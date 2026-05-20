@@ -45,6 +45,13 @@ describe("inventory lot issue priority strip", () => {
     expect(source).toContain("처리할 lot_issue가 없어 조치 버튼을 비활성화했습니다.");
   });
 
+  it("keeps the disposal dock open after confirmation so stock impact remains auditable", () => {
+    expect(source).toContain("const [disposalCompletionSummary");
+    expect(source).toContain("setDisposalCompletionSummary({");
+    expect(source).toContain("completionSummary={disposalCompletionSummary}");
+    expect(source).not.toContain("setDisposalTarget(null);\n      setDisposalInventoryId(null);\n      toast({");
+  });
+
   it("lets the active operations tab reveal the lot issue dock instead of becoming a no-op CTA", () => {
     expect(source).toContain(
       'data-testid={tab.key === "overview" ? "labaxis-inventory-overview-tab" : undefined}',

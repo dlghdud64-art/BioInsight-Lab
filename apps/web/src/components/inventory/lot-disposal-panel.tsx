@@ -48,11 +48,20 @@ export interface DisposalTarget {
   averageDailyUsage?: number;
 }
 
+export interface DisposalCompletionSummary {
+  lotNumber: string;
+  quantity: number;
+  reason: DisposalReason;
+  remainingQuantity: number;
+  reorderReviewRequired: boolean;
+}
+
 interface LotDisposalPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   target: DisposalTarget | null;
   isSubmitting?: boolean;
+  completionSummary?: DisposalCompletionSummary | null;
   onConfirmDisposal?: (params: {
     lotNumber: string;
     quantity: number;
@@ -107,6 +116,7 @@ export function LotDisposalPanel({
   onOpenChange,
   target,
   isSubmitting = false,
+  completionSummary = null,
   onConfirmDisposal,
   onNavigateToReorder,
 }: LotDisposalPanelProps) {
@@ -143,8 +153,13 @@ export function LotDisposalPanel({
   const isExpired = daysUntilExpiry !== null && daysUntilExpiry < 0;
   const canHandOffToReorderAfterConfirm =
     resolution.needsReorderReview && Boolean(onNavigateToReorder);
+  const isCompleted =
+    completionSummary?.lotNumber === target.lotNumber &&
+    completionSummary.quantity === effectiveQty;
   const disposableLotCount =
-    effectiveQty > 0 && effectiveQty <= target.lotQuantity ? 1 : 0;
+    !isCompleted && effectiveQty > 0 && effectiveQty <= target.lotQuantity
+      ? 1
+      : 0;
   const approvalStatusItems = [
     {
       label: "승인 완료",
@@ -178,7 +193,7 @@ export function LotDisposalPanel({
   ];
 
   const handleConfirm = () => {
-    if (isSubmitting) return;
+    if (isSubmitting || isCompleted) return;
     onConfirmDisposal?.({
       lotNumber: target.lotNumber,
       quantity: effectiveQty,
@@ -213,6 +228,48 @@ export function LotDisposalPanel({
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto">
+          <section
+            data-testid="labaxis-inventory-disposal-flow-status"
+            className="border-b border-slate-100 bg-slate-50 px-5 py-3"
+          >
+            <div className="grid grid-cols-3 gap-1.5">
+              <Badge
+                variant="outline"
+                className={
+                  isCompleted || isSubmitting
+                    ? "border-slate-200 bg-white text-slate-500"
+                    : "border-red-200 bg-red-50 text-red-700"
+                }
+              >
+                1 폐기 확인
+              </Badge>
+              <Badge
+                variant="outline"
+                className={
+                  isSubmitting
+                    ? "border-blue-200 bg-blue-50 text-blue-700"
+                    : "border-slate-200 bg-white text-slate-500"
+                }
+              >
+                2 폐기 처리 중
+              </Badge>
+              <Badge
+                variant="outline"
+                className={
+                  isCompleted
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "border-slate-200 bg-white text-slate-500"
+                }
+              >
+                3 폐기 완료
+              </Badge>
+            </div>
+            <p className="mt-2 text-[11px] font-semibold text-slate-600">
+              Lot ID {target.lotNumber} · 수량 {effectiveQty} {unit} · 사유{" "}
+              {REASON_LABELS[effectiveReason]}
+            </p>
+          </section>
+
           <section className="space-y-3 p-5">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -480,6 +537,26 @@ export function LotDisposalPanel({
               </dl>
             </div>
 
+            {isCompleted && completionSummary && (
+              <div
+                data-testid="labaxis-inventory-disposal-complete-summary"
+                className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-extrabold">폐기 완료</span>
+                  <strong>
+                    -{completionSummary.quantity} {unit}
+                  </strong>
+                </div>
+                <p className="mt-1 font-semibold">
+                  폐기 후 재고 {completionSummary.remainingQuantity} {unit} ·{" "}
+                  {completionSummary.reorderReviewRequired
+                    ? "재주문 검토는 보조 단계로 전환됨"
+                    : "재주문 없이 안전재고 유지"}
+                </p>
+              </div>
+            )}
+
             {resolution.causesStockBreach ? (
               <div className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
@@ -516,12 +593,20 @@ export function LotDisposalPanel({
         <div className="border-t border-slate-200 bg-white px-5 py-3">
           <Button
             data-testid="labaxis-inventory-confirm-disposal-cta"
-            disabled={isSubmitting}
-            className="h-10 w-full bg-red-600 text-xs font-extrabold text-white hover:bg-red-700"
+            disabled={isSubmitting || isCompleted}
+            className={`h-10 w-full text-xs font-extrabold text-white ${isCompleted ? "bg-emerald-600 hover:bg-emerald-600" : "bg-red-600 hover:bg-red-700"}`}
             onClick={handleConfirm}
           >
-            <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-            {isSubmitting ? "폐기 반영 중..." : "폐기 승인"}
+            {isCompleted ? (
+              <ShieldCheck className="mr-1.5 h-3.5 w-3.5" />
+            ) : (
+              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+            )}
+            {isCompleted
+              ? "폐기 완료"
+              : isSubmitting
+                ? "폐기 처리 중..."
+                : "폐기 승인"}
           </Button>
 
           {resolution.needsReorderReview && (
@@ -543,6 +628,18 @@ export function LotDisposalPanel({
                   ? "폐기 완료 후 보조 단계로 연결됩니다."
                   : "폐기 완료 후 재고 수치를 먼저 확인합니다."}
               </p>
+              {isCompleted && canHandOffToReorderAfterConfirm && (
+                <Button
+                  data-testid="labaxis-inventory-reorder-after-disposal-cta"
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-2 h-8 w-full border-amber-300 bg-white text-[11px] font-extrabold text-amber-800 hover:bg-amber-100"
+                  onClick={() => onNavigateToReorder?.(target.productName)}
+                >
+                  재주문 검토 열기
+                </Button>
+              )}
             </div>
           )}
         </div>

@@ -287,6 +287,7 @@ function InventoryPageContent() {
   // ── Lot Disposal Panel (object-scoped disposal dock) state ──
   const [disposalTarget, setDisposalTarget] = useState<import("@/components/inventory/lot-disposal-panel").DisposalTarget | null>(null);
   const [disposalInventoryId, setDisposalInventoryId] = useState<string | null>(null);
+  const [disposalCompletionSummary, setDisposalCompletionSummary] = useState<import("@/components/inventory/lot-disposal-panel").DisposalCompletionSummary | null>(null);
   const disposalPanelOpen = disposalTarget !== null;
 
   // ── Context Panel (right-side detail drawer) state ──
@@ -635,14 +636,23 @@ function InventoryPageContent() {
       return response.json();
     },
     onSuccess: (_result, variables) => {
+      const remainingQuantity = Math.max(variables.inventory.currentQuantity - variables.params.quantity, 0);
+      setDisposalCompletionSummary({
+        lotNumber: variables.params.lotNumber,
+        quantity: variables.params.quantity,
+        reason: variables.params.reason,
+        remainingQuantity,
+        reorderReviewRequired:
+          variables.inventory.safetyStock != null
+            ? remainingQuantity <= variables.inventory.safetyStock
+            : false,
+      });
       queryClient.invalidateQueries({ queryKey: ["inventories"] });
       queryClient.invalidateQueries({ queryKey: ["team-inventory"] });
       queryClient.invalidateQueries({ queryKey: ["reorder-recommendations"] });
       queryClient.invalidateQueries({
         queryKey: ["reorder-recommendations-for-highlight"],
       });
-      setDisposalTarget(null);
-      setDisposalInventoryId(null);
       toast({
         title: variables.params.quarantine ? "격리 후 폐기 처리 완료" : "폐기 처리 완료",
         description: `${variables.inventory.product.name} · Lot ${variables.params.lotNumber} 폐기 처리가 반영되었습니다.`,
@@ -958,6 +968,7 @@ function InventoryPageContent() {
   const openDisposalDock = (inventory: ProductInventory) => {
     setDisposalInventoryId(inventory.id);
     setDisposalTarget(buildDisposalTarget(inventory));
+    setDisposalCompletionSummary(null);
   };
 
   const priorityQueueItems = useMemo<QueueItem[]>(() => {
@@ -4015,10 +4026,12 @@ function InventoryPageContent() {
           if (!open) {
             setDisposalTarget(null);
             setDisposalInventoryId(null);
+            setDisposalCompletionSummary(null);
           }
         }}
         target={disposalTarget}
         isSubmitting={disposeLotMutation.isPending}
+        completionSummary={disposalCompletionSummary}
         onConfirmDisposal={(params) => {
           const sourceInventory = displayInventories.find((inv) => inv.id === disposalInventoryId);
           if (!sourceInventory) {
@@ -4037,6 +4050,7 @@ function InventoryPageContent() {
         onNavigateToReorder={(productName) => {
           setDisposalTarget(null);
           setDisposalInventoryId(null);
+          setDisposalCompletionSummary(null);
           const matchingItem = displayInventories.find((inv) => inv.product.name === productName);
           if (matchingItem) {
             openReorderReview(matchingItem);
