@@ -44,7 +44,14 @@ describe("lot disposal approval summary", () => {
     expect(source).toContain(
       'data-testid="labaxis-inventory-disposal-priority-line"',
     );
+    expect(source).toContain(
+      'data-testid="labaxis-inventory-disposal-priority-badges"',
+    );
     expect(source).toContain("우선순위: 폐기 처리 먼저 · 폐기 완료 → 재주문 검토");
+    expect(source).toContain(">만료</Badge>");
+    expect(source).toContain(">사용 금지</Badge>");
+    expect(source).toContain("폐기 처리");
+    expect(source).toContain("안전 재고 영향");
     expect(source).toContain(
       'data-testid="labaxis-inventory-disposal-flow-status"',
     );
@@ -61,6 +68,10 @@ describe("lot disposal approval summary", () => {
 
   it("keeps reorder as a post-disposal note instead of a pre-confirm action", () => {
     expect(source).toContain("{isCompleted && resolution.needsReorderReview && (");
+    expect(source).toContain(
+      'data-testid="labaxis-inventory-reorder-after-confirm-hint"',
+    );
+    expect(source).toContain("재주문 검토는 폐기 완료 후 안내됩니다.");
     expect(source).toContain(
       'data-testid="labaxis-inventory-reorder-after-disposal-note"',
     );

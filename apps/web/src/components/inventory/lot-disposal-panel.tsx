@@ -231,6 +231,19 @@ export function LotDisposalPanel({
           >
             우선순위: 폐기 처리 먼저 · 폐기 완료 → 재주문 검토
           </p>
+          <div
+            data-testid="labaxis-inventory-disposal-priority-badges"
+            className="flex flex-wrap gap-1.5"
+          >
+            <Badge className="bg-red-600 text-white">만료</Badge>
+            <Badge className="bg-amber-600 text-white">사용 금지</Badge>
+            <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700">
+              폐기 처리
+            </Badge>
+            <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-800">
+              안전 재고 영향
+            </Badge>
+          </div>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto">
@@ -614,6 +627,13 @@ export function LotDisposalPanel({
                 ? "폐기 처리 중..."
                 : "폐기 승인"}
           </Button>
+
+          <p
+            data-testid="labaxis-inventory-reorder-after-confirm-hint"
+            className="mt-2 text-center text-[11px] font-semibold text-slate-500"
+          >
+            재주문 검토는 폐기 완료 후 안내됩니다.
+          </p>
 
           {isCompleted && resolution.needsReorderReview && (
             <div
