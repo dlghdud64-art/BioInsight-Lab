@@ -10,6 +10,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+/* §11.269a — 전략 선택 바텀시트 신규 (호영님 spec 흐름 차단 P0 해소). */
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import {
   Sparkles,
   Loader2,
@@ -130,6 +132,12 @@ export function ComparisonModal({
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [activeScenario, setActiveScenario] = useState<string | null>(null);
+  /* §11.269a — 호영님 spec 흐름 차단 P0 해소. 비교까지 완료한 사용자가 시나리오
+     chip 발견 못해서 "전략 선택 필요" 보고 → 흐름 차단. CTA "견적 요청 만들기"
+     항상 활성 + activeScenario null 일 때 탭하면 NEW 전략 선택 바텀시트 열림 →
+     라디오 3개 (cost_first / balanced / speed_first) 선택 후 [요청 생성] 으로 진행. */
+  const [showStrategySheet, setShowStrategySheet] = useState(false);
+  const [pendingStrategy, setPendingStrategy] = useState<string | null>(null);
 
   const compareProducts = products.filter((p) => compareIds.includes(p.id));
   const compareKey = compareIds.slice().sort().join(",");
@@ -424,31 +432,96 @@ export function ComparisonModal({
             <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-slate-500 max-md:flex-1">
               닫기
             </Button>
-            {/* #comparison-human-gate — 다음 CTA gating. activeScenario null
-                (사용자가 시나리오 미선택) 시 disabled + 사유 라벨 1줄.
-                사용자가 시나리오 button (line ~384) 클릭 → setActiveScenario
-                → CTA 활성화 → 다음 단계 (mutation/wizard) 진행 가능. */}
+            {/* #comparison-human-gate — §11.269a 호영님 spec 으로 흐름 보강:
+                기존: activeScenario null 시 CTA disabled + "전략 선택 필요" 라벨.
+                  사용자가 시나리오 chip 영역 (line ~372-413) 발견 못해서 흐름 차단.
+                신규: CTA 항상 활성. activeScenario null 시 탭하면 NEW 전략 선택
+                  바텀시트 (showStrategySheet) 열림 → 라디오 3개 (cost_first /
+                  balanced / speed_first) 선택 후 [요청 생성] → setActiveScenario +
+                  handleOpenRequestWizard. chip 영역으로도 동일 선택 가능 (보조 경로). */}
             {onOpenRequestWizard && result && (
-              <div className="flex flex-col items-end gap-1 max-md:flex-[2]">
-                <Button
-                  size="sm"
-                  disabled={!activeScenario}
-                  className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5 shadow-sm w-full disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={handleOpenRequestWizard}
-                >
-                  {/* §11.255 — 모바일 라벨 축약 ("견적 요청 만들기"). 데스크탑 정합 보존. */}
-                  <span className="hidden sm:inline">견적 요청 조립하기</span>
-                  <span className="sm:hidden">견적 요청 만들기</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-                {!activeScenario && (
-                  <p className="text-[10px] text-slate-500">전략 선택 필요</p>
-                )}
-              </div>
+              <Button
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5 shadow-sm max-md:flex-[2]"
+                onClick={() => {
+                  if (activeScenario) {
+                    handleOpenRequestWizard();
+                  } else {
+                    setShowStrategySheet(true);
+                  }
+                }}
+              >
+                {/* §11.255 — 모바일 라벨 축약 ("견적 요청 만들기"). 데스크탑 정합 보존. */}
+                <span className="hidden sm:inline">견적 요청 조립하기</span>
+                <span className="sm:hidden">견적 요청 만들기</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
             )}
           </div>
         </div>
       </DialogContent>
+
+      {/* §11.269a — 전략 선택 바텀시트 (CTA 항상 활성, activeScenario null 시 열림).
+          라디오 3개 (cost_first / balanced / speed_first) + [요청 생성] → activeScenario
+          set + handleOpenRequestWizard. chip 영역 (line ~372) 으로도 선택 가능. */}
+      <Sheet open={showStrategySheet} onOpenChange={setShowStrategySheet}>
+        <SheetContent
+          data-testid="comparison-strategy-sheet"
+          side="bottom"
+          className="rounded-t-2xl p-6 max-h-[70vh]"
+        >
+          <SheetHeader>
+            <SheetTitle>견적 요청 전략을 선택하세요</SheetTitle>
+            <SheetDescription className="text-[13px] text-slate-500">
+              선택한 전략에 따라 공급사 우선순위가 달라집니다.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-4 space-y-2">
+            {(["cost_first", "balanced", "speed_first"] as const).map((type) => {
+              const meta = scenarioMeta[type];
+              const Icon = meta.icon;
+              const isSelected = pendingStrategy === type;
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setPendingStrategy(type)}
+                  className={`w-full flex items-center gap-3 min-h-[44px] px-4 py-3 rounded-xl border transition-all text-left ${
+                    isSelected
+                      ? "border-blue-500 bg-blue-50/60 ring-2 ring-blue-500/30"
+                      : "border-slate-200 hover:border-blue-200 hover:bg-blue-50/30"
+                  }`}
+                >
+                  <span
+                    className={`h-4 w-4 rounded-full border-2 flex-shrink-0 ${
+                      isSelected ? "border-blue-600 bg-blue-600" : "border-slate-300"
+                    }`}
+                  >
+                    {isSelected && <span className="block h-full w-full rounded-full bg-blue-600 scale-50" />}
+                  </span>
+                  <Icon className={`h-4 w-4 ${isSelected ? "text-blue-600" : "text-slate-400"}`} />
+                  <span className="text-sm font-medium text-slate-800">{meta.label}</span>
+                </button>
+              );
+            })}
+          </div>
+          <Button
+            size="lg"
+            disabled={!pendingStrategy}
+            className="w-full mt-5 bg-blue-600 hover:bg-blue-700 text-white gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => {
+              if (!pendingStrategy) return;
+              setActiveScenario(pendingStrategy);
+              setShowStrategySheet(false);
+              setPendingStrategy(null);
+              handleOpenRequestWizard();
+            }}
+          >
+            요청 생성
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </SheetContent>
+      </Sheet>
     </Dialog>
   );
 }

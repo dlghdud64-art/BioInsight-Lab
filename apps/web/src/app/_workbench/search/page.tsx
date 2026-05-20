@@ -801,14 +801,19 @@ export default function SearchPage() {
                   data-testid="sourcing-ai-analysis-trigger"
                   aria-label="AI 분석 열기"
                   onClick={() => setAiAnalysisSheetOpen(true)}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md text-violet-700 hover:bg-violet-50 border border-violet-200 transition-colors"
+                  /* §11.266e — sourcing AI 분석 + 재고 secondary button 44x44
+                      (§11.266 P1 cluster 5/5, family final close). text-xs 뒤
+                      min-h-[44px] 추가 → 필터 button (§11.266a) 과 sibling
+                      consistency. violet tone / Sparkles / 라벨 보존. */
+                  className="inline-flex items-center gap-1.5 text-xs font-medium min-h-[44px] px-3 py-1.5 rounded-md text-violet-700 hover:bg-violet-50 border border-violet-200 transition-colors"
                 >
                   <Sparkles className="h-3.5 w-3.5" />
                   AI 분석
                 </button>
                 {!!session?.user && hasSearched && searchQuery && (
                   <Link href={`/dashboard/inventory?q=${encodeURIComponent(searchQuery)}`}>
-                    <button className="hidden md:inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors">
+                    {/* §11.266e — 재고 button (데스크탑 한정) 44x44 sibling consistency. */}
+                    <button className="hidden md:inline-flex items-center gap-1.5 text-xs font-medium min-h-[44px] px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors">
                       <Package className="h-3.5 w-3.5" />
                       재고
                     </button>
