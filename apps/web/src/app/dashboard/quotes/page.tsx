@@ -4172,5 +4172,112 @@ function QuotesPageContent() {
           toast({ title: "AI 견적서 파싱 완료", description: "벤더 응답이 등록되었습니다." });
         }}
       />
+              </div>
+            )}
 
-      {/* 
+            {aiCompareResult && (
+              <>
+                {/* 공급사별 비교 테이블 */}
+                {aiCompareResult.comparison.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-900 mb-2">공급사 비교</h4>
+                    <div className="rounded-lg border border-slate-200 overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-slate-50 text-slate-600">
+                            <th className="text-left px-3 py-2 font-medium">공급사</th>
+                            <th className="text-left px-3 py-2 font-medium">가격</th>
+                            <th className="text-left px-3 py-2 font-medium">납기</th>
+                            <th className="text-left px-3 py-2 font-medium">배송비</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {aiCompareResult.comparison.map((row, i) => (
+                            <tr key={i} className="hover:bg-slate-50/50">
+                              <td className="px-3 py-2 font-medium text-slate-900">{row.vendor}</td>
+                              <td className="px-3 py-2 text-slate-700">{row.price}</td>
+                              <td className="px-3 py-2 text-slate-700">{row.leadTime}</td>
+                              <td className="px-3 py-2 text-slate-700">{row.shippingFee}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* 추천 */}
+                {aiCompareResult.recommendation && (
+                  <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-semibold text-blue-900">추천</span>
+                    </div>
+                    <p className="text-sm text-slate-700 leading-relaxed">{aiCompareResult.recommendation}</p>
+                  </div>
+                )}
+
+                {/* 협상 가이드 */}
+                {aiCompareResult.negotiationGuide && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <AlertTriangle className="h-4 w-4 text-amber-600" />
+                      <span className="text-sm font-semibold text-amber-900">협상 포인트</span>
+                    </div>
+                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{aiCompareResult.negotiationGuide}</p>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          <div className="px-6 py-3 border-t border-slate-100 flex justify-end">
+            <Button variant="outline" size="sm" onClick={() => setAiCompareOpen(false)}>닫기</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Intake Dock (외부 견적서 업로드 / BOM 업로드) ── */}
+      <QuoteIntakeDock
+        open={intakeDockOpen}
+        onOpenChange={setIntakeDockOpen}
+        source={intakeDockSource}
+        onCommitSuccess={() => {
+          setIntakeDockOpen(false);
+          setIntakeDockSource(null);
+          refetch();
+        }}
+      />
+
+      {/* §11.181 — 운영 브리핑 floating entry (default = popup open).
+          §11.258-sweep — §11.257 후속: 모바일 (<lg) BarcodeScanFab 겹침 해소,
+          데스크탑 한정 노출. 모바일 inline 진입은 §11.258-sweep-2 백로그. */}
+      <div className="hidden lg:block">
+        <OperationalBriefFloatingEntry controls="operational-brief-popup" />
+      </div>
+      {/* §11.258-sweep-2 — 모바일 좌측 하단 ✨ 운영 브리핑 진입 (방안 1). */}
+      <MobileBriefInlineButton />
+    </div>
+  );
+}
+
+function QuotesPageInner() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+      </div>
+    }>
+      <QuotesPageContent />
+    </Suspense>
+  );
+}
+
+// §11.214b Path Z — NoSSR wrapper.
+export default function QuotesPage() {
+  return (
+    <NoSSR>
+      <QuotesPageInner />
+    </NoSSR>
+  );
+}
