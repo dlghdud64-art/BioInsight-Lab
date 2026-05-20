@@ -43,26 +43,26 @@ describe("§11.264h-2 #1 — 전체 선택 CTA 텍스트 링크 변환", () => {
   it("CTA className 에서 chip 톤 (rounded-full + border + bg-violet-50/50) 제거", () => {
     // 기존 chip 톤 패턴 제거 — selectablePending block 안에 chip 톤 fragment 없어야 함
     expect(page).not.toMatch(
-      /selectablePending\.map\(q => q\.id\)[\s\S]{0,800}rounded-full border[\s\S]{0,200}bg-violet-50\/50/,
+      /selectablePending\.map\(q => q\.id\)[\s\S]{0,1500}rounded-full border[\s\S]{0,200}bg-violet-50\/50/,
     );
   });
 
   it("CTA className 에 텍스트 링크 톤 적용 (underline-offset + hover:underline)", () => {
     // className 은 aria-label 보다 앞에 등장 — selectablePending 호출 후 className 안에 underline 패턴
     expect(page).toMatch(
-      /selectablePending\.map\(q => q\.id\)[\s\S]{0,800}underline-offset-2 hover:underline/,
+      /selectablePending\.map\(q => q\.id\)[\s\S]{0,1500}underline-offset-2 hover:underline/,
     );
   });
 
   it("CTA text-violet-700 톤 보존 (시각 연속성)", () => {
     expect(page).toMatch(
-      /selectablePending\.map\(q => q\.id\)[\s\S]{0,800}text-violet-700/,
+      /selectablePending\.map\(q => q\.id\)[\s\S]{0,1500}text-violet-700/,
     );
   });
 
   it("ml-auto (우측 정렬) 보존", () => {
     expect(page).toMatch(
-      /selectablePending\.map\(q => q\.id\)[\s\S]{0,800}className="ml-auto/,
+      /selectablePending\.map\(q => q\.id\)[\s\S]{0,1500}className="ml-auto/,
     );
   });
 });
@@ -100,13 +100,15 @@ describe("§11.264h-2 #2 — invariant 보존 (canonical truth)", () => {
   it("§11.264h whitespace-nowrap 보존", () => {
     // className 이 aria-label 보다 앞에 등장 — selectablePending 호출 후 className 안에 whitespace-nowrap
     expect(page).toMatch(
-      /selectablePending\.map\(q => q\.id\)[\s\S]{0,800}whitespace-nowrap/,
+      /selectablePending\.map\(q => q\.id\)[\s\S]{0,1500}whitespace-nowrap/,
     );
   });
 
-  it("§11.264h mode chips className whitespace-nowrap 보존", () => {
+  it("§11.264h mode chips className whitespace-nowrap 보존 (§11.264h-4 min-h-[44px] supersede)", () => {
+    // §11.264h-4 가 text-[11px] 뒤에 min-h-[44px] 추가 → invariant supersede.
+    // §11.264h-4 JSDoc 확장으로 distance 800 → 1500 확장.
     expect(page).toMatch(
-      /MODE_CHIPS\.map[\s\S]{0,800}className=\{`inline-flex items-center gap-1 text-\[11px\] px-2\.5 py-1 rounded-full border font-medium transition-all whitespace-nowrap/,
+      /MODE_CHIPS\.map[\s\S]{0,1500}className=\{`inline-flex items-center gap-1 text-\[11px\] min-h-\[44px\] px-2\.5 py-1 rounded-full border font-medium transition-all whitespace-nowrap/,
     );
   });
 

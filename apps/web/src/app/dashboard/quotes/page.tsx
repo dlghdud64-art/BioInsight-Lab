@@ -1,4 +1,4 @@
-﻿"use client";
+﻿﻿"use client";
 
 export const dynamic = 'force-dynamic';
 
@@ -2103,8 +2103,13 @@ function QuotesPageContent() {
               <button key={chip.key} onClick={() => setModeChip(isActive ? null : chip.key)}
                 /* §11.264h — chip 내부 텍스트 줄바꿈 차단 (호영님 spec 견적 모바일 #4).
                    flex-nowrap 은 chip 끼리 줄바꿈 차단, whitespace-nowrap 은
-                   chip 내부 텍스트 wrap 차단 ("우선\n처리" 같은 깨짐 방지). */
-                className={`inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full border font-medium transition-all whitespace-nowrap ${
+                   chip 내부 텍스트 wrap 차단 ("우선\n처리" 같은 깨짐 방지).
+                   §11.264h-4 — mode chips 44x44 touch target (호영님 모바일 spec
+                   a11y 일관성, §11.264h-3 cross-cutting concern follow-up).
+                   min-h-[44px] 추가 → Apple HIG / Material / WCAG 2.1 SC 2.5.5
+                   Target Size 정합. text-[11px] 시각 사이즈 보존 (44px height
+                   안에 items-center 로 가운데 정렬). */
+                className={`inline-flex items-center gap-1 text-[11px] min-h-[44px] px-2.5 py-1 rounded-full border font-medium transition-all whitespace-nowrap ${
                   isActive ? "bg-blue-600/10 text-blue-600 border-blue-600/30" : "text-slate-500 border-bd/50 hover:border-bd hover:text-slate-900"
                 }`}>
                 {chip.label}
@@ -2137,8 +2142,11 @@ function QuotesPageContent() {
                    기존 chip 톤 (rounded-full + border + bg-violet-50/50) 제거 →
                    underline-offset + hover:underline 으로 텍스트 링크 톤 전환.
                    ml-auto (우측 정렬), text-violet-700 (시각 연속성), whitespace-nowrap
-                   (§11.264h), onClick / aria-label 보존. */
-                className="ml-auto inline-flex items-center gap-1 text-[11px] px-1 py-1 font-medium underline-offset-2 hover:underline transition-colors whitespace-nowrap text-violet-700 hover:text-violet-900"
+                   (§11.264h), onClick / aria-label 보존.
+                   §11.264h-3 — touch target 44x44 (Apple HIG / Material). text-[11px]
+                   유지하되 min-h-[44px] + items-center 으로 line-height 가운데 정렬.
+                   px-1 → px-2 으로 가로 영역 확보. 시각 변화 미미, tap 영역 확보. */
+                className="ml-auto inline-flex items-center gap-1 text-[11px] min-h-[44px] px-2 py-1 font-medium underline-offset-2 hover:underline transition-colors whitespace-nowrap text-violet-700 hover:text-violet-900"
                 aria-label={allSelected ? "전체 선택 해제" : "발송 대기 견적 전체 선택"}
               >
                 {allSelected ? "전체 해제" : `전체 선택 (${selectablePending.length}건)`}

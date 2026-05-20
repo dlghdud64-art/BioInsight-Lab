@@ -34,17 +34,21 @@ describe("§11.264h #1 — mode chips whitespace-nowrap", () => {
     expect(page).toMatch(/§11\.264h/);
   });
 
-  it("mode chip className 에 whitespace-nowrap 적용", () => {
+  it("mode chip className 에 whitespace-nowrap 적용 (§11.264h-4 min-h-[44px] supersede)", () => {
     // MODE_CHIPS.map 안의 button className 안에 whitespace-nowrap 존재
+    // §11.264h-4 가 text-[11px] 뒤에 min-h-[44px] 추가 → invariant supersede.
+    // §11.264h-4 JSDoc 확장으로 distance 800 → 1500 확장 (§11.264h-2/h-3 패턴 reuse).
     expect(page).toMatch(
-      /MODE_CHIPS\.map[\s\S]{0,800}className=\{`inline-flex items-center gap-1 text-\[11px\] px-2\.5 py-1 rounded-full border font-medium transition-all whitespace-nowrap/,
+      /MODE_CHIPS\.map[\s\S]{0,1500}className=\{`inline-flex items-center gap-1 text-\[11px\] min-h-\[44px\] px-2\.5 py-1 rounded-full border font-medium transition-all whitespace-nowrap/,
     );
   });
 
-  it("§11.220 전체 선택 CTA className 에 whitespace-nowrap 적용", () => {
-    // 전체 선택 CTA 의 className 안 whitespace-nowrap
+  it("§11.220 전체 선택 CTA className whitespace-nowrap 보존 (§11.264h-2/h-3 supersede)", () => {
+    // §11.264h-2 가 chip 톤 → 텍스트 링크 톤으로 swap. §11.264h-3 가 min-h-[44px] 추가.
+    //   기존 (§11.264h): rounded-full border bg-violet-50/50 + whitespace-nowrap
+    //   신규 (§11.264h-3): px-2 py-1 min-h-[44px] underline-offset-2 hover:underline + whitespace-nowrap
     expect(page).toMatch(
-      /ml-auto inline-flex items-center gap-1 text-\[11px\] px-2\.5 py-1 rounded-full border font-medium transition-all whitespace-nowrap/,
+      /ml-auto inline-flex items-center gap-1 text-\[11px\] min-h-\[44px\] px-2 py-1 font-medium underline-offset-2 hover:underline transition-colors whitespace-nowrap/,
     );
   });
 });
@@ -71,8 +75,9 @@ describe("§11.264h #2 — invariant 보존 (canonical truth)", () => {
     expect(page).toMatch(/aria-label=\{allSelected \? "전체 선택 해제" : "발송 대기 견적 전체 선택"\}/);
   });
 
-  it("§11.220 전체 선택 CTA 시각 (text-violet-700 + border-violet-300/60 + bg-violet-50/50) 보존", () => {
-    expect(page).toMatch(/text-violet-700 border-violet-300\/60 bg-violet-50\/50 hover:bg-violet-100/);
+  it("§11.220 전체 선택 CTA 시각 (text-violet-700 보존, §11.264h-2 supersede)", () => {
+    // §11.264h-2: chip 톤 (border-violet-300/60 bg-violet-50/50) 제거 → text-violet-700 + hover:text-violet-900
+    expect(page).toMatch(/text-violet-700 hover:text-violet-900/);
   });
 
   it("modeChip 초기화 버튼 보존", () => {
