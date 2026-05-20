@@ -727,9 +727,14 @@ function WorkspaceSettingsPageContent() {
                                     className="px-3 py-1 text-sm flex items-center gap-2"
                                   >
                                     <span>{domain}</span>
+                                    {/* §11.270 — settings X button 44x44 touch
+                                        target (§11.266 family 확장). min-h-[44px]
+                                        + min-w-[44px] + inline-flex items-center
+                                        justify-center 추가. X icon h-3 w-3 보존
+                                        (visual size). hover/rounded-full/p-0.5 보존. */}
                                     <button
                                       onClick={() => removeDomain(domain)}
-                                      className="hover:bg-slate-200 rounded-full p-0.5 transition-colors"
+                                      className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] hover:bg-slate-200 rounded-full p-0.5 transition-colors"
                                       aria-label={`${domain} 제거`}
                                     >
                                       <X className="h-3 w-3" />

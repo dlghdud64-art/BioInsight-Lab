@@ -618,9 +618,12 @@ function ComplianceLinksPageContent() {
                     {formData.rules.hazardCodesAny.map((code) => (
                       <Badge key={code} variant="secondary" className="gap-1">
                         {code}
+                        {/* §11.270 — settings X button 44x44 touch target (§11.266 family 확장). min-h-[44px]
+                            + min-w-[44px] + inline-flex items-center justify-center 추가. X icon h-3 w-3 보존
+                            (visual size). ml-1/hover/rounded-full/p-0.5 보존. */}
                         <button
                           onClick={() => removeHazardCode(code)}
-                          className="ml-1 hover:bg-slate-200 rounded-full p-0.5"
+                          className="ml-1 inline-flex items-center justify-center min-h-[44px] min-w-[44px] hover:bg-slate-200 rounded-full p-0.5 transition-colors"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -663,6 +666,9 @@ function ComplianceLinksPageContent() {
                     {formData.rules.pictogramsAny.map((pictogram) => (
                       <Badge key={pictogram} variant="secondary" className="gap-1">
                         {pictogram}
+                        {/* §11.270 — settings X button 44x44 touch target (§11.266 family 확장). min-h-[44px]
+                            + min-w-[44px] + inline-flex items-center justify-center 추가. X icon h-3 w-3 보존
+                            (visual size). ml-1/hover/rounded-full/p-0.5 보존. */}
                         <button
                           onClick={() =>
                             updateRule(
@@ -670,7 +676,7 @@ function ComplianceLinksPageContent() {
                               formData.rules.pictogramsAny?.filter((p) => p !== pictogram) || []
                             )
                           }
-                          className="ml-1 hover:bg-slate-200 rounded-full p-0.5"
+                          className="ml-1 inline-flex items-center justify-center min-h-[44px] min-w-[44px] hover:bg-slate-200 rounded-full p-0.5 transition-colors"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -710,6 +716,9 @@ function ComplianceLinksPageContent() {
                     {formData.rules.categoryIn.map((category) => (
                       <Badge key={category} variant="secondary" className="gap-1">
                         {PRODUCT_CATEGORIES[category as keyof typeof PRODUCT_CATEGORIES] || category}
+                        {/* §11.270 — settings X button 44x44 touch target (§11.266 family 확장). min-h-[44px]
+                            + min-w-[44px] + inline-flex items-center justify-center 추가. X icon h-3 w-3 보존
+                            (visual size). ml-1/hover/rounded-full/p-0.5 보존. */}
                         <button
                           onClick={() =>
                             updateRule(
@@ -717,7 +726,7 @@ function ComplianceLinksPageContent() {
                               formData.rules.categoryIn?.filter((c) => c !== category) || []
                             )
                           }
-                          className="ml-1 hover:bg-slate-200 rounded-full p-0.5"
+                          className="ml-1 inline-flex items-center justify-center min-h-[44px] min-w-[44px] hover:bg-slate-200 rounded-full p-0.5 transition-colors"
                         >
                           <X className="h-3 w-3" />
                         </button>
