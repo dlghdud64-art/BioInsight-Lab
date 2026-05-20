@@ -218,7 +218,11 @@ export default function IntroPage() {
               transition={{ duration: 0.5, delay: 0.4 }}
               className="flex flex-col sm:flex-row items-center justify-center gap-3"
             >
-              <Link href="/search">
+              {/* §11.267c — /intro "제품 시작하기" CTA 동선 개선 (§11.267
+                  implicit consistency 확장). /search 우회 → /auth/signin 직진.
+                  가입 의사 표현 시 검색 단계 우회 차단. 호영님 §11.267 랜딩 spec
+                  동일 패턴 reuse. 라벨 / button className / 도입 문의 보존. */}
+              <Link href="/auth/signin">
                 <button className="w-full sm:w-auto px-7 py-3.5 text-base font-bold rounded-xl transition-all hover:brightness-110 active:scale-[0.98]" style={{ backgroundColor: D.primary, color: D.onPrimary }}>
                   제품 시작하기
                 </button>
