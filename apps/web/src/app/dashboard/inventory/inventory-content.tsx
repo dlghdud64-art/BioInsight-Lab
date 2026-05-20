@@ -2286,8 +2286,13 @@ function InventoryPageContent() {
 
                 {/* 3. Lot 추적 — contextual drill-down (1급 탭에서 내려옴, 품목 컨텍스트에서 진입) */}
                 <TabsContent value="lot-tracking" className="m-0 p-4 sm:p-6 space-y-4">
-                  {/* Back to item view */}
-                  <button type="button" onClick={() => setActiveInventoryTab("manage")} className="flex items-center gap-1.5 text-xs font-medium text-blue-400 hover:text-blue-300 transition-colors mb-1">
+                  {/* §11.266c — inventory lot-tracking back nav 44x44 touch target
+                      (§11.266 P1 cluster 3/5, §11.264h family cross-cutting concern
+                      확장). flex → inline-flex + min-h-[44px] + px-2 추가 → Apple
+                      HIG / Material / WCAG 2.1 SC 2.5.5 표준 정합. text-xs /
+                      text-blue-400 hover:text-blue-300 / mb-1 / setActiveInventoryTab
+                      onClick / ChevronRight rotate-180 / "품목 관리로 돌아가기" 보존. */}
+                  <button type="button" onClick={() => setActiveInventoryTab("manage")} className="inline-flex items-center gap-1.5 text-xs font-medium min-h-[44px] px-2 text-blue-400 hover:text-blue-300 transition-colors mb-1">
                     <ChevronRight className="h-3.5 w-3.5 rotate-180" />
                     품목 관리로 돌아가기
                   </button>
