@@ -429,7 +429,11 @@ export function ComparisonModal({
             AI 분석 결과는 참고용이며, 정확한 조건은 견적 요청을 통해 확인하세요.
           </p>
           <div className="flex items-center gap-2 max-md:w-full">
-            <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-slate-500 max-md:flex-1">
+            {/* §11.269b — 호영님 spec "닫기" + "견적 요청 만들기" 버튼 높이 통일.
+                기존: variant="ghost" (border 0 + bg 0 → 시각 height 작음, 호영님 보고
+                  "닫기 ~20px"). 신규: variant="outline" (border 추가, size="sm" 동일
+                  → 시각 height 정합). onClick / "닫기" 라벨 / max-md:flex-1 보존. */}
+            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} className="text-slate-500 max-md:flex-1">
               닫기
             </Button>
             {/* #comparison-human-gate — §11.269a 호영님 spec 으로 흐름 보강:
