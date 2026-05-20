@@ -32,6 +32,9 @@ import { Search, Bell, HelpCircle, ChevronRight, AlertTriangle, FileText, BookOp
 import { toast } from "sonner";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { CommandPalette } from "@/components/dashboard/command-palette";
+// §11.271 — DashboardShell 의 fixed FAB 에서 헤더 inline 으로 이동 (운영 브리핑 FAB
+// 좌표 충돌 해소). overlay/store/handler 변경 0, button className 만 fixed → relative.
+import { BarcodeScanFab } from "@/components/layout/barcode-scan-fab";
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void;
@@ -304,6 +307,12 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           >
             <Search className="h-5 w-5" />
           </Button>
+
+          {/* §11.271 — 바코드 스캔 모바일 trigger (BarcodeScanFab inline mount).
+              운영 브리핑 FAB (bottom-[72px] right-4) 와 좌표 충돌 해소.
+              component 안에 overlay/store/handler 그대로 보존, button 만 relative
+              헤더 inline 으로 표시. lg:hidden 보존 (mobile only). */}
+          <BarcodeScanFab />
 
 
           {/* 알림 드롭다운 — 이벤트 피드 (고도화) */}

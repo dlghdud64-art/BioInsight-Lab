@@ -4,7 +4,8 @@ import { useState } from "react";
 import { DashboardHeader } from "@/components/dashboard/Header";
 import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { BottomNav } from "@/components/layout/bottom-nav";
-import { BarcodeScanFab } from "@/components/layout/barcode-scan-fab";
+// §11.271 — BarcodeScanFab 은 DashboardHeader 모바일 inline 으로 이동 (운영 브리핑 FAB
+// 좌표 충돌 해소). 본 shell 에서 mount 제거 + import 제거 (dead import 차단).
 import { OpsStoreProvider } from "@/lib/ops-console/ops-store";
 import { OntologyContextLayer } from "@/components/ontology-context-layer/ontology-context-layer";
 import { NotificationSonnerBridge } from "@/components/notifications/notification-sonner-bridge";
@@ -81,7 +82,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <BottomNav />
-        <BarcodeScanFab />
+        {/* §11.271 — BarcodeScanFab mount 제거. 모바일 trigger 는 DashboardHeader 의
+            검색 button 옆에 inline 으로 이동 (운영 브리핑 FAB 좌표 충돌 해소). overlay
+            (scanner modal) + store + handler 는 component 안에 그대로 보존. */}
         {/* CommandPalette는 DashboardHeader 내부에 통합됨 */}
         <OntologyContextLayer />
         <NotificationSonnerBridge />

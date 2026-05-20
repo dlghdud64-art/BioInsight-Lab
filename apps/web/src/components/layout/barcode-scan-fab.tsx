@@ -70,16 +70,15 @@ export function BarcodeScanFab() {
 
   return (
     <>
-      {/* FAB — 모바일 뷰에서만 표시 */}
+      {/* §11.271 — 바코드 스캔 trigger button. DashboardHeader 모바일 영역의 검색 button
+         옆에 inline mount (운영 브리핑 FAB 좌표 충돌 해소). 기존 §11.251d 의 fixed
+         bottom-[72px] right-4 z-40 → relative (헤더 inline) swap. icon h-5 w-5 + lg:hidden
+         + scanner overlay 변경 0. ring/shadow/active scale 그대로 보존. */}
       <button
         type="button"
         onClick={openScanner}
         aria-label="바코드 스캔"
-        /* §11.251d — FAB bottom 위치 호영님 spec 정합. BottomNav h-14 (56px) +
-           safe-area-bottom + 16px 간격 확보 = bottom-[72px] (정확 정합).
-           기존 bottom-20 (80px) 도 spec 충족이지만 "탭 바 바로 위 겹침" 시각 인식
-           완화 위해 명시. */
-        className="fixed bottom-[72px] right-4 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/30 ring-4 ring-white/60 transition-colors hover:bg-blue-500 active:scale-95 lg:hidden"
+        className="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white shadow-md shadow-blue-600/20 transition-colors hover:bg-blue-500 active:scale-95 lg:hidden flex-shrink-0"
       >
         <ScanLine className="h-5 w-5" />
       </button>
