@@ -42,6 +42,10 @@ describe("lot disposal approval summary", () => {
 
   it("separates disposal pending, processing, and completed stock impact states", () => {
     expect(source).toContain(
+      'data-testid="labaxis-inventory-disposal-priority-line"',
+    );
+    expect(source).toContain("우선순위: 폐기 처리 먼저 · 폐기 완료 → 재주문 검토");
+    expect(source).toContain(
       'data-testid="labaxis-inventory-disposal-flow-status"',
     );
     expect(source).toContain("1 폐기 확인");
@@ -56,15 +60,18 @@ describe("lot disposal approval summary", () => {
   });
 
   it("keeps reorder as a post-disposal note instead of a pre-confirm action", () => {
+    expect(source).toContain("{isCompleted && resolution.needsReorderReview && (");
     expect(source).toContain(
       'data-testid="labaxis-inventory-reorder-after-disposal-note"',
     );
     expect(source).toContain(
-      'data-testid="labaxis-inventory-reorder-after-disposal-cta"',
+      'data-testid="labaxis-inventory-reorder-after-disposal-badge"',
     );
-    expect(source).toContain("다음 단계: 폐기 확정 후 재주문 검토");
-    expect(source).toContain("승인 전에는 재주문 실행 버튼을 노출하지 않습니다");
-    expect(source).toContain("재주문 검토 열기");
+    expect(source).toContain("재주문 검토 보조");
+    expect(source).toContain("실행 버튼이 아니라 완료 후 판단 배지입니다.");
+    expect(source).not.toContain('data-testid="labaxis-inventory-reorder-after-disposal-cta"');
+    expect(source).not.toContain("재주문 검토 열기");
+    expect(source).not.toContain("승인 전에는 재주문 실행 버튼을 노출하지 않습니다");
     expect(source).not.toMatch(
       /onClick=\{\(\) => onNavigateToReorder\(target\.productName\)\}/,
     );

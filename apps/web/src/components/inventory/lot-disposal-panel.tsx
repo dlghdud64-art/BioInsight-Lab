@@ -225,6 +225,12 @@ export function LotDisposalPanel({
           <SheetDescription className="text-[11px] leading-relaxed text-slate-500">
             만료 또는 사용 금지 LOT는 재주문보다 먼저 폐기 영향을 확인합니다.
           </SheetDescription>
+          <p
+            data-testid="labaxis-inventory-disposal-priority-line"
+            className="text-[11px] font-extrabold text-red-700"
+          >
+            우선순위: 폐기 처리 먼저 · 폐기 완료 → 재주문 검토
+          </p>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto">
@@ -609,37 +615,28 @@ export function LotDisposalPanel({
                 : "폐기 승인"}
           </Button>
 
-          {resolution.needsReorderReview && (
+          {isCompleted && resolution.needsReorderReview && (
             <div
               data-testid="labaxis-inventory-reorder-after-disposal-note"
               className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800"
             >
-              <span className="hidden">
-                <ArrowRight className="mr-1 h-3 w-3" />
-              폐기 후 재주문 검토로 이동
-              </span>
-              <div className="flex items-center gap-1.5 font-extrabold">
+              <div className="flex items-center justify-between gap-2 font-extrabold">
+                <span className="inline-flex items-center gap-1.5">
                 <ArrowRight className="h-3 w-3" />
-                다음 단계: 폐기 확정 후 재주문 검토
+                  폐기 완료 후속
+                </span>
+                <Badge
+                  data-testid="labaxis-inventory-reorder-after-disposal-badge"
+                  variant="outline"
+                  className="border-amber-300 bg-white text-amber-800"
+                >
+                  재주문 검토 보조
+                </Badge>
               </div>
               <p className="mt-0.5 leading-relaxed">
-                승인 전에는 재주문 실행 버튼을 노출하지 않습니다.{" "}
-                {canHandOffToReorderAfterConfirm
-                  ? "폐기 완료 후 보조 단계로 연결됩니다."
-                  : "폐기 완료 후 재고 수치를 먼저 확인합니다."}
+                실행 버튼이 아니라 완료 후 판단 배지입니다. 재고 부족 시에만{" "}
+                {canHandOffToReorderAfterConfirm ? "보조 연결" : "별도 검토"}로 넘깁니다.
               </p>
-              {isCompleted && canHandOffToReorderAfterConfirm && (
-                <Button
-                  data-testid="labaxis-inventory-reorder-after-disposal-cta"
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="mt-2 h-8 w-full border-amber-300 bg-white text-[11px] font-extrabold text-amber-800 hover:bg-amber-100"
-                  onClick={() => onNavigateToReorder?.(target.productName)}
-                >
-                  재주문 검토 열기
-                </Button>
-              )}
             </div>
           )}
         </div>
