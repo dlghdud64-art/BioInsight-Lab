@@ -1638,6 +1638,24 @@ function QuotesPageContent() {
     };
   }, [quotesWithState]);
 
+  const primaryDispatchQuote = useMemo(
+    () =>
+      selectedQuote
+      ?? quotesWithState.find(({ state }) => state === "request_not_sent")?.quote
+      ?? quotes.find((quote) => quote.status !== "COMPLETED" && quote.status !== "CANCELLED")
+      ?? quotes[0]
+      ?? null,
+    [selectedQuote, quotesWithState, quotes],
+  );
+  const primaryDispatchPreflight = useMemo(
+    () => getQuoteDispatchPreflight(primaryDispatchQuote, organizationVendors, organizationVendorProducts),
+    [primaryDispatchQuote, organizationVendors, organizationVendorProducts],
+  );
+  const primaryDispatchEvidence = useMemo(
+    () => getQuoteDispatchEvidence(primaryDispatchPreflight),
+    [primaryDispatchPreflight],
+  );
+
   // 필터링 + 운영 우선순위 정렬
   // §11.246d-1 — searchQuery → debouncedSearchQuery (300ms) 으로 filter 입력.
   //   input UI 즉시 반응 + .filter() 호출은 300ms delay 후 안정 값 기반.
@@ -1983,6 +2001,72 @@ function QuotesPageContent() {
         </div>
       )}
 
+      <section
+        data-testid="quote-dispatch-fixed-flow"
+        className="rounded-xl border border-blue-200 bg-blue-50/70 px-3 py-3 sm:px-4 sm:py-3.5 space-y-3"
+        aria-label="견적 발송 전 확인 4단계"
+      >
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-700">발송 전 확인</p>
+            <h2 className="text-sm font-semibold text-slate-950">공급사 선택 → 연락처 검증 → 메시지 미리보기 → 발송 확인</h2>
+            <p data-testid="quote-dispatch-send-disabled-reason" className="text-[11px] text-blue-900/80">
+              {primaryDispatchEvidence.canSend
+                ? "공급사와 연락처가 확인되었습니다. 메시지 미리보기 후 최종 발송할 수 있습니다."
+                : `전송 비활성: ${primaryDispatchEvidence.blockReason} · ${primaryDispatchPreflight.summary}`}
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Button
+              type="button"
+              data-testid="quote-dispatch-primary-draft-cta"
+              size="sm"
+              className="h-9 bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={openQuoteDraftWorkbench}
+              disabled={isLoading || quotes.length === 0}
+            >
+              <FileTextIcon className="h-4 w-4 mr-1.5" />
+              견적 요청 초안 만들기
+            </Button>
+            {summaryStats.compareReview.count === 0 ? (
+              <span
+                data-testid="quote-compare-review-zero-disabled"
+                className="inline-flex h-9 items-center justify-center rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-400"
+                aria-disabled="true"
+              >
+                비교 검토 필요 0건 · 검토 대상 없음
+              </span>
+            ) : (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-9 text-xs"
+                onClick={() => setStatusFilter("RESPONDED")}
+              >
+                비교 검토 {summaryStats.compareReview.count}건 보기
+              </Button>
+            )}
+          </div>
+        </div>
+        <div
+          data-testid="quote-dispatch-four-step-gate"
+          className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          {[
+            ["1. supplier 선택", primaryDispatchEvidence.supplierStatus],
+            ["2. contact 검증", primaryDispatchEvidence.contactStatus],
+            ["3. message preview", primaryDispatchEvidence.previewStatus],
+            ["4. send confirm", primaryDispatchEvidence.sendStatus],
+          ].map(([label, status]) => (
+            <div key={label} className="rounded-lg border border-white/80 bg-white px-3 py-2 shadow-sm">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{label}</p>
+              <p className="mt-1 text-xs font-medium text-slate-800">{status}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* §11.217 Phase 3 — Batch action bar (sticky, selectedCount > 0 시만 노출)
           §11.228 #quote-management-v2-phase-c1 — 일괄 처리 강화: 리마인더 + 상태 변경 CTA 추가 */}
       {/* §11.240 — dropdown + 가드레일 prop 확장 */}
@@ -2014,12 +2098,21 @@ function QuotesPageContent() {
         ].map(({ label, count, insight, icon: Icon, filter, iconBg, iconText, activeBorder, activeRing, activeBg, hoverBorder, hoverShadow }, idx) => {
           const isActive = statusFilter === filter;
           const isZero = !isLoading && count === 0;
+          const isCompareReviewZero = label === "비교 검토 필요" && isZero;
           return (
-            <button key={label} onClick={() => setStatusFilter(prev => prev === filter ? "all" : filter)}
+            <button
+              key={label}
+              onClick={() => {
+                if (isCompareReviewZero) return;
+                setStatusFilter(prev => prev === filter ? "all" : filter);
+              }}
+              disabled={isCompareReviewZero}
+              aria-disabled={isCompareReviewZero}
               className={`animate-stagger-up text-left rounded-xl border bg-pn p-3 sm:p-3.5 transition-all duration-200 cursor-pointer group min-w-[140px] sm:min-w-0 shrink-0 sm:shrink snap-start
                 ${hoverBorder} ${hoverShadow} hover:shadow-md hover:-translate-y-1
                 ${isActive ? `${activeBorder} ${activeBg} ring-1 ${activeRing}` : "border-bd/80"}
                 ${isZero && !isActive ? "opacity-50 hover:opacity-100" : ""}
+                ${isCompareReviewZero ? "cursor-not-allowed hover:translate-y-0 hover:shadow-none" : ""}
               `}
               style={{ animationDelay: `${idx * 80}ms` }}>
               <div className="flex items-center gap-2 mb-2">
