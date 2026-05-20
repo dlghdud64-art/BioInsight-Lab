@@ -1021,6 +1021,7 @@ function InventoryPageContent() {
   const lotIssueHoldCount = priorityQueueItems.filter((item) => item.risk !== "critical").length;
   const lotIssueImmediateCount = priorityQueueItems.filter((item) => item.risk === "critical").length;
   const lotIssueDisposalReviewCount = actionableExpiredLots.length;
+  const lotIssueReorderReviewCount = priorityQueueItems.filter((item) => item.category === "reorder_priority").length;
   const showLotIssueDecisionStrip = isBrowserPilotInventoryDisposal || statusFilter === "lot_issue" || activeInventoryTab === "overview";
 
   // 점검 사항 탭용 이슈 카운트 (부족, 품절, 폐기 임박, 재주문 권장, 위치 미지정)
@@ -1571,8 +1572,14 @@ function InventoryPageContent() {
                     <Badge data-testid="labaxis-inventory-lot-issue-disposal-count" variant="outline" className="border-red-200 bg-red-50 text-red-700">
                       폐기 검토 {lotIssueDisposalReviewCount}건
                     </Badge>
+                    <Badge data-testid="labaxis-inventory-lot-issue-reorder-count" variant="outline" className="border-slate-200 bg-slate-50 text-slate-600">
+                      재주문 검토 {lotIssueReorderReviewCount}건
+                    </Badge>
                   </div>
-                  <p className="text-sm font-semibold text-slate-900">다음 작업: 로트 확인 → 격리 → 재검토</p>
+                  <p className="text-sm font-semibold text-slate-900">다음 작업: 1순위 폐기 처리 → 2순위 재주문 검토</p>
+                  <p data-testid="labaxis-inventory-lot-issue-stock-impact" className="text-xs font-semibold text-red-700">
+                    재고 영향: 폐기 전 {actionableExpiredQuantity}개 확인 · 폐기 후 안전재고 이하일 때만 재주문 검토
+                  </p>
                   <p className="text-xs text-slate-500">현재 화면: 운영 현황 · 숫자 배지 순서대로 보류, 즉시 확인, 폐기 검토를 분리해 처리합니다.</p>
                 </div>
                 <Button
@@ -1628,11 +1635,17 @@ function InventoryPageContent() {
                     whitespace-nowrap 보존. */
                 <button
                   key={tab.key}
-                  onClick={() => setActiveInventoryTab(tab.key)}
-                  disabled={activeInventoryTab === tab.key}
-                  aria-disabled={activeInventoryTab === tab.key}
-                  title={activeInventoryTab === tab.key ? "현재 화면입니다. 상단의 다음 처리 버튼에서 실제 조치를 시작하세요." : undefined}
-                  className={`relative inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap disabled:cursor-default ${activeInventoryTab === tab.key ? "text-blue-600" : "text-slate-400 hover:text-slate-600"}`}
+                  data-testid={tab.key === "overview" ? "labaxis-inventory-overview-tab" : undefined}
+                  onClick={() => {
+                    if (tab.key === "overview" && activeInventoryTab === "overview" && showLotIssueDecisionStrip) {
+                      handleLotIssueDecisionAction();
+                      return;
+                    }
+                    setActiveInventoryTab(tab.key);
+                  }}
+                  aria-current={activeInventoryTab === tab.key ? "page" : undefined}
+                  title={tab.key === "overview" && activeInventoryTab === "overview" && showLotIssueDecisionStrip ? "현재 운영 현황입니다. 클릭하면 lot_issue 폐기 검토를 엽니다." : undefined}
+                  className={`relative inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap ${activeInventoryTab === tab.key ? "text-blue-600" : "text-slate-400 hover:text-slate-600"}`}
                 >
                   {tab.icon}
                   {tab.label}
