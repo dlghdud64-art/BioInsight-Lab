@@ -1628,9 +1628,11 @@ export default function SearchPage() {
           → 견적 요청). iPhone SE 375px 잘림 0 정합. */}
       {showSourcingActionDock && (
         <div className="border-t border-white/10 shrink-0" style={{ backgroundColor: '#0f172a' }}>
-          {/* §11.252f 1행 — 비교 (compareIds.length > 0 일 때만 노출) */}
+          {/* §11.252f 1행 — 비교 (compareIds.length > 0 일 때만 노출).
+              §11.268c — 호영님 spec "여전히 혼재" 해소: divider border-white/10 →
+              border-white/20 (opacity 강화). 1행과 2행 사이 시각 분리 명확. */}
           {compareIds.length > 0 && (
-            <div className="px-4 min-h-[44px] flex items-center gap-2 sm:gap-3 border-b border-white/10">
+            <div className="px-4 min-h-[44px] flex items-center gap-2 sm:gap-3 border-b border-white/20">
               <PenLine className="h-4 w-4 text-blue-600 shrink-0" />
               <span className="text-sm font-semibold text-slate-100 shrink-0">비교</span>
               <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs bg-blue-600 text-white shrink-0">{compareIds.length}</Badge>
@@ -1691,8 +1693,10 @@ export default function SearchPage() {
             </div>
           )}
 
-          {/* §11.252f — 전체 해제 (2행 하단 우측 텍스트 링크) */}
-          <div className="px-4 py-1 flex justify-end border-t border-white/5">
+          {/* §11.252f + §11.268c — 전체 해제 (2행 하단 우측 텍스트 링크).
+              border-t opacity 강화 (border-white/5 → border-white/15) — 2행과
+              전체 해제 사이 시각 명확화. */}
+          <div className="px-4 py-1 flex justify-end border-t border-white/15">
             <Button
               size="sm"
               variant="ghost"
