@@ -1018,6 +1018,10 @@ function InventoryPageContent() {
     return [...expiredItems, ...reorderItems];
   }, [actionableExpiredLots, displayInventories, recommendedInventoryIds]);
   const topPriorityQueueItem = priorityQueueItems[0] ?? null;
+  const lotIssueHoldCount = priorityQueueItems.filter((item) => item.risk !== "critical").length;
+  const lotIssueImmediateCount = priorityQueueItems.filter((item) => item.risk === "critical").length;
+  const lotIssueDisposalReviewCount = actionableExpiredLots.length;
+  const showLotIssueDecisionStrip = isBrowserPilotInventoryDisposal || statusFilter === "lot_issue" || activeInventoryTab === "overview";
 
   // 점검 사항 탭용 이슈 카운트 (부족, 품절, 폐기 임박, 재주문 권장, 위치 미지정)
   const issuesCount = displayInventories.filter((inv) => {
@@ -1103,6 +1107,27 @@ function InventoryPageContent() {
     }
 
     openReorderReview(match);
+  };
+
+  const handleLotIssueDecisionAction = () => {
+    setActiveInventoryTab("overview");
+
+    if (priorityExpiredLot) {
+      openDisposalDock(priorityExpiredLot);
+      toast({
+        title: "lot_issue 검토 시작",
+        description: `${priorityExpiredLot.product.name} · ${priorityExpiredLot.lotNumber || "Lot 미지정"} 폐기 확인을 열었습니다.`,
+      });
+      return;
+    }
+
+    if (topPriorityQueueItem) {
+      handlePriorityQueueAction(topPriorityQueueItem);
+      toast({
+        title: "운영 현황 검토 시작",
+        description: `${topPriorityQueueItem.productName} 다음 조치를 열었습니다.`,
+      });
+    }
   };
 
   if (status === "loading") {
@@ -1532,6 +1557,39 @@ function InventoryPageContent() {
             </div>
           </div>
 
+          {showLotIssueDecisionStrip && (
+            <div data-testid="labaxis-inventory-lot-issue-priority-strip" className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div className="min-w-0 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge data-testid="labaxis-inventory-lot-issue-hold-count" variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
+                      보류 {lotIssueHoldCount}건
+                    </Badge>
+                    <Badge data-testid="labaxis-inventory-lot-issue-immediate-count" variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
+                      즉시 확인 {lotIssueImmediateCount}건
+                    </Badge>
+                    <Badge data-testid="labaxis-inventory-lot-issue-disposal-count" variant="outline" className="border-red-200 bg-red-50 text-red-700">
+                      폐기 검토 {lotIssueDisposalReviewCount}건
+                    </Badge>
+                  </div>
+                  <p className="text-sm font-semibold text-slate-900">다음 작업: 로트 확인 → 격리 → 재검토</p>
+                  <p className="text-xs text-slate-500">현재 화면: 운영 현황 · 숫자 배지 순서대로 보류, 즉시 확인, 폐기 검토를 분리해 처리합니다.</p>
+                </div>
+                <Button
+                  data-testid="labaxis-inventory-lot-issue-next-action"
+                  size="sm"
+                  className="h-9 shrink-0 gap-1.5 bg-slate-900 text-white hover:bg-slate-800"
+                  disabled={!priorityExpiredLot && !topPriorityQueueItem}
+                  onClick={handleLotIssueDecisionAction}
+                >
+                  조치 시작
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+              {!priorityExpiredLot && !topPriorityQueueItem && <p className="mt-2 text-xs font-medium text-slate-500">처리할 lot_issue가 없어 조치 버튼을 비활성화했습니다.</p>}
+            </div>
+          )}
+
           {/* 탭 바 — 하단 인디케이터 스타일 */}
           <Tabs value={activeInventoryTab} onValueChange={(v) => setActiveInventoryTab(v)} className="w-full">
             <div className="flex items-center gap-0.5 border-b border-slate-200 mb-4 overflow-x-auto scrollbar-hide">
@@ -1568,7 +1626,14 @@ function InventoryPageContent() {
                     / WCAG 2.1 SC 2.5.5 표준 정합. px-4 py-2.5 / text-sm / tone /
                     active border / tab.icon / tab.label / tab.suffix / tab.badge /
                     whitespace-nowrap 보존. */
-                <button key={tab.key} onClick={() => setActiveInventoryTab(tab.key)} className={`relative inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap ${activeInventoryTab === tab.key ? "text-blue-600" : "text-slate-400 hover:text-slate-600"}`}>
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveInventoryTab(tab.key)}
+                  disabled={activeInventoryTab === tab.key}
+                  aria-disabled={activeInventoryTab === tab.key}
+                  title={activeInventoryTab === tab.key ? "현재 화면입니다. 상단의 다음 처리 버튼에서 실제 조치를 시작하세요." : undefined}
+                  className={`relative inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap disabled:cursor-default ${activeInventoryTab === tab.key ? "text-blue-600" : "text-slate-400 hover:text-slate-600"}`}
+                >
                   {tab.icon}
                   {tab.label}
                   {"suffix" in tab && tab.suffix && <span className="text-[10px] font-bold text-blue-500 ml-0.5">{tab.suffix}</span>}
