@@ -1655,20 +1655,21 @@ function QuotesPageContent() {
     () => getQuoteDispatchEvidence(primaryDispatchPreflight),
     [primaryDispatchPreflight],
   );
+  // §11.272b — badge label 한글화 (호영님 P0 spec): supplier→공급사 선택 / contact→연락처 확인 / preview→메시지 미리보기.
   const primaryDispatchBadges = useMemo(
     () => [
       {
-        label: "supplier",
+        label: "공급사 선택",
         value: primaryDispatchEvidence.supplierStatus,
         tone: primaryDispatchEvidence.supplierStatus.includes("선택 필요") ? "red" : "green",
       },
       {
-        label: "contact",
+        label: "연락처 확인",
         value: primaryDispatchEvidence.contactStatus,
         tone: primaryDispatchEvidence.contactStatus.includes("필요") ? "amber" : "green",
       },
       {
-        label: "preview",
+        label: "메시지 미리보기",
         value: primaryDispatchEvidence.previewStatus,
         tone: primaryDispatchEvidence.previewStatus.includes("대기") ? "slate" : "blue",
       },
@@ -2021,9 +2022,37 @@ function QuotesPageContent() {
         </div>
       )}
 
+      {/* §11.272b — 모바일 간략 배너 (호영님 P0 spec: 큰 블록은 견적 선택 + 발송
+          액션 실행 시에만 표시). dispatchableCount > 0 일 때만 노출, 0 건이면 hidden.
+          tap → openQuoteDraftWorkbench (워크벤치 안에서 4 단계 진행 — same-canvas).
+          데스크탑 (sm+) 은 아래 큰 블록 (quote-dispatch-fixed-flow) 인라인 유지. */}
+      {dispatchableCount > 0 && (
+        <div
+          data-testid="quote-dispatch-mobile-banner"
+          className="sm:hidden flex items-center justify-between gap-2 rounded-lg border border-blue-200 bg-blue-50/80 px-3 py-2.5"
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <Send className="h-4 w-4 text-blue-600 shrink-0" />
+            <p className="text-[13px] font-semibold text-blue-900 truncate">
+              발송 준비 {dispatchableCount}건 · 공급사 전송 가능
+            </p>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            onClick={openQuoteDraftWorkbench}
+            className="h-9 min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white shrink-0"
+          >
+            발송하기
+          </Button>
+        </div>
+      )}
+
+      {/* §11.272b — 큰 블록 (4 단계 + badges + CTA) 모바일 hidden. 데스크탑 (sm+) 에서만
+          인라인 노출 — 정보 밀도 우선 surface. 모바일은 위 간략 배너 + 워크벤치 안 4 단계. */}
       <section
         data-testid="quote-dispatch-fixed-flow"
-        className="rounded-xl border border-blue-200 bg-blue-50/70 px-3 py-3 sm:px-4 sm:py-3.5 space-y-3"
+        className="hidden sm:block rounded-xl border border-blue-200 bg-blue-50/70 px-3 py-3 sm:px-4 sm:py-3.5 space-y-3"
         aria-label="견적 발송 전 확인 4단계"
       >
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
@@ -2100,10 +2129,11 @@ function QuotesPageContent() {
           className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4"
         >
           {[
-            ["1. supplier 선택", primaryDispatchEvidence.supplierStatus],
-            ["2. contact 검증", primaryDispatchEvidence.contactStatus],
-            ["3. message preview", primaryDispatchEvidence.previewStatus],
-            ["4. send confirm", primaryDispatchEvidence.sendStatus],
+            // §11.272b — 4 단계 라벨 영문 → 한글 한글화 (호영님 P0 spec).
+            ["1. 공급사 선택", primaryDispatchEvidence.supplierStatus],
+            ["2. 연락처 확인", primaryDispatchEvidence.contactStatus],
+            ["3. 메시지 미리보기", primaryDispatchEvidence.previewStatus],
+            ["4. 발송 확인", primaryDispatchEvidence.sendStatus],
           ].map(([label, status]) => (
             <div key={label} className="rounded-lg border border-white/80 bg-white px-3 py-2 shadow-sm">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{label}</p>
@@ -4143,142 +4173,4 @@ function QuotesPageContent() {
         }}
       />
 
-      {/* ═══ AI 견적서 비교 모달 ═══ */}
-      <Dialog open={aiCompareOpen} onOpenChange={setAiCompareOpen}>
-        <DialogContent className="max-w-2xl bg-white border-slate-200 p-0 gap-0">
-          <div className="px-6 pt-6 pb-4 border-b border-slate-100">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-lg text-slate-900">
-                <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                  <Sparkles className="h-4 w-4 text-blue-600" />
-                </div>
-                AI 견적서 비교 분석
-              </DialogTitle>
-              <DialogDescription className="text-sm text-slate-500 mt-1">
-                등록된 견적의 공급사별 조건을 비교하고 협상 포인트를 제안합니다
-              </DialogDescription>
-            </DialogHeader>
-          </div>
-
-          <div className="px-6 py-5 max-h-[60vh] overflow-y-auto space-y-4">
-            {aiCompareLoading && (
-              <div className="flex flex-col items-center justify-center py-12 gap-3">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                <p className="text-sm text-slate-500">견적 데이터를 분석하고 있습니다...</p>
-              </div>
-            )}
-
-            {aiCompareError && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-                <p className="text-sm text-red-600">{aiCompareError}</p>
-                <button onClick={runAiQuoteCompare} className="mt-2 text-xs text-red-500 hover:text-red-700 font-medium underline">재시도</button>
-              </div>
-            )}
-
-            {aiCompareResult && (
-              <>
-                {/* 공급사별 비교 테이블 */}
-                {aiCompareResult.comparison.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-slate-900 mb-2">공급사 비교</h4>
-                    <div className="rounded-lg border border-slate-200 overflow-hidden">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="bg-slate-50 text-slate-600">
-                            <th className="text-left px-3 py-2 font-medium">공급사</th>
-                            <th className="text-left px-3 py-2 font-medium">가격</th>
-                            <th className="text-left px-3 py-2 font-medium">납기</th>
-                            <th className="text-left px-3 py-2 font-medium">배송비</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {aiCompareResult.comparison.map((row, i) => (
-                            <tr key={i} className="hover:bg-slate-50/50">
-                              <td className="px-3 py-2 font-medium text-slate-900">{row.vendor}</td>
-                              <td className="px-3 py-2 text-slate-700">{row.price}</td>
-                              <td className="px-3 py-2 text-slate-700">{row.leadTime}</td>
-                              <td className="px-3 py-2 text-slate-700">{row.shippingFee}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-
-                {/* 추천 */}
-                {aiCompareResult.recommendation && (
-                  <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <CheckCircle2 className="h-4 w-4 text-blue-600" />
-                      <span className="text-sm font-semibold text-blue-900">추천</span>
-                    </div>
-                    <p className="text-sm text-slate-700 leading-relaxed">{aiCompareResult.recommendation}</p>
-                  </div>
-                )}
-
-                {/* 협상 가이드 */}
-                {aiCompareResult.negotiationGuide && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <AlertTriangle className="h-4 w-4 text-amber-600" />
-                      <span className="text-sm font-semibold text-amber-900">협상 포인트</span>
-                    </div>
-                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{aiCompareResult.negotiationGuide}</p>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-
-          <div className="px-6 py-3 border-t border-slate-100 flex justify-end">
-            <Button variant="outline" size="sm" onClick={() => setAiCompareOpen(false)}>닫기</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Intake Dock (외부 견적서 업로드 / BOM 업로드) ── */}
-      <QuoteIntakeDock
-        open={intakeDockOpen}
-        onOpenChange={setIntakeDockOpen}
-        source={intakeDockSource}
-        onCommitSuccess={() => {
-          setIntakeDockOpen(false);
-          setIntakeDockSource(null);
-          refetch();
-        }}
-      />
-
-      {/* §11.181 — 운영 브리핑 floating entry (default = popup open).
-          §11.258-sweep — §11.257 후속: 모바일 (<lg) BarcodeScanFab 겹침 해소,
-          데스크탑 한정 노출. 모바일 inline 진입은 §11.258-sweep-2 백로그. */}
-      <div className="hidden lg:block">
-        <OperationalBriefFloatingEntry controls="operational-brief-popup" />
-      </div>
-      {/* §11.258-sweep-2 — 모바일 좌측 하단 ✨ 운영 브리핑 진입 (방안 1). */}
-      <MobileBriefInlineButton />
-    </div>
-  );
-}
-
-function QuotesPageInner() {
-  return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-      </div>
-    }>
-      <QuotesPageContent />
-    </Suspense>
-  );
-}
-
-// §11.214b Path Z — NoSSR wrapper.
-export default function QuotesPage() {
-  return (
-    <NoSSR>
-      <QuotesPageInner />
-    </NoSSR>
-  );
-}
- 
+      {/* 
