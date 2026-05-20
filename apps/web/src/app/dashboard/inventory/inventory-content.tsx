@@ -1562,7 +1562,13 @@ function InventoryPageContent() {
                   badge: null,
                 },
               ].map((tab) => (
-                <button key={tab.key} onClick={() => setActiveInventoryTab(tab.key)} className={`relative flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap ${activeInventoryTab === tab.key ? "text-blue-600" : "text-slate-400 hover:text-slate-600"}`}>
+                /* §11.266d — inventory 1차 탭 44x44 touch target (§11.266 P1
+                    cluster 4/5, §11.264h family cross-cutting concern 확장).
+                    flex → inline-flex + min-h-[44px] 추가 → Apple HIG / Material
+                    / WCAG 2.1 SC 2.5.5 표준 정합. px-4 py-2.5 / text-sm / tone /
+                    active border / tab.icon / tab.label / tab.suffix / tab.badge /
+                    whitespace-nowrap 보존. */
+                <button key={tab.key} onClick={() => setActiveInventoryTab(tab.key)} className={`relative inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap ${activeInventoryTab === tab.key ? "text-blue-600" : "text-slate-400 hover:text-slate-600"}`}>
                   {tab.icon}
                   {tab.label}
                   {"suffix" in tab && tab.suffix && <span className="text-[10px] font-bold text-blue-500 ml-0.5">{tab.suffix}</span>}
