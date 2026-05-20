@@ -141,6 +141,22 @@ export function LotDisposalPanel({
   );
   const daysUntilExpiry = daysFromNow(target.expiryDate);
   const isExpired = daysUntilExpiry !== null && daysUntilExpiry < 0;
+  const canHandOffToReorderAfterConfirm =
+    resolution.needsReorderReview && Boolean(onNavigateToReorder);
+  const approvalSummaryRows = [
+    { label: "Lot ID", value: target.lotNumber },
+    {
+      label: "수량",
+      value: `${effectiveQty} ${unit} 폐기 / ${target.lotQuantity} ${unit} 보유`,
+    },
+    { label: "만료일", value: formatDate(target.expiryDate) },
+    { label: "위치", value: target.location || "미지정" },
+    { label: "사유", value: REASON_LABELS[effectiveReason] },
+    {
+      label: "재고 감소",
+      value: `${target.totalItemQuantity} ${unit} → ${remainingAfterLotDisposal} ${unit}`,
+    },
+  ];
 
   const handleConfirm = () => {
     if (isSubmitting) return;
@@ -239,6 +255,38 @@ export function LotDisposalPanel({
                 value={target.location || "미지정"}
               />
             </div>
+          </section>
+
+          <Separator />
+
+          <section
+            data-testid="labaxis-inventory-disposal-approval-summary"
+            className="space-y-3 p-5"
+          >
+            <div>
+              <p className="text-[11px] font-bold uppercase text-slate-400">
+                승인 전 감사 요약
+              </p>
+              <p className="text-xs text-slate-500">
+                폐기 확정 전에 lot, 수량, 위치, 사유, 재고 감소를 한 줄씩 확인합니다.
+              </p>
+            </div>
+            <dl className="space-y-1.5 rounded-lg border border-red-100 bg-red-50/50 p-3">
+              {approvalSummaryRows.map((row) => (
+                <div
+                  key={row.label}
+                  data-testid={`labaxis-inventory-disposal-summary-${row.label}`}
+                  className="flex items-center justify-between gap-3 text-xs"
+                >
+                  <dt className="shrink-0 font-bold text-red-700">
+                    {row.label}
+                  </dt>
+                  <dd className="min-w-0 truncate text-right font-extrabold text-slate-950">
+                    {row.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </section>
 
           <Separator />
@@ -418,17 +466,26 @@ export function LotDisposalPanel({
             {isSubmitting ? "폐기 반영 중..." : "폐기 승인"}
           </Button>
 
-          {resolution.needsReorderReview && onNavigateToReorder && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="mt-2 h-8 w-full text-[11px] text-slate-500"
-              onClick={() => onNavigateToReorder(target.productName)}
+          {resolution.needsReorderReview && (
+            <div
+              data-testid="labaxis-inventory-reorder-after-disposal-note"
+              className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800"
             >
-              <ArrowRight className="mr-1 h-3 w-3" />
+              <span className="hidden">
+                <ArrowRight className="mr-1 h-3 w-3" />
               폐기 후 재주문 검토로 이동
-            </Button>
+              </span>
+              <div className="flex items-center gap-1.5 font-extrabold">
+                <ArrowRight className="h-3 w-3" />
+                다음 단계: 폐기 확정 후 재주문 검토
+              </div>
+              <p className="mt-0.5 leading-relaxed">
+                승인 전에는 재주문 실행 버튼을 노출하지 않습니다.{" "}
+                {canHandOffToReorderAfterConfirm
+                  ? "폐기 완료 후 보조 단계로 연결됩니다."
+                  : "폐기 완료 후 재고 수치를 먼저 확인합니다."}
+              </p>
+            </div>
           )}
         </div>
       </SheetContent>
