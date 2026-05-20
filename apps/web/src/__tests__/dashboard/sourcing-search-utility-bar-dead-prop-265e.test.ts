@@ -71,7 +71,8 @@ describe("§11.265e #2 — invariant 보존 (canonical truth)", () => {
   });
 
   it("§11.265c Operating Status Bar 필터 button (모바일 entry) 보존", () => {
-    expect(page).toMatch(/<button className="inline-flex items-center gap-1\.5 text-xs font-medium px-3 py-1\.5[\s\S]{0,200}<SlidersHorizontal/);
+    // §11.266a supersede — min-h-[44px] 추가 (44x44 touch target).
+    expect(page).toMatch(/<button className="inline-flex items-center gap-1\.5 text-xs font-medium min-h-\[44px\] px-3 py-1\.5[\s\S]{0,200}<SlidersHorizontal/);
     // SheetTrigger asChild + 필터 라벨
     expect(page).toMatch(/SheetTrigger asChild/);
     expect(page).toMatch(/필터/);

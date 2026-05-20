@@ -37,9 +37,12 @@ describe("§11.263b #1 — 모바일 unified filter row 신규", () => {
     expect(page).toMatch(/§11\.263b/);
   });
 
-  it("모바일 한정 unified wrapper (md:hidden + flex + overflow-x-auto)", () => {
+  it("모바일 unified wrapper 트리 보존 (§11.265a supersede — parent 는 hidden)", () => {
+    // §11.265a 가 wrapper className 을 "md:hidden flex" → "hidden" 으로 swap.
+    //   inner tree (chip + separator) 는 그대로 보존 — parent hidden 으로 비표시.
+    //   따라서 §11.263b invariant 는 inner content 위주로 검증.
     expect(page).toMatch(
-      /md:hidden[\s\S]{0,200}flex items-center gap-1\.5[\s\S]{0,80}overflow-x-auto|md:hidden[\s\S]{0,200}overflow-x-auto[\s\S]{0,80}flex items-center gap-1\.5/,
+      /hidden\s+items-center\s+gap-1\.5\s+overflow-x-auto/,
     );
   });
 

@@ -771,9 +771,15 @@ export default function SearchPage() {
                     데스크탑은 그대로, 모바일에도 inline 노출. activeFilterCount badge
                     보존 (필터 적용 시 파란 배지). SearchUtilityBar 필터 entry 와의
                     중복 정합은 §11.265d 백로그. */}
+                {/* §11.266a — sourcing 필터 button 44x44 touch target
+                    (§11.266 P1 cluster, §11.264h family cross-cutting concern
+                    확장). text-xs 뒤 min-h-[44px] 추가 → Apple HIG / Material
+                    / WCAG 2.1 SC 2.5.5 표준 정합. text-xs / px-3 py-1.5 /
+                    rounded-md / border / tone / hover state 보존. §11.265c
+                    모바일 inline-flex (hidden md:inline-flex 미적용) 보존. */}
                 <Sheet>
                   <SheetTrigger asChild>
-                    <button className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors">
+                    <button className="inline-flex items-center gap-1.5 text-xs font-medium min-h-[44px] px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors">
                       <SlidersHorizontal className="h-3.5 w-3.5" />
                       필터
                       {activeFilterCount > 0 && (

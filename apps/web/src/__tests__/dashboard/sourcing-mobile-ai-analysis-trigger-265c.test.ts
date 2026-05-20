@@ -37,8 +37,9 @@ describe("§11.265c #1 — 필터 버튼 모바일 표시 + AI 분석 트리거"
     // 기존: className="hidden md:inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 ..."
     // 신규: className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 ..."
     // 버튼 className 이 SlidersHorizontal icon 보다 먼저 등장 (button 시작 → className → icon)
+    // §11.266a supersede — min-h-[44px] 추가 (44x44 touch target).
     expect(page).toMatch(
-      /<button className="inline-flex items-center gap-1\.5 text-xs font-medium px-3 py-1\.5[\s\S]{0,200}<SlidersHorizontal/,
+      /<button className="inline-flex items-center gap-1\.5 text-xs font-medium min-h-\[44px\] px-3 py-1\.5[\s\S]{0,200}<SlidersHorizontal/,
     );
   });
 
