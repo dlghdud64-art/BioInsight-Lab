@@ -1655,6 +1655,26 @@ function QuotesPageContent() {
     () => getQuoteDispatchEvidence(primaryDispatchPreflight),
     [primaryDispatchPreflight],
   );
+  const primaryDispatchBadges = useMemo(
+    () => [
+      {
+        label: "supplier",
+        value: primaryDispatchEvidence.supplierStatus,
+        tone: primaryDispatchEvidence.supplierStatus.includes("선택 필요") ? "red" : "green",
+      },
+      {
+        label: "contact",
+        value: primaryDispatchEvidence.contactStatus,
+        tone: primaryDispatchEvidence.contactStatus.includes("필요") ? "amber" : "green",
+      },
+      {
+        label: "preview",
+        value: primaryDispatchEvidence.previewStatus,
+        tone: primaryDispatchEvidence.previewStatus.includes("대기") ? "slate" : "blue",
+      },
+    ],
+    [primaryDispatchEvidence],
+  );
 
   // 필터링 + 운영 우선순위 정렬
   // §11.246d-1 — searchQuery → debouncedSearchQuery (300ms) 으로 filter 입력.
@@ -2016,18 +2036,44 @@ function QuotesPageContent() {
                 : `전송 비활성: ${primaryDispatchEvidence.blockReason} · ${primaryDispatchPreflight.summary}`}
             </p>
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <Button
-              type="button"
-              data-testid="quote-dispatch-primary-draft-cta"
-              size="sm"
-              className="h-9 bg-blue-600 hover:bg-blue-700 text-white"
-              onClick={openQuoteDraftWorkbench}
-              disabled={isLoading || quotes.length === 0}
-            >
-              <FileTextIcon className="h-4 w-4 mr-1.5" />
-              견적 요청 초안 만들기
-            </Button>
+          <div className="flex flex-col gap-2 sm:items-end">
+            <div data-testid="quote-dispatch-readiness-badges" className="flex flex-wrap items-center gap-1.5">
+              {primaryDispatchBadges.map((badge) => (
+                <span
+                  key={badge.label}
+                  data-testid={`quote-dispatch-${badge.label}-badge`}
+                  className={`inline-flex min-h-[28px] items-center rounded-full border px-2.5 text-[11px] font-semibold ${
+                    badge.tone === "green"
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : badge.tone === "blue"
+                        ? "border-blue-200 bg-blue-50 text-blue-700"
+                        : badge.tone === "amber"
+                          ? "border-amber-200 bg-amber-50 text-amber-700"
+                          : "border-rose-200 bg-rose-50 text-rose-700"
+                  }`}
+                >
+                  {badge.label}: {badge.value}
+                </span>
+              ))}
+            </div>
+            <div className="flex flex-col gap-1 sm:items-end">
+              <Button
+                type="button"
+                data-testid="quote-dispatch-send-cta"
+                size="sm"
+                className="h-9 bg-blue-600 hover:bg-blue-700 text-white disabled:bg-slate-200 disabled:text-slate-500"
+                onClick={openQuoteDraftWorkbench}
+                disabled={isLoading || quotes.length === 0 || !primaryDispatchEvidence.canSend}
+              >
+                <Send className="h-4 w-4 mr-1.5" />
+                공급사에 전송
+              </Button>
+              <p data-testid="quote-dispatch-button-reason" className="text-[11px] text-slate-600">
+                {primaryDispatchEvidence.canSend
+                  ? "전송 준비됨 · 미리보기 확인 후 최종 발송"
+                  : `전송 불가 · ${primaryDispatchEvidence.blockReason}`}
+              </p>
+            </div>
             {summaryStats.compareReview.count === 0 ? (
               <span
                 data-testid="quote-compare-review-zero-disabled"

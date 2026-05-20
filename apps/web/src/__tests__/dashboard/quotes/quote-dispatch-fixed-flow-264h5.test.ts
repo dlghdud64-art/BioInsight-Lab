@@ -27,9 +27,26 @@ describe("quote dispatch fixed flow", () => {
     expect(page).toContain("primaryDispatchPreflight.summary");
   });
 
-  it("keeps draft creation as the only primary action when compare review is zero", () => {
-    expect(page).toContain("quote-dispatch-primary-draft-cta");
-    expect(page).toContain("견적 요청 초안 만들기");
+  it("keeps Send to supplier tied to supplier/contact readiness", () => {
+    expect(page).toContain("quote-dispatch-send-cta");
+    expect(page).toContain("공급사에 전송");
+    expect(page).toMatch(/disabled=\{isLoading \|\| quotes\.length === 0 \|\| !primaryDispatchEvidence\.canSend\}/);
+    expect(page).toContain("quote-dispatch-button-reason");
+    expect(page).toContain("전송 불가 ·");
+  });
+
+  it("shows supplier, contact, and preview badges beside the send action", () => {
+    expect(page).toContain("quote-dispatch-readiness-badges");
+    expect(page).toMatch(/data-testid=\{`quote-dispatch-\$\{badge\.label\}-badge`\}/);
+    expect(page).toContain('label: "supplier"');
+    expect(page).toContain('label: "contact"');
+    expect(page).toContain('label: "preview"');
+    expect(page).toContain("primaryDispatchBadges");
+    expect(page).toContain("border-emerald-200 bg-emerald-50 text-emerald-700");
+    expect(page).toContain("border-amber-200 bg-amber-50 text-amber-700");
+  });
+
+  it("keeps compare review zero as a disabled secondary state", () => {
     expect(page).toContain("quote-compare-review-zero-disabled");
     expect(page).toContain("비교 검토 필요 0건 · 검토 대상 없음");
   });
