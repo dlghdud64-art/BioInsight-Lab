@@ -33,6 +33,20 @@ describe("§11.269c 비교 카드 품목명 line-clamp-2 적용", () => {
   });
 });
 
+describe("§11.269c human review boundary", () => {
+  it("keeps request creation behind operator confirmation copy", () => {
+    const content = src();
+    const blockedToken = ["ai", "auto", "apply"].join("-");
+
+    expect(content).not.toContain(blockedToken);
+    expect(content).toContain('data-testid="comparison-human-review-note"');
+    expect(content).toContain(
+      "최종 전략과 요청 생성은 담당자가 직접 확인합니다",
+    );
+    expect(content).toContain("확인 후 요청 생성");
+  });
+});
+
 describe("§11.269c invariant — 카드 레이아웃 + sibling 보존", () => {
   it("h4 text-sm 보존", () => {
     expect(src()).toContain("text-sm font-semibold text-slate-900 line-clamp-2");

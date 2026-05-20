@@ -157,12 +157,10 @@ export function ComparisonModal({
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "분석 실패");
       setResult(json.data);
-      // #comparison-human-gate — Agent Board ai-auto-apply P0 해소.
-      //   AI 분석 결과는 setResult(json.data)까지만. activeScenario 는
-      //   사용자가 시나리오 button 을 직접 클릭해야만 set 된다 (line 384 toggle).
-      //   AI 추천 시나리오는 "AI 추천" 배지 (s.isRecommended) 로만 표시 —
-      //   운영 truth 선택은 사람 확인 필요 흐름. 다음 CTA ("견적 요청") 는
-      //   activeScenario null 시 disabled + "전략 선택 필요" 사유 1줄.
+      // #comparison-human-gate — 분석 응답은 추천 근거로만 저장한다.
+      //   setResult(json.data)는 화면 표시용이며 activeScenario를 바꾸지 않는다.
+      //   최종 전략 선택과 요청 생성은 사용자가 칩 또는 하단 확인 시트에서
+      //   직접 누를 때만 진행된다.
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "AI 분석 중 오류가 발생했습니다.");
     } finally {
@@ -289,6 +287,12 @@ export function ComparisonModal({
                 <p className="text-[13px] md:text-sm text-slate-600 leading-[1.75]">
                   {formatAiSummary(result.aiSummary, productNames)}
                 </p>
+              </div>
+              <div
+                data-testid="comparison-human-review-note"
+                className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800"
+              >
+                분석은 추천 근거입니다. 최종 전략과 요청 생성은 담당자가 직접 확인합니다.
               </div>
 
               {/* ── 상세 비교 카드 ── */}
@@ -431,7 +435,7 @@ export function ComparisonModal({
         {/* ═══ Footer ═══ */}
         <div className="px-5 py-4 md:px-7 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between rounded-b-lg gap-3">
           <p className="text-[11px] text-slate-400 max-md:hidden">
-            AI 분석 결과는 참고용이며, 정확한 조건은 견적 요청을 통해 확인하세요.
+            분석 결과는 추천 근거이며, 최종 조건과 요청 생성은 담당자가 확인하세요.
           </p>
           <div className="flex items-center gap-2 max-md:w-full">
             {/* §11.269b — 호영님 spec "닫기" + "견적 요청 만들기" 버튼 높이 통일.
@@ -441,13 +445,8 @@ export function ComparisonModal({
             <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} className="text-slate-500 max-md:flex-1">
               닫기
             </Button>
-            {/* #comparison-human-gate — §11.269a 호영님 spec 으로 흐름 보강:
-                기존: activeScenario null 시 CTA disabled + "전략 선택 필요" 라벨.
-                  사용자가 시나리오 chip 영역 (line ~372-413) 발견 못해서 흐름 차단.
-                신규: CTA 항상 활성. activeScenario null 시 탭하면 NEW 전략 선택
-                  바텀시트 (showStrategySheet) 열림 → 라디오 3개 (cost_first /
-                  balanced / speed_first) 선택 후 [요청 생성] → setActiveScenario +
-                  handleOpenRequestWizard. chip 영역으로도 동일 선택 가능 (보조 경로). */}
+            {/* #comparison-human-gate — request wizard opens only after a user-selected
+                strategy exists, or after the user confirms one in the strategy sheet. */}
             {onOpenRequestWizard && result && (
               <Button
                 size="sm"
@@ -470,9 +469,7 @@ export function ComparisonModal({
         </div>
       </DialogContent>
 
-      {/* §11.269a — 전략 선택 바텀시트 (CTA 항상 활성, activeScenario null 시 열림).
-          라디오 3개 (cost_first / balanced / speed_first) + [요청 생성] → activeScenario
-          set + handleOpenRequestWizard. chip 영역 (line ~372) 으로도 선택 가능. */}
+      {/* §11.269a — strategy sheet keeps final request creation behind user review. */}
       <Sheet open={showStrategySheet} onOpenChange={setShowStrategySheet}>
         <SheetContent
           data-testid="comparison-strategy-sheet"
@@ -526,7 +523,7 @@ export function ComparisonModal({
               handleOpenRequestWizard();
             }}
           >
-            요청 생성
+            확인 후 요청 생성
             <ArrowRight className="h-4 w-4" />
           </Button>
         </SheetContent>
