@@ -1325,8 +1325,13 @@ function DashboardPageInner() {
             {urgentItems.length > 0 && (
               <div className="space-y-1.5">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">즉시 처리</p>
+                {/* §11.266b — dashboard sidebar urgent + recommended action button
+                    44x44 touch target (§11.266 P1 cluster 2/5, §11.264h family
+                    cross-cutting concern 확장). min-h-[44px] 추가 → Apple HIG /
+                    Material / WCAG 2.1 SC 2.5.5 표준 정합. p-2 / rounded-lg /
+                    severity border / ChevronRight / handleNavigateOrOverlay 보존. */}
                 {urgentItems.map((item) => (
-                  <button key={item.id} type="button" onClick={() => handleNavigateOrOverlay(item.href, "dashboard")} className={`w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 transition-colors text-left ${item.severity === "red" ? "border-l-2 border-l-red-500" : "border-l-2 border-l-amber-500"}`}>
+                  <button key={item.id} type="button" onClick={() => handleNavigateOrOverlay(item.href, "dashboard")} className={`w-full flex items-center gap-2.5 min-h-[44px] p-2 rounded-lg hover:bg-slate-50 transition-colors text-left ${item.severity === "red" ? "border-l-2 border-l-red-500" : "border-l-2 border-l-amber-500"}`}>
                     {item.icon}
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-slate-900">{item.label}</p>
@@ -1343,8 +1348,9 @@ function DashboardPageInner() {
               {urgentItems.length > 0 && <div className="border-t border-slate-200" />}
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">다음 작업</p>
               <div className="space-y-1">
+                {/* §11.266b — recommendedActions button 44x44 (same pattern as urgentItems). */}
                 {recommendedActions.map((action) => (
-                  <button key={action.id} type="button" onClick={() => handleNavigateOrOverlay(action.href, "card")} className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 transition-colors text-left">
+                  <button key={action.id} type="button" onClick={() => handleNavigateOrOverlay(action.href, "card")} className="w-full flex items-center gap-2.5 min-h-[44px] p-2 rounded-lg hover:bg-slate-50 transition-colors text-left">
                     {action.icon}
                     <div className="flex-1 min-w-0">
                       <p className={`text-xs font-semibold ${action.state === "blocked" ? "text-slate-400" : action.state === "ready" ? "text-slate-900" : "text-slate-500"}`}>{action.label}</p>
