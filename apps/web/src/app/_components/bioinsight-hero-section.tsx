@@ -166,7 +166,9 @@ function MobileMenu() {
                 </button>
               ) : (
                 <div className="flex flex-col gap-2.5">
-                  <Link href="/search" onClick={close}>
+                  {/* §11.267a — 호영님 spec 모바일 drawer CTA 동선 개선.
+                      "무료로 시작하기" → /auth/signin 직진 (검색 우회). */}
+                  <Link href="/auth/signin" onClick={close}>
                     <button
                       type="button"
                       className="w-full h-12 rounded-xl text-[15px] font-bold text-white transition-colors"
@@ -183,6 +185,10 @@ function MobileMenu() {
                     >
                       도입 문의하기
                     </button>
+                  </Link>
+                  {/* §11.267a — 가입 전 검색 체험 모바일 보조 링크. */}
+                  <Link href="/search" onClick={close} className="inline-flex items-center justify-center w-full h-10 text-[13px] font-medium text-slate-400 hover:text-slate-200 underline-offset-4 hover:underline transition-colors">
+                    먼저 검색해보기 →
                   </Link>
                 </div>
               )}
@@ -428,8 +434,12 @@ export function BioInsightHeroSection() {
           엑셀, 이메일, 전화로 흩어져 있던 시약 검색부터 재고 관리까지.<br className="hidden md:block" />
           연구에만 집중할 수 있는 환경을 만듭니다.
         </p>
-        <div className="flex flex-row gap-3 mb-10 md:mb-12 animate-stagger-up" style={{ animationDelay: "160ms" }}>
-          <Link href={isLoggedIn ? "/app/search" : "/search"}>
+        {/* §11.267a — 호영님 spec 랜딩 CTA 동선 개선. 기존 "무료로 시작하기" 가
+            /search (검색 체험) 으로 이동 → 사용자가 검색해야 비로소 /auth/signin
+            진입 (이탈 지점). logged-out 일 때 /auth/signin 직진. 검색 체험은
+            아래 "먼저 검색해보기" 보조 링크로 분리 (텍스트 링크). */}
+        <div className="flex flex-row gap-3 mb-3 animate-stagger-up" style={{ animationDelay: "160ms" }}>
+          <Link href={isLoggedIn ? "/app/search" : "/auth/signin"}>
             <Button className="h-10 sm:h-11 px-6 sm:px-7 text-white font-bold text-[13px] sm:text-[14px] rounded-lg shadow-[0_2px_16px_rgba(60,130,255,0.25)]" style={{ backgroundColor: "#3B82F6", border: "1px solid rgba(60,140,255,0.3)" }}>
               {isLoggedIn ? "소싱 시작" : "무료로 시작하기"}<Search className="ml-1.5 h-3.5 w-3.5" />
             </Button>
@@ -440,6 +450,15 @@ export function BioInsightHeroSection() {
             </Button>
           </Link>
         </div>
+        {/* §11.267a — 가입 전 검색 체험 보조 링크 (logged-out 한정).
+            텍스트 링크 톤 (chip/button 톤 회피) — 주 CTA 와 시각적 분리. */}
+        {!isLoggedIn && (
+          <div className="mb-10 md:mb-12 animate-stagger-up" style={{ animationDelay: "200ms" }}>
+            <Link href="/search" className="inline-flex items-center text-[12px] font-medium text-slate-400 hover:text-slate-200 underline-offset-4 hover:underline transition-colors">
+              먼저 검색해보기 →
+            </Link>
+          </div>
+        )}
 
         {/* ── Mockup 1 캡션 ── */}
         <p className="text-[11px] md:text-[13px] font-semibold tracking-wide mb-4 md:mb-5 animate-stagger-up" style={{ color: "#94A3B8", animationDelay: "240ms" }}>

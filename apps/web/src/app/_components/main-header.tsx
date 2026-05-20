@@ -69,7 +69,10 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                   <Link href="/auth/signin" className="px-4 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap">
                     로그인
                   </Link>
-                  <Link href="/search" className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-5 py-2 transition-colors whitespace-nowrap shadow-sm">
+                  {/* §11.267a — 호영님 spec 헤더 CTA 동선 개선. "시작하기" 가
+                      /search 로 가던 동선 차단 → /auth/signin 직진. 검색 체험은
+                      Hero 의 "먼저 검색해보기" 보조 링크로만 진입. */}
+                  <Link href="/auth/signin" className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-5 py-2 transition-colors whitespace-nowrap shadow-sm">
                     무료로 시작하기
                   </Link>
                 </>
@@ -260,7 +263,9 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                   로그아웃
                 </button>
               ) : (
-                <Link href="/search" onClick={close}>
+                /* §11.267a — 호영님 spec 헤더 모바일 drawer CTA 동선 개선.
+                   "무료로 시작하기" → /auth/signin 직진 (검색 우회). */
+                <Link href="/auth/signin" onClick={close}>
                   <button
                     type="button"
                     className="w-full h-11 rounded-xl text-sm font-bold text-white transition-colors"

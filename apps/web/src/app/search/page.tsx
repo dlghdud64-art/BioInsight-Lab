@@ -54,6 +54,19 @@ function PublicSearchContent() {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* §11.267b — 호영님 spec 검색 체험 페이지 상단 가입 배너 (logged-out 한정).
+          검색 입력 전에도 가입 경로 visible — 기존에는 검색해야 비로소 로그인
+          modal 노출 → 이탈 지점. 페이지 상단 sticky 영역 위 banner 로 상시 노출. */}
+      {!session?.user && (
+        <Link
+          href="/auth/signin"
+          data-testid="search-signup-banner"
+          className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-3 px-4 text-sm md:text-[15px] font-semibold transition-colors"
+        >
+          무료 가입하고 비교·견적까지 한 번에 →
+        </Link>
+      )}
+
       {/* Header area */}
       <div className="mx-auto max-w-3xl px-4 pt-28 pb-20 text-center space-y-10">
         {/* Title */}
