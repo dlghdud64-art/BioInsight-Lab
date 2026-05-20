@@ -143,6 +143,25 @@ export function LotDisposalPanel({
   const isExpired = daysUntilExpiry !== null && daysUntilExpiry < 0;
   const canHandOffToReorderAfterConfirm =
     resolution.needsReorderReview && Boolean(onNavigateToReorder);
+  const disposableLotCount =
+    effectiveQty > 0 && effectiveQty <= target.lotQuantity ? 1 : 0;
+  const approvalStatusItems = [
+    {
+      label: "승인 완료",
+      value: 0,
+      className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    },
+    {
+      label: "승인 대기",
+      value: disposableLotCount,
+      className: "border-amber-200 bg-amber-50 text-amber-700",
+    },
+    {
+      label: "차단",
+      value: disposableLotCount === 1 ? 0 : 1,
+      className: "border-red-200 bg-red-50 text-red-700",
+    },
+  ];
   const approvalSummaryRows = [
     { label: "Lot ID", value: target.lotNumber },
     {
@@ -269,6 +288,45 @@ export function LotDisposalPanel({
               </p>
               <p className="text-xs text-slate-500">
                 폐기 확정 전에 lot, 수량, 위치, 사유, 재고 감소를 한 줄씩 확인합니다.
+              </p>
+            </div>
+            <div
+              data-testid="labaxis-inventory-disposal-approval-line"
+              className="grid grid-cols-3 gap-1.5"
+            >
+              {approvalStatusItems.map((item) => (
+                <span
+                  key={item.label}
+                  className={`inline-flex items-center justify-between gap-2 rounded-md border px-2.5 py-2 text-[11px] font-bold ${item.className}`}
+                >
+                  {item.label}
+                  <strong className="text-sm leading-none">{item.value}</strong>
+                </span>
+              ))}
+            </div>
+            <div
+              data-testid="labaxis-inventory-disposable-count"
+              className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs"
+            >
+              <span className="font-bold text-slate-600">폐기 처리 가능</span>
+              <strong className="text-sm text-slate-950">
+                {disposableLotCount}건
+              </strong>
+            </div>
+            <div
+              data-testid="labaxis-inventory-disposal-stock-impact-first"
+              className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-bold">재고 영향</span>
+                <strong>
+                  -{effectiveQty} {unit}
+                </strong>
+              </div>
+              <p className="mt-1 text-[11px] font-semibold">
+                {resolution.causesStockBreach
+                  ? "안전재고 이하"
+                  : "안전재고 유지"}
               </p>
             </div>
             <dl className="space-y-1.5 rounded-lg border border-red-100 bg-red-50/50 p-3">

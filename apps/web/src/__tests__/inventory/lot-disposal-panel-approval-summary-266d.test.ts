@@ -21,6 +21,25 @@ describe("lot disposal approval summary", () => {
     expect(source).toContain("approvalSummaryRows.map");
   });
 
+  it("keeps approval status, disposable count, and stock impact visible together", () => {
+    expect(source).toContain("approvalStatusItems");
+    expect(source).toContain(
+      'data-testid="labaxis-inventory-disposal-approval-line"',
+    );
+    expect(source).toContain(
+      'data-testid="labaxis-inventory-disposable-count"',
+    );
+    expect(source).toContain(
+      'data-testid="labaxis-inventory-disposal-stock-impact-first"',
+    );
+    expect(source).toContain("승인 완료");
+    expect(source).toContain("승인 대기");
+    expect(source).toContain("차단");
+    expect(source).toContain("폐기 처리 가능");
+    expect(source).toContain("재고 영향");
+    expect(source).toContain("안전재고 이하");
+  });
+
   it("keeps reorder as a post-disposal note instead of a pre-confirm action", () => {
     expect(source).toContain(
       'data-testid="labaxis-inventory-reorder-after-disposal-note"',
