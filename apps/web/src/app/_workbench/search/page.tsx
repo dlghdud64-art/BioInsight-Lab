@@ -119,6 +119,10 @@ import { ComparisonModal } from "../_components/comparison-modal";
 import { RequestWizardModal } from "../_components/request-wizard-modal";
 import { useOntologyContextBridge } from "@/hooks/use-ontology-context-bridge";
 
+type SourcingCandidateTriageState = "shortlist" | "hold" | "exclude";
+
+const SOURCING_TRIAGE_STORAGE_KEY = "labaxis-sourcing-triage-state";
+
 export default function SearchPage() {
   const {
     products,
@@ -159,6 +163,7 @@ export default function SearchPage() {
   const pilotCompareSeededRef = useRef(false);
   // ── Step 2: activeResultId (ID only) — rail은 products에서 derive ──
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
+  const [sourcingCandidateTriage, setSourcingCandidateTriage] = useState<Record<string, SourcingCandidateTriageState>>({});
   const railProduct = useMemo(() => activeResultId ? products.find((p: any) => p.id === activeResultId) ?? null : null, [activeResultId, products]);
   const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "compare-review-center" | "approval-handoff-gate" | "approval-workbench" | "po-created-wb-v2" | "request-assembly" | "request-submission" | "quote-queue" | "quote-normalization" | "quote-compare" | "po-conversion" | "po-created" | "dispatch-prep" | "send-confirm" | "po-sent-tracking" | "supplier-confirm" | "receiving-prep" | "receiving-exec" | "inventory-intake" | "stock-release" | "reorder-decision" | "procurement-reentry" | "search-reopen" | "result-review" | "compare-reopen" | "request-reopen" | "submission-reopen" | "quote-reentry" | "norm-reentry" | "compare-reentry" | "approval-reentry" | "po-conv-reentry" | "po-created-reentry" | "dispatch-prep-reentry" | "send-confirm-reentry" | "sent-tracking-reentry" | "supplier-confirm-reentry" | "rcv-prep-reentry" | "rcv-exec-reentry" | "stock-release-reentry" | "reorder-decision-reentry" | "procurement-reentry-reopen" | null>(null);
 
@@ -233,6 +238,16 @@ export default function SearchPage() {
     pilotCompareSeededRef.current = true;
     setWorkWindowMode("compare");
   }, [compareIds, isBrowserPilotSourcingAiCompare, products, toggleCompare]);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(SOURCING_TRIAGE_STORAGE_KEY);
+      if (saved) {
+        setSourcingCandidateTriage(JSON.parse(saved));
+      }
+    } catch {}
+  }, []);
+
   const [preSelectionSnapshot, setPreSelectionSnapshot] = useState<string[] | null>(null);
 
   // Batch-fetch compare status for visible products
@@ -555,6 +570,24 @@ export default function SearchPage() {
     const alternativeProducts = availableProducts.filter((product: any) => {
       return !exactIds.has(product.id) && !equivalentIds.has(product.id);
     });
+    const blockedIds = new Set(blockedProducts.map((product: any) => product.id));
+    const alternativeIds = new Set(alternativeProducts.map((product: any) => product.id));
+    const classificationByProductId = Object.fromEntries(products.map((product: any) => {
+      const id = product.id;
+      if (blockedIds.has(id)) {
+        return [id, { key: "blocked", label: "Blocked", reason: "차단 사유: 공급사 또는 가격 확인 필요", tone: "red" }];
+      }
+      if (exactIds.has(id)) {
+        return [id, { key: "exact", label: "Exact Match", reason: "검색어와 제품 근거가 일치합니다.", tone: "blue" }];
+      }
+      if (equivalentIds.has(id)) {
+        return [id, { key: "equivalent", label: "Cross-Vendor Equivalent", reason: "동일 카테고리의 교차 공급사 후보입니다.", tone: "violet" }];
+      }
+      if (alternativeIds.has(id)) {
+        return [id, { key: "alternative", label: "Substitute", reason: "대체 규격 또는 팩 단위 검토 후보입니다.", tone: "emerald" }];
+      }
+      return [id, { key: "blocked", label: "Blocked", reason: "차단 사유: triage 근거 부족", tone: "red" }];
+    }));
 
     const firstActionProduct = exactProducts[0] ?? equivalentProducts[0] ?? alternativeProducts[0] ?? products[0] ?? null;
     const blockedReason = blockedProducts.length > 0
@@ -564,6 +597,13 @@ export default function SearchPage() {
     return {
       firstActionProduct,
       blockedReason,
+      candidateSections: [
+        { key: "exact", label: "Exact Match", count: exactProducts.length, tone: "blue" as const },
+        { key: "equivalent", label: "Cross-Vendor Equivalent", count: equivalentProducts.length, tone: "violet" as const },
+        { key: "alternative", label: "Substitute", count: alternativeProducts.length, tone: "emerald" as const },
+        { key: "blocked", label: "Blocked", count: blockedProducts.length, tone: "red" as const },
+      ],
+      classificationByProductId,
       sections: [
         { key: "exact", label: "Exact Match", sublabel: "정확 일치", count: exactProducts.length, tone: "blue" },
         { key: "equivalent", label: "Cross-Vendor Equivalent", sublabel: "동등 후보", count: equivalentProducts.length, tone: "violet" },
@@ -579,6 +619,16 @@ export default function SearchPage() {
     }
     setWorkWindowMode("result-review");
   });
+
+  const setSourcingCandidateTriageState = (productId: string, state: SourcingCandidateTriageState) => {
+    setSourcingCandidateTriage((prev) => {
+      const next = { ...prev, [productId]: state };
+      try {
+        window.localStorage.setItem(SOURCING_TRIAGE_STORAGE_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#F8FAFC' }}>
@@ -1318,6 +1368,10 @@ export default function SearchPage() {
                           toast[t.intent](t.message);
                         }
                       })}
+                      triageSections={sourcingTriage?.candidateSections}
+                      triageClassification={sourcingTriage?.classificationByProductId?.[product.id]}
+                      triageActionState={sourcingCandidateTriage[product.id]}
+                      onSetTriageAction={(state) => setSourcingCandidateTriageState(product.id, state)}
                       onSelect={() => setActiveResultId(product.id)}
                     />
                   </div>

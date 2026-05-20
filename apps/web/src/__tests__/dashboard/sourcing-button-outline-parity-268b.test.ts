@@ -17,9 +17,17 @@ const PAGE_PATH = join(
   process.cwd(),
   "src/app/_workbench/search/page.tsx"
 );
+const ROW_PATH = join(
+  process.cwd(),
+  "src/app/_workbench/_components/sourcing-result-row.tsx"
+);
 
 function src(): string {
   return readFileSync(PAGE_PATH, "utf-8");
+}
+
+function rowSrc(): string {
+  return readFileSync(ROW_PATH, "utf-8");
 }
 
 describe("§11.268b 정렬 select min-h-[44px] (§11.266 family 44px)", () => {
@@ -93,5 +101,31 @@ describe("§11.268b invariant — Sparkles / label / testid / 필터 outline 보
     expect(src()).toMatch(
       /sourcing-ai-analysis-trigger[\s\S]{0,400}min-h-\[44px\]/
     );
+  });
+});
+
+describe("짠11.268b sourcing triage candidate evidence", () => {
+  it("search page keeps persisted shortlist/hold/exclude state for candidate triage", () => {
+    const content = src();
+    expect(content).toContain("SOURCING_TRIAGE_STORAGE_KEY");
+    expect(content).toContain("labaxis-sourcing-triage-state");
+    expect(content).toContain("sourcingCandidateTriage");
+    expect(content).toContain("setSourcingCandidateTriageState");
+  });
+
+  it("search page passes candidate section badges and classification into result rows", () => {
+    const content = src();
+    expect(content).toContain("candidateSections");
+    expect(content).toContain("classificationByProductId");
+    expect(content).toContain("triageSections={sourcingTriage?.candidateSections}");
+    expect(content).toContain("triageClassification={sourcingTriage?.classificationByProductId?.[product.id]}");
+  });
+
+  it("candidate row pins Exact/Equivalent/Substitute/Blocked badges and triage actions", () => {
+    const content = rowSrc();
+    expect(content).toContain('data-testid="sourcing-candidate-triage-badges"');
+    expect(content).toContain("sourcing-candidate-triage-${section.key}");
+    expect(content).toContain("sourcing-candidate-${state}-action");
+    expect(src()).toContain('label: "Substitute"');
   });
 });

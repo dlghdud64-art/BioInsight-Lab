@@ -22,15 +22,35 @@ interface SourcingResultRowProps {
   compareSessionCount?: number;
   /** preview mode — 시각 1단 낮추고 click intercept (실행 금지) */
   isPreview?: boolean;
+  triageSections?: SourcingTriageBadge[];
+  triageClassification?: SourcingTriageClassification;
+  triageActionState?: SourcingTriageActionState;
+  onSetTriageAction?: (state: SourcingTriageActionState) => void;
 }
 
 // ── 3행: 동적 운영 신호 ──────────────────────────────────────────────────
 
 type ChipColor = "green" | "amber" | "blue" | "neutral";
+type SourcingTriageTone = "blue" | "violet" | "emerald" | "red";
+type SourcingTriageActionState = "shortlist" | "hold" | "exclude";
 
 interface OpSignal {
   label: string;
   color: ChipColor;
+}
+
+interface SourcingTriageBadge {
+  key: string;
+  label: string;
+  count: number;
+  tone: SourcingTriageTone;
+}
+
+interface SourcingTriageClassification {
+  key: string;
+  label: string;
+  reason: string;
+  tone: SourcingTriageTone;
 }
 
 /**
@@ -45,6 +65,19 @@ const CHIP_STYLES: Record<ChipColor, string> = {
   amber: "text-amber-700 bg-amber-50 border-amber-200",
   blue: "text-blue-700 bg-blue-50 border-blue-200",
   neutral: "text-slate-600 bg-slate-50 border-slate-200",
+};
+
+const TRIAGE_TONE_STYLES: Record<SourcingTriageTone, string> = {
+  blue: "text-blue-700 bg-blue-50 border-blue-200",
+  violet: "text-violet-700 bg-violet-50 border-violet-200",
+  emerald: "text-emerald-700 bg-emerald-50 border-emerald-200",
+  red: "text-red-700 bg-red-50 border-red-200",
+};
+
+const TRIAGE_ACTION_STYLES: Record<SourcingTriageActionState, string> = {
+  shortlist: "border-blue-200 bg-blue-50 text-blue-700",
+  hold: "border-amber-200 bg-amber-50 text-amber-700",
+  exclude: "border-red-200 bg-red-50 text-red-700",
 };
 
 function buildOperatingSignals(product: any, vendor: any, unitPrice: number | null): OpSignal[] {
@@ -151,6 +184,7 @@ function getRowStyle(isSelected: boolean, isInCompare: boolean, isInRequest: boo
 export function SourcingResultRow({
   product, isInCompare, isInRequest, isSelected,
   onToggleCompare, onToggleRequest, onSelect,
+  triageSections, triageClassification, triageActionState, onSetTriageAction,
   isPreview = false,
 }: SourcingResultRowProps) {
   // §11.203 — imageUrl 없으면 immediate fallback (FlaskConical icon).
@@ -187,6 +221,62 @@ export function SourcingResultRow({
         <div className="flex-1 min-w-0">
           {/* 1행: 제품명 */}
           <p className="text-sm font-bold text-slate-900 line-clamp-1 leading-tight tracking-tight">{product.name}</p>
+
+          {triageSections && triageClassification && (
+            <div
+              data-testid="sourcing-candidate-triage-badges"
+              className="mt-1.5 rounded-md border border-slate-200 bg-slate-50/70 px-2 py-1.5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex flex-wrap items-center gap-1">
+                {triageSections.map((section) => (
+                  <span
+                    key={section.key}
+                    data-testid={`sourcing-candidate-triage-${section.key}`}
+                    className={`inline-flex min-h-[24px] items-center gap-1 rounded-full border px-2 text-[10px] font-semibold ${TRIAGE_TONE_STYLES[section.tone]}`}
+                  >
+                    {section.label}
+                    <span className="tabular-nums">{section.count}</span>
+                  </span>
+                ))}
+              </div>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                <span
+                  data-testid="sourcing-candidate-classification"
+                  className={`inline-flex min-h-[24px] items-center rounded-full border px-2 text-[10px] font-semibold ${TRIAGE_TONE_STYLES[triageClassification.tone]}`}
+                >
+                  {triageClassification.label}
+                </span>
+                <span
+                  data-testid="sourcing-candidate-blocked-reason"
+                  className="min-w-0 flex-1 truncate text-[10px] font-medium text-slate-600"
+                >
+                  {triageClassification.reason}
+                </span>
+              </div>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                {(["shortlist", "hold", "exclude"] as const).map((state) => (
+                  <button
+                    key={state}
+                    type="button"
+                    data-testid={`sourcing-candidate-${state}-action`}
+                    aria-pressed={triageActionState === state}
+                    className={`inline-flex min-h-[36px] items-center rounded-md border px-2.5 text-[11px] font-semibold transition-colors ${
+                      triageActionState === state
+                        ? TRIAGE_ACTION_STYLES[state]
+                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-100"
+                    }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSetTriageAction?.(state);
+                    }}
+                  >
+                    {state === "shortlist" ? "Shortlist" : state === "hold" ? "Hold" : "Exclude"}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* 2행: 정적 메타 */}
           {staticMeta && (
