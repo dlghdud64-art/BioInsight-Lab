@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, ArrowRight, Beaker, Package, FlaskConical, Microscope, LogIn } from "lucide-react";
+import { Search, ArrowRight, Beaker, Package, FlaskConical, Microscope, LogIn, CheckCircle2, RefreshCw, Ban } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import Link from "next/link";
 import { savePendingAction } from "@/lib/auth/pending-action";
@@ -15,6 +15,50 @@ const exampleQueries = [
   { label: "DMEM high glucose", icon: FlaskConical },
   { label: "Western blot kit", icon: Package },
   { label: "Cell counting slides", icon: Microscope },
+];
+
+const triageGroups = [
+  {
+    title: "Exact Match",
+    count: 4,
+    badge: "정확 일치",
+    description: "카탈로그 번호와 규격이 바로 맞는 후보",
+    sample: "PBS buffer 500mL · Cat. PBS-500",
+    icon: CheckCircle2,
+    tone: "emerald",
+    actions: ["Shortlist", "Hold", "Exclude"],
+  },
+  {
+    title: "Cross-Vendor Equivalent",
+    count: 3,
+    badge: "동등 대체",
+    description: "동일 성분·동일 용량의 교차 공급사 후보",
+    sample: "PBS 1X · vendor equivalent",
+    icon: RefreshCw,
+    tone: "blue",
+    actions: ["Shortlist", "Hold", "Exclude"],
+  },
+  {
+    title: "Substitute",
+    count: 2,
+    badge: "대체 가능",
+    description: "용량 또는 pack 차이가 있어 확인이 필요한 후보",
+    sample: "PBS tablets · dilution required",
+    icon: Package,
+    tone: "amber",
+    actions: ["Shortlist", "Hold", "Exclude"],
+  },
+  {
+    title: "Blocked",
+    count: 1,
+    badge: "차단",
+    description: "구매 전 제외 사유가 있는 후보",
+    sample: "PBS bulk pack · restricted vendor",
+    blockedReason: "차단 사유: 미승인 공급사 · 냉장 배송 조건 없음",
+    icon: Ban,
+    tone: "red",
+    actions: ["Hold", "Exclude"],
+  },
 ];
 
 function PublicSearchContent() {
@@ -68,7 +112,7 @@ function PublicSearchContent() {
       )}
 
       {/* Header area */}
-      <div className="mx-auto max-w-3xl px-4 pt-28 pb-20 text-center space-y-10">
+      <div className="mx-auto max-w-5xl px-4 pt-28 pb-20 text-center space-y-10">
         {/* Title */}
         <div className="space-y-4">
           <h1 className="text-3xl md:text-[42px] font-extrabold text-slate-900 tracking-tight leading-tight">
@@ -103,6 +147,72 @@ function PublicSearchContent() {
             </Button>
           </div>
         </div>
+
+        <section
+          data-testid="search-result-triage"
+          className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 sm:p-4 text-left space-y-3"
+          aria-label="Sourcing Result Triage"
+        >
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[11px] font-extrabold uppercase tracking-widest text-blue-600">Sourcing Result Triage</p>
+              <h2 className="mt-1 text-base font-extrabold text-slate-950">검색 후보를 비교·보류·제외로 바로 분류합니다</h2>
+            </div>
+            <div className="rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-semibold text-blue-700">
+              비교 진입: 같은 캔버스 우측 패널 전환
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+            {triageGroups.map((group) => {
+              const Icon = group.icon;
+              const toneClass = group.tone === "emerald"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : group.tone === "blue"
+                  ? "border-blue-200 bg-blue-50 text-blue-700"
+                  : group.tone === "amber"
+                    ? "border-amber-200 bg-amber-50 text-amber-700"
+                    : "border-red-200 bg-red-50 text-red-700";
+              return (
+                <article key={group.title} data-testid={`search-triage-${group.title.toLowerCase().replaceAll(" ", "-")}`} className="rounded-xl border border-slate-200 bg-white p-3 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-bold text-slate-950">{group.title}</h3>
+                      <p className="text-xs text-slate-500">{group.count}건 · {group.description}</p>
+                    </div>
+                    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-bold ${toneClass}`}>
+                      <Icon className="h-3 w-3" />
+                      {group.badge}
+                    </span>
+                  </div>
+                  <div className="rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-2">
+                    <p className="text-xs font-semibold text-slate-800">{group.sample}</p>
+                    {group.blockedReason && (
+                      <p data-testid="search-triage-blocked-reason" className="mt-1 text-[11px] font-semibold text-red-700">
+                        {group.blockedReason}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5" aria-label={`${group.title} 후보 액션`}>
+                    {group.actions.map((action) => (
+                      <button
+                        key={action}
+                        type="button"
+                        className="min-h-[32px] rounded-md border border-slate-200 bg-white px-2.5 text-[11px] font-semibold text-slate-600 hover:border-blue-300 hover:text-blue-700"
+                      >
+                        {action}
+                      </button>
+                    ))}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+          <div data-testid="search-triage-compare-panel" className="rounded-xl border border-blue-200 bg-white px-3 py-2.5 text-sm text-slate-700">
+            <span className="font-bold text-slate-950">Compare panel</span>
+            <span className="mx-2 text-slate-300">·</span>
+            Shortlist 후보를 누르면 같은 화면에서 비교 패널이 열리고 검색 컨텍스트가 유지됩니다.
+          </div>
+        </section>
 
         {/* Example queries */}
         <div className="space-y-3">
