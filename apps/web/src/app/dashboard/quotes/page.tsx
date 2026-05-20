@@ -2130,11 +2130,13 @@ function QuotesPageContent() {
         onClearSelection={clearSelection}
       />
 
-      {/* ── KPI Control Cards — 5 카드 단계적 반응형.
-          §11.259a #1 — 모바일 가로 스크롤 (방안 A, snap-x mandatory) supersede §11.248c "<800px 1열".
-          §11.259a #5 — 0건 카드 회색 톤다운 (isZero opacity-50 + text-slate-300/400, 기존 로직 보존).
-          breakpoint: <sm flex 가로 스크롤 / sm 2열 / md 3열 / lg 5열. (§11.217 Phase 2 발송 대기 cell 보존 / §11.248c P0 라벨 wrap 보존) ── */}
-      <div className="flex sm:grid overflow-x-auto sm:overflow-visible snap-x snap-mandatory sm:snap-none grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3 -mx-3 sm:mx-0 px-3 sm:px-0 pb-2 sm:pb-0">
+      {/* ── KPI Control Cards — §11.272c 데스크탑 (sm+) 만 5 cell grid 표시.
+          §11.272c — 모바일 가로 스크롤 (호영님 spec "뒤쪽 카드를 못 봄") 제거.
+            모바일은 아래 <quote-kpi-mobile-summary-bar> 1줄 요약 바 (방안 A).
+          §11.259a #5 — 0건 카드 회색 톤다운 (isZero opacity-50 + text-slate-300/400 보존).
+          데스크탑 breakpoint: sm 2열 / md 3열 / lg 5열 보존. (§11.217 Phase 2 발송 대기
+          cell + §11.248c P0 라벨 wrap 보존) ── */}
+      <div className="hidden sm:grid sm:overflow-visible sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
         {[
           { label: "발송 대기", ...summaryStats.dispatchPending, icon: Send, filter: "PENDING", color: "slate", iconBg: "bg-slate-50", iconText: "text-slate-600", activeBorder: "border-slate-400/50", activeRing: "ring-slate-400/20", activeBg: "bg-slate-50/50", hoverBorder: "hover:border-slate-300", hoverShadow: "hover:shadow-slate-100" },
           { label: "회신 추적", ...summaryStats.responseTracking, icon: Clock, filter: "SENT", color: "amber", iconBg: "bg-amber-50", iconText: "text-amber-600", activeBorder: "border-amber-400/50", activeRing: "ring-amber-400/20", activeBg: "bg-amber-50/50", hoverBorder: "hover:border-amber-300", hoverShadow: "hover:shadow-amber-100" },
@@ -2179,21 +2181,53 @@ function QuotesPageContent() {
         })}
       </div>
 
-      {/* §11.264i — KPI 5 카드 모바일 가로 스크롤 도트 인디케이터 (호영님 spec P2).
-          §11.259a 가로 스크롤 (flex sm:grid + snap-x) 은 이미 적용 — 사용자가
-          "더 있다" 인지하지 못한다는 호영님 보고. 5 도트 시각 hint 만 추가.
-          sm:hidden — 데스크탑은 5 cell grid 로 모두 노출 → 도트 불필요. */}
+      {/* §11.272c — 모바일 KPI 1줄 숫자 요약 바 (호영님 spec 방안 A).
+          가로 스크롤 카드 + 페이지네이션 도트 (§11.264i) supersede.
+          5 KPI 짧은 라벨 + count 1줄 균등 분배. count > 0 = tone color
+          ($activeText), count === 0 = text-slate-400 (회색). 활성 statusFilter
+          (선택) = bg-slate-100 ring. 탭 → setStatusFilter (기존 카드 onClick 와
+          동일 분기) — canonical truth (summaryStats / isCompareReviewZero) 보존.
+          sm:hidden — 데스크탑은 5 cell grid 카드 유지. */}
       <div
-        data-testid="quote-kpi-scroll-dots"
-        className="flex justify-center gap-1.5 mt-1 sm:hidden"
-        aria-hidden="true"
+        data-testid="quote-kpi-mobile-summary-bar"
+        className="sm:hidden flex items-stretch border-y border-slate-200 bg-white -mx-3 px-1 py-1"
+        role="group"
+        aria-label="견적 상태별 요약"
       >
-        {[0, 1, 2, 3, 4].map((i) => (
-          <span
-            key={i}
-            className="w-1.5 h-1.5 rounded-full bg-slate-300"
-          />
-        ))}
+        {[
+          { short: "발송", count: summaryStats.dispatchPending.count, filter: "PENDING", activeText: "text-slate-700" },
+          { short: "회신", count: summaryStats.responseTracking.count, filter: "SENT", activeText: "text-amber-600" },
+          { short: "비교", count: summaryStats.compareReview.count, filter: "RESPONDED", activeText: "text-purple-600" },
+          { short: "승인", count: summaryStats.approvalException.count, filter: "DEADLINE_TODAY", activeText: "text-red-600" },
+          { short: "전환", count: summaryStats.readyToConvert.count, filter: "COMPLETED", activeText: "text-emerald-600" },
+        ].map(({ short, count, filter, activeText }) => {
+          const isActive = statusFilter === filter;
+          const isZero = !isLoading && count === 0;
+          const isCompareReviewZero = short === "비교" && isZero;
+          return (
+            <button
+              key={filter}
+              type="button"
+              onClick={() => {
+                if (isCompareReviewZero) return;
+                setStatusFilter(prev => prev === filter ? "all" : filter);
+              }}
+              disabled={isCompareReviewZero}
+              aria-disabled={isCompareReviewZero}
+              aria-pressed={isActive}
+              aria-label={`${short} ${isLoading ? "집계 중" : count}건${isActive ? " · 선택됨" : ""}`}
+              className={`flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 text-[13px] font-semibold rounded-md transition-colors
+                ${isActive ? "bg-slate-100" : "bg-transparent hover:bg-slate-50"}
+                ${isCompareReviewZero ? "cursor-not-allowed opacity-60" : ""}
+              `}
+            >
+              <span className={isZero ? "text-slate-400" : "text-slate-500"}>{short}</span>
+              <span className={`tabular-nums ${isZero ? "text-slate-400" : activeText}`}>
+                {isLoading ? "·" : count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* ── 검색 + 필터 ──
@@ -4109,141 +4143,4 @@ function QuotesPageContent() {
         }}
       />
 
-      {/* ═══ AI 견적서 비교 모달 ═══ */}
-      <Dialog open={aiCompareOpen} onOpenChange={setAiCompareOpen}>
-        <DialogContent className="max-w-2xl bg-white border-slate-200 p-0 gap-0">
-          <div className="px-6 pt-6 pb-4 border-b border-slate-100">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-lg text-slate-900">
-                <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                  <Sparkles className="h-4 w-4 text-blue-600" />
-                </div>
-                AI 견적서 비교 분석
-              </DialogTitle>
-              <DialogDescription className="text-sm text-slate-500 mt-1">
-                등록된 견적의 공급사별 조건을 비교하고 협상 포인트를 제안합니다
-              </DialogDescription>
-            </DialogHeader>
-          </div>
-
-          <div className="px-6 py-5 max-h-[60vh] overflow-y-auto space-y-4">
-            {aiCompareLoading && (
-              <div className="flex flex-col items-center justify-center py-12 gap-3">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                <p className="text-sm text-slate-500">견적 데이터를 분석하고 있습니다...</p>
-              </div>
-            )}
-
-            {aiCompareError && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-                <p className="text-sm text-red-600">{aiCompareError}</p>
-                <button onClick={runAiQuoteCompare} className="mt-2 text-xs text-red-500 hover:text-red-700 font-medium underline">재시도</button>
-              </div>
-            )}
-
-            {aiCompareResult && (
-              <>
-                {/* 공급사별 비교 테이블 */}
-                {aiCompareResult.comparison.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-slate-900 mb-2">공급사 비교</h4>
-                    <div className="rounded-lg border border-slate-200 overflow-hidden">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="bg-slate-50 text-slate-600">
-                            <th className="text-left px-3 py-2 font-medium">공급사</th>
-                            <th className="text-left px-3 py-2 font-medium">가격</th>
-                            <th className="text-left px-3 py-2 font-medium">납기</th>
-                            <th className="text-left px-3 py-2 font-medium">배송비</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {aiCompareResult.comparison.map((row, i) => (
-                            <tr key={i} className="hover:bg-slate-50/50">
-                              <td className="px-3 py-2 font-medium text-slate-900">{row.vendor}</td>
-                              <td className="px-3 py-2 text-slate-700">{row.price}</td>
-                              <td className="px-3 py-2 text-slate-700">{row.leadTime}</td>
-                              <td className="px-3 py-2 text-slate-700">{row.shippingFee}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-
-                {/* 추천 */}
-                {aiCompareResult.recommendation && (
-                  <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <CheckCircle2 className="h-4 w-4 text-blue-600" />
-                      <span className="text-sm font-semibold text-blue-900">추천</span>
-                    </div>
-                    <p className="text-sm text-slate-700 leading-relaxed">{aiCompareResult.recommendation}</p>
-                  </div>
-                )}
-
-                {/* 협상 가이드 */}
-                {aiCompareResult.negotiationGuide && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <AlertTriangle className="h-4 w-4 text-amber-600" />
-                      <span className="text-sm font-semibold text-amber-900">협상 포인트</span>
-                    </div>
-                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{aiCompareResult.negotiationGuide}</p>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-
-          <div className="px-6 py-3 border-t border-slate-100 flex justify-end">
-            <Button variant="outline" size="sm" onClick={() => setAiCompareOpen(false)}>닫기</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Intake Dock (외부 견적서 업로드 / BOM 업로드) ── */}
-      <QuoteIntakeDock
-        open={intakeDockOpen}
-        onOpenChange={setIntakeDockOpen}
-        source={intakeDockSource}
-        onCommitSuccess={() => {
-          setIntakeDockOpen(false);
-          setIntakeDockSource(null);
-          refetch();
-        }}
-      />
-
-      {/* §11.181 — 운영 브리핑 floating entry (default = popup open).
-          §11.258-sweep — §11.257 후속: 모바일 (<lg) BarcodeScanFab 겹침 해소,
-          데스크탑 한정 노출. 모바일 inline 진입은 §11.258-sweep-2 백로그. */}
-      <div className="hidden lg:block">
-        <OperationalBriefFloatingEntry controls="operational-brief-popup" />
-      </div>
-      {/* §11.258-sweep-2 — 모바일 좌측 하단 ✨ 운영 브리핑 진입 (방안 1). */}
-      <MobileBriefInlineButton />
-    </div>
-  );
-}
-
-function QuotesPageInner() {
-  return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-      </div>
-    }>
-      <QuotesPageContent />
-    </Suspense>
-  );
-}
-
-// §11.214b Path Z — NoSSR wrapper.
-export default function QuotesPage() {
-  return (
-    <NoSSR>
-      <QuotesPageInner />
-    </NoSSR>
-  );
-}
+      {/* 
