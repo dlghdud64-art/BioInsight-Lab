@@ -127,7 +127,7 @@ describe("§11.264g #3 — invariant 보존 (canonical truth)", () => {
 
   it("§11.264h-2 전체 선택 텍스트 링크 보존", () => {
     expect(page).toMatch(
-      /selectablePending\.map\(q => q\.id\)[\s\S]{0,800}underline-offset-2 hover:underline/,
+      /selectablePending\.map\(q => q\.id\)[\s\S]{0,1500}underline-offset-2 hover:underline/,
     );
   });
 

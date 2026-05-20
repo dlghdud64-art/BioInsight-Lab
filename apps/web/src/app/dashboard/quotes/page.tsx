@@ -1,4 +1,4 @@
-﻿﻿"use client";
+﻿﻿﻿"use client";
 
 export const dynamic = 'force-dynamic';
 
@@ -2118,7 +2118,12 @@ function QuotesPageContent() {
             );
           })}
           {modeChip && (
-            <button onClick={() => setModeChip(null)} className="text-[11px] text-slate-500 hover:text-slate-900 ml-1">초기화</button>
+            /* §11.264h-5 — 초기화 button 44x44 touch target (호영님 모바일 spec
+               a11y 일관성, §11.264h family final close). inline-flex items-center
+               + min-h-[44px] + px-2 추가 → mode chip (§11.264h-4 44px) + 전체
+               선택 텍스트 링크 (§11.264h-3 44px) 와 same-row sibling 일관성 확보.
+               text-[11px] + text-slate-500 + ml-1 보존. */
+            <button onClick={() => setModeChip(null)} className="inline-flex items-center text-[11px] min-h-[44px] px-2 text-slate-500 hover:text-slate-900 ml-1">초기화</button>
           )}
 
           {/* §11.220 — 전체 선택 CTA (PENDING quote 일괄 선택). 호영님 피드백

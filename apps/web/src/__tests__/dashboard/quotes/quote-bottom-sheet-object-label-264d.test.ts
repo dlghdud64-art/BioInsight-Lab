@@ -52,13 +52,19 @@ describe("§11.264d #2 — invariant 보존 (canonical truth)", () => {
     );
   });
 
-  it("selectedQuote && selectedSignals 조건부 보존", () => {
-    expect(page).toMatch(/\{selectedQuote && selectedSignals && \(/);
+  it("selectedQuote && selectedSignals 조건부 보존 (§11.264i supersede — briefSheetOpen 추가)", () => {
+    // §11.264i: {briefSheetOpen && selectedQuote && selectedSignals && (
+    //   기존 §11.264d: {selectedQuote && selectedSignals && (
+    //   2중 겹침 fix 로 briefSheetOpen 가드 추가됨. selectedQuote && selectedSignals 보존.
+    expect(page).toMatch(/selectedQuote && selectedSignals && \(/);
   });
 
-  it("open={!!selectedQuote} + onClose 보존", () => {
-    expect(page).toMatch(/open=\{!!selectedQuote\}/);
-    expect(page).toMatch(/onClose=\{\(\) => closeQuoteContextRail\("x_button"\)\}/);
+  it("open + onClose prop 형식 보존 (§11.264i supersede — briefSheetOpen 분리)", () => {
+    // §11.264i 이후: open={briefSheetOpen} + onClose={() => setBriefSheetOpen(false)}
+    //   (기존 §11.264d: open={!!selectedQuote} + onClose=closeQuoteContextRail
+    //   — §11.264i 가 supersede. 사유: §11.248e mobile context sheet 와 2중 겹침 fix.)
+    expect(page).toMatch(/open=\{briefSheetOpen\}/);
+    expect(page).toMatch(/onClose=\{\(\) => setBriefSheetOpen\(false\)\}/);
   });
 
   it("chips override (§11.264a 4 entry) 보존: 상태 요약 / 회신 현황 / 리스크 / 발주 전환", () => {
