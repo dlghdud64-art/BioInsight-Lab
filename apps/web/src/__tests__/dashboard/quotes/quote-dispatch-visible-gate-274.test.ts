@@ -104,4 +104,14 @@ describe("quote dispatch visible gate", () => {
     expect(page).toContain('data-testid="quote-dispatch-mobile-reason-proof"');
     expect(page).toContain("공급사 미선택 · 연락처 누락 · 정상 입력");
   });
+
+  it("converges first glance on one blue priority CTA and one status line", () => {
+    expect(page).toContain('data-testid={isPriorityChip ? "quote-dispatch-priority-primary-cta" : undefined}');
+    expect(page).toContain("bg-blue-600 text-white border-blue-600 shadow-sm hover:bg-blue-700 hover:border-blue-700");
+    expect(page).toContain('data-testid="quote-dispatch-primary-action-status"');
+    expect(page).toContain("다음 작업: 공급사 선택 후 발송 준비");
+    expect(page).toContain('data-testid="quote-draft-workbench-cta"');
+    expect(page).toContain('variant="ghost"');
+    expect(page).toContain("hover:underline");
+  });
 });

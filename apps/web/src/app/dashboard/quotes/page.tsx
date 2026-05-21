@@ -2116,8 +2116,8 @@ function QuotesPageContent() {
             type="button"
             data-testid="quote-draft-workbench-cta"
             size="sm"
-            variant="outline"
-            className="h-9 text-sm hidden md:flex min-w-[140px]"
+            variant="ghost"
+            className="h-9 text-sm hidden md:flex min-w-[140px] px-1 text-slate-500 hover:bg-transparent hover:text-blue-700 hover:underline underline-offset-2"
             onClick={openQuoteDraftWorkbench}
             disabled={isLoading || quotes.length === 0}
           >
@@ -2242,6 +2242,9 @@ function QuotesPageContent() {
                 : primaryDispatchReasonState === "contact-missing"
                   ? "연락처 누락"
                   : "정상 입력"}
+            </p>
+            <p data-testid="quote-dispatch-primary-action-status" className="mt-1 text-[11px] font-semibold text-blue-800">
+              다음 작업: 공급사 선택 후 발송 준비 · 주 행동은 우선 처리 1개입니다.
             </p>
           </div>
           <div className="flex flex-col gap-2 md:items-end">
@@ -2748,8 +2751,12 @@ function QuotesPageContent() {
           {MODE_CHIPS.map(chip => {
             const isActive = modeChip === chip.key;
             const chipCount = quotes.filter(chip.filter).length;
+            const isPriorityChip = chip.key === "urgent";
             return (
-              <button key={chip.key} onClick={() => setModeChip(isActive ? null : chip.key)}
+              <button
+                key={chip.key}
+                data-testid={isPriorityChip ? "quote-dispatch-priority-primary-cta" : undefined}
+                onClick={() => setModeChip(isActive ? null : chip.key)}
                 /* §11.264h — chip 내부 텍스트 줄바꿈 차단 (호영님 spec 견적 모바일 #4).
                    flex-nowrap 은 chip 끼리 줄바꿈 차단, whitespace-nowrap 은
                    chip 내부 텍스트 wrap 차단 ("우선\n처리" 같은 깨짐 방지).
@@ -2759,10 +2766,24 @@ function QuotesPageContent() {
                    Target Size 정합. text-[11px] 시각 사이즈 보존 (44px height
                    안에 items-center 로 가운데 정렬). */
                 className={`inline-flex items-center gap-1 text-[11px] min-h-[44px] px-2.5 py-1 rounded-full border font-medium transition-all whitespace-nowrap ${
-                  isActive ? "bg-blue-600/10 text-blue-600 border-blue-600/30" : "text-slate-500 border-bd/50 hover:border-bd hover:text-slate-900"
+                  isPriorityChip
+                    ? "bg-blue-600 text-white border-blue-600 shadow-sm hover:bg-blue-700 hover:border-blue-700"
+                    : isActive
+                      ? "bg-blue-600/10 text-blue-600 border-blue-600/30"
+                      : "text-slate-500 border-bd/50 hover:border-bd hover:text-slate-900"
                 }`}>
                 {chip.label}
-                {chipCount > 0 && <span className={`text-[9px] ${isActive ? "text-blue-300" : "text-slate-600"}`}>{chipCount}</span>}
+                {chipCount > 0 && (
+                  <span className={`text-[9px] ${
+                    isPriorityChip
+                      ? "text-blue-100"
+                      : isActive
+                        ? "text-blue-300"
+                        : "text-slate-600"
+                  }`}>
+                    {chipCount}
+                  </span>
+                )}
               </button>
             );
           })}
