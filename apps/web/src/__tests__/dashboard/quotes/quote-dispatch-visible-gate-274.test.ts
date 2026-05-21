@@ -38,4 +38,16 @@ describe("quote dispatch visible gate", () => {
     expect(page).toContain('"메시지 미리보기"');
     expect(page).toContain('"발송 확인"');
   });
+
+  it("keeps sent tracking visible from persisted vendor request data", () => {
+    expect(page).toContain("function getQuoteDispatchTracking");
+    expect(page).toContain("q?.vendorRequests ?? []");
+    expect(page).toContain('data-testid="quote-dispatch-tracking-row"');
+    expect(page).toContain('data-testid={`quote-dispatch-tracking-${cell.key}`}');
+    expect(page).toContain('label: "발송됨"');
+    expect(page).toContain('label: "추적중"');
+    expect(page).toContain('label: "실패"');
+    expect(page).toContain("발송 시각 {primaryDispatchTracking.lastSentAt}");
+    expect(page).toContain("추적 ID {primaryDispatchTracking.trackingId}");
+  });
 });

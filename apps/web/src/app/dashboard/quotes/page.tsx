@@ -412,6 +412,55 @@ type QuoteDispatchEvidence = {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function formatDispatchTimestamp(iso?: string | null): string {
+  if (!iso) return "발송 시각 없음";
+  const [date, time = ""] = iso.split("T");
+  const shortTime = time.slice(0, 5);
+  return shortTime ? `${date} ${shortTime}` : date;
+}
+
+function getQuoteDispatchTracking(q: Quote | null) {
+  const requests = q?.vendorRequests ?? [];
+  const sentCount = requests.length;
+  const trackingCount = requests.filter((request) => request.status === "SENT" || request.status === "RESPONDED").length;
+  const failedCount = requests.filter((request) => request.status === "EXPIRED").length;
+  const latestRequest = requests.reduce<(typeof requests)[number] | null>((latest, request) => {
+    if (!latest) return request;
+    return new Date(request.createdAt).getTime() >= new Date(latest.createdAt).getTime() ? request : latest;
+  }, null);
+  const trackingId = latestRequest?.id ?? q?.id ?? "대기";
+  const lastSentAt = formatDispatchTimestamp(latestRequest?.createdAt);
+
+  return {
+    trackingId,
+    lastSentAt,
+    statusLabel: failedCount > 0 ? "실패 확인" : sentCount > 0 ? "추적중" : "발송 대기",
+    cells: [
+      {
+        key: "sent",
+        label: "발송됨",
+        value: sentCount > 0 ? `${sentCount}건` : "0건",
+        detail: sentCount > 0 ? lastSentAt : "발송 전",
+        tone: sentCount > 0 ? "green" : "slate",
+      },
+      {
+        key: "tracking",
+        label: "추적중",
+        value: trackingCount > 0 ? `${trackingCount}건` : "0건",
+        detail: `추적 ID ${trackingId}`,
+        tone: trackingCount > 0 ? "blue" : "slate",
+      },
+      {
+        key: "failed",
+        label: "실패",
+        value: failedCount > 0 ? `${failedCount}건` : "0건",
+        detail: failedCount > 0 ? "확인 필요" : "실패 없음",
+        tone: failedCount > 0 ? "red" : "slate",
+      },
+    ],
+  };
+}
+
 // #user-supplier-registration Phase 5 — organizationVendors optional param.
 //   resolveSuppliers 의 org_book source 정합 — operator 직접 등록한 거래처
 //   가 있으면 preflight 의 includedSuppliers 에 자동 포함.
@@ -1655,6 +1704,10 @@ function QuotesPageContent() {
     () => getQuoteDispatchEvidence(primaryDispatchPreflight),
     [primaryDispatchPreflight],
   );
+  const primaryDispatchTracking = useMemo(
+    () => getQuoteDispatchTracking(primaryDispatchQuote),
+    [primaryDispatchQuote],
+  );
   const primaryDispatchBadges = useMemo(
     () => [
       {
@@ -2112,6 +2165,36 @@ function QuotesPageContent() {
             </div>
           ))}
         </div>
+
+        <div
+          data-testid="quote-dispatch-tracking-row"
+          className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3"
+          aria-label={`견적 발송 추적 상태 ${primaryDispatchTracking.statusLabel}`}
+        >
+          {primaryDispatchTracking.cells.map((cell) => (
+            <div
+              key={cell.key}
+              data-testid={`quote-dispatch-tracking-${cell.key}`}
+              className={`rounded-lg border px-3 py-2 ${
+                cell.tone === "green"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                  : cell.tone === "blue"
+                    ? "border-blue-200 bg-blue-50 text-blue-900"
+                    : cell.tone === "red"
+                      ? "border-rose-200 bg-rose-50 text-rose-900"
+                      : "border-slate-200 bg-slate-50 text-slate-700"
+              }`}
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70">{cell.label}</p>
+              <p className="mt-1 text-xs font-semibold">{cell.value}</p>
+              <p className="mt-1 text-[11px] leading-snug opacity-80">{cell.detail}</p>
+            </div>
+          ))}
+        </div>
+
+        <p data-testid="quote-dispatch-tracking-persistence" className="mt-2 text-[11px] text-slate-600">
+          발송 상태 {primaryDispatchTracking.statusLabel} · 발송 시각 {primaryDispatchTracking.lastSentAt} · 추적 ID {primaryDispatchTracking.trackingId}
+        </p>
 
         <div
           data-testid="quote-dispatch-visible-four-step"
