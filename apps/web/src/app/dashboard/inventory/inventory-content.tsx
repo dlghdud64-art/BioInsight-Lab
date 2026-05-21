@@ -1646,8 +1646,11 @@ function InventoryPageContent() {
                     whitespace-nowrap 보존. */
                 <button
                   key={tab.key}
-                  data-testid={tab.key === "overview" ? "labaxis-inventory-overview-tab" : undefined}
+                  data-testid={tab.key === "overview" ? "labaxis-inventory-overview-tab" : tab.key === "manage" ? "labaxis-inventory-manage-tab" : undefined}
                   onClick={() => {
+                    if (tab.key === "manage" && activeInventoryTab === "manage") {
+                      return;
+                    }
                     if (tab.key === "overview" && activeInventoryTab === "overview" && showLotIssueDecisionStrip) {
                       handleLotIssueDecisionAction();
                       return;
@@ -1655,11 +1658,14 @@ function InventoryPageContent() {
                     setActiveInventoryTab(tab.key);
                   }}
                   aria-current={activeInventoryTab === tab.key ? "page" : undefined}
-                  title={tab.key === "overview" && activeInventoryTab === "overview" && showLotIssueDecisionStrip ? "현재 운영 현황입니다. 클릭하면 lot_issue 폐기 검토를 엽니다." : undefined}
-                  className={`relative inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap ${activeInventoryTab === tab.key ? "text-blue-600" : "text-slate-400 hover:text-slate-600"}`}
+                  aria-disabled={tab.key === "manage" && activeInventoryTab === "manage" ? true : undefined}
+                  disabled={tab.key === "manage" && activeInventoryTab === "manage"}
+                  title={tab.key === "manage" && activeInventoryTab === "manage" ? "현재 품목 관리 화면입니다. 운영 현황이나 조치 시작을 선택하면 화면이 전환됩니다." : tab.key === "overview" && activeInventoryTab === "overview" && showLotIssueDecisionStrip ? "현재 운영 현황입니다. 클릭하면 lot_issue 폐기 검토를 엽니다." : undefined}
+                  className={`relative inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap disabled:cursor-default disabled:opacity-100 ${activeInventoryTab === tab.key ? "text-blue-600" : "text-slate-400 hover:text-slate-600"}`}
                 >
                   {tab.icon}
                   {tab.label}
+                  {tab.key === "manage" && activeInventoryTab === "manage" && <span data-testid="labaxis-inventory-manage-current-reason" className="ml-1 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600">현재 화면</span>}
                   {"suffix" in tab && tab.suffix && <span className="text-[10px] font-bold text-blue-500 ml-0.5">{tab.suffix}</span>}
                   {tab.badge !== null && <span className="inline-flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-rose-500 text-white font-bold px-1 text-[10px] ml-0.5">{tab.badge}</span>}
                   {activeInventoryTab === tab.key && <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-blue-600" />}

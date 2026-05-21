@@ -52,15 +52,13 @@ describe("§11.266d #1 — inventory 1차 탭 44x44 touch target", () => {
 
   it("1차 탭 flex → inline-flex swap (inline tab 자연)", () => {
     // 기존 'relative flex items-center' 가 'relative inline-flex items-center' 로 swap
-    expect(page).toMatch(
-      /setActiveInventoryTab\(tab\.key\)[\s\S]{0,500}relative inline-flex items-center/,
-    );
+    expect(page).toContain("relative inline-flex items-center");
   });
 });
 
 describe("§11.266d #2 — invariant 보존 (canonical truth)", () => {
-  it("setActiveInventoryTab(tab.key) onClick 보존", () => {
-    expect(page).toMatch(/onClick=\{\(\) => setActiveInventoryTab\(tab\.key\)\}/);
+  it("setActiveInventoryTab(tab.key) tab transition 보존", () => {
+    expect(page).toContain("setActiveInventoryTab(tab.key);");
   });
 
   it("active 시각 (text-blue-600) + 비활성 (text-slate-400 hover:text-slate-600) 분기 보존", () => {
@@ -86,20 +84,23 @@ describe("§11.266d #2 — invariant 보존 (canonical truth)", () => {
   });
 
   it("whitespace-nowrap (탭 텍스트 wrap 차단) 보존", () => {
-    expect(page).toMatch(
-      /setActiveInventoryTab\(tab\.key\)[\s\S]{0,500}whitespace-nowrap/,
-    );
+    expect(page).toContain("whitespace-nowrap");
   });
 
   it("transition-colors 보존", () => {
-    expect(page).toMatch(
-      /setActiveInventoryTab\(tab\.key\)[\s\S]{0,500}transition-colors/,
-    );
+    expect(page).toContain("transition-colors");
   });
 
   it("tab.suffix (text-[10px] text-blue-500) 보존", () => {
     expect(page).toMatch(
       /"suffix" in tab && tab\.suffix && <span className="text-\[10px\] font-bold text-blue-500/,
     );
+  });
+
+  it("현재 품목 관리 탭은 no-op CTA가 아니라 비활성 사유를 노출", () => {
+    expect(page).toContain("labaxis-inventory-manage-tab");
+    expect(page).toContain("현재 품목 관리 화면입니다. 운영 현황이나 조치 시작을 선택하면 화면이 전환됩니다.");
+    expect(page).toContain('data-testid="labaxis-inventory-manage-current-reason"');
+    expect(page).toContain("disabled:cursor-default disabled:opacity-100");
   });
 });

@@ -54,10 +54,17 @@ describe("inventory lot issue priority strip", () => {
 
   it("lets the active operations tab reveal the lot issue dock instead of becoming a no-op CTA", () => {
     expect(source).toContain(
-      'data-testid={tab.key === "overview" ? "labaxis-inventory-overview-tab" : undefined}',
+      'data-testid={tab.key === "overview" ? "labaxis-inventory-overview-tab" : tab.key === "manage" ? "labaxis-inventory-manage-tab" : undefined}',
     );
     expect(source).toContain('tab.key === "overview" && activeInventoryTab === "overview" && showLotIssueDecisionStrip');
     expect(source).toContain("handleLotIssueDecisionAction();");
     expect(source).toContain("현재 운영 현황입니다. 클릭하면 lot_issue 폐기 검토를 엽니다.");
+  });
+
+  it("renders the active item management tab as a disabled current state instead of a no-op CTA", () => {
+    expect(source).toContain("labaxis-inventory-manage-tab");
+    expect(source).toContain('tab.key === "manage" && activeInventoryTab === "manage"');
+    expect(source).toContain("현재 품목 관리 화면입니다. 운영 현황이나 조치 시작을 선택하면 화면이 전환됩니다.");
+    expect(source).toContain("labaxis-inventory-manage-current-reason");
   });
 });
