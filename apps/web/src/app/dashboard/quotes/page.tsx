@@ -2113,7 +2113,8 @@ function QuotesPageContent() {
       >
         <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-700">Send to supplier gate</p>
+            {/* §11.274b — visible 한국어 swap (§11.248a sweep 누락 후 §11.272b-restore-2 재발현). */}
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-700">공급사 발송 게이트</p>
             <h2 className="text-sm font-semibold text-slate-950">
               수신자 선택 → 연락처 확인 → 메시지 미리보기 → 발송
             </h2>
@@ -2135,7 +2136,8 @@ function QuotesPageContent() {
             disabled={isLoading || quotes.length === 0 || !primaryDispatchEvidence.canSend}
           >
             <Send className="mr-1.5 h-4 w-4" />
-            Send to supplier
+            {/* §11.274b — visible 한국어 swap (§11.248a + §11.274 aria-label 매핑 정합). */}
+            공급사에 전송
           </Button>
         </div>
 
