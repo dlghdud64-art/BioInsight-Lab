@@ -17,7 +17,7 @@ describe("quote dispatch fixed flow", () => {
   it("keeps the four dispatch preflight steps visible at the top", () => {
     expect(page).toContain("quote-dispatch-fixed-flow");
     expect(page).toContain("quote-dispatch-four-step-gate");
-    expect(page).toMatch(/1\. supplier 선택[\s\S]{0,240}2\. contact 검증[\s\S]{0,240}3\. message preview[\s\S]{0,240}4\. send confirm/);
+    expect(page).toMatch(/1\. 공급사 선택[\s\S]{0,240}2\. 연락처 확인[\s\S]{0,240}3\. 메시지 미리보기[\s\S]{0,240}4\. 발송 확인/);
   });
 
   it("shows a clear disabled send reason before supplier/contact readiness is valid", () => {
@@ -38,9 +38,9 @@ describe("quote dispatch fixed flow", () => {
   it("shows supplier, contact, and preview badges beside the send action", () => {
     expect(page).toContain("quote-dispatch-readiness-badges");
     expect(page).toMatch(/data-testid=\{`quote-dispatch-\$\{badge\.label\}-badge`\}/);
-    expect(page).toContain('label: "supplier"');
-    expect(page).toContain('label: "contact"');
-    expect(page).toContain('label: "preview"');
+    expect(page).toContain('label: "공급사 선택"');
+    expect(page).toContain('label: "연락처 확인"');
+    expect(page).toContain('label: "메시지 미리보기"');
     expect(page).toContain("primaryDispatchBadges");
     expect(page).toContain("border-emerald-200 bg-emerald-50 text-emerald-700");
     expect(page).toContain("border-amber-200 bg-amber-50 text-amber-700");

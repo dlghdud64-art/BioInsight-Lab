@@ -1658,22 +1658,54 @@ function QuotesPageContent() {
   const primaryDispatchBadges = useMemo(
     () => [
       {
-        label: "supplier",
+        label: "공급사 선택",
         value: primaryDispatchEvidence.supplierStatus,
         tone: primaryDispatchEvidence.supplierStatus.includes("선택 필요") ? "red" : "green",
       },
       {
-        label: "contact",
+        label: "연락처 확인",
         value: primaryDispatchEvidence.contactStatus,
         tone: primaryDispatchEvidence.contactStatus.includes("필요") ? "amber" : "green",
       },
       {
-        label: "preview",
+        label: "메시지 미리보기",
         value: primaryDispatchEvidence.previewStatus,
         tone: primaryDispatchEvidence.previewStatus.includes("대기") ? "slate" : "blue",
       },
     ],
     [primaryDispatchEvidence],
+  );
+  const primaryDispatchSummaryCells = useMemo(
+    () => [
+      {
+        key: "supplier",
+        label: "공급사",
+        value: primaryDispatchEvidence.supplierStatus,
+        helper: primaryDispatchEvidence.supplierStatus.includes("선택 필요")
+          ? "수신자 선택 필요"
+          : primaryDispatchPreflight.summary,
+        tone: primaryDispatchEvidence.supplierStatus.includes("선택 필요") ? "red" : "green",
+      },
+      {
+        key: "contact",
+        label: "연락처",
+        value: primaryDispatchEvidence.contactStatus,
+        helper: primaryDispatchEvidence.contactStatus.includes("필요")
+          ? "연락처 확인 전 발송 잠김"
+          : "유효 연락처 확인됨",
+        tone: primaryDispatchEvidence.contactStatus.includes("필요") ? "amber" : "green",
+      },
+      {
+        key: "send",
+        label: "전송 가능 여부",
+        value: primaryDispatchEvidence.canSend ? "전송 가능" : "전송 불가",
+        helper: primaryDispatchEvidence.canSend
+          ? "메시지 미리보기 후 최종 확인"
+          : primaryDispatchEvidence.blockReason,
+        tone: primaryDispatchEvidence.canSend ? "blue" : "slate",
+      },
+    ],
+    [primaryDispatchEvidence, primaryDispatchPreflight.summary],
   );
 
   // 필터링 + 운영 우선순위 정렬
@@ -2020,6 +2052,84 @@ function QuotesPageContent() {
           </p>
         </div>
       )}
+
+      <section
+        data-testid="quote-dispatch-verification-summary"
+        className="rounded-xl border border-blue-200 bg-white px-3 py-3 shadow-sm sm:px-4"
+        aria-label="견적 발송 전 수신자 검증 요약"
+      >
+        <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-700">Send to supplier gate</p>
+            <h2 className="text-sm font-semibold text-slate-950">
+              수신자 선택 → 연락처 확인 → 메시지 미리보기 → 발송
+            </h2>
+            <p
+              data-testid="quote-dispatch-visible-block-reason"
+              className="mt-1 text-[11px] text-slate-600"
+            >
+              {primaryDispatchEvidence.canSend
+                ? "전송 가능 · 수신처와 연락처 확인 후 미리보기를 검토하세요."
+                : `전송 버튼 비활성 · ${primaryDispatchEvidence.blockReason}`}
+            </p>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            data-testid="quote-dispatch-summary-send-cta"
+            className="h-10 min-h-[44px] bg-blue-600 text-white hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-500"
+            onClick={openQuoteDraftWorkbench}
+            disabled={isLoading || quotes.length === 0 || !primaryDispatchEvidence.canSend}
+          >
+            <Send className="mr-1.5 h-4 w-4" />
+            Send to supplier
+          </Button>
+        </div>
+
+        <div
+          data-testid="quote-dispatch-three-cell-summary"
+          className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3"
+        >
+          {primaryDispatchSummaryCells.map((cell) => (
+            <div
+              key={cell.key}
+              data-testid={`quote-dispatch-summary-${cell.key}`}
+              className={`min-h-[72px] rounded-lg border px-3 py-2 ${
+                cell.tone === "green"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                  : cell.tone === "blue"
+                    ? "border-blue-200 bg-blue-50 text-blue-900"
+                    : cell.tone === "amber"
+                      ? "border-amber-200 bg-amber-50 text-amber-900"
+                      : cell.tone === "red"
+                        ? "border-rose-200 bg-rose-50 text-rose-900"
+                        : "border-slate-200 bg-slate-50 text-slate-800"
+              }`}
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70">{cell.label}</p>
+              <p className="mt-1 text-xs font-semibold">{cell.value}</p>
+              <p className="mt-1 text-[11px] leading-snug opacity-80">{cell.helper}</p>
+            </div>
+          ))}
+        </div>
+
+        <div
+          data-testid="quote-dispatch-visible-four-step"
+          className="mt-3 grid grid-cols-2 gap-1.5 text-[11px] text-slate-700 lg:grid-cols-4"
+        >
+          {[
+            ["1", "수신자 선택", primaryDispatchEvidence.supplierStatus],
+            ["2", "연락처 확인", primaryDispatchEvidence.contactStatus],
+            ["3", "메시지 미리보기", primaryDispatchEvidence.previewStatus],
+            ["4", "발송 확인", primaryDispatchEvidence.sendStatus],
+          ].map(([step, label, value]) => (
+            <div key={step} className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-2">
+              <span className="font-semibold text-slate-500">{step}. {label}</span>
+              <span className="ml-1 text-slate-700">{value}</span>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* §11.272b — 모바일 간략 배너 (호영님 P0 spec: 큰 블록은 견적 선택 + 발송
           액션 실행 시에만 표시). dispatchableCount > 0 일 때만 노출, 0 건이면 hidden.
