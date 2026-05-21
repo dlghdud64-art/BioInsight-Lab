@@ -545,8 +545,45 @@ export default function PurchasesPage() {
           </div>
         </div>
 
-        {/* ═══ KPI 카드 4개 — conversionStatus 기반 ═══ */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        {/* §11.277a (= §11.273b reapply) — 모바일 KPI 1줄 숫자 요약 바 (호영님 P0 spec, §11.272c 패턴 reuse).
+            2×2 그리드 → 1줄 (검토/발주/확정/만료) + count. 0건 = text-slate-400 (회색),
+            count > 0 = tone color, 활성 queueTab = bg-slate-100. tap → setQueueTab
+            (KpiCard onClick 와 동일 분기). md:hidden — 데스크탑은 아래 4 cell grid 유지.
+            §11.272b-restore-2 (134a94ea) base restore 시 §11.273b dropped 이후 reapply. */}
+        <div
+          data-testid="purchases-kpi-mobile-summary-bar"
+          className="md:hidden flex items-stretch border-y border-slate-200 bg-white -mx-3 px-1 py-1"
+          role="group"
+          aria-label="구매 상태별 요약"
+        >
+          {[
+            { short: "검토", count: stats.review_required, tab: "review_required" as QueueTab, activeText: "text-blue-600" },
+            { short: "발주", count: stats.ready_for_po, tab: "ready_for_po" as QueueTab, activeText: "text-emerald-600" },
+            { short: "확정", count: stats.confirmed, tab: "confirmed" as QueueTab, activeText: "text-purple-600" },
+            { short: "만료", count: stats.expired, tab: "review_required" as QueueTab, activeText: "text-rose-600" },
+          ].map(({ short, count, tab, activeText }) => {
+            const isActive = queueTab === tab;
+            const isZero = count === 0;
+            return (
+              <button
+                key={short}
+                type="button"
+                onClick={() => setQueueTab(prev => prev === tab ? "all" : tab)}
+                aria-pressed={isActive}
+                aria-label={`${short} ${count}건${isActive ? " · 선택됨" : ""}`}
+                className={`flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 text-[13px] font-semibold rounded-md transition-colors
+                  ${isActive ? "bg-slate-100" : "bg-transparent hover:bg-slate-50"}
+                `}
+              >
+                <span className={isZero ? "text-slate-400" : "text-slate-500"}>{short}</span>
+                <span className={`tabular-nums ${isZero ? "text-slate-400" : activeText}`}>{count}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ═══ KPI 카드 4개 — conversionStatus 기반 (§11.277a/§11.273b 데스크탑 md+ 만 표시) ═══ */}
+        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <KpiCard
             icon={<ListChecks className="h-5 w-5 text-blue-500" />}
             iconBg="bg-blue-50"
