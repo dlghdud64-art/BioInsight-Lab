@@ -149,7 +149,12 @@ describe("§11.251 batch — invariant 보존 (cross-stack)", () => {
     expect(searchPage).toMatch(/시약·장비를\s*검색하세요/);
   });
 
-  it("barcode FAB sticky bottom 위치 보존 (fixed bottom-20 right-4)", () => {
-    expect(scanFab).toMatch(/fixed\s+bottom-20\s+right-4/);
+  // §11.276b — §11.271 이 BarcodeScanFab 을 sticky FAB (fixed bottom-20 right-4) →
+  //   DashboardHeader inline mount (relative + lg:hidden) 로 변경 후 stale invariant.
+  //   §11.271 기반 새 patten 으로 update — relative + lg:hidden + ScanLine icon 보존.
+  it("barcode scan button §11.271 header inline mount 패턴 보존 (relative + lg:hidden)", () => {
+    expect(scanFab).toMatch(/relative\s+inline-flex/);
+    expect(scanFab).toMatch(/lg:hidden/);
+    expect(scanFab).toMatch(/<ScanLine\s+className="h-5\s+w-5"/);
   });
 });
