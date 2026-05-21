@@ -2177,21 +2177,6 @@ function QuotesPageContent() {
           발송 entry point 은 §11.279d 카드 안 직접 [발송] CTA (1 tap, request_not_sent 분기) +
           §11.272b mobile banner (sm:hidden + dispatchableCount > 0) + rail panel primary CTA (보조).
           §11.279e helper data dead cleanup (primaryDispatchValidityBadges 등). */}
-      <div
-        data-testid="quote-dispatch-mobile-reason-proof"
-        className="sm:hidden rounded-lg border border-blue-200 bg-blue-50/80 px-3 py-2"
-        aria-label="모바일 견적 발송 비활성 사유"
-      >
-        <p className="text-[11px] font-semibold text-blue-900">공급사 미선택 · 연락처 누락 · 정상 입력</p>
-        <p className="mt-1 text-[11px] text-blue-800">
-          현재 사유: {primaryDispatchReasonState === "supplier-missing"
-            ? "공급사 미선택"
-            : primaryDispatchReasonState === "contact-missing"
-              ? "연락처 누락"
-              : "정상 입력"} · 미리보기 후 최종 발송
-        </p>
-      </div>
-
       {/* §11.272b — 모바일 간략 배너 (호영님 P0 spec: 큰 블록은 견적 선택 + 발송
           액션 실행 시에만 표시). dispatchableCount > 0 일 때만 노출, 0 건이면 hidden.
           tap → openQuoteDraftWorkbench (워크벤치 안에서 4 단계 진행 — same-canvas).
