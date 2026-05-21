@@ -268,7 +268,7 @@ function PublicSearchContent() {
               <Link
                 href={`/auth/signin?callbackUrl=${encodeURIComponent(buildWorkbenchPath(publicTriageStage === "ready" ? undefined : publicTriageStage))}`}
                 className="inline-flex h-10 items-center justify-center rounded-md px-3 text-xs font-semibold text-slate-500 hover:text-slate-700"
-                onClick={() => savePendingAction({ action: publicTriageStage === "request" ? "create_quote_request" : "compare_products", query: query.trim() || searchParams?.get("q") || "PBS" })}
+                onClick={() => savePendingAction({ action: publicTriageStage === "request" ? "create_request" : "start_compare", query: query.trim() || searchParams?.get("q") || "PBS" })}
               >
                 로그인 후 계속
               </Link>
