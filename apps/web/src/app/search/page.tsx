@@ -151,7 +151,8 @@ function PublicSearchContent() {
         <section
           data-testid="search-result-triage"
           className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 sm:p-4 text-left space-y-3"
-          aria-label="Sourcing Result Triage"
+          // §11.274c — aria-label 한국어 정합 lock.
+          aria-label="소싱 결과 분류"
         >
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>

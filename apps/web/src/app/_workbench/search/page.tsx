@@ -681,7 +681,8 @@ export default function SearchPage() {
             )}
             {/* TRIAGE 블록 (§11.265b-1 inline 과 동일 content) */}
             {sourcingTriage && (
-              <section aria-label="Sourcing Result Triage Mobile">
+              {/* §11.274c — aria-label 한국어 정합 lock (Phase B P2 sweep). */}
+              <section aria-label="소싱 결과 분류 (모바일)">
                 <div className="rounded-lg border border-slate-200 bg-white px-3 py-2.5">
                   <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
                     Sourcing Result Triage
@@ -1232,7 +1233,8 @@ export default function SearchPage() {
             {sourcingTriage && (
               <section
                 data-testid="sourcing-result-triage"
-                aria-label="Sourcing Result Triage"
+                // §11.274c — aria-label 한국어 정합 lock.
+                aria-label="소싱 결과 분류"
                 className="hidden md:block px-3 pt-2"
               >
                 <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">

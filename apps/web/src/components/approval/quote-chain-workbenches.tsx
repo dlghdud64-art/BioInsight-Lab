@@ -123,7 +123,8 @@ export function QuoteApprovalWorkbench({
   return (
     <div
       role="main"
-      aria-label="Quote Approval Workbench"
+      // §11.274c — aria-label 한국어 정합 lock (Phase B P2 sweep).
+      aria-label="견적 결재 워크벤치"
       className={cn("flex flex-col pb-20 md:flex-row md:gap-4 md:h-full md:pb-0", className)}
     >
       <div className="flex-1 min-w-0 space-y-3 md:space-y-4">

@@ -164,7 +164,8 @@ export function DispatchPrepWorkbench({
   return (
     <div
       role="main"
-      aria-label="Dispatch Preparation Workbench"
+      // §11.274c — aria-label 한국어 정합 lock (Phase B P2 sweep).
+      aria-label="발송 준비 워크벤치"
       className={cn(
         // 모바일: 세로 스택 + 하단 dock 공간 확보
         "flex flex-col pb-20",
