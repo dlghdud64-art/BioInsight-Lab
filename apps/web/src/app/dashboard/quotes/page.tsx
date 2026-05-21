@@ -775,7 +775,8 @@ function QuoteCard({
             className={`h-9 sm:h-7 text-xs flex-1 sm:flex-none sm:w-full sm:min-w-[140px] whitespace-nowrap ${signals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
             /* §11.264e — CTA 클릭 시 ctaLabel 을 parent 에 전달 (예: "새 회신 보기").
                parent 가 vendor section auto-scroll 분기 결정. 다른 CTA 는 무시. */
-            onClick={(e) => { e.stopPropagation(); onSelect?.(signals.ctaLabel); }}
+            data-testid={signals.ctaLabel === "견적 요청 발송" ? "quote-card-direct-send-cta" : undefined}
+          onClick={(e) => { e.stopPropagation(); onSelect?.(signals.ctaLabel); }}
           >
             {signals.ctaLabel}
             <ArrowRight className="h-3 w-3 ml-1" />
@@ -1222,9 +1223,17 @@ function QuotesPageContent() {
   }, [autoScrollToVendorSection, selectedQuoteId]);
 
   // §11.264e — QuoteCard onSelect handler. ctaLabel === "새 회신 보기" 면
-  //   openQuoteContextRail 호출 후 autoScroll flag 설정. 다른 CTA (발송/조건/
+  //   openQuoteContextRail 호출 후 autoScroll flag 설정. 다른 CTA (조건/
   //   승인/...) 또는 row 클릭 (ctaLabel undefined) 은 기존 동작.
+  // §11.279d — 카드 [발송] CTA (ctaLabel === "견적 요청 발송") →
+  //   VendorRequestModal 직접 진입 (1 tap, 호영님 spec). rail panel skip
+  //   전 setSelectedQuoteId + setActiveWorkWindow("request_send") 직접 호출.
   const handleQuoteCardSelect = useCallback((quoteId: string, ctaLabel?: string) => {
+    if (ctaLabel === "견적 요청 발송") {
+      setSelectedQuoteId(quoteId);
+      setActiveWorkWindow("request_send");
+      return;
+    }
     openQuoteContextRail(quoteId, "row");
     if (ctaLabel === "새 회신 보기") {
       setAutoScrollToVendorSection(true);
@@ -1732,27 +1741,6 @@ function QuotesPageContent() {
     ],
     [primaryDispatchEvidence.contactStatus, primaryDispatchEvidence.supplierStatus],
   );
-  const primaryDispatchValidityBadges = useMemo(
-    () => [
-      {
-        key: "supplier-valid",
-        label: primaryDispatchEvidence.supplierStatus.includes("선택 필요")
-          ? "supplier valid: 대기"
-          : "supplier valid: 확인됨",
-        detail: primaryDispatchEvidence.supplierStatus,
-        tone: primaryDispatchEvidence.supplierStatus.includes("선택 필요") ? "red" : "green",
-      },
-      {
-        key: "contact-valid",
-        label: primaryDispatchEvidence.contactStatus.includes("필요")
-          ? "contact valid: 대기"
-          : "contact valid: 확인됨",
-        detail: primaryDispatchEvidence.contactStatus,
-        tone: primaryDispatchEvidence.contactStatus.includes("필요") ? "amber" : "green",
-      },
-    ],
-    [primaryDispatchEvidence.contactStatus, primaryDispatchEvidence.supplierStatus],
-  );
   const primaryDispatchLifecycleStage = primaryDispatchTracking.hasSent
     ? "sent"
     : primaryDispatchEvidence.canSend
@@ -1785,35 +1773,6 @@ function QuotesPageContent() {
       },
     ],
     [],
-  );
-  const primaryDispatchLifecycleChips = useMemo(
-    () => [
-      {
-        key: "before",
-        label: "발송 전",
-        detail: primaryDispatchEvidence.canSend ? "미리보기 검토 대기" : primaryDispatchEvidence.blockReason,
-        tone: "slate",
-      },
-      {
-        key: "review",
-        label: "검토 필요",
-        detail: primaryDispatchEvidence.canSend ? "최종 확인 가능" : "차단 사유 확인",
-        tone: "amber",
-      },
-      {
-        key: "sent",
-        label: "발송 완료",
-        detail: primaryDispatchTracking.hasSent ? primaryDispatchTracking.lastSentAt : "sent tracking 대기",
-        tone: primaryDispatchTracking.hasFailure ? "red" : "green",
-      },
-    ],
-    [
-      primaryDispatchEvidence.blockReason,
-      primaryDispatchEvidence.canSend,
-      primaryDispatchTracking.hasFailure,
-      primaryDispatchTracking.hasSent,
-      primaryDispatchTracking.lastSentAt,
-    ],
   );
   const primaryDispatchBadges = useMemo(
     () => [
@@ -2213,259 +2172,11 @@ function QuotesPageContent() {
         </div>
       )}
 
-      {/* §11.275 — verification-summary section 모바일 hidden (호영님 P0 spec: 모바일 80%+ 점유 해소).
-          데스크탑 (sm+) 인라인 보존 — 정보 밀도 우선 surface.
-          모바일 사용자 entry point 은 §11.272b mobile banner (아래) 이미 land. */}
-      <section
-        data-testid="quote-dispatch-verification-summary"
-        className="hidden sm:block rounded-xl border border-blue-200 bg-white px-3 py-3 shadow-sm sm:px-4"
-        aria-label="견적 발송 전 수신자 검증 요약"
-      >
-        <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-          <div className="min-w-0">
-            {/* §11.274b — visible 한국어 swap (§11.248a sweep 누락 후 §11.272b-restore-2 재발현). */}
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-700">공급사 발송 게이트</p>
-            <h2 className="text-sm font-semibold text-slate-950">
-              수신자 선택 → 연락처 확인 → 메시지 미리보기 → 발송
-            </h2>
-            <p
-              data-testid="quote-dispatch-visible-block-reason"
-              className="mt-1 text-[11px] text-slate-600"
-            >
-              {primaryDispatchEvidence.canSend
-                ? "전송 가능 · 수신처와 연락처 확인 후 미리보기를 검토하세요."
-                : `전송 버튼 비활성 · ${primaryDispatchEvidence.blockReason}`}
-            </p>
-            <p data-testid="quote-dispatch-current-fixed-reason" className="mt-1 text-[11px] font-semibold text-slate-700">
-              현재 사유: {primaryDispatchReasonState === "supplier-missing"
-                ? "공급사 미선택"
-                : primaryDispatchReasonState === "contact-missing"
-                  ? "연락처 누락"
-                  : "정상 입력"}
-            </p>
-            <p data-testid="quote-dispatch-primary-action-status" className="mt-1 text-[11px] font-semibold text-blue-800">
-              다음 작업: 공급사 선택 후 발송 준비 · 주 행동은 Send to supplier 1개입니다.
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 md:items-end">
-            <div className="flex flex-wrap items-center gap-1.5" data-testid="quote-dispatch-button-validity-badges">
-              {primaryDispatchValidityBadges.map((badge) => (
-                <span
-                  key={badge.key}
-                  data-testid={`quote-dispatch-validity-${badge.key}`}
-                  className={`inline-flex min-h-[28px] items-center rounded-full border px-2.5 text-[11px] font-semibold ${
-                    badge.tone === "green"
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                      : badge.tone === "amber"
-                        ? "border-amber-200 bg-amber-50 text-amber-800"
-                        : "border-rose-200 bg-rose-50 text-rose-800"
-                  }`}
-                  title={badge.detail}
-                >
-                  {badge.label}
-                </span>
-              ))}
-            </div>
-            <Button
-              type="button"
-              size="sm"
-              data-testid="quote-dispatch-summary-send-cta"
-              className="h-10 min-h-[44px] bg-blue-600 text-white hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-500"
-              onClick={openQuoteDraftWorkbench}
-              disabled={isLoading || quotes.length === 0 || !primaryDispatchEvidence.canSend}
-            >
-              <Send className="mr-1.5 h-4 w-4" />
-              Send to supplier
-              <span className="sr-only">공급사에 전송</span>
-            </Button>
-          </div>
-        </div>
-
-        <div
-          data-testid="quote-dispatch-fixed-reason-row"
-          className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3"
-          aria-label="전송 버튼 비활성 사유 3문구"
-        >
-          {primaryDispatchFixedReasonChips.map((chip) => (
-            <div
-              key={chip.key}
-              data-testid={`quote-dispatch-fixed-reason-${chip.key}`}
-              className={`rounded-lg border px-3 py-2 ${
-                chip.tone === "green"
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                  : chip.tone === "amber"
-                    ? "border-amber-200 bg-amber-50 text-amber-900"
-                    : "border-rose-200 bg-rose-50 text-rose-900"
-              } ${primaryDispatchReasonState === chip.key ? "shadow-sm" : ""}`}
-            >
-              <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70">{chip.label}</p>
-              <p className="mt-1 text-[11px] font-medium">{chip.detail}</p>
-            </div>
-          ))}
-        </div>
-
-        <div
-          data-testid="quote-dispatch-independent-state-chips"
-          className="mt-3 flex flex-wrap items-center gap-2"
-          aria-label="공급사와 연락처 독립 검증 상태"
-        >
-          {primaryDispatchStateChips.map((chip) => (
-            <span
-              key={chip.key}
-              data-testid={`quote-dispatch-state-chip-${chip.key}`}
-              className={`inline-flex min-h-[32px] items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold ${
-                chip.tone === "green"
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                  : chip.tone === "amber"
-                    ? "border-amber-200 bg-amber-50 text-amber-800"
-                    : "border-rose-200 bg-rose-50 text-rose-800"
-              }`}
-              title={chip.detail}
-            >
-              {chip.label}
-            </span>
-          ))}
-          <span
-            data-testid="quote-dispatch-preview-once-chip"
-            className="inline-flex min-h-[32px] items-center rounded-full border border-blue-200 bg-blue-50 px-3 text-[11px] font-semibold text-blue-800"
-          >
-            메시지 미리보기 1회 표시
-          </span>
-          <span
-            data-testid="quote-dispatch-missing-items-badge"
-            className={`inline-flex min-h-[32px] items-center rounded-full border px-3 text-[11px] font-semibold ${
-              primaryDispatchEvidence.canSend
-                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                : "border-rose-200 bg-rose-50 text-rose-800"
-            }`}
-          >
-            {primaryDispatchEvidence.canSend ? "미작성 항목 없음" : `미작성 항목: ${primaryDispatchEvidence.blockReason}`}
-          </span>
-        </div>
-
-        <div
-          data-testid="quote-dispatch-three-cell-summary"
-          className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3"
-        >
-          {primaryDispatchSummaryCells.map((cell) => (
-            <div
-              key={cell.key}
-              data-testid={`quote-dispatch-summary-${cell.key}`}
-              className={`min-h-[72px] rounded-lg border px-3 py-2 ${
-                cell.tone === "green"
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                  : cell.tone === "blue"
-                    ? "border-blue-200 bg-blue-50 text-blue-900"
-                    : cell.tone === "amber"
-                      ? "border-amber-200 bg-amber-50 text-amber-900"
-                      : cell.tone === "red"
-                        ? "border-rose-200 bg-rose-50 text-rose-900"
-                        : "border-slate-200 bg-slate-50 text-slate-800"
-              }`}
-            >
-              <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70">{cell.label}</p>
-              <p className="mt-1 text-xs font-semibold">{cell.value}</p>
-              <p className="mt-1 text-[11px] leading-snug opacity-80">{cell.helper}</p>
-            </div>
-          ))}
-        </div>
-
-        <div
-          data-testid="quote-dispatch-tracking-row"
-          className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3"
-          aria-label={`견적 발송 추적 상태 ${primaryDispatchTracking.statusLabel}`}
-        >
-          {primaryDispatchTracking.cells.map((cell) => (
-            <div
-              key={cell.key}
-              data-testid={`quote-dispatch-tracking-${cell.key}`}
-              className={`rounded-lg border px-3 py-2 ${
-                cell.tone === "green"
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                  : cell.tone === "blue"
-                    ? "border-blue-200 bg-blue-50 text-blue-900"
-                    : cell.tone === "red"
-                      ? "border-rose-200 bg-rose-50 text-rose-900"
-                      : "border-slate-200 bg-slate-50 text-slate-700"
-              }`}
-            >
-              <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70">{cell.label}</p>
-              <p className="mt-1 text-xs font-semibold">{cell.value}</p>
-              <p className="mt-1 text-[11px] leading-snug opacity-80">{cell.detail}</p>
-            </div>
-          ))}
-        </div>
-
-        <p data-testid="quote-dispatch-tracking-persistence" className="mt-2 text-[11px] text-slate-600">
-          발송 상태 {primaryDispatchTracking.statusLabel} · 발송 시각 {primaryDispatchTracking.lastSentAt} · 추적 ID {primaryDispatchTracking.trackingId}
-        </p>
-        <p
-          data-testid="quote-dispatch-sent-tracking-badge"
-          className="mt-1 inline-flex min-h-[28px] items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 text-[11px] font-semibold text-emerald-800"
-        >
-          sent tracking · quote {primaryDispatchTracking.quoteId} · {primaryDispatchTracking.statusLabel} · {primaryDispatchTracking.lastSentAt}
-        </p>
-
-        <div
-          data-testid="quote-dispatch-lifecycle-status-chips"
-          className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3"
-          aria-label={`견적 발송 운영 상태 ${primaryDispatchLifecycleStage}`}
-        >
-          {primaryDispatchLifecycleChips.map((chip) => (
-            <div
-              key={chip.key}
-              data-testid={`quote-dispatch-lifecycle-${chip.key}`}
-              className={`rounded-lg border px-3 py-2 ${
-                chip.tone === "green"
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                  : chip.tone === "red"
-                    ? "border-rose-200 bg-rose-50 text-rose-900"
-                    : chip.tone === "amber"
-                      ? "border-amber-200 bg-amber-50 text-amber-900"
-                      : "border-slate-200 bg-slate-50 text-slate-800"
-              } ${primaryDispatchLifecycleStage === chip.key ? "shadow-sm" : ""}`}
-            >
-              <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70">{chip.label}</p>
-              <p className="mt-1 text-[11px] font-medium">{chip.detail}</p>
-            </div>
-          ))}
-        </div>
-
-        <div
-          data-testid="quote-dispatch-visible-four-step"
-          className="mt-3 grid grid-cols-2 gap-1.5 text-[11px] text-slate-700 lg:grid-cols-4"
-        >
-          {[
-            ["1", "수신자 선택", primaryDispatchEvidence.supplierStatus],
-            ["2", "연락처 확인", primaryDispatchEvidence.contactStatus],
-            ["3", "메시지 미리보기", primaryDispatchEvidence.previewStatus],
-            ["4", "발송 확인", primaryDispatchEvidence.sendStatus],
-          ].map(([step, label, value]) => (
-            <div key={step} className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-2">
-              <span className="font-semibold text-slate-500">{step}. {label}</span>
-              <span className="ml-1 text-slate-700">{value}</span>
-            </div>
-          ))}
-        </div>
-        <div
-          data-testid="quote-dispatch-progress-bar"
-          className="mt-3 grid grid-cols-1 gap-2 lg:grid-cols-4"
-          aria-label="견적 발송 4단계 진행바"
-        >
-          {[
-            ["1", "공급사 선택", "공급사 1명 필요"],
-            ["2", "연락처 유효", "연락처 1개 필요"],
-            ["3", "메시지 미리보기", "전송 전 1회 확인"],
-            ["4", "최종 발송 버튼", primaryDispatchEvidence.canSend ? "활성화" : "비활성"],
-          ].map(([step, label, detail]) => (
-            <div key={step} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{step}. {label}</p>
-              <p className="mt-1 text-[11px] font-medium text-slate-700">{detail}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
+      {/* §11.279 — 게이트 블록 2종 제거 (호영님 P0 spec).
+          §11.279a verification-summary section unmount + §11.279b fixed-flow section unmount.
+          발송 entry point 은 §11.279d 카드 안 직접 [발송] CTA (1 tap, request_not_sent 분기) +
+          §11.272b mobile banner (sm:hidden + dispatchableCount > 0) + rail panel primary CTA (보조).
+          §11.279e helper data dead cleanup (primaryDispatchValidityBadges 등). */}
       <div
         data-testid="quote-dispatch-mobile-reason-proof"
         className="sm:hidden rounded-lg border border-blue-200 bg-blue-50/80 px-3 py-2"
@@ -2506,103 +2217,6 @@ function QuotesPageContent() {
           </Button>
         </div>
       )}
-
-      {/* §11.272b — 큰 블록 (4 단계 + badges + CTA) 모바일 hidden. 데스크탑 (sm+) 에서만
-          인라인 노출 — 정보 밀도 우선 surface. 모바일은 위 간략 배너 + 워크벤치 안 4 단계. */}
-      <section
-        data-testid="quote-dispatch-fixed-flow"
-        className="hidden sm:block rounded-xl border border-blue-200 bg-blue-50/70 px-3 py-3 sm:px-4 sm:py-3.5 space-y-3"
-        aria-label="견적 발송 전 확인 4단계"
-      >
-        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-700">발송 전 확인</p>
-            <h2 className="text-sm font-semibold text-slate-950">공급사 선택 → 연락처 검증 → 메시지 미리보기 → 발송 확인</h2>
-            <p data-testid="quote-dispatch-send-disabled-reason" className="text-[11px] text-blue-900/80">
-              {primaryDispatchEvidence.canSend
-                ? "공급사와 연락처가 확인되었습니다. 메시지 미리보기 후 최종 발송할 수 있습니다."
-                : `전송 비활성: ${primaryDispatchEvidence.blockReason} · ${primaryDispatchPreflight.summary}`}
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 sm:items-end">
-            <div data-testid="quote-dispatch-readiness-badges" className="flex flex-wrap items-center gap-1.5">
-              {primaryDispatchBadges.map((badge) => (
-                <span
-                  key={badge.label}
-                  data-testid={`quote-dispatch-${badge.label}-badge`}
-                  className={`inline-flex min-h-[28px] items-center rounded-full border px-2.5 text-[11px] font-semibold ${
-                    badge.tone === "green"
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                      : badge.tone === "blue"
-                        ? "border-blue-200 bg-blue-50 text-blue-700"
-                        : badge.tone === "amber"
-                          ? "border-amber-200 bg-amber-50 text-amber-700"
-                          : "border-rose-200 bg-rose-50 text-rose-700"
-                  }`}
-                >
-                  {badge.label}: {badge.value}
-                </span>
-              ))}
-            </div>
-            <div className="flex flex-col gap-1 sm:items-end">
-              <Button
-                type="button"
-                data-testid="quote-dispatch-send-cta"
-                size="sm"
-                variant="outline"
-                className="h-9 border-blue-200 bg-white text-blue-700 hover:bg-blue-50 disabled:bg-slate-100 disabled:text-slate-500"
-                onClick={openQuoteDraftWorkbench}
-                disabled={isLoading || quotes.length === 0 || !primaryDispatchEvidence.canSend}
-              >
-                <Send className="h-4 w-4 mr-1.5" />
-                Send to supplier
-                <span className="sr-only">공급사에 전송</span>
-              </Button>
-              <p data-testid="quote-dispatch-button-reason" className="text-[11px] text-slate-600">
-                {primaryDispatchEvidence.canSend
-                  ? "전송 준비됨 · 미리보기 확인 후 최종 발송"
-                  : `전송 불가 · ${primaryDispatchEvidence.blockReason}`}
-              </p>
-            </div>
-            {summaryStats.compareReview.count === 0 ? (
-              <span
-                data-testid="quote-compare-review-zero-disabled"
-                className="inline-flex h-9 items-center justify-center rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-400"
-                aria-disabled="true"
-              >
-                비교 검토 필요 0건 · 검토 대상 없음
-              </span>
-            ) : (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-9 text-xs"
-                onClick={() => setStatusFilter("RESPONDED")}
-              >
-                비교 검토 {summaryStats.compareReview.count}건 보기
-              </Button>
-            )}
-          </div>
-        </div>
-        <div
-          data-testid="quote-dispatch-four-step-gate"
-          className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4"
-        >
-          {[
-            // §11.272b — 4 단계 라벨 영문 → 한글 한글화 (호영님 P0 spec).
-            ["1. 공급사 선택", primaryDispatchEvidence.supplierStatus],
-            ["2. 연락처 확인", primaryDispatchEvidence.contactStatus],
-            ["3. 메시지 미리보기", primaryDispatchEvidence.previewStatus],
-            ["4. 발송 확인", primaryDispatchEvidence.sendStatus],
-          ].map(([label, status]) => (
-            <div key={label} className="rounded-lg border border-white/80 bg-white px-3 py-2 shadow-sm">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{label}</p>
-              <p className="mt-1 text-xs font-medium text-slate-800">{status}</p>
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* §11.217 Phase 3 — Batch action bar (sticky, selectedCount > 0 시만 노출)
           §11.228 #quote-management-v2-phase-c1 — 일괄 처리 강화: 리마인더 + 상태 변경 CTA 추가 */}
