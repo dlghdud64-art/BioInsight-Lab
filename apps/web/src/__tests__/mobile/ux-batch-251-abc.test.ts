@@ -76,19 +76,10 @@ describe("§11.251a — BatchActionBar (이미지1)", () => {
 });
 
 describe("§11.251b — Sourcing 검색 빈 화면 (이미지2)", () => {
-  it("BOM 등록 / 재고 확인 / 비교 목록 카드형 swap (아이콘 + 텍스트)", () => {
-    // 기존 3 텍스트 링크 → 카드형 (아이콘 + 텍스트). lucide icon 또는 inline-flex 안 아이콘 + label.
-    //   §11.251b 안 카드형 swap 시 grid 또는 inline-flex + border + icon.
-    expect(searchPage).toMatch(/§11\.251b|11\.251b/);
-  });
-
-  it("placeholder 축약 (모바일 잘림 방지)", () => {
-    // 기존 "시약명 / CAS / 제조사 / 카탈로그 번호" → 짧게 ("시약명·CAS·제조사" 또는 비슷).
-    // 모바일 잘림 방지를 위해 카탈로그 번호 제거 또는 "·" 구분자 swap.
-    expect(searchPage).toMatch(/placeholder=["'][^"']*시약명[^"']{0,40}["']/);
-    // "카탈로그 번호" 가 placeholder 안 포함 안 됨 (축약 후).
-    expect(searchPage).not.toMatch(/placeholder=["'][^"']*카탈로그\s*번호[^"']*["']/);
-  });
+  // §11.276c — §11.251b 의 2 stale invariant (카드형 swap marker + placeholder
+  //   축약) 제거. search page 가 후속 작업에서 §11.251b spec 회귀 → 현재 source
+  //   가 spec 정합 (호영님 Option A 결정). href 보존 invariant 만 valid 로 유지.
+  //   §11.251b 의도된 spec (카드형 + placeholder 축약) 재진입 시 별 cluster.
 
   it("BOM 등록 / 재고 확인 / 비교 목록 href 보존 (link 동작 보존)", () => {
     expect(searchPage).toMatch(/href=["']\/protocol\/bom["']/);
