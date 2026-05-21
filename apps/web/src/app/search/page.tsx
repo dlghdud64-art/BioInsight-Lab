@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, ArrowRight, Beaker, Package, FlaskConical, Microscope, CheckCircle2, RefreshCw, Ban } from "lucide-react";
 import Link from "next/link";
-import { savePendingAction } from "@/lib/auth/pending-action";
+import { savePendingAction, type PendingActionType } from "@/lib/auth/pending-action";
 
 const exampleQueries = [
   { label: "Anti-GAPDH antibody", icon: Beaker },
@@ -75,7 +75,13 @@ function PublicSearchContent() {
     return `/app/search?${params.toString()}`;
   }, [query, searchParams]);
 
-  const continueToAuth = useCallback((action: string, stage?: "compare" | "request") => {
+  // §11.278 — continueToAuth action 파라미터 type narrowing 회복.
+  //   b1aea5c4 "fix: make public search steps nonblocking" 이 시그니처를
+  //   `action: string` 으로 설계 → savePendingAction({ action: PendingActionType })
+  //   호출 시 TS strict (ignoreBuildErrors=false) 에서 build fail.
+  //   caller 1개 (line 91 `continueToAuth("run_search")`) 모두 valid literal.
+  //   런타임 동작 0 변경, type narrowing 만 강화.
+  const continueToAuth = useCallback((action: PendingActionType, stage?: "compare" | "request") => {
     const target = buildWorkbenchPath(stage);
     savePendingAction({ action, query: query.trim() || searchParams?.get("q") || "PBS" });
     router.push(`/auth/signin?callbackUrl=${encodeURIComponent(target)}`);
