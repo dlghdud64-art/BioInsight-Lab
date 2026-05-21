@@ -802,7 +802,10 @@ export function VendorRequestModal({
                 disabled
                 variant="secondary"
                 data-testid="quote-dispatch-send-disabled"
-                aria-label="Send to supplier disabled"
+                // §11.274 — aria-label 한국어 정합 lock (Phase B smoke 발견).
+                //   기존 "Send to supplier disabled" → SR 사용자가 영문 청취.
+                //   visible "선택 공급사에 요청 전달" 와 정합 + (비활성) suffix.
+                aria-label="공급사 요청 전달 (비활성)"
               >
                 <Send className="h-4 w-4 mr-2" />
                 선택 공급사에 요청 전달
@@ -826,7 +829,11 @@ export function VendorRequestModal({
               onClick={() => setConfirmationOpen(true)}
               disabled={isSubmitting || sendReadiness !== "ready" || Boolean(sentTracking)}
               data-testid="quote-dispatch-confirm-before-send"
-              aria-label="Send to supplier"
+              // §11.274 — aria-label 한국어 정합 lock (Phase B smoke 발견).
+              //   visible label 은 sendReadiness 분기로 4종 (전달 중… /
+              //   전송 추적 확인됨 / 전송 전 확인 필요 / 최종 확인 후 전송)
+              //   변동 — aria-label 은 button intent ("공급사에 전송") 안정화.
+              aria-label="공급사에 전송"
               className={`min-h-[40px] font-semibold active:scale-95 ${
                 sendReadiness === "ready"
                   ? "bg-emerald-600 hover:bg-emerald-700 text-white"
