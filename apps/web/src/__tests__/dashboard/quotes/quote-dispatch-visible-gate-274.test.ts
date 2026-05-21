@@ -50,4 +50,21 @@ describe("quote dispatch visible gate", () => {
     expect(page).toContain("발송 시각 {primaryDispatchTracking.lastSentAt}");
     expect(page).toContain("추적 ID {primaryDispatchTracking.trackingId}");
   });
+
+  it("shows supplier and contact as independent completion chips before send", () => {
+    expect(page).toContain('data-testid="quote-dispatch-independent-state-chips"');
+    expect(page).toContain('data-testid={`quote-dispatch-state-chip-${chip.key}`}');
+    expect(page).toContain("공급사 선택 완료");
+    expect(page).toContain("공급사 선택 필요");
+    expect(page).toContain("연락처 확인 완료");
+    expect(page).toContain("연락처 확인 필요");
+    expect(page).toContain("메시지 미리보기 1회 표시");
+  });
+
+  it("pins a one-line sent tracking badge with quote id and timestamp", () => {
+    expect(page).toContain('data-testid="quote-dispatch-sent-tracking-badge"');
+    expect(page).toContain("sent tracking · quote {primaryDispatchTracking.quoteId}");
+    expect(page).toContain("{primaryDispatchTracking.statusLabel}");
+    expect(page).toContain("{primaryDispatchTracking.lastSentAt}");
+  });
 });

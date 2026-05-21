@@ -432,6 +432,7 @@ function getQuoteDispatchTracking(q: Quote | null) {
   const lastSentAt = formatDispatchTimestamp(latestRequest?.createdAt);
 
   return {
+    quoteId: q?.id ?? "견적 선택 전",
     trackingId,
     lastSentAt,
     statusLabel: failedCount > 0 ? "실패 확인" : sentCount > 0 ? "추적중" : "발송 대기",
@@ -1708,6 +1709,27 @@ function QuotesPageContent() {
     () => getQuoteDispatchTracking(primaryDispatchQuote),
     [primaryDispatchQuote],
   );
+  const primaryDispatchStateChips = useMemo(
+    () => [
+      {
+        key: "supplier-ready",
+        label: primaryDispatchEvidence.supplierStatus.includes("선택 필요")
+          ? "공급사 선택 필요"
+          : "공급사 선택 완료",
+        detail: primaryDispatchEvidence.supplierStatus,
+        tone: primaryDispatchEvidence.supplierStatus.includes("선택 필요") ? "red" : "green",
+      },
+      {
+        key: "contact-ready",
+        label: primaryDispatchEvidence.contactStatus.includes("필요")
+          ? "연락처 확인 필요"
+          : "연락처 확인 완료",
+        detail: primaryDispatchEvidence.contactStatus,
+        tone: primaryDispatchEvidence.contactStatus.includes("필요") ? "amber" : "green",
+      },
+    ],
+    [primaryDispatchEvidence.contactStatus, primaryDispatchEvidence.supplierStatus],
+  );
   const primaryDispatchBadges = useMemo(
     () => [
       {
@@ -2142,6 +2164,35 @@ function QuotesPageContent() {
         </div>
 
         <div
+          data-testid="quote-dispatch-independent-state-chips"
+          className="mt-3 flex flex-wrap items-center gap-2"
+          aria-label="공급사와 연락처 독립 검증 상태"
+        >
+          {primaryDispatchStateChips.map((chip) => (
+            <span
+              key={chip.key}
+              data-testid={`quote-dispatch-state-chip-${chip.key}`}
+              className={`inline-flex min-h-[32px] items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold ${
+                chip.tone === "green"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                  : chip.tone === "amber"
+                    ? "border-amber-200 bg-amber-50 text-amber-800"
+                    : "border-rose-200 bg-rose-50 text-rose-800"
+              }`}
+              title={chip.detail}
+            >
+              {chip.label}
+            </span>
+          ))}
+          <span
+            data-testid="quote-dispatch-preview-once-chip"
+            className="inline-flex min-h-[32px] items-center rounded-full border border-blue-200 bg-blue-50 px-3 text-[11px] font-semibold text-blue-800"
+          >
+            메시지 미리보기 1회 표시
+          </span>
+        </div>
+
+        <div
           data-testid="quote-dispatch-three-cell-summary"
           className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3"
         >
@@ -2196,6 +2247,12 @@ function QuotesPageContent() {
 
         <p data-testid="quote-dispatch-tracking-persistence" className="mt-2 text-[11px] text-slate-600">
           발송 상태 {primaryDispatchTracking.statusLabel} · 발송 시각 {primaryDispatchTracking.lastSentAt} · 추적 ID {primaryDispatchTracking.trackingId}
+        </p>
+        <p
+          data-testid="quote-dispatch-sent-tracking-badge"
+          className="mt-1 inline-flex min-h-[28px] items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 text-[11px] font-semibold text-emerald-800"
+        >
+          sent tracking · quote {primaryDispatchTracking.quoteId} · {primaryDispatchTracking.statusLabel} · {primaryDispatchTracking.lastSentAt}
         </p>
 
         <div
