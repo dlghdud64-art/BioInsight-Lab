@@ -1655,21 +1655,20 @@ function QuotesPageContent() {
     () => getQuoteDispatchEvidence(primaryDispatchPreflight),
     [primaryDispatchPreflight],
   );
-  // §11.272b — badge label 한글화 (호영님 P0 spec): supplier→공급사 선택 / contact→연락처 확인 / preview→메시지 미리보기.
   const primaryDispatchBadges = useMemo(
     () => [
       {
-        label: "공급사 선택",
+        label: "supplier",
         value: primaryDispatchEvidence.supplierStatus,
         tone: primaryDispatchEvidence.supplierStatus.includes("선택 필요") ? "red" : "green",
       },
       {
-        label: "연락처 확인",
+        label: "contact",
         value: primaryDispatchEvidence.contactStatus,
         tone: primaryDispatchEvidence.contactStatus.includes("필요") ? "amber" : "green",
       },
       {
-        label: "메시지 미리보기",
+        label: "preview",
         value: primaryDispatchEvidence.previewStatus,
         tone: primaryDispatchEvidence.previewStatus.includes("대기") ? "slate" : "blue",
       },
@@ -4172,6 +4171,36 @@ function QuotesPageContent() {
           toast({ title: "AI 견적서 파싱 완료", description: "벤더 응답이 등록되었습니다." });
         }}
       />
+
+      {/* ═══ AI 견적서 비교 모달 ═══ */}
+      <Dialog open={aiCompareOpen} onOpenChange={setAiCompareOpen}>
+        <DialogContent className="max-w-2xl bg-white border-slate-200 p-0 gap-0">
+          <div className="px-6 pt-6 pb-4 border-b border-slate-100">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-lg text-slate-900">
+                <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                  <Sparkles className="h-4 w-4 text-blue-600" />
+                </div>
+                AI 견적서 비교 분석
+              </DialogTitle>
+              <DialogDescription className="text-sm text-slate-500 mt-1">
+                등록된 견적의 공급사별 조건을 비교하고 협상 포인트를 제안합니다
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+
+          <div className="px-6 py-5 max-h-[60vh] overflow-y-auto space-y-4">
+            {aiCompareLoading && (
+              <div className="flex flex-col items-center justify-center py-12 gap-3">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                <p className="text-sm text-slate-500">견적 데이터를 분석하고 있습니다...</p>
+              </div>
+            )}
+
+            {aiCompareError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+                <p className="text-sm text-red-600">{aiCompareError}</p>
+                <button onClick={runAiQuoteCompare} className="mt-2 text-xs text-red-500 hover:text-red-700 font-medium underline">재시도</button>
               </div>
             )}
 
@@ -4281,3 +4310,4 @@ export default function QuotesPage() {
     </NoSSR>
   );
 }
+ 
