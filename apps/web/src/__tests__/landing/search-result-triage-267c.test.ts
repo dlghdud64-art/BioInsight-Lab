@@ -38,8 +38,19 @@ describe("§11.267c /search result triage", () => {
 
   it("exposes direct candidate actions and same-canvas compare entry", () => {
     expect(page).toMatch(/"Shortlist", "Hold", "Exclude"/);
+    expect(page).toMatch(/handleTriageAction\(action, group\.title\)/);
     expect(page).toMatch(/data-testid="search-triage-compare-panel"/);
     expect(page).toMatch(/비교 진입: 같은 캔버스 우측 패널 전환/);
     expect(page).toMatch(/같은 화면에서 비교 패널이 열리고/);
+  });
+
+  it("keeps Step 2 and Step 3 as inline CTAs without an active overlay", () => {
+    expect(page).toMatch(/data-testid="search-triage-action-dock"/);
+    expect(page).toMatch(/data-testid="search-step-2-compare"/);
+    expect(page).toMatch(/Step 2 제품 비교/);
+    expect(page).toMatch(/data-testid="search-step-3-request"/);
+    expect(page).toMatch(/Step 3 견적 요청/);
+    expect(page).toMatch(/data-testid="search-triage-live-state"/);
+    expect(page).not.toMatch(/<Dialog open=/);
   });
 });

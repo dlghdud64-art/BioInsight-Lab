@@ -5,8 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, ArrowRight, Beaker, Package, FlaskConical, Microscope, LogIn, CheckCircle2, RefreshCw, Ban } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Search, ArrowRight, Beaker, Package, FlaskConical, Microscope, CheckCircle2, RefreshCw, Ban } from "lucide-react";
 import Link from "next/link";
 import { savePendingAction } from "@/lib/auth/pending-action";
 
@@ -62,11 +61,25 @@ const triageGroups = [
 ];
 
 function PublicSearchContent() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams?.get("q") || "");
-  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [publicTriageStage, setPublicTriageStage] = useState<"ready" | "compare" | "request">("ready");
+  const [publicTriageAction, setPublicTriageAction] = useState("후보 분류 대기");
+
+  const buildWorkbenchPath = useCallback((stage?: "compare" | "request") => {
+    const trimmed = query.trim() || searchParams?.get("q") || "PBS";
+    const params = new URLSearchParams({ q: trimmed });
+    if (stage) params.set("stage", stage);
+    return `/app/search?${params.toString()}`;
+  }, [query, searchParams]);
+
+  const continueToAuth = useCallback((action: string, stage?: "compare" | "request") => {
+    const target = buildWorkbenchPath(stage);
+    savePendingAction({ action, query: query.trim() || searchParams?.get("q") || "PBS" });
+    router.push(`/auth/signin?callbackUrl=${encodeURIComponent(target)}`);
+  }, [buildWorkbenchPath, query, router, searchParams]);
 
   const handleSearch = useCallback(() => {
     const trimmed = query.trim();
@@ -75,10 +88,9 @@ function PublicSearchContent() {
     if (session?.user) {
       router.push(`/app/search?q=${encodeURIComponent(trimmed)}`);
     } else {
-      savePendingAction({ action: "run_search", query: trimmed });
-      setShowLoginModal(true);
+      continueToAuth("run_search");
     }
-  }, [query, session, router]);
+  }, [continueToAuth, query, session, router]);
 
   const handleExampleClick = useCallback((exampleQuery: string) => {
     setQuery(exampleQuery);
@@ -86,7 +98,7 @@ function PublicSearchContent() {
       router.push(`/app/search?q=${encodeURIComponent(exampleQuery)}`);
     } else {
       savePendingAction({ action: "run_search", query: exampleQuery });
-      setShowLoginModal(true);
+      router.push(`/auth/signin?callbackUrl=${encodeURIComponent(`/app/search?q=${encodeURIComponent(exampleQuery)}`)}`);
     }
   }, [session, router]);
 
@@ -95,6 +107,20 @@ function PublicSearchContent() {
       handleSearch();
     }
   }, [handleSearch]);
+
+  const handleTriageAction = useCallback((action: string, groupTitle: string) => {
+    const nextStage = action === "Shortlist" ? "compare" : "ready";
+    setPublicTriageStage(nextStage);
+    setPublicTriageAction(`${groupTitle} · ${action}`);
+  }, []);
+
+  const handleStepAction = useCallback((stage: "compare" | "request") => {
+    setPublicTriageStage(stage);
+    setPublicTriageAction(stage === "compare" ? "Step 2 제품 비교 진입" : "Step 3 견적 요청 진입");
+    if (session?.user) {
+      router.push(buildWorkbenchPath(stage));
+    }
+  }, [buildWorkbenchPath, router, session]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -198,6 +224,7 @@ function PublicSearchContent() {
                       <button
                         key={action}
                         type="button"
+                        onClick={() => handleTriageAction(action, group.title)}
                         className="min-h-[32px] rounded-md border border-slate-200 bg-white px-2.5 text-[11px] font-semibold text-slate-600 hover:border-blue-300 hover:text-blue-700"
                       >
                         {action}
@@ -212,6 +239,41 @@ function PublicSearchContent() {
             <span className="font-bold text-slate-950">Compare panel</span>
             <span className="mx-2 text-slate-300">·</span>
             Shortlist 후보를 누르면 같은 화면에서 비교 패널이 열리고 검색 컨텍스트가 유지됩니다.
+          </div>
+          <div data-testid="search-triage-action-dock" className="grid grid-cols-1 gap-2 rounded-xl border border-slate-200 bg-white p-2 sm:grid-cols-[1fr_1fr_auto] sm:items-center">
+            <Button
+              type="button"
+              data-testid="search-step-2-compare"
+              className="h-10 bg-blue-600 text-white hover:bg-blue-500"
+              onClick={() => handleStepAction("compare")}
+            >
+              Step 2 제품 비교
+            </Button>
+            <Button
+              type="button"
+              data-testid="search-step-3-request"
+              variant="outline"
+              className="h-10 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+              onClick={() => handleStepAction("request")}
+            >
+              Step 3 견적 요청
+            </Button>
+            {!session?.user && (
+              <Link
+                href={`/auth/signin?callbackUrl=${encodeURIComponent(buildWorkbenchPath(publicTriageStage === "ready" ? undefined : publicTriageStage))}`}
+                className="inline-flex h-10 items-center justify-center rounded-md px-3 text-xs font-semibold text-slate-500 hover:text-slate-700"
+                onClick={() => savePendingAction({ action: publicTriageStage === "request" ? "create_quote_request" : "compare_products", query: query.trim() || searchParams?.get("q") || "PBS" })}
+              >
+                로그인 후 계속
+              </Link>
+            )}
+          </div>
+          <div data-testid="search-triage-live-state" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700" aria-live="polite">
+            <span className="font-bold text-slate-950">
+              {publicTriageStage === "compare" ? "비교 패널 준비됨" : publicTriageStage === "request" ? "견적 요청 준비됨" : "분류 준비됨"}
+            </span>
+            <span className="mx-2 text-slate-300">·</span>
+            {publicTriageAction}
           </div>
         </section>
 
@@ -253,34 +315,6 @@ function PublicSearchContent() {
         </div>
       </div>
 
-      {/* Login required modal */}
-      <Dialog open={showLoginModal} onOpenChange={setShowLoginModal}>
-        <DialogContent className="max-w-sm bg-white border-slate-200 shadow-xl">
-          <DialogHeader>
-            <DialogTitle className="text-slate-900 flex items-center gap-2">
-              <LogIn className="h-5 w-5 text-blue-600" />
-              로그인이 필요합니다
-            </DialogTitle>
-            <DialogDescription className="pt-2 text-slate-500">
-              로그인 후 결과 확인과 비교·견적 요청을 진행할 수 있습니다.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-2 pt-2">
-            <Link href={`/auth/signin?callbackUrl=${encodeURIComponent(query.trim() ? `/app/search?q=${encodeURIComponent(query.trim())}` : "/app/search")}`}>
-              <Button className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold">
-                로그인하기
-              </Button>
-            </Link>
-            <Button
-              variant="ghost"
-              className="text-slate-500 hover:text-slate-700"
-              onClick={() => setShowLoginModal(false)}
-            >
-              취소
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

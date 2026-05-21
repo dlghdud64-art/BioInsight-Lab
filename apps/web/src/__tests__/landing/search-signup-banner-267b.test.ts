@@ -13,7 +13,7 @@
  *   - 페이지 상단 (검색 input 위) 배치 — 검색 입력 전에 visible
  *
  * canonical truth lock:
- *   - 기존 search input + 검색 시 로그인 modal 트리거 (handleSearch) 보존
+ *   - 기존 search input + 검색 시 로그인 직행 fallback (handleSearch) 보존
  *   - example queries 보존
  *   - logged-in 분기 (router.push("/app/search?q=...")) 보존
  *   - savePendingAction 보존 (검색 후 로그인 시 검색어 보존)
@@ -52,10 +52,12 @@ describe("§11.267b #1 — search 페이지 상단 가입 배너 신규", () => 
 });
 
 describe("§11.267b #2 — invariant 보존 (canonical truth)", () => {
-  it("handleSearch 보존 (검색 시 로그인 modal 트리거 + savePendingAction)", () => {
+  it("handleSearch 보존 (검색 시 로그인 직행 + savePendingAction)", () => {
     expect(page).toMatch(/handleSearch/);
     expect(page).toMatch(/savePendingAction/);
-    expect(page).toMatch(/setShowLoginModal\(true\)/);
+    expect(page).toMatch(/continueToAuth\("run_search"\)/);
+    expect(page).not.toMatch(/setShowLoginModal\(true\)/);
+    expect(page).not.toMatch(/<Dialog open=/);
   });
 
   it("logged-in 분기 (router.push 으로 /app/search?q=) 보존", () => {
