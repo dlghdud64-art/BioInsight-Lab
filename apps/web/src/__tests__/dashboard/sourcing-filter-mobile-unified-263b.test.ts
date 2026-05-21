@@ -161,4 +161,12 @@ describe("11.263c sourcing result triage evidence", () => {
     expect(page).toMatch(/보류 검토/);
     expect(page).toMatch(/제외 사유/);
   });
+
+  it("keeps the strategy guidance rail from covering compare/request CTAs", () => {
+    expect(page).toMatch(/data-testid="sourcing-strategy-rail"/);
+    expect(page).toMatch(/pointer-events-none fixed right-0 top-\[60px\]/);
+    expect(page).toMatch(/pointer-events-auto absolute top-0 right-0/);
+    expect(page).not.toMatch(/fixed left-0 right-0 top-\[60px\]/);
+    expect(page).not.toMatch(/absolute inset-0 bg-black\/15/);
+  });
 });

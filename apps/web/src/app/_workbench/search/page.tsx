@@ -2587,17 +2587,17 @@ export default function SearchPage() {
         totalAmount={totalAmount}
       />
 
-      {/* ═══ AI Decision Layer — right-anchored, workbench context 유지 ═══ */}
+      {/* ═══ AI Decision Layer — non-blocking right rail, workbench context 유지 ═══ */}
       {isStrategyOverlayOpen && canOpenStrategyOverlay && (
         <div
-          className={`fixed left-0 right-0 top-[60px] z-[70] ${showSourcingActionDock ? "bottom-[128px]" : "bottom-0"}`}
-          onClick={closeStrategyOverlay}
+          className={`pointer-events-none fixed right-0 top-[60px] z-[70] w-full max-w-[400px] ${showSourcingActionDock ? "bottom-[128px]" : "bottom-0"}`}
+          data-testid="sourcing-strategy-rail"
         >
-          {/* Minimal backdrop — workbench 맥락 유지 */}
-          <div className="absolute inset-0 bg-black/15" />
-          {/* Anchored decision layer — right edge, rail과 연결된 느낌 */}
+          {/* Anchored decision layer — right edge only.
+              No full-screen backdrop: Browser Pilot must be able to click central
+              compare/request CTAs while this guidance rail is open. */}
           <div
-            className="absolute top-0 right-0 bottom-0 w-[400px] bg-white border-l border-blue-200 shadow-xl shadow-slate-200/50 flex flex-col overflow-hidden"
+            className="pointer-events-auto absolute top-0 right-0 bottom-0 w-full bg-white border-l border-blue-200 shadow-xl shadow-slate-200/50 flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Layer header — strong AI branding */}
