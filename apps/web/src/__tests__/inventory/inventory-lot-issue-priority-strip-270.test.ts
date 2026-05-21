@@ -27,12 +27,20 @@ describe("inventory lot issue priority strip", () => {
     expect(source).toContain(
       'data-testid="labaxis-inventory-lot-issue-stock-impact"',
     );
+    expect(source).toContain(
+      'data-testid="labaxis-inventory-disposal-priority-badge"',
+    );
+    expect(source).toContain("폐기 처리 우선");
     expect(source).toContain("보류 {lotIssueHoldCount}건");
     expect(source).toContain("즉시 확인 {lotIssueImmediateCount}건");
     expect(source).toContain("폐기 검토 {lotIssueDisposalReviewCount}건");
     expect(source).toContain("재주문 검토 {lotIssueReorderReviewCount}건");
-    expect(source).toContain("다음 작업: 1순위 폐기 처리 → 2순위 재주문 검토");
+    expect(source).toContain("만료 · 사용 금지 · 폐기 처리 순서로 먼저 확인합니다.");
     expect(source).toContain("폐기 후 안전재고 이하일 때만 재주문 검토");
+    expect(source).toContain(
+      'data-testid="labaxis-inventory-reorder-secondary-note"',
+    );
+    expect(source).toContain("재주문 검토는 폐기 완료 후 우측 도크에서 보조 액션으로 확인합니다.");
   });
 
   it("wires the primary lot issue action to a visible dock or disabled reason", () => {
@@ -42,7 +50,15 @@ describe("inventory lot issue priority strip", () => {
     expect(source).toContain("const handleLotIssueDecisionAction = () => {");
     expect(source).toContain('setActiveInventoryTab("overview")');
     expect(source).toContain("openDisposalDock(priorityExpiredLot)");
+    expect(source).toContain("bg-orange-600 text-white hover:bg-orange-700");
+    expect(source).toContain("폐기 처리 시작");
     expect(source).toContain("처리할 lot_issue가 없어 조치 버튼을 비활성화했습니다.");
+  });
+
+  it("removes the weak operations summary tab copy while lot issue review is active", () => {
+    expect(source).toContain('label: showLotIssueDecisionStrip ? "폐기 검토" : "운영 현황"');
+    expect(source).toContain("badge: showLotIssueDecisionStrip ? null : issuesCount > 0 ? issuesCount : null");
+    expect(source).toContain('suffix: showLotIssueDecisionStrip ? null : "S"');
   });
 
   it("keeps the disposal dock open after confirmation so stock impact remains auditable", () => {

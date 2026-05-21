@@ -1574,6 +1574,9 @@ function InventoryPageContent() {
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div className="min-w-0 space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
+                    <Badge data-testid="labaxis-inventory-disposal-priority-badge" variant="outline" className="border-orange-300 bg-orange-50 text-orange-800">
+                      폐기 처리 우선
+                    </Badge>
                     <Badge data-testid="labaxis-inventory-lot-issue-hold-count" variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
                       보류 {lotIssueHoldCount}건
                     </Badge>
@@ -1587,20 +1590,20 @@ function InventoryPageContent() {
                       재주문 검토 {lotIssueReorderReviewCount}건
                     </Badge>
                   </div>
-                  <p className="text-sm font-semibold text-slate-900">다음 작업: 1순위 폐기 처리 → 2순위 재주문 검토</p>
+                  <p className="text-sm font-semibold text-slate-900">만료 · 사용 금지 · 폐기 처리 순서로 먼저 확인합니다.</p>
                   <p data-testid="labaxis-inventory-lot-issue-stock-impact" className="text-xs font-semibold text-red-700">
                     재고 영향: 폐기 전 {actionableExpiredQuantity}개 확인 · 폐기 후 안전재고 이하일 때만 재주문 검토
                   </p>
-                  <p className="text-xs text-slate-500">현재 화면: 운영 현황 · 숫자 배지 순서대로 보류, 즉시 확인, 폐기 검토를 분리해 처리합니다.</p>
+                  <p data-testid="labaxis-inventory-reorder-secondary-note" className="text-xs font-medium text-slate-500">재주문 검토는 폐기 완료 후 우측 도크에서 보조 액션으로 확인합니다.</p>
                 </div>
                 <Button
                   data-testid="labaxis-inventory-lot-issue-next-action"
                   size="sm"
-                  className="h-9 shrink-0 gap-1.5 bg-slate-900 text-white hover:bg-slate-800"
+                  className="h-9 shrink-0 gap-1.5 bg-orange-600 text-white hover:bg-orange-700"
                   disabled={!priorityExpiredLot && !topPriorityQueueItem}
                   onClick={handleLotIssueDecisionAction}
                 >
-                  조치 시작
+                  폐기 처리 시작
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -1621,9 +1624,9 @@ function InventoryPageContent() {
                 {
                   key: "overview",
                   icon: <LayoutGrid className="w-3.5 h-3.5" />,
-                  label: "운영 현황",
-                  badge: issuesCount > 0 ? issuesCount : null,
-                  suffix: "S",
+                  label: showLotIssueDecisionStrip ? "폐기 검토" : "운영 현황",
+                  badge: showLotIssueDecisionStrip ? null : issuesCount > 0 ? issuesCount : null,
+                  suffix: showLotIssueDecisionStrip ? null : "S",
                 },
                 {
                   key: "storage-location",
