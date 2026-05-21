@@ -1758,6 +1758,34 @@ function QuotesPageContent() {
     : primaryDispatchEvidence.canSend
       ? "review"
       : "before";
+  const primaryDispatchReasonState = primaryDispatchEvidence.supplierStatus.includes("선택 필요")
+    ? "supplier-missing"
+    : primaryDispatchEvidence.contactStatus.includes("필요")
+      ? "contact-missing"
+      : "ready";
+  const primaryDispatchFixedReasonChips = useMemo(
+    () => [
+      {
+        key: "supplier-missing",
+        label: "공급사 미선택",
+        detail: "공급사 1명 필요",
+        tone: "red",
+      },
+      {
+        key: "contact-missing",
+        label: "연락처 누락",
+        detail: "유효 연락처 1개 필요",
+        tone: "amber",
+      },
+      {
+        key: "ready",
+        label: "정상 입력",
+        detail: "미리보기 후 최종 발송",
+        tone: "green",
+      },
+    ],
+    [],
+  );
   const primaryDispatchLifecycleChips = useMemo(
     () => [
       {
@@ -2208,6 +2236,13 @@ function QuotesPageContent() {
                 ? "전송 가능 · 수신처와 연락처 확인 후 미리보기를 검토하세요."
                 : `전송 버튼 비활성 · ${primaryDispatchEvidence.blockReason}`}
             </p>
+            <p data-testid="quote-dispatch-current-fixed-reason" className="mt-1 text-[11px] font-semibold text-slate-700">
+              현재 사유: {primaryDispatchReasonState === "supplier-missing"
+                ? "공급사 미선택"
+                : primaryDispatchReasonState === "contact-missing"
+                  ? "연락처 누락"
+                  : "정상 입력"}
+            </p>
           </div>
           <div className="flex flex-col gap-2 md:items-end">
             <div className="flex flex-wrap items-center gap-1.5" data-testid="quote-dispatch-button-validity-badges">
@@ -2241,6 +2276,29 @@ function QuotesPageContent() {
               공급사에 전송
             </Button>
           </div>
+        </div>
+
+        <div
+          data-testid="quote-dispatch-fixed-reason-row"
+          className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3"
+          aria-label="전송 버튼 비활성 사유 3문구"
+        >
+          {primaryDispatchFixedReasonChips.map((chip) => (
+            <div
+              key={chip.key}
+              data-testid={`quote-dispatch-fixed-reason-${chip.key}`}
+              className={`rounded-lg border px-3 py-2 ${
+                chip.tone === "green"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                  : chip.tone === "amber"
+                    ? "border-amber-200 bg-amber-50 text-amber-900"
+                    : "border-rose-200 bg-rose-50 text-rose-900"
+              } ${primaryDispatchReasonState === chip.key ? "shadow-sm" : ""}`}
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70">{chip.label}</p>
+              <p className="mt-1 text-[11px] font-medium">{chip.detail}</p>
+            </div>
+          ))}
         </div>
 
         <div
@@ -2376,7 +2434,39 @@ function QuotesPageContent() {
             </div>
           ))}
         </div>
+        <div
+          data-testid="quote-dispatch-progress-bar"
+          className="mt-3 grid grid-cols-1 gap-2 lg:grid-cols-4"
+          aria-label="견적 발송 4단계 진행바"
+        >
+          {[
+            ["1", "공급사 선택", "공급사 1명 필요"],
+            ["2", "연락처 유효", "연락처 1개 필요"],
+            ["3", "메시지 미리보기", "전송 전 1회 확인"],
+            ["4", "최종 발송 버튼", primaryDispatchEvidence.canSend ? "활성화" : "비활성"],
+          ].map(([step, label, detail]) => (
+            <div key={step} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{step}. {label}</p>
+              <p className="mt-1 text-[11px] font-medium text-slate-700">{detail}</p>
+            </div>
+          ))}
+        </div>
       </section>
+
+      <div
+        data-testid="quote-dispatch-mobile-reason-proof"
+        className="sm:hidden rounded-lg border border-blue-200 bg-blue-50/80 px-3 py-2"
+        aria-label="모바일 견적 발송 비활성 사유"
+      >
+        <p className="text-[11px] font-semibold text-blue-900">공급사 미선택 · 연락처 누락 · 정상 입력</p>
+        <p className="mt-1 text-[11px] text-blue-800">
+          현재 사유: {primaryDispatchReasonState === "supplier-missing"
+            ? "공급사 미선택"
+            : primaryDispatchReasonState === "contact-missing"
+              ? "연락처 누락"
+              : "정상 입력"} · 미리보기 후 최종 발송
+        </p>
+      </div>
 
       {/* §11.272b — 모바일 간략 배너 (호영님 P0 spec: 큰 블록은 견적 선택 + 발송
           액션 실행 시에만 표시). dispatchableCount > 0 일 때만 노출, 0 건이면 hidden.

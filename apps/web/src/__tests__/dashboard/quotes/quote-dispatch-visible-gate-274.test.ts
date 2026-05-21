@@ -85,4 +85,23 @@ describe("quote dispatch visible gate", () => {
     expect(page).toContain('label: "발송 완료"');
     expect(page).toContain("primaryDispatchLifecycleStage");
   });
+
+  it("pins the three fixed disabled/send reasons in one row", () => {
+    expect(page).toContain('data-testid="quote-dispatch-fixed-reason-row"');
+    expect(page).toContain('data-testid={`quote-dispatch-fixed-reason-${chip.key}`}');
+    expect(page).toContain('label: "공급사 미선택"');
+    expect(page).toContain('label: "연락처 누락"');
+    expect(page).toContain('label: "정상 입력"');
+    expect(page).toContain('data-testid="quote-dispatch-current-fixed-reason"');
+  });
+
+  it("shows a four-step progress bar and a mobile proof line", () => {
+    expect(page).toContain('data-testid="quote-dispatch-progress-bar"');
+    expect(page).toContain('"공급사 선택"');
+    expect(page).toContain('"연락처 유효"');
+    expect(page).toContain('"메시지 미리보기"');
+    expect(page).toContain('"최종 발송 버튼"');
+    expect(page).toContain('data-testid="quote-dispatch-mobile-reason-proof"');
+    expect(page).toContain("공급사 미선택 · 연락처 누락 · 정상 입력");
+  });
 });
