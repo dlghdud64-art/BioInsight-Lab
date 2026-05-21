@@ -826,7 +826,7 @@ export default function PurchasesPage() {
                     href="#brief-next"
                     className="text-[11px] px-2 py-1 rounded border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors"
                   >
-                    PO 전환
+                    발주 전환
                   </a>
                   <a
                     href="#brief-risks"
@@ -1377,7 +1377,7 @@ export default function PurchasesPage() {
               { id: "summary", label: "상태 요약" },
               { id: "facts",   label: "공급사 회신" },
               { id: "risks",   label: "차단 사유" },
-              { id: "next",    label: "PO 전환" },
+              { id: "next",    label: "발주 전환" },
             ]}
             summary={
               <p className="text-xs text-slate-700 leading-relaxed">
