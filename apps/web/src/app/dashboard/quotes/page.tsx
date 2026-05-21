@@ -2128,9 +2128,12 @@ function QuotesPageContent() {
         </div>
       )}
 
+      {/* §11.275 — verification-summary section 모바일 hidden (호영님 P0 spec: 모바일 80%+ 점유 해소).
+          데스크탑 (sm+) 인라인 보존 — 정보 밀도 우선 surface.
+          모바일 사용자 entry point 은 §11.272b mobile banner (아래) 이미 land. */}
       <section
         data-testid="quote-dispatch-verification-summary"
-        className="rounded-xl border border-blue-200 bg-white px-3 py-3 shadow-sm sm:px-4"
+        className="hidden sm:block rounded-xl border border-blue-200 bg-white px-3 py-3 shadow-sm sm:px-4"
         aria-label="견적 발송 전 수신자 검증 요약"
       >
         <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
