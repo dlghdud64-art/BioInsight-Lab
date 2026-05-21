@@ -593,10 +593,57 @@ export default function SearchPage() {
     const blockedReason = blockedProducts.length > 0
       ? `${blockedProducts.length}건은 공급사/가격 확인 후 보류 또는 제외가 필요합니다.`
       : "차단 사유 없음. 비교 후보를 같은 화면에서 검토할 수 있습니다.";
+    const toCandidateRow = (
+      product: any,
+      section: "Exact Match" | "Cross-Vendor Equivalent" | "Substitute" | "Blocked",
+      action: SourcingCandidateTriageState,
+      reason: string,
+      tone: "blue" | "violet" | "emerald" | "red",
+    ) => ({
+      key: `${section}-${product.id}`,
+      productId: product.id,
+      name: product.name ?? "이름 없는 후보",
+      brand: product.brand ?? "",
+      section,
+      action,
+      reason,
+      tone,
+    });
+    const candidateRows = [
+      ...exactProducts.slice(0, 1).map((product: any) => toCandidateRow(
+        product,
+        "Exact Match",
+        "shortlist",
+        "Shortlist: 비교 후보로 바로 이동",
+        "blue",
+      )),
+      ...equivalentProducts.slice(0, 1).map((product: any) => toCandidateRow(
+        product,
+        "Cross-Vendor Equivalent",
+        "shortlist",
+        "Shortlist: 동등 후보 비교 대상",
+        "violet",
+      )),
+      ...alternativeProducts.slice(0, 1).map((product: any) => toCandidateRow(
+        product,
+        "Substitute",
+        "hold",
+        "Hold: 대체 규격 확인 필요",
+        "emerald",
+      )),
+      ...blockedProducts.slice(0, 1).map((product: any) => toCandidateRow(
+        product,
+        "Blocked",
+        "exclude",
+        "Exclude: 차단 사유 + 공급사 코드 확인 필요",
+        "red",
+      )),
+    ];
 
     return {
       firstActionProduct,
       blockedReason,
+      candidateRows,
       candidateSections: [
         { key: "exact", label: "Exact Match", count: exactProducts.length, tone: "blue" as const },
         { key: "equivalent", label: "Cross-Vendor Equivalent", count: equivalentProducts.length, tone: "violet" as const },
@@ -607,7 +654,7 @@ export default function SearchPage() {
       sections: [
         { key: "exact", label: "Exact Match", sublabel: "정확 일치", count: exactProducts.length, tone: "blue" },
         { key: "equivalent", label: "Cross-Vendor Equivalent", sublabel: "동등 후보", count: equivalentProducts.length, tone: "violet" },
-        { key: "alternative", label: "Alternative Pack", sublabel: "대체 팩", count: alternativeProducts.length, tone: "emerald" },
+        { key: "alternative", label: "Substitute", sublabel: "대체 후보", count: alternativeProducts.length, tone: "emerald" },
         { key: "blocked", label: "Blocked", sublabel: "차단/보류", count: blockedProducts.length, tone: "red" },
       ],
     };
@@ -1225,16 +1272,15 @@ export default function SearchPage() {
               </div>
             )}
 
-            {/* §11.265b-1 — TRIAGE 블록 모바일 hidden (호영님 spec "검색 본질 회복").
-                  데스크탑 한정 inline 표시. 모바일은 §11.265b-2 NEW
-                  AiAnalysisBottomSheet 안으로 이동 예정. content / state /
-                  handler / data-testid 보존 (parent hidden 으로 비표시). */}
+            {/* §11.276 — Agent Board browser evidence target.
+                  Four-way triage must stay visible with candidate rows so the pilot
+                  can capture compare / hold / exclude from the first screen. */}
             {sourcingTriage && (
               <section
                 data-testid="sourcing-result-triage"
                 // §11.274c — aria-label 한국어 정합 lock.
                 aria-label="소싱 결과 분류"
-                className="hidden md:block px-3 pt-2"
+                className="px-3 pt-2"
               >
                 <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -1280,6 +1326,71 @@ export default function SearchPage() {
                       );
                     })}
                   </div>
+                  {sourcingTriage.candidateRows.length > 0 && (
+                    <div
+                      data-testid="sourcing-triage-candidate-list"
+                      className="mt-2 grid grid-cols-1 gap-1.5 lg:grid-cols-2"
+                    >
+                      {sourcingTriage.candidateRows.map((candidate) => {
+                        const toneClass = candidate.tone === "blue"
+                          ? "border-blue-200 bg-blue-50 text-blue-800"
+                          : candidate.tone === "violet"
+                            ? "border-violet-200 bg-violet-50 text-violet-800"
+                            : candidate.tone === "emerald"
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                              : "border-red-200 bg-red-50 text-red-800";
+                        const actionLabel = candidate.action === "shortlist"
+                          ? "Shortlist"
+                          : candidate.action === "hold"
+                            ? "Hold"
+                            : "Exclude";
+                        const actionState = sourcingCandidateTriage[candidate.productId];
+                        return (
+                          <div
+                            key={candidate.key}
+                            data-testid={`sourcing-triage-candidate-${candidate.action}`}
+                            className={`flex min-w-0 items-center gap-2 rounded-md border px-2.5 py-2 ${toneClass}`}
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="flex min-w-0 items-center gap-1.5">
+                                <span className="shrink-0 rounded-full bg-white/70 px-1.5 py-0.5 text-[10px] font-bold">
+                                  {candidate.section}
+                                </span>
+                                {actionState && (
+                                  <span className="shrink-0 rounded-full bg-white/70 px-1.5 py-0.5 text-[10px] font-semibold uppercase">
+                                    {actionState}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="mt-1 truncate text-xs font-semibold">{candidate.name}</p>
+                              <p className="mt-0.5 truncate text-[11px] font-medium opacity-80">
+                                {candidate.reason}
+                              </p>
+                            </div>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={candidate.action === "shortlist" ? "default" : "outline"}
+                              className="h-7 shrink-0 px-2 text-[11px]"
+                              onClick={() => handleProtectedAction(() => {
+                                if (candidate.action === "shortlist") {
+                                  if (!compareIds.includes(candidate.productId)) {
+                                    toggleCompare(candidate.productId, { name: candidate.name, brand: candidate.brand });
+                                  }
+                                  setActiveResultId(candidate.productId);
+                                  setWorkWindowMode("result-review");
+                                  return;
+                                }
+                                setSourcingCandidateTriageState(candidate.productId, candidate.action);
+                              })}
+                            >
+                              {actionLabel}
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                   <div className="mt-2 flex flex-col gap-2 border-t border-slate-100 pt-2 sm:flex-row sm:items-center">
                     <p
                       data-testid="sourcing-triage-blocked-reason"

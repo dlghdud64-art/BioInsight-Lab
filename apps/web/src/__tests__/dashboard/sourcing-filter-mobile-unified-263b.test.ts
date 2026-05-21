@@ -146,13 +146,18 @@ describe("11.263c sourcing result triage evidence", () => {
     expect(page).toMatch(/Sourcing Result Triage/);
     expect(page).toMatch(/Exact Match/);
     expect(page).toMatch(/Cross-Vendor Equivalent/);
-    expect(page).toMatch(/Alternative Pack/);
+    expect(page).toMatch(/Substitute/);
     expect(page).toMatch(/Blocked/);
   });
 
   it("exposes compare, hold, exclude actions outside result-card overlays", () => {
     expect(page).toMatch(/data-testid="sourcing-triage-compare-cta"/);
     expect(page).toMatch(/data-testid="sourcing-triage-blocked-reason"/);
+    expect(page).toMatch(/data-testid="sourcing-triage-candidate-list"/);
+    expect(page).toMatch(/sourcing-triage-candidate-\$\{candidate\.action\}/);
+    expect(page).toMatch(/Shortlist/);
+    expect(page).toMatch(/Hold/);
+    expect(page).toMatch(/Exclude/);
     expect(page).toMatch(/보류 검토/);
     expect(page).toMatch(/제외 사유/);
   });

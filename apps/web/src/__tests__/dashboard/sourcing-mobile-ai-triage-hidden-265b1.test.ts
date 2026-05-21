@@ -45,11 +45,10 @@ describe("§11.265b-1 #1 — 인라인 두 block 모바일 hidden", () => {
     );
   });
 
-  it("TRIAGE 블록 (sourcing-result-triage) section className hidden md:block", () => {
-    // 기존: <section data-testid="sourcing-result-triage" ... className="px-3 pt-2">
-    // 신규: className 에 "hidden md:block" 추가
+  it("TRIAGE 블록 (sourcing-result-triage) section className visible", () => {
+    // Agent Board browser evidence: inline triage must be visible so capture includes the four groups.
     expect(page).toMatch(
-      /data-testid="sourcing-result-triage"[\s\S]{0,200}className="hidden md:block px-3 pt-2"/,
+      /data-testid="sourcing-result-triage"[\s\S]{0,200}className="px-3 pt-2"/,
     );
   });
 });

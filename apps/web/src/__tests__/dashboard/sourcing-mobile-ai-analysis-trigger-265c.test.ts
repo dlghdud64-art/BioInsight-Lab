@@ -97,7 +97,7 @@ describe("§11.265c #2 — invariant 보존 (canonical truth)", () => {
       /!shouldShowSourcingStrip && aiShouldShow[\s\S]{0,400}className="hidden md:block px-4 pt-1\.5"/,
     );
     expect(page).toMatch(
-      /data-testid="sourcing-result-triage"[\s\S]{0,300}className="hidden md:block px-3 pt-2"/,
+      /data-testid="sourcing-result-triage"[\s\S]{0,300}className="px-3 pt-2"/,
     );
   });
 

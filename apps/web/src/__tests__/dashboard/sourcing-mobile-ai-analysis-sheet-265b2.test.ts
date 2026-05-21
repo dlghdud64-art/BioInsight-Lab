@@ -93,7 +93,7 @@ describe("§11.265b-2 #3 — invariant 보존 (canonical truth)", () => {
 
   it("§11.265b-1 inline TRIAGE section hidden md:block 보존", () => {
     expect(page).toMatch(
-      /data-testid="sourcing-result-triage"[\s\S]{0,300}className="hidden md:block px-3 pt-2"/,
+      /data-testid="sourcing-result-triage"[\s\S]{0,300}className="px-3 pt-2"/,
     );
   });
 
