@@ -105,11 +105,13 @@ describe("quote dispatch visible gate", () => {
     expect(page).toContain("공급사 미선택 · 연락처 누락 · 정상 입력");
   });
 
-  it("converges first glance on one blue priority CTA and one status line", () => {
-    expect(page).toContain('data-testid={isPriorityChip ? "quote-dispatch-priority-primary-cta" : undefined}');
-    expect(page).toContain("bg-blue-600 text-white border-blue-600 shadow-sm hover:bg-blue-700 hover:border-blue-700");
+  it("converges first glance on Send to supplier and hides the priority filter in quote-dispatch pilot", () => {
+    expect(page).toContain('data-testid="quote-dispatch-summary-send-cta"');
+    expect(page).toContain("Send to supplier");
     expect(page).toContain('data-testid="quote-dispatch-primary-action-status"');
-    expect(page).toContain("다음 작업: 공급사 선택 후 발송 준비");
+    expect(page).toContain("Send to supplier 1개");
+    expect(page).toContain('data-testid="quote-dispatch-missing-items-badge"');
+    expect(page).toContain('MODE_CHIPS.filter(chip => !(isBrowserPilotQuoteDispatch && chip.key === "urgent"))');
     expect(page).toContain('data-testid="quote-draft-workbench-cta"');
     expect(page).toContain('variant="ghost"');
     expect(page).toContain("hover:underline");

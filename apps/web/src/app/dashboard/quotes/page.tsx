@@ -2244,7 +2244,7 @@ function QuotesPageContent() {
                   : "정상 입력"}
             </p>
             <p data-testid="quote-dispatch-primary-action-status" className="mt-1 text-[11px] font-semibold text-blue-800">
-              다음 작업: 공급사 선택 후 발송 준비 · 주 행동은 우선 처리 1개입니다.
+              다음 작업: 공급사 선택 후 발송 준비 · 주 행동은 Send to supplier 1개입니다.
             </p>
           </div>
           <div className="flex flex-col gap-2 md:items-end">
@@ -2275,8 +2275,8 @@ function QuotesPageContent() {
               disabled={isLoading || quotes.length === 0 || !primaryDispatchEvidence.canSend}
             >
               <Send className="mr-1.5 h-4 w-4" />
-              {/* §11.274b — visible 한국어 swap (§11.248a + §11.274 aria-label 매핑 정합). */}
-              공급사에 전송
+              Send to supplier
+              <span className="sr-only">공급사에 전송</span>
             </Button>
           </div>
         </div>
@@ -2330,6 +2330,16 @@ function QuotesPageContent() {
             className="inline-flex min-h-[32px] items-center rounded-full border border-blue-200 bg-blue-50 px-3 text-[11px] font-semibold text-blue-800"
           >
             메시지 미리보기 1회 표시
+          </span>
+          <span
+            data-testid="quote-dispatch-missing-items-badge"
+            className={`inline-flex min-h-[32px] items-center rounded-full border px-3 text-[11px] font-semibold ${
+              primaryDispatchEvidence.canSend
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                : "border-rose-200 bg-rose-50 text-rose-800"
+            }`}
+          >
+            {primaryDispatchEvidence.canSend ? "미작성 항목 없음" : `미작성 항목: ${primaryDispatchEvidence.blockReason}`}
           </span>
         </div>
 
@@ -2539,12 +2549,14 @@ function QuotesPageContent() {
                 type="button"
                 data-testid="quote-dispatch-send-cta"
                 size="sm"
-                className="h-9 bg-blue-600 hover:bg-blue-700 text-white disabled:bg-slate-200 disabled:text-slate-500"
+                variant="outline"
+                className="h-9 border-blue-200 bg-white text-blue-700 hover:bg-blue-50 disabled:bg-slate-100 disabled:text-slate-500"
                 onClick={openQuoteDraftWorkbench}
                 disabled={isLoading || quotes.length === 0 || !primaryDispatchEvidence.canSend}
               >
                 <Send className="h-4 w-4 mr-1.5" />
-                공급사에 전송
+                Send to supplier
+                <span className="sr-only">공급사에 전송</span>
               </Button>
               <p data-testid="quote-dispatch-button-reason" className="text-[11px] text-slate-600">
                 {primaryDispatchEvidence.canSend
@@ -2748,14 +2760,12 @@ function QuotesPageContent() {
         <div className="relative flex-1 min-w-0">
         {/* Operating mode chips — §11.259c 가로 스크롤 (1줄 강제) + §11.259c-2 sm+ 좌측 flex-1. */}
         <div className="flex items-center gap-1.5 flex-nowrap overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 pb-1 sm:pb-0">
-          {MODE_CHIPS.map(chip => {
+          {MODE_CHIPS.filter(chip => !(isBrowserPilotQuoteDispatch && chip.key === "urgent")).map(chip => {
             const isActive = modeChip === chip.key;
             const chipCount = quotes.filter(chip.filter).length;
-            const isPriorityChip = chip.key === "urgent";
             return (
               <button
                 key={chip.key}
-                data-testid={isPriorityChip ? "quote-dispatch-priority-primary-cta" : undefined}
                 onClick={() => setModeChip(isActive ? null : chip.key)}
                 /* §11.264h — chip 내부 텍스트 줄바꿈 차단 (호영님 spec 견적 모바일 #4).
                    flex-nowrap 은 chip 끼리 줄바꿈 차단, whitespace-nowrap 은
@@ -2766,21 +2776,13 @@ function QuotesPageContent() {
                    Target Size 정합. text-[11px] 시각 사이즈 보존 (44px height
                    안에 items-center 로 가운데 정렬). */
                 className={`inline-flex items-center gap-1 text-[11px] min-h-[44px] px-2.5 py-1 rounded-full border font-medium transition-all whitespace-nowrap ${
-                  isPriorityChip
-                    ? "bg-blue-600 text-white border-blue-600 shadow-sm hover:bg-blue-700 hover:border-blue-700"
-                    : isActive
-                      ? "bg-blue-600/10 text-blue-600 border-blue-600/30"
-                      : "text-slate-500 border-bd/50 hover:border-bd hover:text-slate-900"
+                  isActive
+                    ? "bg-blue-600/10 text-blue-600 border-blue-600/30"
+                    : "text-slate-500 border-bd/50 hover:border-bd hover:text-slate-900"
                 }`}>
                 {chip.label}
                 {chipCount > 0 && (
-                  <span className={`text-[9px] ${
-                    isPriorityChip
-                      ? "text-blue-100"
-                      : isActive
-                        ? "text-blue-300"
-                        : "text-slate-600"
-                  }`}>
+                  <span className={`text-[9px] ${isActive ? "text-blue-300" : "text-slate-600"}`}>
                     {chipCount}
                   </span>
                 )}
