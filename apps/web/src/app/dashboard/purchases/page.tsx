@@ -773,7 +773,44 @@ export default function PurchasesPage() {
                               {item.blockerReason}
                             </p>
                           </div>
-                          <div className="rounded-xl bg-blue-50/60 border border-blue-200 px-3.5 py-3">
+                          {/* §11.277b — 카드 "다음 단계" 블록 직접 onClick (호영님 P0 Option A).
+                              card click handler 와 분리 (e.stopPropagation), setSelectedId(item.id)
+                              + hash="#brief-next" 으로 rail panel 열림 + 발주 전환 chip 자동 anchor scroll.
+                              '✦ 운영 브리핑' button 은 기존 동작 (상태 요약 chip) 보존. */}
+                          <div
+                            data-testid="purchases-card-next-step-cta"
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`다음 단계로 이동: ${item.nextStage}`}
+                            className="rounded-xl bg-blue-50/60 border border-blue-200 px-3.5 py-3 cursor-pointer hover:bg-blue-100/60 hover:border-blue-300 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedId(item.id);
+                              if (typeof window !== "undefined") {
+                                window.requestAnimationFrame(() => {
+                                  window.requestAnimationFrame(() => {
+                                    const target = document.getElementById("brief-next");
+                                    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+                                  });
+                                });
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setSelectedId(item.id);
+                                if (typeof window !== "undefined") {
+                                  window.requestAnimationFrame(() => {
+                                    window.requestAnimationFrame(() => {
+                                      const target = document.getElementById("brief-next");
+                                      if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+                                    });
+                                  });
+                                }
+                              }
+                            }}
+                          >
                             <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wider mb-1">다음 단계</p>
                             <p className="text-xs text-blue-700 leading-snug flex items-start gap-2 font-medium">
                               <ArrowRight className="h-3.5 w-3.5 flex-shrink-0 mt-0.5 text-blue-500" />
