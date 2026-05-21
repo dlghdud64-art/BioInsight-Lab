@@ -67,4 +67,22 @@ describe("quote dispatch visible gate", () => {
     expect(page).toContain("{primaryDispatchTracking.statusLabel}");
     expect(page).toContain("{primaryDispatchTracking.lastSentAt}");
   });
+
+  it("places supplier valid and contact valid badges beside the send button", () => {
+    expect(page).toContain('data-testid="quote-dispatch-button-validity-badges"');
+    expect(page).toContain('data-testid={`quote-dispatch-validity-${badge.key}`}');
+    expect(page).toContain("supplier valid: 확인됨");
+    expect(page).toContain("supplier valid: 대기");
+    expect(page).toContain("contact valid: 확인됨");
+    expect(page).toContain("contact valid: 대기");
+  });
+
+  it("fixes the operational lifecycle chips for before, review, and sent states", () => {
+    expect(page).toContain('data-testid="quote-dispatch-lifecycle-status-chips"');
+    expect(page).toContain('data-testid={`quote-dispatch-lifecycle-${chip.key}`}');
+    expect(page).toContain('label: "발송 전"');
+    expect(page).toContain('label: "검토 필요"');
+    expect(page).toContain('label: "발송 완료"');
+    expect(page).toContain("primaryDispatchLifecycleStage");
+  });
 });

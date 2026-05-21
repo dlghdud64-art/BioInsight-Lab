@@ -435,6 +435,8 @@ function getQuoteDispatchTracking(q: Quote | null) {
     quoteId: q?.id ?? "견적 선택 전",
     trackingId,
     lastSentAt,
+    hasSent: sentCount > 0,
+    hasFailure: failedCount > 0,
     statusLabel: failedCount > 0 ? "실패 확인" : sentCount > 0 ? "추적중" : "발송 대기",
     cells: [
       {
@@ -1730,6 +1732,61 @@ function QuotesPageContent() {
     ],
     [primaryDispatchEvidence.contactStatus, primaryDispatchEvidence.supplierStatus],
   );
+  const primaryDispatchValidityBadges = useMemo(
+    () => [
+      {
+        key: "supplier-valid",
+        label: primaryDispatchEvidence.supplierStatus.includes("선택 필요")
+          ? "supplier valid: 대기"
+          : "supplier valid: 확인됨",
+        detail: primaryDispatchEvidence.supplierStatus,
+        tone: primaryDispatchEvidence.supplierStatus.includes("선택 필요") ? "red" : "green",
+      },
+      {
+        key: "contact-valid",
+        label: primaryDispatchEvidence.contactStatus.includes("필요")
+          ? "contact valid: 대기"
+          : "contact valid: 확인됨",
+        detail: primaryDispatchEvidence.contactStatus,
+        tone: primaryDispatchEvidence.contactStatus.includes("필요") ? "amber" : "green",
+      },
+    ],
+    [primaryDispatchEvidence.contactStatus, primaryDispatchEvidence.supplierStatus],
+  );
+  const primaryDispatchLifecycleStage = primaryDispatchTracking.hasSent
+    ? "sent"
+    : primaryDispatchEvidence.canSend
+      ? "review"
+      : "before";
+  const primaryDispatchLifecycleChips = useMemo(
+    () => [
+      {
+        key: "before",
+        label: "발송 전",
+        detail: primaryDispatchEvidence.canSend ? "미리보기 검토 대기" : primaryDispatchEvidence.blockReason,
+        tone: "slate",
+      },
+      {
+        key: "review",
+        label: "검토 필요",
+        detail: primaryDispatchEvidence.canSend ? "최종 확인 가능" : "차단 사유 확인",
+        tone: "amber",
+      },
+      {
+        key: "sent",
+        label: "발송 완료",
+        detail: primaryDispatchTracking.hasSent ? primaryDispatchTracking.lastSentAt : "sent tracking 대기",
+        tone: primaryDispatchTracking.hasFailure ? "red" : "green",
+      },
+    ],
+    [
+      primaryDispatchEvidence.blockReason,
+      primaryDispatchEvidence.canSend,
+      primaryDispatchTracking.hasFailure,
+      primaryDispatchTracking.hasSent,
+      primaryDispatchTracking.lastSentAt,
+    ],
+  );
   const primaryDispatchBadges = useMemo(
     () => [
       {
@@ -2152,18 +2209,38 @@ function QuotesPageContent() {
                 : `전송 버튼 비활성 · ${primaryDispatchEvidence.blockReason}`}
             </p>
           </div>
-          <Button
-            type="button"
-            size="sm"
-            data-testid="quote-dispatch-summary-send-cta"
-            className="h-10 min-h-[44px] bg-blue-600 text-white hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-500"
-            onClick={openQuoteDraftWorkbench}
-            disabled={isLoading || quotes.length === 0 || !primaryDispatchEvidence.canSend}
-          >
-            <Send className="mr-1.5 h-4 w-4" />
-            {/* §11.274b — visible 한국어 swap (§11.248a + §11.274 aria-label 매핑 정합). */}
-            공급사에 전송
-          </Button>
+          <div className="flex flex-col gap-2 md:items-end">
+            <div className="flex flex-wrap items-center gap-1.5" data-testid="quote-dispatch-button-validity-badges">
+              {primaryDispatchValidityBadges.map((badge) => (
+                <span
+                  key={badge.key}
+                  data-testid={`quote-dispatch-validity-${badge.key}`}
+                  className={`inline-flex min-h-[28px] items-center rounded-full border px-2.5 text-[11px] font-semibold ${
+                    badge.tone === "green"
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                      : badge.tone === "amber"
+                        ? "border-amber-200 bg-amber-50 text-amber-800"
+                        : "border-rose-200 bg-rose-50 text-rose-800"
+                  }`}
+                  title={badge.detail}
+                >
+                  {badge.label}
+                </span>
+              ))}
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              data-testid="quote-dispatch-summary-send-cta"
+              className="h-10 min-h-[44px] bg-blue-600 text-white hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-500"
+              onClick={openQuoteDraftWorkbench}
+              disabled={isLoading || quotes.length === 0 || !primaryDispatchEvidence.canSend}
+            >
+              <Send className="mr-1.5 h-4 w-4" />
+              {/* §11.274b — visible 한국어 swap (§11.248a + §11.274 aria-label 매핑 정합). */}
+              공급사에 전송
+            </Button>
+          </div>
         </div>
 
         <div
@@ -2257,6 +2334,31 @@ function QuotesPageContent() {
         >
           sent tracking · quote {primaryDispatchTracking.quoteId} · {primaryDispatchTracking.statusLabel} · {primaryDispatchTracking.lastSentAt}
         </p>
+
+        <div
+          data-testid="quote-dispatch-lifecycle-status-chips"
+          className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3"
+          aria-label={`견적 발송 운영 상태 ${primaryDispatchLifecycleStage}`}
+        >
+          {primaryDispatchLifecycleChips.map((chip) => (
+            <div
+              key={chip.key}
+              data-testid={`quote-dispatch-lifecycle-${chip.key}`}
+              className={`rounded-lg border px-3 py-2 ${
+                chip.tone === "green"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                  : chip.tone === "red"
+                    ? "border-rose-200 bg-rose-50 text-rose-900"
+                    : chip.tone === "amber"
+                      ? "border-amber-200 bg-amber-50 text-amber-900"
+                      : "border-slate-200 bg-slate-50 text-slate-800"
+              } ${primaryDispatchLifecycleStage === chip.key ? "shadow-sm" : ""}`}
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70">{chip.label}</p>
+              <p className="mt-1 text-[11px] font-medium">{chip.detail}</p>
+            </div>
+          ))}
+        </div>
 
         <div
           data-testid="quote-dispatch-visible-four-step"
