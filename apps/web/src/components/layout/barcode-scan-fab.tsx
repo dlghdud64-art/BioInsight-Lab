@@ -36,6 +36,14 @@ import { useSmartSourcingStore } from "@/lib/store/smart-sourcing-store";
  *   않기 위해 수락 버튼을 통해서만 반영한다.
  */
 export function BarcodeScanFab() {
+  // §11.276 — production env-gated hide (호영님 P0: fake success 차단).
+  //   NEXT_PUBLIC_FEATURE_BARCODE_SCAN_MOCK !== "true" 시 button + overlay
+  //   노출 0. dev/staging 만 mock 흐름 보존 (개발 테스트용).
+  //   실제 카메라 백엔드 (BarcodeDetector / MediaDevices.getUserMedia +
+  //   product DB lookup) 구현 시 본 gate 제거.
+  if (process.env.NEXT_PUBLIC_FEATURE_BARCODE_SCAN_MOCK !== "true") {
+    return null;
+  }
   const router = useRouter();
   const setBomText = useSmartSourcingStore((s) => s.setBomText);
   const setActiveTab = useSmartSourcingStore((s) => s.setActiveTab);
