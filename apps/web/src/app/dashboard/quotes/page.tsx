@@ -998,6 +998,12 @@ function QuotesPageContent() {
   // refetch / sheet close 시 clearSelection 으로 reset (canonical truth 정합).
   const [selectedQuoteIds, setSelectedQuoteIds] = useState<Set<string>>(new Set());
   const [batchSheetOpen, setBatchSheetOpen] = useState(false);
+
+  // §11.272c-2 — KPI 모바일 요약 바 5초 timeout fallback (호영님 P2 spec, §11.272c 후속).
+  //   isLoading true 진입 후 5s 경과 시 setIsLoadingTimeout(true) → mobile-summary-bar
+  //   내부에서 5 KPI 자리에 "불러오기 실패" + [새로고침] CTA fallback UI 노출.
+  //   isLoading false 시 clearTimeout + reset (timeout 진입 차단).
+  const [isLoadingTimeout, setIsLoadingTimeout] = useState(false);
   // §11.228 #quote-management-v2-phase-c1 — 일괄 처리 강화 sheet state.
   // BatchReminderSheet (responseCount === 0 filter) + BatchStatusChangeSheet
   // (PATCH /api/quotes/[id]/status 일괄). BatchDispatchSheet 와 동등한 lifecycle.
@@ -1531,6 +1537,17 @@ function QuotesPageContent() {
 
   // 필터 변경 중 indicator (기존 list 유지하면서 상단에만 표시)
   const isFilterChanging = isFetching && !isLoading;
+
+  // §11.272c-2 — KPI 모바일 요약 바 5초 timeout fallback (호영님 P2 spec, §11.272c 후속).
+  //   isLoading true 5s 후 setIsLoadingTimeout(true). isLoading false 시 clearTimeout + reset.
+  useEffect(() => {
+    if (!isLoading) {
+      setIsLoadingTimeout(false);
+      return;
+    }
+    const timeoutId = setTimeout(() => setIsLoadingTimeout(true), 5000);
+    return () => clearTimeout(timeoutId);
+  }, [isLoading]);
 
   const quotes: Quote[] = useMemo(() => {
     const baseQuotes: Quote[] = quotesData?.quotes || [];
@@ -2187,13 +2204,34 @@ function QuotesPageContent() {
           (선택) = bg-slate-100 ring. 탭 → setStatusFilter (기존 카드 onClick 와
           동일 분기) — canonical truth (summaryStats / isCompareReviewZero) 보존.
           sm:hidden — 데스크탑은 5 cell grid 카드 유지. */}
+      {/* §11.272c-2 — isLoadingTimeout 시 5 KPI map 대신 "불러오기 실패" fallback UI */}
       <div
         data-testid="quote-kpi-mobile-summary-bar"
         className="sm:hidden flex items-stretch border-y border-slate-200 bg-white -mx-3 px-1 py-1"
         role="group"
         aria-label="견적 상태별 요약"
       >
-        {[
+        {isLoadingTimeout ? (
+          <div
+            data-testid="quote-kpi-mobile-summary-fallback"
+            className="flex-1 inline-flex items-center justify-between px-3 min-h-[44px]"
+            role="alert"
+            aria-live="polite"
+          >
+            <span className="text-[13px] font-medium text-rose-600">불러오기 실패</span>
+            <button
+              type="button"
+              onClick={() => {
+                setIsLoadingTimeout(false);
+                refetch();
+              }}
+              className="text-[13px] font-semibold text-blue-600 hover:text-blue-700 px-2 min-h-[44px] inline-flex items-center"
+              aria-label="견적 데이터 새로고침"
+            >
+              새로고침
+            </button>
+          </div>
+        ) : [
           { short: "발송", count: summaryStats.dispatchPending.count, filter: "PENDING", activeText: "text-slate-700" },
           { short: "회신", count: summaryStats.responseTracking.count, filter: "SENT", activeText: "text-amber-600" },
           { short: "비교", count: summaryStats.compareReview.count, filter: "RESPONDED", activeText: "text-purple-600" },
