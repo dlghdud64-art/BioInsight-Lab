@@ -165,7 +165,9 @@ function PublicSearchContent() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="제품명, 카탈로그 번호, 브랜드 검색..."
+                // §11.251b-redo — placeholder 모바일 잘림 방지 (호영님 P1 spec, §11.251b 원안 재진입).
+                //   "제품명, 카탈로그 번호, 브랜드 검색..." → "시약명·CAS·제조사" (3 항목, 중점 분리).
+                placeholder="시약명·CAS·제조사"
                 className="pl-11 h-12 text-slate-900 placeholder:text-slate-400 text-base bg-white border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-xl"
               />
             </div>
