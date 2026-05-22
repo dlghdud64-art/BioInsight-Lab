@@ -2177,30 +2177,59 @@ function QuotesPageContent() {
           발송 entry point 은 §11.279d 카드 안 직접 [발송] CTA (1 tap, request_not_sent 분기) +
           §11.272b mobile banner (sm:hidden + dispatchableCount > 0) + rail panel primary CTA (보조).
           §11.279e helper data dead cleanup (primaryDispatchValidityBadges 등). */}
+      {/* §11.279f — 데스크탑 (sm+) "📨 발송 준비 완료 N건 [일괄 발송]" 1줄 배너 신규
+          (호영님 P0 spec, §11.279 후속). dispatchableCount > 0 조건부, [일괄 발송]
+          click → setBatchSheetOpen(true) → BatchDispatchSheet 직진 (1 tap entry).
+          §11.279 게이트 블록 제거 후 데스크탑 일괄 발송 entry point 복구 — 카드
+          개별 [발송] CTA (§11.279d) + rail panel CTA (보조) 외 일괄 entry 부재였음. */}
       {/* §11.272b — 모바일 간략 배너 (호영님 P0 spec: 큰 블록은 견적 선택 + 발송
           액션 실행 시에만 표시). dispatchableCount > 0 일 때만 노출, 0 건이면 hidden.
           tap → openQuoteDraftWorkbench (워크벤치 안에서 4 단계 진행 — same-canvas).
-          데스크탑 (sm+) 은 아래 큰 블록 (quote-dispatch-fixed-flow) 인라인 유지. */}
+          데스크탑 (sm+) 은 위 §11.279f 데스크탑 배너 신규. */}
       {dispatchableCount > 0 && (
-        <div
-          data-testid="quote-dispatch-mobile-banner"
-          className="sm:hidden flex items-center justify-between gap-2 rounded-lg border border-blue-200 bg-blue-50/80 px-3 py-2.5"
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <Send className="h-4 w-4 text-blue-600 shrink-0" />
-            <p className="text-[13px] font-semibold text-blue-900 truncate">
-              발송 준비 {dispatchableCount}건 · 공급사 전송 가능
-            </p>
-          </div>
-          <Button
-            type="button"
-            size="sm"
-            onClick={openQuoteDraftWorkbench}
-            className="h-9 min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white shrink-0"
+        <>
+          {/* §11.279f 데스크탑 배너 */}
+          <div
+            data-testid="quote-dispatch-desktop-banner"
+            aria-label={`발송 준비 완료 ${dispatchableCount}건 일괄 발송`}
+            className="hidden sm:flex items-center justify-between gap-3 rounded-lg border border-blue-200 bg-blue-50/80 px-4 py-3"
           >
-            발송하기
-          </Button>
-        </div>
+            <div className="flex items-center gap-2 min-w-0">
+              <Send className="h-4 w-4 text-blue-600 shrink-0" aria-hidden="true" />
+              <p className="text-sm font-semibold text-blue-900 truncate">
+                📨 발송 준비 완료 {dispatchableCount}건 · 공급사 전송 가능
+              </p>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setBatchSheetOpen(true)}
+              className="h-9 min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white shrink-0"
+            >
+              일괄 발송
+            </Button>
+          </div>
+          {/* §11.272b 모바일 배너 */}
+          <div
+              data-testid="quote-dispatch-mobile-banner"
+            className="sm:hidden flex items-center justify-between gap-2 rounded-lg border border-blue-200 bg-blue-50/80 px-3 py-2.5"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <Send className="h-4 w-4 text-blue-600 shrink-0" />
+              <p className="text-[13px] font-semibold text-blue-900 truncate">
+                발송 준비 {dispatchableCount}건 · 공급사 전송 가능
+              </p>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              onClick={openQuoteDraftWorkbench}
+              className="h-9 min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white shrink-0"
+            >
+              발송하기
+            </Button>
+          </div>
+        </>
       )}
 
       {/* §11.217 Phase 3 — Batch action bar (sticky, selectedCount > 0 시만 노출)
