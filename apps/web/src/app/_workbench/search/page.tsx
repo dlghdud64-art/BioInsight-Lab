@@ -678,7 +678,12 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#F8FAFC' }}>
+    // §11.280 — outer container `pointer-events-auto` 강제 (호영님 P0, 햄버거 dead button fix).
+    //   Radix Sheet/Dialog 가 mount 시 `<body>` pointer-events:none 추가 후 unmount cleanup 누락
+    //   → CSS inherited cascade 로 햄버거 + 모든 button hit-test 차단 (Radix issue #2122).
+    //   outer container 가 own `pointer-events: auto` 명시 → cascade 차단, 모든 descendant 정상 hit-test.
+    //   Radix modal 자체 차단 behavior 는 Radix 자체 overlay 안 (body sibling z-index) 에서 작동 → 영향 0.
+    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden pointer-events-auto" style={{ backgroundColor: '#F8FAFC' }}>
       {/* ═══ A. Search Utility Bar — compact, not hero ═══ */}
       {/* §11.265e — onOpenFilter prop 제거 (dead prop, SearchUtilityBar body 사용 0). */}
       <SearchUtilityBar activeFilterCount={activeFilterCount} onAuthRequired={() => setIsLoginPromptOpen(true)} isLoggedIn={!!session?.user} stageOwner={stageOwner} onBackToSourcing={() => setWorkWindowMode(null)} />
