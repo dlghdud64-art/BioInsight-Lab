@@ -88,8 +88,9 @@ describe("§11.248e #5 — invariant 보존", () => {
     expect(page).toMatch(/w-\[480px\]/);
   });
 
-  it("OPERATIONAL BRIEFING 헤더 보존", () => {
-    expect(page).toMatch(/OPERATIONAL BRIEFING/);
+  // §11.279c — OPERATIONAL BRIEFING → 운영 브리핑 한글 swap (호영님 P2 sprint)
+  it("운영 브리핑 헤더 보존 (한글, §11.279c)", () => {
+    expect(page).toMatch(/운영 브리핑/);
   });
 
   it("closeQuoteContextRail mutation 보존", () => {

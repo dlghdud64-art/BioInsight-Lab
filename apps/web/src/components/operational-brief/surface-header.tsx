@@ -2,7 +2,7 @@
  * §11.179 #operational-brief-density-up-other-surfaces
  *
  * 5 surface 공통 ContextPanel 헤더.
- *   - eyebrow "OPERATIONAL BRIEFING" (tracking-[0.12em] text-blue-700)
+ *   - eyebrow "운영 브리핑" (§11.279c — text-blue-700, uppercase + tracking 제거)
  *   - module label badge
  *   - work object title (text-2xl font-bold)
  *   - LAST UPDATED 상대 시간 (formatRelativeKr)
@@ -43,8 +43,8 @@ export function BriefSurfaceHeader({
     <div className={cn("px-6 py-5 border-b border-bd bg-el/20", className)}>
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[11px] font-bold tracking-[0.12em] text-blue-700 uppercase">
-            OPERATIONAL BRIEFING
+          <span className="text-[11px] font-bold text-blue-700">
+            운영 브리핑
           </span>
           {moduleLabel && (
             <span

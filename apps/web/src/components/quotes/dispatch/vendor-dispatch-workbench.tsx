@@ -336,7 +336,7 @@ export function VendorRequestModal({
       setSentTracking({
         id: String(trackingId),
         recipientCount: sentCount,
-        statusLabel: failedCount > 0 ? "부분 전송 추적" : "sent tracking",
+        statusLabel: failedCount > 0 ? "부분 전송 추적" : "전송 추적",
       });
       setConfirmationOpen(false);
       onSuccess?.();

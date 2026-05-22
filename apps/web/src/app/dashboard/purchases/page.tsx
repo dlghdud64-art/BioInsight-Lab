@@ -890,8 +890,8 @@ export default function PurchasesPage() {
                 {/* §11.142-impl Rail header — 운영 브리핑 (§11.179 eyebrow 통일) */}
                 <div className="px-5 py-3.5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
                   <div className="min-w-0">
-                    <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-700 mb-1">
-                      OPERATIONAL BRIEFING
+                    <div className="text-[11px] font-bold text-blue-700 mb-1">
+                      운영 브리핑
                     </div>
                     <div className="text-[11px] text-slate-500 mb-1.5">선택한 견적</div>
                     <div className="flex items-center gap-2 mb-1 flex-wrap">

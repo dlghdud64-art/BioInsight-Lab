@@ -28,10 +28,10 @@ describe("§11.179 shared BriefSurfaceHeader 컴포넌트", () => {
     expect(src).toMatch(/export\s+function\s+BriefSurfaceHeader/);
   });
 
-  it("OPERATIONAL BRIEFING eyebrow + tracking-[0.12em]", () => {
+  // §11.279c — OPERATIONAL BRIEFING → 운영 브리핑 한글 swap, tracking 제거
+  it("운영 브리핑 eyebrow (한글, §11.279c)", () => {
     const src = read(PATH);
-    expect(src).toMatch(/OPERATIONAL BRIEFING/);
-    expect(src).toMatch(/tracking-\[0\.12em\]/);
+    expect(src).toMatch(/운영 브리핑/);
   });
 
   it("LAST UPDATED + formatRelativeKr import", () => {
@@ -56,10 +56,10 @@ describe("§11.179 5 surface eyebrow 일괄 swap", () => {
   ];
 
   for (const { name, path } of SURFACES) {
-    it(`${name} — OPERATIONAL BRIEFING eyebrow + tracking-[0.12em]`, () => {
+    // §11.279c — OPERATIONAL BRIEFING → 운영 브리핑 한글 swap, tracking 제거
+    it(`${name} — 운영 브리핑 eyebrow (한글, §11.279c)`, () => {
       const src = read(path);
-      expect(src).toMatch(/OPERATIONAL BRIEFING/);
-      expect(src).toMatch(/tracking-\[0\.12em\]/);
+      expect(src).toMatch(/운영 브리핑/);
     });
   }
 });

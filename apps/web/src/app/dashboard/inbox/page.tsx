@@ -743,8 +743,8 @@ function ContextPanel({
       <div className="px-6 py-5 border-b border-bd bg-el/20">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold tracking-[0.12em] text-blue-700 uppercase">
-              OPERATIONAL BRIEFING
+            <span className="text-[11px] font-bold text-blue-700">
+              운영 브리핑
             </span>
             <span
               className={cn(

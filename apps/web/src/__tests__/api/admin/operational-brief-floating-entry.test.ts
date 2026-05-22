@@ -95,9 +95,10 @@ describe("§11.175 inbox ContextPanel density-up", () => {
     expect(src).toMatch(/id="brief-facts"[\s\S]*?grid-cols-2[\s\S]*?MetricCell/);
   });
 
-  it("OPERATIONAL BRIEFING eyebrow", () => {
+  // §11.279c — OPERATIONAL BRIEFING → 운영 브리핑 한글 swap (호영님 P2 sprint)
+  it("운영 브리핑 eyebrow (한글, §11.279c)", () => {
     const src = read(PATH);
-    expect(src).toMatch(/OPERATIONAL\s+BRIEFING/);
+    expect(src).toMatch(/운영 브리핑/);
   });
 
   it("LAST UPDATED 상대 시간 표시", () => {
