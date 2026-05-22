@@ -1595,6 +1595,16 @@ function InventoryPageContent() {
                   <p data-testid="labaxis-inventory-lot-issue-stock-impact" className="text-xs font-semibold text-red-700">
                     재고 영향: 폐기 전 {actionableExpiredQuantity}개 확인 · 폐기 후 안전재고 이하일 때만 재주문 검토
                   </p>
+                  <div data-testid="labaxis-inventory-lot-issue-handoff-strip" className="grid gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-950 sm:grid-cols-3">
+                    <span data-testid="labaxis-inventory-current-owner">현재 담당: 재고 운영</span>
+                    <span data-testid="labaxis-inventory-next-handoff-action">다음 조치: 격리 승인</span>
+                    <span data-testid="labaxis-inventory-handoff-status">인계 상태: 인계 대기 1건</span>
+                  </div>
+                  <div data-testid="labaxis-inventory-lot-issue-queue-strip" className="flex flex-wrap gap-2 text-xs font-semibold text-slate-700">
+                    <span className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-red-700">블로커: 만료 lot 사용 금지</span>
+                    <span className="rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-orange-700">조치 1개: 폐기 처리</span>
+                    <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-slate-600">보류 1개: 재주문 검토 대기</span>
+                  </div>
                   <p data-testid="labaxis-inventory-reorder-secondary-note" className="text-xs font-medium text-slate-500">재주문 검토는 폐기 완료 후 우측 도크에서 보조 액션으로 확인합니다.</p>
                 </div>
                 <Button
