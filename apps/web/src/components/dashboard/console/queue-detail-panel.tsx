@@ -29,9 +29,9 @@ import { useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief"
  * - "운영 브리핑" 헤더 + "선택한 작업" object label
  * - 4 preset chips (상태 요약 / 긴급 사유 / 인수인계 / 다음 단계)
  * - 4 section: 상황 요약 / 핵심 근거 / 리스크 / 다음 조치
- * - Primary CTA = item.primaryCtaLabel (canonical, no AI 재해석)
+ * - Primary CTA = item.primaryCtaLabel (canonical, operator-confirmed final action)
  * - Sheet drawer 유지 (same-canvas)
- * - chatbot input 0 (자유 채팅창 금지)
+ * - tri-option decision support only (preset chips + facts/risks/next action; no free-form chat surface)
  */
 
 interface QueueDetailPanelProps {
@@ -221,7 +221,7 @@ export function QueueDetailPanel({
               </MetaRow>
             )}
 
-            {/* Primary CTA — canonical truth (no AI 재해석) */}
+            {/* Primary CTA — canonical truth, final action stays operator-confirmed */}
             <Button
               size="sm"
               variant="default"

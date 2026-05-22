@@ -211,8 +211,8 @@ export default function InboxPage() {
     [allItems, selectedItemId],
   );
 
-  // §11.175 — auto_open URL handler (dashboard/floating entry → priority hydrate).
-  // ?auto_open=p0 또는 ?auto_open=1 → filteredItems 첫 행 자동 선택 (sortInboxItems
+  // §11.175 — deep-link focus handler (dashboard/floating entry → priority hydrate).
+  // ?auto_open=p0 또는 ?auto_open=1 → filteredItems 첫 행을 operator review focus로 엽니다 (sortInboxItems
   // 가 이미 priority desc 로 정렬하므로 [0] 이 가장 시급 항목).
   // 1회성 (URL param consume 후 router.replace 로 제거).
   const autoOpenParam = searchParams.get("auto_open");
@@ -230,7 +230,7 @@ export default function InboxPage() {
   }, [autoOpenParam, filteredItems, selectedItemId, pathname, router, searchParams]);
 
   // §11.181 — handleFloatingEntryClick 제거: FAB default 가 popup 호출.
-  // §11.175 의 auto_open URL handler 만 유지 (외부 deep-link 호환성).
+  // §11.175 의 deep-link focus handler 만 유지 (외부 링크 호환성).
 
   // Toggle group collapse
   const toggleGroup = useCallback((group: string) => {

@@ -58,7 +58,7 @@ import type {
 //  This rewires the Phase B-β page (commit b214386a, which had
 //  swapped to /api/quotes/my as a smaller-scoped intermediate
 //  fix) onto the full conversion-queue ontology. The old mock UX
-//  (status / blocker / nextAction / AI options) is back, but every
+//  (status / blocker / nextAction / three review options) is back, but every
 //  field traces to a documented model branch — no fallback fake
 //  data.
 //
@@ -69,7 +69,7 @@ import type {
 //   • dead button ban — every CTA is a real Link or pure UI state.
 //     The bulk PO + selected-option mutations live in α-D and are
 //     intentionally NOT rendered as disabled-buttons here.
-//   • chatbot/assistant 재해석 금지 — resolver is rule-based
+//   • tri-option decision support only — resolver drafts options, operator confirms final action
 // ═══════════════════════════════════════════════════════════════════
 
 interface ConversionStats {
@@ -119,7 +119,7 @@ const NEXT_ACTION_LABEL: Record<NextAction, string> = {
   check_external_approval: "외부 승인 확인",
 };
 
-const AI_REC_STATUS_LABEL: Record<AiRecommendationStatus, { label: string; className: string }> = {
+const DECISION_SUPPORT_STATUS_LABEL: Record<AiRecommendationStatus, { label: string; className: string }> = {
   recommended:   { label: "AI 추천 완료", className: "text-blue-600" },
   review_needed: { label: "AI 검토 필요", className: "text-amber-600" },
   hold:          { label: "AI 판단 보류", className: "text-slate-500" },
@@ -375,7 +375,7 @@ export default function PurchasesPage() {
       );
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error || "AI 근거 생성 실패");
+        throw new Error(body?.error || "검토 근거 생성 실패");
       }
       return res.json();
     },
@@ -383,7 +383,7 @@ export default function PurchasesPage() {
       data: { rationale: string[]; fromCache: boolean; aiModel: string | null };
     }, vars) => {
       toast({
-        title: data.data.fromCache ? "AI 근거 (캐시)" : "AI 근거 생성 완료",
+        title: data.data.fromCache ? "검토 근거 (캐시)" : "검토 근거 생성 완료",
         description: data.data.rationale.join(" · "),
       });
       queryClient.invalidateQueries({ queryKey: ["purchase-conversion-queue"] });
@@ -392,7 +392,7 @@ export default function PurchasesPage() {
     },
     onError: (err: Error) => {
       toast({
-        title: "AI 근거 생성 실패",
+        title: "검토 근거 생성 실패",
         description: err.message,
         variant: "destructive",
       });
@@ -723,7 +723,7 @@ export default function PurchasesPage() {
 
             {!isLoading && !isError && filteredItems.map((item) => {
               const cs = STATUS_MAP[item.conversionStatus];
-              const ai = AI_REC_STATUS_LABEL[item.aiRecommendationStatus];
+              const ai = DECISION_SUPPORT_STATUS_LABEL[item.aiRecommendationStatus];
               const isSelected = selectedId === item.id;
               const hasBlocker = item.blockerType !== "none";
               // §11.277c — 모바일 카드 2단계 접힘/펼침 (default collapsed).
@@ -833,7 +833,7 @@ export default function PurchasesPage() {
                         </div>
                       </div>
 
-                      {/* 우측: AI 정보 + 가격 + 견적 상세 link (§11.277c — 모바일 collapse 분기) */}
+                      {/* 우측: 결정 보조 정보 + 가격 + 견적 상세 link (§11.277c — 모바일 collapse 분기) */}
                       <div className={`${isExpanded ? "flex" : "hidden"} sm:flex flex-col items-end gap-2 flex-shrink-0 min-w-[160px]`}
                         onClick={(e) => e.stopPropagation()}>
                         <div className="text-right">
@@ -881,7 +881,7 @@ export default function PurchasesPage() {
           {/* ── Rail 패널 ── */}
           {selectedItem && (() => {
             const cs = STATUS_MAP[selectedItem.conversionStatus];
-            const ai = AI_REC_STATUS_LABEL[selectedItem.aiRecommendationStatus];
+            const ai = DECISION_SUPPORT_STATUS_LABEL[selectedItem.aiRecommendationStatus];
             const hasBlocker = selectedItem.blockerType !== "none";
 
             return (
@@ -1219,12 +1219,12 @@ export default function PurchasesPage() {
                     </Link>
                   </div>
 
-                  {/* AI 선택안 */}
+                  {/* 3옵션 결정 보조안 */}
                   {selectedItem.aiOptions.length > 0 && (
                     <div className="px-5 py-4 border-b border-slate-100">
                       <div className="flex items-center gap-1.5 mb-3">
                         <Sparkles className="h-3.5 w-3.5 text-blue-600" />
-                        <span className="text-xs font-bold text-slate-700">AI 선택안</span>
+                        <span className="text-xs font-bold text-slate-700">3옵션 결정 보조안</span>
                         <span className={`text-[10px] ml-auto ${ai.className}`}>{ai.label}</span>
                       </div>
                       <div className="space-y-2">
@@ -1285,7 +1285,7 @@ export default function PurchasesPage() {
                               {opt.rationale.length > 0 && (
                                 <p className="text-[10px] text-slate-400 mt-1 leading-snug">{opt.rationale.join(" · ")}</p>
                               )}
-                              {/* α-F (ADR §11.25): inline AI rationale generator.
+                              {/* α-F (ADR §11.25): inline decision-support rationale generator.
                                   Tiny button below rationale line. Click does NOT
                                   toggle selection (stopPropagation) — it only
                                   persists / refreshes the LLM rationale via
@@ -1311,7 +1311,7 @@ export default function PurchasesPage() {
                                 }}
                                 className="mt-1 inline-flex items-center gap-1 text-[10px] text-slate-500 hover:text-blue-600 disabled:opacity-50"
                               >
-                                <Sparkles className="h-3 w-3" />AI 근거
+                                <Sparkles className="h-3 w-3" />검토 근거
                               </button>
                             </button>
                           );
