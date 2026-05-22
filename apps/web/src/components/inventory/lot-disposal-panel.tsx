@@ -389,6 +389,22 @@ export function LotDisposalPanel({
                 {disposableLotCount}건
               </strong>
             </div>
+            {/* §11.279 요구사항 — 폐기 전/후 수량 + 안전재고 + 상태 한눈 고정 블록 */}
+            <dl
+              data-testid="labaxis-inventory-disposal-before-after-safety"
+              className="grid grid-cols-2 gap-x-4 gap-y-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs"
+            >
+              <dt className="font-bold text-slate-500">폐기 전 수량</dt>
+              <dd className="text-right font-extrabold text-slate-900">{target.lotQuantity} {unit}</dd>
+              <dt className="font-bold text-slate-500">폐기 수량</dt>
+              <dd className="text-right font-extrabold text-red-700">-{effectiveQty} {unit}</dd>
+              <dt className="font-bold text-slate-500">폐기 후 수량</dt>
+              <dd className="text-right font-extrabold text-slate-900">{remainingAfterLotDisposal} {unit}</dd>
+              <dt className="font-bold text-slate-500">안전재고</dt>
+              <dd className="text-right font-extrabold text-slate-700">{target.safetyStock ? `${target.safetyStock} ${unit}` : "미설정"}</dd>
+              <dt className="font-bold text-slate-500">상태</dt>
+              <dd className="text-right font-extrabold text-orange-700">{isExpired ? "만료" : "사용 금지"}</dd>
+            </dl>
             <div
               data-testid="labaxis-inventory-disposal-stock-impact-first"
               className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"

@@ -1569,6 +1569,7 @@ function InventoryPageContent() {
             </div>
           </div>
 
+          {/* §11.273c — lot_issue 배지 색상 긴급도 차별화: count > 0 → 톤 강조, 0건 → slate 톤다운 */}
           {showLotIssueDecisionStrip && (
             <div data-testid="labaxis-inventory-lot-issue-priority-strip" className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -1580,13 +1581,13 @@ function InventoryPageContent() {
                     <Badge data-testid="labaxis-inventory-lot-issue-hold-count" variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
                       보류 {lotIssueHoldCount}건
                     </Badge>
-                    <Badge data-testid="labaxis-inventory-lot-issue-immediate-count" variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
+                    <Badge data-testid="labaxis-inventory-lot-issue-immediate-count" variant="outline" className={lotIssueImmediateCount > 0 ? "border-red-200 bg-red-50 text-red-700" : "border-slate-200 bg-slate-50 text-slate-400"}>
                       즉시 확인 {lotIssueImmediateCount}건
                     </Badge>
-                    <Badge data-testid="labaxis-inventory-lot-issue-disposal-count" variant="outline" className="border-red-200 bg-red-50 text-red-700">
+                    <Badge data-testid="labaxis-inventory-lot-issue-disposal-count" variant="outline" className={lotIssueDisposalReviewCount > 0 ? "border-orange-200 bg-orange-50 text-orange-700" : "border-slate-200 bg-slate-50 text-slate-400"}>
                       폐기 검토 {lotIssueDisposalReviewCount}건
                     </Badge>
-                    <Badge data-testid="labaxis-inventory-lot-issue-reorder-count" variant="outline" className="border-slate-200 bg-slate-50 text-slate-600">
+                    <Badge data-testid="labaxis-inventory-lot-issue-reorder-count" variant="outline" className={lotIssueReorderReviewCount > 0 ? "border-red-200 bg-red-50 text-red-700" : "border-slate-200 bg-slate-50 text-slate-400"}>
                       재주문 검토 {lotIssueReorderReviewCount}건
                     </Badge>
                   </div>
