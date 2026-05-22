@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Search, Package, CheckCircle2, Clock, AlertCircle, AlertTriangle,
-  ArrowRight, X, ListChecks, CircleCheck, ChevronRight, FileText,
+  ArrowRight, X, ListChecks, CircleCheck, ChevronRight, ChevronDown, ChevronUp, FileText,
   Sparkles, Truck, Check,
 } from "lucide-react";
 import Link from "next/link";
@@ -137,6 +137,17 @@ export default function PurchasesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [queueTab, setQueueTab] = useState<QueueTab>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // §11.277c — 모바일 카드 2단계 접힘/펼침 (호영님 P0 spec, §11.264g 패턴 reuse).
+  //   default collapsed (모바일 한정). 접힌 = 배지/제목/막힘/다음 단계.
+  //   펼친 = + itemSummary 본문 + 우측 AI/가격/CTA panel. 데스크탑 (md+) 변경 0.
+  const [expandedCardIds, setExpandedCardIds] = useState<Set<string>>(new Set());
+  const toggleCardExpand = useCallback((id: string) => {
+    setExpandedCardIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
 
   // §11.230c (a)-6 #purchases-orders-filter-sync — server-first hydration.
   //   preferences.purchasesFilter.queueTab 도착 시 QueueTab validation 후 setQueueTab.
@@ -715,6 +726,8 @@ export default function PurchasesPage() {
               const ai = AI_REC_STATUS_LABEL[item.aiRecommendationStatus];
               const isSelected = selectedId === item.id;
               const hasBlocker = item.blockerType !== "none";
+              // §11.277c — 모바일 카드 2단계 접힘/펼침 (default collapsed).
+              const isExpanded = expandedCardIds.has(item.id);
 
               return (
                 <div key={item.id}
@@ -753,7 +766,7 @@ export default function PurchasesPage() {
                     <div className="flex items-start gap-4">
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-slate-900 text-sm leading-snug mb-0.5">{item.requestTitle}</h3>
-                        <p className="text-xs text-slate-500 mb-3 line-clamp-2">{item.itemSummary}</p>
+                        <p className={`text-xs text-slate-500 mb-3 line-clamp-2 ${isExpanded ? "block" : "hidden sm:block"}`}>{item.itemSummary}</p>
 
                         {/* 막힘 / 다음 단계 */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -820,8 +833,8 @@ export default function PurchasesPage() {
                         </div>
                       </div>
 
-                      {/* 우측: AI 정보 + 가격 + 견적 상세 link */}
-                      <div className="hidden sm:flex flex-col items-end gap-2 flex-shrink-0 min-w-[160px]"
+                      {/* 우측: AI 정보 + 가격 + 견적 상세 link (§11.277c — 모바일 collapse 분기) */}
+                      <div className={`${isExpanded ? "flex" : "hidden"} sm:flex flex-col items-end gap-2 flex-shrink-0 min-w-[160px]`}
                         onClick={(e) => e.stopPropagation()}>
                         <div className="text-right">
                           <span className={`text-[11px] flex items-center gap-1 justify-end mb-0.5 ${ai.className}`}>
@@ -843,6 +856,22 @@ export default function PurchasesPage() {
                         <span className="text-[10px] text-slate-400">다음: {NEXT_ACTION_LABEL[item.nextAction]}</span>
                       </div>
                     </div>
+
+                    {/* §11.277c — 모바일 카드 toggle (sm:hidden, default collapsed) */}
+                    <button
+                      type="button"
+                      data-testid="purchases-card-mobile-toggle"
+                      aria-label={isExpanded ? "카드 접기" : "카드 더 보기"}
+                      aria-expanded={isExpanded}
+                      className="sm:hidden w-full mt-3 flex items-center justify-center gap-1 text-[11px] font-medium text-slate-500 hover:text-slate-700 py-1.5 border-t border-slate-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleCardExpand(item.id);
+                      }}
+                    >
+                      {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                      {isExpanded ? "접기" : "더 보기"}
+                    </button>
                   </div>
                 </div>
               );
