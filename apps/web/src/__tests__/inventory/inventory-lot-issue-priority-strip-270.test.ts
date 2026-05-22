@@ -51,8 +51,25 @@ describe("inventory lot issue priority strip", () => {
     expect(source).toContain('setActiveInventoryTab("overview")');
     expect(source).toContain("openDisposalDock(priorityExpiredLot)");
     expect(source).toContain("bg-orange-600 text-white hover:bg-orange-700");
-    expect(source).toContain("폐기 처리 시작");
+    expect(source).toContain("1차 CTA · 폐기 처리 시작");
+    expect(source).toContain(
+      'data-testid="labaxis-inventory-lot-issue-reorder-secondary-action"',
+    );
+    expect(source).toContain("2차 CTA · 폐기 완료 후 재주문 검토");
     expect(source).toContain("처리할 lot_issue가 없어 조치 버튼을 비활성화했습니다.");
+  });
+
+  it("keeps reorder review as a disabled secondary CTA after disposal", () => {
+    expect(source).toContain(
+      'data-testid="labaxis-inventory-lot-issue-action-stack"',
+    );
+    expect(source.indexOf('data-testid="labaxis-inventory-lot-issue-next-action"')).toBeLessThan(
+      source.indexOf('data-testid="labaxis-inventory-lot-issue-reorder-secondary-action"'),
+    );
+    expect(source.indexOf("1차 CTA · 폐기 처리 시작")).toBeLessThan(
+      source.indexOf("2차 CTA · 폐기 완료 후 재주문 검토"),
+    );
+    expect(source).toContain('aria-disabled="true"');
   });
 
   it("removes the weak operations summary tab copy while lot issue review is active", () => {

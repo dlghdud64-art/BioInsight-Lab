@@ -1607,16 +1607,28 @@ function InventoryPageContent() {
                   </div>
                   <p data-testid="labaxis-inventory-reorder-secondary-note" className="text-xs font-medium text-slate-500">재주문 검토는 폐기 완료 후 우측 도크에서 보조 액션으로 확인합니다.</p>
                 </div>
-                <Button
-                  data-testid="labaxis-inventory-lot-issue-next-action"
-                  size="sm"
-                  className="h-9 shrink-0 gap-1.5 bg-orange-600 text-white hover:bg-orange-700"
-                  disabled={!priorityExpiredLot && !topPriorityQueueItem}
-                  onClick={handleLotIssueDecisionAction}
-                >
-                  폐기 처리 시작
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
+                <div data-testid="labaxis-inventory-lot-issue-action-stack" className="flex shrink-0 flex-col gap-2">
+                  <Button
+                    data-testid="labaxis-inventory-lot-issue-next-action"
+                    size="sm"
+                    className="h-9 gap-1.5 bg-orange-600 text-white hover:bg-orange-700"
+                    disabled={!priorityExpiredLot && !topPriorityQueueItem}
+                    onClick={handleLotIssueDecisionAction}
+                  >
+                    1차 CTA · 폐기 처리 시작
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    data-testid="labaxis-inventory-lot-issue-reorder-secondary-action"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 justify-start border-slate-200 bg-white text-xs font-semibold text-slate-500"
+                    disabled
+                    aria-disabled="true"
+                  >
+                    2차 CTA · 폐기 완료 후 재주문 검토
+                  </Button>
+                </div>
               </div>
               {!priorityExpiredLot && !topPriorityQueueItem && <p className="mt-2 text-xs font-medium text-slate-500">처리할 lot_issue가 없어 조치 버튼을 비활성화했습니다.</p>}
             </div>
