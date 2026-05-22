@@ -62,8 +62,11 @@ interface ReadinessCheck {
 
 interface SentTrackingEvidence {
   id: string;
+  quoteId: string;
   recipientCount: number;
   statusLabel: string;
+  operatorName: string;
+  recordedAt: string;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -93,6 +96,9 @@ const CONFIDENCE_COLOR: Record<ResolvedSupplier["confidence"], string> = {
   low: "text-rose-700 border-rose-200 bg-rose-50",
 };
 
+const getDispatchTrackingStorageKey = (quoteId?: string) =>
+  quoteId ? `labaxis:quote-dispatch:${quoteId}:sent-tracking` : null;
+
 // ══════════════════════════════════════════════════════════════
 // Component
 // ══════════════════════════════════════════════════════════════
@@ -121,6 +127,7 @@ export function VendorRequestModal({
   const [messageExpanded, setMessageExpanded] = useState(false);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [sentTracking, setSentTracking] = useState<SentTrackingEvidence | null>(null);
+  const trackingStorageKey = getDispatchTrackingStorageKey(quoteId);
 
   // ── Initialize from resolved data ──
   useEffect(() => {
@@ -137,8 +144,17 @@ export function VendorRequestModal({
     setManualName("");
     setMessageExpanded(true);
     setConfirmationOpen(false);
-    setSentTracking(null);
-  }, [open, resolvedSuppliersInput, draftMessageInput]);
+    if (!trackingStorageKey || typeof window === "undefined") {
+      setSentTracking(null);
+      return;
+    }
+    try {
+      const storedTracking = window.localStorage.getItem(trackingStorageKey);
+      setSentTracking(storedTracking ? JSON.parse(storedTracking) as SentTrackingEvidence : null);
+    } catch {
+      setSentTracking(null);
+    }
+  }, [open, resolvedSuppliersInput, draftMessageInput, trackingStorageKey]);
 
   // ── Derived ──
   const includedSuppliers = suppliers.filter((s) => s.included);
@@ -333,11 +349,22 @@ export function VendorRequestModal({
         variant: failedCount > 0 ? "destructive" : "default",
       });
 
-      setSentTracking({
+      const trackingEvidence: SentTrackingEvidence = {
         id: String(trackingId),
+        quoteId,
         recipientCount: sentCount,
         statusLabel: failedCount > 0 ? "부분 전송 추적" : "전송 추적",
-      });
+        operatorName: "발송 운영자",
+        recordedAt: new Date().toISOString(),
+      };
+      setSentTracking(trackingEvidence);
+      if (trackingStorageKey && typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem(trackingStorageKey, JSON.stringify(trackingEvidence));
+        } catch {
+          // 추적 상태 저장 실패는 발송 성공 자체를 막지 않습니다.
+        }
+      }
       setConfirmationOpen(false);
       onSuccess?.();
     } catch (error: any) {
@@ -379,6 +406,22 @@ export function VendorRequestModal({
               ? `플랫폼이 ${resolvedCount}개 공급사 후보를 선별했습니다. 검토 후 전달을 승인하세요.`
               : "공급사를 직접 추가하거나 플랫폼 DB 보강을 기다려 주세요."}
           </DialogDescription>
+          <div
+            data-testid="quote-dispatch-sent-handoff-line"
+            className={`mt-3 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold ${
+              sentTracking
+                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                : "border-blue-200 bg-blue-50 text-blue-900"
+            }`}
+          >
+            <span data-testid="quote-dispatch-sent-status">{sentTracking ? "전송 완료" : "전송 대기"}</span>
+            <span aria-hidden="true">·</span>
+            <span data-testid="quote-dispatch-sent-tracking-top">{sentTracking ? "추적 중" : "전송 추적 준비"}</span>
+            <span aria-hidden="true">·</span>
+            <span data-testid="quote-dispatch-sent-owner">담당자: {sentTracking?.operatorName ?? "발송 운영자"}</span>
+            <span aria-hidden="true">·</span>
+            <span data-testid="quote-dispatch-sent-quote-id">quote ID: {sentTracking?.quoteId ?? quoteId ?? "저장 필요"}</span>
+          </div>
           <div
             data-testid="quote-dispatch-review-visible"
             className="mt-3 flex flex-wrap gap-2"
@@ -766,6 +809,9 @@ export function VendorRequestModal({
             </div>
             <p className="mt-1 text-xs text-emerald-700">
               {sentTracking.recipientCount}개 수신처 발송 이력이 남았습니다. 새로고침 후에도 이 견적의 vendor request로 추적합니다.
+            </p>
+            <p data-testid="quote-dispatch-sent-refresh-proof" className="mt-1 text-xs text-emerald-700">
+              dispatch event · 전송 추적 · 담당자: {sentTracking.operatorName} · quote ID: {sentTracking.quoteId}
             </p>
           </div>
         )}

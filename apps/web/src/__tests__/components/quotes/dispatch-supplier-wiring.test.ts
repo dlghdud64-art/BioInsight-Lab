@@ -91,9 +91,20 @@ describe("#quote-dispatch-final-confirmation - send gate evidence", () => {
   it("shows sent tracking evidence after a successful dispatch", () => {
     expect(source).toContain("quote-dispatch-sent-tracking-state");
     expect(source).toContain("quote-dispatch-sent-tracking-id");
+    expect(source).toContain("quote-dispatch-sent-handoff-line");
+    expect(source).toContain("quote-dispatch-sent-owner");
+    expect(source).toContain("quote-dispatch-sent-refresh-proof");
     expect(source).toContain("dispatchEventId");
     expect(source).toContain("vendorRequestBatchId");
     expect(source).toContain("createdRequests?.[0]?.id");
+  });
+
+  it("persists sent tracking by quote ID so refresh reopens the same handoff evidence", () => {
+    expect(source).toContain("getDispatchTrackingStorageKey");
+    expect(source).toContain("window.localStorage.getItem(trackingStorageKey)");
+    expect(source).toContain("window.localStorage.setItem(trackingStorageKey, JSON.stringify(trackingEvidence))");
+    expect(source).toContain("담당자: {sentTracking.operatorName}");
+    expect(source).toContain("quote ID: {sentTracking.quoteId}");
   });
 });
 
