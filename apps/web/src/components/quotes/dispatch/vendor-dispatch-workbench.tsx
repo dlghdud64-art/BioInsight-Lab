@@ -803,7 +803,8 @@ export function VendorRequestModal({
                 variant="secondary"
                 data-testid="quote-dispatch-send-disabled"
                 // §11.274 — aria-label 한국어 정합 lock (Phase B smoke 발견).
-                //   기존 "Send to supplier disabled" → SR 사용자가 영문 청취.
+                // §11.279c-cont — comment 안 영문 인용 한글 swap.
+                //   기존 영문 aria-label (공급사 발송 비활성) → SR 사용자가 영문 청취 위험.
                 //   visible "선택 공급사에 요청 전달" 와 정합 + (비활성) suffix.
                 aria-label="공급사 요청 전달 (비활성)"
               >

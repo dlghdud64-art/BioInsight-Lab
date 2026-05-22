@@ -206,8 +206,9 @@ export function OperatorQuickActions({
                     ? "메시지 미리보기 필요"
                     : "전송 가능";
             // §11.247 #1 — Progressive Disclosure.
+            // §11.279c-cont — comment 안 영문 한글 swap.
             //   접힌 상태: minimal layout (다른 3 카드와 동일 높이) + 자세히 보기 hint.
-            //   펼친 상태: 전체 상태 흐름표 + Send to supplier 버튼 + 접기 CTA.
+            //   펼친 상태: 전체 상태 흐름표 + 공급사에 전송 button + 접기 CTA.
             //   카드 클릭/Enter/Space 으로 toggle. min-h-[140px] 균일 + transition 300ms.
             const toggle = () => setIsQuoteDispatchExpanded((prev) => !prev);
             return (

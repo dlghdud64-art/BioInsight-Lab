@@ -1,5 +1,8 @@
 /**
- * Send Confirmation Re-entry Engine — final resend confirmation + resend guard + dispatch re-execution event + sent tracking handoff
+ * §11.279c-cont — JSDoc 한글 swap (호영님 P3 sweep).
+ *
+ * 전송 확인 재진입 엔진 — 최종 재전송 확인 + 재전송 가드 + 발송 재실행 이벤트 + 전송 추적 인계.
+ * (type/identifier 이름은 영문 lineage 보존: SendConfirmationReentry* / *ReentryHandoff)
  */
 
 import type { SendConfirmationReentryHandoff } from "./dispatch-preparation-reentry-engine";
