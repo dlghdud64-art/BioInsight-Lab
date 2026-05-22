@@ -183,7 +183,7 @@ describe("§11.279 — invariant 보존 (canonical truth)", () => {
     expect(PAGE).toMatch(/selectedSignals\.railCtaLabel/);
   });
 
-  it("primaryDispatchEvidence useMemo 보존 (canSend / blockReason canonical)", () => {
-    expect(PAGE).toMatch(/const primaryDispatchEvidence = useMemo/);
-  });
+  // §11.279e-cont-2 — primaryDispatchEvidence + Preflight + Quote 10 helper 전부
+  //   transitively dead 로 § 11.279e-cont-2 batch 에서 일괄 제거. 본 invariant 는 정합 제거.
+  //   대체 sentinel: quote-dispatch-primary-helpers-removed-279e-cont-2.test.ts (Phase 1 RED).
 });
