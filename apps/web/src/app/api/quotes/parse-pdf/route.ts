@@ -55,6 +55,15 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
+    // §11.290 Phase 4c — pipelineResult metadata outer scope retain
+    // (jobId / providerUsed / cached). QuoteScannerModal review step 에서
+    // ProviderBadge + CacheHitIndicator 표시 위해 ocrMetadata response 노출.
+    let ocrMetadata: {
+      jobId: string | null;
+      providerUsed: "GEMINI" | "CLOUD_VISION_CLAUDE" | "REGEX";
+      cached: boolean;
+    } | null = null;
+
     const pipelineResult = await runQuoteOcrPipeline({
       kind: "pdf",
       buffer,
@@ -62,12 +71,19 @@ export async function POST(request: NextRequest) {
       userId: session.user.id,
     });
     const result = pipelineResult.result;
+    ocrMetadata = {
+      jobId: pipelineResult.jobId,
+      providerUsed: pipelineResult.providerUsed,
+      cached: pipelineResult.cached,
+    };
 
     // 기존 QuoteExtractionResult 호환 형태로도 반환
     return NextResponse.json({
       // 새 구조 (상세)
       success: true,
       ...result,
+      // §11.290 Phase 4c — OCR pipeline metadata (provider / cache / jobId).
+      ocrMetadata,
       // 기존 호환 필드
       items: result.parsed.items.map((item) => ({
         productName: item.productName,
