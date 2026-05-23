@@ -43,18 +43,24 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <OperationalBriefPopupProvider>
       {/* §11.125 — skip-link (WCAG 2.4.1 Bypass Blocks). 키보드 사용자가
           Tab 첫 stop 으로 sidebar nav 건너뛰고 main 으로 이동.
-          §11.214c — focus: → focus-visible: swap. §11.214b NoSSR mount-after-
-          render 시 skip-link 가 첫 focusable element 라 자동 focus → visible
-          (LabAxis 텍스트 로고와 겹침). focus-visible 은 keyboard navigation
-          (Tab) 시에만 활성화 — programmatic / 자동 focus 시 visible 0. */}
+          §11.272a-redo — Hybrid 명시 강화 (호영님 P0 회귀 보고 후속). 3-layer
+          defense: (1) sr-only screen reader 안전, (2) absolute left-[-9999px]
+          top-[-9999px] explicit off-screen (sr-only purge fallback), (3)
+          focus-visible:not-sr-only focus-visible:fixed (§11.214c 의도 보존 —
+          키보드 Tab 시에만 노출, programmatic auto-focus 차단). top-auto
+          edge case 차단 — top-[-9999px] 도 명시. */}
       <a
         href="#main-content"
-        className="sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:top-3 focus-visible:left-3 focus-visible:z-[100] focus-visible:bg-blue-600 focus-visible:text-white focus-visible:px-3 focus-visible:py-2 focus-visible:rounded-md focus-visible:text-sm focus-visible:font-semibold focus-visible:shadow-lg"
+        className="sr-only absolute left-[-9999px] top-[-9999px] focus-visible:not-sr-only focus-visible:fixed focus-visible:left-3 focus-visible:top-3 focus-visible:z-[100] focus-visible:bg-blue-600 focus-visible:text-white focus-visible:px-3 focus-visible:py-2 focus-visible:rounded-md focus-visible:text-sm focus-visible:font-semibold focus-visible:shadow-lg"
       >
         본문 바로가기
       </a>
 
-      <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
+      {/* §11.283b #dashboard-shell-bg-white-unified — 호영님 P0 spec: "배경색이
+          너무 회색톤이여서 흰색톤으로 통일". 기존 bg-[#F8FAFC] (slate-50 톤)
+          → bg-white. application-wide dashboard surface (대시보드 / 견적 / 구매
+          / 재고 / 설정 등) 흰색 통일. visual cleanliness ↑. */}
+      <div className="flex h-screen overflow-hidden bg-white">
         <DashboardSidebar
           isMobileOpen={isMobileMenuOpen}
           onMobileOpenChange={setIsMobileMenuOpen}
