@@ -13,6 +13,7 @@ import {
   Shield,
   FileText,
   ShoppingCart,
+  ScanLine,
   LogOut,
   Menu,
   X,
@@ -40,6 +41,8 @@ const ADMIN_MENU_ITEMS = [
   { title: "Users", href: "/admin/users", icon: Users },
   { title: "Organizations", href: "/admin/organizations", icon: Database },
   { title: "Activity Logs", href: "/admin/activity", icon: Activity },
+  // §11.290 Phase 6 — OCR 사용량 모니터링 (per-provider + per-day + cache 활용도)
+  { title: "OCR 사용량", href: "/admin/ocr-monitoring", icon: ScanLine },
   { title: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
@@ -119,7 +122,8 @@ export function AdminSidebar() {
 
   return (
     <>
-      {/* Mobile hamburger trigger (md 미만에서만 노출) */}
+      {/* Mobile hamburger trigger (md 미만에서만 노출)
+          §11.282-d — Menu SVG icon hit-test trap 차단 (§11.280-2/§11.282-a 동일). */}
       <button
         ref={triggerRef}
         type="button"
@@ -129,7 +133,7 @@ export function AdminSidebar() {
         aria-expanded={mobileOpen}
         aria-controls="admin-sidebar-drawer"
       >
-        <Menu className="h-4 w-4" />
+        <Menu className="h-4 w-4 pointer-events-none" />
       </button>
 
       {/* Mobile backdrop (drawer open 시) */}
