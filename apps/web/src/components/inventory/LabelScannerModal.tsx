@@ -42,6 +42,13 @@ interface ScanApiResponse {
     updatedAt: string;
     user: { name: string | null } | null;
   } | null;
+  // §11.290 Phase 4b — OCR pipeline metadata (provider / cache / jobId).
+  // null = regex fallback path (text-only input, image 미사용).
+  ocrMetadata?: {
+    jobId: string | null;
+    providerUsed: "GEMINI" | "CLOUD_VISION_CLAUDE" | "REGEX";
+    cached: boolean;
+  } | null;
   suggestions: {
     isNewProduct: boolean;
     isNewLot: boolean;
@@ -90,6 +97,44 @@ function ConfidenceBadge({ level }: { level: "high" | "medium" | "low" }) {
   if (level === "high") return <Badge className="bg-emerald-100 text-emerald-700 border-0 text-[10px]">높은 신뢰도</Badge>;
   if (level === "medium") return <Badge className="bg-yellow-100 text-yellow-700 border-0 text-[10px]">보통 신뢰도</Badge>;
   return <Badge className="bg-red-100 text-red-700 border-0 text-[10px]">낮은 신뢰도</Badge>;
+}
+
+/* ── §11.290 Phase 4b — OCR Provider 뱃지 ──
+ *  multi-provider fallback 결과 시각화. GEMINI (Tier 1 primary) /
+ *  CLOUD_VISION_CLAUDE (Tier 2 fallback) / REGEX (Tier 3 fallback).
+ *  STORAGE_PROVIDER 미설정 (현재 production) 시 GEMINI 기본값.
+ */
+function ProviderBadge({ provider }: { provider: "GEMINI" | "CLOUD_VISION_CLAUDE" | "REGEX" }) {
+  const label =
+    provider === "GEMINI"
+      ? "Gemini"
+      : provider === "CLOUD_VISION_CLAUDE"
+        ? "Vision+Claude"
+        : "정규식";
+  return (
+    <Badge
+      className="bg-slate-100 text-slate-700 border-0 text-[10px]"
+      data-testid="ocr-provider-badge"
+    >
+      {label}
+    </Badge>
+  );
+}
+
+/* ── §11.290 Phase 4b — Cache Hit 표시 ──
+ *  imageHash 기반 cache lookup 적중 시 API 호출 0. 비용 절감 + UX 개선.
+ *  Phase 1 schema OcrJob.imageHash @@index + Phase 2 findCachedOcrJob 활용.
+ */
+function CacheHitIndicator() {
+  return (
+    <span
+      className="inline-flex items-center gap-1 text-[10px] text-slate-500"
+      data-testid="ocr-cache-hit"
+    >
+      <RotateCcw className="h-3 w-3" />
+      캐시 적중
+    </span>
+  );
 }
 
 /* ── 스캔 애니메이션 CSS ── */
@@ -464,10 +509,16 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
+              {/* §11.290 Phase 4b — confidence badge + provider badge + cache hit
+                  indicator. multi-provider fallback 결과 + cache lookup 적중 시각화. */}
+              <div className="flex items-center gap-2 flex-wrap">
                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                 <p className="text-sm font-semibold text-slate-900">AI 분석 완료</p>
                 {scanResult && <ConfidenceBadge level={scanResult.parsed.confidence} />}
+                {scanResult?.ocrMetadata?.providerUsed && (
+                  <ProviderBadge provider={scanResult.ocrMetadata.providerUsed} />
+                )}
+                {scanResult?.ocrMetadata?.cached && <CacheHitIndicator />}
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
                 추출된 데이터를 확인하고 필요 시 수정하세요

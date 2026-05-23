@@ -65,6 +65,15 @@ export async function POST(req: NextRequest) {
     // 이미지가 있으면 Gemini 멀티모달, 없으면 정규식 fallback
     let parsed;
 
+    // §11.290 Phase 4b — pipelineResult metadata outer scope retain
+    // (jobId / providerUsed / cached). LabelScannerModal review step 에서
+    // ProviderBadge + CacheHitIndicator 표시 위해 ocrMetadata response 노출.
+    let ocrMetadata: {
+      jobId: string | null;
+      providerUsed: "GEMINI" | "CLOUD_VISION_CLAUDE" | "REGEX";
+      cached: boolean;
+    } | null = null;
+
     if (imageBase64) {
       try {
         // §11.290 Phase 4a — parseWithGemini 직접 호출 → runOcrPipeline wrapper
@@ -78,6 +87,11 @@ export async function POST(req: NextRequest) {
           userId: session.user.id,
         });
         parsed = pipelineResult.result;
+        ocrMetadata = {
+          jobId: pipelineResult.jobId,
+          providerUsed: pipelineResult.providerUsed,
+          cached: pipelineResult.cached,
+        };
       } catch (geminiErr) {
         console.error("[scan-label] OCR pipeline failed, falling back to regex:", geminiErr);
         // OCR pipeline 실패 시 텍스트가 있으면 정규식 fallback
@@ -195,6 +209,9 @@ export async function POST(req: NextRequest) {
       parsed,
       matchedProduct,
       matchedInventory,
+      // §11.290 Phase 4b — OCR pipeline metadata (provider / cache hit / jobId).
+      // null = regex fallback path (text-only input, image 미사용).
+      ocrMetadata,
       suggestions: {
         isNewProduct: !matchedProduct,
         isNewLot: matchedProduct && !matchedInventory,
