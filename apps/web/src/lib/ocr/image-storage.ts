@@ -2,6 +2,11 @@
  * §11.290 Phase 2 #ocr-image-storage — Vercel Blob image upload + SHA-256
  *   hash + cache lookup helper.
  *
+ * §11.290 Phase 5.5.b — PDF buffer upload + SHA-256 hash 추가
+ *   (uploadOcrPdf + getOcrPdfHash). image-storage 의 image/* mime 제약 해소.
+ *   PDF 거래명세서도 audit log + cache 활성 가능. prefix "ocr-pdfs/" 로
+ *   image ("ocr-images/") 와 분리 — audit/cost monitoring 카테고리 명확.
+ *
  * 호영님 P1 spec (2026-05-23):
  *   Multi-provider OCR fallback (Phase 3+) 의 image storage layer.
  *   imageHash 로 cache lookup → 같은 라벨 재스캔 시 API 호출 0.
@@ -10,6 +15,7 @@
  *   - OcrJob.imageHash @@index (cache lookup O(log n))
  *   - OcrJob.imageUrl (Vercel Blob URL 영구 저장)
  *   - 48h TTL within → cached job 재사용
+ *   - PDF case 도 OcrJob.imageHash / imageUrl 컬럼 재활용 (schema 변경 0)
  *
  * 호영님 Phase 0 결정:
  *   - @vercel/blob ^2.3.3 이미 설치
@@ -17,8 +23,8 @@
  *     provider 만 우선 지원 (별도 batch 에서 supabase/s3 확장)
  *
  * Lock:
- *   - prefix "ocr-images" (po-pdf-storage 의 "po-pdfs" 와 분리)
- *   - SHA-256(base64 raw bytes, after stripping data URI prefix) — deterministic
+ *   - prefix "ocr-images" (image) / "ocr-pdfs" (PDF) 분리
+ *   - SHA-256(raw bytes) — image: base64 strip, PDF: buffer 직접
  *   - put({ addRandomSuffix: false, allowOverwrite: true }) — hash deterministic
  *   - graceful degradation — STORAGE_PROVIDER 미설정 시 throw → caller fallback
  */
@@ -114,6 +120,73 @@ export async function uploadOcrImage(
     case "s3": {
       throw new Error(
         `OCR image storage provider "${provider}" not implemented (별도 batch).`,
+      );
+    }
+    default:
+      throw new Error(`Unsupported STORAGE_PROVIDER: ${provider}`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// §11.290 Phase 5.5.b — PDF buffer upload + SHA-256 hash (quote pipeline)
+// ─────────────────────────────────────────────────────────────────────────
+
+export interface UploadOcrPdfInput {
+  /** PDF binary Buffer (quote pipeline parseQuotePDFWithGemini 와 동일 입력). */
+  buffer: Buffer;
+  /** OcrJob.organizationId — multi-tenant key prefix 격리용. */
+  organizationId: string;
+}
+
+/**
+ * PDF Buffer → SHA-256 hex hash (64 char).
+ *
+ * base64 변환 불필요 — buffer 직접 hash. image 와 cache key space 분리
+ * (collision 확률 사실상 0 이지만 의미적 분리).
+ */
+export function getOcrPdfHash(buffer: Buffer): string {
+  return createHash("sha256").update(buffer).digest("hex");
+}
+
+/**
+ * §11.290 Phase 5.5.b — Vercel Blob 에 PDF upload + SHA-256 hash 반환.
+ *
+ * prefix "ocr-pdfs/" (image 의 "ocr-images/" 와 분리).
+ * mime type: application/pdf.
+ * STORAGE_PROVIDER 미설정 시 OcrStorageNotConfiguredError throw —
+ * caller (orchestrator) 가 try/catch 로 graceful fallback.
+ *
+ * OcrJob.type 은 caller 가 "QUOTE" 로 set (PDF 는 quote 전용).
+ * Key: ocr-pdfs/{organizationId}/{hash}.pdf
+ */
+export async function uploadOcrPdf(
+  input: UploadOcrPdfInput,
+): Promise<UploadOcrImageResult> {
+  const provider = process.env.STORAGE_PROVIDER ?? "";
+  if (!provider) {
+    throw new OcrStorageNotConfiguredError();
+  }
+
+  const hash = getOcrPdfHash(input.buffer);
+  // multi-tenant key prefix + hash + .pdf ext (deterministic)
+  const key = `ocr-pdfs/${input.organizationId}/${hash}.pdf`;
+
+  switch (provider) {
+    case "vercel-blob": {
+      const { put } = await import("@vercel/blob");
+      const result = await put(key, input.buffer, {
+        access: "public",
+        contentType: "application/pdf",
+        // addRandomSuffix=false + allowOverwrite=true — image 패턴 정합
+        addRandomSuffix: false,
+        allowOverwrite: true,
+      });
+      return { url: result.url, hash, provider };
+    }
+    case "supabase":
+    case "s3": {
+      throw new Error(
+        `OCR PDF storage provider "${provider}" not implemented (별도 batch).`,
       );
     }
     default:
