@@ -8,6 +8,37 @@ const source = readFileSync(
 );
 
 describe("inventory lot issue priority strip", () => {
+  it("pins disposal review, approval waiting, and executable states in Korean", () => {
+    expect(source).toContain(
+      'data-testid="labaxis-inventory-lot-issue-decision-state-strip"',
+    );
+    expect(source).toContain(
+      'data-testid="labaxis-inventory-disposal-review-state"',
+    );
+    expect(source).toContain(
+      'data-testid="labaxis-inventory-approval-waiting-state"',
+    );
+    expect(source).toContain(
+      'data-testid="labaxis-inventory-executable-state"',
+    );
+    expect(source).toContain("처분 검토 {lotIssueDisposalReviewCount}건");
+    expect(source).toContain("승인 대기 {lotIssueApprovalPendingCount}건");
+    expect(source).toContain("실행 가능 {lotIssueExecutableCount}건");
+  });
+
+  it("shows the first-screen decision summary without opening help", () => {
+    expect(source).toContain(
+      'data-testid="labaxis-inventory-lot-issue-decision-summary"',
+    );
+    expect(source).toContain(
+      'data-testid="labaxis-inventory-lot-issue-audit-line"',
+    );
+    expect(source).toContain("재고 이슈: 만료 lot {lotIssueDisposalReviewCount}건 · 다음 조치: 폐기 처리");
+    expect(source).toContain("승인 여부:");
+    expect(source).toContain("재고 감소 영향: {actionableExpiredQuantity}개");
+    expect(source).toContain("다음 처리자: 재고 운영");
+  });
+
   it("keeps lot issue priority counts visible before the operator chooses an action", () => {
     expect(source).toContain(
       'data-testid="labaxis-inventory-lot-issue-priority-strip"',

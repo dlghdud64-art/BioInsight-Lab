@@ -1033,6 +1033,8 @@ function InventoryPageContent() {
   const lotIssueImmediateCount = priorityQueueItems.filter((item) => item.risk === "critical").length;
   const lotIssueDisposalReviewCount = actionableExpiredLots.length;
   const lotIssueReorderReviewCount = priorityQueueItems.filter((item) => item.category === "reorder_priority").length;
+  const lotIssueApprovalPendingCount = lotIssueDisposalReviewCount > 0 ? 1 : 0;
+  const lotIssueExecutableCount = priorityExpiredLot || topPriorityQueueItem ? 1 : 0;
   const showLotIssueDecisionStrip = isBrowserPilotInventoryDisposal || statusFilter === "lot_issue" || activeInventoryTab === "overview";
 
   // 점검 사항 탭용 이슈 카운트 (부족, 품절, 폐기 임박, 재주문 권장, 위치 미지정)
@@ -1574,6 +1576,25 @@ function InventoryPageContent() {
             <div data-testid="labaxis-inventory-lot-issue-priority-strip" className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div className="min-w-0 space-y-2">
+                  <div data-testid="labaxis-inventory-lot-issue-decision-state-strip" className="grid gap-2 text-xs font-extrabold sm:grid-cols-3">
+                    <span data-testid="labaxis-inventory-disposal-review-state" className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-orange-800">
+                      처분 검토 {lotIssueDisposalReviewCount}건
+                    </span>
+                    <span data-testid="labaxis-inventory-approval-waiting-state" className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800">
+                      승인 대기 {lotIssueApprovalPendingCount}건
+                    </span>
+                    <span data-testid="labaxis-inventory-executable-state" className={lotIssueExecutableCount > 0 ? "rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-800" : "rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-500"}>
+                      실행 가능 {lotIssueExecutableCount}건
+                    </span>
+                  </div>
+                  <p data-testid="labaxis-inventory-lot-issue-decision-summary" className="text-sm font-extrabold text-slate-950">
+                    재고 이슈: 만료 lot {lotIssueDisposalReviewCount}건 · 다음 조치: 폐기 처리
+                  </p>
+                  <div data-testid="labaxis-inventory-lot-issue-audit-line" className="flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700">
+                    <span>승인 여부: {lotIssueApprovalPendingCount > 0 ? "승인 대기" : "승인 불필요"}</span>
+                    <span>재고 감소 영향: {actionableExpiredQuantity}개</span>
+                    <span>다음 처리자: 재고 운영</span>
+                  </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge data-testid="labaxis-inventory-disposal-priority-badge" variant="outline" className="border-orange-300 bg-orange-50 text-orange-800">
                       폐기 처리 우선
