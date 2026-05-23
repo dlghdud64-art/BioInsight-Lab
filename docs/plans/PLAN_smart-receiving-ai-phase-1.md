@@ -237,7 +237,7 @@ All phases must strictly follow Red-Green-Refactor.
 
 ### Phase 1: Schema (OcrJob + OcrResult + Migration)
 **Goal:** Prisma schema 변경 + migration + sentinel test (RED).
-- Status: [x] Complete sandbox (2026-05-23) — migration land 호영님 클로드코드 환경 위임
+- Status: [x] **Complete production (2026-05-23)** — Supabase pooler DATABASE_URL `prisma db execute` 직접 적용 + `migrate resolve --applied` 마킹 + `20260523154028_add_ocr_job_result_models/` commit + push + Vercel READY (`dpl_8pUJKyGm...`)
 
 **🔴 RED:** OcrJob/OcrResult 부재 확인 test 작성 (`expect(schema).toMatch(/model OcrJob/)`)
 **🟢 GREEN:**
@@ -297,7 +297,7 @@ enum OcrProvider { GEMINI CLOUD_VISION_CLAUDE }
 
 ### Phase 2: Image Storage Helper (Vercel Blob + SHA-256 hash)
 **Goal:** Image upload + hash + cache lookup 헬퍼.
-- Status: [ ] Pending
+- Status: [x] **Complete sandbox (2026-05-23)** — 3/3 unit test GREEN, po-pdf-storage 패턴 재활용, db lazy import
 
 **🔴 RED:** `uploadOcrImage` / `getOcrImageHash` / `findCachedOcrJob` 부재 test
 **🟢 GREEN:** `apps/web/src/lib/ocr/image-storage.ts`:
@@ -503,15 +503,15 @@ enum OcrProvider { GEMINI CLOUD_VISION_CLAUDE }
 
 ## 11. Progress Tracking
 
-- Overall completion: 33%
-- Current phase: Phase 1 sandbox ✅ — Phase 2 진입 대기 (호영님 push + migration land 후)
-- Current blocker: 호영님 클로드코드 환경에서 `pnpm prisma migrate dev --name add_ocr_job_result_models` 실행 필요
-- Next validation step: 호영님 push + migration land 확인 후 Phase 2 (Vercel Blob image storage helper) 진입
+- Overall completion: 50% (Phase 0+1+2 / 6 phases)
+- Current phase: **Phase 2 sandbox ✅ — Phase 3 진입 ready (Multi-provider orchestrator)**
+- Current blocker: 호영님 push + Phase 3 진입 결정 (sandbox + Vision/Claude SDK install)
+- Next validation step: Phase 3 RED test 작성 — orchestrator integration mock (Gemini fallback path / Vision+Claude / cross-validation / cache hit)
 
 **Phase Checklist:**
 - [x] Phase 0 complete (Truth lock + decision table)
-- [x] Phase 1 complete sandbox (Schema + sentinel test) — migration land 호영님 위임
-- [ ] Phase 2 complete (Image storage helper)
+- [x] **Phase 1 complete production** (Schema + sentinel + migration + Vercel READY)
+- [x] **Phase 2 complete sandbox** (Image storage helper — 3 helper + 3 unit test GREEN)
 - [ ] Phase 3 complete (Multi-provider orchestrator)
 - [ ] Phase 4 complete (UI wiring + API routes)
 - [ ] Phase 5 complete (Smoke + rollout + ADR)
