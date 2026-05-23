@@ -96,11 +96,14 @@ interface ConversionResponse {
 
 type QueueTab = "all" | ConversionStatus;
 
+// §11.284a #purchases-kpi-label-relabel — 호영님 P0 spec: 구매 운영 KPI 라벨
+//   "발주 전환 대기 / 발주 승인 대기 / 발주 확정 / 공급사 통보 완료" 으로 통일.
+//   기존 "검토 필요 / 발주 가능 / 확정됨 / 만료" → 구매 운영 실제 단계명 정합.
 const STATUS_MAP: Record<ConversionStatus, { label: string; bg: string; text: string; border: string }> = {
-  review_required: { label: "검토 필요", bg: "bg-blue-50",    text: "text-blue-600",    border: "border-blue-200" },
-  ready_for_po:    { label: "발주 가능", bg: "bg-emerald-50", text: "text-emerald-600", border: "border-emerald-200" },
-  hold:            { label: "보류",      bg: "bg-slate-100",  text: "text-slate-600",   border: "border-slate-200" },
-  confirmed:       { label: "확정됨",   bg: "bg-purple-50",  text: "text-purple-600",  border: "border-purple-200" },
+  review_required: { label: "발주 전환 대기", bg: "bg-blue-50",    text: "text-blue-600",    border: "border-blue-200" },
+  ready_for_po:    { label: "발주 승인 대기", bg: "bg-emerald-50", text: "text-emerald-600", border: "border-emerald-200" },
+  hold:            { label: "보류",          bg: "bg-slate-100",  text: "text-slate-600",   border: "border-slate-200" },
+  confirmed:       { label: "발주 확정",     bg: "bg-purple-50",  text: "text-purple-600",  border: "border-purple-200" },
 };
 
 const BLOCKER_LABEL: Record<BlockerType, string> = {
@@ -567,11 +570,12 @@ export default function PurchasesPage() {
           role="group"
           aria-label="구매 상태별 요약"
         >
+          {/* §11.284a 모바일 KPI 라벨 — 검토→전환대기 / 발주→승인대기 / 확정 보존 / 만료→통보완료. */}
           {[
-            { short: "검토", count: stats.review_required, tab: "review_required" as QueueTab, activeText: "text-blue-600" },
-            { short: "발주", count: stats.ready_for_po, tab: "ready_for_po" as QueueTab, activeText: "text-emerald-600" },
+            { short: "전환대기", count: stats.review_required, tab: "review_required" as QueueTab, activeText: "text-blue-600" },
+            { short: "승인대기", count: stats.ready_for_po, tab: "ready_for_po" as QueueTab, activeText: "text-emerald-600" },
             { short: "확정", count: stats.confirmed, tab: "confirmed" as QueueTab, activeText: "text-purple-600" },
-            { short: "만료", count: stats.expired, tab: "review_required" as QueueTab, activeText: "text-rose-600" },
+            { short: "통보완료", count: stats.expired, tab: "review_required" as QueueTab, activeText: "text-rose-600" },
           ].map(({ short, count, tab, activeText }) => {
             const isActive = queueTab === tab;
             const isZero = count === 0;
@@ -598,7 +602,7 @@ export default function PurchasesPage() {
           <KpiCard
             icon={<ListChecks className="h-5 w-5 text-blue-500" />}
             iconBg="bg-blue-50"
-            label="검토 필요"
+            label="발주 전환 대기"
             value={stats.review_required}
             valueColor={stats.review_required > 0 ? "text-blue-600" : "text-slate-900"}
             sub="응답 수집 중"
@@ -608,7 +612,7 @@ export default function PurchasesPage() {
           <KpiCard
             icon={<CircleCheck className="h-5 w-5 text-emerald-500" />}
             iconBg="bg-emerald-50"
-            label="발주 가능"
+            label="발주 승인 대기"
             value={stats.ready_for_po}
             valueColor={stats.ready_for_po > 0 ? "text-emerald-600" : "text-slate-900"}
             sub="비교 완료 · 발주 대기"
@@ -618,7 +622,7 @@ export default function PurchasesPage() {
           <KpiCard
             icon={<AlertCircle className="h-5 w-5 text-purple-500" />}
             iconBg="bg-purple-50"
-            label="확정됨"
+            label="발주 확정"
             value={stats.confirmed}
             valueColor={stats.confirmed > 0 ? "text-purple-600" : "text-slate-900"}
             sub="발주 확정 완료"
@@ -628,7 +632,7 @@ export default function PurchasesPage() {
           <KpiCard
             icon={<Clock className="h-5 w-5 text-rose-500" />}
             iconBg="bg-rose-50"
-            label="만료"
+            label="공급사 통보 완료"
             value={stats.expired}
             valueColor={stats.expired > 0 ? "text-rose-600" : "text-slate-900"}
             sub="응답 기한 초과"

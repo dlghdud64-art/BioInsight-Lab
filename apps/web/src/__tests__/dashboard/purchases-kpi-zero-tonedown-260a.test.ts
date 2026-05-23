@@ -51,10 +51,10 @@ describe("§11.260a #2 — invariant 보존 (canonical truth)", () => {
   });
 
   it("4 KpiCard caller 보존 (검토 필요 / 발주 가능 / 확정됨 / 만료)", () => {
-    expect(page).toMatch(/label="검토 필요"/);
-    expect(page).toMatch(/label="발주 가능"/);
-    expect(page).toMatch(/label="확정됨"/);
-    expect(page).toMatch(/label="만료"/);
+    expect(page).toMatch(/label="발주 전환 대기"/);
+    expect(page).toMatch(/label="발주 승인 대기"/);
+    expect(page).toMatch(/label="발주 확정"/);
+    expect(page).toMatch(/label="공급사 통보 완료"/);
   });
 
   it("active 시 border-blue-300 + ring-blue-100 + shadow-md 보존", () => {
@@ -65,8 +65,11 @@ describe("§11.260a #2 — invariant 보존 (canonical truth)", () => {
     expect(page).toMatch(/text-3xl font-extrabold/);
   });
 
-  it("KPI grid grid-cols-2 lg:grid-cols-4 (모바일 2x2) 보존", () => {
-    expect(page).toMatch(/grid grid-cols-2 lg:grid-cols-4/);
+  it("KPI grid md:grid md:grid-cols-2 lg:grid-cols-4 (데스크탑 한정) — §11.277a 후속", () => {
+    // §11.260a 원안 `grid grid-cols-2 lg:grid-cols-4` (모바일 2×2) 는 §11.273b/
+    // §11.277a 후속으로 데스크탑 md+ 한정 (`hidden md:grid md:grid-cols-2
+    // lg:grid-cols-4` + 모바일 1줄 요약 바) 으로 supersede. invariant update.
+    expect(page).toMatch(/md:grid md:grid-cols-2 lg:grid-cols-4/);
   });
 
   it("4 onClick (setQueueTab toggle) 보존", () => {

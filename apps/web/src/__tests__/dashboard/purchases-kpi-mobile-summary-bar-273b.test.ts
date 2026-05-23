@@ -58,7 +58,7 @@ describe("§11.273b #1 — 모바일 1줄 요약 바 + 4 cell grid 데스크탑 
 describe("§11.273b #2 — 4 KPI label + count 정합", () => {
   it("모바일 요약 바에 4 KPI 짧은 라벨 (검토 / 발주 / 확정 / 만료)", () => {
     expect(PURCHASES).toMatch(
-      /purchases-kpi-mobile-summary-bar[\s\S]{0,4000}short: "검토"[\s\S]{0,500}short: "발주"[\s\S]{0,500}short: "확정"[\s\S]{0,500}short: "만료"/,
+      /purchases-kpi-mobile-summary-bar[\s\S]{0,4000}short: "전환대기"[\s\S]{0,500}short: "승인대기"[\s\S]{0,500}short: "확정"[\s\S]{0,500}short: "통보완료"/,
     );
   });
 
@@ -90,10 +90,10 @@ describe("§11.273b #3 — invariant 보존 (canonical truth)", () => {
   });
 
   it("데스크탑 KpiCard 4 (icon / label / value / valueColor / sub / active / onClick) 보존", () => {
-    expect(PURCHASES).toMatch(/<KpiCard[\s\S]{0,500}label="검토 필요"/);
-    expect(PURCHASES).toMatch(/<KpiCard[\s\S]{0,500}label="발주 가능"/);
-    expect(PURCHASES).toMatch(/<KpiCard[\s\S]{0,500}label="확정됨"/);
-    expect(PURCHASES).toMatch(/<KpiCard[\s\S]{0,500}label="만료"/);
+    expect(PURCHASES).toMatch(/<KpiCard[\s\S]{0,500}label="발주 전환 대기"/);
+    expect(PURCHASES).toMatch(/<KpiCard[\s\S]{0,500}label="발주 승인 대기"/);
+    expect(PURCHASES).toMatch(/<KpiCard[\s\S]{0,500}label="발주 확정"/);
+    expect(PURCHASES).toMatch(/<KpiCard[\s\S]{0,500}label="공급사 통보 완료"/);
   });
 
   it("데스크탑 KpiCard 4 icon (ListChecks / CircleCheck / AlertCircle / Clock) 보존", () => {
