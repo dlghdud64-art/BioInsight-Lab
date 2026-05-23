@@ -195,32 +195,45 @@ function MobileSummaryStrip({ inventories }: { inventories: ProductInventory[] }
     return noLoc || hasHazard;
   }).length;
 
+  // §11.283a #inventory-kpi-traffic-light — 호영님 P0 spec:
+  //   (a) KPI 4 카드 가로 스크롤 → 모바일 2×2 + 데스크탑 4-column 그리드.
+  //   (b) 신호등 색상 (긴급=red / 검토=yellow / 위험=orange) 의미적 차별화.
+  //   (c) 0건 카드 회색 톤다운 (gray-50 + gray-400) — 모든 카드 동일 톤 회피.
+  //   amber/orange/violet → red/yellow 신호등 체계로 통일. visual 강도 차별화.
   const cards = [
-    { label: "재주문 필요", count: reorderCount, color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20", icon: ShoppingCart },
-    { label: "만료 임박", count: expiringCount, color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", icon: Clock },
-    { label: "폐기 검토", count: disposeCount, color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/20", icon: Trash2 },
-    { label: "점검 이슈", count: issueCount, color: "text-violet-400", bg: "bg-violet-500/10", border: "border-violet-500/20", icon: AlertTriangle },
+    { label: "재주문 필요", count: reorderCount, color: "text-red-700", bg: "bg-red-100", border: "border-red-200", icon: ShoppingCart },
+    { label: "만료 임박", count: expiringCount, color: "text-yellow-700", bg: "bg-yellow-100", border: "border-yellow-200", icon: Clock },
+    { label: "폐기 검토", count: disposeCount, color: "text-red-700", bg: "bg-red-100", border: "border-red-200", icon: Trash2 },
+    { label: "점검 이슈", count: issueCount, color: "text-yellow-700", bg: "bg-yellow-100", border: "border-yellow-200", icon: AlertTriangle },
   ];
 
   return (
-    <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-      {cards.map((c) => (
-        <div
-          key={c.label}
-          className={`flex-shrink-0 w-[130px] rounded-xl border ${c.border} bg-el px-3 py-2.5`}
-        >
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <div className={`flex h-5 w-5 items-center justify-center rounded-md ${c.bg}`}>
-              <c.icon className={`h-2.5 w-2.5 ${c.color}`} />
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      {cards.map((c) => {
+        const isZero = c.count === 0;
+        const cardBorder = isZero ? "border-gray-200" : c.border;
+        const cardBg = isZero ? "bg-gray-50" : "bg-white";
+        const iconBg = isZero ? "bg-gray-100" : c.bg;
+        const iconColor = isZero ? "text-gray-400" : c.color;
+        const countColor = isZero ? "text-gray-400" : c.color;
+        return (
+          <div
+            key={c.label}
+            className={`rounded-xl border ${cardBorder} ${cardBg} px-3 py-2.5`}
+          >
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <div className={`flex h-5 w-5 items-center justify-center rounded-md ${iconBg}`}>
+                <c.icon className={`h-2.5 w-2.5 ${iconColor}`} />
+              </div>
+              <span className="text-[10px] font-medium text-slate-500 whitespace-nowrap">{c.label}</span>
             </div>
-            <span className="text-[10px] font-medium text-slate-500 whitespace-nowrap">{c.label}</span>
+            <div className={`text-xl font-bold tracking-tight ${countColor}`}>
+              {c.count}
+              <span className="ml-0.5 text-[10px] font-normal text-slate-600">건</span>
+            </div>
           </div>
-          <div className={`text-xl font-bold tracking-tight ${c.count > 0 ? c.color : "text-slate-600"}`}>
-            {c.count}
-            <span className="ml-0.5 text-[10px] font-normal text-slate-600">건</span>
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -272,7 +285,16 @@ function MobilePriorityQueue({
               key={inv.id}
               type="button"
               onClick={() => onItemTap(inv)}
-              className="w-full text-left rounded-xl border border-bd bg-pn p-3 active:bg-el transition-colors"
+              /* §11.273d — 카드 좌측 4px 보더 색상 매칭 (호영님 P0 spec). 배지 톤 동일.
+                 긴급/재주문 = red, 검토/임박 = amber, 폐기 = orange, 위치 = violet,
+                 none = slate. shortLabel === undefined 또는 type === "none" 일 때 slate. */
+              className={`w-full text-left rounded-xl border border-l-4 border-bd bg-pn p-3 active:bg-el transition-colors ${
+                action.shortLabel === "긴급" || action.shortLabel === "재주문" ? "border-l-red-500" :
+                action.shortLabel === "검토" || action.shortLabel === "임박" ? "border-l-amber-500" :
+                action.shortLabel === "폐기" ? "border-l-orange-500" :
+                action.shortLabel === "위치" ? "border-l-violet-500" :
+                "border-l-slate-300"
+              }`}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
@@ -292,17 +314,21 @@ function MobilePriorityQueue({
                     )}
                   </div>
                 </div>
-                {/* §11.251d — 카드 배지 짧은 라벨 (shortLabel) + max-w + truncate
-                    으로 줄바꿈 차단. 호영님 spec "긴급" 축약 정합. 상세 권장 액션은
-                    detail sheet 안 별도 표시 (line 624 기존 label 보존). */}
+                {/* §11.273d — 카드 배지 색상 대비 강화 (호영님 P0 spec). 기존 어둡고
+                    옅은 tone (bg-red-950/30 text-red-400) → 진한 단색 배경 + 흰색/검정
+                    텍스트로 대비 강화. shortLabel 기반 6 분기 (긴급/검토/폐기/임박/재주문/
+                    위치). 좌측 카드 보더 색상도 동일 톤 매칭 (line 271 분기). */}
                 <div className="flex items-center gap-1.5 shrink-0">
                   {action.type !== "none" && (
                     <span
-                      className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md max-w-[64px] truncate whitespace-nowrap ${
-                        action.type === "reorder" ? "bg-red-950/30 text-red-400" :
-                        action.type === "dispose" ? "bg-orange-950/30 text-orange-400" :
-                        action.type === "use_first" ? "bg-amber-950/30 text-amber-400" :
-                        "bg-violet-950/30 text-violet-400"
+                      className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md max-w-[64px] truncate whitespace-nowrap ${
+                        action.shortLabel === "긴급" ? "bg-red-600 text-white" :
+                        action.shortLabel === "검토" ? "bg-amber-500 text-slate-900" :
+                        action.shortLabel === "폐기" ? "bg-orange-600 text-white" :
+                        action.shortLabel === "임박" ? "bg-amber-500 text-slate-900" :
+                        action.shortLabel === "재주문" ? "bg-blue-500 text-white" :
+                        action.shortLabel === "위치" ? "bg-violet-500 text-white" :
+                        "bg-slate-200 text-slate-700"
                       }`}
                       title={action.label}
                     >
