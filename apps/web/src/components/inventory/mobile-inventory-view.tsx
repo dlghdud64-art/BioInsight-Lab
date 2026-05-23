@@ -321,15 +321,21 @@ function MobilePriorityQueue({
                 {/* §11.273d — 카드 배지 색상 대비 강화 (호영님 P0 spec). 기존 어둡고
                     옅은 tone (bg-red-950/30 text-red-400) → 진한 단색 배경 + 흰색/검정
                     텍스트로 대비 강화. shortLabel 기반 6 분기 (긴급/검토/폐기/임박/재주문/
-                    위치). 좌측 카드 보더 색상도 동일 톤 매칭 (line 271 분기). */}
+                    위치). 좌측 카드 보더 색상도 동일 톤 매칭 (line 271 분기).
+                    §11.283e — 검토 + 임박 (bg-yellow-500 text-slate-900) → light mode
+                    신호등 (bg-yellow-100 text-yellow-700) swap. 호영님 P0+ production
+                    smoke 결과 §11.273c lot_issue 분기가 §11.283d STATUS_CONFIG hot fix
+                    가 cover 못한 source — 검토 배지가 진한 노랑 + 어두운 텍스트로 렌더링.
+                    긴급/폐기 (bg-red-600 text-white §11.283d 정합) + 재주문/위치 (다른
+                    category 색상) 보존. */}
                 <div className="flex items-center gap-1.5 shrink-0">
                   {action.type !== "none" && (
                     <span
                       className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md max-w-[64px] truncate whitespace-nowrap ${
                         action.shortLabel === "긴급" ? "bg-red-600 text-white" :
-                        action.shortLabel === "검토" ? "bg-yellow-500 text-slate-900" :
+                        action.shortLabel === "검토" ? "bg-yellow-100 text-yellow-700" :
                         action.shortLabel === "폐기" ? "bg-red-600 text-white" :
-                        action.shortLabel === "임박" ? "bg-yellow-500 text-slate-900" :
+                        action.shortLabel === "임박" ? "bg-yellow-100 text-yellow-700" :
                         action.shortLabel === "재주문" ? "bg-blue-500 text-white" :
                         action.shortLabel === "위치" ? "bg-violet-500 text-white" :
                         "bg-slate-200 text-slate-700"
