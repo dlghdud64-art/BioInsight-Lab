@@ -444,8 +444,21 @@ export default function PurchasesPage() {
     total: 0, review_required: 0, ready_for_po: 0, hold: 0, confirmed: 0, expired: 0,
   };
 
+  // §11.284d #purchases-base-status-whitelist — 호영님 P1 spec (2026-05-23):
+  // 구매 운영 목록은 발주 단계 (ready_for_po 이상) 만 표시. STATUS_MAP 의 5
+  // status (review_required / ready_for_po / hold / confirmed / expired) =
+  // 발주 라이프사이클 단계. 견적 단계 (sent / collecting / comparing 등)
+  // conversionStatus 가 STATUS_MAP 에 없는 item 은 자동 제외 → 구매 운영
+  // 와 견적 관리 화면 정체성 분리 (호영님 "발주 관리 화면" 인지 가능).
+  const PURCHASE_STAGE_STATUSES = useMemo(
+    () => new Set(Object.keys(STATUS_MAP)),
+    [],
+  );
   const filteredItems = useMemo(() => {
-    let result = items;
+    // (1) Base whitelist — 발주 단계 status 만 (견적 단계 자동 제외)
+    let result = items.filter((i) =>
+      PURCHASE_STAGE_STATUSES.has(i.conversionStatus),
+    );
     if (queueTab !== "all") {
       result = result.filter((i) => i.conversionStatus === queueTab);
     }
@@ -459,7 +472,7 @@ export default function PurchasesPage() {
       );
     }
     return result;
-  }, [items, queueTab, searchQuery]);
+  }, [items, queueTab, searchQuery, PURCHASE_STAGE_STATUSES]);
 
   const selectedItem = useMemo(() => {
     if (!selectedId) return null;
@@ -702,17 +715,17 @@ export default function PurchasesPage() {
                   {searchQuery.trim()
                     ? `'${searchQuery.trim()}'에 해당하는 항목이 없습니다`
                     : items.length === 0
-                      ? "비교할 회신이 아직 없습니다"
+                      ? "발주 전환 대기 중인 건이 없습니다"
                       : "선택한 탭에 항목이 없습니다"}
                 </p>
-                {/* §11.209 — 실무 담당자 다음 액션 명시. surface 흐름
-                    (소싱 → 견적 발송 → 회신 → 여기서 비교·발주 전환) 을
-                    부카피에 노출해 "이 화면이 무엇을 처리하는지" 명확화. */}
+                {/* §11.284d — 호영님 P1 spec: 발주 단계만 표시 정책 정합.
+                    "견적 비교 완료되면 여기에 표시" 명시로 구매 운영 surface
+                    의 정체성 (발주 관리) 강화. */}
                 <p className="text-xs text-slate-400 mb-4">
                   {searchQuery.trim()
                     ? "다른 키워드로 검색해 보세요."
                     : items.length === 0
-                      ? "소싱에서 품목을 검색하고 공급사에 견적을 발송하면 회신이 모이는 대로 여기서 비교·선택해 발주로 전환합니다."
+                      ? "견적 비교가 완료되면 여기에 표시됩니다. 견적 관리에서 회신을 비교한 뒤 '발주 전환'을 누르면 구매 운영 큐로 이동합니다."
                       : "다른 탭을 확인해 보세요."}
                 </p>
                 {!searchQuery.trim() && items.length === 0 && (
