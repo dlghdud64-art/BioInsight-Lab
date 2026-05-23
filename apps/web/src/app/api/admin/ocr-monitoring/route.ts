@@ -7,10 +7,14 @@ import { db } from "@/lib/db";
  * §11.290 Phase 6 #ocr-monitoring-admin-dashboard —
  *   GET /api/admin/ocr-monitoring?period=7d|30d
  *
+ * §11.290 Phase 6.b — cacheReuseRatio (proxy) → 정확 cacheHitRatio metric swap.
+ *   OcrCacheHit table 의 count 를 source 로 cacheHits / (jobs + cacheHits) 정확 계산.
+ *   cacheReuseRatio (proxy) 는 deprecated 표시지만 response shape 보존.
+ *
  * 호영님 P1 spec (2026-05-23):
  *   §11.290 family cost monitoring 마무리. Phase 5.5 + 5.5.b 의
  *   OcrResult.costUsd / OcrJob.imageHash 데이터 source 위에 per-provider +
- *   per-day + cache reuse + status breakdown aggregation.
+ *   per-day + cache hit + status breakdown aggregation.
  *
  * Strategy (admin/cron route 패턴 정합):
  *   - admin gate 2 layer: auth() session + isAdmin(userId)
@@ -21,16 +25,18 @@ import { db } from "@/lib/db";
  * Response shape:
  *   {
  *     period: "7d" | "30d",
- *     totals: { jobs, costUsd, uniqueHashes },
+ *     totals: { jobs, costUsd, uniqueHashes, cacheHits, totalRequests },
  *     perProvider: [{ provider, count, costUsd, avgLatencyMs }],
  *     perDay: [{ day, count, costUsd }],
  *     statusBreakdown: [{ status, count }],
- *     cacheReuseRatio: number  // (jobs - uniqueHashes) / jobs (cache eligible proxy)
+ *     cacheHitCount: number,    // §11.290 Phase 6.b 정확 metric
+ *     cacheHitRatio: number,    // §11.290 Phase 6.b 정확 metric (%)
+ *     cacheReuseRatio: number,  // (deprecated) Phase 6 proxy 보존
  *   }
  *
  * canonical truth lock:
- *   - OcrJob/OcrResult read-only — mutation 0
- *   - 정확한 cache hit count 는 별도 audit table 필요 (Phase 6.b 백로그)
+ *   - OcrJob/OcrResult/OcrCacheHit read-only — mutation 0
+ *   - Phase 6.b 의 OcrCacheHit INSERT 는 pipeline 의 cache hit branch 가 담당
  */
 
 interface PerProviderRow {
@@ -112,7 +118,7 @@ export async function GET(request: NextRequest) {
     `)) as StatusRow[];
 
     // (4) totals — jobs count + unique imageHash count + total costUsd
-    //     cacheReuseRatio = (jobs - uniqueHashes) / jobs (cache eligible proxy)
+    //     cacheReuseRatio = (jobs - uniqueHashes) / jobs (Phase 6 cache eligible proxy, deprecated)
     const totalsRows = (await db.$queryRawUnsafe(`
       SELECT
         COUNT(*)::bigint as "jobs",
@@ -127,9 +133,22 @@ export async function GET(request: NextRequest) {
       WHERE j."createdAt" >= NOW() - INTERVAL '${intervalSql}'
     `)) as TotalsRow[];
 
+    // §11.290 Phase 6.b — 정확 cache hit count (OcrCacheHit INSERT 기반)
+    const cacheHitRows = (await db.$queryRawUnsafe(`
+      SELECT COUNT(*)::bigint as "cacheHits"
+      FROM "OcrCacheHit"
+      WHERE "hitAt" >= NOW() - INTERVAL '${intervalSql}'
+    `)) as Array<{ cacheHits: bigint }>;
+
     const totalsRow = totalsRows[0];
     const totalJobs = Number(totalsRow?.jobs ?? 0);
     const uniqueHashes = Number(totalsRow?.uniqueHashes ?? 0);
+    const cacheHitCount = Number(cacheHitRows[0]?.cacheHits ?? 0);
+    const totalRequests = totalJobs + cacheHitCount;
+    // §11.290 Phase 6.b 정확 metric — cacheHits / totalRequests * 100
+    const cacheHitRatio =
+      totalRequests > 0 ? Math.round((cacheHitCount / totalRequests) * 1000) / 10 : 0;
+    // Phase 6 proxy (deprecated, response shape 보존)
     const cacheReuseRatio =
       totalJobs > 0 ? Math.round(((totalJobs - uniqueHashes) / totalJobs) * 1000) / 10 : 0;
 
@@ -139,6 +158,8 @@ export async function GET(request: NextRequest) {
         totals: {
           jobs: totalJobs,
           uniqueHashes,
+          cacheHits: cacheHitCount,
+          totalRequests,
           costUsd: totalsRow?.costUsd != null ? Math.round(totalsRow.costUsd * 10000) / 10000 : 0,
         },
         perProvider: perProviderRows.map((r) => ({
@@ -156,7 +177,9 @@ export async function GET(request: NextRequest) {
           status: r.status,
           count: Number(r.count),
         })),
-        cacheReuseRatio, // %
+        cacheHitCount,    // §11.290 Phase 6.b 정확 metric (count)
+        cacheHitRatio,    // §11.290 Phase 6.b 정확 metric (%)
+        cacheReuseRatio,  // Phase 6 proxy (deprecated, 보존)
       },
       { status: 200 },
     );

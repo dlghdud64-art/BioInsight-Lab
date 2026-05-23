@@ -52,11 +52,19 @@ interface StatusRow {
 
 interface OcrMonitoringResponse {
   period: "7d" | "30d";
-  totals: { jobs: number; uniqueHashes: number; costUsd: number };
+  totals: {
+    jobs: number;
+    uniqueHashes: number;
+    cacheHits?: number; // §11.290 Phase 6.b
+    totalRequests?: number; // §11.290 Phase 6.b
+    costUsd: number;
+  };
   perProvider: PerProviderRow[];
   perDay: PerDayRow[];
   statusBreakdown: StatusRow[];
-  cacheReuseRatio: number;
+  cacheHitCount?: number; // §11.290 Phase 6.b 정확 metric
+  cacheHitRatio?: number; // §11.290 Phase 6.b 정확 metric (%)
+  cacheReuseRatio: number; // Phase 6 proxy (deprecated)
 }
 
 const PROVIDER_LABEL: Record<string, string> = {
@@ -159,12 +167,12 @@ export default function OcrMonitoringPage() {
               value={`$${data.totals.costUsd.toFixed(4)}`}
             />
             <KpiCard
-              label="고유 이미지 수"
-              value={data.totals.uniqueHashes.toLocaleString()}
+              label="Cache hit 수"
+              value={(data.cacheHitCount ?? 0).toLocaleString()}
             />
             <KpiCard
-              label="재스캔 비율 (cache eligible)"
-              value={`${data.cacheReuseRatio.toFixed(1)}%`}
+              label="Cache hit 비율"
+              value={`${(data.cacheHitRatio ?? data.cacheReuseRatio).toFixed(1)}%`}
               testId="ocr-cache-hit-ratio"
             />
           </div>

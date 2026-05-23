@@ -103,6 +103,22 @@ export async function runOcrPipeline(
         where: { id: cached.finalResultId },
       });
       if (finalResult) {
+        // §11.290 Phase 6.b — cache hit audit log INSERT (graceful)
+        try {
+          await db.ocrCacheHit.create({
+            data: {
+              cachedJobId: cached.id,
+              organizationId: input.organizationId,
+              userId: input.userId,
+              imageHash,
+            },
+          });
+        } catch (auditErr) {
+          console.warn(
+            "[OCR] cache hit audit skipped:",
+            (auditErr as Error).message,
+          );
+        }
         return {
           result: finalResult.parsedFields as unknown as LabelParseResult,
           jobId: cached.id,

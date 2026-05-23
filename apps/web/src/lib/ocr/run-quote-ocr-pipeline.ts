@@ -3,11 +3,14 @@
  *   entry point. 기존 /api/quotes/parse-image + /api/quotes/parse-pdf 의
  *   parseQuoteWithGemini / parseQuotePDFWithGemini 직접 호출을 본 wrapper 로 swap.
  *
- * §11.290 Phase 5.5 — Audit log + 48h TTL cache wiring (image path 한정).
+ * §11.290 Phase 5.5 — Audit log + 48h TTL cache wiring (image path).
  *   image case: getOcrImageHash → findCachedOcrJob → uploadOcrImage →
  *     OcrJob.create → Gemini → OcrResult.create → OcrJob.update.
- *   PDF case: graceful skip (audit log + cache 미사용) — PDF support 는
- *     Phase 5.5.b 백로그 (image-storage.ts 의 mime type 처리 확장 필요).
+ *
+ * §11.290 Phase 5.5.b — PDF case 도 full wiring (image case 와 동등).
+ *   PDF case: getOcrPdfHash(buffer) → findCachedOcrJob → uploadOcrPdf →
+ *     OcrJob.create → parseQuotePDFWithGemini → OcrResult.create → OcrJob.update.
+ *   image-storage 의 image/* mime 제약 해소 (Phase 5.5.b 의 PDF helper 활용).
  *   image-storage upload 실패 시 graceful fallback (jobId: null, 기존 동작 보존).
  *
  * Logic:
@@ -15,13 +18,14 @@
  *     (0) Cache lookup — same image hash + 48h TTL → 즉시 반환 (cached: true)
  *     (1) uploadOcrImage → OcrJob.create → Gemini → OcrResult.create
  *     (2) OcrJob.update (status SUCCESS/NEEDS_REVIEW + finalResultId)
- *   PDF path:
- *     (1) parseQuotePDFWithGemini → graceful return (jobId: null)
- *     (2) Phase 5.5.b 에서 PDF audit log 추가 예정
+ *   PDF path (§11.290 Phase 5.5.b):
+ *     (0) Cache lookup — getOcrPdfHash(buffer) + same hash + 48h TTL → cache hit
+ *     (1) uploadOcrPdf → OcrJob.create (imageUrl: pdf url, imageHash: pdf hash)
+ *     (2) parseQuotePDFWithGemini → OcrResult.create → OcrJob.update
  *
  * Input variants:
  *   - { kind: "image", base64 } → parseQuoteWithGemini + audit log + cache
- *   - { kind: "pdf", buffer } → parseQuotePDFWithGemini + graceful skip
+ *   - { kind: "pdf", buffer } → parseQuotePDFWithGemini + audit log + cache
  *
  * 호환 contract:
  *   기존 caller 가 parseQuoteWithGemini / parseQuotePDFWithGemini 반환
@@ -37,6 +41,8 @@ import {
   getOcrImageHash,
   uploadOcrImage,
   findCachedOcrJob,
+  getOcrPdfHash,
+  uploadOcrPdf,
 } from "./image-storage";
 
 export type RunQuoteOcrPipelineInput =
@@ -81,16 +87,138 @@ const GEMINI_COST_USD = 0.001;
 export async function runQuoteOcrPipeline(
   input: RunQuoteOcrPipelineInput,
 ): Promise<RunQuoteOcrPipelineResult> {
-  // PDF case — graceful skip (audit log + cache 미사용, Phase 5.5.b 백로그)
+  // §11.290 Phase 5.5.b — PDF case full wiring (image case 와 동등)
   if (input.kind === "pdf") {
+    const pdfHash = getOcrPdfHash(input.buffer);
+
+    // (0) Cache lookup — same PDF hash + 48h TTL → 즉시 반환
+    try {
+      const cached = await findCachedOcrJob(pdfHash, "QUOTE");
+      if (cached && cached.finalResultId) {
+        const { db } = await import("@/lib/db");
+        const finalResult = await db.ocrResult.findUnique({
+          where: { id: cached.finalResultId },
+        });
+        if (finalResult) {
+          // §11.290 Phase 6.b — cache hit audit log INSERT (graceful)
+          try {
+            await db.ocrCacheHit.create({
+              data: {
+                cachedJobId: cached.id,
+                organizationId: input.organizationId,
+                userId: input.userId,
+                imageHash: pdfHash,
+              },
+            });
+          } catch (auditErr) {
+            console.warn(
+              "[OCR-quote-pdf] cache hit audit skipped:",
+              (auditErr as Error).message,
+            );
+          }
+          return {
+            result: finalResult.parsedFields as unknown as QuoteParseResult,
+            jobId: cached.id,
+            status: cached.status as "SUCCESS" | "NEEDS_REVIEW" | "FAILED",
+            providerUsed: finalResult.provider as
+              | "GEMINI"
+              | "CLOUD_VISION_CLAUDE"
+              | "REGEX",
+            cached: true,
+          };
+        }
+      }
+    } catch (cacheErr) {
+      console.warn(
+        "[OCR-quote-pdf] cache lookup skipped:",
+        (cacheErr as Error).message,
+      );
+    }
+
+    // (1) PDF upload — graceful (STORAGE_PROVIDER 미설정 시 audit log skip)
+    let uploadedPdfUrl: string | null = null;
+    let pdfJobId: string | null = null;
+    try {
+      const uploadResult = await uploadOcrPdf({
+        buffer: input.buffer,
+        organizationId: input.organizationId,
+      });
+      uploadedPdfUrl = uploadResult.url;
+    } catch (uploadErr) {
+      console.warn(
+        "[OCR-quote-pdf] PDF upload skipped:",
+        (uploadErr as Error).message,
+      );
+    }
+
+    // OcrJob.create — upload 성공 시만
+    if (uploadedPdfUrl) {
+      try {
+        const { db } = await import("@/lib/db");
+        const job = await db.ocrJob.create({
+          data: {
+            organizationId: input.organizationId,
+            userId: input.userId,
+            type: "QUOTE",
+            imageUrl: uploadedPdfUrl,
+            imageHash: pdfHash,
+            status: "RUNNING",
+          },
+        });
+        pdfJobId = job.id;
+      } catch (dbErr) {
+        console.warn(
+          "[OCR-quote-pdf] OcrJob.create skipped:",
+          (dbErr as Error).message,
+        );
+      }
+    }
+
+    // (2) Gemini PDF 호출 + latency 측정
+    const pdfStart = Date.now();
     const result = await parseQuotePDFWithGemini(input.buffer);
+    const pdfLatencyMs = Date.now() - pdfStart;
+
     const status: RunQuoteOcrPipelineResult["status"] =
       result.confidence === "high" || result.confidence === "medium"
         ? "SUCCESS"
         : "NEEDS_REVIEW";
+
+    // OcrResult.create + OcrJob.update — pdfJobId 있을 때만
+    if (pdfJobId) {
+      try {
+        const { db } = await import("@/lib/db");
+        const ocrResult = await db.ocrResult.create({
+          data: {
+            jobId: pdfJobId,
+            provider: "GEMINI",
+            parsedFields: result as unknown as object,
+            confidence:
+              result.confidence === "high"
+                ? 0.9
+                : result.confidence === "medium"
+                  ? 0.75
+                  : 0.5,
+            rawText: result.rawText ?? null,
+            costUsd: GEMINI_COST_USD,
+            latencyMs: pdfLatencyMs,
+          },
+        });
+        await db.ocrJob.update({
+          where: { id: pdfJobId },
+          data: { status, finalResultId: ocrResult.id },
+        });
+      } catch (dbErr) {
+        console.warn(
+          "[OCR-quote-pdf] OcrResult.create skipped:",
+          (dbErr as Error).message,
+        );
+      }
+    }
+
     return {
       result,
-      jobId: null,
+      jobId: pdfJobId,
       status,
       providerUsed: "GEMINI",
       cached: false,
@@ -109,6 +237,22 @@ export async function runQuoteOcrPipeline(
         where: { id: cached.finalResultId },
       });
       if (finalResult) {
+        // §11.290 Phase 6.b — cache hit audit log INSERT (graceful)
+        try {
+          await db.ocrCacheHit.create({
+            data: {
+              cachedJobId: cached.id,
+              organizationId: input.organizationId,
+              userId: input.userId,
+              imageHash,
+            },
+          });
+        } catch (auditErr) {
+          console.warn(
+            "[OCR-quote] cache hit audit skipped:",
+            (auditErr as Error).message,
+          );
+        }
         return {
           result: finalResult.parsedFields as unknown as QuoteParseResult,
           jobId: cached.id,

@@ -3104,11 +3104,30 @@ model OcrJob {
   results        OcrResult[]  @relation("OcrJobResults")
   finalResult    OcrResult?   @relation("OcrJobFinal", fields: [finalResultId], references: [id])
   finalResultId  String?      @unique
+  // §11.290 Phase 6.b — cache hit audit back-relation (정확 cacheHitRatio metric)
+  cacheHits      OcrCacheHit[]
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
   @@index([organizationId, type])
   @@index([imageHash])  // cache lookup O(log n)
+}
+
+// §11.290 Phase 6.b — 정확 cache hit count audit.
+// Phase 5.5 의 findCachedOcrJob cache hit branch 에서 INSERT.
+// Phase 6 의 cacheReuseRatio proxy ((totalJobs - uniqueHashes) / totalJobs) →
+// 정확 cacheHitRatio = cacheHitCount / (totalJobs + cacheHitCount) 로 swap.
+model OcrCacheHit {
+  id             String   @id @default(cuid())
+  cachedJob      OcrJob   @relation(fields: [cachedJobId], references: [id], onDelete: Cascade)
+  cachedJobId    String   // cache hit 의 source OcrJob.id
+  organizationId String   // tenant 분리 (multi-tenant aggregation)
+  userId         String   // cache hit 트리거한 사용자
+  imageHash      String   // SHA-256 (audit / debug)
+  hitAt          DateTime @default(now())
+
+  @@index([organizationId, hitAt])
+  @@index([cachedJobId])
 }
 
 model OcrResult {
