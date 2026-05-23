@@ -3132,15 +3132,25 @@ function SearchUtilityBar({ activeFilterCount, onAuthRequired, isLoggedIn, stage
               target 으로 trap → Radix DropdownMenuTrigger 미발화. Menu icon 에
               `pointer-events-none` 강제 → SVG hit-test 제외 → click/PointerEvent
               가 직접 button 으로 dispatch. (§11.280 outer container fix 후속) */}
+          {/* §11.282-e #sourcing-hamburger-asChild-removal — 호영님 P0+ 3rd report:
+              모든 platform (iOS Safari + desktop Chrome) 에서 햄버거 dead button.
+              Sandbox audit 결정적 결과: MouseEvent('click') dispatch 시
+              clickEventFired:true 인데 aria-expanded 변화 0 + portal 0.
+              Root cause: Radix DropdownMenuTrigger `asChild` 가 wrapper button
+              에 onPointerDown 만 spread, onClick 누락 (이전 audit reactPropsKeys
+              =[..., onPointerDown, onKeyDown] — onClick 없음). 브라우저 native
+              click 시퀀스 (pointerdown → pointerup → click) 중 일부가 다른 layer
+              에 capture 되면 fail. asChild 제거 + Radix 자체 button render →
+              Radix 가 모든 event handler (pointer + click + key) 정확 attach.
+              §11.280-2 (Menu icon pointer-events-none) + touch-manipulation +
+              -webkit-tap-highlight-color:transparent 동시 적용 보존. */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                aria-label="메뉴 열기"
-                className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] -mr-1 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors shrink-0"
-              >
-                <Menu className="h-5 w-5 pointer-events-none" />
-              </button>
+            <DropdownMenuTrigger
+              type="button"
+              aria-label="메뉴 열기"
+              className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] -mr-1 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors shrink-0 touch-manipulation [-webkit-tap-highlight-color:transparent]"
+            >
+              <Menu className="h-5 w-5 pointer-events-none" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>주요 화면</DropdownMenuLabel>
