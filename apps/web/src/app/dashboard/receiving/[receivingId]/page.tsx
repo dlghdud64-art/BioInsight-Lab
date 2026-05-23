@@ -1,10 +1,14 @@
 "use client";
 
+// §11.290 Phase 4c-2 — QuoteScannerModal trigger button 추가 (호영님 spec
+// "라벨 + 거래명세서 동시 trigger" 정합). Phase 4c 의 QuoteScannerModal
+// skeleton 의 caller. 풀스펙 PO 매칭 / 입고 자동 prefill 은 Phase 4c-3 별도.
 import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useOpsStore } from "@/lib/ops-console/ops-store";
 import { Badge } from "@/components/ui/badge";
+import { QuoteScannerModal } from "@/components/inventory/QuoteScannerModal";
 // §11.71: native <select> → shadcn Select 통일
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -16,6 +20,7 @@ import {
   CheckCircle2,
   ShieldAlert,
   FileWarning,
+  FileText,
   Package,
   Truck,
   ArrowRight,
@@ -832,19 +837,53 @@ function ReceivingInputPanel({
   const [newLotExpiry, setNewLotExpiry] = useState("");
   const [newLotLocation, setNewLotLocation] = useState("");
   const [discrepancies, setDiscrepancies] = useState<Record<string, string>>({});
+  // §11.290 Phase 4c-2 — QuoteScannerModal trigger state. Phase 4c-3 에서
+  // onScanComplete handler 가 PO 매칭 + 입고 자동 prefill 수행 (PR/Order
+  // 매칭). 본 batch 는 trigger + modal 렌더 + placeholder handler.
+  const [quoteScannerOpen, setQuoteScannerOpen] = useState(false);
 
   const activeLine = lines.find(l => l.id === activeLineId);
   const pendingLines = lines.filter(l => l.conditionTone !== "success");
 
   return (
     <div className="rounded border border-blue-800/50 bg-blue-900/10 overflow-hidden">
-      <div className="px-4 py-3 border-b border-blue-800/30 flex items-center justify-between">
+      <div className="px-4 py-3 border-b border-blue-800/30 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Package className="h-3.5 w-3.5 text-blue-400" />
           <span className="text-xs font-medium text-blue-300">입고 수량 입력 / Lot 등록</span>
         </div>
-        <span className="text-[10px] text-slate-500">{pendingLines.length}건 처리 대기</span>
+        <div className="flex items-center gap-2">
+          {/* §11.290 Phase 4c-2 — 거래명세서 스캔 trigger */}
+          <button
+            type="button"
+            onClick={() => setQuoteScannerOpen(true)}
+            data-testid="receiving-quote-scanner-button"
+            className="inline-flex items-center gap-1 rounded border border-blue-700/40 bg-blue-800/30 px-2 py-1 text-[10px] font-medium text-blue-300 hover:bg-blue-700/40 transition-colors"
+          >
+            <FileText className="h-3 w-3" />
+            거래명세서 스캔
+          </button>
+          <span className="text-[10px] text-slate-500">{pendingLines.length}건 처리 대기</span>
+        </div>
       </div>
+
+      {/* §11.290 Phase 4c-2 — QuoteScannerModal 렌더 (Phase 4c skeleton caller).
+          onScanComplete placeholder — Phase 4c-3 에서 PO 매칭 + 입고 자동
+          prefill (PR/Order 매칭 + receivedQty / newLotNumber 자동 채움). */}
+      <QuoteScannerModal
+        open={quoteScannerOpen}
+        onOpenChange={setQuoteScannerOpen}
+        onScanComplete={(result) => {
+          // Phase 4c-2 placeholder — console.log + 향후 PO 매칭 handler 위치
+          console.info("[receiving] 거래명세서 스캔 완료:", {
+            vendor: result.parsed.vendor?.name,
+            itemCount: result.itemCount,
+            totalAmount: result.parsed.totalAmount,
+            providerUsed: result.ocrMetadata?.providerUsed,
+            cached: result.ocrMetadata?.cached,
+          });
+        }}
+      />
 
       <div className="p-4 space-y-3">
         {/* Line selector */}
