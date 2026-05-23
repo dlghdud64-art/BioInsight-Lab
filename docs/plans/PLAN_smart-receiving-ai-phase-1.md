@@ -320,6 +320,9 @@ enum OcrProvider { GEMINI CLOUD_VISION_CLAUDE }
 ---
 
 ### Phase 3: Multi-Provider Orchestrator + Cross-Validation
+**Status overlay:** [x] **Complete sandbox (2026-05-23)** — 10/10 unit test GREEN. Orchestrator logic + Cloud Vision/Claude skeleton. Phase 5 SDK wiring 대기.
+
+### Phase 3 Original Spec
 **Goal:** Gemini + Cloud Vision + Claude orchestrator + 양쪽 결과 cross-validation + audit log.
 - Status: [ ] Pending
 
@@ -503,18 +506,18 @@ enum OcrProvider { GEMINI CLOUD_VISION_CLAUDE }
 
 ## 11. Progress Tracking
 
-- Overall completion: 50% (Phase 0+1+2 / 6 phases)
-- Current phase: **Phase 2 sandbox ✅ — Phase 3 진입 ready (Multi-provider orchestrator)**
-- Current blocker: 호영님 push + Phase 3 진입 결정 (sandbox + Vision/Claude SDK install)
-- Next validation step: Phase 3 RED test 작성 — orchestrator integration mock (Gemini fallback path / Vision+Claude / cross-validation / cache hit)
+- Overall completion: 67% (Phase 0+1+2+3 / 6 phases)
+- Current phase: **Phase 3 sandbox ✅ — Phase 4 진입 ready (UI wiring + API route)**
+- Current blocker: 호영님 push + Phase 4 진입 결정 (기존 3 route swap + 2 신규 route + UI 강화)
+- Next validation step: Phase 4 RED test 작성 — API route + LabelScannerModal/QuoteScannerModal RTL test
 
 **Phase Checklist:**
 - [x] Phase 0 complete (Truth lock + decision table)
 - [x] **Phase 1 complete production** (Schema + sentinel + migration + Vercel READY)
-- [x] **Phase 2 complete sandbox** (Image storage helper — 3 helper + 3 unit test GREEN)
-- [ ] Phase 3 complete (Multi-provider orchestrator)
+- [x] **Phase 2 complete production** (Image storage helper — 3 helper + 3 unit test GREEN + Vercel READY)
+- [x] **Phase 3 complete sandbox** (Orchestrator + Cloud Vision/Claude skeleton — 10/10 unit test GREEN)
 - [ ] Phase 4 complete (UI wiring + API routes)
-- [ ] Phase 5 complete (Smoke + rollout + ADR)
+- [ ] Phase 5 complete (Smoke + rollout + ADR + SDK install + Vercel env)
 
 ---
 
