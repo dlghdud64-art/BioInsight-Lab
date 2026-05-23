@@ -664,7 +664,21 @@ export default function SearchPage() {
     if (sourcingTriage?.firstActionProduct?.id) {
       setActiveResultId(sourcingTriage.firstActionProduct.id);
     }
+    closeStrategyOverlay();
     setWorkWindowMode("result-review");
+  });
+
+  const openSourcingTriageRequest = () => handleProtectedAction(() => {
+    const product = sourcingTriage?.firstActionProduct;
+    if (product?.id) {
+      setActiveResultId(product.id);
+      const exists = quoteItems.some((item: any) => item.productId === product.id);
+      if (!exists) {
+        addProductToQuote(product);
+      }
+    }
+    closeStrategyOverlay();
+    setWorkWindowMode("request");
   });
 
   const setSourcingCandidateTriageState = (productId: string, state: SourcingCandidateTriageState) => {
@@ -1285,7 +1299,7 @@ export default function SearchPage() {
                 data-testid="sourcing-result-triage"
                 // §11.274c — aria-label 한국어 정합 lock.
                 aria-label="소싱 결과 분류"
-                className="px-3 pt-2"
+                className="relative z-[80] px-3 pt-2"
               >
                 <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -1297,15 +1311,30 @@ export default function SearchPage() {
                         Exact / Equivalent / Substitute / Blocked 후보를 먼저 분리하고 비교로 넘깁니다.
                       </p>
                     </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      data-testid="sourcing-triage-compare-cta"
-                      className="h-8 shrink-0 bg-blue-600 px-3 text-xs font-semibold text-white hover:bg-blue-500"
-                      onClick={openSourcingTriageReview}
-                    >
-                      비교 검토 열기
-                    </Button>
+                    <div className="grid grid-cols-2 gap-1.5 sm:flex sm:items-center">
+                      <Button
+                        type="button"
+                        size="sm"
+                        data-testid="sourcing-triage-compare-cta"
+                        data-action-value="Compare candidates"
+                        aria-label="후보 비교"
+                        className="h-9 shrink-0 bg-blue-600 px-3 text-xs font-semibold text-white hover:bg-blue-500"
+                        onClick={openSourcingTriageReview}
+                      >
+                        후보 비교
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        data-testid="sourcing-triage-request-cta"
+                        aria-label="견적 요청"
+                        variant="outline"
+                        className="h-9 shrink-0 border-emerald-200 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
+                        onClick={openSourcingTriageRequest}
+                      >
+                        견적 요청
+                      </Button>
+                    </div>
                   </div>
                   <div className="mt-2 grid grid-cols-4 gap-1.5 sm:gap-2">
                     {sourcingTriage.sections.map((section) => {
@@ -1351,6 +1380,7 @@ export default function SearchPage() {
                           }
                           setSourcingCandidateTriageState(candidate.productId, "shortlist");
                           setActiveResultId(candidate.productId);
+                          closeStrategyOverlay();
                           setWorkWindowMode("result-review");
                         };
                         return (
@@ -2614,7 +2644,7 @@ export default function SearchPage() {
       {/* ═══ AI Decision Layer — non-blocking right rail, workbench context 유지 ═══ */}
       {isStrategyOverlayOpen && canOpenStrategyOverlay && (
         <div
-          className={`pointer-events-none fixed right-0 top-[60px] z-[70] w-full max-w-[400px] ${showSourcingActionDock ? "bottom-[128px]" : "bottom-0"}`}
+          className={`pointer-events-none fixed right-0 top-[60px] z-[50] hidden w-full max-w-[360px] md:block ${showSourcingActionDock ? "bottom-[128px]" : "bottom-0"}`}
           data-testid="sourcing-strategy-rail"
         >
           {/* Anchored decision layer — right edge only.
@@ -3095,7 +3125,12 @@ function SearchUtilityBar({ activeFilterCount, onAuthRequired, isLoggedIn, stage
             <span className="hidden sm:inline">AI 라벨 스캔</span>
           </button>
           {/* §11.254b — 햄버거 메뉴 (대시보드 / 견적 / 구매 / 재고 / 설정 바로가기).
-              하단 탭 바 추가 0 (액션 바 공간 충돌). 헤더 우측 ≡ 으로 5 entry. */}
+              하단 탭 바 추가 0 (액션 바 공간 충돌). 헤더 우측 ≡ 으로 5 entry.
+              §11.280-2 #sourcing-header-menu-icon-pointer-events-none — 호영님
+              iOS Safari dead button root cause: <Menu /> SVG icon 이 PointerEvent
+              target 으로 trap → Radix DropdownMenuTrigger 미발화. Menu icon 에
+              `pointer-events-none` 강제 → SVG hit-test 제외 → click/PointerEvent
+              가 직접 button 으로 dispatch. (§11.280 outer container fix 후속) */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -3103,7 +3138,7 @@ function SearchUtilityBar({ activeFilterCount, onAuthRequired, isLoggedIn, stage
                 aria-label="메뉴 열기"
                 className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] -mr-1 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors shrink-0"
               >
-                <Menu className="h-5 w-5" />
+                <Menu className="h-5 w-5 pointer-events-none" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
