@@ -2050,12 +2050,12 @@ function QuotesPageContent() {
         <section
           data-testid="quote-dispatch-review-entry"
           data-pilot-target="dispatch-review-visible"
-          aria-label="견적 전달 검토 시작"
+          aria-label="견적 검토 상태 열기"
           className="flex flex-col gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
         >
           <div className="min-w-0 space-y-0.5">
             <p className="text-[11px] font-semibold text-blue-700">현재 단계: 발송 전 확인</p>
-            <p className="text-sm font-bold text-slate-950">다음: 견적 전달 검토</p>
+            <p className="text-sm font-bold text-slate-950">다음: 수신처 검토</p>
             <p className="text-xs text-slate-600">공급사와 연락처를 확인한 뒤 발송합니다.</p>
             <p
               data-testid="quote-dispatch-review-entry-block-reason"
@@ -2073,7 +2073,7 @@ function QuotesPageContent() {
             onClick={openQuoteDraftWorkbench}
             disabled={isLoading || quotes.length === 0}
           >
-            발송 검토 열기
+            검토 상태 열기
             <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
           </Button>
         </section>
@@ -3305,7 +3305,7 @@ function QuotesPageContent() {
                       className="h-8 text-[11px] border-amber-300 text-amber-800"
                       onClick={() => setActiveWorkWindow("request_send")}
                     >
-                      공급사 후보 보강
+                      보완 화면 열기
                     </Button>
                     <Link href="/app/search">
                       <Button size="sm" variant="outline" className="w-full h-8 text-[11px] border-amber-300 text-amber-800">
@@ -3783,7 +3783,7 @@ function QuotesPageContent() {
                     className="h-7 text-[11px] border-amber-300 text-amber-800"
                     onClick={() => setActiveWorkWindow("request_send")}
                   >
-                    공급사 후보 보강
+                    보완 화면 열기
                   </Button>
                   <Link href="/app/search">
                     <Button
@@ -3934,7 +3934,7 @@ function QuotesPageContent() {
           }
           next={<p className="text-xs text-slate-700">{selectedSignals.handoffTarget}</p>}
           primaryCta={selectedDispatchBlocked ? {
-            label: "공급사 후보 보강",
+            label: "보완 화면 열기",
             onClick: () => { setActiveWorkWindow("request_send"); },
           } : selectedSignals.actionKey ? {
             label: selectedSignals.railCtaLabel,

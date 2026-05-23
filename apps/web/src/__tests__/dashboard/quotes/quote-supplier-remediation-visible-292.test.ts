@@ -29,4 +29,11 @@ describe("quote supplier remediation visible gate", () => {
   it("classifies any missing supplier-candidate blocker as send-blocking", () => {
     expect(quotesPageSource).toContain('blocker.includes("공급사 후보")');
   });
+
+  it("leaves only the visible dialog action with the remediation label", () => {
+    const labels = `${quotesPageSource}\n${workbenchSource}`.match(/공급사 후보 보강/g) ?? [];
+
+    expect(labels).toHaveLength(1);
+    expect(quotesPageSource).toContain("보완 화면 열기");
+  });
 });

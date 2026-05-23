@@ -12,7 +12,7 @@ describe("견적 전달 검토 안전 진입", () => {
     expect(PAGE).toMatch(
       /isBrowserPilotQuoteDispatch[\s\S]{0,200}data-testid="quote-dispatch-review-entry"/,
     );
-    expect(PAGE).toContain("다음: 견적 전달 검토");
+    expect(PAGE).toContain("다음: 수신처 검토");
     expect(PAGE).toContain("차단 사유: 공급사 또는 연락처 미확인 시 전송 불가");
   });
 
@@ -23,5 +23,7 @@ describe("견적 전달 검토 안전 진입", () => {
     expect(PAGE).toContain('setActiveWorkWindow("request_send")');
     expect(PAGE).toContain('url.searchParams.set("selected", targetQuote.id)');
     expect(PAGE).toContain('url.searchParams.set("task", "request_send")');
+    expect(PAGE).toContain("검토 상태 열기");
+    expect(PAGE).not.toContain("발송 검토 열기");
   });
 });
