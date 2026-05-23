@@ -525,7 +525,7 @@ function getQuoteDispatchEvidence(preflight: QuoteDispatchPreflight | null): Quo
     };
   }
 
-  const supplierMissing = preflight.blockers.some((blocker) => blocker.includes("공급사 후보 없음"));
+  const supplierMissing = preflight.blockers.some((blocker) => blocker.includes("공급사 후보"));
   const contactMissing = preflight.blockers.some((blocker) => blocker.includes("연락 채널 확인 필요"));
   const quoteMissing = preflight.blockers.some((blocker) => blocker.includes("견적 선택 없음") || blocker.includes("견적 연결 없음"));
   const canSend = !preflight.hardBlocked && !supplierMissing && !contactMissing && !quoteMissing;

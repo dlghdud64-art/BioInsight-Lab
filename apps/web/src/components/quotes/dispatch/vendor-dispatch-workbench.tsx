@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { csrfFetch } from "@/lib/api-client";
 import {
@@ -127,6 +127,8 @@ export function VendorRequestModal({
   const [messageExpanded, setMessageExpanded] = useState(false);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [sentTracking, setSentTracking] = useState<SentTrackingEvidence | null>(null);
+  const [remediationOpened, setRemediationOpened] = useState(false);
+  const manualEmailInputRef = useRef<HTMLInputElement | null>(null);
   const trackingStorageKey = getDispatchTrackingStorageKey(quoteId);
 
   // ── Initialize from resolved data ──
@@ -144,6 +146,7 @@ export function VendorRequestModal({
     setManualName("");
     setMessageExpanded(true);
     setConfirmationOpen(false);
+    setRemediationOpened(false);
     if (!trackingStorageKey || typeof window === "undefined") {
       setSentTracking(null);
       return;
@@ -283,6 +286,14 @@ export function VendorRequestModal({
     // §11.229 — showManualFallback state 는 Section 3 always-visible 후 deprecated.
     setShowManualFallback(false);
   }, [manualEmail, manualName]);
+
+  const openSupplierRemediation = useCallback(() => {
+    setRemediationOpened(true);
+    requestAnimationFrame(() => {
+      manualEmailInputRef.current?.focus();
+      manualEmailInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }, []);
 
   const handleSubmit = async () => {
     if (sentTracking) return;
@@ -557,6 +568,29 @@ export function VendorRequestModal({
                 ))}
               </div>
             )}
+            {sendReadiness === "blocked" && (
+              <div className="mt-3 border-t border-amber-200 pt-3">
+                <Button
+                  type="button"
+                  size="sm"
+                  data-testid="quote-dispatch-supplier-remediation-visible-cta"
+                  onClick={openSupplierRemediation}
+                  className="min-h-[40px] bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  공급사 후보 보강
+                </Button>
+                {remediationOpened && (
+                  <p
+                    role="status"
+                    data-testid="quote-dispatch-remediation-result"
+                    className="mt-2 text-xs font-medium text-amber-800"
+                  >
+                    보강 필요: 아래에서 공급사 연락처를 직접 추가하세요.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* ═══ §11.229 #quote-management-v2-phase-c2 — 3 source grouping ═══
@@ -635,7 +669,10 @@ export function VendorRequestModal({
             </div>
 
             {/* Section 3 — 이메일 직접 입력 (manual, always-visible form) */}
-            <div className="space-y-2 border-t border-slate-100 pt-3">
+            <div
+              data-testid="quote-dispatch-manual-supplier-panel"
+              className="space-y-2 border-t border-slate-100 pt-3"
+            >
               <div className="flex items-center gap-2 px-1">
                 <UserPlus className="h-3 w-3 text-slate-500" />
                 <span className="text-xs font-semibold text-slate-700">이메일 직접 입력</span>
@@ -662,6 +699,7 @@ export function VendorRequestModal({
                 </p>
                 <div className="flex gap-2">
                   <Input
+                    ref={manualEmailInputRef}
                     type="email"
                     placeholder="이메일"
                     value={manualEmail}
@@ -858,12 +896,7 @@ export function VendorRequestModal({
                 선택 공급사에 요청 전달
               </Button>
               <Button
-                onClick={() => {
-                  // §11.229 — Section 3 의 이메일 input 으로 focus
-                  const emailInput = document.querySelector<HTMLInputElement>('input[type="email"][placeholder="이메일"]');
-                  emailInput?.focus();
-                  emailInput?.scrollIntoView({ behavior: "smooth", block: "center" });
-                }}
+                onClick={openSupplierRemediation}
                 disabled={isSubmitting}
                 className="min-h-[40px] font-semibold active:scale-95 bg-blue-600 hover:bg-blue-700 text-white"
               >
