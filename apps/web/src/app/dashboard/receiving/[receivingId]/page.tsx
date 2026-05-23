@@ -867,17 +867,58 @@ function ReceivingInputPanel({
         </div>
       </div>
 
-      {/* §11.290 Phase 4c-2 — QuoteScannerModal 렌더 (Phase 4c skeleton caller).
-          onScanComplete placeholder — Phase 4c-3 에서 PO 매칭 + 입고 자동
-          prefill (PR/Order 매칭 + receivedQty / newLotNumber 자동 채움). */}
+      {/* §11.290 Phase 4c-3 — QuoteScannerModal 렌더 + 실제 PO 매칭 + 입고
+          자동 prefill. items[].productName 으로 line.itemLabel client-side
+          string match (case-insensitive includes). matched line 의
+          setReceivedQty(line.id, items[].quantity) 자동 채움 → 사용자
+          friction 제거. 매칭 결과 alert ("N건 자동 prefill 완료" 또는
+          "매칭된 품목 없음 — 수동 입력 필요"). */}
       <QuoteScannerModal
         open={quoteScannerOpen}
         onOpenChange={setQuoteScannerOpen}
         onScanComplete={(result) => {
-          // Phase 4c-2 placeholder — console.log + 향후 PO 매칭 handler 위치
-          console.info("[receiving] 거래명세서 스캔 완료:", {
+          // §11.290 Phase 4c-3 — client-side PO 매칭 + 입고 자동 prefill.
+          // items[].productName 으로 line.itemLabel 매칭 (case-insensitive includes).
+          const items = result.parsed.items || [];
+          const matchedLines: Array<{ line: ReceivingLineExecution; quantity: number }> = [];
+
+          for (const item of items) {
+            if (!item.productName || !item.quantity) continue;
+            const productLower = item.productName.toLowerCase().trim();
+            // line.itemLabel 안에 productName 이 포함되는 라인 첫 매칭 (case-insensitive)
+            const matched = lines.find((line) => {
+              const labelLower = line.itemLabel.toLowerCase();
+              return labelLower.includes(productLower) || productLower.includes(labelLower);
+            });
+            if (matched) {
+              matchedLines.push({ line: matched, quantity: item.quantity });
+            }
+          }
+
+          // matched line 마다 setReceivedQty 호출하여 자동 prefill
+          for (const { line, quantity } of matchedLines) {
+            setReceivedQty((prev) => ({ ...prev, [line.id]: String(quantity) }));
+          }
+
+          // 사용자 피드백 — 매칭 결과 alert
+          if (matchedLines.length > 0) {
+            const lineList = matchedLines
+              .map(({ line, quantity }) => `  · #${line.lineNumber} ${line.itemLabel.substring(0, 30)}: ${quantity}`)
+              .join("\n");
+            alert(
+              `거래명세서 스캔 완료: ${matchedLines.length}건 자동 prefill\n공급사: ${result.parsed.vendor?.name || "—"}\n\n${lineList}\n\n수량 확인 후 입고 처리하세요.`,
+            );
+          } else {
+            alert(
+              `거래명세서 스캔 완료: 매칭된 품목 없음 — 수동 입력 필요\n공급사: ${result.parsed.vendor?.name || "—"}\n품목 수: ${result.itemCount}`,
+            );
+          }
+
+          // 디버그 로깅 (Phase 5 후 audit log 와 연결)
+          console.info("[receiving] §11.290 Phase 4c-3 거래명세서 스캔 매칭 결과:", {
             vendor: result.parsed.vendor?.name,
-            itemCount: result.itemCount,
+            scannedItemCount: result.itemCount,
+            matchedCount: matchedLines.length,
             totalAmount: result.parsed.totalAmount,
             providerUsed: result.ocrMetadata?.providerUsed,
             cached: result.ocrMetadata?.cached,
