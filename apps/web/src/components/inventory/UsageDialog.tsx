@@ -161,7 +161,7 @@ export function UsageDialog({
               </span>
             </div>
             {quantity && parseFloat(quantity) > (selectedLot?.currentQuantity ?? 0) && (
-              <p className="text-[11px] text-amber-600">현재 재고보다 많습니다. 음수 재고가 됩니다.</p>
+              <p className="text-[11px] text-yellow-600">현재 재고보다 많습니다. 음수 재고가 됩니다.</p>
             )}
           </div>
 

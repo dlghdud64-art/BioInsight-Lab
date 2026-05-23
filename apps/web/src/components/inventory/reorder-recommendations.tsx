@@ -135,12 +135,12 @@ export function ReorderRecommendations({
               const vendor = rec.product.vendors?.[0];
               const urgencyColors = {
                 urgent: "border-red-300 bg-red-50",
-                high: "border-orange-300 bg-orange-50",
+                high: "border-red-300 bg-red-50",
                 medium: "border-yellow-300 bg-yellow-50",
               };
               const urgencyBadgeColors = {
                 urgent: "bg-red-100 text-red-800 border-red-300",
-                high: "bg-orange-100 text-orange-800 border-orange-300",
+                high: "bg-red-100 text-red-800 border-red-300",
                 medium: "bg-yellow-100 text-yellow-800 border-yellow-300",
               };
 
@@ -197,7 +197,7 @@ export function ReorderRecommendations({
             const vendor = rec.product.vendors?.[0];
             const urgencyColors = {
               urgent: "bg-red-100 text-red-800 border-red-300",
-              high: "bg-orange-100 text-orange-800 border-orange-300",
+              high: "bg-red-100 text-red-800 border-red-300",
               medium: "bg-yellow-100 text-yellow-800 border-yellow-300",
             };
 

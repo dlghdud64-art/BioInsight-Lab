@@ -80,7 +80,7 @@ export function InventorySummaryBlock() {
       label: "만료 임박",
       value: expiringSoon,
       icon: Calendar,
-      color: expiringSoon > 0 ? "text-amber-400" : "text-slate-400",
+      color: expiringSoon > 0 ? "text-yellow-700" : "text-slate-400",
       desc: expiringSoon === 0 ? "30일 내 만료 없음" : `${expiringSoon}건 유효기간 확인`,
       href: "/dashboard/inventory?filter=expiring",
     },

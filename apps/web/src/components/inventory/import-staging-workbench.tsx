@@ -379,13 +379,13 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
                         <div className={`h-1.5 rounded-full ${
                           m.confidenceLevel === "high" ? "bg-emerald-500" :
                           m.confidenceLevel === "medium" ? "bg-blue-500" :
-                          m.confidenceLevel === "low" ? "bg-amber-500" :
+                          m.confidenceLevel === "low" ? "bg-yellow-500" :
                           "bg-slate-600"
                         }`} style={{ width: `${Math.max(8, m.confidence * 60)}px` }} />
                         <span className={`text-[10px] font-mono ${
                           m.confidenceLevel === "high" ? "text-emerald-400" :
                           m.confidenceLevel === "medium" ? "text-blue-400" :
-                          m.confidenceLevel === "low" ? "text-amber-400" :
+                          m.confidenceLevel === "low" ? "text-yellow-700" :
                           "text-slate-600"
                         }`}>{Math.round(m.confidence * 100)}%</span>
                       </div>
@@ -404,9 +404,9 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
                   <span className="text-[9px] text-slate-500 block">중간</span>
                   <span className="text-lg font-bold text-blue-400">{stagingState.mediumConfidenceCount}</span>
                 </div>
-                <div className="px-3 py-2.5 rounded-lg border border-amber-500/20 bg-amber-600/[0.03] text-center">
+                <div className="px-3 py-2.5 rounded-lg border border-yellow-500/20 bg-yellow-600/[0.03] text-center">
                   <span className="text-[9px] text-slate-500 block">저신뢰</span>
-                  <span className="text-lg font-bold text-amber-400">{stagingState.lowConfidenceCount}</span>
+                  <span className="text-lg font-bold text-yellow-700">{stagingState.lowConfidenceCount}</span>
                 </div>
                 <div className="px-3 py-2.5 rounded-lg border border-bd/40 bg-slate-50 text-center">
                   <span className="text-[9px] text-slate-500 block">미매핑</span>
@@ -424,9 +424,9 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
                     </div>
                   )}
                   {stagingState.warningCount > 0 && (
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-600/[0.04] border border-amber-500/10">
-                      <AlertTriangle className="h-3 w-3 text-amber-400" />
-                      <span className="text-[11px] text-amber-300">경고 {stagingState.warningCount}건</span>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10">
+                      <AlertTriangle className="h-3 w-3 text-yellow-700" />
+                      <span className="text-[11px] text-yellow-300">경고 {stagingState.warningCount}건</span>
                     </div>
                   )}
                   {stagingState.duplicateCount > 0 && (
@@ -488,7 +488,7 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
                       row.operatorDecision === "approved" ? "border-emerald-500/20 bg-emerald-600/[0.02]" :
                       row.operatorDecision === "rejected" ? "border-red-500/20 bg-red-600/[0.02] opacity-60" :
                       hasErrors ? "border-red-500/25 bg-red-600/[0.03]" :
-                      hasWarnings ? "border-amber-500/15 bg-amber-600/[0.02]" :
+                      hasWarnings ? "border-yellow-500/15 bg-yellow-600/[0.02]" :
                       "border-bd/30 bg-slate-50/60"
                     }`}>
                       {/* Row summary */}
@@ -511,7 +511,7 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
                           <span className={`text-[9px] font-mono ${
                             row.rowConfidenceLevel === "high" ? "text-emerald-400" :
                             row.rowConfidenceLevel === "medium" ? "text-blue-400" :
-                            row.rowConfidenceLevel === "low" ? "text-amber-400" : "text-slate-600"
+                            row.rowConfidenceLevel === "low" ? "text-yellow-700" : "text-slate-600"
                           }`}>{Math.round(row.rowConfidence * 100)}%</span>
                         </div>
                         {/* Decision buttons */}
@@ -552,7 +552,7 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
                             <div className="space-y-1">
                               {row.issues.map((issue, ii) => (
                                 <div key={ii} className={`flex items-center gap-1.5 text-[11px] ${
-                                  issue.severity === "error" ? "text-red-400" : issue.severity === "warning" ? "text-amber-400" : "text-slate-500"
+                                  issue.severity === "error" ? "text-red-400" : issue.severity === "warning" ? "text-yellow-700" : "text-slate-500"
                                 }`}>
                                   {issue.severity === "error" ? <AlertCircle className="h-3 w-3 shrink-0" /> : <AlertTriangle className="h-3 w-3 shrink-0" />}
                                   {issue.message}

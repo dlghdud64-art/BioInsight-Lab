@@ -220,7 +220,7 @@ export function LabelPrintDialog({ open, onOpenChange, items }: LabelPrintDialog
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs font-medium text-foreground truncate">{item.productName}</span>
-                        {ov && <span title="품목명이 2줄을 초과할 수 있습니다"><AlertTriangle className="h-3 w-3 text-amber-500 shrink-0" /></span>}
+                        {ov && <span title="품목명이 2줄을 초과할 수 있습니다"><AlertTriangle className="h-3 w-3 text-yellow-500 shrink-0" /></span>}
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
                         {item.lotNumber && <span className="text-[10px] text-muted-foreground">Lot: {item.lotNumber}</span>}
@@ -243,11 +243,11 @@ export function LabelPrintDialog({ open, onOpenChange, items }: LabelPrintDialog
                     if (typeof slot === "string") return null;
                     const meta = metaLine(slot, includeFields), ov = nameOverflowIds.has(slot.id);
                     return (
-                      <div key={slot.id} className={`bg-white rounded border p-3 flex gap-3 ${ov ? "border-amber-300" : "border-slate-200"}`}
+                      <div key={slot.id} className={`bg-white rounded border p-3 flex gap-3 ${ov ? "border-yellow-300" : "border-slate-200"}`}
                         style={{ maxWidth: `${Math.min(spec.w * 3, 220)}px` }}>
                         {includeFields.qrCode && <div className="shrink-0 flex items-center justify-center w-16 h-16 bg-slate-50 rounded"><QrCode className="h-10 w-10 text-slate-400" /></div>}
                         <div className="flex-1 min-w-0 space-y-0.5">
-                          <p className={`text-xs font-semibold leading-tight ${ov ? "text-amber-700" : "text-slate-800"}`}>{slot.productName}</p>
+                          <p className={`text-xs font-semibold leading-tight ${ov ? "text-yellow-700" : "text-slate-800"}`}>{slot.productName}</p>
                           {meta.map((m, i) => <p key={i} className="text-[10px] text-slate-500">{m}</p>)}
                         </div>
                       </div>
@@ -262,7 +262,7 @@ export function LabelPrintDialog({ open, onOpenChange, items }: LabelPrintDialog
                     if (slot === "empty") return <div key={`empty-${i}`} className="bg-slate-50 rounded-sm border border-slate-100" style={{ aspectRatio: `${spec.w}/${spec.h}` }} />;
                     const meta = metaLine(slot, includeFields), ov = nameOverflowIds.has(slot.id);
                     return (
-                      <div key={slot.id} className={`bg-white rounded-sm border p-[3px] overflow-hidden flex gap-[2px] ${ov ? "border-amber-300" : "border-slate-200"}`}
+                      <div key={slot.id} className={`bg-white rounded-sm border p-[3px] overflow-hidden flex gap-[2px] ${ov ? "border-yellow-300" : "border-slate-200"}`}
                         style={{ aspectRatio: `${spec.w}/${spec.h}` }}>
                         {includeFields.qrCode && <div className="shrink-0 flex items-center justify-center"><QrCode className="h-[60%] w-auto text-slate-400" /></div>}
                         <div className="flex-1 min-w-0 flex flex-col justify-center overflow-hidden">
@@ -276,7 +276,7 @@ export function LabelPrintDialog({ open, onOpenChange, items }: LabelPrintDialog
               )}
             </div>
             {nameOverflowIds.size > 0 && (
-              <p className="text-[10px] text-amber-500 flex items-center gap-1">
+              <p className="text-[10px] text-yellow-500 flex items-center gap-1">
                 <AlertTriangle className="h-3 w-3" />{nameOverflowIds.size}개 항목의 품목명이 2줄을 초과할 수 있습니다
               </p>
             )}

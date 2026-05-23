@@ -37,11 +37,11 @@ interface FlowStage {
 
 const MOCK_STAGES: FlowStage[] = [
   { id: "incoming", label: "입고 예정", icon: Truck, iconBg: "bg-blue-100", iconColor: "text-blue-600", itemCount: 3, lotCount: 4, representative: ["Anti-CD3 Ab", "RPMI 1640"], elapsed: "2일 전 발주", needsAttention: false, nextAction: "/dashboard/purchases", nextActionLabel: "발주 확인" },
-  { id: "inspection", label: "검수 대기", icon: ClipboardCheck, iconBg: "bg-amber-100", iconColor: "text-amber-600", itemCount: 2, lotCount: 2, representative: ["50ml Conical Tube", "Pipette Tips"], elapsed: "입고 후 1일", needsAttention: true, nextAction: "/dashboard/inventory", nextActionLabel: "재고 반영" },
+  { id: "inspection", label: "검수 대기", icon: ClipboardCheck, iconBg: "bg-yellow-100", iconColor: "text-yellow-600", itemCount: 2, lotCount: 2, representative: ["50ml Conical Tube", "Pipette Tips"], elapsed: "입고 후 1일", needsAttention: true, nextAction: "/dashboard/inventory", nextActionLabel: "재고 반영" },
   { id: "stocked", label: "재고 반영", icon: Package, iconBg: "bg-emerald-100", iconColor: "text-emerald-600", itemCount: 45, lotCount: 78, representative: ["FBS", "DMEM", "PBS"], elapsed: "-", needsAttention: false, nextAction: "/dashboard/inventory", nextActionLabel: "재고 현황" },
   { id: "in_use", label: "사용 중", icon: FlaskConical, iconBg: "bg-cyan-100", iconColor: "text-cyan-600", itemCount: 12, lotCount: 15, representative: ["Trypsin-EDTA", "FBS"], elapsed: "활성 사용", needsAttention: false, nextAction: "/dashboard/inventory", nextActionLabel: "사용 추이" },
   { id: "low_stock", label: "안전재고 미만", icon: AlertTriangle, iconBg: "bg-red-100", iconColor: "text-red-600", itemCount: 3, lotCount: 5, representative: ["FBS", "DMEM Medium"], elapsed: "5일 내 소진", needsAttention: true, nextAction: "/dashboard/inventory?filter=low", nextActionLabel: "재주문 검토" },
-  { id: "reorder", label: "재주문 검토", icon: RotateCcw, iconBg: "bg-orange-100", iconColor: "text-orange-600", itemCount: 2, lotCount: 3, representative: ["Gibco FBS"], elapsed: "검토 필요", needsAttention: true, nextAction: "/dashboard/inventory", nextActionLabel: "발주 생성" },
+  { id: "reorder", label: "재주문 검토", icon: RotateCcw, iconBg: "bg-red-100", iconColor: "text-red-600", itemCount: 2, lotCount: 3, representative: ["Gibco FBS"], elapsed: "검토 필요", needsAttention: true, nextAction: "/dashboard/inventory", nextActionLabel: "발주 생성" },
   { id: "disposal", label: "폐기 검토", icon: Trash2, iconBg: "bg-rose-100", iconColor: "text-rose-600", itemCount: 1, lotCount: 1, representative: ["DMEM Lot#2024-A12"], elapsed: "만료 D-7", needsAttention: true, nextAction: "/dashboard/inventory", nextActionLabel: "폐기 처리" },
 ];
 
@@ -109,7 +109,7 @@ const INSIGHT_ICONS: Record<string, React.ElementType> = {
 /** Stage-level micro-insight text */
 const STAGE_MICRO_INSIGHTS: Record<string, { text: string; color: string }> = {
   low_stock: { text: "6일 내 부족 가능", color: "text-red-500" },
-  reorder: { text: "즉시 발주 권장", color: "text-orange-500" },
+  reorder: { text: "즉시 발주 권장", color: "text-red-500" },
   disposal: { text: "D-7 만료 1건", color: "text-rose-500" },
 };
 
@@ -290,9 +290,9 @@ export function InventoryFlowView() {
       {!selectedStage && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: "검수 대기", count: 2, iconBg: "bg-amber-100", iconColor: "text-amber-600", icon: ClipboardCheck },
+            { label: "검수 대기", count: 2, iconBg: "bg-yellow-100", iconColor: "text-yellow-600", icon: ClipboardCheck },
             { label: "안전재고 미만", count: 3, iconBg: "bg-red-100", iconColor: "text-red-600", icon: AlertTriangle },
-            { label: "재주문 검토", count: 2, iconBg: "bg-orange-100", iconColor: "text-orange-600", icon: RotateCcw },
+            { label: "재주문 검토", count: 2, iconBg: "bg-red-100", iconColor: "text-red-600", icon: RotateCcw },
             { label: "폐기 검토", count: 1, iconBg: "bg-rose-100", iconColor: "text-rose-600", icon: Trash2 },
           ].map((s) => (
             <div

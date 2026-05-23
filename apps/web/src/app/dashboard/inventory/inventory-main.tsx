@@ -822,9 +822,9 @@ export function InventoryMain() {
   const ISSUE_CONFIG: Record<IssueType, { label: string; cls: string; priority: number }> = {
     expired:       { label: "만료됨",     cls: "bg-red-900/50 text-red-400",       priority: 0 },
     out_of_stock:  { label: "품절",       cls: "bg-red-900/50 text-red-400",       priority: 1 },
-    expiring:      { label: "임박",       cls: "bg-amber-900/50 text-amber-400", priority: 2 },
-    low_stock:     { label: "재고 부족",  cls: "bg-orange-900/50 text-orange-400", priority: 3 },
-    reorder_lead:  { label: "재주문 권장", cls: "bg-amber-900/50 text-amber-400", priority: 4 },
+    expiring:      { label: "임박",       cls: "bg-yellow-900/50 text-yellow-700", priority: 2 },
+    low_stock:     { label: "재고 부족",  cls: "bg-red-900/50 text-red-600", priority: 3 },
+    reorder_lead:  { label: "재주문 권장", cls: "bg-yellow-900/50 text-yellow-700", priority: 4 },
     no_location:   { label: "위치 미지정", cls: "bg-el text-slate-400",  priority: 5 },
   };
 
@@ -1517,14 +1517,14 @@ export function InventoryMain() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-amber-500/20 bg-pn px-4 py-3">
+              <div className="rounded-xl border border-yellow-500/20 bg-pn px-4 py-3">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-medium text-amber-400/80">만료 임박</span>
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/10">
-                    <Calendar className="h-3 w-3 text-amber-400" />
+                  <span className="text-[11px] font-medium text-yellow-700/80">만료 임박</span>
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-yellow-500/10">
+                    <Calendar className="h-3 w-3 text-yellow-700" />
                   </div>
                 </div>
-                <div className="text-2xl font-bold tracking-tight text-amber-400">
+                <div className="text-2xl font-bold tracking-tight text-yellow-700">
                   {expiringSoonCount}
                   <span className="ml-1 text-sm font-normal text-slate-400">건</span>
                 </div>
@@ -1622,10 +1622,10 @@ export function InventoryMain() {
                       case "out_of_stock":
                         return "bg-red-950/10  bg-red-950/10 border-red-900/30  border-red-900/30";
                       case "expiring":
-                        return "bg-amber-50  bg-amber-50 border-amber-900/30  border-amber-900/30";
+                        return "bg-yellow-50  bg-yellow-50 border-yellow-900/30  border-yellow-900/30";
                       case "low_stock":
                       case "reorder_lead":
-                        return "bg-orange-950/10  bg-orange-950/10 border-orange-900/30  border-orange-900/30";
+                        return "bg-red-900/10  bg-red-900/10 border-red-900/30  border-red-900/30";
                       case "no_location":
                         return "bg-pn/30 border-bs";
                     }
@@ -1663,7 +1663,7 @@ export function InventoryMain() {
                                 <Badge className={`text-[10px] px-1.5 py-0 border-none whitespace-nowrap shrink-0 ${
                                   issueType === "expired"
                                     ? "bg-red-900/50 text-red-400"
-                                    : "bg-amber-900/50 text-amber-400"
+                                    : "bg-yellow-900/50 text-yellow-700"
                                 }`}>{daysLeft}</Badge>
                               )}
                             </div>
@@ -1678,14 +1678,14 @@ export function InventoryMain() {
                               ) : issueType !== "no_location" ? (
                                 <>
                                   <span className="text-slate-600  text-slate-400">·</span>
-                                  <span className="whitespace-nowrap text-amber-500">위치 미지정</span>
+                                  <span className="whitespace-nowrap text-yellow-500">위치 미지정</span>
                                 </>
                               ) : null}
                               <span className="text-slate-600  text-slate-400">·</span>
                               <span className="whitespace-nowrap">
                                 <span className={`font-semibold ${
                                   inv.currentQuantity === 0 ? "text-red-400  text-red-400" :
-                                  (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock) ? "text-orange-400  text-orange-400" :
+                                  (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock) ? "text-red-600  text-red-600" :
                                   "text-slate-600"
                                 }`}>{inv.currentQuantity}</span> {inv.unit}
                                 {inv.safetyStock != null && <span className="text-slate-400"> / 안전재고 {inv.safetyStock}</span>}
@@ -1709,7 +1709,7 @@ export function InventoryMain() {
                                 className={`h-7 px-2 text-[11px] whitespace-nowrap gap-1 ${
                                   issueType === "out_of_stock"
                                     ? "text-red-400 border-red-800 hover:bg-red-950/30  text-red-400  border-red-800  hover:bg-red-950/30"
-                                    : "text-orange-400 border-orange-800 hover:bg-orange-950/30  text-orange-400  border-orange-800  hover:bg-orange-950/30"
+                                    : "text-red-600 border-red-800 hover:bg-red-900/30  text-red-600  border-red-800  hover:bg-red-900/30"
                                 }`}
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -1739,7 +1739,7 @@ export function InventoryMain() {
                             )}
                             {(issueType === "expiring") && (
                               /* 유효기간 임박 → 우선 사용 배지 (읽기 전용 상태 표시) */
-                              <Badge variant="outline" className="h-6 px-1.5 text-[10px] font-semibold whitespace-nowrap bg-amber-50 text-amber-400 border-amber-800  bg-amber-50  text-amber-400  border-amber-800 shrink-0" title="유효기간 임박 또는 먼저 소진해야 하는 항목입니다.">
+                              <Badge variant="outline" className="h-6 px-1.5 text-[10px] font-semibold whitespace-nowrap bg-yellow-50 text-yellow-700 border-yellow-700  bg-yellow-50  text-yellow-700  border-yellow-700 shrink-0" title="유효기간 임박 또는 먼저 소진해야 하는 항목입니다.">
                                 <Truck className="h-2.5 w-2.5 mr-0.5 shrink-0" />
                                 우선 사용
                               </Badge>
@@ -1944,9 +1944,9 @@ export function InventoryMain() {
                     <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">활성 Lot</p>
                     <p className="text-xl font-bold text-slate-700">{displayInventories.filter((i) => i.lotNumber).length}</p>
                   </div>
-                  <div className="rounded-lg border border-amber-500/20 bg-el px-3 py-2.5">
-                    <p className="text-[10px] text-amber-400/70 uppercase tracking-wider mb-1">임박 Lot</p>
-                    <p className="text-xl font-bold text-amber-400">{expiringSoonCount}</p>
+                  <div className="rounded-lg border border-yellow-500/20 bg-el px-3 py-2.5">
+                    <p className="text-[10px] text-yellow-700/70 uppercase tracking-wider mb-1">임박 Lot</p>
+                    <p className="text-xl font-bold text-yellow-700">{expiringSoonCount}</p>
                   </div>
                   <div className="rounded-lg border border-bd bg-el px-3 py-2.5">
                     <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">위치 미지정</p>
@@ -3155,7 +3155,7 @@ export function InventoryMain() {
                               )}
                             </div>
                             {isLowStock && (
-                              <Badge variant="outline" dot="amber" className="mt-1 bg-amber-50 text-amber-400 border-amber-800 text-[11px]">
+                              <Badge variant="outline" dot="amber" className="mt-1 bg-yellow-50 text-yellow-700 border-yellow-700 text-[11px]">
                                 재고 부족
                               </Badge>
                             )}
@@ -3308,7 +3308,7 @@ function InventoryCard({
         : isOutOfStock
         ? "border-red-300 bg-red-950/30"
         : isLowStock
-        ? "border-orange-300 bg-orange-50"
+        ? "border-red-300 bg-red-50"
         : ""
     }>
       <CardHeader>
@@ -3339,7 +3339,7 @@ function InventoryCard({
               </Badge>
             )}
             {isLowStock && !isOutOfStock && !hasRestockRequest && (
-              <Badge variant="outline" dot="amber" className="bg-amber-50 text-amber-400 border-amber-800">
+              <Badge variant="outline" dot="amber" className="bg-yellow-50 text-yellow-700 border-yellow-700">
                 재고 부족
               </Badge>
             )}
@@ -3747,9 +3747,9 @@ function TeamInventoryCard({
         isOutOfStock
           ? "border-red-300 bg-red-950/10 opacity-75"
           : isLocationMissing
-          ? "border-amber-300 bg-amber-50 ring-2 ring-amber-200"
+          ? "border-yellow-300 bg-yellow-50 ring-2 ring-yellow-200"
           : isLowStock
-          ? "border-orange-800 bg-orange-50/30"
+          ? "border-red-800 bg-red-50/30"
           : "border-bd bg-pn"
       }`}
     >
@@ -3789,7 +3789,7 @@ function TeamInventoryCard({
             </Badge>
           )}
           {isLowStock && !isOutOfStock && (
-            <Badge variant="outline" dot="amber" className="flex-shrink-0 bg-amber-50 text-amber-400 border-amber-800">
+            <Badge variant="outline" dot="amber" className="flex-shrink-0 bg-yellow-50 text-yellow-700 border-yellow-700">
               부족
             </Badge>
           )}
@@ -3815,26 +3815,26 @@ function TeamInventoryCard({
         <div
           className={`flex items-center gap-2 text-sm p-2 rounded transition-colors -mx-2 ${
             isLocationMissing
-              ? "bg-amber-100 border border-amber-300"
+              ? "bg-yellow-100 border border-yellow-300"
               : "hover:bg-el"
           }`}
         >
           <MapPin
             className={`h-4 w-4 flex-shrink-0 ${
-              isLocationMissing ? "text-amber-600" : "text-muted-foreground"
+              isLocationMissing ? "text-yellow-600" : "text-muted-foreground"
             }`}
           />
           <span
             className={`flex-1 ${
               isLocationMissing
-                ? "text-amber-400 font-semibold"
+                ? "text-yellow-700 font-semibold"
                 : "text-slate-600"
             }`}
           >
             {inventory.location || "미지정"}
           </span>
           {isLocationMissing && (
-            <Badge variant="outline" dot="amber" className="bg-amber-50 text-amber-400 border-amber-800 text-[11px]">
+            <Badge variant="outline" dot="amber" className="bg-yellow-50 text-yellow-700 border-yellow-700 text-[11px]">
               설정 필요
             </Badge>
           )}

@@ -46,7 +46,7 @@ export interface QueueItem {
 /* ── Config maps ── */
 const RISK_CONFIG: Record<QueueRiskLevel, { label: string; dot: string; bg: string }> = {
   critical: { label: "긴급", dot: "bg-red-500", bg: "bg-red-50 text-red-600 border-red-200" },
-  high:     { label: "높음", dot: "bg-amber-500", bg: "bg-amber-50 text-amber-600 border-amber-200" },
+  high:     { label: "높음", dot: "bg-yellow-500", bg: "bg-yellow-50 text-yellow-600 border-yellow-200" },
   medium:   { label: "보통", dot: "bg-blue-500", bg: "bg-blue-50 text-blue-600 border-blue-200" },
   low:      { label: "낮음", dot: "bg-slate-400", bg: "bg-slate-50 text-slate-500 border-slate-200" },
 };
@@ -54,7 +54,7 @@ const RISK_CONFIG: Record<QueueRiskLevel, { label: string; dot: string; bg: stri
 const CATEGORY_CONFIG: Record<QueueCategory, { label: string; icon: React.ElementType; color: string }> = {
   expiring_soon:    { label: "만료 임박",       icon: Calendar,     color: "text-red-500" },
   disposal_review:  { label: "폐기 처리",       icon: Trash2,       color: "text-red-500" },
-  reorder_priority: { label: "재주문 우선",     icon: ShoppingCart,  color: "text-amber-500" },
+  reorder_priority: { label: "재주문 우선",     icon: ShoppingCart,  color: "text-yellow-500" },
   no_location:      { label: "위치 미지정",     icon: MapPin,        color: "text-blue-500" },
   label_reprint:    { label: "라벨 재출력",     icon: Printer,       color: "text-violet-500" },
   receiving_pending:{ label: "입고 미정리",     icon: PackageCheck,  color: "text-emerald-500" },
@@ -202,8 +202,8 @@ export function PriorityActionQueue({
       {/* Header */}
       <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100">
-            <Flame className="h-3.5 w-3.5 text-amber-600" />
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-yellow-100">
+            <Flame className="h-3.5 w-3.5 text-yellow-600" />
           </div>
           <div>
             <h3 className="text-[13px] font-extrabold text-slate-900">

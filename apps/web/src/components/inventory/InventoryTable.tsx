@@ -202,8 +202,8 @@ function StatusBadge({ status }: { status: string }) {
   if (isShort) {
     return (
       <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-        <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
-        <span className="text-[11px] font-medium text-amber-600 whitespace-nowrap">부족</span>
+        <span className="h-2 w-2 rounded-full bg-yellow-500 shrink-0" />
+        <span className="text-[11px] font-medium text-yellow-600 whitespace-nowrap">부족</span>
       </span>
     );
   }
@@ -220,8 +220,8 @@ function StatusBadge({ status }: { status: string }) {
   if (isWarning) {
     return (
       <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-        <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
-        <span className="text-[11px] font-medium text-amber-600 whitespace-nowrap">주의</span>
+        <span className="h-2 w-2 rounded-full bg-yellow-500 shrink-0" />
+        <span className="text-[11px] font-medium text-yellow-600 whitespace-nowrap">주의</span>
       </span>
     );
   }
@@ -229,8 +229,8 @@ function StatusBadge({ status }: { status: string }) {
   if (isExpiry) {
     return (
       <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-        <span className="h-2 w-2 rounded-full bg-amber-600 shrink-0" />
-        <span className="text-[11px] font-medium text-amber-700 whitespace-nowrap">임박</span>
+        <span className="h-2 w-2 rounded-full bg-yellow-600 shrink-0" />
+        <span className="text-[11px] font-medium text-yellow-700 whitespace-nowrap">임박</span>
       </span>
     );
   }
@@ -349,7 +349,7 @@ export function InventoryTable({
               return (
                 <div
                   key={group.productId}
-                  className={`${isRisky ? "bg-amber-500/5" : ""}`}
+                  className={`${isRisky ? "bg-yellow-500/5" : ""}`}
                 >
                   {/* ── 품목 카드 ── */}
                   <div className="px-3.5 py-3">
@@ -368,8 +368,8 @@ export function InventoryTable({
                     <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-2.5">
                       <span className="flex items-center gap-1">
                         <span className={`font-bold text-sm ${
-                          groupStatus === "부족" ? "text-amber-400" :
-                          groupStatus === "주의" ? "text-amber-400" :
+                          groupStatus === "부족" ? "text-yellow-700" :
+                          groupStatus === "주의" ? "text-yellow-700" :
                           "text-slate-900"
                         }`}>
                           총 {group.totalQuantity}
@@ -381,7 +381,7 @@ export function InventoryTable({
                           <span className="text-slate-600  text-slate-600">·</span>
                           <span className={`flex items-center gap-0.5 ${
                             isExpired(group.earliestExpiry) ? "text-red-500" :
-                            isExpiringSoon(group.earliestExpiry) ? "text-amber-500" :
+                            isExpiringSoon(group.earliestExpiry) ? "text-yellow-500" :
                             "text-slate-400"
                           }`}>
                             <Clock className="h-3 w-3 shrink-0" />
@@ -425,7 +425,7 @@ export function InventoryTable({
                         }
                         if (isExpiringItem) {
                           return (
-                            <Button variant="outline" size="sm" className="h-7 px-2.5 text-[11px] gap-1 text-amber-400 border-amber-500/30 hover:bg-amber-500/10 font-medium" onClick={() => onReorder(group.lots[0])}>
+                            <Button variant="outline" size="sm" className="h-7 px-2.5 text-[11px] gap-1 text-yellow-700 border-yellow-500/30 hover:bg-yellow-500/10 font-medium" onClick={() => onReorder(group.lots[0])}>
                               <Clock className="h-3 w-3 shrink-0" />교체 주문
                             </Button>
                           );
@@ -490,9 +490,9 @@ export function InventoryTable({
                             data-testid={lotExpired && lot.currentQuantity > 0 ? "labaxis-inventory-expired-lot-row" : undefined}
                             className={`rounded-lg border p-3 ${
                               lotUrgent
-                                ? "border-amber-500/20 bg-amber-500/5"
+                                ? "border-yellow-500/20 bg-yellow-500/5"
                                 : lotExpiringSoon
-                                  ? "border-amber-500/20 bg-amber-500/5"
+                                  ? "border-yellow-500/20 bg-yellow-500/5"
                                   : "border-slate-200 bg-white"
                             }`}
                           >
@@ -521,7 +521,7 @@ export function InventoryTable({
                               {lot.expiryDate && (
                                 <span className={`${
                                   lotExpired ? "text-red-500 font-semibold" :
-                                  lotExpiringSoon ? "text-amber-500 font-semibold" :
+                                  lotExpiringSoon ? "text-yellow-500 font-semibold" :
                                   "text-slate-400"
                                 }`}>
                                   {format(new Date(lot.expiryDate), "yyyy.MM.dd")}
@@ -672,7 +672,7 @@ export function InventoryTable({
                         ${isExpanded
                           ? "bg-blue-50/30 hover:bg-blue-50/50"
                           : isRisky
-                          ? "bg-amber-50/30 hover:bg-amber-50/50"
+                          ? "bg-yellow-50/30 hover:bg-yellow-50/50"
                           : "bg-white hover:bg-slate-50/80"
                         }
                       `}
@@ -729,8 +729,8 @@ export function InventoryTable({
                       {/* 총 수량 */}
                       <TableCell className="text-right whitespace-nowrap">
                         <span className={`font-bold text-base ${
-                          groupStatus === "부족" ? "text-amber-600" :
-                          groupStatus === "주의" ? "text-amber-600" :
+                          groupStatus === "부족" ? "text-yellow-600" :
+                          groupStatus === "주의" ? "text-yellow-600" :
                           "text-slate-900"
                         }`}>
                           {group.totalQuantity}
@@ -763,14 +763,14 @@ export function InventoryTable({
                           <div>
                             <span className={`text-xs font-medium ${
                               isExpired(group.earliestExpiry) ? "text-red-600" :
-                              isExpiringSoon(group.earliestExpiry) ? "text-amber-600" :
+                              isExpiringSoon(group.earliestExpiry) ? "text-yellow-600" :
                               "text-slate-500"
                             }`}>
                               {format(new Date(group.earliestExpiry), "yyyy.MM.dd")}
                             </span>
                             {expiryDays !== null && expiryDays <= 30 && (
                               <span className={`text-[10px] ml-1 font-semibold ${
-                                expiryDays <= 0 ? "text-red-500" : "text-amber-500"
+                                expiryDays <= 0 ? "text-red-500" : "text-yellow-500"
                               }`}>
                                 {expiryDays <= 0 ? "만료" : `D-${expiryDays}`}
                               </span>
@@ -819,7 +819,7 @@ export function InventoryTable({
                                       size="sm"
                                       className={`h-7 px-2 text-[11px] gap-1 ${
                                         groupStatus === "부족"
-                                          ? "text-amber-600 border-amber-300 hover:bg-amber-50"
+                                          ? "text-yellow-600 border-yellow-300 hover:bg-yellow-50"
                                           : "text-blue-600 border-blue-300 hover:bg-blue-50"
                                       }`}
                                       onClick={() => onReorder(group.lots[0])}
@@ -1009,7 +1009,7 @@ export function InventoryTable({
                                     <span className="truncate max-w-[80px]">{lot.location}</span>
                                   </span>
                                 ) : (
-                                  <span className="text-[10px] text-amber-500 font-medium">미지정</span>
+                                  <span className="text-[10px] text-yellow-500 font-medium">미지정</span>
                                 )}
                               </TableCell>
 
@@ -1019,14 +1019,14 @@ export function InventoryTable({
                                   <div>
                                     <span className={`text-xs font-medium ${
                                       lotExpired ? "text-red-600 font-bold" :
-                                      lotExpiringSoon ? "text-amber-600" :
+                                      lotExpiringSoon ? "text-yellow-600" :
                                       "text-slate-500"
                                     }`}>
                                       {format(new Date(lot.expiryDate), "yyyy.MM.dd")}
                                     </span>
                                     {lotExpiryDays !== null && lotExpiryDays <= 30 && (
                                       <span className={`text-[10px] ml-1 font-semibold ${
-                                        lotExpiryDays <= 0 ? "text-red-500" : "text-amber-500"
+                                        lotExpiryDays <= 0 ? "text-red-500" : "text-yellow-500"
                                       }`}>
                                         {lotExpiryDays <= 0 ? "만료" : `D-${lotExpiryDays}`}
                                       </span>
@@ -1074,7 +1074,7 @@ export function InventoryTable({
                                             className={`h-7 px-2 text-[11px] gap-1 ${
                                               lotNeedsUrgent
                                                 ? lotDisplayStatus === "부족" || lotDisplayStatus === "만료"
-                                                  ? "text-amber-600 border-amber-300 hover:bg-amber-50"
+                                                  ? "text-yellow-600 border-yellow-300 hover:bg-yellow-50"
                                                   : "text-blue-600 border-blue-300 hover:bg-blue-50"
                                                 : "text-slate-500 border-slate-200 hover:bg-slate-100"
                                             }`}

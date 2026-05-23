@@ -29,11 +29,11 @@ interface InventoryItem {
 function getStatus(inv: InventoryItem): { label: string; cls: string } {
   if (inv.currentQuantity === 0) return { label: "품절", cls: "bg-red-500/10 text-red-400 border-red-500/20" };
   if (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock)
-    return { label: "부족", cls: "bg-amber-500/10 text-amber-400 border-amber-500/20" };
+    return { label: "부족", cls: "bg-yellow-500/10 text-yellow-700 border-yellow-500/20" };
   if (inv.expiryDate) {
     const days = Math.ceil((new Date(inv.expiryDate).getTime() - Date.now()) / 86400000);
     if (days <= 0) return { label: "만료", cls: "bg-red-500/10 text-red-400 border-red-500/20" };
-    if (days <= 30) return { label: "임박", cls: "bg-amber-500/10 text-amber-400 border-amber-500/20" };
+    if (days <= 30) return { label: "임박", cls: "bg-yellow-500/10 text-yellow-700 border-yellow-500/20" };
   }
   return { label: "정상", cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" };
 }

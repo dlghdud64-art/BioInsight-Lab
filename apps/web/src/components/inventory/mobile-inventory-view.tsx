@@ -150,13 +150,13 @@ const STATUS_CONFIG: Record<StatusType, { label: string; dotCls: string; badgeCl
   },
   low: {
     label: "부족",
-    dotCls: "bg-orange-400",
-    badgeCls: "bg-orange-950/40 text-orange-400 border-orange-800/50",
+    dotCls: "bg-red-600",
+    badgeCls: "bg-red-900/40 text-red-600 border-red-800/50",
   },
   expiring: {
     label: "임박",
-    dotCls: "bg-amber-400",
-    badgeCls: "bg-amber-950/40 text-amber-400 border-amber-800/50",
+    dotCls: "bg-yellow-700",
+    badgeCls: "bg-yellow-900/40 text-yellow-700 border-yellow-700/50",
   },
   danger: {
     label: "위험",
@@ -290,8 +290,8 @@ function MobilePriorityQueue({
                  none = slate. shortLabel === undefined 또는 type === "none" 일 때 slate. */
               className={`w-full text-left rounded-xl border border-l-4 border-bd bg-pn p-3 active:bg-el transition-colors ${
                 action.shortLabel === "긴급" || action.shortLabel === "재주문" ? "border-l-red-500" :
-                action.shortLabel === "검토" || action.shortLabel === "임박" ? "border-l-amber-500" :
-                action.shortLabel === "폐기" ? "border-l-orange-500" :
+                action.shortLabel === "검토" || action.shortLabel === "임박" ? "border-l-yellow-500" :
+                action.shortLabel === "폐기" ? "border-l-red-500" :
                 action.shortLabel === "위치" ? "border-l-violet-500" :
                 "border-l-slate-300"
               }`}
@@ -307,7 +307,7 @@ function MobilePriorityQueue({
                     {daysLeft != null && daysLeft <= 30 && (
                       <>
                         <span className="text-slate-700">|</span>
-                        <span className={daysLeft <= 0 ? "text-red-400" : "text-amber-400"}>
+                        <span className={daysLeft <= 0 ? "text-red-400" : "text-yellow-700"}>
                           {daysLeft <= 0 ? "만료됨" : `D-${daysLeft}`}
                         </span>
                       </>
@@ -323,9 +323,9 @@ function MobilePriorityQueue({
                     <span
                       className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md max-w-[64px] truncate whitespace-nowrap ${
                         action.shortLabel === "긴급" ? "bg-red-600 text-white" :
-                        action.shortLabel === "검토" ? "bg-amber-500 text-slate-900" :
-                        action.shortLabel === "폐기" ? "bg-orange-600 text-white" :
-                        action.shortLabel === "임박" ? "bg-amber-500 text-slate-900" :
+                        action.shortLabel === "검토" ? "bg-yellow-500 text-slate-900" :
+                        action.shortLabel === "폐기" ? "bg-red-600 text-white" :
+                        action.shortLabel === "임박" ? "bg-yellow-500 text-slate-900" :
                         action.shortLabel === "재주문" ? "bg-blue-500 text-white" :
                         action.shortLabel === "위치" ? "bg-violet-500 text-white" :
                         "bg-slate-200 text-slate-700"
@@ -394,7 +394,7 @@ function MobileItemCard({
           <Package className="h-3 w-3 text-slate-600" />
           <span className={`font-semibold ${
             status === "danger" ? "text-red-400" :
-            status === "low" ? "text-orange-400" :
+            status === "low" ? "text-red-600" :
             "text-slate-700"
           }`}>
             {inv.currentQuantity}
@@ -410,7 +410,7 @@ function MobileItemCard({
             <span className={(() => {
               const d = getDaysUntilExpiry(inv);
               if (d != null && d <= 0) return "text-red-400";
-              if (d != null && d <= 30) return "text-amber-400";
+              if (d != null && d <= 30) return "text-yellow-700";
               return "text-slate-400";
             })()}>
               {expiryDate}
@@ -424,8 +424,8 @@ function MobileItemCard({
         <div className="flex items-center justify-between">
           <span className={`text-[11px] font-medium ${
             action.type === "reorder" ? "text-red-400/80" :
-            action.type === "dispose" ? "text-orange-400/80" :
-            action.type === "use_first" ? "text-amber-400/80" :
+            action.type === "dispose" ? "text-red-600/80" :
+            action.type === "use_first" ? "text-yellow-700/80" :
             "text-violet-400/80"
           }`}>
             {action.label}
@@ -504,7 +504,7 @@ function MobileDetailSheet({
             </Badge>
             {daysLeft != null && daysLeft <= 30 && (
               <Badge className={`text-[10px] px-1.5 py-0 border-none ${
-                daysLeft <= 0 ? "bg-red-950/40 text-red-400" : "bg-amber-950/40 text-amber-400"
+                daysLeft <= 0 ? "bg-red-950/40 text-red-400" : "bg-yellow-900/40 text-yellow-700"
               }`}>
                 {daysLeft <= 0 ? "만료됨" : `D-${daysLeft}`}
               </Badge>
@@ -538,7 +538,7 @@ function MobileDetailSheet({
                 <p className="font-medium text-slate-600 mt-0.5">
                   <span className={
                     status === "danger" ? "text-red-400" :
-                    status === "low" ? "text-orange-400" :
+                    status === "low" ? "text-red-600" :
                     "text-slate-700"
                   }>{inv.currentQuantity}</span> {inv.unit}
                   {inv.safetyStock != null && <span className="text-slate-600 ml-1">/ 안전 {inv.safetyStock}</span>}
@@ -641,8 +641,8 @@ function MobileDetailSheet({
           {action.type !== "none" && (
             <section className={`rounded-xl border p-3.5 ${
               action.type === "reorder" ? "border-red-500/20 bg-red-950/10" :
-              action.type === "dispose" ? "border-orange-500/20 bg-orange-950/10" :
-              action.type === "use_first" ? "border-amber-500/20 bg-amber-950/10" :
+              action.type === "dispose" ? "border-red-500/20 bg-red-900/10" :
+              action.type === "use_first" ? "border-yellow-500/20 bg-yellow-900/10" :
               "border-violet-500/20 bg-violet-950/10"
             }`}>
               <h5 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
@@ -651,8 +651,8 @@ function MobileDetailSheet({
               </h5>
               <p className={`text-sm font-semibold mb-1 ${
                 action.type === "reorder" ? "text-red-400" :
-                action.type === "dispose" ? "text-orange-400" :
-                action.type === "use_first" ? "text-amber-400" :
+                action.type === "dispose" ? "text-red-600" :
+                action.type === "use_first" ? "text-yellow-700" :
                 "text-violet-400"
               }`}>
                 {action.label}

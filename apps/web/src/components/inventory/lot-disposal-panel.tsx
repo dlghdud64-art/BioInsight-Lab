@@ -169,7 +169,7 @@ export function LotDisposalPanel({
     {
       label: "승인 대기",
       value: disposableLotCount,
-      className: "border-amber-200 bg-amber-50 text-amber-700",
+      className: "border-yellow-200 bg-yellow-50 text-yellow-700",
     },
     {
       label: "차단",
@@ -214,7 +214,7 @@ export function LotDisposalPanel({
         <SheetHeader className="border-b border-slate-200 px-5 pb-4 pt-5">
           <div className="flex items-center gap-2">
             {effectiveQuarantine ? (
-              <ShieldAlert className="h-4 w-4 text-amber-600" />
+              <ShieldAlert className="h-4 w-4 text-yellow-600" />
             ) : (
               <Trash2 className="h-4 w-4 text-red-600" />
             )}
@@ -236,11 +236,11 @@ export function LotDisposalPanel({
             className="flex flex-wrap gap-1.5"
           >
             <Badge className="bg-red-600 text-white">만료</Badge>
-            <Badge className="bg-amber-600 text-white">사용 금지</Badge>
+            <Badge className="bg-yellow-600 text-white">사용 금지</Badge>
             <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700">
               폐기 처리
             </Badge>
-            <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-800">
+            <Badge variant="outline" className="border-yellow-200 bg-yellow-50 text-yellow-700">
               안전 재고 영향
             </Badge>
           </div>
@@ -311,7 +311,7 @@ export function LotDisposalPanel({
                 className={
                   isExpired
                     ? "bg-red-600 text-white"
-                    : "bg-amber-600 text-white"
+                    : "bg-yellow-600 text-white"
                 }
               >
                 {isExpired ? "만료" : "검토"}
@@ -403,11 +403,11 @@ export function LotDisposalPanel({
               <dt className="font-bold text-slate-500">안전재고</dt>
               <dd className="text-right font-extrabold text-slate-700">{target.safetyStock ? `${target.safetyStock} ${unit}` : "미설정"}</dd>
               <dt className="font-bold text-slate-500">상태</dt>
-              <dd className="text-right font-extrabold text-orange-700">{isExpired ? "만료" : "사용 금지"}</dd>
+              <dd className="text-right font-extrabold text-red-700">{isExpired ? "만료" : "사용 금지"}</dd>
             </dl>
             <div
               data-testid="labaxis-inventory-disposal-stock-impact-first"
-              className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+              className="rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-900"
             >
               <div className="flex items-center justify-between gap-3">
                 <span className="font-bold">재고 영향</span>
@@ -593,8 +593,8 @@ export function LotDisposalPanel({
             )}
 
             {resolution.causesStockBreach ? (
-              <div className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+              <div className="flex gap-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-600" />
                 <div>
                   <p className="text-xs font-extrabold text-slate-950">
                     폐기 후 재고 부족 가능
@@ -654,7 +654,7 @@ export function LotDisposalPanel({
           {isCompleted && resolution.needsReorderReview && (
             <div
               data-testid="labaxis-inventory-reorder-after-disposal-note"
-              className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800"
+              className="mt-2 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-[11px] text-yellow-700"
             >
               <div className="flex items-center justify-between gap-2 font-extrabold">
                 <span className="inline-flex items-center gap-1.5">
@@ -664,7 +664,7 @@ export function LotDisposalPanel({
                 <Badge
                   data-testid="labaxis-inventory-reorder-after-disposal-badge"
                   variant="outline"
-                  className="border-amber-300 bg-white text-amber-800"
+                  className="border-yellow-300 bg-white text-yellow-700"
                 >
                   재주문 검토 보조
                 </Badge>
@@ -739,7 +739,7 @@ function ImpactRow({
     <>
       <dt className="text-slate-500">{label}</dt>
       <dd
-        className={`text-right ${strong ? "font-extrabold" : "font-bold"} ${danger ? "text-amber-700" : "text-slate-950"}`}
+        className={`text-right ${strong ? "font-extrabold" : "font-bold"} ${danger ? "text-yellow-700" : "text-slate-950"}`}
       >
         {value}
       </dd>

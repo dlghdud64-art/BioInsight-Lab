@@ -88,7 +88,7 @@ function useIsMobile() {
 /* ── 신뢰도 뱃지 ── */
 function ConfidenceBadge({ level }: { level: "high" | "medium" | "low" }) {
   if (level === "high") return <Badge className="bg-emerald-100 text-emerald-700 border-0 text-[10px]">높은 신뢰도</Badge>;
-  if (level === "medium") return <Badge className="bg-amber-100 text-amber-700 border-0 text-[10px]">보통 신뢰도</Badge>;
+  if (level === "medium") return <Badge className="bg-yellow-100 text-yellow-700 border-0 text-[10px]">보통 신뢰도</Badge>;
   return <Badge className="bg-red-100 text-red-700 border-0 text-[10px]">낮은 신뢰도</Badge>;
 }
 

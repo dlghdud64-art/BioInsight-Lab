@@ -106,7 +106,7 @@ function buildZones(): ZoneSummary[] {
   const defs: { id: ZoneId; label: string; tempRange: string; icon: React.ReactNode; iconColor: string }[] = [
     { id: "cold", label: "냉장", tempRange: "2-8°C", icon: <Thermometer className="w-5 h-5" />, iconColor: "text-sky-400" },
     { id: "frozen", label: "냉동", tempRange: "-20°C", icon: <Snowflake className="w-5 h-5" />, iconColor: "text-blue-400" },
-    { id: "ambient", label: "상온", tempRange: "15-25°C", icon: <Sun className="w-5 h-5" />, iconColor: "text-amber-400" },
+    { id: "ambient", label: "상온", tempRange: "15-25°C", icon: <Sun className="w-5 h-5" />, iconColor: "text-yellow-700" },
     { id: "hazardous", label: "위험물 보관", tempRange: "별도 관리", icon: <AlertTriangle className="w-5 h-5" />, iconColor: "text-red-400" },
     { id: "unassigned", label: "미지정", tempRange: "—", icon: <HelpCircle className="w-5 h-5" />, iconColor: "text-slate-400" },
   ];
@@ -157,7 +157,7 @@ function ExpiryBadge({ days }: { days: number }) {
     return <Badge className="bg-red-50 text-red-600 border-red-200 text-[11px]">D-{days}</Badge>;
   }
   if (days <= 7) {
-    return <Badge className="bg-amber-50 text-amber-600 border-amber-200 text-[11px]">D-{days}</Badge>;
+    return <Badge className="bg-yellow-50 text-yellow-600 border-yellow-200 text-[11px]">D-{days}</Badge>;
   }
   if (days <= 30) {
     return <Badge className="bg-yellow-50 text-yellow-600 border-yellow-200 text-[11px]">D-{days}</Badge>;
@@ -180,7 +180,7 @@ export function StorageLocationView() {
       {priorityAlerts.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-slate-600 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-amber-400" />
+            <AlertCircle className="w-4 h-4 text-yellow-700" />
             우선 조치 알림
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -191,7 +191,7 @@ export function StorageLocationView() {
                   a.severity === "critical"
                     ? "bg-red-50 border-red-200 text-red-700"
                     : a.severity === "warning"
-                      ? "bg-amber-50 border-amber-200 text-amber-700"
+                      ? "bg-yellow-50 border-yellow-200 text-yellow-700"
                       : "bg-blue-50 border-blue-200 text-blue-700"
                 }`}
               >
@@ -250,9 +250,9 @@ export function StorageLocationView() {
                   <span className="font-bold text-slate-700 ml-auto">{zone.totalItems}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px]">
-                  <Clock className="w-3 h-3 text-amber-500" />
+                  <Clock className="w-3 h-3 text-yellow-500" />
                   <span className="text-slate-400">만료</span>
-                  <span className={`font-bold ml-auto ${zone.expiringItems > 0 ? "text-amber-600" : "text-slate-500"}`}>
+                  <span className={`font-bold ml-auto ${zone.expiringItems > 0 ? "text-yellow-600" : "text-slate-500"}`}>
                     {zone.expiringItems}
                   </span>
                 </div>
@@ -369,7 +369,7 @@ export function StorageLocationView() {
                           </Badge>
                         )}
                         {item.needsInspection && (
-                          <Badge className="bg-amber-50 text-amber-600 border-amber-200 text-[10px] px-1.5">
+                          <Badge className="bg-yellow-50 text-yellow-600 border-yellow-200 text-[10px] px-1.5">
                             <Wrench className="w-3 h-3 mr-0.5" />
                             점검
                           </Badge>
@@ -413,7 +413,7 @@ export function StorageLocationView() {
             </span>
             {activeZone.expiringItems > 0 && (
               <span>
-                만료 임박 <span className="text-amber-600 font-medium">{activeZone.expiringItems}</span>건
+                만료 임박 <span className="text-yellow-600 font-medium">{activeZone.expiringItems}</span>건
               </span>
             )}
             {activeZone.reorderItems > 0 && (

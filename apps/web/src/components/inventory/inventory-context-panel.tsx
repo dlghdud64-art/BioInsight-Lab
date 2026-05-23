@@ -340,14 +340,14 @@ function generateMockTransactions(item: ContextPanelItem): RecentTransaction[] {
 /* ── Severity badge styling ── */
 const SEVERITY_STYLE: Record<string, string> = {
   critical: "bg-red-500/15 text-red-400 border-red-500/30",
-  high: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+  high: "bg-yellow-500/15 text-yellow-700 border-yellow-500/30",
   medium: "bg-blue-500/15 text-blue-400 border-blue-500/30",
   low: "bg-pg0/15 text-slate-400 border-slate-500/30",
 };
 
 const LOT_STATUS_STYLE: Record<string, string> = {
   active: "bg-emerald-500/15 text-emerald-400",
-  expiring: "bg-amber-500/15 text-amber-400",
+  expiring: "bg-yellow-500/15 text-yellow-700",
   expired: "bg-red-500/15 text-red-400",
   depleted: "bg-pg0/15 text-slate-400",
 };
@@ -369,7 +369,7 @@ const FLOW_ICON: Record<string, React.ElementType> = {
 
 const ACTION_PRIORITY_STYLE: Record<string, string> = {
   high: "border-l-red-500",
-  medium: "border-l-amber-500",
+  medium: "border-l-yellow-500",
   low: "border-l-slate-500",
 };
 
@@ -527,7 +527,7 @@ export function InventoryContextPanel({
                 <Badge className="border border-red-300 bg-white text-red-700 text-[10px] px-1.5 py-0">
                   사용 금지
                 </Badge>
-                <Badge className="border border-amber-300 bg-white text-amber-700 text-[10px] px-1.5 py-0">
+                <Badge className="border border-yellow-300 bg-white text-yellow-700 text-[10px] px-1.5 py-0">
                   재주문은 폐기 후
                 </Badge>
               </div>
@@ -639,7 +639,7 @@ export function InventoryContextPanel({
                   {item.location}
                 </span>
               ) : (
-                <span className="text-amber-400 text-[11px]">미지정</span>
+                <span className="text-yellow-700 text-[11px]">미지정</span>
               )}
             </InfoRow>
             <InfoRow label="시험항목">
@@ -773,10 +773,10 @@ export function InventoryContextPanel({
             {generateMockTransactions(item).map((tx, idx) => (
               <div key={idx} className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-bd bg-pn">
                 <div className={`flex h-5 w-5 items-center justify-center rounded ${
-                  tx.type === "in" ? "bg-emerald-500/15" : tx.type === "out" ? "bg-amber-500/15" : "bg-red-500/15"
+                  tx.type === "in" ? "bg-emerald-500/15" : tx.type === "out" ? "bg-yellow-500/15" : "bg-red-500/15"
                 }`}>
                   <span className={`text-[9px] font-bold ${
-                    tx.type === "in" ? "text-emerald-400" : tx.type === "out" ? "text-amber-400" : "text-red-400"
+                    tx.type === "in" ? "text-emerald-400" : tx.type === "out" ? "text-yellow-700" : "text-red-400"
                   }`}>{tx.type === "in" ? "입" : tx.type === "out" ? "출" : "폐"}</span>
                 </div>
                 <div className="flex-1 min-w-0">
@@ -931,7 +931,7 @@ export function InventoryContextPanel({
             return (
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" className="flex-1 h-8 text-xs border-bd bg-pn text-slate-600" onClick={() => onDispose?.(item)}>폐기/검토</Button>
-                <Button size="sm" className="flex-1 h-8 text-xs bg-amber-600 hover:bg-amber-500 text-white font-medium" onClick={() => onReorder?.(item)}>
+                <Button size="sm" className="flex-1 h-8 text-xs bg-yellow-600 hover:bg-yellow-500 text-white font-medium" onClick={() => onReorder?.(item)}>
                   <Sparkles className="h-3 w-3 mr-1" />재주문 + 교체
                 </Button>
               </div>

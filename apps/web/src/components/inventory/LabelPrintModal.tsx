@@ -297,7 +297,7 @@ export function LabelPrintModal({ open, onOpenChange, selectedItems = [] }: Labe
         {/* ── 하단: 선택 상태 + 액션 ── */}
         <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
           {selectedItems.length === 0 ? (
-            <div className="flex items-center gap-2 text-amber-600">
+            <div className="flex items-center gap-2 text-yellow-600">
               <AlertCircle className="h-4 w-4" />
               <span className="text-xs font-medium">선택된 품목이 없습니다. 재고 관리에서 품목을 선택해주세요.</span>
             </div>
