@@ -1387,7 +1387,7 @@ export default function SearchPage() {
                                 className="h-8 px-2 text-[11px]"
                                 onClick={() => handleProtectedAction(openCandidateCompare)}
                               >
-                                Compare
+                                비교
                               </Button>
                               <Button
                                 type="button"
@@ -1397,7 +1397,7 @@ export default function SearchPage() {
                                 className="h-8 px-2 text-[11px]"
                                 onClick={() => handleProtectedAction(() => setSourcingCandidateTriageState(candidate.productId, "hold"))}
                               >
-                                Hold
+                                보류
                               </Button>
                               <Button
                                 type="button"
@@ -1407,7 +1407,7 @@ export default function SearchPage() {
                                 className="h-8 px-2 text-[11px] text-red-600 hover:text-red-700"
                                 onClick={() => handleProtectedAction(() => setSourcingCandidateTriageState(candidate.productId, "exclude"))}
                               >
-                                Exclude
+                                제외
                               </Button>
                             </div>
                           </div>

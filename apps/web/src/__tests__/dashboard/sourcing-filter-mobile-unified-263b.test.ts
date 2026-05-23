@@ -161,6 +161,9 @@ describe("11.263c sourcing result triage evidence", () => {
     expect(page).toMatch(/data-testid="sourcing-triage-candidate-exclude-action"/);
     expect(page).toMatch(/setSourcingCandidateTriageState\(candidate\.productId, "shortlist"\)/);
     expect(page).toMatch(/setWorkWindowMode\("result-review"\)/);
+    expect(page).toMatch(/비교/);
+    expect(page).toMatch(/보류/);
+    expect(page).toMatch(/제외/);
     expect(page).toMatch(/Shortlist/);
     expect(page).toMatch(/Hold/);
     expect(page).toMatch(/Exclude/);
