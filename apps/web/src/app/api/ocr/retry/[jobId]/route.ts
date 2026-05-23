@@ -46,6 +46,10 @@ export async function POST(
     return NextResponse.json(
       {
         error: "OCR 재처리는 Vercel env 설정 후 활성됩니다. (Phase 5 진행 중)",
+        state: "blocked",
+        statusLabel: "재처리 차단",
+        actionLabel: "재처리 요청",
+        nextAction: "환경 설정 확인 후 재처리를 다시 요청하세요.",
         phase: "Phase 5 SDK install 대기",
       },
       { status: 503 },
@@ -56,7 +60,12 @@ export async function POST(
   const { jobId } = params;
   if (!jobId) {
     return NextResponse.json(
-      { error: "jobId 가 필요합니다." },
+      {
+        error: "jobId 가 필요합니다.",
+        state: "blocked",
+        statusLabel: "대상 없음",
+        nextAction: "재처리할 OCR 항목을 다시 선택하세요.",
+      },
       { status: 400 },
     );
   }
@@ -76,7 +85,12 @@ export async function POST(
 
   if (!job) {
     return NextResponse.json(
-      { error: "OCR job 을 찾을 수 없습니다." },
+      {
+        error: "OCR job 을 찾을 수 없습니다.",
+        state: "blocked",
+        statusLabel: "대상 없음",
+        nextAction: "재처리할 OCR 항목을 다시 선택하세요.",
+      },
       { status: 404 },
     );
   }
@@ -88,6 +102,10 @@ export async function POST(
       jobId: job.id,
       currentStatus: job.status,
       currentProvider: job.finalResult?.provider ?? null,
+      state: "blocked",
+      statusLabel: "재처리 차단",
+      actionLabel: "재처리 요청",
+      nextAction: "환경 설정 완료 후 재처리를 요청하세요.",
       phase: "Phase 5 SDK install 대기",
     },
     { status: 503 },

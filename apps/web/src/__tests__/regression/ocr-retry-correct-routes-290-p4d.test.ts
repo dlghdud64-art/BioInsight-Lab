@@ -64,6 +64,14 @@ describe("§11.290 Phase 4d — 2 신규 OCR route (retry + correct)", () => {
       expect(src).toMatch(/503/);
     });
 
+    it("운영 화면용 재처리 상태와 다음 행동을 반환", () => {
+      const src = readFileSync(RETRY_ROUTE_PATH, "utf8");
+      expect(src).toContain('state: "blocked"');
+      expect(src).toContain('statusLabel: "재처리 차단"');
+      expect(src).toContain('actionLabel: "재처리 요청"');
+      expect(src).toContain("nextAction:");
+    });
+
     it("jobId path param 추출 (params.jobId)", () => {
       const src = readFileSync(RETRY_ROUTE_PATH, "utf8");
       expect(src).toMatch(/params.*jobId/);
@@ -102,6 +110,14 @@ describe("§11.290 Phase 4d — 2 신규 OCR route (retry + correct)", () => {
       const src = readFileSync(CORRECT_ROUTE_PATH, "utf8");
       expect(src).toMatch(/STORAGE_PROVIDER/);
       expect(src).toMatch(/503/);
+    });
+
+    it("운영 화면용 보정 상태와 다음 행동을 반환", () => {
+      const src = readFileSync(CORRECT_ROUTE_PATH, "utf8");
+      expect(src).toContain('state: "blocked"');
+      expect(src).toContain('statusLabel: "보정 제출 차단"');
+      expect(src).toContain('actionLabel: "수동 보정 제출"');
+      expect(src).toContain("nextAction:");
     });
 
     it("jobId path param + correctedFields body 추출", () => {

@@ -45,6 +45,10 @@ export async function POST(
     return NextResponse.json(
       {
         error: "OCR 수동 보정은 Vercel env 설정 후 활성됩니다. (Phase 5 진행 중)",
+        state: "blocked",
+        statusLabel: "보정 제출 차단",
+        actionLabel: "수동 보정 제출",
+        nextAction: "환경 설정 확인 후 수동 보정을 다시 제출하세요.",
         phase: "Phase 5 SDK install 대기",
       },
       { status: 503 },
@@ -55,7 +59,12 @@ export async function POST(
   const { jobId } = params;
   if (!jobId) {
     return NextResponse.json(
-      { error: "jobId 가 필요합니다." },
+      {
+        error: "jobId 가 필요합니다.",
+        state: "blocked",
+        statusLabel: "대상 없음",
+        nextAction: "보정할 OCR 항목을 다시 선택하세요.",
+      },
       { status: 400 },
     );
   }
@@ -67,7 +76,12 @@ export async function POST(
 
   if (!correctedFields || typeof correctedFields !== "object") {
     return NextResponse.json(
-      { error: "correctedFields body 가 필요합니다." },
+      {
+        error: "correctedFields body 가 필요합니다.",
+        state: "blocked",
+        statusLabel: "보정값 없음",
+        nextAction: "수정한 필드를 확인한 뒤 다시 제출하세요.",
+      },
       { status: 400 },
     );
   }
@@ -82,7 +96,12 @@ export async function POST(
 
   if (!job) {
     return NextResponse.json(
-      { error: "OCR job 을 찾을 수 없습니다." },
+      {
+        error: "OCR job 을 찾을 수 없습니다.",
+        state: "blocked",
+        statusLabel: "대상 없음",
+        nextAction: "보정할 OCR 항목을 다시 선택하세요.",
+      },
       { status: 404 },
     );
   }
@@ -94,6 +113,10 @@ export async function POST(
       jobId: job.id,
       currentStatus: job.status,
       receivedFields: Object.keys(correctedFields),
+      state: "blocked",
+      statusLabel: "보정 제출 차단",
+      actionLabel: "수동 보정 제출",
+      nextAction: "환경 설정 완료 후 수동 보정을 제출하세요.",
       phase: "Phase 5 SDK install 대기",
     },
     { status: 503 },
