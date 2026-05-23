@@ -3144,10 +3144,33 @@ function SearchUtilityBar({ activeFilterCount, onAuthRequired, isLoggedIn, stage
               Radix 가 모든 event handler (pointer + click + key) 정확 attach.
               §11.280-2 (Menu icon pointer-events-none) + touch-manipulation +
               -webkit-tap-highlight-color:transparent 동시 적용 보존. */}
+          {/* §11.283 #sourcing-hamburger-onClick-fallback — 호영님 P0+ 4차
+              (2026-05-24) audit 확정: Sandbox + 호영님 console 동일 결과
+              (React hydrate 정상 + reactProps.onPointerDown function 정상 +
+              native pointerdown PD@ 로그 BUTTON hit 정상) 임에도 호영님
+              환경에서 dropdown 안 열림. 일부 환경 (특정 브라우저/OS/마우스
+              driver 조합) 에서 React event delegation 이 onPointerDown 까지
+              fire 안 함. defense-in-depth fallback — onClick 에서
+              data-state="closed" 이면 PointerEvent('pointerdown') 강제
+              dispatch → Radix internal handler 가 받아서 setOpen(true).
+              Radix uncontrolled mode 유지 (§11.282-e asChild 제거 보존). */}
           <DropdownMenu>
             <DropdownMenuTrigger
               type="button"
               aria-label="메뉴 열기"
+              onClick={(e) => {
+                const trigger = e.currentTarget;
+                if (trigger.getAttribute("data-state") === "closed") {
+                  trigger.dispatchEvent(
+                    new PointerEvent("pointerdown", {
+                      bubbles: true,
+                      cancelable: true,
+                      isPrimary: true,
+                      button: 0,
+                    }),
+                  );
+                }
+              }}
               className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] -mr-1 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors shrink-0 touch-manipulation [-webkit-tap-highlight-color:transparent]"
             >
               <Menu className="h-5 w-5 pointer-events-none" />
