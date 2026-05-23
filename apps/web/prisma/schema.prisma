@@ -3055,3 +3055,75 @@ model DashboardStatsSnapshot {
   @@index([userId, capturedAt])
   @@index([capturedAt])
 }
+
+// ─── §11.290 #smart-receiving-ai-ocr ────────────────────────────────
+// Multi-provider OCR fallback (Gemini primary + Cloud Vision OCR +
+// Claude 구조화 secondary + regex tertiary) 의 audit / cache / 재처리
+// root. 호영님 P1 spec (2026-05-23).
+//
+// Phase 1 = schema 정합만. Phase 2~4 에서 image-storage helper +
+// orchestrator + UI wiring + 4 route 작성. Phase 5 에서 Vercel env
+// (GOOGLE_VISION_API_KEY + ANTHROPIC_API_KEY) 설정 + smoke + ADR.
+//
+// Wiring 결정 (호영님 2026-05-23):
+//   기존 3 route (/api/inventory/scan-label, /api/quotes/parse-image,
+//   /api/quotes/parse-pdf) 내부만 orchestrator 호출로 swap. 새 route
+//   는 재처리 / 수동 보정 surface 만 신설 (/api/ocr/retry/[jobId],
+//   /api/ocr/correct/[jobId]).
+//
+// OcrJob = 1번 OCR scan request. imageHash 로 캐시 lookup (TTL 48h).
+// OcrResult = provider 별 호출 결과 (1:N) — cross-validation 위함.
+// finalResult = 최종 채택된 결과 (canonical winner, 사용자 confirm 전).
+enum OcrJobType {
+  LABEL  // 시약 라벨
+  QUOTE  // 견적서 / 거래명세서
+}
+
+enum OcrJobStatus {
+  PENDING       // 생성 직후
+  RUNNING       // provider 호출 중
+  SUCCESS       // confidence ≥ 0.85, auto prefill 가능
+  FAILED        // 모든 provider 실패
+  NEEDS_REVIEW  // confidence < 0.7, 수동 보정 필요
+}
+
+enum OcrProvider {
+  GEMINI                // 1차: Gemini 2.5 Flash multimodal
+  CLOUD_VISION_CLAUDE   // 2차: Cloud Vision OCR + Claude 구조화
+  REGEX                 // 3차: label-parser.ts regex/heuristic fallback
+}
+
+model OcrJob {
+  id             String       @id @default(cuid())
+  organizationId String       // tenant 분리
+  userId         String       // scan 실행자
+  type           OcrJobType
+  imageUrl       String       // Vercel Blob URL (영구 저장)
+  imageHash      String       // SHA-256(imageBase64) — cache lookup key
+  status         OcrJobStatus @default(PENDING)
+  results        OcrResult[]  @relation("OcrJobResults")
+  finalResult    OcrResult?   @relation("OcrJobFinal", fields: [finalResultId], references: [id])
+  finalResultId  String?      @unique
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId, type])
+  @@index([imageHash])  // cache lookup O(log n)
+}
+
+model OcrResult {
+  id             String      @id @default(cuid())
+  jobId          String
+  job            OcrJob      @relation("OcrJobResults", fields: [jobId], references: [id], onDelete: Cascade)
+  provider       OcrProvider
+  parsedFields   Json        // LabelParseResult | ParsedQuoteDocument shape
+  confidence     Float       // 0.0 ~ 1.0
+  rawText        String?     @db.Text // OCR raw text (regex caller 검증용)
+  costUsd        Float       // per-call cost (e.g. 0.001 Gemini, 0.0015 Vision, 0.03 Claude)
+  latencyMs      Int         // call latency for monitoring
+  errorMessage   String?     @db.Text // fallback chain audit
+  createdAt      DateTime    @default(now())
+  finalForJob    OcrJob?     @relation("OcrJobFinal")  // back-relation for finalResult
+
+  @@index([jobId])
+}
