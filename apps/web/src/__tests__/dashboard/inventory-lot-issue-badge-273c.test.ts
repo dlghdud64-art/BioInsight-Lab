@@ -5,9 +5,9 @@
  *
  * Fix (minimum diff, inventory-content.tsx):
  *   - 4 Badge className 인라인 conditional:
- *       보류:     count > 0 → border-amber-200 bg-amber-50 text-amber-700
+ *       보류:     count > 0 → border-yellow-200 bg-yellow-50 text-yellow-700
  *       즉시 확인: count > 0 → border-red-200 bg-red-50 text-red-700
- *       폐기 검토: count > 0 → border-orange-200 bg-orange-50 text-orange-700
+ *       폐기 검토: count > 0 → border-red-200 bg-red-50 text-red-700
  *       재주문 검토: count > 0 → border-red-200 bg-red-50 text-red-700
  *       0건 공통:  border-slate-200 bg-slate-50 text-slate-400
  *
@@ -46,7 +46,7 @@ describe("§11.273c #1 — trace marker + strip 존재", () => {
 describe("§11.273c #2 — 4 Badge 색상 conditional 적용", () => {
   it("보류 Badge: count > 0 → amber tone", () => {
     expect(inv).toMatch(
-      /labaxis-inventory-lot-issue-hold-count[\s\S]{0,300}border-amber-200 bg-amber-50 text-amber-700/
+      /labaxis-inventory-lot-issue-hold-count[\s\S]{0,300}border-yellow-200 bg-yellow-50 text-yellow-700/
     );
   });
 
@@ -56,9 +56,11 @@ describe("§11.273c #2 — 4 Badge 색상 conditional 적용", () => {
     );
   });
 
-  it("폐기 검토 Badge: count > 0 → orange tone", () => {
+  it("폐기 검토 Badge: count > 0 → red tone (§11.283c orange → red 신호등 sweep)", () => {
+    // §11.273c 원안 orange tone 이 §11.283c (호영님 P0 신호등 spec) 후속으로
+    // red 으로 swap (긴급 신호등 통일). polarities preserved (count > 0 시 강조).
     expect(inv).toMatch(
-      /labaxis-inventory-lot-issue-disposal-count[\s\S]{0,300}border-orange-200 bg-orange-50 text-orange-700/
+      /labaxis-inventory-lot-issue-disposal-count[\s\S]{0,300}border-red-200 bg-red-50 text-red-700/
     );
   });
 
