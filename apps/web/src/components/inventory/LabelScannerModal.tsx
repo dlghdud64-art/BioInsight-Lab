@@ -557,6 +557,56 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                   <RotateCcw className="h-3 w-3" />
                   재처리
                 </button>
+                {/* §11.290 Phase 4e-2 — correct (수동 보정) button. 사용자가
+                    form input 편집한 결과 (formData) 를 correctedFields body 로
+                    POST /api/ocr/correct/[jobId]. jobId null 시 disabled.
+                    Phase 5 후 실제 OcrResult INSERT (provider=MANUAL,
+                    confidence=1.0) + finalResultId update + status SUCCESS. */}
+                <button
+                  type="button"
+                  disabled={!scanResult?.ocrMetadata?.jobId}
+                  data-testid="ocr-correct-button"
+                  onClick={async () => {
+                    const jobId = scanResult?.ocrMetadata?.jobId;
+                    if (!jobId) return;
+                    try {
+                      // formData (SmartReceiveFormData) 를 correctedFields body 로 전송
+                      const correctedFields = {
+                        productName: formData.productName,
+                        catalogNo: formData.catalogNumber,
+                        lotNo: formData.lotNumber,
+                        expirationDate: formData.expirationDate,
+                        brand: formData.brand,
+                        casNumber: formData.casNumber,
+                        quantity: formData.quantity,
+                      };
+                      const res = await csrfFetch(`/api/ocr/correct/${jobId}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ correctedFields }),
+                      });
+                      const data = await res.json();
+                      if (res.status === 503) {
+                        alert(data?.error || "수동 보정 저장은 Phase 5 후 활성됩니다.");
+                      } else if (!res.ok) {
+                        alert(data?.error || "수동 보정 저장 실패");
+                      } else {
+                        alert("수동 보정 저장 완료. (Phase 5 wiring 후 결과 자동 반영)");
+                      }
+                    } catch (err: any) {
+                      alert(`수동 보정 요청 실패: ${err?.message || "알 수 없는 오류"}`);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1 rounded border border-blue-300 bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+                  title={
+                    scanResult?.ocrMetadata?.jobId
+                      ? "사용자 보정 결과 저장 (Phase 5 후 OcrResult INSERT)"
+                      : "수동 보정 저장은 Phase 5 활성 후 가능"
+                  }
+                >
+                  <Edit className="h-3 w-3" />
+                  보정 저장
+                </button>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
                 추출된 데이터를 확인하고 필요 시 수정하세요
