@@ -1344,17 +1344,20 @@ export default function SearchPage() {
                             : candidate.tone === "emerald"
                               ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                               : "border-red-200 bg-red-50 text-red-800";
-                        const actionLabel = candidate.action === "shortlist"
-                          ? "Shortlist"
-                          : candidate.action === "hold"
-                            ? "Hold"
-                            : "Exclude";
                         const actionState = sourcingCandidateTriage[candidate.productId];
+                        const openCandidateCompare = () => {
+                          if (!compareIds.includes(candidate.productId)) {
+                            toggleCompare(candidate.productId, { name: candidate.name, brand: candidate.brand });
+                          }
+                          setSourcingCandidateTriageState(candidate.productId, "shortlist");
+                          setActiveResultId(candidate.productId);
+                          setWorkWindowMode("result-review");
+                        };
                         return (
                           <div
                             key={candidate.key}
                             data-testid={`sourcing-triage-candidate-${candidate.action}`}
-                            className={`flex min-w-0 items-center gap-2 rounded-md border px-2.5 py-2 ${toneClass}`}
+                            className={`flex min-w-0 flex-col gap-2 rounded-md border px-2.5 py-2 sm:flex-row sm:items-center ${toneClass}`}
                           >
                             <div className="min-w-0 flex-1">
                               <div className="flex min-w-0 items-center gap-1.5">
@@ -1372,25 +1375,41 @@ export default function SearchPage() {
                                 {candidate.reason}
                               </p>
                             </div>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant={candidate.action === "shortlist" ? "default" : "outline"}
-                              className="h-7 shrink-0 px-2 text-[11px]"
-                              onClick={() => handleProtectedAction(() => {
-                                if (candidate.action === "shortlist") {
-                                  if (!compareIds.includes(candidate.productId)) {
-                                    toggleCompare(candidate.productId, { name: candidate.name, brand: candidate.brand });
-                                  }
-                                  setActiveResultId(candidate.productId);
-                                  setWorkWindowMode("result-review");
-                                  return;
-                                }
-                                setSourcingCandidateTriageState(candidate.productId, candidate.action);
-                              })}
+                            <div
+                              data-testid="sourcing-triage-candidate-actions"
+                              className="grid w-full grid-cols-3 gap-1 sm:w-auto sm:min-w-[180px]"
                             >
-                              {actionLabel}
-                            </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                data-testid="sourcing-triage-candidate-compare-action"
+                                variant={candidate.action === "shortlist" ? "default" : "outline"}
+                                className="h-8 px-2 text-[11px]"
+                                onClick={() => handleProtectedAction(openCandidateCompare)}
+                              >
+                                Compare
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                data-testid="sourcing-triage-candidate-hold-action"
+                                variant="outline"
+                                className="h-8 px-2 text-[11px]"
+                                onClick={() => handleProtectedAction(() => setSourcingCandidateTriageState(candidate.productId, "hold"))}
+                              >
+                                Hold
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                data-testid="sourcing-triage-candidate-exclude-action"
+                                variant="outline"
+                                className="h-8 px-2 text-[11px] text-red-600 hover:text-red-700"
+                                onClick={() => handleProtectedAction(() => setSourcingCandidateTriageState(candidate.productId, "exclude"))}
+                              >
+                                Exclude
+                              </Button>
+                            </div>
                           </div>
                         );
                       })}

@@ -155,6 +155,12 @@ describe("11.263c sourcing result triage evidence", () => {
     expect(page).toMatch(/data-testid="sourcing-triage-blocked-reason"/);
     expect(page).toMatch(/data-testid="sourcing-triage-candidate-list"/);
     expect(page).toMatch(/sourcing-triage-candidate-\$\{candidate\.action\}/);
+    expect(page).toMatch(/data-testid="sourcing-triage-candidate-actions"/);
+    expect(page).toMatch(/data-testid="sourcing-triage-candidate-compare-action"/);
+    expect(page).toMatch(/data-testid="sourcing-triage-candidate-hold-action"/);
+    expect(page).toMatch(/data-testid="sourcing-triage-candidate-exclude-action"/);
+    expect(page).toMatch(/setSourcingCandidateTriageState\(candidate\.productId, "shortlist"\)/);
+    expect(page).toMatch(/setWorkWindowMode\("result-review"\)/);
     expect(page).toMatch(/Shortlist/);
     expect(page).toMatch(/Hold/);
     expect(page).toMatch(/Exclude/);
