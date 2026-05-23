@@ -519,6 +519,44 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                   <ProviderBadge provider={scanResult.ocrMetadata.providerUsed} />
                 )}
                 {scanResult?.ocrMetadata?.cached && <CacheHitIndicator />}
+                {/* §11.290 Phase 4e — retry button (provider swap 재처리).
+                    jobId null (STORAGE_PROVIDER 미설정 = Phase 5 이전) 시 disabled.
+                    503 graceful response 시 alert. Phase 5 SDK install + Vercel env
+                    설정 후 실제 multi-provider fallback 자동 활성. */}
+                <button
+                  type="button"
+                  disabled={!scanResult?.ocrMetadata?.jobId}
+                  data-testid="ocr-retry-button"
+                  onClick={async () => {
+                    const jobId = scanResult?.ocrMetadata?.jobId;
+                    if (!jobId) return;
+                    try {
+                      const res = await csrfFetch(`/api/ocr/retry/${jobId}`, {
+                        method: "POST",
+                      });
+                      const data = await res.json();
+                      if (res.status === 503) {
+                        alert(data?.error || "재처리는 Phase 5 후 활성됩니다.");
+                      } else if (!res.ok) {
+                        alert(data?.error || "재처리 실패");
+                      } else {
+                        // Phase 5 후: 결과로 scanResult 업데이트
+                        alert("재처리 완료. (Phase 5 wiring 후 결과 자동 반영)");
+                      }
+                    } catch (err: any) {
+                      alert(`재처리 요청 실패: ${err?.message || "알 수 없는 오류"}`);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1 rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+                  title={
+                    scanResult?.ocrMetadata?.jobId
+                      ? "다른 OCR provider로 재처리"
+                      : "재처리는 Phase 5 활성 후 가능"
+                  }
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  재처리
+                </button>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
                 추출된 데이터를 확인하고 필요 시 수정하세요

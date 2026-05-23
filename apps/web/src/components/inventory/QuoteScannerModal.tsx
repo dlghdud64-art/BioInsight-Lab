@@ -239,6 +239,41 @@ export function QuoteScannerModal({
                 <ProviderBadge provider={scanResult.ocrMetadata.providerUsed} />
               )}
               {scanResult.ocrMetadata?.cached && <CacheHitIndicator />}
+              {/* §11.290 Phase 4e — retry button (LabelScannerModal Phase 4e 패턴
+                  동일). jobId null 시 disabled, 503 graceful alert. */}
+              <button
+                type="button"
+                disabled={!scanResult.ocrMetadata?.jobId}
+                data-testid="ocr-retry-button"
+                onClick={async () => {
+                  const jobId = scanResult.ocrMetadata?.jobId;
+                  if (!jobId) return;
+                  try {
+                    const res = await csrfFetch(`/api/ocr/retry/${jobId}`, {
+                      method: "POST",
+                    });
+                    const data = await res.json();
+                    if (res.status === 503) {
+                      alert(data?.error || "재처리는 Phase 5 후 활성됩니다.");
+                    } else if (!res.ok) {
+                      alert(data?.error || "재처리 실패");
+                    } else {
+                      alert("재처리 완료. (Phase 5 wiring 후 결과 자동 반영)");
+                    }
+                  } catch (err: any) {
+                    alert(`재처리 요청 실패: ${err?.message || "알 수 없는 오류"}`);
+                  }
+                }}
+                className="inline-flex items-center gap-1 rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+                title={
+                  scanResult.ocrMetadata?.jobId
+                    ? "다른 OCR provider로 재처리"
+                    : "재처리는 Phase 5 활성 후 가능"
+                }
+              >
+                <RotateCcw className="h-3 w-3" />
+                재처리
+              </button>
             </div>
 
             {/* 결과 요약 (skeleton — Phase 4c-2 에서 풀스펙 form) */}
