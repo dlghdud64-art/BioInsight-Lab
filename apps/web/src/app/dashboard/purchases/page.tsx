@@ -766,11 +766,36 @@ export default function PurchasesPage() {
                       </span>
                     </div>
 
-                    {/* 본문: 제목 + 회신·AI 정보 + 가격 */}
+                    {/* 본문: 제목 + 회신·AI 정보 + 가격
+                        §11.284c — 호영님 P0 spec: 견적 단계 본문 텍스트 (안녕하세요…)
+                        제거 + 금액 (견적가) + 공급사명 1줄 표시. itemSummary 데이터
+                        source 보존 (resolver / engine 변경 0), UI 표시 만 제거. */}
                     <div className="flex items-start gap-4">
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-slate-900 text-sm leading-snug mb-0.5">{item.requestTitle}</h3>
-                        <p className={`text-xs text-slate-500 mb-3 line-clamp-2 ${isExpanded ? "block" : "hidden sm:block"}`}>{item.itemSummary}</p>
+                        {/* §11.284c 금액 + 공급사명 1줄 표시 (itemSummary 본문 텍스트 대체) */}
+                        {(() => {
+                          const selectedOption = item.selectedOptionId
+                            ? item.aiOptions.find((o) => o.id === item.selectedOptionId)
+                            : null;
+                          const primaryOption = item.aiOptions.find((o) => o.recommendationLevel === "primary");
+                          const supplier = selectedOption?.supplierName || primaryOption?.supplierName || item.aiOptions[0]?.supplierName || null;
+                          const amount = item.totalBudget;
+                          const amountText = amount !== null
+                            ? new Intl.NumberFormat("ko-KR", { style: "currency", currency: item.currency || "KRW", maximumFractionDigits: 0 }).format(amount)
+                            : null;
+                          if (!amountText && !supplier) return null;
+                          return (
+                            <p
+                              data-testid="purchases-card-amount-supplier"
+                              className="text-xs text-slate-600 mb-3 flex items-center gap-2 flex-wrap"
+                            >
+                              {amountText && <span className="font-semibold text-slate-900 tabular-nums">{amountText}</span>}
+                              {amountText && supplier && <span className="text-slate-300">·</span>}
+                              {supplier && <span className="text-slate-600">{supplier}</span>}
+                            </p>
+                          );
+                        })()}
 
                         {/* 막힘 / 다음 단계 */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">

@@ -70,9 +70,11 @@ describe("§11.277c — 모바일 카드 2단계 접힘/펼침", () => {
     );
   });
 
-  it("itemSummary <p> 모바일 collapse className 분기", () => {
-    // `${isExpanded ? "block" : "hidden sm:block"}`
-    expect(PAGE).toMatch(
+  it("§11.284c — itemSummary <p> 모바일 collapse 분기 supersede (UI 본문 제거)", () => {
+    // §11.277c 원안: isExpanded ? "block" : "hidden sm:block" 분기.
+    // §11.284c 후속 (호영님 P0 본문 텍스트 제거) 으로 itemSummary <p> 자체 제거.
+    // isExpanded 토글 button 자체는 보존 (우측 AI panel collapse 분기 유지).
+    expect(PAGE).not.toMatch(
       /isExpanded\s*\?\s*["']block["']\s*:\s*["']hidden sm:block["']/,
     );
   });
@@ -150,8 +152,11 @@ describe("§11.277c — invariant 보존 (canonical truth)", () => {
     expect(PAGE).toMatch(/다음 단계/);
   });
 
-  it("itemSummary 데이터 흐름 보존 (line-clamp-2)", () => {
-    expect(PAGE).toMatch(/\{item\.itemSummary\}/);
-    expect(PAGE).toMatch(/line-clamp-2/);
+  it("§11.284c — itemSummary UI 본문 제거 + data source 보존 (search filter 잔존)", () => {
+    // §11.277c 원안: itemSummary line-clamp-2 패턴 (isExpanded 시 block).
+    // §11.284c 후속 (호영님 P0 spec "본문 텍스트 제거") 으로 UI 본문 표시 자체
+    // 제거. 단 itemSummary data source 보존 (search filter 안 사용).
+    expect(PAGE).toMatch(/itemSummary/); // data source 보존 signal
+    expect(PAGE).not.toMatch(/\{item\.itemSummary\}/); // UI 본문 표시 제거
   });
 });
