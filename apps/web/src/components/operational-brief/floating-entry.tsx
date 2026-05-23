@@ -19,10 +19,43 @@
 
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOperationalBriefPopup } from "./popup-context";
+
+/**
+ * §11.272d #fab-bottom-sheet-overlap-hide — 호영님 P0 3차 보고.
+ *
+ * Radix Dialog / Sheet / DropdownMenu 가 mount 되면 body 에 자동
+ * `data-scroll-locked` attribute 추가 (또는 style.overflow="hidden").
+ * FAB 가 fixed bottom + sheet 도 fixed bottom 이라 z-index 충돌 시 sheet 의
+ * primary CTA (e.g. "회신 검토 시작 →") 위에 FAB 가 떠서 가림.
+ *
+ * Fix: MutationObserver 로 body 의 `data-scroll-locked` attribute 또는
+ * style.overflow="hidden" watch → 한 가지라도 true 시 FAB hidden.
+ * 모든 Radix sheet/dialog 통합 (운영 브리핑 popup + 견적 detail sheet +
+ * 재고 detail sheet 등 카테고리 무관).
+ */
+function useBodyScrollLocked(): boolean {
+  const [locked, setLocked] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const update = () => {
+      const hasAttr = document.body.hasAttribute("data-scroll-locked");
+      const overflowHidden = document.body.style.overflow === "hidden";
+      setLocked(hasAttr || overflowHidden);
+    };
+    update();
+    const observer = new MutationObserver(update);
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["data-scroll-locked", "style"],
+    });
+    return () => observer.disconnect();
+  }, []);
+  return locked;
+}
 
 interface OperationalBriefFloatingEntryProps {
   /**
@@ -46,6 +79,8 @@ export function OperationalBriefFloatingEntry({
   className,
 }: OperationalBriefFloatingEntryProps) {
   const popup = useOperationalBriefPopup();
+  // §11.272d — Sheet/Dialog open (body scroll lock) 시 FAB hidden
+  const bodyScrollLocked = useBodyScrollLocked();
   // §11.181b — onClick ?? popup.open 패턴이 prod build minify 후 closure 캡처
   // stale 되는 이슈 발견. useCallback + explicit ternary 로 swap (always-fresh popup ref).
   const handleClick = useCallback(() => {
@@ -58,6 +93,9 @@ export function OperationalBriefFloatingEntry({
   // open prop 미지정 시 popup context 의 isOpen 으로 derive (aria-expanded 동기)
   const open = openProp ?? popup.isOpen;
   const disabled = false; // §11.181b — popup default 항상 가용 (NOOP fallback) 이므로 disabled 0
+  // §11.272d — body scroll lock (Radix Sheet/Dialog/Popup open) 시 FAB hidden
+  // 견적 detail sheet / 재고 detail sheet / 운영 브리핑 popup 모두 통합 hidden
+  if (bodyScrollLocked) return null;
   return (
     <button
       type="button"

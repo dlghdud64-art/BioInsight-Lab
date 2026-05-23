@@ -23,10 +23,12 @@ export default function AdminLayout({
 }) {
   return (
     <>
-      {/* §11.214c — focus: → focus-visible: swap (자동 focus 시 visible 0) */}
+      {/* §11.272a-redo-2 — focus-visible → focus swap (호영님 P0 3차 회귀
+          보고). iOS Safari 의 :focus-visible 임의 적용 회피. dashboard-shell
+          과 동일 패턴. */}
       <a
         href="#admin-main"
-        className="sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:top-3 focus-visible:left-3 focus-visible:z-[100] focus-visible:bg-blue-600 focus-visible:text-white focus-visible:px-3 focus-visible:py-2 focus-visible:rounded-md focus-visible:text-sm focus-visible:font-semibold focus-visible:shadow-lg"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:bg-blue-600 focus:text-white focus:px-3 focus:py-2 focus:rounded-md focus:text-sm focus:font-semibold focus:shadow-lg"
       >
         본문 바로가기
       </a>

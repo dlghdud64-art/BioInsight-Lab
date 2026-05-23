@@ -43,15 +43,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <OperationalBriefPopupProvider>
       {/* §11.125 — skip-link (WCAG 2.4.1 Bypass Blocks). 키보드 사용자가
           Tab 첫 stop 으로 sidebar nav 건너뛰고 main 으로 이동.
-          §11.272a-redo — Hybrid 명시 강화 (호영님 P0 회귀 보고 후속). 3-layer
-          defense: (1) sr-only screen reader 안전, (2) absolute left-[-9999px]
-          top-[-9999px] explicit off-screen (sr-only purge fallback), (3)
-          focus-visible:not-sr-only focus-visible:fixed (§11.214c 의도 보존 —
-          키보드 Tab 시에만 노출, programmatic auto-focus 차단). top-auto
-          edge case 차단 — top-[-9999px] 도 명시. */}
+          §11.272a-redo-2 — focus-visible → focus swap (호영님 P0 3차 회귀
+          보고). iOS Safari 가 :focus-visible pseudo 를 mount 직후 첫 focusable
+          element 에 임의 적용 → 모바일 항상 visible 회귀. 호영님 spec 정답
+          (sr-only + focus:not-sr-only) 채택. desktop Tab focus 시에만 노출,
+          모바일 touch/mouse 시 focus 발동 안 함 → 완전 hidden. */}
       <a
         href="#main-content"
-        className="sr-only absolute left-[-9999px] top-[-9999px] focus-visible:not-sr-only focus-visible:fixed focus-visible:left-3 focus-visible:top-3 focus-visible:z-[100] focus-visible:bg-blue-600 focus-visible:text-white focus-visible:px-3 focus-visible:py-2 focus-visible:rounded-md focus-visible:text-sm focus-visible:font-semibold focus-visible:shadow-lg"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:bg-blue-600 focus:text-white focus:px-3 focus:py-2 focus:rounded-md focus:text-sm focus:font-semibold focus:shadow-lg"
       >
         본문 바로가기
       </a>
