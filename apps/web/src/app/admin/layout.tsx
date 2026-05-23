@@ -23,15 +23,8 @@ export default function AdminLayout({
 }) {
   return (
     <>
-      {/* §11.272a-redo-2 — focus-visible → focus swap (호영님 P0 3차 회귀
-          보고). iOS Safari 의 :focus-visible 임의 적용 회피. dashboard-shell
-          과 동일 패턴. */}
-      <a
-        href="#admin-main"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:bg-blue-600 focus:text-white focus:px-3 focus:py-2 focus:rounded-md focus:text-sm focus:font-semibold focus:shadow-lg"
-      >
-        본문 바로가기
-      </a>
+      {/* §11.272e — skip-link 완전 삭제 (호영님 P0 5차 결정). dashboard-shell
+          과 동일 적용. CSS hot fix 의존 한계 → element 자체 제거. */}
       <main id="admin-main" tabIndex={-1} className="outline-none">
         {children}
       </main>

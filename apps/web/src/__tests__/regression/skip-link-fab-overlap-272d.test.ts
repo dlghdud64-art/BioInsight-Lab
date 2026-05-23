@@ -1,10 +1,12 @@
 /**
- * §11.272a-redo-2 + §11.272d — 호영님 P0 3차 보고 hot fix.
+ * §11.272e + §11.272d — 호영님 P0 5차 보고 hot fix.
  *
- * 1. skip-link: focus-visible → focus swap (iOS Safari 의 :focus-visible
- *    임의 적용 회피 → 모바일 항상 visible 회귀 차단)
+ * 1. skip-link 완전 삭제 — §11.272a-redo / §11.272a-redo-2 / §11.272d
+ *    (sr-only + focus:not-sr-only) 모든 hot fix 후에도 호영님 데스크탑
+ *    환경 좌상단 "본문 바로가기" visible. CSS hot fix 의존 한계 인정.
+ *    element 자체 제거. WCAG 2.4.1 a11y trade-off 인정.
  * 2. FAB: bodyScrollLocked watch → Radix Sheet/Dialog open 시 FAB hidden
- *    (견적 detail sheet 의 primary CTA "회신 검토 시작 →" 겹침 해소)
+ *    (이 부분은 §11.272d 그대로 유지).
  */
 
 import { describe, it, expect } from "vitest";
@@ -24,33 +26,29 @@ const FAB = readFileSync(
   "utf8",
 );
 
-describe("§11.272a-redo-2 + §11.272d — skip-link sr-only + FAB sheet overlap hide", () => {
-  describe("skip-link — focus (NOT focus-visible)", () => {
-    it("dashboard-shell §11.272a-redo-2 trace + focus:not-sr-only (focus-visible 제거)", () => {
-      expect(DASHBOARD_SHELL).toMatch(/§11\.272a-redo-2/);
-      expect(DASHBOARD_SHELL).toMatch(/focus:not-sr-only/);
-      // focus-visible: 가 제거됐는지 (skip-link 의 className 안에)
-      expect(DASHBOARD_SHELL).not.toMatch(/focus-visible:not-sr-only/);
+describe("§11.272e + §11.272d — skip-link 완전 삭제 + FAB sheet overlap hide", () => {
+  describe("skip-link — 완전 삭제 (§11.272e)", () => {
+    it("dashboard-shell §11.272e trace marker + skip-link <a> element 잔존 부재", () => {
+      expect(DASHBOARD_SHELL).toMatch(/§11\.272e/);
+      // skip-link <a href="#main-content"> element 자체 부재
+      expect(DASHBOARD_SHELL).not.toMatch(/href="#main-content"/);
+      // <a ...>본문 바로가기</a> 패턴 부재 (comment 안의 "본문 바로가기"는 허용)
+      expect(DASHBOARD_SHELL).not.toMatch(/<a[\s\S]{0,300}>본문 바로가기<\/a>/);
     });
 
-    it("admin/layout §11.272a-redo-2 trace + focus:not-sr-only", () => {
-      expect(ADMIN_LAYOUT).toMatch(/§11\.272a-redo-2/);
-      expect(ADMIN_LAYOUT).toMatch(/focus:not-sr-only/);
-      expect(ADMIN_LAYOUT).not.toMatch(/focus-visible:not-sr-only/);
+    it("admin/layout §11.272e trace marker + skip-link <a> element 잔존 부재", () => {
+      expect(ADMIN_LAYOUT).toMatch(/§11\.272e/);
+      expect(ADMIN_LAYOUT).not.toMatch(/href="#admin-main"/);
+      expect(ADMIN_LAYOUT).not.toMatch(/<a[\s\S]{0,300}>본문 바로가기<\/a>/);
     });
 
-    it("absolute left-[-9999px] 3-layer defense 제거 (sr-only + focus 만으로 충분)", () => {
-      // §11.272a-redo 의 absolute -9999px off-screen 패턴 제거 (sr-only 만 사용)
-      // dashboard-shell 의 skip-link className 에 absolute left-[-9999px] 없음
-      const skipLinkSection = DASHBOARD_SHELL.match(
-        /href="#main-content"[\s\S]*?>/,
-      );
-      expect(skipLinkSection).not.toBeNull();
-      expect(skipLinkSection![0]).not.toMatch(/left-\[-9999px\]/);
+    it("기존 main id (#main-content, #admin-main) anchor target 보존", () => {
+      // skip-link 만 제거. main element 의 id 는 그대로 (다른 anchor 가능성)
+      expect(ADMIN_LAYOUT).toMatch(/id="admin-main"/);
     });
   });
 
-  describe("FAB — bodyScrollLocked watch", () => {
+  describe("FAB — bodyScrollLocked watch (§11.272d 보존)", () => {
     it("§11.272d trace + useBodyScrollLocked helper", () => {
       expect(FAB).toMatch(/§11\.272d/);
       expect(FAB).toMatch(/useBodyScrollLocked/);

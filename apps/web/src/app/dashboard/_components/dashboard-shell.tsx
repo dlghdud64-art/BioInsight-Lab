@@ -41,21 +41,15 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <OpsStoreProvider>
       <OperationalBriefPopupProvider>
-      {/* §11.125 — skip-link (WCAG 2.4.1 Bypass Blocks). 키보드 사용자가
-          Tab 첫 stop 으로 sidebar nav 건너뛰고 main 으로 이동.
-          §11.272a-redo-2 — focus-visible → focus swap (호영님 P0 3차 회귀
-          보고). iOS Safari 가 :focus-visible pseudo 를 mount 직후 첫 focusable
-          element 에 임의 적용 → 모바일 항상 visible 회귀. 호영님 spec 정답
-          (sr-only + focus:not-sr-only) 채택. desktop Tab focus 시에만 노출,
-          모바일 touch/mouse 시 focus 발동 안 함 → 완전 hidden. */}
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:bg-blue-600 focus:text-white focus:px-3 focus:py-2 focus:rounded-md focus:text-sm focus:font-semibold focus:shadow-lg"
-      >
-        본문 바로가기
-      </a>
+      {/* §11.272e — skip-link 완전 삭제 (호영님 P0 5차 결정). §11.125 /
+          §11.272a-redo / §11.272a-redo-2 / §11.272d (sr-only + focus:
+          not-sr-only) 모든 hot fix 후에도 호영님 데스크탑 환경 좌상단에
+          "본문 바로가기" visible 회귀. CSS hot fix 의존 한계 인정. element
+          자체 제거. WCAG 2.4.1 Bypass Blocks a11y trade-off 인정 — 호영님
+          visible regression 우선. 키보드 사용자는 brower 기본 Tab navigation
+          만 (sidebar nav 통과 후 main 진입). 추후 a11y 강화는 별도 batch. */}
 
-      {/* §11.283b #dashboard-shell-bg-white-unified — 호영님 P0 spec: "배경색이
+{/* §11.283b #dashboard-shell-bg-white-unified — 호영님 P0 spec: "배경색이
           너무 회색톤이여서 흰색톤으로 통일". 기존 bg-[#F8FAFC] (slate-50 톤)
           → bg-white. application-wide dashboard surface (대시보드 / 견적 / 구매
           / 재고 / 설정 등) 흰색 통일. visual cleanliness ↑. */}
