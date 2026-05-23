@@ -820,11 +820,11 @@ export function InventoryMain() {
     return "low_stock"; // fallback
   };
   const ISSUE_CONFIG: Record<IssueType, { label: string; cls: string; priority: number }> = {
-    expired:       { label: "만료됨",     cls: "bg-red-900/50 text-red-400",       priority: 0 },
-    out_of_stock:  { label: "품절",       cls: "bg-red-900/50 text-red-400",       priority: 1 },
-    expiring:      { label: "임박",       cls: "bg-yellow-900/50 text-yellow-700", priority: 2 },
-    low_stock:     { label: "재고 부족",  cls: "bg-red-900/50 text-red-600", priority: 3 },
-    reorder_lead:  { label: "재주문 권장", cls: "bg-yellow-900/50 text-yellow-700", priority: 4 },
+    expired:       { label: "만료됨",     cls: "bg-red-100 text-red-700",       priority: 0 },
+    out_of_stock:  { label: "품절",       cls: "bg-red-100 text-red-700",       priority: 1 },
+    expiring:      { label: "임박",       cls: "bg-yellow-100 text-yellow-700", priority: 2 },
+    low_stock:     { label: "재고 부족",  cls: "bg-red-100 text-red-600", priority: 3 },
+    reorder_lead:  { label: "재주문 권장", cls: "bg-yellow-100 text-yellow-700", priority: 4 },
     no_location:   { label: "위치 미지정", cls: "bg-el text-slate-400",  priority: 5 },
   };
 
@@ -1506,12 +1506,12 @@ export function InventoryMain() {
 
               <div className="rounded-xl border border-red-500/20 bg-pn px-4 py-3">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-medium text-red-400/80">부족/품절</span>
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-red-950/300/10">
-                    <AlertTriangle className="h-3 w-3 text-red-400" />
+                  <span className="text-[11px] font-medium text-red-700/80">부족/품절</span>
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-red-100/10">
+                    <AlertTriangle className="h-3 w-3 text-red-700" />
                   </div>
                 </div>
-                <div className="text-2xl font-bold tracking-tight text-red-400">
+                <div className="text-2xl font-bold tracking-tight text-red-700">
                   {lowOrOutOfStockCount}
                   <span className="ml-1 text-sm font-normal text-slate-400">건</span>
                 </div>
@@ -1559,7 +1559,7 @@ export function InventoryMain() {
             {/* 조치 필요 항목 */}
             <Card className="shadow-sm border-bd bg-pn">
               <CardHeader>
-                <CardTitle className="flex items-center text-lg text-red-400">
+                <CardTitle className="flex items-center text-lg text-red-700">
                   <Zap className="mr-2 h-5 w-5" />
                   조치 필요 항목
                 </CardTitle>
@@ -1598,7 +1598,7 @@ export function InventoryMain() {
                   if (urgent.length === 0) {
                     return (
                       <div className="flex flex-col items-center py-6 text-center">
-                        <CheckCircle2 className="h-10 w-10 text-emerald-300  text-emerald-400 mb-3" />
+                        <CheckCircle2 className="h-10 w-10 text-emerald-700  text-emerald-700 mb-3" />
                         <p className="text-sm font-medium text-slate-400  text-slate-400">
                           모든 재고가 정상 범위입니다.
                         </p>
@@ -1620,12 +1620,12 @@ export function InventoryMain() {
                     switch (issueType) {
                       case "expired":
                       case "out_of_stock":
-                        return "bg-red-950/10  bg-red-950/10 border-red-900/30  border-red-900/30";
+                        return "bg-red-100  bg-red-100 border-red-900/30  border-red-900/30";
                       case "expiring":
                         return "bg-yellow-50  bg-yellow-50 border-yellow-900/30  border-yellow-900/30";
                       case "low_stock":
                       case "reorder_lead":
-                        return "bg-red-900/10  bg-red-900/10 border-red-900/30  border-red-900/30";
+                        return "bg-red-100  bg-red-100 border-red-900/30  border-red-900/30";
                       case "no_location":
                         return "bg-pn/30 border-bs";
                     }
@@ -1662,8 +1662,8 @@ export function InventoryMain() {
                               {daysLeft && (issueType === "expiring" || issueType === "expired") && (
                                 <Badge className={`text-[10px] px-1.5 py-0 border-none whitespace-nowrap shrink-0 ${
                                   issueType === "expired"
-                                    ? "bg-red-900/50 text-red-400"
-                                    : "bg-yellow-900/50 text-yellow-700"
+                                    ? "bg-red-100 text-red-700"
+                                    : "bg-yellow-100 text-yellow-700"
                                 }`}>{daysLeft}</Badge>
                               )}
                             </div>
@@ -1684,7 +1684,7 @@ export function InventoryMain() {
                               <span className="text-slate-600  text-slate-400">·</span>
                               <span className="whitespace-nowrap">
                                 <span className={`font-semibold ${
-                                  inv.currentQuantity === 0 ? "text-red-400  text-red-400" :
+                                  inv.currentQuantity === 0 ? "text-red-700  text-red-700" :
                                   (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock) ? "text-red-600  text-red-600" :
                                   "text-slate-600"
                                 }`}>{inv.currentQuantity}</span> {inv.unit}
@@ -1708,8 +1708,8 @@ export function InventoryMain() {
                                 variant="outline"
                                 className={`h-7 px-2 text-[11px] whitespace-nowrap gap-1 ${
                                   issueType === "out_of_stock"
-                                    ? "text-red-400 border-red-800 hover:bg-red-950/30  text-red-400  border-red-800  hover:bg-red-950/30"
-                                    : "text-red-600 border-red-800 hover:bg-red-900/30  text-red-600  border-red-800  hover:bg-red-900/30"
+                                    ? "text-red-700 border-red-800 hover:bg-red-100  text-red-700  border-red-800  hover:bg-red-100"
+                                    : "text-red-600 border-red-800 hover:bg-red-100  text-red-600  border-red-800  hover:bg-red-100"
                                 }`}
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -1749,7 +1749,7 @@ export function InventoryMain() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-7 px-2 text-[11px] whitespace-nowrap gap-1 text-red-400 border-red-800 hover:bg-red-950/30  text-red-400  border-red-800  hover:bg-red-950/30"
+                                className="h-7 px-2 text-[11px] whitespace-nowrap gap-1 text-red-700 border-red-800 hover:bg-red-100  text-red-700  border-red-800  hover:bg-red-100"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   toast({
@@ -1816,7 +1816,7 @@ export function InventoryMain() {
                                   <>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
-                                      className="gap-2 text-xs text-red-400  text-red-400"
+                                      className="gap-2 text-xs text-red-700  text-red-700"
                                       onClick={() => {
                                         toast({
                                           title: "폐기 검토",
@@ -2035,7 +2035,7 @@ export function InventoryMain() {
               <>
                 <SheetHeader className="mb-3 mt-3 border-b border-emerald-800 pb-3  border-emerald-800">
                   <div className="mb-1 flex items-center gap-1.5">
-                    <Badge className="border-none bg-emerald-900/50 text-emerald-400 hover:bg-emerald-900/40  bg-emerald-900/50  text-emerald-300 text-xs">
+                    <Badge className="border-none bg-emerald-100 text-emerald-700 hover:bg-emerald-100  bg-emerald-100  text-emerald-700 text-xs">
                       구매 → 입고 반영
                     </Badge>
                   </div>
@@ -2050,7 +2050,7 @@ export function InventoryMain() {
                 <div className="space-y-4">
                   {/* 구매 연동 정보 카드 */}
                   <div className="rounded-lg border border-emerald-800 bg-emerald-50  border-emerald-800  bg-emerald-50 p-3.5">
-                    <h4 className="text-xs font-semibold text-emerald-400  text-emerald-400 mb-2 flex items-center gap-1.5">
+                    <h4 className="text-xs font-semibold text-emerald-700  text-emerald-700 mb-2 flex items-center gap-1.5">
                       <Package className="h-3.5 w-3.5" />
                       구매 연동 정보
                     </h4>
@@ -2175,9 +2175,9 @@ export function InventoryMain() {
 
                   {/* 입고 후 예상 재고 */}
                   {receivingForm.actualQty && Number(receivingForm.actualQty) > 0 && selectedItem && (
-                    <div className="rounded-lg bg-emerald-900/20  bg-emerald-900/20 px-4 py-3 text-sm flex justify-between">
-                      <span className="text-emerald-400  text-emerald-400">입고 후 재고</span>
-                      <span className="font-bold text-emerald-400  text-emerald-400">
+                    <div className="rounded-lg bg-emerald-100  bg-emerald-100 px-4 py-3 text-sm flex justify-between">
+                      <span className="text-emerald-700  text-emerald-700">입고 후 재고</span>
+                      <span className="font-bold text-emerald-700  text-emerald-700">
                         {(selectedItem.currentQuantity + Number(receivingForm.actualQty)).toLocaleString()} {selectedItem.unit}
                       </span>
                     </div>
@@ -2257,7 +2257,7 @@ export function InventoryMain() {
                       시약 상세 정보
                     </Badge>
                     {selectedItem.hazard && (
-                      <Badge className="border-none bg-red-950/30 text-red-400  bg-red-950/50  text-red-400 text-xs">
+                      <Badge className="border-none bg-red-100 text-red-700  bg-red-100  text-red-700 text-xs">
                         <AlertTriangle className="mr-1 h-3 w-3" />
                         유해 물질
                       </Badge>
@@ -2437,7 +2437,7 @@ export function InventoryMain() {
                           restockHistoryData.records.map((r: any) => (
                             <div key={r.id} className="rounded-lg border border-bd  border-bd px-3 py-2.5 text-xs">
                               <div className="flex justify-between items-center">
-                                <span className="font-semibold text-emerald-400">+{r.quantity.toLocaleString()} {r.unit || selectedItem.unit}</span>
+                                <span className="font-semibold text-emerald-700">+{r.quantity.toLocaleString()} {r.unit || selectedItem.unit}</span>
                                 <span className="text-slate-400">{format(new Date(r.restockedAt), "yyyy.MM.dd HH:mm", { locale: ko })}</span>
                               </div>
                               {(r.lotNumber || r.expiryDate) && (
@@ -2514,7 +2514,7 @@ export function InventoryMain() {
         <Dialog open={!!restockItem} onOpenChange={(open) => { if (!open) { setRestockItem(null); setRestockForm({ addQty: "", lotNumber: "", expiryDate: "" }); } }}>
           <DialogContent className="max-w-sm">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-emerald-400">
+              <DialogTitle className="flex items-center gap-2 text-emerald-700">
                 <span>입고 수량 추가</span>
               </DialogTitle>
               <DialogDescription>
@@ -2527,7 +2527,7 @@ export function InventoryMain() {
             {restockItem && (
               <div className="space-y-4 pt-1">
                 {/* 신규 Lot 이력 안내 */}
-                <div className="rounded-lg bg-emerald-900/20 border border-emerald-800  bg-emerald-900/20  border-emerald-800 px-3 py-2 text-xs text-emerald-400  text-emerald-400 flex items-start gap-2">
+                <div className="rounded-lg bg-emerald-100 border border-emerald-800  bg-emerald-100  border-emerald-800 px-3 py-2 text-xs text-emerald-700  text-emerald-700 flex items-start gap-2">
                   <PackagePlus className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                   <span>입고 수량과 Lot 정보는 <strong>신규 입고 이력</strong>으로 별도 기록됩니다. 기존 Lot 데이터는 유지됩니다.</span>
                 </div>
@@ -2569,9 +2569,9 @@ export function InventoryMain() {
                   />
                 </div>
                 {restockForm.addQty && Number(restockForm.addQty) > 0 && (
-                  <div className="rounded-lg bg-emerald-900/20  bg-emerald-900/20 px-4 py-3 text-sm flex justify-between">
-                    <span className="text-emerald-400">입고 후 재고</span>
-                    <span className="font-bold text-emerald-400">
+                  <div className="rounded-lg bg-emerald-100  bg-emerald-100 px-4 py-3 text-sm flex justify-between">
+                    <span className="text-emerald-700">입고 후 재고</span>
+                    <span className="font-bold text-emerald-700">
                       {(restockItem.currentQuantity + Number(restockForm.addQty)).toLocaleString()} {restockItem.unit}
                     </span>
                   </div>
@@ -2607,7 +2607,7 @@ export function InventoryMain() {
         <Dialog open={!!restockDoneItem} onOpenChange={(open) => { if (!open) setRestockDoneItem(null); }}>
           <DialogContent className="max-w-xs text-center">
             <div className="flex flex-col items-center gap-3 py-2">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-900/40  bg-emerald-900/40">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100  bg-emerald-100">
                 <CheckCircle2 className="h-6 w-6 text-emerald-600" />
               </div>
               <DialogHeader className="space-y-1">
@@ -3171,7 +3171,7 @@ export function InventoryMain() {
                                 variant="outline"
                                 dot={isLowStock ? "red" : "emerald"}
                                 dotPulse={isLowStock}
-                                className={isLowStock ? "bg-red-950/30 text-red-400 border-red-800 text-[11px]" : "bg-emerald-900/20 text-emerald-400 border-emerald-800 text-[11px]"}
+                                className={isLowStock ? "bg-red-100 text-red-700 border-red-800 text-[11px]" : "bg-emerald-100 text-emerald-700 border-emerald-800 text-[11px]"}
                               >
                                 {isLowStock ? "알림 활성" : "정상"}
                               </Badge>
@@ -3302,11 +3302,11 @@ function InventoryCard({
   return (
     <Card className={
       hasRestockRequest
-        ? "border-red-500 bg-red-950/10 ring-2 ring-red-200"
+        ? "border-red-500 bg-red-100 ring-2 ring-red-200"
         : isRecommended
         ? "border-blue-300 bg-blue-50 ring-1 ring-blue-200"
         : isOutOfStock
-        ? "border-red-300 bg-red-950/30"
+        ? "border-red-300 bg-red-100"
         : isLowStock
         ? "border-red-300 bg-red-50"
         : ""
@@ -3328,13 +3328,13 @@ function InventoryCard({
           </div>
           <div className="flex flex-col items-end gap-1">
             {hasRestockRequest && (
-              <Badge variant="outline" dot="red" dotPulse className="bg-red-950/30 text-red-400 border-red-800 text-[11px]">
+              <Badge variant="outline" dot="red" dotPulse className="bg-red-100 text-red-700 border-red-800 text-[11px]">
                 <Check className="h-3 w-3 mr-1" />
                 요청됨
               </Badge>
             )}
             {isOutOfStock && !hasRestockRequest && (
-              <Badge variant="outline" dot="red" dotPulse className="bg-red-950/30 text-red-400 border-red-800">
+              <Badge variant="outline" dot="red" dotPulse className="bg-red-100 text-red-700 border-red-800">
                 품절
               </Badge>
             )}
@@ -3745,7 +3745,7 @@ function TeamInventoryCard({
     <Card
       className={`transition-all duration-200 hover:shadow-md ${
         isOutOfStock
-          ? "border-red-300 bg-red-950/10 opacity-75"
+          ? "border-red-300 bg-red-100 opacity-75"
           : isLocationMissing
           ? "border-yellow-300 bg-yellow-50 ring-2 ring-yellow-200"
           : isLowStock
@@ -3784,7 +3784,7 @@ function TeamInventoryCard({
             )}
           </div>
           {isOutOfStock && (
-            <Badge variant="outline" dot="red" dotPulse className="flex-shrink-0 bg-red-950/30 text-red-400 border-red-800">
+            <Badge variant="outline" dot="red" dotPulse className="flex-shrink-0 bg-red-100 text-red-700 border-red-800">
               품절
             </Badge>
           )}

@@ -142,26 +142,30 @@ function getRecommendedAction(inv: ProductInventory): { label: string; shortLabe
 }
 
 // ── Status badge config ──
+// §11.283d #status-config-traffic-light — 호영님 P0+ 보고 (위험/부족/정상/검토
+//   카드 색상 옅은 베이지 잔존): §11.283c-2 sweep 가 색상명만 amber→yellow
+//   바꿨고 dark mode `/40` opacity 패턴 (bg-yellow-900/40) 그대로 잔존 → 호영님
+//   spec light mode 신호등 (bg-yellow-100 text-yellow-700) 정합 swap.
 const STATUS_CONFIG: Record<StatusType, { label: string; dotCls: string; badgeCls: string }> = {
   normal: {
     label: "정상",
-    dotCls: "bg-emerald-400",
-    badgeCls: "bg-emerald-950/40 text-emerald-400 border-emerald-800/50",
+    dotCls: "bg-emerald-500",
+    badgeCls: "bg-emerald-100 text-emerald-700 border-emerald-200",
   },
   low: {
     label: "부족",
-    dotCls: "bg-red-600",
-    badgeCls: "bg-red-900/40 text-red-600 border-red-800/50",
+    dotCls: "bg-red-500",
+    badgeCls: "bg-red-100 text-red-700 border-red-200",
   },
   expiring: {
     label: "임박",
-    dotCls: "bg-yellow-700",
-    badgeCls: "bg-yellow-900/40 text-yellow-700 border-yellow-700/50",
+    dotCls: "bg-yellow-500",
+    badgeCls: "bg-yellow-100 text-yellow-700 border-yellow-200",
   },
   danger: {
     label: "위험",
-    dotCls: "bg-red-400",
-    badgeCls: "bg-red-950/40 text-red-400 border-red-800/50",
+    dotCls: "bg-red-600",
+    badgeCls: "bg-red-600 text-white border-red-700",
   },
 };
 
@@ -504,7 +508,7 @@ function MobileDetailSheet({
             </Badge>
             {daysLeft != null && daysLeft <= 30 && (
               <Badge className={`text-[10px] px-1.5 py-0 border-none ${
-                daysLeft <= 0 ? "bg-red-950/40 text-red-400" : "bg-yellow-900/40 text-yellow-700"
+                daysLeft <= 0 ? "bg-red-600 text-white" : "bg-yellow-100 text-yellow-700"
               }`}>
                 {daysLeft <= 0 ? "만료됨" : `D-${daysLeft}`}
               </Badge>

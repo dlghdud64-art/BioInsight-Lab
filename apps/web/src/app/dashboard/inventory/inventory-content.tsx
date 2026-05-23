@@ -1073,12 +1073,12 @@ function InventoryPageContent() {
   const ISSUE_CONFIG: Record<IssueType, { label: string; cls: string; priority: number }> = {
     expired: {
       label: "만료됨",
-      cls: "bg-red-500/10 text-red-400",
+      cls: "bg-red-500/10 text-red-700",
       priority: 0,
     },
     out_of_stock: {
       label: "품절",
-      cls: "bg-red-500/10 text-red-400",
+      cls: "bg-red-500/10 text-red-700",
       priority: 1,
     },
     expiring: {
@@ -2200,11 +2200,11 @@ function InventoryPageContent() {
                                       <div className="flex items-center gap-2">
                                         <Badge className={`text-[10px] px-1.5 py-0 border-none whitespace-nowrap shrink-0 ${issueInfo.cls}`}>{issueInfo.label}</Badge>
                                         <h5 className="text-sm font-bold text-slate-900 truncate flex-1">{inv.product.name}</h5>
-                                        {daysLeft && (issueType === "expiring" || issueType === "expired") && <span className={`text-[10px] font-bold shrink-0 ${issueType === "expired" ? "text-red-400" : "text-yellow-700"}`}>{daysLeft}</span>}
+                                        {daysLeft && (issueType === "expiring" || issueType === "expired") && <span className={`text-[10px] font-bold shrink-0 ${issueType === "expired" ? "text-red-700" : "text-yellow-700"}`}>{daysLeft}</span>}
                                       </div>
                                       {/* Line 2: 핵심 수치 1줄 (축약) */}
                                       <p className="text-[11px] text-slate-400 mt-0.5 truncate">
-                                        <span className={`font-semibold ${inv.currentQuantity === 0 ? "text-red-400" : inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock ? "text-yellow-700" : "text-slate-600"}`}>{inv.currentQuantity}</span> {inv.unit}
+                                        <span className={`font-semibold ${inv.currentQuantity === 0 ? "text-red-700" : inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock ? "text-yellow-700" : "text-slate-600"}`}>{inv.currentQuantity}</span> {inv.unit}
                                         {inv.safetyStock != null && <span className="text-slate-500"> / 안전재고 {inv.safetyStock}</span>}
                                         {inv.expiryDate && issueType !== "expiring" && issueType !== "expired" && <span className="text-slate-500"> · {format(new Date(inv.expiryDate), "MM.dd")} 만료</span>}
                                         {!inv.location && issueType !== "no_location" && <span className="text-yellow-500"> · 위치 없음</span>}
@@ -2316,7 +2316,7 @@ function InventoryPageContent() {
                                             <>
                                               <DropdownMenuSeparator />
                                               <DropdownMenuItem
-                                                className="gap-2 text-xs text-red-400"
+                                                className="gap-2 text-xs text-red-700"
                                                 onClick={() => {
                                                   toast({
                                                     title: "폐기 검토",
@@ -2824,7 +2824,7 @@ function InventoryPageContent() {
             <>
               <SheetHeader className="mb-3 mt-3 border-b border-emerald-800 pb-3  border-emerald-800">
                 <div className="mb-1 flex items-center gap-1.5">
-                  <Badge className="border-none bg-emerald-900/50 text-emerald-400 hover:bg-emerald-900/40  bg-emerald-900/50  text-emerald-300 text-xs">구매 → 입고 반영</Badge>
+                  <Badge className="border-none bg-emerald-100 text-emerald-700 hover:bg-emerald-100  bg-emerald-100  text-emerald-700 text-xs">구매 → 입고 반영</Badge>
                 </div>
                 <SheetTitle className="text-lg font-bold leading-tight">{purchaseContext.itemName || "입고 반영"}</SheetTitle>
                 <SheetDescription className="text-sm text-slate-400  text-slate-400 mt-0.5">구매 데이터를 기반으로 재고에 입고를 반영합니다</SheetDescription>
@@ -2833,7 +2833,7 @@ function InventoryPageContent() {
               <div className="space-y-4">
                 {/* 구매 연동 정보 카드 */}
                 <div className="rounded-lg border border-emerald-800 bg-emerald-50  border-emerald-800  bg-emerald-50 p-3.5">
-                  <h4 className="text-xs font-semibold text-emerald-400  text-emerald-400 mb-2 flex items-center gap-1.5">
+                  <h4 className="text-xs font-semibold text-emerald-700  text-emerald-700 mb-2 flex items-center gap-1.5">
                     <Package className="h-3.5 w-3.5" />
                     구매 연동 정보
                   </h4>
@@ -3000,9 +3000,9 @@ function InventoryPageContent() {
 
                 {/* 입고 후 예상 재고 */}
                 {receivingForm.actualQty && Number(receivingForm.actualQty) > 0 && selectedItem && (
-                  <div className="rounded-lg bg-emerald-900/20  bg-emerald-900/20 px-4 py-3 text-sm flex justify-between">
-                    <span className="text-emerald-400  text-emerald-400">입고 후 재고</span>
-                    <span className="font-bold text-emerald-400  text-emerald-400">
+                  <div className="rounded-lg bg-emerald-100  bg-emerald-100 px-4 py-3 text-sm flex justify-between">
+                    <span className="text-emerald-700  text-emerald-700">입고 후 재고</span>
+                    <span className="font-bold text-emerald-700  text-emerald-700">
                       {(selectedItem.currentQuantity + Number(receivingForm.actualQty)).toLocaleString()} {selectedItem.unit}
                     </span>
                   </div>
@@ -3080,7 +3080,7 @@ function InventoryPageContent() {
                 <div className="mb-1 flex items-center gap-1.5">
                   <Badge className="border-none bg-blue-900/50 text-blue-300 hover:bg-blue-100  bg-blue-900/50  text-blue-300 text-xs">시약 상세 정보</Badge>
                   {selectedItem.hazard && (
-                    <Badge className="border-none bg-red-950/30 text-red-400  bg-red-950/50  text-red-400 text-xs">
+                    <Badge className="border-none bg-red-100 text-red-700  bg-red-100  text-red-700 text-xs">
                       <AlertTriangle className="mr-1 h-3 w-3" />
                       유해 물질
                     </Badge>
@@ -3234,7 +3234,7 @@ function InventoryPageContent() {
                         restockHistoryData.records.map((r: any) => (
                           <div key={r.id} className="rounded-lg border border-bd  border-bd px-3 py-2.5 text-xs">
                             <div className="flex justify-between items-center">
-                              <span className="font-semibold text-emerald-400">
+                              <span className="font-semibold text-emerald-700">
                                 +{r.quantity.toLocaleString()} {r.unit || selectedItem.unit}
                               </span>
                               <span className="text-slate-400">{format(new Date(r.restockedAt), "yyyy.MM.dd HH:mm", { locale: ko })}</span>
@@ -3314,7 +3314,7 @@ function InventoryPageContent() {
       >
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-emerald-400">
+            <DialogTitle className="flex items-center gap-2 text-emerald-700">
               <span>입고 수량 추가</span>
             </DialogTitle>
             <DialogDescription>
@@ -3325,7 +3325,7 @@ function InventoryPageContent() {
           {restockItem && (
             <div className="space-y-4 pt-1">
               {/* 신규 Lot 이력 안내 */}
-              <div className="rounded-lg bg-emerald-900/20 border border-emerald-800  bg-emerald-900/20  border-emerald-800 px-3 py-2 text-xs text-emerald-400  text-emerald-400 flex items-start gap-2">
+              <div className="rounded-lg bg-emerald-100 border border-emerald-800  bg-emerald-100  border-emerald-800 px-3 py-2 text-xs text-emerald-700  text-emerald-700 flex items-start gap-2">
                 <PackagePlus className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                 <span>
                   입고 수량과 Lot 정보는 <strong>신규 입고 이력</strong>으로 별도 기록됩니다. 기존 Lot 데이터는 유지됩니다.
@@ -3365,9 +3365,9 @@ function InventoryPageContent() {
                 />
               </div>
               {restockForm.addQty && Number(restockForm.addQty) > 0 && (
-                <div className="rounded-lg bg-emerald-900/20  bg-emerald-900/20 px-4 py-3 text-sm flex justify-between">
-                  <span className="text-emerald-400">입고 후 재고</span>
-                  <span className="font-bold text-emerald-400">
+                <div className="rounded-lg bg-emerald-100  bg-emerald-100 px-4 py-3 text-sm flex justify-between">
+                  <span className="text-emerald-700">입고 후 재고</span>
+                  <span className="font-bold text-emerald-700">
                     {(restockItem.currentQuantity + Number(restockForm.addQty)).toLocaleString()} {restockItem.unit}
                   </span>
                 </div>
@@ -3419,7 +3419,7 @@ function InventoryPageContent() {
       >
         <DialogContent className="max-w-xs text-center">
           <div className="flex flex-col items-center gap-3 py-2">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-900/40  bg-emerald-900/40">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100  bg-emerald-100">
               <CheckCircle2 className="h-6 w-6 text-emerald-600" />
             </div>
             <DialogHeader className="space-y-1">
@@ -3983,7 +3983,7 @@ function InventoryPageContent() {
                           <div className="flex items-center gap-2 ml-4">
                             {!hasSafetyStock && <span className="text-[10px] md:text-xs text-muted-foreground">안전 재고 설정 필요</span>}
                             {hasSafetyStock && (
-                              <Badge variant="outline" dot={isLowStock ? "red" : "emerald"} dotPulse={isLowStock} className={isLowStock ? "bg-red-950/30 text-red-400 border-red-800 text-[11px]" : "bg-emerald-900/20 text-emerald-400 border-emerald-800 text-[11px]"}>
+                              <Badge variant="outline" dot={isLowStock ? "red" : "emerald"} dotPulse={isLowStock} className={isLowStock ? "bg-red-100 text-red-700 border-red-800 text-[11px]" : "bg-emerald-100 text-emerald-700 border-emerald-800 text-[11px]"}>
                                 {isLowStock ? "알림 활성" : "정상"}
                               </Badge>
                             )}
@@ -4149,7 +4149,7 @@ function InventoryCard({ inventory, onEdit, onRecordUsage, onRestockRequest, onP
 
   return (
     <motion.div whileHover={{ y: -2, backgroundColor: "rgba(255,255,255,0.03)" }} transition={{ duration: 0.18, ease: "easeOut" }} className="rounded-xl">
-      <Card className={isExpiredLotWithQty ? "border-red-300 bg-red-50/70 ring-2 ring-red-100" : hasRestockRequest ? "border-red-500 bg-red-950/10 ring-2 ring-red-200" : isRecommended ? "border-blue-300 bg-blue-50 ring-1 ring-blue-200" : isOutOfStock ? "border-red-300 bg-red-950/30" : isLowStock ? "border-red-300 bg-red-50" : ""}>
+      <Card className={isExpiredLotWithQty ? "border-red-300 bg-red-50/70 ring-2 ring-red-100" : hasRestockRequest ? "border-red-500 bg-red-100 ring-2 ring-red-200" : isRecommended ? "border-blue-300 bg-blue-50 ring-1 ring-blue-200" : isOutOfStock ? "border-red-300 bg-red-100" : isLowStock ? "border-red-300 bg-red-50" : ""}>
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex-1">
@@ -4170,7 +4170,7 @@ function InventoryCard({ inventory, onEdit, onRecordUsage, onRestockRequest, onP
             </div>
             <div className="flex flex-col items-end gap-1">
               {hasRestockRequest && (
-                <Badge variant="outline" dot="red" dotPulse className="bg-red-950/30 text-red-400 border-red-800 text-[11px]">
+                <Badge variant="outline" dot="red" dotPulse className="bg-red-100 text-red-700 border-red-800 text-[11px]">
                   <Check className="h-3 w-3 mr-1" />
                   요청됨
                 </Badge>
@@ -4181,7 +4181,7 @@ function InventoryCard({ inventory, onEdit, onRecordUsage, onRestockRequest, onP
                 </Badge>
               )}
               {isOutOfStock && !hasRestockRequest && !isExpiredLotWithQty && (
-                <Badge variant="outline" dot="red" dotPulse className="bg-red-950/30 text-red-400 border-red-800">
+                <Badge variant="outline" dot="red" dotPulse className="bg-red-100 text-red-700 border-red-800">
                   품절
                 </Badge>
               )}
@@ -4496,7 +4496,7 @@ function TeamInventoryCard({ inventory, onLocationClick, onQuantityUpdate, onReo
   };
 
   return (
-    <Card className={`transition-all duration-200 hover:shadow-md ${isOutOfStock ? "border-red-300 bg-red-950/10 opacity-75" : isLocationMissing ? "border-yellow-300 bg-yellow-50 ring-2 ring-yellow-200" : isLowStock ? "border-red-800 bg-red-50/30" : "border-bd bg-pn"}`}>
+    <Card className={`transition-all duration-200 hover:shadow-md ${isOutOfStock ? "border-red-300 bg-red-100 opacity-75" : isLocationMissing ? "border-yellow-300 bg-yellow-50 ring-2 ring-yellow-200" : isLowStock ? "border-red-800 bg-red-50/30" : "border-bd bg-pn"}`}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
@@ -4520,7 +4520,7 @@ function TeamInventoryCard({ inventory, onLocationClick, onQuantityUpdate, onReo
             )}
           </div>
           {isOutOfStock && (
-            <Badge variant="outline" dot="red" dotPulse className="flex-shrink-0 bg-red-950/30 text-red-400 border-red-800">
+            <Badge variant="outline" dot="red" dotPulse className="flex-shrink-0 bg-red-100 text-red-700 border-red-800">
               품절
             </Badge>
           )}
