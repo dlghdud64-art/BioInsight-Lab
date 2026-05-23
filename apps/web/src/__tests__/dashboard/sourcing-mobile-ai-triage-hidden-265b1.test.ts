@@ -48,7 +48,7 @@ describe("§11.265b-1 #1 — 인라인 두 block 모바일 hidden", () => {
   it("TRIAGE 블록 (sourcing-result-triage) section className visible", () => {
     // Agent Board browser evidence: inline triage must be visible so capture includes the four groups.
     expect(page).toMatch(
-      /data-testid="sourcing-result-triage"[\s\S]{0,200}className="px-3 pt-2"/,
+      /data-testid="sourcing-result-triage"[\s\S]{0,200}className="relative z-\[80\] px-3 pt-2"/,
     );
   });
 });
@@ -75,7 +75,7 @@ describe("§11.265b-1 #2 — invariant 보존 (canonical truth)", () => {
   it("TRIAGE 비교 검토 열기 / 보류 검토 / 제외 사유 핸들러 보존", () => {
     expect(page).toMatch(/data-testid="sourcing-triage-compare-cta"/);
     expect(page).toMatch(/onClick=\{openSourcingTriageReview\}/);
-    expect(page).toMatch(/비교 검토 열기/);
+    expect(page).toMatch(/후보 비교/);
     expect(page).toMatch(/보류 검토/);
     expect(page).toMatch(/제외 사유/);
   });

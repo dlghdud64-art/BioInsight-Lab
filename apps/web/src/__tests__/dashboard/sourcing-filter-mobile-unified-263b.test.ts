@@ -152,6 +152,10 @@ describe("11.263c sourcing result triage evidence", () => {
 
   it("exposes compare, hold, exclude actions outside result-card overlays", () => {
     expect(page).toMatch(/data-testid="sourcing-triage-compare-cta"/);
+    expect(page).toMatch(/data-action-value="Compare candidates"/);
+    expect(page).toMatch(/후보 비교/);
+    expect(page).toMatch(/data-testid="sourcing-triage-request-cta"/);
+    expect(page).toMatch(/견적 요청/);
     expect(page).toMatch(/data-testid="sourcing-triage-blocked-reason"/);
     expect(page).toMatch(/data-testid="sourcing-triage-candidate-list"/);
     expect(page).toMatch(/sourcing-triage-candidate-\$\{candidate\.action\}/);
@@ -173,7 +177,8 @@ describe("11.263c sourcing result triage evidence", () => {
 
   it("keeps the strategy guidance rail from covering compare/request CTAs", () => {
     expect(page).toMatch(/data-testid="sourcing-strategy-rail"/);
-    expect(page).toMatch(/pointer-events-none fixed right-0 top-\[60px\]/);
+    expect(page).toMatch(/pointer-events-none fixed right-0 top-\[60px\][^"]*hidden[^"]*md:block/);
+    expect(page).toMatch(/relative z-\[80\] px-3 pt-2/);
     expect(page).toMatch(/pointer-events-auto absolute top-0 right-0/);
     expect(page).not.toMatch(/fixed left-0 right-0 top-\[60px\]/);
     expect(page).not.toMatch(/absolute inset-0 bg-black\/15/);

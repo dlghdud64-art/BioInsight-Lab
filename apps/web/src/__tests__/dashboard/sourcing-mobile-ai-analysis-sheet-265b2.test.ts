@@ -69,7 +69,7 @@ describe("§11.265b-2 #2 — Sheet content (TRIAGE + AI 제안 복제)", () => {
 
   it("Sheet 안 비교 검토 열기 / 보류 검토 / 제외 사유 3 버튼 복제", () => {
     // 각 라벨 2번 등장
-    const compareMatches = page.match(/비교 검토 열기/g);
+    const compareMatches = page.match(/후보 비교/g);
     expect(compareMatches?.length ?? 0).toBeGreaterThanOrEqual(2);
     const reviewMatches = page.match(/보류 검토/g);
     expect(reviewMatches?.length ?? 0).toBeGreaterThanOrEqual(2);
@@ -93,7 +93,7 @@ describe("§11.265b-2 #3 — invariant 보존 (canonical truth)", () => {
 
   it("§11.265b-1 inline TRIAGE section hidden md:block 보존", () => {
     expect(page).toMatch(
-      /data-testid="sourcing-result-triage"[\s\S]{0,300}className="px-3 pt-2"/,
+      /data-testid="sourcing-result-triage"[\s\S]{0,300}className="relative z-\[80\] px-3 pt-2"/,
     );
   });
 

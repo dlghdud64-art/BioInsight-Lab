@@ -785,10 +785,11 @@ export default function SearchPage() {
                     <Button
                       type="button"
                       size="sm"
+                      data-action-value="Compare candidates"
                       className="h-9 w-full bg-blue-600 text-xs font-semibold text-white hover:bg-blue-500"
                       onClick={() => { setAiAnalysisSheetOpen(false); openSourcingTriageReview(); }}
                     >
-                      비교 검토 열기
+                      후보 비교
                     </Button>
                     <div className="flex gap-1.5">
                       <Button
