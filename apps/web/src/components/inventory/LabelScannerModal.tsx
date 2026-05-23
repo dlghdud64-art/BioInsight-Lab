@@ -105,19 +105,30 @@ function ConfidenceBadge({ level }: { level: "high" | "medium" | "low" }) {
  *  STORAGE_PROVIDER 미설정 (현재 production) 시 GEMINI 기본값.
  */
 function ProviderBadge({ provider }: { provider: "GEMINI" | "CLOUD_VISION_CLAUDE" | "REGEX" }) {
-  const label =
+  const pathLabel =
     provider === "GEMINI"
-      ? "Gemini"
+      ? "Gemini T1"
       : provider === "CLOUD_VISION_CLAUDE"
-        ? "Vision+Claude"
-        : "정규식";
+        ? "Cloud Vision T2 (Claude 구조화)"
+        : "정규식 T3";
+  const fallbackActive = provider !== "GEMINI";
   return (
-    <Badge
-      className="bg-slate-100 text-slate-700 border-0 text-[10px]"
-      data-testid="ocr-provider-badge"
-    >
-      {label}
-    </Badge>
+    <>
+      <Badge
+        className="bg-slate-100 text-slate-700 border-0 text-[10px]"
+        data-testid="ocr-provider-badge"
+      >
+        사용 경로: {pathLabel}
+      </Badge>
+      <Badge
+        className={fallbackActive
+          ? "bg-amber-100 text-amber-700 border-0 text-[10px]"
+          : "bg-emerald-100 text-emerald-700 border-0 text-[10px]"}
+        data-testid="ocr-fallback-badge"
+      >
+        폴백: {fallbackActive ? "활성" : "비활성"}
+      </Badge>
+    </>
   );
 }
 
