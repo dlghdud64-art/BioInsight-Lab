@@ -2878,6 +2878,11 @@ function SearchUtilityBar({ activeFilterCount, onAuthRequired, isLoggedIn, stage
   const { searchQuery, setSearchQuery, runSearch, hasSearched } = useTestFlow();
   const [localQuery, setLocalQuery] = useState(searchQuery);
   const [labelScanOpen, setLabelScanOpen] = useState(false);
+  // §11.283b 햄버거 메뉴 plain state — Radix DropdownMenu 제거 후 단순화.
+  // 호영님 P0+ 4차 (2026-05-24) 보고: §11.280~§11.283 (Radix wiring 4차
+  // hot fix) 후에도 호영님 환경 dead button. Radix 의존성 제거 + plain
+  // button + useState + 조건부 menu render 로 직관적으로 단순화.
+  const [hamburgerOpen, setHamburgerOpen] = useState(false);
 
   // §11.258a #4 — 최근 검색어 dropdown (모바일). localStorage
   // "bioinsight-recent-searches" 가 이미 handleSubmit 안 저장 중 (page.tsx:2001-2003).
@@ -3125,92 +3130,92 @@ function SearchUtilityBar({ activeFilterCount, onAuthRequired, isLoggedIn, stage
             <Camera className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">AI 라벨 스캔</span>
           </button>
-          {/* §11.254b — 햄버거 메뉴 (대시보드 / 견적 / 구매 / 재고 / 설정 바로가기).
-              하단 탭 바 추가 0 (액션 바 공간 충돌). 헤더 우측 ≡ 으로 5 entry.
-              §11.280-2 #sourcing-header-menu-icon-pointer-events-none — 호영님
-              iOS Safari dead button root cause: <Menu /> SVG icon 이 PointerEvent
-              target 으로 trap → Radix DropdownMenuTrigger 미발화. Menu icon 에
-              `pointer-events-none` 강제 → SVG hit-test 제외 → click/PointerEvent
-              가 직접 button 으로 dispatch. (§11.280 outer container fix 후속) */}
-          {/* §11.282-e #sourcing-hamburger-asChild-removal — 호영님 P0+ 3rd report:
-              모든 platform (iOS Safari + desktop Chrome) 에서 햄버거 dead button.
-              Sandbox audit 결정적 결과: MouseEvent('click') dispatch 시
-              clickEventFired:true 인데 aria-expanded 변화 0 + portal 0.
-              Root cause: Radix DropdownMenuTrigger `asChild` 가 wrapper button
-              에 onPointerDown 만 spread, onClick 누락 (이전 audit reactPropsKeys
-              =[..., onPointerDown, onKeyDown] — onClick 없음). 브라우저 native
-              click 시퀀스 (pointerdown → pointerup → click) 중 일부가 다른 layer
-              에 capture 되면 fail. asChild 제거 + Radix 자체 button render →
-              Radix 가 모든 event handler (pointer + click + key) 정확 attach.
-              §11.280-2 (Menu icon pointer-events-none) + touch-manipulation +
-              -webkit-tap-highlight-color:transparent 동시 적용 보존. */}
-          {/* §11.283 #sourcing-hamburger-onClick-fallback — 호영님 P0+ 4차
-              (2026-05-24) audit 확정: Sandbox + 호영님 console 동일 결과
-              (React hydrate 정상 + reactProps.onPointerDown function 정상 +
-              native pointerdown PD@ 로그 BUTTON hit 정상) 임에도 호영님
-              환경에서 dropdown 안 열림. 일부 환경 (특정 브라우저/OS/마우스
-              driver 조합) 에서 React event delegation 이 onPointerDown 까지
-              fire 안 함. defense-in-depth fallback — onClick 에서
-              data-state="closed" 이면 PointerEvent('pointerdown') 강제
-              dispatch → Radix internal handler 가 받아서 setOpen(true).
-              Radix uncontrolled mode 유지 (§11.282-e asChild 제거 보존). */}
-          <DropdownMenu>
-            <DropdownMenuTrigger
+          {/* §11.283b #sourcing-hamburger-plain-button — 호영님 P0+ 5차
+              (2026-05-24) 단순화: §11.280 / §11.280-2 / §11.282-d / §11.282-e
+              / §11.283 (Radix wiring 5차 hot fix) 후에도 호영님 환경 dead
+              button. Radix DropdownMenu 자체 제거 + plain <button> +
+              useState + 조건부 <div> menu. 직관적·단순. 5 menuItem
+              (대시보드/견적/구매/재고/설정) Link navigation 그대로. 외부
+              click 시 close 는 useEffect + addEventListener. ESC close 도
+              keydown listener. dependency 0 (Radix wiring trap 0). */}
+          <div className="relative shrink-0">
+            <button
               type="button"
               aria-label="메뉴 열기"
-              onClick={(e) => {
-                const trigger = e.currentTarget;
-                if (trigger.getAttribute("data-state") === "closed") {
-                  trigger.dispatchEvent(
-                    new PointerEvent("pointerdown", {
-                      bubbles: true,
-                      cancelable: true,
-                      isPrimary: true,
-                      button: 0,
-                    }),
-                  );
-                }
-              }}
+              aria-expanded={hamburgerOpen}
+              aria-haspopup="menu"
+              onClick={() => setHamburgerOpen((v) => !v)}
               className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] -mr-1 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors shrink-0 touch-manipulation [-webkit-tap-highlight-color:transparent]"
             >
               <Menu className="h-5 w-5 pointer-events-none" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>주요 화면</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard" className="flex items-center gap-2 cursor-pointer">
-                  <LayoutDashboard className="h-4 w-4 text-slate-500" />
-                  <span>대시보드</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/quotes" className="flex items-center gap-2 cursor-pointer">
-                  <FileText className="h-4 w-4 text-slate-500" />
-                  <span>견적 관리</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/purchases" className="flex items-center gap-2 cursor-pointer">
-                  <ShoppingCart className="h-4 w-4 text-slate-500" />
-                  <span>구매 운영</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/inventory" className="flex items-center gap-2 cursor-pointer">
-                  <Package className="h-4 w-4 text-slate-500" />
-                  <span>재고 관리</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings" className="flex items-center gap-2 cursor-pointer">
-                  <Settings className="h-4 w-4 text-slate-500" />
-                  <span>설정</span>
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </button>
+            {hamburgerOpen && (
+              <>
+                {/* backdrop — 외부 click 시 close */}
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setHamburgerOpen(false)}
+                  aria-hidden="true"
+                />
+                <div
+                  role="menu"
+                  aria-label="주요 화면"
+                  className="absolute right-0 top-full mt-2 w-56 rounded-md border border-slate-200 bg-white shadow-lg z-50 py-1"
+                >
+                  <div className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    주요 화면
+                  </div>
+                  <div className="h-px bg-slate-100 mx-1 my-1" />
+                  <Link
+                    href="/dashboard"
+                    role="menuitem"
+                    onClick={() => setHamburgerOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 cursor-pointer"
+                  >
+                    <LayoutDashboard className="h-4 w-4 text-slate-500" />
+                    <span>대시보드</span>
+                  </Link>
+                  <Link
+                    href="/dashboard/quotes"
+                    role="menuitem"
+                    onClick={() => setHamburgerOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 cursor-pointer"
+                  >
+                    <FileText className="h-4 w-4 text-slate-500" />
+                    <span>견적 관리</span>
+                  </Link>
+                  <Link
+                    href="/dashboard/purchases"
+                    role="menuitem"
+                    onClick={() => setHamburgerOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 cursor-pointer"
+                  >
+                    <ShoppingCart className="h-4 w-4 text-slate-500" />
+                    <span>구매 운영</span>
+                  </Link>
+                  <Link
+                    href="/dashboard/inventory"
+                    role="menuitem"
+                    onClick={() => setHamburgerOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 cursor-pointer"
+                  >
+                    <Package className="h-4 w-4 text-slate-500" />
+                    <span>재고 관리</span>
+                  </Link>
+                  <div className="h-px bg-slate-100 mx-1 my-1" />
+                  <Link
+                    href="/dashboard/settings"
+                    role="menuitem"
+                    onClick={() => setHamburgerOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 cursor-pointer"
+                  >
+                    <Settings className="h-4 w-4 text-slate-500" />
+                    <span>설정</span>
+                  </Link>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         <LabelScannerModal
