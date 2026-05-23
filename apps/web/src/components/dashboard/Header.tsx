@@ -545,7 +545,12 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           </DropdownMenu>
           </div>
 
-          {/* 햄버거 버튼 (모바일/태블릿 전용 - 데스크탑은 고정 사이드바) */}
+          {/* 햄버거 버튼 (모바일/태블릿 전용 - 데스크탑은 고정 사이드바)
+              §11.282-a #dashboard-header-menu-icon-pointer-events-none — 대시보드
+              햄버거 SVG icon hit-test trap (§11.280-2 와 동일 root cause, application-
+              wide 회귀 첫 발견). <Menu /> SVG 가 PointerEvent target 으로 trap 되면
+              Button 의 onClick handler 미발화. `pointer-events-none` 강제 → SVG hit-
+              test 제외 → click 이 직접 Button 으로 dispatch. (호영님 iOS Safari P0+) */}
           {onMenuClick && (
             <Button
               variant="ghost"
@@ -554,7 +559,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               onClick={onMenuClick}
               aria-label="메뉴 열기"
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-5 w-5 pointer-events-none" />
             </Button>
           )}
         </div>
