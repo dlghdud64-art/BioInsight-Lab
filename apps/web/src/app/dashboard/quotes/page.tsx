@@ -2046,6 +2046,39 @@ function QuotesPageContent() {
         </div>
       </div>
 
+      {isBrowserPilotQuoteDispatch && (
+        <section
+          data-testid="quote-dispatch-review-entry"
+          data-pilot-target="dispatch-review-visible"
+          aria-label="견적 전달 검토 시작"
+          className="flex flex-col gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div className="min-w-0 space-y-0.5">
+            <p className="text-[11px] font-semibold text-blue-700">현재 단계: 발송 전 확인</p>
+            <p className="text-sm font-bold text-slate-950">다음: 견적 전달 검토</p>
+            <p className="text-xs text-slate-600">공급사와 연락처를 확인한 뒤 발송합니다.</p>
+            <p
+              data-testid="quote-dispatch-review-entry-block-reason"
+              className="text-xs font-medium text-blue-800"
+            >
+              차단 사유: 공급사 또는 연락처 미확인 시 전송 불가
+            </p>
+          </div>
+          <Button
+            type="button"
+            data-testid="quote-dispatch-review-entry-cta"
+            data-safe-action="reveal-only"
+            size="sm"
+            className="h-11 min-h-[44px] shrink-0 bg-blue-600 text-white hover:bg-blue-700"
+            onClick={openQuoteDraftWorkbench}
+            disabled={isLoading || quotes.length === 0}
+          >
+            발송 검토 열기
+            <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+          </Button>
+        </section>
+      )}
+
       {/* ── Page-level fatal error (primary fetch 실패 시만) ── */}
       {isError && !quotesData && (
         <div className="rounded-xl border border-red-600/20 bg-red-600/5 p-6 text-center space-y-3">
