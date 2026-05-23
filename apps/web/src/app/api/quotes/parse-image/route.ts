@@ -1,7 +1,10 @@
+// §11.290 Phase 4a — parseQuoteWithGemini 직접 호출 → runQuoteOcrPipeline
+// wrapper swap (호영님 Phase 0 결정 minimum-diff). STORAGE_PROVIDER 미설정
+// 시 graceful fallback. Phase 5 SDK install 후 multi-provider fallback 자동 활성.
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
-import { parseQuoteWithGemini } from "@/lib/ocr/gemini-quote-parser";
+import { runQuoteOcrPipeline } from "@/lib/ocr/run-quote-ocr-pipeline";
 
 export const runtime = "nodejs";
 
@@ -48,7 +51,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await parseQuoteWithGemini(imageBase64);
+    const pipelineResult = await runQuoteOcrPipeline({
+      kind: "image",
+      base64: imageBase64,
+      organizationId: session.user.id,
+      userId: session.user.id,
+    });
+    const result = pipelineResult.result;
 
     return NextResponse.json({
       success: true,

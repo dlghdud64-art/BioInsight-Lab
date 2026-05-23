@@ -17,12 +17,17 @@
  *   - suggestions: { isNewProduct, isNewLot, isExistingLot, action }
  */
 
+// §11.290 Phase 4a — parseWithGemini 직접 호출 → runOcrPipeline wrapper swap
+// (호영님 Phase 0 결정 minimum-diff). STORAGE_PROVIDER 미설정 시 graceful
+// fallback (audit/cache 미사용, 기존 동작 보존). Phase 5 SDK install 후
+// Cloud Vision + Claude Tier 2 자동 활성. parseReagentLabel (regex fallback)
+// 은 보존 — Gemini 호출 실패 시 text input 처리 path 유지.
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { parseReagentLabel } from "@/lib/ocr/label-parser";
-import { parseWithGemini } from "@/lib/ocr/gemini-label-parser";
+import { runOcrPipeline } from "@/lib/ocr/run-ocr-pipeline";
 
 export async function POST(req: NextRequest) {
   let enforcement: InlineEnforcementHandle | undefined;
@@ -62,10 +67,20 @@ export async function POST(req: NextRequest) {
 
     if (imageBase64) {
       try {
-        parsed = await parseWithGemini(imageBase64);
+        // §11.290 Phase 4a — parseWithGemini 직접 호출 → runOcrPipeline wrapper
+        // (호영님 Phase 0 결정 minimum-diff). result shape 호환 유지 (LabelParseResult).
+        // Phase 5 SDK install 후 STORAGE_PROVIDER 설정되면 OcrJob/OcrResult audit
+        // + cache + multi-provider fallback 자동 활성.
+        const pipelineResult = await runOcrPipeline({
+          base64: imageBase64,
+          type: "LABEL",
+          organizationId: session.user.id, // §11.290 Phase 4a tenant 격리 (Phase 5 에서 실제 organizationId 정합)
+          userId: session.user.id,
+        });
+        parsed = pipelineResult.result;
       } catch (geminiErr) {
-        console.error("[scan-label] Gemini parse failed, falling back to regex:", geminiErr);
-        // Gemini 실패 시 텍스트가 있으면 정규식 fallback
+        console.error("[scan-label] OCR pipeline failed, falling back to regex:", geminiErr);
+        // OCR pipeline 실패 시 텍스트가 있으면 정규식 fallback
         if (text) {
           parsed = parseReagentLabel(text);
         } else {
