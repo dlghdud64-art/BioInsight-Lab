@@ -3,7 +3,9 @@
 import { useState, useMemo, Fragment } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+// §11.297/§11.297b Radix DropdownMenu* import 제거 — ActionMenu shared
+// helper (components/inventory/action-menu.tsx) 사용.
+import { ActionMenu } from "@/components/inventory/action-menu";
 import {
   AlertTriangle, Thermometer, Snowflake, PackagePlus,
   MoreVertical, Pencil, Eye, Trash2, ChevronRight, ChevronDown,
@@ -301,6 +303,8 @@ export function InventoryTable({
   emptyActionLabel = "첫 재고 등록하기"
 }: InventoryTableProps) {
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set());
+  // §11.297 ActionMenu single open id — 3 dropdown mutually exclusive.
+  const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
 
   const toggleExpand = (productId: string) => {
     setExpandedProducts((prev) => {
@@ -577,34 +581,17 @@ export function InventoryTable({
                                   라벨
                                 </Button>
                               )}
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-400 ml-auto">
-                                    <MoreVertical className="h-3.5 w-3.5" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-40">
-                                  <DropdownMenuItem onClick={() => onDetailClick?.(lot)} className="gap-2 text-xs">
-                                    <Eye className="h-3.5 w-3.5 text-blue-500" /> 상세 보기
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => onEdit(lot)} className="gap-2 text-xs">
-                                    <Pencil className="h-3.5 w-3.5 text-slate-500" /> 정보 수정
-                                  </DropdownMenuItem>
-                                  {onMoveLocation && (
-                                    <DropdownMenuItem onClick={() => onMoveLocation(lot)} className="gap-2 text-xs">
-                                      <ArrowLeftRight className="h-3.5 w-3.5 text-slate-500" /> 위치 이동
-                                    </DropdownMenuItem>
-                                  )}
-                                  {onDelete && (
-                                    <>
-                                      <DropdownMenuSeparator />
-                                      <DropdownMenuItem onClick={() => onDelete(lot)} className="gap-2 text-xs text-red-600 focus:text-red-600">
-                                        <Trash2 className="h-3.5 w-3.5" /> 삭제
-                                      </DropdownMenuItem>
-                                    </>
-                                  )}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
+                              <ActionMenu
+                                menuId={`lot1-${lot.id}`}
+                                currentOpenId={openActionMenuId}
+                                onOpenChange={setOpenActionMenuId}
+                                items={[
+                                  { label: "상세 보기", icon: <Eye className="h-3.5 w-3.5 text-blue-500" />, onClick: () => onDetailClick?.(lot) },
+                                  { label: "정보 수정", icon: <Pencil className="h-3.5 w-3.5 text-slate-500" />, onClick: () => onEdit(lot) },
+                                  ...(onMoveLocation ? [{ label: "위치 이동", icon: <ArrowLeftRight className="h-3.5 w-3.5 text-slate-500" />, onClick: () => onMoveLocation(lot) }] : []),
+                                  ...(onDelete ? [{ label: "삭제", icon: <Trash2 className="h-3.5 w-3.5" />, onClick: () => onDelete(lot), danger: true, separator: true }] : []),
+                                ]}
+                              />
                             </div>
                           </div>
                         );
@@ -889,39 +876,19 @@ export function InventoryTable({
                               </TooltipProvider>
                             </>
                           )}
-                          {/* 더보기 — 보조/관리 기능 */}
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="sm" className="h-7 w-7 p-0 text-slate-400">
-                                <MoreVertical className="h-3.5 w-3.5 shrink-0" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-44">
-                              <DropdownMenuItem onClick={() => onDetailClick?.(group.lots[0])} className="gap-2 text-xs">
-                                <Eye className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-                                상세 보기
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => onEdit(group.lots[0])} className="gap-2 text-xs">
-                                <Pencil className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-                                정보 수정
-                              </DropdownMenuItem>
-                              {onPrintLabel && (
-                                <DropdownMenuItem onClick={() => onPrintLabel(group.productName, group.lots)} className="gap-2 text-xs">
-                                  <Printer className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
-                                  라벨 인쇄
-                                </DropdownMenuItem>
-                              )}
-                              {onDelete && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem onClick={() => onDelete(group.lots[0])} className="gap-2 text-xs text-red-600 focus:text-red-600">
-                                    <Trash2 className="h-3.5 w-3.5 shrink-0" />
-                                    삭제
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          {/* 더보기 — 보조/관리 기능 (§11.297 ActionMenu) */}
+                          <ActionMenu
+                            menuId={`group-${group.productId}`}
+                            currentOpenId={openActionMenuId}
+                            onOpenChange={setOpenActionMenuId}
+                            width="w-44"
+                            items={[
+                              { label: "상세 보기", icon: <Eye className="h-3.5 w-3.5 text-blue-500 shrink-0" />, onClick: () => onDetailClick?.(group.lots[0]) },
+                              { label: "정보 수정", icon: <Pencil className="h-3.5 w-3.5 text-slate-500 shrink-0" />, onClick: () => onEdit(group.lots[0]) },
+                              ...(onPrintLabel ? [{ label: "라벨 인쇄", icon: <Printer className="h-3.5 w-3.5 text-indigo-500 shrink-0" />, onClick: () => onPrintLabel(group.productName, group.lots) }] : []),
+                              ...(onDelete ? [{ label: "삭제", icon: <Trash2 className="h-3.5 w-3.5 shrink-0" />, onClick: () => onDelete(group.lots[0]), danger: true, separator: true }] : []),
+                            ]}
+                          />
                         </div>
                       </TableCell>
                     </TableRow>
@@ -1108,47 +1075,23 @@ export function InventoryTable({
                                   )}
                                     </>
                                   )}
-                                  {/* 더보기 — QR/라벨/상세/수정/폐기 */}
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="outline" size="sm" className="h-7 w-7 p-0 text-slate-400">
-                                        <MoreVertical className="h-3.5 w-3.5 shrink-0" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-44">
-                                      <DropdownMenuItem onClick={() => onDetailClick?.(lot)} className="gap-2 text-xs">
-                                        <Eye className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-                                        상세 보기
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem
-                                        className="gap-2 text-xs"
-                                        onClick={() => {
-                                          const url = `${window.location.origin}/dashboard/inventory/scan?id=${lot.id}`;
-                                          navigator.clipboard.writeText(url);
-                                        }}
-                                      >
-                                        <QrCode className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-                                        QR 링크 복사
-                                      </DropdownMenuItem>
-                                      {onPrintLabel && (
-                                        <DropdownMenuItem onClick={() => onPrintLabel(lot.product.name, [lot])} className="gap-2 text-xs">
-                                          <Printer className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
-                                          라벨 인쇄
-                                        </DropdownMenuItem>
-                                      )}
-                                      <DropdownMenuSeparator />
-                                      <DropdownMenuItem onClick={() => onEdit(lot)} className="gap-2 text-xs">
-                                        <Pencil className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-                                        정보 수정
-                                      </DropdownMenuItem>
-                                      {onDelete && (
-                                        <DropdownMenuItem onClick={() => onDelete(lot)} className="gap-2 text-xs text-red-600 focus:text-red-600">
-                                          <PackageX className="h-3.5 w-3.5 shrink-0" />
-                                          폐기 검토
-                                        </DropdownMenuItem>
-                                      )}
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
+                                  {/* 더보기 — QR/라벨/상세/수정/폐기 (§11.297 ActionMenu) */}
+                                  <ActionMenu
+                                    menuId={`lot2-${lot.id}`}
+                                    currentOpenId={openActionMenuId}
+                                    onOpenChange={setOpenActionMenuId}
+                                    width="w-44"
+                                    items={[
+                                      { label: "상세 보기", icon: <Eye className="h-3.5 w-3.5 text-blue-500 shrink-0" />, onClick: () => onDetailClick?.(lot) },
+                                      { label: "QR 링크 복사", icon: <QrCode className="h-3.5 w-3.5 text-slate-500 shrink-0" />, onClick: () => {
+                                        const url = `${window.location.origin}/dashboard/inventory/scan?id=${lot.id}`;
+                                        navigator.clipboard.writeText(url);
+                                      } },
+                                      ...(onPrintLabel ? [{ label: "라벨 인쇄", icon: <Printer className="h-3.5 w-3.5 text-indigo-500 shrink-0" />, onClick: () => onPrintLabel(lot.product.name, [lot]) }] : []),
+                                      { label: "정보 수정", icon: <Pencil className="h-3.5 w-3.5 text-slate-500 shrink-0" />, onClick: () => onEdit(lot), separator: true },
+                                      ...(onDelete ? [{ label: "폐기 검토", icon: <PackageX className="h-3.5 w-3.5 shrink-0" />, onClick: () => onDelete(lot), danger: true }] : []),
+                                    ]}
+                                  />
                                 </div>
                               </TableCell>
                             </TableRow>
