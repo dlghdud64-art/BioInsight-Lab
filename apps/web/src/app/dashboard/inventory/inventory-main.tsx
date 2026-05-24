@@ -772,8 +772,9 @@ export function InventoryMain() {
     new Set(displayInventories.map((inv) => inv.location).filter(Boolean))
   ) as string[];
 
-  // 상단 KPI 카드용 요약 지표 (리드 타임 기반 재주문 포함)
-  const totalInventoryCount = displayInventories.length;
+  // 상단 KPI 카드용 요약 지표 (리드 타임 기반 재주문 포함).
+  // §11.302c — totalInventoryCount 제거 (KPI 3개 = 재주문 필요 /
+  //   만료 임박 / 폐기 검토 신호등 체계 으로 swap).
   const lowOrOutOfStockCount = displayInventories.filter((inv) => {
     const isOut = inv.currentQuantity === 0;
     const isLow = inv.safetyStock !== null && inv.currentQuantity <= inv.safetyStock;
@@ -789,6 +790,21 @@ export function InventoryMain() {
       (expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
     );
     return daysUntilExpiry > 0 && daysUntilExpiry <= 30;
+  }).length;
+
+  // §11.302c — 재주문 필요 KPI 색상 분기 (위험 red-600 vs 긴급 red-100).
+  //   currentQuantity === 0 (재고 0 = 즉시 결품) → 위험 격상.
+  const outOfStockCount = displayInventories.filter(
+    (inv) => inv.currentQuantity === 0
+  ).length;
+
+  // §11.302c — 폐기 검토 KPI = 이미 만료된 LOT 개수 (expiryDate < now).
+  //   만료 임박 (1~30일) 과 명확히 구분 — "이미 만료, 폐기 판단 필요".
+  const discardCount = displayInventories.filter((inv) => {
+    if (!inv.expiryDate) return false;
+    const expiry = new Date(inv.expiryDate);
+    if (isNaN(expiry.getTime())) return false;
+    return expiry.getTime() < now.getTime();
   }).length;
 
   // 점검 사항 탭용 이슈 카운트 (부족, 품절, 폐기 임박, 재주문 권장, 위치 미지정)
@@ -1454,44 +1470,69 @@ export function InventoryMain() {
 
             {/* 2. 운영 현황 (Inventory Operations Cockpit) */}
             <TabsContent value="overview" className="m-0 p-4 sm:p-6 space-y-5">
-            {/* KPI Summary Strip — dark cockpit theme */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="rounded-xl border border-bd bg-pn px-4 py-3">
+            {/* §11.302c — KPI 3개 신호등 색상 (재주문 필요/만료 임박/폐기 검토).
+                "전체 재고" 제거 + grid-cols-3 모바일 정합 (375px 잘림 0).
+                spec 색상:
+                  긴급(재주문 1건+): bg-red-100 text-red-700
+                  위험(재고 0 또는 폐기 검토): bg-red-600 text-white
+                  검토(만료 임박 1건+): bg-yellow-100 text-yellow-700
+                  0건: bg-gray-50 text-gray-400
+                amber/orange/brown 전면 폐지 — Badge/안내 박스는 §11.302d. */}
+            <div className="grid grid-cols-3 gap-3">
+              {/* 재주문 필요 — outOfStock > 0 → 위험 red-600 / lowStock > 0 → 긴급 red-100 / 0 → gray */}
+              <div
+                className={`rounded-xl border px-4 py-3 ${
+                  outOfStockCount > 0
+                    ? "border-red-700 bg-red-600 text-white"
+                    : lowOrOutOfStockCount > 0
+                    ? "border-red-200 bg-red-100 text-red-700"
+                    : "border-gray-200 bg-gray-50 text-gray-400"
+                }`}
+              >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-medium text-slate-500">전체 재고</span>
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-50/10">
-                    <Package className="h-3 w-3 text-blue-400" />
-                  </div>
+                  <span className="text-[11px] font-medium">재주문 필요</span>
+                  <AlertTriangle className="h-4 w-4" />
                 </div>
-                <div className="text-2xl font-bold tracking-tight text-slate-900">
-                  {totalInventoryCount}
-                  <span className="ml-1 text-sm font-normal text-slate-400">건</span>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-red-500/20 bg-pn px-4 py-3">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-medium text-red-700/80">부족/품절</span>
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-red-100/10">
-                    <AlertTriangle className="h-3 w-3 text-red-700" />
-                  </div>
-                </div>
-                <div className="text-2xl font-bold tracking-tight text-red-700">
+                <div className="text-2xl font-bold tracking-tight">
                   {lowOrOutOfStockCount}
-                  <span className="ml-1 text-sm font-normal text-slate-400">건</span>
+                  <span className="ml-1 text-sm font-normal opacity-70">건</span>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-yellow-500/20 bg-pn px-4 py-3">
+              {/* 만료 임박 — > 0 → 검토 yellow-100 / 0 → gray */}
+              <div
+                className={`rounded-xl border px-4 py-3 ${
+                  expiringSoonCount > 0
+                    ? "border-yellow-200 bg-yellow-100 text-yellow-700"
+                    : "border-gray-200 bg-gray-50 text-gray-400"
+                }`}
+              >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-medium text-yellow-700/80">만료 임박</span>
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-yellow-500/10">
-                    <Calendar className="h-3 w-3 text-yellow-700" />
-                  </div>
+                  <span className="text-[11px] font-medium">만료 임박</span>
+                  <Calendar className="h-4 w-4" />
                 </div>
-                <div className="text-2xl font-bold tracking-tight text-yellow-700">
+                <div className="text-2xl font-bold tracking-tight">
                   {expiringSoonCount}
-                  <span className="ml-1 text-sm font-normal text-slate-400">건</span>
+                  <span className="ml-1 text-sm font-normal opacity-70">건</span>
+                </div>
+              </div>
+
+              {/* 폐기 검토 — > 0 → 위험 red-600 (이미 만료된 LOT, 즉시 폐기 판단) / 0 → gray.
+                  호영님 spec 폐기 색상 미명시 — "이미 만료" 의미상 위험 (red-600) 적용. */}
+              <div
+                className={`rounded-xl border px-4 py-3 ${
+                  discardCount > 0
+                    ? "border-red-700 bg-red-600 text-white"
+                    : "border-gray-200 bg-gray-50 text-gray-400"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-medium">폐기 검토</span>
+                  <Trash2 className="h-4 w-4" />
+                </div>
+                <div className="text-2xl font-bold tracking-tight">
+                  {discardCount}
+                  <span className="ml-1 text-sm font-normal opacity-70">건</span>
                 </div>
               </div>
             </div>
