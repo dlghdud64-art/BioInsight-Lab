@@ -26,9 +26,7 @@ import { Search, Filter, Package, CheckCircle2, Clock, AlertCircle, Send, FileCh
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+// §11.298d Radix DropdownMenu* import 제거 — inline plain dropdown.
 import { useToast } from "@/hooks/use-toast";
 import { RelativeTimeText } from "@/components/ui/relative-time-text";
 import { RelativeDeliveryText } from "@/components/quotes/relative-delivery-text";
@@ -934,6 +932,9 @@ function QuotesPageContent() {
   //   collapsed: § 2 4 cell + § 2 cont 회신·비교 + 최근 활동 + § 3 리스크 + AI 판단.
   //   chip click → 자동 setBriefDetailExpanded(true) + scrollIntoView (collapsed 시
   //   anchor 가 mount 되어야 scrollIntoView 작동 — expand 후 scroll).
+  // §11.298d quotes header utility plain dropdown state.
+  const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
+  const [isBomDropdownOpen, setIsBomDropdownOpen] = useState(false);
   const [briefDetailExpanded, setBriefDetailExpanded] = useState(false);
   // backward compat alias — 기존 factsExpanded 사용처 (mobile §11.222 등) 보호.
   const factsExpanded = briefDetailExpanded;
@@ -1982,41 +1983,48 @@ function QuotesPageContent() {
           </Button>
           {/* §11.248b — 모바일 더보기 ⋯ 드롭다운 (md 미만 한정).
               견적서 비교 + 초안 만들기 항목을 접어서 모바일 화면 vertical space 확보. */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-9 px-2 md:hidden min-w-[40px]"
-                aria-label="더보기 액션"
-                data-testid="quote-header-more-actions-mobile"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52 !bg-white">
-              <DropdownMenuItem
-                className="cursor-pointer gap-2 py-2.5"
-                disabled={aiCompareLoading || !quotes || quotes.length < 2}
-                onClick={runAiQuoteCompare}
-              >
-                {aiCompareLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Sparkles className="h-4 w-4" />
-                )}
-                견적서 비교
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="cursor-pointer gap-2 py-2.5"
-                disabled={isLoading || quotes.length === 0}
-                onClick={openQuoteDraftWorkbench}
-              >
-                <FileTextIcon className="h-4 w-4" />
-                견적 요청 초안 만들기
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* §11.298d 모바일 더보기 plain */}
+          <div className="relative md:hidden">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-9 px-2 min-w-[40px]"
+              aria-label="더보기 액션"
+              aria-expanded={isMobileMoreOpen}
+              aria-haspopup="menu"
+              data-testid="quote-header-more-actions-mobile"
+              onClick={() => setIsMobileMoreOpen((v) => !v)}
+            >
+              <MoreHorizontal className="h-4 w-4 pointer-events-none" />
+            </Button>
+            {isMobileMoreOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsMobileMoreOpen(false)} aria-hidden="true" />
+                <div role="menu" className="absolute right-0 top-full mt-1 w-52 rounded-md border border-slate-200 bg-white shadow-lg z-50 py-1">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    disabled={aiCompareLoading || !quotes || quotes.length < 2}
+                    onClick={() => { runAiQuoteCompare(); setIsMobileMoreOpen(false); }}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {aiCompareLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    견적서 비교
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    disabled={isLoading || quotes.length === 0}
+                    onClick={() => { openQuoteDraftWorkbench(); setIsMobileMoreOpen(false); }}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <FileTextIcon className="h-4 w-4" />
+                    견적 요청 초안 만들기
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
           <PermissionGate permission="quotes.create">
             <div className="flex items-center gap-0 flex-shrink-0 snap-start">
               <Link href="/app/search">
@@ -2024,23 +2032,36 @@ function QuotesPageContent() {
                   <Plus className="h-4 w-4" /><span className="hidden sm:inline">새 견적 요청</span><span className="sm:hidden">새 요청</span>
                 </Button>
               </Link>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" className="h-9 px-2 bg-blue-600 hover:bg-blue-700 rounded-l-none">
-                    <ChevronDown className="h-3.5 w-3.5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52 !bg-white">
-                  {/* §11.55 — "외부 견적서 업로드" 메뉴 제거: backend 미구현 dead-end였음. */}
-                  <DropdownMenuItem
-                    className="cursor-pointer gap-2 py-2.5"
-                    onClick={() => { setIntakeDockSource("bom_import"); setIntakeDockOpen(true); }}
-                  >
-                    <FileTextIcon className="h-4 w-4 text-emerald-600" />
-                    <span className="text-sm">BOM 업로드</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {/* §11.298d BOM upload dropdown plain (button group) */}
+              <div className="relative">
+                <Button
+                  size="sm"
+                  className="h-9 px-2 bg-blue-600 hover:bg-blue-700 rounded-l-none"
+                  aria-label="추가 액션"
+                  aria-expanded={isBomDropdownOpen}
+                  aria-haspopup="menu"
+                  onClick={() => setIsBomDropdownOpen((v) => !v)}
+                >
+                  <ChevronDown className="h-3.5 w-3.5 pointer-events-none" />
+                </Button>
+                {isBomDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsBomDropdownOpen(false)} aria-hidden="true" />
+                    <div role="menu" className="absolute right-0 top-full mt-1 w-52 rounded-md border border-slate-200 bg-white shadow-lg z-50 py-1">
+                      {/* §11.55 — "외부 견적서 업로드" 메뉴 제거: backend 미구현 dead-end였음. */}
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => { setIntakeDockSource("bom_import"); setIntakeDockOpen(true); setIsBomDropdownOpen(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left hover:bg-slate-100"
+                      >
+                        <FileTextIcon className="h-4 w-4 text-emerald-600" />
+                        <span className="text-sm">BOM 업로드</span>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </PermissionGate>
         </div>

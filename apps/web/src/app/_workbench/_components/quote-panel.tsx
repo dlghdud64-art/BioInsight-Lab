@@ -12,13 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { PriceDisplay } from "@/components/products/price-display";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+// §11.298d Radix DropdownMenu* import 제거 — inline plain dropdown.
 import { Copy, Download, Share2, MoreVertical, Plus, Minus, Trash2, X, GitCompare, Languages, Check, ShoppingCart, Ban, CheckCircle2, Search, TrendingDown, Sparkles, ArrowRight, Settings, Target, Loader2, Thermometer, AlertTriangle, AlertCircle, FileText, UploadCloud, Calendar, MapPin, Package, MessageSquarePlus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { QuoteVersionCompare } from "./quote-version-compare";
@@ -87,6 +81,8 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
     }
   }, [quoteItems]);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  // §11.298d export plain dropdown state.
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const [groupByVendor, setGroupByVendor] = useState(false);
   const [showAdvancedOptimization, setShowAdvancedOptimization] = useState(false);
   const [optimizationConstraints, setOptimizationConstraints] = useState({
@@ -678,16 +674,27 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                     ₩{totalAmount.toLocaleString()}
                   </span>
                 </div>
-                {/* 보조 액션: 더보기 메뉴 */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="text-xs">
-                      <MoreVertical className="h-4 w-4 mr-1" />
-                      내보내기
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
+                {/* §11.298d 보조 액션: 더보기 메뉴 plain */}
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    aria-label="내보내기 메뉴"
+                    aria-expanded={isExportMenuOpen}
+                    aria-haspopup="menu"
+                    onClick={() => setIsExportMenuOpen((v) => !v)}
+                  >
+                    <MoreVertical className="h-4 w-4 mr-1 pointer-events-none" />
+                    내보내기
+                  </Button>
+                  {isExportMenuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsExportMenuOpen(false)} aria-hidden="true" />
+                      <div role="menu" className="absolute right-0 top-full mt-1 w-44 rounded-md border border-slate-200 bg-white shadow-lg z-50 py-1">
+                        <button
+                          type="button"
+                          role="menuitem"
                       onClick={() => {
                         const headers = ["No.", "제품명", "브랜드", "카탈로그 번호", "수량", "예상 단가", "예상 금액", "비고"];
                         const rows = quoteItems.map((item, index) => {
@@ -718,14 +725,19 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                           title: "내보내기 완료",
                           description: "CSV 파일이 다운로드되었습니다.",
                         });
-                      }}
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      CSV 다운로드
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={async () => {
+                            setIsExportMenuOpen(false);
+                          }}
+                          className="w-full flex items-center px-3 py-2 text-sm text-left hover:bg-slate-100"
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          CSV 다운로드
+                        </button>
+                        <div className="h-px bg-slate-100 my-1" />
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={async () => {
+                            setIsExportMenuOpen(false);
                         if (quoteItems.length === 0) return;
                         try {
                           await generateShareLink("견적 요청 리스트", 30);
@@ -740,13 +752,16 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                             variant: "destructive",
                           });
                         }
-                      }}
-                    >
-                      <Share2 className="h-4 w-4 mr-2" />
-                      링크 공유
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                          }}
+                          className="w-full flex items-center px-3 py-2 text-sm text-left hover:bg-slate-100"
+                        >
+                          <Share2 className="h-4 w-4 mr-2" />
+                          링크 공유
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
                 <Link href="/test/quote/request">
                   <Button
                     type="button"
