@@ -9,16 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PriceDisplay } from "@/components/products/price-display";
 import { Loader2, PenLine, X, Trash2, Search, FileText, Package, SlidersHorizontal, TrendingDown, AlertTriangle, AlertCircle, Sparkles, Check, Camera, Menu, LayoutDashboard, ShoppingCart, Settings, ChevronDown } from "lucide-react";
-// §11.254b — 소싱 헤더 햄버거 메뉴 (소싱 → 대시보드 동선 보완).
-//   하단 탭 바 추가 0 (액션 바 공간 충돌 방지). 헤더 우측 ≡ 으로 5 entry 노출.
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+// §11.254b 햄버거 메뉴는 §11.283b 에서 plain button + useState 으로 swap.
+// §11.298f Radix DropdownMenu import dead — application-wide grep 0 회복.
 import Link from "next/link";
 import Image from "next/image";
 // §11.258b — 검색 결과 toolbar 정렬 + 카테고리 필터칩 (호영님 spec #7 client-side scope).
@@ -877,169 +869,13 @@ export default function SearchPage() {
               </div>
             </div>
 
-            {/* §11.263b — 모바일 한정 unified filter row (호영님 spec 소싱 모바일 #3 P1, 방안 A).
-                기존 카테고리/가격/제조사 3 행 (각 py-2 border-b ~ 160px 세로) →
-                1 row + 가로 스크롤. 카테고리 4 + 구분자 + 가격 4 + 구분자 + 제조사 N.
-                구분자 = w-px h-5 bg-slate-300 (aria-hidden). 모든 chip 동일
-                onClick / state setter / aria-pressed 보존 (데스크탑 3 row 와 동일).
-                data-testid 는 "sourcing-mobile-*" prefix 으로 데스크탑 testid 와 구분.
-
-                §11.265a — 호영님 spec "소싱 모바일 — 검색 본질 회복": 인라인
-                필터 칩 row 를 hidden 으로 전환 → 검색 결과까지 도달 거리 단축
-                (~140px 절약). SearchUtilityBar 의 필터 버튼 (line 581) 이
-                isMobileFilterOpen Sheet 트리거 → SearchPanel (line 587) 의
-                풀 필터 (카테고리/가격/제조사) 모바일 entry 역할. 기능 손실 0,
-                JSX 트리는 보존 (separator data-testid 보존, parent hidden 으로
-                자동 비표시). 후속 §11.265b (AI 분석 바텀시트) + §11.265c
-                (1줄 요약 row) 별도 cluster. */}
-            <div className="hidden items-center gap-1.5 overflow-x-auto px-4 py-2 border-b border-slate-100 bg-white">
-              {/* 카테고리 4 chip */}
-              <button
-                type="button"
-                data-testid="sourcing-mobile-category-chip-all"
-                onClick={() => setSearchCategory("")}
-                aria-pressed={searchCategory === ""}
-                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                  searchCategory === ""
-                    ? "bg-blue-600 text-white border border-blue-600"
-                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                전체
-              </button>
-              <button
-                type="button"
-                data-testid="sourcing-mobile-category-chip-reagent"
-                onClick={() => setSearchCategory("REAGENT")}
-                aria-pressed={searchCategory === "REAGENT"}
-                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                  searchCategory === "REAGENT"
-                    ? "bg-blue-600 text-white border border-blue-600"
-                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                {PRODUCT_CATEGORIES.REAGENT}
-              </button>
-              <button
-                type="button"
-                data-testid="sourcing-mobile-category-chip-tool"
-                onClick={() => setSearchCategory("TOOL")}
-                aria-pressed={searchCategory === "TOOL"}
-                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                  searchCategory === "TOOL"
-                    ? "bg-blue-600 text-white border border-blue-600"
-                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                {PRODUCT_CATEGORIES.TOOL}
-              </button>
-              <button
-                type="button"
-                data-testid="sourcing-mobile-category-chip-equipment"
-                onClick={() => setSearchCategory("EQUIPMENT")}
-                aria-pressed={searchCategory === "EQUIPMENT"}
-                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                  searchCategory === "EQUIPMENT"
-                    ? "bg-blue-600 text-white border border-blue-600"
-                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                {PRODUCT_CATEGORIES.EQUIPMENT}
-              </button>
-              {/* 그룹 경계 구분자: 카테고리 | 가격 */}
-              <div data-testid="sourcing-mobile-filter-separator" aria-hidden="true" className="shrink-0 w-px h-5 bg-slate-300 mx-1" />
-              {/* 가격 4 chip */}
-              <button
-                type="button"
-                data-testid="sourcing-mobile-price-chip-all"
-                onClick={() => { setMinPrice(undefined); setMaxPrice(undefined); }}
-                aria-pressed={minPrice === undefined && maxPrice === undefined}
-                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                  minPrice === undefined && maxPrice === undefined
-                    ? "bg-blue-600 text-white border border-blue-600"
-                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                전체 가격
-              </button>
-              <button
-                type="button"
-                data-testid="sourcing-mobile-price-chip-low"
-                onClick={() => { setMinPrice(undefined); setMaxPrice(50000); }}
-                aria-pressed={minPrice === undefined && maxPrice === 50000}
-                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                  minPrice === undefined && maxPrice === 50000
-                    ? "bg-blue-600 text-white border border-blue-600"
-                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                ~5만
-              </button>
-              <button
-                type="button"
-                data-testid="sourcing-mobile-price-chip-mid"
-                onClick={() => { setMinPrice(50000); setMaxPrice(200000); }}
-                aria-pressed={minPrice === 50000 && maxPrice === 200000}
-                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                  minPrice === 50000 && maxPrice === 200000
-                    ? "bg-blue-600 text-white border border-blue-600"
-                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                5~20만
-              </button>
-              <button
-                type="button"
-                data-testid="sourcing-mobile-price-chip-high"
-                onClick={() => { setMinPrice(200000); setMaxPrice(undefined); }}
-                aria-pressed={minPrice === 200000 && maxPrice === undefined}
-                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                  minPrice === 200000 && maxPrice === undefined
-                    ? "bg-blue-600 text-white border border-blue-600"
-                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                20만~
-              </button>
-              {/* 제조사 chip (조건부) — 그룹 경계 구분자 + chip */}
-              {vendorFacets.length > 0 && (
-                <>
-                  <div data-testid="sourcing-mobile-filter-separator" aria-hidden="true" className="shrink-0 w-px h-5 bg-slate-300 mx-1" />
-                  <button
-                    type="button"
-                    data-testid="sourcing-mobile-vendor-chip-all"
-                    onClick={() => setSearchBrand("")}
-                    aria-pressed={searchBrand === ""}
-                    className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                      searchBrand === ""
-                        ? "bg-blue-600 text-white border border-blue-600"
-                        : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
-                    }`}
-                  >
-                    전체 제조사
-                  </button>
-                  {vendorFacets.slice(0, 5).map((v) => (
-                    <button
-                      key={`mobile-${v.vendorId}`}
-                      type="button"
-                      data-testid={`sourcing-mobile-vendor-chip-${v.vendorId}`}
-                      onClick={() => setSearchBrand(v.vendorName)}
-                      aria-pressed={searchBrand === v.vendorName}
-                      className={`shrink-0 inline-flex items-center gap-1 min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                        searchBrand === v.vendorName
-                          ? "bg-blue-600 text-white border border-blue-600"
-                          : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
-                      }`}
-                    >
-                      <span className="truncate max-w-[120px]">{v.vendorName}</span>
-                      <span className={`text-[10px] ${searchBrand === v.vendorName ? "text-blue-100" : "text-slate-400"}`}>
-                        {v.count}
-                      </span>
-                    </button>
-                  ))}
-                </>
-              )}
-            </div>
+            {/* §11.294b — 모바일 unified row dead chip cleanup. §11.265a 가
+                인라인 필터 칩 row 를 `hidden` 으로 전환한 이후 (~140px 절약 +
+                SearchUtilityBar 필터 button → isMobileFilterOpen Sheet → SearchPanel
+                풀 필터 모바일 entry 로 wiring), 본 1 row 의 chip JSX (~148 line)
+                는 dead reference 상태 유지. 모바일 시트 옵션 2 (호영님 spec
+                §11.294 2단계) 가 이미 §11.265a 에서 완전 구현 — 추가 작업 0.
+                dead chip JSX 통째 제거 (회귀 0, visible UI 영향 0). */}
 
             {/* §11.294 데스크탑 필터 1 row + 3 dropdown — 호영님 P2 spec
                 1단계 (2026-05-24). 기존 §11.258b/d-1/d-2 의 3 row (~156 line)
