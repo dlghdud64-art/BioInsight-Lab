@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PriceDisplay } from "@/components/products/price-display";
-import { Loader2, PenLine, X, Trash2, Search, FileText, Package, SlidersHorizontal, TrendingDown, AlertTriangle, AlertCircle, Sparkles, Check, Camera, Menu, LayoutDashboard, ShoppingCart, Settings } from "lucide-react";
+import { Loader2, PenLine, X, Trash2, Search, FileText, Package, SlidersHorizontal, TrendingDown, AlertTriangle, AlertCircle, Sparkles, Check, Camera, Menu, LayoutDashboard, ShoppingCart, Settings, ChevronDown } from "lucide-react";
 // §11.254b — 소싱 헤더 햄버거 메뉴 (소싱 → 대시보드 동선 보완).
 //   하단 탭 바 추가 0 (액션 바 공간 충돌 방지). 헤더 우측 ≡ 으로 5 entry 노출.
 import {
@@ -1041,166 +1041,178 @@ export default function SearchPage() {
               )}
             </div>
 
-            {/* §11.258b — 카테고리 필터칩 (전체 / 시약 / 기구 / 장비).
-                setSearchCategory → useQuery key 안 searchCategory → server fetch
-                재요청 (정합 line 174 + 179). 데스크탑 한정 (§11.263b 모바일은
-                unified row 으로 통합). 가로 스크롤 허용 (overflow-x-auto + shrink-0 chip).
-                가격대 / 제조사 필터 + "이름순" 정렬은 §11.258d 백로그 (server 의존 추가 검토 필요). */}
-            <div className="hidden md:flex px-4 md:px-6 py-2 border-b border-slate-100 bg-white items-center gap-1.5 overflow-x-auto">
-              <button
-                type="button"
-                data-testid="sourcing-category-chip-all"
-                onClick={() => setSearchCategory("")}
-                aria-pressed={searchCategory === ""}
-                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  searchCategory === ""
-                    ? "bg-blue-600 text-white border border-blue-600"
-                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                전체
-              </button>
-              <button
-                type="button"
-                data-testid="sourcing-category-chip-reagent"
-                onClick={() => setSearchCategory("REAGENT")}
-                aria-pressed={searchCategory === "REAGENT"}
-                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  searchCategory === "REAGENT"
-                    ? "bg-blue-600 text-white border border-blue-600"
-                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                {PRODUCT_CATEGORIES.REAGENT}
-              </button>
-              <button
-                type="button"
-                data-testid="sourcing-category-chip-tool"
-                onClick={() => setSearchCategory("TOOL")}
-                aria-pressed={searchCategory === "TOOL"}
-                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  searchCategory === "TOOL"
-                    ? "bg-blue-600 text-white border border-blue-600"
-                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                {PRODUCT_CATEGORIES.TOOL}
-              </button>
-              <button
-                type="button"
-                data-testid="sourcing-category-chip-equipment"
-                onClick={() => setSearchCategory("EQUIPMENT")}
-                aria-pressed={searchCategory === "EQUIPMENT"}
-                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  searchCategory === "EQUIPMENT"
-                    ? "bg-blue-600 text-white border border-blue-600"
-                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                {PRODUCT_CATEGORIES.EQUIPMENT}
-              </button>
-            </div>
-
-            {/* §11.258d-1 — 가격대 필터칩 (전체 / ~5만 / 5~20만 / 20만~).
-                setMinPrice + setMaxPrice 동시 호출 → useQuery key 안 양쪽 모두 포함
-                (정합 line 174) → server fetch 재요청 (route line 182-183). 4 chip
-                동일 height/style (카테고리 chip row 정합). active 기준: 양 범위
-                완전 일치. 데스크탑 한정 (§11.263b 모바일은 unified row). */}
-            <div className="hidden md:flex px-4 md:px-6 py-2 border-b border-slate-100 bg-white items-center gap-1.5 overflow-x-auto">
-              <button
-                type="button"
-                data-testid="sourcing-price-chip-all"
-                onClick={() => { setMinPrice(undefined); setMaxPrice(undefined); }}
-                aria-pressed={minPrice === undefined && maxPrice === undefined}
-                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  minPrice === undefined && maxPrice === undefined
-                    ? "bg-blue-600 text-white border border-blue-600"
-                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                전체 가격
-              </button>
-              <button
-                type="button"
-                data-testid="sourcing-price-chip-low"
-                onClick={() => { setMinPrice(undefined); setMaxPrice(50000); }}
-                aria-pressed={minPrice === undefined && maxPrice === 50000}
-                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  minPrice === undefined && maxPrice === 50000
-                    ? "bg-blue-600 text-white border border-blue-600"
-                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                ~5만
-              </button>
-              <button
-                type="button"
-                data-testid="sourcing-price-chip-mid"
-                onClick={() => { setMinPrice(50000); setMaxPrice(200000); }}
-                aria-pressed={minPrice === 50000 && maxPrice === 200000}
-                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  minPrice === 50000 && maxPrice === 200000
-                    ? "bg-blue-600 text-white border border-blue-600"
-                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                5~20만
-              </button>
-              <button
-                type="button"
-                data-testid="sourcing-price-chip-high"
-                onClick={() => { setMinPrice(200000); setMaxPrice(undefined); }}
-                aria-pressed={minPrice === 200000 && maxPrice === undefined}
-                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  minPrice === 200000 && maxPrice === undefined
-                    ? "bg-blue-600 text-white border border-blue-600"
-                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                20만~
-              </button>
-            </div>
-
-            {/* §11.258d-2 — 제조사 chip row (호영님 spec #7 마지막). server facets
-                vendorCounts top 20 중 client top 5 노출. setSearchBrand → useQuery key
-                포함 → server fetch 재요청. 전체 제조사 chip = reset. 결과 0 시 row
-                자체 0 (조건부 render). 데스크탑 한정 (§11.263b 모바일은 unified row). */}
-            {vendorFacets.length > 0 && (
-              <div className="hidden md:flex px-4 md:px-6 py-2 border-b border-slate-100 bg-white items-center gap-1.5 overflow-x-auto">
+            {/* §11.294 데스크탑 필터 1 row + 3 dropdown — 호영님 P2 spec
+                1단계 (2026-05-24). 기존 §11.258b/d-1/d-2 의 3 row (~156 line)
+                를 1 row + 3 plain dropdown 으로 단순화. "전체" 라벨 제거 (미선택
+                = dropdown 기본 label). 선택 시만 파란색 + ✕ 해제 button.
+                §11.283b plain button + useState pattern (Radix 의존성 0).
+                모바일 §11.263b unified row 그대로 유지 (호영님 spec 2단계 별도). */}
+            <div className="hidden md:flex px-4 md:px-6 py-2 border-b border-slate-100 bg-white items-center gap-2">
+              {/* 카테고리 dropdown */}
+              <div className="relative">
                 <button
                   type="button"
-                  data-testid="sourcing-vendor-chip-all"
-                  onClick={() => setSearchBrand("")}
-                  aria-pressed={searchBrand === ""}
-                  className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                    searchBrand === ""
-                      ? "bg-blue-600 text-white border border-blue-600"
-                      : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                  data-testid="sourcing-category-dropdown"
+                  onClick={() => setFilterDropdownOpen((p) => p === "category" ? null : "category")}
+                  aria-expanded={filterDropdownOpen === "category"}
+                  aria-haspopup="menu"
+                  className={`inline-flex items-center gap-1.5 min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                    searchCategory
+                      ? "bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100"
+                      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
                   }`}
                 >
-                  전체 제조사
+                  <span>{searchCategory ? (PRODUCT_CATEGORIES as Record<string, string>)[searchCategory] ?? "카테고리" : "카테고리"}</span>
+                  {searchCategory ? (
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      aria-label="카테고리 필터 해제"
+                      onClick={(e) => { e.stopPropagation(); setSearchCategory(""); }}
+                      className="inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-blue-200 cursor-pointer"
+                    >
+                      <X className="w-3 h-3" />
+                    </span>
+                  ) : (
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  )}
                 </button>
-                {vendorFacets.slice(0, 5).map((v) => (
+                {filterDropdownOpen === "category" && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setFilterDropdownOpen(null)} aria-hidden="true" />
+                    <div role="menu" className="absolute left-0 top-full mt-1 w-44 rounded-md border border-slate-200 bg-white shadow-lg z-50 py-1">
+                      {(["REAGENT", "TOOL", "EQUIPMENT"] as const).map((cat) => (
+                        <button
+                          key={cat}
+                          type="button"
+                          role="menuitem"
+                          onClick={() => { setSearchCategory(cat); setFilterDropdownOpen(null); }}
+                          className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-100 ${searchCategory === cat ? "text-blue-700 font-semibold" : "text-slate-700"}`}
+                        >
+                          {PRODUCT_CATEGORIES[cat]}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* 가격대 dropdown */}
+              <div className="relative">
+                {(() => {
+                  const priceLabel =
+                    minPrice === undefined && maxPrice === 50000 ? "~5만" :
+                    minPrice === 50000 && maxPrice === 200000 ? "5~20만" :
+                    minPrice === 200000 && maxPrice === undefined ? "20만~" : null;
+                  const isPriceActive = priceLabel !== null;
+                  return (
+                    <>
+                      <button
+                        type="button"
+                        data-testid="sourcing-price-dropdown"
+                        onClick={() => setFilterDropdownOpen((p) => p === "price" ? null : "price")}
+                        aria-expanded={filterDropdownOpen === "price"}
+                        aria-haspopup="menu"
+                        className={`inline-flex items-center gap-1.5 min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                          isPriceActive
+                            ? "bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100"
+                            : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                        }`}
+                      >
+                        <span>{isPriceActive ? priceLabel : "가격대"}</span>
+                        {isPriceActive ? (
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            aria-label="가격대 필터 해제"
+                            onClick={(e) => { e.stopPropagation(); setMinPrice(undefined); setMaxPrice(undefined); }}
+                            className="inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-blue-200 cursor-pointer"
+                          >
+                            <X className="w-3 h-3" />
+                          </span>
+                        ) : (
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                      {filterDropdownOpen === "price" && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setFilterDropdownOpen(null)} aria-hidden="true" />
+                          <div role="menu" className="absolute left-0 top-full mt-1 w-32 rounded-md border border-slate-200 bg-white shadow-lg z-50 py-1">
+                            {([
+                              { label: "~5만", min: undefined, max: 50000 },
+                              { label: "5~20만", min: 50000, max: 200000 },
+                              { label: "20만~", min: 200000, max: undefined },
+                            ] as const).map((opt) => (
+                              <button
+                                key={opt.label}
+                                type="button"
+                                role="menuitem"
+                                onClick={() => { setMinPrice(opt.min); setMaxPrice(opt.max); setFilterDropdownOpen(null); }}
+                                className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-100 ${priceLabel === opt.label ? "text-blue-700 font-semibold" : "text-slate-700"}`}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+
+              {/* 제조사 dropdown — vendorFacets > 0 시만 노출 */}
+              {vendorFacets.length > 0 && (
+                <div className="relative">
                   <button
-                    key={v.vendorId}
                     type="button"
-                    data-testid={`sourcing-vendor-chip-${v.vendorId}`}
-                    onClick={() => setSearchBrand(v.vendorName)}
-                    aria-pressed={searchBrand === v.vendorName}
-                    className={`shrink-0 inline-flex items-center gap-1 min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                      searchBrand === v.vendorName
-                        ? "bg-blue-600 text-white border border-blue-600"
-                        : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                    data-testid="sourcing-vendor-dropdown"
+                    onClick={() => setFilterDropdownOpen((p) => p === "vendor" ? null : "vendor")}
+                    aria-expanded={filterDropdownOpen === "vendor"}
+                    aria-haspopup="menu"
+                    className={`inline-flex items-center gap-1.5 min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                      searchBrand
+                        ? "bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100"
+                        : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
                     }`}
                   >
-                    <span className="truncate max-w-[120px]">{v.vendorName}</span>
-                    <span className={`text-[10px] ${searchBrand === v.vendorName ? "text-blue-100" : "text-slate-400"}`}>
-                      {v.count}
-                    </span>
+                    <span className="truncate max-w-[140px]">{searchBrand || "제조사"}</span>
+                    {searchBrand ? (
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        aria-label="제조사 필터 해제"
+                        onClick={(e) => { e.stopPropagation(); setSearchBrand(""); }}
+                        className="inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-blue-200 cursor-pointer"
+                      >
+                        <X className="w-3 h-3" />
+                      </span>
+                    ) : (
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    )}
                   </button>
-                ))}
-              </div>
-            )}
+                  {filterDropdownOpen === "vendor" && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setFilterDropdownOpen(null)} aria-hidden="true" />
+                      <div role="menu" className="absolute left-0 top-full mt-1 w-60 max-h-80 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg z-50 py-1">
+                        {vendorFacets.slice(0, 20).map((v) => (
+                          <button
+                            key={v.vendorId}
+                            type="button"
+                            role="menuitem"
+                            onClick={() => { setSearchBrand(v.vendorName); setFilterDropdownOpen(null); }}
+                            className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-100 flex items-center justify-between gap-2 ${searchBrand === v.vendorName ? "text-blue-700 font-semibold" : "text-slate-700"}`}
+                          >
+                            <span className="truncate">{v.vendorName}</span>
+                            <span className="text-[10px] text-slate-400 shrink-0">{v.count}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* ═══ P1 AI 제안 fallback (sourcing strip이 안 보일 때) ═══
                 §11.265b-1 — 모바일 hidden (호영님 spec "AI 분석은 AI 분석 영역").
@@ -2634,6 +2646,9 @@ function SearchUtilityBar({ activeFilterCount, onAuthRequired, isLoggedIn, stage
   // hot fix) 후에도 호영님 환경 dead button. Radix 의존성 제거 + plain
   // button + useState + 조건부 menu render 로 직관적으로 단순화.
   const [hamburgerOpen, setHamburgerOpen] = useState(false);
+  // §11.294 필터 dropdown plain state — 호영님 P2 spec (2026-05-24).
+  // 데스크탑 3 row → 1 row + 3 dropdown 단순화. §11.283b 정합 (Radix 의존성 0).
+  const [filterDropdownOpen, setFilterDropdownOpen] = useState<"category" | "price" | "vendor" | null>(null);
 
   // §11.258a #4 — 최근 검색어 dropdown (모바일). localStorage
   // "bioinsight-recent-searches" 가 이미 handleSubmit 안 저장 중 (page.tsx:2001-2003).
