@@ -338,35 +338,12 @@ function CandidateSummaryCard({
           <Badge variant="outline" className="text-xs">차이 {totalDiffs}건</Badge>
         </div>
       )}
-      {/* Shortlist / Hold / Exclude — blocked 후보에서는 제외 */}
-      {!isBlocked && (
-        <div className="flex gap-1.5 pt-1 border-t border-slate-800/50 mt-1">
-          <Button
-            size="sm"
-            variant={action === "shortlist" ? "default" : "outline"}
-            className="text-xs h-7 flex-1"
-            onClick={() => onActionChange(action === "shortlist" ? null : "shortlist")}
-          >
-            후보 등록
-          </Button>
-          <Button
-            size="sm"
-            variant={action === "hold" ? "secondary" : "outline"}
-            className="text-xs h-7 flex-1"
-            onClick={() => onActionChange(action === "hold" ? null : "hold")}
-          >
-            보류
-          </Button>
-          <Button
-            size="sm"
-            variant={action === "exclude" ? "outline" : "outline"}
-            className={`text-xs h-7 flex-1 ${action === "exclude" ? "bg-red-600/10 text-red-400 border-red-700" : ""}`}
-            onClick={() => onActionChange(action === "exclude" ? null : "exclude")}
-          >
-            제외
-          </Button>
-        </div>
-      )}
+      {/* §11.292b 후보 등록/보류/제외 button 3종 제거 (호영님 spec 정합) —
+          §11.292 1단계 (소싱 검색 결과 Shortlist 제거) 와 동일 원리. 비교
+          드로어 안에서도 "이메일 정리" 같은 분류 단계 강제 회피. 사용자는
+          "선택 후보 요청으로 넘기기" CTA 만으로 충분. CandidateAction type
+          / action / onActionChange prop 은 backward compat 유지 (P2 cleanup
+          batch 에서 제거). canProceed 는 directCount > 0 만으로 자연 정합. */}
       {isBlocked && (
         <p className="text-xs text-red-400/60 italic">비교 불가 — {candidate.categoryReason}</p>
       )}
