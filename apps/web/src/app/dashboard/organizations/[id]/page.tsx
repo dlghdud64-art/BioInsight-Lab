@@ -46,13 +46,8 @@ import {
   Lock, Clock, Activity, CreditCard, ClipboardCheck,
   AlertTriangle, ChevronRight, CheckCircle2, XCircle,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+// §11.298c Radix DropdownMenu* import 제거 — ActionMenu shared 사용.
+import { ActionMenu } from "@/components/inventory/action-menu";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
@@ -146,6 +141,8 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // §11.298c member row action plain state.
+  const [openMemberActionId, setOpenMemberActionId] = useState<string | null>(null);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("VIEWER");
@@ -1000,38 +997,18 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                                 {member.rawRole === "OWNER" ? (
                                   <Lock className="h-4 w-4 text-slate-600 mx-auto" />
                                 ) : rawMember && !isSelfAdmin ? (
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                                        <MoreVertical className="h-4 w-4" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-40">
-                                      {isPending ? (
-                                        <>
-                                          <DropdownMenuItem onClick={() => resendInviteMutation.mutate(rawMember.id)}>
-                                            <Send className="h-4 w-4 mr-2" />초대 재발송
-                                          </DropdownMenuItem>
-                                          <DropdownMenuSeparator />
-                                          <DropdownMenuItem
-                                            className="text-red-400"
-                                            onClick={() => { if (confirm("초대를 취소하시겠습니까?")) removeMemberMutation.mutate(rawMember.id); }}
-                                          >
-                                            <X className="h-4 w-4 mr-2" />초대 취소
-                                          </DropdownMenuItem>
-                                        </>
-                                      ) : (
-                                        <>
-                                          <DropdownMenuItem
-                                            className="text-red-400"
-                                            onClick={() => { if (confirm(`${member.name}님을 제거하시겠습니까?`)) removeMemberMutation.mutate(rawMember.id); }}
-                                          >
-                                            <Trash2 className="h-4 w-4 mr-2" />멤버 제거
-                                          </DropdownMenuItem>
-                                        </>
-                                      )}
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
+                                  {/* §11.298c member row action */}
+                                  <ActionMenu
+                                    menuId={`org-member-${rawMember.id}`}
+                                    currentOpenId={openMemberActionId}
+                                    onOpenChange={setOpenMemberActionId}
+                                    items={isPending ? [
+                                      { label: "초대 재발송", icon: <Send className="h-4 w-4 mr-2" />, onClick: () => resendInviteMutation.mutate(rawMember.id) },
+                                      { label: "초대 취소", icon: <X className="h-4 w-4 mr-2" />, danger: true, separator: true, onClick: () => { if (confirm("초대를 취소하시겠습니까?")) removeMemberMutation.mutate(rawMember.id); } },
+                                    ] : [
+                                      { label: "멤버 제거", icon: <Trash2 className="h-4 w-4 mr-2" />, danger: true, onClick: () => { if (confirm(`${member.name}님을 제거하시겠습니까?`)) removeMemberMutation.mutate(rawMember.id); } },
+                                    ]}
+                                  />
                                 ) : isSelfAdmin ? (
                                   <span className="text-[10px] text-slate-400">-</span>
                                 ) : null}

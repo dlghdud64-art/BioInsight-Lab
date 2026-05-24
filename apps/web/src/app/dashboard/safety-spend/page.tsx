@@ -31,13 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+// §11.298c Radix DropdownMenu* import 제거 — inline plain dropdown.
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   AlertTriangle,
@@ -66,6 +60,8 @@ function SafetySpendPageContent() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  // §11.298c safety-spend export plain dropdown state.
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const [selectedOrgId, setSelectedOrgId] = useState<string>(
     searchParams.get("org") || ""
   );
@@ -322,59 +318,52 @@ function SafetySpendPageContent() {
                   iconColor="text-red-600"
                 />
                 {currentOrg && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        disabled={isExporting.format !== null}
-                        variant="outline"
-                      >
-                        {isExporting.format ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            내보내는 중...
-                          </>
-                        ) : (
-                          <>
-                            <Download className="h-4 w-4 mr-2" />
-                            리포트 내보내기
-                          </>
-                        )}
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => handleExport("csv")}
-                        disabled={isExporting.format !== null}
-                      >
-                        <FileDown className="h-4 w-4 mr-2" />
-                        CSV 다운로드
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleExport("xlsx")}
-                        disabled={isExporting.format !== null}
-                      >
-                        <FileSpreadsheet className="h-4 w-4 mr-2" />
-                        XLSX 다운로드
-                        <Badge variant="secondary" className="ml-2 text-xs">
-                          준비중
-                        </Badge>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleExport("pdf")}
-                        disabled={isExporting.format !== null}
-                      >
-                        <FileText className="h-4 w-4 mr-2" />
-                        PDF 다운로드
-                        <Badge variant="secondary" className="ml-2 text-xs">
-                          준비중
-                        </Badge>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                        SDS 없는 품목, 위험물 지출 비중, Hazard Code별 지출을 포함합니다.
-                      </div>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <div className="relative">
+                    <Button
+                      disabled={isExporting.format !== null}
+                      variant="outline"
+                      aria-expanded={isExportMenuOpen}
+                      aria-haspopup="menu"
+                      onClick={() => setIsExportMenuOpen((v) => !v)}
+                    >
+                      {isExporting.format ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          내보내는 중...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-4 w-4 mr-2" />
+                          리포트 내보내기
+                        </>
+                      )}
+                    </Button>
+                    {isExportMenuOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setIsExportMenuOpen(false)} aria-hidden="true" />
+                        <div role="menu" className="absolute right-0 top-full mt-1 w-64 rounded-md border border-slate-200 bg-white shadow-lg z-50 py-1">
+                          <button type="button" role="menuitem" disabled={isExporting.format !== null} onClick={() => { handleExport("csv"); setIsExportMenuOpen(false); }} className="w-full flex items-center px-3 py-2 text-sm text-left hover:bg-slate-100 disabled:opacity-50">
+                            <FileDown className="h-4 w-4 mr-2" />
+                            CSV 다운로드
+                          </button>
+                          <button type="button" role="menuitem" disabled={isExporting.format !== null} onClick={() => { handleExport("xlsx"); setIsExportMenuOpen(false); }} className="w-full flex items-center px-3 py-2 text-sm text-left hover:bg-slate-100 disabled:opacity-50">
+                            <FileSpreadsheet className="h-4 w-4 mr-2" />
+                            XLSX 다운로드
+                            <Badge variant="secondary" className="ml-2 text-xs">준비중</Badge>
+                          </button>
+                          <button type="button" role="menuitem" disabled={isExporting.format !== null} onClick={() => { handleExport("pdf"); setIsExportMenuOpen(false); }} className="w-full flex items-center px-3 py-2 text-sm text-left hover:bg-slate-100 disabled:opacity-50">
+                            <FileText className="h-4 w-4 mr-2" />
+                            PDF 다운로드
+                            <Badge variant="secondary" className="ml-2 text-xs">준비중</Badge>
+                          </button>
+                          <div className="h-px bg-slate-100 my-1" />
+                          <div className="px-3 py-1.5 text-xs text-muted-foreground">
+                            SDS 없는 품목, 위험물 지출 비중, Hazard Code별 지출을 포함합니다.
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
 

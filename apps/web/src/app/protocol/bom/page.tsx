@@ -27,9 +27,8 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+// §11.298c Radix DropdownMenu* import 제거 — ActionMenu shared 사용.
+import { ActionMenu } from "@/components/inventory/action-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
 
@@ -113,6 +112,8 @@ export default function ProtocolBOMPage() {
   const router = useRouter();
   const { toast } = useToast();
 
+  // §11.298c reagent row action plain state.
+  const [openReagentMenuId, setOpenReagentMenuId] = useState<string | null>(null);
   const [protocolText, setProtocolText] = useState("");
   const [extractionResult, setExtractionResult] = useState<ProtocolExtractionResult | null>(null);
   const [reagents, setReagents] = useState<ReagentWithMatch[]>([]);
@@ -902,28 +903,21 @@ export default function ProtocolBOMPage() {
                                     }
                                   </TableCell>
                                   <TableCell>
-                                    <DropdownMenu>
-                                      <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-400">
-                                          <Edit2 className="h-3 w-3" />
-                                        </Button>
-                                      </DropdownMenuTrigger>
-                                      <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={() => setEditingReagentId(reagent.id)}>
-                                          <Edit2 className="h-3 w-3 mr-2" />편집
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => {
+                                    {/* §11.298c reagent row action */}
+                                    <ActionMenu
+                                      menuId={`reagent-${reagent.id}`}
+                                      currentOpenId={openReagentMenuId}
+                                      onOpenChange={setOpenReagentMenuId}
+                                      items={[
+                                        { label: "편집", icon: <Edit2 className="h-3 w-3 mr-2" />, onClick: () => setEditingReagentId(reagent.id) },
+                                        { label: "검색", icon: <Search className="h-3 w-3 mr-2" />, onClick: () => {
                                           if (reagent.matchedProduct?.productId) {
                                             router.push(`/app/search?q=${encodeURIComponent(reagent.name)}`);
                                           }
-                                        }}>
-                                          <Search className="h-3 w-3 mr-2" />검색
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => handleDeleteReagent(reagent.id)} className="text-destructive">
-                                          <Trash2 className="h-3 w-3 mr-2" />삭제
-                                        </DropdownMenuItem>
-                                      </DropdownMenuContent>
-                                    </DropdownMenu>
+                                        } },
+                                        { label: "삭제", icon: <Trash2 className="h-3 w-3 mr-2" />, danger: true, onClick: () => handleDeleteReagent(reagent.id) },
+                                      ]}
+                                    />
                                   </TableCell>
                                 </TableRow>
                                 {/* 추출 근거 행 */}
