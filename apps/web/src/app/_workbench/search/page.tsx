@@ -725,7 +725,8 @@ export default function SearchPage() {
           <div className="px-4 py-3 border-b border-slate-200">
             <h2 className="text-base font-semibold text-slate-900">AI 분석</h2>
             <p className="mt-0.5 text-[11px] text-slate-500">
-              SOURCING RESULT TRIAGE · AI 제안 · 차단 사유
+              {/* §11.292 SOURCING RESULT TRIAGE 제거 — AI 제안 · 차단 사유만 표기 */}
+              AI 제안 · 차단 사유
             </p>
           </div>
           <div className="px-3 py-3 space-y-3">
@@ -745,76 +746,9 @@ export default function SearchPage() {
                 </div>
               </div>
             )}
-            {/* TRIAGE 블록 (§11.265b-1 inline 과 동일 content) */}
-            {sourcingTriage && (
-              <section aria-label="소싱 결과 분류 (모바일)">
-                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2.5">
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                    Sourcing Result Triage
-                  </p>
-                  <p className="mt-0.5 text-[11px] text-slate-600">
-                    Exact / Equivalent / Substitute / Blocked 후보를 먼저 분리하고 비교로 넘깁니다.
-                  </p>
-                  <div className="mt-2 grid grid-cols-2 gap-1.5">
-                    {sourcingTriage.sections.map((section) => {
-                      const toneClass = section.tone === "blue"
-                        ? "border-blue-200 bg-blue-50 text-blue-700"
-                        : section.tone === "violet"
-                          ? "border-violet-200 bg-violet-50 text-violet-700"
-                          : section.tone === "emerald"
-                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                            : "border-red-200 bg-red-50 text-red-700";
-                      return (
-                        <div
-                          key={`mobile-${section.key}`}
-                          className={`min-w-0 rounded-md border px-2.5 py-2 ${toneClass}`}
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="truncate text-[11px] font-semibold">{section.label}</span>
-                            <span className="text-base font-bold tabular-nums">{section.count}</span>
-                          </div>
-                          <p className="mt-0.5 text-[10px] opacity-80">{section.sublabel}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <p className="mt-2 text-[11px] font-medium text-slate-600 break-words">
-                    차단 사유: {sourcingTriage.blockedReason}
-                  </p>
-                  <div className="mt-2 flex flex-col gap-1.5">
-                    <Button
-                      type="button"
-                      size="sm"
-                      data-action-value="Compare candidates"
-                      className="h-9 w-full bg-blue-600 text-xs font-semibold text-white hover:bg-blue-500"
-                      onClick={() => { setAiAnalysisSheetOpen(false); openSourcingTriageReview(); }}
-                    >
-                      후보 비교
-                    </Button>
-                    <div className="flex gap-1.5">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-8 flex-1 text-[11px]"
-                        onClick={() => { setAiAnalysisSheetOpen(false); openSourcingTriageReview(); }}
-                      >
-                        보류 검토
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 flex-1 text-[11px] text-red-600 hover:text-red-700"
-                        onClick={() => { setAiAnalysisSheetOpen(false); openSourcingTriageReview(); }}
-                      >
-                        제외 사유
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            )}
+            {/* §11.292 모바일 sheet TRIAGE 블록 제거 (호영님 P1 1단계 정합).
+                desktop 과 동일 — 분류 정보 가치 0 + Shortlist/Hold/Exclude
+                불필요 중간 단계. AI 동등 대체품 분석은 2단계 비교 surface. */}
             {!sourcingTriage && (
               <div className="px-4 py-6 text-center text-xs text-slate-500">
                 현재 분석할 검색 결과가 없습니다.
@@ -1292,191 +1226,12 @@ export default function SearchPage() {
               </div>
             )}
 
-            {/* §11.276 — Agent Board browser evidence target.
-                  Four-way triage must stay visible with candidate rows so the pilot
-                  can capture compare / hold / exclude from the first screen. */}
-            {sourcingTriage && (
-              <section
-                data-testid="sourcing-result-triage"
-                // §11.274c — aria-label 한국어 정합 lock.
-                aria-label="소싱 결과 분류"
-                className="relative z-[80] px-3 pt-2"
-              >
-                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                        Sourcing Result Triage
-                      </p>
-                      <p className="mt-0.5 text-xs text-slate-600">
-                        Exact / Equivalent / Substitute / Blocked 후보를 먼저 분리하고 비교로 넘깁니다.
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-1.5 sm:flex sm:items-center">
-                      <Button
-                        type="button"
-                        size="sm"
-                        data-testid="sourcing-triage-compare-cta"
-                        data-action-value="Compare candidates"
-                        aria-label="후보 비교"
-                        className="h-9 shrink-0 bg-blue-600 px-3 text-xs font-semibold text-white hover:bg-blue-500"
-                        onClick={openSourcingTriageReview}
-                      >
-                        후보 비교
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        data-testid="sourcing-triage-request-cta"
-                        aria-label="견적 요청"
-                        variant="outline"
-                        className="h-9 shrink-0 border-emerald-200 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
-                        onClick={openSourcingTriageRequest}
-                      >
-                        견적 요청
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="mt-2 grid grid-cols-4 gap-1.5 sm:gap-2">
-                    {sourcingTriage.sections.map((section) => {
-                      const toneClass = section.tone === "blue"
-                        ? "border-blue-200 bg-blue-50 text-blue-700"
-                        : section.tone === "violet"
-                          ? "border-violet-200 bg-violet-50 text-violet-700"
-                          : section.tone === "emerald"
-                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                            : "border-red-200 bg-red-50 text-red-700";
-                      return (
-                        <div
-                          key={section.key}
-                          data-testid={`sourcing-triage-${section.key}`}
-                          className={`min-w-0 rounded-md border px-2 py-2 sm:px-2.5 ${toneClass}`}
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="truncate text-[11px] font-semibold">{section.label}</span>
-                            <span className="text-base font-bold tabular-nums">{section.count}</span>
-                          </div>
-                          <p className="mt-0.5 text-[10px] opacity-80">{section.sublabel}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {sourcingTriage.candidateRows.length > 0 && (
-                    <div
-                      data-testid="sourcing-triage-candidate-list"
-                      className="mt-2 grid grid-cols-1 gap-1.5 lg:grid-cols-2"
-                    >
-                      {sourcingTriage.candidateRows.map((candidate) => {
-                        const toneClass = candidate.tone === "blue"
-                          ? "border-blue-200 bg-blue-50 text-blue-800"
-                          : candidate.tone === "violet"
-                            ? "border-violet-200 bg-violet-50 text-violet-800"
-                            : candidate.tone === "emerald"
-                              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                              : "border-red-200 bg-red-50 text-red-800";
-                        const actionState = sourcingCandidateTriage[candidate.productId];
-                        const openCandidateCompare = () => {
-                          if (!compareIds.includes(candidate.productId)) {
-                            toggleCompare(candidate.productId, { name: candidate.name, brand: candidate.brand });
-                          }
-                          setSourcingCandidateTriageState(candidate.productId, "shortlist");
-                          setActiveResultId(candidate.productId);
-                          closeStrategyOverlay();
-                          setWorkWindowMode("result-review");
-                        };
-                        return (
-                          <div
-                            key={candidate.key}
-                            data-testid={`sourcing-triage-candidate-${candidate.action}`}
-                            className={`flex min-w-0 flex-col gap-2 rounded-md border px-2.5 py-2 sm:flex-row sm:items-center ${toneClass}`}
-                          >
-                            <div className="min-w-0 flex-1">
-                              <div className="flex min-w-0 items-center gap-1.5">
-                                <span className="shrink-0 rounded-full bg-white/70 px-1.5 py-0.5 text-[10px] font-bold">
-                                  {candidate.section}
-                                </span>
-                                {actionState && (
-                                  <span className="shrink-0 rounded-full bg-white/70 px-1.5 py-0.5 text-[10px] font-semibold uppercase">
-                                    {actionState}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="mt-1 truncate text-xs font-semibold">{candidate.name}</p>
-                              <p className="mt-0.5 truncate text-[11px] font-medium opacity-80">
-                                {candidate.reason}
-                              </p>
-                            </div>
-                            <div
-                              data-testid="sourcing-triage-candidate-actions"
-                              className="grid w-full grid-cols-3 gap-1 sm:w-auto sm:min-w-[180px]"
-                            >
-                              <Button
-                                type="button"
-                                size="sm"
-                                data-testid="sourcing-triage-candidate-compare-action"
-                                variant={candidate.action === "shortlist" ? "default" : "outline"}
-                                className="h-8 px-2 text-[11px]"
-                                onClick={() => handleProtectedAction(openCandidateCompare)}
-                              >
-                                비교
-                              </Button>
-                              <Button
-                                type="button"
-                                size="sm"
-                                data-testid="sourcing-triage-candidate-hold-action"
-                                variant="outline"
-                                className="h-8 px-2 text-[11px]"
-                                onClick={() => handleProtectedAction(() => setSourcingCandidateTriageState(candidate.productId, "hold"))}
-                              >
-                                보류
-                              </Button>
-                              <Button
-                                type="button"
-                                size="sm"
-                                data-testid="sourcing-triage-candidate-exclude-action"
-                                variant="outline"
-                                className="h-8 px-2 text-[11px] text-red-600 hover:text-red-700"
-                                onClick={() => handleProtectedAction(() => setSourcingCandidateTriageState(candidate.productId, "exclude"))}
-                              >
-                                제외
-                              </Button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                  <div className="mt-2 flex flex-col gap-2 border-t border-slate-100 pt-2 sm:flex-row sm:items-center">
-                    <p
-                      data-testid="sourcing-triage-blocked-reason"
-                      className="min-w-0 flex-1 truncate text-[11px] font-medium text-slate-600"
-                    >
-                      차단 사유: {sourcingTriage.blockedReason}
-                    </p>
-                    <div className="flex shrink-0 items-center gap-1.5">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-7 px-2 text-[11px]"
-                        onClick={openSourcingTriageReview}
-                      >
-                        보류 검토
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 px-2 text-[11px] text-red-600 hover:text-red-700"
-                        onClick={openSourcingTriageReview}
-                      >
-                        제외 사유
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            )}
+            {/* §11.292 SOURCING RESULT TRIAGE 블록 제거 (호영님 P1 1단계) —
+                검색이 이미 필터 역할 + 모든 카드가 동일 분류 = 정보가치 0 +
+                Shortlist/Hold/Exclude 는 불필요 중간 단계. AI 동등 대체품 /
+                대체 후보 분석은 비교 단계 (2단계 별도 batch) 로 이동. dead
+                state (sourcingCandidateTriage / openSourcingTriageReview /
+                openSourcingTriageRequest) 는 P2 cleanup batch 에서 제거. */}
 
             {/* Result rows */}
             <div className="px-3 py-2 space-y-0.5">
@@ -1535,10 +1290,8 @@ export default function SearchPage() {
                           toast[t.intent](t.message);
                         }
                       })}
-                      triageSections={sourcingTriage?.candidateSections}
-                      triageClassification={sourcingTriage?.classificationByProductId?.[product.id]}
-                      triageActionState={sourcingCandidateTriage[product.id]}
-                      onSetTriageAction={(state) => setSourcingCandidateTriageState(product.id, state)}
+                      {/* §11.292 triage props 제거 (호영님 P1 1단계). 카드
+                          내부 분류 배지 + Shortlist/Hold/Exclude 제거. */}
                       onSelect={() => setActiveResultId(product.id)}
                     />
                   </div>

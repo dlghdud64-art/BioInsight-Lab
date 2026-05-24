@@ -222,61 +222,13 @@ export function SourcingResultRow({
           {/* 1행: 제품명 */}
           <p className="text-sm font-bold text-slate-900 line-clamp-1 leading-tight tracking-tight">{product.name}</p>
 
-          {triageSections && triageClassification && (
-            <div
-              data-testid="sourcing-candidate-triage-badges"
-              className="mt-1.5 rounded-md border border-slate-200 bg-slate-50/70 px-2 py-1.5"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex flex-wrap items-center gap-1">
-                {triageSections.map((section) => (
-                  <span
-                    key={section.key}
-                    data-testid={`sourcing-candidate-triage-${section.key}`}
-                    className={`inline-flex min-h-[24px] items-center gap-1 rounded-full border px-2 text-[10px] font-semibold ${TRIAGE_TONE_STYLES[section.tone]}`}
-                  >
-                    {section.label}
-                    <span className="tabular-nums">{section.count}</span>
-                  </span>
-                ))}
-              </div>
-              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                <span
-                  data-testid="sourcing-candidate-classification"
-                  className={`inline-flex min-h-[24px] items-center rounded-full border px-2 text-[10px] font-semibold ${TRIAGE_TONE_STYLES[triageClassification.tone]}`}
-                >
-                  {triageClassification.label}
-                </span>
-                <span
-                  data-testid="sourcing-candidate-blocked-reason"
-                  className="min-w-0 flex-1 truncate text-[10px] font-medium text-slate-600"
-                >
-                  {triageClassification.reason}
-                </span>
-              </div>
-              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                {(["shortlist", "hold", "exclude"] as const).map((state) => (
-                  <button
-                    key={state}
-                    type="button"
-                    data-testid={`sourcing-candidate-${state}-action`}
-                    aria-pressed={triageActionState === state}
-                    className={`inline-flex min-h-[36px] items-center rounded-md border px-2.5 text-[11px] font-semibold transition-colors ${
-                      triageActionState === state
-                        ? TRIAGE_ACTION_STYLES[state]
-                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-100"
-                    }`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSetTriageAction?.(state);
-                    }}
-                  >
-                    {state === "shortlist" ? "Shortlist" : state === "hold" ? "Hold" : "Exclude"}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* §11.292 카드 내부 TRIAGE 배지 + Classification + Shortlist/Hold/
+              Exclude 제거 (호영님 P1 1단계). 검색이 이미 필터 역할 + 모든
+              카드 동일 분류 = 정보가치 0. AI 동등 대체품 분석은 비교 단계
+              (2단계 별도 batch). triageSections / triageClassification /
+              triageActionState / onSetTriageAction props 는 backward
+              compat 유지 (page.tsx 에서 prop 전달 0 → undefined 안전). */}
+
 
           {/* 2행: 정적 메타 */}
           {staticMeta && (
