@@ -405,8 +405,30 @@ export default function SafetyManagerPage() {
               <span className="text-sm font-bold">긴급 안전 경고: </span>
               <span className="text-sm">현재 즉시 조치가 필요한 고위험 항목이 {immediateCount}건 감지되었습니다.</span>
             </div>
-            <button onClick={() => { const firstImmediate = queueItems[0]; if (firstImmediate) setSelectedItemId(firstImmediate.id); }}
-              className="px-4 py-1.5 rounded-lg border border-white/30 text-sm font-semibold hover:bg-white/10 transition-colors flex-shrink-0">
+            {/* §11.291 #safety-confirm-now-scroll-highlight — 호영님 P0:
+                기존 setSelectedItemId 만 호출 → 시각 신호 부재 = dead button
+                인지. 옵션 A — AI 권장 처리 큐 섹션 scroll + immediate_action
+                item 하이라이트 (3초 후 자동 해제). 별도 페이지 이동 0
+                (같은 페이지 정보 인지). */}
+            <button
+              onClick={() => {
+                const queueSection = document.getElementById("ai-action-queue");
+                queueSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+                const urgentItems = document.querySelectorAll<HTMLElement>(
+                  "[data-priority='urgent']",
+                );
+                urgentItems.forEach((el) => {
+                  el.classList.add("ring-2", "ring-red-500", "animate-pulse");
+                  setTimeout(() => {
+                    el.classList.remove("ring-2", "ring-red-500", "animate-pulse");
+                  }, 3000);
+                });
+                // 기존 detail panel trigger 도 보존 (첫 immediate item)
+                const firstImmediate = queueItems[0];
+                if (firstImmediate) setSelectedItemId(firstImmediate.id);
+              }}
+              className="px-4 py-1.5 rounded-lg border border-white/30 text-sm font-semibold hover:bg-white/10 transition-colors flex-shrink-0"
+            >
               지금 확인하기
             </button>
             <button onClick={() => setBannerDismissed(true)} className="p-1 hover:bg-white/10 rounded transition-colors flex-shrink-0">
@@ -697,8 +719,9 @@ export default function SafetyManagerPage() {
             </div>
           </div>
 
-          {/* AI 권장 처리 큐 */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5">
+          {/* AI 권장 처리 큐 — §11.291 id="ai-action-queue" scroll anchor.
+              "지금 확인하기" 배너 CTA 가 이 섹션으로 scrollIntoView. */}
+          <div id="ai-action-queue" className="rounded-xl border border-slate-200 bg-white p-5">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-base font-bold text-slate-900">AI 권장 처리 큐</h3>
               <span className="text-xs text-slate-400">운영 균형 우선 기준</span>
@@ -708,9 +731,13 @@ export default function SafetyManagerPage() {
               {queueItems.map((q: ClassifiedSafetyItem, i: number) => {
                 const style = CLASS_STYLE[q.classification];
                 const isCompleted = completedQueueIds.has(q.id);
+                // §11.291 — immediate_action classification 시 data-priority="urgent"
+                // 배너 CTA 의 querySelectorAll target. 3초 ring-red-500 animate-pulse.
+                const isUrgent = q.classification === "immediate_action";
                 return (
                   <div key={q.id}
-                    className={`py-4 first:pt-0 last:pb-0 transition-opacity ${isCompleted ? "opacity-40" : ""}`}>
+                    data-priority={isUrgent ? "urgent" : "normal"}
+                    className={`py-4 first:pt-0 last:pb-0 rounded transition-opacity ${isCompleted ? "opacity-40" : ""}`}>
                     <div className="flex items-start gap-3">
                       <span className="text-sm font-bold text-slate-300 w-4 flex-shrink-0 mt-0.5">{i + 1}</span>
                       <div className="flex-1 min-w-0">
