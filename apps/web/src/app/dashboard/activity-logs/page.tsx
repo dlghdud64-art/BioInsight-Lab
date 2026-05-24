@@ -46,16 +46,72 @@ import { motion, AnimatePresence } from "framer-motion";
 //   - dead button 0건 (§11.67 lesson — RESET FILTERS onClick wired)
 //   - AI/chatbot UI 추가 X (AI Insights 는 운영 metric 카드, chat 아님)
 
+// §11.299 ACTIVITY_TYPE_LABELS 확장 (호영님 P1) — schema ActivityType
+// enum 30+ 값 모두 한글 매핑. 누락 시 raw 영문 enum 노출 회귀 차단.
 const ACTIVITY_TYPE_LABELS: Record<string, string> = {
+  // 견적/리스트
   QUOTE_CREATED: "리스트 생성",
   QUOTE_UPDATED: "리스트 수정",
   QUOTE_DELETED: "리스트 삭제",
   QUOTE_SHARED: "리스트 공유",
   QUOTE_VIEWED: "리스트 조회",
+  QUOTE_STATUS_CHANGED: "견적 상태 변경",
+  QUOTE_DRAFT_GENERATED: "견적 초안 생성",
+  QUOTE_DRAFT_REVIEWED: "견적 초안 검토",
+  QUOTE_DRAFT_STARTED_FROM_COMPARE: "비교에서 견적 초안 생성",
+  // 제품/검색
   PRODUCT_COMPARED: "제품 비교",
   PRODUCT_VIEWED: "제품 조회",
   PRODUCT_FAVORITED: "제품 즐겨찾기",
   SEARCH_PERFORMED: "검색 수행",
+  COMPARE_RESULT_VIEWED: "비교 결과 조회",
+  COMPARE_SESSION_REOPENED: "비교 세션 재개",
+  COMPARE_INQUIRY_DRAFT_STATUS_CHANGED: "비교 문의 초안 상태 변경",
+  // 이메일
+  EMAIL_DRAFT_GENERATED: "이메일 초안 생성",
+  EMAIL_SENT: "이메일 발송",
+  VENDOR_REPLY_LOGGED: "공급사 회신 기록",
+  // 발주
+  ORDER_FOLLOWUP_GENERATED: "발주 후속 조치 생성",
+  ORDER_FOLLOWUP_REVIEWED: "발주 후속 조치 검토",
+  ORDER_FOLLOWUP_SENT: "발주 후속 조치 발송",
+  ORDER_STATUS_CHANGE_PROPOSED: "발주 상태 변경 제안",
+  ORDER_STATUS_CHANGE_APPROVED: "발주 상태 변경 승인",
+  ORDER_STATUS_CHANGED: "발주 상태 변경",
+  // 재고
+  INVENTORY_RESTOCK_SUGGESTED: "재발주 제안",
+  INVENTORY_RESTOCK_REVIEWED: "재발주 검토",
+  // 구매 요청
+  PURCHASE_REQUEST_CREATED: "구매 요청 생성",
+  PURCHASE_REQUEST_CANCELLED: "구매 요청 취소",
+  PURCHASE_REQUEST_REVERSED: "구매 요청 되돌림",
+  PURCHASE_RECORD_RECLASSIFIED: "구매 레코드 재분류",
+  // AI 작업
+  AI_TASK_CREATED: "AI 작업 생성",
+  AI_TASK_OPENED: "AI 작업 열기",
+  AI_TASK_COMPLETED: "AI 작업 완료",
+  AI_TASK_FAILED: "AI 작업 실패",
+};
+
+// §11.299 ENTITY_TYPE_LABELS — quote/product/search 등 entity type
+// 한글 매핑 (filter dropdown + 카드 raw 표시).
+const ENTITY_TYPE_LABELS: Record<string, string> = {
+  quote: "견적",
+  QUOTE: "견적",
+  product: "제품",
+  PRODUCT: "제품",
+  search: "검색",
+  SEARCH: "검색",
+  order: "발주",
+  ORDER: "발주",
+  inventory: "재고",
+  INVENTORY: "재고",
+  vendor: "공급사",
+  VENDOR: "공급사",
+  user: "사용자",
+  USER: "사용자",
+  email: "이메일",
+  EMAIL: "이메일",
 };
 
 const ACTIVITY_TYPE_COLORS: Record<string, string> = {
@@ -303,18 +359,23 @@ export default function ActivityLogsPage() {
                 </Select>
               </div>
               <div className="flex-1">
+                {/* §11.299 라벨 한글화 (호영님 P1) — "엔티티 유형" → "대상
+                    구분", "전체 엔티티" → "전체", 옵션 "리스트" → "견적". */}
                 <label className="text-[10px] md:text-xs font-semibold text-slate-500 mb-1.5 block uppercase tracking-wider">
-                  엔티티 유형
+                  대상 구분
                 </label>
                 <Select value={entityTypeFilter} onValueChange={setEntityTypeFilter}>
                   <SelectTrigger className="text-xs md:text-sm h-9">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">전체 엔티티</SelectItem>
-                    <SelectItem value="quote">리스트</SelectItem>
+                    <SelectItem value="all">전체</SelectItem>
+                    <SelectItem value="quote">견적</SelectItem>
                     <SelectItem value="product">제품</SelectItem>
                     <SelectItem value="search">검색</SelectItem>
+                    <SelectItem value="order">발주</SelectItem>
+                    <SelectItem value="inventory">재고</SelectItem>
+                    <SelectItem value="vendor">공급사</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -397,11 +458,11 @@ export default function ActivityLogsPage() {
                               >
                                 {label}
                               </Badge>
-                              <span className="text-[10px] font-mono text-slate-400 break-all">
-                                {log.activityType}
-                              </span>
+                              {/* §11.299 raw 영문 enum 노출 제거 — entityType
+                                  만 한글 매핑 표시. activityType 은 위 Badge 가
+                                  이미 한글 라벨이라 raw mono code 중복 제거. */}
                               {log.entityType && (
-                                <span className="text-[10px] text-slate-400">· {log.entityType}</span>
+                                <span className="text-[10px] text-slate-400">· {ENTITY_TYPE_LABELS[log.entityType] || log.entityType}</span>
                               )}
                             </div>
                             <div className="flex items-center gap-3 text-xs text-slate-600 mb-1.5 flex-wrap">
