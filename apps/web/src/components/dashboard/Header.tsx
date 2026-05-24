@@ -19,14 +19,8 @@ import type { NotificationItem } from "@/lib/notifications/notification-query";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+// §11.295/§11.296 Radix DropdownMenu* import 제거 — Header.tsx 3 dropdown
+// (도움말/프로필/알림) 모두 plain button + useState pattern 으로 swap 완료.
 import { useQRScanner } from "@/contexts/QRScannerContext";
 import { Search, Bell, HelpCircle, ChevronRight, AlertTriangle, FileText, BookOpen, Headphones, Settings, CreditCard, LogOut, ShieldAlert, Clock, CheckCircle2, ClipboardCheck, Menu, Package } from "lucide-react";
 import { toast } from "sonner";
@@ -320,28 +314,35 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           <BarcodeScanFab />
 
 
-          {/* 알림 드롭다운 — 이벤트 피드 (고도화) */}
-          <DropdownMenu open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 md:h-9 md:w-9 relative flex-shrink-0 p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                aria-label="알림"
-              >
-                <Bell className="h-5 w-5" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center h-[18px] min-w-[18px] px-1 text-[10px] font-bold rounded-full bg-blue-600 text-white ring-2 ring-white">
-                    {unreadCount}
-                  </span>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="w-[380px] p-0 !bg-white shadow-2xl shadow-slate-300/40 border border-slate-200 rounded-xl overflow-hidden"
-              sideOffset={8}
+          {/* §11.296 알림 dropdown — Radix 제거 + plain button + useState
+              (호영님 §11.283b/§11.295 패턴 정합, preemptive Radix silent
+              fail 차단). Header.tsx 3 dropdown 마지막 단순화. notifications
+              list + unreadCount + handleMarkAllRead + handleNotificationClick
+              + helper 함수 모두 보존 — UI render layer 만 swap. */}
+          <div className="relative">
+            <button
+              type="button"
+              aria-label="알림"
+              aria-expanded={isNotificationOpen}
+              aria-haspopup="menu"
+              onClick={() => setIsNotificationOpen((v) => !v)}
+              className="inline-flex items-center justify-center h-10 w-10 md:h-9 md:w-9 relative flex-shrink-0 p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
             >
+              <Bell className="h-5 w-5 pointer-events-none" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center h-[18px] min-w-[18px] px-1 text-[10px] font-bold rounded-full bg-blue-600 text-white ring-2 ring-white pointer-events-none">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+            {isNotificationOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsNotificationOpen(false)} aria-hidden="true" />
+                <div
+                  role="menu"
+                  aria-label="알림 메뉴"
+                  className="absolute right-0 top-full mt-2 w-[380px] p-0 bg-white shadow-2xl shadow-slate-300/40 border border-slate-200 rounded-xl overflow-hidden z-50"
+                >
               {/* 헤더 */}
               <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-slate-50/50">
                 <div className="flex items-center gap-2.5">
@@ -429,8 +430,10 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                   전체 알림 보기
                 </Link>
               </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                </div>
+              </>
+            )}
+          </div>
 
           {/* §11.295 도움말 dropdown — Radix 제거 + plain button + useState
               (호영님 §11.283b 패턴 정합, preemptive Radix silent fail 차단). */}
