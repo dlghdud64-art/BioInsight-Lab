@@ -2258,145 +2258,81 @@ function InventoryPageContent() {
                                           위치 지정
                                         </Button>
                                       )}
-                                      {/* 더보기 — 보조 조치 */}
-                                      <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-slate-500 hover:text-slate-600 hover:bg-slate-700 shrink-0">
-                                            <MoreVertical className="h-3.5 w-3.5" />
-                                          </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-44">
-                                          <DropdownMenuItem
-                                            className="gap-2 text-xs"
-                                            onClick={() => {
-                                              setSelectedItem(inv);
-                                              setSheetSafetyStock(String(inv.safetyStock ?? inv.minOrderQty ?? 1));
-                                              setIsSheetOpen(true);
-                                            }}
-                                          >
-                                            <Eye className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-                                            상세 보기
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem
-                                            className="gap-2 text-xs"
-                                            onClick={() => {
-                                              setEditingInventory(inv);
-                                              setIsDialogOpen(true);
-                                            }}
-                                          >
-                                            <Edit className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-                                            정보 수정
-                                          </DropdownMenuItem>
-                                          {/* 이슈별 보조 조치 */}
-                                          {issueType === "expiring" && (
-                                            <>
-                                              <DropdownMenuSeparator />
-                                              <DropdownMenuItem
-                                                className="gap-2 text-xs text-red-700"
-                                                onClick={() => {
-                                                  toast({
-                                                    title: "폐기 검토",
-                                                    description: `${inv.product.name} 폐기 절차를 확인하세요.`,
-                                                  });
-                                                }}
-                                              >
-                                                <Trash2 className="h-3.5 w-3.5 shrink-0" />
-                                                폐기 검토
-                                              </DropdownMenuItem>
-                                              <DropdownMenuItem
-                                                className="gap-2 text-xs"
-                                                onClick={() => {
-                                                  aiPanel.preparePanel({
-                                                    id: inv.id,
-                                                    productId: inv.productId,
-                                                    productName: inv.product.name,
-                                                    brand: inv.product.brand || undefined,
-                                                    catalogNumber: inv.product.catalogNumber || undefined,
-                                                    currentQuantity: inv.currentQuantity,
-                                                    unit: inv.unit || undefined,
-                                                    safetyStock: inv.safetyStock || undefined,
-                                                    minOrderQty: inv.minOrderQty || undefined,
-                                                    location: inv.location || undefined,
-                                                    expiryDate: inv.expiryDate || undefined,
-                                                    lotNumber: inv.lotNumber || undefined,
-                                                    autoReorderEnabled: inv.autoReorderEnabled || false,
-                                                    averageDailyUsage: inv.averageDailyUsage || undefined,
-                                                    leadTimeDays: inv.leadTimeDays || undefined,
-                                                    lastInspectedAt: undefined,
-                                                  });
-                                                }}
-                                              >
-                                                <Sparkles className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-                                                재발주 검토
-                                              </DropdownMenuItem>
-                                            </>
-                                          )}
-                                          {issueType === "expired" && (
-                                            <>
-                                              <DropdownMenuSeparator />
-                                              <DropdownMenuItem
-                                                className="gap-2 text-xs"
-                                                onClick={() => {
-                                                  aiPanel.preparePanel({
-                                                    id: inv.id,
-                                                    productId: inv.productId,
-                                                    productName: inv.product.name,
-                                                    brand: inv.product.brand || undefined,
-                                                    catalogNumber: inv.product.catalogNumber || undefined,
-                                                    currentQuantity: inv.currentQuantity,
-                                                    unit: inv.unit || undefined,
-                                                    safetyStock: inv.safetyStock || undefined,
-                                                    minOrderQty: inv.minOrderQty || undefined,
-                                                    location: inv.location || undefined,
-                                                    expiryDate: inv.expiryDate || undefined,
-                                                    lotNumber: inv.lotNumber || undefined,
-                                                    autoReorderEnabled: inv.autoReorderEnabled || false,
-                                                    averageDailyUsage: inv.averageDailyUsage || undefined,
-                                                    leadTimeDays: inv.leadTimeDays || undefined,
-                                                    lastInspectedAt: undefined,
-                                                  });
-                                                }}
-                                              >
-                                                <Sparkles className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-                                                대체품 재발주 검토
-                                              </DropdownMenuItem>
-                                            </>
-                                          )}
-                                          {(issueType === "out_of_stock" || issueType === "low_stock") && (
-                                            <>
-                                              <DropdownMenuSeparator />
-                                              <DropdownMenuItem
-                                                className="gap-2 text-xs"
-                                                onClick={() => {
-                                                  setRestockItem(inv);
-                                                  setRestockForm({
-                                                    addQty: "",
-                                                    lotNumber: "",
-                                                    expiryDate: "",
-                                                  });
-                                                }}
-                                              >
-                                                <PackagePlus className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                                                입고 등록
-                                              </DropdownMenuItem>
-                                            </>
-                                          )}
-                                          <DropdownMenuSeparator />
-                                          <DropdownMenuItem
-                                            className="gap-2 text-xs text-slate-500"
-                                            onClick={() => {
-                                              setDismissedAlertIds((prev) => new Set(prev).add(inv.id));
-                                              toast({
-                                                title: "이슈 처리 완료",
-                                                description: `${inv.product.name} 이슈를 목록에서 제외했습니다.`,
-                                              });
-                                            }}
-                                          >
-                                            <XCircle className="h-3.5 w-3.5 shrink-0" />
-                                            목록에서 제외
-                                          </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                      </DropdownMenu>
+                                      {/* §11.297e D4 issue alert (issueType 분기) */}
+                                      <ActionMenu
+                                        menuId={`inv-content-issue-${inv.id}`}
+                                        currentOpenId={openInvContentMenuId}
+                                        onOpenChange={setOpenInvContentMenuId}
+                                        width="w-44"
+                                        items={[
+                                          { label: "상세 보기", icon: <Eye className="h-3.5 w-3.5 text-blue-500 shrink-0" />, onClick: () => {
+                                            setSelectedItem(inv);
+                                            setSheetSafetyStock(String(inv.safetyStock ?? inv.minOrderQty ?? 1));
+                                            setIsSheetOpen(true);
+                                          } },
+                                          { label: "정보 수정", icon: <Edit className="h-3.5 w-3.5 text-slate-500 shrink-0" />, onClick: () => {
+                                            setEditingInventory(inv);
+                                            setIsDialogOpen(true);
+                                          } },
+                                          ...(issueType === "expiring" ? [
+                                            { label: "폐기 검토", icon: <Trash2 className="h-3.5 w-3.5 shrink-0" />, danger: true, separator: true, onClick: () => toast({
+                                              title: "폐기 검토",
+                                              description: `${inv.product.name} 폐기 절차를 확인하세요.`,
+                                            }) },
+                                            { label: "재발주 검토", icon: <Sparkles className="h-3.5 w-3.5 text-blue-500 shrink-0" />, onClick: () => aiPanel.preparePanel({
+                                              id: inv.id,
+                                              productId: inv.productId,
+                                              productName: inv.product.name,
+                                              brand: inv.product.brand || undefined,
+                                              catalogNumber: inv.product.catalogNumber || undefined,
+                                              currentQuantity: inv.currentQuantity,
+                                              unit: inv.unit || undefined,
+                                              safetyStock: inv.safetyStock || undefined,
+                                              minOrderQty: inv.minOrderQty || undefined,
+                                              location: inv.location || undefined,
+                                              expiryDate: inv.expiryDate || undefined,
+                                              lotNumber: inv.lotNumber || undefined,
+                                              autoReorderEnabled: inv.autoReorderEnabled || false,
+                                              averageDailyUsage: inv.averageDailyUsage || undefined,
+                                              leadTimeDays: inv.leadTimeDays || undefined,
+                                              lastInspectedAt: undefined,
+                                            }) },
+                                          ] : []),
+                                          ...(issueType === "expired" ? [
+                                            { label: "대체품 재발주 검토", icon: <Sparkles className="h-3.5 w-3.5 text-blue-500 shrink-0" />, separator: true, onClick: () => aiPanel.preparePanel({
+                                              id: inv.id,
+                                              productId: inv.productId,
+                                              productName: inv.product.name,
+                                              brand: inv.product.brand || undefined,
+                                              catalogNumber: inv.product.catalogNumber || undefined,
+                                              currentQuantity: inv.currentQuantity,
+                                              unit: inv.unit || undefined,
+                                              safetyStock: inv.safetyStock || undefined,
+                                              minOrderQty: inv.minOrderQty || undefined,
+                                              location: inv.location || undefined,
+                                              expiryDate: inv.expiryDate || undefined,
+                                              lotNumber: inv.lotNumber || undefined,
+                                              autoReorderEnabled: inv.autoReorderEnabled || false,
+                                              averageDailyUsage: inv.averageDailyUsage || undefined,
+                                              leadTimeDays: inv.leadTimeDays || undefined,
+                                              lastInspectedAt: undefined,
+                                            }) },
+                                          ] : []),
+                                          ...((issueType === "out_of_stock" || issueType === "low_stock") ? [
+                                            { label: "입고 등록", icon: <PackagePlus className="h-3.5 w-3.5 text-emerald-600 shrink-0" />, separator: true, onClick: () => {
+                                              setRestockItem(inv);
+                                              setRestockForm({ addQty: "", lotNumber: "", expiryDate: "" });
+                                            } },
+                                          ] : []),
+                                          { label: "목록에서 제외", icon: <XCircle className="h-3.5 w-3.5 shrink-0" />, separator: true, onClick: () => {
+                                            setDismissedAlertIds((prev) => new Set(prev).add(inv.id));
+                                            toast({
+                                              title: "이슈 처리 완료",
+                                              description: `${inv.product.name} 이슈를 목록에서 제외했습니다.`,
+                                            });
+                                          } },
+                                        ]}
+                                      />
                                     </div>
                                   </div>
                                 );
