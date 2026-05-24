@@ -25,12 +25,8 @@ import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
 import { useToast } from "@/hooks/use-toast";
 import { OrganizationRole } from "@prisma/client";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+// §11.298 Radix DropdownMenu* import 제거 — ActionMenu shared 사용.
+import { ActionMenu } from "@/components/inventory/action-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function WorkspaceSettingsPageContent() {
@@ -40,6 +36,8 @@ function WorkspaceSettingsPageContent() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
+  // §11.298 workspace member row action plain state.
+  const [openMemberMenuId, setOpenMemberMenuId] = useState<string | null>(null);
   const [selectedOrgId, setSelectedOrgId] = useState<string>(
     searchParams.get("org") || ""
   );
@@ -553,27 +551,15 @@ function WorkspaceSettingsPageContent() {
                                     </Badge>
                                   )}
                                   {canEdit ? (
-                                    <DropdownMenu>
-                                      <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                                          <MoreVertical className="h-4 w-4" />
-                                        </Button>
-                                      </DropdownMenuTrigger>
-                                      <DropdownMenuContent align="end" className="w-40">
-                                        <DropdownMenuItem
-                                          className="text-red-600"
-                                          onClick={() =>
-                                            handleDeleteMember(
-                                              member.id,
-                                              member.user?.name || member.user?.email || "멤버"
-                                            )
-                                          }
-                                        >
-                                          <Trash2 className="h-4 w-4 mr-2" />
-                                          멤버 제거
-                                        </DropdownMenuItem>
-                                      </DropdownMenuContent>
-                                    </DropdownMenu>
+                                    {/* §11.298 workspace member row action */}
+                                    <ActionMenu
+                                      menuId={`member-${member.id}`}
+                                      currentOpenId={openMemberMenuId}
+                                      onOpenChange={setOpenMemberMenuId}
+                                      items={[
+                                        { label: "멤버 제거", icon: <Trash2 className="h-4 w-4 mr-2" />, onClick: () => handleDeleteMember(member.id, member.user?.name || member.user?.email || "멤버"), danger: true },
+                                      ]}
+                                    />
                                   ) : isOwner ? (
                                     <span className="text-[10px] text-slate-400">-</span>
                                   ) : null}

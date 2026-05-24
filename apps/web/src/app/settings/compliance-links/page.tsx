@@ -36,12 +36,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+// §11.298 Radix DropdownMenu* import 제거 — ActionMenu shared 사용.
+import { ActionMenu } from "@/components/inventory/action-menu";
 import { MainHeader } from "@/app/_components/main-header";
 import { PageHeader } from "@/app/_components/page-header";
 import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
@@ -68,6 +64,8 @@ function ComplianceLinksPageContent() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  // §11.298 compliance-links row action plain state.
+  const [openLinkMenuId, setOpenLinkMenuId] = useState<string | null>(null);
   const [selectedOrgId, setSelectedOrgId] = useState<string>(
     searchParams.get("org") || ""
   );
@@ -470,26 +468,16 @@ function ComplianceLinksPageContent() {
                               {link.rules ? getRuleDescription(link.rules) : "모든 제품"}
                             </TableCell>
                             <TableCell className="text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <MoreVertical className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => handleEdit(link)}>
-                                    <Pencil className="h-4 w-4 mr-2" />
-                                    수정
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => handleDelete(link.id)}
-                                    className="text-red-600"
-                                  >
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    삭제
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
+                              {/* §11.298 compliance link row actions */}
+                              <ActionMenu
+                                menuId={`compliance-link-${link.id}`}
+                                currentOpenId={openLinkMenuId}
+                                onOpenChange={setOpenLinkMenuId}
+                                items={[
+                                  { label: "수정", icon: <Pencil className="h-4 w-4 mr-2" />, onClick: () => handleEdit(link) },
+                                  { label: "삭제", icon: <Trash2 className="h-4 w-4 mr-2" />, onClick: () => handleDelete(link.id), danger: true },
+                                ]}
+                              />
                             </TableCell>
                           </TableRow>
                         ))}

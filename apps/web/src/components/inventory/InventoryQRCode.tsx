@@ -12,12 +12,7 @@ import {
 import { QrCode, Printer, Download, Layers, MoreHorizontal, Copy } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+// §11.298 Radix DropdownMenu* import 제거 — inline plain dropdown.
 
 interface LotInfo {
   id: string;
@@ -54,6 +49,8 @@ export function InventoryQRCode({
   allLots,
 }: InventoryQRCodeProps) {
   const [open, setOpen] = useState(false);
+  // §11.298 InventoryQRCode plain dropdown state.
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [dataUrl, setDataUrl] = useState<string>("");
   const [printMode, setPrintMode] = useState<"single" | "batch">("single");
@@ -305,28 +302,45 @@ export function InventoryQRCode({
                 닫기
               </Button>
               {/* 보조 액션: overflow menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-400">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40">
-                  <DropdownMenuItem onClick={handleDownload} disabled={!dataUrl} className="text-xs gap-2">
-                    <Download className="h-3.5 w-3.5" />
-                    PNG 저장
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-xs gap-2"
-                    onClick={() => {
-                      navigator.clipboard.writeText(scanUrl);
-                    }}
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                    QR 값 복사
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {/* §11.298 plain dropdown */}
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-label="더보기"
+                  aria-expanded={isMoreMenuOpen}
+                  aria-haspopup="menu"
+                  onClick={() => setIsMoreMenuOpen((v) => !v)}
+                  className="inline-flex items-center justify-center h-8 w-8 p-0 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md"
+                >
+                  <MoreHorizontal className="h-4 w-4 pointer-events-none" />
+                </button>
+                {isMoreMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsMoreMenuOpen(false)} aria-hidden="true" />
+                    <div role="menu" className="absolute right-0 top-full mt-1 w-40 rounded-md border border-slate-200 bg-white shadow-lg z-50 py-1">
+                      <button
+                        type="button"
+                        role="menuitem"
+                        disabled={!dataUrl}
+                        onClick={() => { handleDownload(); setIsMoreMenuOpen(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        PNG 저장
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => { navigator.clipboard.writeText(scanUrl); setIsMoreMenuOpen(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left text-slate-700 hover:bg-slate-100"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                        QR 값 복사
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             <p className="text-[10px] text-slate-400 text-center">
