@@ -255,33 +255,11 @@ export default function AuditTrailPage() {
     [data]
   );
 
-  // §11.163 — 운영 브리핑 캐시 통계 (ADMIN-only gating, /api/admin/operational-brief-cache-stats)
-  // §11.168 — fitness_pass / fitness_fail / fitnessPassRate 추가 (LLM hallucination drift)
-  // §11.173 — topInjectionPatterns 추가 (pattern 별 빈도 breakdown)
-  const { data: briefCacheStats } = useQuery<{
-    hit: number;
-    miss: number;
-    set: number;
-    evict: number;
-    invalidate: number;
-    fitness_pass: number;
-    fitness_fail: number;
-    hitRate: number;
-    fitnessPassRate: number;
-    cacheSize: number;
-    startedAt: string;
-    topInjectionPatterns: Array<{ pattern: string; count: number }>;
-  }>({
-    queryKey: ["operational-brief-cache-stats"],
-    queryFn: async () => {
-      const res = await fetch("/api/admin/operational-brief-cache-stats");
-      if (!res.ok) throw new Error("cache stats fetch 실패");
-      return res.json();
-    },
-    enabled: status === "authenticated" && userRole === "ADMIN",
-    refetchInterval: 60_000, // 1분 자동 갱신 — 운영자 가시성
-    staleTime: 30_000,
-  });
+  // §11.300 — 운영 브리핑 캐시 통계 / Injection 패턴 indicator 는 audit 화면에서
+  // 제거 (호영님 P1, 2026-05-24). 일반 사용자 화면에 노출되는 개발 지표.
+  // ADMIN 전용 가시성은 별도 admin route 신설 시 복원 예정 (§11.300c 보류).
+  // 캐시 통계 API endpoint (/api/admin/operational-brief-cache-stats) 자체는
+  // 유지 — 직접 조회 또는 로그 모니터링으로 가시성 유지.
 
   if (status === "loading" || !canAccessAudit) {
     return (
@@ -501,80 +479,7 @@ export default function AuditTrailPage() {
             className="pl-9 h-9 text-xs"
           />
         </div>
-        {/* §11.172 — Injection 시도 전용 quick filter chip (ADMIN-only) */}
-        {userRole === "ADMIN" && (
-          <button
-            type="button"
-            onClick={() => {
-              const isActive = search.trim() === "prompt_injection_detected" && eventTypeFilter === "SETTINGS_CHANGED";
-              if (isActive) {
-                setSearch("");
-                setEventTypeFilter("all");
-              } else {
-                setSearch("prompt_injection_detected");
-                setEventTypeFilter("SETTINGS_CHANGED");
-              }
-            }}
-            className={`h-9 px-3 rounded-md text-xs font-medium border transition-colors ${
-              search.trim() === "prompt_injection_detected" && eventTypeFilter === "SETTINGS_CHANGED"
-                ? "bg-rose-50 text-rose-700 border-rose-200"
-                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-            }`}
-            title="prompt_injection_detected action 만 보기"
-          >
-            🛡 Injection 시도
-          </button>
-        )}
       </div>
-
-      {/* §11.163 — 운영 브리핑 캐시 통계 (ADMIN-only) */}
-      {userRole === "ADMIN" && briefCacheStats && (
-        <div className="mb-4 border border-slate-200 rounded-lg bg-white p-4 shadow-sm print:hidden">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-bold text-slate-900">운영 브리핑 캐시 통계</h2>
-            <span className="text-[10px] text-slate-500 uppercase tracking-wider">
-              {briefCacheStats.startedAt && `since ${new Date(briefCacheStats.startedAt).toLocaleTimeString("ko-KR")}`}
-            </span>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-            <StatCell label="hit rate" value={`${(briefCacheStats.hitRate * 100).toFixed(1)}%`} accent={briefCacheStats.hitRate >= 0.5 ? "ok" : "warn"} />
-            <StatCell label="cache size" value={String(briefCacheStats.cacheSize)} />
-            <StatCell label="hit" value={String(briefCacheStats.hit)} />
-            <StatCell label="miss" value={String(briefCacheStats.miss)} />
-            <StatCell label="evict" value={String(briefCacheStats.evict)} />
-            <StatCell label="invalidate" value={String(briefCacheStats.invalidate)} />
-            {/* §11.168 fitness drift indicator — pass rate <90% = LLM hallucination 빈도 시그널 */}
-            <StatCell
-              label="fitness pass"
-              value={`${(briefCacheStats.fitnessPassRate * 100).toFixed(1)}%`}
-              accent={briefCacheStats.fitness_pass + briefCacheStats.fitness_fail === 0 ? undefined : briefCacheStats.fitnessPassRate >= 0.9 ? "ok" : "warn"}
-            />
-            <StatCell label="fitness fail" value={String(briefCacheStats.fitness_fail)} accent={briefCacheStats.fitness_fail > 0 ? "warn" : undefined} />
-          </div>
-          <p className="text-[10px] text-slate-500 mt-2">
-            §11.142 ecosystem · 1분 자동 갱신 · ADMIN 전용 가시성. KV 통합 시 cache size 는 -1 (unknown).
-            fitness fail &gt; 0 = LLM hallucination 차단 (자동 deterministic fallback). pass rate &lt; 90% = prompt drift 검토.
-          </p>
-
-          {/* §11.173 — Top 5 injection pattern breakdown (rose accent — 보안 시그널) */}
-          {briefCacheStats.topInjectionPatterns && briefCacheStats.topInjectionPatterns.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-slate-100">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-xs font-semibold text-rose-700">🛡 Injection 패턴 Top {briefCacheStats.topInjectionPatterns.length}</h3>
-                <span className="text-[10px] text-slate-500">누적 빈도 (process 수명)</span>
-              </div>
-              <ul className="space-y-1">
-                {briefCacheStats.topInjectionPatterns.map((p) => (
-                  <li key={p.pattern} className="flex items-center justify-between text-[11px]">
-                    <code className="font-mono text-slate-700 truncate max-w-[60%]">{p.pattern}</code>
-                    <span className="font-semibold text-rose-600 tabular-nums">{p.count}회</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
 
       <div className="border border-bd rounded-lg bg-white overflow-hidden shadow-sm">
         {isLoading ? (
@@ -678,16 +583,3 @@ export default function AuditTrailPage() {
   );
 }
 
-// §11.163 — 운영 브리핑 캐시 통계 단일 셀 helper
-function StatCell({ label, value, accent }: { label: string; value: string; accent?: "ok" | "warn" }) {
-  const valueClass =
-    accent === "ok" ? "text-emerald-700"
-    : accent === "warn" ? "text-amber-700"
-    : "text-slate-900";
-  return (
-    <div className="rounded-md border border-slate-100 bg-slate-50/40 px-3 py-2">
-      <p className="text-[10px] uppercase tracking-wider text-slate-500">{label}</p>
-      <p className={`text-sm font-bold tabular-nums ${valueClass}`}>{value}</p>
-    </div>
-  );
-}
