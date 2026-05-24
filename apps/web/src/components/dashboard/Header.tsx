@@ -99,6 +99,11 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   });
 
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  // §11.295 도움말 + 프로필 dropdown plain state — §11.283b 정합. 호영님
+  // 환경 Radix DropdownMenu silent fail 차단 (preemptive). 알림 dropdown
+  // 은 별도 batch (복잡 logic 보존).
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // 글로벌 단축키: Ctrl+Q → QR 스캐너 열기
   useEffect(() => {
@@ -427,122 +432,146 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* 도움말 드롭다운 (sm 미만에서 공간 부족 시 숨김) */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 md:h-9 md:w-9 flex-shrink-0 p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors hidden md:flex"
-                aria-label="도움말"
-              >
-                <HelpCircle className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64 min-w-[240px] !bg-white border-slate-200 shadow-xl shadow-slate-200/50">
-              {(() => {
-                // 현재 workflow 경로를 recovery source 로 전달 —
-                // Support 진입 시 ontology drawer 가 "원래 작업으로 복귀" CTA 를 만든다.
-                // support-center 자체에서 띄운 경우엔 from 을 붙이지 않는다 (self-link 방지).
-                const isOnSupportCenter = pathname?.startsWith("/dashboard/support-center") ?? false;
-                const fromParam =
-                  !isOnSupportCenter && pathname
-                    ? `&from=${encodeURIComponent(pathname)}`
-                    : "";
-                return (
-                  <>
-                    <DropdownMenuItem asChild>
-                      <Link href={`/dashboard/support-center?tab=manual${fromParam}`} className="cursor-pointer w-full flex items-center gap-3 py-3">
-                        <BookOpen className="mr-2 h-4 w-4" />
-                        운영 매뉴얼
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href={`/dashboard/support-center?tab=troubleshoot${fromParam}`} className="cursor-pointer w-full flex items-center gap-3 py-3">
-                        <HelpCircle className="mr-2 h-4 w-4" />
-                        문제 해결 런북
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href={`/dashboard/support-center?tab=ticket${fromParam}`} className="cursor-pointer w-full flex items-center gap-3 py-3">
-                        <Headphones className="mr-2 h-4 w-4" />
-                        지원 티켓
-                      </Link>
-                    </DropdownMenuItem>
-                  </>
-                );
-              })()}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* §11.295 도움말 dropdown — Radix 제거 + plain button + useState
+              (호영님 §11.283b 패턴 정합, preemptive Radix silent fail 차단). */}
+          <div className="relative hidden md:block">
+            <button
+              type="button"
+              aria-label="도움말"
+              aria-expanded={isHelpOpen}
+              aria-haspopup="menu"
+              onClick={() => setIsHelpOpen((v) => !v)}
+              className="inline-flex items-center justify-center h-10 w-10 md:h-9 md:w-9 flex-shrink-0 p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+            >
+              <HelpCircle className="h-5 w-5 pointer-events-none" />
+            </button>
+            {isHelpOpen && (() => {
+              const isOnSupportCenter = pathname?.startsWith("/dashboard/support-center") ?? false;
+              const fromParam = !isOnSupportCenter && pathname ? `&from=${encodeURIComponent(pathname)}` : "";
+              return (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsHelpOpen(false)} aria-hidden="true" />
+                  <div role="menu" aria-label="도움말 메뉴" className="absolute right-0 top-full mt-2 w-64 min-w-[240px] rounded-md border border-slate-200 bg-white shadow-xl shadow-slate-200/50 z-50 py-1">
+                    <Link
+                      href={`/dashboard/support-center?tab=manual${fromParam}`}
+                      role="menuitem"
+                      onClick={() => setIsHelpOpen(false)}
+                      className="flex items-center gap-3 px-3 py-3 text-sm text-slate-700 hover:bg-slate-100 cursor-pointer"
+                    >
+                      <BookOpen className="h-4 w-4" />
+                      운영 매뉴얼
+                    </Link>
+                    <Link
+                      href={`/dashboard/support-center?tab=troubleshoot${fromParam}`}
+                      role="menuitem"
+                      onClick={() => setIsHelpOpen(false)}
+                      className="flex items-center gap-3 px-3 py-3 text-sm text-slate-700 hover:bg-slate-100 cursor-pointer"
+                    >
+                      <HelpCircle className="h-4 w-4" />
+                      문제 해결 런북
+                    </Link>
+                    <Link
+                      href={`/dashboard/support-center?tab=ticket${fromParam}`}
+                      role="menuitem"
+                      onClick={() => setIsHelpOpen(false)}
+                      className="flex items-center gap-3 px-3 py-3 text-sm text-slate-700 hover:bg-slate-100 cursor-pointer"
+                    >
+                      <Headphones className="h-4 w-4" />
+                      지원 티켓
+                    </Link>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
 
-          {/* 사용자 프로필 (데스크탑 전용 — 모바일은 사이드바 프로필 사용) */}
-          <div className="hidden lg:block">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 pl-3 border-l border-slate-200 flex-shrink-0 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer min-h-[44px]">
-                <Avatar className="h-8 w-8 border border-slate-200">
-                  <AvatarImage src={user?.image || undefined} alt={user?.name || "User"} />
-                  <AvatarFallback className="bg-blue-100 text-blue-600 text-xs font-semibold">
-                    {user?.name
-                      ? user.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .toUpperCase()
-                          .slice(0, 2)
-                      : user?.email?.[0].toUpperCase() || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="hidden xl:block min-w-0 text-left">
-                  <div className="text-sm font-medium text-slate-900 truncate">
-                    {user?.name || "사용자"}
-                  </div>
-                  <div className="text-xs text-slate-500 truncate">
-                    {user?.email}
-                  </div>
+          {/* §11.295 프로필 dropdown — Radix 제거 + plain button + useState
+              (호영님 §11.283b 패턴 정합, preemptive Radix silent fail 차단). */}
+          <div className="hidden lg:block relative">
+            <button
+              type="button"
+              aria-label="사용자 프로필 메뉴"
+              aria-expanded={isProfileOpen}
+              aria-haspopup="menu"
+              onClick={() => setIsProfileOpen((v) => !v)}
+              className="flex items-center gap-2 pl-3 border-l border-slate-200 flex-shrink-0 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer min-h-[44px]"
+            >
+              <Avatar className="h-8 w-8 border border-slate-200">
+                <AvatarImage src={user?.image || undefined} alt={user?.name || "User"} />
+                <AvatarFallback className="bg-blue-100 text-blue-600 text-xs font-semibold">
+                  {user?.name
+                    ? user.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()
+                        .slice(0, 2)
+                    : user?.email?.[0].toUpperCase() || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="hidden xl:block min-w-0 text-left">
+                <div className="text-sm font-medium text-slate-900 truncate">
+                  {user?.name || "사용자"}
                 </div>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-72 min-w-[280px] p-2 !bg-white border-slate-200 shadow-xl shadow-slate-200/50">
-              <DropdownMenuLabel className="p-3">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium text-slate-900">{user?.name || "사용자"}</p>
-                  <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+                <div className="text-xs text-slate-500 truncate">
+                  {user?.email}
                 </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings" className="flex items-center gap-3 py-3 text-sm cursor-pointer">
-                  <Settings className="h-4 w-4" />
-                  설정
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings?tab=billing" className="flex items-center gap-3 py-3 text-sm cursor-pointer">
-                  <CreditCard className="h-4 w-4" />
-                  청구 및 구독
-                </Link>
-              </DropdownMenuItem>
-              <a href="mailto:support@labaxis.io">
-                <DropdownMenuItem className="flex items-center gap-3 py-3 text-sm cursor-pointer">
-                  <HelpCircle className="h-4 w-4" />
-                  고객센터
-                </DropdownMenuItem>
-              </a>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => {
-                  resetWorkbenchSessionOnLogout();
-                  invalidateWorkbenchQueryCache(queryClient);
-                  signOut({ callbackUrl: "/" });
-                }}
-                className="flex items-center gap-3 py-3 text-sm cursor-pointer text-red-400 focus:text-red-400"
-              >
-                <LogOut className="h-4 w-4" />
-                로그아웃
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </div>
+            </button>
+            {isProfileOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsProfileOpen(false)} aria-hidden="true" />
+                <div role="menu" aria-label="프로필 메뉴" className="absolute right-0 top-full mt-2 w-72 min-w-[280px] rounded-md border border-slate-200 bg-white shadow-xl shadow-slate-200/50 z-50 p-2">
+                  <div className="px-3 py-3">
+                    <p className="text-sm font-medium text-slate-900">{user?.name || "사용자"}</p>
+                    <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+                  </div>
+                  <div className="h-px bg-slate-100 my-1" />
+                  <Link
+                    href="/dashboard/settings"
+                    role="menuitem"
+                    onClick={() => setIsProfileOpen(false)}
+                    className="flex items-center gap-3 px-3 py-3 text-sm text-slate-700 hover:bg-slate-100 rounded-md cursor-pointer"
+                  >
+                    <Settings className="h-4 w-4" />
+                    설정
+                  </Link>
+                  <Link
+                    href="/dashboard/settings?tab=billing"
+                    role="menuitem"
+                    onClick={() => setIsProfileOpen(false)}
+                    className="flex items-center gap-3 px-3 py-3 text-sm text-slate-700 hover:bg-slate-100 rounded-md cursor-pointer"
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    청구 및 구독
+                  </Link>
+                  <a
+                    href="mailto:support@labaxis.io"
+                    role="menuitem"
+                    onClick={() => setIsProfileOpen(false)}
+                    className="flex items-center gap-3 px-3 py-3 text-sm text-slate-700 hover:bg-slate-100 rounded-md cursor-pointer"
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                    고객센터
+                  </a>
+                  <div className="h-px bg-slate-100 my-1" />
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setIsProfileOpen(false);
+                      resetWorkbenchSessionOnLogout();
+                      invalidateWorkbenchQueryCache(queryClient);
+                      signOut({ callbackUrl: "/" });
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-3 text-sm text-red-400 hover:bg-red-50 rounded-md cursor-pointer text-left"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    로그아웃
+                  </button>
+                </div>
+              </>
+            )}
           </div>
 
           {/* 햄버거 버튼 (모바일/태블릿 전용 - 데스크탑은 고정 사이드바)
