@@ -763,6 +763,62 @@ export default function SafetyManagerPage() {
                         <CheckCircle2 className="h-4 w-4" />
                       </button>
                     </div>
+                    {/* §11.291b #safety-card-mobile-inline-expand — 호영님 P0
+                        audit: 카드 큐 nextAction button click → setSelectedItemId
+                        호출 → detail panel 은 hidden lg:block (데스크탑 lg 이상)
+                        이라 모바일 visible 0 = dead button 인지. selectedItemId
+                        === q.id 시 모바일 inline detail (차단 요인 + 보류 리스크
+                        + 문서 상태 + Action dock) 노출. 데스크탑 right rail
+                        그대로 유지 (중복 표시 회피). */}
+                    {selectedItemId === q.id && (() => {
+                      const classified = classifiedMap.get(q.id);
+                      if (!classified) return null;
+                      return (
+                        <div className="lg:hidden mt-3 pt-3 border-t border-slate-100 space-y-2">
+                          {classified.blockers.length > 0 && (
+                            <div className="p-3 rounded-lg bg-red-50 border border-red-100">
+                              <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest block mb-1.5">차단 요인</span>
+                              <div className="space-y-1">
+                                {classified.blockers.map((b: string) => (
+                                  <div key={b} className="flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
+                                    <span className="text-xs text-red-700">{b}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">보류 시 리스크</span>
+                            <p className="text-xs text-slate-600 leading-relaxed">{classified.holdRisk}</p>
+                          </div>
+                          <div className="p-3 rounded-lg bg-slate-50 border border-slate-100 flex items-center gap-4 text-xs">
+                            <span>MSDS: {classified.hasMsds ? <span className="text-emerald-600 font-semibold">등록</span> : <span className="text-amber-600 font-semibold">미등록</span>}</span>
+                            <span>점검: {classified.lastInspection ? <span className="text-emerald-600 font-semibold">{classified.lastInspection}</span> : <span className="text-amber-600 font-semibold">없음</span>}</span>
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            {!classified.hasMsds && (
+                              <Button variant="outline" size="sm" className="w-full h-9 text-xs font-medium text-amber-700 border-amber-200 hover:bg-amber-50 justify-start gap-2"
+                                onClick={() => openMsdsDialog(classified)}>
+                                <FileWarning className="h-3.5 w-3.5" />MSDS 등록
+                              </Button>
+                            )}
+                            {!classified.lastInspection && (
+                              <Button variant="outline" size="sm" className="w-full h-9 text-xs font-medium text-blue-700 border-blue-200 hover:bg-blue-50 justify-start gap-2"
+                                onClick={() => openInspDialog(classified)}>
+                                <ClipboardCheck className="h-3.5 w-3.5" />점검 기록
+                              </Button>
+                            )}
+                            {classified.level === "HIGH" && (
+                              <Button variant="outline" size="sm" className="w-full h-9 text-xs font-medium text-red-700 border-red-200 hover:bg-red-50 justify-start gap-2"
+                                onClick={() => openDisposeDialog(classified)}>
+                                <AlertTriangle className="h-3.5 w-3.5" />폐기 처리
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })}
