@@ -1290,8 +1290,6 @@ export default function SearchPage() {
                           toast[t.intent](t.message);
                         }
                       })}
-                      {/* §11.292 triage props 제거 (호영님 P1 1단계). 카드
-                          내부 분류 배지 + Shortlist/Hold/Exclude 제거. */}
                       onSelect={() => setActiveResultId(product.id)}
                     />
                   </div>
