@@ -3017,9 +3017,18 @@ function QuotesPageContent() {
                             <Button
                               size="sm"
                               variant={signals.ctaVariant}
+                              data-testid={signals.ctaLabel === "견적 요청 발송" ? "quote-table-direct-send-cta" : undefined}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                openQuoteContextRail(quote.id, "row");
+                                // §11.279d-2 — 카드 분기 (handleQuoteCardSelect)
+                                // 재사용. "견적 요청 발송" 시 패널 토글 (openRail)
+                                // 대신 VendorRequestModal 직접 진입 (setActiveWorkWindow
+                                // "request_send"). 그 외 CTA (새 회신 보기 등) 은
+                                // 기존 openQuoteContextRail 분기 그대로.
+                                // 호영님 P0 (2026-05-24): 테이블 row button 이
+                                // 모든 ctaLabel 에 openRail 호출 → "발송" 시 패널
+                                // 토글만 = 발송 워크플로우 진입 안 됨 회귀 fix.
+                                handleQuoteCardSelect(quote.id, signals.ctaLabel);
                               }}
                               className={`h-7 text-[11px] whitespace-nowrap min-w-[80px] ${signals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
                             >
