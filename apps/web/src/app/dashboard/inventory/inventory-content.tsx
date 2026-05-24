@@ -21,6 +21,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+// §11.297d ActionMenu shared (utility/card 3 dropdown swap). filter (D3
+// line 1738, Select form 포함) + issue alert (D4 line 2286, issueType
+// 분기 complex) 는 별도 batch §11.297e.
+import { ActionMenu } from "@/components/inventory/action-menu";
 // §11.196f — dead lucide imports 9 symbol 제거 (ArrowLeftRight Clock
 //   FlaskConical GitBranch LayoutDashboard List RotateCcw ShoppingCart X
 //   actual JSX/prop 사용 0). 나머지 보존.
@@ -131,6 +135,8 @@ function InventoryPageContent() {
   const pilotProfile = searchParams.get("labaxisPilot") ?? searchParams.get("pilot");
   const isBrowserPilotInventoryDisposal = pilotProfile === "inventory-disposal";
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  // §11.297d utility dropdown plain state (mutually exclusive).
+  const [openInvContentMenuId, setOpenInvContentMenuId] = useState<string | null>(null);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isImportStagingOpen, setIsImportStagingOpen] = useState(false);
   const [isSmartReceiveOpen, setIsSmartReceiveOpen] = useState(false);
@@ -1336,32 +1342,19 @@ function InventoryPageContent() {
             <PackagePlus className="h-3.5 w-3.5 mr-1.5" />
             구매 반영
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="h-8 w-8 shrink-0">
-                <MoreVertical className="h-3.5 w-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => setIsImportStagingOpen(true)} className="flex items-center gap-2 text-xs">
-                <Upload className="h-3.5 w-3.5" />
-                재고 파일 가져오기
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push("/dashboard/inventory/scan")} className="flex items-center gap-2 text-xs">
-                <QrCode className="h-3.5 w-3.5" />
-                QR 스캔
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleBulkLabelPrint()} className="flex items-center gap-2 text-xs">
-                <Printer className="h-3.5 w-3.5" />
-                라벨 인쇄
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setIsSmartReceiveOpen(true)} className="flex items-center gap-2 text-xs text-blue-600">
-                <ScanLine className="h-3.5 w-3.5" />
-                스마트 입고
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* §11.297d D1 utility-mobile */}
+          <ActionMenu
+            menuId="inv-content-utility-mobile"
+            currentOpenId={openInvContentMenuId}
+            onOpenChange={setOpenInvContentMenuId}
+            width="w-48"
+            items={[
+              { label: "재고 파일 가져오기", icon: <Upload className="h-3.5 w-3.5" />, onClick: () => setIsImportStagingOpen(true) },
+              { label: "QR 스캔", icon: <QrCode className="h-3.5 w-3.5" />, onClick: () => router.push("/dashboard/inventory/scan") },
+              { label: "라벨 인쇄", icon: <Printer className="h-3.5 w-3.5" />, onClick: () => handleBulkLabelPrint() },
+              { label: "스마트 입고", icon: <ScanLine className="h-3.5 w-3.5" />, onClick: () => setIsSmartReceiveOpen(true), separator: true },
+            ]}
+          />
         </div>
         <MobileInventoryView
           inventories={displayInventories}
@@ -1512,63 +1505,46 @@ function InventoryPageContent() {
                 스마트 입고
               </Button>
 
-              {/* ── 더보기: 보조 기능 통합 ── */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52">
-                  <DropdownMenuItem onClick={() => router.push("/dashboard/purchases")} className="flex items-center gap-2 text-xs">
-                    <PackagePlus className="h-3.5 w-3.5" />
-                    구매 반영
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setIsImportStagingOpen(true)} className="flex items-center gap-2 text-xs">
-                    <Upload className="h-3.5 w-3.5" />
-                    재고 파일 가져오기
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push("/dashboard/inventory/scan")} className="flex items-center gap-2 text-xs">
-                    <QrCode className="h-3.5 w-3.5" />
-                    QR 스캔
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={async () => {
-                      if (isExportingLabels) return;
-                      setIsExportingLabels(true);
-                      try {
-                        const res = await fetch("/api/inventory/export-labels");
-                        if (!res.ok) {
-                          const json = await res.json().catch(() => ({}));
-                          throw new Error((json as { error?: string }).error || "내보내기에 실패했습니다.");
-                        }
-                        const blob = await res.blob();
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        const yyyymmdd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-                        a.href = url;
-                        a.download = `Label_Data_${yyyymmdd}.xlsx`;
-                        a.click();
-                        URL.revokeObjectURL(url);
-                        toast({ title: "라벨 데이터가 다운로드되었습니다." });
-                      } catch (e: unknown) {
-                        toast({
-                          title: "라벨 데이터 내보내기 실패",
-                          description: e instanceof Error ? e.message : "잠시 후 다시 시도해주세요.",
-                          variant: "destructive",
-                        });
-                      } finally {
-                        setIsExportingLabels(false);
+              {/* §11.297d D2 utility-desktop 더보기 */}
+              <ActionMenu
+                menuId="inv-content-utility-desktop"
+                currentOpenId={openInvContentMenuId}
+                onOpenChange={setOpenInvContentMenuId}
+                width="w-52"
+                items={[
+                  { label: "구매 반영", icon: <PackagePlus className="h-3.5 w-3.5" />, onClick: () => router.push("/dashboard/purchases") },
+                  { label: "재고 파일 가져오기", icon: <Upload className="h-3.5 w-3.5" />, onClick: () => setIsImportStagingOpen(true) },
+                  { label: "QR 스캔", icon: <QrCode className="h-3.5 w-3.5" />, onClick: () => router.push("/dashboard/inventory/scan") },
+                  { label: "라벨 데이터 내보내기 (엑셀)", icon: <FileDown className="h-3.5 w-3.5" />, separator: true, onClick: async () => {
+                    if (isExportingLabels) return;
+                    setIsExportingLabels(true);
+                    try {
+                      const res = await fetch("/api/inventory/export-labels");
+                      if (!res.ok) {
+                        const json = await res.json().catch(() => ({}));
+                        throw new Error((json as { error?: string }).error || "내보내기에 실패했습니다.");
                       }
-                    }}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <FileDown className="h-3.5 w-3.5" />
-                    라벨 데이터 내보내기 (엑셀)
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                      const blob = await res.blob();
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      const yyyymmdd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+                      a.href = url;
+                      a.download = `Label_Data_${yyyymmdd}.xlsx`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      toast({ title: "라벨 데이터가 다운로드되었습니다." });
+                    } catch (e: unknown) {
+                      toast({
+                        title: "라벨 데이터 내보내기 실패",
+                        description: e instanceof Error ? e.message : "잠시 후 다시 시도해주세요.",
+                        variant: "destructive",
+                      });
+                    } finally {
+                      setIsExportingLabels(false);
+                    }
+                  } },
+                ]}
+              />
             </div>
           </div>
 
@@ -4127,6 +4103,8 @@ function InventoryPageContent() {
 
 function InventoryCard({ inventory, onEdit, onRecordUsage, onRestockRequest, onPrintLabel, onDispose, isRestockRequested = false, isRequestingRestock = false, isRecommended = false }: { inventory: ProductInventory; onEdit: () => void; onRecordUsage: (quantity: number, notes?: string) => void; onRestockRequest?: () => void; onPrintLabel?: () => void; onDispose?: () => void; isRestockRequested?: boolean; isRequestingRestock?: boolean; isRecommended?: boolean }) {
   const [showUsageDialog, setShowUsageDialog] = useState(false);
+  // §11.297d InventoryCard plain dropdown state.
+  const [openContentCardMenuId, setOpenContentCardMenuId] = useState<string | null>(null);
   const [usageQuantity, setUsageQuantity] = useState("");
   const [usageNotes, setUsageNotes] = useState("");
 
@@ -4310,28 +4288,17 @@ function InventoryCard({ inventory, onEdit, onRecordUsage, onRestockRequest, onP
                 </div>
               </DialogContent>
             </Dialog>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-slate-400 hover:text-slate-400 shrink-0">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuItem className="gap-2 text-xs" onClick={onEdit}>
-                  <Edit className="h-3.5 w-3.5 text-slate-500" />
-                  정보 수정
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="gap-2 text-xs"
-                  onClick={() => {
-                    setShowUsageDialog(false);
-                  }}
-                >
-                  <Eye className="h-3.5 w-3.5 text-blue-500" />
-                  상세 보기
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* §11.297d D5 InventoryCard actions */}
+            <ActionMenu
+              menuId="inv-content-card-actions"
+              currentOpenId={openContentCardMenuId}
+              onOpenChange={setOpenContentCardMenuId}
+              width="w-40"
+              items={[
+                { label: "정보 수정", icon: <Edit className="h-3.5 w-3.5 text-slate-500" />, onClick: onEdit },
+                { label: "상세 보기", icon: <Eye className="h-3.5 w-3.5 text-blue-500" />, onClick: () => setShowUsageDialog(false) },
+              ]}
+            />
           </div>
         </CardContent>
       </Card>
