@@ -1745,7 +1745,8 @@ export function InventoryMain() {
                             )}
                             {(issueType === "expiring") && (
                               /* 유효기간 임박 → 우선 사용 배지 (읽기 전용 상태 표시) */
-                              <Badge variant="outline" className="h-6 px-1.5 text-[10px] font-semibold whitespace-nowrap bg-yellow-50 text-yellow-700 border-yellow-700  bg-yellow-50  text-yellow-700  border-yellow-700 shrink-0" title="유효기간 임박 또는 먼저 소진해야 하는 항목입니다.">
+                              {/* §11.302d-1 spec 검토 색상 (yellow-100 + yellow-700 + border-yellow-200) */}
+                              <Badge variant="outline" className="h-6 px-1.5 text-[10px] font-semibold whitespace-nowrap bg-yellow-100 text-yellow-700 border-yellow-200 shrink-0" title="유효기간 임박 또는 먼저 소진해야 하는 항목입니다.">
                                 <Truck className="h-2.5 w-2.5 mr-0.5 shrink-0" />
                                 우선 사용
                               </Badge>
@@ -3097,7 +3098,8 @@ export function InventoryMain() {
                               )}
                             </div>
                             {isLowStock && (
-                              <Badge variant="outline" dot="amber" className="mt-1 bg-yellow-50 text-yellow-700 border-yellow-700 text-[11px]">
+                              /* §11.302d-1 spec 긴급 색상 (red-100 + red-700 + border-red-200, dot=red) */
+                              <Badge variant="outline" dot="red" className="mt-1 bg-red-100 text-red-700 border-red-200 text-[11px]">
                                 재고 부족
                               </Badge>
                             )}
@@ -3283,7 +3285,8 @@ function InventoryCard({
               </Badge>
             )}
             {isLowStock && !isOutOfStock && !hasRestockRequest && (
-              <Badge variant="outline" dot="amber" className="bg-yellow-50 text-yellow-700 border-yellow-700">
+              /* §11.302d-1 spec 긴급 색상 (red-100 + red-700 + border-red-200, dot=red) */
+              <Badge variant="outline" dot="red" className="bg-red-100 text-red-700 border-red-200">
                 재고 부족
               </Badge>
             )}
@@ -3725,7 +3728,8 @@ function TeamInventoryCard({
             </Badge>
           )}
           {isLowStock && !isOutOfStock && (
-            <Badge variant="outline" dot="amber" className="flex-shrink-0 bg-yellow-50 text-yellow-700 border-yellow-700">
+            /* §11.302d-1 spec 긴급 색상 (red-100 + red-700 + border-red-200, dot=red) */
+            <Badge variant="outline" dot="red" className="flex-shrink-0 bg-red-100 text-red-700 border-red-200">
               부족
             </Badge>
           )}
