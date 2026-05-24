@@ -132,8 +132,20 @@ export function VendorRequestModal({
   const trackingStorageKey = getDispatchTrackingStorageKey(quoteId);
 
   // ── Initialize from resolved data ──
+  // §11.293 #vendor-dispatch-toggle-reset-fix — 호영님 P0 (2026-05-24):
+  // 기존 useEffect 가 [open, resolvedSuppliersInput, draftMessageInput,
+  // trackingStorageKey] dependency 였음 → parent 가 resolvedSuppliersInput
+  // 을 새 reference 로 전달할 때마다 setSuppliers(resolvedSuppliersInput)
+  // 호출 → 사용자 toggle 후 즉시 reset 회귀 (호영님 spec Case C 정확).
+  // Fix: open === false → true 전환 시에만 init. open 이 이미 true 인
+  // 상태에서 prop reference 변경은 무시 (사용자 선택 보존).
+  const wasOpenRef = useRef(false);
   useEffect(() => {
+    const wasOpen = wasOpenRef.current;
+    wasOpenRef.current = open;
     if (!open) return;
+    // 이미 열려있던 상태에서 prop reference 변경은 무시 — 사용자 선택 보존
+    if (wasOpen) return;
     if (resolvedSuppliersInput && resolvedSuppliersInput.length > 0) {
       setSuppliers(resolvedSuppliersInput);
     } else {
