@@ -12,7 +12,10 @@ import type { ReactNode } from "react";
 import { PLAN_INTENT_VALUES, type PlanIntent } from "@/lib/billing/plan-select";
 import {
   PLAN_DESCRIPTOR,
-  LABOPS_CREDIT_USAGE_SCENARIOS,
+  // §11.303 — LABOPS_CREDIT_USAGE_SCENARIOS import orphan cleanup (AI 기능
+  //   섹션에서 사용 안 함). PROTECTED_SCENARIOS 는 "항상 사용 가능한 핵심
+  //   운영" 섹션에서 그대로 사용. 둘 다 descriptor 의 const 자체는 §11.303b
+  //   에서 caller 전수 audit 후 제거 예정 (호영님 Q2=보존).
   LABOPS_CREDIT_PROTECTED_SCENARIOS,
   type PlanDescriptor,
 } from "@/lib/billing/plan-descriptor";
@@ -77,18 +80,18 @@ function formatOperatingVolume(descriptor: PlanDescriptor): string[] {
     descriptor.operatingVolume.monthlyPo === null ||
     descriptor.operatingVolume.inventoryItems === null
   ) {
-    // Enterprise — 계약 기반
-    return ["좌석·운영량·Credit 모두 계약 기반"];
+    // Enterprise — 계약 기반 (§11.303 — "Credit" 단어 제거)
+    return ["좌석·운영량 모두 계약 기반"];
   }
+  // §11.303 — LabOps Credit 라벨 제거 (호영님 Q1=C UI batch).
+  //   labOpsCreditMonthly field 자체는 보존 (Q2), UI 노출만 제거.
+  //   §11.303b 에서 caller audit 후 field 제거 예정.
   return [
     descriptor.seatsRecommended !== null
       ? `운영자 ${descriptor.seatsRecommended}명 권장`
       : "운영자 무제한 (계약)",
     `RFQ ${descriptor.operatingVolume.monthlyRfq}건 / PO ${descriptor.operatingVolume.monthlyPo}건 (월)`,
     `재고 ${descriptor.operatingVolume.inventoryItems.toLocaleString("ko-KR")} 품목`,
-    descriptor.labOpsCreditMonthly !== null
-      ? `LabOps Credit ${descriptor.labOpsCreditMonthly.toLocaleString("ko-KR")}/월`
-      : "LabOps Credit 계약 기반",
   ];
 }
 
@@ -266,31 +269,32 @@ export default function PricingPage() {
           </div>
         </section>
 
-        {/* ══ §11.201 LabOps Credit 섹션 ════════════════════════════ */}
-        {/* 운영자가 "왜 크레딧이 있는가" 를 한 곳에서 이해. 사용 작업 (AI 차감) +
-            보호 작업 (핵심 운영 흐름 항상 가용) 두 list. footnote 로 pilot 무제한 명시.
-            descriptor 의 LABOPS_CREDIT_USAGE_SCENARIOS / LABOPS_CREDIT_PROTECTED_SCENARIOS
-            single source 통과 (DRY). */}
+        {/* ══ §11.303 AI 기능 섹션 (LabOps Credit 섹션 교체) ════════════
+            호영님 spec (Quartzy/Benchling 벤치마크 정합):
+              Credit 모델 폐지 → AI 기능은 플랜 등급에 포함, 사용량 무제한.
+              Lab Team+ 부터 AI 핵심 기능, R&D Operations+ 부터 AI 견적 작성
+              보조, Enterprise 부터 커스텀 AI 분석.
+            §11.303b 후속 — labOpsCreditMonthly field caller audit + 제거. */}
         <section className="py-16 md:py-20" style={{ backgroundColor: P.bg }}>
           <div className="max-w-6xl mx-auto px-6 md:px-8">
             <Reveal>
               <div className="text-center mb-10 md:mb-12">
                 <p className="text-[11px] font-bold tracking-[0.08em] text-blue-700 uppercase mb-2">
-                  LabOps Credit
+                  AI 기능
                 </p>
                 <h2 className="text-2xl md:text-3xl font-bold mb-3" style={{ color: P.text1 }}>
-                  자동화 작업은 LabOps Credit으로 운영됩니다
+                  Lab Team 이상 플랜에서 AI 기능을 무제한으로 사용할 수 있습니다
                 </h2>
                 <p className="text-sm md:text-base max-w-2xl mx-auto leading-relaxed" style={{ color: P.text3 }}>
-                  AI 견적 비교, 문서 추출, 운영 브리핑처럼 변동 원가가 발생하는 자동화
-                  작업에만 크레딧이 사용됩니다. 검색, 요청 생성, 승인, PO 전환, 입고,
-                  재고 차감 같은 핵심 운영 흐름은 크레딧 잔량과 관계없이 사용할 수 있습니다.
+                  검색, 견적 요청, 승인, PO 발행, 입고, 재고 같은 핵심 운영 기능은
+                  플랜과 관계없이 제한 없이 사용할 수 있습니다. AI 자동화 기능은
+                  플랜 등급별로 사용 범위가 결정됩니다.
                 </p>
               </div>
             </Reveal>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
-              {/* ── 사용 작업 (AI 차감 대상) ── */}
+              {/* ── AI 자동화 (등급별 포함) ── */}
               <Reveal delay={0.05}>
                 <div
                   className="rounded-2xl p-6 md:p-8 h-full flex flex-col"
@@ -301,28 +305,41 @@ export default function PricingPage() {
                       className="text-[10px] font-bold uppercase tracking-[0.08em] px-2 py-0.5 rounded"
                       style={{ backgroundColor: P.blueSoft, color: P.blueText }}
                     >
-                      크레딧으로 차감되는 자동화
+                      AI가 도와주는 자동화
                     </span>
                   </div>
                   <h3 className="text-lg md:text-xl font-bold mb-3" style={{ color: P.text1 }}>
-                    크레딧이 사용되는 자동화 작업
+                    플랜 등급별 AI 기능
                   </h3>
                   <ul className="flex flex-col gap-2.5 flex-grow">
-                    {LABOPS_CREDIT_USAGE_SCENARIOS.map((scenario) => (
-                      <li key={scenario} className="flex items-start gap-2.5 text-sm" style={{ color: P.text2 }}>
-                        <CheckCircle2 className="h-[18px] w-[18px] mt-0.5 flex-shrink-0" style={{ color: P.blue }} />
-                        <span className="leading-relaxed">{scenario}</span>
-                      </li>
-                    ))}
+                    <li className="flex items-start gap-2.5 text-sm" style={{ color: P.text2 }}>
+                      <CheckCircle2 className="h-[18px] w-[18px] mt-0.5 flex-shrink-0" style={{ color: P.blue }} />
+                      <span className="leading-relaxed">AI 견적 비교 분석 (Lab Team+)</span>
+                    </li>
+                    <li className="flex items-start gap-2.5 text-sm" style={{ color: P.text2 }}>
+                      <CheckCircle2 className="h-[18px] w-[18px] mt-0.5 flex-shrink-0" style={{ color: P.blue }} />
+                      <span className="leading-relaxed">AI 문서 추출 (Lab Team+)</span>
+                    </li>
+                    <li className="flex items-start gap-2.5 text-sm" style={{ color: P.text2 }}>
+                      <CheckCircle2 className="h-[18px] w-[18px] mt-0.5 flex-shrink-0" style={{ color: P.blue }} />
+                      <span className="leading-relaxed">AI 운영 브리핑 (Lab Team+)</span>
+                    </li>
+                    <li className="flex items-start gap-2.5 text-sm" style={{ color: P.text2 }}>
+                      <CheckCircle2 className="h-[18px] w-[18px] mt-0.5 flex-shrink-0" style={{ color: P.blue }} />
+                      <span className="leading-relaxed">AI 견적 작성 보조 (R&D Ops+)</span>
+                    </li>
+                    <li className="flex items-start gap-2.5 text-sm" style={{ color: P.text2 }}>
+                      <CheckCircle2 className="h-[18px] w-[18px] mt-0.5 flex-shrink-0" style={{ color: P.blue }} />
+                      <span className="leading-relaxed">커스텀 AI 분석 (Enterprise)</span>
+                    </li>
                   </ul>
                   <p className="mt-5 text-xs leading-relaxed" style={{ color: P.text4 }}>
-                    플랜별 월 Credit 한도는 카드를 참고하세요 (Starter 100 / Lab Team 1,500 /
-                    R&D Operations 7,500).
+                    AI 기능은 플랜 등급에 따라 사용 범위가 결정되며, 사용량 제한 없이 활용할 수 있습니다.
                   </p>
                 </div>
               </Reveal>
 
-              {/* ── 차감되지 않는 작업 (핵심 운영 흐름 보호) ── */}
+              {/* ── 항상 사용 가능한 핵심 운영 ── */}
               <Reveal delay={0.1}>
                 <div
                   className="rounded-2xl p-6 md:p-8 h-full flex flex-col"
@@ -333,11 +350,11 @@ export default function PricingPage() {
                       className="text-[10px] font-bold uppercase tracking-[0.08em] px-2 py-0.5 rounded"
                       style={{ backgroundColor: "rgba(255,255,255,0.6)", color: P.greenText }}
                     >
-                      크레딧으로 차감되지 않는 핵심 운영
+                      항상 사용 가능한 핵심 운영
                     </span>
                   </div>
                   <h3 className="text-lg md:text-xl font-bold mb-3" style={{ color: P.greenText }}>
-                    크레딧 잔량과 관계없이 사용 가능한 핵심 운영 흐름
+                    플랜과 관계없이 제한 없이 사용
                   </h3>
                   <ul className="flex flex-col gap-2.5 flex-grow">
                     {LABOPS_CREDIT_PROTECTED_SCENARIOS.map((scenario) => (
@@ -348,22 +365,11 @@ export default function PricingPage() {
                     ))}
                   </ul>
                   <p className="mt-5 text-xs leading-relaxed font-medium" style={{ color: P.greenText }}>
-                    검색·요청·승인·PO·입고·재고는 크레딧 잔량과 관계없이 항상 사용할 수 있습니다.
+                    모든 핵심 운영 기능은 플랜과 관계없이 제한 없이 사용할 수 있습니다.
                   </p>
                 </div>
               </Reveal>
             </div>
-
-            {/* footnote — pilot 기간 정직성 명시 */}
-            <Reveal delay={0.15}>
-              <p
-                className="mt-6 md:mt-8 text-xs text-center leading-relaxed"
-                style={{ color: P.text4 }}
-              >
-                * pilot (시범 운영) 기간 동안 LabOps Credit 은 무제한으로 사용 가능합니다.
-                정식 차감 시점은 별도 공지로 안내됩니다.
-              </p>
-            </Reveal>
           </div>
         </section>
 

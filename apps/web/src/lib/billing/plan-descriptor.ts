@@ -123,13 +123,18 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
       inventoryItems: 500,
     },
     labOpsCreditMonthly: 1500,
+    // §11.303 — AI 기능 등급별 명시 (호영님 Q1=C UI batch).
+    //   Quartzy/Benchling 벤치마크 정합: AI 기능 = 플랜 등급별 포함,
+    //   사용량 무제한. Credit 모델 제거 후 등급 분기.
+    //   건수 제한 = 현재 backend 한도 그대로 (Q3 보존, §11.303b 에서
+    //   maxQuotesPerMonth null + UI "무제한" 동시 land 예정).
     features: [
       "Starter 전체 +",
-      "운영자 5명 포함 (추가 운영자 별도)",
+      "운영자 5명 포함 (추가 운영자 ₩25,000/인)",
       "견적 요청 (월 30건)",
       "PO 발행 (월 30건)",
       "재고 운영 (500 품목)",
-      "운영 브리핑 (AI 인사이트)",
+      "AI 견적 비교 / 문서 추출 / 운영 브리핑",
       "활동 로그 / 권한 관리",
     ],
     ctaRoute: "/dashboard/settings/plans?plan=team&intent=checkout",
@@ -149,18 +154,21 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
       inventoryItems: 2000,
     },
     labOpsCreditMonthly: 7500,
+    // §11.303 — AI 견적 작성 보조 추가 + CTA "상담" → "시작하기" (셀프
+    //   결제 전환율 정합). 건수 보존 (Q3, §11.303b 후속).
     features: [
       "Lab Team 전체 +",
-      "운영자 15명 포함 (추가 운영자 별도)",
+      "운영자 15명 포함 (추가 운영자 ₩20,000/인)",
       "견적 요청 (월 80건)",
       "PO 발행 (월 80건)",
       "재고 운영 (2,000 품목)",
+      "AI 견적 작성 보조",
       "다중 부서 / 비용센터 분리",
       "감사 로그 PDF 내보내기",
       "워크플로 템플릿 / 승인자 매트릭스",
     ],
     ctaRoute: "/dashboard/settings/plans?plan=business&intent=checkout",
-    ctaLabel: "R&D 운영 플랜 상담",
+    ctaLabel: "R&D Operations 시작하기",
     recommendTag: "추천: R&D 센터 운영",
     approvalPolicy: "in_app_approval",
   },
@@ -176,12 +184,14 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
       inventoryItems: null,
     },
     labOpsCreditMonthly: null,
+    // §11.303 — 커스텀 AI 분석 추가 (Enterprise 전용 AI 등급).
     features: [
       "R&D Operations 전체 +",
       "전용 좌석 / 운영량 협의",
       "SSO / SAML / 감사 통제",
       "전담 온보딩 매니저",
       "기관 SLA / 보안 검토 지원",
+      "커스텀 AI 분석",
     ],
     ctaRoute: "/support?topic=enterprise",
     ctaLabel: "영업 문의하기",
