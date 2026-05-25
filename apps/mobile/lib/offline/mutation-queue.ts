@@ -4,7 +4,7 @@
  * 원칙:
  * - 서버가 canonical truth. 로컬은 pending queue만 담당.
  * - 네트워크 단절 시 mutation을 queue에 저장.
- * - 재연결 시 FIFO 순서로 서버에 전송.
+ * - 사용자 확인 후 FIFO 순서로 서버에 반영.
  * - 실패 시 retry (최대 3회), 그 뒤 사용자에게 알림.
  * - conflict → server wins.
  *
@@ -166,7 +166,7 @@ async function processMutation(mutation: QueuedMutation): Promise<boolean> {
 
 /**
  * 모든 pending mutation을 FIFO 순서로 처리합니다.
- * 네트워크 복구 시 호출.
+ * 사용자가 대기 작업을 확인한 뒤 호출.
  *
  * @returns 처리 결과 { synced: number, failed: number, remaining: number }
  */

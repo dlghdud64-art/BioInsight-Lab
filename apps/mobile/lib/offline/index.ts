@@ -10,8 +10,8 @@
  *
  * 쓰기 (mutation queue):
  *   await offlineMutate("inspection_create", "/api/inventory/123/inspections", payload);
- *   // 온라인: 즉시 전송
- *   // 오프라인: queue에 저장 → 재연결 시 자동 전송
+ *   // 온라인: 사용자가 실행한 요청을 바로 반영
+ *   // 오프라인: queue에 저장 → 사용자가 확인 후 동기화
  */
 
 export { getDb, closeDb } from "./db";
@@ -100,8 +100,8 @@ interface OfflineMutateOptions {
 
 /**
  * 오프라인 지원 mutation.
- * 온라인: 즉시 전송
- * 오프라인: queue에 저장 → 재연결 시 자동 전송
+ * 온라인: 사용자가 실행한 요청을 바로 반영
+ * 오프라인: queue에 저장 → 사용자가 확인 후 동기화
  *
  * @returns { queued: boolean } — true면 대기열에 저장됨
  */
@@ -111,7 +111,7 @@ export async function offlineMutate(
   payload: Record<string, unknown>,
   options?: OfflineMutateOptions,
 ): Promise<{ queued: boolean; data?: unknown }> {
-  // 온라인이면 즉시 전송 시도
+  // 온라인에서는 사용자가 실행한 요청을 바로 반영
   if (isOnline()) {
     try {
       const method = options?.method ?? "POST";

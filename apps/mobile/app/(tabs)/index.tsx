@@ -20,7 +20,7 @@ import {
 } from "lucide-react-native";
 import { useDashboardSummary, usePurchases } from "../../hooks/useApi";
 import { iconColor, spinnerColor } from "../../theme/colors";
-import { getPendingCount } from "../../lib/offline";
+import { getPendingCount, triggerSync } from "../../lib/offline";
 
 import { useState, useEffect } from "react";
 
@@ -45,6 +45,7 @@ export default function HomeScreen() {
   const { data: summary, isLoading, refetch, isRefetching } = useDashboardSummary();
   const { data: purchases } = usePurchases();
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
+  const [isSyncingPending, setIsSyncingPending] = useState(false);
 
   const recentPurchases = (purchases ?? []).slice(0, 3);
 
@@ -52,6 +53,17 @@ export default function HomeScreen() {
   useEffect(() => {
     getPendingCount().then(setPendingSyncCount).catch(() => {});
   }, [summary]);
+
+  const handleConfirmedSync = async () => {
+    setIsSyncingPending(true);
+    try {
+      await triggerSync();
+      setPendingSyncCount(await getPendingCount());
+      refetch();
+    } finally {
+      setIsSyncingPending(false);
+    }
+  };
 
   // ── 3상태 판정 ──
   const pendingQuotes = summary?.pendingQuotes ?? 0;
@@ -166,11 +178,24 @@ export default function HomeScreen() {
 
             {/* ── 오프라인 동기화 대기 배너 ── */}
             {pendingSyncCount > 0 && (
-              <View className="flex-row items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-amber-50 border border-amber-200">
+              <View className="gap-2.5 px-3.5 py-2.5 rounded-xl bg-amber-50 border border-amber-200">
+                <View className="flex-row items-center gap-2.5">
                 <Clock size={16} color={iconColor.warning} />
                 <Text className="text-xs text-amber-700 font-medium flex-1">
-                  동기화 대기 중 {pendingSyncCount}건 — 네트워크 연결 시 자동 전송됩니다
+                    반영 대기 {pendingSyncCount}건 - 내용을 확인한 뒤 서버에 반영하세요
                 </Text>
+                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="대기 작업 확인 후 동기화"
+                  disabled={isSyncingPending}
+                  onPress={handleConfirmedSync}
+                  className={`min-h-11 rounded-lg items-center justify-center ${isSyncingPending ? "bg-amber-300" : "bg-amber-600"}`}
+                >
+                  <Text className="text-xs font-bold text-white">
+                    {isSyncingPending ? "반영 중" : "확인 후 동기화"}
+                  </Text>
+                </Pressable>
               </View>
             )}
 

@@ -1,8 +1,8 @@
 /**
- * offline/sync-manager.ts — 재연결 시 자동 동기화
+ * offline/sync-manager.ts — 확인 후 동기화
  *
- * NetInfo로 네트워크 상태를 감시하고,
- * 오프라인→온라인 전환 시 mutation queue를 자동 flush.
+ * NetInfo로 네트워크 상태만 감시한다.
+ * 대기 중인 변경은 사용자가 확인 버튼을 누른 경우에만 서버에 반영한다.
  *
  * 원칙:
  * - 서버가 canonical truth
@@ -14,19 +14,22 @@
 import NetInfo, { NetInfoState } from "@react-native-community/netinfo";
 import { flushMutationQueue, getPendingCount } from "./mutation-queue";
 import { pruneExpiredCache } from "./cache";
-import { AppState, AppStateStatus } from "react-native";
 
 type SyncCallback = (result: {
   synced: number;
   failed: number;
   remaining: number;
 }) => void;
+type SyncResult = {
+  synced: number;
+  failed: number;
+  remaining: number;
+};
 
 let _isOnline = true;
 let _isSyncing = false;
 let _listeners: SyncCallback[] = [];
 let _unsubscribeNetInfo: (() => void) | null = null;
-let _unsubscribeAppState: (() => void) | null = null;
 
 /**
  * 현재 온라인 상태
@@ -56,8 +59,10 @@ export function onSyncComplete(callback: SyncCallback): () => void {
 /**
  * mutation queue flush 실행
  */
-async function runSync() {
-  if (_isSyncing || !_isOnline) return;
+async function runSync(): Promise<SyncResult> {
+  if (_isSyncing || !_isOnline) {
+    return { synced: 0, failed: 0, remaining: await getPendingCount() };
+  }
 
   _isSyncing = true;
   try {
@@ -74,8 +79,10 @@ async function runSync() {
     if (result.synced > 0) {
       await pruneExpiredCache();
     }
+    return result;
   } catch (err) {
     console.warn("[sync-manager] flush error:", err);
+    return { synced: 0, failed: 0, remaining: await getPendingCount() };
   } finally {
     _isSyncing = false;
   }
@@ -88,20 +95,9 @@ function handleNetworkChange(state: NetInfoState) {
   const wasOffline = !_isOnline;
   _isOnline = !!state.isConnected;
 
-  // 오프라인 → 온라인 전환 시 자동 sync
+  // 연결 복구만 알린다. 서버 반영은 화면의 확인 CTA가 담당한다.
   if (wasOffline && _isOnline) {
-    console.log("[sync-manager] Online detected. Flushing mutation queue...");
-    runSync();
-  }
-}
-
-/**
- * 앱 foreground 복귀 핸들러
- */
-function handleAppStateChange(state: AppStateStatus) {
-  if (state === "active" && _isOnline) {
-    // foreground 복귀 시에도 pending sync 시도
-    runSync();
+    console.log("[sync-manager] Online detected. Pending changes require confirmation.");
   }
 }
 
@@ -115,16 +111,9 @@ export function startSyncManager() {
     _unsubscribeNetInfo = NetInfo.addEventListener(handleNetworkChange);
   }
 
-  // AppState 구독 (foreground 복귀 감지)
-  if (!_unsubscribeAppState) {
-    const subscription = AppState.addEventListener("change", handleAppStateChange);
-    _unsubscribeAppState = () => subscription.remove();
-  }
-
-  // 초기 상태 확인 + pending sync
+  // 초기 상태만 확인한다. 대기 변경은 사용자 동의 없이 반영하지 않는다.
   NetInfo.fetch().then((state) => {
     _isOnline = !!state.isConnected;
-    if (_isOnline) runSync();
   });
 }
 
@@ -137,23 +126,14 @@ export function stopSyncManager() {
     _unsubscribeNetInfo();
     _unsubscribeNetInfo = null;
   }
-  if (_unsubscribeAppState) {
-    _unsubscribeAppState();
-    _unsubscribeAppState = null;
-  }
 }
 
 /**
- * 수동 sync 트리거 (pull-to-refresh 등)
+ * 사용자가 확인한 뒤 실행하는 동기화 트리거.
  */
-export async function triggerSync(): Promise<{
-  synced: number;
-  failed: number;
-  remaining: number;
-}> {
+export async function triggerSync(): Promise<SyncResult> {
   if (!_isOnline) {
     return { synced: 0, failed: 0, remaining: await getPendingCount() };
   }
-  _isSyncing = false; // 강제 재실행 허용
-  return flushMutationQueue();
+  return runSync();
 }

@@ -22,7 +22,7 @@ function RootLayout() {
   const responseListener = useRef<Notifications.EventSubscription>();
 
   useEffect(() => {
-    // 오프라인 동기화 매니저 시작
+    // 오프라인 대기 상태 감시 시작. 서버 반영은 홈의 확인 CTA에서만 실행한다.
     startSyncManager();
     const unsubSync = onSyncComplete((result) => {
       if (result.synced > 0) {
