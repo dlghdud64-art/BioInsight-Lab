@@ -1077,30 +1077,36 @@ function InventoryPageContent() {
     if (!inv.location) return "no_location";
     return "low_stock"; // fallback
   };
+  // §11.302d-3a — ISSUE_CONFIG Badge cls 신호등 정합:
+  //   expired / out_of_stock → 위험 (bg-red-600 text-white, Badge 작아서 가독성 OK)
+  //   expiring → 검토 (bg-yellow-100 text-yellow-700, 이전 yellow-500/10 정합 강화)
+  //   low_stock / reorder_lead → 긴급 (bg-red-100 text-red-700,
+  //     이전 yellow / blue 잘못 정정)
+  //   no_location → utility 보존
   const ISSUE_CONFIG: Record<IssueType, { label: string; cls: string; priority: number }> = {
     expired: {
       label: "만료됨",
-      cls: "bg-red-500/10 text-red-700",
+      cls: "bg-red-600 text-white",
       priority: 0,
     },
     out_of_stock: {
       label: "품절",
-      cls: "bg-red-500/10 text-red-700",
+      cls: "bg-red-600 text-white",
       priority: 1,
     },
     expiring: {
       label: "만료 임박",
-      cls: "bg-yellow-500/10 text-yellow-700",
+      cls: "bg-yellow-100 text-yellow-700",
       priority: 2,
     },
     low_stock: {
       label: "부족",
-      cls: "bg-yellow-500/10 text-yellow-700",
+      cls: "bg-red-100 text-red-700",
       priority: 3,
     },
     reorder_lead: {
       label: "재발주 필요",
-      cls: "bg-blue-500/10 text-blue-400",
+      cls: "bg-red-100 text-red-700",
       priority: 4,
     },
     no_location: {
@@ -1565,8 +1571,11 @@ function InventoryPageContent() {
                       실행 가능 {lotIssueExecutableCount}건
                     </span>
                   </div>
-                  <p data-testid="labaxis-inventory-lot-issue-decision-summary" className="text-sm font-extrabold text-slate-950">
-                    재고 이슈: 만료 lot {lotIssueDisposalReviewCount}건 · 다음 조치: 폐기 처리
+                  <p data-testid="labaxis-inventory-lot-issue-decision-summary" className="text-sm font-extrabold text-red-800">
+                    1순위: 폐기 처리 · 만료 lot {lotIssueDisposalReviewCount}건
+                  </p>
+                  <p data-testid="labaxis-inventory-lot-issue-followup-summary" className="text-xs font-semibold text-slate-600">
+                    2순위: 재발주 후속 검토 · 폐기 완료 후 안전재고 영향 확인
                   </p>
                   <div data-testid="labaxis-inventory-lot-issue-audit-line" className="flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700">
                     <span>승인 여부: {lotIssueApprovalPendingCount > 0 ? "승인 대기" : "승인 불필요"}</span>
@@ -1586,8 +1595,8 @@ function InventoryPageContent() {
                     <Badge data-testid="labaxis-inventory-lot-issue-disposal-count" variant="outline" className={lotIssueDisposalReviewCount > 0 ? "border-red-200 bg-red-50 text-red-700" : "border-slate-200 bg-slate-50 text-slate-400"}>
                       폐기 검토 {lotIssueDisposalReviewCount}건
                     </Badge>
-                    <Badge data-testid="labaxis-inventory-lot-issue-reorder-count" variant="outline" className={lotIssueReorderReviewCount > 0 ? "border-red-200 bg-red-50 text-red-700" : "border-slate-200 bg-slate-50 text-slate-400"}>
-                      재주문 검토 {lotIssueReorderReviewCount}건
+                    <Badge data-testid="labaxis-inventory-lot-issue-reorder-count" variant="outline" className="border-slate-200 bg-slate-50 text-slate-600">
+                      재발주: 후속 검토 {lotIssueReorderReviewCount}건
                     </Badge>
                   </div>
                   <p className="text-sm font-semibold text-slate-900">만료 · 사용 금지 · 폐기 처리 순서로 먼저 확인합니다.</p>
@@ -2019,9 +2028,9 @@ function InventoryPageContent() {
                           <AlertTriangle className="h-4 w-4 text-red-600" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-red-800">우선 처리: 만료 lot {actionableExpiredLots.length}건 폐기 필요</p>
+                          <p className="text-sm font-semibold text-red-800">1순위: 폐기 처리 · 만료 lot {actionableExpiredLots.length}건 · 잔량 {actionableExpiredQuantity}개</p>
                           <p className="text-xs text-red-600/70">
-                            만료 lot {actionableExpiredLots.length}건 · 잔량 {actionableExpiredQuantity}개. 폐기 처리를 먼저 진행하세요.
+                            2순위: 재발주 후속 검토 · 폐기 완료 후 안전재고 영향이 있을 때만 진행
                           </p>
                         </div>
                         <Button data-testid="labaxis-inventory-dispose-lot-cta" data-legacy-testid="lot-disposal-cta" size="sm" variant="outline" className="h-8 text-xs gap-1.5 border-red-300 text-red-700 hover:bg-red-100 flex-shrink-0" onClick={() => openDisposalDock(priorityExpiredLot)}>
