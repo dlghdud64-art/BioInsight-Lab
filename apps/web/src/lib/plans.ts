@@ -61,30 +61,34 @@ export interface PlanDisplayInfo {
   isRecommended: boolean;
 }
 
+// §11.304 — 티어명 등급화 (Free / Basic / Pro / Enterprise) 정합.
+//   PLAN_DESCRIPTOR (lib/billing/plan-descriptor.ts) 의 canonical label과
+//   동기화. FREE→Free, TEAM→Basic, ORGANIZATION→Pro. tagline 도 권장형
+//   ("N명 규모에 적합") 으로 정합.
 export const PLAN_DISPLAY: Record<SubscriptionPlan, PlanDisplayInfo> = {
   [SubscriptionPlan.FREE]: {
     planKey: SubscriptionPlan.FREE,
-    displayName: "Starter",
-    tagline: "개인 시작",
-    description: "개인 연구자와 초기 검토를 위한 시작 플랜",
+    displayName: "Free",
+    tagline: "도입 검토 · 1인 사용에 적합",
+    description: "도입 검토와 1인 사용을 위한 시작 플랜",
     monthlyPrice: 0,
     priceDisplay: "무료",
     isRecommended: false,
   },
   [SubscriptionPlan.TEAM]: {
     planKey: SubscriptionPlan.TEAM,
-    displayName: "Team",
-    tagline: "협업 시작",
-    description: "소규모 연구팀 협업을 위한 플랜",
+    displayName: "Basic",
+    tagline: "소규모 운영 · 3명 규모에 적합",
+    description: "소규모 운영과 3명 규모 협업에 적합한 플랜",
     monthlyPrice: 129_000,
     priceDisplay: "₩129,000/월",
     isRecommended: false,
   },
   [SubscriptionPlan.ORGANIZATION]: {
     planKey: SubscriptionPlan.ORGANIZATION,
-    displayName: "Business",
-    tagline: "조직 운영 표준",
-    description: "승인과 예산 관리가 필요한 조직용 표준 플랜",
+    displayName: "Pro",
+    tagline: "다중 운영 · 통제 기능 · 10명 규모에 적합",
+    description: "다중 운영과 통제 기능이 필요한 조직용 플랜 (10명 규모)",
     monthlyPrice: 349_000,
     priceDisplay: "₩349,000/월",
     isRecommended: true,
@@ -100,12 +104,15 @@ export const PLAN_DISPLAY: Record<SubscriptionPlan, PlanDisplayInfo> = {
  */
 export const ENTERPRISE_INFO = {
   displayName: "Enterprise",
-  tagline: "기관 / 법인 — 계약 기반 좌석·운영량",
+  // §11.304 — PLAN_DESCRIPTOR.enterprise.tagline 와 정합 (조직 유형 규정
+  //   제거, 계약형 운영 강조).
+  tagline: "기관 · 계약형 운영 · 좌석/운영량 협의",
   description: "보안·연동·대규모 운영이 필요한 기관용 플랜",
   priceDisplay: "별도 문의",
   contactEmail: "sales@labaxis.io",
   features: [
-    "R&D Operations 전체 +",
+    // §11.304 — features 선두 라벨 "R&D Operations" → "Pro" 정합.
+    "Pro 전체 +",
     "전용 좌석 / 운영량 협의",
     "SSO / SAML / 감사 통제",
     "전담 온보딩 매니저",
@@ -210,7 +217,7 @@ export const PLAN_ORDER: Record<SubscriptionPlan, number> = {
   [SubscriptionPlan.ORGANIZATION]: 2,
 };
 
-/** 플랜 이름으로 DB enum 값 반환 */
+/** 플랜 이름으로 DB enum 값 반환 — §11.304 fallback "Starter" → "Free" 정합. */
 export function getPlanDisplayName(plan: SubscriptionPlan): string {
-  return PLAN_DISPLAY[plan]?.displayName ?? "Starter";
+  return PLAN_DISPLAY[plan]?.displayName ?? "Free";
 }

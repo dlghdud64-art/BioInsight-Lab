@@ -76,10 +76,11 @@ function isOverlayCapableRoute(href: string): boolean {
 //   plan=starter         → Starter 플랜 안내 (워크스페이스 없이 즉시 사용)
 //   plan=team|business   → 플랜 결제 대기, 워크스페이스 생성 이후 /dashboard/settings/plans 로 유도
 // ═══════════════════════════════════════════════════════════════════
+// §11.304 — 티어명 등급화 (Starter→Free / Team→Basic / Business→Pro) 정합.
 const PLAN_INTENT_LABELS: Record<string, string> = {
-  starter: "Starter",
-  team: "Team",
-  business: "Business",
+  starter: "Free",
+  team: "Basic",
+  business: "Pro",
   enterprise: "Enterprise",
 };
 

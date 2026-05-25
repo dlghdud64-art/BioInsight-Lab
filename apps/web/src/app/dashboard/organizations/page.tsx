@@ -68,11 +68,12 @@ function roleBadge(role: string) {
   );
 }
 
+// §11.304 — 티어명 등급화 (Starter→Free / Team→Basic / Business→Pro) 정합.
 const PLAN_MAP: Record<string, { label: string; color: string }> = {
   ENTERPRISE: { label: "Enterprise", color: "bg-amber-50 text-amber-700 border-amber-200" },
-  ORGANIZATION: { label: "Business", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
-  TEAM: { label: "Team", color: "bg-blue-50 text-blue-700 border-blue-200" },
-  FREE: { label: "Starter", color: "bg-slate-50 text-slate-500 border-slate-200" },
+  ORGANIZATION: { label: "Pro", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
+  TEAM: { label: "Basic", color: "bg-blue-50 text-blue-700 border-blue-200" },
+  FREE: { label: "Free", color: "bg-slate-50 text-slate-500 border-slate-200" },
 };
 
 function planBadge(plan: string) {

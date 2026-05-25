@@ -85,8 +85,11 @@ export interface PlanDescriptor {
 export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
   starter: {
     intent: "starter",
-    label: "Starter",
-    tagline: "1인 연구실 — 검색·비교·요청 흐름 체험",
+    // §11.304 — 티어명 등급화 (Starter → Free). 사용자 유형 규정 제거.
+    //   Free < Basic < Pro < Enterprise 글로벌 표준 위계.
+    label: "Free",
+    // §11.304 — 권장형 (조직 유형 규정 X)
+    tagline: "도입 검토 · 1인 사용에 적합",
     priceMonthlyKrw: 0,
     seatsRecommended: 1,
     operatingVolume: {
@@ -104,20 +107,23 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
       "재고 등록 (50 품목)",
     ],
     ctaRoute: "/dashboard",
-    ctaLabel: "무료 파일럿 시작",
+    // §11.304 — CTA 새 티어명 정합. "파일럿" 단어 제거 (사용자 유형 규정).
+    ctaLabel: "무료로 시작",
     recommendTag: null,
     approvalPolicy: "none",
   },
   team: {
     intent: "team",
-    label: "Lab Team",
-    // §11.209b Phase 4 — "승인" 단어 제거 (dead promise 차단). Lab Team
-    // 은 approvalPolicy='none' → 결재/승인 약속 visible 0 lock 정합.
-    // "승인" → "비교" swap (LabAxis canonical workflow 정합 — 검색·견적·
-    // 비교·PO·입고·재고).
-    tagline: "단일 연구실 — 비교·요청·PO 추적 운영",
+    // §11.304 — 티어명 등급화 (Lab Team → Basic). 사용자 유형 규정 제거.
+    label: "Basic",
+    // §11.209b Phase 4 — "승인" 단어 제거 (dead promise 차단). Basic 은
+    //   approvalPolicy='none' → 결재/승인 약속 visible 0 lock 정합.
+    // §11.304 — 권장형 + 인원 구간 정합 (5→3명, 점프 완화).
+    tagline: "소규모 운영 · 3명 규모에 적합",
     priceMonthlyKrw: 129000,
-    seatsRecommended: 5,
+    // §11.304 — 기본 운영자 5→3 (1→5 점프 완화, 2~3명 소규모 랩 진입 문턱
+    //   낮춤). backend includedSeats 필드 변경 = §11.303b 별도 batch.
+    seatsRecommended: 3,
     operatingVolume: {
       monthlyRfq: 30,
       monthlyPo: 30,
@@ -129,10 +135,12 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     //   사용량 무제한. Credit 모델 제거 후 등급 분기.
     //   건수 제한 = 현재 backend 한도 그대로 (Q3 보존, §11.303b 에서
     //   maxQuotesPerMonth null + UI "무제한" 동시 land 예정).
+    // §11.304 — 운영자 3명 + 추가 1명당 ₩35,000/월 (기본 인당 ₩43,000
+    //   대비 약간 저렴 → 확장 장려, Quartzy Starter 동등).
     features: [
-      "Starter 전체 +",
+      "Free 전체 +",
       "요청 후 PO 추적",
-      "운영자 5명 포함 (추가 운영자 ₩25,000/인)",
+      "운영자 3명 포함 (추가 1명당 ₩35,000/월)",
       "견적 요청 (월 30건)",
       "PO 발행 (월 30건)",
       "재고 운영 (500 품목)",
@@ -140,16 +148,23 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
       "활동 로그 / 권한 관리",
     ],
     ctaRoute: "/dashboard/settings/plans?plan=team&intent=checkout",
-    ctaLabel: "Lab Team 시작하기",
-    recommendTag: "추천: 단일 연구실 운영",
+    // §11.304 — CTA 새 티어명 정합.
+    ctaLabel: "Basic 시작하기",
+    // §11.304 — 추천 배지 등급화 (조직 유형 규정 X).
+    recommendTag: "가장 많이 선택",
     approvalPolicy: "none",
   },
   business: {
     intent: "business",
-    label: "R&D Operations",
-    tagline: "R&D 센터 — 승인·예산 통제 운영",
+    // §11.304 — 티어명 등급화 (R&D Operations → Pro). 사용자 유형 규정
+    //   제거 — R&D 가 아닌 QC/생산/구매팀도 자기 규모만 보고 선택 가능.
+    label: "Pro",
+    // §11.304 — 권장형 + 인원 구간 정합 (15→10명).
+    tagline: "다중 운영 · 통제 기능 · 10명 규모에 적합",
     priceMonthlyKrw: 349000,
-    seatsRecommended: 15,
+    // §11.304 — 기본 운영자 15→10 (점프 완화 + Quartzy Pro 동등 인당 단가).
+    //   backend includedSeats 변경 = §11.303b 별도.
+    seatsRecommended: 10,
     operatingVolume: {
       monthlyRfq: 80,
       monthlyPo: 80,
@@ -158,10 +173,12 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     labOpsCreditMonthly: 7500,
     // §11.303 — AI 견적 작성 보조 추가 + CTA "상담" → "시작하기" (셀프
     //   결제 전환율 정합). 건수 보존 (Q3, §11.303b 후속).
+    // §11.304 — 운영자 10명 + 추가 1명당 ₩28,000/월 (기본 ₩34,900 대비
+    //   저렴, Quartzy Pro $30 < 보다 저렴 → 확장 장려).
     features: [
-      "Lab Team 전체 +",
+      "Basic 전체 +",
       "발주 전 승인 1단계",
-      "운영자 15명 포함 (추가 운영자 ₩20,000/인)",
+      "운영자 10명 포함 (추가 1명당 ₩28,000/월)",
       "견적 요청 (월 80건)",
       "PO 발행 (월 80건)",
       "재고 운영 (2,000 품목)",
@@ -171,14 +188,17 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
       "워크플로 템플릿 / 승인자 매트릭스",
     ],
     ctaRoute: "/dashboard/settings/plans?plan=business&intent=checkout",
-    ctaLabel: "R&D Operations 시작하기",
-    recommendTag: "추천: R&D 센터 운영",
+    // §11.304 — CTA 새 티어명 정합.
+    ctaLabel: "Pro 시작하기",
+    // §11.304 — 추천 배지 등급화 (조직 유형 규정 X).
+    recommendTag: "성장 단계 추천",
     approvalPolicy: "in_app_approval",
   },
   enterprise: {
     intent: "enterprise",
     label: "Enterprise",
-    tagline: "기관 / 법인 — 승인 정책·PO 감사 추적",
+    // §11.304 — 권장형 (계약형 운영 명시, 조직 유형 규정 X).
+    tagline: "기관 · 계약형 운영 · 좌석/운영량 협의",
     priceMonthlyKrw: null,
     seatsRecommended: null,
     operatingVolume: {
@@ -188,8 +208,9 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     },
     labOpsCreditMonthly: null,
     // §11.303 — 커스텀 AI 분석 추가 (Enterprise 전용 AI 등급).
+    // §11.304 — features 선두 라벨 "R&D Operations" → "Pro" 정합.
     features: [
-      "R&D Operations 전체 +",
+      "Pro 전체 +",
       "기관 승인 매트릭스 · PO 감사 추적",
       "전용 좌석 / 운영량 협의",
       "SSO / SAML / 감사 통제",

@@ -465,8 +465,8 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
     );
   }
 
-  // 플랜 정보
-  const planLabel = (organization as any).plan === "ORGANIZATION" ? "Pro" : (organization as any).plan === "TEAM" ? "Basic" : "Starter";
+  // §11.304 — 플랜 정보 (FREE → "Free" 정합, "Starter" → "Free" swap).
+  const planLabel = (organization as any).plan === "ORGANIZATION" ? "Pro" : (organization as any).plan === "TEAM" ? "Basic" : "Free";
   const seatUsagePercent = totalMembers > 0 ? Math.min(100, Math.round((totalMembers / Math.max(totalMembers + 2, 10)) * 100)) : 0;
 
   // 바로 처리 항목

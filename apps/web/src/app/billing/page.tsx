@@ -54,10 +54,11 @@ interface PlanInfo {
   features: string[];
 }
 
+// §11.304 — 티어명 등급화 (Starter→Free / Team→Basic / Business→Pro) 정합.
 const PLAN_LABELS: Record<string, string> = {
-  starter: "Starter",
-  team: "Team",
-  business: "Business",
+  starter: "Free",
+  team: "Basic",
+  business: "Pro",
   enterprise: "Enterprise",
 };
 

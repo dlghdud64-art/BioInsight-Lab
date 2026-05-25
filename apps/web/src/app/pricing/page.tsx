@@ -184,48 +184,23 @@ export default function PricingPage() {
         {/* ══ Header spacer — MainHeader(h-14, z-40) 위에 배경 보장 ══ */}
         <div className="h-14" style={{ backgroundColor: "#0B1120" }} />
 
-        {/* ══ Hero — 운영 흐름 중심 ═══════════════════════════════════ */}
-        <section className="pt-8 pb-6 md:pt-10 md:pb-7 text-center" style={{ backgroundColor: P.bgSoft }}>
+        {/* ══ §11.304 — Hero 섹션 제거 (서비스 소개 /intro 와 역할 중복).
+            가격 보러 온 사용자에게 plan cards 가 즉시 보이도록.
+            제품 설명은 상단 메뉴 "서비스 소개" (/intro) 으로 유도.
+            제거 대상: 제목 + 설명 + 4단계 탭 + 상단 CTA + 칩 (~32 line).
+            ═══════════════════════════════════════════════════════════ */}
+
+        {/* §11.304 — 월간/연간 토글 (plan cards 직전 별도 section) */}
+        <section className="pt-8 pb-2 md:pt-10 md:pb-3" style={{ backgroundColor: P.bgSoft }}>
           <div className="max-w-4xl mx-auto px-6">
             <Reveal>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-3 leading-[1.15]" style={{ color: P.text1 }}>
-                연구소 조달 운영 OS
-              </h1>
-              <p className="text-base md:text-lg max-w-3xl mx-auto mb-5 leading-relaxed" style={{ color: P.text3 }}>
-                검색부터 승인까지, 연구 구매 결정을 한 흐름에서 운영하세요.
-              </p>
-              <div data-testid="pricing-operations-flow" className="grid grid-cols-4 gap-2 mb-5 rounded-xl border p-2 text-xs font-bold sm:text-sm" style={{ backgroundColor: P.bg, borderColor: P.border, color: P.text2 }}>
-                {["검색", "비교", "요청", "승인"].map((step, index) => (
-                  <div key={step} className="rounded-lg py-3" style={{ backgroundColor: index === 0 ? P.blueSoft : P.bgSoft, color: index === 0 ? P.blueText : P.text2 }}>
-                    {index + 1}. {step}
-                  </div>
-                ))}
-              </div>
-              <div className="mb-4 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Link href="/search">
-                  <button className="rounded-lg px-7 py-3.5 font-bold text-white transition-colors" style={{ backgroundColor: P.blue }}>
-                    R&amp;D Operations 시작하기
-                  </button>
-                </Link>
-                <Link href="/search?q=PBS&labaxisPilot=sourcing-ai-compare" className="rounded-lg border px-7 py-3.5 font-bold transition-colors" style={{ borderColor: P.border, color: P.text2, backgroundColor: P.bg }}>
-                  데모 보기
-                </Link>
-              </div>
-              <div data-testid="pricing-decision-status" className="mb-4 flex flex-wrap items-center justify-center gap-2 text-xs font-bold">
-                <span className="rounded-full border px-3 py-2" style={{ borderColor: P.border, backgroundColor: P.bg, color: P.text2 }}>견적 비교: 후보 3개</span>
-                <span className="rounded-full border px-3 py-2" style={{ borderColor: P.border, backgroundColor: P.bg, color: P.text2 }}>승인 필요: 발주 전 1단계</span>
-                <span className="rounded-full border px-3 py-2" style={{ borderColor: P.border, backgroundColor: P.bg, color: P.text2 }}>예산 영향: 월 비용 확인</span>
-              </div>
-            </Reveal>
-
-            {/* Toggle */}
-            <Reveal delay={0.1}>
-              <div className="flex items-center justify-center gap-4 mb-4">
+              <div className="flex items-center justify-center gap-4">
                 <span className="text-sm font-medium" style={{ color: !annual ? P.text1 : P.text4 }}>월간</span>
                 <button
                   onClick={() => setAnnual(!annual)}
                   className="w-14 h-7 rounded-full p-1 flex items-center relative transition-colors"
                   style={{ backgroundColor: annual ? P.blue : P.bgMuted, border: `1px solid ${P.border}` }}
+                  aria-label={annual ? "연간 결제 선택됨, 월간으로 전환" : "월간 결제 선택됨, 연간으로 전환"}
                 >
                   <div className="w-5 h-5 rounded-full transition-all shadow-sm" style={{
                     backgroundColor: annual ? "#FFFFFF" : P.text4,
@@ -245,9 +220,10 @@ export default function PricingPage() {
 
         {/* ══ Plan cards ════════════════════════════════════════════ */}
         {/* §11.201 — PLAN_DESCRIPTOR (lib/billing/plan-descriptor.ts) single
-            source 통과. Hard-coded magic number 폐기. recommendTag 가 한국어 "추천:" 패턴.
-            featured 카드는 recommendTag 가 "단일 연구실" 을 포함하면 dark navy. */}
-        <section id="plans" className="py-12 md:py-16" style={{ backgroundColor: P.bgSoft }}>
+            source 통과. Hard-coded magic number 폐기.
+            §11.304 — recommendTag 등급화 ("가장 많이 선택" / "성장 단계 추천")
+            정합. featured 카드는 "가장 많이 선택" 추천 (Basic 티어) — dark navy. */}
+        <section id="plans" className="py-8 md:py-12" style={{ backgroundColor: P.bgSoft }}>
           <div className="max-w-7xl mx-auto px-6 md:px-8">
             {/* §11.201e — items-stretch + 카드 h-full 로 4 카드 높이 통일 강제. */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
@@ -255,10 +231,11 @@ export default function PricingPage() {
                 const descriptor = PLAN_DESCRIPTOR[intent];
                 const { price, period } = formatPlanPrice(descriptor, discount);
                 const operatingVolume = formatOperatingVolume(descriptor);
-                // featured = "단일 연구실" 추천 카드 (Lab Team) — dark navy 톤
+                // §11.304 — featured = "가장 많이 선택" 추천 카드 (Basic 티어)
+                //   — dark navy 톤. recommendTag 등급화 정합.
                 const featured =
                   descriptor.recommendTag !== null &&
-                  /단일\s*연구실/.test(descriptor.recommendTag);
+                  /가장\s*많이\s*선택/.test(descriptor.recommendTag);
                 return (
                   <Reveal key={descriptor.intent} delay={i * 0.08} className="h-full">
                     <PlanCard
@@ -318,9 +295,10 @@ export default function PricingPage() {
                   <thead>
                     <tr style={{ backgroundColor: P.bgSoft }}>
                       <th className="p-3 md:p-5 text-xs uppercase tracking-wider font-bold whitespace-nowrap" style={{ color: P.text4 }}>운영 항목</th>
-                      <th className="p-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap" style={{ color: P.text2 }}>Starter</th>
-                      <th className="p-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap" style={{ color: P.text1 }}>Lab Team</th>
-                      <th className="p-3 md:p-5 text-center text-xs md:text-sm font-bold whitespace-nowrap" style={{ color: P.text1 }}>{"R&D Operations"}</th>
+                      {/* §11.304 — 비교 표 헤더 티어명 정합 (Starter→Free / Lab Team→Basic / R&D Operations→Pro). */}
+                      <th className="p-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap" style={{ color: P.text2 }}>Free</th>
+                      <th className="p-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap" style={{ color: P.text1 }}>Basic</th>
+                      <th className="p-3 md:p-5 text-center text-xs md:text-sm font-bold whitespace-nowrap" style={{ color: P.text1 }}>Pro</th>
                       <th className="p-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap" style={{ color: P.text2 }}>Enterprise</th>
                     </tr>
                   </thead>
