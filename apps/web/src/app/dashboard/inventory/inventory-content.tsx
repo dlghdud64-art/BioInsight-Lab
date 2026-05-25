@@ -1564,7 +1564,8 @@ function InventoryPageContent() {
                     <span data-testid="labaxis-inventory-disposal-review-state" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-red-800">
                       처분 검토 {lotIssueDisposalReviewCount}건
                     </span>
-                    <span data-testid="labaxis-inventory-approval-waiting-state" className="rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-yellow-700">
+                    {/* §11.302d-3 검토 spec 강화 (yellow-50 → yellow-100) */}
+                    <span data-testid="labaxis-inventory-approval-waiting-state" className="rounded-lg border border-yellow-200 bg-yellow-100 px-3 py-2 text-yellow-700">
                       승인 대기 {lotIssueApprovalPendingCount}건
                     </span>
                     <span data-testid="labaxis-inventory-executable-state" className={lotIssueExecutableCount > 0 ? "rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-800" : "rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-500"}>
@@ -2167,17 +2168,18 @@ function InventoryPageContent() {
                             if (days <= 0) return "만료됨";
                             return `D-${days}`;
                           };
-                          /** 이슈 유형별 카드 배경 */
+                          /** 이슈 유형별 카드 배경 (§11.302d-3 신호등 spec 강화) */
                           const getCardBg = (issueType: IssueType) => {
                             switch (issueType) {
                               case "expired":
                               case "out_of_stock":
-                                return "bg-red-50 border-red-200";
+                                // 큰 카드 가독성 — bg-red-100 (긴급 색상, KPI 카드 위험 red-600 white 회피)
+                                return "bg-red-100 border-red-200";
                               case "expiring":
-                                return "bg-yellow-50 border-yellow-200";
+                                return "bg-yellow-100 border-yellow-200";
                               case "low_stock":
                               case "reorder_lead":
-                                return "bg-red-50 border-red-200";
+                                return "bg-red-100 border-red-200";
                               case "no_location":
                                 return "bg-slate-50 border-slate-200";
                             }
@@ -2208,7 +2210,8 @@ function InventoryPageContent() {
                                       </div>
                                       {/* Line 2: 핵심 수치 1줄 (축약) */}
                                       <p className="text-[11px] text-slate-400 mt-0.5 truncate">
-                                        <span className={`font-semibold ${inv.currentQuantity === 0 ? "text-red-700" : inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock ? "text-yellow-700" : "text-slate-600"}`}>{inv.currentQuantity}</span> {inv.unit}
+                                        {/* §11.302d-3 stock badge — lowStock yellow → red 긴급 spec 정합 */}
+                                        <span className={`font-semibold ${inv.currentQuantity === 0 ? "text-red-700" : inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock ? "text-red-700" : "text-slate-600"}`}>{inv.currentQuantity}</span> {inv.unit}
                                         {inv.safetyStock != null && <span className="text-slate-500"> / 안전재고 {inv.safetyStock}</span>}
                                         {inv.expiryDate && issueType !== "expiring" && issueType !== "expired" && <span className="text-slate-500"> · {format(new Date(inv.expiryDate), "MM.dd")} 만료</span>}
                                         {!inv.location && issueType !== "no_location" && <span className="text-yellow-500"> · 위치 없음</span>}
@@ -2222,7 +2225,8 @@ function InventoryPageContent() {
                                         <Button
                                           size="sm"
                                           variant="outline"
-                                          className={`h-7 px-2 text-[11px] whitespace-nowrap gap-1 ${issueType === "out_of_stock" ? "text-blue-400 border-blue-500/30 hover:bg-blue-500/10" : "text-yellow-700 border-yellow-500/30 hover:bg-yellow-500/10"}`}
+                                          /* §11.302d-3 button 신호등 정합 — out_of_stock 위험 + low_stock/reorder_lead 긴급 (이전 blue/yellow 정정) */
+                                          className={`h-7 px-2 text-[11px] whitespace-nowrap gap-1 ${issueType === "out_of_stock" ? "text-red-700 border-red-500/30 hover:bg-red-50" : "text-red-700 border-red-500/30 hover:bg-red-50"}`}
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             aiPanel.preparePanel({
@@ -2250,8 +2254,8 @@ function InventoryPageContent() {
                                         </Button>
                                       )}
                                       {issueType === "expiring" && (
-                                        /* 유효기간 임박 → 우선 사용 배지 (읽기 전용 상태 표시) */
-                                        <Badge variant="outline" className="h-6 px-1.5 text-[10px] font-semibold whitespace-nowrap bg-yellow-50 text-yellow-700 border-yellow-700  bg-yellow-50  text-yellow-700  border-yellow-700 shrink-0" title="유효기간 임박 또는 먼저 소진해야 하는 항목입니다.">
+                                        /* §11.302d-3 우선 사용 Badge — 검토 spec 정합 (yellow-50 → yellow-100, border-yellow-700 → yellow-200) + duplicate cleanup */
+                                        <Badge variant="outline" className="h-6 px-1.5 text-[10px] font-semibold whitespace-nowrap bg-yellow-100 text-yellow-700 border-yellow-200 shrink-0" title="유효기간 임박 또는 먼저 소진해야 하는 항목입니다.">
                                           <Truck className="h-2.5 w-2.5 mr-0.5 shrink-0" />
                                           우선 사용
                                         </Badge>
@@ -2439,15 +2443,17 @@ function InventoryPageContent() {
                               key: "expiring_soon" as LotStatusFilter,
                               label: "만료 임박",
                               count: summary.expiringSoonLots,
-                              valueClass: "text-yellow-500",
+                              // §11.302d-3 검토 spec 강화 (text-yellow-500 → text-yellow-700)
+                              valueClass: "text-yellow-700",
                               borderClass: "border-yellow-200",
                             },
                             {
                               key: "expired" as LotStatusFilter,
                               label: "만료/소진",
                               count: summary.expiredLots + summary.depletedLots,
-                              valueClass: "text-rose-500",
-                              borderClass: "border-rose-200",
+                              // §11.302d-3 위험/긴급 spec 정합 (text-rose-500 → text-red-700, rose → red 통일)
+                              valueClass: "text-red-700",
+                              borderClass: "border-red-200",
                             },
                           ].map((card) => (
                             <button key={card.key} onClick={() => setLotStatusFilter(card.key)} className={`rounded-xl p-3 text-left transition-all active:scale-95 bg-white border ${lotStatusFilter === card.key ? "ring-2 ring-blue-500/50 border-blue-500" : card.borderClass}`}>
@@ -4507,11 +4513,4 @@ export function InventoryContent() {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-        </div>
-      }
-    >
-      <InventoryPageContent />
-    </Suspense>
-  );
-}
+          <div classNam
