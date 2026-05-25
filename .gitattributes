@@ -1,0 +1,60 @@
+# §11.303-hotfix-c — Cross-platform line ending normalization
+#
+# 배경: §11.298/§11.298c 의 CRLF (호영님 Windows core.autocrlf=true) 으로
+# Vercel SWC parser fail (§11.303-hotfix). 본 .gitattributes 으로 git
+# checkout 시 자동 LF 변환 + 새 file 저장 시 LF 강제 — 재발 영구 차단.
+#
+# Reference:
+#   https://git-scm.com/docs/gitattributes
+#   https://docs.github.com/en/get-started/getting-started-with-git/configuring-git-to-handle-line-endings
+
+# Default: text file auto-detect, working tree + repo 모두 LF
+* text=auto eol=lf
+
+# Source files — strict LF (SWC / Next.js / Vite / Vitest / Prisma 정합)
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.mdx text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.html text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.prisma text eol=lf
+*.sh text eol=lf
+*.env text eol=lf
+*.env.example text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+
+# Windows-specific scripts — CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary files — no line ending conversion
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.svg binary
+*.pdf binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.eot binary
+*.mp4 binary
+*.webm binary
+*.mov binary
