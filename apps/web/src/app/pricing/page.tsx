@@ -12,11 +12,6 @@ import type { ReactNode } from "react";
 import { PLAN_INTENT_VALUES, type PlanIntent } from "@/lib/billing/plan-select";
 import {
   PLAN_DESCRIPTOR,
-  // §11.303 — LABOPS_CREDIT_USAGE_SCENARIOS import orphan cleanup (AI 기능
-  //   섹션에서 사용 안 함). PROTECTED_SCENARIOS 는 "항상 사용 가능한 핵심
-  //   운영" 섹션에서 그대로 사용. 둘 다 descriptor 의 const 자체는 §11.303b
-  //   에서 caller 전수 audit 후 제거 예정 (호영님 Q2=보존).
-  LABOPS_CREDIT_PROTECTED_SCENARIOS,
   type PlanDescriptor,
 } from "@/lib/billing/plan-descriptor";
 
@@ -189,17 +184,38 @@ export default function PricingPage() {
         {/* ══ Header spacer — MainHeader(h-14, z-40) 위에 배경 보장 ══ */}
         <div className="h-14" style={{ backgroundColor: "#0B1120" }} />
 
-        {/* ══ Hero — white, clean ════════════════════════════════════ */}
-        <section className="pt-16 pb-16 md:pt-24 md:pb-20 text-center" style={{ backgroundColor: P.bgSoft }}>
+        {/* ══ Hero — 운영 흐름 중심 ═══════════════════════════════════ */}
+        <section className="pt-8 pb-6 md:pt-10 md:pb-7 text-center" style={{ backgroundColor: P.bgSoft }}>
           <div className="max-w-4xl mx-auto px-6">
             <Reveal>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-5 leading-[1.15]" style={{ color: P.text1 }}>
-                연구 구매 운영량에 맞는 플랜을 선택하세요
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-3 leading-[1.15]" style={{ color: P.text1 }}>
+                연구소 조달 운영 OS
               </h1>
-              <p className="text-base md:text-lg max-w-3xl mx-auto mb-10 leading-relaxed" style={{ color: P.text3 }}>
-                요청, RFQ, 승인, PO 전환, 입고, 재고, 재주문까지<br className="hidden md:block" />
-                연구 구매 운영 체인에 맞춰 시작하고 확장하세요.
+              <p className="text-base md:text-lg max-w-3xl mx-auto mb-5 leading-relaxed" style={{ color: P.text3 }}>
+                검색부터 승인까지, 연구 구매 결정을 한 흐름에서 운영하세요.
               </p>
+              <div data-testid="pricing-operations-flow" className="grid grid-cols-4 gap-2 mb-5 rounded-xl border p-2 text-xs font-bold sm:text-sm" style={{ backgroundColor: P.bg, borderColor: P.border, color: P.text2 }}>
+                {["검색", "비교", "요청", "승인"].map((step, index) => (
+                  <div key={step} className="rounded-lg py-3" style={{ backgroundColor: index === 0 ? P.blueSoft : P.bgSoft, color: index === 0 ? P.blueText : P.text2 }}>
+                    {index + 1}. {step}
+                  </div>
+                ))}
+              </div>
+              <div className="mb-4 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link href="/search">
+                  <button className="rounded-lg px-7 py-3.5 font-bold text-white transition-colors" style={{ backgroundColor: P.blue }}>
+                    R&amp;D Operations 시작하기
+                  </button>
+                </Link>
+                <Link href="/search?q=PBS&labaxisPilot=sourcing-ai-compare" className="rounded-lg border px-7 py-3.5 font-bold transition-colors" style={{ borderColor: P.border, color: P.text2, backgroundColor: P.bg }}>
+                  데모 보기
+                </Link>
+              </div>
+              <div data-testid="pricing-decision-status" className="mb-4 flex flex-wrap items-center justify-center gap-2 text-xs font-bold">
+                <span className="rounded-full border px-3 py-2" style={{ borderColor: P.border, backgroundColor: P.bg, color: P.text2 }}>견적 비교: 후보 3개</span>
+                <span className="rounded-full border px-3 py-2" style={{ borderColor: P.border, backgroundColor: P.bg, color: P.text2 }}>승인 필요: 발주 전 1단계</span>
+                <span className="rounded-full border px-3 py-2" style={{ borderColor: P.border, backgroundColor: P.bg, color: P.text2 }}>예산 영향: 월 비용 확인</span>
+              </div>
             </Reveal>
 
             {/* Toggle */}
@@ -231,7 +247,7 @@ export default function PricingPage() {
         {/* §11.201 — PLAN_DESCRIPTOR (lib/billing/plan-descriptor.ts) single
             source 통과. Hard-coded magic number 폐기. recommendTag 가 한국어 "추천:" 패턴.
             featured 카드는 recommendTag 가 "단일 연구실" 을 포함하면 dark navy. */}
-        <section className="py-12 md:py-16" style={{ backgroundColor: P.bgSoft }}>
+        <section id="plans" className="py-12 md:py-16" style={{ backgroundColor: P.bgSoft }}>
           <div className="max-w-7xl mx-auto px-6 md:px-8">
             {/* §11.201e — items-stretch + 카드 h-full 로 4 카드 높이 통일 강제. */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
@@ -266,110 +282,6 @@ export default function PricingPage() {
                 {selectError}
               </div>
             )}
-          </div>
-        </section>
-
-        {/* ══ §11.303 AI 기능 섹션 (LabOps Credit 섹션 교체) ════════════
-            호영님 spec (Quartzy/Benchling 벤치마크 정합):
-              Credit 모델 폐지 → AI 기능은 플랜 등급에 포함, 사용량 무제한.
-              Lab Team+ 부터 AI 핵심 기능, R&D Operations+ 부터 AI 견적 작성
-              보조, Enterprise 부터 커스텀 AI 분석.
-            §11.303b 후속 — labOpsCreditMonthly field caller audit + 제거. */}
-        <section className="py-16 md:py-20" style={{ backgroundColor: P.bg }}>
-          <div className="max-w-6xl mx-auto px-6 md:px-8">
-            <Reveal>
-              <div className="text-center mb-10 md:mb-12">
-                <p className="text-[11px] font-bold tracking-[0.08em] text-blue-700 uppercase mb-2">
-                  AI 기능
-                </p>
-                <h2 className="text-2xl md:text-3xl font-bold mb-3" style={{ color: P.text1 }}>
-                  Lab Team 이상 플랜에서 AI 기능을 무제한으로 사용할 수 있습니다
-                </h2>
-                <p className="text-sm md:text-base max-w-2xl mx-auto leading-relaxed" style={{ color: P.text3 }}>
-                  검색, 견적 요청, 승인, PO 발행, 입고, 재고 같은 핵심 운영 기능은
-                  플랜과 관계없이 제한 없이 사용할 수 있습니다. AI 자동화 기능은
-                  플랜 등급별로 사용 범위가 결정됩니다.
-                </p>
-              </div>
-            </Reveal>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
-              {/* ── AI 자동화 (등급별 포함) ── */}
-              <Reveal delay={0.05}>
-                <div
-                  className="rounded-2xl p-6 md:p-8 h-full flex flex-col"
-                  style={{ backgroundColor: P.bgSoft, border: `1px solid ${P.border}` }}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span
-                      className="text-[10px] font-bold uppercase tracking-[0.08em] px-2 py-0.5 rounded"
-                      style={{ backgroundColor: P.blueSoft, color: P.blueText }}
-                    >
-                      AI가 도와주는 자동화
-                    </span>
-                  </div>
-                  <h3 className="text-lg md:text-xl font-bold mb-3" style={{ color: P.text1 }}>
-                    플랜 등급별 AI 기능
-                  </h3>
-                  <ul className="flex flex-col gap-2.5 flex-grow">
-                    <li className="flex items-start gap-2.5 text-sm" style={{ color: P.text2 }}>
-                      <CheckCircle2 className="h-[18px] w-[18px] mt-0.5 flex-shrink-0" style={{ color: P.blue }} />
-                      <span className="leading-relaxed">AI 견적 비교 분석 (Lab Team+)</span>
-                    </li>
-                    <li className="flex items-start gap-2.5 text-sm" style={{ color: P.text2 }}>
-                      <CheckCircle2 className="h-[18px] w-[18px] mt-0.5 flex-shrink-0" style={{ color: P.blue }} />
-                      <span className="leading-relaxed">AI 문서 추출 (Lab Team+)</span>
-                    </li>
-                    <li className="flex items-start gap-2.5 text-sm" style={{ color: P.text2 }}>
-                      <CheckCircle2 className="h-[18px] w-[18px] mt-0.5 flex-shrink-0" style={{ color: P.blue }} />
-                      <span className="leading-relaxed">AI 운영 브리핑 (Lab Team+)</span>
-                    </li>
-                    <li className="flex items-start gap-2.5 text-sm" style={{ color: P.text2 }}>
-                      <CheckCircle2 className="h-[18px] w-[18px] mt-0.5 flex-shrink-0" style={{ color: P.blue }} />
-                      <span className="leading-relaxed">AI 견적 작성 보조 (R&D Ops+)</span>
-                    </li>
-                    <li className="flex items-start gap-2.5 text-sm" style={{ color: P.text2 }}>
-                      <CheckCircle2 className="h-[18px] w-[18px] mt-0.5 flex-shrink-0" style={{ color: P.blue }} />
-                      <span className="leading-relaxed">커스텀 AI 분석 (Enterprise)</span>
-                    </li>
-                  </ul>
-                  <p className="mt-5 text-xs leading-relaxed" style={{ color: P.text4 }}>
-                    AI 기능은 플랜 등급에 따라 사용 범위가 결정되며, 사용량 제한 없이 활용할 수 있습니다.
-                  </p>
-                </div>
-              </Reveal>
-
-              {/* ── 항상 사용 가능한 핵심 운영 ── */}
-              <Reveal delay={0.1}>
-                <div
-                  className="rounded-2xl p-6 md:p-8 h-full flex flex-col"
-                  style={{ backgroundColor: P.greenSoft, border: `1px solid ${P.green}` }}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span
-                      className="text-[10px] font-bold uppercase tracking-[0.08em] px-2 py-0.5 rounded"
-                      style={{ backgroundColor: "rgba(255,255,255,0.6)", color: P.greenText }}
-                    >
-                      항상 사용 가능한 핵심 운영
-                    </span>
-                  </div>
-                  <h3 className="text-lg md:text-xl font-bold mb-3" style={{ color: P.greenText }}>
-                    플랜과 관계없이 제한 없이 사용
-                  </h3>
-                  <ul className="flex flex-col gap-2.5 flex-grow">
-                    {LABOPS_CREDIT_PROTECTED_SCENARIOS.map((scenario) => (
-                      <li key={scenario} className="flex items-start gap-2.5 text-sm" style={{ color: P.greenText }}>
-                        <CheckCircle2 className="h-[18px] w-[18px] mt-0.5 flex-shrink-0" style={{ color: P.green }} />
-                        <span className="leading-relaxed font-medium">{scenario}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="mt-5 text-xs leading-relaxed font-medium" style={{ color: P.greenText }}>
-                    모든 핵심 운영 기능은 플랜과 관계없이 제한 없이 사용할 수 있습니다.
-                  </p>
-                </div>
-              </Reveal>
-            </div>
           </div>
         </section>
 

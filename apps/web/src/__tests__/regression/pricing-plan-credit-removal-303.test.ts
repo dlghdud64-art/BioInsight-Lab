@@ -1,7 +1,6 @@
 /**
- * §11.303 #pricing-plan-credit-removal — pricing/page.tsx LABOPS CREDIT 섹션
- *   → "AI 기능" 섹션 교체 + plan-descriptor features array AI 기능 등급별
- *   명시 + CTA "R&D 운영 플랜 상담" → "R&D Operations 시작하기".
+ * §11.303 #pricing-plan-credit-removal — 가격 첫 화면을 운영 OS 흐름으로
+ *   정리하고 plan-descriptor 의 AI 기능 등급 표기는 카드에만 유지한다.
  *
  * 호영님 P1 spec (2026-05-25, Quartzy/Benchling 벤치마크):
  *   Credit 모델은 사용자가 직관적으로 이해 못 함 + Quartzy/Benchling 모두
@@ -15,7 +14,7 @@
  *   Q4 = audit (displayName 정합)
  *
  * §11.303 (본 batch) scope:
- *   - pricing/page.tsx LABOPS CREDIT 섹션 → "AI 기능" 섹션 교체
+ *   - pricing/page.tsx 상단에 조달 운영 흐름과 CTA 고정
  *   - 카드 label "LabOps Credit N/월" 제거
  *   - plan-descriptor features array AI 기능 등급별 명시
  *   - CTA "R&D 운영 플랜 상담" → "R&D Operations 시작하기"
@@ -49,7 +48,7 @@ describe("§11.303 — pricing 플랜 구조 개편 + Credit 제거 (UI batch)",
     expect(DESCRIPTOR_SRC).toMatch(/§11\.303/);
   });
 
-  describe("pricing/page.tsx — LABOPS CREDIT 섹션 → AI 기능 섹션 교체", () => {
+  describe("pricing/page.tsx — 운영 OS 진입 흐름 고정", () => {
     it("LABOPS CREDIT 섹션 헤더 부재 (UI noxious)", () => {
       // 이전 h2 "자동화 작업은 LabOps Credit으로 운영됩니다" 제거
       expect(PRICING_SRC).not.toMatch(/자동화 작업은 LabOps Credit으로/);
@@ -57,27 +56,36 @@ describe("§11.303 — pricing 플랜 구조 개편 + Credit 제거 (UI batch)",
       expect(PRICING_SRC).not.toMatch(/uppercase mb-2">\s*LabOps Credit\s*</);
     });
 
-    it('AI 기능 섹션 신규 노출 ("Lab Team 이상 플랜에서 AI 기능을 무제한")', () => {
-      expect(PRICING_SRC).toMatch(/AI 기능/);
-      expect(PRICING_SRC).toMatch(/Lab Team 이상 플랜에서 AI 기능을 무제한/);
+    it("첫 화면에 운영 OS 정체성과 4단계 흐름을 노출한다", () => {
+      expect(PRICING_SRC).toMatch(/연구소 조달 운영 OS/);
+      expect(PRICING_SRC).toMatch(/data-testid="pricing-operations-flow"/);
+      expect(PRICING_SRC).toMatch(/\["검색", "비교", "요청", "승인"\]/);
     });
 
-    it("AI 등급별 라벨 (Lab Team+ / R&D Ops+ / Enterprise)", () => {
-      expect(PRICING_SRC).toMatch(/AI 견적 비교 분석 \(Lab Team\+\)/);
-      expect(PRICING_SRC).toMatch(/AI 문서 추출 \(Lab Team\+\)/);
-      expect(PRICING_SRC).toMatch(/AI 운영 브리핑 \(Lab Team\+\)/);
-      expect(PRICING_SRC).toMatch(/AI 견적 작성 보조 \(R&D Ops\+\)/);
-      expect(PRICING_SRC).toMatch(/커스텀 AI 분석 \(Enterprise\)/);
+    it("상단에는 주 CTA와 데모 링크만 둔다", () => {
+      expect(PRICING_SRC).toMatch(/R&amp;D Operations 시작하기/);
+      expect(PRICING_SRC).toMatch(/href="\/search\?q=PBS&labaxisPilot=sourcing-ai-compare"/);
+      expect(PRICING_SRC).toMatch(/데모 보기/);
+      expect(PRICING_SRC).toMatch(/id="plans"/);
+    });
+
+    it("CTA 바로 아래에서 비교, 승인, 예산 판단을 노출한다", () => {
+      expect(PRICING_SRC).toMatch(/data-testid="pricing-decision-status"/);
+      expect(PRICING_SRC).toMatch(/견적 비교: 후보 3개/);
+      expect(PRICING_SRC).toMatch(/승인 필요: 발주 전 1단계/);
+      expect(PRICING_SRC).toMatch(/예산 영향: 월 비용 확인/);
+    });
+
+    it("가격표 위의 중복 AI 소개 블록을 노출하지 않는다", () => {
+      expect(PRICING_SRC).not.toMatch(/Lab Team 이상 플랜에서 AI 기능을 무제한/);
+      expect(PRICING_SRC).not.toMatch(/AI 견적 비교 분석 \(Lab Team\+\)/);
+      expect(PRICING_SRC).not.toMatch(/LABOPS_CREDIT_PROTECTED_SCENARIOS\.map/);
     });
 
     it("pilot 무제한 footnote 제거 (Credit 없으면 불필요)", () => {
       expect(PRICING_SRC).not.toMatch(/pilot \(시범 운영\) 기간 동안 LabOps Credit/);
     });
 
-    it("핵심 운영 보호 섹션 보존 (LABOPS_CREDIT_PROTECTED_SCENARIOS map)", () => {
-      expect(PRICING_SRC).toMatch(/LABOPS_CREDIT_PROTECTED_SCENARIOS\.map/);
-      expect(PRICING_SRC).toMatch(/모든 핵심 운영 기능은 플랜과 관계없이 제한 없이/);
-    });
   });
 
   describe("pricing/page.tsx — 카드 label LabOps Credit 제거", () => {
@@ -100,6 +108,13 @@ describe("§11.303 — pricing 플랜 구조 개편 + Credit 제거 (UI batch)",
   });
 
   describe("plan-descriptor.ts — features array + CTA 정합", () => {
+    it("플랜 카드에 운영 행동값을 한 줄씩 노출한다", () => {
+      expect(DESCRIPTOR_SRC).toMatch(/"견적 비교 후보 3개 확인"/);
+      expect(DESCRIPTOR_SRC).toMatch(/"요청 후 PO 추적"/);
+      expect(DESCRIPTOR_SRC).toMatch(/"발주 전 승인 1단계"/);
+      expect(DESCRIPTOR_SRC).toMatch(/"기관 승인 매트릭스 · PO 감사 추적"/);
+    });
+
     it("team.features — AI 견적 비교 / 문서 추출 / 운영 브리핑 신규", () => {
       expect(DESCRIPTOR_SRC).toMatch(/"AI 견적 비교 \/ 문서 추출 \/ 운영 브리핑"/);
     });
@@ -123,6 +138,11 @@ describe("§11.303 — pricing 플랜 구조 개편 + Credit 제거 (UI batch)",
 
     it("enterprise.features — 커스텀 AI 분석 신규", () => {
       expect(DESCRIPTOR_SRC).toMatch(/"커스텀 AI 분석"/);
+    });
+
+    it("enterprise tagline 에 Credit 문구를 다시 노출하지 않는다", () => {
+      expect(DESCRIPTOR_SRC).toMatch(/tagline:\s*"기관 \/ 법인 — 승인 정책·PO 감사 추적"/);
+      expect(DESCRIPTOR_SRC).not.toMatch(/tagline:\s*"기관 \/ 법인 — 계약 기반 좌석·운영량·Credit"/);
     });
   });
 

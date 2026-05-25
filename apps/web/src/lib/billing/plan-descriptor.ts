@@ -86,7 +86,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
   starter: {
     intent: "starter",
     label: "Starter",
-    tagline: "1인 연구실 또는 도입 검토 — 14일 전체 운영 흐름 체험",
+    tagline: "1인 연구실 — 검색·비교·요청 흐름 체험",
     priceMonthlyKrw: 0,
     seatsRecommended: 1,
     operatingVolume: {
@@ -96,6 +96,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     },
     labOpsCreditMonthly: 100,
     features: [
+      "견적 비교 후보 3개 확인",
       "운영자 1명 포함",
       "통합 검색 / 카탈로그",
       "견적 요청 (월 5건)",
@@ -114,7 +115,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     // 은 approvalPolicy='none' → 결재/승인 약속 visible 0 lock 정합.
     // "승인" → "비교" swap (LabAxis canonical workflow 정합 — 검색·견적·
     // 비교·PO·입고·재고).
-    tagline: "단일 연구실 운영 — 견적·비교·PO·입고·재고를 한 화면에서",
+    tagline: "단일 연구실 — 비교·요청·PO 추적 운영",
     priceMonthlyKrw: 129000,
     seatsRecommended: 5,
     operatingVolume: {
@@ -130,6 +131,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     //   maxQuotesPerMonth null + UI "무제한" 동시 land 예정).
     features: [
       "Starter 전체 +",
+      "요청 후 PO 추적",
       "운영자 5명 포함 (추가 운영자 ₩25,000/인)",
       "견적 요청 (월 30건)",
       "PO 발행 (월 30건)",
@@ -145,7 +147,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
   business: {
     intent: "business",
     label: "R&D Operations",
-    tagline: "다중 연구실 / R&D 센터 — 운영량 확장 + 통제 기능",
+    tagline: "R&D 센터 — 승인·예산 통제 운영",
     priceMonthlyKrw: 349000,
     seatsRecommended: 15,
     operatingVolume: {
@@ -158,6 +160,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     //   결제 전환율 정합). 건수 보존 (Q3, §11.303b 후속).
     features: [
       "Lab Team 전체 +",
+      "발주 전 승인 1단계",
       "운영자 15명 포함 (추가 운영자 ₩20,000/인)",
       "견적 요청 (월 80건)",
       "PO 발행 (월 80건)",
@@ -175,7 +178,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
   enterprise: {
     intent: "enterprise",
     label: "Enterprise",
-    tagline: "기관 / 법인 — 계약 기반 좌석·운영량·Credit",
+    tagline: "기관 / 법인 — 승인 정책·PO 감사 추적",
     priceMonthlyKrw: null,
     seatsRecommended: null,
     operatingVolume: {
@@ -187,6 +190,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     // §11.303 — 커스텀 AI 분석 추가 (Enterprise 전용 AI 등급).
     features: [
       "R&D Operations 전체 +",
+      "기관 승인 매트릭스 · PO 감사 추적",
       "전용 좌석 / 운영량 협의",
       "SSO / SAML / 감사 통제",
       "전담 온보딩 매니저",
