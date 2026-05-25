@@ -470,7 +470,11 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   const seatUsagePercent = totalMembers > 0 ? Math.min(100, Math.round((totalMembers / Math.max(totalMembers + 2, 10)) * 100)) : 0;
 
   // 바로 처리 항목
-  const actionableItems: Array<{ label: string; count: number; icon: React.ComponentType<{ className?: string }>; color: string }> = [];
+  // §11.303-hotfix-d — SWC parser nested generic bug 회피: Array<...
+  //   React.ComponentType<{ className?: string }>> 의 nested <> 가 다음
+  //   JSX `<div` 를 generic 으로 잘못 parse. React.ElementType 단일
+  //   token + postfix `[]` 으로 nested generic 제거.
+  const actionableItems: { label: string; count: number; icon: React.ElementType; color: string }[] = [];
   if (pendingCount > 0) actionableItems.push({ label: "초대 응답 대기", count: pendingCount, icon: Mail, color: "text-amber-500" });
   if (approverCount === 0 && totalMembers > 1) actionableItems.push({ label: "승인자 미지정", count: 1, icon: AlertTriangle, color: "text-red-500" });
 
