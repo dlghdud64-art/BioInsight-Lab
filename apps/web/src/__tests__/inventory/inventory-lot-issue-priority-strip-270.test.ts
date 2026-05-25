@@ -83,11 +83,11 @@ describe("inventory lot issue priority strip", () => {
     expect(source).toContain('setActiveInventoryTab("overview")');
     expect(source).toContain("openDisposalDock(priorityExpiredLot)");
     expect(source).toContain("bg-red-600 text-white hover:bg-red-700");
-    expect(source).toContain("1차 CTA · 폐기 처리 시작");
+    expect(source).toContain("폐기 처리");
     expect(source).toContain(
       'data-testid="labaxis-inventory-lot-issue-reorder-secondary-action"',
     );
-    expect(source).toContain("2차 CTA · 폐기 완료 후 재주문 검토");
+    expect(source).toContain("재발주 검토 (폐기 완료 후)");
     expect(source).toContain("처리할 lot_issue가 없어 조치 버튼을 비활성화했습니다.");
   });
 
@@ -98,8 +98,8 @@ describe("inventory lot issue priority strip", () => {
     expect(source.indexOf('data-testid="labaxis-inventory-lot-issue-next-action"')).toBeLessThan(
       source.indexOf('data-testid="labaxis-inventory-lot-issue-reorder-secondary-action"'),
     );
-    expect(source.indexOf("1차 CTA · 폐기 처리 시작")).toBeLessThan(
-      source.indexOf("2차 CTA · 폐기 완료 후 재주문 검토"),
+    expect(source.indexOf("폐기 처리")).toBeLessThan(
+      source.indexOf("재발주 검토 (폐기 완료 후)"),
     );
     expect(source).toContain('aria-disabled="true"');
   });

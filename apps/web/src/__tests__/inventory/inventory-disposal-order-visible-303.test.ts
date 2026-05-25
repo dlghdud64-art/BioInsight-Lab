@@ -11,7 +11,10 @@ describe("재고 폐기 우선순위 표시", () => {
   it("폐기 처리를 1순위, 재발주를 후속 검토로 분리한다", () => {
     expect(source).toContain("1순위: 폐기 처리 · 만료 lot");
     expect(source).toContain("2순위: 재발주 후속 검토 · 폐기 완료 후 안전재고 영향 확인");
+    expect(source).toContain("대상 lot: {priorityExpiredLot?.lotNumber || \"확인 필요\"} · 잔량 {priorityExpiredLot?.currentQuantity ?? actionableExpiredQuantity}개 · 상태: 만료 / 사용 금지");
     expect(source).toContain("재발주: 후속 검토 {lotIssueReorderReviewCount}건");
+    expect(source).toContain("폐기 처리");
+    expect(source).toContain("재발주 검토 (폐기 완료 후)");
   });
 
   it("운영 현황 배너도 같은 처리 순서를 표시한다", () => {

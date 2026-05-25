@@ -31,8 +31,8 @@ describe("inventory lot issue handoff strip", () => {
   it("keeps disposal as the primary action before the reorder review handoff", () => {
     expect(source).toContain('data-testid="labaxis-inventory-lot-issue-action-stack"');
     expect(source).toContain('data-testid="labaxis-inventory-lot-issue-reorder-secondary-action"');
-    expect(source.indexOf("1차 CTA · 폐기 처리 시작")).toBeLessThan(
-      source.indexOf("2차 CTA · 폐기 완료 후 재주문 검토"),
+    expect(source.indexOf("폐기 처리")).toBeLessThan(
+      source.indexOf("재발주 검토 (폐기 완료 후)"),
     );
   });
 });

@@ -1578,6 +1578,9 @@ function InventoryPageContent() {
                   <p data-testid="labaxis-inventory-lot-issue-followup-summary" className="text-xs font-semibold text-slate-600">
                     2순위: 재발주 후속 검토 · 폐기 완료 후 안전재고 영향 확인
                   </p>
+                  <p data-testid="labaxis-inventory-lot-issue-target-summary" className="text-xs font-bold text-slate-700">
+                    대상 lot: {priorityExpiredLot?.lotNumber || "확인 필요"} · 잔량 {priorityExpiredLot?.currentQuantity ?? actionableExpiredQuantity}개 · 상태: 만료 / 사용 금지
+                  </p>
                   <div data-testid="labaxis-inventory-lot-issue-audit-line" className="flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700">
                     <span>승인 여부: {lotIssueApprovalPendingCount > 0 ? "승인 대기" : "승인 불필요"}</span>
                     <span>재고 감소 영향: {actionableExpiredQuantity}개</span>
@@ -1624,7 +1627,7 @@ function InventoryPageContent() {
                     disabled={!priorityExpiredLot && !topPriorityQueueItem}
                     onClick={handleLotIssueDecisionAction}
                   >
-                    1차 CTA · 폐기 처리 시작
+                    폐기 처리
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Button>
                   <Button
@@ -1635,7 +1638,7 @@ function InventoryPageContent() {
                     disabled
                     aria-disabled="true"
                   >
-                    2차 CTA · 폐기 완료 후 재주문 검토
+                    재발주 검토 (폐기 완료 후)
                   </Button>
                 </div>
               </div>
