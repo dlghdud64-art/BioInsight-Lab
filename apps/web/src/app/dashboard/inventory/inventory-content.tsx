@@ -2031,17 +2031,22 @@ function InventoryPageContent() {
                     );
                   })()}
 
-                  {/* ── 우선 처리 배너 (최상단 1줄) ── */}
+                  {/* ── 우선 처리 배너 (최상단 1줄) ──
+                      §11.302d-4 신호등 색상 정합 (의미 역전 정정):
+                        priorityExpiredLot (이미 만료) → 위험 red (큰 박스 가독성 red-100)
+                        expiringSoon (만료 임박)      → 검토 yellow (이전: red 잘못)
+                        lowOrOutOfStock (재주문 필요) → 긴급 red (이전: yellow 잘못)
+                        fallback                      → slate (그대로) */}
                   {issuesCount > 0 ? (
-                    <div className={`rounded-xl border px-4 py-3 flex items-center gap-3 ${priorityExpiredLot ? "border-red-200 bg-red-50" : expiringSoonCount > 0 ? "border-red-200 bg-red-50" : lowOrOutOfStockCount > 0 ? "border-yellow-200 bg-yellow-50" : "border-slate-200 bg-slate-50"}`}>
-                      <div className={`flex h-8 w-8 items-center justify-center rounded-full flex-shrink-0 ${priorityExpiredLot ? "bg-red-100" : expiringSoonCount > 0 ? "bg-red-100" : lowOrOutOfStockCount > 0 ? "bg-yellow-100" : "bg-slate-100"}`}>{priorityExpiredLot ? <Trash2 className="h-4 w-4 text-red-600" /> : expiringSoonCount > 0 ? <Calendar className="h-4 w-4 text-red-600" /> : lowOrOutOfStockCount > 0 ? <AlertTriangle className="h-4 w-4 text-yellow-600" /> : <Zap className="h-4 w-4 text-slate-600" />}</div>
+                    <div className={`rounded-xl border px-4 py-3 flex items-center gap-3 ${priorityExpiredLot ? "border-red-200 bg-red-100" : expiringSoonCount > 0 ? "border-yellow-200 bg-yellow-100" : lowOrOutOfStockCount > 0 ? "border-red-200 bg-red-100" : "border-slate-200 bg-slate-50"}`}>
+                      <div className={`flex h-8 w-8 items-center justify-center rounded-full flex-shrink-0 ${priorityExpiredLot ? "bg-red-200" : expiringSoonCount > 0 ? "bg-yellow-200" : lowOrOutOfStockCount > 0 ? "bg-red-200" : "bg-slate-100"}`}>{priorityExpiredLot ? <Trash2 className="h-4 w-4 text-red-700" /> : expiringSoonCount > 0 ? <Calendar className="h-4 w-4 text-yellow-700" /> : lowOrOutOfStockCount > 0 ? <AlertTriangle className="h-4 w-4 text-red-700" /> : <Zap className="h-4 w-4 text-slate-600" />}</div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[13px] font-extrabold text-slate-900">{priorityExpiredLot ? `우선 처리: 만료 lot ${actionableExpiredLots.length}건 — 폐기 처리 필요` : expiringSoonCount > 0 ? `우선 처리: 만료 임박 ${expiringSoonCount}건 — 폐기 또는 우선 소진 필요` : lowOrOutOfStockCount > 0 ? `우선 처리: 재고 부족 ${lowOrOutOfStockCount}건 — 발주 검토 필요` : `처리 대기 ${issuesCount}건 — 아래 큐에서 확인하세요`}</p>
                       </div>
                       <Button
                         size="sm"
                         disabled={!priorityExpiredLot && !topPriorityQueueItem}
-                        className={`h-7 px-3 text-[11px] font-bold gap-1 flex-shrink-0 ${priorityExpiredLot || expiringSoonCount > 0 ? "bg-red-600 hover:bg-red-700 text-white" : "bg-yellow-600 hover:bg-yellow-700 text-white"}`}
+                        className={`h-7 px-3 text-[11px] font-bold gap-1 flex-shrink-0 ${expiringSoonCount > 0 && !priorityExpiredLot ? "bg-yellow-600 hover:bg-yellow-700 text-white" : "bg-red-600 hover:bg-red-700 text-white"}`}
                         onClick={() => {
                           if (priorityExpiredLot) {
                             openDisposalDock(priorityExpiredLot);
