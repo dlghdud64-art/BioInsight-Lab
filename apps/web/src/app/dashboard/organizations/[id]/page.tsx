@@ -1001,7 +1001,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                                 {member.rawRole === "OWNER" ? (
                                   <Lock className="h-4 w-4 text-slate-600 mx-auto" />
                                 ) : rawMember && !isSelfAdmin ? (
-                                  {/* §11.298c member row action */}
+                                  // §11.303-hotfix-e — JSX 주석 sibling 제거 (fragment 없이 인접하면 SWC parser fail, 진짜 root cause).
                                   <ActionMenu
                                     menuId={`org-member-${rawMember.id}`}
                                     currentOpenId={openMemberActionId}

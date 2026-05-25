@@ -155,6 +155,11 @@ export default function SearchPage() {
   const pilotCompareSeededRef = useRef(false);
   // ── Step 2: activeResultId (ID only) — rail은 products에서 derive ──
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
+  // §11.303-hotfix-e — SearchPage 자체 filter dropdown state (SearchUtilityBar 와 별개).
+  //   SearchPage JSX (line 891-1039) 가 category/price/vendor dropdown 을
+  //   직접 render — useState 가 누락되어 type error. SearchUtilityBar 의
+  //   동일 state (line 2487) 는 별개 scope.
+  const [filterDropdownOpen, setFilterDropdownOpen] = useState<"category" | "price" | "vendor" | null>(null);
   const [sourcingCandidateTriage, setSourcingCandidateTriage] = useState<Record<string, SourcingCandidateTriageState>>({});
   const railProduct = useMemo(() => activeResultId ? products.find((p: any) => p.id === activeResultId) ?? null : null, [activeResultId, products]);
   const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "compare-review-center" | "approval-handoff-gate" | "approval-workbench" | "po-created-wb-v2" | "request-assembly" | "request-submission" | "quote-queue" | "quote-normalization" | "quote-compare" | "po-conversion" | "po-created" | "dispatch-prep" | "send-confirm" | "po-sent-tracking" | "supplier-confirm" | "receiving-prep" | "receiving-exec" | "inventory-intake" | "stock-release" | "reorder-decision" | "procurement-reentry" | "search-reopen" | "result-review" | "compare-reopen" | "request-reopen" | "submission-reopen" | "quote-reentry" | "norm-reentry" | "compare-reentry" | "approval-reentry" | "po-conv-reentry" | "po-created-reentry" | "dispatch-prep-reentry" | "send-confirm-reentry" | "sent-tracking-reentry" | "supplier-confirm-reentry" | "rcv-prep-reentry" | "rcv-exec-reentry" | "stock-release-reentry" | "reorder-decision-reentry" | "procurement-reentry-reopen" | null>(null);

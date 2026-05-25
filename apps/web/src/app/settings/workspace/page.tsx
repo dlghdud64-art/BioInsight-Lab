@@ -551,7 +551,7 @@ function WorkspaceSettingsPageContent() {
                                     </Badge>
                                   )}
                                   {canEdit ? (
-                                    {/* §11.298 workspace member row action */}
+                                    // §11.303-hotfix-e — JSX 주석 sibling 제거 (fragment 없이 인접하면 SWC parser fail, 진짜 root cause).
                                     <ActionMenu
                                       menuId={`member-${member.id}`}
                                       currentOpenId={openMemberMenuId}
