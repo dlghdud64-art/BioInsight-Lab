@@ -33,7 +33,14 @@ export type AnalyticsEvent =
   | "rfq_reply_upload_file"
   | "rfq_reply_paste_table"
   | "budget_set"
-  | "budget_view";
+  | "budget_view"
+  // §11.305-phase3a — compare/page.tsx hidden trackEvent literal 4건 정합.
+  //   release-prep P1 Phase 3a @ts-nocheck 제거 시 노출. 실제 사용 중인
+  //   compare workbench 이벤트 — type-safe enum 으로 정합.
+  | "compare_export_csv"
+  | "compare_decision_option_committed"
+  | "compare_review_enter"
+  | "compare_review_handoff";
 
 export interface AnalyticsEventProperties {
   // search_run

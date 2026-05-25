@@ -1,4 +1,5 @@
-// @ts-nocheck
+// §11.305-phase3a #ts-nocheck-removal — release-prep P1 Phase 3a (production
+//   code @ts-nocheck 제거). hidden type error 노출 + 정합 처리.
 "use client";
 
 import { csrfFetch } from "@/lib/api-client";
@@ -469,12 +470,20 @@ export default function TestComparePage() {
       products: products.map((p: any) => ({
         id: p.id,
         name: p.name || "",
-        priceKRW: p.vendors?.[0]?.priceInKRW ?? null,
-        leadTimeDays: getAverageLeadTime(p) || null,
-        specMatchScore: null,
+        // §11.305-phase3a — DecisionOptionSet element type 가 number | undefined
+        //   기대. null → undefined swap (functionally 동일).
+        priceKRW: p.vendors?.[0]?.priceInKRW ?? undefined,
+        leadTimeDays: getAverageLeadTime(p) || undefined,
+        specMatchScore: undefined,
       })),
+      // §11.305-phase3a — CompareDecisionContext required field 정합.
+      //   compareMode: 현 file 에 정의 0 → empty string 보수 (별도 batch
+      //   에서 sourcing-mode 와 연결 검토 필요). selectedDecisionItemId:
+      //   기준안 state pass-through.
+      compareMode: "",
+      selectedDecisionItemId,
     });
-  }, [compareSessionId, products, getAverageLeadTime]);
+  }, [compareSessionId, products, getAverageLeadTime, selectedDecisionItemId]);
 
   const compareOptions = compareOptionSet?.options ?? [];
   const activeDecisionOption = compareOptions.find(o => o.frame === activeDecisionOptionStrategy) ?? compareOptions.find(o => o.frame === "balanced") ?? null;
@@ -874,7 +883,10 @@ export default function TestComparePage() {
                           <button onClick={() => moveProduct(index, "up")} disabled={index === 0} className="text-slate-600 hover:text-slate-300 disabled:opacity-30">
                             <ArrowUp className="h-2.5 w-2.5" />
                           </button>
-                          <button onClick={() => moveProduct(index, products.length - 1)} disabled={index === products.length - 1} className="text-slate-600 hover:text-slate-300 disabled:opacity-30">
+                          {/* §11.305-phase3a — hidden bug fix: typo `products.length - 1` (number)
+                              → "down" string. moveProduct signature 는 (index, "up"|"down").
+                              UI 의도 = "한 칸 아래" — line 875 "up" 정합. */}
+                          <button onClick={() => moveProduct(index, "down")} disabled={index === products.length - 1} className="text-slate-600 hover:text-slate-300 disabled:opacity-30">
                             <ArrowDown className="h-2.5 w-2.5" />
                           </button>
                         </div>
@@ -1224,7 +1236,7 @@ export default function TestComparePage() {
                     size="sm"
                     variant="outline"
                     className="flex-1 h-8 text-xs text-red-400 border-red-700/30 hover:bg-red-600/10"
-                    onClick={() => { trackEvent("compare_remove_item", { product_id: selectedProduct.id }); toggleCompare(selectedProduct.id); setSelectedProductId(null); }}
+                    onClick={() => { trackEvent("compare_remove_item", { product_id: selectedProduct.id }); toggleCompare(selectedProduct.id); /* §11.305-phase3a — hidden bug fix: setSelectedProductId(null) → setActiveCompareItemId(null). setSelectedProductId 미정의 (JS ReferenceError) → rail close 안 되는 버그. line 1146 패턴 정합. */ setActiveCompareItemId(null); }}
                   >
                     <X className="h-3 w-3 mr-1" />
                     비교 제외
@@ -1592,7 +1604,8 @@ export default function TestComparePage() {
                       if (!decisionProduct) return;
                       const r = addProductToQuote(decisionProduct);
                       const t = resolveAddToQuoteToast(r);
-                      trackEvent("compare_review_handoff", { selectedDecisionItemId, note: !!reviewNote });
+                      {/* §11.305-phase3a — AnalyticsEventProperties.note string?: 정합 (boolean → string). */}
+                      trackEvent("compare_review_handoff", { selectedDecisionItemId, note: reviewNote || undefined });
                       toast({
                         title: t.message,
                         description: r.ok ? decisionProduct.name : undefined,
