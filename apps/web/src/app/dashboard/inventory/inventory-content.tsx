@@ -1620,10 +1620,14 @@ function InventoryPageContent() {
                   <p data-testid="labaxis-inventory-reorder-secondary-note" className="text-xs font-medium text-slate-500">재주문 검토는 폐기 완료 후 우측 도크에서 보조 액션으로 확인합니다.</p>
                 </div>
                 <div data-testid="labaxis-inventory-lot-issue-action-stack" className="flex shrink-0 flex-col gap-2">
+                  <div data-testid="labaxis-inventory-lot-issue-execution-gate" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-bold text-slate-700">
+                    <p>승인 필요: 폐기 승인 1건</p>
+                    <p className="mt-1 text-red-700">재고 반영 예정: 승인 후 -{priorityExpiredLot?.currentQuantity ?? actionableExpiredQuantity}개</p>
+                  </div>
                   <Button
                     data-testid="labaxis-inventory-lot-issue-next-action"
                     size="sm"
-                    className="h-9 gap-1.5 bg-red-600 text-white hover:bg-red-700"
+                    className="h-9 gap-1.5 bg-blue-600 text-white hover:bg-blue-700"
                     disabled={!priorityExpiredLot && !topPriorityQueueItem}
                     onClick={handleLotIssueDecisionAction}
                   >
@@ -4516,4 +4520,11 @@ export function InventoryContent() {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center">
-          <div classNam
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+        </div>
+      }
+    >
+      <InventoryPageContent />
+    </Suspense>
+  );
+}

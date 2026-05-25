@@ -19,6 +19,13 @@ describe("lot disposal approval summary", () => {
     expect(source).toContain('label: "사유"');
     expect(source).toContain('label: "재고 감소"');
     expect(source).toContain("approvalSummaryRows.map");
+    expect(source).toContain(
+      'data-testid="labaxis-inventory-disposal-header-audit-summary"',
+    );
+    expect(source).toContain(
+      'data-testid="labaxis-inventory-disposal-posting-pending"',
+    );
+    expect(source).toContain("승인 필요 · 재고 반영 예정: 폐기 승인 후 -{effectiveQty} {unit}");
   });
 
   it("keeps approval status, disposable count, and stock impact visible together", () => {

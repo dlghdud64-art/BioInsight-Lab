@@ -15,6 +15,10 @@ describe("재고 폐기 우선순위 표시", () => {
     expect(source).toContain("재발주: 후속 검토 {lotIssueReorderReviewCount}건");
     expect(source).toContain("폐기 처리");
     expect(source).toContain("재발주 검토 (폐기 완료 후)");
+    expect(source).toContain('data-testid="labaxis-inventory-lot-issue-execution-gate"');
+    expect(source).toContain("승인 필요: 폐기 승인 1건");
+    expect(source).toContain("재고 반영 예정: 승인 후 -{priorityExpiredLot?.currentQuantity ?? actionableExpiredQuantity}개");
+    expect(source).toContain("bg-blue-600 text-white hover:bg-blue-700");
   });
 
   it("운영 현황 배너도 같은 처리 순서를 표시한다", () => {

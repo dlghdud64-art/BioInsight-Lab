@@ -82,7 +82,7 @@ describe("inventory lot issue priority strip", () => {
     expect(source).toContain("const handleLotIssueDecisionAction = () => {");
     expect(source).toContain('setActiveInventoryTab("overview")');
     expect(source).toContain("openDisposalDock(priorityExpiredLot)");
-    expect(source).toContain("bg-red-600 text-white hover:bg-red-700");
+    expect(source).toContain("bg-blue-600 text-white hover:bg-blue-700");
     expect(source).toContain("폐기 처리");
     expect(source).toContain(
       'data-testid="labaxis-inventory-lot-issue-reorder-secondary-action"',

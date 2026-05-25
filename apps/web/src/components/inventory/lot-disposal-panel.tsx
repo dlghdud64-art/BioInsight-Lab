@@ -231,6 +231,18 @@ export function LotDisposalPanel({
           >
             우선순위: 폐기 처리 먼저 · 폐기 완료 → 재주문 검토
           </p>
+          <p
+            data-testid="labaxis-inventory-disposal-header-audit-summary"
+            className="text-[11px] font-bold leading-relaxed text-slate-700"
+          >
+            Lot {target.lotNumber} · 수량 {effectiveQty} {unit} · 만료일 {formatDate(target.expiryDate)} · 위치 {target.location || "미지정"} · 사유 {REASON_LABELS[effectiveReason]}
+          </p>
+          <p
+            data-testid="labaxis-inventory-disposal-posting-pending"
+            className="text-[11px] font-bold text-red-700"
+          >
+            승인 필요 · 재고 반영 예정: 폐기 승인 후 -{effectiveQty} {unit}
+          </p>
           <div
             data-testid="labaxis-inventory-disposal-priority-badges"
             className="flex flex-wrap gap-1.5"
