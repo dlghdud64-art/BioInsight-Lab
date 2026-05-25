@@ -10,7 +10,6 @@ const source = readFileSync(
 describe("재고 폐기 우선순위 표시", () => {
   it("폐기 처리를 1순위, 재발주를 후속 검토로 분리한다", () => {
     expect(source).toContain("1순위: 폐기 처리 · 만료 lot");
-    expect(source).toContain("2순위: 재발주 후속 검토 · 폐기 완료 후 안전재고 영향 확인");
     expect(source).toContain('data-testid="labaxis-inventory-lot-issue-visible-audit-summary"');
     expect(source).toContain('Lot ID: {priorityExpiredLot?.lotNumber || "확인 필요"}');
     expect(source).toContain("수량: {priorityExpiredLot?.currentQuantity ?? actionableExpiredQuantity}");
@@ -18,7 +17,6 @@ describe("재고 폐기 우선순위 표시", () => {
     expect(source).toContain('위치: {priorityExpiredLot?.location || "미지정"}');
     expect(source).toContain("사유: 유효기간 만료");
     expect(source).toContain("재고 영향: 승인 후 -{priorityExpiredLot?.currentQuantity ?? actionableExpiredQuantity}");
-    expect(source).toContain("재발주: 후속 검토 {lotIssueReorderReviewCount}건");
     expect(source).toContain("폐기 처리");
     expect(source).toContain("후속: 폐기 완료 후 재발주 검토");
     expect(source).toContain('data-testid="labaxis-inventory-lot-issue-execution-gate"');
@@ -29,6 +27,6 @@ describe("재고 폐기 우선순위 표시", () => {
 
   it("운영 현황 배너도 같은 처리 순서를 표시한다", () => {
     expect(source).toContain("1순위: 폐기 처리 · 만료 lot {actionableExpiredLots.length}건 · 잔량 {actionableExpiredQuantity}개");
-    expect(source).toContain("2순위: 재발주 후속 검토 · 폐기 완료 후 안전재고 영향이 있을 때만 진행");
+    expect(source).toContain("후속: 폐기 완료 후 재발주 검토");
   });
 });

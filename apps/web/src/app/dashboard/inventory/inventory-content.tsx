@@ -1575,17 +1575,6 @@ function InventoryPageContent() {
                   <p data-testid="labaxis-inventory-lot-issue-decision-summary" className="text-sm font-extrabold text-red-800">
                     1순위: 폐기 처리 · 만료 lot {lotIssueDisposalReviewCount}건
                   </p>
-                  <p data-testid="labaxis-inventory-lot-issue-followup-summary" className="text-xs font-semibold text-slate-600">
-                    2순위: 재발주 후속 검토 · 폐기 완료 후 안전재고 영향 확인
-                  </p>
-                  <div data-testid="labaxis-inventory-lot-issue-visible-audit-summary" className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs font-bold text-slate-700 sm:grid-cols-3">
-                    <span>Lot ID: {priorityExpiredLot?.lotNumber || "확인 필요"}</span>
-                    <span>수량: {priorityExpiredLot?.currentQuantity ?? actionableExpiredQuantity} {priorityExpiredLot?.unit || "ea"}</span>
-                    <span>만료일: {priorityExpiredLot?.expiryDate ? format(new Date(priorityExpiredLot.expiryDate), "yyyy.MM.dd", { locale: ko }) : "확인 필요"}</span>
-                    <span>위치: {priorityExpiredLot?.location || "미지정"}</span>
-                    <span>사유: 유효기간 만료</span>
-                    <span className="text-red-700">재고 영향: 승인 후 -{priorityExpiredLot?.currentQuantity ?? actionableExpiredQuantity} {priorityExpiredLot?.unit || "ea"}</span>
-                  </div>
                   <div data-testid="labaxis-inventory-lot-issue-audit-line" className="flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700">
                     <span>승인 여부: {lotIssueApprovalPendingCount > 0 ? "승인 대기" : "승인 불필요"}</span>
                     <span>재고 감소 영향: {actionableExpiredQuantity}개</span>
@@ -1604,12 +1593,9 @@ function InventoryPageContent() {
                     <Badge data-testid="labaxis-inventory-lot-issue-disposal-count" variant="outline" className={lotIssueDisposalReviewCount > 0 ? "border-red-200 bg-red-50 text-red-700" : "border-slate-200 bg-slate-50 text-slate-400"}>
                       폐기 검토 {lotIssueDisposalReviewCount}건
                     </Badge>
-                    <Badge data-testid="labaxis-inventory-lot-issue-reorder-count" variant="outline" className="border-slate-200 bg-slate-50 text-slate-600">
-                      재발주: 후속 검토 {lotIssueReorderReviewCount}건
-                    </Badge>
                   </div>
                   <p data-testid="labaxis-inventory-lot-issue-stock-impact" className="text-xs font-semibold text-red-700">
-                    재고 영향: 폐기 전 {actionableExpiredQuantity}개 확인 · 폐기 후 안전재고 이하일 때만 재주문 검토
+                    재고 영향: 폐기 전 {actionableExpiredQuantity}개 확인
                   </p>
                   <div data-testid="labaxis-inventory-lot-issue-handoff-strip" className="grid gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-950 sm:grid-cols-3">
                     <span data-testid="labaxis-inventory-current-owner">현재 담당: 재고 운영</span>
@@ -1619,11 +1605,17 @@ function InventoryPageContent() {
                   <div data-testid="labaxis-inventory-lot-issue-queue-strip" className="flex flex-wrap gap-2 text-xs font-semibold text-slate-700">
                     <span className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-red-700">블로커: 만료 lot 사용 금지</span>
                     <span className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-red-700">조치 1개: 폐기 처리</span>
-                    <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-slate-600">보류 1개: 재주문 검토 대기</span>
                   </div>
-                  <p data-testid="labaxis-inventory-reorder-secondary-note" className="text-xs font-medium text-slate-500">재주문 검토는 폐기 완료 후 우측 도크에서 보조 액션으로 확인합니다.</p>
                 </div>
                 <div data-testid="labaxis-inventory-lot-issue-action-stack" className="flex shrink-0 flex-col gap-2">
+                  <div data-testid="labaxis-inventory-lot-issue-visible-audit-summary" className="flex flex-col gap-1 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs font-bold text-slate-700">
+                    <span>Lot ID: {priorityExpiredLot?.lotNumber || "확인 필요"}</span>
+                    <span>수량: {priorityExpiredLot?.currentQuantity ?? actionableExpiredQuantity} {priorityExpiredLot?.unit || "ea"}</span>
+                    <span>만료일: {priorityExpiredLot?.expiryDate ? format(new Date(priorityExpiredLot.expiryDate), "yyyy.MM.dd", { locale: ko }) : "확인 필요"}</span>
+                    <span>위치: {priorityExpiredLot?.location || "미지정"}</span>
+                    <span>사유: 유효기간 만료</span>
+                    <span className="text-red-700">재고 영향: 승인 후 -{priorityExpiredLot?.currentQuantity ?? actionableExpiredQuantity} {priorityExpiredLot?.unit || "ea"}</span>
+                  </div>
                   <div data-testid="labaxis-inventory-lot-issue-execution-gate" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-bold text-slate-700">
                     <p>승인 필요: 폐기 승인 1건</p>
                     <p className="mt-1 text-red-700">재고 반영 예정: 승인 후 -{priorityExpiredLot?.currentQuantity ?? actionableExpiredQuantity}개</p>
@@ -2028,7 +2020,7 @@ function InventoryPageContent() {
                 {/* 2. 운영 현황 (Inventory Operations Cockpit) */}
                 <TabsContent value="overview" className="m-0 p-4 sm:p-6 space-y-5">
                   {/* 온톨로지: 만료 lot priority banner */}
-                  {(() => {
+                  {!showLotIssueDecisionStrip && (() => {
                     if (!priorityExpiredLot) return null;
                     return (
                       <div data-testid="labaxis-inventory-priority-banner" data-legacy-testid="inventory-priority-banner" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200">
@@ -2055,7 +2047,7 @@ function InventoryPageContent() {
                         expiringSoon (만료 임박)      → 검토 yellow (이전: red 잘못)
                         lowOrOutOfStock (재주문 필요) → 긴급 red (이전: yellow 잘못)
                         fallback                      → slate (그대로) */}
-                  {issuesCount > 0 ? (
+                  {!showLotIssueDecisionStrip && (issuesCount > 0 ? (
                     <div className={`rounded-xl border px-4 py-3 flex items-center gap-3 ${priorityExpiredLot ? "border-red-200 bg-red-100" : expiringSoonCount > 0 ? "border-yellow-200 bg-yellow-100" : lowOrOutOfStockCount > 0 ? "border-red-200 bg-red-100" : "border-slate-200 bg-slate-50"}`}>
                       <div className={`flex h-8 w-8 items-center justify-center rounded-full flex-shrink-0 ${priorityExpiredLot ? "bg-red-200" : expiringSoonCount > 0 ? "bg-yellow-200" : lowOrOutOfStockCount > 0 ? "bg-red-200" : "bg-slate-100"}`}>{priorityExpiredLot ? <Trash2 className="h-4 w-4 text-red-700" /> : expiringSoonCount > 0 ? <Calendar className="h-4 w-4 text-yellow-700" /> : lowOrOutOfStockCount > 0 ? <AlertTriangle className="h-4 w-4 text-red-700" /> : <Zap className="h-4 w-4 text-slate-600" />}</div>
                       <div className="flex-1 min-w-0">
@@ -2086,7 +2078,7 @@ function InventoryPageContent() {
                       </div>
                       <p className="text-[13px] font-extrabold text-slate-900">모든 재고 정상 — 즉시 처리할 항목 없음</p>
                     </div>
-                  )}
+                  ))}
 
                   {/* ── 요약 칩 (backlog 분류, secondary) ──
                       §11.302d-5 신호등 색상 의미 정합 + "전체 재고" 제거:

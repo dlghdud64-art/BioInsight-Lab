@@ -24,7 +24,7 @@ describe("inventory lot issue handoff strip", () => {
     expect(source).toContain("조치 1개: 폐기 처리");
     expect(source).toContain("border-slate-200 bg-slate-50");
     expect(source.indexOf('data-testid="labaxis-inventory-lot-issue-queue-strip"')).toBeLessThan(
-      source.indexOf('data-testid="labaxis-inventory-reorder-secondary-note"'),
+      source.indexOf('data-testid="labaxis-inventory-lot-issue-reorder-secondary-action"'),
     );
   });
 

@@ -81,8 +81,9 @@ describe("§11.302d-4 — 우선 처리 배너 신호등 의미 정합", () => {
   });
 
   describe("회귀 0 — 핵심 logic 보존", () => {
-    it("issuesCount > 0 conditional 보존 (배너 vs 정상 메시지)", () => {
-      expect(SRC).toMatch(/\{issuesCount > 0 \? \(/);
+    it("파일럿 결정 카드가 보이면 중복 배너를 숨긴다", () => {
+      expect(SRC).toMatch(/\{!showLotIssueDecisionStrip && \(issuesCount > 0 \? \(/);
+      expect(SRC).toMatch(/\{!showLotIssueDecisionStrip && \(\(\) => \{/);
     });
 
     it("정상 상태 fallback (emerald + 모든 재고 정상) 보존", () => {

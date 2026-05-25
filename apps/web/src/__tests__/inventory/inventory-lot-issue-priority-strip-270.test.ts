@@ -37,7 +37,6 @@ describe("inventory lot issue priority strip", () => {
       'data-testid="labaxis-inventory-lot-issue-visible-audit-summary"',
     );
     expect(source).toContain("1순위: 폐기 처리 · 만료 lot {lotIssueDisposalReviewCount}건");
-    expect(source).toContain("2순위: 재발주 후속 검토 · 폐기 완료 후 안전재고 영향 확인");
     expect(source).toContain("승인 여부:");
     expect(source).toContain("재고 감소 영향: {actionableExpiredQuantity}개");
     expect(source).toContain("다음 처리자: 재고 운영");
@@ -57,9 +56,6 @@ describe("inventory lot issue priority strip", () => {
       'data-testid="labaxis-inventory-lot-issue-disposal-count"',
     );
     expect(source).toContain(
-      'data-testid="labaxis-inventory-lot-issue-reorder-count"',
-    );
-    expect(source).toContain(
       'data-testid="labaxis-inventory-lot-issue-stock-impact"',
     );
     expect(source).toContain(
@@ -69,13 +65,8 @@ describe("inventory lot issue priority strip", () => {
     expect(source).toContain("보류 {lotIssueHoldCount}건");
     expect(source).toContain("즉시 확인 {lotIssueImmediateCount}건");
     expect(source).toContain("폐기 검토 {lotIssueDisposalReviewCount}건");
-    expect(source).toContain("재발주: 후속 검토 {lotIssueReorderReviewCount}건");
     expect(source).toContain("사유: 유효기간 만료");
-    expect(source).toContain("폐기 후 안전재고 이하일 때만 재주문 검토");
-    expect(source).toContain(
-      'data-testid="labaxis-inventory-reorder-secondary-note"',
-    );
-    expect(source).toContain("재주문 검토는 폐기 완료 후 우측 도크에서 보조 액션으로 확인합니다.");
+    expect(source).toContain("재고 영향: 폐기 전 {actionableExpiredQuantity}개 확인");
   });
 
   it("wires the primary lot issue action to a visible dock or disabled reason", () => {
@@ -105,6 +96,7 @@ describe("inventory lot issue priority strip", () => {
       source.indexOf("후속: 폐기 완료 후 재발주 검토"),
     );
     expect(source).not.toContain('aria-disabled="true"');
+    expect(source).not.toContain('data-testid="labaxis-inventory-reorder-secondary-note"');
   });
 
   it("removes the weak operations summary tab copy while lot issue review is active", () => {
