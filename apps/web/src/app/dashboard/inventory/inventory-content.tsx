@@ -915,8 +915,9 @@ function InventoryPageContent() {
   // 고유 위치 목록 추출
   const uniqueLocations = Array.from(new Set(displayInventories.map((inv) => inv.location).filter(Boolean))) as string[];
 
-  // 상단 KPI 카드용 요약 지표 (리드 타임 기반 재주문 포함)
-  const totalInventoryCount = displayInventories.length;
+  // 상단 KPI 카드용 요약 지표 (리드 타임 기반 재주문 포함).
+  // §11.302d-5 — totalInventoryCount 제거 (요약 칩 "전체 재고" §11.302c
+  //   정합 제거 후 orphan cleanup).
   const lowOrOutOfStockCount = displayInventories.filter((inv) => {
     const isOut = inv.currentQuantity === 0;
     const isLow = inv.safetyStock !== null && inv.currentQuantity <= inv.safetyStock;
@@ -2070,26 +2071,24 @@ function InventoryPageContent() {
                     </div>
                   )}
 
-                  {/* ── 요약 칩 (backlog 분류, secondary) ── */}
+                  {/* ── 요약 칩 (backlog 분류, secondary) ──
+                      §11.302d-5 신호등 색상 의미 정합 + "전체 재고" 제거:
+                        만료 임박  → 검토 yellow-100 (이전 red-50 잘못 정정)
+                        부족/품절 → 긴급 red-100 (이전 yellow-50 잘못 정정)
+                        전체 재고  → 제거 (§11.302c KPI "전체 재고" 제거 정합) */}
                   <div className="flex flex-wrap items-center gap-2">
                     {[
                       {
                         label: "만료 임박",
                         value: expiringSoonCount,
-                        color: "text-red-600",
-                        bg: "bg-red-50 border-red-200",
+                        color: "text-yellow-700",
+                        bg: "bg-yellow-100 border-yellow-200",
                       },
                       {
-                        label: "부족/품절",
+                        label: "재주문 필요",
                         value: lowOrOutOfStockCount,
-                        color: "text-yellow-600",
-                        bg: "bg-yellow-50 border-yellow-200",
-                      },
-                      {
-                        label: "전체 재고",
-                        value: totalInventoryCount,
-                        color: "text-slate-600",
-                        bg: "bg-white border-slate-200",
+                        color: "text-red-700",
+                        bg: "bg-red-100 border-red-200",
                       },
                     ].map((chip) => (
                       <span key={chip.label} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-bold ${chip.bg} ${chip.color}`}>
