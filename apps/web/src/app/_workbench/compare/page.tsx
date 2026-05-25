@@ -1419,7 +1419,7 @@ export default function TestComparePage() {
 
       {/* ═══ Review Center Work Window ═══ */}
       {reviewMode && products.length >= 2 && (() => {
-        // 기준안이 있으면 기준안 기준으로 handoff. 없으면 추천안만 표시 (자동 확정 금지)
+        // 기준안이 있으면 기준안 기준으로 handoff. 없으면 사람이 선택하기 전까지 추천안으로만 표시.
         const recommended = selectedDecisionItemId
           ? products.find((p: any) => p.id === selectedDecisionItemId) ?? null
           : null;

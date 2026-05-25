@@ -121,18 +121,12 @@ export async function trackEvent(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(eventData),
-    }).catch((error) => {
-      // 에러는 조용히 무시 (Analytics는 앱 동작에 영향을 주지 않아야 함)
-      console.debug("Analytics tracking error:", error);
+    }).catch(() => {
+      // Analytics 실패는 사용자 작업을 막지 않는다.
     });
 
-    // 개발 환경에서는 콘솔에 로그 출력
-    if (process.env.NODE_ENV === "development") {
-      console.log("[Analytics]", event, properties);
-    }
-  } catch (error) {
-    // Analytics 에러는 앱 동작에 영향을 주지 않아야 함
-    console.debug("Analytics tracking error:", error);
+  } catch {
+    // Analytics 실패는 사용자 작업을 막지 않는다.
   }
 }
 
