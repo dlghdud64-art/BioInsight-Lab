@@ -1621,17 +1621,20 @@ export function InventoryMain() {
                     if (days <= 0) return "만료됨";
                     return `D-${days}`;
                   };
-                  /** 이슈 유형별 카드 배경 */
+                  /** 이슈 유형별 카드 배경 (§11.302d-2 신호등 정합 + duplicate orphan cleanup) */
                   const getCardBg = (issueType: IssueType) => {
                     switch (issueType) {
                       case "expired":
                       case "out_of_stock":
-                        return "bg-red-100  bg-red-100 border-red-900/30  border-red-900/30";
+                        // 큰 카드 가독성 (h5 text-slate-900 conflict 회피) — bg-red-100 긴급 색상 유지
+                        return "bg-red-100 border-red-200";
                       case "expiring":
-                        return "bg-yellow-50  bg-yellow-50 border-yellow-900/30  border-yellow-900/30";
+                        // §11.302d-2 spec 검토 (yellow-100 + border-yellow-200)
+                        return "bg-yellow-100 border-yellow-200";
                       case "low_stock":
                       case "reorder_lead":
-                        return "bg-red-100  bg-red-100 border-red-900/30  border-red-900/30";
+                        // §11.302d-2 spec 긴급 (red-100 + border-red-200)
+                        return "bg-red-100 border-red-200";
                       case "no_location":
                         return "bg-pn/30 border-bs";
                     }
