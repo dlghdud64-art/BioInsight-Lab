@@ -148,8 +148,8 @@ async function main() {
       },
       storageCondition: "2-8°C 냉장 보관",
       safetyNote: "냉장 보관 필수. 개봉 후 1개월 내 사용 권장.",
-      imageUrl: "https://via.placeholder.com/300x300?text=PBS+1X+Hero",
-      msdsUrl: "https://example.com/msds/pbs-1x.pdf",
+      imageUrl: null,
+      msdsUrl: null,
     },
   });
 
