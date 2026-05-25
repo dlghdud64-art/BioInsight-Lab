@@ -21,7 +21,7 @@ describe("inventory lot issue handoff strip", () => {
   it("separates blocker, one action, and one hold item as queue language", () => {
     expect(source).toContain('data-testid="labaxis-inventory-lot-issue-queue-strip"');
     expect(source).toContain("border-red-200 bg-red-50");
-    expect(source).toContain("border-orange-200 bg-orange-50");
+    expect(source).toContain("조치 1개: 폐기 처리");
     expect(source).toContain("border-slate-200 bg-slate-50");
     expect(source.indexOf('data-testid="labaxis-inventory-lot-issue-queue-strip"')).toBeLessThan(
       source.indexOf('data-testid="labaxis-inventory-reorder-secondary-note"'),
