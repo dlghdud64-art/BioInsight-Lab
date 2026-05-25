@@ -91,20 +91,26 @@ export const PLAN_DISPLAY: Record<SubscriptionPlan, PlanDisplayInfo> = {
   },
 };
 
-/** Enterprise 전용 — DB에 저장되지 않고, UI에서만 표시 */
+/** Enterprise 전용 — DB에 저장되지 않고, UI에서만 표시.
+ *  §11.303c — PLAN_DESCRIPTOR.enterprise.features (plan-descriptor.ts) 와
+ *    정합. "Business 전체 기능" → "R&D Operations 전체 +" 라벨 통일 +
+ *    SSO/SAML/감사 통제 + 전담 온보딩 매니저 + 기관 SLA + 커스텀 AI 분석
+ *    (§11.303 AI 등급 spec 정합). 향후 ENTERPRISE_INFO → PLAN_DESCRIPTOR
+ *    단일화는 별도 batch (caller audit 후).
+ */
 export const ENTERPRISE_INFO = {
   displayName: "Enterprise",
-  tagline: "기관 도입",
+  tagline: "기관 / 법인 — 계약 기반 좌석·운영량",
   description: "보안·연동·대규모 운영이 필요한 기관용 플랜",
   priceDisplay: "별도 문의",
   contactEmail: "sales@labaxis.io",
   features: [
-    "Business 전체 기능",
-    "ERP API 연동",
-    "SSO 지원",
-    "무제한 데이터 저장",
-    "전담 매니저 및 SLA",
-    "조직 맞춤 구축 지원",
+    "R&D Operations 전체 +",
+    "전용 좌석 / 운영량 협의",
+    "SSO / SAML / 감사 통제",
+    "전담 온보딩 매니저",
+    "기관 SLA / 보안 검토 지원",
+    "커스텀 AI 분석",
   ],
 } as const;
 
