@@ -122,9 +122,13 @@ export const ENTERPRISE_INFO = {
 } as const;
 
 // ── 플랜별 기능 제한 ──
+// §11.303b — maxPurchaseOrdersPerMonth field 신규 (Free 5, Basic/Pro/Enterprise null).
+//   UI "무제한" 표기와 backend enforce 정합 (현재 enforce throw 0건이라
+//   field 정의 + client 전달만으로 정합 보장).
 export interface PlanLimits {
   maxMembers: number | null;
   maxQuotesPerMonth: number | null;
+  maxPurchaseOrdersPerMonth: number | null;
   maxSharedLinks: number | null;
   maxItems: number | null;
   features: {
@@ -146,7 +150,10 @@ export interface PlanLimits {
 export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
   [SubscriptionPlan.FREE]: {
     maxMembers: 1,        // 개인 전용
-    maxQuotesPerMonth: 10,
+    // §11.303b — Free maxQuotesPerMonth 10 → 5 (호영님 spec 정합)
+    maxQuotesPerMonth: 5,
+    // §11.303b — Free maxPurchaseOrdersPerMonth 5 (신규)
+    maxPurchaseOrdersPerMonth: 5,
     maxSharedLinks: 5,
     maxItems: 10,         // 품목 등록 10개
     features: {
@@ -165,8 +172,11 @@ export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
     },
   },
   [SubscriptionPlan.TEAM]: {
-    maxMembers: 5,          // 팀원 5명
-    maxQuotesPerMonth: 100,
+    maxMembers: 5,          // 팀원 5명 — §11.303b-3 grandfather 결정 대기 (3 으로 축소 검토)
+    // §11.303b — TEAM(Basic) maxQuotesPerMonth 100 → null (무제한)
+    maxQuotesPerMonth: null,
+    // §11.303b — TEAM(Basic) maxPurchaseOrdersPerMonth null (신규, 무제한)
+    maxPurchaseOrdersPerMonth: null,
     maxSharedLinks: 50,
     maxItems: 50,           // 품목 등록 50개
     features: {
@@ -185,8 +195,10 @@ export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
     },
   },
   [SubscriptionPlan.ORGANIZATION]: {
-    maxMembers: null,         // 무제한
+    maxMembers: null,         // 무제한 — §11.303b-3 grandfather: 10 으로 축소 검토 (현재 null 유지)
     maxQuotesPerMonth: null,  // 무제한
+    // §11.303b — ORGANIZATION(Pro) maxPurchaseOrdersPerMonth null (신규, 무제한)
+    maxPurchaseOrdersPerMonth: null,
     maxSharedLinks: null,     // 무제한
     maxItems: null,           // 무제한
     features: {

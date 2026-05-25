@@ -125,8 +125,9 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     //   낮춤). backend includedSeats 필드 변경 = §11.303b 별도 batch.
     seatsRecommended: 3,
     operatingVolume: {
-      monthlyRfq: 30,
-      monthlyPo: 30,
+      // §11.303b — Basic 견적/PO 무제한 (UI literal + backend null 동시).
+      monthlyRfq: null,
+      monthlyPo: null,
       inventoryItems: 500,
     },
     labOpsCreditMonthly: 1500,
@@ -141,8 +142,9 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
       "Free 전체 +",
       "요청 후 PO 추적",
       "운영자 3명 포함 (추가 1명당 ₩35,000/월)",
-      "견적 요청 (월 30건)",
-      "PO 발행 (월 30건)",
+      // §11.303b — Basic 견적/PO "무제한" (backend null + UI literal 동시)
+      "견적 요청 무제한",
+      "PO 발행 무제한",
       "재고 운영 (500 품목)",
       "AI 견적 비교 / 문서 추출 / 운영 브리핑",
       "활동 로그 / 권한 관리",
@@ -166,8 +168,9 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     //   backend includedSeats 변경 = §11.303b 별도.
     seatsRecommended: 10,
     operatingVolume: {
-      monthlyRfq: 80,
-      monthlyPo: 80,
+      // §11.303b — Pro 견적/PO 무제한 (UI literal + backend null 동시).
+      monthlyRfq: null,
+      monthlyPo: null,
       inventoryItems: 2000,
     },
     labOpsCreditMonthly: 7500,
@@ -179,8 +182,9 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
       "Basic 전체 +",
       "발주 전 승인 1단계",
       "운영자 10명 포함 (추가 1명당 ₩28,000/월)",
-      "견적 요청 (월 80건)",
-      "PO 발행 (월 80건)",
+      // §11.303b — Pro 견적/PO "무제한" (backend null + UI literal 동시)
+      "견적 요청 무제한",
+      "PO 발행 무제한",
       "재고 운영 (2,000 품목)",
       "AI 견적 작성 보조",
       "다중 부서 / 비용센터 분리",

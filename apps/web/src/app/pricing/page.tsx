@@ -68,26 +68,34 @@ function formatPlanPrice(descriptor: PlanDescriptor, discount: number): {
   };
 }
 
-/** §11.201 — 운영량 / Credit 한 줄 요약. 카드 안의 "왜 이 가격인가" 정량 근거. */
+/** §11.201 — 운영량 / Credit 한 줄 요약. 카드 안의 "왜 이 가격인가" 정량 근거.
+ *  §11.303b — Basic/Pro 견적/PO null (무제한) 시 "견적·발주 무제한" 표기 분기.
+ *    backend maxQuotesPerMonth/maxPurchaseOrdersPerMonth null 과 UI literal 동시 정합.
+ */
 function formatOperatingVolume(descriptor: PlanDescriptor): string[] {
+  // Enterprise — 모두 null (계약 기반)
   if (
-    descriptor.operatingVolume.monthlyRfq === null ||
-    descriptor.operatingVolume.monthlyPo === null ||
+    descriptor.operatingVolume.monthlyRfq === null &&
+    descriptor.operatingVolume.monthlyPo === null &&
     descriptor.operatingVolume.inventoryItems === null
   ) {
-    // Enterprise — 계약 기반 (§11.303 — "Credit" 단어 제거)
     return ["좌석·운영량 모두 계약 기반"];
   }
-  // §11.303 — LabOps Credit 라벨 제거 (호영님 Q1=C UI batch).
-  //   labOpsCreditMonthly field 자체는 보존 (Q2), UI 노출만 제거.
-  //   §11.303b 에서 caller audit 후 field 제거 예정.
-  return [
+  // §11.303b — Basic/Pro: 견적/PO null (무제한) + 재고 quota 있음
+  const seatsLine =
     descriptor.seatsRecommended !== null
       ? `운영자 ${descriptor.seatsRecommended}명 권장`
-      : "운영자 무제한 (계약)",
-    `RFQ ${descriptor.operatingVolume.monthlyRfq}건 / PO ${descriptor.operatingVolume.monthlyPo}건 (월)`,
-    `재고 ${descriptor.operatingVolume.inventoryItems.toLocaleString("ko-KR")} 품목`,
-  ];
+      : "운영자 무제한 (계약)";
+  const rfqPoLine =
+    descriptor.operatingVolume.monthlyRfq === null ||
+    descriptor.operatingVolume.monthlyPo === null
+      ? "견적·발주 무제한"
+      : `RFQ ${descriptor.operatingVolume.monthlyRfq}건 / PO ${descriptor.operatingVolume.monthlyPo}건 (월)`;
+  const itemsLine =
+    descriptor.operatingVolume.inventoryItems !== null
+      ? `재고 ${descriptor.operatingVolume.inventoryItems.toLocaleString("ko-KR")} 품목`
+      : "재고 무제한 (계약)";
+  return [seatsLine, rfqPoLine, itemsLine];
 }
 
 /* ── Scroll animation wrapper ──────────────────────────────────── */
@@ -185,13 +193,28 @@ export default function PricingPage() {
         <div className="h-14" style={{ backgroundColor: "#0B1120" }} />
 
         {/* ══ §11.304 — Hero 섹션 제거 (서비스 소개 /intro 와 역할 중복).
-            가격 보러 온 사용자에게 plan cards 가 즉시 보이도록.
-            제품 설명은 상단 메뉴 "서비스 소개" (/intro) 으로 유도.
-            제거 대상: 제목 + 설명 + 4단계 탭 + 상단 CTA + 칩 (~32 line).
+            §11.303b 추가 — 페이지 정체성 제목만 가볍게 복원 ("요금 안내").
             ═══════════════════════════════════════════════════════════ */}
 
-        {/* §11.304 — 월간/연간 토글 (plan cards 직전 별도 section) */}
-        <section className="pt-8 pb-2 md:pt-10 md:pb-3" style={{ backgroundColor: P.bgSoft }}>
+        {/* §11.303b — 페이지 제목 복원 (휑한 상단 정리, 가볍게).
+            대시보드 페이지 제목 체계 정합 (text-2xl font-bold + 부제 sm/gray-500).
+            이전 무거운 히어로 (4단계 탭/칩/데모 버튼) 는 복원 0 — /intro 가 책임. */}
+        <section className="pt-12 pb-2 text-center" style={{ backgroundColor: P.bgSoft }}>
+          <div className="max-w-4xl mx-auto px-6">
+            <Reveal>
+              <h1 className="text-2xl font-bold" style={{ color: P.text1 }}>
+                요금 안내
+              </h1>
+              <p className="mt-2 text-sm" style={{ color: P.text4 }}>
+                연구 구매 운영 규모에 맞는 플랜을 선택하세요.
+              </p>
+            </Reveal>
+          </div>
+        </section>
+
+        {/* §11.304 — 월간/연간 토글 (plan cards 직전 별도 section).
+            §11.303b — 제목 복원 후 spacing 정리 (제목과 토글 간격 좁힘). */}
+        <section className="pt-4 pb-2 md:pt-5 md:pb-3" style={{ backgroundColor: P.bgSoft }}>
           <div className="max-w-4xl mx-auto px-6">
             <Reveal>
               <div className="flex items-center justify-center gap-4">
