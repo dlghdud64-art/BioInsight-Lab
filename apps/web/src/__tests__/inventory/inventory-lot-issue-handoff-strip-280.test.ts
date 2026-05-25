@@ -32,7 +32,7 @@ describe("inventory lot issue handoff strip", () => {
     expect(source).toContain('data-testid="labaxis-inventory-lot-issue-action-stack"');
     expect(source).toContain('data-testid="labaxis-inventory-lot-issue-reorder-secondary-action"');
     expect(source.indexOf("폐기 처리")).toBeLessThan(
-      source.indexOf("재발주 검토 (폐기 완료 후)"),
+      source.indexOf("후속: 폐기 완료 후 재발주 검토"),
     );
   });
 });

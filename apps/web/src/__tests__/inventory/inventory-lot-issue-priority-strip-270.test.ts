@@ -33,6 +33,9 @@ describe("inventory lot issue priority strip", () => {
     expect(source).toContain(
       'data-testid="labaxis-inventory-lot-issue-audit-line"',
     );
+    expect(source).toContain(
+      'data-testid="labaxis-inventory-lot-issue-visible-audit-summary"',
+    );
     expect(source).toContain("1순위: 폐기 처리 · 만료 lot {lotIssueDisposalReviewCount}건");
     expect(source).toContain("2순위: 재발주 후속 검토 · 폐기 완료 후 안전재고 영향 확인");
     expect(source).toContain("승인 여부:");
@@ -67,7 +70,7 @@ describe("inventory lot issue priority strip", () => {
     expect(source).toContain("즉시 확인 {lotIssueImmediateCount}건");
     expect(source).toContain("폐기 검토 {lotIssueDisposalReviewCount}건");
     expect(source).toContain("재발주: 후속 검토 {lotIssueReorderReviewCount}건");
-    expect(source).toContain("만료 · 사용 금지 · 폐기 처리 순서로 먼저 확인합니다.");
+    expect(source).toContain("사유: 유효기간 만료");
     expect(source).toContain("폐기 후 안전재고 이하일 때만 재주문 검토");
     expect(source).toContain(
       'data-testid="labaxis-inventory-reorder-secondary-note"',
@@ -87,11 +90,11 @@ describe("inventory lot issue priority strip", () => {
     expect(source).toContain(
       'data-testid="labaxis-inventory-lot-issue-reorder-secondary-action"',
     );
-    expect(source).toContain("재발주 검토 (폐기 완료 후)");
+    expect(source).toContain("후속: 폐기 완료 후 재발주 검토");
     expect(source).toContain("처리할 lot_issue가 없어 조치 버튼을 비활성화했습니다.");
   });
 
-  it("keeps reorder review as a disabled secondary CTA after disposal", () => {
+  it("keeps reorder review as secondary guidance after disposal", () => {
     expect(source).toContain(
       'data-testid="labaxis-inventory-lot-issue-action-stack"',
     );
@@ -99,9 +102,9 @@ describe("inventory lot issue priority strip", () => {
       source.indexOf('data-testid="labaxis-inventory-lot-issue-reorder-secondary-action"'),
     );
     expect(source.indexOf("폐기 처리")).toBeLessThan(
-      source.indexOf("재발주 검토 (폐기 완료 후)"),
+      source.indexOf("후속: 폐기 완료 후 재발주 검토"),
     );
-    expect(source).toContain('aria-disabled="true"');
+    expect(source).not.toContain('aria-disabled="true"');
   });
 
   it("removes the weak operations summary tab copy while lot issue review is active", () => {
