@@ -35,7 +35,9 @@ import { useQRScanner } from "@/contexts/QRScannerContext";
 const DatePicker = dynamic(() => import("@/components/ui/date-picker").then(m => m.DatePicker), { ssr: false });
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 // Sheet is kept static as it wraps children — radix portal
-import { Info, FileText, BellRing, Save, Sparkles, GitBranch } from "lucide-react";
+import { Info, FileText, BellRing, Save, Sparkles, GitBranch, ScanLine } from "lucide-react";
+// §11.308a #smart-receiving-entry — placeholder modal (호영님 P1 2026-05-26)
+import { SmartReceivingPlaceholderModal } from "@/components/inventory/SmartReceivingPlaceholderModal";
 import { getStorageConditionLabel } from "@/lib/constants";
 import { useInventoryAiPanel } from "@/hooks/use-inventory-ai-panel";
 const BulkImportModal = dynamic(() => import("@/components/inventory/BulkImportModal").then(m => m.BulkImportModal), { ssr: false });
@@ -91,6 +93,8 @@ export function InventoryMain() {
   const aiPanelParam = searchParams.get("ai_panel") === "open";
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  // §11.308a — 스마트 입고 placeholder modal (mobile + desktop view 공유 state).
+  const [isSmartReceivingOpen, setIsSmartReceivingOpen] = useState(false);
   // §11.297c 재고 utility dropdown plain state (mutually exclusive).
   const [openInvMenuId, setOpenInvMenuId] = useState<string | null>(null);
   const [editingInventory, setEditingInventory] = useState<ProductInventory | null>(null);
@@ -989,6 +993,17 @@ export function InventoryMain() {
           <h1 className="text-xl font-bold tracking-tight text-slate-900">재고 관리</h1>
         </div>
         <div className="flex flex-wrap items-start gap-2 mb-5">
+          {/* §11.308a — 스마트 입고 진입점 (mobile view, 호영님 P1 2026-05-26).
+              "재고 등록" 옆 emerald primary tone — 현장 물건 도착 시 가장 먼저 누름. */}
+          <Button
+            size="sm"
+            data-testid="inventory-smart-receiving-entry-mobile"
+            onClick={() => setIsSmartReceivingOpen(true)}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white min-h-[44px]"
+          >
+            <ScanLine className="h-3.5 w-3.5 mr-1.5" />
+            스마트 입고
+          </Button>
           <Button size="sm" onClick={() => setIsDialogOpen(true)}>
             <Plus className="h-3.5 w-3.5 mr-1.5" />
             재고 등록
@@ -1054,6 +1069,12 @@ export function InventoryMain() {
         />
       </div>
 
+      {/* §11.308a — 스마트 입고 placeholder modal (mobile + desktop view 공유 렌더, 호영님 P1) */}
+      <SmartReceivingPlaceholderModal
+        open={isSmartReceivingOpen}
+        onClose={() => setIsSmartReceivingOpen(false)}
+      />
+
       {/* ── Desktop View (md and above) ── */}
       <div className="hidden md:flex gap-0">
       {/* Main content area */}
@@ -1091,7 +1112,16 @@ export function InventoryMain() {
               }}
             />
 
-            {/* ── 1차 액션: 재고 등록 · 입고 반영 · 라벨 인쇄 ── */}
+            {/* ── 1차 액션: 스마트 입고 · 재고 등록 · 입고 반영 · 라벨 인쇄 ── */}
+            {/* §11.308a — 스마트 입고 진입점 (desktop view, 호영님 P1 2026-05-26). */}
+            <Button
+              data-testid="inventory-smart-receiving-entry-desktop"
+              onClick={() => setIsSmartReceivingOpen(true)}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              <ScanLine className="h-4 w-4 mr-2" />
+              스마트 입고
+            </Button>
             <Button onClick={() => setIsDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               재고 등록
