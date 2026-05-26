@@ -58,7 +58,8 @@ interface QuickAction {
   href: string;
   icon: LucideIcon;
   /** accent border color (좌측 thin line — KpiCard 4-tone palette 와 일관) */
-  tone: "blue" | "emerald" | "amber" | "purple";
+  // §11.308d — amber 제거, yellow 로 swap (§11.302 신호등 정합).
+  tone: "blue" | "emerald" | "yellow" | "purple";
   countKey: ActionCountKey;
 }
 
@@ -91,7 +92,8 @@ const ACTIONS: QuickAction[] = [
     description: "도착한 발주를 입고 등록합니다",
     href: "/dashboard/purchase-orders",
     icon: Truck,
-    tone: "amber",
+    // §11.308d — amber → yellow (§11.302 신호등 정합, 의미 보존: 대기중 입고).
+    tone: "yellow",
     countKey: "receiving",
   },
   {
@@ -107,7 +109,8 @@ const ACTIONS: QuickAction[] = [
 const TONE_MAP = {
   blue: { accent: "border-l-blue-500", iconBg: "bg-blue-50", iconColor: "text-blue-600" },
   emerald: { accent: "border-l-emerald-500", iconBg: "bg-emerald-50", iconColor: "text-emerald-600" },
-  amber: { accent: "border-l-amber-500", iconBg: "bg-amber-50", iconColor: "text-amber-600" },
+  // §11.308d — amber → yellow swap (§11.302 신호등 정합).
+  yellow: { accent: "border-l-yellow-500", iconBg: "bg-yellow-50", iconColor: "text-yellow-600" },
   purple: { accent: "border-l-purple-500", iconBg: "bg-purple-50", iconColor: "text-purple-600" },
 };
 
@@ -271,7 +274,7 @@ export function OperatorQuickActions({
                       data-testid="dashboard-quote-dispatch-stage"
                       className={`rounded-md border px-2 py-1 text-[10px] font-semibold ${
                         step === "연락처 필요"
-                          ? "border-amber-200 bg-amber-50 text-amber-700"
+                          ? "border-yellow-200 bg-yellow-100 text-yellow-700"
                           : "border-slate-200 bg-slate-50 text-slate-600"
                       }`}
                     >
@@ -296,7 +299,7 @@ export function OperatorQuickActions({
                   ))}
                 </div>
                 <div
-                  className="mt-2 flex items-center justify-between gap-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-[10px] text-amber-800"
+                  className="mt-2 flex items-center justify-between gap-2 rounded-md border border-yellow-200 bg-yellow-100 px-2 py-1.5 text-[10px] text-yellow-800"
                   data-testid="dashboard-quote-dispatch-contact-warning"
                 >
                   <span className="break-keep">{sendBlockReason}</span>
