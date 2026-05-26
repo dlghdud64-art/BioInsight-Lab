@@ -119,60 +119,71 @@ describe("§11.303 — pricing 플랜 구조 개편 + Credit 제거 (UI batch)",
       expect(DESCRIPTOR_SRC).toMatch(/"AI 견적 비교 \/ 문서 추출 \/ 운영 브리핑"/);
     });
 
-    it("team.features — 운영자 추가 단가 명시 (₩25,000/인)", () => {
-      expect(DESCRIPTOR_SRC).toMatch(/운영자 5명 포함 \(추가 운영자 ₩25,000\/인\)/);
+    it("team.features — 운영자 추가 단가 명시 (§11.304: 3명 포함 + ₩35,000/월)", () => {
+      // §11.304 swap: "5명 포함 (추가 운영자 ₩25,000/인)" → "3명 포함 (추가 1명당 ₩35,000/월)"
+      expect(DESCRIPTOR_SRC).toMatch(/운영자 3명 포함 \(추가 1명당 ₩35,000\/월\)/);
     });
 
     it("business.features — AI 견적 작성 보조 신규", () => {
       expect(DESCRIPTOR_SRC).toMatch(/"AI 견적 작성 보조"/);
     });
 
-    it("business.features — 운영자 추가 단가 명시 (₩20,000/인)", () => {
-      expect(DESCRIPTOR_SRC).toMatch(/운영자 15명 포함 \(추가 운영자 ₩20,000\/인\)/);
+    it("business.features — 운영자 추가 단가 명시 (§11.304: 10명 포함 + ₩28,000/월)", () => {
+      // §11.304 swap: "15명 포함 (추가 운영자 ₩20,000/인)" → "10명 포함 (추가 1명당 ₩28,000/월)"
+      expect(DESCRIPTOR_SRC).toMatch(/운영자 10명 포함 \(추가 1명당 ₩28,000\/월\)/);
     });
 
-    it('business.ctaLabel — "R&D Operations 시작하기" (이전 "R&D 운영 플랜 상담")', () => {
-      expect(DESCRIPTOR_SRC).toMatch(/ctaLabel:\s*"R&D Operations 시작하기"/);
+    it('business.ctaLabel — §11.304: "Pro 시작하기" (R&D Operations 시작하기 → Pro 시작하기 swap)', () => {
+      expect(DESCRIPTOR_SRC).toMatch(/ctaLabel:\s*"Pro 시작하기"/);
       expect(DESCRIPTOR_SRC).not.toMatch(/ctaLabel:\s*"R&D 운영 플랜 상담"/);
+      expect(DESCRIPTOR_SRC).not.toMatch(/ctaLabel:\s*"R&D Operations 시작하기"/);
     });
 
     it("enterprise.features — 커스텀 AI 분석 신규", () => {
       expect(DESCRIPTOR_SRC).toMatch(/"커스텀 AI 분석"/);
     });
 
-    it("enterprise tagline 에 Credit 문구를 다시 노출하지 않는다", () => {
-      expect(DESCRIPTOR_SRC).toMatch(/tagline:\s*"기관 \/ 법인 — 승인 정책·PO 감사 추적"/);
+    it("enterprise tagline 에 Credit 문구를 다시 노출하지 않는다 (§11.304: 새 tagline 정합)", () => {
+      // §11.304 swap: "기관 / 법인 — 승인 정책·PO 감사 추적" → "기관 · 계약형 운영 · 좌석/운영량 협의"
+      expect(DESCRIPTOR_SRC).toMatch(/tagline:\s*"기관 · 계약형 운영 · 좌석\/운영량 협의"/);
       expect(DESCRIPTOR_SRC).not.toMatch(/tagline:\s*"기관 \/ 법인 — 계약 기반 좌석·운영량·Credit"/);
     });
   });
 
-  describe("회귀 0 — 호영님 Q2/Q3 보존 결정 정합", () => {
-    it("Q2 보존 — labOpsCreditMonthly field schema 보존 (§11.303b 후속)", () => {
-      expect(DESCRIPTOR_SRC).toMatch(/labOpsCreditMonthly:\s*\d+/);
-      expect(DESCRIPTOR_SRC).toMatch(/labOpsCreditMonthly:\s*null/);
-      // getPlanCreditQuota helper 보존
-      expect(DESCRIPTOR_SRC).toMatch(/export function getPlanCreditQuota/);
+  describe("§11.303b override — Q2/Q3 보존 결정 변경 정합", () => {
+    it("§11.303b-2 — labOpsCreditMonthly field 제거 (Q2 보존 → 제거 override)", () => {
+      // §11.303 Q2 = "보존" 결정이 §11.303b-2 에서 "제거" 으로 override
+      expect(DESCRIPTOR_SRC).not.toMatch(/labOpsCreditMonthly:\s*\d+/);
+      expect(DESCRIPTOR_SRC).not.toMatch(/labOpsCreditMonthly:\s*null/);
+      // getPlanCreditQuota helper 도 제거
+      expect(DESCRIPTOR_SRC).not.toMatch(/export function getPlanCreditQuota/);
     });
 
-    it("Q3 보존 — 건수 한도 (RFQ/PO 30/80) literal 보존 (UI 무제한 표기 안 함)", () => {
-      expect(DESCRIPTOR_SRC).toMatch(/"견적 요청 \(월 30건\)"/);
-      expect(DESCRIPTOR_SRC).toMatch(/"PO 발행 \(월 30건\)"/);
-      expect(DESCRIPTOR_SRC).toMatch(/"견적 요청 \(월 80건\)"/);
-      expect(DESCRIPTOR_SRC).toMatch(/"PO 발행 \(월 80건\)"/);
-      // operatingVolume.monthlyRfq 보존
-      expect(DESCRIPTOR_SRC).toMatch(/monthlyRfq:\s*30/);
-      expect(DESCRIPTOR_SRC).toMatch(/monthlyRfq:\s*80/);
+    it("§11.303b — 견적/PO 무제한 (Q3 보존 → 무제한 override, backend null + UI literal 동시)", () => {
+      // §11.303 Q3 = "30/80 literal 보존" → §11.303b: 모두 "무제한" + monthlyRfq/Po null
+      expect(DESCRIPTOR_SRC).not.toMatch(/"견적 요청 \(월 30건\)"/);
+      expect(DESCRIPTOR_SRC).not.toMatch(/"PO 발행 \(월 30건\)"/);
+      expect(DESCRIPTOR_SRC).not.toMatch(/"견적 요청 \(월 80건\)"/);
+      expect(DESCRIPTOR_SRC).not.toMatch(/"PO 발행 \(월 80건\)"/);
+      // §11.303b — team / business operatingVolume.monthlyRfq/Po null
+      expect(DESCRIPTOR_SRC).toMatch(/"견적 요청 무제한"/);
+      expect(DESCRIPTOR_SRC).toMatch(/"PO 발행 무제한"/);
     });
 
-    it("descriptor const LABOPS_CREDIT_USAGE_SCENARIOS / PROTECTED_SCENARIOS 보존 (caller audit 후 §11.303b)", () => {
+    it("descriptor const LABOPS_CREDIT_USAGE_SCENARIOS / PROTECTED_SCENARIOS 보존 (§11.303b-2 cleanup 대상)", () => {
+      // §11.303b-2 에서 field 제거됐지만 SCENARIOS const 는 보존 (Credit 의미
+      // 만 제거, 상수 자체는 추후 별도 정리 가능)
       expect(DESCRIPTOR_SRC).toMatch(/LABOPS_CREDIT_USAGE_SCENARIOS/);
       expect(DESCRIPTOR_SRC).toMatch(/LABOPS_CREDIT_PROTECTED_SCENARIOS/);
     });
 
-    it("Starter / Enterprise displayName / tagline 보존", () => {
-      expect(DESCRIPTOR_SRC).toMatch(/label:\s*"Starter"/);
-      expect(DESCRIPTOR_SRC).toMatch(/label:\s*"Lab Team"/);
-      expect(DESCRIPTOR_SRC).toMatch(/label:\s*"R&D Operations"/);
+    it("§11.304 — 4 label 등급화 (Free/Basic/Pro/Enterprise) — Starter/Lab Team/R&D Operations 제거", () => {
+      expect(DESCRIPTOR_SRC).not.toMatch(/label:\s*"Starter"/);
+      expect(DESCRIPTOR_SRC).not.toMatch(/label:\s*"Lab Team"/);
+      expect(DESCRIPTOR_SRC).not.toMatch(/label:\s*"R&D Operations"/);
+      expect(DESCRIPTOR_SRC).toMatch(/label:\s*"Free"/);
+      expect(DESCRIPTOR_SRC).toMatch(/label:\s*"Basic"/);
+      expect(DESCRIPTOR_SRC).toMatch(/label:\s*"Pro"/);
       expect(DESCRIPTOR_SRC).toMatch(/label:\s*"Enterprise"/);
     });
 

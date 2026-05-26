@@ -48,18 +48,26 @@ function formatOperatingVolume(descriptor: PlanDescriptor): string[] {
     descriptor.operatingVolume.monthlyPo === null ||
     descriptor.operatingVolume.inventoryItems === null
   ) {
-    return ["좌석·운영량·Credit 모두 계약 기반"];
+    // §11.303b-2 — "Credit" 단어 제거 (§11.303 정합, dashboard/pricing 정리)
+    return ["좌석·운영량 모두 계약 기반"];
   }
-  return [
+  // §11.303b-2 — pricing/page.tsx (§11.303b) 정합:
+  //   1) RFQ/PO null 분기 → "견적·발주 무제한" 표기
+  //   2) LabOps Credit 표시 완전 제거 (§11.303 정합)
+  const seatsLine =
     descriptor.seatsRecommended !== null
       ? `운영자 ${descriptor.seatsRecommended}명 권장`
-      : "운영자 무제한 (계약)",
-    `RFQ ${descriptor.operatingVolume.monthlyRfq}건 / PO ${descriptor.operatingVolume.monthlyPo}건 (월)`,
-    `재고 ${descriptor.operatingVolume.inventoryItems.toLocaleString("ko-KR")} 품목`,
-    descriptor.labOpsCreditMonthly !== null
-      ? `LabOps Credit ${descriptor.labOpsCreditMonthly.toLocaleString("ko-KR")}/월`
-      : "LabOps Credit 계약 기반",
-  ];
+      : "운영자 무제한 (계약)";
+  const rfqPoLine =
+    descriptor.operatingVolume.monthlyRfq === null ||
+    descriptor.operatingVolume.monthlyPo === null
+      ? "견적·발주 무제한"
+      : `RFQ ${descriptor.operatingVolume.monthlyRfq}건 / PO ${descriptor.operatingVolume.monthlyPo}건 (월)`;
+  const itemsLine =
+    descriptor.operatingVolume.inventoryItems !== null
+      ? `재고 ${descriptor.operatingVolume.inventoryItems.toLocaleString("ko-KR")} 품목`
+      : "재고 무제한 (계약)";
+  return [seatsLine, rfqPoLine, itemsLine];
 }
 
 export default function PricingPage() {

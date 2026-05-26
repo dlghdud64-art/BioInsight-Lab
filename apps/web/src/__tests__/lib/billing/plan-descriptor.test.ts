@@ -17,7 +17,7 @@ import {
   getPlanDescriptor,
   getPlanLabel,
   getPlanPriceMonthly,
-  getPlanCreditQuota,
+  // §11.303b-2 — getPlanCreditQuota 제거 (labOpsCreditMonthly field 제거 동반)
   LABOPS_CREDIT_USAGE_SCENARIOS,
   LABOPS_CREDIT_PROTECTED_SCENARIOS,
   type PlanDescriptor,
@@ -80,12 +80,7 @@ describe("§11.201 plan-descriptor — 가격 / 좌석 / 운영량 / Credit 매�
     expect(PLAN_DESCRIPTOR.business.operatingVolume.inventoryItems).toBe(2000);
   });
 
-  it("labOpsCreditMonthly — 100 / 1500 / 7500 / null (계약)", () => {
-    expect(PLAN_DESCRIPTOR.starter.labOpsCreditMonthly).toBe(100);
-    expect(PLAN_DESCRIPTOR.team.labOpsCreditMonthly).toBe(1500);
-    expect(PLAN_DESCRIPTOR.business.labOpsCreditMonthly).toBe(7500);
-    expect(PLAN_DESCRIPTOR.enterprise.labOpsCreditMonthly).toBeNull();
-  });
+  // §11.303b-2 — labOpsCreditMonthly assertion 제거 (field 자체 제거됨)
 });
 
 describe("§11.201 plan-descriptor — features + CTA + recommend tag", () => {
@@ -206,16 +201,11 @@ describe("§11.201 plan-descriptor — helper functions", () => {
     expect(getPlanPriceMonthly("enterprise")).toBeNull();
   });
 
-  it("getPlanCreditQuota(intent) 반환 — number 또는 null (Enterprise)", () => {
-    expect(getPlanCreditQuota("starter")).toBe(100);
-    expect(getPlanCreditQuota("team")).toBe(1500);
-    expect(getPlanCreditQuota("business")).toBe(7500);
-    expect(getPlanCreditQuota("enterprise")).toBeNull();
-  });
+  // §11.303b-2 — getPlanCreditQuota test 제거 (getter + labOpsCreditMonthly field 제거 동반)
 });
 
 describe("§11.201 plan-descriptor — type contract", () => {
-  it("PlanDescriptor 의 필수 필드 union: intent / label / tagline / priceMonthlyKrw / seatsRecommended / operatingVolume / labOpsCreditMonthly / features / ctaRoute / ctaLabel / recommendTag", () => {
+  it("PlanDescriptor 의 필수 필드 union: intent / label / tagline / priceMonthlyKrw / seatsRecommended / operatingVolume / features / ctaRoute / ctaLabel / recommendTag (§11.303b-2: labOpsCreditMonthly 제거)", () => {
     const d: PlanDescriptor = PLAN_DESCRIPTOR.team;
     expect(d).toHaveProperty("intent");
     expect(d).toHaveProperty("label");
@@ -223,7 +213,7 @@ describe("§11.201 plan-descriptor — type contract", () => {
     expect(d).toHaveProperty("priceMonthlyKrw");
     expect(d).toHaveProperty("seatsRecommended");
     expect(d).toHaveProperty("operatingVolume");
-    expect(d).toHaveProperty("labOpsCreditMonthly");
+    // §11.303b-2 — labOpsCreditMonthly toHaveProperty 제거 (field 제거됨)
     expect(d).toHaveProperty("features");
     expect(d).toHaveProperty("ctaRoute");
     expect(d).toHaveProperty("ctaLabel");

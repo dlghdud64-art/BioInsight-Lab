@@ -42,8 +42,9 @@ export interface PlanDescriptor {
   seatsRecommended: number | null;
   /** 운영량 권장치 (RFQ / PO / 재고) */
   operatingVolume: OperatingVolume;
-  /** 월 LabOps Credit 한도 — null = 계약 기반 */
-  labOpsCreditMonthly: number | null;
+  // §11.303b-2 — labOpsCreditMonthly field 제거 (production caller 0 확인 후).
+  //   §11.303 Q2 "보존" → §11.303b "caller 제거 후 field 정리" 으로 override.
+  //   dashboard/pricing/page.tsx stale 표시 제거 동반.
   /** 핵심 features 배열 (검색/비교/견적/PO/입고/재고 중심) */
   features: string[];
   /** CTA 라우트 — 기존 alive 라우트만 (fake checkout 0) */
@@ -97,7 +98,6 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
       monthlyPo: 5,
       inventoryItems: 50,
     },
-    labOpsCreditMonthly: 100,
     features: [
       "견적 비교 후보 3개 확인",
       "운영자 1명 포함",
@@ -130,7 +130,6 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
       monthlyPo: null,
       inventoryItems: 500,
     },
-    labOpsCreditMonthly: 1500,
     // §11.303 — AI 기능 등급별 명시 (호영님 Q1=C UI batch).
     //   Quartzy/Benchling 벤치마크 정합: AI 기능 = 플랜 등급별 포함,
     //   사용량 무제한. Credit 모델 제거 후 등급 분기.
@@ -173,7 +172,6 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
       monthlyPo: null,
       inventoryItems: 2000,
     },
-    labOpsCreditMonthly: 7500,
     // §11.303 — AI 견적 작성 보조 추가 + CTA "상담" → "시작하기" (셀프
     //   결제 전환율 정합). 건수 보존 (Q3, §11.303b 후속).
     // §11.304 — 운영자 10명 + 추가 1명당 ₩28,000/월 (기본 ₩34,900 대비
@@ -210,7 +208,6 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
       monthlyPo: null,
       inventoryItems: null,
     },
-    labOpsCreditMonthly: null,
     // §11.303 — 커스텀 AI 분석 추가 (Enterprise 전용 AI 등급).
     // §11.304 — features 선두 라벨 "R&D Operations" → "Pro" 정합.
     features: [
@@ -276,10 +273,7 @@ export function getPlanPriceMonthly(intent: PlanIntent): number | null {
   return PLAN_DESCRIPTOR[intent].priceMonthlyKrw;
 }
 
-/** PlanIntent → 월 LabOps Credit 한도 — Enterprise 는 null (계약 기반) */
-export function getPlanCreditQuota(intent: PlanIntent): number | null {
-  return PLAN_DESCRIPTOR[intent].labOpsCreditMonthly;
-}
+// §11.303b-2 — getPlanCreditQuota getter 제거 (labOpsCreditMonthly field 제거 동반)
 
 /**
  * §11.209b Phase 2 + §11.209c Phase 1 — canonical workspace.plan + optional

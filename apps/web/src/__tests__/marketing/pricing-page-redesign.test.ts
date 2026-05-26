@@ -66,10 +66,9 @@ describe("§11.201 /pricing — 운영량 정보 카드 노출 (seat / RFQ / PO 
     expect(src).toMatch(/inventoryItems|재고\s*[\d,]+\s*품목/);
   });
 
-  it("LabOps Credit 월 한도 표시 (descriptor.labOpsCreditMonthly 통과)", () => {
-    const src = read(PRICING_PATH);
-    expect(src).toMatch(/labOpsCreditMonthly|getPlanCreditQuota|Credit\s*[\d,]+|크레딧/);
-  });
+  // §11.303b-2 — LabOps Credit 표시 테스트 제거 (§11.303 에서 UI 표시 제거,
+  //   §11.303b-2 에서 field 자체 제거 완료). 회귀 차단은 §11.303b-2 sentinel
+  //   (plan-unlimited-quotes-po-303b.test.ts + 새 §11.303b-2 sentinel) 에서.
 });
 
 describe("§11.201 /pricing — recommendTag 한국어 + MOST POPULAR 영문 폐기", () => {
