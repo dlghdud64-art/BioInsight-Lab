@@ -783,7 +783,7 @@ export default function PurchasesPage() {
                         §11.284c — 호영님 P0 spec: 견적 단계 본문 텍스트 (안녕하세요…)
                         제거 + 금액 (견적가) + 공급사명 1줄 표시. itemSummary 데이터
                         source 보존 (resolver / engine 변경 0), UI 표시 만 제거. */}
-                    <div className="flex items-start gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-4">
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-slate-900 text-sm leading-snug mb-0.5">{item.requestTitle}</h3>
                         {/* §11.284c 금액 + 공급사명 1줄 표시 (itemSummary 본문 텍스트 대체) */}
@@ -876,7 +876,7 @@ export default function PurchasesPage() {
                       </div>
 
                       {/* 우측: 결정 보조 정보 + 가격 + 견적 상세 link (§11.277c — 모바일 collapse 분기) */}
-                      <div className={`${isExpanded ? "flex" : "hidden"} sm:flex flex-col items-end gap-2 flex-shrink-0 min-w-[160px]`}
+                      <div className={`${isExpanded ? "flex" : "hidden"} sm:flex flex-col items-end gap-2 flex-shrink-0 w-full sm:w-auto sm:min-w-[160px]`}
                         onClick={(e) => e.stopPropagation()}>
                         <div className="text-right">
                           <span className={`text-[11px] flex items-center gap-1 justify-end mb-0.5 ${ai.className}`}>
