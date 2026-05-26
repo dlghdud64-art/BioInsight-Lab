@@ -13,7 +13,15 @@ import {
   ShieldAlert,
   Loader2,
   RefreshCw,
+  MoreHorizontal,
+  X,
 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   Table,
   TableBody,
@@ -198,6 +206,11 @@ export default function AuditTrailPage() {
   const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
   const [periodFilter, setPeriodFilter] = useState<string>("30");
 
+  // §11.311b — 모바일 액션 kebab + Sheet (호영님 P1 2026-05-26).
+  const [isActionsSheetOpen, setIsActionsSheetOpen] = useState(false);
+  // §11.311b — 모바일 검색 아이콘 → 입력 expand
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+
   const userRole = session?.user?.role as string | undefined;
   const canAccessAudit = userRole === "ADMIN" || (userRole as string)?.toLowerCase() === "manager";
 
@@ -381,25 +394,35 @@ export default function AuditTrailPage() {
       </div>
 
       {/* §11.64: 헤더 단순화 — 자물쇠 제거, CFR 21 Part 11 톤 제거.
-          §11.89: 화면 헤더는 print:hidden — 인쇄 본은 위 인쇄용 헤더 사용. */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-2 print:hidden">
-        <div className="flex flex-col space-y-2">
-          <div className="flex items-center gap-2 text-slate-400 mb-1">
+          §11.89: 화면 헤더는 print:hidden — 인쇄 본은 위 인쇄용 헤더 사용.
+          §11.311b (호영님 P1 2026-05-26):
+            - eyebrow "보안 및 컴플라이언스" 모바일 hidden md:flex (뒤로가기 충분)
+            - 제목 + 건수 통합: "감사 증적 · N건"
+            - description 모바일 단축 (간단한 한 줄)
+            - 액션 4 button 모바일 → kebab + Sheet (4 button overflow 0). */}
+      <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-3 mb-2 print:hidden">
+        <div className="flex flex-col space-y-1.5 min-w-0">
+          {/* §11.311b — eyebrow 모바일 hidden */}
+          <div className="hidden md:flex items-center gap-2 text-slate-400 mb-1">
             <span className="font-semibold tracking-tight text-xs uppercase">보안 및 컴플라이언스</span>
           </div>
-          <h2 className="text-xl md:text-3xl font-bold tracking-tight text-slate-900">
-            감사 증적
-          </h2>
-          <p className="text-sm text-slate-500 break-keep">
-            주요 시스템 데이터 변경 및 접근 기록 이력을 확인합니다.
+          {/* §11.311b — 제목 + 건수 통합 */}
+          <h2 className="text-lg md:text-3xl font-bold tracking-tight text-slate-900 flex items-baseline gap-2 flex-wrap">
+            <span>감사 증적</span>
             {data && (
-              <span className="ml-2 text-slate-400">
-                · 총 {data.total.toLocaleString("ko-KR")}건
+              <span className="text-sm md:text-base text-slate-400 font-medium">
+                · {data.total.toLocaleString("ko-KR")}건
               </span>
             )}
+          </h2>
+          {/* §11.311b — description 데스크탑만 (모바일 first fold 절약) */}
+          <p className="hidden md:block text-sm text-slate-500 break-keep">
+            주요 시스템 데이터 변경 및 접근 기록 이력을 확인합니다.
           </p>
         </div>
-        <div className="flex gap-2 flex-shrink-0">
+
+        {/* §11.311b — 데스크탑 액션 4 button 그대로 (md:flex) */}
+        <div className="hidden md:flex gap-2 flex-shrink-0">
           <Button
             variant="outline"
             className="touch-manipulation active:scale-95"
@@ -421,7 +444,7 @@ export default function AuditTrailPage() {
             <Download className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">간단 </span>인쇄
           </Button>
-          {/* §11.109 — 정형 PDF 양식 (서명란 + 페이지 번호 + 회사 헤더) */}
+          {/* §11.109 — 정형 PDF 양식 */}
           <Button
             variant="outline"
             className="touch-manipulation active:scale-95 border-slate-700 text-slate-700 hover:bg-slate-50"
@@ -438,15 +461,87 @@ export default function AuditTrailPage() {
             <span className="hidden sm:inline">CSV </span>내보내기
           </Button>
         </div>
+
+        {/* §11.311b — 모바일 kebab button → Sheet */}
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          data-testid="audit-actions-kebab"
+          aria-label="감사 증적 액션 메뉴"
+          onClick={() => setIsActionsSheetOpen(true)}
+          className="md:hidden h-10 w-10 self-start"
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
       </div>
+
+      {/* §11.311b — 모바일 액션 Sheet (4 button) */}
+      <Sheet open={isActionsSheetOpen} onOpenChange={(next) => { if (!next) setIsActionsSheetOpen(false); }}>
+        <SheetContent side="bottom" className="max-h-[60vh]" data-testid="audit-actions-sheet">
+          <SheetHeader className="text-left">
+            <SheetTitle className="text-base">감사 증적 액션</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 space-y-2">
+            <Button
+              type="button"
+              variant="outline"
+              data-testid="audit-actions-sheet-refresh"
+              onClick={() => { refetch(); setIsActionsSheetOpen(false); }}
+              disabled={isFetching}
+              className="w-full h-11 justify-start"
+            >
+              {isFetching ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4 mr-2" />
+              )}
+              새로 고침
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              data-testid="audit-actions-sheet-print"
+              onClick={() => { handlePdfDownload(); setIsActionsSheetOpen(false); }}
+              className="w-full h-11 justify-start"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              간단 인쇄
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              data-testid="audit-actions-sheet-pdf"
+              onClick={() => { handleCompliancePdf(); setIsActionsSheetOpen(false); }}
+              className="w-full h-11 justify-start border-slate-700 text-slate-700"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              정형 PDF (서명·페이지 번호 포함)
+            </Button>
+            <Button
+              type="button"
+              data-testid="audit-actions-sheet-csv"
+              onClick={() => { handleCsvExport(); setIsActionsSheetOpen(false); }}
+              className="w-full h-11 justify-start bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              CSV 내보내기
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* §11.81 — 필터 row 복원: real fetcher 와 함께 wired (eventType + period
           + search 모두 query params 로 forward → /api/audit-logs).
           §11.67 에서 dead button 으로 잠시 제거됐던 시안 visual essence 회복. */}
-      <div className="flex flex-col md:flex-row gap-2 md:items-center print:hidden">
-        <div className="flex flex-1 gap-2 flex-wrap">
+      {/* §11.311b — 필터 + 검색 가로 인라인 (호영님 P1).
+          AS-IS: flex-col md:flex-row (모바일 3행)
+          TO-BE: flex-row 항상 (가로) + 모바일 검색 아이콘 expand (탭 시 입력 확장).
+          데스크탑 (md+) 검색 input 그대로 노출 (max-w-sm). */}
+      <div className="flex flex-row gap-2 items-center print:hidden">
+        <div className="flex flex-1 gap-2 flex-wrap min-w-0">
           <Select value={periodFilter} onValueChange={setPeriodFilter}>
-            <SelectTrigger className="h-9 w-[140px] text-xs">
+            <SelectTrigger className="h-9 w-[120px] md:w-[140px] text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -458,7 +553,7 @@ export default function AuditTrailPage() {
             </SelectContent>
           </Select>
           <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
-            <SelectTrigger className="h-9 w-[160px] text-xs">
+            <SelectTrigger className="h-9 w-[120px] md:w-[160px] text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -470,16 +565,46 @@ export default function AuditTrailPage() {
             </SelectContent>
           </Select>
         </div>
-        <div className="relative w-full md:max-w-sm">
+
+        {/* §11.311b — 데스크탑 검색 input 그대로 (md:flex), 모바일 검색 아이콘 */}
+        <div className="relative hidden md:flex md:max-w-sm md:flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
           <Input
             placeholder="ID, 대상, 사용자명, 이메일 검색..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-9 text-xs"
+            className="pl-9 h-9 text-xs w-full"
           />
         </div>
+
+        {/* §11.311b — 모바일 검색 토글 button (아이콘 only) */}
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          data-testid="audit-search-toggle"
+          aria-label={isSearchExpanded ? "검색 닫기" : "검색 열기"}
+          onClick={() => setIsSearchExpanded((v) => !v)}
+          className="md:hidden h-9 w-9 flex-shrink-0"
+        >
+          {isSearchExpanded ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+        </Button>
       </div>
+
+      {/* §11.311b — 모바일 검색 expand (필터 row 위 또는 아래) */}
+      {isSearchExpanded && (
+        <div className="md:hidden relative print:hidden">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+          <Input
+            placeholder="ID, 대상, 사용자명, 이메일 검색..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            data-testid="audit-search-input-mobile"
+            className="pl-9 h-9 text-xs w-full"
+            autoFocus
+          />
+        </div>
+      )}
 
       <div className="border border-bd rounded-lg bg-white overflow-hidden shadow-sm">
         {isLoading ? (
