@@ -53,8 +53,11 @@ const CATEGORY_CONFIG: Record<
   quote_arrived:     { icon: FileText,       tint: "text-slate-400", unreadTint: "text-blue-500",   bg: "bg-slate-100", unreadBg: "bg-blue-50",   label: "견적" },
   delivery_complete: { icon: Package,        tint: "text-slate-400", unreadTint: "text-emerald-500",bg: "bg-slate-100", unreadBg: "bg-emerald-50", label: "입고" },
   approval_pending:  { icon: ClipboardCheck, tint: "text-slate-400", unreadTint: "text-violet-500", bg: "bg-slate-100", unreadBg: "bg-violet-50",  label: "승인" },
-  expiry_warning:    { icon: Clock,          tint: "text-slate-400", unreadTint: "text-amber-500",  bg: "bg-slate-100", unreadBg: "bg-amber-50",   label: "만료" },
-  safety_alert:      { icon: ShieldAlert,    tint: "text-slate-400", unreadTint: "text-orange-500", bg: "bg-slate-100", unreadBg: "bg-orange-50",  label: "안전" },
+  // §11.302d-6a-1 — §11.302 신호등 정합 swap.
+  //   expiry_warning (만료) = 긴급/주의 → amber → yellow (의미 보존).
+  //   safety_alert (안전) = 위험 강도 상승 → orange → red (강한 경고로 격상).
+  expiry_warning:    { icon: Clock,          tint: "text-slate-400", unreadTint: "text-yellow-500", bg: "bg-slate-100", unreadBg: "bg-yellow-50",  label: "만료" },
+  safety_alert:      { icon: ShieldAlert,    tint: "text-slate-400", unreadTint: "text-red-500",    bg: "bg-slate-100", unreadBg: "bg-red-50",     label: "안전" },
   system:            { icon: Bell,           tint: "text-slate-400", unreadTint: "text-slate-600",  bg: "bg-slate-100", unreadBg: "bg-slate-100",  label: "시스템" },
 };
 

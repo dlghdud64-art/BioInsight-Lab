@@ -32,9 +32,12 @@ const dotColorMap = {
     dot: "bg-blue-600",
     ping: "bg-blue-400",
   },
+  // §11.302d-6a-1 — amber key 보존 (caller wiring 영향 0), 값만 yellow swap.
+  //   §11.302 신호등 체계 정합: amber → yellow (긴급/주의 의미 유지).
+  //   caller 가 dot="amber" 로 사용 중인 ~20+ 위치 영향 0 (단순 색상 swap).
   amber: {
-    dot: "bg-amber-500",
-    ping: "bg-amber-400",
+    dot: "bg-yellow-500",
+    ping: "bg-yellow-400",
   },
   emerald: {
     dot: "bg-emerald-500",
