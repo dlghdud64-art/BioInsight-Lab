@@ -216,25 +216,42 @@ export default function ActivityLogsPage() {
           iconColor="text-purple-600"
         />
 
-        {/* §11.70 — Bento Grid 4 KPI cards (오늘 활동 / AI 자동화 / 경고·오류 / Stream Status) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* §11.311 — KPI 컴팩트 (호영님 P1 2026-05-26):
+            모바일 first fold 도달 위해 grid-cols-3 한 줄 압축 (호영님 spec).
+            카드 높이 ~80px (p-5 → p-3), 아이콘 16px (w-10 → w-8),
+            카운트 폰트 축소 (text-2xl → text-lg).
+            0건 비활성 톤 (bg-gray-50 border-gray-200), 1+건 활성 톤 (bg-white shadow-sm),
+            경고 1+건 시 red 톤 (§11.302 색상 체계).
+            Stream Status (4번째 카드) 는 desktop (lg+) 만 노출 — 호영님 spec 3 KPI 만. */}
+        <div
+          data-testid="activity-logs-kpi-grid"
+          className="grid grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3"
+        >
           {/* 1. 오늘의 시스템 활동 */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25 }}
           >
-            <Card className="bg-white border-slate-200 hover:border-purple-200 transition-colors h-full">
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
-                    <Activity className="h-5 w-5 text-purple-600" />
-                  </div>
+            <Card
+              className={`transition-colors h-full ${
+                todayCount > 0
+                  ? "bg-white border-slate-300 shadow-sm"
+                  : "bg-gray-50 border-gray-200"
+              }`}
+            >
+              <CardContent className="p-3 md:p-4">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Activity className={`h-4 w-4 ${todayCount > 0 ? "text-purple-600" : "text-slate-400"}`} />
+                  <p className="text-[10px] md:text-xs text-slate-500 break-keep">시스템 활동</p>
                 </div>
-                <p className="text-xs text-slate-500 mb-1 break-keep">오늘의 시스템 활동</p>
-                <p className="text-2xl md:text-3xl font-extrabold text-slate-900 tabular-nums">
+                <p
+                  className={`text-lg md:text-xl font-bold tabular-nums ${
+                    todayCount > 0 ? "text-slate-900" : "text-gray-400"
+                  }`}
+                >
                   {todayCount.toLocaleString("ko-KR")}
-                  <span className="text-sm font-bold text-slate-400 ml-1">건</span>
+                  <span className="text-xs font-semibold text-slate-400 ml-0.5">건</span>
                 </p>
               </CardContent>
             </Card>
@@ -246,102 +263,141 @@ export default function ActivityLogsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, delay: 0.05 }}
           >
-            <Card className="bg-white border-slate-200 hover:border-amber-200 transition-colors h-full">
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-                    <Zap className="h-5 w-5 text-amber-600" />
-                  </div>
+            <Card
+              className={`transition-colors h-full ${
+                aiCount > 0
+                  ? "bg-white border-slate-300 shadow-sm"
+                  : "bg-gray-50 border-gray-200"
+              }`}
+            >
+              <CardContent className="p-3 md:p-4">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Zap className={`h-4 w-4 ${aiCount > 0 ? "text-blue-600" : "text-slate-400"}`} />
+                  <p className="text-[10px] md:text-xs text-slate-500 break-keep">AI 처리</p>
                 </div>
-                <p className="text-xs text-slate-500 mb-1 break-keep">AI 자동화 처리</p>
-                <p className="text-2xl md:text-3xl font-extrabold text-slate-900 tabular-nums">
+                <p
+                  className={`text-lg md:text-xl font-bold tabular-nums ${
+                    aiCount > 0 ? "text-slate-900" : "text-gray-400"
+                  }`}
+                >
                   {aiCount.toLocaleString("ko-KR")}
-                  <span className="text-sm font-bold text-slate-400 ml-1">건</span>
+                  <span className="text-xs font-semibold text-slate-400 ml-0.5">건</span>
                 </p>
               </CardContent>
             </Card>
           </motion.div>
 
-          {/* 3. 경고/오류 발생 */}
+          {/* 3. 경고/오류 발생 — §11.302 색상: 1+건 시 red 톤 */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, delay: 0.1 }}
           >
-            <Card className="bg-white border-slate-200 hover:border-rose-200 transition-colors h-full">
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center">
-                    <AlertTriangle className="h-5 w-5 text-rose-600" />
-                  </div>
+            <Card
+              className={`transition-colors h-full ${
+                alertCount > 0
+                  ? "bg-red-50 border-red-200"
+                  : "bg-gray-50 border-gray-200"
+              }`}
+            >
+              <CardContent className="p-3 md:p-4">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <AlertTriangle
+                    className={`h-4 w-4 ${alertCount > 0 ? "text-red-700" : "text-slate-400"}`}
+                  />
+                  <p
+                    className={`text-[10px] md:text-xs break-keep ${
+                      alertCount > 0 ? "text-red-700" : "text-slate-500"
+                    }`}
+                  >
+                    경고/오류
+                  </p>
                 </div>
-                <p className="text-xs text-slate-500 mb-1 break-keep">경고/오류 발생</p>
-                <p className="text-2xl md:text-3xl font-extrabold text-slate-900 tabular-nums">
+                <p
+                  className={`text-lg md:text-xl font-bold tabular-nums ${
+                    alertCount > 0 ? "text-red-700" : "text-gray-400"
+                  }`}
+                >
                   {alertCount.toLocaleString("ko-KR")}
-                  <span className="text-sm font-bold text-slate-400 ml-1">건</span>
+                  <span className="text-xs font-semibold text-slate-400 ml-0.5">건</span>
                 </p>
               </CardContent>
             </Card>
           </motion.div>
 
-          {/* 4. Stream Status (dark accent + pulse) */}
+          {/* 4. Stream Status — §11.311: 모바일 hidden, desktop (lg+) 만 노출.
+              호영님 spec KPI 3 카드 강조 — Stream Status 는 보조 위젯. */}
           <motion.div
+            className="hidden lg:block"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, delay: 0.15 }}
           >
             <Card className="bg-slate-900 border-slate-800 text-white h-full">
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-                    <Activity className="h-5 w-5 text-emerald-400" />
-                  </div>
+              <CardContent className="p-3 md:p-4">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Activity className="h-4 w-4 text-emerald-400" />
+                  <p className="text-[10px] md:text-xs text-slate-400 break-keep">실시간 스트림</p>
                 </div>
-                <p className="text-xs text-slate-400 mb-1 break-keep">실시간 데이터 스트림</p>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="relative flex w-2 h-2">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className="relative flex w-1.5 h-1.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex w-2 h-2 rounded-full bg-emerald-400" />
+                    <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-emerald-400" />
                   </span>
-                  <p className="text-xl md:text-2xl font-extrabold text-emerald-400">정상</p>
+                  <p className="text-base md:text-lg font-bold text-emerald-400">정상</p>
                 </div>
-                <p className="text-[11px] text-slate-500 break-keep">동기화: {syncedAt}</p>
+                <p className="text-[10px] text-slate-500 break-keep truncate">동기화: {syncedAt}</p>
               </CardContent>
             </Card>
           </motion.div>
         </div>
 
-        {/* §11.70 — AI Insights 그라디언트 카드 (운영 metric notice — chatbot UI 아님) */}
+        {/* §11.311 — AI 인사이트 조건부 (호영님 P1):
+            0건 시 1줄 muted (bg-gray-50, ~40px 높이), 1건+ 시 그라데이션 확장 유지. */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.2 }}
         >
-          <Card className="border-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white overflow-hidden relative">
-            <CardContent className="p-5 md:p-6 relative">
-              <div className="flex items-start gap-4">
-                <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="h-5 w-5 text-white" />
+          {aiCount === 0 && todayCount === 0 ? (
+            <div
+              data-testid="activity-logs-ai-insight-muted"
+              className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 flex items-center gap-2"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+              <p className="text-xs text-gray-500 break-keep">
+                오늘 활동 0건 · AI 처리 시작 시 인사이트가 표시됩니다
+              </p>
+            </div>
+          ) : (
+            <Card className="border-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white overflow-hidden relative">
+              <CardContent className="p-4 md:p-6 relative">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="h-4 w-4 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold mb-1 break-keep">AI 인사이트</p>
+                    <p className="text-xs md:text-sm text-white/85 break-keep leading-relaxed">
+                      {aiCount > 0
+                        ? `오늘 ${aiCount}건의 AI 자동화 처리가 운영 워크플로에 적용되었습니다. 견적 추천·재고 자동 분류·발주 검토에 시간 절약 효과가 누적되고 있습니다.`
+                        : `오늘 시스템 활동 ${todayCount}건이 기록되었습니다. AI 자동화 처리가 시작되면 이 자리에 인사이트가 노출됩니다.`}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold mb-1.5 break-keep">AI 인사이트</p>
-                  <p className="text-xs md:text-sm text-white/85 break-keep leading-relaxed">
-                    {aiCount > 0
-                      ? `오늘 ${aiCount}건의 AI 자동화 처리가 운영 워크플로에 적용되었습니다. 견적 추천·재고 자동 분류·발주 검토에 시간 절약 효과가 누적되고 있습니다.`
-                      : `오늘 시스템 활동 ${todayCount}건이 기록되었습니다. AI 자동화 처리가 시작되면 이 자리에 인사이트가 노출됩니다.`}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </motion.div>
 
-        {/* §11.70 — 필터 (custom dropdown 이미 §11.71 shadcn Select) + RESET FILTERS button */}
+        {/* §11.311 — 필터 가로 인라인 1행 (호영님 P1).
+            AS-IS: flex-col md:flex-row (모바일 세로) → first fold 점유.
+            TO-BE: flex-row 항상 가로 (모바일 포함) — 활동 내역 first fold 도달. */}
         <Card className="bg-white border-slate-200">
-          <CardContent className="p-4 md:p-5">
-            <div className="flex flex-col md:flex-row gap-3 md:items-end">
-              <div className="flex-1">
-                <label className="text-[10px] md:text-xs font-semibold text-slate-500 mb-1.5 block uppercase tracking-wider">
+          <CardContent className="p-3 md:p-4">
+            <div className="flex flex-row gap-2 md:gap-3 items-end">
+              <div className="flex-1 min-w-0">
+                <label className="text-[10px] md:text-xs font-semibold text-slate-500 mb-1 block uppercase tracking-wider">
                   활동 유형
                 </label>
                 <Select value={activityTypeFilter} onValueChange={setActivityTypeFilter}>
@@ -358,10 +414,10 @@ export default function ActivityLogsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 {/* §11.299 라벨 한글화 (호영님 P1) — "엔티티 유형" → "대상
                     구분", "전체 엔티티" → "전체", 옵션 "리스트" → "견적". */}
-                <label className="text-[10px] md:text-xs font-semibold text-slate-500 mb-1.5 block uppercase tracking-wider">
+                <label className="text-[10px] md:text-xs font-semibold text-slate-500 mb-1 block uppercase tracking-wider">
                   대상 구분
                 </label>
                 <Select value={entityTypeFilter} onValueChange={setEntityTypeFilter}>
