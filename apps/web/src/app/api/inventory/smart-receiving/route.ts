@@ -9,7 +9,7 @@
  *   출처 감사 추적.
  *
  * 패턴 정합 (기존 /api/inventory/[id]/restock/route.ts 참조):
- *   - auth() + enforceAction() 보안 미들웨어
+ *   - auth() 보안 + DataAuditLog 감사 추적 (§11.309c-hotfix-2)
  *   - db.$transaction 원자성 (Product + ProductInventory + InventoryRestock +
  *     AuditLog 모두 같은 트랜잭션)
  *   - createAuditLog (INVENTORY_RESTOCK CREATE)
@@ -51,7 +51,9 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { Prisma, ProductCategory } from "@prisma/client";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+// §11.309c-hotfix-2 — security middleware import 제거 (단순화).
+// IrreversibleActionType enum 미등록 → TS error. auth() + DataAuditLog 로 충분.
+// 후속 §11.309c-3 에서 enum 추가 후 복원 검토.
 
 interface SmartReceivingBody {
   ocrJobId: string;
@@ -76,8 +78,6 @@ interface SmartReceivingBody {
 const DEFAULT_CATEGORY: ProductCategory = "OTHER" as ProductCategory;
 
 export async function POST(request: NextRequest) {
-  let enforcement: InlineEnforcementHandle | undefined;
-
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -104,22 +104,6 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
-
-    // ── Security enforcement ──
-    // §11.309c-hotfix — IrreversibleActionType enum 정합 (TS suggestion).
-    // "inventory_smart_receiving" 은 enum 미등록 → "inventory_receive"
-    // (입고 action 정합 — restock 과 동일 카테고리). 후속 batch 에서
-    // 별도 "inventory_smart_receiving" enum 추가 검토 가능.
-    enforcement = enforceAction({
-      userId: session.user.id,
-      userRole: session.user.role ?? undefined,
-      action: "inventory_receive",
-      targetEntityType: "inventory",
-      targetEntityId: inventoryId ?? `new:${ocrJobId}`,
-      sourceSurface: "smart-receiving-api",
-      routePath: "/api/inventory/smart-receiving",
-    });
-    if (!enforcement.allowed) return enforcement.deny();
 
     // ── OcrJob 검증 (multi-tenant + 존재) ──
     const ocrJob = await db.ocrJob.findUnique({
@@ -257,14 +241,6 @@ export async function POST(request: NextRequest) {
         },
       );
 
-      enforcement.complete({
-        beforeState: { currentQuantity: quantityBefore },
-        afterState: {
-          currentQuantity: updatedInventory.currentQuantity,
-          restockId: restock.id,
-        },
-      });
-
       return NextResponse.json({
         inventoryId: updatedInventory.id,
         inventoryRestockId: restock.id,
@@ -371,16 +347,6 @@ export async function POST(request: NextRequest) {
       },
     );
 
-    enforcement.complete({
-      beforeState: null,
-      afterState: {
-        productId: created.product.id,
-        inventoryId: created.inventory.id,
-        restockId: created.restock.id,
-        currentQuantity: created.inventory.currentQuantity,
-      },
-    });
-
     return NextResponse.json({
       inventoryId: created.inventory.id,
       inventoryRestockId: created.restock.id,
@@ -389,7 +355,6 @@ export async function POST(request: NextRequest) {
       isNew: true,
     });
   } catch (error) {
-    enforcement?.fail();
     console.error("[SmartReceiving/POST]", error);
     return NextResponse.json(
       { error: "스마트 입고 처리에 실패했습니다." },

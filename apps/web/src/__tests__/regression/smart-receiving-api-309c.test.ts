@@ -40,18 +40,13 @@ describe("§11.309c — route 파일 존재 + 패턴", () => {
     expect(src).toMatch(/Unauthorized.*401/);
   });
 
-  it("enforceAction(inventory_receive) 보안 — §11.309c-hotfix IrreversibleActionType enum 정합", () => {
+  it("§11.309c-hotfix-2 — enforceAction 제거 (단순화, enum 미등록)", () => {
     const src = read(ROUTE_PATH);
-    expect(src).toMatch(/enforceAction\(/);
-    expect(src).toMatch(/action:\s*["']inventory_receive["']/);
-    expect(src).toMatch(/routePath:\s*["']\/api\/inventory\/smart-receiving["']/);
-  });
-
-  it("enforcement.deny() / .complete() / .fail() 정합 (기존 패턴)", () => {
-    const src = read(ROUTE_PATH);
-    expect(src).toMatch(/enforcement\.deny\(\)/);
-    expect(src).toMatch(/enforcement\.complete\(/);
-    expect(src).toMatch(/enforcement\?\.fail\(\)/);
+    // enforceAction 호출 0 — auth() + DataAuditLog 만 사용
+    expect(src).not.toMatch(/enforceAction\(/);
+    expect(src).not.toMatch(/enforcement\./);
+    // import 도 제거
+    expect(src).not.toMatch(/from\s+["']@\/lib\/security\/server-enforcement-middleware["']/);
   });
 });
 
@@ -156,13 +151,14 @@ describe("§11.309c — 분기 B (신규 품목)", () => {
 });
 
 describe("§11.309c — 의존성 import", () => {
-  it("auth / db / Prisma / audit / enforcement import", () => {
+  it("auth / db / Prisma / audit import (§11.309c-hotfix-2 enforcement-middleware 제거)", () => {
     const src = read(ROUTE_PATH);
     expect(src).toMatch(/from\s+["']@\/auth["']/);
     expect(src).toMatch(/from\s+["']@\/lib\/db["']/);
     expect(src).toMatch(/from\s+["']@prisma\/client["']/);
     expect(src).toMatch(/from\s+["']@\/lib\/audit["']/);
-    expect(src).toMatch(/from\s+["']@\/lib\/security\/server-enforcement-middleware["']/);
+    // §11.309c-hotfix-2 — enforcement-middleware import 제거 확인
+    expect(src).not.toMatch(/from\s+["']@\/lib\/security\/server-enforcement-middleware["']/);
   });
 
   it("ProductCategory enum import (신규 분기 fallback)", () => {
