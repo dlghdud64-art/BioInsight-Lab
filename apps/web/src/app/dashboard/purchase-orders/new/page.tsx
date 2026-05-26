@@ -59,6 +59,8 @@ function NewPurchaseOrderPageInner() {
   const isReorderRecommendation = prefillSource === "reorder-recommendation";
 
   const [form, setForm] = useState<PrefillForm>(EMPTY_FORM);
+  // §11.310d — POST /api/orders/draft 진행 상태 (button disabled).
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // §11.310c — query string 으로 form 초기화 (mount 1회).
   useEffect(() => {
@@ -83,9 +85,8 @@ function NewPurchaseOrderPageInner() {
 
   const estimatedAmount = form.quantity * form.unitPrice;
 
-  const handleCreate = () => {
-    // §11.310c MVP — 실제 PO create POST 는 §11.310d 후속.
-    // 현재는 toast 안내 + PO 목록으로 redirect.
+  const handleCreate = async () => {
+    // §11.310d — 실제 POST /api/orders/draft (PurchaseRecord create).
     if (!form.productName.trim()) {
       toast.error("품목명을 입력해 주세요.");
       return;
@@ -98,12 +99,32 @@ function NewPurchaseOrderPageInner() {
       toast.error("공급사를 선택해 주세요.");
       return;
     }
-    toast.info(
-      "발주 생성 흐름은 후속 단계에서 활성화됩니다. PO 목록으로 이동합니다.",
-      { duration: 4000 },
-    );
-    // 후속 §11.310d 에서 실제 POST /api/orders 호출 + redirect to created PO
-    setTimeout(() => router.push("/dashboard/purchase-orders"), 800);
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/orders/draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productName: form.productName.trim(),
+          supplier: form.supplier.trim(),
+          quantity: form.quantity,
+          unitPrice: form.unitPrice,
+          notes: form.notes.trim() || undefined,
+          source: isReorderRecommendation ? "reorder-recommendation" : "manual",
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || data.error) {
+        throw new Error(data.error || "발주 draft 생성 실패");
+      }
+      toast.success("발주 draft가 등록되었습니다.", { duration: 3000 });
+      router.push("/dashboard/purchase-orders");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "발주 생성 중 오류 발생";
+      toast.error(msg);
+      setIsSubmitting(false);
+    }
   };
 
   const handleCancel = () => {
@@ -248,12 +269,11 @@ function NewPurchaseOrderPageInner() {
             </span>
           </div>
 
-          {/* §11.310c MVP 안내 */}
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200">
-            <AlertCircle className="h-4 w-4 text-slate-500 mt-0.5 flex-shrink-0" />
-            <p className="text-[11px] text-slate-600 leading-relaxed">
-              실제 발주 생성 및 결재 요청은 후속 단계(§11.310d)에서 활성화됩니다.
-              현재는 입력값 확인까지 가능합니다.
+          {/* §11.310d — 발주 draft 안내 (실제 POST /api/orders/draft 활성) */}
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+            <AlertCircle className="h-4 w-4 text-emerald-700 mt-0.5 flex-shrink-0" />
+            <p className="text-[11px] text-emerald-700 leading-relaxed">
+              발주 draft가 PurchaseRecord에 등록됩니다. 정식 발주 결재는 PO 목록에서 진행하세요.
             </p>
           </div>
         </CardContent>
@@ -274,10 +294,11 @@ function NewPurchaseOrderPageInner() {
           type="button"
           data-testid="new-po-create-cta"
           onClick={handleCreate}
-          className="flex-1 h-11 min-h-[44px] text-sm bg-green-600 hover:bg-green-700 text-white font-semibold"
+          disabled={isSubmitting}
+          className="flex-1 h-11 min-h-[44px] text-sm bg-green-600 hover:bg-green-700 text-white font-semibold disabled:opacity-60"
         >
           <ShoppingCart className="h-4 w-4 mr-1.5" />
-          발주 생성
+          {isSubmitting ? "등록 중..." : "발주 생성"}
         </Button>
       </div>
     </div>
