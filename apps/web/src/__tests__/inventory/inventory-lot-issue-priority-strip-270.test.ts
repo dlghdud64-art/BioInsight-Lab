@@ -38,7 +38,7 @@ describe("inventory lot issue priority strip", () => {
     );
     expect(source).toContain("1순위: 폐기 처리 · 만료 lot {lotIssueDisposalReviewCount}건");
     expect(source).toContain("승인 여부:");
-    expect(source).toContain("재고 감소 영향: {actionableExpiredQuantity}개");
+    expect(source).toContain("재고 감소 영향: -{actionableExpiredQuantity}개");
     expect(source).toContain("다음 처리자: 재고 운영");
   });
 

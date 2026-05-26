@@ -36,14 +36,12 @@ describe("inventory disposal state-entry contract", () => {
     expect(dockSource).toContain(required.disposalImpactSummary);
   });
 
-  it("reveals the disposal review dock in the inventory-disposal pilot without auto-disposing stock", () => {
-    expect(inventorySource).toContain("hasOpenedPilotDisposalDock");
+  it("keeps disposal evidence inline so the pilot can still click page actions", () => {
+    expect(inventorySource).not.toContain("hasOpenedPilotDisposalDock");
     expect(inventorySource).toContain(
-      "if (!isBrowserPilotInventoryDisposal || !priorityExpiredLot || hasOpenedPilotDisposalDock) return;",
+      'data-testid="labaxis-inventory-lot-issue-first-line-action"',
     );
-    expect(inventorySource).toContain("openDisposalDock(priorityExpiredLot);");
-    expect(inventorySource).toContain(
-      "Reveal the review dock for browser evidence; disposal still requires an operator click.",
-    );
+    expect(inventorySource).toContain("만료 · 사용 금지 · 1순위 폐기 처리");
+    expect(inventorySource).toContain("재주문 검토: 폐기 완료 후 보조");
   });
 });

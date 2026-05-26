@@ -295,7 +295,6 @@ function InventoryPageContent() {
   const [disposalTarget, setDisposalTarget] = useState<import("@/components/inventory/lot-disposal-panel").DisposalTarget | null>(null);
   const [disposalInventoryId, setDisposalInventoryId] = useState<string | null>(null);
   const [disposalCompletionSummary, setDisposalCompletionSummary] = useState<import("@/components/inventory/lot-disposal-panel").DisposalCompletionSummary | null>(null);
-  const [hasOpenedPilotDisposalDock, setHasOpenedPilotDisposalDock] = useState(false);
   const disposalPanelOpen = disposalTarget !== null;
 
   // ── Context Panel (right-side detail drawer) state ──
@@ -980,14 +979,6 @@ function InventoryPageContent() {
     setDisposalCompletionSummary(null);
   };
 
-  useEffect(() => {
-    if (!isBrowserPilotInventoryDisposal || !priorityExpiredLot || hasOpenedPilotDisposalDock) return;
-
-    // Reveal the review dock for browser evidence; disposal still requires an operator click.
-    setHasOpenedPilotDisposalDock(true);
-    openDisposalDock(priorityExpiredLot);
-  }, [hasOpenedPilotDisposalDock, isBrowserPilotInventoryDisposal, priorityExpiredLot]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const priorityQueueItems = useMemo<QueueItem[]>(() => {
     const expiredItems = actionableExpiredLots.map((inventory) => {
       const resolution = resolveDisposal({
@@ -1584,9 +1575,14 @@ function InventoryPageContent() {
                   <p data-testid="labaxis-inventory-lot-issue-decision-summary" className="text-sm font-extrabold text-red-800">
                     1순위: 폐기 처리 · 만료 lot {lotIssueDisposalReviewCount}건
                   </p>
+                  <div data-testid="labaxis-inventory-lot-issue-first-line-action" className="flex flex-wrap gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-extrabold text-red-800">
+                    <span>만료 · 사용 금지 · 1순위 폐기 처리</span>
+                    <span>재고 영향 -{priorityExpiredLot?.currentQuantity ?? actionableExpiredQuantity} {priorityExpiredLot?.unit || "ea"} · 안전재고 {priorityExpiredLot?.safetyStock ?? "확인 필요"} {priorityExpiredLot?.unit || "ea"}</span>
+                    <span className="text-slate-600">재주문 검토: 폐기 완료 후 보조</span>
+                  </div>
                   <div data-testid="labaxis-inventory-lot-issue-audit-line" className="flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700">
                     <span>승인 여부: {lotIssueApprovalPendingCount > 0 ? "승인 대기" : "승인 불필요"}</span>
-                    <span>재고 감소 영향: {actionableExpiredQuantity}개</span>
+                    <span>재고 감소 영향: -{actionableExpiredQuantity}개</span>
                     <span>다음 처리자: 재고 운영</span>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
