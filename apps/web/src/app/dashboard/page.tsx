@@ -11,7 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 // store fetch 처리 (이전 mount 동작 회복).
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Package, AlertTriangle, DollarSign, FileText, Search, Plus, TrendingUp, Truck, ChevronRight, Beaker, Calendar, GitCompare, CheckCircle2, Clock, ClipboardList, ShieldAlert, ArrowRight, X, ScanLine } from "lucide-react";
+import { Package, AlertTriangle, DollarSign, FileText, Search, Plus, TrendingUp, Truck, ChevronRight, Beaker, Calendar, GitCompare, CheckCircle2, Clock, ClipboardList, ShieldAlert, ArrowRight, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -35,8 +35,9 @@ import { COMPARE_SUBSTATUS_DEFS, RESOLUTION_PATH_LABELS, HANDOFF_STALL_LABELS } 
 import { OPS_STALL_LABELS } from "@/lib/work-queue/ops-queue-semantics";
 // §11.82 #dashboard-operational-intelligence-redesign Phase 1 — AI 리포트 dialog
 import { AIInsightDialog } from "@/components/dashboard/ai-insight-dialog";
-// §11.308a #smart-receiving-entry — 스마트 입고 placeholder modal (호영님 P1 2026-05-26)
-import { SmartReceivingPlaceholderModal } from "@/components/inventory/SmartReceivingPlaceholderModal";
+// §11.308a-v2 — 스마트 입고 modal import 제거.
+// 진입점은 글로벌 헤더 (components/dashboard/Header.tsx) 로 승격
+// (호영님 P0 2026-05-26). 대시보드 본문 button + state + modal 모두 제거.
 // §11.84 + §11.85 — 시안 채택 후속 chart 2종 (Area + 카테고리 도넛)
 // §11.196d — recharts code split. SpendTrendCard / CategoryDistributionCard
 // 가 recharts (~150KB gzipped) 의존. KPI 4 카드 / SYSTEM INSIGHT / Quick
@@ -144,9 +145,9 @@ function DashboardPageInner() {
   // 데스크탑 (≥lg) 은 기존 grid 보존 (회귀 0).
   const [activeChartTab, setActiveChartTab] = useState<"trend" | "category">("trend");
 
-  // §11.308a #smart-receiving-entry — placeholder modal open state (호영님 P1 2026-05-26).
-  // backend Phase 1~3 미구현 → placeholder + 수동 입고 fallback CTA. dead button 0.
-  const [isSmartReceivingOpen, setIsSmartReceivingOpen] = useState(false);
+  // §11.308a-v2 — isSmartReceivingOpen state 제거 (호영님 P0 2026-05-26).
+  // 진입점이 글로벌 헤더로 승격되어 Header.tsx 에서 state 관리.
+  // 대시보드 본문에서는 어디서나 1탭 접근 불필요.
 
   // §11.252d-1 — OnboardingHero dismiss state + localStorage persist.
   // 호영님 spec: 사용자가 명시적으로 닫기 가능 + 페이지 새로고침 시 dismiss 상태 유지.
@@ -580,24 +581,12 @@ function DashboardPageInner() {
           </p>
         </div>
         <div className="flex-shrink-0 flex flex-col items-end gap-1">
-          {/* §11.308a — 스마트 입고 진입점 (호영님 P1 2026-05-26).
-              backend 미구현 → SmartReceivingPlaceholderModal placeholder + 수동 fallback.
-              AI 리포트 button 위에 위치 (가장 자주 쓰는 모바일 action). */}
-          <div className="flex items-center gap-1.5">
-            <Button
-              type="button"
-              data-testid="dashboard-smart-receiving-entry"
-              size="sm"
-              onClick={() => setIsSmartReceivingOpen(true)}
-              className="h-9 min-h-[44px] text-xs sm:text-sm gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm"
-            >
-              <ScanLine className="h-4 w-4" />
-              <span>스마트 입고</span>
-            </Button>
-            {/* §11.243 #4 — 호영님 P0: isOnboardingMode 시 AI 리포트 disabled +
-                tooltip. mutation 호출 차단으로 0 데이터 분석 방지. */}
-            <AIInsightDialog disabled={isOnboardingMode} />
-          </div>
+          {/* §11.308a-v2 — 스마트 입고 button 제거 (호영님 P0 2026-05-26).
+              진입점이 글로벌 헤더로 승격되어 어느 페이지에서든 1탭 접근.
+              헤더 header-smart-receiving-entry (Header.tsx) 참조. */}
+          {/* §11.243 #4 — 호영님 P0: isOnboardingMode 시 AI 리포트 disabled +
+              tooltip. mutation 호출 차단으로 0 데이터 분석 방지. */}
+          <AIInsightDialog disabled={isOnboardingMode} />
           {isOnboardingMode && (
             <p className="text-[10px] text-slate-400 break-keep">
               리포트 생성에 최소 1건의 완료된 견적 데이터가 필요합니다
@@ -605,12 +594,6 @@ function DashboardPageInner() {
           )}
         </div>
       </div>
-
-      {/* §11.308a — placeholder modal (open state shared) */}
-      <SmartReceivingPlaceholderModal
-        open={isSmartReceivingOpen}
-        onClose={() => setIsSmartReceivingOpen(false)}
-      />
 
       {/* §11.243 #2 — 호영님 P0: OnboardingHero (isOnboardingMode 한정).
           3 step 시각화 (품목 등록 → 견적 요청 → 비교 검토) + 체크마크 + CTA.

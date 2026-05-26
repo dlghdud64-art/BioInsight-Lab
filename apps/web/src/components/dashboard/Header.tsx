@@ -22,13 +22,15 @@ import { Button } from "@/components/ui/button";
 // §11.295/§11.296 Radix DropdownMenu* import 제거 — Header.tsx 3 dropdown
 // (도움말/프로필/알림) 모두 plain button + useState pattern 으로 swap 완료.
 import { useQRScanner } from "@/contexts/QRScannerContext";
-import { Search, Bell, HelpCircle, ChevronRight, AlertTriangle, FileText, BookOpen, Headphones, Settings, CreditCard, LogOut, ShieldAlert, Clock, CheckCircle2, ClipboardCheck, Menu, Package } from "lucide-react";
+import { Search, Bell, HelpCircle, ChevronRight, AlertTriangle, FileText, BookOpen, Headphones, Settings, CreditCard, LogOut, ShieldAlert, Clock, CheckCircle2, ClipboardCheck, Menu, Package, ScanLine } from "lucide-react";
 import { toast } from "sonner";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { CommandPalette } from "@/components/dashboard/command-palette";
 // §11.271 — DashboardShell 의 fixed FAB 에서 헤더 inline 으로 이동 (운영 브리핑 FAB
 // 좌표 충돌 해소). overlay/store/handler 변경 0, button className 만 fixed → relative.
 import { BarcodeScanFab } from "@/components/layout/barcode-scan-fab";
+// §11.308a-v2 #header-smart-receiving — 스마트 입고 글로벌 진입점 (호영님 P0 2026-05-26)
+import { SmartReceivingPlaceholderModal } from "@/components/inventory/SmartReceivingPlaceholderModal";
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void;
@@ -98,6 +100,10 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   // 은 별도 batch (복잡 logic 보존).
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  // §11.308a-v2 — 스마트 입고 글로벌 진입점 (호영님 P0 2026-05-26).
+  // 어느 페이지에서든 1탭으로 placeholder modal 진입. backend 구현 시
+  // 실제 카메라/스캔 흐름으로 swap. SmartReceivingPlaceholderModal 재사용.
+  const [isSmartReceivingOpen, setIsSmartReceivingOpen] = useState(false);
 
   // 글로벌 단축키: Ctrl+Q → QR 스캐너 열기
   useEffect(() => {
@@ -310,8 +316,24 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           {/* §11.271 — 바코드 스캔 모바일 trigger (BarcodeScanFab inline mount).
               운영 브리핑 FAB (bottom-[72px] right-4) 와 좌표 충돌 해소.
               component 안에 overlay/store/handler 그대로 보존, button 만 relative
-              헤더 inline 으로 표시. lg:hidden 보존 (mobile only). */}
+              헤더 inline 으로 표시. lg:hidden 보존 (mobile only).
+              §11.276 production env-gated (NEXT_PUBLIC_FEATURE_BARCODE_SCAN_MOCK)
+              — production 노출 0, dev/staging mock 만. */}
           <BarcodeScanFab />
+
+          {/* §11.308a-v2 — 스마트 입고 글로벌 진입점 (호영님 P0 2026-05-26).
+              모든 페이지에서 1탭으로 스마트 입고 진입 (검색~알림 사이 위치).
+              backend 미구현 — SmartReceivingPlaceholderModal placeholder + 수동 입고
+              fallback (§11.308a 패턴 재사용). backend 구현 시 실제 카메라 swap. */}
+          <button
+            type="button"
+            data-testid="header-smart-receiving-entry"
+            aria-label="스마트 입고"
+            onClick={() => setIsSmartReceivingOpen(true)}
+            className="inline-flex items-center justify-center h-10 w-10 md:h-9 md:w-9 flex-shrink-0 p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
+          >
+            <ScanLine className="h-5 w-5 pointer-events-none" />
+          </button>
 
 
           {/* §11.296 알림 dropdown — Radix 제거 + plain button + useState
@@ -596,6 +618,13 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           )}
         </div>
       </div>
+
+      {/* §11.308a-v2 — 스마트 입고 placeholder modal (호영님 P0 2026-05-26).
+          글로벌 헤더에서 mount — 모든 페이지에서 1탭으로 진입. */}
+      <SmartReceivingPlaceholderModal
+        open={isSmartReceivingOpen}
+        onClose={() => setIsSmartReceivingOpen(false)}
+      />
     </header>
   );
 }
