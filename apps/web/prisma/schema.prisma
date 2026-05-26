@@ -868,16 +868,25 @@ model InventoryRestock {
   restockedAt      DateTime        @default(now())
   createdAt        DateTime        @default(now())
 
+  // §11.309a — 스마트 입고 OCR 스캔 연결 (호영님 P0 2026-05-26).
+  // ocrJobId null = 수동 입고, ocrJobId 있음 = OCR 스캔으로 등록된 입고.
+  // extractedData 는 사용자가 확인/수정한 최종 데이터 (감사 추적용).
+  ocrJobId         String?
+  extractedData    Json?           // 확인된 OCR 추출 데이터 (감사 추적)
+
   // 관계
   inventory ProductInventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   order     Order?           @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  // §11.309a — OcrJob FK. SetNull 으로 OcrJob 삭제 시에도 InventoryRestock 보존.
+  ocrJob    OcrJob?          @relation(fields: [ocrJobId], references: [id], onDelete: SetNull)
 
   @@index([inventoryId])
   @@index([userId])
   @@index([restockedAt])
   @@index([orderId])
   @@index([receivingStatus])
+  @@index([ocrJobId])  // §11.309a — 스캔 입고 조회 O(log n)
 }
 
 // 점검 결과
@@ -3106,6 +3115,9 @@ model OcrJob {
   finalResultId  String?      @unique
   // §11.290 Phase 6.b — cache hit audit back-relation (정확 cacheHitRatio metric)
   cacheHits      OcrCacheHit[]
+  // §11.309a — 스마트 입고 back-relation. 한 OCR job 으로 여러 receiving 생성
+  // 가능 (예: 거래명세서 다수 품목 일괄 입고).
+  restocks       InventoryRestock[]
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
