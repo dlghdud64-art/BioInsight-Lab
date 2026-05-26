@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Search, Filter, Package, CheckCircle2, Clock, AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon, Loader2, Upload, ChevronDown, ChevronUp, ChevronsRight, ChevronsLeft, Settings2, GripVertical, MoreHorizontal } from "lucide-react";
+import { Search, Filter, Package, CheckCircle2, Clock, AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon, Loader2, ScanLine, ChevronDown, ChevronUp, ChevronsRight, ChevronsLeft, Settings2, GripVertical, MoreHorizontal } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -1947,14 +1947,50 @@ function QuotesPageContent() {
             - 모바일 (<md) 더보기 ⋯ DropdownMenu 분리 (견적서 비교 + 초안 항목 접기).
             - 각 버튼 min-w-[80px]~min-w-[120px] 로 텍스트 잘림 방지. */}
         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 flex-wrap lg:flex-nowrap">
-          {/* 견적서 파싱 버튼 — 모바일 + tablet + desktop 모두 노출 (주요 액션) */}
-          <button
-            onClick={() => setAiParseModalOpen(true)}
-            className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition-colors active:scale-95 shrink-0 min-w-[80px] sm:min-w-[120px]"
-          >
-            <Upload className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
-            <span className="hidden sm:inline">견적서 파싱</span><span className="sm:hidden">파싱</span>
-          </button>
+          {/* §11.307 — 호영님 P1 spec (2026-05-26):
+              모바일 액션 순서 = [+ 새 견적 요청] → [📷 스캔] → [⋯ 더보기].
+              ⋯ button 이 컨테이너 우측 끝으로 이동 → absolute right-0 드롭다운
+              viewport 안 (이전 좌측 -66px 짤림 root cause 해결). 데스크탑 (md+)
+              에서는 비교/초안 button 이 새 견적 요청 옆에 직접 노출 (보존). */}
+          <PermissionGate permission="quotes.create">
+            <div className="flex items-center gap-0 flex-shrink-0 snap-start">
+              <Link href="/app/search">
+                <Button size="sm" className="h-9 text-xs sm:text-sm gap-1.5 bg-blue-600 hover:bg-blue-700 rounded-r-none border-r border-blue-500/40">
+                  <Plus className="h-4 w-4" /><span className="hidden sm:inline">새 견적 요청</span><span className="sm:hidden">새 요청</span>
+                </Button>
+              </Link>
+              {/* §11.298d BOM upload dropdown plain (button group) */}
+              <div className="relative">
+                <Button
+                  size="sm"
+                  className="h-9 px-2 bg-blue-600 hover:bg-blue-700 rounded-l-none"
+                  aria-label="추가 액션"
+                  aria-expanded={isBomDropdownOpen}
+                  aria-haspopup="menu"
+                  onClick={() => setIsBomDropdownOpen((v) => !v)}
+                >
+                  <ChevronDown className="h-3.5 w-3.5 pointer-events-none" />
+                </Button>
+                {isBomDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsBomDropdownOpen(false)} aria-hidden="true" />
+                    <div role="menu" className="absolute right-0 top-full mt-1 w-52 rounded-md border border-slate-200 bg-white shadow-lg z-50 py-1">
+                      {/* §11.55 — "외부 견적서 업로드" 메뉴 제거: backend 미구현 dead-end였음. */}
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => { setIntakeDockSource("bom_import"); setIntakeDockOpen(true); setIsBomDropdownOpen(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left hover:bg-slate-100"
+                      >
+                        <FileTextIcon className="h-4 w-4 text-emerald-600" />
+                        <span className="text-sm">BOM 업로드</span>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </PermissionGate>
           {/* 견적서 비교 버튼 — md+ 노출 (모바일은 더보기 드롭다운에서) */}
           <button
             onClick={runAiQuoteCompare}
@@ -1981,8 +2017,17 @@ function QuotesPageContent() {
             <FileTextIcon className="h-4 w-4 mr-1.5" />
             견적 요청 초안 만들기
           </Button>
+          {/* §11.307 — 견적서 스캔 (이전 "파싱"). Upload icon → ScanLine icon (문서
+              읽어들이는 동작 정합). 모바일 + tablet + desktop 모두 노출 (주요 액션). */}
+          <button
+            onClick={() => setAiParseModalOpen(true)}
+            className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition-colors active:scale-95 shrink-0 min-w-[80px] sm:min-w-[120px]"
+          >
+            <ScanLine className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
+            <span className="hidden sm:inline">견적서 스캔</span><span className="sm:hidden">스캔</span>
+          </button>
           {/* §11.248b — 모바일 더보기 ⋯ 드롭다운 (md 미만 한정).
-              견적서 비교 + 초안 만들기 항목을 접어서 모바일 화면 vertical space 확보. */}
+              §11.307 — 컨테이너 우측 끝으로 이동 (right-0 viewport 안). */}
           {/* §11.298d 모바일 더보기 plain */}
           <div className="relative md:hidden">
             <Button
@@ -2025,45 +2070,6 @@ function QuotesPageContent() {
               </>
             )}
           </div>
-          <PermissionGate permission="quotes.create">
-            <div className="flex items-center gap-0 flex-shrink-0 snap-start">
-              <Link href="/app/search">
-                <Button size="sm" className="h-9 text-xs sm:text-sm gap-1.5 bg-blue-600 hover:bg-blue-700 rounded-r-none border-r border-blue-500/40">
-                  <Plus className="h-4 w-4" /><span className="hidden sm:inline">새 견적 요청</span><span className="sm:hidden">새 요청</span>
-                </Button>
-              </Link>
-              {/* §11.298d BOM upload dropdown plain (button group) */}
-              <div className="relative">
-                <Button
-                  size="sm"
-                  className="h-9 px-2 bg-blue-600 hover:bg-blue-700 rounded-l-none"
-                  aria-label="추가 액션"
-                  aria-expanded={isBomDropdownOpen}
-                  aria-haspopup="menu"
-                  onClick={() => setIsBomDropdownOpen((v) => !v)}
-                >
-                  <ChevronDown className="h-3.5 w-3.5 pointer-events-none" />
-                </Button>
-                {isBomDropdownOpen && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setIsBomDropdownOpen(false)} aria-hidden="true" />
-                    <div role="menu" className="absolute right-0 top-full mt-1 w-52 rounded-md border border-slate-200 bg-white shadow-lg z-50 py-1">
-                      {/* §11.55 — "외부 견적서 업로드" 메뉴 제거: backend 미구현 dead-end였음. */}
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={() => { setIntakeDockSource("bom_import"); setIntakeDockOpen(true); setIsBomDropdownOpen(false); }}
-                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left hover:bg-slate-100"
-                      >
-                        <FileTextIcon className="h-4 w-4 text-emerald-600" />
-                        <span className="text-sm">BOM 업로드</span>
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </PermissionGate>
         </div>
       </div>
 
@@ -4240,14 +4246,14 @@ function QuotesPageContent() {
         </CenterWorkWindow>
       )}
 
-      {/* ═══ AI 견적서 파싱 모달 ═══ */}
+      {/* ═══ AI 견적서 스캔 모달 ═══ */}
       <AiQuoteParseModal
         open={aiParseModalOpen}
         onClose={() => setAiParseModalOpen(false)}
         quoteId={selectedQuoteId}
         onRegistered={() => {
           refetch();
-          toast({ title: "AI 견적서 파싱 완료", description: "벤더 응답이 등록되었습니다." });
+          toast({ title: "AI 견적서 스캔 완료", description: "벤더 응답이 등록되었습니다." });
         }}
       />
 
