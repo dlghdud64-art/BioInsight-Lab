@@ -325,8 +325,8 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
         </div>
 
         {/* AI 인사이트 영역 */}
+        {/* §11.302d-6a-2 — 예산 경고 alert: amber → yellow (긴급/주의 의미 유지). */}
         {selectedBudget.hasWarning && selectedBudget.warningMessage && (
-          {/* §11.302d-6a-2 — 예산 경고 alert: amber → yellow (긴급/주의 의미 유지). */}
           <div className="mx-3 mb-3 sm:mx-4 sm:mb-4 rounded-lg bg-yellow-50 border border-yellow-200  border-yellow-800/40 px-3 py-1.5 sm:px-4 sm:py-2 flex items-start gap-2">
             <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-yellow-600 text-yellow-400 shrink-0 mt-0.5" />
             <p className="text-xs text-slate-700  text-yellow-200 leading-relaxed">
