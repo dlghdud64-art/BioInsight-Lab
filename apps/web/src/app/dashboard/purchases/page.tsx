@@ -533,11 +533,10 @@ export default function PurchasesPage() {
                 <Search className="h-4 w-4" /> 소싱
               </Button>
             </Link>
-            <Link href="/dashboard/quotes">
-              <Button size="sm" className="h-10 px-5 text-sm gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm">
-                <FileText className="h-4 w-4" /> 견적 보관함
-              </Button>
-            </Link>
+            {/* §11.306b — header 의 quotes-archive CTA 제거 (호영님 P2 2026-05-26).
+                하단 탭바 /dashboard/quotes 와 중복. 하단 탭바 wiring 보존 — 사용자
+                접근 경로 0 회귀, header CTA 만 단순화. FileText icon 은 line 886/1399
+                다른 사용처 보존되어 import 유지. */}
             {/*
               "일괄 발주 전환" header CTA — α-D session B (ADR §11.22).
               Wired to /api/work-queue/purchase-conversion/bulk-po. Only
