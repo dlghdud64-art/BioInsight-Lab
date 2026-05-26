@@ -548,29 +548,16 @@ function DashboardPageInner() {
 
       {/* --- 페이지 헤더 --- */}
       {/* §11.82 Phase 1: 우측 상단에 "AI 리포트 생성" button 배치.
-          호영님 시안 visual essence 흡수 — 다이얼로그 안에서 real
-          /api/analytics/ai-insight POST 결과 표시 (mock/fake success 0). */}
-      {/* §11.206 — 시안 정합 page header. eyebrow "OPERATIONAL INTELLIGENCE
-          DASHBOARD" + 한국어 title + Live badge (animate-ping) + greeting +
-          AI 리포트 button. (호영님 시안: Google AI Studio LabAxis 정합) */}
+          §11.308b (호영님 Q11 = A, 2026-05-26):
+            - eyebrow "Operational Intelligence Dashboard" 영문 완전 제거
+              (사용자 무의미, 한국어 title 으로 충분)
+            - "Live" 배지 완전 제거 (대시보드 = 원래 실시간, 별도 표기 불필요)
+            - 헤더 단순화: 한국어 title + greeting 만 */}
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 min-w-0">
         <div className="flex flex-col space-y-1 min-w-0">
-          <p className="inline-flex items-center gap-2 text-[10px] font-bold tracking-[0.12em] uppercase text-slate-500">
-            <span className="inline-block w-1 h-1 rounded-full bg-emerald-500" />
-            Operational Intelligence Dashboard
-          </p>
-          <div className="flex items-center gap-2.5">
-            <h2 className="text-2xl md:text-[28px] font-black tracking-tighter text-slate-900">
-              대시보드
-            </h2>
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200/60">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
-              </span>
-              Live
-            </span>
-          </div>
+          <h2 className="text-2xl md:text-[28px] font-black tracking-tighter text-slate-900">
+            대시보드
+          </h2>
           <p className="text-[13px] text-slate-500 font-medium">
             {session?.user?.name ? `${session.user.name}님, ` : ""}
             {dashboardState === "blocked"
