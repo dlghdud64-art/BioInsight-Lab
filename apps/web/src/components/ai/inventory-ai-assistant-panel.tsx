@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -8,6 +9,11 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+// §11.310 #reorder-review-sheet — 재발주안 검토 바텀시트 (호영님 P1 2026-05-26)
+import {
+  ReorderReviewSheet,
+  type ReorderReviewInput,
+} from "@/components/inventory/ReorderReviewSheet";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,6 +38,7 @@ import {
   Replace,
   Timer,
   MapPin,
+  History,
 } from "lucide-react";
 import type {
   InventoryPanelState,
@@ -73,6 +80,40 @@ export function InventoryAiAssistantPanel({
   onViewActions,
   isAnalyzing,
 }: InventoryAiAssistantPanelProps) {
+  // §11.310 — 재발주안 검토 바텀시트 state (호영님 P1 2026-05-26).
+  // Sticky CTA "재발주안 검토하기" 탭 → setIsReorderSheetOpen(true) → ReorderReviewSheet.
+  // MVP: vendors / recentPurchases = [] (후속 §11.310b 에서 PurchaseRecord 집계 wiring).
+  const [isReorderSheetOpen, setIsReorderSheetOpen] = useState(false);
+  const [selectedReorderForReview, setSelectedReorderForReview] = useState<ReorderRecommendation | null>(null);
+
+  const handleOpenReorderSheet = (recommendation: ReorderRecommendation) => {
+    setSelectedReorderForReview(recommendation);
+    setIsReorderSheetOpen(true);
+    // caller props 호환 — 기존 onReviewReorder 도 호출 (다른 caller side-effect 유지)
+    onReviewReorder?.(recommendation);
+  };
+
+  // §11.310 — ReorderReviewInput 매핑 (MVP — vendors/recentPurchases 빈 array).
+  // 후속 §11.310b: PurchaseRecord aggregate hook 으로 채움.
+  const reorderReviewInput: ReorderReviewInput | null = selectedReorderForReview
+    ? {
+        productId: null,
+        productName: selectedReorderForReview.productName,
+        recommendedQty: selectedReorderForReview.recommendedQty,
+        unit: "ea",
+        storageLocation: null,
+        vendors: selectedReorderForReview.suggestedVendor
+          ? [
+              {
+                vendorName: selectedReorderForReview.suggestedVendor,
+                unitPrice: selectedReorderForReview.recentUnitPrice ?? 0,
+                lastPurchasedAt: null,
+              },
+            ]
+          : [],
+        recentPurchases: [],
+      }
+    : null;
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -158,12 +199,21 @@ export function InventoryAiAssistantPanel({
         {(state === "success" || state === "warning_shortage" || state === "warning_expiry") && (
           <StickyActions
             data={data}
-            onReviewReorder={onReviewReorder}
+            onReviewReorder={handleOpenReorderSheet}
             onViewActions={onViewActions}
             onCreatePurchaseRequest={onCreatePurchaseRequest}
           />
         )}
       </SheetContent>
+
+      {/* §11.310 — 재발주안 검토 바텀시트 (Sheet 내부 mount, 호영님 P1 2026-05-26).
+          하단 sticky CTA "재발주안 검토하기" 탭 → 본 시트 노출.
+          [견적 요청] / [바로 발주] 분기 + amber→green 정합. */}
+      <ReorderReviewSheet
+        open={isReorderSheetOpen}
+        onClose={() => setIsReorderSheetOpen(false)}
+        data={reorderReviewInput}
+      />
     </Sheet>
   );
 }
@@ -482,22 +532,23 @@ function ReorderSection({
   const urgencyConfig = {
     urgent: {
       label: "긴급",
-      color: "bg-red-50 text-red-600 border-red-200",
+      color: "bg-red-50 text-red-700 border-red-200",
     },
     high: {
+      // §11.310 — amber → yellow (§11.302 신호등 체계)
       label: "높음",
-      color: "bg-amber-50 text-amber-600 border-amber-200",
+      color: "bg-yellow-100 text-yellow-700 border-yellow-200",
     },
     medium: {
       label: "보통",
-      color: "bg-blue-50 text-blue-600 border-blue-200",
+      color: "bg-blue-50 text-blue-700 border-blue-200",
     },
   };
 
   const urg = urgencyConfig[recommendation.urgency];
 
   return (
-    <div className={`p-5 ${isHighlighted ? "bg-orange-50/50" : ""}`}>
+    <div className={`p-5 ${isHighlighted ? "bg-emerald-50/40" : ""}`}>
       <div className="flex items-center justify-between mb-3">
         <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
           재발주 우선순위
@@ -566,23 +617,17 @@ function ReorderSection({
         </div>
       </div>
 
-      {/* 액션 버튼 */}
+      {/* §11.310 — 카드 내부 button 분리 (호영님 P1 2026-05-26):
+          "재발주안 검토하기" 제거 (하단 sticky CTA 으로 단일화 — 중복 제거).
+          유지: "추천 벤더 보기" (탐색 액션).
+          신설: "구매 이력 보기" (탐색 액션 — 후속 §11.310b 에서 화면 wiring).
+          dead button 0 — 카드 button = 탐색/참조, sticky CTA = 최종 액션. */}
       <div className="flex items-center gap-2 mt-3">
-        {onReviewReorder && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-[11px] flex-1"
-            onClick={() => onReviewReorder(recommendation)}
-          >
-            <ShoppingCart className="h-3 w-3 mr-1" />
-            재발주안 검토하기
-          </Button>
-        )}
         {onViewVendors && (
           <Button
             variant="outline"
             size="sm"
+            data-testid="reorder-card-view-vendors-cta"
             className="h-7 text-[11px] flex-1"
             onClick={() => onViewVendors(recommendation.productName)}
           >
@@ -590,6 +635,27 @@ function ReorderSection({
             추천 벤더 보기
           </Button>
         )}
+        <Button
+          variant="outline"
+          size="sm"
+          data-testid="reorder-card-view-history-cta"
+          className="h-7 text-[11px] flex-1"
+          onClick={() => {
+            // §11.310 — 구매 이력 화면 라우팅 (후속 §11.310b 에서 inventory 페이지
+            // 안 history tab 또는 별도 PurchaseRecord 필터링 화면).
+            // MVP: alert 대신 product 검색 query string 으로 이동.
+            if (typeof window !== "undefined") {
+              const params = new URLSearchParams({
+                search: recommendation.productName,
+                tab: "history",
+              });
+              window.location.href = `/dashboard/purchases?${params.toString()}`;
+            }
+          }}
+        >
+          <History className="h-3 w-3 mr-1" />
+          구매 이력 보기
+        </Button>
       </div>
     </div>
   );
@@ -794,7 +860,10 @@ function StickyActions({
       <div className="flex gap-2">
         {hasReorder && onReviewReorder ? (
           <Button
-            className="flex-1 h-9 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+            data-testid="reorder-sticky-cta"
+            // §11.310 — primary "재발주안 검토하기" → green-600 (호영님 spec
+            // "실행 가능 액션" 색상 체계). 이전 blue-600 → green-600.
+            className="flex-1 h-9 text-xs bg-green-600 hover:bg-green-700 text-white font-semibold"
             onClick={() => onReviewReorder(data.reorderRecommendation!)}
           >
             <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
