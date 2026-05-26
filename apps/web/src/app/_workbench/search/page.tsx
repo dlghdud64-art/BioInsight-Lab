@@ -29,6 +29,8 @@ import { RequestReviewWindow } from "../_components/request-review-window";
 import { CompareReviewWorkWindow } from "../_components/compare-review-work-window";
 import { RequestAssemblyWorkWindow } from "@/components/sourcing/request-assembly-work-window";
 import { RequestSubmissionWorkWindow } from "@/components/sourcing/request-submission-work-window";
+// §11.312 — sticky bar 바텀시트 (호영님 P1 2026-05-26)
+import { SourcingCandidatesSheet } from "@/components/sourcing/SourcingCandidatesSheet";
 import { QuoteManagementWorkqueue } from "../_components/quote-management-workqueue";
 import { QuoteNormalizationWorkbench } from "../_components/quote-normalization-workbench";
 import { QuoteCompareReviewWorkbench } from "../_components/quote-compare-review-workbench";
@@ -222,6 +224,13 @@ export default function SearchPage() {
   const [isStrategyOverlayOpen, setIsStrategyOverlayOpen] = useState(false);
   const [comparisonModalOpen, setComparisonModalOpen] = useState(false);
   const [requestWizardOpen, setRequestWizardOpen] = useState(false);
+
+  // §11.312 — sticky bar 바텀시트 (호영님 P1 2026-05-26).
+  // bar 의 "비교 N" / "견적 N" / "⚠ 검토 N" 영역 탭 시 sheet 열림.
+  // mode 분기로 1 컴포넌트 재사용 (compare / quote / review).
+  const [candidatesSheetMode, setCandidatesSheetMode] = useState<
+    "compare" | "quote" | "review" | null
+  >(null);
   const [previewStrategy, setPreviewStrategy] = useState<"conservative" | "balanced" | "alternative">("balanced");
 
   useEffect(() => {
@@ -1444,25 +1453,40 @@ export default function SearchPage() {
       )}
 
       {/* ═══ D. Sticky Action Dock — sourcing stage only ═══ */}
-      {/* §11.252f — 액션 바 2행 분리 (호영님 spec).
-          AS-IS: 1줄 강제 (§11.252e flex-nowrap + overflow-x-auto) 였으나 가로
-          스크롤 시 정보 인지 cost ↑ + 금액/CTA 화면 밖 잘림 가능.
-          TO-BE: 비교/견적 각각 독립 행 (총 2행). 비교 0건 → 1행 숨김, 견적 0건 →
-          2행 숨김. 각 행 min-h-[44px] + 행 사이 border-b border-white/10 subtle
-          divider. 금액 shrink-0 (잘림 0). CTA 라벨 모바일 축약 (견적 요청서 만들기
-          → 견적 요청). iPhone SE 375px 잘림 0 정합. */}
+      {/* §11.252f — 액션 바 2행 분리 (compareIds.length > 0 / quoteItems.length > 0).
+          §11.268c — divider opacity 강화 (border-white/20).
+          §11.312 (호영님 P1 2026-05-26):
+            - bar 의 "비교 N" / "견적 N" / "⚠ 검토 N" 영역 탭 → SourcingCandidatesSheet
+              (각 항목 ✕ 개별 삭제 + dead button 해소)
+            - amber → yellow (§11.302 색상 체계)
+            - 🗑 휴지통 button 제거 (sheet 내 "전체 삭제" 통합)
+            - 첫 항목명 미리보기 텍스트 (공간 허용 시) */}
       {showSourcingActionDock && (
         <div className="border-t border-white/10 shrink-0" style={{ backgroundColor: '#0f172a' }}>
-          {/* §11.252f 1행 — 비교 (compareIds.length > 0 일 때만 노출).
-              §11.268c — 호영님 spec "여전히 혼재" 해소: divider border-white/10 →
-              border-white/20 (opacity 강화). 1행과 2행 사이 시각 분리 명확. */}
+          {/* §11.252f 1행 — 비교 (compareIds.length > 0 일 때만 노출) */}
           {compareIds.length > 0 && (
             <div className="px-4 min-h-[44px] flex items-center gap-2 sm:gap-3 border-b border-white/20">
-              <PenLine className="h-4 w-4 text-blue-600 shrink-0" />
-              <span className="text-sm font-semibold text-slate-100 shrink-0">비교</span>
-              <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs bg-blue-600 text-white shrink-0">{compareIds.length}</Badge>
+              {/* §11.312 — 비교 N 영역 탭 → sheet (개별 삭제 + 미리보기) */}
+              <button
+                type="button"
+                data-testid="sourcing-bar-compare-open"
+                aria-label="비교 후보 목록 열기"
+                onClick={() => setCandidatesSheetMode("compare")}
+                className="flex items-center gap-2 shrink-0 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
+              >
+                <PenLine className="h-4 w-4 text-blue-600 shrink-0" />
+                <span className="text-sm font-semibold text-slate-100 shrink-0">비교</span>
+                <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs bg-blue-600 text-white shrink-0">{compareIds.length}</Badge>
+                {/* §11.312 — 첫 항목명 미리보기 (모바일 truncate) */}
+                <span className="hidden sm:inline text-xs text-slate-300 truncate max-w-[140px]">
+                  {(() => {
+                    const first = products.find((p: any) => p.id === compareIds[0]);
+                    return first?.name ? first.name : null;
+                  })()}
+                </span>
+              </button>
               {!compareReady && (
-                <span className="inline-flex items-center gap-1 text-xs text-amber-500 whitespace-nowrap">
+                <span className="inline-flex items-center gap-1 text-xs text-yellow-500 whitespace-nowrap">
                   <AlertTriangle className="h-3 w-3 shrink-0" />2개 이상 필요
                 </span>
               )}
@@ -1473,9 +1497,7 @@ export default function SearchPage() {
                     비교 검토
                   </Button>
                 )}
-                <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-slate-500 hover:text-red-500" onClick={() => clearCompare()} aria-label="비교 후보 비우기">
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                {/* §11.312 — 🗑 휴지통 button 제거: sheet 내 "전체 삭제" 통합 */}
               </div>
             </div>
           )}
@@ -1483,16 +1505,40 @@ export default function SearchPage() {
           {/* §11.252f 2행 — 견적 (quoteItems.length > 0 일 때만 노출) */}
           {quoteItems.length > 0 && (
             <div className="px-4 min-h-[44px] flex items-center gap-2 sm:gap-3">
-              <FileText className="h-4 w-4 text-emerald-500 shrink-0" />
-              <span className="text-sm font-semibold text-slate-100 shrink-0">견적</span>
-              <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs bg-emerald-600 text-white shrink-0">{quoteItems.length}</Badge>
-              {requestReadiness.summary.review > 0 && (
-                <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 shrink-0">
-                  <AlertTriangle className="h-3 w-3 shrink-0" />검토 {requestReadiness.summary.review}
+              {/* §11.312 — 견적 N 영역 탭 → sheet (개별 삭제 + 미리보기) */}
+              <button
+                type="button"
+                data-testid="sourcing-bar-quote-open"
+                aria-label="견적 후보 목록 열기"
+                onClick={() => setCandidatesSheetMode("quote")}
+                className="flex items-center gap-2 shrink-0 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
+              >
+                <FileText className="h-4 w-4 text-emerald-500 shrink-0" />
+                <span className="text-sm font-semibold text-slate-100 shrink-0">견적</span>
+                <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs bg-emerald-600 text-white shrink-0">{quoteItems.length}</Badge>
+                {/* §11.312 — 첫 항목명 미리보기 (모바일 truncate) */}
+                <span className="hidden sm:inline text-xs text-slate-300 truncate max-w-[140px]">
+                  {(() => {
+                    const first = quoteItems[0] as any;
+                    const product = products.find((p: any) => p.id === first?.productId);
+                    return product?.name ?? first?.productName ?? null;
+                  })()}
                 </span>
+              </button>
+              {/* §11.312 — ⚠ 검토 배지 dead button 해소: 탭 → review mode sheet */}
+              {requestReadiness.summary.review > 0 && (
+                <button
+                  type="button"
+                  data-testid="sourcing-bar-review-open"
+                  aria-label="검토 필요 항목 보기"
+                  onClick={() => setCandidatesSheetMode("review")}
+                  className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700 shrink-0 hover:bg-yellow-200 transition-colors cursor-pointer"
+                >
+                  <AlertTriangle className="h-3 w-3 shrink-0" />검토 {requestReadiness.summary.review}
+                </button>
               )}
               {requestReadiness.summary.blocked > 0 && (
-                <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-red-600/10 text-red-500 shrink-0">
+                <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-700 shrink-0">
                   <AlertCircle className="h-3 w-3 shrink-0" />차단 {requestReadiness.summary.blocked}
                 </span>
               )}
@@ -1511,16 +1557,12 @@ export default function SearchPage() {
                     <span className="sm:hidden">견적 요청</span>
                   </Button>
                 )}
-                <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-slate-500 hover:text-red-500" onClick={() => { quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }} aria-label="견적 후보 비우기">
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                {/* §11.312 — 🗑 휴지통 button 제거: sheet 내 "전체 삭제" 통합 */}
               </div>
             </div>
           )}
 
-          {/* §11.252f + §11.268c — 전체 해제 (2행 하단 우측 텍스트 링크).
-              border-t opacity 강화 (border-white/5 → border-white/15) — 2행과
-              전체 해제 사이 시각 명확화. */}
+          {/* §11.252f + §11.268c — 전체 해제 (2행 하단 우측 텍스트 링크) */}
           <div className="px-4 py-1 flex justify-end border-t border-white/15">
             <Button
               size="sm"
@@ -1533,6 +1575,55 @@ export default function SearchPage() {
           </div>
         </div>
       )}
+
+      {/* §11.312 — Sourcing Candidates Sheet (compare / quote / review 3 mode 통합) */}
+      <SourcingCandidatesSheet
+        open={candidatesSheetMode !== null}
+        onClose={() => setCandidatesSheetMode(null)}
+        mode={candidatesSheetMode ?? "compare"}
+        compareIds={compareIds}
+        products={products as any}
+        quoteItems={(quoteItems as any[]).map((q) => {
+          const product = products.find((p: any) => p.id === q.productId);
+          const assessment = requestReadiness.candidates.find((c) => c.itemId === q.id);
+          const reviewFlag = assessment?.flags.find((f) => f.type === "review_required");
+          return {
+            id: q.id,
+            productId: q.productId,
+            productName: q.productName ?? product?.name,
+            brand: q.vendorName ?? product?.brand,
+            catalogNumber: q.catalogNumber ?? product?.catalogNumber,
+            category: product?.category,
+            price: q.unitPrice ?? q.lineTotal,
+            reviewReason: reviewFlag?.detail ?? null,
+            isBlocked: assessment?.status === "blocked",
+          };
+        })}
+        totalAmount={totalAmount}
+        onRemoveCompare={(id) => toggleCompare(id)}
+        onClearCompare={() => clearCompare()}
+        onRemoveQuoteItem={(id) => removeQuoteItem(id)}
+        onClearQuote={() => { quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}
+        onClearReviewFlag={(id) => {
+          // §11.312 — "그래도 견적에 유지" — review reason 무시하고 견적 진행.
+          // 현재 reviewReason 은 calculateRequestReadiness 의 derived (compare 진행 중 등),
+          // toggleCompare 로 비교에서 제거하면 review_required flag 도 해소.
+          const item = quoteItems.find((q: any) => q.id === id);
+          if (item && compareIds.includes(item.productId)) {
+            toggleCompare(item.productId);
+          }
+        }}
+        onCompareReview={() => handleProtectedAction(() => setComparisonModalOpen(true))}
+        onQuoteRequest={() =>
+          handleProtectedAction(() => {
+            if (requestHandoff) {
+              setWorkWindowMode("request-assembly");
+            } else {
+              setRequestWizardOpen(true);
+            }
+          })
+        }
+      />
 
       {/* ═══ E. Center Work Window — Compare Review (difference-first decision surface) ═══ */}
       <CompareReviewWorkWindow
