@@ -106,10 +106,14 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Security enforcement ──
+    // §11.309c-hotfix — IrreversibleActionType enum 정합 (TS suggestion).
+    // "inventory_smart_receiving" 은 enum 미등록 → "inventory_receive"
+    // (입고 action 정합 — restock 과 동일 카테고리). 후속 batch 에서
+    // 별도 "inventory_smart_receiving" enum 추가 검토 가능.
     enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
-      action: "inventory_smart_receiving",
+      action: "inventory_receive",
       targetEntityType: "inventory",
       targetEntityId: inventoryId ?? `new:${ocrJobId}`,
       sourceSurface: "smart-receiving-api",

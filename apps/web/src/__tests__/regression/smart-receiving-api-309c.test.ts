@@ -40,10 +40,10 @@ describe("§11.309c — route 파일 존재 + 패턴", () => {
     expect(src).toMatch(/Unauthorized.*401/);
   });
 
-  it("enforceAction(inventory_smart_receiving) 보안", () => {
+  it("enforceAction(inventory_receive) 보안 — §11.309c-hotfix IrreversibleActionType enum 정합", () => {
     const src = read(ROUTE_PATH);
     expect(src).toMatch(/enforceAction\(/);
-    expect(src).toMatch(/action:\s*["']inventory_smart_receiving["']/);
+    expect(src).toMatch(/action:\s*["']inventory_receive["']/);
     expect(src).toMatch(/routePath:\s*["']\/api\/inventory\/smart-receiving["']/);
   });
 
