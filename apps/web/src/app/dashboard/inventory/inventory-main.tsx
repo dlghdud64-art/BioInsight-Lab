@@ -36,8 +36,9 @@ const DatePicker = dynamic(() => import("@/components/ui/date-picker").then(m =>
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 // Sheet is kept static as it wraps children — radix portal
 import { Info, FileText, BellRing, Save, Sparkles, GitBranch, ScanLine } from "lucide-react";
-// §11.308a #smart-receiving-entry — placeholder modal (호영님 P1 2026-05-26)
-import { SmartReceivingPlaceholderModal } from "@/components/inventory/SmartReceivingPlaceholderModal";
+// §11.309d — placeholder → 실제 ScannerModal swap (호영님 P0 2026-05-26 backend MVP D)
+// SmartReceivingPlaceholderModal 컴포넌트는 보존 (다른 future placeholder 재사용 가능).
+import { SmartReceivingScannerModal } from "@/components/inventory/SmartReceivingScannerModal";
 import { getStorageConditionLabel } from "@/lib/constants";
 import { useInventoryAiPanel } from "@/hooks/use-inventory-ai-panel";
 const BulkImportModal = dynamic(() => import("@/components/inventory/BulkImportModal").then(m => m.BulkImportModal), { ssr: false });
@@ -1069,10 +1070,15 @@ export function InventoryMain() {
         />
       </div>
 
-      {/* §11.308a — 스마트 입고 placeholder modal (mobile + desktop view 공유 렌더, 호영님 P1) */}
-      <SmartReceivingPlaceholderModal
+      {/* §11.309d — 스마트 입고 실제 Scanner modal (mobile + desktop 공유, 호영님 P0). */}
+      <SmartReceivingScannerModal
         open={isSmartReceivingOpen}
         onClose={() => setIsSmartReceivingOpen(false)}
+        onReceivingRegistered={() => {
+          // §11.309d — 입고 등록 성공 시 재고 list invalidate (즉시 반영).
+          queryClient.invalidateQueries({ queryKey: ["inventories"] });
+          queryClient.invalidateQueries({ queryKey: ["team-inventory"] });
+        }}
       />
 
       {/* ── Desktop View (md and above) ── */}

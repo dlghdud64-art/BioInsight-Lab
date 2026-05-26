@@ -29,8 +29,9 @@ import { CommandPalette } from "@/components/dashboard/command-palette";
 // §11.271 — DashboardShell 의 fixed FAB 에서 헤더 inline 으로 이동 (운영 브리핑 FAB
 // 좌표 충돌 해소). overlay/store/handler 변경 0, button className 만 fixed → relative.
 import { BarcodeScanFab } from "@/components/layout/barcode-scan-fab";
-// §11.308a-v2 #header-smart-receiving — 스마트 입고 글로벌 진입점 (호영님 P0 2026-05-26)
-import { SmartReceivingPlaceholderModal } from "@/components/inventory/SmartReceivingPlaceholderModal";
+// §11.309d — placeholder → 실제 ScannerModal swap (호영님 P0 2026-05-26 backend MVP D)
+// SmartReceivingPlaceholderModal 컴포넌트는 보존 (다른 future placeholder 재사용 가능).
+import { SmartReceivingScannerModal } from "@/components/inventory/SmartReceivingScannerModal";
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void;
@@ -619,11 +620,16 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
         </div>
       </div>
 
-      {/* §11.308a-v2 — 스마트 입고 placeholder modal (호영님 P0 2026-05-26).
-          글로벌 헤더에서 mount — 모든 페이지에서 1탭으로 진입. */}
-      <SmartReceivingPlaceholderModal
+      {/* §11.309d — 스마트 입고 실제 Scanner modal (호영님 P0 2026-05-26).
+          §11.308a-v2 placeholder → §11.309d ScannerModal swap.
+          글로벌 헤더에서 mount — 모든 페이지에서 1탭으로 카메라/갤러리 진입. */}
+      <SmartReceivingScannerModal
         open={isSmartReceivingOpen}
         onClose={() => setIsSmartReceivingOpen(false)}
+        onReceivingRegistered={() => {
+          // §11.309d caller invalidation — 헤더는 organization context 없으므로
+          // 사용자가 재고 페이지 직접 이동 후 자동 fetch.
+        }}
       />
     </header>
   );
