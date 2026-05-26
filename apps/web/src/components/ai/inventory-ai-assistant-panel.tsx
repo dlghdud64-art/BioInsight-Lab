@@ -14,6 +14,8 @@ import {
   ReorderReviewSheet,
   type ReorderReviewInput,
 } from "@/components/inventory/ReorderReviewSheet";
+// §11.310b #use-reorder-recommendation — PurchaseRecord 집계 hook (호영님 Q32 = A)
+import { useReorderRecommendation } from "@/hooks/use-reorder-recommendation";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -93,8 +95,16 @@ export function InventoryAiAssistantPanel({
     onReviewReorder?.(recommendation);
   };
 
-  // §11.310 — ReorderReviewInput 매핑 (MVP — vendors/recentPurchases 빈 array).
-  // 후속 §11.310b: PurchaseRecord aggregate hook 으로 채움.
+  // §11.310b — PurchaseRecord 집계 hook (Q32 = A).
+  // selectedReorderForReview 있을 때 productName 으로 vendors + recentPurchases fetch.
+  // suggestedVendor (recommendation) 는 fallback — hook 데이터 우선.
+  const recommendationData = useReorderRecommendation(
+    selectedReorderForReview?.productName ?? null,
+  );
+
+  // §11.310 — ReorderReviewInput 매핑.
+  // vendors: §11.310b hook 데이터 우선, fallback = recommendation.suggestedVendor (MVP single)
+  // recentPurchases: §11.310b hook 데이터 (빈 array 시 sheet 안 조건부 hidden)
   const reorderReviewInput: ReorderReviewInput | null = selectedReorderForReview
     ? {
         productId: null,
@@ -102,16 +112,28 @@ export function InventoryAiAssistantPanel({
         recommendedQty: selectedReorderForReview.recommendedQty,
         unit: "ea",
         storageLocation: null,
-        vendors: selectedReorderForReview.suggestedVendor
-          ? [
-              {
-                vendorName: selectedReorderForReview.suggestedVendor,
-                unitPrice: selectedReorderForReview.recentUnitPrice ?? 0,
-                lastPurchasedAt: null,
-              },
-            ]
-          : [],
-        recentPurchases: [],
+        vendors:
+          recommendationData.vendors.length > 0
+            ? recommendationData.vendors.map((v) => ({
+                vendorName: v.vendorName,
+                unitPrice: v.unitPrice,
+                lastPurchasedAt: v.lastPurchasedAt || null,
+              }))
+            : selectedReorderForReview.suggestedVendor
+              ? [
+                  {
+                    vendorName: selectedReorderForReview.suggestedVendor,
+                    unitPrice: selectedReorderForReview.recentUnitPrice ?? 0,
+                    lastPurchasedAt: null,
+                  },
+                ]
+              : [],
+        recentPurchases: recommendationData.recentPurchases.map((p) => ({
+          poNumber: p.poNumber,
+          purchasedAt: p.purchasedAt,
+          quantity: p.quantity,
+          unitPrice: p.unitPrice,
+        })),
       }
     : null;
   return (
