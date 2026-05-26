@@ -194,10 +194,10 @@ The text is typically a 거래명세서 (Korean delivery note) or invoice from a
 Required JSON format:
 {
   "vendor": {
-    "name": "supplier name (e.g. 코람바이오, Sigma-Aldrich) or empty string",
-    "businessNumber": "Korean business registration number (XXX-XX-XXXXX) or null",
-    "contactEmail": "vendor email or null",
-    "contactPhone": "vendor phone or null"
+    "name": "supplier name (e.g. 코람바이오, Sigma-Aldrich) or null",
+    "contactPerson": "vendor contact person or null",
+    "email": "vendor email or null",
+    "phone": "vendor phone or null"
   },
   "quoteNumber": "invoice/document number (e.g. INV-2026-001) or null",
   "quoteDate": "invoice date in YYYY-MM-DD format or null",
@@ -279,18 +279,21 @@ export async function structureInvoiceWithClaude(
   const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (jsonMatch) jsonStr = jsonMatch[1].trim();
 
+  // §11.309a-hotfix — ParsedQuoteVendor 실제 shape 정합:
+  //   name (string | null) / contactPerson / email / phone
+  //   (gemini-quote-parser.ts:64-69 와 동일 type, 회귀 0)
   let parsed: ParsedQuoteDocument;
   try {
     parsed = JSON.parse(jsonStr) as ParsedQuoteDocument;
     // 기본값 보강 (LLM 누락 field 안전 처리)
     if (!parsed.vendor) {
-      parsed.vendor = { name: "", businessNumber: null, contactEmail: null, contactPhone: null };
+      parsed.vendor = { name: null, contactPerson: null, email: null, phone: null };
     }
     if (!Array.isArray(parsed.items)) parsed.items = [];
     if (!parsed.currency) parsed.currency = "KRW";
   } catch {
     parsed = {
-      vendor: { name: "", businessNumber: null, contactEmail: null, contactPhone: null },
+      vendor: { name: null, contactPerson: null, email: null, phone: null },
       quoteNumber: null,
       quoteDate: null,
       validUntil: null,
