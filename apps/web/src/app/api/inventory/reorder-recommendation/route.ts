@@ -129,7 +129,11 @@ export async function GET(request: NextRequest) {
       take: 3,
     });
 
-    const vendors: ReorderVendorSuggestion[] = vendorGroups.map((g) => ({
+    const vendors: ReorderVendorSuggestion[] = vendorGroups.map((g: {
+      vendorName: string | null;
+      _count: { _all: number };
+      _max: { purchasedAt: Date | null; unitPrice: number | null };
+    }) => ({
       vendorName: g.vendorName,
       unitPrice: g._max.unitPrice ?? 0,
       lastPurchasedAt: g._max.purchasedAt?.toISOString() ?? "",
