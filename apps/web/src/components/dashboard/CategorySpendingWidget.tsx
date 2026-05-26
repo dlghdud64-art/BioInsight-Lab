@@ -57,13 +57,17 @@ const STATUS_CONFIG: Record<
     dotColor: "bg-emerald-500",
     borderColor: "border-emerald-200",
   },
+  // §11.302d-6a-2 — warning amber → yellow swap (긴급/주의 의미 유지).
   warning: {
     label: "주의",
-    bgColor: "bg-amber-50",
-    textColor: "text-amber-700",
-    dotColor: "bg-amber-500",
-    borderColor: "border-amber-200",
+    bgColor: "bg-yellow-50",
+    textColor: "text-yellow-700",
+    dotColor: "bg-yellow-500",
+    borderColor: "border-yellow-200",
   },
+  // §11.302d-6a-2 — soft_limit 의 orange 는 warning (yellow) / over_budget (red)
+  //   사이 중간 강도. 별도 의미 분석 필요 → §11.302d-6a-2-soft-limit 후속에서
+  //   호영님 Q 후 결정. 현재 orange 유지 (회귀 0).
   soft_limit: {
     label: "소프트 리밋",
     bgColor: "bg-orange-50",
@@ -161,7 +165,7 @@ function UsageBar({
     status === "over_budget" || status === "soft_limit"
       ? "bg-red-500"
       : status === "warning"
-        ? "bg-amber-500"
+        ? "bg-yellow-500" // §11.302d-6a-2 — warning amber → yellow
         : "bg-emerald-500";
 
   const width = Math.min(usagePercent, 100);
@@ -328,7 +332,7 @@ export default function CategorySpendingWidget({
           {unclassifiedCount > 0 && (
             <Link
               href="/dashboard/purchases?filter=unclassified"
-              className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full hover:bg-amber-100 transition-colors"
+              className="inline-flex items-center gap-1 text-xs font-medium text-yellow-700 bg-yellow-50 px-2 py-0.5 rounded-full hover:bg-yellow-100 transition-colors"
             >
               <HelpCircle className="w-3 h-3" />
               미분류 {unclassifiedCount}건
