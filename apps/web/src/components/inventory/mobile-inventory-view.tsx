@@ -392,8 +392,11 @@ function MobileItemCard({
         <h4 className="text-sm font-semibold text-slate-900 leading-snug line-clamp-2 flex-1">
           {inv.product.name}
         </h4>
+        {/* §11.306c — 호영님 옵션 A (2026-05-26): Badge 좌측 dot indicator 제거.
+            배지 본체 색상 (statusCfg.badgeCls) 만으로 상태 충분 — 같은 색 dot 은
+            대비 부족 (예: danger 의 bg-red-600 dot 이 bg-red-600 배지 안 보임).
+            제품명 좌측 단독 dot (line ~306) 은 별도 시각 신호 — 보존. */}
         <Badge className={`text-[10px] px-1.5 py-0 border shrink-0 ${statusCfg.badgeCls}`}>
-          <span className={`inline-block h-1.5 w-1.5 rounded-full mr-1 ${statusCfg.dotCls}`} />
           {statusCfg.label}
         </Badge>
       </div>
@@ -508,8 +511,8 @@ function MobileDetailSheet({
 
         <SheetHeader className="mb-4 text-left">
           <div className="flex items-center gap-2 mb-1">
+            {/* §11.306c — Sheet header Badge 좌측 dot 제거 (line 395-398 와 정합). */}
             <Badge className={`text-[10px] px-1.5 py-0 border ${statusCfg.badgeCls}`}>
-              <span className={`inline-block h-1.5 w-1.5 rounded-full mr-1 ${statusCfg.dotCls}`} />
               {statusCfg.label}
             </Badge>
             {daysLeft != null && daysLeft <= 30 && (
