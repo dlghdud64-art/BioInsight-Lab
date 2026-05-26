@@ -98,7 +98,15 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const recentPurchases: ReorderRecentPurchase[] = recentRecords.map((r) => ({
+    const recentPurchases: ReorderRecentPurchase[] = recentRecords.map((r: {
+      id: string;
+      purchasedAt: Date;
+      vendorName: string | null;
+      qty: number;
+      unitPrice: number | null;
+      amount: number;
+      quoteId: string | null;
+    }) => ({
       // PO 번호 — quoteId 있으면 그 ID, 없으면 record id (단축)
       poNumber: r.quoteId ?? r.id.slice(0, 8).toUpperCase(),
       purchasedAt: r.purchasedAt.toISOString(),
