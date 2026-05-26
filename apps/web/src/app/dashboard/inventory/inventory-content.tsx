@@ -295,6 +295,7 @@ function InventoryPageContent() {
   const [disposalTarget, setDisposalTarget] = useState<import("@/components/inventory/lot-disposal-panel").DisposalTarget | null>(null);
   const [disposalInventoryId, setDisposalInventoryId] = useState<string | null>(null);
   const [disposalCompletionSummary, setDisposalCompletionSummary] = useState<import("@/components/inventory/lot-disposal-panel").DisposalCompletionSummary | null>(null);
+  const [hasOpenedPilotDisposalDock, setHasOpenedPilotDisposalDock] = useState(false);
   const disposalPanelOpen = disposalTarget !== null;
 
   // ── Context Panel (right-side detail drawer) state ──
@@ -978,6 +979,14 @@ function InventoryPageContent() {
     setDisposalTarget(buildDisposalTarget(inventory));
     setDisposalCompletionSummary(null);
   };
+
+  useEffect(() => {
+    if (!isBrowserPilotInventoryDisposal || !priorityExpiredLot || hasOpenedPilotDisposalDock) return;
+
+    // Reveal the review dock for browser evidence; disposal still requires an operator click.
+    setHasOpenedPilotDisposalDock(true);
+    openDisposalDock(priorityExpiredLot);
+  }, [hasOpenedPilotDisposalDock, isBrowserPilotInventoryDisposal, priorityExpiredLot]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const priorityQueueItems = useMemo<QueueItem[]>(() => {
     const expiredItems = actionableExpiredLots.map((inventory) => {
