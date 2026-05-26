@@ -203,9 +203,9 @@ export async function POST(request: NextRequest) {
                 ? new Date(confirmedData.expirationDate)
                 : null,
               notes: confirmedData.notes ?? null,
-              // §11.309a 신규 필드 — OCR 출처 + 추출 데이터 감사 추적
-              ocrJobId,
-              extractedData: confirmedData as unknown as Prisma.InputJsonValue,
+              // §11.309a 신규 필드 — OCR 출처 + 추출 데이터 감사 추적 (migration pending: prisma migrate deploy 후 활성화)
+              // ocrJobId,
+              // extractedData: confirmedData as unknown as Prisma.InputJsonValue,
             },
             include: {
               user: { select: { id: true, name: true, email: true } },
@@ -309,9 +309,9 @@ export async function POST(request: NextRequest) {
               ? new Date(confirmedData.expirationDate)
               : null,
             notes: confirmedData.notes ?? null,
-            // §11.309a 신규 필드
-            ocrJobId,
-            extractedData: confirmedData as unknown as Prisma.InputJsonValue,
+            // §11.309a 신규 필드 (migration pending: prisma migrate deploy 후 활성화)
+            // ocrJobId,
+            // extractedData: confirmedData as unknown as Prisma.InputJsonValue,
           },
           select: { id: true },
         });
