@@ -35,4 +35,15 @@ describe("inventory disposal state-entry contract", () => {
     expect(dockSource).toContain(required.disposalDock);
     expect(dockSource).toContain(required.disposalImpactSummary);
   });
+
+  it("reveals the disposal review dock in the inventory-disposal pilot without auto-disposing stock", () => {
+    expect(inventorySource).toContain("hasOpenedPilotDisposalDock");
+    expect(inventorySource).toContain(
+      "if (!isBrowserPilotInventoryDisposal || !priorityExpiredLot || hasOpenedPilotDisposalDock) return;",
+    );
+    expect(inventorySource).toContain("openDisposalDock(priorityExpiredLot);");
+    expect(inventorySource).toContain(
+      "Reveal the review dock for browser evidence; disposal still requires an operator click.",
+    );
+  });
 });
