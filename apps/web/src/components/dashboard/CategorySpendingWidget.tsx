@@ -65,15 +65,15 @@ const STATUS_CONFIG: Record<
     dotColor: "bg-yellow-500",
     borderColor: "border-yellow-200",
   },
-  // §11.302d-6a-2 — soft_limit 의 orange 는 warning (yellow) / over_budget (red)
-  //   사이 중간 강도. 별도 의미 분석 필요 → §11.302d-6a-2-soft-limit 후속에서
-  //   호영님 Q 후 결정. 현재 orange 유지 (회귀 0).
+  // §11.302d-6a-2-soft-limit (호영님 Q = A, 2026-05-27) — soft_limit =
+  //   예산 소진 임박(곧 초과) = 위험 임박 → over_budget(red)과 동일 red 격상.
+  //   §11.302 신호등 3색 정합. 라벨("소프트 리밋" vs "예산 초과 위험")로 구분.
   soft_limit: {
     label: "소프트 리밋",
-    bgColor: "bg-orange-50",
-    textColor: "text-orange-700",
-    dotColor: "bg-orange-500",
-    borderColor: "border-orange-200",
+    bgColor: "bg-red-50",
+    textColor: "text-red-700",
+    dotColor: "bg-red-500",
+    borderColor: "border-red-200",
   },
   over_budget: {
     label: "예산 초과 위험",
