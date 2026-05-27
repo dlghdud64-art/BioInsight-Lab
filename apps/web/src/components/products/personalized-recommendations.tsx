@@ -206,7 +206,7 @@ export function PersonalizedRecommendations({
                 {currentProduct && (product as any).specification && (currentProduct as any).specification && (
                   (product as any).specification !== (currentProduct as any).specification && (
                     <div className="flex items-center gap-2 text-xs">
-                      <Zap className="h-3 w-3 text-amber-500" />
+                      <Zap className="h-3 w-3 text-yellow-500" />
                       <span className="text-slate-600">
                         규격 차이: {(currentProduct as any).specification} → {(product as any).specification}
                       </span>

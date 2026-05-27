@@ -218,7 +218,7 @@ function ConfirmStep({
         className={`p-3 rounded-lg text-sm ${
           upgrade
             ? "bg-blue-50 text-blue-800 border border-blue-200"
-            : "bg-amber-50 text-amber-800 border border-amber-200"
+            : "bg-yellow-50 text-yellow-800 border border-yellow-200"
         }`}
       >
         <div className="flex items-start gap-2">

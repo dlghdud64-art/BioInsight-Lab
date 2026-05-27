@@ -427,8 +427,8 @@ export default function AdminQuoteDetailPage() {
             <Card>
               <CardContent className="pt-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-orange-100">
-                    <Calendar className="h-5 w-5 text-orange-600" />
+                  <div className="p-2 rounded-lg bg-sky-100">
+                    <Calendar className="h-5 w-5 text-sky-600" />
                   </div>
                   <div>
                     <p className="text-sm text-slate-500">요청일</p>

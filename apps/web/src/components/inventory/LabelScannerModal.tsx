@@ -122,7 +122,7 @@ function ProviderBadge({ provider }: { provider: "GEMINI" | "CLOUD_VISION_CLAUDE
       </Badge>
       <Badge
         className={fallbackActive
-          ? "bg-amber-100 text-amber-700 border-0 text-[10px]"
+          ? "bg-yellow-100 text-yellow-700 border-0 text-[10px]"
           : "bg-emerald-100 text-emerald-700 border-0 text-[10px]"}
         data-testid="ocr-fallback-badge"
       >

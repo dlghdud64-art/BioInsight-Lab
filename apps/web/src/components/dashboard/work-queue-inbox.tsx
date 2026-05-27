@@ -33,7 +33,7 @@ const DOMAIN_CONFIG: Record<string, {
 }> = {
   QUOTE_DRAFT: { icon: FileText, color: "text-blue-600", bgColor: "bg-blue-50" },
   VENDOR_EMAIL_DRAFT: { icon: FileText, color: "text-blue-600", bgColor: "bg-blue-50" },
-  FOLLOWUP_DRAFT: { icon: Clock, color: "text-amber-600", bgColor: "bg-amber-50" },
+  FOLLOWUP_DRAFT: { icon: Clock, color: "text-yellow-600", bgColor: "bg-yellow-50" },
   STATUS_CHANGE_SUGGEST: { icon: RotateCcw, color: "text-blue-600", bgColor: "bg-blue-50" },
   REORDER_SUGGESTION: { icon: Package, color: "text-emerald-600", bgColor: "bg-emerald-50" },
   EXPIRY_ALERT: { icon: AlertTriangle, color: "text-red-600", bgColor: "bg-red-50" },
@@ -171,8 +171,8 @@ export function WorkQueueInbox() {
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-2.5">
               <span className="relative flex h-2 w-2 flex-shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-yellow-500" />
               </span>
               <span className="text-[13px] font-medium text-slate-700">처리 대기 {activeItems.length}건</span>
               <span className="text-[11px] text-slate-500 hidden sm:inline">
@@ -338,7 +338,7 @@ function WorkQueueCard({
               </p>
             )}
             {item.urgencyReason && (
-              <p className="text-[11px] font-medium text-orange-600 text-orange-400 mt-0.5 flex items-center gap-1">
+              <p className="text-[11px] font-medium text-yellow-600 text-yellow-400 mt-0.5 flex items-center gap-1">
                 <Zap className="h-3 w-3" />
                 {item.urgencyReason}
               </p>
@@ -419,7 +419,7 @@ function CompareSlaBadge({ item }: { item: WorkQueueItem }) {
   if (ageDays === null) return null; // SSR fallback — CSR mount 후 set
   if (!def.isTerminal && def.slaWarningDays > 0 && ageDays >= def.slaWarningDays) {
     return (
-      <span className="text-[10px] text-orange-600 font-medium mt-0.5 flex items-center gap-1">
+      <span className="text-[10px] text-yellow-600 font-medium mt-0.5 flex items-center gap-1">
         <Clock className="h-3 w-3" />{ageDays}일 경과
       </span>
     );
@@ -437,7 +437,7 @@ function ItemSlaBadges({ item }: { item: WorkQueueItem }) {
     const def = OPS_SUBSTATUS_DEFS[item.substatus];
     if (def && !def.isTerminal && def.slaWarningDays > 0 && ageDays >= def.slaWarningDays) {
       parts.push(
-        <span key="ops-sla" className="text-[10px] text-orange-600 font-medium mt-0.5 flex items-center gap-1">
+        <span key="ops-sla" className="text-[10px] text-yellow-600 font-medium mt-0.5 flex items-center gap-1">
           <Clock className="h-3 w-3" />{ageDays}일 경과 — {def.escalationMeaning}
         </span>,
       );
@@ -474,7 +474,7 @@ function ItemSlaBadges({ item }: { item: WorkQueueItem }) {
     const hasQuote = Number(item.metadata?.linkedQuoteCount || 0) > 0;
     if (ageDays >= 3 && !hasInquiry && !hasQuote) {
       parts.push(
-        <span key="no-move" className="text-[10px] text-orange-500 font-medium mt-0.5">
+        <span key="no-move" className="text-[10px] text-yellow-500 font-medium mt-0.5">
           다음 단계 없음 — 판정 또는 문의/견적 전환 필요
         </span>,
       );

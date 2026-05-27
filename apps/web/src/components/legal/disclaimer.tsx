@@ -26,9 +26,9 @@ const disclaimerTexts: Record<DisclaimerType, string> = {
 
 export function Disclaimer({ type, className }: DisclaimerProps) {
   return (
-    <Alert variant="default" className={`bg-amber-50 border-amber-200 ${className || ""}`}>
-      <AlertTriangle className="h-4 w-4 text-amber-600" />
-      <AlertDescription className="text-xs text-amber-800">
+    <Alert variant="default" className={`bg-yellow-50 border-yellow-200 ${className || ""}`}>
+      <AlertTriangle className="h-4 w-4 text-yellow-600" />
+      <AlertDescription className="text-xs text-yellow-800">
         {disclaimerTexts[type]}
       </AlertDescription>
     </Alert>

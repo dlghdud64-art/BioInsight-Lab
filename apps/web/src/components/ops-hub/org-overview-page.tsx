@@ -80,7 +80,7 @@ export function OrganizationOverviewPage({ vm, blockStates }: OrganizationOvervi
     <div className="space-y-6">
       {/* Partial error banner */}
       {showPartialBanner && (
-        <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg px-4 py-2.5 text-xs text-amber-300">
+        <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-lg px-4 py-2.5 text-xs text-yellow-300">
           {PAGE_COPY.partialErrorBanner}
         </div>
       )}

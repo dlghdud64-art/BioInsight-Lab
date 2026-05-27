@@ -126,9 +126,9 @@ export function ErrorState({
   retryCta = "다시 불러오기",
 }: ErrorStateProps) {
   return (
-    <div className="bg-pn border border-amber-500/20 rounded-xl p-5 flex items-center justify-between" role="alert" data-testid="block-error-state">
+    <div className="bg-pn border border-yellow-500/20 rounded-xl p-5 flex items-center justify-between" role="alert" data-testid="block-error-state">
       <div className="flex items-center gap-3">
-        <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0" aria-hidden="true" />
+        <AlertTriangle className="h-5 w-5 text-yellow-400 shrink-0" aria-hidden="true" />
         <div>
           <p className="text-sm font-medium text-slate-700">{title}</p>
           <p className="text-xs text-slate-500 mt-0.5">{description}</p>

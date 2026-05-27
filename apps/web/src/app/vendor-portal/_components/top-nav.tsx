@@ -32,7 +32,7 @@ export function VendorPortalTopNav() {
               {vendorId}
             </span>
           ) : (
-            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-700">
+            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-yellow-200 bg-yellow-50 px-2.5 py-1 text-[11px] font-medium text-yellow-700">
               vendorId 미지정
             </span>
           )}

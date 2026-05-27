@@ -150,7 +150,7 @@ function NetworkErrorUI({ onRetry }: { onRetry: () => void }) {
     <FullPageShell>
       <Card>
         <CardContent className="pt-6 text-center">
-          <WifiOff className="h-10 w-10 text-amber-400 mx-auto mb-3" />
+          <WifiOff className="h-10 w-10 text-yellow-400 mx-auto mb-3" />
           <p className="text-muted-foreground py-4">일시적으로 견적 정보를 불러오지 못했습니다.</p>
           <div className="flex items-center justify-center gap-3">
             <Link href="/dashboard/quotes"><Button variant="outline">견적 목록</Button></Link>
@@ -167,7 +167,7 @@ function NetworkErrorUI({ onRetry }: { onRetry: () => void }) {
 function SectionErrorFallback({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
     <div className="flex flex-col items-center gap-2 py-6 text-center">
-      <AlertTriangle className="h-5 w-5 text-amber-500" />
+      <AlertTriangle className="h-5 w-5 text-yellow-500" />
       <p className="text-sm text-slate-500">{message}</p>
       {onRetry && (
         <Button variant="outline" size="sm" onClick={onRetry} className="text-xs gap-1.5">
@@ -609,7 +609,7 @@ export default function QuoteDetailPage() {
 
   // 운영 상태 구성
   const statusConfig: Record<QuoteStatus, { label: string; cls: string; icon: React.ReactNode }> = {
-    PENDING:   { label: "접수",        cls: "bg-amber-600/10 text-amber-400 border-amber-600/30",     icon: <Clock className="h-3.5 w-3.5" /> },
+    PENDING:   { label: "접수",        cls: "bg-yellow-600/10 text-yellow-400 border-yellow-600/30",     icon: <Clock className="h-3.5 w-3.5" /> },
     SENT:      { label: "발송 완료",   cls: "bg-blue-600/10 text-blue-400 border-blue-600/30",     icon: <Send className="h-3.5 w-3.5" /> },
     RESPONDED: { label: "비교 가능",   cls: "bg-emerald-600/10 text-emerald-400 border-emerald-600/30", icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
     COMPLETED: { label: "구매 완료",   cls: "bg-emerald-600/10 text-emerald-400 border-emerald-600/30", icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
@@ -635,7 +635,7 @@ export default function QuoteDetailPage() {
     if (!deadline) return { label: "일반", cls: "bg-el text-slate-600" };
     const daysLeft = Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000);
     if (daysLeft <= 3) return { label: "긴급", cls: "bg-red-600/10 text-red-400" };
-    if (daysLeft <= 7) return { label: "주의", cls: "bg-amber-600/10 text-amber-400" };
+    if (daysLeft <= 7) return { label: "주의", cls: "bg-yellow-600/10 text-yellow-400" };
     return { label: "일반", cls: "bg-el text-slate-400" };
   };
   const urgency = getUrgency();
@@ -713,7 +713,7 @@ export default function QuoteDetailPage() {
                       다음: {nextAction.label}
                     </span>
                     {respondedCount === 0 && quoteStatus !== "PENDING" && quoteStatus !== "CANCELLED" && (
-                      <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-amber-600/10 text-amber-400 border border-amber-600/20">
+                      <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-yellow-600/10 text-yellow-400 border border-yellow-600/20">
                         <AlertTriangle className="h-2.5 w-2.5" />수신 견적 없음
                       </span>
                     )}
@@ -778,7 +778,7 @@ export default function QuoteDetailPage() {
               </div>
               <div className="bg-pn rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">미응답 벤더</span>
-                <span className={cn("text-xl font-bold", pendingCount > 0 ? "text-amber-500" : "text-slate-400")}>
+                <span className={cn("text-xl font-bold", pendingCount > 0 ? "text-yellow-500" : "text-slate-400")}>
                   {pendingCount}<span className="text-sm font-medium text-slate-500 ml-1">건</span>
                 </span>
               </div>

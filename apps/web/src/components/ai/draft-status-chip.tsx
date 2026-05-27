@@ -20,7 +20,7 @@ export interface DraftStatusChipProps {
 
 const CHIP_STYLES: Record<DraftStatusChipProps["kind"], string> = {
   // conflict: 상대적으로 또렷, small warning tone
-  conflicted: "text-amber-400/90 bg-amber-600/8 border-amber-600/15",
+  conflicted: "text-yellow-400/90 bg-yellow-600/8 border-yellow-600/15",
   // edited: muted neutral tone
   edited: "text-slate-400 bg-slate-600/8 border-slate-600/15",
   // accepted: 가장 약함, success-green 강조 금지
@@ -33,7 +33,7 @@ export function DraftStatusChip({ kind, label }: DraftStatusChipProps) {
       className={`inline-flex items-center gap-1 text-[9px] font-medium px-1.5 py-0.5 rounded border ${CHIP_STYLES[kind]}`}
     >
       {kind === "conflicted" && (
-        <span className="w-1.5 h-1.5 rounded-full bg-amber-400/70 shrink-0" />
+        <span className="w-1.5 h-1.5 rounded-full bg-yellow-400/70 shrink-0" />
       )}
       {label}
     </span>

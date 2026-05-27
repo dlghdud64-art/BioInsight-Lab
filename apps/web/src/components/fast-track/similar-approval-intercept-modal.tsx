@@ -75,10 +75,10 @@ export function SimilarApprovalInterceptModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg border-amber-200 bg-white p-0 overflow-hidden">
-        <DialogHeader className="px-5 pt-5 pb-3 border-b border-slate-200 bg-amber-50">
+      <DialogContent className="max-w-lg border-yellow-200 bg-white p-0 overflow-hidden">
+        <DialogHeader className="px-5 pt-5 pb-3 border-b border-slate-200 bg-yellow-50">
           <div className="flex items-center gap-2">
-            <Zap className="h-4 w-4 text-amber-600" />
+            <Zap className="h-4 w-4 text-yellow-600" />
             <DialogTitle className="text-sm font-semibold text-slate-800">
               같은 공급사에 {similarRecs.length}건이 더 있습니다
             </DialogTitle>
@@ -99,7 +99,7 @@ export function SimilarApprovalInterceptModal({
               >
                 <span
                   className={`shrink-0 mt-0.5 inline-block w-1.5 h-1.5 rounded-full ${
-                    idx === 0 ? "bg-slate-800" : "bg-amber-400"
+                    idx === 0 ? "bg-slate-800" : "bg-yellow-400"
                   }`}
                   aria-hidden
                 />
@@ -142,7 +142,7 @@ export function SimilarApprovalInterceptModal({
           <Button
             size="sm"
             onClick={() => onApproveTogether([...mergedList])}
-            className="bg-amber-600 hover:bg-amber-700 text-white"
+            className="bg-yellow-600 hover:bg-yellow-700 text-white"
           >
             ⚡ {mergedList.length}건 함께 승인
           </Button>

@@ -184,7 +184,7 @@ export function GovernanceView() {
               className={cn(
                 "flex items-center justify-between border rounded-md",
                 SPACING.rowPadding,
-                sig.thresholdExceeded ? "border-l-[3px] border-l-orange-400" : "",
+                sig.thresholdExceeded ? "border-l-[3px] border-l-yellow-400" : "",
               )}
             >
               <span className={TYPOGRAPHY.metadata}>
@@ -192,7 +192,7 @@ export function GovernanceView() {
               </span>
               <span className={cn(
                 "text-base font-bold tabular-nums",
-                sig.thresholdExceeded ? "text-orange-600" : "text-foreground",
+                sig.thresholdExceeded ? "text-yellow-600" : "text-foreground",
               )}>
                 {typeof sig.value === "number" && sig.value % 1 !== 0 ? sig.value.toFixed(1) : sig.value}
               </span>

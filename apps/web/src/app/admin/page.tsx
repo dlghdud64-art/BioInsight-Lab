@@ -105,12 +105,12 @@ function KPIActionCard({
         : "text-slate-400 border-slate-200 hover:bg-slate-50",
     },
     warning: {
-      border: count > 0 ? "border-amber-200" : "border-slate-200",
-      iconBg: "bg-amber-50",
-      iconColor: "text-amber-500",
-      countColor: count > 0 ? "text-amber-600" : "text-slate-300",
+      border: count > 0 ? "border-yellow-200" : "border-slate-200",
+      iconBg: "bg-yellow-50",
+      iconColor: "text-yellow-500",
+      countColor: count > 0 ? "text-yellow-600" : "text-slate-300",
       ctaStyle: count > 0
-        ? "text-amber-700 bg-amber-50 border-amber-200 hover:bg-amber-100"
+        ? "text-yellow-700 bg-yellow-50 border-yellow-200 hover:bg-yellow-100"
         : "text-slate-400 border-slate-200 hover:bg-slate-50",
     },
     error: {
@@ -294,7 +294,7 @@ export default function AdminDashboardPage() {
                   >
                     사용자 승인 대기
                     {kpi.pendingUsers > 0 && (
-                      <Badge className="ml-1.5 h-4 px-1 text-[9px] bg-amber-50 text-amber-600 border-0">{kpi.pendingUsers}</Badge>
+                      <Badge className="ml-1.5 h-4 px-1 text-[9px] bg-yellow-50 text-yellow-600 border-0">{kpi.pendingUsers}</Badge>
                     )}
                   </TabsTrigger>
                   <TabsTrigger
@@ -342,7 +342,7 @@ export default function AdminDashboardPage() {
                       {pendingOrgs.map((org) => (
                         <TableRow key={org.id} className="text-xs">
                           <TableCell>
-                            <Badge className="bg-amber-50 text-amber-700 border-0 text-[10px]">대기</Badge>
+                            <Badge className="bg-yellow-50 text-yellow-700 border-0 text-[10px]">대기</Badge>
                           </TableCell>
                           <TableCell className="font-medium text-slate-200">{org.name}</TableCell>
                           <TableCell>
@@ -399,7 +399,7 @@ export default function AdminDashboardPage() {
                       {pendingUsers.map((user) => (
                         <TableRow key={user.id} className="text-xs">
                           <TableCell>
-                            <Badge className="bg-amber-50 text-amber-700 border-0 text-[10px]">대기</Badge>
+                            <Badge className="bg-yellow-50 text-yellow-700 border-0 text-[10px]">대기</Badge>
                           </TableCell>
                           <TableCell className="font-medium text-slate-200">{user.name}</TableCell>
                           <TableCell className="text-slate-500">{user.email}</TableCell>

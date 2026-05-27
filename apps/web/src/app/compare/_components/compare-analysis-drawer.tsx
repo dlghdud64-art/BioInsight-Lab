@@ -127,7 +127,7 @@ interface CompareAnalysisDrawerProps {
 function SignificanceBadge({ significance }: { significance: string }) {
   const config: Record<string, { label: string; className: string }> = {
     CRITICAL: { label: "치명적", className: "bg-red-600/20 text-red-300" },
-    HIGH: { label: "높음", className: "bg-orange-600/20 text-orange-300" },
+    HIGH: { label: "높음", className: "bg-red-500/20 text-red-300" },
     MEDIUM: { label: "보통", className: "bg-yellow-600/20 text-yellow-300" },
     LOW: { label: "낮음", className: "bg-blue-600/20 text-blue-300" },
     INFO: { label: "참고", className: "bg-el text-slate-400" },
@@ -153,7 +153,7 @@ function VerdictBadge({ verdict }: { verdict: string }) {
   const config: Record<string, { label: string; className: string; icon: typeof CheckCircle }> = {
     EQUIVALENT: { label: "동일", className: "text-green-400 bg-green-600/10", icon: CheckCircle },
     MINOR_DIFFERENCES: { label: "경미한 차이", className: "text-blue-400 bg-blue-600/10", icon: Info },
-    SIGNIFICANT_DIFFERENCES: { label: "중요한 차이", className: "text-orange-400 bg-orange-600/10", icon: AlertTriangle },
+    SIGNIFICANT_DIFFERENCES: { label: "중요한 차이", className: "text-yellow-400 bg-yellow-600/10", icon: AlertTriangle },
     INCOMPATIBLE: { label: "대체 불가", className: "text-red-400 bg-red-600/10", icon: AlertTriangle },
     REQUIRES_EXPERT: { label: "전문가 판단 필요", className: "text-purple-400 bg-purple-600/10", icon: AlertTriangle },
   };
@@ -198,7 +198,7 @@ function relativeTime(dateStr: string | null): string {
 
 const CATEGORY_CONFIG: Record<CompareCategory, { label: string; className: string }> = {
   direct_comparable: { label: "직접 비교", className: "bg-green-600/20 text-green-300" },
-  substitute_reference: { label: "대체 참조", className: "bg-amber-600/20 text-amber-300" },
+  substitute_reference: { label: "대체 참조", className: "bg-yellow-600/20 text-yellow-300" },
   blocked_or_mismatch: { label: "비교 불가", className: "bg-red-600/20 text-red-300" },
 };
 
@@ -249,7 +249,7 @@ function DecisionHeader({
           </span>
         )}
         {referenceCount > 0 && (
-          <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium bg-amber-500/15 text-amber-300 border border-amber-500/25">
+          <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium bg-yellow-500/15 text-yellow-300 border border-yellow-500/25">
             참고 후보 {referenceCount}
           </span>
         )}
@@ -262,9 +262,9 @@ function DecisionHeader({
 
       {/* Blocker Warning */}
       {blockerSummary && (
-        <div className="flex items-center gap-1.5 p-2 rounded bg-amber-500/10 border border-amber-500/20">
-          <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-400" />
-          <p className="text-xs text-amber-300">{blockerSummary}</p>
+        <div className="flex items-center gap-1.5 p-2 rounded bg-yellow-500/10 border border-yellow-500/20">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-yellow-400" />
+          <p className="text-xs text-yellow-300">{blockerSummary}</p>
         </div>
       )}
 
@@ -321,7 +321,7 @@ function CandidateSummaryCard({
         ? "bg-slate-900/30 border-slate-800/50 opacity-70"
         : candidate.category === "direct_comparable"
           ? "bg-slate-900/60 border-emerald-500/20"
-          : "bg-slate-900/60 border-amber-500/15"
+          : "bg-slate-900/60 border-yellow-500/15"
     }`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0">
@@ -334,7 +334,7 @@ function CandidateSummaryCard({
       {totalDiffs > 0 && (
         <div className="flex gap-2 flex-wrap">
           {criticalCount > 0 && <Badge variant="destructive" className="text-xs">치명적 {criticalCount}</Badge>}
-          {highCount > 0 && <Badge className="text-xs bg-orange-600/20 text-orange-300">높음 {highCount}</Badge>}
+          {highCount > 0 && <Badge className="text-xs bg-red-500/20 text-red-300">높음 {highCount}</Badge>}
           <Badge variant="outline" className="text-xs">차이 {totalDiffs}건</Badge>
         </div>
       )}
@@ -835,7 +835,7 @@ export function CompareAnalysisDrawer({
                       <div key={idx} className="flex items-start gap-2">
                         <span className={`mt-0.5 h-1.5 w-1.5 rounded-full shrink-0 ${
                           line.type === "priority" ? "bg-emerald-400" :
-                          line.type === "reference" ? "bg-amber-400" : "bg-red-400/60"
+                          line.type === "reference" ? "bg-yellow-400" : "bg-red-400/60"
                         }`} />
                         <p className={`text-xs leading-relaxed ${
                           line.type === "priority" ? "text-slate-200" :
@@ -848,8 +848,8 @@ export function CompareAnalysisDrawer({
                   </div>
                   {diffResult.summary.criticalCount > 0 && (
                     <div className="flex items-center gap-1.5 pt-1 border-t border-blue-500/10">
-                      <AlertTriangle className="h-3 w-3 text-amber-400" />
-                      <span className="text-xs text-amber-300">
+                      <AlertTriangle className="h-3 w-3 text-yellow-400" />
+                      <span className="text-xs text-yellow-300">
                         치명적 차이 {diffResult.summary.criticalCount}건 — 담당자 직접 확인 필요
                       </span>
                     </div>
@@ -949,7 +949,7 @@ export function CompareAnalysisDrawer({
                       sourceProduct={sourceP}
                       candidateActions={candidateActions}
                       onActionChange={(id, action) => setCandidateActions(prev => ({ ...prev, [id]: action }))}
-                      borderColor="border-amber-500/15 bg-amber-500/5"
+                      borderColor="border-yellow-500/15 bg-yellow-500/5"
                     />
                     <CandidateSectionGroup
                       title="제외/보류"
@@ -993,7 +993,7 @@ export function CompareAnalysisDrawer({
                           key={idx}
                           className={`p-3 border rounded-lg ${
                             item.diffType === "SOURCE_ONLY" || item.diffType === "TARGET_ONLY"
-                              ? "bg-amber-600/10 border-amber-700"
+                              ? "bg-yellow-600/10 border-yellow-700"
                               : "bg-pn"
                           }`}
                         >
@@ -1001,7 +1001,7 @@ export function CompareAnalysisDrawer({
                             <span className="text-sm font-medium">{item.fieldLabel}</span>
                             <SignificanceBadge significance={item.significance} />
                             {(item.diffType === "SOURCE_ONLY" || item.diffType === "TARGET_ONLY") && (
-                              <Badge variant="outline" className="text-xs bg-amber-600/20 text-amber-400">
+                              <Badge variant="outline" className="text-xs bg-yellow-600/20 text-yellow-400">
                                 불완전
                               </Badge>
                             )}
@@ -1010,13 +1010,13 @@ export function CompareAnalysisDrawer({
                             <div>
                               <span className="text-slate-400">A:</span>{" "}
                               {item.sourceValue != null ? formatDisplayValue(item.sourceValue) : (
-                                <span className="text-amber-400 italic">(정보 없음)</span>
+                                <span className="text-yellow-400 italic">(정보 없음)</span>
                               )}
                             </div>
                             <div>
                               <span className="text-slate-400">B:</span>{" "}
                               {item.targetValue != null ? formatDisplayValue(item.targetValue) : (
-                                <span className="text-amber-400 italic">(정보 없음)</span>
+                                <span className="text-yellow-400 italic">(정보 없음)</span>
                               )}
                             </div>
                           </div>
@@ -1128,7 +1128,7 @@ export function CompareAnalysisDrawer({
                         <ul className="text-sm space-y-1.5">
                           {insight.keyChanges.map((change, i) => (
                             <li key={i} className="flex items-start gap-2">
-                              <span className="text-orange-500 mt-0.5">-</span>
+                              <span className="text-yellow-500 mt-0.5">-</span>
                               <span>{change}</span>
                             </li>
                           ))}
@@ -1138,10 +1138,10 @@ export function CompareAnalysisDrawer({
 
                     {/* 5. 불확실 항목 — caveats */}
                     {insight.uncertainFields.length > 0 && (
-                      <Card className="border-amber-700 bg-amber-600/10">
+                      <Card className="border-yellow-700 bg-yellow-600/10">
                         <CardHeader className="pb-2">
                           <CardTitle className="text-sm flex items-center gap-1.5">
-                            <HelpCircle className="h-4 w-4 text-amber-400" />
+                            <HelpCircle className="h-4 w-4 text-yellow-400" />
                             불확실/미확인 항목
                           </CardTitle>
                         </CardHeader>
@@ -1151,7 +1151,7 @@ export function CompareAnalysisDrawer({
                               <div key={i} className="text-sm">
                                 <span className="font-medium">{field.field}</span>
                                 <p className="text-xs text-muted-foreground">{field.reason}</p>
-                                <p className="text-xs text-amber-400 mt-0.5">
+                                <p className="text-xs text-yellow-400 mt-0.5">
                                   해결: {field.suggestedResolution}
                                 </p>
                               </div>

@@ -29,13 +29,13 @@ import type { OpsKPI, StepFunnelSummary, OpsAlert, WorkQueueSection, ActivityFee
 function getKpiStatus(key: string, count: number): { label: string; cls: string } {
   if (key === "reviewNeeded") {
     if (count === 0) return { label: "정상", cls: "text-emerald-400" };
-    if (count <= 5) return { label: "확인 필요", cls: "text-amber-400" };
+    if (count <= 5) return { label: "확인 필요", cls: "text-yellow-400" };
     return { label: "우선 처리", cls: "text-red-400" };
   }
   if (key === "compareWaiting") {
     if (count === 0) return { label: "정상", cls: "text-emerald-400" };
     if (count <= 3) return { label: "처리 가능", cls: "text-blue-400" };
-    return { label: "대기 증가", cls: "text-amber-400" };
+    return { label: "대기 증가", cls: "text-yellow-400" };
   }
   if (key === "quoteDraftReady") {
     if (count === 0) return { label: "없음", cls: "text-slate-500" };
@@ -43,16 +43,16 @@ function getKpiStatus(key: string, count: number): { label: string; cls: string 
   }
   if (key === "approvalPending") {
     if (count === 0) return { label: "정상", cls: "text-emerald-400" };
-    if (count <= 2) return { label: "대기 중", cls: "text-amber-400" };
+    if (count <= 2) return { label: "대기 중", cls: "text-yellow-400" };
     return { label: "우선 확인", cls: "text-red-400" };
   }
   if (key === "budgetWarnings") {
     if (count === 0) return { label: "정상", cls: "text-emerald-400" };
-    return { label: "검토 필요", cls: "text-amber-400" };
+    return { label: "검토 필요", cls: "text-yellow-400" };
   }
   if (key === "inventoryWarnings") {
     if (count === 0) return { label: "정상", cls: "text-emerald-400" };
-    return { label: "대조 필요", cls: "text-amber-400" };
+    return { label: "대조 필요", cls: "text-yellow-400" };
   }
   return { label: "운영 중", cls: "text-slate-400" };
 }
@@ -172,11 +172,11 @@ export function OrgOverviewHub({
           <div className="space-y-2">
             {alerts.map((alert) => (
               <div key={alert.id} className={`bg-pn border rounded-lg p-3 flex items-center justify-between ${
-                alert.priority === "high" ? "border-red-500/30" : alert.priority === "medium" ? "border-amber-500/30" : "border-bd"
+                alert.priority === "high" ? "border-red-500/30" : alert.priority === "medium" ? "border-yellow-500/30" : "border-bd"
               }`}>
                 <div className="flex items-center gap-3">
                   <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                    alert.priority === "high" ? "bg-red-500/10 text-red-400" : alert.priority === "medium" ? "bg-amber-500/10 text-amber-400" : "bg-blue-500/10 text-blue-400"
+                    alert.priority === "high" ? "bg-red-500/10 text-red-400" : alert.priority === "medium" ? "bg-yellow-500/10 text-yellow-400" : "bg-blue-500/10 text-blue-400"
                   }`}>
                     {alert.priority === "high" ? "긴급" : alert.priority === "medium" ? "주의" : "안내"}
                   </span>

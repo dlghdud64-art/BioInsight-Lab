@@ -197,7 +197,7 @@ export function AnalyticsDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 min-w-0">
             <CardTitle className="text-sm font-medium truncate min-w-0">재주문 필요</CardTitle>
-            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <AlertCircle className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -341,7 +341,7 @@ export function AnalyticsDashboard() {
                       insight.type === "positive"
                         ? "bg-emerald-100 text-emerald-700"
                         : insight.type === "warning"
-                        ? "bg-amber-100 text-amber-700"
+                        ? "bg-yellow-100 text-yellow-700"
                         : "bg-blue-100 text-blue-700"
                     )}
                   >

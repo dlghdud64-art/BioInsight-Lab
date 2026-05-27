@@ -205,7 +205,7 @@ function PublicSearchContent() {
                 : group.tone === "blue"
                   ? "border-blue-200 bg-blue-50 text-blue-700"
                   : group.tone === "amber"
-                    ? "border-amber-200 bg-amber-50 text-amber-700"
+                    ? "border-yellow-200 bg-yellow-50 text-yellow-700"
                     : "border-red-200 bg-red-50 text-red-700";
               return (
                 <article key={group.title} data-testid={`search-triage-${group.title.toLowerCase().replaceAll(" ", "-")}`} className="rounded-xl border border-slate-200 bg-white p-3 space-y-3">

@@ -26,7 +26,7 @@ export default function ContractPreviewLayout({
   return (
     <OpsStoreProvider>
       <div className="min-h-screen bg-slate-950">
-        <div className="sticky top-0 z-50 bg-amber-600 text-white text-xs text-center py-1 font-medium">
+        <div className="sticky top-0 z-50 bg-yellow-600 text-white text-xs text-center py-1 font-medium">
           ⚠ Contract Preview — 기본 대시보드에 반영되지 않습니다
         </div>
         {children}

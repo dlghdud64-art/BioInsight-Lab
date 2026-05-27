@@ -324,15 +324,15 @@ export function OntologyCommandOverlay() {
             </Button>
           </div>
           {notice && (
-            <p className="mt-2 text-[11px] text-amber-300/90">{notice}</p>
+            <p className="mt-2 text-[11px] text-yellow-300/90">{notice}</p>
           )}
         </div>
 
         {/* ── Recommendation headline + preview (decision dry-run) ───────────── */}
         {plan && plan.steps.length > 0 && plan.totalTargetCount > 0 && (
           <div className="px-5 pb-3">
-            <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2">
-              <div className="text-[12px] font-medium text-amber-200">
+            <div className="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-3 py-2">
+              <div className="text-[12px] font-medium text-yellow-200">
                 {recommendationHeadline}
               </div>
               {previewRows.length > 0 ? (
@@ -369,11 +369,11 @@ export function OntologyCommandOverlay() {
                   type="checkbox"
                   checked={previewReviewed}
                   onChange={(e) => setPreviewReviewed(e.target.checked)}
-                  className="accent-amber-400"
+                  className="accent-yellow-400"
                 />
                 <label
                   htmlFor="ontology-preview-ack"
-                  className="text-[11px] text-amber-100 cursor-pointer select-none"
+                  className="text-[11px] text-yellow-100 cursor-pointer select-none"
                 >
                   위 추천 결과를 확인했습니다
                 </label>
@@ -438,10 +438,10 @@ export function OntologyCommandOverlay() {
                             else next.delete(idx);
                             setAcknowledged(next);
                           }}
-                          className="mt-0.5 accent-amber-400"
+                          className="mt-0.5 accent-yellow-400"
                           aria-label={`confirm ${idx}`}
                         />
-                        <span className={checked ? "text-slate-300" : "text-amber-300/90"}>
+                        <span className={checked ? "text-slate-300" : "text-yellow-300/90"}>
                           {msg}
                         </span>
                       </li>
@@ -485,7 +485,7 @@ export function OntologyCommandOverlay() {
               size="sm"
               onClick={() => handleExecute("execute")}
               disabled={!canExecute}
-              className="bg-amber-500 text-slate-950 hover:bg-amber-400 disabled:opacity-40 disabled:bg-slate-700 disabled:text-slate-400"
+              className="bg-yellow-500 text-slate-950 hover:bg-yellow-400 disabled:opacity-40 disabled:bg-slate-700 disabled:text-slate-400"
             >
               확인 실행
             </Button>

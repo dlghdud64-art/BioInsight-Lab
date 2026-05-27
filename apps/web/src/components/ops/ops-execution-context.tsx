@@ -297,7 +297,7 @@ function SlaIndicator({ item, slaWarningDays }: { item: WorkQueueItem; slaWarnin
   return (
     <div
       className={`text-[11px] flex items-center gap-1 ${
-        isStale ? "text-red-600" : "text-amber-600"
+        isStale ? "text-red-600" : "text-yellow-600"
       }`}
     >
       <AlertTriangle className="h-3 w-3" />

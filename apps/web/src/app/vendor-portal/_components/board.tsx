@@ -78,14 +78,14 @@ export function VendorPortalBoard() {
   // ── Empty / unauthorized 컨텍스트 ────────────────────────────
   if (!vendorId) {
     return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-6">
+      <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-6">
         <div className="flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600" />
+          <AlertTriangle className="h-5 w-5 flex-shrink-0 text-yellow-600" />
           <div>
-            <p className="text-sm font-semibold text-amber-900">
+            <p className="text-sm font-semibold text-yellow-900">
               공급사 ID가 지정되지 않았습니다
             </p>
-            <p className="mt-1 text-xs text-amber-800">
+            <p className="mt-1 text-xs text-yellow-800">
               본 포털은 공급사별 전용 링크로 접근해야 합니다. 발송된 초대 메일의
               링크를 다시 확인해주세요. 예: <code className="rounded bg-white/60 px-1 py-0.5">/vendor-portal?vendorId=v1</code>
             </p>
@@ -169,7 +169,7 @@ function TabButton({
       {icon}
       <span>{label}</span>
       {badge !== null ? (
-        <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-white">
+        <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-yellow-500 px-1 text-[9px] font-bold text-white">
           {badge}
         </span>
       ) : null}
@@ -227,7 +227,7 @@ function RfqTab({
       {/* ── 요약 카운터 ─────────────────────────────────────── */}
       <div className="grid grid-cols-3 gap-3">
         <SummaryTile
-          icon={<Clock className="h-3.5 w-3.5 text-amber-600" />}
+          icon={<Clock className="h-3.5 w-3.5 text-yellow-600" />}
           label="제출 대기"
           value={pendingCount}
           accent="amber"
@@ -301,7 +301,7 @@ function SummaryTile({
 }) {
   const accentBorder =
     accent === "amber"
-      ? "border-l-amber-500"
+      ? "border-l-yellow-500"
       : accent === "emerald"
         ? "border-l-emerald-500"
         : "border-l-slate-300";
@@ -359,7 +359,7 @@ function RfqCard({
                 제출 완료
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-medium text-amber-700">
+              <span className="inline-flex items-center gap-1 rounded-full bg-yellow-50 px-1.5 py-0.5 text-[9px] font-medium text-yellow-700">
                 <Clock className="h-2.5 w-2.5" />
                 응답 대기
               </span>

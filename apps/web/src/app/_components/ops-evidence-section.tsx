@@ -15,7 +15,7 @@ const EVIDENCE_ITEMS = [
     title: "만료 임박 lot 추적",
     description: "입고된 시약의 Lot 번호와 유효기한을 기록하고, 만료 7일·30일 전 경고를 통해 폐기 리스크를 줄입니다.",
     metric: "D-7 / D-30 만료 경고",
-    color: "text-amber-400",
+    color: "text-yellow-400",
   },
   {
     icon: GitCompare,

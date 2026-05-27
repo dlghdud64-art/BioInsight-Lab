@@ -30,7 +30,7 @@ const ACTIVITY_ICONS: Record<string, React.ReactNode> = {
   EMAIL_SENT: <Mail className="h-3.5 w-3.5 text-green-500" />,
   AI_TASK_COMPLETED: <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />,
   AI_TASK_FAILED: <XCircle className="h-3.5 w-3.5 text-red-500" />,
-  INVENTORY_RESTOCK_SUGGESTED: <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />,
+  INVENTORY_RESTOCK_SUGGESTED: <AlertTriangle className="h-3.5 w-3.5 text-yellow-500" />,
   INVENTORY_RESTOCK_REVIEWED: <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />,
 };
 

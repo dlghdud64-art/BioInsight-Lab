@@ -41,7 +41,7 @@ const DOMAIN_LABELS: Record<GovernanceDomain, string> = {
 
 const SEVERITY_COLORS: Record<GovernanceEventSeverity, { bg: string; text: string; dot: string }> = {
   info: { bg: "bg-slate-800", text: "text-slate-400", dot: "bg-slate-500" },
-  warning: { bg: "bg-amber-50", text: "text-amber-400", dot: "bg-amber-500" },
+  warning: { bg: "bg-yellow-50", text: "text-yellow-400", dot: "bg-yellow-500" },
   critical: { bg: "bg-red-950/30", text: "text-red-400", dot: "bg-red-500" },
 };
 
@@ -162,7 +162,7 @@ export function GovernanceDevPanel() {
             onClick={() => setIsPaused((p) => !p)}
             className={cn(
               "px-1.5 py-0.5 rounded text-[10px]",
-              isPaused ? "bg-amber-900/40 text-amber-400" : "bg-slate-700 text-slate-400",
+              isPaused ? "bg-yellow-900/40 text-yellow-400" : "bg-slate-700 text-slate-400",
             )}
           >
             {isPaused ? "▶ 재개" : "⏸ 일시정지"}

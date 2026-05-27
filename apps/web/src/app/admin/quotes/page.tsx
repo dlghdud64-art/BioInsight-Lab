@@ -91,7 +91,7 @@ interface Quote {
 
 const STATUS_CONFIG: Record<string, { label: string; className: string; order: number }> = {
   PENDING:    { label: "신규 요청",       className: "bg-blue-50 text-blue-700 border-0",     order: 0 },
-  PARSED:     { label: "검토 중",         className: "bg-amber-50 text-amber-700 border-0",   order: 1 },
+  PARSED:     { label: "검토 중",         className: "bg-yellow-50 text-yellow-700 border-0",   order: 1 },
   SENT:       { label: "공급사 문의중",   className: "bg-indigo-50 text-indigo-700 border-0",  order: 2 },
   RESPONDED:  { label: "고객 회신 대기",  className: "bg-purple-50 text-purple-700 border-0",  order: 3 },
   COMPLETED:  { label: "견적 발송 완료",  className: "bg-emerald-50 text-emerald-700 border-0",order: 4 },
@@ -106,7 +106,7 @@ function getSLAStatus(createdAt: string, status: string): { label: string; class
   }
   const hours = (Date.now() - new Date(createdAt).getTime()) / 3600000;
   if (hours < 12) return { label: "정상", className: "text-slate-500" };
-  if (hours < 24) return { label: "오늘 마감", className: "text-amber-600 font-medium" };
+  if (hours < 24) return { label: "오늘 마감", className: "text-yellow-600 font-medium" };
   return { label: "지연", className: "text-red-600 font-semibold" };
 }
 
@@ -592,7 +592,7 @@ function MiniKPI({
 }) {
   const colorMap = {
     blue:  { bg: "bg-blue-50",    text: "text-blue-500",    count: count > 0 ? "text-blue-600" : "text-slate-400" },
-    amber: { bg: "bg-amber-50",   text: "text-amber-500",   count: count > 0 ? "text-amber-600" : "text-slate-400" },
+    amber: { bg: "bg-yellow-50",   text: "text-yellow-500",   count: count > 0 ? "text-yellow-600" : "text-slate-400" },
     red:   { bg: "bg-red-50",     text: "text-red-500",     count: count > 0 ? "text-red-600" : "text-slate-400" },
     green: { bg: "bg-emerald-50", text: "text-emerald-500", count: count > 0 ? "text-emerald-600" : "text-slate-400" },
   };

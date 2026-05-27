@@ -505,7 +505,7 @@ function ExtractionResultSheet({
             <h3 className="text-sm font-semibold mb-2">GHS 피크토그램</h3>
             <div className="flex flex-wrap gap-2">
               {extractionResult.pictograms.map((picto: string) => (
-                <Badge key={picto} variant="outline" className="bg-orange-50">
+                <Badge key={picto} variant="outline" className="bg-yellow-50">
                   {picto}
                 </Badge>
               ))}

@@ -51,7 +51,7 @@ function ReasonChip({ reason }: { reason: AiSuggestionReason }) {
   const Icon = REASON_ICON[reason.type];
   const colorMap = {
     positive: "text-emerald-400",
-    warning: "text-amber-400",
+    warning: "text-yellow-400",
     missing: "text-red-400",
     difference: "text-blue-400",
   };

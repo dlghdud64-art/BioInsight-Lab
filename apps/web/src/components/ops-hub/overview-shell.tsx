@@ -192,9 +192,9 @@ export function OverviewUnavailableCard({
   onRetry,
 }: UnavailableCardProps) {
   return (
-    <div className="bg-pn border border-amber-500/20 rounded-lg p-4 flex items-center justify-between">
+    <div className="bg-pn border border-yellow-500/20 rounded-lg p-4 flex items-center justify-between">
       <div className="flex items-center gap-2.5">
-        <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0" />
+        <AlertTriangle className="h-4 w-4 text-yellow-400 shrink-0" />
         <span className="text-xs text-slate-400">{message}</span>
       </div>
       {onRetry && (

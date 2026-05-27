@@ -74,8 +74,8 @@ const READINESS_MAP: Record<string, ReadinessConfig> = {
   },
   needs_review: {
     label: "검토 필요",
-    color: "text-amber-700",
-    bg: "bg-amber-50",
+    color: "text-yellow-700",
+    bg: "bg-yellow-50",
     icon: Clock,
   },
   blocked: {
@@ -139,12 +139,12 @@ function BlockerRow({
       {severity === "critical" ? (
         <XCircle className="h-3.5 w-3.5 text-red-500 mt-0.5 flex-shrink-0" />
       ) : (
-        <AlertTriangle className="h-3.5 w-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
+        <AlertTriangle className="h-3.5 w-3.5 text-yellow-500 mt-0.5 flex-shrink-0" />
       )}
       <span
         className={cn(
           "leading-relaxed",
-          severity === "critical" ? "text-red-700" : "text-amber-700"
+          severity === "critical" ? "text-red-700" : "text-yellow-700"
         )}
       >
         {label}

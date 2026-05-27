@@ -76,7 +76,7 @@ export function VendorPoConfirmationPanel({ vendorId }: { vendorId: string }) {
       {/* ── 요약 카운터 ─────────────────────────────────── */}
       <div className="grid grid-cols-3 gap-3">
         <SummaryTile
-          icon={<Clock className="h-3.5 w-3.5 text-amber-600" />}
+          icon={<Clock className="h-3.5 w-3.5 text-yellow-600" />}
           label="확인 대기"
           value={pendingCount}
           accent="amber"
@@ -151,7 +151,7 @@ function SummaryTile({
 }) {
   const accentBorder =
     accent === "amber"
-      ? "border-l-amber-500"
+      ? "border-l-yellow-500"
       : accent === "emerald"
         ? "border-l-emerald-500"
         : "border-l-rose-500";
@@ -231,7 +231,7 @@ function StatusBadge({ status }: { status: VendorPoDocument["status"] }) {
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-medium text-amber-700">
+    <span className="inline-flex items-center gap-1 rounded-full bg-yellow-50 px-1.5 py-0.5 text-[9px] font-medium text-yellow-700">
       <Clock className="h-2.5 w-2.5" />
       확인 대기
     </span>

@@ -93,7 +93,7 @@ export function HeroDemoFlowPanel() {
                 </td>
                 <td className="px-3 py-2 text-center whitespace-nowrap">
                   {item.hazard ? (
-                    <span className="inline-flex items-center gap-0.5 text-amber-600" title={item.hazard}>
+                    <span className="inline-flex items-center gap-0.5 text-yellow-600" title={item.hazard}>
                       <AlertTriangle className="h-2.5 w-2.5" strokeWidth={1.5} />
                     </span>
                   ) : (

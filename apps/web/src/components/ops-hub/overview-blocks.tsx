@@ -105,7 +105,7 @@ export function BlockWrapper({
 
       {state.state === "unavailable" && (
         <div className="bg-pn border border-bd rounded-lg p-4 flex items-center gap-2">
-          <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
+          <AlertTriangle className="h-3.5 w-3.5 text-yellow-400" />
           <span className="text-xs text-slate-400">
             {unavailableMessage ?? DEFAULT_UNAVAILABLE_MESSAGE}
           </span>
@@ -123,7 +123,7 @@ export function BlockWrapper({
 
 const TONE_COLORS: Record<KpiTone, string> = {
   green: "text-emerald-400",
-  amber: "text-amber-400",
+  amber: "text-yellow-400",
   red: "text-red-400",
   blue: "text-blue-400",
   slate: "text-slate-400",
@@ -179,7 +179,7 @@ export function StepFunnelBlock({ stages }: { stages: StepFunnelStageViewModel[]
 
 const SEVERITY_STYLES: Record<string, { badge: string; border: string }> = {
   urgent: { badge: "bg-red-500/10 text-red-400", border: "border-red-500/30" },
-  warning: { badge: "bg-amber-500/10 text-amber-400", border: "border-amber-500/30" },
+  warning: { badge: "bg-yellow-500/10 text-yellow-400", border: "border-yellow-500/30" },
   info: { badge: "bg-blue-500/10 text-blue-400", border: "border-bd" },
 };
 

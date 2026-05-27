@@ -241,10 +241,10 @@ export function GovernedActionComposer({
 
             {/* 해석 실패 */}
             {intentResult && !intentResult.resolved && intentResult.candidates.length === 0 && (
-              <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3.5">
+              <div className="rounded-lg border border-yellow-200 bg-yellow-50/50 p-3.5">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
-                  <p className="text-sm text-amber-700">{intentResult.failureReason}</p>
+                  <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0" />
+                  <p className="text-sm text-yellow-700">{intentResult.failureReason}</p>
                 </div>
               </div>
             )}
@@ -313,7 +313,7 @@ export function GovernedActionComposer({
                     </div>
                   )}
                   {proposal.willMutateSupplierFacingState && (
-                    <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-600 font-medium">
+                    <div className="mt-2 flex items-center gap-1.5 text-xs text-yellow-600 font-medium">
                       <AlertTriangle className="h-3 w-3" />
                       공급사에게 보이는 상태가 변경됩니다
                     </div>
@@ -350,7 +350,7 @@ export function GovernedActionComposer({
                         <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold flex items-center justify-center shrink-0">{step.order}</span>
                         <span className="text-sm text-slate-600">{step.description}</span>
                         {step.isSupplierFacing && (
-                          <span className="text-[10px] text-amber-500 bg-amber-50 px-1 py-0.5 rounded border border-amber-200 shrink-0">공급사</span>
+                          <span className="text-[10px] text-yellow-500 bg-yellow-50 px-1 py-0.5 rounded border border-yellow-200 shrink-0">공급사</span>
                         )}
                       </div>
                     ))}
@@ -469,7 +469,7 @@ export function GovernedActionComposer({
                     {/* Reopen 경로 */}
                     {proposal.reopenRequired && (
                       <RailSection title="재개 경로 필요">
-                        <div className="flex items-center gap-1.5 text-xs text-amber-600">
+                        <div className="flex items-center gap-1.5 text-xs text-yellow-600">
                           <RotateCcw className="h-3 w-3" />
                           <span>{proposal.reopenRequired.reason}</span>
                         </div>
@@ -497,7 +497,7 @@ export function GovernedActionComposer({
               {(selectedIntent?.intentType === "dispatch_now" || selectedIntent?.intentType === "schedule_dispatch") && (
                 <button
                   onClick={() => handleQuickIntent("request_correction")}
-                  className="px-3 py-2 rounded-lg border border-amber-200 text-sm text-amber-600 hover:bg-amber-50 transition-colors flex items-center gap-1.5"
+                  className="px-3 py-2 rounded-lg border border-yellow-200 text-sm text-yellow-600 hover:bg-yellow-50 transition-colors flex items-center gap-1.5"
                 >
                   <RotateCcw className="h-3.5 w-3.5" />
                   교정 요청
@@ -554,7 +554,7 @@ function RiskBadge({ level }: { level: string }) {
   const styles: Record<string, string> = {
     immediate: "bg-slate-100 text-slate-500 border-slate-200",
     reviewed: "bg-blue-50 text-blue-600 border-blue-200",
-    governed: "bg-amber-50 text-amber-600 border-amber-200",
+    governed: "bg-yellow-50 text-yellow-600 border-yellow-200",
     irreversible: "bg-red-50 text-red-600 border-red-200",
   };
   const labels: Record<string, string> = {

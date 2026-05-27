@@ -450,7 +450,7 @@ export default function AdminUsersPage() {
 
   const STATUS_BADGE: Record<string, { label: string; className: string }> = {
     active:   { label: "활성",     className: "bg-emerald-50 text-emerald-700 border-0" },
-    pending:  { label: "승인 대기", className: "bg-amber-50 text-amber-700 border-0" },
+    pending:  { label: "승인 대기", className: "bg-yellow-50 text-yellow-700 border-0" },
     inactive: { label: "비활성",   className: "bg-el text-slate-500 border-0" },
   };
 
@@ -1275,7 +1275,7 @@ function MiniKPI({
 }) {
   const colorMap = {
     blue:  { bg: "bg-blue-50",    text: "text-blue-500",    count: "text-blue-600" },
-    amber: { bg: "bg-amber-50",   text: "text-amber-500",   count: "text-amber-600" },
+    amber: { bg: "bg-yellow-50",   text: "text-yellow-500",   count: "text-yellow-600" },
     slate: { bg: "bg-el",  text: "text-slate-500",   count: "text-slate-600" },
     green: { bg: "bg-emerald-50", text: "text-emerald-500", count: "text-emerald-600" },
   };

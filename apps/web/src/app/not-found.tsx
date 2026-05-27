@@ -10,7 +10,7 @@ export default function NotFound() {
         <div className="mb-6 flex justify-center">
           <div className="relative">
             <FlaskConical className="h-24 w-24 text-slate-300" />
-            <div className="absolute -top-2 -right-2 bg-orange-500 text-white text-sm font-bold rounded-full w-12 h-12 flex items-center justify-center">
+            <div className="absolute -top-2 -right-2 bg-sky-500 text-white text-sm font-bold rounded-full w-12 h-12 flex items-center justify-center">
               404
             </div>
           </div>

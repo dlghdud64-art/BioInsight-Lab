@@ -23,7 +23,7 @@ interface MetricCellProps {
 export function MetricCell({ label, value, tone = "neutral" }: MetricCellProps) {
   const accent: Record<MetricCellTone, string> = {
     ok: "border-l-emerald-500",
-    warn: "border-l-amber-500",
+    warn: "border-l-yellow-500",
     danger: "border-l-red-500",
     neutral: "border-l-slate-300",
   };

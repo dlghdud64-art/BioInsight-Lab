@@ -93,13 +93,13 @@ const CATEGORY_TONE_BORDER: Record<"blue" | "purple" | "emerald" | "amber", stri
   blue: "border-l-blue-500",
   purple: "border-l-purple-500",
   emerald: "border-l-emerald-500",
-  amber: "border-l-amber-500",
+  amber: "border-l-yellow-500",
 };
 const CATEGORY_TONE_ICON: Record<"blue" | "purple" | "emerald" | "amber", string> = {
   blue: "text-blue-600",
   purple: "text-purple-600",
   emerald: "text-emerald-600",
-  amber: "text-amber-600",
+  amber: "text-yellow-600",
 };
 
 /* §11.182 — priority 사람 라벨 (raw enum 노출 0). */
@@ -111,7 +111,7 @@ const PRIORITY_HUMAN: Record<string, string> = {
 };
 const PRIORITY_BADGE: Record<string, string> = {
   p0: "bg-red-500/10 text-red-700",
-  p1: "bg-amber-500/10 text-amber-700",
+  p1: "bg-yellow-500/10 text-yellow-700",
   p2: "bg-blue-500/10 text-blue-700",
   p3: "bg-zinc-500/10 text-zinc-700",
 };
@@ -651,7 +651,7 @@ const CATEGORY_TONE_ACTIVE_BG: Record<"blue" | "purple" | "emerald" | "amber", s
   blue: "bg-blue-100 text-blue-700",
   purple: "bg-purple-100 text-purple-700",
   emerald: "bg-emerald-100 text-emerald-700",
-  amber: "bg-amber-100 text-amber-700",
+  amber: "bg-yellow-100 text-yellow-700",
 };
 
 function PopupCategoryListWithExpand({
@@ -783,7 +783,7 @@ function PopupItemWithExpand({
     item.priority === "p0"
       ? "border-l-rose-500"
       : item.priority === "p1"
-        ? "border-l-amber-400"
+        ? "border-l-yellow-400"
         : item.priority === "p2"
           ? "border-l-blue-400"
           : "border-l-slate-300";

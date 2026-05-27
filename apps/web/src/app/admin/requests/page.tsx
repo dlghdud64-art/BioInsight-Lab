@@ -223,10 +223,10 @@ export default function AdminRequestsPage() {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">대기 중</CardTitle>
-                    <Clock className="h-4 w-4 text-amber-600" />
+                    <Clock className="h-4 w-4 text-yellow-600" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-amber-600">{pendingRequests.length}</div>
+                    <div className="text-2xl font-bold text-yellow-600">{pendingRequests.length}</div>
                   </CardContent>
                 </Card>
                 <Card>
@@ -254,7 +254,7 @@ export default function AdminRequestsPage() {
                 <Card>
                   <CardHeader>
                     <div className="flex items-center gap-2">
-                      <Inbox className="h-5 w-5 text-amber-600" />
+                      <Inbox className="h-5 w-5 text-yellow-600" />
                       <CardTitle>대기 중인 요청</CardTitle>
                       <Badge variant="outline" className="ml-auto">
                         {pendingRequests.length}건
@@ -388,7 +388,7 @@ function RequestCard({
                 {format(new Date(request.createdAt), "yyyy.MM.dd HH:mm", { locale: ko })}
               </div>
             </div>
-            <Badge variant="outline" className="bg-amber-100 text-amber-900 border-amber-300">
+            <Badge variant="outline" className="bg-yellow-100 text-yellow-900 border-yellow-300">
               <Clock className="h-3 w-3 mr-1" />
               검토 중
             </Badge>

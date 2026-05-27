@@ -354,7 +354,7 @@ export function StrategicAnalytics({ kpis, className }: StrategicAnalyticsProps)
               <div className="col-span-3 space-y-1">
                 {simResult.warnings.map((w, i) => (
                   <div key={i} className={cn("text-[10px] flex items-center gap-1.5",
-                    w.severity === "critical" ? "text-red-400" : w.severity === "warning" ? "text-amber-400" : "text-slate-500"
+                    w.severity === "critical" ? "text-red-400" : w.severity === "warning" ? "text-yellow-400" : "text-slate-500"
                   )}>
                     <span className="shrink-0">{w.severity === "critical" ? "✕" : w.severity === "warning" ? "△" : "ℹ"}</span>
                     {w.message}
@@ -367,7 +367,7 @@ export function StrategicAnalytics({ kpis, className }: StrategicAnalyticsProps)
                 신뢰도:
                 <span className={cn("font-medium",
                   simResult.confidence >= 0.8 ? "text-emerald-400" :
-                  simResult.confidence >= 0.5 ? "text-amber-400" : "text-red-400"
+                  simResult.confidence >= 0.5 ? "text-yellow-400" : "text-red-400"
                 )}>
                   {Math.round(simResult.confidence * 100)}%
                 </span>
@@ -451,7 +451,7 @@ export function StrategicAnalytics({ kpis, className }: StrategicAnalyticsProps)
                 <div key={item.itemId} className="flex items-center gap-3 text-xs py-1 border-b border-slate-200/50 last:border-0">
                   <span className={cn("h-2 w-2 rounded-full shrink-0",
                     item.stockStatus === "out_of_stock" ? "bg-red-500" :
-                    item.stockStatus === "low_stock" ? "bg-amber-500" :
+                    item.stockStatus === "low_stock" ? "bg-yellow-500" :
                     item.stockStatus === "expired" ? "bg-red-400" : "bg-slate-600"
                   )} />
                   <span className="text-slate-400 flex-1">{item.itemName}</span>
@@ -479,14 +479,14 @@ export function StrategicAnalytics({ kpis, className }: StrategicAnalyticsProps)
 function KPICard({ label, value, sub, color }: { label: string; value: string; sub: string; color: string }) {
   const colorMap: Record<string, string> = {
     blue: "border-blue-500/20 bg-blue-500/5",
-    amber: "border-amber-500/20 bg-amber-500/5",
+    amber: "border-yellow-500/20 bg-yellow-500/5",
     red: "border-red-500/20 bg-red-500/5",
     emerald: "border-emerald-500/20 bg-emerald-500/5",
     violet: "border-violet-500/20 bg-violet-500/5",
   };
   const textMap: Record<string, string> = {
     blue: "text-blue-400",
-    amber: "text-amber-400",
+    amber: "text-yellow-400",
     red: "text-red-400",
     emerald: "text-emerald-400",
     violet: "text-violet-400",
@@ -507,8 +507,8 @@ function SimResultCard({
   label: string; before: string; after: string; delta: string;
   severity: "info" | "warning" | "critical";
 }) {
-  const borderColor = severity === "critical" ? "border-red-500/20" : severity === "warning" ? "border-amber-500/20" : "border-slate-200";
-  const deltaColor = severity === "critical" ? "text-red-400" : severity === "warning" ? "text-amber-400" : "text-slate-500";
+  const borderColor = severity === "critical" ? "border-red-500/20" : severity === "warning" ? "border-yellow-500/20" : "border-slate-200";
+  const deltaColor = severity === "critical" ? "text-red-400" : severity === "warning" ? "text-yellow-400" : "text-slate-500";
 
   return (
     <div className={cn("rounded border bg-white p-3", borderColor)}>
@@ -570,21 +570,21 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
 const PHASE_LINE_COLOR: Record<string, string> = {
   blue: "bg-blue-500",
   violet: "bg-violet-500",
-  amber: "bg-amber-500",
+  amber: "bg-yellow-500",
   emerald: "bg-emerald-500",
 };
 
 const PHASE_DOT_RING: Record<string, string> = {
   blue: "ring-blue-500/30",
   violet: "ring-violet-500/30",
-  amber: "ring-amber-500/30",
+  amber: "ring-yellow-500/30",
   emerald: "ring-emerald-500/30",
 };
 
 const PHASE_TEXT: Record<string, string> = {
   blue: "text-blue-400",
   violet: "text-violet-400",
-  amber: "text-amber-400",
+  amber: "text-yellow-400",
   emerald: "text-emerald-400",
 };
 

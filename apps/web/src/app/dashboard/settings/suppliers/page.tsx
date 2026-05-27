@@ -515,7 +515,7 @@ export default function SuppliersSettingsPage() {
                     </h3>
                     {vendor.isPrimary && (
                       <Badge className="bg-yellow-50 text-yellow-700 border-yellow-200 text-[10px] gap-1">
-                        <Star className="h-2.5 w-2.5 fill-amber-500 text-yellow-500" />
+                        <Star className="h-2.5 w-2.5 fill-yellow-500 text-yellow-500" />
                         우선 거래처
                       </Badge>
                     )}

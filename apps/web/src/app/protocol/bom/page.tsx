@@ -543,22 +543,22 @@ export default function ProtocolBOMPage() {
 
                       {/* PDF 분석 실패 안내 */}
                       {pdfParseError && (
-                        <div className="rounded-lg border border-amber-800 bg-amber-950/30 p-3 space-y-2.5">
+                        <div className="rounded-lg border border-yellow-800 bg-yellow-950/30 p-3 space-y-2.5">
                           <div className="flex items-start gap-2">
-                            <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />
-                            <p className="text-xs text-amber-800 leading-relaxed">{pdfParseError}</p>
+                            <AlertTriangle className="h-4 w-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+                            <p className="text-xs text-yellow-800 leading-relaxed">{pdfParseError}</p>
                           </div>
                           {pdfParseError.includes("스캔본") && (
-                            <p className="text-xs text-amber-700 leading-relaxed pl-6">
+                            <p className="text-xs text-yellow-700 leading-relaxed pl-6">
                               스캔본 문서일 수 있어 OCR이 필요합니다. 텍스트 붙여넣기로 계속 진행해 주세요.
                             </p>
                           )}
                           {pdfParseError.includes("암호") ? (
-                            <p className="text-xs text-amber-700 leading-relaxed pl-6">
+                            <p className="text-xs text-yellow-700 leading-relaxed pl-6">
                               PDF 암호를 해제한 후 다시 업로드해 주세요.
                             </p>
                           ) : (
-                            <p className="text-xs text-amber-700 leading-relaxed pl-6">
+                            <p className="text-xs text-yellow-700 leading-relaxed pl-6">
                               텍스트 붙여넣기로 계속 진행해 주세요.
                             </p>
                           )}
@@ -566,14 +566,14 @@ export default function ProtocolBOMPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="h-7 text-xs border-amber-300 text-amber-800 hover:bg-amber-900/40"
+                              className="h-7 text-xs border-yellow-300 text-yellow-800 hover:bg-yellow-900/40"
                               onClick={() => { setPdfParseError(null); pdfFile && extractFromFileMutation.mutate(pdfFile); }}
                             >
                               다시 시도
                             </Button>
                             <Button
                               size="sm"
-                              className="h-7 text-xs bg-amber-600 hover:bg-amber-700 text-white"
+                              className="h-7 text-xs bg-yellow-600 hover:bg-yellow-700 text-white"
                               onClick={() => setActiveTab("paste")}
                             >
                               <Clipboard className="h-3 w-3 mr-1" />
@@ -687,8 +687,8 @@ export default function ProtocolBOMPage() {
               /* ── 분석 실패 ── */
               <div className="rounded-xl border border-dashed border-bd bg-el h-full">
                 <div className="p-5 flex flex-col items-center justify-center min-h-[280px] text-center space-y-4">
-                  <div className="w-12 h-12 rounded-full bg-amber-900/40 flex items-center justify-center">
-                    <AlertTriangle className="h-6 w-6 text-amber-500" />
+                  <div className="w-12 h-12 rounded-full bg-yellow-900/40 flex items-center justify-center">
+                    <AlertTriangle className="h-6 w-6 text-yellow-500" />
                   </div>
                   <div className="space-y-1.5">
                     <p className="text-sm font-semibold text-slate-200">PDF 분석에 실패했습니다</p>
@@ -746,7 +746,7 @@ export default function ProtocolBOMPage() {
                         </div>
                         {unmatchedCount > 0 && (
                           <div className="text-center">
-                            <p className="text-lg font-bold text-amber-400">{unmatchedCount}</p>
+                            <p className="text-lg font-bold text-yellow-400">{unmatchedCount}</p>
                             <p className="text-[10px] text-slate-500">미매칭</p>
                           </div>
                         )}
@@ -890,7 +890,7 @@ export default function ProtocolBOMPage() {
                                         </p>
                                       </div>
                                     ) : (
-                                      <div className="flex items-center gap-1 text-amber-400">
+                                      <div className="flex items-center gap-1 text-yellow-400">
                                         <AlertCircle className="h-3 w-3" />
                                         <span className="text-[10px]">미매칭</span>
                                       </div>
@@ -1033,7 +1033,7 @@ export default function ProtocolBOMPage() {
             {unmatchedCount > 0 && (
               <div className="flex items-center justify-between py-1.5 border-b border-bd">
                 <span className="text-slate-400">미매칭 (수동 검색 필요)</span>
-                <span className="font-semibold text-amber-400">{unmatchedCount}개</span>
+                <span className="font-semibold text-yellow-400">{unmatchedCount}개</span>
               </div>
             )}
             {estimatedTotal > 0 && (

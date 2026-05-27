@@ -24,7 +24,7 @@ import {
 /** Severity → left border color */
 const SEVERITY_BORDER: Record<string, string> = {
   critical: "border-l-red-500",
-  high: "border-l-orange-400",
+  high: "border-l-yellow-400",
   medium: "border-l-yellow-400",
   low: "border-l-gray-200",
 };

@@ -53,7 +53,7 @@ export default function ContractPreviewPage() {
               <span
                 className={`text-[10px] px-1.5 py-0.5 rounded ${
                   item.status === "isolated"
-                    ? "bg-amber-500/15 text-amber-400"
+                    ? "bg-yellow-500/15 text-yellow-400"
                     : "bg-emerald-500/15 text-emerald-400"
                 }`}
               >

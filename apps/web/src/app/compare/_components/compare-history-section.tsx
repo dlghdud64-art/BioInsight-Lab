@@ -226,7 +226,7 @@ export function CompareHistorySection({ onOpenSession }: CompareHistorySectionPr
                         ? Math.floor((Date.now() - new Date(session.createdAt).getTime()) / 86400000)
                         : 0;
                       if (ageDays >= 7) {
-                        return <span className="text-[10px] text-orange-400 font-medium ml-1">{ageDays}일 대기</span>;
+                        return <span className="text-[10px] text-yellow-400 font-medium ml-1">{ageDays}일 대기</span>;
                       }
                       return null;
                     })()}

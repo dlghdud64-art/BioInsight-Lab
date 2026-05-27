@@ -149,7 +149,7 @@ export function OpsConsoleMockupContent() {
         {[
           { icon: <FileText className="h-3 w-3 text-blue-500" />, label: "처리 필요", value: "2건", color: "#2563eb" },
           { icon: <CheckCircle2 className="h-3 w-3 text-emerald-500" />, label: "전환 가능", value: "1건", color: "#059669" },
-          { icon: <Clock className="h-3 w-3 text-amber-500" />, label: "승인 대기", value: "0건", color: "#94a3b8" },
+          { icon: <Clock className="h-3 w-3 text-yellow-500" />, label: "승인 대기", value: "0건", color: "#94a3b8" },
           { icon: <ShieldAlert className="h-3 w-3 text-slate-400" />, label: "위험/차단", value: "0건", color: "#94a3b8" },
         ].map((kpi) => (
           <div key={kpi.label} className="flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-slate-200">

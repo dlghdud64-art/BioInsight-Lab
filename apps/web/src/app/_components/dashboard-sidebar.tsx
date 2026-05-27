@@ -174,7 +174,7 @@ const ICON_TINT: Record<string, { active: string; inactive: string }> = {
   "/dashboard/budget":       { active: "text-emerald-600", inactive: "text-emerald-400/70" },
   "/dashboard/inventory":    { active: "text-teal-600",    inactive: "text-teal-400/70" },
   "/dashboard/organizations":{ active: "text-indigo-600",  inactive: "text-indigo-400/70" },
-  "/dashboard/safety":       { active: "text-orange-500",  inactive: "text-orange-400/70" },
+  "/dashboard/safety":       { active: "text-sky-500",  inactive: "text-sky-400/70" },
   "/dashboard/support-center":{ active: "text-blue-600",    inactive: "text-blue-400/70" },
   "/dashboard/settings":     { active: "text-slate-600",   inactive: "text-slate-400" },
   "/dashboard/activity-logs":{ active: "text-slate-600",   inactive: "text-slate-400" },

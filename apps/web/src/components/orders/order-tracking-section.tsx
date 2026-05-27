@@ -63,7 +63,7 @@ interface Props {
 const STATUS_META: Record<string, { label: string; tone: string; bgClass: string; textClass: string }> = {
   ORDERED: { label: "주문 완료", tone: "blue", bgClass: "bg-blue-50", textClass: "text-blue-700" },
   CONFIRMED: { label: "확인됨", tone: "indigo", bgClass: "bg-indigo-50", textClass: "text-indigo-700" },
-  SHIPPING: { label: "배송 중", tone: "amber", bgClass: "bg-amber-50", textClass: "text-amber-700" },
+  SHIPPING: { label: "배송 중", tone: "amber", bgClass: "bg-yellow-50", textClass: "text-yellow-700" },
   DELIVERED: { label: "배송 완료", tone: "emerald", bgClass: "bg-emerald-50", textClass: "text-emerald-700" },
   CANCELLED: { label: "취소됨", tone: "rose", bgClass: "bg-rose-50", textClass: "text-rose-700" },
 };

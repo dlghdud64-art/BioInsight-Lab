@@ -178,13 +178,13 @@ function eventIcon(kind: LedgerEventKind) {
     case "order_dispatch_ready":
       return <Truck className="h-3.5 w-3.5 text-violet-600" />;
     case "order_pending_approval":
-      return <Clock className="h-3.5 w-3.5 text-amber-500" />;
+      return <Clock className="h-3.5 w-3.5 text-yellow-500" />;
     case "budget_over":
       return <ShieldAlert className="h-3.5 w-3.5 text-rose-600" />;
     case "budget_critical":
       return <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />;
     case "budget_warning":
-      return <DollarSign className="h-3.5 w-3.5 text-amber-500" />;
+      return <DollarSign className="h-3.5 w-3.5 text-yellow-500" />;
     case "fast_track_accepted":
       return <Zap className="h-3.5 w-3.5 text-emerald-600" />;
     default:
@@ -202,7 +202,7 @@ function eventDotColor(kind: LedgerEventKind): string {
       return "bg-violet-500";
     case "order_pending_approval":
     case "budget_warning":
-      return "bg-amber-500";
+      return "bg-yellow-500";
     case "budget_critical":
     case "budget_over":
       return "bg-rose-500";

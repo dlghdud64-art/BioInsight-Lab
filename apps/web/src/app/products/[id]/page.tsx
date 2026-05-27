@@ -634,7 +634,7 @@ export default function ProductDetailPage() {
                   <div className="pt-4 border-t">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <Shield className="h-4 w-4 text-amber-600" />
+                        <Shield className="h-4 w-4 text-yellow-600" />
                         <h3 className="font-semibold text-sm md:text-base">안전 · 규제 정보</h3>
                       </div>
                       <div className="flex items-center gap-2">
@@ -720,12 +720,12 @@ export default function ProductDetailPage() {
 
                         {/* 안전 취급 요약 */}
                         {product.safetyNote && (
-                          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                             <div className="flex items-start gap-2">
-                              <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                              <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
                               <div className="flex-1">
-                                <p className="text-xs font-medium text-amber-900 mb-1">안전 취급 요약</p>
-                                <p className="text-xs text-amber-800 leading-relaxed whitespace-pre-wrap">
+                                <p className="text-xs font-medium text-yellow-900 mb-1">안전 취급 요약</p>
+                                <p className="text-xs text-yellow-800 leading-relaxed whitespace-pre-wrap">
                                   {product.safetyNote}
                                 </p>
                               </div>

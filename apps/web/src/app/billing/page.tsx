@@ -259,7 +259,7 @@ function BillingPageContent() {
                   className={cn(
                     "mb-6 rounded-lg border px-4 py-3 flex items-start gap-3",
                     contextBanner.variant === "warning"
-                      ? "border-amber-300 bg-amber-50 text-amber-900"
+                      ? "border-yellow-300 bg-yellow-50 text-yellow-900"
                       : "border-blue-300 bg-blue-50 text-blue-900"
                   )}
                   role="status"
@@ -506,7 +506,7 @@ function BillingPageContent() {
                                   />
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-lg text-sm text-amber-700">
+                              <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-lg text-sm text-yellow-700">
                                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
                                 <span>데모 모드: 실제 결제가 발생하지 않습니다.</span>
                               </div>

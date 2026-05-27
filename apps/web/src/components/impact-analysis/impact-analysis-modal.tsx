@@ -185,7 +185,7 @@ export function ImpactAnalysisModal({
       <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
-            <ShieldAlert className="h-4 w-4 text-amber-500" />
+            <ShieldAlert className="h-4 w-4 text-yellow-500" />
             발주 영향 분석 (What-if)
             {headerHint && (
               <span className="text-xs font-normal text-slate-500">— {headerHint}</span>
@@ -222,7 +222,7 @@ export function ImpactAnalysisModal({
                 severity === "blocked"
                   ? "border-red-500/30 bg-red-500/10 text-red-300"
                   : severity === "review"
-                    ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+                    ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-300"
                     : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
               )}
             >
@@ -357,7 +357,7 @@ export function ImpactAnalysisModal({
               variant="outline"
               onClick={handleRequestCorrection}
               disabled={!result || loading || confirming}
-              className="border-amber-500/40 text-amber-300 hover:bg-amber-500/10"
+              className="border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/10"
             >
               교정 요청
             </Button>

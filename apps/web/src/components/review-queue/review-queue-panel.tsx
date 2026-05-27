@@ -53,8 +53,8 @@ const STATUS_CONFIG: Record<
     label: "확정",
   },
   needs_review: {
-    dot: "bg-amber-500",
-    badge: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
+    dot: "bg-yellow-500",
+    badge: "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20",
     label: "검토 필요",
   },
   match_failed: {
@@ -93,7 +93,7 @@ const CONFIDENCE_CONFIG: Record<
   { label: string; className: string }
 > = {
   high: { label: "높음", className: "text-emerald-400" },
-  medium: { label: "중간", className: "text-amber-400" },
+  medium: { label: "중간", className: "text-yellow-400" },
   low: { label: "낮음", className: "text-red-400" },
 };
 
@@ -245,7 +245,7 @@ export function ReviewQueuePanel({
         <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400">
           <span className="text-green-400">확정 {stats.confirmed}</span>
           <span className="text-slate-600">·</span>
-          <span className="text-amber-400">검토 {stats.needsReview}</span>
+          <span className="text-yellow-400">검토 {stats.needsReview}</span>
           <span className="text-slate-600">·</span>
           <span className="text-red-400">실패 {stats.matchFailed}</span>
           <span className="text-slate-600">·</span>
@@ -406,7 +406,7 @@ export function ReviewQueuePanel({
                 </div>
 
                 {/* 검토 사유 (축약) */}
-                <div className="text-[10px] text-amber-400 truncate">
+                <div className="text-[10px] text-yellow-400 truncate">
                   {item.reviewReason ? "!" : ""}
                 </div>
 
@@ -526,7 +526,7 @@ function RowActions({
         <div className="flex items-center gap-1">
           <button
             onClick={onApprove}
-            className="text-[11px] px-2.5 py-1 rounded bg-amber-600 text-white hover:bg-amber-500 transition-colors"
+            className="text-[11px] px-2.5 py-1 rounded bg-yellow-600 text-white hover:bg-yellow-500 transition-colors"
           >
             검토
           </button>
@@ -659,7 +659,7 @@ function ExpandPanel({
                     c.score >= 0.8
                       ? "bg-emerald-500/10 text-emerald-400"
                       : c.score >= 0.5
-                        ? "bg-amber-500/10 text-amber-400"
+                        ? "bg-yellow-500/10 text-yellow-400"
                         : "bg-red-500/10 text-red-400"
                   }`}
                 >
@@ -680,7 +680,7 @@ function ExpandPanel({
       {/* 검토 사유 */}
       {item.reviewReason && (
         <div className="flex items-center gap-2">
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 whitespace-nowrap">
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 whitespace-nowrap">
             검토 사유
           </span>
           <span className="text-xs text-slate-400">{item.reviewReason}</span>

@@ -197,7 +197,7 @@ export function ProtocolUpload({ onBOMCreated }: ProtocolUploadProps) {
           <CardDescription>
             실험 프로토콜 PDF를 업로드하거나 텍스트를 붙여넣어 필요한 시약을 자동으로 추출합니다.
             {!pdfUploadEnabled && (
-              <span className="block mt-1 text-xs text-amber-600">
+              <span className="block mt-1 text-xs text-yellow-600">
                 보안 환경: 텍스트 붙여넣기 모드만 사용 가능합니다.
               </span>
             )}

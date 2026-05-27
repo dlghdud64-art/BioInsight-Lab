@@ -51,7 +51,7 @@ export function ExtractionResultItem({ item }: ExtractionResultItemProps) {
                 variant={isLowConfidence ? "secondary" : "outline"}
                 className={`text-xs ${
                   isLowConfidence
-                    ? "bg-orange-50 text-orange-700 border-orange-200"
+                    ? "bg-yellow-50 text-yellow-700 border-yellow-200"
                     : "bg-pg text-slate-700"
                 }`}
               >
@@ -64,7 +64,7 @@ export function ExtractionResultItem({ item }: ExtractionResultItemProps) {
         {/* Right: Icons */}
         <div className="flex items-start gap-1.5 flex-shrink-0">
           {isLowConfidence && (
-            <AlertCircle className="h-4 w-4 text-orange-500 mt-0.5" />
+            <AlertCircle className="h-4 w-4 text-yellow-500 mt-0.5" />
           )}
           {item.evidence && (
             <HoverCard>

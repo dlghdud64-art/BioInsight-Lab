@@ -390,12 +390,12 @@ const PRIORITY_STYLES: Record<
   },
   correction: {
     label: "해결 필요",
-    border: "border-amber-200",
-    bg: "bg-amber-50/60",
-    iconBg: "bg-amber-100",
-    iconColor: "text-amber-600",
-    badge: "text-amber-600",
-    cta: "bg-amber-600 hover:bg-amber-500 text-white",
+    border: "border-yellow-200",
+    bg: "bg-yellow-50/60",
+    iconBg: "bg-yellow-100",
+    iconColor: "text-yellow-600",
+    badge: "text-yellow-600",
+    cta: "bg-yellow-600 hover:bg-yellow-500 text-white",
     Icon: AlertTriangle,
   },
   overview: {
@@ -417,7 +417,7 @@ const PRIORITY_STYLES: Record<
 const TONE_BADGE_STYLES: Record<CenterContextItem["tone"], string> = {
   neutral: "bg-slate-100 text-slate-600",
   positive: "bg-blue-50 text-blue-700",
-  warning: "bg-amber-50 text-amber-700",
+  warning: "bg-yellow-50 text-yellow-700",
   blocked: "bg-red-50 text-red-700",
 };
 
@@ -435,7 +435,7 @@ function ContextBadge({ item }: { item: CenterContextItem }) {
 const TONE_VALUE_STYLES: Record<RailLineageItem["tone"], string> = {
   neutral: "text-slate-600",
   positive: "text-blue-600",
-  warning: "text-amber-600",
+  warning: "text-yellow-600",
   blocked: "text-red-600",
 };
 

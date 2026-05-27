@@ -22,8 +22,8 @@ interface DailyReviewRowProps {
 /** Daily review category → severity border color */
 const CATEGORY_BORDER: Record<string, string> = {
   urgent_now: "border-l-red-500",
-  overdue_owned: "border-l-orange-400",
-  blocked_too_long: "border-l-amber-400",
+  overdue_owned: "border-l-yellow-400",
+  blocked_too_long: "border-l-yellow-400",
   handoff_not_accepted: "border-l-purple-400",
   urgent_unassigned: "border-l-yellow-400",
   recently_resolved: "border-l-green-300",

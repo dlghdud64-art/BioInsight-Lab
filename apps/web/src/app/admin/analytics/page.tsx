@@ -219,7 +219,7 @@ export default function AdminAnalyticsPage() {
             <Card>
               <CardHeader className="pb-3 min-w-0">
                 <CardTitle className="text-sm font-medium flex items-center gap-2 min-w-0">
-                  <Share2 className="h-4 w-4 text-orange-600 flex-shrink-0" />
+                  <Share2 className="h-4 w-4 text-sky-600 flex-shrink-0" />
                   <span className="truncate">공유 링크 생성률</span>
                 </CardTitle>
               </CardHeader>

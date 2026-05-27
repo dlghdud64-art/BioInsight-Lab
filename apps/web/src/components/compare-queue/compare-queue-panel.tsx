@@ -23,7 +23,7 @@ import type {
 // ── 상태 badge ──
 const STATUS_CONFIG: Record<CompareStatus, { label: string; dot: string; text: string }> = {
   pending_comparison: { label: "비교 대기", dot: "bg-blue-400", text: "text-blue-400" },
-  selection_needed: { label: "선택 필요", dot: "bg-amber-400", text: "text-amber-400" },
+  selection_needed: { label: "선택 필요", dot: "bg-yellow-400", text: "text-yellow-400" },
   selection_confirmed: { label: "선택 확정", dot: "bg-emerald-400", text: "text-emerald-400" },
   removed: { label: "제외됨", dot: "bg-slate-500", text: "text-slate-500" },
 };
@@ -108,7 +108,7 @@ export function CompareQueuePanel({
             </Badge>
           </div>
           <div className="flex items-center gap-2 text-[10px] text-slate-500">
-            <span>선택 필요 <strong className="text-amber-400">{stats.selectionNeeded}</strong></span>
+            <span>선택 필요 <strong className="text-yellow-400">{stats.selectionNeeded}</strong></span>
             <span>·</span>
             <span>확정 <strong className="text-emerald-400">{stats.confirmed}</strong></span>
             <span>·</span>
@@ -238,7 +238,7 @@ export function CompareQueuePanel({
                               candidate.score >= 0.9
                                 ? "text-emerald-400 border-emerald-500/30"
                                 : candidate.score >= 0.7
-                                ? "text-amber-400 border-amber-500/30"
+                                ? "text-yellow-400 border-yellow-500/30"
                                 : "text-red-400 border-red-500/30"
                             }`}
                           >

@@ -30,7 +30,7 @@ import {
 const STATUS_CONFIG: Record<QuoteDraftStatus, { label: string; dot: string; text: string }> = {
   draft_ready: { label: "제출 가능", dot: "bg-emerald-400", text: "text-emerald-400" },
   missing_required_fields: { label: "필수 정보 누락", dot: "bg-red-400", text: "text-red-400" },
-  awaiting_review: { label: "검토 필요", dot: "bg-amber-400", text: "text-amber-400" },
+  awaiting_review: { label: "검토 필요", dot: "bg-yellow-400", text: "text-yellow-400" },
   removed: { label: "제외됨", dot: "bg-slate-500", text: "text-slate-500" },
 };
 
@@ -43,15 +43,15 @@ const SOURCE_BADGE: Record<SourceType, { label: string; cls: string }> = {
 const BUDGET_LABELS: Record<string, { text: string; cls: string }> = {
   budgetLinked: { text: "예산 연결됨", cls: "text-emerald-400" },
   budgetSuggested: { text: "예산 연결 가능", cls: "text-blue-400" },
-  budgetCheckRequired: { text: "예산 확인 필요", cls: "text-amber-400" },
+  budgetCheckRequired: { text: "예산 확인 필요", cls: "text-yellow-400" },
   noBudgetContext: { text: "예산 정보 없음", cls: "text-slate-500" },
 };
 
 const INVENTORY_LABELS: Record<string, { text: string; cls: string }> = {
   inventoryAvailable: { text: "보유 재고 있음", cls: "text-blue-400" },
-  possibleDuplicatePurchase: { text: "중복 구매 가능성", cls: "text-amber-400" },
+  possibleDuplicatePurchase: { text: "중복 구매 가능성", cls: "text-yellow-400" },
   noInventoryMatch: { text: "재고 없음", cls: "text-slate-500" },
-  inventoryCheckRequired: { text: "재고 확인 필요", cls: "text-amber-400" },
+  inventoryCheckRequired: { text: "재고 확인 필요", cls: "text-yellow-400" },
 };
 
 type FilterTab = "all" | QuoteDraftStatus;
@@ -135,9 +135,9 @@ export function QuoteDraftPanel({
             <span>·</span>
             <span>누락 <strong className="text-red-400">{stats.missing}</strong></span>
             <span>·</span>
-            <span>검토 <strong className="text-amber-400">{stats.review}</strong></span>
-            {stats.budgetWarning > 0 && <><span>·</span><span>예산 경고 <strong className="text-amber-400">{stats.budgetWarning}</strong></span></>}
-            {stats.inventoryWarning > 0 && <><span>·</span><span>재고 중복 <strong className="text-amber-400">{stats.inventoryWarning}</strong></span></>}
+            <span>검토 <strong className="text-yellow-400">{stats.review}</strong></span>
+            {stats.budgetWarning > 0 && <><span>·</span><span>예산 경고 <strong className="text-yellow-400">{stats.budgetWarning}</strong></span></>}
+            {stats.inventoryWarning > 0 && <><span>·</span><span>재고 중복 <strong className="text-yellow-400">{stats.inventoryWarning}</strong></span></>}
           </div>
         </div>
 
@@ -192,8 +192,8 @@ export function QuoteDraftPanel({
                 </div>
                 {warnings.length > 0 && (
                   <div className="flex items-center gap-1 mt-1.5">
-                    <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />
-                    <span className="text-[10px] text-amber-400 truncate">{warnings[0]}</span>
+                    <AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" />
+                    <span className="text-[10px] text-yellow-400 truncate">{warnings[0]}</span>
                     {warnings.length > 1 && <span className="text-[10px] text-slate-500">+{warnings.length - 1}</span>}
                   </div>
                 )}
@@ -306,11 +306,11 @@ export function QuoteDraftPanel({
                 const w = mapQuoteDraftWarnings(selectedItem);
                 if (w.length === 0) return null;
                 return (
-                  <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3">
-                    <p className="text-[10px] text-amber-400 font-medium mb-1">제출 전 확인 사항</p>
+                  <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-lg p-3">
+                    <p className="text-[10px] text-yellow-400 font-medium mb-1">제출 전 확인 사항</p>
                     <ul className="space-y-0.5">
                       {w.map((msg, i) => (
-                        <li key={i} className="text-xs text-amber-300 flex items-start gap-1.5">
+                        <li key={i} className="text-xs text-yellow-300 flex items-start gap-1.5">
                           <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5" />
                           {msg}
                         </li>

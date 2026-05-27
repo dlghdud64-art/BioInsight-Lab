@@ -394,9 +394,9 @@ export default function ExtractPage() {
                 <h2 className="font-semibold text-slate-100 mb-4">추출 결과</h2>
 
                 {hasLowConfidenceItems && (
-                  <Alert className="mb-4 border-orange-200 bg-orange-50/80 backdrop-blur-sm">
-                    <AlertCircle className="h-4 w-4 text-orange-600" />
-                    <AlertDescription className="text-sm text-orange-800">
+                  <Alert className="mb-4 border-yellow-200 bg-yellow-50/80 backdrop-blur-sm">
+                    <AlertCircle className="h-4 w-4 text-yellow-600" />
+                    <AlertDescription className="text-sm text-yellow-800">
                       일부 품목의 신뢰도가 낮습니다. 결과를 확인하고 필요시 수정해주세요.
                     </AlertDescription>
                   </Alert>

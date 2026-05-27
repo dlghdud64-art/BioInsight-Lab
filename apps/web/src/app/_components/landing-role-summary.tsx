@@ -5,7 +5,7 @@ const ROLES = [
     icon: Beaker,
     role: "연구원",
     benefit: "통합 검색 + 비교표 자동 생성으로 시약 선정 시간 단축",
-    color: "text-amber-400",
+    color: "text-yellow-400",
   },
   {
     icon: ShoppingCart,

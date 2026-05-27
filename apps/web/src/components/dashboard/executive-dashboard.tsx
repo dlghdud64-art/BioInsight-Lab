@@ -241,7 +241,7 @@ export function ExecutiveDashboard() {
         <Card className={cn("relative overflow-hidden", useMockData && "opacity-60")}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">재고 부족 알림</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-orange-500" />
+            <AlertTriangle className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
