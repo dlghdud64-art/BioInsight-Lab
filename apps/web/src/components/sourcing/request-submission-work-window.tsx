@@ -263,8 +263,9 @@ export function RequestSubmissionWorkWindow({
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className={`flex items-center justify-center w-10 h-10 rounded-xl border ${isSubmitted ? "bg-emerald-600/15 border-emerald-500/25" : "bg-orange-600/15 border-orange-500/25"}`}>
-                {isSubmitted ? <Check className="h-5 w-5 text-emerald-400" /> : <Send className="h-5 w-5 text-orange-400" />}
+              {/* §11.302d-6b-1 — 제출 검토 status = 진행/액션 (위험 아님) → orange → blue (정보 톤). */}
+              <div className={`flex items-center justify-center w-10 h-10 rounded-xl border ${isSubmitted ? "bg-emerald-600/15 border-emerald-500/25" : "bg-blue-600/15 border-blue-500/25"}`}>
+                {isSubmitted ? <Check className="h-5 w-5 text-emerald-400" /> : <Send className="h-5 w-5 text-blue-400" />}
               </div>
               <div>
                 <h2 className="text-lg font-bold text-white leading-tight">{isSubmitted ? "요청 제출 완료" : "요청 제출 검토"}</h2>
@@ -308,7 +309,7 @@ export function RequestSubmissionWorkWindow({
               </div>
               <div className="px-4 py-3 rounded-lg border border-slate-600/25 bg-[#2a2e35]">
                 <span className="text-xs font-medium text-slate-400 block mb-1">긴급도</span>
-                <span className={`text-sm font-medium ${conditionSummary?.urgency === "critical" ? "text-red-300" : conditionSummary?.urgency === "urgent" ? "text-amber-300" : "text-slate-100"}`}>
+                <span className={`text-sm font-medium ${conditionSummary?.urgency === "critical" ? "text-red-300" : conditionSummary?.urgency === "urgent" ? "text-yellow-300" : "text-slate-100"}`}>
                   {conditionSummary?.urgencyLabel || "일반"}
                 </span>
               </div>
@@ -327,14 +328,14 @@ export function RequestSubmissionWorkWindow({
           {draftSnapshot.unresolvedInfoItems.length > 0 && (
             <section>
               <div className="flex items-center gap-2 mb-3">
-                <AlertCircle className="h-4 w-4 text-amber-400" />
+                <AlertCircle className="h-4 w-4 text-yellow-400" />
                 <h3 className="text-[15px] font-semibold text-slate-100">미확인 항목</h3>
               </div>
               <div className="space-y-1.5">
                 {draftSnapshot.unresolvedInfoItems.map((item, i) => (
-                  <div key={i} className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-amber-600/[0.04] border border-amber-500/15">
-                    <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                    <span className="text-sm text-amber-200">{item}</span>
+                  <div key={i} className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-yellow-600/[0.04] border border-yellow-500/15">
+                    <AlertTriangle className="h-3.5 w-3.5 text-yellow-400 shrink-0" />
+                    <span className="text-sm text-yellow-200">{item}</span>
                   </div>
                 ))}
               </div>
@@ -361,7 +362,7 @@ export function RequestSubmissionWorkWindow({
             </div>
             <div className="border border-slate-600/25 rounded-lg overflow-hidden">
               {submissionLines.map((line, i) => (
-                <div key={line.lineId} className={`flex items-center gap-4 px-4 py-3 ${i > 0 ? "border-t border-slate-600/15" : ""} ${!line.isComplete ? "bg-amber-600/[0.03]" : ""}`}>
+                <div key={line.lineId} className={`flex items-center gap-4 px-4 py-3 ${i > 0 ? "border-t border-slate-600/15" : ""} ${!line.isComplete ? "bg-yellow-600/[0.03]" : ""}`}>
                   <div className="flex-1 min-w-0">
                     <span className="text-sm text-slate-100 font-medium block truncate">{line.itemName}</span>
                     <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
@@ -376,7 +377,7 @@ export function RequestSubmissionWorkWindow({
                       {line.substituteAllowed ? "대체 허용" : "대체 불가"}
                     </span>
                     {line.blockingReason && (
-                      <AlertTriangle className="h-4 w-4 text-amber-400" />
+                      <AlertTriangle className="h-4 w-4 text-yellow-400" />
                     )}
                   </div>
                 </div>
@@ -429,11 +430,11 @@ export function RequestSubmissionWorkWindow({
                   </div>
                 ))}
                 {validation.warnings.map((w, i) => (
-                  <div key={`warn-${i}`} className="flex items-start gap-3 px-4 py-3 rounded-lg bg-amber-600/[0.06] border border-amber-500/15">
-                    <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                  <div key={`warn-${i}`} className="flex items-start gap-3 px-4 py-3 rounded-lg bg-yellow-600/[0.06] border border-yellow-500/15">
+                    <AlertTriangle className="h-4 w-4 text-yellow-400 shrink-0 mt-0.5" />
                     <div>
-                      <span className="text-xs font-semibold text-amber-300 uppercase tracking-wider block mb-0.5">경고</span>
-                      <span className="text-sm text-amber-200">{w}</span>
+                      <span className="text-xs font-semibold text-yellow-300 uppercase tracking-wider block mb-0.5">경고</span>
+                      <span className="text-sm text-yellow-200">{w}</span>
                     </div>
                   </div>
                 ))}
@@ -550,7 +551,7 @@ export function RequestSubmissionWorkWindow({
             {blockedLines.length > 0 && (
               <>
                 <span className="text-slate-600">·</span>
-                <span className="text-amber-400 font-medium">차단 {blockedLines.length}</span>
+                <span className="text-yellow-400 font-medium">차단 {blockedLines.length}</span>
               </>
             )}
             <span className="text-slate-600">·</span>
@@ -572,11 +573,12 @@ export function RequestSubmissionWorkWindow({
                 <Button
                   className={cn(
                     "flex-1 h-10 text-sm font-semibold transition-all",
+                    /* §11.302d-6b-1 — 제출 primary CTA = 진행/액션 (위험 아님) → orange → blue. */
                     isSubmitting
-                      ? "bg-orange-700 text-orange-200 cursor-wait"
+                      ? "bg-blue-700 text-blue-200 cursor-wait"
                       : !validation?.canSubmit
                         ? "bg-slate-700/60 text-slate-400 cursor-not-allowed border border-slate-600/40"
-                        : "bg-orange-600 hover:bg-orange-500 text-white",
+                        : "bg-blue-600 hover:bg-blue-500 text-white",
                   )}
                   onClick={executeSubmission}
                   disabled={isSubmitting || !validation?.canSubmit}
