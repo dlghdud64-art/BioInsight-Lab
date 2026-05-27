@@ -420,7 +420,7 @@ function DashboardPageInner() {
 
   const riskBorder = (risk: string) => {
     if (risk === "red") return "border-l-2 border-l-red-500";
-    if (risk === "amber") return "border-l-2 border-l-amber-500";
+    if (risk === "amber") return "border-l-2 border-l-yellow-500";
     return "";
   };
 
@@ -449,7 +449,7 @@ function DashboardPageInner() {
   if (stats.expiringCount > 0) {
     urgentItems.push({
       id: "u-expiring",
-      icon: <Calendar className="h-4 w-4 text-amber-700" />,
+      icon: <Calendar className="h-4 w-4 text-yellow-700" />,
       label: `유통기한 임박 ${stats.expiringCount}건`,
       desc: "30일 이내 만료 예정",
       href: "/dashboard/inventory",
@@ -469,7 +469,7 @@ function DashboardPageInner() {
   if (stats.activeQuotes > 0 && stats.respondedQuotes === 0) {
     urgentItems.push({
       id: "u-pending-quote",
-      icon: <Clock className="h-4 w-4 text-amber-700" />,
+      icon: <Clock className="h-4 w-4 text-yellow-700" />,
       label: `승인 대기 견적 ${stats.activeQuotes}건`,
       desc: "공급사 응답 대기 중",
       href: "/dashboard/quotes?status=PENDING",
@@ -489,14 +489,14 @@ function DashboardPageInner() {
 
   // 비교 상태
   if (stats.undecidedCompareCount > 0) {
-    recommendedActions.push({ id: "r-compare", icon: <GitCompare className="h-3.5 w-3.5 text-amber-700" />, label: "비교 판정", desc: `${stats.undecidedCompareCount}건 판정 대기 — 검토 후 확정하세요`, href: "/compare", state: "ready" });
+    recommendedActions.push({ id: "r-compare", icon: <GitCompare className="h-3.5 w-3.5 text-yellow-700" />, label: "비교 판정", desc: `${stats.undecidedCompareCount}건 판정 대기 — 검토 후 확정하세요`, href: "/compare", state: "ready" });
   } else if (stats.totalInventory > 0) {
     recommendedActions.push({ id: "r-compare", icon: <GitCompare className="h-3.5 w-3.5 text-slate-400" />, label: "제품 비교", desc: "비교 대기 항목 없음 — 검색에서 후보를 추가하세요", href: "/app/compare", state: "idle" });
   }
 
   // 견적 상태
   if (stats.respondedQuotes > 0) {
-    recommendedActions.push({ id: "r-quote", icon: <FileText className="h-3.5 w-3.5 text-amber-700" />, label: "견적 검토", desc: `${stats.respondedQuotes}건 응답 수신 — 확정 대기`, href: "/dashboard/quotes?status=RESPONDED", state: "ready" });
+    recommendedActions.push({ id: "r-quote", icon: <FileText className="h-3.5 w-3.5 text-yellow-700" />, label: "견적 검토", desc: `${stats.respondedQuotes}건 응답 수신 — 확정 대기`, href: "/dashboard/quotes?status=RESPONDED", state: "ready" });
   } else if (stats.activeQuotes > 0) {
     recommendedActions.push({ id: "r-quote", icon: <FileText className="h-3.5 w-3.5 text-slate-400" />, label: "견적 현황", desc: `${stats.activeQuotes}건 응답 대기 중`, href: "/dashboard/quotes?status=PENDING", state: "idle" });
   } else {
@@ -798,7 +798,7 @@ function DashboardPageInner() {
                   <div className="mt-4 pt-3 border-t border-slate-100 max-w-sm mx-auto">
                     <p className="text-[10px] font-semibold text-slate-500 mb-1.5">이런 이슈를 자동으로 감지합니다</p>
                     <div className="flex flex-wrap justify-center gap-1.5">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-medium">납기 지연</span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-700 text-[10px] font-medium">납기 지연</span>
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-medium">가격 이상</span>
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 text-[10px] font-medium">재고 소진</span>
                     </div>
@@ -855,22 +855,22 @@ function DashboardPageInner() {
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <span className="relative flex h-2 w-2 flex-shrink-0">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-60" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-60" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-yellow-500" />
                   </span>
                   <h3 className="text-[13px] font-extrabold text-slate-900">지금 확인이 필요한 운영 이슈가 있습니다</h3>
                 </div>
                 <p className="text-xs text-slate-500">아래 항목부터 우선 처리하세요.</p>
                 <div className="space-y-2">
                   {processingRequiredCount > 0 && (
-                    <Link href="/dashboard/inventory?filter=low" className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-amber-50/70 border border-amber-200/60 hover:bg-amber-50 transition-colors group">
+                    <Link href="/dashboard/inventory?filter=low" className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-yellow-50/70 border border-yellow-200/60 hover:bg-yellow-50 transition-colors group">
                       <div className="flex items-center gap-2.5">
-                        <AlertTriangle className="h-4 w-4 text-amber-600" />
+                        <AlertTriangle className="h-4 w-4 text-yellow-600" />
                         <span className="text-[13px] font-bold text-slate-900">처리 필요 항목</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[13px] font-extrabold text-amber-700">{processingRequiredCount}건</span>
-                        <ChevronRight className="h-4 w-4 text-amber-700 group-hover:text-amber-600" />
+                        <span className="text-[13px] font-extrabold text-yellow-700">{processingRequiredCount}건</span>
+                        <ChevronRight className="h-4 w-4 text-yellow-700 group-hover:text-yellow-600" />
                       </div>
                     </Link>
                   )}
@@ -975,10 +975,10 @@ function DashboardPageInner() {
                 <h3 className="text-[13px] font-extrabold text-slate-900">우선 처리</h3>
                 <div className="space-y-1.5">
                   {processingRequiredCount > 0 && (
-                    <Link href="/dashboard/inventory?filter=low" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-amber-50 transition-colors group">
-                      <AlertTriangle className="h-4 w-4 text-amber-500" />
-                      <span className="text-sm font-medium text-slate-700 group-hover:text-amber-700">처리 필요 항목 보기</span>
-                      <ChevronRight className="h-4 w-4 text-slate-300 ml-auto group-hover:text-amber-500" />
+                    <Link href="/dashboard/inventory?filter=low" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-yellow-50 transition-colors group">
+                      <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-yellow-700">처리 필요 항목 보기</span>
+                      <ChevronRight className="h-4 w-4 text-slate-300 ml-auto group-hover:text-yellow-500" />
                     </Link>
                   )}
                   {approvalPendingCount > 0 && (
@@ -1022,7 +1022,7 @@ function DashboardPageInner() {
           <div className="rounded-xl border border-slate-200/80 bg-white p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[13px] font-extrabold text-slate-900 flex items-center gap-2">
-                <ShieldAlert className="h-4 w-4 text-amber-500" />
+                <ShieldAlert className="h-4 w-4 text-yellow-500" />
                 운영 인텔리전스
               </h3>
               <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">자동 감지</span>
@@ -1101,7 +1101,7 @@ function DashboardPageInner() {
 
               const colorMap = {
                 red: { border: "border-red-200", bg: "bg-red-50/60", icon: "text-red-500", link: "text-red-600 hover:text-red-700" },
-                amber: { border: "border-amber-200", bg: "bg-amber-50/60", icon: "text-amber-500", link: "text-amber-600 hover:text-amber-700" },
+                amber: { border: "border-yellow-200", bg: "bg-yellow-50/60", icon: "text-yellow-500", link: "text-yellow-600 hover:text-yellow-700" },
                 blue: { border: "border-blue-200", bg: "bg-blue-50/60", icon: "text-blue-500", link: "text-blue-600 hover:text-blue-700" },
                 emerald: { border: "border-emerald-200", bg: "bg-emerald-50/60", icon: "text-emerald-500", link: "text-emerald-600 hover:text-emerald-700" },
               };
@@ -1137,8 +1137,8 @@ function DashboardPageInner() {
             {hasActionItems ? (
               <>
                 <span className="relative flex h-2 w-2 flex-shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-60" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-60" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-yellow-500" />
                 </span>
                 <h3 className="text-[13px] font-extrabold text-slate-900">오늘의 우선 작업</h3>
               </>
@@ -1178,7 +1178,7 @@ function DashboardPageInner() {
             )}
             {stats.expiringCount > 0 && (
               <button type="button" onClick={() => handleNavigateOrOverlay("/dashboard/inventory", "dashboard")} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors group text-left w-full">
-                <Calendar className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                <Calendar className="h-4 w-4 text-yellow-500 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-[13px] font-bold text-slate-900">{stats.expiringCount}건 유통기한 임박</p>
                   <p className="text-[11px] text-slate-500">30일 이내 만료 예정</p>
@@ -1220,7 +1220,7 @@ function DashboardPageInner() {
                     </p>
                   )}
                   {stats.compareStats.noMovementCount > 0 && (
-                    <p className="text-[10px] text-orange-500 font-medium mt-0.5">
+                    <p className="text-[10px] text-yellow-600 font-medium mt-0.5">
                       다음 단계 없음 {stats.compareStats.noMovementCount}건
                     </p>
                   )}
@@ -1231,7 +1231,7 @@ function DashboardPageInner() {
                       {" -> 입고 "}{stats.compareStats.purchaseToReceivingCount}
                       {" -> 완료 "}{stats.compareStats.receivingToInventoryCount}
                       {stats.compareStats.handoffStallPoint !== "none" && (
-                        <span className="text-orange-500 ml-1">
+                        <span className="text-yellow-600 ml-1">
                           ({HANDOFF_STALL_LABELS[stats.compareStats.handoffStallPoint as keyof typeof HANDOFF_STALL_LABELS]})
                         </span>
                       )}
@@ -1289,7 +1289,7 @@ function DashboardPageInner() {
           })}
           {renderKpiCard({
             href: "/dashboard/inventory?filter=low",
-            icon: <AlertTriangle className="h-3 w-3 text-amber-700" />,
+            icon: <AlertTriangle className="h-3 w-3 text-yellow-700" />,
             label: "재고 부족",
             value: stats.lowStockAlerts,
             insight: getStockInsight(),
@@ -1329,7 +1329,7 @@ function DashboardPageInner() {
                     Material / WCAG 2.1 SC 2.5.5 표준 정합. p-2 / rounded-lg /
                     severity border / ChevronRight / handleNavigateOrOverlay 보존. */}
                 {urgentItems.map((item) => (
-                  <button key={item.id} type="button" onClick={() => handleNavigateOrOverlay(item.href, "dashboard")} className={`w-full flex items-center gap-2.5 min-h-[44px] p-2 rounded-lg hover:bg-slate-50 transition-colors text-left ${item.severity === "red" ? "border-l-2 border-l-red-500" : "border-l-2 border-l-amber-500"}`}>
+                  <button key={item.id} type="button" onClick={() => handleNavigateOrOverlay(item.href, "dashboard")} className={`w-full flex items-center gap-2.5 min-h-[44px] p-2 rounded-lg hover:bg-slate-50 transition-colors text-left ${item.severity === "red" ? "border-l-2 border-l-red-500" : "border-l-2 border-l-yellow-500"}`}>
                     {item.icon}
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-slate-900">{item.label}</p>
