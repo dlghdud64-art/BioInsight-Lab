@@ -25,7 +25,7 @@ const READINESS_DISPLAY = {
 const DRILL_RESULT_COLOR: Record<string, string> = {
   pass: "text-emerald-400",
   fail: "text-red-400",
-  partial: "text-amber-400",
+  partial: "text-yellow-400",
   "미실시": "text-slate-500",
 };
 
@@ -176,7 +176,7 @@ export function RC0PilotLaunchWorkbench({
           <SectionCard title="미서명 역할">
             <div className="space-y-1">
               {center.signoffSummary.pending.map((p) => (
-                <div key={p} className="rounded bg-amber-500/5 px-2 py-1 text-xs text-amber-400">{p}</div>
+                <div key={p} className="rounded bg-yellow-500/5 px-2 py-1 text-xs text-yellow-400">{p}</div>
               ))}
             </div>
           </SectionCard>

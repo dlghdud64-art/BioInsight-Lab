@@ -269,10 +269,10 @@ export function POConversionWorkbench({
         </div>
 
         {surface.lockedFields.length > 0 && (
-          <div className="rounded border border-amber-500/20 bg-amber-500/5 p-3">
-            <h4 className="text-[10px] font-medium text-amber-400 mb-1">승인에서 잠긴 필드 (수정 불가)</h4>
+          <div className="rounded border border-yellow-500/20 bg-yellow-500/5 p-3">
+            <h4 className="text-[10px] font-medium text-yellow-400 mb-1">승인에서 잠긴 필드 (수정 불가)</h4>
             <div className="flex flex-wrap gap-1">
-              {surface.lockedFields.map(f => <span key={f} className="text-[10px] bg-amber-500/10 text-amber-300 rounded px-1.5 py-0.5 border border-amber-500/20">{f}</span>)}
+              {surface.lockedFields.map(f => <span key={f} className="text-[10px] bg-yellow-500/10 text-yellow-300 rounded px-1.5 py-0.5 border border-yellow-500/20">{f}</span>)}
             </div>
           </div>
         )}

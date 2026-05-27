@@ -149,7 +149,7 @@ function resolveRecordDrivenSurface(record: POCreatedRecord): {
 
 const TONE_CLASSES: Record<"emerald" | "amber" | "red" | "slate", { border: string; bg: string; text: string }> = {
   emerald: { border: "border-emerald-500/20", bg: "bg-emerald-500/5", text: "text-emerald-300" },
-  amber:   { border: "border-amber-500/20",   bg: "bg-amber-500/5",   text: "text-amber-300" },
+  amber:   { border: "border-yellow-500/20",   bg: "bg-yellow-500/5",   text: "text-yellow-300" },
   red:     { border: "border-red-500/20",     bg: "bg-red-500/5",     text: "text-red-300" },
   slate:   { border: "border-slate-700",      bg: "bg-slate-900/50",  text: "text-slate-400" },
 };
@@ -253,11 +253,11 @@ export function POCreatedReentrySurface({
 
         {/* Next required action */}
         <div className={cn("rounded border px-3 md:px-4 py-2.5 md:py-3",
-          surface.badge === "ready" ? "border-emerald-500/20 bg-emerald-500/5" : surface.badge === "blocked" ? "border-red-500/20 bg-red-500/5" : "border-amber-500/20 bg-amber-500/5"
+          surface.badge === "ready" ? "border-emerald-500/20 bg-emerald-500/5" : surface.badge === "blocked" ? "border-red-500/20 bg-red-500/5" : "border-yellow-500/20 bg-yellow-500/5"
         )}>
           <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">다음 필요 작업</span>
           <p className={cn("text-sm font-medium mt-0.5",
-            surface.badge === "ready" ? "text-emerald-300" : surface.badge === "blocked" ? "text-red-300" : "text-amber-300"
+            surface.badge === "ready" ? "text-emerald-300" : surface.badge === "blocked" ? "text-red-300" : "text-yellow-300"
           )}>
             {surface.nextAction || decisionOptions.decisionReasonSummary}
           </p>
@@ -286,11 +286,11 @@ export function POCreatedReentrySurface({
             <h4 className="text-xs font-medium uppercase tracking-wider text-slate-500">차단/검토 사유</h4>
             {record.blockingReasons.map((b, i) => (
               <div key={`${b.code}-${i}`} className="flex items-start gap-2 text-xs">
-                <span className={cn("shrink-0 mt-0.5", b.severity === "hard" ? "text-red-400" : "text-amber-400")}>
+                <span className={cn("shrink-0 mt-0.5", b.severity === "hard" ? "text-red-400" : "text-yellow-400")}>
                   {b.severity === "hard" ? "✕" : "△"}
                 </span>
                 <div className="min-w-0">
-                  <span className={b.severity === "hard" ? "text-red-300" : "text-amber-300"}>{b.message}</span>
+                  <span className={b.severity === "hard" ? "text-red-300" : "text-yellow-300"}>{b.message}</span>
                   <span className="block sm:inline text-slate-500 sm:ml-2">→ {b.remediation}</span>
                 </div>
               </div>
@@ -347,8 +347,8 @@ export function POCreatedReentrySurface({
             </div>
           </div>
           {state.missingFieldCount > 0 && (
-            <div className="mt-2 flex items-center gap-2 text-xs text-amber-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
+            <div className="mt-2 flex items-center gap-2 text-xs text-yellow-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-yellow-400 shrink-0" />
               <span>누락 필드 {state.missingFieldCount}건 — 보완 필요</span>
             </div>
           )}
@@ -441,7 +441,7 @@ export function POCreatedReentrySurface({
               <button
                 onClick={onReturnToConversion}
                 aria-label="PO 전환 다시 열기"
-                className="shrink-0 rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 min-h-[40px] px-3 py-2 md:py-1.5 text-xs font-medium text-amber-300 transition-all snap-start"
+                className="shrink-0 rounded border border-yellow-500/20 bg-yellow-500/10 hover:bg-yellow-500/20 active:scale-95 min-h-[40px] px-3 py-2 md:py-1.5 text-xs font-medium text-yellow-300 transition-all snap-start"
               >
                 PO 전환 재열기
               </button>

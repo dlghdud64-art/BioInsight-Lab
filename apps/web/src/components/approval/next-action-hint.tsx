@@ -31,7 +31,7 @@ export function NextActionHint({
       className={cn(
         "rounded px-3 py-2 text-xs",
         variant === "blocked" && "bg-red-500/5 border border-red-500/10",
-        variant === "urgent" && "bg-amber-500/5 border border-amber-500/10",
+        variant === "urgent" && "bg-yellow-500/5 border border-yellow-500/10",
         variant === "default" && "bg-slate-800/50 border border-slate-800",
         className
       )}
@@ -41,7 +41,7 @@ export function NextActionHint({
           className={cn(
             "shrink-0",
             variant === "blocked" && "text-red-400",
-            variant === "urgent" && "text-amber-400",
+            variant === "urgent" && "text-yellow-400",
             variant === "default" && "text-blue-400",
           )}
           aria-hidden="true"
@@ -52,7 +52,7 @@ export function NextActionHint({
           className={cn(
             "font-medium",
             variant === "blocked" && "text-red-300",
-            variant === "urgent" && "text-amber-300",
+            variant === "urgent" && "text-yellow-300",
             variant === "default" && "text-slate-600",
           )}
         >

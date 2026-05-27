@@ -41,7 +41,7 @@ export interface StockReleaseGovernanceWorkbenchProps {
 const STATUS_BG: Record<string, string> = {
   slate: "border-slate-600/20 bg-slate-800/50",
   blue: "border-blue-500/20 bg-blue-500/5",
-  amber: "border-amber-500/20 bg-amber-500/5",
+  amber: "border-yellow-500/20 bg-yellow-500/5",
   emerald: "border-emerald-500/20 bg-emerald-500/5",
   red: "border-red-500/20 bg-red-500/5",
 };
@@ -49,14 +49,14 @@ const STATUS_BG: Record<string, string> = {
 const STATUS_DOT: Record<string, string> = {
   slate: "bg-slate-500",
   blue: "bg-blue-400",
-  amber: "bg-amber-400 animate-pulse",
+  amber: "bg-yellow-400 animate-pulse",
   emerald: "bg-emerald-400",
   red: "bg-red-400",
 };
 
 const DECISION_COLOR: Record<string, string> = {
   release: "text-emerald-400",
-  hold: "text-amber-400",
+  hold: "text-yellow-400",
   return: "text-red-400",
   destroy: "text-red-500",
   pending: "text-slate-500",
@@ -74,7 +74,7 @@ const QUALITY_COLOR: Record<string, string> = {
   passed: "text-emerald-400",
   pending: "text-slate-500",
   failed: "text-red-400",
-  hold: "text-amber-400",
+  hold: "text-yellow-400",
 };
 
 const QUALITY_LABEL: Record<string, string> = {
@@ -162,7 +162,7 @@ export function StockReleaseGovernanceWorkbench({
                   <td className="px-3 py-1.5 text-right tabular-nums text-slate-400">{line.received}</td>
                   <td className="px-3 py-1.5 text-center text-slate-600">→</td>
                   <td className={cn("px-3 py-1.5 text-right tabular-nums font-medium", line.releasable > 0 ? "text-emerald-400" : "text-slate-600")}>{line.releasable}</td>
-                  <td className={cn("px-3 py-1.5 text-right tabular-nums", line.held > 0 ? "text-amber-400" : "text-slate-600")}>{line.held}</td>
+                  <td className={cn("px-3 py-1.5 text-right tabular-nums", line.held > 0 ? "text-yellow-400" : "text-slate-600")}>{line.held}</td>
                   <td className={cn("px-3 py-1.5 text-center", QUALITY_COLOR[line.qualityStatus])}>{QUALITY_LABEL[line.qualityStatus]}</td>
                   <td className={cn("px-3 py-1.5 text-center font-medium", DECISION_COLOR[line.decision])}>{DECISION_LABEL[line.decision]}</td>
                   <td className="px-3 py-1.5 text-slate-500 max-w-[120px] truncate">{line.holdReasons.length > 0 ? line.holdReasons[0] : "—"}</td>
@@ -182,16 +182,16 @@ export function StockReleaseGovernanceWorkbench({
         {/* Active holds */}
         {state.activeHolds.length > 0 && (
           <div className="space-y-2">
-            <h4 className="text-[10px] font-medium uppercase tracking-wider text-amber-400">활성 보류 ({surface.activeHoldCount}건)</h4>
+            <h4 className="text-[10px] font-medium uppercase tracking-wider text-yellow-400">활성 보류 ({surface.activeHoldCount}건)</h4>
             {state.activeHolds.map(hold => (
               <div key={hold.holdId} className={cn(
                 "rounded border p-3 flex items-start justify-between",
-                hold.severity === "hard" ? "border-red-500/30 bg-red-500/5" : "border-amber-500/30 bg-amber-500/5"
+                hold.severity === "hard" ? "border-red-500/30 bg-red-500/5" : "border-yellow-500/30 bg-yellow-500/5"
               )}>
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
                     <span className={cn("text-[9px] font-medium px-1.5 py-0.5 rounded",
-                      hold.severity === "hard" ? "bg-red-500/20 text-red-300" : "bg-amber-500/20 text-amber-300"
+                      hold.severity === "hard" ? "bg-red-500/20 text-red-300" : "bg-yellow-500/20 text-yellow-300"
                     )}>{hold.severity}</span>
                     <span className="text-xs text-slate-400">{hold.type.replace(/_/g, " ")}</span>
                   </div>
@@ -237,12 +237,12 @@ export function StockReleaseGovernanceWorkbench({
           <div className="grid grid-cols-2 gap-2">
             <div><span className="text-slate-500">수령</span><p className="text-slate-700 tabular-nums">{surface.totalReceived}개</p></div>
             <div><span className="text-slate-500">릴리즈</span><p className="text-emerald-400 tabular-nums">{surface.totalReleasable}개</p></div>
-            <div><span className="text-slate-500">보류</span><p className="text-amber-400 tabular-nums">{surface.totalHeld}개</p></div>
+            <div><span className="text-slate-500">보류</span><p className="text-yellow-400 tabular-nums">{surface.totalHeld}개</p></div>
             <div><span className="text-slate-500">완료율</span><p className="text-slate-700 tabular-nums">{surface.completeness}%</p></div>
           </div>
           <div className="border-t border-slate-800 pt-2 mt-2 grid grid-cols-3 gap-1 text-center">
             <div><p className="text-emerald-400 tabular-nums font-medium">{surface.releasedCount}</p><span className="text-slate-500 text-[9px]">릴리즈</span></div>
-            <div><p className="text-amber-400 tabular-nums font-medium">{surface.heldCount}</p><span className="text-slate-500 text-[9px]">보류</span></div>
+            <div><p className="text-yellow-400 tabular-nums font-medium">{surface.heldCount}</p><span className="text-slate-500 text-[9px]">보류</span></div>
             <div><p className="text-slate-400 tabular-nums font-medium">{surface.pendingCount}</p><span className="text-slate-500 text-[9px]">대기</span></div>
           </div>
         </div>
@@ -291,10 +291,10 @@ export function StockReleaseGovernanceWorkbench({
               <button onClick={onCancel} className="min-h-[40px] flex-1 md:flex-none rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 active:scale-95 px-3 py-1.5 text-xs text-slate-600 transition-colors">취소</button>
             )}
             {surface.canReopenReceiving && (
-              <button onClick={onReopenReceiving} className="min-h-[40px] flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 px-3 py-1.5 text-xs text-amber-300 transition-colors">Receiving 재열기</button>
+              <button onClick={onReopenReceiving} className="min-h-[40px] flex-1 md:flex-none rounded border border-yellow-500/20 bg-yellow-500/10 hover:bg-yellow-500/20 active:scale-95 px-3 py-1.5 text-xs text-yellow-300 transition-colors">Receiving 재열기</button>
             )}
             {surface.canPlaceHold && !surface.isTerminal && (
-              <button onClick={onPlaceHold} className="min-h-[40px] flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 px-3 py-1.5 text-xs text-amber-300 transition-colors">보류 추가</button>
+              <button onClick={onPlaceHold} className="min-h-[40px] flex-1 md:flex-none rounded border border-yellow-500/20 bg-yellow-500/10 hover:bg-yellow-500/20 active:scale-95 px-3 py-1.5 text-xs text-yellow-300 transition-colors">보류 추가</button>
             )}
             {surface.canPartialRelease && (
               <button onClick={onPartialRelease} className="min-h-[40px] flex-1 md:flex-none rounded border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 active:scale-95 px-3 py-1.5 text-xs text-blue-300 transition-colors">부분 릴리즈</button>

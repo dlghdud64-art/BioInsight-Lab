@@ -74,7 +74,7 @@ const STAGE_CONFIGS: readonly ChainStageConfig[] = [
 const PHASE_COLORS: Record<ChainPhase, { bg: string; border: string; text: string; label: string }> = {
   sourcing:    { bg: "bg-blue-500/10",    border: "border-blue-500/20",    text: "text-blue-400",    label: "소싱" },
   approval:    { bg: "bg-violet-500/10",  border: "border-violet-500/20",  text: "text-violet-400",  label: "승인" },
-  dispatch:    { bg: "bg-amber-500/10",   border: "border-amber-500/20",   text: "text-amber-400",   label: "발송" },
+  dispatch:    { bg: "bg-yellow-500/10",   border: "border-yellow-500/20",   text: "text-yellow-400",   label: "발송" },
   fulfillment: { bg: "bg-emerald-500/10", border: "border-emerald-500/20", text: "text-emerald-400", label: "이행" },
   inventory:   { bg: "bg-cyan-500/10",    border: "border-cyan-500/20",    text: "text-cyan-400",    label: "재고" },
 };

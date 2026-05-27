@@ -38,7 +38,7 @@ export interface ReorderTriggerWorkbenchProps {
 const RESULT_CONFIG: Record<string, { label: string; color: string; badge: "allowed" | "approval_needed" | "blocked" }> = {
   no_reorder_needed: { label: "재주문 불필요", color: "text-emerald-400", badge: "allowed" },
   monitoring: { label: "모니터링", color: "text-blue-400", badge: "allowed" },
-  reorder_recommended: { label: "재주문 권장", color: "text-amber-400", badge: "approval_needed" },
+  reorder_recommended: { label: "재주문 권장", color: "text-yellow-400", badge: "approval_needed" },
   reorder_urgent: { label: "긴급 재주문", color: "text-red-400", badge: "blocked" },
   procurement_reentry_required: { label: "즉시 재구매 필요", color: "text-red-400", badge: "blocked" },
 };
@@ -84,7 +84,7 @@ export function ReorderTriggerWorkbench({
           evaluationResult === "procurement_reentry_required" || evaluationResult === "reorder_urgent"
             ? "border-red-500/20 bg-red-500/5"
             : evaluationResult === "reorder_recommended"
-              ? "border-amber-500/20 bg-amber-500/5"
+              ? "border-yellow-500/20 bg-yellow-500/5"
               : "border-slate-800 bg-slate-900/50"
         )}>
           <div className="flex items-center justify-between">
@@ -112,7 +112,7 @@ export function ReorderTriggerWorkbench({
             <div>
               <span className="text-slate-500 text-xs">재주문점</span>
               <p className="text-sm font-semibold tabular-nums text-slate-900">{reorderPointQty}</p>
-              <p className={cn("text-xs tabular-nums", vsReorderPoint >= 0 ? "text-emerald-400" : "text-amber-400")}>
+              <p className={cn("text-xs tabular-nums", vsReorderPoint >= 0 ? "text-emerald-400" : "text-yellow-400")}>
                 {vsReorderPoint >= 0 ? `+${vsReorderPoint}` : vsReorderPoint}
               </p>
             </div>
@@ -137,7 +137,7 @@ export function ReorderTriggerWorkbench({
             <div className="flex justify-between">
               <span className="text-slate-500">공급 일수</span>
               <span className={cn("tabular-nums font-medium",
-                daysOfSupply < leadTimeDays ? "text-red-400" : daysOfSupply < leadTimeDays * 1.5 ? "text-amber-400" : "text-emerald-400"
+                daysOfSupply < leadTimeDays ? "text-red-400" : daysOfSupply < leadTimeDays * 1.5 ? "text-yellow-400" : "text-emerald-400"
               )}>
                 {daysOfSupply}일
               </span>
@@ -146,9 +146,9 @@ export function ReorderTriggerWorkbench({
         </div>
 
         {procurementReentryRecommended && (
-          <div className="rounded border border-amber-500/20 bg-amber-500/5 p-3">
-            <p className="text-xs text-amber-400 font-medium">재구매 진입 권장</p>
-            <p className="text-xs text-amber-400/70 mt-0.5">Procurement re-entry 단계로 이동하여 재구매를 시작하세요.</p>
+          <div className="rounded border border-yellow-500/20 bg-yellow-500/5 p-3">
+            <p className="text-xs text-yellow-400 font-medium">재구매 진입 권장</p>
+            <p className="text-xs text-yellow-400/70 mt-0.5">Procurement re-entry 단계로 이동하여 재구매를 시작하세요.</p>
           </div>
         )}
       </div>

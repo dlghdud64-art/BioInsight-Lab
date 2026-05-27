@@ -40,7 +40,7 @@ export function PolicyExplanationCard({ payload, compact = false, className }: P
           정책 판단 근거
         </h4>
         {payload.conflictDiagnostics.hasConflicts && (
-          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
             충돌 {payload.conflictDiagnostics.conflictCount}건
           </span>
         )}
@@ -67,7 +67,7 @@ export function PolicyExplanationCard({ payload, compact = false, className }: P
             <div className="text-xs space-y-0.5">
               <span className="text-slate-500">이중 승인 이유:</span>
               {payload.dualApprovalReasonCodes.map((code, i) => (
-                <span key={i} className="ml-1 text-amber-400">{formatReasonCode(code)}</span>
+                <span key={i} className="ml-1 text-yellow-400">{formatReasonCode(code)}</span>
               ))}
             </div>
           )}
@@ -125,7 +125,7 @@ const SCOPE_COLORS: Record<string, string> = {
   organization: "bg-blue-500/10 text-blue-400 border-blue-500/20",
   department: "bg-purple-500/10 text-purple-400 border-purple-500/20",
   team: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  site: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  site: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
   location: "bg-red-500/10 text-red-400 border-red-500/20",
 };
 
@@ -151,7 +151,7 @@ export interface ApprovalSourceTraceProps {
 const SOURCE_CONFIG: Record<EffectiveApprovalSource, { label: string; color: string }> = {
   risk_tier: { label: "위험 등급", color: "text-red-400" },
   org_policy: { label: "조직 정책", color: "text-blue-400" },
-  combined: { label: "위험 등급 + 조직 정책", color: "text-amber-400" },
+  combined: { label: "위험 등급 + 조직 정책", color: "text-yellow-400" },
   none: { label: "승인 불필요", color: "text-emerald-400" },
 };
 
@@ -180,7 +180,7 @@ export function EscalationSourceTrace({ source, reasonCodes, className }: Escala
     <div className={cn("text-xs space-y-0.5", className)}>
       <div className="flex items-center gap-2">
         <span className="text-slate-500">에스컬레이션 원인:</span>
-        <span className="text-amber-400">{formatEscalationSource(source)}</span>
+        <span className="text-yellow-400">{formatEscalationSource(source)}</span>
       </div>
       {reasonCodes.length > 0 && (
         <div className="ml-4 space-y-0.5">
@@ -254,8 +254,8 @@ export function WhyThisEffectPanel({ payload, className }: WhyThisEffectPanelPro
         {/* Conflict summary */}
         {payload.conflictDiagnostics.hasConflicts && (
           <div className="flex items-start gap-2">
-            <span className="text-amber-500 shrink-0">충돌:</span>
-            <span className="text-amber-300">{payload.conflictDiagnostics.conflictSummary}</span>
+            <span className="text-yellow-500 shrink-0">충돌:</span>
+            <span className="text-yellow-300">{payload.conflictDiagnostics.conflictSummary}</span>
           </div>
         )}
 

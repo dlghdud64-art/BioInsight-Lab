@@ -34,15 +34,15 @@ import {
 
 const VERDICT_COLOR: Record<MidpointVerdict, string> = {
   stable: "text-green-400",
-  stable_but_insufficient_time: "text-amber-400",
-  attention_required: "text-orange-400",
+  stable_but_insufficient_time: "text-yellow-400",
+  attention_required: "text-yellow-400",
   risk_increasing: "text-red-400",
 };
 
 const VERDICT_BG: Record<MidpointVerdict, string> = {
   stable: "bg-green-900/30 border-green-700/40",
-  stable_but_insufficient_time: "bg-amber-900/30 border-amber-700/40",
-  attention_required: "bg-orange-900/30 border-orange-700/40",
+  stable_but_insufficient_time: "bg-yellow-900/30 border-yellow-700/40",
+  attention_required: "bg-yellow-900/30 border-yellow-700/40",
   risk_increasing: "bg-red-900/30 border-red-700/40",
 };
 
@@ -55,8 +55,9 @@ const VERDICT_DISPLAY: Record<MidpointVerdict, string> = {
 
 const DWELL_COLOR: Record<DwellRiskLevel, string> = {
   normal: "text-green-400",
-  watch: "text-amber-400",
-  at_risk: "text-orange-400",
+  watch: "text-yellow-400",
+  // §11.302d-6b-3 — at_risk = 위험 → red 격상 (watch=yellow 주의와 구분, critical 과 함께 위험 신호).
+  at_risk: "text-red-400",
   critical: "text-red-400",
 };
 
@@ -183,7 +184,7 @@ export default function RC0MidpointReviewWorkbench({
               {rail.actorConcentrationSummary.map(a => (
                 <div key={a.actor} className="flex justify-between">
                   <span>{a.actor}</span>
-                  <span className="text-amber-400">{a.share}</span>
+                  <span className="text-yellow-400">{a.share}</span>
                 </div>
               ))}
             </div>
@@ -293,7 +294,7 @@ function ProjectionComparison({
         {expansionPlausible ? (
           <span className="text-green-400">확장 가능성 있음</span>
         ) : (
-          <span className="text-amber-400">확장 조건 미충족</span>
+          <span className="text-yellow-400">확장 조건 미충족</span>
         )}
       </div>
     </div>
@@ -332,7 +333,7 @@ function NonComplianceSummaryCard({
             <div key={c.caseId} className="bg-slate-800/60 rounded p-2 text-xs">
               <div className="flex justify-between">
                 <span className="text-slate-700">{c.caseId} / {c.poNumber}</span>
-                <span className={c.repeatRisk === "high" ? "text-red-400" : c.repeatRisk === "medium" ? "text-amber-400" : "text-green-400"}>
+                <span className={c.repeatRisk === "high" ? "text-red-400" : c.repeatRisk === "medium" ? "text-yellow-400" : "text-green-400"}>
                   {c.repeatRisk}
                 </span>
               </div>
@@ -354,8 +355,8 @@ function BlockerPatternCard({
   summary: { total: number; repeatedPatterns: number; actorConcentrations: number; concentrationScore: number };
 }) {
   return (
-    <div className="rounded-lg border border-amber-800/40 bg-amber-900/20 p-4">
-      <div className="text-sm font-medium text-amber-300">
+    <div className="rounded-lg border border-yellow-800/40 bg-yellow-900/20 p-4">
+      <div className="text-sm font-medium text-yellow-300">
         Soft Blocker 패턴
       </div>
       <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-600">
@@ -384,11 +385,11 @@ function DwellRiskCard({
           <div className="text-slate-500">정상</div>
         </div>
         <div>
-          <div className="text-amber-400 font-medium">{summary.watch}</div>
+          <div className="text-yellow-400 font-medium">{summary.watch}</div>
           <div className="text-slate-500">주의</div>
         </div>
         <div>
-          <div className="text-orange-400 font-medium">{summary.atRisk}</div>
+          <div className="text-yellow-400 font-medium">{summary.atRisk}</div>
           <div className="text-slate-500">위험</div>
         </div>
         <div>
@@ -420,7 +421,7 @@ function ActionPlanCard({ plan }: { plan: MidpointActionPlan }) {
       )}
       {plan.beforeDay7Actions.length > 0 && (
         <div className="mb-2">
-          <div className="text-xs text-amber-400 mb-1">7일 전 완료</div>
+          <div className="text-xs text-yellow-400 mb-1">7일 전 완료</div>
           {plan.beforeDay7Actions.map((a, i) => (
             <div key={i} className="text-xs text-slate-600 ml-2">• {a}</div>
           ))}

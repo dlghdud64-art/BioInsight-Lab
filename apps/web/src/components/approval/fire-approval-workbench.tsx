@@ -245,7 +245,7 @@ export function FireApprovalWorkbench({
                       "font-medium",
                       h.decision === "approved" && "text-emerald-400",
                       h.decision === "rejected" && "text-red-400",
-                      h.decision === "escalated" && "text-amber-400",
+                      h.decision === "escalated" && "text-yellow-400",
                     )}>
                       {h.decision === "approved" ? "승인" : h.decision === "rejected" ? "거부" : "에스컬레이션"}
                     </span>
@@ -285,7 +285,7 @@ export function FireApprovalWorkbench({
             {canRequestChange && (
               <button
                 onClick={() => onRequestChange?.(reason)}
-                className="flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors active:scale-95 min-h-[40px]"
+                className="flex-1 md:flex-none rounded border border-yellow-500/20 bg-yellow-500/10 hover:bg-yellow-500/20 px-3 py-1.5 text-xs font-medium text-yellow-300 transition-colors active:scale-95 min-h-[40px]"
               >
                 수정 요청
               </button>

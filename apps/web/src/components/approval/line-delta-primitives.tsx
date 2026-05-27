@@ -51,7 +51,7 @@ export function LineDeltaSummaryStrip({
         <span className={cn(
           "font-semibold tabular-nums",
           isShortage && "text-red-400",
-          isOverage && "text-amber-400",
+          isOverage && "text-yellow-400",
           !isShortage && !isOverage && "text-emerald-400",
         )}>
           {deltaQty > 0 ? `+${deltaQty}` : deltaQty}{unit}
@@ -59,7 +59,7 @@ export function LineDeltaSummaryStrip({
         <span className={cn(
           "tabular-nums",
           Math.abs(deltaPercent) > 10 && "text-red-400",
-          Math.abs(deltaPercent) > 5 && Math.abs(deltaPercent) <= 10 && "text-amber-400",
+          Math.abs(deltaPercent) > 5 && Math.abs(deltaPercent) <= 10 && "text-yellow-400",
           Math.abs(deltaPercent) <= 5 && "text-slate-400",
         )}>
           ({deltaPercent > 0 ? "+" : ""}{deltaPercent.toFixed(1)}%)
@@ -87,7 +87,7 @@ export function BlockerRowAnnotation({
     <div className={cn(
       "flex items-center gap-2 px-2 py-1 rounded text-[10px]",
       severity === "hard" && "bg-red-500/5 border border-red-500/10 text-red-400",
-      severity === "soft" && "bg-amber-500/5 border border-amber-500/10 text-amber-400",
+      severity === "soft" && "bg-yellow-500/5 border border-yellow-500/10 text-yellow-400",
       severity === "warning" && "bg-slate-500/5 border border-slate-500/10 text-slate-400",
       className,
     )}>
@@ -118,7 +118,7 @@ const CHIP_COLORS: Record<string, string> = {
   rejected: "bg-red-500/10 text-red-400 border-red-500/20",
   pending: "bg-slate-500/10 text-slate-400 border-slate-500/20",
   accepted: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  returned: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  returned: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
   disposed: "bg-red-500/10 text-red-300 border-red-500/20",
 };
 
@@ -189,14 +189,14 @@ export interface LineStatusIndicatorProps {
 const LINE_STATUS_CONFIG: Record<string, { dot: string; text: string; label: string }> = {
   released: { dot: "bg-emerald-400", text: "text-emerald-400", label: "릴리스" },
   received: { dot: "bg-emerald-400", text: "text-emerald-400", label: "입고 완료" },
-  partial: { dot: "bg-amber-400", text: "text-amber-400", label: "부분 입고" },
+  partial: { dot: "bg-yellow-400", text: "text-yellow-400", label: "부분 입고" },
   pending: { dot: "bg-slate-400", text: "text-slate-400", label: "대기" },
   rejected: { dot: "bg-red-400", text: "text-red-400", label: "거부" },
   damaged: { dot: "bg-red-400", text: "text-red-400", label: "손상" },
   held: { dot: "bg-blue-400", text: "text-blue-400", label: "보류" },
   disposed: { dot: "bg-red-300", text: "text-red-300", label: "폐기" },
   accepted: { dot: "bg-emerald-400", text: "text-emerald-400", label: "수용" },
-  returned: { dot: "bg-amber-400", text: "text-amber-400", label: "반품" },
+  returned: { dot: "bg-yellow-400", text: "text-yellow-400", label: "반품" },
 };
 
 export function LineStatusIndicator({ status, label, className }: LineStatusIndicatorProps) {

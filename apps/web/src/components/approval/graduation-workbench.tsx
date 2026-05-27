@@ -31,7 +31,7 @@ import {
 // ── Verdict display mapping (label from registry, color local) ──
 const VERDICT_COLOR: Record<PilotCompletionVerdict, string> = {
   completed_successfully: "text-green-700 bg-green-50 border-green-200",
-  completed_conditionally: "text-amber-700 bg-amber-50 border-amber-200",
+  completed_conditionally: "text-yellow-700 bg-yellow-50 border-yellow-200",
   rollback_required: "text-red-700 bg-red-50 border-red-200",
   cancelled: "text-gray-700 bg-gray-50 border-gray-200",
   insufficient_evidence: "text-blue-700 bg-blue-50 border-blue-200",
@@ -177,9 +177,9 @@ export default function GraduationWorkbench({
 
           {/* Conditions */}
           {surface.center.conditions.length > 0 && (
-            <div className="border border-amber-200 rounded-lg p-3">
-              <h3 className="text-sm font-semibold text-amber-700 mb-1">조건 / 후속 조치</h3>
-              <ul className="text-sm text-amber-600 space-y-0.5">
+            <div className="border border-yellow-200 rounded-lg p-3">
+              <h3 className="text-sm font-semibold text-yellow-700 mb-1">조건 / 후속 조치</h3>
+              <ul className="text-sm text-yellow-600 space-y-0.5">
                 {surface.center.conditions.map((c, i) => (
                   <li key={i}>• {c}</li>
                 ))}
@@ -268,7 +268,7 @@ export default function GraduationWorkbench({
                         r.status === "completed" ? "text-green-600" :
                         r.status === "in_progress" ? "text-blue-600" :
                         r.status === "waived" ? "text-gray-400" :
-                        "text-amber-600"
+                        "text-yellow-600"
                       }>
                         {r.status}
                       </span>
@@ -311,17 +311,17 @@ export default function GraduationWorkbench({
 
         {/* Confirmation Dialog */}
         {confirmingAction && (
-          <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <p className="text-sm text-amber-800 font-medium">
+          <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-sm text-yellow-800 font-medium">
               이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?
             </p>
-            <p className="text-xs text-amber-600 mt-1">
+            <p className="text-xs text-yellow-600 mt-1">
               작업: {surface.dock.actions.find(a => a.actionKey === confirmingAction)?.label}
             </p>
             <div className="flex gap-2 mt-2">
               <button
                 onClick={confirmAction}
-                className="px-3 py-1 bg-amber-600 text-white rounded text-sm hover:bg-amber-700"
+                className="px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700"
               >
                 확인
               </button>

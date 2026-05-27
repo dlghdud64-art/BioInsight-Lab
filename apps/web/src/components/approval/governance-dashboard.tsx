@@ -69,20 +69,20 @@ function BottleneckAlerts({ bottlenecks }: { bottlenecks: BottleneckIndicator[] 
             "rounded border px-3 py-2.5",
             b.severity === "critical"
               ? "border-red-500/20 bg-red-500/5"
-              : "border-amber-500/20 bg-amber-500/5",
+              : "border-yellow-500/20 bg-yellow-500/5",
           )}
         >
           <div className="flex items-start gap-2">
             <span className={cn(
               "shrink-0 mt-0.5 text-xs",
-              b.severity === "critical" ? "text-red-400" : "text-amber-400",
+              b.severity === "critical" ? "text-red-400" : "text-yellow-400",
             )} aria-hidden="true">
               {b.severity === "critical" ? "✕" : "!"}
             </span>
             <div className="flex-1 min-w-0">
               <p className={cn(
                 "text-sm font-medium",
-                b.severity === "critical" ? "text-red-300" : "text-amber-300",
+                b.severity === "critical" ? "text-red-300" : "text-yellow-300",
               )}>
                 {b.detail}
               </p>
@@ -112,7 +112,7 @@ function KPIStrip({ metrics }: { metrics: ApprovalMetric[] }) {
           className={cn(
             "rounded border bg-slate-900/50 p-3 space-y-1",
             m.status === "critical" && "border-red-500/20",
-            m.status === "warning" && "border-amber-500/20",
+            m.status === "warning" && "border-yellow-500/20",
             m.status === "healthy" && "border-slate-800",
           )}
         >
@@ -123,7 +123,7 @@ function KPIStrip({ metrics }: { metrics: ApprovalMetric[] }) {
             <span className={cn(
               "text-lg font-semibold tabular-nums",
               m.status === "critical" && "text-red-400",
-              m.status === "warning" && "text-amber-400",
+              m.status === "warning" && "text-yellow-400",
               m.status === "healthy" && "text-slate-900",
             )}>
               {typeof m.value === "number" && m.value > 999
@@ -136,7 +136,7 @@ function KPIStrip({ metrics }: { metrics: ApprovalMetric[] }) {
             <span className={cn(
               "h-1.5 w-1.5 rounded-full",
               m.status === "critical" && "bg-red-400",
-              m.status === "warning" && "bg-amber-400",
+              m.status === "warning" && "bg-yellow-400",
               m.status === "healthy" && "bg-emerald-400",
             )} />
             <span className="text-[10px] text-slate-600 truncate">{m.detail}</span>
@@ -178,10 +178,10 @@ function DomainBreakdownPanel({ domains }: { domains: DomainMetrics[] }) {
                 <span className="text-red-400 tabular-nums">SLA초과 {d.slaBreachCount}</span>
               )}
               {d.escalationCount > 0 && (
-                <span className="text-amber-400 tabular-nums">에스컬 {d.escalationCount}</span>
+                <span className="text-yellow-400 tabular-nums">에스컬 {d.escalationCount}</span>
               )}
               {d.reapprovalCount > 0 && (
-                <span className="text-amber-400 tabular-nums">재승인 {d.reapprovalCount}</span>
+                <span className="text-yellow-400 tabular-nums">재승인 {d.reapprovalCount}</span>
               )}
             </div>
             {d.oldestItemAgeMinutes > 240 && (
@@ -227,7 +227,7 @@ function TopBlockersPanel({ blockers }: { blockers: BlockerFrequency[] }) {
                 <div
                   className={cn(
                     "h-full rounded-full transition-all",
-                    b.percentage > 30 ? "bg-red-400" : b.percentage > 15 ? "bg-amber-400" : "bg-slate-500",
+                    b.percentage > 30 ? "bg-red-400" : b.percentage > 15 ? "bg-yellow-400" : "bg-slate-500",
                   )}
                   style={{ width: `${Math.min(100, b.percentage)}%` }}
                 />

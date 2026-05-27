@@ -37,7 +37,7 @@ export interface ReceivingPrepGovernanceWorkbenchProps {
 const PREP_STATUS_BG: Record<string, string> = {
   allowed: "border-emerald-500/20 bg-emerald-500/5",
   blocked: "border-red-500/20 bg-red-500/5",
-  needs_review: "border-amber-500/20 bg-amber-500/5",
+  needs_review: "border-yellow-500/20 bg-yellow-500/5",
   scheduled: "border-blue-500/20 bg-blue-500/5",
   cancelled: "border-slate-600/20 bg-slate-800/50",
 };
@@ -45,7 +45,7 @@ const PREP_STATUS_BG: Record<string, string> = {
 const PREP_STATUS_TEXT: Record<string, string> = {
   allowed: "text-emerald-400",
   blocked: "text-red-400",
-  needs_review: "text-amber-400",
+  needs_review: "text-yellow-400",
   scheduled: "text-blue-400",
   cancelled: "text-slate-500",
 };
@@ -61,7 +61,7 @@ export function ReceivingPrepGovernanceWorkbench({
       <div className="flex-1 min-w-0 space-y-4">
         {/* Status strip */}
         <div className={cn("flex items-center gap-3 px-4 py-2.5 rounded border", PREP_STATUS_BG[surface.statusBadge])}>
-          <span className={cn("h-2 w-2 rounded-full shrink-0", surface.statusColor === "emerald" ? "bg-emerald-400" : surface.statusColor === "red" ? "bg-red-400" : surface.statusColor === "amber" ? "bg-amber-400" : surface.statusColor === "blue" ? "bg-blue-400" : "bg-slate-500")} />
+          <span className={cn("h-2 w-2 rounded-full shrink-0", surface.statusColor === "emerald" ? "bg-emerald-400" : surface.statusColor === "red" ? "bg-red-400" : surface.statusColor === "amber" ? "bg-yellow-400" : surface.statusColor === "blue" ? "bg-blue-400" : "bg-slate-500")} />
           <div className="min-w-0">
             <p className={cn("text-sm font-medium", PREP_STATUS_TEXT[surface.statusBadge])}>{surface.primaryMessage}</p>
             <p className="text-xs text-slate-500 mt-0.5">{surface.nextAction}</p>
@@ -90,10 +90,10 @@ export function ReceivingPrepGovernanceWorkbench({
 
         {/* Warnings */}
         {surface.warningMessages.length > 0 && (
-          <div className="rounded border border-amber-500/20 bg-amber-500/5 p-3 space-y-1">
-            <h4 className="text-[10px] font-medium text-amber-400 uppercase tracking-wider">검토 필요</h4>
+          <div className="rounded border border-yellow-500/20 bg-yellow-500/5 p-3 space-y-1">
+            <h4 className="text-[10px] font-medium text-yellow-400 uppercase tracking-wider">검토 필요</h4>
             {surface.warningMessages.map((msg, i) => (
-              <p key={i} className="text-xs text-amber-300">{msg}</p>
+              <p key={i} className="text-xs text-yellow-300">{msg}</p>
             ))}
           </div>
         )}
@@ -130,7 +130,7 @@ export function ReceivingPrepGovernanceWorkbench({
           <div><span className="text-slate-500">사이트</span><p className="text-slate-600">{state.receivingSite || "미지정"}</p></div>
           <div><span className="text-slate-500">보관</span><p className="text-slate-600">{state.storageLocation || "미지정"}</p></div>
           {state.requiresColdChain && <p className="text-blue-400">콜드체인 필수</p>}
-          {state.requiresHazardHandling && <p className="text-amber-400">위험물 취급</p>}
+          {state.requiresHazardHandling && <p className="text-yellow-400">위험물 취급</p>}
           {state.handlingInstructions && <p className="text-slate-400">{state.handlingInstructions}</p>}
         </div>
 
@@ -162,7 +162,7 @@ export function ReceivingPrepGovernanceWorkbench({
               <button onClick={onCancel} className="min-h-[40px] flex-1 md:flex-none rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 active:scale-95 px-3 py-1.5 text-xs text-slate-600 transition-colors">취소</button>
             )}
             {surface.canReopenConfirmation && (
-              <button onClick={onReopenConfirmation} className="min-h-[40px] flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 px-3 py-1.5 text-xs text-amber-300 transition-colors">공급사 확인 재열기</button>
+              <button onClick={onReopenConfirmation} className="min-h-[40px] flex-1 md:flex-none rounded border border-yellow-500/20 bg-yellow-500/10 hover:bg-yellow-500/20 active:scale-95 px-3 py-1.5 text-xs text-yellow-300 transition-colors">공급사 확인 재열기</button>
             )}
             {surface.canSchedule && (
               <button onClick={() => onSchedule?.(new Date().toISOString())} className="min-h-[40px] flex-1 md:flex-none rounded border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 active:scale-95 px-3 py-1.5 text-xs text-blue-300 transition-colors">예약 입고</button>
@@ -197,7 +197,7 @@ export interface ReceivingExecutionGovernanceWorkbenchProps {
 
 const MATCH_COLOR: Record<string, string> = {
   exact: "text-emerald-400",
-  over: "text-amber-400",
+  over: "text-yellow-400",
   under: "text-red-400",
   zero: "text-red-500",
   pending: "text-slate-500",
@@ -226,7 +226,7 @@ export function ReceivingExecutionGovernanceWorkbench({
           <span className={cn("h-2 w-2 rounded-full shrink-0",
             surface.statusColor === "emerald" ? "bg-emerald-400" :
             surface.statusColor === "red" ? "bg-red-400" :
-            surface.statusColor === "amber" ? "bg-amber-400 animate-pulse" :
+            surface.statusColor === "amber" ? "bg-yellow-400 animate-pulse" :
             surface.statusColor === "blue" ? "bg-blue-400" : "bg-slate-500"
           )} />
           <div className="min-w-0">
@@ -281,14 +281,14 @@ export function ReceivingExecutionGovernanceWorkbench({
               <div key={disc.discrepancyId} className={cn(
                 "rounded border p-3 flex items-start justify-between",
                 disc.resolution === "pending"
-                  ? disc.severity === "critical" ? "border-red-500/30 bg-red-500/5" : disc.severity === "major" ? "border-amber-500/30 bg-amber-500/5" : "border-slate-700 bg-slate-900/50"
+                  ? disc.severity === "critical" ? "border-red-500/30 bg-red-500/5" : disc.severity === "major" ? "border-yellow-500/30 bg-yellow-500/5" : "border-slate-700 bg-slate-900/50"
                   : "border-slate-800 bg-slate-900/30 opacity-60"
               )}>
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
                     <span className={cn("text-[9px] font-medium px-1.5 py-0.5 rounded",
                       disc.severity === "critical" ? "bg-red-500/20 text-red-300" :
-                      disc.severity === "major" ? "bg-amber-500/20 text-amber-300" :
+                      disc.severity === "major" ? "bg-yellow-500/20 text-yellow-300" :
                       "bg-slate-700 text-slate-400"
                     )}>{disc.severity}</span>
                     <span className="text-xs text-slate-400">{disc.type.replace(/_/g, " ")}</span>
@@ -357,13 +357,13 @@ export function ReceivingExecutionGovernanceWorkbench({
               <button onClick={onCancel} className="min-h-[40px] flex-1 md:flex-none rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 active:scale-95 px-3 py-1.5 text-xs text-slate-600 transition-colors">취소</button>
             )}
             {surface.canReopenPrep && (
-              <button onClick={onReopenPrep} className="min-h-[40px] flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 px-3 py-1.5 text-xs text-amber-300 transition-colors">Receiving Prep 재열기</button>
+              <button onClick={onReopenPrep} className="min-h-[40px] flex-1 md:flex-none rounded border border-yellow-500/20 bg-yellow-500/10 hover:bg-yellow-500/20 active:scale-95 px-3 py-1.5 text-xs text-yellow-300 transition-colors">Receiving Prep 재열기</button>
             )}
             {surface.canQuarantine && (
               <button onClick={onQuarantine} className="min-h-[40px] flex-1 md:flex-none rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 active:scale-95 px-3 py-1.5 text-xs text-red-300 transition-colors">격리</button>
             )}
             {surface.canMarkDiscrepancy && (
-              <button onClick={onMarkDiscrepancy} className="min-h-[40px] flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 px-3 py-1.5 text-xs text-amber-300 transition-colors">불일치 보고</button>
+              <button onClick={onMarkDiscrepancy} className="min-h-[40px] flex-1 md:flex-none rounded border border-yellow-500/20 bg-yellow-500/10 hover:bg-yellow-500/20 active:scale-95 px-3 py-1.5 text-xs text-yellow-300 transition-colors">불일치 보고</button>
             )}
             {surface.canMarkPartial && (
               <button onClick={onMarkPartial} className="min-h-[40px] flex-1 md:flex-none rounded border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 active:scale-95 px-3 py-1.5 text-xs text-blue-300 transition-colors">부분 입고</button>

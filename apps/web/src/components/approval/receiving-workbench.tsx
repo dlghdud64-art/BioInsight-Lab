@@ -53,7 +53,7 @@ const STATUS_LABELS: Record<string, string> = {
 const STATUS_COLORS: Record<string, string> = {
   pending: "text-slate-400",
   received: "text-emerald-400",
-  partial: "text-amber-400",
+  partial: "text-yellow-400",
   rejected: "text-red-400",
   damaged: "text-red-400",
 };
@@ -112,7 +112,7 @@ export function ReceivingWorkbench({
             </div>
             <div>
               <span className="text-slate-500 text-xs">미완료</span>
-              <p className={cn("text-sm font-semibold tabular-nums", pendingLines.length > 0 ? "text-amber-400" : "text-emerald-400")}>
+              <p className={cn("text-sm font-semibold tabular-nums", pendingLines.length > 0 ? "text-yellow-400" : "text-emerald-400")}>
                 {pendingLines.length}건
               </p>
             </div>
@@ -181,8 +181,8 @@ export function ReceivingWorkbench({
         </div>
 
             {hasVariance && (
-              <div className="rounded border border-amber-500/20 bg-amber-500/5 p-3">
-                <p className="text-xs text-amber-400">
+              <div className="rounded border border-yellow-500/20 bg-yellow-500/5 p-3">
+                <p className="text-xs text-yellow-400">
                   입고 수량 차이 감지됨. 완료 후 variance disposition 단계로 이동합니다.
                 </p>
               </div>

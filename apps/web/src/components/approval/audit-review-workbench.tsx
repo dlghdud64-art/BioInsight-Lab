@@ -39,12 +39,12 @@ export interface AuditReviewWorkbenchProps {
 const VERDICT_STYLE: Record<ComplianceVerdict, { bg: string; text: string; label: string }> = {
   compliant: { bg: "bg-emerald-500/10 border-emerald-500/20", text: "text-emerald-400", label: "준수" },
   non_compliant: { bg: "bg-red-500/10 border-red-500/20", text: "text-red-400", label: "비준수" },
-  needs_review: { bg: "bg-amber-500/10 border-amber-500/20", text: "text-amber-400", label: "검토 필요" },
+  needs_review: { bg: "bg-yellow-500/10 border-yellow-500/20", text: "text-yellow-400", label: "검토 필요" },
 };
 
 const RISK_BADGE: Record<string, { bg: string; text: string }> = {
   info: { bg: "bg-slate-600/20", text: "text-slate-400" },
-  warning: { bg: "bg-amber-500/10", text: "text-amber-400" },
+  warning: { bg: "bg-yellow-500/10", text: "text-yellow-400" },
   critical: { bg: "bg-red-500/10", text: "text-red-400" },
 };
 
@@ -257,8 +257,8 @@ function ComplianceSummaryCard({ summary }: {
         <div className="text-right text-emerald-300">{summary.compliantCount}</div>
         <div className="text-red-400">비준수</div>
         <div className="text-right text-red-300">{summary.nonCompliantCount}</div>
-        <div className="text-amber-400">검토 필요</div>
-        <div className="text-right text-amber-300">{summary.needsReviewCount}</div>
+        <div className="text-yellow-400">검토 필요</div>
+        <div className="text-right text-yellow-300">{summary.needsReviewCount}</div>
       </div>
     </div>
   );

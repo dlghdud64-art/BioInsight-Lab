@@ -49,8 +49,8 @@ export interface SupplierConfirmationWorkbenchProps {
 function LineDeltaRow({ delta }: { delta: LineDelta }) {
   const directionColors: Record<string, string> = {
     increased: "text-red-300",
-    decreased: "text-amber-300",
-    changed: "text-amber-300",
+    decreased: "text-yellow-300",
+    changed: "text-yellow-300",
     rejected: "text-red-400",
   };
 
@@ -86,7 +86,7 @@ function LineDeltaRow({ delta }: { delta: LineDelta }) {
 function TermChangeRow({ change }: { change: SupplierProposedChange }) {
   const severityColors: Record<string, string> = {
     minor: "border-slate-700 bg-slate-800",
-    major: "border-amber-500/20 bg-amber-500/5",
+    major: "border-yellow-500/20 bg-yellow-500/5",
     critical: "border-red-500/20 bg-red-500/5",
   };
 
@@ -96,7 +96,7 @@ function TermChangeRow({ change }: { change: SupplierProposedChange }) {
         <span className="text-slate-400 font-medium">{change.field}</span>
         <span className={cn("text-[10px] px-1.5 py-0.5 rounded",
           change.severity === "critical" ? "bg-red-500/20 text-red-300" :
-          change.severity === "major" ? "bg-amber-500/20 text-amber-300" :
+          change.severity === "major" ? "bg-yellow-500/20 text-yellow-300" :
           "bg-slate-700 text-slate-400"
         )}>{change.severity}</span>
       </div>
@@ -147,12 +147,12 @@ export function SupplierConfirmationWorkbench({
         {/* Delta summary — 가장 중요한 영역 */}
         {surface.delta && surface.delta.totalDeltaCount > 0 && (
           <div className={cn("rounded border p-3 md:p-4 space-y-3",
-            surface.delta.hasCriticalDelta ? "border-red-500/20 bg-red-500/5" : "border-amber-500/20 bg-amber-500/5"
+            surface.delta.hasCriticalDelta ? "border-red-500/20 bg-red-500/5" : "border-yellow-500/20 bg-yellow-500/5"
           )}>
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-medium uppercase tracking-wider text-slate-400">공급사 응답 변경 사항</h3>
               <span className={cn("text-[10px] px-1.5 py-0.5 rounded",
-                surface.delta.hasCriticalDelta ? "bg-red-500/20 text-red-300" : "bg-amber-500/20 text-amber-300"
+                surface.delta.hasCriticalDelta ? "bg-red-500/20 text-red-300" : "bg-yellow-500/20 text-yellow-300"
               )}>
                 {surface.delta.summaryMessage}
               </span>
@@ -184,7 +184,7 @@ export function SupplierConfirmationWorkbench({
                 <span className="text-slate-500">납기</span>
                 <span className="text-slate-400">{surface.delta.deliveryDelta.original || "미설정"}</span>
                 <span className="text-slate-600">→</span>
-                <span className="text-amber-300 font-medium">{surface.delta.deliveryDelta.confirmed || "미설정"}</span>
+                <span className="text-yellow-300 font-medium">{surface.delta.deliveryDelta.confirmed || "미설정"}</span>
               </div>
             )}
           </div>
@@ -328,12 +328,12 @@ export function SupplierConfirmationWorkbench({
               </button>
             )}
             {onReopenConversion && surface.canReopenConversion && (
-              <button onClick={onReopenConversion} className="min-h-[40px] flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors">
+              <button onClick={onReopenConversion} className="min-h-[40px] flex-1 md:flex-none rounded border border-yellow-500/20 bg-yellow-500/10 hover:bg-yellow-500/20 active:scale-95 px-3 py-1.5 text-xs font-medium text-yellow-300 transition-colors">
                 PO 전환 재열기
               </button>
             )}
             {onReopenApproval && surface.canReopenApproval && (
-              <button onClick={onReopenApproval} className="min-h-[40px] flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors">
+              <button onClick={onReopenApproval} className="min-h-[40px] flex-1 md:flex-none rounded border border-yellow-500/20 bg-yellow-500/10 hover:bg-yellow-500/20 active:scale-95 px-3 py-1.5 text-xs font-medium text-yellow-300 transition-colors">
                 승인 재열기
               </button>
             )}

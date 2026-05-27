@@ -272,7 +272,7 @@ export function DispatchExecutionWorkbench({
             )}
             {/* Reopen dispatch prep — cancelled 상태에서 */}
             {onReopenDispatchPrep && state.status === "cancelled" && (
-              <button onClick={onReopenDispatchPrep} className="min-h-[40px] flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors">
+              <button onClick={onReopenDispatchPrep} className="min-h-[40px] flex-1 md:flex-none rounded border border-yellow-500/20 bg-yellow-500/10 hover:bg-yellow-500/20 active:scale-95 px-3 py-1.5 text-xs font-medium text-yellow-300 transition-colors">
                 Dispatch Prep 재열기
               </button>
             )}

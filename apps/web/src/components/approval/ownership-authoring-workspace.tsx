@@ -220,7 +220,7 @@ export function OwnershipAuthoringWorkspace({
           </div>
           <div className="flex items-center gap-2">
             {selectedRecord && onReassign && (
-              <button onClick={() => onReassign(selectedRecord.ownerId)} className="rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors">
+              <button onClick={() => onReassign(selectedRecord.ownerId)} className="rounded border border-yellow-500/20 bg-yellow-500/10 hover:bg-yellow-500/20 px-3 py-1.5 text-xs font-medium text-yellow-300 transition-colors">
                 재배정
               </button>
             )}

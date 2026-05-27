@@ -28,7 +28,7 @@ export interface RecommendedActionsPanelProps {
 
 const URGENCY_CONFIG: Record<string, { label: string; color: string; border: string }> = {
   immediate: { label: "즉시", color: "text-red-400", border: "border-red-500/20" },
-  soon: { label: "조속", color: "text-amber-400", border: "border-amber-500/20" },
+  soon: { label: "조속", color: "text-yellow-400", border: "border-yellow-500/20" },
   scheduled: { label: "예정", color: "text-slate-400", border: "border-slate-800" },
 };
 
@@ -66,7 +66,7 @@ export function RecommendedActionsPanel({
             <span className="text-red-400">{actions.filter(a => a.urgency === "immediate").length} 즉시</span>
           )}
           {actions.filter(a => a.urgency === "soon").length > 0 && (
-            <span className="text-amber-400">{actions.filter(a => a.urgency === "soon").length} 조속</span>
+            <span className="text-yellow-400">{actions.filter(a => a.urgency === "soon").length} 조속</span>
           )}
         </div>
       </div>
@@ -142,7 +142,7 @@ const OWNERSHIP_ICONS: Record<OwnershipType, string> = {
 
 const OWNERSHIP_COLORS: Record<OwnershipType, string> = {
   approval_owner: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
-  escalation_owner: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+  escalation_owner: "text-yellow-400 bg-yellow-500/10 border-yellow-500/20",
   policy_owner: "text-blue-400 bg-blue-500/10 border-blue-500/20",
   backlog_owner: "text-slate-400 bg-slate-500/10 border-slate-500/20",
   sla_owner: "text-purple-400 bg-purple-500/10 border-purple-500/20",
@@ -247,7 +247,7 @@ export function ActionHandoffStrip({ links, onLinkClick, className }: ActionHand
           className={cn(
             "rounded px-2 py-0.5 text-[10px] font-medium transition-colors border",
             link.priority === "critical" && "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20",
-            link.priority === "high" && "bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20",
+            link.priority === "high" && "bg-yellow-500/10 text-yellow-400 border-yellow-500/20 hover:bg-yellow-500/20",
             link.priority === "medium" && "bg-slate-800 text-slate-600 border-slate-700 hover:bg-slate-700",
             link.priority === "low" && "bg-slate-800/50 text-slate-400 border-slate-800 hover:bg-slate-800",
           )}

@@ -59,7 +59,7 @@ const DISPOSITION_LABELS: Record<string, string> = {
 
 const DISPOSITION_COLORS: Record<string, string> = {
   accept: "text-emerald-400",
-  return: "text-amber-400",
+  return: "text-yellow-400",
   dispose: "text-red-400",
   hold: "text-blue-400",
   pending: "text-slate-500",
@@ -126,7 +126,7 @@ export function VarianceDispositionWorkbench({
             </div>
             <div>
               <span className="text-slate-500 text-xs">Variance %</span>
-              <p className={cn("text-sm font-semibold tabular-nums", totalVariancePercent > 10 ? "text-red-400" : totalVariancePercent > 5 ? "text-amber-400" : "text-slate-700")}>
+              <p className={cn("text-sm font-semibold tabular-nums", totalVariancePercent > 10 ? "text-red-400" : totalVariancePercent > 5 ? "text-yellow-400" : "text-slate-700")}>
                 {totalVariancePercent.toFixed(1)}%
               </p>
             </div>
@@ -211,7 +211,7 @@ export function VarianceDispositionWorkbench({
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">미결정</span>
-              <span className={pendingLines.length > 0 ? "text-amber-400" : "text-slate-400"}>
+              <span className={pendingLines.length > 0 ? "text-yellow-400" : "text-slate-400"}>
                 {pendingLines.length}건
               </span>
             </div>

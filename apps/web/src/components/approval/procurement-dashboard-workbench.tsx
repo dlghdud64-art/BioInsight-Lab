@@ -50,32 +50,32 @@ export interface ProcurementDashboardWorkbenchProps {
 
 const SEVERITY_BG: Record<string, string> = {
   critical: "border-red-500/30 bg-red-500/5",
-  warning: "border-amber-500/20 bg-amber-500/5",
+  warning: "border-yellow-500/20 bg-yellow-500/5",
   normal: "border-slate-600/20 bg-slate-800/30",
 };
 
 const SEVERITY_DOT: Record<string, string> = {
   critical: "bg-red-400",
-  warning: "bg-amber-400",
+  warning: "bg-yellow-400",
   normal: "bg-slate-500",
 };
 
 const SEVERITY_TEXT: Record<string, string> = {
   critical: "text-red-400",
-  warning: "text-amber-400",
+  warning: "text-yellow-400",
   normal: "text-slate-400",
 };
 
 const STALE_BANNER_STYLE: Record<string, string> = {
   none: "",
   info: "border-blue-500/20 bg-blue-500/5 text-blue-300",
-  warning: "border-amber-500/20 bg-amber-500/5 text-amber-300",
+  warning: "border-yellow-500/20 bg-yellow-500/5 text-yellow-300",
   blocking: "border-red-500/30 bg-red-500/10 text-red-300",
 };
 
 const HEALTH_COLOR: Record<string, string> = {
   healthy: "text-emerald-400",
-  at_risk: "text-amber-400",
+  at_risk: "text-yellow-400",
   blocked: "text-red-400",
 };
 
@@ -141,8 +141,8 @@ function KPIStrip({
       )}
       {totalWarning > 0 && (
         <div className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-          <span className="text-amber-400 font-mono">{totalWarning}</span>
+          <span className="h-1.5 w-1.5 rounded-full bg-yellow-400" />
+          <span className="text-yellow-400 font-mono">{totalWarning}</span>
         </div>
       )}
       {isFiltered && (
@@ -167,7 +167,7 @@ function PanelCard({
 }) {
   const hasCritical = panel.criticalCount > 0;
   const borderColor = isStale
-    ? "border-amber-500/30"
+    ? "border-yellow-500/30"
     : hasCritical
       ? "border-red-500/20"
       : panel.count > 0
@@ -191,7 +191,7 @@ function PanelCard({
         <div className="flex items-center gap-1.5">
           <span className="font-mono text-sm font-medium text-slate-700">{panel.count}</span>
           {isStale && (
-            <span className="text-amber-400 text-xs" title={panel.staleReason ?? undefined}>⚠</span>
+            <span className="text-yellow-400 text-xs" title={panel.staleReason ?? undefined}>⚠</span>
           )}
         </div>
       </div>
@@ -207,8 +207,8 @@ function PanelCard({
           )}
           {panel.warningCount > 0 && (
             <span className="flex items-center gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-              <span className="text-amber-400 font-mono">{panel.warningCount}</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-yellow-400" />
+              <span className="text-yellow-400 font-mono">{panel.warningCount}</span>
             </span>
           )}
           {panel.normalCount > 0 && (
@@ -292,7 +292,7 @@ function ChainTimelineRow({
               className={cn(
                 "h-2 w-2 rounded-full transition-colors",
                 TIMELINE_STATUS_DOT[entry.status],
-                entry.stale && "ring-1 ring-amber-400/50",
+                entry.stale && "ring-1 ring-yellow-400/50",
                 onStageClick && "cursor-pointer hover:ring-1 hover:ring-slate-400/50",
               )}
               title={`${entry.stage}: ${entry.status}${entry.blockerCount > 0 ? ` (차단 ${entry.blockerCount})` : ""}${entry.stale ? " ⚠ stale" : ""}`}
@@ -381,17 +381,17 @@ export function ProcurementDashboardWorkbench({
           {/* Stale Panels List */}
           {surface.hasStalePanel && (
             <div className="space-y-1">
-              <h4 className="text-xs font-medium text-amber-400">변경 감지 패널</h4>
+              <h4 className="text-xs font-medium text-yellow-400">변경 감지 패널</h4>
               {surface.stalePanelIds.map(id => {
                 const panel = surface.panels.find(p => p.panelId === id);
                 return (
                   <div
                     key={id}
-                    className="text-xs text-amber-300/70 rounded bg-amber-500/5 border border-amber-500/10 px-2 py-1"
+                    className="text-xs text-yellow-300/70 rounded bg-yellow-500/5 border border-yellow-500/10 px-2 py-1"
                   >
                     {panel?.label ?? id}
                     {panel?.staleReason && (
-                      <span className="block text-amber-500/50 mt-0.5">{panel.staleReason}</span>
+                      <span className="block text-yellow-500/50 mt-0.5">{panel.staleReason}</span>
                     )}
                   </div>
                 );
@@ -430,7 +430,7 @@ export function ProcurementDashboardWorkbench({
                   <div className="text-slate-600">정상</div>
                 </div>
                 <div>
-                  <div className="font-mono text-amber-400">
+                  <div className="font-mono text-yellow-400">
                     {chainTimelines.filter(t => t.overallHealth === "at_risk").length}
                   </div>
                   <div className="text-slate-600">주의</div>

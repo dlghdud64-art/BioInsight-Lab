@@ -62,7 +62,7 @@ export interface ExceptionApprovalWorkbenchProps {
 const SEVERITY_COLORS: Record<string, string> = {
   critical: "text-red-400 bg-red-500/10 border-red-500/20",
   high: "text-red-300 bg-red-500/5 border-red-500/10",
-  medium: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+  medium: "text-yellow-400 bg-yellow-500/10 border-yellow-500/20",
   low: "text-slate-400 bg-slate-500/10 border-slate-500/20",
 };
 
@@ -188,7 +188,7 @@ export function ExceptionApprovalWorkbench({
                 </div>
                 <div>
                   <span className="text-slate-500 text-xs">Bypass Risk</span>
-                  <p className="text-amber-400 text-xs">{bypassRisk}</p>
+                  <p className="text-yellow-400 text-xs">{bypassRisk}</p>
                 </div>
               </>
             )}

@@ -59,7 +59,7 @@ const RISK_COLORS: Record<string, string> = {
 const IMPACT_COLORS: Record<string, string> = {
   positive: "text-emerald-400",
   negative: "text-red-400",
-  mixed: "text-amber-400",
+  mixed: "text-yellow-400",
   neutral: "text-slate-400",
 };
 
@@ -147,7 +147,7 @@ export function GovernanceReviewWorkbench({
             {simulation.warnings.length > 0 && (
               <div className="space-y-0.5">
                 {simulation.warnings.map((w, i) => (
-                  <p key={i} className="text-[10px] text-amber-400">! {w}</p>
+                  <p key={i} className="text-[10px] text-yellow-400">! {w}</p>
                 ))}
               </div>
             )}
@@ -210,7 +210,7 @@ export function GovernanceReviewWorkbench({
         <div className="flex flex-col md:flex-row items-start md:items-center md:justify-end gap-2">
           {canRevert && <button onClick={() => onRevert?.(comment)} className="flex-1 md:flex-none rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors active:scale-95 min-h-[40px]">롤백</button>}
           {canReject && <button onClick={() => onReject?.(comment)} className="flex-1 md:flex-none rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors active:scale-95 min-h-[40px]">거부</button>}
-          {onRequestChanges && cr.status === "pending_review" && <button onClick={() => onRequestChanges(comment)} className="flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors active:scale-95 min-h-[40px]">수정 요청</button>}
+          {onRequestChanges && cr.status === "pending_review" && <button onClick={() => onRequestChanges(comment)} className="flex-1 md:flex-none rounded border border-yellow-500/20 bg-yellow-500/10 hover:bg-yellow-500/20 px-3 py-1.5 text-xs font-medium text-yellow-300 transition-colors active:scale-95 min-h-[40px]">수정 요청</button>}
           {canSchedule && cr.status === "approved" && <button onClick={onScheduleApply} className="flex-1 md:flex-none rounded border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 text-xs font-medium text-blue-300 transition-colors active:scale-95 min-h-[40px]">예약 적용</button>}
           {cr.status === "approved" && onApplyNow && <button onClick={onApplyNow} className="flex-1 md:flex-none rounded bg-emerald-600 hover:bg-emerald-500 px-4 py-1.5 text-xs font-medium text-white transition-colors active:scale-95 min-h-[40px]">즉시 적용</button>}
           {canApprove && <button onClick={() => onApprove?.(comment)} disabled={!comment.trim()} className="flex-1 md:flex-none rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-40 active:scale-95 min-h-[40px]">승인</button>}

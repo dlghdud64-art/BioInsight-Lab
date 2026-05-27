@@ -69,7 +69,7 @@ export function PolicyMessageStack({
           {warningMessages.map((msg, i) => (
             <div
               key={i}
-              className="flex items-start gap-2 rounded bg-amber-500/5 border border-amber-500/10 px-2.5 py-1.5 text-xs text-amber-400"
+              className="flex items-start gap-2 rounded bg-yellow-500/5 border border-yellow-500/10 px-2.5 py-1.5 text-xs text-yellow-400"
             >
               <span className="mt-0.5 shrink-0" aria-hidden="true">!</span>
               <span>{msg}</span>

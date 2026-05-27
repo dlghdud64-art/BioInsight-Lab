@@ -34,23 +34,23 @@ export function ReapprovalBanner({
   return (
     <div
       className={cn(
-        "rounded border border-amber-500/20 bg-amber-500/5 px-3 py-2.5 space-y-1.5",
+        "rounded border border-yellow-500/20 bg-yellow-500/5 px-3 py-2.5 space-y-1.5",
         className
       )}
     >
       <div className="flex items-start gap-2">
-        <span className="mt-0.5 text-amber-400" aria-hidden="true">↻</span>
+        <span className="mt-0.5 text-yellow-400" aria-hidden="true">↻</span>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-amber-300">재승인 필요</p>
-          <p className="text-xs text-amber-400/80 mt-0.5">{reason}</p>
+          <p className="text-sm font-medium text-yellow-300">재승인 필요</p>
+          <p className="text-xs text-yellow-400/80 mt-0.5">{reason}</p>
           {hashMismatchDetail && (
-            <p className="text-xs text-amber-500/70 mt-1">{hashMismatchDetail}</p>
+            <p className="text-xs text-yellow-500/70 mt-1">{hashMismatchDetail}</p>
           )}
         </div>
         {onRequestReapproval && (
           <button
             onClick={onRequestReapproval}
-            className="shrink-0 rounded bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 px-2.5 py-1 text-xs font-medium text-amber-300 transition-colors"
+            className="shrink-0 rounded bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/20 px-2.5 py-1 text-xs font-medium text-yellow-300 transition-colors"
           >
             재승인 요청
           </button>

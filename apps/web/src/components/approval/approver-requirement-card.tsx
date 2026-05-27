@@ -57,7 +57,7 @@ export function ApproverRequirementCard({
           <span className={cn(
             "text-[10px] font-medium px-1.5 py-0.5 rounded",
             riskTier === "tier3_irreversible" && "bg-red-500/10 text-red-400",
-            riskTier === "tier2_org_impact" && "bg-amber-500/10 text-amber-400",
+            riskTier === "tier2_org_impact" && "bg-yellow-500/10 text-yellow-400",
             riskTier === "tier1_routine" && "bg-slate-500/10 text-slate-400",
           )}>
             {riskTier === "tier3_irreversible" ? "Tier 3" : riskTier === "tier2_org_impact" ? "Tier 2" : "Tier 1"}
@@ -81,7 +81,7 @@ export function ApproverRequirementCard({
         {dualApprovalRequired && (
           <div className="flex items-center justify-between">
             <span className="text-slate-500">이중 승인</span>
-            <span className="text-amber-400">필수 (2인)</span>
+            <span className="text-yellow-400">필수 (2인)</span>
           </div>
         )}
 

@@ -59,8 +59,8 @@ export function TeamSiteBreakdownPanel({ breakdown, onDrilldown, className }: Te
             </div>
             <div className="flex gap-3 text-[10px]">
               {record.slaBreachCount > 0 && <span className="text-red-400">SLA초과 {record.slaBreachCount}</span>}
-              {record.escalationCount > 0 && <span className="text-amber-400">에스컬 {record.escalationCount}</span>}
-              {record.reapprovalCount > 0 && <span className="text-amber-400">재승인 {record.reapprovalCount}</span>}
+              {record.escalationCount > 0 && <span className="text-yellow-400">에스컬 {record.escalationCount}</span>}
+              {record.reapprovalCount > 0 && <span className="text-yellow-400">재승인 {record.reapprovalCount}</span>}
               <span className="text-slate-600">평균 {Math.round(record.avgLeadTimeMinutes / 60)}h</span>
               {record.oldestPendingAgeMinutes > 240 && (
                 <span className="text-red-400/70">최장 {Math.round(record.oldestPendingAgeMinutes / 60)}h</span>
@@ -100,7 +100,7 @@ export function EscalationHotspotPanel({ data, onDrilldown, className }: Escalat
       </div>
 
       {data.hottestSource && (
-        <div className="rounded bg-amber-500/5 border border-amber-500/10 px-2.5 py-1.5 text-xs text-amber-400">
+        <div className="rounded bg-yellow-500/5 border border-yellow-500/10 px-2.5 py-1.5 text-xs text-yellow-400">
           최다 원인: <span className="font-medium">{data.hottestSource}</span>
         </div>
       )}
@@ -114,7 +114,7 @@ export function EscalationHotspotPanel({ data, onDrilldown, className }: Escalat
           >
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-slate-700">{DOMAIN_LABELS[hotspot.domain] || hotspot.domain}</span>
-              <span className="text-xs tabular-nums font-medium text-amber-400">{hotspot.escalationCount}건 ({hotspot.escalationRate}%)</span>
+              <span className="text-xs tabular-nums font-medium text-yellow-400">{hotspot.escalationCount}건 ({hotspot.escalationRate}%)</span>
             </div>
             {hotspot.sourceBreakdown.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1">
@@ -156,7 +156,7 @@ export function ReapprovalLoopPanel({ data, onDrilldown, className }: Reapproval
           <div key={d.domain} className="rounded bg-slate-800/30 p-2 text-xs">
             <span className="text-slate-400">{DOMAIN_LABELS[d.domain] || d.domain}</span>
             <div className="flex items-baseline gap-1 mt-0.5">
-              <span className="text-sm font-semibold tabular-nums text-amber-400">{d.reapprovalCount}</span>
+              <span className="text-sm font-semibold tabular-nums text-yellow-400">{d.reapprovalCount}</span>
               <span className="text-[10px] text-slate-600">({d.loopRate}%)</span>
             </div>
           </div>
@@ -174,7 +174,7 @@ export function ReapprovalLoopPanel({ data, onDrilldown, className }: Reapproval
               className="w-full text-left flex items-center justify-between rounded hover:bg-slate-800/30 px-2 py-1 text-xs transition-colors"
             >
               <span className="text-slate-600 font-mono text-[10px]">{r.caseId.slice(0, 12)}</span>
-              <span className="text-amber-400 tabular-nums">{r.totalLoops}회</span>
+              <span className="text-yellow-400 tabular-nums">{r.totalLoops}회</span>
             </button>
           ))}
         </div>
@@ -254,7 +254,7 @@ function RiskBadge({ level, score }: { level: string; score: number }) {
     <span className={cn(
       "text-[9px] font-medium px-1 py-0.5 rounded tabular-nums",
       level === "critical" && "bg-red-500/10 text-red-400",
-      level === "high" && "bg-amber-500/10 text-amber-400",
+      level === "high" && "bg-yellow-500/10 text-yellow-400",
       level === "medium" && "bg-blue-500/10 text-blue-400",
       level === "low" && "bg-slate-500/10 text-slate-400",
     )}>
@@ -269,7 +269,7 @@ function ImpactBadge({ impact }: { impact: string }) {
       "text-[9px] font-medium px-1 py-0.5 rounded",
       impact === "tightened" && "bg-red-500/10 text-red-400",
       impact === "relaxed" && "bg-emerald-500/10 text-emerald-400",
-      impact === "mixed" && "bg-amber-500/10 text-amber-400",
+      impact === "mixed" && "bg-yellow-500/10 text-yellow-400",
       impact === "neutral" && "bg-slate-500/10 text-slate-400",
     )}>
       {impact === "tightened" ? "강화" : impact === "relaxed" ? "완화" : impact === "mixed" ? "혼합" : "변동없음"}

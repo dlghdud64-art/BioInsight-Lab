@@ -190,7 +190,7 @@ export function DispatchPrepWorkbench({
         <div className={cn(
           "flex items-start gap-2 px-3 md:px-4 py-2.5 rounded border text-xs",
           surface.statusBadge === "blocked" ? "border-red-500/30 bg-red-500/5 text-red-300" :
-          surface.statusBadge === "reapproval_needed" ? "border-amber-500/30 bg-amber-500/5 text-amber-300" :
+          surface.statusBadge === "reapproval_needed" ? "border-yellow-500/30 bg-yellow-500/5 text-yellow-300" :
           "border-emerald-500/30 bg-emerald-500/5 text-emerald-300"
         )}>
           <span className="shrink-0 mt-0.5 font-medium">{surface.statusBadge === "blocked" ? "✕" : surface.statusBadge === "reapproval_needed" ? "△" : "→"}</span>
@@ -231,14 +231,14 @@ export function DispatchPrepWorkbench({
 
         {/* Soft blockers / warnings */}
         {state.softBlockers.length > 0 && (
-          <div className="rounded border border-amber-500/20 bg-amber-500/5 p-3 md:p-4 space-y-2">
-            <h4 className="text-xs font-medium text-amber-300">검토 권장 사항</h4>
+          <div className="rounded border border-yellow-500/20 bg-yellow-500/5 p-3 md:p-4 space-y-2">
+            <h4 className="text-xs font-medium text-yellow-300">검토 권장 사항</h4>
             {state.softBlockers.map((b, i) => (
               <div key={i} className="flex items-start gap-2 text-xs">
-                <span className="text-amber-400 shrink-0 mt-0.5">△</span>
+                <span className="text-yellow-400 shrink-0 mt-0.5">△</span>
                 <div>
-                  <span className="text-amber-300">{b.detail}</span>
-                  <span className="block sm:inline text-amber-400/70 sm:ml-2">→ {b.remediationAction}</span>
+                  <span className="text-yellow-300">{b.detail}</span>
+                  <span className="block sm:inline text-yellow-400/70 sm:ml-2">→ {b.remediationAction}</span>
                 </div>
               </div>
             ))}
@@ -405,24 +405,24 @@ export function DispatchPrepWorkbench({
 
             {/* Delta since approval */}
             {state.supplierFacingPayloadDelta.length > 0 && (
-              <div className="rounded border border-amber-500/20 bg-amber-500/5 p-3">
+              <div className="rounded border border-yellow-500/20 bg-yellow-500/5 p-3">
                 <div className="flex items-center justify-between mb-1.5">
-                  <h5 className="text-[10px] font-medium uppercase tracking-wider text-amber-400">
+                  <h5 className="text-[10px] font-medium uppercase tracking-wider text-yellow-400">
                     승인 이후 변경
                   </h5>
-                  <span className="text-[10px] font-medium text-amber-500/80">
+                  <span className="text-[10px] font-medium text-yellow-500/80">
                     {state.supplierFacingPayloadDelta.length}건
                   </span>
                 </div>
                 <ul className="space-y-0.5">
                   {state.supplierFacingPayloadDelta.map((d, i) => (
-                    <li key={i} className="text-[10px] text-amber-300 flex gap-1.5">
-                      <span className="text-amber-500/60 shrink-0">•</span>
+                    <li key={i} className="text-[10px] text-yellow-300 flex gap-1.5">
+                      <span className="text-yellow-500/60 shrink-0">•</span>
                       <span className="leading-tight">{d}</span>
                     </li>
                   ))}
                 </ul>
-                <p className="text-[9px] text-amber-500/60 mt-1.5 leading-tight">
+                <p className="text-[9px] text-yellow-500/60 mt-1.5 leading-tight">
                   재승인 또는 PO 전환 재실행 후 재검토 필요
                 </p>
               </div>
@@ -487,7 +487,7 @@ export function DispatchPrepWorkbench({
               <button
                 onClick={onReopenConversion}
                 aria-label="PO 전환 다시 열기"
-                className="shrink-0 rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 min-h-[40px] px-3 py-2 md:py-1.5 text-xs font-medium text-amber-300 transition-all snap-start"
+                className="shrink-0 rounded border border-yellow-500/20 bg-yellow-500/10 hover:bg-yellow-500/20 active:scale-95 min-h-[40px] px-3 py-2 md:py-1.5 text-xs font-medium text-yellow-300 transition-all snap-start"
               >
                 PO 전환 재열기
               </button>

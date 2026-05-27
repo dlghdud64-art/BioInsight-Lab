@@ -56,7 +56,7 @@ const STATUS_DISPLAY: Record<PilotStatus, { label: string; color: string }> = {
   draft: { label: "초안", color: "text-slate-400" },
   checklist_in_progress: { label: "체크리스트 진행 중", color: "text-blue-400" },
   ready_to_activate: { label: "활성화 준비 완료", color: "text-emerald-400" },
-  active: { label: "파일럿 운영 중", color: "text-amber-400" },
+  active: { label: "파일럿 운영 중", color: "text-yellow-400" },
   completed: { label: "파일럿 완료", color: "text-emerald-400" },
   rolled_back: { label: "롤백 완료", color: "text-red-400" },
   cancelled: { label: "취소됨", color: "text-slate-500" },
@@ -183,8 +183,8 @@ export function PilotActivationWorkbench({
 
         {/* Authorization status */}
         {!isAuthorized && (
-          <div className="rounded border border-amber-500/20 bg-amber-500/5 p-3">
-            <p className="text-[10px] text-amber-400">현재 역할({operatorRole})은 파일럿 활성화/롤백 권한이 없습니다.</p>
+          <div className="rounded border border-yellow-500/20 bg-yellow-500/5 p-3">
+            <p className="text-[10px] text-yellow-400">현재 역할({operatorRole})은 파일럿 활성화/롤백 권한이 없습니다.</p>
           </div>
         )}
         </div>
@@ -250,7 +250,7 @@ function ChecklistItemRow({ item, editable, onCheck, onUncheck }: {
         {item.description}
       </span>
       {item.required && !item.checked && (
-        <span className="text-[8px] text-amber-400 bg-amber-500/10 rounded px-1 py-0.5 shrink-0">필수</span>
+        <span className="text-[8px] text-yellow-400 bg-yellow-500/10 rounded px-1 py-0.5 shrink-0">필수</span>
       )}
       {item.checkedBy && (
         <span className="text-[8px] text-slate-600 shrink-0">{item.checkedBy}</span>
@@ -281,7 +281,7 @@ function ConfirmationDialog({ action, onConfirm, onDismiss }: {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-96 rounded-lg border border-slate-700 bg-slate-900 p-6 space-y-4 shadow-xl">
-        <h3 className={cn("text-sm font-medium", msg.severity === "danger" ? "text-red-400" : "text-amber-400")}>{msg.title}</h3>
+        <h3 className={cn("text-sm font-medium", msg.severity === "danger" ? "text-red-400" : "text-yellow-400")}>{msg.title}</h3>
         <p className="text-xs text-slate-600 leading-relaxed">{msg.description}</p>
         <div className="flex justify-end gap-2">
           <button onClick={onDismiss} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs text-slate-600 transition-colors">취소</button>
@@ -301,7 +301,7 @@ function ConfirmationDialog({ action, onConfirm, onDismiss }: {
 
 const ROLLBACK_BADGE: Record<RollbackRecommendation, { label: string; color: string; bg: string }> = {
   none: { label: "정상", color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
-  watch: { label: "주시 필요", color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20" },
+  watch: { label: "주시 필요", color: "text-yellow-400", bg: "bg-yellow-500/10 border-yellow-500/20" },
   rollback_recommended: { label: "롤백 권고", color: "text-red-400", bg: "bg-red-500/10 border-red-500/20" },
   rollback_required: { label: "롤백 필수", color: "text-red-300", bg: "bg-red-500/20 border-red-500/30" },
 };
@@ -357,7 +357,7 @@ export function PilotMonitoringWorkbench({
             <span className={cn("text-[10px] rounded px-1.5 py-0.5 border", rollbackBadge.bg, rollbackBadge.color)}>{rollbackBadge.label}</span>
           </div>
           {health.signalFreshness.stale && (
-            <span className="text-[10px] text-amber-400">신호 {Math.round(health.signalFreshness.ageMs / 60000)}분 전</span>
+            <span className="text-[10px] text-yellow-400">신호 {Math.round(health.signalFreshness.ageMs / 60000)}분 전</span>
           )}
         </div>
 
@@ -376,7 +376,7 @@ export function PilotMonitoringWorkbench({
             {health.operationalHealth.signals.map(s => (
               <div key={s.signalId} className="flex items-center justify-between text-[10px]">
                 <div className="flex items-center gap-2">
-                  <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", s.passed ? "bg-emerald-400" : s.severity === "critical" ? "bg-red-400" : "bg-amber-400")} />
+                  <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", s.passed ? "bg-emerald-400" : s.severity === "critical" ? "bg-red-400" : "bg-yellow-400")} />
                   <span className="text-slate-600">{s.name}</span>
                 </div>
                 <span className="tabular-nums text-slate-500">{s.score}</span>
@@ -410,8 +410,8 @@ export function PilotMonitoringWorkbench({
 
         {/* Rollback triggers hit */}
         {health.rollbackStatus.triggerCount > 0 && (
-          <div className={cn("rounded border p-3 space-y-1", health.rollbackStatus.recommendation === "rollback_required" ? "border-red-500/30 bg-red-500/10" : "border-amber-500/20 bg-amber-500/5")}>
-            <h4 className={cn("text-[10px] font-medium", health.rollbackStatus.recommendation === "rollback_required" ? "text-red-400" : "text-amber-400")}>
+          <div className={cn("rounded border p-3 space-y-1", health.rollbackStatus.recommendation === "rollback_required" ? "border-red-500/30 bg-red-500/10" : "border-yellow-500/20 bg-yellow-500/5")}>
+            <h4 className={cn("text-[10px] font-medium", health.rollbackStatus.recommendation === "rollback_required" ? "text-red-400" : "text-yellow-400")}>
               롤백 트리거 {health.rollbackStatus.triggerCount}건 발동
             </h4>
           </div>
@@ -436,8 +436,8 @@ export function PilotMonitoringWorkbench({
 
         {/* Stale warning */}
         {surface.rail.staleWarning && (
-          <div className="rounded border border-amber-500/20 bg-amber-500/5 p-3">
-            <p className="text-[10px] text-amber-400">{surface.rail.staleWarning}</p>
+          <div className="rounded border border-yellow-500/20 bg-yellow-500/5 p-3">
+            <p className="text-[10px] text-yellow-400">{surface.rail.staleWarning}</p>
           </div>
         )}
 
@@ -472,7 +472,7 @@ export function PilotMonitoringWorkbench({
       {/* ── Dock: Actions ── */}
       <div className="absolute bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950 px-4 py-3">
         <div className="flex items-center justify-between">
-          <span className={cn("text-[10px]", health.rollbackStatus.recommendation !== "none" ? "text-amber-400" : "text-slate-500")}>
+          <span className={cn("text-[10px]", health.rollbackStatus.recommendation !== "none" ? "text-yellow-400" : "text-slate-500")}>
             {health.rollbackStatus.recommendation === "rollback_required" ? "롤백 필수 — 즉시 조치 필요" :
              health.rollbackStatus.recommendation === "rollback_recommended" ? "롤백 권고 — 검토 필요" :
              health.rollbackStatus.recommendation === "watch" ? "주시 필요 — 트리거 감시 중" :

@@ -40,24 +40,24 @@ export interface ReorderDecisionGovernanceWorkbenchProps {
 const STATUS_BG: Record<string, string> = {
   slate: "border-slate-600/20 bg-slate-800/50",
   blue: "border-blue-500/20 bg-blue-500/5",
-  amber: "border-amber-500/20 bg-amber-500/5",
+  amber: "border-yellow-500/20 bg-yellow-500/5",
   emerald: "border-emerald-500/20 bg-emerald-500/5",
   red: "border-red-500/20 bg-red-500/5",
-  orange: "border-orange-500/20 bg-orange-500/5",
+  orange: "border-yellow-500/20 bg-yellow-500/5",
 };
 
 const STATUS_DOT: Record<string, string> = {
   slate: "bg-slate-500",
   blue: "bg-blue-400",
-  amber: "bg-amber-400",
+  amber: "bg-yellow-400",
   emerald: "bg-emerald-400",
   red: "bg-red-400 animate-pulse",
-  orange: "bg-orange-400 animate-pulse",
+  orange: "bg-yellow-400 animate-pulse",
 };
 
 const DECISION_COLOR: Record<string, string> = {
   reorder: "text-red-400",
-  watch: "text-amber-400",
+  watch: "text-yellow-400",
   no_action: "text-emerald-400",
   return_claim: "text-blue-400",
   substitute: "text-purple-400",
@@ -75,7 +75,7 @@ const DECISION_LABEL: Record<string, string> = {
 
 const URGENCY_COLOR: Record<string, string> = {
   immediate: "text-red-400",
-  normal: "text-amber-400",
+  normal: "text-yellow-400",
   watch: "text-blue-400",
   none: "text-slate-500",
 };
@@ -116,8 +116,8 @@ export function ReorderDecisionGovernanceWorkbench({
             <p className={cn("text-lg font-bold tabular-nums", surface.hasGap ? "text-red-400" : "text-emerald-400")}>{surface.gap}</p>
             <p className="text-[10px] text-slate-500">Gap</p>
           </div>
-          <div className={cn("rounded border p-3 text-center", surface.totalReorderQty > 0 ? "border-amber-500/20 bg-amber-500/5" : "border-slate-800 bg-slate-900/50")}>
-            <p className={cn("text-lg font-bold tabular-nums", surface.totalReorderQty > 0 ? "text-amber-400" : "text-slate-400")}>{surface.totalReorderQty}</p>
+          <div className={cn("rounded border p-3 text-center", surface.totalReorderQty > 0 ? "border-yellow-500/20 bg-yellow-500/5" : "border-slate-800 bg-slate-900/50")}>
+            <p className={cn("text-lg font-bold tabular-nums", surface.totalReorderQty > 0 ? "text-yellow-400" : "text-slate-400")}>{surface.totalReorderQty}</p>
             <p className="text-[10px] text-slate-500">재주문</p>
           </div>
         </div>
@@ -156,7 +156,7 @@ export function ReorderDecisionGovernanceWorkbench({
                     <td className="px-3 py-1.5 text-right tabular-nums text-emerald-400">{line.released}</td>
                     <td className={cn("px-3 py-1.5 text-right tabular-nums font-medium", line.gap > 0 ? "text-red-400" : "text-slate-400")}>{line.gap}</td>
                     <td className={cn("px-3 py-1.5 text-center font-medium", DECISION_COLOR[line.decision])}>{DECISION_LABEL[line.decision]}</td>
-                    <td className={cn("px-3 py-1.5 text-right tabular-nums", line.reorderQty > 0 ? "text-amber-400 font-medium" : "text-slate-600")}>{line.reorderQty}</td>
+                    <td className={cn("px-3 py-1.5 text-right tabular-nums", line.reorderQty > 0 ? "text-yellow-400 font-medium" : "text-slate-600")}>{line.reorderQty}</td>
                     <td className={cn("px-3 py-1.5 text-center text-[10px]", URGENCY_COLOR[line.urgency])}>{line.urgency}</td>
                     <td className="px-3 py-1.5 text-slate-500 text-[10px]">{line.supplierPath.replace(/_/g, " ")}</td>
                     {!surface.isTerminal && (
@@ -175,13 +175,13 @@ export function ReorderDecisionGovernanceWorkbench({
 
         {/* Loss accounting */}
         {surface.totalLoss > 0 && (
-          <div className="rounded border border-amber-500/20 bg-amber-500/5 p-3 space-y-1">
-            <h4 className="text-[10px] font-medium text-amber-400 uppercase tracking-wider">손실 내역</h4>
+          <div className="rounded border border-yellow-500/20 bg-yellow-500/5 p-3 space-y-1">
+            <h4 className="text-[10px] font-medium text-yellow-400 uppercase tracking-wider">손실 내역</h4>
             <div className="flex items-center gap-4 text-xs">
               <span className="text-slate-400">반품 <span className="text-red-400 tabular-nums font-medium">{state.lossAccounting.totalReturned}개</span></span>
               <span className="text-slate-400">폐기 <span className="text-red-400 tabular-nums font-medium">{state.lossAccounting.totalDestroyed}개</span></span>
-              <span className="text-slate-400">보류 <span className="text-amber-400 tabular-nums font-medium">{state.lossAccounting.totalHeld}개</span></span>
-              <span className="text-slate-500 ml-auto">손실률 <span className="text-amber-400 font-medium">{surface.lossPercentage}%</span></span>
+              <span className="text-slate-400">보류 <span className="text-yellow-400 tabular-nums font-medium">{state.lossAccounting.totalHeld}개</span></span>
+              <span className="text-slate-500 ml-auto">손실률 <span className="text-yellow-400 font-medium">{surface.lossPercentage}%</span></span>
             </div>
             {surface.hasSupplierClaim && <p className="text-[10px] text-blue-400">공급사 클레임 대상 존재</p>}
           </div>
@@ -196,7 +196,7 @@ export function ReorderDecisionGovernanceWorkbench({
           <h4 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">판단 요약</h4>
           <div className="grid grid-cols-2 gap-2">
             <div><span className="text-slate-500">재주문</span><p className="text-red-400 tabular-nums font-medium">{surface.reorderCount}건</p></div>
-            <div><span className="text-slate-500">감시</span><p className="text-amber-400 tabular-nums">{surface.watchCount}건</p></div>
+            <div><span className="text-slate-500">감시</span><p className="text-yellow-400 tabular-nums">{surface.watchCount}건</p></div>
             <div><span className="text-slate-500">불필요</span><p className="text-emerald-400 tabular-nums">{surface.noActionCount}건</p></div>
             <div><span className="text-slate-500">미판단</span><p className="text-slate-400 tabular-nums">{surface.pendingCount}건</p></div>
           </div>
@@ -212,7 +212,7 @@ export function ReorderDecisionGovernanceWorkbench({
               <div className="flex justify-between"><span className="text-slate-500">입고 대기</span><span className="text-slate-700 tabular-nums">{state.supplyContext.openInboundQuantity}개</span></div>
               <div className="flex justify-between"><span className="text-slate-500">안전재고</span><span className="text-slate-700 tabular-nums">{state.supplyContext.safetyStockLevel}개</span></div>
               <div className="flex justify-between"><span className="text-slate-500">리드타임</span><span className="text-slate-700">{state.supplyContext.supplierLeadTimeDays}일</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">커버리지</span><span className={cn("tabular-nums font-medium", state.coverageStatus === "critical" ? "text-red-400" : state.coverageStatus === "low" ? "text-amber-400" : "text-emerald-400")}>{state.supplyContext.daysOfCoverageRemaining}일</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">커버리지</span><span className={cn("tabular-nums font-medium", state.coverageStatus === "critical" ? "text-red-400" : state.coverageStatus === "low" ? "text-yellow-400" : "text-emerald-400")}>{state.supplyContext.daysOfCoverageRemaining}일</span></div>
             </div>
           ) : (
             <p className="text-slate-500">Supply context 미입력</p>
@@ -244,22 +244,22 @@ export function ReorderDecisionGovernanceWorkbench({
               <button onClick={onCancel} className="flex-1 md:flex-none rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs text-slate-600 transition-colors active:scale-95 min-h-[40px]">취소</button>
             )}
             {surface.canReopenStockRelease && (
-              <button onClick={onReopenStockRelease} className="flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs text-amber-300 transition-colors active:scale-95 min-h-[40px]">Stock Release 재열기</button>
+              <button onClick={onReopenStockRelease} className="flex-1 md:flex-none rounded border border-yellow-500/20 bg-yellow-500/10 hover:bg-yellow-500/20 px-3 py-1.5 text-xs text-yellow-300 transition-colors active:scale-95 min-h-[40px]">Stock Release 재열기</button>
             )}
             {surface.canSetWatch && (
-              <button onClick={onSetWatch} className="flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs text-amber-300 transition-colors active:scale-95 min-h-[40px]">모니터링</button>
+              <button onClick={onSetWatch} className="flex-1 md:flex-none rounded border border-yellow-500/20 bg-yellow-500/10 hover:bg-yellow-500/20 px-3 py-1.5 text-xs text-yellow-300 transition-colors active:scale-95 min-h-[40px]">모니터링</button>
             )}
             {surface.canMarkNoAction && (
               <button onClick={onMarkNoAction} className="flex-1 md:flex-none rounded border border-emerald-500/20 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 text-xs text-emerald-300 transition-colors active:scale-95 min-h-[40px]">조치 불필요</button>
             )}
             {surface.canRecommendReorder && (
-              <button onClick={onRecommendReorder} className="flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs text-amber-300 transition-colors active:scale-95 min-h-[40px]">재주문 권고</button>
+              <button onClick={onRecommendReorder} className="flex-1 md:flex-none rounded border border-yellow-500/20 bg-yellow-500/10 hover:bg-yellow-500/20 px-3 py-1.5 text-xs text-yellow-300 transition-colors active:scale-95 min-h-[40px]">재주문 권고</button>
             )}
             {surface.canRequireReorder && (
               <button onClick={onRequireReorder} className="flex-1 md:flex-none rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 text-xs text-red-300 transition-colors active:scale-95 min-h-[40px]">재주문 확정</button>
             )}
             {surface.canExpedite && (
-              <button onClick={onExpedite} className="flex-1 md:flex-none rounded border border-orange-500/20 bg-orange-500/10 hover:bg-orange-500/20 px-3 py-1.5 text-xs text-orange-300 transition-colors active:scale-95 min-h-[40px]">긴급 발주</button>
+              <button onClick={onExpedite} className="flex-1 md:flex-none rounded border border-yellow-500/20 bg-yellow-500/10 hover:bg-yellow-500/20 px-3 py-1.5 text-xs text-yellow-300 transition-colors active:scale-95 min-h-[40px]">긴급 발주</button>
             )}
             {surface.canEvaluate && (
               <button onClick={onStartEvaluation} className="flex-1 md:flex-none rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors active:scale-95 min-h-[40px]">재주문 평가 시작</button>

@@ -130,7 +130,7 @@ export function PolicyAdminWorkspace({
                 <div className="text-red-400">- {changeDiff.removedRules.length}개 규칙 삭제</div>
               )}
               {changeDiff.modifiedRules.length > 0 && (
-                <div className="text-amber-400">~ {changeDiff.modifiedRules.length}개 규칙 수정</div>
+                <div className="text-yellow-400">~ {changeDiff.modifiedRules.length}개 규칙 수정</div>
               )}
             </div>
           </div>
@@ -175,9 +175,9 @@ export function PolicyAdminWorkspace({
               <BeforeAfterCard comparison={simulationResult.beforeAfter} />
             )}
             {simulationResult.warnings.length > 0 && (
-              <div className="rounded border border-amber-500/20 bg-amber-500/5 p-3 space-y-1">
+              <div className="rounded border border-yellow-500/20 bg-yellow-500/5 p-3 space-y-1">
                 {simulationResult.warnings.map((w, i) => (
-                  <p key={i} className="text-xs text-amber-400">{w}</p>
+                  <p key={i} className="text-xs text-yellow-400">{w}</p>
                 ))}
               </div>
             )}
@@ -241,14 +241,14 @@ function ApprovalImpactCard({ impact }: { impact: ApprovalImpactSimulation }) {
       impact.impactLevel === "tightened" && "border-red-500/20 bg-red-500/5",
       impact.impactLevel === "relaxed" && "border-emerald-500/20 bg-emerald-500/5",
       impact.impactLevel === "no_change" && "border-slate-800 bg-slate-900/50",
-      impact.impactLevel === "mixed" && "border-amber-500/20 bg-amber-500/5",
+      impact.impactLevel === "mixed" && "border-yellow-500/20 bg-yellow-500/5",
     )}>
       <h5 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">승인 영향</h5>
       <p className={cn("text-xs font-medium",
         impact.impactLevel === "tightened" && "text-red-400",
         impact.impactLevel === "relaxed" && "text-emerald-400",
         impact.impactLevel === "no_change" && "text-slate-400",
-        impact.impactLevel === "mixed" && "text-amber-400",
+        impact.impactLevel === "mixed" && "text-yellow-400",
       )}>
         {impact.impactSummary}
       </p>

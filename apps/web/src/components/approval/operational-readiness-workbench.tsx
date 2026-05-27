@@ -27,19 +27,19 @@ import type { UnifiedSeverity } from "@/lib/ai/governance-grammar-registry";
 
 const VERDICT_DISPLAY: Record<OperationalVerdict, { label: string; color: string; bg: string; description: string }> = {
   go: { label: "Go", color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20", description: "전체 검증 통과 — 파일럿 활성화 가능" },
-  conditional_go: { label: "Conditional Go", color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20", description: "조건부 통과 — 제한적 활성화 가능" },
+  conditional_go: { label: "Conditional Go", color: "text-yellow-400", bg: "bg-yellow-500/10 border-yellow-500/20", description: "조건부 통과 — 제한적 활성화 가능" },
   no_go: { label: "No-Go", color: "text-red-400", bg: "bg-red-500/10 border-red-500/20", description: "미통과 — blocker 해소 필요" },
 };
 
 const SEVERITY_COLOR: Record<UnifiedSeverity, string> = {
   info: "text-sky-400",
-  warning: "text-amber-400",
+  warning: "text-yellow-400",
   critical: "text-red-400",
 };
 
 const SCOPE_DISPLAY: Record<string, { label: string; color: string }> = {
   internal_only: { label: "내부 전용", color: "text-slate-400" },
-  pilot_limited: { label: "제한 파일럿", color: "text-amber-400" },
+  pilot_limited: { label: "제한 파일럿", color: "text-yellow-400" },
   pilot_expanded: { label: "확장 파일럿", color: "text-emerald-400" },
   hold: { label: "보류", color: "text-red-400" },
 };
@@ -82,7 +82,7 @@ function CategoryRow({ cat }: {
 }) {
   const statusIcon = cat.passed ? "✓" : "✗";
   const statusColor = cat.passed ? "text-emerald-400" : "text-red-400";
-  const scoreColor = cat.score >= 80 ? "text-emerald-400" : cat.score >= 50 ? "text-amber-400" : "text-red-400";
+  const scoreColor = cat.score >= 80 ? "text-emerald-400" : cat.score >= 50 ? "text-yellow-400" : "text-red-400";
 
   return (
     <div className="flex items-center justify-between border-b border-slate-700/50 py-2 last:border-0">
@@ -97,7 +97,7 @@ function CategoryRow({ cat }: {
           </span>
         )}
         {cat.conditionalCount > 0 && (
-          <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-xs text-amber-400">
+          <span className="rounded bg-yellow-500/10 px-1.5 py-0.5 text-xs text-yellow-400">
             {cat.conditionalCount} 조건부
           </span>
         )}
@@ -183,7 +183,7 @@ function DockAction({
       ? ""
       : action.actionKey === "approve_go"
         ? "bg-emerald-600 hover:bg-emerald-500 text-white"
-        : "bg-amber-600 hover:bg-amber-500 text-white"
+        : "bg-yellow-600 hover:bg-yellow-500 text-white"
     : "";
 
   const handleClick = () => {
@@ -268,7 +268,7 @@ export function OperationalReadinessWorkbench({
         <IssueList title={`Blocker (${center.blockingIssues.length})`} issues={center.blockingIssues} color="text-red-400" />
 
         {/* Conditional issues */}
-        <IssueList title={`조건부 이슈 (${center.conditionalIssues.length})`} issues={center.conditionalIssues} color="text-amber-400" />
+        <IssueList title={`조건부 이슈 (${center.conditionalIssues.length})`} issues={center.conditionalIssues} color="text-yellow-400" />
 
         {/* Scope recommendation */}
         <ScopeRecommendation rec={center.scopeRecommendation} />
@@ -352,7 +352,7 @@ export function OperationalReadinessWorkbench({
               <span>판정</span>
               <span className={
                 rail.acceptanceSummary.verdict === "accepted" ? "text-emerald-400"
-                  : rail.acceptanceSummary.verdict === "conditional" ? "text-amber-400"
+                  : rail.acceptanceSummary.verdict === "conditional" ? "text-yellow-400"
                   : "text-red-400"
               }>
                 {rail.acceptanceSummary.verdict}
