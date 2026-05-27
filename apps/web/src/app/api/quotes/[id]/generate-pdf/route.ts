@@ -190,6 +190,6 @@ export async function POST(
       },
     });
   } catch (error) {
-    return handleApiError(error);
+    return handleApiError(error, "quotes/[id]/generate-pdf/POST");
   }
 }
