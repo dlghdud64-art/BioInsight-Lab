@@ -743,12 +743,15 @@ function DashboardPageInner() {
           <CategoryDistributionCard categorySpending={stats.categorySpending} />
         )}
       </div>
-      <div className="hidden lg:grid lg:grid-cols-3 gap-4">
+      {/* §11.313 — items-stretch 로 두 grid cell 높이 정합 + CategoryDistributionCard
+          h-full 로 셀(=SpendTrend 높이) 채움. 카드 하단 라인 일치 + 카테고리
+          카드 내부 세로 균등 배치 (flex-1). */}
+      <div className="hidden lg:grid lg:grid-cols-3 gap-4 items-stretch">
         <div className="lg:col-span-2">
           <SpendTrendCard monthlySpending={stats.monthlySpendingChart} />
         </div>
         <div className="lg:col-span-1">
-          <CategoryDistributionCard categorySpending={stats.categorySpending} />
+          <CategoryDistributionCard categorySpending={stats.categorySpending} className="h-full" />
         </div>
       </div>
 

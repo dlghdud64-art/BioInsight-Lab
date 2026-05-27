@@ -37,6 +37,8 @@ interface CategoryItem {
 
 interface CategoryDistributionCardProps {
   categorySpending: CategoryItem[];
+  /** §11.313 — 부모 grid cell 높이 정합용 (예: "h-full"). */
+  className?: string;
 }
 
 const CATEGORY_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#94a3b8"];
@@ -72,7 +74,7 @@ function ChartTooltip({
   );
 }
 
-export function CategoryDistributionCard({ categorySpending }: CategoryDistributionCardProps) {
+export function CategoryDistributionCard({ categorySpending, className }: CategoryDistributionCardProps) {
   const data = useMemo(() => {
     if (!categorySpending || categorySpending.length === 0) return [];
     const total = categorySpending.reduce((s, c) => s + c.amount, 0);
@@ -93,7 +95,9 @@ export function CategoryDistributionCard({ categorySpending }: CategoryDistribut
   const isEmpty = data.length === 0;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4 md:p-5">
+    /* §11.313 — flex flex-col + className(h-full) 로 부모 grid cell 높이 정합.
+       헤더는 고정, 차트 영역은 flex-1 로 남은 세로 공간 채워 중앙 정렬. */
+    <div className={`rounded-xl border border-slate-200 bg-white shadow-sm p-4 md:p-5 flex flex-col ${className ?? ""}`}>
       <div className="flex items-center justify-between mb-3">
         <div>
           <h3 className="text-[13px] font-extrabold text-slate-900">카테고리별 비중</h3>
@@ -115,7 +119,7 @@ export function CategoryDistributionCard({ categorySpending }: CategoryDistribut
         /* §11.243b #4 — 호영님 P0: 빈 도넛 mockup + 반투명 overlay.
            회색 톤 sample 차트 + 안내 메시지로 "쌓이면 무엇을 볼 수 있는지"
            사전 인지. backdrop-blur overlay 안 안내 텍스트 정합. */
-        <div className="relative grid grid-cols-1 md:grid-cols-2 gap-3 items-center opacity-90">
+        <div className="relative grid grid-cols-1 md:grid-cols-2 gap-3 items-center opacity-90 flex-1">
           <div className="h-[160px] opacity-50 grayscale pointer-events-none">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -166,7 +170,7 @@ export function CategoryDistributionCard({ categorySpending }: CategoryDistribut
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-center flex-1">
           <div className="h-[160px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
