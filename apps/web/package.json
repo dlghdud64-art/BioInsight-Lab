@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/vercel-migrate.js",
+    "prebuild": "node scripts/vercel-migrate.js && node scripts/copy-pretendard-font.js",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
