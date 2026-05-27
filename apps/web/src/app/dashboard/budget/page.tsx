@@ -39,8 +39,8 @@ import {
 // ── Risk config ──
 const RISK_CONFIG: Record<string, { label: string; color: string; dotColor: string; barColor: string }> = {
   safe:     { label: "정상", color: "text-emerald-600", dotColor: "bg-emerald-500", barColor: "bg-emerald-500" },
-  warning:  { label: "주의", color: "text-amber-600",   dotColor: "bg-amber-500",   barColor: "bg-amber-500" },
-  critical: { label: "소과", color: "text-orange-600",  dotColor: "bg-orange-500",  barColor: "bg-orange-500" },
+  warning:  { label: "주의", color: "text-yellow-600",   dotColor: "bg-yellow-500",   barColor: "bg-yellow-500" },
+  critical: { label: "소과", color: "text-red-600",  dotColor: "bg-red-500",  barColor: "bg-red-500" },
   over:     { label: "초과", color: "text-red-600",     dotColor: "bg-red-500",     barColor: "bg-red-500" },
   ended:    { label: "종료", color: "text-slate-500",   dotColor: "bg-slate-400",   barColor: "bg-slate-400" },
   upcoming: { label: "예정", color: "text-blue-600",    dotColor: "bg-blue-500",    barColor: "bg-blue-500" },
@@ -175,7 +175,7 @@ export default function BudgetPage() {
         description: `"${b.name}"의 소모품 지출이 지난 3개월 평균 대비 42% 급증했습니다. 대량 발주 여부를 확인하세요.`,
         actionLabel: "상세 분석 보기",
         actionHref: `/dashboard/budget/${b.id}`,
-        color: "text-amber-600",
+        color: "text-yellow-600",
       });
     }
     insights.push({
@@ -324,9 +324,9 @@ export default function BudgetPage() {
             },
             {
               icon: <Clock className="h-4 w-4" />,
-              iconColor: "text-amber-500",
-              cardBg: actionKpi.blockRisk > 0 ? "bg-amber-50 border-amber-200" : "bg-white border-slate-200",
-              valueColor: actionKpi.blockRisk > 0 ? "text-amber-600" : "text-slate-900",
+              iconColor: "text-yellow-500",
+              cardBg: actionKpi.blockRisk > 0 ? "bg-yellow-50 border-yellow-200" : "bg-white border-slate-200",
+              valueColor: actionKpi.blockRisk > 0 ? "text-yellow-600" : "text-slate-900",
               label: "차단 위험",
               value: `${actionKpi.blockRisk}건`,
               sub: actionKpi.blockRisk > 0 ? "임계 구간 — 곧 차단 가능" : "임계치 안전",
@@ -419,12 +419,12 @@ export default function BudgetPage() {
                 {departmentTop3.length > 0 ? (
                   <div className="space-y-3">
                     {departmentTop3.map((dept: DepartmentSpending) => {
-                      const barColor = dept.rate > 100 ? "bg-red-500" : dept.rate >= 80 ? "bg-amber-500" : "bg-emerald-500";
+                      const barColor = dept.rate > 100 ? "bg-red-500" : dept.rate >= 80 ? "bg-yellow-500" : "bg-emerald-500";
                       return (
                         <div key={dept.department}>
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-xs text-slate-700 font-medium">{dept.department}</span>
-                            <span className={`text-xs font-bold tabular-nums ${dept.rate > 100 ? "text-red-600" : dept.rate >= 80 ? "text-amber-600" : "text-emerald-600"}`}>{dept.rate}%</span>
+                            <span className={`text-xs font-bold tabular-nums ${dept.rate > 100 ? "text-red-600" : dept.rate >= 80 ? "text-yellow-600" : "text-emerald-600"}`}>{dept.rate}%</span>
                           </div>
                           <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
                             <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${Math.min(dept.rate, 100)}%` }} />
@@ -502,8 +502,8 @@ export default function BudgetPage() {
                 : ctrl.risk === "warning" ? "추이 확인"
                 : "상세 보기";
               const barColor = ctrl.risk === "over" ? "bg-red-500"
-                : ctrl.risk === "critical" ? "bg-orange-500"
-                : ctrl.risk === "warning" ? "bg-amber-400"
+                : ctrl.risk === "critical" ? "bg-red-500"
+                : ctrl.risk === "warning" ? "bg-yellow-400"
                 : "bg-emerald-500";
               return (
                 <Link key={b.id} href={`/dashboard/budget/${b.id}`} className="block border-b border-slate-100 last:border-b-0 hover:bg-slate-50 transition-colors">
@@ -602,7 +602,7 @@ export default function BudgetPage() {
           <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 rounded-2xl p-6 text-white">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
-                <Sparkles className="h-5 w-5 text-amber-400" />
+                <Sparkles className="h-5 w-5 text-yellow-400" />
               </div>
               <div>
                 <h2 className="text-sm font-bold">AI 예산 이상 탐지 &amp; 예측</h2>

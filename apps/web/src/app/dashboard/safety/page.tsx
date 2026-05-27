@@ -48,8 +48,8 @@ import {
 // ── GHS 픽토그램 (라이트 테마) ──────────────────────────────────────────────
 const GHS_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
   corrosive: { label: "부식성 물질", bg: "bg-red-50", color: "text-red-500" },
-  toxic: { label: "독성 물질", bg: "bg-amber-50", color: "text-amber-600" },
-  flammable: { label: "인화성 물질", bg: "bg-orange-50", color: "text-orange-500" },
+  toxic: { label: "독성 물질", bg: "bg-yellow-50", color: "text-yellow-600" },
+  flammable: { label: "인화성 물질", bg: "bg-red-50", color: "text-red-500" },
   oxidizer: { label: "산화성 물질", bg: "bg-yellow-50", color: "text-yellow-600" },
 };
 
@@ -100,7 +100,7 @@ function PPEIcon({ type, required }: { type: string; required?: boolean }) {
 // ── Classification badge ─────────────────────────────────────────────
 const CLASS_STYLE: Record<OperationalClassification, { label: string; bg: string; text: string; dot: string }> = {
   immediate_action: { label: "즉시 조치", bg: "bg-red-50", text: "text-red-700", dot: "bg-red-500" },
-  document_remediation: { label: "문서 보완", bg: "bg-amber-50", text: "text-amber-700", dot: "bg-amber-500" },
+  document_remediation: { label: "문서 보완", bg: "bg-yellow-50", text: "text-yellow-700", dot: "bg-yellow-500" },
   review_required: { label: "검토 필요", bg: "bg-blue-50", text: "text-blue-700", dot: "bg-blue-500" },
   monitor_only: { label: "모니터링", bg: "bg-slate-50", text: "text-slate-600", dot: "bg-slate-400" },
   compliant: { label: "정상", bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500" },
@@ -441,8 +441,8 @@ export default function SafetyManagerPage() {
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
-                <Shield className="h-5 w-5 text-orange-500" />
+              <div className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
+                <Shield className="h-5 w-5 text-red-500" />
               </div>
               <div>
                 <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-slate-900">안전 운영 판단</h1>
@@ -494,7 +494,7 @@ export default function SafetyManagerPage() {
             <Badge variant="outline" dot="emerald" className="border-emerald-200 bg-emerald-50 text-emerald-700">
               현재 적용됨 {safetyAppliedCount}
             </Badge>
-            <Badge variant="outline" dot="amber" className="border-amber-200 bg-amber-50 text-amber-700">
+            <Badge variant="outline" dot="amber" className="border-yellow-200 bg-yellow-50 text-yellow-700">
               저장 대기 {safetyPendingCount}
             </Badge>
             <span
@@ -565,9 +565,9 @@ export default function SafetyManagerPage() {
                 <p className="text-xs font-bold text-slate-300 mb-3">위험 유형별 분포</p>
                 <div className="space-y-2.5">
                   {[
-                    { label: "인화성", count: kpiDetail.flammableCount, color: "bg-orange-400" },
+                    { label: "인화성", count: kpiDetail.flammableCount, color: "bg-red-400" },
                     { label: "부식성", count: kpiDetail.corrosiveCount, color: "bg-red-400" },
-                    { label: "독성", count: kpiDetail.toxicCount, color: "bg-amber-400" },
+                    { label: "독성", count: kpiDetail.toxicCount, color: "bg-yellow-400" },
                     { label: "산화성", count: kpiDetail.oxidizerCount, color: "bg-yellow-400" },
                   ].filter((d) => d.count > 0).map((d) => (
                     <div key={d.label}>
@@ -586,15 +586,15 @@ export default function SafetyManagerPage() {
           </div>
 
           {/* MSDS 미등록 */}
-          <div className="group/kpi relative rounded-xl border border-slate-200 bg-white p-5 hover:shadow-md hover:border-amber-200 transition-all cursor-default">
+          <div className="group/kpi relative rounded-xl border border-slate-200 bg-white p-5 hover:shadow-md hover:border-yellow-200 transition-all cursor-default">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-                <FileWarning className="h-5 w-5 text-amber-500" />
+              <div className="w-10 h-10 rounded-xl bg-yellow-50 flex items-center justify-center">
+                <FileWarning className="h-5 w-5 text-yellow-500" />
               </div>
               <span className="text-xs text-slate-400">MSDS 미등록</span>
             </div>
             <p className="text-3xl font-extrabold text-slate-900">{msdsMissingCount}</p>
-            <p className="text-xs text-amber-600 font-medium mt-1">보완 필요</p>
+            <p className="text-xs text-yellow-600 font-medium mt-1">보완 필요</p>
             {/* 호버 팝업 */}
             <div className="absolute left-0 right-0 top-full mt-2 z-30 opacity-0 translate-y-1 pointer-events-none group-hover/kpi:opacity-100 group-hover/kpi:translate-y-0 group-hover/kpi:pointer-events-auto transition-all duration-200 ease-out">
               <div className="mx-2 rounded-xl bg-slate-900 text-white p-4 shadow-xl">
@@ -606,7 +606,7 @@ export default function SafetyManagerPage() {
                       <span className="font-bold">{kpiDetail.msdsNewMissing}건</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-slate-700 overflow-hidden">
-                      <div className="h-full rounded-full bg-amber-400 transition-all duration-500" style={{ width: `${msdsMissingCount > 0 ? (kpiDetail.msdsNewMissing / msdsMissingCount) * 100 : 0}%` }} />
+                      <div className="h-full rounded-full bg-yellow-400 transition-all duration-500" style={{ width: `${msdsMissingCount > 0 ? (kpiDetail.msdsNewMissing / msdsMissingCount) * 100 : 0}%` }} />
                     </div>
                   </div>
                   <div>
@@ -707,7 +707,7 @@ export default function SafetyManagerPage() {
                 <span className="font-bold text-slate-900">{immediateCount}건</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                <span className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
                 <span className="text-slate-600">문서 보완</span>
                 <span className="font-bold text-slate-900">{docRemCount}건</span>
               </div>
@@ -793,12 +793,12 @@ export default function SafetyManagerPage() {
                             <p className="text-xs text-slate-600 leading-relaxed">{classified.holdRisk}</p>
                           </div>
                           <div className="p-3 rounded-lg bg-slate-50 border border-slate-100 flex items-center gap-4 text-xs">
-                            <span>MSDS: {classified.hasMsds ? <span className="text-emerald-600 font-semibold">등록</span> : <span className="text-amber-600 font-semibold">미등록</span>}</span>
-                            <span>점검: {classified.lastInspection ? <span className="text-emerald-600 font-semibold">{classified.lastInspection}</span> : <span className="text-amber-600 font-semibold">없음</span>}</span>
+                            <span>MSDS: {classified.hasMsds ? <span className="text-emerald-600 font-semibold">등록</span> : <span className="text-yellow-600 font-semibold">미등록</span>}</span>
+                            <span>점검: {classified.lastInspection ? <span className="text-emerald-600 font-semibold">{classified.lastInspection}</span> : <span className="text-yellow-600 font-semibold">없음</span>}</span>
                           </div>
                           <div className="flex flex-col gap-1.5">
                             {!classified.hasMsds && (
-                              <Button variant="outline" size="sm" className="w-full h-9 text-xs font-medium text-amber-700 border-amber-200 hover:bg-amber-50 justify-start gap-2"
+                              <Button variant="outline" size="sm" className="w-full h-9 text-xs font-medium text-yellow-700 border-yellow-200 hover:bg-yellow-50 justify-start gap-2"
                                 onClick={() => openMsdsDialog(classified)}>
                                 <FileWarning className="h-3.5 w-3.5" />MSDS 등록
                               </Button>
@@ -880,7 +880,7 @@ export default function SafetyManagerPage() {
                   const classified = classifiedMap.get(item.id);
                   const classStyle = classified ? CLASS_STYLE[classified.classification] : null;
                   const isSelected = selectedItemId === item.id;
-                  const borderColor = item.level === "HIGH" ? "border-l-red-400" : item.level === "MEDIUM" ? "border-l-amber-400" : "border-l-slate-200";
+                  const borderColor = item.level === "HIGH" ? "border-l-red-400" : item.level === "MEDIUM" ? "border-l-yellow-400" : "border-l-slate-200";
 
                   return (
                     <button key={item.id} type="button" onClick={() => setSelectedItemId(item.id)}
@@ -913,7 +913,7 @@ export default function SafetyManagerPage() {
                         <div className="flex items-center gap-4 flex-shrink-0 text-xs">
                           <div className="text-right hidden md:block">
                             <span className="text-slate-400">MSDS 상태</span>
-                            <div className={`font-semibold mt-0.5 ${item.hasMsds ? "text-emerald-600" : "text-amber-600"}`}>
+                            <div className={`font-semibold mt-0.5 ${item.hasMsds ? "text-emerald-600" : "text-yellow-600"}`}>
                               {item.hasMsds ? "● 등록" : "● 미등록"}
                             </div>
                           </div>
@@ -985,8 +985,8 @@ export default function SafetyManagerPage() {
                   <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-100">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">문서 상태</span>
                     <div className="flex items-center gap-4 text-xs">
-                      <span>MSDS: {selectedClassified.hasMsds ? <span className="text-emerald-600 font-semibold">등록</span> : <span className="text-amber-600 font-semibold">미등록</span>}</span>
-                      <span>점검: {selectedClassified.lastInspection ? <span className="text-emerald-600 font-semibold">{selectedClassified.lastInspection}</span> : <span className="text-amber-600 font-semibold">없음</span>}</span>
+                      <span>MSDS: {selectedClassified.hasMsds ? <span className="text-emerald-600 font-semibold">등록</span> : <span className="text-yellow-600 font-semibold">미등록</span>}</span>
+                      <span>점검: {selectedClassified.lastInspection ? <span className="text-emerald-600 font-semibold">{selectedClassified.lastInspection}</span> : <span className="text-yellow-600 font-semibold">없음</span>}</span>
                     </div>
                   </div>
 
@@ -1002,7 +1002,7 @@ export default function SafetyManagerPage() {
                   {/* Action dock */}
                   <div className="pt-3 border-t border-slate-100 space-y-2">
                     {!selectedClassified.hasMsds && (
-                      <Button variant="outline" size="sm" className="w-full h-9 text-xs font-medium text-amber-700 border-amber-200 hover:bg-amber-50 justify-start gap-2"
+                      <Button variant="outline" size="sm" className="w-full h-9 text-xs font-medium text-yellow-700 border-yellow-200 hover:bg-yellow-50 justify-start gap-2"
                         onClick={() => openMsdsDialog(selectedClassified)}>
                         <FileWarning className="h-3.5 w-3.5" />MSDS 등록
                       </Button>
@@ -1039,7 +1039,7 @@ export default function SafetyManagerPage() {
         <DialogContent className="sm:max-w-lg bg-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base text-slate-900">
-              <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center"><FileWarning className="h-4 w-4 text-amber-500" /></div>
+              <div className="w-8 h-8 rounded-lg bg-yellow-50 flex items-center justify-center"><FileWarning className="h-4 w-4 text-yellow-500" /></div>
               MSDS 등록
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">{msdsTarget?.name} ({msdsTarget?.cas})의 안전보건자료를 등록합니다.</DialogDescription>
@@ -1088,7 +1088,7 @@ export default function SafetyManagerPage() {
             <div className="space-y-3">
               <div className="flex items-center justify-between"><div><Label className="text-xs font-medium text-slate-700">보관 상태 정상</Label><p className="text-[11px] text-slate-400">보관 조건 및 용기 상태가 적합합니다.</p></div><Switch checked={inspForm.storageOk} onCheckedChange={(v: boolean) => setInspForm((f) => ({ ...f, storageOk: v }))} /></div>
               <div className="flex items-center justify-between"><div><Label className="text-xs font-medium text-slate-700">PPE 확인</Label><p className="text-[11px] text-slate-400">필수 보호구가 비치되어 있습니다.</p></div><Switch checked={inspForm.ppeOk} onCheckedChange={(v: boolean) => setInspForm((f) => ({ ...f, ppeOk: v }))} /></div>
-              <div className="flex items-center justify-between"><div><Label className="text-xs font-medium text-amber-600">이상 여부</Label><p className="text-[11px] text-slate-400">점검 중 이상이 발견되었습니다.</p></div><Switch checked={inspForm.hasIssue} onCheckedChange={(v: boolean) => setInspForm((f) => ({ ...f, hasIssue: v }))} /></div>
+              <div className="flex items-center justify-between"><div><Label className="text-xs font-medium text-yellow-600">이상 여부</Label><p className="text-[11px] text-slate-400">점검 중 이상이 발견되었습니다.</p></div><Switch checked={inspForm.hasIssue} onCheckedChange={(v: boolean) => setInspForm((f) => ({ ...f, hasIssue: v }))} /></div>
             </div>
             {inspForm.hasIssue && (
               <div className="space-y-1.5">
@@ -1161,7 +1161,7 @@ export default function SafetyManagerPage() {
               <div className="flex items-center gap-4 text-xs">
                 <span className="text-red-600 font-semibold">긴급 {immediateCount}</span>
                 <span className="text-slate-300">|</span>
-                <span className="text-amber-600 font-semibold">문서보완 {docRemCount}</span>
+                <span className="text-yellow-600 font-semibold">문서보완 {docRemCount}</span>
                 <span className="text-slate-300">|</span>
                 <span className="text-slate-500">MSDS 미등록 {msdsMissingCount}</span>
                 <span className="ml-auto text-slate-400">분석 대상 {priorityBacklogCount}건</span>

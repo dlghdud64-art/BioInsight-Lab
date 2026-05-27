@@ -86,7 +86,7 @@ export function ReentryContextStrip({ context, onReturn }: ReentryContextStripPr
           <span className="text-red-400/70">제외: {context.blockedVendorIds.length}곳</span>
         )}
         {!context.substituteAllowed && (
-          <span className="text-amber-400/70">동일 품목만</span>
+          <span className="text-yellow-400/70">동일 품목만</span>
         )}
         {context.requiredDocuments && context.requiredDocuments.length > 0 && (
           <span className="text-blue-400/70">필수 문서: {context.requiredDocuments.join(', ')}</span>
@@ -101,7 +101,7 @@ export function ReentryContextStrip({ context, onReturn }: ReentryContextStripPr
         {decision.blockedReasons.length > 0 && (
           <>
             <span>·</span>
-            <span className="text-amber-400">{decision.blockedReasons[0]}</span>
+            <span className="text-yellow-400">{decision.blockedReasons[0]}</span>
           </>
         )}
       </div>
@@ -125,7 +125,7 @@ export function ReentryDecisionPanel({ context }: ReentryDecisionPanelProps) {
   const readinessColor = decision.reentryReadiness === 'ready'
     ? 'bg-emerald-400'
     : decision.reentryReadiness === 'needs_review'
-      ? 'bg-amber-400'
+      ? 'bg-yellow-400'
       : 'bg-red-400';
 
   return (
@@ -275,7 +275,7 @@ export function QuoteBootstrapBanner({ bootstrap }: QuoteBootstrapBannerProps) {
           <span className="text-red-400/70">제외 {bootstrap.excludedVendorIds.length}곳</span>
         )}
         {!bootstrap.substituteAllowed && (
-          <span className="text-amber-400/70">동일 품목만</span>
+          <span className="text-yellow-400/70">동일 품목만</span>
         )}
         {bootstrap.requiredDocuments.length > 0 && (
           <span className="text-blue-400/70">문서: {bootstrap.requiredDocuments.join(', ')}</span>

@@ -279,7 +279,7 @@ export default function AuditTrailPage() {
       <div className="flex-1 flex items-center justify-center min-h-[60vh]">
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
-            <ShieldAlert className="h-10 w-10 text-amber-500 mx-auto mb-3" />
+            <ShieldAlert className="h-10 w-10 text-yellow-500 mx-auto mb-3" />
             <p className="text-sm font-semibold text-slate-700">권한 확인 중</p>
             <p className="text-xs text-slate-400 mt-1 break-keep">
               감사 증적은 관리자(Admin) 계정만 열람할 수 있습니다.

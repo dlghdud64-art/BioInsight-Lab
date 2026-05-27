@@ -66,7 +66,7 @@ const STATUS_TONES: Record<string, OperationalHeaderProps["statusTone"]> = {
 const STEP_TONE_STYLES: Record<string, string> = {
   neutral: "bg-slate-200 text-slate-600 border-slate-200",
   info: "bg-blue-900/40 text-blue-300 border-blue-700",
-  warning: "bg-amber-900/40 text-amber-300 border-amber-700",
+  warning: "bg-yellow-900/40 text-yellow-300 border-yellow-700",
   danger: "bg-red-900/40 text-red-300 border-red-700",
   success: "bg-green-900/40 text-green-300 border-green-700",
 };
@@ -74,7 +74,7 @@ const STEP_TONE_STYLES: Record<string, string> = {
 const FULFILLMENT_TONE_STYLES: Record<string, string> = {
   neutral: "text-slate-400",
   info: "text-blue-400",
-  warning: "text-amber-400",
+  warning: "text-yellow-400",
   danger: "text-red-400",
   success: "text-emerald-400",
 };
@@ -82,16 +82,16 @@ const FULFILLMENT_TONE_STYLES: Record<string, string> = {
 // ── Readiness indicators ──
 const READINESS_DOT: Record<string, string> = {
   ready: "bg-emerald-400",
-  needs_review: "bg-amber-400",
+  needs_review: "bg-yellow-400",
   blocked: "bg-red-400",
-  partial: "bg-amber-400",
+  partial: "bg-yellow-400",
 };
 
 const READINESS_TEXT: Record<string, string> = {
   ready: "text-emerald-400",
-  needs_review: "text-amber-400",
+  needs_review: "text-yellow-400",
   blocked: "text-red-400",
-  partial: "text-amber-400",
+  partial: "text-yellow-400",
 };
 
 // ==========================================================================
@@ -423,7 +423,7 @@ function UpstreamContextStrip({ model }: { model: POExecutionModel }) {
       )}
       <span className="ml-auto text-slate-500">
         <span className={cn(
-          origin.requiredByTone === "overdue" ? "text-red-400" : origin.requiredByTone === "due_soon" ? "text-amber-400" : "text-slate-500",
+          origin.requiredByTone === "overdue" ? "text-red-400" : origin.requiredByTone === "due_soon" ? "text-yellow-400" : "text-slate-500",
         )}>
           {origin.requiredByLabel}
         </span>
@@ -483,7 +483,7 @@ function CollapsibleSection({
   const toneCls: Record<string, string> = {
     neutral: "bg-slate-200 text-slate-600",
     info: "bg-blue-900/30 text-blue-300",
-    warning: "bg-amber-900/30 text-amber-300",
+    warning: "bg-yellow-900/30 text-yellow-300",
     danger: "bg-red-900/30 text-red-300",
     success: "bg-emerald-900/30 text-emerald-300",
   };
@@ -532,9 +532,9 @@ function ApprovalExecutionSurface({ model }: { model: POExecutionModel }) {
 
       {/* Blocker label */}
       {ap.blockerLabel && (
-        <div className="flex items-center gap-2 text-xs bg-amber-900/10 border border-amber-800/30 rounded px-3 py-2">
-          <Shield className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-          <span className="text-amber-300">{ap.blockerLabel}</span>
+        <div className="flex items-center gap-2 text-xs bg-yellow-900/10 border border-yellow-800/30 rounded px-3 py-2">
+          <Shield className="h-3.5 w-3.5 text-yellow-400 shrink-0" />
+          <span className="text-yellow-300">{ap.blockerLabel}</span>
         </div>
       )}
 
@@ -550,8 +550,8 @@ function ApprovalExecutionSurface({ model }: { model: POExecutionModel }) {
       {ap.conditionalNotes.length > 0 && (
         <div className="space-y-1">
           {ap.conditionalNotes.map((note, i) => (
-            <div key={i} className="flex items-center gap-2 text-xs text-amber-300">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+            <div key={i} className="flex items-center gap-2 text-xs text-yellow-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 shrink-0" />
               조건부: {note}
             </div>
           ))}
@@ -615,7 +615,7 @@ function IssueReadinessStrip({ model }: { model: POExecutionModel }) {
         <span className={cn("font-medium", READINESS_TEXT[ir.readiness])}>{ir.label}</span>
       </div>
       {ir.missingContext.length > 0 && (
-        <div className="flex items-center gap-1 text-amber-400">
+        <div className="flex items-center gap-1 text-yellow-400">
           <AlertCircle className="h-3 w-3" />
           {ir.missingContext.join(" · ")}
         </div>
@@ -648,7 +648,7 @@ function LineExecutionTable({ lines }: { lines: LineExecutionSummary[] }) {
               <td className="px-3 py-2 text-slate-700">
                 {line.itemLabel}
                 {line.substituteFlag && (
-                  <span className="ml-1 text-[10px] text-orange-400">[대체]</span>
+                  <span className="ml-1 text-[10px] text-yellow-400">[대체]</span>
                 )}
               </td>
               <td className="px-3 py-2 text-slate-600 font-mono whitespace-nowrap">{line.orderedSummary}</td>
@@ -664,7 +664,7 @@ function LineExecutionTable({ lines }: { lines: LineExecutionSummary[] }) {
                 {line.nextAction ? (
                   <span className="text-blue-400 font-medium">{line.nextAction}</span>
                 ) : line.riskSummary ? (
-                  <span className="text-amber-400">{line.riskSummary}</span>
+                  <span className="text-yellow-400">{line.riskSummary}</span>
                 ) : (
                   <span className="text-slate-600">—</span>
                 )}
@@ -737,10 +737,10 @@ function AcknowledgementSurface({ model }: { model: POExecutionModel }) {
       {(a.backorderCount > 0 || a.substituteCount > 0 || a.issueCount > 0) && (
         <div className="flex items-center gap-2 text-[10px] font-medium">
           {a.backorderCount > 0 && (
-            <span className="rounded bg-amber-900/30 text-amber-300 px-2 py-0.5">재입고 {a.backorderCount}건</span>
+            <span className="rounded bg-yellow-900/30 text-yellow-300 px-2 py-0.5">재입고 {a.backorderCount}건</span>
           )}
           {a.substituteCount > 0 && (
-            <span className="rounded bg-orange-900/30 text-orange-300 px-2 py-0.5">대체품 {a.substituteCount}건</span>
+            <span className="rounded bg-yellow-900/30 text-yellow-300 px-2 py-0.5">대체품 {a.substituteCount}건</span>
           )}
           {a.issueCount > 0 && (
             <span className="rounded bg-red-900/30 text-red-300 px-2 py-0.5">이슈 {a.issueCount}건</span>
@@ -771,7 +771,7 @@ function AcknowledgementSurface({ model }: { model: POExecutionModel }) {
                     <span className={cn(
                       "px-1.5 py-0.5 rounded text-[10px] font-medium",
                       lc.status === "confirmed" ? "bg-emerald-900/30 text-emerald-300" :
-                      lc.status === "backordered" ? "bg-amber-900/30 text-amber-300" :
+                      lc.status === "backordered" ? "bg-yellow-900/30 text-yellow-300" :
                       lc.status === "declined" ? "bg-red-900/30 text-red-300" :
                       "bg-slate-200 text-slate-600",
                     )}>
@@ -780,7 +780,7 @@ function AcknowledgementSurface({ model }: { model: POExecutionModel }) {
                   </td>
                   <td className="px-3 py-2 text-slate-600 font-mono">
                     {lc.confirmedQty ?? "—"}
-                    {lc.backorderQty ? <span className="text-amber-400 ml-1">(+{lc.backorderQty} 대기)</span> : ""}
+                    {lc.backorderQty ? <span className="text-yellow-400 ml-1">(+{lc.backorderQty} 대기)</span> : ""}
                   </td>
                   <td className="px-3 py-2 text-slate-500">{lc.confirmedDelivery ?? "—"}</td>
                   <td className="px-3 py-2">
@@ -911,18 +911,18 @@ function DispatchWorkbenchEntry({ poId, outboundRecord }: DispatchWorkbenchEntry
     return (
       <Link
         href={href}
-        className="flex items-center justify-between gap-3 rounded border border-amber-700/40 bg-amber-900/15 hover:bg-amber-900/25 px-4 py-2.5 text-xs transition-colors"
+        className="flex items-center justify-between gap-3 rounded border border-yellow-700/40 bg-yellow-900/15 hover:bg-yellow-900/25 px-4 py-2.5 text-xs transition-colors"
       >
         <div className="flex items-center gap-2">
-          <span className="rounded bg-amber-700/40 px-1.5 py-0.5 text-[10px] font-medium text-amber-200 uppercase tracking-wider">
+          <span className="rounded bg-yellow-700/40 px-1.5 py-0.5 text-[10px] font-medium text-yellow-200 uppercase tracking-wider">
             예약 발송 등록
           </span>
-          <CalendarClock className="h-3.5 w-3.5 text-amber-300" />
+          <CalendarClock className="h-3.5 w-3.5 text-yellow-300" />
           <span className="text-slate-300">
             {formatScheduledFor(outboundRecord.scheduledFor)} 발송 예정 — 워크벤치에서 재예약/취소
           </span>
         </div>
-        <ArrowRight className="h-3 w-3 text-amber-300" />
+        <ArrowRight className="h-3 w-3 text-yellow-300" />
       </Link>
     );
   }

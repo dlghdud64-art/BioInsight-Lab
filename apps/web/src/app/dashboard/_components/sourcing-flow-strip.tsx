@@ -67,7 +67,7 @@ export function SourcingFlowStrip({ flowContext, className }: SourcingFlowStripP
             flowContext.urgency === '긴급' || flowContext.urgency === 'critical'
               ? 'bg-red-500/10 text-red-400'
               : flowContext.urgency === '높음' || flowContext.urgency === 'high'
-                ? 'bg-amber-500/10 text-amber-400'
+                ? 'bg-yellow-500/10 text-yellow-400'
                 : 'bg-slate-700 text-slate-400',
           )}
         >
@@ -116,7 +116,7 @@ export function SourcingFlowStrip({ flowContext, className }: SourcingFlowStripP
               flowContext.recommendedPath === 'quick_quote_create'
                 ? 'bg-emerald-500/10 text-emerald-400'
                 : flowContext.recommendedPath === 'compare_first'
-                  ? 'bg-amber-500/10 text-amber-400'
+                  ? 'bg-yellow-500/10 text-yellow-400'
                   : 'bg-blue-500/10 text-blue-400',
             )}
           >

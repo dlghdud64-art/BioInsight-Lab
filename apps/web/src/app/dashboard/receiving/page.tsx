@@ -31,7 +31,7 @@ const RCV_BUCKET_TABS: { key: ModuleBucketKey; label: string }[] = [
 // ── Priority badge color ──────────────────────────────────────────
 const PRIORITY_DOT: Record<string, string> = {
   p0: "bg-red-500",
-  p1: "bg-amber-500",
+  p1: "bg-yellow-500",
   p2: "bg-blue-500",
   p3: "bg-slate-500",
 };
@@ -312,7 +312,7 @@ function PriorityCard({
   const borderClass = item.dueState.isOverdue
     ? "border-l-red-500"
     : item.blockerSummary
-      ? "border-l-amber-500"
+      ? "border-l-yellow-500"
       : "border-l-slate-700";
 
   return (
@@ -366,7 +366,7 @@ function ActionableRow({
   const borderClass = item.dueState.isOverdue
     ? "border-l-2 border-l-red-500"
     : item.blockerSummary
-      ? "border-l-2 border-l-amber-500"
+      ? "border-l-2 border-l-yellow-500"
       : "";
 
   return (
@@ -416,7 +416,7 @@ function DueStateBadge({
   const cls =
     dueState.tone === "overdue"
       ? "text-red-600"
-      : "text-amber-600";
+      : "text-yellow-600";
 
   return (
     <span className={`text-xs flex items-center gap-0.5 ${cls}`}>

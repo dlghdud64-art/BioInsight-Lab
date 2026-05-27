@@ -51,7 +51,7 @@ const ROLE_LABEL: Record<string, string> = {
 };
 
 const ROLE_COLOR: Record<string, string> = {
-  OWNER: "bg-amber-50 text-amber-700 border-amber-200",
+  OWNER: "bg-yellow-50 text-yellow-700 border-yellow-200",
   ADMIN: "bg-indigo-50 text-indigo-700 border-indigo-200",
   APPROVER: "bg-purple-50 text-purple-700 border-purple-200",
   REQUESTER: "bg-blue-50 text-blue-700 border-blue-200",
@@ -70,7 +70,7 @@ function roleBadge(role: string) {
 
 // §11.304 — 티어명 등급화 (Starter→Free / Team→Basic / Business→Pro) 정합.
 const PLAN_MAP: Record<string, { label: string; color: string }> = {
-  ENTERPRISE: { label: "Enterprise", color: "bg-amber-50 text-amber-700 border-amber-200" },
+  ENTERPRISE: { label: "Enterprise", color: "bg-yellow-50 text-yellow-700 border-yellow-200" },
   ORGANIZATION: { label: "Pro", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
   TEAM: { label: "Basic", color: "bg-blue-50 text-blue-700 border-blue-200" },
   FREE: { label: "Free", color: "bg-slate-50 text-slate-500 border-slate-200" },
@@ -93,7 +93,7 @@ const AVATAR_COLORS = [
   { bg: "bg-blue-600", text: "text-white" },
   { bg: "bg-violet-600", text: "text-white" },
   { bg: "bg-emerald-600", text: "text-white" },
-  { bg: "bg-orange-500", text: "text-white" },
+  { bg: "bg-sky-500", text: "text-white" },
   { bg: "bg-rose-500", text: "text-white" },
   { bg: "bg-cyan-600", text: "text-white" },
 ];
@@ -514,8 +514,8 @@ export default function OrganizationsPage() {
                     value={totalMembers}
                   />
                   <SidebarStatRow
-                    icon={<Clock className="h-4.5 w-4.5 text-amber-500" />}
-                    iconBg="bg-amber-50"
+                    icon={<Clock className="h-4.5 w-4.5 text-yellow-500" />}
+                    iconBg="bg-yellow-50"
                     label="초대 대기"
                     value={totalPending}
                     highlight={totalPending > 0}
@@ -711,7 +711,7 @@ function SidebarStatRow({
         </div>
         <span className="text-sm text-slate-600">{label}</span>
       </div>
-      <span className={`text-xl font-extrabold ${highlight ? "text-amber-600" : "text-slate-900"}`}>
+      <span className={`text-xl font-extrabold ${highlight ? "text-yellow-600" : "text-slate-900"}`}>
         {value}
       </span>
     </div>

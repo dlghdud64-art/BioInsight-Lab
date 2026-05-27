@@ -78,7 +78,7 @@ const PARTNERSHIP_TIER_TONE: Record<PartnershipTier, string> = {
   DIRECT_PARTNER: "border-violet-300 bg-violet-50 text-violet-700",
   VERIFIED: "border-emerald-300 bg-emerald-50 text-emerald-700",
   GENERAL: "border-slate-300 bg-slate-50 text-slate-700",
-  UNVERIFIED: "border-amber-300 bg-amber-50 text-amber-700",
+  UNVERIFIED: "border-yellow-300 bg-yellow-50 text-yellow-700",
 };
 
 const PARTNERSHIP_TIER_OPTIONS: ReadonlyArray<PartnershipTier> = [
@@ -514,8 +514,8 @@ export default function SuppliersSettingsPage() {
                       {vendor.vendorName}
                     </h3>
                     {vendor.isPrimary && (
-                      <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] gap-1">
-                        <Star className="h-2.5 w-2.5 fill-amber-500 text-amber-500" />
+                      <Badge className="bg-yellow-50 text-yellow-700 border-yellow-200 text-[10px] gap-1">
+                        <Star className="h-2.5 w-2.5 fill-amber-500 text-yellow-500" />
                         우선 거래처
                       </Badge>
                     )}
@@ -773,7 +773,7 @@ export default function SuppliersSettingsPage() {
 
             <div className="flex items-center justify-between rounded-lg border border-bd/60 px-3 py-2">
               <div className="flex items-center gap-2">
-                <Star className="h-4 w-4 text-amber-500" />
+                <Star className="h-4 w-4 text-yellow-500" />
                 <Label htmlFor="isPrimary" className="text-xs font-medium text-slate-700 cursor-pointer">
                   우선 거래처로 표시
                 </Label>

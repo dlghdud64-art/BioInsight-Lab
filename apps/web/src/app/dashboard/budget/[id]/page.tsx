@@ -73,8 +73,8 @@ function deriveBudgetControl(b: Budget) {
 
 const RISK_CONFIG: Record<string, { label: string; color: string; bgColor: string; borderColor: string }> = {
   safe: { label: "정상", color: "text-emerald-400", bgColor: "bg-emerald-600/10", borderColor: "border-emerald-600/30" },
-  warning: { label: "주의", color: "text-amber-400", bgColor: "bg-amber-600/10", borderColor: "border-amber-600/30" },
-  critical: { label: "경고", color: "text-orange-400", bgColor: "bg-orange-600/10", borderColor: "border-orange-600/30" },
+  warning: { label: "주의", color: "text-yellow-400", bgColor: "bg-yellow-600/10", borderColor: "border-yellow-600/30" },
+  critical: { label: "경고", color: "text-red-400", bgColor: "bg-red-600/10", borderColor: "border-red-600/30" },
   over: { label: "초과", color: "text-red-400", bgColor: "bg-red-600/10", borderColor: "border-red-600/30" },
   ended: { label: "종료", color: "text-slate-500", bgColor: "bg-slate-600/5", borderColor: "border-slate-600/20" },
   upcoming: { label: "예정", color: "text-blue-400", bgColor: "bg-blue-600/10", borderColor: "border-blue-600/30" },
@@ -250,7 +250,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">확정 (Committed)</div>
-              <div className="text-lg font-bold text-amber-400/70 tabular-nums">{formatAmt(ctrl.committed)}</div>
+              <div className="text-lg font-bold text-yellow-400/70 tabular-nums">{formatAmt(ctrl.committed)}</div>
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">집행 (Actual)</div>
@@ -268,7 +268,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
                 <div className="h-full bg-slate-400" style={{ width: `${Math.min((ctrl.actual / ctrl.total) * 100, 100)}%` }} />
               )}
               {ctrl.committed > 0 && (
-                <div className="h-full bg-amber-500/50" style={{ width: `${Math.min((ctrl.committed / ctrl.total) * 100, 100 - (ctrl.actual / ctrl.total) * 100)}%` }} />
+                <div className="h-full bg-yellow-500/50" style={{ width: `${Math.min((ctrl.committed / ctrl.total) * 100, 100 - (ctrl.actual / ctrl.total) * 100)}%` }} />
               )}
               {ctrl.reserved > 0 && (
                 <div className="h-full bg-blue-500/30" style={{ width: `${Math.min((ctrl.reserved / ctrl.total) * 100, 100 - ((ctrl.actual + ctrl.committed) / ctrl.total) * 100)}%` }} />
@@ -331,12 +331,12 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
                     {ctrl.burnRate < policy.warningThreshold
                       ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
                       : ctrl.burnRate < policy.hardBlock
-                        ? <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
+                        ? <AlertTriangle className="h-3.5 w-3.5 text-yellow-400" />
                         : <AlertCircle className="h-3.5 w-3.5 text-red-400" />
                     }
                     <span className="text-slate-600">경고 임계치 ({policy.warningThreshold}%)</span>
                   </div>
-                  <span className={`text-[10px] ${ctrl.burnRate < policy.warningThreshold ? "text-emerald-400" : ctrl.burnRate < policy.hardBlock ? "text-amber-400" : "text-red-400"}`}>
+                  <span className={`text-[10px] ${ctrl.burnRate < policy.warningThreshold ? "text-emerald-400" : ctrl.burnRate < policy.hardBlock ? "text-yellow-400" : "text-red-400"}`}>
                     {ctrl.burnRate < policy.warningThreshold ? "정상" : ctrl.burnRate < policy.hardBlock ? "주의 구간" : "초과 차단"}
                   </span>
                 </div>
@@ -361,11 +361,11 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
                     <div className="flex items-center gap-2 text-xs">
                       {ctrl.forecastExhaustDays > ctrl.remainingDays
                         ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                        : <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
+                        : <AlertTriangle className="h-3.5 w-3.5 text-yellow-400" />
                       }
                       <span className="text-slate-600">소진 예측</span>
                     </div>
-                    <span className={`text-[10px] ${ctrl.forecastExhaustDays > ctrl.remainingDays ? "text-emerald-400" : "text-amber-400"}`}>
+                    <span className={`text-[10px] ${ctrl.forecastExhaustDays > ctrl.remainingDays ? "text-emerald-400" : "text-yellow-400"}`}>
                       {ctrl.forecastExhaustDays > ctrl.remainingDays
                         ? `기간 내 여유 (${ctrl.forecastExhaustDays}일 후 소진)`
                         : `기간 종료 전 소진 가능 (${ctrl.forecastExhaustDays}일 후)`

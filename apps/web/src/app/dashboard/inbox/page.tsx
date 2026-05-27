@@ -64,7 +64,7 @@ import {
 // ── Priority badge 색상 ──
 const PRIORITY_BADGE: Record<string, string> = {
   p0: "bg-red-500/10 text-red-400",
-  p1: "bg-amber-500/10 text-amber-400",
+  p1: "bg-yellow-500/10 text-yellow-400",
   p2: "bg-blue-500/10 text-blue-400",
   p3: "bg-zinc-500/10 text-zinc-400",
 };
@@ -79,7 +79,7 @@ const PRIORITY_LABEL: Record<string, string> = {
 // ── Due badge 색상 ──
 const DUE_BADGE: Record<string, string> = {
   overdue: "bg-red-500/10 text-red-400",
-  due_soon: "bg-amber-500/10 text-amber-400",
+  due_soon: "bg-yellow-500/10 text-yellow-400",
   normal: "bg-zinc-500/10 text-zinc-400",
 };
 
@@ -326,7 +326,7 @@ export default function InboxPage() {
             key: "overdue",
             label: "기한 초과",
             count: stats.overdueCount,
-            color: "text-amber-400",
+            color: "text-yellow-400",
           },
           {
             key: "review",
@@ -859,10 +859,10 @@ function ContextPanel({
             );
           }
           return (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-3">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-                <span className="text-sm font-semibold text-amber-900">
+                <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                <span className="text-sm font-semibold text-yellow-900">
                   차단 사유 ({blockers.length}건)
                 </span>
               </div>

@@ -75,7 +75,7 @@ export function OwnershipStrip({ ownership }: OwnershipStripProps) {
       {/* Approver/reviewer */}
       {approverNames && approverNames.length > 0 && (
         <span className="text-slate-500">
-          승인: <span className="text-amber-400">{approverNames.join(', ')}</span>
+          승인: <span className="text-yellow-400">{approverNames.join(', ')}</span>
         </span>
       )}
       {reviewerNames && reviewerNames.length > 0 && (
@@ -179,7 +179,7 @@ export function DecisionOwnerContext({ ownership }: DecisionOwnerContextProps) {
 
       {/* Approval blocking */}
       {isBlocked && approverNames && approverNames.length > 0 && (
-        <div className="text-amber-400/80">
+        <div className="text-yellow-400/80">
           승인 필요: {approverNames.join(', ')}
         </div>
       )}

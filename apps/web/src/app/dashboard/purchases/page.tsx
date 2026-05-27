@@ -124,7 +124,7 @@ const NEXT_ACTION_LABEL: Record<NextAction, string> = {
 
 const DECISION_SUPPORT_STATUS_LABEL: Record<AiRecommendationStatus, { label: string; className: string }> = {
   recommended:   { label: "AI 추천 완료", className: "text-blue-600" },
-  review_needed: { label: "AI 검토 필요", className: "text-amber-600" },
+  review_needed: { label: "AI 검토 필요", className: "text-yellow-600" },
   hold:          { label: "AI 판단 보류", className: "text-slate-500" },
 };
 
@@ -764,7 +764,7 @@ export default function PurchasesPage() {
                         </span>
                       )}
                       {hasBlocker && (
-                        <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
+                        <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md bg-yellow-50 text-yellow-700 border border-yellow-200">
                           {BLOCKER_LABEL[item.blockerType]}
                         </span>
                       )}
@@ -812,16 +812,16 @@ export default function PurchasesPage() {
                         {/* 막힘 / 다음 단계 */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                           <div className={`rounded-xl px-3.5 py-3 border ${
-                            hasBlocker ? "bg-amber-50/70 border-amber-200" : "bg-emerald-50/50 border-emerald-200"
+                            hasBlocker ? "bg-yellow-50/70 border-yellow-200" : "bg-emerald-50/50 border-emerald-200"
                           }`}>
                             <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${
-                              hasBlocker ? "text-amber-500" : "text-emerald-500"
+                              hasBlocker ? "text-yellow-500" : "text-emerald-500"
                             }`}>막힘 확인</p>
                             <p className={`text-xs leading-snug flex items-start gap-2 font-medium ${
-                              hasBlocker ? "text-amber-700" : "text-emerald-700"
+                              hasBlocker ? "text-yellow-700" : "text-emerald-700"
                             }`}>
                               {hasBlocker
-                                ? <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5 text-amber-500" />
+                                ? <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5 text-yellow-500" />
                                 : <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0 mt-0.5 text-emerald-500" />
                               }
                               {item.blockerReason}
@@ -1046,15 +1046,15 @@ export default function PurchasesPage() {
                   <div id="brief-risks" className="px-5 py-4 border-b border-slate-100">
                     <div className="text-xs font-bold text-slate-700 mb-2.5">리스크</div>
                     <div className={`rounded-xl px-4 py-3 ${
-                      hasBlocker ? "bg-amber-50/70 border border-amber-200" : "bg-emerald-50/70 border border-emerald-200"
+                      hasBlocker ? "bg-yellow-50/70 border border-yellow-200" : "bg-emerald-50/70 border border-emerald-200"
                     }`}>
                       <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${
-                        hasBlocker ? "text-amber-700" : "text-emerald-700"
+                        hasBlocker ? "text-yellow-700" : "text-emerald-700"
                       }`}>
                         {hasBlocker ? "현재 막힘" : "차단 없음"}
                       </p>
                       <p className={`text-xs font-medium leading-snug ${
-                        hasBlocker ? "text-amber-700" : "text-emerald-700"
+                        hasBlocker ? "text-yellow-700" : "text-emerald-700"
                       }`}>
                         {selectedItem.blockerReason}
                       </p>
@@ -1087,7 +1087,7 @@ export default function PurchasesPage() {
                           selectedItem.internalApprovalStatus === "APPROVED"
                             ? "text-emerald-700 font-medium"
                             : selectedItem.internalApprovalStatus === "PENDING"
-                              ? "text-amber-700 font-medium"
+                              ? "text-yellow-700 font-medium"
                               : selectedItem.internalApprovalStatus === "REJECTED"
                                 ? "text-rose-700 font-medium"
                                 : "text-slate-500"
@@ -1200,7 +1200,7 @@ export default function PurchasesPage() {
                                                   ? "font-semibold text-rose-700"
                                                   : entry.status === "CANCELLED"
                                                     ? "font-semibold text-slate-500"
-                                                    : "font-semibold text-amber-700"
+                                                    : "font-semibold text-yellow-700"
                                             }
                                           >
                                             {entry.status === "APPROVED"
@@ -1242,7 +1242,7 @@ export default function PurchasesPage() {
                         <span className={selectedItem.externalApprovalStatus === "approved"
                           ? "text-emerald-700 font-medium"
                           : selectedItem.externalApprovalStatus === "pending"
-                            ? "text-amber-700"
+                            ? "text-yellow-700"
                             : "text-slate-500"}>
                           {selectedItem.externalApprovalStatus === "approved" ? "승인 완료"
                             : selectedItem.externalApprovalStatus === "pending" ? "대기 중"
@@ -1483,7 +1483,7 @@ export default function PurchasesPage() {
                         )}
                       </Button>
                       {selectedItem.internalApprovalStatus === "PENDING" && (
-                        <p className="text-[11px] text-amber-700 text-center">결재 완료 후 발주 가능</p>
+                        <p className="text-[11px] text-yellow-700 text-center">결재 완료 후 발주 가능</p>
                       )}
                       {selectedItem.internalApprovalStatus === "REJECTED" && (
                         <p className="text-[11px] text-rose-700 text-center">결재 반려 — 재요청 또는 대안 검토</p>
@@ -1538,7 +1538,7 @@ export default function PurchasesPage() {
             }
             risks={
               selectedItem.blockerType !== "none"
-                ? <p className="text-xs text-amber-700">{selectedItem.blockerReason}</p>
+                ? <p className="text-xs text-yellow-700">{selectedItem.blockerReason}</p>
                 : selectedItem.isExpired
                   ? <p className="text-xs text-rose-700">유효기간 만료</p>
                   : <p className="text-xs text-slate-500">차단 없음</p>

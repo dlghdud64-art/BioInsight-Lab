@@ -44,7 +44,7 @@ const CATEGORY_TINT: Record<Exclude<Category, "all">, { read: string; unread: st
   inventory: { read: "text-slate-500", unread: "text-teal-400" },
   quote:     { read: "text-slate-500", unread: "text-blue-400" },
   org:       { read: "text-slate-500", unread: "text-violet-400" },
-  safety:    { read: "text-slate-500", unread: "text-amber-400" },
+  safety:    { read: "text-slate-500", unread: "text-yellow-400" },
   billing:   { read: "text-slate-500", unread: "text-blue-400" },
   system:    { read: "text-slate-500", unread: "text-slate-600" },
 };

@@ -84,7 +84,7 @@ function getStatusStyle(status: TeamSpendingData["status"]) {
     case "안정":
       return { bg: "bg-emerald-50  bg-emerald-50", text: "text-emerald-700 text-emerald-400", border: "border-emerald-200  border-emerald-900/40" };
     case "주의":
-      return { bg: "bg-amber-50  bg-amber-50", text: "text-amber-700 text-amber-400", border: "border-amber-200  border-amber-900/40" };
+      return { bg: "bg-yellow-50  bg-yellow-50", text: "text-yellow-700 text-yellow-400", border: "border-yellow-200  border-yellow-900/40" };
     case "초과 위험":
       return { bg: "bg-red-50 bg-red-950/20", text: "text-red-700 text-red-400", border: "border-red-200  border-red-900/40" };
     case "검토 필요":
@@ -132,12 +132,12 @@ export default function TeamAnalyticsView() {
           <p className="text-xs text-slate-400 mt-1">예산 배정된 운영 팀</p>
         </div>
 
-        <div className={`rounded-xl border p-4 shadow-sm ${riskTeams > 0 ? "border-amber-200/60 bg-amber-50/30  bg-amber-50  border-amber-900/30" : "border-bd/60 bg-pn border-bd/50"}`}>
+        <div className={`rounded-xl border p-4 shadow-sm ${riskTeams > 0 ? "border-yellow-200/60 bg-yellow-50/30  bg-yellow-50  border-yellow-900/30" : "border-bd/60 bg-pn border-bd/50"}`}>
           <div className="flex items-center gap-2 mb-2">
-            <ShieldAlert className="h-4 w-4 text-amber-500 flex-shrink-0" />
+            <ShieldAlert className="h-4 w-4 text-yellow-500 flex-shrink-0" />
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">예산 위험 팀</span>
           </div>
-          <div className={`text-xl font-bold ${riskTeams > 0 ? "text-amber-700 text-amber-400" : "text-slate-900"}`}>
+          <div className={`text-xl font-bold ${riskTeams > 0 ? "text-yellow-700 text-yellow-400" : "text-slate-900"}`}>
             {riskTeams}개
           </div>
           <p className="text-xs text-slate-400 mt-1">소진율 75% 이상</p>
@@ -164,10 +164,10 @@ export default function TeamAnalyticsView() {
 
       {/* ══ 2. 예산 위험 팀 알림 ══ */}
       {riskTeamList.length > 0 && (
-        <Card className="rounded-xl border-amber-100  border-amber-900/30 bg-amber-50/40  bg-amber-50 shadow-sm">
+        <Card className="rounded-xl border-yellow-100  border-yellow-900/30 bg-yellow-50/40  bg-yellow-50 shadow-sm">
           <CardHeader className="pb-2 p-4">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0" />
+              <AlertTriangle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
               <CardTitle className="text-sm font-semibold text-slate-700">예산 위험 팀 현황</CardTitle>
             </div>
           </CardHeader>
@@ -180,7 +180,7 @@ export default function TeamAnalyticsView() {
                     {team.status === "초과 위험" ? (
                       <ShieldAlert className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-red-500" />
                     ) : (
-                      <Shield className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-amber-500" />
+                      <Shield className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-yellow-500" />
                     )}
                     <span className="text-sm text-slate-600 leading-snug">
                       <span className="font-medium">{team.name}</span>
@@ -321,7 +321,7 @@ export default function TeamAnalyticsView() {
                       </TableCell>
                       <TableCell className="py-2.5 text-center">
                         <div className="flex flex-col items-center gap-1">
-                          <span className={`text-xs font-semibold ${team.burnRate >= 90 ? "text-red-600 text-red-400" : team.burnRate >= 75 ? "text-amber-600 text-amber-400" : "text-slate-400"}`}>
+                          <span className={`text-xs font-semibold ${team.burnRate >= 90 ? "text-red-600 text-red-400" : team.burnRate >= 75 ? "text-yellow-600 text-yellow-400" : "text-slate-400"}`}>
                             {team.burnRate}%
                           </span>
                           <div className="w-14 h-1.5 bg-st/60 rounded-full overflow-hidden">

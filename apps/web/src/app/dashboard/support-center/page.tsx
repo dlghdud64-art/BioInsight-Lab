@@ -88,7 +88,7 @@ const RECENT_UPDATES = [
   {
     date: "2026-02-28",
     tag: "수정",
-    tagColor: "bg-amber-50 text-amber-600",
+    tagColor: "bg-yellow-50 text-yellow-600",
     title: "하루 한 번 요약 이메일 발송 안정화",
     desc: "일부 조직에서 발송이 누락되던 문제가 해결되었습니다.",
   },
@@ -793,7 +793,7 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
       account: "bg-violet-50 text-violet-600 border-violet-200",
       "search-compare": "bg-blue-50 text-blue-600 border-blue-200",
       "purchase-inventory": "bg-emerald-50 text-emerald-600 border-emerald-200",
-      "org-role": "bg-amber-50 text-amber-600 border-amber-200",
+      "org-role": "bg-yellow-50 text-yellow-600 border-yellow-200",
       notification: "bg-cyan-50 text-cyan-600 border-cyan-200",
       "ai-pdf": "bg-indigo-50 text-indigo-600 border-indigo-200",
       billing: "bg-pink-50 text-pink-600 border-pink-200",
@@ -876,8 +876,8 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
               >
                 {/* 증상 헤더 */}
                 <button onClick={() => toggleExpand(item.id)} className="w-full text-left px-5 md:px-6 py-5 flex items-start gap-3.5 group">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${isExpanded ? "bg-amber-100" : "bg-slate-100"}`}>
-                    <AlertTriangle className={`h-3.5 w-3.5 transition-colors ${isExpanded ? "text-amber-600" : "text-slate-400"}`} />
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${isExpanded ? "bg-yellow-100" : "bg-slate-100"}`}>
+                    <AlertTriangle className={`h-3.5 w-3.5 transition-colors ${isExpanded ? "text-yellow-600" : "text-slate-400"}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className={`text-[15px] font-extrabold leading-snug transition-colors mb-1.5 ${isExpanded ? "text-slate-900" : "text-slate-700 group-hover:text-slate-900"}`}>
@@ -928,12 +928,12 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
                       </div>
 
                       {/* 에스컬레이션 기준 */}
-                      <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3.5">
+                      <div className="rounded-xl bg-yellow-50 border border-yellow-200 px-4 py-3.5">
                         <div className="flex items-start gap-2.5">
-                          <ArrowUpRight className="h-3.5 w-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
+                          <ArrowUpRight className="h-3.5 w-3.5 text-yellow-500 flex-shrink-0 mt-0.5" />
                           <div>
-                            <span className="text-[11px] font-extrabold text-amber-600 uppercase tracking-wider">에스컬레이션 기준</span>
-                            <p className="text-[13px] text-amber-700 leading-relaxed mt-1">{item.escalation}</p>
+                            <span className="text-[11px] font-extrabold text-yellow-600 uppercase tracking-wider">에스컬레이션 기준</span>
+                            <p className="text-[13px] text-yellow-700 leading-relaxed mt-1">{item.escalation}</p>
                           </div>
                         </div>
                       </div>
@@ -960,7 +960,7 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
                           <Button
                             variant="outline"
                             size="sm"
-                            className="gap-1.5 text-xs border-amber-200 text-amber-600 bg-transparent hover:bg-amber-50 hover:text-amber-700"
+                            className="gap-1.5 text-xs border-yellow-200 text-yellow-600 bg-transparent hover:bg-yellow-50 hover:text-yellow-700"
                             onClick={() => {
                               const body = [
                                 `증상: ${item.symptom}`,
@@ -1281,8 +1281,8 @@ function TicketTab() {
             <div className="flex gap-2">
               {PRIORITY_OPTIONS.map((opt) => (
                 <button key={opt.value} type="button" onClick={() => setPriority(opt.value)}
-                  className={`flex-1 rounded-lg border px-3 py-2.5 text-center transition-all active:scale-[0.98] ${priority === opt.value ? (opt.value === "high" ? "border-red-200 bg-red-50 ring-1 ring-red-200" : opt.value === "medium" ? "border-amber-200 bg-amber-50 ring-1 ring-amber-200" : "border-blue-200 bg-blue-50 ring-1 ring-blue-200") : "border-slate-200 bg-slate-50 hover:bg-white"}`}>
-                  <span className={`text-xs font-semibold ${priority === opt.value ? (opt.value === "high" ? "text-red-600" : opt.value === "medium" ? "text-amber-600" : "text-blue-600") : "text-slate-500"}`}>{opt.label}</span>
+                  className={`flex-1 rounded-lg border px-3 py-2.5 text-center transition-all active:scale-[0.98] ${priority === opt.value ? (opt.value === "high" ? "border-red-200 bg-red-50 ring-1 ring-red-200" : opt.value === "medium" ? "border-yellow-200 bg-yellow-50 ring-1 ring-yellow-200" : "border-blue-200 bg-blue-50 ring-1 ring-blue-200") : "border-slate-200 bg-slate-50 hover:bg-white"}`}>
+                  <span className={`text-xs font-semibold ${priority === opt.value ? (opt.value === "high" ? "text-red-600" : opt.value === "medium" ? "text-yellow-600" : "text-blue-600") : "text-slate-500"}`}>{opt.label}</span>
                   <p className="text-[10px] mt-0.5 text-slate-500">{opt.description}</p>
                 </button>
               ))}

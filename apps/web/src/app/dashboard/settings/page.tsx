@@ -1160,10 +1160,10 @@ function SettingsPageContent() {
                       <div key={sys.name} className="flex items-center justify-between py-3 px-4 rounded-lg bg-slate-50 border border-slate-200">
                         <div className="flex items-center gap-3">
                           <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center",
-                            sys.status === "connected" ? "bg-emerald-50" : sys.status === "pending" ? "bg-amber-50" : "bg-slate-100"
+                            sys.status === "connected" ? "bg-emerald-50" : sys.status === "pending" ? "bg-yellow-50" : "bg-slate-100"
                           )}>
                             <sys.icon className={cn("h-4 w-4",
-                              sys.status === "connected" ? "text-emerald-600" : sys.status === "pending" ? "text-amber-600" : "text-slate-500"
+                              sys.status === "connected" ? "text-emerald-600" : sys.status === "pending" ? "text-yellow-600" : "text-slate-500"
                             )} />
                           </div>
                           <div>
@@ -1175,10 +1175,10 @@ function SettingsPageContent() {
                           <div className="text-right">
                             <div className="flex items-center gap-1.5">
                               <div className={cn("h-1.5 w-1.5 rounded-full",
-                                sys.status === "connected" ? "bg-emerald-500" : sys.status === "pending" ? "bg-amber-500 animate-pulse" : "bg-slate-400"
+                                sys.status === "connected" ? "bg-emerald-500" : sys.status === "pending" ? "bg-yellow-500 animate-pulse" : "bg-slate-400"
                               )} />
                               <span className={cn("text-[10px] font-medium",
-                                sys.status === "connected" ? "text-emerald-600" : sys.status === "pending" ? "text-amber-600" : "text-slate-500"
+                                sys.status === "connected" ? "text-emerald-600" : sys.status === "pending" ? "text-yellow-600" : "text-slate-500"
                               )}>
                                 {sys.status === "connected" ? "연결됨" : sys.status === "pending" ? "대기 중" : "미연결"}
                               </span>
@@ -1422,10 +1422,10 @@ function SettingsPageContent() {
           )}
           {cancelStep === 2 && cancelReason && (
             <div className="space-y-4 pt-2">
-              <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
-                <p className="text-sm font-medium text-amber-700">{getSaveOffer(cancelReason).title}</p>
-                <p className="text-xs text-amber-600 mt-1">{getSaveOffer(cancelReason).description}</p>
-                <Button size="sm" className="mt-3 h-8 bg-amber-600 hover:bg-amber-500 text-white text-xs" onClick={resetCancelFlow}>
+              <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-4">
+                <p className="text-sm font-medium text-yellow-700">{getSaveOffer(cancelReason).title}</p>
+                <p className="text-xs text-yellow-600 mt-1">{getSaveOffer(cancelReason).description}</p>
+                <Button size="sm" className="mt-3 h-8 bg-yellow-600 hover:bg-yellow-500 text-white text-xs" onClick={resetCancelFlow}>
                   {getSaveOffer(cancelReason).cta}
                 </Button>
               </div>
@@ -1533,7 +1533,7 @@ function ApprovalTierRow({ tier, label, description, value, onChange, color }: {
   const colorMap = {
     emerald: { bg: "bg-emerald-50", text: "text-emerald-600", border: "border-emerald-200" },
     blue: { bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-200" },
-    amber: { bg: "bg-amber-50", text: "text-amber-600", border: "border-amber-200" },
+    amber: { bg: "bg-yellow-50", text: "text-yellow-600", border: "border-yellow-200" },
   };
   const c = colorMap[color];
 

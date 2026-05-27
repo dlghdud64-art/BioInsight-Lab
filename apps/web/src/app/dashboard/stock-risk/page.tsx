@@ -57,7 +57,7 @@ const SR_BUCKET_TABS: { key: ModuleBucketKey; label: string }[] = [
 // ── Priority badge color ────────────────────────────────────────
 const PRIORITY_DOT: Record<string, string> = {
   p0: "bg-red-500",
-  p1: "bg-amber-500",
+  p1: "bg-yellow-500",
   p2: "bg-blue-500",
   p3: "bg-slate-500",
 };
@@ -77,9 +77,9 @@ type RiskStatus = "healthy" | "watch" | "reorder_due" | "critical_shortage" | "e
 const RISK_BADGE: Record<string, { label: string; className: string }> = {
   healthy: { label: "안전", className: "bg-green-900/40 text-green-300 border-green-700" },
   watch: { label: "관찰", className: "bg-blue-900/40 text-blue-300 border-blue-700" },
-  reorder_due: { label: "재주문 필요", className: "bg-amber-900/40 text-amber-300 border-amber-700" },
+  reorder_due: { label: "재주문 필요", className: "bg-yellow-900/40 text-yellow-300 border-yellow-700" },
   critical_shortage: { label: "긴급", className: "bg-red-900/40 text-red-300 border-red-700" },
-  expiry_risk: { label: "만료 위험", className: "bg-orange-900/40 text-orange-300 border-orange-700" },
+  expiry_risk: { label: "만료 위험", className: "bg-red-900/40 text-red-300 border-red-700" },
   quarantine_constrained: { label: "격리", className: "bg-purple-900/40 text-purple-300 border-purple-700" },
   blocked: { label: "차단", className: "bg-red-900/40 text-red-300 border-red-700" },
 };
@@ -87,7 +87,7 @@ const RISK_BADGE: Record<string, { label: string; className: string }> = {
 const URGENCY_BADGE: Record<string, { label: string; className: string }> = {
   low: { label: "낮음", className: "bg-slate-700/60 text-slate-600 border-slate-600" },
   medium: { label: "보통", className: "bg-blue-900/40 text-blue-300 border-blue-700" },
-  high: { label: "높음", className: "bg-amber-900/40 text-amber-300 border-amber-700" },
+  high: { label: "높음", className: "bg-yellow-900/40 text-yellow-300 border-yellow-700" },
   critical: { label: "긴급", className: "bg-red-900/40 text-red-300 border-red-700" },
   urgent: { label: "긴급", className: "bg-red-900/40 text-red-300 border-red-700" },
 };
@@ -485,7 +485,7 @@ export default function StockRiskPage() {
                             <td className="px-4 py-3 text-right">
                               <span
                                 className={`font-mono ${
-                                  ratio < 0.5 ? "text-red-600" : ratio < 1 ? "text-amber-600" : "text-slate-700"
+                                  ratio < 0.5 ? "text-red-600" : ratio < 1 ? "text-yellow-600" : "text-slate-700"
                                 }`}
                               >
                                 {sp.availableQuantity}
@@ -501,7 +501,7 @@ export default function StockRiskPage() {
                                   coverageDays <= 7
                                     ? "text-red-600"
                                     : coverageDays <= 21
-                                      ? "text-amber-600"
+                                      ? "text-yellow-600"
                                       : "text-slate-600"
                                 }`}
                               >
@@ -658,8 +658,8 @@ export default function StockRiskPage() {
                           (ea.daysToExpiry ?? 0) <= 7
                             ? "text-red-600"
                             : (ea.daysToExpiry ?? 0) <= 30
-                              ? "text-orange-600"
-                              : "text-amber-600";
+                              ? "text-red-600"
+                              : "text-yellow-600";
                         const isCompleted = ea.status === "completed";
                         return (
                           <tr
@@ -675,7 +675,7 @@ export default function StockRiskPage() {
                                   ea.actionType === "dispose"
                                     ? "bg-red-50 text-red-600 border-red-200"
                                     : ea.actionType === "consume_first"
-                                      ? "bg-amber-50 text-amber-600 border-amber-200"
+                                      ? "bg-yellow-50 text-yellow-600 border-yellow-200"
                                       : "bg-blue-50 text-blue-600 border-blue-200"
                                 }`}
                               >
@@ -697,7 +697,7 @@ export default function StockRiskPage() {
                                   ea.status === "completed"
                                     ? "bg-green-900/40 text-green-300 border-green-700"
                                     : ea.status === "in_progress"
-                                      ? "bg-amber-900/40 text-amber-300 border-amber-700"
+                                      ? "bg-yellow-900/40 text-yellow-300 border-yellow-700"
                                       : "bg-slate-700/60 text-slate-600 border-slate-600"
                                 }`}
                               >
@@ -750,7 +750,7 @@ function PriorityCard({
   const borderClass = item.dueState.isOverdue
     ? "border-l-red-500"
     : item.blockerSummary
-      ? "border-l-amber-500"
+      ? "border-l-yellow-500"
       : "border-l-slate-700";
 
   return (
@@ -804,7 +804,7 @@ function ActionableRow({
   const borderClass = item.dueState.isOverdue
     ? "border-l-2 border-l-red-500"
     : item.blockerSummary
-      ? "border-l-2 border-l-amber-500"
+      ? "border-l-2 border-l-yellow-500"
       : "";
 
   return (
@@ -854,7 +854,7 @@ function DueStateBadge({
   const cls =
     dueState.tone === "overdue"
       ? "text-red-600"
-      : "text-amber-600";
+      : "text-yellow-600";
 
   return (
     <span className={`text-xs flex items-center gap-0.5 ${cls}`}>

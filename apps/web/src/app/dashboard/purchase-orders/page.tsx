@@ -46,7 +46,7 @@ const PO_BUCKET_TABS: { key: ModuleBucketKey; label: string }[] = [
 // ── Priority badge color ──────────────────────────────────────────
 const PRIORITY_DOT: Record<string, string> = {
   p0: "bg-red-500",
-  p1: "bg-amber-500",
+  p1: "bg-yellow-500",
   p2: "bg-blue-500",
   p3: "bg-slate-500",
 };
@@ -370,7 +370,7 @@ function PriorityCard({
   const borderClass = item.dueState.isOverdue
     ? "border-l-red-500"
     : item.blockerSummary
-      ? "border-l-amber-500"
+      ? "border-l-yellow-500"
       : "border-l-slate-700";
 
   return (
@@ -427,7 +427,7 @@ function ActionableRow({
   const borderClass = item.dueState.isOverdue
     ? "border-l-2 border-l-red-500"
     : item.blockerSummary
-      ? "border-l-2 border-l-amber-500"
+      ? "border-l-2 border-l-yellow-500"
       : "";
 
   // §11.211 Path V — ActionableRow 안 useQuery 로 entityId → DB Order.id
@@ -613,7 +613,7 @@ function DueStateBadge({
   const cls =
     dueState.tone === "overdue"
       ? "text-red-600"
-      : "text-amber-600";
+      : "text-yellow-600";
 
   return (
     <span className={`text-xs flex items-center gap-0.5 ${cls}`}>
@@ -653,14 +653,14 @@ interface SafetyCheckResult {
 const RISK_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   NONE:     { bg: "bg-slate-100",  text: "text-slate-600",   border: "border-slate-300" },
   LOW:      { bg: "bg-blue-50",    text: "text-blue-600",    border: "border-blue-200" },
-  MEDIUM:   { bg: "bg-amber-50",   text: "text-amber-600",   border: "border-amber-200" },
-  HIGH:     { bg: "bg-orange-50",  text: "text-orange-600",  border: "border-orange-200" },
+  MEDIUM:   { bg: "bg-yellow-50",   text: "text-yellow-600",   border: "border-yellow-200" },
+  HIGH:     { bg: "bg-yellow-50",  text: "text-yellow-600",  border: "border-yellow-200" },
   CRITICAL: { bg: "bg-red-50",     text: "text-red-600",     border: "border-red-200" },
 };
 
 const BURN_COLORS: Record<string, { bg: string; text: string; icon: string }> = {
   SAFE:     { bg: "bg-emerald-50",  text: "text-emerald-600", icon: "text-emerald-600" },
-  WARNING:  { bg: "bg-amber-50",    text: "text-amber-600",   icon: "text-amber-600" },
+  WARNING:  { bg: "bg-yellow-50",    text: "text-yellow-600",   icon: "text-yellow-600" },
   CRITICAL: { bg: "bg-red-50",      text: "text-red-600",     icon: "text-red-600" },
   NORMAL:   { bg: "bg-slate-100",   text: "text-slate-600",   icon: "text-slate-500" },
 };
@@ -785,7 +785,7 @@ function AiAnalysisPanel({ item }: { item: ModuleLandingItem }) {
           {safetyResult && (
             <div className="rounded border border-slate-300 bg-slate-100 p-2.5 space-y-1.5">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
-                <FlaskConical className="h-3 w-3 text-amber-600" />
+                <FlaskConical className="h-3 w-3 text-yellow-600" />
                 Safety & Compliance
               </div>
 
@@ -815,7 +815,7 @@ function AiAnalysisPanel({ item }: { item: ModuleLandingItem }) {
               {safetyResult.regulatoryWarnings.length > 0 && (
                 <div className="space-y-0.5">
                   {safetyResult.regulatoryWarnings.map((w, i) => (
-                    <div key={i} className="flex items-start gap-1 text-[10px] text-amber-600">
+                    <div key={i} className="flex items-start gap-1 text-[10px] text-yellow-600">
                       <AlertTriangle className="h-2.5 w-2.5 mt-0.5 flex-shrink-0" />
                       {w}
                     </div>

@@ -62,7 +62,7 @@ const PHASE_STEPS: { key: string; label: string; matchPhases: ReceivingExecution
 const TONE_TEXT: Record<string, string> = {
   neutral: "text-slate-400",
   info: "text-blue-400",
-  warning: "text-amber-400",
+  warning: "text-yellow-400",
   danger: "text-red-400",
   success: "text-emerald-400",
 };
@@ -70,7 +70,7 @@ const TONE_TEXT: Record<string, string> = {
 const TONE_BG: Record<string, string> = {
   neutral: "bg-slate-800/50",
   info: "bg-blue-900/30",
-  warning: "bg-amber-900/30",
+  warning: "bg-yellow-900/30",
   danger: "bg-red-900/30",
   success: "bg-emerald-900/30",
 };
@@ -78,21 +78,21 @@ const TONE_BG: Record<string, string> = {
 const TONE_BORDER: Record<string, string> = {
   neutral: "border-slate-700",
   info: "border-blue-800",
-  warning: "border-amber-800",
+  warning: "border-yellow-800",
   danger: "border-red-800",
   success: "border-emerald-800",
 };
 
 const EXPIRY_TONE_COLOR: Record<string, string> = {
   safe: "text-emerald-400",
-  expiring_soon: "text-amber-400",
+  expiring_soon: "text-yellow-400",
   expired: "text-red-400",
   missing: "text-slate-500",
 };
 
 const QUARANTINE_TONE_COLOR: Record<string, string> = {
   neutral: "text-slate-400",
-  warning: "text-amber-400",
+  warning: "text-yellow-400",
   danger: "text-red-400",
   success: "text-emerald-400",
 };
@@ -449,7 +449,7 @@ function DocumentSurface({ model }: { model: ReceivingExecutionModel }) {
         <StatCell label="검토" value={doc.needsReviewLines} tone={doc.needsReviewLines > 0 ? "warning" : undefined} />
       </div>
       {doc.missingTypes.length > 0 && (
-        <div className="mt-2 text-xs text-amber-400">
+        <div className="mt-2 text-xs text-yellow-400">
           미첨부: {doc.missingTypes.join(", ")}
         </div>
       )}
@@ -502,7 +502,7 @@ function LineExecutionTable({ lines }: { lines: ReceivingLineExecution[] }) {
                   <td className="px-3 py-2 text-slate-400">{line.postingRelevance}</td>
                   <td className="px-3 py-2">
                     {line.nextAction && (
-                      <span className="text-xs text-amber-400">{line.nextAction}</span>
+                      <span className="text-xs text-yellow-400">{line.nextAction}</span>
                     )}
                   </td>
                 </tr>
@@ -588,7 +588,7 @@ function LotDetailSurface({
                           <Badge
                             key={badge}
                             variant="outline"
-                            className="text-[10px] border-amber-700 text-amber-300 bg-amber-900/20"
+                            className="text-[10px] border-yellow-700 text-yellow-300 bg-yellow-900/20"
                           >
                             {badge}
                           </Badge>
@@ -598,7 +598,7 @@ function LotDetailSurface({
                   </td>
                   <td className="px-3 py-2">
                     {lot.nextAction && (
-                      <span className="text-xs text-amber-400">{lot.nextAction}</span>
+                      <span className="text-xs text-yellow-400">{lot.nextAction}</span>
                     )}
                   </td>
                 </tr>
@@ -621,19 +621,19 @@ function PostingReadinessStrip({ model }: { model: ReceivingExecutionModel }) {
     pr.readiness === "ready"
       ? "border-emerald-800 bg-emerald-900/20"
       : pr.readiness === "partial"
-        ? "border-amber-800 bg-amber-900/20"
+        ? "border-yellow-800 bg-yellow-900/20"
         : "border-red-800 bg-red-900/20";
   const textCls =
     pr.readiness === "ready"
       ? "text-emerald-400"
       : pr.readiness === "partial"
-        ? "text-amber-400"
+        ? "text-yellow-400"
         : "text-red-400";
   const iconCls =
     pr.readiness === "ready"
       ? "text-emerald-500"
       : pr.readiness === "partial"
-        ? "text-amber-500"
+        ? "text-yellow-500"
         : "text-red-500";
 
   return (
@@ -698,7 +698,7 @@ function InventoryReleaseHandoffPanel({ model }: { model: ReceivingExecutionMode
 
       {/* Inventory Risk Assessment */}
       {(expiringLots.length > 0 || expiredLots.length > 0 || quarantinedLots.length > 0) && (
-        <div className="bg-slate-900 border border-amber-800/40 rounded p-3">
+        <div className="bg-slate-900 border border-yellow-800/40 rounded p-3">
           <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
             재고 리스크 평가
           </div>
@@ -715,10 +715,10 @@ function InventoryReleaseHandoffPanel({ model }: { model: ReceivingExecutionMode
             {expiringLots.length > 0 && (
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
-                  <Clock className="h-3 w-3 text-amber-400" />
-                  <span className="text-amber-300">만료 임박 lot {expiringLots.length}건 — 우선 사용 권장</span>
+                  <Clock className="h-3 w-3 text-yellow-400" />
+                  <span className="text-yellow-300">만료 임박 lot {expiringLots.length}건 — 우선 사용 권장</span>
                 </div>
-                <Link href="/dashboard/inventory" className="text-[10px] text-amber-400 hover:text-amber-300">확인 →</Link>
+                <Link href="/dashboard/inventory" className="text-[10px] text-yellow-400 hover:text-yellow-300">확인 →</Link>
               </div>
             )}
             {quarantinedLots.length > 0 && (
@@ -750,7 +750,7 @@ function InventoryReleaseHandoffPanel({ model }: { model: ReceivingExecutionMode
           </Link>
           {expiringLots.length > 0 && (
             <Link href="/dashboard/stock-risk" className="flex items-center justify-between text-xs py-1 hover:bg-slate-800/30 rounded px-1 -mx-1 transition-colors">
-              <div className="flex items-center gap-2"><Clock className="h-3 w-3 text-amber-400" /><span className="text-amber-300">Expiry 주의 항목 {expiringLots.length}건</span></div>
+              <div className="flex items-center gap-2"><Clock className="h-3 w-3 text-yellow-400" /><span className="text-yellow-300">Expiry 주의 항목 {expiringLots.length}건</span></div>
               <ChevronRight className="h-3 w-3 text-slate-600" />
             </Link>
           )}
@@ -808,7 +808,7 @@ function StatCell({
     ? tone === "success"
       ? "text-emerald-400"
       : tone === "warning"
-        ? "text-amber-400"
+        ? "text-yellow-400"
         : "text-red-400"
     : "text-slate-700";
 
@@ -1035,7 +1035,7 @@ function ReceivingInputPanel({
                 </button>
               )}
               {discrepancies[activeLine.id] && (
-                <button className="h-7 px-3 text-[10px] font-medium rounded bg-amber-600/15 text-amber-400 border border-amber-600/30 hover:bg-amber-600/25 transition-colors">
+                <button className="h-7 px-3 text-[10px] font-medium rounded bg-yellow-600/15 text-yellow-400 border border-yellow-600/30 hover:bg-yellow-600/25 transition-colors">
                   이슈 등록
                 </button>
               )}

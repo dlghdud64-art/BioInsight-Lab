@@ -32,8 +32,8 @@ function ConfirmDialog({
   onCancel: () => void;
 }) {
   return (
-    <div className="rounded border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
-      <p className="text-xs text-amber-300">{message}</p>
+    <div className="rounded border border-yellow-500/30 bg-yellow-500/5 p-3 space-y-2">
+      <p className="text-xs text-yellow-300">{message}</p>
       <div className="flex gap-2">
         <button
           onClick={onConfirm}
@@ -158,7 +158,7 @@ function CommandButton({
       {command.reviewReasons.length > 0 && (
         <div className="px-1">
           {command.reviewReasons.map((reason, i) => (
-            <p key={i} className="text-[10px] text-amber-400/70">⚠ {reason}</p>
+            <p key={i} className="text-[10px] text-yellow-400/70">⚠ {reason}</p>
           ))}
         </div>
       )}
@@ -185,7 +185,7 @@ export function OperationalCommandBar({ surface, ownership, blockerView }: Opera
       {/* Readiness indicator */}
       <div className="flex items-center gap-2 text-xs">
         <span
-          className={`w-2 h-2 rounded-full ${surface.isReady ? 'bg-emerald-400' : 'bg-amber-400'}`}
+          className={`w-2 h-2 rounded-full ${surface.isReady ? 'bg-emerald-400' : 'bg-yellow-400'}`}
         />
         <span className="text-slate-600">{surface.readinessSummary}</span>
       </div>

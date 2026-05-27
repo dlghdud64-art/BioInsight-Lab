@@ -122,7 +122,7 @@ const ACTIVITY_TYPE_COLORS: Record<string, string> = {
   QUOTE_VIEWED: "bg-purple-100 text-purple-700 border-purple-200",
   PRODUCT_COMPARED: "bg-indigo-100 text-indigo-700 border-indigo-200",
   PRODUCT_VIEWED: "bg-pink-100 text-pink-700 border-pink-200",
-  PRODUCT_FAVORITED: "bg-orange-100 text-orange-700 border-orange-200",
+  PRODUCT_FAVORITED: "bg-yellow-100 text-yellow-700 border-yellow-200",
   SEARCH_PERFORMED: "bg-cyan-100 text-cyan-700 border-cyan-200",
 };
 

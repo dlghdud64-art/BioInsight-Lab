@@ -97,7 +97,7 @@ function CategoryIcon({ category, className = "h-3.5 w-3.5" }: { category: strin
   const label = getCategoryLabel(category);
   if (label.includes("시약")) return <FlaskConical className={`${className} text-blue-500`} />;
   if (label.includes("장비")) return <Package className={`${className} text-emerald-500`} />;
-  if (label.includes("소모품")) return <ShoppingCart className={`${className} text-amber-500`} />;
+  if (label.includes("소모품")) return <ShoppingCart className={`${className} text-yellow-500`} />;
   if (label.includes("배지")) return <Package className={`${className} text-purple-500`} />;
   return <Package className={`${className} text-slate-400`} />;
 }
@@ -595,7 +595,7 @@ export default function AnalyticsPage() {
             {/* 지출 인사이트 */}
             <div className="lg:col-span-2 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
               <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2 mb-4">
-                <AlertCircle className="h-4 w-4 text-amber-500" />
+                <AlertCircle className="h-4 w-4 text-yellow-500" />
                 지출 인사이트
               </h3>
               {intelligenceCards.length > 0 ? (
@@ -604,7 +604,7 @@ export default function AnalyticsPage() {
                     const colors = {
                       red: { border: "border-red-200", bg: "bg-red-50/50", icon: "text-red-500", cta: "text-red-600 hover:text-red-700" },
                       blue: { border: "border-blue-200", bg: "bg-blue-50/50", icon: "text-blue-500", cta: "text-blue-600 hover:text-blue-700" },
-                      amber: { border: "border-amber-200", bg: "bg-amber-50/50", icon: "text-amber-500", cta: "text-amber-600 hover:text-amber-700" },
+                      amber: { border: "border-yellow-200", bg: "bg-yellow-50/50", icon: "text-yellow-500", cta: "text-yellow-600 hover:text-yellow-700" },
                     }[card.color];
                     return (
                       <div key={card.id} className={`rounded-lg border ${colors.border} ${colors.bg} p-3.5`}>
@@ -739,7 +739,7 @@ export default function AnalyticsPage() {
                   <ul className="space-y-2.5">
                     {anomalies.slice(0, 4).map((a, idx) => {
                       const isHigh = a.severity === "high";
-                      const accent = isHigh ? "border-l-rose-500" : "border-l-amber-400";
+                      const accent = isHigh ? "border-l-rose-500" : "border-l-yellow-400";
                       return (
                         <li
                           key={`${a.item}-${idx}`}
@@ -852,7 +852,7 @@ export default function AnalyticsPage() {
                 <Users className="h-4 w-4 text-slate-400" />
                 공급사 집중도
                 {vendorConcentration > 50 && (
-                  <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">주의</span>
+                  <span className="text-xs font-semibold text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded border border-yellow-200">주의</span>
                 )}
               </h3>
               {vendorItems.length > 0 ? (
@@ -867,7 +867,7 @@ export default function AnalyticsPage() {
                         </div>
                         <div className="h-1.5 bg-el rounded-full overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all ${v.pct > 50 ? "bg-amber-400" : idx === 0 ? "bg-blue-400" : "bg-slate-300"}`}
+                            className={`h-full rounded-full transition-all ${v.pct > 50 ? "bg-yellow-400" : idx === 0 ? "bg-blue-400" : "bg-slate-300"}`}
                             style={{ width: `${Math.min(100, v.pct)}%` }}
                           />
                         </div>
@@ -876,8 +876,8 @@ export default function AnalyticsPage() {
                     </div>
                   ))}
                   {vendorConcentration > 50 && (
-                    <div className="mt-3 rounded-lg bg-amber-50 border border-amber-200 p-3">
-                      <p className="text-xs text-amber-700 font-medium">
+                    <div className="mt-3 rounded-lg bg-yellow-50 border border-yellow-200 p-3">
+                      <p className="text-xs text-yellow-700 font-medium">
                         상위 1개 공급사가 전체 지출의 {vendorConcentration}%를 차지합니다. 공급 리스크 분산을 검토하세요.
                       </p>
                     </div>
@@ -968,10 +968,10 @@ export default function AnalyticsPage() {
             <div className="rounded-xl border border-bd bg-pn p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  <AlertTriangle className="h-4 w-4 text-yellow-500" />
                   이상 지출 항목
                   {anomalies.length > 0 && (
-                    <span className="text-xs font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">{anomalies.length}</span>
+                    <span className="text-xs font-bold text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded border border-yellow-200">{anomalies.length}</span>
                   )}
                 </h3>
                 <button
@@ -987,7 +987,7 @@ export default function AnalyticsPage() {
               {anomalies.length > 0 ? (
                 <div className="space-y-2.5">
                   {anomalies.map((a, i) => (
-                    <div key={i} className={`rounded-lg border ${a.severity === "high" ? "border-red-200 bg-red-50/40" : "border-amber-200 bg-amber-50/40"} p-3.5`}>
+                    <div key={i} className={`rounded-lg border ${a.severity === "high" ? "border-red-200 bg-red-50/40" : "border-yellow-200 bg-yellow-50/40"} p-3.5`}>
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-slate-800">{a.item}</p>
@@ -1051,7 +1051,7 @@ export default function AnalyticsPage() {
                         <p className="text-xs text-slate-500">마지막 주문 {item.daysSinceLast}일 전 · {item.count}회 반복</p>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
-                        {item.daysSinceLast >= 60 && <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
+                        {item.daysSinceLast >= 60 && <div className="w-1.5 h-1.5 rounded-full bg-yellow-400" />}
                         <span className="text-xs font-bold text-slate-400">{item.daysSinceLast}d</span>
                       </div>
                     </div>

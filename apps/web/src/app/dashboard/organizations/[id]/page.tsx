@@ -65,7 +65,7 @@ type ActivityCategory = "inventory" | "purchase" | "budget" | "team" | "approval
 const ACTIVITY_CATEGORY_STYLES: Record<string, { icon: React.ComponentType<{ className?: string }>; bg: string; text: string; label: string }> = {
   inventory: { icon: Package, bg: "bg-teal-50", text: "text-teal-600", label: "재고" },
   purchase: { icon: ShoppingCart, bg: "bg-blue-50", text: "text-blue-600", label: "구매" },
-  budget: { icon: FileText, bg: "bg-amber-50", text: "text-amber-600", label: "예산" },
+  budget: { icon: FileText, bg: "bg-yellow-50", text: "text-yellow-600", label: "예산" },
   approval: { icon: ShieldCheck, bg: "bg-emerald-50", text: "text-emerald-600", label: "승인" },
   team: { icon: UserPlus, bg: "bg-purple-50", text: "text-purple-600", label: "멤버" },
   member: { icon: Users, bg: "bg-indigo-50", text: "text-indigo-600", label: "멤버" },
@@ -94,7 +94,7 @@ function getActivityImportance(action: string): "high" | "medium" | "low" {
 }
 const IMPORTANCE_DOT: Record<string, string> = {
   high: "bg-red-500/70",
-  medium: "bg-amber-500/60",
+  medium: "bg-yellow-500/60",
   low: "bg-slate-500/50",
 };
 
@@ -475,7 +475,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   //   JSX `<div` 를 generic 으로 잘못 parse. React.ElementType 단일
   //   token + postfix `[]` 으로 nested generic 제거.
   const actionableItems: { label: string; count: number; icon: React.ElementType; color: string }[] = [];
-  if (pendingCount > 0) actionableItems.push({ label: "초대 응답 대기", count: pendingCount, icon: Mail, color: "text-amber-500" });
+  if (pendingCount > 0) actionableItems.push({ label: "초대 응답 대기", count: pendingCount, icon: Mail, color: "text-yellow-500" });
   if (approverCount === 0 && totalMembers > 1) actionableItems.push({ label: "승인자 미지정", count: 1, icon: AlertTriangle, color: "text-red-500" });
 
   return (
@@ -577,12 +577,12 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-medium text-slate-400">초대 대기</span>
-              <div className="bg-amber-50 p-1.5 rounded-full">
-                <Mail className="h-3.5 w-3.5 text-amber-500" />
+              <div className="bg-yellow-50 p-1.5 rounded-full">
+                <Mail className="h-3.5 w-3.5 text-yellow-500" />
               </div>
             </div>
             <p className="text-2xl font-bold text-slate-900">{pendingCount}<span className="text-sm font-normal text-slate-400 ml-0.5">명</span></p>
-            <p className="text-[11px] text-amber-500 mt-1">{pendingCount > 0 ? "응답 대기 중" : "대기 없음"}</p>
+            <p className="text-[11px] text-yellow-500 mt-1">{pendingCount > 0 ? "응답 대기 중" : "대기 없음"}</p>
           </CardContent>
         </Card>
         {/* 승인 필요 */}
@@ -681,8 +681,8 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
               <Card className="shadow-sm border-slate-200 bg-white">
                 <CardContent className="p-5">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="bg-amber-50 p-2 rounded-lg">
-                      <Mail className="h-5 w-5 text-amber-500" />
+                    <div className="bg-yellow-50 p-2 rounded-lg">
+                      <Mail className="h-5 w-5 text-yellow-500" />
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-slate-900">초대 상태</p>
@@ -710,7 +710,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                     </div>
                   </div>
                   {approverCount === 0 && totalMembers > 1 && (
-                    <p className="text-xs text-amber-500">승인자를 지정해 주세요</p>
+                    <p className="text-xs text-yellow-500">승인자를 지정해 주세요</p>
                   )}
                 </CardContent>
               </Card>
@@ -825,7 +825,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                     </div>
                     <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
                       <div
-                        className={`h-full rounded-full transition-all ${seatUsagePercent > 80 ? "bg-amber-500" : "bg-blue-500"}`}
+                        className={`h-full rounded-full transition-all ${seatUsagePercent > 80 ? "bg-yellow-500" : "bg-blue-500"}`}
                         style={{ width: `${seatUsagePercent}%` }}
                       />
                     </div>
@@ -873,7 +873,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                     }`}
                   >
                     {f === "active" && <span className="w-2 h-2 rounded-full bg-emerald-500" />}
-                    {f === "pending" && <Clock className="h-3 w-3 text-amber-500" />}
+                    {f === "pending" && <Clock className="h-3 w-3 text-yellow-500" />}
                     {f === "inactive" && <PauseCircle className="h-3 w-3 text-slate-500" />}
                     {labels[f]} <span className="font-bold">{counts[f]}</span>
                   </button>
@@ -979,7 +979,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                             </TableCell>
                             <TableCell className="py-4">
                               {isPending ? (
-                                <Badge variant="secondary" className="text-xs bg-amber-50 text-amber-700">초대 대기</Badge>
+                                <Badge variant="secondary" className="text-xs bg-yellow-50 text-yellow-700">초대 대기</Badge>
                               ) : (
                                 <Badge variant="outline" className="text-xs border-emerald-200 text-emerald-700">활동 중</Badge>
                               )}
@@ -1049,7 +1049,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
             <Card className="shadow-sm border-slate-200 bg-white">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-amber-500" />
+                  <Mail className="h-4 w-4 text-yellow-500" />
                   초대 대기 ({pendingCount})
                 </CardTitle>
               </CardHeader>
@@ -1119,8 +1119,8 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
               <CardContent>
                 {members.filter((m) => m.role === "APPROVER" || m.role === "ADMIN" || m.role === "OWNER").length === 0 ? (
                   <div className="flex items-center gap-2 py-4 justify-center">
-                    <AlertTriangle className="h-5 w-5 text-amber-500" />
-                    <p className="text-sm text-amber-600">승인자를 지정해 주세요</p>
+                    <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                    <p className="text-sm text-yellow-600">승인자를 지정해 주세요</p>
                   </div>
                 ) : (
                   <div className="space-y-2">

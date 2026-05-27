@@ -550,9 +550,9 @@ function PlansPageContent() {
  return (
  <div className="container mx-auto px-4 py-8">
  <div className="max-w-xl mx-auto">
- <Card className="border-amber-200 border-amber-200">
+ <Card className="border-yellow-200 border-yellow-200">
  <CardContent className="py-12 text-center space-y-4">
- <AlertCircle className="h-8 w-8 text-amber-500 mx-auto"/>
+ <AlertCircle className="h-8 w-8 text-yellow-500 mx-auto"/>
  <div>
  <p className="text-base font-medium text-slate-900">
  조직 정보를 불러오지 못했습니다.
@@ -749,7 +749,7 @@ function PlansPageContent() {
  className={cn(
  "rounded-lg border px-4 py-3 flex items-start gap-3",
  intentBanner.variant === "warning"
- ? "border-amber-300 bg-amber-50 text-amber-900"
+ ? "border-yellow-300 bg-yellow-50 text-yellow-900"
  : "border-blue-300 bg-blue-50 text-blue-900"
  )}
  role="status"
@@ -895,13 +895,13 @@ function PlansPageContent() {
  <CardContent>
  {/* 구독 조회 실패 시 inline error */}
  {subError && !subFetching ? (
- <div className="flex items-center gap-3 p-4 rounded-lg bg-amber-50 bg-amber-900/20 border border-amber-200 border-amber-200">
- <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0"/>
+ <div className="flex items-center gap-3 p-4 rounded-lg bg-yellow-50 bg-yellow-900/20 border border-yellow-200 border-yellow-200">
+ <AlertCircle className="h-5 w-5 text-yellow-500 flex-shrink-0"/>
  <div className="flex-1">
- <p className="text-sm font-medium text-amber-800 text-amber-600">
+ <p className="text-sm font-medium text-yellow-800 text-yellow-600">
  구독 상세 정보를 불러오지 못했습니다.
  </p>
- <p className="text-xs text-amber-600 text-amber-400 mt-0.5">
+ <p className="text-xs text-yellow-600 text-yellow-400 mt-0.5">
  {(subErrorObj as Error)?.message ??"잠시 후 다시 시도해주세요."}
  </p>
  </div>
@@ -909,7 +909,7 @@ function PlansPageContent() {
  variant="outline"
  size="sm"
  onClick={() => refetchSub()}
- className="border-amber-300 border-amber-300 text-amber-700 text-amber-600"
+ className="border-yellow-300 border-yellow-300 text-yellow-700 text-yellow-600"
  >
  <RefreshCw className="mr-1.5 h-3.5 w-3.5"/>
  재시도

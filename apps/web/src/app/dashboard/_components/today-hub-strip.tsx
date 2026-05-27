@@ -20,7 +20,7 @@ import { buildDetailHref } from "@/lib/ops-console/navigation-context";
 
 function priorityColor(p: string): string {
   if (p === "p0") return "bg-red-500/20 text-red-400 border-red-500/30";
-  if (p === "p1") return "bg-amber-500/20 text-amber-400 border-amber-500/30";
+  if (p === "p1") return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
   return "bg-blue-500/20 text-blue-400 border-blue-500/30";
 }
 
@@ -32,7 +32,7 @@ function priorityLabel(p: string): string {
 
 function riskBorder(item: DashboardItem): string {
   if (item.dueState.isOverdue) return "border-l-2 border-l-red-500";
-  if (item.blockerSummary) return "border-l-2 border-l-amber-500";
+  if (item.blockerSummary) return "border-l-2 border-l-yellow-500";
   return "border-l-2 border-l-slate-700";
 }
 
@@ -42,7 +42,7 @@ function statColor(key: keyof TodayHeaderStats): string {
     case "overdueCount":
       return "text-red-400";
     case "waitingExternalCount":
-      return "text-amber-400";
+      return "text-yellow-400";
     case "readyToExecuteCount":
       return "text-emerald-400";
     case "totalActionable":

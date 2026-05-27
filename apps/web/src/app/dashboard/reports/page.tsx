@@ -577,18 +577,18 @@ export default function ReportsPage() {
               </div>
 
               {/* Insight 2: Outlier Detection */}
-              <div className="bg-amber-50 border border-amber-100 rounded-xl p-5 flex flex-col gap-3">
+              <div className="bg-yellow-50 border border-yellow-100 rounded-xl p-5 flex flex-col gap-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
-                    <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  <div className="w-8 h-8 rounded-lg bg-yellow-100 flex items-center justify-center">
+                    <AlertTriangle className="h-4 w-4 text-yellow-600" />
                   </div>
-                  <span className="text-xs font-semibold text-amber-700">이상치 감지</span>
+                  <span className="text-xs font-semibold text-yellow-700">이상치 감지</span>
                 </div>
                 <div>
-                  <p className="text-2xl font-extrabold text-amber-900 leading-tight">
+                  <p className="text-2xl font-extrabold text-yellow-900 leading-tight">
                     {insights.outlierCount}건
                   </p>
-                  <p className="text-xs text-amber-600/70 mt-1.5 leading-relaxed">
+                  <p className="text-xs text-yellow-600/70 mt-1.5 leading-relaxed">
                     평균 단가 대비 2배 이상 항목 건수
                   </p>
                 </div>
@@ -759,7 +759,7 @@ export default function ReportsPage() {
               {/* Vendor concentration warning */}
               {insights.topVendor && insights.vendorRisk !== "safe" && (
                 <div className={`mt-3 rounded-lg px-3.5 py-2.5 flex items-start gap-2 text-xs ${
-                  insights.vendorRisk === "danger" ? "bg-red-50 text-red-700 border border-red-200" : "bg-amber-50 text-amber-700 border border-amber-200"
+                  insights.vendorRisk === "danger" ? "bg-red-50 text-red-700 border border-red-200" : "bg-yellow-50 text-yellow-700 border border-yellow-200"
                 }`}>
                   <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
                   <span className="font-medium">
@@ -857,7 +857,7 @@ export default function ReportsPage() {
                           <TableCell className="py-3 text-xs text-slate-700">{item.productName || item.product || "-"}</TableCell>
                           <TableCell className="py-3 text-xs text-slate-400">{item.vendorName || item.vendor || "-"}</TableCell>
                           <TableCell className="py-3 text-xs text-slate-600 text-right">{item.quantity ?? "-"}</TableCell>
-                          <TableCell className={`py-3 text-xs text-right font-mono ${isOutlier ? "text-amber-400" : "text-slate-600"}`}>
+                          <TableCell className={`py-3 text-xs text-right font-mono ${isOutlier ? "text-yellow-400" : "text-slate-600"}`}>
                             {formatCurrency(unitPrice, "KRW")}
                             {isOutlier && <AlertTriangle className="inline h-3 w-3 ml-1" />}
                           </TableCell>

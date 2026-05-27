@@ -110,7 +110,7 @@ export function AggregatedBlockerStrip({
           </span>
         )}
         {blockerView.reviewGates.length > 0 && (
-          <span className="rounded bg-amber-500/10 px-2 py-0.5 text-amber-400 font-medium">
+          <span className="rounded bg-yellow-500/10 px-2 py-0.5 text-yellow-400 font-medium">
             검토 {blockerView.reviewGates.length}
           </span>
         )}
@@ -245,7 +245,7 @@ export function InboxBlockerBadge({ blockers }: InboxBlockerBadgeProps) {
     : hasExternal
       ? 'bg-purple-400'
       : hasReview
-        ? 'bg-amber-400'
+        ? 'bg-yellow-400'
         : 'bg-slate-500';
 
   const label = hasHard

@@ -99,7 +99,7 @@ export function InboxContextStrip({
     dueTone === 'overdue'
       ? 'bg-red-500/10 text-red-400'
       : dueTone === 'due_soon'
-        ? 'bg-amber-500/10 text-amber-400'
+        ? 'bg-yellow-500/10 text-yellow-400'
         : 'bg-slate-700 text-slate-400';
 
   return (
@@ -138,7 +138,7 @@ export function InboxContextStrip({
 
 const STATUS_TONE_STYLES: Record<OperationalHeaderProps['statusTone'], string> = {
   info: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  warning: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  warning: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
   danger: 'bg-red-500/10 text-red-400 border-red-500/20',
   success: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
   neutral: 'bg-slate-700 text-slate-600 border-slate-600',
@@ -182,7 +182,7 @@ export function OperationalHeader({
             d.tone === 'overdue'
               ? 'text-red-400'
               : d.tone === 'due_soon'
-                ? 'text-amber-400'
+                ? 'text-yellow-400'
                 : 'text-slate-600';
           return (
             <span key={d.label} className="text-slate-500">
@@ -237,7 +237,7 @@ export function BlockerReviewStrip({
           </span>
         )}
         {reviewPoints.length > 0 && (
-          <span className="rounded bg-amber-500/10 px-2 py-0.5 text-amber-400 font-medium">
+          <span className="rounded bg-yellow-500/10 px-2 py-0.5 text-yellow-400 font-medium">
             검토 {reviewPoints.length}
           </span>
         )}
@@ -259,7 +259,7 @@ export function BlockerReviewStrip({
         ))}
         {reviewPoints.map((r, i) => (
           <div key={i} className="flex items-center gap-2 text-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+            <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 shrink-0" />
             <span className="text-slate-600">{r.label}</span>
           </div>
         ))}
@@ -302,7 +302,7 @@ export function DecisionPanelShell({
       {/* Readiness */}
       <div className="flex items-center gap-2 text-xs">
         <span
-          className={`w-2 h-2 rounded-full ${readinessReady ? 'bg-emerald-400' : 'bg-amber-400'}`}
+          className={`w-2 h-2 rounded-full ${readinessReady ? 'bg-emerald-400' : 'bg-yellow-400'}`}
         />
         <span className="text-slate-600">{readinessSummary}</span>
       </div>
