@@ -143,18 +143,13 @@ export async function POST(
     //   `userRole: undefined` 시 mapUserRole(undefined) → ['requester'] →
     //   `quote_request_resend: ['buyer', 'ops_admin']` 매칭 fail → 403.
     const session = await auth();
-    enforcement = enforceAction({
-      userId: session?.user?.id ?? quote.userId,
-      userRole: session?.user?.role,
-      action: 'quote_request_resend',
-      targetEntityType: 'quote',
-      targetEntityId: id,
-      sourceSurface: 'vendor-requests-api',
-      routePath: '/api/quotes/[id]/vendor-requests',
-    });
-    if (!enforcement.allowed) return enforcement.deny();
 
-    // Parse and validate request body
+    // §11.314-a — body 를 enforceAction 앞에서 parse (isReminder 분기로 action 결정).
+    //   root cause (호영님 §11.308 확인요청): 이전 action 'quote_request_resend'
+    //   하드코딩 → quote_request_resend: ['buyer','ops_admin'] 이라 requester
+    //   (연구원, RESEARCHER→requester) 403 → "견적 요청 실패".
+    //   fix (호영님 옵션 A): 첫 발송 = quote_request_submit (requester 허용),
+    //   리마인더(isReminder=true) = quote_request_resend (재발송 거버넌스 유지).
     const body = await request.json();
     const validation = CreateVendorRequestsSchema.safeParse(body);
 
@@ -166,6 +161,17 @@ export async function POST(
     }
 
     const { vendors, message, expiresInDays, isReminder } = validation.data;
+
+    enforcement = enforceAction({
+      userId: session?.user?.id ?? quote.userId,
+      userRole: session?.user?.role,
+      action: isReminder ? 'quote_request_resend' : 'quote_request_submit',
+      targetEntityType: 'quote',
+      targetEntityId: id,
+      sourceSurface: 'vendor-requests-api',
+      routePath: '/api/quotes/[id]/vendor-requests',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // §11.228b — Rate-limit cooldown check (24h 내 같은 quote+vendor 차단).
     //   isReminder=true 인 경우만 적용 — initial dispatch 는 cooldown 미적용.
