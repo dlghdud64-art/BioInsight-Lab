@@ -330,7 +330,7 @@ function StockSummarySection({
     stockStatus.stockRatio <= 0.3
       ? { text: "text-red-600", bg: "bg-red-50" }
       : stockStatus.stockRatio <= 0.7
-      ? { text: "text-amber-600", bg: "bg-amber-50" }
+      ? { text: "text-yellow-600", bg: "bg-yellow-50" }
       : { text: "text-emerald-600", bg: "bg-emerald-50" };
 
   const stats = [
@@ -370,10 +370,10 @@ function StockSummarySection({
         ? `${stockStatus.actionNeededCount}건`
         : "없음",
       color: stockStatus.actionNeededCount > 0
-        ? "text-amber-600"
+        ? "text-yellow-600"
         : "text-emerald-600",
       bg: stockStatus.actionNeededCount > 0
-        ? "bg-amber-50"
+        ? "bg-yellow-50"
         : "bg-emerald-50",
     },
   ];
@@ -425,7 +425,7 @@ function StockSummarySection({
             </div>
           )}
           {stockStatus.expiringLotCount > 0 && (
-            <div className="flex items-center gap-2 text-[11px] text-amber-600">
+            <div className="flex items-center gap-2 text-[11px] text-yellow-600">
               <CalendarClock className="h-3.5 w-3.5" />
               <span>유효기간 임박 Lot: <span className="font-bold">{stockStatus.expiringLotCount}건</span></span>
             </div>
@@ -460,9 +460,9 @@ function IssueWarningsSection({
   };
 
   return (
-    <div className={`p-5 ${isShortage ? "bg-red-50/50" : "bg-amber-50/40"}`}>
+    <div className={`p-5 ${isShortage ? "bg-red-50/50" : "bg-yellow-50/40"}`}>
       <div className="flex items-center gap-2 mb-3">
-        <ShieldAlert className={`h-4 w-4 ${errors.length > 0 ? "text-red-500" : "text-amber-500"}`} />
+        <ShieldAlert className={`h-4 w-4 ${errors.length > 0 ? "text-red-500" : "text-yellow-500"}`} />
         <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
           확인 필요한 재고 이슈
         </h4>
@@ -471,7 +471,7 @@ function IssueWarningsSection({
           className={`text-[10px] h-4 px-1.5 ${
             errors.length > 0
               ? "bg-red-50 text-red-600 border-red-200"
-              : "bg-amber-50 text-amber-600 border-amber-200"
+              : "bg-yellow-50 text-yellow-600 border-yellow-200"
           }`}
         >
           {issues.length}건
@@ -491,14 +491,14 @@ function IssueWarningsSection({
                 isError
                   ? "border-red-200 bg-red-50/80"
                   : isWarning
-                  ? "border-amber-200 bg-amber-50/80"
+                  ? "border-yellow-200 bg-yellow-50/80"
                   : "border-slate-200 bg-slate-50"
               }`}
             >
               <div className="flex items-start gap-2">
                 <IconComp
                   className={`h-3.5 w-3.5 mt-0.5 flex-shrink-0 ${
-                    isError ? "text-red-500" : isWarning ? "text-amber-500" : "text-blue-500"
+                    isError ? "text-red-500" : isWarning ? "text-yellow-500" : "text-blue-500"
                   }`}
                 />
                 <div className="flex-1 min-w-0">
@@ -512,7 +512,7 @@ function IssueWarningsSection({
                         isError
                           ? "text-red-600 border-red-200 bg-red-50"
                           : isWarning
-                          ? "text-amber-600 border-amber-200 bg-amber-50"
+                          ? "text-yellow-600 border-yellow-200 bg-yellow-50"
                           : "text-slate-500 border-slate-200"
                       }`}
                     >
@@ -713,9 +713,9 @@ function LotExpirySection({
   };
 
   return (
-    <div className={`p-5 ${isHighlighted ? "bg-amber-50/40" : ""}`}>
+    <div className={`p-5 ${isHighlighted ? "bg-yellow-50/40" : ""}`}>
       <div className="flex items-center gap-2 mb-3">
-        <CalendarClock className="h-4 w-4 text-amber-500" />
+        <CalendarClock className="h-4 w-4 text-yellow-500" />
         <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
           LOT 및 유효기간 확인
         </h4>
@@ -734,7 +734,7 @@ function LotExpirySection({
                 isExpired
                   ? "border-red-200 bg-red-50/80"
                   : isSoon
-                  ? "border-amber-200 bg-amber-50/80"
+                  ? "border-yellow-200 bg-yellow-50/80"
                   : "border-slate-200 bg-white"
               }`}
             >
@@ -751,7 +751,7 @@ function LotExpirySection({
                   </Badge>
                 )}
                 {isSoon && !isExpired && (
-                  <Badge variant="outline" className="text-[9px] h-3.5 px-1 bg-amber-50 text-amber-600 border-amber-200 font-bold">
+                  <Badge variant="outline" className="text-[9px] h-3.5 px-1 bg-yellow-50 text-yellow-600 border-yellow-200 font-bold">
                     D-{lot.daysUntilExpiry}
                   </Badge>
                 )}
@@ -769,7 +769,7 @@ function LotExpirySection({
 
               {action && (
                 <p className={`text-[11px] font-semibold mt-1 ${
-                  isExpired ? "text-red-600" : "text-amber-600"
+                  isExpired ? "text-red-600" : "text-yellow-600"
                 }`}>
                   {action}
                 </p>
@@ -789,7 +789,7 @@ function LotExpirySection({
                 {(isExpired || isSoon) && onReviewDisposal && (
                   <button
                     className={`text-[11px] font-semibold flex items-center gap-0.5 ml-auto ${
-                      isExpired ? "text-red-600 hover:text-red-700" : "text-amber-600 hover:text-amber-700"
+                      isExpired ? "text-red-600 hover:text-red-700" : "text-yellow-600 hover:text-yellow-700"
                     }`}
                     onClick={() => onReviewDisposal(lot.lotNumber)}
                   >
