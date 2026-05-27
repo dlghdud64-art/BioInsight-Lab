@@ -74,7 +74,7 @@ export async function POST(
     // QuoteItem.productId → Product 상세 조회 (품목명/브랜드/카탈로그/규격/grade)
     const productIds = quote.items
       .map((it: typeof quote.items[number]) => it.productId)
-      .filter(Boolean);
+      .filter((id): id is string => Boolean(id));
     const products = productIds.length
       ? await db.product.findMany({
           where: { id: { in: productIds } },
@@ -88,7 +88,8 @@ export async function POST(
           },
         })
       : [];
-    const productMap = new Map(products.map((p: typeof products[number]) => [p.id, p]));
+    type ProductRow = (typeof products)[number];
+    const productMap = new Map<string, ProductRow>(products.map((p) => [p.id, p]));
 
     // 요청자 이름 (best-effort)
     const requesterName = session?.user?.name ?? undefined;
