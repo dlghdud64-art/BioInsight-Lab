@@ -5,6 +5,9 @@ on:
     branches:
       - main
       - develop
+  repository_dispatch:
+    types:
+      - vercel.deployment.success
   workflow_dispatch:
     inputs:
       pilot:
@@ -86,6 +89,7 @@ jobs:
         with:
           path: labaxis
           fetch-depth: 0
+          ref: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.git.sha || github.sha }}
 
       - name: Verify Agent Board repository token
         env:
@@ -149,7 +153,7 @@ jobs:
           LABAXIS_REVIEW_INPUT_CHANGED_FILE_3: ${{ github.event.inputs.changed_file_3 }}
           OPENAI_AGENT_MODEL: ${{ vars.OPENAI_AGENT_MODEL }}
           OPENAI_ARBITER_MODEL: ${{ vars.OPENAI_ARBITER_MODEL }}
-          LABAXIS_BROWSER_URL: ${{ github.event.inputs.browser_url || vars.LABAXIS_BROWSER_URL || 'https://www.labaxis.co.kr' }}
+          LABAXIS_BROWSER_URL: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.url || github.event.inputs.browser_url || vars.LABAXIS_BROWSER_URL || 'https://www.labaxis.co.kr' }}
           LABAXIS_BROWSER_ROUTE_1: ${{ github.event.inputs.browser_route_1 || 'auto' }}
           LABAXIS_BROWSER_ROUTE_2: ${{ github.event.inputs.browser_route_2 || '' }}
           LABAXIS_BROWSER_ROUTE_3: ${{ github.event.inputs.browser_route_3 || '' }}
@@ -174,6 +178,12 @@ jobs:
             SUMMARY="PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}"
             BASE_ARGS=(--base "origin/${{ github.base_ref }}")
             REVIEW_CHANGED_FILES="$(git -C "$GITHUB_WORKSPACE/labaxis" diff --name-only "origin/${{ github.base_ref }}"...HEAD || true)"
+          elif [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            DEPLOY_SHA="${{ github.event.client_payload.git.sha }}"
+            DEPLOY_ENV="${{ github.event.client_payload.environment }}"
+            SUMMARY="Vercel ${DEPLOY_ENV} deployment: ${DEPLOY_SHA}"
+            BASE_ARGS=(--base "${DEPLOY_SHA}^")
+            REVIEW_CHANGED_FILES="$(git -C "$GITHUB_WORKSPACE/labaxis" diff --name-only "${DEPLOY_SHA}^"..."${DEPLOY_SHA}" || true)"
           else
             MANUAL_BASE="${LABAXIS_REVIEW_INPUT_BASE:-HEAD~1}"
             SUMMARY="Manual LabAxis Agent Board run (base: ${MANUAL_BASE})"
