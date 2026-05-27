@@ -855,6 +855,6 @@ export const WORK_TYPE_LABELS: Record<InboxWorkType, string> = {
 export const SOURCE_MODULE_COLORS: Record<InboxSourceModule, string> = {
   quote: 'bg-blue-500/10 text-blue-400',
   po: 'bg-teal-500/10 text-teal-400',
-  receiving: 'bg-orange-500/10 text-orange-400',
+  receiving: 'bg-yellow-500/10 text-yellow-400',
   stock_risk: 'bg-purple-500/10 text-purple-400',
 };

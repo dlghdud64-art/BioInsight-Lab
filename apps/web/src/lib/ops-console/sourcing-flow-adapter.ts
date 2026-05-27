@@ -100,7 +100,7 @@ export const FLOW_STAGE_ORDER: SourcingFlowStage[] = [
 const FLOW_STAGE_TONES: Record<SourcingFlowStage, string> = {
   search_entry: 'bg-slate-700 text-slate-300',
   candidate_narrowing: 'bg-blue-500/10 text-blue-400',
-  compare_gate: 'bg-amber-500/10 text-amber-400',
+  compare_gate: 'bg-yellow-500/10 text-yellow-400',
   quote_draft_bootstrap: 'bg-teal-500/10 text-teal-400',
   quote_execution: 'bg-emerald-500/10 text-emerald-400',
 };

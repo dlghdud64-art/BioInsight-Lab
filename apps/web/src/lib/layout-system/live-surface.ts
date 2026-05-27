@@ -74,7 +74,7 @@ export function getFreshnessDisplay(level: FreshnessLevel): FreshnessDisplay {
     case 'aging':
       return {
         label: '갱신 필요',
-        color: 'text-amber-400',
+        color: 'text-yellow-400',
         showBadge: true,
         showTimestamp: true,
       };

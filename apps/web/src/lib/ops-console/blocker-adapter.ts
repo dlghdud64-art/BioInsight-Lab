@@ -648,14 +648,14 @@ export const SEVERITY_LABELS: Record<BlockerSeverity, string> = {
 
 export const SEVERITY_TONES: Record<BlockerSeverity, string> = {
   hard_block: 'text-red-400 bg-red-500/10',
-  review_gate: 'text-amber-400 bg-amber-500/10',
+  review_gate: 'text-yellow-400 bg-yellow-500/10',
   soft_warning: 'text-slate-400 bg-slate-700',
   external_wait: 'text-purple-400 bg-purple-500/10',
 };
 
 export const SEVERITY_DOT_COLORS: Record<BlockerSeverity, string> = {
   hard_block: 'bg-red-400',
-  review_gate: 'bg-amber-400',
+  review_gate: 'bg-yellow-400',
   soft_warning: 'bg-slate-500',
   external_wait: 'bg-purple-400',
 };

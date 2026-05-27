@@ -75,7 +75,7 @@ export const PURCHASE_PHASE_LABELS: Record<PurchasePhase, string> = {
 
 export const PURCHASE_PHASE_BADGE_COLORS: Record<PurchasePhase, string> = {
   REQUEST: "bg-blue-100 text-blue-800",
-  PENDING_APPROVAL: "bg-amber-100 text-amber-800",
+  PENDING_APPROVAL: "bg-yellow-100 text-yellow-800",
   ORDERED: "bg-blue-100 text-blue-800",
   RECEIVING: "bg-blue-100 text-blue-800",
   COMPLETED: "bg-green-100 text-green-800",
@@ -129,7 +129,7 @@ export const RECEIVING_STATUS_LABELS: Record<ReceivingStatus, string> = {
 
 export const RECEIVING_STATUS_BADGE_COLORS: Record<ReceivingStatus, string> = {
   PENDING: "bg-el text-slate-700",
-  PARTIAL: "bg-orange-100 text-orange-800",
+  PARTIAL: "bg-yellow-100 text-yellow-800",
   COMPLETED: "bg-green-100 text-green-800",
   ISSUE: "bg-red-100 text-red-800",
 };
@@ -156,7 +156,7 @@ export const INVENTORY_CONDITION_LABELS: Record<InventoryCondition, string> = {
 export const INVENTORY_CONDITION_BADGE_COLORS: Record<InventoryCondition, string> = {
   NORMAL: "bg-green-100 text-green-800",
   LOW: "bg-yellow-100 text-yellow-800",
-  EXPIRING: "bg-orange-100 text-orange-800",
+  EXPIRING: "bg-yellow-100 text-yellow-800",
   EXPIRED: "bg-red-100 text-red-800",
   DISPOSAL_SCHEDULED: "bg-el text-gray-600",
 };

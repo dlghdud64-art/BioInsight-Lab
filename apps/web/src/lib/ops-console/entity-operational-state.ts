@@ -911,7 +911,7 @@ export const READINESS_LABELS: Record<OperationalReadiness, string> = {
 export const READINESS_TONES: Record<OperationalReadiness, string> = {
   ready: 'text-emerald-400',
   blocked: 'text-red-400',
-  needs_review: 'text-amber-400',
+  needs_review: 'text-yellow-400',
   waiting_external: 'text-blue-400',
   handoff_ready: 'text-teal-400',
   terminal: 'text-slate-500',

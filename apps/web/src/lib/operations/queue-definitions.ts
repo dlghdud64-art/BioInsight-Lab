@@ -26,7 +26,7 @@ export const PRIORITY_LABELS: Record<PriorityLevel, string> = {
 
 export const PRIORITY_BADGE_COLORS: Record<PriorityLevel, string> = {
   P0: "bg-red-100 text-red-800",
-  P1: "bg-orange-100 text-orange-800",
+  P1: "bg-yellow-100 text-yellow-800",
   P2: "bg-blue-100 text-blue-800",
   P3: "bg-el text-gray-600",
 };

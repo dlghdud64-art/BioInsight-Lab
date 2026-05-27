@@ -618,8 +618,8 @@ export const SOURCE_TYPE_LABELS: Record<ReentrySourceType, string> = {
 };
 
 export const SOURCE_TYPE_TONES: Record<ReentrySourceType, string> = {
-  stock_risk_reorder: 'bg-amber-500/10 text-amber-400',
-  expiry_replacement: 'bg-orange-500/10 text-orange-400',
+  stock_risk_reorder: 'bg-yellow-500/10 text-yellow-400',
+  expiry_replacement: 'bg-yellow-500/10 text-yellow-400',
   receiving_exception: 'bg-red-500/10 text-red-400',
   quote_review_followup: 'bg-blue-500/10 text-blue-400',
   po_issue_context_recovery: 'bg-purple-500/10 text-purple-400',
@@ -635,7 +635,7 @@ export const URGENCY_LABELS: Record<ReentryUrgency, string> = {
 
 export const URGENCY_TONES: Record<ReentryUrgency, string> = {
   critical: 'bg-red-500/10 text-red-400',
-  high: 'bg-amber-500/10 text-amber-400',
+  high: 'bg-yellow-500/10 text-yellow-400',
   normal: 'bg-slate-700 text-slate-300',
   low: 'bg-slate-700 text-slate-400',
 };

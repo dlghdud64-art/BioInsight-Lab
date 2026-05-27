@@ -15,7 +15,7 @@ import type { ProcurementStage, ApprovalPolicy, ApprovalStatus } from "./procure
 export type GuardrailSeverity = "warning" | "conditional" | "blocked";
 
 export const SEVERITY_CONFIG: Record<GuardrailSeverity, { label: string; color: string; bgColor: string; borderColor: string; icon: string }> = {
-  warning:     { label: "경고",       color: "text-amber-400",   bgColor: "bg-amber-600/10",  borderColor: "border-amber-600/30",  icon: "AlertTriangle" },
+  warning:     { label: "경고",       color: "text-yellow-400",   bgColor: "bg-yellow-600/10",  borderColor: "border-yellow-600/30",  icon: "AlertTriangle" },
   conditional: { label: "조건부 진행", color: "text-blue-400",    bgColor: "bg-blue-600/10",   borderColor: "border-blue-600/30",   icon: "Info" },
   blocked:     { label: "차단",       color: "text-red-400",     bgColor: "bg-red-600/10",    borderColor: "border-red-600/30",    icon: "AlertCircle" },
 };

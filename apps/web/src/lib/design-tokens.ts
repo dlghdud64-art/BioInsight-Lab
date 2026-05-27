@@ -23,7 +23,7 @@ export const BORDER = {
   divider: "divide-slate-800",
   severity: {
     critical: "border-l-red-500",
-    warning: "border-l-amber-500",
+    warning: "border-l-yellow-500", // §11.302d-6c-2 — amber → yellow (신호등 정합)
     info: "border-l-blue-500",
     success: "border-l-emerald-500",
     neutral: "border-l-slate-700",
@@ -37,7 +37,7 @@ export const TEXT = {
   muted: "text-slate-500",
   accent: "text-blue-400",
   danger: "text-red-400",
-  warning: "text-amber-400",
+  warning: "text-yellow-400", // §11.302d-6c-2 — amber → yellow (신호등 정합)
   success: "text-emerald-400",
 } as const;
 

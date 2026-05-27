@@ -106,10 +106,10 @@ export const SEVERITY_INDICATORS: Record<PriorityTier, SeverityIndicator> = {
     textColor: "text-red-700",
   },
   approval_needed: {
-    borderColor: "border-l-orange-400",
+    borderColor: "border-l-yellow-400",
     dotColor: "amber",
     dotPulse: false,
-    textColor: "text-orange-700",
+    textColor: "text-yellow-700",
   },
   action_needed: {
     borderColor: "border-l-yellow-400",

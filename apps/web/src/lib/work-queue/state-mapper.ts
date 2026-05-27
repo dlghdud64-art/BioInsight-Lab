@@ -283,7 +283,7 @@ export const TASK_STATUS_SORT_ORDER: Record<TaskStatus, number> = {
  */
 export const TASK_STATUS_BADGE: Record<TaskStatus, { label: string; color: string }> = {
   READY: { label: "준비", color: "bg-el text-slate-700" },
-  REVIEW_NEEDED: { label: "검토 필요", color: "bg-amber-100 text-amber-800" },
+  REVIEW_NEEDED: { label: "검토 필요", color: "bg-yellow-100 text-yellow-800" },
   IN_PROGRESS: { label: "진행 중", color: "bg-blue-100 text-blue-800" },
   WAITING_RESPONSE: { label: "응답 대기", color: "bg-purple-100 text-purple-800" },
   ACTION_NEEDED: { label: "조치 필요", color: "bg-red-100 text-red-800" },

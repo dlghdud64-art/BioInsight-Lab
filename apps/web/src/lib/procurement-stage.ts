@@ -74,7 +74,7 @@ export interface StageInfo {
 
 const STAGE_MAP: Record<ProcurementStage, Omit<StageInfo, "stage">> = {
   quote_queue:             { label: "요청 접수",      color: "text-slate-400",   bgColor: "bg-el",              borderColor: "border-bd",             priority: 5, nextAction: "발송 대기",     queueTarget: "quote" },
-  quote_waiting:           { label: "회신 대기",      color: "text-amber-400",   bgColor: "bg-amber-600/10",    borderColor: "border-amber-600/30",   priority: 3, nextAction: "응답 확인",     queueTarget: "quote" },
+  quote_waiting:           { label: "회신 대기",      color: "text-yellow-400",   bgColor: "bg-yellow-600/10",    borderColor: "border-yellow-600/30",   priority: 3, nextAction: "응답 확인",     queueTarget: "quote" },
   quote_partial:           { label: "일부 회신",      color: "text-blue-400",    bgColor: "bg-blue-600/10",     borderColor: "border-blue-600/30",    priority: 2, nextAction: "추가 응답 대기", queueTarget: "quote" },
   quote_received:          { label: "응답 완료",      color: "text-emerald-400", bgColor: "bg-emerald-600/10",  borderColor: "border-emerald-600/30", priority: 1, nextAction: "비교 검토",     queueTarget: "quote" },
   quote_compare_review:    { label: "비교 검토 필요", color: "text-purple-400",  bgColor: "bg-purple-600/10",   borderColor: "border-purple-600/30",  priority: 0, nextAction: "비교 검토",     queueTarget: "quote" },

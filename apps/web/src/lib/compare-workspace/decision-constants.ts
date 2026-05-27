@@ -15,7 +15,7 @@ export interface DecisionStateConfig {
 }
 
 export const DECISION_STATE_CONFIG: Record<string, DecisionStateConfig> = {
-  UNDECIDED: { label: "검토 중", dotColor: "amber", className: "text-amber-700 bg-amber-50", pulse: true },
+  UNDECIDED: { label: "검토 중", dotColor: "amber", className: "text-yellow-700 bg-yellow-50", pulse: true },
   APPROVED: { label: "승인", dotColor: "emerald", className: "text-emerald-700 bg-emerald-50" },
   HELD: { label: "보류", dotColor: "blue", className: "text-blue-700 bg-blue-50" },
   REJECTED: { label: "반려", dotColor: "red", className: "text-red-700 bg-red-50" },
@@ -59,7 +59,7 @@ export interface VerdictConfig {
 export const VERDICT_CONFIG: Record<string, VerdictConfig> = {
   EQUIVALENT: { label: "동일", className: "bg-green-50 text-green-700" },
   MINOR_DIFFERENCES: { label: "경미", className: "bg-blue-50 text-blue-700" },
-  SIGNIFICANT_DIFFERENCES: { label: "중요", className: "bg-orange-50 text-orange-700" },
+  SIGNIFICANT_DIFFERENCES: { label: "중요", className: "bg-yellow-50 text-yellow-700" },
   INCOMPATIBLE: { label: "불가", className: "bg-red-50 text-red-700" },
   REQUIRES_EXPERT: { label: "전문가", className: "bg-purple-50 text-purple-700" },
 };
@@ -67,7 +67,7 @@ export const VERDICT_CONFIG: Record<string, VerdictConfig> = {
 // ── Quote Status ──
 
 export const QUOTE_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  PENDING: { label: "접수", className: "bg-amber-50 text-amber-700" },
+  PENDING: { label: "접수", className: "bg-yellow-50 text-yellow-700" },
   PARSED: { label: "파싱", className: "bg-pg text-slate-700" },
   SENT: { label: "발송", className: "bg-blue-50 text-blue-700" },
   RESPONDED: { label: "회신", className: "bg-green-50 text-green-700" },

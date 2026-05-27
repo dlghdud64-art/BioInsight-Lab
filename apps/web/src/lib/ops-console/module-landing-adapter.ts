@@ -691,7 +691,7 @@ function buildStockRiskDownstream(
 export const BUCKET_COLORS: Record<ModuleBucketKey, string> = {
   ready: 'bg-emerald-500/10 text-emerald-400',
   blocked: 'bg-red-500/10 text-red-400',
-  needs_review: 'bg-amber-500/10 text-amber-400',
+  needs_review: 'bg-yellow-500/10 text-yellow-400',
   waiting_external: 'bg-blue-500/10 text-blue-400',
   handoff: 'bg-teal-500/10 text-teal-400',
 };

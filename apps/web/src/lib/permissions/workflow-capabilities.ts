@@ -84,7 +84,7 @@ export const WORKFLOW_CAPABILITY_LABEL: Record<WorkflowCapability, string> = {
 export const WORKFLOW_CAPABILITY_BADGE_CLS: Record<WorkflowCapability, string> = {
   LAB_MANAGER: "bg-blue-50 text-blue-700 border-blue-200",
   APPROVER: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  REQUESTER: "bg-amber-50 text-amber-700 border-amber-200",
+  REQUESTER: "bg-yellow-50 text-yellow-700 border-yellow-200",
 };
 
 /**

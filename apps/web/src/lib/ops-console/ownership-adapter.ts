@@ -365,9 +365,9 @@ export const ASSIGNMENT_STATE_LABELS: Record<AssignmentState, string> = {
 export const ASSIGNMENT_STATE_TONES: Record<AssignmentState, string> = {
   owned_by_me: 'text-blue-400',
   owned_by_team: 'text-slate-300',
-  unassigned: 'text-amber-400',
-  awaiting_internal_review: 'text-amber-400',
-  awaiting_approval: 'text-amber-400',
+  unassigned: 'text-yellow-400',
+  awaiting_internal_review: 'text-yellow-400',
+  awaiting_approval: 'text-yellow-400',
   waiting_external: 'text-purple-400',
   handoff_pending: 'text-teal-400',
   escalated: 'text-red-400',
@@ -385,7 +385,7 @@ export const SLA_STATE_LABELS: Record<SlaState, string> = {
 
 export const SLA_STATE_TONES: Record<SlaState, string> = {
   on_track: 'text-emerald-400',
-  due_soon: 'text-amber-400',
+  due_soon: 'text-yellow-400',
   overdue_internal: 'text-red-400',
   overdue_external: 'text-purple-400',
   escalation_required: 'text-red-400',

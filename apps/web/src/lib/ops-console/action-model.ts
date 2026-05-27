@@ -135,7 +135,7 @@ export const COMMAND_PRIORITY_STYLES: Record<CommandPriority, string> = {
 /** Command type → icon hint (UI에서 사용) */
 export const COMMAND_TYPE_HINTS: Record<CommandType, { iconHint: string; tone: string }> = {
   execute: { iconHint: 'play', tone: 'text-blue-400' },
-  review: { iconHint: 'eye', tone: 'text-amber-400' },
+  review: { iconHint: 'eye', tone: 'text-yellow-400' },
   resolve_blocker: { iconHint: 'unlock', tone: 'text-red-400' },
   handoff: { iconHint: 'arrow-right', tone: 'text-teal-400' },
   external_followup: { iconHint: 'mail', tone: 'text-purple-400' },
