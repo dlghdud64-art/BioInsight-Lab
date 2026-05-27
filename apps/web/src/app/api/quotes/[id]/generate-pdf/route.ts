@@ -18,6 +18,16 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+
+/** §11.314-b-1 — Product select row type (noImplicitAny strict) */
+interface ProductSelectRow {
+  id: string;
+  name: string;
+  brand: string | null;
+  catalogNumber: string | null;
+  specification: string | null;
+  grade: string | null;
+}
 import { db } from "@/lib/db";
 import { getOrCreateGuestKey } from "@/lib/api/guest-key";
 import { handleApiError } from "@/lib/api-error-handler";
@@ -75,7 +85,7 @@ export async function POST(
     const productIds = quote.items
       .map((it: typeof quote.items[number]) => it.productId)
       .filter((id: string | null | undefined): id is string => Boolean(id));
-    const products = productIds.length
+    const products: ProductSelectRow[] = productIds.length
       ? await db.product.findMany({
           where: { id: { in: productIds } },
           select: {
@@ -87,8 +97,8 @@ export async function POST(
             grade: true,
           },
         })
-      : ([] as Awaited<ReturnType<typeof db.product.findMany>>);
-    const productMap = new Map(products.map((p: { id: string; name: string; brand: string | null; catalogNumber: string | null; specification: string | null; grade: string | null }) => [p.id, p] as const));
+      : [];
+    const productMap = new Map<string, ProductSelectRow>(products.map((p) => [p.id, p]));
 
     // 요청자 이름 (best-effort)
     const requesterName = session?.user?.name ?? undefined;
