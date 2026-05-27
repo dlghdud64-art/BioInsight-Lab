@@ -129,6 +129,33 @@ export async function POST(
       vendorName: quote.vendor ?? undefined,
     });
 
+    // §11.314-c — PDF 생성(견적 요청서 발행) = 발송 행위 → status
+    //   PENDING/PARSED → SENT 전환. 호영님 §11.308b 완료기준 #4
+    //   "견적 상태 draft → sent" 충족.
+    //   - POST(발송) 일 때만 전환. GET (mobile read-only download) 은 0
+    //     (request.method 로 구분 — GET handler 가 POST 호출 시 method="GET").
+    //   - enforceAction 없이 ownership 검증만 (quote_status_change 는
+    //     buyer/approver/ops_admin 전용이라 requester 403 → §11.314-a 와
+    //     동일 문제. 발송은 requester 허용해야 하므로 status route 우회).
+    //   - best-effort (status 전환 실패해도 PDF 응답 영향 0).
+    let statusTransitioned = false;
+    if (
+      request.method === "POST" &&
+      (quote.status === "PENDING" || quote.status === "PARSED")
+    ) {
+      await db.quote
+        .update({
+          where: { id },
+          data: { status: "SENT", updatedAt: new Date() },
+        })
+        .then(() => {
+          statusTransitioned = true;
+        })
+        .catch(() => {
+          // status 전환 실패는 PDF 응답 영향 0
+        });
+    }
+
     // audit log — best-effort (graceful, PDF 응답 영향 0).
     await createAuditLog({
       userId: session?.user?.id ?? undefined,
@@ -143,6 +170,9 @@ export async function POST(
         quoteNumber: quote.quoteNumber,
         itemCount: quote.items.length,
         byteSize: pdfBuffer.length,
+        // §11.314-c — status PENDING/PARSED → SENT 전환 여부
+        statusTransitioned,
+        previousStatus: quote.status,
       },
     }).catch(() => {
       // audit log 실패는 PDF 응답 영향 0
@@ -151,15 +181,4 @@ export async function POST(
     const filename = `${quote.quoteNumber ?? `quote-${quote.id.slice(0, 8)}`}.pdf`;
 
     // PDF stream 반환 — application/pdf + attachment.
-    return new NextResponse(pdfBuffer as unknown as BodyInit, {
-      status: 200,
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${filename}"`,
-        "Content-Length": pdfBuffer.length.toString(),
-      },
-    });
-  } catch (error) {
-    return handleApiError(error, "quotes/[id]/generate-pdf/POST");
-  }
-}
+    return new NextResponse(pdfBuffer as unknown as BodyIn

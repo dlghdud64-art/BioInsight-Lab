@@ -101,6 +101,31 @@ describe("§11.314-b — generate-pdf route", () => {
   });
 });
 
+describe("§11.314-c — PDF 생성 시 status PENDING/PARSED → SENT 전환", () => {
+  it("POST(발송) 일 때만 status SENT 전환 (request.method 분기)", () => {
+    const src = read(ROUTE_PATH);
+    expect(src).toMatch(/request\.method === "POST"/);
+    expect(src).toMatch(/quote\.status === "PENDING"\s*\|\|\s*quote\.status === "PARSED"/);
+  });
+
+  it("db.quote.update status SENT (best-effort catch)", () => {
+    const src = read(ROUTE_PATH);
+    expect(src).toMatch(/data:\s*\{\s*status:\s*"SENT"/);
+    expect(src).toMatch(/statusTransitioned/);
+  });
+
+  it("audit metadata 에 statusTransitioned + previousStatus 기록", () => {
+    const src = read(ROUTE_PATH);
+    expect(src).toMatch(/statusTransitioned,/);
+    expect(src).toMatch(/previousStatus:\s*quote\.status/);
+  });
+
+  it("enforceAction 미사용 (quote_status_change 우회 — requester 발송 허용, §11.314-a 정합)", () => {
+    const src = read(ROUTE_PATH);
+    expect(src).not.toMatch(/enforceAction\(/);
+  });
+});
+
 describe("§11.314-b — 회귀 0 (기존 PDF 인프라 보존)", () => {
   it("order PDF generator 변경 0 (별도 file)", () => {
     const src = read("src/lib/orders/po-pdf-generator.ts");
