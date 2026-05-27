@@ -9,69 +9,6 @@ on:
     types:
       - vercel.deployment.success
   workflow_dispatch:
-    inputs:
-      pilot:
-        description: Pilot scenario name or auto
-        required: false
-        default: auto
-        type: string
-      base_ref:
-        description: Base ref for manual diff review (for example HEAD~1 or a commit SHA)
-        required: false
-        default: HEAD~1
-        type: string
-      changed_files:
-        description: Legacy newline-separated changed file paths
-        required: false
-        type: string
-      changed_file_1:
-        description: Changed file path 1
-        required: false
-        type: string
-      changed_file_2:
-        description: Changed file path 2
-        required: false
-        type: string
-      changed_file_3:
-        description: Changed file path 3
-        required: false
-        type: string
-      browser_url:
-        description: Runtime URL to inspect; leave blank for configured production URL
-        required: false
-        type: string
-      browser_route_1:
-        description: Primary browser route or auto
-        required: false
-        default: auto
-        type: string
-      browser_route_2:
-        description: Additional browser route
-        required: false
-        type: string
-      browser_route_3:
-        description: Additional browser route
-        required: false
-        type: string
-      browser_routes:
-        description: Additional comma or newline-separated browser routes
-        required: false
-        type: string
-      browser_click_mode:
-        description: Browser click mode
-        required: false
-        default: safe
-        type: string
-      browser_max_clicks:
-        description: Browser click sampling budget
-        required: false
-        default: "6"
-        type: string
-      browser_assertion_profile:
-        description: Browser assertion profile or auto
-        required: false
-        default: auto
-        type: string
 
 permissions:
   contents: read
@@ -183,7 +120,7 @@ jobs:
             DEPLOY_ENV="${{ github.event.client_payload.environment }}"
             SUMMARY="Vercel ${DEPLOY_ENV} deployment: ${DEPLOY_SHA}"
             BASE_ARGS=(--base "${DEPLOY_SHA}^")
-            REVIEW_CHANGED_FILES="$(git -C "$GITHUB_WORKSPACE/labaxis" diff --name-only "${DEPLOY_SHA}^"..."${DEPLOY_SHA}" || true)"
+            REVIEW_CHANGED_FILES="$(git -C "$GITHUB_WORKSPACE/labaxis" diff --name-only "${DEPLOY_SHA}^" "${DEPLOY_SHA}" || true)"
           else
             MANUAL_BASE="${LABAXIS_REVIEW_INPUT_BASE:-HEAD~1}"
             SUMMARY="Manual LabAxis Agent Board run (base: ${MANUAL_BASE})"
