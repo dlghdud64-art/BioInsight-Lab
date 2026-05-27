@@ -273,31 +273,34 @@ function KpiCard({ icon, label, value, hint, risk, href, breakdown, toneOverride
   //   font-black tracking-tighter + glassmorphism delta + hover lift 로 upgrade.
   //   (호영님 시안: Google AI Studio LabAxis "OPERATIONAL INTELLIGENCE
   //   DASHBOARD" 4 KPI 카드 정합)
+  // §11.302d-6a-3-β — tone key "amber" 보존 (caller toneOverride / risk 매핑
+  //   영향 0), 값만 yellow swap. badge.tsx 패턴 정합.
+  //   §11.302 신호등 정합: amber → yellow (경고 의미 유지).
   const iconContainerMap = {
     blue: "bg-blue-50 text-blue-600",
     emerald: "bg-emerald-50 text-emerald-600",
-    amber: "bg-amber-50 text-amber-600",
+    amber: "bg-yellow-50 text-yellow-600",
     rose: "bg-rose-50 text-rose-600",
   };
 
   const hoverBorderMap = {
     blue: "hover:border-blue-200",
     emerald: "hover:border-emerald-200",
-    amber: "hover:border-amber-200",
+    amber: "hover:border-yellow-200",
     rose: "hover:border-rose-200",
   };
 
   const progressBarMap = {
     blue: "bg-blue-500",
     emerald: "bg-emerald-500",
-    amber: "bg-amber-500",
+    amber: "bg-yellow-500",
     rose: "bg-rose-500",
   };
 
   const valueColorMap = {
     blue: "text-blue-700",
     emerald: "text-slate-900",
-    amber: "text-amber-700",
+    amber: "text-yellow-700",
     rose: "text-rose-700",
   };
 
@@ -322,7 +325,8 @@ function KpiCard({ icon, label, value, hint, risk, href, breakdown, toneOverride
           chip 노출. fake "+0%" 가 아니라 truthful status (정상 / 주의 / 위험)
           를 tone 에 따라 표기. 시안 정합 visual 리듬 보존. */}
       <div className="flex items-start justify-between mb-4">
-        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${iconContainerMap[tone]} shadow-sm shadow-${tone === "rose" ? "rose" : tone === "amber" ? "amber" : tone === "blue" ? "blue" : "emerald"}-100 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[-2deg]`}>
+        {/* §11.302d-6a-3-β — dynamic shadow class: tone === "amber" → "yellow" 으로 변환 (Tailwind class 출력). */}
+        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${iconContainerMap[tone]} shadow-sm shadow-${tone === "rose" ? "rose" : tone === "amber" ? "yellow" : tone === "blue" ? "blue" : "emerald"}-100 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[-2deg]`}>
           {icon}
         </div>
         <div className="flex items-center gap-1.5">
@@ -339,7 +343,7 @@ function KpiCard({ icon, label, value, hint, risk, href, breakdown, toneOverride
                 tone === "rose"
                   ? "bg-rose-50/80 text-rose-700 border-rose-200/60 backdrop-blur-sm"
                   : tone === "amber"
-                    ? "bg-amber-50/80 text-amber-700 border-amber-200/60 backdrop-blur-sm"
+                    ? "bg-yellow-50/80 text-yellow-700 border-yellow-200/60 backdrop-blur-sm"
                     : tone === "blue"
                       ? "bg-blue-50/80 text-blue-700 border-blue-200/60 backdrop-blur-sm"
                       : "bg-emerald-50/80 text-emerald-700 border-emerald-200/60 backdrop-blur-sm"
@@ -348,7 +352,7 @@ function KpiCard({ icon, label, value, hint, risk, href, breakdown, toneOverride
               <span className="relative flex h-1 w-1">
                 <span className={`relative inline-flex rounded-full h-1 w-1 ${
                   tone === "rose" ? "bg-rose-500"
-                    : tone === "amber" ? "bg-amber-500"
+                    : tone === "amber" ? "bg-yellow-500"
                       : tone === "blue" ? "bg-blue-500"
                         : "bg-emerald-500"
                 }`} />
@@ -829,17 +833,18 @@ function SystemInsightCard({
     accent = "emerald";
   }
 
-  // dark accent gradient 매핑 (호영님 시안 보라/그라데이션 톤 흡수)
+  // §11.302d-6a-3-β — gradient/dotMap amber key 보존, value yellow swap.
+  //   dark accent gradient 매핑 (호영님 시안 보라/그라데이션 톤 흡수).
   const gradientMap = {
     emerald: "from-emerald-700 to-emerald-900",
-    amber: "from-amber-700 to-amber-900",
+    amber: "from-yellow-700 to-yellow-900",
     rose: "from-rose-700 to-rose-900",
     indigo: "from-indigo-700 to-purple-800",
   };
 
   const dotMap = {
     emerald: "bg-emerald-400",
-    amber: "bg-amber-400",
+    amber: "bg-yellow-400",
     rose: "bg-rose-400",
     indigo: "bg-indigo-300",
   };
