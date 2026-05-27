@@ -181,4 +181,15 @@ export async function POST(
     const filename = `${quote.quoteNumber ?? `quote-${quote.id.slice(0, 8)}`}.pdf`;
 
     // PDF stream 반환 — application/pdf + attachment.
-    return new NextResponse(pdfBuffer as unknown as BodyIn
+    return new NextResponse(pdfBuffer as unknown as BodyInit, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Length": String(pdfBuffer.length),
+      },
+    });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
