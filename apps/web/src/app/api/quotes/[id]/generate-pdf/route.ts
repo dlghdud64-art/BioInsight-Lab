@@ -87,9 +87,8 @@ export async function POST(
             grade: true,
           },
         })
-      : [];
-    type ProductRow = (typeof products)[number];
-    const productMap = new Map<string, ProductRow>(products.map((p) => [p.id, p]));
+      : ([] as Awaited<ReturnType<typeof db.product.findMany>>);
+    const productMap = new Map(products.map((p: { id: string; name: string; brand: string | null; catalogNumber: string | null; specification: string | null; grade: string | null }) => [p.id, p] as const));
 
     // 요청자 이름 (best-effort)
     const requesterName = session?.user?.name ?? undefined;
