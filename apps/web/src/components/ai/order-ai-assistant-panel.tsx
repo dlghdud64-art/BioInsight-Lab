@@ -296,7 +296,7 @@ function OrderSummarySection({ order }: { order: OrderAiPanelData["order"] }) {
   };
 
   const statusColors: Record<string, { text: string; bg: string }> = {
-    ORDERED: { text: "text-amber-400", bg: "bg-amber-950/30" },
+    ORDERED: { text: "text-yellow-400", bg: "bg-yellow-950/30" },
     CONFIRMED: { text: "text-blue-400", bg: "bg-blue-950/30" },
     SHIPPING: { text: "text-purple-400", bg: "bg-purple-950/30" },
     DELIVERED: { text: "text-emerald-400", bg: "bg-emerald-950/30" },
@@ -333,10 +333,10 @@ function OrderSummarySection({ order }: { order: OrderAiPanelData["order"] }) {
       label: "경과일",
       value: `${order.daysSinceOrdered}일`,
       color: order.daysSinceOrdered >= 7
-        ? "text-amber-400"
+        ? "text-yellow-400"
         : "text-slate-400",
       bg: order.daysSinceOrdered >= 7
-        ? "bg-amber-950/30"
+        ? "bg-yellow-950/30"
         : "bg-el/30",
     },
   ];
@@ -418,9 +418,9 @@ function IssueWarningsSection({ issues }: { issues: OrderIssue[] }) {
   };
 
   return (
-    <div className={`p-5 ${errors.length > 0 ? "bg-red-950/10" : "bg-amber-950/10"}`}>
+    <div className={`p-5 ${errors.length > 0 ? "bg-red-950/10" : "bg-yellow-950/10"}`}>
       <div className="flex items-center gap-2 mb-3">
-        <ShieldAlert className={`h-4 w-4 ${errors.length > 0 ? "text-red-500" : "text-amber-500"}`} />
+        <ShieldAlert className={`h-4 w-4 ${errors.length > 0 ? "text-red-500" : "text-yellow-500"}`} />
         <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
           확인 필요한 이슈
         </h4>
@@ -429,7 +429,7 @@ function IssueWarningsSection({ issues }: { issues: OrderIssue[] }) {
           className={`text-[10px] h-4 px-1.5 ${
             errors.length > 0
               ? "bg-red-950/30 text-red-400 border-red-200"
-              : "bg-amber-950/30 text-amber-400 border-amber-200"
+              : "bg-yellow-950/30 text-yellow-400 border-yellow-200"
           }`}
         >
           {issues.length}건
@@ -449,14 +449,14 @@ function IssueWarningsSection({ issues }: { issues: OrderIssue[] }) {
                 isError
                   ? "border-red-800/50 bg-red-950/20"
                   : isWarning
-                  ? "border-amber-800/50 bg-amber-950/20"
+                  ? "border-yellow-800/50 bg-yellow-950/20"
                   : "border-bs bg-el/30"
               }`}
             >
               <div className="flex items-start gap-2">
                 <IconComp
                   className={`h-3.5 w-3.5 mt-0.5 flex-shrink-0 ${
-                    isError ? "text-red-500" : isWarning ? "text-amber-500" : "text-blue-500"
+                    isError ? "text-red-500" : isWarning ? "text-yellow-500" : "text-blue-500"
                   }`}
                 />
                 <div className="flex-1 min-w-0">
@@ -515,13 +515,13 @@ function FollowUpDraftSection({
 
       {/* 확인 필요 항목 */}
       {draft.pendingChecks && draft.pendingChecks.length > 0 && (
-        <div className="rounded-lg border border-amber-800/50 bg-amber-950/20 p-3 mb-3">
-          <p className="text-[11px] font-semibold text-amber-400 mb-1.5">
+        <div className="rounded-lg border border-yellow-800/50 bg-yellow-950/20 p-3 mb-3">
+          <p className="text-[11px] font-semibold text-yellow-400 mb-1.5">
             확인 필요 항목
           </p>
           <div className="space-y-1">
             {draft.pendingChecks.map((check: string, idx: number) => (
-              <div key={idx} className="flex items-center gap-1.5 text-[11px] text-amber-400">
+              <div key={idx} className="flex items-center gap-1.5 text-[11px] text-yellow-400">
                 <AlertTriangle className="h-3 w-3 flex-shrink-0" />
                 <span>{check}</span>
               </div>
@@ -700,7 +700,7 @@ function StatusTransitionSection({
 
   const confidenceConfig: Record<string, { label: string; color: string }> = {
     high: { label: "높음", color: "bg-emerald-950/30 text-emerald-400 border-emerald-200" },
-    medium: { label: "보통", color: "bg-amber-950/30 text-amber-400 border-amber-200" },
+    medium: { label: "보통", color: "bg-yellow-950/30 text-yellow-400 border-yellow-200" },
     low: { label: "낮음", color: "bg-el text-slate-400 border-bd" },
   };
 

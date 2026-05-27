@@ -304,10 +304,10 @@ function SummarySection({ data }: { data: QuoteAiPanelData }) {
       label: "누락 항목",
       value: issueCount > 0 ? `${issueCount}건` : "없음",
       color: issueCount > 0
-        ? "text-amber-400"
+        ? "text-yellow-400"
         : "text-emerald-400",
       bg: issueCount > 0
-        ? "bg-amber-950/30"
+        ? "bg-yellow-950/30"
         : "bg-emerald-950/30",
     },
     {
@@ -546,7 +546,7 @@ function ValidationSection({
     <div
       className={`p-5 ${
         isWarningState
-          ? "bg-amber-950/10"
+          ? "bg-yellow-950/10"
           : ""
       }`}
     >
@@ -555,7 +555,7 @@ function ValidationSection({
           className={`h-4 w-4 ${
             errors.length > 0
               ? "text-red-500"
-              : "text-amber-500"
+              : "text-yellow-500"
           }`}
         />
         <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
@@ -566,7 +566,7 @@ function ValidationSection({
           className={`text-[10px] h-4 px-1.5 ${
             errors.length > 0
               ? "bg-red-950/30 text-red-400 border-red-200"
-              : "bg-amber-950/30 text-amber-400 border-amber-200"
+              : "bg-yellow-950/30 text-yellow-400 border-yellow-200"
           }`}
         >
           {issues.length}건
@@ -600,13 +600,13 @@ function IssueCard({
       className={`flex items-center justify-between p-2.5 rounded-lg border ${
         isError
           ? "border-red-800/50 bg-red-950/20"
-          : "border-amber-800/50 bg-amber-950/20"
+          : "border-yellow-800/50 bg-yellow-950/20"
       }`}
     >
       <div className="flex items-center gap-2">
         <AlertTriangle
           className={`h-3.5 w-3.5 flex-shrink-0 ${
-            isError ? "text-red-500" : "text-amber-500"
+            isError ? "text-red-500" : "text-yellow-500"
           }`}
         />
         <span className="text-xs text-slate-600">
@@ -618,7 +618,7 @@ function IssueCard({
           className={`text-[11px] font-medium flex-shrink-0 ml-2 ${
             isError
               ? "text-red-600 hover:text-red-700"
-              : "text-amber-600 hover:text-amber-700"
+              : "text-yellow-600 hover:text-yellow-700"
           }`}
           onClick={() => onFix(issue.field)}
         >
