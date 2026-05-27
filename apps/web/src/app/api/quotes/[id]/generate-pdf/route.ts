@@ -74,7 +74,7 @@ export async function POST(
     // QuoteItem.productId → Product 상세 조회 (품목명/브랜드/카탈로그/규격/grade)
     const productIds = quote.items
       .map((it: typeof quote.items[number]) => it.productId)
-      .filter((id): id is string => Boolean(id));
+      .filter((id: string | null | undefined): id is string => Boolean(id));
     const products = productIds.length
       ? await db.product.findMany({
           where: { id: { in: productIds } },
