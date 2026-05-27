@@ -65,16 +65,17 @@ const CARD_CONFIG: Record<string, CardConfig> = {
     badgeClass: "bg-red-50 text-red-700  bg-red-950/40 text-red-400 border-red-200  border-red-800",
     approveToast: "이메일 초안이 승인되었습니다",
   },
+  // §11.302d-6a-3-α — FOLLOWUP_DRAFT amber → yellow (회신 대기 = 긴급/주의 의미 유지).
   FOLLOWUP_DRAFT: {
     icon: Clock,
-    iconBg: "bg-amber-50  bg-amber-50",
-    iconColor: "text-amber-600 text-amber-400",
-    borderColor: "border-l-amber-500",
+    iconBg: "bg-yellow-50  bg-yellow-50",
+    iconColor: "text-yellow-600 text-yellow-400",
+    borderColor: "border-l-yellow-500",
     title: "회신 지연 주문이 있습니다",
     description: "회신 대기 중인 주문에 대해 follow-up 메일 초안을 준비했습니다.",
     cta: "follow-up 초안 확인하기",
     badgeLabel: "회신 대기",
-    badgeClass: "bg-amber-50 text-amber-700  bg-amber-50 text-amber-400 border-amber-200  border-amber-800",
+    badgeClass: "bg-yellow-50 text-yellow-700  bg-yellow-50 text-yellow-400 border-yellow-200  border-yellow-800",
     approveToast: "Follow-up 메일이 승인되었습니다",
     // §11.162: PO list canonical = /dashboard/purchase-orders
     approveHref: "/dashboard/purchase-orders",
@@ -93,16 +94,18 @@ const CARD_CONFIG: Record<string, CardConfig> = {
     // §11.162: PO list canonical = /dashboard/purchase-orders
     approveHref: "/dashboard/purchase-orders",
   },
+  // §11.302d-6a-3-α — REORDER_SUGGESTION orange → red 격상 (badge label "재고 위험"
+  //   = 위험 강조, STAGE REORDER_SUGGESTION 도 이미 red — 일관성).
   REORDER_SUGGESTION: {
     icon: Package,
-    iconBg: "bg-orange-50  bg-orange-950/40",
-    iconColor: "text-orange-600 text-orange-400",
-    borderColor: "border-l-orange-500",
+    iconBg: "bg-red-50  bg-red-950/40",
+    iconColor: "text-red-600 text-red-400",
+    borderColor: "border-l-red-500",
     title: "재발주 검토가 필요한 품목이 있습니다",
     description: "부족 재고와 사용 추이를 기준으로 우선 확인할 품목을 정리했습니다.",
     cta: "재발주 우선순위 보기",
     badgeLabel: "재고 위험",
-    badgeClass: "bg-orange-50 text-orange-700  bg-orange-950/40 text-orange-400 border-orange-200  border-orange-800",
+    badgeClass: "bg-red-50 text-red-700  bg-red-950/40 text-red-400 border-red-200  border-red-800",
     approveToast: "재발주 요청이 승인되었습니다",
     approveHref: "/dashboard/inventory",
   },
@@ -137,17 +140,20 @@ const DEFAULT_CONFIG: CardConfig = {
 // ── 승인 단계 배지 ──
 
 const STAGE_CONFIG: Record<string, { label: string; className: string }> = {
+  // §11.302d-6a-3-α — "검토 필요" / "응답 대기" 단계는 정보+주의 →
+  //   STAGE QUOTE_DRAFT/VENDOR_EMAIL_DRAFT orange → yellow (검토 단계),
+  //   STAGE FOLLOWUP_DRAFT amber → yellow (응답 대기 = 긴급/주의).
   QUOTE_DRAFT: {
     label: "검토 필요",
-    className: "bg-orange-50 text-orange-700  bg-orange-950/40 text-orange-400 border-orange-200  border-orange-800",
+    className: "bg-yellow-50 text-yellow-700  bg-yellow-950/40 text-yellow-400 border-yellow-200  border-yellow-800",
   },
   VENDOR_EMAIL_DRAFT: {
     label: "검토 필요",
-    className: "bg-orange-50 text-orange-700  bg-orange-950/40 text-orange-400 border-orange-200  border-orange-800",
+    className: "bg-yellow-50 text-yellow-700  bg-yellow-950/40 text-yellow-400 border-yellow-200  border-yellow-800",
   },
   FOLLOWUP_DRAFT: {
     label: "응답 대기",
-    className: "bg-amber-50 text-amber-700  bg-amber-50 text-amber-400 border-amber-200  border-amber-800",
+    className: "bg-yellow-50 text-yellow-700  bg-yellow-50 text-yellow-400 border-yellow-200  border-yellow-800",
   },
   STATUS_CHANGE_SUGGEST: {
     label: "승인 필요",
