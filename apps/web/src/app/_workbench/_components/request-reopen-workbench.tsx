@@ -92,7 +92,7 @@ export function RequestReopenWorkbench({ open, onClose, handoff, onReopenRecorde
           <div className="flex items-center gap-1.5 mb-2"><Pencil className="h-3 w-3 text-slate-500" /><span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Request Line Reuse / Rewrite</span></div>
           <div className="grid grid-cols-2 gap-2">
             <div className={`px-3 py-2.5 rounded-md border ${reopenState.reusedRequestLineIds.length > 0 ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252A33]"} text-center`}><span className="text-[9px] text-slate-500 block">재사용</span><span className={`text-lg font-bold ${reopenState.reusedRequestLineIds.length > 0 ? "text-emerald-400" : "text-slate-600"}`}>{reopenState.reusedRequestLineIds.length}</span></div>
-            <div className={`px-3 py-2.5 rounded-md border ${reopenState.rewrittenRequestLineIds.length > 0 ? "border-amber-500/20 bg-amber-600/[0.03]" : "border-bd/40 bg-[#252A33]"} text-center`}><span className="text-[9px] text-slate-500 block">재작성</span><span className={`text-lg font-bold ${reopenState.rewrittenRequestLineIds.length > 0 ? "text-amber-400" : "text-slate-600"}`}>{reopenState.rewrittenRequestLineIds.length}</span></div>
+            <div className={`px-3 py-2.5 rounded-md border ${reopenState.rewrittenRequestLineIds.length > 0 ? "border-yellow-500/20 bg-yellow-600/[0.03]" : "border-bd/40 bg-[#252A33]"} text-center`}><span className="text-[9px] text-slate-500 block">재작성</span><span className={`text-lg font-bold ${reopenState.rewrittenRequestLineIds.length > 0 ? "text-yellow-400" : "text-slate-600"}`}>{reopenState.rewrittenRequestLineIds.length}</span></div>
           </div>
         </div>
 

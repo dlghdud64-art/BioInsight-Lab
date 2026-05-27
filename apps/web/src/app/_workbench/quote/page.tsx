@@ -33,7 +33,7 @@ import {
 
 const READINESS_CONFIG: Record<AssemblyReadinessLevel, { color: string; icon: any }> = {
   ready_to_write_request: { color: "text-emerald-400 bg-emerald-600/10 border-emerald-600/30", icon: CheckCircle2 },
-  review_first: { color: "text-amber-400 bg-amber-600/10 border-amber-600/30", icon: AlertTriangle },
+  review_first: { color: "text-yellow-400 bg-yellow-600/10 border-yellow-600/30", icon: AlertTriangle },
   blocked: { color: "text-red-400 bg-red-600/10 border-red-600/30", icon: AlertCircle },
   split_required: { color: "text-blue-400 bg-blue-600/10 border-blue-600/30", icon: Info },
 };
@@ -115,7 +115,7 @@ export default function RequestAssemblyPage() {
 
           {/* Warning pills */}
           {summary.noPriceCount > 0 && (
-            <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-amber-600/10 text-amber-400">
+            <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-yellow-600/10 text-yellow-400">
               <AlertTriangle className="h-2.5 w-2.5" />가격 미확인 {summary.noPriceCount}
             </span>
           )}
@@ -155,7 +155,7 @@ export default function RequestAssemblyPage() {
                     </div>
                   ))}
                   {warnings.map((msg, i) => (
-                    <div key={i} className="flex items-center gap-2 px-3 py-2 rounded border border-amber-600/20 bg-amber-600/5 text-xs text-amber-300">
+                    <div key={i} className="flex items-center gap-2 px-3 py-2 rounded border border-yellow-600/20 bg-yellow-600/5 text-xs text-yellow-300">
                       <AlertTriangle className="h-3 w-3 shrink-0" />{msg}
                     </div>
                   ))}
@@ -201,7 +201,7 @@ export default function RequestAssemblyPage() {
                     <span className="text-xs text-blue-400 font-medium">{allCompareIds.length}개</span>
                   </div>
                   {summary.inCompareCount > 0 && (
-                    <p className="text-[10px] text-amber-400 mb-2">
+                    <p className="text-[10px] text-yellow-400 mb-2">
                       {summary.inCompareCount}건이 비교 목록과 견적 목록에 모두 포함됨
                     </p>
                   )}
@@ -221,12 +221,12 @@ export default function RequestAssemblyPage() {
                 <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">다음 단계</div>
                 {/* 비교 진행 중 후보가 있으면 blocker CTA */}
                 {summary.inCompareCount > 0 && (
-                  <div className="px-3 py-2 rounded border border-amber-600/20 bg-amber-600/5 mb-2">
-                    <p className="text-[10px] text-amber-300 mb-1.5">비교 판단 미완료 후보 {summary.inCompareCount}건</p>
+                  <div className="px-3 py-2 rounded border border-yellow-600/20 bg-yellow-600/5 mb-2">
+                    <p className="text-[10px] text-yellow-300 mb-1.5">비교 판단 미완료 후보 {summary.inCompareCount}건</p>
                     <Button
                       size="sm"
                       variant="outline"
-                      className="w-full h-7 text-[10px] text-amber-400 border-amber-600/30 hover:bg-amber-600/10"
+                      className="w-full h-7 text-[10px] text-yellow-400 border-yellow-600/30 hover:bg-yellow-600/10"
                       onClick={() => router.push("/app/compare")}
                     >
                       <GitCompare className="h-3 w-3 mr-1.5" />
@@ -358,7 +358,7 @@ function VendorGroupCard({
                   </span>
                 )}
                 {!item.hasPrice && (
-                  <span className="inline-flex items-center gap-0.5 text-[9px] px-1 py-0 rounded bg-amber-600/10 text-amber-400">
+                  <span className="inline-flex items-center gap-0.5 text-[9px] px-1 py-0 rounded bg-yellow-600/10 text-yellow-400">
                     가격 미확인
                   </span>
                 )}

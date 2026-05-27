@@ -102,8 +102,8 @@ export function QuoteNormalizationWorkbench({
         {/* ═══ 1. Identity Strip ═══ */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center gap-3">
-            <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-orange-600/15 border-orange-500/25"}`}>
-              {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <RefreshCw className="h-4 w-4 text-orange-400" />}
+            <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-yellow-600/15 border-yellow-500/25"}`}>
+              {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <RefreshCw className="h-4 w-4 text-yellow-400" />}
             </div>
             <div>
               <h2 className="text-sm font-semibold text-slate-100">{isRecorded ? "견적 정리 완료" : "공급사별 견적 정리"}</h2>
@@ -115,7 +115,7 @@ export function QuoteNormalizationWorkbench({
                 {incompleteCount > 0 && (
                   <>
                     <span className="text-slate-600">·</span>
-                    <span className="text-amber-400">누락 {incompleteCount}</span>
+                    <span className="text-yellow-400">누락 {incompleteCount}</span>
                   </>
                 )}
               </div>
@@ -138,7 +138,7 @@ export function QuoteNormalizationWorkbench({
               </div>
               <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33] text-center">
                 <span className="text-[9px] text-slate-500 block">미매핑 견적 라인</span>
-                <span className={`text-lg font-bold tabular-nums ${unmappedCount > 0 ? "text-amber-400" : "text-slate-600"}`}>{unmappedCount}</span>
+                <span className={`text-lg font-bold tabular-nums ${unmappedCount > 0 ? "text-yellow-400" : "text-slate-600"}`}>{unmappedCount}</span>
               </div>
               <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33] text-center">
                 <span className="text-[9px] text-slate-500 block">미커버 요청 라인</span>
@@ -155,21 +155,21 @@ export function QuoteNormalizationWorkbench({
                 const rawLine = normState.normalizedLines.find((l) => l.rawLineId === pair.rawLineId);
                 return (
                   <div key={pair.rawLineId} className={`flex items-center gap-3 px-3 py-2.5 ${i > 0 ? "border-t border-bd/20" : ""}`}>
-                    <div className={`w-2 h-2 rounded-full shrink-0 ${pair.mappedStatus === "confirmed" ? "bg-emerald-400" : pair.mappedStatus === "ambiguous" ? "bg-amber-400" : "bg-blue-400"}`} />
+                    <div className={`w-2 h-2 rounded-full shrink-0 ${pair.mappedStatus === "confirmed" ? "bg-emerald-400" : pair.mappedStatus === "ambiguous" ? "bg-yellow-400" : "bg-blue-400"}`} />
                     <Link2 className="h-3 w-3 text-slate-500 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <span className="text-[10px] text-slate-200 font-medium block truncate">{rawLine?.rawLineId || pair.rawLineId}</span>
                       <span className="text-[9px] text-slate-500">{pair.requestLineId} → {pair.mappedStatus === "confirmed" ? "확정" : pair.mappedStatus === "ambiguous" ? "모호" : "대체"}</span>
                     </div>
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded ${pair.mappedStatus === "confirmed" ? "bg-emerald-600/10 text-emerald-400" : pair.mappedStatus === "ambiguous" ? "bg-amber-600/10 text-amber-400" : "bg-blue-600/10 text-blue-400"}`}>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded ${pair.mappedStatus === "confirmed" ? "bg-emerald-600/10 text-emerald-400" : pair.mappedStatus === "ambiguous" ? "bg-yellow-600/10 text-yellow-400" : "bg-blue-600/10 text-blue-400"}`}>
                       {pair.mappedStatus === "confirmed" ? "확정" : pair.mappedStatus === "ambiguous" ? "모호" : "대체"}
                     </span>
                   </div>
                 );
               })}
               {normState.lineMapping.unmappedRawLines.length > 0 && (
-                <div className="px-3 py-2 border-t border-bd/20 bg-amber-600/[0.02]">
-                  <span className="text-[9px] text-amber-400">미매핑: {normState.lineMapping.unmappedRawLines.join(", ")}</span>
+                <div className="px-3 py-2 border-t border-bd/20 bg-yellow-600/[0.02]">
+                  <span className="text-[9px] text-yellow-400">미매핑: {normState.lineMapping.unmappedRawLines.join(", ")}</span>
                 </div>
               )}
               {normState.lineMapping.uncoveredRequestLines.length > 0 && (
@@ -191,21 +191,21 @@ export function QuoteNormalizationWorkbench({
                 ))}
               </div>
               {normState.normalizedLines.map((line, i) => (
-                <div key={line.normalizedLineId} className={`grid grid-cols-6 px-3 py-2 ${i > 0 ? "border-t border-bd/20" : ""} ${!line.isComplete ? "bg-amber-600/[0.02]" : ""}`}>
+                <div key={line.normalizedLineId} className={`grid grid-cols-6 px-3 py-2 ${i > 0 ? "border-t border-bd/20" : ""} ${!line.isComplete ? "bg-yellow-600/[0.02]" : ""}`}>
                   <span className="text-[10px] text-slate-300 truncate">{line.rawLineId}</span>
                   <span className={`text-[10px] tabular-nums ${line.normalizedUnitPrice ? "text-slate-200" : "text-red-400"}`}>
                     {line.normalizedUnitPrice ? `₩${line.normalizedUnitPrice.toLocaleString("ko-KR")}` : "누락"}
                   </span>
-                  <span className={`text-[10px] tabular-nums ${line.normalizedLeadTimeDays ? "text-slate-200" : "text-amber-400"}`}>
+                  <span className={`text-[10px] tabular-nums ${line.normalizedLeadTimeDays ? "text-slate-200" : "text-yellow-400"}`}>
                     {line.normalizedLeadTimeDays ? `${line.normalizedLeadTimeDays}일` : "누락"}
                   </span>
-                  <span className={`text-[10px] tabular-nums ${line.normalizedMOQ ? "text-slate-200" : "text-amber-400"}`}>
+                  <span className={`text-[10px] tabular-nums ${line.normalizedMOQ ? "text-slate-200" : "text-yellow-400"}`}>
                     {line.normalizedMOQ ?? "누락"}
                   </span>
-                  <span className={`text-[10px] ${line.normalizedStockAvailability === "in_stock" ? "text-emerald-400" : line.normalizedStockAvailability === "unknown" ? "text-amber-400" : "text-red-400"}`}>
+                  <span className={`text-[10px] ${line.normalizedStockAvailability === "in_stock" ? "text-emerald-400" : line.normalizedStockAvailability === "unknown" ? "text-yellow-400" : "text-red-400"}`}>
                     {line.normalizedStockAvailability === "in_stock" ? "있음" : line.normalizedStockAvailability === "out_of_stock" ? "없음" : line.normalizedStockAvailability === "limited" ? "제한" : "미확인"}
                   </span>
-                  <span className={`text-[9px] ${line.isComplete ? "text-emerald-400" : "text-amber-400"}`}>
+                  <span className={`text-[9px] ${line.isComplete ? "text-emerald-400" : "text-yellow-400"}`}>
                     {line.isComplete ? "완료" : `누락 ${line.missingFields.length}`}
                   </span>
                 </div>
@@ -223,9 +223,9 @@ export function QuoteNormalizationWorkbench({
                 </div>
               ))}
               {validation.warnings.map((w, i) => (
-                <div key={`w-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10">
-                  <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />
-                  <span className="text-[10px] text-amber-300">{w}</span>
+                <div key={`w-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10">
+                  <AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" />
+                  <span className="text-[10px] text-yellow-300">{w}</span>
                 </div>
               ))}
             </div>
@@ -259,7 +259,7 @@ export function QuoteNormalizationWorkbench({
             {!isRecorded ? (
               <Button
                 size="sm"
-                className="flex-1 h-8 text-[10px] bg-orange-600 hover:bg-orange-500 text-white font-medium"
+                className="flex-1 h-8 text-[10px] bg-yellow-600 hover:bg-yellow-500 text-white font-medium"
                 onClick={recordNormalization}
                 disabled={!validation?.canRecordNormalizedQuote}
               >

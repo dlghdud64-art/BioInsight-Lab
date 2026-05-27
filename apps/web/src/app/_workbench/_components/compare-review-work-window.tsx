@@ -71,7 +71,7 @@ function getAiOptionTestId(frame: StrategyFrame) {
 const FRAME_COLOR: Record<StrategyFrame, { bg: string; border: string; text: string; accent: string }> = {
   cost: { bg: "bg-emerald-950/30", border: "border-emerald-500/20", text: "text-emerald-300", accent: "bg-emerald-500/15" },
   balanced: { bg: "bg-blue-950/30", border: "border-blue-500/20", text: "text-blue-300", accent: "bg-blue-500/15" },
-  spec: { bg: "bg-amber-950/25", border: "border-amber-500/20", text: "text-amber-300", accent: "bg-amber-500/15" },
+  spec: { bg: "bg-yellow-950/25", border: "border-yellow-500/20", text: "text-yellow-300", accent: "bg-yellow-500/15" },
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -249,7 +249,7 @@ export function CompareReviewWorkWindow({
                 <div className="flex items-center gap-2 text-[11px] mt-0.5">
                   <span className="text-slate-400">후보 <span className="text-slate-200 font-semibold">{candidates.length}개</span></span>
                   <span className="text-slate-600">·</span>
-                  <span className={categoryResult.compareMode === "direct" ? "text-emerald-400" : categoryResult.compareMode === "mixed_warning" ? "text-amber-400" : "text-red-400"}>
+                  <span className={categoryResult.compareMode === "direct" ? "text-emerald-400" : categoryResult.compareMode === "mixed_warning" ? "text-yellow-400" : "text-red-400"}>
                     {categoryResult.compareMode === "direct" ? "직접 비교" : categoryResult.compareMode === "mixed_warning" ? "혼합 카테고리" : "비교 불가"}
                   </span>
                 </div>
@@ -312,9 +312,9 @@ export function CompareReviewWorkWindow({
                     <span className="text-[14px] font-bold text-emerald-300">{decisionHeader.requestReadyCount}</span>
                     <span className="text-[10px] text-emerald-400/80">요청 가능</span>
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/15">
-                    <span className="text-[14px] font-bold text-amber-300">{decisionHeader.holdCount}</span>
-                    <span className="text-[10px] text-amber-400/80">보류</span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-yellow-500/10 border border-yellow-500/15">
+                    <span className="text-[14px] font-bold text-yellow-300">{decisionHeader.holdCount}</span>
+                    <span className="text-[10px] text-yellow-400/80">보류</span>
                   </span>
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-500/10 border border-red-500/15">
                     <span className="text-[14px] font-bold text-red-300">{decisionHeader.excludedCount}</span>
@@ -322,9 +322,9 @@ export function CompareReviewWorkWindow({
                   </span>
                 </div>
                 {decisionHeader.topBlocker && (
-                  <div className="flex items-center gap-2 mt-2 px-2.5 py-1.5 rounded-md bg-[#28251e] border border-amber-500/15">
-                    <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />
-                    <span className="text-[11px] text-amber-300">{decisionHeader.topBlocker}</span>
+                  <div className="flex items-center gap-2 mt-2 px-2.5 py-1.5 rounded-md bg-[#28251e] border border-yellow-500/15">
+                    <AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" />
+                    <span className="text-[11px] text-yellow-300">{decisionHeader.topBlocker}</span>
                   </div>
                 )}
               </div>
@@ -388,8 +388,8 @@ export function CompareReviewWorkWindow({
                   {activeOption.held.length > 0 && (
                     <div className="mb-4">
                       <div className="flex items-center gap-2 mb-2.5">
-                        <div className="w-3 h-3 rounded bg-amber-400" />
-                        <span className="text-[12px] font-bold text-amber-300 uppercase tracking-wider">보류 · 확인 필요</span>
+                        <div className="w-3 h-3 rounded bg-yellow-400" />
+                        <span className="text-[12px] font-bold text-yellow-300 uppercase tracking-wider">보류 · 확인 필요</span>
                       </div>
                       <div className="space-y-2">
                         {activeOption.held.map((sc: StrategyCandidate) => (
@@ -441,7 +441,7 @@ export function CompareReviewWorkWindow({
                           {activeOption.blockers.length > 0 && (
                             <div className="col-span-2">
                               <span className="text-slate-500 block text-[10px]">요청 전 확인</span>
-                              <span className="text-amber-300">{activeOption.blockers.join(" / ")}</span>
+                              <span className="text-yellow-300">{activeOption.blockers.join(" / ")}</span>
                             </div>
                           )}
                         </div>
@@ -689,7 +689,7 @@ function StrategyCandidateCard({
       <div className="flex items-center justify-between gap-2 mb-1">
         <span className="text-[13px] font-bold text-white truncate">{sc.name}</span>
         <span className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-wider shrink-0 ${
-          isRecommended ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/25" : "bg-amber-500/15 text-amber-400 border border-amber-500/20"
+          isRecommended ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/25" : "bg-yellow-500/15 text-yellow-400 border border-yellow-500/20"
         }`}>{sc.readinessLabel}</span>
       </div>
       {/* 핵심 판단 1줄 */}

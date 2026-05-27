@@ -8,8 +8,8 @@ import type { InventoryIntakeHandoff } from "@/lib/ai/receiving-execution-engine
 
 const DISPOSITION_LABELS: Record<DispositionType, { label: string; color: string }> = {
   stockable_now: { label: "재고 편입", color: "text-emerald-400" },
-  inspection_hold: { label: "검수 보류", color: "text-amber-400" },
-  quarantine_hold: { label: "검역 보류", color: "text-orange-400" },
+  inspection_hold: { label: "검수 보류", color: "text-yellow-400" },
+  quarantine_hold: { label: "검역 보류", color: "text-yellow-400" },
   damaged_retained: { label: "손상 보유", color: "text-red-400" },
   discard_pending: { label: "폐기 대기", color: "text-red-400" },
   unresolved: { label: "미결정", color: "text-slate-500" },
@@ -54,15 +54,15 @@ export function InventoryIntakeWorkbench({ open, onClose, handoff, onIntakeRecor
       <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center gap-3">
-            <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-amber-600/15 border-amber-500/25"}`}>
-              {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Archive className="h-4 w-4 text-amber-400" />}
+            <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-yellow-600/15 border-yellow-500/25"}`}>
+              {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Archive className="h-4 w-4 text-yellow-400" />}
             </div>
             <div>
               <h2 className="text-sm font-semibold text-slate-100">{isRecorded ? "Inventory Intake 완료" : "Inventory Intake"}</h2>
               <div className="flex items-center gap-2 text-[10px] mt-0.5">
                 <span className="text-slate-400">Stockable <span className="text-emerald-300 font-medium">{dispositionPlan?.stockableLineIds.length || 0}</span></span>
                 <span className="text-slate-600">·</span>
-                <span className="text-slate-400">Hold <span className="text-amber-300 font-medium">{(dispositionPlan?.holdLineIds.length || 0) + (dispositionPlan?.quarantineLineIds.length || 0)}</span></span>
+                <span className="text-slate-400">Hold <span className="text-yellow-300 font-medium">{(dispositionPlan?.holdLineIds.length || 0) + (dispositionPlan?.quarantineLineIds.length || 0)}</span></span>
                 <span className="text-slate-600">·</span>
                 <span className="text-slate-400">Damaged <span className="text-red-300 font-medium">{dispositionPlan?.damagedLineIds.length || 0}</span></span>
               </div>
@@ -83,8 +83,8 @@ export function InventoryIntakeWorkbench({ open, onClose, handoff, onIntakeRecor
             <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">재고 편입 분류</span>
             <div className="mt-2 grid grid-cols-4 gap-2">
               <div className="px-3 py-2.5 rounded-md border border-emerald-500/20 bg-emerald-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Stockable</span><span className="text-lg font-bold tabular-nums text-emerald-400">{dispositionPlan?.stockableLineIds.length || 0}</span></div>
-              <div className="px-3 py-2.5 rounded-md border border-amber-500/20 bg-amber-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Hold</span><span className="text-lg font-bold tabular-nums text-amber-400">{dispositionPlan?.holdLineIds.length || 0}</span></div>
-              <div className="px-3 py-2.5 rounded-md border border-orange-500/20 bg-orange-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Quarantine</span><span className="text-lg font-bold tabular-nums text-orange-400">{dispositionPlan?.quarantineLineIds.length || 0}</span></div>
+              <div className="px-3 py-2.5 rounded-md border border-yellow-500/20 bg-yellow-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Hold</span><span className="text-lg font-bold tabular-nums text-yellow-400">{dispositionPlan?.holdLineIds.length || 0}</span></div>
+              <div className="px-3 py-2.5 rounded-md border border-yellow-500/20 bg-yellow-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Quarantine</span><span className="text-lg font-bold tabular-nums text-yellow-400">{dispositionPlan?.quarantineLineIds.length || 0}</span></div>
               <div className="px-3 py-2.5 rounded-md border border-red-500/15 bg-red-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Damaged</span><span className="text-lg font-bold tabular-nums text-red-400">{dispositionPlan?.damagedLineIds.length || 0}</span></div>
             </div>
             {intakeState.lineDispositions.length === 0 && (
@@ -100,7 +100,7 @@ export function InventoryIntakeWorkbench({ open, onClose, handoff, onIntakeRecor
                 {intakeState.lineDispositions.map(ld => {
                   const dl = DISPOSITION_LABELS[ld.disposition];
                   return (
-                    <div key={ld.lineId} className={`flex items-center gap-3 px-3 py-2.5 rounded-md border ${ld.disposition === "stockable_now" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : ld.disposition === "damaged_retained" || ld.disposition === "discard_pending" ? "border-red-500/15 bg-red-600/[0.03]" : "border-amber-500/20 bg-amber-600/[0.03]"}`}>
+                    <div key={ld.lineId} className={`flex items-center gap-3 px-3 py-2.5 rounded-md border ${ld.disposition === "stockable_now" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : ld.disposition === "damaged_retained" || ld.disposition === "discard_pending" ? "border-red-500/15 bg-red-600/[0.03]" : "border-yellow-500/20 bg-yellow-600/[0.03]"}`}>
                       <div className="flex-1 min-w-0">
                         <span className="text-[11px] text-slate-200 font-medium block">{ld.lineId}</span>
                         <div className="flex items-center gap-2 text-[9px] text-slate-500 mt-0.5">
@@ -109,7 +109,7 @@ export function InventoryIntakeWorkbench({ open, onClose, handoff, onIntakeRecor
                           {ld.storageLocation && <><span>·</span><MapPin className="h-2.5 w-2.5 inline" /><span>{ld.storageLocation}</span></>}
                         </div>
                       </div>
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${dl.color} ${ld.disposition === "stockable_now" ? "bg-emerald-600/10" : ld.disposition.includes("damaged") || ld.disposition.includes("discard") ? "bg-red-600/10" : "bg-amber-600/10"}`}>{dl.label}</span>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${dl.color} ${ld.disposition === "stockable_now" ? "bg-emerald-600/10" : ld.disposition.includes("damaged") || ld.disposition.includes("discard") ? "bg-red-600/10" : "bg-yellow-600/10"}`}>{dl.label}</span>
                     </div>
                   );
                 })}
@@ -121,7 +121,7 @@ export function InventoryIntakeWorkbench({ open, onClose, handoff, onIntakeRecor
           {validation && (validation.blockingIssues.length > 0 || validation.warnings.length > 0) && !isRecorded && (
             <div className="space-y-1">
               {validation.blockingIssues.map((b, i) => <div key={`b-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-red-600/[0.06] border border-red-500/15"><AlertTriangle className="h-3 w-3 text-red-400 shrink-0" /><span className="text-[10px] text-red-300">{b}</span></div>)}
-              {validation.warnings.map((w, i) => <div key={`w-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">{w}</span></div>)}
+              {validation.warnings.map((w, i) => <div key={`w-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">{w}</span></div>)}
             </div>
           )}
 
@@ -143,14 +143,14 @@ export function InventoryIntakeWorkbench({ open, onClose, handoff, onIntakeRecor
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
             <span className="text-slate-500">Stockable <span className="text-emerald-300 font-medium">{dispositionPlan?.stockableLineIds.length || 0}</span></span>
             <span className="text-slate-600">·</span>
-            <span className="text-slate-500">Hold <span className="text-amber-300 font-medium">{(dispositionPlan?.holdLineIds.length || 0) + (dispositionPlan?.quarantineLineIds.length || 0)}</span></span>
+            <span className="text-slate-500">Hold <span className="text-yellow-300 font-medium">{(dispositionPlan?.holdLineIds.length || 0) + (dispositionPlan?.quarantineLineIds.length || 0)}</span></span>
             <span className="text-slate-600">·</span>
             <span className="text-slate-500">{validation?.recommendedNextAction || ""}</span>
           </div>
           <div className="flex gap-2">
             <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onReturnToExecution}><ArrowLeft className="h-3 w-3 mr-1" />Receiving Execution</Button>
             {!isRecorded ? (
-              <Button size="sm" className="flex-1 h-8 text-[10px] bg-amber-600 hover:bg-amber-500 text-white font-medium" onClick={recordIntake} disabled={!validation?.canRecordInventoryIntake}><Archive className="h-3 w-3 mr-1" />Inventory Intake 저장</Button>
+              <Button size="sm" className="flex-1 h-8 text-[10px] bg-yellow-600 hover:bg-yellow-500 text-white font-medium" onClick={recordIntake} disabled={!validation?.canRecordInventoryIntake}><Archive className="h-3 w-3 mr-1" />Inventory Intake 저장</Button>
             ) : (
               <Button size="sm" className={`flex-1 h-8 text-[10px] font-medium ${validation?.canOpenStockRelease ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "bg-slate-700 text-slate-400"}`} onClick={onStockReleaseHandoff} disabled={!validation?.canOpenStockRelease}>
                 <Package className="h-3 w-3 mr-1" />Stock Release<ArrowRight className="h-3 w-3 ml-1" />

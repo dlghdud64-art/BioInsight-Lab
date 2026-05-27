@@ -61,7 +61,7 @@ export function DispatchPreparationWorkbench({ open, onClose, handoff, onPrepRec
                 <span className="text-slate-600">·</span>
                 <span className="text-slate-400">첨부 <span className="text-slate-200 font-medium">{prepState.attachmentBundle.filter(a => a.included).length}</span></span>
                 <span className="text-slate-600">·</span>
-                {readiness?.isSendReady ? <span className="text-emerald-400 font-medium">Send 준비 완료</span> : <span className="text-amber-400">누락 {readiness?.sendCriticalMissing.length || 0}</span>}
+                {readiness?.isSendReady ? <span className="text-emerald-400 font-medium">Send 준비 완료</span> : <span className="text-yellow-400">누락 {readiness?.sendCriticalMissing.length || 0}</span>}
               </div>
             </div>
           </div>
@@ -113,9 +113,9 @@ export function DispatchPreparationWorkbench({ open, onClose, handoff, onPrepRec
                 <span className="text-[9px] text-slate-500 block mb-0.5">Send-Critical</span>
                 {readiness.sendCriticalMissing.length === 0 ? <div className="flex items-center gap-1"><Check className="h-3 w-3 text-emerald-400" /><span className="text-[10px] text-emerald-300">완료</span></div> : <span className="text-[10px] text-red-300">누락: {readiness.sendCriticalMissing.join(", ")}</span>}
               </div>
-              <div className={`px-3 py-2.5 rounded-md border ${readiness.nonCriticalMissing.length === 0 ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-amber-500/20 bg-amber-600/[0.03]"}`}>
+              <div className={`px-3 py-2.5 rounded-md border ${readiness.nonCriticalMissing.length === 0 ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-yellow-500/20 bg-yellow-600/[0.03]"}`}>
                 <span className="text-[9px] text-slate-500 block mb-0.5">Non-Critical</span>
-                {readiness.nonCriticalMissing.length === 0 ? <div className="flex items-center gap-1"><Check className="h-3 w-3 text-emerald-400" /><span className="text-[10px] text-emerald-300">완료</span></div> : <span className="text-[10px] text-amber-300">선택: {readiness.nonCriticalMissing.join(", ")}</span>}
+                {readiness.nonCriticalMissing.length === 0 ? <div className="flex items-center gap-1"><Check className="h-3 w-3 text-emerald-400" /><span className="text-[10px] text-emerald-300">완료</span></div> : <span className="text-[10px] text-yellow-300">선택: {readiness.nonCriticalMissing.join(", ")}</span>}
               </div>
             </div>
           )}

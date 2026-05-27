@@ -48,9 +48,9 @@ export function ReceivingPreparationReentryWorkbench({ open, onClose, handoff, o
               <div className="flex items-center gap-2 text-[10px] mt-0.5">
                 <span className="text-slate-400">Lines <span className="text-slate-200 font-medium">{prepState.confirmedLineCount}</span></span>
                 <span className="text-slate-600">·</span>
-                <span className="text-slate-400">Inbound <span className={prepState.expectedInboundWindowStatus === "confirmed" ? "text-emerald-300" : "text-amber-300"}>{prepState.expectedInboundWindowStatus}</span></span>
+                <span className="text-slate-400">Inbound <span className={prepState.expectedInboundWindowStatus === "confirmed" ? "text-emerald-300" : "text-yellow-300"}>{prepState.expectedInboundWindowStatus}</span></span>
                 <span className="text-slate-600">·</span>
-                <span className="text-slate-400">Readiness <span className={prepState.lotExpiryStorageReadinessStatus === "ready" ? "text-emerald-300" : "text-amber-300"}>{prepState.lotExpiryStorageReadinessStatus}</span></span>
+                <span className="text-slate-400">Readiness <span className={prepState.lotExpiryStorageReadinessStatus === "ready" ? "text-emerald-300" : "text-yellow-300"}>{prepState.lotExpiryStorageReadinessStatus}</span></span>
               </div>
             </div>
           </div>
@@ -68,9 +68,9 @@ export function ReceivingPreparationReentryWorkbench({ open, onClose, handoff, o
           <div>
             <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Inbound Expectation</span>
             <div className="mt-2 grid grid-cols-2 gap-2">
-              <div className={`px-3 py-2 rounded-md border ${prepState.expectedInboundWindowStatus === "confirmed" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-amber-500/20 bg-amber-600/[0.03]"}`}>
+              <div className={`px-3 py-2 rounded-md border ${prepState.expectedInboundWindowStatus === "confirmed" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-yellow-500/20 bg-yellow-600/[0.03]"}`}>
                 <div className="flex items-center gap-1.5 mb-0.5"><Clock className="h-3 w-3 text-slate-500" /><span className="text-[9px] text-slate-500">Inbound Window</span></div>
-                <span className={`text-[10px] font-medium ${prepState.expectedInboundWindowStatus === "confirmed" ? "text-emerald-300" : "text-amber-300"}`}>{prepState.expectedInboundWindowStatus}</span>
+                <span className={`text-[10px] font-medium ${prepState.expectedInboundWindowStatus === "confirmed" ? "text-emerald-300" : "text-yellow-300"}`}>{prepState.expectedInboundWindowStatus}</span>
               </div>
               <div className={`px-3 py-2 rounded-md border ${prepState.partialReceivingReentryStatus === "full" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
                 <div className="flex items-center gap-1.5 mb-0.5"><Package className="h-3 w-3 text-slate-500" /><span className="text-[9px] text-slate-500">Partial Receiving</span></div>
@@ -89,10 +89,10 @@ export function ReceivingPreparationReentryWorkbench({ open, onClose, handoff, o
               ].map(item => {
                 const Icon = item.icon;
                 return (
-                  <div key={item.label} className={`flex items-center gap-3 px-3 py-2 rounded-md border ${item.status === "ready" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : item.status === "blocked" ? "border-red-500/15 bg-red-600/[0.03]" : "border-amber-500/20 bg-amber-600/[0.03]"}`}>
-                    <Icon className={`h-3.5 w-3.5 shrink-0 ${item.status === "ready" ? "text-emerald-400" : item.status === "blocked" ? "text-red-400" : "text-amber-400"}`} />
+                  <div key={item.label} className={`flex items-center gap-3 px-3 py-2 rounded-md border ${item.status === "ready" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : item.status === "blocked" ? "border-red-500/15 bg-red-600/[0.03]" : "border-yellow-500/20 bg-yellow-600/[0.03]"}`}>
+                    <Icon className={`h-3.5 w-3.5 shrink-0 ${item.status === "ready" ? "text-emerald-400" : item.status === "blocked" ? "text-red-400" : "text-yellow-400"}`} />
                     <span className="text-[10px] text-slate-200 flex-1">{item.label}</span>
-                    <span className={`text-[9px] ${item.status === "ready" ? "text-emerald-400" : item.status === "blocked" ? "text-red-400" : "text-amber-400"}`}>{item.status === "ready" ? "완료" : item.status === "blocked" ? "차단" : "미완료"}</span>
+                    <span className={`text-[9px] ${item.status === "ready" ? "text-emerald-400" : item.status === "blocked" ? "text-red-400" : "text-yellow-400"}`}>{item.status === "ready" ? "완료" : item.status === "blocked" ? "차단" : "미완료"}</span>
                   </div>
                 );
               })}
@@ -104,11 +104,11 @@ export function ReceivingPreparationReentryWorkbench({ open, onClose, handoff, o
 
           {/* Overlap */}
           {prepState.priorPreparationOverlapCount > 0 && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">이전 Preparation overlap {prepState.priorPreparationOverlapCount}건</span></div>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">이전 Preparation overlap {prepState.priorPreparationOverlapCount}건</span></div>
           )}
 
           {validation && validation.warnings.length > 0 && !isRecorded && validation.warnings.map((w, i) => (
-            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">{w}</span></div>
+            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">{w}</span></div>
           ))}
 
           {isRecorded && (
@@ -121,7 +121,7 @@ export function ReceivingPreparationReentryWorkbench({ open, onClose, handoff, o
 
         <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
-            <span className="text-slate-500">Inbound <span className={prepState.expectedInboundWindowStatus === "confirmed" ? "text-emerald-300" : "text-amber-300"}>{prepState.expectedInboundWindowStatus}</span></span>
+            <span className="text-slate-500">Inbound <span className={prepState.expectedInboundWindowStatus === "confirmed" ? "text-emerald-300" : "text-yellow-300"}>{prepState.expectedInboundWindowStatus}</span></span>
             <span className="text-slate-600">·</span>
             <span className="text-slate-500">{validation?.recommendedNextAction || ""}</span>
           </div>

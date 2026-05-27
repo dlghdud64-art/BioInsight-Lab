@@ -67,7 +67,7 @@ export function PoCreatedReentryWorkbench({ open, onClose, handoff, onCreatedRec
                 <span className="text-slate-600">·</span>
                 <span className="text-slate-400">Approved <span className="text-emerald-300 font-medium">{reentryState.approvedCandidateIds.length}</span></span>
                 <span className="text-slate-600">·</span>
-                {reentryState.sendCriticalReadinessStatus === "ready" ? <span className="text-emerald-400">Dispatch 준비</span> : <span className="text-amber-400">미완료</span>}
+                {reentryState.sendCriticalReadinessStatus === "ready" ? <span className="text-emerald-400">Dispatch 준비</span> : <span className="text-yellow-400">미완료</span>}
               </div>
             </div>
           </div>
@@ -99,9 +99,9 @@ export function PoCreatedReentryWorkbench({ open, onClose, handoff, onCreatedRec
                 { label: "Line Delta", status: reentryState.createdLineDeltaStatus },
                 { label: "Operational", status: reentryState.operationalCarryForwardStatus },
               ].map(item => (
-                <div key={item.label} className={`px-3 py-2.5 rounded-md border text-center ${item.status === "reviewed" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : item.status === "blocked" ? "border-red-500/15 bg-red-600/[0.03]" : "border-amber-500/20 bg-amber-600/[0.03]"}`}>
+                <div key={item.label} className={`px-3 py-2.5 rounded-md border text-center ${item.status === "reviewed" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : item.status === "blocked" ? "border-red-500/15 bg-red-600/[0.03]" : "border-yellow-500/20 bg-yellow-600/[0.03]"}`}>
                   <span className="text-[9px] text-slate-500 block">{item.label}</span>
-                  <span className={`text-[10px] font-medium ${item.status === "reviewed" ? "text-emerald-300" : item.status === "blocked" ? "text-red-300" : "text-amber-300"}`}>{item.status === "reviewed" ? "검토 완료" : item.status === "blocked" ? "차단" : "미검토"}</span>
+                  <span className={`text-[10px] font-medium ${item.status === "reviewed" ? "text-emerald-300" : item.status === "blocked" ? "text-red-300" : "text-yellow-300"}`}>{item.status === "reviewed" ? "검토 완료" : item.status === "blocked" ? "차단" : "미검토"}</span>
                 </div>
               ))}
             </div>
@@ -111,18 +111,18 @@ export function PoCreatedReentryWorkbench({ open, onClose, handoff, onCreatedRec
           </div>
 
           {/* Send-critical bridge */}
-          <div className={`px-3 py-2.5 rounded-md border ${reentryState.sendCriticalReadinessStatus === "ready" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-amber-500/20 bg-amber-600/[0.03]"}`}>
+          <div className={`px-3 py-2.5 rounded-md border ${reentryState.sendCriticalReadinessStatus === "ready" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-yellow-500/20 bg-yellow-600/[0.03]"}`}>
             <div className="flex items-center gap-1.5 mb-0.5"><Shield className="h-3 w-3 text-slate-500" /><span className="text-[9px] text-slate-500">Send-Critical Bridge</span></div>
-            {reentryState.sendCriticalReadinessStatus === "ready" ? <div className="flex items-center gap-1"><Check className="h-3 w-3 text-emerald-400" /><span className="text-[10px] text-emerald-300">Dispatch 준비 완료</span></div> : <span className="text-[10px] text-amber-300">필드 검토 완료 후 준비됨</span>}
+            {reentryState.sendCriticalReadinessStatus === "ready" ? <div className="flex items-center gap-1"><Check className="h-3 w-3 text-emerald-400" /><span className="text-[10px] text-emerald-300">Dispatch 준비 완료</span></div> : <span className="text-[10px] text-yellow-300">필드 검토 완료 후 준비됨</span>}
           </div>
 
           {/* Overlap */}
           {reentryState.previousCreatedOverlapCount > 0 && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">이전 Created Object {reentryState.previousCreatedOverlapCount}개 overlap</span></div>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">이전 Created Object {reentryState.previousCreatedOverlapCount}개 overlap</span></div>
           )}
 
           {validation && validation.warnings.length > 0 && !isRecorded && validation.warnings.map((w, i) => (
-            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">{w}</span></div>
+            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">{w}</span></div>
           ))}
 
           {isRecorded && (

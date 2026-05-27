@@ -9,8 +9,8 @@ import type { PoSentReentryTrackingHandoff } from "@/lib/ai/send-confirmation-re
 const ACK_LABELS: Record<AckReentryStatus, { label: string; color: string }> = {
   no_response: { label: "응답 없음", color: "text-slate-500" },
   acknowledged: { label: "확인 완료", color: "text-emerald-400" },
-  partial: { label: "부분 확인", color: "text-amber-400" },
-  clarification_required: { label: "확인 필요", color: "text-orange-400" },
+  partial: { label: "부분 확인", color: "text-yellow-400" },
+  clarification_required: { label: "확인 필요", color: "text-yellow-400" },
   issue_raised: { label: "이슈 제기", color: "text-red-400" },
 };
 
@@ -74,12 +74,12 @@ export function PoSentReentryTrackingWorkbench({ open, onClose, handoff, onAckno
           {/* Acknowledgment status */}
           <div>
             <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Acknowledgment 상태</span>
-            <div className={`mt-2 flex items-center gap-3 px-3 py-3 rounded-md border ${trackingState.acknowledgmentReentryStatus === "acknowledged" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : trackingState.acknowledgmentReentryStatus === "no_response" ? "border-slate-700/40 bg-[#252A33]" : "border-amber-500/20 bg-amber-600/[0.03]"}`}>
-              <div className={`w-2.5 h-2.5 rounded-full ${trackingState.acknowledgmentReentryStatus === "acknowledged" ? "bg-emerald-400" : trackingState.acknowledgmentReentryStatus === "no_response" ? "bg-slate-500" : "bg-amber-400"}`} />
+            <div className={`mt-2 flex items-center gap-3 px-3 py-3 rounded-md border ${trackingState.acknowledgmentReentryStatus === "acknowledged" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : trackingState.acknowledgmentReentryStatus === "no_response" ? "border-slate-700/40 bg-[#252A33]" : "border-yellow-500/20 bg-yellow-600/[0.03]"}`}>
+              <div className={`w-2.5 h-2.5 rounded-full ${trackingState.acknowledgmentReentryStatus === "acknowledged" ? "bg-emerald-400" : trackingState.acknowledgmentReentryStatus === "no_response" ? "bg-slate-500" : "bg-yellow-400"}`} />
               <div className="flex-1">
                 <span className={`text-[12px] font-semibold ${ackLabel.color}`}>{ackLabel.label}</span>
-                {trackingState.followupRequiredFlag && <span className="text-[10px] text-amber-400 block mt-0.5">Follow-up 필요</span>}
-                {trackingState.clarificationRequiredFlag && <span className="text-[10px] text-orange-400 block mt-0.5">Clarification 필요</span>}
+                {trackingState.followupRequiredFlag && <span className="text-[10px] text-yellow-400 block mt-0.5">Follow-up 필요</span>}
+                {trackingState.clarificationRequiredFlag && <span className="text-[10px] text-yellow-400 block mt-0.5">Clarification 필요</span>}
               </div>
               {trackingState.acknowledgmentReentryStatus === "no_response" && (
                 <Button size="sm" variant="ghost" className="h-6 px-2 text-[9px] text-blue-400 hover:text-blue-300 border border-blue-500/20" onClick={simulateAck}>확인 시뮬레이션</Button>
@@ -90,8 +90,8 @@ export function PoSentReentryTrackingWorkbench({ open, onClose, handoff, onAckno
           {/* Prior overlap */}
           {(trackingState.priorSentOverlapCount > 0 || trackingState.priorAcknowledgmentConflictCount > 0) && (
             <div className="space-y-1">
-              {trackingState.priorSentOverlapCount > 0 && <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">이전 발송 overlap {trackingState.priorSentOverlapCount}건</span></div>}
-              {trackingState.priorAcknowledgmentConflictCount > 0 && <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><HelpCircle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">이전 acknowledgment 충돌 {trackingState.priorAcknowledgmentConflictCount}건</span></div>}
+              {trackingState.priorSentOverlapCount > 0 && <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">이전 발송 overlap {trackingState.priorSentOverlapCount}건</span></div>}
+              {trackingState.priorAcknowledgmentConflictCount > 0 && <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><HelpCircle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">이전 acknowledgment 충돌 {trackingState.priorAcknowledgmentConflictCount}건</span></div>}
             </div>
           )}
 
@@ -102,7 +102,7 @@ export function PoSentReentryTrackingWorkbench({ open, onClose, handoff, onAckno
           </div>
 
           {validation && validation.warnings.length > 0 && !isRecorded && validation.warnings.map((w, i) => (
-            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">{w}</span></div>
+            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">{w}</span></div>
           ))}
 
           {isRecorded && (

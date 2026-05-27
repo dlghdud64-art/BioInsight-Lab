@@ -124,7 +124,7 @@ export function SourcingSearchReopenWorkbench({ open, onClose, handoff, onReopen
                     <div className="flex-1 min-w-0">
                       <span className={`text-[11px] font-medium block ${isSelected ? "text-slate-100" : "text-slate-300"}`}>{strat.label}</span>
                       <span className="text-[9px] text-slate-500">{strat.rationale}</span>
-                      <div className="flex items-center gap-2 mt-0.5"><span className="text-[8px] text-amber-400">Risk: {strat.risk}</span><span className="text-[8px] text-slate-600">·</span><span className="text-[8px] text-slate-500">{strat.downstreamEffect}</span></div>
+                      <div className="flex items-center gap-2 mt-0.5"><span className="text-[8px] text-yellow-400">Risk: {strat.risk}</span><span className="text-[8px] text-slate-600">·</span><span className="text-[8px] text-slate-500">{strat.downstreamEffect}</span></div>
                     </div>
                     <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium shrink-0 ${isSelected ? config.color + " " + config.bg : "text-slate-500 bg-slate-700/30"}`}>{config.label}</span>
                     {isSelected && <Check className="h-4 w-4 text-blue-400 shrink-0" />}
@@ -151,7 +151,7 @@ export function SourcingSearchReopenWorkbench({ open, onClose, handoff, onReopen
                 ))}
               </div>
               {baselineDecision.baselineCarryForwardRiskSummary && (
-                <div className="mt-1.5 flex items-center gap-1.5 text-[9px] text-amber-400"><AlertTriangle className="h-3 w-3 shrink-0" />{baselineDecision.baselineCarryForwardRiskSummary}</div>
+                <div className="mt-1.5 flex items-center gap-1.5 text-[9px] text-yellow-400"><AlertTriangle className="h-3 w-3 shrink-0" />{baselineDecision.baselineCarryForwardRiskSummary}</div>
               )}
             </div>
           )}

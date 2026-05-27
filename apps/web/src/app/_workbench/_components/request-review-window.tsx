@@ -46,9 +46,9 @@ interface RequestReviewWindowProps {
 
 const READINESS_CONFIG: Record<RequestReadinessLevel, { color: string; icon: any }> = {
   ready_to_create_request: { color: "bg-emerald-600/10 text-emerald-400 border-emerald-600/30", icon: CheckCircle2 },
-  review_first: { color: "bg-amber-600/10 text-amber-400 border-amber-600/30", icon: AlertTriangle },
+  review_first: { color: "bg-yellow-600/10 text-yellow-400 border-yellow-600/30", icon: AlertTriangle },
   blocked: { color: "bg-red-600/10 text-red-400 border-red-600/30", icon: AlertCircle },
-  partial_ready: { color: "bg-amber-600/10 text-amber-400 border-amber-600/30", icon: Info },
+  partial_ready: { color: "bg-yellow-600/10 text-yellow-400 border-yellow-600/30", icon: Info },
 };
 
 function ReadinessBadge({ level, label }: { level: RequestReadinessLevel; label: string }) {
@@ -79,7 +79,7 @@ function CandidateReviewRow({
     candidate.status === "ready"
       ? "border-l-emerald-500"
       : candidate.status === "review"
-        ? "border-l-amber-500"
+        ? "border-l-yellow-500"
         : "border-l-red-500";
 
   return (
@@ -117,7 +117,7 @@ function CandidateReviewRow({
             className={`text-[9px] px-1.5 py-0.5 rounded ${
               flag.type === "hard_blocker"
                 ? "bg-red-600/10 text-red-400"
-                : "bg-amber-600/10 text-amber-400"
+                : "bg-yellow-600/10 text-yellow-400"
             }`}
             title={flag.detail}
           >
@@ -218,7 +218,7 @@ export function RequestReviewWindow({
             </span>
             {summary.review > 0 && (
               <span className="flex items-center gap-1">
-                <AlertTriangle className="h-3 w-3 text-amber-400" />검토 {summary.review}
+                <AlertTriangle className="h-3 w-3 text-yellow-400" />검토 {summary.review}
               </span>
             )}
             {summary.blocked > 0 && (
@@ -329,7 +329,7 @@ export function RequestReviewWindow({
                   <p className="text-[10px] text-slate-500">준비</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold tabular-nums text-amber-400">{summary.review}</p>
+                  <p className="text-lg font-bold tabular-nums text-yellow-400">{summary.review}</p>
                   <p className="text-[10px] text-slate-500">검토</p>
                 </div>
                 <div>
@@ -362,14 +362,14 @@ export function RequestReviewWindow({
                 </div>
               )}
               {reviewItems.length > 0 && (
-                <div className="rounded border border-amber-600/20 bg-amber-600/5 px-3 py-2">
+                <div className="rounded border border-yellow-600/20 bg-yellow-600/5 px-3 py-2">
                   <div className="flex items-center gap-1.5 mb-1">
-                    <AlertTriangle className="h-3 w-3 text-amber-400" />
-                    <span className="text-[10px] font-medium text-amber-400 uppercase">검토 필요</span>
+                    <AlertTriangle className="h-3 w-3 text-yellow-400" />
+                    <span className="text-[10px] font-medium text-yellow-400 uppercase">검토 필요</span>
                   </div>
                   <ul className="space-y-0.5">
                     {reviewItems.map((msg, i) => (
-                      <li key={i} className="text-xs text-amber-300">{msg}</li>
+                      <li key={i} className="text-xs text-yellow-300">{msg}</li>
                     ))}
                   </ul>
                 </div>
@@ -392,13 +392,13 @@ export function RequestReviewWindow({
 
           {/* Compare 복귀 경로 — 비교 미완료 시 blocker, 완료 시 secondary review */}
           {reviewItems.some((r) => r.includes("비교")) && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded border border-amber-600/20 bg-amber-600/5">
-              <GitCompare className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-              <span className="text-xs text-amber-300 flex-1">비교 판단 미완료 후보가 있습니다.</span>
+            <div className="flex items-center gap-2 px-3 py-2 rounded border border-yellow-600/20 bg-yellow-600/5">
+              <GitCompare className="h-3.5 w-3.5 text-yellow-400 shrink-0" />
+              <span className="text-xs text-yellow-300 flex-1">비교 판단 미완료 후보가 있습니다.</span>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 px-2 text-[10px] text-amber-400 hover:text-amber-300 shrink-0"
+                className="h-6 px-2 text-[10px] text-yellow-400 hover:text-yellow-300 shrink-0"
                 onClick={onSwitchToCompare}
               >
                 비교 판단 먼저

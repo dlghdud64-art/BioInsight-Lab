@@ -48,9 +48,9 @@ export function ReceivingExecutionReentryWorkbench({ open, onClose, handoff, onE
               <div className="flex items-center gap-2 text-[10px] mt-0.5">
                 <span className="text-slate-400">Lines <span className="text-slate-200 font-medium">{execState.actualReceivedLineCount}/{execState.expectedLineCount}</span></span>
                 <span className="text-slate-600">·</span>
-                <span className="text-slate-400">Capture <span className={execState.recaptureCompletenessStatus === "complete" ? "text-emerald-300" : "text-amber-300"}>{execState.recaptureCompletenessStatus}</span></span>
+                <span className="text-slate-400">Capture <span className={execState.recaptureCompletenessStatus === "complete" ? "text-emerald-300" : "text-yellow-300"}>{execState.recaptureCompletenessStatus}</span></span>
                 <span className="text-slate-600">·</span>
-                {execState.partialRereceiptFlag ? <span className="text-amber-400">부분 입고</span> : execState.actualRereceiptQtySummary ? <span className="text-emerald-400">전량 입고</span> : <span className="text-slate-500">대기</span>}
+                {execState.partialRereceiptFlag ? <span className="text-yellow-400">부분 입고</span> : execState.actualRereceiptQtySummary ? <span className="text-emerald-400">전량 입고</span> : <span className="text-slate-500">대기</span>}
               </div>
             </div>
           </div>
@@ -78,18 +78,18 @@ export function ReceivingExecutionReentryWorkbench({ open, onClose, handoff, onE
           </div>
 
           {/* Recapture status */}
-          <div className={`px-3 py-2.5 rounded-md border ${execState.recaptureCompletenessStatus === "complete" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-amber-500/20 bg-amber-600/[0.03]"}`}>
+          <div className={`px-3 py-2.5 rounded-md border ${execState.recaptureCompletenessStatus === "complete" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-yellow-500/20 bg-yellow-600/[0.03]"}`}>
             <span className="text-[9px] text-slate-500 block mb-0.5">Lot/Expiry/Storage/Document Recapture</span>
-            {execState.recaptureCompletenessStatus === "complete" ? <div className="flex items-center gap-1"><Check className="h-3 w-3 text-emerald-400" /><span className="text-[10px] text-emerald-300">전체 Capture 완료</span></div> : <span className="text-[10px] text-amber-300">Capture 미완료</span>}
+            {execState.recaptureCompletenessStatus === "complete" ? <div className="flex items-center gap-1"><Check className="h-3 w-3 text-emerald-400" /><span className="text-[10px] text-emerald-300">전체 Capture 완료</span></div> : <span className="text-[10px] text-yellow-300">Capture 미완료</span>}
           </div>
 
           {/* Overlap */}
           {execState.priorExecutionOverlapCount > 0 && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">이전 Execution overlap {execState.priorExecutionOverlapCount}건</span></div>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">이전 Execution overlap {execState.priorExecutionOverlapCount}건</span></div>
           )}
 
           {validation && validation.warnings.length > 0 && !isRecorded && validation.warnings.map((w, i) => (
-            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">{w}</span></div>
+            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">{w}</span></div>
           ))}
 
           {/* Inventory Intake readiness */}

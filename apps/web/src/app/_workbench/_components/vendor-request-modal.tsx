@@ -70,7 +70,7 @@ const CONTACT_SOURCE_LABEL: Record<ResolvedSupplier["contactSource"], string> = 
 
 const CONFIDENCE_COLOR: Record<ResolvedSupplier["confidence"], string> = {
   high: "text-emerald-400 border-emerald-500/25 bg-emerald-600/10",
-  medium: "text-amber-400 border-amber-500/25 bg-amber-600/10",
+  medium: "text-yellow-400 border-yellow-500/25 bg-yellow-600/10",
   low: "text-red-400 border-red-500/25 bg-red-600/10",
 };
 
@@ -297,19 +297,19 @@ export function VendorRequestModal({
             sendReadiness === "ready"
               ? "border-emerald-500/25 bg-emerald-950/10"
               : sendReadiness === "needs_review"
-                ? "border-amber-500/25 bg-amber-950/10"
+                ? "border-yellow-500/25 bg-yellow-950/10"
                 : "border-red-500/25 bg-red-950/10"
           }`}>
             <div className="flex items-center gap-2 mb-2">
               {sendReadiness === "ready" ? (
                 <Check className="h-4 w-4 text-emerald-400" />
               ) : sendReadiness === "needs_review" ? (
-                <AlertTriangle className="h-4 w-4 text-amber-400" />
+                <AlertTriangle className="h-4 w-4 text-yellow-400" />
               ) : (
                 <AlertTriangle className="h-4 w-4 text-red-400" />
               )}
               <span className={`text-sm font-semibold ${
-                sendReadiness === "ready" ? "text-emerald-300" : sendReadiness === "needs_review" ? "text-amber-300" : "text-red-300"
+                sendReadiness === "ready" ? "text-emerald-300" : sendReadiness === "needs_review" ? "text-yellow-300" : "text-red-300"
               }`}>
                 {sendReadiness === "ready" ? "발송 준비 완료" : sendReadiness === "needs_review" ? "보완 필요" : "발송 차단"}
               </span>
@@ -503,7 +503,7 @@ export function VendorRequestModal({
               sendReadiness === "ready"
                 ? "bg-emerald-600 hover:bg-emerald-500 text-white"
                 : sendReadiness === "needs_review"
-                  ? "bg-amber-600 hover:bg-amber-500 text-white"
+                  ? "bg-yellow-600 hover:bg-yellow-500 text-white"
                   : "bg-slate-700 text-slate-400 cursor-not-allowed"
             }`}
           >

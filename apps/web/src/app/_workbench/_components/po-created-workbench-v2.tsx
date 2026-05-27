@@ -91,8 +91,8 @@ export function PoCreatedWorkbenchV2({
         <div className="px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center gap-3">
-              <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRouted ? "bg-emerald-600/15 border-emerald-500/25" : isHold ? "bg-amber-600/15 border-amber-500/25" : "bg-teal-600/15 border-teal-500/25"}`}>
-                {isRouted ? <Truck className="h-4 w-4 text-emerald-400" /> : isHold ? <Pause className="h-4 w-4 text-amber-400" /> : <Package className="h-4 w-4 text-teal-400" />}
+              <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRouted ? "bg-emerald-600/15 border-emerald-500/25" : isHold ? "bg-yellow-600/15 border-yellow-500/25" : "bg-teal-600/15 border-teal-500/25"}`}>
+                {isRouted ? <Truck className="h-4 w-4 text-emerald-400" /> : isHold ? <Pause className="h-4 w-4 text-yellow-400" /> : <Package className="h-4 w-4 text-teal-400" />}
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-slate-100">PO Created Workbench</h2>
@@ -100,7 +100,7 @@ export function PoCreatedWorkbenchV2({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`text-[9px] px-2 py-0.5 rounded font-medium ${readiness?.status === "ready" ? "bg-emerald-600/15 text-emerald-300 border border-emerald-500/20" : readiness?.status === "blocked" ? "bg-red-600/10 text-red-300 border border-red-500/15" : "bg-amber-600/10 text-amber-300 border border-amber-500/15"}`}>
+              <span className={`text-[9px] px-2 py-0.5 rounded font-medium ${readiness?.status === "ready" ? "bg-emerald-600/15 text-emerald-300 border border-emerald-500/20" : readiness?.status === "blocked" ? "bg-red-600/10 text-red-300 border border-red-500/15" : "bg-yellow-600/10 text-yellow-300 border border-yellow-500/15"}`}>
                 {readiness?.status === "ready" ? "발송 준비 가능" : readiness?.status === "blocked" ? "발송 차단" : "경고 있음"}
               </span>
               <button type="button" onClick={onClose} className="h-6 w-6 flex items-center justify-center rounded text-slate-500 hover:text-slate-300"><X className="h-3.5 w-3.5" /></button>
@@ -112,7 +112,7 @@ export function PoCreatedWorkbenchV2({
             <span className="text-slate-400">Amount <span className="text-slate-200 font-medium">{poRecord.amountSummary}</span></span>
             <span className="text-slate-600">·</span>
             <span className="text-slate-400">Status <span className="text-teal-300 font-medium">{poRecord.status}</span></span>
-            {isHold && <><span className="text-slate-600">·</span><span className="text-amber-400 font-medium">Hold</span></>}
+            {isHold && <><span className="text-slate-600">·</span><span className="text-yellow-400 font-medium">Hold</span></>}
           </div>
         </div>
 
@@ -157,9 +157,9 @@ export function PoCreatedWorkbenchV2({
                   </div>
                 ))}
                 {readiness.warnings.map((w, i) => (
-                  <div key={`wrn-${i}`} className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-amber-600/[0.04] border border-amber-500/10">
-                    <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />
-                    <span className="text-[10px] text-amber-300">{w}</span>
+                  <div key={`wrn-${i}`} className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10">
+                    <AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" />
+                    <span className="text-[10px] text-yellow-300">{w}</span>
                   </div>
                 ))}
                 {readiness.infos.map((info, i) => (
@@ -209,7 +209,7 @@ export function PoCreatedWorkbenchV2({
             </Button>
             {!isRouted && (
               <>
-                <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-amber-400 hover:text-amber-300 border border-amber-500/20" onClick={handleHold}>
+                <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-yellow-400 hover:text-yellow-300 border border-yellow-500/20" onClick={handleHold}>
                   <Pause className="h-3 w-3 mr-1" />Hold
                 </Button>
                 <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={() => handleCorrection("po_conversion_entry")}>

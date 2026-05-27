@@ -45,8 +45,8 @@ export function ApprovalReentryWorkbench({ open, onClose, handoff, onDecisionRec
       <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center gap-3">
-            <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-amber-600/15 border-amber-500/25"}`}>
-              {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <ShieldCheck className="h-4 w-4 text-amber-400" />}
+            <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-yellow-600/15 border-yellow-500/25"}`}>
+              {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <ShieldCheck className="h-4 w-4 text-yellow-400" />}
             </div>
             <div>
               <h2 className="text-sm font-semibold text-slate-100">{isRecorded ? "Approval Re-entry 완료" : "Approval Re-entry"}</h2>
@@ -80,10 +80,10 @@ export function ApprovalReentryWorkbench({ open, onClose, handoff, onDecisionRec
               ].map(item => {
                 const Icon = item.icon;
                 return (
-                  <div key={item.label} className={`px-3 py-2.5 rounded-md border text-center ${item.status === "reviewed" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : item.status === "blocked" ? "border-red-500/15 bg-red-600/[0.03]" : "border-amber-500/20 bg-amber-600/[0.03]"}`}>
-                    <Icon className={`h-3.5 w-3.5 mx-auto mb-1 ${item.status === "reviewed" ? "text-emerald-400" : item.status === "blocked" ? "text-red-400" : "text-amber-400"}`} />
+                  <div key={item.label} className={`px-3 py-2.5 rounded-md border text-center ${item.status === "reviewed" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : item.status === "blocked" ? "border-red-500/15 bg-red-600/[0.03]" : "border-yellow-500/20 bg-yellow-600/[0.03]"}`}>
+                    <Icon className={`h-3.5 w-3.5 mx-auto mb-1 ${item.status === "reviewed" ? "text-emerald-400" : item.status === "blocked" ? "text-red-400" : "text-yellow-400"}`} />
                     <span className="text-[9px] text-slate-500 block">{item.label}</span>
-                    <span className={`text-[10px] font-medium ${item.status === "reviewed" ? "text-emerald-300" : item.status === "blocked" ? "text-red-300" : "text-amber-300"}`}>{item.status === "reviewed" ? "검토 완료" : item.status === "blocked" ? "차단" : "미검토"}</span>
+                    <span className={`text-[10px] font-medium ${item.status === "reviewed" ? "text-emerald-300" : item.status === "blocked" ? "text-red-300" : "text-yellow-300"}`}>{item.status === "reviewed" ? "검토 완료" : item.status === "blocked" ? "차단" : "미검토"}</span>
                   </div>
                 );
               })}
@@ -114,7 +114,7 @@ export function ApprovalReentryWorkbench({ open, onClose, handoff, onDecisionRec
           </div>
 
           {deltaReview && deltaReview.warnings.length > 0 && !isRecorded && deltaReview.warnings.map((w, i) => (
-            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">{w}</span></div>
+            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">{w}</span></div>
           ))}
 
           {isRecorded && (
@@ -136,7 +136,7 @@ export function ApprovalReentryWorkbench({ open, onClose, handoff, onDecisionRec
           <div className="flex gap-2">
             <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onReturnToCompareReentry}><ArrowLeft className="h-3 w-3 mr-1" />Compare Re-entry</Button>
             {!isRecorded ? (
-              <Button size="sm" className="flex-1 h-8 text-[10px] bg-amber-600 hover:bg-amber-500 text-white font-medium" onClick={recordDecision} disabled={!validation?.canRecordApprovalReentryDecision}><ShieldCheck className="h-3 w-3 mr-1" />Approval Re-entry 저장</Button>
+              <Button size="sm" className="flex-1 h-8 text-[10px] bg-yellow-600 hover:bg-yellow-500 text-white font-medium" onClick={recordDecision} disabled={!validation?.canRecordApprovalReentryDecision}><ShieldCheck className="h-3 w-3 mr-1" />Approval Re-entry 저장</Button>
             ) : (
               <Button size="sm" className={`flex-1 h-8 text-[10px] font-medium ${validation?.canOpenPoConversionReentry ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "bg-slate-700 text-slate-400"}`} onClick={onPoConversionReentryHandoff} disabled={!validation?.canOpenPoConversionReentry}>
                 <ShieldCheck className="h-3 w-3 mr-1" />PO Conversion Re-entry<ArrowRight className="h-3 w-3 ml-1" />

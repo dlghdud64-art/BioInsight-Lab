@@ -181,7 +181,7 @@ export function SearchAnalysisCard() {
         <CardContent>
           <div className="space-y-3">
             <div className="flex items-start gap-2 text-sm text-slate-600">
-              <AlertCircle className="h-4 w-4 mt-0.5 text-amber-500" />
+              <AlertCircle className="h-4 w-4 mt-0.5 text-yellow-500" />
               <div>
                 <p className="font-medium">GPT 분석 중 오류가 발생했습니다.</p>
                 <p className="text-xs text-slate-500 mt-1">

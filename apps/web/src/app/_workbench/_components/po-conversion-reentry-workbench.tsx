@@ -102,7 +102,7 @@ export function PoConversionReentryWorkbench({ open, onClose, handoff, onDraftRe
 
           {/* Warnings */}
           {fieldPlan && fieldPlan.warnings.length > 0 && !isRecorded && fieldPlan.warnings.map((w, i) => (
-            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">{w}</span></div>
+            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">{w}</span></div>
           ))}
 
           {isRecorded && (

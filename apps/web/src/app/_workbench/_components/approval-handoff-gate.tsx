@@ -29,7 +29,7 @@ interface ApprovalHandoffGateProps {
 
 const SEVERITY_CONFIG: Record<GateItemSeverity, { icon: any; color: string; bg: string; border: string }> = {
   blocker: { icon: AlertCircle, color: "text-red-400", bg: "bg-red-600/[0.06]", border: "border-red-500/15" },
-  warning: { icon: AlertTriangle, color: "text-amber-400", bg: "bg-amber-600/[0.04]", border: "border-amber-500/10" },
+  warning: { icon: AlertTriangle, color: "text-yellow-400", bg: "bg-yellow-600/[0.04]", border: "border-yellow-500/10" },
   info: { icon: Info, color: "text-blue-400", bg: "bg-blue-600/[0.04]", border: "border-blue-500/10" },
 };
 
@@ -83,8 +83,8 @@ export function ApprovalHandoffGate({
         <div className="px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center gap-3">
-              <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isHandedOff ? "bg-emerald-600/15 border-emerald-500/25" : gateState.gateStatus === "ready" ? "bg-emerald-600/15 border-emerald-500/25" : gateState.gateStatus === "blocked" ? "bg-red-600/15 border-red-500/25" : "bg-amber-600/15 border-amber-500/25"}`}>
-                {isHandedOff ? <Check className="h-4 w-4 text-emerald-400" /> : <ShieldCheck className={`h-4 w-4 ${gateState.gateStatus === "ready" ? "text-emerald-400" : gateState.gateStatus === "blocked" ? "text-red-400" : "text-amber-400"}`} />}
+              <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isHandedOff ? "bg-emerald-600/15 border-emerald-500/25" : gateState.gateStatus === "ready" ? "bg-emerald-600/15 border-emerald-500/25" : gateState.gateStatus === "blocked" ? "bg-red-600/15 border-red-500/25" : "bg-yellow-600/15 border-yellow-500/25"}`}>
+                {isHandedOff ? <Check className="h-4 w-4 text-emerald-400" /> : <ShieldCheck className={`h-4 w-4 ${gateState.gateStatus === "ready" ? "text-emerald-400" : gateState.gateStatus === "blocked" ? "text-red-400" : "text-yellow-400"}`} />}
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-slate-100">{isHandedOff ? "승인 이관 완료" : "Approval Handoff Gate"}</h2>
@@ -92,7 +92,7 @@ export function ApprovalHandoffGate({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`text-[9px] px-2 py-0.5 rounded font-medium ${gateState.gateStatus === "ready" || isHandedOff ? "bg-emerald-600/15 text-emerald-300 border border-emerald-500/20" : gateState.gateStatus === "blocked" ? "bg-red-600/10 text-red-300 border border-red-500/15" : "bg-amber-600/10 text-amber-300 border border-amber-500/15"}`}>
+              <span className={`text-[9px] px-2 py-0.5 rounded font-medium ${gateState.gateStatus === "ready" || isHandedOff ? "bg-emerald-600/15 text-emerald-300 border border-emerald-500/20" : gateState.gateStatus === "blocked" ? "bg-red-600/10 text-red-300 border border-red-500/15" : "bg-yellow-600/10 text-yellow-300 border border-yellow-500/15"}`}>
                 {isHandedOff ? "이관 완료" : gateState.gateStatus === "ready" ? "이관 가능" : gateState.gateStatus === "blocked" ? "차단됨" : "경고 있음"}
               </span>
               <button type="button" onClick={onClose} className="h-6 w-6 flex items-center justify-center rounded text-slate-500 hover:text-slate-300"><X className="h-3.5 w-3.5" /></button>
@@ -101,7 +101,7 @@ export function ApprovalHandoffGate({
           <div className="flex items-center gap-3 text-[10px]">
             <span className="text-red-400 font-medium">Blocker {gateState.blockerCount}</span>
             <span className="text-slate-600">·</span>
-            <span className="text-amber-400">Warning {gateState.warningCount}</span>
+            <span className="text-yellow-400">Warning {gateState.warningCount}</span>
             <span className="text-slate-600">·</span>
             <span className="text-blue-400">Info {gateState.infoCount}</span>
           </div>
@@ -137,7 +137,7 @@ export function ApprovalHandoffGate({
                   <div key={item.id} className={`flex items-center gap-3 px-3 py-2 rounded-md border ${config.border} ${config.bg}`}>
                     <Icon className={`h-3.5 w-3.5 shrink-0 ${config.color}`} />
                     <span className={`text-[10px] flex-1 ${config.color}`}>{item.message}</span>
-                    {item.fixAction && <Button size="sm" variant="ghost" className="h-6 px-2 text-[9px] text-amber-400 hover:text-amber-300 border border-amber-500/15" onClick={() => onFixBlocker(item.id)}>{item.fixAction}</Button>}
+                    {item.fixAction && <Button size="sm" variant="ghost" className="h-6 px-2 text-[9px] text-yellow-400 hover:text-yellow-300 border border-yellow-500/15" onClick={() => onFixBlocker(item.id)}>{item.fixAction}</Button>}
                   </div>
                 );
               })}
@@ -205,7 +205,7 @@ export function ApprovalHandoffGate({
             {!isHandedOff ? (
               <>
                 {gateState.gateStatus === "warning" && (
-                  <Button size="sm" className="flex-1 h-8 text-[10px] bg-amber-600 hover:bg-amber-500 text-white font-medium" onClick={() => handleHandoff(true)}>
+                  <Button size="sm" className="flex-1 h-8 text-[10px] bg-yellow-600 hover:bg-yellow-500 text-white font-medium" onClick={() => handleHandoff(true)}>
                     <AlertTriangle className="h-3 w-3 mr-1" />경고 포함 승인 이관
                   </Button>
                 )}

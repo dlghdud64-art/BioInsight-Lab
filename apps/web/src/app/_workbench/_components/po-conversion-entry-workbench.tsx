@@ -115,7 +115,7 @@ export function PoConversionEntryWorkbench({
                 <span className="text-slate-400">잠긴 필드 <span className="text-slate-200 font-medium">{convState.lockedFields.length}</span></span>
                 <span className="text-slate-600">·</span>
                 {currentState && currentState.missingFieldCount > 0 ? (
-                  <span className="text-amber-400">누락 {currentState.missingFieldCount}</span>
+                  <span className="text-yellow-400">누락 {currentState.missingFieldCount}</span>
                 ) : (
                   <span className="text-emerald-400">필드 완료</span>
                 )}
@@ -205,20 +205,20 @@ export function PoConversionEntryWorkbench({
           {/* ═══ D. Completion Summary ═══ */}
           {completion && (
             <div className="grid grid-cols-2 gap-2">
-              <div className={`px-3 py-2.5 rounded-md border ${completion.commercialComplete ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-amber-500/20 bg-amber-600/[0.03]"}`}>
+              <div className={`px-3 py-2.5 rounded-md border ${completion.commercialComplete ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-yellow-500/20 bg-yellow-600/[0.03]"}`}>
                 <span className="text-[9px] text-slate-500 block mb-0.5">상업 필드</span>
                 {completion.commercialComplete ? (
                   <div className="flex items-center gap-1"><Check className="h-3 w-3 text-emerald-400" /><span className="text-[10px] text-emerald-300">완료</span></div>
                 ) : (
-                  <span className="text-[10px] text-amber-300">누락: {completion.commercialMissing.join(", ")}</span>
+                  <span className="text-[10px] text-yellow-300">누락: {completion.commercialMissing.join(", ")}</span>
                 )}
               </div>
-              <div className={`px-3 py-2.5 rounded-md border ${completion.operationalComplete ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-amber-500/20 bg-amber-600/[0.03]"}`}>
+              <div className={`px-3 py-2.5 rounded-md border ${completion.operationalComplete ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-yellow-500/20 bg-yellow-600/[0.03]"}`}>
                 <span className="text-[9px] text-slate-500 block mb-0.5">운영 필드</span>
                 {completion.operationalComplete ? (
                   <div className="flex items-center gap-1"><Check className="h-3 w-3 text-emerald-400" /><span className="text-[10px] text-emerald-300">완료</span></div>
                 ) : (
-                  <span className="text-[10px] text-amber-300">누락: {completion.operationalMissing.join(", ")}</span>
+                  <span className="text-[10px] text-yellow-300">누락: {completion.operationalMissing.join(", ")}</span>
                 )}
               </div>
             </div>
@@ -233,8 +233,8 @@ export function PoConversionEntryWorkbench({
                 </div>
               ))}
               {validation.warnings.map((w, i) => (
-                <div key={`w-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10">
-                  <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">{w}</span>
+                <div key={`w-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10">
+                  <AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">{w}</span>
                 </div>
               ))}
             </div>

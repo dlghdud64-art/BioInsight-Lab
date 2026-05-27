@@ -143,7 +143,7 @@ export function QuoteCompareReviewWorkbench({
                 {compareState.followupVendorIds.length > 0 && (
                   <>
                     <span className="text-slate-600">·</span>
-                    <span className="text-amber-400">추가 확인 {compareState.followupVendorIds.length}</span>
+                    <span className="text-yellow-400">추가 확인 {compareState.followupVendorIds.length}</span>
                   </>
                 )}
               </div>
@@ -181,9 +181,9 @@ export function QuoteCompareReviewWorkbench({
                 </div>
               )}
               {diffSummary.moqWarning && (
-                <div className="px-3 py-2.5 rounded-md border border-amber-500/20 bg-amber-600/[0.03]">
-                  <div className="flex items-center gap-1.5 mb-1"><AlertTriangle className="h-3 w-3 text-amber-400" /><span className="text-[9px] text-slate-500">최소 주문</span></div>
-                  <span className="text-[11px] text-amber-300 font-medium">{diffSummary.moqWarning.label}</span>
+                <div className="px-3 py-2.5 rounded-md border border-yellow-500/20 bg-yellow-600/[0.03]">
+                  <div className="flex items-center gap-1.5 mb-1"><AlertTriangle className="h-3 w-3 text-yellow-400" /><span className="text-[9px] text-slate-500">최소 주문</span></div>
+                  <span className="text-[11px] text-yellow-300 font-medium">{diffSummary.moqWarning.label}</span>
                 </div>
               )}
             </div>
@@ -191,7 +191,7 @@ export function QuoteCompareReviewWorkbench({
               <div className="mt-2 px-3 py-2 rounded bg-[#252A33] border border-bd/30">
                 {diffSummary.operatorCheckpoints.map((cp, i) => (
                   <div key={i} className="flex items-center gap-1.5 text-[10px] text-slate-400">
-                    <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />{cp}
+                    <AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" />{cp}
                   </div>
                 ))}
               </div>
@@ -243,7 +243,7 @@ export function QuoteCompareReviewWorkbench({
                 const isExcluded = compareState.excludedVendorIds.includes(vid);
                 const isFollowup = compareState.followupVendorIds.includes(vid);
                 return (
-                  <div key={q.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-md border transition-all ${isShortlisted ? "border-emerald-500/25 bg-emerald-600/[0.04]" : isExcluded ? "border-red-500/15 bg-red-600/[0.03] opacity-60" : isFollowup ? "border-amber-500/20 bg-amber-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
+                  <div key={q.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-md border transition-all ${isShortlisted ? "border-emerald-500/25 bg-emerald-600/[0.04]" : isExcluded ? "border-red-500/15 bg-red-600/[0.03] opacity-60" : isFollowup ? "border-yellow-500/20 bg-yellow-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
                     <Building2 className="h-3.5 w-3.5 text-slate-500 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <span className="text-[11px] text-slate-200 font-medium block truncate">{vid}</span>
@@ -256,7 +256,7 @@ export function QuoteCompareReviewWorkbench({
                         <Check className="h-3 w-3 mr-0.5" />shortlist
                       </Button>
                       <Button size="sm" variant="ghost"
-                        className={`h-6 px-2 text-[9px] ${isFollowup ? "bg-amber-600/10 text-amber-400 border border-amber-500/20" : "text-slate-500 border border-bd/30"}`}
+                        className={`h-6 px-2 text-[9px] ${isFollowup ? "bg-yellow-600/10 text-yellow-400 border border-yellow-500/20" : "text-slate-500 border border-bd/30"}`}
                         onClick={() => toggleFollowup(vid)} disabled={isDecisionRecorded}>
                         <AlertTriangle className="h-3 w-3 mr-0.5" />확인
                       </Button>
@@ -281,8 +281,8 @@ export function QuoteCompareReviewWorkbench({
                 </div>
               ))}
               {validation.warnings.map((w, i) => (
-                <div key={`w-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10">
-                  <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">{w}</span>
+                <div key={`w-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10">
+                  <AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">{w}</span>
                 </div>
               ))}
             </div>

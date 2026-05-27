@@ -123,7 +123,7 @@ export function SourcingContextRail({
               </button>
             )}
             {isInCompare && compareCount < 2 && (
-              <p className="text-amber-600">비교 후보 1개 더 추가</p>
+              <p className="text-yellow-600">비교 후보 1개 더 추가</p>
             )}
             {isInRequest && onOpenRequestWindow && (
               <button

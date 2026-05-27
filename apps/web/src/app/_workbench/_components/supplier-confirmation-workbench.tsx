@@ -8,7 +8,7 @@ import type { SupplierConfirmationHandoff } from "@/lib/ai/po-sent-tracking-engi
 
 const FIELD_LABELS: Record<ConfFieldStatus, { label: string; color: string }> = {
   confirmed: { label: "확정", color: "text-emerald-400" },
-  partial: { label: "부분", color: "text-amber-400" },
+  partial: { label: "부분", color: "text-yellow-400" },
   unclear: { label: "미확인", color: "text-slate-500" },
   not_available: { label: "불가", color: "text-red-400" },
 };
@@ -106,7 +106,7 @@ export function SupplierConfirmationWorkbench({ open, onClose, handoff, onConfir
               <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">불일치 · 불확실성</span>
               <div className="mt-2 space-y-1">
                 {discrepancy.blockingIssues.map((b, i) => <div key={`b-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-red-600/[0.06] border border-red-500/15"><AlertTriangle className="h-3 w-3 text-red-400 shrink-0" /><span className="text-[10px] text-red-300">{b}</span></div>)}
-                {discrepancy.warnings.map((w, i) => <div key={`w-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><HelpCircle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">{w}</span></div>)}
+                {discrepancy.warnings.map((w, i) => <div key={`w-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><HelpCircle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">{w}</span></div>)}
               </div>
             </div>
           )}

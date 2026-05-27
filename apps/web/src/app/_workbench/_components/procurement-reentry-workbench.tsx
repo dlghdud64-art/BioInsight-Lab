@@ -10,7 +10,7 @@ const ROUTE_CONFIG: Record<ReentryRoute, { label: string; icon: any; color: stri
   search_reopen: { label: "소싱 탐색 재개", icon: Search, color: "text-blue-400", desc: "새로운 공급사·제품 검색부터 시작" },
   compare_reopen: { label: "비교 검토 재개", icon: GitCompare, color: "text-violet-400", desc: "기존 후보 기반 비교 재검토" },
   request_reopen: { label: "요청 재생성", icon: FileText, color: "text-emerald-400", desc: "기존 구조로 견적 요청 재발행" },
-  watch_no_reentry: { label: "Watch 유지", icon: Eye, color: "text-amber-400", desc: "즉시 재진입 없이 모니터링" },
+  watch_no_reentry: { label: "Watch 유지", icon: Eye, color: "text-yellow-400", desc: "즉시 재진입 없이 모니터링" },
   blocked_from_reentry: { label: "재진입 차단", icon: AlertTriangle, color: "text-red-400", desc: "재진입 조건 미충족" },
 };
 
@@ -62,7 +62,7 @@ export function ProcurementReentryWorkbench({ open, onClose, handoff, onReentryR
               <div className="flex items-center gap-2 text-[10px] mt-0.5">
                 <span className="text-slate-400">Reorder <span className="text-blue-300 font-medium">{reentryState.reorderCandidateQtySummary || "—"}</span></span>
                 <span className="text-slate-600">·</span>
-                <span className="text-slate-400">Watch <span className="text-amber-300 font-medium">{reentryState.watchCandidateQtySummary || "—"}</span></span>
+                <span className="text-slate-400">Watch <span className="text-yellow-300 font-medium">{reentryState.watchCandidateQtySummary || "—"}</span></span>
                 {reentryState.selectedReentryRoute && (
                   <><span className="text-slate-600">·</span><span className={ROUTE_CONFIG[reentryState.selectedReentryRoute].color}>{ROUTE_CONFIG[reentryState.selectedReentryRoute].label}</span></>
                 )}
@@ -121,7 +121,7 @@ export function ProcurementReentryWorkbench({ open, onClose, handoff, onReentryR
               {baselinePlan.baselineCarryForwardRisks.length > 0 && (
                 <div className="mt-1.5 space-y-0.5">
                   {baselinePlan.baselineCarryForwardRisks.map((r, i) => (
-                    <div key={i} className="flex items-center gap-1.5 text-[9px] text-amber-400"><AlertTriangle className="h-3 w-3 shrink-0" />{r}</div>
+                    <div key={i} className="flex items-center gap-1.5 text-[9px] text-yellow-400"><AlertTriangle className="h-3 w-3 shrink-0" />{r}</div>
                   ))}
                 </div>
               )}

@@ -62,7 +62,7 @@ interface SourcingTriageClassification {
  */
 const CHIP_STYLES: Record<ChipColor, string> = {
   green: "text-emerald-700 bg-emerald-50 border-emerald-200",
-  amber: "text-amber-700 bg-amber-50 border-amber-200",
+  amber: "text-yellow-700 bg-yellow-50 border-yellow-200",
   blue: "text-blue-700 bg-blue-50 border-blue-200",
   neutral: "text-slate-600 bg-slate-50 border-slate-200",
 };
@@ -76,7 +76,7 @@ const TRIAGE_TONE_STYLES: Record<SourcingTriageTone, string> = {
 
 const TRIAGE_ACTION_STYLES: Record<SourcingTriageActionState, string> = {
   shortlist: "border-blue-200 bg-blue-50 text-blue-700",
-  hold: "border-amber-200 bg-amber-50 text-amber-700",
+  hold: "border-yellow-200 bg-yellow-50 text-yellow-700",
   exclude: "border-red-200 bg-red-50 text-red-700",
 };
 
@@ -261,7 +261,7 @@ export function SourcingResultRow({
               <PriceDisplay price={unitPrice} currency="KRW" />
             </span>
           ) : (
-            <span className="text-sm font-semibold text-amber-600 flex items-center gap-0.5">
+            <span className="text-sm font-semibold text-yellow-600 flex items-center gap-0.5">
               <AlertTriangle className="h-3.5 w-3.5" />견적 필요
             </span>
           )}
@@ -325,7 +325,7 @@ export function SourcingResultRow({
           {unitPrice ? (
             <span className="font-semibold tabular-nums text-slate-900"><PriceDisplay price={unitPrice} currency="KRW" /></span>
           ) : (
-            <span className="text-amber-600 text-xs">견적 필요</span>
+            <span className="text-yellow-600 text-xs">견적 필요</span>
           )}
         </div>
         <div className="flex items-center gap-1.5">

@@ -51,7 +51,7 @@ export function DispatchPreparationReentryWorkbench({ open, onClose, handoff, on
                 <span className="text-slate-600">·</span>
                 <span className="text-slate-400">Channel <span className="text-slate-200 font-medium">{reentryState.channelStatus}</span></span>
                 <span className="text-slate-600">·</span>
-                {reentryState.sendCriticalFieldStatus === "ready" ? <span className="text-emerald-400">Send 준비</span> : <span className="text-amber-400">미완료</span>}
+                {reentryState.sendCriticalFieldStatus === "ready" ? <span className="text-emerald-400">Send 준비</span> : <span className="text-yellow-400">미완료</span>}
               </div>
             </div>
           </div>
@@ -76,9 +76,9 @@ export function DispatchPreparationReentryWorkbench({ open, onClose, handoff, on
 
           {/* Payload & Attachment */}
           <div className="grid grid-cols-2 gap-2">
-            <div className={`px-3 py-2.5 rounded-md border ${reentryState.payloadDeltaStatus === "reviewed" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-amber-500/20 bg-amber-600/[0.03]"} text-center`}>
+            <div className={`px-3 py-2.5 rounded-md border ${reentryState.payloadDeltaStatus === "reviewed" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-yellow-500/20 bg-yellow-600/[0.03]"} text-center`}>
               <span className="text-[9px] text-slate-500 block">Payload Delta</span>
-              <span className={`text-[10px] font-medium ${reentryState.payloadDeltaStatus === "reviewed" ? "text-emerald-300" : "text-amber-300"}`}>{reentryState.payloadDeltaStatus === "reviewed" ? "검토 완료" : "미검토"}</span>
+              <span className={`text-[10px] font-medium ${reentryState.payloadDeltaStatus === "reviewed" ? "text-emerald-300" : "text-yellow-300"}`}>{reentryState.payloadDeltaStatus === "reviewed" ? "검토 완료" : "미검토"}</span>
             </div>
             <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33] text-center">
               <div className="flex items-center justify-center gap-1 mb-0.5"><Paperclip className="h-3 w-3 text-slate-500" /><span className="text-[9px] text-slate-500">첨부</span></div>
@@ -87,9 +87,9 @@ export function DispatchPreparationReentryWorkbench({ open, onClose, handoff, on
           </div>
 
           {/* Send-critical bridge */}
-          <div className={`px-3 py-2.5 rounded-md border ${reentryState.sendCriticalFieldStatus === "ready" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-amber-500/20 bg-amber-600/[0.03]"}`}>
+          <div className={`px-3 py-2.5 rounded-md border ${reentryState.sendCriticalFieldStatus === "ready" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-yellow-500/20 bg-yellow-600/[0.03]"}`}>
             <div className="flex items-center gap-1.5 mb-0.5"><Shield className="h-3 w-3 text-slate-500" /><span className="text-[9px] text-slate-500">Send-Critical Bridge</span></div>
-            {reentryState.sendCriticalFieldStatus === "ready" ? <div className="flex items-center gap-1"><Check className="h-3 w-3 text-emerald-400" /><span className="text-[10px] text-emerald-300">Send 준비 완료</span></div> : <span className="text-[10px] text-amber-300">필드 완료 필요</span>}
+            {reentryState.sendCriticalFieldStatus === "ready" ? <div className="flex items-center gap-1"><Check className="h-3 w-3 text-emerald-400" /><span className="text-[10px] text-emerald-300">Send 준비 완료</span></div> : <span className="text-[10px] text-yellow-300">필드 완료 필요</span>}
           </div>
 
           {!reentryState.primaryRecipient && !isRecorded && (
@@ -97,7 +97,7 @@ export function DispatchPreparationReentryWorkbench({ open, onClose, handoff, on
           )}
 
           {validation && validation.warnings.length > 0 && !isRecorded && validation.warnings.map((w, i) => (
-            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">{w}</span></div>
+            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">{w}</span></div>
           ))}
 
           {isRecorded && (

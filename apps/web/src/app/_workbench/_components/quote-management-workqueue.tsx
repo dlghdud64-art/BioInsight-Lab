@@ -36,9 +36,9 @@ interface QuoteManagementWorkqueueProps {
 
 const STATUS_CONFIG = {
   no_response: { label: "미응답", color: "text-slate-500", bg: "bg-slate-700/30", icon: Mail },
-  partial_response: { label: "일부 응답", color: "text-amber-400", bg: "bg-amber-600/10", icon: MailOpen },
+  partial_response: { label: "일부 응답", color: "text-yellow-400", bg: "bg-yellow-600/10", icon: MailOpen },
   quote_received: { label: "견적 수신", color: "text-blue-400", bg: "bg-blue-600/10", icon: MailOpen },
-  normalization_required: { label: "정리 필요", color: "text-orange-400", bg: "bg-orange-600/10", icon: RefreshCw },
+  normalization_required: { label: "정리 필요", color: "text-yellow-400", bg: "bg-yellow-600/10", icon: RefreshCw },
   ready_for_compare: { label: "비교 준비", color: "text-emerald-400", bg: "bg-emerald-600/10", icon: Check },
   needs_followup: { label: "추가 요청", color: "text-red-400", bg: "bg-red-600/10", icon: AlertTriangle },
 } as const;
@@ -137,7 +137,7 @@ export function QuoteManagementWorkqueue({
                 {compareReadiness?.canOpenQuoteCompareReview ? (
                   <span className="text-emerald-400 font-medium">비교 검토 가능</span>
                 ) : (
-                  <span className="text-amber-400">비교 준비 중</span>
+                  <span className="text-yellow-400">비교 준비 중</span>
                 )}
               </div>
             </div>
@@ -160,7 +160,7 @@ export function QuoteManagementWorkqueue({
             </div>
             <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33] text-center">
               <span className="text-[9px] text-slate-500 block">정리 필요</span>
-              <span className={`text-lg font-bold tabular-nums ${normalizationCount > 0 ? "text-orange-400" : "text-slate-600"}`}>{normalizationCount}</span>
+              <span className={`text-lg font-bold tabular-nums ${normalizationCount > 0 ? "text-yellow-400" : "text-slate-600"}`}>{normalizationCount}</span>
             </div>
             <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33] text-center">
               <span className="text-[9px] text-slate-500 block">비교 준비</span>
@@ -184,7 +184,7 @@ export function QuoteManagementWorkqueue({
                   onClick={() => setSelectedRowId(isSelected ? null : row.rowId)}
                 >
                   {/* Status dot */}
-                  <div className={`w-2 h-2 rounded-full shrink-0 ${row.responseStatus === "ready_for_compare" ? "bg-emerald-400" : row.responseStatus === "no_response" ? "bg-slate-500" : row.responseStatus === "normalization_required" ? "bg-orange-400" : row.quoteReceivedFlag ? "bg-blue-400" : "bg-slate-500"}`} />
+                  <div className={`w-2 h-2 rounded-full shrink-0 ${row.responseStatus === "ready_for_compare" ? "bg-emerald-400" : row.responseStatus === "no_response" ? "bg-slate-500" : row.responseStatus === "normalization_required" ? "bg-yellow-400" : row.quoteReceivedFlag ? "bg-blue-400" : "bg-slate-500"}`} />
 
                   {/* Vendor */}
                   <Building2 className="h-3.5 w-3.5 text-slate-500 shrink-0" />
@@ -211,7 +211,7 @@ export function QuoteManagementWorkqueue({
                       </Button>
                     )}
                     {row.normalizationStatus === "required" && (
-                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[9px] text-orange-400 hover:text-orange-300 border border-orange-500/20"
+                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[9px] text-yellow-400 hover:text-yellow-300 border border-yellow-500/20"
                         onClick={(e) => { e.stopPropagation(); simulateNormalization(row.rowId); }}>
                         견적 정리
                       </Button>
@@ -237,9 +237,9 @@ export function QuoteManagementWorkqueue({
                 </div>
               ))}
               {compareReadiness.warnings.map((w, i) => (
-                <div key={`w-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10">
-                  <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />
-                  <span className="text-[10px] text-amber-300">{w}</span>
+                <div key={`w-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10">
+                  <AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" />
+                  <span className="text-[10px] text-yellow-300">{w}</span>
                 </div>
               ))}
             </div>
@@ -265,7 +265,7 @@ export function QuoteManagementWorkqueue({
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-8 px-3 text-[10px] text-orange-400 hover:text-orange-300 border border-orange-500/20"
+                className="h-8 px-3 text-[10px] text-yellow-400 hover:text-yellow-300 border border-yellow-500/20"
                 onClick={() => {
                   const row = rows.find((r) => r.normalizationStatus === "required");
                   if (row) onNormalizationOpen(row.vendorTargetId);

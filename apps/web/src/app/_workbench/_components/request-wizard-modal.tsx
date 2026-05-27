@@ -395,7 +395,7 @@ export function RequestWizardModal({
                               u === "일반"
                                 ? isActive ? "bg-blue-600 text-white" : "bg-white text-slate-600 border-slate-200"
                                 : u === "긴급"
-                                ? isActive ? "bg-amber-500 text-white" : "bg-white text-slate-600 border-slate-200"
+                                ? isActive ? "bg-yellow-500 text-white" : "bg-white text-slate-600 border-slate-200"
                                 : isActive ? "bg-red-500 text-white" : "bg-white text-slate-600 border-slate-200";
                             return (
                               <button
@@ -485,7 +485,7 @@ export function RequestWizardModal({
                             className={`flex flex-col items-start gap-1 p-3 rounded-xl border text-left transition-all ${
                               isActive
                                 ? opt.color === "blue" ? "border-blue-300 bg-blue-50 ring-1 ring-blue-200"
-                                : opt.color === "amber" ? "border-amber-300 bg-amber-50 ring-1 ring-amber-200"
+                                : opt.color === "amber" ? "border-yellow-300 bg-yellow-50 ring-1 ring-yellow-200"
                                 : "border-slate-300 bg-slate-50 ring-1 ring-slate-200"
                                 : "border-slate-200 bg-white hover:border-slate-300"
                             }`}
@@ -494,7 +494,7 @@ export function RequestWizardModal({
                               <Icon className={`h-3.5 w-3.5 ${
                                 isActive
                                   ? opt.color === "blue" ? "text-blue-600"
-                                  : opt.color === "amber" ? "text-amber-600"
+                                  : opt.color === "amber" ? "text-yellow-600"
                                   : "text-slate-600"
                                   : "text-slate-400"
                               }`} />
@@ -527,15 +527,15 @@ export function RequestWizardModal({
                 <>
                   {/* 미확인 항목 경고 */}
                   {warnings.length > 0 && (
-                    <div className="rounded-xl bg-amber-50 border border-amber-200 p-4">
+                    <div className="rounded-xl bg-yellow-50 border border-yellow-200 p-4">
                       <div className="flex items-center gap-2 mb-1.5">
-                        <AlertTriangle className="h-4 w-4 text-amber-600" />
-                        <h4 className="text-sm font-semibold text-amber-800">미확인 항목이 있습니다</h4>
+                        <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                        <h4 className="text-sm font-semibold text-yellow-800">미확인 항목이 있습니다</h4>
                       </div>
                       <ul className="space-y-0.5">
                         {warnings.map((w, i) => (
-                          <li key={i} className="text-xs text-amber-700 flex items-center gap-1.5">
-                            <span className="h-1 w-1 rounded-full bg-amber-400 shrink-0" />
+                          <li key={i} className="text-xs text-yellow-700 flex items-center gap-1.5">
+                            <span className="h-1 w-1 rounded-full bg-yellow-400 shrink-0" />
                             {w}
                           </li>
                         ))}
@@ -552,7 +552,7 @@ export function RequestWizardModal({
                     <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                       <span className="text-[11px] text-slate-400 font-medium">긴급도</span>
                       <p className="text-sm font-semibold text-slate-900 mt-0.5 flex items-center gap-1.5">
-                        {urgency === "긴급" && <Zap className="h-3.5 w-3.5 text-amber-500" />}
+                        {urgency === "긴급" && <Zap className="h-3.5 w-3.5 text-yellow-500" />}
                         {urgency === "최우선" && <AlertCircle className="h-3.5 w-3.5 text-red-500" />}
                         {urgency === "일반" && <Clock className="h-3.5 w-3.5 text-blue-500" />}
                         {urgency}
@@ -603,7 +603,7 @@ export function RequestWizardModal({
                       </div>
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                         supplierStrategy === "compare" ? "bg-blue-50 text-blue-600" :
-                        supplierStrategy === "preferred" ? "bg-amber-50 text-amber-600" :
+                        supplierStrategy === "preferred" ? "bg-yellow-50 text-yellow-600" :
                         "bg-slate-100 text-slate-600"
                       }`}>
                         {supplierStrategy === "compare" ? "비교 견적" :
@@ -627,7 +627,7 @@ export function RequestWizardModal({
                         {suppliers.map((s) => (
                           <div key={s} className="flex items-center justify-between py-1.5">
                             <div className="flex items-center gap-2">
-                              <span className={`h-2 w-2 rounded-full ${supplierStrategy === "preferred" ? "bg-amber-500" : "bg-slate-500"}`} />
+                              <span className={`h-2 w-2 rounded-full ${supplierStrategy === "preferred" ? "bg-yellow-500" : "bg-slate-500"}`} />
                               <span className="text-sm text-slate-700">{s}</span>
                             </div>
                             <span className="text-xs text-slate-500 font-medium">
@@ -636,8 +636,8 @@ export function RequestWizardModal({
                           </div>
                         ))}
                         {supplierStrategy === "preferred" && (
-                          <div className="rounded-lg bg-amber-50 border border-amber-100 px-3 py-2.5">
-                            <p className="text-[11px] text-amber-600 leading-relaxed">
+                          <div className="rounded-lg bg-yellow-50 border border-yellow-100 px-3 py-2.5">
+                            <p className="text-[11px] text-yellow-600 leading-relaxed">
                               선호 공급사 우선 배정, 비교 견적도 병행합니다.
                             </p>
                           </div>
@@ -726,7 +726,7 @@ export function RequestWizardModal({
               <Button
                 size="sm"
                 disabled={isSubmitting}
-                className="bg-orange-500 hover:bg-orange-600 text-white gap-1.5 shadow-md disabled:opacity-60"
+                className="bg-yellow-500 hover:bg-yellow-600 text-white gap-1.5 shadow-md disabled:opacity-60"
                 onClick={handleSubmit}
               >
                 {isSubmitting ? (

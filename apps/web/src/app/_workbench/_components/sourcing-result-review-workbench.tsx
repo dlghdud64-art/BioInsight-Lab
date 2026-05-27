@@ -10,7 +10,7 @@ const DECISION_CONFIG: Record<CandidateDecisionType, { label: string; color: str
   compare_candidate: { label: "비교 후보", color: "text-blue-400", bg: "bg-blue-600/10" },
   request_direct: { label: "요청 직행", color: "text-emerald-400", bg: "bg-emerald-600/10" },
   excluded: { label: "제외", color: "text-slate-500", bg: "bg-slate-700/30" },
-  held: { label: "보류", color: "text-amber-400", bg: "bg-amber-600/10" },
+  held: { label: "보류", color: "text-yellow-400", bg: "bg-yellow-600/10" },
   blocked: { label: "차단", color: "text-red-400", bg: "bg-red-600/10" },
 };
 
@@ -58,7 +58,7 @@ export function SourcingResultReviewWorkbench({ open, onClose, handoff, onReview
               <span className="text-slate-400">Request <span className="text-emerald-300 font-medium">{plan?.requestDirectCandidateIds.length || 0}</span></span>
               <span className="text-slate-600">·</span>
               <span className="text-slate-400">Excluded <span className="text-slate-500 font-medium">{plan?.excludedCandidateIds.length || 0}</span></span>
-              {reviewState.baselineBiasFlag && <><span className="text-slate-600">·</span><span className="text-amber-400">Bias</span></>}
+              {reviewState.baselineBiasFlag && <><span className="text-slate-600">·</span><span className="text-yellow-400">Bias</span></>}
             </div>
           </div>
         </div>
@@ -77,9 +77,9 @@ export function SourcingResultReviewWorkbench({ open, onClose, handoff, onReview
               <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Triage 요약</span>
               <div className="mt-2 grid grid-cols-4 gap-2">
                 <div className="px-3 py-2.5 rounded-md border border-emerald-500/20 bg-emerald-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">High Fit</span><span className="text-lg font-bold text-emerald-400">{triage.highFitCount}</span></div>
-                <div className="px-3 py-2.5 rounded-md border border-amber-500/20 bg-amber-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Medium</span><span className="text-lg font-bold text-amber-400">{triage.mediumFitCount}</span></div>
+                <div className="px-3 py-2.5 rounded-md border border-yellow-500/20 bg-yellow-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Medium</span><span className="text-lg font-bold text-yellow-400">{triage.mediumFitCount}</span></div>
                 <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33] text-center"><span className="text-[9px] text-slate-500 block">Excluded</span><span className="text-lg font-bold text-slate-500">{triage.excludedCount}</span></div>
-                <div className="px-3 py-2.5 rounded-md border border-amber-500/20 bg-amber-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Bias</span><span className="text-lg font-bold text-amber-400">{triage.baselineBiasCount}</span></div>
+                <div className="px-3 py-2.5 rounded-md border border-yellow-500/20 bg-yellow-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Bias</span><span className="text-lg font-bold text-yellow-400">{triage.baselineBiasCount}</span></div>
               </div>
             </div>
           )}
@@ -129,16 +129,16 @@ export function SourcingResultReviewWorkbench({ open, onClose, handoff, onReview
                 {reviewState.candidateDecisions.map(cd => {
                   const config = DECISION_CONFIG[cd.decisionType];
                   return (
-                    <div key={cd.candidateId} className={`flex items-center gap-3 px-3 py-2.5 rounded-md border ${cd.decisionType === "compare_candidate" ? "border-blue-500/20 bg-blue-600/[0.03]" : cd.decisionType === "request_direct" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : cd.decisionType === "excluded" ? "border-bd/40 bg-[#252A33] opacity-60" : "border-amber-500/20 bg-amber-600/[0.03]"}`}>
-                      {cd.decisionType === "compare_candidate" ? <GitCompare className="h-3.5 w-3.5 text-blue-400 shrink-0" /> : cd.decisionType === "request_direct" ? <FileText className="h-3.5 w-3.5 text-emerald-400 shrink-0" /> : cd.decisionType === "excluded" ? <Minus className="h-3.5 w-3.5 text-slate-500 shrink-0" /> : <Eye className="h-3.5 w-3.5 text-amber-400 shrink-0" />}
+                    <div key={cd.candidateId} className={`flex items-center gap-3 px-3 py-2.5 rounded-md border ${cd.decisionType === "compare_candidate" ? "border-blue-500/20 bg-blue-600/[0.03]" : cd.decisionType === "request_direct" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : cd.decisionType === "excluded" ? "border-bd/40 bg-[#252A33] opacity-60" : "border-yellow-500/20 bg-yellow-600/[0.03]"}`}>
+                      {cd.decisionType === "compare_candidate" ? <GitCompare className="h-3.5 w-3.5 text-blue-400 shrink-0" /> : cd.decisionType === "request_direct" ? <FileText className="h-3.5 w-3.5 text-emerald-400 shrink-0" /> : cd.decisionType === "excluded" ? <Minus className="h-3.5 w-3.5 text-slate-500 shrink-0" /> : <Eye className="h-3.5 w-3.5 text-yellow-400 shrink-0" />}
                       <div className="flex-1 min-w-0">
                         <span className="text-[11px] text-slate-200 font-medium block truncate">{cd.candidateName}</span>
                         <span className="text-[9px] text-slate-500">{cd.vendorName} · {cd.rationale}</span>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded ${cd.fitScore === "high" ? "bg-emerald-600/10 text-emerald-400" : cd.fitScore === "medium" ? "bg-amber-600/10 text-amber-400" : "bg-slate-700/30 text-slate-500"}`}>{cd.fitScore}</span>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded ${cd.fitScore === "high" ? "bg-emerald-600/10 text-emerald-400" : cd.fitScore === "medium" ? "bg-yellow-600/10 text-yellow-400" : "bg-slate-700/30 text-slate-500"}`}>{cd.fitScore}</span>
                         <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${config.color} ${config.bg}`}>{config.label}</span>
-                        {cd.baselineBiasFlag && <AlertTriangle className="h-3 w-3 text-amber-400" />}
+                        {cd.baselineBiasFlag && <AlertTriangle className="h-3 w-3 text-yellow-400" />}
                       </div>
                     </div>
                   );
@@ -163,7 +163,7 @@ export function SourcingResultReviewWorkbench({ open, onClose, handoff, onReview
 
           {/* Validation */}
           {triage && triage.warnings.length > 0 && !isRecorded && triage.warnings.map((w, i) => (
-            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">{w}</span></div>
+            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">{w}</span></div>
           ))}
 
           {isRecorded && (

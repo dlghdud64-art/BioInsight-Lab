@@ -62,7 +62,7 @@ const STATUS_CONFIG: Record<OptionReviewStatus, { label: string; color: string; 
   pending_review: { label: "미검토", color: "text-slate-500", bg: "bg-slate-700/30" },
   shortlisted: { label: "Shortlist", color: "text-emerald-400", bg: "bg-emerald-600/10" },
   excluded: { label: "제외", color: "text-red-400", bg: "bg-red-600/10" },
-  needs_followup: { label: "확인 필요", color: "text-amber-400", bg: "bg-amber-600/10" },
+  needs_followup: { label: "확인 필요", color: "text-yellow-400", bg: "bg-yellow-600/10" },
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -162,7 +162,7 @@ export function CompareReviewCenterWorkWindow({
         <div className="px-5 py-2.5 border-b border-bd/60 bg-[#252A33] flex items-center justify-between">
           <div className="flex items-center gap-3">
             {reviewState.reopenMeta.isReopened && (
-              <span className="text-[9px] px-2 py-0.5 rounded bg-amber-600/15 text-amber-300 font-medium border border-amber-500/20">
+              <span className="text-[9px] px-2 py-0.5 rounded bg-yellow-600/15 text-yellow-300 font-medium border border-yellow-500/20">
                 <RefreshCw className="h-3 w-3 inline mr-0.5" />재검토 #{reviewState.reopenMeta.reopenCount}
               </span>
             )}
@@ -194,9 +194,9 @@ export function CompareReviewCenterWorkWindow({
             <span className="text-red-400">제외 {excludedCount}</span>
             <span className="text-slate-600">·</span>
             <span className="text-slate-500">미검토 {pendingCount}</span>
-            {followupCount > 0 && <><span className="text-slate-600">·</span><span className="text-amber-400">확인 필요 {followupCount}</span></>}
+            {followupCount > 0 && <><span className="text-slate-600">·</span><span className="text-yellow-400">확인 필요 {followupCount}</span></>}
             {reviewState.reopenMeta.isReopened && (
-              <><span className="text-slate-600">·</span><span className="text-amber-300 text-[9px]">사유: {reviewState.reopenMeta.reopenReason || "미지정"}</span></>
+              <><span className="text-slate-600">·</span><span className="text-yellow-300 text-[9px]">사유: {reviewState.reopenMeta.reopenReason || "미지정"}</span></>
             )}
           </div>
         </div>
@@ -205,9 +205,9 @@ export function CompareReviewCenterWorkWindow({
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
           {/* Reopen previous decisions note */}
           {reviewState.reopenMeta.isReopened && reviewState.reopenMeta.previousShortlistIds.length > 0 && (
-            <div className="px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/15 mb-2">
-              <span className="text-[9px] font-medium text-amber-400 block mb-0.5">이전 판단 기록</span>
-              <span className="text-[10px] text-amber-200">이전 Shortlist: {reviewState.reopenMeta.previousShortlistIds.join(", ")}</span>
+            <div className="px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/15 mb-2">
+              <span className="text-[9px] font-medium text-yellow-400 block mb-0.5">이전 판단 기록</span>
+              <span className="text-[10px] text-yellow-200">이전 Shortlist: {reviewState.reopenMeta.previousShortlistIds.join(", ")}</span>
             </div>
           )}
 
@@ -253,7 +253,7 @@ export function CompareReviewCenterWorkWindow({
                       <Minus className="h-3 w-3" />
                     </Button>
                     <Button size="sm" variant="ghost"
-                      className={`h-6 px-2 text-[9px] ${opt.reviewStatus === "needs_followup" ? "bg-amber-600/10 text-amber-400 border border-amber-500/20" : "text-slate-500 border border-bd/30"}`}
+                      className={`h-6 px-2 text-[9px] ${opt.reviewStatus === "needs_followup" ? "bg-yellow-600/10 text-yellow-400 border border-yellow-500/20" : "text-slate-500 border border-bd/30"}`}
                       onClick={(e) => { e.stopPropagation(); setOptionStatus(opt.optionId, "needs_followup"); }}
                       disabled={isCompleted}>
                       <AlertTriangle className="h-3 w-3" />
@@ -302,7 +302,7 @@ export function CompareReviewCenterWorkWindow({
                     {opt.riskFlags.length > 0 && (
                       <div className="flex items-center gap-1.5 flex-wrap">
                         {opt.riskFlags.map((flag, i) => (
-                          <span key={i} className="text-[8px] px-1.5 py-0.5 rounded bg-amber-600/10 text-amber-400">{flag}</span>
+                          <span key={i} className="text-[8px] px-1.5 py-0.5 rounded bg-yellow-600/10 text-yellow-400">{flag}</span>
                         ))}
                       </div>
                     )}
@@ -340,7 +340,7 @@ export function CompareReviewCenterWorkWindow({
             <span className="text-red-400">제외 {excludedCount}</span>
             <span className="text-slate-600">·</span>
             <span className="text-slate-500">미검토 {pendingCount}</span>
-            {followupCount > 0 && <><span className="text-slate-600">·</span><span className="text-amber-400">확인 {followupCount}</span></>}
+            {followupCount > 0 && <><span className="text-slate-600">·</span><span className="text-yellow-400">확인 {followupCount}</span></>}
             <span className="text-slate-600">·</span>
             <span className="text-slate-500">{validation?.recommendedNextAction || ""}</span>
           </div>
@@ -348,7 +348,7 @@ export function CompareReviewCenterWorkWindow({
             {!isCompleted ? (
               <>
                 {followupCount > 0 && (
-                  <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-amber-400 hover:text-amber-300 border border-amber-500/20" onClick={handleFollowup}>
+                  <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-yellow-400 hover:text-yellow-300 border border-yellow-500/20" onClick={handleFollowup}>
                     <AlertTriangle className="h-3 w-3 mr-1" />후속 확인 요청
                   </Button>
                 )}

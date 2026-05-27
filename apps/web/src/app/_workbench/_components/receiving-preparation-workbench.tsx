@@ -77,10 +77,10 @@ export function ReceivingPreparationWorkbench({ open, onClose, handoff, onPrepRe
               ].map(item => {
                 const Icon = item.icon;
                 return (
-                  <div key={item.label} className={`flex items-center gap-3 px-3 py-2 rounded-md border ${item.ready ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-amber-500/20 bg-amber-600/[0.03]"}`}>
-                    <Icon className={`h-3.5 w-3.5 shrink-0 ${item.ready ? "text-emerald-400" : "text-amber-400"}`} />
+                  <div key={item.label} className={`flex items-center gap-3 px-3 py-2 rounded-md border ${item.ready ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-yellow-500/20 bg-yellow-600/[0.03]"}`}>
+                    <Icon className={`h-3.5 w-3.5 shrink-0 ${item.ready ? "text-emerald-400" : "text-yellow-400"}`} />
                     <span className="text-[10px] text-slate-200 flex-1">{item.label}</span>
-                    <span className={`text-[9px] ${item.ready ? "text-emerald-400" : "text-amber-400"}`}>{item.ready ? "완료" : "미완료"}</span>
+                    <span className={`text-[9px] ${item.ready ? "text-emerald-400" : "text-yellow-400"}`}>{item.ready ? "완료" : "미완료"}</span>
                   </div>
                 );
               })}

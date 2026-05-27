@@ -40,8 +40,8 @@ export function RequestSubmissionReopenWorkbench({ open, onClose, handoff, onRes
       {/* ── Decision Header ── */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33] shrink-0">
         <div className="flex items-center gap-3">
-          <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-orange-600/15 border-orange-500/25"}`}>
-            {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Send className="h-4 w-4 text-orange-400" />}
+          <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-yellow-600/15 border-yellow-500/25"}`}>
+            {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Send className="h-4 w-4 text-yellow-400" />}
           </div>
           <div>
             <h2 className="text-sm font-semibold text-slate-100">{isRecorded ? "Resubmission 완료" : "Request Submission Reopen"}</h2>
@@ -77,7 +77,7 @@ export function RequestSubmissionReopenWorkbench({ open, onClose, handoff, onRes
             <div className="flex items-center gap-1.5 mb-2"><FileText className="h-3 w-3 text-slate-500" /><span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Final Line Delta</span></div>
             <div className="grid grid-cols-2 gap-2">
               <div className={`px-3 py-2.5 rounded-md border ${handoff.reusedRequestLineIds.length > 0 ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252A33]"} text-center`}><span className="text-[9px] text-slate-500 block">재사용</span><span className={`text-lg font-bold ${handoff.reusedRequestLineIds.length > 0 ? "text-emerald-400" : "text-slate-600"}`}>{handoff.reusedRequestLineIds.length}</span></div>
-              <div className={`px-3 py-2.5 rounded-md border ${handoff.rewrittenRequestLineIds.length > 0 ? "border-amber-500/20 bg-amber-600/[0.03]" : "border-bd/40 bg-[#252A33]"} text-center`}><span className="text-[9px] text-slate-500 block">재작성</span><span className={`text-lg font-bold ${handoff.rewrittenRequestLineIds.length > 0 ? "text-amber-400" : "text-slate-600"}`}>{handoff.rewrittenRequestLineIds.length}</span></div>
+              <div className={`px-3 py-2.5 rounded-md border ${handoff.rewrittenRequestLineIds.length > 0 ? "border-yellow-500/20 bg-yellow-600/[0.03]" : "border-bd/40 bg-[#252A33]"} text-center`}><span className="text-[9px] text-slate-500 block">재작성</span><span className={`text-lg font-bold ${handoff.rewrittenRequestLineIds.length > 0 ? "text-yellow-400" : "text-slate-600"}`}>{handoff.rewrittenRequestLineIds.length}</span></div>
             </div>
           </div>
 
@@ -93,7 +93,7 @@ export function RequestSubmissionReopenWorkbench({ open, onClose, handoff, onRes
           {guards && (guards.blockingIssues.length > 0 || guards.warnings.length > 0) && !isRecorded && (
             <div className="space-y-1">
               {guards.blockingIssues.map((b, i) => <div key={`b-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-red-600/[0.06] border border-red-500/15"><ShieldAlert className="h-3 w-3 text-red-400 shrink-0" /><span className="text-[10px] text-red-300">{b}</span></div>)}
-              {guards.warnings.map((w, i) => <div key={`w-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">{w}</span></div>)}
+              {guards.warnings.map((w, i) => <div key={`w-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">{w}</span></div>)}
             </div>
           )}
 
@@ -118,7 +118,7 @@ export function RequestSubmissionReopenWorkbench({ open, onClose, handoff, onRes
           {!isRecorded ? (
             <>
               <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onReturnToRequestReopen}><ArrowLeft className="h-3 w-3 mr-1" />Request Reopen</Button>
-              <Button size="sm" className="flex-1 h-8 text-[10px] bg-orange-600 hover:bg-orange-500 text-white font-medium" onClick={executeResubmission} disabled={!validation?.canRecordRequestResubmission || isSubmitting}>
+              <Button size="sm" className="flex-1 h-8 text-[10px] bg-yellow-600 hover:bg-yellow-500 text-white font-medium" onClick={executeResubmission} disabled={!validation?.canRecordRequestResubmission || isSubmitting}>
                 {isSubmitting ? "재제출 중..." : <><Send className="h-3 w-3 mr-1" />Request Resubmission</>}
               </Button>
             </>

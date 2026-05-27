@@ -44,7 +44,7 @@ export function StockReleaseWorkbench({ open, onClose, handoff, onReleaseRecorde
               <div className="flex items-center gap-2 text-[10px] mt-0.5">
                 <span className="text-slate-400">Releasable: <span className="text-emerald-300 font-medium">{releaseState.releasableQtySummary || "—"}</span></span>
                 <span className="text-slate-600">·</span>
-                <span className="text-slate-400">Hold: <span className="text-amber-300 font-medium">{releaseState.holdRemainingQtySummary || "0"}</span></span>
+                <span className="text-slate-400">Hold: <span className="text-yellow-300 font-medium">{releaseState.holdRemainingQtySummary || "0"}</span></span>
               </div>
             </div>
           </div>
@@ -54,12 +54,12 @@ export function StockReleaseWorkbench({ open, onClose, handoff, onReleaseRecorde
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           <div className="grid grid-cols-3 gap-2">
             <div className="px-3 py-2.5 rounded-md border border-emerald-500/20 bg-emerald-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Releasable</span><span className="text-lg font-bold text-emerald-400">{releaseState.releasableQtySummary || "—"}</span></div>
-            <div className="px-3 py-2.5 rounded-md border border-amber-500/20 bg-amber-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Hold</span><span className="text-lg font-bold text-amber-400">{releaseState.holdRemainingQtySummary || "0"}</span></div>
-            <div className="px-3 py-2.5 rounded-md border border-orange-500/20 bg-orange-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Quarantine</span><span className="text-lg font-bold text-orange-400">{releaseState.quarantineRemainingQtySummary || "0"}</span></div>
+            <div className="px-3 py-2.5 rounded-md border border-yellow-500/20 bg-yellow-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Hold</span><span className="text-lg font-bold text-yellow-400">{releaseState.holdRemainingQtySummary || "0"}</span></div>
+            <div className="px-3 py-2.5 rounded-md border border-yellow-500/20 bg-yellow-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Quarantine</span><span className="text-lg font-bold text-yellow-400">{releaseState.quarantineRemainingQtySummary || "0"}</span></div>
           </div>
 
           {validation && validation.warnings.length > 0 && validation.warnings.map((w, i) => (
-            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><ShieldAlert className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">{w}</span></div>
+            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><ShieldAlert className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">{w}</span></div>
           ))}
 
           {isRecorded && (

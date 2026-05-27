@@ -103,7 +103,7 @@ export function PoCreatedDetailWorkbench({
                 {readiness?.isSendReady ? (
                   <span className="text-emerald-400 font-medium">Dispatch 준비 완료</span>
                 ) : (
-                  <span className="text-amber-400">누락 {readiness?.sendCriticalMissing.length || 0}</span>
+                  <span className="text-yellow-400">누락 {readiness?.sendCriticalMissing.length || 0}</span>
                 )}
               </div>
             </div>
@@ -150,13 +150,13 @@ export function PoCreatedDetailWorkbench({
                 const Icon = item.icon;
                 const isMissing = !item.value;
                 return (
-                  <div key={item.label} className={`flex items-center gap-3 px-3 py-2 rounded-md border ${isMissing && item.critical ? "border-amber-500/20 bg-amber-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
-                    <Icon className={`h-3.5 w-3.5 shrink-0 ${isMissing ? "text-amber-400" : "text-slate-500"}`} />
+                  <div key={item.label} className={`flex items-center gap-3 px-3 py-2 rounded-md border ${isMissing && item.critical ? "border-yellow-500/20 bg-yellow-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
+                    <Icon className={`h-3.5 w-3.5 shrink-0 ${isMissing ? "text-yellow-400" : "text-slate-500"}`} />
                     <div className="flex-1 min-w-0">
                       <span className="text-[9px] text-slate-500 block">{item.label}{item.critical ? " *" : ""}</span>
-                      <span className={`text-[11px] font-medium ${isMissing ? "text-amber-400" : "text-slate-200"}`}>{item.value || "미입력"}</span>
+                      <span className={`text-[11px] font-medium ${isMissing ? "text-yellow-400" : "text-slate-200"}`}>{item.value || "미입력"}</span>
                     </div>
-                    {isMissing && item.critical && <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />}
+                    {isMissing && item.critical && <AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" />}
                   </div>
                 );
               })}
@@ -191,12 +191,12 @@ export function PoCreatedDetailWorkbench({
                   <span className="text-[10px] text-red-300">누락: {readiness.sendCriticalMissing.join(", ")}</span>
                 )}
               </div>
-              <div className={`px-3 py-2.5 rounded-md border ${readiness.nonCriticalMissing.length === 0 ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-amber-500/20 bg-amber-600/[0.03]"}`}>
+              <div className={`px-3 py-2.5 rounded-md border ${readiness.nonCriticalMissing.length === 0 ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-yellow-500/20 bg-yellow-600/[0.03]"}`}>
                 <span className="text-[9px] text-slate-500 block mb-0.5">Non-Critical</span>
                 {readiness.nonCriticalMissing.length === 0 ? (
                   <div className="flex items-center gap-1"><Check className="h-3 w-3 text-emerald-400" /><span className="text-[10px] text-emerald-300">전부 완료</span></div>
                 ) : (
-                  <span className="text-[10px] text-amber-300">선택: {readiness.nonCriticalMissing.join(", ")}</span>
+                  <span className="text-[10px] text-yellow-300">선택: {readiness.nonCriticalMissing.join(", ")}</span>
                 )}
               </div>
             </div>
@@ -211,8 +211,8 @@ export function PoCreatedDetailWorkbench({
                 </div>
               ))}
               {validation.warnings.map((w, i) => (
-                <div key={`w-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10">
-                  <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">{w}</span>
+                <div key={`w-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10">
+                  <AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">{w}</span>
                 </div>
               ))}
             </div>

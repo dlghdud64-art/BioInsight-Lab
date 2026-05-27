@@ -65,7 +65,7 @@ export function ReceivingExecutionWorkbench({ open, onClose, handoff, onExecutio
               <div className="flex items-center gap-2 text-[10px] mt-0.5">
                 <span className="text-slate-400">수신 <span className="text-slate-200 font-medium">{execState.receivedLineCount}/{execState.expectedLineCount}</span> 라인</span>
                 <span className="text-slate-600">·</span>
-                {execState.partialReceiptFlag ? <span className="text-amber-400">부분 입고</span> : execState.actualReceiptTimestamp ? <span className="text-emerald-400">전량 입고</span> : <span className="text-slate-500">입고 대기</span>}
+                {execState.partialReceiptFlag ? <span className="text-yellow-400">부분 입고</span> : execState.actualReceiptTimestamp ? <span className="text-emerald-400">전량 입고</span> : <span className="text-slate-500">입고 대기</span>}
               </div>
             </div>
           </div>
@@ -101,7 +101,7 @@ export function ReceivingExecutionWorkbench({ open, onClose, handoff, onExecutio
                   <div key={lr.lineId} className={`flex items-center gap-3 px-3 py-2 ${i > 0 ? "border-t border-bd/20" : ""}`}>
                     <span className="text-[10px] text-slate-300 flex-1">{lr.lineId}</span>
                     <span className="text-[10px] tabular-nums text-slate-200">{lr.receivedQty}/{lr.expectedQty}</span>
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded ${lr.receiptStatus === "full" ? "bg-emerald-600/10 text-emerald-400" : lr.receiptStatus === "partial" ? "bg-amber-600/10 text-amber-400" : "bg-red-600/10 text-red-400"}`}>{lr.receiptStatus}</span>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded ${lr.receiptStatus === "full" ? "bg-emerald-600/10 text-emerald-400" : lr.receiptStatus === "partial" ? "bg-yellow-600/10 text-yellow-400" : "bg-red-600/10 text-red-400"}`}>{lr.receiptStatus}</span>
                   </div>
                 ))}
               </div>
@@ -133,7 +133,7 @@ export function ReceivingExecutionWorkbench({ open, onClose, handoff, onExecutio
           {discrepancy && (discrepancy.blockingIssues.length > 0 || discrepancy.warnings.length > 0) && (
             <div className="space-y-1">
               {discrepancy.blockingIssues.map((b, i) => <div key={`b-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-red-600/[0.06] border border-red-500/15"><AlertTriangle className="h-3 w-3 text-red-400 shrink-0" /><span className="text-[10px] text-red-300">{b}</span></div>)}
-              {discrepancy.warnings.map((w, i) => <div key={`w-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">{w}</span></div>)}
+              {discrepancy.warnings.map((w, i) => <div key={`w-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">{w}</span></div>)}
             </div>
           )}
 

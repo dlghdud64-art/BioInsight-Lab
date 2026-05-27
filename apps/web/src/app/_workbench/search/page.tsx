@@ -1171,13 +1171,13 @@ export default function SearchPage() {
             {/* ═══ AI 비교 판단 상태 strip — 작업 상태 바 (추천 카드 아님) ═══ */}
             {aiCompareReadiness.active ? (
               <div className="px-3 py-2 border-b border-slate-200">
-                <div className={`rounded-md border px-3 py-2.5 ${aiCompareReadiness.mode === "direct" ? "border-blue-200 bg-blue-50" : aiCompareReadiness.mode === "mixed_warning" ? "border-amber-200 bg-amber-50" : "border-red-200 bg-red-50"}`}>
+                <div className={`rounded-md border px-3 py-2.5 ${aiCompareReadiness.mode === "direct" ? "border-blue-200 bg-blue-50" : aiCompareReadiness.mode === "mixed_warning" ? "border-yellow-200 bg-yellow-50" : "border-red-200 bg-red-50"}`}>
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-1.5">
-                      <div className={`w-1.5 h-1.5 rounded-full ${aiCompareReadiness.mode === "direct" ? "bg-blue-500" : aiCompareReadiness.mode === "mixed_warning" ? "bg-amber-500" : "bg-red-400"}`} />
+                      <div className={`w-1.5 h-1.5 rounded-full ${aiCompareReadiness.mode === "direct" ? "bg-blue-500" : aiCompareReadiness.mode === "mixed_warning" ? "bg-yellow-500" : "bg-red-400"}`} />
                       <span className="text-[10px] font-semibold text-slate-800">비교 검토 활성</span>
                     </div>
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${aiCompareReadiness.mode === "direct" ? "bg-blue-50 text-blue-600" : aiCompareReadiness.mode === "mixed_warning" ? "bg-amber-600/15 text-amber-300" : "bg-red-600/15 text-red-300"}`}>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${aiCompareReadiness.mode === "direct" ? "bg-blue-50 text-blue-600" : aiCompareReadiness.mode === "mixed_warning" ? "bg-yellow-600/15 text-yellow-300" : "bg-red-600/15 text-red-300"}`}>
                       {compareIds.length}개 선택
                     </span>
                   </div>
@@ -1253,8 +1253,8 @@ export default function SearchPage() {
           <div className="max-w-lg w-full px-6">
             {/* Stage header */}
             <div className="text-center mb-6">
-              <div className={`w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-3 border ${stageOwner === "request" ? "bg-emerald-600/10 border-emerald-500/20" : stageOwner === "quote" ? "bg-blue-50 border-blue-200" : "bg-orange-600/10 border-orange-500/20"}`}>
-                {stageOwner === "request" ? <FileText className="h-5 w-5 text-emerald-600" /> : stageOwner === "quote" ? <Package className="h-5 w-5 text-blue-600" /> : <Package className="h-5 w-5 text-orange-400" />}
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-3 border ${stageOwner === "request" ? "bg-emerald-600/10 border-emerald-500/20" : stageOwner === "quote" ? "bg-blue-50 border-blue-200" : "bg-yellow-600/10 border-yellow-500/20"}`}>
+                {stageOwner === "request" ? <FileText className="h-5 w-5 text-emerald-600" /> : stageOwner === "quote" ? <Package className="h-5 w-5 text-blue-600" /> : <Package className="h-5 w-5 text-yellow-400" />}
               </div>
               <p className="text-sm font-bold text-slate-100 mb-1">
                 {stageOwner === "request" ? "견적 요청 단계" : stageOwner === "quote" ? "견적 관리 단계" : "구매 실행 단계"}
@@ -2364,7 +2364,7 @@ export default function SearchPage() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   {isStrategyStale && (
-                    <span className="text-[9px] text-amber-600 px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200">갱신 필요</span>
+                    <span className="text-[9px] text-yellow-600 px-1.5 py-0.5 rounded bg-yellow-50 border border-yellow-200">갱신 필요</span>
                   )}
                   <button
                     type="button"
@@ -2440,8 +2440,8 @@ export default function SearchPage() {
                       <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">리스크</span>
                       <div className="mt-1.5 space-y-1">
                         {previewOption.risks.slice(0, 2).map((r, i: number) => (
-                          <div key={i} className="flex items-start gap-2 px-2.5 py-1.5 rounded bg-amber-600/[0.05] border border-amber-500/10">
-                            <AlertTriangle className="h-3 w-3 text-amber-600 mt-0.5 shrink-0" />
+                          <div key={i} className="flex items-start gap-2 px-2.5 py-1.5 rounded bg-yellow-600/[0.05] border border-yellow-500/10">
+                            <AlertTriangle className="h-3 w-3 text-yellow-600 mt-0.5 shrink-0" />
                             <span className="text-[10px] text-slate-400 leading-relaxed">{typeof r === "string" ? r : r.label}</span>
                           </div>
                         ))}
@@ -2471,8 +2471,8 @@ export default function SearchPage() {
               {isStrategyStale ? (
                 <div className="text-center space-y-2">
                   <div className="flex items-center justify-center gap-1.5">
-                    <AlertTriangle className="h-3 w-3 text-amber-600" />
-                    <span className="text-[10px] text-amber-600">선택 상태가 변경되었습니다</span>
+                    <AlertTriangle className="h-3 w-3 text-yellow-600" />
+                    <span className="text-[10px] text-yellow-600">선택 상태가 변경되었습니다</span>
                   </div>
                   <Button size="sm" className="w-full h-8 text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-600"
                     onClick={closeStrategyOverlay}>

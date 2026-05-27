@@ -23,7 +23,7 @@ import { Check, X } from "lucide-react";
 
 const READINESS_CONFIG: Record<string, { color: string; icon: any; label: string }> = {
   ready_to_write_request: { color: "text-emerald-400 bg-emerald-600/10 border-emerald-600/30", icon: CheckCircle2, label: "전송 가능" },
-  review_first: { color: "text-amber-400 bg-amber-600/10 border-amber-600/30", icon: AlertTriangle, label: "검토 필요" },
+  review_first: { color: "text-yellow-400 bg-yellow-600/10 border-yellow-600/30", icon: AlertTriangle, label: "검토 필요" },
   blocked: { color: "text-red-400 bg-red-600/10 border-red-600/30", icon: AlertCircle, label: "전송 불가" },
   split_required: { color: "text-blue-400 bg-blue-600/10 border-blue-600/30", icon: Info, label: "분리 전송" },
 };
@@ -174,7 +174,7 @@ function QuoteRequestPageContent() {
                   <span className="block">{g.vendorName}</span>
                   <span className="block text-[10px] tabular-nums opacity-60">{g.itemCount}건 · ₩{g.subtotal.toLocaleString("ko-KR")}</span>
                 </div>
-                {isHeld ? <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-600/15 text-amber-400">보류</span>
+                {isHeld ? <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-600/15 text-yellow-400">보류</span>
                 : isActive ? <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-600/20 text-blue-300">편집 중</span>
                 : <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-600/15 text-emerald-300">준비 완료</span>}
               </button>
@@ -198,7 +198,7 @@ function QuoteRequestPageContent() {
             <div className="rounded-lg border border-bd bg-pn px-5 py-4">
               <div className="grid grid-cols-4 gap-3 text-center">
                 <div><p className="text-2xl font-bold tabular-nums text-emerald-400">{submissionOutcome.sentCount}</p><p className="text-xs text-slate-500">전송</p></div>
-                <div><p className="text-2xl font-bold tabular-nums text-amber-400">{submissionOutcome.heldCount}</p><p className="text-xs text-slate-500">보류</p></div>
+                <div><p className="text-2xl font-bold tabular-nums text-yellow-400">{submissionOutcome.heldCount}</p><p className="text-xs text-slate-500">보류</p></div>
                 <div><p className="text-2xl font-bold tabular-nums text-slate-100">{submissionOutcome.vendorCount}</p><p className="text-xs text-slate-500">공급사</p></div>
                 <div><p className="text-lg font-bold tabular-nums text-slate-100">₩{submissionOutcome.totalAmount.toLocaleString("ko-KR")}</p><p className="text-xs text-slate-500">금액</p></div>
               </div>
@@ -213,8 +213,8 @@ function QuoteRequestPageContent() {
               )}
               {submissionOutcome.heldCount > 0 && (
                 <div className="flex items-center justify-between py-2 border-b border-bd/50">
-                  <div className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-amber-400" /><div><p className="text-sm text-slate-200 font-medium">보류 항목</p><p className="text-[10px] text-slate-400">{submissionOutcome.heldVendors.join(", ")}</p></div></div>
-                  <Link href="/app/quote"><Button size="sm" variant="outline" className="h-7 text-[10px] text-amber-400 border-amber-600/30">요청 조립</Button></Link>
+                  <div className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-yellow-400" /><div><p className="text-sm text-slate-200 font-medium">보류 항목</p><p className="text-[10px] text-slate-400">{submissionOutcome.heldVendors.join(", ")}</p></div></div>
+                  <Link href="/app/quote"><Button size="sm" variant="outline" className="h-7 text-[10px] text-yellow-400 border-yellow-600/30">요청 조립</Button></Link>
                 </div>
               )}
             </div>
@@ -234,14 +234,14 @@ function QuoteRequestPageContent() {
 
           {/* Preflight Gate */}
           {(blockers.length > 0 || warnings.length > 0) && (
-            <div className={`rounded-lg border px-4 py-3 ${level === "blocked" ? "border-red-600/20 bg-red-600/5" : "border-amber-600/20 bg-amber-600/5"}`}>
+            <div className={`rounded-lg border px-4 py-3 ${level === "blocked" ? "border-red-600/20 bg-red-600/5" : "border-yellow-600/20 bg-yellow-600/5"}`}>
               <div className="flex items-center gap-2 mb-1">
-                <ReadinessIcon className={`h-4 w-4 ${level === "blocked" ? "text-red-400" : "text-amber-400"}`} />
+                <ReadinessIcon className={`h-4 w-4 ${level === "blocked" ? "text-red-400" : "text-yellow-400"}`} />
                 <span className="text-xs font-medium text-slate-200">{level === "blocked" ? "전송 차단" : "전송 전 확인"}</span>
               </div>
               <div className="space-y-1">
                 {blockers.map((m, i) => <div key={`b${i}`} className="flex items-center gap-2 text-[10px] text-red-300"><AlertCircle className="h-3 w-3 shrink-0 text-red-400" />{m}</div>)}
-                {warnings.map((m, i) => <div key={`w${i}`} className="flex items-center gap-2 text-[10px] text-amber-300"><AlertTriangle className="h-3 w-3 shrink-0 text-amber-400" />{m}</div>)}
+                {warnings.map((m, i) => <div key={`w${i}`} className="flex items-center gap-2 text-[10px] text-yellow-300"><AlertTriangle className="h-3 w-3 shrink-0 text-yellow-400" />{m}</div>)}
               </div>
             </div>
           )}
@@ -256,11 +256,11 @@ function QuoteRequestPageContent() {
                     <FileText className="h-4 w-4 text-blue-400 shrink-0" />
                     <span className="text-sm font-semibold text-slate-100">{activeGroup.vendorName}</span>
                     {holdUnits.has(activeGroup.vendorName)
-                      ? <Badge variant="secondary" className="text-[9px] bg-amber-600/15 text-amber-400 border-amber-600/20">보류</Badge>
+                      ? <Badge variant="secondary" className="text-[9px] bg-yellow-600/15 text-yellow-400 border-yellow-600/20">보류</Badge>
                       : <Badge variant="secondary" className="text-[9px] bg-emerald-600/15 text-emerald-400 border-emerald-600/20">전송 대상</Badge>
                     }
                   </div>
-                  <Button size="sm" variant="ghost" className={`h-7 px-2.5 text-[10px] ${holdUnits.has(activeGroup.vendorName) ? "text-emerald-400" : "text-amber-400"}`}
+                  <Button size="sm" variant="ghost" className={`h-7 px-2.5 text-[10px] ${holdUnits.has(activeGroup.vendorName) ? "text-emerald-400" : "text-yellow-400"}`}
                     onClick={() => toggleHold(activeGroup.vendorName)}>
                     {holdUnits.has(activeGroup.vendorName) ? "전송으로 복원" : "보류 처리"}
                   </Button>
@@ -274,7 +274,7 @@ function QuoteRequestPageContent() {
               </div>
 
               {holdUnits.has(activeGroup.vendorName) && (
-                <div className="px-4 py-2 bg-amber-600/5 border-b border-amber-600/20 text-[10px] text-amber-400">이 요청서는 보류 상태입니다. 전송 대상에서 제외됩니다.</div>
+                <div className="px-4 py-2 bg-yellow-600/5 border-b border-yellow-600/20 text-[10px] text-yellow-400">이 요청서는 보류 상태입니다. 전송 대상에서 제외됩니다.</div>
               )}
 
               {/* 품목 compact table */}
@@ -358,10 +358,10 @@ function QuoteRequestPageContent() {
                           ))}
                         </div>
                         <div>
-                          <div className="text-[9px] font-semibold text-amber-400 mb-1">리스크</div>
+                          <div className="text-[9px] font-semibold text-yellow-400 mb-1">리스크</div>
                           {activeRequestOption.risks.map((r) => (
                             <div key={r.id} className="text-[10px] text-slate-300 flex items-start gap-1">
-                              <AlertTriangle className={`h-2.5 w-2.5 mt-0.5 shrink-0 ${r.severity === "high" ? "text-red-400" : r.severity === "medium" ? "text-amber-400" : "text-slate-500"}`} />{r.label}
+                              <AlertTriangle className={`h-2.5 w-2.5 mt-0.5 shrink-0 ${r.severity === "high" ? "text-red-400" : r.severity === "medium" ? "text-yellow-400" : "text-slate-500"}`} />{r.label}
                             </div>
                           ))}
                         </div>
@@ -418,7 +418,7 @@ function QuoteRequestPageContent() {
                 <p className="text-[10px] text-slate-500 mt-0.5">전송</p>
               </div>
               <div className="rounded-lg bg-pn border border-bd p-2.5">
-                <p className="text-xl font-bold tabular-nums text-amber-400">{holdCount}</p>
+                <p className="text-xl font-bold tabular-nums text-yellow-400">{holdCount}</p>
                 <p className="text-[10px] text-slate-500 mt-0.5">보류</p>
               </div>
               <div className="rounded-lg bg-pn border border-bd p-2.5">
@@ -432,7 +432,7 @@ function QuoteRequestPageContent() {
                 <div className="text-[10px] text-red-400 flex items-center gap-1"><AlertCircle className="h-3 w-3" />차단 {blockers.length}건</div>
               )}
               {warnings.length > 0 && (
-                <div className="text-[10px] text-amber-400 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />확인 필요 {warnings.length}건</div>
+                <div className="text-[10px] text-yellow-400 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />확인 필요 {warnings.length}건</div>
               )}
               {blockers.length === 0 && warnings.length === 0 && readyCount > 0 && (
                 <div className="text-[10px] text-emerald-400 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />전체 {readyCount}건 전송 준비 완료</div>
@@ -452,7 +452,7 @@ function QuoteRequestPageContent() {
               ) : (
                 <>
                   {blockers.length > 0 && <span className="text-red-400 block">누락 항목 확인 · {blockers.length}건</span>}
-                  {warnings.length > 0 && <span className="text-amber-400 block">검토 필요 · {warnings.length}건</span>}
+                  {warnings.length > 0 && <span className="text-yellow-400 block">검토 필요 · {warnings.length}건</span>}
                   {vendorGroups.some(g => !vendorNotes[g.vendorId]) && <span className="text-slate-400 block">메시지 미작성 공급사 있음</span>}
                 </>
               )}
@@ -477,7 +477,7 @@ function QuoteRequestPageContent() {
                       <span className="block text-[10px] text-slate-500">{g.itemCount}건</span>
                     </div>
                     <span className={`tabular-nums text-right ${isActive ? "text-blue-300 font-semibold" : "text-slate-400"}`}>₩{g.subtotal.toLocaleString("ko-KR")}</span>
-                    {isHeld && <span className="text-[9px] px-1 py-0.5 rounded bg-amber-600/15 text-amber-400 shrink-0">보류</span>}
+                    {isHeld && <span className="text-[9px] px-1 py-0.5 rounded bg-yellow-600/15 text-yellow-400 shrink-0">보류</span>}
                   </button>
                 );
               })}
@@ -494,7 +494,7 @@ function QuoteRequestPageContent() {
                 <div className="flex justify-between text-xs"><span className="text-slate-400">금액</span><span className="text-slate-200 tabular-nums font-medium">₩{activeGroup.subtotal.toLocaleString("ko-KR")}</span></div>
                 <div className="flex justify-between text-xs"><span className="text-slate-400">메시지</span><span className="text-slate-200">{vendorNotes[activeGroup.vendorId] ? "작성됨" : "없음"}</span></div>
                 <div className="flex justify-between text-xs"><span className="text-slate-400">상태</span>
-                  {holdUnits.has(activeGroup.vendorName) ? <span className="text-amber-400">보류</span> : <span className="text-emerald-400">전송 대상</span>}
+                  {holdUnits.has(activeGroup.vendorName) ? <span className="text-yellow-400">보류</span> : <span className="text-emerald-400">전송 대상</span>}
                 </div>
               </div>
               {/* Line items preview */}

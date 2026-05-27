@@ -2451,15 +2451,15 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
             </div>
 
             {!session?.user && (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-                <p className="text-xs text-amber-800">
+              <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3">
+                <p className="text-xs text-yellow-800">
                   공유 링크를 생성하려면 로그인이 필요합니다.
                 </p>
               </div>
             )}
             {session?.user && !quoteId && (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-                <p className="text-xs text-amber-800">
+              <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3">
+                <p className="text-xs text-yellow-800">
                   공유 링크를 생성하려면 먼저 견적 요청 리스트를 저장해주세요.
                 </p>
               </div>

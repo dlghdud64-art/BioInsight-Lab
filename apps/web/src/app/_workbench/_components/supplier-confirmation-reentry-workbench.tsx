@@ -6,7 +6,7 @@ import { X, Check, AlertTriangle, ArrowRight, ArrowLeft, Shield, Clock, Package,
 import { type SupplierConfirmationReentryState, type SupplierConfirmationReentryObject, type ConfReentryFieldStatus, createInitialSupplierConfirmationReentryState, validateSupplierConfirmationReentryBeforeRecord, buildSupplierConfirmationReentryObject, buildReceivingPreparationReentryHandoff } from "@/lib/ai/supplier-confirmation-reentry-engine";
 import type { SupplierConfirmationReentryHandoff } from "@/lib/ai/po-sent-reentry-tracking-engine";
 
-const FIELD_LABELS: Record<ConfReentryFieldStatus, { label: string; color: string }> = { confirmed: { label: "확정", color: "text-emerald-400" }, partial: { label: "부분", color: "text-amber-400" }, unclear: { label: "미확인", color: "text-slate-500" }, not_available: { label: "불가", color: "text-red-400" } };
+const FIELD_LABELS: Record<ConfReentryFieldStatus, { label: string; color: string }> = { confirmed: { label: "확정", color: "text-emerald-400" }, partial: { label: "부분", color: "text-yellow-400" }, unclear: { label: "미확인", color: "text-slate-500" }, not_available: { label: "불가", color: "text-red-400" } };
 
 interface SupplierConfirmationReentryWorkbenchProps {
   open: boolean; onClose: () => void; handoff: SupplierConfirmationReentryHandoff | null;
@@ -52,7 +52,7 @@ export function SupplierConfirmationReentryWorkbench({ open, onClose, handoff, o
                 <span className="text-slate-600">·</span>
                 <span className="text-slate-400">납기: <span className={FIELD_LABELS[confState.confirmedEtaReentryStatus].color}>{FIELD_LABELS[confState.confirmedEtaReentryStatus].label}</span></span>
                 <span className="text-slate-600">·</span>
-                {confState.clarificationOpenCount > 0 ? <span className="text-amber-400">Clarification {confState.clarificationOpenCount}</span> : <span className="text-emerald-400">해결됨</span>}
+                {confState.clarificationOpenCount > 0 ? <span className="text-yellow-400">Clarification {confState.clarificationOpenCount}</span> : <span className="text-emerald-400">해결됨</span>}
               </div>
             </div>
           </div>
@@ -94,8 +94,8 @@ export function SupplierConfirmationReentryWorkbench({ open, onClose, handoff, o
           {/* Overlap / clarification */}
           {(confState.priorConfirmationOverlapCount > 0 || confState.clarificationOpenCount > 0) && (
             <div className="space-y-1">
-              {confState.priorConfirmationOverlapCount > 0 && <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">이전 Confirmation overlap {confState.priorConfirmationOverlapCount}건</span></div>}
-              {confState.clarificationOpenCount > 0 && <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><HelpCircle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">Clarification 미해결 {confState.clarificationOpenCount}건</span></div>}
+              {confState.priorConfirmationOverlapCount > 0 && <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">이전 Confirmation overlap {confState.priorConfirmationOverlapCount}건</span></div>}
+              {confState.clarificationOpenCount > 0 && <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><HelpCircle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">Clarification 미해결 {confState.clarificationOpenCount}건</span></div>}
             </div>
           )}
 

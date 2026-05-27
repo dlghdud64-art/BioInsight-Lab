@@ -527,7 +527,7 @@ export default function TestComparePage() {
             suitabilityLevel === "high"
               ? "text-emerald-400 bg-emerald-600/10 border-emerald-600/30"
               : suitabilityLevel === "medium"
-              ? "text-amber-400 bg-amber-600/10 border-amber-600/30"
+              ? "text-yellow-400 bg-yellow-600/10 border-yellow-600/30"
               : "text-red-400 bg-red-600/10 border-red-600/30"
           }`}>
             비교 적합도 {suitabilityLevel === "high" ? "높음" : suitabilityLevel === "medium" ? "보통" : "낮음"}
@@ -549,7 +549,7 @@ export default function TestComparePage() {
           )}
 
           {hasPriceDiff && (
-            <Badge className="text-[9px] h-4 bg-amber-600/10 text-amber-400 border-amber-600/20 border">
+            <Badge className="text-[9px] h-4 bg-yellow-600/10 text-yellow-400 border-yellow-600/20 border">
               가격차 {Math.round(((highestPrice - cheapestPrice) / cheapestPrice) * 100)}%
             </Badge>
           )}
@@ -582,7 +582,7 @@ export default function TestComparePage() {
                 {compareOptions.map((opt) => {
                   const isActive = activeDecisionOption?.id === opt.id;
                   const strategyLabel = opt.frame === "conservative" ? "보수형" : opt.frame === "balanced" ? "균형형" : "대안형";
-                  const dotColor = opt.frame === "conservative" ? "bg-blue-400" : opt.frame === "balanced" ? "bg-emerald-400" : "bg-amber-400";
+                  const dotColor = opt.frame === "conservative" ? "bg-blue-400" : opt.frame === "balanced" ? "bg-emerald-400" : "bg-yellow-400";
                   return (
                     <button
                       key={opt.id}
@@ -968,7 +968,7 @@ export default function TestComparePage() {
                               if (nums.length > 1 && value === Math.min(...nums)) {
                                 judgment = { label: "최저", cls: "text-emerald-400 bg-emerald-600/10 border-emerald-600/20" };
                               } else if (nums.length > 1 && value === Math.max(...nums)) {
-                                judgment = { label: "최고", cls: "text-amber-400 bg-amber-600/10 border-amber-600/20" };
+                                judgment = { label: "최고", cls: "text-yellow-400 bg-yellow-600/10 border-yellow-600/20" };
                               }
                             }
                             if (field.key === "leadTime" && typeof value === "number" && value > 0) {
@@ -1055,10 +1055,10 @@ export default function TestComparePage() {
                     ))}
                   </div>
                   <div>
-                    <div className="text-[9px] font-semibold text-amber-400 mb-1">리스크</div>
+                    <div className="text-[9px] font-semibold text-yellow-400 mb-1">리스크</div>
                     {activeDecisionOption.risks.map((r) => (
                       <div key={r.id} className="text-[10px] text-slate-300 flex items-start gap-1">
-                        <AlertTriangle className={`h-2.5 w-2.5 mt-0.5 shrink-0 ${r.severity === "high" ? "text-red-400" : r.severity === "medium" ? "text-amber-400" : "text-slate-500"}`} />{r.label}
+                        <AlertTriangle className={`h-2.5 w-2.5 mt-0.5 shrink-0 ${r.severity === "high" ? "text-red-400" : r.severity === "medium" ? "text-yellow-400" : "text-slate-500"}`} />{r.label}
                       </div>
                     ))}
                   </div>
@@ -1081,7 +1081,7 @@ export default function TestComparePage() {
                       <span className="text-slate-300">
                         <strong className="text-slate-200">{cheapestProduct.name.substring(0, 22)}</strong>이 최저가
                         (₩{cheapestPrice.toLocaleString()}) — 최고가 대비{" "}
-                        <strong className="text-amber-400">{Math.round(((highestPrice - cheapestPrice) / cheapestPrice) * 100)}%</strong> 저렴
+                        <strong className="text-yellow-400">{Math.round(((highestPrice - cheapestPrice) / cheapestPrice) * 100)}%</strong> 저렴
                       </span>
                     </div>
                   )}
@@ -1096,7 +1096,7 @@ export default function TestComparePage() {
                   )}
                   {uniqueCategories.length > 1 && (
                     <div className="flex items-start gap-2">
-                      <span className="text-amber-400 mt-0.5 shrink-0">●</span>
+                      <span className="text-yellow-400 mt-0.5 shrink-0">●</span>
                       <span className="text-slate-400">서로 다른 카테고리 ({uniqueCategories.length}개) 포함 — 직접 사양 비교 시 주의 필요</span>
                     </div>
                   )}
@@ -1273,7 +1273,7 @@ export default function TestComparePage() {
                 {hasPriceDiff && (
                   <div className="flex justify-between">
                     <span>가격 차</span>
-                    <span className="text-amber-400">{Math.round(((highestPrice - cheapestPrice) / cheapestPrice) * 100)}%</span>
+                    <span className="text-yellow-400">{Math.round(((highestPrice - cheapestPrice) / cheapestPrice) * 100)}%</span>
                   </div>
                 )}
                 {fastestProduct && (
@@ -1353,7 +1353,7 @@ export default function TestComparePage() {
                 기준안: {decisionProduct?.name?.substring(0, 15)}
               </span>
             ) : (
-              <span className="text-[10px] text-amber-400 hidden sm:inline">기준안 미선택</span>
+              <span className="text-[10px] text-yellow-400 hidden sm:inline">기준안 미선택</span>
             )}
 
             {/* Primary: enter review mode */}
@@ -1459,7 +1459,7 @@ export default function TestComparePage() {
                 <span className="text-slate-600">·</span>
                 <span className="text-[10px] text-slate-400">{products.length}개 비교 · {rejected.length}개 대안</span>
                 {blockerItems.length > 0 && (
-                  <span className="text-[10px] text-amber-400"><AlertTriangle className="h-3 w-3 inline mr-0.5" />{blockerItems.length}건 확인</span>
+                  <span className="text-[10px] text-yellow-400"><AlertTriangle className="h-3 w-3 inline mr-0.5" />{blockerItems.length}건 확인</span>
                 )}
                 {allResolved && <span className="text-[10px] text-emerald-400"><CheckCircle2 className="h-3 w-3 inline mr-0.5" />전달 가능</span>}
               </div>
@@ -1509,10 +1509,10 @@ export default function TestComparePage() {
                         {blockerItems.map((item, idx) => {
                           const resolved = resolvedBlockers.has(idx);
                           return (
-                            <div key={idx} className={`flex items-center justify-between px-3 py-2 rounded border ${resolved ? "border-emerald-600/20 bg-emerald-600/5" : "border-amber-600/20 bg-amber-600/5"}`}>
+                            <div key={idx} className={`flex items-center justify-between px-3 py-2 rounded border ${resolved ? "border-emerald-600/20 bg-emerald-600/5" : "border-yellow-600/20 bg-yellow-600/5"}`}>
                               <div className="flex items-center gap-2 text-xs">
-                                {resolved ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> : <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />}
-                                <span className={resolved ? "text-slate-400 line-through" : "text-amber-300"}>{item}</span>
+                                {resolved ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> : <AlertTriangle className="h-3.5 w-3.5 text-yellow-400" />}
+                                <span className={resolved ? "text-slate-400 line-through" : "text-yellow-300"}>{item}</span>
                               </div>
                               <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]"
                                 onClick={() => setResolvedBlockers(prev => {
@@ -1583,7 +1583,7 @@ export default function TestComparePage() {
                       <div className="flex items-start gap-2"><span className="text-blue-400 shrink-0">●</span><span>최단납기 {fastestProduct.name.substring(0, 20)} ({getAverageLeadTime(fastestProduct)}일)</span></div>
                     )}
                     {uniqueCategories.length > 1 && (
-                      <div className="flex items-start gap-2"><span className="text-amber-400 shrink-0">●</span><span>카테고리 혼합 ({uniqueCategories.length}개)</span></div>
+                      <div className="flex items-start gap-2"><span className="text-yellow-400 shrink-0">●</span><span>카테고리 혼합 ({uniqueCategories.length}개)</span></div>
                     )}
                   </div>
                 </div>
@@ -1591,9 +1591,9 @@ export default function TestComparePage() {
                   <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">전달 상태</div>
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-xs"><span className="text-slate-400">{selectedDecisionItemId ? "기준안" : "추천안"}</span><span className="text-slate-200">{recommended?.name?.substring(0, 15)}</span></div>
-                    <div className="flex justify-between text-xs"><span className="text-slate-400">확인 필요</span><span className={allResolved ? "text-emerald-400" : "text-amber-400"}>{allResolved ? "모두 해결" : `${blockerItems.length - resolvedBlockers.size}건 미해결`}</span></div>
+                    <div className="flex justify-between text-xs"><span className="text-slate-400">확인 필요</span><span className={allResolved ? "text-emerald-400" : "text-yellow-400"}>{allResolved ? "모두 해결" : `${blockerItems.length - resolvedBlockers.size}건 미해결`}</span></div>
                     <div className="flex justify-between text-xs"><span className="text-slate-400">메모</span><span className="text-slate-200">{reviewNote ? "작성됨" : "없음"}</span></div>
-                    <div className="flex justify-between text-xs"><span className="text-slate-400">전달 가능</span><span className={allResolved ? "text-emerald-400 font-medium" : "text-amber-400"}>{allResolved ? "예" : "아니오"}</span></div>
+                    <div className="flex justify-between text-xs"><span className="text-slate-400">전달 가능</span><span className={allResolved ? "text-emerald-400 font-medium" : "text-yellow-400"}>{allResolved ? "예" : "아니오"}</span></div>
                   </div>
                 </div>
                 <div className="flex-1" />
@@ -1630,7 +1630,7 @@ export default function TestComparePage() {
                 <div className="flex items-center gap-2">
                   {allResolved
                     ? <span className="text-[10px] text-emerald-400"><CheckCircle2 className="h-3 w-3 inline mr-0.5" />전달 가능</span>
-                    : <span className="text-[10px] text-amber-400"><AlertTriangle className="h-3 w-3 inline mr-0.5" />{blockerItems.length - resolvedBlockers.size}건 미해결</span>
+                    : <span className="text-[10px] text-yellow-400"><AlertTriangle className="h-3 w-3 inline mr-0.5" />{blockerItems.length - resolvedBlockers.size}건 미해결</span>
                   }
                 </div>
                 <Button size="sm" className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-40"

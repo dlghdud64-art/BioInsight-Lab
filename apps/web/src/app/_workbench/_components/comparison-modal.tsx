@@ -81,7 +81,7 @@ const statusConfig = (status: string) => {
     case "요청 가능":
       return { icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-200", badge: "bg-emerald-50 text-emerald-700 border border-emerald-200", dot: "bg-emerald-500" };
     case "보류":
-      return { icon: Clock, color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200", badge: "bg-amber-50 text-amber-700 border border-amber-200", dot: "bg-amber-500" };
+      return { icon: Clock, color: "text-yellow-600", bg: "bg-yellow-50", border: "border-yellow-200", badge: "bg-yellow-50 text-yellow-700 border border-yellow-200", dot: "bg-yellow-500" };
     case "제외":
       return { icon: Ban, color: "text-red-600", bg: "bg-red-50", border: "border-red-200", badge: "bg-red-50 text-red-700 border border-red-200", dot: "bg-red-500" };
     default:
@@ -293,7 +293,7 @@ export function ComparisonModal({
               </div>
               <div
                 data-testid="comparison-human-review-note"
-                className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800"
+                className="rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-xs font-semibold text-yellow-800"
               >
                 분석은 추천 근거입니다. 최종 전략과 요청 생성은 담당자가 직접 확인합니다.
               </div>
@@ -364,7 +364,7 @@ export function ComparisonModal({
                           <div className="flex items-center justify-between">
                             <span className="text-xs text-slate-500">예상 납기</span>
                             <span className={`text-sm font-medium tabular-nums ${
-                              pa.estimatedDelivery.includes("확인") ? "text-amber-600" : "text-slate-700"
+                              pa.estimatedDelivery.includes("확인") ? "text-yellow-600" : "text-slate-700"
                             }`}>
                               {pa.estimatedDelivery}
                             </span>

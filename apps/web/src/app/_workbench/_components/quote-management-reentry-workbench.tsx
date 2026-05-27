@@ -10,9 +10,9 @@ const CLASS_CONFIG: Record<QuoteReentryClassification, { label: string; color: s
   new_expected: { label: "신규 대기", color: "text-blue-400" },
   prior_active_retained: { label: "기존 유지", color: "text-emerald-400" },
   stale: { label: "Stale", color: "text-slate-500" },
-  needs_normalization_reentry: { label: "정리 재진입", color: "text-orange-400" },
+  needs_normalization_reentry: { label: "정리 재진입", color: "text-yellow-400" },
   ready_for_compare_reentry: { label: "비교 재진입", color: "text-violet-400" },
-  blocked_pending_response: { label: "응답 대기", color: "text-amber-400" },
+  blocked_pending_response: { label: "응답 대기", color: "text-yellow-400" },
 };
 
 interface QuoteManagementReentryWorkbenchProps {
@@ -58,7 +58,7 @@ export function QuoteManagementReentryWorkbench({ open, onClose, handoff, onReen
                 <span className="text-slate-600">·</span>
                 <span className="text-slate-400">Stale <span className="text-slate-500 font-medium">{reentryState.staleQuoteCount}</span></span>
                 <span className="text-slate-600">·</span>
-                <span className="text-slate-400">정리 필요 <span className="text-orange-300 font-medium">{reentryState.normalizationReentryCandidateCount}</span></span>
+                <span className="text-slate-400">정리 필요 <span className="text-yellow-300 font-medium">{reentryState.normalizationReentryCandidateCount}</span></span>
                 <span className="text-slate-600">·</span>
                 <span className="text-slate-400">비교 <span className="text-violet-300 font-medium">{reentryState.compareReentryCandidateCount}</span></span>
               </div>
@@ -97,7 +97,7 @@ export function QuoteManagementReentryWorkbench({ open, onClose, handoff, onReen
                 const config = CLASS_CONFIG[row.classification];
                 return (
                   <div key={row.rowId} className="flex items-center gap-3 px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33]">
-                    <div className={`w-2 h-2 rounded-full shrink-0 ${row.classification === "new_expected" ? "bg-blue-400" : row.classification === "stale" ? "bg-slate-500" : row.classification === "prior_active_retained" ? "bg-emerald-400" : "bg-amber-400"}`} />
+                    <div className={`w-2 h-2 rounded-full shrink-0 ${row.classification === "new_expected" ? "bg-blue-400" : row.classification === "stale" ? "bg-slate-500" : row.classification === "prior_active_retained" ? "bg-emerald-400" : "bg-yellow-400"}`} />
                     <div className="flex-1 min-w-0">
                       <span className="text-[11px] text-slate-200 font-medium block truncate">{row.vendorName}</span>
                       <span className="text-[9px] text-slate-500">Norm: {row.normalizationRequired ? "필요" : "불필요"} · Compare: {row.compareReady ? "준비" : "대기"}</span>
@@ -112,9 +112,9 @@ export function QuoteManagementReentryWorkbench({ open, onClose, handoff, onReen
           {/* Route readiness */}
           {classification && (
             <div className="grid grid-cols-2 gap-2">
-              <div className={`px-3 py-2.5 rounded-md border ${classification.normalizationReentryCandidateIds.length > 0 ? "border-orange-500/20 bg-orange-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
+              <div className={`px-3 py-2.5 rounded-md border ${classification.normalizationReentryCandidateIds.length > 0 ? "border-yellow-500/20 bg-yellow-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
                 <span className="text-[9px] text-slate-500 block mb-0.5">Normalization Re-entry</span>
-                <span className={`text-[10px] font-medium ${classification.normalizationReentryCandidateIds.length > 0 ? "text-orange-300" : "text-slate-500"}`}>{classification.normalizationReentryCandidateIds.length}개 후보</span>
+                <span className={`text-[10px] font-medium ${classification.normalizationReentryCandidateIds.length > 0 ? "text-yellow-300" : "text-slate-500"}`}>{classification.normalizationReentryCandidateIds.length}개 후보</span>
               </div>
               <div className={`px-3 py-2.5 rounded-md border ${classification.compareReentryCandidateIds.length >= 2 ? "border-violet-500/20 bg-violet-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
                 <span className="text-[9px] text-slate-500 block mb-0.5">Compare Re-entry</span>
@@ -124,7 +124,7 @@ export function QuoteManagementReentryWorkbench({ open, onClose, handoff, onReen
           )}
 
           {reconciliation && reconciliation.warnings.length > 0 && !isRecorded && reconciliation.warnings.map((w, i) => (
-            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">{w}</span></div>
+            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">{w}</span></div>
           ))}
 
           {isRecorded && (
@@ -137,7 +137,7 @@ export function QuoteManagementReentryWorkbench({ open, onClose, handoff, onReen
 
         <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
-            <span className="text-slate-500">Norm <span className="text-orange-300 font-medium">{reentryState.normalizationReentryCandidateCount}</span></span>
+            <span className="text-slate-500">Norm <span className="text-yellow-300 font-medium">{reentryState.normalizationReentryCandidateCount}</span></span>
             <span className="text-slate-600">·</span>
             <span className="text-slate-500">Compare <span className="text-violet-300 font-medium">{reentryState.compareReentryCandidateCount}</span></span>
             <span className="text-slate-600">·</span>
@@ -150,7 +150,7 @@ export function QuoteManagementReentryWorkbench({ open, onClose, handoff, onReen
             ) : (
               <div className="flex gap-1.5 flex-1">
                 {validation?.canOpenNormalizationReentry && (
-                  <Button size="sm" className="flex-1 h-8 text-[10px] bg-orange-600 hover:bg-orange-500 text-white font-medium" onClick={onNormalizationReentryHandoff}><FileText className="h-3 w-3 mr-1" />Normalization<ArrowRight className="h-3 w-3 ml-1" /></Button>
+                  <Button size="sm" className="flex-1 h-8 text-[10px] bg-yellow-600 hover:bg-yellow-500 text-white font-medium" onClick={onNormalizationReentryHandoff}><FileText className="h-3 w-3 mr-1" />Normalization<ArrowRight className="h-3 w-3 ml-1" /></Button>
                 )}
                 {validation?.canOpenCompareReentry && (
                   <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={onCompareReentryHandoff}><GitCompare className="h-3 w-3 mr-1" />Compare<ArrowRight className="h-3 w-3 ml-1" /></Button>

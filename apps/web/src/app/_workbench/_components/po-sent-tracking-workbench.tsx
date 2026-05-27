@@ -10,8 +10,8 @@ import type { AcknowledgmentStatus } from "@/lib/ai/po-sent-tracking-engine";
 const ACK_LABELS: Record<AcknowledgmentStatus, { label: string; color: string }> = {
   no_response: { label: "응답 없음", color: "text-slate-500" },
   acknowledgment_received: { label: "확인 완료", color: "text-emerald-400" },
-  partial_acknowledgment: { label: "부분 확인", color: "text-amber-400" },
-  clarification_required: { label: "확인 필요", color: "text-orange-400" },
+  partial_acknowledgment: { label: "부분 확인", color: "text-yellow-400" },
+  clarification_required: { label: "확인 필요", color: "text-yellow-400" },
   issue_raised: { label: "이슈 제기", color: "text-red-400" },
   resend_suggested: { label: "재발송 권장", color: "text-red-400" },
 };
@@ -81,11 +81,11 @@ export function PoSentTrackingWorkbench({ open, onClose, handoff, onAcknowledgme
           {/* Acknowledgment status */}
           <div>
             <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">공급사 확인 상태</span>
-            <div className={`mt-2 flex items-center gap-3 px-3 py-3 rounded-md border ${trackingState.acknowledgmentStatus === "acknowledgment_received" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : trackingState.acknowledgmentStatus === "no_response" ? "border-slate-700/40 bg-[#252A33]" : "border-amber-500/20 bg-amber-600/[0.03]"}`}>
-              <div className={`w-2.5 h-2.5 rounded-full ${trackingState.acknowledgmentStatus === "acknowledgment_received" ? "bg-emerald-400" : trackingState.acknowledgmentStatus === "no_response" ? "bg-slate-500" : "bg-amber-400"}`} />
+            <div className={`mt-2 flex items-center gap-3 px-3 py-3 rounded-md border ${trackingState.acknowledgmentStatus === "acknowledgment_received" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : trackingState.acknowledgmentStatus === "no_response" ? "border-slate-700/40 bg-[#252A33]" : "border-yellow-500/20 bg-yellow-600/[0.03]"}`}>
+              <div className={`w-2.5 h-2.5 rounded-full ${trackingState.acknowledgmentStatus === "acknowledgment_received" ? "bg-emerald-400" : trackingState.acknowledgmentStatus === "no_response" ? "bg-slate-500" : "bg-yellow-400"}`} />
               <div className="flex-1">
                 <span className={`text-[12px] font-semibold ${ackLabel.color}`}>{ackLabel.label}</span>
-                {trackingState.followupRequiredFlag && <span className="text-[10px] text-amber-400 block mt-0.5">Follow-up 필요</span>}
+                {trackingState.followupRequiredFlag && <span className="text-[10px] text-yellow-400 block mt-0.5">Follow-up 필요</span>}
               </div>
               {trackingState.acknowledgmentStatus === "no_response" && (
                 <Button size="sm" variant="ghost" className="h-6 px-2 text-[9px] text-blue-400 hover:text-blue-300 border border-blue-500/20" onClick={simulateAck}>확인 시뮬레이션</Button>
@@ -97,7 +97,7 @@ export function PoSentTrackingWorkbench({ open, onClose, handoff, onAcknowledgme
           {ackEval && (ackEval.blockingIssues.length > 0 || ackEval.warnings.length > 0) && (
             <div className="space-y-1">
               {ackEval.blockingIssues.map((b, i) => <div key={`b-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-red-600/[0.06] border border-red-500/15"><AlertTriangle className="h-3 w-3 text-red-400 shrink-0" /><span className="text-[10px] text-red-300">{b}</span></div>)}
-              {ackEval.warnings.map((w, i) => <div key={`w-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">{w}</span></div>)}
+              {ackEval.warnings.map((w, i) => <div key={`w-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">{w}</span></div>)}
             </div>
           )}
 

@@ -8,9 +8,9 @@ import type { ReorderDecisionHandoff } from "@/lib/ai/stock-release-engine";
 
 const DECISION_LABELS: Record<ReorderCandidateType, { label: string; color: string }> = {
   reorder_candidate: { label: "재주문", color: "text-blue-400" },
-  watch_only: { label: "Watch", color: "text-amber-400" },
+  watch_only: { label: "Watch", color: "text-yellow-400" },
   blocked_from_reorder: { label: "차단", color: "text-red-400" },
-  requires_followup: { label: "확인 필요", color: "text-orange-400" },
+  requires_followup: { label: "확인 필요", color: "text-yellow-400" },
 };
 
 interface ReorderDecisionWorkbenchProps {
@@ -61,9 +61,9 @@ export function ReorderDecisionWorkbench({ open, onClose, handoff, onDecisionRec
               <div className="flex items-center gap-2 text-[10px] mt-0.5">
                 <span className="text-slate-400">Reorder <span className="text-blue-300 font-medium">{decisionPlan?.reorderCandidateItemIds.length || 0}</span></span>
                 <span className="text-slate-600">·</span>
-                <span className="text-slate-400">Watch <span className="text-amber-300 font-medium">{decisionPlan?.watchOnlyItemIds.length || 0}</span></span>
+                <span className="text-slate-400">Watch <span className="text-yellow-300 font-medium">{decisionPlan?.watchOnlyItemIds.length || 0}</span></span>
                 <span className="text-slate-600">·</span>
-                <span className="text-slate-400">Coverage <span className={decisionState.coverageRiskStatus === "critical" ? "text-red-300" : decisionState.coverageRiskStatus === "low" ? "text-amber-300" : "text-emerald-300"}>{decisionState.coverageRiskStatus}</span></span>
+                <span className="text-slate-400">Coverage <span className={decisionState.coverageRiskStatus === "critical" ? "text-red-300" : decisionState.coverageRiskStatus === "low" ? "text-yellow-300" : "text-emerald-300"}>{decisionState.coverageRiskStatus}</span></span>
               </div>
             </div>
           </div>
@@ -81,13 +81,13 @@ export function ReorderDecisionWorkbench({ open, onClose, handoff, onDecisionRec
           <div>
             <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">리스크 평가</span>
             <div className="mt-2 grid grid-cols-2 gap-2">
-              <div className={`px-3 py-2.5 rounded-md border ${decisionState.coverageRiskStatus === "critical" ? "border-red-500/20 bg-red-600/[0.03]" : decisionState.coverageRiskStatus === "low" ? "border-amber-500/20 bg-amber-600/[0.03]" : "border-emerald-500/20 bg-emerald-600/[0.03]"}`}>
+              <div className={`px-3 py-2.5 rounded-md border ${decisionState.coverageRiskStatus === "critical" ? "border-red-500/20 bg-red-600/[0.03]" : decisionState.coverageRiskStatus === "low" ? "border-yellow-500/20 bg-yellow-600/[0.03]" : "border-emerald-500/20 bg-emerald-600/[0.03]"}`}>
                 <div className="flex items-center gap-1.5 mb-0.5"><TrendingDown className="h-3 w-3 text-slate-500" /><span className="text-[9px] text-slate-500">커버리지</span></div>
-                <span className={`text-[11px] font-medium ${decisionState.coverageRiskStatus === "critical" ? "text-red-300" : decisionState.coverageRiskStatus === "low" ? "text-amber-300" : "text-emerald-300"}`}>{decisionState.coverageRiskStatus === "critical" ? "위험" : decisionState.coverageRiskStatus === "low" ? "낮음" : "충분"}</span>
+                <span className={`text-[11px] font-medium ${decisionState.coverageRiskStatus === "critical" ? "text-red-300" : decisionState.coverageRiskStatus === "low" ? "text-yellow-300" : "text-emerald-300"}`}>{decisionState.coverageRiskStatus === "critical" ? "위험" : decisionState.coverageRiskStatus === "low" ? "낮음" : "충분"}</span>
               </div>
-              <div className={`px-3 py-2.5 rounded-md border ${decisionState.expiryRiskStatus === "critical" ? "border-red-500/20 bg-red-600/[0.03]" : decisionState.expiryRiskStatus === "warning" ? "border-amber-500/20 bg-amber-600/[0.03]" : "border-emerald-500/20 bg-emerald-600/[0.03]"}`}>
+              <div className={`px-3 py-2.5 rounded-md border ${decisionState.expiryRiskStatus === "critical" ? "border-red-500/20 bg-red-600/[0.03]" : decisionState.expiryRiskStatus === "warning" ? "border-yellow-500/20 bg-yellow-600/[0.03]" : "border-emerald-500/20 bg-emerald-600/[0.03]"}`}>
                 <div className="flex items-center gap-1.5 mb-0.5"><Clock className="h-3 w-3 text-slate-500" /><span className="text-[9px] text-slate-500">유효기한</span></div>
-                <span className={`text-[11px] font-medium ${decisionState.expiryRiskStatus === "critical" ? "text-red-300" : decisionState.expiryRiskStatus === "warning" ? "text-amber-300" : "text-emerald-300"}`}>{decisionState.expiryRiskStatus === "critical" ? "위험" : decisionState.expiryRiskStatus === "warning" ? "주의" : "양호"}</span>
+                <span className={`text-[11px] font-medium ${decisionState.expiryRiskStatus === "critical" ? "text-red-300" : decisionState.expiryRiskStatus === "warning" ? "text-yellow-300" : "text-emerald-300"}`}>{decisionState.expiryRiskStatus === "critical" ? "위험" : decisionState.expiryRiskStatus === "warning" ? "주의" : "양호"}</span>
               </div>
             </div>
           </div>
@@ -95,7 +95,7 @@ export function ReorderDecisionWorkbench({ open, onClose, handoff, onDecisionRec
           {riskAssessment && (riskAssessment.blockingIssues.length > 0 || riskAssessment.warnings.length > 0) && (
             <div className="space-y-1">
               {riskAssessment.blockingIssues.map((b, i) => <div key={`b-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-red-600/[0.06] border border-red-500/15"><ShieldAlert className="h-3 w-3 text-red-400 shrink-0" /><span className="text-[10px] text-red-300">{b}</span></div>)}
-              {riskAssessment.warnings.map((w, i) => <div key={`w-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">{w}</span></div>)}
+              {riskAssessment.warnings.map((w, i) => <div key={`w-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-md bg-yellow-600/[0.04] border border-yellow-500/10"><AlertTriangle className="h-3 w-3 text-yellow-400 shrink-0" /><span className="text-[10px] text-yellow-300">{w}</span></div>)}
             </div>
           )}
 
@@ -109,15 +109,15 @@ export function ReorderDecisionWorkbench({ open, onClose, handoff, onDecisionRec
                 {decisionState.candidateDecisions.map(cd => {
                   const dl = DECISION_LABELS[cd.decisionType];
                   return (
-                    <div key={cd.itemId} className={`flex items-center gap-3 px-3 py-2.5 rounded-md border ${cd.decisionType === "reorder_candidate" ? "border-blue-500/20 bg-blue-600/[0.03]" : cd.decisionType === "watch_only" ? "border-amber-500/20 bg-amber-600/[0.03]" : "border-red-500/15 bg-red-600/[0.03]"}`}>
-                      {cd.decisionType === "reorder_candidate" ? <RefreshCw className="h-3.5 w-3.5 text-blue-400 shrink-0" /> : <Eye className="h-3.5 w-3.5 text-amber-400 shrink-0" />}
+                    <div key={cd.itemId} className={`flex items-center gap-3 px-3 py-2.5 rounded-md border ${cd.decisionType === "reorder_candidate" ? "border-blue-500/20 bg-blue-600/[0.03]" : cd.decisionType === "watch_only" ? "border-yellow-500/20 bg-yellow-600/[0.03]" : "border-red-500/15 bg-red-600/[0.03]"}`}>
+                      {cd.decisionType === "reorder_candidate" ? <RefreshCw className="h-3.5 w-3.5 text-blue-400 shrink-0" /> : <Eye className="h-3.5 w-3.5 text-yellow-400 shrink-0" />}
                       <div className="flex-1 min-w-0">
                         <span className="text-[11px] text-slate-200 font-medium block">{cd.itemName}</span>
                         <span className="text-[9px] text-slate-500">{cd.rationale}</span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         {cd.reorderQty > 0 && <span className="text-[10px] tabular-nums text-slate-300 font-medium">{cd.reorderQty}개</span>}
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${dl.color} ${cd.decisionType === "reorder_candidate" ? "bg-blue-600/10" : cd.decisionType === "watch_only" ? "bg-amber-600/10" : "bg-red-600/10"}`}>{dl.label}</span>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${dl.color} ${cd.decisionType === "reorder_candidate" ? "bg-blue-600/10" : cd.decisionType === "watch_only" ? "bg-yellow-600/10" : "bg-red-600/10"}`}>{dl.label}</span>
                       </div>
                     </div>
                   );
@@ -138,7 +138,7 @@ export function ReorderDecisionWorkbench({ open, onClose, handoff, onDecisionRec
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
             <span className="text-slate-500">Reorder <span className="text-blue-300 font-medium">{decisionPlan?.reorderCandidateItemIds.length || 0}</span></span>
             <span className="text-slate-600">·</span>
-            <span className="text-slate-500">Watch <span className="text-amber-300 font-medium">{decisionPlan?.watchOnlyItemIds.length || 0}</span></span>
+            <span className="text-slate-500">Watch <span className="text-yellow-300 font-medium">{decisionPlan?.watchOnlyItemIds.length || 0}</span></span>
             <span className="text-slate-600">·</span>
             <span className="text-slate-500">{validation?.recommendedNextAction || ""}</span>
           </div>
