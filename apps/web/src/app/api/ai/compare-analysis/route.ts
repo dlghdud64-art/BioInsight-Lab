@@ -5,9 +5,23 @@
  * 종합 의견, 3가지 시나리오, 개별 품목 분석을 반환합니다.
  */
 
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
+
+/**
+ * §11.305 P0 hotfix (호영님 옵션 A, 2026-05-27):
+ *   AI 비교 분석 lock 영구 잔존 버그 해소.
+ *
+ *   root cause: 이전 구현이 enforceAction() 으로 mutation lock 을 획득한 뒤
+ *   complete()/fail() 을 어느 경로에서도 호출하지 않아 lock 이 잔존.
+ *   + targetEntityId 'compare-analysis' 하드코딩으로 전체 사용자가 동일
+ *   concurrencyKey 공유 → 한 명이 분석하면 전원 차단 (multi-tenant 격리 위반).
+ *   + AI 비교 분석은 DB write 없는 read/분석 액션 — mutation 동시 실행 lock
+ *   자체가 부적합.
+ *
+ *   fix: enforceAction 완전 제거. auth() 인증만 유지 (§11.309c-hotfix-2 선례
+ *   정합). 분석은 idempotent read 라 동시 실행 제한 불필요.
+ */
 
 const GEMINI_API_KEY = process.env.GOOGLE_GEMINI_API_KEY ?? "";
 
@@ -102,24 +116,13 @@ function buildLocalAnalysis(products: ProductInput[]) {
 }
 
 export async function POST(req: NextRequest) {
-  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
-    // AI 비교 분석은 읽기/분석 액션 — requester도 허용
-    // sensitive_data_import는 부적절 (buyer/ops_admin만 허용되어 일반 사용자 차단됨)
-    enforcement = enforceAction({
-      userId: session.user.id,
-      userRole: session.user.role ?? undefined,
-      action: 'quote_request_create',
-      targetEntityType: 'ai_action',
-      targetEntityId: 'compare-analysis',
-      sourceSurface: 'web_app',
-      routePath: '/ai/compare-analysis',
-    });
-    if (!enforcement.allowed) return enforcement.deny();
+    // §11.305 — AI 비교 분석은 read/분석 액션. enforceAction(mutation lock)
+    //   제거 — auth() 인증만으로 충분. 동시 실행 제한 불필요 (idempotent).
 
     const body = await req.json();
     const { products } = body as { products: ProductInput[] };
