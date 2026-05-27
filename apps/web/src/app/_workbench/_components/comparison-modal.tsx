@@ -263,8 +263,11 @@ export function ComparisonModal({
                 <AlertCircle className="h-7 w-7 text-red-400" />
               </div>
               <div className="text-center">
+                {/* §11.305-2 — error = 실제 서버 원인 표시. 이전 하드코딩
+                    "네트워크 상태를 확인해 주세요"는 모든 에러(분석 실패/권한 등)에
+                    무조건 붙어 misleading → 네트워크 단정 제거, 일반 재시도 안내로. */}
                 <p className="text-sm font-medium text-red-600">{error}</p>
-                <p className="text-xs text-slate-400 mt-1">네트워크 상태를 확인해 주세요.</p>
+                <p className="text-xs text-slate-400 mt-1">문제가 계속되면 잠시 후 다시 시도해 주세요.</p>
               </div>
               <Button size="sm" variant="outline" onClick={fetchAnalysis} className="gap-1.5 mt-1">
                 <RefreshCw className="h-3.5 w-3.5" />
