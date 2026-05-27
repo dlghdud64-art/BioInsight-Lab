@@ -367,7 +367,7 @@ export function QuoteIntakeDock({
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <span className="text-slate-500">{item.quantity} {item.unit}</span>
                             {!item.normalized && (
-                              <Badge className="text-[9px] px-1 py-0 bg-amber-50 text-amber-600 border-amber-200">검토</Badge>
+                              <Badge className="text-[9px] px-1 py-0 bg-yellow-50 text-yellow-600 border-yellow-200">검토</Badge>
                             )}
                           </div>
                         </div>

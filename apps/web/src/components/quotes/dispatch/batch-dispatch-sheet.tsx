@@ -292,7 +292,7 @@ export function BatchDispatchSheet({
           {hardBlockQuotes.length > 0 && (
             <section>
               <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+                <AlertTriangle className="h-3.5 w-3.5 text-yellow-600" />
                 보류 — 단일 발송으로 처리 ({hardBlockQuotes.length}건)
               </h4>
               <ul className="space-y-1.5">
@@ -303,12 +303,12 @@ export function BatchDispatchSheet({
                   return (
                     <li
                       key={quote.id}
-                      className="flex items-center justify-between gap-3 px-3 py-2 rounded-md border border-amber-100 bg-amber-50/40"
+                      className="flex items-center justify-between gap-3 px-3 py-2 rounded-md border border-yellow-100 bg-yellow-50/40"
                     >
                       <div className="flex items-center gap-2 min-w-0 flex-1">
                         <span className="text-sm text-slate-700 truncate">{display}</span>
                       </div>
-                      <span className="text-[11px] text-amber-700 shrink-0 truncate max-w-[40%]" title={preflight.summary}>
+                      <span className="text-[11px] text-yellow-700 shrink-0 truncate max-w-[40%]" title={preflight.summary}>
                         {preflight.summary}
                       </span>
                     </li>

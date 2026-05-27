@@ -92,7 +92,7 @@ const CONTACT_SOURCE_ICON: Record<ResolvedSupplier["contactSource"], string> = {
 
 const CONFIDENCE_COLOR: Record<ResolvedSupplier["confidence"], string> = {
   high: "text-emerald-700 border-emerald-200 bg-emerald-50",
-  medium: "text-amber-700 border-amber-200 bg-amber-50",
+  medium: "text-yellow-700 border-yellow-200 bg-yellow-50",
   low: "text-rose-700 border-rose-200 bg-rose-50",
 };
 
@@ -409,8 +409,7 @@ export function VendorRequestModal({
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       {/* §11.54 — light-theme alignment.
-          Pre-§11.54: bg-pg + border-slate-600/40 + bg-amber-950/10 +
-          text-amber-300 etc. (다크 테마 잔재) was painting a dark
+          Pre-§11.54: dark-island (bg-pg + slate/dark warning 톤) 잔재 was painting a dark
           island inside LabAxis light chrome — same class of regression
           as §11.43/§11.48 but expressed in Tailwind classes (the
           §11.45 inline-hex grep can't catch this; future §11.55 may
@@ -453,21 +452,21 @@ export function VendorRequestModal({
             <Badge
               variant="outline"
               data-testid="quote-dispatch-supplier-badge"
-              className={includedCount > 0 ? "border-blue-200 bg-blue-50 text-blue-800" : "border-amber-200 bg-amber-50 text-amber-800"}
+              className={includedCount > 0 ? "border-blue-200 bg-blue-50 text-blue-800" : "border-yellow-200 bg-yellow-50 text-yellow-800"}
             >
               공급사 · {selectedStateLabel}
             </Badge>
             <Badge
               variant="outline"
               data-testid="quote-dispatch-contact-badge-top"
-              className={contactBlocker ? "border-amber-200 bg-amber-50 text-amber-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}
+              className={contactBlocker ? "border-yellow-200 bg-yellow-50 text-yellow-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}
             >
               연락처 · {contactStateLabel}
             </Badge>
             <Badge
               variant="outline"
               data-testid="quote-dispatch-send-readiness-badge"
-              className={sendReadiness === "ready" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"}
+              className={sendReadiness === "ready" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-yellow-200 bg-yellow-50 text-yellow-800"}
             >
               발송 · {sendStateLabel}
             </Badge>
@@ -480,13 +479,13 @@ export function VendorRequestModal({
               <Badge
                 variant="outline"
                 data-testid="quote-dispatch-recipient-count-badge"
-                className={sendReadiness === "ready" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"}
+                className={sendReadiness === "ready" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-yellow-200 bg-yellow-50 text-yellow-800"}
               >
                 공급사 {includedCount}곳 선택됨 · 회신 담당자 {validContactCount}명 확인됨
               </Badge>
               <span
                 data-testid="quote-dispatch-next-required-action"
-                className={sendReadiness === "ready" ? "text-emerald-700" : "text-amber-700"}
+                className={sendReadiness === "ready" ? "text-emerald-700" : "text-yellow-700"}
               >
                 {sendReadiness === "ready" ? "다음: 메시지 미리보기 확인" : `다음: ${firstReadinessBlocker ?? "공급사 선택"}`}
               </span>
@@ -539,7 +538,7 @@ export function VendorRequestModal({
             className={`rounded-lg border px-4 py-3 ${
             sendReadiness === "ready"
               ? "border-emerald-200 bg-emerald-50"
-              : "border-amber-200 bg-amber-50"
+              : "border-yellow-200 bg-yellow-50"
           }`}
           >
             <div className="flex items-center justify-between mb-2">
@@ -547,10 +546,10 @@ export function VendorRequestModal({
                 {sendReadiness === "ready" ? (
                   <Check className="h-4 w-4 text-emerald-600" />
                 ) : (
-                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  <AlertTriangle className="h-4 w-4 text-yellow-500" />
                 )}
                 <span className={`text-sm font-semibold ${
-                  sendReadiness === "ready" ? "text-emerald-700" : "text-amber-700"
+                  sendReadiness === "ready" ? "text-emerald-700" : "text-yellow-700"
                 }`}>
                   {sendReadiness === "ready" ? "전달 준비 완료" : sendReadiness === "needs_review" ? "보완 필요" : "공급사 추가 필요"}
                 </span>
@@ -565,7 +564,7 @@ export function VendorRequestModal({
                   {check.ready ? (
                     <Check className="h-3 w-3 text-emerald-600" />
                   ) : (
-                    <Clock className="h-3 w-3 text-amber-500" />
+                    <Clock className="h-3 w-3 text-yellow-500" />
                   )}
                   <span className={`text-xs ${check.ready ? "text-slate-700" : "text-slate-500"}`}>
                     {check.label}
@@ -581,7 +580,7 @@ export function VendorRequestModal({
               </div>
             )}
             {sendReadiness === "blocked" && (
-              <div className="mt-3 border-t border-amber-200 pt-3">
+              <div className="mt-3 border-t border-yellow-200 pt-3">
                 <Button
                   type="button"
                   size="sm"
@@ -596,7 +595,7 @@ export function VendorRequestModal({
                   <p
                     role="status"
                     data-testid="quote-dispatch-remediation-result"
-                    className="mt-2 text-xs font-medium text-amber-800"
+                    className="mt-2 text-xs font-medium text-yellow-800"
                   >
                     보강 필요: 아래에서 공급사 연락처를 직접 추가하세요.
                   </p>
@@ -743,9 +742,9 @@ export function VendorRequestModal({
                 Section 3 (이메일 직접 입력) 가 always-visible 로 대체.
                 empty 안내 자체는 sourcing 보강 흐름 유지. */}
             {!hasResolved && (
-              <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50 px-4 py-4">
+              <div className="rounded-lg border border-dashed border-yellow-200 bg-yellow-50 px-4 py-4">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                  <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm font-medium text-slate-900">공급사 후보 선별 실패</p>
                     <p className="text-xs text-slate-600 mt-1">
@@ -871,7 +870,7 @@ export function VendorRequestModal({
             sendReadiness === "ready"
               ? "border-emerald-200 bg-emerald-50 text-emerald-900"
               : sendReadiness === "needs_review"
-                ? "border-amber-200 bg-amber-50 text-amber-900"
+                ? "border-yellow-200 bg-yellow-50 text-yellow-900"
                 : "border-red-200 bg-red-50 text-red-900"
           }`}
           data-testid="quote-dispatch-send-gate"
@@ -929,7 +928,7 @@ export function VendorRequestModal({
               className={`min-h-[40px] font-semibold active:scale-95 ${
                 sendReadiness === "ready"
                   ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                  : "bg-amber-500 hover:bg-amber-600 text-white"
+                  : "bg-yellow-500 hover:bg-yellow-600 text-white"
               }`}
             >
               {isSubmitting ? (

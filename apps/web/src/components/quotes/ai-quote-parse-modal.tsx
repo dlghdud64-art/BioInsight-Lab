@@ -263,13 +263,13 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className={cn("h-4 w-4",
                     parseResult?.confidence === "high" ? "text-emerald-400" :
-                    parseResult?.confidence === "medium" ? "text-amber-400" : "text-red-400"
+                    parseResult?.confidence === "medium" ? "text-yellow-400" : "text-red-400"
                   )} />
                   <span className="text-xs text-slate-500">
                     파싱 완료 — 신뢰도{" "}
                     <span className={cn("font-semibold",
                       parseResult?.confidence === "high" ? "text-emerald-400" :
-                      parseResult?.confidence === "medium" ? "text-amber-400" : "text-red-400"
+                      parseResult?.confidence === "medium" ? "text-yellow-400" : "text-red-400"
                     )}>
                       {parseResult?.confidence === "high" ? "높음" : parseResult?.confidence === "medium" ? "보통" : "낮음"}
                     </span>
@@ -429,7 +429,7 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
                     벤더 응답으로 등록
                   </Button>
                 ) : (
-                  <span className="text-[10px] text-amber-500">견적 ID가 없어 등록할 수 없습니다</span>
+                  <span className="text-[10px] text-yellow-500">견적 ID가 없어 등록할 수 없습니다</span>
                 )}
               </>
             )}

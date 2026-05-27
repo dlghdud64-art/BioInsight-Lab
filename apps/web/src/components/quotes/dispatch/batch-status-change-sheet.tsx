@@ -223,9 +223,9 @@ export function BatchStatusChangeSheet({
           </div>
 
           {/* invalid transition 안내 */}
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 flex items-start gap-2">
-            <Info className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-            <p className="text-[11px] text-amber-800 leading-snug">
+          <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 flex items-start gap-2">
+            <Info className="h-4 w-4 text-yellow-600 shrink-0 mt-0.5" />
+            <p className="text-[11px] text-yellow-800 leading-snug">
               현재 상태에서 전환할 수 없는 견적은 서버가 차단합니다. 변경 후 성공/실패 결과가 표시됩니다.
             </p>
           </div>

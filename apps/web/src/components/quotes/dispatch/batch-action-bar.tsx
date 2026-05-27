@@ -143,7 +143,7 @@ export function BatchActionBar({
             {hardBlockCount > 0 && (
               <>
                 <span className="text-violet-300">·</span>
-                <span className="inline-flex items-center gap-1 text-amber-700">
+                <span className="inline-flex items-center gap-1 text-yellow-700">
                   <AlertTriangle className="h-3 w-3" />
                   보류 {hardBlockCount}건
                 </span>
