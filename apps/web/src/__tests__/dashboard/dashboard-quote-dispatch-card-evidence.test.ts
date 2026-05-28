@@ -1,8 +1,13 @@
 /**
  * #dashboard-quote-dispatch-card-evidence
  *
- * Agent Board P1: dashboard quote dispatch entry must expose supplier/contact/
- * preview/send readiness before the operator reaches the quote workbench.
+ * §11.308d-2 (호영님 P2 옵션 A, 2026-05-28) — 견적 발송 카드 재설계 후 evidence.
+ *   기존: dashboard 카드 안에서 발송 플로우(공급사/연락처/미리보기/전송)를
+ *   시뮬레이션 + 영구 비활 Send + 정적 state-matrix.
+ *   문제: 대시보드 카드는 집계 count 만 보유 — 개별 견적 발송 준비 상태를
+ *   알 수 없고, 실제 발송은 견적 워크벤치(/dashboard/quotes)에서 일어남.
+ *   → 재설계: 펼침 = 발송 대기 요약 1줄 + "견적 워크벤치 열기" 진입 CTA.
+ *   canonical truth: 카드 = count display-only, 발송 truth = 워크벤치 소유.
  */
 
 import { describe, expect, it } from "vitest";
@@ -15,69 +20,51 @@ const QUICK_ACTIONS_PATH = resolve(
 );
 const quickActions = readFileSync(QUICK_ACTIONS_PATH, "utf8");
 
-describe("dashboard quote dispatch readiness card", () => {
-  it("exposes one quote dispatch evidence card with four separate steps", () => {
+describe("§11.308d-2 — 견적 발송 카드 요약 + 워크벤치 진입", () => {
+  it("dispatch 카드 + progressive disclosure 보존", () => {
     expect(quickActions).toContain("dashboard-quote-dispatch-card");
-    expect(quickActions).toContain("dashboard-quote-dispatch-readiness");
-    expect(quickActions).toContain("dashboard-quote-dispatch-stage");
-    expect(quickActions).toContain("공급사 없음");
-    expect(quickActions).toContain("연락처 필요");
-    expect(quickActions).toContain("메시지 미리보기");
-    expect(quickActions).toContain("전송 확인");
+    expect(quickActions).toMatch(/isQuoteDispatchExpanded/);
+    expect(quickActions).toMatch(/setIsQuoteDispatchExpanded/);
   });
 
-  it("keeps 공급사에 전송 (Send to supplier) as the single blue primary CTA", () => {
+  it("펼친 상태 = 발송 대기 요약 블록 (summary)", () => {
+    expect(quickActions).toContain("dashboard-quote-dispatch-summary");
+    expect(quickActions).toMatch(/발송 대기/);
+    // 발송 대기 0건 empty state 도 정직하게 표시
+    expect(quickActions).toMatch(/발송 대기 중인 견적이 없습니다/);
+  });
+
+  it("단일 primary CTA = 견적 워크벤치 진입 (real route, dead button 0)", () => {
     expect(quickActions).toContain("dashboard-quote-dispatch-primary-cta");
-    // §11.248a — "Send to supplier" → "공급사에 전송" 한글화. 양방향 매칭 (cluster lineage 보존).
-    expect(quickActions).toMatch(/(공급사에 전송|Send to supplier)/);
+    expect(quickActions).toMatch(/견적 워크벤치 열기/);
+    expect(quickActions).toMatch(/href="\/dashboard\/quotes\?labaxisPilot=quote-dispatch"/);
     expect(quickActions).toContain("bg-blue-600");
     expect(quickActions).toContain("hover:bg-blue-700");
   });
 
-  it("blocks the primary CTA until quote dispatch has a candidate", () => {
-    expect(quickActions).toMatch(/supplierSelected: count > 0/);
-    expect(quickActions).toContain("aria-disabled={!canSendToSupplier}");
-    expect(quickActions).toContain("pointer-events-none opacity-60");
+  it("CTA 는 항상 활성 — 영구 비활(aria-disabled/opacity) 제거", () => {
+    // §11.308d-2 — 카드가 알 수 없는 readiness 로 Send 를 영구 비활시키던 anti-pattern 제거.
+    expect(quickActions).not.toContain("aria-disabled={!canSendToSupplier}");
+    expect(quickActions).not.toContain("pointer-events-none opacity-60");
+    expect(quickActions).not.toMatch(/canSendToSupplier/);
   });
 
-  it("uses an amber contact warning with the manual supplier path next to it", () => {
-    expect(quickActions).toContain("dashboard-quote-dispatch-contact-warning");
-    expect(quickActions).toMatch(/border-amber-200[\s\S]{0,120}bg-amber-50[\s\S]{0,120}text-amber-800/);
-    expect(quickActions).toContain("연락처 필요");
-    expect(quickActions).toContain("dashboard-quote-dispatch-manual-link");
-    expect(quickActions).toContain("수동 공급사 추가");
+  it("canonical truth — in-card 발송 플로우 시뮬레이션 제거 (워크벤치 소유)", () => {
+    // 정적 state-matrix / preview-tracking / contact-warning / step grid 모두 제거
+    expect(quickActions).not.toContain("dashboard-quote-dispatch-state-matrix");
+    expect(quickActions).not.toContain("dashboard-quote-dispatch-preview-tracking");
+    expect(quickActions).not.toContain("dashboard-quote-dispatch-contact-warning");
+    expect(quickActions).not.toContain("dashboard-quote-dispatch-stage");
+    expect(quickActions).not.toContain("dashboard-quote-dispatch-readiness");
+    // QA 메모형 문구 제거
+    expect(quickActions).not.toContain("발송 후 새로고침에도 dispatch 이벤트 추적");
+    // 미사용 readiness prop/타입 제거
+    expect(quickActions).not.toMatch(/quoteDispatchReadiness/);
+    expect(quickActions).not.toMatch(/OperatorQuickActionsQuoteDispatchReadiness/);
   });
 
-  it("separates supplier missing, contact missing, and ready input states", () => {
-    expect(quickActions).toContain("dashboard-quote-dispatch-state-matrix");
-    expect(quickActions).toContain("dashboard-quote-dispatch-case-${row.key}");
-    expect(quickActions).toContain('key: "no-supplier"');
-    expect(quickActions).toContain('key: "missing-contact"');
-    expect(quickActions).toContain('key: "ready"');
-    expect(quickActions).toContain("공급사 선택 필요");
-    expect(quickActions).toContain("초안만 표시");
-    expect(quickActions).toContain("정상 입력");
-  });
-
-  it("requires supplier, contact, preview, and no server error before enabling send", () => {
-    expect(quickActions).toMatch(/quoteReadiness\.supplierSelected[\s\S]{0,120}quoteReadiness\.contactValid[\s\S]{0,120}quoteReadiness\.previewReady[\s\S]{0,120}!quoteReadiness\.serverError/);
-    expect(quickActions).toContain("공급사 선택 필요");
-    expect(quickActions).toContain("연락처 필요");
-    expect(quickActions).toContain("메시지 미리보기 필요");
-    expect(quickActions).toContain("서버 오류");
-  });
-
-  it("shows preview and dispatch tracking status before leaving dashboard", () => {
-    expect(quickActions).toContain("dashboard-quote-dispatch-preview-tracking");
-    expect(quickActions).toContain("dashboard-quote-dispatch-preview-status");
-    expect(quickActions).toContain("dashboard-quote-dispatch-tracking-status");
-    expect(quickActions).toContain("전송 전 확인됨");
-    expect(quickActions).toContain("dispatch 이벤트 추적됨");
-    expect(quickActions).toContain("발송 후 새로고침에도 dispatch 이벤트 추적");
-  });
-
-  it("keeps the secondary action visually subordinate", () => {
-    expect(quickActions).toContain("text-slate-500");
-    expect(quickActions).toContain("검토");
+  it("접기 CTA 보존 (progressive disclosure toggle)", () => {
+    expect(quickActions).toMatch(/aria-label="견적 발송 카드 접기"/);
+    expect(quickActions).toContain("접기");
   });
 });

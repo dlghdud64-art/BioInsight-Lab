@@ -90,19 +90,23 @@ describe("§11.247 #5 — invariant 보존", () => {
     expect(component).toMatch(/재고 점검/);
   });
 
-  it("OperatorQuickActionsProps counts + quoteDispatchReadiness 보존", () => {
+  it("OperatorQuickActionsProps counts 보존 (§11.308d-2 — quoteDispatchReadiness prop 제거)", () => {
     expect(component).toMatch(/counts\?\s*:\s*OperatorQuickActionsCounts/);
-    expect(component).toMatch(/quoteDispatchReadiness\?\s*:\s*OperatorQuickActionsQuoteDispatchReadiness/);
+    // §11.308d-2 — in-card 발송 시뮬레이션 제거로 readiness prop/타입 삭제 (caller 미전달, dead).
+    expect(component).not.toMatch(/quoteDispatchReadiness/);
+    expect(component).not.toMatch(/OperatorQuickActionsQuoteDispatchReadiness/);
   });
 
   it("§11.243 #5 건수 뱃지 보존 (대기 N건)", () => {
     expect(component).toMatch(/대기/);
   });
 
-  it("공급사 전송 button (펼친 상태) 보존 — canonical CTA + readiness", () => {
-    // §11.248a — "Send to supplier" → "공급사에 전송" 한글화. 양방향 매칭 (cluster lineage 보존).
-    expect(component).toMatch(/(공급사에 전송|Send to supplier)/);
-    expect(component).toMatch(/canSendToSupplier/);
+  it("§11.308d-2 — 펼친 상태 단일 CTA = 견적 워크벤치 진입 (영구 비활 Send 제거)", () => {
+    // 재설계: in-card 가짜 발송 button(공급사에 전송 + canSendToSupplier 비활) →
+    //   워크벤치 진입 CTA. 발송 truth 는 /dashboard/quotes 소유.
+    expect(component).toMatch(/견적 워크벤치 열기/);
+    expect(component).toMatch(/href="\/dashboard\/quotes\?labaxisPilot=quote-dispatch"/);
+    expect(component).not.toMatch(/canSendToSupplier/);
   });
 
   it("dashboard-quote-dispatch-card data-testid 보존 (cluster lineage)", () => {

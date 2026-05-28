@@ -114,54 +114,20 @@ const TONE_MAP = {
   purple: { accent: "border-l-purple-500", iconBg: "bg-purple-50", iconColor: "text-purple-600" },
 };
 
-const QUOTE_DISPATCH_STEPS = [
-  "공급사 없음",
-  "연락처 필요",
-  "메시지 미리보기",
-  "전송 확인",
-] as const;
-
-const QUOTE_DISPATCH_STATE_MATRIX = [
-  {
-    key: "no-supplier",
-    label: "공급사 없음",
-    button: "버튼 비활성",
-    preview: "미리보기 대기",
-    result: "공급사 선택 필요",
-  },
-  {
-    key: "missing-contact",
-    label: "연락처 없음",
-    button: "버튼 비활성",
-    preview: "초안만 표시",
-    result: "연락처 필요",
-  },
-  {
-    key: "ready",
-    label: "정상 입력",
-    button: "버튼 활성",
-    preview: "전송 전 미리보기",
-    result: "dispatch 이벤트 추적",
-  },
-] as const;
-
-export interface OperatorQuickActionsQuoteDispatchReadiness {
-  supplierSelected?: boolean;
-  contactValid?: boolean;
-  previewReady?: boolean;
-  dispatchEventTracked?: boolean;
-  serverError?: boolean;
-}
+// §11.308d-2 #quote-dispatch-summary-entry (호영님 P2 옵션 A, 2026-05-28)
+//   기존 in-card 발송 플로우 시뮬레이션(QUOTE_DISPATCH_STEPS/STATE_MATRIX +
+//   영구 비활 Send + readiness prop) 제거. 대시보드 카드는 개별 견적의 발송
+//   준비 상태를 알 수 없고(집계 count 만 보유), 실제 발송은 견적 워크벤치
+//   (/dashboard/quotes)에서 일어남. → 펼침 = 발송 대기 요약 + 워크벤치 진입.
+//   canonical truth: 카드는 count display-only, 발송 truth 는 워크벤치 소유.
 
 interface OperatorQuickActionsProps {
   /** §11.243 #5 — 카드 우측 상단 건수 뱃지 (count > 0 시 노출). caller forward. */
   counts?: OperatorQuickActionsCounts;
-  quoteDispatchReadiness?: OperatorQuickActionsQuoteDispatchReadiness;
 }
 
 export function OperatorQuickActions({
   counts,
-  quoteDispatchReadiness,
 }: OperatorQuickActionsProps = {}) {
   // §11.247 #1 — 견적 발송 카드 Progressive Disclosure. default false 로
   //   접힌 상태 (다른 3 카드와 동일 높이). 클릭/Enter/Space 시 toggle.
@@ -186,33 +152,11 @@ export function OperatorQuickActions({
           // §11.243 #5 — count > 0 시 우측 상단 뱃지. ChevronRight 자리 swap.
           const count = counts ? counts[action.countKey] : 0;
           if (action.countKey === "quotes") {
-            const quoteReadiness = {
-              supplierSelected: count > 0,
-              contactValid: false,
-              previewReady: false,
-              dispatchEventTracked: false,
-              serverError: false,
-              ...quoteDispatchReadiness,
-            };
-            const canSendToSupplier =
-              quoteReadiness.supplierSelected &&
-              quoteReadiness.contactValid &&
-              quoteReadiness.previewReady &&
-              !quoteReadiness.serverError;
-            const sendBlockReason = quoteReadiness.serverError
-              ? "서버 오류"
-              : !quoteReadiness.supplierSelected
-                ? "공급사 선택 필요"
-                : !quoteReadiness.contactValid
-                  ? "연락처 필요"
-                  : !quoteReadiness.previewReady
-                    ? "메시지 미리보기 필요"
-                    : "전송 가능";
-            // §11.247 #1 — Progressive Disclosure.
-            // §11.279c-cont — comment 안 영문 한글 swap.
-            //   접힌 상태: minimal layout (다른 3 카드와 동일 높이) + 자세히 보기 hint.
-            //   펼친 상태: 전체 상태 흐름표 + 공급사에 전송 button + 접기 CTA.
-            //   카드 클릭/Enter/Space 으로 toggle. min-h-[140px] 균일 + transition 300ms.
+            // §11.308d-2 — Progressive Disclosure (요약 + 워크벤치 진입).
+            //   접힌 상태: minimal layout (다른 3 카드와 동일 높이) + 요약 보기 hint.
+            //   펼친 상태: 발송 대기 요약 1줄 + "견적 워크벤치 열기" CTA + 접기.
+            //   카드는 집계 count display-only — 개별 발송 준비 상태/전송은 워크벤치 소유.
+            //   카드 클릭/Enter/Space 으로 toggle. min-h 균일 + transition 300ms.
             const toggle = () => setIsQuoteDispatchExpanded((prev) => !prev);
             return (
               <div
@@ -254,105 +198,46 @@ export function OperatorQuickActions({
                 <p className="text-sm font-bold text-slate-900 break-keep">견적 발송</p>
                 {/* §11.252a — 설명 line-clamp-1 모바일 (1줄) + sm+ 전체. */}
                 <p className="text-[11px] text-slate-500 mt-0.5 break-keep line-clamp-1 sm:line-clamp-none">
-                  공급사 선택부터 전송 확인까지 한 화면에서 검토합니다
+                  발송 대기 견적을 확인하고 견적 워크벤치로 이동합니다
                 </p>
-                {/* §11.247 #1 — 접힌 상태: minimal hint, 펼친 상태: full content. */}
+                {/* §11.308d-2 — 접힌 상태: minimal hint, 펼친 상태: 요약 + 워크벤치 진입. */}
                 {!isQuoteDispatchExpanded && (
                   <p className="mt-2 text-[10px] font-semibold text-blue-600 break-keep">
-                    클릭하여 상세 흐름 + 전송 보기 →
+                    클릭하여 발송 대기 요약 보기 →
                   </p>
                 )}
                 {isQuoteDispatchExpanded && (
-                <>
                 <div
-                  className="mt-3 grid grid-cols-2 gap-1.5"
-                  data-testid="dashboard-quote-dispatch-readiness"
+                  className="mt-3 space-y-2.5"
+                  data-testid="dashboard-quote-dispatch-summary"
                 >
-                  {QUOTE_DISPATCH_STEPS.map((step) => (
-                    <span
-                      key={step}
-                      data-testid="dashboard-quote-dispatch-stage"
-                      className={`rounded-md border px-2 py-1 text-[10px] font-semibold ${
-                        step === "연락처 필요"
-                          ? "border-yellow-200 bg-yellow-100 text-yellow-700"
-                          : "border-slate-200 bg-slate-50 text-slate-600"
-                      }`}
+                  <p className="text-[11px] text-slate-600 break-keep leading-relaxed">
+                    {count > 0
+                      ? `발송 대기 ${count > 99 ? "99+" : count}건. 공급사 선택·연락처 확인·미리보기·전송은 견적 워크벤치에서 진행합니다.`
+                      : "발송 대기 중인 견적이 없습니다. 새 견적을 등록하면 여기에 표시됩니다."}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href="/dashboard/quotes?labaxisPilot=quote-dispatch"
+                      className="inline-flex min-h-[32px] flex-1 items-center justify-center rounded-md bg-blue-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-blue-700"
+                      data-testid="dashboard-quote-dispatch-primary-cta"
                     >
-                      {step}
-                    </span>
-                  ))}
-                </div>
-                <div
-                  className="mt-2 space-y-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5"
-                  data-testid="dashboard-quote-dispatch-state-matrix"
-                >
-                  {QUOTE_DISPATCH_STATE_MATRIX.map((row) => (
-                    <div
-                      key={row.key}
-                      data-testid={`dashboard-quote-dispatch-case-${row.key}`}
-                      className="grid grid-cols-[0.8fr_0.8fr_1fr] gap-1 text-[10px] text-slate-600"
+                      견적 워크벤치 열기
+                    </Link>
+                    {/* §11.308d-2 — 접기 CTA */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggle();
+                      }}
+                      className="min-h-[32px] shrink-0 rounded-md px-2 py-2 text-[11px] font-semibold text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                      aria-label="견적 발송 카드 접기"
                     >
-                      <span className="font-semibold text-slate-800">{row.label}</span>
-                      <span>{row.button}</span>
-                      <span>{row.preview} · {row.result}</span>
-                    </div>
-                  ))}
+                      접기
+                    </button>
+                  </div>
                 </div>
-                <div
-                  className="mt-2 flex items-center justify-between gap-2 rounded-md border border-yellow-200 bg-yellow-100 px-2 py-1.5 text-[10px] text-yellow-800"
-                  data-testid="dashboard-quote-dispatch-contact-warning"
-                >
-                  <span className="break-keep">{sendBlockReason}</span>
-                  <Link
-                    href="/dashboard/quotes?labaxisPilot=quote-dispatch&manualSupplier=1"
-                    className="shrink-0 text-slate-600 underline-offset-2 hover:underline"
-                    data-testid="dashboard-quote-dispatch-manual-link"
-                  >
-                    수동 공급사 추가
-                  </Link>
-                </div>
-                <div
-                  className="mt-2 grid gap-1 text-[10px] text-slate-500"
-                  data-testid="dashboard-quote-dispatch-preview-tracking"
-                >
-                  <span data-testid="dashboard-quote-dispatch-preview-status">
-                    미리보기: {quoteReadiness.previewReady ? "전송 전 확인됨" : "메시지 미리보기 필요"}
-                  </span>
-                  <span data-testid="dashboard-quote-dispatch-tracking-status">
-                    전송 결과: {quoteReadiness.dispatchEventTracked ? "dispatch 이벤트 추적됨" : "발송 후 새로고침에도 dispatch 이벤트 추적"}
-                  </span>
-                </div>
-                <div className="mt-3 flex items-center gap-2">
-                  <Link
-                    href="/dashboard/quotes?labaxisPilot=quote-dispatch"
-                    aria-disabled={!canSendToSupplier}
-                    className={`inline-flex min-h-[32px] flex-1 items-center justify-center rounded-md bg-blue-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-blue-700 ${
-                      !canSendToSupplier ? "pointer-events-none opacity-60" : ""
-                    }`}
-                    data-testid="dashboard-quote-dispatch-primary-cta"
-                  >
-                    공급사에 전송
-                  </Link>
-                  <Link
-                    href="/dashboard/quotes"
-                    className="min-h-[32px] shrink-0 rounded-md px-2 py-2 text-[11px] font-semibold text-slate-500 hover:bg-slate-50 hover:text-slate-700"
-                  >
-                    검토
-                  </Link>
-                  {/* §11.247 #1 — 접기 CTA */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggle();
-                    }}
-                    className="min-h-[32px] shrink-0 rounded-md px-2 py-2 text-[11px] font-semibold text-slate-500 hover:bg-slate-50 hover:text-slate-700"
-                    aria-label="견적 발송 카드 접기"
-                  >
-                    접기
-                  </button>
-                </div>
-                </>
                 )}
               </div>
             );

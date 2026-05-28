@@ -84,15 +84,8 @@ describe("§11.308d — yellow 신호등 swap 정합", () => {
     expect(src).toMatch(/iconColor:\s*"text-yellow-600"/);
   });
 
-  it("dispatch step '연락처 필요' yellow tone (border-yellow-200 bg-yellow-100 text-yellow-700)", () => {
-    const src = read(PATH);
-    expect(src).toMatch(/border-yellow-200 bg-yellow-100 text-yellow-700/);
-  });
-
-  it("dispatch alert box yellow tone (border-yellow-200 bg-yellow-100 text-yellow-800)", () => {
-    const src = read(PATH);
-    expect(src).toMatch(/border-yellow-200 bg-yellow-100 px-2 py-1\.5 text-\[10px\] text-yellow-800/);
-  });
+  // §11.308d-2 — dispatch step/alert-box yellow 요소는 요약+진입 재설계로 제거됨
+  //   (in-card 발송 플로우 시뮬레이션 삭제). 색상 가드는 amber/orange 0 + TONE_MAP 로 충분.
 });
 
 describe("§11.308d — 회귀 0 (4 카드 구조 + 핵심 wiring)", () => {
@@ -127,13 +120,16 @@ describe("§11.308d — 회귀 0 (4 카드 구조 + 핵심 wiring)", () => {
     expect(src).toMatch(/data-testid="dashboard-quote-dispatch-card"/);
   });
 
-  it("data-testid 6+ 보존 (dispatch 관련)", () => {
+  it("§11.308d-2 — dispatch 요약+진입 testid (summary + primary-cta), 가짜 플로우 testid 제거", () => {
     const src = read(PATH);
-    expect(src).toMatch(/data-testid="dashboard-quote-dispatch-readiness"/);
-    expect(src).toMatch(/data-testid="dashboard-quote-dispatch-state-matrix"/);
-    expect(src).toMatch(/data-testid="dashboard-quote-dispatch-contact-warning"/);
-    expect(src).toMatch(/data-testid="dashboard-quote-dispatch-preview-tracking"/);
-    expect(src).toMatch(/data-testid="dashboard-quote-dispatch-stage"/);
+    // 새 구조: 요약 블록 + 워크벤치 진입 CTA
+    expect(src).toMatch(/data-testid="dashboard-quote-dispatch-summary"/);
+    expect(src).toMatch(/data-testid="dashboard-quote-dispatch-primary-cta"/);
+    // 제거된 in-card 발송 플로우 시뮬레이션 testid (회귀 가드)
+    expect(src).not.toMatch(/data-testid="dashboard-quote-dispatch-state-matrix"/);
+    expect(src).not.toMatch(/data-testid="dashboard-quote-dispatch-preview-tracking"/);
+    expect(src).not.toMatch(/data-testid="dashboard-quote-dispatch-contact-warning"/);
+    expect(src).not.toMatch(/data-testid="dashboard-quote-dispatch-stage"/);
   });
 
   it("모바일 grid-cols-2 + min-h-[110px] sm:min-h-[140px] 보존 (§11.252a)", () => {
