@@ -363,6 +363,16 @@ function DashboardPageInner() {
   const secondaryPriorityActions = dashboardPriorityActions
     .filter((action) => action.id !== primaryPriorityAction.id)
     .slice(0, 2);
+  const nextPriorityAction = secondaryPriorityActions[0] ?? dashboardPriorityActions[1];
+  const inactiveReason =
+    primaryPriorityAction.count > 0
+      ? `${nextPriorityAction.label}는 ${primaryPriorityAction.label} 완료 후 보조로 처리`
+      : `${primaryPriorityAction.label} 대기 건수가 없어 보조 작업만 확인`;
+  const priorityStageBadges = [
+    { label: "실행", value: primaryPriorityAction.count },
+    { label: "검토", value: nextPriorityAction.count },
+    { label: "보류", value: approvalPendingCount },
+  ];
 
   const isBlocked = processingRequiredCount > 0 || approvalPendingCount > 0 || riskOrBlockerCount > 0;
   const hasOperationalFootprint = recentActivityCount > 0;
@@ -805,14 +815,42 @@ function DashboardPageInner() {
       >
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              오늘 먼저 처리
-            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                다음 액션
+              </p>
+              <span
+                className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700"
+                data-testid="dashboard-priority-approval-badge"
+              >
+                승인 필요 {approvalPendingCount}건
+              </span>
+            </div>
             <h3 className="mt-0.5 text-base font-extrabold text-slate-900">
-              {dashboardPriorityActions
-                .map((action) => `${action.label} ${action.count}건`)
-                .join(" · ")}
+              {primaryPriorityAction.label} {primaryPriorityAction.count}건 먼저 처리
             </h3>
+            <p
+              className="mt-1 text-[11px] font-medium text-slate-500"
+              data-testid="dashboard-priority-flow-state"
+            >
+              현재 단계: {primaryPriorityAction.label} · 다음 단계: {nextPriorityAction.label}
+            </p>
+            <p
+              className="mt-1 text-[11px] text-slate-500"
+              data-testid="dashboard-priority-inactive-reason"
+            >
+              비활성 사유: {inactiveReason}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-1.5" data-testid="dashboard-priority-stage-badges">
+              {priorityStageBadges.map((badge) => (
+                <span
+                  key={badge.label}
+                  className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-bold text-slate-600"
+                >
+                  {badge.label} {badge.value}건
+                </span>
+              ))}
+            </div>
           </div>
           <Link
             href={primaryPriorityAction.href}

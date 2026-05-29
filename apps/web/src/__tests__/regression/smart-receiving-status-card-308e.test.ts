@@ -53,7 +53,19 @@ describe("dashboard priority banner wiring", () => {
 
     expect(src).toMatch(/data-testid="dashboard-priority-banner"/);
     expect(src).toMatch(/data-testid="dashboard-priority-primary-cta"/);
+    expect(src).toMatch(/data-testid="dashboard-priority-approval-badge"/);
+    expect(src).toMatch(/data-testid="dashboard-priority-inactive-reason"/);
+    expect(src).toMatch(/data-testid="dashboard-priority-flow-state"/);
+    expect(src).toMatch(/data-testid="dashboard-priority-stage-badges"/);
     expect(src).toMatch(/dashboard-priority-secondary-\$\{action\.id\}/);
+    expect(src).toMatch(/다음 액션/);
+    expect(src).toMatch(/비활성 사유/);
+    expect(src).toMatch(/현재 단계/);
+    expect(src).toMatch(/다음 단계/);
+    expect(src).toMatch(/승인 필요/);
+    expect(src).toMatch(/실행/);
+    expect(src).toMatch(/검토/);
+    expect(src).toMatch(/보류/);
     expect(src).toMatch(/입고 처리/);
     expect(src).toMatch(/재고 부족/);
     expect(src).toMatch(/승인 대기/);
