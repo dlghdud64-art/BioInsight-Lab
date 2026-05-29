@@ -329,6 +329,40 @@ function DashboardPageInner() {
   const riskOrBlockerCount = stats.compareStats.slaBreachedCount;
   const inProgressCount = stats.activeQuotes;
   const recentActivityCount = stats.totalInventory + stats.monthlySpending + stats.activeQuotes;
+  const inventoryIssueHref = "/dashboard/inventory?filter=lot_issue&tab=overview";
+
+  const dashboardPriorityActions = [
+    {
+      id: "receiving",
+      label: "입고 처리",
+      count: stats.compareStats.purchaseToReceivingCount,
+      helper: "입고 대기와 예외를 먼저 확인",
+      href: inventoryIssueHref,
+      icon: <Truck className="h-4 w-4" />,
+    },
+    {
+      id: "inventory",
+      label: "재고 부족",
+      count: stats.lowStockAlerts,
+      helper: "안전재고와 재주문 후보 확인",
+      href: "/dashboard/inventory?filter=low",
+      icon: <AlertTriangle className="h-4 w-4" />,
+    },
+    {
+      id: "approval",
+      label: "승인 대기",
+      count: approvalPendingCount,
+      helper: "견적 응답 검토 후 발주 전환",
+      href: "/dashboard/quotes?status=RESPONDED",
+      icon: <ClipboardList className="h-4 w-4" />,
+    },
+  ];
+  const primaryPriorityAction =
+    dashboardPriorityActions.find((action) => action.count > 0) ??
+    dashboardPriorityActions[0];
+  const secondaryPriorityActions = dashboardPriorityActions
+    .filter((action) => action.id !== primaryPriorityAction.id)
+    .slice(0, 2);
 
   const isBlocked = processingRequiredCount > 0 || approvalPendingCount > 0 || riskOrBlockerCount > 0;
   const hasOperationalFootprint = recentActivityCount > 0;
@@ -765,6 +799,56 @@ function DashboardPageInner() {
           quotes = 진행중 견적 / purchases = 응답 검토 대기 (발주 전환
           candidate) / receiving = 발주→입고 funnel / inventory = 안전재고
           미달. canonical truth: stats 그대로 forward, count mutation 0. */}
+      <section
+        className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm md:p-4"
+        data-testid="dashboard-priority-banner"
+      >
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              오늘 먼저 처리
+            </p>
+            <h3 className="mt-0.5 text-base font-extrabold text-slate-900">
+              {dashboardPriorityActions
+                .map((action) => `${action.label} ${action.count}건`)
+                .join(" · ")}
+            </h3>
+          </div>
+          <Link
+            href={primaryPriorityAction.href}
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-bold text-white transition-colors hover:bg-blue-700"
+            data-testid="dashboard-priority-primary-cta"
+          >
+            {primaryPriorityAction.icon}
+            {primaryPriorityAction.label} {primaryPriorityAction.count}건 처리
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+        <div className="mt-3 grid gap-2 md:grid-cols-2">
+          {secondaryPriorityActions.map((action) => (
+            <Link
+              key={action.id}
+              href={action.href}
+              className="flex min-h-[44px] items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 transition-colors hover:border-blue-200 hover:bg-blue-50"
+              data-testid={`dashboard-priority-secondary-${action.id}`}
+            >
+              <span className="flex min-w-0 items-center gap-2">
+                <span className="text-slate-500">{action.icon}</span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold text-slate-900">
+                    {action.label} {action.count}건
+                  </span>
+                  <span className="block truncate text-[11px] text-slate-500">
+                    {action.helper}
+                  </span>
+                </span>
+              </span>
+              <ChevronRight className="h-4 w-4 flex-shrink-0 text-slate-400" />
+            </Link>
+          ))}
+        </div>
+      </section>
+
       <OperatorQuickActions
         counts={{
           quotes: stats.activeQuotes,
@@ -780,6 +864,8 @@ function DashboardPageInner() {
           canonical truth: display-only (Header modal 이 단일 스캔 source). */}
       <SmartReceivingStatusCard
         pendingHandoffCount={stats.compareStats.purchaseToReceivingCount}
+        exceptionCount={stats.compareStats.slaBreachedCount}
+        reorderReviewCount={stats.lowStockAlerts}
       />
 
       {/* WorkQueueInbox 제거 — 3상태 중앙 패널이 대체 */}
