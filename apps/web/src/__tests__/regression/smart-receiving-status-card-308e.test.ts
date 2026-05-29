@@ -2,7 +2,7 @@
  * §11.308e / §11.315 dashboard priority sentinel.
  *
  * The dashboard must make the next operational action readable in one glance:
- * one primary CTA, two secondary CTAs, and a smart receiving status card that
+ * one primary CTA, a separated secondary rail, and a smart receiving status card that
  * links receiving exceptions back to the inventory truth screen.
  */
 
@@ -56,12 +56,21 @@ describe("dashboard priority banner wiring", () => {
     expect(src.match(/data-testid="dashboard-priority-primary-cta"/g)).toHaveLength(1);
     expect(src).toMatch(/data-testid="dashboard-priority-first-badge"/);
     expect(src).toMatch(/data-testid="dashboard-priority-approval-badge"/);
+    expect(src).toMatch(/data-testid="dashboard-priority-urgent-count"/);
+    expect(src).toMatch(/data-testid="dashboard-priority-owner"/);
+    expect(src).toMatch(/data-testid="dashboard-priority-route"/);
     expect(src).toMatch(/data-testid="dashboard-priority-inactive-reason"/);
     expect(src).toMatch(/data-testid="dashboard-priority-flow-state"/);
     expect(src).toMatch(/data-testid="dashboard-priority-stage-badges"/);
+    expect(src).toMatch(/data-testid="dashboard-priority-secondary-rail"/);
     expect(src).toMatch(/dashboard-priority-secondary-state-\$\{action\.id\}/);
     expect(src).not.toMatch(/dashboard-priority-secondary-\$\{action\.id\}/);
     expect(src).toMatch(/가장 먼저 처리/);
+    expect(src).toMatch(/긴급 \{urgentPriorityCount\}건 · 다음 작업 1개/);
+    expect(src).toMatch(/담당: 운영/);
+    expect(src).toMatch(/첫 클릭: \{primaryPriorityAction\.label\}/);
+    expect(src).toMatch(/검색", "비교", "요청", "승인", "PO", "입고", "재고", "재주문"/);
+    expect(src).toMatch(/보조열/);
     expect(src).toMatch(/비활성 사유/);
     expect(src).toMatch(/현재 단계/);
     expect(src).toMatch(/다음 단계/);

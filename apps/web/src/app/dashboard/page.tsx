@@ -373,6 +373,8 @@ function DashboardPageInner() {
     { label: "검토", value: nextPriorityAction.count },
     { label: "보류", value: approvalPendingCount },
   ];
+  const priorityRouteSteps = ["검색", "비교", "요청", "승인", "PO", "입고", "재고", "재주문"];
+  const urgentPriorityCount = dashboardPriorityActions.filter((action) => action.count > 0).length;
 
   const isBlocked = processingRequiredCount > 0 || approvalPendingCount > 0 || riskOrBlockerCount > 0;
   const hasOperationalFootprint = recentActivityCount > 0;
@@ -632,7 +634,7 @@ function DashboardPageInner() {
         className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm md:p-4"
         data-testid="dashboard-priority-banner"
       >
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_220px] md:items-center">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <span
@@ -640,6 +642,12 @@ function DashboardPageInner() {
                 data-testid="dashboard-priority-first-badge"
               >
                 가장 먼저 처리
+              </span>
+              <span
+                className="inline-flex items-center rounded-full bg-slate-900 px-2 py-0.5 text-[10px] font-bold text-white"
+                data-testid="dashboard-priority-urgent-count"
+              >
+                긴급 {urgentPriorityCount}건 · 다음 작업 1개
               </span>
               <span
                 className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700"
@@ -652,10 +660,22 @@ function DashboardPageInner() {
               {primaryPriorityAction.label} {primaryPriorityAction.count}건
             </h3>
             <p
+              className="mt-1 text-[11px] font-semibold text-slate-600"
+              data-testid="dashboard-priority-owner"
+            >
+              담당: 운영 · 첫 클릭: {primaryPriorityAction.label}
+            </p>
+            <p
               className="mt-1 text-[11px] font-medium text-slate-500"
               data-testid="dashboard-priority-flow-state"
             >
               현재 단계: {primaryPriorityAction.label} · 다음 단계: {nextPriorityAction.label}
+            </p>
+            <p
+              className="mt-1 text-[11px] text-slate-500"
+              data-testid="dashboard-priority-route"
+            >
+              {priorityRouteSteps.join(" → ")}
             </p>
             <p
               className="mt-1 text-[11px] text-slate-500"
@@ -683,18 +703,27 @@ function DashboardPageInner() {
             {primaryPriorityAction.label} {primaryPriorityAction.count}건 처리
             <ArrowRight className="h-4 w-4" />
           </Link>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {secondaryPriorityActions.map((action) => (
-            <span
-              key={action.id}
-              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-600"
-              data-testid={`dashboard-priority-secondary-state-${action.id}`}
-            >
-              {action.icon}
-              {action.label} {action.count}건
-            </span>
-          ))}
+          <div
+            className="rounded-lg border border-slate-200 bg-slate-50 p-2"
+            data-testid="dashboard-priority-secondary-rail"
+          >
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">보조열</p>
+            <div className="mt-1.5 space-y-1">
+              {secondaryPriorityActions.map((action) => (
+                <span
+                  key={action.id}
+                  className="flex items-center justify-between gap-2 rounded-md bg-white px-2 py-1 text-[11px] font-semibold text-slate-600"
+                  data-testid={`dashboard-priority-secondary-state-${action.id}`}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    {action.icon}
+                    {action.label}
+                  </span>
+                  <span className="text-slate-900">{action.count}건</span>
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
