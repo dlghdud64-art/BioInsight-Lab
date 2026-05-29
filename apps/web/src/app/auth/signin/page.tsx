@@ -29,12 +29,20 @@ function SplineBg() {
     setReducedMotion(prefersReducedMotion);
 
     let app: any = null;
-    // Delayed mount — auth card renders first, then 3D fades in
-    const timer = setTimeout(async () => {
+    let disposed = false;
+    // §11.316 — 호영님 P1 (2026-05-29): 즉시 mount + 짧은 fade.
+    //   기존 setTimeout(800) "auth card 먼저" 지연 제거 → 페이지 진입 즉시 Spline runtime
+    //   import + scene load 시작. opacity transition 도 2.4s → 0.6s 로 단축 (즉시감 + 자연스러움).
+    (async () => {
       try {
         const { Application } = await import("@splinetool/runtime");
-        app = new Application(canvasRef.current!);
+        if (disposed || !canvasRef.current) return;
+        app = new Application(canvasRef.current);
         await app.load("https://prod.spline.design/Nd9Ab5oDbi1kcWsV/scene.splinecode?v=2");
+        if (disposed) {
+          app?.dispose?.();
+          return;
+        }
 
         // Ensure scene animations autoplay + loop
         if (typeof app.play === "function") {
@@ -45,10 +53,10 @@ function SplineBg() {
       } catch {
         setLoaded(true);
       }
-    }, 800);
+    })();
 
     return () => {
-      clearTimeout(timer);
+      disposed = true;
       app?.dispose?.();
     };
   }, []);
@@ -63,7 +71,8 @@ function SplineBg() {
         filter: reducedMotion
           ? "brightness(1.08) contrast(1.04) saturate(1.0)"
           : "brightness(1.14) contrast(1.06) saturate(1.06)",
-        transition: "opacity 2.4s ease",
+        // §11.316 — fade 2.4s → 0.6s (즉시감, 자연스러움 유지)
+        transition: "opacity 0.6s ease",
       }}
     />
   );
