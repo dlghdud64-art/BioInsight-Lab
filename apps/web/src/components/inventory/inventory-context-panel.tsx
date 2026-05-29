@@ -27,6 +27,8 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+// §11.320 Phase 2 — 상태 배너 onClick → 운영 브리핑 풀 패널 진입
+import { useOperationalBriefPopup } from "@/components/operational-brief/popup-context";
 import { useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { MetricCell } from "@/components/operational-brief/metric-cell";
 import { formatRelativeKr } from "@/components/operational-brief/relative-time";
@@ -396,6 +398,8 @@ export function InventoryContextPanel({
   onLotDrillDown,
   className = "",
 }: InventoryContextPanelProps) {
+  // §11.320 Phase 2 — 상태 배너 onClick → operationalBriefPopup.open (풀 패널 진입)
+  const operationalBriefPopup = useOperationalBriefPopup();
   const lots = generateMockLots(item);
   const risks = generateMockRisks(item);
   const flows = generateMockConnectedFlows(item);
@@ -450,49 +454,21 @@ export function InventoryContextPanel({
         <span className="text-[10px] text-slate-500 uppercase tracking-wide">선택한 재고</span>
       </div>
 
-      {/* §11.146 4 preset chips — anchor jump */}
-      <div className="px-5 py-2 border-b border-bd/50 flex flex-wrap gap-1.5">
-        {[
-          { id: "summary", label: "상태 요약" },
-          { id: "facts",   label: "보유량" },
-          { id: "risks",   label: "리스크" },
-          { id: "next",    label: "재발주" },
-        ].map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              const el = document.getElementById(`brief-${c.id}`);
-              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-            }}
-            className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors"
-          >
-            {c.label}
-          </button>
-        ))}
-      </div>
+      {/* §11.320 Phase 2 — 4 preset chips 제거 (어차피 다 펼침, 탭 무의미). 상태 배너로 정보 우선순위 명확화. */}
 
       {/* Header */}
       <div className="bg-el border-b border-bd px-5 py-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              {item.hazard && (
+            {/* §11.320 Phase 2 — risks Badge 제거 (상태 배너 통합). 유해물질만 유지. */}
+            {item.hazard && (
+              <div className="flex items-center gap-2 mb-1">
                 <Badge className="border-none bg-red-500/15 text-red-400 text-[10px] px-1.5 py-0">
                   <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
                   유해물질
                 </Badge>
-              )}
-              {risks.length > 0 && (
-                <Badge
-                  variant="outline"
-                  className={`text-[10px] px-1.5 py-0 ${SEVERITY_STYLE[risks[0].severity]}`}
-                >
-                  {risks.length}건 리스크
-                </Badge>
-              )}
-            </div>
+              </div>
+            )}
             <h2 className="text-base font-bold text-slate-900 leading-tight truncate">
               {item.productName}
             </h2>
@@ -512,6 +488,111 @@ export function InventoryContextPanel({
           </Button>
         </div>
       </div>
+
+      {/* §11.320 Phase 2 — 상태 배너 (만료 case 제외 — isExpiredLotWithQty 가 더 강하게 처리).
+          상황 요약 + 리스크 + 권장 액션을 단일 카드로 통합. canonical truth = item.currentQuantity/safetyStock/expiryDate. */}
+      {(() => {
+        if (isExpiredLotWithQty) return null; // 만료 case 는 disposal-strip 이 책임
+        const isBelowSafety =
+          item.safetyStock !== null && item.currentQuantity <= item.safetyStock;
+        const isOutOfStock = item.currentQuantity === 0;
+        const expiryDays = item.expiryDate
+          ? Math.ceil((new Date(item.expiryDate).getTime() - Date.now()) / 86400000)
+          : null;
+        const isExpiringSoon = expiryDays !== null && expiryDays >= 0 && expiryDays <= 30;
+        const isDanger = isOutOfStock || isBelowSafety;
+        const isWarn = !isDanger && isExpiringSoon;
+        const tone: "danger" | "warn" | "ok" = isDanger ? "danger" : isWarn ? "warn" : "ok";
+        const toneClass: Record<typeof tone, string> = {
+          danger: "border-red-200 bg-red-50 text-red-700",
+          warn: "border-yellow-200 bg-yellow-50 text-yellow-700",
+          ok: "border-emerald-200 bg-emerald-50 text-emerald-700",
+        };
+        const toneIcon =
+          tone === "danger" ? "🔴" : tone === "warn" ? "🟡" : "✅";
+        const toneLabel =
+          tone === "danger"
+            ? isOutOfStock
+              ? "재고 소진"
+              : "안전재고 미달"
+            : tone === "warn"
+              ? "만료 임박"
+              : "정상";
+        const toneSub =
+          tone === "danger"
+            ? `현재 ${item.currentQuantity} ${item.unit} / 안전재고 ${item.safetyStock ?? "-"} ${item.unit}`
+            : tone === "warn"
+              ? `만료까지 D-${expiryDays} · 현재 ${item.currentQuantity} ${item.unit}`
+              : `현재 ${item.currentQuantity} ${item.unit} / 안전재고 ${item.safetyStock ?? "-"} ${item.unit}`;
+        const toneAction =
+          tone === "danger" ? "재주문 권장" : tone === "warn" ? "우선 소진 권장" : "특이사항 없음";
+        return (
+          <div className="border-b border-bd/50 px-5 py-3 space-y-3">
+            <div
+              data-testid="inventory-context-status-banner"
+              role="button"
+              tabIndex={0}
+              onClick={() => operationalBriefPopup?.open?.()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  operationalBriefPopup?.open?.();
+                }
+              }}
+              className={`rounded-lg border px-3 py-2.5 ${toneClass[tone]} cursor-pointer transition-colors hover:brightness-95`}
+            >
+              <p className="text-sm font-bold flex items-center gap-1.5">
+                <span>{toneIcon}</span>
+                {toneLabel}
+              </p>
+              <p className="text-[11px] mt-0.5 leading-snug">{toneSub}</p>
+              <p className="text-[11px] mt-1 font-semibold">→ {toneAction}</p>
+            </div>
+            {/* §11.320 — 액션 button 상태 배너 바로 아래 상단 이동 (구 sticky footer 제거). */}
+            <div
+              data-testid="inventory-context-primary-actions"
+              className="flex items-center gap-2"
+            >
+              {tone === "danger" ? (
+                <Button
+                  size="sm"
+                  className="flex-1 h-8 text-xs bg-blue-600 hover:bg-blue-500 text-white"
+                  onClick={() => onReorder?.(item)}
+                >
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  재주문
+                </Button>
+              ) : tone === "warn" ? (
+                <Button
+                  size="sm"
+                  className="flex-1 h-8 text-xs bg-yellow-600 hover:bg-yellow-500 text-white"
+                  onClick={() => onReorder?.(item)}
+                >
+                  ⚠ 우선 소진
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 h-8 text-xs border-bd bg-pn text-slate-700"
+                  onClick={() => onEdit?.(item)}
+                >
+                  <Package className="h-3 w-3 mr-1" />
+                  입고 등록
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 h-8 text-xs border-bd bg-pn text-slate-600"
+                onClick={() => onEdit?.(item)}
+              >
+                정보 수정
+              </Button>
+            </div>
+          </div>
+        );
+      })()}
 
       {isExpiredLotWithQty && (
         <div
@@ -570,21 +651,8 @@ export function InventoryContextPanel({
         </div>
       )}
 
-      {/* § 1. 상황 요약 — resolver-derived 1-line + §11.161 LLM narrative hook */}
-      <section id="brief-summary" className="px-5 py-3 border-b border-bd/50 scroll-mt-4">
-        <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">상황 요약</div>
-        <p className="text-xs text-slate-700 leading-relaxed">
-          {briefNarrative ??
-            (item.currentQuantity === 0
-              ? "재고 소진 — 즉시 재발주 필요"
-              : item.safetyStock !== null && item.currentQuantity <= item.safetyStock
-                ? `안전재고 미달 (${item.currentQuantity}/${item.safetyStock} ${item.unit}) — 재발주 검토`
-                : risks.length > 0
-                  ? `${risks.length}건 운영 리스크 — 검토 필요`
-                  : "안정 — 운영 정상")}
-          {briefCached && <span className="ml-1 text-[10px] text-slate-400">· 캐시</span>}
-        </p>
-      </section>
+      {/* §11.320 Phase 2 — § 1. 상황 요약 섹션 제거 (상태 배너로 통합됨). briefNarrative/briefCached 는
+          Phase 3~4 에서 상태 배너 sub-text 또는 운영 브리핑 풀 패널에서 활용 검토. */}
 
       <div id="brief-facts" className="px-5 py-4 space-y-5 scroll-mt-4">
         {/* ── § 2. 핵심 근거 — A. Basic Info ── */}
@@ -908,56 +976,9 @@ export function InventoryContextPanel({
         </section>
       </div>
 
-      {/* § 4. 다음 조치 — Sticky footer actions (state-based primary action) */}
-      <div id="brief-next" className="sticky bottom-0 bg-el border-t border-bd px-5 py-3 scroll-mt-4">
-        <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">다음 조치</div>
-        {(() => {
-          // 상태별 primary action 차등 노출
-          const isLow = item.safetyStock !== null && item.currentQuantity <= item.safetyStock;
-          const isExpiring = item.expiryDate ? Math.ceil((new Date(item.expiryDate).getTime() - Date.now()) / 86400000) <= 7 : false;
-          const isOut = item.currentQuantity === 0;
-
-          if (isExpiredLotWithQty) {
-            return (
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1 h-8 text-xs border-bd bg-pn text-slate-600" onClick={() => onEdit?.(item)}>정보 수정</Button>
-                <Button size="sm" className="flex-1 h-8 text-xs bg-red-600 hover:bg-red-500 text-white font-medium" onClick={() => onDispose?.(item)}>
-                  <AlertTriangle className="h-3 w-3 mr-1" />폐기 검토
-                </Button>
-              </div>
-            );
-          }
-          if (isExpiring) {
-            return (
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1 h-8 text-xs border-bd bg-pn text-slate-600" onClick={() => onDispose?.(item)}>폐기/검토</Button>
-                <Button size="sm" className="flex-1 h-8 text-xs bg-yellow-600 hover:bg-yellow-500 text-white font-medium" onClick={() => onReorder?.(item)}>
-                  <Sparkles className="h-3 w-3 mr-1" />재주문 + 교체
-                </Button>
-              </div>
-            );
-          }
-          if (isOut || isLow) {
-            return (
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1 h-8 text-xs border-bd bg-pn text-slate-600" onClick={() => onEdit?.(item)}>정보 수정</Button>
-                <Button size="sm" className="flex-1 h-8 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={() => onReorder?.(item)}>
-                  <ShoppingCart className="h-3 w-3 mr-1" />재주문
-                </Button>
-              </div>
-            );
-          }
-          // 정상
-          return (
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1 h-8 text-xs border-bd bg-pn text-slate-600" onClick={() => onEdit?.(item)}>정보 수정</Button>
-              <Button variant="outline" size="sm" className="flex-1 h-8 text-xs border-bd bg-pn text-slate-600" onClick={() => onReorder?.(item)}>
-                <Sparkles className="h-3 w-3 mr-1" />재발주 검토
-              </Button>
-            </div>
-          );
-        })()}
-      </div>
+      {/* §11.320 Phase 2 — 구 sticky footer(다음 조치) 제거. 액션 button 이 상태 배너 하단으로 이동
+          (inventory-context-primary-actions). 만료 case 의 폐기/검토 button 은 isExpiredLotWithQty
+          disposal-strip(line ~610) 에서 별도 노출 — 손대지 않음. */}
     </div>
   );
 }
