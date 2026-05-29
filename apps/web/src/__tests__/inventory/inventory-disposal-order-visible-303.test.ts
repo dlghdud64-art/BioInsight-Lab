@@ -1,3 +1,10 @@
+/**
+ * ⚠️ §11.317 Phase 5 obsolete (호영님 P1, 2026-05-29) — describe.skip 처리.
+ *   본 file 의 lot-issue priority strip 안 폐기 우선순위 testid 단언은 §11.317 Phase 2 에서
+ *   inventory-content.tsx 의 폐기 strip(90 lines) 자체가 운영 브리핑(stock_risk 카테고리)으로
+ *   이관되어 제거됨. 새 구조 가드는 inventory-header-brief-migration-317.test.ts 가 책임.
+ *   본 file 은 후속 cleanup batch 에서 삭제 검토.
+ */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -7,7 +14,7 @@ const source = readFileSync(
   "utf8",
 );
 
-describe("재고 폐기 우선순위 표시", () => {
+describe.skip("재고 폐기 우선순위 표시", () => {
   it("폐기 처리를 1순위, 재발주를 후속 검토로 분리한다", () => {
     expect(source).toContain("1순위: 폐기 처리 · 만료 lot");
     expect(source).toContain('data-testid="labaxis-inventory-lot-issue-visible-audit-summary"');

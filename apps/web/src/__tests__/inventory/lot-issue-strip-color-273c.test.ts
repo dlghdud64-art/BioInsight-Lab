@@ -1,4 +1,9 @@
 /**
+ * ⚠️ §11.317 Phase 5 obsolete (호영님 P1, 2026-05-29) — describe.skip 처리.
+ *   본 file 의 lot-issue priority strip 4 Badge 색상 단언은 §11.317 Phase 2 에서
+ *   strip(90 lines) 자체가 운영 브리핑(stock_risk)으로 이관 + 제거됨. 새 구조 가드는
+ *   inventory-header-brief-migration-317.test.ts. 후속 cleanup batch 에서 file 삭제 검토.
+ *
  * §11.273c #lot-issue-strip-color — 재고 관리 lot_issue priority strip 4 Badge
  *   색상 차별화 (긴급도 기반, 호영님 P0 spec)
  *
@@ -33,7 +38,7 @@ const INVENTORY = readFileSync(
   "utf8",
 );
 
-describe("§11.273c #1 — lot_issue strip 4 Badge 색상 차별화", () => {
+describe.skip("§11.273c #1 — lot_issue strip 4 Badge 색상 차별화", () => {
   it("§11.273c trace marker comment 존재", () => {
     expect(INVENTORY).toMatch(/§11\.273c/);
   });
@@ -64,7 +69,7 @@ describe("§11.273c #1 — lot_issue strip 4 Badge 색상 차별화", () => {
   });
 });
 
-describe("§11.273c #2 — invariant 보존 (canonical truth)", () => {
+describe.skip("§11.273c #2 — invariant 보존 (canonical truth)", () => {
   it("4 Badge data-testid 보존", () => {
     expect(INVENTORY).toMatch(/data-testid="labaxis-inventory-lot-issue-hold-count"/);
     expect(INVENTORY).toMatch(/data-testid="labaxis-inventory-lot-issue-immediate-count"/);

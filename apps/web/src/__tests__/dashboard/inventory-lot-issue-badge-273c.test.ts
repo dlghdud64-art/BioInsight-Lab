@@ -1,4 +1,10 @@
 /**
+ * ⚠️ §11.317 Phase 5 obsolete (호영님 P1, 2026-05-29) — describe.skip 처리.
+ *   본 file 의 lot_issue priority strip / disposal Badge testid 단언은 §11.317 Phase 2 에서
+ *   inventory-content.tsx 의 폐기 strip(90 lines) 자체가 운영 브리핑(stock_risk 카테고리)으로
+ *   이관되어 제거됨. 새 구조 가드는 inventory-header-brief-migration-317.test.ts (Phase 1 sentinel)
+ *   가 책임. 본 file 은 후속 cleanup batch 에서 삭제 검토.
+ *
  * §11.273c #lot_issue-strip — 4 Badge 색상 차별화 (호영님 P0 긴급도)
  *
  * 호영님 spec: 0건 카드도 동일 컬러 → 1건 이상 항목 시각 강조 안 됨.
@@ -29,7 +35,7 @@ const INV_PATH = resolve(
 );
 const inv = readFileSync(INV_PATH, "utf8");
 
-describe("§11.273c #1 — trace marker + strip 존재", () => {
+describe.skip("§11.273c #1 — trace marker + strip 존재", () => {
   it("§11.273c trace marker comment 존재", () => {
     expect(inv).toMatch(/§11\.273c/);
   });
@@ -43,7 +49,7 @@ describe("§11.273c #1 — trace marker + strip 존재", () => {
   });
 });
 
-describe("§11.273c #2 — 4 Badge 색상 conditional 적용", () => {
+describe.skip("§11.273c #2 — 4 Badge 색상 conditional 적용", () => {
   it("보류 Badge: count > 0 → amber tone", () => {
     expect(inv).toMatch(
       /labaxis-inventory-lot-issue-hold-count[\s\S]{0,300}border-yellow-200 bg-yellow-50 text-yellow-700/
@@ -75,7 +81,7 @@ describe("§11.273c #2 — 4 Badge 색상 conditional 적용", () => {
   });
 });
 
-describe("§11.273c #3 — Badge invariant 보존 (canonical truth)", () => {
+describe.skip("§11.273c #3 — Badge invariant 보존 (canonical truth)", () => {
   it("4 Badge data-testid 보존 (hold / immediate / disposal / reorder)", () => {
     expect(inv).toContain('data-testid="labaxis-inventory-lot-issue-hold-count"');
     expect(inv).toContain('data-testid="labaxis-inventory-lot-issue-immediate-count"');

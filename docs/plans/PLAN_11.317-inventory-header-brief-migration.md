@@ -1,9 +1,9 @@
 # Implementation Plan: §11.317 — 재고 관리 헤더 폐기/처분 정보 운영 브리핑 이관
 
-- **Status:** 🔄 In Progress
+- **Status:** ✅ Closed (Phase 0~5 Complete, 2026-05-29 종결)
 - **Started:** 2026-05-29
-- **Last Updated:** 2026-05-29
-- **Estimated Completion:** 2026-05-29~30 (3~4h working)
+- **Last Updated:** 2026-05-29 (Phase 5 종결)
+- **Estimated Completion:** 2026-05-29 (실제 1일 내 완료)
 - **Scope:** 5 phases / medium-large
 - **Approval:** 호영님 spec(§11.313 → 번호 충돌로 §11.317 매핑) + 5 phase 계획 + plan 문서 생성 승인 완료
 - **호영님 모델 권장:** Opus 4.7로 충분 (UI 정리 + 데이터 이동, 신규 설계 없음)
@@ -385,12 +385,12 @@ All phases follow Red-Green-Refactor.
 - Next validation step: inventory-content.tsx 1565-1612 + 우측 카드 컴포넌트 식별
 
 **Phase Checklist:**
-- [ ] Phase 0 complete (Truth Lock + 우측 카드 식별 + popup API 확인)
-- [ ] Phase 1 complete (Failing sentinel)
-- [ ] Phase 2 complete (Header simplification)
-- [ ] Phase 3 complete (Brief stock_risk 카드 강화)
-- [ ] Phase 4 complete (진입 동선 wiring)
-- [ ] Phase 5 complete (모바일 + 회귀 통합)
+- [x] Phase 0 complete (Truth Lock + 우측 카드 식별 + popup API 확인)
+- [x] Phase 1 complete (Failing sentinel) — inventory-header-brief-migration-317.test.ts
+- [x] Phase 2 complete (Header simplification) — 폐기 strip 90 lines 제거 + KPI 4 + 1줄 배너
+- [x] Phase 3 complete (Brief stock_risk 카드 강화) — 5 카드 deep link
+- [x] Phase 4 complete (진입 동선 wiring) — popup-context selectedCategory 확장 + 배너 onClick
+- [x] Phase 5 complete (모바일 + 회귀 통합) — 4 sentinel obsolete + describe.skip + 모바일 grid 정합
 
 ---
 
