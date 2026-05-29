@@ -6,6 +6,7 @@
  */
 
 import type { LabelParseResult } from "./label-parser";
+import { callGeminiWithFallback } from "./gemini-config";
 
 const GEMINI_API_KEY = process.env.GOOGLE_GEMINI_API_KEY ?? "";
 
@@ -56,27 +57,30 @@ export async function parseWithGemini(imageBase64: string): Promise<LabelParseRe
   const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
   const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
 
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-preview-04-17",
-    contents: [
-      {
-        role: "user",
-        parts: [
-          {
-            inlineData: {
-              mimeType,
-              data: base64Data,
+  // §11.315 — preview-04-17 폐기 → env-aware PRIMARY + 404 시 FALLBACK 재시도.
+  const response = await callGeminiWithFallback((model) =>
+    ai.models.generateContent({
+      model,
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              inlineData: {
+                mimeType,
+                data: base64Data,
+              },
             },
-          },
-          { text: PARSE_PROMPT },
-        ],
+            { text: PARSE_PROMPT },
+          ],
+        },
+      ],
+      config: {
+        temperature: 0.1,
+        maxOutputTokens: 512,
       },
-    ],
-    config: {
-      temperature: 0.1,
-      maxOutputTokens: 512,
-    },
-  });
+    }),
+  );
 
   const rawText = response.text ?? "";
 

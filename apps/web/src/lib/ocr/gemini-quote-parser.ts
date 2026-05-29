@@ -9,6 +9,8 @@
  * - Gemini 2.5 Flash: 네이티브 PDF 이해, 테이블/레이아웃/이미지 인식
  */
 
+import { callGeminiWithFallback } from "./gemini-config";
+
 const GEMINI_API_KEY = process.env.GOOGLE_GEMINI_API_KEY ?? "";
 
 const QUOTE_PARSE_PROMPT = `You are a vendor quote document parser for a laboratory procurement system.
@@ -105,8 +107,7 @@ export interface QuoteParseResult {
 }
 
 // ── Internal: Gemini API call + JSON extraction ──
-
-const GEMINI_MODEL = "gemini-2.5-flash-preview-04-17";
+// §11.315 — 모델 ID 는 lib/ocr/gemini-config 에서 env-aware 로 주입(preview 폐기 대응).
 
 async function callGeminiAndParse(
   mimeType: string,
@@ -119,22 +120,25 @@ async function callGeminiAndParse(
   const { GoogleGenAI } = await import("@google/genai");
   const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
-  const response = await ai.models.generateContent({
-    model: GEMINI_MODEL,
-    contents: [
-      {
-        role: "user",
-        parts: [
-          { inlineData: { mimeType, data: base64Data } },
-          { text: QUOTE_PARSE_PROMPT },
-        ],
+  // §11.315 — PRIMARY (env GEMINI_MODEL 또는 gemini-2.5-flash) + 404 시 FALLBACK 재시도.
+  const response = await callGeminiWithFallback((model) =>
+    ai.models.generateContent({
+      model,
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { inlineData: { mimeType, data: base64Data } },
+            { text: QUOTE_PARSE_PROMPT },
+          ],
+        },
+      ],
+      config: {
+        temperature: 0.1,
+        maxOutputTokens: 4096,
       },
-    ],
-    config: {
-      temperature: 0.1,
-      maxOutputTokens: 4096,
-    },
-  });
+    }),
+  );
 
   const rawText = response.text ?? "";
 

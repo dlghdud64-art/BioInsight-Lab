@@ -8,6 +8,7 @@
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
+import { callGeminiWithFallback } from "@/lib/ocr/gemini-config";
 
 const GEMINI_API_KEY = process.env.GOOGLE_GEMINI_API_KEY ?? "";
 
@@ -112,16 +113,19 @@ export async function POST(req: NextRequest) {
 
     const userMessage = `다음 BOM 텍스트를 파싱하여 구조화된 JSON으로 변환해 주세요:\n\n${text.slice(0, 5000)}`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-preview-04-17",
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: BOM_PARSE_SYSTEM_PROMPT + "\n\n" + userMessage }],
-        },
-      ],
-      config: { temperature: 0.1, maxOutputTokens: 4096 },
-    });
+    // §11.315 — preview-04-17 폐기 → env-aware PRIMARY + 404 시 FALLBACK 재시도.
+    const response = await callGeminiWithFallback((model) =>
+      ai.models.generateContent({
+        model,
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: BOM_PARSE_SYSTEM_PROMPT + "\n\n" + userMessage }],
+          },
+        ],
+        config: { temperature: 0.1, maxOutputTokens: 4096 },
+      }),
+    );
 
     const rawText = response.text ?? "";
     let jsonStr = rawText;

@@ -80,9 +80,12 @@ export async function POST(request: NextRequest) {
       ocrMetadata,
     });
   } catch (error: any) {
-    console.error("[parse-image] Error:", error?.message);
+    // §11.315 — raw Gemini JSON("models/... NOT_FOUND") 사용자 노출 차단.
+    //   raw 는 서버 로그(Sentry)로만, 응답은 friendly 메시지만.
+    console.error("[parse-image] Error:", error?.message, error);
+    const { friendlyGeminiErrorMessage } = await import("@/lib/ocr/gemini-config");
     return NextResponse.json(
-      { error: error?.message || "견적서 이미지 파싱에 실패했습니다." },
+      { error: friendlyGeminiErrorMessage("quote") },
       { status: 500 }
     );
   }
