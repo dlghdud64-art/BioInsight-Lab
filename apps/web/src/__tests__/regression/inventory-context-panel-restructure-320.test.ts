@@ -98,10 +98,11 @@ describe("§11.320 — 색상 §11.302 정합 (Phase 4 GREEN target)", () => {
 });
 
 describe("§11.320 — 인터랙션 wiring (Phase 4 GREEN target)", () => {
-  it("재주문 button → §11.303 재발주안 바텀시트 wiring (real action)", () => {
+  it("재주문 button → §11.303 재발주안 바텀시트 wiring (real action, onReorder prop 보존)", () => {
     const src = read(PATH);
-    // onReorderReview 또는 동일 prop, real handler reference
-    expect(src).toMatch(/onReorderReview|openReorderReview|reorderReviewSheet/);
+    // Phase 4 GREEN: 실제 prop 이름 onReorder (또는 변형). caller(inventory-content:2725 /
+    //   inventory-main:1958) 가 §11.303 재발주안 바텀시트 trigger 를 onReorder 핸들러 안에 wiring.
+    expect(src).toMatch(/onReorder\?\.\(item\)|onReorder\(item\)|onReorder\?:\s*\(/);
   });
 
   it("상태 배너 onClick → operationalBriefPopup.open (풀 패널 진입)", () => {

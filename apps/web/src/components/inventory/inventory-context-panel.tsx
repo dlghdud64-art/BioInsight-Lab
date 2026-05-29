@@ -341,11 +341,12 @@ function generateMockTransactions(item: ContextPanelItem): RecentTransaction[] {
 }
 
 /* ── Severity badge styling ── */
+// §11.320 Phase 4 — 위험/주의 톤을 §11.302 신호등 정합으로 swap (border 강조 제거, bg-{tone}-50 + text-{tone}-700).
 const SEVERITY_STYLE: Record<string, string> = {
-  critical: "bg-red-500/15 text-red-400 border-red-500/30",
-  high: "bg-yellow-500/15 text-yellow-700 border-yellow-500/30",
-  medium: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-  low: "bg-pg0/15 text-slate-400 border-slate-500/30",
+  critical: "bg-red-50 text-red-700",
+  high: "bg-yellow-50 text-yellow-700",
+  medium: "bg-blue-50 text-blue-700",
+  low: "bg-slate-50 text-slate-600",
 };
 
 const LOT_STATUS_STYLE: Record<string, string> = {
@@ -607,13 +608,14 @@ export function InventoryContextPanel({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 space-y-2">
               <div className="flex flex-wrap items-center gap-1.5">
-                <Badge className="border border-red-300 bg-white text-red-700 text-[10px] px-1.5 py-0">
+                {/* §11.320 Phase 4 — border 강조 제거 + §11.302 신호등 정합 (bg/text). */}
+                <Badge className="border-none bg-red-50 text-red-700 text-[10px] px-1.5 py-0">
                   만료
                 </Badge>
-                <Badge className="border border-red-300 bg-white text-red-700 text-[10px] px-1.5 py-0">
+                <Badge className="border-none bg-red-50 text-red-700 text-[10px] px-1.5 py-0">
                   사용 금지
                 </Badge>
-                <Badge className="border border-yellow-300 bg-white text-yellow-700 text-[10px] px-1.5 py-0">
+                <Badge className="border-none bg-yellow-50 text-yellow-700 text-[10px] px-1.5 py-0">
                   재주문은 폐기 후
                 </Badge>
               </div>
