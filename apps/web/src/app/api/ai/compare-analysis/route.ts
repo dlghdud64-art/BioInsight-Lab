@@ -7,6 +7,11 @@
 
 import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
+// §11.318 1d-1 — 환각 억제 데이터 게이트(가격/납기 ≥2 없으면 시나리오 미생성).
+import {
+  assessAnalysisDataAvailability,
+  type ScenarioType,
+} from "@/lib/ai/compare-analysis-data-gate";
 
 /**
  * §11.305 P0 hotfix (호영님 옵션 A, 2026-05-27):
@@ -115,6 +120,32 @@ function buildLocalAnalysis(products: ProductInput[]) {
   };
 }
 
+/** §11.318 1d-1 — 허용 시나리오로 필터(없는 축 전략 제거). 추천 1개 보정. */
+function filterScenarios<T extends { type: string; isRecommended: boolean }>(
+  scenarios: T[] | undefined,
+  allowed: ScenarioType[],
+): T[] {
+  const f = (scenarios ?? []).filter((s) => allowed.includes(s.type as ScenarioType));
+  if (f.length > 0 && !f.some((s) => s.isRecommended)) f[0].isRecommended = true;
+  return f;
+}
+
+/** §11.318 1d-1 — 데이터 부족 시 정직한 빈 분석(시나리오 0, 미확인 표기). */
+function buildSuppressedAnalysis(products: ProductInput[], reason: string) {
+  return {
+    aiSummary: reason,
+    dataState: "insufficient" as const,
+    scenarios: [] as Array<{ type: string; title: string; description: string; isRecommended: boolean }>,
+    productAnalysis: products.map((p) => ({
+      productId: p.id,
+      estimatedPrice: typeof p.price === "number" && p.price > 0 ? `${p.price.toLocaleString()}원` : "가격 미확인",
+      estimatedDelivery: p.leadTime ?? "납기 미확인",
+      status: "요청 가능" as const,
+      reason: "비교 데이터가 부족합니다. 견적 요청으로 정확한 조건을 확인하세요.",
+    })),
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
@@ -137,9 +168,22 @@ export async function POST(req: NextRequest) {
     // 최대 5개 제한
     const capped = products.slice(0, 5);
 
-    // API 키 없으면 로컬 fallback
+    // §11.318 1d-1 — 환각 억제 게이트: 가격/납기 데이터(같은 축 ≥2)가 없으면
+    //   Gemini 호출도 skip, 시나리오 0 + 정직한 빈 상태 반환(비용 0·환각 0).
+    const availability = assessAnalysisDataAvailability(capped);
+    if (availability.suppressed) {
+      return NextResponse.json({
+        success: true,
+        gated: true,
+        data: buildSuppressedAnalysis(capped, availability.reason),
+      });
+    }
+
+    // API 키 없으면 로컬 fallback (허용 시나리오로 필터)
     if (!GEMINI_API_KEY) {
-      return NextResponse.json({ success: true, data: buildLocalAnalysis(capped), fallback: true });
+      const local = buildLocalAnalysis(capped);
+      local.scenarios = filterScenarios(local.scenarios, availability.allowedScenarios);
+      return NextResponse.json({ success: true, data: local, fallback: true });
     }
 
     const userMessage = `다음 ${capped.length}개 제품을 분석해 주세요:\n${JSON.stringify(
@@ -173,7 +217,9 @@ export async function POST(req: NextRequest) {
       rawText = response.text ?? "";
     } catch (importErr) {
       console.warn("[compare-analysis] @google/genai 모듈 로드 실패, 로컬 fallback 사용:", importErr);
-      return NextResponse.json({ success: true, data: buildLocalAnalysis(capped), fallback: true });
+      const localFb = buildLocalAnalysis(capped);
+      localFb.scenarios = filterScenarios(localFb.scenarios, availability.allowedScenarios);
+      return NextResponse.json({ success: true, data: localFb, fallback: true });
     }
 
     // JSON 추출 (마크다운 코드블록 대응)
@@ -184,6 +230,11 @@ export async function POST(req: NextRequest) {
     }
 
     const parsed = JSON.parse(jsonStr);
+
+    // §11.318 1d-1 — Gemini 결과도 허용 시나리오로 필터(없는 축 전략 제거).
+    if (Array.isArray(parsed?.scenarios)) {
+      parsed.scenarios = filterScenarios(parsed.scenarios, availability.allowedScenarios);
+    }
 
     return NextResponse.json({ success: true, data: parsed });
   } catch (error) {
