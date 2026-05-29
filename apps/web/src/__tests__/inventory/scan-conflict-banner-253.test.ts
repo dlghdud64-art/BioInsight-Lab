@@ -1,5 +1,5 @@
 /**
- * §11.253 — 스마트 입고 (AI 스캔) 충돌 경고 메시지 강화 (case 3 = 이미 등록된 Lot).
+ * §11.253 — 스마트 재고 등록 (AI 라벨 스캔, §11.315-b 명칭 분리 정합) 충돌 경고 메시지 강화 (case 3 = 이미 등록된 Lot).
  *
  * 호영님 spec (5 요구사항 중 본 트랙 4개):
  *   ① 항목 특정 — matchedProduct.name + matchedInventory.lotNumber 명시.

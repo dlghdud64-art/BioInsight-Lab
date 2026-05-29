@@ -1359,7 +1359,7 @@ function InventoryPageContent() {
               { label: "재고 파일 가져오기", icon: <Upload className="h-3.5 w-3.5" />, onClick: () => setIsImportStagingOpen(true) },
               { label: "QR 스캔", icon: <QrCode className="h-3.5 w-3.5" />, onClick: () => router.push("/dashboard/inventory/scan") },
               { label: "라벨 인쇄", icon: <Printer className="h-3.5 w-3.5" />, onClick: () => handleBulkLabelPrint() },
-              { label: "스마트 입고", icon: <ScanLine className="h-3.5 w-3.5" />, onClick: () => setIsSmartReceiveOpen(true), separator: true },
+              { label: "스마트 재고 등록", icon: <ScanLine className="h-3.5 w-3.5" />, onClick: () => setIsSmartReceiveOpen(true), separator: true },
             ]}
           />
         </div>
@@ -1502,14 +1502,14 @@ function InventoryPageContent() {
                 }}
               />
 
-              {/* ── Primary CTAs: 품목 추가 + 스마트 입고 ── */}
+              {/* ── Primary CTAs: 품목 추가 + 스마트 재고 등록 (§11.315-b — 라벨 OCR 직접 등록, "스마트 입고"는 거래명세서/PO 입고용으로 분리) ── */}
               <Button onClick={() => setIsDialogOpen(true)} className="h-9 px-4 text-sm shadow-sm active:scale-95 transition-transform">
                 <Plus className="h-4 w-4 mr-1.5" />
                 품목 추가
               </Button>
               <Button onClick={() => setIsSmartReceiveOpen(true)} className="h-9 px-4 text-sm bg-blue-600 hover:bg-blue-700 text-white shadow-sm active:scale-95 transition-transform">
                 <Sparkles className="h-4 w-4 mr-1.5" />
-                스마트 입고
+                스마트 재고 등록
               </Button>
 
               {/* §11.297d D2 utility-desktop 더보기 */}

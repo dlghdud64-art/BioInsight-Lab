@@ -74,7 +74,7 @@ interface LabelScannerModalProps {
   onOpenChange: (open: boolean) => void;
   /** 스캔 결과를 입고 폼에 전달할 콜백 (기존 호환) */
   onScanComplete?: (result: ScanApiResponse) => void;
-  /** 스마트 입고: 모달 내에서 직접 입고 완료 콜백 */
+  /** §11.315-b — 스마트 재고 등록: 모달 내에서 직접 등록 완료 콜백 (라벨 OCR → 재고 직접 추가, PO 없음). */
   onDirectReceive?: (data: SmartReceiveFormData, scanResult: ScanApiResponse | null) => void;
 }
 
@@ -402,7 +402,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
             <ScanLine className="h-7 w-7 text-blue-600" />
           </div>
           <div className="text-center">
-            <h3 className="text-base font-bold text-slate-900">스마트 입고 (AI 스캔)</h3>
+            <h3 className="text-base font-bold text-slate-900">스마트 재고 등록 (AI 라벨 스캔)</h3>
             <p className="text-sm text-slate-500 mt-1">
               라벨이나 거래명세서를 촬영하면 자동으로 각고를 등록하세요.
             </p>
@@ -836,7 +836,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl p-0 bg-white text-slate-900">
           <SheetHeader className="px-4 pt-4 pb-2">
-            <SheetTitle className="text-base font-bold text-slate-900">스마트 입고 (AI 스캔)</SheetTitle>
+            <SheetTitle className="text-base font-bold text-slate-900">스마트 재고 등록 (AI 라벨 스캔)</SheetTitle>
           </SheetHeader>
           {content}
         </SheetContent>
@@ -850,7 +850,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
         <DialogHeader className="px-4 pt-4 pb-2">
           <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
             <ScanLine className="h-4 w-4 text-blue-600" />
-            스마트 입고 (AI 스캔)
+            스마트 재고 등록 (AI 라벨 스캔)
           </DialogTitle>
         </DialogHeader>
         {content}
