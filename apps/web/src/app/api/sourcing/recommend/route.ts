@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
       ...new Set(
         rawRecords
           .map((r: { quoteId: string | null }) => r.quoteId)
-          .filter((id): id is string => !!id),
+          .filter((id: string | null): id is string => !!id),
       ),
     ];
 
