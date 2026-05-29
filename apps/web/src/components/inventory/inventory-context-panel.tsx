@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -400,6 +401,10 @@ export function InventoryContextPanel({
 }: InventoryContextPanelProps) {
   // §11.320 Phase 2 — 상태 배너 onClick → operationalBriefPopup.open (풀 패널 진입)
   const operationalBriefPopup = useOperationalBriefPopup();
+  // §11.320 Phase 3 — LOT / 연결된 흐름 / 최근 수정 접기(default false). 정보 우선순위 명확화.
+  const [isLotSectionExpanded, setIsLotSectionExpanded] = useState(false);
+  const [isFlowSectionExpanded, setIsFlowSectionExpanded] = useState(false);
+  const [isHistorySectionExpanded, setIsHistorySectionExpanded] = useState(false);
   const lots = generateMockLots(item);
   const risks = generateMockRisks(item);
   const flows = generateMockConnectedFlows(item);
@@ -655,10 +660,10 @@ export function InventoryContextPanel({
           Phase 3~4 에서 상태 배너 sub-text 또는 운영 브리핑 풀 패널에서 활용 검토. */}
 
       <div id="brief-facts" className="px-5 py-4 space-y-5 scroll-mt-4">
-        {/* ── § 2. 핵심 근거 — A. Basic Info ── */}
+        {/* §11.320 Phase 3 — "핵심 근거" → "재고 현황" (라벨 의미 불명 해소) + KPI 4 → 3 (최단 Lot 제거).
+            카테고리/보관/위치/시험항목 InfoRow 4 → 1줄 메타로 압축. */}
         <section>
-          <SectionHeader icon={Package} label="핵심 근거" />
-          {/* §11.180 — RESOLVER 판별 근거 4-cell MetricCell grid (text-3xl 수치) */}
+          <SectionHeader icon={Package} label="재고 현황" />
           {(() => {
             const qtyTone: "ok" | "warn" | "danger" =
               item.currentQuantity === 0
@@ -675,50 +680,55 @@ export function InventoryContextPanel({
               expiryDays === null ? "neutral" : expiryDays < 0 ? "danger" : expiryDays <= 30 ? "warn" : "ok";
             const safetyValue =
               item.safetyStock !== null ? `${item.safetyStock} ${item.unit}` : "미설정";
-            const lotValue = item.lotNumber ?? "-";
             return (
-              <div className="grid grid-cols-2 gap-3 mt-3">
-                <MetricCell
-                  label="현재 수량"
-                  value={`${item.currentQuantity} ${item.unit}`}
-                  tone={qtyTone}
-                />
-                <MetricCell label="안전재고" value={safetyValue} tone="neutral" />
-                <MetricCell label="만료까지" value={expiryValue} tone={expiryTone} />
-                <MetricCell label="최단 Lot" value={lotValue} tone="neutral" />
+              <div className="grid grid-cols-3 gap-3 mt-3">
+                <div data-testid="inventory-context-kpi-current">
+                  <MetricCell
+                    label="현재 수량"
+                    value={`${item.currentQuantity} ${item.unit}`}
+                    tone={qtyTone}
+                  />
+                </div>
+                <div data-testid="inventory-context-kpi-safety-stock">
+                  <MetricCell label="안전재고" value={safetyValue} tone="neutral" />
+                </div>
+                <div data-testid="inventory-context-kpi-expiring-soon">
+                  <MetricCell label="만료 임박" value={expiryValue} tone={expiryTone} />
+                </div>
               </div>
             );
           })()}
-          {/* 보조 metadata — 카테고리/보관/위치/시험항목 (정보 보존) */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-3 pt-3 border-t border-bd/50">
-            <InfoRow label="카테고리">
-              <span className="text-slate-600">{item.category || "시약"}</span>
-            </InfoRow>
-            <InfoRow label="보관 조건">
-              <span className="text-slate-600 flex items-center gap-1">
-                <Thermometer className="h-3 w-3 text-slate-500" />
-                {formatStorageCondition(item.storageCondition)}
-              </span>
-            </InfoRow>
-            <InfoRow label="위치">
-              {item.location ? (
-                <span className="text-slate-600 flex items-center gap-1">
-                  <MapPin className="h-3 w-3 text-slate-500" />
-                  {item.location}
-                </span>
-              ) : (
-                <span className="text-yellow-700 text-[11px]">미지정</span>
-              )}
-            </InfoRow>
-            <InfoRow label="시험항목">
-              <span className="text-slate-600 text-[11px]">{item.testPurpose || "-"}</span>
-            </InfoRow>
-          </div>
+          {/* §11.320 Phase 3 — 카테고리/보관/위치/시험항목 1줄 메타 inline (구 grid-cols-2 4 InfoRow). */}
+          <p className="mt-3 pt-3 border-t border-bd/50 text-[11px] text-slate-500 leading-relaxed flex flex-wrap gap-x-3 gap-y-1">
+            <span><span className="text-slate-400">카테고리</span> {item.category || "시약"}</span>
+            <span className="flex items-center gap-0.5">
+              <Thermometer className="h-3 w-3 text-slate-400" />
+              {formatStorageCondition(item.storageCondition)}
+            </span>
+            <span className="flex items-center gap-0.5">
+              <MapPin className="h-3 w-3 text-slate-400" />
+              {item.location || "위치 미지정"}
+            </span>
+            {item.testPurpose && (
+              <span><span className="text-slate-400">시험항목</span> {item.testPurpose}</span>
+            )}
+          </p>
         </section>
 
-        {/* ── B. Lot Info ── */}
+        {/* §11.320 Phase 3 — Lot 정보 접기(default false). spec §3-3 LOT 펼치기 패턴. */}
         <section>
-          <SectionHeader icon={FlaskConical} label="Lot 정보" />
+          <div className="flex items-center justify-between">
+            <SectionHeader icon={FlaskConical} label={`Lot 정보 (${lots.length}건)`} />
+            <button
+              type="button"
+              onClick={() => setIsLotSectionExpanded((v) => !v)}
+              className="text-[10px] font-medium text-slate-500 hover:text-slate-900 transition-colors"
+              aria-expanded={isLotSectionExpanded}
+            >
+              {isLotSectionExpanded ? "접기 ▴" : "펼치기 ▾"}
+            </button>
+          </div>
+          {isLotSectionExpanded && (
           <div className="mt-2.5 space-y-2">
             {lots.map((lot) => (
               <div
@@ -773,6 +783,7 @@ export function InventoryContextPanel({
               </button>
             )}
           </div>
+          )}
         </section>
 
         {/* ── C. Operational Risk ── */}
@@ -802,9 +813,20 @@ export function InventoryContextPanel({
           </section>
         )}
 
-        {/* ── D. Connected Flow ── */}
+        {/* §11.320 Phase 3 — 연결된 흐름 접기(default false). spec §3-3 "최근 흐름 펼치기" 패턴. */}
         <section>
-          <SectionHeader icon={History} label="연결된 흐름" />
+          <div className="flex items-center justify-between">
+            <SectionHeader icon={History} label="연결된 흐름" />
+            <button
+              type="button"
+              onClick={() => setIsFlowSectionExpanded((v) => !v)}
+              className="text-[10px] font-medium text-slate-500 hover:text-slate-900 transition-colors"
+              aria-expanded={isFlowSectionExpanded}
+            >
+              {isFlowSectionExpanded ? "접기 ▴" : "펼치기 ▾"}
+            </button>
+          </div>
+          {isFlowSectionExpanded && (
           <div className="mt-2.5 space-y-2">
             {flows.map((flow, idx) => {
               const FlowIcon = FLOW_ICON[flow.type] || Info;
@@ -832,6 +854,7 @@ export function InventoryContextPanel({
               );
             })}
           </div>
+          )}
         </section>
 
         {/* ── E. Recent Transactions ── */}
@@ -956,9 +979,20 @@ export function InventoryContextPanel({
           </div>
         </section>
 
-        {/* ── H. Last Modified / Audit ── */}
+        {/* §11.320 Phase 3 — 최근 수정 이력 접기(default false). spec §3-3 "최근 수정 펼치기" 패턴. */}
         <section>
-          <SectionHeader icon={History} label="최근 수정 이력" />
+          <div className="flex items-center justify-between">
+            <SectionHeader icon={History} label="최근 수정 이력" />
+            <button
+              type="button"
+              onClick={() => setIsHistorySectionExpanded((v) => !v)}
+              className="text-[10px] font-medium text-slate-500 hover:text-slate-900 transition-colors"
+              aria-expanded={isHistorySectionExpanded}
+            >
+              {isHistorySectionExpanded ? "접기 ▴" : "펼치기 ▾"}
+            </button>
+          </div>
+          {isHistorySectionExpanded && (
           <div className="mt-2.5 rounded-lg border border-bd bg-pn px-3 py-2.5 space-y-1">
             <div className="flex items-center justify-between text-[11px]">
               <span className="text-slate-500">마지막 수정</span>
@@ -973,6 +1007,7 @@ export function InventoryContextPanel({
               <span className="text-slate-400">수량 조정 5→3</span>
             </div>
           </div>
+          )}
         </section>
       </div>
 
