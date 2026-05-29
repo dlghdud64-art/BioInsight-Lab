@@ -682,20 +682,66 @@ export function InventoryContextPanel({
               expiryDays === null ? "neutral" : expiryDays < 0 ? "danger" : expiryDays <= 30 ? "warn" : "ok";
             const safetyValue =
               item.safetyStock !== null ? `${item.safetyStock} ${item.unit}` : "미설정";
+            // §11.322 Phase 2 — 최단 LOT (expiryDate 가장 가까운 lot) 계산
+            const shortestLotLabel = (() => {
+              const lotsWithExpiry = lots.filter((l) => l.expiryDate);
+              if (lotsWithExpiry.length === 0) return lots[0]?.lotNumber ?? "-";
+              const sorted = [...lotsWithExpiry].sort(
+                (a, b) => new Date(a.expiryDate!).getTime() - new Date(b.expiryDate!).getTime(),
+              );
+              return sorted[0]?.lotNumber ?? "-";
+            })();
             return (
-              <div className="grid grid-cols-3 gap-3 mt-3">
-                <div data-testid="inventory-context-kpi-current">
-                  <MetricCell
-                    label="현재 수량"
-                    value={`${item.currentQuantity} ${item.unit}`}
-                    tone={qtyTone}
-                  />
+              // §11.322 Phase 2 — 인라인 라벨-값 row 4 (잘림 0, 단위 풀표기). 옛 grid-cols-3
+              //   + MetricCell 카드 제거 (위험은 텍스트 색상 text-red-600 만, 카드 테두리 0).
+              <div className="mt-3 space-y-1.5">
+                <div
+                  data-testid="inventory-context-kpi-current"
+                  className="flex justify-between items-center text-xs"
+                >
+                  <span className="text-slate-500">현재 수량</span>
+                  <span
+                    className={`font-semibold ${
+                      qtyTone === "danger"
+                        ? "text-red-600"
+                        : qtyTone === "warn"
+                          ? "text-yellow-700"
+                          : "text-slate-900"
+                    }`}
+                  >
+                    {item.currentQuantity} {item.unit}
+                  </span>
                 </div>
-                <div data-testid="inventory-context-kpi-safety-stock">
-                  <MetricCell label="안전재고" value={safetyValue} tone="neutral" />
+                <div
+                  data-testid="inventory-context-kpi-safety-stock"
+                  className="flex justify-between items-center text-xs"
+                >
+                  <span className="text-slate-500">안전재고</span>
+                  <span className="font-medium text-slate-700">{safetyValue}</span>
                 </div>
-                <div data-testid="inventory-context-kpi-expiring-soon">
-                  <MetricCell label="만료 임박" value={expiryValue} tone={expiryTone} />
+                <div
+                  data-testid="inventory-context-kpi-expiring-soon"
+                  className="flex justify-between items-center text-xs"
+                >
+                  <span className="text-slate-500">만료 임박</span>
+                  <span
+                    className={`font-medium ${
+                      expiryTone === "danger"
+                        ? "text-red-600"
+                        : expiryTone === "warn"
+                          ? "text-yellow-700"
+                          : "text-slate-700"
+                    }`}
+                  >
+                    {expiryValue}
+                  </span>
+                </div>
+                <div
+                  data-testid="inventory-context-kpi-shortest-lot"
+                  className="flex justify-between items-center text-xs"
+                >
+                  <span className="text-slate-500">최단 LOT</span>
+                  <span className="font-mono text-slate-700">{shortestLotLabel}</span>
                 </div>
               </div>
             );
