@@ -62,6 +62,8 @@ const CategoryDistributionCard = dynamic_import(
 );
 // §11.93 — 운영 바로가기 4 카드 (operator quick actions)
 import { OperatorQuickActions } from "@/components/dashboard/operator-quick-actions";
+// §11.308e — 스마트 입고 본문 awareness + status 카드 (호영님 P2 옵션 B).
+import { SmartReceivingStatusCard } from "@/components/dashboard/SmartReceivingStatusCard";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
 
 // ── Overlay 지원 경로 판별 ──
@@ -770,6 +772,14 @@ function DashboardPageInner() {
           receiving: stats.compareStats.purchaseToReceivingCount,
           inventory: stats.lowStockAlerts,
         }}
+      />
+
+      {/* §11.308e — 스마트 입고 본문 awareness + status 카드 (호영님 P2 옵션 B).
+          §11.308a-v2 가 진입을 Header(ScanLine) 로 승격한 뒤 본문 인지율
+          하락 → 본 카드로 awareness + at-a-glance pending + 입고 큐 진입.
+          canonical truth: display-only (Header modal 이 단일 스캔 source). */}
+      <SmartReceivingStatusCard
+        pendingHandoffCount={stats.compareStats.purchaseToReceivingCount}
       />
 
       {/* WorkQueueInbox 제거 — 3상태 중앙 패널이 대체 */}
