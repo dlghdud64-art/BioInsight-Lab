@@ -19,6 +19,13 @@ import {
   X, Sparkles, Upload, FileText, Edit,
 } from "lucide-react";
 import type { LabelParseResult } from "@/lib/ocr/label-parser";
+// §11.319 — capture-quality 휴리스틱(흐림/조명 게이트) + OCR 신뢰도 매핑.
+//   라이브 프레임 품질 평가는 웹 전용(canvas getImageData 픽셀 접근 가능).
+import {
+  assessFrameQuality,
+  mapOcrConfidence,
+  type FrameQuality,
+} from "@/lib/ocr/capture-quality";
 // §11.253b-1 — RelativeTimeText hydration-safe helper reuse (§11.212 lineage)
 //   "X분 전" / "X시간 전" 표시 — conflict banner 시간 정보 ⑤.
 import { RelativeTimeText } from "@/components/ui/relative-time-text";
@@ -219,6 +226,26 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
   }, [open, scanResult, broadcastEdit]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  /* ── §11.319 라이브 카메라 + capture-quality 게이트 ──
+   *  A안: 카메라/파일 업로드 토글(default 카메라). 흐림/조명 휴리스틱이
+   *  good=자동+수동+OCR / warn=수동+OCR(경고) / poor=차단+OCR 미호출("그래도 시도" 우회).
+   *  자동 캡처 default off(수동). 파일피커/드래그드롭/텍스트 입력 경로 보존.
+   */
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const analysisCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const captureRef = useRef<(force?: boolean) => void>(() => {});
+  const autoCaptureRef = useRef(false);
+  const qualityRef = useRef<FrameQuality | null>(null);
+  const goodStreakRef = useRef(0);
+  const [uploadMode, setUploadMode] = useState<"camera" | "file">("camera");
+  const [autoCapture, setAutoCapture] = useState(false);
+  const [quality, setQuality] = useState<FrameQuality | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  useEffect(() => {
+    autoCaptureRef.current = autoCapture;
+  }, [autoCapture]);
+
   /* ── 리셋 ── */
   const resetState = useCallback(() => {
     setStep("upload");
@@ -230,6 +257,11 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
     setManualMode(false);
     setManualText("");
     setConflictAck(false);
+    setQuality(null);
+    qualityRef.current = null;
+    setCameraError(null);
+    setUploadMode("camera");
+    setAutoCapture(false);
   }, []);
 
   useEffect(() => {
@@ -253,39 +285,143 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
     unit: data.matchedInventory?.unit || "개",
   });
 
-  /* ── 파일 → Gemini API 전송 ── */
+  /* ── base64(data URI) → scan-label API (파일/카메라 공통) ── */
+  const runScan = useCallback(async (base64: string) => {
+    setPreviewImage(base64);
+    setStep("scanning");
+    setError(null);
+    try {
+      const res = await csrfFetch("/api/inventory/scan-label", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64: base64 }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "분석 실패");
+      }
+      const data: ScanApiResponse = await res.json();
+      setScanResult(data);
+      setFormData(mapScanToForm(data));
+      setStep("review");
+    } catch (err) {
+      console.error("[LabelScanner] Gemini parse error:", err);
+      setError(err instanceof Error ? err.message : "라벨 분석 중 오류가 발생했습니다");
+      setStep("upload");
+    }
+  }, []);
+
+  /* ── 파일 → base64 → runScan ── */
   const processFile = async (file: File) => {
     const reader = new FileReader();
     reader.onload = async () => {
-      const base64 = reader.result as string;
-      setPreviewImage(base64);
-      setStep("scanning");
-      setError(null);
-
-      try {
-        const res = await csrfFetch("/api/inventory/scan-label", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imageBase64: base64 }),
-        });
-
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error || "분석 실패");
-        }
-
-        const data: ScanApiResponse = await res.json();
-        setScanResult(data);
-        setFormData(mapScanToForm(data));
-        setStep("review");
-      } catch (err) {
-        console.error("[LabelScanner] Gemini parse error:", err);
-        setError(err instanceof Error ? err.message : "라벨 분석 중 오류가 발생했습니다");
-        setStep("upload");
-      }
+      await runScan(reader.result as string);
     };
     reader.readAsDataURL(file);
   };
+
+  /* ── §11.319 라이브 카메라 lifecycle + 프레임 품질 분석 ── */
+  useEffect(() => {
+    if (!(open && step === "upload" && !manualMode && uploadMode === "camera")) {
+      return;
+    }
+    let stream: MediaStream | null = null;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+    let cancelled = false;
+
+    const stopCamera = () => {
+      if (intervalId) clearInterval(intervalId);
+      if (stream) stream.getTracks().forEach((t) => t.stop());
+      stream = null;
+    };
+
+    // good=수동+자동, warn=수동, poor=차단(force=true 우회 시에만 진행)
+    const capture = (force = false) => {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      if (!video || !canvas) return;
+      if (!force && qualityRef.current?.overall === "poor") return;
+      const w = video.videoWidth;
+      const h = video.videoHeight;
+      if (!w || !h) return;
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.drawImage(video, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+      stopCamera();
+      void runScan(dataUrl);
+    };
+    captureRef.current = capture;
+
+    const analyze = () => {
+      const video = videoRef.current;
+      if (!video || video.readyState < 2) return;
+      const SW = 64;
+      const SH = 64;
+      let c = analysisCanvasRef.current;
+      if (!c) {
+        c = document.createElement("canvas");
+        analysisCanvasRef.current = c;
+      }
+      c.width = SW;
+      c.height = SH;
+      const ctx = c.getContext("2d", { willReadFrequently: true });
+      if (!ctx) return;
+      ctx.drawImage(video, 0, 0, SW, SH);
+      const img = ctx.getImageData(0, 0, SW, SH);
+      const lum = new Uint8Array(SW * SH);
+      for (let i = 0, p = 0; i < img.data.length; i += 4, p++) {
+        lum[p] =
+          (0.299 * img.data[i] +
+            0.587 * img.data[i + 1] +
+            0.114 * img.data[i + 2]) |
+          0;
+      }
+      const q = assessFrameQuality({ data: lum, width: SW, height: SH });
+      qualityRef.current = q;
+      setQuality(q);
+      // 자동 캡처: good 이 연속 3프레임이면 트리거 (default off)
+      if (autoCaptureRef.current && q.overall === "good") {
+        goodStreakRef.current += 1;
+        if (goodStreakRef.current >= 3) {
+          goodStreakRef.current = 0;
+          capture(false);
+        }
+      } else {
+        goodStreakRef.current = 0;
+      }
+    };
+
+    (async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+          audio: false,
+        });
+        if (cancelled) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        setCameraError(null);
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play().catch(() => {});
+        }
+        intervalId = setInterval(analyze, 400);
+      } catch {
+        setCameraError(
+          "카메라를 사용할 수 없습니다. 파일 업로드로 진행하세요.",
+        );
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      stopCamera();
+    };
+  }, [open, step, manualMode, uploadMode, runScan]);
 
   /* ── 파일 선택/촬영 ── */
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -372,6 +508,8 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
         onChange={handleFileChange}
         className="hidden"
       />
+      {/* §11.319 캡처용 히든 canvas (라이브 프레임 → JPEG) */}
+      <canvas ref={canvasRef} className="hidden" />
 
       {/* ── 탭 인디케이터 ── */}
       <div className="flex border-b border-slate-200 px-4">
@@ -395,57 +533,185 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
         </button>
       </div>
 
-      {/* ═══ Step 1: 업로드 ═══ */}
+      {/* ═══ Step 1: 업로드 (카메라 / 파일 업로드 토글) ═══ */}
       {step === "upload" && !manualMode && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-5 p-6">
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center">
-            <ScanLine className="h-7 w-7 text-blue-600" />
-          </div>
+        <div className="flex-1 flex flex-col gap-4 p-5">
           <div className="text-center">
             <h3 className="text-base font-bold text-slate-900">스마트 재고 등록 (AI 라벨 스캔)</h3>
             <p className="text-sm text-slate-500 mt-1">
-              라벨이나 거래명세서를 촬영하면 자동으로 각고를 등록하세요.
+              라벨을 프레임 안에 맞춰 촬영하거나 이미지를 업로드하세요.
             </p>
           </div>
 
-          {/* 드래그 & 드롭 + 클릭 업로드 영역 */}
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            className={`w-full max-w-sm aspect-[4/3] rounded-xl border-2 border-dashed transition-all flex flex-col items-center justify-center gap-3 group cursor-pointer ${
-              isDragOver
-                ? "border-blue-500 bg-blue-100/50 scale-[1.02]"
-                : "border-slate-300 bg-slate-50 hover:border-blue-400 hover:bg-blue-50/50"
-            }`}
-          >
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
-              isDragOver ? "bg-blue-200" : "bg-slate-100 group-hover:bg-blue-100"
-            }`}>
-              <Upload className={`h-6 w-6 ${isDragOver ? "text-blue-600" : "text-slate-400 group-hover:text-blue-500"}`} />
-            </div>
-            <div className="text-center">
-              <p className="text-sm font-medium text-slate-700">클릭하여 이미지 업로드 또는 촬영</p>
-              <p className="text-xs text-slate-400 mt-0.5">시약 병의 라벨이나 앱에서 선명하게 찍어주세요</p>
-            </div>
-          </button>
+          {/* 모드 토글 */}
+          <div className="flex bg-slate-100 rounded-xl p-1">
+            <button
+              type="button"
+              onClick={() => setUploadMode("camera")}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-colors ${
+                uploadMode === "camera" ? "bg-white shadow-sm text-blue-600" : "text-slate-400"
+              }`}
+            >
+              <Camera className="h-3.5 w-3.5" />
+              카메라
+            </button>
+            <button
+              type="button"
+              onClick={() => setUploadMode("file")}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-colors ${
+                uploadMode === "file" ? "bg-white shadow-sm text-blue-600" : "text-slate-400"
+              }`}
+            >
+              <Upload className="h-3.5 w-3.5" />
+              파일 업로드
+            </button>
+          </div>
 
-          {error && (
-            <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 w-full max-w-sm">
-              <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-              {error}
+          {uploadMode === "camera" ? (
+            <div className="flex flex-col gap-3">
+              {cameraError ? (
+                <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-center">
+                  <p className="text-sm text-yellow-700">{cameraError}</p>
+                  <button
+                    type="button"
+                    onClick={() => setUploadMode("file")}
+                    className="mt-2 text-xs font-semibold text-blue-600 hover:text-blue-700"
+                  >
+                    파일 업로드로 전환
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-black">
+                    <video
+                      ref={videoRef}
+                      playsInline
+                      muted
+                      className="w-full h-full object-cover"
+                    />
+                    <div
+                      data-testid="camera-guide-frame"
+                      className="pointer-events-none absolute inset-6 border-2 border-white/70 rounded-lg"
+                    />
+                    {quality && (
+                      <div
+                        className={`absolute left-2 top-2 px-2 py-1 rounded-md text-[11px] font-medium ${
+                          quality.overall === "good"
+                            ? "bg-emerald-600/90 text-white"
+                            : quality.overall === "warn"
+                              ? "bg-yellow-500/90 text-white"
+                              : "bg-red-600/90 text-white"
+                        }`}
+                      >
+                        {quality.overall === "good"
+                          ? "양호"
+                          : quality.overall === "warn"
+                            ? "흔들림/조명 주의"
+                            : "흐림/조명 불량 — 재촬영"}
+                        {quality.reasons.length > 0
+                          ? ` · ${quality.reasons.join(", ")}`
+                          : ""}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 자동 캡처 토글 + 인라인 힌트 (default 수동) */}
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-2 text-xs text-slate-600">
+                      <input
+                        type="checkbox"
+                        checked={autoCapture}
+                        onChange={(e) => setAutoCapture(e.target.checked)}
+                      />
+                      자동 캡처
+                    </label>
+                    <span className="text-[11px] text-slate-400">
+                      💡 화면이 &lsquo;양호&rsquo;하면 자동 촬영 (기본: 수동)
+                    </span>
+                  </div>
+
+                  {/* 캡처 버튼 — poor 차단 */}
+                  <button
+                    type="button"
+                    onClick={() => captureRef.current(false)}
+                    disabled={quality?.overall === "poor"}
+                    className="flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+                  >
+                    <Camera className="h-4 w-4" />
+                    촬영
+                  </button>
+
+                  {quality?.overall === "poor" && (
+                    <button
+                      type="button"
+                      onClick={() => captureRef.current(true)}
+                      className="self-center text-xs text-slate-500 underline hover:text-slate-700"
+                    >
+                      그래도 시도 (OCR 강제 실행)
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {error && (
+                <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
+                  <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setManualMode(true)}
+                className="self-center flex items-center gap-2 text-xs text-slate-500 hover:text-slate-700 transition-colors"
+              >
+                <Type className="h-3.5 w-3.5" />
+                텍스트 직접 입력
+                <ChevronRight className="h-3 w-3" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-4">
+              {/* 드래그 & 드롭 + 클릭 업로드 영역 (기존 경로 보존) */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`w-full max-w-sm aspect-[4/3] rounded-xl border-2 border-dashed transition-all flex flex-col items-center justify-center gap-3 group cursor-pointer ${
+                  isDragOver
+                    ? "border-blue-500 bg-blue-100/50 scale-[1.02]"
+                    : "border-slate-300 bg-slate-50 hover:border-blue-400 hover:bg-blue-50/50"
+                }`}
+              >
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+                  isDragOver ? "bg-blue-200" : "bg-slate-100 group-hover:bg-blue-100"
+                }`}>
+                  <Upload className={`h-6 w-6 ${isDragOver ? "text-blue-600" : "text-slate-400 group-hover:text-blue-500"}`} />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-medium text-slate-700">클릭하여 이미지 업로드 또는 촬영</p>
+                  <p className="text-xs text-slate-400 mt-0.5">시약 병의 라벨이나 앱에서 선명하게 찍어주세요</p>
+                </div>
+              </button>
+
+              {error && (
+                <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 w-full max-w-sm">
+                  <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                  {error}
+                </div>
+              )}
+
+              <button
+                onClick={() => setManualMode(true)}
+                className="flex items-center gap-2 text-xs text-slate-500 hover:text-slate-700 transition-colors"
+              >
+                <Type className="h-3.5 w-3.5" />
+                텍스트 직접 입력
+                <ChevronRight className="h-3 w-3" />
+              </button>
             </div>
           )}
-
-          <button
-            onClick={() => setManualMode(true)}
-            className="flex items-center gap-2 text-xs text-slate-500 hover:text-slate-700 transition-colors"
-          >
-            <Type className="h-3.5 w-3.5" />
-            텍스트 직접 입력
-            <ChevronRight className="h-3 w-3" />
-          </button>
         </div>
       )}
 
@@ -525,7 +791,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
               <div className="flex items-center gap-2 flex-wrap">
                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                 <p className="text-sm font-semibold text-slate-900">AI 분석 완료</p>
-                {scanResult && <ConfidenceBadge level={scanResult.parsed.confidence} />}
+                {scanResult && <ConfidenceBadge level={mapOcrConfidence(scanResult.parsed.confidence)} />}
                 {scanResult?.ocrMetadata?.providerUsed && (
                   <ProviderBadge provider={scanResult.ocrMetadata.providerUsed} />
                 )}
