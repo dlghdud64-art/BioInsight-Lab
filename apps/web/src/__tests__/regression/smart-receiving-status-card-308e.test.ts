@@ -48,17 +48,20 @@ describe("SmartReceivingStatusCard", () => {
 });
 
 describe("dashboard priority banner wiring", () => {
-  it("adds one primary dashboard CTA and two secondary operational CTAs", () => {
+  it("keeps one first-click CTA at the top with state boundaries", () => {
     const src = read(PAGE_PATH);
 
     expect(src).toMatch(/data-testid="dashboard-priority-banner"/);
     expect(src).toMatch(/data-testid="dashboard-priority-primary-cta"/);
+    expect(src.match(/data-testid="dashboard-priority-primary-cta"/g)).toHaveLength(1);
+    expect(src).toMatch(/data-testid="dashboard-priority-first-badge"/);
     expect(src).toMatch(/data-testid="dashboard-priority-approval-badge"/);
     expect(src).toMatch(/data-testid="dashboard-priority-inactive-reason"/);
     expect(src).toMatch(/data-testid="dashboard-priority-flow-state"/);
     expect(src).toMatch(/data-testid="dashboard-priority-stage-badges"/);
-    expect(src).toMatch(/dashboard-priority-secondary-\$\{action\.id\}/);
-    expect(src).toMatch(/다음 액션/);
+    expect(src).toMatch(/dashboard-priority-secondary-state-\$\{action\.id\}/);
+    expect(src).not.toMatch(/dashboard-priority-secondary-\$\{action\.id\}/);
+    expect(src).toMatch(/가장 먼저 처리/);
     expect(src).toMatch(/비활성 사유/);
     expect(src).toMatch(/현재 단계/);
     expect(src).toMatch(/다음 단계/);

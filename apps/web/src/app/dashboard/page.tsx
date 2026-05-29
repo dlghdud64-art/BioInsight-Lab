@@ -628,6 +628,76 @@ function DashboardPageInner() {
         </div>
       </div>
 
+      <section
+        className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm md:p-4"
+        data-testid="dashboard-priority-banner"
+      >
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700"
+                data-testid="dashboard-priority-first-badge"
+              >
+                가장 먼저 처리
+              </span>
+              <span
+                className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700"
+                data-testid="dashboard-priority-approval-badge"
+              >
+                승인 필요 {approvalPendingCount}건
+              </span>
+            </div>
+            <h3 className="mt-1 text-base font-extrabold text-slate-900">
+              {primaryPriorityAction.label} {primaryPriorityAction.count}건
+            </h3>
+            <p
+              className="mt-1 text-[11px] font-medium text-slate-500"
+              data-testid="dashboard-priority-flow-state"
+            >
+              현재 단계: {primaryPriorityAction.label} · 다음 단계: {nextPriorityAction.label}
+            </p>
+            <p
+              className="mt-1 text-[11px] text-slate-500"
+              data-testid="dashboard-priority-inactive-reason"
+            >
+              비활성 사유: {inactiveReason}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-1.5" data-testid="dashboard-priority-stage-badges">
+              {priorityStageBadges.map((badge) => (
+                <span
+                  key={badge.label}
+                  className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-bold text-slate-600"
+                >
+                  {badge.label} {badge.value}건
+                </span>
+              ))}
+            </div>
+          </div>
+          <Link
+            href={primaryPriorityAction.href}
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-bold text-white transition-colors hover:bg-blue-700"
+            data-testid="dashboard-priority-primary-cta"
+          >
+            {primaryPriorityAction.icon}
+            {primaryPriorityAction.label} {primaryPriorityAction.count}건 처리
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {secondaryPriorityActions.map((action) => (
+            <span
+              key={action.id}
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-600"
+              data-testid={`dashboard-priority-secondary-state-${action.id}`}
+            >
+              {action.icon}
+              {action.label} {action.count}건
+            </span>
+          ))}
+        </div>
+      </section>
+
       {/* §11.243 #2 — 호영님 P0: OnboardingHero (isOnboardingMode 한정).
           3 step 시각화 (품목 등록 → 견적 요청 → 비교 검토) + 체크마크 + CTA.
           데이터 1건+ 시 자동 숨김. canonical truth: onboardingSteps derive
@@ -809,84 +879,6 @@ function DashboardPageInner() {
           quotes = 진행중 견적 / purchases = 응답 검토 대기 (발주 전환
           candidate) / receiving = 발주→입고 funnel / inventory = 안전재고
           미달. canonical truth: stats 그대로 forward, count mutation 0. */}
-      <section
-        className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm md:p-4"
-        data-testid="dashboard-priority-banner"
-      >
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                다음 액션
-              </p>
-              <span
-                className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700"
-                data-testid="dashboard-priority-approval-badge"
-              >
-                승인 필요 {approvalPendingCount}건
-              </span>
-            </div>
-            <h3 className="mt-0.5 text-base font-extrabold text-slate-900">
-              {primaryPriorityAction.label} {primaryPriorityAction.count}건 먼저 처리
-            </h3>
-            <p
-              className="mt-1 text-[11px] font-medium text-slate-500"
-              data-testid="dashboard-priority-flow-state"
-            >
-              현재 단계: {primaryPriorityAction.label} · 다음 단계: {nextPriorityAction.label}
-            </p>
-            <p
-              className="mt-1 text-[11px] text-slate-500"
-              data-testid="dashboard-priority-inactive-reason"
-            >
-              비활성 사유: {inactiveReason}
-            </p>
-            <div className="mt-2 flex flex-wrap gap-1.5" data-testid="dashboard-priority-stage-badges">
-              {priorityStageBadges.map((badge) => (
-                <span
-                  key={badge.label}
-                  className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-bold text-slate-600"
-                >
-                  {badge.label} {badge.value}건
-                </span>
-              ))}
-            </div>
-          </div>
-          <Link
-            href={primaryPriorityAction.href}
-            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-bold text-white transition-colors hover:bg-blue-700"
-            data-testid="dashboard-priority-primary-cta"
-          >
-            {primaryPriorityAction.icon}
-            {primaryPriorityAction.label} {primaryPriorityAction.count}건 처리
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-        <div className="mt-3 grid gap-2 md:grid-cols-2">
-          {secondaryPriorityActions.map((action) => (
-            <Link
-              key={action.id}
-              href={action.href}
-              className="flex min-h-[44px] items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 transition-colors hover:border-blue-200 hover:bg-blue-50"
-              data-testid={`dashboard-priority-secondary-${action.id}`}
-            >
-              <span className="flex min-w-0 items-center gap-2">
-                <span className="text-slate-500">{action.icon}</span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-bold text-slate-900">
-                    {action.label} {action.count}건
-                  </span>
-                  <span className="block truncate text-[11px] text-slate-500">
-                    {action.helper}
-                  </span>
-                </span>
-              </span>
-              <ChevronRight className="h-4 w-4 flex-shrink-0 text-slate-400" />
-            </Link>
-          ))}
-        </div>
-      </section>
-
       <OperatorQuickActions
         counts={{
           quotes: stats.activeQuotes,
