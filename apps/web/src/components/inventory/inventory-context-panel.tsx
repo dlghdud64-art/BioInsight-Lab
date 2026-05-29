@@ -403,11 +403,16 @@ export function InventoryContextPanel({
   // §11.320 Phase 2 — 상태 배너 onClick → operationalBriefPopup.open (풀 패널 진입)
   const operationalBriefPopup = useOperationalBriefPopup();
   // §11.320 Phase 3 — LOT / 연결된 흐름 / 최근 수정 접기(default false). 정보 우선순위 명확화.
+  // §11.322 Phase 4 — 권장 액션 접기 추가(default false). 3차 위계 통일.
   const [isLotSectionExpanded, setIsLotSectionExpanded] = useState(false);
   const [isFlowSectionExpanded, setIsFlowSectionExpanded] = useState(false);
   const [isHistorySectionExpanded, setIsHistorySectionExpanded] = useState(false);
+  const [isActionsSectionExpanded, setIsActionsSectionExpanded] = useState(false);
   const lots = generateMockLots(item);
   const risks = generateMockRisks(item);
+  // §11.322 Phase 3 — D. 리스크 섹션 = 상태 배너 흡수(below_safety) 제외, 부가 리스크만.
+  //   inventorySummary narrative 입력은 전체 risks 그대로 유지(흡수 여부와 무관).
+  const visibleRisks = risks.filter((r) => r.type !== "below_safety");
   const flows = generateMockConnectedFlows(item);
   const actions = generateMockActions(item);
   const expiryDays = item.expiryDate
@@ -524,14 +529,16 @@ export function InventoryContextPanel({
             : tone === "warn"
               ? "만료 임박"
               : "정상";
+        // §11.322 Phase 3 — toneSub 정량 숫자 제거(결론 only). 숫자는 재고 현황 섹션이 유일한 출처.
+        //   toneAction 변수 + display 라인 함께 제거(중복 의미 — 결론은 toneSub 한 줄로 통합).
         const toneSub =
           tone === "danger"
-            ? `현재 ${item.currentQuantity} ${item.unit} / 안전재고 ${item.safetyStock ?? "-"} ${item.unit}`
+            ? isOutOfStock
+              ? "즉시 재주문 필요"
+              : "안전재고 보충 권장"
             : tone === "warn"
-              ? `만료까지 D-${expiryDays} · 현재 ${item.currentQuantity} ${item.unit}`
-              : `현재 ${item.currentQuantity} ${item.unit} / 안전재고 ${item.safetyStock ?? "-"} ${item.unit}`;
-        const toneAction =
-          tone === "danger" ? "재주문 권장" : tone === "warn" ? "우선 소진 권장" : "특이사항 없음";
+              ? "만료 임박 — 우선 소진 권장"
+              : "정상 운영 중";
         return (
           <div className="border-b border-bd/50 px-5 py-3 space-y-3">
             <div
@@ -551,8 +558,7 @@ export function InventoryContextPanel({
                 <span>{toneIcon}</span>
                 {toneLabel}
               </p>
-              <p className="text-[11px] mt-0.5 leading-snug">{toneSub}</p>
-              <p className="text-[11px] mt-1 font-semibold">→ {toneAction}</p>
+              <p className="text-[11px] mt-0.5 leading-snug font-semibold">{toneSub}</p>
             </div>
             {/* §11.320 — 액션 button 상태 배너 바로 아래 상단 이동 (구 sticky footer 제거). */}
             <div
@@ -835,12 +841,13 @@ export function InventoryContextPanel({
         </section>
 
         {/* ── C. Operational Risk ── */}
-        {risks.length > 0 && (
+        {/* §11.322 Phase 3 — D. 리스크 섹션 = visibleRisks(below_safety 흡수 제외). length 0 시 섹션 자체 생략. */}
+        {visibleRisks.length > 0 && (
           <section>
             <span id="brief-risks" className="scroll-mt-4" />
-            <SectionHeader icon={AlertTriangle} label="리스크 — 운영 리스크" count={risks.length} />
+            <SectionHeader icon={AlertTriangle} label="리스크 — 운영 리스크" count={visibleRisks.length} />
             <div className="mt-2.5 space-y-2">
-              {risks.map((risk, idx) => (
+              {visibleRisks.map((risk, idx) => (
                 <div
                   key={idx}
                   className="flex items-start gap-2.5 rounded-lg border border-bd bg-pn px-3 py-2.5"
