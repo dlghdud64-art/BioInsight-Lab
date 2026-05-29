@@ -1,7 +1,7 @@
 /**
  * §11.319 시약 라벨 스캔 — 캡처 품질 휴리스틱 (플랫폼 무의존 순수 모듈)
  *
- * ⚠️ DUPLICATED from apps/web/src/lib/ocr/capture-quality.ts
+ * ⚠️ DUPLICATED with apps/web/src/lib/ocr/capture-quality.ts
  * 변경 시 양쪽 동기화 필수. 향후 packages/shared 로 추출 예정 (§11.319 후속).
  *
  * Boundary A (호영님 2026-05-29 확정): 캡처 품질 = 클라이언트 이미지 처리.
