@@ -32,6 +32,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { CompareAnalysisDrawer } from "./_components/compare-analysis-drawer";
+import { SourcingRecommendationDrawer } from "./_components/sourcing-recommendation-drawer";
 import { CompareHistorySection, type CompareSessionSummary } from "./_components/compare-history-section";
 
 export default function ComparePage() {
@@ -51,6 +52,10 @@ function ComparePageContent() {
   const [showFieldSettings, setShowFieldSettings] = useState(false);
   const [showAnalysisDrawer, setShowAnalysisDrawer] = useState(false);
   const [existingSessionId, setExistingSessionId] = useState<string | undefined>(undefined);
+  // §11.318 Phase 1c — 대체품/벤더 찾기 드로어 state
+  const [showSourcingDrawer, setShowSourcingDrawer] = useState(false);
+  const [sourcingProductId, setSourcingProductId] = useState<string>("");
+  const [sourcingProductName, setSourcingProductName] = useState<string>("");
   const [selectedFields, setSelectedFields] = useState<string[]>([
     "name", "brand", "category", "price", "leadTime", "stockStatus", "minOrderQty", "vendorCount"
   ]);
@@ -566,11 +571,26 @@ function ComparePageContent() {
                           )}
                         </div>
                       </div>
+                      {/* §11.318 Phase 1c — 대체품/벤더 찾기 CTA */}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setSourcingProductId(product.id);
+                          setSourcingProductName(product.name || product.id);
+                          setShowSourcingDrawer(true);
+                        }}
+                        className="ml-2 text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-600/10"
+                        data-testid="sourcing-find-btn"
+                      >
+                        <Search className="h-3 w-3 mr-1" />
+                        대체품/벤더 찾기
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => removeProduct(product.id)}
-                        className="ml-4 text-xs hover:bg-red-600/10 hover:text-red-400 hover:border-red-700"
+                        className="ml-2 text-xs hover:bg-red-600/10 hover:text-red-400 hover:border-red-700"
                       >
                         <X className="h-3 w-3 mr-1" />
                         제거
@@ -984,6 +1004,19 @@ function ComparePageContent() {
       }}
       productIds={productIds}
       existingSessionId={existingSessionId}
+    />
+    {/* §11.318 Phase 1c — 대체품/벤더 추천 드로어 (same-canvas) */}
+    <SourcingRecommendationDrawer
+      open={showSourcingDrawer}
+      onOpenChange={(open) => {
+        setShowSourcingDrawer(open);
+        if (!open) {
+          setSourcingProductId("");
+          setSourcingProductName("");
+        }
+      }}
+      productId={sourcingProductId}
+      productName={sourcingProductName}
     />
     </MainLayout>
   );
