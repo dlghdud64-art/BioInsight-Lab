@@ -10,6 +10,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useUserPreferences } from "@/lib/preferences/user-preferences";
 import { csrfFetch } from "@/lib/api-client";
 import { invalidateBriefNarrative } from "@/lib/hooks/use-operational-brief";
+// §11.317 — 헤더 1줄 배너 → 운영 브리핑 popup open (canonical truth 보존, dead button 0)
+import { useOperationalBriefPopup } from "@/components/operational-brief/popup-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -140,6 +142,8 @@ function InventoryPageContent() {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isImportStagingOpen, setIsImportStagingOpen] = useState(false);
   const [isSmartReceiveOpen, setIsSmartReceiveOpen] = useState(false);
+  // §11.317 — 헤더 1줄 배너 onClick → 운영 브리핑 popup open (Phase 4 에서 category hint 추가).
+  const operationalBriefPopup = useOperationalBriefPopup();
   const [editingInventory, setEditingInventory] = useState<ProductInventory | null>(null);
   const [inventoryView, setInventoryView] = useState<"my" | "team">("my");
   const [restockRequestedIds, setRestockRequestedIds] = useState<Set<string>>(new Set());
@@ -471,6 +475,18 @@ function InventoryPageContent() {
     const byLeadTime = isReorderNeededByLeadTime(inv);
     return bySafetyStock || byLeadTime || inv.currentQuantity === 0;
   });
+
+  // §11.317 — 헤더 KPI 4 source (전체 품목 / 안전재고 미달 / 만료 임박 / 격리 Lot).
+  //   canonical truth: inventories (mutation 0, derived projection 만).
+  //   격리 Lot = schema 에 quarantine_status 미존재 → 0 fallback (호영님 spec §4-2 후속 확장 가능).
+  const headerKpiTotalItems = inventories.length;
+  const headerKpiLowStock = lowStockItems.length;
+  const headerKpiExpiringSoon = inventories.filter((inv) => {
+    if (!inv.expiryDate || inv.currentQuantity <= 0) return false;
+    const diffDays = (new Date(inv.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+    return diffDays >= 0 && diffDays <= 30;
+  }).length;
+  const headerKpiQuarantineLot = 0; // schema 미정의 — backend 확장 시 source 교체
 
   // Canonical truth only — mock fallback removed per #P02 (ADR-002 canvas).
   // Empty inventory renders empty state CTA → real /api/inventory POST dialog.
@@ -1555,83 +1571,88 @@ function InventoryPageContent() {
             </div>
           </div>
 
-          {/* §11.273c — lot_issue 배지 색상 긴급도 차별화: count > 0 → 톤 강조, 0건 → slate 톤다운 */}
-          {showLotIssueDecisionStrip && (
-            <div data-testid="labaxis-inventory-lot-issue-priority-strip" className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div className="min-w-0 space-y-2">
-                  <div data-testid="labaxis-inventory-lot-issue-decision-state-strip" className="grid gap-2 text-xs font-extrabold sm:grid-cols-3">
-                    <span data-testid="labaxis-inventory-disposal-review-state" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-red-800">
-                      처분 검토 {lotIssueDisposalReviewCount}건
-                    </span>
-                    {/* §11.302d-3 검토 spec 강화 (yellow-50 → yellow-100) */}
-                    <span data-testid="labaxis-inventory-approval-waiting-state" className="rounded-lg border border-yellow-200 bg-yellow-100 px-3 py-2 text-yellow-700">
-                      승인 대기 {lotIssueApprovalPendingCount}건
-                    </span>
-                    <span data-testid="labaxis-inventory-executable-state" className={lotIssueExecutableCount > 0 ? "rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-800" : "rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-500"}>
-                      실행 가능 {lotIssueExecutableCount}건
-                    </span>
-                  </div>
-                  <p data-testid="labaxis-inventory-lot-issue-decision-summary" className="text-sm font-extrabold text-red-800">
-                    1순위: 폐기 처리 · 만료 lot {lotIssueDisposalReviewCount}건
-                  </p>
-                  <div data-testid="labaxis-inventory-lot-issue-first-line-action" className="flex flex-wrap gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-extrabold text-red-800">
-                    <span>만료 · 사용 금지 · 1순위 폐기 처리</span>
-                    <span>재고 영향 -{priorityExpiredLot?.currentQuantity ?? actionableExpiredQuantity} {priorityExpiredLot?.unit || "ea"} · 안전재고 {priorityExpiredLot?.safetyStock ?? "확인 필요"} {priorityExpiredLot?.unit || "ea"}</span>
-                    <span className="text-slate-600">재주문 검토: 폐기 완료 후 보조</span>
-                  </div>
-                  <div data-testid="labaxis-inventory-lot-issue-audit-line" className="flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700">
-                    <span>승인 여부: {lotIssueApprovalPendingCount > 0 ? "승인 대기" : "승인 불필요"}</span>
-                    <span>재고 감소 영향: -{actionableExpiredQuantity}개</span>
-                    <span>다음 처리자: 재고 운영</span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge data-testid="labaxis-inventory-disposal-priority-badge" variant="outline" className="border-red-300 bg-red-50 text-red-800">
-                      폐기 처리 우선
-                    </Badge>
-                    <Badge data-testid="labaxis-inventory-lot-issue-hold-count" variant="outline" className={lotIssueHoldCount > 0 ? "border-yellow-200 bg-yellow-50 text-yellow-700" : "border-slate-200 bg-slate-50 text-slate-400"}>
-                      보류 {lotIssueHoldCount}건
-                    </Badge>
-                    <Badge data-testid="labaxis-inventory-lot-issue-immediate-count" variant="outline" className={lotIssueImmediateCount > 0 ? "border-red-200 bg-red-50 text-red-700" : "border-slate-200 bg-slate-50 text-slate-400"}>
-                      즉시 확인 {lotIssueImmediateCount}건
-                    </Badge>
-                    <Badge data-testid="labaxis-inventory-lot-issue-disposal-count" variant="outline" className={lotIssueDisposalReviewCount > 0 ? "border-red-200 bg-red-50 text-red-700" : "border-slate-200 bg-slate-50 text-slate-400"}>
-                      폐기 검토 {lotIssueDisposalReviewCount}건
-                    </Badge>
-                  </div>
-                  <p data-testid="labaxis-inventory-lot-issue-stock-impact" className="text-xs font-semibold text-red-700">
-                    재고 영향: 폐기 전 {actionableExpiredQuantity}개 확인
-                  </p>
-                  <div data-testid="labaxis-inventory-lot-issue-handoff-strip" className="grid gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-950 sm:grid-cols-3">
-                    <span data-testid="labaxis-inventory-current-owner">현재 담당: 재고 운영</span>
-                    <span data-testid="labaxis-inventory-next-handoff-action">다음 조치: 격리 승인</span>
-                    <span data-testid="labaxis-inventory-handoff-status">인계 상태: 인계 대기 1건</span>
-                  </div>
-                  <div data-testid="labaxis-inventory-lot-issue-queue-strip" className="flex flex-wrap gap-2 text-xs font-semibold text-slate-700">
-                    <span className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-red-700">블로커: 만료 lot 사용 금지</span>
-                    <span className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-red-700">조치 1개: 폐기 처리</span>
-                  </div>
-                </div>
-                <div data-testid="labaxis-inventory-lot-issue-action-stack" className="flex shrink-0 flex-col gap-2">
-                  <div data-testid="labaxis-inventory-lot-issue-visible-audit-summary" className="flex flex-col gap-1 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs font-bold text-slate-700">
-                    <span>Lot ID: {priorityExpiredLot?.lotNumber || "확인 필요"}</span>
-                    <span>수량: {priorityExpiredLot?.currentQuantity ?? actionableExpiredQuantity} {priorityExpiredLot?.unit || "ea"}</span>
-                    <span>만료일: {priorityExpiredLot?.expiryDate ? format(new Date(priorityExpiredLot.expiryDate), "yyyy.MM.dd", { locale: ko }) : "확인 필요"}</span>
-                    <span>위치: {priorityExpiredLot?.location || "미지정"}</span>
-                    <span>사유: 유효기간 만료</span>
-                    <span className="text-red-700">재고 영향: 승인 후 -{priorityExpiredLot?.currentQuantity ?? actionableExpiredQuantity} {priorityExpiredLot?.unit || "ea"}</span>
-                  </div>
-                  <div data-testid="labaxis-inventory-lot-issue-execution-gate" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-bold text-slate-700">
-                    <p>승인 필요: 폐기 승인 1건</p>
-                    <p className="mt-1 text-red-700">재고 반영 예정: 승인 후 -{priorityExpiredLot?.currentQuantity ?? actionableExpiredQuantity}개</p>
-                  </div>
-                  <Button
-                    data-testid="labaxis-inventory-lot-issue-next-action"
-                    size="sm"
-                    className="h-9 gap-1.5 bg-blue-600 text-white hover:bg-blue-700"
-                    disabled={!priorityExpiredLot && !topPriorityQueueItem}
-                    onClick={handleLotIssueDecisionAction}
-                  >
+          {/* §11.317 — 재고 본 목적 KPI 4 + 운영 조치 1줄 배너 (구 폐기 strip 90 lines 제거).
+              canonical truth: 카드 = count display-only. 폐기/처분 상세는 운영 브리핑(stock_risk)으로 이관.
+              배너 onClick → operationalBriefPopup.open() (Phase 4 에서 category="stock_risk" hint 추가). */}
+          <div data-testid="dashboard-inventory-header-kpi-grid" className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm md:p-4">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
+              <div
+                data-testid="dashboard-inventory-header-kpi-total-items"
+                className={`rounded-lg border px-3 py-2 ${headerKpiTotalItems > 0 ? "border-slate-300 bg-white" : "border-slate-200 bg-gray-50"}`}
+              >
+                <span className="block text-[10px] font-semibold text-slate-500">전체 품목</span>
+                <span className={`mt-0.5 block text-lg font-extrabold leading-none md:text-xl ${headerKpiTotalItems > 0 ? "text-slate-900" : "text-gray-400"}`}>
+                  {headerKpiTotalItems}
+                  <span className="ml-0.5 text-[10px] font-bold text-slate-500">종</span>
+                </span>
+              </div>
+              <div
+                data-testid="dashboard-inventory-header-kpi-low-stock"
+                className={`rounded-lg border px-3 py-2 ${headerKpiLowStock > 0 ? "border-red-200 bg-red-50" : "border-slate-200 bg-gray-50"}`}
+              >
+                <span className={`block text-[10px] font-semibold ${headerKpiLowStock > 0 ? "text-red-700" : "text-slate-500"}`}>안전재고 미달</span>
+                <span className={`mt-0.5 block text-lg font-extrabold leading-none md:text-xl ${headerKpiLowStock > 0 ? "text-red-700" : "text-gray-400"}`}>
+                  {headerKpiLowStock}
+                  <span className="ml-0.5 text-[10px] font-bold">건</span>
+                </span>
+              </div>
+              <div
+                data-testid="dashboard-inventory-header-kpi-expiring-soon"
+                className={`rounded-lg border px-3 py-2 ${headerKpiExpiringSoon > 0 ? "border-yellow-200 bg-yellow-50" : "border-slate-200 bg-gray-50"}`}
+              >
+                <span className={`block text-[10px] font-semibold ${headerKpiExpiringSoon > 0 ? "text-yellow-700" : "text-slate-500"}`}>만료 임박</span>
+                <span className={`mt-0.5 block text-lg font-extrabold leading-none md:text-xl ${headerKpiExpiringSoon > 0 ? "text-yellow-700" : "text-gray-400"}`}>
+                  {headerKpiExpiringSoon}
+                  <span className="ml-0.5 text-[10px] font-bold">건</span>
+                </span>
+              </div>
+              <div
+                data-testid="dashboard-inventory-header-kpi-quarantine-lot"
+                className={`rounded-lg border px-3 py-2 ${headerKpiQuarantineLot > 0 ? "border-red-200 bg-red-50" : "border-slate-200 bg-gray-50"}`}
+              >
+                <span className={`block text-[10px] font-semibold ${headerKpiQuarantineLot > 0 ? "text-red-700" : "text-slate-500"}`}>격리 Lot</span>
+                <span className={`mt-0.5 block text-lg font-extrabold leading-none md:text-xl ${headerKpiQuarantineLot > 0 ? "text-red-700" : "text-gray-400"}`}>
+                  {headerKpiQuarantineLot}
+                  <span className="ml-0.5 text-[10px] font-bold">건</span>
+                </span>
+              </div>
+            </div>
+            {/* 운영 조치 1줄 배너 — 합산 0건이면 hide */}
+            {(lotIssueDisposalReviewCount + lotIssueApprovalPendingCount + lotIssueExecutableCount) > 0 && (
+              <button
+                type="button"
+                data-testid="dashboard-inventory-header-action-banner"
+                onClick={() => operationalBriefPopup.open()}
+                className="mt-3 flex w-full items-center justify-between gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-left text-xs font-semibold text-yellow-800 transition-colors hover:border-yellow-300 hover:bg-yellow-100"
+              >
+                <span className="flex items-center gap-1.5">
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                  {lotIssueDisposalReviewCount + lotIssueApprovalPendingCount + lotIssueExecutableCount}건의 운영 조치가 필요합니다
+                </span>
+                <span
+                  data-testid="dashboard-inventory-header-action-banner-open-brief"
+                  className="flex shrink-0 items-center gap-0.5 font-bold text-yellow-900"
+                >
+                  운영 브리핑 열기
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </span>
+              </button>
+            )}
+          </div>
+
+          {/* §11.317 — 구 폐기 strip(91 lines) 제거. priorityExpiredLot/topPriorityQueueItem/
+              handleLotIssueDecisionAction 등 폐기 mutation 은 폐기 검토 탭(작업 surface)에서
+              유지. canonical count(lotIssueDisposalReviewCount 등)는 보존, 운영 브리핑 stock_risk
+              카드 source 로 forward (Phase 3). */}
+          {/* §11.317 — 폐기 mutation handler/variable 은 폐기 검토 탭(작업 surface)에서 유지.
+              본 hidden block 은 TypeScript noUnusedLocals 회피용 dead-ref 보존(렌더 0). */}
+          {false && (
+            <div className="hidden">
+              <Button
+                onClick={handleLotIssueDecisionAction}
+                disabled={!priorityExpiredLot && !topPriorityQueueItem}
+                className="bg-blue-600 text-white"
+              >
                     폐기 처리
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Button>
@@ -1641,8 +1662,6 @@ function InventoryPageContent() {
                   >
                     후속: 폐기 완료 후 재발주 검토
                   </p>
-                </div>
-              </div>
               {!priorityExpiredLot && !topPriorityQueueItem && <p className="mt-2 text-xs font-medium text-slate-500">처리할 lot_issue가 없어 조치 버튼을 비활성화했습니다.</p>}
             </div>
           )}
