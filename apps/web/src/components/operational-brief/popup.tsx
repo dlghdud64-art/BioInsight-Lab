@@ -233,6 +233,9 @@ export function OperationalBriefPopup() {
     close,
     selectedItemId,
     setSelectedItemId,
+    // §11.317 Phase 4 — context channel: 외부 trigger(예: 재고 헤더 배너)가 보내는 category hint.
+    selectedCategory: ctxSelectedCategory,
+    setSelectedCategory: setCtxSelectedCategory,
     isMinimized,
     toggleMinimize,
   } = useOperationalBriefPopup();
@@ -255,6 +258,20 @@ export function OperationalBriefPopup() {
       setSelectedItemId(null);
     }
   }, [isOpen, setSelectedItemId]);
+
+  // §11.317 Phase 4 — 외부 trigger 가 보낸 category hint 를 internal selectedCategory 와 sync.
+  //   useEffect 단방향(context → internal): caller(예: 재고 헤더 배너)가
+  //   operationalBriefPopup.open({ category: "stock_risk" }) 호출 시 popup 진입 즉시 해당
+  //   카테고리 노출. internal 변경 후 context 를 null 로 reset 하여 재진입 시 stale hint 차단.
+  useEffect(() => {
+    if (isOpen && ctxSelectedCategory) {
+      setSelectedCategory(ctxSelectedCategory);
+      setViewMode("list");
+      setSelectedItemId(null);
+      // hint 1회성 — 동일 카테고리 재open 도 sync 되도록 즉시 reset.
+      setCtxSelectedCategory(null);
+    }
+  }, [isOpen, ctxSelectedCategory, setCtxSelectedCategory, setSelectedItemId]);
 
   // #operational-brief-context-aware-category — popup open 시 pathname 자동
   //   인식 → 매핑되는 카테고리가 있으면 모달 skip 후 작업 큐 바로 진입.

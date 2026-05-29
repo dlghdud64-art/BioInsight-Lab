@@ -1622,7 +1622,7 @@ function InventoryPageContent() {
               <button
                 type="button"
                 data-testid="dashboard-inventory-header-action-banner"
-                onClick={() => operationalBriefPopup.open()}
+                onClick={() => operationalBriefPopup.open({ category: "stock_risk" })}
                 className="mt-3 flex w-full items-center justify-between gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-left text-xs font-semibold text-yellow-800 transition-colors hover:border-yellow-300 hover:bg-yellow-100"
               >
                 <span className="flex items-center gap-1.5">

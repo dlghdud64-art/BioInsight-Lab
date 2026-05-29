@@ -23,14 +23,23 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import type { InboxSourceModule } from "@/lib/ops-console/inbox-adapter";
 
 interface OperationalBriefPopupContextValue {
   isOpen: boolean;
-  open: () => void;
+  /**
+   * §11.317 Phase 4 — open() 확장: opts.category 지정 시 popup 열림과 함께 해당 카테고리 자동 진입.
+   * 기존 caller(인자 0)는 변경 0(backward compatible).
+   */
+  open: (opts?: { category?: InboxSourceModule }) => void;
   close: () => void;
   /** popup 내부에서 선택한 work object id (priority list → brief detail stack 전환 트리거). */
   selectedItemId: string | null;
   setSelectedItemId: (id: string | null) => void;
+  /** §11.317 Phase 4 — 외부 trigger 가 카테고리 자동 진입 hint 를 전달하는 channel.
+   *   popup.tsx 가 useEffect 로 변경 감지하여 internal selectedCategory 와 sync. */
+  selectedCategory: InboxSourceModule | null;
+  setSelectedCategory: (cat: InboxSourceModule | null) => void;
   /** §11.195 — popup 이 dock chip 으로 축소된 상태 여부. */
   isMinimized: boolean;
   /** §11.195 — minimize ↔ restore toggle. */
@@ -49,17 +58,26 @@ export function OperationalBriefPopupProvider({ children }: ProviderProps) {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   // §11.195 — minimize state (default = false, full sheet 노출)
   const [isMinimized, setIsMinimized] = useState(false);
+  // §11.317 Phase 4 — 외부 trigger 가 카테고리 자동 진입 hint 를 전달하는 state.
+  //   popup.tsx 가 useEffect 로 변경 감지하여 internal selectedCategory 와 단방향 sync.
+  const [selectedCategory, setSelectedCategory] = useState<InboxSourceModule | null>(null);
 
-  const open = useCallback(() => {
+  const open = useCallback((opts?: { category?: InboxSourceModule }) => {
     setIsOpen(true);
     // 다시 open 시 expanded 부터 (이전 minimize 잔존 state 차단)
     setIsMinimized(false);
+    // §11.317 Phase 4 — caller 가 category hint 전달 시 popup 진입 즉시 해당 카테고리 노출.
+    //   미전달 시 null 유지(category grid entry).
+    if (opts?.category !== undefined) {
+      setSelectedCategory(opts.category);
+    }
   }, []);
   const close = useCallback(() => {
     setIsOpen(false);
-    // popup close 시 selection + minimize 모두 reset — 다음 open 은
+    // popup close 시 selection + minimize + category hint 모두 reset — 다음 open 은
     // expanded category grid 부터 (canonical entry point).
     setSelectedItemId(null);
+    setSelectedCategory(null);
     setIsMinimized(false);
   }, []);
   const toggleMinimize = useCallback(() => {
@@ -73,10 +91,12 @@ export function OperationalBriefPopupProvider({ children }: ProviderProps) {
       close,
       selectedItemId,
       setSelectedItemId,
+      selectedCategory,
+      setSelectedCategory,
       isMinimized,
       toggleMinimize,
     }),
-    [isOpen, open, close, selectedItemId, isMinimized, toggleMinimize],
+    [isOpen, open, close, selectedItemId, selectedCategory, isMinimized, toggleMinimize],
   );
 
   return (
@@ -92,7 +112,7 @@ export function OperationalBriefPopupProvider({ children }: ProviderProps) {
  */
 const NOOP_VALUE: OperationalBriefPopupContextValue = {
   isOpen: false,
-  open: () => {
+  open: (_opts?: { category?: InboxSourceModule }) => {
     // dev 환경에서만 콘솔 알림 — Provider 미mount 시 silent 무시.
     if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
       // eslint-disable-next-line no-console
@@ -104,6 +124,9 @@ const NOOP_VALUE: OperationalBriefPopupContextValue = {
   close: () => {},
   selectedItemId: null,
   setSelectedItemId: () => {},
+  // §11.317 Phase 4 — Provider 미mount 시 selectedCategory hint 도 noop.
+  selectedCategory: null,
+  setSelectedCategory: () => {},
   isMinimized: false,
   toggleMinimize: () => {},
 };
