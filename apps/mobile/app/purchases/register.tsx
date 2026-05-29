@@ -74,21 +74,28 @@ function parsePastedText(text: string): { rows: ParsedRow[]; errors: string[] } 
 
 // ─── 간편입력 폼 ──────────────────────────────────────────────
 function QuickEntryForm() {
+  // §11.319 — 시약 라벨 스캔 결과 prefill 확장(additive). catalogNumber /
+  //   quantity / category 추가 수신. lot/expiry 는 입고(lot-receive) 단계 소관이라
+  //   purchase 등록에는 포함하지 않음(canonical 모델 보존).
   const params = useLocalSearchParams<{
     prefill?: string;
     productName?: string;
     vendor?: string;
     amount?: string;
     unit?: string;
+    catalogNumber?: string;
+    quantity?: string;
+    category?: string;
   }>();
 
   const [form, setForm] = useState({
     productName: params.productName ?? "",
     vendor: params.vendor ?? "",
     amount: params.amount ?? "",
-    quantity: "",
+    quantity: params.quantity ?? "",
     unit: params.unit ?? "ea",
-    category: "",
+    catalogNumber: params.catalogNumber ?? "",
+    category: params.category ?? "",
     notes: "",
   });
   const [purchaseDate, setPurchaseDate] = useState(new Date());
@@ -132,6 +139,7 @@ function QuickEntryForm() {
         amount: Number(form.amount),
         quantity: form.quantity ? Number(form.quantity) : undefined,
         unit: form.unit || "ea",
+        catalogNumber: form.catalogNumber.trim() || undefined,
         category: form.category.trim() || undefined,
         purchasedAt: purchaseDate.toISOString(),
         notes: form.notes.trim() || undefined,
@@ -182,6 +190,18 @@ function QuickEntryForm() {
           placeholder="공급업체명"
           value={form.vendor}
           onChangeText={(v) => update("vendor", v)}
+        />
+      </View>
+
+      {/* §11.319 — 라벨 스캔 prefill 표시/편집 (catalogNumber) */}
+      <View className="mb-4">
+        <Text className="text-sm font-medium text-slate-700 mb-1.5">카탈로그 번호</Text>
+        <TextInput
+          className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800"
+          placeholder="Cat. No. (선택)"
+          value={form.catalogNumber}
+          onChangeText={(v) => update("catalogNumber", v)}
+          autoCapitalize="characters"
         />
       </View>
 

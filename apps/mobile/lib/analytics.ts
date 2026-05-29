@@ -13,6 +13,11 @@ type AnalyticsEvent =
   | "qr_scan_unmatched"
   | "qr_scan_failed"
   | "qr_action_selected"
+  // §11.319 시약 라벨 스캔(OCR)
+  | "label_scan_started"
+  | "label_scan_success"
+  | "label_scan_unmatched"
+  | "label_scan_failed"
   // 푸시 알림
   | "push_opened"
   | "push_deeplink_success"

@@ -436,6 +436,62 @@ export async function lookupInventory(params: {
   return res.data?.inventoryId ?? null;
 }
 
+// ─── §11.319 시약 라벨 스캔 (OCR) ────────────────────────────────────
+//
+// Boundary A (호영님 2026-05-29): 모바일 = OCR 라벨 촬영 → web canonical
+//   POST /api/inventory/scan-label 재사용(별도 mobile route 0). 응답 shape 은
+//   web LabelScannerModal 의 ScanApiResponse 와 1:1. 신뢰도 기반 재촬영 권유는
+//   mapOcrConfidence(parsed.confidence) 로 처리. 클라이언트 흐림/조명 휴리스틱은
+//   웹 전용(Phase 3) — 모바일은 OCR 추출 신뢰도 기반.
+
+export interface LabelScanParsed {
+  productName: string | null;
+  catalogNo: string | null;
+  lotNo: string | null;
+  expirationDate: string | null;
+  quantity: string | null;
+  brand: string | null;
+  casNumber: string | null;
+  confidence: "high" | "medium" | "low";
+}
+
+export interface LabelScanResponse {
+  success: boolean;
+  parsed: LabelScanParsed;
+  matchedProduct: {
+    id: string;
+    name: string;
+    brand: string | null;
+    catalogNumber: string | null;
+  } | null;
+  matchedInventory: {
+    id: string;
+    lotNumber: string | null;
+    currentQuantity: number;
+    unit: string | null;
+  } | null;
+  ocrMetadata?: {
+    jobId: string | null;
+    providerUsed: "GEMINI" | "CLOUD_VISION_CLAUDE" | "REGEX";
+    cached: boolean;
+  } | null;
+  suggestions: {
+    isNewProduct: boolean;
+    isNewLot: boolean;
+    isExistingLot: boolean;
+    action: "restock" | "new_lot" | "new_product";
+  };
+}
+
+/**
+ * §11.319 — 시약 라벨 OCR. imageBase64(data URI) 를 web canonical
+ * POST /api/inventory/scan-label 로 전송. Bearer token 자동 주입(apiClient).
+ */
+export async function scanLabel(imageBase64: string): Promise<LabelScanResponse> {
+  const res = await apiClient.post("/api/inventory/scan-label", { imageBase64 });
+  return res.data as LabelScanResponse;
+}
+
 export function useCreateInventory() {
   const qc = useQueryClient();
   return useMutation({

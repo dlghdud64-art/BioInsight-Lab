@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  Image,
 } from "react-native";
 import { router } from "expo-router";
 import { CameraView, useCameraPermissions } from "expo-camera";
@@ -24,31 +26,97 @@ import {
   Package,
   AlertCircle,
   Keyboard,
+  Camera,
+  ScanLine,
+  RotateCcw,
+  CheckCircle2,
+  FlaskConical,
 } from "lucide-react-native";
-import { lookupInventory } from "../hooks/useApi";
+import { lookupInventory, scanLabel, type LabelScanResponse } from "../hooks/useApi";
+import { mapOcrConfidence } from "../lib/ocr/capture-quality";
 import { logEvent } from "../lib/analytics";
 
-type ScanState = "scanning" | "looking" | "matched" | "unmatched" | "manual" | "error";
+// §11.319 — 바코드(기존) + 라벨 OCR(신규) 두 모드. label-capture = 촬영/분석 중,
+//   label-review = 추출 결과 편집. 기존 barcode 상태머신 보존.
+type ScanState =
+  | "scanning"
+  | "looking"
+  | "matched"
+  | "unmatched"
+  | "manual"
+  | "error"
+  | "label-capture"
+  | "label-review";
+
+type ScanMode = "barcode" | "label";
 
 interface MatchResult {
   inventoryId: string;
   scannedData: string;
 }
 
+// §11.319 — 라벨 OCR 추출 결과 편집 폼
+interface LabelForm {
+  productName: string;
+  catalogNumber: string;
+  lotNumber: string;
+  expirationDate: string;
+  quantity: string;
+  brand: string;
+  casNumber: string;
+  unit: string;
+}
+
+function emptyLabelForm(): LabelForm {
+  return {
+    productName: "",
+    catalogNumber: "",
+    lotNumber: "",
+    expirationDate: "",
+    quantity: "1",
+    brand: "",
+    casNumber: "",
+    unit: "개",
+  };
+}
+
+function mapLabelToForm(r: LabelScanResponse): LabelForm {
+  return {
+    productName: r.parsed.productName || r.matchedProduct?.name || "",
+    catalogNumber: r.parsed.catalogNo || r.matchedProduct?.catalogNumber || "",
+    lotNumber: r.parsed.lotNo || "",
+    expirationDate: r.parsed.expirationDate || "",
+    quantity: r.parsed.quantity || "1",
+    brand: r.parsed.brand || r.matchedProduct?.brand || "",
+    casNumber: r.parsed.casNumber || "",
+    unit: r.matchedInventory?.unit || "개",
+  };
+}
+
 export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [state, setState] = useState<ScanState>("scanning");
+  const [scanMode, setScanMode] = useState<ScanMode>("barcode");
   const [torch, setTorch] = useState(false);
   const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
   const [unmatchedData, setUnmatchedData] = useState("");
   const [manualInput, setManualInput] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
+  // §11.319 — 라벨 OCR 상태
+  const cameraRef = useRef<CameraView>(null);
+  const [labelResult, setLabelResult] = useState<LabelScanResponse | null>(null);
+  const [labelForm, setLabelForm] = useState<LabelForm>(emptyLabelForm());
+  const [capturedUri, setCapturedUri] = useState<string | null>(null);
+
   const resetToScan = useCallback(() => {
     setState("scanning");
     setMatchResult(null);
     setUnmatchedData("");
     setErrorMessage("");
+    setLabelResult(null);
+    setLabelForm(emptyLabelForm());
+    setCapturedUri(null);
   }, []);
 
   const performLookup = useCallback(
@@ -87,10 +155,10 @@ export default function ScanScreen() {
 
   const handleBarCodeScanned = useCallback(
     async ({ data }: { data: string }) => {
-      if (state !== "scanning") return;
+      if (state !== "scanning" || scanMode !== "barcode") return;
       performLookup(data, "scan");
     },
-    [state, performLookup]
+    [state, scanMode, performLookup]
   );
 
   const handleManualSearch = useCallback(() => {
@@ -98,6 +166,75 @@ export default function ScanScreen() {
     if (!query) return;
     performLookup(query, "manual");
   }, [manualInput, performLookup]);
+
+  // §11.319 — 라벨 촬영 → OCR 분석
+  const handleCaptureLabel = useCallback(async () => {
+    if (state === "label-capture") return;
+    setState("label-capture");
+    logEvent("label_scan_started", {});
+    try {
+      const photo = await cameraRef.current?.takePictureAsync({
+        base64: true,
+        quality: 0.5,
+        skipProcessing: true,
+      });
+      if (!photo?.base64) {
+        throw new Error("촬영 이미지를 가져오지 못했습니다.");
+      }
+      setCapturedUri(photo.uri ?? null);
+      const dataUri = `data:image/jpeg;base64,${photo.base64}`;
+      const result = await scanLabel(dataUri);
+      setLabelResult(result);
+      setLabelForm(mapLabelToForm(result));
+      logEvent("label_scan_success", {
+        confidence: result.parsed.confidence,
+        matched: result.matchedProduct ? 1 : 0,
+        provider: result.ocrMetadata?.providerUsed ?? "REGEX",
+      });
+      setState("label-review");
+    } catch (err) {
+      logEvent("label_scan_failed", { error: String(err) });
+      setErrorMessage(
+        "라벨 분석에 실패했습니다.\n조명을 확보하고 라벨을 프레임 안에 맞춰 다시 촬영해주세요."
+      );
+      setState("error");
+    }
+  }, [state]);
+
+  const updateLabelField = useCallback((key: keyof LabelForm, value: string) => {
+    setLabelForm((f) => ({ ...f, [key]: value }));
+  }, []);
+
+  // §11.319 — 입고 prefill: 매칭 재고 있으면 입고(lot-receive), 없으면 신규 등록(register)
+  const confirmLabelReceive = useCallback(() => {
+    if (!labelForm.productName.trim()) {
+      setErrorMessage("제품명을 입력해주세요.");
+      return;
+    }
+    const matchedInventoryId = labelResult?.matchedInventory?.id;
+    if (matchedInventoryId) {
+      router.replace({
+        pathname: "/inventory/lot-receive",
+        params: {
+          id: matchedInventoryId,
+          lotNumber: labelForm.lotNumber,
+          prefillQty: labelForm.quantity,
+        },
+      });
+    } else {
+      router.replace({
+        pathname: "/purchases/register",
+        params: {
+          prefill: "1",
+          productName: labelForm.productName,
+          catalogNumber: labelForm.catalogNumber,
+          unit: labelForm.unit,
+          quantity: labelForm.quantity,
+          category: "시약",
+        },
+      });
+    }
+  }, [labelResult, labelForm]);
 
   const handleAction = useCallback(
     (action: string) => {
@@ -158,7 +295,7 @@ export default function ScanScreen() {
           카메라 권한 필요
         </Text>
         <Text className="text-sm text-slate-500 text-center mb-6 leading-5">
-          QR/바코드 스캔을 위해 카메라 접근 권한이 필요합니다.{"\n"}
+          QR/바코드 스캔 및 라벨 촬영을 위해 카메라 접근 권한이 필요합니다.{"\n"}
           권한을 허용하지 않으면 수동 검색을 이용할 수 있습니다.
         </Text>
 
@@ -197,6 +334,189 @@ export default function ScanScreen() {
           <Text className="text-sm text-slate-400 mt-2">뒤로 가기</Text>
         </Pressable>
       </View>
+    );
+  }
+
+  // ─── §11.319 라벨 OCR 검토/편집 ───
+  if (state === "label-review") {
+    const level = labelResult
+      ? mapOcrConfidence(labelResult.parsed.confidence)
+      : "low";
+    const lowConf = level === "low";
+    const confTone =
+      level === "high"
+        ? { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", label: "높은 신뢰도" }
+        : level === "medium"
+          ? { bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-700", label: "보통 신뢰도" }
+          : { bg: "bg-red-50", border: "border-red-200", text: "text-red-700", label: "낮은 신뢰도" };
+
+    return (
+      <KeyboardAvoidingView
+        className="flex-1 bg-white"
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <ScrollView
+          contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* 상태 헤더 */}
+          <View className="flex-row items-center gap-3 mb-4">
+            {capturedUri ? (
+              <Image
+                source={{ uri: capturedUri }}
+                className="w-14 h-14 rounded-lg border border-slate-200"
+              />
+            ) : (
+              <View className="w-14 h-14 rounded-lg bg-blue-50 items-center justify-center">
+                <FlaskConical size={22} color="#2563eb" />
+              </View>
+            )}
+            <View className="flex-1">
+              <View className="flex-row items-center gap-2">
+                <CheckCircle2 size={16} color="#059669" />
+                <Text className="text-sm font-bold text-slate-900">AI 분석 완료</Text>
+                <View className={`px-2 py-0.5 rounded-full border ${confTone.bg} ${confTone.border}`}>
+                  <Text className={`text-[11px] font-medium ${confTone.text}`}>
+                    신뢰도: {confTone.label}
+                  </Text>
+                </View>
+              </View>
+              <Text className="text-xs text-slate-400 mt-0.5">
+                추출 데이터를 확인하고 필요 시 수정하세요
+              </Text>
+            </View>
+          </View>
+
+          {/* 저신뢰 재촬영 권유 (비차단) */}
+          {lowConf && (
+            <View className="flex-row items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
+              <AlertCircle size={16} color="#ef4444" />
+              <Text className="flex-1 text-xs text-red-600 leading-5">
+                인식 신뢰도가 낮습니다. 조명을 확보하고 라벨을 프레임 안에 채워 재촬영하면
+                정확도가 올라갑니다. 그대로 진행할 수도 있습니다.
+              </Text>
+            </View>
+          )}
+
+          {/* DB 매칭 표시 */}
+          {labelResult?.matchedProduct && (
+            <View className="flex-row items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2.5 mb-4">
+              <Package size={14} color="#059669" />
+              <Text className="text-xs font-semibold text-emerald-700">
+                DB 매칭: {labelResult.matchedProduct.name}
+              </Text>
+            </View>
+          )}
+
+          {/* 편집 폼 */}
+          <View className="gap-3">
+            <View>
+              <Text className="text-xs font-medium text-slate-600 mb-1">제품명</Text>
+              <TextInput
+                className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800"
+                placeholder="예: Sodium Chloride"
+                value={labelForm.productName}
+                onChangeText={(v) => updateLabelField("productName", v)}
+              />
+            </View>
+
+            <View className="flex-row gap-3">
+              <View className="flex-1">
+                <Text className="text-xs font-medium text-slate-600 mb-1">카탈로그 번호</Text>
+                <TextInput
+                  className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800"
+                  placeholder="Cat. No."
+                  value={labelForm.catalogNumber}
+                  onChangeText={(v) => updateLabelField("catalogNumber", v)}
+                  autoCapitalize="characters"
+                />
+              </View>
+              <View className="flex-1">
+                <Text className="text-xs font-medium text-slate-600 mb-1">Lot 번호</Text>
+                <TextInput
+                  className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800"
+                  placeholder="Lot No."
+                  value={labelForm.lotNumber}
+                  onChangeText={(v) => updateLabelField("lotNumber", v)}
+                />
+              </View>
+            </View>
+
+            <View className="flex-row gap-3">
+              <View className="flex-1">
+                <Text className="text-xs font-medium text-slate-600 mb-1">유효기간</Text>
+                <TextInput
+                  className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800"
+                  placeholder="YYYY-MM-DD"
+                  value={labelForm.expirationDate}
+                  onChangeText={(v) => updateLabelField("expirationDate", v)}
+                />
+              </View>
+              <View className="w-28">
+                <Text className="text-xs font-medium text-slate-600 mb-1">수량</Text>
+                <TextInput
+                  className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800"
+                  placeholder="1"
+                  keyboardType="numeric"
+                  value={labelForm.quantity}
+                  onChangeText={(v) => updateLabelField("quantity", v)}
+                />
+              </View>
+            </View>
+
+            <View className="flex-row gap-3">
+              <View className="flex-1">
+                <Text className="text-xs font-medium text-slate-600 mb-1">제조사</Text>
+                <TextInput
+                  className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800"
+                  placeholder="제조사명"
+                  value={labelForm.brand}
+                  onChangeText={(v) => updateLabelField("brand", v)}
+                />
+              </View>
+              <View className="flex-1">
+                <Text className="text-xs font-medium text-slate-600 mb-1">CAS 번호</Text>
+                <TextInput
+                  className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800"
+                  placeholder="CAS No."
+                  value={labelForm.casNumber}
+                  onChangeText={(v) => updateLabelField("casNumber", v)}
+                />
+              </View>
+            </View>
+          </View>
+
+          {/* 액션 */}
+          <View className="flex-row gap-3 mt-6">
+            <Pressable
+              className="flex-row items-center justify-center gap-1.5 border border-slate-200 rounded-xl py-3.5 px-4"
+              onPress={resetToScan}
+            >
+              <RotateCcw size={15} color="#475569" />
+              <Text className="text-sm font-semibold text-slate-600">재촬영</Text>
+            </Pressable>
+            <Pressable
+              className={`flex-1 flex-row items-center justify-center gap-2 rounded-xl py-3.5 ${
+                labelForm.productName.trim() ? "bg-blue-600" : "bg-slate-200"
+              }`}
+              onPress={confirmLabelReceive}
+              disabled={!labelForm.productName.trim()}
+            >
+              <CheckCircle2
+                size={16}
+                color={labelForm.productName.trim() ? "white" : "#94a3b8"}
+              />
+              <Text
+                className={`text-sm font-semibold ${
+                  labelForm.productName.trim() ? "text-white" : "text-slate-400"
+                }`}
+              >
+                {labelResult?.matchedInventory?.id ? "입고 처리로 이동" : "신규 등록으로 이동"}
+              </Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     );
   }
 
@@ -430,10 +750,14 @@ export default function ScanScreen() {
     );
   }
 
-  // ─── 메인: 카메라 스캔 화면 ───
+  // ─── 메인: 카메라 스캔 화면 (바코드 + 라벨 OCR) ───
+  const isLabelMode = scanMode === "label";
+  const isBusy = state === "looking" || state === "label-capture";
+
   return (
     <View className="flex-1 bg-black">
       <CameraView
+        ref={cameraRef}
         style={{ flex: 1 }}
         facing="back"
         enableTorch={torch}
@@ -450,7 +774,11 @@ export default function ScanScreen() {
             "datamatrix",
           ],
         }}
-        onBarcodeScanned={state === "scanning" ? handleBarCodeScanned : undefined}
+        onBarcodeScanned={
+          scanMode === "barcode" && state === "scanning"
+            ? handleBarCodeScanned
+            : undefined
+        }
       >
         <View className="flex-1">
           {/* 상단 바 */}
@@ -462,7 +790,7 @@ export default function ScanScreen() {
               <X size={20} color="white" />
             </Pressable>
             <Text className="text-base font-bold text-white">
-              QR / 바코드 스캔
+              {isLabelMode ? "라벨 스캔" : "QR / 바코드 스캔"}
             </Text>
             <Pressable
               className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
@@ -476,6 +804,42 @@ export default function ScanScreen() {
             </Pressable>
           </View>
 
+          {/* 모드 토글 (바코드 / 라벨) */}
+          <View className="items-center">
+            <View className="flex-row bg-black/40 rounded-full p-1">
+              <Pressable
+                className={`flex-row items-center gap-1.5 px-4 py-2 rounded-full ${
+                  !isLabelMode ? "bg-white" : ""
+                }`}
+                onPress={() => setScanMode("barcode")}
+              >
+                <ScanLine size={14} color={!isLabelMode ? "#0f172a" : "white"} />
+                <Text
+                  className={`text-xs font-semibold ${
+                    !isLabelMode ? "text-slate-900" : "text-white"
+                  }`}
+                >
+                  바코드
+                </Text>
+              </Pressable>
+              <Pressable
+                className={`flex-row items-center gap-1.5 px-4 py-2 rounded-full ${
+                  isLabelMode ? "bg-white" : ""
+                }`}
+                onPress={() => setScanMode("label")}
+              >
+                <Camera size={14} color={isLabelMode ? "#0f172a" : "white"} />
+                <Text
+                  className={`text-xs font-semibold ${
+                    isLabelMode ? "text-slate-900" : "text-white"
+                  }`}
+                >
+                  라벨 촬영
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+
           {/* 가이드 프레임 */}
           <View className="flex-1 items-center justify-center">
             <View className="w-64 h-64 border-2 border-white/60 rounded-2xl">
@@ -484,30 +848,54 @@ export default function ScanScreen() {
               <View className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-2xl" />
               <View className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-2xl" />
             </View>
-            {state === "looking" && (
+            {isBusy && (
               <View className="absolute">
                 <ActivityIndicator color="white" size="large" />
               </View>
             )}
           </View>
 
-          {/* 하단: 안내 + 수동 검색 버튼 */}
+          {/* 하단: 모드별 안내 + 액션 */}
           <View className="items-center pb-12 gap-4">
-            <Text className="text-sm text-white/80">
-              시약 라벨의 QR 또는 바코드를 스캔하세요
-            </Text>
-            <Pressable
-              className="flex-row items-center gap-2 bg-white/20 rounded-full px-5 py-2.5"
-              onPress={() => {
-                setManualInput("");
-                setState("manual");
-              }}
-            >
-              <Keyboard size={14} color="white" />
-              <Text className="text-xs font-medium text-white">
-                직접 입력으로 검색
-              </Text>
-            </Pressable>
+            {isLabelMode ? (
+              <>
+                <Text className="text-sm text-white/80 text-center px-8">
+                  시약 라벨을 프레임 안에 채우고 촬영하세요{"\n"}
+                  AI가 제품명·Lot·유효기간을 추출합니다
+                </Text>
+                <Pressable
+                  className={`w-16 h-16 rounded-full items-center justify-center ${
+                    isBusy ? "bg-white/40" : "bg-white"
+                  }`}
+                  onPress={handleCaptureLabel}
+                  disabled={isBusy}
+                >
+                  {state === "label-capture" ? (
+                    <ActivityIndicator color="#0f172a" />
+                  ) : (
+                    <Camera size={26} color="#0f172a" />
+                  )}
+                </Pressable>
+              </>
+            ) : (
+              <>
+                <Text className="text-sm text-white/80">
+                  시약 라벨의 QR 또는 바코드를 스캔하세요
+                </Text>
+                <Pressable
+                  className="flex-row items-center gap-2 bg-white/20 rounded-full px-5 py-2.5"
+                  onPress={() => {
+                    setManualInput("");
+                    setState("manual");
+                  }}
+                >
+                  <Keyboard size={14} color="white" />
+                  <Text className="text-xs font-medium text-white">
+                    직접 입력으로 검색
+                  </Text>
+                </Pressable>
+              </>
+            )}
           </View>
         </View>
       </CameraView>
