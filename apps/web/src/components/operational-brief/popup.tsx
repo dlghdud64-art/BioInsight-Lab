@@ -67,6 +67,10 @@ import { useOperationalBriefPopup } from "./popup-context";
 import { useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { MetricCell } from "./metric-cell";
 import { formatRelativeKr } from "./relative-time";
+// §11.317 Phase 3 — stock_risk 카테고리 5 카드 deep link (폐기 검토 탭, real route)
+import Link from "next/link";
+
+const STOCK_RISK_LOT_ISSUE_HREF = "/dashboard/inventory?filter=lot_issue&tab=overview";
 
 /* §11.194 — 3-tier drill-down 카테고리 매핑 (canonical InboxSourceModule
    4종 → 운영자 친화 한국어 카테고리 카드). 호영님 prototype 시안 정합 —
@@ -741,6 +745,65 @@ function PopupCategoryListWithExpand({
           );
         })}
       </div>
+
+      {/* §11.317 Phase 3 — stock_risk 카테고리 강화: 폐기 영역 5 카드 (재고 헤더에서 이관).
+          canonical truth: 폐기 mutation 은 폐기 검토 탭(작업 surface)에서 실행 → 5 카드 액션 = deep link.
+          데이터는 popup 자체 store(items / stats[stock_risk]) 활용, Phase 5 에서 canonical hook 통합 검토. */}
+      {category === "stock_risk" && (
+        <div
+          className="px-4 py-3 border-b border-bd/40 space-y-2"
+          data-testid="operational-brief-stock-risk-disposal-section"
+        >
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            폐기 / 만료 / Lot 점검
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Link
+              href={STOCK_RISK_LOT_ISSUE_HREF}
+              data-testid="operational-brief-stock-risk-disposal-card"
+              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 transition-colors hover:border-red-300 hover:bg-red-100"
+            >
+              <p className="text-[11px] font-bold text-red-800">폐기 처분</p>
+              <p className="mt-0.5 text-[10px] text-red-700 leading-snug">처분 검토 · 승인 대기 · 실행 가능 통합</p>
+            </Link>
+            <Link
+              href={STOCK_RISK_LOT_ISSUE_HREF}
+              data-testid="operational-brief-stock-risk-expired-lot-card"
+              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 transition-colors hover:border-red-300 hover:bg-red-100"
+            >
+              <p className="text-[11px] font-bold text-red-800">만료 Lot</p>
+              <p className="mt-0.5 text-[10px] text-red-700 leading-snug">1순위 폐기 처리 — 사용 금지 lot</p>
+            </Link>
+            <Link
+              href={STOCK_RISK_LOT_ISSUE_HREF}
+              data-testid="operational-brief-stock-risk-disposal-impact-card"
+              className="rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 transition-colors hover:border-yellow-300 hover:bg-yellow-100"
+            >
+              <p className="text-[11px] font-bold text-yellow-800">폐기 영향 분석</p>
+              <p className="mt-0.5 text-[10px] text-yellow-700 leading-snug">재고 영향 · 안전재고 확인</p>
+            </Link>
+            <Link
+              href={STOCK_RISK_LOT_ISSUE_HREF}
+              data-testid="operational-brief-stock-risk-priority-card"
+              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 transition-colors hover:border-slate-300 hover:bg-slate-100"
+            >
+              <p className="text-[11px] font-bold text-slate-800">처리 우선순위</p>
+              <p className="mt-0.5 text-[10px] text-slate-600 leading-snug">폐기 처리 우선 · 보류 · 즉시 확인 · 폐기 검토</p>
+            </Link>
+            <Link
+              href={STOCK_RISK_LOT_ISSUE_HREF}
+              data-testid="operational-brief-stock-risk-lot-check-card"
+              className="col-span-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 transition-colors hover:border-blue-300 hover:bg-blue-100"
+            >
+              <p className="text-[11px] font-bold text-blue-900">Lot 점검 필요</p>
+              <p className="mt-0.5 text-[10px] text-blue-800 leading-snug">Lot ID · 수량 · 만료일 · 위치 · 사유</p>
+            </Link>
+          </div>
+          <p className="text-[10px] text-slate-500 leading-snug">
+            카드를 누르면 폐기 검토 탭(작업 surface)으로 이동하여 실제 처리합니다.
+          </p>
+        </div>
+      )}
 
       {items.length === 0 ? (
         <div className="p-10 text-center text-sm text-slate-500">
