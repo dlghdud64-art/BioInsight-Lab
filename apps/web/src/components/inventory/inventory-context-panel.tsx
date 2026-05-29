@@ -562,7 +562,7 @@ export function InventoryContextPanel({
               {tone === "danger" ? (
                 <Button
                   size="sm"
-                  className="flex-1 h-8 text-xs bg-blue-600 hover:bg-blue-500 text-white"
+                  className="flex-1 min-h-[44px] md:min-h-0 md:h-8 text-xs bg-blue-600 hover:bg-blue-500 text-white"
                   onClick={() => onReorder?.(item)}
                 >
                   <Sparkles className="h-3 w-3 mr-1" />
@@ -571,7 +571,7 @@ export function InventoryContextPanel({
               ) : tone === "warn" ? (
                 <Button
                   size="sm"
-                  className="flex-1 h-8 text-xs bg-yellow-600 hover:bg-yellow-500 text-white"
+                  className="flex-1 min-h-[44px] md:min-h-0 md:h-8 text-xs bg-yellow-600 hover:bg-yellow-500 text-white"
                   onClick={() => onReorder?.(item)}
                 >
                   ⚠ 우선 소진
@@ -580,7 +580,7 @@ export function InventoryContextPanel({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="flex-1 h-8 text-xs border-bd bg-pn text-slate-700"
+                  className="flex-1 min-h-[44px] md:min-h-0 md:h-8 text-xs border-bd bg-pn text-slate-700"
                   onClick={() => onEdit?.(item)}
                 >
                   <Package className="h-3 w-3 mr-1" />
@@ -590,7 +590,7 @@ export function InventoryContextPanel({
               <Button
                 size="sm"
                 variant="outline"
-                className="flex-1 h-8 text-xs border-bd bg-pn text-slate-600"
+                className="flex-1 min-h-[44px] md:min-h-0 md:h-8 text-xs border-bd bg-pn text-slate-600"
                 onClick={() => onEdit?.(item)}
               >
                 정보 수정
@@ -724,7 +724,7 @@ export function InventoryContextPanel({
             <button
               type="button"
               onClick={() => setIsLotSectionExpanded((v) => !v)}
-              className="text-[10px] font-medium text-slate-500 hover:text-slate-900 transition-colors"
+              className="text-[10px] font-medium text-slate-500 hover:text-slate-900 transition-colors min-h-[32px] px-2 -mx-2 inline-flex items-center"
               aria-expanded={isLotSectionExpanded}
             >
               {isLotSectionExpanded ? "접기 ▴" : "펼치기 ▾"}
@@ -822,7 +822,7 @@ export function InventoryContextPanel({
             <button
               type="button"
               onClick={() => setIsFlowSectionExpanded((v) => !v)}
-              className="text-[10px] font-medium text-slate-500 hover:text-slate-900 transition-colors"
+              className="text-[10px] font-medium text-slate-500 hover:text-slate-900 transition-colors min-h-[32px] px-2 -mx-2 inline-flex items-center"
               aria-expanded={isFlowSectionExpanded}
             >
               {isFlowSectionExpanded ? "접기 ▴" : "펼치기 ▾"}
@@ -988,7 +988,7 @@ export function InventoryContextPanel({
             <button
               type="button"
               onClick={() => setIsHistorySectionExpanded((v) => !v)}
-              className="text-[10px] font-medium text-slate-500 hover:text-slate-900 transition-colors"
+              className="text-[10px] font-medium text-slate-500 hover:text-slate-900 transition-colors min-h-[32px] px-2 -mx-2 inline-flex items-center"
               aria-expanded={isHistorySectionExpanded}
             >
               {isHistorySectionExpanded ? "접기 ▴" : "펼치기 ▾"}

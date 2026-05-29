@@ -1,9 +1,9 @@
 # Implementation Plan: §11.320 — 재고 상세 우측 패널 정보 구조 + 시각 정리
 
-- **Status:** 🔄 In Progress (Phase 0~1 작업 중)
+- **Status:** ✅ Complete (Phase 0~5 sandbox 작업 완료, Phase 5 호영님 push 대기)
 - **Started:** 2026-05-29
-- **Last Updated:** 2026-05-29
-- **Estimated Completion:** 2026-05-29~30 (4~6h working)
+- **Last Updated:** 2026-05-29 (Phase 5 closeout)
+- **Estimated Completion:** 2026-05-29 (1일 내 완주)
 - **Scope:** 5 phases / medium-large
 - **Approval:** 호영님 spec(§11.315 → 번호 충돌로 §11.320 매핑) + §11.317 패턴 따라 5 phase 진행 결정
 - **호영님 모델 권장:** Opus 4.7로 충분 (명확한 구조 정리 + 색상 통일 + 섹션 재배치, 신규 로직 0)
@@ -109,33 +109,37 @@
 ### Phase 0: Truth Lock ✅ COMPLETE
 - Status: [x] Complete (§0 evidence 9 섹션 매핑 + 호출부 + 외부 의존 확정)
 
-### Phase 1: Failing sentinel (RED)
-- Status: [ ] Pending | [ ] In Progress | [ ] Complete
+### Phase 1: Failing sentinel (RED) ✅ COMPLETE
+- Status: [x] Complete
 - 새 구조 단언: 상태 배너 testid / 액션 상단 / 탭 0 / KPI 3 / 접기 패턴 / "재고 현황" 라벨 / 색상 §11.302
 - Canonical 보존: caller 호출 시그니처 / item props / 폐기 검토 분리
 
-### Phase 2: Header + 상태 배너 + 액션 상단
-- Status: [ ] Pending | [ ] In Progress | [ ] Complete
+### Phase 2: Header + 상태 배너 + 액션 상단 ✅ COMPLETE
+- Status: [x] Complete
 - 탭 4 제거 + 상태 배너(상태별 분기 3 case) + 액션 button 상단 이동
 - 상황요약+리스크+권장액션+추천이유 → 상태 배너 통합
 
-### Phase 3: 재고 현황 KPI 3 + 섹션 접기
-- Status: [ ] Pending | [ ] In Progress | [ ] Complete
+### Phase 3: 재고 현황 KPI 3 + 섹션 접기 ✅ COMPLETE
+- Status: [x] Complete
 - "핵심 근거" → "재고 현황" 라벨, 4 KPI → 3 (최단 LOT 제거)
 - LOT/연결된 흐름/최근 수정 useState 접기 시작
 - 카테고리/보관/위치 1줄 메타 통합
 
-### Phase 4: 색상 통일 + 인터랙션 wiring
-- Status: [ ] Pending | [ ] In Progress | [ ] Complete
+### Phase 4: 색상 통일 + 인터랙션 wiring ✅ COMPLETE
+- Status: [x] Complete
 - 보라색/빨간 테두리/회색 글씨 강조 제거 → §11.302 신호등 정합
 - 재주문 → §11.303 재발주안 바텀시트 wiring (real action)
 - 상태 배너 클릭 → 운영 브리핑 풀 패널(operationalBriefPopup.open)
 
-### Phase 5: 모바일 + 회귀 통합
-- Status: [ ] Pending | [ ] In Progress | [ ] Complete
-- 모바일 375px above the fold 확인
-- sourcing-context-rail 회귀 0 확인
-- 기존 sentinel 영향 audit + 정합
+### Phase 5: 모바일 + 회귀 통합 ✅ COMPLETE (sandbox)
+- Status: [x] Complete (호영님 push 대기)
+- 액션 button 4개 모바일 min-h-[44px] md:min-h-0 md:h-8 (CLAUDE.md §8 정합)
+- 접기 button 3개 min-h-[32px] px-2 -mx-2 inline-flex (LOT/Flow/History hit area 확장)
+- sourcing-context-rail 회귀 0 grep evidence (SEVERITY_STYLE / SectionHeader 미공유)
+- 기존 sentinel 영향 audit:
+  · inventory-app-wide-traffic-light-283c-2: amber/orange 0 유지 ✓
+  · inventory-context-panel-disposal-priority: disposal-strip + isExpiredLotWithQty + reorder-after-disposal 보존 ✓
+  · operational-brief-* (4 file): caller-side 영향 0, popup-context import 추가만 ✓
 
 ## 9. Risk Assessment
 | Risk | 확률 | Mitigation |
@@ -151,21 +155,42 @@
 - Phase 5 fail: 모바일 grid + sentinel revert
 
 ## 11. Progress Tracking
-- Overall: 0% → Phase 0 ✅ 진행 후 20%
-- Current phase: Phase 0 → 1
-- Next: failing sentinel 작성
+- Overall: 100% (Phase 5 sandbox 작업 완료, 호영님 push 대기)
+- Current phase: Phase 5 closeout
+- Next: 호영님 Phase 5 push 후 §11.320 종결, 다음 트랙 진입
 
 **Phase Checklist:**
 - [x] Phase 0 complete (Truth Lock)
-- [ ] Phase 1 complete (Failing sentinel)
-- [ ] Phase 2 complete (Header + 상태 배너 + 액션 상단)
-- [ ] Phase 3 complete (KPI 3 + 섹션 접기)
-- [ ] Phase 4 complete (색상 + 인터랙션 wiring)
-- [ ] Phase 5 complete (모바일 + 회귀)
+- [x] Phase 1 complete (Failing sentinel)
+- [x] Phase 2 complete (Header + 상태 배너 + 액션 상단)
+- [x] Phase 3 complete (KPI 3 + 섹션 접기)
+- [x] Phase 4 complete (색상 + 인터랙션 wiring)
+- [x] Phase 5 complete (모바일 + 회귀, 호영님 push 대기)
 
 ## 12. Notes & Learnings
 
 **Implementation Notes:**
-- §11.317 5-phase 패턴 재사용 (호영님 phase별 push 가능)
+- §11.317 5-phase 패턴 재사용 (호영님 phase별 push 성공)
 - caller 2곳 props 보존 → file 1개 inline 재구성으로 risk 최소화
-- sourcing-context-rail 이식 의존성 = Phase 5 회귀 가드 필수
+- sourcing-context-rail 이식 의존성 = Phase 5 회귀 가드 통과 (SEVERITY_STYLE / SectionHeader 미공유 grep 0)
+
+**Blockers Encountered:**
+- [2026-05-29] onReorderReview prop 미존재 → 실제 prop 이름 onReorder. Phase 2 swap + Phase 4 sentinel 정확화
+- [2026-05-29] useOperationalBriefPopup 미import → Phase 2 hook + import 추가
+- [2026-05-29] useState 미import → Phase 3 react import 추가
+- [2026-05-29] Phase 4 sentinel docblock 자체가 false-positive 유발 → "border 강조 제거 + §11.302 신호등 정합" 으로 문구 정리
+
+**Phase별 commit/draft:**
+- Phase 0~1: COMMIT_11.320-phase0-1.md ✅ pushed
+- Phase 2: COMMIT_11.320-phase2-status-banner.md ✅ pushed
+- Phase 3: COMMIT_11.320-phase3-kpi-sections.md ✅ pushed
+- Phase 4: COMMIT_11.320-phase4-color-wiring.md ✅ pushed
+- Phase 5: COMMIT_11.320-phase5-mobile-closeout.md ⏳ 호영님 push 대기
+
+**Production effect (5 phase 합산):**
+- 9 섹션 세로 나열 → 5 섹션 (상태 배너 / 재고 현황 KPI 3 / LOT 접기 / 리스크 / 연결된 흐름 접기 / 최근 수정 접기)
+- 상황요약+리스크+권장액션+추천이유 4중 표시 → 상태 배너 1개로 통합
+- 액션 button sticky footer 최하단 → 상단 배너 직하 노출
+- 모바일 first fold 도달 (상태 배너 + 액션 + KPI 3 + 1줄 메타)
+- 색상 §11.302 신호등 정합 (보라/빨간테두리/회색강조 0)
+- 터치 영역 ≥ 44px (CLAUDE.md §8 정합)

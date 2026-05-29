@@ -124,3 +124,41 @@ describe("§11.320 — canonical 보존 (caller props + item mutation 0)", () =>
     expect(src).not.toMatch(/handleLotDisposal\(|executeDisposal\(/);
   });
 });
+
+// §11.320 Phase 5 — 모바일 정합 + sourcing-context-rail 회귀 0 audit (closeout)
+describe("§11.320 Phase 5 — 모바일 터치 영역 ≥ 44px (CLAUDE.md §8 정합)", () => {
+  it("액션 button 모바일 min-h-[44px] 정합 (md+ md:h-8 단순화)", () => {
+    const src = read(PATH);
+    // 액션 button 4개(재주문/우선 소진/입고 등록/정보 수정) 모두 min-h-[44px] md:min-h-0 md:h-8
+    const actionMinHCount = (src.match(/min-h-\[44px\] md:min-h-0 md:h-8/g) || []).length;
+    expect(actionMinHCount).toBeGreaterThanOrEqual(4);
+    // 옛 h-8 단독(모바일 32px) 잔존 0 — 액션 button 패턴 위반 금지
+    expect(src).not.toMatch(/flex-1 h-8 text-xs bg-(?:blue|yellow)-600/);
+  });
+
+  it("접기/펼치기 button 3개 hit area min-h-[32px] 확장", () => {
+    const src = read(PATH);
+    // LOT / Flow / History 3개 접기 button 모두 min-h-[32px] 적용
+    const expandHitArea = (src.match(/min-h-\[32px\] px-2 -mx-2 inline-flex items-center/g) || []).length;
+    expect(expandHitArea).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe("§11.320 Phase 5 — KPI grid 모바일 한 줄 (CLAUDE.md §1 정합)", () => {
+  it("KPI 3 grid-cols-3 — 모바일 포함 한 줄", () => {
+    const src = read(PATH);
+    // KPI 컨테이너 grid-cols-3 정합 (모바일에서도 grid-cols-2 되돌리지 않음)
+    expect(src).toMatch(/grid grid-cols-3 gap-3 mt-3/);
+  });
+});
+
+describe("§11.320 Phase 5 — sourcing-context-rail 회귀 0 audit", () => {
+  it("sourcing-context-rail 이식본 — InventoryContextPanel 내부 패턴(SEVERITY_STYLE / SectionHeader) 미공유", () => {
+    const RAIL_PATH = "src/app/_workbench/_components/sourcing-context-rail.tsx";
+    const railSrc = read(RAIL_PATH);
+    // 본 패널의 SEVERITY_STYLE Record 패턴이 sourcing rail 에 미이식 (의존 0)
+    expect(railSrc).not.toMatch(/const SEVERITY_STYLE:\s*Record/);
+    // 본 패널의 SectionHeader 컴포넌트가 sourcing rail 에 미공유 (별도 패턴)
+    expect(railSrc).not.toMatch(/function SectionHeader/);
+  });
+});
