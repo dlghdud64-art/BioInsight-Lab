@@ -976,8 +976,20 @@ export function InventoryContextPanel({
         )}
 
         {/* ── G. Recommended Actions ── */}
+        {/* §11.322 Phase 4 — E. 권장 액션 접기(default false). 3차 위계(LOT/Flow/History) 통일. */}
         <section>
-          <SectionHeader icon={Sparkles} label="권장 액션 + 추천 이유" />
+          <div className="flex items-center justify-between">
+            <SectionHeader icon={Sparkles} label="권장 액션 + 추천 이유" />
+            <button
+              type="button"
+              onClick={() => setIsActionsSectionExpanded((v) => !v)}
+              className="text-[10px] font-medium text-slate-500 hover:text-slate-900 transition-colors min-h-[32px] px-2 -mx-2 inline-flex items-center"
+              aria-expanded={isActionsSectionExpanded}
+            >
+              {isActionsSectionExpanded ? "접기 ▴" : "펼치기 ▾"}
+            </button>
+          </div>
+          {isActionsSectionExpanded && (
           <div className="mt-2.5 space-y-2">
             {visibleActions.map((action, idx) => (
               <div
@@ -1032,6 +1044,7 @@ export function InventoryContextPanel({
               </div>
             )}
           </div>
+          )}
         </section>
 
         {/* §11.320 Phase 3 — 최근 수정 이력 접기(default false). spec §3-3 "최근 수정 펼치기" 패턴. */}
