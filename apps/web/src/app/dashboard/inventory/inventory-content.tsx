@@ -1668,67 +1668,63 @@ function InventoryPageContent() {
 
           {/* 탭 바 — 하단 인디케이터 스타일 */}
           <Tabs value={activeInventoryTab} onValueChange={(v) => setActiveInventoryTab(v)} className="w-full">
-            <div className="flex items-center gap-0.5 border-b border-slate-200 mb-4 overflow-x-auto scrollbar-hide">
+            {/* §11.321 — 세그먼트 컨트롤 스타일 (옛 border-b + 하단 인디케이터 → 흰 배경 + shadow).
+                canonical 보존: 4 key / aria / testid / min-h-[44px] / badge / suffix / showLotIssueDecisionStrip 분기. */}
+            <div data-testid="dashboard-inventory-tab-segmented" className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 mb-4">
               {[
                 {
                   key: "manage",
-                  icon: <ListFilter className="w-3.5 h-3.5" />,
+                  icon: <ListFilter className="w-5 h-5" />,
                   label: "품목 관리",
                   badge: null,
                 },
                 {
                   key: "overview",
-                  icon: <LayoutGrid className="w-3.5 h-3.5" />,
+                  icon: <LayoutGrid className="w-5 h-5" />,
                   label: showLotIssueDecisionStrip ? "폐기 검토" : "운영 현황",
                   badge: showLotIssueDecisionStrip ? null : issuesCount > 0 ? issuesCount : null,
                   suffix: showLotIssueDecisionStrip ? null : "S",
                 },
                 {
                   key: "storage-location",
-                  icon: <MapPin className="w-3.5 h-3.5" />,
+                  icon: <MapPin className="w-5 h-5" />,
                   label: "보관 위치",
                   badge: null,
                 },
                 {
                   key: "flow",
-                  icon: <Truck className="w-3.5 h-3.5" />,
+                  icon: <Truck className="w-5 h-5" />,
                   label: "입출고 흐름",
                   badge: null,
                 },
-              ].map((tab) => (
-                /* §11.266d — inventory 1차 탭 44x44 touch target (§11.266 P1
-                    cluster 4/5, §11.264h family cross-cutting concern 확장).
-                    flex → inline-flex + min-h-[44px] 추가 → Apple HIG / Material
-                    / WCAG 2.1 SC 2.5.5 표준 정합. px-4 py-2.5 / text-sm / tone /
-                    active border / tab.icon / tab.label / tab.suffix / tab.badge /
-                    whitespace-nowrap 보존. */
-                <button
-                  key={tab.key}
-                  data-testid={tab.key === "overview" ? "labaxis-inventory-overview-tab" : tab.key === "manage" ? "labaxis-inventory-manage-tab" : undefined}
-                  onClick={() => {
-                    if (tab.key === "manage" && activeInventoryTab === "manage") {
-                      return;
-                    }
-                    if (tab.key === "overview" && activeInventoryTab === "overview" && showLotIssueDecisionStrip) {
-                      handleLotIssueDecisionAction();
-                      return;
-                    }
-                    setActiveInventoryTab(tab.key);
-                  }}
-                  aria-current={activeInventoryTab === tab.key ? "page" : undefined}
-                  aria-disabled={tab.key === "manage" && activeInventoryTab === "manage" ? true : undefined}
-                  disabled={tab.key === "manage" && activeInventoryTab === "manage"}
-                  title={tab.key === "manage" && activeInventoryTab === "manage" ? "현재 품목 관리 화면입니다. 운영 현황이나 조치 시작을 선택하면 화면이 전환됩니다." : tab.key === "overview" && activeInventoryTab === "overview" && showLotIssueDecisionStrip ? "현재 운영 현황입니다. 클릭하면 lot_issue 폐기 검토를 엽니다." : undefined}
-                  className={`relative inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap disabled:cursor-default disabled:opacity-100 ${activeInventoryTab === tab.key ? "text-blue-600" : "text-slate-400 hover:text-slate-600"}`}
-                >
-                  {tab.icon}
-                  {tab.label}
-                  {tab.key === "manage" && activeInventoryTab === "manage" && <span data-testid="labaxis-inventory-manage-current-reason" className="ml-1 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600">현재 화면</span>}
-                  {"suffix" in tab && tab.suffix && <span className="text-[10px] font-bold text-blue-500 ml-0.5">{tab.suffix}</span>}
-                  {tab.badge !== null && <span className="inline-flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-rose-500 text-white font-bold px-1 text-[10px] ml-0.5">{tab.badge}</span>}
-                  {activeInventoryTab === tab.key && <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-blue-600" />}
-                </button>
-              ))}
+              ].map((tab) => {
+                /* §11.266d / §11.321 — min-h-[44px] WCAG SC 2.5.5 / Apple HIG 보존. */
+                const isActive = activeInventoryTab === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    data-testid={tab.key === "overview" ? "labaxis-inventory-overview-tab" : tab.key === "manage" ? "labaxis-inventory-manage-tab" : undefined}
+                    onClick={() => {
+                      if (tab.key === "manage" && activeInventoryTab === "manage") return;
+                      if (tab.key === "overview" && activeInventoryTab === "overview" && showLotIssueDecisionStrip) {
+                        handleLotIssueDecisionAction();
+                        return;
+                      }
+                      setActiveInventoryTab(tab.key);
+                    }}
+                    aria-current={isActive ? "page" : undefined}
+                    aria-disabled={tab.key === "manage" && activeInventoryTab === "manage" ? true : undefined}
+                    disabled={tab.key === "manage" && activeInventoryTab === "manage"}
+                    title={tab.key === "manage" && activeInventoryTab === "manage" ? "현재 품목 관리 화면입니다. 운영 현황이나 조치 시작을 선택하면 화면이 전환됩니다." : tab.key === "overview" && activeInventoryTab === "overview" && showLotIssueDecisionStrip ? "현재 운영 현황입니다. 클릭하면 lot_issue 폐기 검토를 엽니다." : undefined}
+                    className={`flex-1 inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3 py-2 text-sm rounded-md transition-all duration-150 whitespace-nowrap disabled:cursor-default disabled:opacity-100 ${isActive ? "bg-white text-slate-900 shadow-sm font-semibold" : "bg-transparent text-gray-600 hover:bg-gray-200"}`}
+                  >
+                    <span className={isActive ? "text-blue-600" : "text-gray-500"}>{tab.icon}</span>
+                    {tab.label}
+                    {"suffix" in tab && tab.suffix && <span className={`text-[10px] font-bold ml-0.5 ${isActive ? "text-blue-600" : "text-gray-500"}`}>{tab.suffix}</span>}
+                    {tab.badge !== null && <span className="inline-flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-rose-500 text-white font-bold px-1 text-[10px] ml-0.5">{tab.badge}</span>}
+                  </button>
+                );
+              })}
             </div>
 
             {/* 통합 카드: 콘텐츠 */}
