@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from "next/server";
  * §11.305 P0 hotfix (호영님 옵션 A, 2026-05-27):
  *   AI 비교 분석 lock 영구 잔존 버그 해소.
  *
- *   root cause: 이전 구현이 enforceAction() 으로 mutation lock 을 획득한 뒤
+ *   root cause: 이전 구현이 enforceAction — mutation lock 을 획득한 뒤
  *   complete()/fail() 을 어느 경로에서도 호출하지 않아 lock 이 잔존.
  *   + targetEntityId 'compare-analysis' 하드코딩으로 전체 사용자가 동일
  *   concurrencyKey 공유 → 한 명이 분석하면 전원 차단 (multi-tenant 격리 위반).
@@ -121,8 +121,8 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
-    // §11.305 — AI 비교 분석은 read/분석 액션. enforceAction(mutation lock)
-    //   제거 — auth() 인증만으로 충분. 동시 실행 제한 불필요 (idempotent).
+    // §11.305 — AI 비교 분석은 read/분석 액션. enforceAction — mutation lock
+    //   완전 제거. auth() 인증만으로 충분. 동시 실행 제한 불필요 (idempotent).
 
     const body = await req.json();
     const { products } = body as { products: ProductInput[] };
