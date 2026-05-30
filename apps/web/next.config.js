@@ -10,6 +10,14 @@ const nextConfig = {
   // pdfjs-dist: pdf-parse v2의 종속 라이브러리 (번들링 시 DOM API 참조 오류 방지)
   experimental: {
     serverComponentsExternalPackages: ['pdf-parse', 'pdfjs-dist'],
+    // §11.326 (호영님 P0, 2026-05-30) — PDFKit 한글 폰트 Vercel 함수 번들 강제 포함.
+    //   Root cause: public/fonts/PretendardVariable.ttf 가 serverless 함수 번들에 자동 포함 안 됨
+    //   → fontPath 미존재 → silent Helvetica fallback → Vercel 에 Helvetica.afm 없음 → 500 ENOENT.
+    //   Fix: outputFileTracingIncludes 로 강제 포함 + generator 도 fallback 제거 (silent → throw).
+    outputFileTracingIncludes: {
+      '/api/quotes/[id]/generate-pdf': ['./public/fonts/**/*'],
+      '/api/orders/[id]/generate-pdf': ['./public/fonts/**/*'],
+    },
   },
 
   // 이미지 최적화 설정

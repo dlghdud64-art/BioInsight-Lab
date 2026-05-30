@@ -15,6 +15,7 @@
 
 import PDFDocument from "pdfkit";
 import { join } from "node:path";
+import { existsSync } from "node:fs";
 import { Buffer as NodeBuffer } from "node:buffer";
 
 /** 견적 요청서 PDF generator 입력. caller 는 items(product join) 포함 Quote 전달. */
@@ -45,14 +46,37 @@ export interface GenerateQuoteRequestPdfInput {
 /**
  * pdfkit + 한글 폰트로 견적 요청서 PDF Buffer 생성.
  *
- * Pretendard 폰트 path = apps/web/public/fonts/PretendardVariable.ttf
- * (host install 단계에서 추가). 미존재 시 Helvetica fallback (한글 깨짐).
+ * §11.326 (호영님 P0, 2026-05-30) — Pretendard 폰트 다중 경로 fallback + Helvetica fallback 제거.
+ *   옛: try { register } catch { Helvetica } → Vercel 번들에 Helvetica.afm 없으면 500 ENOENT silent.
+ *   신: 후보 경로 3개 (process.cwd() / monorepo root / __dirname relative) 차례로 시도 →
+ *       미발견 시 명확한 throw (한글 깨짐 silent 회피).
+ *   next.config.js outputFileTracingIncludes 와 함께 적용 (public/fonts/** Vercel 강제 포함).
  */
+function resolvePretendardPath(): string {
+  const candidates = [
+    join(process.cwd(), "public", "fonts", "PretendardVariable.ttf"),
+    join(process.cwd(), "apps", "web", "public", "fonts", "PretendardVariable.ttf"),
+    join(__dirname, "..", "..", "..", "public", "fonts", "PretendardVariable.ttf"),
+  ];
+  for (const path of candidates) {
+    try {
+      if (existsSync(path)) return path;
+    } catch {
+      // existsSync 자체 throw 는 무시 (다음 후보 시도)
+    }
+  }
+  throw new Error(
+    `[§11.326] Pretendard 폰트 미발견 — 후보: ${candidates.join(" | ")}. ` +
+      `Vercel: next.config.js experimental.outputFileTracingIncludes 확인. ` +
+      `로컬: apps/web/public/fonts/PretendardVariable.ttf 존재 확인.`,
+  );
+}
+
 export async function generateQuoteRequestPdf(
   input: GenerateQuoteRequestPdfInput,
 ): Promise<Buffer> {
   const { quote, requesterName, vendorName } = input;
-  const fontPath = join(process.cwd(), "public", "fonts", "PretendardVariable.ttf");
+  const fontPath = resolvePretendardPath();
 
   return new Promise<Buffer>((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margin: 48 });
@@ -63,13 +87,10 @@ export async function generateQuoteRequestPdf(
     );
     doc.on("error", reject);
 
-    // 한글 폰트 임베드 — Pretendard. 미존재 시 helvetica fallback.
-    try {
-      doc.registerFont("Korean", fontPath);
-      doc.font("Korean");
-    } catch {
-      doc.font("Helvetica");
-    }
+    // §11.326 — 한글 폰트 임베드 강제 (옛 Helvetica fallback 제거, silent 한글 깨짐 차단).
+    //   resolvePretendardPath() 가 미발견 시 throw, 여기 도달했으면 fontPath 유효 보장.
+    doc.registerFont("Korean", fontPath);
+    doc.font("Korean");
 
     // ── Header — 견적 요청서 (Quote Request / RFQ) ──
     doc.fontSize(22).text("견적 요청서 (Quote Request)", { align: "center" });

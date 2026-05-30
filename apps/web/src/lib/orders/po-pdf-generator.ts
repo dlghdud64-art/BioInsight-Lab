@@ -24,6 +24,7 @@
 // build-time 에서는 module 미존재 시 typecheck error (host install 후 해소).
 import PDFDocument from "pdfkit";
 import { join } from "node:path";
+import { existsSync } from "node:fs";
 // §11.239 — pdfkit type 정의가 global Buffer (typeof Buffer) 를 namespace
 // merge 로 가리는 케이스 존재. node:buffer 의 Buffer 를 NodeBuffer alias 로
 // import 해 static concat 안전 호출. runtime 동작 0 변경.
@@ -62,12 +63,34 @@ export interface GeneratePoPdfInput {
 /**
  * pdfkit + 한글 폰트로 PO PDF Buffer 생성.
  *
- * Pretendard 폰트 path = apps/web/public/fonts/PretendardVariable.ttf
- * (host install 단계에서 추가). 미존재 시 Helvetica fallback (한글 깨짐).
+ * §11.326 (호영님 P0, 2026-05-30) — Pretendard 폰트 다중 경로 fallback + Helvetica fallback 제거.
+ *   옛: try { register } catch { Helvetica } → Vercel 번들에 Helvetica.afm 없으면 500 ENOENT silent.
+ *   신: 후보 경로 3개 차례로 시도 → 미발견 시 명확한 throw (한글 깨짐 silent 회피).
+ *   quote-request-pdf-generator.ts 와 동일 패턴. next.config.js outputFileTracingIncludes 정합.
  */
+function resolvePretendardPath(): string {
+  const candidates = [
+    join(process.cwd(), "public", "fonts", "PretendardVariable.ttf"),
+    join(process.cwd(), "apps", "web", "public", "fonts", "PretendardVariable.ttf"),
+    join(__dirname, "..", "..", "..", "public", "fonts", "PretendardVariable.ttf"),
+  ];
+  for (const path of candidates) {
+    try {
+      if (existsSync(path)) return path;
+    } catch {
+      // existsSync 자체 throw 는 무시 (다음 후보 시도)
+    }
+  }
+  throw new Error(
+    `[§11.326] Pretendard 폰트 미발견 — 후보: ${candidates.join(" | ")}. ` +
+      `Vercel: next.config.js experimental.outputFileTracingIncludes 확인. ` +
+      `로컬: apps/web/public/fonts/PretendardVariable.ttf 존재 확인.`,
+  );
+}
+
 export async function generatePoPdf(input: GeneratePoPdfInput): Promise<Buffer> {
   const { order, requesterName } = input;
-  const fontPath = join(process.cwd(), "public", "fonts", "PretendardVariable.ttf");
+  const fontPath = resolvePretendardPath();
 
   return new Promise<Buffer>((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margin: 48 });
@@ -81,14 +104,10 @@ export async function generatePoPdf(input: GeneratePoPdfInput): Promise<Buffer> 
     );
     doc.on("error", reject);
 
-    // 한글 폰트 임베드 — Pretendard. 미존재 시 helvetica fallback.
-    try {
-      doc.registerFont("Korean", fontPath);
-      doc.font("Korean");
-    } catch {
-      // host 폰트 미설치 시 fallback — 한글 깨짐 위험. 운영 alarm.
-      doc.font("Helvetica");
-    }
+    // §11.326 — 한글 폰트 임베드 강제 (옛 Helvetica fallback 제거, silent 한글 깨짐 차단).
+    //   resolvePretendardPath() 가 미발견 시 throw, 여기 도달했으면 fontPath 유효 보장.
+    doc.registerFont("Korean", fontPath);
+    doc.font("Korean");
 
     // ── Header — 발주서 (Purchase Order) 한글 ──
     doc.fontSize(22).text("발주서 (Purchase Order)", { align: "center" });
