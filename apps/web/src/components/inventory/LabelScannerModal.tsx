@@ -866,7 +866,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                         expirationDate: formData.expirationDate,
                         brand: formData.brand,
                         casNumber: formData.casNumber,
-                        quantity: formData.quantity,
+                        quantity: formData.packSize ?? formData.receivedQuantity,
                       };
                       const res = await csrfFetch(`/api/ocr/correct/${jobId}`, {
                         method: "POST",
