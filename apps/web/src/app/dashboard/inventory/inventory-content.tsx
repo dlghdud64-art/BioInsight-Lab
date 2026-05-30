@@ -157,6 +157,9 @@ function InventoryPageContent() {
   const [statusFilter, setStatusFilter] = useState(searchParams.get("filter") ?? "all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  // §11.326 Phase 4 — 의심 입고수량 필터 + 배너 dismiss
+  const [suspectFilterActive, setSuspectFilterActive] = useState(false);
+  const [suspectBannerDismissed, setSuspectBannerDismissed] = useState(false);
 
   const activeFilterCount = [locationFilter, statusFilter, categoryFilter].filter((f) => f !== "all").length;
 
