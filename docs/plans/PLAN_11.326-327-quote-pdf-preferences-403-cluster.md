@@ -1,11 +1,46 @@
 # Implementation Plan: §11.326 + §11.327 — 견적 PDF 실패 + preferences 403 폭주 (P0 cluster)
 
-- **Status:** 🔄 In Progress (Phase 0 Truth audit 완료, Phase 1 즉시 차단 작성 중)
+- **Status:** 🔄 In Progress (§11.326 Phase 3 sandbox closeout 작성, §11.327 Phase 2 sandbox audit 완료 — 호영님 info/Vercel 회신 대기)
 - **Spec received:** 2026-05-30 (호영님 spec §11.324 + §11.325 둘 다 P0 긴급, 번호 충돌 매핑 §11.326 + §11.327)
 - **Started:** 2026-05-30 (§11.314 Phase 2 종결 후 진입)
-- **Estimated Completion:** Phase 1 즉시 (~30m sandbox), Phase 2 호영님 production info 회신 의존
+- **Last Updated:** 2026-05-30 (Phase 3 closeout sentinel + §11.327 audit 결과 추가)
 - **Scope:** P0 cluster (2 spec 통합 — 호영님 §6 "공통 인증 이슈면 합쳐서 처리" 정합)
 - **호영님 모델 권장:** Opus 4.7 (조사 + 즉시 차단), root cause 가 복잡하면 Opus 4.8 재검토
+
+## 진행 요약 (2026-05-30)
+
+| Batch | Status | 다음 |
+|---|---|---|
+| §11.326 Phase 0+1 | ✅ push 완료 | — |
+| §11.326 Phase 2 (commit 9abc1f07) | ✅ push 완료 | Vercel 결과 대기 |
+| §11.326 Phase 3 (sentinel + closeout) | 🔄 sandbox 작성 완료 | 시나리오 1 시 즉시 push |
+| §11.327 Phase 1 (commit f80f5e05) | ✅ push 완료 | — |
+| §11.327 Phase 2 sandbox audit | 🔄 완료 (가설 D 강화) | 호영님 production info 4 회신 |
+| §11.328 (입고 데이터 모델) | ⏳ 미진입 | SPEC file sync 대기 |
+
+## §11.327 Phase 2 sandbox audit 결과 (root cause 가설 강화)
+
+**middleware.ts 발견:**
+- line 5: "API route CSRF gate (Batch 10)" 명시
+- LABAXIS_CSRF_MODE env 기반 rollout
+- 5 fail event type: csrf_missing_token / csrf_token_mismatch / csrf_token_expired / csrf_origin_mismatch / csrf_token_format
+- CSRF 검증 fail 시 응답 코드 → 403 매핑 가능 (호영님 보는 403 ←→ middleware CSRF 403)
+
+**csrfFetch wrapper (lib/api-client.ts:311) 발견:**
+- POST/PUT/PATCH/DELETE 에 x-labaxis-csrf-token 자동 첨부
+- cookie 에서 토큰 읽기 → 없으면 /api/security/csrf-token bootstrap
+- #csrf-fetch-race-condition-fix: 403 응답 시 refreshCsrfToken → fresh !== csrfToken 면 1회 retry, fresh === csrfToken 면 skip (무한 loop 차단)
+
+**가설 강화:**
+- ⭐⭐ D (CSRF) — middleware CSRF gate 존재 + csrfFetch race-condition retry 1회 → **20+ 폭주는 다중 caller (7 page) 또는 useEffect feedback loop 추가 결합 시만 발생**
+- ⭐ F (useEffect feedback loop) — caller page 의 useEffect 가 query.data 변경 시 mutation trigger → response → cache update → 다시 useEffect → mutation 무한 (가장 유력한 second-order 원인)
+- ❌ A/B (세션 만료 / guest) — route 자체 401, 호영님 보는 403 != 401, middleware 매핑
+
+**호영님 4 info 회신 받으면 root cause 즉시 분기 (이미 spec 명시):**
+1. response body — csrf_* event 코드 매칭 → 가설 D 확정
+2. request headers — x-labaxis-csrf-token 첨부 여부 → csrfFetch race-condition 추적
+3. 다른 PATCH/POST 정상 여부 → CSRF gate 영향 범위
+4. 로그인 직후 vs 시간 후 → 세션 만료 (csrf_token_expired) 또는 hydration race
 
 ---
 
