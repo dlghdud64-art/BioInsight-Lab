@@ -351,7 +351,19 @@ export function VendorRequestModal({
       });
 
       if (!response.ok) {
-        throw new Error("견적서 생성에 실패했습니다. 다시 시도해 주세요.");
+        // §11.326 (호영님 P0) — server 응답 status + body 추출하여 root cause 진단 가능하게.
+        //   서버 로그용 raw error 와 사용자 안내 메시지 분리.
+        const status = response.status;
+        let serverDetail = "";
+        try {
+          const body = await response.json();
+          serverDetail = body?.error ?? body?.message ?? "";
+        } catch {
+          // body 가 JSON 아닐 수 있음 — silent.
+        }
+        console.error("[§11.326] PDF 생성 실패", { status, serverDetail, quoteId });
+        const errorTag = status === 403 ? "인증/권한" : status === 404 ? "견적 없음" : status >= 500 ? "서버 오류" : "요청 오류";
+        throw new Error(`${errorTag} (${status})${serverDetail ? ` · ${serverDetail}` : ""}`);
       }
 
       // PDF blob 다운로드
@@ -401,9 +413,14 @@ export function VendorRequestModal({
       setConfirmationOpen(false);
       onSuccess?.();
     } catch (error: any) {
+      // §11.326 (호영님 P0 spec §5) — friendly + actionable 메시지.
+      //   raw error.message 는 console.error 만 (Sentry 추적), 사용자에게는 임시 우회 안내.
+      const reason = typeof error?.message === "string" ? error.message : "";
       toast({
-        title: "견적서 생성 실패",
-        description: error.message || "견적서를 생성할 수 없습니다. 다시 시도해 주세요.",
+        title: "견적서 PDF를 만들 수 없습니다",
+        description:
+          (reason ? `사유: ${reason}\n\n` : "") +
+          "현재 PDF 생성이 불안정합니다. 잠시 후 다시 시도하거나, 메시지 미리보기 내용을 복사해서 직접 메일로 보내실 수 있습니다.",
         variant: "destructive",
       });
     } finally {

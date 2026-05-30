@@ -214,13 +214,21 @@ export function useUserPreferences(options?: { enabled?: boolean }) {
 
   const mutation = useMutation({
     mutationFn: patchUserPreferences,
+    // §11.327 (호영님 P0) — retry 정책 명시 0 (TanStack default 도 0 이지만 폭주 방지 강제).
+    //   호영님 production 보고: PATCH 20+ 반복 403 → middleware/CSRF/다중 caller 의심.
+    //   본 retry: 0 은 useMutation 단일 instance retry 차단. 폭주 root cause 는
+    //   다중 caller(7 page) 또는 useEffect feedback loop 의 가능성 → Phase 2 확정.
+    retry: 0,
     onSuccess: (data) => {
       // §11.230c (a) — server 응답으로 cache 갱신 (refetch 0).
       queryClient.setQueryData(QUERY_KEY, data);
     },
-    // §11.230c (a) — server PATCH 실패 silent (client localStorage fallback).
-    onError: () => {
-      // 의도적 silent — UI fallback 으로 충분.
+    // §11.327 (호영님 P0) — silent 풀고 console.warn 1회 → 폭주 가시성 확보.
+    //   client localStorage fallback 유지 (graceful degrade), 다만 디버깅 가능.
+    onError: (error) => {
+      console.warn("[§11.327] preferences PATCH 실패 (silent fallback)", {
+        message: error instanceof Error ? error.message : String(error),
+      });
     },
   });
 
