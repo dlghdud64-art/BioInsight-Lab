@@ -1,10 +1,10 @@
 # Implementation Plan: §11.312-b — 소싱 하단 비교/견적 bar UX 보강
 
-- **Status:** 🔄 In Progress (Phase 0 Truth audit 완료, Phase 1 RED 작성 중)
+- **Status:** ✅ Complete (Phase 0~3 sandbox 완료, Phase 2/3 호영님 push 대기)
 - **Spec received:** 2026-05-30 (호영님 spec §11.306 = §11.312 production smoke 후 보강)
 - **Started:** 2026-05-30 (§11.325b 종결 후 진입)
-- **Estimated Completion:** 2026-05-30 (3-4 phase / ~1.5h, scope 대폭 축소 — Phase 0 audit 결과 §11.312 1차 wiring 대부분 완료)
-- **Scope:** 4 phases / small-medium (실제 잔여 = 데스크탑 "전체 해제" 위치 보강 only)
+- **Completed:** 2026-05-30 (3 phase / ~1h, scope 대폭 축소 — Phase 0 audit 결과 §11.312 1차 wiring 대부분 완료)
+- **Scope:** 3 phases / small (실제 잔여 = 데스크탑 "전체 해제" 위치 보강 only)
 
 ---
 

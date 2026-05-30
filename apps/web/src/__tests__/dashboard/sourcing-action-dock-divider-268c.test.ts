@@ -41,11 +41,13 @@ describe("§11.268c #1 — divider tone 강화 (border-white/10 → border-white
     );
   });
 
-  it("전체 해제 row 의 border-t border-white/15 강화", () => {
-    expect(page).toMatch(
-      /전체 해제[\s\S]{0,500}|border-t border-white\/15[\s\S]{0,500}전체 해제/,
-    );
-    expect(page).toMatch(/border-t border-white\/15/);
+  it("§11.312-b 정합 — 옛 별도 줄 'border-t border-white/15' 제거 후 견적 bar 본체 🗑 통합 (라벨/onClick 보존)", () => {
+    // §11.312-b 호영님 spec 5번: "전체 해제 별도 줄" 제거 + bar 본체 🗑 + AlertDialog 확인 다이얼로그.
+    // 옛 border-t border-white/15 별도 줄 패턴 잔존 0.
+    expect(page).not.toMatch(/border-t border-white\/15[\s\S]{0,200}전체 해제/);
+    // §11.312-b 신규 testid + aria-label 매칭 (라벨 "전체 해제" 는 aria-label 안 보존).
+    expect(page).toMatch(/data-testid="sourcing-bar-clear-all-trigger"/);
+    expect(page).toMatch(/aria-label="견적 후보 전체 해제"/);
   });
 });
 
