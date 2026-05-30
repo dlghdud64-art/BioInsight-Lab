@@ -271,6 +271,9 @@ model Product {
   // 그룹?어 친화???드
   grade                 String? // Grade (HPLC grade, GMP, EP/USP, cell culture tested ??
   specification         String? // 규격/?량 (?? 1mg, 500mL, 0.22um ??
+  // §11.326 — 통 1개 함량(규격). 입고 수량과 분리. 있으면 specification보다 우선.
+  packSize              Float?  // 통 1개의 함량 수치 (예: 100)
+  packUnit              String? // 함량 단위 (예: CAPSULES, mL)
   regulatoryCompliance  String? // 규제/?전 규격 (USP, EP, JP ??
 
   // 안전·규제 정보 (P1)
