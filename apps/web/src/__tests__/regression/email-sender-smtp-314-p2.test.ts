@@ -38,8 +38,8 @@ describe("§11.314 Phase 2 — Resend SDK 통합 (production 분기)", () => {
     const src = read(SENDER);
     // TODO 주석 잔존 0 (mock placeholder 제거)
     expect(src).not.toMatch(/TODO:\s*실제 이메일|TODO.*이메일 서비스 연동 구현/);
-    // Resend send 호출 존재
-    expect(src).toMatch(/resend\.emails\.send|new Resend/);
+    // Resend 클라이언트 + send 호출 존재
+    expect(src).toMatch(/resend\.emails\.send|new Resend|getResend/);
   });
 
   it("RESEND_API_KEY env 참조 존재", () => {

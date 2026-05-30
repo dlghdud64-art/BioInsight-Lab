@@ -44,8 +44,16 @@ export interface EmailOptions {
   vendorId?: string;
 }
 
-// §11.314 Phase 2 — Resend 클라이언트 (런타임 초기화, API key 없으면 mock 모드)
-const resend = new Resend(process.env.RESEND_API_KEY ?? "");
+// §11.314 Phase 2 — Resend 클라이언트 lazy 초기화 (RESEND_API_KEY 있을 때만 생성, 빌드 타임 throw 방지)
+let _resend: import("resend").Resend | null = null;
+function getResend(): import("resend").Resend {
+  if (!_resend) {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) throw new Error("RESEND_API_KEY env 미설정 — Vercel 환경 변수를 확인하세요.");
+    _resend = new Resend(apiKey);
+  }
+  return _resend;
+}
 
 /**
  * 이메일 발송 — Resend SDK (production) / 콘솔 로깅 (development)
@@ -94,7 +102,7 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
         : a.content.toString("base64"), // Buffer → base64
   }));
 
-  const { error } = await resend.emails.send({
+  const { error } = await getResend().emails.send({
     from,
     to: options.to,
     subject: options.subject,
