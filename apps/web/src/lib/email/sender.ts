@@ -16,9 +16,8 @@ import { isVendorPilot } from "@/lib/email/pilot-vendor";
 
 /**
  * #post-approval-purchase-order-flow Phase 3.x-attach — email attachment.
- * vendor email 의 PDF 첨부 (또는 다른 binary). 호영님 host config 후
- * 실제 mailer (Resend / SendGrid / SES) 가 attachment field 를 정합 송부.
- * 현재 mock sender 는 metadata 만 console log.
+ * vendor email 의 PDF 첨부 (또는 다른 binary). Resend SDK 가 attachment field 를
+ * 정합 송부 (filename + content Buffer/string + path?). §11.314-b 견적 PDF 발송.
  */
 export interface EmailAttachment {
   /** 첨부 파일명 (확장자 포함). 예: "ORD-20260506-AB12.pdf" */
@@ -45,8 +44,8 @@ export interface EmailOptions {
 }
 
 // §11.314 Phase 2 — Resend 클라이언트 lazy 초기화 (RESEND_API_KEY 있을 때만 생성, 빌드 타임 throw 방지)
-let _resend: import("resend").Resend | null = null;
-function getResend(): import("resend").Resend {
+let _resend: Resend | null = null;
+function getResend(): Resend {
   if (!_resend) {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) throw new Error("RESEND_API_KEY env 미설정 — Vercel 환경 변수를 확인하세요.");
@@ -74,7 +73,7 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
     return;
   }
 
-  // 개발 환경에서는 콘솔에만 출력
+  // 개발 환경에서는 콘솔에만 출력 (sandbox 보호)
   if (process.env.NODE_ENV === "development") {
     console.log("📧 이메일 발송 (개발 모드):", {
       to: options.to,
@@ -83,37 +82,37 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
       attachments: options.attachments?.map((a) => ({
         filename: a.filename,
         contentType: a.contentType,
-        byteSize:
-          typeof a.content === "string" ? a.content.length : a.content.length,
+        byteSize: typeof a.content === "string" ? a.content.length : a.content.length,
       })),
     });
     return;
   }
 
-  // §11.314 Phase 2 — Resend 실제 발송 (production)
+  // §11.314 Phase 2 — production Resend SDK 발송
   const from = process.env.EMAIL_FROM ?? "noreply@labaxis.co.kr";
+  const resend = getResend();
 
-  // EmailAttachment → Resend attachments 포맷 변환
-  const attachments = options.attachments?.map((a) => ({
-    filename: a.filename,
-    content:
-      typeof a.content === "string"
-        ? a.content // base64 string — Resend 직접 수용
-        : a.content.toString("base64"), // Buffer → base64
-  }));
-
-  const { error } = await getResend().emails.send({
+  const { data, error } = await resend.emails.send({
     from,
     to: options.to,
     subject: options.subject,
     html: options.html,
     text: options.text,
-    ...(attachments && attachments.length > 0 ? { attachments } : {}),
+    attachments: options.attachments?.map((a) => ({
+      filename: a.filename,
+      content: a.content,
+      contentType: a.contentType,
+    })),
   });
 
   if (error) {
-    console.error("[sendEmail] Resend error:", error);
-    throw new Error(`이메일 발송 실패: ${error.message}`);
+    // silent success 금지 — caller try/catch 에 전파.
+    throw new Error(`Resend SMTP 발송 실패: ${error.message ?? JSON.stringify(error)}`);
   }
-}
 
+  console.log("📧 이메일 발송 완료 (Resend):", {
+    to: options.to,
+    subject: options.subject,
+    messageId: data?.id,
+  });
+}
