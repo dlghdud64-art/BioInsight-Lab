@@ -1,6 +1,6 @@
 # Implementation Plan: §11.325 — 제품 상세 진입 동선 Truth Reconciliation
 
-- **Status:** 🔄 In Progress (§11.325 Truth ✅ + §11.325b 진입 승인, Phase 1 RED 작성 중)
+- **Status:** ✅ Complete (§11.325 Truth + §11.325b Phase 0~3 sandbox 완료, 호영님 Phase 3 push 대기)
 - **Spec received:** 2026-05-30 (호영님 spec §11.321 → 번호 충돌 매핑 §11.325)
 - **Estimated Completion:** Truth audit 완료(0.5h), §11.325b 배선 작업 별도 (2~3h)
 - **호영님 모델 권장:** Opus 4.7로 충분
@@ -165,12 +165,38 @@
 3. ✅ 상세 진입 표면 = `product-detail-summary.tsx` 패널/모달 우선 (same-canvas), `/products/[id]` = 비로그인 진입로만
 4. ✅ P1 즉시, §11.318-CORRECTION 과 병행 가능
 
-### Phase 구조 (4 phase, ~1.5h)
+### Phase 구조 (4 phase, ~1.5h) ✅ ALL COMPLETE (호영님 push 대기)
 
 - **Phase 0**: Truth Lock ✅ COMPLETE (위 §10, §12 audit 완료)
-- **Phase 1**: RED sentinel — 명시적 button + ChevronRight wiring + cursor-pointer + canonical 보존
-- **Phase 2**: GREEN 작업 — sourcing-result-row.tsx 명시적 "상세 보기" button 추가 + ChevronRight onClick wiring + hover/cursor 명확화
-- **Phase 3**: 회귀 + closeout — onSelect / isSelected / 비교 추가 / 견적 담기 영향 0 + 모바일 정합
+- **Phase 1**: RED sentinel ✅ COMPLETE — 8 it, COMMIT_11.325b-phase0-1.md
+- **Phase 2**: GREEN 작업 ✅ COMPLETE — sourcing-result-row.tsx 3 Edit (데스크탑 button + ChevronRight wrap + 모바일 button), COMMIT_11.325b-phase2-wiring.md
+- **Phase 3**: 회귀 + closeout ✅ COMPLETE — 기존 sentinel 3건 영향 0 audit, PLAN closeout, COMMIT_11.325b-phase3-closeout.md
+
+### Phase 3 회귀 audit 결과 (sandbox grep)
+
+**Caller audit:**
+- sourcing-result-row.tsx 유일 caller = `app/_workbench/search/page.tsx` (예상대로)
+- props 시그니처 변경 0 → caller 영향 0
+
+**기존 sentinel 영향 0 (3건):**
+- `__tests__/dashboard/sourcing-button-outline-parity-268b.test.ts` — target = page.tsx Operating Status Bar button, sourcing-result-row 와 무관
+- `__tests__/dashboard/sourcing-mobile-search-258a.test.ts` — target = page.tsx 모바일 검색 form, 검색 결과 카드 별개
+- `__tests__/regression/sourcing-triage-removal-292.test.ts` — TRIAGE / 카드 배지 / Shortlist "제거" 단언, 신규 button 추가 영향 0
+
+**§11.325b sentinel 자연 GREEN:**
+- 8 it 모두 Phase 2 작업으로 자연 정합 (Phase 3 sandbox 추가 작업 0)
+
+**모바일 final 검증:**
+- 데스크탑 (sm:flex 영역): [비교 추가] [견적 담기] [상세 보기] [▶ ChevronRight button] — 4 elements, h-8 px-3 통일 패턴
+- 모바일 (sm:hidden 영역): [비교 추가] [견적 담기] [상세 보기] — 3 elements, 375px overflow 0 예상 (각 button h-8 px-3 + gap-1.5)
+- ChevronRight 모바일 hidden (`hidden sm:inline-flex`) — 모바일은 button 만으로 affordance
+
+### 회귀 0 (Phase 3 audit 결과)
+- caller 영향 0 (props 보존)
+- 기존 sentinel 3건 영향 0
+- sourcing-context-rail.tsx ProductDetailSummary render 보존
+- /products/[id] 라우트 보존
+- 비교/견적 담기 wiring 보존
 
 ### canonical 보존 (회귀 0)
 - `onSelect={() => setActiveResultId(product.id)}` 보존 (page state 갱신)
