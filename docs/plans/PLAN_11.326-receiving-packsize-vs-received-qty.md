@@ -96,12 +96,25 @@
 - ✋ Gate: 입고 수량=사용자 입력만, 라벨값 영속화 0, dead button 0, 회귀 0(기존 smart-receiving 테스트).
 - Rollback: 모달/onDirectReceive revert.
 
-### Phase 4: 기존 데이터 알림 + smoke (1~2h)
-- Status: [ ] Pending
+### Phase 4: 기존 데이터 알림 + smoke (1~2h) — ✅ GREEN 완료
+- Status: [x] Complete (호영님 env vitest/build 확인 잔여)
+- 결정(2026-05-30): A안(라운드 숫자 ≥100 & 100배수, packSize 매칭 후속) + 세션 useState dismiss + 의심 0건 미노출 + 닫기 후 KPI 칩 재진입(dead-end 방지).
+- 🟢 GREEN: `lib/inventory/suspect-received-quantity.ts`(isSuspectReceivedQuantity + countSuspectInventories + SUSPECT_MIN_QTY 상수, node 하네스 8/8) + `inventory-content.tsx` 배너(의심 N건, 재고 검토하기→필터 / 닫기→dismiss) + 필터 해제 칩. 4607줄 무결(brace/paren/eof, garble 0).
+- 🔴 RED: `suspect-received-quantity.test.ts`(8) + `suspect-received-banner-326p4.test.ts`(배선). sentinel ALL PASS.
+- ✋ Gate: dead button 0(실 필터 wiring), 의심 0건 배너 미노출, 닫기 후 칩 재진입 ✓. vitest 풀/build = 호영님 env.
+- Out(후속): B안 packSize 매칭 = Phase B land 후 정확도 부족 시.
 - 옵션 C: 재고/대시보드 상단 1회성 배너 "입고 방식 개선 + [재고 검토하기]"(닫기 가능). 의심 데이터 탐지 보조(receivedQuantity 비정상 라운드값+라벨 일치 → 검토 우선, 자동 수정 X). smoke + closeout.
 
 ### Phase B (후속 batch): 모바일 동일 적용
 - mobile `lib/inventory/map-label-to-receiving.ts` 복제(+DUPLICATED 주석) + `scan.tsx`/`register.tsx`/`lot-receive.tsx` + §11.310 1-flow.
+
+**Phase B audit (2026-05-30, read-only):**
+- `scan.tsx`(904줄): 버그 = `mapLabelToForm:89` `quantity: r.parsed.quantity||"1"`(라벨 함량→입고). LabelForm{...quantity,unit} → packSize/packUnit/receivedQuantity/receivedUnit 분리 필요. `confirmLabelReceive`(209~232): 매칭→lot-receive `prefillQty: labelForm.quantity`, 미매칭→register `quantity: labelForm.quantity`. **→ packSize는 품목, receivedQuantity(기본1)는 prefillQty로.**
+- `lot-receive.tsx`(228줄): `useRestockInventory().mutate({quantity,lotNumber,expiryDate})`, quantity=parseInt(qty), qty←prefillQty. **여기 quantity=받은 수량 자리 정상** — prefill 소스(scan)만 고치면 됨. packSize 전달 시 별도 처리 검토.
+- `register.tsx`(566줄): QuickEntryForm `quantity` param(95) — 라벨값이 구매 수량으로. §11.319서 catalogNumber prefill 이미 추가됨.
+- `lib/inventory/` 없음 → mapLabelToReceiving 복제 필요.
+- **구조 차이:** 데스크톱=onDirectReceive 단일 영속화 / 모바일=scan→라우팅 prefill. Phase B 핵심 = scan에서 packSize·receivedQuantity 분리 후 각 화면 올바른 prefill.
+- 사전조건: migrate deploy + 데스크톱 vitest GREEN + 실제 라벨스캔 검증 회신.
 
 ## 9. Risks
 | Risk | Prob | Impact | Mitigation |
@@ -122,7 +135,15 @@
 
 **확정(2026-05-30):** ⓐ 신규 컬럼+specification fallback+자동파싱X / 총함량 표시만 / 데스크톱(A) 먼저→모바일(B) / 옵션 C / §11.326>§11.327>§11.318 1d-2.
 
-**Checklist:** [x] P0 / [x] P1 / [x] P2-a / [x] P3(UI GREEN) / [ ] P4(알림) / [ ] Phase B(모바일)
+**Checklist:** [x] P0 / [x] P1 / [x] P2-a / [x] P3(UI GREEN) / [ ] P4(알림) / [x] Phase B(모바일 GREEN)
+
+### Phase B GREEN (2026-05-30) — 완료
+- migrate deploy 확인(packSize/packUnit 컬럼 + _prisma_migrations 레코드) → Phase B 진입.
+- mobile `lib/inventory/map-label-to-receiving.ts` 복제(92줄, DUPLICATED→web 주석, 순수).
+- `scan.tsx`(904→940): LabelForm packSize/packUnit/receivedQuantity/receivedUnit 분리(quantity/unit 제거), mapLabelToForm 라벨 quantity→packSize·입고수량 기본"1", confirmLabelReceive prefillQty/quantity=receivedQuantity(라벨값 제거), UI 규격(통1개 함량)+받은 통 개수+총함량(mapLabelToReceiving). 바코드/label-review 회귀 보존.
+- `register.tsx`: §11.319 quantity/catalogNumber prefill 기존 — scan이 receivedQuantity를 quantity로 넘겨 정합(추가 변경 0).
+- RED: `receiving-packsize-split-mobile-326b.test.ts`. sentinel 전항목 ✓, scan brace/paren/eof 무결, 버그 0, garble 0.
+- ⚠️ 전부 Python 원자 치환(Edit 툴 truncation 회피).
 
 ## 12. Notes
 - [2026-05-30] root cause = LabelScannerModal:282 + mobile mapLabelToForm 한 줄. 표면=LabelScannerModal(워크벤치 함정 없음).

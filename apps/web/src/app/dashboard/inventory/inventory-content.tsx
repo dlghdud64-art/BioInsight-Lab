@@ -927,8 +927,14 @@ function InventoryPageContent() {
       }
     }
 
+    // §11.326 Phase 4 — 의심 데이터 검토 필터(라운드 숫자 입고 수량).
+    if (suspectFilterActive && !isSuspectReceivedQuantity(inv.currentQuantity)) return false;
+
     return true;
   });
+
+  // §11.326 Phase 4 — 의심 입고 건수(currentQuantity 라운드 숫자). 0 이면 배너/칩 미노출.
+  const suspectCount = countSuspectInventories(inventories);
 
   // 고유 위치 목록 추출
   const uniqueLocations = Array.from(new Set(displayInventories.map((inv) => inv.location).filter(Boolean))) as string[];
@@ -1345,6 +1351,51 @@ function InventoryPageContent() {
 
   return (
     <div className="w-full max-w-full px-3 sm:px-4 md:px-6 py-4 md:py-8 pb-20 lg:pb-8">
+      {/* §11.326 Phase 4 — 의심 입고 데이터 검토 배너(의심 0건이면 미노출, 세션 dismiss).
+          닫아도 아래 "검토 권장 N건" 칩으로 재진입 가능(dead-end 방지). */}
+      {suspectCount > 0 && !suspectBannerDismissed && (
+        <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2.5">
+          <AlertTriangle className="h-4 w-4 text-yellow-600 shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-yellow-800">
+              입고 등록 방식이 개선됐어요 — 검토 권장 {suspectCount}건
+            </p>
+            <p className="text-xs text-yellow-700 mt-0.5">
+              이전에는 라벨의 용량(예: 100 CAPSULES)이 입고 수량으로 등록되어 통 개수가 부풀려졌을 수 있습니다. 큰 라운드 숫자 입고 건을 확인해 주세요.
+            </p>
+            <div className="flex items-center gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => setSuspectFilterActive(true)}
+                className="inline-flex items-center h-8 px-3 rounded-md bg-yellow-600 text-white text-xs font-semibold hover:bg-yellow-500 active:scale-95 transition-all"
+              >
+                재고 검토하기
+              </button>
+              <button
+                type="button"
+                onClick={() => setSuspectBannerDismissed(true)}
+                className="inline-flex items-center h-8 px-3 rounded-md border border-yellow-300 bg-white text-yellow-700 text-xs font-medium hover:bg-yellow-50 active:scale-95 transition-all"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* §11.326 Phase 4 — 검토 필터 활성 시 해제 칩(현재 상태 가시화 + 재진입). */}
+      {suspectFilterActive && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2">
+          <AlertTriangle className="h-3.5 w-3.5 text-yellow-600" />
+          <span className="text-xs text-yellow-800">검토 권장 {suspectCount}건 필터 적용 중</span>
+          <button
+            type="button"
+            onClick={() => setSuspectFilterActive(false)}
+            className="ml-auto inline-flex items-center gap-1 text-xs text-yellow-700 hover:text-yellow-900"
+          >
+            <X className="h-3 w-3" /> 필터 해제
+          </button>
+        </div>
+      )}
       {/* ── Mobile View (below md breakpoint) ── */}
       <div className="md:hidden">
         <div className="flex flex-col space-y-1 mb-4">
