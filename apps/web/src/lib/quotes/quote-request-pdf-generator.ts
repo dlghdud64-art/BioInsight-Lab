@@ -88,7 +88,8 @@ export async function generateQuoteRequestPdf(
     // §11.326 Phase 4 — `font: fontBuffer` 로 constructor 단계에서 Pretendard 등록.
     //   PDFKit source: `this.font(options.font || 'Helvetica')` — font option 없으면
     //   Helvetica fallback (null/false 도 fallback). Buffer 전달이 유일한 robust fix.
-    const doc = new PDFDocument({ size: "A4", margin: 48, font: fontBuffer });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const doc = new PDFDocument({ size: "A4", margin: 48, font: fontBuffer as any });
     const chunks: Buffer[] = [];
     doc.on("data", (chunk: Buffer) => chunks.push(chunk));
     doc.on("end", () =>
