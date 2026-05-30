@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, ArrowRight, Beaker, Package, FlaskConical, Microscope, CheckCircle2, RefreshCw, Ban } from "lucide-react";
+import { Search, ArrowRight, Beaker, Package, FlaskConical, Microscope, GitCompare, FileText } from "lucide-react";
 import Link from "next/link";
 import { savePendingAction, type PendingActionType } from "@/lib/auth/pending-action";
 
@@ -16,47 +16,27 @@ const exampleQueries = [
   { label: "Cell counting slides", icon: Microscope },
 ];
 
-const triageGroups = [
+// §11.324 — 3단계 다이어그램 (검색/비교/견적). 옛 triageGroups (Exact Match/Cross-Vendor/
+//   Substitute/Blocked + Shortlist/Hold/Exclude) 제거: 비로그인 랜딩 = 가치 제안 + 가입 유도
+//   페이지, 실제 사용 UI 노출은 인지 부하 + dead button 위험 + 가입 conversion 저해.
+const flowSteps = [
   {
-    title: "Exact Match",
-    count: 4,
-    badge: "정확 일치",
-    description: "카탈로그 번호와 규격이 바로 맞는 후보",
-    sample: "PBS buffer 500mL · Cat. PBS-500",
-    icon: CheckCircle2,
-    tone: "emerald",
-    actions: ["Shortlist", "Hold", "Exclude"],
+    no: "①",
+    title: "검색",
+    icon: Search,
+    description: "제품명·CAS·카탈로그·브랜드로 빠르게 찾기",
   },
   {
-    title: "Cross-Vendor Equivalent",
-    count: 3,
-    badge: "동등 대체",
-    description: "동일 성분·동일 용량의 교차 공급사 후보",
-    sample: "PBS 1X · vendor equivalent",
-    icon: RefreshCw,
-    tone: "blue",
-    actions: ["Shortlist", "Hold", "Exclude"],
+    no: "②",
+    title: "비교",
+    icon: GitCompare,
+    description: "같은 제품 다른 공급사를 한눈에 비교",
   },
   {
-    title: "Substitute",
-    count: 2,
-    badge: "대체 가능",
-    description: "용량 또는 pack 차이가 있어 확인이 필요한 후보",
-    sample: "PBS tablets · dilution required",
-    icon: Package,
-    tone: "amber",
-    actions: ["Shortlist", "Hold", "Exclude"],
-  },
-  {
-    title: "Blocked",
-    count: 1,
-    badge: "차단",
-    description: "구매 전 제외 사유가 있는 후보",
-    sample: "PBS bulk pack · restricted vendor",
-    blockedReason: "차단 사유: 미승인 공급사 · 냉장 배송 조건 없음",
-    icon: Ban,
-    tone: "red",
-    actions: ["Hold", "Exclude"],
+    no: "③",
+    title: "견적",
+    icon: FileText,
+    description: "여러 공급사에 한 번에 견적 요청",
   },
 ];
 
@@ -65,8 +45,7 @@ function PublicSearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams?.get("q") || "");
-  const [publicTriageStage, setPublicTriageStage] = useState<"ready" | "compare" | "request">("ready");
-  const [publicTriageAction, setPublicTriageAction] = useState("후보 분류 대기");
+  // §11.324 — publicTriageStage / publicTriageAction state 제거 (Triage 데모 영역 함께 제거).
 
   const buildWorkbenchPath = useCallback((stage?: "compare" | "request") => {
     const trimmed = query.trim() || searchParams?.get("q") || "PBS";
@@ -114,19 +93,7 @@ function PublicSearchContent() {
     }
   }, [handleSearch]);
 
-  const handleTriageAction = useCallback((action: string, groupTitle: string) => {
-    const nextStage = action === "Shortlist" ? "compare" : "ready";
-    setPublicTriageStage(nextStage);
-    setPublicTriageAction(`${groupTitle} · ${action}`);
-  }, []);
-
-  const handleStepAction = useCallback((stage: "compare" | "request") => {
-    setPublicTriageStage(stage);
-    setPublicTriageAction(stage === "compare" ? "Step 2 제품 비교 진입" : "Step 3 견적 요청 진입");
-    if (session?.user) {
-      router.push(buildWorkbenchPath(stage));
-    }
-  }, [buildWorkbenchPath, router, session]);
+  // §11.324 — handleTriageAction / handleStepAction 제거 (Triage 데모 + Step 2/3 button 함께 제거).
 
   return (
     <div className="min-h-screen bg-white">
@@ -182,108 +149,52 @@ function PublicSearchContent() {
           </div>
         </div>
 
+        {/* §11.324 — 옛 Triage 데모 section (search-result-triage, line ~185-286) 전체 제거.
+            비로그인 랜딩 = 가치 제안 + 가입 유도 페이지로 단순화. 호영님 A안 정합. */}
+
+        {/* §11.324 — 3단계 다이어그램 (검색/비교/견적). 사용자 멘탈 모델 명확화. */}
         <section
-          data-testid="search-result-triage"
-          className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 sm:p-4 text-left space-y-3"
-          // §11.274c — aria-label 한국어 정합 lock.
-          aria-label="소싱 결과 분류"
+          data-testid="landing-search-flow-steps"
+          aria-label="LabAxis 사용 흐름 3단계"
+          className="grid grid-cols-3 gap-3 sm:gap-4 text-left"
         >
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-[11px] font-extrabold uppercase tracking-widest text-blue-600">Sourcing Result Triage</p>
-              <h2 className="mt-1 text-base font-extrabold text-slate-950">검색 후보를 비교·보류·제외로 바로 분류합니다</h2>
-            </div>
-            <div className="rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-semibold text-blue-700">
-              비교 진입: 같은 캔버스 우측 패널 전환
-            </div>
-          </div>
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
-            {triageGroups.map((group) => {
-              const Icon = group.icon;
-              const toneClass = group.tone === "emerald"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                : group.tone === "blue"
-                  ? "border-blue-200 bg-blue-50 text-blue-700"
-                  : group.tone === "amber"
-                    ? "border-yellow-200 bg-yellow-50 text-yellow-700"
-                    : "border-red-200 bg-red-50 text-red-700";
-              return (
-                <article key={group.title} data-testid={`search-triage-${group.title.toLowerCase().replaceAll(" ", "-")}`} className="rounded-xl border border-slate-200 bg-white p-3 space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <h3 className="text-sm font-bold text-slate-950">{group.title}</h3>
-                      <p className="text-xs text-slate-500">{group.count}건 · {group.description}</p>
-                    </div>
-                    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-bold ${toneClass}`}>
-                      <Icon className="h-3 w-3" />
-                      {group.badge}
-                    </span>
-                  </div>
-                  <div className="rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-2">
-                    <p className="text-xs font-semibold text-slate-800">{group.sample}</p>
-                    {group.blockedReason && (
-                      <p data-testid="search-triage-blocked-reason" className="mt-1 text-[11px] font-semibold text-red-700">
-                        {group.blockedReason}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-1.5" aria-label={`${group.title} 후보 액션`}>
-                    {group.actions.map((action) => (
-                      <button
-                        key={action}
-                        type="button"
-                        onClick={() => handleTriageAction(action, group.title)}
-                        className="min-h-[32px] rounded-md border border-slate-200 bg-white px-2.5 text-[11px] font-semibold text-slate-600 hover:border-blue-300 hover:text-blue-700"
-                      >
-                        {action}
-                      </button>
-                    ))}
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-          <div data-testid="search-triage-compare-panel" className="rounded-xl border border-blue-200 bg-white px-3 py-2.5 text-sm text-slate-700">
-            <span className="font-bold text-slate-950">Compare panel</span>
-            <span className="mx-2 text-slate-300">·</span>
-            Shortlist 후보를 누르면 같은 화면에서 비교 패널이 열리고 검색 컨텍스트가 유지됩니다.
-          </div>
-          <div data-testid="search-triage-action-dock" className="grid grid-cols-1 gap-2 rounded-xl border border-slate-200 bg-white p-2 sm:grid-cols-[1fr_1fr_auto] sm:items-center">
-            <Button
-              type="button"
-              data-testid="search-step-2-compare"
-              className="h-10 bg-blue-600 text-white hover:bg-blue-500"
-              onClick={() => handleStepAction("compare")}
-            >
-              Step 2 제품 비교
-            </Button>
-            <Button
-              type="button"
-              data-testid="search-step-3-request"
-              variant="outline"
-              className="h-10 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-              onClick={() => handleStepAction("request")}
-            >
-              Step 3 견적 요청
-            </Button>
-            {!session?.user && (
-              <Link
-                href={`/auth/signin?callbackUrl=${encodeURIComponent(buildWorkbenchPath(publicTriageStage === "ready" ? undefined : publicTriageStage))}`}
-                className="inline-flex h-10 items-center justify-center rounded-md px-3 text-xs font-semibold text-slate-500 hover:text-slate-700"
-                onClick={() => savePendingAction({ action: publicTriageStage === "request" ? "create_request" : "start_compare", query: query.trim() || searchParams?.get("q") || "PBS" })}
+          {flowSteps.map((step) => {
+            const Icon = step.icon;
+            return (
+              <article
+                key={step.title}
+                className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 space-y-2.5 hover:border-blue-300 hover:shadow-sm transition-all"
               >
-                로그인 후 계속
-              </Link>
-            )}
-          </div>
-          <div data-testid="search-triage-live-state" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700" aria-live="polite">
-            <span className="font-bold text-slate-950">
-              {publicTriageStage === "compare" ? "비교 패널 준비됨" : publicTriageStage === "request" ? "견적 요청 준비됨" : "분류 준비됨"}
-            </span>
-            <span className="mx-2 text-slate-300">·</span>
-            {publicTriageAction}
-          </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-600 text-base font-extrabold">{step.no}</span>
+                  <Icon className="h-5 w-5 text-blue-600" />
+                  <h3 className="text-sm sm:text-base font-extrabold text-slate-900">{step.title}</h3>
+                </div>
+                <p className="text-xs sm:text-[13px] leading-relaxed text-slate-500">{step.description}</p>
+              </article>
+            );
+          })}
         </section>
+
+        {/* §11.324 — 큰 가입 CTA (primary conversion). 옛 Step 2/3 button + 로그인 후 계속 link 흡수. */}
+        {!session?.user && (
+          <div className="flex flex-col items-center gap-3 pt-2">
+            <Link
+              href="/auth/signin"
+              data-testid="landing-search-primary-cta"
+              className="inline-flex items-center justify-center gap-2 h-12 px-8 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[15px] font-bold transition-colors shadow-sm hover:shadow-md"
+            >
+              무료로 시작하기 — 30초 가입
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/auth/signin"
+              className="text-xs text-slate-500 hover:text-slate-700"
+            >
+              이미 회원이세요? 로그인
+            </Link>
+          </div>
+        )}
 
         {/* Example queries */}
         <div className="space-y-3">
