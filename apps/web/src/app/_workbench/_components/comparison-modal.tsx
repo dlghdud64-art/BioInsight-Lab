@@ -1,6 +1,8 @@
 "use client";
 
 import { csrfFetch } from "@/lib/api-client";
+// §11.318 1d-2 — 혼합 카테고리 가드(warn→block, B안). 환각 비교 자동 분석 차단.
+import { validateCompareCategoryIntegrity } from "@/lib/ai/compare-review-engine";
 import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
@@ -143,6 +145,24 @@ export function ComparisonModal({
   const compareKey = compareIds.slice().sort().join(",");
   const productNames = useMemo(() => compareProducts.map((p) => p.name), [compareProducts]);
 
+  // §11.318 1d-2 — 비교 후보 카테고리 정합 가드. mixed_warning/blocked 면 자동 분석 차단.
+  const categoryGuard = useMemo(
+    () =>
+      validateCompareCategoryIntegrity(
+        compareProducts.map((p) => ({
+          id: p.id,
+          name: p.name,
+          brand: p.brand ?? "",
+          category: (p as { category?: string }).category,
+          catalogNumber: p.catalogNumber ?? undefined,
+          spec: p.specification ?? undefined,
+          priceKRW: typeof p.price === "number" ? p.price : 0,
+          leadTimeDays: 0,
+        })),
+      ),
+    [compareProducts],
+  );
+
   const fetchAnalysis = async () => {
     const targets = products.filter((p) => compareIds.includes(p.id));
     if (targets.length === 0) return;
@@ -173,7 +193,11 @@ export function ComparisonModal({
       setResult(null);
       setError(null);
       setActiveScenario(null);
-      fetchAnalysis();
+      // §11.318 1d-2 — direct(카테고리 정합)일 때만 자동 분석. mixed/blocked 는
+      //   환각 방지 위해 자동 호출 차단, 사용자가 "그래도 분석"으로 수동 우회.
+      if (categoryGuard.compareMode === "direct") {
+        fetchAnalysis();
+      }
     }
     if (!open) {
       setResult(null);
@@ -240,6 +264,30 @@ export function ComparisonModal({
 
         {/* ═══ Body ═══ */}
         <div className="px-5 py-6 md:px-7 md:py-8 space-y-8 max-h-[62vh] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "#cbd5e1 transparent" }}>
+
+          {/* §11.318 1d-2 — 혼합/비교불가 카테고리 경고 + 수동 우회(B안). 환각 자동분석 차단. */}
+          {!loading && !result && categoryGuard.compareMode !== "direct" && (
+            <div className="mx-1 my-2 px-4 py-4 rounded-lg border border-yellow-300 bg-yellow-50 space-y-2.5">
+              <div className="flex items-start gap-2">
+                <Scale className="h-4 w-4 text-yellow-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-yellow-800">
+                    {categoryGuard.compareMode === "blocked" ? "비교할 수 없는 조합입니다" : "용도가 다른 제품이 섞여 있습니다"}
+                  </p>
+                  <p className="text-xs text-yellow-700 mt-0.5">
+                    카테고리가 다른 제품을 비교하면 결과가 부정확할 수 있어 AI 분석을 자동 실행하지 않았습니다. {categoryGuard.recommendedNextAction}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={fetchAnalysis}
+                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-yellow-400 bg-yellow-100 text-yellow-800 text-xs font-medium hover:bg-yellow-200 active:scale-95 transition-all"
+              >
+                <Sparkles className="h-3.5 w-3.5" /> 그래도 분석
+              </button>
+            </div>
+          )}
 
           {/* Loading */}
           {loading && (
