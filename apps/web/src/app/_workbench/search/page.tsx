@@ -102,6 +102,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { generateSearchSummary, type SearchSummaryLine } from "@/lib/ai/suggestion-engine";
