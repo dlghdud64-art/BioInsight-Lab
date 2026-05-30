@@ -1542,8 +1542,40 @@ export default function SearchPage() {
                   <AlertCircle className="h-3 w-3 shrink-0" />차단 {requestReadiness.summary.blocked}
                 </span>
               )}
-              <div className="ml-auto flex items-center gap-2 shrink-0">
+              <div className="ml-auto flex items-center gap-3 shrink-0">
                 <span className="text-xs text-slate-300 tabular-nums font-medium shrink-0 whitespace-nowrap">₩{totalAmount.toLocaleString("ko-KR")}</span>
+                {/* §11.312-b — 전체 해제 🗑 = 견적 금액과 primary CTA 사이, outline + AlertDialog 확인 다이얼로그
+                    (호영님 spec 5번: 옛 "전체 해제 별도 줄 우측 끝" 제거 + bar 본체 통합). */}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      data-testid="sourcing-bar-clear-all-trigger"
+                      aria-label="견적 후보 전체 해제"
+                      className="h-8 w-8 p-0 shrink-0 border-slate-200/40 bg-slate-700/40 text-slate-300 hover:bg-slate-600/60 hover:text-slate-100"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>견적 후보를 모두 해제할까요?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        견적 후보 {quoteItems.length}건{compareIds.length > 0 ? ` · 비교 후보 ${compareIds.length}건` : ""}이 모두 해제됩니다. 개별 항목 삭제는 "견적" 또는 "비교" 영역을 탭하여 시트에서 가능합니다.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>취소</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => { clearCompare(); quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        모두 해제
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
                 {requestHandoff ? (
                   <Button size="sm" className="h-8 px-3 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium shrink-0" onClick={() => handleProtectedAction(() => setWorkWindowMode("request-assembly"))}>
                     <FileText className="h-3.5 w-3.5 mr-1" />
@@ -1557,22 +1589,11 @@ export default function SearchPage() {
                     <span className="sm:hidden">견적 요청</span>
                   </Button>
                 )}
-                {/* §11.312 — 🗑 휴지통 button 제거: sheet 내 "전체 삭제" 통합 */}
               </div>
             </div>
           )}
 
-          {/* §11.252f + §11.268c — 전체 해제 (2행 하단 우측 텍스트 링크) */}
-          <div className="px-4 py-1 flex justify-end border-t border-white/15">
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7 px-2 text-[11px] text-slate-500 hover:text-red-500"
-              onClick={() => { clearCompare(); quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}
-            >
-              전체 해제
-            </Button>
-          </div>
+          {/* §11.312-b — 옛 "전체 해제 별도 줄" 제거 (line 1565-1575). 견적 bar 본체 안 🗑 으로 통합. */}
         </div>
       )}
 
