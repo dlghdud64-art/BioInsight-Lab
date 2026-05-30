@@ -102,6 +102,26 @@ export async function generateQuoteRequestPdf(
     doc.registerFont("Korean", fontBuffer);
     doc.font("Korean");
 
+    // §11.329 — 레이아웃 상수(하드코딩 제거). A4 595 − margin 48×2 = 499.
+    const PAGE_MARGIN = 48;
+    const contentLeft = PAGE_MARGIN;
+    const contentRight = doc.page.width - PAGE_MARGIN; // 547
+    const contentWidth = contentRight - contentLeft;   // 499
+    const BOTTOM_LIMIT = doc.page.height - 80;
+    const COL = {
+      name: { x: contentLeft, w: 230 },
+      spec: { x: contentLeft + 230, w: 110 },
+      qty: { x: contentLeft + 340, w: 50 },
+      price: { x: contentLeft + 390, w: 109 },
+    } as const;
+    const ensureSpace = (rowY: number, need = 24): number => {
+      if (rowY + need > BOTTOM_LIMIT) {
+        doc.addPage();
+        return doc.y;
+      }
+      return rowY;
+    };
+
     // ── Header — 견적 요청서 (Quote Request / RFQ) ──
     doc.fontSize(22).text("견적 요청서 (Quote Request)", { align: "center" });
     doc.moveDown(0.5);
@@ -139,21 +159,21 @@ export async function generateQuoteRequestPdf(
     doc.fontSize(13).text("요청 품목", { underline: true });
     doc.moveDown(0.5).fontSize(10);
     const tableTop = doc.y;
-    const colX = { name: 48, spec: 280, qty: 420, price: 480 };
     doc
       .fillColor("#666")
-      .text("품목", colX.name, tableTop)
-      .text("규격", colX.spec, tableTop)
-      .text("수량", colX.qty, tableTop)
-      .text("견적가", colX.price, tableTop);
+      .text("품목", COL.name.x, tableTop, { width: COL.name.w })
+      .text("규격", COL.spec.x, tableTop, { width: COL.spec.w })
+      .text("수량", COL.qty.x, tableTop, { width: COL.qty.w, align: "right" })
+      .text("견적가", COL.price.x, tableTop, { width: COL.price.w, align: "right" });
     doc
-      .moveTo(48, tableTop + 14)
-      .lineTo(545, tableTop + 14)
+      .moveTo(contentLeft, tableTop + 14)
+      .lineTo(contentRight, tableTop + 14)
       .stroke();
     doc.fillColor("#000");
 
     let rowY = tableTop + 20;
     for (const item of quote.items) {
+      rowY = ensureSpace(rowY);
       const itemLabel = `${item.productName}${
         item.brand ? ` (${item.brand})` : ""
       }${item.catalogNumber ? ` · ${item.catalogNumber}` : ""}`;
@@ -161,46 +181,58 @@ export async function generateQuoteRequestPdf(
         .filter(Boolean)
         .join(" / ") || "-";
       doc
-        .text(itemLabel, colX.name, rowY, { width: 220 })
-        .text(specLabel, colX.spec, rowY, { width: 130 })
-        .text(item.quantity.toString(), colX.qty, rowY)
+        .text(itemLabel, COL.name.x, rowY, { width: COL.name.w })
+        .text(specLabel, COL.spec.x, rowY, { width: COL.spec.w })
+        .text(item.quantity.toString(), COL.qty.x, rowY, { width: COL.qty.w, align: "right" })
         // 견적가 = 공급사 작성란 (빈 칸)
         .fillColor("#bbb")
-        .text("(   )", colX.price, rowY)
+        .text("(   )", COL.price.x, rowY, { width: COL.price.w, align: "right" })
         .fillColor("#000");
-      // notes 가 있으면 다음 줄에 작게
       if (item.notes) {
         rowY += 14;
+        rowY = ensureSpace(rowY);
         doc
           .fontSize(8)
           .fillColor("#888")
-          .text(`  비고: ${item.notes}`, colX.name, rowY, { width: 480 })
+          .text(`  비고: ${item.notes}`, COL.name.x, rowY, { width: contentWidth })
           .fontSize(10)
           .fillColor("#000");
       }
       rowY += 22;
     }
-    doc.moveTo(48, rowY).lineTo(545, rowY).stroke();
+    rowY = ensureSpace(rowY);
+    doc.moveTo(contentLeft, rowY).lineTo(contentRight, rowY).stroke();
     rowY += 12;
 
     // ── 요청 사유 / 비고 (quote.description) ──
     if (quote.description) {
-      doc.moveDown(1).fontSize(13).text("요청 사유 / 비고", { underline: true });
-      doc.moveDown(0.3).fontSize(11).text(quote.description, { width: 497 });
+      rowY = ensureSpace(rowY, 60);
+      doc.y = rowY + 18;
+      doc
+        .fontSize(13)
+        .text("요청 사유 / 비고", contentLeft, doc.y, { width: contentWidth, underline: true });
+      doc.moveDown(0.3);
+      doc
+        .fontSize(11)
+        .text(quote.description, contentLeft, doc.y, { width: contentWidth, align: "left" });
     }
 
     // ── 안내 ──
     doc.moveDown(1.5).fontSize(9).fillColor("#666");
     doc.text(
       "※ 견적가 란에 품목별 단가를 기재하여 회신 부탁드립니다.",
-      { width: 497 },
+      contentLeft,
+      doc.y,
+      { width: contentWidth, align: "left" },
     );
 
     // ── Footer ──
     doc.moveDown(1.5).fontSize(9).fillColor("#999");
     doc.text(
       "본 견적 요청서는 LabAxis 운영 시스템에서 자동 생성되었습니다.",
-      { align: "center" },
+      contentLeft,
+      doc.y,
+      { width: contentWidth, align: "center" },
     );
 
     doc.end();

@@ -119,6 +119,26 @@ export async function generatePoPdf(input: GeneratePoPdfInput): Promise<Buffer> 
     doc.registerFont("Korean", fontBuffer);
     doc.font("Korean");
 
+    // §11.329 — 레이아웃 상수(하드코딩 제거). A4 595 − margin 48×2 = 499.
+    const PAGE_MARGIN = 48;
+    const contentLeft = PAGE_MARGIN;
+    const contentRight = doc.page.width - PAGE_MARGIN; // 547
+    const contentWidth = contentRight - contentLeft;   // 499
+    const BOTTOM_LIMIT = doc.page.height - 80;
+    const COL = {
+      name: { x: contentLeft, w: 230 },
+      qty: { x: contentLeft + 230, w: 70 },
+      unit: { x: contentLeft + 300, w: 99 },
+      total: { x: contentLeft + 399, w: 100 },
+    } as const;
+    const ensureSpace = (rowY: number, need = 24): number => {
+      if (rowY + need > BOTTOM_LIMIT) {
+        doc.addPage();
+        return doc.y;
+      }
+      return rowY;
+    };
+
     // ── Header — 발주서 (Purchase Order) 한글 ──
     doc.fontSize(22).text("발주서 (Purchase Order)", { align: "center" });
     doc.moveDown(0.5);
@@ -163,49 +183,53 @@ export async function generatePoPdf(input: GeneratePoPdfInput): Promise<Buffer> 
     doc.fontSize(13).text("발주 품목", { underline: true });
     doc.moveDown(0.5).fontSize(10);
     const tableTop = doc.y;
-    const colX = { name: 48, qty: 280, unit: 360, total: 460 };
     doc
       .fillColor("#666")
-      .text("품목", colX.name, tableTop)
-      .text("수량", colX.qty, tableTop)
-      .text("단가", colX.unit, tableTop)
-      .text("합계", colX.total, tableTop);
+      .text("품목", COL.name.x, tableTop, { width: COL.name.w })
+      .text("수량", COL.qty.x, tableTop, { width: COL.qty.w, align: "right" })
+      .text("단가", COL.unit.x, tableTop, { width: COL.unit.w, align: "right" })
+      .text("합계", COL.total.x, tableTop, { width: COL.total.w, align: "right" });
     doc
-      .moveTo(48, tableTop + 14)
-      .lineTo(545, tableTop + 14)
+      .moveTo(contentLeft, tableTop + 14)
+      .lineTo(contentRight, tableTop + 14)
       .stroke();
     doc.fillColor("#000");
 
     let rowY = tableTop + 20;
     for (const item of order.items) {
+      rowY = ensureSpace(rowY);
       const itemLabel = `${item.name}${
         item.brand ? ` (${item.brand})` : ""
       }${item.catalogNumber ? ` · ${item.catalogNumber}` : ""}`;
       doc
-        .text(itemLabel, colX.name, rowY, { width: 220 })
-        .text(item.quantity.toString(), colX.qty, rowY)
-        .text(`₩${item.unitPrice.toLocaleString("ko-KR")}`, colX.unit, rowY)
-        .text(`₩${item.lineTotal.toLocaleString("ko-KR")}`, colX.total, rowY);
+        .text(itemLabel, COL.name.x, rowY, { width: COL.name.w })
+        .text(item.quantity.toString(), COL.qty.x, rowY, { width: COL.qty.w, align: "right" })
+        .text(`₩${item.unitPrice.toLocaleString("ko-KR")}`, COL.unit.x, rowY, { width: COL.unit.w, align: "right" })
+        .text(`₩${item.lineTotal.toLocaleString("ko-KR")}`, COL.total.x, rowY, { width: COL.total.w, align: "right" });
       rowY += 22;
     }
-    doc.moveTo(48, rowY).lineTo(545, rowY).stroke();
+    rowY = ensureSpace(rowY);
+    doc.moveTo(contentLeft, rowY).lineTo(contentRight, rowY).stroke();
     rowY += 12;
 
     // ── 총액 ──
+    rowY = ensureSpace(rowY, 30);
     doc
       .fontSize(13)
       .text(
         `총액: ₩${order.totalAmount.toLocaleString("ko-KR")}`,
-        colX.unit,
+        contentLeft,
         rowY,
-        { align: "left" },
+        { width: contentWidth, align: "right" },
       );
 
     // ── Footer ──
     doc.moveDown(2).fontSize(9).fillColor("#999");
     doc.text(
       "본 발주서는 LabAxis 운영 시스템에서 자동 생성되었습니다.",
-      { align: "center" },
+      contentLeft,
+      doc.y,
+      { width: contentWidth, align: "center" },
     );
 
     doc.end();
