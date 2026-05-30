@@ -222,6 +222,9 @@ export async function POST(request: NextRequest) {
       autoReorderEnabled,
       autoReorderThreshold,
       organizationId,
+      // §11.326 — 라벨 추출 규격(통 1개 함량). 입고 수량과 분리, Product 마스터에 저장.
+      packSize,
+      packUnit,
       // 아래 필드는 스키마에 없으므로 notes에 병합 처리
       lotNumber,
       testPurpose,
@@ -317,6 +320,9 @@ export async function POST(request: NextRequest) {
                 catalogNumber: resolvedCatalog,
                 manufacturer: resolvedBrand, // manufacturer 컬럼도 동일 값으로 저장
                 category: clientCategory ?? "REAGENT", // 미지정 시 기본값 REAGENT
+                // §11.326 — 라벨 규격(통 1개 함량). 입고 수량과 분리.
+                packSize: typeof packSize === "number" ? packSize : null,
+                packUnit: packUnit ?? null,
               },
               select: { id: true },
             });

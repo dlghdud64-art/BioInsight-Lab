@@ -2,6 +2,8 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { csrfFetch } from "@/lib/api-client";
+// §11.326 — 라벨 용량(packSize) vs 입고 수량(받은 통 개수) 분리 매핑.
+import { mapLabelToReceiving } from "@/lib/inventory/map-label-to-receiving";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -70,10 +72,14 @@ export interface SmartReceiveFormData {
   catalogNumber: string;
   lotNumber: string;
   expirationDate: string;
-  quantity: string;
+  // §11.326 — 라벨 규격(통 1개 함량). 입고 수량 아님.
+  packSize: string;
+  packUnit: string;
+  // §11.326 — 입고 정보(사용자 입력). 받은 통/박스 개수.
+  receivedQuantity: string;
+  receivedUnit: string;
   brand: string;
   casNumber: string;
-  unit: string;
 }
 
 interface LabelScannerModalProps {
@@ -166,7 +172,7 @@ const scanAnimationStyle = `
 
 /* ── 빈 폼 데이터 ── */
 function emptyFormData(): SmartReceiveFormData {
-  return { productName: "", catalogNumber: "", lotNumber: "", expirationDate: "", quantity: "1", brand: "", casNumber: "", unit: "개" };
+  return { productName: "", catalogNumber: "", lotNumber: "", expirationDate: "", packSize: "", packUnit: "", receivedQuantity: "1", receivedUnit: "통", brand: "", casNumber: "" };
 }
 
 /* ══════════════════════════════════════════════════════════════ */
@@ -279,10 +285,15 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
     catalogNumber: data.parsed.catalogNo || data.matchedProduct?.catalogNumber || "",
     lotNumber: data.parsed.lotNo || "",
     expirationDate: data.parsed.expirationDate || "",
-    quantity: data.parsed.quantity || "1",
+    // §11.326 — 라벨 quantity 는 통 1개 함량(packSize). 입고 수량 아님.
+    //   LabelParseResult 에 unit 필드 없음 → packUnit 은 사용자 편집(빈값 시작).
+    packSize: data.parsed.quantity || "",
+    packUnit: "",
+    // 입고 수량(받은 통 개수)은 사용자 입력 — 라벨값 절대 사용 안 함. 기본 1.
+    receivedQuantity: "1",
+    receivedUnit: "통",
     brand: data.parsed.brand || data.matchedProduct?.brand || "",
     casNumber: data.parsed.casNumber || "",
-    unit: data.matchedInventory?.unit || "개",
   });
 
   /* ── base64(data URI) → scan-label API (파일/카메라 공통) ── */
@@ -1032,22 +1043,24 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                 />
               </div>
               <div>
-                <Label className="text-xs font-medium text-slate-600">수량</Label>
+                <Label className="text-xs font-medium text-slate-600">규격 (통 1개의 함량)</Label>
                 <div className="flex gap-2 mt-1">
                   <Input
                     type="number"
                     min="0"
-                    value={formData.quantity}
-                    onChange={(e) => updateField("quantity", e.target.value)}
+                    value={formData.packSize}
+                    onChange={(e) => updateField("packSize", e.target.value)}
+                    placeholder="예: 100"
                     className="h-9 text-sm flex-1"
                   />
                   <Input
-                    value={formData.unit}
-                    onChange={(e) => updateField("unit", e.target.value)}
-                    placeholder="단위"
-                    className="h-9 text-sm w-16"
+                    value={formData.packUnit}
+                    onChange={(e) => updateField("packUnit", e.target.value)}
+                    placeholder="CAPSULES"
+                    className="h-9 text-sm w-24"
                   />
                 </div>
+                <p className="text-[11px] text-slate-400 mt-0.5">ⓘ 라벨에 표시된 통 1개의 용량입니다 (입고 수량 아님)</p>
               </div>
             </div>
 

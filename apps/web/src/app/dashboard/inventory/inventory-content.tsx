@@ -50,6 +50,8 @@ import { getStorageConditionLabel } from "@/lib/constants";
 import { useInventoryAiPanel } from "@/hooks/use-inventory-ai-panel";
 import { resolveDisposal, type DisposalReason } from "@/lib/ontology/contextual-action/disposal-resolver";
 import type { SmartReceiveFormData } from "@/components/inventory/LabelScannerModal";
+// §11.326 — 라벨 규격(packSize) vs 입고 수량(받은 통 개수) 분리 매핑.
+import { mapLabelToReceiving } from "@/lib/inventory/map-label-to-receiving";
 import type { QueueItem } from "@/components/inventory/priority-action-queue";
 const LabelScannerModal = dynamic(() => import("@/components/inventory/LabelScannerModal").then((m) => m.LabelScannerModal), { ssr: false });
 const LabelPrintModal = dynamic(() => import("@/components/inventory/LabelPrintModal").then((m) => m.LabelPrintModal), { ssr: false });
@@ -1487,20 +1489,32 @@ function InventoryPageContent() {
                     const res = await csrfFetch("/api/inventory", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        productName: data.productName,
-                        brand: data.brand || null,
-                        catalogNumber: data.catalogNumber || null,
-                        lotNumber: data.lotNumber || null,
-                        expiryDate: data.expirationDate || null,
-                        currentQuantity: parseInt(data.quantity) || 1,
-                        unit: data.unit || "개",
-                      }),
+                      body: JSON.stringify((() => {
+                        // §11.326 — 라벨 packSize vs 받은 통 개수 분리. 입고 수량은
+                        //   사용자 입력(받은 통 개수)이며 라벨값(통 1개 함량)이 아니다.
+                        const m = mapLabelToReceiving(
+                          { quantity: data.packSize || null, unit: data.packUnit || null },
+                          { receivedQuantity: parseFloat(data.receivedQuantity) || 1, receivedUnit: data.receivedUnit },
+                        );
+                        return {
+                          productName: data.productName,
+                          brand: data.brand || null,
+                          catalogNumber: data.catalogNumber || null,
+                          lotNumber: data.lotNumber || null,
+                          expiryDate: data.expirationDate || null,
+                          // 입고 수량 = 받은 통 개수 (라벨값 아님)
+                          currentQuantity: m.receivedQuantity,
+                          unit: m.receivedUnit,
+                          // 통 1개 함량(규격)은 품목 마스터로 분리 저장
+                          packSize: m.packSize,
+                          packUnit: m.packUnit,
+                        };
+                      })()),
                     });
                     if (!res.ok) throw new Error("입고 등록 실패");
                     toast({
                       title: "입고 완료",
-                      description: `${data.productName} ${data.quantity}${data.unit} 입고 처리되었습니다.`,
+                      description: `${data.productName} ${parseFloat(data.receivedQuantity) || 1}${data.receivedUnit || "통"} 입고 처리되었습니다.`,
                     });
                     queryClient.invalidateQueries({
                       queryKey: ["inventories"],

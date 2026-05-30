@@ -77,9 +77,20 @@
 - ✋ Gate: prisma generate, 마이그레이션 dry-run 보고, 기존 row 영향 0.
 
 ### Phase 3: 데스크톱 UI + 영속화 분리 (2~3h)
-- Status: [ ] RED 선작성 완료 (migrate deploy 후 GREEN)
+- Status: [x] GREEN 완료 (sentinel 전항목 ✓, 호영님 env vitest/build/migrate 확인 잔여)
+- 🟢 GREEN(3파일, Python 원자 치환):
+  1. `LabelScannerModal.tsx`(1180줄) — SmartReceiveFormData{packSize,packUnit,receivedQuantity,receivedUnit}(quantity/unit 제거), mapScanToForm 라벨 quantity→packSize·입고수량 기본"1", "품목 정보"/"입고 정보" 섹션 헤더, "규격(통 1개의 함량)"+ⓘ, "받은 통 개수"+ⓘ(기본1), 총함량=mapLabelToReceiving(표시), correctedFields quantity→packSize. brace 257/257.
+  2. `inventory-content.tsx`(4549줄) onDirectReceive — mapLabelToReceiving 경유, **currentQuantity=receivedQuantity(라벨값 제거), packSize/packUnit body 추가, unit=receivedUnit, toast 정정**. `parseInt(data.quantity)` 버그 0.
+  3. `/api/inventory/route.ts`(401줄) — body destructure packSize/packUnit + tx.product.create data 영속화. brace 124/124.
+- ⚠️ route.ts Edit 툴 truncation 재발(390줄 손상) → HEAD 복원+Python 치환 재구성. 이후 전부 Python.
+- ✋ Gate: sentinel 전항목 ✓ / 3파일 brace·paren·EOF 무결 / 옛 quantity·unit·parseInt(data.quantity) 0 / 회귀(scan-label·ConfidenceBadge·스마트 재고 등록·onDirectReceive) 보존 / vitest·build = 호영님 env
+- Rollback: 3파일 revert(HEAD).
 - **onDirectReceive audit (2026-05-30, read-only):** `inventory-content.tsx:1485~1518` → 단일 `POST /api/inventory` body `{ productName, brand, catalogNumber, lotNumber, expiryDate, currentQuantity: parseInt(data.quantity) || 1, unit: data.unit || "개" }`. **버그 = `currentQuantity: parseInt(data.quantity)`(라벨값).** 별도 /api/products 없음 — /api/inventory가 품목+재고 처리. toast도 data.quantity 표시. → GREEN: currentQuantity=receivedQuantity, packSize/packUnit body 추가, unit=receivedUnit, toast 정정. /api/inventory 라우트가 packSize/packUnit 받는지 GREEN 진입 시 확인.
-- 🔴 RED: [x] `src/__tests__/regression/receiving-packsize-split-326.test.ts` — 섹션 분리/규격(통1개 함량)/받은 통 개수/총함량/mapLabelToReceiving + onDirectReceive receivedQuantity·packSize·`parseInt(data.quantity)` 제거 + 회귀(scan-label/ConfidenceBadge/스마트 재고 등록 보존). **의도된 RED**(현재 코드 실패), 헤더에 "migrate deploy 선행·Phase 3 GREEN 전환" 명시. grep 검증으로 RED 확정.
+- 🔴 RED: [x] `src/__tests__/regression/receiving-packsize-split-326.test.ts` — 섹션 분리/규격(통1개 함량)/받은 통 개수/총함량/mapLabelToReceiving + onDirectReceive receivedQuantity·packSize·`parseInt(data.quantity)` 제거 + 회귀(scan-label/ConfidenceBadge/스마트 재고 등록 보존). **의도된 RED**, push `7cb3aac9`.
+- **GREEN 범위 = 3파일 (route audit 2026-05-30, python ground truth):**
+  1. `LabelScannerModal.tsx` — 섹션 분리 + `mapLabelToReceiving` + SmartReceiveFormData{packSize,packUnit,receivedQuantity,receivedUnit} + 총함량 표시.
+  2. `inventory-content.tsx onDirectReceive`(1490~1497) — `currentQuantity=receivedQuantity`(라벨값 제거) + body에 packSize/packUnit + unit=receivedUnit + toast 정정.
+  3. **`/api/inventory/route.ts`(395줄)** — body destructure(207~228)에 packSize/packUnit 추가 + `tx.product.create`(313/341/379) data에 packSize/packUnit 영속화. **현재 0건 → 라우트도 수정 필요.**
 - 🔴 RED: `LabelScannerModal` sentinel — "품목 정보"/"입고 정보" 섹션, "규격(통 1개 함량)" + ⓘ, "받은 통 개수" 기본1 + ⓘ, 총함량 표시.
 - 🟢 GREEN: 모달 폼 분리(packSize/packUnit vs receivedQuantity/receivedUnit) + `mapLabelToReceiving` 사용. `inventory-content.tsx onDirectReceive`가 **receivedQuantity를 InventoryRestock.quantity로**(라벨값 아님), packSize→Product. 큰 파일 Python/heredoc.
 - ✋ Gate: 입고 수량=사용자 입력만, 라벨값 영속화 0, dead button 0, 회귀 0(기존 smart-receiving 테스트).
@@ -103,14 +114,15 @@
 ## 10. Rollback — 1: 신규파일 revert / 2: 컬럼 drop(또는 NULL 무시) / 3: 모달·onDirectReceive revert / 4: 배너 제거.
 
 ## 11. Progress
-- Overall: ~45% (Phase 0/1/2-a 완료, push `564979eb` 빌드 성공)
-- Current: Phase 3(데스크톱 UI) 진입 대기 — 호영님 production `prisma migrate deploy` 후
-- Blocker: 없음. (production 컬럼 적용 확인 후 Phase 3)
-- [2026-05-30] commit `564979eb`: schema packSize/packUnit + migration + map-label-to-receiving land. Vercel 빌드 통과.
+- Overall: ~80% (Phase 0/1/2-a/3 GREEN 완료, P4 알림 + Phase B 모바일 남음)
+- Current: Phase 3 GREEN 완료(sentinel 전항목 ✓, 3파일 무결). 호영님 env vitest/build/migrate deploy 확인 + 커밋·푸시 대기.
+- Blocker: 없음.
+- [2026-05-30] commit `564979eb`: 2-a(schema+migration+core) land.
+- [2026-05-30] Phase 3 GREEN: LabelScannerModal(1180)·inventory-content(4557)·route.ts(401) 3파일. ⚠️ Edit 툴이 LabelScannerModal 3회 truncated 손상 → 매번 Python 백업/HEAD 복원. 최종 무결(brace/paren/eof OK, parsed.unit 0, garble 0). 이 파일군은 Python/heredoc 전용.
 
 **확정(2026-05-30):** ⓐ 신규 컬럼+specification fallback+자동파싱X / 총함량 표시만 / 데스크톱(A) 먼저→모바일(B) / 옵션 C / §11.326>§11.327>§11.318 1d-2.
 
-**Checklist:** [x] P0 / [ ] P1(RED) / [ ] P2(migration) / [ ] P3(UI) / [ ] P4(알림) / [ ] Phase B
+**Checklist:** [x] P0 / [x] P1 / [x] P2-a / [x] P3(UI GREEN) / [ ] P4(알림) / [ ] Phase B(모바일)
 
 ## 12. Notes
 - [2026-05-30] root cause = LabelScannerModal:282 + mobile mapLabelToForm 한 줄. 표면=LabelScannerModal(워크벤치 함정 없음).
