@@ -314,9 +314,30 @@ export function SourcingResultRow({
               <FileText className="h-3.5 w-3.5 mr-1" />견적 담기
             </motion.button>
           )}
+          {/* §11.325b — 명시적 "상세 보기" button (primary affordance). onSelect → page activeResultId
+              → sourcing-context-rail ProductDetailSummary same-canvas render. caller stopPropagation 보존. */}
+          <motion.button
+            data-testid="sourcing-result-row-detail-cta"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.95 }}
+            className="h-8 px-3 rounded-md text-sm font-medium text-slate-600 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 transition-colors inline-flex items-center"
+            onClick={() => { onSelect(); }}
+          >
+            상세 보기
+          </motion.button>
         </div>
 
-        <ChevronRight className={`h-3.5 w-3.5 shrink-0 transition-colors hidden sm:block mt-1 ${isSelected ? "text-blue-400" : "text-slate-400 group-hover:text-slate-600"}`} />
+        {/* §11.325b — ChevronRight secondary affordance: button wrap + onClick={onSelect} + cursor-pointer
+            (옛 dead UI 정리). stopPropagation 으로 카드 본체 onSelect 중복 호출 방지. */}
+        <button
+          type="button"
+          data-testid="sourcing-result-row-detail-chevron"
+          aria-label="상세 보기"
+          onClick={(e) => { e.stopPropagation(); onSelect(); }}
+          className="hidden sm:inline-flex items-center justify-center shrink-0 mt-1 cursor-pointer rounded p-1 -m-1 hover:bg-slate-100 transition-colors"
+        >
+          <ChevronRight className={`h-3.5 w-3.5 transition-colors ${isSelected ? "text-blue-400" : "text-slate-400 group-hover:text-slate-600"}`} />
+        </button>
       </div>
 
       {/* Mobile bottom: price + CTA */}
@@ -356,6 +377,17 @@ export function SourcingResultRow({
               <FileText className="h-3.5 w-3.5 mr-1" />견적 담기
             </motion.button>
           )}
+          {/* §11.325b — 모바일 "상세 보기" button (ChevronRight 는 sm:inline-flex 로 데스크탑만 노출,
+              모바일은 명시적 button 으로 affordance). 동일 onSelect 호출. */}
+          <motion.button
+            data-testid="sourcing-result-row-detail-cta-mobile"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.95 }}
+            className="h-8 px-3 rounded-md text-sm font-medium text-slate-600 border border-slate-200 inline-flex items-center"
+            onClick={() => { onSelect(); }}
+          >
+            상세 보기
+          </motion.button>
         </div>
       </div>
     </div>
