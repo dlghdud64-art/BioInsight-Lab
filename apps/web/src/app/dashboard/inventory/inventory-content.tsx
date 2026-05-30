@@ -29,7 +29,7 @@ import { ActionMenu } from "@/components/inventory/action-menu";
 // §11.196f — dead lucide imports 9 symbol 제거 (ArrowLeftRight Clock
 //   FlaskConical GitBranch LayoutDashboard List RotateCcw ShoppingCart X
 //   actual JSX/prop 사용 0). 나머지 보존.
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ArrowRight, Zap, Check, Upload, Download, Filter, Search, LayoutGrid, ListFilter, FileDown, QrCode, PackagePlus, MoreVertical, Eye, Printer, Truck, XCircle, ChevronRight, ScanLine } from "lucide-react";
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ArrowRight, Zap, Check, Upload, Download, Filter, Search, LayoutGrid, ListFilter, FileDown, QrCode, PackagePlus, MoreVertical, Eye, Printer, Truck, XCircle, ChevronRight, ScanLine, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
