@@ -24,7 +24,7 @@
 // build-time 에서는 module 미존재 시 typecheck error (host install 후 해소).
 import PDFDocument from "pdfkit";
 import { join } from "node:path";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 // §11.239 — pdfkit type 정의가 global Buffer (typeof Buffer) 를 namespace
 // merge 로 가리는 케이스 존재. node:buffer 의 Buffer 를 NodeBuffer alias 로
 // import 해 static concat 안전 호출. runtime 동작 0 변경.
@@ -90,10 +90,19 @@ function resolvePretendardPath(): string {
 
 export async function generatePoPdf(input: GeneratePoPdfInput): Promise<Buffer> {
   const { order, requesterName } = input;
+  // §11.326 Phase 4 (시나리오 3 root cause B-1):
+  //   PDFKit constructor `new PDFDocument({...})` 가 default font 'Helvetica' 즉시 auto-load
+  //   → Vercel 번들에 Helvetica.afm 없음 → 500 ENOENT (registerFont 호출 전 발생).
+  //   호영님 가설 B-1 확정: constructor `font` option 에 Pretendard Buffer 직접 전달 →
+  //   Helvetica auto-load 차단. quote-request-pdf-generator 와 동일 패턴.
   const fontPath = resolvePretendardPath();
+  const fontBuffer = readFileSync(fontPath);
 
   return new Promise<Buffer>((resolve, reject) => {
-    const doc = new PDFDocument({ size: "A4", margin: 48 });
+    // §11.326 Phase 4 — `font: fontBuffer` 로 constructor 단계에서 Pretendard 등록.
+    //   PDFKit source: `this.font(options.font || 'Helvetica')` — font option 없으면
+    //   Helvetica fallback (null/false 도 fallback). Buffer 전달이 유일한 robust fix.
+    const doc = new PDFDocument({ size: "A4", margin: 48, font: fontBuffer });
     const chunks: Buffer[] = [];
     doc.on("data", (chunk: Buffer) => chunks.push(chunk));
     // §11.238 / §11.239 — Buffer.concat type drift (pdfkit type 가 global
@@ -104,9 +113,9 @@ export async function generatePoPdf(input: GeneratePoPdfInput): Promise<Buffer> 
     );
     doc.on("error", reject);
 
-    // §11.326 — 한글 폰트 임베드 강제 (옛 Helvetica fallback 제거, silent 한글 깨짐 차단).
-    //   resolvePretendardPath() 가 미발견 시 throw, 여기 도달했으면 fontPath 유효 보장.
-    doc.registerFont("Korean", fontPath);
+    // §11.326 Phase 4 — Korean alias 등록 (다른 코드 경로 font 참조 호환).
+    //   constructor 에서 fontBuffer 이미 사용 중이므로 registerFont 는 alias 명명용.
+    doc.registerFont("Korean", fontBuffer);
     doc.font("Korean");
 
     // ── Header — 발주서 (Purchase Order) 한글 ──

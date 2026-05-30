@@ -79,10 +79,17 @@ describe("§11.326 Phase 2 — quote PDF generator (resolvePretendardPath + Helv
     expect(src).not.toMatch(/catch[\s\S]{0,50}doc\.font\(["']Helvetica["']\)/);
   });
 
-  it("doc.registerFont('Korean', fontPath) + doc.font('Korean') 보존", () => {
+  it("doc.registerFont('Korean', fontBuffer) + doc.font('Korean') 보존 (Phase 4 Buffer swap)", () => {
     const src = read(QUOTE_GEN);
-    expect(src).toMatch(/doc\.registerFont\(["']Korean["'],\s*fontPath\)/);
+    expect(src).toMatch(/doc\.registerFont\(["']Korean["'],\s*fontBuffer\)/);
     expect(src).toMatch(/doc\.font\(["']Korean["']\)/);
+  });
+
+  it("§11.326 Phase 4 — PDFDocument constructor 에 font: fontBuffer 전달 (Helvetica auto-load 차단)", () => {
+    const src = read(QUOTE_GEN);
+    expect(src).toMatch(/import\s*\{[^}]*readFileSync[^}]*\}\s*from\s*["']node:fs["']/);
+    expect(src).toMatch(/const fontBuffer = readFileSync\(fontPath\)/);
+    expect(src).toMatch(/new PDFDocument\(\{[^}]*font:\s*fontBuffer[^}]*\}\)/);
   });
 });
 
@@ -101,6 +108,13 @@ describe("§11.326 Phase 2 — PO PDF generator (동일 패턴)", () => {
   it("옛 Helvetica fallback 잔존 0", () => {
     const src = read(PO_GEN);
     expect(src).not.toMatch(/catch[\s\S]{0,50}doc\.font\(["']Helvetica["']\)/);
+  });
+
+  it("§11.326 Phase 4 — PDFDocument constructor 에 font: fontBuffer 전달 (Helvetica auto-load 차단)", () => {
+    const src = read(PO_GEN);
+    expect(src).toMatch(/import\s*\{[^}]*readFileSync[^}]*\}\s*from\s*["']node:fs["']/);
+    expect(src).toMatch(/const fontBuffer = readFileSync\(fontPath\)/);
+    expect(src).toMatch(/new PDFDocument\(\{[^}]*font:\s*fontBuffer[^}]*\}\)/);
   });
 });
 
