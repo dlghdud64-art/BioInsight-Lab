@@ -98,8 +98,13 @@ describe("§11.274c #2 — 한글 aria-label 매칭 (5 spot)", () => {
     expect(WORKBENCH_SEARCH).toMatch(/aria-label="소싱 결과 분류"/);
   });
 
-  it("search/page.tsx 한글 \"소싱 결과 분류\" 매칭", () => {
-    expect(SEARCH).toMatch(/aria-label="소싱 결과 분류"/);
+  it("search/page.tsx 한글 \"LabAxis 사용 흐름 3단계\" 매칭 (§11.324 supersede — 옛 \"소싱 결과 분류\" Triage section 제거 + 3단계 다이어그램으로 swap)", () => {
+    // §11.324 (호영님 P2, 2026-05-30, A안): 비로그인 랜딩 Triage 데모 제거 → 3단계 다이어그램.
+    //   aria-label 도 함께 변경 ("소싱 결과 분류" → "LabAxis 사용 흐름 3단계").
+    //   §11.274c "영문 → 한글 정합" 원칙은 그대로 유효 (한글 라벨 유지).
+    expect(SEARCH).toMatch(/aria-label="LabAxis 사용 흐름 3단계"/);
+    // 옛 라벨 잔존 0 (§11.324 정합 검증)
+    expect(SEARCH).not.toMatch(/aria-label="소싱 결과 분류"/);
   });
 });
 
@@ -124,8 +129,9 @@ describe("§11.274c #3 — invariant 보존 (canonical truth)", () => {
     expect(WORKBENCH_SEARCH).toMatch(/aria-label="소싱 결과 분류"/);
   });
 
-  it("search/page.tsx section landmark + aria-label 보존", () => {
-    // section 과 aria-label 사이에 data-testid + className + comment 있음 → window 400
-    expect(SEARCH).toMatch(/<section[\s\S]{0,400}aria-label="소싱 결과 분류"/);
+  it("search/page.tsx section landmark + aria-label 보존 (§11.324 — LabAxis 사용 흐름 3단계 로 swap)", () => {
+    // §11.324 (호영님 P2, 2026-05-30): Triage section → 3단계 다이어그램, aria-label 도 변경.
+    // 옛 "소싱 결과 분류" 단언 → "LabAxis 사용 흐름 3단계" 로 swap.
+    expect(SEARCH).toMatch(/<section[\s\S]{0,400}aria-label="LabAxis 사용 흐름 3단계"/);
   });
 });

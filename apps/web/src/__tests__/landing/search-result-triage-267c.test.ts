@@ -1,10 +1,26 @@
 /**
- * §11.267c search result triage source guard
+ * §11.267c search result triage source guard — ⚠️ OBSOLETE (§11.324 supersede)
  *
- * Agent Board asked for the public /search results area to expose a real
- * sourcing triage surface: Exact Match, Cross-Vendor Equivalent, Substitute,
- * and Blocked, with visible counts, blocked reason, direct row actions, and a
- * same-canvas compare entry.
+ * 원본 spec (Agent Board):
+ *   비로그인 /search 랜딩에 Exact Match / Cross-Vendor Equivalent / Substitute /
+ *   Blocked 4 카드 + Shortlist/Hold/Exclude + Step 2/3 + same-canvas compare
+ *   진입로 노출.
+ *
+ * §11.324 supersede (호영님 P2, 2026-05-30, A안 정합):
+ *   비로그인 랜딩 = 가치 제안 + 가입 유도 페이지. Triage 데모 (실제 사용 UI) 노출은
+ *   인지 부하 + dead button 위험 + 가입 conversion 저해. 호영님 spec 결정:
+ *   - Triage 4 카드 + Shortlist/Hold/Exclude + Step 2/3 button 전체 제거
+ *   - 3단계 다이어그램 (검색/비교/견적) + 큰 가입 CTA "무료로 시작하기 — 30초 가입"
+ *   - 본 §11.267c spec 의도 자체가 §11.324 와 정면 충돌 → describe.skip 처리
+ *
+ * 새 sentinel (§11.324 정합):
+ *   `__tests__/regression/landing-search-triage-cleanup-324.test.ts`
+ *   - search-result-triage / search-step-2/3 / publicTriage* 잔존 0 단언
+ *   - landing-search-flow-steps + landing-search-primary-cta 신규 단언
+ *   - 상단 띠 + 히어로 + 검색 예시 canonical 보존
+ *
+ * Rollback path (§11.324 revert 시):
+ *   describe.skip → describe 로 복원 + §11.324 sentinel 삭제
  */
 
 import { describe, expect, it } from "vitest";
@@ -14,7 +30,7 @@ import { resolve } from "node:path";
 const PAGE_PATH = resolve(__dirname, "../../app/search/page.tsx");
 const page = readFileSync(PAGE_PATH, "utf8");
 
-describe("§11.267c /search result triage", () => {
+describe.skip("§11.267c /search result triage — OBSOLETE (§11.324 supersede)", () => {
   it("pins the sourcing triage surface on the search page", () => {
     expect(page).toMatch(/data-testid="search-result-triage"/);
     expect(page).toMatch(/Sourcing Result Triage/);

@@ -1,9 +1,9 @@
 # Implementation Plan: §11.324 — 랜딩 페이지(/search) Sourcing Result Triage 데모 정리
 
-- **Status:** 🔄 In Progress (Phase 0 Truth audit 완료, Phase 1 RED 작성 중)
+- **Status:** ✅ Complete (Phase 0~3 sandbox 완료, Phase 3 호영님 push 대기)
 - **Spec received:** 2026-05-30 (호영님 spec §11.320 → 번호 충돌 매핑 §11.324)
 - **Started:** 2026-05-30 (§11.312-b 종결 후 진입)
-- **Estimated Completion:** 2026-05-30 (3 phase / ~2.5h)
+- **Completed:** 2026-05-30 (3 phase / ~2.5h)
 - **Scope:** A안 (권장) — 데모 제거 + 가치 제안 중심 / 3 phases / small-medium
 - **호영님 모델 권장:** Opus 4.7로 충분 (랜딩 단순화 + 컴포넌트 제거 + 신규 다이어그램 1개, 신규 로직 0)
 
