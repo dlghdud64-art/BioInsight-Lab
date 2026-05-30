@@ -1,8 +1,8 @@
 # Implementation Plan: §11.314 Phase 2 — SMTP 실제 발송 (sender.ts mock → production)
 
-- **Status:** ⏳ Pending (호영님 provider 결정 대기)
+- **Status:** ✅ Complete (Phase 0~3 sandbox 완료, 호영님 Resend env 설정 + push 대기)
 - **Started:** 2026-05-30 (§11.324 종결 후 진입)
-- **Estimated Completion:** TBD (Provider 결정 후 ~2-3h)
+- **Completed:** 2026-05-30 (호영님 권장안 Resend 채택, ~1.5h sandbox)
 - **Scope:** release-prep deferred / single file core change / 8 caller 영향
 - **호영님 모델 권장:** Opus 4.7로 충분 (provider SDK 통합 + env 설정 + error handling)
 - **Prerequisite:** §11.314-b PDF + mailto MVP 완료 (task #97 completed)
