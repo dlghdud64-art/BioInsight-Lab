@@ -77,7 +77,9 @@
 - ✋ Gate: prisma generate, 마이그레이션 dry-run 보고, 기존 row 영향 0.
 
 ### Phase 3: 데스크톱 UI + 영속화 분리 (2~3h)
-- Status: [ ] Pending
+- Status: [ ] RED 선작성 완료 (migrate deploy 후 GREEN)
+- **onDirectReceive audit (2026-05-30, read-only):** `inventory-content.tsx:1485~1518` → 단일 `POST /api/inventory` body `{ productName, brand, catalogNumber, lotNumber, expiryDate, currentQuantity: parseInt(data.quantity) || 1, unit: data.unit || "개" }`. **버그 = `currentQuantity: parseInt(data.quantity)`(라벨값).** 별도 /api/products 없음 — /api/inventory가 품목+재고 처리. toast도 data.quantity 표시. → GREEN: currentQuantity=receivedQuantity, packSize/packUnit body 추가, unit=receivedUnit, toast 정정. /api/inventory 라우트가 packSize/packUnit 받는지 GREEN 진입 시 확인.
+- 🔴 RED: [x] `src/__tests__/regression/receiving-packsize-split-326.test.ts` — 섹션 분리/규격(통1개 함량)/받은 통 개수/총함량/mapLabelToReceiving + onDirectReceive receivedQuantity·packSize·`parseInt(data.quantity)` 제거 + 회귀(scan-label/ConfidenceBadge/스마트 재고 등록 보존). **의도된 RED**(현재 코드 실패), 헤더에 "migrate deploy 선행·Phase 3 GREEN 전환" 명시. grep 검증으로 RED 확정.
 - 🔴 RED: `LabelScannerModal` sentinel — "품목 정보"/"입고 정보" 섹션, "규격(통 1개 함량)" + ⓘ, "받은 통 개수" 기본1 + ⓘ, 총함량 표시.
 - 🟢 GREEN: 모달 폼 분리(packSize/packUnit vs receivedQuantity/receivedUnit) + `mapLabelToReceiving` 사용. `inventory-content.tsx onDirectReceive`가 **receivedQuantity를 InventoryRestock.quantity로**(라벨값 아님), packSize→Product. 큰 파일 Python/heredoc.
 - ✋ Gate: 입고 수량=사용자 입력만, 라벨값 영속화 0, dead button 0, 회귀 0(기존 smart-receiving 테스트).
@@ -101,9 +103,10 @@
 ## 10. Rollback — 1: 신규파일 revert / 2: 컬럼 drop(또는 NULL 무시) / 3: 모달·onDirectReceive revert / 4: 배너 제거.
 
 ## 11. Progress
-- Overall: ~10% (Phase 0 완료)
-- Current: Phase 1 RED
-- Blocker: 없음 (Phase 2 마이그레이션은 호영님 production 승인 대기)
+- Overall: ~45% (Phase 0/1/2-a 완료, push `564979eb` 빌드 성공)
+- Current: Phase 3(데스크톱 UI) 진입 대기 — 호영님 production `prisma migrate deploy` 후
+- Blocker: 없음. (production 컬럼 적용 확인 후 Phase 3)
+- [2026-05-30] commit `564979eb`: schema packSize/packUnit + migration + map-label-to-receiving land. Vercel 빌드 통과.
 
 **확정(2026-05-30):** ⓐ 신규 컬럼+specification fallback+자동파싱X / 총함량 표시만 / 데스크톱(A) 먼저→모바일(B) / 옵션 C / §11.326>§11.327>§11.318 1d-2.
 
