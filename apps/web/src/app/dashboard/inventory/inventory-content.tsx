@@ -1,6 +1,7 @@
 "use client";
 
 // §11.283c #inventory-content-traffic-light — amber/orange 토큰 → yellow/red 신호등 sweep (호영님 P0 spec, §11.283 cluster C, 30+ spot byte-level swap).
+import { isSuspectReceivedQuantity, countSuspectInventories } from "@/lib/inventory/suspect-received-quantity";
 import { useState, useEffect, Suspense, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
