@@ -402,12 +402,15 @@ export function InventoryContextPanel({
 }: InventoryContextPanelProps) {
   // §11.320 Phase 2 — 상태 배너 onClick → operationalBriefPopup.open (풀 패널 진입)
   const operationalBriefPopup = useOperationalBriefPopup();
-  // §11.320 Phase 3 — LOT / 연결된 흐름 / 최근 수정 접기(default false). 정보 우선순위 명확화.
-  // §11.322 Phase 4 — 권장 액션 접기 추가(default false). 3차 위계 통일.
-  const [isLotSectionExpanded, setIsLotSectionExpanded] = useState(false);
-  const [isFlowSectionExpanded, setIsFlowSectionExpanded] = useState(false);
+  // §11.320 Phase 3 / §11.322 Phase 4 — 옛 default false (3차 위계 접힘 시작).
+  // §11.333 Part B-2-3 (호영님 P2, 2026-05-30) — 자주 보는 핵심 정보 기본 펼침으로 정정:
+  //   · LOT 정보 / 연결된 흐름 / 권장 액션 + 추천 이유 = 기본 펼침 (true)
+  //   · 최근 수정 이력 = 보조 정보, 기본 접힘 (false)
+  //   원칙: 자주 보는 정보는 펼침, 보조/이력성만 접힘.
+  const [isLotSectionExpanded, setIsLotSectionExpanded] = useState(true);
+  const [isFlowSectionExpanded, setIsFlowSectionExpanded] = useState(true);
   const [isHistorySectionExpanded, setIsHistorySectionExpanded] = useState(false);
-  const [isActionsSectionExpanded, setIsActionsSectionExpanded] = useState(false);
+  const [isActionsSectionExpanded, setIsActionsSectionExpanded] = useState(true);
   const lots = generateMockLots(item);
   const risks = generateMockRisks(item);
   // §11.322 Phase 3 — D. 리스크 섹션 = 상태 배너 흡수(below_safety) 제외, 부가 리스크만.
@@ -776,7 +779,7 @@ export function InventoryContextPanel({
             <button
               type="button"
               onClick={() => setIsLotSectionExpanded((v) => !v)}
-              className="text-[10px] font-medium text-slate-500 hover:text-slate-900 transition-colors min-h-[32px] px-2 -mx-2 inline-flex items-center"
+              className="text-xs font-semibold text-slate-700 hover:text-slate-950 transition-colors min-h-[36px] px-2 -mx-2 inline-flex items-center gap-1"
               aria-expanded={isLotSectionExpanded}
             >
               {isLotSectionExpanded ? "접기 ▴" : "펼치기 ▾"}
@@ -875,7 +878,7 @@ export function InventoryContextPanel({
             <button
               type="button"
               onClick={() => setIsFlowSectionExpanded((v) => !v)}
-              className="text-[10px] font-medium text-slate-500 hover:text-slate-900 transition-colors min-h-[32px] px-2 -mx-2 inline-flex items-center"
+              className="text-xs font-semibold text-slate-700 hover:text-slate-950 transition-colors min-h-[36px] px-2 -mx-2 inline-flex items-center gap-1"
               aria-expanded={isFlowSectionExpanded}
             >
               {isFlowSectionExpanded ? "접기 ▴" : "펼치기 ▾"}
@@ -983,7 +986,7 @@ export function InventoryContextPanel({
             <button
               type="button"
               onClick={() => setIsActionsSectionExpanded((v) => !v)}
-              className="text-[10px] font-medium text-slate-500 hover:text-slate-900 transition-colors min-h-[32px] px-2 -mx-2 inline-flex items-center"
+              className="text-xs font-semibold text-slate-700 hover:text-slate-950 transition-colors min-h-[36px] px-2 -mx-2 inline-flex items-center gap-1"
               aria-expanded={isActionsSectionExpanded}
             >
               {isActionsSectionExpanded ? "접기 ▴" : "펼치기 ▾"}
@@ -1054,7 +1057,7 @@ export function InventoryContextPanel({
             <button
               type="button"
               onClick={() => setIsHistorySectionExpanded((v) => !v)}
-              className="text-[10px] font-medium text-slate-500 hover:text-slate-900 transition-colors min-h-[32px] px-2 -mx-2 inline-flex items-center"
+              className="text-xs font-semibold text-slate-700 hover:text-slate-950 transition-colors min-h-[36px] px-2 -mx-2 inline-flex items-center gap-1"
               aria-expanded={isHistorySectionExpanded}
             >
               {isHistorySectionExpanded ? "접기 ▴" : "펼치기 ▾"}

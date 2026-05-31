@@ -504,7 +504,9 @@ export default function PurchasesPage() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 p-4 md:p-6 pt-4 md:pt-4">
-      <div className="max-w-7xl mx-auto space-y-4">
+      {/* §11.333 Part A — 운영 화면 wide 정책 정합. 옛 max-w-7xl(1280px) → max-w-full
+          (다른 운영 화면 dashboard/quotes/inventory/purchase-orders/receiving 와 동일). */}
+      <div className="max-w-full mx-auto space-y-4">
 
         {/* ═══ 브레드크럼 ═══ */}
         <div className="flex items-center gap-1.5 text-xs text-slate-500">
