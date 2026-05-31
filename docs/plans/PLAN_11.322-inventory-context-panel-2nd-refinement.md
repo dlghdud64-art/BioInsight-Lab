@@ -1,9 +1,9 @@
 # Implementation Plan: §11.322 — 재고 상세 우측 레일 2차 고도화 (잘림·중복·위계)
 
-- **Status:** ⏳ Pending (호영님 spec 진행 승인, plan 작성)
+- **Status:** ✅ Complete (Phase 0~5 sandbox 작업 완료, Phase 5 호영님 push 대기)
 - **Started:** 2026-05-29
-- **Last Updated:** 2026-05-29
-- **Estimated Completion:** 2026-05-29~30 (3~4h working)
+- **Last Updated:** 2026-05-30 (Phase 5 closeout)
+- **Estimated Completion:** 2026-05-30 (2일 내 완주)
 - **Scope:** 5 phases / medium (§11.320 후속 incremental)
 - **호영님 모델 권장:** Opus 4.7로 충분 (시각 정리 + 중복 제거 + 위계 재배치, 신규 로직 0)
 - **번호 매핑:** 호영님 §11.317 (spec 번호) → §11.322 (이미 §11.317-b = ai-pipeline @ts-nocheck batch 사용 중, 번호 충돌 회피)
@@ -116,36 +116,44 @@
 ### Phase 0: Truth Lock ✅ COMPLETE
 - Status: [x] Complete (§0 evidence + line 매핑 + 호출부 + §11.320 결정 번복 명시)
 
-### Phase 1: Failing sentinel (RED)
-- Status: [ ] Pending
-- 8 완료 기준 단언: 인라인 row testid / 카드 테두리 0 / 상태 배너 숫자 0 / 리스크 필터 / 권장 액션 접기
-- Canonical 보존: caller 호출 시그니처 / item props / §11.320 결정 유지
+### Phase 1: Failing sentinel (RED) ✅ COMPLETE
+- Status: [x] Complete
+- 8 완료 기준 단언 + canonical 보존 11 it
+- §11.322 commit: COMMIT_11.322-phase0-1.md
 
-### Phase 2: A + B (재고 현황 인라인 row + 위험 텍스트 색상)
-- Status: [ ] Pending
+### Phase 2: A + B (재고 현황 인라인 row + 위험 텍스트 색상) ✅ COMPLETE
+- Status: [x] Complete
 - KPI grid-cols-3 → 인라인 라벨-값 row 4 (현재/안전재고/만료 임박/최단 LOT)
 - MetricCell 미사용, `<div className="flex justify-between">` 패턴
-- 위험 값 (currentQuantity = 0 등) `text-red-600 font-semibold` 만
-- "0 bottle" 단위 풀표기 (잘림 0)
+- 위험 값 `text-red-600 font-semibold` (qtyTone/expiryTone)
+- 최단 LOT 재도입 (shortestLotLabel IIFE)
+- §11.320 sentinel KPI 단언 동시 갱신 (3 → 4 정합)
+- §11.322 commit: COMMIT_11.322-phase2-inline-row.md
 
-### Phase 3: C + D (상태 배너 숫자 제거 + 리스크 필터링)
-- Status: [ ] Pending
-- toneSub: "현재 ${qty} ${unit} / 안전재고 ${safety}" → 결론만 ("즉시 재주문 필요" / "우선 소진 권장" / "특이사항 없음")
-- risks 필터: risk.type 또는 risk.label 기반 "안전재고 미달" / "재고 소진" 제외
-- 필터 후 length 0 시 섹션 자체 생략 (이미 length > 0 조건 있음, 필터만 추가)
+### Phase 3: C + D (상태 배너 숫자 제거 + 리스크 필터링) ✅ COMPLETE
+- Status: [x] Complete
+- toneSub 결론 only: "즉시 재주문 필요" / "안전재고 보충 권장" / "만료 임박 — 우선 소진 권장" / "정상 운영 중"
+- toneAction 변수 + display 함께 제거 (의미 중복)
+- visibleRisks 필터 (type !== "below_safety")
+- 3 곳 risks → visibleRisks swap (length/count/map)
+- inventorySummary narrative 입력 보존
+- §11.322 commit: COMMIT_11.322-phase3-banner-risks.md
 
-### Phase 4: E (권장 액션 접힘) + 모바일
-- Status: [ ] Pending
-- `useState isActionsSectionExpanded` 추가 (default false)
-- 권장 액션 + 추천 이유 섹션 SectionHeader 옆 접기/펼치기 button + 본문 `{isActionsSectionExpanded && (...)}` wrap
-- 다른 3차 섹션과 동일 패턴
-- 모바일 375px above the fold (상태 배너 + 액션 button + 재고 현황 인라인 row) 도달 검증
+### Phase 4: E (권장 액션 접힘) + 모바일 ✅ COMPLETE
+- Status: [x] Complete
+- isActionsSectionExpanded useState (default false)
+- 권장 액션 SectionHeader + 토글 button + body wrap (다른 3 섹션 패턴 통일)
+- 모바일 hit area min-h-[32px] (§11.320 Phase 5 패턴 정합)
+- §11.322 commit: COMMIT_11.322-phase4-actions-collapse.md
 
-### Phase 5: 회귀 + closeout
-- Status: [ ] Pending
-- §11.320 sentinel 영향 audit (testid / 라벨 / KPI 3 → 4 변경 시 sentinel 갱신)
-- sourcing-context-rail 회귀 0 (이미 의존 0 확인, 재확인)
-- PLAN closeout (체크박스 + notes)
+### Phase 5: 회귀 + closeout ✅ COMPLETE (sandbox)
+- Status: [x] Complete (호영님 push 대기)
+- §11.320 sentinel KPI 단언 = Phase 2 동시 swap 완료 (3 → 4 정합 ✓)
+- sourcing-context-rail 회귀 0 = §11.320 Phase 5 sentinel 자연 보존 ✓
+- §11.322 Phase 1 sentinel mobile min-h-[44px] 단언 = §11.320 Phase 5 패턴 보존 ✓
+- §11.322 Phase 1 sentinel "접기 button >= 3" 단언 = Phase 4 신규 추가로 4 매칭 (자연 GREEN)
+- 추가 sandbox 작업 0 (Phase 2~4 작업이 sentinel 모든 단언 자연 정합)
+- PLAN closeout (체크박스 + Notes 갱신)
 
 ## 9. Risk Assessment
 | Risk | 확률 | Mitigation |
@@ -161,27 +169,48 @@
 - Phase 5 fail: sentinel 갱신만 revert
 
 ## 11. Progress Tracking
-- Overall: 10% → Phase 0 ✅ + Phase 1 RED 작성 중
-- Current phase: Phase 0 → 1
-- Next: Phase 1 RED sentinel 작성 → 호영님 승인 → Phase 2 진입
+- Overall: 100% (Phase 5 sandbox closeout 완료, 호영님 Phase 5 push 대기)
+- Current phase: Phase 5 closeout
+- Next: 호영님 Phase 5 push → §11.322 완전 종결, 다음 트랙 진입
 
 **Phase Checklist:**
 - [x] Phase 0 complete (Truth Lock)
-- [ ] Phase 1 complete (Failing sentinel)
-- [ ] Phase 2 complete (재고 현황 인라인 row + 위험 텍스트 색상)
-- [ ] Phase 3 complete (상태 배너 숫자 제거 + 리스크 필터링)
-- [ ] Phase 4 complete (권장 액션 접힘 + 모바일)
-- [ ] Phase 5 complete (회귀 + closeout)
+- [x] Phase 1 complete (Failing sentinel)
+- [x] Phase 2 complete (재고 현황 인라인 row + 위험 텍스트 색상)
+- [x] Phase 3 complete (상태 배너 숫자 제거 + 리스크 필터링)
+- [x] Phase 4 complete (권장 액션 접힘 + 모바일)
+- [x] Phase 5 complete (회귀 + closeout, 호영님 push 대기)
 
 ## 12. Notes & Learnings
 
 **Implementation Notes:**
-- §11.317 5-phase 패턴 재사용 (호영님 phase 별 push 가능)
-- §11.320 위에 incremental refinement — caller props 변경 0
+- §11.317 5-phase 패턴 재사용 (호영님 phase 별 push 패턴 성공)
+- §11.320 위에 incremental refinement — caller props 변경 0 (inventory-content:2725 / inventory-main:1958 영향 0)
 - 최단 LOT 재도입 = §11.320 phase 3 결정 번복 (호영님 production smoke 결과 우선)
 - 호영님 spec text 그대로 follow
 
-**§11.320 sentinel 영향 예상:**
-- `inventory-context-kpi-current` / `kpi-safety-stock` / `kpi-expiring-soon` testid 보존 (Phase 2 인라인 row 에서도 동일 testid 유지)
-- 새 testid 추가: `inventory-context-kpi-shortest-lot` (최단 LOT)
-- "grid grid-cols-3" 단언 → "flex justify-between" 패턴으로 swap 가능
+**Blockers Encountered:**
+- [2026-05-29] §11.320 sentinel KPI 3 단언 = Phase 2 swap 필요 → 동시 처리 (의도 갱신 + grid-cols-3 패턴 0 swap)
+- [2026-05-29] toneAction 의미 중복 → 변수 + display 모두 제거 결정 (sandbox 단순화)
+- [2026-05-30] Phase 5 = §11.320 Phase 5 자연 보존으로 추가 sandbox 작업 0 (sentinel 모든 단언 Phase 2~4 작업으로 GREEN)
+
+**Phase별 commit/draft:**
+- Phase 0+1: COMMIT_11.322-phase0-1.md ✅ pushed
+- Phase 2: COMMIT_11.322-phase2-inline-row.md ✅ pushed
+- Phase 3: COMMIT_11.322-phase3-banner-risks.md ✅ pushed
+- Phase 4: COMMIT_11.322-phase4-actions-collapse.md ✅ pushed
+- Phase 5: COMMIT_11.322-phase5-closeout.md ⏳ 호영님 push 대기
+
+**Production effect (5 phase 합산):**
+- A: KPI grid-cols-3 카드 → 인라인 row 4 (현재/안전재고/만료 임박/최단 LOT) — 잘림 0, 단위 풀표기
+- B: 위험 카드 빨간 테두리 사라짐 — text-red-600 텍스트 색상만 (§11.302 정합)
+- C: 상태 배너 정량 숫자 제거 — 결론 only ("즉시 재주문 필요" 등), 재고 현황 섹션이 유일한 숫자 출처
+- D: 안전재고 미달 리스크 = 상태 배너 흡수, expiring 리스크만 잔존 (없으면 섹션 자체 생략)
+- E: 정보 위계 3 단계 통일 — 권장 액션 접힘 추가 (LOT/Flow/History/Actions 4 섹션 모두 접힘 시작)
+- 모바일 first fold = 상태 배너 + 액션 button + 재고 현황 인라인 row 4 도달
+
+**§11.320 → §11.322 cross-reference:**
+- §11.320 Phase 3 "최단 LOT 제거" 결정 → §11.322 Phase 2 재도입 (호영님 production smoke 우선)
+- §11.320 Phase 5 모바일 패턴(min-h-[44px] 액션 + min-h-[32px] 접기) 보존
+- §11.320 sentinel KPI 3 단언 → §11.322 Phase 2 KPI 4 인라인 row 정합 갱신
+- 권장 액션 섹션 접힘 = §11.320 Phase 3 (LOT/Flow/History) 패턴 통일
