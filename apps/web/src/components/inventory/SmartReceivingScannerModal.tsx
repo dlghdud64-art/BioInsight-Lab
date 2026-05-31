@@ -177,6 +177,17 @@ function extractInitialForm(doc: ParsedQuoteDocument): ConfirmedFormState {
   };
 }
 
+// §11.326 v3 — po-candidates-for-label 응답 후보(라벨↔미입고 발주 Order).
+interface PoCandidate {
+  orderId: string;
+  orderNumber: string;
+  status: string;
+  expectedDelivery: string | null;
+  vendorName: string | null;
+  matchedItem: { name: string; catalogNumber: string | null; quantity: number };
+  confidence: "catalog" | "name";
+}
+
 interface SmartReceivingScannerModalProps {
   open: boolean;
   onClose: () => void;
@@ -197,6 +208,10 @@ export function SmartReceivingScannerModal({
   const [step, setStep] = useState<ScanStep>("upload");
   const [scanResult, setScanResult] = useState<QuoteScanApiResponse | null>(null);
   const [form, setForm] = useState<ConfirmedFormState>(EMPTY_FORM);
+  // §11.326 v3 — 라벨↔미입고 발주 매칭 후보 + 선택.
+  const [poCandidates, setPoCandidates] = useState<PoCandidate[]>([]);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [candidatesLoading, setCandidatesLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -205,11 +220,37 @@ export function SmartReceivingScannerModal({
     setScanResult(null);
     setForm(EMPTY_FORM);
     setErrorMessage(null);
+    setPoCandidates([]);
+    setSelectedOrderId(null);
   };
 
   const handleClose = () => {
     reset();
     onClose();
+  };
+
+  // §11.326 v3 — 라벨로 식별한 품목과 매칭되는 미입고 발주(Order) 후보 조회.
+  const fetchPoCandidates = async (catalogNumber: string, productName: string) => {
+    if (!catalogNumber.trim() && !productName.trim()) { setPoCandidates([]); return; }
+    setCandidatesLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (catalogNumber.trim()) params.set("catalogNumber", catalogNumber.trim());
+      if (productName.trim()) params.set("productName", productName.trim());
+      const res = await csrfFetch(`/api/inventory/po-candidates-for-label?${params.toString()}`);
+      const data = await res.json();
+      setPoCandidates(res.ok && Array.isArray(data.candidates) ? data.candidates : []);
+    } catch {
+      setPoCandidates([]);
+    } finally {
+      setCandidatesLoading(false);
+    }
+  };
+
+  // 발주 선택 시 받은 통 개수를 발주 수량으로 prefill (전량 입고 기준).
+  const handleSelectCandidate = (c: PoCandidate) => {
+    setSelectedOrderId((prev) => (prev === c.orderId ? null : c.orderId));
+    setForm((f) => ({ ...f, receivedQuantity: c.matchedItem.quantity }));
   };
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -234,9 +275,11 @@ export function SmartReceivingScannerModal({
           if (!response.ok || !data.success) {
             throw new Error((data as { error?: string })?.error || "거래명세서 파싱 실패");
           }
+          const _initForm = extractInitialForm(data.parsed);
           setScanResult(data);
-          setForm(extractInitialForm(data.parsed));
+          setForm(_initForm);
           setStep("review");
+          void fetchPoCandidates(_initForm.catalogNumber, _initForm.productName);
         } catch (err) {
           const msg = err instanceof Error ? err.message : "거래명세서 파싱 중 오류 발생";
           setErrorMessage(msg);
@@ -255,6 +298,30 @@ export function SmartReceivingScannerModal({
   };
 
   const handleSubmit = async () => {
+    // §11.326 v3 — 발주 매핑 경로: 선택된 미입고 발주를 DELIVERED 처리
+    //   → InventoryRestock 자동 생성(orders/[id] PATCH). ocrJobId 불필요.
+    if (selectedOrderId) {
+      setStep("submitting");
+      try {
+        const response = await csrfFetch(`/api/orders/${selectedOrderId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "DELIVERED", actualDelivery: new Date().toISOString() }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error((data as { error?: string })?.error || "발주 입고 처리에 실패했습니다.");
+        }
+        onReceivingRegistered?.({ isNew: false });
+        toast.success("발주 입고 처리 완료");
+        setStep("success");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "발주 입고 처리 중 오류가 발생했습니다.";
+        setErrorMessage(msg);
+        setStep("error");
+      }
+      return;
+    }
     if (!scanResult?.ocrMetadata?.jobId) {
       setErrorMessage("이미지 분석 결과를 찾을 수 없습니다. 다시 스캔해 주세요.");
       setStep("error");
@@ -365,6 +432,49 @@ export function SmartReceivingScannerModal({
         {/* ── Step: review (사용자 확인 form) ── */}
         {step === "review" && scanResult && (
           <div className="space-y-4 py-2">
+            {/* §11.326 v3 — 미입고 발주 매칭 후보 */}
+            {(candidatesLoading || poCandidates.length > 0) && (
+              <div className="space-y-2" data-testid="srm-po-candidates">
+                <h4 className="text-xs font-bold text-slate-700">
+                  매칭된 발주{poCandidates.length > 0 ? ` · ${poCandidates.length}건` : ""}
+                </h4>
+                {candidatesLoading && (
+                  <p className="text-[11px] text-slate-400">발주 내역을 확인하는 중…</p>
+                )}
+                {!candidatesLoading && poCandidates.map((c) => {
+                  const selected = selectedOrderId === c.orderId;
+                  return (
+                    <button
+                      key={c.orderId}
+                      type="button"
+                      data-testid="srm-po-candidate-item"
+                      onClick={() => handleSelectCandidate(c)}
+                      className={`w-full text-left rounded-lg border p-2.5 transition ${selected ? "border-emerald-500 bg-emerald-50" : "border-slate-200 bg-white hover:border-slate-300"}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-900">{c.matchedItem.name}</span>
+                        <span className="text-[10px] text-slate-500">{c.orderNumber}</span>
+                      </div>
+                      <div className="mt-0.5 flex items-center gap-2 text-[10px] text-slate-500">
+                        <span>발주 수량 {c.matchedItem.quantity}</span>
+                        {c.vendorName && <span>· {c.vendorName}</span>}
+                        {selected && <span className="text-emerald-600 font-semibold">· 선택됨</span>}
+                      </div>
+                    </button>
+                  );
+                })}
+                {!candidatesLoading && poCandidates.length > 0 && (
+                  <button
+                    type="button"
+                    data-testid="srm-po-candidate-none"
+                    onClick={() => setSelectedOrderId(null)}
+                    className={`w-full text-left rounded-lg border p-2 text-[11px] transition ${selectedOrderId === null ? "border-slate-400 bg-slate-50 text-slate-700" : "border-slate-200 text-slate-500 hover:border-slate-300"}`}
+                  >
+                    매칭되는 발주 없음 · 새 품목으로 등록
+                  </button>
+                )}
+              </div>
+            )}
             <div className="flex items-center gap-2 flex-wrap">
               <ConfidenceBadge level={scanResult.confidence} />
               {scanResult.ocrMetadata?.providerUsed && (
@@ -506,7 +616,7 @@ export function SmartReceivingScannerModal({
                 onClick={handleSubmit}
                 className="w-full h-11 min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold"
               >
-                입고 등록
+                {selectedOrderId ? "발주 입고 처리" : "입고 등록"}
                 <ArrowRight className="ml-1.5 h-4 w-4" />
               </Button>
               <Button
