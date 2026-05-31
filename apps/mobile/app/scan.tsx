@@ -61,10 +61,14 @@ interface LabelForm {
   catalogNumber: string;
   lotNumber: string;
   expirationDate: string;
-  quantity: string;
+  // §11.326 — 라벨 규격(통 1개 함량). 입고 수량 아님.
+  packSize: string;
+  packUnit: string;
+  // §11.326 — 입고 정보(사용자 입력). 받은 통/박스 개수.
+  receivedQuantity: string;
+  receivedUnit: string;
   brand: string;
   casNumber: string;
-  unit: string;
 }
 
 function emptyLabelForm(): LabelForm {
@@ -73,10 +77,12 @@ function emptyLabelForm(): LabelForm {
     catalogNumber: "",
     lotNumber: "",
     expirationDate: "",
-    quantity: "1",
+    packSize: "",
+    packUnit: "",
+    receivedQuantity: "1",
+    receivedUnit: "통",
     brand: "",
     casNumber: "",
-    unit: "개",
   };
 }
 
@@ -86,10 +92,13 @@ function mapLabelToForm(r: LabelScanResponse): LabelForm {
     catalogNumber: r.parsed.catalogNo || r.matchedProduct?.catalogNumber || "",
     lotNumber: r.parsed.lotNo || "",
     expirationDate: r.parsed.expirationDate || "",
-    quantity: r.parsed.quantity || "1",
+    // §11.326 — 라벨 quantity 는 통 1개 함량(packSize). 입고 수량 아님(기본 1).
+    packSize: r.parsed.quantity || "",
+    packUnit: "",
+    receivedQuantity: "1",
+    receivedUnit: r.matchedInventory?.unit || "통",
     brand: r.parsed.brand || r.matchedProduct?.brand || "",
     casNumber: r.parsed.casNumber || "",
-    unit: r.matchedInventory?.unit || "개",
   };
 }
 
@@ -218,7 +227,8 @@ export default function ScanScreen() {
         params: {
           id: matchedInventoryId,
           lotNumber: labelForm.lotNumber,
-          prefillQty: labelForm.quantity,
+          // §11.326 — 입고 수량 = 받은 통 개수(라벨값 아님).
+          prefillQty: labelForm.receivedQuantity,
         },
       });
     } else {
@@ -228,8 +238,8 @@ export default function ScanScreen() {
           prefill: "1",
           productName: labelForm.productName,
           catalogNumber: labelForm.catalogNumber,
-          unit: labelForm.unit,
-          quantity: labelForm.quantity,
+          unit: labelForm.receivedUnit,
+          quantity: labelForm.receivedQuantity,
           category: "시약",
         },
       });
@@ -453,13 +463,13 @@ export default function ScanScreen() {
                 />
               </View>
               <View className="w-28">
-                <Text className="text-xs font-medium text-slate-600 mb-1">수량</Text>
+                <Text className="text-xs font-medium text-slate-600 mb-1">규격 (통 1개)</Text>
                 <TextInput
                   className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800"
-                  placeholder="1"
+                  placeholder="예: 100"
                   keyboardType="numeric"
-                  value={labelForm.quantity}
-                  onChangeText={(v) => updateLabelField("quantity", v)}
+                  value={labelForm.packSize}
+                  onChangeText={(v) => updateLabelField("packSize", v)}
                 />
               </View>
             </View>
