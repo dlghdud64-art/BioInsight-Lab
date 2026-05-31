@@ -67,6 +67,8 @@ interface SmartReceivingBody {
     expirationDate?: string | null;
     quantity: number;
     unit?: string | null;
+    packSize?: number | null;
+    packUnit?: string | null;
     storageCondition?: string | null;
     category?: string | null;
     notes?: string | null;
@@ -276,6 +278,8 @@ export async function POST(request: NextRequest) {
             catalogNumber: confirmedData.catalogNumber ?? null,
             lotNumber: confirmedData.lotNumber ?? null,
             category: (confirmedData.category as ProductCategory) ?? DEFAULT_CATEGORY,
+            packSize: typeof confirmedData.packSize === "number" ? confirmedData.packSize : null,
+            packUnit: confirmedData.packUnit ?? null,
             storageCondition: confirmedData.storageCondition ?? null,
           },
           select: { id: true, name: true, brand: true, catalogNumber: true },

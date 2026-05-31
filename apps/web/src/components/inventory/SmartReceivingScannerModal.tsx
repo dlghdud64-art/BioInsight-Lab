@@ -78,9 +78,11 @@ interface ConfirmedFormState {
   brand: string;
   catalogNumber: string;
   lotNumber: string;
-  expirationDate: string; // YYYY-MM-DD or YYYY-MM
-  quantity: number;
-  unit: string;
+  expirationDate: string;
+  packSize: string;       // §11.326 통 1개 함량(규격). 입고 수량 아님.
+  packUnit: string;
+  receivedQuantity: number; // §11.326 받은 통/박스 개수.
+  receivedUnit: string;
   storageCondition: string;
   notes: string;
 }
@@ -91,8 +93,10 @@ const EMPTY_FORM: ConfirmedFormState = {
   catalogNumber: "",
   lotNumber: "",
   expirationDate: "",
-  quantity: 1,
-  unit: "",
+  packSize: "",
+  packUnit: "",
+  receivedQuantity: 1,
+  receivedUnit: "",
   storageCondition: "",
   notes: "",
 };
@@ -164,8 +168,10 @@ function extractInitialForm(doc: ParsedQuoteDocument): ConfirmedFormState {
     catalogNumber: firstItem.catalogNumber ?? "",
     lotNumber: "",
     expirationDate: doc.validUntil ?? "",
-    quantity: firstItem.quantity > 0 ? firstItem.quantity : 1,
-    unit: firstItem.unit ?? "",
+    packSize: "",
+    packUnit: firstItem.unit ?? "",
+    receivedQuantity: firstItem.quantity > 0 ? firstItem.quantity : 1,
+    receivedUnit: firstItem.unit ?? "",
     storageCondition: "",
     notes: firstItem.notes ?? "",
   };
@@ -250,7 +256,7 @@ export function SmartReceivingScannerModal({
 
   const handleSubmit = async () => {
     if (!scanResult?.ocrMetadata?.jobId) {
-      setErrorMessage("ocrJobId 가 없어 입고 등록할 수 없습니다. 다시 스캔해 주세요.");
+      setErrorMessage("이미지 분석 결과를 찾을 수 없습니다. 다시 스캔해 주세요.");
       setStep("error");
       return;
     }
@@ -258,8 +264,8 @@ export function SmartReceivingScannerModal({
       toast.error("품목명을 입력해 주세요.");
       return;
     }
-    if (form.quantity <= 0) {
-      toast.error("수량은 0보다 커야 합니다.");
+    if (form.receivedQuantity <= 0) {
+      toast.error("입고 수량(받은 통 개수)은 0보다 커야 합니다.");
       return;
     }
 
@@ -277,8 +283,10 @@ export function SmartReceivingScannerModal({
             catalogNumber: form.catalogNumber.trim() || null,
             lotNumber: form.lotNumber.trim() || null,
             expirationDate: form.expirationDate || null,
-            quantity: form.quantity,
-            unit: form.unit.trim() || null,
+            quantity: form.receivedQuantity,
+            unit: form.receivedUnit.trim() || null,
+            packSize: form.packSize.trim() ? Number(form.packSize) : null,
+            packUnit: form.packUnit.trim() || null,
             storageCondition: form.storageCondition.trim() || null,
             notes: form.notes.trim() || null,
           },
@@ -320,7 +328,7 @@ export function SmartReceivingScannerModal({
         {step === "upload" && (
           <div className="space-y-4 py-2">
             <p className="text-xs text-slate-600 leading-relaxed">
-              JPG/PNG/WebP 이미지를 선택해 주세요. 모바일에서는 카메라 직접 촬영도 가능합니다.
+              사진을 선택하거나 촬영해 주세요. 거래명세서나 시약 라벨 모두 인식됩니다.
             </p>
             <Button
               type="button"
@@ -429,29 +437,42 @@ export function SmartReceivingScannerModal({
                 </div>
               </div>
 
+              {/* §11.326 — 규격(통 1개 함량). 입고 수량 아님. */}
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <Label htmlFor="srm-quantity" className="text-xs font-semibold">
-                    수량 <span className="text-rose-600">*</span>
-                  </Label>
-                  <Input
-                    id="srm-quantity"
-                    type="number"
-                    min={1}
-                    value={form.quantity}
-                    onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) || 0 })}
-                    className="mt-1 h-9 text-sm"
-                  />
+                  <Label htmlFor="srm-packSize" className="text-xs font-semibold">규격 (통 1개 함량)</Label>
+                  <Input id="srm-packSize" type="number" min={0}
+                    value={form.packSize}
+                    onChange={(e) => setForm({ ...form, packSize: e.target.value })}
+                    placeholder="예: 100" className="mt-1 h-9 text-sm" />
+                  <p className="text-[10px] text-slate-400 mt-0.5">라벨의 통 1개 용량 (입고 수량 아님)</p>
                 </div>
                 <div>
-                  <Label htmlFor="srm-unit" className="text-xs font-semibold">단위</Label>
-                  <Input
-                    id="srm-unit"
-                    value={form.unit}
-                    onChange={(e) => setForm({ ...form, unit: e.target.value })}
-                    placeholder="bottle / EA / mL"
-                    className="mt-1 h-9 text-sm"
-                  />
+                  <Label htmlFor="srm-packUnit" className="text-xs font-semibold">함량 단위</Label>
+                  <Input id="srm-packUnit"
+                    value={form.packUnit}
+                    onChange={(e) => setForm({ ...form, packUnit: e.target.value })}
+                    placeholder="CAPSULES / mL" className="mt-1 h-9 text-sm" />
+                </div>
+              </div>
+              {/* §11.326 — 입고 정보(받은 통 개수). */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <Label htmlFor="srm-receivedQuantity" className="text-xs font-semibold">
+                    입고 수량 (받은 통 개수) <span className="text-rose-600">*</span>
+                  </Label>
+                  <Input id="srm-receivedQuantity" type="number" min={1}
+                    value={form.receivedQuantity}
+                    onChange={(e) => setForm({ ...form, receivedQuantity: Number(e.target.value) || 0 })}
+                    className="mt-1 h-9 text-sm" />
+                  <p className="text-[10px] text-slate-400 mt-0.5">거래명세서를 확인하고 받은 통/박스 개수</p>
+                </div>
+                <div>
+                  <Label htmlFor="srm-receivedUnit" className="text-xs font-semibold">입고 단위</Label>
+                  <Input id="srm-receivedUnit"
+                    value={form.receivedUnit}
+                    onChange={(e) => setForm({ ...form, receivedUnit: e.target.value })}
+                    placeholder="통 / 박스" className="mt-1 h-9 text-sm" />
                 </div>
               </div>
 
