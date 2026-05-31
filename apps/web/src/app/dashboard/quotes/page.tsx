@@ -1086,6 +1086,21 @@ function QuotesPageContent() {
   //   localStorage hydration 위에 override (server = canonical, localStorage = fallback).
   //   server fetch 실패 시 useUserPreferences hook 안 retry 1 + silent fallback.
   const userPrefs = useUserPreferences();
+  // §11.327 (호영님 P0, 2026-05-30) — useEffect feedback loop 차단 가드.
+  //   Hydration useEffect → setLocalState → Mutation useEffect → PATCH → server response
+  //   → preferences cache update → 새 reference → Hydration useEffect 재실행 → 무한 loop.
+  //   가설 F 확정 evidence: line 1138 Mutation 2 dep `[columnPrefs, userPrefs]` —
+  //   userPrefs 자체가 매번 새 reference (mutation onSuccess setQueryData).
+  //   Fix: hydratedRef 가드 — 첫 hydration 완료 전까지 mutation skip.
+  //   호영님 spec Option A (minimal scope = quotes/page only).
+  const hydratedRef = useRef(false);
+  // §11.327 — preferences fetch 완료 (null 아닌 server response) → mutation 가드 풀림.
+  //   별도 useEffect 분리 (columnPrefs hydration 의 early return 영향 0 → 안전).
+  useEffect(() => {
+    if (userPrefs.preferences) {
+      hydratedRef.current = true;
+    }
+  }, [userPrefs.preferences]);
   useEffect(() => {
     const serverQuotes = userPrefs.preferences?.columnPrefs?.quotes;
     if (!serverQuotes) return;
@@ -1110,7 +1125,9 @@ function QuotesPageContent() {
   // §11.230c (a)-2 — debounced server PATCH on isBriefingCollapsed change.
   //   §11.248e-2 localStorage write 와 양립 (3-layer: state + localStorage + server).
   //   debounce 400ms = 마지막 클릭만 server 도달 (rapid toggle 차단).
+  // §11.327 — hydratedRef 가드 (feedback loop 차단).
   useEffect(() => {
+    if (!hydratedRef.current) return; // §11.327 — 첫 hydration 전 skip
     userPrefs.updateBriefingCollapsed(isBriefingCollapsed);
     // userPrefs 는 외부 deps 이지만 hook signature 가 stable 보장 (useCallback X
     // 이지만 react-query setQueryData 가 referential stability 유지).
@@ -1120,6 +1137,9 @@ function QuotesPageContent() {
   // §11.230b write on mutation — localStorage immediate.
   //   §11.230c (a) server-first: localStorage + debounced server PATCH 동시.
   //   userPrefs.updateColumnPrefs 안에 setTimeout debounce (400ms) — rapid resize 차단.
+  // §11.327 (호영님 P0) — hydratedRef 가드 + dep `[columnPrefs, userPrefs]` → `[columnPrefs]`.
+  //   userPrefs 가 mutation 마다 새 reference → feedback loop 의 root cause.
+  //   userPrefs.updateColumnPrefs 자체는 stable closure (hook 내부 setTimeout debounce).
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -1127,6 +1147,7 @@ function QuotesPageContent() {
     } catch {
       // quota / disabled — silent fail
     }
+    if (!hydratedRef.current) return; // §11.327 — 첫 hydration 전 server PATCH skip
     // §11.230c (a) — debounced server PATCH (mount 시 server hydration 직후
     //   동일값 set 으로 인한 noise 도 debounce 가 차단 — 직전 값과 같으면
     //   서버 PATCH 가 무해, 마지막 PATCH 만 도달).
@@ -1135,7 +1156,9 @@ function QuotesPageContent() {
       visibility: columnPrefs.visibility,
       order: columnPrefs.order,
     });
-  }, [columnPrefs, userPrefs]);
+    // §11.327 — userPrefs dep 제거 (mutation onSuccess 가 새 reference 생성 → 무한 loop).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [columnPrefs]);
 
   // §11.230b column resize — document-level mousemove/mouseup (drag 안전 종료)
   useEffect(() => {
@@ -1360,7 +1383,9 @@ function QuotesPageContent() {
   // §11.230c (a)-3 — debounced server PATCH on viewMode/sortState change.
   //   §11.217 localStorage (viewMode 만) 와 양립 — 두 layer 모두 update.
   //   sortState 는 localStorage 0 → server-only.
+  // §11.327 — hydratedRef 가드 (feedback loop 차단).
   useEffect(() => {
+    if (!hydratedRef.current) return; // §11.327 — 첫 hydration 전 skip
     userPrefs.updateQuotesView({
       mode: viewMode,
       sort: { key: sortState.key, direction: sortState.direction },
@@ -1386,7 +1411,9 @@ function QuotesPageContent() {
 
   // §11.230c (a)-4 — debounced server PATCH on statusFilter/modeChip change.
   //   localStorage 0 → server-only persistence. searchQuery 는 ad-hoc 제외.
+  // §11.327 — hydratedRef 가드 (feedback loop 차단).
   useEffect(() => {
+    if (!hydratedRef.current) return; // §11.327 — 첫 hydration 전 skip
     userPrefs.updateQuotesFilter({
       status: statusFilter,
       modeChip: modeChip,
