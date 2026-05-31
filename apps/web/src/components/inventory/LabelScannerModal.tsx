@@ -548,7 +548,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
       {step === "upload" && !manualMode && (
         <div className="flex-1 flex flex-col gap-4 p-5">
           <div className="text-center">
-            <h3 className="text-base font-bold text-slate-900">스마트 재고 등록 (AI 라벨 스캔)</h3>
+            <h3 className="text-base font-bold text-slate-900">스마트 입고</h3>
             <p className="text-sm text-slate-500 mt-1">
               라벨을 프레임 안에 맞춰 촬영하거나 이미지를 업로드하세요.
             </p>
@@ -1115,7 +1115,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl p-0 bg-white text-slate-900">
           <SheetHeader className="px-4 pt-4 pb-2">
-            <SheetTitle className="text-base font-bold text-slate-900">스마트 재고 등록 (AI 라벨 스캔)</SheetTitle>
+            <SheetTitle className="text-base font-bold text-slate-900">스마트 입고</SheetTitle>
           </SheetHeader>
           {content}
         </SheetContent>
@@ -1129,7 +1129,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
         <DialogHeader className="px-4 pt-4 pb-2">
           <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
             <ScanLine className="h-4 w-4 text-blue-600" />
-            스마트 재고 등록 (AI 라벨 스캔)
+            스마트 입고
           </DialogTitle>
         </DialogHeader>
         {content}

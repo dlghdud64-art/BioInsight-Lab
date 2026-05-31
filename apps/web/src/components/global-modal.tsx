@@ -45,7 +45,7 @@ const MODAL_REGISTRY: Partial<Record<ModalType, ModalRegistryEntry>> = {
       })),
     ),
     defaultSize: "md",
-    defaultTitle: "스마트 재고 등록 (AI 라벨 스캔)",
+    defaultTitle: "스마트 입고",
     defaultSubtitle: "시약 라벨을 스캔하여 자동 인식 후 재고에 직접 등록합니다.",
   },
   qr_scanner: {

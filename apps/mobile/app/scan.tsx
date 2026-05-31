@@ -800,7 +800,7 @@ export default function ScanScreen() {
               <X size={20} color="white" />
             </Pressable>
             <Text className="text-base font-bold text-white">
-              {isLabelMode ? "라벨 스캔" : "QR / 바코드 스캔"}
+              {isLabelMode ? "스마트 입고" : "QR / 바코드 스캔"}
             </Text>
             <Pressable
               className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
