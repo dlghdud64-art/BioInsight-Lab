@@ -2731,7 +2731,7 @@ function SearchUtilityBar({ activeFilterCount, onAuthRequired, isLoggedIn, stage
               onChange={(e) => { setLocalQuery(e.target.value); setSearchQuery(e.target.value); }}
               onFocus={() => setDesktopOpen(true)}
               onBlur={() => { setTimeout(() => setDesktopOpen(false), 200); }}
-              placeholder="시약명·CAS·제조사"
+              placeholder="시약명·CAS·제조사·카탈로그 번호"
               className="h-10 px-2.5 text-sm border-0 bg-transparent text-slate-900 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-400"
             />
             {/* §11.258a #2 — X 클리어 button. localQuery > 0 시 노출. */}
