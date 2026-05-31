@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
       take: MAX_SCAN,
     });
 
-    const normalized: OrderLike[] = orders.map((o) => ({
+    const normalized: OrderLike[] = orders.map((o: typeof orders[number]) => ({
       id: o.id,
       orderNumber: o.orderNumber,
       status: o.status,
