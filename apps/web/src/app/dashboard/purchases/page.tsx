@@ -888,12 +888,17 @@ export default function PurchasesPage() {
                         <p className="text-xl font-extrabold text-slate-900">
                           {formatPrice(item.totalBudget, item.currency)}
                         </p>
-                        <Link href={`/dashboard/quotes/${item.id}`} className="w-full">
-                          <Button size="sm" variant="outline"
-                            className="w-full h-9 text-xs font-semibold border-slate-200 text-slate-700">
-                            견적 상세 <ArrowRight className="h-3.5 w-3.5 ml-1" />
-                          </Button>
-                        </Link>
+                        {/* §11.331-a — 견적 상세: 페이지 점프 대신 same-canvas Rail 열기.
+                            구매 운영 컨텍스트 유지(이탈 X). Rail 안에서 deep-dive 가능. */}
+                        <Button size="sm" variant="outline"
+                          data-testid="purchases-quote-detail-rail"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedId(item.id);
+                          }}
+                          className="w-full h-9 text-xs font-semibold border-slate-200 text-slate-700">
+                          견적 상세 <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                        </Button>
                         <span className="text-[10px] text-slate-400">다음: {NEXT_ACTION_LABEL[item.nextAction]}</span>
                       </div>
                     </div>
@@ -1499,7 +1504,7 @@ export default function PurchasesPage() {
                           : "w-full h-9 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
                       }
                     >
-                      견적 상세 페이지 열기 <ArrowRight className="h-3 w-3 ml-1.5" />
+                      전체 견적 페이지 열기 <ArrowRight className="h-3 w-3 ml-1.5" />
                     </Button>
                   </Link>
                   <Button size="sm" variant="ghost" className="w-full h-8 text-[11px] text-slate-500" onClick={closeRail}>
