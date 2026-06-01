@@ -1193,40 +1193,7 @@ export default function SearchPage() {
 
           {/* C. Right Context Rail — persistent panel */}
           <div className="hidden lg:flex w-[360px] shrink-0 border-l border-slate-200 bg-white flex-col overflow-hidden">
-            {/* ═══ AI 비교 판단 상태 strip — 작업 상태 바 (추천 카드 아님) ═══ */}
-            {aiCompareReadiness.active ? (
-              <div className="px-3 py-2 border-b border-slate-200">
-                <div className={`rounded-md border px-3 py-2.5 ${aiCompareReadiness.mode === "direct" ? "border-blue-200 bg-blue-50" : aiCompareReadiness.mode === "mixed_warning" ? "border-yellow-200 bg-yellow-50" : "border-red-200 bg-red-50"}`}>
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-1.5">
-                      <div className={`w-1.5 h-1.5 rounded-full ${aiCompareReadiness.mode === "direct" ? "bg-blue-500" : aiCompareReadiness.mode === "mixed_warning" ? "bg-yellow-500" : "bg-red-400"}`} />
-                      <span className="text-[10px] font-semibold text-slate-800">비교 검토 활성</span>
-                    </div>
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${aiCompareReadiness.mode === "direct" ? "bg-blue-50 text-blue-600" : aiCompareReadiness.mode === "mixed_warning" ? "bg-yellow-600/15 text-yellow-300" : "bg-red-600/15 text-red-300"}`}>
-                      {compareIds.length}개 선택
-                    </span>
-                  </div>
-                  <div className="text-[10px] text-slate-400 mb-2">{aiCompareReadiness.label}</div>
-                  <div className="flex items-center gap-1.5 text-[10px]">
-                    {shouldShowSourcingStrip && (
-                      <span className="text-blue-600">판단안 3개 준비됨</span>
-                    )}
-                  </div>
-                  {/* Primary CTA: 비교 검토 시작 */}
-                  <div className="flex gap-1.5 mt-2">
-                    <Button
-                      size="sm"
-                      className="flex-1 h-7 text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-medium"
-                      onClick={() => handleProtectedAction(() => setComparisonModalOpen(true))}
-                    >
-                      <PenLine className="h-3 w-3 mr-1" />
-                      비교 검토
-                    </Button>
-                    {/* AI 아이콘 버튼 제거 — 비교 검토 버튼만 유지 */}
-                  </div>
-                </div>
-              </div>
-            ) : null}
+            {/* §11.339 v2 2단계 — 탭 위 "비교 검토 활성" strip 제거(2-3). 비교는 비교함 탭 + 하단 바로 일원화. */}
 
             {/* §11.339 v2 — 우측 패널 탭 카트(견적함/비교함/상세). 하단 드로어 2종 흡수.
                 상세 탭 = SourcingContextRail(§11.337 Part C 통합) slot 주입. */}
@@ -1243,7 +1210,15 @@ export default function SearchPage() {
               }))}
               compareItems={compareIds.map((id: string) => {
                 const p = products.find((pp: any) => pp.id === id);
-                return { id, name: p?.name ?? "제품", brand: p?.brand, category: p?.category };
+                // §11.339 v2 2-4 — 현재 검색결과에 없는 비교 항목은 compareStore 저장명 fallback.
+                //   "제품" placeholder 버그 수정(다른 검색에서 담은 항목 품명 보존).
+                const storedName = getStoredName(id);
+                return {
+                  id,
+                  name: p?.name || storedName || "제품",
+                  brand: p?.brand,
+                  category: p?.category,
+                };
               })}
               reviewFlags={requestReadiness.candidates
                 .filter((c) => c.flags.some((f) => f.type === "review_required"))
@@ -1281,6 +1256,8 @@ export default function SearchPage() {
               onQuantityChange={(id, quantity) => updateQuoteItem(id, { quantity })}
               onRemoveQuoteItem={(id) => removeQuoteItem(id)}
               onRemoveCompareItem={(id) => toggleCompare(id)}
+              compareReadiness={aiCompareReadiness}
+              onCompareReview={() => handleProtectedAction(() => setComparisonModalOpen(true))}
               onResolveReview={(id) => {
                 const item = quoteItems.find((q: any) => q.id === id);
                 if (item && compareIds.includes(item.productId)) toggleCompare(item.productId);

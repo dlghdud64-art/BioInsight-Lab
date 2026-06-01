@@ -58,6 +58,9 @@ interface QuoteCartPanelProps {
   onQuantityChange?: (itemId: string, quantity: number) => void;
   onRemoveQuoteItem?: (itemId: string) => void;
   onRemoveCompareItem?: (productId: string) => void;
+  /** §11.339 v2 2단계 — 비교 검토 상태(혼합 카테고리 경고 등). 비교함 탭 상단 표시. */
+  compareReadiness?: { active: boolean; mode: "direct" | "mixed_warning" | "inactive" | string; label: string } | null;
+  onCompareReview?: () => void;
   onResolveReview?: (itemId: string) => void;   // [재고 확인]
   onKeepReview?: (itemId: string) => void;       // [그래도 유지]
   onQuoteRequest?: () => void;
@@ -78,6 +81,8 @@ export function QuoteCartPanel({
   onQuantityChange,
   onRemoveQuoteItem,
   onRemoveCompareItem,
+  compareReadiness,
+  onCompareReview,
   onResolveReview,
   onKeepReview,
   onQuoteRequest,
@@ -248,6 +253,35 @@ export function QuoteCartPanel({
         {/* ── 비교함 ── */}
         {tab === "compare" && (
           <div className="p-3 space-y-2" data-testid="cart-compare-tab">
+            {/* §11.339 v2 2단계 — 비교 검토 상태(혼합 카테고리 경고) 비교함 탭 내부로 일원화.
+                §11.302: mixed_warning 만 노랑 보더, 그 외 중립/blue. 전체 배경 노랑 X. */}
+            {compareReadiness?.active && (
+              <div
+                data-testid="cart-compare-readiness"
+                className={`rounded-lg border bg-white p-3 ${
+                  compareReadiness.mode === "mixed_warning"
+                    ? "border-l-2 border-l-yellow-400 border-slate-200"
+                    : compareReadiness.mode === "direct"
+                      ? "border-l-2 border-l-blue-400 border-slate-200"
+                      : "border-l-2 border-l-red-400 border-slate-200"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-800">비교 검토 활성</span>
+                  <span className="text-[10px] text-slate-500">{compareItems.length}개 선택</span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-0.5">{compareReadiness.label}</p>
+                <Button
+                  type="button"
+                  size="sm"
+                  data-testid="cart-compare-review"
+                  onClick={() => onCompareReview?.()}
+                  className="w-full h-8 mt-2 text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                >
+                  비교 검토
+                </Button>
+              </div>
+            )}
             {compareItems.length === 0 ? (
               <p className="text-sm text-slate-500 text-center py-10">
                 담은 비교 후보가 없습니다.
