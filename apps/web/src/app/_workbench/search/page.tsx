@@ -24,6 +24,7 @@ import { PRODUCT_CATEGORIES, SORT_OPTIONS } from "@/lib/constants";
 import { useAutocomplete } from "@/hooks/use-autocomplete";
 import { SourcingResultRow } from "../_components/sourcing-result-row";
 import { SourcingContextRail } from "../_components/sourcing-context-rail";
+import { QuoteCartPanel } from "../_components/quote-cart-panel"; // §11.339 v2 — 우측 탭 카트
 import { CenterWorkWindow } from "@/components/work-window/center-work-window";
 import { RequestReviewWindow } from "../_components/request-review-window";
 import { CompareReviewWorkWindow } from "../_components/compare-review-work-window";
@@ -1225,50 +1226,77 @@ export default function SearchPage() {
                   </div>
                 </div>
               </div>
-            ) : hasSearched && products.length >= 2 && compareIds.length < 2 ? (
-              <div className="px-3 py-2 border-b border-slate-200">
-                <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-slate-600" />
-                  <span className="text-[10px] text-slate-500">제품 2개 이상 선택 시 비교 검토가 활성화됩니다</span>
-                </div>
-              </div>
             ) : null}
 
-            {railProduct ? (
-              <SourcingContextRail
-                product={railProduct}
-                isInCompare={compareIds.includes(railProduct.id)}
-                isInRequest={quoteItems.some((q: any) => q.productId === railProduct.id)}
-                onToggleCompare={() => handleProtectedAction(() => toggleCompare(railProduct.id, { name: railProduct.name, brand: railProduct.brand }))}
-                onToggleRequest={() => handleProtectedAction(() => {
-                  const existing = quoteItems.find((q: any) => q.productId === railProduct.id);
-                  if (existing) {
-                    removeQuoteItem(existing.id);
-                    toast.info("견적함에서 제거되었습니다.");
-                  } else {
-                    const r = addProductToQuote(railProduct);
-                    const t = resolveAddToQuoteToast(r);
-                    toast[t.intent](t.message);
-                  }
-                })}
-                onClose={() => setActiveResultId(null)}
-                onOpenCompareWindow={() => handleProtectedAction(() => setWorkWindowMode("compare"))}
-                onOpenRequestWindow={() => handleProtectedAction(() => setWorkWindowMode("request"))}
-                compareCount={compareIds.length}
-                requestCount={quoteItems.length}
-                searchQuery={searchQuery}
-              />
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
-                <div className="w-12 h-12 rounded-xl bg-el border border-slate-200 flex items-center justify-center mb-4">
-                  <PenLine className="h-6 w-6 text-blue-600/60" />
-                </div>
-                <p className="text-sm font-semibold text-slate-800 mb-1.5">제품을 선택해 비교를 시작하세요</p>
-                <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                  선택한 제품은 비교 목록에 모아<br />가격, 규격, 제조사를 함께 검토할 수 있습니다.
-                </p>
-              </div>
-            )}
+            {/* §11.339 v2 — 우측 패널 탭 카트(견적함/비교함/상세). 하단 드로어 2종 흡수.
+                상세 탭 = SourcingContextRail(§11.337 Part C 통합) slot 주입. */}
+            <QuoteCartPanel
+              quoteItems={(quoteItems as any[]).map((q) => ({
+                id: q.id,
+                productId: q.productId,
+                productName: q.productName ?? products.find((p: any) => p.id === q.productId)?.name,
+                vendorName: q.vendorName ?? products.find((p: any) => p.id === q.productId)?.brand,
+                category: products.find((p: any) => p.id === q.productId)?.category,
+                unitPrice: q.unitPrice,
+                quantity: q.quantity ?? 1,
+                unit: q.unit ?? products.find((p: any) => p.id === q.productId)?.unit ?? null,
+              }))}
+              compareItems={compareIds.map((id: string) => {
+                const p = products.find((pp: any) => pp.id === id);
+                return { id, name: p?.name ?? "제품", brand: p?.brand, category: p?.category };
+              })}
+              reviewFlags={requestReadiness.candidates
+                .filter((c) => c.flags.some((f) => f.type === "review_required"))
+                .map((c) => ({
+                  itemId: c.itemId,
+                  detail: c.flags.find((f) => f.type === "review_required")?.detail ?? "검토 필요",
+                  resolvable: true,
+                }))}
+              forceDetailKey={activeResultId}
+              detailSlot={railProduct ? (
+                <SourcingContextRail
+                  product={railProduct}
+                  isInCompare={compareIds.includes(railProduct.id)}
+                  isInRequest={quoteItems.some((q: any) => q.productId === railProduct.id)}
+                  onToggleCompare={() => handleProtectedAction(() => toggleCompare(railProduct.id, { name: railProduct.name, brand: railProduct.brand }))}
+                  onToggleRequest={() => handleProtectedAction(() => {
+                    const existing = quoteItems.find((q: any) => q.productId === railProduct.id);
+                    if (existing) {
+                      removeQuoteItem(existing.id);
+                      toast.info("견적함에서 제거되었습니다.");
+                    } else {
+                      const r = addProductToQuote(railProduct);
+                      const t = resolveAddToQuoteToast(r);
+                      toast[t.intent](t.message);
+                    }
+                  })}
+                  onClose={() => setActiveResultId(null)}
+                  onOpenCompareWindow={() => handleProtectedAction(() => setWorkWindowMode("compare"))}
+                  onOpenRequestWindow={() => handleProtectedAction(() => setWorkWindowMode("request"))}
+                  compareCount={compareIds.length}
+                  requestCount={quoteItems.length}
+                  searchQuery={searchQuery}
+                />
+              ) : null}
+              onQuantityChange={(id, quantity) => updateQuoteItem(id, { quantity })}
+              onRemoveQuoteItem={(id) => removeQuoteItem(id)}
+              onRemoveCompareItem={(id) => toggleCompare(id)}
+              onResolveReview={(id) => {
+                const item = quoteItems.find((q: any) => q.id === id);
+                if (item && compareIds.includes(item.productId)) toggleCompare(item.productId);
+              }}
+              onKeepReview={(id) => {
+                const item = quoteItems.find((q: any) => q.id === id);
+                if (item && compareIds.includes(item.productId)) toggleCompare(item.productId);
+              }}
+              onQuoteRequest={() => handleProtectedAction(() => {
+                if (requestHandoff) {
+                  setWorkWindowMode("request-assembly");
+                } else {
+                  setRequestWizardOpen(true);
+                }
+              })}
+            />
           </div>
         </div>
         ) : (
