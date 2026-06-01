@@ -1645,7 +1645,10 @@ export default function SearchPage() {
             brand: q.vendorName ?? product?.brand,
             catalogNumber: q.catalogNumber ?? product?.catalogNumber,
             category: product?.category,
-            price: q.unitPrice ?? q.lineTotal,
+            // §11.338 — 확정 단가만(미견적 lineTotal fallback 제거 → "견적 후 확정" 표기).
+            price: (q.unitPrice ?? 0) > 0 ? q.unitPrice : null,
+            quantity: q.quantity ?? 1,                       // §11.339 — 수량
+            unit: q.unit ?? product?.unit ?? null,           // §11.339 — 단위
             reviewReason: reviewFlag?.detail ?? null,
             isBlocked: assessment?.status === "blocked",
           };
@@ -1654,6 +1657,7 @@ export default function SearchPage() {
         onRemoveCompare={(id) => toggleCompare(id)}
         onClearCompare={() => clearCompare()}
         onRemoveQuoteItem={(id) => removeQuoteItem(id)}
+        onQuantityChange={(id, quantity) => updateQuoteItem(id, { quantity })}
         onClearQuote={() => { quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}
         onClearReviewFlag={(id) => {
           // §11.312 — "그래도 견적에 유지" — review reason 무시하고 견적 진행.

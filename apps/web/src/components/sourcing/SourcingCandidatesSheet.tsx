@@ -45,6 +45,8 @@ export interface CandidateQuoteItem {
   catalogNumber?: string;
   category?: string;
   price?: number | null;
+  quantity?: number;              // §11.339 — 견적 수량(기본 1)
+  unit?: string | null;           // §11.339 — 단위(ea/box 등, Product.unit)
   reviewReason?: string | null;   // §11.312 — 검토 필요 사유
   isBlocked?: boolean;
 }
@@ -67,6 +69,8 @@ interface SourcingCandidatesSheetProps {
   onClearCompare?: () => void;
   /** Quote 개별 삭제 */
   onRemoveQuoteItem?: (itemId: string) => void;
+  /** §11.339 — 견적 후보 수량 조절 (itemId, 새 수량). */
+  onQuantityChange?: (itemId: string, quantity: number) => void;
   onClearQuote?: () => void;
   /** Review 모드 — 검토 해제 (item 을 정상 견적으로 전환) */
   onClearReviewFlag?: (itemId: string) => void;
@@ -87,6 +91,7 @@ export function SourcingCandidatesSheet(props: SourcingCandidatesSheetProps) {
     onRemoveCompare,
     onClearCompare,
     onRemoveQuoteItem,
+    onQuantityChange,
     onClearQuote,
     onClearReviewFlag,
     onCompareReview,
@@ -255,11 +260,41 @@ export function SourcingCandidatesSheet(props: SourcingCandidatesSheetProps) {
                       {[
                         q.brand,
                         q.category,
-                        q.price ? `${q.price.toLocaleString("ko-KR")}원` : null,
+                        // §11.338 — 확정가만 금액 표시, 미견적은 "견적 후 확정".
+                        (q.price ?? 0) > 0 ? `${(q.price as number).toLocaleString("ko-KR")}원` : "견적 후 확정",
                       ]
                         .filter(Boolean)
                         .join(" · ")}
                     </p>
+                    {/* §11.339 — 수량 조절(−/숫자/+). 기본 1, 단위 표시. */}
+                    <div className="flex items-center gap-1.5 mt-2" data-testid="candidate-qty">
+                      <button
+                        type="button"
+                        aria-label="수량 감소"
+                        onClick={() => onQuantityChange?.(q.id, Math.max(1, (q.quantity ?? 1) - 1))}
+                        className="h-7 w-7 inline-flex items-center justify-center rounded border border-slate-300 text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+                        disabled={(q.quantity ?? 1) <= 1}
+                      >
+                        −
+                      </button>
+                      <input
+                        type="number"
+                        min={1}
+                        value={q.quantity ?? 1}
+                        onChange={(e) => onQuantityChange?.(q.id, Math.max(1, Number(e.target.value) || 1))}
+                        aria-label="수량"
+                        className="h-7 w-12 text-center text-xs border border-slate-300 rounded tabular-nums"
+                      />
+                      <button
+                        type="button"
+                        aria-label="수량 증가"
+                        onClick={() => onQuantityChange?.(q.id, (q.quantity ?? 1) + 1)}
+                        className="h-7 w-7 inline-flex items-center justify-center rounded border border-slate-300 text-slate-600 hover:bg-slate-50"
+                      >
+                        +
+                      </button>
+                      {q.unit && <span className="text-[10px] text-slate-400 ml-0.5">{q.unit}</span>}
+                    </div>
                   </div>
                   <Button
                     type="button"
