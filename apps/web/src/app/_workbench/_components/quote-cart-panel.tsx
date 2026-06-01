@@ -51,6 +51,8 @@ interface QuoteCartPanelProps {
   quoteItems: QuoteCartItem[];
   compareItems: CompareCartItem[];
   reviewFlags?: QuoteCartReviewFlag[];
+  /** §11.343 — 미견적(단가 0원) 항목 수. 카드별 반복 경고 대신 상단 1줄 요약으로 노출(호영님 P1). */
+  unpricedCount?: number;
   /** 상세 탭 슬롯 — 부모가 SourcingContextRail 주입(§11.337 Part C). null = 빈 안내. */
   detailSlot?: ReactNode;
   /** 외부에서 상세 탭으로 강제 전환(제품 "상세 보기" 클릭 시). */
@@ -80,6 +82,7 @@ export function QuoteCartPanel({
   quoteItems,
   compareItems,
   reviewFlags = [],
+  unpricedCount = 0,
   detailSlot,
   forceDetailKey,
   forceQuoteKey,
@@ -154,6 +157,16 @@ export function QuoteCartPanel({
               </p>
             ) : (
               <>
+                {/* §11.343 (호영님 P1) — 미견적은 정상 상태(아직 견적 전)이므로 카드마다
+                    반복 경고하지 않고 상단 1줄 중립 요약으로 통합. §11.302 중립 톤(노랑 X). */}
+                {unpricedCount > 0 && (
+                  <p
+                    data-testid="cart-unpriced-summary"
+                    className="text-[11px] text-slate-500 bg-slate-50 border border-slate-200 rounded-md px-2.5 py-1.5"
+                  >
+                    {unpricedCount}건은 견적 요청 후 가격이 확정됩니다.
+                  </p>
+                )}
                 {quoteItems.map((q) => {
                   const flag = flagByItem.get(q.id);
                   const qty = q.quantity ?? 1;

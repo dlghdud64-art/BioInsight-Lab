@@ -1161,6 +1161,7 @@ export default function SearchPage() {
                   >
                     <SourcingResultRow
                       product={product}
+                      query={searchQuery}
                       isInCompare={compareIds.includes(product.id)}
                       isInRequest={quoteItems.some((q: any) => q.productId === product.id)}
                       isSelected={railProduct?.id === product.id}
@@ -1224,13 +1225,17 @@ export default function SearchPage() {
                   category: p?.category,
                 };
               })}
+              unpricedCount={priceUnknownCount}
               reviewFlags={requestReadiness.candidates
-                .filter((c) => c.flags.some((f) => f.type === "review_required"))
-                .map((c) => ({
-                  itemId: c.itemId,
-                  detail: c.flags.find((f) => f.type === "review_required")?.detail ?? "검토 필요",
-                  resolvable: true,
-                }))}
+                .map((c) => {
+                  const nonPriceReview = c.flags.find(
+                    (f) => f.type === "review_required" && f.label !== "가격 미확인",
+                  );
+                  return nonPriceReview
+                    ? { itemId: c.itemId, detail: nonPriceReview.detail, resolvable: false }
+                    : null;
+                })
+                .filter((f): f is { itemId: string; detail: string; resolvable: boolean } => f !== null)}
               forceDetailKey={activeResultId}
               forceQuoteKey={(reviewFocusKey + quoteFocusKey) ? String(reviewFocusKey + quoteFocusKey) : null}
               forceCompareKey={compareFocusKey ? String(compareFocusKey) : null}
