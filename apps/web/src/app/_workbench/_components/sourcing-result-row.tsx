@@ -13,6 +13,8 @@ import {
 
 interface SourcingResultRowProps {
   product: any;
+  /** §11.337-v3 — 현재 검색어. 매칭 이유 배지("품명 일치"/"Cat.No 일치") 계산용. */
+  query?: string;
   isInCompare: boolean;
   isInRequest: boolean;
   isSelected: boolean;
@@ -140,6 +142,26 @@ function buildOperatingSignals(product: any, vendor: any, unitPrice: number | nu
   return signals.slice(0, 3);
 }
 
+// ── 매칭 이유 배지 (§11.337-v3, 호영님 P1) ───────────────────────────────
+//   "왜 이 결과가 떴는가" 를 카드에 명시 → Cat.No/제조사 매칭이 품명과 무관해
+//   보여도 사용자가 매칭 근거를 즉시 인지. 우선순위: 품명 > Cat.No > 제조사.
+interface MatchReason {
+  label: string;
+  color: ChipColor;
+}
+
+function buildMatchReason(product: any, query?: string): MatchReason | null {
+  const q = (query ?? "").trim().toLowerCase();
+  if (!q) return null;
+  const name = String(product.name ?? "").toLowerCase();
+  const cat = String(product.catalogNumber ?? "").toLowerCase();
+  const brand = String(product.brand ?? "").toLowerCase();
+  if (name.includes(q)) return { label: "품명 일치", color: "blue" };
+  if (cat.includes(q)) return { label: "Cat.No 일치", color: "neutral" };
+  if (brand.includes(q)) return { label: "제조사 일치", color: "neutral" };
+  return null;
+}
+
 // ── 2행: 정적 메타 ──────────────────────────────────────────────────────
 
 function buildStaticMeta(product: any, vendor: any): string {
@@ -177,7 +199,7 @@ function getRowStyle(isSelected: boolean, isInCompare: boolean, isInRequest: boo
 // ── Component ────────────────────────────────────────────────────────────
 
 export function SourcingResultRow({
-  product, isInCompare, isInRequest, isSelected,
+  product, query, isInCompare, isInRequest, isSelected,
   onToggleCompare, onToggleRequest, onSelect,
   triageSections, triageClassification, triageActionState, onSetTriageAction,
   isPreview = false,
@@ -190,6 +212,7 @@ export function SourcingResultRow({
   const unitPrice = vendor?.priceInKRW && vendor.priceInKRW > 0 ? vendor.priceInKRW : null;
   const imageSrc = product.imageUrl ?? "";
   const staticMeta = buildStaticMeta(product, vendor);
+  const matchReason = buildMatchReason(product, query);
   const opSignals = buildOperatingSignals(product, vendor, unitPrice);
   const rowStyle = getRowStyle(isSelected, isInCompare, isInRequest);
 
@@ -214,8 +237,19 @@ export function SourcingResultRow({
 
         {/* 3-tier content */}
         <div className="flex-1 min-w-0">
-          {/* 1행: 제품명 */}
-          <p className="text-sm font-bold text-slate-900 line-clamp-1 leading-tight tracking-tight">{product.name}</p>
+          {/* 1행: 제품명 + 매칭 이유 배지 (§11.337-v3) */}
+          <div className="flex items-center gap-1.5 min-w-0">
+            <p className="text-sm font-bold text-slate-900 line-clamp-1 leading-tight tracking-tight min-w-0">{product.name}</p>
+            {matchReason && (
+              <span
+                data-testid="sourcing-match-reason"
+                className={`shrink-0 inline-flex items-center border rounded-full font-semibold leading-4 ${CHIP_STYLES[matchReason.color]}`}
+                style={{ fontSize: "10px", height: "18px", paddingLeft: "7px", paddingRight: "7px" }}
+              >
+                {matchReason.label}
+              </span>
+            )}
+          </div>
 
           {/* §11.292 카드 내부 TRIAGE 배지 + Classification + Shortlist/Hold/
               Exclude 제거 (호영님 P1 1단계). 검색이 이미 필터 역할 + 모든
