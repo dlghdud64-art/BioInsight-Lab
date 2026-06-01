@@ -127,7 +127,7 @@ export async function PATCH(
 
     // 감사 로그 기록
     try {
-      const { createAuditLog } = await import("@/lib/audit/audit-logger");
+      const { createAuditLog, auditRequestMeta } = await import("@/lib/audit/audit-logger");
       await createAuditLog({
         organizationId: id,
         userId: session.user.id,
@@ -135,6 +135,7 @@ export async function PATCH(
         entityType: "organization",
         entityId: id,
         action: "update_security_settings",
+        ...auditRequestMeta(request), // §11.345-B — IP/UA 캡처
         changes: {
           before: { allowedEmailDomains: beforeDomains },
           after: { allowedEmailDomains },

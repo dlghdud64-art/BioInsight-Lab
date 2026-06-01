@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { isAdmin } from "@/lib/api/admin";
-import { createAuditLog } from "@/lib/audit/audit-logger";
+import { createAuditLog, auditRequestMeta } from "@/lib/audit/audit-logger";
 import {
   normalizeApprovalPolicyInput,
   ApprovalPolicyValidationError,
@@ -191,6 +191,7 @@ export async function PATCH(
       entityType: "User",
       entityId: targetUserId,
       action: "approval_policy_update",
+      ...auditRequestMeta(request), // §11.345-B — IP/UA 캡처
       changes: {
         before: {
           approvalLimit: before.approvalLimit?.toString() ?? null,

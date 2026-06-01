@@ -23,6 +23,24 @@ export interface AuditLogParams {
 }
 
 /**
+ * §11.345-B — 요청 헤더에서 감사용 IP/UA 추출 헬퍼.
+ *   route handler 에서 `createAuditLog({ ...auditRequestMeta(request), ... })` 로 사용.
+ *   x-forwarded-for(프록시 체인 첫 IP)·x-real-ip 우선. 값 없으면 undefined → "기록 없음".
+ *   시스템/cron 등 request 없는 호출은 호출하지 않음(= IP null = 시스템, 정상).
+ */
+export function auditRequestMeta(request: {
+  headers: { get: (k: string) => string | null };
+}): { ipAddress?: string; userAgent?: string } {
+  const fwd = request.headers.get("x-forwarded-for");
+  const ipAddress =
+    (fwd ? fwd.split(",")[0]?.trim() : null) ||
+    request.headers.get("x-real-ip") ||
+    undefined;
+  const userAgent = request.headers.get("user-agent") || undefined;
+  return { ipAddress: ipAddress || undefined, userAgent };
+}
+
+/**
  * 감사 로그 생성
  */
 export async function createAuditLog(params: AuditLogParams) {

@@ -31,7 +31,7 @@ interface ProductSelectRow {
 import { db } from "@/lib/db";
 import { getOrCreateGuestKey } from "@/lib/api/guest-key";
 import { handleApiError } from "@/lib/api-error-handler";
-import { createAuditLog } from "@/lib/audit/audit-logger";
+import { createAuditLog, auditRequestMeta } from "@/lib/audit/audit-logger";
 import { generateQuoteRequestPdf } from "@/lib/quotes/quote-request-pdf-generator";
 
 export async function GET(
@@ -160,10 +160,13 @@ export async function POST(
     await createAuditLog({
       userId: session?.user?.id ?? undefined,
       organizationId: quote.organizationId ?? undefined,
-      eventType: "SETTINGS_CHANGED",
+      // §11.345-B — PDF 생성은 설정 변경이 아니라 문서 내보내기 → DATA_EXPORTED 로 재분류.
+      //   export 라 before/after(changes) 없음이 정상(감사 페이지 "변경 내역" 비움이 옳음).
+      eventType: "DATA_EXPORTED",
       entityType: "QUOTE",
       entityId: quote.id,
       action: "quote_pdf_generate",
+      ...auditRequestMeta(request),
       metadata: {
         kind: "quote_request_pdf_generated",
         quoteId: quote.id,

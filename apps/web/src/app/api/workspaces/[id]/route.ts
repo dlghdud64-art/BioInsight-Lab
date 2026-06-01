@@ -7,7 +7,7 @@ import { z } from "zod";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 // #approver-routing-audit-log — workspace 결재 임계치 변경 audit 추적성.
 // best effort (try/catch graceful — mutation atomic 보호).
-import { createAuditLog } from "@/lib/audit/audit-logger";
+import { createAuditLog, auditRequestMeta } from "@/lib/audit/audit-logger";
 // #approver-routing-validation-error-i18n — validation message i18n.
 //   Accept-Language header 기반 ko/en 분기. unsupported → ko fallback.
 import {
@@ -283,6 +283,7 @@ export async function PATCH(
           entityType: "WORKSPACE",
           entityId: workspaceId,
           action: "threshold_update",
+          ...auditRequestMeta(request), // §11.345-B — IP/UA 캡처
           changes: {
             before: {
               approvalLowThresholdKrw: beforeThresholds.approvalLowThresholdKrw,
