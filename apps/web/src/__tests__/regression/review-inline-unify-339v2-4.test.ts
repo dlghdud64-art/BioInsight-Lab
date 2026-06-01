@@ -20,10 +20,13 @@ describe("§11.339 v2 4 — 하단 노란시트 review 진입 제거", () => {
     const src = read(SEARCH);
     expect(src).not.toMatch(/setCandidatesSheetMode\("review"\)/);
   });
-  it("하단 바 검토 배지는 비클릭 건수 표시(span)", () => {
+  it("하단 바 검토 배지 클릭 → 견적함 탭 전환(forceQuoteKey), 노란시트 X", () => {
     const src = read(SEARCH);
     expect(src).toMatch(/data-testid="sourcing-bar-review-count"/);
     expect(src).not.toMatch(/data-testid="sourcing-bar-review-open"/);
+    // 배지 클릭이 reviewFocusKey 증가 → forceQuoteKey 로 견적함 탭 전환
+    expect(src).toMatch(/onClick=\{\(\) => setReviewFocusKey\(\(k\) => k \+ 1\)\}/);
+    expect(src).toMatch(/forceQuoteKey=\{reviewFocusKey/);
   });
 });
 

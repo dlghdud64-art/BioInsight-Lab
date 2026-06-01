@@ -159,6 +159,8 @@ export default function SearchPage() {
   const pilotCompareSeededRef = useRef(false);
   // ── Step 2: activeResultId (ID only) — rail은 products에서 derive ──
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
+  // §11.339 v2 4 — 하단 바 "검토 N" 배지 클릭 → 우측 견적함 탭 전환 트리거(카운터 변경 = useEffect 발화).
+  const [reviewFocusKey, setReviewFocusKey] = useState(0);
   // §11.303-hotfix-e — SearchPage 자체 filter dropdown state (SearchUtilityBar 와 별개).
   //   SearchPage JSX (line 891-1039) 가 category/price/vendor dropdown 을
   //   직접 render — useState 가 누락되어 type error. SearchUtilityBar 의
@@ -1228,6 +1230,7 @@ export default function SearchPage() {
                   resolvable: true,
                 }))}
               forceDetailKey={activeResultId}
+              forceQuoteKey={reviewFocusKey ? String(reviewFocusKey) : null}
               detailSlot={railProduct ? (
                 <SourcingContextRail
                   product={railProduct}
@@ -1557,13 +1560,16 @@ export default function SearchPage() {
               {/* §11.339 v2 4 — 검토 필요는 견적함 탭 인라인(cart-review-inline)으로 일원화.
                   하단 노란 시트(review mode) 진입 제거. 배지는 건수 표시만(비클릭, 인라인이 실동작). */}
               {requestReadiness.summary.review > 0 && (
-                <span
+                <button
+                  type="button"
                   data-testid="sourcing-bar-review-count"
-                  title="검토 필요 항목은 견적함 탭에서 확인하세요"
-                  className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700 shrink-0"
+                  aria-label="검토 필요 항목 보기 (견적함 탭)"
+                  title="견적함 탭에서 검토 필요 항목 확인"
+                  onClick={() => setReviewFocusKey((k) => k + 1)}
+                  className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700 shrink-0 hover:bg-yellow-200 transition-colors cursor-pointer"
                 >
                   <AlertTriangle className="h-3 w-3 shrink-0" />검토 {requestReadiness.summary.review}
-                </span>
+                </button>
               )}
               {requestReadiness.summary.blocked > 0 && (
                 <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-700 shrink-0">

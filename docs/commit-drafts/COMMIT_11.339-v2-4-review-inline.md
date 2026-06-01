@@ -10,11 +10,13 @@ mode)로 뜨던 패턴 제거. 견적함 탭 인라인(cart-review-inline)으로
 
 호영님 결정: 옵션 B (견적함 인라인 = 별도 레이어 제거).
 
-Fix (search/page.tsx):
-- 하단 바 "검토 N" 버튼: onClick setCandidatesSheetMode("review") 제거.
-  → <button> → <span data-testid="sourcing-bar-review-count"> 비클릭 건수 배지로 교체
-    (dead button 아님 — 검토 실동작은 견적함 탭 인라인이 담당, 배지는 건수 가시성만).
+Fix (search/page.tsx + quote-cart-panel.tsx):
+- 하단 바 "검토 N" 버튼: onClick setCandidatesSheetMode("review")(노란 시트) 제거.
+- 대신 배지 클릭 → setReviewFocusKey(k+1) → QuoteCartPanel forceQuoteKey → 견적함 탭 전환.
+  (호영님 "검토 진입 안 됨" 피드백 반영: 비클릭 배지는 dead-feel → 견적함 탭으로 라우팅.)
+- QuoteCartPanel: forceQuoteKey prop + useEffect(forceQuoteKey → setTab("quote")) 추가.
 - setCandidatesSheetMode("review") 트리거 0 (compare/quote 모드 Sheet 는 보존 — review 진입만 차단).
+- 검토 실동작 = 견적함 탭 인라인(cart-review-inline + resolve/keep). 배지 = 탭 진입 + 건수.
 
 canonical truth / 제약:
 - 검토 필요 단일 경로 = 견적함 탭 인라인(cart-review-inline + resolve/keep 액션). §11.339 v2 1단계 구현분.
