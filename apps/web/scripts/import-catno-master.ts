@@ -152,7 +152,8 @@ async function main() {
           catalogNumber: p.catalogNumber,
           manufacturer: p.manufacturer ?? null,
           brand: p.manufacturer ?? null,
-          grade: p.grade ?? null,
+          // §11.341 — 자사 A~E 는 internalGrade(공인등급 grade 아님). 혼동 방지.
+          internalGrade: p.grade ?? null,
         },
       });
       productIdByCat.set(catKey, created.id);

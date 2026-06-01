@@ -269,7 +269,11 @@ model Product {
   imageUrl              String?
   embedding             Unsupported("vector(1536)")? // 벡터 ?베??(pgvector)
   // 그룹?어 친화???드
-  grade                 String? // Grade (HPLC grade, GMP, EP/USP, cell culture tested ??
+  grade                 String? // 제조사 공인 등급 (HPLC grade, GMP, EP/USP, cell culture tested) — §11.341 크롤링 대상
+  // §11.341 — 자사 내부 등급(시약관리대장 A~E). 제품 본연 속성 아님(§11.337 Part D 정책상 UI 비노출).
+  //   grade(공인등급)와 별도 필드로 분리 — 혼동 방지. gradeSource 로 출처 추적.
+  internalGrade         String? // 자사 내부 등급 (A~E). 시약관리대장 출처.
+  gradeSource           String? // 공인등급 출처 (제조사 카탈로그 URL/명 — §11.341 크롤링 시 기록). §11.335 출처 명시 정책.
   specification         String? // 규격/?량 (?? 1mg, 500mL, 0.22um ??
   // §11.326 — 통 1개 함량(규격). 입고 수량과 분리. 있으면 specification보다 우선.
   packSize              Float?  // 통 1개의 함량 수치 (예: 100)
