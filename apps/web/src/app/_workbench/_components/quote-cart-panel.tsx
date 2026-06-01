@@ -55,8 +55,10 @@ interface QuoteCartPanelProps {
   detailSlot?: ReactNode;
   /** 외부에서 상세 탭으로 강제 전환(제품 "상세 보기" 클릭 시). */
   forceDetailKey?: string | null;
-  /** §11.339 v2 4 — 외부에서 견적함 탭으로 강제 전환(하단 바 "검토 N" 배지 클릭 시). */
+  /** §11.339 v2 4 — 외부에서 견적함 탭으로 강제 전환(하단 바 "검토 N"/"견적 N" 클릭 시). */
   forceQuoteKey?: string | null;
+  /** §11.339 v2 5 — 외부에서 비교함 탭으로 강제 전환(하단 바 "비교 N" 클릭 시). */
+  forceCompareKey?: string | null;
   onQuantityChange?: (itemId: string, quantity: number) => void;
   onRemoveQuoteItem?: (itemId: string) => void;
   onRemoveCompareItem?: (productId: string) => void;
@@ -81,6 +83,7 @@ export function QuoteCartPanel({
   detailSlot,
   forceDetailKey,
   forceQuoteKey,
+  forceCompareKey,
   onQuantityChange,
   onRemoveQuoteItem,
   onRemoveCompareItem,
@@ -101,6 +104,11 @@ export function QuoteCartPanel({
   useEffect(() => {
     if (forceQuoteKey) setTab("quote");
   }, [forceQuoteKey]);
+
+  // §11.339 v2 5 — 하단 바 "비교 N" 클릭 → 비교함 탭 전환.
+  useEffect(() => {
+    if (forceCompareKey) setTab("compare");
+  }, [forceCompareKey]);
 
   // 담은 게 없고 상세도 없으면 견적함 기본(빈 안내).
   const flagByItem = new Map(reviewFlags.map((f) => [f.itemId, f]));

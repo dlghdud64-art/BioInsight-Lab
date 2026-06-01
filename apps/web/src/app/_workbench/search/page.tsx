@@ -159,8 +159,10 @@ export default function SearchPage() {
   const pilotCompareSeededRef = useRef(false);
   // ── Step 2: activeResultId (ID only) — rail은 products에서 derive ──
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
-  // §11.339 v2 4 — 하단 바 "검토 N" 배지 클릭 → 우측 견적함 탭 전환 트리거(카운터 변경 = useEffect 발화).
+  // §11.339 v2 4·5 — 하단 바 "검토/견적/비교" 클릭 → 우측 탭 전환 트리거(카운터 = useEffect 발화).
   const [reviewFocusKey, setReviewFocusKey] = useState(0);
+  const [quoteFocusKey, setQuoteFocusKey] = useState(0);
+  const [compareFocusKey, setCompareFocusKey] = useState(0);
   // §11.303-hotfix-e — SearchPage 자체 filter dropdown state (SearchUtilityBar 와 별개).
   //   SearchPage JSX (line 891-1039) 가 category/price/vendor dropdown 을
   //   직접 render — useState 가 누락되어 type error. SearchUtilityBar 의
@@ -1230,7 +1232,8 @@ export default function SearchPage() {
                   resolvable: true,
                 }))}
               forceDetailKey={activeResultId}
-              forceQuoteKey={reviewFocusKey ? String(reviewFocusKey) : null}
+              forceQuoteKey={(reviewFocusKey + quoteFocusKey) ? String(reviewFocusKey + quoteFocusKey) : null}
+              forceCompareKey={compareFocusKey ? String(compareFocusKey) : null}
               detailSlot={railProduct ? (
                 <SourcingContextRail
                   product={railProduct}
@@ -1503,7 +1506,7 @@ export default function SearchPage() {
                 type="button"
                 data-testid="sourcing-bar-compare-open"
                 aria-label="비교 후보 목록 열기"
-                onClick={() => setCandidatesSheetMode("compare")}
+                onClick={() => setCompareFocusKey((k) => k + 1)} /* §11.339 v2 5 — 드로어 대신 비교함 탭 */
                 className="flex items-center gap-2 shrink-0 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
               >
                 <PenLine className="h-4 w-4 text-blue-600 shrink-0" />
@@ -1542,7 +1545,7 @@ export default function SearchPage() {
                 type="button"
                 data-testid="sourcing-bar-quote-open"
                 aria-label="견적 후보 목록 열기"
-                onClick={() => setCandidatesSheetMode("quote")}
+                onClick={() => setQuoteFocusKey((k) => k + 1)} /* §11.339 v2 5 — 드로어 대신 견적함 탭 */
                 className="flex items-center gap-2 shrink-0 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
               >
                 <FileText className="h-4 w-4 text-emerald-500 shrink-0" />
@@ -1638,57 +1641,7 @@ export default function SearchPage() {
       )}
 
       {/* §11.312 — Sourcing Candidates Sheet (compare / quote / review 3 mode 통합) */}
-      <SourcingCandidatesSheet
-        open={candidatesSheetMode !== null}
-        onClose={() => setCandidatesSheetMode(null)}
-        mode={candidatesSheetMode ?? "compare"}
-        compareIds={compareIds}
-        products={products as any}
-        quoteItems={(quoteItems as any[]).map((q) => {
-          const product = products.find((p: any) => p.id === q.productId);
-          const assessment = requestReadiness.candidates.find((c) => c.itemId === q.id);
-          const reviewFlag = assessment?.flags.find((f) => f.type === "review_required");
-          return {
-            id: q.id,
-            productId: q.productId,
-            productName: q.productName ?? product?.name,
-            brand: q.vendorName ?? product?.brand,
-            catalogNumber: q.catalogNumber ?? product?.catalogNumber,
-            category: product?.category,
-            // §11.338 — 확정 단가만(미견적 lineTotal fallback 제거 → "견적 후 확정" 표기).
-            price: (q.unitPrice ?? 0) > 0 ? q.unitPrice : null,
-            quantity: q.quantity ?? 1,                       // §11.339 — 수량
-            unit: q.unit ?? product?.unit ?? null,           // §11.339 — 단위
-            reviewReason: reviewFlag?.detail ?? null,
-            isBlocked: assessment?.status === "blocked",
-          };
-        })}
-        totalAmount={totalAmount}
-        onRemoveCompare={(id) => toggleCompare(id)}
-        onClearCompare={() => clearCompare()}
-        onRemoveQuoteItem={(id) => removeQuoteItem(id)}
-        onQuantityChange={(id, quantity) => updateQuoteItem(id, { quantity })}
-        onClearQuote={() => { quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}
-        onClearReviewFlag={(id) => {
-          // §11.312 — "그래도 견적에 유지" — review reason 무시하고 견적 진행.
-          // 현재 reviewReason 은 calculateRequestReadiness 의 derived (compare 진행 중 등),
-          // toggleCompare 로 비교에서 제거하면 review_required flag 도 해소.
-          const item = quoteItems.find((q: any) => q.id === id);
-          if (item && compareIds.includes(item.productId)) {
-            toggleCompare(item.productId);
-          }
-        }}
-        onCompareReview={() => handleProtectedAction(() => setComparisonModalOpen(true))}
-        onQuoteRequest={() =>
-          handleProtectedAction(() => {
-            if (requestHandoff) {
-              setWorkWindowMode("request-assembly");
-            } else {
-              setRequestWizardOpen(true);
-            }
-          })
-        }
-      />
+      {/* §11.339 v2 5 — 하단 SourcingCandidatesSheet(견적/비교/검토 드로어) 제거. 우측 탭 카트로 일원화. */}
 
       {/* ═══ E. Center Work Window — Compare Review (difference-first decision surface) ═══ */}
       <CompareReviewWorkWindow
