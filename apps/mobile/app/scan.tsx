@@ -117,6 +117,11 @@ export default function ScanScreen() {
   const [labelResult, setLabelResult] = useState<LabelScanResponse | null>(null);
   const [labelForm, setLabelForm] = useState<LabelForm>(emptyLabelForm());
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
+  // §11.340 — Lot/유효기한 출처 추적(라벨 스캔 확인 vs 수기 입력, §11.335 정책).
+  const [lotScanFilled, setLotScanFilled] = useState(false);
+  const [expiryScanFilled, setExpiryScanFilled] = useState(false);
+  const [lotDirty, setLotDirty] = useState(false);
+  const [expiryDirty, setExpiryDirty] = useState(false);
 
   const resetToScan = useCallback(() => {
     setState("scanning");
@@ -125,6 +130,8 @@ export default function ScanScreen() {
     setErrorMessage("");
     setLabelResult(null);
     setLabelForm(emptyLabelForm());
+    setLotScanFilled(false); setExpiryScanFilled(false);
+    setLotDirty(false); setExpiryDirty(false);
     setCapturedUri(null);
   }, []);
 
@@ -195,6 +202,11 @@ export default function ScanScreen() {
       const result = await scanLabel(dataUri);
       setLabelResult(result);
       setLabelForm(mapLabelToForm(result));
+      // §11.340 — 스캔 결과 Lot/유효기한 출처 기록.
+      setLotScanFilled(Boolean(result.parsed.lotNo));
+      setExpiryScanFilled(Boolean(result.parsed.expirationDate));
+      setLotDirty(false);
+      setExpiryDirty(false);
       logEvent("label_scan_success", {
         confidence: result.parsed.confidence,
         matched: result.matchedProduct ? 1 : 0,
@@ -212,7 +224,17 @@ export default function ScanScreen() {
 
   const updateLabelField = useCallback((key: keyof LabelForm, value: string) => {
     setLabelForm((f) => ({ ...f, [key]: value }));
+    // §11.340 — 직접 수정 → 수기 출처로 전환.
+    if (key === "lotNumber") setLotDirty(true);
+    if (key === "expirationDate") setExpiryDirty(true);
   }, []);
+
+  // §11.340 — 출처 배지(스캔 확인 vs 수기). 스캔으로 채워졌고 미수정 = 검증값.
+  const fieldSource = (value: string, scanFilled: boolean, dirty: boolean) => {
+    if (scanFilled && !dirty) return { label: "라벨 스캔 확인", cls: "bg-emerald-100 text-emerald-700" };
+    if (value.trim()) return { label: "수기 입력", cls: "bg-slate-100 text-slate-500" };
+    return null;
+  };
 
   // §11.319 — 입고 prefill: 매칭 재고 있으면 입고(lot-receive), 없으면 신규 등록(register)
   const confirmLabelReceive = useCallback(() => {
@@ -442,7 +464,13 @@ export default function ScanScreen() {
                 />
               </View>
               <View className="flex-1">
-                <Text className="text-xs font-medium text-slate-600 mb-1">Lot 번호</Text>
+                <View className="flex-row items-center gap-1.5 mb-1">
+                  <Text className="text-xs font-medium text-slate-600">Lot 번호</Text>
+                  {(() => {
+                    const b = fieldSource(labelForm.lotNumber, lotScanFilled, lotDirty);
+                    return b ? <Text className={`text-[9px] px-1.5 py-0.5 rounded ${b.cls}`}>{b.label}</Text> : null;
+                  })()}
+                </View>
                 <TextInput
                   className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800"
                   placeholder="Lot No."
@@ -454,7 +482,13 @@ export default function ScanScreen() {
 
             <View className="flex-row gap-3">
               <View className="flex-1">
-                <Text className="text-xs font-medium text-slate-600 mb-1">유효기간</Text>
+                <View className="flex-row items-center gap-1.5 mb-1">
+                  <Text className="text-xs font-medium text-slate-600">유효기간</Text>
+                  {(() => {
+                    const b = fieldSource(labelForm.expirationDate, expiryScanFilled, expiryDirty);
+                    return b ? <Text className={`text-[9px] px-1.5 py-0.5 rounded ${b.cls}`}>{b.label}</Text> : null;
+                  })()}
+                </View>
                 <TextInput
                   className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800"
                   placeholder="YYYY-MM-DD"

@@ -210,6 +210,12 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
   const [error, setError] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [formData, setFormData] = useState<SmartReceiveFormData>(emptyFormData());
+  // §11.340 — Lot/유효기한 출처 추적. 라벨 스캔으로 채워졌고(scanFilled) 사용자가
+  //   수정 안 했으면 "라벨 스캔 확인", 수정했거나 수기 입력이면 "수기 입력"(§11.335 출처 정책).
+  const [lotScanFilled, setLotScanFilled] = useState(false);
+  const [expiryScanFilled, setExpiryScanFilled] = useState(false);
+  const [lotDirty, setLotDirty] = useState(false);
+  const [expiryDirty, setExpiryDirty] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [manualMode, setManualMode] = useState(false);
   const [manualText, setManualText] = useState("");
@@ -259,6 +265,8 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
     setError(null);
     setPreviewImage(null);
     setFormData(emptyFormData());
+    setLotScanFilled(false); setExpiryScanFilled(false);
+    setLotDirty(false); setExpiryDirty(false);
     setIsDragOver(false);
     setManualMode(false);
     setManualText("");
@@ -277,6 +285,24 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
   /* ── 폼 필드 변경 ── */
   const updateField = (key: keyof SmartReceiveFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
+    // §11.340 — 사용자가 직접 수정 → 수기 출처로 전환.
+    if (key === "lotNumber") setLotDirty(true);
+    if (key === "expirationDate") setExpiryDirty(true);
+  };
+
+  // §11.340 — 출처 배지 헬퍼. 스캔으로 채워졌고 미수정 = 검증값, 그 외 값 있으면 수기.
+  const fieldSourceBadge = (
+    value: string,
+    scanFilled: boolean,
+    dirty: boolean,
+  ): { label: string; cls: string } | null => {
+    if (scanFilled && !dirty) {
+      return { label: "라벨 스캔 확인", cls: "bg-emerald-100 text-emerald-700" };
+    }
+    if (value.trim()) {
+      return { label: "수기 입력", cls: "bg-slate-100 text-slate-600" };
+    }
+    return null;
   };
 
   /* ── ScanApiResponse → 편집 폼 데이터로 매핑 ── */
@@ -314,6 +340,11 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
       const data: ScanApiResponse = await res.json();
       setScanResult(data);
       setFormData(mapScanToForm(data));
+      // §11.340 — 스캔 결과에 Lot/유효기한 있었는지 출처 기록(이후 수정 시 dirty 로 전환).
+      setLotScanFilled(Boolean(data.parsed.lotNo));
+      setExpiryScanFilled(Boolean(data.parsed.expirationDate));
+      setLotDirty(false);
+      setExpiryDirty(false);
       setStep("review");
     } catch (err) {
       console.error("[LabelScanner] Gemini parse error:", err);
@@ -476,6 +507,11 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
       const data: ScanApiResponse = await res.json();
       setScanResult(data);
       setFormData(mapScanToForm(data));
+      // §11.340 — 스캔 결과에 Lot/유효기한 있었는지 출처 기록(이후 수정 시 dirty 로 전환).
+      setLotScanFilled(Boolean(data.parsed.lotNo));
+      setExpiryScanFilled(Boolean(data.parsed.expirationDate));
+      setLotDirty(false);
+      setExpiryDirty(false);
       setStep("review");
     } catch (err) {
       console.error("[LabelScanner] Parse error:", err);
@@ -1022,7 +1058,13 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                 />
               </div>
               <div>
-                <Label className="text-xs font-medium text-slate-600">Lot 번호</Label>
+                <div className="flex items-center gap-1.5">
+                  <Label className="text-xs font-medium text-slate-600">Lot 번호</Label>
+                  {(() => {
+                    const b = fieldSourceBadge(formData.lotNumber, lotScanFilled, lotDirty);
+                    return b ? <span data-testid="lot-source-badge" className={`text-[9px] px-1.5 py-0 rounded ${b.cls}`}>{b.label}</span> : null;
+                  })()}
+                </div>
                 <Input
                   value={formData.lotNumber}
                   onChange={(e) => updateField("lotNumber", e.target.value)}
@@ -1034,7 +1076,13 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs font-medium text-slate-600">유효기간</Label>
+                <div className="flex items-center gap-1.5">
+                  <Label className="text-xs font-medium text-slate-600">유효기간</Label>
+                  {(() => {
+                    const b = fieldSourceBadge(formData.expirationDate, expiryScanFilled, expiryDirty);
+                    return b ? <span data-testid="expiry-source-badge" className={`text-[9px] px-1.5 py-0 rounded ${b.cls}`}>{b.label}</span> : null;
+                  })()}
+                </div>
                 <Input
                   type="date"
                   value={formData.expirationDate}
