@@ -42,6 +42,7 @@ interface AddInventoryModalProps {
     lotNumber?: string;
     storageCondition?: string;
     testPurpose?: string;
+    catalogNumber?: string | null; // §11.336 — 편집모드 Cat.No 수동 입력(Product 마스터 반영).
   }) => void;
   inventory?: any;
   /** 저장 중일 때 true. 버튼 비활성화 및 스피너 표시용 */
@@ -70,6 +71,8 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
   const [lotNumber, setLotNumber] = useState(inventory?.lotNumber ?? "");
   const [storageCondition, setStorageCondition] = useState(inventory?.storageCondition ?? "");
   const [testPurpose, setTestPurpose] = useState(inventory?.testPurpose ?? "");
+  // §11.336 — 편집모드 Cat.No 수동 입력 state(Product 마스터 catalogNumber).
+  const [editableCatNo, setEditableCatNo] = useState<string>(inventory?.product?.catalogNumber ?? "");
   const [expiryDatePopoverOpen, setExpiryDatePopoverOpen] = useState(false);
 
   // 수정 모드: 모달 열릴 때 검색 단계 건너뛰고 폼 데이터 프리필
@@ -87,6 +90,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
       setSafetyStock(inventory.safetyStock != null ? String(inventory.safetyStock) : "");
       setMinOrderQty(inventory.minOrderQty != null ? String(inventory.minOrderQty) : "");
       setLocation(inventory.location ?? "");
+      setEditableCatNo(inventory.product?.catalogNumber ?? "");
       setExpiryDate(inventory.expiryDate ? new Date(inventory.expiryDate) : undefined);
       setNotes(inventory.notes ?? "");
       setLotNumber(inventory.lotNumber ?? "");
@@ -162,6 +166,8 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
       lotNumber: lotNumber.trim() || undefined,
       storageCondition: storageCondition || undefined,
       testPurpose: testPurpose.trim() || undefined,
+      // §11.336 — 편집모드: 사용자가 입력/수정한 Cat.No (빈 값이면 null 로 명시 전송).
+      ...(inventory ? { catalogNumber: editableCatNo.trim() || null } : {}),
     };
     console.log("저장 시도:", data);
     onSubmit(data);
@@ -242,10 +248,12 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                   <Label htmlFor="catNo">Cat.No (카탈로그 번호)</Label>
                   <Input
                     id="catNo"
-                    value={formCatNo}
-                    readOnly
-                    className="bg-pg bg-pn/50 font-mono"
-                    placeholder="예: 16000-044"
+                    value={inventory ? editableCatNo : formCatNo}
+                    onChange={inventory ? (e) => setEditableCatNo(e.target.value) : undefined}
+                    readOnly={!inventory}
+                    data-testid="catno-edit-input"
+                    className={inventory ? "font-mono" : "bg-pg bg-pn/50 font-mono"}
+                    placeholder="예: 25200-056"
                   />
                 </div>
               </div>

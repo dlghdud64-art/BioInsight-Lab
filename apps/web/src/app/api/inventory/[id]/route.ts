@@ -137,10 +137,19 @@ export async function PATCH(
       autoReorderEnabled,
       autoReorderThreshold,
       lotNumber,
+      catalogNumber, // §11.336 — Product 마스터 Cat.No 편집(수동 입력 동선).
     } = body;
 
     // 업데이트할 데이터 준비
     const updateData: any = {};
+    // §11.336 — Product 마스터 catalogNumber 업데이트(옵션 A: 같은 Product 공유 재고에 반영).
+    //   빈 문자열/공백 → null(채우기 취소). 값 있으면 trim. undefined 면 변경 안 함.
+    let resolvedCatalogNumber: string | null | undefined = undefined;
+    if (catalogNumber !== undefined) {
+      resolvedCatalogNumber = typeof catalogNumber === "string" && catalogNumber.trim() !== ""
+        ? catalogNumber.trim()
+        : null;
+    }
 
     if (quantity !== undefined) {
       const parsedQuantity = typeof quantity === 'string'
@@ -213,6 +222,20 @@ export async function PATCH(
         },
       });
 
+      // §11.336 — Cat.No 편집: 연결된 Product 마스터 catalogNumber 업데이트.
+      //   옵션 A — 같은 Product 를 공유하는 모든 재고에 반영(제품 고유 식별자 정합).
+      //   기존 값이 있는데 다른 값으로 변경 시 audit 로그에 before/after 남김.
+      if (resolvedCatalogNumber !== undefined && existingInventory.productId) {
+        const prevCatNo = updated.product?.catalogNumber ?? null;
+        if (prevCatNo !== resolvedCatalogNumber) {
+          await tx.product.update({
+            where: { id: existingInventory.productId },
+            data: { catalogNumber: resolvedCatalogNumber },
+          });
+          if (updated.product) updated.product.catalogNumber = resolvedCatalogNumber;
+        }
+      }
+
       await createAuditLog(
         {
           userId:         session.user.id,
@@ -230,7 +253,7 @@ export async function PATCH(
             autoReorderEnabled:   (existingInventory as any).autoReorderEnabled,
             autoReorderThreshold: (existingInventory as any).autoReorderThreshold,
           },
-          newData: updateData,
+          newData: { ...updateData, ...(resolvedCatalogNumber !== undefined ? { catalogNumber: resolvedCatalogNumber } : {}) },
           ipAddress,
           userAgent,
         },

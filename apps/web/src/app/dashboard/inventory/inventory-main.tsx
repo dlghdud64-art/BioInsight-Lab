@@ -583,6 +583,7 @@ export function InventoryMain() {
       lotNumber?: string;
       storageCondition?: string;
       testPurpose?: string;
+      catalogNumber?: string | null; // §11.336 — 편집모드 Cat.No 수동 입력.
     }) => {
       const isEdit = Boolean(data.id);
       const isMockItem = isEdit && data.id?.startsWith("mock-");
@@ -624,6 +625,8 @@ export function InventoryMain() {
             lotNumber: data.lotNumber ?? undefined,
             storageCondition: data.storageCondition ?? undefined,
             testPurpose: data.testPurpose ?? undefined,
+            // §11.336 — Cat.No 편집 → PATCH 로 Product 마스터 반영.
+            catalogNumber: data.catalogNumber,
           }
         : data;
 
