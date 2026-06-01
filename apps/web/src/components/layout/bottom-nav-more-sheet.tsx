@@ -64,7 +64,7 @@ const menuGroups: { title: string; items: MoreMenuItem[] }[] = [
 
 const adminItems: MoreMenuItem[] = [
   { label: "활동 로그", href: "/dashboard/activity-logs", icon: Activity },
-  { label: "감사 증적", href: "/dashboard/audit", icon: ShieldCheck },
+  { label: "감사 추적", href: "/dashboard/audit", icon: ShieldCheck },
 ];
 
 export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {

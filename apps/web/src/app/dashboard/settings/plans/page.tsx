@@ -184,7 +184,7 @@ const FEATURE_COMPARISON = [
  { key:"autoReorder", label:"자동 재주문", desc:"안전재고 기반 자동 발주"},
  { key:"advancedReports", label:"고급 리포트", desc:"맞춤 분석 및 내보내기"},
  { key:"lotManagement", label:"Lot 관리", desc:"Lot별 수량·위치·유효기한 추적"},
- { key:"auditTrail", label:"Audit Trail", desc:"변경 이력 및 감사 증적"},
+ { key:"auditTrail", label:"Audit Trail", desc:"변경 이력 및 감사 추적"},
  { key:"inboundEmail", label:"이메일 연동", desc:"견적 이메일 자동 처리"},
  { key:"vendorPortal", label:"벤더 포털", desc:"공급사 직접 견적 응답"},
  { key:"sso", label:"SSO (통합 인증)", desc:"SAML/OAuth 기반 로그인 — Enterprise 전용"},

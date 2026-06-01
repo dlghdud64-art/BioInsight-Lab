@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<title>LabAxis 감사 증적 — ${printedAt.toLocaleDateString("ko-KR")}</title>
+<title>LabAxis 감사 추적 (Audit Trail) — ${printedAt.toLocaleDateString("ko-KR")}</title>
 <style>
   @page { size: A4; margin: 1.5cm; }
   @media print {
@@ -247,7 +247,7 @@ export async function GET(request: NextRequest) {
     <header class="report-header">
       <img src="/brand/Bio-Insight.png" alt="BioInsight Lab" class="logo" />
       <div class="title-block">
-        <h1>LabAxis 감사 증적 (Audit Trail)</h1>
+        <h1>LabAxis 감사 추적 (Audit Trail)</h1>
         <div class="subtitle">컴플라이언스 보존 양식 — 운영자 검토용</div>
       </div>
     </header>

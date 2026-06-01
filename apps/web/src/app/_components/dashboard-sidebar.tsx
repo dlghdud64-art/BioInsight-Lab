@@ -143,7 +143,7 @@ const sidebarGroups: SidebarGroup[] = [
 // 관리자 전용 메뉴 (role === ADMIN || OWNER 시에만 표시)
 const adminMenuItems: NavItem[] = [
   { title: "활동 로그", href: "/dashboard/activity-logs", icon: Activity },
-  { title: "감사 증적", href: "/dashboard/audit", icon: ShieldCheck },
+  { title: "감사 추적", href: "/dashboard/audit", icon: ShieldCheck },
 ];
 
 // 대시보드 링크 (상단에 별도 배치)

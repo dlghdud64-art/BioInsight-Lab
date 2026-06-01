@@ -101,10 +101,11 @@ describe("§11.300 — audit page cleanup + 사이드바 영문 병기 제거", 
     });
   });
 
-  describe("dashboard sidebar — 감사 증적 영문 병기 제거", () => {
-    it('"감사 증적 (Audit Trail)" → "감사 증적"', () => {
-      expect(SIDEBAR_SRC).not.toMatch(/감사 증적 \(Audit Trail\)/);
-      expect(SIDEBAR_SRC).toMatch(/title:\s*"감사 증적",\s*href:\s*"\/dashboard\/audit"/);
+  describe("dashboard sidebar — 감사 추적 라벨 (§11.345 용어 정정)", () => {
+    it('"감사 증적" → "감사 추적", 영문 병기 없음', () => {
+      expect(SIDEBAR_SRC).not.toMatch(/감사 증적/);
+      expect(SIDEBAR_SRC).not.toMatch(/감사 추적 \(Audit Trail\)/);
+      expect(SIDEBAR_SRC).toMatch(/title:\s*"감사 추적",\s*href:\s*"\/dashboard\/audit"/);
     });
   });
 });

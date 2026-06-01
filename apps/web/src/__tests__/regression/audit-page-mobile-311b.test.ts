@@ -3,7 +3,7 @@
  *
  * 호영님 P1 spec (2026-05-26) "더보기 모바일 최적화" — audit page 한정:
  *   1. "보안 및 컴플라이언스" eyebrow 모바일 hidden (md:flex)
- *   2. 제목 + 건수 통합 ("감사 증적 · N건")
+ *   2. 제목 + 건수 통합 ("감사 추적 · N건")  // §11.345 용어 정정
  *   3. description 모바일 hidden (md:block)
  *   4. 액션 4 button (고침/인쇄/PDF/내보내기) 모바일 → kebab + Sheet
  *   5. 필터 + 검색 가로 인라인 1행 (모바일 포함)
@@ -30,9 +30,9 @@ describe("§11.311b — 헤더 모바일 정합", () => {
     expect(src).toMatch(/hidden md:flex items-center gap-2 text-slate-400[\s\S]{0,200}보안 및 컴플라이언스/);
   });
 
-  it("제목 + 건수 통합 (감사 증적 · N건 inline)", () => {
+  it("제목 + 건수 통합 (감사 추적 · N건 inline)", () => {
     const src = read(PATH);
-    expect(src).toMatch(/<h2[^>]*>[\s\S]{0,300}<span>감사 증적<\/span>[\s\S]{0,400}data\.total\.toLocaleString\("ko-KR"\)/);
+    expect(src).toMatch(/<h2[^>]*>[\s\S]{0,300}<span>감사 추적<\/span>[\s\S]{0,400}data\.total\.toLocaleString\("ko-KR"\)/);
   });
 
   it("description 모바일 hidden (hidden md:block)", () => {
@@ -157,6 +157,6 @@ describe("§11.311b — 회귀 0 (보존)", () => {
 
   it("§11.89 인쇄용 헤더 (print 시만 표시) 보존", () => {
     const src = read(PATH);
-    expect(src).toMatch(/LabAxis 감사 증적/);
+    expect(src).toMatch(/LabAxis 감사 추적/);
   });
 });

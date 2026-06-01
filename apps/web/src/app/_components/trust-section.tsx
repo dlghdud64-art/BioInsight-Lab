@@ -4,7 +4,7 @@ const TRUST_ITEMS = [
   {
     icon: History,
     title: "구매 이력 추적",
-    description: "모든 견적·발주·입고 기록이 자동으로 저장되고, 감사 증적으로 활용할 수 있습니다.",
+    description: "모든 견적·발주·입고 기록이 자동으로 저장되고, 감사 추적으로 활용할 수 있습니다.",
   },
   {
     icon: FlaskConical,

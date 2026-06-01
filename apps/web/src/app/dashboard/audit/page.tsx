@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +15,8 @@ import {
   RefreshCw,
   MoreHorizontal,
   X,
+  ChevronRight,
+  Lock,
 } from "lucide-react";
 import {
   Sheet,
@@ -110,6 +112,12 @@ interface AuditRow {
   after: string;
   reason: string;
   authMethod: "user_token" | "system";
+  // §11.345 — 행 클릭 상세(same-canvas)용 raw 메타
+  userAgent: string;
+  entityType: string;
+  entityId: string;
+  changesRaw: string;
+  metadataRaw: string;
 }
 
 const EVENT_TYPE_MAP = AUDIT_EVENT_LABELS;
@@ -175,16 +183,22 @@ function adaptLog(log: AuditLogResponse["logs"][number]): AuditRow {
     ? `${log.entityType} (${log.entityId.slice(0, 8)})`
     : log.entityType;
 
-  return {
-    id: log.id,
-    time: new Date(log.createdAt).toLocaleString("ko-KR", {
+  // §11.345 — 타임존 명시(Asia/Seoul) + "KST" 라벨. 서버/런타임 TZ 추정 제거,
+  // GMP 감사 추적은 timestamp 의 타임존이 명확해야 함 (Part 11 정합).
+  const time =
+    new Date(log.createdAt).toLocaleString("ko-KR", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
-    }),
+      timeZone: "Asia/Seoul",
+    }) + " KST";
+
+  return {
+    id: log.id,
+    time,
     user: log.user?.name ?? log.user?.email ?? "시스템",
     email: log.user?.email ?? "",
     ip: log.ipAddress ?? "",
@@ -195,7 +209,40 @@ function adaptLog(log: AuditLogResponse["logs"][number]): AuditRow {
     after,
     reason,
     authMethod: log.userId ? "user_token" : "system",
+    userAgent: log.userAgent ?? "",
+    entityType: log.entityType,
+    entityId: log.entityId ?? "",
+    changesRaw: log.changes ? formatChange(log.changes) : "",
+    metadataRaw: log.metadata ? formatChange(log.metadata) : "",
   };
+}
+
+// §11.345 — 행 클릭 상세의 단일 필드 (label/value 쌍).
+function DetailField({
+  label,
+  value,
+  mono,
+  empty,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  empty?: boolean;
+}) {
+  return (
+    <div className="flex flex-col">
+      <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        {label}
+      </dt>
+      <dd
+        className={`mt-0.5 break-all ${mono ? "font-mono text-xs" : "text-sm"} ${
+          empty ? "italic text-slate-300" : "text-slate-700"
+        }`}
+      >
+        {value}
+      </dd>
+    </div>
+  );
 }
 
 export default function AuditTrailPage() {
@@ -210,6 +257,8 @@ export default function AuditTrailPage() {
   const [isActionsSheetOpen, setIsActionsSheetOpen] = useState(false);
   // §11.311b — 모바일 검색 아이콘 → 입력 expand
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  // §11.345 — 행 클릭 시 전체 상세(전후 값·메타·IP·UA·full ID) inline expand (same-canvas)
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const userRole = session?.user?.role as string | undefined;
   const canAccessAudit = userRole === "ADMIN" || (userRole as string)?.toLowerCase() === "manager";
@@ -223,7 +272,7 @@ export default function AuditTrailPage() {
     if (status === "authenticated" && !canAccessAudit) {
       toast({
         title: "접근 권한이 없습니다",
-        description: "감사 증적은 관리자만 열람할 수 있습니다.",
+        description: "감사 추적은 관리자만 열람할 수 있습니다.",
         variant: "destructive",
       });
       router.replace("/dashboard");
@@ -282,7 +331,7 @@ export default function AuditTrailPage() {
             <ShieldAlert className="h-10 w-10 text-yellow-500 mx-auto mb-3" />
             <p className="text-sm font-semibold text-slate-700">권한 확인 중</p>
             <p className="text-xs text-slate-400 mt-1 break-keep">
-              감사 증적은 관리자(Admin) 계정만 열람할 수 있습니다.
+              감사 추적은 관리자(Admin) 계정만 열람할 수 있습니다.
             </p>
           </CardContent>
         </Card>
@@ -375,11 +424,11 @@ export default function AuditTrailPage() {
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8 pt-6 max-w-7xl mx-auto w-full print:p-0 print:max-w-none print:space-y-3">
       {/* §11.89 — 인쇄용 헤더 (화면에는 hidden, PDF/print 시만 표시).
-          회사명 + 인쇄 시각 + 필터 컨디션 요약 — 감사 증적 출력본 보존 용도. */}
+          회사명 + 인쇄 시각 + 필터 컨디션 요약 — 감사 추적 출력본 보존 용도. */}
       <div className="hidden print:block border-b border-slate-300 pb-3 mb-3">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-lg font-bold text-slate-900">LabAxis 감사 증적</p>
+            <p className="text-lg font-bold text-slate-900">LabAxis 감사 추적 (Audit Trail)</p>
             <p className="text-[11px] text-slate-500 mt-0.5">
               {periodMeta?.label || "전체 기간"}
               {eventTypeFilter !== "all" && ` · ${EVENT_TYPE_OPTIONS.find((o) => o.value === eventTypeFilter)?.label || eventTypeFilter}`}
@@ -397,7 +446,7 @@ export default function AuditTrailPage() {
           §11.89: 화면 헤더는 print:hidden — 인쇄 본은 위 인쇄용 헤더 사용.
           §11.311b (호영님 P1 2026-05-26):
             - eyebrow "보안 및 컴플라이언스" 모바일 hidden md:flex (뒤로가기 충분)
-            - 제목 + 건수 통합: "감사 증적 · N건"
+            - 제목 + 건수 통합: "감사 추적 · N건"
             - description 모바일 단축 (간단한 한 줄)
             - 액션 4 button 모바일 → kebab + Sheet (4 button overflow 0). */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-3 mb-2 print:hidden">
@@ -408,7 +457,7 @@ export default function AuditTrailPage() {
           </div>
           {/* §11.311b — 제목 + 건수 통합 */}
           <h2 className="text-lg md:text-3xl font-bold tracking-tight text-slate-900 flex items-baseline gap-2 flex-wrap">
-            <span>감사 증적</span>
+            <span>감사 추적</span>
             {data && (
               <span className="text-sm md:text-base text-slate-400 font-medium">
                 · {data.total.toLocaleString("ko-KR")}건
@@ -468,7 +517,7 @@ export default function AuditTrailPage() {
           variant="outline"
           size="icon"
           data-testid="audit-actions-kebab"
-          aria-label="감사 증적 액션 메뉴"
+          aria-label="감사 추적 액션 메뉴"
           onClick={() => setIsActionsSheetOpen(true)}
           className="md:hidden h-10 w-10 self-start"
         >
@@ -480,7 +529,7 @@ export default function AuditTrailPage() {
       <Sheet open={isActionsSheetOpen} onOpenChange={(next) => { if (!next) setIsActionsSheetOpen(false); }}>
         <SheetContent side="bottom" className="max-h-[60vh]" data-testid="audit-actions-sheet">
           <SheetHeader className="text-left">
-            <SheetTitle className="text-base">감사 증적 액션</SheetTitle>
+            <SheetTitle className="text-base">감사 추적 액션</SheetTitle>
           </SheetHeader>
           <div className="mt-4 space-y-2">
             <Button
@@ -645,14 +694,29 @@ export default function AuditTrailPage() {
                   const auth = AUTH_LABEL[log.authMethod];
                   const hasChange = log.before && log.after;
                   const onlyAfter = !log.before && log.after;
+                  // §11.345 — 행 클릭 상세 토글 (same-canvas inline expand)
+                  const isExpanded = expandedId === log.id;
                   return (
-                    <TableRow key={log.id} className="hover:bg-slate-50/50">
+                    <Fragment key={log.id}>
+                    <TableRow
+                      className="hover:bg-slate-50/50 cursor-pointer print:cursor-auto"
+                      onClick={() => setExpandedId(isExpanded ? null : log.id)}
+                      aria-expanded={isExpanded}
+                      data-testid="audit-row"
+                    >
                       <TableCell>
-                        <div className="font-mono text-sm font-medium text-slate-900">
-                          {log.time}
-                        </div>
-                        <div className="text-xs text-slate-400 mt-0.5 truncate max-w-[160px]">
-                          {log.id}
+                        <div className="flex items-start gap-1.5">
+                          <ChevronRight
+                            className={`h-3.5 w-3.5 mt-0.5 text-slate-400 flex-shrink-0 transition-transform print:hidden ${isExpanded ? "rotate-90" : ""}`}
+                          />
+                          <div className="min-w-0">
+                            <div className="font-mono text-sm font-medium text-slate-900">
+                              {log.time}
+                            </div>
+                            <div className="text-xs text-slate-400 mt-0.5 truncate max-w-[160px]">
+                              {log.id}
+                            </div>
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -663,7 +727,8 @@ export default function AuditTrailPage() {
                           )}
                         </div>
                         <div className="text-xs text-slate-400 mt-0.5 font-mono">
-                          IP: {log.ip || "-"}
+                          {/* §11.345 — 빈 값은 "-" 대신 "기록 없음" 으로 수집 누락 명확화 */}
+                          IP: {log.ip || <span className="italic text-slate-300">기록 없음</span>}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -684,7 +749,7 @@ export default function AuditTrailPage() {
                         ) : onlyAfter ? (
                           <span className="text-sm text-slate-500 italic break-keep">{log.after}</span>
                         ) : (
-                          <span className="text-slate-400 text-sm">-</span>
+                          <span className="text-slate-300 text-sm italic">기록 없음</span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -697,6 +762,76 @@ export default function AuditTrailPage() {
                         </Badge>
                       </TableCell>
                     </TableRow>
+                    {/* §11.345 — 행 클릭 상세: 전후 값·메타·IP·UA·full ID (same-canvas).
+                        새 페이지 0건. GMP 검토 시 단일 레코드 전체 컨텍스트 확인용. */}
+                    {isExpanded && (
+                      <TableRow
+                        className="bg-slate-50/70 hover:bg-slate-50/70"
+                        data-testid="audit-row-detail"
+                      >
+                        <TableCell colSpan={5} className="p-0">
+                          <div className="px-4 py-4 border-l-2 border-slate-300">
+                            <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                              <DetailField label="레코드 ID" value={log.id} mono />
+                              <DetailField label="일시 (KST)" value={log.time} mono />
+                              <DetailField label="작업자" value={log.user} />
+                              <DetailField label="이메일" value={log.email || "기록 없음"} mono empty={!log.email} />
+                              <DetailField label="IP 주소" value={log.ip || "기록 없음"} mono empty={!log.ip} />
+                              <DetailField label="User Agent" value={log.userAgent || "기록 없음"} mono empty={!log.userAgent} />
+                              <DetailField label="대상 유형" value={log.entityType} mono />
+                              <DetailField label="대상 ID" value={log.entityId || "기록 없음"} mono empty={!log.entityId} />
+                              <DetailField label="사유" value={log.reason} />
+                              <DetailField label="인증 방식" value={auth.label} />
+                            </dl>
+                            <div className="mt-3 pt-3 border-t border-slate-200">
+                              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                                변경 전 → 후
+                              </p>
+                              {hasChange ? (
+                                <div className="flex items-center gap-2 text-sm flex-wrap">
+                                  <span className="text-slate-500 break-keep">{log.before}</span>
+                                  <span className="text-slate-400">→</span>
+                                  <span className="text-slate-900 font-bold break-keep">{log.after}</span>
+                                </div>
+                              ) : onlyAfter ? (
+                                <span className="text-sm text-slate-500 italic break-keep">{log.after}</span>
+                              ) : (
+                                <span className="text-sm text-slate-300 italic">기록 없음</span>
+                              )}
+                            </div>
+                            {(log.changesRaw || log.metadataRaw) && (
+                              <div className="mt-3 pt-3 border-t border-slate-200 space-y-2">
+                                {log.changesRaw && (
+                                  <div>
+                                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                                      changes (raw)
+                                    </p>
+                                    <pre className="text-[11px] font-mono text-slate-600 bg-white border border-slate-200 rounded p-2 overflow-x-auto whitespace-pre-wrap break-all">
+                                      {log.changesRaw}
+                                    </pre>
+                                  </div>
+                                )}
+                                {log.metadataRaw && (
+                                  <div>
+                                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                                      metadata (raw)
+                                    </p>
+                                    <pre className="text-[11px] font-mono text-slate-600 bg-white border border-slate-200 rounded p-2 overflow-x-auto whitespace-pre-wrap break-all">
+                                      {log.metadataRaw}
+                                    </pre>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            <div className="mt-3 flex items-center gap-1.5 text-[11px] text-slate-400">
+                              <Lock className="h-3 w-3" />
+                              감사 추적 레코드는 추가 전용(append-only)으로 보존되며 수정·삭제되지 않습니다.
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    </Fragment>
                   );
                 })}
               </TableBody>

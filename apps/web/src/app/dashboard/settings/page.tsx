@@ -941,7 +941,7 @@ function SettingsPageContent() {
                 <SectionCard
                   title="최근 보안 및 활동 로그"
                   icon={Activity}
-                  description="식별 정보·워크스페이스 설정·접근 권한 변경 이력. 전체 감사 증적은 별도 페이지에서 확인."
+                  description="식별 정보·워크스페이스 설정·접근 권한 변경 이력. 전체 감사 추적은 별도 페이지에서 확인."
                   topRightLabel="AUDIT TRAIL"
                 >
                   <div className="space-y-2">
@@ -1011,7 +1011,7 @@ function SettingsPageContent() {
                         className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 gap-1.5"
                         onClick={() => router.push("/dashboard/audit")}
                       >
-                        전체 감사 증적 보기
+                        전체 감사 추적 보기
                         <ArrowRight className="h-3 w-3" />
                       </Button>
                     </div>
