@@ -80,20 +80,40 @@ export function buildSearchQuery(options: SearchQueryOptions): SearchFilters {
   } = options;
 
   const normalizedQuery = normalizeQuery(query);
-  const allQueries = [normalizedQuery, ...expandedQueries.map(normalizeQuery)];
+
+  // §11.337-v2 Part A — 쿼리 길이 게이트(옵션 A: ranked search 의 base set 정밀화).
+  //   짧은 쿼리(≤2자)는 단어 중간 contains 가 noise("P"→Capricorn/PCR 단어중간 'p').
+  //   → 품명/Cat.No 의 시작(startsWith)만 base set 에 포함. brand 중간매칭 + synonyms 변형 컷.
+  //   긴 쿼리(≥3자)는 의도 명확 → 현행 contains + synonyms 확장 유지("PCR"→PCR Tube 정상).
+  //   점수(scoreProduct: CATALOG_PREFIX/NAME_PREFIX 우선)는 그대로 정렬에 사용.
+  const isShortQuery = normalizedQuery.length <= 2;
+  const allQueries = isShortQuery
+    ? [normalizedQuery] // 짧은 쿼리: synonyms 확장 억제(P 변형 noise 방지)
+    : [normalizedQuery, ...expandedQueries.map(normalizeQuery)];
 
   // Build WHERE conditions
   const searchConditions: Prisma.ProductWhereInput[] = [];
 
   // For each query variant, add ILIKE conditions
   for (const q of allQueries) {
-    searchConditions.push({
-      OR: [
-        { name: { contains: q, mode: "insensitive" } },
-        { catalogNumber: { contains: q, mode: "insensitive" } },
-        { brand: { contains: q, mode: "insensitive" } },
-      ],
-    });
+    if (isShortQuery) {
+      // ≤2자: 품명/Cat.No 시작 일치만(prefix). brand 제외(중간매칭 noise 원천).
+      searchConditions.push({
+        OR: [
+          { name: { startsWith: q, mode: "insensitive" } },
+          { catalogNumber: { startsWith: q, mode: "insensitive" } },
+        ],
+      });
+    } else {
+      // ≥3자: 전 필드 부분일치(현행 보존 — §11.335 Cat.No 검색 + 단어 내 매칭).
+      searchConditions.push({
+        OR: [
+          { name: { contains: q, mode: "insensitive" } },
+          { catalogNumber: { contains: q, mode: "insensitive" } },
+          { brand: { contains: q, mode: "insensitive" } },
+        ],
+      });
+    }
   }
 
   const where: Prisma.ProductWhereInput = {
