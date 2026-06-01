@@ -305,7 +305,15 @@ export default function SearchPage() {
     router.push(`/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`);
   };
 
-  const totalAmount = quoteItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
+  // §11.338 — 가격 표시 정합: 견적 회신으로 확정된 가격(unitPrice>0)만 합산.
+  //   미견적(unitPrice=0, import/시드 = price null)은 "견적 후 확정"이라 금액에서 제외 →
+  //   하단 바가 "확정분 합계 + N건 가격 미정"으로 표기(환각/모순 방지, §11.335 정책).
+  const totalAmount = quoteItems.reduce(
+    (sum, item) => sum + ((item.unitPrice ?? 0) > 0 ? (item.lineTotal || 0) : 0),
+    0,
+  );
+  const priceUnknownCount = quoteItems.filter((item: any) => !((item.unitPrice ?? 0) > 0)).length;
+  const hasConfirmedPrice = quoteItems.some((item: any) => (item.unitPrice ?? 0) > 0);
 
   // ── Step 2 상태 정책: query 변경 시 activeResultId 초기화 ──
   useEffect(() => {
@@ -1559,7 +1567,13 @@ export default function SearchPage() {
                 </span>
               )}
               <div className="ml-auto flex items-center gap-3 shrink-0">
-                <span className="text-xs text-slate-300 tabular-nums font-medium shrink-0 whitespace-nowrap">₩{totalAmount.toLocaleString("ko-KR")}</span>
+                {/* §11.338 — 확정가 있으면 합계, 미견적 건수는 별도 표기. 전부 미견적이면 "견적 후 확정". */}
+                <span className="text-xs text-slate-300 tabular-nums font-medium shrink-0 whitespace-nowrap" data-testid="quote-bar-total">
+                  {hasConfirmedPrice ? `₩${totalAmount.toLocaleString("ko-KR")}` : "견적 후 확정"}
+                  {priceUnknownCount > 0 && (
+                    <span className="ml-1 text-[10px] text-slate-400">· {priceUnknownCount}건 가격 미정</span>
+                  )}
+                </span>
                 {/* §11.312-b — 전체 해제 🗑 = 견적 금액과 primary CTA 사이, outline + AlertDialog 확인 다이얼로그
                     (호영님 spec 5번: 옛 "전체 해제 별도 줄 우측 끝" 제거 + bar 본체 통합). */}
                 <AlertDialog>

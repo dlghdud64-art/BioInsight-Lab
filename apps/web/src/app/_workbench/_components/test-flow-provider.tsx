@@ -101,11 +101,20 @@ function TestFlowProviderContent({ children }: { children: ReactNode }) {
   const isRestoringFromStorageRef = useRef(true);
   const [shareLink, setShareLink] = useState<string | null>(null);
 
-  const STORAGE_KEY = "quote-cart-storage";
+  // §11.338 — cart 스키마 버전. §11.336-data import 전(시드 PBS 1X ₩18,000 등) 잔존
+  //   cart 를 1회 무효화. 가격 정책(견적 후 확정) 변경 정합. 향후 구조 변경 시 ++.
+  const STORAGE_KEY = "quote-cart-storage-v2";
+  const LEGACY_STORAGE_KEYS = ["quote-cart-storage"];
 
   // 클라이언트 마운트 후 localStorage에서 장바구니 복원 (Hydration 에러 방지)
   useEffect(() => {
     try {
+      if (typeof window !== "undefined") {
+        // §11.338 — 구버전 cart 키 제거(시드 PBS 1X ₩18,000 등 잔존 정리).
+        for (const k of LEGACY_STORAGE_KEYS) {
+          try { localStorage.removeItem(k); } catch {}
+        }
+      }
       const stored = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
       if (stored) {
         const parsed = JSON.parse(stored);
