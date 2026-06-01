@@ -161,13 +161,6 @@ export function ProductDetailSummary({
               <span className="text-slate-600 ml-auto truncate max-w-[140px]">{data.storageCondition}</span>
             </div>
           )}
-          {data.grade && (
-            <div className="flex items-start gap-2 text-xs">
-              <Package className="h-3.5 w-3.5 text-slate-500 shrink-0 mt-0.5" />
-              <span className="text-slate-500">Grade</span>
-              <span className="text-slate-600 ml-auto truncate max-w-[140px]">{data.grade}</span>
-            </div>
-          )}
           {data.category && (
             <div className="flex items-start gap-2 text-xs">
               <ClipboardList className="h-3.5 w-3.5 text-slate-500 shrink-0 mt-0.5" />
@@ -177,7 +170,7 @@ export function ProductDetailSummary({
               </span>
             </div>
           )}
-          {!data.specification && !data.storageCondition && !data.grade && !data.category && (
+          {!data.specification && !data.storageCondition && !data.category && (
             <p className="text-xs text-slate-500">등록된 스펙 없음</p>
           )}
         </div>

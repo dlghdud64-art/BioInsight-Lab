@@ -153,9 +153,9 @@ function buildStaticMeta(product: any, vendor: any): string {
   }
   if (product.specification) {
     parts.push(product.specification.substring(0, 30));
-  } else if (product.grade) {
-    parts.push(product.grade);
   }
+  // §11.344 — 자사 Grade(A~E)는 제품 본연 속성 아님(자사 시약관리 기준) → 소싱 카드 비노출.
+  //   데이터(product.grade)는 보존, 표시만 제거.
   return parts.join(" · ");
 }
 
