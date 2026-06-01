@@ -152,12 +152,22 @@ interface MatchReason {
 
 function buildMatchReason(product: any, query?: string): MatchReason | null {
   const q = (query ?? "").trim().toLowerCase();
-  if (!q) return null;
+  // §11.335b — 1글자(미만)는 검색 자체가 안 되므로 배지도 없음.
+  if (q.length < 2) return null;
   const name = String(product.name ?? "").toLowerCase();
   const cat = String(product.catalogNumber ?? "").toLowerCase();
   const brand = String(product.brand ?? "").toLowerCase();
-  if (name.includes(q)) return { label: "품명 일치", color: "blue" };
+
+  // §11.335b 강도 차등: 품명 시작 > 품명 단어경계/포함 > Cat.No > 제조사.
+  //   단어 중간 'p'(Microplate)만 걸리는 약한 매칭은 "품명 시작 일치"로 과표시하지 않음.
+  const nameWords = name.split(/[\s\-_/]+/).filter(Boolean);
+  const nameStarts = name.startsWith(q);
+  const nameWordBoundary = nameWords.slice(1).some((w) => w.startsWith(q));
+
+  if (nameStarts) return { label: "품명 시작 일치", color: "blue" };
+  if (nameWordBoundary) return { label: "품명 일치", color: "blue" };
   if (cat.includes(q)) return { label: "Cat.No 일치", color: "neutral" };
+  if (name.includes(q)) return { label: "품명 포함", color: "neutral" };
   if (brand.includes(q)) return { label: "제조사 일치", color: "neutral" };
   return null;
 }

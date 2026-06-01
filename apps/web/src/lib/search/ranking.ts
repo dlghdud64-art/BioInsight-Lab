@@ -6,12 +6,13 @@ import { normalizeQuery, tokenizeQuery } from "./synonyms";
  * Higher scores = better match
  */
 export const RANKING_WEIGHTS = {
-  CATALOG_EXACT: 100,     // Exact catalog number match
-  CATALOG_PREFIX: 60,     // Catalog number starts with query
-  NAME_PREFIX: 40,        // Product name starts with query
-  NAME_CONTAINS: 20,      // Product name contains query
-  TRIGRAM_MAX: 20,        // Maximum score from trigram similarity (0-20)
-  VENDOR_MATCH: 10,       // Vendor name matches
+  CATALOG_EXACT: 100,        // Exact catalog number match
+  CATALOG_PREFIX: 60,        // Catalog number starts with query
+  NAME_PREFIX: 40,           // Product name starts with query
+  NAME_WORD_BOUNDARY: 30,    // §11.335b — name 의 단어(공백/구분자 뒤)가 query 로 시작
+  NAME_CONTAINS: 20,         // Product name contains query (단어 중간 포함)
+  TRIGRAM_MAX: 20,           // Maximum score from trigram similarity (0-20)
+  VENDOR_MATCH: 10,          // Vendor name matches
 };
 
 /**
@@ -21,6 +22,7 @@ export interface ScoringFactors {
   catalogExact: boolean;
   catalogPrefix: boolean;
   namePrefix: boolean;
+  nameWordBoundary: boolean; // §11.335b — 단어경계(공백/구분자 뒤) 시작 일치
   nameContains: boolean;
   trigramSimilarity: number; // 0-1
   vendorMatch: boolean;
@@ -32,7 +34,9 @@ export function calculateRelevanceScore(factors: ScoringFactors): number {
   if (factors.catalogExact) score += RANKING_WEIGHTS.CATALOG_EXACT;
   else if (factors.catalogPrefix) score += RANKING_WEIGHTS.CATALOG_PREFIX;
 
+  // §11.335b — 시작 일치 > 단어경계 > 포함 순으로 강도 차등.
   if (factors.namePrefix) score += RANKING_WEIGHTS.NAME_PREFIX;
+  else if (factors.nameWordBoundary) score += RANKING_WEIGHTS.NAME_WORD_BOUNDARY;
   else if (factors.nameContains) score += RANKING_WEIGHTS.NAME_CONTAINS;
 
   // Trigram similarity adds 0-20 points
@@ -86,26 +90,43 @@ export function buildSearchQuery(options: SearchQueryOptions): SearchFilters {
   //   → 품명/Cat.No 의 시작(startsWith)만 base set 에 포함. brand 중간매칭 + synonyms 변형 컷.
   //   긴 쿼리(≥3자)는 의도 명확 → 현행 contains + synonyms 확장 유지("PCR"→PCR Tube 정상).
   //   점수(scoreProduct: CATALOG_PREFIX/NAME_PREFIX 우선)는 그대로 정렬에 사용.
-  const isShortQuery = normalizedQuery.length <= 2;
+  //
+  // §11.335b (호영님 P2, §11.337 승계) — 소싱 검색 매칭 정밀화("조이기").
+  //   결정: ① min 2글자(1글자는 결과 없음 → UI 빈 상태 "2글자 이상").
+  //         ② 2글자: 단어 중간 contains 컷 — 품명/Cat.No 시작(startsWith) + 품명 단어경계
+  //            (공백 뒤 시작)만. brand 제외. ("P" noise 원천 차단; min2 라 1글자는 아예 컷)
+  //         ③ ≥3자: 전 필드 contains 보존(§11.335 Cat.No 검색 + 단어 내 매칭).
+  //   랭킹 강도(scoreProduct): 시작 일치 > 단어경계 > 포함. 본 WHERE 는 base set 만.
+  const QUERY_MIN_LENGTH = 2;
+  const isShortQuery = normalizedQuery.length === 2;
   const allQueries = isShortQuery
-    ? [normalizedQuery] // 짧은 쿼리: synonyms 확장 억제(P 변형 noise 방지)
+    ? [normalizedQuery] // 짧은 쿼리: synonyms 확장 억제(noise 방지)
     : [normalizedQuery, ...expandedQueries.map(normalizeQuery)];
 
   // Build WHERE conditions
   const searchConditions: Prisma.ProductWhereInput[] = [];
 
+  // ① min 2글자 게이트 — 1글자(또는 빈 값)는 매칭 0건(never-match). UI 는 빈 상태로 안내.
+  if (normalizedQuery.length < QUERY_MIN_LENGTH) {
+    return {
+      where: { AND: [{ id: { equals: "__never_match__" } }] },
+      orderBy: [{ updatedAt: "desc" }],
+    };
+  }
+
   // For each query variant, add ILIKE conditions
   for (const q of allQueries) {
     if (isShortQuery) {
-      // ≤2자: 품명/Cat.No 시작 일치만(prefix). brand 제외(중간매칭 noise 원천).
+      // ② 2글자: 품명/Cat.No 시작 + 품명 단어경계(공백 뒤 시작)만. 단어 중간 contains 컷.
       searchConditions.push({
         OR: [
           { name: { startsWith: q, mode: "insensitive" } },
+          { name: { contains: ` ${q}`, mode: "insensitive" } }, // 단어경계(공백 뒤)
           { catalogNumber: { startsWith: q, mode: "insensitive" } },
         ],
       });
     } else {
-      // ≥3자: 전 필드 부분일치(현행 보존 — §11.335 Cat.No 검색 + 단어 내 매칭).
+      // ③ ≥3자: 전 필드 부분일치(현행 보존 — §11.335 Cat.No 검색 + 단어 내 매칭).
       searchConditions.push({
         OR: [
           { name: { contains: q, mode: "insensitive" } },
@@ -174,6 +195,7 @@ export function scoreProduct(
     catalogExact: normalizedCatalog === normalizedQuery,
     catalogPrefix: normalizedCatalog.startsWith(normalizedQuery),
     namePrefix: normalizedName.startsWith(normalizedQuery),
+    nameWordBoundary: hasWordBoundaryMatch(normalizedName, normalizedQuery),
     nameContains: normalizedName.includes(normalizedQuery),
     trigramSimilarity: calculateTrigramSimilarity(normalizedName, normalizedQuery),
     vendorMatch: false,
@@ -187,6 +209,18 @@ export function scoreProduct(
   }
 
   return calculateRelevanceScore(factors);
+}
+
+/**
+ * §11.335b — 단어경계 매칭: text 를 공백/하이픈/언더스코어/슬래시로 토큰화한 뒤
+ * 어떤 단어가 query 로 시작하는지(첫 단어 제외 — 그건 namePrefix 로 이미 처리).
+ * 예: "Microplate shaker" + "sh" → true("shaker"), "Microplate" 중간 'p' → false.
+ */
+export function hasWordBoundaryMatch(text: string, query: string): boolean {
+  if (!text || !query) return false;
+  const words = text.split(/[\s\-_/]+/).filter(Boolean);
+  // 첫 단어 startsWith 는 namePrefix(상위 티어)와 중복 → 2번째 단어부터 검사.
+  return words.slice(1).some((w) => w.startsWith(query));
 }
 
 /**

@@ -43,12 +43,15 @@ export async function GET(request: NextRequest) {
     );
     const includeFacets = searchParams.get("facets") === "true";
 
-    if (!query || query.trim().length === 0) {
+    // §11.335b — min 2글자 게이트. 1글자(또는 빈 값)는 검색하지 않고 빈 결과 +
+    //   minLength 마커 반환 → UI 가 "2글자 이상 입력하세요" 빈 상태로 안내.
+    if (!query || query.trim().length < 2) {
       return NextResponse.json({
         products: [],
         total: 0,
         page,
         limit,
+        minLength: 2,
       });
     }
 

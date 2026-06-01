@@ -1186,6 +1186,13 @@ export default function SearchPage() {
                     />
                   </div>
                 ))
+              ) : searchQuery.trim().length < 2 ? (
+                /* §11.335b — min 2글자 게이트. 1글자는 검색하지 않고 안내. */
+                <div className="flex flex-col items-center text-center py-16" data-testid="search-min-length">
+                  <Search className="h-7 w-7 text-slate-400 mb-2" strokeWidth={1.5} />
+                  <p className="text-sm text-slate-600 mb-1">2글자 이상 입력하세요</p>
+                  <p className="text-xs text-slate-500">시약명·CAS·제조사·카탈로그 번호로 검색</p>
+                </div>
               ) : (
                 <div className="flex flex-col items-center text-center py-16">
                   <Package className="h-7 w-7 text-slate-500 mb-2" strokeWidth={1.5} />
