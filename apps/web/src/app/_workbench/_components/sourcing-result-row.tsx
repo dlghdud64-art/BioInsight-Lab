@@ -81,33 +81,33 @@ const TRIAGE_ACTION_STYLES: Record<SourcingTriageActionState, string> = {
 };
 
 function buildOperatingSignals(product: any, vendor: any, unitPrice: number | null): OpSignal[] {
+  // §11.337 Part B — 배지는 "항목 간 차이를 보여줄 때만" 의미. 데이터(납기/가격/재고)가
+  //   없어 전 항목이 동일 배지("납기 확인 필요"/"견적 필요"/"요청 전환 권장")가 되는 경우는
+  //   정보값 0 + CTA("견적 담기") 중복 → 억제. 실제 신호가 있을 때만 push.
+  //   (§11.336-data import 가 price/leadTime 을 null 로 넣어 noise 발생한 케이스 정정.)
   const signals: OpSignal[] = [];
   const lt = vendor?.leadTime;
   const ltSource = vendor?.leadTimeSource; // "supplier" | "historical" | undefined
 
-  // ── 1순위: 납기 ──
-  if (!lt) {
-    signals.push({ label: "납기 확인 필요", color: "amber" });
-  } else {
+  // ── 1순위: 납기 — 실제 값 있을 때만 (null = 억제) ──
+  if (lt) {
     const str = String(lt).trim().toLowerCase();
     if (str === "즉시" || str === "즉시 출고" || str === "in stock" || str === "0") {
       signals.push({ label: "즉시 출고", color: "green" });
     } else {
       const num = parseInt(str);
       if (!isNaN(num)) {
-        // 출처에 따라 표현 구분
         if (ltSource === "historical") {
           signals.push({ label: `평균 리드타임 ${num}영업일`, color: "neutral" });
         } else {
           signals.push({ label: `예상 배송기간 ${num}영업일`, color: "neutral" });
         }
-      } else {
-        signals.push({ label: "납기 확인 필요", color: "amber" });
       }
+      // 파싱 불가한 비정형 lt = 억제(전 항목 동일 noise 방지)
     }
   }
 
-  // ── 2순위: 재고/가격 상태 ──
+  // ── 2순위: 재고/가격 상태 — 실제 신호 있을 때만 ──
   const hasStock = product.stockStatus === "in_stock" || product.inStock === true;
   const stockAvailable = product.stockStatus === "available" || product.stockAvailable === true;
   const lowStock = product.stockStatus === "low" || product.lowStock === true;
@@ -118,20 +118,15 @@ function buildOperatingSignals(product: any, vendor: any, unitPrice: number | nu
     signals.push({ label: "재고 가능", color: "neutral" });
   } else if (lowStock) {
     signals.push({ label: "재고 부족", color: "amber" });
-  } else if (!unitPrice || unitPrice <= 0) {
-    signals.push({ label: "견적 필요", color: "amber" });
-  } else if (unitPrice > 500000) {
+  } else if (unitPrice && unitPrice > 500000) {
     signals.push({ label: "고가 후보", color: "amber" });
-  } else if (unitPrice > 100000) {
+  } else if (unitPrice && unitPrice > 100000) {
     signals.push({ label: "예산 검토 필요", color: "amber" });
-  } else {
-    signals.push({ label: "재고 확인 필요", color: "amber" });
   }
+  // 가격/재고 데이터 0 = 억제("견적 필요" noise 제거, CTA 버튼이 행동 제시)
 
-  // ── 3순위: 행동 방향 ──
-  if (!unitPrice || unitPrice <= 0) {
-    signals.push({ label: "요청 전환 권장", color: "blue" });
-  } else {
+  // ── 3순위: 행동 방향 — 가격 있을 때 비교 권장/적합만 (요청 전환 권장 noise 제거) ──
+  if (unitPrice && unitPrice > 0) {
     const isEquipment = product.category === "EQUIPMENT";
     const ltNum = lt ? parseInt(String(lt)) : NaN;
     const highPrice = unitPrice > 100000;

@@ -553,8 +553,23 @@ export default function SearchPage() {
       const vendor = product.vendors?.[0];
       return Boolean(vendor?.vendor?.name || vendor?.name || (vendor?.priceInKRW ?? 0) > 0);
     };
+    // §11.337 Part A — 식별자(품명·Cat.No) 우선 매칭. 짧은 쿼리(≤2자)는 임의 위치
+    //   부분일치 시 "P"가 PCR의 P, Capricorn의 p 까지 걸려 noise → prefix(시작/단어경계)만.
+    //   긴 쿼리(≥3자)는 의도가 명확하므로 전 필드 부분일치 허용(기존 동작 보존).
     const matchesQuery = (product: any) => {
       if (!queryToken) return false;
+      const name = String(product.name ?? "").toLowerCase();
+      const catNo = String(product.catalogNumber ?? "").toLowerCase();
+
+      if (queryToken.length <= 2) {
+        // 품명/Cat.No 의 시작 또는 단어경계(공백 뒤) 시작 일치만.
+        const startsWith = (text: string) =>
+          text.startsWith(queryToken) ||
+          text.split(/[\s\-_/]+/).some((w) => w.startsWith(queryToken));
+        return startsWith(name) || startsWith(catNo);
+      }
+
+      // 긴 쿼리 — 전 필드 부분일치(제조사/규격/분류 포함).
       const haystack = [
         product.name,
         product.brand,
