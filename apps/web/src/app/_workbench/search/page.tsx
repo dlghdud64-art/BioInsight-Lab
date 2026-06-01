@@ -1554,17 +1554,16 @@ export default function SearchPage() {
                   })()}
                 </span>
               </button>
-              {/* §11.312 — ⚠ 검토 배지 dead button 해소: 탭 → review mode sheet */}
+              {/* §11.339 v2 4 — 검토 필요는 견적함 탭 인라인(cart-review-inline)으로 일원화.
+                  하단 노란 시트(review mode) 진입 제거. 배지는 건수 표시만(비클릭, 인라인이 실동작). */}
               {requestReadiness.summary.review > 0 && (
-                <button
-                  type="button"
-                  data-testid="sourcing-bar-review-open"
-                  aria-label="검토 필요 항목 보기"
-                  onClick={() => setCandidatesSheetMode("review")}
-                  className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700 shrink-0 hover:bg-yellow-200 transition-colors cursor-pointer"
+                <span
+                  data-testid="sourcing-bar-review-count"
+                  title="검토 필요 항목은 견적함 탭에서 확인하세요"
+                  className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700 shrink-0"
                 >
                   <AlertTriangle className="h-3 w-3 shrink-0" />검토 {requestReadiness.summary.review}
-                </button>
+                </span>
               )}
               {requestReadiness.summary.blocked > 0 && (
                 <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-700 shrink-0">
