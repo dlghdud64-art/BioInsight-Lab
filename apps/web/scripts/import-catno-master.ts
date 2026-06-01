@@ -152,8 +152,9 @@ async function main() {
           catalogNumber: p.catalogNumber,
           manufacturer: p.manufacturer ?? null,
           brand: p.manufacturer ?? null,
-          // §11.341 — 자사 A~E 는 internalGrade(공인등급 grade 아님). 혼동 방지.
-          internalGrade: p.grade ?? null,
+          // §11.341 — A~E 자사등급. internalGrade 분리는 migration 선적용 후(§11.337-hotfix P0).
+          //   현재는 기존 grade 필드 사용(컬럼 존재 보장). 분리 재개 시 internalGrade 로 전환.
+          grade: p.grade ?? null,
         },
       });
       productIdByCat.set(catKey, created.id);
