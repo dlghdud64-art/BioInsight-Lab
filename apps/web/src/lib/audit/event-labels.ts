@@ -18,7 +18,8 @@ export type AuditEventTone =
   | "storage"
   | "alert"
   | "register"
-  | "permission";
+  | "permission"
+  | "output"; // §11.337 — 조회·출력(PDF/CSV 등). 데이터 변경 아님 → 중립 톤.
 
 export interface AuditEventLabel {
   label: string;
@@ -84,6 +85,29 @@ export const AUDIT_TONE_CLASSES: Record<AuditEventTone, string> = {
   alert: "bg-blue-50 text-blue-700 border-blue-200",
   register: "bg-blue-50 text-blue-700 border-blue-200",
   permission: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  output: "bg-slate-50 text-slate-600 border-slate-200", // §11.337 조회·출력 중립
+};
+
+/**
+ * §11.337 (호영님 P2) — action 키 기반 표시 매핑 레이어.
+ *   목적: 비-CRUD 이벤트(PDF/CSV 출력·조회)가 저장 시 generic eventType
+ *   (예: 옛 quote_pdf_generate = SETTINGS_CHANGED)으로 기록돼도, 화면에서는
+ *   action 키로 정확히 "조회·출력"으로 분류 + 사람 읽는 사유 라벨로 치환.
+ *
+ *   ⚠️ 데이터 무결성(Part 11): 저장된 AuditLog raw record 는 불변.
+ *   본 매핑은 표시(파생)에서만 사용 — backfill / 재작성 없음.
+ */
+export interface AuditActionMeta {
+  /** 사람 읽는 사유 문구 (raw action key 노출 대체) */
+  reason: string;
+  /** 배지 카테고리 라벨 (eventType 기반 라벨을 override) */
+  categoryLabel: string;
+  tone: AuditEventTone;
+}
+
+export const AUDIT_ACTION_MAP: Record<string, AuditActionMeta> = {
+  quote_pdf_generate: { reason: "견적서 PDF 생성", categoryLabel: "조회·출력", tone: "output" },
+  po_pdf_generate: { reason: "발주서 PDF 생성", categoryLabel: "조회·출력", tone: "output" },
 };
 
 /**
@@ -95,4 +119,5 @@ export const AUDIT_TONE_DOT_CLASSES: Record<AuditEventTone, string> = {
   alert: "bg-blue-500",
   register: "bg-blue-500",
   permission: "bg-emerald-500",
+  output: "bg-slate-400", // §11.337 조회·출력 중립
 };

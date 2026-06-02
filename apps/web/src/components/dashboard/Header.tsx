@@ -163,6 +163,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
       faq: "자주 묻는 질문",
       support: "1:1 문의",
       orders: "견적 및 구매 내역",
+      audit: "감사 추적", // §11.337 — 브레드크럼 영문 "Audit" 한글 통일
       admin: "관리자",
       my: "내 정보",
       test: "테스트",

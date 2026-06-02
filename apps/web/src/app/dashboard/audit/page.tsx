@@ -49,6 +49,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   AUDIT_EVENT_LABELS,
   AUDIT_TONE_CLASSES,
+  AUDIT_ACTION_MAP,
   buildEventTypeOptions,
   type AuditEventTone,
 } from "@/lib/audit/event-labels";
@@ -127,7 +128,7 @@ const EVENT_TYPE_OPTIONS = buildEventTypeOptions();
 const ACTION_TONE = AUDIT_TONE_CLASSES;
 
 const AUTH_LABEL: Record<AuditRow["authMethod"], { label: string; cls: string }> = {
-  user_token: { label: "User Token", cls: "bg-slate-100 text-slate-600 border-slate-200" },
+  user_token: { label: "사용자 토큰", cls: "bg-slate-100 text-slate-600 border-slate-200" },
   system: { label: "시스템 액션", cls: "bg-slate-50 text-slate-500 border-slate-200" },
 };
 
@@ -154,6 +155,10 @@ function adaptLog(log: AuditLogResponse["logs"][number]): AuditRow {
     label: log.eventType,
     tone: "register" as ActionTone,
   };
+  // §11.337 — action 키 기반 표시 override (raw record 불변 — 표시 파생만).
+  //   비-CRUD 출력/조회 이벤트(quote_pdf_generate 등)가 옛 레코드에서 generic
+  //   eventType(SETTINGS_CHANGED)으로 저장됐어도 화면에선 "조회·출력"으로 정확 분류.
+  const actionMeta = AUDIT_ACTION_MAP[log.action];
 
   // changes JSON 은 { before, after } 또는 { previous, new } 또는 평탄 object.
   // 일반 케이스만 best-effort decode — 미상 shape 면 빈 문자열로 graceful.
@@ -167,8 +172,9 @@ function adaptLog(log: AuditLogResponse["logs"][number]): AuditRow {
     if (!after && "new" in c) after = formatChange(c.new);
   }
 
-  // metadata 안에 reason / description 있으면 사유로 사용, 없으면 action + entityType
-  let reason = log.action;
+  // 사유: §11.337 — raw action key 노출 대신 사람 읽는 라벨 우선(action 매핑) →
+  //   metadata.reason(사용자 입력)이 있으면 그게 최우선.
+  let reason = actionMeta?.reason ?? log.action;
   if (log.metadata && typeof log.metadata === "object") {
     const m = log.metadata as Record<string, unknown>;
     if (typeof m.reason === "string") reason = m.reason;
@@ -179,9 +185,15 @@ function adaptLog(log: AuditLogResponse["logs"][number]): AuditRow {
     reason = `[실패] ${log.errorMessage}`;
   }
 
-  const target = log.entityId
+  // 대상: §11.337 — 사람 읽는 식별자 우선(cuid 노출 최소화).
+  let target = log.entityId
     ? `${log.entityType} (${log.entityId.slice(0, 8)})`
     : log.entityType;
+  if (log.metadata && typeof log.metadata === "object") {
+    const m = log.metadata as Record<string, unknown>;
+    if (typeof m.quoteNumber === "string" && m.quoteNumber) target = `견적 ${m.quoteNumber}`;
+    else if (typeof m.poNumber === "string" && m.poNumber) target = `발주 ${m.poNumber}`;
+  }
 
   // §11.345 — 타임존 명시(Asia/Seoul) + "KST" 라벨. 서버/런타임 TZ 추정 제거,
   // GMP 감사 추적은 timestamp 의 타임존이 명확해야 함 (Part 11 정합).
@@ -202,8 +214,8 @@ function adaptLog(log: AuditLogResponse["logs"][number]): AuditRow {
     user: log.user?.name ?? log.user?.email ?? "시스템",
     email: log.user?.email ?? "",
     ip: log.ipAddress ?? "",
-    action: meta.label,
-    actionTone: meta.tone,
+    action: actionMeta ? actionMeta.categoryLabel : meta.label,
+    actionTone: actionMeta ? actionMeta.tone : meta.tone,
     target,
     before,
     after,
