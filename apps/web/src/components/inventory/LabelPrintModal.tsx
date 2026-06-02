@@ -19,6 +19,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -34,18 +35,31 @@ import { cn } from "@/lib/utils";
 interface LabelSpec {
   id: string;
   name: string;
-  size: string;
+  /** 라벨 1칸 실치수 (mm) — 인쇄 width/height 의 canonical source. */
+  widthMm: number;
+  heightMm: number;
   perSheet: string;
+  /** 커스텀 규격(사용자 입력) 표식 — widthMm/heightMm 는 입력값으로 대체. */
+  custom?: boolean;
   recommended?: boolean;
 }
 
+// §11.355-B 규격 데이터화 — 폼텍/DYMO 실측 치수(2026-06 formtec/retailer 대조).
+//   하드코딩 width(`.includes("3104")`) 제거 → widthMm/heightMm 가 canonical.
+//   구 값 정정: 3101 60칸 38.1×19.2 / 3102 40칸 47×26.9 / 3104 27칸 62.7×30.1.
 const LABEL_SPECS: LabelSpec[] = [
-  { id: "formtec-3100", name: "폼텍 3100 (바코드용)", size: "38.1 × 21.2 mm", perSheet: "1시트 65칸", recommended: true },
-  { id: "formtec-3101", name: "폼텍 3101 (주소용)", size: "63.5 × 38.1 mm", perSheet: "1시트 21칸" },
-  { id: "formtec-3102", name: "폼텍 3102 (물류용)", size: "99.1 × 38.1 mm", perSheet: "1시트 14칸" },
-  { id: "formtec-3104", name: "폼텍 3104 (대형)", size: "99.1 × 67.7 mm", perSheet: "1시트 8칸" },
-  { id: "dymo-11354", name: "DYMO 11354 (다목적)", size: "57 × 32 mm", perSheet: "롤 타입" },
+  { id: "formtec-3100", name: "폼텍 3100 (바코드용)", widthMm: 38.1, heightMm: 21.2, perSheet: "1시트 65칸", recommended: true },
+  { id: "formtec-3101", name: "폼텍 3101 (소형)", widthMm: 38.1, heightMm: 19.2, perSheet: "1시트 60칸" },
+  { id: "formtec-3102", name: "폼텍 3102 (바코드용)", widthMm: 47, heightMm: 26.9, perSheet: "1시트 40칸" },
+  { id: "formtec-3104", name: "폼텍 3104 (바코드용)", widthMm: 62.7, heightMm: 30.1, perSheet: "1시트 27칸" },
+  { id: "dymo-11354", name: "DYMO 11354 (다목적)", widthMm: 57, heightMm: 32, perSheet: "롤 타입" },
+  { id: "custom", name: "커스텀 규격 (직접 입력)", widthMm: 50, heightMm: 30, perSheet: "직접 설정", custom: true },
 ];
+
+/** mm 표시 문자열 (size 컬럼 대체 — dims 에서 파생, 단일 출처). */
+function specSizeLabel(s: { widthMm: number; heightMm: number }): string {
+  return `${s.widthMm} × ${s.heightMm} mm`;
+}
 
 // §11.355-B — 인쇄 HTML 안전 이스케이프 (품명 등에 < > & " 포함 시 깨짐/주입 방지).
 function escapeHtml(s: string): string {
@@ -90,8 +104,15 @@ export function LabelPrintModal({ open, onOpenChange, selectedItems = [] }: Labe
   const [includeBarcode, setIncludeBarcode] = useState(true);
   const [includeQR, setIncludeQR] = useState(true);
   const [includeExpiry, setIncludeExpiry] = useState(true);
+  // §11.355-B 커스텀 규격 입력 (selectedSpec === "custom" 일 때만 사용).
+  const [customW, setCustomW] = useState("50");
+  const [customH, setCustomH] = useState("30");
 
   const activeSpec = LABEL_SPECS.find((s) => s.id === selectedSpec);
+  const isCustomSpec = activeSpec?.custom === true;
+  // §11.355-B — 인쇄/미리보기의 canonical 치수(mm). 커스텀이면 입력값, 아니면 프리셋 실측.
+  const labelWidthMm = isCustomSpec ? (parseFloat(customW) || 50) : (activeSpec?.widthMm ?? 38.1);
+  const labelHeightMm = isCustomSpec ? (parseFloat(customH) || 30) : (activeSpec?.heightMm ?? 21.2);
 
   // §11.355-B — 미리보기 라벨의 실 QR dataURL (inv.id 인코딩 = 스캔 payload 표준).
   //   미리보기=인쇄 일치(dead toggle 해소). selectedItems/QR 토글 변동 시 재생성.
@@ -152,7 +173,7 @@ export function LabelPrintModal({ open, onOpenChange, selectedItems = [] }: Labe
         .label {
           border: 1px solid #ccc; border-radius: 4px; padding: 6px 8px;
           margin-bottom: 4px; page-break-inside: avoid;
-          width: ${activeSpec?.id.includes("3104") ? "90mm" : activeSpec?.id.includes("3102") ? "90mm" : activeSpec?.id.includes("3101") ? "60mm" : "36mm"};
+          width: ${labelWidthMm}mm; min-height: ${labelHeightMm}mm;
         }
         .name { font-size: 9px; font-weight: bold; }
         .cat, .lot { font-size: 7px; color: #666; }
@@ -219,7 +240,7 @@ export function LabelPrintModal({ open, onOpenChange, selectedItems = [] }: Labe
                           <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold">추천</span>
                         )}
                       </div>
-                      <span className="text-xs text-slate-500">{spec.size} · {spec.perSheet}</span>
+                      <span className="text-xs text-slate-500">{spec.custom ? spec.perSheet : `${specSizeLabel(spec)} · ${spec.perSheet}`}</span>
                     </div>
                     {selectedSpec === spec.id && (
                       <CheckCircle2 className="h-4 w-4 text-blue-600 flex-shrink-0" />
@@ -227,6 +248,25 @@ export function LabelPrintModal({ open, onOpenChange, selectedItems = [] }: Labe
                   </label>
                 ))}
               </div>
+              {/* §11.355-B 커스텀 규격 입력 — 프리셋이 실물과 다를 때 직접 치수 지정 */}
+              {isCustomSpec && (
+                <div className="mt-2 flex items-center gap-2 px-4 py-3 rounded-xl border border-blue-200 bg-blue-50/40">
+                  <span className="text-xs font-medium text-slate-600">가로</span>
+                  <Input
+                    type="number" min="1" step="any" value={customW}
+                    onChange={(e) => setCustomW(e.target.value)}
+                    className="h-9 w-20"
+                  />
+                  <span className="text-xs text-slate-400">×</span>
+                  <span className="text-xs font-medium text-slate-600">세로</span>
+                  <Input
+                    type="number" min="1" step="any" value={customH}
+                    onChange={(e) => setCustomH(e.target.value)}
+                    className="h-9 w-20"
+                  />
+                  <span className="text-xs text-slate-500">mm</span>
+                </div>
+              )}
             </div>
 
             {/* 출력 옵션 */}
@@ -301,7 +341,7 @@ export function LabelPrintModal({ open, onOpenChange, selectedItems = [] }: Labe
                   className="bg-white rounded-lg border border-slate-200 p-3 shadow-sm"
                   style={{
                     width: "100%",
-                    minHeight: activeSpec?.id.includes("3104") ? "80px" : "56px",
+                    minHeight: `${Math.max(48, Math.round(labelHeightMm * 1.8))}px`,
                   }}
                 >
                   <p className="text-[10px] font-bold text-slate-900 truncate">{item.name}</p>
