@@ -24,7 +24,7 @@ import { OrderStatus } from "@prisma/client";
 import { runDeliveryInventorySync } from "@/lib/inventory/delivery-sync";
 import { z } from "zod";
 import { handleApiError } from "@/lib/api-error-handler";
-import { createAuditLog } from "@/lib/audit/audit-logger";
+import { createAuditLog, auditRequestMeta } from "@/lib/audit/audit-logger";
 
 const updateOrderSchema = z.object({
   status: z.nativeEnum(OrderStatus).optional(),
@@ -189,6 +189,7 @@ export async function PATCH(
         entityType: "ORDER",
         entityId: id,
         action: "order_update",
+        ...auditRequestMeta(request), // §11.345-B2 — IP/UA 캡처
         changes: {
           before: {
             status: before.status,

@@ -18,7 +18,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error-handler";
-import { createAuditLog } from "@/lib/audit/audit-logger";
+import { createAuditLog, auditRequestMeta } from "@/lib/audit/audit-logger";
 import { sendEmail } from "@/lib/email/sender";
 import { generatePoVendorEmail } from "@/lib/email/po-vendor-template";
 // #post-approval-purchase-order-flow Phase 3.x-attach — vendor email 의 PDF
@@ -27,7 +27,7 @@ import { generatePoVendorEmail } from "@/lib/email/po-vendor-template";
 import { generatePoPdf } from "@/lib/orders/po-pdf-generator";
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
@@ -163,6 +163,7 @@ export async function POST(
       entityType: "ORDER",
       entityId: order.id,
       action: "vendor_email_sent",
+      ...auditRequestMeta(request), // §11.345-B2 — IP/UA 캡처
       metadata: {
         kind: "po_vendor_email_sent",
         orderId: order.id,
