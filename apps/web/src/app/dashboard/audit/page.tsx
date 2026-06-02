@@ -13,7 +13,7 @@ import {
   ShieldAlert,
   Loader2,
   RefreshCw,
-  MoreHorizontal,
+  ChevronDown,
   X,
   ChevronRight,
   Lock,
@@ -150,6 +150,19 @@ function formatChange(value: unknown): string {
   }
 }
 
+// §11.337 — entityType(내부 토큰) → 사람 읽는 대상 라벨. cuid 노출 최소화.
+const ENTITY_TYPE_LABELS: Record<string, string> = {
+  QUOTE: "견적",
+  ORDER: "발주",
+  PURCHASE_REQUEST: "결재 요청",
+  organization: "조직",
+  User: "사용자",
+  WORKSPACE: "워크스페이스",
+  INVENTORY: "재고",
+  AI_ACTION: "AI 작업",
+  PRODUCT: "제품",
+};
+
 function adaptLog(log: AuditLogResponse["logs"][number]): AuditRow {
   const meta = EVENT_TYPE_MAP[log.eventType] ?? {
     label: log.eventType,
@@ -185,10 +198,11 @@ function adaptLog(log: AuditLogResponse["logs"][number]): AuditRow {
     reason = `[실패] ${log.errorMessage}`;
   }
 
-  // 대상: §11.337 — 사람 읽는 식별자 우선(cuid 노출 최소화).
-  let target = log.entityId
-    ? `${log.entityType} (${log.entityId.slice(0, 8)})`
-    : log.entityType;
+  // 대상: §11.337 — 사람 읽는 라벨(entityType 한글) 우선, cuid 는 compact 뷰에서 제거
+  //   (전체 entityId 는 행 클릭 상세 expand 에 "대상 ID"로 보존). metadata 에 견적/발주
+  //   번호가 있으면 그 번호로 정확히 식별(신규 레코드). 옛 레코드는 번호 부재 → 라벨만.
+  const entityLabel = ENTITY_TYPE_LABELS[log.entityType] ?? log.entityType;
+  let target = entityLabel;
   if (log.metadata && typeof log.metadata === "object") {
     const m = log.metadata as Record<string, unknown>;
     if (typeof m.quoteNumber === "string" && m.quoteNumber) target = `견적 ${m.quoteNumber}`;
@@ -482,83 +496,50 @@ export default function AuditTrailPage() {
           </p>
         </div>
 
-        {/* §11.311b — 데스크탑 액션 4 button 그대로 (md:flex) */}
-        <div className="hidden md:flex gap-2 flex-shrink-0">
+        {/* §11.337 — export 액션 one-primary 정리(호영님 P2).
+            AS-IS: 새로고침/간단인쇄/정형PDF/CSV 4 button 과밀(one-primary 위반).
+            TO-BE: [새로 고침 아이콘 분리] + [내보내기 단일 primary → Sheet(인쇄/PDF/CSV)].
+            데스크탑·모바일 공통(기존 md 분기 + 모바일 kebab 제거 → 단일 패턴). */}
+        <div className="flex gap-2 flex-shrink-0 items-center self-start md:self-auto">
+          {/* 새로 고침 — 아이콘 분리 (export 와 별개 동작) */}
           <Button
+            type="button"
             variant="outline"
-            className="touch-manipulation active:scale-95"
+            size="icon"
+            aria-label="새로 고침"
+            data-testid="audit-refresh"
             onClick={() => refetch()}
             disabled={isFetching}
+            className="h-10 w-10 touch-manipulation active:scale-95"
           >
             {isFetching ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <RefreshCw className="w-4 h-4 mr-2" />
+              <RefreshCw className="w-4 h-4" />
             )}
-            <span className="hidden sm:inline">새로 </span>고침
           </Button>
+          {/* 내보내기 — 단일 primary, Sheet 로 인쇄/PDF/CSV 묶음 */}
           <Button
-            variant="outline"
-            className="touch-manipulation active:scale-95"
-            onClick={handlePdfDownload}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">간단 </span>인쇄
-          </Button>
-          {/* §11.109 — 정형 PDF 양식 */}
-          <Button
-            variant="outline"
-            className="touch-manipulation active:scale-95 border-slate-700 text-slate-700 hover:bg-slate-50"
-            onClick={handleCompliancePdf}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">정형 </span>PDF
-          </Button>
-          <Button
+            type="button"
+            data-testid="audit-export-trigger"
+            aria-label="내보내기 메뉴 열기"
+            onClick={() => setIsActionsSheetOpen(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white touch-manipulation active:scale-95"
-            onClick={handleCsvExport}
           >
-            <FileText className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">CSV </span>내보내기
+            <Download className="w-4 h-4 mr-2" />
+            내보내기
+            <ChevronDown className="w-4 h-4 ml-1.5" />
           </Button>
         </div>
-
-        {/* §11.311b — 모바일 kebab button → Sheet */}
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          data-testid="audit-actions-kebab"
-          aria-label="감사 추적 액션 메뉴"
-          onClick={() => setIsActionsSheetOpen(true)}
-          className="md:hidden h-10 w-10 self-start"
-        >
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
       </div>
 
-      {/* §11.311b — 모바일 액션 Sheet (4 button) */}
+      {/* §11.337 — 내보내기 Sheet (인쇄/정형 PDF/CSV 묶음). 새로 고침은 분리 아이콘. */}
       <Sheet open={isActionsSheetOpen} onOpenChange={(next) => { if (!next) setIsActionsSheetOpen(false); }}>
         <SheetContent side="bottom" className="max-h-[60vh]" data-testid="audit-actions-sheet">
           <SheetHeader className="text-left">
-            <SheetTitle className="text-base">감사 추적 액션</SheetTitle>
+            <SheetTitle className="text-base">내보내기</SheetTitle>
           </SheetHeader>
           <div className="mt-4 space-y-2">
-            <Button
-              type="button"
-              variant="outline"
-              data-testid="audit-actions-sheet-refresh"
-              onClick={() => { refetch(); setIsActionsSheetOpen(false); }}
-              disabled={isFetching}
-              className="w-full h-11 justify-start"
-            >
-              {isFetching ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <RefreshCw className="w-4 h-4 mr-2" />
-              )}
-              새로 고침
-            </Button>
             <Button
               type="button"
               variant="outline"
