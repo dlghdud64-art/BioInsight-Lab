@@ -130,9 +130,10 @@ const NAV_GROUPS: { group: string; items: { id: SettingsSection; label: string; 
     group: "메뉴",
     items: [
       { id: "operator", label: "운영자 및 워크스페이스", sublabel: "식별 정보 및 운영 정보", icon: Fingerprint },
-      { id: "ontology", label: "온톨로지 엔진 (AI)", sublabel: "추론 및 자동화 규칙", icon: Brain },
       { id: "security", label: "보안 및 접근 제어", sublabel: "역할 권한 및 승인 라우팅", icon: ShieldCheck },
-      { id: "integrations", label: "시스템 연동", sublabel: "외부 시스템 및 공급사 연결", icon: Webhook },
+      // §11.332 — 온톨로지 엔진(AI 추론 매개변수)·시스템 연동(ERP) 메뉴 제거.
+      //   둘 다 미구현(useState only 저장 0 / 하드코딩 mock) → dead 노출 차단(CLAUDE.md dead-button 원칙).
+      //   activeSection "ontology"/"integrations" 블록은 코드 잔존하나 진입로 0. rollback=항목 복원.
     ],
   },
   {
@@ -776,30 +777,28 @@ function SettingsPageContent() {
                       </div>
                     </div>
                     <div className="h-px bg-slate-200" />
-                    {/* §11.87 + §11.97 — 기본 업무 환경.
-                        User.costCenter / defaultLocation schema 추가 후 (§11.97)
-                        real data 표시. null 시 honest empty state 유지. */}
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-3">기본 업무 환경</p>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
-                          <span className="text-xs text-slate-500">기본 Cost Center</span>
-                          {userData?.costCenter ? (
-                            <span className="text-sm font-mono text-slate-900">{userData.costCenter}</span>
-                          ) : (
-                            <span className="text-sm text-slate-400 break-keep">운영 정책 미설정</span>
+                    {/* §11.87 + §11.97 → §11.332 — 기본 업무 환경.
+                        값(costCenter/defaultLocation)이 있을 때만 렌더. 미설정 시 블록 자체 제거
+                        ("운영 정책 미설정" dead 신호 제거 — 소비처 0 표시만 항목 정리). 각 행도 값 있을 때만. */}
+                    {(userData?.costCenter || userData?.defaultLocation) && (
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-3">기본 업무 환경</p>
+                        <div className="space-y-2">
+                          {userData?.costCenter && (
+                            <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
+                              <span className="text-xs text-slate-500">기본 Cost Center</span>
+                              <span className="text-sm font-mono text-slate-900">{userData.costCenter}</span>
+                            </div>
                           )}
-                        </div>
-                        <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
-                          <span className="text-xs text-slate-500">기본 입고 위치</span>
-                          {userData?.defaultLocation ? (
-                            <span className="text-sm text-slate-900 break-keep">{userData.defaultLocation}</span>
-                          ) : (
-                            <span className="text-sm text-slate-400 break-keep">운영 정책 미설정</span>
+                          {userData?.defaultLocation && (
+                            <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
+                              <span className="text-xs text-slate-500">기본 입고 위치</span>
+                              <span className="text-sm text-slate-900 break-keep">{userData.defaultLocation}</span>
+                            </div>
                           )}
                         </div>
                       </div>
-                    </div>
+                    )}
                     {/* §11.67 lesson: 권한 검토 요청 wired (dead button 회피).
                         §11.197 — 시안 정합: CTA 우측 정렬 (운영자 default 시선 끝점). */}
                     <div className="pt-2 flex justify-end">
