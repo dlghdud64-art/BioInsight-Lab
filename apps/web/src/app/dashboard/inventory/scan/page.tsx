@@ -4,7 +4,8 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useRef, useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { csrfFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -70,6 +71,47 @@ function InventoryScanContent() {
   });
 
   const inventory = inventoryData?.inventory;
+
+  // ─── §11.355-D 재고 차감(사용) — 글로벌 스캐너 /use 흐름 재사용 (단편화 해소) ──
+  //   스캔=식별, 차감=사용량 입력 후 실행(사람 확인 게이트). canonical mutation + 감사.
+  const queryClient = useQueryClient();
+  const [showUseForm, setShowUseForm] = useState(false);
+  const [useQty, setUseQty] = useState("1");
+  const [useNotes, setUseNotes] = useState("");
+  const deductMutation = useMutation({
+    mutationFn: async () => {
+      if (!inventory) throw new Error("재고 정보 없음");
+      const qty = parseFloat(useQty);
+      if (isNaN(qty) || qty <= 0) throw new Error("올바른 수량을 입력하세요.");
+      const res = await csrfFetch(`/api/inventory/${inventory.id}/use`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quantity: qty,
+          unit: inventory.unit ?? undefined,
+          notes: useNotes.trim() || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "차감 실패");
+      }
+      return res.json();
+    },
+    onSuccess: (data: { updatedQuantity?: number; warning?: string }) => {
+      toast({
+        title: "사용 처리 완료",
+        description: `${useQty}${inventory?.unit || "개"} 차감${data.updatedQuantity != null ? ` → 잔여 ${data.updatedQuantity}${inventory?.unit || "개"}` : ""}${data.warning ? ` ⚠️ ${data.warning}` : ""}`,
+      });
+      setShowUseForm(false);
+      setUseQty("1");
+      setUseNotes("");
+      queryClient.invalidateQueries({ queryKey: ["inventory-item", inventoryId] });
+    },
+    onError: (err: Error) => {
+      toast({ title: "차감 실패", description: err.message, variant: "destructive" });
+    },
+  });
 
   // ─── ZXing 스캐너 시작 ──────────────────────────────────────────────
   const startScanner = useCallback(async () => {
@@ -336,6 +378,60 @@ function InventoryScanContent() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* §11.355-D 사용/차감 — 스캔→canonical 차감 (사람 확인 게이트). 폐루프 닫힘. */}
+              {!showUseForm ? (
+                <Button
+                  className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white h-12 disabled:opacity-50"
+                  onClick={() => setShowUseForm(true)}
+                  disabled={inventory.currentQuantity <= 0}
+                >
+                  <ScanLine className="h-4 w-4" />
+                  {inventory.currentQuantity <= 0 ? "재고 없음 — 사용 불가" : "사용/차감"}
+                </Button>
+              ) : (
+                <Card className="border-blue-200 bg-blue-50/40">
+                  <CardContent className="space-y-3 py-4">
+                    <p className="text-sm font-semibold text-slate-800">사용량 입력</p>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={useQty}
+                        onChange={(e) => setUseQty(e.target.value)}
+                        className="h-11 text-base"
+                        placeholder="수량"
+                      />
+                      <span className="text-sm text-slate-500 whitespace-nowrap">{inventory.unit || "개"}</span>
+                    </div>
+                    <Input
+                      value={useNotes}
+                      onChange={(e) => setUseNotes(e.target.value)}
+                      className="h-11"
+                      placeholder="메모 (선택) — 사용 목적·실험명 등"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant="outline"
+                        className="h-11"
+                        onClick={() => { setShowUseForm(false); setUseQty("1"); setUseNotes(""); }}
+                        disabled={deductMutation.isPending}
+                      >
+                        취소
+                      </Button>
+                      <Button
+                        className="h-11 bg-blue-600 hover:bg-blue-700 text-white gap-1.5"
+                        onClick={() => deductMutation.mutate()}
+                        disabled={deductMutation.isPending}
+                      >
+                        {deductMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                        차감 확인
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* 빠른 액션 */}
               <div className="grid grid-cols-2 gap-3">
