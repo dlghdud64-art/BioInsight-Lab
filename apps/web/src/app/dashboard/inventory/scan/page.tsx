@@ -50,6 +50,9 @@ function InventoryScanContent() {
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [manualId, setManualId] = useState("");
   const readerRef = useRef<any>(null);
+  // §11.349 — @zxing/browser decodeFromVideoDevice 가 반환하는 IScannerControls(.stop()) 보관.
+  //   구 코드는 이걸 버리고 reader.reset()(미존재 API) 호출 → 카메라 미정지(중지 dead). 캡처 필수.
+  const controlsRef = useRef<{ stop: () => void } | null>(null);
 
   // ─── 재고 조회 (id가 있을 때) ────────────────────────────────────────
   const { data: inventoryData, isLoading: loadingInventory, error: inventoryError } = useQuery({
@@ -89,13 +92,13 @@ function InventoryScanContent() {
       const backCamera =
         devices.find((d) => /back|rear|environment/i.test(d.label)) || devices[0];
 
-      await reader.decodeFromVideoDevice(
+      // §11.349 — 반환되는 IScannerControls 캡처(정지 핸들). 구 코드는 버렸음.
+      controlsRef.current = await reader.decodeFromVideoDevice(
         backCamera.deviceId,
         videoRef.current!,
-        (result, err) => {
+        (result) => {
           if (result) {
-            const text = result.getText();
-            handleScannedText(text);
+            handleScannedText(result.getText());
           }
         }
       );
@@ -111,9 +114,24 @@ function InventoryScanContent() {
   }, []);
 
   const stopScanner = useCallback(() => {
-    if (readerRef.current) {
-      readerRef.current.reset();
-      readerRef.current = null;
+    // §11.349 — 정지 = IScannerControls.stop() (구 reader.reset() 은 @zxing/browser 미존재 →
+    //   TypeError/no-op 로 중지가 dead 였음). controls 정지 + 방어적 track 종료로 카메라 LED 소등 보장.
+    try {
+      controlsRef.current?.stop();
+    } catch {
+      /* ignore — 이미 정지된 경우 */
+    }
+    controlsRef.current = null;
+    readerRef.current = null;
+    // 방어: video element 의 MediaStream track 강제 종료(웹뷰 잔존/배터리 방지, Black Screen 방지).
+    const video = videoRef.current;
+    if (video?.srcObject) {
+      try {
+        (video.srcObject as MediaStream).getTracks().forEach((t) => t.stop());
+      } catch {
+        /* ignore */
+      }
+      video.srcObject = null;
     }
     setScanning(false);
   }, []);
@@ -147,9 +165,17 @@ function InventoryScanContent() {
     router.push(`/dashboard/inventory/scan?id=${id}`);
   };
 
-  // 페이지 언마운트 시 카메라 정리
+  // §11.349 — 언마운트 + 백그라운드(탭 숨김) 시 카메라 정리(웹뷰 카메라 점유·배터리·프라이버시 방지).
+  //   포그라운드 복귀 시 자동 재시작은 안 함(사용자가 "카메라 시작" 명시 — 권한/UX 안전).
   useEffect(() => {
-    return () => { stopScanner(); };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") stopScanner();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      stopScanner();
+    };
   }, [stopScanner]);
 
   // ─── 라벨 스캔 결과 처리 → 재고 등록 페이지로 전달 ──────────────────
