@@ -199,13 +199,14 @@ export async function GET(request: NextRequest) {
 
     // 감사 로그 기록
     try {
-      const { createAuditLog } = await import("@/lib/audit/audit-logger");
+      const { createAuditLog, auditRequestMeta } = await import("@/lib/audit/audit-logger");
       await createAuditLog({
         organizationId: organizationId || undefined,
         userId: session.user.id,
         eventType: "SETTINGS_CHANGED",
         entityType: "safety_spend",
         action: "view_summary",
+        ...auditRequestMeta(request), // §11.345-B5 — IP/UA 캡처
         metadata: {
           period: {
             start: dateStart.toISOString(),

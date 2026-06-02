@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
 
     // 감사 로그 기록
     try {
-      const { createAuditLog } = await import("@/lib/audit/audit-logger");
+      const { createAuditLog, auditRequestMeta } = await import("@/lib/audit/audit-logger");
       await createAuditLog({
         organizationId: purchaseRecord.organizationId || undefined,
         userId: session.user.id,
@@ -121,6 +121,7 @@ export async function POST(request: NextRequest) {
         entityType: "purchase_record",
         entityId: purchaseId,
         action: "purchase_manual_map",
+        ...auditRequestMeta(request), // §11.345-B5 — IP/UA 캡처
         changes: {
           before: { productId: purchaseRecord.productId },
           after: { productId, matchType: "MANUAL" },
