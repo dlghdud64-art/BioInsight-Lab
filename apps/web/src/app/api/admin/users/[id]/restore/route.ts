@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { isAdmin } from "@/lib/api/admin";
-import { createAuditLog } from "@/lib/audit/audit-logger";
+import { createAuditLog, auditRequestMeta } from "@/lib/audit/audit-logger";
 import { AuditEventType } from "@prisma/client";
 
 /**
@@ -28,7 +28,7 @@ import { AuditEventType } from "@prisma/client";
  */
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
@@ -96,6 +96,7 @@ export async function POST(
       entityType: "User",
       entityId: targetUserId,
       action: "user_restore",
+      ...auditRequestMeta(request), // §11.345-B3 — IP/UA 캡처
       metadata: {
         targetUserEmail: existing.email,
         targetUserName: existing.name,

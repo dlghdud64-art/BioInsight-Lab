@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { isAdmin } from "@/lib/api/admin";
-import { createAuditLog } from "@/lib/audit/audit-logger";
+import { createAuditLog, auditRequestMeta } from "@/lib/audit/audit-logger";
 import {
   validateInviteInput,
   buildInviteLink,
@@ -134,6 +134,7 @@ export async function POST(request: NextRequest) {
       entityType: "User",
       entityId: created.id,
       action: "user_invite",
+      ...auditRequestMeta(request), // §11.345-B3 — IP/UA 캡처
       metadata: {
         invitedEmail: created.email,
         invitedName: created.name,

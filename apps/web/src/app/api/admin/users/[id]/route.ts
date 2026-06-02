@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { isAdmin } from "@/lib/api/admin";
-import { createAuditLog } from "@/lib/audit/audit-logger";
+import { createAuditLog, auditRequestMeta } from "@/lib/audit/audit-logger";
 import { AuditEventType } from "@prisma/client";
 
 /**
@@ -32,7 +32,7 @@ import { AuditEventType } from "@prisma/client";
  */
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
@@ -96,6 +96,7 @@ export async function DELETE(
       entityType: "User",
       entityId: targetUserId,
       action: "user_reject",
+      ...auditRequestMeta(request), // §11.345-B3 — IP/UA 캡처
       metadata: {
         deletedUserEmail: existing.email,
         deletedUserName: existing.name,
