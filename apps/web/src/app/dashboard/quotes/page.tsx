@@ -1848,7 +1848,11 @@ function QuotesPageContent() {
         return; // native a 보호
       }
       e.preventDefault();
-      const allIds = new Set(sortedQuotes.map((q) => q.id));
+      // §11.351 — 전체 선택도 발송 대상(요청 발송 전)만 선택. 회신 대기(이미 발송) 등 비대상 제외
+      //   → 개별/thead 체크박스(isSelectable=request_not_sent)와 정합, 일괄 집계·중복 발송 버그 차단.
+      const allIds = new Set(
+        sortedQuotes.filter((q) => deriveRailState(q) === "request_not_sent").map((q) => q.id),
+      );
       setSelectedQuoteIds(allIds);
     };
     document.addEventListener("keydown", handleSelectAll);
@@ -1898,6 +1902,9 @@ function QuotesPageContent() {
     let dispatchable = 0;
     let hardBlock = 0;
     for (const q of selectedQuotes) {
+      // §11.351 — 발송 대상 = canonical 상태 "요청 발송 전"만. 회신 대기(이미 발송)는 발송 가능
+      //   집계에서 제외(중복 발송 방지). 비대상은 행 액션 "회신 확인"/리마인더로 분기.
+      if (deriveRailState(q) !== "request_not_sent") continue;
       const preflight = getQuoteDispatchPreflight(q, organizationVendors, organizationVendorProducts);
       if (preflight.hardBlocked) hardBlock += 1;
       else dispatchable += 1;
@@ -2031,19 +2038,9 @@ function QuotesPageContent() {
             )}
             견적서 비교
           </button>
-          {/* 견적 요청 초안 만들기 — md+ 노출 (모바일은 더보기 드롭다운에서) */}
-          <Button
-            type="button"
-            data-testid="quote-draft-workbench-cta"
-            size="sm"
-            variant="ghost"
-            className="h-9 text-sm hidden md:flex min-w-[140px] px-1 text-slate-500 hover:bg-transparent hover:text-blue-700 hover:underline underline-offset-2"
-            onClick={openQuoteDraftWorkbench}
-            disabled={isLoading || quotes.length === 0}
-          >
-            <FileTextIcon className="h-4 w-4 mr-1.5" />
-            견적 요청 초안 만들기
-          </Button>
+          {/* §11.351 — "견적 요청 초안 만들기" 헤더 버튼 제거(방안 a, 진입로만 hide).
+              불필요(이전 업로드 창, 실가치 0) + 헤더 one-primary 위반. openQuoteDraftWorkbench
+              핸들러·모달 코드는 잔존(dead 노출 0, 필요 시 복구 용이). 모바일 더보기 항목도 제거. */}
           {/* §11.307 — 견적서 스캔 (이전 "파싱"). Upload icon → ScanLine icon (문서
               읽어들이는 동작 정합). 모바일 + tablet + desktop 모두 노출 (주요 액션). */}
           <button
@@ -2083,16 +2080,7 @@ function QuotesPageContent() {
                     {aiCompareLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                     견적서 비교
                   </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    disabled={isLoading || quotes.length === 0}
-                    onClick={() => { openQuoteDraftWorkbench(); setIsMobileMoreOpen(false); }}
-                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <FileTextIcon className="h-4 w-4" />
-                    견적 요청 초안 만들기
-                  </button>
+                  {/* §11.351 — 모바일 더보기의 "견적 요청 초안 만들기" 항목 제거(헤더 버튼과 동일 정리). */}
                 </div>
               </>
             )}
