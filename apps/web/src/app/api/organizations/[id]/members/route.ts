@@ -6,7 +6,7 @@ import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-en
 import { z } from "zod";
 // #approver-routing-per-user-limit-organization-member-admin-ui Phase 2 —
 // approvalLimit 변경 audit (best effort, mutation atomic 보호).
-import { createAuditLog } from "@/lib/audit/audit-logger";
+import { createAuditLog, auditRequestMeta } from "@/lib/audit/audit-logger";
 
 // #approver-routing-per-user-limit-organization-member-admin-ui — zod schema.
 // role + approvalLimit 둘 다 optional (partial update). approvalLimit
@@ -189,6 +189,7 @@ export async function PATCH(
           entityType: "ORGANIZATION_MEMBER",
           entityId: memberId,
           action: "approval_limit_update",
+          ...auditRequestMeta(request), // §11.345-B4 — IP/UA 캡처
           changes: {
             before: { approvalLimit: beforeApprovalLimit },
             after: { approvalLimit },

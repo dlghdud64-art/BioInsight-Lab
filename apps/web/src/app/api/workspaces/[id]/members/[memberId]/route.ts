@@ -7,7 +7,7 @@ import { z } from "zod";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 // #approver-routing-per-user-limit-audit-log — approvalLimit 변경 audit 추적성.
 // best effort (try/catch graceful — mutation atomic 보호).
-import { createAuditLog } from "@/lib/audit/audit-logger";
+import { createAuditLog, auditRequestMeta } from "@/lib/audit/audit-logger";
 
 const logger = createLogger("api/workspaces/[id]/members/[memberId]");
 
@@ -152,6 +152,7 @@ export async function PATCH(
           entityType: "WORKSPACE_MEMBER",
           entityId: memberId,
           action: "approval_limit_update",
+          ...auditRequestMeta(request), // §11.345-B4 — IP/UA 캡처
           changes: {
             before: { approvalLimit: beforeMember.approvalLimit },
             after: { approvalLimit },

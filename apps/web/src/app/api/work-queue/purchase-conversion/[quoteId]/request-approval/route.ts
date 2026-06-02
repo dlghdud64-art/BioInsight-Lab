@@ -41,7 +41,7 @@ import { generatePurchaseApprovalRequestEmail } from "@/lib/email/templates";
 import { dispatchNotificationEvent } from "@/lib/notifications";
 // #approver-routing-audit-log — 결재 매핑 결과 audit (best effort).
 //   candidate.source / appliedThresholds / totalAmount 추적.
-import { createAuditLog } from "@/lib/audit/audit-logger";
+import { createAuditLog, auditRequestMeta } from "@/lib/audit/audit-logger";
 // #mobile-push-notification Phase 2 — approver 에게 push (best effort).
 import { sendPushNotification } from "@/lib/notifications/push-sender";
 
@@ -321,6 +321,7 @@ export async function POST(
         entityType: "PURCHASE_REQUEST",
         entityId: purchaseRequest.id,
         action: "request_approval_create",
+        ...auditRequestMeta(request), // §11.345-B4 — IP/UA 캡처
         metadata: {
           source: candidate.source,
           totalAmount: quote.totalAmount,
