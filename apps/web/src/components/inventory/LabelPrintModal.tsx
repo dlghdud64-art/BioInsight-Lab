@@ -13,7 +13,8 @@
  * - 브라우저 인쇄 연동
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import QRCode from "qrcode";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -44,6 +45,21 @@ const LABEL_SPECS: LabelSpec[] = [
   { id: "formtec-3102", name: "폼텍 3102 (물류용)", size: "99.1 × 38.1 mm", perSheet: "1시트 14칸" },
   { id: "formtec-3104", name: "폼텍 3104 (대형)", size: "99.1 × 67.7 mm", perSheet: "1시트 8칸" },
   { id: "dymo-11354", name: "DYMO 11354 (다목적)", size: "57 × 32 mm", perSheet: "롤 타입" },
+];
+
+// §11.355-B — 인쇄 HTML 안전 이스케이프 (품명 등에 < > & " 포함 시 깨짐/주입 방지).
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+// §11.355-B — 미리보기/인쇄 공용 데모 시드 (selectedItems 비었을 때만).
+const DEMO_PREVIEW_ITEMS = [
+  { id: "preview-1", name: "Sample Reagent A", catalogNumber: "CAT-001", lotNumber: "LOT-2026-01", expiryDate: "2027-03-15", brand: "Sigma" },
+  { id: "preview-2", name: "Sample Reagent B", catalogNumber: "CAT-002", lotNumber: "LOT-2026-02", expiryDate: "2026-12-31", brand: "Thermo" },
 ];
 
 // ══════════════════════════════════════════════
@@ -77,20 +93,50 @@ export function LabelPrintModal({ open, onOpenChange, selectedItems = [] }: Labe
 
   const activeSpec = LABEL_SPECS.find((s) => s.id === selectedSpec);
 
-  const handlePrint = () => {
+  // §11.355-B — 미리보기 라벨의 실 QR dataURL (inv.id 인코딩 = 스캔 payload 표준).
+  //   미리보기=인쇄 일치(dead toggle 해소). selectedItems/QR 토글 변동 시 재생성.
+  const previewSourceItems = selectedItems.length > 0 ? selectedItems.slice(0, 3) : DEMO_PREVIEW_ITEMS;
+  const [qrPreviewMap, setQrPreviewMap] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!includeQR) { if (!cancelled) setQrPreviewMap({}); return; }
+      const map: Record<string, string> = {};
+      for (const it of previewSourceItems) {
+        try { map[it.id] = await QRCode.toDataURL(it.id, { width: 120, margin: 0 }); } catch { /* skip */ }
+      }
+      if (!cancelled) setQrPreviewMap(map);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedItems, includeQR]);
+
+  const handlePrint = async () => {
     // 새 창에서 라벨 전용 인쇄 페이지 생성
     const items = selectedItems.length > 0 ? selectedItems : [
       { id: "sample", name: "Sample Reagent", catalogNumber: "CAT-001", lotNumber: "LOT-001", expiryDate: "2027-01-01" },
     ];
 
+    // §11.355-B — 실 QR 생성 (inv.id 인코딩 = 스캔 payload 표준). 가짜 바코드 제거,
+    //   includeBarcode 는 스캔/수기 입력용 고유번호(inv.id) 텍스트로 대체(정직).
+    const qrMap: Record<string, string> = {};
+    if (includeQR) {
+      for (const item of items) {
+        if (!qrMap[item.id]) {
+          try { qrMap[item.id] = await QRCode.toDataURL(item.id, { width: 120, margin: 0 }); } catch { /* skip */ }
+        }
+      }
+    }
+
     const labelsHtml = items.flatMap((item) =>
-      Array.from({ length: copies }).map((_, i) => `
+      Array.from({ length: copies }).map(() => `
         <div class="label">
-          <div class="name">${item.name}</div>
-          ${item.catalogNumber ? `<div class="cat">Cat. ${item.catalogNumber}</div>` : ""}
-          ${item.lotNumber ? `<div class="lot">Lot: ${item.lotNumber}</div>` : ""}
-          ${includeBarcode ? `<div class="barcode">||||||||||||||||||||</div>` : ""}
-          ${includeExpiry && item.expiryDate ? `<div class="expiry">EXP: ${item.expiryDate}</div>` : ""}
+          <div class="name">${escapeHtml(item.name)}</div>
+          ${item.catalogNumber ? `<div class="cat">Cat. ${escapeHtml(item.catalogNumber)}</div>` : ""}
+          ${item.lotNumber ? `<div class="lot">Lot: ${escapeHtml(item.lotNumber)}</div>` : ""}
+          ${includeQR && qrMap[item.id] ? `<img class="qr" src="${qrMap[item.id]}" alt="QR ${escapeHtml(item.id)}" />` : ""}
+          ${includeBarcode ? `<div class="code">${escapeHtml(item.id)}</div>` : ""}
+          ${includeExpiry && item.expiryDate ? `<div class="expiry">EXP: ${escapeHtml(item.expiryDate)}</div>` : ""}
         </div>
       `)
     ).join("");
@@ -110,13 +156,15 @@ export function LabelPrintModal({ open, onOpenChange, selectedItems = [] }: Labe
         }
         .name { font-size: 9px; font-weight: bold; }
         .cat, .lot { font-size: 7px; color: #666; }
-        .barcode { font-family: monospace; font-size: 10px; letter-spacing: -1px; margin: 3px 0; }
+        .qr { width: 56px; height: 56px; margin: 3px 0; display: block; }
+        .code { font-family: monospace; font-size: 6px; color: #444; word-break: break-all; margin: 1px 0; }
         .expiry { font-size: 6px; color: #999; }
       </style>
     </head><body>${labelsHtml}</body></html>`);
     printWindow.document.close();
     printWindow.focus();
-    printWindow.print();
+    // QR dataURL 이미지 렌더 시간 확보 후 인쇄 (즉시 print 시 빈 QR 위험).
+    setTimeout(() => { try { printWindow.print(); } catch { /* noop */ } }, 250);
   };
 
   return (
@@ -261,17 +309,12 @@ export function LabelPrintModal({ open, onOpenChange, selectedItems = [] }: Labe
                     <p className="text-[8px] text-slate-500 mt-0.5">Cat. {item.catalogNumber}</p>
                   )}
                   <div className="flex items-center gap-2 mt-1.5">
-                    {includeBarcode && (
-                      <div className="flex gap-px">
-                        {Array.from({ length: 20 }).map((_, i) => (
-                          <div key={i} className="w-[1px] bg-slate-800" style={{ height: `${8 + Math.random() * 6}px` }} />
-                        ))}
-                      </div>
+                    {/* §11.355-B — 실 QR(inv.id 인코딩) 미리보기 = 인쇄 결과와 일치 */}
+                    {includeQR && qrPreviewMap[item.id] && (
+                      <img src={qrPreviewMap[item.id]} alt="QR" className="w-8 h-8 flex-shrink-0" />
                     )}
-                    {includeQR && (
-                      <div className="w-5 h-5 bg-slate-200 rounded-sm flex items-center justify-center flex-shrink-0">
-                        <QrCode className="h-3 w-3 text-slate-600" />
-                      </div>
+                    {includeBarcode && (
+                      <span className="text-[6px] font-mono text-slate-500 break-all leading-tight">{item.id}</span>
                     )}
                   </div>
                   {includeExpiry && item.expiryDate && (
