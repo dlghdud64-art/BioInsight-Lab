@@ -60,7 +60,7 @@ describe("§11.260b #1 — 탭/검색 row 모바일 1줄 압축", () => {
 describe("§11.260b #2 — invariant 보존 (canonical truth)", () => {
   it("5 탭 라벨 보존 (전체 / 검토 필요 / 발주 가능 / 보류 / 확정됨)", () => {
     expect(page).toMatch(/label:\s*"전체"/);
-    expect(page).toMatch(/label:\s*"발주 전환 대기"/);
+    expect(page).toMatch(/label:\s*"발주 인계 대기"/);
     expect(page).toMatch(/label:\s*"발주 승인 대기"/);
     expect(page).toMatch(/label:\s*"보류"/);
     expect(page).toMatch(/label:\s*"발주 확정"/);

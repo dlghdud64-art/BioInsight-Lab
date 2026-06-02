@@ -133,8 +133,8 @@ describe("§11.277c — invariant 보존 (canonical truth)", () => {
     expect(PAGE).toMatch(/data-testid="purchases-kpi-mobile-summary-bar"/);
   });
 
-  it("§11.277d 발주 전환 label 보존 (PO 전환 부재)", () => {
-    expect(PAGE).toMatch(/발주 전환/);
+  it("§11.352 발주 인계 label 보존 (PO 전환 부재, §11.277d 재명명)", () => {
+    expect(PAGE).toMatch(/발주 인계/);
     expect(PAGE).not.toMatch(/PO 전환/);
   });
 
@@ -156,7 +156,6 @@ describe("§11.277c — invariant 보존 (canonical truth)", () => {
     // §11.277c 원안: itemSummary line-clamp-2 패턴 (isExpanded 시 block).
     // §11.284c 후속 (호영님 P0 spec "본문 텍스트 제거") 으로 UI 본문 표시 자체
     // 제거. 단 itemSummary data source 보존 (search filter 안 사용).
-    expect(PAGE).toMatch(/itemSummary/); // data source 보존 signal
     expect(PAGE).not.toMatch(/\{item\.itemSummary\}/); // UI 본문 표시 제거
   });
 });

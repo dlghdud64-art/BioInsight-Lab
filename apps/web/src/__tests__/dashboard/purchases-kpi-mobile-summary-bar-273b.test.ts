@@ -90,7 +90,7 @@ describe("§11.273b #3 — invariant 보존 (canonical truth)", () => {
   });
 
   it("데스크탑 KpiCard 4 (icon / label / value / valueColor / sub / active / onClick) 보존", () => {
-    expect(PURCHASES).toMatch(/<KpiCard[\s\S]{0,500}label="발주 전환 대기"/);
+    expect(PURCHASES).toMatch(/<KpiCard[\s\S]{0,500}label="발주 인계 대기"/);
     expect(PURCHASES).toMatch(/<KpiCard[\s\S]{0,500}label="발주 승인 대기"/);
     expect(PURCHASES).toMatch(/<KpiCard[\s\S]{0,500}label="발주 확정"/);
     expect(PURCHASES).toMatch(/<KpiCard[\s\S]{0,500}label="공급사 통보 완료"/);

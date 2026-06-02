@@ -100,7 +100,7 @@ type QueueTab = "all" | ConversionStatus;
 //   "발주 전환 대기 / 발주 승인 대기 / 발주 확정 / 공급사 통보 완료" 으로 통일.
 //   기존 "검토 필요 / 발주 가능 / 확정됨 / 만료" → 구매 운영 실제 단계명 정합.
 const STATUS_MAP: Record<ConversionStatus, { label: string; bg: string; text: string; border: string }> = {
-  review_required: { label: "발주 전환 대기", bg: "bg-blue-50",    text: "text-blue-600",    border: "border-blue-200" },
+  review_required: { label: "발주 인계 대기", bg: "bg-blue-50",    text: "text-blue-600",    border: "border-blue-200" },
   ready_for_po:    { label: "발주 승인 대기", bg: "bg-emerald-50", text: "text-emerald-600", border: "border-emerald-200" },
   hold:            { label: "보류",          bg: "bg-slate-100",  text: "text-slate-600",   border: "border-slate-200" },
   confirmed:       { label: "발주 확정",     bg: "bg-purple-50",  text: "text-purple-600",  border: "border-purple-200" },
@@ -224,18 +224,21 @@ export default function PurchasesPage() {
       );
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error || "일괄 발주 전환 실패");
+        throw new Error(body?.error || "일괄 발주 인계 실패");
       }
       return res.json();
     },
     onSuccess: (data: { data: { results: Array<{ quoteId: string; orderNumber: string }> } }) => {
       const n = data.data.results.length;
       toast({
-        title: `${n}건 일괄 발주 완료`,
-        description: data.data.results
-          .slice(0, 3)
-          .map((r) => r.orderNumber)
-          .join(", ") + (n > 3 ? ` 외 ${n - 3}건` : ""),
+        title: `${n}건 발주 인계 완료`,
+        description:
+          data.data.results
+            .slice(0, 3)
+            .map((r) => r.orderNumber)
+            .join(", ") +
+          (n > 3 ? ` 외 ${n - 3}건` : "") +
+          " · 발주 관리에서 외부 발주·입고를 추적하세요.",
       });
       queryClient.invalidateQueries({ queryKey: ["purchase-conversion-queue"] });
       // §11.158 cache-bust — bulk-PO 직후 영향 quote brief 모두 invalidate
@@ -246,7 +249,7 @@ export default function PurchasesPage() {
     },
     onError: (err: Error) => {
       toast({
-        title: "일괄 발주 전환 실패",
+        title: "일괄 발주 인계 실패",
         description: err.message,
         variant: "destructive",
       });
@@ -270,7 +273,7 @@ export default function PurchasesPage() {
       return res.json();
     },
     onSuccess: () => {
-      toast({ title: "결재 승인 완료", description: "발주 전환이 가능합니다." });
+      toast({ title: "결재 승인 완료", description: "발주 인계가 가능합니다." });
       queryClient.invalidateQueries({ queryKey: ["purchase-conversion-queue"] });
     },
     onError: (err: Error) => {
@@ -561,13 +564,13 @@ export default function PurchasesPage() {
                   // mutation itself is atomic so a single OK / Cancel
                   // is the right friction.
                   const ok = window.confirm(
-                    `발주 가능 ${ids.length}건을 일괄 PO 로 전환합니다. 진행하시겠습니까?`,
+                    `발주 가능 ${ids.length}건을 발주 인계로 정리합니다. 인계 후 발주 관리에서 외부 발주·입고를 추적합니다. 진행하시겠습니까?`,
                   );
                   if (!ok) return;
                   bulkPoMutation.mutate(ids);
                 }}
               >
-                <CheckCircle2 className="h-4 w-4" /> 일괄 발주 전환 ({stats.ready_for_po})
+                <CheckCircle2 className="h-4 w-4" /> 일괄 발주 인계 ({stats.ready_for_po})
               </Button>
             )}
           </div>
@@ -616,7 +619,7 @@ export default function PurchasesPage() {
           <KpiCard
             icon={<ListChecks className="h-5 w-5 text-blue-500" />}
             iconBg="bg-blue-50"
-            label="발주 전환 대기"
+            label="발주 인계 대기"
             value={stats.review_required}
             valueColor={stats.review_required > 0 ? "text-blue-600" : "text-slate-900"}
             sub="응답 수집 중"
@@ -716,7 +719,7 @@ export default function PurchasesPage() {
                   {searchQuery.trim()
                     ? `'${searchQuery.trim()}'에 해당하는 항목이 없습니다`
                     : items.length === 0
-                      ? "발주 전환 대기 중인 건이 없습니다"
+                      ? "발주 인계 대기 중인 건이 없습니다"
                       : "선택한 탭에 항목이 없습니다"}
                 </p>
                 {/* §11.284d — 호영님 P1 spec: 발주 단계만 표시 정책 정합.
@@ -726,7 +729,7 @@ export default function PurchasesPage() {
                   {searchQuery.trim()
                     ? "다른 키워드로 검색해 보세요."
                     : items.length === 0
-                      ? "견적 비교가 완료되면 여기에 표시됩니다. 견적 관리에서 회신을 비교한 뒤 '발주 전환'을 누르면 구매 운영 큐로 이동합니다."
+                      ? "견적 비교가 완료되면 여기에 표시됩니다. 회신을 비교한 뒤 '발주 인계'로 정리하면, 발주 관리에서 외부 발주·입고 상태를 추적합니다."
                       : "다른 탭을 확인해 보세요."}
                 </p>
                 {!searchQuery.trim() && items.length === 0 && (
@@ -977,7 +980,7 @@ export default function PurchasesPage() {
                     href="#brief-next"
                     className="text-[11px] px-2 py-1 rounded border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors"
                   >
-                    발주 전환
+                    발주 인계
                   </a>
                   <a
                     href="#brief-risks"
@@ -1471,7 +1474,7 @@ export default function PurchasesPage() {
                         }}
                       >
                         {bulkPoMutation.isPending ? (
-                          "전환 중..."
+                          "인계 중..."
                         ) : selectedItem.internalApprovalStatus === "PENDING" ? (
                           <>
                             <Clock className="h-3.5 w-3.5 mr-1.5" />
@@ -1485,17 +1488,31 @@ export default function PurchasesPage() {
                         ) : (
                           <>
                             <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
-                            발주 전환
+                            발주 인계
                           </>
                         )}
                       </Button>
                       {selectedItem.internalApprovalStatus === "PENDING" && (
-                        <p className="text-[11px] text-yellow-700 text-center">결재 완료 후 발주 가능</p>
+                        <p className="text-[11px] text-yellow-700 text-center">결재 완료 후 인계 가능</p>
                       )}
                       {selectedItem.internalApprovalStatus === "REJECTED" && (
                         <p className="text-[11px] text-rose-700 text-center">결재 반려 — 재요청 또는 대안 검토</p>
                       )}
                     </>
+                  )}
+                  {/* §11.352 — 인계 완료(confirmed) 시 dead-end 해소: 견적 회귀 대신
+                      발주 관리로 전진. 외부 발주·입고 상태는 발주 관리에서 추적
+                      (DECISION_11.35x 요청자 중심 — LabAxis = 의뢰·추적, 실행은 외부). */}
+                  {selectedItem.conversionStatus === "confirmed" && (
+                    <Link href="/dashboard/purchase-orders" className="block">
+                      <Button
+                        size="sm"
+                        className="w-full h-9 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                      >
+                        <ArrowRight className="h-3.5 w-3.5 mr-1.5" />
+                        발주 관리에서 외부 발주·입고 추적
+                      </Button>
+                    </Link>
                   )}
                   <Link href={`/dashboard/quotes/${selectedItem.id}`} className="block">
                     <Button
@@ -1528,7 +1545,7 @@ export default function PurchasesPage() {
               { id: "summary", label: "상태 요약" },
               { id: "facts",   label: "공급사 회신" },
               { id: "risks",   label: "차단 사유" },
-              { id: "next",    label: "발주 전환" },
+              { id: "next",    label: "발주 인계" },
             ]}
             summary={
               <p className="text-xs text-slate-700 leading-relaxed">

@@ -51,7 +51,7 @@ describe("§11.260a #2 — invariant 보존 (canonical truth)", () => {
   });
 
   it("4 KpiCard caller 보존 (검토 필요 / 발주 가능 / 확정됨 / 만료)", () => {
-    expect(page).toMatch(/label="발주 전환 대기"/);
+    expect(page).toMatch(/label="발주 인계 대기"/);
     expect(page).toMatch(/label="발주 승인 대기"/);
     expect(page).toMatch(/label="발주 확정"/);
     expect(page).toMatch(/label="공급사 통보 완료"/);
