@@ -87,10 +87,12 @@ describe("§11.314-b — generate-pdf route", () => {
     expect(src).toMatch(/Content-Disposition.*attachment/);
   });
 
-  it("audit log graceful (SETTINGS_CHANGED + quote_pdf_generate)", () => {
+  it("audit log graceful (DATA_EXPORTED + quote_pdf_generate, §11.345-B 재분류)", () => {
     const src = read(ROUTE_PATH);
     expect(src).toMatch(/createAuditLog/);
-    expect(src).toMatch(/eventType:\s*"SETTINGS_CHANGED"/);
+    // §11.345-B: PDF 생성은 설정 변경 아니라 내보내기 → DATA_EXPORTED 로 재분류.
+    expect(src).toMatch(/eventType:\s*"DATA_EXPORTED"/);
+    expect(src).not.toMatch(/eventType:\s*"SETTINGS_CHANGED"/);
     expect(src).toMatch(/action:\s*"quote_pdf_generate"/);
     expect(src).toMatch(/\.catch\(\(\)\s*=>/);
   });
