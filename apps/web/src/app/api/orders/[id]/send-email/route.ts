@@ -25,6 +25,8 @@ import { generatePoVendorEmail } from "@/lib/email/po-vendor-template";
 // 첨부. 직전 Phase 3.2 본문만 → PDF binary 첨부 추가. host mailer (Resend
 // /SendGrid) 가 attachments field 를 정합 송부, mock 은 metadata logging.
 import { generatePoPdf } from "@/lib/orders/po-pdf-generator";
+// §11.348-A-1 — 발주 후 입고 회신 링크용 토큰(견적 vendor-request 패턴 재사용).
+import { generateVendorRequestToken } from "@/lib/api/vendor-request-token";
 
 export async function POST(
   request: NextRequest,
@@ -77,6 +79,49 @@ export async function POST(
       );
     }
 
+    // §11.348-A-1 — 입고 회신 폐루프 입구: ReceivingDraft(AWAITING_REPLY)
+    // get-or-create. 재발송 시 기존 미회신 draft 의 token 재사용(중복 링크 방지).
+    // 실패해도 발주 메일 자체는 본문/PDF 로 송부(graceful) — 링크만 생략.
+    let receivingReplyUrl: string | undefined;
+    try {
+      const existingDraft = await db.receivingDraft.findFirst({
+        where: {
+          orderId: order.id,
+          status: { in: ["AWAITING_REPLY", "PENDING_REVIEW"] },
+        },
+        select: { token: true },
+      });
+      let token = existingDraft?.token;
+      if (!token) {
+        token = generateVendorRequestToken();
+        await db.receivingDraft.create({
+          data: {
+            orderId: order.id,
+            userId: order.userId,
+            organizationId: order.organizationId ?? null,
+            vendorId: order.vendorId ?? null,
+            token,
+            status: "AWAITING_REPLY",
+            // 14일 만료 — 견적 vendor-request 와 동일 기본값.
+            expiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+            // 발송 시점 PO 스냅샷(회신 폼 freeze 기준 — A-2).
+            snapshot: {
+              orderNumber: order.orderNumber,
+              items: order.items.map((it: typeof order.items[number]) => ({
+                orderItemId: it.id,
+                productId: it.productId,
+                name: it.name,
+                quantity: it.quantity,
+              })),
+            },
+          },
+        });
+      }
+      receivingReplyUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/receiving/${token}`;
+    } catch {
+      receivingReplyUrl = undefined;
+    }
+
     // template 합산
     const template = generatePoVendorEmail({
       vendorName: order.vendor.name,
@@ -87,6 +132,8 @@ export async function POST(
       requesterEmail: order.user?.email ?? null,
       expectedDelivery: order.expectedDelivery,
       notes: order.notes,
+      // §11.348-A-1 — 입고 회신 CTA 링크.
+      receivingReplyUrl,
       items: order.items.map((it: typeof order.items[number]) => ({
         name: it.name,
         brand: it.brand,
@@ -147,6 +194,8 @@ export async function POST(
     // 실패 시 catch 에서 500 반환 (mutation atomic 외라 audit 도 fail).
     await sendEmail({
       to: order.vendor.email,
+      // §11.348-A-1 — 공급사 답장이 발주자(연구소)에게 가도록 reply-to(SEND-A 동형).
+      replyTo: order.user?.email ?? undefined,
       subject: template.subject,
       html: template.html,
       text: template.text,

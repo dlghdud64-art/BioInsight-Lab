@@ -36,6 +36,9 @@ export interface GeneratePoVendorEmailInput {
   }>;
   /** PO PDF 다운로드 URL — 차후 attach 또는 link. 미전달 시 link 미표시. */
   pdfDownloadUrl?: string | null;
+  /** §11.348-A-1 — 입고 회신 링크(ReceivingDraft.token). 공급사가 납품 시
+   *  LOT·납기·실수량을 우리 스키마로 회신. 미전달 시 섹션 미표시. */
+  receivingReplyUrl?: string | null;
 }
 
 /**
@@ -89,6 +92,18 @@ export function generatePoVendorEmail(
     : "";
   const pdfLinkText = data.pdfDownloadUrl
     ? `\n발주서 PDF 다운로드: ${data.pdfDownloadUrl}\n`
+    : "";
+
+  // §11.348-A-1 — 입고 정보 회신 CTA. 공급사가 클릭 → ReceivingDraft 폼(A-2).
+  const receivingReplyHtml = data.receivingReplyUrl
+    ? `<div style="margin:20px 0;padding:16px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;">
+        <p style="margin:0 0 8px;color:#4f46e5;font-weight:700;">입고 정보 회신</p>
+        <p style="margin:0 0 12px;color:#374151;font-size:14px;">납품 시 아래 버튼을 눌러 LOT 번호·납기·실수량을 입력해 주시면 입고 처리가 빠르게 진행됩니다.</p>
+        <a href="${data.receivingReplyUrl}" style="display:inline-block;padding:10px 20px;background:#4f46e5;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:600;">입고 정보 입력하기</a>
+      </div>`
+    : "";
+  const receivingReplyText = data.receivingReplyUrl
+    ? `\n[입고 정보 회신] 납품 시 아래 링크에서 LOT·납기·실수량을 입력해 주세요:\n${data.receivingReplyUrl}\n`
     : "";
 
   const notesBlock = data.notes
@@ -145,6 +160,7 @@ export function generatePoVendorEmail(
 
     ${notesBlock}
     ${pdfLinkHtml}
+    ${receivingReplyHtml}
 
     <div class="footer">
       본 메일은 LabAxis 운영 시스템에서 자동 발송되었습니다.
@@ -169,7 +185,7 @@ ${itemRowsText}
 예상 배송일: ${expectedLine}
 발주자: ${requesterLine}
 회신 연락처: ${data.requesterEmail ?? "(별도 문의 채널 안내 예정)"}
-${notesText}${pdfLinkText}
+${notesText}${pdfLinkText}${receivingReplyText}
 — 본 메일은 LabAxis 운영 시스템에서 자동 발송되었습니다.
 `.trim();
 
