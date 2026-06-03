@@ -66,7 +66,6 @@ export default function TabsLayout() {
       />
       {/* 기존 탭 숨김 처리 */}
       <Tabs.Screen name="search" options={{ href: null }} />
-      <Tabs.Screen name="profile" options={{ href: null }} />
     </Tabs>
   );
 }
