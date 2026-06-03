@@ -1,5 +1,6 @@
 import { View, Text, FlatList, Pressable, RefreshControl, ActivityIndicator, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { AppHeader } from "../../components/AppHeader";
 import { router } from "expo-router";
 import { Plus, Calendar, Store, ChevronRight } from "lucide-react-native";
 import { iconColor, spinnerColor } from "../../theme/colors";
@@ -114,17 +115,18 @@ export default function PurchasesScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
-      {/* 헤더 */}
-      <View className="flex-row items-center justify-between px-5 pt-3 pb-3 bg-white border-b border-slate-100">
-        <Text className="text-lg font-bold text-slate-900">구매 내역</Text>
-        <Pressable
-          className="flex-row items-center gap-1 bg-blue-600 rounded-lg px-3 py-2"
-          onPress={() => router.push("/purchases/register")}
-        >
-          <Plus size={16} color="white" />
-          <Text className="text-xs font-semibold text-white">등록</Text>
-        </Pressable>
-      </View>
+      <AppHeader
+        title="구매 내역"
+        right={
+          <Pressable
+            className="flex-row items-center gap-1 bg-blue-600 rounded-lg px-3 py-2"
+            onPress={() => router.push("/purchases/register")}
+          >
+            <Plus size={16} color="white" />
+            <Text className="text-xs font-semibold text-white">등록</Text>
+          </Pressable>
+        }
+      />
 
       {/* 검색 */}
       <View className="px-4 py-3 bg-white">

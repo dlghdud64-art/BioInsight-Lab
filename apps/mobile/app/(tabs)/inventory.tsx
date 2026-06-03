@@ -1,5 +1,6 @@
 import { View, Text, FlatList, Pressable, RefreshControl, ActivityIndicator, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { AppHeader } from "../../components/AppHeader";
 import { router } from "expo-router";
 import { MapPin, Layers, ChevronRight, Filter } from "lucide-react-native";
 import { iconColor, spinnerColor } from "../../theme/colors";
@@ -113,10 +114,7 @@ export default function InventoryScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
-      {/* 헤더 */}
-      <View className="px-5 pt-3 pb-3 bg-white border-b border-slate-100">
-        <Text className="text-lg font-bold text-slate-900">재고 관리</Text>
-      </View>
+      <AppHeader title="재고 관리" />
 
       {/* 검색 */}
       <View className="px-4 py-3 bg-white">

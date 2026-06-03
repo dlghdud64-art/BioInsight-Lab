@@ -1,5 +1,6 @@
 import { View, Text, Pressable, Alert, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { AppHeader } from "../../components/AppHeader";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import {
@@ -149,10 +150,7 @@ export default function MoreScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
-      {/* 헤더 */}
-      <View className="px-5 pt-3 pb-3 bg-white border-b border-slate-100">
-        <Text className="text-lg font-bold text-slate-900">설정</Text>
-      </View>
+      <AppHeader title="설정" />
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
         {renderSection("계정", accountItems)}

@@ -1,5 +1,6 @@
 import { View, Text, ScrollView, Pressable, RefreshControl, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { AppHeader } from "../../components/AppHeader";
 import { router } from "expo-router";
 import {
   ShoppingCart,
@@ -146,19 +147,17 @@ export default function HomeScreen() {
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
         }
       >
-        {/* ── 헤더 ── */}
-        <View className="px-5 pt-3 pb-2 bg-white border-b border-slate-100">
-          <Text className="text-lg font-extrabold text-slate-900 tracking-tight">
-            LabAxis
-          </Text>
-          <Text className="text-xs text-slate-500 mt-0.5">
-            {dashboardState === "blocked"
+        {/* ── 헤더 (§11.358-3 공통 AppHeader) ── */}
+        <AppHeader
+          title="LabAxis"
+          subtitle={
+            dashboardState === "blocked"
               ? `확인이 필요한 항목 ${processingRequired + approvalPending}건`
               : dashboardState === "zero"
                 ? "아래에서 첫 업무를 시작하세요"
-                : "오늘 즉시 처리할 이슈가 없습니다"}
-          </Text>
-        </View>
+                : "오늘 즉시 처리할 이슈가 없습니다"
+          }
+        />
 
         {isLoading ? (
           <ActivityIndicator color={spinnerColor} className="py-12" />
