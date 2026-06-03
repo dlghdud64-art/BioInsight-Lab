@@ -41,6 +41,8 @@ export interface EmailOptions {
    * 다른 caller (auth verification 등) 는 vendorId 미전달 — 기존 동작 유지.
    */
   vendorId?: string;
+  /** §11.348-SEND-A — 회신 주소(연구소/요청자). 미설정 시 from(noreply)만. A 명의 정합. */
+  replyTo?: string;
 }
 
 // §11.314 Phase 2 — Resend 클라이언트 lazy 초기화 (RESEND_API_KEY 있을 때만 생성, 빌드 타임 throw 방지)
@@ -94,6 +96,8 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
 
   const { data, error } = await resend.emails.send({
     from,
+    // §11.348-SEND-A — replyTo 있으면 전달(공급사 답장 → 연구소). 없으면 from(noreply)만.
+    ...(options.replyTo ? { replyTo: options.replyTo } : {}),
     to: options.to,
     subject: options.subject,
     html: options.html,

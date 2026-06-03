@@ -321,6 +321,8 @@ export async function POST(
           html: emailTemplate.html,
           text: emailTemplate.text,
           vendorId: vendor.id,
+          // §11.348-SEND-A — 회신 주소를 요청자(연구소)로 → 공급사 답장이 연구소로 (A 명의, LabAxis 도구화).
+          replyTo: session?.user?.email ?? undefined,
         });
 
         emailResults.push({ email: vendor.email, success: true });
