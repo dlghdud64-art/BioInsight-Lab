@@ -56,22 +56,10 @@ export default function TemplatesPage() {
     }
   };
 
-  const handleAddToList = async (template: Template) => {
-    try {
-      // TODO: Implement actual add to list logic
-      // This would typically add items to a shopping cart or quote list
-      toast({
-        title: "추가 완료",
-        description: `${template.name} (${template.itemCount}개 품목)이 목록에 추가되었습니다.`,
-      });
-    } catch (error) {
-      toast({
-        title: "추가 실패",
-        description: "목록에 추가할 수 없습니다.",
-        variant: "destructive",
-      });
-    }
-  };
+  // §11.312-templates — "목록에 추가" 는 add 대상(cart/quote-list) 미확정 상태.
+  //   이전: mutation 없이 toast 성공만 호출 = fake success(누르면 성공 뜨는데 실제 추가 0).
+  //   추측 wiring 금지 → 동선 확정(b 단계) 전까지 버튼 disabled. fake toast 제거.
+  //   export/delete 등 실동작 핸들러는 영향 없음.
 
   const handleExportTemplate = async (template: Template) => {
     try {
@@ -207,11 +195,12 @@ export default function TemplatesPage() {
                 <div className="flex items-center gap-2">
                   <Button
                     size="sm"
-                    onClick={() => handleAddToList(template)}
+                    disabled
+                    title="목록 추가 동선 준비 중입니다"
                     className="flex-1"
                   >
                     <Plus className="h-3 w-3 mr-1" />
-                    Add to List
+                    목록에 추가 (준비 중)
                   </Button>
                   <Button
                     size="sm"
