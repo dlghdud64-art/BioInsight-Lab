@@ -26,7 +26,7 @@ describe("§11.339 v2 4 — 하단 노란시트 review 진입 제거", () => {
     expect(src).not.toMatch(/data-testid="sourcing-bar-review-open"/);
     // 배지 클릭이 reviewFocusKey 증가 → forceQuoteKey 로 견적함 탭 전환
     expect(src).toMatch(/onClick=\{\(\) => setReviewFocusKey\(\(k\) => k \+ 1\)\}/);
-    expect(src).toMatch(/forceQuoteKey=\{reviewFocusKey/);
+    expect(src).toMatch(/forceQuoteKey=\{\(reviewFocusKey/); // §11.339 v2: (review+quote) 합산 카운터
   });
 });
 

@@ -34,7 +34,7 @@ describe("§11.339-1 (3) 수량 조절", () => {
   it("호출부 quantity/unit 매핑 + updateQuoteItem 연결", () => {
     const src = read(SEARCH);
     expect(src).toMatch(/quantity: q\.quantity \?\? 1/);
-    expect(src).toMatch(/unit: q\.unit \?\? product\?\.unit \?\? null/);
+    expect(src).toMatch(/unit: q\.unit \?\? products\.find/); // §11.339 v2 cart 매핑(중첩괄호 회피)
     expect(src).toMatch(/onQuantityChange=\{\(id, quantity\) => updateQuoteItem\(id, \{ quantity \}\)\}/);
   });
 });
@@ -51,8 +51,8 @@ describe("§11.339-1 §11.338 가격 정합", () => {
     const src = read(SHEET);
     expect(src).toMatch(/\(q\.price \?\? 0\) > 0 \?.*: "견적 후 확정"/s);
   });
-  it("호출부 price lineTotal fallback 제거(미견적 null)", () => {
+  it("호출부 unitPrice 전달 (가격판정은 §11.339 v2 QuoteCartPanel priceText 로 이동)", () => {
     const src = read(SEARCH);
-    expect(src).toMatch(/price: \(q\.unitPrice \?\? 0\) > 0 \? q\.unitPrice : null/);
+    expect(src).toMatch(/unitPrice: q\.unitPrice/);
   });
 });

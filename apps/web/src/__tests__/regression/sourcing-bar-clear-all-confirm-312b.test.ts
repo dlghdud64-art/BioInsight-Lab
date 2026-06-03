@@ -70,10 +70,10 @@ describe("§11.312-b — 견적 bar 본체 🗑 button + AlertDialog (Phase 2 GR
 describe("§11.312-b — canonical 보존 (§11.312 1차 sandbox 보존)", () => {
   it("SourcingCandidatesSheet wiring 보존 (sheet open + onClose + 3 mode)", () => {
     const src = read(PAGE_PATH);
-    expect(src).toMatch(/<SourcingCandidatesSheet/);
-    expect(src).toMatch(/setCandidatesSheetMode\("compare"\)/);
-    expect(src).toMatch(/setCandidatesSheetMode\("quote"\)/);
-    expect(src).toMatch(/setCandidatesSheetMode\("review"\)/);
+    expect(src).toMatch(/<QuoteCartPanel/); // §11.339 v2: sheet→QuoteCartPanel 탭 일원화
+    expect(src).toMatch(/setCompareFocusKey/); // §11.339 v2 탭전환
+    expect(src).toMatch(/setQuoteFocusKey/);
+    expect(src).toMatch(/setReviewFocusKey/);
   });
 
   it("미리보기 truncate (§11.312 1차) + 검토 배지 yellow-100 (§11.302) 보존", () => {

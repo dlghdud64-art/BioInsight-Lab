@@ -28,11 +28,11 @@ describe("§11.314-b — quote-request-pdf-generator", () => {
     expect(src).toMatch(/export\s+async\s+function\s+generateQuoteRequestPdf/);
   });
 
-  it("pdfkit + Pretendard 한글 폰트 임베드 (fallback Helvetica)", () => {
+  it("pdfkit + Pretendard 한글 폰트 임베드 (§11.326 Helvetica fallback 제거)", () => {
     const src = read(GEN_PATH);
     expect(src).toMatch(/import PDFDocument from "pdfkit"/);
     expect(src).toMatch(/PretendardVariable\.ttf/);
-    expect(src).toMatch(/doc\.font\("Helvetica"\)/);
+    expect(src).not.toMatch(/doc\.font\("Helvetica"\)/); // §11.326 — Helvetica fallback 제거(한글 깨짐 silent 회피)
   });
 
   it("견적 요청서 헤더 + 회신기한 + 요청품목 표", () => {

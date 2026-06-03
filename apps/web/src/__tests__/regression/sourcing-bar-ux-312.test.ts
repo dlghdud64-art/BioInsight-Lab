@@ -1,6 +1,11 @@
 /**
  * §11.312 #sourcing-bar-ux — Regression sentinel
  *
+ * ⚠️ §11.339 v2 supersede: 하단 SourcingCandidatesSheet(드로어) 제거 → 우측
+ *   QuoteCartPanel 탭으로 일원화. bar 탭 = FocusKey 카운터 증가(forceQuoteKey/
+ *   forceCompareKey)로 탭 전환. 본 sentinel 의 search/page wiring 단언을 그
+ *   동작에 맞게 갱신(§11.356 Phase2 — sheet 기대는 stale 이었음).
+ *
  * 호영님 P1 spec (2026-05-26):
  *   1. 비교/견적 bar 의 숫자 영역 탭 → SourcingCandidatesSheet (개별 ✕ 삭제)
  *   2. ⚠ 검토 N 배지 dead button → 탭 시 review mode sheet (사유 + [재고 확인] / [그래도 유지])
@@ -85,19 +90,19 @@ describe("§11.312 — search/page.tsx wiring", () => {
   it("비교 bar 영역 탭 → sheet open (sourcing-bar-compare-open testid)", () => {
     const src = read(SEARCH_PATH);
     expect(src).toMatch(/data-testid="sourcing-bar-compare-open"/);
-    expect(src).toMatch(/setCandidatesSheetMode\("compare"\)/);
+    expect(src).toMatch(/setCompareFocusKey/); // §11.339 v2 탭전환
   });
 
   it("견적 bar 영역 탭 → sheet open (sourcing-bar-quote-open testid)", () => {
     const src = read(SEARCH_PATH);
     expect(src).toMatch(/data-testid="sourcing-bar-quote-open"/);
-    expect(src).toMatch(/setCandidatesSheetMode\("quote"\)/);
+    expect(src).toMatch(/setQuoteFocusKey/); // §11.339 v2 탭전환
   });
 
   it("⚠ 검토 N 배지 dead button 해소 → review mode sheet (sourcing-bar-review-open testid)", () => {
     const src = read(SEARCH_PATH);
-    expect(src).toMatch(/data-testid="sourcing-bar-review-open"/);
-    expect(src).toMatch(/setCandidatesSheetMode\("review"\)/);
+    expect(src).toMatch(/data-testid="sourcing-bar-review-count"/); // §11.339 v2: 견적함 탭 인라인
+    expect(src).toMatch(/setReviewFocusKey/); // §11.339 v2 탭전환
   });
 
   it("amber → yellow swap (compare 1행 + 견적 배지)", () => {
@@ -118,12 +123,12 @@ describe("§11.312 — search/page.tsx wiring", () => {
     expect(src).not.toMatch(/aria-label="견적 후보 비우기"/);
   });
 
-  it("Sheet 렌더 (compareIds + quoteItems + handlers)", () => {
+  it("§11.339 v2 — bar 탭 → QuoteCartPanel forceKey 탭 전환 (sheet 드로어 폐지)", () => {
     const src = read(SEARCH_PATH);
-    expect(src).toMatch(/<SourcingCandidatesSheet/);
-    expect(src).toMatch(/onRemoveCompare=\{\(id\)\s*=>\s*toggleCompare\(id\)\}/);
+    expect(src).toMatch(/<QuoteCartPanel/);
+    expect(src).toMatch(/forceQuoteKey=/);
+    expect(src).toMatch(/forceCompareKey=/);
     expect(src).toMatch(/onRemoveQuoteItem=\{\(id\)\s*=>\s*removeQuoteItem\(id\)\}/);
-    expect(src).toMatch(/onClearCompare=\{\(\)\s*=>\s*clearCompare\(\)\}/);
   });
 
   it("미리보기 텍스트 — products lookup (compare 첫 항목명)", () => {
