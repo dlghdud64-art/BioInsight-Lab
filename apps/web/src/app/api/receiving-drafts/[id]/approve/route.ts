@@ -108,8 +108,8 @@ export async function POST(
         });
       }
 
-      // 품목별 InventoryRestock 생성 (LOT 단위 보존)
-      let restockCount = 0;
+      // 품목별 InventoryRestock 생성 (LOT 단위 보존) + 현장 라벨용 항목 수집(A-5)
+      const restockedItems: Array<{ inventoryId: string; name: string; lotNumber: string | null; expiryDate: Date | null }> = [];
       for (const it of restockable) {
         const inv = await tx.productInventory.findUnique({
           where:
@@ -131,7 +131,7 @@ export async function POST(
             notes: "§11.348-A 공급사 회신 입고(승인)",
           },
         });
-        restockCount++;
+        restockedItems.push({ inventoryId: inv.id, name: it.name, lotNumber: it.lotNumber ?? null, expiryDate: it.expiryDate ?? null });
       }
 
       // 발주 입고 확정(terminal — status 경로 재sync 차단) + PO 매칭
@@ -151,7 +151,7 @@ export async function POST(
         },
       });
 
-      return { restockCount };
+      return { restockCount: restockedItems.length, restockedItems };
     });
 
     await createAuditLog({
@@ -174,6 +174,13 @@ export async function POST(
       ok: true,
       status: "APPROVED",
       restockCount: result.restockCount,
+      // §11.348-A-5 — 현장 QR 라벨 출력용. inventoryId 를 QR 로 인코딩 → 스캔→차감(§11.355).
+      restockedItems: result.restockedItems.map((r: any) => ({
+        id: r.inventoryId,
+        name: r.name,
+        lotNumber: r.lotNumber,
+        expiryDate: r.expiryDate ? r.expiryDate.toISOString().split("T")[0] : null,
+      })),
       message: "입고가 확정되어 재고에 반영되었습니다.",
     });
   } catch (error) {

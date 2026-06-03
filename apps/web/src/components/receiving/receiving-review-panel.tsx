@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { PackageCheck, Loader2, CheckCircle2, XCircle, ChevronDown, ChevronRight } from "lucide-react";
+// §11.348-A-5 — 확정 입고안 → 현장 QR 라벨(§11.355-B) 접합.
+import { LabelPrintModal } from "@/components/inventory/LabelPrintModal";
 
 interface DraftItem {
   id: string;
@@ -35,6 +37,9 @@ export function ReceivingReviewPanel() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [acting, setActing] = useState<Record<string, boolean>>({});
+  // §11.348-A-5 — 승인 직후 현장 라벨 출력(QR=inventoryId).
+  const [labelOpen, setLabelOpen] = useState(false);
+  const [labelItems, setLabelItems] = useState<Array<{ id: string; name: string; lotNumber?: string; expiryDate?: string }>>([]);
 
   const load = useCallback(async () => {
     try {
@@ -65,9 +70,14 @@ export function ReceivingReviewPanel() {
       toast({
         title: action === "approve" ? "입고 확정" : "반려 완료",
         description: action === "approve"
-          ? `재고에 반영되었습니다. (${data.restockCount ?? 0}건)`
+          ? `재고에 반영되었습니다. (${data.restockCount ?? 0}건) 현장 라벨을 출력하세요.`
           : "입고안이 반려되었습니다.",
       });
+      // §11.348-A-5 — 승인 시 확정 품목(inventoryId)을 라벨 모달로 → 현장 QR 출력.
+      if (action === "approve" && Array.isArray(data.restockedItems) && data.restockedItems.length > 0) {
+        setLabelItems(data.restockedItems);
+        setLabelOpen(true);
+      }
       setDrafts((prev) => prev.filter((d) => d.id !== id));
     } catch (e: any) {
       toast({ title: "처리 실패", description: e.message, variant: "destructive" });
@@ -142,6 +152,9 @@ export function ReceivingReviewPanel() {
           );
         })}
       </div>
+
+      {/* §11.348-A-5 — 확정 입고안 현장 QR 라벨 출력 */}
+      <LabelPrintModal open={labelOpen} onOpenChange={setLabelOpen} selectedItems={labelItems} />
     </div>
   );
 }
