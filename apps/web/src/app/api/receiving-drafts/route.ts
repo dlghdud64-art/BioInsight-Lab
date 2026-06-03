@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      drafts: drafts.map((d) => ({
+      drafts: drafts.map((d: any) => ({
         id: d.id,
         status: d.status,
         submittedAt: d.submittedAt,
