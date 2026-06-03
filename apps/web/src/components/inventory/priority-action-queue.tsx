@@ -44,11 +44,14 @@ export interface QueueItem {
 }
 
 /* ── Config maps ── */
-const RISK_CONFIG: Record<QueueRiskLevel, { label: string; dot: string; bg: string }> = {
-  critical: { label: "긴급", dot: "bg-red-500", bg: "bg-red-50 text-red-600 border-red-200" },
-  high:     { label: "높음", dot: "bg-yellow-500", bg: "bg-yellow-50 text-yellow-600 border-yellow-200" },
-  medium:   { label: "보통", dot: "bg-blue-500", bg: "bg-blue-50 text-blue-600 border-blue-200" },
-  low:      { label: "낮음", dot: "bg-slate-400", bg: "bg-slate-50 text-slate-500 border-slate-200" },
+// §11.360 — severity 팔레트. bg=배지, cardBg=카드 행 배경(약한 채도 + 좌측 보더 강조).
+//   배지(강)와 카드(약)가 같은 severity 팔레트를 공유해 색 언어 일원화. 하드코딩 단일색 제거.
+//   §11.302 정합: amber 금지 → high=yellow. 카드 전체 강채도는 과함 → 50 배경 + 좌측 보더 + 텍스트/아이콘으로 강조.
+const RISK_CONFIG: Record<QueueRiskLevel, { label: string; dot: string; bg: string; cardBg: string }> = {
+  critical: { label: "긴급", dot: "bg-red-500", bg: "bg-red-50 text-red-600 border-red-200", cardBg: "border-l-2 border-l-red-400 bg-red-50/40 hover:bg-red-50" },
+  high:     { label: "높음", dot: "bg-yellow-500", bg: "bg-yellow-50 text-yellow-600 border-yellow-200", cardBg: "border-l-2 border-l-yellow-400 bg-yellow-50/40 hover:bg-yellow-50" },
+  medium:   { label: "보통", dot: "bg-blue-500", bg: "bg-blue-50 text-blue-600 border-blue-200", cardBg: "border-l-2 border-l-blue-300 bg-blue-50/30 hover:bg-blue-50" },
+  low:      { label: "낮음", dot: "bg-slate-400", bg: "bg-slate-50 text-slate-500 border-slate-200", cardBg: "border-l-2 border-l-slate-200 hover:bg-slate-50/80" },
 };
 
 const CATEGORY_CONFIG: Record<QueueCategory, { label: string; icon: React.ElementType; color: string }> = {
@@ -265,7 +268,8 @@ export function PriorityActionQueue({
           return (
             <div
               key={item.id}
-              className="px-4 py-3 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+              // §11.360 — severity 기반 카드 배경(약채도 + 좌측 보더). 배지와 동일 팔레트로 위계 일원화.
+              className={`px-4 py-3 transition-colors cursor-pointer group ${riskCfg.cardBg}`}
               onClick={() => onItemClick?.(item)}
             >
               {/* Line 1: Risk dot + Product + Risk badge */}
