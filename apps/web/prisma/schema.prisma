@@ -100,6 +100,8 @@ model Organization {
   // "모든 Organization 에 Workspace 존재" 를 강제할 수 없고 (Prisma validator 가 차단), 1:1 은
   // createOrganization 트랜잭션이 애플리케이션 레이어에서 보장한다.
   workspace          Workspace?
+  // §11.348-A — 조직 스코프 검증 대기 입고안.
+  receivingDrafts    ReceivingDraft[]
 
   @@index([name])
   @@index([plan])
@@ -199,6 +201,8 @@ model User {
   ingestionUploads    IngestionEntry[] @relation("IngestionUploader")
   // #mobile-push-notification Phase 1 server — 사용자별 등록된 푸시 토큰
   devices             Device[]
+  // §11.348-A — 검증 대기 입고안 소유자(발주 주체/감사).
+  receivingDrafts     ReceivingDraft[]
 
   @@index([email])
   @@index([role])
@@ -365,6 +369,8 @@ model Vendor {
   organizationLinks OrganizationVendor[]
   // #vendor-catalog-product-matching Phase 1 — 조직 단위 vendor-product carry.
   organizationProductLinks OrganizationVendorProduct[]
+  // §11.348-A — 발주 후 입고 회신을 보낸 공급사.
+  receivingDrafts   ReceivingDraft[]
 
   @@index([name])
   @@index([isPremium])
@@ -1793,6 +1799,8 @@ model Order {
   items           OrderItem[]
   restocks        InventoryRestock[]  // P7-1: 입고 기록
   budgetTransaction UserBudgetTransaction?
+  // §11.348-A — 발주 후 입고 회신(검증 대기 입고안). 1 PO ↔ N draft.
+  receivingDrafts   ReceivingDraft[]
 
   @@unique([quoteId, vendorId]) // vendor 별 1개 Order — legacy NULL row 도 1개 보장
   @@index([userId])
@@ -3165,4 +3173,80 @@ model OcrResult {
   finalForJob    OcrJob?     @relation("OcrJobFinal")  // back-relation for finalResult
 
   @@index([jobId])
+}
+
+
+// =====================================================
+// §11.348-A — 발주→회신→입고 폐루프 (검증 대기 입고안)
+// =====================================================
+// A-3 본체: 공급사가 발주(PO) 후 회신한 입고 정보(LOT·납기·실수량)를
+// "검증 대기 입고안"으로 보관한다. canonical 아님(derived 제안).
+// 승인 전 재고·LOT mutation 0 (§11.336). 사람 승인(A-4)에서만
+// InventoryRestock(delivery-sync) 생성 → canonical 승격. ReceivingDraft 는
+// 어떤 ProductInventory 도 변경하지 않는다(순수 데이터). token = 공급사
+// 회신 링크(A-1). orderItemId/productId 는 scalar(OrderItem.productId 선례).
+
+enum ReceivingDraftStatus {
+  AWAITING_REPLY // 발주 후 회신 대기 (링크 발송, 미회신)
+  PENDING_REVIEW // 공급사 회신 도착 → 사람 검증 대기
+  APPROVED       // 승인 → 입고 확정(InventoryRestock 생성됨)
+  REJECTED       // 반려
+  EXPIRED        // 링크 만료
+}
+
+model ReceivingDraft {
+  id              String               @id @default(cuid())
+  orderId         String               // FK to Order(PO)
+  userId          String               // 발주 주체/감사 소유자
+  organizationId  String?              // 조직 스코프
+  vendorId        String?              // 회신한 공급사
+  token           String               @unique // 공급사 회신 링크 공개 토큰 (A-1)
+  status          ReceivingDraftStatus @default(AWAITING_REPLY)
+  submittedAt     DateTime?            // 공급사 회신 제출 시각
+  reviewedAt      DateTime?            // 사람 검증(승인/반려) 시각
+  approvedById    String?              // 승인자 (audit, scalar)
+  rejectedReason  String?              @db.Text
+  vendorNote      String?              @db.Text // 공급사 회신 메모
+  snapshot        Json?                // 발송 시점 PO 스냅샷 (회신 폼 freeze)
+  expiresAt       DateTime             // 링크 만료
+  restockSyncedAt DateTime?            // InventoryRestock 생성 완료 시각 (이중 입고 idempotent 가드)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  order        Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization?        @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  vendor       Vendor?              @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  items        ReceivingDraftItem[]
+
+  @@index([orderId])
+  @@index([userId])
+  @@index([organizationId])
+  @@index([vendorId])
+  @@index([token])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+// 검증 대기 입고안 품목 (공급사 회신 품목별). 순수 데이터, 재고 미변경.
+model ReceivingDraftItem {
+  id               String    @id @default(cuid())
+  receivingDraftId String
+  orderItemId      String?   // PO 품목 매핑 (scalar — OrderItem.productId 선례)
+  productId        String?   // 제품 매핑 (승인 시 InventoryRestock 대상)
+  name             String    // 품목명 (스냅샷)
+  expectedQuantity Float?    // PO 발주 수량
+  receivedQuantity Float?    // 공급사 회신 실수량
+  unit             String?
+  lotNumber        String?   // 회신 LOT
+  expiryDate       DateTime? // 회신 유효기간
+  vendorNote       String?   @db.Text
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  receivingDraft ReceivingDraft @relation(fields: [receivingDraftId], references: [id], onDelete: Cascade)
+
+  @@index([receivingDraftId])
+  @@index([orderItemId])
+  @@index([productId])
 }
