@@ -7,6 +7,7 @@ import { iconColor, spinnerColor } from "../../theme/colors";
 import { useInventory } from "../../hooks/useApi";
 import { StatusBadge } from "../../components/StatusBadge";
 import { EmptyState } from "../../components/EmptyState";
+import { ErrorState } from "../../components/ErrorState";
 import { SearchBar } from "../../components/SearchBar";
 import { BottomSheet } from "../../components/BottomSheet";
 import { useState } from "react";
@@ -87,7 +88,7 @@ function InventoryCard({ item }: { item: ProductInventory }) {
 }
 
 export default function InventoryScreen() {
-  const { data: inventories, isLoading, refetch, isRefetching } = useInventory();
+  const { data: inventories, isLoading, isError, refetch, isRefetching } = useInventory();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
 
@@ -156,6 +157,9 @@ export default function InventoryScreen() {
       {/* 리스트 */}
       {isLoading ? (
         <ActivityIndicator color={spinnerColor} className="mt-10" />
+      ) : isError ? (
+        // §11.358-1 F-1 — 실패를 빈 상태로 위장하지 않고 정직 표시 + 재시도.
+        <ErrorState title="재고를 불러오지 못했습니다" description="네트워크 상태를 확인하고 다시 시도해주세요." onRetry={() => refetch()} />
       ) : (
         <FlatList
           data={filtered}

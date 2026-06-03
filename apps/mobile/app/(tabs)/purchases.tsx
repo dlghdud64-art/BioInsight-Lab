@@ -7,6 +7,7 @@ import { iconColor, spinnerColor } from "../../theme/colors";
 import { usePurchases } from "../../hooks/useApi";
 import { StatusBadge } from "../../components/StatusBadge";
 import { EmptyState } from "../../components/EmptyState";
+import { ErrorState } from "../../components/ErrorState";
 import { SearchBar } from "../../components/SearchBar";
 import { useState } from "react";
 import type { PurchaseRecord } from "../../types";
@@ -82,7 +83,7 @@ function PurchaseCard({ item }: { item: PurchaseRecord }) {
 }
 
 export default function PurchasesScreen() {
-  const { data: purchases, isLoading, refetch, isRefetching } = usePurchases();
+  const { data: purchases, isLoading, isError, refetch, isRefetching } = usePurchases();
   const [search, setSearch] = useState("");
   const [period, setPeriod] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -196,6 +197,9 @@ export default function PurchasesScreen() {
       {/* 리스트 */}
       {isLoading ? (
         <ActivityIndicator color={spinnerColor} className="mt-10" />
+      ) : isError ? (
+        // §11.358-1 F-1 — 실패를 빈 상태로 위장하지 않고 정직 표시 + 재시도.
+        <ErrorState title="구매 내역을 불러오지 못했습니다" description="네트워크 상태를 확인하고 다시 시도해주세요." onRetry={() => refetch()} />
       ) : (
         <FlatList
           data={filtered}

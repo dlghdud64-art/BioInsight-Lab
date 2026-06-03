@@ -7,6 +7,7 @@ import { iconColor, spinnerColor } from "../../theme/colors";
 import { useQuotes } from "../../hooks/useApi";
 import { StatusBadge } from "../../components/StatusBadge";
 import { EmptyState } from "../../components/EmptyState";
+import { ErrorState } from "../../components/ErrorState";
 import { SearchBar } from "../../components/SearchBar";
 import { useState } from "react";
 import type { Quote } from "../../types";
@@ -74,7 +75,7 @@ function QuoteCard({ item }: { item: Quote }) {
 export default function QuotesScreen() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [search, setSearch] = useState("");
-  const { data: quotes, isLoading, refetch, isRefetching } = useQuotes(statusFilter);
+  const { data: quotes, isLoading, isError, refetch, isRefetching } = useQuotes(statusFilter);
 
   const filtered = (quotes ?? []).filter((q) =>
     search ? (q.title ?? "").toLowerCase().includes(search.toLowerCase()) : true
@@ -124,6 +125,13 @@ export default function QuotesScreen() {
       {/* 리스트 */}
       {isLoading ? (
         <ActivityIndicator color={spinnerColor} className="mt-10" />
+      ) : isError ? (
+        // §11.358-1 F-1 — 실패를 빈 상태("견적이 없습니다")로 위장하지 않고 정직하게 표시 + 재시도.
+        <ErrorState
+          title="견적을 불러오지 못했습니다"
+          description="네트워크 상태를 확인하고 다시 시도해주세요."
+          onRetry={() => refetch()}
+        />
       ) : (
         <FlatList
           data={filtered}
