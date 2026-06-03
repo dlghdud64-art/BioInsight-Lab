@@ -19,6 +19,8 @@ import {
 } from "@/lib/ops-console/module-landing-adapter";
 import { ChevronRight, ArrowRight, AlertCircle, Clock, Zap } from "lucide-react";
 import { buildDetailHref } from "@/lib/ops-console/navigation-context";
+// §11.348-A-4b — 공급사 입고 회신 검토 패널(same-canvas).
+import { ReceivingReviewPanel } from "@/components/receiving/receiving-review-panel";
 
 // ── Bucket tab config (Receiving-specific labels) ─────────────────
 const RCV_BUCKET_TABS: { key: ModuleBucketKey; label: string }[] = [
@@ -117,6 +119,9 @@ export default function ReceivingLandingPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-6 space-y-5">
+      {/* §11.348-A-4b — 공급사 입고 회신(PENDING_REVIEW) 검토. 0건 시 자동 숨김. */}
+      <ReceivingReviewPanel />
+
       {/* ── 1. Header ──────────────────────────────────────────────── */}
       <div className="bg-white border border-slate-200 rounded-lg p-4">
         <div className="flex items-start justify-between">

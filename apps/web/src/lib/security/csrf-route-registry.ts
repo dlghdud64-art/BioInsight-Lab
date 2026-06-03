@@ -7,7 +7,7 @@
  * Next.js middleware에서 import하여 route별 CSRF 정책을 결정합니다.
  *
  * 설계 원칙:
- * - exempt 9건, highRisk(irreversible) 42건은 명시 등록
+ * - exempt 10건, highRisk(irreversible) 42건은 명시 등록
  * - 나머지 209건 eligible route는 기본값 { protection: 'required', highRisk: false }
  * - 패턴은 모듈 로드 시 regex로 pre-compile (middleware 성능 보장)
  * - route 추가/삭제 시 이 파일 + matrix만 갱신
@@ -45,6 +45,8 @@ const EXEMPT_ROUTES: ReadonlyArray<{ pattern: string; reason: string }> = [
   { pattern: '/api/inbound/sendgrid/[secret]',          reason: 'webhook_signature' },
   // §11.90 — /api/invite/[token] 항목 제거 (endpoint cleanup batch).
   { pattern: '/api/vendor-requests/[token]/response',   reason: 'public_token_auth' },
+  // §11.348-A-2 — 공급사 입고 회신(공개 token 인증, 세션 없음). 견적 회신과 동형.
+  { pattern: '/api/receiving/[token]/response',         reason: 'public_token_auth' },
   { pattern: '/api/mobile/auth/signin',                 reason: 'bearer_token_auth' },
   { pattern: '/api/mobile/auth/refresh',                reason: 'bearer_token_auth' },
   { pattern: '/api/vendor/auth/send-link',              reason: 'vendor_token_auth' },

@@ -51,6 +51,7 @@ describe('csrf-route-registry', () => {
       '/api/billing/webhook',
       '/api/inbound/sendgrid/abc123',
       '/api/vendor-requests/tkn-xyz/response',
+      '/api/receiving/tkn-xyz/response',
       '/api/mobile/auth/signin',
       '/api/mobile/auth/refresh',
       '/api/vendor/auth/send-link',
@@ -63,9 +64,9 @@ describe('csrf-route-registry', () => {
       expect(config.exemptReason).toBeDefined();
     });
 
-    it('exempt 수는 정확히 8개여야 함', () => {
+    it('exempt 수는 정확히 9개여야 함', () => {
       const stats = getRegistryStats();
-      expect(stats.exempt).toBe(8);
+      expect(stats.exempt).toBe(9);
     });
 
     it('exempt reason 분류가 올바름', () => {
@@ -74,7 +75,7 @@ describe('csrf-route-registry', () => {
       expect(stats.exemptReasons).toEqual({
         framework_csrf_builtin: 1,
         webhook_signature: 2,
-        public_token_auth: 1,
+        public_token_auth: 2,
         bearer_token_auth: 2,
         vendor_token_auth: 2,
       });
