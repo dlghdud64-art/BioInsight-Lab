@@ -3,6 +3,9 @@ import { db } from "@/lib/db";
 import { isValidVendorRequestToken } from "@/lib/api/vendor-request-token";
 import { checkRateLimit, getClientIp } from "@/lib/api/rate-limit";
 import { z } from "zod";
+// §11.348-A-2-notify — 회신 도착 시 연구소 알림(견적 vendor-reply 패턴 재사용).
+import { dispatchNotificationEvent } from "@/lib/notifications/event-dispatcher";
+import { sendPushNotification } from "@/lib/notifications/push-sender";
 
 /**
  * POST /api/receiving/:token/response  (§11.348-A-2)
@@ -110,6 +113,51 @@ export async function POST(
         },
       });
     });
+
+    // §11.348-A-2-notify — 회신 도착 → 연구소(소유자 + 조직 OWNER/ADMIN) 알림.
+    //   public 라우트라 세션 없음 → draft 의 userId/organizationId 기준 수신자 산정.
+    //   알림 실패가 vendor 제출(이미 커밋)을 막지 않도록 try/catch graceful.
+    try {
+      const recipientUserIds = new Set<string>();
+      if (draft.userId) recipientUserIds.add(draft.userId);
+      if (draft.organizationId) {
+        const orgMembers = await db.organizationMember.findMany({
+          where: { organizationId: draft.organizationId, role: { in: ["OWNER", "ADMIN"] } },
+          select: { userId: true },
+        });
+        for (const m of orgMembers) if (m.userId) recipientUserIds.add(m.userId);
+      }
+      if (recipientUserIds.size > 0) {
+        const recipients = Array.from(recipientUserIds).map((uid) => ({ userId: uid }));
+        // VENDOR_REPLIED 재사용(공급사 응답 도착). entityType=ORDER (입고 회신 맥락).
+        await dispatchNotificationEvent({
+          eventType: "VENDOR_REPLIED",
+          entityType: "ORDER",
+          entityId: draft.orderId,
+          triggeredBy: undefined,
+          recipients,
+          metadata: {
+            kind: "receiving_reply_received",
+            receivingDraftId: draft.id,
+            orderId: draft.orderId,
+            itemCount: items.length,
+          },
+        }).catch(() => {});
+        for (const uid of recipientUserIds) {
+          await sendPushNotification(
+            uid,
+            {
+              title: "입고 회신 도착",
+              body: "공급사가 입고 정보를 회신했습니다. 검토 후 승인하세요.",
+              data: { type: "purchase", id: draft.orderId },
+            },
+            "VENDOR_REPLIED",
+          ).catch(() => {});
+        }
+      }
+    } catch {
+      // 알림 실패는 응답 영향 0 (vendor 제출은 이미 커밋됨)
+    }
 
     return NextResponse.json({
       ok: true,

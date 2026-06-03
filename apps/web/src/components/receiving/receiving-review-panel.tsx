@@ -153,6 +153,16 @@ export function ReceivingReviewPanel() {
         })}
       </div>
 
+      {/* §11.348-A-5b — 라벨 재출력: 승인 직후 모달을 닫았어도 방금 확정분 다시 출력 */}
+      {labelItems.length > 0 && !labelOpen && (
+        <button
+          onClick={() => setLabelOpen(true)}
+          className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700"
+        >
+          <PackageCheck className="h-3.5 w-3.5" /> 방금 승인한 입고 라벨 재출력 ({labelItems.length}건)
+        </button>
+      )}
+
       {/* §11.348-A-5 — 확정 입고안 현장 QR 라벨 출력 */}
       <LabelPrintModal open={labelOpen} onOpenChange={setLabelOpen} selectedItems={labelItems} />
     </div>
