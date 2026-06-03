@@ -2,6 +2,8 @@ import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-en
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+// §11.348-B-1 B1-1 — 실제 Supabase 서명 URL 생성.
+import { createSdsSignedUrl } from "@/lib/safety/sds-storage";
 
 // SDS 문서의 signed URL 생성
 export async function POST(
@@ -64,17 +66,18 @@ export async function POST(
       }
     }
 
-    // Supabase Storage signed URL 생성 (구현 필요)
-    // 현재는 임시로 경로 반환
-    // TODO: Supabase Storage signed URL 생성
-    // const { data, error } = await supabase.storage
-    //   .from(sdsDocument.bucket!)
-    //   .createSignedUrl(sdsDocument.path!, 3600); // 1시간 유효
-
-    // 임시: 직접 URL 반환 (실제로는 signed URL 사용)
-    const signedUrl = sdsDocument.path
-      ? `/api/sds/${id}/download` // 임시 다운로드 엔드포인트
-      : sdsDocument.product.msdsUrl || null;
+    // §11.348-B-1 B1-1 — 실제 Supabase 서명 URL(1시간). 스토리지 미설정/실패 시
+    // null → Product.msdsUrl(레거시 단일 URL) 폴백. silent fake success 금지.
+    let signedUrl: string | null = null;
+    if (sdsDocument.bucket && sdsDocument.path) {
+      signedUrl = await createSdsSignedUrl({
+        bucket: sdsDocument.bucket,
+        path: sdsDocument.path,
+      });
+    }
+    if (!signedUrl) {
+      signedUrl = sdsDocument.product?.msdsUrl ?? null;
+    }
 
     return NextResponse.json({
       signedUrl,

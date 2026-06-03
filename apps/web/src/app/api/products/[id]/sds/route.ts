@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+// §11.348-B-1 B1-1 — SDS 파일 업로드(스토리지 + 메타).
+import { uploadSdsFile, StorageNotConfiguredError } from "@/lib/safety/sds-storage";
 
 // 제품의 SDS 문서 목록 조회
 export async function GET(
@@ -69,3 +71,76 @@ export async function GET(
 
 
 
+
+// §11.348-B-1 B1-1 — SDS 문서 업로드 (multipart). 파일→스토리지 + SDSDocument 메타 생성.
+// canonical 안전필드(Product) 승격은 별도 사람 승인(api/sds/[id]/apply) — 업로드는 보관만.
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { id: productId } = await params;
+
+    const product = await db.product.findUnique({ where: { id: productId }, select: { id: true } });
+    if (!product) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    const form = await request.formData();
+    const file = form.get("file");
+    if (!file || typeof file === "string") {
+      return NextResponse.json({ error: "파일이 필요합니다.", code: "FILE_REQUIRED" }, { status: 400 });
+    }
+    const f = file as File;
+    const buffer = Buffer.from(await f.arrayBuffer());
+
+    // 조직 스코프: 요청자의 첫 조직(없으면 공용 null).
+    const membership = await db.organizationMember.findFirst({
+      where: { userId: session.user.id },
+      select: { organizationId: true },
+    });
+    const organizationId = membership?.organizationId ?? null;
+
+    // 스토리지 업로드 — 미설정 시 503 graceful(silent 성공 금지).
+    let stored: { bucket: string; path: string };
+    try {
+      stored = await uploadSdsFile({
+        productId,
+        fileName: f.name || "sds.pdf",
+        buffer,
+        contentType: f.type || undefined,
+      });
+    } catch (e) {
+      if (e instanceof StorageNotConfiguredError) {
+        return NextResponse.json(
+          { error: "파일 스토리지가 설정되지 않았습니다. 관리자에게 문의하세요.", code: "STORAGE_NOT_CONFIGURED" },
+          { status: 503 },
+        );
+      }
+      throw e;
+    }
+
+    const doc = await db.sDSDocument.create({
+      data: {
+        productId,
+        organizationId,
+        fileName: f.name || "sds.pdf",
+        bucket: stored.bucket,
+        path: stored.path,
+        source: "upload",
+        contentType: f.type || null,
+        sizeBytes: buffer.length,
+      },
+      select: { id: true, fileName: true, source: true, createdAt: true },
+    });
+
+    return NextResponse.json({ ok: true, sdsDocument: doc }, { status: 201 });
+  } catch (error: any) {
+    console.error("Error uploading SDS document:", error);
+    return NextResponse.json({ error: "Failed to upload SDS document" }, { status: 500 });
+  }
+}
