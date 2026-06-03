@@ -4,6 +4,9 @@ export const dynamic = "force-dynamic";
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useUserPreferences } from "@/lib/preferences/user-preferences";
+import { useQuery } from "@tanstack/react-query";
+// §11.348-B-1 B1-3 — 안전 페이지 mock→실데이터(/api/safety/products) 어댑터.
+import { adaptSafetyProducts, type SafetyApiProduct } from "@/lib/safety/product-to-safety-item";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -109,36 +112,7 @@ const CLASS_STYLE: Record<OperationalClassification, { label: string; bg: string
 // ── Mock data ────────────────────────────────────────────────────────────────
 type SafetyItem = SafetyItemInput;
 
-const safetyItems: SafetyItem[] = [
-  {
-    id: 1, name: "Sulfuric Acid (황산)", cas: "7664-93-9", isHighRisk: true, level: "HIGH",
-    actionStatus: "caution", hasMsds: true, msdsUpdatedAt: "2025-01-15", registeredAt: "2024-03-10",
-    lastInspection: "2025-02-20", storageCondition: "산성 전용, 밀폐 보관", loc: "시약장 A (산성)",
-    icons: ["corrosive", "toxic"],
-    ppe: [{ type: "gloves", required: true }, { type: "goggles", required: true }, { type: "coat", required: true }, { type: "mask", required: false }],
-  },
-  {
-    id: 2, name: "Acetone (아세톤)", cas: "67-64-1", isHighRisk: false, level: "MEDIUM",
-    actionStatus: "action_required", hasMsds: false, msdsUpdatedAt: null, registeredAt: "2024-06-15",
-    lastInspection: null, storageCondition: "방폭, 직사광선 차단", loc: "방폭 캐비닛 1",
-    icons: ["flammable"],
-    ppe: [{ type: "gloves", required: true }, { type: "goggles", required: true }, { type: "coat", required: false }, { type: "mask", required: false }],
-  },
-  {
-    id: 3, name: "Sodium Hydroxide (수산화나트륨)", cas: "1310-73-2", isHighRisk: true, level: "HIGH",
-    actionStatus: "action_required", hasMsds: false, msdsUpdatedAt: null, registeredAt: "2024-05-22",
-    lastInspection: "2025-01-10", storageCondition: "염기성 전용, 밀폐 보관", loc: "시약장 B (염기성)",
-    icons: ["corrosive"],
-    ppe: [{ type: "gloves", required: true }, { type: "goggles", required: true }, { type: "coat", required: true }, { type: "mask", required: false }],
-  },
-  {
-    id: 4, name: "Ethanol 70%", cas: "64-17-5", isHighRisk: false, level: "LOW",
-    actionStatus: "normal", hasMsds: true, msdsUpdatedAt: "2025-02-01", registeredAt: "2024-08-01",
-    lastInspection: "2025-03-01", storageCondition: "실온 보관", loc: "일반 캐비닛",
-    icons: ["flammable"],
-    ppe: [{ type: "gloves", required: true }, { type: "goggles", required: false }, { type: "coat", required: false }, { type: "mask", required: false }],
-  },
-];
+// §11.348-B-1 B1-3 — mock safetyItems 제거(실데이터 /api/safety/products 로 대체).
 
 const LOCATIONS = ["시약장 A (산성)", "시약장 B (염기성)", "방폭 캐비닛 1", "일반 캐비닛"];
 
@@ -167,7 +141,24 @@ export default function SafetyManagerPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   // ── Mutable item state ──
-  const [items, setItems] = useState<SafetyItem[]>(safetyItems);
+  // §11.348-B-1 B1-3 — 초기값 []; 실데이터(/api/safety/products) 도착 시 동기화.
+  //   mock(safetyItems) 는 제거 — 하드코딩 4건 대신 실 Product 안전필드 기반.
+  const [items, setItems] = useState<SafetyItem[]>([]);
+  const safetyQuery = useQuery({
+    queryKey: ["safety-products"],
+    queryFn: async () => {
+      const res = await fetch("/api/safety/products?limit=100");
+      if (!res.ok) throw new Error("안전 데이터를 불러오지 못했습니다.");
+      const data = await res.json();
+      return (data.products ?? []) as SafetyApiProduct[];
+    },
+  });
+  useEffect(() => {
+    if (!safetyQuery.data) return;
+    const { items: adapted } = adaptSafetyProducts(safetyQuery.data);
+    setItems(adapted);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [safetyQuery.data]);
 
   // ── Strategy ──
   const [activeFrame, setActiveFrame] = useState<StrategyFrame>("balanced_ops");

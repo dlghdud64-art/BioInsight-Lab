@@ -93,6 +93,15 @@ B1-0(모델+인프라, migration dry-run) → B1-1(업로드/서명URL) → B1-2
 - ✅ sentinel B1-2 2/2. migration 0.
 - **다음**: B1-3 안전 페이지 mock→실데이터(§11.357, /api/safety/products 연결 + SDS 섹션 재사용) → B1-4 COA 동형.
 
+---
+## 부록 — B1-3 구현 완료 (§11.357 mock 해소, Claude, 2026-06-03, push 대기)
+- ✅ `dashboard/safety` 하드코딩 `safetyItems`(4건) 제거 → `useQuery(/api/safety/products)` + `adaptSafetyProducts` 어댑터. `buildSafetyDecision` 규칙엔진 그대로(입력만 실데이터).
+- ✅ **id 충돌 회피**: 어댑터가 로컬 index id(1..N) 부여 → 엔진 타입·페이지 number-id(selectedItemId/Set/Map) 무변경 = 저위험. 실 productId 는 맵 보존(B1-3b deep-link).
+- ✅ 파생: hasMsds(msdsUrl∨sds) / level·isHighRisk(픽토·hazardCode) / actionStatus(MSDS) / icons / ppe / cas(없음→"").
+- ✅ sentinel B1-3 6/6 + 기존 안전 sentinel 53/53 무영향. migration 0.
+- ⚠️ **B1-3b 잔여**: 가짜 mutation(등록/점검/폐기) 영속화(등록→SDS 업로드, 점검→Inspection). 현재 READ만 실데이터(기존도 fake라 회귀 0). TREND_DATA(7일) mock 잔존.
+- **다음**: B1-4 COA 동형(coaUrl/source=coa) — B-1 마지막 조각.
+
 ## Notes
 - §11.357 은 독립 스펙이 아니라 **B-1의 B1-3 phase로 흡수**(파일 인프라 위에).
 - A-3(입고안 모델)과 무관·독립 — 병행 가능하나 둘 다 migration이라 적용은 순차 권장.
