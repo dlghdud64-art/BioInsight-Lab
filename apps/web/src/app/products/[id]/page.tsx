@@ -1,6 +1,8 @@
 "use client";
 
 import { csrfFetch } from "@/lib/api-client";
+// §11.348-B-1 B1-2 — SDS 문서 섹션(업로드/열람).
+import { SdsDocumentsSection } from "@/components/safety/sds-documents-section";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
@@ -775,6 +777,8 @@ export default function ProductDetailPage() {
                               MSDS/SDS 문서 정보가 없습니다.
                             </div>
                           )}
+                          {/* §11.348-B-1 B1-2 — 업로드된 SDS 문서 목록/업로드/열람 (서명URL) */}
+                          {product?.id && <SdsDocumentsSection productId={product.id} />}
                         </div>
 
                         {/* 규제/절차 링크 */}

@@ -77,6 +77,22 @@ B1-0(모델+인프라, migration dry-run) → B1-1(업로드/서명URL) → B1-2
 - [ ] 스토리지 Supabase 단일 vs Blob 폴백 — B1-1 에서 `po-pdf-storage.ts` 패턴 확인 후 결정.
 - [ ] SDSDocument vs Product.msdsUrl 관계 — B1-1/B1-2: msdsUrl=레거시 단일 URL, SDSDocument[]=정본(뷰어는 SDSDocument 우선, msdsUrl 폴백).
 
+---
+## 부록 — B1-1 구현 완료 (Claude, 2026-06-03, push 완료)
+- ✅ `lib/safety/sds-storage.ts`(service-role) — `uploadSdsFile`/`createSdsSignedUrl`/`StorageNotConfiguredError`. env: SUPABASE_URL/SERVICE_ROLE_KEY/SDS_BUCKET.
+- ✅ `api/sds/[id]/signed-url` TODO 제거 → 실 Supabase 서명URL + Product.msdsUrl 폴백.
+- ✅ `api/products/[id]/sds` POST 업로드(multipart→스토리지→SDSDocument, 미설정 503 graceful).
+- ✅ 정본 우선순위 확정: SDSDocument > msdsUrl(레거시). 업로드=보관만, 안전필드 승격은 apply(B1-3).
+- ✅ sentinel B1-1 3/3 + B1-0 3/3. migration 0.
+- ⚠️ 런타임 스토리지는 SUPABASE_* env 필요(ops) — 없으면 graceful(503/폴백).
+
+---
+## 부록 — B1-2 구현 완료 (Claude, 2026-06-03, push 대기)
+- ✅ `components/safety/sds-documents-section.tsx` — 목록(GET) + 업로드(POST multipart csrfFetch) + 열람(POST signed-url→window.open). 스토리지 미설정/팝업차단 graceful.
+- ✅ `products/[id]` 안전 섹션에 same-canvas 마운트(MSDS 레거시 링크 + SDSDocument 정본 병존). page-per-feature 금지 준수.
+- ✅ sentinel B1-2 2/2. migration 0.
+- **다음**: B1-3 안전 페이지 mock→실데이터(§11.357, /api/safety/products 연결 + SDS 섹션 재사용) → B1-4 COA 동형.
+
 ## Notes
 - §11.357 은 독립 스펙이 아니라 **B-1의 B1-3 phase로 흡수**(파일 인프라 위에).
 - A-3(입고안 모델)과 무관·독립 — 병행 가능하나 둘 다 migration이라 적용은 순차 권장.
