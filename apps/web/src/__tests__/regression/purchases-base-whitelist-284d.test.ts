@@ -37,8 +37,8 @@ describe("§11.284d — 구매 운영 base status whitelist + empty state", () =
     expect(PAGE).toMatch(/PURCHASE_STAGE_STATUSES\.has\(i\.conversionStatus\)/);
   });
 
-  it("empty state 메시지 호영님 spec 정합 — '발주 전환 대기 중인 건이 없습니다'", () => {
-    expect(PAGE).toMatch(/발주 전환 대기 중인 건이 없습니다/);
+  it("empty state 메시지 호영님 spec 정합 — '발주 인계 대기 중인 건이 없습니다'", () => {
+    expect(PAGE).toMatch(/발주 인계 대기 중인 건이 없습니다/);
   });
 
   it("empty state 부카피 호영님 spec — '견적 비교가 완료되면 여기에 표시'", () => {

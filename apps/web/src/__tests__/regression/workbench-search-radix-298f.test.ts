@@ -95,6 +95,8 @@ describe("§11.298f — application-wide Radix wiring 0 회복 (Node.js FS 스�
       SRC_DIR,
       /from "@\/components\/ui\/dropdown-menu"/,
       [".tsx", ".ts"],
+      // §11.356 — __tests__ 제외 (test 파일 내 단언 regex false positive). JSX 스캔과 정합.
+      ["node_modules", ".next", ".git", "dist", ".turbo", "__tests__"],
     );
     expect(matches).toHaveLength(0);
   });

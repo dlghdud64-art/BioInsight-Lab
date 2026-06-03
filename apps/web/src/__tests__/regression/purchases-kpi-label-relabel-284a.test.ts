@@ -4,17 +4,17 @@
  *
  * 호영님 P0 spec (대화 메시지, 2026-05-23):
  *   "구매 운영 KPI 라벨이 견적 단계 텍스트 그대로 (검토/발주/확정/만료) —
- *    구매 운영 실제 단계 (발주 전환 대기 / 발주 승인 대기 / 발주 확정 /
+ *    구매 운영 실제 단계 (발주 인계 대기 / 발주 승인 대기 / 발주 확정 /
  *    공급사 통보 완료) 으로 변경."
  *
  * Fix (minimum diff, 1 file ~10 spot swap):
  *   STATUS_MAP (line 99-104):
- *     review_required: "검토 필요" → "발주 전환 대기"
+ *     review_required: "검토 필요" → "발주 인계 대기"
  *     ready_for_po:    "발주 가능" → "발주 승인 대기"
  *     confirmed:       "확정됨"   → "발주 확정"
  *
  *   데스크탑 KpiCard 4 spot (line 600-640):
- *     "검토 필요" → "발주 전환 대기"
+ *     "검토 필요" → "발주 인계 대기"
  *     "발주 가능" → "발주 승인 대기"
  *     "확정됨"   → "발주 확정"
  *     "만료"     → "공급사 통보 완료"
@@ -47,8 +47,8 @@ describe("§11.284a — 구매 운영 KPI 라벨 데스크탑 4 spot", () => {
     expect(PAGE).toMatch(/§11\.284a/);
   });
 
-  it("STATUS_MAP.review_required label \"발주 전환 대기\"", () => {
-    expect(PAGE).toMatch(/review_required:\s*\{\s*label:\s*"발주 전환 대기"/);
+  it("STATUS_MAP.review_required label \"발주 인계 대기\"", () => {
+    expect(PAGE).toMatch(/review_required:\s*\{\s*label:\s*"발주 인계 대기"/);
   });
 
   it("STATUS_MAP.ready_for_po label \"발주 승인 대기\"", () => {
@@ -59,8 +59,8 @@ describe("§11.284a — 구매 운영 KPI 라벨 데스크탑 4 spot", () => {
     expect(PAGE).toMatch(/confirmed:\s*\{\s*label:\s*"발주 확정"/);
   });
 
-  it("데스크탑 KpiCard 4 label 명시 (발주 전환 대기 / 발주 승인 대기 / 발주 확정 / 공급사 통보 완료)", () => {
-    expect(PAGE).toMatch(/label="발주 전환 대기"/);
+  it("데스크탑 KpiCard 4 label 명시 (발주 인계 대기 / 발주 승인 대기 / 발주 확정 / 공급사 통보 완료)", () => {
+    expect(PAGE).toMatch(/label="발주 인계 대기"/);
     expect(PAGE).toMatch(/label="발주 승인 대기"/);
     expect(PAGE).toMatch(/label="발주 확정"/);
     expect(PAGE).toMatch(/label="공급사 통보 완료"/);
