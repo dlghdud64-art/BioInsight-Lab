@@ -30,6 +30,32 @@
 3. 모바일 거래명세서 추가촬영 동선 (scan.tsx — 현재 라벨만)
 4. scan.tsx 카피 정리 (오타/문구)
 
+### ⚠️ 호영님 production 검증 추가 정정 (2026-05-30) — 3건
+- **(P0) 통합 동선 핵심 동작 = 라벨→거래명세서/PO 매핑**: 라벨 스캔으로 품목 식별 → 그 품목으로 **기존 거래명세서/PO 자동 검색 + 사용자 선택/매핑** → 매핑된 PO에서 **입고 수량 자동 채움** → 매핑 없으면 수동 입력. (현재는 라벨→폼→끝, 매핑 동선 부재.) = §11.326 데이터 모델 최종 의도.
+- **(P1) 개발자 용어 → 사용자 친화 문구**: "JPG/PNG/WebP 이미지 선택" / "OCR" / "ocrJobId" 등 → 일반 문구. (예: "사진을 선택하거나 촬영하세요".)
+- **(P1) 에러 메시지 정정 + root cause**: "ocrJobId가 없어 입고 등록할 수 없습니다" → "이미지 분석 결과를 찾을 수 없습니다. 다시 스캔해 주세요." + **왜 jobId 없는지 root cause 조사**(매핑 미적용·STORAGE_PROVIDER 미설정 맥락 가능 = §11.290 Phase 5 연관).
+- ⚠️ **grep 정합 경고**: 현재 sandbox 코드에 `ocrJobId`/`JPG`/`WebP`/"이미지를 선택" **0건**(grep). 호영님 화면은 이전 배포본일 수 있음 → GREEN 진입 시 **실제 문구·에러 위치 재확인 필수**(추정 금지). production-sandbox drift 확인 선행.
+
+### 자기정정
+- 직전 "스마트 입고로 통일됐다"는 부정확. 정확히는 "Phase B 보강 사양에 통일이 포함" + **실제 land 안 됨**. 호영님 검증이 잡음.
+
+### ⚠️ 표면 재audit 결과 (2026-05-30, §11.318 학습 적용) — 두 모달 별개 확정
+| 컴포넌트 | 진입점 | OCR API | §11.326 데이터모델 |
+| :-- | :-- | :-- | :-- |
+| **SmartReceivingScannerModal**(558줄) | 메인 대시보드(inventory-main:?, Header) = "스마트 입고" | `/api/quotes/parse-image` → `/api/inventory/smart-receiving` | **quantity 단일 — packSize 분리 미적용(§11.326 버그 존재)** |
+| **LabelScannerModal** | 재고 kebab/scan page/워크벤치/global-modal = "스마트 재고 등록" | `/api/inventory/scan-label` | packSize/receivedQuantity 분리 **적용됨(Phase 3)** |
+- **가설 A 확정**: 두 모달은 중복 아니라 **목적 다름**(Smart=거래명세서 파싱, Label=라벨 OCR). 단 §11.326 데이터모델이 Smart엔 미적용.
+- **ocrJobId 에러 root cause = SmartReceivingScannerModal:253** — `scanResult.ocrMetadata.jobId` 없으면 입고 차단(dead-end). 거래명세서 파싱이 jobId 없이 반환(STORAGE_PROVIDER 미설정 시 §11.290처럼 jobId=null) → 입고 불가. = §11.290 Phase 5 연관(호영님 통찰 정확).
+- **친화문구 위치 = Smart:315/323** ("거래명세서 또는 라벨 촬영" + "JPG/PNG/WebP").
+- **진입점 정정**: 호영님 화면(메인 대시보드 "스마트 입고" + ocrJobId 에러) = **SmartReceivingScannerModal**. sandbox §11.319/§11.326 Phase 3 작업 = **LabelScannerModal**(다른 컴포넌트). §11.318 표면 불일치와 동일 구조.
+
+### Phase B v2 scope 확정 (audit 후)
+1. **SmartReceivingScannerModal에 §11.326 데이터모델 적용** — quantity 단일 → packSize/receivedQuantity 분리(Label과 동일 패턴). **P0(데이터 무결성, Smart에도 같은 버그)**.
+2. **ocrJobId dead-end fix** — 친화 메시지 + jobId 없을 때 우회(수동 입고) 경로. root cause(STORAGE_PROVIDER) = §11.290 Phase 5 별도.
+3. 명칭 통일(웹 4곳 + 모바일) + 친화문구(JPG/PNG/WebP, OCR 제거).
+4. 라벨→거래명세서/PO 매핑 동선(P0, 통합 핵심).
+5. 두 모달 정합: 통합 vs 병존 = 호영님 결정(목적 다르므로 **병존 + 데이터모델 통일** 권장).
+
 ### Chosen Source of Truth
 - canonical 명칭 = **"스마트 입고"** (smart-receiving-modal 기준, 가장 포괄적).
 - 데이터: §11.326 본 모델(packSize=품목, receivedQuantity=입고) 불변.

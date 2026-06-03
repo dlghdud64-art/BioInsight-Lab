@@ -115,13 +115,23 @@ route 적용:
 - ✋ Gate: 혼합 카테고리 시 환각 미생성, dead button 0, 6테스트 의도 변경 동반.
 - Rollback: block→warn 복귀.
 
-### Phase 1d-3: 기존 6테스트 회귀 정리 (1~2h)
-- Status: [ ] Pending
-- 대상: compare-engine / compare-insight-generator / compare-completed-notification / compare-queue-semantics / compare-analysis-lock-removed-305 / compare-drawer-shortlist-removal-292b. 의도 변경분 기대값 갱신 + 나머지 GREEN 유지(호영님 env vitest).
+### Phase 1d-3: 기존 6테스트 회귀 점검 — ✅ 완료 (회귀 0)
+- Status: [x] Complete
+- 점검(2026-05-30, grep 전수): 6테스트 = compare-engine / compare-insight-generator / compare-completed-notification / compare-queue-semantics / compare-analysis-lock-removed-305 / compare-drawer-shortlist-removal-292b.
+- **내 변경 파일을 단언하는 기존 테스트 3건 정밀 검증(전부 보존 = 회귀 0):**
+  - `compare-analysis-lock-removed-305` (1d-1 route): enforceAction/InlineEnforcementHandle/.complete()/.fail()/enforcement. 없음 + auth() 유지 → 전항목 ✓ (1d-1 게이트는 이 패턴 건드리지 않음).
+  - `comparison-modal-error-message-305-2` (1d-2 modal): "AI 분석 중 오류가 발생했습니다" 메시지 보존 → ✓.
+  - `comparison-human-gate` (1d-2 modal): fetchAnalysis 시작+800자 슬라이스에 setActiveScenario( 미포함(categoryGuard useMemo는 fetchAnalysis **앞**, 본문 불변) + useEffect setActiveScenario(null) 유지 → ✓.
+- 결론: B안이 엔진(compare-review-engine) 불변 + route/modal 기존 단언 패턴 전부 보존 → **회귀 0 확정.** (PLAN §9 "6테스트 깨짐 High" 리스크 미실현 — B안 설계 + categoryGuard를 fetchAnalysis 앞에 둔 덕.)
+- ⚠️ 호영님 env vitest로 위 3건 + compare-category-guard-318-1d2 최종 GREEN 확인 권장.
 
 ### Phase 1c-rev: 대체품/벤더 추천 워크벤치 신설 (후속, core 재사용)
-- Status: [ ] Deferred (1d land 후)
-- 워크벤치에 추천 surface 신설 + 기존 core(`sourcing-recommendation.ts`) + `/api/sourcing/recommend` 재사용. 빈 상태/견적 유도/출처 명시. 데이터 전략(Phase 0~1) 정합.
+- Status: [ ] Deferred (baseline 확정 후 진입) — **사전 정독 완료(2026-05-30, read-only)**
+- **재사용 자산 확인:** core `buildSourcingRecommendation`(export ✓) + route `GET /api/sourcing/recommend`(export ✓) 모두 존재 → **1c-rev 백엔드 신규 0, surface만 신설.**
+- **추천 surface 후보:** `SourcingResultRow`(395줄, search/page.tsx:1134 렌더) 행 CTA(현재 "비교 추가"/"견적 담기")에 "대체품/벤더 찾기" 추가 → 결과는 (a) `SourcingContextRail`(156줄, 우측 레일) 확장 **[워크벤치 rail/dock 정합 권장]** / (b) 신규 드로어(legacy /compare 드로어 재사용은 표면 불일치라 비권장) / (c) 행 인라인 확장.
+- **진입 시 결정 필요:** ① surface (rail 확장 권장) ② `SourcingResultRow.product`(any)에 category/catalogNumber 실재 여부(추천 입력) — 진입 시 확인.
+- 빈 상태/견적 유도/출처 명시(과거 구매 기록 기반)는 기존 legacy 드로어 카피 재사용 가능.
+- ⚠️ §11.318 Phase 1c 표면 불일치 사고(/compare 오배치) 재발 방지 — 반드시 워크벤치(/app/search) surface 확정 후 RED→GREEN.
 
 ### Phase dep: /compare deprecation (후속)
 - 기능 워크벤치 이전 완료 → `/compare` 진입점(링크/라우팅) grep → deprecation 안내 → 제거. 갑작스런 삭제 금지(404 방지). 중복 route `api/sourcing/recommendations` 도 이때 정리(현재 호영님 env `rm` 1건 대기).
