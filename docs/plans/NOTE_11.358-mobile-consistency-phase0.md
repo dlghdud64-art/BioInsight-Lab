@@ -31,7 +31,9 @@
 - 예: index = `LabAxis`(text-lg font-extrabold) + 동적 서브텍스트(흰 배경 border-b). 타 탭(inventory/quotes/purchases)은 헤더 구조 제각각, 공통 `<AppHeader>` 부재.
 - **판정: 공통 모바일 헤더 컴포넌트 없음 → 신규 도입으로 통합(정합 트랙).** page-per-feature 회귀 방지.
 
-## 4. 긴급재발주 배지 색상 — 무해(§11.302 sweep)
+## 4. 긴급재발주 배지 색상 — 무해(§11.302 sweep) → **완료(§11.358-4, 2026-06-03)**
+> 재고 화면 amber/orange 8곳 → yellow 정합(amber-50→yellow-50, 300→300, 600→yellow-700, orange-300→yellow-300). 4파일(`[id]`/inspection/lot-dispatch/(tabs)inventory). 결품/만료 red 유지. grep 잔재 0. commit-draft: COMMIT_11.358-4.
+
 - `app/inventory/[id].tsx` lot 카드 임박 상태 = `border-amber-300 bg-amber-50` / `text-amber-600`.
 - CLAUDE.md §11.302: amber/orange 금지 → yellow. **판정: 색상 토큰 sweep 대상(무해).**
 

@@ -56,8 +56,8 @@ const RESULT_OPTIONS: {
     value: "CAUTION",
     label: "주의",
     color: "#d97706",
-    bgColor: "bg-amber-50",
-    borderColor: "border-amber-300",
+    bgColor: "bg-yellow-50",
+    borderColor: "border-yellow-300",
     icon: AlertTriangle,
   },
   {

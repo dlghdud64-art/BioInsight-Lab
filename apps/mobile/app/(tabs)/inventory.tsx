@@ -26,7 +26,7 @@ function InventoryCard({ item }: { item: ProductInventory }) {
     item.status === "OUT_OF_STOCK"
       ? "border-red-300"
       : item.status === "LOW_STOCK"
-        ? "border-orange-300"
+        ? "border-yellow-300"
         : "border-slate-200";
 
   return (

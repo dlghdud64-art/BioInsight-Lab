@@ -44,7 +44,7 @@ function LotCard({ lot, inventoryId }: { lot: InventoryLot; inventoryId: string 
   const borderColor = isExpired
     ? "border-red-300 bg-red-50"
     : isExpiringSoon
-      ? "border-amber-300 bg-amber-50"
+      ? "border-yellow-300 bg-yellow-50"
       : "border-slate-200 bg-white";
 
   const nav = (path: string) =>
@@ -95,7 +95,7 @@ function LotCard({ lot, inventoryId }: { lot: InventoryLot; inventoryId: string 
             <Text
               className={`text-xs ${
                 isExpired ? "text-red-600 font-semibold"
-                  : isExpiringSoon ? "text-amber-600 font-semibold"
+                  : isExpiringSoon ? "text-yellow-700 font-semibold"
                   : "text-slate-500"
               }`}
             >
@@ -142,7 +142,7 @@ function LotCard({ lot, inventoryId }: { lot: InventoryLot; inventoryId: string 
 
 const RESULT_STYLE: Record<string, { icon: typeof CheckCircle2; color: string; label: string; bg: string }> = {
   PASS: { icon: CheckCircle2, color: iconColor.success, label: "양호", bg: "bg-emerald-50" },
-  CAUTION: { icon: AlertTriangle, color: iconColor.warning, label: "주의", bg: "bg-amber-50" },
+  CAUTION: { icon: AlertTriangle, color: iconColor.warning, label: "주의", bg: "bg-yellow-50" },
   FAIL: { icon: XCircle, color: iconColor.danger, label: "불량", bg: "bg-red-50" },
 };
 

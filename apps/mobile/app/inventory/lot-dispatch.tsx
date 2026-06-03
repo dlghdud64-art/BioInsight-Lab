@@ -105,7 +105,7 @@ export default function LotDispatchScreen() {
           </View>
         )}
         {enteredQty > 0 && enteredQty === currentQty && (
-          <Text className="text-xs text-amber-600 mt-1.5">
+          <Text className="text-xs text-yellow-700 mt-1.5">
             전량 출고됩니다. 이 Lot은 소진 상태가 됩니다.
           </Text>
         )}
