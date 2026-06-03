@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
         vendorNote: d.vendorNote,
         vendorName: d.vendor?.name ?? null,
         order: d.order ? { id: d.order.id, orderNumber: d.order.orderNumber, status: d.order.status } : null,
-        items: d.items.map((it) => ({
+        items: d.items.map((it: any) => ({
           id: it.id,
           name: it.name,
           productId: it.productId,
