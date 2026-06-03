@@ -102,6 +102,25 @@ B1-0(모델+인프라, migration dry-run) → B1-1(업로드/서명URL) → B1-2
 - ⚠️ **B1-3b 잔여**: 가짜 mutation(등록/점검/폐기) 영속화(등록→SDS 업로드, 점검→Inspection). 현재 READ만 실데이터(기존도 fake라 회귀 0). TREND_DATA(7일) mock 잔존.
 - **다음**: B1-4 COA 동형(coaUrl/source=coa) — B-1 마지막 조각.
 
+---
+## 부록 — B1-4 구현 완료 + §11.348-B-1 완결 (Claude, 2026-06-03, push + migration 적용 대기)
+- ✅ **COA 동형**: `SDSDocument.docType`(sds/coa, default sds) 판별자 1개로 SDS 인프라 100% 재사용. 별도 모델 0.
+- ✅ migration `20260603140000_add_sds_doctype` = ADD COLUMN DEFAULT 'sds' + index(backward-compat, DROP 0).
+- ✅ 라우트 docType 필터/수신, 컴포넌트 docType/title prop, product 페이지 SDS+COA 2섹션.
+- ✅ sentinel B1-4 5/5 + B1-0/1/2 회귀 green(B1-2 마운트 단언 docType 허용 갱신).
+- ⚠️ migration 적용 게이트(호영님 migrate dev + generate).
+
+## §11.348-B-1 전체 상태 (2026-06-03)
+| Phase | 내용 | 상태 |
+| :-- | :-- | :-- |
+| B1-0 | SDSDocument 모델 | ✅ DB 적용 완료 |
+| B1-1 | 서명URL 완성 + 업로드 | ✅ push 완료(코드) |
+| B1-2 | 뷰어 UI(제품 안전 섹션) | ✅ push 완료(코드) |
+| B1-3 | 안전 mock→실데이터(§11.357) | ✅ push 완료(코드) |
+| B1-4 | COA 동형(docType) | ✅ push + migration 적용 대기 |
+
+**§11.348-B-1 완결.** 잔여(별도 트랙·세션): B1-3b(안전 mutation 영속화·TREND 실데이터), §11.348-B-2(COA 교차검증 — 품목 규격 ontology 선행), §11.348-FALLBACK(OCR).
+
 ## Notes
 - §11.357 은 독립 스펙이 아니라 **B-1의 B1-3 phase로 흡수**(파일 인프라 위에).
 - A-3(입고안 모델)과 무관·독립 — 병행 가능하나 둘 다 migration이라 적용은 순차 권장.

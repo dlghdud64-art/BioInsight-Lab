@@ -17,7 +17,16 @@ interface SdsDoc {
   createdAt: string;
 }
 
-export function SdsDocumentsSection({ productId }: { productId: string }) {
+export function SdsDocumentsSection({
+  productId,
+  docType = "sds",
+  title,
+}: {
+  productId: string;
+  docType?: "sds" | "coa"; // §11.348-B-1 B1-4 — COA 재사용
+  title?: string;
+}) {
+  const docLabel = title ?? (docType === "coa" ? "COA(시험성적서)" : "SDS");
   const { toast } = useToast();
   const [docs, setDocs] = useState<SdsDoc[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +36,7 @@ export function SdsDocumentsSection({ productId }: { productId: string }) {
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch(`/api/products/${productId}/sds`);
+      const res = await fetch(`/api/products/${productId}/sds?docType=${docType}`);
       if (!res.ok) throw new Error();
       const data = await res.json();
       setDocs(data.sdsDocuments ?? []);
@@ -36,7 +45,7 @@ export function SdsDocumentsSection({ productId }: { productId: string }) {
     } finally {
       setLoading(false);
     }
-  }, [productId]);
+  }, [productId, docType]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -47,6 +56,7 @@ export function SdsDocumentsSection({ productId }: { productId: string }) {
     try {
       const form = new FormData();
       form.append("file", file);
+      form.append("docType", docType);
       const res = await csrfFetch(`/api/products/${productId}/sds`, { method: "POST", body: form });
       const data = await res.json();
       if (!res.ok) {
@@ -56,7 +66,7 @@ export function SdsDocumentsSection({ productId }: { productId: string }) {
             : data.error || "업로드 실패",
         );
       }
-      toast({ title: "SDS 업로드 완료", description: file.name });
+      toast({ title: `${docLabel} 업로드 완료`, description: file.name });
       await load();
     } catch (err: any) {
       toast({ title: "업로드 실패", description: err.message, variant: "destructive" });
@@ -82,16 +92,16 @@ export function SdsDocumentsSection({ productId }: { productId: string }) {
   };
 
   return (
-    <div className="space-y-2" data-testid="sds-documents-section">
+    <div className="space-y-2" data-testid={`sds-documents-section-${docType}`}>
       <div className="flex items-center justify-between">
-        <div className="text-xs font-semibold text-slate-700">등록된 SDS 문서{docs.length > 0 ? ` · ${docs.length}건` : ""}</div>
+        <div className="text-xs font-semibold text-slate-700">등록된 {docLabel} 문서{docs.length > 0 ? ` · ${docs.length}건` : ""}</div>
         <Button
           variant="outline" size="sm" disabled={uploading}
           className="h-8 text-xs gap-1.5"
           onClick={() => fileRef.current?.click()}
         >
           {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-          SDS 업로드
+          {docLabel} 업로드
         </Button>
         <input ref={fileRef} type="file" accept=".pdf,.png,.jpg,.jpeg" className="hidden" onChange={handleUpload} />
       </div>
@@ -100,7 +110,7 @@ export function SdsDocumentsSection({ productId }: { productId: string }) {
         <div className="flex items-center gap-2 text-xs text-slate-400 p-2"><Loader2 className="h-3 w-3 animate-spin" /> 불러오는 중…</div>
       ) : docs.length === 0 ? (
         <div className="text-xs text-slate-400 italic p-2 bg-slate-50 rounded border border-slate-200">
-          등록된 SDS 파일이 없습니다. 업로드하면 품목별로 보관·열람됩니다.
+          등록된 {docLabel} 파일이 없습니다. 업로드하면 품목별로 보관·열람됩니다.
         </div>
       ) : (
         <div className="space-y-1.5">

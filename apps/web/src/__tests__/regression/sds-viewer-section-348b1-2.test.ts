@@ -33,6 +33,6 @@ describe("§11.348-B-1 B1-2 — same-canvas 마운트", () => {
   it("products/[id] 안전 섹션에 SdsDocumentsSection", () => {
     const src = read(PAGE);
     expect(src).toContain('from "@/components/safety/sds-documents-section"');
-    expect(src).toContain("<SdsDocumentsSection productId={product.id} />");
+    expect(src).toContain("<SdsDocumentsSection productId={product.id}"); // B1-4: docType prop 추가 허용
   });
 });

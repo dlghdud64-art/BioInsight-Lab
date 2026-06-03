@@ -778,7 +778,9 @@ export default function ProductDetailPage() {
                             </div>
                           )}
                           {/* §11.348-B-1 B1-2 — 업로드된 SDS 문서 목록/업로드/열람 (서명URL) */}
-                          {product?.id && <SdsDocumentsSection productId={product.id} />}
+                          {product?.id && <SdsDocumentsSection productId={product.id} docType="sds" />}
+                          {/* §11.348-B-1 B1-4 — COA(시험성적서) 동형 아카이브 */}
+                          {product?.id && <SdsDocumentsSection productId={product.id} docType="coa" />}
                         </div>
 
                         {/* 규제/절차 링크 */}

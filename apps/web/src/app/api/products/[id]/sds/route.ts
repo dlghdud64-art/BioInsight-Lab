@@ -41,8 +41,12 @@ export async function GET(
 
     // SDS 문서 조회
     // 공용(vendor) 또는 사용자의 조직에 속한 문서만 조회
+    // §11.348-B-1 B1-4 — docType(sds/coa) 필터(미지정 시 전체).
+    const { searchParams } = new URL(request.url);
+    const docType = searchParams.get("docType");
     const where: any = {
       productId: id,
+      ...(docType ? { docType } : {}),
       OR: [
         { organizationId: null }, // 공용 문서
         ...(organizationIds && organizationIds.length > 0
@@ -97,6 +101,9 @@ export async function POST(
     }
     const f = file as File;
     const buffer = Buffer.from(await f.arrayBuffer());
+    // §11.348-B-1 B1-4 — docType(sds/coa). 미지정/비정상 시 "sds".
+    const rawDocType = form.get("docType");
+    const docType = rawDocType === "coa" ? "coa" : "sds";
 
     // 조직 스코프: 요청자의 첫 조직(없으면 공용 null).
     const membership = await db.organizationMember.findFirst({
@@ -132,6 +139,7 @@ export async function POST(
         bucket: stored.bucket,
         path: stored.path,
         source: "upload",
+        docType,
         contentType: f.type || null,
         sizeBytes: buffer.length,
       },
