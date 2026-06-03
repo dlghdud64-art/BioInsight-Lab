@@ -102,6 +102,8 @@ model Organization {
   workspace          Workspace?
   // §11.348-A — 조직 스코프 검증 대기 입고안.
   receivingDrafts    ReceivingDraft[]
+  // §11.348-B-1 — 조직 스코프 SDS 문서.
+  sdsDocuments       SDSDocument[]
 
   @@index([name])
   @@index([plan])
@@ -312,6 +314,8 @@ model Product {
   recommendations ProductRecommendation[] @relation("ProductRecommendations")
   recommendedFor  ProductRecommendation[] @relation("RecommendedProducts")
   searchHistory   SearchHistory[]
+  // §11.348-B-1 — 제품별 SDS/MSDS 문서(파일 스토리지 메타).
+  sdsDocuments    SDSDocument[]
   reviews         Review[]
   quoteListItems  QuoteListItem[]
   inventories     ProductInventory[]
@@ -3249,4 +3253,37 @@ model ReceivingDraftItem {
   @@index([receivingDraftId])
   @@index([orderItemId])
   @@index([productId])
+}
+
+
+// =====================================================
+// §11.348-B-1 — SDS/MSDS 문서 (파일 스토리지 메타 + 추출 결과)
+// =====================================================
+// 파일 원본은 오브젝트 스토리지(bucket/path), DB엔 메타+링크만(BLOB 금지).
+// 기존 라우트(api/sds/[id]/{signed-url,extract,apply}, api/products/[id]/sds,
+// api/safety/sds, admin/safety)가 참조하던 db.sDSDocument 모델을 정규화.
+// 추출 결과(extractionResult)는 검증 전 derived — canonical 안전필드(Product)
+// 승격은 사람 승인(api/sds/[id]/apply). source: upload(직접) / ocr / vendor.
+
+model SDSDocument {
+  id               String    @id @default(cuid())
+  productId        String
+  organizationId   String?   // 공용 문서 = null
+  fileName         String
+  bucket           String    // 오브젝트 스토리지 버킷(Supabase/Blob)
+  path             String    // 스토리지 경로
+  source           String    @default("upload") // upload / ocr / vendor
+  contentType      String?
+  sizeBytes        Int?
+  extractionStatus String?   // queued / processing / done / failed (null=미추출)
+  extractionResult Json?     // 추출된 안전 필드(검증 전 derived 제안)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  product      Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@index([productId])
+  @@index([organizationId])
+  @@index([extractionStatus])
 }
