@@ -96,12 +96,12 @@ export function PoCreatedDetailWorkbench({
               {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Package className="h-4 w-4 text-teal-400" />}
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-slate-100">{isRecorded ? "PO Created 완료" : "PO Created 검토"}</h2>
+              <h2 className="text-sm font-semibold text-slate-100">{isRecorded ? "PO 생성(PO Created) 완료" : "PO 생성(PO Created) 검토"}</h2>
               <div className="flex items-center gap-2 text-[10px] mt-0.5">
                 <span className="text-slate-400">공급사 <span className="text-slate-200 font-medium">{createdState.createdVendorCount}개</span></span>
                 <span className="text-slate-600">·</span>
                 {readiness?.isSendReady ? (
-                  <span className="text-emerald-400 font-medium">Dispatch 준비 완료</span>
+                  <span className="text-emerald-400 font-medium">발송 준비 완료</span>
                 ) : (
                   <span className="text-yellow-400">누락 {readiness?.sendCriticalMissing.length || 0}</span>
                 )}
@@ -184,7 +184,7 @@ export function PoCreatedDetailWorkbench({
           {readiness && (
             <div className="grid grid-cols-2 gap-2">
               <div className={`px-3 py-2.5 rounded-md border ${readiness.sendCriticalMissing.length === 0 ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-red-500/15 bg-red-600/[0.03]"}`}>
-                <span className="text-[9px] text-slate-500 block mb-0.5">Send-Critical</span>
+                <span className="text-[9px] text-slate-500 block mb-0.5">발송 필수(Send-Critical)</span>
                 {readiness.sendCriticalMissing.length === 0 ? (
                   <div className="flex items-center gap-1"><Check className="h-3 w-3 text-emerald-400" /><span className="text-[10px] text-emerald-300">전부 완료</span></div>
                 ) : (
@@ -192,7 +192,7 @@ export function PoCreatedDetailWorkbench({
                 )}
               </div>
               <div className={`px-3 py-2.5 rounded-md border ${readiness.nonCriticalMissing.length === 0 ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-yellow-500/20 bg-yellow-600/[0.03]"}`}>
-                <span className="text-[9px] text-slate-500 block mb-0.5">Non-Critical</span>
+                <span className="text-[9px] text-slate-500 block mb-0.5">비필수(Non-Critical)</span>
                 {readiness.nonCriticalMissing.length === 0 ? (
                   <div className="flex items-center gap-1"><Check className="h-3 w-3 text-emerald-400" /><span className="text-[10px] text-emerald-300">전부 완료</span></div>
                 ) : (
@@ -221,9 +221,9 @@ export function PoCreatedDetailWorkbench({
           {/* ═══ Success ═══ */}
           {isRecorded && (
             <div className="px-3 py-3 rounded-md bg-emerald-600/[0.06] border border-emerald-500/15 space-y-1">
-              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /><span className="text-[11px] text-emerald-300 font-medium">PO Created가 저장되었습니다</span></div>
+              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /><span className="text-[11px] text-emerald-300 font-medium">PO 생성(PO Created)이 저장되었습니다</span></div>
               <span className="text-[10px] text-slate-400">
-                {readiness?.isSendReady ? "Dispatch Preparation으로 보내 발주를 발송할 수 있습니다." : "누락 필드를 보완 후 Dispatch Preparation으로 보낼 수 있습니다."}
+                {readiness?.isSendReady ? "발송 준비(Dispatch Preparation)로 보내 발주를 발송할 수 있습니다." : "누락 필드를 보완 후 발송 준비(Dispatch Preparation)로 보낼 수 있습니다."}
               </span>
             </div>
           )}
@@ -245,14 +245,14 @@ export function PoCreatedDetailWorkbench({
             {!isRecorded ? (
               <Button size="sm" className="flex-1 h-8 text-[10px] bg-teal-600 hover:bg-teal-500 text-white font-medium"
                 onClick={recordCreated} disabled={!validation?.canRecordPoCreated}>
-                <Package className="h-3 w-3 mr-1" />PO Created 저장
+                <Package className="h-3 w-3 mr-1" />PO 생성(PO Created) 저장
               </Button>
             ) : (
               <Button size="sm"
                 className={`flex-1 h-8 text-[10px] font-medium ${validation?.canOpenDispatchPreparation ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "bg-slate-700 text-slate-400 cursor-not-allowed"}`}
                 onClick={handleDispatchPrep}
                 disabled={!validation?.canOpenDispatchPreparation}>
-                <Truck className="h-3 w-3 mr-1" />Dispatch Preparation<ArrowRight className="h-3 w-3 ml-1" />
+                <Truck className="h-3 w-3 mr-1" />발송 준비(Dispatch Preparation)<ArrowRight className="h-3 w-3 ml-1" />
               </Button>
             )}
           </div>

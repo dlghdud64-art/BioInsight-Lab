@@ -51,14 +51,14 @@ export function SourcingResultReviewWorkbench({ open, onClose, handoff, onReview
             {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Search className="h-4 w-4 text-violet-400" />}
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-slate-100">{isRecorded ? "Result Review 완료" : "Sourcing Result Review"}</h2>
+            <h2 className="text-sm font-semibold text-slate-100">{isRecorded ? "결과 검토 완료" : "소싱 결과 검토(Sourcing Result Review)"}</h2>
             <div className="flex items-center gap-2 text-[10px] mt-0.5">
-              <span className="text-slate-400">Compare <span className="text-blue-300 font-medium">{plan?.compareCandidateIds.length || 0}</span></span>
+              <span className="text-slate-400">비교(Compare) <span className="text-blue-300 font-medium">{plan?.compareCandidateIds.length || 0}</span></span>
               <span className="text-slate-600">·</span>
-              <span className="text-slate-400">Request <span className="text-emerald-300 font-medium">{plan?.requestDirectCandidateIds.length || 0}</span></span>
+              <span className="text-slate-400">요청(Request) <span className="text-emerald-300 font-medium">{plan?.requestDirectCandidateIds.length || 0}</span></span>
               <span className="text-slate-600">·</span>
-              <span className="text-slate-400">Excluded <span className="text-slate-500 font-medium">{plan?.excludedCandidateIds.length || 0}</span></span>
-              {reviewState.baselineBiasFlag && <><span className="text-slate-600">·</span><span className="text-yellow-400">Bias</span></>}
+              <span className="text-slate-400">제외(Excluded) <span className="text-slate-500 font-medium">{plan?.excludedCandidateIds.length || 0}</span></span>
+              {reviewState.baselineBiasFlag && <><span className="text-slate-600">·</span><span className="text-yellow-400">편향(Bias)</span></>}
             </div>
           </div>
         </div>
@@ -67,19 +67,19 @@ export function SourcingResultReviewWorkbench({ open, onClose, handoff, onReview
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           {/* Search basis */}
           <div className="px-3 py-2 rounded-md bg-blue-600/[0.04] border border-blue-500/15">
-            <span className="text-[9px] font-medium text-blue-400 uppercase tracking-wider block mb-0.5">Search Reopen 근거</span>
-            <span className="text-[10px] text-blue-200">Query: {handoff.querySeedSummary} · Filter: {handoff.filterSeedSummary} · Baseline: {handoff.baselineReuseSummary}</span>
+            <span className="text-[9px] font-medium text-blue-400 uppercase tracking-wider block mb-0.5">검색 재개(Search Reopen) 근거</span>
+            <span className="text-[10px] text-blue-200">검색어(Query): {handoff.querySeedSummary} · 필터(Filter): {handoff.filterSeedSummary} · 기준선(Baseline): {handoff.baselineReuseSummary}</span>
           </div>
 
           {/* Triage summary */}
           {triage && (
             <div>
-              <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Triage 요약</span>
+              <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">선별(Triage) 요약</span>
               <div className="mt-2 grid grid-cols-4 gap-2">
-                <div className="px-3 py-2.5 rounded-md border border-emerald-500/20 bg-emerald-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">High Fit</span><span className="text-lg font-bold text-emerald-400">{triage.highFitCount}</span></div>
-                <div className="px-3 py-2.5 rounded-md border border-yellow-500/20 bg-yellow-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Medium</span><span className="text-lg font-bold text-yellow-400">{triage.mediumFitCount}</span></div>
-                <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33] text-center"><span className="text-[9px] text-slate-500 block">Excluded</span><span className="text-lg font-bold text-slate-500">{triage.excludedCount}</span></div>
-                <div className="px-3 py-2.5 rounded-md border border-yellow-500/20 bg-yellow-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Bias</span><span className="text-lg font-bold text-yellow-400">{triage.baselineBiasCount}</span></div>
+                <div className="px-3 py-2.5 rounded-md border border-emerald-500/20 bg-emerald-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">적합도 高(High Fit)</span><span className="text-lg font-bold text-emerald-400">{triage.highFitCount}</span></div>
+                <div className="px-3 py-2.5 rounded-md border border-yellow-500/20 bg-yellow-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">적합도 中(Medium)</span><span className="text-lg font-bold text-yellow-400">{triage.mediumFitCount}</span></div>
+                <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33] text-center"><span className="text-[9px] text-slate-500 block">제외(Excluded)</span><span className="text-lg font-bold text-slate-500">{triage.excludedCount}</span></div>
+                <div className="px-3 py-2.5 rounded-md border border-yellow-500/20 bg-yellow-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">편향(Bias)</span><span className="text-lg font-bold text-yellow-400">{triage.baselineBiasCount}</span></div>
               </div>
             </div>
           )}
@@ -89,12 +89,12 @@ export function SourcingResultReviewWorkbench({ open, onClose, handoff, onReview
             const groupPlan = buildSourcingResultGroupPlan(reviewState.candidateDecisions, "");
             return (
               <div>
-                <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Candidate Group</span>
+                <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">후보 그룹(Candidate Group)</span>
                 <div className="mt-2 grid grid-cols-4 gap-2">
-                  <div className="px-3 py-2.5 rounded-md border border-blue-500/20 bg-blue-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Exact Match</span><span className="text-lg font-bold text-blue-400">{groupPlan.exactMatchCandidateIds.length}</span></div>
-                  <div className="px-3 py-2.5 rounded-md border border-violet-500/20 bg-violet-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Equivalent</span><span className="text-lg font-bold text-violet-400">{groupPlan.equivalentCandidateIds.length}</span></div>
-                  <div className="px-3 py-2.5 rounded-md border border-emerald-500/20 bg-emerald-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Substitute</span><span className="text-lg font-bold text-emerald-400">{groupPlan.substituteCandidateIds.length}</span></div>
-                  <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33] text-center"><span className="text-[9px] text-slate-500 block">Blocked</span><span className="text-lg font-bold text-slate-500">{groupPlan.blockedCandidateIds.length}</span></div>
+                  <div className="px-3 py-2.5 rounded-md border border-blue-500/20 bg-blue-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">정확 일치(Exact Match)</span><span className="text-lg font-bold text-blue-400">{groupPlan.exactMatchCandidateIds.length}</span></div>
+                  <div className="px-3 py-2.5 rounded-md border border-violet-500/20 bg-violet-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">동등(Equivalent)</span><span className="text-lg font-bold text-violet-400">{groupPlan.equivalentCandidateIds.length}</span></div>
+                  <div className="px-3 py-2.5 rounded-md border border-emerald-500/20 bg-emerald-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">대체(Substitute)</span><span className="text-lg font-bold text-emerald-400">{groupPlan.substituteCandidateIds.length}</span></div>
+                  <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33] text-center"><span className="text-[9px] text-slate-500 block">차단(Blocked)</span><span className="text-lg font-bold text-slate-500">{groupPlan.blockedCandidateIds.length}</span></div>
                 </div>
               </div>
             );
@@ -107,7 +107,7 @@ export function SourcingResultReviewWorkbench({ open, onClose, handoff, onReview
             const deltaSummary = buildSourcingCompareDeltaSummary(compareCandidates.length);
             return (
               <div>
-                <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Delta-First Compare</span>
+                <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">변동 우선 비교(Delta-First Compare)</span>
                 <div className="mt-2 grid grid-cols-3 gap-2">
                   <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]"><span className="text-[9px] text-slate-500 block">가격</span><span className="text-[10px] text-slate-200">{deltaSummary.priceDeltaSummary}</span></div>
                   <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]"><span className="text-[9px] text-slate-500 block">납기</span><span className="text-[10px] text-slate-200">{deltaSummary.leadTimeDeltaSummary}</span></div>
@@ -122,7 +122,7 @@ export function SourcingResultReviewWorkbench({ open, onClose, handoff, onReview
             <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">후보 검토</span>
             {reviewState.candidateDecisions.length === 0 ? (
               <div className="px-3 py-3 rounded-md bg-slate-700/20 border border-bd/30 text-center">
-                <span className="text-[10px] text-slate-500">후보 데이터가 handoff를 통해 전달됩니다.</span>
+                <span className="text-[10px] text-slate-500">후보 데이터가 인계(handoff)를 통해 전달됩니다.</span>
               </div>
             ) : (
               <div className="mt-2 space-y-1.5">
@@ -151,11 +151,11 @@ export function SourcingResultReviewWorkbench({ open, onClose, handoff, onReview
           {plan && (plan.compareCandidateIds.length > 0 || plan.requestDirectCandidateIds.length > 0) && (
             <div className="grid grid-cols-2 gap-2">
               <div className={`px-3 py-2.5 rounded-md border ${plan.compareCandidateIds.length >= 2 ? "border-blue-500/20 bg-blue-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
-                <span className="text-[9px] text-slate-500 block mb-0.5">Compare Reopen</span>
+                <span className="text-[9px] text-slate-500 block mb-0.5">비교 재개(Compare Reopen)</span>
                 <span className={`text-[10px] font-medium ${plan.compareCandidateIds.length >= 2 ? "text-blue-300" : "text-slate-500"}`}>{plan.compareCandidateIds.length}개 후보 {plan.compareCandidateIds.length >= 2 ? "— 준비됨" : "— 부족"}</span>
               </div>
               <div className={`px-3 py-2.5 rounded-md border ${plan.requestDirectCandidateIds.length > 0 ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
-                <span className="text-[9px] text-slate-500 block mb-0.5">Request Reopen</span>
+                <span className="text-[9px] text-slate-500 block mb-0.5">요청 재개(Request Reopen)</span>
                 <span className={`text-[10px] font-medium ${plan.requestDirectCandidateIds.length > 0 ? "text-emerald-300" : "text-slate-500"}`}>{plan.requestDirectCandidateIds.length}개 후보 {plan.requestDirectCandidateIds.length > 0 ? "— 준비됨" : "— 없음"}</span>
               </div>
             </div>
@@ -168,8 +168,8 @@ export function SourcingResultReviewWorkbench({ open, onClose, handoff, onReview
 
           {isRecorded && (
             <div className="px-3 py-3 rounded-md bg-emerald-600/[0.06] border border-emerald-500/15">
-              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /><span className="text-[11px] text-emerald-300 font-medium">Result Review 저장 완료</span></div>
-              <span className="text-[10px] text-slate-400 block mt-1">Compare Reopen 또는 Request Reopen으로 진행하여 조달 흐름을 재개할 수 있습니다.</span>
+              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /><span className="text-[11px] text-emerald-300 font-medium">결과 검토 저장 완료</span></div>
+              <span className="text-[10px] text-slate-400 block mt-1">비교 재개(Compare Reopen) 또는 요청 재개(Request Reopen)로 진행하여 조달 흐름을 재개할 수 있습니다.</span>
             </div>
           )}
         </div>
@@ -177,23 +177,23 @@ export function SourcingResultReviewWorkbench({ open, onClose, handoff, onReview
       {/* ── Sticky Dock ── */}
       <div className="px-5 py-3 border-t border-bd bg-[#181E28] shrink-0">
         <div className="flex items-center gap-3 text-[10px] mb-2.5">
-          <span className="text-slate-500">Compare <span className="text-blue-300 font-medium">{plan?.compareCandidateIds.length || 0}</span></span>
+          <span className="text-slate-500">비교(Compare) <span className="text-blue-300 font-medium">{plan?.compareCandidateIds.length || 0}</span></span>
           <span className="text-slate-600">·</span>
-          <span className="text-slate-500">Request <span className="text-emerald-300 font-medium">{plan?.requestDirectCandidateIds.length || 0}</span></span>
+          <span className="text-slate-500">요청(Request) <span className="text-emerald-300 font-medium">{plan?.requestDirectCandidateIds.length || 0}</span></span>
           <span className="text-slate-600">·</span>
           <span className="text-slate-500">{validation?.recommendedNextAction || ""}</span>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onReturnToSearchReopen}><ArrowLeft className="h-3 w-3 mr-1" />Search Reopen</Button>
+          <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onReturnToSearchReopen}><ArrowLeft className="h-3 w-3 mr-1" />검색 재개(Search Reopen)</Button>
           {!isRecorded ? (
-            <Button size="sm" className="flex-1 h-8 text-[10px] bg-violet-600 hover:bg-violet-500 text-white font-medium" onClick={recordReview} disabled={!validation?.canRecordSourcingResultReview}><Search className="h-3 w-3 mr-1" />Result Review 저장</Button>
+            <Button size="sm" className="flex-1 h-8 text-[10px] bg-violet-600 hover:bg-violet-500 text-white font-medium" onClick={recordReview} disabled={!validation?.canRecordSourcingResultReview}><Search className="h-3 w-3 mr-1" />결과 검토 저장</Button>
           ) : (
             <div className="flex gap-1.5 flex-1">
               {validation?.canOpenCompareReopen && (
-                <Button size="sm" className="flex-1 h-8 text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={onCompareReopenHandoff}><GitCompare className="h-3 w-3 mr-1" />Compare Reopen<ArrowRight className="h-3 w-3 ml-1" /></Button>
+                <Button size="sm" className="flex-1 h-8 text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={onCompareReopenHandoff}><GitCompare className="h-3 w-3 mr-1" />비교 재개(Compare Reopen)<ArrowRight className="h-3 w-3 ml-1" /></Button>
               )}
               {validation?.canOpenRequestReopen && (
-                <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={onRequestReopenHandoff}><FileText className="h-3 w-3 mr-1" />Request Reopen<ArrowRight className="h-3 w-3 ml-1" /></Button>
+                <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={onRequestReopenHandoff}><FileText className="h-3 w-3 mr-1" />요청 재개(Request Reopen)<ArrowRight className="h-3 w-3 ml-1" /></Button>
               )}
             </div>
           )}

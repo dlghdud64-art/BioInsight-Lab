@@ -53,6 +53,8 @@
 - 계승: Stock Release→재고 출고 / Reorder Decision→재주문 결정 / Supplier Confirmation→공급사 확인 / Receiving Execution→입고 실행 / Receiving Preparation→입고 준비 / Procurement Re-entry→조달 재진입 / Watch→관찰 / Acknowledgment→수령 확인 / Dispatch Preparation→발송 준비.
 - 신규(확정 2026-06-04, 호영님 "권장 가자"): Compare→비교 / Request→요청 / Shortlist→후보 추림 / Approval→승인 / PO Conversion→발주 전환 / Quote Management→견적 관리 / Normalization→정규화 / **Vendor=Supplier→"공급사" 통일** / Send Confirmation→발송 확인 / Send-Critical→발송 필수 / Non-Critical→비필수 / Eligibility→적격 / Bias→편향 / Recipient→수신자 / Channel→채널 / Payload→페이로드 / Readiness→준비 / Lines→라인 / Candidates→후보 / Stale→경과 / Retained→유지 / Remap→재매핑 / Locked→잠금 / Editable→수정 가능 / Delta→변동 / Capture→기록 / Inbound→입고 예정.
 - ✅ Vendor/Supplier 표기 = "공급사" 통일 확정.
+- 신규(확정 2026-06-04, 호영님 승인 — sourcing-result-review 게이트): Sourcing→소싱 / (Sourcing) Result Review→결과 검토 / Triage→선별(분류는 category 혼동 회피) / Fit 등급 High·Medium·Low→적합도 高·中·低(영문 병기 유지, raw enum fitScore 값은 별도 트랙 보존) / Exact Match→정확 일치 / Equivalent→동등 / Substitute→대체 / Delta-First Compare→변동 우선 비교 / Reopen→재개(in-product 선례 popup L172) / Candidate Group→후보 그룹 / Blocked→차단.
+- 보조(generic, 동일 게이트에서 적용 — 필요 시 호영님 veto): Query→검색어 / Filter→필터 / Baseline→기준선 / handoff→인계. ⚠️ raw enum 표시값(fitScore "high/medium/low")은 한글화 안 함(값 보존, 별도 트랙).
 
 ## 4. Phases
 - B-1: Tier 1 (정방향 surface, 노출順). 군별 병기 한글화 + sentinel.
@@ -71,7 +73,7 @@
 - 파일군별(Phase별) 독립 revert.
 
 ## 7. Progress
-- Overall ~13% · Tier 1: [x] supplier-confirmation [x] receiving-execution [x] send-confirmation [x] dispatch-preparation / [ ] po-created-detail [ ] sourcing-result-review [ ] approval-workbench [ ] approval-handoff-gate [ ] compare-review-center-work-window [ ] quote-compare-review [ ] quote-management-workqueue
+- Overall ~25% · Tier 1: [x] supplier-confirmation [x] receiving-execution [x] send-confirmation [x] dispatch-preparation [x] po-created-detail [x] sourcing-result-review / [ ] approval-workbench [ ] approval-handoff-gate [ ] compare-review-center-work-window [ ] quote-compare-review [ ] quote-management-workqueue
 - Tier 2: 미착수(18).
 - 선결 게이트: ✅ 병기 매핑(Vendor/Supplier=공급사 통일 포함) 확정 완료.
 
@@ -84,3 +86,8 @@
 - `send-confirmation-workbench.tsx`: 발송 확인(Send Confirmation), 최종 페이로드(Payload) 확인, PO 발송 상세(PO Sent Detail), 발송 준비(Dispatch Prep)로 병기. done 헤더 "발송 완료"·수신자/채널/발송됨·차단됨 Korean 보존. L55 ternary·canRecord* enum/handler 무변경.
 - `dispatch-preparation-workbench.tsx`: 발송 준비(Dispatch Preparation) [헤더/저장/저장 완료], 발송 필수(Send-Critical), 비필수(Non-Critical), 발송 확인(Send Confirmation), PO 생성(PO Created)로 병기. done 헤더 "발송 준비 완료"·수신자/첨부/유효/미입력/필수/선택 Korean 보존. attachment type enum(po_document)·readiness 코드조각 무변경.
 - 표시 영문 라벨 0 (잔여 grep 매칭 = 코드조각, 비-라벨). ⏳ baseline = Claude Code 미실행.
+
+**B Tier1-batch3 결과 (2026-06-04):**
+- `po-created-detail-workbench.tsx`: PO 생성(PO Created) [헤더/저장/저장 완료], 발송 준비 완료, 발송 필수(Send-Critical), 비필수(Non-Critical), 발송 준비(Dispatch Preparation) 병기. PO 헤더·결제 조건·배송지 등 기존 한글 보존. status raw enum·handler 무변경.
+- `sourcing-result-review-workbench.tsx`: 6종 신규 매핑 + Reopen→재개 일괄 적용. 소싱 결과 검토(Sourcing Result Review), 선별(Triage), 적합도 高/中(High/Medium Fit), 정확 일치/동등/대체(Exact Match/Equivalent/Substitute), 차단(Blocked), 변동 우선 비교(Delta-First Compare), 비교/요청 재개(Compare/Request Reopen), 검색 재개(Search Reopen), 검색어/필터/기준선(Query/Filter/Baseline), 인계(handoff) 병기. DECISION_CONFIG 한글 라벨·enum key 보존. ⚠️ raw enum fitScore("high/medium/low") 표시값 = 미한글화(별도 트랙).
+- 표시 영문 라벨 0 (잔여 = L133 ternary 코드조각, fitScore raw enum). ⏳ baseline = Claude Code 미실행.
