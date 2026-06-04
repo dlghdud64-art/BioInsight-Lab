@@ -314,12 +314,11 @@ function DashboardPageInner() {
   const totalQuotesCount = stats.activeQuotes + stats.respondedQuotes;
   // §11.361-1 — canonical truth: 온보딩 게이트가 "견적 0"만 보면, 재고가 이미 있는
   //   운영 유저(품목 N·안전재고 미달 M)도 신규로 오판해 KPI 를 0 으로 마스킹한다
-  //   (대시보드 0 vs 재고 모듈 2 = truth 충돌). 견적+재고(+발주) 모두 0 일 때만 온보딩.
+  //   (대시보드 0 vs 재고 모듈 2 = truth 충돌). 견적+재고 모두 0 일 때만 온보딩.
   //   stats.lowStockAlerts 등 실데이터가 있으면 운영 모드로 전환해 실 KPI 노출.
   const hasAnyOperationalData =
     totalQuotesCount > 0 ||
-    stats.totalInventory > 0 ||
-    (stats.orderStats?.totalOrders ?? 0) > 0;
+    stats.totalInventory > 0;
   const isOnboardingMode = !hasAnyOperationalData;
   // §11.243 #2 — OnboardingHero 3 step 완료 derive.
   //   step 1 (품목 등록) = totalInventory > 0
