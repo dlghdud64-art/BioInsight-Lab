@@ -79,6 +79,7 @@ interface ProductInventory {
   product: {
     id: string;
     name: string;
+    nameEn?: string | null;
     brand: string | null;
     catalogNumber: string | null;
   };
@@ -2262,6 +2263,10 @@ export function InventoryMain() {
                   <SheetTitle className="text-lg font-bold leading-tight">
                     {selectedItem.product.name}
                   </SheetTitle>
+                  {/* §11.366 D-8 — 영문명(nameEn) 보강 */}
+                  {selectedItem.product.nameEn && (
+                    <p className="text-xs text-slate-500 leading-tight">{selectedItem.product.nameEn}</p>
+                  )}
                   <SheetDescription className="flex items-center gap-2 text-sm text-slate-400  text-slate-400 mt-0.5">
                     <span>{selectedItem.product.brand ?? "-"}</span>
                     <span className="text-slate-600  text-slate-400">|</span>
@@ -2272,6 +2277,21 @@ export function InventoryMain() {
                 </SheetHeader>
 
                 <div className="space-y-3">
+                  {/* §11.366 D-8 — 현재고/안전재고 강조 (조회 핵심 — 기존엔 표시 부재). */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="rounded-md bg-pn/50 px-3 py-2">
+                      <p className="text-[10px] text-slate-500  text-slate-400">현재고</p>
+                      <p className="text-sm font-bold text-slate-900 mt-0.5">
+                        {selectedItem.currentQuantity} {selectedItem.unit || "개"}
+                      </p>
+                    </div>
+                    <div className="rounded-md bg-pn/50 px-3 py-2">
+                      <p className="text-[10px] text-slate-500  text-slate-400">안전재고</p>
+                      <p className="text-sm font-bold text-slate-900 mt-0.5">
+                        {selectedItem.safetyStock != null ? `${selectedItem.safetyStock} ${selectedItem.unit || "개"}` : "-"}
+                      </p>
+                    </div>
+                  </div>
                   {/* ── Lot / 유효기한 카드: 패딩 압축 ── */}
                   <div className="grid grid-cols-2 gap-2">
                     <div className="rounded-md bg-pn/50 px-3 py-2">
@@ -2296,7 +2316,8 @@ export function InventoryMain() {
                       <Info className="mr-1.5 h-3 w-3 text-slate-400" />
                       기본 정보
                     </h4>
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 border-t border-bd pt-2  border-bd">
+                    {/* §11.366 D-8 Phase 2 — 모바일 세로 스택(grid-cols-1)으로 값 잘림·가로 욱여넣기 0. 데스크탑(sm+) 2칸 유지. */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5 border-t border-bd pt-2  border-bd">
                       <div className="flex items-center justify-between gap-1 min-w-0">
                         <span className="text-[11px] text-slate-500  text-slate-400 shrink-0">제조사</span>
                         <span className="text-xs font-medium truncate text-right">{selectedItem.product.brand ?? "-"}</span>
@@ -2313,6 +2334,16 @@ export function InventoryMain() {
                         <span className="text-[11px] text-slate-500  text-slate-400 shrink-0">배송기간</span>
                         <span className="text-xs font-medium truncate text-right">{selectedItem.deliveryPeriod ?? "-"}</span>
                       </div>
+                      {/* §11.366 D-8 — 보관위치(location) 보강 */}
+                      <div className="flex items-center justify-between gap-1 min-w-0">
+                        <span className="text-[11px] text-slate-500  text-slate-400 shrink-0">보관위치</span>
+                        <span className="text-xs font-medium truncate text-right">{selectedItem.location ?? "-"}</span>
+                      </div>
+                      {/* §11.366 D-8 — 고유 식별자 = inv.id (§11.355-B 라벨 QR 인코딩과 정합). */}
+                      <div className="flex items-center justify-between gap-1 min-w-0">
+                        <span className="text-[11px] text-slate-500  text-slate-400 shrink-0">고유 식별자</span>
+                        <span className="font-mono text-[10px] font-medium truncate text-right">{selectedItem.id}</span>
+                      </div>
                     </div>
                   </div>
 
@@ -2321,7 +2352,8 @@ export function InventoryMain() {
                       <Info className="mr-1.5 h-3 w-3 text-slate-400" />
                       관리 정보
                     </h4>
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 border-t border-bd pt-2  border-bd">
+                    {/* §11.366 D-8 Phase 2 — 모바일 세로 스택(grid-cols-1)으로 값 잘림·가로 욱여넣기 0. 데스크탑(sm+) 2칸 유지. */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5 border-t border-bd pt-2  border-bd">
                       <div className="flex items-center justify-between gap-1 min-w-0">
                         <span className="text-[11px] text-slate-500  text-slate-400 shrink-0">사용/미개봉</span>
                         <span className="text-xs font-medium truncate text-right">{selectedItem.inUseOrUnopened ?? "-"}</span>
