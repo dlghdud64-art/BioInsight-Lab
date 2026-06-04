@@ -809,6 +809,7 @@ function DashboardPageInner() {
           §11.243 #3 — onboardingMode forward: 데이터 0 시 KPI dim + 가이드 banner. */}
       <ExecutiveSummarySection
         onboardingMode={isOnboardingMode}
+        reorderReviewCount={stats.lowStockAlerts}
         deltas={{
           monthOverMonthChange: stats.monthOverMonthChange,
           weekOverWeekChange: stats.weekOverWeekChange,

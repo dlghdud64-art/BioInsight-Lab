@@ -511,9 +511,13 @@ interface ExecutiveSummaryDeltas {
 export function ExecutiveSummarySection({
   deltas,
   onboardingMode = false,
+  reorderReviewCount = 0,
 }: {
   deltas?: ExecutiveSummaryDeltas;
   onboardingMode?: boolean;
+  /** §11.361-2b — 재고 부족(안전재고 미달) 건수. "처리 필요 항목" KPI 가 발주/예산만
+   *  집계해 재고 부족을 누락하던 truth 불일치 정정 — page.tsx stats.lowStockAlerts 전달. */
+  reorderReviewCount?: number;
 } = {}) {
   // store hydration
   const orders = useOrderQueueStore((s) => s.orders);
@@ -596,20 +600,24 @@ export function ExecutiveSummarySection({
         <KpiCard
           icon={<AlertCircle className="h-5 w-5" />}
           label="처리 필요 항목"
-          value={`${kpis.pendingApprovalCount + kpis.anomalyCount}건`}
+          /* §11.361-2b — 재고 부족(reorderReviewCount) 포함. 이전엔 발주/예산(승인+이상)만
+             집계해 재고 부족 2건이 있어도 "0건"으로 표기 = 대시보드 processingRequiredCount
+             (재고 포함)와 truth 불일치. 재고를 더해 정합. */
+          value={`${kpis.pendingApprovalCount + kpis.anomalyCount + reorderReviewCount}건`}
           hint={
-            (kpis.pendingApprovalCount + kpis.anomalyCount) > 0
+            (kpis.pendingApprovalCount + kpis.anomalyCount + reorderReviewCount) > 0
               ? "즉시 처리가 필요한 항목 건수"
               : "현재 즉시 처리할 항목 없음"
           }
-          risk={(kpis.pendingApprovalCount + kpis.anomalyCount) > 0 ? "warning" : "none"}
+          risk={(kpis.pendingApprovalCount + kpis.anomalyCount + reorderReviewCount) > 0 ? "warning" : "none"}
           toneOverride={
-            kpis.pendingApprovalCount + kpis.anomalyCount === 0 ? "emerald" : "amber"
+            kpis.pendingApprovalCount + kpis.anomalyCount + reorderReviewCount === 0 ? "emerald" : "amber"
           }
           href="/dashboard/purchase-orders"
           breakdown={[
             { label: "승인 대기", value: `${kpis.pendingApprovalCount}건` },
             { label: "이상 신호", value: `${kpis.anomalyCount}건` },
+            { label: "재고 부족", value: `${reorderReviewCount}건` },
           ]}
           /* §11.107/§11.108 — processingDelta chip (snapshot 24h 비교).
              증가 = negative tone (운영 부담 ↑). 감소 = positive (해소). */
