@@ -190,15 +190,19 @@ function DashboardPageInner() {
       if (guestKey) headers["x-guest-key"] = guestKey;
       const response = await fetch("/api/dashboard/stats", { headers });
       if (!response.ok) {
-        console.warn("[dashboard] stats API failed:", response.status);
-        return null;
+        // §11.361-1b — 이전엔 return null → react-query 가 "성공(null)"으로 처리해
+        //   retry 미작동 → 간헐 500(콜드스타트 Prisma transient) 1회로 stats 영구 null
+        //   → KPI 0 + 온보딩 오판 + System Insight 사라짐. throw 로 바꿔 retry 가 동작.
+        throw new Error(`dashboard stats ${response.status}`);
       }
       return response.json();
     },
     enabled: status === "authenticated",
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    retry: 1,
+    // 콜드스타트 transient 500 회복: 지수 backoff 로 따뜻한 재시도.
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
     refetchOnWindowFocus: false,
   });
 
