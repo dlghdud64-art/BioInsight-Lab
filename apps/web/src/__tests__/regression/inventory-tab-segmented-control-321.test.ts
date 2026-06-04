@@ -83,7 +83,8 @@ describe("§11.321 — 재고 탭 세그먼트 컨트롤 스타일", () => {
     expect(src).toMatch(/key:\s*"storage-location"/);
     expect(src).toMatch(/key:\s*"flow"/);
     // aria
-    expect(src).toMatch(/aria-current=\{activeInventoryTab === tab\.key/);
+    // §11.358-1-4 — isActive 변수 추출 리팩토링(isActive = activeInventoryTab === tab.key) 반영.
+    expect(src).toMatch(/aria-current=\{isActive \? "page" : undefined\}/);
     expect(src).toMatch(/aria-disabled=/);
     // testid 보존
     expect(src).toMatch(/data-testid=\{tab\.key === "overview" \? "labaxis-inventory-overview-tab"/);
@@ -99,9 +100,12 @@ describe("§11.321 — 재고 탭 세그먼트 컨트롤 스타일", () => {
     expect(src).toMatch(/flex-1/);
   });
 
-  it("badge('S' suffix / N건 rose-500) 보존", () => {
+  it("badge(N건 rose-500) 보존 — §11.358-1 #4: 무의미 'S' suffix 제거", () => {
     const src = read(PATH);
     expect(src).toMatch(/bg-rose-500/);
-    expect(src).toMatch(/tab\.suffix/);
+    // §11.358-1 #4 — "운영 현황" 탭 뒤 raw "S" suffix 제거 (화면 "운영 현황s" stray token).
+    //   §11.321 의 'S' suffix 보존은 본 정정으로 폐기 — raw label 금지 원칙 우선.
+    expect(src).not.toMatch(/tab\.suffix/);
+    expect(src).not.toMatch(/suffix:\s*showLotIssueDecisionStrip/);
   });
 });

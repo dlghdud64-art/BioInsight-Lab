@@ -1739,7 +1739,8 @@ function InventoryPageContent() {
           {/* 탭 바 — 하단 인디케이터 스타일 */}
           <Tabs value={activeInventoryTab} onValueChange={(v) => setActiveInventoryTab(v)} className="w-full">
             {/* §11.321 — 세그먼트 컨트롤 스타일 (옛 border-b + 하단 인디케이터 → 흰 배경 + shadow).
-                canonical 보존: 4 key / aria / testid / min-h-[44px] / badge / suffix / showLotIssueDecisionStrip 분기. */}
+                canonical 보존: 4 key / aria / testid / min-h-[44px] / badge / showLotIssueDecisionStrip 분기.
+                §11.358-1 #4 — "운영 현황" 탭 무의미 "S" suffix 제거(raw label 금지). */}
             <div data-testid="dashboard-inventory-tab-segmented" className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 mb-4">
               {[
                 {
@@ -1753,7 +1754,6 @@ function InventoryPageContent() {
                   icon: <LayoutGrid className="w-5 h-5" />,
                   label: showLotIssueDecisionStrip ? "폐기 검토" : "운영 현황",
                   badge: showLotIssueDecisionStrip ? null : issuesCount > 0 ? issuesCount : null,
-                  suffix: showLotIssueDecisionStrip ? null : "S",
                 },
                 {
                   key: "storage-location",
@@ -1790,7 +1790,6 @@ function InventoryPageContent() {
                   >
                     <span className={isActive ? "text-blue-600" : "text-gray-500"}>{tab.icon}</span>
                     {tab.label}
-                    {"suffix" in tab && tab.suffix && <span className={`text-[10px] font-bold ml-0.5 ${isActive ? "text-blue-600" : "text-gray-500"}`}>{tab.suffix}</span>}
                     {tab.badge !== null && <span className="inline-flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-rose-500 text-white font-bold px-1 text-[10px] ml-0.5">{tab.badge}</span>}
                   </button>
                 );
