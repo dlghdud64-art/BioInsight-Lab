@@ -87,7 +87,7 @@ export function ApprovalHandoffGate({
                 {isHandedOff ? <Check className="h-4 w-4 text-emerald-400" /> : <ShieldCheck className={`h-4 w-4 ${gateState.gateStatus === "ready" ? "text-emerald-400" : gateState.gateStatus === "blocked" ? "text-red-400" : "text-yellow-400"}`} />}
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-slate-100">{isHandedOff ? "승인 이관 완료" : "Approval Handoff Gate"}</h2>
+                <h2 className="text-sm font-semibold text-slate-100">{isHandedOff ? "승인 이관 완료" : "승인 이관 게이트(Approval Handoff Gate)"}</h2>
                 <span className="text-[10px] text-slate-500">{gateState.requestReference} · {gateState.compareReviewId}</span>
               </div>
             </div>
@@ -99,11 +99,11 @@ export function ApprovalHandoffGate({
             </div>
           </div>
           <div className="flex items-center gap-3 text-[10px]">
-            <span className="text-red-400 font-medium">Blocker {gateState.blockerCount}</span>
+            <span className="text-red-400 font-medium">차단(Blocker) {gateState.blockerCount}</span>
             <span className="text-slate-600">·</span>
-            <span className="text-yellow-400">Warning {gateState.warningCount}</span>
+            <span className="text-yellow-400">경고(Warning) {gateState.warningCount}</span>
             <span className="text-slate-600">·</span>
-            <span className="text-blue-400">Info {gateState.infoCount}</span>
+            <span className="text-blue-400">정보(Info) {gateState.infoCount}</span>
           </div>
         </div>
 
@@ -159,7 +159,7 @@ export function ApprovalHandoffGate({
           {preview && (
             <div>
               <div className="flex items-center gap-1.5 mb-2">
-                <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Approval Payload Preview</span>
+                <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">승인 페이로드 미리보기(Approval Payload Preview)</span>
                 <span className="text-[8px] text-slate-600">(읽기 전용 — 실제 수정은 검토 화면에서)</span>
               </div>
               <div className="rounded-md border border-bd/40 bg-[#252A33] divide-y divide-bd/20">
@@ -184,8 +184,8 @@ export function ApprovalHandoffGate({
           {/* ═══ Handoff success ═══ */}
           {isHandedOff && handoffPackage && (
             <div className="px-3 py-3 rounded-md bg-emerald-600/[0.06] border border-emerald-500/15">
-              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /><span className="text-[11px] text-emerald-300 font-medium">Approval Handoff 완료</span></div>
-              <span className="text-[10px] text-slate-400 block mt-1">Package ID: {handoffPackage.id} — Approval Workbench에서 최종 승인 검토를 진행할 수 있습니다.</span>
+              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /><span className="text-[11px] text-emerald-300 font-medium">승인 이관 완료</span></div>
+              <span className="text-[10px] text-slate-400 block mt-1">패키지 ID(Package ID): {handoffPackage.id} — 승인 워크벤치(Approval Workbench)에서 최종 승인 검토를 진행할 수 있습니다.</span>
             </div>
           )}
         </div>
@@ -221,7 +221,7 @@ export function ApprovalHandoffGate({
                 )}
               </>
             ) : (
-              <div className="flex-1 text-center text-[10px] text-emerald-400 py-2">Approval Handoff 완료 — Package 생성됨</div>
+              <div className="flex-1 text-center text-[10px] text-emerald-400 py-2">승인 이관 완료 — 패키지(Package) 생성됨</div>
             )}
           </div>
         </div>
