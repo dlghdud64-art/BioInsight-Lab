@@ -43,8 +43,9 @@ describe("§11.252a #1 — 모바일 2x2 grid (1열 fallback 제거)", () => {
     expect(code).toMatch(/(sm:|md:|lg:)(grid-cols|grid)/);
   });
 
-  it("§11.252a trace marker (mobile 2x2 정합 표시)", () => {
-    expect(code).toMatch(/§11\.252a|11\.252a/);
+  it("모바일 2x2 정합 — grid-cols-2 보존 (§11.252a 의도, §11.247/§11.364 마커 통합)", () => {
+    // §11.364: trace marker(§11.252a)가 §11.247 로 통합. 기능 보존 증거 = grid-cols-2(모바일 2x2).
+    expect(code).toMatch(/grid-cols-2/);
   });
 });
 
@@ -61,8 +62,9 @@ describe("§11.252a #2 — 카드 높이 모바일 축소 + 설명 1줄 축약",
 });
 
 describe("§11.252a #3 — invariant 보존 (props / ACTIONS / Progressive Disclosure)", () => {
-  it("ACTIONS 4 entry 보존 (견적 등록 / 발주 전환 / 입고 처리 / 재고 점검)", () => {
-    expect(code).toMatch(/견적\s*등록/);
+  it("ACTIONS 4 entry 보존 (견적 발송 / 발주 전환 / 입고 처리 / 재고 점검)", () => {
+    // §11.364 D-1 — "견적 등록" → "견적 발송"(워크벤치 진입) 강등 정합.
+    expect(code).toMatch(/견적\s*발송/);
     expect(code).toMatch(/발주\s*전환/);
     expect(code).toMatch(/입고\s*처리/);
     expect(code).toMatch(/재고\s*점검/);
@@ -73,9 +75,10 @@ describe("§11.252a #3 — invariant 보존 (props / ACTIONS / Progressive Discl
     expect(code).toMatch(/OperatorQuickActionsCounts/);
   });
 
-  it("§11.247 견적 발송 Progressive Disclosure 보존 (isQuoteDispatchExpanded)", () => {
-    expect(code).toMatch(/isQuoteDispatchExpanded/);
-    expect(code).toMatch(/aria-expanded/);
+  it("§11.364 D-1 — Progressive Disclosure 폐기 (순수 네비 강등)", () => {
+    // §11.247 expand/aria-expanded 는 §11.364 D-1 역할 분리로 제거.
+    expect(code).not.toMatch(/isQuoteDispatchExpanded/);
+    expect(code).not.toMatch(/aria-expanded/);
   });
 
   it("count > 0 badge + href routing 보존", () => {
