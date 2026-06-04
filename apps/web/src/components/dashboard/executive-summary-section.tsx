@@ -318,15 +318,17 @@ function KpiCard({ icon, label, value, hint, risk, href, breakdown, toneOverride
 
   const body = (
     <div
-      className={`group relative rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.05),_0_2px_4px_rgba(0,0,0,0.04),_0_8px_24px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_2px_4px_rgba(0,0,0,0.08),_0_8px_16px_rgba(0,0,0,0.08),_0_24px_48px_rgba(0,0,0,0.12)] ${hoverBorderMap[tone]} overflow-hidden`}
+      /* §11.364 D-3 — 데스크탑 KPI 밀도: 패딩 p-5→p-4 (폰트 24-30 유지, 높이는 패딩·여백에서). */
+      className={`group relative rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.05),_0_2px_4px_rgba(0,0,0,0.04),_0_8px_24px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_2px_4px_rgba(0,0,0,0.08),_0_8px_16px_rgba(0,0,0,0.08),_0_24px_48px_rgba(0,0,0,0.12)] ${hoverBorderMap[tone]} overflow-hidden`}
     >
       {/* §11.206 — 헤더 row: 아이콘 컨테이너 + glassmorphism delta badge.
           §11.206b — delta = undefined (real data 부재) 시 fallback status
           chip 노출. fake "+0%" 가 아니라 truthful status (정상 / 주의 / 위험)
           를 tone 에 따라 표기. 시안 정합 visual 리듬 보존. */}
-      <div className="flex items-start justify-between mb-4">
+      {/* §11.364 D-3 — 헤더 mb-4→mb-3, 아이콘 w-12→w-10 (높이 축소). */}
+      <div className="flex items-start justify-between mb-3">
         {/* §11.302d-6a-3-β — dynamic shadow class: tone === "amber" → "yellow" 으로 변환 (Tailwind class 출력). */}
-        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${iconContainerMap[tone]} shadow-sm shadow-${tone === "rose" ? "rose" : tone === "amber" ? "yellow" : tone === "blue" ? "blue" : "emerald"}-100 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[-2deg]`}>
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconContainerMap[tone]} shadow-sm shadow-${tone === "rose" ? "rose" : tone === "amber" ? "yellow" : tone === "blue" ? "blue" : "emerald"}-100 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[-2deg]`}>
           {icon}
         </div>
         <div className="flex items-center gap-1.5">
@@ -370,16 +372,18 @@ function KpiCard({ icon, label, value, hint, risk, href, breakdown, toneOverride
       <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 mb-1">
         {label}
       </p>
-      <p className={`text-3xl md:text-[32px] font-black tracking-tighter tabular-nums leading-none ${valueColorMap[tone]}`}>
+      {/* §11.364 D-3 — value 폰트 24-30 유지(text-2xl md:text-3xl), hint 여백 mt-2→mt-1.5. */}
+      <p className={`text-2xl md:text-3xl font-black tracking-tighter tabular-nums leading-none ${valueColorMap[tone]}`}>
         {value}
       </p>
-      <p className="mt-2 text-[11px] text-slate-500 break-keep leading-relaxed">{hint}</p>
+      <p className="mt-1.5 text-[11px] text-slate-500 break-keep leading-relaxed">{hint}</p>
 
       {/* §11.206 — 카드 하단 progress bar (시각 리듬 강화).
           §11.206b/c — h-1 → h-1.5 + opacity 0.65 → 1.0 + width 더 visible.
           시안 정합 (호영님 첨부 LabAxis dashboard) — bar 가 명확히 보여야
           시각 리듬 작동. */}
-      <div className="mt-5 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+      {/* §11.364 D-3 — 하단 progress bar 데드스페이스 mt-5→mt-3. */}
+      <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-700 ${progressBarMap[tone]}`}
           style={{
