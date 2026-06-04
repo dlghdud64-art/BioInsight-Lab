@@ -52,9 +52,9 @@ export function SupplierConfirmationWorkbench({ open, onClose, handoff, onConfir
               {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Shield className="h-4 w-4 text-purple-400" />}
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-slate-100">{isRecorded ? "Supplier Confirmation 완료" : "Supplier Confirmation"}</h2>
+              <h2 className="text-sm font-semibold text-slate-100">{isRecorded ? "공급사 확인(Supplier Confirmation) 완료" : "공급사 확인(Supplier Confirmation)"}</h2>
               <div className="flex items-center gap-2 text-[10px] mt-0.5">
-                <span className="text-slate-400">Qty: <span className={FIELD_LABELS[confState.confirmedQtyStatus].color}>{FIELD_LABELS[confState.confirmedQtyStatus].label}</span></span>
+                <span className="text-slate-400">수량(Qty): <span className={FIELD_LABELS[confState.confirmedQtyStatus].color}>{FIELD_LABELS[confState.confirmedQtyStatus].label}</span></span>
                 <span className="text-slate-600">·</span>
                 <span className="text-slate-400">납기: <span className={FIELD_LABELS[confState.confirmedEtaStatus].color}>{FIELD_LABELS[confState.confirmedEtaStatus].label}</span></span>
                 <span className="text-slate-600">·</span>
@@ -68,7 +68,7 @@ export function SupplierConfirmationWorkbench({ open, onClose, handoff, onConfir
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           {/* Acknowledgment basis */}
           <div className="px-3 py-2 rounded-md bg-blue-600/[0.04] border border-blue-500/15">
-            <span className="text-[9px] font-medium text-blue-400 uppercase tracking-wider block mb-0.5">Acknowledgment 근거</span>
+            <span className="text-[9px] font-medium text-blue-400 uppercase tracking-wider block mb-0.5">수령 확인(Acknowledgment) 근거</span>
             <span className="text-[10px] text-blue-200">{handoff.responseSummary}</span>
           </div>
 
@@ -113,7 +113,7 @@ export function SupplierConfirmationWorkbench({ open, onClose, handoff, onConfir
 
           {/* Receiving readiness */}
           <div className={`px-3 py-2.5 rounded-md border ${validation?.canOpenReceivingPreparation ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
-            <span className="text-[9px] text-slate-500 block mb-0.5">Receiving Preparation Readiness</span>
+            <span className="text-[9px] text-slate-500 block mb-0.5">입고 준비 준비도(Receiving Preparation Readiness)</span>
             {validation?.canOpenReceivingPreparation ? (
               <div className="flex items-center gap-1"><Check className="h-3 w-3 text-emerald-400" /><span className="text-[10px] text-emerald-300">진입 가능</span></div>
             ) : (
@@ -123,27 +123,27 @@ export function SupplierConfirmationWorkbench({ open, onClose, handoff, onConfir
 
           {isRecorded && (
             <div className="px-3 py-3 rounded-md bg-emerald-600/[0.06] border border-emerald-500/15">
-              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /><span className="text-[11px] text-emerald-300 font-medium">Supplier Confirmation 저장 완료</span></div>
-              <span className="text-[10px] text-slate-400 block mt-1">Receiving Preparation으로 진행할 수 있습니다.</span>
+              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /><span className="text-[11px] text-emerald-300 font-medium">공급사 확인 저장 완료</span></div>
+              <span className="text-[10px] text-slate-400 block mt-1">입고 준비(Receiving Preparation)로 진행할 수 있습니다.</span>
             </div>
           )}
         </div>
 
         <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
-            <span className="text-slate-500">Qty <span className={FIELD_LABELS[confState.confirmedQtyStatus].color}>{FIELD_LABELS[confState.confirmedQtyStatus].label}</span></span>
+            <span className="text-slate-500">수량 <span className={FIELD_LABELS[confState.confirmedQtyStatus].color}>{FIELD_LABELS[confState.confirmedQtyStatus].label}</span></span>
             <span className="text-slate-600">·</span>
             <span className="text-slate-500">납기 <span className={FIELD_LABELS[confState.confirmedEtaStatus].color}>{FIELD_LABELS[confState.confirmedEtaStatus].label}</span></span>
             <span className="text-slate-600">·</span>
             <span className="text-slate-500">{validation?.recommendedNextAction || ""}</span>
           </div>
           <div className="flex gap-2">
-            <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onReturnToSentTracking}><ArrowLeft className="h-3 w-3 mr-1" />Sent Tracking</Button>
+            <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onReturnToSentTracking}><ArrowLeft className="h-3 w-3 mr-1" />발송 추적(Sent Tracking)</Button>
             {!isRecorded ? (
-              <Button size="sm" className="flex-1 h-8 text-[10px] bg-purple-600 hover:bg-purple-500 text-white font-medium" onClick={recordConfirmation} disabled={!validation?.canRecordSupplierConfirmation}><Shield className="h-3 w-3 mr-1" />Supplier Confirmation 저장</Button>
+              <Button size="sm" className="flex-1 h-8 text-[10px] bg-purple-600 hover:bg-purple-500 text-white font-medium" onClick={recordConfirmation} disabled={!validation?.canRecordSupplierConfirmation}><Shield className="h-3 w-3 mr-1" />공급사 확인 저장</Button>
             ) : (
               <Button size="sm" className={`flex-1 h-8 text-[10px] font-medium ${validation?.canOpenReceivingPreparation ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "bg-slate-700 text-slate-400"}`} onClick={onReceivingPrepHandoff} disabled={!validation?.canOpenReceivingPreparation}>
-                <Package className="h-3 w-3 mr-1" />Receiving Preparation<ArrowRight className="h-3 w-3 ml-1" />
+                <Package className="h-3 w-3 mr-1" />입고 준비<ArrowRight className="h-3 w-3 ml-1" />
               </Button>
             )}
           </div>
