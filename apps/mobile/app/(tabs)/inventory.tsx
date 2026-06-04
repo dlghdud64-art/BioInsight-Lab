@@ -167,10 +167,24 @@ export default function InventoryScreen() {
           renderItem={({ item }) => <InventoryCard item={item} />}
           contentContainerStyle={{ paddingTop: 12, paddingBottom: 100 }}
           ListEmptyComponent={
-            <EmptyState
-              title="재고 품목이 없습니다"
-              description="웹에서 재고를 등록하거나 구매 내역에서 입고 처리하세요."
-            />
+            // §11.361-2 — 필터/검색 활성 시 0건을 "전역 재고 없음"으로 위장하지 않음.
+            //   필터 결과 0 → "조건에 맞는 재고 없음" + [필터 초기화]. 진짜 0건일 때만 등록 안내.
+            search.trim() !== "" || statusFilter !== "ALL" ? (
+              <EmptyState
+                title="조건에 맞는 재고가 없습니다"
+                description="필터를 해제하면 전체 재고를 볼 수 있습니다."
+                actionLabel="필터 초기화"
+                onAction={() => {
+                  setSearch("");
+                  setStatusFilter("ALL");
+                }}
+              />
+            ) : (
+              <EmptyState
+                title="재고 품목이 없습니다"
+                description="웹에서 재고를 등록하거나 구매 내역에서 입고 처리하세요."
+              />
+            )
           }
           refreshControl={
             <RefreshControl refreshing={isRefetching} onRefresh={refetch} />

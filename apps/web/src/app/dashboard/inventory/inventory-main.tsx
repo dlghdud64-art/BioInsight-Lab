@@ -1494,13 +1494,29 @@ export function InventoryMain() {
                       setLabelPrintQty(defaultQty);
                       setLabelPrintOpen(true);
                     }}
+                    // §11.361-2 — 검색·필터 활성 시 0건을 "전역 재고 없음"으로 위장 금지.
+                    //   우선순위: 검색 > 필터(status/category/location) > 진짜 0건(첫 재고 등록).
                     emptyMessage={
                       debouncedSearchQuery.trim()
                         ? `검색어 '${debouncedSearchQuery.trim()}'에 대한 결과를 찾을 수 없습니다.`
-                        : "아직 등록된 재고가 없습니다. 첫 재고를 등록해보세요."
+                        : activeFilterCount > 0
+                          ? "이 조건에 맞는 재고가 없습니다. 필터를 초기화해보세요."
+                          : "아직 등록된 재고가 없습니다. 첫 재고를 등록해보세요."
                     }
-                    emptyAction={debouncedSearchQuery.trim() ? () => setSearchQuery("") : () => setIsDialogOpen(true)}
-                    emptyActionLabel={debouncedSearchQuery.trim() ? "모든 재고 보기" : "첫 재고 등록하기"}
+                    emptyAction={
+                      debouncedSearchQuery.trim()
+                        ? () => setSearchQuery("")
+                        : activeFilterCount > 0
+                          ? () => { setLocationFilter("all"); setStatusFilter("all"); setCategoryFilter("all"); }
+                          : () => setIsDialogOpen(true)
+                    }
+                    emptyActionLabel={
+                      debouncedSearchQuery.trim()
+                        ? "모든 재고 보기"
+                        : activeFilterCount > 0
+                          ? "필터 초기화"
+                          : "첫 재고 등록하기"
+                    }
                   />
                 </CardContent>
               </Card>
