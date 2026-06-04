@@ -230,7 +230,11 @@ function DashboardPageInner() {
   //
   // §11.196 series 의 dead import sweep / chunk wait / brand UX 등은 모두
   // 보존. pageReady gate 한 가지만 revert.
-  if (status === "loading") {
+  // §11.361-1c — 콜드스타트 0-flash 차단: stats 가 아직 안 온 동안(첫 로드/retry backoff)
+  //   온보딩·0 KPI 로 떨어지면 "데이터 없음" 거짓 상태가 ~12s 노출된다. statsLoading
+  //   중(아직 data 없음)엔 온보딩 대신 로딩 스켈레톤 유지 → 거짓 표기 방지. retry 소진
+  //   (최종 실패) 시 statsLoading false → 아래로 흘러 정상 fallback.
+  if (status === "loading" || (statsLoading && !dashboardStats)) {
     return (
       <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4">
         <div className="h-6 w-48 rounded bg-slate-200 animate-pulse" />

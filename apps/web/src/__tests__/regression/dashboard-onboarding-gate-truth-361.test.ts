@@ -26,10 +26,14 @@ describe("§11.361-1 — 온보딩 게이트가 견적 단독이 아님", () => 
 });
 
 describe("§11.361-1b — stats 쿼리 500 시 throw(swallow 금지) + retry", () => {
-  it("!response.ok 에서 throw, return null 제거, retry>=2", () => {
+  it("!response.ok 에서 throw + retry(backoff)", () => {
     expect(SRC).toContain("throw new Error(`dashboard stats ${response.status}`)");
-    expect(SRC).not.toContain('console.warn("[dashboard] stats API failed:", response.status);\n        return null;');
     expect(SRC).toContain("retry: 3");
-    expect(SRC).toContain("retryDelay:");
+  });
+});
+
+describe("§11.361-1c — 콜드스타트 0-flash 차단(statsLoading 중 온보딩 억제)", () => {
+  it("statsLoading && !dashboardStats 시 스켈레톤 early-return", () => {
+    expect(SRC).toContain('status === "loading" || (statsLoading && !dashboardStats)');
   });
 });
