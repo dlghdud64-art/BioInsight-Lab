@@ -15,7 +15,10 @@ function Reveal({ children, delay = 0, y = 40, className = "" }: {
     <motion.div
       initial={{ opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
+      /* §11.364 D-6c — margin:"-60px"(트리거 60px 지연)가 페이지 하단 섹션에서
+         요소가 보여도 발화 안 돼 opacity:0 흐릿 멈춤 → amount 기반(15% 진입 시
+         발화)으로 트리거 보장. once:true 유지(재발화 0). */
+      viewport={{ once: true, amount: 0.15 }}
       transition={{ duration: 0.7, delay, ease: [0.25, 0.1, 0.25, 1] }}
       className={className}
     >
