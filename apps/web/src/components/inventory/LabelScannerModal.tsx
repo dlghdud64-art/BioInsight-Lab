@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { csrfFetch } from "@/lib/api-client";
+import { getRearCameraStream } from "@/lib/utils/get-rear-camera-stream";
 // §11.326 — 라벨 용량(packSize) vs 입고 수량(받은 통 개수) 분리 매핑.
 import { mapLabelToReceiving } from "@/lib/inventory/map-label-to-receiving";
 import {
@@ -438,10 +439,9 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
 
     (async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
-          audio: false,
-        });
+        // §11.355-C — 후면 카메라 4단계 fallback (exact→loose→enumerate→video).
+        //   기존 environment 단일 시도는 후면 미획득/전면 강등 위험.
+        stream = await getRearCameraStream();
         if (cancelled) {
           stream.getTracks().forEach((t) => t.stop());
           return;
