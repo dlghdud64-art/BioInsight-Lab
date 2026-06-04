@@ -32,7 +32,8 @@ export function AISection() {
               <div className="flex h-6 w-6 items-center justify-center rounded bg-blue-600/15 shrink-0">
                 <GitCompare className="h-3 w-3 text-blue-400" />
               </div>
-              <h3 className="text-sm font-semibold text-slate-200">비교 판단 요약</h3>
+              {/* §11.368 §0 — "비교 판단"→"비교 분석"(compare-analysis 일관). */}
+              <h3 className="text-sm font-semibold text-slate-200">비교 분석 요약</h3>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed">
               현재 비교 모드 기준으로 추천 선택안과 다음 액션을 제안합니다.

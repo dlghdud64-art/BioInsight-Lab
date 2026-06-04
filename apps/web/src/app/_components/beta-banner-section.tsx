@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles } from "lucide-react";
+// §11.368 §0 — ✨ Sparkles(AI 마케팅 데코) → Info(베타 안내).
+import { Info } from "lucide-react";
 
 type BetaBannerSectionProps = {
   variant?: "compact" | "full";
@@ -14,7 +15,7 @@ export function BetaBannerSection({ variant = "compact" }: BetaBannerSectionProp
           <CardContent className="p-5">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0 mt-1">
-                <Sparkles className="h-5 w-5 text-indigo-600" strokeWidth={1.5} />
+                <Info className="h-5 w-5 text-indigo-600" strokeWidth={1.5} />
               </div>
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-2">
@@ -41,7 +42,7 @@ export function BetaBannerSection({ variant = "compact" }: BetaBannerSectionProp
     <section className="py-2 md:py-3">
       <div className="mx-auto max-w-6xl px-4 md:px-6">
         <div className="flex items-center gap-2 rounded-md border border-bd bg-pn px-3 py-1.5">
-          <Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4 text-indigo-600 flex-shrink-0" strokeWidth={1.5} />
+          <Info className="h-3.5 w-3.5 md:h-4 md:w-4 text-indigo-600 flex-shrink-0" strokeWidth={1.5} />
           <div className="flex items-center gap-1.5 md:gap-2 flex-1 min-w-0">
             <span className="text-xs md:text-sm font-medium text-slate-700">
               <span className="hidden sm:inline">Beta 기간 - 무료 체험</span>

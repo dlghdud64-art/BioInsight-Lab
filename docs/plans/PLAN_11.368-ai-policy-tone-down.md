@@ -110,8 +110,10 @@
 - 위젯군별(Phase 1~4) 독립 revert.
 
 ## 11. Progress
-- Overall 70% · Current: Phase 2/3 완료 (견적·비교 + AI 데코 8파일) · Next: Phase 4 (제품/랜딩 ai-section) → Phase 5 (smoke)
-- Checklist: [x] P0 [x] P1 [x] P2 [x] P3 [ ] P4 [ ] P5
+- Overall 90% · Current: Phase 4 완료 (제품/랜딩) · Next: Phase 5 (Claude Code smoke + push)
+- Checklist: [x] P0 [x] P1 [x] P2 [x] P3 [x] P4 [ ] P5
+
+**Phase 4 완료:** ai-section = freeze 정렬(operator review 모범) 보존, "비교 판단"→"비교 분석" 일관. beta-banner ✨ Sparkles→Info. sentinel `ai-policy-tone-down-368-landing`. (랜딩 마케팅 = freeze 적용, lib/ai 백엔드 보존.)
 
 **Phase 0 결론:** §0 = 기존 `public-ai-messaging-freeze`(Step 6) 운영 화면 확장 적용. 기준=operator review ladder + forbidden claim + 결정형. AI 기능(lib/ai) 보존, UI 마케팅 톤만 절제. 랜딩/세일즈=freeze 완료(보존).
 
