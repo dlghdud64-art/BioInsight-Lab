@@ -44,11 +44,11 @@ export function ReceivingPreparationWorkbench({ open, onClose, handoff, onPrepRe
               {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Package className="h-4 w-4 text-indigo-400" />}
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-slate-100">{isRecorded ? "Receiving Preparation 완료" : "Receiving Preparation"}</h2>
+              <h2 className="text-sm font-semibold text-slate-100">{isRecorded ? "입고 준비(Receiving Preparation) 완료" : "입고 준비(Receiving Preparation)"}</h2>
               <div className="flex items-center gap-2 text-[10px] mt-0.5">
                 <span className="text-slate-400">납기: <span className="text-slate-200 font-medium">{prepState.confirmedEtaWindow || "미확정"}</span></span>
                 <span className="text-slate-600">·</span>
-                <span className="text-slate-400">Qty: <span className="text-slate-200 font-medium">{prepState.confirmedQtySummary || "미확정"}</span></span>
+                <span className="text-slate-400">수량(Qty): <span className="text-slate-200 font-medium">{prepState.confirmedQtySummary || "미확정"}</span></span>
               </div>
             </div>
           </div>
@@ -96,7 +96,7 @@ export function ReceivingPreparationWorkbench({ open, onClose, handoff, onPrepRe
 
           {isRecorded && (
             <div className="px-3 py-3 rounded-md bg-emerald-600/[0.06] border border-emerald-500/15">
-              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /><span className="text-[11px] text-emerald-300 font-medium">Receiving Preparation 저장 완료</span></div>
+              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /><span className="text-[11px] text-emerald-300 font-medium">입고 준비 저장 완료</span></div>
             </div>
           )}
         </div>
@@ -104,11 +104,11 @@ export function ReceivingPreparationWorkbench({ open, onClose, handoff, onPrepRe
         <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5"><span className="text-slate-500">{validation?.recommendedNextAction || ""}</span></div>
           <div className="flex gap-2">
-            <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onReturnToConfirmation}><ArrowLeft className="h-3 w-3 mr-1" />Supplier Confirmation</Button>
+            <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onReturnToConfirmation}><ArrowLeft className="h-3 w-3 mr-1" />공급사 확인(Supplier Confirmation)</Button>
             {!isRecorded ? (
-              <Button size="sm" className="flex-1 h-8 text-[10px] bg-indigo-600 hover:bg-indigo-500 text-white font-medium" onClick={recordPrep} disabled={!validation?.canRecordReceivingPreparation}><Package className="h-3 w-3 mr-1" />Receiving Preparation 저장</Button>
+              <Button size="sm" className="flex-1 h-8 text-[10px] bg-indigo-600 hover:bg-indigo-500 text-white font-medium" onClick={recordPrep} disabled={!validation?.canRecordReceivingPreparation}><Package className="h-3 w-3 mr-1" />입고 준비 저장</Button>
             ) : (
-              <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={onExecutionHandoff}><Package className="h-3 w-3 mr-1" />Receiving Execution<ArrowRight className="h-3 w-3 ml-1" /></Button>
+              <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={onExecutionHandoff}><Package className="h-3 w-3 mr-1" />입고 실행(Receiving Execution)<ArrowRight className="h-3 w-3 ml-1" /></Button>
             )}
           </div>
         </div>

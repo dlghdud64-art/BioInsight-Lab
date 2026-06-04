@@ -8,7 +8,7 @@ import type { ReorderDecisionHandoff } from "@/lib/ai/stock-release-engine";
 
 const DECISION_LABELS: Record<ReorderCandidateType, { label: string; color: string }> = {
   reorder_candidate: { label: "재주문", color: "text-blue-400" },
-  watch_only: { label: "Watch", color: "text-yellow-400" },
+  watch_only: { label: "관찰", color: "text-yellow-400" },
   blocked_from_reorder: { label: "차단", color: "text-red-400" },
   requires_followup: { label: "확인 필요", color: "text-yellow-400" },
 };
@@ -57,13 +57,13 @@ export function ReorderDecisionWorkbench({ open, onClose, handoff, onDecisionRec
               {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <RefreshCw className="h-4 w-4 text-blue-400" />}
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-slate-100">{isRecorded ? "Reorder Decision 완료" : "Reorder Decision"}</h2>
+              <h2 className="text-sm font-semibold text-slate-100">{isRecorded ? "재주문 결정(Reorder Decision) 완료" : "재주문 결정(Reorder Decision)"}</h2>
               <div className="flex items-center gap-2 text-[10px] mt-0.5">
-                <span className="text-slate-400">Reorder <span className="text-blue-300 font-medium">{decisionPlan?.reorderCandidateItemIds.length || 0}</span></span>
+                <span className="text-slate-400">재주문 <span className="text-blue-300 font-medium">{decisionPlan?.reorderCandidateItemIds.length || 0}</span></span>
                 <span className="text-slate-600">·</span>
-                <span className="text-slate-400">Watch <span className="text-yellow-300 font-medium">{decisionPlan?.watchOnlyItemIds.length || 0}</span></span>
+                <span className="text-slate-400">관찰(Watch) <span className="text-yellow-300 font-medium">{decisionPlan?.watchOnlyItemIds.length || 0}</span></span>
                 <span className="text-slate-600">·</span>
-                <span className="text-slate-400">Coverage <span className={decisionState.coverageRiskStatus === "critical" ? "text-red-300" : decisionState.coverageRiskStatus === "low" ? "text-yellow-300" : "text-emerald-300"}>{decisionState.coverageRiskStatus}</span></span>
+                <span className="text-slate-400">커버리지(Coverage) <span className={decisionState.coverageRiskStatus === "critical" ? "text-red-300" : decisionState.coverageRiskStatus === "low" ? "text-yellow-300" : "text-emerald-300"}>{decisionState.coverageRiskStatus}</span></span>
               </div>
             </div>
           </div>
@@ -73,8 +73,8 @@ export function ReorderDecisionWorkbench({ open, onClose, handoff, onDecisionRec
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           {/* Stock release basis */}
           <div className="px-3 py-2 rounded-md bg-blue-600/[0.04] border border-blue-500/15">
-            <span className="text-[9px] font-medium text-blue-400 uppercase tracking-wider block mb-0.5">Stock Release 근거</span>
-            <span className="text-[10px] text-blue-200">Releasable: {handoff.releasableQtySummary} · Hold: {handoff.holdRemainingQtySummary} · {handoff.releaseDecisionSummary}</span>
+            <span className="text-[9px] font-medium text-blue-400 uppercase tracking-wider block mb-0.5">재고 출고(Stock Release) 근거</span>
+            <span className="text-[10px] text-blue-200">출고 가능(Releasable): {handoff.releasableQtySummary} · 보류(Hold): {handoff.holdRemainingQtySummary} · {handoff.releaseDecisionSummary}</span>
           </div>
 
           {/* Risk summary */}
@@ -103,7 +103,7 @@ export function ReorderDecisionWorkbench({ open, onClose, handoff, onDecisionRec
           <div>
             <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">품목별 결정</span>
             {decisionState.candidateDecisions.length === 0 ? (
-              <Button size="sm" variant="ghost" className="w-full h-7 text-[9px] text-blue-400 hover:text-blue-300 border border-blue-500/20 mt-2" onClick={simulateReorderDecision}>Reorder 결정 시뮬레이션</Button>
+              <Button size="sm" variant="ghost" className="w-full h-7 text-[9px] text-blue-400 hover:text-blue-300 border border-blue-500/20 mt-2" onClick={simulateReorderDecision}>재주문 결정 시뮬레이션</Button>
             ) : (
               <div className="mt-2 space-y-1.5">
                 {decisionState.candidateDecisions.map(cd => {
@@ -128,27 +128,27 @@ export function ReorderDecisionWorkbench({ open, onClose, handoff, onDecisionRec
 
           {isRecorded && (
             <div className="px-3 py-3 rounded-md bg-emerald-600/[0.06] border border-emerald-500/15">
-              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /><span className="text-[11px] text-emerald-300 font-medium">Reorder Decision 저장 완료</span></div>
-              <span className="text-[10px] text-slate-400 block mt-1">Procurement Re-entry로 소싱 흐름에 재진입할 수 있습니다.</span>
+              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /><span className="text-[11px] text-emerald-300 font-medium">재주문 결정 저장 완료</span></div>
+              <span className="text-[10px] text-slate-400 block mt-1">조달 재진입(Procurement Re-entry)으로 소싱 흐름에 재진입할 수 있습니다.</span>
             </div>
           )}
         </div>
 
         <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
-            <span className="text-slate-500">Reorder <span className="text-blue-300 font-medium">{decisionPlan?.reorderCandidateItemIds.length || 0}</span></span>
+            <span className="text-slate-500">재주문 <span className="text-blue-300 font-medium">{decisionPlan?.reorderCandidateItemIds.length || 0}</span></span>
             <span className="text-slate-600">·</span>
-            <span className="text-slate-500">Watch <span className="text-yellow-300 font-medium">{decisionPlan?.watchOnlyItemIds.length || 0}</span></span>
+            <span className="text-slate-500">관찰 <span className="text-yellow-300 font-medium">{decisionPlan?.watchOnlyItemIds.length || 0}</span></span>
             <span className="text-slate-600">·</span>
             <span className="text-slate-500">{validation?.recommendedNextAction || ""}</span>
           </div>
           <div className="flex gap-2">
-            <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onReturnToStockRelease}><ArrowLeft className="h-3 w-3 mr-1" />Stock Release</Button>
+            <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onReturnToStockRelease}><ArrowLeft className="h-3 w-3 mr-1" />재고 출고</Button>
             {!isRecorded ? (
-              <Button size="sm" className="flex-1 h-8 text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={recordDecision} disabled={!validation?.canRecordReorderDecision}><RefreshCw className="h-3 w-3 mr-1" />Reorder Decision 저장</Button>
+              <Button size="sm" className="flex-1 h-8 text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={recordDecision} disabled={!validation?.canRecordReorderDecision}><RefreshCw className="h-3 w-3 mr-1" />재주문 결정 저장</Button>
             ) : (
               <Button size="sm" className={`flex-1 h-8 text-[10px] font-medium ${validation?.canOpenProcurementReentry ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "bg-slate-700 text-slate-400"}`} onClick={onProcurementReentryHandoff} disabled={!validation?.canOpenProcurementReentry}>
-                <RefreshCw className="h-3 w-3 mr-1" />Procurement Re-entry<ArrowRight className="h-3 w-3 ml-1" />
+                <RefreshCw className="h-3 w-3 mr-1" />조달 재진입<ArrowRight className="h-3 w-3 ml-1" />
               </Button>
             )}
           </div>
