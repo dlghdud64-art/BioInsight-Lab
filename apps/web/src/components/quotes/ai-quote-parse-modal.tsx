@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * AI 견적서 파싱 모달
+ * §11.368 §0 — 견적서 자동 인식 모달 (AI 마케팅 라벨 절제)
  *
  * 공급사 견적서(PDF/이미지)를 업로드하면 Gemini 2.5 Flash로 파싱하여
  * 품목별 단가/납기/조건을 자동 추출하고, 벤더 응답으로 등록합니다.
@@ -15,7 +15,7 @@ import { csrfFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import {
   Upload, FileText, Loader2, CheckCircle2, AlertTriangle, X,
-  Sparkles, ChevronRight, Edit3, Save,
+  ChevronRight, Edit3, Save,
 } from "lucide-react";
 import type {
   ParsedQuoteDocument,
@@ -182,8 +182,8 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 shrink-0">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-blue-400" />
-            <span className="text-sm font-semibold text-slate-900">AI 견적서 파싱</span>
+            {/* §11.368 §0 — ✨ 제거, "AI 견적서 파싱" → 기능명. */}
+            <span className="text-sm font-semibold text-slate-900">견적서 자동 인식</span>
             <span className="text-[10px] font-mono text-slate-500 bg-slate-100 rounded px-1.5 py-0.5">
               Gemini 2.5 Flash
             </span>
@@ -240,7 +240,8 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
             <div className="flex flex-col items-center gap-4 py-12">
               <div className="relative">
                 <div className="h-14 w-14 rounded-xl bg-blue-500/10 flex items-center justify-center animate-pulse">
-                  <Sparkles className="h-6 w-6 text-blue-400" />
+                  {/* §11.368 §0 — ✨ → 기능 로딩 아이콘. */}
+                  <Loader2 className="h-6 w-6 text-blue-400 animate-spin" />
                 </div>
                 <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-blue-500 animate-ping" />
               </div>

@@ -10,7 +10,8 @@
  * - reasons 최대 3개, preview 1줄
  */
 import { Button } from "@/components/ui/button";
-import { Sparkles, X, Check, AlertTriangle, MinusCircle, ArrowRight } from "lucide-react";
+// §11.368 §0 — Sparkles 제거.
+import { X, Check, AlertTriangle, MinusCircle, ArrowRight } from "lucide-react";
 import type { AiSuggestion, AiSuggestionReason } from "@/lib/ai/suggestion-engine";
 
 export type SuggestionPanelProps = {
@@ -23,9 +24,10 @@ export type SuggestionPanelProps = {
 };
 
 const VARIANT_CONFIG = {
-  sourcing: { label: "AI 제안", labelColor: "text-blue-400", borderColor: "border-blue-600/20", bgColor: "bg-blue-600/5" },
-  compare: { label: "AI 판단", labelColor: "text-blue-300", borderColor: "border-blue-600/20", bgColor: "bg-blue-600/5" },
-  request: { label: "AI 초안", labelColor: "text-blue-300", borderColor: "border-blue-600/20", bgColor: "bg-blue-600/5" },
+  // §11.368 §0 — "AI 제안/판단/초안"(AI 주체) → 기능 라벨(결정형).
+  sourcing: { label: "소싱 제안", labelColor: "text-blue-400", borderColor: "border-blue-600/20", bgColor: "bg-blue-600/5" },
+  compare: { label: "비교 분석", labelColor: "text-blue-300", borderColor: "border-blue-600/20", bgColor: "bg-blue-600/5" },
+  request: { label: "요청 초안", labelColor: "text-blue-300", borderColor: "border-blue-600/20", bgColor: "bg-blue-600/5" },
 } as const;
 
 const CONFIDENCE_LABEL: Record<string, { label: string; color: string }> = {
@@ -77,7 +79,7 @@ export function SuggestionPanel({ suggestion, variant, onPrimaryAction, onDismis
       {/* Header row */}
       <div className="flex items-center gap-2 px-2.5 py-1.5">
         <div className="flex items-center gap-1 shrink-0">
-          <Sparkles className="h-3 w-3 text-blue-400" />
+          {/* §11.368 §0 — ✨ 제거(라벨만). */}
           <span className={`text-[10px] font-semibold ${config.labelColor}`}>{config.label}</span>
         </div>
 

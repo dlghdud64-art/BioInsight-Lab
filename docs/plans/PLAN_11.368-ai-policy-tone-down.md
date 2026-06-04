@@ -110,8 +110,8 @@
 - 위젯군별(Phase 1~4) 독립 revert.
 
 ## 11. Progress
-- Overall 35% · Current: Phase 1 완료 (대시보드 운영 위젯 5종) · Next: Phase 2 (분석 deep) → Phase 3 (견적/비교)
-- Checklist: [x] P0 [x] P1 [ ] P2 [ ] P3 [ ] P4 [ ] P5
+- Overall 70% · Current: Phase 2/3 완료 (견적·비교 + AI 데코 8파일) · Next: Phase 4 (제품/랜딩 ai-section) → Phase 5 (smoke)
+- Checklist: [x] P0 [x] P1 [x] P2 [x] P3 [ ] P4 [ ] P5
 
 **Phase 0 결론:** §0 = 기존 `public-ai-messaging-freeze`(Step 6) 운영 화면 확장 적용. 기준=operator review ladder + forbidden claim + 결정형. AI 기능(lib/ai) 보존, UI 마케팅 톤만 절제. 랜딩/세일즈=freeze 완료(보존).
 

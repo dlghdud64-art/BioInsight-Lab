@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import {
-  Sparkles, ChevronDown, ChevronUp,
+  Info, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -26,7 +26,7 @@ export function AIInsightCard({ query, productCount, isLoading, queryAnalysis }:
     return (
       <div className="flex items-center gap-2 px-3 py-2 rounded border border-bd bg-pn">
         <div className="w-6 h-6 rounded bg-el flex items-center justify-center animate-pulse shrink-0">
-          <Sparkles className="h-3 w-3 text-slate-400" />
+          <Info className="h-3 w-3 text-slate-400" />
         </div>
         <div className="flex-1 space-y-1 min-w-0">
           <div className="h-2.5 bg-el rounded animate-pulse w-32" />
@@ -85,7 +85,7 @@ export function AIInsightCard({ query, productCount, isLoading, queryAnalysis }:
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center gap-1.5 px-2.5 py-1.5 text-left hover:bg-el transition-colors"
       >
-        <Sparkles className="h-3 w-3 text-slate-400 shrink-0" />
+        <Info className="h-3 w-3 text-slate-400 shrink-0" />
         <p className="text-[11px] text-slate-600 leading-snug line-clamp-1 flex-1 min-w-0">
           {getInsightText()}
         </p>

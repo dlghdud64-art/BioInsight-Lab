@@ -9,7 +9,6 @@ import {
   FileText,
   Mail,
   AlertTriangle,
-  Sparkles,
   Eye,
 } from "lucide-react";
 import {
@@ -22,7 +21,7 @@ import {
 // ── 아이콘 매핑 ──
 
 const ACTIVITY_ICONS: Record<string, React.ReactNode> = {
-  AI_TASK_CREATED: <Sparkles className="h-3.5 w-3.5 text-blue-500" />,
+  AI_TASK_CREATED: <FileText className="h-3.5 w-3.5 text-blue-500" />,
   AI_TASK_OPENED: <Eye className="h-3.5 w-3.5 text-gray-500" />,
   QUOTE_DRAFT_GENERATED: <FileText className="h-3.5 w-3.5 text-blue-500" />,
   QUOTE_DRAFT_REVIEWED: <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />,

@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { usePersonalizedRecommendations } from "@/hooks/use-personalized-recommendations";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
-import { Sparkles, TrendingUp, Package, ThumbsUp, ThumbsDown, DollarSign, Zap, Info } from "lucide-react";
+// §11.368 §0 — Sparkles(AI 마케팅 데코) 제거.
+import { TrendingUp, Package, ThumbsUp, ThumbsDown, DollarSign, Zap, Info } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -50,7 +51,7 @@ export function PersonalizedRecommendations({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5" />
+            <Zap className="h-5 w-5" />
             {title}
           </CardTitle>
         </CardHeader>
@@ -69,7 +70,7 @@ export function PersonalizedRecommendations({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-purple-600" />
+          <Zap className="h-5 w-5 text-purple-600" />
           {title}
         </CardTitle>
         <CardDescription>

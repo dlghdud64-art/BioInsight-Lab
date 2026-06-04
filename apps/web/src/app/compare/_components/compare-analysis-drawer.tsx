@@ -25,7 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import {
-  Loader2, AlertTriangle, CheckCircle, Info, Mail, Sparkles,
+  Loader2, AlertTriangle, CheckCircle, Info, Mail,
   Copy, Check, ShoppingCart, HelpCircle, FileText, Clock, ExternalLink, ChevronRight,
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -562,19 +562,20 @@ export function CompareAnalysisDrawer({
           diffIndex: 0,
         }),
       });
-      if (!res.ok) throw new Error("AI 분석 실패");
+      if (!res.ok) throw new Error("비교 분석 실패");
       return res.json();
     },
     onSuccess: (data) => {
       setInsight(data.insight);
-      toast({ title: "AI 분석 완료", description: "핵심 변경 사항과 추천 액션을 확인하세요." });
+      // §11.368 §0 — "AI 분석"·"추천 액션"(AI 결정) → 기능명·"조치 후보"(operator review).
+      toast({ title: "비교 분석 완료", description: "핵심 변경 사항과 조치 후보를 확인하세요." });
     },
     onError: () => {
-      toast({ title: "AI 분석 실패", variant: "destructive" });
+      toast({ title: "비교 분석 실패", variant: "destructive" });
     },
   });
 
-  // AI 분석 자동 실행: 세션 로드 완료 + insight 없으면 자동 트리거
+  // §11.368 §0 — 비교 분석 자동 실행: 세션 로드 완료 + insight 없으면 자동 트리거
   useEffect(() => {
     if (sessionData && !insight && !insightMutation.isPending && !insightMutation.isSuccess) {
       insightMutation.mutate();
@@ -797,7 +798,7 @@ export function CompareAnalysisDrawer({
               });
               const blockedItems = candidatePs.filter((_, idx) => allDiffs[idx]?.summary.overallVerdict === "INCOMPATIBLE");
 
-              // 구조화된 AI 판단 요약 — 산문이 아니라 structured bullets
+              // §11.368 §0 — 구조화된 비교 분석 요약 (structured bullets)
               const judgmentLines: Array<{ type: "priority" | "reference" | "excluded"; text: string }> = [];
 
               if (directItems.length > 0) {
@@ -827,8 +828,8 @@ export function CompareAnalysisDrawer({
               return (
                 <div className="p-3 rounded-lg border border-blue-500/20 bg-blue-500/5 space-y-2">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="h-3.5 w-3.5 text-blue-400" />
-                    <h4 className="text-xs font-semibold text-blue-300">AI 판단 요약</h4>
+                    {/* §11.368 §0 — ✨·"AI 판단"(판단 주체) → 기능 라벨(비교 분석). */}
+                    <h4 className="text-xs font-semibold text-blue-300">비교 분석 요약</h4>
                   </div>
                   <div className="space-y-1.5">
                     {judgmentLines.map((line, idx) => (
@@ -1036,7 +1037,7 @@ export function CompareAnalysisDrawer({
                 )}
               </TabsContent>
 
-              {/* AI 분석 탭 */}
+              {/* §11.368 §0 — 비교 분석 탭 */}
               <TabsContent value="insight" className="space-y-3 mt-3">
                 {/* 로딩 상태 */}
                 {!insight && insightMutation.isPending && (
@@ -1053,19 +1054,18 @@ export function CompareAnalysisDrawer({
                     disabled={insightMutation.isPending}
                     className="w-full"
                   >
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    AI 분석 실행
+                    {/* §11.368 §0 — ✨ 제거, "AI 분석" → 기능명. */}
+                    비교 분석 실행
                   </Button>
                 )}
 
                 {insight && (
                   <>
-                    {/* 1. 권장 판단 요약 — decision-first */}
+                    {/* §11.368 §0 — 1. 권장 조치 요약(decision-first). ✨·"판단"(주체) 절제. */}
                     <Card className="border-blue-500/30 bg-blue-500/5">
                       <CardContent className="pt-4 pb-3">
                         <div className="flex items-center gap-2 mb-2">
-                          <Sparkles className="h-4 w-4 text-blue-400" />
-                          <span className="text-sm font-semibold text-blue-300">권장 판단</span>
+                          <span className="text-sm font-semibold text-blue-300">권장 조치</span>
                         </div>
                         <p className="text-sm leading-relaxed">{insight.overallAssessment}</p>
                       </CardContent>
