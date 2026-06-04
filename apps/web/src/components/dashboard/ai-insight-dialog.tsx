@@ -3,7 +3,7 @@
 /**
  * §11.82 #dashboard-operational-intelligence-redesign Phase 1
  *
- * 호영님 시안 흡수 — "AI 리포트 생성" button + modal.
+ * §11.368 §0 — "운영 리포트" button + modal (AI 마케팅 라벨/✨ 제거, 결정형).
  * dashboard/page.tsx 헤더 우측에 배치되어 클릭 시 dialog 가 열리며
  * /api/analytics/ai-insight POST 호출 → 한국어 운영 분석 결과 표시.
  *
@@ -39,7 +39,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { Sparkles, Loader2, RefreshCw, AlertCircle } from "lucide-react";
+// §11.368 §0 — ✨ Sparkles(AI 마케팅 데코) 제거 → FileText(기능 아이콘).
+import { FileText, Loader2, RefreshCw, AlertCircle } from "lucide-react";
 import { csrfFetch } from "@/lib/api-client";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -74,7 +75,7 @@ export function AIInsightDialog({
       const res = await csrfFetch("/api/analytics/ai-insight", { method: "POST" });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(body?.error || "AI 분석에 실패했습니다");
+        throw new Error(body?.error || "리포트 생성에 실패했습니다");
       }
       return body as AIInsightResponse;
     },
@@ -110,12 +111,13 @@ export function AIInsightDialog({
       className={
         disabled
           ? "h-8 text-xs gap-1.5 bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
-          : "h-8 text-xs gap-1.5 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white shadow-sm"
+          : "h-8 text-xs gap-1.5 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
       }
       onClick={() => handleOpen(true)}
     >
-      <Sparkles className="h-3.5 w-3.5" />
-      AI 리포트 생성
+      {/* §11.368 §0 — AI 마케팅 라벨/그라데이션 제거 → 기능 라벨(운영 리포트). */}
+      <FileText className="h-3.5 w-3.5" />
+      운영 리포트
     </Button>
   );
 
@@ -132,11 +134,13 @@ export function AIInsightDialog({
       <DialogContent className="max-w-xl bg-white">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-indigo-500" />
-            AI 운영 인사이트
+            {/* §11.368 §0 — Sparkles 제거, "AI 인사이트" → 기능 라벨. */}
+            <FileText className="h-4 w-4 text-blue-600" />
+            운영 리포트
           </DialogTitle>
           <DialogDescription className="text-xs break-keep">
-            최근 60일 구매 데이터를 분석하여 운영 패턴, 이상 징후, 조치 권고를 한국어로 요약합니다.
+            {/* §11.368 §0 — "조치 권고"(AI 결정 주체) → "조치 후보"(operator review 종착). */}
+            최근 60일 구매 데이터를 분석하여 운영 패턴, 이상 징후, 조치 후보를 한국어로 요약합니다.
           </DialogDescription>
         </DialogHeader>
 
@@ -146,7 +150,8 @@ export function AIInsightDialog({
               <Loader2 className="h-5 w-5 animate-spin text-indigo-400 mx-auto mb-3" />
               <p className="text-sm text-slate-700 font-medium">운영 데이터 분석 중...</p>
               <p className="text-[11px] text-slate-400 mt-1 break-keep">
-                Anthropic Claude 가 최근 구매 흐름을 검토하고 있습니다.
+                {/* §11.368 §0 — AI 주체 "검토"(operator 역할) → 기능 "분석". */}
+                최근 구매 흐름을 분석하고 있습니다.
               </p>
             </div>
           ) : mutation.isError ? (
@@ -156,7 +161,7 @@ export function AIInsightDialog({
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-rose-700">분석 실패</p>
                   <p className="text-xs text-rose-600 mt-0.5 break-keep">
-                    {mutation.error?.message || "AI 분석을 완료하지 못했습니다."}
+                    {mutation.error?.message || "리포트 생성을 완료하지 못했습니다."}
                   </p>
                   <Button
                     size="sm"

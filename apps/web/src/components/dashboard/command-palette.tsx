@@ -14,7 +14,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search, FileText, CreditCard, Package, BarChart2,
-  ArrowRight, Clock, Sparkles, Command, CornerDownLeft,
+  ArrowRight, Clock, Command, CornerDownLeft,
   ShoppingCart, ClipboardCheck, Loader2,
 } from "lucide-react";
 import {
@@ -448,7 +448,8 @@ export function CommandPalette() {
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-                            <Sparkles className="h-4 w-4 text-blue-600" />
+                            {/* §11.368 §0 — ✨ → 기능 아이콘(검색). */}
+                            <Search className="h-4 w-4 text-blue-600" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-slate-700">
@@ -544,9 +545,10 @@ export function CommandPalette() {
                   <kbd className="px-1 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono">Enter</kbd>
                   <span>선택</span>
                 </div>
+                {/* §11.368 §0 — AI 마케팅 톤·데코 → 기능명. */}
                 <div className="flex items-center gap-1 text-[10px] text-slate-400 ml-auto">
-                  <Sparkles className="h-3 w-3" />
-                  <span>AI 자연어 분석</span>
+                  <Search className="h-3 w-3" />
+                  <span>자연어 검색</span>
                 </div>
               </div>
             </div>

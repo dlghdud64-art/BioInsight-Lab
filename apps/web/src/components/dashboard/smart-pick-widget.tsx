@@ -5,7 +5,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Sparkles, Loader2 } from "lucide-react";
+// §11.368 §0 — Sparkles(AI 마케팅 데코) 제거.
+import { ShoppingCart, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
@@ -32,8 +33,6 @@ export function SmartPickWidget() {
   const queryClient = useQueryClient();
 
   // 사용자 이름 가져오기
-  const userName = session?.user?.name || session?.user?.email?.split("@")[0] || "연구원";
-  const userDisplayName = userName.split(" ")[0] || userName;
 
   // 재주문 추천 조회
   const { data, isLoading } = useQuery<{ recommendations: ReorderRecommendation[] }>({
@@ -84,12 +83,13 @@ export function SmartPickWidget() {
     },
   });
 
+  // §11.368 §0 — gradient 데코·의인화 제거 → 절제·결정형.
   if (isLoading) {
     return (
-      <Card className="border-none shadow-sm bg-gradient-to-br from-blue-50 to-indigo-50">
+      <Card className="border border-slate-200 shadow-sm bg-white">
         <CardContent className="py-8 text-center">
           <Loader2 className="h-6 w-6 animate-spin text-blue-600 mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">추천 상품을 찾고 있어요...</p>
+          <p className="text-sm text-muted-foreground">재주문 후보를 확인 중입니다.</p>
         </CardContent>
       </Card>
     );
@@ -99,17 +99,18 @@ export function SmartPickWidget() {
     return null; // 추천이 없으면 표시하지 않음
   }
 
+  // §11.368 §0 — AI 마케팅 톤·의인화 → 결정형(소진 임박 규칙 근거).
   return (
-    <Card className="border-none shadow-sm bg-gradient-to-br from-blue-50 to-indigo-50">
+    <Card className="border border-slate-200 shadow-sm bg-white">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-blue-600" />
+          <ShoppingCart className="h-5 w-5 text-blue-600" />
           <CardTitle className="text-lg font-semibold text-slate-900">
-            AI 추천: 슬슬 필요하지 않으세요?
+            재주문 검토 권장
           </CardTitle>
         </div>
         <CardDescription className="text-sm text-gray-600 mt-1">
-          {userDisplayName}님, 지난번 주문한 시약이 떨어질 때가 된 것 같아 챙겨봤어요.
+          최근 사용 패턴 기준 소진이 임박한 품목입니다. 재주문을 검토하세요.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">

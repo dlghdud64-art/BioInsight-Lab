@@ -110,6 +110,7 @@
 - ⚠️ **유일 갭 = 명의(reply-to)**: `EmailOptions` 에 `replyTo` 필드 없음, sender.ts reply-to 처리 없음 → noreply@labaxis 발송 + reply-to 미설정 → 공급사 답장이 연구소로 안 감. **A 원칙 위반.**
 - → **§11.348-SEND-A 할 일 = "연결"이 아니라 `replyTo`(연구소/요청자) 추가** (sender.ts EmailOptions + Resend 전달 / vendor-requests 가 replyTo 세팅). 작지만 A의 본질.
 - ⚠️ 환경변수 `RESEND_API_KEY`·`EMAIL_FROM` 프로덕션 설정 여부 = ops 확인(코드 아님).
+- ✅ **§11.348-SEND-A reply-to 구현 완료(2026-06-03, push 대기):** `EmailOptions.replyTo?` + resend.emails.send 조건부 전달 + vendor-requests `replyTo: session?.user?.email`. 공급사 답장→연구소(A 명의). sentinel 22/22 green. **외부발송 동작 변경이라 push 전 코드 검토 + env(RESEND_API_KEY·EMAIL_FROM) + npm run test 필수.**
 - 🔎 더 깊은 미구현: §11.348-A 회신 루프 본체(`vendor-requests/[token]/response` 라우트는 존재 → 회신→"검증 대기 입고안"→사람 승인→입고확정 흐름 완성도는 별도 Phase 0 필요).
 
 ### 규격 ontology / 오브젝트 스토리지 — 미확인 (다음 세션)

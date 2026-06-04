@@ -18,7 +18,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { DollarSign, TrendingUp, TrendingDown, Package, AlertCircle, Sparkles } from "lucide-react";
+// §11.368 §0 — Sparkles(AI 마케팅 데코) 제거.
+import { DollarSign, TrendingUp, TrendingDown, Package, AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -319,14 +320,15 @@ export function AnalyticsDashboard() {
       </div>
 
       {/* Insight Section */}
+      {/* §11.368 §0 — gradient 데코 제거, ✨→기능 아이콘, "스마트"(AI 톤)·"조언" → 결정형. */}
       {insights.length > 0 && (
-        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+        <Card className="bg-white border border-slate-200">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-blue-600" />
-              <CardTitle>스마트 인사이트</CardTitle>
+              <TrendingUp className="h-5 w-5 text-blue-600" />
+              <CardTitle>데이터 분석 요약</CardTitle>
             </div>
-            <CardDescription>데이터 기반 인사이트와 조언</CardDescription>
+            <CardDescription>지출·예산 데이터 기반 요약</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
