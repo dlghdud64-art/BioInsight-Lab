@@ -584,6 +584,15 @@ export function ExecutiveSummarySection({
         </div>
       )}
 
+      {/* §11.362-3 — 호영님: System Insight(종합 판단)를 KPI(개별 액션) 위로.
+          종합 판단 → 개별 액션 순. real signal — 진행 중 발주 / 이상 신호 /
+          예산 burn rate 기반 한 줄 운영 시그니처 자동 derive. fake 0.
+          §11.243b #3 — onboardingMode 시 hide(KPI guide banner 와 상호배타).
+          dismiss + sessionStorage 유지. */}
+      {!onboardingMode && (
+        <SystemInsightCard kpis={kpis} ordersCount={orders.length} />
+      )}
+
       {/* ── KPI Row ─────────────────────────────────────── */}
       {/* §11.82 #dashboard-operational-intelligence-redesign Phase 2.
           호영님 시안의 4-card visual essence 흡수 — hover Quick Data
@@ -748,17 +757,6 @@ export function ExecutiveSummarySection({
           }
         />
       </div>
-
-      {/* §11.82 #dashboard-operational-intelligence-redesign Phase 3.
-          호영님 시안의 SYSTEM INSIGHT 다크 accent card 흡수.
-          real signal — 진행 중 발주 / 이상 신호 / 예산 burn rate 기반으로
-          한 줄짜리 운영 시그니처 메시지 자동 derive. fake percentage 0,
-          marketing decorative 0.
-          §11.243b #3 — 호영님 P0: onboardingMode 시 hide. 운영 데이터 0 일 때는
-          시그니처 의미 없음. dismiss + sessionStorage 도 함께 적용. */}
-      {!onboardingMode && (
-        <SystemInsightCard kpis={kpis} ordersCount={orders.length} />
-      )}
 
       {/* 차트/활동 피드는 대시보드에서 제거.
           월별 추이는 지출 분석 페이지로 이관.
