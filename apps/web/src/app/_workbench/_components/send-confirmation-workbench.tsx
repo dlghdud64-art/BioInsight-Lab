@@ -46,7 +46,7 @@ export function SendConfirmationWorkbench({ open, onClose, handoff, onExecutionR
               {isExecuted ? <Check className="h-4 w-4 text-emerald-400" /> : <Send className="h-4 w-4 text-yellow-400" />}
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-slate-100">{isExecuted ? "발송 완료" : "Send Confirmation"}</h2>
+              <h2 className="text-sm font-semibold text-slate-100">{isExecuted ? "발송 완료" : "발송 확인(Send Confirmation)"}</h2>
               <div className="flex items-center gap-2 text-[10px] mt-0.5">
                 <span className="text-slate-400">수신자: <span className="text-slate-200 font-medium">{confirmState.primaryRecipient}</span></span>
                 <span className="text-slate-600">·</span>
@@ -72,7 +72,7 @@ export function SendConfirmationWorkbench({ open, onClose, handoff, onExecutionR
 
           {/* Final Payload */}
           <div>
-            <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">최종 Payload 확인</span>
+            <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">최종 페이로드(Payload) 확인</span>
             <div className="mt-2 px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33]">
               <span className="text-[9px] text-slate-500 block mb-0.5">발송 내용 요약</span>
               <span className="text-[10px] text-slate-200">{confirmState.outboundSummary || "—"}</span>
@@ -99,7 +99,7 @@ export function SendConfirmationWorkbench({ open, onClose, handoff, onExecutionR
           {isExecuted && (
             <div className="px-3 py-3 rounded-md bg-emerald-600/[0.06] border border-emerald-500/15 space-y-1">
               <div className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /><span className="text-[11px] text-emerald-300 font-medium">PO가 공급사에 발송되었습니다</span></div>
-              <span className="text-[10px] text-slate-400">PO Sent Detail에서 공급사 확인 상태를 추적할 수 있습니다.</span>
+              <span className="text-[10px] text-slate-400">PO 발송 상세(PO Sent Detail)에서 공급사 확인 상태를 추적할 수 있습니다.</span>
             </div>
           )}
         </div>
@@ -113,7 +113,7 @@ export function SendConfirmationWorkbench({ open, onClose, handoff, onExecutionR
           <div className="flex gap-2">
             {!isExecuted ? (
               <>
-                <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onReturnToPreparation}><ArrowLeft className="h-3 w-3 mr-1" />Dispatch Prep로</Button>
+                <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onReturnToPreparation}><ArrowLeft className="h-3 w-3 mr-1" />발송 준비(Dispatch Prep)로</Button>
                 <Button size="sm" className="flex-1 h-8 text-[10px] bg-yellow-600 hover:bg-yellow-500 text-white font-medium" onClick={executeDispatch} disabled={!validation?.canRecordDispatchExecution || isExecuting}>
                   {isExecuting ? "발송 중..." : <><Send className="h-3 w-3 mr-1" />발송 실행</>}
                 </Button>
@@ -121,7 +121,7 @@ export function SendConfirmationWorkbench({ open, onClose, handoff, onExecutionR
             ) : (
               <>
                 <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onClose}>닫기</Button>
-                <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={handleSentDetail}><Mail className="h-3 w-3 mr-1" />PO Sent Detail<ArrowRight className="h-3 w-3 ml-1" /></Button>
+                <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={handleSentDetail}><Mail className="h-3 w-3 mr-1" />PO 발송 상세(PO Sent Detail)<ArrowRight className="h-3 w-3 ml-1" /></Button>
               </>
             )}
           </div>

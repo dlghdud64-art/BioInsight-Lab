@@ -55,13 +55,13 @@ export function DispatchPreparationWorkbench({ open, onClose, handoff, onPrepRec
               {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Truck className="h-4 w-4 text-cyan-400" />}
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-slate-100">{isRecorded ? "Dispatch 준비 완료" : "Dispatch Preparation"}</h2>
+              <h2 className="text-sm font-semibold text-slate-100">{isRecorded ? "발송 준비 완료" : "발송 준비(Dispatch Preparation)"}</h2>
               <div className="flex items-center gap-2 text-[10px] mt-0.5">
                 <span className="text-slate-400">수신자 <span className="text-slate-200 font-medium">{prepState.recipients.length}</span></span>
                 <span className="text-slate-600">·</span>
                 <span className="text-slate-400">첨부 <span className="text-slate-200 font-medium">{prepState.attachmentBundle.filter(a => a.included).length}</span></span>
                 <span className="text-slate-600">·</span>
-                {readiness?.isSendReady ? <span className="text-emerald-400 font-medium">Send 준비 완료</span> : <span className="text-yellow-400">누락 {readiness?.sendCriticalMissing.length || 0}</span>}
+                {readiness?.isSendReady ? <span className="text-emerald-400 font-medium">발송 준비 완료</span> : <span className="text-yellow-400">누락 {readiness?.sendCriticalMissing.length || 0}</span>}
               </div>
             </div>
           </div>
@@ -110,11 +110,11 @@ export function DispatchPreparationWorkbench({ open, onClose, handoff, onPrepRec
           {readiness && (
             <div className="grid grid-cols-2 gap-2">
               <div className={`px-3 py-2.5 rounded-md border ${readiness.sendCriticalMissing.length === 0 ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-red-500/15 bg-red-600/[0.03]"}`}>
-                <span className="text-[9px] text-slate-500 block mb-0.5">Send-Critical</span>
+                <span className="text-[9px] text-slate-500 block mb-0.5">발송 필수(Send-Critical)</span>
                 {readiness.sendCriticalMissing.length === 0 ? <div className="flex items-center gap-1"><Check className="h-3 w-3 text-emerald-400" /><span className="text-[10px] text-emerald-300">완료</span></div> : <span className="text-[10px] text-red-300">누락: {readiness.sendCriticalMissing.join(", ")}</span>}
               </div>
               <div className={`px-3 py-2.5 rounded-md border ${readiness.nonCriticalMissing.length === 0 ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-yellow-500/20 bg-yellow-600/[0.03]"}`}>
-                <span className="text-[9px] text-slate-500 block mb-0.5">Non-Critical</span>
+                <span className="text-[9px] text-slate-500 block mb-0.5">비필수(Non-Critical)</span>
                 {readiness.nonCriticalMissing.length === 0 ? <div className="flex items-center gap-1"><Check className="h-3 w-3 text-emerald-400" /><span className="text-[10px] text-emerald-300">완료</span></div> : <span className="text-[10px] text-yellow-300">선택: {readiness.nonCriticalMissing.join(", ")}</span>}
               </div>
             </div>
@@ -126,7 +126,7 @@ export function DispatchPreparationWorkbench({ open, onClose, handoff, onPrepRec
 
           {isRecorded && (
             <div className="px-3 py-3 rounded-md bg-emerald-600/[0.06] border border-emerald-500/15">
-              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /><span className="text-[11px] text-emerald-300 font-medium">Dispatch Preparation 저장 완료</span></div>
+              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /><span className="text-[11px] text-emerald-300 font-medium">발송 준비(Dispatch Preparation) 저장 완료</span></div>
             </div>
           )}
         </div>
@@ -138,11 +138,11 @@ export function DispatchPreparationWorkbench({ open, onClose, handoff, onPrepRec
             <span className="text-slate-500">{validation?.recommendedNextAction || ""}</span>
           </div>
           <div className="flex gap-2">
-            <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onReturnToCreated}><ArrowLeft className="h-3 w-3 mr-1" />PO Created로</Button>
+            <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onReturnToCreated}><ArrowLeft className="h-3 w-3 mr-1" />PO 생성(PO Created)로</Button>
             {!isRecorded ? (
-              <Button size="sm" className="flex-1 h-8 text-[10px] bg-cyan-600 hover:bg-cyan-500 text-white font-medium" onClick={recordPrep} disabled={!validation?.canRecordDispatchPreparation}><Truck className="h-3 w-3 mr-1" />Dispatch Preparation 저장</Button>
+              <Button size="sm" className="flex-1 h-8 text-[10px] bg-cyan-600 hover:bg-cyan-500 text-white font-medium" onClick={recordPrep} disabled={!validation?.canRecordDispatchPreparation}><Truck className="h-3 w-3 mr-1" />발송 준비(Dispatch Preparation) 저장</Button>
             ) : (
-              <Button size="sm" className={`flex-1 h-8 text-[10px] font-medium ${validation?.canOpenSendConfirmation ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "bg-slate-700 text-slate-400"}`} onClick={handleSendConfirm} disabled={!validation?.canOpenSendConfirmation}><Mail className="h-3 w-3 mr-1" />Send Confirmation<ArrowRight className="h-3 w-3 ml-1" /></Button>
+              <Button size="sm" className={`flex-1 h-8 text-[10px] font-medium ${validation?.canOpenSendConfirmation ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "bg-slate-700 text-slate-400"}`} onClick={handleSendConfirm} disabled={!validation?.canOpenSendConfirmation}><Mail className="h-3 w-3 mr-1" />발송 확인(Send Confirmation)<ArrowRight className="h-3 w-3 ml-1" /></Button>
             )}
           </div>
         </div>
