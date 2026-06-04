@@ -346,37 +346,66 @@ function DashboardPageInner() {
   const recentActivityCount = stats.totalInventory + stats.monthlySpending + stats.activeQuotes;
   const inventoryIssueHref = "/dashboard/inventory?filter=lot_issue&tab=overview";
 
+  // §11.362-1/2 — 호영님 도메인 결정: 위험-우선 severity rank.
+  //   (구) 고정 배열순 find(count>0) → severity 무시·위험신호(만료/SLA) 누락.
+  //   (신) count>0 후보 중 severityRank 최상위(작을수록 우선)를 primary 로 선정.
+  //   rank: 만료 폐기(1) > SLA 지연(2) > 재고 부족(3) > 입고 처리(4) > 승인 대기(5).
+  //   href 는 검증된 기존 라우트 재사용 — 신규 dead route 0.
   const dashboardPriorityActions = [
     {
-      id: "receiving",
-      label: "입고 처리",
-      count: stats.compareStats.purchaseToReceivingCount,
-      helper: "입고 대기와 예외를 먼저 확인",
+      id: "expiring",
+      label: "만료 폐기",
+      count: stats.expiringCount,
+      severityRank: 1,
+      helper: "유효기간 경과 lot 우선 폐기·교체",
       href: inventoryIssueHref,
-      icon: <Truck className="h-4 w-4" />,
+      icon: <AlertTriangle className="h-4 w-4" />,
+    },
+    {
+      id: "sla",
+      label: "SLA 지연",
+      count: riskOrBlockerCount,
+      severityRank: 2,
+      helper: "응답 기한 초과 견적 즉시 처리",
+      href: "/dashboard/quotes?status=RESPONDED",
+      icon: <AlertTriangle className="h-4 w-4" />,
     },
     {
       id: "inventory",
       label: "재고 부족",
       count: stats.lowStockAlerts,
+      severityRank: 3,
       helper: "안전재고와 재주문 후보 확인",
       href: "/dashboard/inventory?filter=low",
       icon: <AlertTriangle className="h-4 w-4" />,
     },
     {
+      id: "receiving",
+      label: "입고 처리",
+      count: stats.compareStats.purchaseToReceivingCount,
+      severityRank: 4,
+      helper: "입고 대기와 예외를 먼저 확인",
+      href: inventoryIssueHref,
+      icon: <Truck className="h-4 w-4" />,
+    },
+    {
       id: "approval",
       label: "승인 대기",
       count: approvalPendingCount,
+      severityRank: 5,
       helper: "견적 응답 검토 후 발주 전환",
       href: "/dashboard/quotes?status=RESPONDED",
       icon: <ClipboardList className="h-4 w-4" />,
     },
   ];
   const primaryPriorityAction =
-    dashboardPriorityActions.find((action) => action.count > 0) ??
+    [...dashboardPriorityActions]
+      .filter((action) => action.count > 0)
+      .sort((a, b) => a.severityRank - b.severityRank)[0] ??
     dashboardPriorityActions[0];
-  const secondaryPriorityActions = dashboardPriorityActions
+  const secondaryPriorityActions = [...dashboardPriorityActions]
     .filter((action) => action.id !== primaryPriorityAction.id)
+    .sort((a, b) => a.severityRank - b.severityRank)
     .slice(0, 2);
   const nextPriorityAction = secondaryPriorityActions[0] ?? dashboardPriorityActions[1];
   const inactiveReason =
