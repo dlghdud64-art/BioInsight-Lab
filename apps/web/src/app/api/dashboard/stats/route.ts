@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
     const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000); // §11.366 — trend snapshot 병렬 선조회용
     const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
     // ── Phase 1: 완전 독립 쿼리 4개 동시 실행 ─────────────────────────
@@ -75,6 +76,28 @@ export async function GET(request: NextRequest) {
       ],
     };
 
+    // ── §11.366 — 0건 early count-check ──────────────────────────────────
+    // 신규/빈 계정은 전체 배터리(~20쿼리) 생략하고 즉시 빈 응답.
+    // client(page.tsx/executive/analytics)는 모든 키를 ?? / || 기본값으로 소비
+    //   → {} 반환이 payload contract 안전(빈 대시보드/온보딩/mock 정상 동작).
+    // 데이터 계정엔 count 1라운드트립 추가(효과 무효, Risk Low) — 데이터 계정 핵심
+    //   단축은 아래 직렬체인 병렬 호이스트.
+    const earlyPurchaseWhere: any = {
+      OR: [
+        { scopeKey: { in: [userId, ...workspaceIds, ...(guestKey ? [guestKey] : [])] } },
+        ...(workspaceIds.length > 0 ? [{ workspaceId: { in: workspaceIds } }] : []),
+      ],
+    };
+    const [quoteCount, orderCount, inventoryCount, purchaseCount] = await Promise.all([
+      db.quote.count({ where: quoteOwnerWhere }),
+      db.order.count({ where: { userId } }),
+      db.productInventory.count({ where: inventoryOwnerWhere }),
+      db.purchaseRecord.count({ where: earlyPurchaseWhere }),
+    ]);
+    if (quoteCount === 0 && orderCount === 0 && inventoryCount === 0 && purchaseCount === 0) {
+      return NextResponse.json({});
+    }
+
     // ── Phase 2: Phase 1 결과 의존 쿼리 6개 동시 실행 ─────────────────
     // 이전: quotes → ordersWithItems → userInventories → (fallback budget) 순차 실행
     // 이후: 모두 병렬
@@ -91,7 +114,6 @@ export async function GET(request: NextRequest) {
       compareLinkedQuoteSessions,
       completedCompareItems,
       sessionsWithInquiry,
-      followThroughData,
       opsFunnelData,
     ] = await Promise.all([
       db.quote.findMany({
@@ -114,7 +136,7 @@ export async function GET(request: NextRequest) {
       db.productInventory.findMany({
         where: inventoryOwnerWhere,
         include: {
-          product: { select: { name: true, catalogNumber: true, brand: true } },
+          product: { select: { name: true, catalogNumber: true } }, // §11.366 — brand overfetch 제거(미소비)
         },
         take: 500,
       }),
@@ -189,9 +211,7 @@ export async function GET(request: NextRequest) {
         where: { userId, inquiryDrafts: { some: {} } },
         select: { id: true },
       }).catch(() => [] as { id: string }[]),
-      // Follow-through: compareLinkedQuoteSessions 재사용 (id 포함 확장) → orders → restocks
-      // 중복 quote 쿼리 제거: compareLinkedQuoteSessions에 id를 추가해서 공유
-      Promise.resolve(null), // placeholder — Phase 2 완료 후 compareLinkedQuoteSessions 결과로 후처리
+      // §11.366 — followThrough 는 Phase 3 배치로 호이스트(placeholder 제거).
       // Ops funnel: all user quotes → purchased → orders confirmed → receiving completed
       db.quote.findMany({
         where: quoteOwnerWhere,
@@ -237,7 +257,13 @@ export async function GET(request: NextRequest) {
 
     // lastMonthRecords 별도 쿼리 제거: recentPurchaseRecords에서 필터링으로 대체
     // recentOrders 별도 쿼리 제거: ordersWithItems.slice(0,5)로 대체
-    const [recentPurchaseRecords, recentPurchases] =
+    //
+    // §11.366 — 병렬 호이스트: followThrough(quoteId→order→restock) + trend snapshot
+    //   을 Phase 3 배치에 합류. 기존엔 Phase 3 이후 직렬 실행(임계 경로 +3 라운드트립:
+    //   ftOrders→restocks 2 + snapshot 1). 의존성 = followThrough:
+    //   compareLinkedQuoteSessions(Phase 2 가용), snapshot: orgIds(Phase 1 가용)
+    //   → Phase 3 와 안전하게 병렬. 집계 산식·payload contract 불변(성능만).
+    const [recentPurchaseRecords, recentPurchases, followThroughDataResolved, trendSnapshot] =
       await Promise.all([
         db.purchaseRecord.findMany({
           where: { ...purchaseOwnerWhere, purchasedAt: { gte: sixMonthsAgo, lte: thisMonthEnd } },
@@ -260,38 +286,43 @@ export async function GET(request: NextRequest) {
             unit: true,
           },
         }),
+        // followThrough: compareLinkedQuoteSessions(id 포함) → orders → restocks.
+        //   내부 2-chain 은 IIFE 로 캡슐화해 Phase 3 배치와 중첩(직렬 배리어 제거).
+        (async (): Promise<{ quoteCount: number; orderCount: number; receivingCount: number; inventoryCount: number }> => {
+          const linkedQuotes = compareLinkedQuoteSessions as { id: string; comparisonId: string | null }[];
+          if (linkedQuotes.length === 0) {
+            return { quoteCount: 0, orderCount: 0, receivingCount: 0, inventoryCount: 0 };
+          }
+          const qIds = linkedQuotes.map((q) => q.id);
+          const ftOrders = await db.order.findMany({
+            where: { quoteId: { in: qIds } },
+            select: { id: true },
+          });
+          if (ftOrders.length === 0) {
+            return { quoteCount: linkedQuotes.length, orderCount: 0, receivingCount: 0, inventoryCount: 0 };
+          }
+          const oIds = ftOrders.map((o: { id: string }) => o.id);
+          const restocks = await db.inventoryRestock.findMany({
+            where: { orderId: { in: oIds } },
+            select: { receivingStatus: true },
+          });
+          return {
+            quoteCount: linkedQuotes.length,
+            orderCount: ftOrders.length,
+            receivingCount: restocks.length,
+            inventoryCount: restocks.filter((r: { receivingStatus: string }) => r.receivingStatus === "COMPLETED").length,
+          };
+        })().catch(() => ({ quoteCount: 0, orderCount: 0, receivingCount: 0, inventoryCount: 0 })),
+        // trend snapshot 선조회(orgIds 의존). delta 계산은 데이터 가공부에서 수행.
+        getMostRecentSnapshotBefore({
+          organizationId: orgIds[0] ?? null,
+          userId: orgIds[0] ? null : userId,
+          before: oneDayAgo,
+        }).catch(() => null),
       ]);
 
     // recentOrders는 ordersWithItems에서 추출
     const recentOrders = ordersWithItems.slice(0, 5);
-
-    // followThroughData: compareLinkedQuoteSessions 결과 재사용 (중복 쿼리 제거)
-    const linkedQuotes = compareLinkedQuoteSessions as { id: string; comparisonId: string | null }[];
-    let followThroughDataResolved: { quoteCount: number; orderCount: number; receivingCount: number; inventoryCount: number };
-    if (linkedQuotes.length === 0) {
-      followThroughDataResolved = { quoteCount: 0, orderCount: 0, receivingCount: 0, inventoryCount: 0 };
-    } else {
-      const qIds = linkedQuotes.map((q) => q.id);
-      const ftOrders = await db.order.findMany({
-        where: { quoteId: { in: qIds } },
-        select: { id: true },
-      });
-      if (ftOrders.length === 0) {
-        followThroughDataResolved = { quoteCount: linkedQuotes.length, orderCount: 0, receivingCount: 0, inventoryCount: 0 };
-      } else {
-        const oIds = ftOrders.map((o: { id: string }) => o.id);
-        const restocks = await db.inventoryRestock.findMany({
-          where: { orderId: { in: oIds } },
-          select: { receivingStatus: true },
-        });
-        followThroughDataResolved = {
-          quoteCount: linkedQuotes.length,
-          orderCount: ftOrders.length,
-          receivingCount: restocks.length,
-          inventoryCount: restocks.filter((r: { receivingStatus: string }) => r.receivingStatus === "COMPLETED").length,
-        };
-      }
-    }
 
     // ── Phase 4: N+1 제거 배치 조회 2개 동시 실행 ──────────────────────
     // 이전: userInventories 루프에서 매 항목마다 db.orderItem.findUnique 호출 (N+1)
@@ -523,25 +554,16 @@ export async function GET(request: NextRequest) {
       anomalyDelta: null,
       lookupAt: null,
     };
-    try {
-      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      // §11.107 — primary org membership 사용 (multi-org 운영자는 첫 org 기준).
-      const orgIdForLookup = orgIds[0] ?? null;
-      const snap = await getMostRecentSnapshotBefore({
-        organizationId: orgIdForLookup,
-        userId: orgIdForLookup ? null : userId,
-        before: oneDayAgo,
-      });
-      if (snap) {
-        trend = {
-          processingDelta: currentProcessing - snap.processingRequiredCount,
-          pendingApprovalDelta: currentPendingApproval - snap.pendingApprovalCount,
-          anomalyDelta: currentAnomaly - snap.anomalyCount,
-          lookupAt: snap.capturedAt.toISOString(),
-        };
-      }
-    } catch {
-      // graceful — schema/DB 부재 시 null 유지 (frontend chip 미노출)
+    // §11.366 — snapshot 은 Phase 3 배치에서 병렬 선조회(trendSnapshot, .catch→null).
+    //   여기선 delta 만 계산(추가 DB 라운드트립 0). 산식·null fallback 의미 불변.
+    if (trendSnapshot) {
+      const snap = trendSnapshot;
+      trend = {
+        processingDelta: currentProcessing - snap.processingRequiredCount,
+        pendingApprovalDelta: currentPendingApproval - snap.pendingApprovalCount,
+        anomalyDelta: currentAnomaly - snap.anomalyCount,
+        lookupAt: snap.capturedAt.toISOString(),
+      };
     }
 
     const resp = NextResponse.json({
