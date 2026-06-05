@@ -4056,6 +4056,17 @@ function QuotesPageContent() {
               ? "승인 패키지 준비 완료"
               : selectedSignals.ctaLabel,
             onClick: () => {
+              // §11.363 — "추가 회신 확보"/재요청 = 추가 발송 intent.
+              //   canonical send 단일점(request_send → VendorRequestModal) 재진입.
+              //   기존 no-op(창만 닫기) 제거. compare_review>=2(선택안 확정) /
+              //   approval_prep / po_conversion 은 send intent 아님 → 닫기 유지.
+              if (
+                activeWorkWindow === "followup_send" ||
+                (activeWorkWindow === "compare_review" && (selectedQuote.responses?.length ?? 0) < 2)
+              ) {
+                setActiveWorkWindow("request_send");
+                return;
+              }
               setActiveWorkWindow(null);
             },
           }}
