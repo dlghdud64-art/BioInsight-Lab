@@ -182,7 +182,7 @@ function DashboardPageInner() {
     }
   };
 
-  const { data: dashboardStats, isLoading: statsLoading } = useQuery({
+  const { data: dashboardStats, isLoading: statsLoading, refetch: refetchStats } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
       const guestKey = getGuestKey();
@@ -201,10 +201,20 @@ function DashboardPageInner() {
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     // 콜드스타트 transient 500 회복: 지수 backoff 로 따뜻한 재시도.
-    retry: 3,
-    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
+    // §11.366 — retry 창 단축(2*4000=~3s) — 스켈레톤 상한(6s)과 정합.
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
     refetchOnWindowFocus: false,
   });
+
+  // §11.366 — 6초 상한 타이머. 로딩 중일 때만 활성, 회복 시 자동 reset.
+  const [loadTimedOut, setLoadTimedOut] = useState(false);
+  useEffect(() => {
+    const stillLoading = status === "loading" || (statsLoading && !dashboardStats);
+    if (!stillLoading) { setLoadTimedOut(false); return; }
+    const t = setTimeout(() => setLoadTimedOut(true), 6000);
+    return () => clearTimeout(t);
+  }, [status, statsLoading, dashboardStats]);
 
   // §11.199b P0 — page-ready unified gate 자체 revert.
   //
@@ -234,7 +244,10 @@ function DashboardPageInner() {
   //   온보딩·0 KPI 로 떨어지면 "데이터 없음" 거짓 상태가 ~12s 노출된다. statsLoading
   //   중(아직 data 없음)엔 온보딩 대신 로딩 스켈레톤 유지 → 거짓 표기 방지. retry 소진
   //   (최종 실패) 시 statsLoading false → 아래로 흘러 정상 fallback.
-  if (status === "loading" || (statsLoading && !dashboardStats)) {
+  // §11.366 — 무한/장시간 스켈레톤 상한. status "loading" 무한(auth hang) +
+  //   cold retry backoff(~3s) 공통 커버. 6초 상한 후 스켈레톤 대신 에러+재시도.
+  const isStillLoading = status === "loading" || (statsLoading && !dashboardStats);
+  if (isStillLoading && !loadTimedOut) {
     return (
       <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4">
         <div className="h-6 w-48 rounded bg-slate-200 animate-pulse" />
@@ -244,6 +257,25 @@ function DashboardPageInner() {
             <div key={i} className="h-[100px] md:h-[120px] rounded-xl bg-slate-200 animate-pulse" />
           ))}
         </div>
+      </div>
+    );
+  }
+  if (isStillLoading && loadTimedOut) {
+    return (
+      <div className="p-4 pt-4 md:p-8 md:pt-6 flex flex-col items-center justify-center gap-3 min-h-[40vh] text-center">
+        <AlertTriangle className="h-8 w-8 text-yellow-500" />
+        <p className="text-sm font-medium text-slate-700">대시보드를 불러오는 중 지연이 발생했습니다.</p>
+        <p className="text-xs text-slate-500">네트워크 또는 로그인 상태를 확인 중입니다.</p>
+        <Button
+          size="sm"
+          onClick={() => {
+            setLoadTimedOut(false);
+            if (status === "loading") window.location.reload();
+            else refetchStats();
+          }}
+        >
+          다시 시도
+        </Button>
       </div>
     );
   }

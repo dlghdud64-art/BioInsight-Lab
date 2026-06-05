@@ -28,7 +28,8 @@ describe("§11.361-1 — 온보딩 게이트가 견적 단독이 아님", () => 
 describe("§11.361-1b — stats 쿼리 500 시 throw(swallow 금지) + retry", () => {
   it("!response.ok 에서 throw + retry(backoff)", () => {
     expect(SRC).toContain("throw new Error(`dashboard stats ${response.status}`)");
-    expect(SRC).toContain("retry: 3");
+    // §11.366 — retry 창 단축(3→2). swallow 금지 + 재시도 보존 의도는 동일.
+    expect(SRC).toMatch(/retry:\s*[23]/);
   });
 });
 
