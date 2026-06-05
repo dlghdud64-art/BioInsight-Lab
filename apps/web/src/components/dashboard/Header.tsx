@@ -64,7 +64,7 @@ const CATEGORY_CONFIG: Record<
 export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const queryClient = useQueryClient();
   const { open: openQRScanner } = useQRScanner();
   const openModal = useOpenModal();
@@ -331,7 +331,15 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             type="button"
             data-testid="header-scan-entry"
             aria-label="스캔"
-            onClick={() => openModal("scan_hub")}
+            onClick={() => {
+              // §11.371-1 — 미인증/세션 만료 시 doomed 모달 open 대신 재로그인 유도.
+              if (status !== "authenticated") {
+                const cb = encodeURIComponent(window.location.pathname + window.location.search);
+                router.push(`/auth/signin?callbackUrl=${cb}`);
+                return;
+              }
+              openModal("scan_hub");
+            }}
             className="inline-flex items-center justify-center h-10 w-10 md:h-9 md:w-9 flex-shrink-0 p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
           >
             <ScanLine className="h-5 w-5 pointer-events-none" />

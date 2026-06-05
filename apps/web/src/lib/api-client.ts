@@ -326,7 +326,7 @@ export async function csrfFetch(
     ? Object.fromEntries(init.headers.entries())
     : (init?.headers as Record<string, string>) || {};
 
-  const response = await fetch(input, {
+  let response = await fetch(input, {
     ...init,
     headers: {
       ...existingHeaders,
@@ -343,7 +343,7 @@ export async function csrfFetch(
     await refreshCsrfToken();
     const fresh = await acquireCsrfToken();
     if (fresh && fresh !== csrfToken) {
-      return fetch(input, {
+      response = await fetch(input, {
         ...init,
         headers: {
           ...existingHeaders,
@@ -351,6 +351,16 @@ export async function csrfFetch(
         },
       });
     }
+  }
+
+  // §11.371-1 — 세션 만료(401) 시 dead-end("보안검증 미완") 대신 재로그인 유도.
+  //   apiClient 의 401 정책을 csrfFetch(스캔·입고·재고 mutation 실경로)에도 적용.
+  //   401(미인증)만 처리 — 403(권한거부)은 redirect loop 위험으로 제외(retry 보존).
+  if (response.status === 401 && typeof window !== "undefined") {
+    const callbackUrl = encodeURIComponent(
+      window.location.pathname + window.location.search,
+    );
+    window.location.href = `/auth/signin?callbackUrl=${callbackUrl}`;
   }
 
   return response;
