@@ -36,12 +36,14 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
+    // §11.369-1 — targetEntityId 를 요청별 유니크로(이전 'unknown' 하드코딩 시
+    //   sensitive_data_import:unknown 단일 키 lock 으로 cross-user/cross-item 409 발생).
     enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'inventory',
-      targetEntityId: 'unknown',
+      targetEntityId: crypto.randomUUID(),
       sourceSurface: 'web_app',
       routePath: '/inventory/scan-label',
     });
@@ -204,6 +206,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // §11.369-1 — 성공 응답 직전 lock 해제(이전 complete() 부재로 5분 잔존 → 후속 스캔 409).
+    enforcement.complete();
     return NextResponse.json({
       success: true,
       parsed,
@@ -224,6 +228,8 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
+    // §11.369-1 — 실패 경로 lock 해제(restock/route.ts L195·L202 패턴 동일).
+    enforcement?.fail();
     console.error("[scan-label] Error:", error);
     return NextResponse.json(
       { error: "라벨 파싱 중 오류가 발생했습니다" },
