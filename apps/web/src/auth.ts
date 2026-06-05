@@ -11,6 +11,10 @@ const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 const hasGoogleOAuth = googleClientId && googleClientSecret && googleClientId !== "" && googleClientSecret !== "";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  // §11.370 영구화 — NextAuth v5 host 신뢰를 env(AUTH_TRUST_HOST) 의존에서
+  // 코드 보장으로 전환. env 누락/재배포 누락 시에도 로그인 Configuration 재발 차단.
+  // known custom domain(www.labaxis.co.kr) self-host 표준.
+  trustHost: true,
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   // JWT 전략을 사용할 때는 adapter를 사용하지 않습니다
   // adapter: PrismaAdapter(db),
