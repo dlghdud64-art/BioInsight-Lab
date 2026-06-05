@@ -1479,7 +1479,7 @@ function QuotesPageContent() {
     };
   }, [selectedQuoteId]);
 
-  const { data: quotesData, isLoading, isFetching, isError, refetch } = useQuery({
+  const { data: quotesData, isLoading: quotesQueryLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ["quotes", statusFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -1493,6 +1493,10 @@ function QuotesPageContent() {
     placeholderData: (prev) => prev, // 필터 변경 시 기존 데이터 유지
     refetchOnWindowFocus: true,
   });
+  // §11.358-1 — 세션 미해결("loading") 윈도우엔 enabled:false → quotesQueryLoading=false
+  //   이므로 빈 상태가 skeleton 대신 오노출됨. auth-ready 전까지 로딩으로 간주하여
+  //   skeleton / empty / KPI / timeout 게이트를 단일점에서 정합. authenticated 후 동작 불변.
+  const isLoading = quotesQueryLoading || status === "loading";
 
   // #user-supplier-registration Phase 5 — 조직 거래처 (org_book source) fetch.
   //   resolveSuppliers / preflight / batch sheet 모두 정합 forward.
