@@ -170,6 +170,17 @@ export default function SearchPage() {
   const [filterDropdownOpen, setFilterDropdownOpen] = useState<"category" | "price" | "vendor" | null>(null);
   const [sourcingCandidateTriage, setSourcingCandidateTriage] = useState<Record<string, SourcingCandidateTriageState>>({});
   const railProduct = useMemo(() => activeResultId ? products.find((p: any) => p.id === activeResultId) ?? null : null, [activeResultId, products]);
+  // §11.367-1 — lg(1024px) 미만에서 우측 rail(hidden lg:flex)이 안 보임 → 모바일 "상세 보기" dead.
+  //   동일 SourcingContextRail 을 모바일 bottom Sheet 로 노출하기 위한 브레이크포인트 게이트.
+  const [isLgUp, setIsLgUp] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const sync = () => setIsLgUp(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
   const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "compare-review-center" | "approval-handoff-gate" | "approval-workbench" | "po-created-wb-v2" | "request-assembly" | "request-submission" | "quote-queue" | "quote-normalization" | "quote-compare" | "po-conversion" | "po-created" | "dispatch-prep" | "send-confirm" | "po-sent-tracking" | "supplier-confirm" | "receiving-prep" | "receiving-exec" | "inventory-intake" | "stock-release" | "reorder-decision" | "procurement-reentry" | "search-reopen" | "result-review" | "compare-reopen" | "request-reopen" | "submission-reopen" | "quote-reentry" | "norm-reentry" | "compare-reentry" | "approval-reentry" | "po-conv-reentry" | "po-created-reentry" | "dispatch-prep-reentry" | "send-confirm-reentry" | "sent-tracking-reentry" | "supplier-confirm-reentry" | "rcv-prep-reentry" | "rcv-exec-reentry" | "stock-release-reentry" | "reorder-decision-reentry" | "procurement-reentry-reopen" | null>(null);
 
   // ── Reopen chain canonical states ──
@@ -726,6 +737,33 @@ export default function SearchPage() {
     });
   };
 
+  // §11.367-1 — 상세 rail 노드: 데스크탑 detailSlot + 모바일 Sheet 공유(이중 정의 방지).
+  const sourcingRail = railProduct ? (
+    <SourcingContextRail
+      product={railProduct}
+      isInCompare={compareIds.includes(railProduct.id)}
+      isInRequest={quoteItems.some((q: any) => q.productId === railProduct.id)}
+      onToggleCompare={() => handleProtectedAction(() => toggleCompare(railProduct.id, { name: railProduct.name, brand: railProduct.brand }))}
+      onToggleRequest={() => handleProtectedAction(() => {
+        const existing = quoteItems.find((q: any) => q.productId === railProduct.id);
+        if (existing) {
+          removeQuoteItem(existing.id);
+          toast.info("견적함에서 제거되었습니다.");
+        } else {
+          const r = addProductToQuote(railProduct);
+          const t = resolveAddToQuoteToast(r);
+          toast[t.intent](t.message);
+        }
+      })}
+      onClose={() => setActiveResultId(null)}
+      onOpenCompareWindow={() => handleProtectedAction(() => setWorkWindowMode("compare"))}
+      onOpenRequestWindow={() => handleProtectedAction(() => setWorkWindowMode("request"))}
+      compareCount={compareIds.length}
+      requestCount={quoteItems.length}
+      searchQuery={searchQuery}
+    />
+  ) : null;
+
   return (
     // §11.280 — outer container `pointer-events-auto` 강제 (호영님 P0, 햄버거 dead button fix).
     //   Radix Sheet/Dialog 가 mount 시 `<body>` pointer-events:none 추가 후 unmount cleanup 누락
@@ -741,6 +779,15 @@ export default function SearchPage() {
       <Sheet open={isMobileFilterOpen} onOpenChange={setIsMobileFilterOpen}>
         <SheetContent side="bottom" className="h-[75vh] overflow-y-auto">
           <div className="pt-2"><SearchPanel /></div>
+        </SheetContent>
+      </Sheet>
+
+      {/* §11.367-1 — 모바일 제품 "상세 보기" bottom Sheet. 데스크탑은 hidden lg:flex 우측 rail,
+          모바일(<lg)은 동일 SourcingContextRail 을 Sheet 로 노출(dead button 해소).
+          open 게이트 !isLgUp 로 데스크탑 이중 렌더 방지. */}
+      <Sheet open={!isLgUp && !!activeResultId} onOpenChange={(o) => { if (!o) setActiveResultId(null); }}>
+        <SheetContent side="bottom" className="lg:hidden h-[85vh] p-0 overflow-y-auto" data-testid="sourcing-detail-mobile-sheet">
+          {sourcingRail}
         </SheetContent>
       </Sheet>
 
@@ -1246,31 +1293,7 @@ export default function SearchPage() {
               forceDetailKey={activeResultId}
               forceQuoteKey={(reviewFocusKey + quoteFocusKey) ? String(reviewFocusKey + quoteFocusKey) : null}
               forceCompareKey={compareFocusKey ? String(compareFocusKey) : null}
-              detailSlot={railProduct ? (
-                <SourcingContextRail
-                  product={railProduct}
-                  isInCompare={compareIds.includes(railProduct.id)}
-                  isInRequest={quoteItems.some((q: any) => q.productId === railProduct.id)}
-                  onToggleCompare={() => handleProtectedAction(() => toggleCompare(railProduct.id, { name: railProduct.name, brand: railProduct.brand }))}
-                  onToggleRequest={() => handleProtectedAction(() => {
-                    const existing = quoteItems.find((q: any) => q.productId === railProduct.id);
-                    if (existing) {
-                      removeQuoteItem(existing.id);
-                      toast.info("견적함에서 제거되었습니다.");
-                    } else {
-                      const r = addProductToQuote(railProduct);
-                      const t = resolveAddToQuoteToast(r);
-                      toast[t.intent](t.message);
-                    }
-                  })}
-                  onClose={() => setActiveResultId(null)}
-                  onOpenCompareWindow={() => handleProtectedAction(() => setWorkWindowMode("compare"))}
-                  onOpenRequestWindow={() => handleProtectedAction(() => setWorkWindowMode("request"))}
-                  compareCount={compareIds.length}
-                  requestCount={quoteItems.length}
-                  searchQuery={searchQuery}
-                />
-              ) : null}
+              detailSlot={sourcingRail}
               onQuantityChange={(id, quantity) => updateQuoteItem(id, { quantity })}
               onRemoveQuoteItem={(id) => removeQuoteItem(id)}
               onRemoveCompareItem={(id) => toggleCompare(id)}
