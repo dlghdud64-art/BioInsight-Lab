@@ -1591,9 +1591,12 @@ export default function SearchPage() {
                   <AlertCircle className="h-3 w-3 shrink-0" />차단 {requestReadiness.summary.blocked}
                 </span>
               )}
-              <div className="ml-auto flex items-center gap-3 shrink-0">
+              {/* §11.367-2 — 우측 그룹 shrink 허용(min-w-0): 좁은 모바일에서 가격 텍스트가
+                  truncate 되어 1차 CTA(견적 요청)/🗑 가 절대 화면 밖으로 잘리지 않게 한다. */}
+              <div className="ml-auto flex items-center gap-2 sm:gap-3 min-w-0">
                 {/* §11.338 — 확정가 있으면 합계, 미견적 건수는 별도 표기. 전부 미견적이면 "견적 후 확정". */}
-                <span className="text-xs text-slate-300 tabular-nums font-medium shrink-0 whitespace-nowrap" data-testid="quote-bar-total">
+                {/* §11.367-2 — shrink-0 whitespace-nowrap → min-w-0 truncate (overflow 주범 제거). */}
+                <span className="text-xs text-slate-300 tabular-nums font-medium min-w-0 truncate" data-testid="quote-bar-total">
                   {hasConfirmedPrice ? `₩${totalAmount.toLocaleString("ko-KR")}` : "견적 후 확정"}
                   {priceUnknownCount > 0 && (
                     <span className="ml-1 text-[10px] text-slate-400">· {priceUnknownCount}건 가격 미정</span>
