@@ -31,7 +31,7 @@ import { CommandPalette } from "@/components/dashboard/command-palette";
 import { BarcodeScanFab } from "@/components/layout/barcode-scan-fab";
 // §11.309d — placeholder → 실제 ScannerModal swap (호영님 P0 2026-05-26 backend MVP D)
 // SmartReceivingPlaceholderModal 컴포넌트는 보존 (다른 future placeholder 재사용 가능).
-import { SmartReceivingScannerModal } from "@/components/inventory/SmartReceivingScannerModal";
+import { useOpenModal } from "@/lib/store/modal-store";
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void;
@@ -67,6 +67,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const { open: openQRScanner } = useQRScanner();
+  const openModal = useOpenModal();
   const [searchQuery, setSearchQuery] = useState("");
   // §11.209d-notification-inapp-web-bell-ui — /api/notifications 실시간
   // 데이터. actionType=IN_APP 만 필터 (EMAIL_DRAFT / QUEUE_ITEM 별도). 1분
@@ -104,10 +105,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   // 은 별도 batch (복잡 logic 보존).
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  // §11.308a-v2 — 스마트 입고 글로벌 진입점 (호영님 P0 2026-05-26).
-  // 어느 페이지에서든 1탭으로 placeholder modal 진입. backend 구현 시
-  // 실제 카메라/스캔 흐름으로 swap. SmartReceivingPlaceholderModal 재사용.
-  const [isSmartReceivingOpen, setIsSmartReceivingOpen] = useState(false);
+  // §11.371-3 — 글로벌 스캔 허브 진입점. Header 버튼 → openModal("scan_hub").
+  //   (이전 §11.308a-v2 로컬 open state → 통합 모달 store 로 이관.)
 
   // 글로벌 단축키: Ctrl+Q → QR 스캐너 열기
   useEffect(() => {
@@ -326,15 +325,13 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               — production 노출 0, dev/staging mock 만. */}
           <BarcodeScanFab />
 
-          {/* §11.308a-v2 — 스마트 입고 글로벌 진입점 (호영님 P0 2026-05-26).
-              모든 페이지에서 1탭으로 스마트 입고 진입 (검색~알림 사이 위치).
-              backend 미구현 — SmartReceivingPlaceholderModal placeholder + 수동 입고
-              fallback (§11.308a 패턴 재사용). backend 구현 시 실제 카메라 swap. */}
+          {/* §11.371-3 — 글로벌 스캔 허브 진입점 (검색~알림 사이).
+              1탭 → scan_hub picker(라벨 직접등록 / 거래명세서 입고 / QR 조회). */}
           <button
             type="button"
-            data-testid="header-smart-receiving-entry"
-            aria-label="스마트 입고"
-            onClick={() => setIsSmartReceivingOpen(true)}
+            data-testid="header-scan-entry"
+            aria-label="스캔"
+            onClick={() => openModal("scan_hub")}
             className="inline-flex items-center justify-center h-10 w-10 md:h-9 md:w-9 flex-shrink-0 p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
           >
             <ScanLine className="h-5 w-5 pointer-events-none" />
@@ -624,17 +621,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
         </div>
       </div>
 
-      {/* §11.309d — 스마트 입고 실제 Scanner modal (호영님 P0 2026-05-26).
-          §11.308a-v2 placeholder → §11.309d ScannerModal swap.
-          글로벌 헤더에서 mount — 모든 페이지에서 1탭으로 카메라/갤러리 진입. */}
-      <SmartReceivingScannerModal
-        open={isSmartReceivingOpen}
-        onClose={() => setIsSmartReceivingOpen(false)}
-        onReceivingRegistered={() => {
-          // §11.309d caller invalidation — 헤더는 organization context 없으므로
-          // 사용자가 재고 페이지 직접 이동 후 자동 fetch.
-        }}
-      />
+      {/* §11.371-3 — 스캔 허브/하위 모달은 전역 GlobalModal(modal store)이 렌더.
+          Header 는 진입 트리거(openModal)만 담당. */}
     </header>
   );
 }

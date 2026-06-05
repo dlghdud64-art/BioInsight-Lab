@@ -29,7 +29,9 @@ import { create } from "zustand";
  * GlobalModal registry에 컴포넌트를 매핑한다.
  */
 export type ModalType =
+  | "scan_hub"        // §11.371-3 글로벌 스캔 허브 (라벨/거래명세서/QR 선택 picker)
   | "label_scanner"
+  | "smart_receiving" // §11.371-3 거래명세서/PO 입고 (parse-image)
   | "qr_scanner"
   | "add_inventory"
   | "bulk_import"

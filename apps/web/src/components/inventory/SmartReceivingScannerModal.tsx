@@ -4,7 +4,7 @@
  * §11.309d #smart-receiving-scanner-modal — 스마트 입고 카메라/갤러리 스캔 모달.
  *
  * 호영님 P0 spec (2026-05-26) — backend MVP Phase D:
- *   1. 사용자가 카메라/갤러리에서 거래명세서 또는 라벨 이미지 선택
+ *   1. 사용자가 카메라/갤러리에서 거래명세서(명세서·PO) 이미지 선택
  *   2. POST /api/quotes/parse-image (§11.290 OCR pipeline) → ParsedQuoteDocument
  *   3. 추출 결과 form 표시 (모든 필드 사용자 수정 가능)
  *   4. [입고 등록] → POST /api/inventory/smart-receiving (§11.309c) → 신규 Product +
@@ -26,6 +26,7 @@
  */
 
 import { useState, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { csrfFetch } from "@/lib/api-client";
 import {
   Dialog,
@@ -195,6 +196,8 @@ interface SmartReceivingScannerModalProps {
   onReceivingRegistered?: (result: SmartReceivingApiResponse) => void;
   /** organizationId — 신규 ProductInventory 의 org 격리용 (caller 가 현재 org 주입). */
   organizationId?: string | null;
+  /** §11.371-3 — GlobalModal/BaseModal 안에서 Dialog 래퍼 없이 콘텐츠만 렌더. */
+  _renderContentOnly?: boolean;
 }
 
 type ScanStep = "upload" | "scanning" | "review" | "submitting" | "success" | "error";
@@ -204,6 +207,7 @@ export function SmartReceivingScannerModal({
   onClose,
   onReceivingRegistered,
   organizationId,
+  _renderContentOnly,
 }: SmartReceivingScannerModalProps) {
   const [step, setStep] = useState<ScanStep>("upload");
   const [scanResult, setScanResult] = useState<QuoteScanApiResponse | null>(null);
@@ -375,27 +379,13 @@ export function SmartReceivingScannerModal({
     }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={(next) => { if (!next) handleClose(); }}>
-      <DialogContent
-        className="max-w-md sm:max-w-lg max-h-[90vh] overflow-y-auto"
-        data-testid="smart-receiving-scanner-modal"
-      >
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <ScanLine className="h-5 w-5 text-emerald-600" />
-            스마트 입고
-          </DialogTitle>
-          <DialogDescription className="text-sm text-slate-500">
-            거래명세서 또는 라벨을 촬영하면 AI 가 자동으로 품목·수량·LOT을 인식해 입고를 처리합니다.
-          </DialogDescription>
-        </DialogHeader>
-
+  const body = (
+    <>
         {/* ── Step: upload ── */}
         {step === "upload" && (
           <div className="space-y-4 py-2">
             <p className="text-xs text-slate-600 leading-relaxed">
-              사진을 선택하거나 촬영해 주세요. 거래명세서나 시약 라벨 모두 인식됩니다.
+              거래명세서(명세서·PO)를 촬영하거나 선택해 주세요. 다품목도 자동 인식됩니다.
             </p>
             <Button
               type="button"
@@ -683,7 +673,64 @@ export function SmartReceivingScannerModal({
             </div>
           </div>
         )}
+    </>
+  );
+
+  if (_renderContentOnly) {
+    return (
+      <div
+        className="max-h-[80vh] overflow-y-auto"
+        data-testid="smart-receiving-scanner-content"
+      >
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => { if (!next) handleClose(); }}>
+      <DialogContent
+        className="max-w-md sm:max-w-lg max-h-[90vh] overflow-y-auto"
+        data-testid="smart-receiving-scanner-modal"
+      >
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-lg">
+            <ScanLine className="h-5 w-5 text-emerald-600" />
+            스마트 입고
+          </DialogTitle>
+          <DialogDescription className="text-sm text-slate-500">
+            거래명세서(명세서·PO)를 촬영하면 AI 가 자동으로 품목·수량·LOT을 인식해 입고를 처리합니다.
+          </DialogDescription>
+        </DialogHeader>
+        {body}
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════ */
+/* Content-only export (GlobalModal 통합용, §11.371-3)             */
+/* ══════════════════════════════════════════════════════════════ */
+
+/** BaseModal 내부에 렌더링되는 순수 콘텐츠. GlobalModal registry(scan_hub→smart_receiving)에서 사용. */
+export function SmartReceivingContent({
+  onClose,
+  organizationId,
+}: {
+  onClose?: () => void;
+  organizationId?: string | null;
+}) {
+  const queryClient = useQueryClient();
+  return (
+    <SmartReceivingScannerModal
+      open={true}
+      onClose={() => onClose?.()}
+      organizationId={organizationId ?? null}
+      onReceivingRegistered={() => {
+        queryClient.invalidateQueries({ queryKey: ["inventories"] });
+        queryClient.invalidateQueries({ queryKey: ["team-inventory"] });
+      }}
+      _renderContentOnly
+    />
   );
 }

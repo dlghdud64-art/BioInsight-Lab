@@ -51,8 +51,8 @@ import { getStorageConditionLabel } from "@/lib/constants";
 import { useInventoryAiPanel } from "@/hooks/use-inventory-ai-panel";
 import { resolveDisposal, type DisposalReason } from "@/lib/ontology/contextual-action/disposal-resolver";
 import type { SmartReceiveFormData } from "@/components/inventory/LabelScannerModal";
-// §11.326 — 라벨 규격(packSize) vs 입고 수량(받은 통 개수) 분리 매핑.
-import { mapLabelToReceiving } from "@/lib/inventory/map-label-to-receiving";
+// §11.371-3 — 라벨 직접 입고 영속화 단일점(내부에서 §11.326 mapLabelToReceiving 사용).
+import { submitLabelReceive } from "@/lib/inventory/submit-label-receive";
 import type { QueueItem } from "@/components/inventory/priority-action-queue";
 const LabelScannerModal = dynamic(() => import("@/components/inventory/LabelScannerModal").then((m) => m.LabelScannerModal), { ssr: false });
 const LabelPrintModal = dynamic(() => import("@/components/inventory/LabelPrintModal").then((m) => m.LabelPrintModal), { ssr: false });
@@ -1541,44 +1541,16 @@ function InventoryPageContent() {
                 open={isSmartReceiveOpen}
                 onOpenChange={setIsSmartReceiveOpen}
                 onDirectReceive={async (data: SmartReceiveFormData) => {
-                  try {
-                    const res = await csrfFetch("/api/inventory", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify((() => {
-                        // §11.326 — 라벨 packSize vs 받은 통 개수 분리. 입고 수량은
-                        //   사용자 입력(받은 통 개수)이며 라벨값(통 1개 함량)이 아니다.
-                        const m = mapLabelToReceiving(
-                          { quantity: data.packSize || null, unit: data.packUnit || null },
-                          { receivedQuantity: parseFloat(data.receivedQuantity) || 1, receivedUnit: data.receivedUnit },
-                        );
-                        return {
-                          productName: data.productName,
-                          brand: data.brand || null,
-                          catalogNumber: data.catalogNumber || null,
-                          lotNumber: data.lotNumber || null,
-                          expiryDate: data.expirationDate || null,
-                          // 입고 수량 = 받은 통 개수 (라벨값 아님)
-                          currentQuantity: m.receivedQuantity,
-                          unit: m.receivedUnit,
-                          // 통 1개 함량(규격)은 품목 마스터로 분리 저장
-                          packSize: m.packSize,
-                          packUnit: m.packUnit,
-                        };
-                      })()),
-                    });
-                    if (!res.ok) throw new Error("입고 등록 실패");
+                  // §11.371-3 — 영속화 단일점(submit-label-receive) 재사용. 토스트는
+                  //   inventory 페이지 flavor(shadcn) 유지. front-only success 금지
+                  //   (helper 가 /api/inventory 200 일 때만 ok).
+                  const r = await submitLabelReceive(data, queryClient);
+                  if (r.ok) {
                     toast({
                       title: "입고 완료",
-                      description: `${data.productName} ${parseFloat(data.receivedQuantity) || 1}${data.receivedUnit || "통"} 입고 처리되었습니다.`,
+                      description: `${r.productName} ${r.receivedQuantity}${r.receivedUnit} 입고 처리되었습니다.`,
                     });
-                    queryClient.invalidateQueries({
-                      queryKey: ["inventories"],
-                    });
-                    queryClient.invalidateQueries({
-                      queryKey: ["team-inventory"],
-                    });
-                  } catch {
+                  } else {
                     toast({
                       title: "오류",
                       description: "입고 처리 중 오류가 발생했습니다.",

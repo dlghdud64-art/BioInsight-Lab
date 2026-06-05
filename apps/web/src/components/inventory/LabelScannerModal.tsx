@@ -5,6 +5,10 @@ import { csrfFetch } from "@/lib/api-client";
 import { getRearCameraStream } from "@/lib/utils/get-rear-camera-stream";
 // §11.326 — 라벨 용량(packSize) vs 입고 수량(받은 통 개수) 분리 매핑.
 import { mapLabelToReceiving } from "@/lib/inventory/map-label-to-receiving";
+// §11.371-3 — 글로벌 스캔 허브 진입 시 onDirectReceive 미주입이어도 라벨 직접등록 보장.
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { submitLabelReceive } from "@/lib/inventory/submit-label-receive";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -190,12 +194,27 @@ export function LabelScannerContent({
   onScanComplete?: (result: ScanApiResponse) => void;
   onDirectReceive?: (data: SmartReceiveFormData, scanResult: ScanApiResponse | null) => void;
 }) {
+  const queryClient = useQueryClient();
+  // §11.371-3 — 글로벌 스캔 허브에서 caller 가 onDirectReceive 를 주지 않아도
+  //   라벨 직접등록(공유 helper /api/inventory)이 동작하도록 기본 핸들러 주입.
+  //   front-only success 금지: helper 가 200 반환(ok)일 때만 성공 토스트 + close.
+  const directReceive =
+    onDirectReceive ??
+    (async (data: SmartReceiveFormData) => {
+      const r = await submitLabelReceive(data, queryClient);
+      if (r.ok) {
+        toast.success(`${r.productName} ${r.receivedQuantity}${r.receivedUnit} 입고 처리되었습니다.`);
+        onClose?.();
+      } else {
+        toast.error("입고 처리 중 오류가 발생했습니다.");
+      }
+    });
   return (
     <LabelScannerModal
       open={true}
       onOpenChange={(v) => { if (!v && onClose) onClose(); }}
       onScanComplete={onScanComplete}
-      onDirectReceive={onDirectReceive}
+      onDirectReceive={directReceive}
       _renderContentOnly
     />
   );

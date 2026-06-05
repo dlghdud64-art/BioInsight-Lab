@@ -38,6 +38,17 @@ interface ModalRegistryEntry {
  * lazy import로 코드 스플리팅. 모달을 열 때만 해당 컴포넌트를 로드한다.
  */
 const MODAL_REGISTRY: Partial<Record<ModalType, ModalRegistryEntry>> = {
+  // §11.371-3 — 글로벌 스캔 단일 진입 허브 (라벨/거래명세서/QR picker)
+  scan_hub: {
+    component: lazy(() =>
+      import("@/components/inventory/ScanHubModal").then((m) => ({
+        default: m.ScanHubContent,
+      })),
+    ),
+    defaultSize: "sm",
+    defaultTitle: "스캔",
+    defaultSubtitle: "라벨 등록 · 거래명세서 입고 · QR 조회 중에서 선택하세요.",
+  },
   label_scanner: {
     component: lazy(() =>
       import("@/components/inventory/LabelScannerModal").then((m) => ({
@@ -45,8 +56,19 @@ const MODAL_REGISTRY: Partial<Record<ModalType, ModalRegistryEntry>> = {
       })),
     ),
     defaultSize: "md",
-    defaultTitle: "스마트 입고",
-    defaultSubtitle: "시약 라벨을 스캔하여 자동 인식 후 재고에 직접 등록합니다.",
+    defaultTitle: "라벨 직접등록",
+    defaultSubtitle: "시약·소모품 라벨을 스캔하여 자동 인식 후 재고에 직접 등록합니다.",
+  },
+  // §11.371-3 — 거래명세서/PO 입고 (parse-image). Content-only 어댑터 사용.
+  smart_receiving: {
+    component: lazy(() =>
+      import("@/components/inventory/SmartReceivingScannerModal").then((m) => ({
+        default: m.SmartReceivingContent,
+      })),
+    ),
+    defaultSize: "md",
+    defaultTitle: "거래명세서 입고",
+    defaultSubtitle: "명세서·PO를 촬영하면 품목·수량·LOT을 자동 인식해 입고합니다.",
   },
   qr_scanner: {
     component: lazy(() =>
