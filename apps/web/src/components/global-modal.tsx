@@ -55,7 +55,9 @@ const MODAL_REGISTRY: Partial<Record<ModalType, ModalRegistryEntry>> = {
         default: m.LabelScannerContent,
       })),
     ),
-    defaultSize: "md",
+    // §11.374-vivino — 풀블리드 카메라(h-[68vh])가 작은 모달(md=max-w-lg)에 갇히지 않게 full.
+    //   카메라 + 촬영 오버레이가 한 화면(스크롤 0). 폼 step 은 full 안에서 가운데 정렬.
+    defaultSize: "full",
     defaultTitle: "라벨 직접등록",
     defaultSubtitle: "시약·소모품 라벨을 스캔하여 자동 인식 후 재고에 직접 등록합니다.",
   },
@@ -76,7 +78,8 @@ const MODAL_REGISTRY: Partial<Record<ModalType, ModalRegistryEntry>> = {
         default: m.GlobalQRScannerContent,
       })),
     ),
-    defaultSize: "md",
+    // §11.374-vivino — QR 풀블리드(h-[60vh])도 작은 모달에 갇히지 않게 full.
+    defaultSize: "full",
     defaultTitle: "QR 스캐너",
     defaultSubtitle: "QR 코드를 스캔하여 재고를 조회합니다.",
   },

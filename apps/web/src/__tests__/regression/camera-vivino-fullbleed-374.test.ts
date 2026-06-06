@@ -63,6 +63,14 @@ describe("§11.374-vivino Phase 3 — LabelScanner status 전달 + 풀블리드"
     // QR 뷰파인더 컨테이너 max-w-sm 제거
     expect(src).not.toMatch(/뷰파인더 영역 \*\/\}\s*<div className="relative w-full max-w-sm"/);
   });
+
+  it("카메라 모달(label_scanner·qr_scanner) defaultSize full — 작은 모달 갇힘 방지", () => {
+    const reg = read("src/components/global-modal.tsx");
+    const label = reg.slice(reg.indexOf("label_scanner:"), reg.indexOf("smart_receiving:"));
+    expect(label).toMatch(/defaultSize: "full"/);
+    const qr = reg.slice(reg.indexOf("qr_scanner:"), reg.indexOf("bulk_import:"));
+    expect(qr).toMatch(/defaultSize: "full"/);
+  });
 });
 
 describe("§11.374-vivino — 회귀 0 (§11.374/374b 보존)", () => {
