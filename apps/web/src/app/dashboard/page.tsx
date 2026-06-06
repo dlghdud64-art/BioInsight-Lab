@@ -207,12 +207,15 @@ function DashboardPageInner() {
     refetchOnWindowFocus: false,
   });
 
-  // §11.366 — 6초 상한 타이머. 로딩 중일 때만 활성, 회복 시 자동 reset.
+  // §11.366 → §11.375 P1 — 스켈레톤 상한 타이머. 로딩 중일 때만 활성, 회복 시 자동 reset.
+  //   상한 6→10초: prod serverless cold latency(첫 진입 5~6초, 에러 아닌 느린 성공)가
+  //   6초 상한에 걸려 "지연 발생" 에러 카드가 깜빡이던 것을 제거. cold 는 상한 전 회복,
+  //   진짜 무한(auth hang)만 10초 후 에러 노출. (근본 절감은 Phase 2+ stats slimming.)
   const [loadTimedOut, setLoadTimedOut] = useState(false);
   useEffect(() => {
     const stillLoading = status === "loading" || (statsLoading && !dashboardStats);
     if (!stillLoading) { setLoadTimedOut(false); return; }
-    const t = setTimeout(() => setLoadTimedOut(true), 6000);
+    const t = setTimeout(() => setLoadTimedOut(true), 10000);
     return () => clearTimeout(t);
   }, [status, statsLoading, dashboardStats]);
 
@@ -250,11 +253,25 @@ function DashboardPageInner() {
   if (isStillLoading && !loadTimedOut) {
     return (
       <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4">
+        {/* 제목 */}
         <div className="h-6 w-48 rounded bg-slate-200 animate-pulse" />
+        {/* 우선순위 배너 */}
         <div className="h-[72px] rounded-xl bg-slate-200 animate-pulse" />
+        {/* KPI 4 */}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="h-[100px] md:h-[120px] rounded-xl bg-slate-200 animate-pulse" />
+          ))}
+        </div>
+        {/* §11.377 — 차트 영역 placeholder (지출 트렌드 넓게 + 카테고리) */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="h-[200px] rounded-xl bg-slate-200 animate-pulse md:h-[240px] lg:col-span-2" />
+          <div className="h-[200px] rounded-xl bg-slate-200 animate-pulse md:h-[240px]" />
+        </div>
+        {/* §11.377 — 운영 바로가기 4카드 placeholder */}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={`q${i}`} className="h-[88px] rounded-xl bg-slate-200 animate-pulse" />
           ))}
         </div>
       </div>
