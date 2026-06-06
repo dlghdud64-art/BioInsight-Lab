@@ -8,8 +8,6 @@ import { determineOpsStallPoint } from "@/lib/work-queue/ops-queue-semantics";
 import { getMostRecentSnapshotBefore } from "@/lib/dashboard/snapshot-helper";
 // §11.366-server — cold-start transient DB 재시도 래퍼
 import { withDbRetry } from "@/lib/db-retry";
-// §11.375 Phase 2 — 지출 집계 slimming(take 1000 → DB SUM aggregate)
-import { fetchSpendAggregates } from "@/lib/dashboard/spend-aggregates";
 
 // Next.js 정적 캐시 완전 비활성화: 항상 DB에서 최신 데이터 조회
 export const dynamic = "force-dynamic";
@@ -39,8 +37,10 @@ export async function GET(request: NextRequest) {
     // 날짜 계산 (공통)
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    // §11.375 P2 — sixMonthsAgo/thisMonthEnd/lastMonth* 는 지출 집계가
-    //   fetchSpendAggregates(spend-aggregates.ts)로 이동하며 미사용 → 제거.
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    const thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
     const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000); // §11.366 — trend snapshot 병렬 선조회용
     const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -270,11 +270,14 @@ export async function GET(request: NextRequest) {
     //   ftOrders→restocks 2 + snapshot 1). 의존성 = followThrough:
     //   compareLinkedQuoteSessions(Phase 2 가용), snapshot: orgIds(Phase 1 가용)
     //   → Phase 3 와 안전하게 병렬. 집계 산식·payload contract 불변(성능만).
-    const [spendAggregates, recentPurchases, followThroughDataResolved, trendSnapshot] =
+    const [recentPurchaseRecords, recentPurchases, followThroughDataResolved, trendSnapshot] =
       await Promise.all([
-        // §11.375 P2 — take 1000 findMany + JS reduce → DB SUM aggregate 병렬.
-        //   thisMonth/lastMonth/last7/prev7/6개월 월별을 경계 1:1 미러로 집계.
-        fetchSpendAggregates(db, purchaseOwnerWhere, now),
+        db.purchaseRecord.findMany({
+          where: { ...purchaseOwnerWhere, purchasedAt: { gte: sixMonthsAgo, lte: thisMonthEnd } },
+          select: { amount: true, purchasedAt: true },
+          orderBy: { purchasedAt: "desc" },
+          take: 1000,
+        }),
         db.purchaseRecord.findMany({
           where: purchaseOwnerWhere,
           orderBy: { purchasedAt: "desc" },
@@ -388,24 +391,61 @@ export async function GET(request: NextRequest) {
       .filter((q: any) => q.status === "RESPONDED" || q.status === "COMPLETED")
       .reduce((sum: number, q: any) => sum + (q.totalAmount || 0), 0);
 
-    // §11.375 P2 — 지출 집계는 fetchSpendAggregates(DB SUM aggregate)에서 산출.
-    //   경계는 기존 JS reduce 와 1:1 미러(thisMonth/lastMonth/last7/prev7/월별).
-    const {
-      thisMonthPurchaseAmount,
-      lastMonthPurchaseAmount,
-      last7DaysSpending,
-      prev7DaysSpending,
-      monthlySpending,
-    } = spendAggregates;
+    // 이번 달 구매 금액
+    const thisMonthPurchaseAmount = recentPurchaseRecords
+      .filter((p: any) => new Date(p.purchasedAt) >= monthStart)
+      .reduce((s: number, p: any) => s + (p.amount || 0), 0);
 
+    console.log("[DASHBOARD_STATS] recentPurchaseRecords count:", recentPurchaseRecords.length);
+    console.log("[DASHBOARD_STATS] thisMonthPurchaseAmount:", thisMonthPurchaseAmount);
+
+    // 전월 대비 증감률 (recentPurchaseRecords에서 필터링 — 별도 쿼리 제거)
+    const lastMonthPurchaseAmount = recentPurchaseRecords
+      .filter((p: any) => {
+        const d = new Date(p.purchasedAt);
+        return d >= lastMonthStart && d <= lastMonthEnd;
+      })
+      .reduce((s: number, p: any) => s + (p.amount || 0), 0);
     const monthOverMonthChange =
       lastMonthPurchaseAmount > 0
         ? ((thisMonthPurchaseAmount - lastMonthPurchaseAmount) / lastMonthPurchaseAmount) * 100
         : 0;
+
+    // §11.94 #dashboard-store-trend-history Phase 1
+    // weekOverWeek 비교 — 최근 7일 vs 그 이전 7일 누적 지출.
+    // monthOverMonth (월 단위) 보다 짧은 시간 윈도우 — 운영자가 주간
+    // 변화 sensitivity 가 더 높을 때 가치. recentPurchaseRecords 기반
+    // (별도 쿼리 0 — 동일 데이터 source 재사용).
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+    const last7DaysSpending = recentPurchaseRecords
+      .filter((p: any) => new Date(p.purchasedAt) >= sevenDaysAgo)
+      .reduce((s: number, p: any) => s + (p.amount || 0), 0);
+    const prev7DaysSpending = recentPurchaseRecords
+      .filter((p: any) => {
+        const d = new Date(p.purchasedAt);
+        return d >= fourteenDaysAgo && d < sevenDaysAgo;
+      })
+      .reduce((s: number, p: any) => s + (p.amount || 0), 0);
     const weekOverWeekChange =
       prev7DaysSpending > 0
         ? ((last7DaysSpending - prev7DaysSpending) / prev7DaysSpending) * 100
         : 0;
+
+    // 최근 6개월 월별 지출 (차트용)
+    const monthlySpending: Array<{ month: string; amount: number }> = [];
+    for (let i = 5; i >= 0; i--) {
+      const mStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const mEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+      const monthStr = `${mStart.getFullYear()}-${String(mStart.getMonth() + 1).padStart(2, "0")}`;
+      const monthAmount = recentPurchaseRecords
+        .filter((p: any) => {
+          const d = new Date(p.purchasedAt);
+          return d >= mStart && d <= mEnd;
+        })
+        .reduce((s: number, p: any) => s + (p.amount || 0), 0);
+      monthlySpending.push({ month: monthStr, amount: monthAmount });
+    }
 
     // 예산 사용률
     let budgetUsageRate =
