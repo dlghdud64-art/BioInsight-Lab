@@ -688,7 +688,9 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
-                  <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-black">
+                  {/* §11.374-vivino — 풀블리드 카메라(작은 aspect-[4/3] 박스 → 모달 큰 높이 h-[68vh]).
+                      조준·라벨 인식 용이. 토글·촬영버튼은 아래 별도(오버레이 아님, 컨트롤 영역 유지). */}
+                  <div className="relative w-full h-[68vh] rounded-xl overflow-hidden bg-black">
                     {/* §11.373c — iOS Safari getUserMedia 검은 프리뷰 보강. playsInline·muted 만으론
                         iOS 가 첫 프레임을 안 그림 → autoPlay 속성 명시(play() 호출과 별개로 iOS 요구).
                         transform-gpu 로 GPU 합성 레이어 승격(video 합성 누락 방지). stream 획득(§11.349)과
@@ -700,8 +702,18 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                       muted
                       className="w-full h-full object-cover transform-gpu"
                     />
-                    {/* §11.374 — 공통 가이드 프레임(blue 코너 마커). 정적 캡처라 스캔라인 없음. */}
-                    <ScanGuideFrame testId="camera-guide-frame" />
+                    {/* §11.374-vivino — 정합 색변화. quality.overall(good/warn/poor·null) → status.
+                        good=정합(emerald) / warn=주의(yellow) / 그 외=기본(blue). 신규 ML 0(기존 판정 재사용). */}
+                    <ScanGuideFrame
+                      testId="camera-guide-frame"
+                      status={
+                        quality?.overall === "good"
+                          ? "good"
+                          : quality?.overall === "warn"
+                            ? "warn"
+                            : "idle"
+                      }
+                    />
                     {quality && (
                       <div
                         className={`absolute left-2 top-2 px-2 py-1 rounded-md text-[11px] font-medium ${
