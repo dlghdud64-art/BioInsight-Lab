@@ -209,6 +209,18 @@ export function QRScanner({
 
       if (!mountedRef.current) return;
 
+      // §11.373d — html5-qrcode ESM 빌드(우리가 import)는 내부 <video> 에 autoplay 를 설정하지
+      //   않는다(muted/playsInline 만, style.width 만 px·height 미설정). iOS Safari 는 autoplay
+      //   없으면 첫 프레임을 안 그려 검은화면 → verifyVideoActive false → 에러카드. start 후 DOM
+      //   video 에 autoplay/playsinline 속성 강제 주입 + play() 재호출(§11.373c LabelScanner 동일 근본).
+      const injectedVideo = document.getElementById(id)?.querySelector("video");
+      if (injectedVideo) {
+        injectedVideo.setAttribute("autoplay", "true");
+        injectedVideo.setAttribute("playsinline", "true");
+        injectedVideo.muted = true;
+        await injectedVideo.play().catch(() => {});
+      }
+
       // §11.373 — 검은화면 위장 제거(H3): start 가 resolve 해도 실제 video 프레임이
       //   안 잡히면(device 충돌) videoWidth 0. scanning 으로 위장하지 않고 에러 처리.
       const active = await verifyVideoActive(id);

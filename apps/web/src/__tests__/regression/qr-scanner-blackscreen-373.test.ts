@@ -68,6 +68,27 @@ describe("§11.373b — 가시성 검증 + video 표시 강제 (검은화면 잔
   });
 });
 
+describe("§11.373d — html5-qrcode 내부 video autoplay/playsinline 주입 (iOS 검정 근본)", () => {
+  it("start 후 DOM video 에 autoplay·playsinline setAttribute 주입", () => {
+    const src = read(QR);
+    expect(src).toMatch(/setAttribute\("autoplay", "true"\)/);
+    expect(src).toMatch(/setAttribute\("playsinline", "true"\)/);
+  });
+
+  it("주입 후 play() 재호출(첫 프레임 트리거)", () => {
+    const src = read(QR);
+    expect(src).toMatch(/injectedVideo\.play\(\)/);
+  });
+
+  it("주입은 verifyVideoActive 검증 이전에 수행", () => {
+    const src = read(QR);
+    const injectIdx = src.indexOf('setAttribute("autoplay"');
+    const verifyIdx = src.indexOf("const active = await verifyVideoActive(id)");
+    expect(injectIdx).toBeGreaterThan(0);
+    expect(verifyIdx).toBeGreaterThan(injectIdx);
+  });
+});
+
 describe("§11.373 — 회귀 0 (기존 lifecycle 보존)", () => {
   it("stopScanner / mountedRef cleanup 보존", () => {
     const src = read(QR);
