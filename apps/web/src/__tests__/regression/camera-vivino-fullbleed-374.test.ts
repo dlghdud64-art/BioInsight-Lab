@@ -25,6 +25,7 @@ function read(rel: string): string {
 
 const FRAME = "src/components/inventory/ScanGuideFrame.tsx";
 const LABEL = "src/components/inventory/LabelScannerModal.tsx";
+const QR = "src/components/inventory/QRScanner.tsx";
 
 describe("§11.374-vivino Phase 2 — ScanGuideFrame status 색변화", () => {
   it("status prop(idle/good/warn) 시그니처", () => {
@@ -54,6 +55,13 @@ describe("§11.374-vivino Phase 3 — LabelScanner status 전달 + 풀블리드"
   it("카메라 컨테이너 풀블리드(작은 aspect-[4/3] 박스 탈피, h-[68vh])", () => {
     const src = read(LABEL);
     expect(src).toMatch(/h-\[68vh\]/);
+  });
+
+  it("QR 풀블리드(max-w-sm 작은 정사각 탈피, h-[60vh])", () => {
+    const src = read(QR);
+    expect(src).toMatch(/h-\[60vh\]/);
+    // QR 뷰파인더 컨테이너 max-w-sm 제거
+    expect(src).not.toMatch(/뷰파인더 영역 \*\/\}\s*<div className="relative w-full max-w-sm"/);
   });
 });
 

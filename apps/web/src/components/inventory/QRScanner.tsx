@@ -168,8 +168,9 @@ export function QRScanner({
 
   return (
     <div className={`flex flex-col items-center gap-4 ${className}`}>
-      {/* 뷰파인더 영역 */}
-      <div className="relative w-full max-w-sm">
+      {/* 뷰파인더 영역 — §11.374-vivino QR 풀블리드(작은 max-w-sm 정사각 → 모달 큰 높이 h-[60vh]).
+          LabelScanner(h-[68vh])와 통일. QR 은 코드 디코딩이라 정합 색변화(status) 무관 → 기본 blue. */}
+      <div className="relative w-full">
         {/* §11.373-web-QR-replace — video 를 직접 렌더(autoPlay·playsInline·muted)해 qr-scanner 에 넘김.
             iOS Safari 첫 프레임 렌더 보장(§11.373c 동일 근본). transform-gpu 로 합성 승격. */}
         <video
@@ -177,8 +178,7 @@ export function QRScanner({
           autoPlay
           playsInline
           muted
-          className="block w-full rounded-2xl overflow-hidden bg-black aspect-square object-cover transform-gpu"
-          style={{ minHeight: 280 }}
+          className="block w-full h-[60vh] rounded-2xl overflow-hidden bg-black object-cover transform-gpu"
         />
 
         {/* 스캔 중일 때 오버레이 가이드 — §11.374 공통 프레임(QR=스캔라인 포함) */}
