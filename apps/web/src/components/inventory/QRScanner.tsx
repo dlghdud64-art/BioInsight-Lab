@@ -177,9 +177,7 @@ export function QRScanner({
           autoPlay
           playsInline
           muted
-          className={`w-full rounded-2xl overflow-hidden bg-black aspect-square object-cover transform-gpu ${
-            state === "scanning" ? "block" : "hidden"
-          }`}
+          className="block w-full rounded-2xl overflow-hidden bg-black aspect-square object-cover transform-gpu"
           style={{ minHeight: 280 }}
         />
 
@@ -188,9 +186,10 @@ export function QRScanner({
           <ScanGuideFrame showScanLine className="rounded-2xl overflow-hidden" />
         )}
 
-        {/* idle / requesting 상태 플레이스홀더 */}
+        {/* idle / requesting 상태 플레이스홀더 — §11.373-web-QR-replace-v2: video 를 숨기지 않고
+            그 위 absolute 오버레이로 덮는다(start 시점 video display:none 금지 → iOS 흰화면 방지). */}
         {(state === "idle" || state === "requesting") && (
-          <div className="w-full aspect-square bg-pn rounded-2xl flex flex-col items-center justify-center gap-4 text-white/60">
+          <div className="absolute inset-0 bg-pn rounded-2xl flex flex-col items-center justify-center gap-4 text-white/60">
             {state === "requesting" ? (
               <>
                 <Loader2 className="h-12 w-12 animate-spin text-blue-400" />
@@ -205,9 +204,9 @@ export function QRScanner({
           </div>
         )}
 
-        {/* 에러 상태 */}
+        {/* 에러 상태 — video 위 absolute 오버레이 */}
         {state === "error" && (
-          <div className="w-full aspect-square bg-red-950/80 rounded-2xl flex flex-col items-center justify-center gap-4 p-6 text-center border border-red-800">
+          <div className="absolute inset-0 bg-red-950/80 rounded-2xl flex flex-col items-center justify-center gap-4 p-6 text-center border border-red-800">
             <AlertTriangle className="h-12 w-12 text-red-400 flex-shrink-0" />
             <p className="text-sm text-red-300 leading-relaxed">{errorMsg}</p>
             <div className="flex flex-col gap-2 w-full">
