@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import {
   Sheet,
   SheetContent,
@@ -20,6 +20,7 @@ import {
   FileBarChart,
   Building2,
   Shield,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -80,6 +81,13 @@ export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {
     router.push(href);
   };
 
+  // §11.359 — 모바일 로그아웃 진입점(더보기 시트). 햄버거(계정/설정)와 역할 분리
+  //   유지하되, 운영 메뉴 허브인 더보기에 로그아웃을 노출(기존 진입점 부재 해소).
+  const handleSignOut = () => {
+    onOpenChange(false);
+    void signOut({ callbackUrl: "/" });
+  };
+
   const renderItem = (item: MoreMenuItem) => {
     const active = pathname.startsWith(item.href);
     return (
@@ -134,6 +142,18 @@ export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {
               </div>
             </div>
           )}
+
+          {/* §11.359 — 로그아웃(모바일 진입점). 메뉴 항목과 구분선·red 톤으로 분리. */}
+          <div className="pt-2 mt-2 border-t border-slate-200">
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="flex items-center gap-3 w-full px-3 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors touch-manipulation"
+            >
+              <LogOut className="h-5 w-5 flex-shrink-0" />
+              <span>로그아웃</span>
+            </button>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
