@@ -11,6 +11,8 @@ import {
   RotateCcw,
   Keyboard,
 } from "lucide-react";
+// §11.374 — 인앱 스캔 공통 가이드 프레임(라벨/QR 통일)
+import { ScanGuideFrame } from "./ScanGuideFrame";
 
 type ScannerState = "idle" | "requesting" | "scanning" | "paused" | "error";
 
@@ -44,6 +46,9 @@ export function QRScanner({
   const [isPermissionError, setIsPermissionError] = useState(false);
   const scannerRef = useRef<any>(null);
   const mountedRef = useRef(true);
+  // §11.373 — start in-flight 직렬화. stop↔start race(이전 트랙 미정리 상태에서
+  //   새 start)로 인한 device 점유 충돌 → 검은화면을 막기 위해 진행 중 중복 start 차단.
+  const startingRef = useRef(false);
 
   // 마운트마다 고유 ID 생성 → 재오픈 시 이전 DOM 잔여물과 충돌 방지
   const scannerIdRef = useRef(
@@ -122,7 +127,26 @@ export function QRScanner({
     }
   }, []);
 
+  /**
+   * §11.373 — start resolve 후 실제 video 프레임이 잡혔는지 확인.
+   * device 점유 충돌 시 html5-qrcode start 는 resolve 하나 video 가 검은(videoWidth 0).
+   * 짧게 polling 해 활성(videoWidth>0 + readyState≥2)을 확인, 미충족이면 false.
+   */
+  const verifyVideoActive = useCallback(async (elementId: string): Promise<boolean> => {
+    const deadline = Date.now() + 1200;
+    while (Date.now() < deadline) {
+      if (!mountedRef.current) return false;
+      const videoEl = document.getElementById(elementId)?.querySelector("video");
+      if (videoEl && videoEl.videoWidth > 0 && videoEl.readyState >= 2) return true;
+      await new Promise((r) => setTimeout(r, 120));
+    }
+    return false;
+  }, []);
+
   const startScanner = useCallback(async () => {
+    // §11.373 — in-flight 직렬화: 진행 중이면 중복 start 차단(연타·재오픈 중첩 → race).
+    if (startingRef.current) return;
+    startingRef.current = true;
     setErrorMsg(null);
     setIsPermissionError(false);
     setState("requesting");
@@ -135,6 +159,10 @@ export function QRScanner({
 
       // 이전 인스턴스 완전 정리
       await stopScanner();
+      // §11.373 — stop 후 yield: html5-qrcode 내부 track 정리가 stop() resolve 이후에도
+      //   미완일 수 있어, 새 start 전 microtask 틈을 줘 device 점유 충돌을 완화한다.
+      await new Promise((r) => setTimeout(r, 0));
+      if (!mountedRef.current) return;
 
       // DOM 잔여 요소(video, canvas 등) 강제 클리어 → Black Screen 방지
       const container = document.getElementById(id);
@@ -173,7 +201,22 @@ export function QRScanner({
         );
       }
 
-      if (mountedRef.current) setState("scanning");
+      if (!mountedRef.current) return;
+
+      // §11.373 — 검은화면 위장 제거(H3): start 가 resolve 해도 실제 video 프레임이
+      //   안 잡히면(device 충돌) videoWidth 0. scanning 으로 위장하지 않고 에러 처리.
+      const active = await verifyVideoActive(id);
+      if (!active) {
+        if (!mountedRef.current) return;
+        const blackMsg = "카메라 화면을 표시할 수 없습니다. 다시 시도하세요.";
+        setErrorMsg(blackMsg);
+        setState("error");
+        onScanError?.(blackMsg);
+        await stopScanner();
+        return;
+      }
+
+      setState("scanning");
     } catch (err: any) {
       if (!mountedRef.current) return;
       console.error("QR Scanner error:", err);
@@ -201,8 +244,11 @@ export function QRScanner({
       setState("error");
       onScanError?.(msg);
       await stopScanner();
+    } finally {
+      // §11.373 — in-flight 가드 해제(성공/실패/위장 모든 경로).
+      startingRef.current = false;
     }
-  }, [onScanSuccess, onScanError, stopScanner]);
+  }, [onScanSuccess, onScanError, stopScanner, verifyVideoActive]);
 
   const handleReset = useCallback(async () => {
     await stopScanner();
@@ -224,26 +270,9 @@ export function QRScanner({
           style={{ minHeight: 280 }}
         />
 
-        {/* 스캔 중일 때 오버레이 가이드 */}
+        {/* 스캔 중일 때 오버레이 가이드 — §11.374 공통 프레임(QR=스캔라인 포함) */}
         {state === "scanning" && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none rounded-2xl overflow-hidden">
-            <div className="relative w-56 h-56">
-              {/* 모서리 마커 */}
-              {(["tl", "tr", "bl", "br"] as const).map((pos) => (
-                <div
-                  key={pos}
-                  className={`absolute w-7 h-7 border-4 border-blue-400
-                    ${pos === "tl" ? "top-0 left-0 border-r-0 border-b-0 rounded-tl-lg" : ""}
-                    ${pos === "tr" ? "top-0 right-0 border-l-0 border-b-0 rounded-tr-lg" : ""}
-                    ${pos === "bl" ? "bottom-0 left-0 border-r-0 border-t-0 rounded-bl-lg" : ""}
-                    ${pos === "br" ? "bottom-0 right-0 border-l-0 border-t-0 rounded-br-lg" : ""}
-                  `}
-                />
-              ))}
-              {/* 스캔 라인 */}
-              <div className="absolute inset-x-4 top-1/2 h-0.5 bg-blue-400/80 animate-pulse rounded-full" />
-            </div>
-          </div>
+          <ScanGuideFrame showScanLine className="rounded-2xl overflow-hidden" />
         )}
 
         {/* idle / requesting 상태 플레이스홀더 */}

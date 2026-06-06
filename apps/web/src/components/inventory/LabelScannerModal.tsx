@@ -39,6 +39,8 @@ import { RelativeTimeText } from "@/components/ui/relative-time-text";
 // §11.253b-3 — 본인 다른 탭 detection (case 1). BroadcastChannel 으로 같은
 //   origin 의 다른 탭이 동일 productId/lotNumber 작업 중인지 감지. backend 0.
 import { useInventoryEditBroadcast } from "@/hooks/use-inventory-edit-broadcast";
+// §11.374 — 인앱 스캔 공통 가이드 프레임(라벨/QR 통일)
+import { ScanGuideFrame } from "./ScanGuideFrame";
 
 /* ── 타입 ── */
 interface ScanApiResponse {
@@ -689,10 +691,8 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                       muted
                       className="w-full h-full object-cover"
                     />
-                    <div
-                      data-testid="camera-guide-frame"
-                      className="pointer-events-none absolute inset-6 border-2 border-white/70 rounded-lg"
-                    />
+                    {/* §11.374 — 공통 가이드 프레임(blue 코너 마커). 정적 캡처라 스캔라인 없음. */}
+                    <ScanGuideFrame testId="camera-guide-frame" />
                     {quality && (
                       <div
                         className={`absolute left-2 top-2 px-2 py-1 rounded-md text-[11px] font-medium ${
@@ -1100,7 +1100,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs font-medium text-slate-600">카탈로그 번호</Label>
                 <Input
@@ -1127,7 +1127,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <div className="flex items-center gap-1.5">
                   <Label className="text-xs font-medium text-slate-600">유효기간</Label>
@@ -1165,7 +1165,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs font-medium text-slate-600">제조사</Label>
                 <Input
