@@ -238,6 +238,9 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
   const [expiryScanFilled, setExpiryScanFilled] = useState(false);
   const [lotDirty, setLotDirty] = useState(false);
   const [expiryDirty, setExpiryDirty] = useState(false);
+  // §11.378 — 제품명 사용자 수정 추적. OCR 저신뢰도 시 미보정이면 입고 완료 차단,
+  //   사용자가 제품명을 직접 수정(보정)하면 차단 해제(무효 통과 = fake success 방지).
+  const [productNameDirty, setProductNameDirty] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [manualMode, setManualMode] = useState(false);
   const [manualText, setManualText] = useState("");
@@ -293,7 +296,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
     setPreviewImage(null);
     setFormData(emptyFormData());
     setLotScanFilled(false); setExpiryScanFilled(false);
-    setLotDirty(false); setExpiryDirty(false);
+    setLotDirty(false); setExpiryDirty(false); setProductNameDirty(false);
     setIsDragOver(false);
     setManualMode(false);
     setManualText("");
@@ -315,6 +318,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
     // §11.340 — 사용자가 직접 수정 → 수기 출처로 전환.
     if (key === "lotNumber") setLotDirty(true);
     if (key === "expirationDate") setExpiryDirty(true);
+    if (key === "productName") setProductNameDirty(true); // §11.378 — 저신뢰도 게이트 해제용
   };
 
   // §11.340 — 출처 배지 헬퍼. 스캔으로 채워졌고 미수정 = 검증값, 그 외 값 있으면 수기.
@@ -1187,6 +1191,20 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
             </div>
           </div>
 
+          {/* §11.378 — OCR 저신뢰도 + 사용자 미보정 시 입고 완료 차단(무효 통과 방지).
+              제품명을 직접 수정하면 해제. 라벨 아닌 사진(키보드 등)이 재고로 들어가는 것 차단. */}
+          {scanResult &&
+            mapOcrConfidence(scanResult.parsed.confidence) === "low" &&
+            !productNameDirty && (
+              <div className="flex items-start gap-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-3">
+                <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <span>
+                  라벨 인식 신뢰도가 낮습니다. 라벨이 맞는지 확인하고 제품명을 수정한 뒤
+                  진행하세요. (잘못된 사진은 재고 오염을 일으킬 수 있습니다.)
+                </span>
+              </div>
+            )}
+
           {/* ── 액션 버튼 ── */}
           <div className="flex items-center gap-3 mt-auto pt-3 border-t border-slate-100">
             <Button variant="outline" onClick={resetState} className="gap-1.5">
@@ -1195,7 +1213,13 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
             </Button>
             <Button
               onClick={onDirectReceive ? handleDirectReceive : handleApplyToForm}
-              disabled={!formData.productName.trim()}
+              disabled={
+                !formData.productName.trim() ||
+                // §11.378 — 저신뢰도 + 미보정 차단. 수동 보정(productNameDirty) 시 허용.
+                (!!scanResult &&
+                  mapOcrConfidence(scanResult.parsed.confidence) === "low" &&
+                  !productNameDirty)
+              }
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white gap-2"
             >
               <CheckCircle2 className="h-4 w-4" />
