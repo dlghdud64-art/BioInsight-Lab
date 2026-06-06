@@ -58,6 +58,20 @@ describe("§11.374 — 라벨/QR 가 ScanGuideFrame 사용", () => {
   });
 });
 
+describe("§11.374b — 프레임 오버플로우 fix (프리뷰 상대 클램프)", () => {
+  it("고정 w-56 h-56 제거 — 프리뷰보다 큰 고정 px 금지", () => {
+    const src = read(FRAME);
+    expect(src).not.toMatch(/className="relative w-56 h-56"/);
+  });
+
+  it("프리뷰 height 상대(78%) + aspect-square + max-h-56 클램프", () => {
+    const src = read(FRAME);
+    expect(src).toMatch(/h-\[78%\]/);
+    expect(src).toMatch(/aspect-square/);
+    expect(src).toMatch(/max-h-56/);
+  });
+});
+
 describe("§11.374 — 회귀 0", () => {
   it("라벨 camera-guide-frame testid prop 전달 보존(E2E hook)", () => {
     const src = read(LABEL);

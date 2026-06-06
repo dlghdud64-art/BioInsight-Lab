@@ -1140,11 +1140,14 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                     return b ? <span data-testid="expiry-source-badge" className={`text-[9px] px-1.5 py-0 rounded ${b.cls}`}>{b.label}</span> : null;
                   })()}
                 </div>
+                {/* §11.371-4b — type=date 모바일 native 비대(min-height) 차단. appearance-none 으로
+                    native control 박스 제거 → 다른 필드와 동일 h-9 적용. 달력 picker indicator 는
+                    명시 유지(날짜 입력 UX 보존). */}
                 <Input
                   type="date"
                   value={formData.expirationDate}
                   onChange={(e) => updateField("expirationDate", e.target.value)}
-                  className="mt-1 h-9 text-sm"
+                  className="mt-1 h-9 text-sm appearance-none [&::-webkit-calendar-picker-indicator]:opacity-100"
                 />
               </div>
               <div>

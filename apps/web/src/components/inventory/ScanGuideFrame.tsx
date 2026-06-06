@@ -29,7 +29,10 @@ export function ScanGuideFrame({
       data-testid={testId}
       className={`pointer-events-none absolute inset-0 flex items-center justify-center ${className}`}
     >
-      <div className="relative w-56 h-56">
+      {/* §11.374b — 고정 w-56 h-56(224px) 은 프리뷰(aspect-[4/3] 등 height<224)보다 커서
+          코너 마커가 프리뷰 밖으로 오버플로우(화면 밖). 프리뷰 height 상대(78%) + aspect-square
+          로 클램프 → 어떤 프리뷰 비율에서도 항상 안쪽. max-h-56 으로 대형 화면 상한. */}
+      <div className="relative h-[78%] aspect-square max-h-56">
         {/* blue accent 코너 4마커 (공통 시각 언어) */}
         {(["tl", "tr", "bl", "br"] as const).map((pos) => (
           <div

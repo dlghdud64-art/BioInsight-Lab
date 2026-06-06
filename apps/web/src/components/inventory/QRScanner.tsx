@@ -137,7 +137,13 @@ export function QRScanner({
     while (Date.now() < deadline) {
       if (!mountedRef.current) return false;
       const videoEl = document.getElementById(elementId)?.querySelector("video");
-      if (videoEl && videoEl.videoWidth > 0 && videoEl.readyState >= 2) return true;
+      if (videoEl && videoEl.videoWidth > 0 && videoEl.readyState >= 2) {
+        // §11.373b — videoWidth 는 stream intrinsic 해상도라 "보이는지"를 보장 못 한다
+        //   (0높이/숨김 video 도 videoWidth>0 통과 → 검은화면 위장). 실제 렌더 박스
+        //   (getBoundingClientRect)까지 확인해 화면에 안 잡히는 검정을 정직하게 가른다.
+        const rect = videoEl.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) return true;
+      }
       await new Promise((r) => setTimeout(r, 120));
     }
     return false;
@@ -261,10 +267,12 @@ export function QRScanner({
     <div className={`flex flex-col items-center gap-4 ${className}`}>
       {/* 뷰파인더 영역 */}
       <div className="relative w-full max-w-sm">
-        {/* html5-qrcode 마운트 포인트 — 마운트마다 고유 ID */}
+        {/* html5-qrcode 마운트 포인트 — 마운트마다 고유 ID
+            §11.373b — html5-qrcode 가 <video> 에 박는 inline px 크기가 aspect-square 컨테이너와
+            충돌해 표시 0/오버플로우(검은화면) → 자식 video 를 컨테이너에 강제로 채운다. */}
         <div
           id={scannerIdRef.current}
-          className={`w-full rounded-2xl overflow-hidden bg-black aspect-square ${
+          className={`w-full rounded-2xl overflow-hidden bg-black aspect-square [&_video]:!w-full [&_video]:!h-full [&_video]:!max-w-none [&_video]:!object-cover ${
             state === "scanning" || state === "paused" ? "block" : "hidden"
           }`}
           style={{ minHeight: 280 }}
