@@ -270,6 +270,11 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
   const autoCaptureRef = useRef(false);
   const qualityRef = useRef<FrameQuality | null>(null);
   const goodStreakRef = useRef(0);
+  // §11.349 — 카메라 획득 직렬화. acquireGenRef=effect 세대, acquiringRef=직전
+  //   획득 promise. deps 빠른 토글로 effect 가 중복 실행돼도 getRearCameraStream
+  //   (getUserMedia 체인)이 동시 2회 in-flight 되지 않게 직전 획득을 await 한다.
+  const acquireGenRef = useRef(0);
+  const acquiringRef = useRef<Promise<void> | null>(null);
   const [uploadMode, setUploadMode] = useState<"camera" | "file">("camera");
   const [autoCapture, setAutoCapture] = useState(false);
   const [quality, setQuality] = useState<FrameQuality | null>(null);
@@ -456,27 +461,56 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
       }
     };
 
-    (async () => {
+    // §11.349 — 동시 in-flight 직렬화. 이 effect run 의 세대를 고정하고,
+    //   직전 획득(prev)이 끝난 뒤에만 새 getRearCameraStream 을 발사한다.
+    const myGen = ++acquireGenRef.current;
+    const prev = acquiringRef.current;
+    const superseded = () => cancelled || myGen !== acquireGenRef.current;
+
+    const run = (async () => {
+      // 직전 획득이 진행 중이면 settle 까지 대기 → getUserMedia 중첩 0.
+      if (prev) {
+        await prev.catch(() => {});
+      }
+      // 대기 사이 더 새로운 effect run 이 생겼으면 양보(획득 자체를 건너뜀).
+      if (superseded()) return;
       try {
         // §11.355-C — 후면 카메라 4단계 fallback (exact→loose→enumerate→video).
         //   기존 environment 단일 시도는 후면 미획득/전면 강등 위험.
         stream = await getRearCameraStream();
-        if (cancelled) {
-          stream.getTracks().forEach((t) => t.stop());
-          return;
-        }
-        setCameraError(null);
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          await videoRef.current.play().catch(() => {});
-        }
-        intervalId = setInterval(analyze, 400);
       } catch {
-        setCameraError(
-          "카메라를 사용할 수 없습니다. 파일 업로드로 진행하세요.",
-        );
+        if (!superseded()) {
+          setCameraError(
+            "카메라를 사용할 수 없습니다. 파일 업로드로 진행하세요.",
+          );
+        }
+        return;
       }
+      // 획득 후 cancelled/superseded → 즉시 정리(이 stream 을 attach 하지 않음).
+      if (superseded()) {
+        stream.getTracks().forEach((t) => t.stop());
+        stream = null;
+        return;
+      }
+      // §11.349 H2 — 4차 video:true 가 전면(facingMode "user") 으로 강등됐으면
+      //   성공으로 위장하지 않는다. stream 정지 후 후면 미획득을 명시한다.
+      const settings = stream.getVideoTracks()[0]?.getSettings();
+      if (settings?.facingMode === "user") {
+        stream.getTracks().forEach((t) => t.stop());
+        stream = null;
+        setCameraError(
+          "후면 카메라를 찾지 못했습니다. 파일 업로드로 진행하세요.",
+        );
+        return;
+      }
+      setCameraError(null);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play().catch(() => {});
+      }
+      intervalId = setInterval(analyze, 400);
     })();
+    acquiringRef.current = run;
 
     return () => {
       cancelled = true;
