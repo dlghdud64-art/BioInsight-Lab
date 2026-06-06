@@ -92,6 +92,13 @@ const sidebarGroups: SidebarGroup[] = [
         icon: ClipboardList,
       },
       {
+        // §11.365 — "지출 분석"을 상단 독립(dashboardLinks) → PURCHASE 그룹으로 이동
+        //   (IA 정합). 구매·예산 분석류라 구매 리포트와 인접 배치. href/icon 보존.
+        title: "지출 분석",
+        href: "/dashboard/analytics",
+        icon: PieChart,
+      },
+      {
         title: "구매 리포트",
         href: "/dashboard/reports",
         icon: BarChart3,
@@ -147,16 +154,12 @@ const adminMenuItems: NavItem[] = [
 ];
 
 // 대시보드 링크 (상단에 별도 배치)
+// §11.365 — "지출 분석"은 PURCHASE 그룹으로 이동(위 sidebarGroups). 상단은 대시보드만.
 const dashboardLinks = [
   {
     title: "대시보드",
     href: "/dashboard",
     icon: LayoutDashboard,
-  },
-  {
-    title: "지출 분석",
-    href: "/dashboard/analytics",
-    icon: PieChart,
   },
 ];
 
