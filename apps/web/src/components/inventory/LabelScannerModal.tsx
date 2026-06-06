@@ -689,11 +689,16 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
               ) : (
                 <div className="flex flex-col gap-3">
                   <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-black">
+                    {/* §11.373c — iOS Safari getUserMedia 검은 프리뷰 보강. playsInline·muted 만으론
+                        iOS 가 첫 프레임을 안 그림 → autoPlay 속성 명시(play() 호출과 별개로 iOS 요구).
+                        transform-gpu 로 GPU 합성 레이어 승격(video 합성 누락 방지). stream 획득(§11.349)과
+                        직교한 "표시" 보강. */}
                     <video
                       ref={videoRef}
+                      autoPlay
                       playsInline
                       muted
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transform-gpu"
                     />
                     {/* §11.374 — 공통 가이드 프레임(blue 코너 마커). 정적 캡처라 스캔라인 없음. */}
                     <ScanGuideFrame testId="camera-guide-frame" />
