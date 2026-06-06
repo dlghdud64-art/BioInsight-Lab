@@ -6,6 +6,8 @@ import { COMPARE_SUBSTATUS_DEFS, determineHandoffStallPoint } from "@/lib/work-q
 import { determineOpsStallPoint } from "@/lib/work-queue/ops-queue-semantics";
 // §11.107 — DashboardStatsSnapshot 기반 trend derive
 import { getMostRecentSnapshotBefore } from "@/lib/dashboard/snapshot-helper";
+// §11.366-server — cold-start transient DB 재시도 래퍼
+import { withDbRetry } from "@/lib/db-retry";
 
 // Next.js 정적 캐시 완전 비활성화: 항상 DB에서 최신 데이터 조회
 export const dynamic = "force-dynamic";
@@ -88,12 +90,17 @@ export async function GET(request: NextRequest) {
         ...(workspaceIds.length > 0 ? [{ workspaceId: { in: workspaceIds } }] : []),
       ],
     };
-    const [quoteCount, orderCount, inventoryCount, purchaseCount] = await Promise.all([
-      db.quote.count({ where: quoteOwnerWhere }),
-      db.order.count({ where: { userId } }),
-      db.productInventory.count({ where: inventoryOwnerWhere }),
-      db.purchaseRecord.count({ where: earlyPurchaseWhere }),
-    ]);
+    // §11.366-server — cold-start 흡수: 첫 connection 시점인 early count gate 를
+    //   transient(P1001/P1017/P2024) 한정 1회 재시도로 감싼다. non-transient 는
+    //   즉시 전파(아래 catch → 500). 이후 Phase 쿼리는 warm 이라 미적용.
+    const [quoteCount, orderCount, inventoryCount, purchaseCount] = await withDbRetry(() =>
+      Promise.all([
+        db.quote.count({ where: quoteOwnerWhere }),
+        db.order.count({ where: { userId } }),
+        db.productInventory.count({ where: inventoryOwnerWhere }),
+        db.purchaseRecord.count({ where: earlyPurchaseWhere }),
+      ]),
+    );
     if (quoteCount === 0 && orderCount === 0 && inventoryCount === 0 && purchaseCount === 0) {
       return NextResponse.json({});
     }
