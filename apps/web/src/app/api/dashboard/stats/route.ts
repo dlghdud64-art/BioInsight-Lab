@@ -25,6 +25,9 @@ export const revalidate = 0;
  */
 export async function GET(request: NextRequest) {
   try {
+    // §11.376 — 첫진입 18초 단계 분해 계측(임시). Vercel 함수 로그에서
+    //   cold/Prisma init(첫 DB 접근) vs 각 Phase 쿼리 비중 확인 후 제거.
+    const __t0 = Date.now();
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -105,6 +108,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({});
     }
 
+    const __tBeforeP2 = Date.now(); // §11.376 계측
     // ── Phase 2: Phase 1 결과 의존 쿼리 6개 동시 실행 ─────────────────
     // 이전: quotes → ordersWithItems → userInventories → (fallback budget) 순차 실행
     // 이후: 모두 병렬
@@ -247,6 +251,7 @@ export async function GET(request: NextRequest) {
       }).catch(() => ({ totalQuotes: 0, purchasedQuotes: 0, confirmedOrders: 0, completedReceiving: 0 })),
     ]);
 
+    const __tBeforeP3 = Date.now(); // §11.376 계측
     // ── Phase 3: 구매 기록 쿼리 4개 동시 실행 ─────────────────────────
     // 이전: recentOrders, recentPurchases가 return문 안에서 순차 실행
     // 이후: 모두 병렬 (quoteId 의존성 해소 후 실행)
@@ -331,6 +336,7 @@ export async function GET(request: NextRequest) {
     // recentOrders는 ordersWithItems에서 추출
     const recentOrders = ordersWithItems.slice(0, 5);
 
+    const __tBeforeP4 = Date.now(); // §11.376 계측
     // ── Phase 4: N+1 제거 배치 조회 2개 동시 실행 ──────────────────────
     // 이전: userInventories 루프에서 매 항목마다 db.orderItem.findUnique 호출 (N+1)
     // 이후: orderItemId 목록으로 한 번에 batch 조회
@@ -648,6 +654,16 @@ export async function GET(request: NextRequest) {
           stallPoint: determineOpsStallPoint(data),
         };
       })(),
+    });
+
+    // §11.376 — 단계별 소요(ms). authPhase1Early 가 크면 cold/Prisma init 지배,
+    //   특정 phase 가 크면 그 쿼리 무게. 측정 후 본 계측 블록 제거 예정.
+    console.log("[STATS_TIMING]", {
+      authPhase1Early: __tBeforeP2 - __t0,
+      phase2: __tBeforeP3 - __tBeforeP2,
+      phase3: __tBeforeP4 - __tBeforeP3,
+      phase4AndBuild: Date.now() - __tBeforeP4,
+      total: Date.now() - __t0,
     });
 
     // Non-blocking: sync compare sessions into work queue
