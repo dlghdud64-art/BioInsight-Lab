@@ -724,8 +724,10 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                               : "bg-red-600/90 text-white"
                         }`}
                       >
+                        {/* §11.375 — "양호"는 촬영 품질(흔들림/조명)이지 라벨 인식이 아님.
+                            라벨 정합/인식은 OCR(§11.378 confidence 게이트)이 판정 → 오해 제거 위해 라벨 정정. */}
                         {quality.overall === "good"
-                          ? "양호"
+                          ? "흔들림 없음"
                           : quality.overall === "warn"
                             ? "흔들림/조명 주의"
                             : "흐림/조명 불량 — 재촬영"}
@@ -734,43 +736,48 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                           : ""}
                       </div>
                     )}
+
+                    {/* §11.374-vivino — 촬영 컨트롤을 video 위 absolute 하단 오버레이로 고정.
+                        풀블리드 video + 컨트롤 세로 합산이 모달 높이를 넘겨 "촬영" 버튼이 스크롤 밖으로
+                        밀리던 것 해소 → 카메라+촬영 한 화면, 버튼 항상 노출. */}
+                    <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-3 bg-gradient-to-t from-black/80 via-black/50 to-transparent">
+                      {/* 자동 캡처 토글 + 인라인 힌트 (default 수동) */}
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center gap-2 text-xs text-white/90">
+                          <input
+                            type="checkbox"
+                            checked={autoCapture}
+                            onChange={(e) => setAutoCapture(e.target.checked)}
+                          />
+                          자동 캡처
+                        </label>
+                        <span className="text-[11px] text-white/70">
+                          💡 &lsquo;흔들림 없음&rsquo;일 때 자동 촬영
+                        </span>
+                      </div>
+
+                      {/* 캡처 버튼 — poor 차단 */}
+                      <button
+                        type="button"
+                        onClick={() => captureRef.current(false)}
+                        disabled={quality?.overall === "poor"}
+                        className="flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-500/60 disabled:text-white/50"
+                      >
+                        <Camera className="h-4 w-4" />
+                        촬영
+                      </button>
+
+                      {quality?.overall === "poor" && (
+                        <button
+                          type="button"
+                          onClick={() => captureRef.current(true)}
+                          className="self-center text-xs text-white/70 underline hover:text-white"
+                        >
+                          그래도 시도 (OCR 강제 실행)
+                        </button>
+                      )}
+                    </div>
                   </div>
-
-                  {/* 자동 캡처 토글 + 인라인 힌트 (default 수동) */}
-                  <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-2 text-xs text-slate-600">
-                      <input
-                        type="checkbox"
-                        checked={autoCapture}
-                        onChange={(e) => setAutoCapture(e.target.checked)}
-                      />
-                      자동 캡처
-                    </label>
-                    <span className="text-[11px] text-slate-400">
-                      💡 화면이 &lsquo;양호&rsquo;하면 자동 촬영 (기본: 수동)
-                    </span>
-                  </div>
-
-                  {/* 캡처 버튼 — poor 차단 */}
-                  <button
-                    type="button"
-                    onClick={() => captureRef.current(false)}
-                    disabled={quality?.overall === "poor"}
-                    className="flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
-                  >
-                    <Camera className="h-4 w-4" />
-                    촬영
-                  </button>
-
-                  {quality?.overall === "poor" && (
-                    <button
-                      type="button"
-                      onClick={() => captureRef.current(true)}
-                      className="self-center text-xs text-slate-500 underline hover:text-slate-700"
-                    >
-                      그래도 시도 (OCR 강제 실행)
-                    </button>
-                  )}
                 </div>
               )}
 
