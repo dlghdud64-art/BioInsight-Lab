@@ -111,7 +111,8 @@ function PublicSearchContent() {
       )}
 
       {/* Header area */}
-      <div className="mx-auto max-w-5xl px-4 pt-28 pb-20 text-center space-y-10">
+      {/* §11.372 — 모바일 패딩/간격 축소(first-view 에 헤드라인+검색+CTA 확보). md+ 기존 보존. */}
+      <div className="mx-auto max-w-5xl px-4 pt-20 pb-12 text-center space-y-6 md:pt-28 md:pb-20 md:space-y-10">
         {/* Title */}
         <div className="space-y-4">
           <h1 className="text-3xl md:text-[42px] font-extrabold text-slate-900 tracking-tight leading-tight">
@@ -156,7 +157,7 @@ function PublicSearchContent() {
         <section
           data-testid="landing-search-flow-steps"
           aria-label="LabAxis 사용 흐름 3단계"
-          className="grid grid-cols-3 gap-3 sm:gap-4 text-left"
+          className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4 text-left"
         >
           {flowSteps.map((step) => {
             const Icon = step.icon;
