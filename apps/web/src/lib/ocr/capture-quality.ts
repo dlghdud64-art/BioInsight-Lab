@@ -245,6 +245,13 @@ export function assessFrameQuality(
   let overall: QualityVerdict =
     failCount === 0 ? "good" : failCount === 2 ? "poor" : "warn";
   if (overall !== "poor" && captureConfidence < poorFloor) overall = "poor";
+  // §11.375 — alignment 게이트(라벨 정합 진짜화). blur+조명만으론 키보드·잡동사니도 good
+  //   (가짜 "양호" 신호 → 오입고 유발). 중앙 ROI 엣지 집중(alignment.ok) 미달 시 good→warn 격하:
+  //   라벨이 프레임 중앙에 채워져야만 "양호". poor 는 유지(더 약화 안 함).
+  if (overall === "good" && !alignment.ok) {
+    overall = "warn";
+    reasons.push("정합_미흡");
+  }
 
   return { blur, lighting, alignment, captureConfidence, overall, reasons };
 }
