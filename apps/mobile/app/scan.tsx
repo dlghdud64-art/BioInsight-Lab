@@ -11,7 +11,7 @@ import {
   ScrollView,
   Image,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import {
   X,
@@ -104,8 +104,14 @@ function mapLabelToForm(r: LabelScanResponse): LabelForm {
 
 export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
+  // §11.379 — ScanHubSheet intent 수신. 입고(라벨)/사용(QR 차감) 진입 의도.
+  //   receive_label → 라벨 OCR 모드, use_qr → 바코드/QR 모드(matched 시 차감 우선).
+  //   intent 없는 직진입은 기존 기본값(barcode) 유지(하위호환).
+  const { intent } = useLocalSearchParams<{ intent?: string }>();
   const [state, setState] = useState<ScanState>("scanning");
-  const [scanMode, setScanMode] = useState<ScanMode>("barcode");
+  const [scanMode, setScanMode] = useState<ScanMode>(
+    intent === "receive_label" ? "label" : "barcode"
+  );
   const [torch, setTorch] = useState(false);
   const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
   const [unmatchedData, setUnmatchedData] = useState("");
@@ -608,6 +614,13 @@ export default function ScanScreen() {
         desc: "보관 위치 변경",
       },
     ];
+
+    // §11.379 — 사용(QR 차감) 의도 진입 시 출고(dispatch) 액션을 상단 우선 노출.
+    //   실제 차감은 lot-dispatch route 게이트가 책임(front-only 차감 0).
+    if (intent === "use_qr") {
+      const di = actions.findIndex((a) => a.key === "dispatch");
+      if (di > 0) actions.unshift(actions.splice(di, 1)[0]);
+    }
 
     return (
       <View className="flex-1 bg-white items-center justify-center px-6">

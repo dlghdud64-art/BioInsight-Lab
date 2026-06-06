@@ -22,6 +22,7 @@ import {
 import { useDashboardSummary, usePurchases } from "../../hooks/useApi";
 import { iconColor, spinnerColor } from "../../theme/colors";
 import { getPendingCount, triggerSync } from "../../lib/offline";
+import { ScanHubSheet } from "../../components/ScanHubSheet";
 
 import { useState, useEffect } from "react";
 
@@ -47,6 +48,8 @@ export default function HomeScreen() {
   const { data: purchases } = usePurchases();
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const [isSyncingPending, setIsSyncingPending] = useState(false);
+  // §11.379 — 스캔 진입 허브(입고/사용 2분류). QR 스캔 quickAction → hub 선행.
+  const [scanHubOpen, setScanHubOpen] = useState(false);
 
   const recentPurchases = (purchases ?? []).slice(0, 3);
 
@@ -122,17 +125,17 @@ export default function HomeScreen() {
     ? [
         { icon: Package, label: "품목 등록", color: iconColor.success, onPress: () => router.push("/(tabs)/inventory") },
         { icon: Search, label: "제품 검색", color: iconColor.primary, onPress: () => router.push("/(tabs)/inventory") },
-        { icon: QrCode, label: "QR 스캔", color: iconColor.sky, onPress: () => router.push("/scan") },
+        { icon: QrCode, label: "QR 스캔", color: iconColor.sky, onPress: () => setScanHubOpen(true) },
       ]
     : dashboardState === "blocked"
       ? [
           ...(lowStockItems > 0 ? [{ icon: AlertTriangle, label: "재고 부족 확인", color: iconColor.danger, onPress: () => router.push("/(tabs)/inventory") }] : []),
           ...(pendingQuotes > 0 ? [{ icon: FileText, label: "견적 검토", color: iconColor.warning, onPress: () => router.push("/(tabs)/quotes") }] : []),
           ...(pendingInspections > 0 ? [{ icon: ClipboardCheck, label: "점검 기록", color: iconColor.violet, onPress: () => router.push("/(tabs)/inventory") }] : []),
-          { icon: QrCode, label: "QR 스캔", color: iconColor.sky, onPress: () => router.push("/scan") },
+          { icon: QrCode, label: "QR 스캔", color: iconColor.sky, onPress: () => setScanHubOpen(true) },
         ]
       : [
-          { icon: QrCode, label: "QR 스캔", color: iconColor.sky, onPress: () => router.push("/scan") },
+          { icon: QrCode, label: "QR 스캔", color: iconColor.sky, onPress: () => setScanHubOpen(true) },
           { icon: ArrowDownToLine, label: "입고 처리", color: iconColor.success, onPress: () => router.push("/inventory/lot-receive" as any) },
           { icon: ArrowUpFromLine, label: "출고 처리", color: iconColor.violet, onPress: () => router.push("/inventory/lot-dispatch" as any) },
           { icon: ClipboardCheck, label: "점검 기록", color: iconColor.violet, onPress: () => router.push("/(tabs)/inventory") },
@@ -340,6 +343,9 @@ export default function HomeScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* §11.379 — 스캔 진입 허브(입고/사용 2분류) */}
+      <ScanHubSheet visible={scanHubOpen} onClose={() => setScanHubOpen(false)} />
     </SafeAreaView>
   );
 }
