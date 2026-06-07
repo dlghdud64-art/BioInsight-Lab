@@ -641,13 +641,16 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
 
       {/* ═══ Step 1: 업로드 (카메라 / 파일 업로드 토글) ═══ */}
       {step === "upload" && !manualMode && (
-        <div className="flex-1 flex flex-col gap-4 p-5">
-          <div className="text-center">
-            <h3 className="text-base font-bold text-slate-900">스마트 입고</h3>
-            <p className="text-sm text-slate-500 mt-1">
-              라벨을 프레임 안에 맞춰 촬영하거나 이미지를 업로드하세요.
-            </p>
-          </div>
+        <div className="flex-1 flex flex-col gap-3 p-3 min-h-0">
+          {/* §11.374-vivino — 카메라 모드 시 제목/설명 숨김(헤더 chrome 축소 → video 세로 확보). */}
+          {uploadMode === "file" && (
+            <div className="text-center">
+              <h3 className="text-base font-bold text-slate-900">스마트 입고</h3>
+              <p className="text-sm text-slate-500 mt-1">
+                라벨을 프레임 안에 맞춰 촬영하거나 이미지를 업로드하세요.
+              </p>
+            </div>
+          )}
 
           {/* 모드 토글 */}
           <div className="flex bg-slate-100 rounded-xl p-1">
@@ -674,7 +677,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
           </div>
 
           {uploadMode === "camera" ? (
-            <div className="flex flex-col gap-3">
+            <div className="flex-1 flex flex-col gap-3 min-h-0">
               {cameraError ? (
                 <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-center">
                   <p className="text-sm text-yellow-700">{cameraError}</p>
@@ -687,10 +690,10 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                   </button>
                 </div>
               ) : (
-                <div className="flex flex-col gap-3">
-                  {/* §11.374-vivino — 풀블리드 카메라(작은 aspect-[4/3] 박스 → 모달 큰 높이 h-[68vh]).
-                      조준·라벨 인식 용이. 토글·촬영버튼은 아래 별도(오버레이 아님, 컨트롤 영역 유지). */}
-                  <div className="relative w-full h-[68vh] rounded-xl overflow-hidden bg-black">
+                <div className="flex-1 flex flex-col gap-3 min-h-0">
+                  {/* §11.374-vivino — 풀블리드 카메라: video 가 모달 가용 세로 전부 채움(flex-1).
+                      헤더 chrome(제목 숨김·토글만) 축소 → video 최대화. 촬영 컨트롤은 video 위 absolute 하단 고정. */}
+                  <div className="relative w-full flex-1 min-h-0 rounded-xl overflow-hidden bg-black">
                     {/* §11.373c — iOS Safari getUserMedia 검은 프리뷰 보강. playsInline·muted 만으론
                         iOS 가 첫 프레임을 안 그림 → autoPlay 속성 명시(play() 호출과 별개로 iOS 요구).
                         transform-gpu 로 GPU 합성 레이어 승격(video 합성 누락 방지). stream 획득(§11.349)과

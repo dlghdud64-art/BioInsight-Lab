@@ -52,9 +52,15 @@ describe("§11.374-vivino Phase 3 — LabelScanner status 전달 + 풀블리드"
     expect(src).toMatch(/quality(\?\.|\.)overall/);
   });
 
-  it("카메라 컨테이너 풀블리드(작은 aspect-[4/3] 박스 탈피, h-[68vh])", () => {
+  it("카메라 컨테이너 풀블리드(flex-1 가용공간, aspect-[4/3] 작은 박스 탈피)", () => {
     const src = read(LABEL);
-    expect(src).toMatch(/h-\[68vh\]/);
+    // video 컨테이너가 flex-1 로 모달 가용 세로 전부 채움(고정 h 아님)
+    expect(src).toMatch(/relative w-full flex-1 min-h-0 rounded-xl overflow-hidden bg-black/);
+  });
+
+  it("카메라 모드 헤더 chrome 축소(제목 file 모드만 노출)", () => {
+    const src = read(LABEL);
+    expect(src).toMatch(/uploadMode === "file" && \(/);
   });
 
   it("QR 풀블리드(max-w-sm 작은 정사각 탈피, h-[60vh])", () => {
