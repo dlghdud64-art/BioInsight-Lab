@@ -373,7 +373,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 <div
                   role="menu"
                   aria-label="알림 메뉴"
-                  className="absolute right-0 top-full mt-2 w-[380px] p-0 bg-white shadow-2xl shadow-slate-300/40 border border-slate-200 rounded-xl overflow-hidden z-50"
+                  className="absolute right-0 top-full mt-2 w-[calc(100vw-1.5rem)] max-w-[380px] p-0 bg-white shadow-2xl shadow-slate-300/40 border border-slate-200 rounded-xl overflow-hidden z-50"
                 >
               {/* 헤더 */}
               <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-slate-50/50">

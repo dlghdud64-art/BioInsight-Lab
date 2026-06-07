@@ -21,6 +21,8 @@ import {
   Building2,
   Shield,
   LogOut,
+  LayoutDashboard,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,9 +35,18 @@ interface MoreMenuItem {
   label: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  // §11.359-2 — startsWith 매칭이 "/dashboard"(홈)에 과활성되지 않도록 정확 매칭 옵션.
+  exact?: boolean;
 }
 
 const menuGroups: { title: string; items: MoreMenuItem[] }[] = [
+  {
+    // §11.359-2 — 더보기 시트 출구: 대시보드(홈) 직행 항목. 시트 갇힘 시 홈 복귀 동선.
+    title: "바로가기",
+    items: [
+      { label: "대시보드", href: "/dashboard", icon: LayoutDashboard, exact: true },
+    ],
+  },
   {
     title: "운영",
     items: [
@@ -89,7 +100,9 @@ export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {
   };
 
   const renderItem = (item: MoreMenuItem) => {
-    const active = pathname.startsWith(item.href);
+    const active = item.exact
+      ? pathname === item.href
+      : pathname.startsWith(item.href);
     return (
       <button
         key={item.href}
@@ -112,12 +125,24 @@ export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="rounded-t-2xl px-4 pb-8 safe-area-bottom bg-white border-t border-slate-200"
+        // §11.359-2 — max-h + overflow: 시트가 화면 전체높이를 덮어 backdrop/닫기(X)가
+        //   화면 밖으로 밀리던 "출구 부재" 체감 해소. 항목 초과 시 시트 내부 스크롤.
+        className="rounded-t-2xl px-4 pb-8 safe-area-bottom bg-white border-t border-slate-200 max-h-[80vh] overflow-y-auto"
       >
-        <SheetHeader className="pb-2">
+        {/* §11.359-2 — 명시 닫기 동선: 기본 X(우상단, 작음) 외에 헤더에 라벨형
+            닫기 버튼 추가. 시트=오버레이라 닫기=언마운트(라우팅 불요). */}
+        <SheetHeader className="pb-2 flex-row items-center justify-between space-y-0">
           <SheetTitle className="text-base font-bold text-slate-900">
             전체 메뉴
           </SheetTitle>
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            aria-label="메뉴 닫기"
+            className="inline-flex items-center justify-center h-10 w-10 -mr-2 rounded-lg text-slate-500 hover:bg-slate-100 active:scale-95 transition-colors touch-manipulation"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </SheetHeader>
 
         <div className="space-y-4 mt-2">
