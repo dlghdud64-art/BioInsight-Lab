@@ -51,6 +51,8 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { Prisma, ProductCategory } from "@prisma/client";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
+// 알림 고도화 #notif-inventory-received — 입고 완료 시 INVENTORY_RECEIVED 알림(best-effort).
+import { dispatchNotificationEvent, resolveOrgRecipients } from "@/lib/notifications";
 // §11.309c-hotfix-2 — security middleware import 제거 (단순화).
 // IrreversibleActionType enum 미등록 → TS error. auth() + DataAuditLog 로 충분.
 // 후속 §11.309c-3 에서 enum 추가 후 복원 검토.
@@ -243,6 +245,31 @@ export async function POST(request: NextRequest) {
         },
       );
 
+      // 알림 고도화 — 기존 재고 입고 완료 → INVENTORY_RECEIVED (best-effort, mutation 비차단).
+      try {
+        const recipients = await resolveOrgRecipients(
+          inventory.userId,
+          inventory.organizationId,
+        );
+        if (recipients.length > 0) {
+          await dispatchNotificationEvent({
+            eventType: "INVENTORY_RECEIVED",
+            entityType: "INVENTORY",
+            entityId: inventoryId,
+            triggeredBy: session.user.id,
+            recipients,
+            metadata: {
+              productName: updatedInventory.product?.name ?? null,
+              quantity: confirmedData.quantity,
+              lotNumber: confirmedData.lotNumber ?? null,
+              isNewProduct: false,
+            },
+          });
+        }
+      } catch (notifyErr) {
+        console.error("[SmartReceiving] INVENTORY_RECEIVED dispatch 실패 (무시):", notifyErr);
+      }
+
       return NextResponse.json({
         inventoryId: updatedInventory.id,
         inventoryRestockId: restock.id,
@@ -350,6 +377,28 @@ export async function POST(request: NextRequest) {
         return { product, inventory: newInventory, restock: restockRecord };
       },
     );
+
+    // 알림 고도화 — 신규 품목 입고 완료 → INVENTORY_RECEIVED (best-effort, mutation 비차단).
+    try {
+      const recipients = await resolveOrgRecipients(session.user.id, targetOrgId);
+      if (recipients.length > 0) {
+        await dispatchNotificationEvent({
+          eventType: "INVENTORY_RECEIVED",
+          entityType: "INVENTORY",
+          entityId: created.inventory.id,
+          triggeredBy: session.user.id,
+          recipients,
+          metadata: {
+            productName: created.product.name,
+            quantity: confirmedData.quantity,
+            lotNumber: confirmedData.lotNumber ?? null,
+            isNewProduct: true,
+          },
+        });
+      }
+    } catch (notifyErr) {
+      console.error("[SmartReceiving] INVENTORY_RECEIVED dispatch 실패 (무시):", notifyErr);
+    }
 
     return NextResponse.json({
       inventoryId: created.inventory.id,

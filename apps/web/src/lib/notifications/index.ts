@@ -30,6 +30,9 @@ export {
   type DispatchNotificationEventParams,
 } from "./event-dispatcher";
 
+// 수신자 해석 (소유자 + 조직 OWNER/ADMIN 브로드캐스트)
+export { resolveOrgRecipients } from "./recipients";
+
 // 액션 실행기
 export {
   executeNotificationAction,
