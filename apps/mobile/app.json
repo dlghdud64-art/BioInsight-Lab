@@ -34,11 +34,12 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.bioinsightlab.app",
       "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "INTERNET",
-        "ACCESS_NETWORK_STATE"
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -70,10 +71,25 @@
           "photosPermission": "시약 및 장비 사진을 선택하기 위해 사진첩 접근이 필요합니다.",
           "cameraPermission": "시약 및 장비 사진 촬영을 위해 카메라 접근이 필요합니다."
         }
+      ],
+      [
+        "react-native-vision-camera",
+        {
+          "cameraPermission": "시약 라벨 인식 및 QR/바코드 스캔을 위해 카메라 접근이 필요합니다.",
+          "enableCodeScanner": true,
+          "enableMicrophonePermission": false
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b080d51a-7b1b-4b5d-aa65-c203a7011f5b"
+      }
+    },
+    "owner": "labaxis"
   }
 }
