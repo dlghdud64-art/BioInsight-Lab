@@ -201,13 +201,9 @@ export function assessFrameQuality(
   let overall: QualityVerdict =
     failCount === 0 ? "good" : failCount === 2 ? "poor" : "warn";
   if (overall !== "poor" && captureConfidence < poorFloor) overall = "poor";
-  // §11.375 — alignment 게이트(라벨 정합 진짜화). blur+조명만으론 키보드·잡동사니도 good
-  //   (가짜 "양호" 신호 → 오입고 유발). 중앙 ROI 엣지 집중(alignment.ok) 미달 시 good→warn 격하.
+  // §11.375 — 라이브 "정합" 판정 폐기(촬영 전 휴리스틱 양방향 오판 → 신뢰 파괴). overall 은
+  //   blur+lighting(촬영 품질)만. 정합은 OCR confidence 게이트(§11.378) 단일 판정.
   //   ⚠️ DUPLICATED with apps/web/src/lib/ocr/capture-quality.ts — 동기화 유지.
-  if (overall === "good" && !alignment.ok) {
-    overall = "warn";
-    reasons.push("정합_미흡");
-  }
 
   return { blur, lighting, alignment, captureConfidence, overall, reasons };
 }
