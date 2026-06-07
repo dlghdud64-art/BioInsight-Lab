@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -21,8 +21,19 @@ import {
   useCameraDevice,
   useCameraPermission,
   useCodeScanner,
+  useFrameProcessor,
+  runAtTargetFps,
 } from "react-native-vision-camera";
+import { useTextRecognition } from "react-native-vision-camera-text-recognition";
+import { Worklets } from "react-native-worklets-core";
+import * as Haptics from "expo-haptics";
 import * as FileSystem from "expo-file-system";
+// §11.380 Phase 3 — 라벨 검출 lock 상태머신(순수). 라이브 신호 전용(진위=§11.378).
+import {
+  stepLock,
+  initialLockRuntime,
+  type LockState,
+} from "../lib/scan/label-lock";
 import {
   X,
   Flashlight,
@@ -135,6 +146,9 @@ export default function ScanScreen() {
   const cameraRef = useRef<VisionCamera>(null);
   // §11.380 Phase 2 — 바코드 연속 프레임 중복 호출 잠금(matched 전이 burst 차단). resetToScan 해제.
   const scanLockRef = useRef(false);
+  // §11.380 Phase 3 — 라벨 라이브 검출 lock(가이드색·햅틱·촬영강조 신호 전용). 진위 아님(§11.378).
+  const [lockState, setLockState] = useState<LockState>("idle");
+  const lockRuntimeRef = useRef(initialLockRuntime());
   const [labelResult, setLabelResult] = useState<LabelScanResponse | null>(null);
   const [labelForm, setLabelForm] = useState<LabelForm>(emptyLabelForm());
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
@@ -159,6 +173,8 @@ export default function ScanScreen() {
     setProductNameDirty(false);
     setCapturedUri(null);
     scanLockRef.current = false;
+    lockRuntimeRef.current = initialLockRuntime();
+    setLockState("idle");
   }, []);
 
   const performLookup = useCallback(
@@ -218,6 +234,52 @@ export default function ScanScreen() {
       performLookup(value, "scan");
     },
   });
+
+  // §11.380 Phase 3 — 라벨 모드 라이브 텍스트 검출(ML Kit) → lock 상태머신.
+  //   ⚠️ §11.375 경계: locked = "텍스트 감지됨, 촬영 권장" 신호일 뿐 진위 판정 아님.
+  //   진위는 OCR 후단(§11.378). idle 여도 수동 촬영 가능(막다른 길 금지).
+  const { scanText } = useTextRecognition({ language: "latin" });
+
+  // worklet → JS: 프레임 신호(텍스트 길이/블록 수)로 상태머신 1스텝. 전이 시 햅틱 1회.
+  const applyFrameSignal = useCallback(
+    (textLength: number, blockCount: number) => {
+      const { next, haptic } = stepLock(lockRuntimeRef.current, {
+        textLength,
+        blockCount,
+      });
+      lockRuntimeRef.current = next;
+      setLockState((prev) => (prev === next.state ? prev : next.state));
+      if (haptic) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+      }
+    },
+    [],
+  );
+  const onFrameSignal = useMemo(
+    () => Worklets.createRunOnJS(applyFrameSignal),
+    [applyFrameSignal],
+  );
+
+  const frameProcessor = useFrameProcessor(
+    (frame) => {
+      "worklet";
+      // OCR 은 무거움 → 5fps 로 throttle(파이프라인 부하 방지).
+      runAtTargetFps(5, () => {
+        "worklet";
+        const data = scanText(frame);
+        onFrameSignal(data.resultText.length, data.blocks.length);
+      });
+    },
+    [scanText, onFrameSignal],
+  );
+
+  // §11.380 Phase 3 — 바코드 모드 전환 시 lock 초기화(라벨 신호 잔존 방지).
+  useEffect(() => {
+    if (scanMode !== "label") {
+      lockRuntimeRef.current = initialLockRuntime();
+      setLockState("idle");
+    }
+  }, [scanMode]);
 
   const handleManualSearch = useCallback(() => {
     const query = manualInput.trim();
@@ -862,6 +924,8 @@ export default function ScanScreen() {
   // §11.380 Phase 2 — 화면 포커스 + 스캔/촬영 단계에서만 카메라 active(이탈 시 정지).
   const isActive =
     isFocused && (state === "scanning" || state === "label-capture");
+  // §11.380 Phase 3 — 라벨 검출 신호. 라벨 모드 스캔 중에만 lock 의미 부여.
+  const isLocked = isLabelMode && state === "scanning" && lockState === "locked";
 
   return (
     <View className="flex-1 bg-black">
@@ -881,6 +945,11 @@ export default function ScanScreen() {
           photo={true}
           torch={torch ? "on" : "off"}
           codeScanner={scanMode === "barcode" ? codeScanner : undefined}
+          frameProcessor={
+            scanMode === "label" && state === "scanning"
+              ? frameProcessor
+              : undefined
+          }
         />
       )}
       <View className="flex-1">
@@ -943,13 +1012,33 @@ export default function ScanScreen() {
             </View>
           </View>
 
-          {/* 가이드 프레임 */}
+          {/* 가이드 프레임 — §11.380 Phase 3: 라벨 감지(locked) 시 emerald 강조(신호 전용, 진위 아님). */}
           <View className="flex-1 items-center justify-center">
-            <View className="w-64 h-64 border-2 border-white/60 rounded-2xl">
-              <View className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-2xl" />
-              <View className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-2xl" />
-              <View className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-2xl" />
-              <View className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-2xl" />
+            <View
+              className={`w-64 h-64 border-2 rounded-2xl ${
+                isLocked ? "border-emerald-400/80" : "border-white/60"
+              }`}
+            >
+              <View
+                className={`absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 rounded-tl-2xl ${
+                  isLocked ? "border-emerald-400" : "border-white"
+                }`}
+              />
+              <View
+                className={`absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 rounded-tr-2xl ${
+                  isLocked ? "border-emerald-400" : "border-white"
+                }`}
+              />
+              <View
+                className={`absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 rounded-bl-2xl ${
+                  isLocked ? "border-emerald-400" : "border-white"
+                }`}
+              />
+              <View
+                className={`absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 rounded-br-2xl ${
+                  isLocked ? "border-emerald-400" : "border-white"
+                }`}
+              />
             </View>
             {isBusy && (
               <View className="absolute">
@@ -962,21 +1051,28 @@ export default function ScanScreen() {
           <View className="items-center pb-12 gap-4">
             {isLabelMode ? (
               <>
-                <Text className="text-sm text-white/80 text-center px-8">
-                  시약 라벨을 프레임 안에 채우고 촬영하세요{"\n"}
-                  AI가 제품명·Lot·유효기간을 추출합니다
+                {/* §11.380 Phase 3 — 감지 시 안내 강조. UI 텍스트에 진위 판정 표현 금지(§11.375): 감지 신호일 뿐. */}
+                <Text
+                  className={`text-sm text-center px-8 ${
+                    isLocked ? "text-emerald-300 font-semibold" : "text-white/80"
+                  }`}
+                >
+                  {isLocked
+                    ? "라벨 감지됨 · 지금 촬영하세요"
+                    : "시약 라벨을 프레임 안에 채우고 촬영하세요\nAI가 제품명·Lot·유효기간을 추출합니다"}
                 </Text>
+                {/* idle 여도 누를 수 있음(막다른 길 금지). locked 는 emerald 강조 신호만. */}
                 <Pressable
                   className={`w-16 h-16 rounded-full items-center justify-center ${
-                    isBusy ? "bg-white/40" : "bg-white"
+                    isBusy ? "bg-white/40" : isLocked ? "bg-emerald-500" : "bg-white"
                   }`}
                   onPress={handleCaptureLabel}
                   disabled={isBusy}
                 >
                   {state === "label-capture" ? (
-                    <ActivityIndicator color="#0f172a" />
+                    <ActivityIndicator color={isLocked ? "white" : "#0f172a"} />
                   ) : (
-                    <Camera size={26} color="#0f172a" />
+                    <Camera size={26} color={isLocked ? "white" : "#0f172a"} />
                   )}
                 </Pressable>
               </>
