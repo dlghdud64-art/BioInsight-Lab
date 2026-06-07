@@ -217,6 +217,10 @@ export function SmartReceivingScannerModal({
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [candidatesLoading, setCandidatesLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // §11.375 (재설계) / §11.378 — 라이브 입고 경로 OCR 후단 게이트. 저신뢰도 OCR
+  //   (키보드·잡동사니 사진 등) + 사용자 미보정이면 입고 등록 차단(재고 오염 방지).
+  //   제품명 직접 수정 시 차단 해제(수동 보정 허용). LabelScannerModal §11.378 패턴 이식.
+  const [productNameDirty, setProductNameDirty] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {
@@ -226,6 +230,7 @@ export function SmartReceivingScannerModal({
     setErrorMessage(null);
     setPoCandidates([]);
     setSelectedOrderId(null);
+    setProductNameDirty(false);
   };
 
   const handleClose = () => {
@@ -329,6 +334,12 @@ export function SmartReceivingScannerModal({
     if (!scanResult?.ocrMetadata?.jobId) {
       setErrorMessage("이미지 분석 결과를 찾을 수 없습니다. 다시 스캔해 주세요.");
       setStep("error");
+      return;
+    }
+    // §11.375 OCR 후단 게이트 — 저신뢰도(키보드·잡동사니 등 추출 실패) + 미보정 시 입고 차단.
+    //   제품명 수동 수정(productNameDirty) 시 해제. 재고 오염 방지(fake success 차단).
+    if (scanResult.confidence === "low" && !productNameDirty) {
+      toast.error("라벨 인식 신뢰도가 낮습니다. 제품명을 확인·수정한 뒤 다시 시도해 주세요.");
       return;
     }
     if (!form.productName.trim()) {
@@ -484,7 +495,10 @@ export function SmartReceivingScannerModal({
                 <Input
                   id="srm-productName"
                   value={form.productName}
-                  onChange={(e) => setForm({ ...form, productName: e.target.value })}
+                  onChange={(e) => {
+                    setForm({ ...form, productName: e.target.value });
+                    setProductNameDirty(true); // §11.375 — 수동 보정 시 저신뢰도 게이트 해제
+                  }}
                   placeholder="예: Trypsin-EDTA 0.25% 100ml"
                   className="mt-1 h-9 text-sm"
                 />
@@ -599,12 +613,26 @@ export function SmartReceivingScannerModal({
               </div>
             </div>
 
+            {/* §11.375 OCR 후단 게이트 — 저신뢰도 + 미보정 시 입고 차단 사유 노출(no-op 금지). */}
+            {!selectedOrderId &&
+              scanResult?.confidence === "low" &&
+              !productNameDirty && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">
+                  라벨 인식 신뢰도가 낮습니다. 라벨이 맞는지 확인하고 제품명을 수정한 뒤
+                  입고 등록할 수 있습니다. (재고 오염 방지)
+                </div>
+              )}
             <div className="space-y-2 pt-1">
               <Button
                 type="button"
                 data-testid="smart-receiving-submit-cta"
                 onClick={handleSubmit}
-                className="w-full h-11 min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold"
+                disabled={
+                  !selectedOrderId &&
+                  scanResult?.confidence === "low" &&
+                  !productNameDirty
+                }
+                className="w-full h-11 min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {selectedOrderId ? "발주 입고 처리" : "입고 등록"}
                 <ArrowRight className="ml-1.5 h-4 w-4" />
