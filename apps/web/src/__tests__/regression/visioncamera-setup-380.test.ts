@@ -44,6 +44,13 @@ describe("§11.380 Phase 2 — VisionCamera config", () => {
     expect(src).toMatch(/"developmentClient":\s*true/);
   });
 
+  it("eas.json: dev 빌드 Sentry source map 자동 업로드 비활성(SENTRY_ORG 없어 fail-loud 회피)", () => {
+    const src = read(EAS_JSON);
+    // @sentry/react-native/expo 가 dev build 시 sentry-cli 업로드 시도 → org 없으면 Xcode fail.
+    //   dev env 에서만 비활성(prod 무관).
+    expect(src).toMatch(/"SENTRY_DISABLE_AUTO_UPLOAD":\s*"true"/);
+  });
+
   it("app.json: 기존 expo-camera/expo-router plugin 보존(Phase 2-impl 이전엔 병존)", () => {
     const src = read(APP_JSON);
     expect(src).toMatch(/"expo-router"/);
