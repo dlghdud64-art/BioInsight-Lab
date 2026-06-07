@@ -48,6 +48,24 @@ describe("§11.378 — 신뢰도 게이트", () => {
   });
 });
 
+describe("§11.378b — 자동캡처도 동일 OCR 게이트 (우회 0, 호영님 §11.375 재설계)", () => {
+  it("자동캡처는 capture(false)→runScan→review 까지만(자동 입고 직행 없음)", () => {
+    const src = read(MODAL);
+    // 자동캡처 트리거(good 연속)는 capture 호출 → runScan → review step. 직접 입고 호출 아님.
+    expect(src).toMatch(/autoCaptureRef\.current && q\.overall === "good"/);
+    expect(src).toMatch(/void runScan\(dataUrl\)/);
+    expect(src).toMatch(/setStep\("review"\)/);
+  });
+
+  it("입고 완료(handleDirectReceive)는 수동 버튼 onClick 만 — 동일 disabled 게이트 경유", () => {
+    const src = read(MODAL);
+    expect(src).toMatch(/onClick=\{onDirectReceive \? handleDirectReceive : handleApplyToForm\}/);
+    // 완료 버튼 disabled = 제품명 빈값 OR (confidence low + 미보정) → 자동캡처 결과도 동일 차단
+    expect(src).toMatch(/!formData\.productName\.trim\(\)/);
+    expect(src).toMatch(/mapOcrConfidence\(scanResult\.parsed\.confidence\) === "low"/);
+  });
+});
+
 describe("§11.378 — 회귀 0", () => {
   it("기존 productName.trim 게이트 + ConfidenceBadge 보존", () => {
     const src = read(MODAL);
