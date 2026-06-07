@@ -5,6 +5,11 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { createAuditLog, AuditAction, AuditEntityType } from "@/lib/audit";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+// 알림 고도화 #notif-inventory-low-dispatch — 출고/사용으로 currentQuantity 가
+// safetyStock 임계 아래로 "최초 진입"(prevQty > safetyStock && newQty <= safetyStock)
+// 시 INVENTORY_LOW 알림(best-effort). inventory/[id] PATCH 캘러(§11.250a)와 동일
+// 임계·edge 기준 — 라우트 분리(출고 경로 갭)일 뿐 중복 아님(전이 1회 보장).
+import { dispatchNotificationEvent, resolveOrgRecipients } from "@/lib/notifications";
 
 const UseInventorySchema = z.object({
   quantity: z.number().positive("수량은 0보다 커야 합니다."),
@@ -149,6 +154,45 @@ export async function POST(
       beforeState: { currentQuantity: quantityBefore },
       afterState: { currentQuantity: updatedInventory.currentQuantity, usageRecordId: usageRecord.id },
     });
+
+    // 알림 고도화 — 출고/사용 차감으로 safetyStock 임계 "최초 진입" 시 INVENTORY_LOW
+    // (best-effort, mutation 비차단). edge 감지(prevQty > st && newQty <= st)로
+    // 임계 복귀 전 재발화 0 + 차감마다 폭주 0(query-free dedupe). 임계 미설정 시 skip.
+    {
+      const safetyStock = inventory.safetyStock;
+      const newQty = updatedInventory.currentQuantity;
+      if (
+        safetyStock != null &&
+        safetyStock > 0 &&
+        quantityBefore > safetyStock &&
+        newQty <= safetyStock
+      ) {
+        try {
+          const recipients = await resolveOrgRecipients(
+            inventory.userId,
+            inventory.organizationId,
+          );
+          if (recipients.length > 0) {
+            await dispatchNotificationEvent({
+              eventType: "INVENTORY_LOW",
+              entityType: "INVENTORY",
+              entityId: id,
+              triggeredBy: session.user.id,
+              recipients,
+              metadata: {
+                productName: updatedInventory.product?.name ?? null,
+                currentQuantity: newQty,
+                safetyStock,
+                unit: updatedInventory.unit ?? inventory.unit ?? null,
+                trigger: type, // DISPATCH | USAGE
+              },
+            });
+          }
+        } catch (notifyErr) {
+          console.error("[inventory/use] INVENTORY_LOW dispatch 실패 (무시):", notifyErr);
+        }
+      }
+    }
 
     return NextResponse.json({
       success: true,

@@ -12,6 +12,9 @@ import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-en
 // 기반 1 NULL-vendor Order fallback (backward compat).
 import { convertPOCandidatesToOrders } from "@/lib/orders/convert-pocandidate-to-orders";
 import { buildOrderDispatchReadiness } from "@/lib/orders/dispatch-readiness";
+// 알림 고도화 #notif-order-placed — 발주 생성 성공 후 ORDER_PLACED 알림(best-effort).
+// caller 0 갭(ORDER_CREATED_FROM_POCANDIDATE 는 audit eventType, 알림 아님).
+import { dispatchNotificationEvent, resolveOrgRecipients } from "@/lib/notifications";
 
 // 주문번호 생성 함수
 function generateOrderNumber(): string {
@@ -340,6 +343,32 @@ export async function POST(request: NextRequest) {
       beforeState: { quoteId, status: 'COMPLETED' },
       afterState: { orderId: result.order.id, orderNumber: result.order.orderNumber, status: 'ORDERED' },
     });
+
+    // 알림 고도화 — 발주 생성 완료 → ORDER_PLACED (best-effort, mutation 비차단).
+    // vendor-split(POCandidate) 시 result.order = 대표(첫) Order — activity/state
+    // transition 로그 granularity 와 정합(나머지 vendor Order 알림은 후속 백로그).
+    try {
+      const recipients = await resolveOrgRecipients(
+        result.order.userId,
+        result.order.organizationId,
+      );
+      if (recipients.length > 0) {
+        await dispatchNotificationEvent({
+          eventType: "ORDER_PLACED",
+          entityType: "ORDER",
+          entityId: result.order.id,
+          triggeredBy: session.user.id,
+          recipients,
+          metadata: {
+            orderNumber: result.order.orderNumber,
+            quoteId,
+            totalAmount: result.order.totalAmount,
+          },
+        });
+      }
+    } catch (notifyErr) {
+      console.error("[orders POST] ORDER_PLACED dispatch 실패 (무시):", notifyErr);
+    }
 
     return NextResponse.json({
       success: true,

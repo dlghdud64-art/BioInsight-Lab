@@ -25,6 +25,11 @@ import { runDeliveryInventorySync } from "@/lib/inventory/delivery-sync";
 import { z } from "zod";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createAuditLog, auditRequestMeta } from "@/lib/audit/audit-logger";
+// 알림 고도화 #notif-order-status-owner — owner/org PATCH 경로의 상태전이
+// (SHIPPING→ORDER_SHIPPED / DELIVERED→ORDER_DELIVERED) 알림(best-effort).
+// admin status route(§11.250acd-2)와 동일 eventType·전이 기준 — owner 경로 갭만
+// 메움. edge 감지(before.status !== newStatus)로 멱등 PATCH 재호출 중복 0.
+import { dispatchNotificationEvent, resolveOrgRecipients } from "@/lib/notifications";
 
 const updateOrderSchema = z.object({
   status: z.nativeEnum(OrderStatus).optional(),
@@ -215,6 +220,46 @@ export async function PATCH(
         "[orders/PATCH] audit log 실패 (mutation 정합 유지):",
         auditErr,
       );
+    }
+
+    // 알림 고도화 — owner/org PATCH 상태전이 → ORDER_SHIPPED / ORDER_DELIVERED
+    // (best-effort, mutation 비차단). edge 감지(before.status !== newStatus)로
+    // 전이당 1회 + 멱등 재호출 중복 0. recipient = order owner + org OWNER/ADMIN.
+    {
+      const shippedTransition =
+        data.status === OrderStatus.SHIPPING &&
+        before.status !== OrderStatus.SHIPPING;
+      const deliveredTransition =
+        data.status === OrderStatus.DELIVERED &&
+        before.status !== OrderStatus.DELIVERED;
+      if (shippedTransition || deliveredTransition) {
+        try {
+          const recipients = await resolveOrgRecipients(
+            before.userId,
+            before.organizationId,
+          );
+          if (recipients.length > 0) {
+            await dispatchNotificationEvent({
+              eventType: shippedTransition ? "ORDER_SHIPPED" : "ORDER_DELIVERED",
+              entityType: "ORDER",
+              entityId: id,
+              triggeredBy: session.user.id,
+              recipients,
+              metadata: {
+                orderNumber: updated.orderNumber,
+                previousStatus: before.status,
+                newStatus: data.status,
+                source: "owner-patch",
+              },
+            });
+          }
+        } catch (notifyErr) {
+          console.error(
+            "[orders/PATCH] ORDER status notification dispatch 실패 (무시):",
+            notifyErr,
+          );
+        }
+      }
     }
 
     return NextResponse.json({ order: updated });
