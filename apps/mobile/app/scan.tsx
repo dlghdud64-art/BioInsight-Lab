@@ -128,6 +128,9 @@ export default function ScanScreen() {
   const [expiryScanFilled, setExpiryScanFilled] = useState(false);
   const [lotDirty, setLotDirty] = useState(false);
   const [expiryDirty, setExpiryDirty] = useState(false);
+  // §11.378 — 제품명 사용자 수정 추적. OCR 저신뢰도 + 미보정이면 입고 차단,
+  //   제품명을 직접 수정(보정)하면 차단 해제(무효 사진 재고 오염 방지, web 동치).
+  const [productNameDirty, setProductNameDirty] = useState(false);
 
   const resetToScan = useCallback(() => {
     setState("scanning");
@@ -138,6 +141,7 @@ export default function ScanScreen() {
     setLabelForm(emptyLabelForm());
     setLotScanFilled(false); setExpiryScanFilled(false);
     setLotDirty(false); setExpiryDirty(false);
+    setProductNameDirty(false);
     setCapturedUri(null);
   }, []);
 
@@ -233,6 +237,7 @@ export default function ScanScreen() {
     // §11.340 — 직접 수정 → 수기 출처로 전환.
     if (key === "lotNumber") setLotDirty(true);
     if (key === "expirationDate") setExpiryDirty(true);
+    if (key === "productName") setProductNameDirty(true); // §11.378 — 저신뢰도 게이트 해제
   }, []);
 
   // §11.340 — 출처 배지(스캔 확인 vs 수기). 스캔으로 채워졌고 미수정 = 검증값.
@@ -248,6 +253,12 @@ export default function ScanScreen() {
       setErrorMessage("제품명을 입력해주세요.");
       return;
     }
+    // §11.378 — OCR 저신뢰도 + 미보정 차단(무효 사진 재고 오염 방지). 제품명 수정 시 해제.
+    //   버튼 disabled 와 동일 게이트(우회 0). web LabelScannerModal 동치.
+    const lowConf = labelResult
+      ? mapOcrConfidence(labelResult.parsed.confidence) === "low"
+      : false;
+    if (lowConf && !productNameDirty) return;
     const matchedInventoryId = labelResult?.matchedInventory?.id;
     if (matchedInventoryId) {
       router.replace({
@@ -272,7 +283,7 @@ export default function ScanScreen() {
         },
       });
     }
-  }, [labelResult, labelForm]);
+  }, [labelResult, labelForm, productNameDirty]);
 
   const handleAction = useCallback(
     (action: string) => {
@@ -381,6 +392,10 @@ export default function ScanScreen() {
       ? mapOcrConfidence(labelResult.parsed.confidence)
       : "low";
     const lowConf = level === "low";
+    // §11.378 — 입고/등록 이동 차단 게이트: 제품명 빈값 OR (저신뢰 + 미보정).
+    //   제품명 수정 시(productNameDirty) 저신뢰 차단 해제. confirmLabelReceive 가드와 동일.
+    const receiveBlocked =
+      !labelForm.productName.trim() || (lowConf && !productNameDirty);
     const confTone =
       level === "high"
         ? { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", label: "높은 신뢰도" }
@@ -425,13 +440,14 @@ export default function ScanScreen() {
             </View>
           </View>
 
-          {/* 저신뢰 재촬영 권유 (비차단) */}
-          {lowConf && (
+          {/* §11.378 — OCR 저신뢰도 + 미보정 시 입고 차단(무효 사진 재고 오염 방지).
+              제품명을 직접 수정하면 해제. 라벨 아닌 사진(키보드 등)이 재고로 들어가는 것 차단. */}
+          {lowConf && !productNameDirty && (
             <View className="flex-row items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
               <AlertCircle size={16} color="#ef4444" />
               <Text className="flex-1 text-xs text-red-600 leading-5">
-                인식 신뢰도가 낮습니다. 조명을 확보하고 라벨을 프레임 안에 채워 재촬영하면
-                정확도가 올라갑니다. 그대로 진행할 수도 있습니다.
+                라벨 인식 신뢰도가 낮습니다. 라벨이 맞는지 확인하고 제품명을 수정한 뒤
+                진행하세요. 잘못된 사진은 재고 오염을 일으킬 수 있습니다.
               </Text>
             </View>
           )}
@@ -547,18 +563,18 @@ export default function ScanScreen() {
             </Pressable>
             <Pressable
               className={`flex-1 flex-row items-center justify-center gap-2 rounded-xl py-3.5 ${
-                labelForm.productName.trim() ? "bg-blue-600" : "bg-slate-200"
+                receiveBlocked ? "bg-slate-200" : "bg-blue-600"
               }`}
               onPress={confirmLabelReceive}
-              disabled={!labelForm.productName.trim()}
+              disabled={receiveBlocked}
             >
               <CheckCircle2
                 size={16}
-                color={labelForm.productName.trim() ? "white" : "#94a3b8"}
+                color={receiveBlocked ? "#94a3b8" : "white"}
               />
               <Text
                 className={`text-sm font-semibold ${
-                  labelForm.productName.trim() ? "text-white" : "text-slate-400"
+                  receiveBlocked ? "text-slate-400" : "text-white"
                 }`}
               >
                 {labelResult?.matchedInventory?.id ? "입고 처리로 이동" : "신규 등록으로 이동"}
