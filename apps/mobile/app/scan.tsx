@@ -10,9 +10,19 @@ import {
   Platform,
   ScrollView,
   Image,
+  StyleSheet,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { CameraView, useCameraPermissions } from "expo-camera";
+import { useIsFocused } from "@react-navigation/native";
+// §11.380 Phase 2 — expo-camera → VisionCamera v4 이전. lucide Camera(아이콘)과
+//   이름 충돌 회피 위해 컴포넌트는 VisionCamera 로 alias.
+import {
+  Camera as VisionCamera,
+  useCameraDevice,
+  useCameraPermission,
+  useCodeScanner,
+} from "react-native-vision-camera";
+import * as FileSystem from "expo-file-system";
 import {
   X,
   Flashlight,
@@ -103,7 +113,10 @@ function mapLabelToForm(r: LabelScanResponse): LabelForm {
 }
 
 export default function ScanScreen() {
-  const [permission, requestPermission] = useCameraPermissions();
+  // §11.380 Phase 2 — VisionCamera 권한/디바이스/포커스 lifecycle.
+  const { hasPermission, requestPermission } = useCameraPermission();
+  const device = useCameraDevice("back");
+  const isFocused = useIsFocused();
   // §11.379 — ScanHubSheet intent 수신. 입고(라벨)/사용(QR 차감) 진입 의도.
   //   receive_label → 라벨 OCR 모드, use_qr → 바코드/QR 모드(matched 시 차감 우선).
   //   intent 없는 직진입은 기존 기본값(barcode) 유지(하위호환).
@@ -119,7 +132,9 @@ export default function ScanScreen() {
   const [errorMessage, setErrorMessage] = useState("");
 
   // §11.319 — 라벨 OCR 상태
-  const cameraRef = useRef<CameraView>(null);
+  const cameraRef = useRef<VisionCamera>(null);
+  // §11.380 Phase 2 — 바코드 연속 프레임 중복 호출 잠금(matched 전이 burst 차단). resetToScan 해제.
+  const scanLockRef = useRef(false);
   const [labelResult, setLabelResult] = useState<LabelScanResponse | null>(null);
   const [labelForm, setLabelForm] = useState<LabelForm>(emptyLabelForm());
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
@@ -143,6 +158,7 @@ export default function ScanScreen() {
     setLotDirty(false); setExpiryDirty(false);
     setProductNameDirty(false);
     setCapturedUri(null);
+    scanLockRef.current = false;
   }, []);
 
   const performLookup = useCallback(
@@ -179,13 +195,29 @@ export default function ScanScreen() {
     []
   );
 
-  const handleBarCodeScanned = useCallback(
-    async ({ data }: { data: string }) => {
-      if (state !== "scanning" || scanMode !== "barcode") return;
-      performLookup(data, "scan");
+  // §11.380 Phase 2 — VisionCamera CodeScanner(기존 9종 동일 매핑, 하이픈 표기).
+  //   연속 프레임 burst 는 scanLockRef 로 1회 차단(matched 전이 후 isActive=false 로 정지).
+  const codeScanner = useCodeScanner({
+    codeTypes: [
+      "qr",
+      "ean-13",
+      "ean-8",
+      "code-128",
+      "code-39",
+      "code-93",
+      "upc-a",
+      "upc-e",
+      "data-matrix",
+    ],
+    onCodeScanned: (codes) => {
+      if (scanMode !== "barcode") return;
+      if (scanLockRef.current) return;
+      const value = codes[0]?.value;
+      if (!value) return;
+      scanLockRef.current = true;
+      performLookup(value, "scan");
     },
-    [state, scanMode, performLookup]
-  );
+  });
 
   const handleManualSearch = useCallback(() => {
     const query = manualInput.trim();
@@ -199,16 +231,23 @@ export default function ScanScreen() {
     setState("label-capture");
     logEvent("label_scan_started", {});
     try {
-      const photo = await cameraRef.current?.takePictureAsync({
-        base64: true,
-        quality: 0.5,
-        skipProcessing: true,
+      // §11.380 Phase 2 — VisionCamera takePhoto 는 file path 반환. base64 는
+      //   expo-file-system 으로 읽어 기존 scanLabel(dataUri) 계약 유지(OCR 경로 무변경).
+      const photo = await cameraRef.current?.takePhoto({
+        enableShutterSound: false,
+        flash: torch ? "on" : "off",
       });
-      if (!photo?.base64) {
+      if (!photo?.path) {
         throw new Error("촬영 이미지를 가져오지 못했습니다.");
       }
-      setCapturedUri(photo.uri ?? null);
-      const dataUri = `data:image/jpeg;base64,${photo.base64}`;
+      const fileUri = photo.path.startsWith("file://")
+        ? photo.path
+        : `file://${photo.path}`;
+      setCapturedUri(fileUri);
+      const base64 = await FileSystem.readAsStringAsync(fileUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      const dataUri = `data:image/jpeg;base64,${base64}`;
       const result = await scanLabel(dataUri);
       setLabelResult(result);
       setLabelForm(mapLabelToForm(result));
@@ -230,7 +269,7 @@ export default function ScanScreen() {
       );
       setState("error");
     }
-  }, [state]);
+  }, [state, torch]);
 
   const updateLabelField = useCallback((key: keyof LabelForm, value: string) => {
     setLabelForm((f) => ({ ...f, [key]: value }));
@@ -324,17 +363,10 @@ export default function ScanScreen() {
     [matchResult]
   );
 
-  // ─── 권한 로딩 중 ───
-  if (!permission) {
-    return (
-      <View className="flex-1 items-center justify-center bg-black">
-        <ActivityIndicator color="white" />
-      </View>
-    );
-  }
-
   // ─── 권한 거부 (Fallback UI 포함) ───
-  if (!permission.granted) {
+  //   §11.380 Phase 2 — VisionCamera useCameraPermission 은 로딩 null/canAskAgain 미제공.
+  //   요청 버튼(requestPermission) + 설정 이동(영구 거부 대비) 동시 노출.
+  if (!hasPermission) {
     return (
       <View className="flex-1 bg-white px-6 items-center justify-center">
         <View className="w-16 h-16 rounded-full bg-slate-100 items-center justify-center mb-4">
@@ -348,26 +380,27 @@ export default function ScanScreen() {
           권한을 허용하지 않으면 수동 검색을 이용할 수 있습니다.
         </Text>
 
-        {permission.canAskAgain ? (
-          <Pressable
-            className="bg-blue-600 rounded-xl px-8 py-3.5 mb-3 w-full items-center"
-            onPress={requestPermission}
-          >
-            <Text className="text-sm font-semibold text-white">
-              카메라 권한 허용
-            </Text>
-          </Pressable>
-        ) : (
-          <Pressable
-            className="flex-row items-center justify-center gap-2 bg-slate-700 rounded-xl px-8 py-3.5 mb-3 w-full"
-            onPress={() => Linking.openSettings()}
-          >
-            <Settings size={16} color="white" />
-            <Text className="text-sm font-semibold text-white">
-              설정에서 권한 허용
-            </Text>
-          </Pressable>
-        )}
+        <Pressable
+          className="bg-blue-600 rounded-xl px-8 py-3.5 mb-3 w-full items-center"
+          onPress={async () => {
+            const granted = await requestPermission();
+            // 영구 거부 시 requestPermission 즉시 false → 설정 안내(아래 버튼)로 유도.
+            if (!granted) Linking.openSettings();
+          }}
+        >
+          <Text className="text-sm font-semibold text-white">
+            카메라 권한 허용
+          </Text>
+        </Pressable>
+        <Pressable
+          className="flex-row items-center justify-center gap-2 bg-slate-700 rounded-xl px-8 py-3.5 mb-3 w-full"
+          onPress={() => Linking.openSettings()}
+        >
+          <Settings size={16} color="white" />
+          <Text className="text-sm font-semibold text-white">
+            설정에서 권한 허용
+          </Text>
+        </Pressable>
 
         <Pressable
           className="flex-row items-center justify-center gap-2 border border-slate-200 rounded-xl px-8 py-3.5 mb-3 w-full"
@@ -826,34 +859,31 @@ export default function ScanScreen() {
   // ─── 메인: 카메라 스캔 화면 (바코드 + 라벨 OCR) ───
   const isLabelMode = scanMode === "label";
   const isBusy = state === "looking" || state === "label-capture";
+  // §11.380 Phase 2 — 화면 포커스 + 스캔/촬영 단계에서만 카메라 active(이탈 시 정지).
+  const isActive =
+    isFocused && (state === "scanning" || state === "label-capture");
 
   return (
     <View className="flex-1 bg-black">
-      <CameraView
-        ref={cameraRef}
-        style={{ flex: 1 }}
-        facing="back"
-        enableTorch={torch}
-        barcodeScannerSettings={{
-          barcodeTypes: [
-            "qr",
-            "ean13",
-            "ean8",
-            "code128",
-            "code39",
-            "code93",
-            "upc_a",
-            "upc_e",
-            "datamatrix",
-          ],
-        }}
-        onBarcodeScanned={
-          scanMode === "barcode" && state === "scanning"
-            ? handleBarCodeScanned
-            : undefined
-        }
-      >
-        <View className="flex-1">
+      {/* §11.380 Phase 2 — VisionCamera 는 self-closing(자식 없음). 오버레이는 형제 absolute. */}
+      {device == null ? (
+        <View className="absolute inset-0 items-center justify-center">
+          <Text className="text-sm text-white/80">
+            카메라 장치를 찾을 수 없습니다
+          </Text>
+        </View>
+      ) : (
+        <VisionCamera
+          ref={cameraRef}
+          style={StyleSheet.absoluteFill}
+          device={device}
+          isActive={isActive}
+          photo={true}
+          torch={torch ? "on" : "off"}
+          codeScanner={scanMode === "barcode" ? codeScanner : undefined}
+        />
+      )}
+      <View className="flex-1">
           {/* 상단 바 */}
           <View className="flex-row items-center justify-between px-5 pt-14 pb-4">
             <Pressable
@@ -971,7 +1001,7 @@ export default function ScanScreen() {
             )}
           </View>
         </View>
-      </CameraView>
+      </View>
     </View>
   );
 }

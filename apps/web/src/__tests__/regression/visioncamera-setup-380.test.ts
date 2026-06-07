@@ -51,9 +51,10 @@ describe("§11.380 Phase 2 — VisionCamera config", () => {
     expect(src).toMatch(/"SENTRY_DISABLE_AUTO_UPLOAD":\s*"true"/);
   });
 
-  it("app.json: 기존 expo-camera/expo-router plugin 보존(Phase 2-impl 이전엔 병존)", () => {
+  it("app.json: Phase 2-impl 후 expo-camera plugin 제거, expo-router 보존", () => {
     const src = read(APP_JSON);
     expect(src).toMatch(/"expo-router"/);
-    expect(src).toMatch(/"expo-camera"/);
+    // scan.tsx 가 VisionCamera 로 이전되어 expo-camera plugin 불요 → 제거(회귀 시 재출현 차단).
+    expect(src).not.toMatch(/"expo-camera"/);
   });
 });

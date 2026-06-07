@@ -66,9 +66,12 @@ describe("§11.378-native — 회귀 0", () => {
     expect(src).toMatch(/setExpiryDirty/);
   });
 
-  it("기존 ScanState/ScanMode + 바코드 핸들러 보존", () => {
+  it("기존 ScanState/ScanMode + 바코드 핸들러 보존(§11.380-p2 VisionCamera 이전 동치)", () => {
     const src = read(SCAN);
-    expect(src).toMatch(/handleBarCodeScanned/);
+    // §11.380-p2-impl: handleBarCodeScanned(expo-camera) → useCodeScanner/onCodeScanned(VisionCamera v4).
+    //   바코드 핸들러 존재 + "label-review" 모드 보존 의도(intent) 만 회귀 0 으로 검증.
+    expect(src).toMatch(/useCodeScanner\s*\(/);
+    expect(src).toMatch(/onCodeScanned/);
     expect(src).toMatch(/"label-review"/);
   });
 });
