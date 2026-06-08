@@ -55,6 +55,8 @@ import {
 } from "lucide-react-native";
 import { lookupInventory, scanLabel, type LabelScanResponse } from "../hooks/useApi";
 import { mapOcrConfidence } from "../lib/ocr/capture-quality";
+// §gs1-datamatrix — 시약 라벨 2D datamatrix(GS1) 결정적 디코드. OCR보다 Lot/유효기간 신뢰 ↑.
+import { parseGs1 } from "../lib/scan/gs1-parser";
 import { logEvent } from "../lib/analytics";
 
 // §11.319 — 바코드(기존) + 라벨 OCR(신규) 두 모드. label-capture = 촬영/분석 중,
@@ -160,6 +162,8 @@ export default function ScanScreen() {
   // §11.378 — 제품명 사용자 수정 추적. OCR 저신뢰도 + 미보정이면 입고 차단,
   //   제품명을 직접 수정(보정)하면 차단 해제(무효 사진 재고 오염 방지, web 동치).
   const [productNameDirty, setProductNameDirty] = useState(false);
+  // §gs1-datamatrix — GS1 datamatrix 캡처 시 GTIN(표시용, 제품매칭 아님). null = OCR/일반 경로.
+  const [gs1Gtin, setGs1Gtin] = useState<string | null>(null);
 
   const resetToScan = useCallback(() => {
     setState("scanning");
@@ -169,6 +173,7 @@ export default function ScanScreen() {
     setLabelResult(null);
     setLabelForm(emptyLabelForm());
     setLotScanFilled(false); setExpiryScanFilled(false);
+    setGs1Gtin(null);
     setLotDirty(false); setExpiryDirty(false);
     setProductNameDirty(false);
     setCapturedUri(null);
@@ -231,6 +236,27 @@ export default function ScanScreen() {
       const value = codes[0]?.value;
       if (!value) return;
       scanLockRef.current = true;
+      // §gs1-datamatrix — GS1 2D datamatrix(시약 라벨, Lot/유효기간 보유)면 재고등록
+      //   검토로 분기 + Lot/유효기간 자동채움(결정적, OCR보다 신뢰 ↑). use_qr(차감) 의도는
+      //   기존 조회 유지. GTIN 은 표시용(제품매칭 아님 — 카탈로그 GTIN 필드 부재).
+      const gs1 = parseGs1(value);
+      if (intent !== "use_qr" && gs1.isGs1 && (gs1.lotNo || gs1.expirationDate)) {
+        setLabelForm((f) => ({
+          ...f,
+          lotNumber: gs1.lotNo ?? f.lotNumber,
+          expirationDate: gs1.expirationDate ?? f.expirationDate,
+        }));
+        setLotScanFilled(Boolean(gs1.lotNo));
+        setExpiryScanFilled(Boolean(gs1.expirationDate));
+        setGs1Gtin(gs1.gtin);
+        logEvent("gs1_datamatrix_capture", {
+          gtin: gs1.gtin,
+          hasLot: Boolean(gs1.lotNo),
+          hasExpiry: Boolean(gs1.expirationDate),
+        });
+        setState("label-review");
+        return;
+      }
       performLookup(value, "scan");
     },
   });
@@ -483,12 +509,15 @@ export default function ScanScreen() {
 
   // ─── §11.319 라벨 OCR 검토/편집 ───
   if (state === "label-review") {
+    // §gs1-datamatrix — GS1 datamatrix 경로(OCR 아님). datamatrix=결정적 인코딩이라
+    //   OCR 저신뢰 게이트 미적용. 단 제품명(GTIN≠이름)은 여전히 필수.
+    const isGs1Capture = !!gs1Gtin && !labelResult;
     const level = labelResult
       ? mapOcrConfidence(labelResult.parsed.confidence)
       : "low";
-    const lowConf = level === "low";
+    const lowConf = !isGs1Capture && level === "low";
     // §11.378 — 입고/등록 이동 차단 게이트: 제품명 빈값 OR (저신뢰 + 미보정).
-    //   제품명 수정 시(productNameDirty) 저신뢰 차단 해제. confirmLabelReceive 가드와 동일.
+    //   제품명 수정 시(productNameDirty) 저신뢰 차단 해제. GS1 경로는 lowConf=false.
     const receiveBlocked =
       !labelForm.productName.trim() || (lowConf && !productNameDirty);
     const confTone =
@@ -522,18 +551,39 @@ export default function ScanScreen() {
             <View className="flex-1">
               <View className="flex-row items-center gap-2">
                 <CheckCircle2 size={16} color="#059669" />
-                <Text className="text-sm font-bold text-slate-900">AI 분석 완료</Text>
-                <View className={`px-2 py-0.5 rounded-full border ${confTone.bg} ${confTone.border}`}>
-                  <Text className={`text-[11px] font-medium ${confTone.text}`}>
-                    신뢰도: {confTone.label}
-                  </Text>
-                </View>
+                <Text className="text-sm font-bold text-slate-900">
+                  {isGs1Capture ? "datamatrix 스캔 완료" : "AI 분석 완료"}
+                </Text>
+                {isGs1Capture ? (
+                  <View className="px-2 py-0.5 rounded-full border bg-emerald-50 border-emerald-200">
+                    <Text className="text-[11px] font-medium text-emerald-700">
+                      Lot·유효기간 확정
+                    </Text>
+                  </View>
+                ) : (
+                  <View className={`px-2 py-0.5 rounded-full border ${confTone.bg} ${confTone.border}`}>
+                    <Text className={`text-[11px] font-medium ${confTone.text}`}>
+                      신뢰도: {confTone.label}
+                    </Text>
+                  </View>
+                )}
               </View>
               <Text className="text-xs text-slate-400 mt-0.5">
-                추출 데이터를 확인하고 필요 시 수정하세요
+                {isGs1Capture
+                  ? "Lot·유효기간은 datamatrix에서 확정. 제품명을 입력하세요"
+                  : "추출 데이터를 확인하고 필요 시 수정하세요"}
               </Text>
             </View>
           </View>
+
+          {/* §gs1-datamatrix — GTIN 표시(제품 매칭 아님 — 카탈로그 GTIN 필드 부재). */}
+          {isGs1Capture && gs1Gtin && (
+            <View className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 mb-4">
+              <Text className="text-[11px] text-slate-500">
+                GTIN <Text className="font-mono text-slate-700">{gs1Gtin}</Text> · datamatrix
+              </Text>
+            </View>
+          )}
 
           {/* §11.378 — OCR 저신뢰도 + 미보정 시 입고 차단(무효 사진 재고 오염 방지).
               제품명을 직접 수정하면 해제. 라벨 아닌 사진(키보드 등)이 재고로 들어가는 것 차단. */}
