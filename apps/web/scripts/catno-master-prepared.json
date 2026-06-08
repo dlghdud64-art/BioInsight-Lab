@@ -714,9 +714,7 @@
    "category_kr": "시약",
    "manufacturer": "Welgene",
    "grade": "D",
-   "vendors": [
-    "웰호"
-   ],
+   "vendors": [],
    "merged_from": 1
   },
   {
@@ -882,9 +880,7 @@
    "category_kr": "시약",
    "manufacturer": "Welgene",
    "grade": "E",
-   "vendors": [
-    "웰호"
-   ],
+   "vendors": [],
    "merged_from": 1
   },
   {
@@ -3428,7 +3424,6 @@
   "와우프레스",
   "우성크라이어텍",
   "웅비메디텍",
-  "웰호",
   "유정메디텍",
   "이효바이오",
   "제이씨바이오",
