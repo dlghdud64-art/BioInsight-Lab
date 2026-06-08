@@ -1397,34 +1397,20 @@ export default function SearchPage() {
               <p className="text-sm text-slate-600 mb-2 leading-relaxed break-keep">시약명·CAS·제조사·카탈로그 번호로 500만+ 품목 검색</p>
               <p className="text-xs text-slate-500 mb-6 break-keep">검색 → 비교 → 견적 → 재고까지 한 흐름으로 연결됩니다</p>
 
-              {/* §11.252e #3 — card-position: 품목 등록 / 재고 확인 / 비교 목록 카드를
-                  검색 입력 직하단 (샘플 칩 위) 로 이동. 호영님 spec "검색 전에 먼저 노출".
-                  로그인 사용자만 노출 — 비로그인은 하단 fallback 버튼 유지. */}
+              {/* §11.252e #3 / §11.35x — quick-entry 카드 정리(호영님 소싱 surface 정리).
+                  제거: "품목 등록"(→/protocol/bom = 라벨↔기능 불일치 + BOM 미완 라이브 숨김),
+                  "비교 목록"(→/app/compare = 소싱 workbench 흡수된 중복·역행 진입점).
+                  BOM/compare 라우트·페이지는 보존(삭제 아님), 라이브 진입점만 차단.
+                  재고 확인만 유지. 로그인 사용자만 노출. */}
               {session?.user && (
-                <div className="grid grid-cols-3 gap-2 max-w-md mx-auto mb-6">
-                  <Link
-                    href="/protocol/bom"
-                    className="min-h-[44px] inline-flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border border-slate-200 bg-el/50 text-xs text-slate-600 hover:bg-st hover:text-slate-900 hover:border-slate-300 transition-colors"
-                    aria-label="품목 등록 페이지로 이동"
-                  >
-                    <FileText className="h-3.5 w-3.5 text-blue-600/70" />
-                    <span className="text-[11px] font-medium break-keep">품목 등록</span>
-                  </Link>
+                <div className="flex justify-center mb-6">
                   <Link
                     href="/dashboard/inventory"
-                    className="min-h-[44px] inline-flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border border-slate-200 bg-el/50 text-xs text-slate-600 hover:bg-st hover:text-slate-900 hover:border-slate-300 transition-colors"
+                    className="min-h-[44px] min-w-[7.5rem] inline-flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg border border-slate-200 bg-el/50 text-xs text-slate-600 hover:bg-st hover:text-slate-900 hover:border-slate-300 transition-colors"
                     aria-label="재고 확인 페이지로 이동"
                   >
                     <Package className="h-3.5 w-3.5 text-blue-600/70" />
                     <span className="text-[11px] font-medium break-keep">재고 확인</span>
-                  </Link>
-                  <Link
-                    href="/app/compare"
-                    className="min-h-[44px] inline-flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border border-slate-200 bg-el/50 text-xs text-slate-600 hover:bg-st hover:text-slate-900 hover:border-slate-300 transition-colors"
-                    aria-label="비교 목록 페이지로 이동"
-                  >
-                    <PenLine className="h-3.5 w-3.5 text-blue-600/70" />
-                    <span className="text-[11px] font-medium break-keep">비교 목록</span>
                   </Link>
                 </div>
               )}

@@ -21,11 +21,6 @@ const guides = [
     href: "/search",
   },
   {
-    title: "프로토콜 분석",
-    description: "프로토콜 텍스트나 PDF를 업로드하여 필요한 시약을 자동 추출하는 방법",
-    href: "/protocol/bom",
-  },
-  {
     title: "예산 관리",
     description: "조직/팀/프로젝트별 예산을 설정하고 사용률을 추적하는 방법",
     href: "/dashboard/budget",
