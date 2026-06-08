@@ -8,7 +8,7 @@ const FLOW_STEPS = [
     icon: Search,
     title: "검색",
     input: "시약명, CAS No., 카탈로그 번호",
-    criteria: "글로벌 공급사 500만+ 품목에서 검색, 스펙 확인",
+    criteria: "주요 시약·장비 카탈로그에서 검색, 스펙 확인",
     action: "대체품 후보 선정 → 비교 큐 추가",
     result: "비교 대상 품목 확정",
   },

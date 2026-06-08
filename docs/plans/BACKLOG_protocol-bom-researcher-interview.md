@@ -68,6 +68,26 @@
 
 ---
 
+## 5b. PoC 결과 — 카탈로그 매핑 반쪽 (2026-06-08, sandbox 실측)
+
+PoC를 두 반쪽으로 분리: **추출**(PDF→items, Gemini) vs **매핑**(items→catno-master, deterministic).
+
+**기존 파이프라인 (TR):** PDF → `protocol/extract-pdf(-text)` → 텍스트 → `ai/bom-parse`(Gemini, `GOOGLE_GEMINI_API_KEY` 없으면 regex localBomParse fallback) → items. `protocol/bom`에 `matchedProductId` 부분 매칭 존재. 추출은 **텍스트 기반 Gemini**(PDF 멀티모달 직접 아님 — extract 단계가 PDF→텍스트 선행).
+
+**매핑 반쪽 실측** (더미 한국 세포배양 시약 12종 → catno-master 286 products, catno/이름exact/fuzzy 매칭):
+- 매칭 **9/12 = 75%**. 미스 3건 성격 분리:
+  - **알고리즘 갭 1건**: "DMEM high glucose" — 카탈로그에 "High glucose DMEM" 존재하나 정규화 어순 차이로 누락. → **token-set 매칭으로 수정 가능**(수정 시 10/12 ≈ 83%).
+  - **커버리지 갭 2건**: Trypsin-EDTA, Penicillin-Streptomycin — 286 카탈로그에 **아예 없음**(매칭 알고리즘으로 해결 불가).
+
+**판정 함의:**
+1. deterministic 매핑 로직은 건전(catno exact·이름 exact·fuzzy 0.88 동작). 어순 1건만 token-set으로 보강.
+2. **실세계 매칭률의 상한 = 카탈로그 커버리지**(286개는 좁음, 흔한 시약 누락). 추출·매칭이 완벽해도 카탈로그에 없으면 못 맞춤.
+3. → 미매칭은 **빈칸 + "검색으로" 유도**(절대 가짜 제품 생성 금지, fake success 안티패턴). 매핑=후보 제시, 없으면 정직하게 없음.
+
+**남은 PoC (호영님 유료키 필요):** 추출 반쪽 = 실제 시약 PDF(더미)로 `bom-parse` Gemini 실행 → PDF→items 추출 정확도 측정. sandbox에 `GOOGLE_GEMINI_API_KEY` 없어 미실행. 학습-비사용 유료 티어로 더미 문서만.
+
+---
+
 ## 6. 다음 액션
 - [ ] PoC: 시약·조성 문서 추출 정확도 측정(유료 학습-비사용).
 - [ ] 연구자 인터뷰(§4 4축) → 실험 프로토콜 범위 확정.

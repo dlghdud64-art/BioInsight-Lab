@@ -10,6 +10,8 @@
 
 | 순위 | 항목 | 절 |
 | :-- | :-- | :-- |
+| **P0 (최상위)** | **카탈로그 정합 — searchProducts=로컬 db.product(≈286), "500만+" 허위광고. 모든 것의 토대** | **§1-cat** |
+| **P1 블로커** | **라벨 추출 엔진 — 도메인 미스 + datamatrix 부재 (라벨·BOM·재고등록 공통 선행)** | **§1-0** |
 | P1 | 카탈로그 vendor 데이터 교차검증 (웰호 오기) | §1-2 ① |
 | P1 | 헤더 뒤로가기 겹침 / 가짜 surface 제거 | §1-2 ②③, §1-3 |
 | P1 | 스캔 intent 모델 (소싱 카메라 재정의) | §1-1 |
@@ -21,6 +23,35 @@
 ---
 
 ## 1. 잠긴 결정 (실행 가능)
+
+### 1-cat. 카탈로그 정합 — P0 (최상위, 모든 것의 토대)
+**코드 확정 (2026-06-08 cowork TR):** `searchProducts`(src/lib/api/products.ts)는 **로컬 `db.product`만** 조회(외부 5M 소스 0, Prisma 없으면 sample fallback). 실제 검색 집합 = import-catno-master "**검증 실거래 286 Product / 68 Vendor**" + seed ~31. **"500만+ 품목"은 5개 surface의 무근거 광고 = 웰호보다 큰 canonical(표시) 위반**(단발 오기 아니라 사업 클레임 허위표시). 상대가 규제 산업 전문 구매자라 신뢰·표시광고 리스크 실재. ⚖️ 표시광고 법적 검토는 변호사 영역 — 사실관계상 286을 500만+로 광고는 즉시 정정 대상.
+
+라벨추출·BOM·검색·비교가 전부 이 ~286 위에 얹힘. **진짜 병목 = AI 아니라 카탈로그(canonical)의 폭 + 정합.** (PoC §5b "커버리지 75%"는 매핑 대상이 맞았으므로 유효 — 오히려 더 심각.)
+
+**전략 (호영님 확정): 혼합 — B 즉시 + A 로드맵.**
+- **B (즉시 필수):** "500만+" → 정성 표현(숫자 제거) 5 surface 정정. ✅ 완료(아래 실행 로그). 라이브 허위 클레임 제거.
+- **A (대형 로드맵, 별 트랙):** 외부 공급사 카탈로그 실연동 — 데이터 파트너/API 라이선싱 + 수집·dedup + 286 품질관리(웰호류)를 스케일로. 광고가 진실이 되는 길. 별도 트랙 분리.
+
+**실행 순서:** ① B(완료) → ② datamatrix 디코드(재고 등록용, 폭 무관 — 아래) → ③ A 로드맵 → ④ 추출 매칭 고도화·BOM 킬러(폭 A 확보 후, 그 전엔 286 천장).
+
+### 1-0. 라벨 추출 엔진 — P1 블로커 (라벨·BOM·재고등록 공통 선행)
+근본원인: **제네릭/소비자제품 도메인 미스 + GS1 datamatrix 미사용.** 영양제(한글·표준 레이아웃·"제품명/유효기간" 또렷) = 성공, 시약 라벨(영문 + Cat/Lot + 2D datamatrix + EXP 다양 포맷 + 기술용어) = 저신뢰 → (blank 로직 때문에) 공란. LabAxis는 시약·소모품인데 소비자 라벨 기준으로 검증된 셈.
+
+**코드 확인 (2026-06-08 cowork TR):**
+- ✅ **datamatrix/GS1 디코드 부재 확정** — zxing/quagga/gtin 라이브러리 0. 시약 라벨엔 2D datamatrix가 거의 항상 있고 GTIN·Lot·Expiry를 결정적 인코딩 → OCR보다 신뢰도 ↑. **최고 레버.**
+- ✅ **필드 스키마 갭** — `lib/ocr/label-parser.ts` `LabelParseResult` = {catalogNo, lotNo, expirationDate, brand, productName, casNumber}. **규격/용량·보관온도 누락.**
+- ⚠️ 정정: 엔진은 "영양제 튜닝"이 아니라 **reagent-named**(fallback `parseReagentLabel` + BRAND_PATTERNS이 Sigma/Gibco/NEB/QIAGEN/Takara 등 시약 전용). 실패 원인 = Gemini 프롬프트 도메인 강도(미확인) + datamatrix 부재 + 스키마 갭 복합.
+- ✅ **code-confirm 닫음:** `gemini-label-parser.ts` `PARSE_PROMPT` = "reagent label parser" 명시(영양제 아님 재확인). 단 **얇음** — 필드 5개(productName/catalogNo/lotNo/expirationDate/casNumber), **규격·용량·보관온도·제조사 없음, few-shot 없음, EXP는 YYYY-MM-DD 단일 가정**(시약 EXP 다양성 미대응), datamatrix 없음. → 실패 = 도메인 튜닝이 아니라 **라벨 포맷**(작은 기술인쇄 OCR 약함 + 신뢰 데이터가 datamatrix 인코딩). datamatrix가 결정적 레버 = 코드로 확정.
+- ⚠️ **datamatrix 천장 정정:** "효과 상한 286"은 **카탈로그 매칭**(라벨검색→제품, BOM 추천)에만 해당. **재고 직접등록**의 datamatrix는 내 재고의 Cat/Lot/EXP 캡처라 **카탈로그 폭 무관 — 지금 가치**. → datamatrix는 재고등록용으로 즉시 진행 가능(286 안 묶임), 추출의 *매칭* 가치만 A 대기.
+
+**지시 (레버리지순):**
+1. **GS1 datamatrix 디코드 = 1차 경로** 추가(비전 OCR 보조). 재고 QR 바코드 디코드 역량과 공유. 결정적 인코딩이라 신뢰도 최고.
+2. **추출 프롬프트·스키마 시약 도메인 재타게팅** — 필드 명시(제품명 영문 reagent / Cat. No / Lot No / EXP 다양 포맷 / 규격·용량 / 제조사 / 보관온도) + 시약 라벨 few-shot. 스키마에 규격·보관온도 추가.
+3. **blank-on-low-confidence → 초안 채움 + 경고**로 전환. ⚠️ §11.378/§11.375 게이트(저신뢰+미보정 차단)와 충돌 주의 — "공란"이 아니라 "저신뢰 초안 + 신뢰 표시 + 검수 강제"로 정합(fake success 금지 유지).
+4. 라벨 검색·직접등록·BOM이 **공통 엔진**이면 한 번에 적용 → 셋 다 같이 살아남.
+
+핵심: **엔진 골격은 멀쩡(reagent-named), 도메인만 맞추면 라벨 검색·재고 등록·BOM 추출이 동반 회복.** 제네릭 추출이 lab을 못 버틴다는 교훈은 BOM에도 동일(§5b 카탈로그 커버리지 갭과 별개의 추출측 근본).
 
 ### 1-1. §11.37x 스캔 intent 모델
 - 스캔 = **조회 read-only 기본.** 차감은 스캔 후 **명시 확인** 단계로만 — 자동 차감 금지(canonical truth 보호).
@@ -80,6 +111,9 @@
 ---
 
 ## 실행 로그 (2026-06-08 cowork 세션)
+- ✅ **P0 카탈로그 정합 — B(광고 정정) 완료**: 허위 "500만+ 품목" 클레임 5 surface 제거(ops-flow-section / search/page ×1 [+1 동일카피] / dashboard/page / support-center/page / command-palette) → 정성 표현(숫자 0). 허위 강제하던 `search-page-252e.test` 반전(500만 not-match). P0 회귀 가드 `catalog-claim-honesty-p0.test` 신규(5 surface 500만 0). 잔존 0 확인. **A(외부 카탈로그 실연동)는 별도 로드맵 트랙.** searchProducts=로컬 db.product(≈286) 확정 = canonical 병목.
+- ✅ **P1 BOM PoC(매핑 반쪽)**: catno-master 286 대상 더미 시약 12종 매칭 9/12=75%(어순 token-set 보강 시 83%, 미스 2건=카탈로그 커버리지 갭). deterministic 골격 건전. 추출 반쪽(Gemini)은 유료키 필요(미실행). `BACKLOG_protocol-bom-...md` §5b 기록.
+- ✅ **§1-0 라벨엔진 root 확정**: gemini-label-parser PARSE_PROMPT reagent-named이나 얇음(5필드·few-shot 0·datamatrix 0). datamatrix가 결정적 레버(재고등록용은 폭 무관 즉시 가치).
 - ✅ **P1① vendor 정정**: `catno-master-prepared.json` "웰호" 3곳 제거(제품 2 `vendors:[]` + 거래처 마스터 1). 제조사 영문 Welgene 유지. (호영님 결정: 영문사 영문 유지, 웰호 삭제.) **DB 반영(import 재실행 or UPDATE)은 통제구조상 "진행" 대기.**
 - ✅ **P1 가짜/중복 진입점 정리**: `search/page.tsx` 품목등록(→/protocol/bom, 라벨불일치+BOM숨김)·비교목록(→/app/compare, workbench 흡수 중복) 카드 제거(재고확인 유지). `help/page.tsx` 프로토콜분석(BOM) 링크 제거. **BOM·compare 라우트/페이지는 보존(삭제 금지) — 라이브 진입점만 차단.**
 - ⏳ **남음**: /app/compare 라우트 파일 자체 정리(git rm, inbound 링크 재확인 후) / "품목 등록" 올바른 목적지(카탈로그 수기 등록) 결정 / 소싱 상단 "검색 / 프로토콜 업로드" 병렬 진입 재설계(BOM PoC 후).

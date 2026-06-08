@@ -50,10 +50,11 @@ describe("§11.252e #2 — 빈 화면 텍스트 짧게 + word-break keep-all", (
     expect(code).not.toMatch(/하나의\s*흐름으로\s*이어집니다/);
   });
 
-  it("'500만\\+ 품목 검색' 또는 짧은 swap 문장", () => {
-    // AS-IS "500만+ 품목을 검색할 수 있습니다." → TO-BE "500만+ 품목 검색".
-    expect(code).toMatch(/500만\+\s*품목\s*검색/);
-    expect(code).not.toMatch(/500만\+\s*품목을\s*검색할\s*수\s*있습니다/);
+  it("검색 안내 카피 — 허위 '500만+' 클레임 제거(P0 canonical), 검색축 유지", () => {
+    // §catalog-honesty: searchProducts=로컬 db.product(≈286), 외부 5M 소스 0.
+    //   "500만+ 품목"은 무근거 광고 → 정성 표현으로 정정. 숫자 클레임 0.
+    expect(code).toMatch(/카탈로그 번호로 검색/);
+    expect(code).not.toMatch(/500만/);
   });
 
   it("break-keep className 또는 word-break:keep-all 적용 (어절 단위 줄바꿈)", () => {
@@ -68,10 +69,12 @@ describe("§11.252e #3 — 카드 위치 이동 (검색 입력 직하단 또는 
     expect(code).toMatch(/§11\.252e[\s\S]{0,200}#3|11\.252e[\s\S]{0,200}card-position/);
   });
 
-  it("기존 href 보존 (/protocol/bom, /dashboard/inventory, /app/compare)", () => {
-    expect(code).toMatch(/href=["']\/protocol\/bom["']/);
+  it("기존 href 정합 (재고확인 보존 / 0cfb8fb7 §11.359-2 진입점 정리 반영)", () => {
+    // §11.359-2(0cfb8fb7): '품목 등록'(→/protocol/bom 라벨 불일치) + '비교 목록'(→/app/compare workbench 흡수
+    //   중복) 카드 제거. 라우트/페이지는 보존, 라이브 진입점만 차단. 재고확인 카드는 유지.
     expect(code).toMatch(/href=["']\/dashboard\/inventory["']/);
-    expect(code).toMatch(/href=["']\/app\/compare["']/);
+    expect(code).not.toMatch(/href=["']\/protocol\/bom["']/);
+    expect(code).not.toMatch(/href=["']\/app\/compare["']/);
   });
 });
 

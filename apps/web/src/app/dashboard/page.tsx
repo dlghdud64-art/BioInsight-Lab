@@ -646,7 +646,7 @@ function DashboardPageInner() {
   recommendedActions.push({ id: "r-po-conversion", icon: <ClipboardList className="h-3.5 w-3.5 text-blue-700" />, label: "발주 전환", desc: "발주 전환 후보를 검토하고 승인·발송을 준비하세요", href: "/dashboard/purchases?view=conversion-ready", state: "idle" });
 
   // 검색
-  recommendedActions.push({ id: "r-search", icon: <Search className="h-3.5 w-3.5 text-slate-400" />, label: "시약·장비 검색", desc: "500만+ 품목에서 후보 탐색", href: "/app/search", state: "idle" });
+  recommendedActions.push({ id: "r-search", icon: <Search className="h-3.5 w-3.5 text-slate-400" />, label: "시약·장비 검색", desc: "주요 시약·장비에서 후보 탐색", href: "/app/search", state: "idle" });
 
   // -- KPI 판단 카드 렌더 (공통) --
   const renderKpiCard = (config: {

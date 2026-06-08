@@ -46,7 +46,7 @@ interface QuickAction {
  *   Ontology 다음액션 resolver 와는 별개.
  */
 const QUICK_ACTIONS: QuickAction[] = [
-  { id: "search", icon: <Search className="h-4 w-4" />, label: "시약·장비 검색 시작", description: "500만+ 품목 통합 검색", href: "/app/search" },
+  { id: "search", icon: <Search className="h-4 w-4" />, label: "시약·장비 검색 시작", description: "시약·장비 통합 검색", href: "/app/search" },
   { id: "compare", icon: <ShoppingCart className="h-4 w-4" />, label: "비교 워크스페이스 열기", description: "후보 품목 나란히 비교", href: "/compare" },
   { id: "quote", icon: <FileText className="h-4 w-4" />, label: "견적 요청 생성", description: "공급사에 견적 요청", href: "/dashboard/quotes" },
   { id: "inventory", icon: <Package className="h-4 w-4" />, label: "재고 현황 확인", description: "입고·유효기간·안전재고", href: "/dashboard/inventory" },

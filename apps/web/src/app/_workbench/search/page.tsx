@@ -1394,7 +1394,7 @@ export default function SearchPage() {
               {/* §11.252e #2 — 빈 화면 설명 텍스트 모바일 어절 분리 어색 fix.
                   짧은 문장 swap + break-keep 으로 어절 단위 줄바꿈 보장. */}
               <h2 className="text-lg font-bold text-slate-900 mb-2 break-keep">시약·장비를 검색하세요</h2>
-              <p className="text-sm text-slate-600 mb-2 leading-relaxed break-keep">시약명·CAS·제조사·카탈로그 번호로 500만+ 품목 검색</p>
+              <p className="text-sm text-slate-600 mb-2 leading-relaxed break-keep">시약명·CAS·제조사·카탈로그 번호로 검색</p>
               <p className="text-xs text-slate-500 mb-6 break-keep">검색 → 비교 → 견적 → 재고까지 한 흐름으로 연결됩니다</p>
 
               {/* §11.252e #3 / §11.35x — quick-entry 카드 정리(호영님 소싱 surface 정리).
