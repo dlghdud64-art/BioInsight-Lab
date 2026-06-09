@@ -6,7 +6,7 @@
 
 > **정정(2026-06-10):** 옵션1 종결이 **UI conflation을 놓쳐 성급**했음(호영님 지적). 코드 mutation 하드와이어는 0이 맞으나, `LabelScannerModal`이 타이틀 "스마트 입고"·CTA "입고 폼에 적용"을 **하드코딩**해 소싱(검색)에서 열어도 입고 UI로 보이는 맥락 누수가 있었음 → **(a) 모달 맥락 분기 추가 구현**.
 > **(a) 완료:** `LabelScannerModal`에 `isSearchContext = !onDirectReceive` 파생 + `scanTitle`("라벨 스캔 검색"/"스마트 입고") 분기(타이틀 3곳) + CTA `onDirectReceive ? "입고 완료" : "이 라벨로 검색"` + 검색 맥락 설명문. 저신뢰/needs-confirm 게이트는 기존 `onDirectReceive &&`라 검색 맥락 자동 off. search/page는 onScanComplete-only라 자동 검색 맥락(호출부 무변경). sentinel 보강.
-> **(b) 백로그:** web 소싱 "QR 재고 확인" 카메라 진입(중복구매 방지 게이트, 호영님 강조) / mobile 소싱 카메라 / 차감 확인 UX 상세.
+> **(b) 진행 중 (2026-06-10 승인):** web 소싱 "QR 재고 확인" 카메라 진입(중복구매 방지 게이트, 호영님 강조) — **advisory 게이트**(경고+진행 허용)로 확정. 서브플랜 = 본 문서 하단 **§11.37x(b)** 참조. mobile 소싱 카메라 / 차감 확인 UX 상세는 백로그 유지.
 > **커밋 대상:** `scan-intent-model-11.37x.test.ts`(맥락 분기 가드 보강) + `LabelScannerModal.tsx`(맥락 분기) + 본 PLAN.
 
 ## ⚖️ Quality Gate 규칙 (모든 phase 공통)
@@ -114,3 +114,49 @@
 ## 7. Notes
 - ScanHub(입고/사용)은 §11.371-3/§11.379 canonical — 유지. 본 플랜은 소싱 카메라(탐색 맥락)만 재정의.
 - 차감 확인 UX 상세(불출 수량·lot)는 본 플랜 잠근 뒤 후속.
+
+---
+
+# §11.37x(b) — QR 재고 확인 게이트 (중복구매 방지) — 서브플랜
+
+- **Status:** 🔄 sandbox GREEN (b-1~b-4 구현 완료) / 클로드코드 vitest 재확정 + push 대기
+- **Started:** 2026-06-10
+- **Last Updated:** 2026-06-10
+
+> **승인(2026-06-10):** advisory 게이트 — 보유 시 경고 + 진행 허용(차단 아님). 소싱 QR = read-only 조회, 차감/mutation 0. ScanHub(차감) 복제 금지.
+
+## b-0. Truth Reconciliation (코드 실측)
+- 소싱 surface `apps/web/src/app/_workbench/search/page.tsx`. 기존 "재고 확인"=/dashboard/inventory 이동 Link뿐(카메라 아님). `labelScanOpen`+`LabelScannerModal`(onScanComplete=검색) 존재.
+- 재사용: `components/inventory/QRScanner.tsx`(onScanSuccess(decodedText), read-only) / `GET /api/inventory?search=<q>`→`{inventories:[{currentQuantity,product:{name,catalogNumber}}]}`, org/user scoped, auth 필요. canonical on-hand=`currentQuantity`.
+- GS1: mobile `lib/scan/gs1-parser.ts` 순수함수 → web 포팅. inventory GTIN 필드 부재 → GS1은 lot 매칭만.
+- ⚠️ ScanHub `qr_scanner`="QR 재고 사용(차감,mutation)" canonical — (b)는 복제 금지(맥락 분리).
+
+## b-1. Priority Fit — P1 운영 front. §catalog A와 독립 병렬.
+## b-2. Work Type — Workflow wiring + Web. Scope Small~Medium.
+
+## b-3. Canonical Truth / Surface
+- SoT: 재고=서버(currentQuantity). 스캔=조회만. same-canvas(신규 페이지 0, QRScanner 재사용). 평행 ScanHub 복제 0. advisory(경고+진행, 차단 아님).
+
+## b-4. Phases
+### Phase b-0: Context & Truth Lock — [x] Complete
+### Phase b-1: Contract & Failing Tests — [x] Complete (scan-stock-gate-37xb.test.ts 13건 RED→GREEN 전이)
+### Phase b-2: Core resolve+gate — [x] Complete
+- `lib/scan/gs1-parser.ts`(포팅,순수) + `lib/scan/stock-lookup-resolve.ts`(resolveScanToStockQuery / computeDuplicatePurchaseGate). mutation 0. unit GREEN.
+### Phase b-3: Wiring — [x] Complete
+- 소싱 surface "QR 재고 확인" 진입 버튼(AI 라벨 스캔 옆, 로그인 게이트) + QRScanner read-only 모달 → onScanSuccess→resolve→GET /api/inventory 조회→advisory 배너(warn=red 보유경고+재고보기/그래도검색, clear=emerald 신규구매OK+이제품검색). loading/error/empty 처리. dead button·자동차감 0. esbuild clean.
+### Phase b-4: Smoke / Rollback — [~] sandbox 로직 smoke 통과 / 클로드코드 vitest+라이브 smoke 대기
+
+## b-5. 샌드박스 검증
+- `scan-stock-gate-37xb.test.ts` 13/13 GREEN(vitest). page.tsx esbuild clean. 신규 util tsc 단위 GREEN.
+- (b)=HEAD 순수 가산(삭제 0, lucide import 1줄 교체). `scan-intent-model-11.37x.test.ts` 기존과 동일(1 fail/10 pass) → (b) 신규 회귀 0.
+- ⚠️ 선행 red(드리프트, (b) 무관): scan-intent(a) "타이틀≥3"(실 spot 2곳=단정 과다) / §11.274c "소싱 결과 분류"(영문·한글 모두 HEAD 부재). 호영님 env GREEN 확정 대상.
+- 전체 tsc -p / lint = 샌드박스 타임아웃 → 실행 불가, 클로드코드 확정.
+
+## b-6. Out of Scope — mobile 소싱 카메라 / 차감 UX 상세 / hard block / GTIN→product 매칭.
+
+## b-7. Rollback — b-1 계약 revert / b-2 util revert / b-3 wiring revert(진입점 제거) / b-4 진입 제거. 재고 운영(ScanHub) 전 과정 불변.
+
+## b-8. 핸드오프
+- **page.tsx = wholesale 교체 금지**(호영님 env §11.274c 등 보존). `outputs/page.tsx.37xb.patch`(git apply, HEAD 기준 5 hunk, 재적용 검증 OK)로 적용.
+- 신규 3파일 그대로 추가: `lib/scan/gs1-parser.ts`, `lib/scan/stock-lookup-resolve.ts`, `__tests__/regression/scan-stock-gate-37xb.test.ts`.
+- 커밋: `feat(sourcing) §11.37x(b) #qr-stock-duplicate-gate — 소싱 QR 재고 확인 advisory 게이트(read-only 중복구매 방지)`.

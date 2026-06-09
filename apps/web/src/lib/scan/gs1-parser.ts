@@ -1,0 +1,134 @@
+/**
+ * §11.37x(b) / §gs1-datamatrix — GS1 element string 파서 (순수 / DOM·node 무의존)
+ *
+ * apps/mobile/lib/scan/gs1-parser.ts 의 web 포팅. 두 앱 모두 시약 라벨 2D datamatrix(GS1)를
+ * 결정적 디코드해야 하므로 동일 순수 로직을 공유한다(외부 import 0 → 향후 shared 패키지 추출 후보).
+ *
+ * 범위(시약 라벨 빈출 AI):
+ *   01 GTIN(14, 고정) · 11 생산일(YYMMDD) · 15 best-before(YYMMDD) · 17 유효기간(YYMMDD)
+ *   10 Lot/Batch(가변, FNC1) · 21 Serial(가변, FNC1)
+ * 미지 AI 는 graceful skip. GTIN→제품 매칭은 범위 밖(카탈로그 GTIN 필드 부재).
+ *
+ * 입력 양식 2종:
+ *   - raw scan: FNC1 = GS(\x1d) 구분자. 고정길이 AI 는 길이로, 가변 AI 는 FNC1/끝까지.
+ *   - 사람가독(HRI): "(01)08806... (17)261231 (10)ABC123" 괄호 양식.
+ */
+
+export interface Gs1Parsed {
+  /** GTIN-14 (표시용 — 제품 매칭 아님). */
+  gtin: string | null;
+  /** Lot/Batch (AI 10). */
+  lotNo: string | null;
+  /** 유효기간 (AI 17) → YYYY-MM-DD (DD=00 이면 YYYY-MM, day=null). */
+  expirationDate: string | null;
+  /** 생산일 (AI 11) → YYYY-MM-DD. */
+  productionDate: string | null;
+  /** Serial (AI 21). */
+  serial: string | null;
+  /** 인식된 AI 키→raw 값 전체(디버그·확장용). */
+  elements: Record<string, string>;
+  /** GS1 로 해석 가능했는가(최소 1개 AI 인식). */
+  isGs1: boolean;
+}
+
+const FNC1 = "\x1d"; // GS (ASCII 29)
+
+/** 고정 길이 AI (값 길이). */
+const FIXED_LEN: Record<string, number> = {
+  "00": 18,
+  "01": 14,
+  "02": 14,
+  "11": 6,
+  "12": 6,
+  "13": 6,
+  "15": 6,
+  "16": 6,
+  "17": 6,
+  "20": 2,
+};
+
+/** YYMMDD → ISO. DD=00 → 일(day) 미상 → YYYY-MM. YY: 00–49=20YY, 50–99=19YY(GS1 규칙). */
+function yymmddToIso(v: string): string | null {
+  if (!/^\d{6}$/.test(v)) return null;
+  const yy = parseInt(v.slice(0, 2), 10);
+  const mm = v.slice(2, 4);
+  const dd = v.slice(4, 6);
+  const year = yy <= 49 ? 2000 + yy : 1900 + yy;
+  if (mm < "01" || mm > "12") return null;
+  if (dd === "00") return `${year}-${mm}`;
+  if (dd < "01" || dd > "31") return null;
+  return `${year}-${mm}-${dd}`;
+}
+
+/** 괄호 HRI 양식 → FNC1 정규화(가변 AI 뒤에 FNC1 삽입). */
+function normalizeParenForm(input: string): string {
+  const parts = input.match(/\((\d{2,4})\)([^(]*)/g);
+  if (!parts) return input;
+  let out = "";
+  for (const part of parts) {
+    const m = part.match(/\((\d{2,4})\)(.*)/);
+    if (!m) continue;
+    const ai = m[1];
+    const val = m[2];
+    out += ai + val;
+    if (!(ai in FIXED_LEN)) out += FNC1; // 가변 AI 종료
+  }
+  return out;
+}
+
+export function parseGs1(rawInput: string | null | undefined): Gs1Parsed {
+  const empty: Gs1Parsed = {
+    gtin: null, lotNo: null, expirationDate: null,
+    productionDate: null, serial: null, elements: {}, isGs1: false,
+  };
+  if (!rawInput || typeof rawInput !== "string") return empty;
+
+  let s = rawInput;
+  // GS1 datamatrix 는 보통 선두에 FNC1(심볼로지 식별자) — 제거.
+  if (s.startsWith(FNC1)) s = s.slice(1);
+  // 괄호 HRI 양식이면 정규화.
+  if (s.includes("(")) s = normalizeParenForm(s);
+
+  const elements: Record<string, string> = {};
+  let i = 0;
+  let guard = 0;
+  while (i < s.length && guard++ < 64) {
+    const ai2 = s.slice(i, i + 2);
+    let ai = ai2;
+    let valStart = i + 2;
+
+    if (ai in FIXED_LEN) {
+      const len = FIXED_LEN[ai];
+      const val = s.slice(valStart, valStart + len);
+      elements[ai] = val;
+      i = valStart + len;
+      if (s[i] === FNC1) i++;
+      continue;
+    }
+    if (ai === "10" || ai === "21" || ai === "22" || ai === "240" || ai === "241") {
+      if (s.slice(i, i + 3) === "240" || s.slice(i, i + 3) === "241") {
+        ai = s.slice(i, i + 3);
+        valStart = i + 3;
+      }
+      const fnc = s.indexOf(FNC1, valStart);
+      const end = fnc === -1 ? s.length : fnc;
+      elements[ai] = s.slice(valStart, end);
+      i = end === s.length ? end : end + 1;
+      continue;
+    }
+    break;
+  }
+
+  const expirationDate = elements["17"] ? yymmddToIso(elements["17"]) : null;
+  const productionDate = elements["11"] ? yymmddToIso(elements["11"]) : null;
+
+  return {
+    gtin: elements["01"] ?? null,
+    lotNo: elements["10"] ?? null,
+    expirationDate,
+    productionDate,
+    serial: elements["21"] ?? null,
+    elements,
+    isGs1: Object.keys(elements).length > 0,
+  };
+}

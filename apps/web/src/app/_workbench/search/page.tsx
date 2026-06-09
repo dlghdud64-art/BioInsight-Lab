@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PriceDisplay } from "@/components/products/price-display";
-import { Loader2, PenLine, X, Trash2, Search, FileText, Package, SlidersHorizontal, TrendingDown, AlertTriangle, AlertCircle, Sparkles, Check, Camera, Menu, LayoutDashboard, ShoppingCart, Settings, ChevronDown } from "lucide-react";
+import { Loader2, PenLine, X, Trash2, Search, FileText, Package, SlidersHorizontal, TrendingDown, AlertTriangle, AlertCircle, Sparkles, Check, Camera, Menu, LayoutDashboard, ShoppingCart, Settings, ChevronDown, QrCode } from "lucide-react";
 // §11.254b 햄버거 메뉴는 §11.283b 에서 plain button + useState 으로 swap.
 // §11.298f Radix DropdownMenu import dead — application-wide grep 0 회복.
 import Link from "next/link";
@@ -113,6 +113,9 @@ import { buildSourcingStrategyOptionSet } from "@/lib/ai/decision-option-builder
 import type { DecisionOption, DecisionOptionSet } from "@/lib/ai/decision-option-set";
 import { buildSourcingAiContextHash, createCompareSeedDraft, type CompareSeedDraft, type SourcingStrategyOptionLocal } from "@/lib/ai/sourcing-operating-layer";
 import { LabelScannerModal } from "@/components/inventory/LabelScannerModal";
+// §11.37x(b) — 소싱 QR 재고 확인(중복구매 방지). read-only 조회, 차감/mutation 0.
+import { QRScanner } from "@/components/inventory/QRScanner";
+import { resolveScanToStockQuery, computeDuplicatePurchaseGate, type DuplicatePurchaseGate } from "@/lib/scan/stock-lookup-resolve";
 import { ComparisonModal } from "../_components/comparison-modal";
 import { RequestWizardModal } from "../_components/request-wizard-modal";
 import { useOntologyContextBridge } from "@/hooks/use-ontology-context-bridge";
@@ -2546,8 +2549,57 @@ const STAGE_LABELS: Record<string, string> = {
 //   + SearchPanel) 가 유일. dead prop drift 차단 + 명확성.
 function SearchUtilityBar({ activeFilterCount, onAuthRequired, isLoggedIn, stageOwner = "sourcing", onBackToSourcing }: { activeFilterCount: number; onAuthRequired: () => void; isLoggedIn: boolean; stageOwner?: string; onBackToSourcing?: () => void }) {
   const { searchQuery, setSearchQuery, runSearch, hasSearched } = useTestFlow();
+  const utilRouter = useRouter();
   const [localQuery, setLocalQuery] = useState(searchQuery);
   const [labelScanOpen, setLabelScanOpen] = useState(false);
+  // §11.37x(b) — QR 재고 확인(중복구매 방지) advisory 게이트. 스캔=조회만, 차감 0.
+  const [qrCheckOpen, setQrCheckOpen] = useState(false);
+  const [qrChecking, setQrChecking] = useState(false);
+  const [qrGate, setQrGate] = useState<DuplicatePurchaseGate | null>(null);
+  const [qrQuery, setQrQuery] = useState("");
+  const [qrError, setQrError] = useState<string | null>(null);
+
+  // 스캔 디코드 → resolve → GET /api/inventory(조회) → advisory 게이트 판정.
+  //   canonical(재고=서버) read-only. 어떤 mutation/차감도 호출하지 않는다.
+  const handleQrStockCheck = async (decodedText: string) => {
+    const { query } = resolveScanToStockQuery(decodedText);
+    if (!query) {
+      setQrError("\ucf54\ub4dc\ub97c \uc778\uc2dd\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. \ub2e4\uc2dc \uc2dc\ub3c4\ud574 \uc8fc\uc138\uc694.");
+      return;
+    }
+    setQrError(null);
+    setQrQuery(query);
+    setQrChecking(true);
+    try {
+      const res = await fetch(`/api/inventory?search=${encodeURIComponent(query)}`);
+      if (!res.ok) throw new Error("inventory lookup failed");
+      const data = await res.json();
+      setQrGate(computeDuplicatePurchaseGate(data?.inventories ?? []));
+    } catch {
+      setQrError("\uc7ac\uace0 \uc870\ud68c\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4. \ub124\ud2b8\uc6cc\ud06c\ub97c \ud655\uc778\ud574 \uc8fc\uc138\uc694.");
+      setQrGate(null);
+    } finally {
+      setQrChecking(false);
+    }
+  };
+
+  const openQrStockCheck = () => {
+    if (!isLoggedIn) {
+      onAuthRequired();
+      return;
+    }
+    setQrGate(null);
+    setQrError(null);
+    setQrQuery("");
+    setQrCheckOpen(true);
+  };
+
+  const runQrQuerySearch = () => {
+    setQrCheckOpen(false);
+    setLocalQuery(qrQuery);
+    setSearchQuery(qrQuery);
+    runSearch();
+  };
   // §11.283b 햄버거 메뉴 plain state — Radix DropdownMenu 제거 후 단순화.
   // 호영님 P0+ 4차 (2026-05-24) 보고: §11.280~§11.283 (Radix wiring 4차
   // hot fix) 후에도 호영님 환경 dead button. Radix 의존성 제거 + plain
@@ -2803,6 +2855,16 @@ function SearchUtilityBar({ activeFilterCount, onAuthRequired, isLoggedIn, stage
             <Camera className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">AI 라벨 스캔</span>
           </button>
+          {/* §11.37x(b) — QR 재고 확인(중복구매 방지). 구매 전 보유 재고 조회 게이트.
+              read-only(차감 0). ScanHub QR 재고 '사용'(차감) 과 맥락 분리 — 평행 진입 아님. */}
+          <button
+            onClick={openQrStockCheck}
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-blue-500/15 text-blue-300 border border-blue-500/30 hover:bg-blue-500/25 transition-colors shrink-0"
+            aria-label="QR 재고 확인 — 구매 전 보유 재고 조회로 중복구매 방지"
+          >
+            <QrCode className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">QR 재고 확인</span>
+          </button>
           {/* §11.283b #sourcing-hamburger-plain-button — 호영님 P0+ 5차
               (2026-05-24) 단순화: §11.280 / §11.280-2 / §11.282-d / §11.282-e
               / §11.283 (Radix wiring 5차 hot fix) 후에도 호영님 환경 dead
@@ -2903,6 +2965,114 @@ function SearchUtilityBar({ activeFilterCount, onAuthRequired, isLoggedIn, stage
             }
           }}
         />
+
+        {/* §11.37x(b) — QR 재고 확인 게이트(중복구매 방지). 스캔=조회 read-only, 차감 0.
+            보유 시 advisory 경고 + 진행 허용(차단 아님). 보유 0 이면 신규 구매 OK. */}
+        <Dialog
+          open={qrCheckOpen}
+          onOpenChange={(o) => {
+            setQrCheckOpen(o);
+            if (!o) {
+              setQrGate(null);
+              setQrError(null);
+              setQrChecking(false);
+            }
+          }}
+        >
+          <DialogContent className="max-w-md p-0 gap-0 bg-white">
+            <DialogHeader className="px-4 pt-4 pb-2 text-left">
+              <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <QrCode className="h-4 w-4 text-blue-600" /> QR 재고 확인
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500 leading-relaxed">
+                구매 전 보유 재고를 확인해 중복 구매를 막습니다. 스캔은 조회만 하며 재고를 차감하지 않습니다.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="px-4 pb-4">
+              {/* 스캐너 — 결과/오류/조회중이 아닐 때만 (read-only, 차감 없음) */}
+              {!qrGate && !qrError && !qrChecking && (
+                <QRScanner onScanSuccess={handleQrStockCheck} paused={qrChecking} />
+              )}
+
+              {/* 조회 중 */}
+              {qrChecking && (
+                <div className="flex items-center justify-center gap-2 py-8 text-sm text-slate-600">
+                  <Loader2 className="h-4 w-4 animate-spin" /> 재고 조회 중…
+                </div>
+              )}
+
+              {/* 오류 */}
+              {qrError && !qrChecking && (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <div className="flex items-center gap-2 text-slate-700 text-sm font-medium">
+                    <AlertTriangle className="h-4 w-4 text-slate-500" /> {qrError}
+                  </div>
+                  <button
+                    onClick={() => { setQrError(null); }}
+                    className="mt-3 min-h-[44px] w-full inline-flex items-center justify-center rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    다시 스캔
+                  </button>
+                </div>
+              )}
+
+              {/* advisory 게이트 — 보유 있음(warn) */}
+              {qrGate && qrGate.status === "warn" && !qrChecking && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+                  <div className="flex items-center gap-2 text-red-700 text-sm font-bold">
+                    <AlertTriangle className="h-4 w-4" /> 이미 보유 중 · {qrGate.totalOnHand}개
+                  </div>
+                  <p className="mt-1 text-xs text-red-700/90 leading-relaxed break-keep">
+                    {qrGate.topMatch?.name}
+                    {qrGate.topMatch?.catalogNumber ? ` (${qrGate.topMatch.catalogNumber})` : ""}
+                    {qrGate.matchCount > 1 ? ` 외 ${qrGate.matchCount}품목` : ""} 보유.
+                    중복 구매 전 재고를 확인하세요.
+                  </p>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={() => { setQrCheckOpen(false); utilRouter.push(`/dashboard/inventory?search=${encodeURIComponent(qrQuery)}`); }}
+                      className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+                    >
+                      <Package className="h-3.5 w-3.5" /> 재고 보기
+                    </button>
+                    <button
+                      onClick={runQrQuerySearch}
+                      className="flex-1 min-h-[44px] inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors"
+                    >
+                      그래도 검색
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* advisory 게이트 — 보유 없음(clear) */}
+              {qrGate && qrGate.status === "clear" && !qrChecking && (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                  <div className="flex items-center gap-2 text-emerald-700 text-sm font-bold">
+                    <Check className="h-4 w-4" /> 보유 재고 없음
+                  </div>
+                  <p className="mt-1 text-xs text-emerald-700/90 leading-relaxed break-keep">
+                    현재 보유 재고가 없습니다. 신규 구매를 진행해도 됩니다.
+                  </p>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={runQrQuerySearch}
+                      className="flex-1 min-h-[44px] inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors"
+                    >
+                      이 제품 검색
+                    </button>
+                    <button
+                      onClick={() => { setQrGate(null); }}
+                      className="min-h-[44px] px-4 inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors"
+                    >
+                      다시 스캔
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* §11.268a — §11.264f FAB block 제거 (호영님 P0 spec). 모바일 우하단 fixed
