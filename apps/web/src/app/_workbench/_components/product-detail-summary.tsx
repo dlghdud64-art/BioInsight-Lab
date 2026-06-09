@@ -66,6 +66,12 @@ interface ProductDetailSummaryProps {
   variant?: "full" | "compact";
   /** full-page 링크 표시 */
   showDetailLink?: boolean;
+  /**
+   * §1-2④ — 후보 추가(비교/견적) 액션바 노출 여부. 기본 true.
+   * 소싱 퀵뷰(context-rail)는 행(row)이 비교/견적 triage 를 담당하므로 false 로 억제 →
+   * 퀵뷰는 스펙 peek + '전체 상세 보기' 단일 전진 CTA 만(행 액션 복제 제거).
+   */
+  showCandidateActions?: boolean;
 }
 
 export function ProductDetailSummary({
@@ -78,6 +84,7 @@ export function ProductDetailSummary({
   requestCount = 0,
   variant = "full",
   showDetailLink = true,
+  showCandidateActions = true,
 }: ProductDetailSummaryProps) {
   // §11.203 — imageUrl 없으면 immediate fallback (404 spam 차단).
   const [imgError, setImgError] = useState(!data.imageUrl);
@@ -201,13 +208,14 @@ export function ProductDetailSummary({
         </div>
       </div>
 
-      {/* 액션 바 — 비교 primary, 견적 secondary */}
-      {(onToggleCompare || onToggleRequest) && (
+      {/* 액션 바 — 비교 primary, 견적 secondary.
+          §1-2④ — showCandidateActions=false(소싱 퀵뷰)면 억제: 행(row)이 비교/견적 triage 담당. */}
+      {showCandidateActions !== false && (onToggleCompare || onToggleRequest) && (
         <div className="px-4 py-3 border-b border-slate-200 space-y-1.5">
           {onToggleCompare && (
             isInCompare ? (
               <div className="w-full h-7 px-3 rounded text-xs font-medium inline-flex items-center gap-1.5 bg-blue-50 text-blue-600 border border-blue-200">
-                <Check className="h-3 w-3" />비교 후보에 포함됨
+                <Check className="h-3 w-3" />비교에 포함됨
               </div>
             ) : (
               <Button
@@ -215,14 +223,14 @@ export function ProductDetailSummary({
                 className="w-full h-7 text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white"
                 onClick={onToggleCompare}
               >
-                <GitCompare className="h-3 w-3 mr-1.5" />비교 후보에 추가
+                <GitCompare className="h-3 w-3 mr-1.5" />비교 추가
               </Button>
             )
           )}
           {onToggleRequest && (
             isInRequest ? (
               <div className="w-full h-7 px-3 rounded text-xs font-medium inline-flex items-center gap-1.5 bg-slate-500/10 text-slate-500 border border-slate-500/15">
-                <Check className="h-3 w-3" />견적 후보에 포함됨
+                <Check className="h-3 w-3" />견적에 포함됨
               </div>
             ) : (
               <Button
@@ -231,22 +239,24 @@ export function ProductDetailSummary({
                 className="w-full h-7 text-xs font-medium border-slate-200 text-slate-500 hover:text-slate-700"
                 onClick={onToggleRequest}
               >
-                <FileText className="h-3 w-3 mr-1.5" />견적 후보에 추가
+                <FileText className="h-3 w-3 mr-1.5" />견적 담기
               </Button>
             )
           )}
         </div>
       )}
 
-      {/* Full detail link (fallback) */}
+      {/* §1-2④ — 전진 CTA 단일화: 약한 텍스트 링크 → 강한 primary 버튼.
+          퀵뷰는 후보 추가를 행에 넘기고(showCandidateActions=false), 깊은 결정은
+          '전체 상세 보기' 하나로 전진(dead peek 방지). */}
       {showDetailLink && (
-        <div className="px-4 py-2">
+        <div className="px-4 py-3">
           <Link
             href={`/products/${data.id}`}
-            className="flex items-center gap-2 text-xs text-slate-500 hover:text-slate-700 transition-colors py-1"
+            className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-500 transition-colors"
           >
-            <ExternalLink className="h-3 w-3" />
-            전체 상세 페이지
+            <ExternalLink className="h-3.5 w-3.5" />
+            전체 상세 보기
           </Link>
         </div>
       )}

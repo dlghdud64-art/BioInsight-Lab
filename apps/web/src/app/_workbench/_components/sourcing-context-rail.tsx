@@ -72,12 +72,12 @@ export function SourcingContextRail({
         <div className="flex items-center gap-1.5 px-4 py-1.5 border-b border-slate-200 bg-slate-50">
           {isInCompare && (
             <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
-              <GitCompare className="h-3 w-3" />비교 후보에 포함됨
+              <GitCompare className="h-3 w-3" />비교에 포함됨
             </span>
           )}
           {isInRequest && (
             <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <FileText className="h-3 w-3" />견적 후보에 포함됨
+              <FileText className="h-3 w-3" />견적에 포함됨
             </span>
           )}
         </div>
@@ -95,6 +95,9 @@ export function SourcingContextRail({
           requestCount={requestCount}
           variant="full"
           showDetailLink={true}
+          /* §1-2④ — 퀵뷰는 행(row)이 비교/견적 triage 담당 → peek 후보 추가 억제.
+             전진은 '전체 상세 보기' 단일 CTA + 아래 '다음 단계' 행동형 링크. */
+          showCandidateActions={false}
         />
 
         {/* 비로그인 안내 */}
@@ -111,7 +114,7 @@ export function SourcingContextRail({
           </div>
           <div className="space-y-1.5 text-xs">
             {!isInCompare && !isInRequest && (
-              <p className="text-slate-600">비교 후보에 추가하거나 견적 후보에 추가</p>
+              <p className="text-slate-600">비교 추가 또는 견적 담기</p>
             )}
             {isInCompare && compareCount >= 2 && onOpenCompareWindow && (
               <button
@@ -123,7 +126,7 @@ export function SourcingContextRail({
               </button>
             )}
             {isInCompare && compareCount < 2 && (
-              <p className="text-yellow-600">비교 후보 1개 더 추가</p>
+              <p className="text-yellow-600">비교 1개 더 추가</p>
             )}
             {isInRequest && onOpenRequestWindow && (
               <button

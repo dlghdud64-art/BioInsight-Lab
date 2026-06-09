@@ -12,7 +12,6 @@ import Image from "next/image";
 import {
   Package,
   ShoppingCart,
-  Heart,
   PenLine,
   ExternalLink,
   ClipboardCopy,
@@ -23,7 +22,6 @@ import {
   AlertTriangle,
   FileText,
   Check,
-  Sparkles,
   ChevronDown,
   ChevronUp,
   ChevronRight,
@@ -54,7 +52,6 @@ import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { getProductSafetyLevel, HAZARD_CODE_DESCRIPTIONS } from "@/lib/utils/safety-visualization";
 import { getRegulationLinksForProduct } from "@/lib/regulation/links";
 import { filterComplianceLinksForProduct, getRuleDescription } from "@/lib/compliance-links";
-import { ReviewSection } from "@/components/products/review-section";
 import { PersonalizedRecommendations } from "@/components/products/personalized-recommendations";
 import { Disclaimer } from "@/components/legal/disclaimer";
 
@@ -65,12 +62,8 @@ export default function ProductDetailPage() {
   const { data: session } = useSession();
   const { data: fetchedProduct, isLoading, error } = useProduct(id);
   const { addProduct, removeProduct, hasProduct } = useCompareStore();
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
   const [translatedDescription, setTranslatedDescription] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
-  const [generatedUsage, setGeneratedUsage] = useState<string | null>(null);
-  const [isGeneratingUsage, setIsGeneratingUsage] = useState(false);
   const [isSafetyEditing, setIsSafetyEditing] = useState(false);
   const [safetyForm, setSafetyForm] = useState<{
     hazardCodes: string;
@@ -136,57 +129,12 @@ export default function ProductDetailPage() {
   const organizationLinks = filteredComplianceLinks.filter((link) => link.linkType === "organization");
   const isAdmin = session?.user?.role === "ADMIN";
 
-  // 즐겨찾기 확인
-  useEffect(() => {
-    if (id && session) {
-      fetch(`/api/favorites?productId=${id}`)
-        .then((res) => res.json())
-        .then((data) => setIsFavorite(data.isFavorite || false))
-        .catch(() => {});
-    }
-  }, [id, session]);
-
   // 제품 조회 기록
   useEffect(() => {
     if (id && session) {
       fetch(`/api/products/${id}/view`, { method: "POST" }).catch(() => {});
     }
   }, [id, session]);
-
-  const toggleFavorite = async () => {
-    if (!session) {
-      toast({
-        title: "로그인 필요",
-        description: "즐겨찾기를 사용하려면 로그인이 필요합니다.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsTogglingFavorite(true);
-    try {
-      const response = await fetch(`/api/favorites`, {
-        method: isFavorite ? "DELETE" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: id }),
-      });
-
-      if (response.ok) {
-        setIsFavorite(!isFavorite);
-        toast({
-          title: isFavorite ? "즐겨찾기 제거됨" : "즐겨찾기 추가됨",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "오류",
-        description: "즐겨찾기 업데이트에 실패했습니다.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsTogglingFavorite(false);
-    }
-  };
 
   const handleTranslate = async () => {
     if (!product.descriptionEn) return;
@@ -345,11 +293,6 @@ export default function ProductDetailPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-4">
-                        {product.grade && (
-                          <Badge className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wide rounded-full">
-                            {product.grade}
-                          </Badge>
-                        )}
                         {/* 재고 상태는 표시하지 않음 (확실하지 않은 정보) */}
                       </div>
                       <CardTitle className="text-2xl md:text-4xl font-bold text-slate-100 leading-tight mb-3 break-words">{product.name}</CardTitle>
@@ -367,11 +310,6 @@ export default function ProductDetailPage() {
                     {product.category && (
                       <Badge variant="outline" className="text-[10px] md:text-sm">
                         {PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES]}
-                      </Badge>
-                    )}
-                    {product.grade && (
-                      <Badge variant="secondary" className="text-[10px] md:text-sm">
-                        {product.grade}
                       </Badge>
                     )}
                     {product.brand && (
@@ -504,14 +442,8 @@ export default function ProductDetailPage() {
                       <h3 className="text-lg font-bold text-slate-100">상세 스펙 (Specifications)</h3>
                     </div>
                     <div className="p-4 md:p-8 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 bg-pn/50 rounded-b-3xl">
-                      {(product.grade || product.specification || product.catalogNumber || product.regulatoryCompliance || product.brand || product.category) ? (
+                      {(product.specification || product.catalogNumber || product.regulatoryCompliance || product.brand || product.category) ? (
                         <>
-                          {product.grade && (
-                            <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-pg/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
-                              <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">Grade</span>
-                              <span className="text-sm md:text-lg font-bold text-slate-100 break-words">{product.grade}</span>
-                            </div>
-                          )}
                           {product.specification && (
                             <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-pg/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
                               <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">규격/용량</span>
@@ -569,58 +501,19 @@ export default function ProductDetailPage() {
                     </div>
                   )}
 
-                  {/* 사용 용도 */}
+                  {/* 사용 용도 — §1-2⑤ AI 생성 버튼 제거(관통원칙: 별도 AI UI 금지 + non-persist).
+                      product.usageDescription(DB 캐노니컬)만 노출. */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-semibold text-sm md:text-base">사용 용도</h3>
-                      {!generatedUsage && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={async () => {
-                            setIsGeneratingUsage(true);
-                            try {
-                              const response = await fetch(`/api/products/${id}/usage`, { method: "POST" });
-                              if (response.ok) {
-                                const data = await response.json();
-                                setGeneratedUsage(data.usageDescription);
-                                toast({
-                                  title: "사용 용도 생성 완료",
-                                  description: "GPT 기반 사용 용도 설명이 생성되었습니다.",
-                                });
-                              }
-                            } catch (error) {
-                              toast({
-                                title: "생성 실패",
-                                variant: "destructive",
-                              });
-                            } finally {
-                              setIsGeneratingUsage(false);
-                            }
-                          }}
-                          disabled={isGeneratingUsage}
-                        >
-                          {isGeneratingUsage ? (
-                            <>
-                              <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                              생성 중...
-                            </>
-                          ) : (
-                            <>
-                              <Sparkles className="h-3 w-3 mr-2" />
-                              AI로 생성
-                            </>
-                          )}
-                        </Button>
-                      )}
                     </div>
-                    {(product.usageDescription || generatedUsage) ? (
+                    {product.usageDescription ? (
                       <p className="text-xs md:text-sm text-slate-700 whitespace-pre-wrap">
-                        {generatedUsage || product.usageDescription}
+                        {product.usageDescription}
                       </p>
                     ) : (
                       <p className="text-xs md:text-sm text-slate-400 italic">
-                        사용 용도 정보가 없습니다. "AI로 생성" 버튼을 클릭하여 생성할 수 있습니다.
+                        등록된 사용 용도 정보가 없습니다.
                       </p>
                     )}
                   </div>
@@ -1013,18 +906,7 @@ export default function ProductDetailPage() {
                         }}
                       >
                           <PenLine className="w-4 h-4" />
-                          바로 비교
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="py-3 bg-pn/80 border border-bd/50 hover:border-red-400 text-gray-700 hover:text-red-500 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
-                          onClick={toggleFavorite}
-                          disabled={isTogglingFavorite}
-                        >
-                          <Heart
-                            className={`w-4 h-4 ${isFavorite ? "fill-red-500 text-red-500" : ""}`}
-                          />
-                          찜하기
+                          비교 추가
                         </Button>
                       </div>
                     </div>
@@ -1043,10 +925,8 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          {/* 리뷰 섹션 */}
+          {/* §1-2⑥ 리뷰 섹션 제거(리뷰 liquidity 0). 추천 섹션은 유지. */}
           <div className="mt-8">
-            <ReviewSection productId={id} />
-            
             {/* 대체품 추천 */}
             <AlternativeProductsSection productId={id} currentProduct={product} />
             
