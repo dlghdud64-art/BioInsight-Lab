@@ -57,6 +57,8 @@ import { lookupInventory, scanLabel, type LabelScanResponse } from "../hooks/use
 import { mapOcrConfidence } from "../lib/ocr/capture-quality";
 // §gs1-datamatrix — 시약 라벨 2D datamatrix(GS1) 결정적 디코드. OCR보다 Lot/유효기간 신뢰 ↑.
 import { parseGs1 } from "../lib/scan/gs1-parser";
+// §1-2/PLAN — 라벨 저신뢰 commit 게이트(rule 2 Lot·EXP 명시확인, rule 3 datamatrix verified 우회).
+import { evaluateLabelCommitGate } from "../lib/scan/label-commit-gate";
 import { logEvent } from "../lib/analytics";
 
 // §11.319 — 바코드(기존) + 라벨 OCR(신규) 두 모드. label-capture = 촬영/분석 중,
@@ -159,6 +161,9 @@ export default function ScanScreen() {
   const [expiryScanFilled, setExpiryScanFilled] = useState(false);
   const [lotDirty, setLotDirty] = useState(false);
   const [expiryDirty, setExpiryDirty] = useState(false);
+  // §1-2/PLAN rule 3 — datamatrix(GS1) 결정적 디코드 = verified. OCR-fill·수기와 구분.
+  const [lotVerified, setLotVerified] = useState(false);
+  const [expiryVerified, setExpiryVerified] = useState(false);
   // §11.378 — 제품명 사용자 수정 추적. OCR 저신뢰도 + 미보정이면 입고 차단,
   //   제품명을 직접 수정(보정)하면 차단 해제(무효 사진 재고 오염 방지, web 동치).
   const [productNameDirty, setProductNameDirty] = useState(false);
@@ -175,6 +180,7 @@ export default function ScanScreen() {
     setLotScanFilled(false); setExpiryScanFilled(false);
     setGs1Gtin(null);
     setLotDirty(false); setExpiryDirty(false);
+    setLotVerified(false); setExpiryVerified(false);
     setProductNameDirty(false);
     setCapturedUri(null);
     scanLockRef.current = false;
@@ -248,6 +254,9 @@ export default function ScanScreen() {
         }));
         setLotScanFilled(Boolean(gs1.lotNo));
         setExpiryScanFilled(Boolean(gs1.expirationDate));
+        // §1-2/PLAN rule 3 — datamatrix Lot/EXP = verified(결정적) → commit 게이트 우회.
+        setLotVerified(Boolean(gs1.lotNo));
+        setExpiryVerified(Boolean(gs1.expirationDate));
         setGs1Gtin(gs1.gtin);
         logEvent("gs1_datamatrix_capture", {
           gtin: gs1.gtin,
@@ -344,6 +353,9 @@ export default function ScanScreen() {
       setExpiryScanFilled(Boolean(result.parsed.expirationDate));
       setLotDirty(false);
       setExpiryDirty(false);
+      // §1-2/PLAN rule 3 — OCR-fill 은 verified 아님(결정적 아님). datamatrix 경로만 verified.
+      setLotVerified(false);
+      setExpiryVerified(false);
       logEvent("label_scan_success", {
         confidence: result.parsed.confidence,
         matched: result.matchedProduct ? 1 : 0,
@@ -362,8 +374,9 @@ export default function ScanScreen() {
   const updateLabelField = useCallback((key: keyof LabelForm, value: string) => {
     setLabelForm((f) => ({ ...f, [key]: value }));
     // §11.340 — 직접 수정 → 수기 출처로 전환.
-    if (key === "lotNumber") setLotDirty(true);
-    if (key === "expirationDate") setExpiryDirty(true);
+    //   §1-2/PLAN rule 3 — 수기 수정 시 verified 해제(결정적 디코드값 아님). dirty=확인으로 commit 허용.
+    if (key === "lotNumber") { setLotDirty(true); setLotVerified(false); }
+    if (key === "expirationDate") { setExpiryDirty(true); setExpiryVerified(false); }
     if (key === "productName") setProductNameDirty(true); // §11.378 — 저신뢰도 게이트 해제
   }, []);
 
@@ -386,6 +399,24 @@ export default function ScanScreen() {
       ? mapOcrConfidence(labelResult.parsed.confidence) === "low"
       : false;
     if (lowConf && !productNameDirty) return;
+    // §1-2/PLAN rule 2~3 — Lot·유효기간 명시 확인(터치/수정) 또는 datamatrix verified 후에만 commit.
+    const gate = evaluateLabelCommitGate({
+      confidence: labelResult ? mapOcrConfidence(labelResult.parsed.confidence) : "high",
+      present: {
+        lot: labelForm.lotNumber.trim() !== "",
+        expiry: labelForm.expirationDate.trim() !== "",
+      },
+      criticalConfirmed: { lot: lotDirty, expiry: expiryDirty },
+      verified: { lot: lotVerified, expiry: expiryVerified },
+      reviewed: productNameDirty,
+    });
+    if (
+      gate.blockers.includes("lot-unconfirmed") ||
+      gate.blockers.includes("expiry-unconfirmed")
+    ) {
+      setErrorMessage("Lot 번호·유효기한을 확인(터치/수정)한 뒤 진행해주세요.");
+      return;
+    }
     const matchedInventoryId = labelResult?.matchedInventory?.id;
     if (matchedInventoryId) {
       router.replace({
@@ -410,7 +441,7 @@ export default function ScanScreen() {
         },
       });
     }
-  }, [labelResult, labelForm, productNameDirty]);
+  }, [labelResult, labelForm, productNameDirty, lotDirty, expiryDirty, lotVerified, expiryVerified]);
 
   const handleAction = useCallback(
     (action: string) => {
@@ -516,10 +547,27 @@ export default function ScanScreen() {
       ? mapOcrConfidence(labelResult.parsed.confidence)
       : "low";
     const lowConf = !isGs1Capture && level === "low";
+    // §1-2/PLAN rule 2~3 — Lot·유효기간 commit 게이트. datamatrix(verified) 우회.
+    const commitGate = evaluateLabelCommitGate({
+      confidence: isGs1Capture ? "high" : level,
+      present: {
+        lot: labelForm.lotNumber.trim() !== "",
+        expiry: labelForm.expirationDate.trim() !== "",
+      },
+      criticalConfirmed: { lot: lotDirty, expiry: expiryDirty },
+      verified: { lot: lotVerified, expiry: expiryVerified },
+      reviewed: productNameDirty,
+    });
+    const criticalUnconfirmed =
+      commitGate.blockers.includes("lot-unconfirmed") ||
+      commitGate.blockers.includes("expiry-unconfirmed");
     // §11.378 — 입고/등록 이동 차단 게이트: 제품명 빈값 OR (저신뢰 + 미보정).
     //   제품명 수정 시(productNameDirty) 저신뢰 차단 해제. GS1 경로는 lowConf=false.
+    //   §1-2/PLAN — Lot·유효기간 미확인(criticalUnconfirmed) 추가.
     const receiveBlocked =
-      !labelForm.productName.trim() || (lowConf && !productNameDirty);
+      !labelForm.productName.trim() ||
+      (lowConf && !productNameDirty) ||
+      criticalUnconfirmed;
     const confTone =
       level === "high"
         ? { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", label: "높은 신뢰도" }
@@ -597,6 +645,17 @@ export default function ScanScreen() {
             </View>
           )}
 
+          {/* §1-2/PLAN rule 2 — Lot·유효기간 미확인 시 진행 차단 사유(no-op 금지). datamatrix는 verified로 면제. */}
+          {criticalUnconfirmed && (
+            <View className="flex-row items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
+              <AlertCircle size={16} color="#ef4444" />
+              <Text className="flex-1 text-xs text-red-600 leading-5">
+                Lot 번호·유효기한을 확인(터치/수정)해주세요. 자동 인식값은 확인 후 입고됩니다.
+                (재고 오염 방지)
+              </Text>
+            </View>
+          )}
+
           {/* DB 매칭 표시 */}
           {labelResult?.matchedProduct && (
             <View className="flex-row items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2.5 mb-4">
@@ -637,6 +696,9 @@ export default function ScanScreen() {
                     const b = fieldSource(labelForm.lotNumber, lotScanFilled, lotDirty);
                     return b ? <Text className={`text-[9px] px-1.5 py-0.5 rounded ${b.cls}`}>{b.label}</Text> : null;
                   })()}
+                  {commitGate.fieldMarks.lot === "needs-confirm" && (
+                    <Text className="text-[10px] font-medium text-red-600">· 확인 필요</Text>
+                  )}
                 </View>
                 <TextInput
                   className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800"
@@ -655,6 +717,9 @@ export default function ScanScreen() {
                     const b = fieldSource(labelForm.expirationDate, expiryScanFilled, expiryDirty);
                     return b ? <Text className={`text-[9px] px-1.5 py-0.5 rounded ${b.cls}`}>{b.label}</Text> : null;
                   })()}
+                  {commitGate.fieldMarks.expiry === "needs-confirm" && (
+                    <Text className="text-[10px] font-medium text-red-600">· 확인 필요</Text>
+                  )}
                 </View>
                 <TextInput
                   className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800"

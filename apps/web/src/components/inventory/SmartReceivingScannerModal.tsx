@@ -52,6 +52,8 @@ import {
   ArrowRight,
 } from "lucide-react";
 import type { QuoteParseResult, ParsedQuoteDocument } from "@/lib/ocr/gemini-quote-parser";
+// §1-2/PLAN — 라벨 저신뢰 commit 게이트(rule 2: Lot·유효기간 신뢰도 무관 명시 확인).
+import { evaluateLabelCommitGate } from "@/lib/ocr/label-commit-gate";
 
 /* ── /api/quotes/parse-image response (QuoteScannerModal §11.290 패턴 정합) ── */
 interface QuoteScanApiResponse extends QuoteParseResult {
@@ -221,6 +223,10 @@ export function SmartReceivingScannerModal({
   //   (키보드·잡동사니 사진 등) + 사용자 미보정이면 입고 등록 차단(재고 오염 방지).
   //   제품명 직접 수정 시 차단 해제(수동 보정 허용). LabelScannerModal §11.378 패턴 이식.
   const [productNameDirty, setProductNameDirty] = useState(false);
+  // §1-2/PLAN rule 2 — Lot·유효기간 명시 확인(터치/수정) 추적. OCR 자동채움 자동수용 금지.
+  //   웹 모달은 datamatrix 없음(verified false) → 사용자 확인이 유일 경로.
+  const [lotConfirmed, setLotConfirmed] = useState(false);
+  const [expiryConfirmed, setExpiryConfirmed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {
@@ -231,6 +237,8 @@ export function SmartReceivingScannerModal({
     setPoCandidates([]);
     setSelectedOrderId(null);
     setProductNameDirty(false);
+    setLotConfirmed(false);
+    setExpiryConfirmed(false);
   };
 
   const handleClose = () => {
@@ -342,6 +350,27 @@ export function SmartReceivingScannerModal({
       toast.error("라벨 인식 신뢰도가 낮습니다. 제품명을 확인·수정한 뒤 다시 시도해 주세요.");
       return;
     }
+    // §1-2/PLAN rule 2 — Lot·유효기간은 신뢰도 무관 명시 확인(터치/수정) 후에만 commit.
+    //   OCR 자동채움 자동수용 금지(재고 오염 방지). datamatrix 없는 웹은 확인이 유일 경로.
+    {
+      const gate = evaluateLabelCommitGate({
+        confidence: scanResult.confidence,
+        present: {
+          lot: form.lotNumber.trim() !== "",
+          expiry: form.expirationDate.trim() !== "",
+        },
+        criticalConfirmed: { lot: lotConfirmed, expiry: expiryConfirmed },
+        verified: { lot: false, expiry: false },
+        reviewed: productNameDirty,
+      });
+      if (
+        gate.blockers.includes("lot-unconfirmed") ||
+        gate.blockers.includes("expiry-unconfirmed")
+      ) {
+        toast.error("Lot 번호·유효기한을 확인(터치/수정)한 뒤 입고 등록할 수 있습니다.");
+        return;
+      }
+    }
     if (!form.productName.trim()) {
       toast.error("품목명을 입력해 주세요.");
       return;
@@ -389,6 +418,24 @@ export function SmartReceivingScannerModal({
       setStep("error");
     }
   };
+
+  // §1-2/PLAN rule 1~3 — OCR 경로(발주매핑 제외)의 commit 게이트.
+  //   웹 모달은 datamatrix 없음 → verified false. Lot·유효기간은 터치/수정(확인) 전 commit 차단.
+  const commitGate = evaluateLabelCommitGate({
+    confidence: scanResult?.confidence ?? "high",
+    present: {
+      lot: form.lotNumber.trim() !== "",
+      expiry: form.expirationDate.trim() !== "",
+    },
+    criticalConfirmed: { lot: lotConfirmed, expiry: expiryConfirmed },
+    verified: { lot: false, expiry: false },
+    reviewed: productNameDirty,
+  });
+  // 발주매핑(selectedOrderId)은 OCR 무관 → 게이트 제외(우회 아님).
+  const criticalUnconfirmed =
+    !selectedOrderId &&
+    (commitGate.blockers.includes("lot-unconfirmed") ||
+      commitGate.blockers.includes("expiry-unconfirmed"));
 
   const body = (
     <>
@@ -529,22 +576,38 @@ export function SmartReceivingScannerModal({
 
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <Label htmlFor="srm-lotNumber" className="text-xs font-semibold">LOT 번호</Label>
+                  <Label htmlFor="srm-lotNumber" className="text-xs font-semibold">
+                    LOT 번호
+                    {commitGate.fieldMarks.lot === "needs-confirm" && (
+                      <span className="ml-1 text-[10px] font-medium text-red-600">· 확인 필요</span>
+                    )}
+                  </Label>
                   <Input
                     id="srm-lotNumber"
                     value={form.lotNumber}
-                    onChange={(e) => setForm({ ...form, lotNumber: e.target.value })}
+                    onChange={(e) => {
+                      setForm({ ...form, lotNumber: e.target.value });
+                      setLotConfirmed(true); // §1-2/PLAN rule 2 — 터치/수정 = 명시 확인
+                    }}
                     placeholder="2587934"
                     className="mt-1 h-9 text-sm"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="srm-expirationDate" className="text-xs font-semibold">유효기한</Label>
+                  <Label htmlFor="srm-expirationDate" className="text-xs font-semibold">
+                    유효기한
+                    {commitGate.fieldMarks.expiry === "needs-confirm" && (
+                      <span className="ml-1 text-[10px] font-medium text-red-600">· 확인 필요</span>
+                    )}
+                  </Label>
                   <Input
                     id="srm-expirationDate"
                     type="text"
                     value={form.expirationDate}
-                    onChange={(e) => setForm({ ...form, expirationDate: e.target.value })}
+                    onChange={(e) => {
+                      setForm({ ...form, expirationDate: e.target.value });
+                      setExpiryConfirmed(true); // §1-2/PLAN rule 2 — 터치/수정 = 명시 확인
+                    }}
                     placeholder="2026-12-31"
                     className="mt-1 h-9 text-sm"
                   />
@@ -622,15 +685,22 @@ export function SmartReceivingScannerModal({
                   입고 등록할 수 있습니다. (재고 오염 방지)
                 </div>
               )}
+            {/* §1-2/PLAN rule 2 — Lot·유효기간 미확인 시 저장 차단 사유(no-op 금지). */}
+            {criticalUnconfirmed && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">
+                Lot 번호·유효기한을 확인(터치/수정)해 주세요. 자동 인식값은 확인 후 입고됩니다. (재고 오염 방지)
+              </div>
+            )}
             <div className="space-y-2 pt-1">
               <Button
                 type="button"
                 data-testid="smart-receiving-submit-cta"
                 onClick={handleSubmit}
                 disabled={
-                  !selectedOrderId &&
-                  scanResult?.confidence === "low" &&
-                  !productNameDirty
+                  (!selectedOrderId &&
+                    scanResult?.confidence === "low" &&
+                    !productNameDirty) ||
+                  criticalUnconfirmed
                 }
                 className="w-full h-11 min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >

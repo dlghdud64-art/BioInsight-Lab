@@ -26,6 +26,8 @@ import {
   X, Sparkles, Upload, FileText, Edit,
 } from "lucide-react";
 import type { LabelParseResult } from "@/lib/ocr/label-parser";
+// §1-2/PLAN — 라벨 저신뢰 commit 게이트(rule 2: Lot·유효기간 신뢰도 무관 명시 확인).
+import { evaluateLabelCommitGate } from "@/lib/ocr/label-commit-gate";
 // §11.319 — capture-quality 휴리스틱(흐림/조명 게이트) + OCR 신뢰도 매핑.
 //   라이브 프레임 품질 평가는 웹 전용(canvas getImageData 픽셀 접근 가능).
 import {
@@ -582,6 +584,25 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
 
   /* ── 입고 완료 (직접 처리) ── */
   const handleDirectReceive = () => {
+    // §1-2/PLAN rule 2 — 직접 입고(commit) 시 Lot·유효기간 명시 확인(터치/수정) 강제.
+    //   '입고 폼에 적용' 핸드오프(handleApplyToForm)는 받는 폼이 게이트 담당 → 여기 제외.
+    const gate = evaluateLabelCommitGate({
+      confidence: scanResult ? mapOcrConfidence(scanResult.parsed.confidence) : "high",
+      present: {
+        lot: formData.lotNumber.trim() !== "",
+        expiry: formData.expirationDate.trim() !== "",
+      },
+      criticalConfirmed: { lot: lotDirty, expiry: expiryDirty },
+      verified: { lot: false, expiry: false },
+      reviewed: productNameDirty,
+    });
+    if (
+      gate.blockers.includes("lot-unconfirmed") ||
+      gate.blockers.includes("expiry-unconfirmed")
+    ) {
+      toast.error("Lot 번호·유효기한을 확인(터치/수정)한 뒤 입고할 수 있습니다.");
+      return;
+    }
     if (onDirectReceive) {
       onDirectReceive(formData, scanResult);
     } else if (onScanComplete && scanResult) {
@@ -601,6 +622,22 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
   /* ═══════════════════════════════════════════════════════════ */
   /* 렌더링                                                      */
   /* ═══════════════════════════════════════════════════════════ */
+  // §1-2/PLAN rule 1~3 — 직접 입고(commit) 경로 게이트. 폼 적용(handoff)은 제외.
+  const commitGate = evaluateLabelCommitGate({
+    confidence: scanResult ? mapOcrConfidence(scanResult.parsed.confidence) : "high",
+    present: {
+      lot: formData.lotNumber.trim() !== "",
+      expiry: formData.expirationDate.trim() !== "",
+    },
+    criticalConfirmed: { lot: lotDirty, expiry: expiryDirty },
+    verified: { lot: false, expiry: false },
+    reviewed: productNameDirty,
+  });
+  const criticalUnconfirmed =
+    !!onDirectReceive &&
+    (commitGate.blockers.includes("lot-unconfirmed") ||
+      commitGate.blockers.includes("expiry-unconfirmed"));
+
   const content = (
     <div className="flex flex-col h-full">
       <style>{scanAnimationStyle}</style>
@@ -1148,6 +1185,9 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                     const b = fieldSourceBadge(formData.lotNumber, lotScanFilled, lotDirty);
                     return b ? <span data-testid="lot-source-badge" className={`text-[9px] px-1.5 py-0 rounded ${b.cls}`}>{b.label}</span> : null;
                   })()}
+                  {onDirectReceive && commitGate.fieldMarks.lot === "needs-confirm" && (
+                    <span className="text-[10px] font-medium text-red-600">· 확인 필요</span>
+                  )}
                 </div>
                 <Input
                   value={formData.lotNumber}
@@ -1166,6 +1206,9 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                     const b = fieldSourceBadge(formData.expirationDate, expiryScanFilled, expiryDirty);
                     return b ? <span data-testid="expiry-source-badge" className={`text-[9px] px-1.5 py-0 rounded ${b.cls}`}>{b.label}</span> : null;
                   })()}
+                  {onDirectReceive && commitGate.fieldMarks.expiry === "needs-confirm" && (
+                    <span className="text-[10px] font-medium text-red-600">· 확인 필요</span>
+                  )}
                 </div>
                 {/* §11.371-4b — type=date 모바일 native 비대(min-height) 차단. appearance-none 으로
                     native control 박스 제거 → 다른 필드와 동일 h-9 적용. 달력 picker indicator 는
@@ -1235,6 +1278,17 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
               </div>
             )}
 
+          {/* §1-2/PLAN rule 2 — 직접 입고 시 Lot·유효기간 미확인 차단 사유(no-op 금지). */}
+          {criticalUnconfirmed && (
+            <div className="flex items-start gap-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-3">
+              <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+              <span>
+                Lot 번호·유효기한을 확인(터치/수정)해 주세요. 자동 인식값은 확인 후 입고됩니다.
+                (재고 오염 방지)
+              </span>
+            </div>
+          )}
+
           {/* ── 액션 버튼 ── */}
           <div className="flex items-center gap-3 mt-auto pt-3 border-t border-slate-100">
             <Button variant="outline" onClick={resetState} className="gap-1.5">
@@ -1248,7 +1302,9 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                 // §11.378 — 저신뢰도 + 미보정 차단. 수동 보정(productNameDirty) 시 허용.
                 (!!scanResult &&
                   mapOcrConfidence(scanResult.parsed.confidence) === "low" &&
-                  !productNameDirty)
+                  !productNameDirty) ||
+                // §1-2/PLAN rule 2 — 직접 입고 시 Lot·유효기간 미확인 차단.
+                criticalUnconfirmed
               }
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white gap-2"
             >
