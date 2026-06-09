@@ -3,6 +3,8 @@
 import { csrfFetch } from "@/lib/api-client";
 // §11.318 1d-2 — 혼합 카테고리 가드(warn→block, B안). 환각 비교 자동 분석 차단.
 import { validateCompareCategoryIntegrity } from "@/lib/ai/compare-review-engine";
+// §1-4 — compare 2단계 게이트. 가격·납기 보유 후보 ≥2일 때만 AI 비교 분석(조숙 분석 차단).
+import { evaluateCompareStage } from "@/lib/ai/sourcing-signal-surface";
 import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
@@ -163,6 +165,16 @@ export function ComparisonModal({
     [compareProducts],
   );
 
+  // §1-4 — 2단계 게이트: 가격·납기 보유 후보 수 → pre-quote(스펙비교+견적요청) / post-quote(AI 비교 분석).
+  const quoteReadyCount = useMemo(
+    () =>
+      compareProducts.filter(
+        (p) => typeof p.price === "number" && p.price > 0 && !!p.leadTime,
+      ).length,
+    [compareProducts],
+  );
+  const compareStage = evaluateCompareStage(quoteReadyCount);
+
   const fetchAnalysis = async () => {
     const targets = products.filter((p) => compareIds.includes(p.id));
     if (targets.length === 0) return;
@@ -195,7 +207,9 @@ export function ComparisonModal({
       setActiveScenario(null);
       // §11.318 1d-2 — direct(카테고리 정합)일 때만 자동 분석. mixed/blocked 는
       //   환각 방지 위해 자동 호출 차단, 사용자가 "그래도 분석"으로 수동 우회.
-      if (categoryGuard.compareMode === "direct") {
+      // §1-4 — 가격·납기 보유 후보 ≥2(post-quote)일 때만 자동 분석. 미만(pre-quote)은
+      //   조숙 분석 차단 → 스펙 비교 + "견적 요청 만들기" primary 로 유도(§4 데이터 없는데 분석 금지).
+      if (categoryGuard.compareMode === "direct" && compareStage.canAiAnalyze) {
         fetchAnalysis();
       }
     }
@@ -285,6 +299,33 @@ export function ComparisonModal({
                 className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-yellow-400 bg-yellow-100 text-yellow-800 text-xs font-medium hover:bg-yellow-200 active:scale-95 transition-all"
               >
                 <Sparkles className="h-3.5 w-3.5" /> 그래도 분석
+              </button>
+            </div>
+          )}
+
+          {/* §1-4 — pre-quote 게이트: 가격·납기 보유 후보 <2 면 AI 비교 분석 대신 스펙 비교 +
+              "견적 요청 만들기" 유도(조숙 분석 차단). 카테고리 정합(direct)인데 데이터만 부족한 경우. */}
+          {!loading && !result && categoryGuard.compareMode === "direct" && !compareStage.canAiAnalyze && (
+            <div
+              data-testid="compare-pre-quote-gate"
+              className="mx-1 my-2 px-4 py-4 rounded-lg border border-blue-200 bg-blue-50 space-y-2.5"
+            >
+              <div className="flex items-start gap-2">
+                <Scale className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-blue-800">먼저 견적을 받아 가격·납기를 확보하세요</p>
+                  <p className="text-xs text-blue-700 mt-0.5">
+                    가격·납기 보유 후보가 2건 미만이라 AI 비교 분석은 아직 신뢰할 수 없습니다.
+                    제조사·규격/용량·분류 등 스펙은 아래에서 비교하고, 견적 요청으로 가격·납기를 확보한 뒤 분석하세요.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleOpenRequestWizard}
+                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 active:scale-95 transition-all"
+              >
+                <ArrowRight className="h-3.5 w-3.5" /> 견적 요청 만들기
               </button>
             </div>
           )}

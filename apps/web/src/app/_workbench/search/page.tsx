@@ -107,6 +107,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { generateSearchSummary, type SearchSummaryLine } from "@/lib/ai/suggestion-engine";
+// §1-3 — 소싱 AI surface inline 전환(상단 우선 배너 1개). 별도 "AI 분석" 패널 폐기(§4).
+import { pickTopBanner } from "@/lib/ai/sourcing-signal-surface";
 import { buildSourcingStrategyOptionSet } from "@/lib/ai/decision-option-builders";
 import type { DecisionOption, DecisionOptionSet } from "@/lib/ai/decision-option-set";
 import { buildSourcingAiContextHash, createCompareSeedDraft, type CompareSeedDraft, type SourcingStrategyOptionLocal } from "@/lib/ai/sourcing-operating-layer";
@@ -226,11 +228,7 @@ export default function SearchPage() {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
-  // §11.265b-2 — AI 분석 바텀시트 (호영님 spec "AI 분석은 AI 분석 영역").
-  //   §11.265b-1 hidden 으로 모바일 비표시된 인라인 AI 제안 fallback + TRIAGE 블록을
-  //   바텀시트 안에서 동일 markup 으로 노출. 트리거는 §11.265c 1줄 row 안 "AI 분석"
-  //   버튼 (별도 cluster). 본 phase 는 shell + state + content 만.
-  const [aiAnalysisSheetOpen, setAiAnalysisSheetOpen] = useState(false);
+  // §1-3 — "AI 분석" 바텀시트 state 제거(시트·트리거 폐기). 신호는 상단 배너 + 행 chip inline.
   // ── AI suggestion orchestration (contextHash 기반, SSR-safe) ──
   const [aiDismissedHash, setAiDismissedHash] = useState<string | null>(null);
   // ── P2: Sourcing tri-option operating layer ──
@@ -791,54 +789,8 @@ export default function SearchPage() {
         </SheetContent>
       </Sheet>
 
-      {/* ═══ §11.265b-2 AI 분석 바텀시트 ═══
-            호영님 spec "AI 분석은 AI 분석 영역". §11.265b-1 hidden 으로 모바일 비표시
-            된 인라인 AI 제안 fallback + TRIAGE 블록 markup 을 sheet 안에서 동일 content
-            노출. content / state / handler 는 inline 과 동일 closure 변수 사용 →
-            별도 컴포넌트 분리 X (markup duplication ~80 line acceptable). 트리거는
-            §11.265c 1줄 요약 row 안 "AI 분석" 버튼 (별도 cluster) → 본 phase 는
-            진입 path 0 = dead component 아닌 latent component (사용자 영향 0). */}
-      <Sheet open={aiAnalysisSheetOpen} onOpenChange={setAiAnalysisSheetOpen}>
-        <SheetContent
-          data-testid="sourcing-ai-analysis-sheet"
-          side="bottom"
-          className="h-[85vh] overflow-y-auto p-0"
-        >
-          <div className="px-4 py-3 border-b border-slate-200">
-            <h2 className="text-base font-semibold text-slate-900">AI 분석</h2>
-            <p className="mt-0.5 text-[11px] text-slate-500">
-              {/* §11.292 SOURCING RESULT TRIAGE 제거 — AI 제안 · 차단 사유만 표기 */}
-              AI 제안 · 차단 사유
-            </p>
-          </div>
-          <div className="px-3 py-3 space-y-3">
-            {/* AI 제안 fallback (§11.265b-1 inline 과 동일 content) */}
-            {!shouldShowSourcingStrip && aiShouldShow && aiSearchSummary[0] && (
-              <div className="flex items-center gap-2 px-2.5 py-2 rounded border border-blue-200 bg-blue-50">
-                <span className="text-[10px] font-semibold text-blue-600 shrink-0">AI 제안</span>
-                <span className="text-[11px] text-slate-700 flex-1 break-words">{aiSearchSummary[0].text}</span>
-                <div className="flex items-center gap-1 shrink-0">
-                  {aiSearchSummary.some(l => l.signal === "compare") && compareIds.length === 0 && (
-                    <Button size="sm" variant="ghost" className="h-7 px-2 text-[11px] text-blue-600 hover:bg-blue-50 border border-blue-200"
-                      onClick={() => handleProtectedAction(() => {
-                        products.filter((p: any) => p.vendors?.[0]?.priceInKRW > 0 && !compareIds.includes(p.id)).slice(0, 3)
-                          .forEach((p: any) => toggleCompare(p.id, { name: p.name, brand: p.brand }));
-                      })}>비교 후보 담기</Button>
-                  )}
-                </div>
-              </div>
-            )}
-            {/* §11.292 모바일 sheet TRIAGE 블록 제거 (호영님 P1 1단계 정합).
-                desktop 과 동일 — 분류 정보 가치 0 + Shortlist/Hold/Exclude
-                불필요 중간 단계. AI 동등 대체품 분석은 2단계 비교 surface. */}
-            {!sourcingTriage && (
-              <div className="px-4 py-6 text-center text-xs text-slate-500">
-                현재 분석할 검색 결과가 없습니다.
-              </div>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
+      {/* §1-3 — "AI 분석" 바텀시트(§11.265b-2) 제거. 별도 AI 패널 폐기(§4 ontology=inline 신호).
+            신호는 상단 우선 배너 1개(pickTopBanner) + 행 inline blocker chip 으로 전환. */}
 
       {/* ═══ B + C. Workbench Body ═══ */}
       {hasSearched && !!session?.user ? (
@@ -894,7 +846,8 @@ export default function SearchPage() {
                     onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
                     className="text-xs font-medium min-h-[44px] px-2.5 py-1.5 rounded-md text-slate-700 hover:bg-slate-100 border border-slate-200 bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                   >
-                    <option value="relevance">AI 추천순</option>
+                    {/* §1-2⑦ — 라벨에서 AI 데코 제거(정렬 로직 value=relevance 유지). */}
+                    <option value="relevance">추천순</option>
                     <option value="price_low">가격 낮은순</option>
                     <option value="price_high">가격 높은순</option>
                     <option value="lead_time">배송기간순</option>
@@ -927,26 +880,7 @@ export default function SearchPage() {
                     <SearchPanel />
                   </SheetContent>
                 </Sheet>
-                {/* §11.265c — AI 분석 트리거 버튼 (호영님 spec 1줄 row 4번째 요소).
-                    §11.265b-2 의 aiAnalysisSheetOpen state 활성 → bottom sheet 진입.
-                    모바일에서 §11.265b-1 hidden 된 인라인 AI 제안 + TRIAGE 의
-                    access path 복원. 데스크탑은 inline TRIAGE 가 정상 표시되지만
-                    동일 트리거 노출 (UX 일관성) — 데스크탑 사용자도 sheet 진입 가능. */}
-                <button
-                  type="button"
-                  data-testid="sourcing-ai-analysis-trigger"
-                  aria-label="AI 분석 열기"
-                  onClick={() => setAiAnalysisSheetOpen(true)}
-                  /* §11.266e + §11.268b — sourcing AI 분석 button. min-h-[44px]
-                      (§11.266 family 44px) 보존. violet → slate outline (호영님
-                      §11.268b spec "파란색 강조 제거") — 필터 button (§11.266a)
-                      과 동일 outline. Sparkles / 라벨 / setAiAnalysisSheetOpen
-                      onClick 보존. */
-                  className="inline-flex items-center gap-1.5 text-xs font-medium min-h-[44px] px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors"
-                >
-                  <Sparkles className="h-3.5 w-3.5" />
-                  AI 분석
-                </button>
+                {/* §1-3 — "AI 분석" 트리거 버튼 제거(§4 별도 AI 패널 폐기). 신호는 상단 배너 + 행 chip inline. */}
                 {!!session?.user && hasSearched && searchQuery && (
                   <Link href={`/dashboard/inventory?q=${encodeURIComponent(searchQuery)}`}>
                     {/* §11.266e — 재고 button (데스크탑 한정) 44x44 sibling consistency. */}
@@ -1140,15 +1074,14 @@ export default function SearchPage() {
               )}
             </div>
 
-            {/* ═══ P1 AI 제안 fallback (sourcing strip이 안 보일 때) ═══
-                §11.265b-1 — 모바일 hidden (호영님 spec "AI 분석은 AI 분석 영역").
-                  §11.265c 의 1줄 요약 row 안 "AI 분석" 버튼이 §11.265b-2 의
-                  AiAnalysisBottomSheet 트리거 — 본 inline 은 데스크탑 한정. */}
-            {!shouldShowSourcingStrip && aiShouldShow && (
-              <div className="hidden md:block px-4 pt-1.5">
+            {/* ═══ §1-3 상단 우선 배너 1개 ═══
+                §11.265b-2 시트·트리거 폐기 → 모든 뷰포트에서 우선 신호 1줄 inline 노출.
+                pickTopBanner 로 신호 우선순위(caution>compare>request>info) 최고 1건만.
+                "AI 제안" 라벨 폐기(§1-3), 검색결과 한정(비교 분석 아님). */}
+            {!shouldShowSourcingStrip && aiShouldShow && pickTopBanner(aiSearchSummary) && (
+              <div className="block px-4 pt-1.5" data-testid="sourcing-top-banner">
                 <div className="flex items-center gap-2 px-2.5 py-1.5 rounded border border-blue-200 bg-blue-50">
-                  <span className="text-[10px] font-semibold text-blue-600 shrink-0">AI 제안</span>
-                  <span className="text-[10px] text-slate-600 flex-1 truncate">{aiSearchSummary[0]?.text}</span>
+                  <span className="text-[10px] text-slate-600 flex-1 truncate">{pickTopBanner(aiSearchSummary)?.text}</span>
                   <div className="flex items-center gap-1 shrink-0">
                     {aiSearchSummary.some(l => l.signal === "compare") && compareIds.length === 0 && (
                       <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-blue-600 hover:bg-blue-50 border border-blue-200"

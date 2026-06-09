@@ -47,85 +47,39 @@ describe("§11.268b 정렬 select min-h-[44px] (§11.266 family 44px)", () => {
     expect(src()).toContain("setSortBy(e.target.value");
   });
 
-  it("정렬 select 4 option 보존 (AI 추천순 / 가격낮은순 / 가격높은순 / 배송기간순)", () => {
+  it("정렬 select 4 option 보존 (추천순 / 가격낮은순 / 가격높은순 / 배송기간순) — §1-2⑦ AI 데코 제거", () => {
     const content = src();
-    expect(content).toContain("AI 추천순");
+    // §1-2⑦ — "AI 추천순"→"추천순"(value=relevance 유지). AI 데코 라벨 supersede.
+    expect(content).toContain("추천순");
+    expect(content).not.toContain("AI 추천순");
     expect(content).toContain("가격 낮은순");
     expect(content).toContain("가격 높은순");
     expect(content).toContain("배송기간순");
   });
 });
 
-describe("§11.268b AI 분석 button violet → slate outline (필터 동일)", () => {
-  it("AI 분석 button text-slate-500 적용 (violet 제거)", () => {
-    expect(src()).toMatch(
-      /setAiAnalysisSheetOpen\(true\)[\s\S]{0,800}text-slate-500/
-    );
+describe("§11.268b → §1-3 SUPERSEDE — AI 분석 button 제거", () => {
+  // §1-3/§4 — 별도 "AI 분석" 버튼 폐기(ontology=inline 신호). 트리거·시트 제거 검증.
+  it("AI 분석 트리거/시트 state 제거", () => {
+    expect(src()).not.toContain('data-testid="sourcing-ai-analysis-trigger"');
+    expect(src()).not.toContain("setAiAnalysisSheetOpen");
   });
 
-  it("AI 분석 button violet tone 제거 (text-violet-700 없음, setAiAnalysisSheetOpen 근처)", () => {
-    expect(src()).not.toMatch(
-      /setAiAnalysisSheetOpen\(true\)[\s\S]{0,800}text-violet-700/
-    );
-  });
-
-  it("AI 분석 button 이 필터 button 과 동일 slate outline border-slate-200", () => {
-    expect(src()).toMatch(
-      /setAiAnalysisSheetOpen\(true\)[\s\S]{0,800}border border-slate-200/
-    );
+  it("상단 우선 배너 1개로 대체", () => {
+    expect(src()).toContain('data-testid="sourcing-top-banner"');
   });
 });
 
-describe("§11.268b invariant — Sparkles / label / testid / 필터 outline 보존", () => {
-  it("Sparkles icon import 보존", () => {
-    expect(src()).toContain("Sparkles");
-  });
-
-  it("AI 분석 라벨 보존", () => {
-    expect(src()).toContain("AI 분석");
-  });
-
-  it("data-testid=sourcing-ai-analysis-trigger 보존", () => {
-    expect(src()).toContain('data-testid="sourcing-ai-analysis-trigger"');
-  });
-
-  it("필터 button §11.266a border-slate-200 outline 보존 (3 button 통일 기준)", () => {
+describe("§11.268b invariant — 필터 button outline 보존(PRESERVE)", () => {
+  it("필터 button §11.266a border-slate-200 outline 보존", () => {
     const content = src();
     expect(content).toContain("SlidersHorizontal");
     expect(content).toMatch(
       /SlidersHorizontal[\s\S]{0,100}필터|필터[\s\S]{0,200}border border-slate-200/
     );
   });
-
-  it("min-h-[44px] §11.266 family 44px — AI 분석 button 보존", () => {
-    expect(src()).toMatch(
-      /sourcing-ai-analysis-trigger[\s\S]{0,400}min-h-\[44px\]/
-    );
-  });
 });
 
-describe("짠11.268b sourcing triage candidate evidence", () => {
-  it("search page keeps persisted shortlist/hold/exclude state for candidate triage", () => {
-    const content = src();
-    expect(content).toContain("SOURCING_TRIAGE_STORAGE_KEY");
-    expect(content).toContain("labaxis-sourcing-triage-state");
-    expect(content).toContain("sourcingCandidateTriage");
-    expect(content).toContain("setSourcingCandidateTriageState");
-  });
-
-  it("search page passes candidate section badges and classification into result rows", () => {
-    const content = src();
-    expect(content).toContain("candidateSections");
-    expect(content).toContain("classificationByProductId");
-    expect(content).toContain("triageSections={sourcingTriage?.candidateSections}");
-    expect(content).toContain("triageClassification={sourcingTriage?.classificationByProductId?.[product.id]}");
-  });
-
-  it("candidate row pins Exact/Equivalent/Substitute/Blocked badges and triage actions", () => {
-    const content = rowSrc();
-    expect(content).toContain('data-testid="sourcing-candidate-triage-badges"');
-    expect(content).toContain("sourcing-candidate-triage-${section.key}");
-    expect(content).toContain("sourcing-candidate-${state}-action");
-    expect(src()).toContain('label: "Substitute"');
-  });
-});
+// §11.292 supersede — sourcing triage candidate evidence(Exact/Equivalent/Substitute/Blocked
+//   배지 + shortlist/hold/exclude 분류)는 §11.292(호영님 P1 1단계, 검색 단순화)에서 의도적
+//   제거됨. 해당 가드는 confirmed-stale → 삭제(sentinel-restore). candidate triage UI 부재가 정상.

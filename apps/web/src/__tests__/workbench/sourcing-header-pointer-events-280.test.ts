@@ -71,17 +71,23 @@ describe("§11.280 — invariant 보존 (canonical truth)", () => {
     expect(PAGE).toMatch(/aria-label="메뉴 열기"/);
   });
 
-  it("DropdownMenu + DropdownMenuTrigger asChild 보존", () => {
-    expect(PAGE).toMatch(/<DropdownMenu>/);
-    expect(PAGE).toMatch(/<DropdownMenuTrigger asChild>/);
+  // §11.283b supersede — Radix DropdownMenu/asChild 제거, plain <button>+useState+<div> 메뉴로 교체(의도).
+  it("§11.283b plain 햄버거 메뉴 보존 (Radix 제거)", () => {
+    expect(PAGE).toMatch(/aria-haspopup="menu"/);
+    expect(PAGE).toMatch(/aria-expanded=\{hamburgerOpen\}/);
+    expect(PAGE).toMatch(/setHamburgerOpen\(/);
   });
 
-  it("DropdownMenu 5 항목 (대시보드 / 견적 관리 / 구매 운영 / 재고 관리 / 설정) 보존", () => {
-    expect(PAGE).toMatch(/href="\/dashboard"[\s\S]{0,200}대시보드/);
-    expect(PAGE).toMatch(/href="\/dashboard\/quotes"[\s\S]{0,200}견적 관리/);
-    expect(PAGE).toMatch(/href="\/dashboard\/purchases"[\s\S]{0,200}구매 운영/);
-    expect(PAGE).toMatch(/href="\/dashboard\/inventory"[\s\S]{0,200}재고 관리/);
-    expect(PAGE).toMatch(/href="\/dashboard\/settings"[\s\S]{0,200}설정/);
+  it("햄버거 5 항목 (대시보드 / 견적 관리 / 구매 운영 / 재고 관리 / 설정) Link 보존", () => {
+    expect(PAGE).toMatch(/href="\/dashboard"/);
+    expect(PAGE).toMatch(/href="\/dashboard\/quotes"/);
+    expect(PAGE).toMatch(/href="\/dashboard\/purchases"/);
+    expect(PAGE).toMatch(/href="\/dashboard\/inventory"/);
+    expect(PAGE).toMatch(/href="\/dashboard\/settings"/);
+    expect(PAGE).toMatch(/대시보드/);
+    expect(PAGE).toMatch(/견적 관리/);
+    expect(PAGE).toMatch(/구매 운영/);
+    expect(PAGE).toMatch(/재고 관리/);
   });
 
   it("AI 라벨 스캔 button (Camera icon) 보존", () => {
@@ -89,9 +95,10 @@ describe("§11.280 — invariant 보존 (canonical truth)", () => {
     expect(PAGE).toMatch(/<Camera/);
   });
 
-  it("5 Radix Sheet/Dialog mount 보존", () => {
+  it("Radix Sheet/Dialog mount 보존 (§1-3: AI 분석 Sheet 제거)", () => {
     expect(PAGE).toMatch(/<Sheet open=\{isMobileFilterOpen\}/);
-    expect(PAGE).toMatch(/<Sheet open=\{aiAnalysisSheetOpen\}/);
+    // §1-3 — AI 분석 Sheet(aiAnalysisSheetOpen) 제거(별도 AI 패널 폐기). 잔존 0 검증.
+    expect(PAGE).not.toMatch(/<Sheet open=\{aiAnalysisSheetOpen\}/);
     expect(PAGE).toMatch(/<Dialog open=\{isLoginPromptOpen\}/);
     expect(PAGE).toMatch(/<AlertDialogContent>/);
   });

@@ -78,14 +78,15 @@ describe("§11.265e #2 — invariant 보존 (canonical truth)", () => {
     expect(page).toMatch(/필터/);
   });
 
-  it("§11.265c AI 분석 트리거 보존", () => {
-    expect(page).toMatch(/data-testid="sourcing-ai-analysis-trigger"/);
-    expect(page).toMatch(/setAiAnalysisSheetOpen\(true\)/);
+  it("§1-3 supersede — AI 분석 트리거 제거 + 상단 배너 대체", () => {
+    // §1-3/§4 — 별도 AI 분석 버튼/패널 폐기. 신호는 상단 배너 + 행 chip inline.
+    expect(page).not.toMatch(/data-testid="sourcing-ai-analysis-trigger"/);
+    expect(page).not.toMatch(/setAiAnalysisSheetOpen/);
+    expect(page).toMatch(/data-testid="sourcing-top-banner"/);
   });
 
-  it("§11.264f Label Scan FAB 보존", () => {
-    expect(page).toMatch(/data-testid="sourcing-label-scan-fab"/);
-  });
+  // §11.264f Label Scan FAB 가드 제거 — FAB 는 dead-button(실카메라 호출 0, mock gate)
+  //   이었고 §11.336/§11.379 스캔 진입 통합(ScanHubModal)에서 의도적 제거됨(confirmed-stale).
 
   it("§11.254b 햄버거 메뉴 보존", () => {
     expect(page).toMatch(/§11\.254b/);
