@@ -229,6 +229,10 @@ export function LabelScannerContent({
 /* ══════════════════════════════════════════════════════════════ */
 export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirectReceive, _renderContentOnly }: LabelScannerModalProps & { _renderContentOnly?: boolean }) {
   const isMobile = useIsMobile();
+  // §11.37x — 맥락 분기: onDirectReceive 없음 = 검색(소싱 read) 맥락, 있음 = 입고(재고 mutation) 맥락.
+  //   소싱에서 라벨 스캔 시 "스마트 입고" 타이틀/CTA 가 뜨던 conflation 제거(라벨=검색 명확).
+  const isSearchContext = !onDirectReceive;
+  const scanTitle = isSearchContext ? "라벨 스캔 검색" : "스마트 입고";
   const [step, setStep] = useState<ScanStep>("upload");
   const [scanResult, setScanResult] = useState<ScanApiResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -682,9 +686,11 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
           {/* §11.374-vivino — 카메라 모드 시 제목/설명 숨김(헤더 chrome 축소 → video 세로 확보). */}
           {uploadMode === "file" && (
             <div className="text-center">
-              <h3 className="text-base font-bold text-slate-900">스마트 입고</h3>
+              <h3 className="text-base font-bold text-slate-900">{scanTitle}</h3>
               <p className="text-sm text-slate-500 mt-1">
-                라벨을 프레임 안에 맞춰 촬영하거나 이미지를 업로드하세요.
+                {isSearchContext
+                  ? "라벨을 촬영하면 카탈로그에서 제품을 검색합니다."
+                  : "라벨을 프레임 안에 맞춰 촬영하거나 이미지를 업로드하세요."}
               </p>
             </div>
           )}
@@ -1309,7 +1315,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white gap-2"
             >
               <CheckCircle2 className="h-4 w-4" />
-              {onDirectReceive ? "입고 완료" : "입고 폼에 적용"}
+              {onDirectReceive ? "입고 완료" : "이 라벨로 검색"}
             </Button>
           </div>
         </div>
@@ -1326,7 +1332,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl p-0 bg-white text-slate-900">
           <SheetHeader className="px-4 pt-4 pb-2">
-            <SheetTitle className="text-base font-bold text-slate-900">스마트 입고</SheetTitle>
+            <SheetTitle className="text-base font-bold text-slate-900">{scanTitle}</SheetTitle>
           </SheetHeader>
           {content}
         </SheetContent>
@@ -1340,7 +1346,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
         <DialogHeader className="px-4 pt-4 pb-2">
           <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
             <ScanLine className="h-4 w-4 text-blue-600" />
-            스마트 입고
+            {scanTitle}
           </DialogTitle>
         </DialogHeader>
         {content}

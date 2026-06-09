@@ -21,6 +21,7 @@ function readMobile(rel: string): string {
 
 const SEARCH = "src/app/_workbench/search/page.tsx";
 const SCAN = "app/scan.tsx";
+const LABEL = "src/components/inventory/LabelScannerModal.tsx";
 
 describe("§11.37x — 소싱 카메라 = 라벨 스캔 검색(read), 입고 mutation 하드와이어 금지", () => {
   it("web 소싱 'AI 라벨 스캔' = onScanComplete(검색) wiring", () => {
@@ -57,5 +58,36 @@ describe("§11.37x — 자동차감 금지 (scan use_qr = 조회 후 명시 액�
     const src = readMobile(SCAN);
     expect(src).toMatch(/use_qr/);
     expect(src).toMatch(/receive_label/);
+  });
+});
+
+describe("§11.37x — LabelScannerModal 맥락 분기(소싱 검색 vs 입고 conflation 제거)", () => {
+  it("isSearchContext = !onDirectReceive 파생(검색/입고 맥락 구분)", () => {
+    const src = readWeb(LABEL);
+    expect(src).toMatch(/const isSearchContext = !onDirectReceive/);
+    expect(src).toMatch(/const scanTitle = isSearchContext \? "라벨 스캔 검색" : "스마트 입고"/);
+  });
+
+  it("타이틀 3곳(업로드/Sheet/Dialog) scanTitle 분기 — '스마트 입고' 하드코딩 제거", () => {
+    const src = readWeb(LABEL);
+    const uses = (src.match(/\{scanTitle\}/g) || []).length;
+    expect(uses).toBeGreaterThanOrEqual(3);
+  });
+
+  it("검색 맥락 CTA = '이 라벨로 검색'(입고 맥락은 '입고 완료' 유지)", () => {
+    const src = readWeb(LABEL);
+    expect(src).toMatch(/onDirectReceive \? "입고 완료" : "이 라벨로 검색"/);
+  });
+
+  it("회귀 0 — 입고 맥락(onDirectReceive) 게이트·CTA 보존", () => {
+    const src = readWeb(LABEL);
+    expect(src).toMatch(/onClick=\{onDirectReceive \? handleDirectReceive : handleApplyToForm\}/);
+    expect(src).toMatch(/onDirectReceive && commitGate\.fieldMarks/);
+  });
+
+  it("소싱(search/page)은 onScanComplete만 — 자동 검색 맥락", () => {
+    const src = readWeb(SEARCH);
+    expect(src).toMatch(/<LabelScannerModal[\s\S]{0,400}onScanComplete=\{/);
+    expect(src).not.toMatch(/<LabelScannerModal[\s\S]{0,400}onDirectReceive=/);
   });
 });

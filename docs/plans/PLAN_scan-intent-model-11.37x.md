@@ -4,8 +4,10 @@
 - **Started:** 2026-06-09
 - **Last Updated:** 2026-06-09 (종결)
 
-> **종결 요지(옵션 1):** Phase 0 TR에서 §1-1 핵심 우려(소싱 카메라 입고 하드와이어 / 자동차감)가 활성 §11.374~380 트랙으로 **이미 정합**임을 확인. 대형 결함수정 불필요 → 정합 상태를 sentinel(`scan-intent-model-11.37x.test.ts`)로 못 박아 회귀 방지하고 종결. 갭 2건(web 소싱 QR확인 진입·mobile 소싱 카메라)은 백로그(결함 아닌 추가 기능).
-> **커밋 대상:** `apps/web/src/__tests__/regression/scan-intent-model-11.37x.test.ts`(new) + 본 PLAN. (production 코드 변경 0 — 정합 이미 성립.)
+> **정정(2026-06-10):** 옵션1 종결이 **UI conflation을 놓쳐 성급**했음(호영님 지적). 코드 mutation 하드와이어는 0이 맞으나, `LabelScannerModal`이 타이틀 "스마트 입고"·CTA "입고 폼에 적용"을 **하드코딩**해 소싱(검색)에서 열어도 입고 UI로 보이는 맥락 누수가 있었음 → **(a) 모달 맥락 분기 추가 구현**.
+> **(a) 완료:** `LabelScannerModal`에 `isSearchContext = !onDirectReceive` 파생 + `scanTitle`("라벨 스캔 검색"/"스마트 입고") 분기(타이틀 3곳) + CTA `onDirectReceive ? "입고 완료" : "이 라벨로 검색"` + 검색 맥락 설명문. 저신뢰/needs-confirm 게이트는 기존 `onDirectReceive &&`라 검색 맥락 자동 off. search/page는 onScanComplete-only라 자동 검색 맥락(호출부 무변경). sentinel 보강.
+> **(b) 백로그:** web 소싱 "QR 재고 확인" 카메라 진입(중복구매 방지 게이트, 호영님 강조) / mobile 소싱 카메라 / 차감 확인 UX 상세.
+> **커밋 대상:** `scan-intent-model-11.37x.test.ts`(맥락 분기 가드 보강) + `LabelScannerModal.tsx`(맥락 분기) + 본 PLAN.
 
 ## ⚖️ Quality Gate 규칙 (모든 phase 공통)
 - quality gate 통과 후에만 다음 phase. 실패 시 stop, skip 금지.
