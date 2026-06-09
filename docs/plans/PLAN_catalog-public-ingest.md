@@ -88,7 +88,7 @@ All phases Red-Green-Refactor.
 
 ### Phase 0: Context & Truth Lock
 **Goal:** truth·명령·우선순위·계약·아키텍처를 구현 전 확정.
-- Status: [ ] Pending | [ ] In Progress | [ ] Complete
+- Status: [x] Complete (2026-06-10) — **GO.** 키 발급·정상작동 확인. operation 확정(`getPrdctClsfcNoUnit{2,4,6,8,10}Info` + 품목목록). 커버리지 실측: 시약·실험 8자리 backbone **1,108**(Seg12 123 + Seg41 985) vs 현 286 → 천장 해소 확정. 상세 `SCOPING_catalog-public-ingest-phase0.md §4-b`. 제품 실수는 품목목록 파라미터 확정 후(Phase 1 병행).
 
 **🔴 RED:** db.product canonical·searchProducts 경로 코드 확인 / API 키·엔드포인트 미확보 상태 명시 / 시약·실험 분류번호 미확정 노출.
 **🟢 GREEN:** data.go.kr 키 발급, 시약·실험 분류번호(UNSPSC 12·41) 확정, **커버리지 카운트**(품목 수·제조사 분포·식별번호 존재율) 실행, ref-table 접근 확정.
