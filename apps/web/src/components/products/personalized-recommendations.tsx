@@ -8,7 +8,8 @@ import { usePersonalizedRecommendations } from "@/hooks/use-personalized-recomme
 import { useCompareStore } from "@/lib/store/compare-store";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 // §11.368 §0 — Sparkles(AI 마케팅 데코) 제거.
-import { TrendingUp, Package, ThumbsUp, ThumbsDown, DollarSign, Zap, Info } from "lucide-react";
+// §1-2③ — TrendingUp(유사도 배지) 제거: score는 유사도가 아니라 빈도 카운트라 % 표기는 fake-metric.
+import { Package, ThumbsUp, ThumbsDown, DollarSign, Zap, Info } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -74,7 +75,7 @@ export function PersonalizedRecommendations({
           {title}
         </CardTitle>
         <CardDescription>
-          유사도 점수, 가격대 범위, 성능 차이를 비교하여 추천된 제품입니다
+          검색·구매 이력과 가격대를 반영해 추천된 제품입니다
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -101,6 +102,8 @@ export function PersonalizedRecommendations({
           }
           const inCompare = hasProduct(product.id);
 
+          // §1-2③ — score는 빈도 카운트(카테고리·브랜드 검색수)라 유사도 % 아님. 배지 제거(fake 0%/200% 금지). 정렬용으로만 사용.
+
           // 가격 비교 (현재 제품 대비)
           const priceDiff = currentMinPrice && minPrice
             ? ((minPrice - currentMinPrice) / currentMinPrice) * 100
@@ -110,10 +113,6 @@ export function PersonalizedRecommendations({
             : minPrice
             ? `₩${minPrice.toLocaleString()}`
             : null;
-
-          // 유사도 점수 기반 배지 색상
-          const similarityScore = rec.score || 0;
-          const similarityBadgeVariant = similarityScore >= 0.8 ? "default" : similarityScore >= 0.6 ? "secondary" : "outline";
 
           return (
             <div
@@ -132,12 +131,6 @@ export function PersonalizedRecommendations({
                     {product.brand && (
                       <p className="text-sm text-slate-500 mt-0.5">{product.brand}</p>
                     )}
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <Badge variant={similarityBadgeVariant} className="text-xs font-semibold">
-                      <TrendingUp className="h-3 w-3 mr-1" />
-                      유사도 {(similarityScore * 100).toFixed(0)}%
-                    </Badge>
                   </div>
                 </div>
 

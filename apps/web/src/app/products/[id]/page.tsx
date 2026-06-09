@@ -298,16 +298,9 @@ export default function ProductDetailPage() {
       {/* 배경 그라데이션 데코레이션 */}
       <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-blue-50/50 via-transparent to-transparent -z-10 pointer-events-none" />
       
-      {/* 모바일 뒤로가기 버튼 - 상단 고정 */}
-      <button
-        onClick={() => router.back()}
-        className="fixed top-16 left-4 z-50 md:hidden p-2 -ml-2 text-gray-700 hover:text-slate-100 transition-colors bg-pn/80 backdrop-blur-md rounded-full shadow-sm"
-        aria-label="뒤로가기"
-      >
-        <ChevronLeft className="w-6 h-6" />
-      </button>
-      
-      <div className="container mx-auto px-4 md:px-4 lg:px-8 pt-14 md:py-8 relative z-0">
+      {/* §1-2② — floating 원형 back 제거(breadcrumb과 중복·겹침). breadcrumb이 회귀 경로 담당.
+          전역 헤더 없음 + viewportFit:cover → breadcrumb이 모바일 최상단이라 safe-area 인식 pt. */}
+      <div className="container mx-auto px-4 md:px-4 lg:px-8 pt-[calc(env(safe-area-inset-top)+1rem)] md:py-8 relative z-0">
         <div className="max-w-7xl mx-auto">
           {/* Breadcrumb */}
           <nav className="flex items-center space-x-1 md:space-x-2 text-sm text-slate-500 mb-6 md:mb-8 px-1 overflow-x-auto whitespace-nowrap" aria-label="Breadcrumb">
