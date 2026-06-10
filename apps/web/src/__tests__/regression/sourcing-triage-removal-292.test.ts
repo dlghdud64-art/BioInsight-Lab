@@ -13,6 +13,11 @@
  * 변경: page.tsx 4 location + sourcing-result-row.tsx 1 block. dead
  *   state/handler (sourcingCandidateTriage / openSourcingTriageReview /
  *   openSourcingTriageRequest) 는 P2 cleanup batch.
+ *
+ * §1-3 갱신 (2026-06-10, §11.381 batch 중 baseline 정합):
+ *   6d81c5d7 (호영님 P1 2026-06-08) 이 "AI 분석" 패널·시트를 폐기하고
+ *   inline 신호(pickTopBanner + 행 blocker chip) 로 전환 — "AI 제안 ·
+ *   차단 사유" 헤더 단언을 후속 anchor (pickTopBanner) 로 의도 반영 갱신.
  */
 
 import { describe, it, expect } from "vitest";
@@ -60,9 +65,13 @@ describe("§11.292 — 소싱 TRIAGE 제거 + 카드 단순화", () => {
       expect(PAGE).not.toMatch(/onSetTriageAction=\{\(state\)/);
     });
 
-    it("AI 분석 sheet 헤더 'SOURCING RESULT TRIAGE' 텍스트 제거 (AI 제안 · 차단 사유만)", () => {
+    it("TRIAGE 대문자 헤더 잔존 0 + AI 신호는 §1-3 inline 전환 (pickTopBanner)", () => {
+      // §1-3 (6d81c5d7, 호영님 P1 2026-06-08): "AI 분석" 패널·시트 폐기 →
+      // "AI 제안 · 차단 사유" 헤더는 의도 제거됨. 후속 anchor 는 상단 우선
+      // 배너(pickTopBanner) + 행 inline blocker chip. §11.292 의 본질
+      // (TRIAGE 블록 부활 금지)은 그대로 유지.
       expect(PAGE).not.toMatch(/SOURCING RESULT TRIAGE/);
-      expect(PAGE).toMatch(/AI 제안 · 차단 사유/);
+      expect(PAGE).toMatch(/pickTopBanner/);
     });
   });
 

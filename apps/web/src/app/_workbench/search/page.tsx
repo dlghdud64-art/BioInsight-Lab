@@ -1132,7 +1132,7 @@ export default function SearchPage() {
               </div>
             )}
 
-            {/* §11.292 SOURCING RESULT TRIAGE 블록 제거 (호영님 P1 1단계) —
+            {/* §11.292 결과 선별(Result Triage) 블록 제거 (호영님 P1 1단계) —
                 검색이 이미 필터 역할 + 모든 카드가 동일 분류 = 정보가치 0 +
                 Shortlist/Hold/Exclude 는 불필요 중간 단계. AI 동등 대체품 /
                 대체 후보 분석은 비교 단계 (2단계 별도 batch) 로 이동. dead
