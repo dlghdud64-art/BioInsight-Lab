@@ -88,14 +88,14 @@ describe("§11.274c #2 — 한글 aria-label 매칭 (5 spot)", () => {
     expect(DISPATCH_PREP).toMatch(/aria-label="발송 준비 워크벤치"/);
   });
 
-  it("_workbench/search/page.tsx 한글 \"소싱 결과 분류 (모바일)\" 매칭", () => {
-    expect(WORKBENCH_SEARCH).toMatch(
-      /aria-label="소싱 결과 분류 \(모바일\)"/,
-    );
-  });
-
-  it("_workbench/search/page.tsx 한글 \"소싱 결과 분류\" 매칭 (desktop spot)", () => {
-    expect(WORKBENCH_SEARCH).toMatch(/aria-label="소싱 결과 분류"/);
+  it("_workbench/search/page.tsx — §11.292 supersede (TRIAGE 블록 제거, 라벨 부활 0)", () => {
+    // §11.292 (호영님 P1 2026-05-24): SOURCING RESULT TRIAGE 블록 전면 제거 —
+    //   모바일/데스크탑 landmark 자체가 의도 소멸. 본 한글 매칭 단언은
+    //   §11.292 와 정면 충돌하던 stale 보존 단언 → 부활 금지로 전환
+    //   (§11.381 batch baseline 정합 2026-06-11). §11.274c 본질(영문 잔존 0)은
+    //   #1 sweep 이 그대로 유지.
+    expect(WORKBENCH_SEARCH).not.toMatch(/aria-label="소싱 결과 분류 \(모바일\)"/);
+    expect(WORKBENCH_SEARCH).not.toMatch(/aria-label="소싱 결과 분류"/);
   });
 
   it("search/page.tsx 한글 \"LabAxis 사용 흐름 3단계\" 매칭 (§11.324 supersede — 옛 \"소싱 결과 분류\" Triage section 제거 + 3단계 다이어그램으로 swap)", () => {
@@ -122,11 +122,9 @@ describe("§11.274c #3 — invariant 보존 (canonical truth)", () => {
     );
   });
 
-  it("_workbench/search/page.tsx 모바일 + 데스크탑 2 landmark 보존", () => {
-    // line 684: section aria-label="소싱 결과 분류 (모바일)"
-    expect(WORKBENCH_SEARCH).toMatch(/aria-label="소싱 결과 분류 \(모바일\)"/);
-    // line 1235: section aria-label="소싱 결과 분류"
-    expect(WORKBENCH_SEARCH).toMatch(/aria-label="소싱 결과 분류"/);
+  it("_workbench/search/page.tsx — TRIAGE landmark 2곳 제거 유지 (§11.292 정합)", () => {
+    // §11.292 supersede: 보존 단언 → 제거 유지 검증으로 전환 (위 #2 주석 참조).
+    expect(WORKBENCH_SEARCH).not.toMatch(/aria-label="소싱 결과 분류/);
   });
 
   it("search/page.tsx section landmark + aria-label 보존 (§11.324 — LabAxis 사용 흐름 3단계 로 swap)", () => {

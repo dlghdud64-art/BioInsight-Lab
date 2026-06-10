@@ -38,7 +38,9 @@ describe("§gs1 배선 — onCodeScanned GS1 분기", () => {
     expect(src).toMatch(/const isGs1Capture = !!gs1Gtin && !labelResult/);
     expect(src).toMatch(/const lowConf = !isGs1Capture && level === "low"/);
     // 제품명 필수 게이트는 유지(receiveBlocked 가 productName.trim 포함)
-    expect(src).toMatch(/!labelForm\.productName\.trim\(\) \|\| \(lowConf && !productNameDirty\)/);
+    // §11.381 batch baseline 정합 (2026-06-11): receiveBlocked 멀티라인 포맷
+    //   드리프트(HEAD 기준 기존)로 단일라인 regex 비매칭 → 공백 허용으로 정합.
+    expect(src).toMatch(/!labelForm\.productName\.trim\(\)\s*\|\|\s*\(lowConf && !productNameDirty\)/);
   });
 });
 
