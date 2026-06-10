@@ -322,4 +322,6 @@ export function SourcingRecommendationDrawer({
           )}
         </div>
       </SheetContent>
-    </She
+    </Sheet>
+  );
+}
