@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 
@@ -25,22 +25,18 @@ describe("§11.368 §0 — ✨ Sparkles 제거 (견적/비교/데코 8파일)", 
       expect(src).not.toMatch(/^\s*Sparkles,/m); // multiline import 항목
     });
   }
-  it("compare-analysis-drawer — Sparkles 0", () => {
-    const src = read("src/app/compare/_components/compare-analysis-drawer.tsx");
-    expect(src).not.toMatch(/<Sparkles/);
-    expect(src).not.toMatch(/\bSparkles\b/);
+  it("compare-analysis-drawer — §11.381c retire (단언 대상 소멸, 부활 금지)", () => {
+    // §11.381c (호영님 b2 결정 2026-06-10): compare 라우트 + drawer retire.
+    // Sparkles 0 단언은 파일 소멸로 자연 충족 — 부재 검증으로 전환.
+    expect(existsSync(join(REPO_ROOT, "src/app/compare/_components/compare-analysis-drawer.tsx"))).toBe(false);
   });
 });
 
 describe("§11.368 §0 — AI 판단/마케팅 라벨 → 결정형", () => {
-  it("compare-analysis: 'AI 판단'·'AI 분석'(toast) 0 → 비교 분석·권장 조치", () => {
-    const src = read("src/app/compare/_components/compare-analysis-drawer.tsx");
-    expect(src).not.toMatch(/AI 판단 요약/);
-    expect(src).not.toMatch(/title: "AI 분석/);
-    expect(src).toMatch(/비교 분석 요약/);
-    expect(src).toMatch(/권장 조치/);
-    // L1168 출처 투명 문구(AI 분석은 …참고 자료…담당자 확인)는 §0 모범으로 보존.
-    expect(src).toMatch(/참고 자료입니다/);
+  it("compare-analysis — §11.381c retire (라벨 단언 대상 소멸)", () => {
+    // §11.381c (2026-06-10): compare-analysis-drawer retire — AI 판단/마케팅
+    // 라벨 0 단언은 파일 소멸로 자연 충족. 부재 검증으로 전환.
+    expect(existsSync(join(REPO_ROOT, "src/app/compare/_components/compare-analysis-drawer.tsx"))).toBe(false);
   });
 
   it("suggestion-panel: VARIANT 'AI 제안/판단/초안' 0 → 기능 라벨", () => {

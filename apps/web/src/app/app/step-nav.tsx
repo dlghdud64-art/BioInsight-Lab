@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Search, GitCompare, FileText, CheckCircle2, Package } from "lucide-react";
+import { Search, FileText, CheckCircle2, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Suspense } from "react";
 
@@ -16,22 +16,15 @@ const steps = [
     step: 1,
     match: /^\/app\/search(\/.*)?$/,
   },
-  {
-    id: "compare",
-    label: "제품 비교",
-    fullLabel: "제품 비교",
-    href: "/app/compare",
-    icon: GitCompare,
-    step: 2,
-    match: /^\/app\/compare(\/.*)?$/,
-  },
+  // §11.381c — compare step 제거 (호영님 b2 결정 2026-06-10):
+  // 비교 검토는 /app/search 소싱 워크벤치 same-canvas 로 흡수 (§11.381a/b).
   {
     id: "quote",
     label: "견적 요청",
     fullLabel: "견적 요청",
     href: "/app/quote",
     icon: FileText,
-    step: 3,
+    step: 2,
     match: /^\/app\/quote(\/.*)?$/,
   },
 ];

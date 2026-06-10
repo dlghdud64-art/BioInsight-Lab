@@ -628,9 +628,9 @@ function DashboardPageInner() {
 
   // 비교 상태
   if (stats.undecidedCompareCount > 0) {
-    recommendedActions.push({ id: "r-compare", icon: <GitCompare className="h-3.5 w-3.5 text-yellow-700" />, label: "비교 판정", desc: `${stats.undecidedCompareCount}건 판정 대기 — 검토 후 확정하세요`, href: "/compare", state: "ready" });
+    recommendedActions.push({ id: "r-compare", icon: <GitCompare className="h-3.5 w-3.5 text-yellow-700" />, label: "비교 판정", desc: `${stats.undecidedCompareCount}건 판정 대기 — 검토 후 확정하세요`, href: "/app/search", state: "ready" });
   } else if (stats.totalInventory > 0) {
-    recommendedActions.push({ id: "r-compare", icon: <GitCompare className="h-3.5 w-3.5 text-slate-400" />, label: "제품 비교", desc: "비교 대기 항목 없음 — 검색에서 후보를 추가하세요", href: "/app/compare", state: "idle" });
+    recommendedActions.push({ id: "r-compare", icon: <GitCompare className="h-3.5 w-3.5 text-slate-400" />, label: "제품 비교", desc: "비교 대기 항목 없음 — 검색에서 후보를 추가하세요", href: "/app/search", state: "idle" });
   }
 
   // 견적 상태
@@ -1033,7 +1033,7 @@ function DashboardPageInner() {
                       <Plus className="h-3.5 w-3.5" /> 품목 등록
                     </Button>
                   </Link>
-                  <Link href="/app/compare">
+                  <Link href="/app/search">
                     <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5 border-slate-200">
                       <GitCompare className="h-3.5 w-3.5" /> 비교 시작
                     </Button>
@@ -1110,7 +1110,7 @@ function DashboardPageInner() {
                     </Link>
                   )}
                   {riskOrBlockerCount > 0 && (
-                    <Link href="/compare" className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-red-50/70 border border-red-200/60 hover:bg-red-50 transition-colors group">
+                    <Link href="/app/search" className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-red-50/70 border border-red-200/60 hover:bg-red-50 transition-colors group">
                       <div className="flex items-center gap-2.5">
                         <ShieldAlert className="h-4 w-4 text-red-600" />
                         <span className="text-[13px] font-bold text-slate-900">위험/차단</span>
@@ -1139,7 +1139,7 @@ function DashboardPageInner() {
                 <div className="space-y-1.5">
                   {[
                     { label: "품목 등록", desc: "시약·장비를 등록합니다", href: "/dashboard/inventory", icon: <Plus className="h-3.5 w-3.5 text-slate-500" /> },
-                    { label: "비교 시작", desc: "제품 스펙·가격을 비교합니다", href: "/app/compare", icon: <GitCompare className="h-3.5 w-3.5 text-slate-500" /> },
+                    { label: "비교 시작", desc: "제품 스펙·가격을 비교합니다", href: "/app/search", icon: <GitCompare className="h-3.5 w-3.5 text-slate-500" /> },
                     { label: "견적 요청 생성", desc: "공급사에 견적을 요청합니다", href: "/dashboard/quotes", icon: <FileText className="h-3.5 w-3.5 text-slate-500" /> },
                   ].map((item) => (
                     <Link key={item.label} href={item.href} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 transition-colors group">
@@ -1212,7 +1212,7 @@ function DashboardPageInner() {
                     </Link>
                   )}
                   {riskOrBlockerCount > 0 && (
-                    <Link href="/compare" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-50 transition-colors group">
+                    <Link href="/app/search" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-50 transition-colors group">
                       <ShieldAlert className="h-4 w-4 text-red-500" />
                       <span className="text-sm font-medium text-slate-700 group-hover:text-red-700">위험/차단 확인</span>
                       <ChevronRight className="h-4 w-4 text-slate-300 ml-auto group-hover:text-red-500" />
@@ -1478,7 +1478,7 @@ function DashboardPageInner() {
                       <Package className="h-3.5 w-3.5" /> 품목 등록
                     </Button>
                   </Link>
-                  <Link href="/app/compare">
+                  <Link href="/app/search">
                     <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5 border-slate-200">
                       <GitCompare className="h-3.5 w-3.5" /> 비교 시작
                     </Button>

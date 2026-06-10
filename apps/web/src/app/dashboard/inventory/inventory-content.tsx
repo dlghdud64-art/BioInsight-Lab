@@ -4057,7 +4057,7 @@ function InventoryPageContent() {
           });
         }}
         onViewVendors={(productName) => {
-          router.push(`/compare?search=${encodeURIComponent(productName)}`);
+          router.push(`/app/search?q=${encodeURIComponent(productName)}`);
           aiPanel.setIsOpen(false);
         }}
         onViewLotDetail={(lotNumber) => {

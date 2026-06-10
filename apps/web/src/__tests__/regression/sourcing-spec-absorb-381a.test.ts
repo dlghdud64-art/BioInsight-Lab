@@ -151,20 +151,20 @@ describe("§11.381a — 회귀 0: sourcing-result-review-workbench 기존 보존
   });
 });
 
-describe("§11.381a — Phase A 무손상: compare 라우트 보존 (제거는 Phase B)", () => {
-  it("_workbench/compare/page.tsx 존재 + 하이라이트 원본 보존", () => {
-    expect(existsSync(join(REPO_ROOT, COMPARE_PAGE_PATH))).toBe(true);
-    const src = read(COMPARE_PAGE_PATH);
-    expect(src).toMatch(/최저가/);
-    expect(src).toMatch(/최단납기/);
-    expect(src).toMatch(/\/api\/products\/compare/);
+describe("§11.381a — Phase B 완료: compare 라우트 retire (§11.381c 의도 반영 갱신)", () => {
+  // Phase A 시점에는 "무손상 보존" 블록이었으나 §11.381c (호영님 b2/(가) 결정,
+  // 2026-06-10) 로 compare 4라우트 retire — 부재 검증으로 전환.
+  // 하이라이트·데이터 경로의 canonical 은 본 파일 상단 블록(소싱 섹션)이 검증.
+
+  it("_workbench/compare/page.tsx retire (하이라이트는 소싱 섹션이 canonical)", () => {
+    expect(existsSync(join(REPO_ROOT, COMPARE_PAGE_PATH))).toBe(false);
   });
 
-  it("/app/compare re-export 보존 (Phase B 전 무손상)", () => {
-    expect(existsSync(join(REPO_ROOT, "src/app/app/compare/page.tsx"))).toBe(true);
+  it("/app/compare re-export retire", () => {
+    expect(existsSync(join(REPO_ROOT, "src/app/app/compare/page.tsx"))).toBe(false);
   });
 
-  it("/compare 구형 페이지 보존 (Phase B 전 무손상)", () => {
-    expect(existsSync(join(REPO_ROOT, "src/app/compare/page.tsx"))).toBe(true);
+  it("/compare 구형 페이지 retire", () => {
+    expect(existsSync(join(REPO_ROOT, "src/app/compare/page.tsx"))).toBe(false);
   });
 });

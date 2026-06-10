@@ -72,8 +72,8 @@ export function CompareFlowGuard() {
                   description: "비교 화면으로 이동합니다",
                   duration: 3000,
                 });
-                // 3. compare 화면으로 이동
-                router.push("/app/compare");
+                // 3. 소싱 워크벤치로 이동 (§11.381c — compare 라우트 retire, 비교 검토는 /app/search same-canvas)
+                router.push("/app/search");
               }}>
                 복원
               </ToastAction>

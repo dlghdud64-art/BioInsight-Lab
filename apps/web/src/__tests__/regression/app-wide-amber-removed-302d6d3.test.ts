@@ -22,7 +22,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 const REPO_ROOT = join(__dirname, "..", "..", "..");
@@ -67,11 +67,10 @@ describe("§11.302d-6d-3 — 대표 file 분류별 swap 검증", () => {
     expect(src).not.toMatch(/(bg|text|border)-orange-[0-9]/);
   });
 
-  it("compare-analysis-drawer HIGH significance → red (위험 격상), SIGNIFICANT → yellow", () => {
-    const src = read("app/compare/_components/compare-analysis-drawer.tsx");
-    expect(src).toMatch(/HIGH:\s*\{\s*label:\s*"높음",\s*className:\s*"bg-red-500\/20 text-red-300"/);
-    expect(src).toMatch(/SIGNIFICANT_DIFFERENCES:\s*\{[\s\S]{0,80}text-yellow-400 bg-yellow-600\/10/);
-    expect(src).not.toMatch(/(bg|text|border)-orange-[0-9]/);
+  it("compare-analysis-drawer — §11.381c retire (amber 단언 대상 소멸)", () => {
+    // §11.381c (2026-06-10): compare 라우트 retire — drawer 파일 소멸로
+    // amber/orange 0 단언 자연 충족. 부재 검증으로 전환.
+    expect(existsSync(join(SRC_DIR, "app/compare/_components/compare-analysis-drawer.tsx"))).toBe(false);
   });
 
   it("link-graph DispatchPackage 노드 → sky (장식/categorical)", () => {

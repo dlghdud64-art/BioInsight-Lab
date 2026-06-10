@@ -27,10 +27,13 @@ const PAGE_PATH = resolve(__dirname, "../../app/_workbench/search/page.tsx");
 const code = safeRead(PAGE_PATH);
 
 describe("§11.252e #1 — 액션 바 압축 (3줄 → 2줄)", () => {
-  it("액션 바 외부 컨테이너 overflow-x-auto 또는 flex-nowrap (모바일 wrap 차단)", () => {
-    // 기존 flex-wrap → 모바일에서 flex-nowrap + overflow-x-auto (가로 스크롤).
-    // 액션 바 외부 div ~ "전체 해제" Button 거리 ~5000+ chars (search/page.tsx 대형 file).
-    expect(code).toMatch(/(overflow-x-auto|flex-nowrap)[\s\S]{0,8000}전체\s*해제|전체\s*해제[\s\S]{0,8000}(overflow-x-auto|flex-nowrap)/);
+  it("액션 바 — §11.312-b 통합 bar 정합 (전체 해제 AlertDialog 보존)", () => {
+    // §11.381 batch baseline 정합 (2026-06-10): §11.312-b 가 액션 바를 재설계
+    //   (전체 해제 별도 줄 제거 → bar 본체 🗑 + AlertDialog 통합) — 기존
+    //   overflow-x-auto/flex-nowrap 단언은 §11.312-b 이후 stale. 현 invariant
+    //   = 전체 해제 aria-label + 확인 다이얼로그 보존.
+    expect(code).toMatch(/aria-label="견적 후보 전체 해제"/);
+    expect(code).toMatch(/§11\.312-b/);
   });
 
   it("우측 padding 확보 (휴지통 잘림 방지, padding-right 16px+)", () => {

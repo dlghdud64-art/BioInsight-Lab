@@ -164,7 +164,7 @@ export function ProtocolUpload({ onBOMCreated }: ProtocolUploadProps) {
       
       // BOM 생성 성공 시 품목 리스트 페이지로 이동
       if (data.quote?.id) {
-        router.push(`/compare/quote/${data.quote.id}`);
+        router.push(`/quotes/${data.quote.id}`);
       } else {
         alert(data.message || "BOM이 생성되었습니다.");
       }

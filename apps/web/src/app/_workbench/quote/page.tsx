@@ -121,7 +121,7 @@ export default function RequestAssemblyPage() {
           )}
           {summary.inCompareCount > 0 && (
             <button
-              onClick={() => router.push("/app/compare")}
+              onClick={() => router.push("/app/search")}
               className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 transition-colors cursor-pointer"
             >
               <GitCompare className="h-2.5 w-2.5" />비교중 {summary.inCompareCount} →
@@ -207,7 +207,7 @@ export default function RequestAssemblyPage() {
                   )}
                   <button
                     type="button"
-                    onClick={() => router.push("/app/compare")}
+                    onClick={() => router.push("/app/search")}
                     className="text-[10px] text-slate-500 hover:text-blue-400 transition-colors flex items-center gap-1"
                   >
                     <GitCompare className="h-3 w-3" />
@@ -227,7 +227,7 @@ export default function RequestAssemblyPage() {
                       size="sm"
                       variant="outline"
                       className="w-full h-7 text-[10px] text-yellow-400 border-yellow-600/30 hover:bg-yellow-600/10"
-                      onClick={() => router.push("/app/compare")}
+                      onClick={() => router.push("/app/search")}
                     >
                       <GitCompare className="h-3 w-3 mr-1.5" />
                       비교 판단 먼저

@@ -26,7 +26,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 const REPO_ROOT = join(__dirname, "..", "..", "..");
@@ -155,40 +155,24 @@ describe("§11.318 Phase 1c — B. SourcingRecommendationDrawer", () => {
 
 // ── C. compare/page.tsx wiring ──
 
-describe("§11.318 Phase 1c — C. compare/page.tsx CTA wiring", () => {
-  it("SourcingRecommendationDrawer import 존재", () => {
-    const src = read("src/app/compare/page.tsx");
-    expect(src).toMatch(/SourcingRecommendationDrawer/);
-    expect(src).toMatch(/sourcing-recommendation-drawer/);
+describe("§11.318 Phase 1c — C. CTA wiring (§11.381c 갱신: compare/page retire → 소싱 섹션 이전)", () => {
+  // §11.381c (2026-06-10): compare/page.tsx retire — 드로어 CTA wiring 의
+  // canonical 소비처는 sourcing-spec-compare-section (§11.381b 가 상세 검증).
+  // 본 블록은 구 표면 부재 + 신 표면 wiring 존재의 요점만 잠근다.
+  const SECTION = "src/app/_workbench/_components/sourcing-spec-compare-section.tsx";
+
+  it("compare/page.tsx 소멸 (구 wiring 표면 부재)", () => {
+    expect(existsSync(join(REPO_ROOT, "src/app/compare/page.tsx"))).toBe(false);
   });
 
-  it("showSourcingDrawer + sourcingProductId + sourcingProductName state 존재", () => {
-    const src = read("src/app/compare/page.tsx");
-    expect(src).toMatch(/showSourcingDrawer/);
-    expect(src).toMatch(/sourcingProductId/);
-    expect(src).toMatch(/sourcingProductName/);
-  });
-
-  it("'대체품/벤더 찾기' 버튼 + sourcing-find-btn testid + onClick wiring", () => {
-    const src = read("src/app/compare/page.tsx");
+  it("소싱 섹션 — '대체품/벤더 찾기' 버튼 + drawer wiring 존재", () => {
+    const src = read(SECTION);
     expect(src).toMatch(/대체품\/벤더 찾기/);
     expect(src).toMatch(/sourcing-find-btn/);
     expect(src).toMatch(/setShowSourcingDrawer\(true\)/);
-    expect(src).toMatch(/setSourcingProductId/);
-  });
-
-  it("SourcingRecommendationDrawer render — productId + productName props wiring", () => {
-    const src = read("src/app/compare/page.tsx");
     expect(src).toMatch(/<SourcingRecommendationDrawer/);
     expect(src).toMatch(/productId=\{sourcingProductId\}/);
     expect(src).toMatch(/productName=\{sourcingProductName\}/);
-  });
-
-  it("기존 CompareAnalysisDrawer 보존 (회귀 0)", () => {
-    const src = read("src/app/compare/page.tsx");
-    expect(src).toMatch(/CompareAnalysisDrawer/);
-    expect(src).toMatch(/showAnalysisDrawer/);
-    expect(src).toMatch(/구조적 비교 분석/);
   });
 });
 

@@ -90,11 +90,12 @@ describe("§11.381b — 소싱 wiring: SourcingSpecCompareSection 트리거", ()
   });
 });
 
-describe("§11.381b — compare/page.tsx 무손상 (B2 전): 새 경로 import 유지", () => {
-  it("새 경로 import + 기존 wiring 보존", () => {
-    const src = read(COMPARE_PAGE);
-    expect(src).toMatch(/from ["']\.\.\/_workbench\/_components\/sourcing-recommendation-drawer["']/);
-    expect(src).toMatch(/<SourcingRecommendationDrawer/);
-    expect(src).toMatch(/대체품\/벤더 찾기/);
+describe("§11.381b — compare/page.tsx (§11.381c 갱신: retire 완료)", () => {
+  // B-pre 시점에는 "새 경로 import 무손상" 블록이었으나 §11.381c 로
+  // compare/page.tsx retire — 부재 검증으로 전환. drawer 의 canonical
+  // 소비처는 sourcing-spec-compare-section (위 블록이 검증).
+  it("compare/page.tsx 소멸 + drawer 신경로 생존", () => {
+    expect(existsSync(join(REPO_ROOT, COMPARE_PAGE))).toBe(false);
+    expect(existsSync(join(REPO_ROOT, NEW_DRAWER))).toBe(true);
   });
 });

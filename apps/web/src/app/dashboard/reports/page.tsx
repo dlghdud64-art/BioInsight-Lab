@@ -727,7 +727,7 @@ export default function ReportsPage() {
             <div className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500">공급사별 분석</p>
-                <Link href="/app/compare">
+                <Link href="/app/search">
                   <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-700 hover:bg-el h-7 px-2">
                     벤더 비교 →
                   </Button>

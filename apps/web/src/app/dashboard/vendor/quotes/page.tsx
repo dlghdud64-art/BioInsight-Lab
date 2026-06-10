@@ -785,7 +785,7 @@ export default function VendorQuotesPage() {
                     )}
                     <Button
                       variant="outline"
-                      onClick={() => router.push(`/compare/quote/${quote.id}`)}
+                      onClick={() => router.push(`/quotes/${quote.id}`)}
                     >
                       상세 보기
                     </Button>

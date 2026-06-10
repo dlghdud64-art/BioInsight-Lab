@@ -53,8 +53,9 @@ describe("§11.252d-2 — invariant 보존", () => {
 
   it("빠른 시작 3 link href 보존", () => {
     // 두 token 모두 빠른 시작 카드 안 (line 902~924 인근) 존재 검증.
+    // §11.381c (2026-06-10): /app/compare retire — 비교 진입점은 /app/search 로 재배선.
     expect(code).toMatch(/href:\s*["']\/dashboard\/inventory["']/);
-    expect(code).toMatch(/href:\s*["']\/app\/compare["']/);
+    expect(code).toMatch(/href:\s*["']\/app\/search["']/);
     expect(code).toMatch(/견적\s*요청\s*생성/);
   });
 

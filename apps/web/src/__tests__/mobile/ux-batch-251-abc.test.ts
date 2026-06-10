@@ -81,10 +81,14 @@ describe("§11.251b — Sourcing 검색 빈 화면 (이미지2)", () => {
   //   가 spec 정합 (호영님 Option A 결정). href 보존 invariant 만 valid 로 유지.
   //   §11.251b 의도된 spec (카드형 + placeholder 축약) 재진입 시 별 cluster.
 
-  it("BOM 등록 / 재고 확인 / 비교 목록 href 보존 (link 동작 보존)", () => {
-    expect(searchPage).toMatch(/href=["']\/protocol\/bom["']/);
+  it("재고 확인 href 보존 + 제거된 진입점 부활 0 (§1-3·§11.381c 정합)", () => {
+    // §11.381 batch baseline 정합 (2026-06-10): search page 1373-1374 주석이
+    //   "품목 등록"(/protocol/bom)·"비교 목록"(/app/compare) 진입점의 의도 제거를
+    //   명기 (라벨↔기능 불일치 + 소싱 workbench 흡수 역행 진입점). §11.381c 로
+    //   /app/compare 라우트 자체 retire — href 보존 단언을 부활 금지로 전환.
     expect(searchPage).toMatch(/href=["']\/dashboard\/inventory["']/);
-    expect(searchPage).toMatch(/href=["']\/app\/compare["']/);
+    expect(searchPage).not.toMatch(/href=["']\/app\/compare["']/);
+    expect(searchPage).not.toMatch(/href=["']\/protocol\/bom["']/);
   });
 });
 
@@ -126,8 +130,10 @@ describe("§11.251-bom-label — BOM → 품목 라벨 통일 (호영님 추가 
     expect(searchPage).not.toMatch(/>\s*BOM\s*등록\s*</);
   });
 
-  it("href /protocol/bom 보존 (변수/path 유지 — 라벨만 swap)", () => {
-    expect(searchPage).toMatch(/href=["']\/protocol\/bom["']/);
+  it("href /protocol/bom — 의도 제거 반영 (부활 금지로 전환)", () => {
+    // §11.381 batch baseline 정합: 후속 batch 가 /protocol/bom 진입점을 의도
+    //   제거 (search page 1373 주석 — BOM 미완 라이브 숨김). 보존→부활 금지 전환.
+    expect(searchPage).not.toMatch(/href=["']\/protocol\/bom["']/);
   });
 });
 
