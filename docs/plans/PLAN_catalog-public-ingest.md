@@ -140,7 +140,10 @@ All phases Red-Green-Refactor.
 
 ### Phase 4: Rollout / Smoke / Rollback
 **Goal:** 안전 출시·복구 보장.
-- Status: [ ] Pending | [ ] In Progress | [ ] Complete
+- Status: [x] Complete (2026-06-10, sandbox GREEN) — RED(모듈 부재)→GREEN 12/12, catalog 누적 55 + cron-monitoring 36 = 91/91 무회귀.
+  산출: `lib/catalog/procurement-codes.ts`(세그먼트 12·41 + Unit8 range URL + parseUnit8Codes) + `api/cron/catalog-ingest/route.ts`(CRON_SECRET 게이트·logCronExecution wrap·flag+key no-op·runIngest 소비·day-rotation cursor·maxDuration 60) + `apps/web/vercel.json` cron 등록(0 3 * * *) + phase4 sentinel 12건.
+  계약 핵심: flag(CATALOG_PUBLIC_INGEST)+key(PROCUREMENT_API_KEY) 둘 다 있을 때만 실행, 부재 시 skipped 보고(fake success·throw 0) / 8자리 코드는 런타임 Unit8 range 해석(날조 0, Phase 0는 카운트만) / day-rotation으로 예산<전체 시 tail starvation 방지 / upsert=procurementCatalogRef만(db.product write 0).
+  ⚠️ 호영님 env 잔여(라이브, 코드 무관): (1) PROCUREMENT_API_KEY + CATALOG_PUBLIC_INGEST=1 Vercel env 등록 (2) PARAM_CLSFC 실명 미리보기 확정(Phase 2 상수 1곳) (3) prisma migrate deploy(ProcurementCatalogRef 테이블 prod 생성) (4) flag on 후 라이브 smoke(검색→ref 배지→승격→견적). vercel buildCommand에 migrate deploy 포함이라 배포 시 자동 apply — §11.341 순서(deploy→배포)는 단일 빌드 내 충족.
 
 **🔴 RED:** rollout 실패 모드 식별, smoke 경로 정의.
 **🟢 GREEN:** feature flag(`catalog_public_ingest`), nightly refresh job, smoke(알려진 시약이 출처표기+액션 가능하게 검색됨) 실행, audit/카운트 로깅.
@@ -199,19 +202,17 @@ All phases Red-Green-Refactor.
 ---
 
 ## 11. Progress Tracking
-- Overall completion: 80%
-- Current phase: Phase 4 (rollout — flag/ingest cron/smoke/rollback)
-- Current blocker: PROCUREMENT_API_KEY env 등록 + PARAM_CLSFC 실명 확정(미리보기) — Phase 4 smoke에서
-- Next validation step: 클로드코드 vitest/build → push → Phase 4 (cron route + vercel.json + flag on smoke)
+- Overall completion: 100% (sandbox) — 호영님 env 4건(키·PARAM·migrate·라이브 smoke) 후 production live
+- Current phase: 완료 (Phase 4 rollout scaffold GREEN)
+- Current blocker: 없음(sandbox). production = 호영님 env 4건
+- Next validation step: 클로드코드 vitest/build → push → 호영님 Vercel env 등록 + 라이브 smoke
 
 **Phase Checklist:**
 - [x] Phase 0 complete
 - [x] Phase 1 complete
 - [x] Phase 2 complete
 - [x] Phase 3 complete
-- [ ] Phase 2 complete
-- [ ] Phase 3 complete
-- [ ] Phase 4 complete
+- [x] Phase 4 complete
 
 ---
 
