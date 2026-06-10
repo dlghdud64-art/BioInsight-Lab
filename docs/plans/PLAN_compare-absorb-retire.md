@@ -136,6 +136,14 @@
 ### ↩ Rollback B
 - 라우트·링크 git revert — Phase A 흡수분 독립 유지
 
+### ✅ §11.381d — mobile compare retire (2026-06-11, push 대기)
+- 배경: §11.381c-2 orphan 역추적의 **web-only grep 사각** — mobile `compare/[id].tsx`
+  (179줄)가 제거된 비교 세션 API 소비 + push 알림 deep-link(/compare/{id}) = broken link.
+- Fix: `app/compare/[id].tsx` 삭제 + `lib/notifications.ts` compare 타입 재배선
+  (타입 보존 — 과거 payload 호환, 목적지 (tabs)/search 전환) + `mobile-compare-retire-381d`
+  sentinel 4 tests. 잔존 /compare 참조 0 확인.
+- 교훈 영속화: orphan 역추적은 **apps/web + apps/mobile 전 워크스페이스** grep 필수.
+
 ### ✅ Phase B 구현 완료 (2026-06-10, push 대기)
 - B-pre: `643d9b8d`+`b0388e23` (drawer 구출, push 완료)
 - B1: 381c sentinel 17 tests (RED 14 → GREEN 17 확인)

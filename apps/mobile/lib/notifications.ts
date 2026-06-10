@@ -95,10 +95,12 @@ const ROUTE_MAP: Record<NotificationType, RouteTarget> = {
   },
   compare: {
     // §11.250g — AI 비교 분석 완료 push notification.
-    // §11.250g-2 — mobile compare detail surface 추가 (push tap 즉시 진입).
-    //   id 있을 때 /compare/{id} screen 으로 deep-link. id 없을 시 dashboard.
-    detail: (id) => `/compare/${id}`,
-    fallback: "/(tabs)",
+    // §11.381d (2026-06-11) — compare/[id] retire: 화면이 소비하던 비교 세션 API 가
+    //   §11.381c-2 에서 제거됐고 web compare 라우트도 §11.381c retire — canonical
+    //   fork 해소. 과거 알림 payload 호환 위해 타입은 보존, 목적지만 mobile 소싱
+    //   canonical((tabs)/search)로 재배선. 신규 compare 알림 생성 경로는 이미 소멸.
+    detail: () => "/(tabs)/search",
+    fallback: "/(tabs)/search",
   },
   system: {
     detail: () => "/(tabs)",
