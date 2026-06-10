@@ -43,7 +43,8 @@ interface TestFlowContextType {
   //   /api/products/search?facets=true 응답 의 data.facets.vendorCounts.
   vendorFacets: Array<{ vendorId: string; vendorName: string; count: number }>;
   // §catalog-A Phase 3 — 공공조달 참조 검색 결과 (flag on + page 1 시 서버가 부착).
-  procurementRefs: Array<{ prdctIdNo: string; name: string; nameEn: string | null; brand: string | null; modelNm: string | null; prdctClsfcNo: string | null; source: string }>;
+  //   타입은 lib/catalog/procurement-search 의 RefSearchItem 과 정합(source literal "public_procurement").
+  procurementRefs: import("@/lib/catalog/procurement-search").RefSearchItem[];
   isSearchLoading: boolean;
   queryAnalysis: any;
   
