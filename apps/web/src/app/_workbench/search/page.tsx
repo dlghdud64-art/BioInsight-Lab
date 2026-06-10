@@ -23,6 +23,9 @@ import { PRODUCT_CATEGORIES, SORT_OPTIONS } from "@/lib/constants";
 //   server route /api/search/autocomplete + Product.name/brand/catalogNumber 3 type.
 import { useAutocomplete } from "@/hooks/use-autocomplete";
 import { SourcingResultRow } from "../_components/sourcing-result-row";
+// §catalog-A Phase 3 — 공공조달 참조 결과 + demand-driven 승격(견적 담기).
+import { ProcurementRefResults } from "../_components/procurement-ref-results";
+import { csrfFetch } from "@/lib/api-client";
 import { SourcingContextRail } from "../_components/sourcing-context-rail";
 import { QuoteCartPanel } from "../_components/quote-cart-panel"; // §11.339 v2 — 우측 탭 카트
 import { CenterWorkWindow } from "@/components/work-window/center-work-window";
@@ -154,6 +157,8 @@ export default function SearchPage() {
     maxPrice,
     setMaxPrice,
     grade,
+    // §catalog-A Phase 3 — 공공조달 참조 검색 결과.
+    procurementRefs,
   } = useTestFlow();
   const { getDisplayName: getStoredName } = useCompareStore();
   const { data: session, status: sessionStatus } = useSession();
@@ -315,6 +320,33 @@ export default function SearchPage() {
       return;
     }
     action();
+  };
+
+  // §catalog-A Phase 3 — 공공조달 ref 승격(/api/catalog/promote = 유일한 명시 경로)
+  //   → 견적 담기. 실패는 toast로 가시화 (fake success·dead-end 0).
+  const addRefToQuote = async (ref: { prdctIdNo: string; name: string }) => {
+    if (sessionStatus !== "loading" && !session?.user) {
+      setIsLoginPromptOpen(true);
+      return;
+    }
+    try {
+      const res = await csrfFetch("/api/catalog/promote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prdctIdNo: ref.prdctIdNo }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        toast.error(err?.error || "카탈로그 등록에 실패했습니다.");
+        return;
+      }
+      const { product } = await res.json();
+      const r = addProductToQuote(product);
+      const t = resolveAddToQuoteToast(r);
+      toast[t.intent](t.message);
+    } catch {
+      toast.error("카탈로그 등록 중 오류가 발생했습니다.");
+    }
   };
 
   const handleLoginRedirect = () => {
@@ -1182,6 +1214,10 @@ export default function SearchPage() {
                   <p className="text-sm text-slate-600 mb-1">검색 결과가 없습니다</p>
                   <p className="text-xs text-slate-500">다른 키워드로 검색해보세요</p>
                 </div>
+              )}
+              {/* §catalog-A Phase 3 — 공공조달 참조 섹션 (0건 시 자체 미렌더, canonical 결과 아래) */}
+              {hasSearched && (
+                <ProcurementRefResults refs={procurementRefs} onAddToQuote={addRefToQuote} />
               )}
             </div>
           </div>

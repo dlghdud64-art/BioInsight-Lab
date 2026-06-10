@@ -126,7 +126,11 @@ All phases Red-Green-Refactor.
 
 ### Phase 3: Search Union + Provenance Wiring
 **Goal:** 동작 로직을 실제 사용자 진입점에 연결.
-- Status: [ ] Pending | [ ] In Progress | [ ] Complete
+- Status: [x] Complete (2026-06-10, sandbox GREEN) — RED(모듈 부재)→GREEN 19/19, P1·P2 무회귀(43/43).
+  산출: `lib/catalog/procurement-search.ts`(where/projection/승격 input) + `api/catalog/promote/route.ts`(승격 유일 경로, auth+idempotent+404) + 검색 route union(+34, flag `CATALOG_PUBLIC_INGEST` 게이트·page 1·take 5·select 제한·graceful catch) + `procurement-ref-results.tsx`(배지+견적 CTA+pending) + provider(+5)/page(+36) wiring.
+  계약 핵심: 미승격 ref만 노출(중복 0) / ref 섹션은 canonical 결과 아래(밀어내기 0) / 승격=제조사·모델 매핑+Seg12→REAGENT·41→EQUIPMENT / dead-end 0(실패 toast).
+  ⚠️ 선행 red 드리프트(본 트랙 무관, HEAD=now 동일 확인): §11.274c·§11.263b·§11.252e·§11.268c 일부 — 호영님 env vitest에서 GREEN 여부 확정 필요.
+  ⚠️ 모바일(§8-D)은 Phase 4와 함께 — web 우선.
 
 **🔴 RED:** search union·배지·액션 integration 테스트(ref 항목이 검색에 뜨고 액션 가능).
 **🟢 GREEN:** `searchProducts`가 union(db.product, procurement_catalog_ref) 조회 / ref 항목 "공공조달 참조" 배지 / 실 액션(퀵뷰·견적요청·담기) wiring(no dead-end) / demand-driven 승격 hook(ref→product 최초 실사용 시 INSERT).
@@ -195,15 +199,16 @@ All phases Red-Green-Refactor.
 ---
 
 ## 11. Progress Tracking
-- Overall completion: 60%
-- Current phase: Phase 3 (search union + provenance wiring)
-- Current blocker: 없음. (PARAM_CLSFC 실명 확정은 Phase 4 smoke에서 — 상수 1곳 격리됨)
-- Next validation step: Phase 3 integration (searchProducts union·배지·액션) + 클로드코드 vitest/build
+- Overall completion: 80%
+- Current phase: Phase 4 (rollout — flag/ingest cron/smoke/rollback)
+- Current blocker: PROCUREMENT_API_KEY env 등록 + PARAM_CLSFC 실명 확정(미리보기) — Phase 4 smoke에서
+- Next validation step: 클로드코드 vitest/build → push → Phase 4 (cron route + vercel.json + flag on smoke)
 
 **Phase Checklist:**
 - [x] Phase 0 complete
 - [x] Phase 1 complete
 - [x] Phase 2 complete
+- [x] Phase 3 complete
 - [ ] Phase 2 complete
 - [ ] Phase 3 complete
 - [ ] Phase 4 complete

@@ -42,6 +42,8 @@ interface TestFlowContextType {
   // §11.258d-2 — vendorFacets (server top 20 distinct vendor + count) UI chip 소스.
   //   /api/products/search?facets=true 응답 의 data.facets.vendorCounts.
   vendorFacets: Array<{ vendorId: string; vendorName: string; count: number }>;
+  // §catalog-A Phase 3 — 공공조달 참조 검색 결과 (flag on + page 1 시 서버가 부착).
+  procurementRefs: Array<{ prdctIdNo: string; name: string; nameEn: string | null; brand: string | null; modelNm: string | null; prdctClsfcNo: string | null; source: string }>;
   isSearchLoading: boolean;
   queryAnalysis: any;
   
@@ -603,6 +605,8 @@ function TestFlowProviderContent({ children }: { children: ReactNode }) {
         products,
         // §11.258d-2 — server facets.vendorCounts (top 20) expose. 미응답 시 빈 array.
         vendorFacets: (searchData?.facets?.vendorCounts ?? []) as Array<{ vendorId: string; vendorName: string; count: number }>,
+        // §catalog-A Phase 3 — 공공조달 ref expose. flag off/미응답 시 빈 array.
+        procurementRefs: searchData?.procurementRefs ?? [],
         isSearchLoading,
         queryAnalysis,
         protocolText,
@@ -672,6 +676,7 @@ function TestFlowProviderFallback({ children }: { children: ReactNode }) {
         setGrade: () => {},
         products: [],
         vendorFacets: [],
+        procurementRefs: [],
         isSearchLoading: false,
         queryAnalysis: null,
         protocolText: "",

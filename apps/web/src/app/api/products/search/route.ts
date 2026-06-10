@@ -5,6 +5,8 @@ import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import { expandQueryWithSynonyms } from "@/lib/search/synonyms";
 import { buildSearchQuery, sortByRelevance } from "@/lib/search/ranking";
+// §catalog-A Phase 3 — 공공조달 ref union (flag 게이트, additive).
+import { buildRefSearchWhere, toRefSearchItem, type RefSearchItem } from "@/lib/catalog/procurement-search";
 import { Prisma, ProductCategory } from "@prisma/client";
 
 const logger = createLogger("products/search");
@@ -18,6 +20,8 @@ export interface SearchResponse {
     vendorCounts: Array<{ vendorId: string; vendorName: string; count: number }>;
     categoryCounts: Array<{ category: ProductCategory; count: number }>;
   };
+  // §catalog-A Phase 3 — 공공조달 참조 항목 (additive, flag on + page 1 만).
+  procurementRefs?: RefSearchItem[];
 }
 
 export async function GET(request: NextRequest) {
@@ -202,6 +206,36 @@ export async function GET(request: NextRequest) {
           .map(([category, count]) => ({ category, count }))
           .sort((a: any, b: any) => b.count - a.count),
       };
+    }
+
+    // §catalog-A Phase 3 — 공공조달 ref union. flag 게이트(rollback = env off),
+    //   page 1 한정, select 제한(§8-C overfetch 금지), 미승격만(중복 노출 0).
+    //   ref 조회 실패가 canonical 검색을 죽이지 않음 — graceful catch.
+    if (process.env.CATALOG_PUBLIC_INGEST === "1" && page === 1) {
+      try {
+        const refs = await db.procurementCatalogRef.findMany({
+          where: buildRefSearchWhere(query),
+          select: {
+            prdctIdNo: true,
+            prdctClsfcNo: true,
+            dtilPrdctClsfcNo: true,
+            mfrtNm: true,
+            prdctNm: true,
+            dtilPrdctNm: true,
+            engPrdctNm: true,
+            modelNm: true,
+            source: true,
+            linkedProductId: true,
+            sourceUpdatedAt: true,
+          },
+          take: 5,
+        });
+        if (refs.length > 0) {
+          response.procurementRefs = refs.map(toRefSearchItem);
+        }
+      } catch (refError) {
+        logger.error("Procurement ref search failed (canonical search unaffected)", refError);
+      }
     }
 
     // Save search history (async, non-blocking)
