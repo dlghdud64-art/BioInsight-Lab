@@ -130,9 +130,27 @@ describe("§11.381c — 회귀 0: 흡수 surface·API 생존", () => {
     expect(gone("src/app/_workbench/_components/sourcing-result-review-workbench.tsx")).toBe(false);
   });
 
-  it("데이터 경로 API 생존 (라우트만 제거, API 스코프 밖)", () => {
+  it("데이터 경로 API 생존 (live consumer 확인분)", () => {
     expect(gone("src/app/api/products/compare/route.ts")).toBe(false);
     expect(gone("src/app/api/sourcing/recommend/route.ts")).toBe(false);
+    expect(gone("src/app/api/products/compare-status/route.ts")).toBe(false);
+    expect(gone("src/app/api/work-queue/compare-sync/route.ts")).toBe(false);
+    expect(gone("src/app/api/ai/quote-compare/route.ts")).toBe(false);
+    expect(gone("src/app/api/ai/compare-analysis/route.ts")).toBe(false);
+  });
+
+  it("orphan API 제거 — retire 직접 부산물 (호영님 1번 지적 2026-06-10)", () => {
+    // 유일 소비자가 삭제된 compare 라우트뿐이던 API surface 동반 제거.
+    // average-lead-time: _workbench/compare 전용 / compare-sessions 6 route:
+    // /compare 구형 페이지 전용. lib(compare-engine 등)는 unit test 보유
+    // 자산이라 보존 — cascade 는 /test/* cleanup batch 기록.
+    expect(gone("src/app/api/products/average-lead-time/route.ts")).toBe(true);
+    expect(gone("src/app/api/compare-sessions/route.ts")).toBe(true);
+    expect(gone("src/app/api/compare-sessions/[id]/route.ts")).toBe(true);
+    expect(gone("src/app/api/compare-sessions/[id]/decision/route.ts")).toBe(true);
+    expect(gone("src/app/api/compare-sessions/[id]/inquiry-draft/route.ts")).toBe(true);
+    expect(gone("src/app/api/compare-sessions/[id]/insight/route.ts")).toBe(true);
+    expect(gone("src/app/api/compare-sessions/[id]/quote-draft/route.ts")).toBe(true);
   });
 
   it("소싱 워크벤치 진입점 생존: /app/search", () => {
