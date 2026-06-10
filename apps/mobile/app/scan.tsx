@@ -59,6 +59,7 @@ import { mapOcrConfidence } from "../lib/ocr/capture-quality";
 import { parseGs1 } from "../lib/scan/gs1-parser";
 // §1-2/PLAN — 라벨 저신뢰 commit 게이트(rule 2 Lot·EXP 명시확인, rule 3 datamatrix verified 우회).
 import { evaluateLabelCommitGate } from "../lib/scan/label-commit-gate";
+import { resolveSourcingSearchQuery } from "../lib/scan/sourcing-search-resolve";
 import { logEvent } from "../lib/analytics";
 
 // §11.319 — 바코드(기존) + 라벨 OCR(신규) 두 모드. label-capture = 촬영/분석 중,
@@ -138,7 +139,8 @@ export default function ScanScreen() {
   const { intent } = useLocalSearchParams<{ intent?: string }>();
   const [state, setState] = useState<ScanState>("scanning");
   const [scanMode, setScanMode] = useState<ScanMode>(
-    intent === "receive_label" ? "label" : "barcode"
+    // §11.37x(c) — sourcing_label(소싱 라벨→검색, read-only)도 label 모드 재사용.
+    intent === "receive_label" || intent === "sourcing_label" ? "label" : "barcode"
   );
   const [torch, setTorch] = useState(false);
   const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
@@ -389,6 +391,21 @@ export default function ScanScreen() {
 
   // §11.319 — 입고 prefill: 매칭 재고 있으면 입고(lot-receive), 없으면 신규 등록(register)
   const confirmLabelReceive = useCallback(() => {
+    // §11.37x(c) — 소싱 검색 맥락(read-only): 입고 게이트·mutation 전부 우회하고
+    //   검색 복귀만 수행. 자동차감·입고 라우팅 0 (canonical 보호).
+    if (intent === "sourcing_label") {
+      const q = resolveSourcingSearchQuery({
+        catalogNumber: labelForm.catalogNumber,
+        productName: labelForm.productName,
+      });
+      if (!q) {
+        setErrorMessage("검색할 제품명 또는 카탈로그 번호가 없습니다.");
+        return;
+      }
+      logEvent("sourcing_label_search", { hasCatalog: Boolean(labelForm.catalogNumber.trim()) });
+      router.replace({ pathname: "/(tabs)/search", params: { q } });
+      return;
+    }
     if (!labelForm.productName.trim()) {
       setErrorMessage("제품명을 입력해주세요.");
       return;
@@ -441,7 +458,7 @@ export default function ScanScreen() {
         },
       });
     }
-  }, [labelResult, labelForm, productNameDirty, lotDirty, expiryDirty, lotVerified, expiryVerified]);
+  }, [intent, labelResult, labelForm, productNameDirty, lotDirty, expiryDirty, lotVerified, expiryVerified]);
 
   const handleAction = useCallback(
     (action: string) => {
@@ -568,6 +585,12 @@ export default function ScanScreen() {
       !labelForm.productName.trim() ||
       (lowConf && !productNameDirty) ||
       criticalUnconfirmed;
+    // §11.37x(c) — 소싱 검색 맥락: 입고 게이트 무관(read-only). 검색어
+    //   (제품명 또는 카탈로그 번호) 없을 때만 차단 — confirmLabelReceive 분기와 동일 게이트.
+    const isSourcingContext = intent === "sourcing_label";
+    const commitBlocked = isSourcingContext
+      ? !labelForm.productName.trim() && !labelForm.catalogNumber.trim()
+      : receiveBlocked;
     const confTone =
       level === "high"
         ? { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", label: "높은 신뢰도" }
@@ -773,21 +796,21 @@ export default function ScanScreen() {
             </Pressable>
             <Pressable
               className={`flex-1 flex-row items-center justify-center gap-2 rounded-xl py-3.5 ${
-                receiveBlocked ? "bg-slate-200" : "bg-blue-600"
+                commitBlocked ? "bg-slate-200" : "bg-blue-600"
               }`}
               onPress={confirmLabelReceive}
-              disabled={receiveBlocked}
+              disabled={commitBlocked}
             >
               <CheckCircle2
                 size={16}
-                color={receiveBlocked ? "#94a3b8" : "white"}
+                color={commitBlocked ? "#94a3b8" : "white"}
               />
               <Text
                 className={`text-sm font-semibold ${
-                  receiveBlocked ? "text-slate-400" : "text-white"
+                  commitBlocked ? "text-slate-400" : "text-white"
                 }`}
               >
-                {labelResult?.matchedInventory?.id ? "입고 처리로 이동" : "신규 등록으로 이동"}
+                {isSourcingContext ? "이 라벨로 검색" : labelResult?.matchedInventory?.id ? "입고 처리로 이동" : "신규 등록으로 이동"}
               </Text>
             </Pressable>
           </View>

@@ -1,5 +1,16 @@
 # PLAN — 소싱 제품 surface 정리 (§1-2④⑤⑥⑦)
 
+> **§1-2⑤ 확장 스코프 큐잉 (2026-06-11, 호영님 라이브 진단 — P1 scan intent 후 진입):**
+> /products/[id] 상세가 "고도화 안 된 느낌" = UI 가 아니라 데이터·추천 레이어 공백.
+> 진단 5건: ① Specifications = identity 3필드 tautology (실 spec 0 — catalog backfill
+> 별도 foundational 트랙) ② 연관 추천 fake — "유사한 제품입니다" canned 근거 + cross-category
+> noise (시약 상세에 기구 추천) ③ 상세 진입 시 소싱 상태(비교 포함/견적 미포함) 하강 —
+> quick-view rail 상태를 full page 가 승계 못 함 (§11.381c canonical 일원화와 역행)
+> ④ 표시명 PBS-3 ↔ Cat.No PBS-1A 불일치 + sparse price = seed 데이터 smell
+> ⑤ 안전정보 편집·SDS/COA 업로드 버튼 buyer 노출 여부 점검 (vendor/admin 전용이어야).
+> **batch 구성(확정 시)**: ②추천 cross-category 필터+근거 실데이터화 + ③rail 상태 full view
+> 승계 + ①라벨 정직화 = 1 batch. catalog spec backfill 은 분리 트랙.
+
 - **Status:** 🔄 sandbox GREEN (P1~P3 구현 완료) / 클로드코드 vitest 재확정 + push 대기
 - **Started:** 2026-06-10
 - **Last Updated:** 2026-06-10
