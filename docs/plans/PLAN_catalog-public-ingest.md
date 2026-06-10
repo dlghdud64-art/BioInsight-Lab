@@ -112,7 +112,11 @@ All phases Red-Green-Refactor.
 
 ### Phase 2: Core Ingest + Dedup Logic
 **Goal:** ingest·정규화 핵심 로직 최소 동작.
-- Status: [ ] Pending | [ ] In Progress | [ ] Complete
+- Status: [x] Complete (2026-06-10, sandbox GREEN) — RED(모듈 부재)→GREEN 10/10, P1 14건 무회귀.
+  산출: `lib/catalog/procurement-ingest.ts`(buildItemSearchUrl / parseProcurementResponse / runIngest) + `catalog-public-ingest-phase2.test.ts`(10건).
+  계약 핵심: resultCode 00 강제(silent skip 금지) / 페이징 완주+무한루프 가드 / **maxRequests 예산+remainingCodes cursor**(일일 1000 제약, 조용한 overrun 금지) / 코드 중간 중단 시 해당 코드 재시작(idempotent라 안전) / skipped 카운트 보고(silent drop 금지) / deps 주입식(실 fetch·db는 Phase 4 cron route에서 바인딩).
+  ⚠️ 미확정 1: 분류 필터 파라미터 실명(`PARAM_CLSFC` 상수 1곳 격리, 현재 dtilPrdctClsfcNo 가정) — Phase 4 smoke에서 미리보기 확정 후 필요 시 1줄 교체.
+  벌크 seed(15050862 CSV)는 Phase 4로 이동(증분 API 경로 우선, seed는 동일 transform/upsert 소비).
 
 **🔴 RED:** transform·upsert·dedup matcher unit 테스트.
 **🟢 GREEN:** data.go.kr 페이징 fetch(시약·실험 분류 필터)→transform→idempotent upsert / 정규화 매처(식별번호 exact=auto-merge·`linked_product_id` 주석 / 제조사+세부품명 fuzzy=후보 주석만, merge 안 함). 벌크 seed(15050862) + API 증분(15129417).
@@ -191,14 +195,15 @@ All phases Red-Green-Refactor.
 ---
 
 ## 11. Progress Tracking
-- Overall completion: 40%
-- Current phase: Phase 2 (ingest job — 페이징 fetch→transform→upsert 실행 레이어)
-- Current blocker: 없음. (품목목록 operation 파라미터 확정은 Phase 2 진입 시 미리보기로)
-- Next validation step: Phase 2 unit (transform·upsert·매처 소비 검증) + 클로드코드 vitest/build
+- Overall completion: 60%
+- Current phase: Phase 3 (search union + provenance wiring)
+- Current blocker: 없음. (PARAM_CLSFC 실명 확정은 Phase 4 smoke에서 — 상수 1곳 격리됨)
+- Next validation step: Phase 3 integration (searchProducts union·배지·액션) + 클로드코드 vitest/build
 
 **Phase Checklist:**
 - [x] Phase 0 complete
 - [x] Phase 1 complete
+- [x] Phase 2 complete
 - [ ] Phase 2 complete
 - [ ] Phase 3 complete
 - [ ] Phase 4 complete
