@@ -328,6 +328,30 @@ model Product {
   @@index([name])
 }
 
+// §catalog-A Phase 1 — 조달청 공공데이터 식별 계층 reference (PLAN_catalog-public-ingest §4).
+//   canonical 아님(projection). db.product를 절대 직접 덮지 않음 — 승격은 별도 명시 경로.
+//   §11.341 교훈: Product 모델 무변경(FK/relation 미부착, linkedProductId = plain 컬럼)
+//   → migration deploy 순서 무관하게 기존 findMany 무영향.
+model ProcurementCatalogRef {
+  prdctIdNo        String   @id // 물품식별번호 (제조사+모델 고유, dedup 키)
+  prdctClsfcNo     String? // 물품분류번호 (UNSPSC 기반 8자리)
+  dtilPrdctClsfcNo String? // 세부물품분류번호 (10자리)
+  mfrtNm           String? // 제조업체명
+  prdctNm          String? // 품명
+  dtilPrdctNm      String? // 세부품명
+  engPrdctNm       String? // 영문품명
+  modelNm          String? // 모델명
+  source           String   @default("public_procurement") // provenance 고정
+  linkedProductId  String? // 승격 hook — 실사용 시에만 db.product id 주석 (FK 아님)
+  ingestedAt       DateTime @default(now())
+  sourceUpdatedAt  String? // 원천 등록/변경일 (조달청 표기 그대로)
+
+  @@index([prdctClsfcNo])
+  @@index([mfrtNm])
+  @@index([prdctNm])
+  @@index([linkedProductId])
+}
+
 // #vendor-partnership-tier Phase 1 — 4단계 partnership tier enum.
 //   호영님 한국 시약 시장 strategy 정합:
 //   - DIRECT_PARTNER: 직접 파트너십 / MOU (글로벌 제조사 본사 직거래)

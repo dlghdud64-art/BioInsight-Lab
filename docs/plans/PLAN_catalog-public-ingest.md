@@ -98,7 +98,11 @@ All phases Red-Green-Refactor.
 
 ### Phase 1: Contract & Failing Tests
 **Goal:** 의도된 동작을 계약으로 고정, 실패를 가시화.
-- Status: [ ] Pending | [ ] In Progress | [ ] Complete
+- Status: [x] Complete (2026-06-10, sandbox GREEN) — RED(모듈 부재 fail 확인)→GREEN 14/14.
+  산출: `ProcurementCatalogRef` 모델(schema.prisma, Product 무변경·FK 미부착=§11.341 정합) + `migrations/20260610120000_add_procurement_catalog_ref` + `lib/catalog/procurement-ref.ts`(transform/idempotent upsert args/dedup match — 순수함수, DB write 0) + `__tests__/regression/catalog-public-ingest-phase1.test.ts`(14건: 스키마·마이그레이션 sentinel + transform·upsert·match unit + canonical 가드).
+  계약 핵심: 식별번호 없으면 reject / update에 linkedProductId 미포함(재ingest가 승격 덮기 금지) / auto-link=제조사+모델 exact만, fuzzy=candidate.
+  search-union failing test는 Phase 3 시작 시 작성(레포에 red 테스트 잔류 금지).
+  prisma validate 통과. ⚠️ prod migrate deploy는 별도 승인 후(§11.341 순서: migrate deploy → 배포).
 
 **🔴 RED:** `procurement_catalog_ref` 스키마 마이그레이션 테스트 / idempotent upsert(by 물품식별번호) 테스트 / dedup-match(식별번호 exact) 테스트 / search-union(ref 항목 반환) 테스트 — 전부 실패 상태로 작성.
 **🟢 GREEN:** 최소 스키마·계약 scaffolding 구현(테스트 빨강→초록 최소선).
@@ -187,14 +191,14 @@ All phases Red-Green-Refactor.
 ---
 
 ## 11. Progress Tracking
-- Overall completion: 0%
-- Current phase: Phase 0 (대기)
-- Current blocker: data.go.kr API 키 + 커버리지 카운트
-- Next validation step: Phase 0 커버리지 수치로 go/no-go
+- Overall completion: 40%
+- Current phase: Phase 2 (ingest job — 페이징 fetch→transform→upsert 실행 레이어)
+- Current blocker: 없음. (품목목록 operation 파라미터 확정은 Phase 2 진입 시 미리보기로)
+- Next validation step: Phase 2 unit (transform·upsert·매처 소비 검증) + 클로드코드 vitest/build
 
 **Phase Checklist:**
-- [ ] Phase 0 complete
-- [ ] Phase 1 complete
+- [x] Phase 0 complete
+- [x] Phase 1 complete
 - [ ] Phase 2 complete
 - [ ] Phase 3 complete
 - [ ] Phase 4 complete
