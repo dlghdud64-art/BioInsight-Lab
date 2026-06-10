@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Check, AlertTriangle, ArrowRight, ArrowLeft, Search, GitCompare, FileText, Eye, Minus } from "lucide-react";
 import { type SourcingResultReviewState, type SourcingResultReviewObject, type ResultCandidateDecision, type CandidateDecisionType, createInitialSourcingResultReviewState, buildSourcingResultTriage, buildSourcingCandidateAssemblyPlan, validateSourcingResultReviewBeforeRecord, buildSourcingResultReviewObject, buildSourcingResultGroupPlan, buildSourcingCompareDeltaSummary } from "@/lib/ai/sourcing-result-review-engine";
 import type { SourcingSearchResultHandoff } from "@/lib/ai/sourcing-search-reopen-engine";
+import { SourcingSpecCompareSection } from "./sourcing-spec-compare-section";
 
 const DECISION_CONFIG: Record<CandidateDecisionType, { label: string; color: string; bg: string }> = {
   compare_candidate: { label: "비교 후보", color: "text-blue-400", bg: "bg-blue-600/10" },
@@ -115,6 +116,13 @@ export function SourcingResultReviewWorkbench({ open, onClose, handoff, onReview
                 </div>
               </div>
             );
+          })()}
+
+          {/* Spec Compare (§11.381a — compare 흡수) */}
+          {(() => {
+            const compareCandidates = reviewState.candidateDecisions.filter(d => d.decisionType === "compare_candidate");
+            if (compareCandidates.length < 2) return null;
+            return <SourcingSpecCompareSection compareCandidates={compareCandidates} />;
           })()}
 
           {/* Candidate list */}
