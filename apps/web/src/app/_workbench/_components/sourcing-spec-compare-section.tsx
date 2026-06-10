@@ -10,13 +10,14 @@
  * - 하이라이트: 최저가(emerald) / 최단납기(blue) — compare 배지 로직 이식
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { csrfFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
-import { GitCompare, Loader2, AlertTriangle, RefreshCw } from "lucide-react";
+import { GitCompare, Loader2, AlertTriangle, RefreshCw, Search } from "lucide-react";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import type { ResultCandidateDecision } from "@/lib/ai/sourcing-result-review-engine";
+import { SourcingRecommendationDrawer } from "./sourcing-recommendation-drawer";
 
 interface CompareProductVendor {
   id: string;
@@ -52,6 +53,11 @@ function minVendorLeadTime(p: CompareProduct): number | null {
 
 export function SourcingSpecCompareSection({ compareCandidates }: SourcingSpecCompareSectionProps) {
   const candidateIds = useMemo(() => compareCandidates.map(c => c.candidateId).slice(0, 5), [compareCandidates]);
+
+  // §11.381b — 대체품/벤더 추천 drawer (compare 에서 구출 이식)
+  const [showSourcingDrawer, setShowSourcingDrawer] = useState(false);
+  const [sourcingProductId, setSourcingProductId] = useState("");
+  const [sourcingProductName, setSourcingProductName] = useState("");
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["sourcing-spec-compare", candidateIds],
@@ -126,6 +132,7 @@ export function SourcingSpecCompareSection({ compareCandidates }: SourcingSpecCo
                 <th className="px-3 py-2 text-[9px] font-medium text-slate-500 uppercase tracking-wider">Grade</th>
                 <th className="px-3 py-2 text-[9px] font-medium text-slate-500 uppercase tracking-wider">최저가</th>
                 <th className="px-3 py-2 text-[9px] font-medium text-slate-500 uppercase tracking-wider">납기</th>
+                <th className="px-3 py-2 text-[9px] font-medium text-slate-500 uppercase tracking-wider">벤더</th>
               </tr>
             </thead>
             <tbody>
@@ -159,6 +166,22 @@ export function SourcingSpecCompareSection({ compareCandidates }: SourcingSpecCo
                         ? <span className={`text-[10px] font-medium ${isFastest ? "text-blue-400" : "text-slate-200"}`}>{lead}일</span>
                         : <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-700/40 text-slate-400 border border-slate-600/40">견적 대기</span>}
                     </td>
+                    <td className="px-3 py-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 px-2 text-[10px] text-slate-400 hover:text-slate-200 border border-bd/40 whitespace-nowrap"
+                        data-testid="sourcing-find-btn"
+                        title="대체품/벤더 찾기"
+                        onClick={() => {
+                          setSourcingProductId(p.id);
+                          setSourcingProductName(p.name);
+                          setShowSourcingDrawer(true);
+                        }}
+                      >
+                        <Search className="h-3 w-3 mr-1" />대체품/벤더 찾기
+                      </Button>
+                    </td>
                   </tr>
                 );
               })}
@@ -166,6 +189,14 @@ export function SourcingSpecCompareSection({ compareCandidates }: SourcingSpecCo
           </table>
         </div>
       )}
+
+      {/* §11.381b — 대체품/벤더 추천 drawer (same-canvas) */}
+      <SourcingRecommendationDrawer
+        open={showSourcingDrawer}
+        onOpenChange={setShowSourcingDrawer}
+        productId={sourcingProductId}
+        productName={sourcingProductName}
+      />
     </div>
   );
 }

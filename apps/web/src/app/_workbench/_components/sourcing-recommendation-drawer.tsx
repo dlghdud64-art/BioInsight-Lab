@@ -2,17 +2,20 @@
 
 /**
  * §11.318 Phase 1c — 대체품/벤더 추천 드로어 (same-canvas Sheet)
+ * §11.381b 이식 (2026-06-10): compare/_components → _workbench/_components.
+ *   compare 라우트 retire(Phase B) 에 따른 구출 — 소싱 비교 검토 단계가
+ *   canonical 소비처. CTA 재배선: 구 compare 견적 경로 → /app/quote.
  *
  * 결정(호영님 2026-05-29):
  *   - 기존 compare-analysis-drawer 패턴 재사용(Sheet 같은 캔버스).
- *   - 신규 page 없음. compare/page.tsx 제품 행 CTA → 이 드로어.
+ *   - 신규 page 없음. 제품 행 CTA → 이 드로어.
  *   - 데이터 출처 = PurchaseRecord(실거래). 없으면 hasData=false + 견적 유도.
  *   - "과거 구매 기록 기반" 뱃지 항상 표시(출처 투명성).
  *   - 자유 텍스트 추천/전략 표시 0 (환각 표면 차단).
  *
  * Dead button 없음:
- *   - 벤더 행 → 견적 요청(/api/quotes CTA) 실 wiring
- *   - 빈 상태 → "견적 요청하기" Link(/compare/quote)
+ *   - 벤더 행 → 견적 요청 실 wiring
+ *   - 빈 상태 → "견적 요청하기" Link(/app/quote)
  */
 
 import { useQuery } from "@tanstack/react-query";
@@ -166,7 +169,7 @@ function EmptyState({ productName }: { productName: string }) {
           견적을 요청하여 벤더 정보를 확보하세요.
         </p>
       </div>
-      <Link href="/compare/quote">
+      <Link href="/app/quote">
         <Button
           size="sm"
           className="gap-1.5 bg-blue-600 hover:bg-blue-500 text-white"
@@ -282,7 +285,7 @@ export function SourcingRecommendationDrawer({
                   </div>
                   {/* 벤더 선택 후 견적 CTA */}
                   <div className="mt-3">
-                    <Link href="/compare/quote">
+                    <Link href="/app/quote">
                       <Button
                         size="sm"
                         className="w-full gap-1.5 bg-blue-600 hover:bg-blue-500 text-white"
@@ -319,6 +322,4 @@ export function SourcingRecommendationDrawer({
           )}
         </div>
       </SheetContent>
-    </Sheet>
-  );
-}
+    </She

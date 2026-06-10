@@ -32,7 +32,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { CompareAnalysisDrawer } from "./_components/compare-analysis-drawer";
-import { SourcingRecommendationDrawer } from "./_components/sourcing-recommendation-drawer";
+import { SourcingRecommendationDrawer } from "../_workbench/_components/sourcing-recommendation-drawer";
 import { CompareHistorySection, type CompareSessionSummary } from "./_components/compare-history-section";
 
 export default function ComparePage() {
