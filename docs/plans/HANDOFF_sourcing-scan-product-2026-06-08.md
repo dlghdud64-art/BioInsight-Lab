@@ -20,6 +20,15 @@
 
 > 데이터(§1-2①)와 라이브 결함(뒤로가기·가짜 surface)이 최우선. UI 충실화·정리는 그다음.
 
+**[로드맵 백로그 — 착수 금지, 호영님 별도 승인 후 feature-planner] (2026-06-11 등재)**
+- **동일 규격 경쟁 견적(multi-vendor RFQ) + 결정 수렴 surface**: "견적 요청서 만들기"를
+  단건이 아닌 동일 규격 N후보 동시 RFQ 로 — 회신 시 비교 뷰가 최저가·최단납기 랭킹 → 1클릭
+  선택. advisory 배너 = nag 아닌 결정 수렴 상태(후보 N·비교 n·회신 n/대기 n). 후보별 조달
+  경로 배지(대리점/수입대행/미입점 — 파트너십 전략 트랙 연동) 합류 여지.
+  **선행 의존(미충족 시 착수 금지)**: quote backend real = server-persist(보류 트랙) + 실제
+  RFQ 송신·회신 추적. 제약: same-canvas dock/rail 상태로만, ontology→chatbot 금지, fake
+  success 금지. 착수 순위: backfill·QA 다음 major 후보.
+
 ---
 
 ## 1. 잠긴 결정 (실행 가능)

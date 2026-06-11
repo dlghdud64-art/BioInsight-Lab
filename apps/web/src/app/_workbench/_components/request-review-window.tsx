@@ -22,6 +22,7 @@ import {
   type RequestReadiness,
   type CandidateAssessment,
   type RequestReadinessLevel,
+  flagTone,
 } from "./request-readiness";
 
 // ── Props ──
@@ -111,14 +112,11 @@ function CandidateReviewRow({
 
       {/* Flags */}
       <div className="shrink-0 flex items-center gap-1">
+        {/* #advisory-banner-honesty — 톤은 엔진 flagTone 단일 소스 (advisory=정보 blue) */}
         {candidate.flags.filter(f => f.type !== "soft_warning").map((flag, i) => (
           <span
             key={i}
-            className={`text-[9px] px-1.5 py-0.5 rounded ${
-              flag.type === "hard_blocker"
-                ? "bg-red-600/10 text-red-400"
-                : "bg-yellow-600/10 text-yellow-400"
-            }`}
+            className={`text-[9px] px-1.5 py-0.5 rounded ${flagTone(flag.type).badge}`}
             title={flag.detail}
           >
             {flag.label}

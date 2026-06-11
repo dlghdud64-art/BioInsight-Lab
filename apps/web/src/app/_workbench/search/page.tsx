@@ -1254,14 +1254,16 @@ export default function SearchPage() {
               unpricedCount={priceUnknownCount}
               reviewFlags={requestReadiness.candidates
                 .map((c) => {
+                  // #advisory-banner-honesty — advisory(비교 검토 진행 중) 포함 + tone 승계
+                  //   (review_required 만 거르면 advisory 전환과 함께 견적함 노출이 소실 = drift)
                   const nonPriceReview = c.flags.find(
-                    (f) => f.type === "review_required" && f.label !== "가격 미확인",
+                    (f) => (f.type === "review_required" || f.type === "advisory") && f.label !== "가격 미확인",
                   );
                   return nonPriceReview
-                    ? { itemId: c.itemId, detail: nonPriceReview.detail, resolvable: false }
+                    ? { itemId: c.itemId, detail: nonPriceReview.detail, resolvable: false, tone: nonPriceReview.type === "advisory" ? ("advisory" as const) : ("review_required" as const) }
                     : null;
                 })
-                .filter((f): f is { itemId: string; detail: string; resolvable: boolean } => f !== null)}
+                .filter((f): f is { itemId: string; detail: string; resolvable: boolean; tone: "review_required" | "advisory" } => f !== null)}
               forceDetailKey={activeResultId}
               forceQuoteKey={(reviewFocusKey + quoteFocusKey) ? String(reviewFocusKey + quoteFocusKey) : null}
               forceCompareKey={compareFocusKey ? String(compareFocusKey) : null}

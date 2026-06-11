@@ -36,6 +36,8 @@ export interface QuoteCartReviewFlag {
   itemId: string;
   detail: string;          // 사유(가격 미정/재고 중복 등)
   resolvable: boolean;     // [재고 확인]/[유지] 액션 노출 여부
+  // #advisory-banner-honesty — 엔진 flag type 승계 (advisory=정보 톤, 미지정=review 호환)
+  tone?: "review_required" | "advisory";
 }
 
 export interface CompareCartItem {
@@ -175,7 +177,10 @@ export function QuoteCartPanel({
                       key={q.id}
                       data-testid="cart-quote-item"
                       className={`rounded-lg border bg-white ${
-                        flag ? "border-l-2 border-l-yellow-400 border-slate-200" : "border-slate-200"
+                        // #advisory-banner-honesty — advisory(시스템 규칙 안내)=정보 blue, 검토=yellow
+                        flag
+                          ? `border-l-2 ${flag.tone === "advisory" ? "border-l-blue-400" : "border-l-yellow-400"} border-slate-200`
+                          : "border-slate-200"
                       }`}
                     >
                       <div className="flex items-start gap-2 p-3">

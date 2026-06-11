@@ -16,9 +16,28 @@
 // ── Item-level flags ──
 
 export interface CandidateFlag {
-  type: "hard_blocker" | "review_required" | "soft_warning";
+  // #advisory-banner-honesty (호영님 2026-06-11) — "advisory" 신설:
+  //   blocker/검토가 아닌 시스템 규칙 안내 (예: 비교 검토 진행 중 → 순서 규칙).
+  //   status 게이트 효과는 review 와 동일하게 유지 (규칙 의미 보존), 톤만 정보(blue).
+  type: "hard_blocker" | "review_required" | "advisory" | "soft_warning";
   label: string;
   detail: string;
+}
+
+// ── 톤 단일 소스 (#advisory-banner-honesty) ──
+// 전 surface(견적함 패널·검토 윈도 등)가 본 매핑만 사용 — 렌더 drift 차단.
+// §11.302 신호등 체계: 위험 red / 검토 yellow / 정보(advisory) blue / 참고 slate.
+export function flagTone(type: CandidateFlag["type"]): { badge: string; borderL: string } {
+  switch (type) {
+    case "hard_blocker":
+      return { badge: "bg-red-600/10 text-red-400", borderL: "border-l-red-400" };
+    case "review_required":
+      return { badge: "bg-yellow-600/10 text-yellow-400", borderL: "border-l-yellow-400" };
+    case "advisory":
+      return { badge: "bg-blue-600/10 text-blue-400", borderL: "border-l-blue-400" };
+    case "soft_warning":
+      return { badge: "bg-slate-600/10 text-slate-400", borderL: "border-l-slate-300" };
+  }
 }
 
 export interface CandidateAssessment {
@@ -88,12 +107,13 @@ export function calculateRequestReadiness(
       });
     }
 
-    // Review: in compare but compare not completed (ambiguity)
+    // #advisory-banner-honesty — "권장 nag" → 시스템 규칙 톤 리스타일 (규칙 의미 보존:
+    //   동일 후보가 비교 검토 중이면 비교 확정 → 견적 요청 순서). blocker 아님 = advisory.
     if (compareIds.includes(item.productId)) {
       flags.push({
-        type: "review_required",
-        label: "비교 진행 중",
-        detail: "비교 목록에 포함됨 — 최적 후보 확정 후 요청 권장",
+        type: "advisory",
+        label: "비교 검토 진행 중",
+        detail: "동일 후보가 비교 검토에 있습니다 — 비교 확정 → 견적 요청 순서로 진행됩니다",
       });
     }
 
@@ -117,7 +137,8 @@ export function calculateRequestReadiness(
     }
 
     const hasBlocker = flags.some((f) => f.type === "hard_blocker");
-    const hasReview = flags.some((f) => f.type === "review_required");
+    // advisory 도 review 게이트 유지 — 규칙(비교 확정 후 요청)의 실효 보존, 톤만 정보.
+    const hasReview = flags.some((f) => f.type === "review_required" || f.type === "advisory");
     const status: CandidateAssessment["status"] = hasBlocker
       ? "blocked"
       : hasReview

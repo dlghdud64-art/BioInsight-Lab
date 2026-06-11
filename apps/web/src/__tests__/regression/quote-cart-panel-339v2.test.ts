@@ -42,7 +42,11 @@ describe("§11.339 v2 — 견적함: 수량/중립카드/검토인라인", () =>
   it("§11.302 — 카드 배경 중립(bg-white), 전체 노랑 X(보더만)", () => {
     const src = read(PANEL);
     expect(src).toMatch(/rounded-lg border bg-white/);
-    expect(src).toMatch(/border-l-2 border-l-yellow-400/);
+    // #advisory-banner-honesty (2026-06-11) — 보더가 tone 분기로 확장:
+    //   advisory(시스템 규칙)=blue, 검토=yellow. 단일라인 단언 → 분기 보존 단언.
+    expect(src).toMatch(/border-l-yellow-400/);
+    expect(src).toMatch(/border-l-blue-400/);
+    expect(src).toMatch(/flag\.tone === "advisory"/);
     // 전체 노란 배경(bg-yellow-50) 카드 금지
     expect(src).not.toMatch(/bg-yellow-50/);
   });
@@ -67,7 +71,10 @@ describe("§11.339 v2 — search/page 연결", () => {
   });
   it("detailSlot 에 SourcingContextRail + forceDetailKey=activeResultId", () => {
     const src = read(SEARCH);
-    expect(src).toMatch(/detailSlot=\{railProduct \?/);
+    // §11.367-1 (이전 batch): inline detailSlot={railProduct ? <Rail .../> : null}
+    //   → sourcingRail 변수 추출 + detailSlot={sourcingRail}. 의도 동일(데스크탑/모바일 공유).
+    expect(src).toMatch(/const sourcingRail\s*=\s*railProduct \?/);
+    expect(src).toMatch(/detailSlot=\{sourcingRail\}/);
     expect(src).toMatch(/forceDetailKey=\{activeResultId\}/);
   });
   it("reviewFlags = requestReadiness review_required 매핑", () => {
