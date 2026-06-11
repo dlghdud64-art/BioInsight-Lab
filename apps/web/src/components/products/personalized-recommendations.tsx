@@ -23,6 +23,8 @@ interface PersonalizedRecommendationsProps {
   currentProduct?: any; // 현재 제품 정보 (가격/스펙 비교용)
   title?: string;
   limit?: number;
+  /** §1-2⑤ — 상세 맥락 카테고리 고정 (cross-category 추천 noise 차단) */
+  category?: string;
 }
 
 export function PersonalizedRecommendations({
@@ -30,9 +32,10 @@ export function PersonalizedRecommendations({
   currentProduct,
   title = "연관 추천 제품",
   limit = 5,
+  category,
 }: PersonalizedRecommendationsProps) {
   const router = useRouter();
-  const { data, isLoading } = usePersonalizedRecommendations(productId, limit);
+  const { data, isLoading } = usePersonalizedRecommendations(productId, limit, category);
   const { addProduct, removeProduct, hasProduct } = useCompareStore();
 
   const recommendations = data?.recommendations || [];

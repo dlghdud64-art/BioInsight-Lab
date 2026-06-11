@@ -10,6 +10,15 @@
 > ⑤ 안전정보 편집·SDS/COA 업로드 버튼 buyer 노출 여부 점검 (vendor/admin 전용이어야).
 > **batch 구성(확정 시)**: ②추천 cross-category 필터+근거 실데이터화 + ③rail 상태 full view
 > 승계 + ①라벨 정직화 = 1 batch. catalog spec backfill 은 분리 트랙.
+>
+> **✅ §1-2⑤ batch 구현 완료 (2026-06-11, push 대기)** — sentinel `product-detail-honesty-125`(13 tests):
+> ② route canned 폴백 제거(빈 근거→박스 자동 숨김) + categoryLock(hook·component·detail 전달) /
+> ③ 비교 포함 배지 승계(compare-store 전역; **견적 배지는 useTestFlow provider 경계로 defer**) /
+> ① 스펙 그리드 identity 3타일 제거(실 spec 만 + 정직한 empty) /
+> ⑤ SDS/COA 업로드 canUpload(ADMIN·SUPPLIER) 게이트 — **권한 누수 실재했음, 봉합** /
+> ④ PBS-3↔PBS-1A = catno-master seed 데이터 확정 → **catalog A 트랙 이관**.
+> ⚠️ 신규 발견(스코프 밖, 호영님 판단 대기): 상세 "견적 담기" CTA가 GET /api/products/{id}
+> 조회 후 무조건 성공 toast = **front-only fake success**(mutation 0) — §4 위반, 별도 수리 필요.
 
 - **Status:** 🔄 sandbox GREEN (P1~P3 구현 완료) / 클로드코드 vitest 재확정 + push 대기
 - **Started:** 2026-06-10

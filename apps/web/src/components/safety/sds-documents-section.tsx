@@ -5,6 +5,7 @@
 // 열람=서명URL(B1-1). canonical 안전필드 승격은 사람 승인(apply) — 여기선 보관/열람만.
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useSession } from "next-auth/react";
 import { csrfFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +29,11 @@ export function SdsDocumentsSection({
 }) {
   const docLabel = title ?? (docType === "coa" ? "COA(시험성적서)" : "SDS");
   const { toast } = useToast();
+  // §1-2⑤ ⑤ — 업로드 권한 게이트: canonical 안전 문서 적재는 ADMIN·SUPPLIER 전용.
+  //   buyer(RESEARCHER/BUYER)는 열람만 (권한 누수 봉합 — 호영님 진단 2026-06-11).
+  const { data: session } = useSession();
+  const role = (session?.user as { role?: string } | undefined)?.role;
+  const canUpload = role === "ADMIN" || role === "SUPPLIER";
   const [docs, setDocs] = useState<SdsDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -95,15 +101,19 @@ export function SdsDocumentsSection({
     <div className="space-y-2" data-testid={`sds-documents-section-${docType}`}>
       <div className="flex items-center justify-between">
         <div className="text-xs font-semibold text-slate-700">등록된 {docLabel} 문서{docs.length > 0 ? ` · ${docs.length}건` : ""}</div>
-        <Button
-          variant="outline" size="sm" disabled={uploading}
-          className="h-8 text-xs gap-1.5"
-          onClick={() => fileRef.current?.click()}
-        >
-          {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-          {docLabel} 업로드
-        </Button>
-        <input ref={fileRef} type="file" accept=".pdf,.png,.jpg,.jpeg" className="hidden" onChange={handleUpload} />
+        {canUpload && (
+          <>
+            <Button
+              variant="outline" size="sm" disabled={uploading}
+              className="h-8 text-xs gap-1.5"
+              onClick={() => fileRef.current?.click()}
+            >
+              {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+              {docLabel} 업로드
+            </Button>
+            <input ref={fileRef} type="file" accept=".pdf,.png,.jpg,.jpeg" className="hidden" onChange={handleUpload} />
+          </>
+        )}
       </div>
 
       {loading ? (

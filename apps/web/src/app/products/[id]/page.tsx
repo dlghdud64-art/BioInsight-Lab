@@ -442,7 +442,10 @@ export default function ProductDetailPage() {
                       <h3 className="text-lg font-bold text-slate-100">상세 스펙 (Specifications)</h3>
                     </div>
                     <div className="p-4 md:p-8 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 bg-pn/50 rounded-b-3xl">
-                      {(product.specification || product.catalogNumber || product.regulatoryCompliance || product.brand || product.category) ? (
+                      {/* §1-2⑤ ① — spec tautology 제거: identity 필드(브랜드·카테고리·
+                          카탈로그번호)는 헤더가 표시 — spec 그리드는 실 spec 만 (라벨 정직화).
+                          실 spec 부재 시 정직한 empty 노출 (catalog spec backfill 별도 트랙). */}
+                      {(product.specification || product.regulatoryCompliance) ? (
                         <>
                           {product.specification && (
                             <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-pg/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
@@ -450,30 +453,10 @@ export default function ProductDetailPage() {
                               <span className="text-sm md:text-lg font-bold text-slate-100 break-words line-clamp-2">{product.specification}</span>
                             </div>
                           )}
-                          {product.catalogNumber && (
-                            <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-pg/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
-                              <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">카탈로그 번호</span>
-                              <span className="text-sm md:text-lg font-mono font-bold text-slate-100 break-words">{product.catalogNumber}</span>
-                            </div>
-                          )}
                           {product.regulatoryCompliance && (
                             <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-pg/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
                               <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">규제 규격</span>
                               <span className="text-sm md:text-lg font-bold text-slate-100 break-words">{product.regulatoryCompliance}</span>
-                            </div>
-                          )}
-                          {product.brand && (
-                            <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-pg/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
-                              <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">브랜드</span>
-                              <span className="text-sm md:text-lg font-bold text-slate-100 break-words">{product.brand}</span>
-                            </div>
-                          )}
-                          {product.category && (
-                            <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-pg/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
-                              <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">카테고리</span>
-                              <span className="text-sm md:text-lg font-bold text-slate-100 break-words">
-                                {PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES]}
-                              </span>
                             </div>
                           )}
                         </>
@@ -931,7 +914,8 @@ export default function ProductDetailPage() {
             <AlternativeProductsSection productId={id} currentProduct={product} />
             
             {/* 개인화 추천 제품 */}
-            <PersonalizedRecommendations productId={id} currentProduct={product} />
+            {/* §1-2⑤ — category 고정: 상세 맥락 cross-category 추천 noise 차단 */}
+            <PersonalizedRecommendations productId={id} currentProduct={product} category={product?.category} />
           </div>
         </div>
       </div>

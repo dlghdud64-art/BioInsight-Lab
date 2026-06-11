@@ -81,6 +81,9 @@ export async function GET(request: NextRequest) {
     });
 
     // 5. 추천 제품 계산
+    // §1-2⑤ — 제품 상세 맥락(category 전달 시) cross-category noise 차단:
+    //   사용자 선호 카테고리 대신 현재 제품 카테고리로 고정 (시약 상세에 기구 추천 금지).
+    const categoryLock = searchParams.get("category") || undefined;
     const recommendations = await generatePersonalizedRecommendations({
       userId,
       preferences,
@@ -88,6 +91,7 @@ export async function GET(request: NextRequest) {
       quoteItems,
       favorites,
       currentProductId: productId,
+      categoryLock,
       limit,
     });
 
@@ -301,9 +305,11 @@ async function generatePersonalizedRecommendations(params: {
   quoteItems: any[];
   favorites: any[];
   currentProductId: string | null;
+  /** §1-2⑤ — 상세 맥락 카테고리 고정 (cross-category noise 차단) */
+  categoryLock?: string;
   limit: number;
 }) {
-  const { preferences, currentProductId, limit } = params;
+  const { preferences, currentProductId, categoryLock, limit } = params;
 
   // 선호 카테고리 추출
   const topCategories = Object.entries(preferences.categories)
@@ -320,7 +326,10 @@ async function generatePersonalizedRecommendations(params: {
   // 추천 제품 쿼리
   const where: any = {};
 
-  if (topCategories.length > 0) {
+  // §1-2⑤ — categoryLock 우선: 상세 맥락에서는 현재 제품 카테고리로 고정.
+  if (categoryLock) {
+    where.category = categoryLock;
+  } else if (topCategories.length > 0) {
     where.category = { in: topCategories };
   }
 
@@ -403,5 +412,7 @@ function generateRecommendationReason(product: any, preferences: any): string {
     reasons.push(`${product.brand} 브랜드를 선호하시는 것으로 보입니다`);
   }
 
-  return reasons.length > 0 ? reasons.join(", ") : "유사한 제품입니다";
+  // §1-2⑤ — canned 폴백 문구 제거: 진짜 근거 없으면 빈 문자열
+  //   → UI(rec.reason 조건부 렌더)가 근거 박스 자체를 숨김 (fake 근거 0, §4 정합).
+  return reasons.length > 0 ? reasons.join(", ") : "";
 }
