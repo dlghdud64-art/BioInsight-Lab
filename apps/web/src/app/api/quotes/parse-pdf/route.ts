@@ -88,6 +88,8 @@ export async function POST(request: NextRequest) {
       items: result.parsed.items.map((item) => ({
         productName: item.productName,
         catalogNumber: item.catalogNumber,
+        // #catalog-spec-backfill ①-a — 파서가 이미 추출하던 규격을 응답에 통과 (떨굼 제거)
+        specification: item.specification,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
         totalPrice: item.totalPrice,

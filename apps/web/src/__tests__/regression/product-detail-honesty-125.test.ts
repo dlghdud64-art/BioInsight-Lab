@@ -73,7 +73,9 @@ describe("§1-2⑤ ① — spec tautology 제거 (라벨 정직화)", () => {
     const src = read(DETAIL);
     const gridStart = src.indexOf("상세 스펙 (Specifications)");
     expect(gridStart).toBeGreaterThan(-1);
-    const grid = src.slice(gridStart, gridStart + 2600);
+    // #catalog-spec-backfill ② (2026-06-11) 으로 "스펙 편집" button JSX 가 헤더/본문 사이 ~900 chars
+    //   삽입 → slice 범위 정합(2600 → 3500). 정직화 의도(empty state 보존) 동일.
+    const grid = src.slice(gridStart, gridStart + 3500);
     expect(grid).not.toMatch(/>브랜드</);
     expect(grid).not.toMatch(/>카테고리</);
     expect(grid).not.toMatch(/>카탈로그 번호</);

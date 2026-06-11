@@ -314,6 +314,10 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
                         {item.catalogNumber && (
                           <span className="text-[9px] text-slate-600 font-mono">{item.catalogNumber}</span>
                         )}
+                        {/* #catalog-spec-backfill ①-a — 파싱된 규격 노출 (카탈로그 승격 CTA 는 ①-b 후속) */}
+                        {item.specification && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">{item.specification}</span>
+                        )}
                       </div>
                       <div className="flex items-center gap-3 ml-6 text-[10px]">
                         <span className="text-slate-600">수량:</span>

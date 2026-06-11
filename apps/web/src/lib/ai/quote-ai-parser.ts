@@ -30,6 +30,8 @@ import {
 interface RawQuoteItem {
   name: string;
   catalogNumber: string | null;
+  // #catalog-spec-backfill ①-a — 견적 회신은 규격의 1차 소스 (조달청 ref 에 spec 부재)
+  specification: string | null;
   price: string | number | null;
   leadTime: string | null;
   quantity: string | number | null;
@@ -40,6 +42,7 @@ interface RawQuoteItem {
 interface QuoteItem {
   name: string;
   catalogNumber: string | null;
+  specification: string | null;
   price: number | null;
   leadTime: string | null;
   quantity: number | null;
@@ -130,6 +133,7 @@ export async function parseQuoteWithAI(
 2. **items** (제품 리스트): 배열로 반환
    - name: 제품명
    - catalogNumber: 카탈로그 번호 (Cat#, Part#, Model# 등)
+   - specification: 규격/용량 (예: "500mL", "100g", "0.22μm" — 제품명·설명란에서 추출, 추측 금지, 없으면 null)
    - price: 가격 (숫자만, ₩ , 원 같은 기호 제거)
    - leadTime: 납기일 (예: "3-5일", "1주", 있으면)
    - quantity: 수량 (숫자만)
@@ -141,6 +145,7 @@ export async function parseQuoteWithAI(
 **중요 규칙:**
 - 가격은 반드시 순수 숫자(Integer)로 변환해. 예: "₩150,000원" → 150000
 - catalogNumber가 없으면 null
+- specification은 문서에 명시된 값만 (추측·생성 금지), 없으면 null
 - leadTime이 없으면 null
 - 여러 제품이 있으면 모두 추출
 - JSON만 반환하고 다른 설명 붙이지 마

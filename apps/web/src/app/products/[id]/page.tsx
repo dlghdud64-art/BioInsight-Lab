@@ -179,6 +179,42 @@ export default function ProductDetailPage() {
     setIsSafetyEditing(true);
   };
 
+  // #catalog-spec-backfill ② — 규격 편집 (ADMIN·SUPPLIER, 서버측 검증 동반)
+  const role = session?.user?.role as string | undefined;
+  const canEditSpec = role === "ADMIN" || role === "SUPPLIER";
+  const [isSpecEditing, setIsSpecEditing] = useState(false);
+  const [specForm, setSpecForm] = useState("");
+  const [isSavingSpec, setIsSavingSpec] = useState(false);
+  const saveSpecification = async () => {
+    if (!fetchedProduct) return;
+    setIsSavingSpec(true);
+    try {
+      const response = await fetch(`/api/products/${id}/specification`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ specification: specForm.trim() || null }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "규격을 저장하는 데 실패했습니다.");
+      }
+      queryClient.invalidateQueries({ queryKey: ["product", id] });
+      setIsSpecEditing(false);
+      toast({
+        title: "규격 저장 완료",
+        description: "제품의 규격/용량 정보가 업데이트되었습니다.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "저장 실패",
+        description: error?.message || "규격을 저장하는 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingSpec(false);
+    }
+  };
+
   const saveSafetyInfo = async () => {
     if (!fetchedProduct) return;
     setIsSavingSafety(true);
@@ -448,6 +484,22 @@ export default function ProductDetailPage() {
                     <div className="px-6 md:px-8 py-4 border-b border-gray-100/50 flex items-center gap-3 bg-pg/30 rounded-t-3xl">
                       <Check className="w-5 h-5 text-blue-600" />
                       <h3 className="text-lg font-bold text-slate-100">상세 스펙 (Specifications)</h3>
+                      {/* #catalog-spec-backfill ② — 공급사/관리자 규격 직접 충전 */}
+                      {canEditSpec && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs ml-auto"
+                          onClick={() => {
+                            setSpecForm(product?.specification || "");
+                            setIsSpecEditing(true);
+                          }}
+                        >
+                          <Pencil className="h-3 w-3 mr-1" />
+                          스펙 편집
+                        </Button>
+                      )}
                     </div>
                     <div className="p-4 md:p-8 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 bg-pn/50 rounded-b-3xl">
                       {/* §1-2⑤ ① — spec tautology 제거: identity 필드(브랜드·카테고리·
@@ -1008,6 +1060,38 @@ export default function ProductDetailPage() {
           </Button>
         </div>
       </div>
+
+      {/* #catalog-spec-backfill ② — 규격 편집 모달 (safety 모달 동형) */}
+      {isSpecEditing && (
+        <Dialog open={isSpecEditing} onOpenChange={(open) => !open && setIsSpecEditing(false)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>규격/용량 편집</DialogTitle>
+              <DialogDescription>
+                카탈로그 규격 정보를 입력합니다. 저장 시 상세 스펙과 소싱 비교에 즉시 반영됩니다.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Label htmlFor="spec-input">규격/용량</Label>
+              <Input
+                id="spec-input"
+                value={specForm}
+                onChange={(e) => setSpecForm(e.target.value)}
+                placeholder="예: 500mL, 1L, 100g, 0.22μm"
+                maxLength={200}
+              />
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setIsSpecEditing(false)} disabled={isSavingSpec}>
+                취소
+              </Button>
+              <Button onClick={saveSpecification} disabled={isSavingSpec} className="flex-1">
+                {isSavingSpec ? "저장 중..." : "저장"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* 안전 필드 편집 모달 */}
       {isSafetyEditing && (
