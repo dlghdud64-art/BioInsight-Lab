@@ -13,6 +13,8 @@ import {
   computeAddToQuote,
   type ComputeAddToQuoteResult,
 } from "@/lib/quote/add-product-to-quote";
+// #quote-cta-truth — 견적함 키 단일 출처 (상세 CTA 저장소 합류, 호영님 ⓐ 결정 2026-06-11)
+import { QUOTE_CART_STORAGE_KEY } from "@/lib/quote/quote-cart-storage";
 
 interface TestFlowContextType {
   // 검색 상태
@@ -106,7 +108,8 @@ function TestFlowProviderContent({ children }: { children: ReactNode }) {
 
   // §11.338 — cart 스키마 버전. §11.336-data import 전(시드 PBS 1X ₩18,000 등) 잔존
   //   cart 를 1회 무효화. 가격 정책(견적 후 확정) 변경 정합. 향후 구조 변경 시 ++.
-  const STORAGE_KEY = "quote-cart-storage-v2";
+  // #quote-cta-truth — 키 literal 을 공유 lib 단일 출처로 교체.
+  const STORAGE_KEY = QUOTE_CART_STORAGE_KEY;
   const LEGACY_STORAGE_KEYS = ["quote-cart-storage"];
 
   // 클라이언트 마운트 후 localStorage에서 장바구니 복원 (Hydration 에러 방지)

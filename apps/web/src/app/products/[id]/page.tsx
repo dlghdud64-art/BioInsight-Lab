@@ -54,6 +54,8 @@ import { getRegulationLinksForProduct } from "@/lib/regulation/links";
 import { filterComplianceLinksForProduct, getRuleDescription } from "@/lib/compliance-links";
 import { PersonalizedRecommendations } from "@/components/products/personalized-recommendations";
 import { Disclaimer } from "@/components/legal/disclaimer";
+// #quote-cta-truth — 견적함 저장 계층 단일 출처 (fake success 제거, 호영님 2026-06-11)
+import { addToQuoteCart, readQuoteCart } from "@/lib/quote/quote-cart-storage";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -62,6 +64,12 @@ export default function ProductDetailPage() {
   const { data: session } = useSession();
   const { data: fetchedProduct, isLoading, error } = useProduct(id);
   const { addProduct, removeProduct, hasProduct } = useCompareStore();
+  // #quote-cta-truth — 견적함 truth 합류 (provider 와 동일 키·동일 순수함수, ⓐ 결정)
+  const [inQuoteCart, setInQuoteCart] = useState(false);
+  useEffect(() => {
+    if (!id) return;
+    setInQuoteCart(readQuoteCart().some((q: any) => q.productId === id));
+  }, [id]);
   const [translatedDescription, setTranslatedDescription] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [isSafetyEditing, setIsSafetyEditing] = useState(false);
@@ -846,27 +854,51 @@ export default function ProductDetailPage() {
 
                     {/* CTA 버튼 */}
                     <div className="space-y-3 pt-6 border-t border-bd/50">
+                      {/* §1-2⑤ ③ — 소싱 상태 승계: 비교·견적함 포함 배지 (rail 라벨 동형) */}
+                      {(hasProduct(id) || inQuoteCart) && (
+                        <div className="flex items-center gap-1.5">
+                          {hasProduct(id) && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                              <PenLine className="h-3 w-3" />비교에 포함됨
+                            </span>
+                          )}
+                          {inQuoteCart && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <ShoppingCart className="h-3 w-3" />견적함에 포함됨
+                            </span>
+                          )}
+                        </div>
+                      )}
                       <Button
                         className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-blue-500/25 transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 group"
-                        onClick={async () => {
-                          try {
-                            const response = await fetch(`/api/products/${id}`);
-                            if (response.ok) {
-                              toast({
-                                title: "견적 담기 완료",
-                                description: "제품이 견적 요청 리스트에 추가되었습니다.",
-                              });
-                            }
-                          } catch (error) {
+                        onClick={() => {
+                          // #quote-cta-truth — 구 GET-only fake success 제거: 실 견적함
+                          //   (provider 동일 truth) 에 추가하고 결과로만 toast (조건부).
+                          if (inQuoteCart) {
                             toast({
-                              title: "추가 실패",
+                              title: "이미 견적함에 있습니다",
+                              description: "견적 요청 화면에서 수량·벤더를 조정할 수 있습니다.",
+                            });
+                            return;
+                          }
+                          const result = addToQuoteCart(product);
+                          if (result.ok) {
+                            setInQuoteCart(true);
+                            toast({
+                              title: "견적 담기 완료",
+                              description: "제품이 견적함에 추가되었습니다.",
+                            });
+                          } else {
+                            toast({
+                              title: "견적 담기 실패",
+                              description: "제품 정보를 확인할 수 없습니다.",
                               variant: "destructive",
                             });
                           }
                         }}
                       >
                         <ShoppingCart className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                        견적 담기
+                        {inQuoteCart ? "견적함에 담김" : "견적 담기"}
                       </Button>
                       <div className="grid grid-cols-2 gap-3">
                         <Button
@@ -946,25 +978,33 @@ export default function ProductDetailPage() {
         <div className="flex items-center justify-end">
           <Button
             className="flex-shrink-0 py-3 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold text-base shadow-lg hover:shadow-blue-500/25 transition-all flex items-center justify-center gap-2"
-            onClick={async () => {
-              try {
-                const response = await fetch(`/api/products/${id}`);
-                if (response.ok) {
-                  toast({
-                    title: "견적 담기 완료",
-                    description: "제품이 견적 요청 리스트에 추가되었습니다.",
-                  });
-                }
-              } catch (error) {
+            onClick={() => {
+              // #quote-cta-truth — 모바일 하단 바도 동일 truth 결선 (fake success 0)
+              if (inQuoteCart) {
                 toast({
-                  title: "추가 실패",
+                  title: "이미 견적함에 있습니다",
+                  description: "견적 요청 화면에서 수량·벤더를 조정할 수 있습니다.",
+                });
+                return;
+              }
+              const result = addToQuoteCart(product);
+              if (result.ok) {
+                setInQuoteCart(true);
+                toast({
+                  title: "견적 담기 완료",
+                  description: "제품이 견적함에 추가되었습니다.",
+                });
+              } else {
+                toast({
+                  title: "견적 담기 실패",
+                  description: "제품 정보를 확인할 수 없습니다.",
                   variant: "destructive",
                 });
               }
             }}
           >
             <ShoppingCart className="w-5 h-5" />
-            견적 담기
+            {inQuoteCart ? "견적함에 담김" : "견적 담기"}
           </Button>
         </div>
       </div>
