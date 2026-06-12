@@ -51,10 +51,18 @@ describe("§11.369-3 P1-3 — read lock-skip (P3 RED)", () => {
   });
 });
 
-describe("§11.369-3 P4 — 에러 메시지 정직화", () => {
-  it("'다른 작업 진행 중' 이중거짓 제거 — double-submit 정직 문구", () => {
-    const src = read(MIDDLEWARE);
-    expect(src).not.toMatch(/같은 항목에 대한 다른 작업이 진행 중입니다/);
-    expect(src).toMatch(/처리 중인 동일 요청|중복.*요청|잠시 후 다시/);
+const LEAK_GUARD = "src/lib/security/frontend-leak-guard.ts";
+const REPLAY_GUARD = "src/lib/security/mutation-replay-guard.ts";
+
+describe("§11.369-3 P4 — 에러 메시지 정직화 (전 surface)", () => {
+  it("enforce: '다른 작업 진행 중' 이중거짓 제거", () => {
+    expect(read(MIDDLEWARE)).not.toMatch(/같은 항목에 대한 다른 작업이 진행 중입니다/);
+    expect(read(MIDDLEWARE)).toMatch(/처리 중인 동일 요청/);
+  });
+  it("frontend-leak-guard 동일 거짓문구 부재", () => {
+    expect(read(LEAK_GUARD)).not.toMatch(/같은 항목에 대한 다른 작업이 진행 중입니다/);
+  });
+  it("mutation-replay-guard 동일 거짓문구 부재", () => {
+    expect(read(REPLAY_GUARD)).not.toMatch(/같은 항목에 대한 다른 작업이 진행 중입니다/);
   });
 });

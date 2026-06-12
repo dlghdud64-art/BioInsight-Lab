@@ -737,7 +737,7 @@ export default function CheckoutDialog({
         setStatus("confirming");
       } catch (err) {
         // 서버 측 저장 오류를 사용자에게 그대로 노출한다.
-        // (예: 409 "같은 항목에 대한 다른 작업이 진행 중입니다", 500 저장 실패 등)
+        // (예: 409 "처리 중인 동일 요청이 있습니다", 500 저장 실패 등)
         const msg =
           err instanceof Error && err.message
             ? err.message

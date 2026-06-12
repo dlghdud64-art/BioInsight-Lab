@@ -148,7 +148,7 @@ const ERROR_MESSAGE_MAP: Record<string, SafeErrorMessage> = {
   // System
   CONCURRENT_MUTATION: {
     category: 'system_error',
-    userMessage: '같은 항목에 대한 다른 작업이 진행 중입니다',
+    userMessage: '처리 중인 동일 요청이 있습니다. 잠시 후 다시 시도하세요.',
     actionHint: '잠시 후 다시 시도해주세요',
     retryable: true,
   },

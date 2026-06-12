@@ -136,7 +136,7 @@ const GUARD_MESSAGES: Record<MutationGuardDenialReason, string> = {
   stale_snapshot: '데이터가 변경되었습니다. 최신 상태를 확인한 후 다시 시도해주세요',
   csrf_invalid: '요청 검증에 실패했습니다. 페이지를 새로고침해주세요',
   request_expired: '요청이 만료되었습니다. 다시 시도해주세요',
-  concurrent_mutation: '같은 항목에 대한 다른 작업이 진행 중입니다. 잠시 후 다시 시도해주세요',
+  concurrent_mutation: '처리 중인 동일 요청이 있습니다. 잠시 후 다시 시도해주세요.',
 };
 
 // ═══════════════════════════════════════════════════════
