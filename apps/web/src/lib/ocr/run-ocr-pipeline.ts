@@ -72,7 +72,7 @@ export interface RunOcrPipelineResult {
   providerUsed: "GEMINI" | "CLOUD_VISION_CLAUDE" | "REGEX";
   /** Cache hit 여부. */
   cached: boolean;
-  /** §scan-gs1 P4 — Gemini 채택 사유(silent degradation 제거, 운영자 가시화). */
+  /** §11.382 P4 — Gemini 채택 사유(silent degradation 제거, 운영자 가시화). */
   fallbackReason?: "high_confidence" | "tier2_unconfigured" | "tier2_error" | null;
 }
 
@@ -234,7 +234,7 @@ export async function runOcrPipeline(
   }
 
   // (4) Gemini confidence medium/low → Tier 2 시도 (Phase 5 실제 wiring)
-  // §scan-gs1 P4 — Tier2 미채택 사유 캡처(silent degradation 제거).
+  // §11.382 P4 — Tier2 미채택 사유 캡처(silent degradation 제거).
   let tier2FallbackReason: "tier2_unconfigured" | "tier2_error" = "tier2_error";
   try {
     const visionResult = await extractWithCloudVision({ base64: input.base64 });

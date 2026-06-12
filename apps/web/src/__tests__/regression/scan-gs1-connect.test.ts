@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 
-// §scan-gs1 — GS1 datamatrix connect (라벨 직접등록 추출 dead 봉합).
+// §11.382 — GS1 datamatrix connect (라벨 직접등록 추출 dead 봉합).
 //   배치: src/__tests__/regression/ (REPO_WEB = 3단계 상승).
 //   ⚠️ P1-2(scan-label GS1)·P1-3a(모달 디코드)·P1-4b(#2 신호)는 P3/P4 구현 전 RED(의도).
 //      P1-1(머신)·P1-3b(single impl)·P1-4a(fallback 보존)은 GREEN.
@@ -17,7 +17,7 @@ const SCAN_LABEL = "src/app/api/inventory/scan-label/route.ts";
 const MODAL = "src/components/inventory/LabelScannerModal.tsx";
 const PIPELINE = "src/lib/ocr/run-ocr-pipeline.ts";
 
-describe("§scan-gs1 P1-1 — merge 머신 (P2 GREEN)", () => {
+describe("§11.382 P1-1 — merge 머신 (P2 GREEN)", () => {
   it("mergeGs1WithOcr + isFieldVerified export", () => {
     const src = read(MACHINE);
     expect(src).toMatch(/export function mergeGs1WithOcr/);
@@ -36,7 +36,7 @@ describe("§scan-gs1 P1-1 — merge 머신 (P2 GREEN)", () => {
   });
 });
 
-describe("§scan-gs1 P1-2 — scan-label GS1 단계 (P3 RED)", () => {
+describe("§11.382 P1-2 — scan-label GS1 단계 (P3 RED)", () => {
   it("parseGs1 호출 (서버 single impl 재사용)", () => {
     const src = read(SCAN_LABEL);
     expect(src).toMatch(/parseGs1/);
@@ -53,7 +53,7 @@ describe("§scan-gs1 P1-2 — scan-label GS1 단계 (P3 RED)", () => {
   });
 });
 
-describe("§scan-gs1 P1-3 — 클라 디코드(P3 RED) + single impl 락(GREEN)", () => {
+describe("§11.382 P1-3 — 클라 디코드(P3 RED) + single impl 락(GREEN)", () => {
   it("LabelScannerModal 이 zxing 으로 datamatrix 디코드 (P3 RED)", () => {
     const src = read(MODAL);
     expect(src).toMatch(/@zxing\/browser|BrowserMultiFormatReader|decodeFrom/);
@@ -65,7 +65,7 @@ describe("§scan-gs1 P1-3 — 클라 디코드(P3 RED) + single impl 락(GREEN)"
   });
 });
 
-describe("§scan-gs1 P1-4 — Gemini fallback 보존(GREEN) + #2 Tier2 신호(P4 RED)", () => {
+describe("§11.382 P1-4 — Gemini fallback 보존(GREEN) + #2 Tier2 신호(P4 RED)", () => {
   it("Gemini fallback 보존 — scan-label runOcrPipeline 잔존 (GS1 대체 아님)", () => {
     const src = read(SCAN_LABEL);
     expect(src).toMatch(/runOcrPipeline/);
@@ -77,7 +77,7 @@ describe("§scan-gs1 P1-4 — Gemini fallback 보존(GREEN) + #2 Tier2 신호(P4
   });
 });
 
-describe("§scan-gs1 P1-5 — P4 verified gate 연결 + #2 신호", () => {
+describe("§11.382 P1-5 — P4 verified gate 연결 + #2 신호", () => {
   it("모달 verified gate 가 isFieldVerified 연결(false 하드코딩 제거)", () => {
     const src = read(MODAL);
     expect(src).toMatch(/verified:\s*\{\s*lot:\s*lotVerified/);

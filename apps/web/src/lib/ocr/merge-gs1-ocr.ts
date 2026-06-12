@@ -1,4 +1,4 @@
-// §scan-gs1 P2 — GS1 datamatrix ↔ Gemini OCR source-based merge (순수). 호영님 P-track 2026-06-12
+// §11.382 P2 — GS1 datamatrix ↔ Gemini OCR source-based merge (순수). 호영님 P-track 2026-06-12
 //   GS1 = canonical fast-path(checksum 결정적), Gemini = fallback(공백 보강, 대체 아님).
 //   결정적 필드(lotNo·expirationDate): GS1 있으면 우선 + source "gs1". 공백만 OCR.
 //   gtin = GS1 only(표시). catalogNo = OCR only(GTIN→catalog 매핑은 out-of-scope roadmap).

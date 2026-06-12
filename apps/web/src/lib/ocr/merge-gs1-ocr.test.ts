@@ -3,7 +3,7 @@ import { mergeGs1WithOcr, isFieldVerified } from "@/lib/ocr/merge-gs1-ocr";
 import type { Gs1Parsed } from "@/lib/scan/gs1-parser";
 import type { LabelParseResult } from "@/lib/ocr/label-parser";
 
-// §scan-gs1 P2 — GS1↔OCR merge 머신 단위. source-based verified 마킹 핵심.
+// §11.382 P2 — GS1↔OCR merge 머신 단위. source-based verified 마킹 핵심.
 
 const gs1 = (o: Partial<Gs1Parsed>): Gs1Parsed => ({
   gtin: null, lotNo: null, expirationDate: null, productionDate: null,
@@ -15,7 +15,7 @@ const ocr = (o: Partial<LabelParseResult>): LabelParseResult => ({
   casNumber: null, quantity: null, rawText: "", confidence: "low", matchedFields: 0, ...o,
 });
 
-describe("§scan-gs1 — mergeGs1WithOcr: GS1 결정적 우선 + source 태그", () => {
+describe("§11.382 — mergeGs1WithOcr: GS1 결정적 우선 + source 태그", () => {
   it("GS1 lotNo/expiry 있으면 우선 + source gs1 (OCR 무시)", () => {
     const m = mergeGs1WithOcr(
       gs1({ lotNo: "2505056", expirationDate: "2027-05", gtin: "00812345600012" }),
@@ -52,7 +52,7 @@ describe("§scan-gs1 — mergeGs1WithOcr: GS1 결정적 우선 + source 태그",
   });
 });
 
-describe("§scan-gs1 — conflict: GS1≠OCR → GS1 우선 + conflict(확인필요)", () => {
+describe("§11.382 — conflict: GS1≠OCR → GS1 우선 + conflict(확인필요)", () => {
   it("불일치 시 GS1 값 채택 + conflict true", () => {
     const m = mergeGs1WithOcr(gs1({ lotNo: "2505056" }), ocr({ lotNo: "250505G" }));
     expect(m.lotNo).toBe("2505056"); // GS1 우선
@@ -65,7 +65,7 @@ describe("§scan-gs1 — conflict: GS1≠OCR → GS1 우선 + conflict(확인필
   });
 });
 
-describe("§scan-gs1 — isFieldVerified: datamatrix=verified, OCR/conflict=확인필요", () => {
+describe("§11.382 — isFieldVerified: datamatrix=verified, OCR/conflict=확인필요", () => {
   it("source gs1 + 불일치 없음 → verified (§11.380 vision-guess 예외)", () => {
     expect(isFieldVerified("gs1", false)).toBe(true);
   });

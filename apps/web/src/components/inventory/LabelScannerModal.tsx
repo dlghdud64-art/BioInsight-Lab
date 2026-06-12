@@ -45,7 +45,7 @@ import { useInventoryEditBroadcast } from "@/hooks/use-inventory-edit-broadcast"
 // §11.374 — 인앱 스캔 공통 가이드 프레임(라벨/QR 통일)
 import { ScanGuideFrame } from "./ScanGuideFrame";
 
-// §scan-gs1 — 정지 이미지(data URI)에서 datamatrix/QR 디코드(@zxing/browser).
+// §11.382 — 정지 이미지(data URI)에서 datamatrix/QR 디코드(@zxing/browser).
 //   성공 → raw GS1 string(서버 parseGs1 single impl 으로 전달). 실패/없음 → null(Gemini fallback).
 //   ⚠️ parseGs1 클라 복제 금지 — 여기선 raw string 만 추출.
 async function decodeDatamatrixFromImage(dataUri: string): Promise<string | null> {
@@ -91,7 +91,7 @@ interface ScanApiResponse {
     providerUsed: "GEMINI" | "CLOUD_VISION_CLAUDE" | "REGEX";
     cached: boolean;
   } | null;
-  // §scan-gs1 — source-based 마킹(P4 verified 표시). datamatrix=gs1, OCR=ocr.
+  // §11.382 — source-based 마킹(P4 verified 표시). datamatrix=gs1, OCR=ocr.
   fieldSources?: { lotNo: "gs1" | "ocr" | null; expirationDate: "gs1" | "ocr" | null; catalogNo: "gs1" | "ocr" | null };
   fieldConflicts?: { lotNo: boolean; expirationDate: boolean };
   gtin?: string | null;
@@ -263,7 +263,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
   const scanTitle = isSearchContext ? "라벨 스캔 검색" : "스마트 입고";
   const [step, setStep] = useState<ScanStep>("upload");
   const [scanResult, setScanResult] = useState<ScanApiResponse | null>(null);
-  // §scan-gs1 P4 — GS1 datamatrix 필드 verified(확인필요 면제, label-commit-gate rule 3).
+  // §11.382 P4 — GS1 datamatrix 필드 verified(확인필요 면제, label-commit-gate rule 3).
   //   source gs1 + 불일치 없음만. OCR(vision-guess)/conflict 는 verified 아님(터치 강제 유지).
   const lotVerified = isFieldVerified(scanResult?.fieldSources?.lotNo ?? null, scanResult?.fieldConflicts?.lotNo ?? false);
   const expiryVerified = isFieldVerified(scanResult?.fieldSources?.expirationDate ?? null, scanResult?.fieldConflicts?.expirationDate ?? false);
@@ -397,7 +397,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
     setStep("scanning");
     setError(null);
     try {
-      // §scan-gs1 — datamatrix 클라 디코드 → raw GS1 을 서버로(결정적 Lot/EXP).
+      // §11.382 — datamatrix 클라 디코드 → raw GS1 을 서버로(결정적 Lot/EXP).
       const gs1Raw = await decodeDatamatrixFromImage(base64);
       const res = await csrfFetch("/api/inventory/scan-label", {
         method: "POST",
@@ -1225,7 +1225,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                     const b = fieldSourceBadge(formData.lotNumber, lotScanFilled, lotDirty);
                     return b ? <span data-testid="lot-source-badge" className={`text-[9px] px-1.5 py-0 rounded ${b.cls}`}>{b.label}</span> : null;
                   })()}
-                  {/* §scan-gs1 P4 — datamatrix verified 녹색 배지(확인필요 면제 시각화) */}
+                  {/* §11.382 P4 — datamatrix verified 녹색 배지(확인필요 면제 시각화) */}
                   {lotVerified && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 inline-flex items-center gap-0.5">
                       <CheckCircle2 className="h-2.5 w-2.5" />GS1 검증
@@ -1252,7 +1252,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                     const b = fieldSourceBadge(formData.expirationDate, expiryScanFilled, expiryDirty);
                     return b ? <span data-testid="expiry-source-badge" className={`text-[9px] px-1.5 py-0 rounded ${b.cls}`}>{b.label}</span> : null;
                   })()}
-                  {/* §scan-gs1 P4 — datamatrix verified 녹색 배지(확인필요 면제 시각화) */}
+                  {/* §11.382 P4 — datamatrix verified 녹색 배지(확인필요 면제 시각화) */}
                   {expiryVerified && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 inline-flex items-center gap-0.5">
                       <CheckCircle2 className="h-2.5 w-2.5" />GS1 검증

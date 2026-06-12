@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
       jobId: string | null;
       providerUsed: "GEMINI" | "CLOUD_VISION_CLAUDE" | "REGEX";
       cached: boolean;
-      // §scan-gs1 P4 — Gemini 채택 사유 노출(silent degradation 제거).
+      // §11.382 P4 — Gemini 채택 사유 노출(silent degradation 제거).
       fallbackReason?: "high_confidence" | "tier2_unconfigured" | "tier2_error" | null;
     } | null = null;
 
@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
       parsed = parseReagentLabel(text!);
     }
 
-    // §scan-gs1 — GS1 datamatrix(결정적, checksum) + Gemini OCR source-based 병합.
+    // §11.382 — GS1 datamatrix(결정적, checksum) + Gemini OCR source-based 병합.
     //   gs1Raw 있으면 parseGs1(서버 single impl) → mergeGs1WithOcr 로 결정적 필드(lot/exp) 우선.
     //   gs1Raw 없음/비-GS1 → OCR 단독(Gemini fallback 보존, GS1 대체 아님).
     const gs1 = gs1Raw ? parseGs1(gs1Raw) : null;
@@ -221,7 +221,7 @@ export async function POST(req: NextRequest) {
     enforcement.complete();
     return NextResponse.json({
       success: true,
-      parsed: { ...parsed, ...merged }, // §scan-gs1 — GS1 병합 필드 우선 + OCR 메타(confidence/rawText) 보존
+      parsed: { ...parsed, ...merged }, // §11.382 — GS1 병합 필드 우선 + OCR 메타(confidence/rawText) 보존
       fieldSources: merged.sources,
       fieldConflicts: merged.conflicts,
       gtin: merged.gtin,
