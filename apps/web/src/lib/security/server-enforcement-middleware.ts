@@ -28,6 +28,7 @@ import {
   type MutationRequest,
   type MutationActionType,
 } from './mutation-replay-guard';
+import { deriveConcurrencyKey } from './concurrency-key';
 import {
   appendAuditEnvelope,
   computeStateHash,
@@ -290,10 +291,13 @@ export function withEnforcement(
     }
 
     // 8. Concurrency lock 획득
-    const lockAcquired = beginMutation(config.mutationAction, entityId);
+    // §11.369-3 — wrapper 경로는 routePath 부재 → 구 키(action:entityId) 명시로 동작 불변.
+    //   completeMutation 내부 키(`${action}:${targetEntityId}`)와 일치(begin≠complete leak 방지).
+    const wrapperKey = `${config.mutationAction}:${entityId}`;
+    const lockAcquired = beginMutation(wrapperKey);
     if (!lockAcquired) {
       return NextResponse.json(
-        { error: '같은 항목에 대한 다른 작업이 진행 중입니다', correlationId },
+        { error: '처리 중인 동일 요청이 있습니다. 잠시 후 다시 시도하세요.', correlationId },
         { status: 409 },
       );
     }
@@ -335,12 +339,12 @@ export function withEnforcement(
       }
 
       // Lock 해제
-      failMutation(config.mutationAction, entityId);
+      failMutation(wrapperKey);
       return response;
 
     } catch (error) {
       // Lock 해제
-      failMutation(config.mutationAction, entityId);
+      failMutation(wrapperKey);
 
       // Error sanitization
       const safeError = sanitizeErrorForSurface(
@@ -450,6 +454,8 @@ export interface InlineEnforcementConfig {
   readonly csrfProtection?: CsrfProtectionLevel;
   /** 고위험 route — soft_enforce에서도 차단 */
   readonly csrfHighRisk?: boolean;
+  /** §11.369-3 — read-only(GET) lock-skip. 동시성 보호 불요(audit 유지). */
+  readonly readOnly?: boolean;
 }
 
 export interface InlineEnforcementHandle {
@@ -527,15 +533,22 @@ export function enforceAction(config: InlineEnforcementConfig): InlineEnforcemen
     }
   }
 
-  // 3. Concurrency lock
+  // 3. Concurrency lock — §11.369-3 route+resource/user 키(전역 'unknown' 제거)
   const mutationAction = config.action as unknown as MutationActionType;
+  const concurrencyKey = deriveConcurrencyKey({
+    action: mutationAction,
+    routePath: config.routePath,
+    targetEntityId: config.targetEntityId,
+    userId: config.userId,
+  });
+  const isReadOnly = config.readOnly === true; // §11.369-3 B — read lock-skip(audit 유지)
   let lockAcquired = false;
 
-  if (authResult.permitted && csrfPassed) {
-    lockAcquired = beginMutation(mutationAction, config.targetEntityId);
+  if (authResult.permitted && csrfPassed && !isReadOnly) {
+    lockAcquired = beginMutation(concurrencyKey);
   }
 
-  const allowed = authResult.permitted && csrfPassed && lockAcquired;
+  const allowed = authResult.permitted && csrfPassed && (isReadOnly || lockAcquired);
 
   // 4. Security event 기록 (차단 시)
   if (!authResult.permitted) {
@@ -567,7 +580,7 @@ export function enforceAction(config: InlineEnforcementConfig): InlineEnforcemen
         ? authResult.governanceMessage
         : !csrfPassed
         ? (csrfDenyMessage || '보안 검증이 완료되지 않아 작업을 진행할 수 없습니다.')
-        : '같은 항목에 대한 다른 작업이 진행 중입니다';
+        : '처리 중인 동일 요청이 있습니다. 잠시 후 다시 시도하세요.';
       const status = !authResult.permitted ? 403 : !csrfPassed ? 403 : 409;
 
       return NextResponse.json(
@@ -594,14 +607,14 @@ export function enforceAction(config: InlineEnforcementConfig): InlineEnforcemen
         securityClassification: classifyEventSecurity(config.action) as any,
       });
 
-      // Lock 해제
-      failMutation(mutationAction, config.targetEntityId);
+      // Lock 해제 — §11.369-3 begin 과 동일 concurrencyKey(begin≠complete leak 방지)
+      failMutation(concurrencyKey);
     },
 
     fail() {
       // Lock 해제만 (audit 미기록)
       if (lockAcquired) {
-        failMutation(mutationAction, config.targetEntityId);
+        failMutation(concurrencyKey);
       }
     },
   };

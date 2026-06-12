@@ -292,12 +292,9 @@ export function checkMutationReplayGuard(
  * Mutation 실행 시작 — concurrency lock 획득
  * 반드시 completeMutation / failMutation으로 해제해야 함
  */
-export function beginMutation(
-  action: MutationActionType,
-  targetEntityId: string,
-): boolean {
-  const concurrencyKey = `${action}:${targetEntityId}`;
-  // stale lock은 hasActiveLock 내부에서 자동 해제됨
+export function beginMutation(concurrencyKey: string): boolean {
+  // §11.369-3 — concurrencyKey 직접 수신(route+resource/user 격리, deriveConcurrencyKey 산출).
+  //   stale lock은 hasActiveLock 내부에서 자동 해제됨.
   if (hasActiveLock(concurrencyKey)) return false;
   ACTIVE_MUTATIONS.set(concurrencyKey, Date.now());
   return true;
@@ -329,11 +326,8 @@ export function completeMutation(request: MutationRequest): void {
 /**
  * Mutation 실패 — lock 해제 (fingerprint는 기록하지 않아 재시도 가능)
  */
-export function failMutation(
-  action: MutationActionType,
-  targetEntityId: string,
-): void {
-  const concurrencyKey = `${action}:${targetEntityId}`;
+export function failMutation(concurrencyKey: string): void {
+  // §11.369-3 — concurrencyKey 직접 수신(begin 과 동일 키 — begin≠fail 영구 leak 방지).
   ACTIVE_MUTATIONS.delete(concurrencyKey);
 }
 

@@ -290,7 +290,9 @@ describe('Security Batch A: Irreversible Action Protection', () => {
 
   // ── SH11: concurrent mutation 차단 ──
   it('SH11: 같은 entity에 대한 동시 mutation 차단', () => {
-    const acquired = beginMutation('send_now', 'po-001');
+    // §11.369-3 — beginMutation/failMutation 단일 concurrencyKey 시그니처.
+    //   checkMutationReplayGuard 내부 키(`${action}:${targetEntityId}`)와 동일 표현으로 일치.
+    const acquired = beginMutation('send_now:po-001');
     expect(acquired).toBe(true);
 
     const req = makeMutationRequest({ action: 'send_now', targetEntityId: 'po-001' });
@@ -298,7 +300,7 @@ describe('Security Batch A: Irreversible Action Protection', () => {
     expect(result.allowed).toBe(false);
     expect(result.reason).toBe('concurrent_mutation');
 
-    failMutation('send_now', 'po-001');
+    failMutation('send_now:po-001');
   });
 
   // ── SH12: ready_to_send ≠ sent 경계 ──
