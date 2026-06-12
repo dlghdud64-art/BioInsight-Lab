@@ -14,6 +14,11 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
     }
+    // §catalog-A P3a — 승격 mutation 게이트(③ security theater 봉합).
+    //   canonical product INSERT 단독 경로 → ADMIN|SUPPLIER 서버 재검증. RESEARCHER 차단.
+    if (session.user.role !== "ADMIN" && session.user.role !== "SUPPLIER") {
+      return NextResponse.json({ error: "제품 승격 권한이 없습니다." }, { status: 403 });
+    }
 
     const body = await request.json().catch(() => null);
     const prdctIdNo = typeof body?.prdctIdNo === "string" ? body.prdctIdNo.trim() : "";

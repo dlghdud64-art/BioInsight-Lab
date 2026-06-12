@@ -13,6 +13,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { csrfFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Upload, FileText, Loader2, CheckCircle2, AlertTriangle, X,
   ChevronRight, Edit3, Save,
@@ -38,6 +39,14 @@ interface AiQuoteParseModalProps {
 
 type Step = "upload" | "parsing" | "review" | "registering" | "done" | "error";
 
+// §catalog-A P3b — 매칭 결과 (quote-scoped, quoteItemId = 등록키)
+type QuoteMatchTier = "exact" | "candidate" | "none";
+interface ItemMatch {
+  lineIndex: number;
+  tier: QuoteMatchTier;
+  matches: Array<{ quoteItemId: string; name: string | null; catalogNumber: string | null }>;
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // Component
 // ══════════════════════════════════════════════════════════════════════════════
@@ -49,6 +58,11 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [fileName, setFileName] = React.useState<string>("");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  // #catalog-spec-backfill ①-b Phase 3a — item별 매칭(read-only). 실패해도 등록 흐름 무손상.
+  const [itemMatches, setItemMatches] = React.useState<ItemMatch[] | null>(null);
+  // §catalog-A P3b — candidate picker 선택(lineIndex→quoteItemId) + picker 시트 대상.
+  const [selectedQuoteItemId, setSelectedQuoteItemId] = React.useState<Record<number, string>>({});
+  const [pickerLineIndex, setPickerLineIndex] = React.useState<number | null>(null);
 
   // Reset on open
   React.useEffect(() => {
@@ -58,8 +72,40 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
       setEditableDoc(null);
       setErrorMessage(null);
       setFileName("");
+      setItemMatches(null);
+      setSelectedQuoteItemId({});
+      setPickerLineIndex(null);
     }
   }, [open]);
+
+  // §catalog-A P3b — review 진입 시 quote-scoped 매칭 1회(batch).
+  //   read-only. 매칭 실패는 graceful(배지만 미표시, 파싱/등록 흐름 영향 0).
+  React.useEffect(() => {
+    if (step !== "review" || !editableDoc?.items?.length || !quoteId) return;
+    let aborted = false;
+    (async () => {
+      try {
+        const res = await csrfFetch(`/api/quotes/${quoteId}/match-products`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: editableDoc.items.map((it: ParsedQuoteLineItem) => ({
+              productName: it.productName,
+              catalogNumber: it.catalogNumber,
+            })),
+          }),
+        });
+        if (!res.ok) return; // graceful — 배지 없이 진행
+        const data = await res.json();
+        if (!aborted) setItemMatches(data.results ?? null);
+      } catch {
+        /* graceful — 매칭 실패가 견적 등록을 막지 않음 */
+      }
+    })();
+    return () => {
+      aborted = true;
+    };
+  }, [step, editableDoc, quoteId]);
 
   if (!open) return null;
 
@@ -120,6 +166,17 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
   // ── Register as Vendor Reply ──
   async function handleRegister() {
     if (!editableDoc || !quoteId) return;
+    // §catalog-A P3b — 매칭(quoteItemId 확보) 라인 0건이면 등록 불가(빈 items 400 방지).
+    const matchedCount = editableDoc.items.filter((_item, idx) => {
+      const m = itemMatches?.find((x) => x.lineIndex === idx);
+      const auto = m?.tier === "exact" ? m.matches[0]?.quoteItemId : undefined;
+      return Boolean(selectedQuoteItemId[idx] ?? auto);
+    }).length;
+    if (matchedCount === 0) {
+      setErrorMessage("매칭된 품목이 없습니다. 후보 배지를 눌러 견적 품목을 선택하세요.");
+      setStep("error");
+      return;
+    }
     setStep("registering");
 
     try {
@@ -128,19 +185,24 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           vendorName: editableDoc.vendor?.name || "AI 파싱 공급사",
-          items: editableDoc.items.map((item: ParsedQuoteLineItem) => ({
-            quoteItemId: "", // 빈 값 — 서버에서 매칭 처리
-            unitPrice: item.unitPrice || 0,
-            currency: editableDoc.currency || "KRW",
-            leadTimeDays: item.leadTimeDays ?? undefined,
-            moq: undefined,
-            vendorSku: item.catalogNumber ?? undefined,
-            notes: [
-              item.productName,
-              item.specification,
-              item.notes,
-            ].filter(Boolean).join(" / "),
-          })),
+          items: editableDoc.items
+            .map((item: ParsedQuoteLineItem, idx: number) => {
+              // exact 자동 + candidate picker 선택. none/미선택은 제외(오매칭 차단, 400 봉합).
+              const m = itemMatches?.find((x) => x.lineIndex === idx);
+              const auto = m?.tier === "exact" ? m.matches[0]?.quoteItemId : undefined;
+              const quoteItemId = selectedQuoteItemId[idx] ?? auto;
+              if (!quoteItemId) return null;
+              return {
+                quoteItemId,
+                unitPrice: item.unitPrice || 0,
+                currency: editableDoc.currency || "KRW",
+                leadTimeDays: item.leadTimeDays ?? undefined,
+                moq: undefined,
+                vendorSku: item.catalogNumber ?? undefined,
+                notes: [item.productName, item.specification, item.notes].filter(Boolean).join(" / "),
+              };
+            })
+            .filter((x): x is NonNullable<typeof x> => x !== null),
         }),
       });
 
@@ -314,10 +376,49 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
                         {item.catalogNumber && (
                           <span className="text-[9px] text-slate-600 font-mono">{item.catalogNumber}</span>
                         )}
-                        {/* #catalog-spec-backfill ①-a — 파싱된 규격 노출 (카탈로그 승격 CTA 는 ①-b 후속) */}
+                        {/* #catalog-spec-backfill ①-a — 파싱된 규격 노출 */}
                         {item.specification && (
                           <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">{item.specification}</span>
                         )}
+                        {/* §catalog-A P3b — 카탈로그 매칭 배지(candidate = picker 트리거, dead-end 0) */}
+                        {(() => {
+                          const m = itemMatches?.find((x) => x.lineIndex === idx);
+                          if (!m) return null;
+                          if (m.tier === "exact") {
+                            return (
+                              <span className="shrink-0 text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 inline-flex items-center gap-0.5">
+                                <CheckCircle2 className="h-2.5 w-2.5" />카탈로그 일치
+                              </span>
+                            );
+                          }
+                          if (m.tier === "candidate") {
+                            const picked = selectedQuoteItemId[idx];
+                            const pickedName = picked
+                              ? m.matches.find((c) => c.quoteItemId === picked)?.name
+                              : null;
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => setPickerLineIndex(idx)}
+                                className={cn(
+                                  "shrink-0 inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded min-h-[24px]",
+                                  picked ? "bg-emerald-100 text-emerald-700" : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200",
+                                )}
+                              >
+                                {picked ? (
+                                  <><CheckCircle2 className="h-2.5 w-2.5" />{pickedName ?? "선택됨"}</>
+                                ) : (
+                                  <>후보 {m.matches.length} · 선택</>
+                                )}
+                              </button>
+                            );
+                          }
+                          return (
+                            <span className="shrink-0 text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">
+                              매칭 없음
+                            </span>
+                          );
+                        })()}
                       </div>
                       <div className="flex items-center gap-3 ml-6 text-[10px]">
                         <span className="text-slate-600">수량:</span>
@@ -459,6 +560,38 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
             )}
           </div>
         </div>
+
+        {/* §catalog-A P3b — candidate 후보 picker (bottom sheet, §11.311 ≥44px) */}
+        <Sheet open={pickerLineIndex !== null} onOpenChange={(o) => { if (!o) setPickerLineIndex(null); }}>
+          <SheetContent side="bottom" className="max-h-[70vh] overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle className="text-sm">매칭할 견적 품목 선택</SheetTitle>
+            </SheetHeader>
+            <div className="mt-3 space-y-1.5">
+              {pickerLineIndex !== null &&
+                itemMatches?.find((x) => x.lineIndex === pickerLineIndex)?.matches.map((c) => {
+                  const picked = selectedQuoteItemId[pickerLineIndex] === c.quoteItemId;
+                  return (
+                    <button
+                      key={c.quoteItemId}
+                      type="button"
+                      onClick={() => {
+                        setSelectedQuoteItemId((prev) => ({ ...prev, [pickerLineIndex]: c.quoteItemId }));
+                        setPickerLineIndex(null);
+                      }}
+                      className={cn(
+                        "w-full text-left rounded-md border px-3 min-h-[44px] flex flex-col justify-center",
+                        picked ? "border-emerald-300 bg-emerald-50" : "border-slate-200 hover:bg-slate-50",
+                      )}
+                    >
+                      <span className="text-xs text-slate-800">{c.name ?? "(품명 없음)"}</span>
+                      {c.catalogNumber && <span className="text-[10px] font-mono text-slate-500">{c.catalogNumber}</span>}
+                    </button>
+                  );
+                })}
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </div>
   );
