@@ -35,15 +35,11 @@ export async function POST() {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_export',
       targetEntityType: 'ai_action',
-      targetEntityId: 'unknown',
+      targetEntityId: session.user.id, // §11.369-2 — 'unknown' 고정 = 전역 lock 충돌. per-user 격리.
       sourceSurface: 'web_app',
       routePath: '/analytics/ai-insight',
     });
     if (!enforcement.allowed) return enforcement.deny();
-
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const userId = session.user.id;
 
@@ -77,6 +73,7 @@ export async function POST() {
     });
 
     if (purchases.length === 0) {
+      enforcement.complete(); // §11.369-2 — lock 해제(early return leak 방지)
       return NextResponse.json({
         summary: "분석할 구매 데이터가 없습니다. 구매 내역이 축적되면 AI 분석이 가능합니다.",
         generated: false,
@@ -164,6 +161,7 @@ export async function POST() {
       }
     }
 
+    enforcement.complete(); // §11.369-2 — lock 해제(정상 성공 시에도 필수)
     return NextResponse.json({
       summary,
       generated: true,
@@ -171,6 +169,7 @@ export async function POST() {
       analyzedAt: new Date().toISOString(),
     });
   } catch (err: unknown) {
+    enforcement?.fail(); // §11.369-2 — 실패 시 lock 해제(stale lock 방지)
     console.error("[ai-insight]", err);
     const message = err instanceof Error ? err.message : "AI 분석 중 오류 발생";
     return NextResponse.json({ error: message }, { status: 500 });
