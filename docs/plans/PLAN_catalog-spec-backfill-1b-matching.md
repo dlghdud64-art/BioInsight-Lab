@@ -1,9 +1,9 @@
 # Implementation Plan: #catalog-spec-backfill ①-b — 견적 파싱 item↔Product 매칭 신뢰도
 
-- **Status:** ⏳ Pending (Phase 0 진입 대기)
+- **Status:** ✅ Complete (P3b push f3554d06 · P3c 마감 2026-06-12, P4 RTL 생략 — 호영님 a 채택)
 - **Started:** 2026-06-11
-- **Last Updated:** 2026-06-11
-- **승인:** 호영님 2026-06-11 (계획 문서 생성)
+- **Last Updated:** 2026-06-12
+- **승인:** 호영님 2026-06-11 (계획 문서 생성) · P3b push 2026-06-12 · P3c a(RTL 생략) 2026-06-12
 
 **CRITICAL INSTRUCTIONS** — 각 phase 완료 시:
 1. ✅ 체크박스 갱신
@@ -364,6 +364,13 @@ All phases Red-Green-Refactor.
   ③ route `li` implicit any → select 명시 타입(TS7006).
 - [2026-06-12 P3b] 구 /api/quotes/match-products(전 카탈로그)는 P3c까지 잔존 —
   BOM 전용 products/batch-match 분리 시 deprecate 판단.
+- [2026-06-12 P3c] §catalog-A P3c 마감: products/batch-match 신규(OR 합산 단일 findMany,
+  안전필드 select, 401 only, top-5, toBomCandidate 투영) + BOM patch A~D(batch 전환·
+  Promise.all 제거·handleSelectCandidate·위험 배지+인라인 select) + 구 route 삭제.
+  sentinel 21/21 + 무회귀 145/145 + tsc clean + next build 291/291 PASS.
+  P3a sentinel describe1 supersede(7→2 it): 구 라우트 계약 → P3b-1·2 + P3c-1·2 분산 승계.
+  P4 RTL 생략(호영님 a): N+1=sentinel 구조 락, 안전정보=머신 단위 8 — BOM mount RTL 은
+  비용 대비 가치 낮음(handleSelectCandidate 는 단순 state 교체).
 - [2026-06-11 Phase 0] ② PATCH는 `specification` 단일필드만 수용(provenance 미지원). **(a) 엔드포인트 무변경 + provenance는 UI 표기/audit 레벨만 = 현 가정**(scope 최소, canonical write 경로 무변경). P3 진입 시 호영님 확정. (b) route 확장은 scope↑라 비권장.
 - [2026-06-11 Phase 0] spec max 200자 제약 — 파싱 spec이 200 초과 시 truncate/거부 정책 P1 계약에 포함(조용한 절단 금지).
 - 파서 출력에 제조사·모델 부재 = procurement-ref 매처 재사용 불가, 견적 전용 매처 신설(매칭키 = catalog exact + name fuzzy).

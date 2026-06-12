@@ -73,6 +73,7 @@ interface ProductMatch {
 interface ReagentWithMatch extends ExtractedReagent {
   id: string;
   matchedProduct?: ProductMatch;
+  candidates?: ProductMatch[]; // §catalog-A P3c — batch top-N 후보(자동 top-1 + 인라인 교체)
   isMatching?: boolean;
   showEvidence?: boolean;
 }
@@ -168,47 +169,31 @@ export default function ProtocolBOMPage() {
     if (file) handleFile(file);
   };
 
-  /* ──── 제품 매칭 ──── */
+  /* ──── 제품 매칭 (§catalog-A P3c — batch, N+1 0) ──── */
   const matchProductsForReagents = async (reagentsToMatch: ReagentWithMatch[]) => {
-    const updatedReagents = await Promise.all(
-      reagentsToMatch.map(async (reagent) => {
-        try {
-          const response = await fetch(
-            `/api/products/search?query=${encodeURIComponent(reagent.name)}&limit=1${
-              reagent.category ? `&category=${reagent.category}` : ""
-            }`
-          );
-          if (response.ok) {
-            const data = await response.json();
-            if (data.products && data.products.length > 0) {
-              const product = data.products[0];
-              const vendor = product.vendors?.[0];
-              const isHighRisk =
-                (product.hazardCodes?.length > 0) ||
-                (product.pictograms?.some((p: string) => ["skull", "flame", "corrosive"].includes(p)));
-              return {
-                ...reagent,
-                matchedProduct: vendor
-                  ? {
-                      productId: product.id,
-                      productName: product.name,
-                      vendorName: vendor.vendor.name,
-                      price: vendor.priceInKRW || 0,
-                      currency: vendor.currency || "KRW",
-                      isHighRisk,
-                      hazardCodes: product.hazardCodes || [],
-                      safetyNote: product.safetyNote || undefined,
-                    }
-                  : undefined,
-                isMatching: true,
-              };
-            }
-          }
-        } catch { /* noop */ }
-        return { ...reagent, isMatching: false };
-      })
-    );
-    setReagents(updatedReagents);
+    try {
+      const response = await fetch("/api/products/batch-match", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: reagentsToMatch.map((r) => ({ id: r.id, name: r.name, category: r.category ?? null })),
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const byId = new Map<string, ProductMatch[]>(
+          (data.results ?? []).map((r: { id: string; candidates: ProductMatch[] }) => [r.id, r.candidates ?? []]),
+        );
+        setReagents((prev) =>
+          prev.map((r) => {
+            const candidates = byId.get(r.id) ?? [];
+            return { ...r, candidates, matchedProduct: candidates[0] ?? undefined, isMatching: true };
+          }),
+        );
+        return;
+      }
+    } catch { /* noop */ }
+    setReagents((prev) => prev.map((r) => ({ ...r, isMatching: false })));
   };
 
   /* ──── PDF 추출 mutation ──── */
@@ -309,6 +294,16 @@ export default function ProtocolBOMPage() {
   const handleDeleteReagent = (id: string) => {
     setReagents((prev) => prev.filter((r) => r.id !== id));
     toast({ title: "항목이 삭제되었습니다." });
+  };
+  // §catalog-A P3c — conflate 인라인 교체: 자동 top-1 을 다른 후보로 override.
+  const handleSelectCandidate = (reagentId: string, productId: string) => {
+    setReagents((prev) =>
+      prev.map((r) => {
+        if (r.id !== reagentId) return r;
+        const picked = r.candidates?.find((c) => c.productId === productId);
+        return picked ? { ...r, matchedProduct: picked } : r;
+      }),
+    );
   };
   const handleAddReagent = () => {
     const newReagent: ReagentWithMatch = { id: `reagent-new-${Date.now()}`, name: "", category: "REAGENT", quantity: "1", unit: "", showEvidence: false };
@@ -884,10 +879,27 @@ export default function ProtocolBOMPage() {
                                             title={reagent.matchedProduct.productName}>
                                             {reagent.matchedProduct.productName}
                                           </span>
+                                          {reagent.matchedProduct.isHighRisk && (
+                                            <span className="text-[9px] px-1 rounded bg-red-600 text-white flex-shrink-0">위험</span>
+                                          )}
                                         </div>
                                         <p className="text-[10px] text-slate-400 ml-4">
                                           {reagent.matchedProduct.vendorName} · ₩{reagent.matchedProduct.price.toLocaleString("ko-KR")}
                                         </p>
+                                        {reagent.candidates && reagent.candidates.length > 1 && (
+                                          <select
+                                            value={reagent.matchedProduct.productId}
+                                            onChange={(e) => handleSelectCandidate(reagent.id, e.target.value)}
+                                            className="mt-1 ml-4 h-6 text-[10px] bg-slate-800 border border-slate-600 rounded text-slate-300 max-w-[150px]"
+                                            aria-label="다른 후보 선택"
+                                          >
+                                            {reagent.candidates.map((c) => (
+                                              <option key={c.productId} value={c.productId}>
+                                                {c.productName}{c.vendorName ? ` · ${c.vendorName}` : ""}
+                                              </option>
+                                            ))}
+                                          </select>
+                                        )}
                                       </div>
                                     ) : (
                                       <div className="flex items-center gap-1 text-yellow-400">

@@ -3,50 +3,27 @@
 //       모달 배지 tier별 / 매칭 실패 graceful / 3a 는 승격 PATCH 미포함(쓰기는 3b).
 // 패턴: sentinel(readFileSync). DB/컴포넌트 mount 없음.
 
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 const REPO_WEB = join(__dirname, "..", "..", "..");
 const read = (rel: string): string => readFileSync(join(REPO_WEB, rel), "utf8");
 
-const ROUTE = "src/app/api/quotes/match-products/route.ts";
+const OLD_ROUTE = "src/app/api/quotes/match-products/route.ts";
 const MODAL = "src/components/quotes/ai-quote-parse-modal.tsx";
 
-// ── 1. 매칭 라우트 — read-only · batch · auth ─────────────────────────
-describe("§①-b P3a — match-products 라우트", () => {
-  const src = read(ROUTE);
-
-  it("auth 게이트 — 미인증 401", () => {
-    expect(src).toMatch(/await auth\(\)/);
-    expect(src).toMatch(/status:\s*401/);
+// ── 1. 매칭 라우트 — §catalog-A P3c 에서 deprecate(2026-06-12, 호출처 0) ──
+//   구 전 카탈로그 라우트의 read-only·batch·auth 계약은 후계 2 라우트로 분산 승계:
+//   quote-scoped = quotes/[id]/match-products (phase3b sentinel P3b-1·2 가 락)
+//   catalog-scoped = products/batch-match (catalog-batch-match-p3c P3c-1·2 가 락)
+describe("§①-b P3a — match-products 라우트 (P3c supersede)", () => {
+  it("구 전 카탈로그 라우트는 삭제됨 — 부활 금지(catalog-batch-match-p3c 와 동일 락)", () => {
+    expect(existsSync(join(REPO_WEB, OLD_ROUTE))).toBe(false);
   });
 
-  it("canonical write 0 — db.product.(update|create|upsert|delete) 부재", () => {
-    expect(src).not.toMatch(/db\.product\.(update|create|upsert|delete)/);
-  });
-
-  it("순수 매처 소비 — matchQuoteItemToProduct", () => {
-    expect(src).toMatch(/matchQuoteItemToProduct/);
-  });
-
-  it("batch 단일 쿼리 — findMany 1회만 (item별 개별 쿼리 0)", () => {
-    const calls = src.match(/db\.product\.findMany/g) ?? [];
-    expect(calls.length).toBe(1);
-  });
-
-  it("overfetch 금지 — select 제한(id·name·catalogNumber·modelNumber)", () => {
-    expect(src).toMatch(/select:\s*\{[^}]*id:\s*true/);
-    expect(src).toMatch(/catalogNumber:\s*true/);
-    expect(src).toMatch(/modelNumber:\s*true/);
-    expect(src).not.toMatch(/include:\s*\{/); // 전체 관계 로드 금지
-  });
-
-  it("입력 상한 — items .max(100)", () => {
-    expect(src).toMatch(/\.max\(100\)/);
-  });
-
-  it("spec 미사용 — 매칭 호출에 specification: null", () => {
-    expect(src).toMatch(/specification:\s*null/);
+  it("계약 승계 — 후계 2 라우트 존재(quote-scoped + catalog-scoped)", () => {
+    expect(existsSync(join(REPO_WEB, "src/app/api/quotes/[id]/match-products/route.ts"))).toBe(true);
+    expect(existsSync(join(REPO_WEB, "src/app/api/products/batch-match/route.ts"))).toBe(true);
   });
 });
 
