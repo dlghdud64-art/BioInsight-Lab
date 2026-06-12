@@ -128,7 +128,11 @@ describe("Phase 3 — mobile scan.tsx critical-field 게이트 + rule 3 datamatr
     const src = readMobile("app/scan.tsx");
     expect(src).toMatch(/lot-unconfirmed/);
     expect(src).toMatch(/criticalUnconfirmed/);
-    expect(src).toMatch(/disabled=\{receiveBlocked\}/);
+    // §11.37x(c) (6bc00890): disabled={receiveBlocked} → disabled={commitBlocked}.
+    //   commitBlocked = sourcing 분기 wrap — 비-sourcing(입고)은 receiveBlocked 동치라
+    //   Lot/EXP 게이트 결합 의도 보존. 단언을 wrap 구조로 갱신.
+    expect(src).toMatch(/disabled=\{commitBlocked\}/);
+    expect(src).toMatch(/:\s*receiveBlocked/);
   });
 
   it("§11.378-native 회귀 0 — 기존 저신뢰 게이트 보존", () => {

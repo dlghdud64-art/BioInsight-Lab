@@ -28,6 +28,8 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { parseReagentLabel } from "@/lib/ocr/label-parser";
 import { runOcrPipeline } from "@/lib/ocr/run-ocr-pipeline";
+import { parseGs1 } from "@/lib/scan/gs1-parser";
+import { mergeGs1WithOcr, type MergedLabelResult } from "@/lib/ocr/merge-gs1-ocr";
 
 export async function POST(req: NextRequest) {
   let enforcement: InlineEnforcementHandle | undefined;
@@ -54,7 +56,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { text, imageBase64 } = body as { text?: string; imageBase64?: string };
+    const { text, imageBase64, gs1Raw } = body as { text?: string; imageBase64?: string; gs1Raw?: string };
 
     if (!text && !imageBase64) {
       return NextResponse.json(
@@ -74,6 +76,8 @@ export async function POST(req: NextRequest) {
       jobId: string | null;
       providerUsed: "GEMINI" | "CLOUD_VISION_CLAUDE" | "REGEX";
       cached: boolean;
+      // §scan-gs1 P4 — Gemini 채택 사유 노출(silent degradation 제거).
+      fallbackReason?: "high_confidence" | "tier2_unconfigured" | "tier2_error" | null;
     } | null = null;
 
     if (imageBase64) {
@@ -93,6 +97,7 @@ export async function POST(req: NextRequest) {
           jobId: pipelineResult.jobId,
           providerUsed: pipelineResult.providerUsed,
           cached: pipelineResult.cached,
+          fallbackReason: pipelineResult.fallbackReason,
         };
       } catch (geminiErr) {
         console.error("[scan-label] OCR pipeline failed, falling back to regex:", geminiErr);
@@ -110,6 +115,12 @@ export async function POST(req: NextRequest) {
       parsed = parseReagentLabel(text!);
     }
 
+    // §scan-gs1 — GS1 datamatrix(결정적, checksum) + Gemini OCR source-based 병합.
+    //   gs1Raw 있으면 parseGs1(서버 single impl) → mergeGs1WithOcr 로 결정적 필드(lot/exp) 우선.
+    //   gs1Raw 없음/비-GS1 → OCR 단독(Gemini fallback 보존, GS1 대체 아님).
+    const gs1 = gs1Raw ? parseGs1(gs1Raw) : null;
+    const merged: MergedLabelResult = mergeGs1WithOcr(gs1 && gs1.isGs1 ? gs1 : null, parsed);
+
     // ── DB 매칭 단계: catalogNo로 기존 제품 검색 ──
     let matchedProduct: {
       id: string;
@@ -118,11 +129,11 @@ export async function POST(req: NextRequest) {
       catalogNumber: string | null;
     } | null = null;
 
-    if (parsed.catalogNo) {
+    if (merged.catalogNo) {
       const product = await db.product.findFirst({
         where: {
           catalogNumber: {
-            equals: parsed.catalogNo,
+            equals: merged.catalogNo,
             mode: "insensitive",
           },
         },
@@ -140,11 +151,11 @@ export async function POST(req: NextRequest) {
     }
 
     // catalogNo로 못 찾으면 CAS Number로 시도
-    if (!matchedProduct && parsed.casNumber) {
+    if (!matchedProduct && merged.casNumber) {
       const product = await db.product.findFirst({
         where: {
           casNumber: {
-            equals: parsed.casNumber,
+            equals: merged.casNumber,
             mode: "insensitive",
           },
         },
@@ -177,12 +188,12 @@ export async function POST(req: NextRequest) {
       user: { name: string | null } | null;
     } | null = null;
 
-    if (matchedProduct && parsed.lotNo) {
+    if (matchedProduct && merged.lotNo) {
       const inventory = await db.inventory.findFirst({
         where: {
           productId: matchedProduct.id,
           lotNumber: {
-            equals: parsed.lotNo,
+            equals: merged.lotNo,
             mode: "insensitive",
           },
           userId: session.user.id,
@@ -210,7 +221,10 @@ export async function POST(req: NextRequest) {
     enforcement.complete();
     return NextResponse.json({
       success: true,
-      parsed,
+      parsed: { ...parsed, ...merged }, // §scan-gs1 — GS1 병합 필드 우선 + OCR 메타(confidence/rawText) 보존
+      fieldSources: merged.sources,
+      fieldConflicts: merged.conflicts,
+      gtin: merged.gtin,
       matchedProduct,
       matchedInventory,
       // §11.290 Phase 4b — OCR pipeline metadata (provider / cache hit / jobId).

@@ -72,6 +72,8 @@ export interface RunOcrPipelineResult {
   providerUsed: "GEMINI" | "CLOUD_VISION_CLAUDE" | "REGEX";
   /** Cache hit 여부. */
   cached: boolean;
+  /** §scan-gs1 P4 — Gemini 채택 사유(silent degradation 제거, 운영자 가시화). */
+  fallbackReason?: "high_confidence" | "tier2_unconfigured" | "tier2_error" | null;
 }
 
 // Gemini confidence → numeric threshold
@@ -227,10 +229,13 @@ export async function runOcrPipeline(
       status: "SUCCESS",
       providerUsed: "GEMINI",
       cached: false,
+      fallbackReason: "high_confidence",
     };
   }
 
   // (4) Gemini confidence medium/low → Tier 2 시도 (Phase 5 실제 wiring)
+  // §scan-gs1 P4 — Tier2 미채택 사유 캡처(silent degradation 제거).
+  let tier2FallbackReason: "tier2_unconfigured" | "tier2_error" = "tier2_error";
   try {
     const visionResult = await extractWithCloudVision({ base64: input.base64 });
 
@@ -282,6 +287,7 @@ export async function runOcrPipeline(
       status: tier2Status,
       providerUsed: "CLOUD_VISION_CLAUDE",
       cached: false,
+      fallbackReason: null,
     };
   } catch (err) {
     if (
@@ -289,9 +295,11 @@ export async function runOcrPipeline(
       err instanceof ClaudeStructurerNotConfiguredError
     ) {
       // env 미설정 또는 Tier 2 실패 → Gemini 결과 graceful fallback
+      tier2FallbackReason = "tier2_unconfigured";
       console.warn("[OCR] Tier 2 fallback skipped:", (err as Error).message);
     } else {
       // 예상치 못한 오류도 graceful degradation (production 중단 방지)
+      tier2FallbackReason = "tier2_error";
       console.error("[OCR] Tier 2 unexpected error (falling back to Gemini):", err);
     }
   }
@@ -319,5 +327,6 @@ export async function runOcrPipeline(
     status: fallbackStatus,
     providerUsed: "GEMINI",
     cached: false,
+    fallbackReason: tier2FallbackReason,
   };
 }
