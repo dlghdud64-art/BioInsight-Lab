@@ -709,10 +709,12 @@ export default function ProductDetailPage() {
                               MSDS/SDS 문서 정보가 없습니다.
                             </div>
                           )}
-                          {/* §11.348-B-1 B1-2 — 업로드된 SDS 문서 목록/업로드/열람 (서명URL) */}
+                          {/* §11.348-B-1 B1-2 — 업로드된 SDS 문서 목록/업로드/열람 (서명URL).
+                              SDS 는 제품(product) 단위 canonical 이므로 catalog 에 유지. */}
                           {product?.id && <SdsDocumentsSection productId={product.id} docType="sds" />}
-                          {/* §11.348-B-1 B1-4 — COA(시험성적서) 동형 아카이브 */}
-                          {product?.id && <SdsDocumentsSection productId={product.id} docType="coa" />}
+                          {/* §detail-page P1-1 — COA(시험성적서)는 lot-scoped(P2 CHECK: coa → inventoryId NOT NULL).
+                              catalog(제품)은 lot 단위가 아니므로 COA 업로드 affordance 제거.
+                              COA surface 는 inventory item(입고 lot)으로 이전 — P3. 데이터/route/model 불변. */}
                         </div>
 
                         {/* 규제/절차 링크 */}
