@@ -277,7 +277,7 @@ export function QuoteManagementWorkqueue({
             )}
             <Button
               size="sm"
-              className={`flex-1 h-8 text-[10px] font-medium ${compareReadiness?.canOpenQuoteCompareReview ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "bg-slate-700 text-slate-400 cursor-not-allowed"}`}
+              className={`flex-1 h-8 text-[10px] font-medium ${compareReadiness?.canOpenQuoteCompareReview ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-slate-700 text-slate-400 cursor-not-allowed"}`}
               onClick={onCompareReviewOpen}
               disabled={!compareReadiness?.canOpenQuoteCompareReview}
             >

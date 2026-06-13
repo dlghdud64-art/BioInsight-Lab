@@ -267,7 +267,7 @@ export function PoConversionEntryWorkbench({
                 <Package className="h-3 w-3 mr-1" />PO 전환 초안 저장
               </Button>
             ) : (
-              <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={handlePoCreated}>
+              <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white font-medium" onClick={handlePoCreated}>
                 <ShieldCheck className="h-3 w-3 mr-1" />PO Created로 보내기<ArrowRight className="h-3 w-3 ml-1" />
               </Button>
             )}

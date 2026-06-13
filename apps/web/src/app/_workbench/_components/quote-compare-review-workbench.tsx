@@ -317,7 +317,7 @@ export function QuoteCompareReviewWorkbench({
                 <GitCompare className="h-3 w-3 mr-1" />비교 결과 저장
               </Button>
             ) : (
-              <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={handleApprovalHandoff}>
+              <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white font-medium" onClick={handleApprovalHandoff}>
                 <ShieldCheck className="h-3 w-3 mr-1" />Approval 검토로 보내기<ArrowRight className="h-3 w-3 ml-1" />
               </Button>
             )}

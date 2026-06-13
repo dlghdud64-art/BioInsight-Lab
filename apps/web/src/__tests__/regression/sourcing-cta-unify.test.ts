@@ -11,7 +11,7 @@
  * Phase 1 기대: (a)variant RED, (b)core bespoke-hover RED.
  */
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
 const APP_WEB_ROOT = join(__dirname, "..", "..", "..");
@@ -45,4 +45,17 @@ describe("#sourcing-cta-unify (b) — core surface bespoke CTA hover 제거", ()
       expect(src).not.toMatch(/hover:bg-emerald-500(?![/\d])/);
     });
   }
+});
+
+describe("#sourcing-cta-unify (d) — 소싱 워크벤치 전역 solid hover-500 0", () => {
+  it("no solid hover:bg-{blue,emerald}-500 (tonal /opacity 제외)", () => {
+    const dir = join(APP_WEB_ROOT, "src/app/_workbench/_components");
+    const offenders = readdirSync(dir)
+      .filter((f) => f.endsWith(".tsx"))
+      .filter((f) => {
+        const src = readFileSync(join(dir, f), "utf8");
+        return /hover:bg-blue-500(?![/\d])/.test(src) || /hover:bg-emerald-500(?![/\d])/.test(src);
+      });
+    expect(offenders).toEqual([]);
+  });
 });

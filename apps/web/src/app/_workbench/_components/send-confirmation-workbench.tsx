@@ -121,7 +121,7 @@ export function SendConfirmationWorkbench({ open, onClose, handoff, onExecutionR
             ) : (
               <>
                 <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onClose}>닫기</Button>
-                <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={handleSentDetail}><Mail className="h-3 w-3 mr-1" />PO 발송 상세(PO Sent Detail)<ArrowRight className="h-3 w-3 ml-1" /></Button>
+                <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white font-medium" onClick={handleSentDetail}><Mail className="h-3 w-3 mr-1" />PO 발송 상세(PO Sent Detail)<ArrowRight className="h-3 w-3 ml-1" /></Button>
               </>
             )}
           </div>

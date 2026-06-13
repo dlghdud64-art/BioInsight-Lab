@@ -1,6 +1,6 @@
 # Implementation Plan: ② 소싱 워크벤치 CTA·token 통일 (shared variant)
 
-- **Status:** 🔄 In Progress (Phase 0 lock 완료)
+- **Status:** ✅ 완료 (core 5 + 잔여 39 sweep, dir-wide sentinel 8/8 GREEN)
 - **Started:** 2026-06-13
 - **Last Updated:** 2026-06-13
 - **Estimated Completion:** TBD (medium, ~5 phases)
@@ -107,7 +107,7 @@
 - **✋ Gate:** sentinel b)·c) GREEN, dead button/no-op 0, 시각 회귀 0(수동 전후), `next build`.  **Rollback:** surface 전환 revert(variant는 유지 가능).
 
 ### Phase 4: Follow-on Batch + Smoke
-- Status: [ ] Pending
+- Status: [x] Complete (39파일 sweep, dir-wide sentinel GREEN)
 - **🟢 GREEN:** 나머지 소싱 surface(quote workqueue·reentry 등) 배치 전환. 라이브 smoke(소싱 화면 버튼 일관·동작 보존).
 - **✋ Gate:** 잔여 bespoke 카운트 감소 추적, smoke PASS, rollback 문서화.
 
@@ -123,8 +123,8 @@
 - Phase 1 실패: sentinel revert. Phase 2: cva revert(소비처 무영향). Phase 3/4: surface 전환 revert(variant 유지 가능, 점진). 스키마/데이터 변경 0.
 
 ## 10. Progress Tracking
-- Overall: 80% · Current: Phase 4 (follow-on 배치 + smoke) · Blocker: 없음 · Next: 잔여 ~25 소싱 surface 배치 전환.
-- Phase Checklist: [x] P0 [x] P1 [x] P2 [x] P3 [ ] P4
+- Overall: 100% · Current: 완료 · Blocker: 없음 · Next: 라이브 smoke(선택) · status-tone/amber sweep은 별 트랙.
+- Phase Checklist: [x] P0 [x] P1 [x] P2 [x] P3 [x] P4
 
 ## 10b. Phase 0 Lock (2026-06-13)
 
@@ -145,6 +145,15 @@
 - 방식: `<Button>` blue → color class 제거(default variant), emerald → `variant="success"`; `<Link>`/ternary/identical-triple → hover 토큰 500→700 swap.
 - wiring(onClick/href/문구/icon)·size·layout 전부 보존 — color/hover 토큰만 변경. resting 동일, hover만 500→700 미세 darken(권장 정합).
 - 잔여: ~25 소싱 surface(hover-500 보유) Phase 4 배치 전환.
+
+## 10d. Phase 4 결과 (2026-06-14)
+
+**잔여 39 소싱 surface sweep 완료** (solid hover-500 → 700, 48 replacements, dir-wide sentinel GREEN):
+- 방식: solid CTA hover 토큰만 `hover:bg-{blue,emerald}-500`→`-700`(space/quote 트레일만, tonal `/opacity` 제외). atomic validate-then-write(count==48, 전 파일 brace 균형).
+- 전 파일 ≤6줄 hover-only diff(numstat 확인) — wiring/문구/layout 불변, CRLF flip 0.
+- sentinel (d) dir-wide: `_workbench/_components` 전역 solid hover-500 = 0 lock.
+- 소싱 워크벤치 전역 단일 hover convention(700) 달성. ② 트랙 종결.
+- ⚠️ commit add는 hover-700 변경 39파일 + sentinel + plan만(선존 CRLF M 노이즈 제외).
 
 ## 11. Notes & Learnings
 - [2026-06-13] 실측: 76 tsx, 44 bg-blue-600 / 46 bg-emerald-600 인라인, primary blue 10종+ 시그니처. emerald CTA canonical variant 부재가 bespoke 원인.

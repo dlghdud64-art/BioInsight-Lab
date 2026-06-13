@@ -138,7 +138,7 @@ export function ApprovalReentryWorkbench({ open, onClose, handoff, onDecisionRec
             {!isRecorded ? (
               <Button size="sm" className="flex-1 h-8 text-[10px] bg-yellow-600 hover:bg-yellow-500 text-white font-medium" onClick={recordDecision} disabled={!validation?.canRecordApprovalReentryDecision}><ShieldCheck className="h-3 w-3 mr-1" />Approval Re-entry 저장</Button>
             ) : (
-              <Button size="sm" className={`flex-1 h-8 text-[10px] font-medium ${validation?.canOpenPoConversionReentry ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "bg-slate-700 text-slate-400"}`} onClick={onPoConversionReentryHandoff} disabled={!validation?.canOpenPoConversionReentry}>
+              <Button size="sm" className={`flex-1 h-8 text-[10px] font-medium ${validation?.canOpenPoConversionReentry ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-slate-700 text-slate-400"}`} onClick={onPoConversionReentryHandoff} disabled={!validation?.canOpenPoConversionReentry}>
                 <ShieldCheck className="h-3 w-3 mr-1" />PO Conversion Re-entry<ArrowRight className="h-3 w-3 ml-1" />
               </Button>
             )}

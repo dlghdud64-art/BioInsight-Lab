@@ -108,7 +108,7 @@ export function ReceivingPreparationWorkbench({ open, onClose, handoff, onPrepRe
             {!isRecorded ? (
               <Button size="sm" className="flex-1 h-8 text-[10px] bg-indigo-600 hover:bg-indigo-500 text-white font-medium" onClick={recordPrep} disabled={!validation?.canRecordReceivingPreparation}><Package className="h-3 w-3 mr-1" />입고 준비 저장</Button>
             ) : (
-              <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={onExecutionHandoff}><Package className="h-3 w-3 mr-1" />입고 실행(Receiving Execution)<ArrowRight className="h-3 w-3 ml-1" /></Button>
+              <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white font-medium" onClick={onExecutionHandoff}><Package className="h-3 w-3 mr-1" />입고 실행(Receiving Execution)<ArrowRight className="h-3 w-3 ml-1" /></Button>
             )}
           </div>
         </div>

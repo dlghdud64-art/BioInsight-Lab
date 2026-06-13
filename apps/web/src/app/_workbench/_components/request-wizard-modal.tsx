@@ -755,7 +755,7 @@ export function RequestWizardModal({
               </Button>
               <Button
                 size="sm"
-                className="bg-emerald-600 hover:bg-emerald-500 text-white gap-1.5"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
                 onClick={() => {
                   onOpenChange(false);
                   onQuoteManagementOpen?.();

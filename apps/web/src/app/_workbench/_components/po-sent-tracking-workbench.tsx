@@ -134,7 +134,7 @@ export function PoSentTrackingWorkbench({ open, onClose, handoff, onAcknowledgme
             {!isRecorded ? (
               <Button size="sm" className="flex-1 h-8 text-[10px] bg-sky-600 hover:bg-sky-500 text-white font-medium" onClick={recordAck} disabled={!validation?.canRecordAcknowledgment}><Shield className="h-3 w-3 mr-1" />Acknowledgment 저장</Button>
             ) : (
-              <Button size="sm" className={`flex-1 h-8 text-[10px] font-medium ${nextStep?.canOpenSupplierConfirmation ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "bg-slate-700 text-slate-400"}`} onClick={onSupplierConfirmation} disabled={!nextStep?.canOpenSupplierConfirmation}>
+              <Button size="sm" className={`flex-1 h-8 text-[10px] font-medium ${nextStep?.canOpenSupplierConfirmation ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-slate-700 text-slate-400"}`} onClick={onSupplierConfirmation} disabled={!nextStep?.canOpenSupplierConfirmation}>
                 <Package className="h-3 w-3 mr-1" />Supplier Confirmation<ArrowRight className="h-3 w-3 ml-1" />
               </Button>
             )}

@@ -153,7 +153,7 @@ export function QuoteManagementReentryWorkbench({ open, onClose, handoff, onReen
                   <Button size="sm" className="flex-1 h-8 text-[10px] bg-yellow-600 hover:bg-yellow-500 text-white font-medium" onClick={onNormalizationReentryHandoff}><FileText className="h-3 w-3 mr-1" />Normalization<ArrowRight className="h-3 w-3 ml-1" /></Button>
                 )}
                 {validation?.canOpenCompareReentry && (
-                  <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={onCompareReentryHandoff}><GitCompare className="h-3 w-3 mr-1" />Compare<ArrowRight className="h-3 w-3 ml-1" /></Button>
+                  <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white font-medium" onClick={onCompareReentryHandoff}><GitCompare className="h-3 w-3 mr-1" />Compare<ArrowRight className="h-3 w-3 ml-1" /></Button>
                 )}
               </div>
             )}

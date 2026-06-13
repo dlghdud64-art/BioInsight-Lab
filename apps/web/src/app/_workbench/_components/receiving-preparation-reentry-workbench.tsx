@@ -130,7 +130,7 @@ export function ReceivingPreparationReentryWorkbench({ open, onClose, handoff, o
             {!isRecorded ? (
               <Button size="sm" className="flex-1 h-8 text-[10px] bg-indigo-600 hover:bg-indigo-500 text-white font-medium" onClick={recordPrep} disabled={!validation?.canRecordReceivingPreparationReentry}><Package className="h-3 w-3 mr-1" />Rcv Prep Re-entry 저장</Button>
             ) : (
-              <Button size="sm" className={`flex-1 h-8 text-[10px] font-medium ${validation?.canOpenReceivingExecutionReentry ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "bg-slate-700 text-slate-400"}`} onClick={onReceivingExecReentryHandoff} disabled={!validation?.canOpenReceivingExecutionReentry}>
+              <Button size="sm" className={`flex-1 h-8 text-[10px] font-medium ${validation?.canOpenReceivingExecutionReentry ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-slate-700 text-slate-400"}`} onClick={onReceivingExecReentryHandoff} disabled={!validation?.canOpenReceivingExecutionReentry}>
                 <Package className="h-3 w-3 mr-1" />Rcv Execution Re-entry<ArrowRight className="h-3 w-3 ml-1" />
               </Button>
             )}

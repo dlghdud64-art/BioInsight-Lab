@@ -269,7 +269,7 @@ export function QuoteNormalizationWorkbench({
             ) : (
               <Button
                 size="sm"
-                className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium"
+                className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
                 onClick={onCompareHandoffReady}
               >
                 <GitCompare className="h-3 w-3 mr-1" />

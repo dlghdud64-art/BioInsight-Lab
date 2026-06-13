@@ -352,13 +352,13 @@ export function CompareReviewCenterWorkWindow({
                     <AlertTriangle className="h-3 w-3 mr-1" />후속 확인 요청
                   </Button>
                 )}
-                <Button size="sm" className="flex-1 h-8 text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-medium"
+                <Button size="sm" className="flex-1 h-8 text-[10px] bg-blue-600 hover:bg-blue-700 text-white font-medium"
                   onClick={handleMarkCompleted} disabled={!validation?.canMarkCompleted}>
                   <Check className="h-3 w-3 mr-1" />검토 완료로 표시
                 </Button>
               </>
             ) : reviewState.compareReviewCenterStatus === "completed" ? (
-              <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={handleHandoff}>
+              <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white font-medium" onClick={handleHandoff}>
                 <ShieldCheck className="h-3 w-3 mr-1" />Approval로 넘기기<ArrowRight className="h-3 w-3 ml-1" />
               </Button>
             ) : (

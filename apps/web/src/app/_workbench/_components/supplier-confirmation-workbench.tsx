@@ -142,7 +142,7 @@ export function SupplierConfirmationWorkbench({ open, onClose, handoff, onConfir
             {!isRecorded ? (
               <Button size="sm" className="flex-1 h-8 text-[10px] bg-purple-600 hover:bg-purple-500 text-white font-medium" onClick={recordConfirmation} disabled={!validation?.canRecordSupplierConfirmation}><Shield className="h-3 w-3 mr-1" />공급사 확인 저장</Button>
             ) : (
-              <Button size="sm" className={`flex-1 h-8 text-[10px] font-medium ${validation?.canOpenReceivingPreparation ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "bg-slate-700 text-slate-400"}`} onClick={onReceivingPrepHandoff} disabled={!validation?.canOpenReceivingPreparation}>
+              <Button size="sm" className={`flex-1 h-8 text-[10px] font-medium ${validation?.canOpenReceivingPreparation ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-slate-700 text-slate-400"}`} onClick={onReceivingPrepHandoff} disabled={!validation?.canOpenReceivingPreparation}>
                 <Package className="h-3 w-3 mr-1" />입고 준비<ArrowRight className="h-3 w-3 ml-1" />
               </Button>
             )}

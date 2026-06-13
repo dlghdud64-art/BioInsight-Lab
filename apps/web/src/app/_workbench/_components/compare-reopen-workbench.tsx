@@ -165,9 +165,9 @@ export function CompareReopenWorkbench({ open, onClose, handoff, onDecisionRecor
         <div className="flex gap-2">
           <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onReturnToResultReview}><ArrowLeft className="h-3 w-3 mr-1" />Result Review</Button>
           {!isRecorded ? (
-            <Button size="sm" className="flex-1 h-8 text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={recordDecision} disabled={!validation?.canRecordCompareReopenDecision}><GitCompare className="h-3 w-3 mr-1" />Compare Reopen 저장</Button>
+            <Button size="sm" className="flex-1 h-8 text-[10px] bg-blue-600 hover:bg-blue-700 text-white font-medium" onClick={recordDecision} disabled={!validation?.canRecordCompareReopenDecision}><GitCompare className="h-3 w-3 mr-1" />Compare Reopen 저장</Button>
           ) : (
-            <Button size="sm" className={`flex-1 h-8 text-[10px] font-medium ${validation?.canOpenRequestReopen ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "bg-slate-700 text-slate-400"}`} onClick={onRequestReopenHandoff} disabled={!validation?.canOpenRequestReopen}>
+            <Button size="sm" className={`flex-1 h-8 text-[10px] font-medium ${validation?.canOpenRequestReopen ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-slate-700 text-slate-400"}`} onClick={onRequestReopenHandoff} disabled={!validation?.canOpenRequestReopen}>
               <FileText className="h-3 w-3 mr-1" />Request Reopen<ArrowRight className="h-3 w-3 ml-1" />
             </Button>
           )}

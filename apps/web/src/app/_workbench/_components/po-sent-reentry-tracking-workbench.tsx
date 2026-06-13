@@ -124,7 +124,7 @@ export function PoSentReentryTrackingWorkbench({ open, onClose, handoff, onAckno
             {!isRecorded ? (
               <Button size="sm" className="flex-1 h-8 text-[10px] bg-sky-600 hover:bg-sky-500 text-white font-medium" onClick={recordAck} disabled={!validation?.canRecordSupplierAcknowledgmentReentry}><Shield className="h-3 w-3 mr-1" />Ack Re-entry 저장</Button>
             ) : (
-              <Button size="sm" className={`flex-1 h-8 text-[10px] font-medium ${validation?.canOpenSupplierConfirmationReentry ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "bg-slate-700 text-slate-400"}`} onClick={onSupplierConfirmationReentryHandoff} disabled={!validation?.canOpenSupplierConfirmationReentry}>
+              <Button size="sm" className={`flex-1 h-8 text-[10px] font-medium ${validation?.canOpenSupplierConfirmationReentry ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-slate-700 text-slate-400"}`} onClick={onSupplierConfirmationReentryHandoff} disabled={!validation?.canOpenSupplierConfirmationReentry}>
                 <Shield className="h-3 w-3 mr-1" />Supplier Confirm Re-entry<ArrowRight className="h-3 w-3 ml-1" />
               </Button>
             )}

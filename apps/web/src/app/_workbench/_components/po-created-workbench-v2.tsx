@@ -217,7 +217,7 @@ export function PoCreatedWorkbenchV2({
                 </Button>
                 <Button
                   size="sm"
-                  className={`flex-1 h-8 text-[10px] font-medium ${readiness?.status !== "blocked" ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "bg-slate-700 text-slate-400 cursor-not-allowed"}`}
+                  className={`flex-1 h-8 text-[10px] font-medium ${readiness?.status !== "blocked" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-slate-700 text-slate-400 cursor-not-allowed"}`}
                   onClick={handleDispatchPrep}
                   disabled={readiness?.status === "blocked"}
                 >

@@ -77,7 +77,7 @@ export function StockReleaseWorkbench({ open, onClose, handoff, onReleaseRecorde
             {!isRecorded ? (
               <Button size="sm" className="flex-1 h-8 text-[10px] bg-green-600 hover:bg-green-500 text-white font-medium" onClick={recordRelease} disabled={!validation?.canRecordStockRelease}><Package className="h-3 w-3 mr-1" />재고 출고 저장</Button>
             ) : (
-              <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={onReorderDecisionHandoff}><AlertTriangle className="h-3 w-3 mr-1" />재주문 결정<ArrowRight className="h-3 w-3 ml-1" /></Button>
+              <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white font-medium" onClick={onReorderDecisionHandoff}><AlertTriangle className="h-3 w-3 mr-1" />재주문 결정<ArrowRight className="h-3 w-3 ml-1" /></Button>
             )}
           </div>
         </div>

@@ -132,9 +132,9 @@ export function RequestReopenWorkbench({ open, onClose, handoff, onReopenRecorde
         <div className="flex gap-2">
           <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onReturnToCompareReopen}><ArrowLeft className="h-3 w-3 mr-1" />Compare Reopen</Button>
           {!isRecorded ? (
-            <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={recordReopen} disabled={!validation?.canRecordRequestReopen}><FileText className="h-3 w-3 mr-1" />Request Reopen 저장</Button>
+            <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white font-medium" onClick={recordReopen} disabled={!validation?.canRecordRequestReopen}><FileText className="h-3 w-3 mr-1" />Request Reopen 저장</Button>
           ) : (
-            <Button size="sm" className={`flex-1 h-8 text-[10px] font-medium ${validation?.canOpenRequestSubmissionReopen ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "bg-slate-700 text-slate-400"}`} onClick={onRequestSubmissionReopenHandoff} disabled={!validation?.canOpenRequestSubmissionReopen}>
+            <Button size="sm" className={`flex-1 h-8 text-[10px] font-medium ${validation?.canOpenRequestSubmissionReopen ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-slate-700 text-slate-400"}`} onClick={onRequestSubmissionReopenHandoff} disabled={!validation?.canOpenRequestSubmissionReopen}>
               <RefreshCw className="h-3 w-3 mr-1" />Request Submission Reopen<ArrowRight className="h-3 w-3 ml-1" />
             </Button>
           )}
