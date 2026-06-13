@@ -852,6 +852,7 @@ model ProductInventory {
   usageRecords     InventoryUsage[]
   restockRecords   InventoryRestock[]
   inspections      Inspection[]
+  sdsDocuments     SDSDocument[]    // §detail-page P2 — COA lot-scoped 역방향. ON DELETE RESTRICT(QC 기록 보존).
 
   @@unique([userId, productId]) // ?용?별 ?품???나???고 기록
   @@unique([organizationId, productId]) // 조직??품???나???고 기록
@@ -3293,11 +3294,14 @@ model SDSDocument {
   id               String    @id @default(cuid())
   productId        String
   organizationId   String?   // 공용 문서 = null
+  // §detail-page P2 — COA(lot-scoped) 경계. coa=>NOT NULL, sds=>NULL. CHECK constraint `SDSDocument_coa_lot_check` 강제.
+  inventoryId      String?
   fileName         String
   bucket           String    // 오브젝트 스토리지 버킷(Supabase/Blob)
   path             String    // 스토리지 경로
   source           String    @default("upload") // upload / ocr / vendor
   // §11.348-B-1 B1-4 — 문서 종류 판별자(sds/coa). 기존 행 backward-compat = "sds".
+  // ⚠️ docType 값 추가(예: msds/spec) 시 SDSDocument_coa_lot_check CHECK constraint 동반 갱신 필수 — 미갱신 시 신규 docType INSERT 전면 차단.
   docType          String    @default("sds") // sds / coa
   contentType      String?
   sizeBytes        Int?
@@ -3308,9 +3312,11 @@ model SDSDocument {
 
   product      Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  inventory    ProductInventory? @relation(fields: [inventoryId], references: [id], onDelete: Restrict)
 
   @@index([productId])
   @@index([organizationId])
+  @@index([inventoryId])
   @@index([extractionStatus])
   @@index([docType])
 }
