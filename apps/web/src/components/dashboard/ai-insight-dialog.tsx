@@ -47,8 +47,10 @@ import { ko } from "date-fns/locale";
 
 interface AIInsightResponse {
   summary: string;
-  dataPoints: number;
+  // 빈 계정(generated:false) 응답엔 누락 — optional. §ai-insight-dialog null-safety.
+  dataPoints?: number;
   analyzedAt?: string;
+  generated?: boolean;
   error?: string;
 }
 
@@ -182,10 +184,21 @@ export function AIInsightDialog({
                   {insight.summary}
                 </p>
               </div>
-              <div className="flex items-center justify-between text-[11px] text-slate-400">
-                <span>분석 데이터 {insight.dataPoints.toLocaleString("ko-KR")}건</span>
-                {analyzedAtLabel && <span>분석 시각: {analyzedAtLabel}</span>}
-              </div>
+              {(() => {
+                // §ai-insight-dialog null-safety — 빈 계정(generated:false) 에는
+                //   dataPoints 누락 → undefined.toLocaleString crash. local 추출로
+                //   sentinel "무가드 직접 호출 부재" 정합.
+                const dp = insight.dataPoints;
+                if (dp == null && !analyzedAtLabel) return null;
+                return (
+                  <div className="flex items-center justify-between text-[11px] text-slate-400">
+                    {dp != null && (
+                      <span>분석 데이터 {dp.toLocaleString("ko-KR")}건</span>
+                    )}
+                    {analyzedAtLabel && <span>분석 시각: {analyzedAtLabel}</span>}
+                  </div>
+                );
+              })()}
               <div className="flex justify-end">
                 <Button
                   size="sm"
