@@ -145,8 +145,16 @@ describe("§11.XXX — feature scope", () => {
 
 - 호영님은 코드/DB/터미널에 직접 접근하지 않음
 - 모든 개발 작업을 Claude (Cowork / Cursor) 에게 위임
-- evidence 수집은 Claude 가 sandbox 에서 직접
-- production DB 변경 = dry-run → 평이한 한국어 보고 → "진행" 후만 apply
+- evidence 수집은 Claude 가 sandbox 에서 직접 — 단 **local / read-only 한정**.
+  prod DB 접속 쓰기·리셋·migrate·`db push`·`migrate diff --shadow-database-url`
+  은 sandbox 금지 (DEV_RUNBOOK §9.9 인시던트). 이런 명령은 클로드코드
+  operator-shell 단독.
+- 🛑 `migrate diff` 는 **`--from-url`(read-only) 만**. `--from-migrations
+  --shadow-database-url=<prod>` 절대 금지 — shadow 를 리셋하므로 prod 를 가리키면
+  전 데이터 소실 (2026-06-14 실제 사고, DEV_RUNBOOK §9.9).
+- production DB 변경 = dry-run → 평이한 한국어 보고 → "진행" 후만 apply.
+  파괴적 명령(`--force-reset` / `--accept-data-loss` / `migrate reset` / `db push`)
+  은 project-ref echo 확인 + 명시 "진행" 게이트.
 - 클로드코드 환경에서만 push (sandbox commit 금지)
 - WebFetch / WebSearch 실패 시 bash curl 등 대체 fetch 금지
 - NEVER skip hooks unless explicitly requested

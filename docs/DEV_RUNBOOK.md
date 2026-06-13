@@ -341,5 +341,41 @@ DB 를 가리키도록 설정 권장. 수동 폴더 + 복붙 우회는 1~2회는
 build-time migrate 가 폐지되어 양쪽 모두 의미 없음. 역사적 맥락은
 ADR-002 §11.10 / §11.11 / §11.12 에 보존.
 
+### 9.9 🛑 인시던트 — prod DATA WIPE (2026-06-14) + 하드 가드
+
+**무슨 일**: sandbox(cowork)에서 잔여 drift 확인용으로
+`prisma migrate diff --from-migrations <dir> --shadow-database-url=$DIRECT_URL`
+를 실행했다. `--from-migrations` 는 shadow DB 를 **드롭·리셋 후 migration replay**
+한다. `$DIRECT_URL` 이 prod(`xhidynwpkqeaojuudhsw`)였으므로 **prod 전 테이블이
+DROP→빈 재생성 = 전 데이터 소실**. `_prisma_migrations` 도 함께 초기화됐다.
+Free 플랜이라 PITR/백업 없음 → 정상 복구 불가. dev 데이터였기에 `db push` +
+`seed` 재구성으로 수습.
+
+**근접 원인**: §9.5 의 안전한 drift 체크는 `migrate diff --from-url $env:DATABASE_URL`
+(read-only introspection) 인데, 위험한 `--from-migrations --shadow-database-url`
+(shadow 리셋·replay) 변형을 쓰고 그 shadow 를 prod 로 가리킨 것.
+
+**하드 가드 (위반 금지)**:
+1. **drift 체크는 `--from-url` 만.** §9.5 패턴 고수. `--from-migrations
+   --shadow-database-url=<prod>` 절대 금지 — shadow 를 리셋하므로 prod 를
+   가리키면 전소한다. shadow 가 필요하면 throwaway DB 만(§9.7).
+2. **sandbox(cowork)는 prod DB 명령 금지.** migrate / db push / diff(shadow) /
+   resolve 등 prod 접속 쓰기·리셋 명령은 **클로드코드 operator-shell 단독**.
+   sandbox 는 코드만(schema·seed·sentinel·계획). prod read-only 조회도 가급적
+   operator-shell 로.
+3. **파괴적 명령 = 명시 "진행" 게이트.** `--force-reset` / `--accept-data-loss` /
+   `migrate reset` / `db push` 는 실행 전 호영 명시 승인 + project-ref echo
+   (§9.3) 확인.
+4. **db push 흐름 ↔ migrate deploy 충돌.** `db push` 는 `_prisma_migrations`
+   를 안 건드린다. db push 로 스키마를 맞춘 뒤 `migrate deploy` 를 돌리면 기록
+   불일치로 충돌. db push 사용 시 migrate deploy 금지(또는 사전
+   `resolve --applied` 로 기록 정합).
+
+**복구 기록 (2026-06-14)**: `db push --accept-data-loss`(force-reset 불요 — 데이터
+이미 0) → `seed`(데모 + PBS lot 2건) → count 검증(User2 / Product9 /
+ProductInventory9 / InventoryRestock2 / partnershipTier 복원 / restockId 유지).
+잔여: `_prisma_migrations` 1행 → 객체 실재 확인 후 `resolve --applied` 정합은
+별 트랙(prod write 게이트).
+
 상세 근거·배경: `docs/decisions/ADR-002-pilot-tenant-seed.md §11.13`
 (요약), `§11.9` `§11.11` `§11.12` (단계별 진단).
