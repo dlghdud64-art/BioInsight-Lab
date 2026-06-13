@@ -1,6 +1,6 @@
 # Implementation Plan: #inventory-lot-entity — COA lot-scoping (InventoryRestock 활용)
 
-- **Status:** 🔄 In Progress (Phase 2 ✅ — 다음 Phase 3 prod migration: dry-run→보고→진행 게이트)
+- **Status:** 🔄 P3+P4 코드 완료 → migration apply 대기(호영님 push → Vercel migrate deploy). Phase 5 smoke 잔여.
 - **Started:** 2026-06-14
 - **Last Updated:** 2026-06-14
 - **Estimated Completion:** TBD (large, ~6 phases, migration 포함)
@@ -115,13 +115,13 @@
 - **✋ Gate:** mock 제거 sentinel GREEN, dead/no-op 0, 빈/loading/error 상태, `next build`.  **Rollback:** generateMockLots 복귀.
 
 ### Phase 3: COA→restock schema (migration)
-- Status: [ ] Pending
+- Status: [x] Complete  📅 2026-06-14  📝 dry-run 실측(COA 1=테스트row, 매핑가능 실lot 0, SDS 0 → 위험최소) 후 호영님 승인. migration 20260614120000(DELETE 테스트row + restockId FK/index + CHECK 재정의 coa→restockId). route restockId 수용·소유검증(inventory relation). residual diff에 SDSDocument 잔존0=정합.
 - **🔴 RED:** migration sentinel(restockId FK·CHECK 양조건), route 계약 test.
 - **🟢 GREEN:** `SDSDocument.restockId String?` FK(→InventoryRestock, onDelete Restrict) + CHECK 재정의(coa→restockId NOT NULL). 기존 COA migration(inventoryId→해당 restock 매핑 또는 보류 규칙). route restockId 수용·소유검증. **dry-run→보고→진행.**
 - **✋ Gate:** migrate status in-sync·diff empty, reconcile/회귀 GREEN, 데이터 무손실, no N+1.  **Rollback:** migration down + route revert.
 
 ### Phase 4: COA per-lot surface
-- Status: [ ] Pending
+- Status: [x] Complete  📅 2026-06-14  📝 A안(P3+P4 병합 — route 계약이 surface와 한몸, dead-button 회피). ContextLotInfo+realLots restockId, lot 카드별 SdsDocumentsSection(restockId), item-level COA 폐기. SDS prop+GET/POST restockId. esbuild OK·brace 균형·sentinel 14/14.
 - **🟢 GREEN:** 각 lot 카드 안에 그 lot COA(`SdsDocumentsSection docType="coa" restockId={…}` 또는 동형) 업로드/열람. item-level COA 섹션 폐기. 업로드 후 invalidate.
 - **✋ Gate:** dead button 0, 상태별 UI, same-canvas, P1-1 미회귀, `next build`.  **Rollback:** surface revert(item-level 복귀 가능).
 

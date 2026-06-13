@@ -44,12 +44,15 @@ export async function GET(
     // §11.348-B-1 B1-4 — docType(sds/coa) 필터(미지정 시 전체).
     const { searchParams } = new URL(request.url);
     const docType = searchParams.get("docType");
-    // §detail-page P3 — COA는 inventory record(ProductInventory) 귀속 → inventoryId 필터(미지정 시 전체).
+    // §detail-page P3 — COA는 inventory record(ProductInventory) 귀속 → inventoryId 필터(레거시 denorm).
     const inventoryId = searchParams.get("inventoryId");
+    // #inventory-lot-entity P4 — COA canonical scope = 입고 lot(InventoryRestock) → restockId 필터(미지정 시 전체).
+    const restockId = searchParams.get("restockId");
     const where: any = {
       productId: id,
       ...(docType ? { docType } : {}),
       ...(inventoryId ? { inventoryId } : {}),
+      ...(restockId ? { restockId } : {}),
       OR: [
         { organizationId: null }, // 공용 문서
         ...(organizationIds && organizationIds.length > 0
@@ -116,36 +119,41 @@ export async function POST(
     const orgIds = memberships.map((m: any) => m.organizationId);
     const organizationId = orgIds[0] ?? null;
 
-    // §detail-page P3 — COA는 lot-scoped(inventory record 귀속). docType별 inventoryId 정합:
-    //   coa → inventoryId 필수 + 소유(해당 product·요청자 org/user의 ProductInventory) 검증 → 422(명시 거부; DB CHECK 차단 승격)
-    //   sds → inventoryId 항상 null 강제 (P2 CHECK: SDSDocument_coa_lot_check, sds→inventoryId IS NULL)
+    // #inventory-lot-entity P3 — COA는 lot-scoped(실 입고 lot=InventoryRestock 귀속). docType별 정합:
+    //   coa → restockId 필수 + 소유(해당 product·요청자 org/user의 입고 lot) 검증 → 422(명시 거부; DB CHECK 차단 승격)
+    //   inventoryId 는 restock.inventoryId 에서 파생(재고 단위 그룹핑/인덱스용 denorm).
+    //   sds → restockId/inventoryId 항상 null (CHECK: SDSDocument_coa_lot_check, sds→restockId IS NULL)
     let inventoryId: string | null = null;
+    let restockId: string | null = null;
     if (docType === "coa") {
-      const rawInventoryId = form.get("inventoryId");
-      if (typeof rawInventoryId !== "string" || !rawInventoryId) {
+      const rawRestockId = form.get("restockId");
+      if (typeof rawRestockId !== "string" || !rawRestockId) {
         return NextResponse.json(
-          { error: "COA(시험성적서)는 입고(재고) 항목에 귀속됩니다. 재고 항목을 먼저 선택하세요.", code: "INVENTORY_REQUIRED" },
+          { error: "COA(시험성적서)는 입고 lot 에 귀속됩니다. 입고 항목(lot)을 먼저 선택하세요.", code: "RESTOCK_REQUIRED" },
           { status: 422 },
         );
       }
-      const inv = await db.productInventory.findFirst({
+      const restock = await db.inventoryRestock.findFirst({
         where: {
-          id: rawInventoryId,
-          productId,
-          OR: [
-            { userId: session.user.id },
-            ...(orgIds.length > 0 ? [{ organizationId: { in: orgIds } }] : []),
-          ],
+          id: rawRestockId,
+          inventory: {
+            productId,
+            OR: [
+              { userId: session.user.id },
+              ...(orgIds.length > 0 ? [{ organizationId: { in: orgIds } }] : []),
+            ],
+          },
         },
-        select: { id: true },
+        select: { id: true, inventoryId: true },
       });
-      if (!inv) {
+      if (!restock) {
         return NextResponse.json(
-          { error: "유효하지 않은 재고 항목입니다. 본인/조직의 재고만 선택할 수 있습니다.", code: "INVENTORY_INVALID" },
+          { error: "유효하지 않은 입고 lot 입니다. 본인/조직의 입고 항목만 선택할 수 있습니다.", code: "RESTOCK_INVALID" },
           { status: 422 },
         );
       }
-      inventoryId = inv.id;
+      restockId = restock.id;
+      inventoryId = restock.inventoryId;
     }
 
     // 스토리지 업로드 — 미설정 시 503 graceful(silent 성공 금지).
@@ -172,6 +180,7 @@ export async function POST(
         productId,
         organizationId,
         inventoryId,
+        restockId,
         fileName: f.name || "sds.pdf",
         bucket: stored.bucket,
         path: stored.path,

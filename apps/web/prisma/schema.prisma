@@ -923,6 +923,8 @@ model InventoryRestock {
   order     Order?           @relation(fields: [orderId], references: [id], onDelete: SetNull)
   // §11.309a — OcrJob FK. SetNull 으로 OcrJob 삭제 시에도 InventoryRestock 보존.
   ocrJob    OcrJob?          @relation(fields: [ocrJobId], references: [id], onDelete: SetNull)
+  // #inventory-lot-entity P3 — lot-scoped COA 역방향.
+  sdsDocuments SDSDocument[]
 
   @@index([inventoryId])
   @@index([userId])
@@ -3296,6 +3298,8 @@ model SDSDocument {
   organizationId   String?   // 공용 문서 = null
   // §detail-page P2 — COA(lot-scoped) 경계. coa=>NOT NULL, sds=>NULL. CHECK constraint `SDSDocument_coa_lot_check` 강제.
   inventoryId      String?
+  // #inventory-lot-entity P3 — COA(lot-scoped) 를 실 입고 lot(InventoryRestock) 에 바인딩. coa=>restockId NOT NULL, sds=>NULL. CHECK `SDSDocument_coa_lot_check` 재정의.
+  restockId        String?
   fileName         String
   bucket           String    // 오브젝트 스토리지 버킷(Supabase/Blob)
   path             String    // 스토리지 경로
@@ -3313,10 +3317,12 @@ model SDSDocument {
   product      Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   inventory    ProductInventory? @relation(fields: [inventoryId], references: [id], onDelete: Restrict)
+  restock      InventoryRestock? @relation(fields: [restockId], references: [id], onDelete: Restrict)
 
   @@index([productId])
   @@index([organizationId])
   @@index([inventoryId])
+  @@index([restockId])
   @@index([extractionStatus])
   @@index([docType])
 }

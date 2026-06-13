@@ -64,6 +64,7 @@ export interface ContextPanelItem {
 }
 
 export interface ContextLotInfo {
+  restockId: string; // #inventory-lot-entity P4 — lot(InventoryRestock) id. COA scope key.
   lotNumber: string;
   quantity: number;
   receivedDate: string;
@@ -104,6 +105,7 @@ function realLots(item: ContextPanelItem): ContextLotInfo[] {
     const status: ContextLotInfo["status"] =
       days === null ? "active" : days <= 0 ? "expired" : days <= 7 ? "expiring" : "active";
     return {
+      restockId: r.id,
       lotNumber: r.lotNumber || "(lot 미지정)",
       quantity: r.quantity,
       receivedDate: r.restockedAt,
@@ -781,7 +783,7 @@ export function InventoryContextPanel({
             )}
             {lots.map((lot) => (
               <div
-                key={lot.lotNumber}
+                key={lot.restockId}
                 className="rounded-lg border border-bd bg-pn px-3 py-2.5"
               >
                 <div className="flex items-center justify-between mb-1.5">
@@ -816,6 +818,10 @@ export function InventoryContextPanel({
                     </div>
                   )}
                 </div>
+                {/* #inventory-lot-entity P4 — COA(시험성적서)를 lot(restock) 단위로. dead button 0(restockId 실값 전달). */}
+                <div className="mt-2 pt-2 border-t border-bd">
+                  <SdsDocumentsSection productId={item.productId} docType="coa" restockId={lot.restockId} title="COA(시험성적서)" />
+                </div>
               </div>
             ))}
             {/* Lot drill-down entry */}
@@ -835,21 +841,7 @@ export function InventoryContextPanel({
           )}
         </section>
 
-        {/* §detail-page P3 — COA(시험성적서) lot-scoped surface. real 재고 record(item.id)만 활성;
-            mock fallback(id=mock-*)은 honest disabled(FK 위반 방지). productId+inventoryId 동반. */}
-        <section>
-          <SectionHeader icon={FileText} label="COA (시험성적서)" />
-          {item.id.startsWith("mock") ? (
-            <p className="mt-2.5 text-[11px] text-slate-400 italic px-3 py-2 rounded-lg border border-bd bg-pn">
-              샘플 재고에는 COA를 등록할 수 없습니다. 실제 입고된 재고 항목에서 등록·열람하세요.
-            </p>
-          ) : (
-            <div className="mt-2.5">
-              <SdsDocumentsSection productId={item.productId} docType="coa" inventoryId={item.id} />
-            </div>
-          )}
-        </section>
-
+        {/* #inventory-lot-entity P4 — item-level COA section 제거. COA 는 위 Lot 섹션의 lot(restock) 카드별로 등록·열람(폭발 방지). */}
         {/* ── C. Operational Risk ── */}
         {/* §11.322 Phase 3 — D. 리스크 섹션 = visibleRisks(below_safety 흡수 제외). length 0 시 섹션 자체 생략. */}
         {visibleRisks.length > 0 && (

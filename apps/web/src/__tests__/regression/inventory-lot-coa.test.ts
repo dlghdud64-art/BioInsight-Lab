@@ -4,7 +4,7 @@
  * lot = InventoryRestock(기존). COA를 lot에 종속.
  * - P2: context-panel이 real restockRecords 렌더(generateMockLots 제거).
  * - P3: SDSDocument.restockId FK + CHECK(coa→restockId NOT NULL). route restockId 수용.
- * - P4: COA 업로드/열람을 lot 카드 단위로.
+ * - P4: COA 업로드/열람을 lot(restockId) 카드 단위로 (GREEN).
  * 회귀: P1-1 catalog COA 미노출, catalog SDS 보존.
  *
  * Phase 1 기대: schema/route/surface RED, 회귀 GREEN.
@@ -21,6 +21,7 @@ const ROUTE = "src/app/api/products/[id]/sds/route.ts";
 const PANEL = "src/components/inventory/inventory-context-panel.tsx";
 const PAGE = "src/app/products/[id]/page.tsx";
 const MAIN = "src/app/dashboard/inventory/inventory-main.tsx";
+const SDS = "src/components/safety/sds-documents-section.tsx";
 const MIG = "prisma/migrations";
 
 function migrationsContain(re: RegExp): boolean {
@@ -60,6 +61,28 @@ describe("#inventory-lot-entity P2 — real-lot 렌더 (RED)", () => {
   });
   it("inventory-main이 restockRecords plumb", () => {
     expect(read(MAIN)).toContain("restockRecords");
+  });
+});
+
+describe("#inventory-lot-entity P4 — per-lot COA surface (GREEN)", () => {
+  it("ContextLotInfo restockId 필드", () => {
+    expect(read(PANEL)).toContain("restockId: string");
+  });
+  it("realLots restockId 매핑(r.id)", () => {
+    expect(read(PANEL)).toContain("restockId: r.id");
+  });
+  it("panel COA를 lot(restockId) 단위로 렌더", () => {
+    expect(read(PANEL)).toContain("restockId={lot.restockId}");
+  });
+  it("item-level COA(inventoryId) section 제거", () => {
+    expect(read(PANEL)).not.toContain('docType="coa" inventoryId={item.id}');
+  });
+  it("SdsDocumentsSection restockId prop 수용", () => {
+    expect(read(SDS)).toContain("restockId");
+  });
+  it("GET route restockId 필터", () => {
+    const r = read(ROUTE);
+    expect(r).toContain('searchParams.get("restockId")');
   });
 });
 
