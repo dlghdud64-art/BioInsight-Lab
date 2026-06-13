@@ -44,9 +44,12 @@ export async function GET(
     // §11.348-B-1 B1-4 — docType(sds/coa) 필터(미지정 시 전체).
     const { searchParams } = new URL(request.url);
     const docType = searchParams.get("docType");
+    // §detail-page P3 — COA는 inventory record(ProductInventory) 귀속 → inventoryId 필터(미지정 시 전체).
+    const inventoryId = searchParams.get("inventoryId");
     const where: any = {
       productId: id,
       ...(docType ? { docType } : {}),
+      ...(inventoryId ? { inventoryId } : {}),
       OR: [
         { organizationId: null }, // 공용 문서
         ...(organizationIds && organizationIds.length > 0
@@ -105,12 +108,45 @@ export async function POST(
     const rawDocType = form.get("docType");
     const docType = rawDocType === "coa" ? "coa" : "sds";
 
-    // 조직 스코프: 요청자의 첫 조직(없으면 공용 null).
-    const membership = await db.organizationMember.findFirst({
+    // 조직 스코프: 요청자의 조직 목록(첫 조직 = 문서 org, 없으면 공용 null).
+    const memberships = await db.organizationMember.findMany({
       where: { userId: session.user.id },
       select: { organizationId: true },
     });
-    const organizationId = membership?.organizationId ?? null;
+    const orgIds = memberships.map((m: any) => m.organizationId);
+    const organizationId = orgIds[0] ?? null;
+
+    // §detail-page P3 — COA는 lot-scoped(inventory record 귀속). docType별 inventoryId 정합:
+    //   coa → inventoryId 필수 + 소유(해당 product·요청자 org/user의 ProductInventory) 검증 → 422(명시 거부; DB CHECK 차단 승격)
+    //   sds → inventoryId 항상 null 강제 (P2 CHECK: SDSDocument_coa_lot_check, sds→inventoryId IS NULL)
+    let inventoryId: string | null = null;
+    if (docType === "coa") {
+      const rawInventoryId = form.get("inventoryId");
+      if (typeof rawInventoryId !== "string" || !rawInventoryId) {
+        return NextResponse.json(
+          { error: "COA(시험성적서)는 입고(재고) 항목에 귀속됩니다. 재고 항목을 먼저 선택하세요.", code: "INVENTORY_REQUIRED" },
+          { status: 422 },
+        );
+      }
+      const inv = await db.productInventory.findFirst({
+        where: {
+          id: rawInventoryId,
+          productId,
+          OR: [
+            { userId: session.user.id },
+            ...(orgIds.length > 0 ? [{ organizationId: { in: orgIds } }] : []),
+          ],
+        },
+        select: { id: true },
+      });
+      if (!inv) {
+        return NextResponse.json(
+          { error: "유효하지 않은 재고 항목입니다. 본인/조직의 재고만 선택할 수 있습니다.", code: "INVENTORY_INVALID" },
+          { status: 422 },
+        );
+      }
+      inventoryId = inv.id;
+    }
 
     // 스토리지 업로드 — 미설정 시 503 graceful(silent 성공 금지).
     let stored: { bucket: string; path: string };
@@ -135,6 +171,7 @@ export async function POST(
       data: {
         productId,
         organizationId,
+        inventoryId,
         fileName: f.name || "sds.pdf",
         bucket: stored.bucket,
         path: stored.path,

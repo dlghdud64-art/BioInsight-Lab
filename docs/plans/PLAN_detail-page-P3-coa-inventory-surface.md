@@ -1,8 +1,8 @@
 # Implementation Plan: §detail-page P3 — COA lot-scoped surface (route + inventory)
 
-- **Status:** ⏳ Pending
+- **Status:** 🟢 구현 완료 (commit/push + 수동 smoke 대기)
 - **Started:** 2026-06-13
-- **Last Updated:** 2026-06-13
+- **Last Updated:** 2026-06-13 (Phase 1–4 구현 완료·desync 복구)
 - **Estimated Completion:** TBD (medium, ~5 phases / 8–12h)
 - **Tracker:** `#coa-inventory-surface` (reconcile P1-3 deferred RED 해소)
 
@@ -157,7 +157,7 @@ Red-Green-Refactor 엄수.
 ## 7. Implementation Phases
 
 ### Phase 0: Context & Scope Lock
-- Status: [ ] Pending
+- Status: [x] Complete
 - **🔴 RED:** C1(record-scoped) / C2(POST 차단) 확정, inventory surface 타깃 1곳 확정(context-panel vs receiving workbench), 현 재고 record id 공급 경로 확인
 - **🟢 GREEN:** runnable 명령 확정, 기존 SdsDocumentsSection upload 경로 확인
 - **🔵 REFACTOR:** scope 축소(record-scoped 한정 재확인)
@@ -165,7 +165,7 @@ Red-Green-Refactor 엄수.
 - **Rollback:** planning-only
 
 ### Phase 1: Contract & Failing Tests
-- Status: [ ] Pending
+- Status: [x] Complete (5 RED / 2 regression GREEN)
 - **🔴 RED:** (a) route 계약 sentinel — POST가 inventoryId 수용 + coa→필수/sds→null; (b) inventory COA surface sentinel — docType="coa" + inventoryId 전달; (c) 회귀 — catalog SDS 보존·P1-1 미회귀. 실패 확인.
 - **🟢 GREEN:** 최소 scaffolding
 - **🔵 REFACTOR:** 네이밍/scope 정리
@@ -173,7 +173,7 @@ Red-Green-Refactor 엄수.
 - **Rollback:** test/scaffold revert
 
 ### Phase 2: Upload Route Lot Handling (P1-3)
-- Status: [ ] Pending
+- Status: [x] Complete (reconcile P1-3 RED→GREEN)
 - **🔴 RED:** route 단위/계약 test (coa+inventoryId→저장, coa-no-inventoryId→422, sds→null 강제)
 - **🟢 GREEN:** POST formData `inventoryId` 파싱, docType=coa면 inventoryId 필수+소유 검증(해당 org의 ProductInventory), docType=sds면 inventoryId=null 강제. CHECK 정합.
 - **🔵 REFACTOR:** 분기 단순화, 중복 제거
@@ -181,7 +181,7 @@ Red-Green-Refactor 엄수.
 - **Rollback:** route를 Phase 1 상태로 revert(스키마 불변이라 안전)
 
 ### Phase 3: Inventory COA Surface 신설
-- Status: [ ] Pending
+- Status: [x] Complete (context-panel COA 섹션, real-id 게이트)
 - **🔴 RED:** inventory surface에 COA 섹션 sentinel(wiring)
 - **🟢 GREEN:** `SdsDocumentsSection docType="coa" inventoryId={...}`를 inventory context-panel/item에 same-canvas로 흡수. 업로드 후 목록 invalidate. loading/error/empty/disabled 상태 구비.
 - **🔵 REFACTOR:** UI 중복 제거, same-canvas 유지
@@ -189,7 +189,7 @@ Red-Green-Refactor 엄수.
 - **Rollback:** surface wiring revert(route는 유지 가능)
 
 ### Phase 4: Smoke / Rollback
-- Status: [ ] Pending
+- Status: [x] Documented (수동 smoke는 호영님 환경, sandbox 실행 불가)
 - **🔴 RED:** 실패 모드 식별(권한 없는 업로드, inventoryId 불일치, 대용량 파일), smoke path 정의
 - **🟢 GREEN:** smoke 실행(입고 record에 COA 업로드→열람→catalog SDS 불변 확인), audit/모니터링 확인
 - **🔵 REFACTOR:** 임시 계측 제거, Notes 마감
@@ -235,29 +235,45 @@ Red-Green-Refactor 엄수.
 
 ## 11. Progress Tracking
 
-- Overall completion: 0%
-- Current phase: Phase 0 (대기)
+- Overall completion: 95% (구현·sentinel·tsc 완료, 수동 smoke만 잔여)
+- Current phase: Phase 4 (smoke/rollback — 수동 smoke는 호영님 환경)
 - Current blocker: 없음
-- Next validation step: Phase 0 surface 타깃 확정
+- Next validation step: Phase 1 RED sentinel (route+surface) 실패 확인
 
 **Phase Checklist:**
-- [ ] Phase 0 complete
-- [ ] Phase 1 complete
-- [ ] Phase 2 complete
-- [ ] Phase 3 complete
-- [ ] Phase 4 complete
+- [x] Phase 0 complete
+- [x] Phase 1 complete
+- [x] Phase 2 complete
+- [x] Phase 3 complete
+- [x] Phase 4 documented (manual smoke pending)
 
 ---
 
 ## 12. Notes & Learnings
 
 **Blockers Encountered:**
+- [2026-06-13 Phase 2-3] ⚠️ file-tool↔bash 마운트 desync로 route/section/panel + ai-insight-dialog 가 working tree에서 truncate 손상(WT<HEAD, 중괄호 불균형). 센티넬은 source를 문자열로만 읽어 미탐지·tsc는 tool timeout. → `git show HEAD: > file` 후 edit 재적용으로 전 파일 복구·중괄호 균형 확인. 교훈: 변경 후 brace 균형 + git diff --stat(net insertion) 점검을 sentinel과 별도로 필수.
 - [2026-06-13] ProductInventory `@@unique([organizationId, productId])` → 진짜 multi-lot 불가 발견 → record-scoped로 한정, multi-lot defer.
 - [2026-06-13] COA POST가 CHECK로 DB 차단 상태 → route+surface 동반 필요.
 
 **Implementation Notes:**
+- [2026-06-13 Phase 0 lock] COA surface 타깃 = `InventoryContextPanel`(선택 재고 same-canvas rail). real `item.id`(ProductInventory.id)+`item.productId` 보유. 호영님 확정.
+- [2026-06-13 Phase 0] inventory-main: `/api/inventory` real 조회 + empty 시 mock fallback(id=`mock-*`). → COA는 real id만 활성, mock item 비활성(honest disabled, FK 위반 방지).
+- [2026-06-13 Phase 0] context-panel lots/flows/transactions = mock 생성(선존 debt). 이번 트랙 미터치 — 별 트랙.
+- SdsDocumentsSection: `inventoryId` prop 추가(upload FormData + GET 필터) 필요.
 - SDS canonical 단일화 + 규제포털 auto-link = **별 트랙**(호영님 결정 2026-06-13). 비가역 per-org dedup이라 dry-run→보고→승인 게이트 별도.
 - 이번 트랙 스키마 변경 0(P2에 land됨). route+surface+sentinel만.
+
+**Phase 4 — Smoke / Rollback (2026-06-13):**
+- Smoke(수동, 호영님 환경 권장): real 재고 선택→COA 섹션 노출→ADMIN/SUPPLIER 업로드(201)→열람(서명URL)→catalog SDS 불변(P1-1)→mock 재고는 honest disabled→inventoryId 없는 coa POST=422.
+- Sandbox live DB/storage smoke = **실행 불가**(추정 통과 금지). 대신 sentinel(계약/와이어링) 7/7 + reconcile P1-3 GREEN + tsc 0 으로 정합 확인.
+- Rollback: panel COA 섹션 revert→COA 미노출(route 무해, sds 영향 0). route revert→P1-3 RED 복귀(스키마 불변 안전). COA 데이터=append-only, FK Restrict 보호.
+
+**Changed files (this track):**
+- NEW `apps/web/src/__tests__/regression/coa-inventory-surface.test.ts`
+- MOD `apps/web/src/app/api/products/[id]/sds/route.ts` (inventoryId 수용·coa 검증·sds null)
+- MOD `apps/web/src/components/safety/sds-documents-section.tsx` (inventoryId prop)
+- MOD `apps/web/src/components/inventory/inventory-context-panel.tsx` (COA 섹션, real-id 게이트)
 
 **To Revisit:**
 - 진짜 multi-lot(lot 엔티티) 필요 시점 재평가.

@@ -21,10 +21,13 @@ interface SdsDoc {
 export function SdsDocumentsSection({
   productId,
   docType = "sds",
+  inventoryId,
   title,
 }: {
   productId: string;
   docType?: "sds" | "coa"; // §11.348-B-1 B1-4 — COA 재사용
+  // §detail-page P3 — COA(lot-scoped)는 inventory record 귀속. coa 업로드/조회 시 동반(필수).
+  inventoryId?: string | null;
   title?: string;
 }) {
   const docLabel = title ?? (docType === "coa" ? "COA(시험성적서)" : "SDS");
@@ -42,7 +45,9 @@ export function SdsDocumentsSection({
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch(`/api/products/${productId}/sds?docType=${docType}`);
+      // §detail-page P3 — coa는 inventoryId로 해당 재고 record 문서만 조회(미지정 시 docType 전체).
+      const qs = `docType=${docType}${inventoryId ? `&inventoryId=${inventoryId}` : ""}`;
+      const res = await fetch(`/api/products/${productId}/sds?${qs}`);
       if (!res.ok) throw new Error();
       const data = await res.json();
       setDocs(data.sdsDocuments ?? []);
@@ -51,7 +56,7 @@ export function SdsDocumentsSection({
     } finally {
       setLoading(false);
     }
-  }, [productId, docType]);
+  }, [productId, docType, inventoryId]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -63,6 +68,8 @@ export function SdsDocumentsSection({
       const form = new FormData();
       form.append("file", file);
       form.append("docType", docType);
+      // §detail-page P3 — coa는 inventoryId 동반(route가 필수 검증). sds는 미전달 → route가 null 강제.
+      if (inventoryId) form.append("inventoryId", inventoryId);
       const res = await csrfFetch(`/api/products/${productId}/sds`, { method: "POST", body: form });
       const data = await res.json();
       if (!res.ok) {

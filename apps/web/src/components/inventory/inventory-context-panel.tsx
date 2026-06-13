@@ -33,6 +33,8 @@ import { useOperationalBriefPopup } from "@/components/operational-brief/popup-c
 import { useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { MetricCell } from "@/components/operational-brief/metric-cell";
 import { formatRelativeKr } from "@/components/operational-brief/relative-time";
+// §detail-page P3 — COA(시험성적서) lot-scoped surface (inventory record 귀속).
+import { SdsDocumentsSection } from "@/components/safety/sds-documents-section";
 
 /* ── Types ── */
 export interface ContextPanelItem {
@@ -840,6 +842,21 @@ export function InventoryContextPanel({
               </button>
             )}
           </div>
+          )}
+        </section>
+
+        {/* §detail-page P3 — COA(시험성적서) lot-scoped surface. real 재고 record(item.id)만 활성;
+            mock fallback(id=mock-*)은 honest disabled(FK 위반 방지). productId+inventoryId 동반. */}
+        <section>
+          <SectionHeader icon={FileText} label="COA (시험성적서)" />
+          {item.id.startsWith("mock") ? (
+            <p className="mt-2.5 text-[11px] text-slate-400 italic px-3 py-2 rounded-lg border border-bd bg-pn">
+              샘플 재고에는 COA를 등록할 수 없습니다. 실제 입고된 재고 항목에서 등록·열람하세요.
+            </p>
+          ) : (
+            <div className="mt-2.5">
+              <SdsDocumentsSection productId={item.productId} docType="coa" inventoryId={item.id} />
+            </div>
           )}
         </section>
 
