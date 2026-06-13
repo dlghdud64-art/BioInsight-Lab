@@ -145,6 +145,7 @@ export async function GET(request: NextRequest) {
             lotNumber: true,
             expiryDate: true,
             quantity: true,
+            restockedAt: true,
           },
           orderBy: { restockedAt: "desc" },
         },

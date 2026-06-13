@@ -59,6 +59,8 @@ export interface ContextPanelItem {
   averageDailyUsage?: number;
   leadTimeDays?: number;
   notes?: string | null;
+  // #inventory-lot-entity — 실 입고 lot(InventoryRestock). mock lot 생성 대체.
+  restocks?: { id: string; lotNumber: string | null; expiryDate: string | null; quantity: number; restockedAt: string }[];
 }
 
 export interface ContextLotInfo {
@@ -93,38 +95,23 @@ export interface RecommendedAction {
 }
 
 /* ── Mock data generators ── */
-function generateMockLots(item: ContextPanelItem): ContextLotInfo[] {
-  const lots: ContextLotInfo[] = [];
-  if (item.lotNumber) {
-    const daysUntilExpiry = item.expiryDate
-      ? Math.ceil((new Date(item.expiryDate).getTime() - Date.now()) / 86400000)
+function realLots(item: ContextPanelItem): ContextLotInfo[] {
+  // #inventory-lot-entity — 실 입고 lot(InventoryRestock) 매핑. 가짜 생성 금지(restock 0건 = 빈 lot).
+  return (item.restocks ?? []).map((r) => {
+    const days = r.expiryDate
+      ? Math.ceil((new Date(r.expiryDate).getTime() - Date.now()) / 86400000)
       : null;
-    lots.push({
-      lotNumber: item.lotNumber,
-      quantity: Math.max(1, Math.floor(item.currentQuantity * 0.6)),
-      receivedDate: "2025-11-15",
-      expiryDate: item.expiryDate || null,
-      location: item.location || null,
-      status:
-        daysUntilExpiry === null
-          ? "active"
-          : daysUntilExpiry <= 0
-            ? "expired"
-            : daysUntilExpiry <= 7
-              ? "expiring"
-              : "active",
-    });
-  }
-  // Add a second mock lot
-  lots.push({
-    lotNumber: item.lotNumber ? `${item.lotNumber.slice(0, -1)}Z` : "25A01-M",
-    quantity: Math.max(1, item.currentQuantity - (lots[0]?.quantity ?? 0)),
-    receivedDate: "2026-01-20",
-    expiryDate: null,
-    location: item.location || null,
-    status: "active",
+    const status: ContextLotInfo["status"] =
+      days === null ? "active" : days <= 0 ? "expired" : days <= 7 ? "expiring" : "active";
+    return {
+      lotNumber: r.lotNumber || "(lot 미지정)",
+      quantity: r.quantity,
+      receivedDate: r.restockedAt,
+      expiryDate: r.expiryDate ?? null,
+      location: item.location ?? null,
+      status,
+    };
   });
-  return lots;
 }
 
 function generateMockRisks(item: ContextPanelItem): ContextRisk[] {
@@ -413,7 +400,7 @@ export function InventoryContextPanel({
   const [isFlowSectionExpanded, setIsFlowSectionExpanded] = useState(true);
   const [isHistorySectionExpanded, setIsHistorySectionExpanded] = useState(false);
   const [isActionsSectionExpanded, setIsActionsSectionExpanded] = useState(true);
-  const lots = generateMockLots(item);
+  const lots = realLots(item);
   const risks = generateMockRisks(item);
   // §11.322 Phase 3 — D. 리스크 섹션 = 상태 배너 흡수(below_safety) 제외, 부가 리스크만.
   //   inventorySummary narrative 입력은 전체 risks 그대로 유지(흡수 여부와 무관).
@@ -789,6 +776,9 @@ export function InventoryContextPanel({
           </div>
           {isLotSectionExpanded && (
           <div className="mt-2.5 space-y-2">
+            {lots.length === 0 && (
+              <p className="text-[11px] text-slate-500 italic px-1 py-1">입고 lot 기록이 없습니다.</p>
+            )}
             {lots.map((lot) => (
               <div
                 key={lot.lotNumber}

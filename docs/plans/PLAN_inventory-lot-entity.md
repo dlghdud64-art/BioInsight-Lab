@@ -1,6 +1,6 @@
 # Implementation Plan: #inventory-lot-entity — COA lot-scoping (InventoryRestock 활용)
 
-- **Status:** ⏳ Pending
+- **Status:** 🔄 In Progress (Phase 2 ✅ — 다음 Phase 3 prod migration: dry-run→보고→진행 게이트)
 - **Started:** 2026-06-14
 - **Last Updated:** 2026-06-14
 - **Estimated Completion:** TBD (large, ~6 phases, migration 포함)
@@ -99,18 +99,18 @@
 ## 7. Implementation Phases
 
 ### Phase 0: Truth & Scope Lock
-- Status: [ ] Pending
+- Status: [x] Complete
 - **🔴 RED:** InventoryRestock=lot SoT 확정, context-panel에 restockRecords 공급 경로(query/API) 확인, COA 재-scope 스키마(restockId 추가 vs 교체) 결정, 기존 COA 1행(TEST) migration 방침, restock 없는 제품 빈-lot 처리.
 - **🟢 GREEN:** runnable·migration 절차(§9.5) 확정.
 - **✋ Gate:** 충돌 0, restock 조회 경로 단일 확정, migration 방침 문서화.  **Rollback:** planning-only.
 
 ### Phase 1: Contract & Failing Tests (RED)
-- Status: [ ] Pending
+- Status: [x] Complete  📅 2026-06-14  📝 RED sentinel `inventory-lot-coa.test.ts`(P2 GREEN·P3 의도 RED).
 - **🔴 RED:** (a) schema sentinel — SDSDocument.restockId FK + CHECK(coa→restockId); (b) route — restockId 수용/coa 필수; (c) surface — generateMockLots 부재·real restock 렌더·COA per-lot; (d) 회귀 — P1-1·SDS. 실패 확인.
 - **✋ Gate:** 실패 test 실재, 기존 suite GREEN.  **Rollback:** test revert.
 
 ### Phase 2: Real-lot 렌더 (schema 0)
-- Status: [ ] Pending
+- Status: [x] Complete  📅 2026-06-14  📝 generateMockLots 제거→realLots(item.restocks). route restockedAt select·main plumb. brace 131/323/1087·esbuild OK·타입정합. 회귀 GREEN(P1-1/SDS/302d2/disposal/322). restructure-320 2건=선존drift(HEAD동일). schema 0 단독 ship 가능.
 - **🟢 GREEN:** `generateMockLots` 제거 → context-panel이 실 `restockRecords`(lotNumber/expiry/qty/restockedAt) 렌더. restock 0건 = 정직한 빈 lot 상태. 만료 lot 우선 정합.
 - **✋ Gate:** mock 제거 sentinel GREEN, dead/no-op 0, 빈/loading/error 상태, `next build`.  **Rollback:** generateMockLots 복귀.
 
@@ -144,8 +144,18 @@
 - **Special:** prod migration = down migration 준비 + 데이터 백업 확인 후 apply.
 
 ## 10. Progress Tracking
-- Overall: 0% · Current: Phase 0 대기 · Blocker: 없음 · Next: InventoryRestock=lot SoT + restock 공급 경로 확정.
-- Phase Checklist: [ ] P0 [ ] P1 [ ] P2 [ ] P3 [ ] P4 [ ] P5
+- Overall: 15% · Current: Phase 1 (RED sentinel) · Blocker: 없음 · Next: schema/route/surface 계약 RED.
+- Phase Checklist: [x] P0 [ ] P1 [ ] P2 [ ] P3 [ ] P4 [ ] P5
+
+## 10b. Phase 0 Lock (2026-06-14)
+
+**확정:**
+- SoT: `InventoryRestock` = lot (lotNumber/expiryDate/quantity/restockedAt/receivingStatus/orderId). 새 엔티티 불요.
+- **restock 공급 경로 이미 존재**: `/api/inventory/route.ts`(L142)가 `restockRecords`(restockedAt desc) include. inventory-main이 받는 ProductInventory에 real lot 포함. context-panel `openContextPanel(inv)`가 ContextPanelItem으로 변환하며 restockRecords 탈락 → `generateMockLots` 가짜 생성. **plumb만 하면 됨**(쿼리 신설 불요).
+- 입고 생성 = POST `/api/inventory/[id]/restock`(lot 생성). 클라: inventory-main restock 상태/mutation 보유.
+- 스키마 결정: `SDSDocument.restockId String?` FK(→InventoryRestock, onDelete Restrict) 추가. CHECK 재정의 coa→restockId NOT NULL.
+- ⚠️ **기존 coa 행 migration**: 현 coa는 inventoryId set + restockId NULL. 새 CHECK가 즉시 위반 → migration에서 (a) 기존 coa restockId backfill(해당 inventory의 최신 restock 매핑) 또는 (b) TEST coa 1행 정리 후 enforce. P3에서 결정·dry-run.
+- restock 0건 제품 = lot 0 → 정직한 빈-lot 상태(가짜 0 금지).
 
 ## 11. Notes & Learnings
 - [2026-06-14] 핵심 재정의: `InventoryRestock`가 이미 lot 엔티티 → 새 엔티티/ProductInventory 재구성 불요. 트랙 규모 대폭 축소(new entity → restockId FK 1개 + render 교체).

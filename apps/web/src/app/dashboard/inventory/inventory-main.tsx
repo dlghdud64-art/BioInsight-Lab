@@ -198,6 +198,10 @@ export function InventoryMain() {
       averageDailyUsage: inv.averageDailyUsage,
       leadTimeDays: inv.leadTimeDays,
       notes: inv.notes,
+      // #inventory-lot-entity — 실 입고 lot 공급(generateMockLots 대체).
+      restocks: ((inv as any).restockRecords ?? []).map((r: any) => ({
+        id: r.id, lotNumber: r.lotNumber ?? null, expiryDate: r.expiryDate, quantity: r.quantity, restockedAt: r.restockedAt,
+      })),
     });
   };
 
