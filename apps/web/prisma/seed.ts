@@ -859,6 +859,42 @@ async function main() {
   console.log(`⭐ HERO PRODUCT 재고: ${pbsInventory.currentQuantity}개 (LOW STOCK - AI 알림 대상)`);
 
   // ============================================================================
+  // §inventory-lot-entity Phase 5 — 실 입고 lot(InventoryRestock) seed.
+  //   COA 는 lot-scoped(restockId NOT NULL). hero PBS 에 lot 2건을 만들어
+  //   재고 패널 lot 카드별 per-lot COA 업로드/열람 smoke 가 가능하도록 한다.
+  // ============================================================================
+  await prisma.inventoryRestock.deleteMany({ where: { inventoryId: "inv-hero-pbs" } });
+  const pbsLot1 = await prisma.inventoryRestock.create({
+    data: {
+      id: "restock-hero-pbs-lot1",
+      inventoryId: "inv-hero-pbs",
+      userId: "user-bioinsight-researcher",
+      quantity: 10,
+      unit: "ea",
+      lotNumber: "PBS-2026-A01",
+      expiryDate: new Date(now.getFullYear() + 1, 5, 30),
+      receivingStatus: "COMPLETED",
+      restockedAt: daysAgo(20),
+      notes: "1차 입고 lot — per-lot COA 등록 대상",
+    },
+  });
+  const pbsLot2 = await prisma.inventoryRestock.create({
+    data: {
+      id: "restock-hero-pbs-lot2",
+      inventoryId: "inv-hero-pbs",
+      userId: "user-bioinsight-researcher",
+      quantity: 5,
+      unit: "ea",
+      lotNumber: "PBS-2026-B07",
+      expiryDate: new Date(now.getFullYear() + 1, 8, 15),
+      receivingStatus: "COMPLETED",
+      restockedAt: daysAgo(5),
+      notes: "2차 입고 lot — per-lot COA 등록 대상",
+    },
+  });
+  console.log(`📦 입고 lot 2건 생성: ${pbsLot1.lotNumber} / ${pbsLot2.lotNumber} (per-lot COA smoke용)`);
+
+  // ============================================================================
   // 다양한 재고 상태 품목들
   // ============================================================================
   const inventoryItems = await Promise.all([
