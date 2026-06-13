@@ -311,7 +311,7 @@ export default function ProductDetailPage() {
               검색 결과
             </Link>
             <ChevronRight className="h-4 w-4 text-slate-300 flex-shrink-0" />
-            <span className="text-slate-100 font-semibold truncate max-w-[200px] md:max-w-[400px]">
+            <span className="text-slate-900 font-semibold truncate max-w-[200px] md:max-w-[400px]">
               {product.name || "제품"}
             </span>
           </nav>
@@ -339,7 +339,7 @@ export default function ProductDetailPage() {
                       <div className="flex items-center gap-3 mb-4">
                         {/* 재고 상태는 표시하지 않음 (확실하지 않은 정보) */}
                       </div>
-                      <CardTitle className="text-2xl md:text-4xl font-bold text-slate-100 leading-tight mb-3 break-words">{product.name}</CardTitle>
+                      <CardTitle className="text-2xl md:text-4xl font-bold text-slate-900 leading-tight mb-3 break-words">{product.name}</CardTitle>
                       {product.nameEn && (
                         <CardDescription className="text-sm md:text-base break-words">{product.nameEn}</CardDescription>
                       )}
@@ -392,8 +392,11 @@ export default function ProductDetailPage() {
                       />
                     </div>
                   ) : (
-                    <div className="w-full max-w-md mx-auto max-h-[400px] md:aspect-video lg:max-h-[400px] bg-el rounded-xl flex items-center justify-center">
-                      <Package className="h-16 w-16 text-gray-300" strokeWidth={1.5} />
+                    /* §detail-page ④ — 빈 이미지 섹션 collapse: 400px aspect-video 빈 박스 →
+                       honest-empty compact 바(h-20). 이미지 부재는 정직하게 알리되 비대 제거. */
+                    <div className="w-full max-w-md mx-auto h-20 bg-el rounded-xl flex items-center justify-center gap-2 text-gray-400">
+                      <Package className="h-5 w-5" strokeWidth={1.5} />
+                      <span className="text-xs">제품 이미지 없음</span>
                     </div>
                   )}
 
@@ -483,7 +486,7 @@ export default function ProductDetailPage() {
                   <div className="mb-6 md:mb-8">
                     <div className="px-6 md:px-8 py-4 border-b border-gray-100/50 flex items-center gap-3 bg-pg/30 rounded-t-3xl">
                       <Check className="w-5 h-5 text-blue-600" />
-                      <h3 className="text-lg font-bold text-slate-100">상세 스펙 (Specifications)</h3>
+                      <h3 className="text-lg font-bold text-slate-900">상세 스펙 (Specifications)</h3>
                       {/* #catalog-spec-backfill ② — 공급사/관리자 규격 직접 충전 */}
                       {canEditSpec && (
                         <Button
@@ -510,18 +513,18 @@ export default function ProductDetailPage() {
                           {product.specification && (
                             <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-pg/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
                               <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">규격/용량</span>
-                              <span className="text-sm md:text-lg font-bold text-slate-100 break-words line-clamp-2">{product.specification}</span>
+                              <span className="text-sm md:text-lg font-bold text-slate-900 break-words line-clamp-2">{product.specification}</span>
                             </div>
                           )}
                           {product.regulatoryCompliance && (
                             <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-pg/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
                               <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">규제 규격</span>
-                              <span className="text-sm md:text-lg font-bold text-slate-100 break-words">{product.regulatoryCompliance}</span>
+                              <span className="text-sm md:text-lg font-bold text-slate-900 break-words">{product.regulatoryCompliance}</span>
                             </div>
                           )}
                         </>
                       ) : (
-                        <div className="col-span-full text-center text-gray-400 py-8">등록된 상세 스펙이 없습니다.</div>
+                        <div className="col-span-full text-center text-gray-400 py-4 text-xs">등록된 상세 스펙이 없습니다.</div>
                       )}
                     </div>
                   </div>
@@ -531,13 +534,13 @@ export default function ProductDetailPage() {
                     <div className="mb-6 md:mb-8">
                       <div className="px-6 md:px-8 py-4 border-b border-gray-100/50 flex items-center gap-3 bg-pg/30 rounded-t-3xl">
                         <Check className="w-5 h-5 text-blue-600" />
-                        <h3 className="text-lg font-bold text-slate-100">추가 스펙 정보</h3>
+                        <h3 className="text-lg font-bold text-slate-900">추가 스펙 정보</h3>
                       </div>
                       <div className="p-4 md:p-8 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 bg-pn/50 rounded-b-3xl">
                         {Object.entries(product.specifications as Record<string, any>).map(([key, value]) => (
                           <div key={key} className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-pg/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
                             <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">{key}</span>
-                            <span className="text-sm md:text-lg font-bold text-slate-100 break-words">{String(value)}</span>
+                            <span className="text-sm md:text-lg font-bold text-slate-900 break-words">{String(value)}</span>
                           </div>
                         ))}
                       </div>
@@ -645,7 +648,7 @@ export default function ProductDetailPage() {
                         {product.storageCondition && (
                           <div>
                             <div className="text-xs md:text-sm text-slate-600 mb-1.5">보관 조건</div>
-                            <p className="text-xs md:text-sm text-slate-100">{product.storageCondition}</p>
+                            <p className="text-xs md:text-sm text-slate-900">{product.storageCondition}</p>
                           </div>
                         )}
 
@@ -729,7 +732,7 @@ export default function ProductDetailPage() {
                                     >
                                       <ExternalLink className="h-3 w-3 mt-0.5 text-slate-400 group-hover:text-slate-600 flex-shrink-0" />
                                       <div className="flex-1 min-w-0">
-                                        <div className="text-xs font-medium text-slate-100">{link.title}</div>
+                                        <div className="text-xs font-medium text-slate-900">{link.title}</div>
                                         {link.description && (
                                           <div className="text-xs text-slate-600 mt-0.5">{link.description}</div>
                                         )}
@@ -797,7 +800,7 @@ export default function ProductDetailPage() {
                         <div className="space-y-2 pt-2 border-t border-bd">
                           <div className="flex items-center gap-2 mb-3">
                             <Shield className="h-4 w-4 text-blue-600" />
-                            <div className="text-xs font-semibold text-slate-100">국내 규제기관 포털</div>
+                            <div className="text-xs font-semibold text-slate-900">국내 규제기관 포털</div>
                           </div>
                           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2">
                             {getRegulationLinksForProduct(
@@ -844,7 +847,7 @@ export default function ProductDetailPage() {
                         공급가 (VAT 별도)
                       </p>
                     </div>
-                    <CardTitle className="text-base font-semibold text-slate-100 mb-2">가격 정보</CardTitle>
+                    <CardTitle className="text-base font-semibold text-slate-900 mb-2">가격 정보</CardTitle>
                     {product.vendors?.[0]?.vendor?.name && (
                       <p className="text-sm text-gray-600 mt-1">{product.vendors[0].vendor.name}</p>
                     )}
@@ -865,7 +868,7 @@ export default function ProductDetailPage() {
                             )}
                             {pv.priceInKRW && pv.priceInKRW > 0 ? (
                               <div className="flex items-baseline gap-1">
-                                <span className="text-3xl md:text-4xl font-extrabold text-slate-100 tracking-tight">
+                                <span className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
                                   ₩{pv.priceInKRW.toLocaleString()}
                                 </span>
                                 <span className="text-lg font-medium text-gray-400">KRW</span>
@@ -1010,7 +1013,7 @@ export default function ProductDetailPage() {
           <div className="flex-1 min-w-0 mr-4">
             {vendors.length > 0 && vendors[0].priceInKRW && vendors[0].priceInKRW > 0 ? (
               <div className="flex items-baseline gap-1">
-                <span className="text-xl font-bold text-slate-100">
+                <span className="text-xl font-bold text-slate-900">
                   ₩{vendors[0].priceInKRW.toLocaleString()}
                 </span>
                 <span className="text-sm font-medium text-gray-400">KRW</span>
