@@ -155,6 +155,10 @@ describe("§11.XXX — feature scope", () => {
 - production DB 변경 = dry-run → 평이한 한국어 보고 → "진행" 후만 apply.
   파괴적 명령(`--force-reset` / `--accept-data-loss` / `migrate reset` / `db push`)
   은 project-ref echo 확인 + 명시 "진행" 게이트.
+- 🛑 sandbox 는 **공유 node_modules 에 패키지 설치 금지** (`npm install` /
+  `pnpm add`) — 호영님 Windows 설치본 오염(react 버전 불일치 → `npm run build`
+  useContext null prerender 실패 = pre-push hook 불능, 2026-06-14 2차 사고,
+  DEV_RUNBOOK §9.9). 조회 도구는 격리 `/tmp` 또는 operator-shell 위임.
 - 클로드코드 환경에서만 push (sandbox commit 금지)
 - WebFetch / WebSearch 실패 시 bash curl 등 대체 fetch 금지
 - NEVER skip hooks unless explicitly requested
