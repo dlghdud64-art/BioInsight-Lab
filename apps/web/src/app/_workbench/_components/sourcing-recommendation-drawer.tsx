@@ -172,7 +172,7 @@ function EmptyState({ productName }: { productName: string }) {
       <Link href="/app/quote">
         <Button
           size="sm"
-          className="gap-1.5 bg-blue-600 hover:bg-blue-500 text-white"
+          className="gap-1.5"
           data-testid="sourcing-empty-quote-cta"
         >
           <ShoppingCart className="h-3.5 w-3.5" />
@@ -288,7 +288,7 @@ export function SourcingRecommendationDrawer({
                     <Link href="/app/quote">
                       <Button
                         size="sm"
-                        className="w-full gap-1.5 bg-blue-600 hover:bg-blue-500 text-white"
+                        className="w-full gap-1.5"
                         data-testid="sourcing-vendor-quote-cta"
                       >
                         <ShoppingCart className="h-3.5 w-3.5" />

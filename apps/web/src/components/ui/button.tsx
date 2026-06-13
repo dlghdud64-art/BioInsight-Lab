@@ -11,6 +11,8 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-blue-600 text-white hover:bg-blue-700",
+        // #sourcing-cta-unify — emerald primary(견적/입고/담기 등). default hover-darker 정합.
+        success: "bg-emerald-600 text-white hover:bg-emerald-700",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
@@ -25,6 +27,8 @@ const buttonVariants = cva(
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
         icon: "h-10 w-10",
+        // #sourcing-cta-unify — 워크벤치 compact CTA(행/rail/dock 밀도).
+        xs: "h-7 rounded-md px-2.5 text-xs",
       },
     },
     defaultVariants: {

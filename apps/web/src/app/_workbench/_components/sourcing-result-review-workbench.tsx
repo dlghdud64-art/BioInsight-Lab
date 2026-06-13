@@ -198,10 +198,10 @@ export function SourcingResultReviewWorkbench({ open, onClose, handoff, onReview
           ) : (
             <div className="flex gap-1.5 flex-1">
               {validation?.canOpenCompareReopen && (
-                <Button size="sm" className="flex-1 h-8 text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={onCompareReopenHandoff}><GitCompare className="h-3 w-3 mr-1" />비교 재개(Compare Reopen)<ArrowRight className="h-3 w-3 ml-1" /></Button>
+                <Button size="sm" className="flex-1 h-8 text-[10px] font-medium" onClick={onCompareReopenHandoff}><GitCompare className="h-3 w-3 mr-1" />비교 재개(Compare Reopen)<ArrowRight className="h-3 w-3 ml-1" /></Button>
               )}
               {validation?.canOpenRequestReopen && (
-                <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={onRequestReopenHandoff}><FileText className="h-3 w-3 mr-1" />요청 재개(Request Reopen)<ArrowRight className="h-3 w-3 ml-1" /></Button>
+                <Button variant="success" size="sm" className="flex-1 h-8 text-[10px] font-medium" onClick={onRequestReopenHandoff}><FileText className="h-3 w-3 mr-1" />요청 재개(Request Reopen)<ArrowRight className="h-3 w-3 ml-1" /></Button>
               )}
             </div>
           )}

@@ -465,7 +465,7 @@ export function CompareReviewWorkWindow({
                     </Button>
                     {/* 확정 */}
                     <Button size="sm"
-                      className="w-full h-11 text-[13px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg"
+                      className="w-full h-11 text-[13px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg"
                       onClick={recordDecision}
                       disabled={shortlistCount === 0 || !categoryResult.isComparable}>
                       <Check className="h-4 w-4 mr-2" />
@@ -482,7 +482,7 @@ export function CompareReviewWorkWindow({
                       </button>
                     </div>
                     <Button size="sm"
-                      className="w-full h-11 text-[13px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg"
+                      className="w-full h-11 text-[13px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg"
                       onClick={handleRequestHandoff}>
                       <FileText className="h-4 w-4 mr-2" />
                       견적 후보로 반영
@@ -619,7 +619,7 @@ export function CompareReviewWorkWindow({
                       </button>
                     </div>
                     <Button size="sm"
-                      className="w-full h-11 text-[13px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg"
+                      className="w-full h-11 text-[13px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg"
                       onClick={handleRequestHandoff}>
                       <FileText className="h-4 w-4 mr-2" />
                       견적 후보로 반영

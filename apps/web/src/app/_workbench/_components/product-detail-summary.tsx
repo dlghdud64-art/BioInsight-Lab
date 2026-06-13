@@ -220,7 +220,7 @@ export function ProductDetailSummary({
             ) : (
               <Button
                 size="sm"
-                className="w-full h-7 text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white"
+                className="w-full h-7 text-xs font-medium"
                 onClick={onToggleCompare}
               >
                 <GitCompare className="h-3 w-3 mr-1.5" />비교 추가
@@ -253,7 +253,7 @@ export function ProductDetailSummary({
         <div className="px-4 py-3">
           <Link
             href={`/products/${data.id}`}
-            className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-500 transition-colors"
+            className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors"
           >
             <ExternalLink className="h-3.5 w-3.5" />
             전체 상세 보기

@@ -420,7 +420,7 @@ export function VendorRequestModal({
                     size="sm"
                     onClick={addManualVendor}
                     disabled={!manualEmail.trim()}
-                    className="h-7 text-xs bg-blue-600 hover:bg-blue-500 text-white"
+                    className="h-7 text-xs"
                   >
                     추가
                   </Button>
@@ -501,7 +501,7 @@ export function VendorRequestModal({
             disabled={isSubmitting || sendReadiness === "blocked"}
             className={`font-semibold ${
               sendReadiness === "ready"
-                ? "bg-emerald-600 hover:bg-emerald-500 text-white"
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                 : sendReadiness === "needs_review"
                   ? "bg-yellow-600 hover:bg-yellow-500 text-white"
                   : "bg-slate-700 text-slate-400 cursor-not-allowed"
@@ -590,7 +590,7 @@ function SupplierCard({
                   type="button"
                   size="sm"
                   onClick={() => { onEditEmail(editEmail); setEditing(false); }}
-                  className="h-7 text-xs px-2 bg-blue-600 hover:bg-blue-500 text-white"
+                  className="h-7 text-xs px-2"
                 >
                   저장
                 </Button>

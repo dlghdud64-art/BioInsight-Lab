@@ -1,6 +1,6 @@
 # Implementation Plan: ② 소싱 워크벤치 CTA·token 통일 (shared variant)
 
-- **Status:** ⏳ Pending
+- **Status:** 🔄 In Progress (Phase 0 lock 완료)
 - **Started:** 2026-06-13
 - **Last Updated:** 2026-06-13
 - **Estimated Completion:** TBD (medium, ~5 phases)
@@ -46,11 +46,11 @@
 **Feature Description:** 소싱/견적 워크벤치 surface들이 굴리는 bespoke CTA className(`bg-blue-600 hover:bg-blue-500 h-7 …`·`bg-emerald-600 …`)을, `Button`의 **canonical variant**로 흡수한다. 누락 variant(emerald success·compact size)를 추가해 surface가 variant만 쓰게 한다. wiring·문구·truth 불변.
 
 **Success Criteria:**
-- [ ] `buttonVariants`에 누락 variant 추가(예: `success` emerald, compact size `xs`) — §11.302 정합
+- [x] `buttonVariants`에 누락 variant 추가(`success` emerald hover-700, size `xs`) — §11.302 정합
 - [ ] core 소싱 surface(row·rail·cart·review·candidate)의 primary/secondary CTA가 bespoke className → variant 전환
 - [ ] hover/weight 단일화(`hover:bg-blue-500` ↔ `700` 혼재 해소)
 - [ ] 시각 회귀 0(전환 전후 동일 톤·크기), wiring/onClick 불변
-- [ ] sentinel: canonical 시그니처 lock + core surface bespoke 부재
+- [x] sentinel: canonical 시그니처 lock + core surface bespoke 부재 (7/7 GREEN)
 
 **Out of Scope (⚠️ 금지):**
 - [ ] 76 파일 전수 한 번에 (core 먼저 → 나머지 follow-on 배치)
@@ -83,7 +83,7 @@
 ## 7. Implementation Phases
 
 ### Phase 0: Inventory & Variant Spec Lock
-- Status: [ ] Pending
+- Status: [x] Complete
 - **🔴 RED:** 소싱 CTA 역할 분류(primary blue / success emerald / analysis blue / compact size / status), `default` hover 통일이 비-소싱 default 소비처에 미치는 영향 측정.
 - **🟢 GREEN:** 추가할 variant·size 명세 확정(이름·class), §11.302 정합 확인.
 - **🔵 REFACTOR:** core surface 6~8개로 1차 범위 한정.
@@ -91,17 +91,17 @@
 - **Rollback:** planning-only.
 
 ### Phase 1: Sentinel (RED)
-- Status: [ ] Pending
+- Status: [x] Complete (7 RED 확인)
 - **🔴 RED:** (a) buttonVariants에 신규 variant 존재; (b) core surface에 bespoke `bg-blue-600 hover:bg-blue-500` 부재 + variant 사용; (c) 회귀 — onClick/wiring/문구 보존, amber 부재. 실패 확인.
 - **✋ Gate:** 실패 test 실재, 기존 suite GREEN.  **Rollback:** sentinel revert.
 
 ### Phase 2: Extend buttonVariants
-- Status: [ ] Pending
+- Status: [x] Complete (success+xs 추가, sentinel a GREEN)
 - **🟢 GREEN:** `success`(emerald, §11.302 정보 CTA)·compact size(`xs` h-7/h-8 text-xs) 등 누락분 추가. `default` hover는 Phase 0 측정대로 단일화. cva만 — 소비처 영향 0(추가는 비파괴).
 - **✋ Gate:** `next build` GREEN, 기존 버튼 시각 불변(default 영향 측정 반영), sentinel a) GREEN.  **Rollback:** cva revert.
 
 ### Phase 3: Migrate Core Surfaces
-- Status: [ ] Pending
+- Status: [x] Complete (core 5, sentinel 7/7 GREEN, 회귀 0)
 - **🟢 GREEN:** row·rail·cart·review·candidate의 bespoke CTA className → variant. 위치 보정(w-full/gap)만 className 유지. onClick/문구/상태 분기 불변.
 - **🔵 REFACTOR:** 중복 제거, 시각 parity 확인.
 - **✋ Gate:** sentinel b)·c) GREEN, dead button/no-op 0, 시각 회귀 0(수동 전후), `next build`.  **Rollback:** surface 전환 revert(variant는 유지 가능).
@@ -123,8 +123,28 @@
 - Phase 1 실패: sentinel revert. Phase 2: cva revert(소비처 무영향). Phase 3/4: surface 전환 revert(variant 유지 가능, 점진). 스키마/데이터 변경 0.
 
 ## 10. Progress Tracking
-- Overall: 0% · Current: Phase 0 대기 · Blocker: 없음 · Next: 소싱 CTA 역할 분류 + hover 영향 측정.
-- Phase Checklist: [ ] P0 [ ] P1 [ ] P2 [ ] P3 [ ] P4
+- Overall: 80% · Current: Phase 4 (follow-on 배치 + smoke) · Blocker: 없음 · Next: 잔여 ~25 소싱 surface 배치 전환.
+- Phase Checklist: [x] P0 [x] P1 [x] P2 [x] P3 [ ] P4
+
+## 10b. Phase 0 Lock (2026-06-13)
+
+**측정:** hover:bg-blue-500(100) vs 700(138). emerald solid CTA `bg-emerald-600 hover:bg-emerald-500 text-white`(41) — canonical 부재. 워크벤치 compact h-7/h-8 text-xs.
+
+**결정(호영님 — 권장: 단일 canonical 통일):** 소싱 primary blue를 `default`(hover-700)로 통일.
+- blue primary = 기존 `Button` `default`(hover-blue-700) **재사용**(신규 blue variant 불요). 소싱 bespoke blue → `variant="default"`.
+- `buttonVariants`에 추가: `success`=`bg-emerald-600 text-white hover:bg-emerald-700`(default hover-darker convention 정합), size `xs`=`h-7 rounded-md px-2.5 text-xs`.
+- 소싱 bespoke emerald → `variant="success"`, compact → `size="xs"`.
+- 시각 델타: 소싱 blue·emerald **hover만** 500→700 미세 darken(resting bg-blue/emerald-600 동일). 단일 convention 정렬 — 호영님 권장 허용.
+- emerald 톤 변형(`/[0.03]`·`/15` soft-tint badge/card)은 solid CTA 아님 → variant 범위 밖.
+
+## 10c. Phase 1–3 결과 (2026-06-14)
+
+**core 5 마이그레이션 완료** (sentinel 7/7 GREEN, 인접 회귀 0):
+- button.tsx: `success`(emerald hover-700) variant + size `xs`(h-7 text-xs) 추가(additive 비파괴).
+- product-detail-summary·sourcing-result-review-workbench·vendor-request-modal·sourcing-recommendation-drawer·compare-review-work-window.
+- 방식: `<Button>` blue → color class 제거(default variant), emerald → `variant="success"`; `<Link>`/ternary/identical-triple → hover 토큰 500→700 swap.
+- wiring(onClick/href/문구/icon)·size·layout 전부 보존 — color/hover 토큰만 변경. resting 동일, hover만 500→700 미세 darken(권장 정합).
+- 잔여: ~25 소싱 surface(hover-500 보유) Phase 4 배치 전환.
 
 ## 11. Notes & Learnings
 - [2026-06-13] 실측: 76 tsx, 44 bg-blue-600 / 46 bg-emerald-600 인라인, primary blue 10종+ 시그니처. emerald CTA canonical variant 부재가 bespoke 원인.
