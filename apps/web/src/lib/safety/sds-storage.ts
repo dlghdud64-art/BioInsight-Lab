@@ -5,13 +5,13 @@
  * po-pdf-storage 패턴 정합 — env 미설정 시 StorageNotConfiguredError throw →
  * caller 가 graceful fallback(Product.msdsUrl 등). silent fake success 금지.
  *
- * env: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY / SUPABASE_SDS_BUCKET(기본 "sds-documents")
+ * env: SUPABASE_URL(또는 NEXT_PUBLIC_SUPABASE_URL) / SUPABASE_SERVICE_ROLE_KEY / SUPABASE_SDS_BUCKET(기본 "sds-documents")
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 export class StorageNotConfiguredError extends Error {
   constructor() {
-    super("SDS storage not configured (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 미설정).");
+    super("SDS storage not configured (SUPABASE_URL|NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 미설정).");
     this.name = "StorageNotConfiguredError";
   }
 }
@@ -22,7 +22,9 @@ let _client: SupabaseClient | null = null;
 /** service-role 서버 클라이언트(lazy). env 미설정/형식오류 시 null. */
 function getServiceClient(): SupabaseClient | null {
   if (_client) return _client;
-  const url = process.env.SUPABASE_URL ?? "";
+  // §sds-storage-url — prod env는 NEXT_PUBLIC_SUPABASE_URL 명으로 존재(SUPABASE_URL 미설정).
+  //   service-role 클라는 프로젝트 URL(공개값) + service key(시크릿)면 충분 → fallback 수용.
+  const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
   if (!url || !key) return null;
   try {
