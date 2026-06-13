@@ -287,7 +287,54 @@ write-chain smoke 에서 검증된 동일 패턴.
 
 남겨도 무해하지만, env 표면을 새 절차와 맞추기 위해 정리 권장.
 
-### 9.5 (OBSOLETE) 옛 §9.1 / §9.2
+### 9.5 Drift 검증 절차 (post-deploy 게이트, 2026-06-13)
+
+§detail-page P2 세션(`§detail-page COA/SDS 경계`) 에서 누적 drift(OcrCacheHit·
+GovernanceEvent false-alarm·SDSDocument.docType 미배포·pending 8건) 봉합 과정에서
+확정된 표준 검증 절차. **각 deploy 직후 다음 3 게이트를 반드시 수행한다.**
+
+```sh
+# (1) project-ref 가드 — DATABASE_URL 의 project-ref 가 prod 인지 직접 echo
+$env:DATABASE_URL = $env:DIRECT_URL  # operator-shell 우회 (Supabase pooler:5432)
+# echo / Korean 1줄 확인: postgres.<project-ref>:...@aws-1-...pooler.supabase.com:5432
+
+# (2) migrate status — "Database schema is up to date!" 확인
+pnpm -C apps/web prisma migrate status
+
+# (3) migrate diff — 빈 스크립트 = drift 0
+pnpm -C apps/web prisma migrate diff \
+  --from-url $env:DATABASE_URL \
+  --to-schema-datamodel apps/web/prisma/schema.prisma --script
+# 기대: "-- This is an empty migration." 1줄
+```
+
+**잔여 diff ≠ 0 = STOP**. 잔여 op 의 출처가 (a) Prisma 비관리 객체(CHECK constraint 등) 인지 (b) 미발견 drift 인지 식별 후 처리.
+
+**A 트랙 (db push 잔재 봉합) 패턴**: schema↔prod 불일치가 발견되면 `migrate diff --script` 출력을 그대로 신규 migration 폴더에 박는다. `prisma migrate dev` 는 Supabase pgvector + Prisma shadow DB 호환 이슈(`type "vector" does not exist`)로 실패하므로 **수동 폴더 + diff 출력 복붙** 이 표준 우회. 사후 게이트(위 3건) 로 shadow-replay 검증 상실을 보완한다.
+
+### 9.6 Prisma 비관리 CHECK constraint — 부채 노트
+
+`schema.prisma` 는 SQL `CHECK constraint` 를 표현하지 못한다. `§detail-page P2`
+의 `SDSDocument_coa_lot_check` (`docType ∈ {'sds','coa'}` 강제 + COA/SDS 경계) 는
+migration.sql 에 직접 박혔으며, 향후 다음 시나리오에 주의:
+
+- **현재 (Prisma 5.22)**: `migrate diff` 가 CHECK 자체를 introspection 안 함 →
+  drift 로 감지 안 됨. 추가/유지 안전. (실증 2026-06-13)
+- **미래 Prisma 버전**: CHECK introspection 추가 가능성 있음. 만약 추가되면
+  `migrate diff` 가 "schema 에 CHECK 없음 / prod 에 CHECK 있음" 으로 잡고 DROP
+  을 제안. 이때 **반드시 DROP 무시 후 보존**. 구조적 방어(미스매치 차단) 값어치
+  가 Prisma drift 부채 보다 큼.
+- **docType 값 확장 (예: msds/spec)**: CHECK 동반 갱신 필수. 미갱신 시 신규
+  docType INSERT 전면 차단. schema.prisma SDSDocument.docType 라인 주석에도 동일
+  가드 박혀있음.
+
+### 9.7 인프라 트랙 — shadowDatabaseUrl(pgvector 활성 DB)
+
+`migrate dev` 정공법 복귀를 위해 `shadowDatabaseUrl` 에 pgvector extension 활성
+DB 를 가리키도록 설정 권장. 수동 폴더 + 복붙 우회는 1~2회는 안전하나 반복 누적
+시 shadow-replay 검증 상실이 부채. 별 트랙 (P-band-infra-shadow-pgvector) 로 분리.
+
+### 9.8 (OBSOLETE) 옛 §9.1 / §9.2
 
 이전 §9.1 (Non-fatal migrate + 90s timeout) 과 §9.2 (4-item 복구
 체크리스트) 는 모두 build-time migrate 가 존재할 때의 운영 안전망이었다.
