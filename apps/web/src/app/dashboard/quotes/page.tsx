@@ -8,6 +8,8 @@ import { OperationalBriefFloatingEntry } from "@/components/operational-brief/fl
 // §11.258-sweep-2 — 모바일 좌측 하단 ✨ 진입 (방안 1 위치 분리).
 import { MobileBriefInlineButton } from "@/components/operational-brief/mobile-inline-button";
 import { MetricCell } from "@/components/operational-brief/metric-cell";
+// §11.374 — 모바일 상태요약 단일 컴포넌트(가로 5탭 빽빽 → 2x2). 표현만, count 주입.
+import { StatusCountGrid } from "@/components/layout/status-count-grid";
 import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { useOperationalBriefPopup } from "@/components/operational-brief/popup-context";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -2284,16 +2286,18 @@ function QuotesPageContent() {
           동일 분기) — canonical truth (summaryStats / isCompareReviewZero) 보존.
           sm:hidden — 데스크탑은 5 cell grid 카드 유지. */}
       {/* §11.272c-2 — isLoadingTimeout 시 5 KPI map 대신 "불러오기 실패" fallback UI */}
+      {/* §11.374 — 모바일 상태요약: 가로 5-탭(빽빽) → StatusCountGrid 2x2 통일.
+          canonical summaryStats/statusFilter wiring + isCompareReviewZero(비교 0건)
+          가드 + isLoadingTimeout fallback 전수 보존. count 주입만(데이터 경로 불변).
+          sm:hidden — 데스크탑 5-cell grid 는 별도 유지(P4 통일 예정). */}
       <div
         data-testid="quote-kpi-mobile-summary-bar"
-        className="sm:hidden flex items-stretch border-y border-slate-200 bg-white -mx-3 px-1 py-1"
-        role="group"
-        aria-label="견적 상태별 요약"
+        className="sm:hidden -mx-3 px-3 py-2"
       >
         {isLoadingTimeout ? (
           <div
             data-testid="quote-kpi-mobile-summary-fallback"
-            className="flex-1 inline-flex items-center justify-between px-3 min-h-[44px]"
+            className="inline-flex w-full items-center justify-between rounded-xl border border-rose-200 bg-rose-50 px-3 min-h-[44px]"
             role="alert"
             aria-live="polite"
           >
@@ -2310,40 +2314,29 @@ function QuotesPageContent() {
               새로고침
             </button>
           </div>
-        ) : [
-          { short: "발송", count: summaryStats.dispatchPending.count, filter: "PENDING", activeText: "text-slate-700" },
-          { short: "회신", count: summaryStats.responseTracking.count, filter: "SENT", activeText: "text-yellow-600" },
-          { short: "비교", count: summaryStats.compareReview.count, filter: "RESPONDED", activeText: "text-purple-600" },
-          { short: "승인", count: summaryStats.approvalException.count, filter: "DEADLINE_TODAY", activeText: "text-red-600" },
-          { short: "전환", count: summaryStats.readyToConvert.count, filter: "COMPLETED", activeText: "text-emerald-600" },
-        ].map(({ short, count, filter, activeText }) => {
-          const isActive = statusFilter === filter;
-          const isZero = !isLoading && count === 0;
-          const isCompareReviewZero = short === "비교" && isZero;
-          return (
-            <button
-              key={filter}
-              type="button"
-              onClick={() => {
-                if (isCompareReviewZero) return;
-                setStatusFilter(prev => prev === filter ? "all" : filter);
-              }}
-              disabled={isCompareReviewZero}
-              aria-disabled={isCompareReviewZero}
-              aria-pressed={isActive}
-              aria-label={`${short} ${isLoading ? "집계 중" : count}건${isActive ? " · 선택됨" : ""}`}
-              className={`flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 text-[13px] font-semibold rounded-md transition-colors
-                ${isActive ? "bg-slate-100" : "bg-transparent hover:bg-slate-50"}
-                ${isCompareReviewZero ? "cursor-not-allowed opacity-60" : ""}
-              `}
-            >
-              <span className={isZero ? "text-slate-400" : "text-slate-500"}>{short}</span>
-              <span className={`tabular-nums ${isZero ? "text-slate-400" : activeText}`}>
-                {isLoading ? "·" : count}
-              </span>
-            </button>
-          );
-        })}
+        ) : (
+          <StatusCountGrid
+            ariaLabel="견적 상태별 요약"
+            loading={isLoading}
+            items={[
+              { key: "PENDING", label: "발송", tone: "neutral" as const, count: summaryStats.dispatchPending.count },
+              { key: "SENT", label: "회신", tone: "warning" as const, count: summaryStats.responseTracking.count },
+              { key: "RESPONDED", label: "비교", tone: "review" as const, count: summaryStats.compareReview.count },
+              { key: "DEADLINE_TODAY", label: "승인", tone: "danger" as const, count: summaryStats.approvalException.count },
+              { key: "COMPLETED", label: "전환", tone: "success" as const, count: summaryStats.readyToConvert.count },
+            ].map((it) => {
+              const isZero = !isLoading && it.count === 0;
+              // §11.272c 보존 — 비교(RESPONDED) 0건은 클릭 무효(비교 불가).
+              const compareGuard = it.key === "RESPONDED" && isZero;
+              return {
+                ...it,
+                active: statusFilter === it.key,
+                disabled: compareGuard,
+                onClick: () => setStatusFilter((prev) => (prev === it.key ? "all" : it.key)),
+              };
+            })}
+          />
+        )}
       </div>
 
       {/* ── 검색 + 필터 ──
