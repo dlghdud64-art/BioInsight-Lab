@@ -1,0 +1,7800 @@
+{
+  "meta": {
+    "generatedAt": "2026-06-14 (build-time placeholder, see DRYRUN)",
+    "source": "통합_seed.json",
+    "inputCount": 316,
+    "cleanedCount": 304,
+    "absorbed": 12,
+    "categoryDistribution": {
+      "REAGENT": 115,
+      "CONSUMABLE": 55,
+      "TOOL": 134
+    },
+    "vendorCount": 68,
+    "productVendorLinkCount": 284,
+    "mergeGroupCount": 9,
+    "idScheme": "deterministic sha1 slug — products mp-*, vendors mv-*, productVendor mpv-* (no cuid pkg)",
+    "note": "catalogNumber is a NON-unique attribute. Product identity = deterministic id. Placeholders -> catalogNumber null + importFlags."
+  },
+  "vendors": [
+    {
+      "id": "mv-2162810e20e0a4e9",
+      "name": "㈜라이카 코리아"
+    },
+    {
+      "id": "mv-ed3990f59dbe600c",
+      "name": "㈜삼우에스앤티"
+    },
+    {
+      "id": "mv-1b7d95dc39eae368",
+      "name": "㈜카스콤"
+    },
+    {
+      "id": "mv-b53fb6ad6e10e45c",
+      "name": "가남교역"
+    },
+    {
+      "id": "mv-38272bc5356f3be1",
+      "name": "고려에이스"
+    },
+    {
+      "id": "mv-4950f1ecdb4b5bda",
+      "name": "고려에이스과학"
+    },
+    {
+      "id": "mv-35fb5e2fdfc9469a",
+      "name": "그린플로우테크"
+    },
+    {
+      "id": "mv-2a0bf9c17ebb4679",
+      "name": "나비엠알오"
+    },
+    {
+      "id": "mv-3d620f791f433536",
+      "name": "다윈바이오"
+    },
+    {
+      "id": "mv-5fe49bfbe5806f32",
+      "name": "다윈바이오텍"
+    },
+    {
+      "id": "mv-41c31e4eb3d05b10",
+      "name": "다인바이오"
+    },
+    {
+      "id": "mv-900c7c40e82e74c6",
+      "name": "대일사이언스"
+    },
+    {
+      "id": "mv-3bb08d4aef8303c2",
+      "name": "도디스주식회사"
+    },
+    {
+      "id": "mv-caf6c02447418478",
+      "name": "동일바이오테크"
+    },
+    {
+      "id": "mv-22b5d79704a70584",
+      "name": "동일시마즈스펙트롬"
+    },
+    {
+      "id": "mv-e81f325a3beaa178",
+      "name": "드림셀"
+    },
+    {
+      "id": "mv-e35ad93b87697ada",
+      "name": "라이프 테크놀로지스"
+    },
+    {
+      "id": "mv-dea05cef574cb8b8",
+      "name": "레보딕스"
+    },
+    {
+      "id": "mv-20d8b90035fae07d",
+      "name": "메디랩코리아"
+    },
+    {
+      "id": "mv-8445b56566291ff2",
+      "name": "메스디아"
+    },
+    {
+      "id": "mv-0babe014ea03d0c3",
+      "name": "바이오브릿지"
+    },
+    {
+      "id": "mv-c825e5a493fc0555",
+      "name": "바이오시스텍"
+    },
+    {
+      "id": "mv-a368df4d0051457b",
+      "name": "바이오트레이더"
+    },
+    {
+      "id": "mv-32222e2432f8b5fd",
+      "name": "바이오프리"
+    },
+    {
+      "id": "mv-764418068721e701",
+      "name": "보성과학"
+    },
+    {
+      "id": "mv-de2af28cc4793f39",
+      "name": "비케이팜"
+    },
+    {
+      "id": "mv-7ea43463d0c5d814",
+      "name": "서린바이오"
+    },
+    {
+      "id": "mv-ef21122624d89af0",
+      "name": "성우라이프사이언스"
+    },
+    {
+      "id": "mv-21bf948f4b8aa55d",
+      "name": "세니젠"
+    },
+    {
+      "id": "mv-2c1b9a9b7cda5157",
+      "name": "에스비상사"
+    },
+    {
+      "id": "mv-fabf1d1cacfd138f",
+      "name": "에이스사이언스"
+    },
+    {
+      "id": "mv-169c6401ddfb7658",
+      "name": "영동"
+    },
+    {
+      "id": "mv-68a7ecd1711271f8",
+      "name": "영사이언스"
+    },
+    {
+      "id": "mv-0c065b63f3fbd0d7",
+      "name": "영인랩플러스"
+    },
+    {
+      "id": "mv-548c76a21e1fd050",
+      "name": "영진사이언스"
+    },
+    {
+      "id": "mv-d75b330d8360ed6a",
+      "name": "예스고24"
+    },
+    {
+      "id": "mv-ae19a62d7d2183b2",
+      "name": "와우프레스"
+    },
+    {
+      "id": "mv-410e97c20b22e189",
+      "name": "우성크라이어텍"
+    },
+    {
+      "id": "mv-705fb77bc6cdac47",
+      "name": "웅비메디텍"
+    },
+    {
+      "id": "mv-7d48ea9f5785e438",
+      "name": "웰호"
+    },
+    {
+      "id": "mv-2cf5a4b0e53e1986",
+      "name": "유정메디텍"
+    },
+    {
+      "id": "mv-5f3f938f3248cd4a",
+      "name": "이효바이오"
+    },
+    {
+      "id": "mv-4165a3127d9ca48a",
+      "name": "제이씨바이오"
+    },
+    {
+      "id": "mv-9606f41a1f90f7e1",
+      "name": "제이오텍"
+    },
+    {
+      "id": "mv-85de88c5f8a45c0a",
+      "name": "진올바이오"
+    },
+    {
+      "id": "mv-8936e780c71abb18",
+      "name": "코람데오랩"
+    },
+    {
+      "id": "mv-3d8c661daa665738",
+      "name": "코리아스탬프"
+    },
+    {
+      "id": "mv-7940d15f8b3332a0",
+      "name": "코리아인스트루먼트"
+    },
+    {
+      "id": "mv-a57a116e8afd940f",
+      "name": "코아테크코리아"
+    },
+    {
+      "id": "mv-0af728b50e66d769",
+      "name": "큐어바이오"
+    },
+    {
+      "id": "mv-47af231b98995cf2",
+      "name": "킴앤프랜즈"
+    },
+    {
+      "id": "mv-b21fd4b00b16e76c",
+      "name": "택산하이텍"
+    },
+    {
+      "id": "mv-fb069249d54984c6",
+      "name": "파워랩"
+    },
+    {
+      "id": "mv-ec16a428bb56b564",
+      "name": "한강"
+    },
+    {
+      "id": "mv-65c6f219373a0420",
+      "name": "한국비티비"
+    },
+    {
+      "id": "mv-22a677d9ca3b0a6d",
+      "name": "현일에스엔피랩"
+    },
+    {
+      "id": "mv-0014592ca5782988",
+      "name": "ATS"
+    },
+    {
+      "id": "mv-17190fa38db435fb",
+      "name": "BMS"
+    },
+    {
+      "id": "mv-b62dabc37418ca44",
+      "name": "BNN KOREA"
+    },
+    {
+      "id": "mv-591dbcb2d48f405f",
+      "name": "BST"
+    },
+    {
+      "id": "mv-ca7a02b16c61a2b3",
+      "name": "Cellsafe"
+    },
+    {
+      "id": "mv-14b7085083b2013f",
+      "name": "DKSH"
+    },
+    {
+      "id": "mv-8192ab2eeb010b9d",
+      "name": "I Measure"
+    },
+    {
+      "id": "mv-35407ab300bf845d",
+      "name": "iss"
+    },
+    {
+      "id": "mv-6e103f7fd88ceaca",
+      "name": "Merck"
+    },
+    {
+      "id": "mv-9251dd79e7d63337",
+      "name": "Sigma"
+    },
+    {
+      "id": "mv-048439d40216bc5f",
+      "name": "SNC"
+    },
+    {
+      "id": "mv-731acfca0beafd1b",
+      "name": "Thermo Fisher"
+    }
+  ],
+  "products": [
+    {
+      "id": "mp-4a5692f0878db37e",
+      "name": "Chicken RBC",
+      "category": "REAGENT",
+      "manufacturer": "Innovative Research",
+      "catalogNumber": "ICHRBC5P",
+      "storageCondition": "2~8℃",
+      "specifications": {
+        "internalGrade": "A",
+        "testItem": "[KA, CO, SQ] 외래성 바이러스 시험",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-0790bbbbba382c80",
+      "name": "Guinea pig RBC",
+      "category": "REAGENT",
+      "manufacturer": "Innovative Research",
+      "catalogNumber": "IGPRBC",
+      "storageCondition": "2~8℃",
+      "specifications": {
+        "internalGrade": "A",
+        "testItem": "[KA, CO, SQ] 외래성 바이러스 시험",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-3ed227015262350a",
+      "name": "Human RBC",
+      "category": "REAGENT",
+      "manufacturer": "Innovative Research",
+      "catalogNumber": "IWB3ALS",
+      "storageCondition": "2~8℃",
+      "specifications": {
+        "internalGrade": "A",
+        "testItem": "[KA, CO, SQ] 외래성 바이러스 시험",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-7be068222acb585b",
+      "name": "Mycoplasma Test Kit",
+      "category": "REAGENT",
+      "manufacturer": "Biological Industries",
+      "catalogNumber": "20-700-20",
+      "storageCondition": "-10~-20℃",
+      "specifications": {
+        "internalGrade": "A",
+        "testItem": "[KH, KA, CL, CO, SQ] 마이코플라스마 PCR",
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-56ae5e2034fcf620",
+      "name": "BSA Elisa Kit",
+      "category": "REAGENT",
+      "manufacturer": "Cygnus",
+      "catalogNumber": "F030",
+      "storageCondition": "2~8℃",
+      "specifications": {
+        "internalGrade": "A",
+        "testItem": "[KH, CL, CO, SQ] 순도시험(BSA)",
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-716413afa76fa84b",
+      "name": "Papain from papaya latex (solution)",
+      "category": "REAGENT",
+      "manufacturer": "Sigma",
+      "catalogNumber": "P3125",
+      "storageCondition": "2~8℃",
+      "specifications": {
+        "internalGrade": "A",
+        "testItem": "[CL, CO] 역가시험(GAG)",
+        "purchaseYears": [
+          2024,
+          2026
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-20ac5f0e840ce046",
+      "name": "Fluorescein Anti-mouse IgG",
+      "category": "REAGENT",
+      "manufacturer": "Vector lab.",
+      "catalogNumber": "FI2000",
+      "storageCondition": "2~8℃",
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[KH] 확인시험 (Pan-CK) 역가시험(Ki-67) [KA] 확인시험(E-Cadherin) [CL] 순도시험(Type X coll) [CO] 순도시험(CD31)",
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-e4dbbffa3b637549",
+      "name": "Go taq green master",
+      "category": "REAGENT",
+      "manufacturer": "Promega",
+      "catalogNumber": "M7122",
+      "storageCondition": "-10~-30℃",
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[CL, CO] 확인시험(Aggrecan) [CL, CO] 확인시험(Type II coll) [SQ] 확인시험(Type I coll)",
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-3d22b8374ee4ba0a",
+      "name": "Mounting medium with DAPI",
+      "category": "REAGENT",
+      "manufacturer": "Vector lab.",
+      "catalogNumber": "H1200",
+      "storageCondition": "2~8℃",
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[KH] 확인시험(Pan-CK) 역가시험(Ki-67) [KA] 확인시험(E-Cadherin) [CL, CO] 순도시험(Type X coll) [CO] 순도시험(CD31)",
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-01c75f19e8338fbb",
+      "name": "Type II Collagenase",
+      "category": "REAGENT",
+      "manufacturer": "Worthington",
+      "catalogNumber": "LS004176",
+      "storageCondition": "2~8℃",
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[CL, CO] 세포생존율/총세포수 [SQ] 세포생존율",
+        "purchaseYears": [
+          2024,
+          2025
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-734624bea909c552",
+      "name": "Premix Taq",
+      "category": "REAGENT",
+      "manufacturer": "Takara",
+      "catalogNumber": "RR003A",
+      "storageCondition": "-20℃",
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[KA] 확인시험(CK-14)",
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-ba240fd602e44a82",
+      "name": "Primescript™ 1st strand cDNA synthesis kit",
+      "category": "REAGENT",
+      "manufacturer": "Takara",
+      "catalogNumber": "6110A",
+      "storageCondition": "-20℃",
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[KA] 확인시험(CK-14) 순도시험(세포성불순물) [CL, CO] 확인시험(Aggrecan) [CL, CO] 확인시험(Type II coll) [SQ] 확인시험(Type I coll)",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-443f6b2dacde89b6",
+      "name": "RNAiso Plus",
+      "category": "REAGENT",
+      "manufacturer": "Takara",
+      "catalogNumber": "9109",
+      "storageCondition": "4℃",
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[KA] 확인시험(CK-14) 순도시험(세포성불순물) [CL, CO] 확인시험(Aggrecan) [CL, CO] 확인시험(Type II coll) [SQ] 확인시험(Type I coll)",
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-b4d36d39ecd29b1a",
+      "name": "SYBR Green LightCycler 480 SYBR Green I Master",
+      "category": "REAGENT",
+      "manufacturer": "Roche",
+      "catalogNumber": "4887352001",
+      "storageCondition": "-15~-25℃",
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[KA] 순도시험(세포성불순물)",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-0d515436bc1d9be0",
+      "name": "BCP (1-Bromo-3-chloropropane)",
+      "category": "REAGENT",
+      "manufacturer": "Sigma",
+      "catalogNumber": "B9673",
+      "storageCondition": "15~25℃",
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[KA] 확인시험(CK-14) 순도시험(세포성불순물) [CL, CO] 확인시험(Aggrecan) [CL, CO] 확인시험(Type II coll) [SQ] 확인시험(Type I coll)",
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-30869ab5e2937471",
+      "name": "Bicinchoninic Acid solution",
+      "category": "REAGENT",
+      "manufacturer": "Sigma",
+      "catalogNumber": "B9643",
+      "storageCondition": "15~25℃",
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[KA] 총단백질량 시험",
+        "purchaseYears": [
+          2024,
+          2026
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-df46e6fa24423622",
+      "name": "Copper(II) sulfate solution",
+      "category": "REAGENT",
+      "manufacturer": "Sigma",
+      "catalogNumber": "C2284",
+      "storageCondition": "15~25℃",
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[KA] 총단백질량 시험",
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-70a4609b09db45b3",
+      "name": "Type X collagen Antibody",
+      "category": "REAGENT",
+      "manufacturer": "Sigma",
+      "catalogNumber": "C7974",
+      "storageCondition": "-20℃",
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[CL, CO] 순도시험(Type X coll)",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-d5dde9a423b3a8b9",
+      "name": "Anti-Pan-Cytokeratin antibody",
+      "category": "REAGENT",
+      "manufacturer": "Novusbio",
+      "catalogNumber": "NBP2-29429",
+      "storageCondition": "4℃",
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[KH] 확인시험(Pan-CK)",
+        "purchaseYears": [
+          2024,
+          2025
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-c4ff80c888f8b86b",
+      "name": "Human FGF basic Quanti SixPak",
+      "category": "REAGENT",
+      "manufacturer": "R&D Systems",
+      "catalogNumber": "DFB50",
+      "storageCondition": "2~8℃",
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[KA] 역가시험(bFGF)",
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-7c4e20754cb39671",
+      "name": "IhIL-1α Qkit SixPak 2nd Gen(1pk)",
+      "category": "REAGENT",
+      "manufacturer": "R&D Systems",
+      "catalogNumber": "DLA50",
+      "storageCondition": "2~8℃",
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[KA] 역가시험(IL-1α)",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-9eeb9e360c98d443",
+      "name": "Anti E-Cad anti-body",
+      "category": "REAGENT",
+      "manufacturer": "BD Pharmigen",
+      "catalogNumber": "610181",
+      "storageCondition": "-20℃",
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[KA] 확인시험(E-Cadherin)",
+        "purchaseYears": [
+          2024,
+          2025
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-d3b89947910d77d0",
+      "name": "Anti-Human CD-31",
+      "category": "REAGENT",
+      "manufacturer": "Dako",
+      "catalogNumber": "M0823",
+      "storageCondition": "2~8℃",
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[CO] 순도시험(CD-31)",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-36ea47e20496f25b",
+      "name": "Ki-67 anti-body Mo a Hu Ki-67 Ag, cl MIB-1",
+      "category": "REAGENT",
+      "manufacturer": "Dako",
+      "catalogNumber": "M7240",
+      "storageCondition": "2~8℃",
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[KH] 역가시험(Ki-67)",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-78d234ceed838e6d",
+      "name": "Bovine Serum Albumin 2mg/ml",
+      "category": "REAGENT",
+      "manufacturer": "Bio rad",
+      "catalogNumber": "500-0206",
+      "storageCondition": "4℃",
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[KA] 총단백질량 시험",
+        "purchaseYears": [
+          2024,
+          2025
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-e1603bf41594a576",
+      "name": "Blyscan sulfated GAG assay",
+      "category": "REAGENT",
+      "manufacturer": "Biocolor",
+      "catalogNumber": "B1000",
+      "storageCondition": "15~25℃",
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[CL, CO] 역가시험 (GAG)",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-a8d309f910b4633d",
+      "name": "Blyscan sulfated GAG Reference STD",
+      "category": "REAGENT",
+      "manufacturer": "Biocolor",
+      "catalogNumber": "B1010",
+      "storageCondition": "4℃",
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[CL, CO] 역가시험 (GAG)",
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-ad37ca80b2246f69",
+      "name": "Aqueous safranin O",
+      "category": "REAGENT",
+      "manufacturer": "sigma",
+      "catalogNumber": "S8884",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[CL, CO] 확인시험(세포형태)",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-1c26c4b99e94f1fe",
+      "name": "10X cell Lysis Buffer",
+      "category": "REAGENT",
+      "manufacturer": "CellSignal",
+      "catalogNumber": "9803",
+      "storageCondition": "-20℃",
+      "specifications": {
+        "internalGrade": "B",
+        "testItem": "[KA] 총단백질량 시험 [CL, CO, SQ] 순도시험(BSA) [SQ] 역가시험(FGF-18, Endostatin)",
+        "purchaseYears": [
+          2025,
+          2026
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-41df22578e8fe03c",
+      "name": "그람 시스테인 시약",
+      "category": "REAGENT",
+      "manufacturer": "영동제약",
+      "catalogNumber": "B1",
+      "storageCondition": "1~30℃",
+      "specifications": {
+        "internalGrade": "C",
+        "testItem": "[KH, CL, CO] 무균시험",
+        "purchaseYears": [
+          2024,
+          2025
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-ae312c63c2a82c84",
+      "name": "PPLO B I (W/Glu)",
+      "category": "REAGENT",
+      "manufacturer": "시너지 이노베이션",
+      "catalogNumber": "500190",
+      "storageCondition": "2~8℃",
+      "specifications": {
+        "internalGrade": "C",
+        "testItem": "[KH, KA, CL, CO] 마이코플라스마 배양법",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-84397bcc82df320e",
+      "name": "PPLO B II(W/Arg)",
+      "category": "REAGENT",
+      "manufacturer": "시너지 이노베이션",
+      "catalogNumber": "500191",
+      "storageCondition": "2~8℃",
+      "specifications": {
+        "internalGrade": "C",
+        "testItem": "[KH, KA, CL, CO] 마이코플라스마 배양법",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-3fde249d3603d38e",
+      "name": "PPLO Agar",
+      "category": "REAGENT",
+      "manufacturer": "시너지 이노베이션",
+      "catalogNumber": "500906",
+      "storageCondition": "2~8℃",
+      "specifications": {
+        "internalGrade": "C",
+        "testItem": "[KH, KA, CL, CO] 마이코플라스마 배양법",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-f56467f9dca3f608",
+      "name": "CSE",
+      "category": "REAGENT",
+      "manufacturer": "Lonza",
+      "catalogNumber": "7360",
+      "storageCondition": "2~8℃",
+      "specifications": {
+        "internalGrade": "C",
+        "testItem": "[KH, KA, CL, CO, SQ] 엔도톡신",
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-338f47a331a1bd54",
+      "name": "LAL Lysate",
+      "category": "REAGENT",
+      "manufacturer": "Lonza",
+      "catalogNumber": "E194-06",
+      "storageCondition": "2~8℃",
+      "specifications": {
+        "internalGrade": "C",
+        "testItem": "[KH, KA, CL, CO, SQ] 엔도톡신",
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-173858f7f64dd50d",
+      "name": "Papain from papaya latex (powder)",
+      "category": "REAGENT",
+      "manufacturer": "Sigma",
+      "catalogNumber": "P4762",
+      "storageCondition": "-20℃",
+      "specifications": {
+        "internalGrade": "C",
+        "testItem": "[CL, CO] 역가시험(GAG)",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-8fe02d1738cf90c7",
+      "name": "EMEM",
+      "category": "REAGENT",
+      "manufacturer": "Serana",
+      "catalogNumber": "MCL-052",
+      "storageCondition": "2~8℃",
+      "specifications": {
+        "internalGrade": "C",
+        "testItem": "[KA, CO, SQ] 외래성바이러스 시험",
+        "purchaseYears": [
+          2024,
+          2025
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-bebb2dc677fcb861",
+      "name": "MEM - Minimum Essential Media",
+      "category": "REAGENT",
+      "manufacturer": "Serana",
+      "catalogNumber": "MCL-052",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025,
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-a0d2794c665cbf7a",
+      "name": "QIAamp UCP Pathogen Mini Kit",
+      "category": "REAGENT",
+      "manufacturer": "Qiagen",
+      "catalogNumber": "50214",
+      "storageCondition": "15~25℃",
+      "specifications": {
+        "internalGrade": "C",
+        "testItem": "[SQ] 마이코플라스마 Real-time PCR",
+        "purchaseYears": [
+          2025,
+          2026
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-12684c05cb9a2f4f",
+      "name": "MycoQsearch Plus qPCR detection kit",
+      "category": "REAGENT",
+      "manufacturer": "Cellsafe",
+      "catalogNumber": "QDPEP-100",
+      "storageCondition": "-20℃",
+      "specifications": {
+        "internalGrade": "C",
+        "testItem": "[SQ] 마이코플라스마 Real-time PCR",
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-1fe08b4a8a9a5993",
+      "name": "FGF18 ELISA kit",
+      "category": "REAGENT",
+      "manufacturer": "mybiosource",
+      "catalogNumber": "MBS450481",
+      "storageCondition": "-20℃/4℃",
+      "specifications": {
+        "internalGrade": "C",
+        "testItem": "[SQ] 역가시험(FGF-18)",
+        "purchaseYears": [
+          2025,
+          2026
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-3ecdfdcb60ee0829",
+      "name": "Endostatin ELISA kit",
+      "category": "REAGENT",
+      "manufacturer": "raybiotech",
+      "catalogNumber": "ELH-endostatin",
+      "storageCondition": "-20℃",
+      "specifications": {
+        "internalGrade": "C",
+        "testItem": "[SQ] 역가시험(Endostatin)",
+        "purchaseYears": [
+          2025,
+          2026
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-43c9f8046fd23b86",
+      "name": "IL-10 ELISA kit",
+      "category": "REAGENT",
+      "manufacturer": "raybiotech",
+      "catalogNumber": "ELH-IL10",
+      "storageCondition": "-20℃",
+      "specifications": {
+        "internalGrade": "C",
+        "testItem": "[SQ] 역가시험(IL-10)",
+        "purchaseYears": [
+          2026
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-3b36ce9b4517d35f",
+      "name": "37% Formaldehyde solutions",
+      "category": "REAGENT",
+      "manufacturer": "Sigma",
+      "catalogNumber": "F1635",
+      "storageCondition": "15~25℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "확인시험 (P-CK) 역가시험 (Ki-67) 확인시험 (E-Cadherin) 확인시험 (세포형태) 순도시험 (Col.-X) 순도시험 (CD31)",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-7156e9c11cdd4a22",
+      "name": "Ethidium Bromide Solutions",
+      "category": "REAGENT",
+      "manufacturer": "Sigma",
+      "catalogNumber": "E1385",
+      "storageCondition": "15~25℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "마이코플라스마 PCR 확인시험 (CK-14) 확인시험 (Aggrecan) 확인시험 (Type II col.)",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-383fd7ee37882abd",
+      "name": "L-Cysteine Hydrochloride",
+      "category": "REAGENT",
+      "manufacturer": "Sigma",
+      "catalogNumber": "C7477",
+      "storageCondition": "15~25℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "역가시험 (GAG)",
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-3099fd219e2afa6a",
+      "name": "Na2 EDTA",
+      "category": "REAGENT",
+      "manufacturer": "Sigma",
+      "catalogNumber": "E5134",
+      "storageCondition": "2~25℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "역가시험 (GAG)",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-ed9d37ebf8a07799",
+      "name": "PMSF (Phenylmethylsulfonyl Fluoride)",
+      "category": "REAGENT",
+      "manufacturer": "Sigma",
+      "catalogNumber": "P7626",
+      "storageCondition": "15~25℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "총단백질량 시험 순도시험 (BSA)",
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-8ed1677a51672aa8",
+      "name": "Sodium Acetate",
+      "category": "REAGENT",
+      "manufacturer": "Sigma",
+      "catalogNumber": "71183",
+      "storageCondition": "2~25℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "역가시험 (GAG)",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-fde1598b3f7fa050",
+      "name": "Triton X-100",
+      "category": "REAGENT",
+      "manufacturer": "Sigma",
+      "catalogNumber": "T9284",
+      "storageCondition": "15~25℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "확인시험 (P-CK) 역가시험 (Ki-67) 순도시험 (Col.-X) 순도시험 (CD31) MTT assay",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-6ad0f5a7837ee742",
+      "name": "페링시액 A",
+      "category": "REAGENT",
+      "manufacturer": "SAMCHUN",
+      "catalogNumber": "F0013",
+      "storageCondition": "2~25℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "확인시험 (Dextrose)",
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-d79f4f484126bdb4",
+      "name": "페링시액 B",
+      "category": "REAGENT",
+      "manufacturer": "SAMCHUN",
+      "catalogNumber": "F0016",
+      "storageCondition": "2~25℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "확인시험 (Dextrose)",
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-ae7131216f433b95",
+      "name": "Agarose E",
+      "category": "REAGENT",
+      "manufacturer": "CONDA Lab",
+      "catalogNumber": "8100",
+      "storageCondition": "2~25℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "마이코플라스마 PCR 확인시험 (CK-14) 확인시험 (Aggrecan) 확인시험 (Type II col.)",
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-512ad5b63320eba3",
+      "name": "Bromocresol green-Methyl red",
+      "category": "REAGENT",
+      "manufacturer": "SAMCHUN",
+      "catalogNumber": "B1197",
+      "storageCondition": "15~25℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "알칼리 용출 시험",
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-0d565e4184ceafa6",
+      "name": "DEPC Water",
+      "category": "REAGENT",
+      "manufacturer": "Ambion (thermofisher)",
+      "catalogNumber": "9906",
+      "storageCondition": "15~30℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "확인시험 (CK-14) 순도시험 (세포성불순물) 확인시험 (Type II col.) 확인시험(Aggrecan)",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-18d505a17ba41b9f",
+      "name": "Isopropyl alcohol",
+      "category": "REAGENT",
+      "manufacturer": "Junsei",
+      "catalogNumber": "64605-0380",
+      "storageCondition": "2~8℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "확인시험 (CK-14) 순도시험 (세포성불순물) 확인시험 (Type II col.) 확인시험(Aggrecan)",
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-7ff0f50cb4666a60",
+      "name": "50X TAE Buffer",
+      "category": "REAGENT",
+      "manufacturer": "Thermo Fisher Scientific",
+      "catalogNumber": "B49",
+      "storageCondition": "15~25℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "마이코플라스마 PCR 확인시험 (CK-14) 확인시험 (Aggrecan) 확인시험 (Type II col.)",
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-99bedd99a53585f3",
+      "name": "Goat Serum",
+      "category": "REAGENT",
+      "manufacturer": "Gibco (thermofisher)",
+      "catalogNumber": "16210-072",
+      "storageCondition": "≤-10℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "확인시험 (P-CK) 역가시험 (Ki-67) 확인시험 (E-Cadherin) 순도시험 (Col.-X) 순도시험 (CD31)",
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-7ade8f1d5a2719e5",
+      "name": "Potassium hydroxide",
+      "category": "REAGENT",
+      "manufacturer": "Sigma",
+      "catalogNumber": "417661",
+      "storageCondition": "15~25℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "확인시험 (NaCl)",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-4a87d60d76450804",
+      "name": "피로안티몬산 칼륨",
+      "category": "REAGENT",
+      "manufacturer": "Wako",
+      "catalogNumber": "160-03212",
+      "storageCondition": "15~25℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "확인시험 (NaCl)",
+        "purchaseYears": [
+          2024,
+          2025
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-2e90b47a38c77e6c",
+      "name": "100bp DNA ladder",
+      "category": "REAGENT",
+      "manufacturer": "GENESTA",
+      "catalogNumber": "GA-010",
+      "storageCondition": "-20℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "마이코플라스마 PCR 확인시험 (CK-14) 확인시험 (Aggrecan) 확인시험 (Type II col.)",
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-c5cf464be077d013",
+      "name": "5x loading buffer",
+      "category": "REAGENT",
+      "manufacturer": null,
+      "catalogNumber": null,
+      "storageCondition": "4℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": null,
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ],
+        "importFlags": [
+          "placeholder-catalog-null"
+        ]
+      }
+    },
+    {
+      "id": "mp-21e4f84ed3990595",
+      "name": "Ethanol",
+      "category": "REAGENT",
+      "manufacturer": "Merck",
+      "catalogNumber": "1.00983.1011",
+      "storageCondition": "2~30℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "확인시험 (CK-14) 순도시험 (세포성불순물) 확인시험 (Type II col.) 확인시험(Aggrecan) 원료 sample 희석 MTT assay 알칼리 용출 시험",
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-777bb8b4434471b4",
+      "name": "Tissue tek embedding Medium",
+      "category": "REAGENT",
+      "manufacturer": "Sakura Finetek",
+      "catalogNumber": "4583",
+      "storageCondition": "15~30℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "확인시험 (세포형태) 순도시험 (Col.-X)",
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-409e72f99a7e1a76",
+      "name": "Alpha MEM",
+      "category": "REAGENT",
+      "manufacturer": "Welgene",
+      "catalogNumber": "LM008-02",
+      "storageCondition": "2~8℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "순도시험 (Col.-X) WST-1 assay",
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-bb68dec327f1c6ed",
+      "name": "MTT",
+      "category": "REAGENT",
+      "manufacturer": "Sigma",
+      "catalogNumber": "M-2128",
+      "storageCondition": "2~8℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "MTT assay",
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-5cc3fec0e7be9dcc",
+      "name": "WST-1",
+      "category": "REAGENT",
+      "manufacturer": "Roche",
+      "catalogNumber": "11 644 807 001 5015944001-8mL",
+      "storageCondition": "냉동",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "WST-1 assay",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-1bd1d8c567259f45",
+      "name": "Aqueous fast green",
+      "category": "REAGENT",
+      "manufacturer": "sigma",
+      "catalogNumber": "F7258",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "세포형태",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-39493eae23068b40",
+      "name": "Hematoxylin",
+      "category": "REAGENT",
+      "manufacturer": "sigma",
+      "catalogNumber": "H3136",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "세포형태",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-33184c042a8a4109",
+      "name": "xylene",
+      "category": "REAGENT",
+      "manufacturer": "대정화금",
+      "catalogNumber": "8587-4400",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "세포형태",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-50cde5d631d651e9",
+      "name": "Ferric chloride (29%)",
+      "category": "REAGENT",
+      "manufacturer": "Sigma",
+      "catalogNumber": "236489",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "세포형태",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-b15152ca4b3714b2",
+      "name": "Hydrochloric acid",
+      "category": "REAGENT",
+      "manufacturer": "Sigma",
+      "catalogNumber": "H1758",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "세포형태",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-81ef0419d9f84469",
+      "name": "FTM Fluid Thioglycollate Medium",
+      "category": "REAGENT",
+      "manufacturer": "BD",
+      "catalogNumber": "225650",
+      "storageCondition": "2~25℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "무균시험",
+        "purchaseYears": [
+          2024,
+          2026
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-64c78c5aee0c3e54",
+      "name": "SCDM Soybean Casein Digest Medium",
+      "category": "REAGENT",
+      "manufacturer": "BD",
+      "catalogNumber": "211825",
+      "storageCondition": "2~25℃",
+      "specifications": {
+        "internalGrade": "D",
+        "testItem": "무균시험",
+        "purchaseYears": [
+          2024,
+          2026
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-a72248150895cd5c",
+      "name": "DMSO",
+      "category": "REAGENT",
+      "manufacturer": "Mylan",
+      "catalogNumber": "67457-178",
+      "storageCondition": "GMP 상온",
+      "specifications": {
+        "internalGrade": "E",
+        "testItem": "[원자재] MTT assay",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-e25de0bfa87d6cdb",
+      "name": "DMSO-2",
+      "category": "REAGENT",
+      "manufacturer": "Sigma",
+      "catalogNumber": "D2438",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": "E",
+        "testItem": null,
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-761be7893fdce961",
+      "name": "High glucose DMEM",
+      "category": "REAGENT",
+      "manufacturer": "Gibco",
+      "catalogNumber": "12430-054",
+      "storageCondition": "GMP 2~8℃",
+      "specifications": {
+        "internalGrade": "E",
+        "testItem": "[원자재] MTT assay",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-599eefe00fa66e30",
+      "name": "Acetic acid",
+      "category": "REAGENT",
+      "manufacturer": "Sigma",
+      "catalogNumber": "A6283",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": "E",
+        "testItem": "[CO] 확인시험(세포형태) [원자재] 원료 sample 희석",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-4fdfe75a1fa7ad47",
+      "name": "KGM",
+      "category": "REAGENT",
+      "manufacturer": "Lonza",
+      "catalogNumber": "CC-4131",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": "E",
+        "testItem": "[KA] 외래성바이러스 시험",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-e70bd30b3acabcf1",
+      "name": "KGM-Gold",
+      "category": "REAGENT",
+      "manufacturer": "Lonza",
+      "catalogNumber": "912060",
+      "storageCondition": "GMP 냉장",
+      "specifications": {
+        "internalGrade": "E",
+        "testItem": "[KA] 외래성바이러스 시험",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-0e6752e7684776c9",
+      "name": "Low glucose DMEM",
+      "category": "REAGENT",
+      "manufacturer": "Welgene",
+      "catalogNumber": "LM001-14",
+      "storageCondition": "2~8℃",
+      "specifications": {
+        "internalGrade": "E",
+        "testItem": "[CO] 외래성바이러스 시험 순도시험(CD31)",
+        "purchaseYears": [
+          2024,
+          2025
+        ],
+        "source": [
+          "대장",
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-fd9e51f6b8649cf2",
+      "name": "FBS",
+      "category": "REAGENT",
+      "manufacturer": "Omega",
+      "catalogNumber": "FB-11",
+      "storageCondition": "냉동",
+      "specifications": {
+        "internalGrade": "E",
+        "testItem": "외래성 바이러스 시험 MTT assay",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-38305799ad06656c",
+      "name": "FBS-2",
+      "category": "REAGENT",
+      "manufacturer": "Gibco",
+      "catalogNumber": "160000-44",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": "E",
+        "testItem": null,
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-bc683b1f2a006c72",
+      "name": "Gentaimicin",
+      "category": "REAGENT",
+      "manufacturer": "Thermo Fisher Scientific",
+      "catalogNumber": "15750-060",
+      "storageCondition": "15~30℃",
+      "specifications": {
+        "internalGrade": "E",
+        "testItem": "외래성 바이러스 시험 MTT assay WST-1 assay",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-63f974351e849f86",
+      "name": "PBS",
+      "category": "REAGENT",
+      "manufacturer": "Sigma",
+      "catalogNumber": "D8537",
+      "storageCondition": "상온",
+      "specifications": {
+        "internalGrade": "E",
+        "testItem": "외래성 바이러스 확인시험 (P-CK) 역가시험 (Ki-67) 순도시험 (BSA) 총세포수/세포생존율 확인시험 (CK-14) 확인시험 (E-Cadherin) 역가시험(IL-1α,bFGF) 총단백질량 확인시험 (세포형태) 순도시험 (Col.-X) 역가시험 (GAG) 원료 sample 희석",
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-836fc3b1c57d1c5d",
+      "name": "PBS-2",
+      "category": "REAGENT",
+      "manufacturer": "Corning",
+      "catalogNumber": "21-031-CV",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": "E",
+        "testItem": null,
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-1d15e84030a913d5",
+      "name": "PBS-3",
+      "category": "REAGENT",
+      "manufacturer": "Capricorn",
+      "catalogNumber": "PBS-1A",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": "E",
+        "testItem": null,
+        "purchaseYears": [],
+        "source": [
+          "대장"
+        ]
+      }
+    },
+    {
+      "id": "mp-c9f4b8f56e91db51",
+      "name": "Tryptic Soy Broth [1L]",
+      "category": "REAGENT",
+      "manufacturer": "아산제약",
+      "catalogNumber": "28748",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-efe4a3088ec6b13f",
+      "name": "Eagle's Minimum Essential Medium (EMEM)",
+      "category": "REAGENT",
+      "manufacturer": "ATCC",
+      "catalogNumber": "30-2003",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "구매"
+        ],
+        "importFlags": [
+          "merged-cluster"
+        ],
+        "mergedFrom": [
+          "Eagle's Minimum Essential Medium (EMEM)",
+          "EMEM"
+        ]
+      }
+    },
+    {
+      "id": "mp-ed0c720d373d7ac8",
+      "name": "Guinea Pig Blood Cell (100%)",
+      "category": "REAGENT",
+      "manufacturer": "innovative",
+      "catalogNumber": "IGPRBC10ML",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-8aab084579b7e890",
+      "name": "Human Red Blood Cells in Alsever`s (25%)",
+      "category": "REAGENT",
+      "manufacturer": "innovative",
+      "catalogNumber": "IWB3ALS40ML",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-beacd6d6d0cf4e6e",
+      "name": "chicken red blood cell (5%)",
+      "category": "REAGENT",
+      "manufacturer": "innovative",
+      "catalogNumber": "ICHRBC5P15ML",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-baa5d041e5caa54d",
+      "name": "Mo a Hu Ki-67 Ag, cl MIB-1",
+      "category": "REAGENT",
+      "manufacturer": "DAKO",
+      "catalogNumber": "M724029-2",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-4e2604c079903445",
+      "name": "PPLO BROTH W/GLU 100mL",
+      "category": "REAGENT",
+      "manufacturer": "시너지이노베이션",
+      "catalogNumber": "SI-500190",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-20fdd260fc9865c2",
+      "name": "PPLO BROTH W/ARG 100mL",
+      "category": "REAGENT",
+      "manufacturer": "시너지이노베이션",
+      "catalogNumber": "SI-500191",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-777b80587671b135",
+      "name": "PPLO AGAR 2",
+      "category": "REAGENT",
+      "manufacturer": "시너지이노베이션",
+      "catalogNumber": "SI-500906",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-5680c3f1db316eba",
+      "name": "Lightcycler 480 SYBR Green 1 Master<R>",
+      "category": "REAGENT",
+      "manufacturer": "Roche",
+      "catalogNumber": "4707516001",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-b84b35a1ce7ab172",
+      "name": "PrimeScript 1st Strand cDNASynthesis 200rxns",
+      "category": "REAGENT",
+      "manufacturer": "TAKARA",
+      "catalogNumber": "6110B",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-e1fa409d48ac0a15",
+      "name": "Anaerobic gas pack",
+      "category": "CONSUMABLE",
+      "manufacturer": "BD",
+      "catalogNumber": "260678",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-52455a044362cd2b",
+      "name": "Cell Lysis Buffer(10x)",
+      "category": "REAGENT",
+      "manufacturer": "CST",
+      "catalogNumber": "9803s",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-3fd4788ddd23ad54",
+      "name": "Blyscan Dye & Dissociation Reagents",
+      "category": "REAGENT",
+      "manufacturer": "Biocolor",
+      "catalogNumber": "B1500",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-1630b7f6b92c1399",
+      "name": "Monoclonal Anti-Collagen, Type X antibody",
+      "category": "REAGENT",
+      "manufacturer": "Sigma",
+      "catalogNumber": "C7974-.2ML",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-f96d8921718ba786",
+      "name": "Sodium Hydroxide 93%/ 1kg",
+      "category": "REAGENT",
+      "manufacturer": "duksan",
+      "catalogNumber": "D1636",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-6f1b4da30f5c222f",
+      "name": "Cell Lysis Buffer",
+      "category": "REAGENT",
+      "manufacturer": "CST",
+      "catalogNumber": "9803S",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-f7bccb0fcec463b9",
+      "name": "Human FGF basic/FGF2/ bFGF Quanti SixPak",
+      "category": "REAGENT",
+      "manufacturer": "R&D Systems",
+      "catalogNumber": "SFB50",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-9bb54d231fb50c41",
+      "name": "Kit, Human IL-1 alpha/ IL-1F1 Quantikine SixPak",
+      "category": "REAGENT",
+      "manufacturer": "R&D Systems",
+      "catalogNumber": "SLA50",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-387f2fb095a34aa4",
+      "name": "Mo a Hu CD31, Endothelial Cell, cl JC70A",
+      "category": "REAGENT",
+      "manufacturer": "DAKO",
+      "catalogNumber": "M082329-2",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-d203e0b1ab433929",
+      "name": "Ethidium bromide solution",
+      "category": "REAGENT",
+      "manufacturer": "Sigma",
+      "catalogNumber": "E1385-5ML",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-0ecef4c6d256a9ee",
+      "name": "TSB - 1000ml",
+      "category": "REAGENT",
+      "manufacturer": "한강",
+      "catalogNumber": "HG-B311000",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-0c62357f29301855",
+      "name": "Cell Proliferation Reagent WST-1",
+      "category": "REAGENT",
+      "manufacturer": "Roche",
+      "catalogNumber": "05 015 944 001",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-70a2f4ac078eb923",
+      "name": "Methanol GR/1L",
+      "category": "REAGENT",
+      "manufacturer": "Merck",
+      "catalogNumber": "1.06009.1011",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-9d075fb90179fc39",
+      "name": "Potassium hydroxide solution",
+      "category": "REAGENT",
+      "manufacturer": "Sigma-aldrich",
+      "catalogNumber": "417661-1L",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-d8a647a049cae6a0",
+      "name": "DEPC-Treated Water",
+      "category": "REAGENT",
+      "manufacturer": "Themofisher",
+      "catalogNumber": "AM9906",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-9e9f69e8a3f675cd",
+      "name": "환경모니터링배지(TSA 90mm)",
+      "category": "REAGENT",
+      "manufacturer": "한강",
+      "catalogNumber": "HG-PT001",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-0f3bcc8712138d06",
+      "name": "Tryptic Soya Agar(TSA) , 90mm",
+      "category": "CONSUMABLE",
+      "manufacturer": "한강",
+      "catalogNumber": "HG-PT001",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-c88861ef93d6d981",
+      "name": "환경모니터링배지(TSA 55mm)",
+      "category": "REAGENT",
+      "manufacturer": "한강",
+      "catalogNumber": "HG-PT003",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-644f5094eed9825e",
+      "name": "Tryptic Soya Agar(TSA) , 55mm",
+      "category": "CONSUMABLE",
+      "manufacturer": "한강",
+      "catalogNumber": "HG-PT003",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-c6e4371a42d5fb1e",
+      "name": "PrimeScript 1st Strand cDNASynthesis 500rxns",
+      "category": "REAGENT",
+      "manufacturer": "TAKARA",
+      "catalogNumber": "6110M",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-8df4116f6d6b90d7",
+      "name": "S.S 여과장치, 죠인트연결형, 휠터서포트 43mm",
+      "category": "CONSUMABLE",
+      "manufacturer": "랩콤",
+      "catalogNumber": "KMS1908- B",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-95200362e3fc1a50",
+      "name": "S.S 여과장치, 죠인트 연결형, 300ml-여과컵",
+      "category": "CONSUMABLE",
+      "manufacturer": "랩콤",
+      "catalogNumber": "KMS1908 C-300",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-c53f2ef42620f919",
+      "name": "INDICATOR STRIPS GASPAK DRY ANAEROBIC",
+      "category": "CONSUMABLE",
+      "manufacturer": "BD",
+      "catalogNumber": "271051",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-ee7191f7cf09a573",
+      "name": "Glycerol insect cell culture tested, ~99%, GC",
+      "category": "CONSUMABLE",
+      "manufacturer": "SIGMA",
+      "catalogNumber": "G2025-500ML",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-3126c1daa1995ae4",
+      "name": "Cryo Flex",
+      "category": "CONSUMABLE",
+      "manufacturer": "Nunc",
+      "catalogNumber": "343958",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-7af0bbd08a0928eb",
+      "name": "B. subtilis ATCCⓇ6633™",
+      "category": "CONSUMABLE",
+      "manufacturer": "Thermo fisher Scientific",
+      "catalogNumber": "6633™",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-29fcfc27f4cf1791",
+      "name": "P. aeruginosa ATCCⓇ9027™",
+      "category": "CONSUMABLE",
+      "manufacturer": "Thermo fisher Scientific",
+      "catalogNumber": "9027™",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-57131a7294fe5f4f",
+      "name": "S. aureus ATCCⓇ6538™",
+      "category": "CONSUMABLE",
+      "manufacturer": "Thermo fisher Scientific",
+      "catalogNumber": "6538™",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-5e2a4b046429ad06",
+      "name": "A. brasiliensis ATCCⓇ16404™",
+      "category": "CONSUMABLE",
+      "manufacturer": "Thermo fisher Scientific",
+      "catalogNumber": "16404™",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-27d52e09fe4cfb04",
+      "name": "C. albicans ATCCⓇ10231™",
+      "category": "CONSUMABLE",
+      "manufacturer": "Thermo fisher Scientific",
+      "catalogNumber": "10231™",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-d7a43873bbbf199f",
+      "name": "`B` Clear Adhesive Seal",
+      "category": "TOOL",
+      "manufacturer": "Bio-Rad",
+      "catalogNumber": "BRMSB1001",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-9b9f96afe4a5f69f",
+      "name": "Hard-shell 96 plates, White shell/clear well",
+      "category": "TOOL",
+      "manufacturer": "Bio-Rad",
+      "catalogNumber": "BRHSP9601",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-3fac8e8b379f3aee",
+      "name": "Ethyl Alcohol 70%/18L",
+      "category": "CONSUMABLE",
+      "manufacturer": "Duksan",
+      "catalogNumber": "EPP0-18L",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-0eab31d695e90b1d",
+      "name": "Pyrogen-Free Test Tubes 10x75mm w/oCap",
+      "category": "CONSUMABLE",
+      "manufacturer": "Lonza",
+      "catalogNumber": "N205",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-1da95eec8ce04b84",
+      "name": "PH Electrode Storage solution(100ml)",
+      "category": "CONSUMABLE",
+      "manufacturer": "OHAUS",
+      "catalogNumber": "30059256",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-53937267dd210723",
+      "name": "0.45um White Gridded S-Pak 47mm 600ea",
+      "category": "CONSUMABLE",
+      "manufacturer": "Merck",
+      "catalogNumber": "HAWG047S6",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025,
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-e4245da0f6cdaae5",
+      "name": "LAL Reagent water",
+      "category": "CONSUMABLE",
+      "manufacturer": "Lonza",
+      "catalogNumber": "W50-100",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-812d58cbb43655c9",
+      "name": "Microscope Cover Glass(24*50)/100x10/pk",
+      "category": "TOOL",
+      "manufacturer": "Superior",
+      "catalogNumber": "HSU-0101222",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-595a859c5dcf30c8",
+      "name": "Transfer Pipette, PE, L119mm, Bulb 4.6ml, 3ml (100/Inner Pack)",
+      "category": "CONSUMABLE",
+      "manufacturer": "daihan",
+      "catalogNumber": "DH.Pip3041",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ],
+        "categoryConflict": [
+          "소모품",
+          "기구"
+        ],
+        "importFlags": [
+          "category-conflict",
+          "merged-cluster"
+        ],
+        "mergedFrom": [
+          "Transfer Pipette, PE, L119mm, Bulb 4.6ml, 3ml (100/Inner Pack)",
+          "Transfer Pipette, PE, L119mm, Bulb 4.6ml, 3ml"
+        ]
+      }
+    },
+    {
+      "id": "mp-94d229011ec0088c",
+      "name": "원형 cover glass(12mm)",
+      "category": "CONSUMABLE",
+      "manufacturer": "Marienfeld",
+      "catalogNumber": "HSU-0111520",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-ecd0b55896cc5776",
+      "name": "Microscpoe Cover glass(circle,12mm)/1000/pk",
+      "category": "CONSUMABLE",
+      "manufacturer": "Labmate",
+      "catalogNumber": "HSU-0111520",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-83b6d2a69633780f",
+      "name": "Heparin sodium salt from porcine intest",
+      "category": "CONSUMABLE",
+      "manufacturer": "Sigma",
+      "catalogNumber": "H3393-100KU",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-605ca4d29dfec1ce",
+      "name": "F-12K Medium",
+      "category": "CONSUMABLE",
+      "manufacturer": "ACTT",
+      "catalogNumber": "30-2004",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-e90fcbb77ac58fc3",
+      "name": "ECGS Bovine Natural",
+      "category": "CONSUMABLE",
+      "manufacturer": "Corning",
+      "catalogNumber": "FAL-356006",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-3b1a71a66986c1cb",
+      "name": "Buffer pH 4.01 250ml",
+      "category": "CONSUMABLE",
+      "manufacturer": "OHAUS",
+      "catalogNumber": "30100425",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-b1685614e819f04a",
+      "name": "Buffer pH 7.00 250ml",
+      "category": "CONSUMABLE",
+      "manufacturer": "OHAUS",
+      "catalogNumber": "30100427",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-243c848c15696a6c",
+      "name": "Buffer pH 10.01 250ml",
+      "category": "CONSUMABLE",
+      "manufacturer": "OHAUS",
+      "catalogNumber": "30100429",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-5d96f7a1645a46b2",
+      "name": "MicroAmp™ Optical 96-Well Reaction Plate",
+      "category": "CONSUMABLE",
+      "manufacturer": "Applied Biosystems",
+      "catalogNumber": "4306737",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-2458641c15681e3f",
+      "name": "MicroAmp™ Optical Adhesive Film",
+      "category": "CONSUMABLE",
+      "manufacturer": "Applied Biosystems",
+      "catalogNumber": "4311971",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025,
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-6d484b9e9f0cfbd5",
+      "name": "HEX Calibration Plate",
+      "category": "CONSUMABLE",
+      "manufacturer": "Cellsafe",
+      "catalogNumber": "QD-HCP96L-0.2",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-50d846acc117fa3f",
+      "name": "​Mycoplasma arginini",
+      "category": "CONSUMABLE",
+      "manufacturer": "Cellsafe",
+      "catalogNumber": "M10CFU-MA",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-d675d200afb01913",
+      "name": "EGM-2 BulletKit",
+      "category": "CONSUMABLE",
+      "manufacturer": "Lonza",
+      "catalogNumber": "CC-3162",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-1513f68a516915bc",
+      "name": "​Optical Adhesive Film kit",
+      "category": "CONSUMABLE",
+      "manufacturer": "Applied Biosystems",
+      "catalogNumber": "4313663",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-d632c78e16d79540",
+      "name": "캡튜브-16*125",
+      "category": "CONSUMABLE",
+      "manufacturer": "Samwoo",
+      "catalogNumber": "CT-16-125",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025,
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-105505aafab07968",
+      "name": "C. sporogenes",
+      "category": "CONSUMABLE",
+      "manufacturer": "Thermo fisher Scientific",
+      "catalogNumber": "11437™",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-8c68e0381429a83f",
+      "name": "10ul Filter Tip, Pre-Sterile, Racked, 960/pk 5pk/cs",
+      "category": "CONSUMABLE",
+      "manufacturer": "NEPTUNE",
+      "catalogNumber": "BT10",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-63207f598b627a9e",
+      "name": "200ul Filter Tip, Pre-Sterile, Racked, 960/pk 5pk/cs",
+      "category": "CONSUMABLE",
+      "manufacturer": "NEPTUNE",
+      "catalogNumber": "BT200",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-ef167806369f1762",
+      "name": "1250ul Extended Length Filter Tip, Pre-Sterile, Racked, 768/pk 4pk/cs",
+      "category": "CONSUMABLE",
+      "manufacturer": "NEPTUNE",
+      "catalogNumber": "BT1250",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-575ad6483013ebeb",
+      "name": "Barrier Tip, 1250 µl, S3, Rack-96, Sterile768ea/pk",
+      "category": "CONSUMABLE",
+      "manufacturer": "Neptune",
+      "catalogNumber": "BT1250",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025,
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-55d41460af50fff5",
+      "name": "Biohazard Bags (멸균 비닐백) 48x58(중) / 100/BX",
+      "category": "CONSUMABLE",
+      "manufacturer": "Korea ace",
+      "catalogNumber": "KA.00-30B",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-89a5a864cab2c5bd",
+      "name": "Spreader/500/cs",
+      "category": "CONSUMABLE",
+      "manufacturer": "SPL",
+      "catalogNumber": "90050",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-3a2b2b65874dff0d",
+      "name": "FLASK,ERLEN GL,1L",
+      "category": "TOOL",
+      "manufacturer": "Duran",
+      "catalogNumber": "DU.2121654",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019,
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-f4689ec371ed7a37",
+      "name": "BRIGHT LINE , WITH V-SLASH",
+      "category": "CONSUMABLE",
+      "manufacturer": "Marienfeld",
+      "catalogNumber": "HSU-0650030",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-f8a43b958a40a950",
+      "name": "Counting chambers with V-slash",
+      "category": "TOOL",
+      "manufacturer": "Marienfeld",
+      "catalogNumber": "HSU-0650030",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-02bff66bec42235d",
+      "name": "Blood Counting Chamber (일반형) Bright-line",
+      "category": "TOOL",
+      "manufacturer": "Marienfeld",
+      "catalogNumber": "HSU-0650030",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-c95c7c61898cb702",
+      "name": "PRECISION IRIS FORCEP 10CM",
+      "category": "TOOL",
+      "manufacturer": "Hirose",
+      "catalogNumber": "HC.37-610",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2023,
+          2024,
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-e90350ed25196e85",
+      "name": "FORCEPS",
+      "category": "CONSUMABLE",
+      "manufacturer": "Daihan",
+      "catalogNumber": "SL.for7032",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-07d980dd439f1f24",
+      "name": "캡시험관 16*125",
+      "category": "CONSUMABLE",
+      "manufacturer": "Dongsung",
+      "catalogNumber": "0404-16*125",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-b2ec3e1016781490",
+      "name": "Eppendorf Safe-Lock 1.5 mL snap-captubes [1000 pk]",
+      "category": "CONSUMABLE",
+      "manufacturer": "Eppendorf",
+      "catalogNumber": "0030120086",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-ae100bd1e56076fc",
+      "name": "캡시험관 16*125",
+      "category": "CONSUMABLE",
+      "manufacturer": "Dongsung",
+      "catalogNumber": "0404-16*125-100/BX",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025,
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-205aa7be8d8fee20",
+      "name": "CT-CAP-16-12 스크류 캡튜브, 16*125, SET, 100ea/box",
+      "category": "CONSUMABLE",
+      "manufacturer": "Dongsung",
+      "catalogNumber": "0404-16*125-100/BX",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-1e0b25d759f0ae4e",
+      "name": "캡튜브-16*150 [100ea/box]",
+      "category": "CONSUMABLE",
+      "manufacturer": "Samwoo",
+      "catalogNumber": "CT-16-150",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-040a579659488eb9",
+      "name": "Pyrogen-Free Dilution 13x100mm w/oCaps",
+      "category": "CONSUMABLE",
+      "manufacturer": "Lonza",
+      "catalogNumber": "N207",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-1fa59758dc84bfc8",
+      "name": "Anaerobic Indicator",
+      "category": "CONSUMABLE",
+      "manufacturer": "Oxoid",
+      "catalogNumber": "BR0055B",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-c87caea78da274f5",
+      "name": "96 Well ClEAr Polystyrene High Bind Stripwell™ Microplate, w/o Lid, Nonsterile",
+      "category": "CONSUMABLE",
+      "manufacturer": "Corning",
+      "catalogNumber": "2592",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-30fc0bc7ee3fd4d6",
+      "name": "0.2ml PCR Tube / 1000pkg",
+      "category": "CONSUMABLE",
+      "manufacturer": "Axygen",
+      "catalogNumber": "PCR-02-C",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-13cf7d3dfb370ee4",
+      "name": "High-profile disposable blades 818(1x50)",
+      "category": "TOOL",
+      "manufacturer": "Leica",
+      "catalogNumber": "14035838926",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024,
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-a36d7f7d90260610",
+      "name": "10ml syringe",
+      "category": "CONSUMABLE",
+      "manufacturer": "KOVAX",
+      "catalogNumber": "LH05",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-4852552e774adb80",
+      "name": "Cell Scraper (Blade 2cm, 총 29cm)/100/bx",
+      "category": "CONSUMABLE",
+      "manufacturer": "SPL",
+      "catalogNumber": "90030",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-144e7784ac1ded50",
+      "name": "Duran Laboratory bottles, with caps, 250ml",
+      "category": "CONSUMABLE",
+      "manufacturer": "Duran",
+      "catalogNumber": "DU.21801365",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2026
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-410721a8bd45e2d7",
+      "name": "OQIPV,Service 9700/9800",
+      "category": "TOOL",
+      "manufacturer": "thermofisher scientific",
+      "catalogNumber": "4415262",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2017,
+          2018
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-06116a31b5782573",
+      "name": "PERF CERT, ON-SITE, versaMax, 340PC,190",
+      "category": "TOOL",
+      "manufacturer": null,
+      "catalogNumber": "9300-0062A",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2017
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-b901a9cb4edd1589",
+      "name": "Climet Model CI-1052x Prove Boll Head & Stand",
+      "category": "TOOL",
+      "manufacturer": "Climet",
+      "catalogNumber": null,
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2017,
+          2018
+        ],
+        "source": [
+          "구매"
+        ],
+        "importFlags": [
+          "placeholder-catalog-null",
+          "merged-cluster"
+        ],
+        "mergedFrom": [
+          "Climet Model CI-1052x Prove Boll Head & Stand",
+          "Climet Model CI-1052x Prove",
+          "Climet Model CI-1052x Prove stand",
+          "Climet Model CI-1052x Prove Boll Head"
+        ]
+      }
+    },
+    {
+      "id": "mp-e15dfaf36cfaf392",
+      "name": "디지털타이머",
+      "category": "TOOL",
+      "manufacturer": "Electronics Tomorrow",
+      "catalogNumber": "TL-2530",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2017,
+          2019,
+          2020,
+          2021,
+          2022
+        ],
+        "source": [
+          "구매"
+        ],
+        "importFlags": [
+          "merged-cluster"
+        ],
+        "mergedFrom": [
+          "디지텉타이머",
+          "디지털타이머",
+          "디지털타미머"
+        ]
+      }
+    },
+    {
+      "id": "mp-0b7059f4a1563bcc",
+      "name": "다이얼형 진공계",
+      "category": "TOOL",
+      "manufacturer": "NONE",
+      "catalogNumber": "1607787",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2017
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-120f1e521c0e4814",
+      "name": "Research plus 1-ch, 0.5-10㎕",
+      "category": "TOOL",
+      "manufacturer": "Eppendorf",
+      "catalogNumber": "EP3120000020",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2017
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-770403ceecf1b902",
+      "name": "Research plus 1-ch, 20-200㎕",
+      "category": "TOOL",
+      "manufacturer": "Eppendorf",
+      "catalogNumber": "EP3120000054",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2017
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-ddabe59d34aef947",
+      "name": "Research plus 1-ch, 10-1000㎕",
+      "category": "TOOL",
+      "manufacturer": "Eppendorf",
+      "catalogNumber": "EP3120000062",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2017
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-ccaee3c471bd56cd",
+      "name": "Finnpipette F1 1 to 10㎕",
+      "category": "TOOL",
+      "manufacturer": "Theromo",
+      "catalogNumber": "4641040N",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2017
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-e8da75f969538d76",
+      "name": "Finnpipette F1 20 to 200㎕",
+      "category": "TOOL",
+      "manufacturer": "Theromo",
+      "catalogNumber": "4641080N",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2017
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-6f750bc0f7410c48",
+      "name": "Finnpipette F1 100 to 1000㎕",
+      "category": "TOOL",
+      "manufacturer": "Theromo",
+      "catalogNumber": "4641100N",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2017
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-7ed49ea5bf9b8566",
+      "name": "Mupid-ec U",
+      "category": "TOOL",
+      "manufacturer": null,
+      "catalogNumber": "70376",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2017
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-ce5ab265c0570355",
+      "name": "디지털 온도계",
+      "category": "TOOL",
+      "manufacturer": "FOURIER",
+      "catalogNumber": "724713",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2017
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-bbc99f690daf6a12",
+      "name": "유리제 온도계",
+      "category": "TOOL",
+      "manufacturer": "유일계기",
+      "catalogNumber": "2338",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2017
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-24f88ee36e9ca82b",
+      "name": "스텐선 시험관대(5부 50홀)",
+      "category": "TOOL",
+      "manufacturer": "Kroea ace",
+      "catalogNumber": "ka11-26",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2017,
+          2019,
+          2020,
+          2024
+        ],
+        "source": [
+          "구매"
+        ],
+        "importFlags": [
+          "merged-cluster"
+        ],
+        "mergedFrom": [
+          "스텐선 시험관대(5부 50홀)",
+          "스텐선시험관대(5/50)"
+        ]
+      }
+    },
+    {
+      "id": "mp-dbf93db8865e749b",
+      "name": "S/T Wire test Tube Racks/ea(5부/50hole)",
+      "category": "TOOL",
+      "manufacturer": "Korea Ace",
+      "catalogNumber": "ka11-26",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018,
+          2020
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-fbc38c53ea7c0c7e",
+      "name": "디지털 온도계",
+      "category": "TOOL",
+      "manufacturer": "OCEASOFT",
+      "catalogNumber": "E101000001CE",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2017,
+          2018
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-d87349b19f4de763",
+      "name": "digimatic Caliper 구매",
+      "category": "TOOL",
+      "manufacturer": "Mitutoyo",
+      "catalogNumber": "500-18",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2017
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-3b91ecd8e5a976f9",
+      "name": "gel maker stand- L",
+      "category": "TOOL",
+      "manufacturer": null,
+      "catalogNumber": "AD215",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2017
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-e8a16d4c0f6f789e",
+      "name": "Climet Model CI-95 Microbial sampler",
+      "category": "TOOL",
+      "manufacturer": "Climet",
+      "catalogNumber": "CI-95A",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018,
+          2020
+        ],
+        "source": [
+          "구매"
+        ],
+        "importFlags": [
+          "merged-cluster"
+        ],
+        "mergedFrom": [
+          "Climet Model CI-95 Microbial sampler",
+          "Climet Model CI-95A Microbial Samper"
+        ]
+      }
+    },
+    {
+      "id": "mp-a7c3fc10d59ebc23",
+      "name": "Air sampler",
+      "category": "TOOL",
+      "manufacturer": "Climet",
+      "catalogNumber": "CI-95",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018,
+          2019,
+          2020,
+          2021,
+          2022,
+          2023
+        ],
+        "source": [
+          "구매"
+        ],
+        "importFlags": [
+          "merged-cluster"
+        ],
+        "mergedFrom": [
+          "Air sampler ( 부유균 측정기)",
+          "Air sampler"
+        ]
+      }
+    },
+    {
+      "id": "mp-dd40c6bb70163bda",
+      "name": "Particle counter ( 부유입자 측정기)",
+      "category": "TOOL",
+      "manufacturer": "Climet",
+      "catalogNumber": "CI-1052x",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018,
+          2019,
+          2020,
+          2021,
+          2022,
+          2023
+        ],
+        "source": [
+          "구매"
+        ],
+        "importFlags": [
+          "merged-cluster"
+        ],
+        "mergedFrom": [
+          "Particle counter ( 부유입자 측정기)",
+          "부유입자측정기"
+        ]
+      }
+    },
+    {
+      "id": "mp-583531fad2b86d66",
+      "name": "Climet Model CI-1052X Portable Particle Counter",
+      "category": "TOOL",
+      "manufacturer": "Climet",
+      "catalogNumber": "CI-1052x",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2020,
+          2021
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-5a5b95ddc9bff82a",
+      "name": "디지털 온 습도계",
+      "category": "TOOL",
+      "manufacturer": "TSETO",
+      "catalogNumber": "TESTO 174H",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018,
+          2019,
+          2020,
+          2021,
+          2022,
+          2023
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-285ad519c13a3e19",
+      "name": "Calibrex TM530 adjustable. with stopcock. 1-10mL(despenser)",
+      "category": "TOOL",
+      "manufacturer": "SOCOREX",
+      "catalogNumber": "530,010FC",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-7d91ebe9e4bd48b3",
+      "name": "디지털 온·습도계 (DATA LOGGER)",
+      "category": "TOOL",
+      "manufacturer": "TESTO",
+      "catalogNumber": "174H",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018,
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-ffe2240da116fd17",
+      "name": "S/T Wire test Tube Racks/ea (4부/50hole)",
+      "category": "TOOL",
+      "manufacturer": "MIK",
+      "catalogNumber": "KA 11-24",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-502b7f1921a2af09",
+      "name": "AB RC Support 1 year",
+      "category": "TOOL",
+      "manufacturer": "thermofisher scientific",
+      "catalogNumber": "ZG03-SC9700",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-dd707cf110109433",
+      "name": "9700 micro AMP 96well -tray",
+      "category": "TOOL",
+      "manufacturer": "thermofisher scientific",
+      "catalogNumber": "403081",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-02fb162d2172650f",
+      "name": "자동스탬프",
+      "category": "TOOL",
+      "manufacturer": "Maxstamp",
+      "catalogNumber": "SI-5260",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-67e8c94f36ea8d5e",
+      "name": "다이얼형 진공계",
+      "category": "TOOL",
+      "manufacturer": "GAST",
+      "catalogNumber": "1 BAR",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018,
+          2019,
+          2020,
+          2021
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-238203a6d5969158",
+      "name": "피스톤식 부피계(Despenser)",
+      "category": "TOOL",
+      "manufacturer": "SOCOREX",
+      "catalogNumber": "1-10mL",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018,
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-8acd4116a94b11ea",
+      "name": "광조도계",
+      "category": "TOOL",
+      "manufacturer": "SELCO",
+      "catalogNumber": "AR813A",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018,
+          2019,
+          2020,
+          2021,
+          2022
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-f66528ef96962514",
+      "name": "Thermo sientific model TSD403E",
+      "category": "TOOL",
+      "manufacturer": "thermofisher scientific",
+      "catalogNumber": "TSD0320GPD",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-53dcd618e337b166",
+      "name": "Revco Refrigerator",
+      "category": "TOOL",
+      "manufacturer": "thermofisher scientific",
+      "catalogNumber": "REL1204",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-946fba30bfacf0bf",
+      "name": "HERA VISS 160I CO2 SST TC 230V EACH",
+      "category": "TOOL",
+      "manufacturer": "thermofisher scientific",
+      "catalogNumber": "51030287",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-97c57f5e5a370548",
+      "name": "REQUIRED ADAPTER FOR STACKING EA",
+      "category": "TOOL",
+      "manufacturer": "thermofisher scientific",
+      "catalogNumber": "50148172",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-32eb95639078a252",
+      "name": "Microplate shaker for 2 plates",
+      "category": "TOOL",
+      "manufacturer": "Grant",
+      "catalogNumber": "PMS-100i",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-9e64bb982e51c16f",
+      "name": "Tacta Mecanical Pipette,1-ch,2-20㎕",
+      "category": "TOOL",
+      "manufacturer": "sartorius",
+      "catalogNumber": "LH-729030",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018,
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-8241ebb366d20809",
+      "name": "피스톤식부피계 (Pipette) (2-20㎕)",
+      "category": "TOOL",
+      "manufacturer": "Sartorius",
+      "catalogNumber": "LH-729030",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2023
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-8bef3c6daa947524",
+      "name": "Tacta Mecanical Pipette,1-ch,20-200㎕",
+      "category": "TOOL",
+      "manufacturer": "sartorius",
+      "catalogNumber": "LH-729060",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018,
+          2019,
+          2020
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-8d4b5ad066d2361b",
+      "name": "피스톤식부피계 (Pipette) (20-200㎕)",
+      "category": "TOOL",
+      "manufacturer": "Sartorius",
+      "catalogNumber": "LH-729060",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2023
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-b68b5e0d4ae2cacd",
+      "name": "Tacta Mecanical Pipette,1-ch,10-100㎕",
+      "category": "TOOL",
+      "manufacturer": "sartorius",
+      "catalogNumber": "LH-729050",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-1f781b259958b4b6",
+      "name": "피스톤식부피계 (Pipette) (10-100㎕)",
+      "category": "TOOL",
+      "manufacturer": "Sartorius",
+      "catalogNumber": "LH-729050",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2023
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-208a2b26eb6e4c73",
+      "name": "Tacta Mecanical Pipette,1-ch,100-1000㎕",
+      "category": "TOOL",
+      "manufacturer": "sartorius",
+      "catalogNumber": "LH-729070",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018,
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-fc8a8f23934518a0",
+      "name": "피스톤식부피계 (Pipette) (100-1000㎕)",
+      "category": "TOOL",
+      "manufacturer": "Sartorius",
+      "catalogNumber": "LH-729070",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2023
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-b8b9489421fd58a4",
+      "name": "3호 (30x45cm) bag stand",
+      "category": "TOOL",
+      "manufacturer": null,
+      "catalogNumber": "90143",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-1c2f241a7a81952d",
+      "name": "4호 (40x60cm) bag stand",
+      "category": "TOOL",
+      "manufacturer": null,
+      "catalogNumber": "90134",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-cf4d4fd1a382f5f2",
+      "name": "81 Holl Sample Box",
+      "category": "TOOL",
+      "manufacturer": "Chtech",
+      "catalogNumber": "LH04",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2018,
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-3cead6d16b2edc7c",
+      "name": "초음파페이퍼 UPP-110HG(10roll)",
+      "category": "TOOL",
+      "manufacturer": "SONY",
+      "catalogNumber": "20161205",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-1e45e69ac2ef18da",
+      "name": "스텐선시험관대(6/50)",
+      "category": "TOOL",
+      "manufacturer": "Korea Ace",
+      "catalogNumber": "KA11-28",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-fb4f06e15883f3ec",
+      "name": "50ML 원심관시험관대(8hole)",
+      "category": "TOOL",
+      "manufacturer": "Korea Ace",
+      "catalogNumber": "ka11-39L",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019,
+          2020
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-35743d71f4f1f71c",
+      "name": "Decapper, Erogomic M annual, for 20mm AI-Seals/EA",
+      "category": "TOOL",
+      "manufacturer": "DAIHAN",
+      "catalogNumber": "SL.Vi1372",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019,
+          2020
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-a4d9571ddc3c4546",
+      "name": "Forcep, STS, Straight, Blunt Tip, L130mm",
+      "category": "TOOL",
+      "manufacturer": "SciLab",
+      "catalogNumber": "SL.For7023",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-0d46f217b936c35f",
+      "name": "Forcep, STS, Curved, Blunt Tip, L130mm",
+      "category": "TOOL",
+      "manufacturer": "SciLab",
+      "catalogNumber": "SL.For7043",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-4de4b92606d6cb3a",
+      "name": "FORcep blunt STS 140mm",
+      "category": "TOOL",
+      "manufacturer": "SciLab",
+      "catalogNumber": "SL.For7015",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-0a307b0ac060b319",
+      "name": "Finnpipette Novus Electronic Multichannel Pipettes",
+      "category": "TOOL",
+      "manufacturer": "thermofisher scientific",
+      "catalogNumber": "46300800",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-9674386947a441c8",
+      "name": "중알실험대",
+      "category": "TOOL",
+      "manufacturer": "그린플로우테크",
+      "catalogNumber": "ELT-CS03",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-5807f34cc034241f",
+      "name": "Genie2 vortexmixer",
+      "category": "TOOL",
+      "manufacturer": "Scientific Industries",
+      "catalogNumber": "G562",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019,
+          2021
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-c56b3016f64d72e0",
+      "name": "Multiple sample starter set",
+      "category": "TOOL",
+      "manufacturer": "SI",
+      "catalogNumber": "504-0233-00",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-83a8dc50b071d3d4",
+      "name": "1250ul XL TIP GRAD",
+      "category": "TOOL",
+      "manufacturer": "thermofisher scientific",
+      "catalogNumber": "T112NXLRS-Q",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-489e4005a58cb79a",
+      "name": "BLUE SWAN Pipet-aid",
+      "category": "TOOL",
+      "manufacturer": "Blue-Ray Biotech",
+      "catalogNumber": "BS01-X000",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-cf057eaed4d047e9",
+      "name": "1.5ml Micro Tube rack 80holl",
+      "category": "TOOL",
+      "manufacturer": "Korea Ace",
+      "catalogNumber": "UB33-27",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-81d54b7ad3786dca",
+      "name": "Centrifuge Tube Racks, 8hole (50ml) / EA",
+      "category": "TOOL",
+      "manufacturer": "Korea Ace",
+      "catalogNumber": "KA11-39L",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-efdaf78d051c303b",
+      "name": "디지털 온습도계",
+      "category": "TOOL",
+      "manufacturer": "FOURTEC",
+      "catalogNumber": "EC850A",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-09f824d1426bf5d9",
+      "name": "(플라스틱)열린카3단 (745*475)- 카트",
+      "category": "TOOL",
+      "manufacturer": null,
+      "catalogNumber": "RYS-101B",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-87c687e23a2cd981",
+      "name": "IX73 w/acc(광학현미경)",
+      "category": "TOOL",
+      "manufacturer": "Olympus",
+      "catalogNumber": "IX73P1F",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-d69d6b763081890f",
+      "name": "Tacta Mecanical Pipette,1-ch,0.5-10㎕",
+      "category": "TOOL",
+      "manufacturer": "sartorius",
+      "catalogNumber": "LH-729020",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019,
+          2020
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-b08125f07b9e91b8",
+      "name": "피스톤식부피계 (Pipette) (0.5-10㎕)",
+      "category": "TOOL",
+      "manufacturer": "Sartorius",
+      "catalogNumber": "LH-729020",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2023
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-6f94963c379fb292",
+      "name": "슬라이드 워머",
+      "category": "TOOL",
+      "manufacturer": "C&A Scientific",
+      "catalogNumber": "XH-2004",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-3feea501392d5db2",
+      "name": "유리제 온도계(Endotoxin)",
+      "category": "TOOL",
+      "manufacturer": "유일계기",
+      "catalogNumber": "-10~110",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019,
+          2020
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-41b9a96740158214",
+      "name": "디지털온도계(USB)",
+      "category": "TOOL",
+      "manufacturer": "FOURIER",
+      "catalogNumber": "LITE5008",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019,
+          2020
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-d7831c32bc0f28d1",
+      "name": "발판(철제2단-2840)",
+      "category": "TOOL",
+      "manufacturer": "DAIHAN",
+      "catalogNumber": "CY-2840",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-32ad98616083aae2",
+      "name": "Mini Centrifuge 6KS with combi Rotor",
+      "category": "TOOL",
+      "manufacturer": null,
+      "catalogNumber": "AS0803000",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-85659cfb0356a498",
+      "name": "PMS (Climet Model CI-3100RS particle counter Cal)",
+      "category": "TOOL",
+      "manufacturer": "Climet",
+      "catalogNumber": "CI-3100",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019,
+          2020,
+          2021,
+          2022
+        ],
+        "source": [
+          "구매"
+        ],
+        "importFlags": [
+          "merged-cluster"
+        ],
+        "mergedFrom": [
+          "PMS",
+          "PMS (Climet Model CI-3100RS particle counter Cal)"
+        ]
+      }
+    },
+    {
+      "id": "mp-c4ad2bd2fee73e1f",
+      "name": "Duo main swich",
+      "category": "TOOL",
+      "manufacturer": "VWR",
+      "catalogNumber": "32177119-A",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2019
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-c390fb376787b488",
+      "name": "Rack pp red 24-holes d30mm",
+      "category": "TOOL",
+      "manufacturer": "Kartell",
+      "catalogNumber": "KA.568.10",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2020
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-e531c433192c5d9a",
+      "name": "REFRIG. INC. 20 CU FT 230V-50HZ",
+      "category": "TOOL",
+      "manufacturer": "Theromo",
+      "catalogNumber": "PR505750R",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2020
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-4671164b60db49b4",
+      "name": "IQOQ Validation",
+      "category": "TOOL",
+      "manufacturer": "Theromo",
+      "catalogNumber": "IOQ",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2020
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-14a50412d89f0e0c",
+      "name": "ALUMINUM STORAGE CONTAINER",
+      "category": "TOOL",
+      "manufacturer": "MVE",
+      "catalogNumber": "XC47/116(M.V.E)",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2020
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-4527f7b9dfa5d6e0",
+      "name": "thermofinnipipette calibration service",
+      "category": "TOOL",
+      "manufacturer": "Theromo",
+      "catalogNumber": "TF-CAL",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2020
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-3fc97b4785c6e481",
+      "name": "Essential check; Adjustable-volume pipet",
+      "category": "TOOL",
+      "manufacturer": "Eppendorf",
+      "catalogNumber": "EP0082000044",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2020
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-53eda66d840460a9",
+      "name": "유리제 부피계( 메스 피펫)",
+      "category": "TOOL",
+      "manufacturer": "pyrex",
+      "catalogNumber": "1/5/10 ml",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2020
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-81e9fa8861602607",
+      "name": "유리제 부피계( 메스실린더)",
+      "category": "TOOL",
+      "manufacturer": "pyrex",
+      "catalogNumber": "1000 ml",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2020
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-396d46fced92f577",
+      "name": "디지털 점도계",
+      "category": "TOOL",
+      "manufacturer": "BROOKFIEID",
+      "catalogNumber": "DV-II+P",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2020
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-c07734b2132b1569",
+      "name": "디지털 점도계",
+      "category": "TOOL",
+      "manufacturer": "BROOKFIEID",
+      "catalogNumber": "DVNXHB_CP",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2020
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-d7e392c6d04dadd6",
+      "name": "디지털 점도계",
+      "category": "TOOL",
+      "manufacturer": "BROOKFIEID",
+      "catalogNumber": "DVNXHBCBG",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2020,
+          2021
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-ef616457b4f340f0",
+      "name": "Climet Model CI-1052X Power supply replacement",
+      "category": "TOOL",
+      "manufacturer": "Climet",
+      "catalogNumber": "CI-1052X",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2020
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-d5dc5ecd33b41fa8",
+      "name": "Microtome Blades, High PRHFILE/50/BX",
+      "category": "TOOL",
+      "manufacturer": "Leica",
+      "catalogNumber": "818",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2020
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-838ef8e0e2bb8047",
+      "name": "PMS-Pump Replacement",
+      "category": "TOOL",
+      "manufacturer": null,
+      "catalogNumber": "Medo VP0626",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2021,
+          2022
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-6af992f6d58a8621",
+      "name": "TSX REF SOLID 12cf 208v/69Hz",
+      "category": "TOOL",
+      "manufacturer": "thermofisher scientific",
+      "catalogNumber": "TSX1205SZ",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2021
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-272299c2104281c4",
+      "name": "1.6mm (1/16 inch) Stainless steel balls",
+      "category": "TOOL",
+      "manufacturer": "NextAdvance",
+      "catalogNumber": "SSB16",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2021
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-16f125c47106be38",
+      "name": "Thermo -5+300",
+      "category": "TOOL",
+      "manufacturer": "Alla",
+      "catalogNumber": "AL.595.002",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2021
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-1880babd28868815",
+      "name": "유리제 온도계",
+      "category": "TOOL",
+      "manufacturer": "Alla",
+      "catalogNumber": "AL.595.002",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2021,
+          2022
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-3066ef473dbf3d8e",
+      "name": "Centr. 5427R(cooled), 230V/50-60Hz.incl. rotorFA-45-30-11",
+      "category": "TOOL",
+      "manufacturer": "Eppendorf",
+      "catalogNumber": "5427R",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2021
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-7306e0b8dbf14c87",
+      "name": "Centr. 5427 IQ.OQ비용",
+      "category": "TOOL",
+      "manufacturer": "Eppendorf",
+      "catalogNumber": "5427R",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2021
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-03a0dfc3c2ee91eb",
+      "name": "Microtube Foam Insert + 6-inch plattorm (set)",
+      "category": "TOOL",
+      "manufacturer": "SI",
+      "catalogNumber": "504-0234-00",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2021
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-aa012b0083f0f96a",
+      "name": "중량랙 (3단)",
+      "category": "TOOL",
+      "manufacturer": "도디스주식회사",
+      "catalogNumber": "1200x600x2100(3단)",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2021
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-c1f3b3d35e3260c7",
+      "name": "DFC450C digital camera",
+      "category": "TOOL",
+      "manufacturer": "Leica",
+      "catalogNumber": "DFC450C",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2021
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-afce9e2d24c11412",
+      "name": "디지털 온도계",
+      "category": "TOOL",
+      "manufacturer": "Tempsen",
+      "catalogNumber": "TEMPOD 50XB",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2021,
+          2022,
+          2023
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-e9f8162bf5582baa",
+      "name": "형광현미경(DM4 B) + 카메라 (DFC7000T)",
+      "category": "TOOL",
+      "manufacturer": "Leica",
+      "catalogNumber": "DM4 B",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2021
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-933c79f8d13a4999",
+      "name": "스티커",
+      "category": "TOOL",
+      "manufacturer": "와우프레스",
+      "catalogNumber": "원형35",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2021
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-e7e4417e9f924b97",
+      "name": "계수기(Hand Counter)",
+      "category": "TOOL",
+      "manufacturer": "고려에이스",
+      "catalogNumber": "KA-UB33-21",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2021
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-6db9926cacc2a875",
+      "name": "디지털 온도계",
+      "category": "TOOL",
+      "manufacturer": "Tempsen",
+      "catalogNumber": "TEMPOD 20B",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2022,
+          2023
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-231d73f91f172c72",
+      "name": "BLUE SWAN Pipet-aid",
+      "category": "TOOL",
+      "manufacturer": "Blue-Ray Biotech",
+      "catalogNumber": "BS01- 2000",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2022
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-fb815ea697fd7150",
+      "name": "PMS",
+      "category": "TOOL",
+      "manufacturer": "Climet",
+      "catalogNumber": "CI-3100RS",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2022,
+          2023
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-9c4302acf4758440",
+      "name": "PMS-Pump Replacement",
+      "category": "TOOL",
+      "manufacturer": "NITTO",
+      "catalogNumber": "Medo VP0625",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2023,
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-902d80638ed7f827",
+      "name": "Pathlength Calibration Fluid Kit",
+      "category": "TOOL",
+      "manufacturer": "Biochrom",
+      "catalogNumber": "80-2140-09",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2023,
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-4e82b5759dae3510",
+      "name": "피스톤식부피계(Pipette)",
+      "category": "TOOL",
+      "manufacturer": "SARTORIUS",
+      "catalogNumber": "KRCLS130101",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2023,
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-afc06fb9c0571781",
+      "name": "Precision Iris Forceps Curved 10cm/EA",
+      "category": "TOOL",
+      "manufacturer": "Hirose",
+      "catalogNumber": "HC.37-611",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2023
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-457d869ce1b4a668",
+      "name": "S/T Forcep (150mm) / EA",
+      "category": "TOOL",
+      "manufacturer": "koreace",
+      "catalogNumber": "KA.11-05",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2023
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-68b62a2de7d446ea",
+      "name": "Dressing Forcep 14cm/ EA",
+      "category": "TOOL",
+      "manufacturer": "Hirose",
+      "catalogNumber": "HC.15-122",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2023
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-676e1bd39fac003a",
+      "name": "Forcep, STS, Straight, Sharp Tip, L130mm",
+      "category": "TOOL",
+      "manufacturer": "scilab",
+      "catalogNumber": "SL.For7033",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2023
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-9313e71130d5791f",
+      "name": "Forcep, STS, Straight, Blunt Tip,L115mm",
+      "category": "TOOL",
+      "manufacturer": "scilab",
+      "catalogNumber": "SL.For7022",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2023
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-8c6c716324455dbe",
+      "name": "Leica Disposable Blade (818 ), 50/pkg",
+      "category": "TOOL",
+      "manufacturer": "Leica",
+      "catalogNumber": "0358 38926",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2023
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-a322b5a2b0899430",
+      "name": "피스톤식부피계 (Pipette) 4-pack (10/100/200/1000)",
+      "category": "TOOL",
+      "manufacturer": "Sartorius",
+      "catalogNumber": "LH-729673",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2023
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-f05d6f619426647a",
+      "name": "Counting Chamber Cover (CE MARK 20mm x 26mm) , 10ea/pk",
+      "category": "TOOL",
+      "manufacturer": "Marienfeld",
+      "catalogNumber": "HSU-0350000",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-de8f24f130036521",
+      "name": "Transfer Pipette, PE, L65mm, Bulb 1.25ml, 0.1ml",
+      "category": "TOOL",
+      "manufacturer": "daihan",
+      "catalogNumber": "DH.Pip3031",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-6529bda35de83032",
+      "name": "Histobond Slide Glass/100/pk",
+      "category": "TOOL",
+      "manufacturer": "Marienfeld",
+      "catalogNumber": "HSU-0810001",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-445971d26b0692d7",
+      "name": "Mupid Gel Maker Set(Mupid-21, 2plus용 Acc.)",
+      "category": "TOOL",
+      "manufacturer": "Mupid",
+      "catalogNumber": "GM-L",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-cdf4887c0051d68f",
+      "name": "스텐선 시험관대",
+      "category": "TOOL",
+      "manufacturer": "Kroea ace",
+      "catalogNumber": "KA-11-34",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-1ea01f7e4a05589e",
+      "name": "IT5",
+      "category": "TOOL",
+      "manufacturer": "MERKS",
+      "catalogNumber": "SSVESPIT5",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2024
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-05ef65acdd295a2b",
+      "name": "피스톤식부피계(PM Package Tacta 200ul)",
+      "category": "TOOL",
+      "manufacturer": "Sartorius",
+      "catalogNumber": "LH-727075",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-be37a88d2dc02bc6",
+      "name": "피스톤식부피계(Basic Service Pipette)",
+      "category": "TOOL",
+      "manufacturer": "Sartorius",
+      "catalogNumber": "KRCLS190002",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-51bb5460874c968d",
+      "name": "IM-10, Mini Incubator",
+      "category": "TOOL",
+      "manufacturer": "제이오텍",
+      "catalogNumber": "IM-10",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    },
+    {
+      "id": "mp-3494304f798f3635",
+      "name": "Bullet Blender Storm Pro [1.5 mL screw and snap cap tubes]",
+      "category": "TOOL",
+      "manufacturer": "Next Advance",
+      "catalogNumber": "BT24M.EU",
+      "storageCondition": null,
+      "specifications": {
+        "internalGrade": null,
+        "testItem": null,
+        "purchaseYears": [
+          2025
+        ],
+        "source": [
+          "구매"
+        ]
+      }
+    }
+  ],
+  "productVendors": [
+    {
+      "id": "mpv-2363fb8e1841230d",
+      "productId": "mp-7be068222acb585b",
+      "vendorId": "mv-35407ab300bf845d",
+      "vendorName": "iss"
+    },
+    {
+      "id": "mpv-0e843fa6c75f7fc1",
+      "productId": "mp-7be068222acb585b",
+      "vendorId": "mv-85de88c5f8a45c0a",
+      "vendorName": "진올바이오"
+    },
+    {
+      "id": "mpv-01bf0770990035bc",
+      "productId": "mp-56ae5e2034fcf620",
+      "vendorId": "mv-caf6c02447418478",
+      "vendorName": "동일바이오테크"
+    },
+    {
+      "id": "mpv-2d31edd981f09175",
+      "productId": "mp-716413afa76fa84b",
+      "vendorId": "mv-9251dd79e7d63337",
+      "vendorName": "Sigma"
+    },
+    {
+      "id": "mpv-ffa418880e881cd2",
+      "productId": "mp-20ac5f0e840ce046",
+      "vendorId": "mv-ef21122624d89af0",
+      "vendorName": "성우라이프사이언스"
+    },
+    {
+      "id": "mpv-59ecbe8868f919da",
+      "productId": "mp-e4dbbffa3b637549",
+      "vendorId": "mv-e81f325a3beaa178",
+      "vendorName": "드림셀"
+    },
+    {
+      "id": "mpv-8b5e9d5f5537ee9c",
+      "productId": "mp-3d22b8374ee4ba0a",
+      "vendorId": "mv-ef21122624d89af0",
+      "vendorName": "성우라이프사이언스"
+    },
+    {
+      "id": "mpv-2d03e66d7bd48f15",
+      "productId": "mp-01c75f19e8338fbb",
+      "vendorId": "mv-47af231b98995cf2",
+      "vendorName": "킴앤프랜즈"
+    },
+    {
+      "id": "mpv-d955e23ab62a4385",
+      "productId": "mp-734624bea909c552",
+      "vendorId": "mv-048439d40216bc5f",
+      "vendorName": "SNC"
+    },
+    {
+      "id": "mpv-713b6a3f04f01b17",
+      "productId": "mp-443f6b2dacde89b6",
+      "vendorId": "mv-048439d40216bc5f",
+      "vendorName": "SNC"
+    },
+    {
+      "id": "mpv-327c732e9d754e2d",
+      "productId": "mp-443f6b2dacde89b6",
+      "vendorId": "mv-41c31e4eb3d05b10",
+      "vendorName": "다인바이오"
+    },
+    {
+      "id": "mpv-ce824db08f714c68",
+      "productId": "mp-0d515436bc1d9be0",
+      "vendorId": "mv-9251dd79e7d63337",
+      "vendorName": "Sigma"
+    },
+    {
+      "id": "mpv-ce615020496decb4",
+      "productId": "mp-30869ab5e2937471",
+      "vendorId": "mv-9251dd79e7d63337",
+      "vendorName": "Sigma"
+    },
+    {
+      "id": "mpv-bcf6256782bf7200",
+      "productId": "mp-df46e6fa24423622",
+      "vendorId": "mv-6e103f7fd88ceaca",
+      "vendorName": "Merck"
+    },
+    {
+      "id": "mpv-8f5ed963aa35d56e",
+      "productId": "mp-d5dde9a423b3a8b9",
+      "vendorId": "mv-705fb77bc6cdac47",
+      "vendorName": "웅비메디텍"
+    },
+    {
+      "id": "mpv-247b00f54672a862",
+      "productId": "mp-c4ff80c888f8b86b",
+      "vendorId": "mv-705fb77bc6cdac47",
+      "vendorName": "웅비메디텍"
+    },
+    {
+      "id": "mpv-6ad91b4baad2007b",
+      "productId": "mp-9eeb9e360c98d443",
+      "vendorId": "mv-20d8b90035fae07d",
+      "vendorName": "메디랩코리아"
+    },
+    {
+      "id": "mpv-0334346b4842ddac",
+      "productId": "mp-78d234ceed838e6d",
+      "vendorId": "mv-17190fa38db435fb",
+      "vendorName": "BMS"
+    },
+    {
+      "id": "mpv-920ff75fbf3fcde9",
+      "productId": "mp-a8d309f910b4633d",
+      "vendorId": "mv-a368df4d0051457b",
+      "vendorName": "바이오트레이더"
+    },
+    {
+      "id": "mpv-73723a0daba84c2a",
+      "productId": "mp-a8d309f910b4633d",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-28959768f26e9f64",
+      "productId": "mp-1c26c4b99e94f1fe",
+      "vendorId": "mv-7ea43463d0c5d814",
+      "vendorName": "서린바이오"
+    },
+    {
+      "id": "mpv-a985344e85d0371a",
+      "productId": "mp-1c26c4b99e94f1fe",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-ca90eef3a8b2aba8",
+      "productId": "mp-41df22578e8fe03c",
+      "vendorId": "mv-de2af28cc4793f39",
+      "vendorName": "비케이팜"
+    },
+    {
+      "id": "mpv-7b68d9ae7d9bea67",
+      "productId": "mp-41df22578e8fe03c",
+      "vendorId": "mv-169c6401ddfb7658",
+      "vendorName": "영동"
+    },
+    {
+      "id": "mpv-eb1dee2d3b40dbd1",
+      "productId": "mp-f56467f9dca3f608",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-acc966ec8eb14170",
+      "productId": "mp-338f47a331a1bd54",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-3c0db67ac0490d36",
+      "productId": "mp-8fe02d1738cf90c7",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-1a423759a5f02771",
+      "productId": "mp-bebb2dc677fcb861",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-a29400f26468c208",
+      "productId": "mp-a0d2794c665cbf7a",
+      "vendorId": "mv-ca7a02b16c61a2b3",
+      "vendorName": "Cellsafe"
+    },
+    {
+      "id": "mpv-1d63a6a3a997e6b6",
+      "productId": "mp-12684c05cb9a2f4f",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-14d43e52325eec9f",
+      "productId": "mp-1fe08b4a8a9a5993",
+      "vendorId": "mv-ef21122624d89af0",
+      "vendorName": "성우라이프사이언스"
+    },
+    {
+      "id": "mpv-2bf74ae8736c2214",
+      "productId": "mp-3ecdfdcb60ee0829",
+      "vendorId": "mv-47af231b98995cf2",
+      "vendorName": "킴앤프랜즈"
+    },
+    {
+      "id": "mpv-3e00961aff00b389",
+      "productId": "mp-43c9f8046fd23b86",
+      "vendorId": "mv-47af231b98995cf2",
+      "vendorName": "킴앤프랜즈"
+    },
+    {
+      "id": "mpv-8b537bf466946796",
+      "productId": "mp-383fd7ee37882abd",
+      "vendorId": "mv-9251dd79e7d63337",
+      "vendorName": "Sigma"
+    },
+    {
+      "id": "mpv-c505eaba4d4aef40",
+      "productId": "mp-ed9d37ebf8a07799",
+      "vendorId": "mv-9251dd79e7d63337",
+      "vendorName": "Sigma"
+    },
+    {
+      "id": "mpv-c1bd1ff43696b8ea",
+      "productId": "mp-6ad0f5a7837ee742",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-27af1f7acfbcf95b",
+      "productId": "mp-d79f4f484126bdb4",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-87a54ff66a53ba04",
+      "productId": "mp-ae7131216f433b95",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-f5b6a7e790925e74",
+      "productId": "mp-ae7131216f433b95",
+      "vendorId": "mv-65c6f219373a0420",
+      "vendorName": "한국비티비"
+    },
+    {
+      "id": "mpv-2f84dbf7a587a0b6",
+      "productId": "mp-512ad5b63320eba3",
+      "vendorId": "mv-65c6f219373a0420",
+      "vendorName": "한국비티비"
+    },
+    {
+      "id": "mpv-a4fe666b7f220e17",
+      "productId": "mp-18d505a17ba41b9f",
+      "vendorId": "mv-65c6f219373a0420",
+      "vendorName": "한국비티비"
+    },
+    {
+      "id": "mpv-11cfd76922dfb21b",
+      "productId": "mp-7ff0f50cb4666a60",
+      "vendorId": "mv-731acfca0beafd1b",
+      "vendorName": "Thermo Fisher"
+    },
+    {
+      "id": "mpv-66fd2204ba1270ca",
+      "productId": "mp-99bedd99a53585f3",
+      "vendorId": "mv-731acfca0beafd1b",
+      "vendorName": "Thermo Fisher"
+    },
+    {
+      "id": "mpv-6276a6c797dec0c9",
+      "productId": "mp-4a87d60d76450804",
+      "vendorId": "mv-65c6f219373a0420",
+      "vendorName": "한국비티비"
+    },
+    {
+      "id": "mpv-f049a4165cc5000d",
+      "productId": "mp-2e90b47a38c77e6c",
+      "vendorId": "mv-85de88c5f8a45c0a",
+      "vendorName": "진올바이오"
+    },
+    {
+      "id": "mpv-e91764bf38aa2797",
+      "productId": "mp-21e4f84ed3990595",
+      "vendorId": "mv-6e103f7fd88ceaca",
+      "vendorName": "Merck"
+    },
+    {
+      "id": "mpv-e6fafec8c0ffff54",
+      "productId": "mp-21e4f84ed3990595",
+      "vendorId": "mv-9251dd79e7d63337",
+      "vendorName": "Sigma"
+    },
+    {
+      "id": "mpv-cc63885af3f77cb1",
+      "productId": "mp-777bb8b4434471b4",
+      "vendorId": "mv-22a677d9ca3b0a6d",
+      "vendorName": "현일에스엔피랩"
+    },
+    {
+      "id": "mpv-f56594dacfcb84b9",
+      "productId": "mp-409e72f99a7e1a76",
+      "vendorId": "mv-7d48ea9f5785e438",
+      "vendorName": "웰호"
+    },
+    {
+      "id": "mpv-b02ea7c394761a9f",
+      "productId": "mp-bb68dec327f1c6ed",
+      "vendorId": "mv-9251dd79e7d63337",
+      "vendorName": "Sigma"
+    },
+    {
+      "id": "mpv-e9d35cb03eb7c920",
+      "productId": "mp-81ef0419d9f84469",
+      "vendorId": "mv-20d8b90035fae07d",
+      "vendorName": "메디랩코리아"
+    },
+    {
+      "id": "mpv-4bf2e08dab1a7fcc",
+      "productId": "mp-64c78c5aee0c3e54",
+      "vendorId": "mv-20d8b90035fae07d",
+      "vendorName": "메디랩코리아"
+    },
+    {
+      "id": "mpv-221c5bace08a92f9",
+      "productId": "mp-0e6752e7684776c9",
+      "vendorId": "mv-7d48ea9f5785e438",
+      "vendorName": "웰호"
+    },
+    {
+      "id": "mpv-9d51d4459b9b5716",
+      "productId": "mp-c9f4b8f56e91db51",
+      "vendorId": "mv-8445b56566291ff2",
+      "vendorName": "메스디아"
+    },
+    {
+      "id": "mpv-cea7c1417d50db41",
+      "productId": "mp-c9f4b8f56e91db51",
+      "vendorId": "mv-2cf5a4b0e53e1986",
+      "vendorName": "유정메디텍"
+    },
+    {
+      "id": "mpv-9095fc5e2a0fe0f0",
+      "productId": "mp-efe4a3088ec6b13f",
+      "vendorId": "mv-8936e780c71abb18",
+      "vendorName": "코람데오랩"
+    },
+    {
+      "id": "mpv-7999bea06b54bbb1",
+      "productId": "mp-ed0c720d373d7ac8",
+      "vendorId": "mv-b62dabc37418ca44",
+      "vendorName": "BNN KOREA"
+    },
+    {
+      "id": "mpv-661bfbaa2c70e1cf",
+      "productId": "mp-8aab084579b7e890",
+      "vendorId": "mv-b62dabc37418ca44",
+      "vendorName": "BNN KOREA"
+    },
+    {
+      "id": "mpv-725ad524ed5c2eca",
+      "productId": "mp-beacd6d6d0cf4e6e",
+      "vendorId": "mv-b62dabc37418ca44",
+      "vendorName": "BNN KOREA"
+    },
+    {
+      "id": "mpv-261189f69f7928f5",
+      "productId": "mp-baa5d041e5caa54d",
+      "vendorId": "mv-e81f325a3beaa178",
+      "vendorName": "드림셀"
+    },
+    {
+      "id": "mpv-22fe28cf5826db7d",
+      "productId": "mp-4e2604c079903445",
+      "vendorId": "mv-2cf5a4b0e53e1986",
+      "vendorName": "유정메디텍"
+    },
+    {
+      "id": "mpv-c43225150dcafaf4",
+      "productId": "mp-20fdd260fc9865c2",
+      "vendorId": "mv-2cf5a4b0e53e1986",
+      "vendorName": "유정메디텍"
+    },
+    {
+      "id": "mpv-d2c745c729b03d1a",
+      "productId": "mp-777b80587671b135",
+      "vendorId": "mv-2cf5a4b0e53e1986",
+      "vendorName": "유정메디텍"
+    },
+    {
+      "id": "mpv-cbe36c205bf81fcf",
+      "productId": "mp-5680c3f1db316eba",
+      "vendorId": "mv-41c31e4eb3d05b10",
+      "vendorName": "다인바이오"
+    },
+    {
+      "id": "mpv-fca7c5feb91ab559",
+      "productId": "mp-b84b35a1ce7ab172",
+      "vendorId": "mv-048439d40216bc5f",
+      "vendorName": "SNC"
+    },
+    {
+      "id": "mpv-e62729da3f5d3622",
+      "productId": "mp-e1fa409d48ac0a15",
+      "vendorId": "mv-20d8b90035fae07d",
+      "vendorName": "메디랩코리아"
+    },
+    {
+      "id": "mpv-e7a4d5a4bb68a70a",
+      "productId": "mp-52455a044362cd2b",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-d99f61da5d27ae23",
+      "productId": "mp-3fd4788ddd23ad54",
+      "vendorId": "mv-a368df4d0051457b",
+      "vendorName": "바이오트레이더"
+    },
+    {
+      "id": "mpv-3cd3974fc9a91ed9",
+      "productId": "mp-1630b7f6b92c1399",
+      "vendorId": "mv-9251dd79e7d63337",
+      "vendorName": "Sigma"
+    },
+    {
+      "id": "mpv-8ccc00d4aa0caa7f",
+      "productId": "mp-f96d8921718ba786",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-66e0bb17406b975c",
+      "productId": "mp-6f1b4da30f5c222f",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-d5d3a512eed97897",
+      "productId": "mp-f7bccb0fcec463b9",
+      "vendorId": "mv-705fb77bc6cdac47",
+      "vendorName": "웅비메디텍"
+    },
+    {
+      "id": "mpv-d923cd538c9726b3",
+      "productId": "mp-9bb54d231fb50c41",
+      "vendorId": "mv-705fb77bc6cdac47",
+      "vendorName": "웅비메디텍"
+    },
+    {
+      "id": "mpv-406127427af3d36d",
+      "productId": "mp-387f2fb095a34aa4",
+      "vendorId": "mv-e81f325a3beaa178",
+      "vendorName": "드림셀"
+    },
+    {
+      "id": "mpv-4f5f45b5b7536fa6",
+      "productId": "mp-d203e0b1ab433929",
+      "vendorId": "mv-9251dd79e7d63337",
+      "vendorName": "Sigma"
+    },
+    {
+      "id": "mpv-99a6d40a618f68b2",
+      "productId": "mp-0ecef4c6d256a9ee",
+      "vendorId": "mv-ec16a428bb56b564",
+      "vendorName": "한강"
+    },
+    {
+      "id": "mpv-0eaf296ac1149a56",
+      "productId": "mp-0c62357f29301855",
+      "vendorId": "mv-9251dd79e7d63337",
+      "vendorName": "Sigma"
+    },
+    {
+      "id": "mpv-9d97e780c325a48c",
+      "productId": "mp-70a2f4ac078eb923",
+      "vendorId": "mv-6e103f7fd88ceaca",
+      "vendorName": "Merck"
+    },
+    {
+      "id": "mpv-e86fcc2a5843d31c",
+      "productId": "mp-9d075fb90179fc39",
+      "vendorId": "mv-6e103f7fd88ceaca",
+      "vendorName": "Merck"
+    },
+    {
+      "id": "mpv-3f7db379516ecfb9",
+      "productId": "mp-d8a647a049cae6a0",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-d63832591b0c1244",
+      "productId": "mp-9e9f69e8a3f675cd",
+      "vendorId": "mv-ec16a428bb56b564",
+      "vendorName": "한강"
+    },
+    {
+      "id": "mpv-617e4c5a36af9592",
+      "productId": "mp-0f3bcc8712138d06",
+      "vendorId": "mv-ec16a428bb56b564",
+      "vendorName": "한강"
+    },
+    {
+      "id": "mpv-9b914d08c6a97cc6",
+      "productId": "mp-c88861ef93d6d981",
+      "vendorId": "mv-ec16a428bb56b564",
+      "vendorName": "한강"
+    },
+    {
+      "id": "mpv-307b7f98271da75b",
+      "productId": "mp-644f5094eed9825e",
+      "vendorId": "mv-ec16a428bb56b564",
+      "vendorName": "한강"
+    },
+    {
+      "id": "mpv-0f0e35cf9c4db101",
+      "productId": "mp-c6e4371a42d5fb1e",
+      "vendorId": "mv-048439d40216bc5f",
+      "vendorName": "SNC"
+    },
+    {
+      "id": "mpv-f92c0feca20e9ed6",
+      "productId": "mp-8df4116f6d6b90d7",
+      "vendorId": "mv-b62dabc37418ca44",
+      "vendorName": "BNN KOREA"
+    },
+    {
+      "id": "mpv-ce37cf57757bcf64",
+      "productId": "mp-95200362e3fc1a50",
+      "vendorId": "mv-b62dabc37418ca44",
+      "vendorName": "BNN KOREA"
+    },
+    {
+      "id": "mpv-be65b8f3dc11f287",
+      "productId": "mp-c53f2ef42620f919",
+      "vendorId": "mv-20d8b90035fae07d",
+      "vendorName": "메디랩코리아"
+    },
+    {
+      "id": "mpv-c513164b21e97bfd",
+      "productId": "mp-ee7191f7cf09a573",
+      "vendorId": "mv-9251dd79e7d63337",
+      "vendorName": "Sigma"
+    },
+    {
+      "id": "mpv-2568a041be815389",
+      "productId": "mp-3126c1daa1995ae4",
+      "vendorId": "mv-0af728b50e66d769",
+      "vendorName": "큐어바이오"
+    },
+    {
+      "id": "mpv-a85a6468c415823d",
+      "productId": "mp-7af0bbd08a0928eb",
+      "vendorId": "mv-ec16a428bb56b564",
+      "vendorName": "한강"
+    },
+    {
+      "id": "mpv-8fdee920c1b31f37",
+      "productId": "mp-29fcfc27f4cf1791",
+      "vendorId": "mv-ec16a428bb56b564",
+      "vendorName": "한강"
+    },
+    {
+      "id": "mpv-2f60088d450cee5d",
+      "productId": "mp-57131a7294fe5f4f",
+      "vendorId": "mv-ec16a428bb56b564",
+      "vendorName": "한강"
+    },
+    {
+      "id": "mpv-de133598829a7d43",
+      "productId": "mp-5e2a4b046429ad06",
+      "vendorId": "mv-ec16a428bb56b564",
+      "vendorName": "한강"
+    },
+    {
+      "id": "mpv-857a35dc7a3da525",
+      "productId": "mp-27d52e09fe4cfb04",
+      "vendorId": "mv-ec16a428bb56b564",
+      "vendorName": "한강"
+    },
+    {
+      "id": "mpv-e810308a6414baad",
+      "productId": "mp-d7a43873bbbf199f",
+      "vendorId": "mv-17190fa38db435fb",
+      "vendorName": "BMS"
+    },
+    {
+      "id": "mpv-499c928b1b16ab81",
+      "productId": "mp-9b9f96afe4a5f69f",
+      "vendorId": "mv-17190fa38db435fb",
+      "vendorName": "BMS"
+    },
+    {
+      "id": "mpv-ed54f7d644d222bd",
+      "productId": "mp-3fac8e8b379f3aee",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-fc5fa16fc54894f1",
+      "productId": "mp-0eab31d695e90b1d",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-04eb2ed925576ef4",
+      "productId": "mp-1da95eec8ce04b84",
+      "vendorId": "mv-1b7d95dc39eae368",
+      "vendorName": "㈜카스콤"
+    },
+    {
+      "id": "mpv-4466ec391515e4ea",
+      "productId": "mp-53937267dd210723",
+      "vendorId": "mv-21bf948f4b8aa55d",
+      "vendorName": "세니젠"
+    },
+    {
+      "id": "mpv-cb70df2a640cbf67",
+      "productId": "mp-e4245da0f6cdaae5",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-4a30be94c9dfb7a6",
+      "productId": "mp-812d58cbb43655c9",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-84de7b98c02ed4ca",
+      "productId": "mp-595a859c5dcf30c8",
+      "vendorId": "mv-38272bc5356f3be1",
+      "vendorName": "고려에이스"
+    },
+    {
+      "id": "mpv-cf385dadd27d6e53",
+      "productId": "mp-595a859c5dcf30c8",
+      "vendorId": "mv-4950f1ecdb4b5bda",
+      "vendorName": "고려에이스과학"
+    },
+    {
+      "id": "mpv-3671b5fc5e1ec3ae",
+      "productId": "mp-94d229011ec0088c",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-e7b44b2e774757ae",
+      "productId": "mp-ecd0b55896cc5776",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-8b8f1174b19a3db1",
+      "productId": "mp-83b6d2a69633780f",
+      "vendorId": "mv-9251dd79e7d63337",
+      "vendorName": "Sigma"
+    },
+    {
+      "id": "mpv-aa433662bccd55e3",
+      "productId": "mp-605ca4d29dfec1ce",
+      "vendorId": "mv-8936e780c71abb18",
+      "vendorName": "코람데오랩"
+    },
+    {
+      "id": "mpv-5f1598bfb2c24720",
+      "productId": "mp-e90fcbb77ac58fc3",
+      "vendorId": "mv-900c7c40e82e74c6",
+      "vendorName": "대일사이언스"
+    },
+    {
+      "id": "mpv-bf2a5e732eb720d6",
+      "productId": "mp-3b1a71a66986c1cb",
+      "vendorId": "mv-1b7d95dc39eae368",
+      "vendorName": "㈜카스콤"
+    },
+    {
+      "id": "mpv-743659ad46354637",
+      "productId": "mp-b1685614e819f04a",
+      "vendorId": "mv-1b7d95dc39eae368",
+      "vendorName": "㈜카스콤"
+    },
+    {
+      "id": "mpv-25209b279ce10737",
+      "productId": "mp-243c848c15696a6c",
+      "vendorId": "mv-1b7d95dc39eae368",
+      "vendorName": "㈜카스콤"
+    },
+    {
+      "id": "mpv-7862821a37b123c3",
+      "productId": "mp-5d96f7a1645a46b2",
+      "vendorId": "mv-731acfca0beafd1b",
+      "vendorName": "Thermo Fisher"
+    },
+    {
+      "id": "mpv-b6d2883b1b09a8b1",
+      "productId": "mp-2458641c15681e3f",
+      "vendorId": "mv-731acfca0beafd1b",
+      "vendorName": "Thermo Fisher"
+    },
+    {
+      "id": "mpv-e53f0b544eec4b4b",
+      "productId": "mp-6d484b9e9f0cfbd5",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-0f75d5e7fce3f242",
+      "productId": "mp-50d846acc117fa3f",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-42bcfe8ba550c7d8",
+      "productId": "mp-d675d200afb01913",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-7d172961982e7e43",
+      "productId": "mp-1513f68a516915bc",
+      "vendorId": "mv-731acfca0beafd1b",
+      "vendorName": "Thermo Fisher"
+    },
+    {
+      "id": "mpv-4aca4c0b5af61e4f",
+      "productId": "mp-d632c78e16d79540",
+      "vendorId": "mv-0babe014ea03d0c3",
+      "vendorName": "바이오브릿지"
+    },
+    {
+      "id": "mpv-a8a44038d65f7f67",
+      "productId": "mp-d632c78e16d79540",
+      "vendorId": "mv-65c6f219373a0420",
+      "vendorName": "한국비티비"
+    },
+    {
+      "id": "mpv-b9ab5ebb02e64b91",
+      "productId": "mp-105505aafab07968",
+      "vendorId": "mv-ec16a428bb56b564",
+      "vendorName": "한강"
+    },
+    {
+      "id": "mpv-12db55e463b34b17",
+      "productId": "mp-8c68e0381429a83f",
+      "vendorId": "mv-b62dabc37418ca44",
+      "vendorName": "BNN KOREA"
+    },
+    {
+      "id": "mpv-48796579bba411c5",
+      "productId": "mp-63207f598b627a9e",
+      "vendorId": "mv-b62dabc37418ca44",
+      "vendorName": "BNN KOREA"
+    },
+    {
+      "id": "mpv-e67bdba57a01475b",
+      "productId": "mp-ef167806369f1762",
+      "vendorId": "mv-b62dabc37418ca44",
+      "vendorName": "BNN KOREA"
+    },
+    {
+      "id": "mpv-e22a019149438ebb",
+      "productId": "mp-575ad6483013ebeb",
+      "vendorId": "mv-e81f325a3beaa178",
+      "vendorName": "드림셀"
+    },
+    {
+      "id": "mpv-db33b201e4bed3a5",
+      "productId": "mp-55d41460af50fff5",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-720214848c3d98f2",
+      "productId": "mp-89a5a864cab2c5bd",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-b0d4da050ec8f30c",
+      "productId": "mp-3a2b2b65874dff0d",
+      "vendorId": "mv-fabf1d1cacfd138f",
+      "vendorName": "에이스사이언스"
+    },
+    {
+      "id": "mpv-03030cc29dc30132",
+      "productId": "mp-3a2b2b65874dff0d",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-22dc0328a796e89e",
+      "productId": "mp-f4689ec371ed7a37",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-54290290a81a0939",
+      "productId": "mp-f8a43b958a40a950",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-5ad3ffd97763b46f",
+      "productId": "mp-02bff66bec42235d",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-fbb4522df43a4622",
+      "productId": "mp-c95c7c61898cb702",
+      "vendorId": "mv-fabf1d1cacfd138f",
+      "vendorName": "에이스사이언스"
+    },
+    {
+      "id": "mpv-c26860a1c123b0c6",
+      "productId": "mp-c95c7c61898cb702",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-07d087b4905643b8",
+      "productId": "mp-e90350ed25196e85",
+      "vendorId": "mv-fabf1d1cacfd138f",
+      "vendorName": "에이스사이언스"
+    },
+    {
+      "id": "mpv-22d782868d3d714a",
+      "productId": "mp-07d980dd439f1f24",
+      "vendorId": "mv-65c6f219373a0420",
+      "vendorName": "한국비티비"
+    },
+    {
+      "id": "mpv-e0b0d3fb36783f65",
+      "productId": "mp-b2ec3e1016781490",
+      "vendorId": "mv-5fe49bfbe5806f32",
+      "vendorName": "다윈바이오텍"
+    },
+    {
+      "id": "mpv-e22dadcde278d85a",
+      "productId": "mp-ae100bd1e56076fc",
+      "vendorId": "mv-65c6f219373a0420",
+      "vendorName": "한국비티비"
+    },
+    {
+      "id": "mpv-bf15440d0c1dddab",
+      "productId": "mp-205aa7be8d8fee20",
+      "vendorId": "mv-0babe014ea03d0c3",
+      "vendorName": "바이오브릿지"
+    },
+    {
+      "id": "mpv-a8dfbf7df1e5a941",
+      "productId": "mp-1e0b25d759f0ae4e",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-77129c07f71efd75",
+      "productId": "mp-040a579659488eb9",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-5dc7cf9a8ffea37c",
+      "productId": "mp-1fa59758dc84bfc8",
+      "vendorId": "mv-14b7085083b2013f",
+      "vendorName": "DKSH"
+    },
+    {
+      "id": "mpv-2a2675f1430ddcaa",
+      "productId": "mp-c87caea78da274f5",
+      "vendorId": "mv-9251dd79e7d63337",
+      "vendorName": "Sigma"
+    },
+    {
+      "id": "mpv-91c3d0370fcc1101",
+      "productId": "mp-30fc0bc7ee3fd4d6",
+      "vendorId": "mv-7ea43463d0c5d814",
+      "vendorName": "서린바이오"
+    },
+    {
+      "id": "mpv-b03c0f6cedb0ace1",
+      "productId": "mp-13cf7d3dfb370ee4",
+      "vendorId": "mv-b53fb6ad6e10e45c",
+      "vendorName": "가남교역"
+    },
+    {
+      "id": "mpv-2d925cb95cc4f256",
+      "productId": "mp-a36d7f7d90260610",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-ad564f26ccaee38c",
+      "productId": "mp-4852552e774adb80",
+      "vendorId": "mv-0babe014ea03d0c3",
+      "vendorName": "바이오브릿지"
+    },
+    {
+      "id": "mpv-d77b55f7d6fe6563",
+      "productId": "mp-144e7784ac1ded50",
+      "vendorId": "mv-fabf1d1cacfd138f",
+      "vendorName": "에이스사이언스"
+    },
+    {
+      "id": "mpv-1626af0a64b14be2",
+      "productId": "mp-410721a8bd45e2d7",
+      "vendorId": "mv-e35ad93b87697ada",
+      "vendorName": "라이프 테크놀로지스"
+    },
+    {
+      "id": "mpv-f4a8dbd259a6f251",
+      "productId": "mp-410721a8bd45e2d7",
+      "vendorId": "mv-764418068721e701",
+      "vendorName": "보성과학"
+    },
+    {
+      "id": "mpv-b6bd3b8b2c8999c1",
+      "productId": "mp-06116a31b5782573",
+      "vendorId": "mv-fb069249d54984c6",
+      "vendorName": "파워랩"
+    },
+    {
+      "id": "mpv-5c5d497a3ea2b2f2",
+      "productId": "mp-b901a9cb4edd1589",
+      "vendorId": "mv-591dbcb2d48f405f",
+      "vendorName": "BST"
+    },
+    {
+      "id": "mpv-ea18eccd8dcee3ee",
+      "productId": "mp-e15dfaf36cfaf392",
+      "vendorId": "mv-7940d15f8b3332a0",
+      "vendorName": "코리아인스트루먼트"
+    },
+    {
+      "id": "mpv-057c5fc298dd53e2",
+      "productId": "mp-e15dfaf36cfaf392",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-1bb98f8ffd258e3b",
+      "productId": "mp-0b7059f4a1563bcc",
+      "vendorId": "mv-7940d15f8b3332a0",
+      "vendorName": "코리아인스트루먼트"
+    },
+    {
+      "id": "mpv-b6238b7ebb25875f",
+      "productId": "mp-120f1e521c0e4814",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-4feaa18322e3c8aa",
+      "productId": "mp-770403ceecf1b902",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-b2e20e6cdbce1087",
+      "productId": "mp-ddabe59d34aef947",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-7f14e550392d9115",
+      "productId": "mp-ccaee3c471bd56cd",
+      "vendorId": "mv-e35ad93b87697ada",
+      "vendorName": "라이프 테크놀로지스"
+    },
+    {
+      "id": "mpv-ca7514dc9b68f88c",
+      "productId": "mp-e8da75f969538d76",
+      "vendorId": "mv-e35ad93b87697ada",
+      "vendorName": "라이프 테크놀로지스"
+    },
+    {
+      "id": "mpv-2ff62166f89b0509",
+      "productId": "mp-6f750bc0f7410c48",
+      "vendorId": "mv-e35ad93b87697ada",
+      "vendorName": "라이프 테크놀로지스"
+    },
+    {
+      "id": "mpv-66709da06aca1775",
+      "productId": "mp-7ed49ea5bf9b8566",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-5fbd6c628e1576b5",
+      "productId": "mp-ce5ab265c0570355",
+      "vendorId": "mv-7940d15f8b3332a0",
+      "vendorName": "코리아인스트루먼트"
+    },
+    {
+      "id": "mpv-b35d7cdecba6c02b",
+      "productId": "mp-bbc99f690daf6a12",
+      "vendorId": "mv-7940d15f8b3332a0",
+      "vendorName": "코리아인스트루먼트"
+    },
+    {
+      "id": "mpv-f79d8642e84cd9e9",
+      "productId": "mp-24f88ee36e9ca82b",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-e83c379c62b1ae1e",
+      "productId": "mp-dbf93db8865e749b",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-b85662fa06560d92",
+      "productId": "mp-fbc38c53ea7c0c7e",
+      "vendorId": "mv-7940d15f8b3332a0",
+      "vendorName": "코리아인스트루먼트"
+    },
+    {
+      "id": "mpv-0d88d5dd1c359091",
+      "productId": "mp-d87349b19f4de763",
+      "vendorId": "mv-2a0bf9c17ebb4679",
+      "vendorName": "나비엠알오"
+    },
+    {
+      "id": "mpv-6a5d240ecf568345",
+      "productId": "mp-3b91ecd8e5a976f9",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-85c6ebfd2993a4a4",
+      "productId": "mp-e8a16d4c0f6f789e",
+      "vendorId": "mv-591dbcb2d48f405f",
+      "vendorName": "BST"
+    },
+    {
+      "id": "mpv-df90c72ab7579460",
+      "productId": "mp-e8a16d4c0f6f789e",
+      "vendorId": "mv-c825e5a493fc0555",
+      "vendorName": "바이오시스텍"
+    },
+    {
+      "id": "mpv-d64d436fd5c90e2f",
+      "productId": "mp-a7c3fc10d59ebc23",
+      "vendorId": "mv-591dbcb2d48f405f",
+      "vendorName": "BST"
+    },
+    {
+      "id": "mpv-15a58151c6694c9b",
+      "productId": "mp-a7c3fc10d59ebc23",
+      "vendorId": "mv-c825e5a493fc0555",
+      "vendorName": "바이오시스텍"
+    },
+    {
+      "id": "mpv-76859e739a82f9f7",
+      "productId": "mp-dd40c6bb70163bda",
+      "vendorId": "mv-591dbcb2d48f405f",
+      "vendorName": "BST"
+    },
+    {
+      "id": "mpv-36527ad24e926fb0",
+      "productId": "mp-dd40c6bb70163bda",
+      "vendorId": "mv-c825e5a493fc0555",
+      "vendorName": "바이오시스텍"
+    },
+    {
+      "id": "mpv-176ab167d3267bf9",
+      "productId": "mp-583531fad2b86d66",
+      "vendorId": "mv-c825e5a493fc0555",
+      "vendorName": "바이오시스텍"
+    },
+    {
+      "id": "mpv-f5346db5cfa6db24",
+      "productId": "mp-5a5b95ddc9bff82a",
+      "vendorId": "mv-8192ab2eeb010b9d",
+      "vendorName": "I Measure"
+    },
+    {
+      "id": "mpv-44ced4b3fcfc6146",
+      "productId": "mp-5a5b95ddc9bff82a",
+      "vendorId": "mv-7940d15f8b3332a0",
+      "vendorName": "코리아인스트루먼트"
+    },
+    {
+      "id": "mpv-a0011134a251eb56",
+      "productId": "mp-285ad519c13a3e19",
+      "vendorId": "mv-22b5d79704a70584",
+      "vendorName": "동일시마즈스펙트롬"
+    },
+    {
+      "id": "mpv-c79f79ee30e0baa8",
+      "productId": "mp-7d91ebe9e4bd48b3",
+      "vendorId": "mv-7940d15f8b3332a0",
+      "vendorName": "코리아인스트루먼트"
+    },
+    {
+      "id": "mpv-532e8d8e177eb831",
+      "productId": "mp-ffe2240da116fd17",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-a5c0e2e85cb3901e",
+      "productId": "mp-502b7f1921a2af09",
+      "vendorId": "mv-764418068721e701",
+      "vendorName": "보성과학"
+    },
+    {
+      "id": "mpv-dea4b3c101361920",
+      "productId": "mp-dd707cf110109433",
+      "vendorId": "mv-731acfca0beafd1b",
+      "vendorName": "Thermo Fisher"
+    },
+    {
+      "id": "mpv-2adf1ac7fc24dacb",
+      "productId": "mp-02fb162d2172650f",
+      "vendorId": "mv-3d8c661daa665738",
+      "vendorName": "코리아스탬프"
+    },
+    {
+      "id": "mpv-c8c8057d8e1e69cb",
+      "productId": "mp-67e8c94f36ea8d5e",
+      "vendorId": "mv-7940d15f8b3332a0",
+      "vendorName": "코리아인스트루먼트"
+    },
+    {
+      "id": "mpv-d7b804adf73d9174",
+      "productId": "mp-238203a6d5969158",
+      "vendorId": "mv-7940d15f8b3332a0",
+      "vendorName": "코리아인스트루먼트"
+    },
+    {
+      "id": "mpv-b0ad7902f61ee182",
+      "productId": "mp-8acd4116a94b11ea",
+      "vendorId": "mv-7940d15f8b3332a0",
+      "vendorName": "코리아인스트루먼트"
+    },
+    {
+      "id": "mpv-cf80e6a9598829fe",
+      "productId": "mp-f66528ef96962514",
+      "vendorId": "mv-731acfca0beafd1b",
+      "vendorName": "Thermo Fisher"
+    },
+    {
+      "id": "mpv-e7a1539cecae22b6",
+      "productId": "mp-53dcd618e337b166",
+      "vendorId": "mv-731acfca0beafd1b",
+      "vendorName": "Thermo Fisher"
+    },
+    {
+      "id": "mpv-4f4ac9a92753b439",
+      "productId": "mp-946fba30bfacf0bf",
+      "vendorId": "mv-731acfca0beafd1b",
+      "vendorName": "Thermo Fisher"
+    },
+    {
+      "id": "mpv-6eb83a53fc1d1297",
+      "productId": "mp-97c57f5e5a370548",
+      "vendorId": "mv-731acfca0beafd1b",
+      "vendorName": "Thermo Fisher"
+    },
+    {
+      "id": "mpv-639250f432586913",
+      "productId": "mp-32eb95639078a252",
+      "vendorId": "mv-dea05cef574cb8b8",
+      "vendorName": "레보딕스"
+    },
+    {
+      "id": "mpv-fed97e4f50e1fa1a",
+      "productId": "mp-9e64bb982e51c16f",
+      "vendorId": "mv-3d620f791f433536",
+      "vendorName": "다윈바이오"
+    },
+    {
+      "id": "mpv-447d05eb8e524a1a",
+      "productId": "mp-8241ebb366d20809",
+      "vendorId": "mv-3d620f791f433536",
+      "vendorName": "다윈바이오"
+    },
+    {
+      "id": "mpv-c5904738e385cacb",
+      "productId": "mp-8bef3c6daa947524",
+      "vendorId": "mv-3d620f791f433536",
+      "vendorName": "다윈바이오"
+    },
+    {
+      "id": "mpv-53a348596233a6b5",
+      "productId": "mp-8d4b5ad066d2361b",
+      "vendorId": "mv-3d620f791f433536",
+      "vendorName": "다윈바이오"
+    },
+    {
+      "id": "mpv-8393a29f8770efb9",
+      "productId": "mp-b68b5e0d4ae2cacd",
+      "vendorId": "mv-3d620f791f433536",
+      "vendorName": "다윈바이오"
+    },
+    {
+      "id": "mpv-220fdfa1ec26806f",
+      "productId": "mp-1f781b259958b4b6",
+      "vendorId": "mv-3d620f791f433536",
+      "vendorName": "다윈바이오"
+    },
+    {
+      "id": "mpv-21cfa5305ea8b8f9",
+      "productId": "mp-208a2b26eb6e4c73",
+      "vendorId": "mv-3d620f791f433536",
+      "vendorName": "다윈바이오"
+    },
+    {
+      "id": "mpv-722e8d109d34eb21",
+      "productId": "mp-fc8a8f23934518a0",
+      "vendorId": "mv-3d620f791f433536",
+      "vendorName": "다윈바이오"
+    },
+    {
+      "id": "mpv-44066a90548fa1a8",
+      "productId": "mp-b8b9489421fd58a4",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-791f8c6816080366",
+      "productId": "mp-1c2f241a7a81952d",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-9d824305df8d26fb",
+      "productId": "mp-cf4d4fd1a382f5f2",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-8076de1f37cc6415",
+      "productId": "mp-3cead6d16b2edc7c",
+      "vendorId": "mv-2c1b9a9b7cda5157",
+      "vendorName": "에스비상사"
+    },
+    {
+      "id": "mpv-cf4e74668e64ee84",
+      "productId": "mp-1e45e69ac2ef18da",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-535c5db4709dcfe1",
+      "productId": "mp-fb4f06e15883f3ec",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-a79c33674a1431dc",
+      "productId": "mp-35743d71f4f1f71c",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-88b12edc3a22005b",
+      "productId": "mp-a4d9571ddc3c4546",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-1e447f75bb6e9d31",
+      "productId": "mp-0d46f217b936c35f",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-f630e57fb3c996d3",
+      "productId": "mp-4de4b92606d6cb3a",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-029a0d8317828ee8",
+      "productId": "mp-0a307b0ac060b319",
+      "vendorId": "mv-731acfca0beafd1b",
+      "vendorName": "Thermo Fisher"
+    },
+    {
+      "id": "mpv-4516f789e537344e",
+      "productId": "mp-9674386947a441c8",
+      "vendorId": "mv-35fb5e2fdfc9469a",
+      "vendorName": "그린플로우테크"
+    },
+    {
+      "id": "mpv-431f6b5cc848106a",
+      "productId": "mp-5807f34cc034241f",
+      "vendorId": "mv-32222e2432f8b5fd",
+      "vendorName": "바이오프리"
+    },
+    {
+      "id": "mpv-3b3a831b599e21c1",
+      "productId": "mp-5807f34cc034241f",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-4d9a062320fac6c9",
+      "productId": "mp-c56b3016f64d72e0",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-9046872d69209552",
+      "productId": "mp-83a8dc50b071d3d4",
+      "vendorId": "mv-731acfca0beafd1b",
+      "vendorName": "Thermo Fisher"
+    },
+    {
+      "id": "mpv-579c53aa0999fe9e",
+      "productId": "mp-489e4005a58cb79a",
+      "vendorId": "mv-b62dabc37418ca44",
+      "vendorName": "BNN KOREA"
+    },
+    {
+      "id": "mpv-8ea8464527e5352d",
+      "productId": "mp-cf057eaed4d047e9",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-72e67bdf9e101ef8",
+      "productId": "mp-81d54b7ad3786dca",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-0633721a2319ba77",
+      "productId": "mp-efdaf78d051c303b",
+      "vendorId": "mv-7940d15f8b3332a0",
+      "vendorName": "코리아인스트루먼트"
+    },
+    {
+      "id": "mpv-4b0db78b9515a96c",
+      "productId": "mp-09f824d1426bf5d9",
+      "vendorId": "mv-d75b330d8360ed6a",
+      "vendorName": "예스고24"
+    },
+    {
+      "id": "mpv-acc89a96a10e8c94",
+      "productId": "mp-87c687e23a2cd981",
+      "vendorId": "mv-b21fd4b00b16e76c",
+      "vendorName": "택산하이텍"
+    },
+    {
+      "id": "mpv-2f77d6d2375665bd",
+      "productId": "mp-d69d6b763081890f",
+      "vendorId": "mv-3d620f791f433536",
+      "vendorName": "다윈바이오"
+    },
+    {
+      "id": "mpv-04dde9cec2ade171",
+      "productId": "mp-b08125f07b9e91b8",
+      "vendorId": "mv-3d620f791f433536",
+      "vendorName": "다윈바이오"
+    },
+    {
+      "id": "mpv-d3f2079d7ee70a49",
+      "productId": "mp-6f94963c379fb292",
+      "vendorId": "mv-8192ab2eeb010b9d",
+      "vendorName": "I Measure"
+    },
+    {
+      "id": "mpv-efcf02165c06b934",
+      "productId": "mp-3feea501392d5db2",
+      "vendorId": "mv-7940d15f8b3332a0",
+      "vendorName": "코리아인스트루먼트"
+    },
+    {
+      "id": "mpv-277c36a9ad3fcaf3",
+      "productId": "mp-41b9a96740158214",
+      "vendorId": "mv-7940d15f8b3332a0",
+      "vendorName": "코리아인스트루먼트"
+    },
+    {
+      "id": "mpv-c363d4d679fa88b8",
+      "productId": "mp-d7831c32bc0f28d1",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-77e785d34c17424a",
+      "productId": "mp-32ad98616083aae2",
+      "vendorId": "mv-b62dabc37418ca44",
+      "vendorName": "BNN KOREA"
+    },
+    {
+      "id": "mpv-791a65e9582a92ae",
+      "productId": "mp-85659cfb0356a498",
+      "vendorId": "mv-591dbcb2d48f405f",
+      "vendorName": "BST"
+    },
+    {
+      "id": "mpv-954c3120bfeb5e9b",
+      "productId": "mp-85659cfb0356a498",
+      "vendorId": "mv-c825e5a493fc0555",
+      "vendorName": "바이오시스텍"
+    },
+    {
+      "id": "mpv-e91b5781477c5ebe",
+      "productId": "mp-c4ad2bd2fee73e1f",
+      "vendorId": "mv-0014592ca5782988",
+      "vendorName": "ATS"
+    },
+    {
+      "id": "mpv-16d75007223f9709",
+      "productId": "mp-c390fb376787b488",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-adbc1d6b6194c389",
+      "productId": "mp-e531c433192c5d9a",
+      "vendorId": "mv-731acfca0beafd1b",
+      "vendorName": "Thermo Fisher"
+    },
+    {
+      "id": "mpv-e4d534dd627f3729",
+      "productId": "mp-4671164b60db49b4",
+      "vendorId": "mv-731acfca0beafd1b",
+      "vendorName": "Thermo Fisher"
+    },
+    {
+      "id": "mpv-93bdc4ab6eb984a6",
+      "productId": "mp-14a50412d89f0e0c",
+      "vendorId": "mv-410e97c20b22e189",
+      "vendorName": "우성크라이어텍"
+    },
+    {
+      "id": "mpv-855a298fc49b71bc",
+      "productId": "mp-4527f7b9dfa5d6e0",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-0f4a82c8262b0f30",
+      "productId": "mp-3fc97b4785c6e481",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-eaeb453d980df095",
+      "productId": "mp-53eda66d840460a9",
+      "vendorId": "mv-7940d15f8b3332a0",
+      "vendorName": "코리아인스트루먼트"
+    },
+    {
+      "id": "mpv-095bab978f0d0b5d",
+      "productId": "mp-81e9fa8861602607",
+      "vendorId": "mv-7940d15f8b3332a0",
+      "vendorName": "코리아인스트루먼트"
+    },
+    {
+      "id": "mpv-93421ba4b37fdd40",
+      "productId": "mp-396d46fced92f577",
+      "vendorId": "mv-7940d15f8b3332a0",
+      "vendorName": "코리아인스트루먼트"
+    },
+    {
+      "id": "mpv-1febc51756218227",
+      "productId": "mp-c07734b2132b1569",
+      "vendorId": "mv-a57a116e8afd940f",
+      "vendorName": "코아테크코리아"
+    },
+    {
+      "id": "mpv-ab87522666a7750d",
+      "productId": "mp-d7e392c6d04dadd6",
+      "vendorId": "mv-7940d15f8b3332a0",
+      "vendorName": "코리아인스트루먼트"
+    },
+    {
+      "id": "mpv-bb1e1e78bd2f4f16",
+      "productId": "mp-ef616457b4f340f0",
+      "vendorId": "mv-591dbcb2d48f405f",
+      "vendorName": "BST"
+    },
+    {
+      "id": "mpv-178927d32a9aa9cc",
+      "productId": "mp-d5dc5ecd33b41fa8",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-80857e4409d822c1",
+      "productId": "mp-838ef8e0e2bb8047",
+      "vendorId": "mv-c825e5a493fc0555",
+      "vendorName": "바이오시스텍"
+    },
+    {
+      "id": "mpv-70a207ddc0a25a14",
+      "productId": "mp-6af992f6d58a8621",
+      "vendorId": "mv-731acfca0beafd1b",
+      "vendorName": "Thermo Fisher"
+    },
+    {
+      "id": "mpv-6e80d85abe8801ef",
+      "productId": "mp-272299c2104281c4",
+      "vendorId": "mv-4165a3127d9ca48a",
+      "vendorName": "제이씨바이오"
+    },
+    {
+      "id": "mpv-beaa3c1074c5d4c6",
+      "productId": "mp-16f125c47106be38",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-0517e17c5ad7e1fd",
+      "productId": "mp-16f125c47106be38",
+      "vendorId": "mv-7940d15f8b3332a0",
+      "vendorName": "코리아인스트루먼트"
+    },
+    {
+      "id": "mpv-9a370859a6bbc5a4",
+      "productId": "mp-1880babd28868815",
+      "vendorId": "mv-7940d15f8b3332a0",
+      "vendorName": "코리아인스트루먼트"
+    },
+    {
+      "id": "mpv-b61d832f524cf80a",
+      "productId": "mp-3066ef473dbf3d8e",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-3837676402260ff8",
+      "productId": "mp-7306e0b8dbf14c87",
+      "vendorId": "mv-68a7ecd1711271f8",
+      "vendorName": "영사이언스"
+    },
+    {
+      "id": "mpv-3a7c6935f2929ffb",
+      "productId": "mp-03a0dfc3c2ee91eb",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-a4cfaff46932fd67",
+      "productId": "mp-aa012b0083f0f96a",
+      "vendorId": "mv-3bb08d4aef8303c2",
+      "vendorName": "도디스주식회사"
+    },
+    {
+      "id": "mpv-286047829613de8c",
+      "productId": "mp-c1f3b3d35e3260c7",
+      "vendorId": "mv-2162810e20e0a4e9",
+      "vendorName": "㈜라이카 코리아"
+    },
+    {
+      "id": "mpv-fedeac0dc114413c",
+      "productId": "mp-afce9e2d24c11412",
+      "vendorId": "mv-7940d15f8b3332a0",
+      "vendorName": "코리아인스트루먼트"
+    },
+    {
+      "id": "mpv-2d9c4d59614a846f",
+      "productId": "mp-e9f8162bf5582baa",
+      "vendorId": "mv-548c76a21e1fd050",
+      "vendorName": "영진사이언스"
+    },
+    {
+      "id": "mpv-233257828182fce1",
+      "productId": "mp-933c79f8d13a4999",
+      "vendorId": "mv-ae19a62d7d2183b2",
+      "vendorName": "와우프레스"
+    },
+    {
+      "id": "mpv-41a3dd6c9b9614c7",
+      "productId": "mp-e7e4417e9f924b97",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-995b627ccbc316aa",
+      "productId": "mp-6db9926cacc2a875",
+      "vendorId": "mv-7940d15f8b3332a0",
+      "vendorName": "코리아인스트루먼트"
+    },
+    {
+      "id": "mpv-56fcf6bfb88db62c",
+      "productId": "mp-231d73f91f172c72",
+      "vendorId": "mv-b62dabc37418ca44",
+      "vendorName": "BNN KOREA"
+    },
+    {
+      "id": "mpv-f4194902963c5a1a",
+      "productId": "mp-fb815ea697fd7150",
+      "vendorId": "mv-c825e5a493fc0555",
+      "vendorName": "바이오시스텍"
+    },
+    {
+      "id": "mpv-ef805547f9961cf4",
+      "productId": "mp-9c4302acf4758440",
+      "vendorId": "mv-c825e5a493fc0555",
+      "vendorName": "바이오시스텍"
+    },
+    {
+      "id": "mpv-d043260a881c0071",
+      "productId": "mp-902d80638ed7f827",
+      "vendorId": "mv-0c065b63f3fbd0d7",
+      "vendorName": "영인랩플러스"
+    },
+    {
+      "id": "mpv-6db9751d34ce562b",
+      "productId": "mp-4e82b5759dae3510",
+      "vendorId": "mv-3d620f791f433536",
+      "vendorName": "다윈바이오"
+    },
+    {
+      "id": "mpv-983a3dbae007030e",
+      "productId": "mp-afc06fb9c0571781",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-3e4b17b6e5168ee8",
+      "productId": "mp-457d869ce1b4a668",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-cdd725c5b93daeeb",
+      "productId": "mp-68b62a2de7d446ea",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-f3efbb1aad48ddb6",
+      "productId": "mp-676e1bd39fac003a",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-264bcf0103bdf031",
+      "productId": "mp-9313e71130d5791f",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-fe4fc4bbeca5d4a8",
+      "productId": "mp-8c6c716324455dbe",
+      "vendorId": "mv-b53fb6ad6e10e45c",
+      "vendorName": "가남교역"
+    },
+    {
+      "id": "mpv-c0a78f0a7d1c6279",
+      "productId": "mp-a322b5a2b0899430",
+      "vendorId": "mv-3d620f791f433536",
+      "vendorName": "다윈바이오"
+    },
+    {
+      "id": "mpv-52fc7299721301a4",
+      "productId": "mp-f05d6f619426647a",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-80d26b169da46801",
+      "productId": "mp-de8f24f130036521",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-572cfc709c0f4f31",
+      "productId": "mp-6529bda35de83032",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-c4009780d4e17489",
+      "productId": "mp-445971d26b0692d7",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-65ac921b58f854bc",
+      "productId": "mp-cdf4887c0051d68f",
+      "vendorId": "mv-5f3f938f3248cd4a",
+      "vendorName": "이효바이오"
+    },
+    {
+      "id": "mpv-3a58c77ac3856014",
+      "productId": "mp-1ea01f7e4a05589e",
+      "vendorId": "mv-ed3990f59dbe600c",
+      "vendorName": "㈜삼우에스앤티"
+    },
+    {
+      "id": "mpv-0ca36f553b957678",
+      "productId": "mp-05ef65acdd295a2b",
+      "vendorId": "mv-3d620f791f433536",
+      "vendorName": "다윈바이오"
+    },
+    {
+      "id": "mpv-e485b30586a70357",
+      "productId": "mp-be37a88d2dc02bc6",
+      "vendorId": "mv-3d620f791f433536",
+      "vendorName": "다윈바이오"
+    },
+    {
+      "id": "mpv-2f0a8df5795d65b3",
+      "productId": "mp-51bb5460874c968d",
+      "vendorId": "mv-9606f41a1f90f7e1",
+      "vendorName": "제이오텍"
+    },
+    {
+      "id": "mpv-bf7667bc67ea4bb2",
+      "productId": "mp-3494304f798f3635",
+      "vendorId": "mv-4165a3127d9ca48a",
+      "vendorName": "제이씨바이오"
+    }
+  ],
+  "merges": [
+    {
+      "catalogNumber": "30-2003",
+      "manufacturer": "ATCC",
+      "canonicalName": "Eagle's Minimum Essential Medium (EMEM)",
+      "mergedNames": [
+        "Eagle's Minimum Essential Medium (EMEM)",
+        "EMEM"
+      ],
+      "mergedManufacturers": [
+        "ATCC"
+      ],
+      "count": 2,
+      "reason": "shared Cat.No name-similar cluster (mfr-typo bridged)"
+    },
+    {
+      "catalogNumber": "DH.Pip3041",
+      "manufacturer": "daihan",
+      "canonicalName": "Transfer Pipette, PE, L119mm, Bulb 4.6ml, 3ml (100/Inner Pack)",
+      "mergedNames": [
+        "Transfer Pipette, PE, L119mm, Bulb 4.6ml, 3ml (100/Inner Pack)",
+        "Transfer Pipette, PE, L119mm, Bulb 4.6ml, 3ml"
+      ],
+      "mergedManufacturers": [
+        "daihan"
+      ],
+      "count": 2,
+      "reason": "shared Cat.No name-similar cluster (mfr-typo bridged)"
+    },
+    {
+      "catalogNumber": null,
+      "manufacturer": "Climet",
+      "canonicalName": "Climet Model CI-1052x Prove Boll Head & Stand",
+      "mergedNames": [
+        "Climet Model CI-1052x Prove Boll Head & Stand",
+        "Climet Model CI-1052x Prove",
+        "Climet Model CI-1052x Prove stand",
+        "Climet Model CI-1052x Prove Boll Head"
+      ],
+      "mergedManufacturers": [
+        "Climet"
+      ],
+      "count": 4,
+      "reason": "placeholder-cat typo/variant cluster"
+    },
+    {
+      "catalogNumber": "TL-2530",
+      "manufacturer": "Electronics Tomorrow",
+      "canonicalName": "디지털타이머",
+      "mergedNames": [
+        "디지텉타이머",
+        "디지털타이머",
+        "디지털타미머"
+      ],
+      "mergedManufacturers": [
+        "Korea Ace",
+        "Electronics Tomorrow"
+      ],
+      "count": 3,
+      "reason": "shared Cat.No name-similar cluster (mfr-typo bridged)"
+    },
+    {
+      "catalogNumber": "ka11-26",
+      "manufacturer": "Kroea ace",
+      "canonicalName": "스텐선 시험관대(5부 50홀)",
+      "mergedNames": [
+        "스텐선 시험관대(5부 50홀)",
+        "스텐선시험관대(5/50)"
+      ],
+      "mergedManufacturers": [
+        "Kroea ace",
+        "Korea Ace"
+      ],
+      "count": 2,
+      "reason": "shared Cat.No name-similar cluster (mfr-typo bridged)"
+    },
+    {
+      "catalogNumber": "CI-95A",
+      "manufacturer": "Climet",
+      "canonicalName": "Climet Model CI-95 Microbial sampler",
+      "mergedNames": [
+        "Climet Model CI-95 Microbial sampler",
+        "Climet Model CI-95A Microbial Samper"
+      ],
+      "mergedManufacturers": [
+        "Climet"
+      ],
+      "count": 2,
+      "reason": "shared Cat.No name-similar cluster (mfr-typo bridged)"
+    },
+    {
+      "catalogNumber": "CI-95",
+      "manufacturer": "Climet",
+      "canonicalName": "Air sampler",
+      "mergedNames": [
+        "Air sampler ( 부유균 측정기)",
+        "Air sampler"
+      ],
+      "mergedManufacturers": [
+        "Climet"
+      ],
+      "count": 2,
+      "reason": "shared Cat.No name-similar cluster (mfr-typo bridged)"
+    },
+    {
+      "catalogNumber": "CI-1052x",
+      "manufacturer": "Climet",
+      "canonicalName": "Particle counter ( 부유입자 측정기)",
+      "mergedNames": [
+        "Particle counter ( 부유입자 측정기)",
+        "부유입자측정기"
+      ],
+      "mergedManufacturers": [
+        "Climet"
+      ],
+      "count": 2,
+      "reason": "shared Cat.No name-similar cluster (mfr-typo bridged)"
+    },
+    {
+      "catalogNumber": "CI-3100",
+      "manufacturer": "Climet",
+      "canonicalName": "PMS (Climet Model CI-3100RS particle counter Cal)",
+      "mergedNames": [
+        "PMS",
+        "PMS (Climet Model CI-3100RS particle counter Cal)"
+      ],
+      "mergedManufacturers": [
+        "Climet"
+      ],
+      "count": 2,
+      "reason": "shared Cat.No name-similar cluster (mfr-typo bridged)"
+    }
+  ]
+}
