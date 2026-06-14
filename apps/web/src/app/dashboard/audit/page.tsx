@@ -17,6 +17,8 @@ import {
   X,
   ChevronRight,
   Lock,
+  Activity,
+  RotateCcw,
 } from "lucide-react";
 import {
   Sheet,
@@ -53,6 +55,13 @@ import {
   buildEventTypeOptions,
   type AuditEventTone,
 } from "@/lib/audit/event-labels";
+
+// §log-consolidation P2 — 활동 모드 표시 라벨(통합 surface 단일 소스).
+import {
+  ACTIVITY_TYPE_LABELS,
+  ENTITY_TYPE_LABELS as ACTIVITY_ENTITY_LABELS,
+  ACTIVITY_TYPE_COLORS,
+} from "@/lib/activity/activity-labels";
 
 // §11.81 #audit-trail-data-fetcher-wiring
 //
@@ -286,24 +295,49 @@ export default function AuditTrailPage() {
   // §11.345 — 행 클릭 시 전체 상세(전후 값·메타·IP·UA·full ID) inline expand (same-canvas)
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  // §log-consolidation P2 — 통합 로그 surface: 활동/감사 모드 토글.
+  const [mode, setMode] = useState<"activity" | "audit">("activity");
+  const [modeInitialized, setModeInitialized] = useState(false);
+  // 활동 모드 필터(자기 모델 ActivityLog 읽기 — 모델 병합 없음)
+  const [activityTypeFilter, setActivityTypeFilter] = useState<string>("all");
+  const [entityTypeFilter, setEntityTypeFilter] = useState<string>("all");
+
   const userRole = session?.user?.role as string | undefined;
   const canAccessAudit = userRole === "ADMIN" || (userRole as string)?.toLowerCase() === "manager";
 
+  // 미인증 → 로그인. (org 멤버는 활동 모드 접근 가능 — 통합 surface)
   useEffect(() => {
-    if (status === "loading") return;
     if (status === "unauthenticated") {
       router.replace("/auth/signin?callbackUrl=/dashboard/audit");
-      return;
     }
-    if (status === "authenticated" && !canAccessAudit) {
+  }, [status, router]);
+
+  // §log-consolidation P2 — 초기 모드: admin 은 감사, 그 외 org 멤버는 활동.
+  useEffect(() => {
+    if (status === "authenticated" && !modeInitialized) {
+      setMode(canAccessAudit ? "audit" : "activity");
+      setModeInitialized(true);
+    }
+  }, [status, canAccessAudit, modeInitialized]);
+
+  // §log-consolidation P2 — 권한 분기(admin-gate 의미 보존):
+  //   비admin 이 감사 모드에 진입하면 거부 안내 + 활동 모드로 강등.
+  //   감사 데이터(AuditLog)는 admin 만 — 기존 wholesale redirect 의 대체 메커니즘.
+  useEffect(() => {
+    if (
+      modeInitialized &&
+      mode === "audit" &&
+      status === "authenticated" &&
+      !canAccessAudit
+    ) {
       toast({
         title: "접근 권한이 없습니다",
         description: "감사 추적은 관리자만 열람할 수 있습니다.",
         variant: "destructive",
       });
-      router.replace("/dashboard");
+      setMode("activity");
     }
-  }, [status, canAccessAudit, router, toast]);
+  }, [mode, modeInitialized, status, canAccessAudit, toast]);
 
   // §11.81: real fetcher — /api/audit-logs (limit 200, eventType + startDate + search forward).
   const periodMeta = PERIOD_OPTIONS.find((p) => p.value === periodFilter);
@@ -335,7 +369,7 @@ export default function AuditTrailPage() {
       }
       return res.json();
     },
-    enabled: status === "authenticated" && canAccessAudit,
+    enabled: status === "authenticated" && canAccessAudit && mode === "audit",
   });
 
   const rows: AuditRow[] = useMemo(
@@ -343,22 +377,44 @@ export default function AuditTrailPage() {
     [data]
   );
 
+  // §log-consolidation P2 — 활동 모드 fetcher (/api/activity-logs / ActivityLog).
+  //   감사와 별 모델 — 데이터 병합 없음. org 멤버 열람(admin-gate 아님).
+  const activityQuery = useQuery<{ logs: any[]; total: number }>({
+    queryKey: ["activity-logs", activityTypeFilter, entityTypeFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (activityTypeFilter !== "all") params.append("activityType", activityTypeFilter);
+      if (entityTypeFilter !== "all") params.append("entityType", entityTypeFilter);
+      params.append("limit", "100");
+      const res = await fetch(`/api/activity-logs?${params.toString()}`);
+      if (!res.ok) throw new Error("활동 로그 조회 실패");
+      return res.json();
+    },
+    enabled: status === "authenticated" && mode === "activity",
+  });
+  const activityLogs: any[] = activityQuery.data?.logs ?? [];
+  const activityTotal: number = activityQuery.data?.total ?? 0;
+  const isActivityFiltered = activityTypeFilter !== "all" || entityTypeFilter !== "all";
+  const handleResetActivityFilters = () => {
+    setActivityTypeFilter("all");
+    setEntityTypeFilter("all");
+  };
+
   // §11.300 — 운영 브리핑 캐시 통계 / Injection 패턴 indicator 는 audit 화면에서
   // 제거 (호영님 P1, 2026-05-24). 일반 사용자 화면에 노출되는 개발 지표.
   // ADMIN 전용 가시성은 별도 admin route 신설 시 복원 예정 (§11.300c 보류).
   // 캐시 통계 API endpoint (/api/admin/operational-brief-cache-stats) 자체는
   // 유지 — 직접 조회 또는 로그 모니터링으로 가시성 유지.
 
-  if (status === "loading" || !canAccessAudit) {
+  // §log-consolidation P2 — 통합 surface: 세션/모드 확정 전 로딩.
+  // (비admin 도 활동 모드로 진입 — 페이지 단위 admin-gate 제거, 감사 모드만 게이트.)
+  if (status === "loading" || !modeInitialized) {
     return (
       <div className="flex-1 flex items-center justify-center min-h-[60vh]">
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
-            <ShieldAlert className="h-10 w-10 text-yellow-500 mx-auto mb-3" />
-            <p className="text-sm font-semibold text-slate-700">권한 확인 중</p>
-            <p className="text-xs text-slate-400 mt-1 break-keep">
-              감사 추적은 관리자(Admin) 계정만 열람할 수 있습니다.
-            </p>
+            <Loader2 className="h-6 w-6 animate-spin text-slate-400 mx-auto mb-3" />
+            <p className="text-sm font-semibold text-slate-700">로그를 불러오는 중…</p>
           </CardContent>
         </Card>
       </div>
@@ -449,6 +505,184 @@ export default function AuditTrailPage() {
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8 pt-6 max-w-7xl mx-auto w-full print:p-0 print:max-w-none print:space-y-3">
+      {/* §log-consolidation P2 — 활동/감사 모드 토글 (단일 로그 surface).
+          비admin 은 감사 탭 비노출 (canAccessAudit 게이트). */}
+      <div className="print:hidden">
+        <div
+          data-testid="log-mode-toggle"
+          role="tablist"
+          aria-label="로그 보기 모드"
+          className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 p-0.5"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "activity"}
+            data-testid="log-mode-activity"
+            onClick={() => setMode("activity")}
+            className={`h-9 px-4 rounded-md text-sm font-medium transition-colors touch-manipulation ${
+              mode === "activity"
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            활동 로그
+          </button>
+          {canAccessAudit && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "audit"}
+              data-testid="log-mode-audit"
+              onClick={() => setMode("audit")}
+              className={`h-9 px-4 rounded-md text-sm font-medium transition-colors touch-manipulation ${
+                mode === "audit"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              감사 추적
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* §log-consolidation P2 — 활동 모드: ActivityLog(/api/activity-logs) 자기 모델 읽기. */}
+      {mode === "activity" && (
+        <div className="space-y-4" data-testid="log-activity-section">
+          <div className="flex flex-col space-y-1.5 min-w-0">
+            <h2 className="text-lg md:text-3xl font-bold tracking-tight text-slate-900 flex items-baseline gap-2 flex-wrap">
+              <span>활동 로그</span>
+              {activityQuery.data && (
+                <span className="text-sm md:text-base text-slate-400 font-medium">
+                  · {activityTotal.toLocaleString("ko-KR")}건
+                </span>
+              )}
+            </h2>
+            <p className="hidden md:block text-sm text-slate-500 break-keep">
+              리스트 생성·수정·공유 등 모든 활동 내역을 확인합니다.
+            </p>
+          </div>
+
+          <div className="flex flex-row gap-2 items-center">
+            <Select value={activityTypeFilter} onValueChange={setActivityTypeFilter}>
+              <SelectTrigger className="h-9 w-[120px] md:w-[160px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">전체 활동</SelectItem>
+                {Object.entries(ACTIVITY_TYPE_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={entityTypeFilter} onValueChange={setEntityTypeFilter}>
+              <SelectTrigger className="h-9 w-[120px] md:w-[140px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">전체</SelectItem>
+                <SelectItem value="quote">견적</SelectItem>
+                <SelectItem value="product">제품</SelectItem>
+                <SelectItem value="search">검색</SelectItem>
+                <SelectItem value="order">발주</SelectItem>
+                <SelectItem value="inventory">재고</SelectItem>
+                <SelectItem value="vendor">공급사</SelectItem>
+              </SelectContent>
+            </Select>
+            {isActivityFiltered && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResetActivityFilters}
+                className="h-9 gap-1.5 text-xs"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                필터 초기화
+              </Button>
+            )}
+          </div>
+
+          <div className="border border-bd rounded-lg bg-white overflow-hidden shadow-sm">
+            {activityQuery.isLoading ? (
+              <div className="py-16 text-center">
+                <Loader2 className="h-5 w-5 animate-spin text-slate-400 mx-auto mb-2" />
+                <p className="text-sm text-slate-500">활동 로그 조회 중...</p>
+              </div>
+            ) : activityQuery.isError ? (
+              <div className="py-12 text-center">
+                <Activity className="h-8 w-8 text-rose-700 mx-auto mb-2" />
+                <p className="text-sm text-rose-700">활동 로그를 불러오지 못했습니다.</p>
+              </div>
+            ) : activityLogs.length === 0 ? (
+              <div className="py-16 text-center">
+                <Activity className="h-8 w-8 text-slate-300 mx-auto mb-3" />
+                <p className="text-sm font-semibold text-slate-700 mb-1">활동 내역이 없습니다.</p>
+                <p className="text-[11px] text-slate-400 break-keep">
+                  선택한 조건에 해당하는 활동 기록이 없습니다.
+                </p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-slate-100">
+                {activityLogs.map((log: any) => {
+                  const label = ACTIVITY_TYPE_LABELS[log.activityType] || log.activityType;
+                  const colorClass =
+                    ACTIVITY_TYPE_COLORS[log.activityType] ||
+                    "bg-slate-100 text-slate-700 border-slate-200";
+                  const entityLabel = log.entityType
+                    ? ACTIVITY_ENTITY_LABELS[log.entityType] || log.entityType
+                    : "";
+                  return (
+                    <li
+                      key={log.id}
+                      className="flex items-start gap-3 p-3 md:p-4 hover:bg-slate-50/50"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] md:text-xs font-bold ${colorClass}`}
+                          >
+                            {label}
+                          </Badge>
+                          {entityLabel && (
+                            <span className="text-[10px] text-slate-400">· {entityLabel}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-slate-500 flex-wrap">
+                          {log.user && (
+                            <span className="break-keep">{log.user.name || log.user.email}</span>
+                          )}
+                          {log.organization && (
+                            <span className="break-keep">{log.organization.name}</span>
+                          )}
+                          <span className="font-mono text-slate-400">
+                            {new Date(log.createdAt).toLocaleString("ko-KR", {
+                              year: "numeric",
+                              month: "2-digit",
+                              day: "2-digit",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              timeZone: "Asia/Seoul",
+                            })}
+                          </span>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* §log-consolidation P2 — 감사 모드: AuditLog(/api/audit-logs), admin-gate +
+          GMP Part 11 + PDF/CSV export 보존. */}
+      {mode === "audit" && (
+        <>
       {/* §11.89 — 인쇄용 헤더 (화면에는 hidden, PDF/print 시만 표시).
           회사명 + 인쇄 시각 + 필터 컨디션 요약 — 감사 추적 출력본 보존 용도. */}
       <div className="hidden print:block border-b border-slate-300 pb-3 mb-3">
@@ -832,6 +1066,8 @@ export default function AuditTrailPage() {
           </div>
         )}
       </div>
+        </>
+      )}
     </div>
   );
 }

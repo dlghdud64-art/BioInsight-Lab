@@ -10,11 +10,17 @@
  *   - 권한 비대칭: 활동=org멤버 / 감사=admin → 모드토글 권한 분기 필수.
  *   - 통합 host = canonical 감사 surface (dashboard/audit/page.tsx).
  *
- * 이 파일은 P1 의 RED 계약 + 회귀 0 가드다.
- *   🔴 RED  : 아래 "단일 surface 모드토글 계약" describe — P2 구현 전 실패해야 함.
- *   🟢 GUARD: "회귀 0" describe 들 — 지금도 통과(감사 컴플라이언스·활동 모델 보존).
+ * 이 파일은 단일 로그 surface 계약 + 회귀 0 가드다.
+ *   계약 : "단일 surface 모드토글 계약" describe — P1 에서 RED(미구현),
+ *          P2(통합 surface 구현) 후 GREEN.
+ *   GUARD: "회귀 0" describe 들 — 감사 컴플라이언스·활동 모델 보존.
  *
- * 검증: 격리 node 로 RED 확인 → operator-shell 실 vitest + push.
+ * P2 갱신: 페이지 단위 wholesale redirect(router.replace("/dashboard")) 가
+ *   통합 surface 와 비양립(비admin 도 활동 모드 진입 필요) → admin-gate 의 의미
+ *   (비admin 의 감사 데이터 비노출)는 "감사 모드 권한 강등" 메커니즘으로 보존.
+ *   해당 GUARD assertion 을 redirect → setMode("activity") 로 진화(의도 동일).
+ *
+ * 검증: 격리 node 로 패턴 확인 → operator-shell 실 vitest + push.
  */
 
 import { describe, it, expect } from "vitest";
@@ -31,9 +37,9 @@ function read(rel: string): string {
 }
 
 // ────────────────────────────────────────────────────────────────────
-// 🔴 RED — 단일 surface 모드토글 계약 (P2 구현 전 실패)
+// 계약 — 단일 surface 모드토글 (P1 RED → P2 GREEN)
 // ────────────────────────────────────────────────────────────────────
-describe("§log-consolidation P1 RED — 단일 로그 surface 모드토글 계약", () => {
+describe("§log-consolidation — 단일 로그 surface 모드토글 계약", () => {
   it("통합 host(감사 surface)에 모드토글 컨테이너 노출", () => {
     const src = read(AUDIT_PATH);
     expect(src).toMatch(/data-testid="log-mode-toggle"/);
@@ -72,10 +78,18 @@ describe("§log-consolidation P1 GUARD — 감사 admin-gate 보존", () => {
     expect(src).toMatch(/userRole\s*===\s*"ADMIN"/);
   });
 
-  it("비admin redirect(/dashboard) + 권한 거부 안내 유지", () => {
+  it("비admin 감사모드 차단: 권한 거부 안내 + 활동 모드 강등 (admin-gate 의미 보존)", () => {
     const src = read(AUDIT_PATH);
-    expect(src).toMatch(/router\.replace\("\/dashboard"\)/);
+    // P2: wholesale redirect → 감사 모드 권한 강등 메커니즘(의도 동일).
     expect(src).toMatch(/감사 추적은 관리자만 열람할 수 있습니다/);
+    expect(src).toMatch(/setMode\("activity"\)/);
+  });
+
+  it("감사 모드 탭은 canAccessAudit 게이트 뒤에서만 노출 (비admin 비노출)", () => {
+    const src = read(AUDIT_PATH);
+    expect(src).toMatch(
+      /canAccessAudit[\s\S]{0,240}data-testid="log-mode-audit"/,
+    );
   });
 
   it("canonical 데이터 소스 /api/audit-logs 유지 (UI state 가 truth 대체 금지)", () => {
