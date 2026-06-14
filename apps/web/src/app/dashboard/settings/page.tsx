@@ -54,7 +54,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Upload, Lock, Bell, Mail, Shield, Loader2, ChevronRight, Package, CreditCard, Receipt, Check, RotateCcw, AlertCircle, Clock, FileText, AlertTriangle, XCircle, Zap, ClipboardCheck, Server, Trash2, UserPlus, KeyRound, Crown, Settings, Brain, Link2, Building2, Globe, Fingerprint, Activity, Database, Webhook, ShieldCheck, Users, ArrowRight } from "lucide-react";
+import { User, Upload, Lock, Bell, Mail, Shield, Loader2, ChevronRight, ChevronLeft, Package, CreditCard, Receipt, Check, RotateCcw, AlertCircle, Clock, FileText, AlertTriangle, XCircle, Zap, ClipboardCheck, Server, Trash2, UserPlus, KeyRound, Crown, Settings, Brain, Link2, Building2, Globe, Fingerprint, Activity, Database, Webhook, ShieldCheck, Users, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ══════════════════════════════════════════════
@@ -181,6 +181,11 @@ function SettingsPageContent() {
   const searchParams = useSearchParams();
 
   const [activeSection, setActiveSection] = useState<SettingsSection>("operator");
+  // §11.372 — 설정 모바일 drill-in. 기존 flex-col lg:flex-row 는 <lg 에서 nav(메뉴)
+  //   + active 콘텐츠를 한 스크롤에 동시 적층(master-detail 세로 적층). 모바일은
+  //   메뉴 리스트 ↔ 디테일 1뎁스 전환(same-canvas, 신규 route 0): false=메뉴 뷰,
+  //   true=선택 콘텐츠 뷰(+뒤로가기). lg+ 는 항상 master-detail 동시 노출(무회귀).
+  const [mobileDetail, setMobileDetail] = useState(false);
 
   // ── Profile state ──
   const [profileName, setProfileName] = useState(session?.user?.name || "");
@@ -263,8 +268,9 @@ function SettingsPageContent() {
 
   useEffect(() => {
     const tab = searchParams.get("tab");
-    if (tab === "billing") setActiveSection("billing");
-    if (tab === "notifications") setActiveSection("notifications");
+    // §11.372 — deep-link(?tab=) 진입 시 모바일도 해당 콘텐츠로 바로 drill-in.
+    if (tab === "billing") { setActiveSection("billing"); setMobileDetail(true); }
+    if (tab === "notifications") { setActiveSection("notifications"); setMobileDetail(true); }
   }, [searchParams]);
 
   useEffect(() => {
@@ -528,7 +534,8 @@ function SettingsPageContent() {
                 에서는 button 자체 hidden (dead button 회귀 차단). 시안 검정 primary
                 button 모양 (bg-slate-900 + rounded-lg + shadow-sm) 적용. */}
             {(activeSection === "operator" || activeSection === "notifications") ? (
-              <div className="flex items-center gap-2">
+              // §11.372 — 저장바는 콘텐츠에 종속 → 모바일 메뉴 뷰에선 숨김(detail 전용). lg+ 항상.
+              <div className={cn("flex items-center gap-2", !mobileDetail && "hidden lg:flex")}>
                 {isDirty && (
                   <Button
                     variant="ghost"
@@ -561,7 +568,7 @@ function SettingsPageContent() {
             ) : (
               // 운영자/notifications 외 section 은 read-only 또는 별도 mutation —
               // header 의 통합 "설정 저장" button 의미 없음.
-              <div className="text-[11px] text-slate-400 break-keep">
+              <div className={cn("text-[11px] text-slate-400 break-keep", !mobileDetail && "hidden lg:block")}>
                 이 영역의 변경은 자체 컨트롤로 즉시 반영됩니다.
               </div>
             )}
@@ -571,7 +578,8 @@ function SettingsPageContent() {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* ═══ Left System Nav ═══ */}
           {/* §11.100 — 인쇄 시 settings 좌측 nav hide (활성 section 만 인쇄). */}
-          <nav className="lg:w-64 shrink-0 print:hidden">
+          {/* §11.372 — 모바일 drill-in: 디테일 진입 시 메뉴 숨김. lg+ 는 항상 노출. */}
+          <nav className={cn("lg:w-64 shrink-0 print:hidden", mobileDetail && "hidden lg:block")}>
             {NAV_GROUPS.map((group) => (
               <div key={group.group} className="mb-4">
                 <div className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 px-3 mb-2">{group.group}</div>
@@ -583,7 +591,8 @@ function SettingsPageContent() {
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => setActiveSection(item.id)}
+                        // §11.372 — 항목 탭 시 콘텐츠 뷰로 drill-in(모바일). lg+ 무영향.
+                        onClick={() => { setActiveSection(item.id); setMobileDetail(true); }}
                         className={cn(
                           "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all",
                           isActive
@@ -606,7 +615,18 @@ function SettingsPageContent() {
           </nav>
 
           {/* ═══ Right Content ═══ */}
-          <div className="flex-1 min-w-0 space-y-5">
+          {/* §11.372 — 모바일 drill-in: 메뉴 뷰(!mobileDetail)에선 콘텐츠 숨김. lg+ 항상 노출. */}
+          <div className={cn("flex-1 min-w-0 space-y-5", !mobileDetail && "hidden lg:block")}>
+
+            {/* §11.372 — 모바일 전용 뒤로가기(메뉴 복귀). lg+ 는 master-detail 동시 노출이라 불요. */}
+            <button
+              type="button"
+              onClick={() => setMobileDetail(false)}
+              className="lg:hidden inline-flex items-center gap-1.5 -ml-1 h-10 px-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition-colors touch-manipulation"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              설정 메뉴
+            </button>
 
             {/* ═══ OPERATOR & WORKSPACE ═══ */}
             {activeSection === "operator" && (
@@ -840,13 +860,15 @@ function SettingsPageContent() {
                     //        `#user-last-workspace-id-schema`). 현재 User 모델에 필드 부재.
                     //     2. WorkspaceMember.updatedAt desc 첫 번째 (last active implicit) —
                     //        `getUserWorkspaces` (lib/auth/scope.ts:208) 가 이미 desc 정렬.
-                    //     3. fallback null → "데이터 미동기화" indicator (§11.159).
+                    //     3. fallback null → "워크스페이스 미연결" indicator (§11.159, 카피 §11.373).
                     //   `Workspace.lastWorkspaceId` (schema:933) 는 design ambiguity —
                     //   workspace 모델 안 user-scoped 필드는 multi-user 부합 0. 사용 X.
                     const activeWorkspace = pickActiveWorkspace(workspacesData?.workspaces);
                     const wsList = workspacesData?.workspaces ?? [];
                     const activeWs = activeWorkspace;
-                    const wsName = activeWs?.name ?? "데이터 미동기화";
+                    // §11.373 — 빈 워크스페이스 fallback 카피 개선(명칭 자리에 "데이터
+                    //   미동기화" 가 들어가던 어색함 해소). 운영자 직관 라벨.
+                    const wsName = activeWs?.name ?? "워크스페이스 미연결";
                     const wsSlug = activeWs?.slug ?? "—";
                     const wsPlan = activeWs?.plan ? activeWs.plan : "—";
                     // §11.201 — sub-label 한국어 swap (descriptor.label 통과).
@@ -866,21 +888,30 @@ function SettingsPageContent() {
                       return p ? `${p} 플랜` : "플랜 미지정";
                     })();
                     return (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div className="rounded-xl border border-slate-200 bg-white p-4">
-                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">워크스페이스 명칭</p>
-                          <p className="text-sm font-bold text-slate-900 break-keep mb-1">{wsName}</p>
-                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">{planSubLabel}</p>
+                      // §11.373 — 단일 필드 full-box 적층 제거(§11.311). 모바일: 한 카드
+                      //   안 compact row(label 좌 · value 우 인라인, meta 숨김). md+: 기존
+                      //   3-카드 grid 복원(업무 밀도 유지). canonical wsName/wsSlug 표시 보존.
+                      <div className="rounded-xl border border-slate-200 bg-white divide-y divide-slate-100 overflow-hidden md:rounded-none md:border-0 md:bg-transparent md:divide-y-0 md:overflow-visible md:grid md:grid-cols-3 md:gap-3">
+                        <div className="flex items-center justify-between gap-3 px-3 py-2.5 md:block md:rounded-xl md:border md:border-slate-200 md:bg-white md:p-4">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 shrink-0 md:mb-1.5">워크스페이스 명칭</p>
+                          <div className="min-w-0 text-right md:text-left">
+                            <p className="text-sm font-bold text-slate-900 break-keep truncate md:mb-1">{wsName}</p>
+                            <p className="text-[10px] text-slate-500 uppercase tracking-wider hidden md:block">{planSubLabel}</p>
+                          </div>
                         </div>
-                        <div className="rounded-xl border border-slate-200 bg-white p-4">
-                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">워크스페이스 코드</p>
-                          <p className="text-sm font-bold font-mono text-slate-900 mb-1">{wsSlug}</p>
-                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">AUTO-GENERATED ID</p>
+                        <div className="flex items-center justify-between gap-3 px-3 py-2.5 md:block md:rounded-xl md:border md:border-slate-200 md:bg-white md:p-4">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 shrink-0 md:mb-1.5">워크스페이스 코드</p>
+                          <div className="min-w-0 text-right md:text-left">
+                            <p className="text-sm font-bold font-mono text-slate-900 truncate md:mb-1">{wsSlug}</p>
+                            <p className="text-[10px] text-slate-500 uppercase tracking-wider hidden md:block">AUTO-GENERATED ID</p>
+                          </div>
                         </div>
-                        <div className="rounded-xl border border-slate-200 bg-white p-4">
-                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">기본 통화</p>
-                          <p className="text-sm font-bold text-slate-900 mb-1">KRW (₩)</p>
-                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">FINANCIAL BASE</p>
+                        <div className="flex items-center justify-between gap-3 px-3 py-2.5 md:block md:rounded-xl md:border md:border-slate-200 md:bg-white md:p-4">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 shrink-0 md:mb-1.5">기본 통화</p>
+                          <div className="min-w-0 text-right md:text-left">
+                            <p className="text-sm font-bold text-slate-900 md:mb-1">KRW (₩)</p>
+                            <p className="text-[10px] text-slate-500 uppercase tracking-wider hidden md:block">FINANCIAL BASE</p>
+                          </div>
                         </div>
                       </div>
                     );
@@ -1456,8 +1487,10 @@ function SectionCard({ title, icon: Icon, description, children, topRightLabel }
   topRightLabel?: string;
 }) {
   return (
+    // §11.373 — 카드 compact 토큰(§11.311). 모바일 패딩 축소(px-4 py-3 / p-3),
+    //   md+ 는 기존 밀도 복원(md:px-5 md:py-4 / md:p-5). 13 SectionCard 일괄 적용.
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-      <div className="px-5 py-4 border-b border-slate-100">
+      <div className="px-4 py-3 md:px-5 md:py-4 border-b border-slate-100">
         <div className="flex items-center gap-2">
           <Icon className="h-4 w-4 text-slate-500" />
           <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
@@ -1469,7 +1502,7 @@ function SectionCard({ title, icon: Icon, description, children, topRightLabel }
         </div>
         {description && <p className="text-xs text-slate-500 mt-1 ml-6">{description}</p>}
       </div>
-      <div className="p-5">{children}</div>
+      <div className="p-3 md:p-5">{children}</div>
     </div>
   );
 }
