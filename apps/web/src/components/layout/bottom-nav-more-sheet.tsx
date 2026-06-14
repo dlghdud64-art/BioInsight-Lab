@@ -127,7 +127,13 @@ export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {
         side="bottom"
         // §11.359-2 — max-h + overflow: 시트가 화면 전체높이를 덮어 backdrop/닫기(X)가
         //   화면 밖으로 밀리던 "출구 부재" 체감 해소. 항목 초과 시 시트 내부 스크롤.
-        className="rounded-t-2xl px-4 pb-8 safe-area-bottom bg-white border-t border-slate-200 max-h-[80vh] overflow-y-auto"
+        // §11.372 — X 이중 렌더 fix. SheetContent(ui/sheet)는 {children} 뒤에 기본
+        //   SheetPrimitive.Close(absolute right-4 top-4, h-4) 1개를 직계 자식 button 으로
+        //   렌더. §11.359-2 가 헤더에 큰 커스텀 X(h-10, aria-label, 44px 타겟)를 추가해
+        //   우상단에 X 가 2개 겹침. 기본 X 만 인스턴스 한정 숨김([&>button] = 직계 button =
+        //   기본 Close 만 매칭; 커스텀 X 는 SheetHeader<div> 내부라 비매칭). a11y 우수한
+        //   커스텀 X 유지. 공용 sheet.tsx 무변경(다른 시트 회귀 0).
+        className="rounded-t-2xl px-4 pb-8 safe-area-bottom bg-white border-t border-slate-200 max-h-[80vh] overflow-y-auto [&>button]:hidden"
       >
         {/* §11.359-2 — 명시 닫기 동선: 기본 X(우상단, 작음) 외에 헤더에 라벨형
             닫기 버튼 추가. 시트=오버레이라 닫기=언마운트(라우팅 불요). */}

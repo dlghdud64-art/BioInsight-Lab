@@ -373,7 +373,13 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 <div
                   role="menu"
                   aria-label="알림 메뉴"
-                  className="absolute right-0 top-full mt-2 w-[calc(100vw-1.5rem)] max-w-[380px] p-0 bg-white shadow-2xl shadow-slate-300/40 border border-slate-200 rounded-xl overflow-hidden z-50"
+                  // §11.372 — 알림 패널 모바일 클리핑 fix. 햄버거(<Menu> lg:hidden)가
+                  //   종 우측에 있어 종은 모바일 최우측이 아님. 기존 absolute right-0 +
+                  //   뷰포트폭(§11.359-2)은 폭만 맞추고 trigger(종)에 우측정렬돼 패널이
+                  //   왼쪽으로 ~36px overflow → "림" 잘림. 모바일은 trigger 분리 후
+                  //   viewport 고정(fixed left-3 right-3 top-14, 헤더 h-14 바로 아래),
+                  //   md+는 기존 종 기준 absolute right-0 top-full 복원(데스크톱 무회귀).
+                  className="fixed left-3 right-3 top-14 md:absolute md:left-auto md:right-0 md:top-full md:mt-2 w-auto md:w-[380px] max-w-[380px] p-0 bg-white shadow-2xl shadow-slate-300/40 border border-slate-200 rounded-xl overflow-hidden z-50"
                 >
               {/* 헤더 */}
               <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-slate-50/50">
