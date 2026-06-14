@@ -35,6 +35,8 @@ import { COMPARE_SUBSTATUS_DEFS, RESOLUTION_PATH_LABELS, HANDOFF_STALL_LABELS } 
 import { OPS_STALL_LABELS } from "@/lib/work-queue/ops-queue-semantics";
 // §11.82 #dashboard-operational-intelligence-redesign Phase 1 — AI 리포트 dialog
 import { AIInsightDialog } from "@/components/dashboard/ai-insight-dialog";
+// §11.374 P3.4 — 헤더 단일 문법(AppPageHeader). 대시보드 KPI 판단카드는 본문 보존(상태 카운트 그리드 미적용 — trend/risk 유지).
+import { AppPageHeader } from "@/components/layout/page-header";
 // §11.308a-v2 — 스마트 입고 modal import 제거.
 // 진입점은 글로벌 헤더 (components/dashboard/Header.tsx) 로 승격
 // (호영님 P0 2026-05-26). 대시보드 본문 button + state + modal 모두 제거.
@@ -692,34 +694,34 @@ function DashboardPageInner() {
               (사용자 무의미, 한국어 title 으로 충분)
             - "Live" 배지 완전 제거 (대시보드 = 원래 실시간, 별도 표기 불필요)
             - 헤더 단순화: 한국어 title + greeting 만 */}
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 min-w-0">
-        <div className="flex flex-col space-y-1 min-w-0">
-          <h2 className="text-2xl md:text-[28px] font-black tracking-tighter text-slate-900">
-            대시보드
-          </h2>
-          <p className="text-[13px] text-slate-500 font-medium">
-            {session?.user?.name ? `${session.user.name}님, ` : ""}
-            {dashboardState === "blocked"
-              ? `확인이 필요한 항목 ${processingRequiredCount + approvalPendingCount + riskOrBlockerCount}건이 있습니다.`
-              : dashboardState === "zero"
-                ? "견적 요청을 시작하면 운영 데이터가 쌓이기 시작합니다."
-                : "오늘 즉시 처리할 운영 이슈가 없습니다."}
-          </p>
-        </div>
-        <div className="flex-shrink-0 flex flex-col items-end gap-1">
-          {/* §11.308a-v2 — 스마트 입고 button 제거 (호영님 P0 2026-05-26).
-              진입점이 글로벌 헤더로 승격되어 어느 페이지에서든 1탭 접근.
-              헤더 header-smart-receiving-entry (Header.tsx) 참조. */}
-          {/* §11.243 #4 — 호영님 P0: isOnboardingMode 시 AI 리포트 disabled +
-              tooltip. mutation 호출 차단으로 0 데이터 분석 방지. */}
-          <AIInsightDialog disabled={isOnboardingMode} />
-          {isOnboardingMode && (
-            <p className="text-[10px] text-slate-400 break-keep">
-              리포트 생성에 최소 1건의 완료된 견적 데이터가 필요합니다
-            </p>
-          )}
-        </div>
-      </div>
+      {/* §11.374 P3.4 — AppPageHeader 채택(인라인 헤더 제거, card-less 단일 문법).
+          동적 greeting/state → description, AIInsightDialog+온보딩 툴팁 → actions render 보존.
+          ⚠️ KPI 판단카드(아래 본문)는 상태 카운트 그리드 미적용 — trend/risk 정보 보존. */}
+      <AppPageHeader
+        title="대시보드"
+        description={`${session?.user?.name ? `${session.user.name}님, ` : ""}${
+          dashboardState === "blocked"
+            ? `확인이 필요한 항목 ${processingRequiredCount + approvalPendingCount + riskOrBlockerCount}건이 있습니다.`
+            : dashboardState === "zero"
+              ? "견적 요청을 시작하면 운영 데이터가 쌓이기 시작합니다."
+              : "오늘 즉시 처리할 운영 이슈가 없습니다."
+        }`}
+        actions={[
+          {
+            render: (
+              <div className="flex flex-col items-end gap-1">
+                {/* §11.243 #4 — isOnboardingMode 시 AI 리포트 disabled + tooltip(0 데이터 분석 차단) */}
+                <AIInsightDialog disabled={isOnboardingMode} />
+                {isOnboardingMode && (
+                  <p className="text-[10px] text-slate-400 break-keep">
+                    리포트 생성에 최소 1건의 완료된 견적 데이터가 필요합니다
+                  </p>
+                )}
+              </div>
+            ),
+          },
+        ]}
+      />
 
       <section
         className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm md:p-4"

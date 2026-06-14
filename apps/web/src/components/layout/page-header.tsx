@@ -70,7 +70,8 @@ interface HeaderBreadcrumb {
 }
 
 interface HeaderAction {
-  label: string;
+  /** render 제공 시 생략 가능(렌더 로직이 render 우선 — §11.374 P3.4-2 dashboard AIInsightDialog 등 custom action). */
+  label?: string;
   href?: string;
   onClick?: () => void;
   tone?: HeaderActionTone;
