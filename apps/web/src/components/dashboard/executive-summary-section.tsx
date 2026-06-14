@@ -399,7 +399,7 @@ function KpiCard({ icon, label, value, hint, risk, href, breakdown, toneOverride
         <div className="hidden md:block pointer-events-none absolute left-0 right-0 top-full mt-1 z-20 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-150">
           <div className="rounded-lg border border-slate-700 bg-slate-900 text-white shadow-lg p-3">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
-              Quick Data Breakdown
+              데이터 상세
             </p>
             <div className="space-y-1.5">
               {breakdown.map((b) => (
@@ -876,7 +876,7 @@ function SystemInsightCard({
         </div>
         <div className="flex-1 min-w-0 pr-6">
           <p className="text-[10px] font-bold uppercase tracking-wider text-white/70 mb-1">
-            System Insight
+            운영 인사이트
           </p>
           <p className="text-sm md:text-base font-bold text-white break-keep">{title}</p>
           <p className="text-[12px] md:text-[13px] text-white/80 mt-1 break-keep leading-relaxed">
@@ -887,7 +887,7 @@ function SystemInsightCard({
         <button
           type="button"
           onClick={handleDismiss}
-          aria-label="System Insight 카드 닫기"
+          aria-label="운영 인사이트 카드 닫기"
           title="이번 세션에서 숨기기"
           className="absolute top-3 right-3 inline-flex items-center justify-center h-6 w-6 rounded-md text-white/60 hover:text-white hover:bg-white/10 transition-colors"
         >

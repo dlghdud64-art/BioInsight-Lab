@@ -118,9 +118,6 @@ export function SpendTrendCard({ monthlySpending }: SpendTrendCardProps) {
           </div>
           <div>
             <h3 className="text-base font-bold text-slate-900 leading-tight">지출 트렌드 분석</h3>
-            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400 mt-1">
-              Real-time Spend Tracking
-            </p>
           </div>
         </div>
         {!isEmpty && stats?.peak && (
