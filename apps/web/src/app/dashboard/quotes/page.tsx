@@ -10,6 +10,8 @@ import { MobileBriefInlineButton } from "@/components/operational-brief/mobile-i
 import { MetricCell } from "@/components/operational-brief/metric-cell";
 // §11.374 — 모바일 상태요약 단일 컴포넌트(가로 5탭 빽빽 → 2x2). 표현만, count 주입.
 import { StatusCountGrid } from "@/components/layout/status-count-grid";
+// §11.374 P3.4 — 헤더 단일 문법(AppPageHeader). 스캔 포함 액션 우측 통합.
+import { AppPageHeader } from "@/components/layout/page-header";
 import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { useOperationalBriefPopup } from "@/components/operational-brief/popup-context";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -1976,17 +1978,17 @@ function QuotesPageContent() {
   return (
     <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
 
-      {/* ── 헤더 ── */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900">견적 관리</h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5 hidden sm:block">처리가 필요한 견적 케이스를 우선순위 순으로 확인합니다.</p>
-        </div>
-        {/* §11.248b #quote-header-actions-responsive — 호영님 P0 상단 액션 버튼 반응형.
-            - flex-wrap (lg:flex-nowrap): ≤1024px 2행 줄바꿈 허용 (호영님 spec).
-            - 모바일 (<md) 더보기 ⋯ DropdownMenu 분리 (견적서 비교 + 초안 항목 접기).
-            - 각 버튼 min-w-[80px]~min-w-[120px] 로 텍스트 잘림 방지. */}
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 flex-wrap lg:flex-nowrap">
+      {/* ── 헤더 (§11.374 P3.4 — AppPageHeader 채택, 스캔 포함 액션 우측 통합) ──
+          §11.248b #quote-header-actions-responsive 반응형 액션(새 견적/BOM/비교/스캔/모바일 더보기)을
+          AppPageHeader actions render 로 이동(우측 고정). 모든 wiring(setAiParseModalOpen/runAiQuoteCompare/
+          PermissionGate/드롭다운 state) verbatim 보존. */}
+      <AppPageHeader
+        title="견적 관리"
+        description="처리가 필요한 견적 케이스를 우선순위 순으로 확인합니다."
+        actions={[
+          {
+            render: (
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 flex-wrap lg:flex-nowrap">
           {/* §11.307 — 호영님 P1 spec (2026-05-26):
               모바일 액션 순서 = [+ 새 견적 요청] → [📷 스캔] → [⋯ 더보기].
               ⋯ button 이 컨테이너 우측 끝으로 이동 → absolute right-0 드롭다운
@@ -2091,8 +2093,11 @@ function QuotesPageContent() {
               </>
             )}
           </div>
-        </div>
-      </div>
+              </div>
+            ),
+          },
+        ]}
+      />
 
       {isBrowserPilotQuoteDispatch && (
         <section

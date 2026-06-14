@@ -166,8 +166,9 @@ describe("§11.374 P3.4 AppPageHeader 4탭 채택 [RED until P3.4]", () => {
 
 describe("§11.374 P3.4 견적 스캔버튼 우측 이동 [RED until P3.4]", () => {
   it("스캔 액션이 AppPageHeader actions 로 이동(우측 고정)", () => {
-    // actions 배열 안에서 스캔 핸들러(setAiParseModalOpen)가 연결되어야 함
-    expect(quotes).toMatch(/actions=\{[\s\S]{0,1500}setAiParseModalOpen/);
+    // actions 배열 안에서 스캔 핸들러(setAiParseModalOpen)가 연결되어야 함.
+    // 윈도우 5000자: 견적 actions 클러스터(PermissionGate+BOM+비교)가 스캔 앞에 ~3.8K자.
+    expect(quotes).toMatch(/actions=\{[\s\S]{0,5000}setAiParseModalOpen/);
   });
 });
 
