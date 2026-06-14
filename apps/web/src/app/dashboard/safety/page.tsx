@@ -180,11 +180,20 @@ export default function SafetyManagerPage() {
     }
   }, [userPrefs.preferences]);
 
-  // §11.230c (a)-7 — debounced server PATCH on activeFrame change.
+  // §safety-save-state-fix — mount/hydration echo PATCH 차단 (호영님 버그: 무동작
+  //   first-load 에 "서버 반영 실패" 빨간 칩 오노출). 기존 [activeFrame] 의존 effect 는
+  //   마운트 1회 + 서버 hydration 으로 setActiveFrame 시 다시 발사되어, 사용자가 아무
+  //   것도 안 했는데도 자동 PATCH 가 나가고 그게 실패하면 isPatchError 가 켜졌다.
+  //   → (1) 서버 응답 전(isLoading) 차단, (2) activeFrame 이 서버값(빈 계정은 default)과
+  //   실제로 다를 때만 저장. 파생 자동 저장 → 사용자 실제 변경 시에만 저장으로 축소
+  //   (§11.327 다중 caller / feedback loop 정합).
   useEffect(() => {
+    if (userPrefs.isLoading) return; // 서버 응답 전 자동 PATCH 차단
+    const serverFrame = userPrefs.preferences?.safetyFilter?.activeFrame;
+    if (activeFrame === (serverFrame ?? "balanced_ops")) return; // 무변경 / 빈계정 default 차단
     userPrefs.updateSafetyFilter({ activeFrame });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeFrame]);
+  }, [activeFrame, userPrefs.isLoading, userPrefs.preferences]);
 
   useEffect(() => {
     if (userPrefs.isPatching) {
@@ -490,16 +499,16 @@ export default function SafetyManagerPage() {
             <Badge variant="outline" dot="amber" className="border-yellow-200 bg-yellow-50 text-yellow-700">
               저장 대기 {safetyPendingCount}
             </Badge>
-            <span
-              data-testid="safety-preferences-failure-reason"
-              className={`rounded-full border px-3 py-1 text-xs font-semibold ${
-                userPrefs.isPatchError || userPrefs.isError
-                  ? "border-red-200 bg-red-50 text-red-700"
-                  : "border-slate-200 bg-slate-50 text-slate-600"
-              }`}
-            >
-              {safetySaveFailureReason}
-            </span>
+            {/* §safety-save-state-fix — 실패 상태(isPatchError/isError)일 때만 노출.
+                정상 first-load 에 "실패 사유 없음" 부정 워딩 상시 노출 제거(노이즈). */}
+            {(userPrefs.isPatchError || userPrefs.isError) && (
+              <span
+                data-testid="safety-preferences-failure-reason"
+                className="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-700"
+              >
+                {safetySaveFailureReason}
+              </span>
+            )}
           </div>
         </div>
 
