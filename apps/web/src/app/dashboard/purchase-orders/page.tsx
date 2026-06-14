@@ -37,6 +37,8 @@ import { useToast } from "@/hooks/use-toast";
 // §11.374 P3.2 #mobile-surface-unify — 모바일 상태요약 가로 카운트 → StatusCountGrid 2x2.
 import { StatusCountGrid } from "@/components/layout/status-count-grid";
 import type { StatusCountItem, StatusCountTone } from "@/components/layout/status-count-grid";
+// §11.374 P3.4 — 헤더 단일 문법(AppPageHeader 부활·채택, white card 제거).
+import { AppPageHeader } from "@/components/layout/page-header";
 
 // ── Bucket tab config (PO-specific labels) ────────────────────────
 const PO_BUCKET_TABS: { key: ModuleBucketKey; label: string }[] = [
@@ -172,22 +174,16 @@ function PurchaseOrderLandingPageInner() {
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-6 space-y-5">
-      {/* ── 1. Header ──────────────────────────────────────────────── */}
-      <div className="bg-white border border-slate-200 rounded-lg p-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-slate-900">발주 관리</h1>
-            {/* §11.209 — 실무 담당자 톤 정합. orientation.role 만으로는
-                "관리" 의 실무 의미(발송 후 무엇을 추적) 불명확 → 작업
-                흐름(공급사 확인·납기·입고) 을 직접 명시. Hybrid Tier
-                별 외부 ERP/그룹웨어 hand-off 카피는 실 구현 land 시 별도
-                batch 에서 분기 표기. */}
-            <p className="text-xs text-slate-600 mt-0.5">발주서 발송 후 공급사 확인·납기·입고까지 추적하세요.</p>
-          </div>
-          <p className="text-xs text-slate-500 max-w-xs text-right">
-            {headerStats.nextActionSummary}
-          </p>
-        </div>
+      {/* ── 1. Header (§11.374 P3.4 — AppPageHeader 채택, white card 제거 → card-less 단일 문법) ── */}
+      <div className="space-y-3">
+        <AppPageHeader
+          title="발주 관리"
+          description="발주서 발송 후 공급사 확인·납기·입고까지 추적하세요."
+        />
+        {/* §11.209 — nextActionSummary: 실무 흐름(공급사 확인·납기·입고) 다음 행동 힌트 보존 */}
+        {headerStats.nextActionSummary && (
+          <p className="text-xs text-slate-500">{headerStats.nextActionSummary}</p>
+        )}
 
         {/* §11.374 P3.2 — 모바일 상태요약: 가로 카운트 pill → StatusCountGrid 2x2.
             count = headerStats[key] 주입(경로 불변), 클릭 = setActiveTab 토글. */}
