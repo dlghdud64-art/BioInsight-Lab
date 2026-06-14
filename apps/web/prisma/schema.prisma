@@ -255,6 +255,7 @@ enum ProductCategory {
   TOOL // 기구
   EQUIPMENT // ?비
   RAW_MATERIAL // 원료(원부자재)
+  CONSUMABLE // 소모품 (§11.374 마스터 적재)
 }
 
 // ?품
