@@ -184,3 +184,20 @@ describe("§log-consolidation P3 — 메뉴 통합 + 구 route redirect", () => 
     expect(src).not.toMatch(/"use client"/);
   });
 });
+
+// ────────────────────────────────────────────────────────────────────
+// 🟢 P4 — 통합 활동 모드 모바일 정합 + KPI 기능 동등성(구 activity-logs 회복)
+// ────────────────────────────────────────────────────────────────────
+describe("§log-consolidation P4 — 통합 활동 모드 KPI 기능 동등성", () => {
+  it("활동 모드 컴팩트 KPI 그리드(§11.311 grid-cols-3) 노출", () => {
+    const src = read(AUDIT_PATH);
+    expect(src).toMatch(/data-testid="log-activity-kpi-grid"/);
+    expect(src).toMatch(/grid-cols-3/);
+  });
+
+  it("활동 KPI 분류 헬퍼(isAiActivity/isAlertActivity) 사용 — 구 activity-logs 동등성", () => {
+    const src = read(AUDIT_PATH);
+    expect(src).toMatch(/isAiActivity/);
+    expect(src).toMatch(/isAlertActivity/);
+  });
+});

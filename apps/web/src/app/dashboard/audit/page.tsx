@@ -18,6 +18,8 @@ import {
   ChevronRight,
   Lock,
   Activity,
+  Zap,
+  AlertTriangle,
   RotateCcw,
 } from "lucide-react";
 import {
@@ -61,6 +63,8 @@ import {
   ACTIVITY_TYPE_LABELS,
   ENTITY_TYPE_LABELS as ACTIVITY_ENTITY_LABELS,
   ACTIVITY_TYPE_COLORS,
+  isAiActivity,
+  isAlertActivity,
 } from "@/lib/activity/activity-labels";
 
 // §11.81 #audit-trail-data-fetcher-wiring
@@ -400,6 +404,25 @@ export default function AuditTrailPage() {
     setEntityTypeFilter("all");
   };
 
+  // §log-consolidation P4 — 활동 모드 KPI(구 activity-logs 기능 동등성 회복).
+  //   redirect 로 구 surface 제거 시 KPI 가 사라지면 기능 퇴행 → 통합 활동 모드로 이식.
+  //   오늘(KST 자정 기준) 활동/AI 처리/경고 카운트. §11.311 컴팩트 3카드.
+  const activityTodayStart = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+  const activityTodayLogs = activityLogs.filter(
+    (l: any) => new Date(l.createdAt) >= activityTodayStart,
+  );
+  const activityTodayCount = activityTodayLogs.length;
+  const activityAiCount = activityTodayLogs.filter((l: any) =>
+    isAiActivity(l.activityType),
+  ).length;
+  const activityAlertCount = activityTodayLogs.filter((l: any) =>
+    isAlertActivity(l.activityType),
+  ).length;
+
   // §11.300 — 운영 브리핑 캐시 통계 / Injection 패턴 indicator 는 audit 화면에서
   // 제거 (호영님 P1, 2026-05-24). 일반 사용자 화면에 노출되는 개발 지표.
   // ADMIN 전용 가시성은 별도 admin route 신설 시 복원 예정 (§11.300c 보류).
@@ -562,6 +585,92 @@ export default function AuditTrailPage() {
             <p className="hidden md:block text-sm text-slate-500 break-keep">
               리스트 생성·수정·공유 등 모든 활동 내역을 확인합니다.
             </p>
+          </div>
+
+          {/* §log-consolidation P4 — 활동 KPI(§11.311 컴팩트 3카드, 구 activity-logs 동등성).
+              grid-cols-3 한 줄 / p-3 / text-lg / 0건 회색·1+건 활성 / 경고 1+건 red(§11.302). */}
+          <div
+            data-testid="log-activity-kpi-grid"
+            className="grid grid-cols-3 gap-2 md:gap-3"
+          >
+            <Card
+              className={`transition-colors ${
+                activityTodayCount > 0
+                  ? "bg-white border-slate-300 shadow-sm"
+                  : "bg-gray-50 border-gray-200"
+              }`}
+            >
+              <CardContent className="p-3 md:p-4">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Activity
+                    className={`h-4 w-4 ${activityTodayCount > 0 ? "text-purple-600" : "text-slate-400"}`}
+                  />
+                  <p className="text-[10px] md:text-xs text-slate-500 break-keep">시스템 활동</p>
+                </div>
+                <p
+                  className={`text-lg md:text-xl font-bold tabular-nums ${
+                    activityTodayCount > 0 ? "text-slate-900" : "text-gray-400"
+                  }`}
+                >
+                  {activityTodayCount.toLocaleString("ko-KR")}
+                  <span className="text-xs font-semibold text-slate-400 ml-0.5">건</span>
+                </p>
+              </CardContent>
+            </Card>
+            <Card
+              className={`transition-colors ${
+                activityAiCount > 0
+                  ? "bg-white border-slate-300 shadow-sm"
+                  : "bg-gray-50 border-gray-200"
+              }`}
+            >
+              <CardContent className="p-3 md:p-4">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Zap
+                    className={`h-4 w-4 ${activityAiCount > 0 ? "text-blue-600" : "text-slate-400"}`}
+                  />
+                  <p className="text-[10px] md:text-xs text-slate-500 break-keep">AI 처리</p>
+                </div>
+                <p
+                  className={`text-lg md:text-xl font-bold tabular-nums ${
+                    activityAiCount > 0 ? "text-slate-900" : "text-gray-400"
+                  }`}
+                >
+                  {activityAiCount.toLocaleString("ko-KR")}
+                  <span className="text-xs font-semibold text-slate-400 ml-0.5">건</span>
+                </p>
+              </CardContent>
+            </Card>
+            <Card
+              className={`transition-colors ${
+                activityAlertCount > 0
+                  ? "bg-red-50 border-red-200"
+                  : "bg-gray-50 border-gray-200"
+              }`}
+            >
+              <CardContent className="p-3 md:p-4">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <AlertTriangle
+                    className={`h-4 w-4 ${activityAlertCount > 0 ? "text-red-700" : "text-slate-400"}`}
+                  />
+                  <p
+                    className={`text-[10px] md:text-xs break-keep ${
+                      activityAlertCount > 0 ? "text-red-700" : "text-slate-500"
+                    }`}
+                  >
+                    경고/오류
+                  </p>
+                </div>
+                <p
+                  className={`text-lg md:text-xl font-bold tabular-nums ${
+                    activityAlertCount > 0 ? "text-red-700" : "text-gray-400"
+                  }`}
+                >
+                  {activityAlertCount.toLocaleString("ko-KR")}
+                  <span className="text-xs font-semibold text-slate-400 ml-0.5">건</span>
+                </p>
+              </CardContent>
+            </Card>
           </div>
 
           <div className="flex flex-row gap-2 items-center">
