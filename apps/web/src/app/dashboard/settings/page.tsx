@@ -849,9 +849,8 @@ function SettingsPageContent() {
                   description="워크스페이스 기본값은 조직 관리자만 변경할 수 있습니다."
                   topRightLabel="관리자 지정"
                 >
-                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-blue-700 mb-3">
-                    Workspace Canonical Identity
-                  </p>
+                  {/* §ko-ux ② — 영문 워크스페이스 eyebrow 제거(본제목 "현재 워크스페이스 정보" +
+                      topRightLabel "관리자 지정"과 의미 중복). */}
                   {(() => {
                     // §11.159 — canonical Workspace fetch (mock 제거)
                     // §11.164 — explicit pickActiveWorkspace priority logic

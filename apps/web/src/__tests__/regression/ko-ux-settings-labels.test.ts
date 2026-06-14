@@ -54,6 +54,12 @@ describe("§ko-ux ② — 중복 영문 보조부제 제거", () => {
     expect(src).not.toMatch(/승인 권한 \(LIMITS\)/);
     expect(src).toMatch(/승인 한도/);
   });
+
+  it("영문 eyebrow 'Workspace Canonical Identity' 렌더 제거 (라이브 smoke 발견)", () => {
+    const src = read(SETTINGS_PATH);
+    // 렌더 mixed-case 제거 (대문자 주석 § 히스토리는 보존).
+    expect(src).not.toMatch(/Workspace Canonical Identity/);
+  });
 });
 
 describe("§ko-ux ② — billing 영문 한글화", () => {
