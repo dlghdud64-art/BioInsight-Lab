@@ -1,0 +1,139 @@
+/**
+ * §log-consolidation P1 #contract-sentinel — 활동 로그 + 감사 추적 → 단일 로그 surface
+ *
+ * 계획서: docs/plans/PLAN_log-consolidation.md (P0 ✅ truth lock).
+ *
+ * P0 확정 truth:
+ *   - 활동 로그 = 실 ActivityLog (`/api/activity-logs`, org 멤버 열람) — mock 아님.
+ *   - 감사 추적 = 실 AuditLog (`/api/audit-logs`, admin-gate + GMP Part 11 + PDF/CSV export).
+ *   - 통합 = 단일 route + 모드토글, 각 모드가 자기 모델 읽기(모델 병합/migration 없음).
+ *   - 권한 비대칭: 활동=org멤버 / 감사=admin → 모드토글 권한 분기 필수.
+ *   - 통합 host = canonical 감사 surface (dashboard/audit/page.tsx).
+ *
+ * 이 파일은 P1 의 RED 계약 + 회귀 0 가드다.
+ *   🔴 RED  : 아래 "단일 surface 모드토글 계약" describe — P2 구현 전 실패해야 함.
+ *   🟢 GUARD: "회귀 0" describe 들 — 지금도 통과(감사 컴플라이언스·활동 모델 보존).
+ *
+ * 검증: 격리 node 로 RED 확인 → operator-shell 실 vitest + push.
+ */
+
+import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+// __dirname = apps/web/src/__tests__/regression → up 3 = apps/web
+const REPO_ROOT = join(__dirname, "..", "..", "..");
+const AUDIT_PATH = "src/app/dashboard/audit/page.tsx";
+const ACTIVITY_PATH = "src/app/dashboard/activity-logs/page.tsx";
+
+function read(rel: string): string {
+  return readFileSync(join(REPO_ROOT, rel), "utf8");
+}
+
+// ────────────────────────────────────────────────────────────────────
+// 🔴 RED — 단일 surface 모드토글 계약 (P2 구현 전 실패)
+// ────────────────────────────────────────────────────────────────────
+describe("§log-consolidation P1 RED — 단일 로그 surface 모드토글 계약", () => {
+  it("통합 host(감사 surface)에 모드토글 컨테이너 노출", () => {
+    const src = read(AUDIT_PATH);
+    expect(src).toMatch(/data-testid="log-mode-toggle"/);
+  });
+
+  it("모드토글: 활동 모드 탭", () => {
+    const src = read(AUDIT_PATH);
+    expect(src).toMatch(/data-testid="log-mode-activity"/);
+  });
+
+  it("모드토글: 감사 모드 탭", () => {
+    const src = read(AUDIT_PATH);
+    expect(src).toMatch(/data-testid="log-mode-audit"/);
+  });
+
+  it("활동 모드가 자기 모델(ActivityLog) 읽기 — /api/activity-logs 흡수 (모델 병합 없음)", () => {
+    const src = read(AUDIT_PATH);
+    expect(src).toMatch(/\/api\/activity-logs/);
+  });
+
+  it("권한 분기: 감사 모드 탭이 canAccessAudit 게이트 뒤에서만 노출 (비admin 비노출)", () => {
+    const src = read(AUDIT_PATH);
+    expect(src).toMatch(
+      /canAccessAudit[\s\S]{0,240}data-testid="log-mode-audit"|data-testid="log-mode-audit"[\s\S]{0,240}canAccessAudit/,
+    );
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// 🟢 회귀 0 — 감사 컴플라이언스 보존 (규제 리스크, 절대 손실 금지)
+// ────────────────────────────────────────────────────────────────────
+describe("§log-consolidation P1 GUARD — 감사 admin-gate 보존", () => {
+  it("canAccessAudit + ADMIN role 게이트 유지", () => {
+    const src = read(AUDIT_PATH);
+    expect(src).toMatch(/const\s+canAccessAudit\s*=/);
+    expect(src).toMatch(/userRole\s*===\s*"ADMIN"/);
+  });
+
+  it("비admin redirect(/dashboard) + 권한 거부 안내 유지", () => {
+    const src = read(AUDIT_PATH);
+    expect(src).toMatch(/router\.replace\("\/dashboard"\)/);
+    expect(src).toMatch(/감사 추적은 관리자만 열람할 수 있습니다/);
+  });
+
+  it("canonical 데이터 소스 /api/audit-logs 유지 (UI state 가 truth 대체 금지)", () => {
+    const src = read(AUDIT_PATH);
+    expect(src).toMatch(/\/api\/audit-logs/);
+  });
+});
+
+describe("§log-consolidation P1 GUARD — GMP Part 11 보존", () => {
+  it("타임존 명시(Asia/Seoul) + KST 라벨 유지", () => {
+    const src = read(AUDIT_PATH);
+    expect(src).toMatch(/timeZone:\s*"Asia\/Seoul"/);
+    expect(src).toMatch(/KST/);
+  });
+
+  it("append-only(추가 전용) 보존 안내 유지", () => {
+    const src = read(AUDIT_PATH);
+    expect(src).toMatch(/추가 전용|append-only/);
+  });
+});
+
+describe("§log-consolidation P1 GUARD — PDF/CSV export 보존 (§11.89)", () => {
+  it("정형 PDF export 핸들러 + pdf-view endpoint 유지", () => {
+    const src = read(AUDIT_PATH);
+    expect(src).toMatch(/handleCompliancePdf/);
+    expect(src).toMatch(/\/api\/audit-logs\/pdf-view/);
+    expect(src).toMatch(/autoPrint/);
+  });
+
+  it("CSV export 핸들러 유지", () => {
+    const src = read(AUDIT_PATH);
+    expect(src).toMatch(/handleCsvExport/);
+  });
+
+  it("내보내기 트리거 + Sheet(PDF/CSV) testid 유지 (dead button 0)", () => {
+    const src = read(AUDIT_PATH);
+    expect(src).toMatch(/data-testid="audit-export-trigger"/);
+    expect(src).toMatch(/data-testid="audit-actions-sheet-pdf"/);
+    expect(src).toMatch(/data-testid="audit-actions-sheet-csv"/);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// 🟢 회귀 0 — 활동 모델(ActivityLog) 보존 + 권한 비대칭(org 멤버)
+// ────────────────────────────────────────────────────────────────────
+describe("§log-consolidation P1 GUARD — 활동 ActivityLog 보존", () => {
+  it("활동 surface 가 /api/activity-logs(ActivityLog) 읽기 유지", () => {
+    const src = read(ACTIVITY_PATH);
+    expect(src).toMatch(/\/api\/activity-logs/);
+  });
+
+  it("활동 = org 멤버 열람(admin-gate 아님) — enabled: status authenticated 유지", () => {
+    const src = read(ACTIVITY_PATH);
+    expect(src).toMatch(/enabled:\s*status\s*===\s*"authenticated"/);
+  });
+
+  it("ActivityType 한글 매핑(raw enum 노출 회귀 차단) 유지 — §11.299", () => {
+    const src = read(ACTIVITY_PATH);
+    expect(src).toMatch(/ACTIVITY_TYPE_LABELS/);
+  });
+});
