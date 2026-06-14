@@ -21,6 +21,9 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { getStorageConditionLabel } from "@/lib/constants";
+// §11.374 P3.3 #mobile-surface-unify — 재고 모바일 상태요약 2x2 정합.
+import { StatusCountGrid } from "@/components/layout/status-count-grid";
+import type { StatusCountItem } from "@/components/layout/status-count-grid";
 
 // ── Types ──
 interface ProductInventory {
@@ -211,34 +214,55 @@ function MobileSummaryStrip({ inventories }: { inventories: ProductInventory[] }
     { label: "점검 이슈", count: issueCount, color: "text-yellow-700", bg: "bg-yellow-100", border: "border-yellow-200", icon: AlertTriangle },
   ];
 
+  // §11.374 P3.3 — 모바일 상태요약을 StatusCountGrid(2x2)로 정합. count 경로 불변
+  //   (reorder/expiring/dispose/issue 동일 산출). §11.302 톤: 재주문·폐기=danger(red),
+  //   만료임박·점검=warning(yellow). §11.311 폐기(dispose) red 톤 유지(우선 신호 보존).
+  //   표시 전용(클릭 wiring 없음 — 기존 카드와 동일, dead button 0).
+  const statusItems: StatusCountItem[] = [
+    { key: "reorder", label: "재주문 필요", count: reorderCount, tone: "danger" },
+    { key: "expiring", label: "만료 임박", count: expiringCount, tone: "warning" },
+    { key: "dispose", label: "폐기 검토", count: disposeCount, tone: "danger" },
+    { key: "issue", label: "점검 이슈", count: issueCount, tone: "warning" },
+  ];
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-      {cards.map((c) => {
-        const isZero = c.count === 0;
-        const cardBorder = isZero ? "border-gray-200" : c.border;
-        const cardBg = isZero ? "bg-gray-50" : "bg-white";
-        const iconBg = isZero ? "bg-gray-100" : c.bg;
-        const iconColor = isZero ? "text-gray-400" : c.color;
-        const countColor = isZero ? "text-gray-400" : c.color;
-        return (
-          <div
-            key={c.label}
-            className={`rounded-xl border ${cardBorder} ${cardBg} px-3 py-2.5`}
-          >
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <div className={`flex h-5 w-5 items-center justify-center rounded-md ${iconBg}`}>
-                <c.icon className={`h-2.5 w-2.5 ${iconColor}`} />
+    <>
+      {/* 모바일 (sm 미만): StatusCountGrid 2x2 — 4탭 단일 시각언어 */}
+      <StatusCountGrid
+        items={statusItems}
+        ariaLabel="재고 상태별 요약"
+        className="sm:hidden"
+      />
+
+      {/* 데스크탑 (sm+): 기존 §11.283a 4-column 신호등 카드 유지 */}
+      <div className="hidden sm:grid sm:grid-cols-4 gap-2">
+        {cards.map((c) => {
+          const isZero = c.count === 0;
+          const cardBorder = isZero ? "border-gray-200" : c.border;
+          const cardBg = isZero ? "bg-gray-50" : "bg-white";
+          const iconBg = isZero ? "bg-gray-100" : c.bg;
+          const iconColor = isZero ? "text-gray-400" : c.color;
+          const countColor = isZero ? "text-gray-400" : c.color;
+          return (
+            <div
+              key={c.label}
+              className={`rounded-xl border ${cardBorder} ${cardBg} px-3 py-2.5`}
+            >
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <div className={`flex h-5 w-5 items-center justify-center rounded-md ${iconBg}`}>
+                  <c.icon className={`h-2.5 w-2.5 ${iconColor}`} />
+                </div>
+                <span className="text-[10px] font-medium text-slate-500 whitespace-nowrap">{c.label}</span>
               </div>
-              <span className="text-[10px] font-medium text-slate-500 whitespace-nowrap">{c.label}</span>
+              <div className={`text-xl font-bold tracking-tight ${countColor}`}>
+                {c.count}
+                <span className="ml-0.5 text-[10px] font-normal text-slate-600">건</span>
+              </div>
             </div>
-            <div className={`text-xl font-bold tracking-tight ${countColor}`}>
-              {c.count}
-              <span className="ml-0.5 text-[10px] font-normal text-slate-600">건</span>
-            </div>
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
+    </>
   );
 }
 
