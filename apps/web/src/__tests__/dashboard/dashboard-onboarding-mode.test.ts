@@ -85,10 +85,13 @@ describe("§11.243 #7 — KPI 가이드 + 회색 progress", () => {
   });
 });
 
-describe("§11.243 #8 — AI 리포트 disabled + tooltip", () => {
-  it("AI 리포트 button disabled 분기 + title tooltip", () => {
-    expect(page).toMatch(/(AI 리포트|aiReport)[\s\S]{0,400}(disabled|cursor-not-allowed)/);
-    expect(page).toMatch(/(리포트 생성에 최소|최소 1건|완료된 견적|데이터가 필요)/);
+describe("§11.243 #8 — AI 리포트 onboarding 분석 차단 (§11.374 P4 진화: disabled+tooltip → entry 숨김)", () => {
+  it("온보딩(데이터 0) 시 AI 리포트 entry 비노출 — 0데이터 분석 차단 (더 강한 게이트)", () => {
+    // §11.374 P4(호영님 정정): 회색 disabled+tooltip 붕뜸 → 온보딩 시 헤더 actions 에서
+    //   리포트 entry 자체 제거(isOnboardingMode ? undefined). 의도(0데이터 분석 차단) 동일·강화.
+    expect(page).toMatch(/isOnboardingMode[\s\S]{0,120}\?\s*undefined/);
+    // 데이터 있을 때만 AIInsightDialog 노출 (분석 진입점 보존).
+    expect(page).toMatch(/AIInsightDialog/);
   });
 });
 
