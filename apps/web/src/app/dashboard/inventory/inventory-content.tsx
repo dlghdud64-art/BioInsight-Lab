@@ -2,6 +2,8 @@
 
 // §11.283c #inventory-content-traffic-light — amber/orange 토큰 → yellow/red 신호등 sweep (호영님 P0 spec, §11.283 cluster C, 30+ spot byte-level swap).
 import { isSuspectReceivedQuantity, countSuspectInventories } from "@/lib/inventory/suspect-received-quantity";
+// §11.374 P3.4 — 헤더 단일 문법(AppPageHeader). 인라인 h1 교체, 모달 액션 클러스터는 보존.
+import { AppPageHeader } from "@/components/layout/page-header";
 import { useState, useEffect, Suspense, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -1404,17 +1406,12 @@ function InventoryPageContent() {
       )}
       {/* ── Mobile View (below md breakpoint) ── */}
       <div className="md:hidden">
-        <div className="flex flex-col space-y-1 mb-4">
-          <h1
-            className="text-xl font-bold tracking-tight text-slate-900"
-            style={{
-              fontFamily: "'Inter', 'Pretendard', system-ui, sans-serif",
-            }}
-          >
-            재고 관리
-          </h1>
-          <p className="text-slate-500 text-xs">실험실 재고와 lot 상태를 관리합니다.</p>
-        </div>
+        {/* §11.374 P3.4 — 인라인 h1 → AppPageHeader(단일 헤더 문법). 액션 버튼은 아래 보존. */}
+        <AppPageHeader
+          title="재고 관리"
+          description="실험실 재고와 lot 상태를 관리합니다."
+          className="mb-4"
+        />
         <div className="flex flex-wrap items-start gap-2 mb-5">
           <Button size="sm" onClick={() => setIsDialogOpen(true)}>
             <Plus className="h-3.5 w-3.5 mr-1.5" />
@@ -1483,24 +1480,11 @@ function InventoryPageContent() {
         <div className={`flex-1 min-w-0 space-y-4 sm:space-y-6 transition-all ${contextPanelOpen ? "max-w-[calc(100%-420px)]" : "max-w-7xl mx-auto"}`}>
           {/* 상단 타이틀 및 액션 버튼 — 타이틀 좌측 / 버튼 우측 (스크린샷 레이아웃) */}
           <div className="flex items-start justify-between gap-4 mb-3 sm:mb-4">
-            <div className="flex flex-col space-y-1">
-              <h1
-                className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900"
-                style={{
-                  fontFamily: "'Inter', 'Pretendard', system-ui, sans-serif",
-                }}
-              >
-                재고 관리
-              </h1>
-              <p
-                className="text-sm text-slate-500 hidden sm:block"
-                style={{
-                  fontFamily: "'Pretendard', 'Inter', system-ui, sans-serif",
-                }}
-              >
-                실험실 재고와 lot 상태를 관리합니다.
-              </p>
-            </div>
+            {/* §11.374 P3.4 — 인라인 h1 → AppPageHeader. 우측 모달 액션 클러스터는 형제로 보존. */}
+            <AppPageHeader
+              title="재고 관리"
+              description="실험실 재고와 lot 상태를 관리합니다."
+            />
             <div className="flex items-center gap-2 flex-shrink-0">
               <AddInventoryModal
                 open={isDialogOpen}
