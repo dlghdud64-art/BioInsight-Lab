@@ -34,6 +34,9 @@ import { EmptyState } from "@/components/ui/empty-state";
 // #post-approval-purchase-order-flow B+H step 3 — quick-action button.
 // row 안 PDF/email 직접 trigger (detail page 진입 0). 호영님 스크린샷 정합.
 import { useToast } from "@/hooks/use-toast";
+// §11.374 P3.2 #mobile-surface-unify — 모바일 상태요약 가로 카운트 → StatusCountGrid 2x2.
+import { StatusCountGrid } from "@/components/layout/status-count-grid";
+import type { StatusCountItem, StatusCountTone } from "@/components/layout/status-count-grid";
 
 // ── Bucket tab config (PO-specific labels) ────────────────────────
 const PO_BUCKET_TABS: { key: ModuleBucketKey; label: string }[] = [
@@ -58,6 +61,15 @@ const STAT_FILTER_MAP: Record<string, string> = {
   overdue: "overdue",
   waitingExternal: "waiting_external",
   readyToExecute: "ready",
+};
+
+// §11.374 P3.2 — 상태별 §11.302 신호등 톤(표현 통일). count 경로는 불변(headerStats).
+const STAT_TONE_MAP: Record<string, StatusCountTone> = {
+  openActionable: "neutral",
+  blocked: "danger",
+  overdue: "warning",
+  waitingExternal: "info",
+  readyToExecute: "success",
 };
 
 // ── Component ─────────────────────────────────────────────────────
@@ -86,6 +98,32 @@ function PurchaseOrderLandingPageInner() {
   const headerStats = useMemo(
     () => buildModuleHeaderStats(unifiedInboxItems, "po"),
     [unifiedInboxItems],
+  );
+
+  // §11.374 P3.2 — StatusCountGrid items. canonical count = headerStats[key]
+  // (경로 불변). matching bucket 있으면 setActiveTab 토글(클릭 가능), 없으면
+  // onClick 미연결 = 표시 전용(기존 display-only span 의미 보존, dead button 0).
+  const poStatusItems: StatusCountItem[] = useMemo(
+    () =>
+      (
+        Object.keys(MODULE_HEADER_STAT_META) as Array<
+          keyof typeof MODULE_HEADER_STAT_META
+        >
+      ).map((key) => {
+        const filterKey = STAT_FILTER_MAP[key] ?? key;
+        const matchingTab = PO_BUCKET_TABS.find((t) => t.key === filterKey);
+        return {
+          key,
+          label: MODULE_HEADER_STAT_META[key].label,
+          count: headerStats[key],
+          tone: STAT_TONE_MAP[key] ?? "neutral",
+          active: matchingTab ? activeTab === matchingTab.key : false,
+          onClick: matchingTab
+            ? () => setActiveTab(matchingTab.key)
+            : undefined,
+        };
+      }),
+    [headerStats, activeTab],
   );
 
   // Priority queue (top 6)
@@ -151,10 +189,18 @@ function PurchaseOrderLandingPageInner() {
           </p>
         </div>
 
-        {/* Stat pills — §11.191c self-filter (inbox redirect 제거, 자체
-            페이지 bucket tab 으로 즉시 분기). matching bucket 있으면 button,
-            없으면 display-only span (dead-link 0). */}
-        <div className="flex flex-wrap gap-2 mt-3">
+        {/* §11.374 P3.2 — 모바일 상태요약: 가로 카운트 pill → StatusCountGrid 2x2.
+            count = headerStats[key] 주입(경로 불변), 클릭 = setActiveTab 토글. */}
+        <StatusCountGrid
+          items={poStatusItems}
+          ariaLabel="발주 상태별 요약"
+          className="sm:hidden mt-3"
+        />
+
+        {/* Stat pills (데스크탑 sm+) — §11.191c self-filter (inbox redirect 제거,
+            자체 페이지 bucket tab 으로 즉시 분기). matching bucket 있으면 button,
+            없으면 display-only span (dead-link 0). 모바일은 위 StatusCountGrid. */}
+        <div className="hidden sm:flex flex-wrap gap-2 mt-3">
           {(
             Object.keys(MODULE_HEADER_STAT_META) as Array<
               keyof typeof MODULE_HEADER_STAT_META
