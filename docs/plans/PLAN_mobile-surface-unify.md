@@ -2,7 +2,7 @@
 
 - **Status:** 🔄 In Progress
 - **Started:** 2026-06-14
-- **Last Updated:** 2026-06-14
+- **Last Updated:** 2026-06-14 (P1-2 production READY·라이브 GREEN, P3 4 sub-phase 상세화)
 
 **CRITICAL INSTRUCTIONS**: 각 phase 후 — 체크박스 갱신 / quality gate 검증 / Last Updated / Notes / 그다음 phase.
 ⛔ quality gate 실패·SoT 충돌·dead button/no-op 도입 금지. ⛔ count 데이터 경로 변경 금지(표현만 통일).
@@ -69,19 +69,39 @@ Sentinel(readFileSync+regex): 헤더 단일문법 채택·StatusCountGrid 계약
 - 견적 `sm:hidden` 가로5탭 → StatusCountGrid 교체. canonical `summaryStats.*.count` 주입(데이터 경로 불변), `setStatusFilter` 토글 + 비교(RESPONDED) 0건 가드 + isLoadingTimeout fallback 보존. 데스크탑 5-cell grid 유지.
 - Gate: count 무변경 ✓, dead button 0 ✓, sentinel GREEN ✓.
 
-### Phase 3: 헤더 AppPageHeader 채택 + 상태요약 rollout(전 탭)
+### Phase 3: 전 탭 rollout + AppPageHeader 채택 (blast 제어: surface 1개씩 — 4 sub-phase로 분해)
+
+> P1-2(견적) production READY·라이브 GREEN 확인(2026-06-14, dpl `016b0247`) 후 진입. 각 sub-phase = 독립 커밋·독립 rollback. count 데이터 경로 변경 0(표현만).
+
+#### Phase 3.1: Sentinel 계약 확장 (🔴 RED 먼저)
 - Status: [ ] Pending
-- 🟢 4탭 `AppPageHeader` 채택(breadcrumb?/title/subtitle?/actions 우측). 견적 좌측 스캔 drift 제거. StatusCountGrid 전 탭 적용.
-- Gate: 4탭 헤더 단일문법, 액션 wiring 보존, 인라인 헤더 0. Rollback: surface별 인라인 복귀.
+- 🔴 RED: StatusCountGrid 채택 sentinel을 구매/재고/대시보드로 확장 + AppPageHeader 4탭 채택 sentinel + 견적 스캔버튼 우측 이동 sentinel + **회귀 0** describe(각 탭 count 경로 불변·필터/액션 wiring 보존·StatusCountGrid 자체 fetch 0). 전부 실패(RED) 확인.
+- 🔵 REFACTOR: items 정규화 형태(key/label/count/tone/active/disabled/onClick) 탭 공통화.
+- **✋ Gate:** RED 진짜 실패 확인, 기존 sentinel(견적 10/10) 무회귀. Rollback: sentinel revert.
+
+#### Phase 3.2: 구매(purchase-orders) StatusCountGrid 채택
+- Status: [ ] Pending
+- 🟢 GREEN: 모바일 상태요약(가로 카운트) → StatusCountGrid 2x2. canonical `summaryStats.*.count` 주입(경로 불변) + 필터칩(전체/검토필요/발주가능/보류) `setStatusFilter` wiring + `상태별 분류` aria-label 보존. 데스크탑 grid 유지.
+- **✋ Gate:** count 무변경, dead button 0, 필터 wiring 라이브 동작, sentinel 3.1 GREEN(구매 항목). Rollback: 구매 인라인 상태요약 복귀.
+
+#### Phase 3.3: 재고(inventory) StatusCountGrid 정합
+- Status: [ ] Pending
+- 🟢 GREEN: `mobile-inventory-view` 2x2 카드 → StatusCountGrid. stock·lot count 주입(경로 불변). **§11.311 expired-lot 우선 톤 유지** — generic reorder가 expired lot dispose보다 먼저 뜨지 않게(priority-action-queue / lot-disposal 순서 보존).
+- **✋ Gate:** count 무변경, expired-lot 우선순위 회귀 0, sentinel 3.1 GREEN(재고 항목). Rollback: 재고 카드 인라인 복귀.
+
+#### Phase 3.4: 대시보드 StatusCountGrid + AppPageHeader 4탭 채택 + 견적 스캔 우측 이동
+- Status: [ ] Pending
+- 🟢 GREEN: ① 대시보드 모바일 상태요약 → StatusCountGrid(KPI count 주입). ② 4탭 `AppPageHeader` 부활·채택(breadcrumb?/title/subtitle?/actions **우측 고정**), 인라인 헤더 재구현 제거. ③ **견적 좌측 스캔버튼 → 우측 actions 이동**(스캔 onClick wiring 보존 — dead button 금지).
+- **✋ Gate:** 4탭 헤더 단일문법, 액션 wiring 보존, 인라인 헤더 0, 스캔 버튼 라이브 동작. Rollback: 탭별 인라인 헤더 복귀.
 
 ### Phase 4: 타입 스케일 + 필터 칩 토큰(③④)
 - Status: [ ] Pending
 - 🟢 제목/부제/카드 숫자 토큰화(임의값 제거), 2차 필터 칩 스타일·위치 통일.
-- Gate: 토큰 일관, 위계 정립. Rollback: 토큰 revert.
+- **✋ Gate:** 토큰 일관, 위계 정립. Rollback: 토큰 revert.
 
 ### Phase 5: Smoke / Rollback
 - Status: [ ] Pending
-- 375px 4탭 정렬 육안(Chrome) + canonical count 무변경 확인. Rollback: phase별.
+- Chrome 375px 4탭 정렬 육안 + canonical count 무변경 실측(DOM count vs 자체 query) + dead button 0 재확인. Rollback: phase별.
 
 ## 9. Risk Assessment
 | Risk | Prob | Impact | Mitigation |
@@ -94,10 +114,12 @@ Sentinel(readFileSync+regex): 헤더 단일문법 채택·StatusCountGrid 계약
 phase별 surface 인라인 복귀. 컴포넌트/표현 한정 — 데이터 비파괴.
 
 ## 11. Progress Tracking
-- Overall: 15% (P0 완료)
-- Current: P1 진입 대기
-- Phase Checklist: [x] P0 · [ ] P1 · [ ] P2 · [ ] P3 · [ ] P4 · [ ] P5
+- Overall: 40% (P0/P1/P2 완료 — 견적 production READY·라이브 검증 GREEN)
+- Current: P3.1(sentinel 계약 확장) 진입 대기
+- Phase Checklist: [x] P0 · [x] P1 · [x] P2 · [ ] P3.1 · [ ] P3.2 · [ ] P3.3 · [ ] P3.4 · [ ] P4 · [ ] P5
 
 ## 12. Notes & Learnings
 - [2026-06-14] P0: 캐노니컬 shell 후보 2개(AppPageHeader / ops-hub PageShell) **둘 다 0 importer** — 헤더 drift의 코드 근원. AppPageHeader가 목표 API 보유 → 부활 채택, ops-hub는 제거 핀(별 트랙).
 - [2026-06-14] §11.372/373 직후 동일 §mobile-surface 트랙 연장(페이지별 surface 재구현이라는 한 근본).
+- [2026-06-14] P2(견적) push `016b0247` → Vercel production READY. 라이브 DOM 실측(labaxis.co.kr, Chrome): 2x2+1 배치 ✓ / canonical count 0 경로 불변 ✓ / dead-button 가드 ✓(비교 RESPONDED 0 → aria-disabled+onClick 제거+not-allowed) / setStatusFilter wiring ✓(발송 클릭 → aria-pressed+ring 선택톤) / 터치영역 54px ✓ / overflow 0 ✓. Caveat: Chrome 창 최소폭으로 CSS 뷰포트 540px(375 아님, md 미만 모바일 레이아웃은 활성) — 375 보장은 sentinel.
+- [2026-06-14] P3 분해 결정: 원안 "헤더+전탭 rollout 단일 phase"는 blast 과대(4 surface 동시) → P3.1 sentinel(RED) / P3.2 구매 / P3.3 재고 / P3.4 대시보드+AppPageHeader+견적 스캔이동 으로 분리. surface 1개씩·독립 커밋·독립 rollback.
