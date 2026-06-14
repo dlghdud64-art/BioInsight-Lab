@@ -637,7 +637,7 @@ function SettingsPageContent() {
                 <SectionCard
                   title="운영자 식별 정보"
                   icon={Fingerprint}
-                  topRightLabel="SELF-MANAGED"
+                  topRightLabel="직접 관리"
                 >
                   <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6">
                     {/* Avatar */}
@@ -689,7 +689,7 @@ function SettingsPageContent() {
                   title="운영 역할 및 업무 범위"
                   icon={Shield}
                   description="시스템 권한(RBAC)과 승인 워크플로우에 영향을 줍니다. 직접 변경할 수 없습니다."
-                  topRightLabel="ASSIGNED BY ADMIN"
+                  topRightLabel="관리자 지정"
                 >
                   <div className="space-y-5">
                     {/* §11.87 + §11.193d Phase 2.3 활성 운영 역할 (workflow capabilities multi-badge).
@@ -762,7 +762,7 @@ function SettingsPageContent() {
                         2-row inline 정렬. 작은 sub-text 박스 → 정적 label-value row,
                         large bold 숫자로 시각 강조. */}
                     <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-3">승인 권한 (LIMITS)</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-3">승인 한도</p>
                       <div className="rounded-lg border border-slate-200 bg-slate-50/50 divide-y divide-slate-200">
                         <div className="flex items-center justify-between px-4 py-3">
                           <span className="text-sm text-slate-600">단일 건 승인 한도</span>
@@ -847,7 +847,7 @@ function SettingsPageContent() {
                   title="현재 워크스페이스 정보"
                   icon={Building2}
                   description="워크스페이스 기본값은 조직 관리자만 변경할 수 있습니다."
-                  topRightLabel="ASSIGNED BY ADMIN"
+                  topRightLabel="관리자 지정"
                 >
                   <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-blue-700 mb-3">
                     Workspace Canonical Identity
@@ -903,14 +903,12 @@ function SettingsPageContent() {
                           <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 shrink-0 md:mb-1.5">워크스페이스 코드</p>
                           <div className="min-w-0 text-right md:text-left">
                             <p className="text-sm font-bold font-mono text-slate-900 truncate md:mb-1">{wsSlug}</p>
-                            <p className="text-[10px] text-slate-500 uppercase tracking-wider hidden md:block">AUTO-GENERATED ID</p>
                           </div>
                         </div>
                         <div className="flex items-center justify-between gap-3 px-3 py-2.5 md:block md:rounded-xl md:border md:border-slate-200 md:bg-white md:p-4">
                           <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 shrink-0 md:mb-1.5">기본 통화</p>
                           <div className="min-w-0 text-right md:text-left">
                             <p className="text-sm font-bold text-slate-900 md:mb-1">KRW (₩)</p>
-                            <p className="text-[10px] text-slate-500 uppercase tracking-wider hidden md:block">FINANCIAL BASE</p>
                           </div>
                         </div>
                       </div>
@@ -924,7 +922,7 @@ function SettingsPageContent() {
                 <SectionCard
                   title="보안 자격 증명"
                   icon={Lock}
-                  topRightLabel="SELF-MANAGED"
+                  topRightLabel="직접 관리"
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -972,7 +970,7 @@ function SettingsPageContent() {
                   title="최근 보안 및 활동 로그"
                   icon={Activity}
                   description="식별 정보·워크스페이스 설정·접근 권한 변경 이력. 전체 감사 추적은 별도 페이지에서 확인."
-                  topRightLabel="AUDIT TRAIL"
+                  topRightLabel="감사 추적"
                 >
                   <div className="space-y-2">
                     {(() => {
@@ -1084,7 +1082,7 @@ function SettingsPageContent() {
             {/* ═══ ONTOLOGY ENGINE (AI) ═══ */}
             {activeSection === "ontology" && (
               <div className="space-y-5 animate-in fade-in-50 duration-200">
-                <SectionCard title="AI 추론 매개변수" icon={Brain} description="온톨로지 엔진의 자동 판단 기준을 조정합니다. 값을 변경하면 실시간으로 추론 결과에 반영됩니다." topRightLabel="ASSIGNED BY ADMIN">
+                <SectionCard title="AI 추론 매개변수" icon={Brain} description="온톨로지 엔진의 자동 판단 기준을 조정합니다. 값을 변경하면 실시간으로 추론 결과에 반영됩니다." topRightLabel="관리자 지정">
                   <div className="space-y-6">
                     <SliderField
                       label="자동 승인 신뢰도 임계값 (Confidence Threshold)"
@@ -1112,7 +1110,7 @@ function SettingsPageContent() {
                   </div>
                 </SectionCard>
 
-                <SectionCard title="자동화 규칙" icon={Zap} topRightLabel="ASSIGNED BY ADMIN">
+                <SectionCard title="자동화 규칙" icon={Zap} topRightLabel="관리자 지정">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
@@ -1142,7 +1140,7 @@ function SettingsPageContent() {
             {/* ═══ SECURITY & RBAC ═══ */}
             {activeSection === "security" && (
               <div className="space-y-5 animate-in fade-in-50 duration-200">
-                <SectionCard title="결재선 라우팅 규칙" icon={ShieldCheck} description="금액별 전결 규정을 설정합니다. 각 단계의 금액 기준을 초과하면 상위 승인자에게 자동 라우팅됩니다." topRightLabel="ASSIGNED BY ADMIN">
+                <SectionCard title="결재선 라우팅 규칙" icon={ShieldCheck} description="금액별 전결 규정을 설정합니다. 각 단계의 금액 기준을 초과하면 상위 승인자에게 자동 라우팅됩니다." topRightLabel="관리자 지정">
                   <div className="space-y-4">
                     <ApprovalTierRow tier={1} label="자동 승인" description="이 금액 이하는 AI 자동 승인" value={approvalTier1} onChange={setApprovalTier1} color="emerald" />
                     <div className="h-px bg-slate-200" />
@@ -1152,7 +1150,7 @@ function SettingsPageContent() {
                   </div>
                 </SectionCard>
 
-                <SectionCard title="역할 기반 접근 제어" icon={Users} topRightLabel="ASSIGNED BY ADMIN">
+                <SectionCard title="역할 기반 접근 제어" icon={Users} topRightLabel="관리자 지정">
                   <div className="space-y-3">
                     {[
                       { role: "관리자", permissions: "전체 설정 / 사용자 관리 / 결재선 변경", count: 1, color: "text-red-600" },
@@ -1179,7 +1177,7 @@ function SettingsPageContent() {
             {/* ═══ INTEGRATIONS ═══ */}
             {activeSection === "integrations" && (
               <div className="space-y-5 animate-in fade-in-50 duration-200">
-                <SectionCard title="ERP 및 외부 시스템 연동" icon={Server} description="SAP, Oracle 등 기간계 시스템과의 동기화 상태를 관리합니다." topRightLabel="ADMIN ONLY">
+                <SectionCard title="ERP 및 외부 시스템 연동" icon={Server} description="SAP, Oracle 등 기간계 시스템과의 동기화 상태를 관리합니다." topRightLabel="관리자 전용">
                   <div className="space-y-3">
                     {[
                       { name: "SAP S/4HANA", type: "ERP 동기화", status: "connected", lastSync: "2분 전", icon: Database },
@@ -1229,7 +1227,7 @@ function SettingsPageContent() {
             {/* ═══ NOTIFICATIONS ═══ */}
             {activeSection === "notifications" && (
               <div className="space-y-5 animate-in fade-in-50 duration-200">
-                <SectionCard title="전역 알림 빈도" icon={Bell} topRightLabel="SELF-MANAGED">
+                <SectionCard title="전역 알림 빈도" icon={Bell} topRightLabel="직접 관리">
                   <div className="flex items-center gap-4">
                     <Select value={notificationFrequency} onValueChange={(v: string) => setNotificationFrequency(v as DeliveryMode)}>
                       <SelectTrigger className="w-48 bg-white border-slate-200 text-slate-900 h-9 text-sm">
@@ -1248,7 +1246,7 @@ function SettingsPageContent() {
                 <NotificationPreferenceToggles />
 
                 {notificationsByCategory.map((group) => (
-                  <SectionCard key={group.category} title={group.category} icon={group.items[0].icon} topRightLabel="SELF-MANAGED">
+                  <SectionCard key={group.category} title={group.category} icon={group.items[0].icon} topRightLabel="직접 관리">
                     <div className="space-y-1">
                       {group.items.map((n) => {
                         const isSafety = SAFETY_CRITICAL_IDS.has(n.id);
@@ -1291,7 +1289,7 @@ function SettingsPageContent() {
                       <Zap className="h-32 w-32 -rotate-12" strokeWidth={1.5} />
                     </div>
                     <Badge className="bg-blue-600/90 text-white border-0 text-[10px] uppercase tracking-wider font-bold mb-3">
-                      Current Plan
+                      현재 플랜
                     </Badge>
                     <h3 className="text-2xl md:text-3xl font-extrabold mb-2 break-keep">LabAxis Enterprise</h3>
                     <p className="text-xs md:text-sm text-slate-300 mb-6 break-keep">
@@ -1299,11 +1297,11 @@ function SettingsPageContent() {
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-4">
-                        <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Next Billing Date</p>
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">다음 청구일</p>
                         <p className="text-lg md:text-xl font-bold font-mono text-white">2026.05.15</p>
                       </div>
                       <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-4">
-                        <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Monthly Cost</p>
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">월 비용</p>
                         <p className="text-lg md:text-xl font-bold text-white tabular-nums">
                           ₩1,200,000
                           <span className="text-xs text-slate-400 font-normal ml-1.5">/ mo</span>
@@ -1344,7 +1342,7 @@ function SettingsPageContent() {
                     /api/billing/invoices alive endpoint 가 Subscription invoices
                     (real) 또는 mock fallback 반환. PDF 다운로드 버튼은
                     invoicePdfUrl 이 있으면 새 탭으로 open, 없으면 솔직한 안내. */}
-                <SectionCard title="최근 청구 내역" icon={Receipt} topRightLabel="AUDIT TRAIL">
+                <SectionCard title="최근 청구 내역" icon={Receipt} topRightLabel="감사 추적">
                   <div className="space-y-2">
                     {(() => {
                       const invoices = invoicesData?.invoices ?? [];
