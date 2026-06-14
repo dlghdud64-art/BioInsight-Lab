@@ -1,8 +1,11 @@
 # 세션 인계 — §log-consolidation 트랙 (2026-06-14)
 
 대상: 새 세션 / 클로드코드. 호영님(CEO) 위임 구조. terse-mode.
-재개점: `origin/main eb82e198` (clean). 누적 push 33 commit.
-재개 명령: **"§log-consolidation P1 가자"**
+재개점: `origin/main 0f37176b` (clean, P2 push 완료). 누적 push 35 commit.
+재개 명령: **"§log-consolidation P3 가자"**
+
+> 진척: P0 ✅ · P1 ✅(sentinel `4e3ee0d4`) · P2 ✅(단일 surface `0f37176b`,
+> build EXIT 0 / vitest 17/17 / 규제 3중 보존). 다음 = P3.
 
 ---
 
@@ -13,29 +16,32 @@
 - §9.9: sandbox 공유 node_modules 설치 금지, prod 명령 금지, `migrate diff --shadow=prod` 금지.
 - sentinel = readFileSync+regex. 구조변경·multi-surface = feature-planner 승인 후 코딩.
 
-## 2. 다음 작업 = §log-consolidation P1 (계약 + sentinel RED)
+## 2. 다음 작업 = §log-consolidation P3 (메뉴 1항목 + 구 route redirect)
 
-계획서: `docs/plans/PLAN_log-consolidation.md` (P0 ✅, 20%).
+계획서: `docs/plans/PLAN_log-consolidation.md` (P0·P1·P2 ✅, 65%).
 
-### P0 확정 사실 (재조사 불요)
+### P0~P2 확정 사실 (재조사 불요)
 
-- 활동 로그 = 실 `ActivityLog` (`/api/activity-logs`, `db.activityLog.*`). mock 아님(주석 line 45 stale).
-- 감사 추적 = 실 `AuditLog` (`/api/audit-logs`, `getAuditLogs`). admin-gate + GMP Part 11 + PDF export(§11.89).
-- `DataAuditLog` = orphan(UI 0) → 제외. 안전(`/dashboard/safety`) → 별 도메인, 통합 X.
-- 통합 형태 = 단일 route + 모드토글, 각 모드가 자기 모델 읽기(병합·migration 없음).
-- 권한 비대칭: 활동=org멤버 / 감사=admin → 모드토글 권한 분기 필수.
+- 활동 로그 = 실 `ActivityLog` (`/api/activity-logs`). 감사 = 실 `AuditLog` (`/api/audit-logs`, admin-gate + Part11 + PDF/CSV export).
+- 통합 host = canonical `dashboard/audit/page.tsx` (단일 route + 모드토글). 모델 병합 없음(각 모드 자기 모델).
+- 활동 라벨 단일 소스 = `src/lib/activity/activity-labels.ts` (P2 신규).
+- 권한 3중 보존: 감사 query `enabled: canAccessAudit && mode==="audit"` / 감사 탭 `canAccessAudit &&` 게이트 / 비admin 감사모드 진입 시 `setMode("activity")` 강등.
+- sentinel = `__tests__/regression/log-consolidation-p1.test.ts` (계약 5 GREEN + GUARD).
 
-### P1 산출물
+### P3 산출물
 
-1. sentinel(RED) — 단일 surface 모드토글 계약 + 회귀 0 가드
-   (감사 admin-gate·Part11·PDF export 문자열/핸들러 보존, 활동 ActivityLog 보존, 비admin 감사모드 비노출).
-2. 격리 node로 RED 확인 → operator-shell 실 vitest + push.
+1. `_components/dashboard-sidebar.tsx` adminMenuItems(152-153): "활동 로그"+"감사 추적" 2항목 → **1항목**(통합 진입). dead link 0.
+2. 구 route `/dashboard/activity-logs` → 통합 route(`/dashboard/audit`) **redirect** (비admin 도 활동 모드 진입 가능하므로 redirect 안전).
+3. sentinel 보강: sidebar 1항목 + redirect 가드. → 격리 node 확인 → operator 실 vitest + build + push.
+   ⚠️ activity-logs/page.tsx 의 GUARD(`/api/activity-logs`·org멤버 enabled·ACTIVITY_TYPE_LABELS)는 redirect 전환 시 위치 이동 가능 — sentinel 경로 동기화 필요.
 
-### P2~P4 (P1 후)
+### P4 (P3 후)
 
-- P2 단일 surface 구현(모드토글+권한분기)
-- P3 sidebar 1항목 + 구route redirect
-- P4 모바일 §mobile-surface + 375px smoke(감사 export 동작)
+- P4 모바일 §mobile-surface(헤더 우측액션·컴팩트·drill-in) + 375px smoke(감사 export 동작).
+
+### 잔여 smoke (P2 미완)
+
+- 비admin 계정 `/dashboard/audit` UI 실측(활동 모드만/감사 탭 비노출) — 호영님 OAuth 계정 필요(현재 demo 계정만). 코드레벨 3중 보존은 build+sentinel 로 확정.
 
 ### 불변 제약
 

@@ -16,7 +16,6 @@ import {
   FileText,
   BarChart3,
   Settings,
-  Activity,
   Shield,
   ShieldCheck,
   X,
@@ -148,9 +147,11 @@ const sidebarGroups: SidebarGroup[] = [
 ];
 
 // 관리자 전용 메뉴 (role === ADMIN || OWNER 시에만 표시)
+// §log-consolidation P3 — 활동 로그 + 감사 추적 2항목 → 통합 단일 진입.
+//   통합 host = /dashboard/audit (활동/감사 모드 토글, 각 모드 자기 모델 읽기).
+//   구 /dashboard/activity-logs 는 통합 route 로 영구 redirect (dead link 0).
 const adminMenuItems: NavItem[] = [
-  { title: "활동 로그", href: "/dashboard/activity-logs", icon: Activity },
-  { title: "감사 추적", href: "/dashboard/audit", icon: ShieldCheck },
+  { title: "활동 · 감사 로그", href: "/dashboard/audit", icon: ShieldCheck },
 ];
 
 // 대시보드 링크 (상단에 별도 배치)

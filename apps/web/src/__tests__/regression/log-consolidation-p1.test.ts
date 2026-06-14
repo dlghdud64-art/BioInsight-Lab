@@ -31,6 +31,7 @@ import { join } from "node:path";
 const REPO_ROOT = join(__dirname, "..", "..", "..");
 const AUDIT_PATH = "src/app/dashboard/audit/page.tsx";
 const ACTIVITY_PATH = "src/app/dashboard/activity-logs/page.tsx";
+const SIDEBAR_PATH = "src/app/_components/dashboard-sidebar.tsx";
 
 function read(rel: string): string {
   return readFileSync(join(REPO_ROOT, rel), "utf8");
@@ -135,19 +136,51 @@ describe("§log-consolidation P1 GUARD — PDF/CSV export 보존 (§11.89)", () 
 // ────────────────────────────────────────────────────────────────────
 // 🟢 회귀 0 — 활동 모델(ActivityLog) 보존 + 권한 비대칭(org 멤버)
 // ────────────────────────────────────────────────────────────────────
-describe("§log-consolidation P1 GUARD — 활동 ActivityLog 보존", () => {
-  it("활동 surface 가 /api/activity-logs(ActivityLog) 읽기 유지", () => {
-    const src = read(ACTIVITY_PATH);
+// P3: 구 activity-logs/page.tsx 가 통합 route redirect 로 전환됨 → 활동 데이터
+//   읽기 · org 멤버 열람 · 라벨 보존 가드를 통합 host(audit page 활동 모드)로 이전.
+//   (정직성 §1-2⑤ + 권한 비대칭 보존 의미는 위치만 이동, 강도 동일.)
+describe("§log-consolidation P3 GUARD — 활동 ActivityLog 보존 (통합 host)", () => {
+  it("활동 모드가 /api/activity-logs(ActivityLog) 읽기 유지", () => {
+    const src = read(AUDIT_PATH);
     expect(src).toMatch(/\/api\/activity-logs/);
   });
 
   it("활동 = org 멤버 열람(admin-gate 아님) — enabled: status authenticated 유지", () => {
-    const src = read(ACTIVITY_PATH);
+    const src = read(AUDIT_PATH);
     expect(src).toMatch(/enabled:\s*status\s*===\s*"authenticated"/);
   });
 
   it("ActivityType 한글 매핑(raw enum 노출 회귀 차단) 유지 — §11.299", () => {
-    const src = read(ACTIVITY_PATH);
+    const src = read(AUDIT_PATH);
     expect(src).toMatch(/ACTIVITY_TYPE_LABELS/);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// 🟢 P3 — 메뉴 1항목 정리 + 구 route redirect (dead link 0)
+// ────────────────────────────────────────────────────────────────────
+describe("§log-consolidation P3 — 메뉴 통합 + 구 route redirect", () => {
+  it("sidebar adminMenuItems 통합 단일 진입(/dashboard/audit)", () => {
+    const src = read(SIDEBAR_PATH);
+    expect(src).toMatch(/href:\s*"\/dashboard\/audit",\s*icon/);
+  });
+
+  it("sidebar 구 활동 로그 별 메뉴 항목 제거 (2항목 회귀 차단)", () => {
+    const src = read(SIDEBAR_PATH);
+    // NavItem 형태(href: "/dashboard/activity-logs", icon: ...)가 더는 없어야 함.
+    // (ICON_TINT 의 "/dashboard/activity-logs": {...} 키 형태는 href: 가 아니라 무관.)
+    expect(src).not.toMatch(/href:\s*"\/dashboard\/activity-logs",\s*icon/);
+  });
+
+  it("구 route /dashboard/activity-logs → 통합 route redirect", () => {
+    const src = read(ACTIVITY_PATH);
+    expect(src).toMatch(/from\s+"next\/navigation"/);
+    expect(src).toMatch(/redirect\(\s*["']\/dashboard\/audit["']\s*\)/);
+  });
+
+  it("구 활동 surface 는 redirect-only (구 client 데이터 fetch 잔존 금지)", () => {
+    const src = read(ACTIVITY_PATH);
+    expect(src).not.toMatch(/useQuery/);
+    expect(src).not.toMatch(/"use client"/);
   });
 });
