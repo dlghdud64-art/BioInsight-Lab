@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { PurchaseRequestStatus, TeamRole, OrderStatus } from "@prisma/client";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { checkApprovalLimit } from "@/lib/security/approval-limit-guard";
 import {
   validateCategoryBudgetInTransaction,
   resolvePeriodYearMonth,
@@ -116,6 +117,31 @@ export async function POST(
       return NextResponse.json(
         { error: "Forbidden: Only ADMIN can approve requests" },
         { status: 403 }
+      );
+    }
+
+    // §S2 #approval-limit-server-enforce — per-user 단일건 승인 한도 서버 강제
+    //   (audit S2 HIGH). actor 의 OrganizationMember.approvalLimit(null=무제한)이
+    //   PR 금액보다 작으면 직접 승인 차단(403) + 상위 승인자 안내. selectApproverByAmount
+    //   의 escalation 설계를 실행시점에 강제 — 라우팅 추천만으론 권한 보유 actor 가
+    //   자기 한도 초과 건을 직접 승인하던 우회를 닫는다. 카테고리 예산 게이트(tx 내)와
+    //   별 통제축(개인 결재 권한). read-only 비교라 tx 전 pre-validation.
+    const actorOrgMembership = await db.organizationMember.findFirst({
+      where: {
+        organizationId: purchaseRequest.organizationId ?? "",
+        userId: session.user.id,
+      },
+      select: { approvalLimit: true },
+    });
+    const approvalLimitCheck = checkApprovalLimit(
+      actorOrgMembership?.approvalLimit ?? null,
+      purchaseRequest.totalAmount ?? 0,
+    );
+    if (!approvalLimitCheck.allowed) {
+      enforcement?.fail();
+      return NextResponse.json(
+        { error: approvalLimitCheck.reason, requiresHigherApprover: true },
+        { status: 403 },
       );
     }
 

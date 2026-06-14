@@ -17,10 +17,13 @@
 **확정 사실:**
 - 카테고리/월 예산 = 서버 강제(해소): `request/[id]/approve/route.ts:131-170` SERIALIZABLE + `validateCategoryBudgetInTransaction` → `BudgetBlockedError` → 403.
 - per-user `approvalLimit` = **서버 미강제(HIGH)**: 저장만(`workspaces/[id]/members/[memberId]/route.ts`) + 라우팅 추천(`approver-routing.ts` read-only) + ABAC 빈 슬롯(`abac-rules.ts` export {}) + 승인 실행 route에 한도 체크 부재.
-**P0 미확정(이번 phase에서 확정):**
-- 추정: `approvalLimit` 필드 = WorkspaceMember(또는 OrganizationMember). members route가 PATCH → 필드 존재 추정. **schema 확인 필요.**
-- 승인 실행 경로 전수: `request/[id]/approve` 외 — `work-queue/purchase-conversion/*`, `ai-actions/[id]/approve`, `request/[id]/reject`(반대편), admin orders 등 — **인벤토리 필요.**
-- 초과 시 동작: 즉시 403 차단 vs 상위 승인자 escalation(approver-routing 연계). **결정 필요.**
+**P0 확정 (조사 완료 2026-06-14):**
+- **approvalLimit schema = 3곳:** `User.approvalLimit`(BigInt?, §11.97 — settings 운영정책 *표시용*) / `WorkspaceMember.approvalLimit`(Int?) / `OrganizationMember.approvalLimit`(Int?, null=무제한). 결재 한도 canonical = **OrganizationMember.approvalLimit**(approver-routing 정합, org 컨텍스트). User 필드는 표시용 별개.
+- **canonical 한도 검증 패턴 = `approvalLimit == null || approvalLimit >= totalAmount`** — `selectApproverByAmount`(approver-routing.ts:120-123)가 DB-side filter로 동일 사용. helper가 이 패턴 재사용(SoT 정합).
+- **갭 정확화:** 요청 *라우팅*(selectApproverByAmount)엔 한도 반영됨. **승인 실행 시점에 actor 한도 재검증이 부재** → 권한 보유 actor가 자기 한도 초과 건 직접 승인 가능.
+- **동작 확정(호영님):** 한도 초과 actor 직접 승인 → **403 차단 + "상위 승인자 필요" 안내**. 자동 escalation 라우팅은 후속 트랙(복잡도↑).
+- **승인 실행 경로 = 5곳:** `request/[id]/approve`(purchase_request, totalAmount — **1차 대상 확정**) / `ai-actions/[id]/approve` / `admin/orders/[id]/status` / `receiving-drafts/[id]/approve` / `ai-actions/generate/quote-rationale`. ⚠️ **P1에서 각 경로 "금액 결재" 성격 분류** — totalAmount 결재 승인만 한도 게이트 대상(입고/일부 ai-action은 금액 결재 아닐 수 있음 → 오적용 방지).
+- **helper 위치:** `lib/security/approval-limit-guard.ts`(신규).
 
 **Environment:** sentinel readFileSync+regex. 실 vitest·build·push = operator. prod write 0.
 
@@ -105,8 +108,12 @@
 - P1: sentinel / P2: helper / P3: route별 게이트 / P4: helper no-op(한도 미강제=기존). 데이터 비파괴.
 
 ## 11. Progress
-- Overall: 0% · Current: P0 대기(schema+경로+동작) · Checklist: [ ]P0 [ ]P1 [ ]P2 [ ]P3 [ ]P4
+- Overall: 90% 코드 (P0~P3 완료, single-surface 확정) — operator 실 vitest+build+push + 라이브 smoke 잔여
+- Current: P4 smoke(operator/라이브 — 한도 설정 계정 초과 승인 차단 실측)
+- Checklist: [x]P0 [x]P1 [x]P2 [x]P3 [ ]P4
 
 ## 12. Notes
 - [2026-06-14] S2 HIGH 확정 근거: ABAC 빈 슬롯·라우팅 read-only·승인 route 한도 부재. 카테고리 예산축은 해소(무관).
-- P0 핵심: 승인 실행 경로 전수가 우회 차단의 전제.
+- [2026-06-14] **경로 분류 결과: 금액 결재 승인 = `request/[id]/approve` 1곳**. ai-actions(totalAmount:0)·order_status_change(상태 전이)·receiving(입고 확인)·quote-rationale(generate)는 금액 결재 아님 → 제외(오적용 방지). order 직접 생성(api/orders)은 예산 차단 있음 + create≠결재 → 별 워크플로 이슈로 분리(호영님 결정). → S2 single-surface.
+- [2026-06-14] helper `lib/security/approval-limit-guard.ts`(순수함수, null=무제한·amount<=limit). request/approve teamMember 게이트 다음 pre-tx 검증 → 초과 시 403 + requiresHigherApprover. 카테고리 예산 게이트 보존. 격리 self-check 16/16(로직 경계 + wiring + budget 보존).
+- [2026-06-14] escalation 자동 라우팅(설계 의도)은 후속 트랙 — 본 트랙은 차단(403)으로 우회 먼저 닫음.
