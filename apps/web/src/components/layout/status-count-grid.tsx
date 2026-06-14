@@ -69,7 +69,7 @@ export function StatusCountGrid({
     <div
       role="group"
       aria-label={ariaLabel}
-      className={cn("grid grid-cols-2 gap-2", className)}
+      className={cn("grid grid-cols-2 gap-1.5", className)}
     >
       {items.map((item) => {
         const isZero = !loading && item.count === 0;
@@ -85,8 +85,9 @@ export function StatusCountGrid({
             aria-pressed={item.onClick ? !!item.active : undefined}
             aria-label={`${item.label} ${loading ? "집계 중" : item.count}건${item.active ? " · 선택됨" : ""}`}
             className={cn(
-              // §11.311: 컴팩트 패딩 p-3, 44px 터치, active ring, active:scale 피드백
-              "flex items-center justify-between gap-2 rounded-xl border p-3 min-h-[44px] text-left transition-colors",
+              // §11.374 P4: 큰 카드 → 컴팩트(호영님 정정). px-2.5 py-1.5 + rounded-lg 밀도↑.
+              //   터치 min-h-[44px]는 a11y로 유지(셀이 인터랙티브 필터). active ring/scale 피드백.
+              "flex items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 min-h-[44px] text-left transition-colors",
               item.active
                 ? "border-slate-300 bg-slate-50 ring-1 ring-slate-300"
                 : isZero
@@ -104,7 +105,7 @@ export function StatusCountGrid({
             >
               {item.label}
             </span>
-            <span className={cn("text-lg font-bold tabular-nums", valueTone)}>
+            <span className={cn("text-base font-bold tabular-nums", valueTone)}>
               {loading ? <span className="inline-block h-5 w-5 rounded bg-slate-200 animate-pulse" /> : item.count}
             </span>
           </button>

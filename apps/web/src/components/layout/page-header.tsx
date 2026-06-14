@@ -163,9 +163,10 @@ export function AppPageHeader({
           )}
         </div>
 
-        {/* Actions */}
+        {/* Actions — §11.374 P4: 모바일(flex-col stretch)에서도 우측 고정(justify-end).
+            데스크탑은 parent justify-between 으로 우측. 한국 모바일 UX 주요 액션 우측 관습. */}
         {actions && actions.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+          <div className="flex flex-wrap items-center justify-end gap-2 flex-shrink-0">
             {actions.map((action, idx) => {
               if (action.render) return <span key={idx}>{action.render}</span>;
 

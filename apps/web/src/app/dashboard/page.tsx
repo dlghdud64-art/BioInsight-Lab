@@ -706,21 +706,14 @@ function DashboardPageInner() {
               ? "견적 요청을 시작하면 운영 데이터가 쌓이기 시작합니다."
               : "오늘 즉시 처리할 운영 이슈가 없습니다."
         }`}
-        actions={[
-          {
-            render: (
-              <div className="flex flex-col items-end gap-1">
-                {/* §11.243 #4 — isOnboardingMode 시 AI 리포트 disabled + tooltip(0 데이터 분석 차단) */}
-                <AIInsightDialog disabled={isOnboardingMode} />
-                {isOnboardingMode && (
-                  <p className="text-[10px] text-slate-400 break-keep">
-                    리포트 생성에 최소 1건의 완료된 견적 데이터가 필요합니다
-                  </p>
-                )}
-              </div>
-            ),
-          },
-        ]}
+        actions={
+          // §11.374 P4 — 온보딩(데이터 0)이면 리포트 entry 자체를 숨김(회색 disabled 붕뜸 제거).
+          //   리포트는 완료 견적 ≥1 필요 → 데이터 없으면 헤더에 둘 이유 없음(온보딩 히어로가 안내).
+          //   데이터 있으면 우측 고정 노출(AppPageHeader justify-end).
+          isOnboardingMode
+            ? undefined
+            : [{ render: <AIInsightDialog disabled={false} /> }]
+        }
       />
 
       <section
