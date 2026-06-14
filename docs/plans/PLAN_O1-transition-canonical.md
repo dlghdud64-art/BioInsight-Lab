@@ -97,7 +97,10 @@ sentinel(readFileSync+regex): canonical CANCELLED→PENDING 존재·COMPLETED→
 - P1: sentinel revert / P2: 2파일 revert / P3: 전이 분기 revert. 데이터 비파괴(스키마 무변경).
 
 ## 11. Progress
-- Overall: 0% · Current: P0 대기 · Checklist: [ ]P0 [ ]P1 [ ]P2 [ ]P3
+- Overall: 90% 코드 (P0~P2 완료) — operator 실 vitest+build+push + P3 라이브 smoke 잔여
+- Current: P3 라이브 smoke(Chrome — CANCELLED→PENDING 허용·COMPLETED→CANCELLED 거부·skip 거부)
+- Checklist: [x]P0 [x]P1 [x]P2 [ ]P3
+- [2026-06-14] 구현: state-machine CANCELLED→["PENDING"] 한 줄 추가 / quotes route 로컬 `ALLOWED_STATUS_TRANSITIONS` 제거 → `validateTransition("QUOTE", ...)` + 에러 응답 `ALLOWED_QUOTE_TRANSITIONS` 재구성 / S1 stale 주석 정정. 격리 self-check 12/12(canonical 규칙 + 일원화 + 로컬참조 0 + enforce/UX 보존). dead import 해소.
 
 ## 12. Notes
 - [2026-06-14] 호영님 도메인 확정: a) CANCELLED→PENDING 허용, b) COMPLETED→CANCELLED 금지, c) skip 전이 금지. canonical 변경 = CANCELLED→[PENDING] 한 줄.

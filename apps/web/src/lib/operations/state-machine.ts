@@ -24,7 +24,9 @@ const ALLOWED_QUOTE_TRANSITIONS: Record<QuoteStatus, QuoteStatus[]> = {
   RESPONDED: ["COMPLETED", "CANCELLED"],
   COMPLETED: ["PURCHASED"],
   PURCHASED: [],
-  CANCELLED: [],
+  // §O1 (호영님 a) — 취소 견적 재활성화 허용. canonical SoT 단일화(quotes status route
+  //   로컬 재정의 제거)의 유일 변경. b) 완료→취소·c) 단계 skip 은 금지(canonical 엄격 유지).
+  CANCELLED: ["PENDING"],
 };
 
 // ══════════════════════════════════════════════════════════════════════════════

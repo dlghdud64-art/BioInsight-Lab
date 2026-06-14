@@ -4,20 +4,14 @@ import { db } from "@/lib/db";
 import { QuoteStatus, ActivityType } from "@prisma/client";
 import { sendQuoteCompletedEmail, sendQuoteRejectedEmail } from "@/lib/email";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
-import { validateTransition } from "@/lib/operations/state-machine";
+import { validateTransition, ALLOWED_QUOTE_TRANSITIONS } from "@/lib/operations/state-machine";
 import { logStateTransition } from "@/lib/operations/state-transition-logger";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
-// 허용되는 상태 전환 (P7-1: 정규화된 state-machine.ts가 정의의 원천)
-const ALLOWED_STATUS_TRANSITIONS: Record<QuoteStatus, QuoteStatus[]> = {
-  [QuoteStatus.PENDING]: [QuoteStatus.PARSED, QuoteStatus.SENT, QuoteStatus.COMPLETED, QuoteStatus.CANCELLED],
-  [QuoteStatus.PARSED]: [QuoteStatus.SENT, QuoteStatus.COMPLETED, QuoteStatus.CANCELLED],
-  [QuoteStatus.SENT]: [QuoteStatus.RESPONDED, QuoteStatus.COMPLETED, QuoteStatus.CANCELLED],
-  [QuoteStatus.RESPONDED]: [QuoteStatus.COMPLETED, QuoteStatus.PURCHASED, QuoteStatus.CANCELLED],
-  [QuoteStatus.COMPLETED]: [QuoteStatus.PURCHASED, QuoteStatus.CANCELLED],
-  [QuoteStatus.PURCHASED]: [],
-  [QuoteStatus.CANCELLED]: [QuoteStatus.PENDING], // 취소된 견적 재활성화 가능
-};
+// §O1 #transition-canonical — 전이 규칙은 canonical state-machine.ts(validateTransition)가
+//   유일 SoT. 기존 로컬 ALLOWED_STATUS_TRANSITIONS 재정의는 canonical 과 drift(예: 단계 skip
+//   PENDING→COMPLETED, 완료→취소 허용)했어 제거. 에러 응답의 allowedTransitions 표시는
+//   canonical ALLOWED_QUOTE_TRANSITIONS 에서 재구성. (호영님 확정: 재활성화 a 허용 / b·c 금지.)
 
 // 상태 한글 레이블
 const STATUS_LABELS: Record<QuoteStatus, string> = {
@@ -44,8 +38,8 @@ export async function PATCH(
   try {
     const session = await auth();
 
-    // 관리자 권한 확인 (선택적으로 추가)
-    // 현재는 인증된 사용자면 허용
+    // §audit 주석 정정 — 인증 확인 + 아래 enforceAction(quote_status_change)이
+    //   role(buyer/approver/ops_admin)을 서버에서 강제(클라 hide 무관). "인증되면 허용"은 stale.
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -95,15 +89,16 @@ export async function PATCH(
       return NextResponse.json({ error: "Quote not found" }, { status: 404 });
     }
 
-    // 상태 전환 유효성 검사
+    // §O1 — canonical state-machine 으로 전이 검증(SoT 단일).
     const currentStatus = quote.status as QuoteStatus;
-    const allowedTransitions = ALLOWED_STATUS_TRANSITIONS[currentStatus] || [];
+    const transition = validateTransition("QUOTE", currentStatus, status);
 
-    if (!allowedTransitions.includes(status)) {
+    if (!transition.valid) {
+      const allowedTransitions = ALLOWED_QUOTE_TRANSITIONS[currentStatus] || [];
       return NextResponse.json(
         {
           error: `Cannot transition from ${STATUS_LABELS[currentStatus]} to ${STATUS_LABELS[status as QuoteStatus]}`,
-          allowedTransitions: allowedTransitions.map(s => ({ status: s, label: STATUS_LABELS[s] })),
+          allowedTransitions: allowedTransitions.map((s) => ({ status: s, label: STATUS_LABELS[s as QuoteStatus] })),
         },
         { status: 400 }
       );
@@ -260,7 +255,7 @@ export async function GET(
     }
 
     const currentStatus = quote.status as QuoteStatus;
-    const allowedTransitions = ALLOWED_STATUS_TRANSITIONS[currentStatus] || [];
+    const allowedTransitions = ALLOWED_QUOTE_TRANSITIONS[currentStatus] || [];
 
     return NextResponse.json({
       id: quote.id,
