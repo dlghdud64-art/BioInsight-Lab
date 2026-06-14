@@ -23,12 +23,14 @@ const settings = read("app/dashboard/settings/page.tsx");
 // ① 알림 패널 — 모바일 viewport 고정, md+ trigger anchor 복원
 // ─────────────────────────────────────────────────────────────
 describe("§11.372 ① 알림 패널 모바일 클리핑", () => {
-  it("모바일: viewport 고정(fixed left-3 right-3 top-14) — trigger 분리", () => {
-    expect(header).toMatch(/fixed left-3 right-3 top-14/);
+  it("모바일: viewport 우측 고정(fixed right-3 top-14) + 폭 clamp — §11.372-b 우측 hug", () => {
+    expect(header).toMatch(/fixed right-3 top-14/);
+    expect(header).toMatch(/w-\[min\(20rem,calc\(100vw-1\.5rem\)\)\]/);
+    expect(header).toMatch(/max-w-\[calc\(100vw-1\.5rem\)\]/);
   });
 
   it("md+: 종 기준 absolute right-0 top-full 복원(데스크톱 무회귀)", () => {
-    expect(header).toMatch(/md:absolute md:left-auto md:right-0 md:top-full/);
+    expect(header).toMatch(/md:absolute md:right-0 md:top-full/);
     expect(header).toMatch(/md:w-\[380px\]/);
   });
 
