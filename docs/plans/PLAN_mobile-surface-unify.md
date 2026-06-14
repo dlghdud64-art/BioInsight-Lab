@@ -89,10 +89,11 @@ Sentinel(readFileSync+regex): 헤더 단일문법 채택·StatusCountGrid 계약
 - 🟢 GREEN: `mobile-inventory-view` 2x2 카드 → StatusCountGrid. stock·lot count 주입(경로 불변). **§11.311 expired-lot 우선 톤 유지** — generic reorder가 expired lot dispose보다 먼저 뜨지 않게(priority-action-queue / lot-disposal 순서 보존).
 - **✋ Gate:** count 무변경, expired-lot 우선순위 회귀 0, sentinel 3.1 GREEN(재고 항목). Rollback: 재고 카드 인라인 복귀.
 
-#### Phase 3.4: 대시보드 StatusCountGrid + AppPageHeader 4탭 채택 + 견적 스캔 우측 이동
+#### Phase 3.4: AppPageHeader 4탭 채택 + 견적 스캔 우측 이동
 - Status: [ ] Pending
-- 🟢 GREEN: ① 대시보드 모바일 상태요약 → StatusCountGrid(KPI count 주입). ② 4탭 `AppPageHeader` 부활·채택(breadcrumb?/title/subtitle?/actions **우측 고정**), 인라인 헤더 재구현 제거. ③ **견적 좌측 스캔버튼 → 우측 actions 이동**(스캔 onClick wiring 보존 — dead button 금지).
-- **✋ Gate:** 4탭 헤더 단일문법, 액션 wiring 보존, 인라인 헤더 0, 스캔 버튼 라이브 동작. Rollback: 탭별 인라인 헤더 복귀.
+- 🟢 GREEN: ① 4탭 `AppPageHeader` 부활·채택(breadcrumb?/title/subtitle?/actions **우측 고정**), 인라인 헤더 재구현 제거(quotes/purchase-orders/dashboard/inventory-content). ② **견적 좌측 스캔버튼 → 우측 actions 이동**(`setAiParseModalOpen` wiring 보존 — dead button 금지).
+- **⚠️ 범위 정정(2026-06-14):** 대시보드는 **StatusCountGrid 대상 아님**. 대시보드 모바일 요약 = KPI **판단 카드**(`stats.*` + trend delta + risk level + 해석 문구)로, 단순 count가 아님 → StatusCountGrid(2x2 count) 강제 시 trend/risk **정보 손실** = canonical truth 위반. 대시보드는 **AppPageHeader만** 채택, KPI 판단 카드 본문 보존. StatusCountGrid rollout은 견적(P2 ✅)+구매(P3.2)+재고(P3.3) 3 workbench surface 한정.
+- **✋ Gate:** 4탭 헤더 단일문법, 액션 wiring 보존, 인라인 헤더 0, 스캔 버튼 라이브 동작, 대시보드 KPI 판단카드 무회귀. Rollback: 탭별 인라인 헤더 복귀.
 
 ### Phase 4: 타입 스케일 + 필터 칩 토큰(③④)
 - Status: [ ] Pending
