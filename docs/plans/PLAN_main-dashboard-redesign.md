@@ -160,10 +160,11 @@
   - ✋ Gate: sentinel GREEN + baseline 91 신규 fail 0 + 라이브 smoke(입고 awareness 보존·무한스켈레톤 0). Rollback: page 2 edit revert.
 - **다음 P4-B2(별도):** ActionInbox 배선 — "가장 먼저 처리"/"다음 작업" 통합 대체(현행 우선순위 derive 주입). 단독 smoke. (이후 P3-B2 StatLine 교체 — 처리필요·이상징후 ActionInbox 이전 완료 후.)
 
-### Phase 5: 하단 모듈 — BudgetSpend / QuickActions / RecentActivity
-- Status: [ ] Pending
+### Phase 5: 하단 모듈 — BudgetSpend / QuickActions / RecentActivity — ✅ Complete (2026-06-15)
+- Status: [x] Complete
 - 🟢 BudgetSpend: 현행 Spend+Category 정렬, **가짜 차트 제거(가드②), 빈 데이터 차트 미렌더 → "데이터 쌓이면 표시" empty(가드①)**. QuickActions(2×2, OperatorQuickActions 재사용). RecentActivity(최근 이력 재사용, empty 정직).
-- ✋ Gate: 가짜 분포 0, 빈 차트 0, wiring 보존. Rollback: 모듈 revert.
+- **P5 산출:** BudgetSpend 가짜차트 제거=P1 완료(추가 0). page "최근 알림" 카드 제거(호영님 — 상단바 NotificationCenter 단일 진입, 중복 0); notifications 데이터는 "최근 운영 활동" 타임라인 잔존 소비(awareness 손실 0, orphan import 0). QuickActions/RecentActivity(empty 정직) 보존. `dashboard-bottom-modules-p5.test.ts`(신규). 격리 11/11 PASS. "미배선" 가드 충돌 0(제거 phase).
+- ✋ Gate: sentinel GREEN + baseline 91 신규 fail 0 + 라이브 smoke(최근알림 사라짐·최근운영활동 잔존·무한스켈레톤 0). Rollback: 카드 제거 revert(1 edit).
 
 ### Phase 6: 반응형 + 접근성 + smoke
 - Status: [ ] Pending
@@ -185,8 +186,8 @@
 - 모듈별 독립 커밋 → phase별 revert. summary API no-op 시 현행 분산 fetch 복귀. 데이터 비파괴(읽기).
 
 ## 11. Progress
-- Overall: 74% (P1·P2·P3(A·B1·B2)·P4(A·B1)) · Current: P3-B2 operator 검증(smoke) 대기 → P5(하단 모듈)
-- Checklist: [x]P0 [x]P1 [x]P2 [x]P3(A·B1·B2) [~]P4(A·B1 / B2 ActionInbox 보류=다음작업 모델 불일치) [ ]P5 [ ]P6
+- Overall: 84% (P1·P2·P3(A·B1·B2)·P4(A·B1)·P5) · Current: P5 operator 검증(smoke) 대기 → P6(반응형·접근성·종합 smoke)
+- Checklist: [x]P0 [x]P1 [x]P2 [x]P3(A·B1·B2) [~]P4(A·B1 / B2 ActionInbox 보류) [x]P5 [ ]P6
 - [2026-06-15] P4-B1 Pipeline 배선(SmartReceiving 대체). P4-B2 보류(다음작업=가이드형, ActionInbox=count형 불일치 — ActionInbox 향후 count surface 보존). P3-B2 StatLine 배선(누적지출 ₩0 모순 해소).
 - [2026-06-15] P1 push READY(94a4da1e). P2 capMs 10s(2.6s 폐기, §11.375 충돌 해소) push. P3-A 고립 빌드(StatLine·GlobalEmpty·summary spend 확장).
 - ⚠️ 별 트랙 §suite-red: 전체 dashboard+regression suite 286 fail(91 file) 발견. P2/대시보드 무관(고립 검증). ENOENT-14 가설 철회(전부 통과 가드). 실 vitest 실패목록 → baseline allowlist 후 P3-B 게이트 "신규 fail 0".
