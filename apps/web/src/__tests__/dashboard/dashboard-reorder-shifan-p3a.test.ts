@@ -38,9 +38,10 @@ describe("§dashboard-shifan-adopt P3a (A) — 시안 순서 재배열", () => {
     expect(iNext).toBeLessThan(iInbox);
     expect(iInbox).toBeLessThan(iPipe);
   });
-  it("Pipeline → (예산&지출 차트) → 빠른작업 순", () => {
-    expect(iPipe).toBeLessThan(iChart);
-    expect(iChart).toBeLessThan(iQuick);
+  it("Pipeline → 빠른작업(2-col) → 차트(하단) 순 — P3b 중단 재구성 반영", () => {
+    // §dashboard-shifan-adopt P3b — 중단=예산&지출 카드+빠른작업(2-col), 지출트렌드/카테고리는 하단 이동.
+    expect(iPipe).toBeLessThan(iQuick);
+    expect(iQuick).toBeLessThan(iChart);
   });
   it("재배열 마커 주석", () => {
     expect(PAGE).toMatch(/§dashboard-shifan-adopt P3a — 시안 단일 흐름 재배열/);

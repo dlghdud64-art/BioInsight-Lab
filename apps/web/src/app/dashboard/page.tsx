@@ -59,6 +59,8 @@ const CategoryDistributionCard = dynamic_import(
 );
 // §11.93 — 운영 바로가기 4 카드 (operator quick actions)
 import { OperatorQuickActions } from "@/components/dashboard/operator-quick-actions";
+// §dashboard-shifan-adopt P3b — 예산&지출 집행률 카드(시안 중단 좌). canonical summary.budget.
+import { BudgetSpendCard } from "@/components/dashboard/budget-spend-card";
 // §11.308e — 스마트 입고 본문 awareness + status 카드 (호영님 P2 옵션 B).
 // §main-dashboard-redesign P4-B1 — SmartReceiving 카드 → Pipeline 대체(입고 awareness 흡수).
 import { Pipeline } from "@/components/dashboard/pipeline";
@@ -768,80 +770,25 @@ function DashboardPageInner() {
           insight=NextStepBanner 중복. onboarding KPI guide banner는 NextStepBanner+GlobalEmpty 흡수
           (awareness 공백 0). 컴포넌트 파일 dormant 보존(rollback). */}
 
-      {/* §11.84 + §11.85 — 시안 채택 후속.
-          dashboard 종합 same-canvas 원칙: 운영자가 detail 보러 다른 surface 로
-          이동하지 않고 한 화면에서 종합 표시. /dashboard/analytics + /dashboard/reports
-          는 deep-dive 그대로 유지 (duplicate 아님 — same canonical truth, different
-          angle). data: dashboard/stats endpoint 의 monthlySpending +
-          categorySpending unused fields 활용 (새 endpoint 0). */}
-      {/* §11.252b — 모바일 차트 영역 탭 전환 (트렌드 / 카테고리).
-          호영님 spec: 두 카드 모바일에서 1.5 화면 차지 → 탭 전환으로 한
-          영역에 합치기. canonical truth lock: SpendTrendCard +
-          CategoryDistributionCard import / props / dynamic_import 보존,
-          데스크탑 lg:grid-cols-3 + lg:col-span-2 layout 보존 (회귀 0). */}
-      <div className="lg:hidden">
-        <div className="flex border-b border-slate-200 mb-3" role="tablist" aria-label="차트 영역 탭">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeChartTab === "trend"}
-            onClick={() => setActiveChartTab("trend")}
-            className={`flex-1 min-h-[44px] text-sm font-semibold transition-colors ${
-              activeChartTab === "trend"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "border-b-2 border-transparent text-slate-500"
-            }`}
-          >
-            지출 트렌드
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeChartTab === "category"}
-            onClick={() => setActiveChartTab("category")}
-            className={`flex-1 min-h-[44px] text-sm font-semibold transition-colors ${
-              activeChartTab === "category"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "border-b-2 border-transparent text-slate-500"
-            }`}
-          >
-            카테고리 비중
-          </button>
-        </div>
-        {activeChartTab === "trend" ? (
-          <SpendTrendCard monthlySpending={stats.monthlySpendingChart} />
-        ) : (
-          <CategoryDistributionCard categorySpending={stats.categorySpending} />
-        )}
+      {/* §dashboard-shifan-adopt P3b — 시안 중단 2-col: 예산&지출 집행률 카드(좌) + 빠른작업(우).
+          예산집행률 = canonical summary.budget 단일 진실(미설정→"미설정" 정직, 가짜 집행률 0).
+          지출 트렌드 + 카테고리 도넛은 하단으로 이동(아래, 최근활동 뒤). */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        <BudgetSpendCard
+          state={summarySection.state}
+          summary={summarySection.data}
+          onRetry={summarySection.retry}
+        />
+        {/* §11.93 — 운영 바로가기(빠른작업). canonical truth: stats forward, count mutation 0. */}
+        <OperatorQuickActions
+          counts={{
+            quotes: stats.activeQuotes,
+            purchases: stats.respondedQuotes,
+            receiving: stats.compareStats.purchaseToReceivingCount,
+            inventory: stats.lowStockAlerts,
+          }}
+        />
       </div>
-      {/* §11.313 — items-stretch 로 두 grid cell 높이 정합 + CategoryDistributionCard
-          h-full 로 셀(=SpendTrend 높이) 채움. 카드 하단 라인 일치 + 카테고리
-          카드 내부 세로 균등 배치 (flex-1). */}
-      <div className="hidden lg:grid lg:grid-cols-3 gap-4 items-stretch">
-        <div className="lg:col-span-2">
-          <SpendTrendCard monthlySpending={stats.monthlySpendingChart} />
-        </div>
-        <div className="lg:col-span-1">
-          <CategoryDistributionCard categorySpending={stats.categorySpending} className="h-full" />
-        </div>
-      </div>
-
-      {/* §11.93 — 운영 바로가기 4 카드 (LabAxis 운영 verb 정합).
-          호영님 시안의 "운영 바로가기" visual essence 흡수, 운영 verb 4개:
-          견적 등록 / 발주 전환 / 입고 처리 / 재고 점검. sidebar 와 부분
-          duplicate 이지만 dashboard 종합 surface single-click 단축이 가치.
-          §11.243 #5 — 호영님 P0: 카드 우측 상단 건수 뱃지 forward.
-          quotes = 진행중 견적 / purchases = 응답 검토 대기 (발주 전환
-          candidate) / receiving = 발주→입고 funnel / inventory = 안전재고
-          미달. canonical truth: stats 그대로 forward, count mutation 0. */}
-      <OperatorQuickActions
-        counts={{
-          quotes: stats.activeQuotes,
-          purchases: stats.respondedQuotes,
-          receiving: stats.compareStats.purchaseToReceivingCount,
-          inventory: stats.lowStockAlerts,
-        }}
-      />
 
       {/* §dashboard-shifan-adopt P3a — Pipeline은 ActionInbox 직후로 상승(위 참조). 원위치 제거.
           중단=차트(예산&지출)+빠른작업, 하단=최근활동 순(시안 흐름). */}
@@ -1206,6 +1153,56 @@ function DashboardPageInner() {
           </div>
         </div>
       )}
+
+      {/* §dashboard-shifan-adopt P3b — 지출 트렌드 + 카테고리 도넛(하단 이동, 시안 흐름).
+          중단 슬롯은 예산집행률 카드가 차지(위). 두 차트 모두 빈 계정 empty 정직:
+          SpendTrend(§main-dashboard-redesign P1 가드)·Category(P3b mockup 제거)는 차트 미렌더 +
+          컴팩트 정직 empty. dashboard/stats endpoint monthlySpending/categorySpending forward(새 endpoint 0). */}
+      {/* §11.252b — 모바일 차트 영역 탭 전환 (트렌드 / 카테고리). */}
+      <div className="lg:hidden">
+        <div className="flex border-b border-slate-200 mb-3" role="tablist" aria-label="차트 영역 탭">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeChartTab === "trend"}
+            onClick={() => setActiveChartTab("trend")}
+            className={`flex-1 min-h-[44px] text-sm font-semibold transition-colors ${
+              activeChartTab === "trend"
+                ? "border-b-2 border-blue-600 text-blue-600"
+                : "border-b-2 border-transparent text-slate-500"
+            }`}
+          >
+            지출 트렌드
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeChartTab === "category"}
+            onClick={() => setActiveChartTab("category")}
+            className={`flex-1 min-h-[44px] text-sm font-semibold transition-colors ${
+              activeChartTab === "category"
+                ? "border-b-2 border-blue-600 text-blue-600"
+                : "border-b-2 border-transparent text-slate-500"
+            }`}
+          >
+            카테고리 비중
+          </button>
+        </div>
+        {activeChartTab === "trend" ? (
+          <SpendTrendCard monthlySpending={stats.monthlySpendingChart} />
+        ) : (
+          <CategoryDistributionCard categorySpending={stats.categorySpending} />
+        )}
+      </div>
+      {/* §11.313 — items-stretch 로 두 grid cell 높이 정합 + CategoryDistributionCard h-full. */}
+      <div className="hidden lg:grid lg:grid-cols-3 gap-4 items-stretch">
+        <div className="lg:col-span-2">
+          <SpendTrendCard monthlySpending={stats.monthlySpendingChart} />
+        </div>
+        <div className="lg:col-span-1">
+          <CategoryDistributionCard categorySpending={stats.categorySpending} className="h-full" />
+        </div>
+      </div>
 
       {/* --- 1순위: 오늘의 우선 작업 (모바일용 fallback, md 이하) --- */}
       <div className="md:hidden rounded-xl border border-slate-200/80 bg-white overflow-hidden">

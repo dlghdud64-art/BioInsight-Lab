@@ -60,9 +60,13 @@ describe("§11.313 — category-distribution-card 높이/세로 정합", () => {
     expect(src).toMatch(/grid grid-cols-1 md:grid-cols-2 gap-3 items-center flex-1/);
   });
 
-  it("empty 차트 영역 flex-1 (세로 균등)", () => {
+  it("empty 차트 영역 flex-1 (세로 균등) — §dashboard-shifan-adopt P3b 정직 empty(mockup grid/opacity 제거)", () => {
     const src = read(CARD_PATH);
-    expect(src).toMatch(/relative grid grid-cols-1 md:grid-cols-2 gap-3 items-center opacity-90 flex-1/);
+    // P3b 정직성 코어: 빈 도넛 mockup(opacity-90 grid grayscale overlay) 제거 → 정직 empty 박스.
+    //   height 정합(flex-1 세로 균등)은 보존(카드 높이 정합 §11.313 유지).
+    expect(src).toMatch(/flex-1/); // empty 박스 세로 균등(height 정합)
+    expect(src).toMatch(/발주가 시작되면|분포가 표시/); // 정직 empty 안내(mockup 분포 0)
+    expect(src).not.toMatch(/opacity-90 flex-1/); // mockup overlay 잔존 0(정직성)
   });
 });
 
