@@ -89,12 +89,12 @@ describe("§main-dashboard-redesign P3 (C) — 가드② mock/예시 0", () => {
   });
 });
 
-// ── (D) 탑재 단계 — GlobalEmpty 배선(P3-B1), StatLine 미배선(P3-B2) ──────
+// ── (D) 탑재 단계 — GlobalEmpty(P3-B1) + StatLine(P3-B2) 배선 완료 ───────
 describe("§main-dashboard-redesign P3 (D) — 모듈 탑재 단계", () => {
-  it("page.tsx 가 GlobalEmpty 배선(P3-B1 탑재 완료)", () => {
+  it("page.tsx 가 GlobalEmpty 배선(P3-B1)", () => {
     expect(read(PAGE)).toMatch(/global-empty|GlobalEmpty/);
   });
-  it("page.tsx 가 StatLine 아직 미배선(P3-B2 대기 — KPI 교체는 P4 ActionInbox 후)", () => {
-    expect(read(PAGE)).not.toMatch(/stat-line|StatLine/);
+  it("page.tsx 가 StatLine 배선(P3-B2 — 재무 KPI 이전)", () => {
+    expect(read(PAGE)).toMatch(/stat-line|StatLine/);
   });
 });

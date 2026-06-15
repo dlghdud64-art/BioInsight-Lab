@@ -25,7 +25,6 @@ import { useEffect, useMemo, useState } from "react";
 //   spurious — dead import 제거로 자연 해소. KPI 카드 + projection
 //   table 만 사용하므로 recharts 불필요.
 import {
-  TrendingDown,
   ClipboardList,
   ShieldAlert,
   AlertCircle,
@@ -605,9 +604,11 @@ export function ExecutiveSummarySection({
           drived store 에서 derive — mock 0 / fake 0. */}
       <div
         className={
+          // §main-dashboard-redesign P3-B2 — 누적지출 KPI 이전(→StatLine)으로 3 KPI.
+          //   §11.311: KPI 3개 → grid-cols-3 한 줄.
           onboardingMode
-            ? "grid grid-cols-2 gap-3 sm:grid-cols-4 opacity-60 grayscale pointer-events-none"
-            : "grid grid-cols-2 gap-3 sm:grid-cols-4"
+            ? "grid grid-cols-3 gap-3 opacity-60 grayscale pointer-events-none"
+            : "grid grid-cols-3 gap-3"
         }
       >
         <KpiCard
@@ -678,49 +679,11 @@ export function ExecutiveSummarySection({
               : undefined
           }
         />
-        <KpiCard
-          icon={<TrendingDown className="h-5 w-5" />}
-          label="누적 지출"
-          value={`₩${(kpis.totalSpent / 1_000_000).toFixed(1)}M`}
-          hint={
-            kpis.totalBudget > 0
-              ? `예산 대비 ${kpis.burnRate.toFixed(0)}% 소진`
-              : "예산 미설정"
-          }
-          risk={kpis.burnRateRisk === "over" || kpis.burnRateRisk === "critical" ? "critical" : kpis.burnRateRisk === "warning" ? "warning" : "none"}
-          toneOverride={
-            kpis.burnRateRisk === "over" || kpis.burnRateRisk === "critical"
-              ? "rose"
-              : kpis.burnRateRisk === "warning"
-                ? "amber"
-                : "blue"
-          }
-          href="/dashboard/budget"
-          breakdown={[
-            { label: "총 예산", value: `₩${kpis.totalBudget.toLocaleString("ko-KR")}` },
-            { label: "누적 소진", value: `₩${kpis.totalSpent.toLocaleString("ko-KR")}` },
-            { label: "소진율", value: `${kpis.burnRate.toFixed(1)}%` },
-          ]}
-          /* §11.92 + §11.94 — week 우선, month fallback delta forward.
-             week 데이터가 더 최신/정밀. 지출 증가는 negative tone (운영
-             비용 ↑ = 나쁨), 감소는 positive. */
-          delta={(() => {
-            const weekly = deltas?.weekOverWeekChange;
-            const monthly = deltas?.monthOverMonthChange;
-            const value = weekly !== undefined && Math.abs(weekly) > 0.1
-              ? weekly
-              : monthly !== undefined && Math.abs(monthly) > 0.1
-                ? monthly
-                : undefined;
-            if (value === undefined) return undefined;
-            const isWeek = weekly !== undefined && Math.abs(weekly) > 0.1;
-            return {
-              text: `${value > 0 ? "+" : ""}${value.toFixed(1)}% ${isWeek ? "주" : "월"}`,
-              direction: value > 0 ? "up" : value < 0 ? "down" : "flat",
-              tone: value > 0 ? "negative" : value < 0 ? "positive" : "neutral",
-            };
-          })()}
-        />
+        {/* §main-dashboard-redesign P3-B2 — 재무 KPI(누적 지출)는 StatLine(상단,
+            summary.spend.thisMonth 실데이터)이 소유로 이전. 기존 store 예산축 derive 는
+            빈 예산 시 ₩0 으로 표기돼 실 지출 차트(₩71.6M)와 §1-2⑤ 모순(가드②) → 제거.
+            운영 KPI(처리필요·진행발주·이상징후)는 본 섹션 유지. burnRate 는 SystemInsight
+            가 계속 사용(여기선 카드만 제거). */}
         <KpiCard
           icon={<ShieldAlert className="h-5 w-5" />}
           label="신규 이상 징후"

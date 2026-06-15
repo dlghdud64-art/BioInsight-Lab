@@ -67,6 +67,8 @@ import { OperatorQuickActions } from "@/components/dashboard/operator-quick-acti
 // §11.308e — 스마트 입고 본문 awareness + status 카드 (호영님 P2 옵션 B).
 // §main-dashboard-redesign P4-B1 — SmartReceiving 카드 → Pipeline 대체(입고 awareness 흡수).
 import { Pipeline } from "@/components/dashboard/pipeline";
+// §main-dashboard-redesign P3-B2 — StatLine(재무 KPI3, summary 실데이터) 상단 배선.
+import { StatLine } from "@/components/dashboard/stat-line";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
 // §main-dashboard-redesign P3-B1 — GlobalEmpty(allEmpty 종합 빈) + summary 단일 진실 훅.
 //   비차단 추가: 기존 stats useQuery 렌더 경로 무수정(§11.199b stuck 위험 격리).
@@ -901,10 +903,22 @@ function DashboardPageInner() {
         <GlobalEmpty />
       )}
 
-      {/* --- Executive Summary (예산/승인/Anomaly + 추이 + 활동 피드) ---
-          §11.92: deltas prop 으로 monthOverMonthChange real delta forward.
-          KpiCard 의 우측 trend chip 에 표시 (real data only).
-          §11.243 #3 — onboardingMode forward: 데이터 0 시 KPI dim + 가이드 banner. */}
+      {/* §main-dashboard-redesign P3-B2 — StatLine(재무 KPI3: 이번달 지출·잔여 예산·
+          확정 발주액) summary 단일 진실. 기존 ExecutiveSummary 의 store 예산축 "누적 지출"
+          (빈 예산 시 ₩0 모순)을 대체 — 실 지출 차트와 정합(가드②). summarySection 훅
+          재사용(신규 fetch 0) + capMs 4상태. */}
+      <section className="space-y-2">
+        <h2 className="text-[13px] font-bold text-slate-900">재무 현황</h2>
+        <StatLine
+          state={summarySection.state}
+          summary={summarySection.data}
+          onRetry={summarySection.retry}
+        />
+      </section>
+
+      {/* --- Executive Summary (승인/Anomaly + 활동 피드) — 운영 KPI 3(처리필요·진행발주·
+          이상징후). 재무 KPI(누적지출)는 StatLine 으로 이전(P3-B2).
+          §11.92: deltas prop 으로 monthOverMonthChange real delta forward. */}
       <ExecutiveSummarySection
         onboardingMode={isOnboardingMode}
         reorderReviewCount={stats.lowStockAlerts}

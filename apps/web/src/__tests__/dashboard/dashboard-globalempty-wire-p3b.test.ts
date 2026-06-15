@@ -55,9 +55,12 @@ describe("§main-dashboard-redesign P3-B1 (C) — 비차단·무회귀", () => {
   });
 });
 
-// ── (D) StatLine 미배선 ─────────────────────────────────────────────────
-describe("§main-dashboard-redesign P3-B1 (D) — StatLine 미배선(P3-B2 대기)", () => {
-  it("StatLine 아직 page 미배선", () => {
-    expect(PAGE).not.toMatch(/stat-line|StatLine/);
+// ── (D) P3-B2 진화 — StatLine 배선됨(상세는 dashboard-statline-wire-p3b2) ──
+//   P3-B1 의 "StatLine 미배선" 가드는 P3-B2(statline-wire)에서 종료. page 가 StatLine
+//   을 배선(재무 KPI3 summary). 배선 상세·ES 누적지출 제거·무회귀는
+//   dashboard-statline-wire-p3b2.test.ts 가 검증. 여기선 배선 완료만 확인.
+describe("§main-dashboard-redesign P3-B1→P3-B2 (D) — StatLine 배선됨", () => {
+  it("StatLine 이 page 배선(P3-B2 재무 KPI3)", () => {
+    expect(PAGE).toMatch(/stat-line|StatLine/);
   });
 });
