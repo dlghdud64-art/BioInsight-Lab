@@ -52,9 +52,11 @@ describe("§main-dashboard-redesign P3-B2 (C) — 비차단·무회귀", () => {
     expect(PAGE).toMatch(/queryKey:\s*\["dashboard-stats"\]/);
     expect(PAGE).toMatch(/isStillLoading/);
   });
-  it("GlobalEmpty(P3-B1) + Pipeline(P4-B1) + ExecutiveSummary 보존", () => {
+  it("GlobalEmpty(P3-B1) + Pipeline(P4-B1) 보존 + ExecutiveSummary 제거(P3a)", () => {
     expect(PAGE).toMatch(/<GlobalEmpty\s*\/>/);
     expect(PAGE).toMatch(/<Pipeline/);
-    expect(PAGE).toMatch(/<ExecutiveSummarySection/);
+    // §dashboard-shifan-adopt P3a — ExecutiveSummary 제거(운영 KPI3 중복). 운영 KPI 보존 검증은
+    //   (B) ES 컴포넌트축(파일 dormant 보존)에서 계속 GREEN.
+    expect(PAGE).not.toMatch(/<ExecutiveSummarySection/);
   });
 });

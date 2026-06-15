@@ -69,11 +69,12 @@ describe("§dashboard-shifan-adopt P2 (C) — 시작하기 hero 폐지", () => {
 
 // ── (D) 무회귀 ──────────────────────────────────────────────────────────
 describe("§dashboard-shifan-adopt P2 (D) — 무회귀", () => {
-  it("StatLine·Pipeline·ActionInbox·ExecutiveSummary 보존", () => {
+  it("StatLine·Pipeline·ActionInbox 보존 + ExecutiveSummary 제거(P3a)", () => {
     expect(PAGE).toMatch(/<StatLine/);
     expect(PAGE).toMatch(/<Pipeline/);
     expect(PAGE).toMatch(/<ActionInbox/);
-    expect(PAGE).toMatch(/<ExecutiveSummarySection/);
+    // §dashboard-shifan-adopt P3a — 레거시 SystemInsightCard=NextStepBanner 중복 → ExecutiveSummary 제거.
+    expect(PAGE).not.toMatch(/<ExecutiveSummarySection/);
   });
   it("§11.199b stats useQuery + 로딩 게이트 보존", () => {
     expect(PAGE).toMatch(/queryKey:\s*\["dashboard-stats"\]/);

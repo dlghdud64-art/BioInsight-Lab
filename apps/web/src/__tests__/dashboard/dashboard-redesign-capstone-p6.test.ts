@@ -77,11 +77,12 @@ describe("§main-dashboard-redesign P6 (D) — capMs·단일 진실", () => {
 
 // ── (E) page 통합 ───────────────────────────────────────────────────────
 describe("§main-dashboard-redesign P6 (E) — 8모듈 통합·무회귀", () => {
-  it("상단 GlobalEmpty/StatLine + 중단 Pipeline + ExecutiveSummary 배선", () => {
+  it("상단 GlobalEmpty/StatLine + 중단 Pipeline 배선 + ExecutiveSummary 제거(P3a)", () => {
     expect(PAGE).toMatch(/<GlobalEmpty\s*\/>/);
     expect(PAGE).toMatch(/<StatLine/);
     expect(PAGE).toMatch(/<Pipeline/);
-    expect(PAGE).toMatch(/<ExecutiveSummarySection/);
+    // §dashboard-shifan-adopt P3a — 운영 KPI3=ActionInbox/Pipeline/StatLine 중복 → 제거.
+    expect(PAGE).not.toMatch(/<ExecutiveSummarySection/);
   });
   it("§11.199b 로딩 게이트 보존 + 최근알림 카드 제거", () => {
     expect(PAGE).toMatch(/isStillLoading/);

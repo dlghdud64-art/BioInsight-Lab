@@ -60,11 +60,12 @@ describe("§dashboard-shifan-adopt P1 (C) — awareness 보존(공백 0)", () =>
 
 // ── (D) 비차단 / 무회귀 ─────────────────────────────────────────────────
 describe("§dashboard-shifan-adopt P1 (D) — 무회귀", () => {
-  it("StatLine·Pipeline·GlobalEmpty·ExecutiveSummary 보존", () => {
+  it("StatLine·Pipeline·GlobalEmpty 보존 + ExecutiveSummary 제거(P3a 중복 흡수)", () => {
     expect(PAGE).toMatch(/<StatLine/);
     expect(PAGE).toMatch(/<Pipeline/);
     expect(PAGE).toMatch(/<GlobalEmpty\s*\/>/);
-    expect(PAGE).toMatch(/<ExecutiveSummarySection/);
+    // §dashboard-shifan-adopt P3a — 운영 KPI3 = ActionInbox/Pipeline/StatLine 중복 → 제거.
+    expect(PAGE).not.toMatch(/<ExecutiveSummarySection/);
   });
   it("§11.199b stats useQuery + 로딩 게이트 보존", () => {
     expect(PAGE).toMatch(/queryKey:\s*\["dashboard-stats"\]/);

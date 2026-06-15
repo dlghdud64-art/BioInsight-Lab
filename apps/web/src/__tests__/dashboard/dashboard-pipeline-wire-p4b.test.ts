@@ -48,8 +48,9 @@ describe("§main-dashboard-redesign P4-B1 (C) — 비차단·무회귀", () => {
     expect(PAGE).toMatch(/isStillLoading/);
     expect(PAGE).toMatch(/loadTimedOut/);
   });
-  it("ExecutiveSummarySection + GlobalEmpty(P3-B1) 보존", () => {
-    expect(PAGE).toMatch(/<ExecutiveSummarySection/);
+  it("GlobalEmpty(P3-B1) 보존 + ExecutiveSummary 제거(P3a)", () => {
+    // §dashboard-shifan-adopt P3a — ExecutiveSummary 운영 KPI3 제거(중복). Pipeline awareness 유지.
+    expect(PAGE).not.toMatch(/<ExecutiveSummarySection/);
     expect(PAGE).toMatch(/<GlobalEmpty\s*\/>/);
   });
 });

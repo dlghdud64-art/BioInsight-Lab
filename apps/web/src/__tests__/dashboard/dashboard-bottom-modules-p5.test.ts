@@ -50,11 +50,12 @@ describe("§main-dashboard-redesign P5 (C) — QuickActions/RecentActivity 보�
 
 // ── (D) 비차단 / 무회귀 ─────────────────────────────────────────────────
 describe("§main-dashboard-redesign P5 (D) — 무회귀", () => {
-  it("StatLine·Pipeline·GlobalEmpty·ExecutiveSummary 보존", () => {
+  it("StatLine·Pipeline·GlobalEmpty 보존 + ExecutiveSummary 제거(P3a 중복 흡수)", () => {
     expect(PAGE).toMatch(/<StatLine/);
     expect(PAGE).toMatch(/<Pipeline/);
     expect(PAGE).toMatch(/<GlobalEmpty\s*\/>/);
-    expect(PAGE).toMatch(/<ExecutiveSummarySection/);
+    // §dashboard-shifan-adopt P3a — ExecutiveSummary 운영 KPI3 제거(중복).
+    expect(PAGE).not.toMatch(/<ExecutiveSummarySection/);
   });
   it("stats useQuery + 로딩 게이트 보존(§11.199b)", () => {
     expect(PAGE).toMatch(/queryKey:\s*\["dashboard-stats"\]/);

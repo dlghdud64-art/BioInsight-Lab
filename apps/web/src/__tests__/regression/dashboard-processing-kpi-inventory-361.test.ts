@@ -24,8 +24,14 @@ describe("§11.361-2b — executive-summary KPI 재고 포함", () => {
   });
 });
 
-describe("§11.361-2b — page.tsx 가 재고 카운트 전달", () => {
-  it("reorderReviewCount={stats.lowStockAlerts}", () => {
-    expect(PAGE).toContain("reorderReviewCount={stats.lowStockAlerts}");
+describe("§11.361-2b — page.tsx 재고 부족 awareness (P3a 진화)", () => {
+  // §dashboard-shifan-adopt P3a — ExecutiveSummary 제거 → "처리 필요 항목" KPI(reorderReviewCount)
+  //   폐지. 재고 부족 awareness 는 ActionInbox 우선순위 행(id:"inventory", count: stats.lowStockAlerts)로
+  //   이전 — 동일 canonical 소스, 공백 0. EXEC 컴포넌트축 KPI 합산 로직은 (위) 그대로 GREEN(dormant 보존).
+  it("reorderReviewCount prop 폐지(ExecutiveSummary 제거)", () => {
+    expect(PAGE).not.toContain("reorderReviewCount={stats.lowStockAlerts}");
+  });
+  it("재고 부족 awareness = ActionInbox 소스(dashboardPriorityActions inventory)", () => {
+    expect(PAGE).toContain("count: stats.lowStockAlerts");
   });
 });

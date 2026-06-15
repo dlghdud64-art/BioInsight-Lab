@@ -22,14 +22,9 @@ import { Badge } from "@/components/ui/badge";
 // 있어 initial bundle 부담. 제거 후 recharts 는 chart component lazy chunk 만.
 import { getGuestKey } from "@/lib/guest-key";
 import { useWorkbenchOverlayOpen } from "@/hooks/use-workbench-overlay-open";
-// §11.196c — ExecutiveSummarySection 의 dynamic_import(ssr:false) 제거.
-//   §11.196 page-ready gate 가 store fetch 를 mount 직후 explicit trigger
-//   하지만, dynamic chunk loading 은 여전히 mount 시점에야 다운로드 시작 →
-//   chunk 도착 후에야 KPI 카드 reveal 가능. static import 로 swap 해서
-//   initial bundle 에 포함 → chunk loading wait 0 + §11.196 gate 와 시너지.
-//   ssr:false 의 client-only 의존성 부재 확인 (window/document/localStorage 0
-//   사용, zustand store 는 SSR-safe singleton, "use client" directive 보존).
-import { ExecutiveSummarySection } from "@/components/dashboard/executive-summary-section";
+// §dashboard-shifan-adopt P3a — ExecutiveSummarySection 제거(운영 KPI3=ActionInbox/Pipeline/
+//   StatLine 중복 + 레거시 SystemInsightCard=NextStepBanner 중복). 컴포넌트 파일은 dormant
+//   보존(rollback). import 삭제로 dead import 0.
 import { NoSSR } from "@/components/ui/no-ssr";
 import { COMPARE_SUBSTATUS_DEFS, RESOLUTION_PATH_LABELS, HANDOFF_STALL_LABELS } from "@/lib/work-queue/compare-queue-semantics";
 import { OPS_STALL_LABELS } from "@/lib/work-queue/ops-queue-semantics";
@@ -724,27 +719,14 @@ function DashboardPageInner() {
         }
       />
 
-      {/* §dashboard-shifan-adopt P1 — ActionInbox("오늘 처리해야 할 일")가 레거시
-          "가장 먼저 처리" 우선순위 배너 대체(시안 채택). dashboardPriorityActions 동일
-          소스(만료/SLA/재고/입고/승인) = awareness 공백 0. count>0만 렌더(dead button 0),
-          §11.302 신호등 톤, 행 클릭 라우팅, empty "처리할 항목 없음" 정직. */}
-      <ActionInbox items={actionInboxItems} />
-
-      {/* §dashboard-shifan-adopt P2 — "시작하기 3단계" hero → NextStepBanner("다음 단계 추천")
-          대체(시안 채택). summary 단일 진실 가이드(예산 미설정→예산 설정 유도 등). 빈 계정 시작
-          유도는 GlobalEmpty(아래)가 담당. NextStepBanner는 self-gate(allEmpty/dismiss 시 미렌더). */}
-      <NextStepBanner summary={summarySection.data} />
-
-      {/* §dashboard-shifan-adopt P2 — GlobalEmpty(종합 빈 첫 화면, allEmpty). hero 제거로
-          상호배타 게이트 불요 → summary allEmpty 시 노출(빈 계정 시작 유도). 정직 빈 + 시작 CTA. */}
-      {summarySection.state === "empty" && <GlobalEmpty />}
+      {/* §dashboard-shifan-adopt P3a — 시안 단일 흐름 재배열:
+          StatLine → NextStep → ActionInbox → (GlobalEmpty) → Pipeline →
+          (예산&지출 + 빠른작업) → 최근활동. 운영 KPI3(ExecutiveSummary) 제거(중복 흡수). */}
 
       {/* §main-dashboard-redesign P3-B2 — StatLine(재무 KPI3: 이번달 지출·잔여 예산·
-          확정 발주액) summary 단일 진실. 기존 ExecutiveSummary 의 store 예산축 "누적 지출"
-          (빈 예산 시 ₩0 모순)을 대체 — 실 지출 차트와 정합(가드②). summarySection 훅
-          재사용(신규 fetch 0) + capMs 4상태. */}
+          확정 발주액) summary 단일 진실. summarySection 훅 재사용(신규 fetch 0) + capMs 4상태.
+          §dashboard-shifan-adopt P3a 갭1 — "재무 현황" h2 제거(시안=헤더 직하 3카드, 라벨 없음). */}
       <section className="space-y-2">
-        <h2 className="text-[13px] font-bold text-slate-900">재무 현황</h2>
         <StatLine
           state={summarySection.state}
           summary={summarySection.data}
@@ -752,30 +734,39 @@ function DashboardPageInner() {
         />
       </section>
 
-      {/* --- Executive Summary (승인/Anomaly + 활동 피드) — 운영 KPI 3(처리필요·진행발주·
-          이상징후). 재무 KPI(누적지출)는 StatLine 으로 이전(P3-B2).
-          §11.92: deltas prop 으로 monthOverMonthChange real delta forward. */}
-      <ExecutiveSummarySection
-        onboardingMode={isOnboardingMode}
-        reorderReviewCount={stats.lowStockAlerts}
-        deltas={{
-          monthOverMonthChange: stats.monthOverMonthChange,
-          weekOverWeekChange: stats.weekOverWeekChange,
-          // §11.107 — snapshot trend forward (null 시 chip 미노출)
-          processingDelta:
-            stats.trend.processingDelta !== null
-              ? { value: stats.trend.processingDelta, period: "day" }
-              : undefined,
-          pendingApprovalDelta:
-            stats.trend.pendingApprovalDelta !== null
-              ? { value: stats.trend.pendingApprovalDelta, period: "day" }
-              : undefined,
-          anomalyDelta:
-            stats.trend.anomalyDelta !== null
-              ? { value: stats.trend.anomalyDelta, period: "day" }
-              : undefined,
-        }}
-      />
+      {/* §dashboard-shifan-adopt P2 — NextStepBanner("다음 단계 추천"). summary 단일 진실
+          가이드(예산 미설정→예산 설정 유도 등). 빈 계정 시작 유도는 GlobalEmpty(아래)가 담당.
+          NextStepBanner는 self-gate(allEmpty/dismiss 시 미렌더). */}
+      <NextStepBanner summary={summarySection.data} />
+
+      {/* §dashboard-shifan-adopt P1 — ActionInbox("오늘 처리해야 할 일"). dashboardPriorityActions
+          동일 소스(만료/SLA/재고/입고/승인) = awareness 공백 0. count>0만 렌더(dead button 0),
+          §11.302 신호등 톤, 행 클릭 라우팅, empty "처리할 항목 없음" 정직. */}
+      <ActionInbox items={actionInboxItems} />
+
+      {/* §dashboard-shifan-adopt P2 — GlobalEmpty(종합 빈 첫 화면, allEmpty). summary allEmpty
+          시 노출(빈 계정 시작 유도). 정직 빈 + 시작 CTA. */}
+      {summarySection.state === "empty" && <GlobalEmpty />}
+
+      {/* §main-dashboard-redesign P4-B1 — Pipeline(견적→발주→입고→재고) summary 단일 진실
+          (summarySection 훅 재사용, 신규 fetch 0) + capMs 4상태. 가드③ 전이 canonical=state-machine.
+          §dashboard-shifan-adopt P3a — 시안 흐름상 ActionInbox 직후로 상승(중단 차트 앞).
+          상태 라벨(열린견적/미확정/미완료/재주문·이상없음·데이터없음)은 컴포넌트 내부 정직 노출(갭2). */}
+      <section className="space-y-2">
+        <h2 className="text-[13px] font-bold text-slate-900">
+          운영 파이프라인 <span className="text-slate-400 font-semibold">· 견적 → 발주 → 입고 → 재고</span>
+        </h2>
+        <Pipeline
+          state={summarySection.state}
+          summary={summarySection.data}
+          onRetry={summarySection.retry}
+        />
+      </section>
+
+      {/* §dashboard-shifan-adopt P3a — ExecutiveSummarySection(운영 KPI3 처리필요/진행발주/
+          이상징후 + 레거시 SystemInsightCard) 제거. KPI3=ActionInbox/Pipeline/StatLine 중복,
+          insight=NextStepBanner 중복. onboarding KPI guide banner는 NextStepBanner+GlobalEmpty 흡수
+          (awareness 공백 0). 컴포넌트 파일 dormant 보존(rollback). */}
 
       {/* §11.84 + §11.85 — 시안 채택 후속.
           dashboard 종합 same-canvas 원칙: 운영자가 detail 보러 다른 surface 로
@@ -852,20 +843,8 @@ function DashboardPageInner() {
         }}
       />
 
-      {/* §main-dashboard-redesign P4-B1 — Pipeline(견적→발주→입고→재고) 으로
-          SmartReceiving 카드 대체(입고 awareness 흡수: 입고 단계=receive 모듈
-          미완료, 재고 단계=reorderNeeded). summary 단일 진실(P3-B1 summarySection 훅
-          재사용, 신규 fetch 0) + capMs 4상태. 가드③ 전이 canonical=state-machine. */}
-      <section className="space-y-2">
-        <h2 className="text-[13px] font-bold text-slate-900">
-          운영 파이프라인 <span className="text-slate-400 font-semibold">· 견적 → 발주 → 입고 → 재고</span>
-        </h2>
-        <Pipeline
-          state={summarySection.state}
-          summary={summarySection.data}
-          onRetry={summarySection.retry}
-        />
-      </section>
+      {/* §dashboard-shifan-adopt P3a — Pipeline은 ActionInbox 직후로 상승(위 참조). 원위치 제거.
+          중단=차트(예산&지출)+빠른작업, 하단=최근활동 순(시안 흐름). */}
 
       {/* WorkQueueInbox 제거 — 3상태 중앙 패널이 대체 */}
 
