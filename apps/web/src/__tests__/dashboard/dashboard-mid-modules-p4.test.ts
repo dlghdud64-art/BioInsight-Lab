@@ -95,7 +95,7 @@ describe("§main-dashboard-redesign P4 (D) — 모듈 탑재 단계", () => {
   it("page.tsx 가 Pipeline 배선(P4-B1 — SmartReceiving 대체)", () => {
     expect(read(PAGE)).toMatch(/components\/dashboard\/pipeline|<Pipeline/);
   });
-  it("page.tsx 가 ActionInbox 아직 미배선(P4-B2 대기)", () => {
-    expect(read(PAGE)).not.toMatch(/action-inbox|ActionInbox/);
+  it("page.tsx 가 ActionInbox 배선(§dashboard-shifan-adopt P1 — 우선순위 배너 대체)", () => {
+    expect(read(PAGE)).toMatch(/action-inbox|ActionInbox/);
   });
 });

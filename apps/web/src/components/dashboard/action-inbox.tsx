@@ -62,7 +62,7 @@ export function ActionInbox({ items }: ActionInboxProps) {
       <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-slate-100">
         <Inbox className="h-3.5 w-3.5 text-slate-500" />
         <h2 className="text-[13px] font-bold text-slate-900">
-          처리 인박스 <span className="text-slate-400 font-semibold">· {actionable.length}건</span>
+          오늘 처리해야 할 일 <span className="text-slate-400 font-semibold">· {actionable.length}건</span>
         </h2>
       </div>
       <ul className="max-h-[412px] overflow-y-auto divide-y divide-slate-50">

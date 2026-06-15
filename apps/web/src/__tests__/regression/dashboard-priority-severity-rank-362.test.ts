@@ -25,12 +25,13 @@ describe("§11.362-1/2 — 위험-우선 severity rank (가장 먼저 처리)", 
     expect(src).toMatch(/count:\s*riskOrBlockerCount/);
   });
 
-  it("primary 는 count>0 후보 중 severityRank 최상위로 정렬 선정", () => {
+  // §dashboard-shifan-adopt P1 진화 — 단일 "primary" 선정(레거시 배너)은 ActionInbox
+  //   ("오늘 처리해야 할 일")로 대체. ActionInbox가 dashboardPriorityActions(severity 순
+  //   배열)의 count>0 항목 전부를 배열 순(=severity 순)으로 surface → 위험-우선 awareness 보존.
+  it("우선처리는 ActionInbox가 dashboardPriorityActions(severity 순)를 surface", () => {
     const src = read(FILE);
-    // find(count>0) 단독(구) 제거 → filter + sort(severityRank) 로 전환.
-    expect(src).toMatch(
-      /\.filter\(\(action\) => action\.count > 0\)\s*\.sort\(\(a, b\) => a\.severityRank - b\.severityRank\)\[0\]/
-    );
+    expect(src).toMatch(/actionInboxItems:\s*ActionInboxItem\[\]\s*=\s*dashboardPriorityActions\.map/);
+    expect(src).toMatch(/<ActionInbox items=\{actionInboxItems\}/);
   });
 
   it("rank 순서: 만료(1) < SLA(2) < 재고(3) < 입고(4) < 승인(5)", () => {
@@ -47,25 +48,18 @@ describe("§11.362-1/2 — 위험-우선 severity rank (가장 먼저 처리)", 
     expect(idxReceiving).toBeLessThan(idxApproval);
   });
 
-  describe("회귀 0 — 보존 항목", () => {
-    it("secondary 도 severity 정렬 후 2개로 제한", () => {
+  describe("§dashboard-shifan-adopt P1 진화 — 레거시 배너 retire, ActionInbox 대체", () => {
+    it("레거시 primary 선정/배너 cluster 제거(primaryPriorityAction/priorityStageBadges/nextPriorityAction 0)", () => {
       const src = read(FILE);
-      expect(src).toMatch(
-        /secondaryPriorityActions = \[\.\.\.dashboardPriorityActions\][\s\S]*?\.sort\(\(a, b\) => a\.severityRank - b\.severityRank\)\s*\.slice\(0, 2\)/
-      );
+      expect(src).not.toMatch(/primaryPriorityAction/);
+      expect(src).not.toMatch(/priorityStageBadges/);
+      expect(src).not.toMatch(/nextPriorityAction/);
     });
 
-    it("nextPriorityAction / inactiveReason / priorityStageBadges 유지", () => {
+    it("severity 순서 awareness 보존 — 배열 순(만료<SLA<재고<입고<승인)이 ActionInbox map 표시 순", () => {
       const src = read(FILE);
-      expect(src).toMatch(/const nextPriorityAction = secondaryPriorityActions\[0\]/);
-      expect(src).toMatch(/const inactiveReason =/);
-      expect(src).toMatch(/const priorityStageBadges = \[/);
-    });
-
-    it("primary CTA href / label 렌더 유지", () => {
-      const src = read(FILE);
-      expect(src).toMatch(/href=\{primaryPriorityAction\.href\}/);
-      expect(src).toMatch(/\{primaryPriorityAction\.label\} \{primaryPriorityAction\.count\}건/);
+      // it4가 배열 선언 순서(severity 순) 검증 — ActionInbox는 .map 순서(=배열 순) 유지.
+      expect(src).toMatch(/dashboardPriorityActions\.map/);
     });
   });
 });

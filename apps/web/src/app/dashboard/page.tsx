@@ -69,6 +69,8 @@ import { OperatorQuickActions } from "@/components/dashboard/operator-quick-acti
 import { Pipeline } from "@/components/dashboard/pipeline";
 // §main-dashboard-redesign P3-B2 — StatLine(재무 KPI3, summary 실데이터) 상단 배선.
 import { StatLine } from "@/components/dashboard/stat-line";
+// §dashboard-shifan-adopt P1 — ActionInbox("오늘 처리해야 할 일") 가 레거시 우선순위 배너 대체.
+import { ActionInbox, type ActionInboxItem } from "@/components/dashboard/action-inbox";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
 // §main-dashboard-redesign P3-B1 — GlobalEmpty(allEmpty 종합 빈) + summary 단일 진실 훅.
 //   비차단 추가: 기존 stats useQuery 렌더 경로 무수정(§11.199b stuck 위험 격리).
@@ -469,25 +471,18 @@ function DashboardPageInner() {
       icon: <ClipboardList className="h-4 w-4" />,
     },
   ];
-  const primaryPriorityAction =
-    [...dashboardPriorityActions]
-      .filter((action) => action.count > 0)
-      .sort((a, b) => a.severityRank - b.severityRank)[0] ??
-    dashboardPriorityActions[0];
-  const secondaryPriorityActions = [...dashboardPriorityActions]
-    .filter((action) => action.id !== primaryPriorityAction.id)
-    .sort((a, b) => a.severityRank - b.severityRank)
-    .slice(0, 2);
-  const nextPriorityAction = secondaryPriorityActions[0] ?? dashboardPriorityActions[1];
-  const inactiveReason =
-    primaryPriorityAction.count > 0
-      ? `${nextPriorityAction.label}는 ${primaryPriorityAction.label} 완료 후 보조로 처리`
-      : `${primaryPriorityAction.label} 대기 건수가 없어 보조 작업만 확인`;
-  const priorityStageBadges = [
-    { label: "실행", value: primaryPriorityAction.count },
-    { label: "검토", value: nextPriorityAction.count },
-    { label: "보류", value: approvalPendingCount },
-  ];
+  // §dashboard-shifan-adopt P1 — ActionInbox("오늘 처리해야 할 일") 데이터.
+  //   dashboardPriorityActions(만료/SLA/재고/입고/승인) → ActionInboxItem. count>0 필터·
+  //   empty 정직은 ActionInbox 내부(dead button 0). 레거시 "가장 먼저 처리" 배너와 동일
+  //   소스 = awareness 공백 0. tone: severityRank 1만료/2SLA→danger, 3재고/4입고→warn, 5승인→info.
+  const actionInboxItems: ActionInboxItem[] = dashboardPriorityActions.map((a) => ({
+    id: a.id,
+    label: a.label,
+    count: a.count,
+    href: a.href,
+    detail: a.helper,
+    tone: a.severityRank <= 2 ? "danger" : a.severityRank <= 4 ? "warn" : "info",
+  }));
 
   const isBlocked = processingRequiredCount > 0 || approvalPendingCount > 0 || riskOrBlockerCount > 0;
   const hasOperationalFootprint = recentActivityCount > 0;
@@ -736,75 +731,11 @@ function DashboardPageInner() {
         }
       />
 
-      <section
-        className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm md:p-4"
-        data-testid="dashboard-priority-banner"
-      >
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <span
-                className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700"
-                data-testid="dashboard-priority-first-badge"
-              >
-                가장 먼저 처리
-              </span>
-              <span
-                className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700"
-                data-testid="dashboard-priority-approval-badge"
-              >
-                승인 필요 {approvalPendingCount}건
-              </span>
-            </div>
-            <h3 className="mt-1 text-base font-extrabold text-slate-900">
-              {primaryPriorityAction.label} {primaryPriorityAction.count}건
-            </h3>
-            <p
-              className="mt-1 text-[11px] font-medium text-slate-500"
-              data-testid="dashboard-priority-flow-state"
-            >
-              현재 단계: {primaryPriorityAction.label} · 다음 단계: {nextPriorityAction.label}
-            </p>
-            <p
-              className="mt-1 text-[11px] text-slate-500"
-              data-testid="dashboard-priority-inactive-reason"
-            >
-              비활성 사유: {inactiveReason}
-            </p>
-            <div className="mt-2 flex flex-wrap gap-1.5" data-testid="dashboard-priority-stage-badges">
-              {priorityStageBadges.map((badge) => (
-                <span
-                  key={badge.label}
-                  className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-bold text-slate-600"
-                >
-                  {badge.label} {badge.value}건
-                </span>
-              ))}
-            </div>
-          </div>
-          <Link
-            href={primaryPriorityAction.href}
-            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-bold text-white transition-colors hover:bg-blue-700"
-            data-testid="dashboard-priority-primary-cta"
-          >
-            {primaryPriorityAction.icon}
-            {primaryPriorityAction.label} {primaryPriorityAction.count}건 처리
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {secondaryPriorityActions.map((action) => (
-            <span
-              key={action.id}
-              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-600"
-              data-testid={`dashboard-priority-secondary-state-${action.id}`}
-            >
-              {action.icon}
-              {action.label} {action.count}건
-            </span>
-          ))}
-        </div>
-      </section>
+      {/* §dashboard-shifan-adopt P1 — ActionInbox("오늘 처리해야 할 일")가 레거시
+          "가장 먼저 처리" 우선순위 배너 대체(시안 채택). dashboardPriorityActions 동일
+          소스(만료/SLA/재고/입고/승인) = awareness 공백 0. count>0만 렌더(dead button 0),
+          §11.302 신호등 톤, 행 클릭 라우팅, empty "처리할 항목 없음" 정직. */}
+      <ActionInbox items={actionInboxItems} />
 
       {/* §11.243 #2 — 호영님 P0: OnboardingHero (isOnboardingMode 한정).
           3 step 시각화 (품목 등록 → 견적 요청 → 비교 검토) + 체크마크 + CTA.

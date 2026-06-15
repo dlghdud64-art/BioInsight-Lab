@@ -55,8 +55,8 @@ describe("§main-dashboard-redesign P4-B1 (C) — 비차단·무회귀", () => {
 });
 
 // ── (D) ActionInbox 미배선 ──────────────────────────────────────────────
-describe("§main-dashboard-redesign P4-B1 (D) — ActionInbox 미배선(P4-B2 대기)", () => {
-  it("ActionInbox 아직 page 미배선", () => {
-    expect(PAGE).not.toMatch(/action-inbox|ActionInbox/);
+describe("§main-dashboard-redesign P4-B1→shifan P1 (D) — ActionInbox 배선됨", () => {
+  it("ActionInbox page 배선(§dashboard-shifan-adopt P1 — 시안 우선처리 인박스)", () => {
+    expect(PAGE).toMatch(/action-inbox|ActionInbox/);
   });
 });

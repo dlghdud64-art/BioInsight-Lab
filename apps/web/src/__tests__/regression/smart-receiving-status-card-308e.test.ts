@@ -47,28 +47,24 @@ describe("SmartReceivingStatusCard", () => {
   });
 });
 
-describe("dashboard priority banner wiring", () => {
-  it("keeps one first-click CTA at the top with state boundaries", () => {
+// §dashboard-shifan-adopt P1 진화 — 레거시 "가장 먼저 처리" 우선순위 배너(다수 testid·
+//   flow-state·stage-badge)가 ActionInbox("오늘 처리해야 할 일")로 대체(시안 전면 채택).
+//   배너 rich framing 제거. awareness는 dashboardPriorityActions(만료/SLA/재고/입고/승인)
+//   동일 소스가 ActionInbox로 surface → 공백 0(회귀 은폐 아님, 소스 보존 증명).
+describe("dashboard 우선처리 — ActionInbox(시안) 대체", () => {
+  it("ActionInbox 배선 + 레거시 우선순위 배너 제거", () => {
     const src = read(PAGE_PATH);
 
-    expect(src).toMatch(/data-testid="dashboard-priority-banner"/);
-    expect(src).toMatch(/data-testid="dashboard-priority-primary-cta"/);
-    expect(src.match(/data-testid="dashboard-priority-primary-cta"/g)).toHaveLength(1);
-    expect(src).toMatch(/data-testid="dashboard-priority-first-badge"/);
-    expect(src).toMatch(/data-testid="dashboard-priority-approval-badge"/);
-    expect(src).toMatch(/data-testid="dashboard-priority-inactive-reason"/);
-    expect(src).toMatch(/data-testid="dashboard-priority-flow-state"/);
-    expect(src).toMatch(/data-testid="dashboard-priority-stage-badges"/);
-    expect(src).toMatch(/dashboard-priority-secondary-state-\$\{action\.id\}/);
-    expect(src).not.toMatch(/dashboard-priority-secondary-\$\{action\.id\}/);
-    expect(src).toMatch(/가장 먼저 처리/);
-    expect(src).toMatch(/비활성 사유/);
-    expect(src).toMatch(/현재 단계/);
-    expect(src).toMatch(/다음 단계/);
-    expect(src).toMatch(/승인 필요/);
-    expect(src).toMatch(/실행/);
-    expect(src).toMatch(/검토/);
-    expect(src).toMatch(/보류/);
+    expect(src).toMatch(/<ActionInbox/);
+    expect(src).toMatch(/actionInboxItems/);
+    expect(src).not.toMatch(/data-testid="dashboard-priority-banner"/);
+    expect(src).not.toMatch(/data-testid="dashboard-priority-primary-cta"/);
+  });
+
+  it("awareness 보존 — dashboardPriorityActions 5 action(만료/SLA/재고/입고/승인) 소스 잔존", () => {
+    const src = read(PAGE_PATH);
+
+    expect(src).toMatch(/dashboardPriorityActions/);
     expect(src).toMatch(/입고 처리/);
     expect(src).toMatch(/재고 부족/);
     expect(src).toMatch(/승인 대기/);
@@ -79,13 +75,13 @@ describe("dashboard priority banner wiring", () => {
   //   전달하던 CFO 3 카운트(입고/SLA/재고)는 **우선순위 배너 action 에 잔존**(중복
   //   awareness였음) → 카드 retire 후에도 awareness 공백 0. 본 it 은 "카드 전달"이
   //   아니라 "Pipeline 배선 + 3 카운트 awareness 보존"으로 진화(회귀 은폐 아님 — 보존 증명).
-  it("CFO counts(입고/SLA/재고) awareness 보존 — Pipeline 배선 + 우선순위 배너 잔존", () => {
+  it("CFO counts(입고/SLA/재고) awareness 보존 — Pipeline 배선 + dashboardPriorityActions 잔존", () => {
     const src = read(PAGE_PATH);
 
     // 카드 retire(page 에서 SmartReceivingStatusCard import/usage 제거) → Pipeline 대체.
     expect(src).not.toMatch(/SmartReceivingStatusCard/);
     expect(src).toMatch(/<Pipeline/);
-    // awareness 보존 증명: 3 카운트가 우선순위 배너 action 에 그대로 잔존(공백 0).
+    // awareness 보존 증명: 3 카운트가 dashboardPriorityActions(→ActionInbox surface)에 잔존(공백 0).
     expect(src).toMatch(/count:\s*riskOrBlockerCount/);                              // SLA 지연 = slaBreachedCount
     expect(src).toMatch(/count:\s*stats\.compareStats\.purchaseToReceivingCount/);   // 입고 처리
     expect(src).toMatch(/count:\s*stats\.lowStockAlerts/);                           // 재고 부족
