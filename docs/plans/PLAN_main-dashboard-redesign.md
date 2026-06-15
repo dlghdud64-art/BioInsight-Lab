@@ -141,7 +141,7 @@
   - 산출: `app/dashboard/page.tsx`(훅+게이트 렌더+import) / `__tests__/dashboard/dashboard-globalempty-wire-p3b.test.ts`(신규: 훅 배선·게이트·무회귀·StatLine 미배선) / `dashboard-top-modules-p3.test.ts`(D 진화: GlobalEmpty 배선됨·StatLine 미배선).
   - 격리 검증: page 배선 regex 16/16 PASS(훅 단일·게이트·stats/loadTimedOut/ExecutiveSummary 보존). **operator 실 vitest+build+라이브 smoke 대기**(첫 page 변경 — 빈계정 GlobalEmpty / 데이터계정 무영향·무한스켈레톤 0 확인).
   - ✋ Gate(P3-B1): sentinel GREEN + baseline 91 신규 fail 0 + 라이브 smoke. Rollback: page 3 edit + sentinel revert(독립).
-- **다음 P3-B2(P4 이후):** StatLine 로 ExecutiveSummary KPI 교체(처리필요·이상징후는 P4 ActionInbox 이전 후 — 중간 공백 0). SystemInsight 재소스. store→summary swap 단독 smoke.
+- **P3-B2 완료(2026-06-15):** page 상단 StatLine(재무 KPI3: 이번달 지출=summary.spend.thisMonth·잔여 예산·확정 발주액) 배선 — summarySection 훅 재사용(신규 fetch 0, summary 훅 단일). ExecutiveSummary "누적 지출" KPI(빈 예산 ₩0 = 실차트 ₩71.6M 모순) 제거(가드②), grid 4→3(§11.311), 운영 KPI 3(처리필요·진행발주·이상징후)+SystemInsight 보존(awareness 우선순위 배너 잔존=공백 0). TrendingDown import 정리. 격리 regex PASS, 충돌 sentinel 0. operator 실 vitest+build+smoke 대기. Rollback: page+ES revert.
 
 ### Phase 4: 중단 모듈 — ActionInbox + Pipeline(신규)
 - Status: [ ] In Progress (2026-06-15) — P4-A 고립 빌드 완료, 탑재(P4-B) 대기
@@ -185,9 +185,9 @@
 - 모듈별 독립 커밋 → phase별 revert. summary API no-op 시 현행 분산 fetch 복귀. 데이터 비파괴(읽기).
 
 ## 11. Progress
-- Overall: 66% (P0·P1·P2 + P3-A·B1 + P4-A·B1 Pipeline 배선) · Current: P4-B1 operator 검증(라이브 smoke) 대기 → P4-B2 ActionInbox 배선
-- Checklist: [x]P0 [x]P1 [x]P2 [~]P3(A·B1 / B2 대기) [~]P4(A·B1 Pipeline / B2 ActionInbox 대기) [ ]P5 [ ]P6
-- [2026-06-15] P3-B1 smoke 통과. P4-A 고립 빌드. P4-B1 Pipeline 배선(SmartReceiving 대체, summarySection 훅 재사용).
+- Overall: 74% (P1·P2·P3(A·B1·B2)·P4(A·B1)) · Current: P3-B2 operator 검증(smoke) 대기 → P5(하단 모듈)
+- Checklist: [x]P0 [x]P1 [x]P2 [x]P3(A·B1·B2) [~]P4(A·B1 / B2 ActionInbox 보류=다음작업 모델 불일치) [ ]P5 [ ]P6
+- [2026-06-15] P4-B1 Pipeline 배선(SmartReceiving 대체). P4-B2 보류(다음작업=가이드형, ActionInbox=count형 불일치 — ActionInbox 향후 count surface 보존). P3-B2 StatLine 배선(누적지출 ₩0 모순 해소).
 - [2026-06-15] P1 push READY(94a4da1e). P2 capMs 10s(2.6s 폐기, §11.375 충돌 해소) push. P3-A 고립 빌드(StatLine·GlobalEmpty·summary spend 확장).
 - ⚠️ 별 트랙 §suite-red: 전체 dashboard+regression suite 286 fail(91 file) 발견. P2/대시보드 무관(고립 검증). ENOENT-14 가설 철회(전부 통과 가드). 실 vitest 실패목록 → baseline allowlist 후 P3-B 게이트 "신규 fail 0".
 - P4 Pipeline 입고 단계에 SmartReceiving 흡수 / P5 최근 알림 제거 — P0 결정 반영.
