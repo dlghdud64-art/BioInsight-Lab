@@ -97,10 +97,21 @@
 - 격리: P2 15/15 + 진화 4 sentinel 정합. dead import 0. §11.199b 로딩게이트 무수정.
 - ✋ Gate: hero 폐지·가이드 보존·dead import 0 ✅. **operator 실 vitest+build+baseline 88+라이브 smoke 대기**. Rollback: page+banner+sentinel revert.
 
-### Phase 3: 시안 순서 재배열 + 중복 KPI 정리 + Pipeline 라벨 보강
-- Status: [ ] Pending
-- 🟢 page 단일 흐름 재배열(StatLine→Insight→ActionInbox→Pipeline→예산&지출+빠른작업→최근활동). ExecutiveSummary 운영 KPI 3 제거/흡수(ActionInbox·Pipeline·StatLine 중복). Pipeline 상태 라벨 보강(발송대기/안전재고미달). density-364·system-insight-order·processing-kpi sentinel 진화.
-- ✋ Gate: 중복 0, 순서 정합, sentinel 진화 GREEN, baseline 88. Rollback: 모듈 순서 revert.
+### Phase 3: 시안 단일 흐름 재배열 + 중복 KPI 제거 + 중단 2-col 정직성 재구성
+- Status: [ ] Pending (P3a/P3b 분리 land — 호영님 2026-06-15 결정)
+- **범위 확정(갭1·2·3 전부 P3):** 갭3은 scope 확장이 아니라 **정직성 결함 수리**(빈계정 가짜 분포 제거). empty 정직 가드 > 픽셀 정합.
+- **P3a (저위험 — 기존 컴포넌트 이동/정리):**
+  - 순서 재배열: StatLine→NextStep→ActionInbox→(GlobalEmpty)→Pipeline→(예산&지출+빠른작업)→최근활동.
+  - 갭1: 재무 StatLine `<h2>재무 현황</h2>` 제거(시안=헤더 직하 3카드, 라벨 없음).
+  - ExecutiveSummary 운영 KPI 3(처리필요/진행발주/이상징후) 제거 — ActionInbox·Pipeline·StatLine 중복. 레거시 SystemInsightCard 제거 — NextStepBanner 중복. 컴포넌트 파일 dormant 보존(rollback).
+  - 갭2: Pipeline 상태 라벨 — 이미 정직 노출(열린견적/미확정/미완료/재주문·이상없음·데이터없음). 변경 최소(시안 문구 align 선택).
+- **P3b (핵심 — 중단 재구성 = 정직성 수리):**
+  - 중단 area차트 슬롯 → **예산&지출 집행률 카드 신규**(canonical `summary.budget`: isSet/usageRate/budTone, 미설정→"미설정" 정직, 가짜 집행률 금지) + **빠른작업 2×2 좌우 2-col**.
+  - SpendTrend(area, **이미 정직 empty**)·CategoryDistribution(도넛)은 **하단 이동**.
+  - ★ **CategoryDistribution mockup 제거**: `MOCKUP_CATEGORY_DATA`(42/25/20/13%)+"예시 데이터" overlay → SpendTrend 패턴(미렌더+컴팩트 정직 empty)로 수리. **이게 갭3 정직성 코어.** (SpendTrend는 이미 수리됨 — 이 계정 ₩71.6M은 실데이터.)
+  - ★ 하단 이동분 전부 빈계정 empty 정직(자리만 옮기고 가짜 들고가기 금지).
+- **Truth(코드 확인 2026-06-15):** SpendTrendCard mockup 이미 제거(§main-dashboard-redesign P1). CategoryDistributionCard mockup 잔존 = P3b 타깃. Pipeline 라벨 이미 정직.
+- ✋ Gate(P3a/P3b 각): 중복 0, 순서 정합, **전 섹션 empty 정직(가짜 분포 0)**, sentinel 진화 GREEN, baseline 88 신규 0. Rollback: P3a=모듈 순서 revert / P3b=중단 레이아웃·카드 revert(컴포넌트 보존).
 
 ### Phase 4: 반응형 + 종합 smoke + rollback
 - Status: [ ] Pending
