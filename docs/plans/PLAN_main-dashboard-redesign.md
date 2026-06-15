@@ -144,9 +144,16 @@
 - **다음 P3-B2(P4 이후):** StatLine 로 ExecutiveSummary KPI 교체(처리필요·이상징후는 P4 ActionInbox 이전 후 — 중간 공백 0). SystemInsight 재소스. store→summary swap 단독 smoke.
 
 ### Phase 4: 중단 모듈 — ActionInbox + Pipeline(신규)
-- Status: [ ] Pending
+- Status: [ ] In Progress (2026-06-15) — P4-A 고립 빌드 완료, 탑재(P4-B) 대기
 - 🟢 ActionInbox: 현행 "가장 먼저 처리"/"다음 작업" 통합(max-h 412 내부 스크롤, 행 클릭 라우팅, empty 0건 정직). **Pipeline 신규**: 견적→발주→입고→재고 4단계, 각 단계 자기 집계 + 클릭 라우팅, **canonical state-machine 상속(가드③)**, empty(0·0·0·0) 회색.
-- ✋ Gate: Pipeline 로컬 전이 재정의 0, dead button 0, empty 정직. Rollback: 모듈 revert.
+- **접근:** 고립 빌드 → 별도 탑재(P3 동일). page 미배선.
+- **P4-A 산출(고립 빌드):**
+  - `components/dashboard/pipeline.tsx`(신규) — 견적→발주→입고→재고 4단계, summary.modules 단일 진실(total + 주의 sub-count), 클릭 라우팅, 4상태, §11.311 컴팩트, 0 회색, 터치≥44px. **SmartReceivingStatusCard 입고 awareness 흡수**(입고 단계=receive 모듈). **가드③: 전이맵 로컬 재정의 0**(state-machine canonical 권위 참조, 표시 전용 — O1 drift 차단).
+  - `components/dashboard/action-inbox.tsx`(신규) — 가장 먼저 처리+다음 작업 통합 인박스. max-h-[412px] 스크롤, 행 클릭 라우팅, §11.302 신호등 톤, empty "처리할 항목 없음" 정직, **dead button 0**(count>0 항목만 렌더, items=page 주입).
+  - `__tests__/dashboard/dashboard-mid-modules-p4.test.ts`(신규) — Pipeline 4단계·summary소스·4상태·§11.311 / 가드③ 전이 로컬재정의 0 / ActionInbox 통합·스크롤·dead button 0·신호등 / page 미배선.
+- **격리 검증:** regex 16/16 PASS(Pipeline 가드③ 로컬전이 0·state-machine 참조 / ActionInbox dead-button 0 filter / page 미배선). **operator 실 vitest+build 대기.**
+- ✋ Gate(P4-A): 모듈 sentinel GREEN + baseline 91 신규 fail 0 + Pipeline 로컬 전이 0 + dead button 0. Rollback: 모듈 revert(page 무변경=무영향).
+- **다음 P4-B(별도):** page 배선 — ActionInbox(현행 우선순위 derive 주입, "가장 먼저 처리"/"다음 작업" 대체) + Pipeline(summary+capMs 훅, SmartReceivingStatusCard 대체). 단독 smoke.
 
 ### Phase 5: 하단 모듈 — BudgetSpend / QuickActions / RecentActivity
 - Status: [ ] Pending
@@ -173,8 +180,9 @@
 - 모듈별 독립 커밋 → phase별 revert. summary API no-op 시 현행 분산 fetch 복귀. 데이터 비파괴(읽기).
 
 ## 11. Progress
-- Overall: 52% (P0·P1·P2 + P3-A 고립 빌드 + P3-B1 GlobalEmpty 배선) · Current: P3-B1 operator 검증(라이브 smoke) 대기 → P3-B2(StatLine 교체, P4 후)
-- Checklist: [x]P0 [x]P1 [x]P2 [~]P3(A 빌드·B1 GlobalEmpty 배선 / B2 StatLine 대기) [ ]P4 [ ]P5 [ ]P6
+- Overall: 60% (P0·P1·P2 + P3-A·B1 + P4-A 중단모듈 고립 빌드) · Current: P4-A operator 검증 대기 → P4-B 탑재
+- Checklist: [x]P0 [x]P1 [x]P2 [~]P3(A·B1 / B2 대기) [~]P4(A 빌드 / B 탑재 대기) [ ]P5 [ ]P6
+- [2026-06-15] P3-B1 라이브 smoke 통과(§11.199b 무재발·GlobalEmpty 무중복). P4-A Pipeline·ActionInbox 고립 빌드.
 - [2026-06-15] P1 push READY(94a4da1e). P2 capMs 10s(2.6s 폐기, §11.375 충돌 해소) push. P3-A 고립 빌드(StatLine·GlobalEmpty·summary spend 확장).
 - ⚠️ 별 트랙 §suite-red: 전체 dashboard+regression suite 286 fail(91 file) 발견. P2/대시보드 무관(고립 검증). ENOENT-14 가설 철회(전부 통과 가드). 실 vitest 실패목록 → baseline allowlist 후 P3-B 게이트 "신규 fail 0".
 - P4 Pipeline 입고 단계에 SmartReceiving 흡수 / P5 최근 알림 제거 — P0 결정 반영.
