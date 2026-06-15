@@ -71,6 +71,8 @@ import { Pipeline } from "@/components/dashboard/pipeline";
 import { StatLine } from "@/components/dashboard/stat-line";
 // §dashboard-shifan-adopt P1 — ActionInbox("오늘 처리해야 할 일") 가 레거시 우선순위 배너 대체.
 import { ActionInbox, type ActionInboxItem } from "@/components/dashboard/action-inbox";
+// §dashboard-shifan-adopt P2 — NextStepBanner("다음 단계 추천") 가 레거시 "시작하기 3단계" hero 대체.
+import { NextStepBanner } from "@/components/dashboard/next-step-banner";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
 // §main-dashboard-redesign P3-B1 — GlobalEmpty(allEmpty 종합 빈) + summary 단일 진실 훅.
 //   비차단 추가: 기존 stats useQuery 렌더 경로 무수정(§11.199b stuck 위험 격리).
@@ -177,14 +179,8 @@ function DashboardPageInner() {
       // localStorage 접근 실패 (private mode 등) — silent fallback, default false 유지.
     }
   }, []);
-  const dismissOnboarding = () => {
-    setOnboardingDismissed(true);
-    try {
-      localStorage.setItem("labaxis-onboarding-dismissed", "true");
-    } catch {
-      // silent fallback — state 만 변경, 새로고침 시 다시 노출.
-    }
-  };
+  // §dashboard-shifan-adopt P2 — dismissOnboarding 제거(시작하기 hero 폐지 → NextStepBanner).
+  //   onboardingDismissed(localStorage)는 "빠른 시작" hide 조건(아래)에서 계속 읽힘 — useState/effect 유지.
 
   /** Link 대신 overlay를 열 수 있는 경로면 overlay를, 아니면 router.push */
   const handleNavigateOrOverlay = (href: string, origin: "dashboard" | "queue" | "card" = "dashboard") => {
@@ -405,11 +401,8 @@ function DashboardPageInner() {
   //   step 1 (품목 등록) = totalInventory > 0
   //   step 2 (견적 요청) = activeQuotes > 0
   //   step 3 (비교 검토) = respondedQuotes > 0
-  const onboardingSteps = {
-    inventoryDone: stats.totalInventory > 0,
-    quoteRequestDone: stats.activeQuotes > 0,
-    compareDone: stats.respondedQuotes > 0,
-  };
+  // §dashboard-shifan-adopt P2 — onboardingSteps(3단계 진행) 제거: "시작하기 3단계" hero 폐지
+  //   (→ NextStepBanner). 진행 가이드는 summary 기반 NextStepBanner + GlobalEmpty가 담당.
 
   // ── 3상태 대시보드 판정 ──────────────────────────────────
   const processingRequiredCount = stats.lowStockAlerts + stats.expiringCount + stats.undecidedCompareCount;
@@ -737,102 +730,14 @@ function DashboardPageInner() {
           §11.302 신호등 톤, 행 클릭 라우팅, empty "처리할 항목 없음" 정직. */}
       <ActionInbox items={actionInboxItems} />
 
-      {/* §11.243 #2 — 호영님 P0: OnboardingHero (isOnboardingMode 한정).
-          3 step 시각화 (품목 등록 → 견적 요청 → 비교 검토) + 체크마크 + CTA.
-          데이터 1건+ 시 자동 숨김. canonical truth: onboardingSteps derive
-          (line 284) — stats.totalInventory / activeQuotes / respondedQuotes.
-          §11.252d-1 — 호영님 spec: 사용자 명시적 dismiss + localStorage persist.
-          render 조건 강화 — isOnboardingMode + !onboardingDismissed 양립. */}
-      {isOnboardingMode && !onboardingDismissed && (
-        // §11.252d-4 — 모바일 padding 압축 (p-6 → p-4 md:p-6). 헤더 mb 도 모바일
-        //   축소 (mb-5 → mb-3 md:mb-5). 데스크탑 보존. shadow-sm + rounded-xl +
-        //   border-blue-200 시그니처 보존.
-        <div className="bg-white border border-blue-200 rounded-xl p-4 md:p-6 shadow-sm relative">
-          {/* §11.252d-1 — 우상단 X dismiss button. min-h-[44px] + min-w-[44px]
-              터치 타깃 (Apple HIG / Material Design 표준). aria-label 명시. */}
-          <button
-            type="button"
-            onClick={dismissOnboarding}
-            aria-label="시작 가이드 닫기"
-            className="absolute top-3 right-3 inline-flex items-center justify-center min-h-[44px] min-w-[44px] -m-2 p-2 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:bg-slate-200 transition-colors"
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
-          <div className="mb-3 md:mb-5 pr-10">
-            <div className="flex items-baseline justify-between mb-1.5">
-              <h3 className="text-base font-bold text-slate-900">시작하기</h3>
-              {/* §11.243 #7 — 호영님 P0: 회색 progress 바로 진행도 표시
-                  (KPI 카드 0건 가이드 정합). 완료 step 수 / 3 단계. */}
-              <span className="text-[11px] text-slate-500 font-medium">
-                {[onboardingSteps.inventoryDone, onboardingSteps.quoteRequestDone, onboardingSteps.compareDone].filter(Boolean).length} / 3 단계 완료
-              </span>
-            </div>
-            <div className="h-1 w-full bg-slate-200 rounded-full overflow-hidden mb-2">
-              <div
-                className="h-full bg-emerald-500 transition-all duration-300"
-                style={{
-                  width: `${([onboardingSteps.inventoryDone, onboardingSteps.quoteRequestDone, onboardingSteps.compareDone].filter(Boolean).length / 3) * 100}%`,
-                }}
-              />
-            </div>
-            <p className="text-sm text-slate-500">3단계로 운영 흐름을 시작하세요</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Step 1: 품목 등록 */}
-            <div className={`border rounded-lg p-4 ${onboardingSteps.inventoryDone ? "bg-emerald-50/50 border-emerald-200" : "bg-white border-slate-200"}`}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-xs font-bold ${onboardingSteps.inventoryDone ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-600"}`}>
-                  {onboardingSteps.inventoryDone ? <CheckCircle2 className="h-4 w-4" /> : "1"}
-                </span>
-                <span className={`text-sm font-semibold ${onboardingSteps.inventoryDone ? "text-emerald-700 line-through" : "text-slate-900"}`}>품목 등록</span>
-              </div>
-              <p className="text-xs text-slate-500 mb-3 leading-relaxed">실험실에서 사용하는 재고를 먼저 등록하세요.</p>
-              <Link href="/dashboard/inventory">
-                <Button size="sm" variant={onboardingSteps.inventoryDone ? "ghost" : "outline"} className="w-full h-8 text-xs gap-1.5">
-                  <Plus className="h-3 w-3" /> {onboardingSteps.inventoryDone ? "추가 등록" : "지금 등록"}
-                </Button>
-              </Link>
-            </div>
-            {/* Step 2: 견적 요청 */}
-            <div className={`border rounded-lg p-4 ${onboardingSteps.quoteRequestDone ? "bg-emerald-50/50 border-emerald-200" : "bg-white border-slate-200"}`}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-xs font-bold ${onboardingSteps.quoteRequestDone ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-600"}`}>
-                  {onboardingSteps.quoteRequestDone ? <CheckCircle2 className="h-4 w-4" /> : "2"}
-                </span>
-                <span className={`text-sm font-semibold ${onboardingSteps.quoteRequestDone ? "text-emerald-700 line-through" : "text-slate-900"}`}>견적 요청</span>
-              </div>
-              <p className="text-xs text-slate-500 mb-3 leading-relaxed">공급사에 견적을 요청해 가격을 비교하세요.</p>
-              <Link href="/dashboard/quotes">
-                <Button size="sm" variant={onboardingSteps.quoteRequestDone ? "ghost" : "outline"} className="w-full h-8 text-xs gap-1.5">
-                  <FileText className="h-3 w-3" /> {onboardingSteps.quoteRequestDone ? "추가 요청" : "지금 요청"}
-                </Button>
-              </Link>
-            </div>
-            {/* Step 3: 비교 검토 */}
-            <div className={`border rounded-lg p-4 ${onboardingSteps.compareDone ? "bg-emerald-50/50 border-emerald-200" : "bg-white border-slate-200"}`}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-xs font-bold ${onboardingSteps.compareDone ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-600"}`}>
-                  {onboardingSteps.compareDone ? <CheckCircle2 className="h-4 w-4" /> : "3"}
-                </span>
-                <span className={`text-sm font-semibold ${onboardingSteps.compareDone ? "text-emerald-700 line-through" : "text-slate-900"}`}>비교 검토</span>
-              </div>
-              <p className="text-xs text-slate-500 mb-3 leading-relaxed">받은 견적을 비교해 최적의 공급사를 선택하세요.</p>
-              <Link href="/dashboard/quotes">
-                <Button size="sm" variant={onboardingSteps.compareDone ? "ghost" : "outline"} className="w-full h-8 text-xs gap-1.5">
-                  <GitCompare className="h-3 w-3" /> {onboardingSteps.compareDone ? "추가 검토" : "검토 시작"}
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* §dashboard-shifan-adopt P2 — "시작하기 3단계" hero → NextStepBanner("다음 단계 추천")
+          대체(시안 채택). summary 단일 진실 가이드(예산 미설정→예산 설정 유도 등). 빈 계정 시작
+          유도는 GlobalEmpty(아래)가 담당. NextStepBanner는 self-gate(allEmpty/dismiss 시 미렌더). */}
+      <NextStepBanner summary={summarySection.data} />
 
-      {/* §main-dashboard-redesign P3-B1 — GlobalEmpty(종합 빈 첫 화면, allEmpty).
-          OnboardingHero(3-step) 미표시(dismiss 또는 비온보딩) + summary allEmpty 시에만
-          노출 — hero 와 상호배타(중복 0), 정직한 빈 + 시작 CTA. 빈 차트/목업 0(가드①②). */}
-      {summarySection.state === "empty" && (onboardingDismissed || !isOnboardingMode) && (
-        <GlobalEmpty />
-      )}
+      {/* §dashboard-shifan-adopt P2 — GlobalEmpty(종합 빈 첫 화면, allEmpty). hero 제거로
+          상호배타 게이트 불요 → summary allEmpty 시 노출(빈 계정 시작 유도). 정직 빈 + 시작 CTA. */}
+      {summarySection.state === "empty" && <GlobalEmpty />}
 
       {/* §main-dashboard-redesign P3-B2 — StatLine(재무 KPI3: 이번달 지출·잔여 예산·
           확정 발주액) summary 단일 진실. 기존 ExecutiveSummary 의 store 예산축 "누적 지출"

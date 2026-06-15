@@ -59,11 +59,11 @@ describe("§11.252d-2 — invariant 보존", () => {
     expect(code).toMatch(/견적\s*요청\s*생성/);
   });
 
-  it("OnboardingHero 3 step 보존 (품목 등록 / 견적 요청 / 비교 검토)", () => {
-    // OnboardingHero 가 §11.252d-1 reuse — span 안 "품목 등록" / "견적 요청" / "비교 검토" 보존.
-    expect(code).toMatch(/onboardingSteps\.inventoryDone/);
-    expect(code).toMatch(/onboardingSteps\.quoteRequestDone/);
-    expect(code).toMatch(/onboardingSteps\.compareDone/);
+  // §dashboard-shifan-adopt P2 진화 — OnboardingHero 3-step 폐지(시안 채택)→ NextStepBanner.
+  //   빠른시작 카드(위 assertions)는 유지 — hero 중복 제거 의도는 hero 자체 폐지로 자연 충족.
+  it("OnboardingHero 3-step 폐지 → NextStepBanner 대체(빠른시작 중복 원천 제거)", () => {
+    expect(code).not.toMatch(/onboardingSteps\.inventoryDone/);
+    expect(code).toMatch(/<NextStepBanner/);
   });
 
   it("isOnboardingMode + onboardingDismissed state 보존 (§11.252d-1)", () => {

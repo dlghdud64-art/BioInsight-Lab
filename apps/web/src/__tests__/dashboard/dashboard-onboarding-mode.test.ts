@@ -44,16 +44,17 @@ describe("§11.243 #1 — 온보딩 모드 분기", () => {
   });
 });
 
-describe("§11.243 #2 — 온보딩 히어로 3단계", () => {
-  it("OnboardingHero 3 step 라벨 (품목 등록 / 견적 요청 / 비교 검토)", () => {
-    expect(page).toMatch(/(품목 등록|시약\/소모품)/);
-    expect(page).toMatch(/견적 요청/);
-    expect(page).toMatch(/비교 검토/);
+// §dashboard-shifan-adopt P2 진화 — "온보딩 히어로 3단계"(시작하기 hero) 폐지(시안 채택).
+//   진행 가이드는 NextStepBanner("다음 단계 추천", summary) + GlobalEmpty(빈 계정 CTA)로 대체.
+describe("§243 #2→shifan P2 — OnboardingHero 폐지·NextStepBanner 대체", () => {
+  it("'시작하기' 3단계 hero 제거", () => {
+    expect(page).not.toMatch(/>\s*시작하기\s*</);
+    expect(page).not.toMatch(/onboardingSteps\.inventoryDone/);
   });
 
-  it("3 step 완료 분기 (stats 기반 derive)", () => {
-    // step 1 완료 = totalInventory > 0, step 2 = activeQuotes > 0, step 3 = respondedQuotes > 0
-    expect(page).toMatch(/(stats\.totalInventory\s*>\s*0|totalInventory\s*>\s*0)/);
+  it("가이드 보존 — NextStepBanner + GlobalEmpty 배선", () => {
+    expect(page).toMatch(/<NextStepBanner/);
+    expect(page).toMatch(/<GlobalEmpty\s*\/>/);
   });
 });
 
@@ -79,9 +80,11 @@ describe("§11.243 #5/#6 — 이슈 요약 + 인텔리전스 빈 상태", () => 
   });
 });
 
-describe("§11.243 #7 — KPI 가이드 + 회색 progress", () => {
-  it("KPI 0건 분기 — bg-gray-200 progress 또는 회색 fallback", () => {
-    expect(page).toMatch(/(bg-gray-200|bg-slate-200)[\s\S]{0,300}(progress|width|h-1)/);
+describe("§11.243 #7 — 온보딩 진행 가이드 (§dashboard-shifan-adopt P2: hero progress → NextStepBanner/GlobalEmpty)", () => {
+  it("'시작하기 3단계' hero progress bar 폐지 → NextStepBanner/GlobalEmpty 가이드 이전", () => {
+    // §dashboard-shifan-adopt P2: hero(bg-gray-200 3단계 progress) 폐지 → 진행 가이드는
+    //   NextStepBanner(다음 단계 추천, summary 소스) + GlobalEmpty(빈 계정)로 이전. 가이드 공백 0.
+    expect(page).toMatch(/NextStepBanner|GlobalEmpty/);
   });
 });
 

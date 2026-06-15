@@ -1,19 +1,12 @@
 /**
- * §11.252d-1 — 온보딩 자동 숨김 강화 (dismiss button + localStorage persist).
+ * §11.252d-1 → §dashboard-shifan-adopt P2 진화 — OnboardingHero "시작하기 3단계" 폐지.
  *
- * 호영님 spec:
- *   - 우상단 X dismiss button (44px 터치 타깃).
- *   - localStorage persist (페이지 새로고침 시 dismiss 상태 유지).
- *   - 자동 hide 조건 추가 — isOnboardingMode + !onboardingDismissed.
- *   - SSR hydration safe (useEffect 안 localStorage 읽기).
+ * 호영님 시안 전면 채택 결정(2026-06-15): 3단계 hero(품목 등록→견적 요청→비교 검토) +
+ * dismiss button 은 NextStepBanner("다음 단계 추천", summary 가이드) + GlobalEmpty(빈 계정
+ * 시작 CTA)로 대체. 따라서 §11.252d-1 의 hero/dismiss-button/3-step 가드는 stale →
+ * "hero 폐지 + 가이드(NextStepBanner/GlobalEmpty) 보존"으로 진화(가이드 awareness 공백 0).
  *
- * canonical truth lock:
- *   - isOnboardingMode = totalQuotesCount === 0 derive 보존.
- *   - onboardingSteps (inventoryDone/quoteRequestDone/compareDone) derive 보존.
- *   - OnboardingHero 3 step 구조 (품목 등록 / 견적 요청 / 비교 검토) 보존.
- *   - progress bar / CTA / Link href 모두 보존.
- *
- * localStorage key: "labaxis-onboarding-dismissed" (boolean string).
+ * 보존: isOnboardingMode derive(타 분기 사용) · onboardingDismissed state(빠른시작 hide 조건).
  */
 
 import { describe, it, expect } from "vitest";
@@ -27,66 +20,35 @@ function safeRead(p: string): string {
 const PAGE_PATH = resolve(__dirname, "../../app/dashboard/page.tsx");
 const code = safeRead(PAGE_PATH);
 
-describe("§11.252d-1 #1 — dismiss state + localStorage persist", () => {
-  it("§11.252d-1 trace marker 명시", () => {
-    expect(code).toMatch(/§11\.252d-1|11\.252d-1/);
+describe("§252d-1→shifan P2 — OnboardingHero 폐지", () => {
+  it("'시작하기' 3단계 hero 제거(헤더·진행바·3 step grid 부재)", () => {
+    expect(code).not.toMatch(/>\s*시작하기\s*</);
+    expect(code).not.toMatch(/3단계로\s*운영\s*흐름을\s*시작하세요/);
+    expect(code).not.toMatch(/onboardingSteps\.inventoryDone/);
   });
 
-  it("onboardingDismissed useState 추가", () => {
-    expect(code).toMatch(/(onboardingDismissed|setOnboardingDismissed)/);
+  it("dismissOnboarding(hero dismiss button) 제거", () => {
+    expect(code).not.toMatch(/const dismissOnboarding =/);
+  });
+});
+
+describe("§252d-1→shifan P2 — 가이드 보존(공백 0)", () => {
+  it("NextStepBanner(다음 단계 추천) 배선 — hero 가이드 역할 흡수", () => {
+    expect(code).toMatch(/<NextStepBanner/);
   });
 
-  it("localStorage key 'labaxis-onboarding-dismissed' 사용", () => {
+  it("GlobalEmpty(빈 계정 시작 CTA) 배선", () => {
+    expect(code).toMatch(/<GlobalEmpty\s*\/>/);
+  });
+});
+
+describe("§252d-1 — invariant 보존", () => {
+  it("isOnboardingMode derive 보존(타 분기 사용)", () => {
+    expect(code).toMatch(/isOnboardingMode/);
+  });
+
+  it("onboardingDismissed state + localStorage persist 보존(빠른시작 hide 조건)", () => {
+    expect(code).toMatch(/onboardingDismissed/);
     expect(code).toMatch(/labaxis-onboarding-dismissed/);
-  });
-
-  it("useEffect mount 시 localStorage 읽기 (SSR safe)", () => {
-    // useEffect 안 localStorage.getItem 매칭.
-    expect(code).toMatch(/useEffect[\s\S]{0,500}localStorage\.getItem\(["']labaxis-onboarding-dismissed["']\)/);
-  });
-});
-
-describe("§11.252d-1 #2 — X dismiss button + auto hide 조건", () => {
-  it("dismiss button onClick → setOnboardingDismissed(true) + localStorage.setItem", () => {
-    expect(code).toMatch(/setOnboardingDismissed\(true\)|localStorage\.setItem\(["']labaxis-onboarding-dismissed["']/);
-  });
-
-  it("OnboardingHero render 조건 — !onboardingDismissed 추가", () => {
-    // isOnboardingMode && !onboardingDismissed 분기.
-    expect(code).toMatch(/isOnboardingMode\s*&&\s*!onboardingDismissed|!onboardingDismissed\s*&&\s*isOnboardingMode/);
-  });
-
-  it("dismiss button — X icon 또는 '닫기' aria-label", () => {
-    expect(code).toMatch(/aria-label=["'](온보딩\s*닫기|시작\s*가이드\s*닫기|닫기)["']/);
-  });
-
-  it("dismiss button 터치 타깃 — min-h-[44px] 또는 h-9+ 인근 §11.252d-1 trace", () => {
-    // §11.252d-1 ~ 가까운 height class.
-    expect(code).toMatch(/§11\.252d-1[\s\S]{0,3000}(min-h-\[44px\]|h-9|h-10|h-11)/);
-  });
-});
-
-describe("§11.252d-1 — invariant 보존", () => {
-  it("isOnboardingMode derive 보존 (totalQuotesCount === 0)", () => {
-    expect(code).toMatch(/isOnboardingMode\s*=\s*totalQuotesCount\s*===\s*0/);
-  });
-
-  it("onboardingSteps derive 보존 (3 step)", () => {
-    expect(code).toMatch(/inventoryDone:/);
-    expect(code).toMatch(/quoteRequestDone:/);
-    expect(code).toMatch(/compareDone:/);
-  });
-
-  it("'시작하기' 헤더 보존 (OnboardingHero 시그니처)", () => {
-    expect(code).toMatch(/>\s*시작하기\s*</);
-  });
-
-  it("3 step Link href 보존 (/dashboard/inventory + /dashboard/quotes)", () => {
-    expect(code).toMatch(/href=["']\/dashboard\/inventory["']/);
-    expect(code).toMatch(/href=["']\/dashboard\/quotes["']/);
-  });
-
-  it("'3단계로 운영 흐름을 시작하세요' 안내 텍스트 보존", () => {
-    expect(code).toMatch(/3단계로\s*운영\s*흐름을\s*시작하세요/);
   });
 });
