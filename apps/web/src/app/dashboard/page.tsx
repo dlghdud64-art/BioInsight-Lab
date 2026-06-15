@@ -1624,30 +1624,10 @@ function DashboardPageInner() {
           </CardContent>
         </Card>
 
-        {/* 최근 알림 */}
-        <Card className="bg-white border-slate-200/80 rounded-xl">
-          <CardHeader className="pb-2 p-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-[13px] font-extrabold text-slate-900">최근 알림</CardTitle>
-              <Link href="/dashboard/notifications"><Button variant="ghost" size="sm" className="text-[11px] h-6 px-2">모두 보기</Button></Link>
-            </div>
-          </CardHeader>
-          <CardContent className="p-3 pt-0 space-y-1">
-            {notifications.map((n) => (
-              <Link key={n.id} href={n.href} className={`flex items-start gap-2.5 p-2 rounded-lg transition-colors ${n.unread ? "bg-blue-50/50" : "hover:bg-slate-50"}`}>
-                {renderNotificationIcon(n.type)}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <p className="font-medium text-xs text-slate-900 truncate">{n.title}</p>
-                    {n.unread && <Badge variant="default" className="h-3.5 px-1 text-[9px] bg-blue-600 flex-shrink-0">새</Badge>}
-                  </div>
-                  <p className="text-[10px] text-slate-500 line-clamp-1">{n.content}</p>
-                </div>
-                <ChevronRight className="h-3.5 w-3.5 text-slate-500 flex-shrink-0 mt-1" />
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
+        {/* §main-dashboard-redesign P5 — "최근 알림" 카드 제거(호영님 결정).
+            상단바 NotificationCenter(header-notification-wiring)가 알림 단일 진입 →
+            대시보드 중복 카드 제거(중복 0). notifications 데이터는 "최근 운영 활동"
+            타임라인(중앙 패널)에서 계속 소비 — awareness 손실 0. */}
 
         {/* 최근 처리 이력 (축소) */}
         <Card className="bg-white border-slate-200/80 rounded-xl">
