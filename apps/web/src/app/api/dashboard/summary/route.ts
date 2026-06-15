@@ -159,6 +159,22 @@ export async function GET(request: NextRequest) {
       (i) => i.safetyStock !== null && i.currentQuantity <= i.safetyStock,
     ).length;
 
+    // ── 이번 달 실 구매액(예산 무관, scope 동일) — StatLine "이번달 지출" + 폴백예산 spent ──
+    const scopeKeyValues = [userId, ...workspaceIds, ...(guestKey ? [guestKey] : [])];
+    const thisMonthSpend = await db.purchaseRecord
+      .aggregate({
+        where: {
+          OR: [
+            { scopeKey: { in: scopeKeyValues } },
+            ...(workspaceIds.length > 0 ? [{ workspaceId: { in: workspaceIds } }] : []),
+          ],
+          purchasedAt: { gte: monthStart },
+        },
+        _sum: { amount: true },
+      })
+      .then((r: { _sum: { amount: number | null } }) => r._sum.amount || 0)
+      .catch(() => 0);
+
     // ── BUDGET ──────────────────────────────────────────────────────────
     let budgetInput: DashboardSummaryInput["budget"] = null;
     if (activeBudget && activeBudget.totalAmount > 0) {
@@ -168,25 +184,11 @@ export async function GET(request: NextRequest) {
         remaining: activeBudget.remainingAmount,
       };
     } else if (fallbackBudget && fallbackBudget.amount > 0) {
-      // 폴백 예산: 이번 달 구매액 합(scope 동일)으로 spent derive
-      const scopeKeyValues = [userId, ...workspaceIds, ...(guestKey ? [guestKey] : [])];
-      const monthSpent = await db.purchaseRecord
-        .aggregate({
-          where: {
-            OR: [
-              { scopeKey: { in: scopeKeyValues } },
-              ...(workspaceIds.length > 0 ? [{ workspaceId: { in: workspaceIds } }] : []),
-            ],
-            purchasedAt: { gte: monthStart },
-          },
-          _sum: { amount: true },
-        })
-        .then((r: { _sum: { amount: number | null } }) => r._sum.amount || 0)
-        .catch(() => 0);
+      // 폴백 예산: 이번 달 구매액 합으로 spent derive(위 thisMonthSpend 재사용)
       budgetInput = {
         limit: fallbackBudget.amount,
-        spent: monthSpent,
-        remaining: fallbackBudget.amount - monthSpent,
+        spent: thisMonthSpend,
+        remaining: fallbackBudget.amount - thisMonthSpend,
       };
     }
 
@@ -227,6 +229,7 @@ export async function GET(request: NextRequest) {
         assetValue: 0,
       },
       budget: budgetInput,
+      spend: { thisMonth: thisMonthSpend },
     };
 
     return NextResponse.json(deriveDashboardSummary(input));

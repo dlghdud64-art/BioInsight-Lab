@@ -35,6 +35,7 @@ function emptyInput(): DashboardSummaryInput {
     receive: { total: 0, pending: 0, partial: 0, completed: 0, issue: 0, expiringCount: 0 },
     stock: { total: 0, reorderNeeded: 0, lowStock: 0, expiringCount: 0, assetValue: 0 },
     budget: null,
+    spend: { thisMonth: 0 },
   };
 }
 
@@ -52,6 +53,13 @@ describe("§main-dashboard-redesign P1 (A) — 파생 helper 로직", () => {
     const input = emptyInput();
     input.quote.total = 1;
     expect(deriveDashboardSummary(input).derived.allEmpty).toBe(false);
+  });
+
+  it("spend.thisMonth 통과(StatLine 이번달 지출 소스, 실데이터/0)", () => {
+    const input = emptyInput();
+    input.spend.thisMonth = 1_500_000;
+    expect(deriveDashboardSummary(input).spend.thisMonth).toBe(1_500_000);
+    expect(deriveDashboardSummary(emptyInput()).spend.thisMonth).toBe(0);
   });
 
   it("budget 설정 시 usageRate 계산 + isSet=true", () => {
@@ -103,6 +111,7 @@ describe("§main-dashboard-redesign P1 (B) — summary route 계약", () => {
     expect(src).toMatch(/receive:\s*\{/);
     expect(src).toMatch(/stock:\s*\{/);
     expect(src).toMatch(/budget:\s*budgetInput/);
+    expect(src).toMatch(/spend:\s*\{\s*thisMonth:\s*thisMonthSpend/);
   });
 
   it("prod write 0 — mutation 메서드 부재(읽기 endpoint)", () => {
@@ -134,9 +143,9 @@ describe("§main-dashboard-redesign P1 (D) — 가드③ Pipeline 전이 로컬 
 
 // ── (E) 회귀 0 — helper 계약 보존 ──────────────────────────────────────
 describe("§main-dashboard-redesign P1 (E) — helper 계약 회귀 0", () => {
-  it("출력 구조 modules/budget/derived 보존", () => {
+  it("출력 구조 modules/budget/spend/derived 보존", () => {
     const s = deriveDashboardSummary(emptyInput());
-    expect(Object.keys(s).sort()).toEqual(["budget", "derived", "modules"]);
+    expect(Object.keys(s).sort()).toEqual(["budget", "derived", "modules", "spend"]);
     expect(Object.keys(s.modules).sort()).toEqual(["po", "quote", "receive", "stock"]);
     expect(Object.keys(s.budget).sort()).toEqual(["isSet", "limit", "remaining", "spent", "usageRate"]);
     expect(Object.keys(s.derived).sort()).toEqual(["allEmpty", "budTone"]);

@@ -56,6 +56,11 @@ export interface DashboardSummaryInput {
     spent: number;
     remaining: number;
   } | null;
+  /** 지출 파생(예산 무관 실구매 합). StatLine "이번달 지출" 소스. */
+  spend: {
+    /** 이번 달(1일~) 실 구매액 합. 실데이터/0만(가드②). */
+    thisMonth: number;
+  };
 }
 
 export type BudgetTone = "none" | "ok" | "warn" | "danger";
@@ -77,6 +82,8 @@ export interface DashboardSummary {
     stock: DashboardSummaryInput["stock"];
   };
   budget: DashboardSummaryBudget;
+  /** 지출 파생 — StatLine "이번달 지출" 소스(예산 무관 실구매). */
+  spend: { thisMonth: number };
   derived: {
     /** 4모듈 전부 0 = GlobalEmpty(종합 빈). 빈 계정 정직 첫 화면(가드①). */
     allEmpty: boolean;
@@ -133,6 +140,7 @@ export function deriveDashboardSummary(
       remaining: budget?.remaining ?? 0,
       usageRate: Math.round(usageRate * 10) / 10,
     },
+    spend: { thisMonth: input.spend?.thisMonth ?? 0 },
     derived: {
       allEmpty,
       budTone: budTone(isSet, usageRate),
