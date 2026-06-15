@@ -89,11 +89,12 @@ describe("§main-dashboard-redesign P3 (C) — 가드② mock/예시 0", () => {
   });
 });
 
-// ── (D) P3 격리 — page 미배선 ───────────────────────────────────────────
-describe("§main-dashboard-redesign P3 (D) — page 미배선(고립 빌드)", () => {
-  it("page.tsx 가 StatLine/GlobalEmpty 아직 미import(탑재 별도 커밋)", () => {
-    const src = read(PAGE);
-    expect(src).not.toMatch(/stat-line|StatLine/);
-    expect(src).not.toMatch(/global-empty|GlobalEmpty/);
+// ── (D) 탑재 단계 — GlobalEmpty 배선(P3-B1), StatLine 미배선(P3-B2) ──────
+describe("§main-dashboard-redesign P3 (D) — 모듈 탑재 단계", () => {
+  it("page.tsx 가 GlobalEmpty 배선(P3-B1 탑재 완료)", () => {
+    expect(read(PAGE)).toMatch(/global-empty|GlobalEmpty/);
+  });
+  it("page.tsx 가 StatLine 아직 미배선(P3-B2 대기 — KPI 교체는 P4 ActionInbox 후)", () => {
+    expect(read(PAGE)).not.toMatch(/stat-line|StatLine/);
   });
 });

@@ -67,6 +67,12 @@ import { OperatorQuickActions } from "@/components/dashboard/operator-quick-acti
 // §11.308e — 스마트 입고 본문 awareness + status 카드 (호영님 P2 옵션 B).
 import { SmartReceivingStatusCard } from "@/components/dashboard/SmartReceivingStatusCard";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
+// §main-dashboard-redesign P3-B1 — GlobalEmpty(allEmpty 종합 빈) + summary 단일 진실 훅.
+//   비차단 추가: 기존 stats useQuery 렌더 경로 무수정(§11.199b stuck 위험 격리).
+//   GlobalEmpty 는 OnboardingHero 미표시 시에만(상호배타, 중복 0).
+import { GlobalEmpty } from "@/components/dashboard/global-empty";
+import { useDashboardSection } from "@/hooks/use-dashboard-section";
+import type { DashboardSummary } from "@/lib/dashboard/summary-derive";
 
 // ── Overlay 지원 경로 판별 ──
 const OVERLAY_ROUTE_PATTERNS = [
@@ -207,6 +213,17 @@ function DashboardPageInner() {
     retry: 2,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
     refetchOnWindowFocus: false,
+  });
+
+  // §main-dashboard-redesign P3-B1 — summary 단일 진실(capMs 10s 4상태). 비차단:
+  //   기존 stats 렌더 게이트와 독립. state==='empty'(allEmpty) + OnboardingHero
+  //   미표시 시에만 GlobalEmpty 렌더(아래). error/timeout 시 미렌더(무회귀).
+  const summarySection = useDashboardSection<DashboardSummary>({
+    queryKey: ["dashboard-summary"],
+    url: "/api/dashboard/summary",
+    enabled: status === "authenticated",
+    authLoading: status === "loading",
+    isEmpty: (s) => s.derived.allEmpty,
   });
 
   // §11.366 → §11.375 P1 — 스켈레톤 상한 타이머. 로딩 중일 때만 활성, 회복 시 자동 reset.
@@ -874,6 +891,13 @@ function DashboardPageInner() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* §main-dashboard-redesign P3-B1 — GlobalEmpty(종합 빈 첫 화면, allEmpty).
+          OnboardingHero(3-step) 미표시(dismiss 또는 비온보딩) + summary allEmpty 시에만
+          노출 — hero 와 상호배타(중복 0), 정직한 빈 + 시작 CTA. 빈 차트/목업 0(가드①②). */}
+      {summarySection.state === "empty" && (onboardingDismissed || !isOnboardingMode) && (
+        <GlobalEmpty />
       )}
 
       {/* --- Executive Summary (예산/승인/Anomaly + 추이 + 활동 피드) ---
