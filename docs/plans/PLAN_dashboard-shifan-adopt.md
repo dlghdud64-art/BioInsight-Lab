@@ -86,10 +86,16 @@
 - 격리 검증: 배선 14/14 + sentinel 정합 9/9 PASS. dead import/cluster 잔존 0. §11.199b 로딩게이트 무수정.
 - ✋ Gate: dead button 0 ✅, awareness 보존 ✅, **operator 실 vitest+build+baseline 88 신규 0+라이브 smoke 대기**. Rollback: page+sentinel revert(배너 복원).
 
-### Phase 2: SystemInsight "다음 단계 추천" 다크 배너 + OnboardingHero 흡수
-- Status: [ ] Pending
-- 🟢 SystemInsightCard를 ExecutiveSummary에서 분해→독립 다크 배너("다음 단계 추천", dismiss 보존). "시작하기 3단계" hero → GlobalEmpty(빈 계정)/Insight(시작 유도)로 흡수, 레거시 hero 제거.
-- ✋ Gate: insight 재소스 정합, hero 제거 후 시작 유도 보존, dismiss 동작. Rollback: hero/insight 복원.
+### Phase 2: NextStepBanner("다음 단계 추천") + OnboardingHero 폐지 — ✅ Complete (2026-06-15)
+- Status: [x] Complete (호영님 결정: summary-소스 신규 경량 배너)
+- **산출:**
+  - `components/dashboard/next-step-banner.tsx`(신규) — summary 단일 진실 "다음 단계 추천" 다크 배너. 예산 미설정→[예산 설정] 유도(시안 메시지)·≥80/100% warn/danger. allEmpty self-gate(GlobalEmpty 담당, 중복 0)·dismiss(sessionStorage)·터치 44px·CTA wired(no-op 0). store-coupling 회피(레거시 SystemInsightCard 대신 summary 소스).
+  - `app/dashboard/page.tsx` — "시작하기 3단계" hero(OnboardingHero) **폐지** → `<NextStepBanner summary={summarySection.data}/>`. GlobalEmpty 게이트 단순화(`state==='empty'` — hero 상호배타 불요). cluster 정리: onboardingSteps def·dismissOnboarding 제거(unused). isOnboardingMode/onboardingDismissed 보존(타 분기·빠른시작 hide 사용).
+  - sentinel: `dashboard-nextstep-wire-shifan-p2.test.ts`(신규) + **hero sentinel 진화 4건**(252d1·252d2·252d4·onboarding-mode #2 — OnboardingHero 폐지→NextStepBanner/GlobalEmpty 가이드 보존 증명).
+- **가이드 awareness 공백 0:** hero의 시작 유도 = NextStepBanner(예산 등) + GlobalEmpty(빈 계정 CTA)로 흡수.
+- **⚠️ 이연:** 레거시 SystemInsightCard(ExecutiveSummary 내부)는 P3(ExecutiveSummary 정리)에서 제거 — P2~P3 일시 중복(NextStepBanner + 레거시 insight).
+- 격리: P2 15/15 + 진화 4 sentinel 정합. dead import 0. §11.199b 로딩게이트 무수정.
+- ✋ Gate: hero 폐지·가이드 보존·dead import 0 ✅. **operator 실 vitest+build+baseline 88+라이브 smoke 대기**. Rollback: page+banner+sentinel revert.
 
 ### Phase 3: 시안 순서 재배열 + 중복 KPI 정리 + Pipeline 라벨 보강
 - Status: [ ] Pending
@@ -116,8 +122,8 @@
 - 모듈별 독립 커밋 → phase별 revert. 레거시 제거는 복원 가능(컴포넌트 보존). 데이터 비파괴(읽기). 최악 시 page.tsx 직전 commit revert.
 
 ## 11. Progress
-- Overall: 35% (P0 매핑 + P1 ActionInbox 배선·배너 대체) · Current: P1 operator 검증(smoke) 대기 → P2(SystemInsight 다크배너 + hero 흡수)
-- Checklist: [x]P0 [x]P1 [ ]P2 [ ]P3 [ ]P4
+- Overall: 60% (P0 매핑 + P1 ActionInbox + P2 NextStepBanner·hero 폐지) · Current: P2 operator 검증(smoke) 대기 → P3(시안 순서 재배열 + 중복 KPI/레거시 insight 정리)
+- Checklist: [x]P0 [x]P1 [x]P2 [ ]P3 [ ]P4
 
 ## 12. Notes
 - [2026-06-15] 호영님 라이브 A/B 비교 후 시안(B) 채택 결정. A-점진 산출 전부 자산 재사용(신규 코드 ~0). ActionInbox(P4-A 빌드)가 시안 "오늘 처리해야 할 일"에 정합 — P4-B2 보류했던 모델 불일치는 "다음 작업(가이드형)" 한정이었고, 우선처리(count형)엔 적합.
