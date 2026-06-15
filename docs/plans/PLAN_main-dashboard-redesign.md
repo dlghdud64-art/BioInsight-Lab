@@ -127,9 +127,17 @@
 - ✋ Gate: 4상태 sentinel, capMs 전환(10s), empty 정직, 무한 스켈레톤 0. Rollback: 훅+순수모듈 revert(page 무변경이라 무영향).
 
 ### Phase 3: 상단 모듈 — GlobalEmpty / StatLine / SystemInsight
-- Status: [ ] Pending
+- Status: [ ] In Progress (2026-06-15) — P3-A 고립 빌드 완료, 탑재(P3-B) 대기
 - 🟢 현행 ExecutiveSummary를 시안 StatLine(KPI3: 이번달 지출·잔여 예산·확정 발주액) + SystemInsight(1줄 도출 우선순위) + GlobalEmpty(ALL_EMPTY)로 정렬. KPI 칩/CTA wiring 보존.
-- ✋ Gate: 순서/계약 정합, KPI wiring 보존, empty 정직. Rollback: 모듈 revert.
+- **접근(호영님 2026-06-15 결정):** 고립 빌드 → 별도 탑재. 현행 ExecutiveSummary(zustand store derive)를 in-place 교체하지 않고, summary 소스 신규 모듈을 먼저 작성·검증(page 미배선) → 별도 커밋에서 store→summary swap 배선(§11.199b/§11.196b stuck 위험 격리, wiring 단독 rollback).
+- **P3-A 산출(고립 빌드):**
+  - `lib/dashboard/summary-derive.ts` + `api/dashboard/summary/route.ts` — **계약 확장**: `spend.thisMonth`(이번달 실구매 합, 예산 무관) 추가. StatLine "이번달 지출" 소스(P0 "stats 확장" 정합, 실데이터/0). P1 sentinel(E) 계약 키 `+spend` 갱신.
+  - `components/dashboard/stat-line.tsx`(신규) — KPI3(이번달 지출=spend.thisMonth·잔여 예산=budget.remaining·확정 발주액=po.confirmedAmount) summary 단일 진실. 4상태(loading 스켈레톤/error 재시도/값 표시), §11.311 컴팩트(grid-cols-3·p-3 md:p-4·text-lg md:text-xl), 0건 회색(bg-gray-50/text-gray-400), won() 포맷, 터치≥44px. presentational(fetch=P2 훅 주입, 탑재 시).
+  - `components/dashboard/global-empty.tsx`(신규) — allEmpty 종합 빈 첫 화면. 정직 문구 + 견적/예산 CTA. 차트/목업/예시 0(가드①②), 컴팩트.
+  - `__tests__/dashboard/dashboard-top-modules-p3.test.ts`(신규) — StatLine KPI3·4상태·§11.311·0회색·summary소스 / GlobalEmpty CTA·정직 / 가드② mock 0 / **page 미배선(격리)** 가드.
+- **격리 node 검증:** regex 전부 PASS(route spend·stat 10/10·empty mock 0·page 미배선). summary spend 로직은 `?? 0` passthrough(P1 로직 불변). ⚠️ bash mount staleness로 strip-eval 1회 막힘(파일툴 디스크는 정합) — operator 실 vitest가 로직 권위.
+- ✋ Gate(P3-A): 모듈 sentinel GREEN, 가짜 분포 0, page 미배선. **operator 실 vitest+build 대기.** Rollback: 모듈+계약 revert(page 무변경=무영향).
+- **다음 P3-B(별도):** page.tsx 에서 useDashboardSection(summary) → state 분기: allEmpty→GlobalEmpty / else→StatLine + SystemInsight 재소스. 현행 ExecutiveSummary KPI/CTA wiring 보존 정렬. (store→summary swap = 회귀 위험, 단독 커밋·smoke.)
 
 ### Phase 4: 중단 모듈 — ActionInbox + Pipeline(신규)
 - Status: [ ] Pending
@@ -161,9 +169,10 @@
 - 모듈별 독립 커밋 → phase별 revert. summary API no-op 시 현행 분산 fetch 복귀. 데이터 비파괴(읽기).
 
 ## 11. Progress
-- Overall: 28% (P0 매핑·empty 명세·가드 확정 + P1 summary 계약·파생 helper·mockup 제거 완료) · Current: P2 대기(capMs 상태머신 + empty 4상태)
-- Checklist: [x]P0 [x]P1 [ ]P2 [ ]P3 [ ]P4 [ ]P5 [ ]P6
-- [2026-06-15] P1 완료(격리 node 검증). operator 실 vitest+build+push 대기 → READY 후 P2.
+- Overall: 45% (P0·P1 완료 + P2 capMs 머신 push + P3-A 상단모듈 고립 빌드) · Current: P3-A operator 검증 대기 → P3-B 탑재
+- Checklist: [x]P0 [x]P1 [x]P2 [~]P3(A 빌드/B 탑재 대기) [ ]P4 [ ]P5 [ ]P6
+- [2026-06-15] P1 push READY(94a4da1e). P2 capMs 10s(2.6s 폐기, §11.375 충돌 해소) push. P3-A 고립 빌드(StatLine·GlobalEmpty·summary spend 확장).
+- ⚠️ 별 트랙 §suite-red: 전체 dashboard+regression suite 286 fail(91 file) 발견. P2/대시보드 무관(고립 검증). ENOENT-14 가설 철회(전부 통과 가드). 실 vitest 실패목록 → baseline allowlist 후 P3-B 게이트 "신규 fail 0".
 - P4 Pipeline 입고 단계에 SmartReceiving 흡수 / P5 최근 알림 제거 — P0 결정 반영.
 
 ## 12. Notes
