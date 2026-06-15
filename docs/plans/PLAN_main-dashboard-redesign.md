@@ -137,7 +137,11 @@
   - `__tests__/dashboard/dashboard-top-modules-p3.test.ts`(신규) — StatLine KPI3·4상태·§11.311·0회색·summary소스 / GlobalEmpty CTA·정직 / 가드② mock 0 / **page 미배선(격리)** 가드.
 - **격리 node 검증:** regex 전부 PASS(route spend·stat 10/10·empty mock 0·page 미배선). summary spend 로직은 `?? 0` passthrough(P1 로직 불변). ⚠️ bash mount staleness로 strip-eval 1회 막힘(파일툴 디스크는 정합) — operator 실 vitest가 로직 권위.
 - ✋ Gate(P3-A): 모듈 sentinel GREEN, 가짜 분포 0, page 미배선. **operator 실 vitest+build 대기.** Rollback: 모듈+계약 revert(page 무변경=무영향).
-- **다음 P3-B(별도):** page.tsx 에서 useDashboardSection(summary) → state 분기: allEmpty→GlobalEmpty / else→StatLine + SystemInsight 재소스. 현행 ExecutiveSummary KPI/CTA wiring 보존 정렬. (store→summary swap = 회귀 위험, 단독 커밋·smoke.)
+- **P3-B1 완료(2026-06-15, 호영님 "GlobalEmpty 먼저·최소" 결정):** page.tsx 에 useDashboardSection(summary, capMs 10s) 비차단 배선 + GlobalEmpty 렌더(state==='empty'=allEmpty AND OnboardingHero 미표시 — 상호배타, 중복 0). **기존 stats useQuery·isStillLoading 로딩 게이트·ExecutiveSummary 무수정**(§11.199b/§11.375 스카 보호, 회귀 0). summary error/timeout 시 GlobalEmpty 미렌더(graceful).
+  - 산출: `app/dashboard/page.tsx`(훅+게이트 렌더+import) / `__tests__/dashboard/dashboard-globalempty-wire-p3b.test.ts`(신규: 훅 배선·게이트·무회귀·StatLine 미배선) / `dashboard-top-modules-p3.test.ts`(D 진화: GlobalEmpty 배선됨·StatLine 미배선).
+  - 격리 검증: page 배선 regex 16/16 PASS(훅 단일·게이트·stats/loadTimedOut/ExecutiveSummary 보존). **operator 실 vitest+build+라이브 smoke 대기**(첫 page 변경 — 빈계정 GlobalEmpty / 데이터계정 무영향·무한스켈레톤 0 확인).
+  - ✋ Gate(P3-B1): sentinel GREEN + baseline 91 신규 fail 0 + 라이브 smoke. Rollback: page 3 edit + sentinel revert(독립).
+- **다음 P3-B2(P4 이후):** StatLine 로 ExecutiveSummary KPI 교체(처리필요·이상징후는 P4 ActionInbox 이전 후 — 중간 공백 0). SystemInsight 재소스. store→summary swap 단독 smoke.
 
 ### Phase 4: 중단 모듈 — ActionInbox + Pipeline(신규)
 - Status: [ ] Pending
@@ -169,8 +173,8 @@
 - 모듈별 독립 커밋 → phase별 revert. summary API no-op 시 현행 분산 fetch 복귀. 데이터 비파괴(읽기).
 
 ## 11. Progress
-- Overall: 45% (P0·P1 완료 + P2 capMs 머신 push + P3-A 상단모듈 고립 빌드) · Current: P3-A operator 검증 대기 → P3-B 탑재
-- Checklist: [x]P0 [x]P1 [x]P2 [~]P3(A 빌드/B 탑재 대기) [ ]P4 [ ]P5 [ ]P6
+- Overall: 52% (P0·P1·P2 + P3-A 고립 빌드 + P3-B1 GlobalEmpty 배선) · Current: P3-B1 operator 검증(라이브 smoke) 대기 → P3-B2(StatLine 교체, P4 후)
+- Checklist: [x]P0 [x]P1 [x]P2 [~]P3(A 빌드·B1 GlobalEmpty 배선 / B2 StatLine 대기) [ ]P4 [ ]P5 [ ]P6
 - [2026-06-15] P1 push READY(94a4da1e). P2 capMs 10s(2.6s 폐기, §11.375 충돌 해소) push. P3-A 고립 빌드(StatLine·GlobalEmpty·summary spend 확장).
 - ⚠️ 별 트랙 §suite-red: 전체 dashboard+regression suite 286 fail(91 file) 발견. P2/대시보드 무관(고립 검증). ENOENT-14 가설 철회(전부 통과 가드). 실 vitest 실패목록 → baseline allowlist 후 P3-B 게이트 "신규 fail 0".
 - P4 Pipeline 입고 단계에 SmartReceiving 흡수 / P5 최근 알림 제거 — P0 결정 반영.
