@@ -74,12 +74,20 @@ describe("dashboard priority banner wiring", () => {
     expect(src).toMatch(/승인 대기/);
   });
 
-  it("passes CFO counts into SmartReceivingStatusCard from dashboard truth", () => {
+  // §main-dashboard-redesign P4-B1 진화 — SmartReceivingStatusCard 카드는 page 에서
+  //   Pipeline(견적→발주→입고→재고) 으로 대체(입고/재고 awareness 흡수). 카드가
+  //   전달하던 CFO 3 카운트(입고/SLA/재고)는 **우선순위 배너 action 에 잔존**(중복
+  //   awareness였음) → 카드 retire 후에도 awareness 공백 0. 본 it 은 "카드 전달"이
+  //   아니라 "Pipeline 배선 + 3 카운트 awareness 보존"으로 진화(회귀 은폐 아님 — 보존 증명).
+  it("CFO counts(입고/SLA/재고) awareness 보존 — Pipeline 배선 + 우선순위 배너 잔존", () => {
     const src = read(PAGE_PATH);
 
-    expect(src).toMatch(/import \{ SmartReceivingStatusCard \} from "@\/components\/dashboard\/SmartReceivingStatusCard"/);
-    expect(src).toMatch(/pendingHandoffCount=\{stats\.compareStats\.purchaseToReceivingCount\}/);
-    expect(src).toMatch(/exceptionCount=\{stats\.compareStats\.slaBreachedCount\}/);
-    expect(src).toMatch(/reorderReviewCount=\{stats\.lowStockAlerts\}/);
+    // 카드 retire(page 에서 SmartReceivingStatusCard import/usage 제거) → Pipeline 대체.
+    expect(src).not.toMatch(/SmartReceivingStatusCard/);
+    expect(src).toMatch(/<Pipeline/);
+    // awareness 보존 증명: 3 카운트가 우선순위 배너 action 에 그대로 잔존(공백 0).
+    expect(src).toMatch(/count:\s*riskOrBlockerCount/);                              // SLA 지연 = slaBreachedCount
+    expect(src).toMatch(/count:\s*stats\.compareStats\.purchaseToReceivingCount/);   // 입고 처리
+    expect(src).toMatch(/count:\s*stats\.lowStockAlerts/);                           // 재고 부족
   });
 });

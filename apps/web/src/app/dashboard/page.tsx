@@ -65,7 +65,8 @@ const CategoryDistributionCard = dynamic_import(
 // §11.93 — 운영 바로가기 4 카드 (operator quick actions)
 import { OperatorQuickActions } from "@/components/dashboard/operator-quick-actions";
 // §11.308e — 스마트 입고 본문 awareness + status 카드 (호영님 P2 옵션 B).
-import { SmartReceivingStatusCard } from "@/components/dashboard/SmartReceivingStatusCard";
+// §main-dashboard-redesign P4-B1 — SmartReceiving 카드 → Pipeline 대체(입고 awareness 흡수).
+import { Pipeline } from "@/components/dashboard/pipeline";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
 // §main-dashboard-redesign P3-B1 — GlobalEmpty(allEmpty 종합 빈) + summary 단일 진실 훅.
 //   비차단 추가: 기존 stats useQuery 렌더 경로 무수정(§11.199b stuck 위험 격리).
@@ -1001,15 +1002,20 @@ function DashboardPageInner() {
         }}
       />
 
-      {/* §11.308e — 스마트 입고 본문 awareness + status 카드 (호영님 P2 옵션 B).
-          §11.308a-v2 가 진입을 Header(ScanLine) 로 승격한 뒤 본문 인지율
-          하락 → 본 카드로 awareness + at-a-glance pending + 입고 큐 진입.
-          canonical truth: display-only (Header modal 이 단일 스캔 source). */}
-      <SmartReceivingStatusCard
-        pendingHandoffCount={stats.compareStats.purchaseToReceivingCount}
-        exceptionCount={stats.compareStats.slaBreachedCount}
-        reorderReviewCount={stats.lowStockAlerts}
-      />
+      {/* §main-dashboard-redesign P4-B1 — Pipeline(견적→발주→입고→재고) 으로
+          SmartReceiving 카드 대체(입고 awareness 흡수: 입고 단계=receive 모듈
+          미완료, 재고 단계=reorderNeeded). summary 단일 진실(P3-B1 summarySection 훅
+          재사용, 신규 fetch 0) + capMs 4상태. 가드③ 전이 canonical=state-machine. */}
+      <section className="space-y-2">
+        <h2 className="text-[13px] font-bold text-slate-900">
+          운영 파이프라인 <span className="text-slate-400 font-semibold">· 견적 → 발주 → 입고 → 재고</span>
+        </h2>
+        <Pipeline
+          state={summarySection.state}
+          summary={summarySection.data}
+          onRetry={summarySection.retry}
+        />
+      </section>
 
       {/* WorkQueueInbox 제거 — 3상태 중앙 패널이 대체 */}
 
