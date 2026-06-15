@@ -133,8 +133,9 @@
 - 모듈별 독립 커밋 → phase별 revert. 레거시 제거는 복원 가능(컴포넌트 보존). 데이터 비파괴(읽기). 최악 시 page.tsx 직전 commit revert.
 
 ## 11. Progress
-- Overall: 60% (P0 매핑 + P1 ActionInbox + P2 NextStepBanner·hero 폐지) · Current: P2 operator 검증(smoke) 대기 → P3(시안 순서 재배열 + 중복 KPI/레거시 insight 정리)
-- Checklist: [x]P0 [x]P1 [x]P2 [ ]P3 [ ]P4
+- Overall: 95% — P0~P3b land(P3a `f245072c`, P3b `47b8f919`, baseline 87). P4 코드/sentinel 완료(sandbox) → operator 실 vitest+build+종합 라이브 smoke 후 트랙 클로즈.
+- P4 산출: 시안 최종 capstone sentinel(`dashboard-shifan-final-p4`) 신규 + onboarding-mode §11.243#4 정직 진화 + 반응형 정적 감사(2-col stack·터치44·amber0) PASS.
+- Checklist: [x]P0 [x]P1 [x]P2 [x]P3(a/b) [~]P4(코드 완료·smoke 대기)
 
 ## 12. Notes
 - [2026-06-15] 호영님 라이브 A/B 비교 후 시안(B) 채택 결정. A-점진 산출 전부 자산 재사용(신규 코드 ~0). ActionInbox(P4-A 빌드)가 시안 "오늘 처리해야 할 일"에 정합 — P4-B2 보류했던 모델 불일치는 "다음 작업(가이드형)" 한정이었고, 우선처리(count형)엔 적합.

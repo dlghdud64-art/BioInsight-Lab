@@ -64,13 +64,19 @@ describe("§11.243 #3 — SYSTEM INSIGHT 축소 + dismiss", () => {
   });
 });
 
-describe("§11.243 #4 — 빈 차트 mockup + 오버레이", () => {
-  it("spend-trend-card — mockup data + overlay 분기", () => {
-    expect(spend).toMatch(/(MOCKUP|mockup|sample|샘플|hardCodedMonthly|isEmpty|backdrop-blur)/);
+// §11.243 #4 → §dashboard-shifan-adopt P3b 진화 — 빈 차트 mockup 폐지, 정직 empty 강제.
+//   이전엔 회색 mockup 도넛/area + "예시 데이터" overlay 를 빈 계정에 그렸으나(정직성 위반),
+//   SpendTrend(가드①②)·Category(P3b) 모두 차트 미렌더 + 컴팩트 정직 empty 로 수리됨.
+describe("§11.243 #4 → P3b — 빈 차트 정직 empty(가짜 분포 0)", () => {
+  it("spend-trend-card — isEmpty 분기 + 정직 empty 문구(mockup 0)", () => {
+    expect(spend).toMatch(/isEmpty/);
+    expect(spend).toMatch(/데이터가 쌓이면 지출 추이가 표시됩니다/);
   });
 
-  it("category-distribution-card — mockup data + overlay 분기", () => {
-    expect(category).toMatch(/(MOCKUP|mockup|sample|샘플|hardCodedCategories|isEmpty|backdrop-blur)/);
+  it("category-distribution-card — isEmpty 분기 + 정직 empty 문구 + 예시 overlay 0", () => {
+    expect(category).toMatch(/isEmpty/);
+    expect(category).toMatch(/발주가 시작되면 카테고리 분포가 표시됩니다/);
+    expect(category).not.toMatch(/위 차트는 예시 데이터/);
   });
 });
 
