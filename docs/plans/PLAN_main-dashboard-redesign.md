@@ -167,9 +167,12 @@
 - ✋ Gate: sentinel GREEN + baseline 91 신규 fail 0 + 라이브 smoke(최근알림 사라짐·최근운영활동 잔존·무한스켈레톤 0). Rollback: 카드 제거 revert(1 edit).
 
 ### Phase 6: 반응형 + 접근성 + smoke
-- Status: [ ] Pending
+- Status: [x] Complete (2026-06-15) — capstone sentinel + 라이브 smoke
 - 🟢 1180/760/680 브레이크포인트 + 접근성(dialog/menu/aria) + ⌘K/ScanHub/토스트 정합. 라이브 375/데스크탑 smoke(빈 계정 정직 0 + 데이터 시 채워짐).
-- ✋ Gate: 반응형 정합, 빈 계정 가짜 0 라이브 확인. Rollback: 스타일 revert.
+- **P6 산출:** `dashboard-redesign-capstone-p6.test.ts`(신규) — 트랙 전체 불변식 단일 lock: (A) 반응형(StatLine grid-cols-3 / Pipeline grid-cols-2→md:grid-cols-4)·터치≥44px / (B) 접근성(로딩 aria-busy·break-keep) / (C) 가드①②③ 최종(가짜차트 0·Pipeline 전이 로컬재정의 0) / (D) capMs 10s·summary 훅 단일 / (E) 8모듈 통합·§11.199b 게이트 보존·최근알림 제거. 격리 11/11 PASS.
+  - 신규 모듈 반응형/a11y 내장 확인: StatLine·Pipeline·GlobalEmpty 전부 터치 44px·break-keep·mock 0, StatLine/Pipeline 로딩 aria-busy.
+  - 라이브 smoke(P3-B2+P5 동시, 6ba7d5f3): §11.199b 무재발·StatLine 실데이터(₩10.8M)·₩0 모순 해소·최근알림 제거·Pipeline 4단계·우선순위 배너 잔존 — 전부 PASS.
+- ✋ Gate: capstone sentinel GREEN + baseline 91 신규 fail 0 + 라이브 smoke PASS. 데스크탑 라이브 검증 완료, 375 모바일 시각 검증은 operator 선택(그리드 클래스 sentinel 고정). Rollback: 스타일 revert.
 
 ## 8. Addendum A (Workflow/Ontology)
 - Pipeline = workflow 집계 표시(전이는 state-machine SoT 참조, 클릭=해당 모듈 라우팅). dashboard ontology 강노출 금지(quick action/entry 우선).
@@ -186,8 +189,8 @@
 - 모듈별 독립 커밋 → phase별 revert. summary API no-op 시 현행 분산 fetch 복귀. 데이터 비파괴(읽기).
 
 ## 11. Progress
-- Overall: 84% (P1·P2·P3(A·B1·B2)·P4(A·B1)·P5) · Current: P5 operator 검증(smoke) 대기 → P6(반응형·접근성·종합 smoke)
-- Checklist: [x]P0 [x]P1 [x]P2 [x]P3(A·B1·B2) [~]P4(A·B1 / B2 ActionInbox 보류) [x]P5 [ ]P6
+- Overall: 95% (P1·P2·P3·P4(A·B1)·P5·P6 — 8모듈 중 7 라이브, capstone lock) · Current: P6 operator 검증 후 트랙 마무리. 잔여: P4-B2(ActionInbox, 모델 정합 재설계 시 별도 — 보류)
+- Checklist: [x]P0 [x]P1 [x]P2 [x]P3(A·B1·B2) [~]P4(A·B1 / B2 보류) [x]P5 [x]P6
 - [2026-06-15] P4-B1 Pipeline 배선(SmartReceiving 대체). P4-B2 보류(다음작업=가이드형, ActionInbox=count형 불일치 — ActionInbox 향후 count surface 보존). P3-B2 StatLine 배선(누적지출 ₩0 모순 해소).
 - [2026-06-15] P1 push READY(94a4da1e). P2 capMs 10s(2.6s 폐기, §11.375 충돌 해소) push. P3-A 고립 빌드(StatLine·GlobalEmpty·summary spend 확장).
 - ⚠️ 별 트랙 §suite-red: 전체 dashboard+regression suite 286 fail(91 file) 발견. P2/대시보드 무관(고립 검증). ENOENT-14 가설 철회(전부 통과 가드). 실 vitest 실패목록 → baseline allowlist 후 P3-B 게이트 "신규 fail 0".
