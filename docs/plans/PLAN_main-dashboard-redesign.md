@@ -117,9 +117,14 @@
 - ✋ Gate: 계약 sentinel GREEN(격리 PASS, **operator 실 vitest+build 대기**), 가짜 분포 0 ✅, Pipeline 전이 로컬 재정의 0 ✅. Rollback: API/helper+테스트 revert(현행 stats fetch 유지), spend-trend mockup 제거는 독립 revert.
 
 ### Phase 2: capMs 상태머신 + empty 4상태
-- Status: [ ] Pending
-- 🟢 섹션별 독립 로드 훅(loading/error/ready·데이터/ready·빈상태) + capMs 2.6s 오류 전환(무한 스켈레톤 금지) + 카드별 재시도. **빈 데이터 차트 미렌더 정책(가드①)**.
-- ✋ Gate: 4상태 sentinel, capMs 전환, empty 정직. Rollback: 훅 revert.
+- Status: [ ] In Progress (2026-06-15)
+- 🟢 섹션별 독립 로드 훅(loading/error/ready·데이터/ready·빈상태) + capMs **10s** 오류 전환(무한 스켈레톤 금지) + 카드별 재시도. **빈 데이터 차트 미렌더 정책(가드①)**.
+- **⚠️ Truth reconciliation (2026-06-15, 호영님 결정):** PLAN 초안 `capMs 2.6s`(프로토타입 시안값) 는 라이브 §11.375 P1 픽스와 충돌 — `dashboard/page.tsx:212-222` 스켈레톤 상한을 6→**10초**로 올린 이유가 "콜드스타트 serverless 5~6s(느린 성공)가 짧은 상한에 걸려 거짓 '지연' 에러카드 깜빡임"(2026 실인시던트). 2.6s hard-error = 인시던트 재발. **결정: 2.6s 폐기 → hard-error 임계 10s 채택**(라이브 정합). 4상태는 유지(error 는 10s+retry 소진 시).
+- **산출(파일):**
+  - `lib/dashboard/section-state.ts`(신규, 순수) — `deriveSectionState()` 4상태(loading/error/empty/ready) + `CAPMS_DEFAULT=10000`(§11.375 정합). React 의존 0 → 격리 단위 검증 가능.
+  - `hooks/use-dashboard-section.ts`(신규, client) — react-query useQuery 래핑(retry 2·backoff canonical 보존) + capMs 10s hard-cap 타이머(§11.366/§11.375 패턴 재사용, 신규 경쟁 primitive 0) + `deriveSectionState` 합성. `{state,data,error,retry,timedOut}` 노출(카드별 재시도). **page 미교체(P3~5에서 모듈별 채택)** → 훅 revert=페이지 무영향.
+  - `__tests__/dashboard/dashboard-section-capms-p2.test.ts`(신규) — 순수 4상태 도출 단위 + capMs 10s(2.6s 부재) + retry/refetch 노출 + 무한 스켈레톤 금지(timedOut&&!data→error) 가드.
+- ✋ Gate: 4상태 sentinel, capMs 전환(10s), empty 정직, 무한 스켈레톤 0. Rollback: 훅+순수모듈 revert(page 무변경이라 무영향).
 
 ### Phase 3: 상단 모듈 — GlobalEmpty / StatLine / SystemInsight
 - Status: [ ] Pending
