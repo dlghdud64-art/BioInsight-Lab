@@ -153,7 +153,12 @@
   - `__tests__/dashboard/dashboard-mid-modules-p4.test.ts`(신규) — Pipeline 4단계·summary소스·4상태·§11.311 / 가드③ 전이 로컬재정의 0 / ActionInbox 통합·스크롤·dead button 0·신호등 / page 미배선.
 - **격리 검증:** regex 16/16 PASS(Pipeline 가드③ 로컬전이 0·state-machine 참조 / ActionInbox dead-button 0 filter / page 미배선). **operator 실 vitest+build 대기.**
 - ✋ Gate(P4-A): 모듈 sentinel GREEN + baseline 91 신규 fail 0 + Pipeline 로컬 전이 0 + dead button 0. Rollback: 모듈 revert(page 무변경=무영향).
-- **다음 P4-B(별도):** page 배선 — ActionInbox(현행 우선순위 derive 주입, "가장 먼저 처리"/"다음 작업" 대체) + Pipeline(summary+capMs 훅, SmartReceivingStatusCard 대체). 단독 smoke.
+- **P4-B1 완료(2026-06-15):** page 에 Pipeline 배선 — SmartReceiving 카드 대체(입고 awareness 흡수). **P3-B1 summarySection 훅 재사용**(신규 fetch 0, summary 훅 단일). 기존 stats/로딩게이트/ExecutiveSummary/GlobalEmpty 무수정(§11.199b 보호). dead import 0(SmartReceiving import/usage 제거).
+  - 산출: `app/dashboard/page.tsx`(Pipeline 배선+SmartReceiving 제거) / `dashboard-pipeline-wire-p4b.test.ts`(신규) / `dashboard-mid-modules-p4.test.ts`(D 진화: Pipeline 배선·ActionInbox 미배선).
+  - 격리 검증: page 배선 regex PASS(훅 단일 재사용·SmartReceiving 제거·무회귀). **operator 실 vitest+build+라이브 smoke 대기.**
+  - **⚠️ baseline-delta 정합(operator STOP→해소):** SmartReceiving 카드 제거로 `smart-receiving-status-card-308e.test.ts` line-77(page→카드 CFO counts 전달) RED = 신규 fail 1. 조사 결과 **awareness 공백 0**: 카드가 전달하던 3 카운트(SLA=slaBreached·입고=purchaseToReceiving·재고=lowStock)는 **우선순위 배너 dashboardPriorityActions 에 전부 잔존**(중복 awareness였음, P4-B1 미수정). 308e line-77 을 "카드 전달"→"Pipeline 배선 + 3 카운트 배너 잔존 awareness 보존 증명"으로 **진화**(retire 아님 — 보존 강제). 컴포넌트 file describe(21-48)·priority banner describe(line51) GREEN 유지. → baseline 91 복귀, 신규 fail 0.
+  - ✋ Gate: sentinel GREEN + baseline 91 신규 fail 0 + 라이브 smoke(입고 awareness 보존·무한스켈레톤 0). Rollback: page 2 edit revert.
+- **다음 P4-B2(별도):** ActionInbox 배선 — "가장 먼저 처리"/"다음 작업" 통합 대체(현행 우선순위 derive 주입). 단독 smoke. (이후 P3-B2 StatLine 교체 — 처리필요·이상징후 ActionInbox 이전 완료 후.)
 
 ### Phase 5: 하단 모듈 — BudgetSpend / QuickActions / RecentActivity
 - Status: [ ] Pending
@@ -180,9 +185,9 @@
 - 모듈별 독립 커밋 → phase별 revert. summary API no-op 시 현행 분산 fetch 복귀. 데이터 비파괴(읽기).
 
 ## 11. Progress
-- Overall: 60% (P0·P1·P2 + P3-A·B1 + P4-A 중단모듈 고립 빌드) · Current: P4-A operator 검증 대기 → P4-B 탑재
-- Checklist: [x]P0 [x]P1 [x]P2 [~]P3(A·B1 / B2 대기) [~]P4(A 빌드 / B 탑재 대기) [ ]P5 [ ]P6
-- [2026-06-15] P3-B1 라이브 smoke 통과(§11.199b 무재발·GlobalEmpty 무중복). P4-A Pipeline·ActionInbox 고립 빌드.
+- Overall: 66% (P0·P1·P2 + P3-A·B1 + P4-A·B1 Pipeline 배선) · Current: P4-B1 operator 검증(라이브 smoke) 대기 → P4-B2 ActionInbox 배선
+- Checklist: [x]P0 [x]P1 [x]P2 [~]P3(A·B1 / B2 대기) [~]P4(A·B1 Pipeline / B2 ActionInbox 대기) [ ]P5 [ ]P6
+- [2026-06-15] P3-B1 smoke 통과. P4-A 고립 빌드. P4-B1 Pipeline 배선(SmartReceiving 대체, summarySection 훅 재사용).
 - [2026-06-15] P1 push READY(94a4da1e). P2 capMs 10s(2.6s 폐기, §11.375 충돌 해소) push. P3-A 고립 빌드(StatLine·GlobalEmpty·summary spend 확장).
 - ⚠️ 별 트랙 §suite-red: 전체 dashboard+regression suite 286 fail(91 file) 발견. P2/대시보드 무관(고립 검증). ENOENT-14 가설 철회(전부 통과 가드). 실 vitest 실패목록 → baseline allowlist 후 P3-B 게이트 "신규 fail 0".
 - P4 Pipeline 입고 단계에 SmartReceiving 흡수 / P5 최근 알림 제거 — P0 결정 반영.
