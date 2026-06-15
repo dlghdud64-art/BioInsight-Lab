@@ -20,12 +20,11 @@
 
 ## 분류
 
-### A. 이번 세션 §log-consolidation 귀속 의심 (3) — redirect-only 화로 구 surface 검사 stale
-- `src/__tests__/regression/activity-logs-korean-299.test.ts`
-- `src/__tests__/regression/activity-logs-mobile-311a.test.ts`
-- `src/__tests__/regression/audit-page-cleanup-300.test.ts`
-> §log-consolidation 이 `activity-logs/page.tsx` 를 redirect-only 로 축소(통합 host = audit page) →
-> 구 activity-logs surface 를 readFileSync/검사하던 sentinel stale. **진화 또는 retire 대상**(§suite-red-cleanup).
+### A. §log-consolidation 귀속 (3) — ✅ 해소 (§suite-red-cleanup 2026-06-15)
+- ~~`activity-logs-korean-299`~~ → **retire** (redirect-only 구 surface 검사). 라벨 보호는 `log-activity-mode-preservation.test.ts`(통합 host audit 활동 모드 + lib/activity-labels) repoint.
+- ~~`activity-logs-mobile-311a`~~ → **retire** (redirect-only). 모바일 KPI §11.311 보호는 동 sentinel repoint.
+- `audit-page-cleanup-300` → **진화** (sidebar assertion "감사 추적"→"활동·감사 로그" §log-consolidation P3 통합 정합, audit 개발지표 검사 유지).
+> **결과: baseline 91 → 88.** 보호 공백 0 (통합 host 보존 sentinel 신규 GREEN).
 
 ### B. 타 트랙 누적 UI/regression 기술부채 (88) — main-dashboard 무관
 sourcing/quotes/inventory/mobile/touch-target/amber-sweep/traffic-light/korean/eyebrow/smart-receiving/

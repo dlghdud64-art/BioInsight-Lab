@@ -101,11 +101,13 @@ describe("§11.300 — audit page cleanup + 사이드바 영문 병기 제거", 
     });
   });
 
-  describe("dashboard sidebar — 감사 추적 라벨 (§11.345 용어 정정)", () => {
-    it('"감사 증적" → "감사 추적", 영문 병기 없음', () => {
+  describe("dashboard sidebar — 감사 라벨 (§11.345 용어 + §log-consolidation P3 통합)", () => {
+    it('"감사 증적" 잔존 0 + §log-consolidation 통합 단일 진입("활동 · 감사 로그")', () => {
+      // §log-consolidation P3 진화: 활동 로그 + 감사 추적 2메뉴 → "활동 · 감사 로그"
+      //   단일 진입(/dashboard/audit 모드토글). 영문 병기·"감사 증적" 0 보존.
       expect(SIDEBAR_SRC).not.toMatch(/감사 증적/);
       expect(SIDEBAR_SRC).not.toMatch(/감사 추적 \(Audit Trail\)/);
-      expect(SIDEBAR_SRC).toMatch(/title:\s*"감사 추적",\s*href:\s*"\/dashboard\/audit"/);
+      expect(SIDEBAR_SRC).toMatch(/title:\s*"활동 · 감사 로그",\s*href:\s*"\/dashboard\/audit"/);
     });
   });
 });
