@@ -55,9 +55,14 @@ describe("§11.369-1 — 회귀 0 (기존 동작 보존)", () => {
     expect(src).toContain("if (!enforcement.allowed) return enforcement.deny();");
   });
 
-  it("sensitive_data_import action / inventory targetEntityType 보존", () => {
+  it("enforceAction canonical action / inventory targetEntityType 보존 (§scan-role-scope 진화: 단건 → inventory_create)", () => {
     const src = read(ROUTE);
-    expect(src).toContain("action: 'sensitive_data_import'");
+    // §scan-role-scope (호영님 2026-06-16): 단건 라벨 스캔 action 을 sensitive_data_import(buyer/
+    //   ops_admin) → inventory_create(requester 허용)로 하향. §11.369-1 보호 의도(lock 버그 수정:
+    //   uuid+complete/fail+enforceAction wiring)는 무관·유지. 여기선 enforceAction 이 canonical action
+    //   으로 배선되고 targetEntityType 가 inventory 임만 확인(구체 action 값은 scope 트랙 소관).
+    expect(src).toContain("action: 'inventory_create'");
+    expect(src).not.toContain("action: 'sensitive_data_import'"); // 단건 경로 sensitive 미사용(대량은 별 route)
     expect(src).toContain("targetEntityType: 'inventory'");
   });
 });

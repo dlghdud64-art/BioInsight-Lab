@@ -40,10 +40,15 @@ export async function POST(req: NextRequest) {
     }
     // §11.369-1 — targetEntityId 를 요청별 유니크로(이전 'unknown' 하드코딩 시
     //   sensitive_data_import:unknown 단일 키 lock 으로 cross-user/cross-item 409 발생).
+    // §scan-role-scope (호영님 2026-06-16) — 단건 라벨 스캔은 수동 등록(inventory_create)의
+    //   빠른 입력 방식일 뿐(결과=재고 1건). 입력 방식(스캔/수동)으로 권한이 갈리는 불일치 제거:
+    //   sensitive_data_import(buyer/ops_admin) → inventory_create(requester 허용). 단건이라
+    //   대량 오염 위험 0 + OCR 신뢰도 게이트(§375/378)·datamatrix verified·확인단계가 품질 보장.
+    //   ⚠️ 대량 유입(BulkImport)은 sensitive_data_import 유지(엄격) — 본 변경은 단건 scan-label 한정.
     enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
-      action: 'sensitive_data_import',
+      action: 'inventory_create',
       targetEntityType: 'inventory',
       targetEntityId: crypto.randomUUID(),
       sourceSurface: 'web_app',
