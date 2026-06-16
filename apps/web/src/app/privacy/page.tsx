@@ -10,7 +10,7 @@ export default function PrivacyPage() {
         <div className="mb-10 border-b border-[#1E2D40] pb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight mb-2">LabAxis 개인정보처리방침</h1>
           <div className="flex flex-wrap gap-3 text-xs text-[#8794AA]">
-            <span>시행일: 2026.03.24</span><span>·</span><span>최종 개정일: 2026.06.15</span><span>·</span><span>버전: v1.1</span>
+            <span>시행일: 2026.03.24</span><span>·</span><span>최종 개정일: 2026.06.16</span><span>·</span><span>버전: v1.2</span>
           </div>
         </div>
         <div className="space-y-10 text-sm md:text-[15px] leading-relaxed text-[#BAC6D9]">
@@ -48,15 +48,32 @@ export default function PrivacyPage() {
               <table className="w-full text-xs md:text-sm border-collapse min-w-[500px]">
                 <thead><tr className="border-b-2 border-[#26364C] text-left text-[#8794AA]"><th className="py-2 px-3">수탁자</th><th className="py-2 px-3">위탁 업무</th><th className="py-2 px-3">항목</th><th className="py-2 px-3">보유기간</th></tr></thead>
                 <tbody className="text-[#BAC6D9]">
-                  <tr className="border-b border-[#1E2D40]"><td className="py-2 px-3">[클라우드 호스팅]</td><td className="py-2 px-3">인프라·데이터 저장</td><td className="py-2 px-3">계정·이용기록</td><td className="py-2 px-3">계약 종료 시</td></tr>
-                  <tr className="border-b border-[#1E2D40]"><td className="py-2 px-3">[이메일 발송]</td><td className="py-2 px-3">알림 발송</td><td className="py-2 px-3">이메일, 이름</td><td className="py-2 px-3">계약 종료 시</td></tr>
+                  <tr className="border-b border-[#1E2D40]"><td className="py-2 px-3">Vercel Inc.</td><td className="py-2 px-3">서비스 호스팅·인프라</td><td className="py-2 px-3">접속기록·이용 데이터</td><td className="py-2 px-3">위탁계약 종료 시</td></tr>
+                  <tr className="border-b border-[#1E2D40]"><td className="py-2 px-3">Supabase (AWS 도쿄 리전)</td><td className="py-2 px-3">데이터베이스 저장·처리</td><td className="py-2 px-3">회원·운영 데이터</td><td className="py-2 px-3">위탁계약 종료 또는 회원 탈퇴 시</td></tr>
+                  <tr className="border-b border-[#1E2D40]"><td className="py-2 px-3">Google LLC</td><td className="py-2 px-3">소셜 로그인(OAuth) 인증</td><td className="py-2 px-3">소셜 로그인 계정 식별자</td><td className="py-2 px-3">인증 처리 시</td></tr>
+                  <tr className="border-b border-[#1E2D40]"><td className="py-2 px-3">Resend, Inc.</td><td className="py-2 px-3">알림·견적 이메일 발송</td><td className="py-2 px-3">이메일, 이름</td><td className="py-2 px-3">발송 처리 시</td></tr>
                 </tbody>
               </table>
             </div>
-            <p className="text-xs text-[#8794AA] mt-2">※ 실제 사용 업체 확정 시 업데이트</p>
+            <p className="text-xs text-[#8794AA] mt-2">※ 수탁자·위탁 현황은 변경 시 본 방침을 통해 갱신합니다.</p>
           </section>
 
-          <section><h2 className="text-lg font-bold text-white mb-3">5. 국외 이전</h2><p>현재 해당 없음. 국외 서비스 이용 확정 시 업데이트 예정입니다.</p></section>
+          <section>
+            <h2 className="text-lg font-bold text-white mb-3">5. 개인정보의 국외 이전</h2>
+            <p className="mb-3">회사는 서비스 제공을 위해 아래와 같이 개인정보를 국외로 이전(처리위탁·보관)하고 있습니다.</p>
+            <div className="overflow-x-auto -mx-4 px-4">
+              <table className="w-full text-xs md:text-sm border-collapse min-w-[640px]">
+                <thead><tr className="border-b-2 border-[#26364C] text-left text-[#8794AA]"><th className="py-2 px-3 font-semibold">이전받는 자</th><th className="py-2 px-3 font-semibold">국가</th><th className="py-2 px-3 font-semibold">이전 항목</th><th className="py-2 px-3 font-semibold">이전 목적 · 시기/방법</th><th className="py-2 px-3 font-semibold">보유·이용기간</th></tr></thead>
+                <tbody className="text-[#BAC6D9]">
+                  <tr className="border-b border-[#1E2D40]"><td className="py-2.5 px-3 text-white font-medium">Vercel Inc.</td><td className="py-2.5 px-3">미국</td><td className="py-2.5 px-3">접속기록·이용 데이터</td><td className="py-2.5 px-3">서비스 호스팅 — 이용 시 네트워크 전송</td><td className="py-2.5 px-3">위탁계약 종료 시</td></tr>
+                  <tr className="border-b border-[#1E2D40]"><td className="py-2.5 px-3 text-white font-medium">Supabase</td><td className="py-2.5 px-3">일본(AWS 도쿄 리전)</td><td className="py-2.5 px-3">회원·운영 데이터 전체</td><td className="py-2.5 px-3">데이터베이스 저장·처리 — 입력 시 전송</td><td className="py-2.5 px-3">위탁계약 종료 또는 회원 탈퇴 시</td></tr>
+                  <tr className="border-b border-[#1E2D40]"><td className="py-2.5 px-3 text-white font-medium">Google LLC</td><td className="py-2.5 px-3">미국</td><td className="py-2.5 px-3">소셜 로그인 계정 식별자</td><td className="py-2.5 px-3">소셜 로그인(OAuth) 인증 — 로그인 시</td><td className="py-2.5 px-3">인증 처리 시</td></tr>
+                  <tr className="border-b border-[#1E2D40]"><td className="py-2.5 px-3 text-white font-medium">Resend, Inc.</td><td className="py-2.5 px-3">미국</td><td className="py-2.5 px-3">이메일, 이름</td><td className="py-2.5 px-3">알림·견적 이메일 발송 — 발송 시</td><td className="py-2.5 px-3">발송 처리 시</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p className="text-xs text-[#8794AA] mt-3">정보주체는 개인정보의 국외 이전을 거부할 수 있으며, 거부 시 회원가입·로그인 등 서비스의 전부 또는 일부 이용이 제한될 수 있습니다. 이전 국가·수탁자가 변경되면 본 방침을 통해 갱신합니다.</p>
+          </section>
 
           <section>
             <h2 className="text-lg font-bold text-white mb-3">6. 파기절차 및 방법</h2>
