@@ -20,21 +20,27 @@ const PAGE = read("src/app/dashboard/page.tsx");
 const BANNER = read("src/components/dashboard/next-step-banner.tsx");
 
 // ── (A) NextStepBanner 컴포넌트 ─────────────────────────────────────────
-describe("§dashboard-shifan-adopt P2 (A) — NextStepBanner 컴포넌트", () => {
-  it("summary 소스 + '다음 단계 추천' + 다크 gradient", () => {
+describe("§dashboard-shifan-adopt P2 / fidelity (A) — SystemInsight '다음 단계 추천' 배너", () => {
+  it("summary 소스 + '다음 단계 추천' + 시안 네이비→블루 3-stop 그라데이션", () => {
     expect(BANNER).toMatch(/from "@\/lib\/dashboard\/summary-derive"/);
     expect(BANNER).toMatch(/다음 단계 추천/);
-    expect(BANNER).toMatch(/bg-gradient-to-br/);
+    // §fidelity — 다크 단색 gradient → 시안 정합 linear-gradient(100deg #1b2b50→#243a72→#2f6be0 130%).
+    expect(BANNER).toMatch(/linear-gradient\(100deg/);
+    expect(BANNER).toMatch(/#1b2b50/);
   });
-  it("allEmpty self-gate(중복 0) + dismiss(sessionStorage)", () => {
-    expect(BANNER).toMatch(/derived\.allEmpty/);
-    expect(BANNER).toMatch(/return null/);
-    expect(BANNER).toMatch(/sessionStorage/);
+  it("데이터 기반 항상 노출(allEmpty self-gate 폐지) + dismiss(localStorage)", () => {
+    // §fidelity(호영님 배너 지시문) — allEmpty self-gate 제거: 시안은 GlobalEmpty와 공존, 데이터 인사이트 항상 노출.
+    expect(BANNER).not.toMatch(/derived\.allEmpty/);
+    expect(BANNER).toMatch(/return null/); // !summary || dismissed
+    expect(BANNER).toMatch(/lab_insight_dismissed/);
+    expect(BANNER).toMatch(/localStorage/);
   });
-  it("예산 미설정 가이드 CTA(예산 설정) + 터치 44px(no-op 0)", () => {
+  it("deriveInsight 우선순위(예산미설정→재고→견적→정상) + CTA wired(no-op 0)", () => {
     expect(BANNER).toMatch(/budget\.isSet/);
     expect(BANNER).toMatch(/예산 설정/);
-    expect(BANNER).toMatch(/href=\{cta\.href\}/);
+    expect(BANNER).toMatch(/재고 점검/);
+    expect(BANNER).toMatch(/발송 대기 견적/);
+    expect(BANNER).toMatch(/href=\{ins\.cta\.href\}/);
     expect(BANNER).toMatch(/min-h-\[44px\]/);
   });
   it("가짜 차트/목업 0", () => {
