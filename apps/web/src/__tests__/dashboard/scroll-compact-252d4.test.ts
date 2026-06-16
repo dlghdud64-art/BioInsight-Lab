@@ -53,9 +53,12 @@ describe("§252d-4→shifan P2 — OnboardingHero 폐지", () => {
     expect(code).not.toMatch(/const dismissOnboarding =/);
   });
 
-  it("NextStepBanner 대체 + 빠른시작 분기 보존", () => {
+  it("NextStepBanner 대체 (레거시 빠른시작 zero 분기 폐지 — §dashboard-shifan-fidelity P-fid1)", () => {
+    // §dashboard-shifan-fidelity P-fid1 — 레거시 3상태 패널(빠른시작 zero 분기) 폐지.
+    //   진행 가이드는 NextStepBanner 단일. 빠른시작 조건부 분기(!isOnboardingMode||onboardingDismissed
+    //   로 hide하던 카드) 자체가 부재. 모바일 압축(#1) 의도는 top wrapper 무변경으로 보존.
     expect(code).toMatch(/<NextStepBanner/);
-    expect(code).toMatch(/!isOnboardingMode\s*\|\|\s*onboardingDismissed/);
+    expect(code).not.toMatch(/>\s*빠른\s*시작\s*</); // 빠른시작 카드 부재(되살아나면 잡음)
   });
 
   it("onboardingDismissed state 보존(빠른시작 hide)", () => {

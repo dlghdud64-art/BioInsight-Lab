@@ -38,8 +38,10 @@ describe("§dashboard-shifan-adopt P4 (A) — 시안 최종 순서", () => {
 
 // ── (B) 중단 2-col 반응형 ────────────────────────────────────────────────
 describe("§dashboard-shifan-adopt P4 (B) — 중단 2-col 반응형", () => {
-  it("grid-cols-1 lg:grid-cols-2 (모바일 stack → 데스크탑 2-col)", () => {
-    expect(PAGE).toMatch(/grid grid-cols-1 lg:grid-cols-2[\s\S]{0,260}<BudgetSpendCard[\s\S]{0,280}<OperatorQuickActions/);
+  it("grid-cols-1 lg:grid-cols-2 (모바일 stack → 데스크탑 2-col) + side-col(빠른작업+최근활동)", () => {
+    // §dashboard-shifan-fidelity P-fid1 — 우측 side-col 래퍼로 window 확장 + 최근활동 스택 정합.
+    expect(PAGE).toMatch(/grid grid-cols-1 lg:grid-cols-2[\s\S]{0,260}<BudgetSpendCard[\s\S]{0,460}<OperatorQuickActions/);
+    expect(PAGE).toMatch(/<OperatorQuickActions[\s\S]{0,460}<RecentActivityCard/);
   });
   it("예산 카드 summarySection 단일 진실 주입(신규 fetch 0)", () => {
     expect(PAGE).toMatch(/<BudgetSpendCard[\s\S]{0,120}state=\{summarySection\.state\}/);

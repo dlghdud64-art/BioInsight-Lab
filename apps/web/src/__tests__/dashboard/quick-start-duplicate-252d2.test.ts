@@ -29,19 +29,13 @@ function safeRead(p: string): string {
 const PAGE_PATH = resolve(__dirname, "../../app/dashboard/page.tsx");
 const code = safeRead(PAGE_PATH);
 
-describe("§11.252d-2 #1 — 빠른 시작 카드 render 조건 강화", () => {
-  it("§11.252d-2 trace marker 명시", () => {
-    expect(code).toMatch(/§11\.252d-2|11\.252d-2/);
-  });
-
-  it("빠른 시작 카드 조건 — !isOnboardingMode 또는 onboardingDismissed 분기 추가", () => {
-    // dashboardState === "zero" + (!isOnboardingMode || onboardingDismissed) 또는
-    // (!isOnboardingMode || onboardingDismissed) + dashboardState === "zero".
-    expect(code).toMatch(/dashboardState\s*===\s*["']zero["'][\s\S]{0,300}(!isOnboardingMode|onboardingDismissed)/);
-  });
-
-  it("'빠른 시작' 헤더 텍스트 보존", () => {
-    expect(code).toMatch(/>\s*빠른\s*시작\s*</);
+describe("§11.252d-2→shifan P-fid1 — 빠른시작/OnboardingHero 중복 부재-lock", () => {
+  // §dashboard-shifan-fidelity P-fid1 — 원 의도: 빠른시작 카드 vs OnboardingHero 품목등록 중복 제거.
+  //   둘 다 폐지(OnboardingHero=P2, 빠른시작 zero 분기=P-fid1 레거시 3상태 패널 360행 삭제) →
+  //   중복 불가가 자연 충족. 파일 삭제 대신 둘 다 absent 강제(LabAxis retire 규율 — 되살아나면 중복 회귀 잡음).
+  it("'빠른 시작' 카드 폐지(레거시 3상태 zero 분기 제거)", () => {
+    expect(code).not.toMatch(/>\s*빠른\s*시작\s*</);
+    expect(code).not.toMatch(/견적\s*요청\s*생성/);
   });
 });
 
@@ -51,13 +45,9 @@ describe("§11.252d-2 — invariant 보존", () => {
     expect(code).toMatch(/dashboardState\s*===\s*["']active["']/);
   });
 
-  it("빠른 시작 3 link href 보존", () => {
-    // 두 token 모두 빠른 시작 카드 안 (line 902~924 인근) 존재 검증.
-    // §11.381c (2026-06-10): /app/compare retire — 비교 진입점은 /app/search 로 재배선.
-    expect(code).toMatch(/href:\s*["']\/dashboard\/inventory["']/);
-    expect(code).toMatch(/href:\s*["']\/app\/search["']/);
-    expect(code).toMatch(/견적\s*요청\s*생성/);
-  });
+  // §dashboard-shifan-fidelity P-fid1 — "빠른 시작 3 link" it 제거: 빠른시작 카드 폐지로
+  //   해당 카드 안 link 자체 부재. 액션 도달성(품목/검색/견적)은 OperatorQuickActions +
+  //   ActionInbox + NextStepBanner 가 흡수(각 sentinel 이 보호). 부재-lock 은 #1 describe 가 강제.
 
   // §dashboard-shifan-adopt P2 진화 — OnboardingHero 3-step 폐지(시안 채택)→ NextStepBanner.
   //   빠른시작 카드(위 assertions)는 유지 — hero 중복 제거 의도는 hero 자체 폐지로 자연 충족.

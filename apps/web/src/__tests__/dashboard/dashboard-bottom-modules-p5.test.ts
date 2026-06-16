@@ -28,12 +28,15 @@ describe("§main-dashboard-redesign P5 (A) — 최근 알림 카드 제거", () 
   });
 });
 
-// ── (B) awareness 무손실 — notifications 계속 소비 ──────────────────────
-describe("§main-dashboard-redesign P5 (B) — notifications awareness 보존", () => {
-  it("'최근 운영 활동' 타임라인이 notifications 계속 소비(데이터 retire 아님)", () => {
-    expect(PAGE).toMatch(/최근 운영 활동/);
-    expect(PAGE).toMatch(/notifications\.(slice|filter)\(/);
-    expect(PAGE).toMatch(/renderNotificationIcon\(/);
+// ── (B) awareness 무손실 — RecentActivityCard 로 이전 (§dashboard-shifan-fidelity P-fid1) ──
+describe("§main-dashboard-redesign P5→shifan P-fid1 (B) — 최근활동 awareness 이전", () => {
+  it("최근활동 awareness 가 side-col <RecentActivityCard /> 로 이전(레거시 in-page notifications 타임라인 폐지)", () => {
+    // §dashboard-shifan-fidelity P-fid1 — 레거시 3상태 패널/운영인텔 360행 폐지로 in-page
+    //   notifications.slice 타임라인 + renderNotificationIcon 제거. 최근활동 awareness 는
+    //   side-col 컴포넌트 <RecentActivityCard /> 가 자체 데이터로 흡수. 보호 의도(awareness 무손실) 보존.
+    expect(PAGE).toMatch(/<RecentActivityCard\s*\/>/); // 흡수 surface present
+    expect(PAGE).not.toMatch(/notifications\.(slice|filter)\(/); // 레거시 in-page 타임라인 absent
+    expect(PAGE).not.toMatch(/renderNotificationIcon/); // 레거시 아이콘 헬퍼 absent
   });
 });
 

@@ -59,15 +59,10 @@ describe("§11.302d-6a-4-γ — yellow swap 정합", () => {
     expect(src).toMatch(/risk === "amber"\s*\)\s*return\s*"border-l-2 border-l-yellow-500"/);
   });
 
-  it("color map amber entry value yellow (border/bg/icon/link)", () => {
-    const src = read(PATH);
-    expect(src).toMatch(/amber:\s*\{\s*border:\s*"border-yellow-200",\s*bg:\s*"bg-yellow-50\/60",\s*icon:\s*"text-yellow-500",\s*link:\s*"text-yellow-600 hover:text-yellow-700"/);
-  });
-
-  it("납기 지연 chip yellow (bg-yellow-50 text-yellow-700)", () => {
-    const src = read(PATH);
-    expect(src).toMatch(/bg-yellow-50 text-yellow-700 text-\[10px\] font-medium/);
-  });
+  // §dashboard-shifan-fidelity P-fid1 — "color map amber entry" + "납기 지연 chip" it 제거:
+  //   두 yellow-value 검사 대상(운영 인텔리전스 카드 colorMap + 납기지연 chip)이 레거시 3상태/
+  //   운영인텔 360행 폐지로 소멸. repoint 대상 없음(블록 자체 retire). no-amber 본 의도는 위
+  //   describe(#1 amber/orange class 0, 전체 file)가 완전 커버하므로 보호 공백 0.
 
   it("noMovement 정체 경고 yellow (text-yellow-600)", () => {
     const src = read(PATH);
@@ -90,10 +85,9 @@ describe("§11.302d-6a-4-γ — severity literal 'amber' 보존 (risk 시스템 
     expect(src).toMatch(/severity:\s*"red"\s*\|\s*"amber"/);
   });
 
-  it("color map type 'red' | 'amber' | 'blue' | 'emerald' 보존", () => {
-    const src = read(PATH);
-    expect(src).toMatch(/color:\s*"red"\s*\|\s*"amber"\s*\|\s*"blue"\s*\|\s*"emerald"/);
-  });
+  // §dashboard-shifan-fidelity P-fid1 — "color map type union" it 제거: 운영 인텔리전스
+  //   colorMap(color:"red"|"amber"|"blue"|"emerald") 가 블록 폐지로 소멸. severity literal "amber"
+  //   보존(risk 시스템 key)은 아래 inventoryRisk/stockRisk/urgentItems it 가 계속 강제.
 
   it("stockRisk red 분기 보존 (lowStockAlerts >= 3 → red)", () => {
     const src = read(PATH);

@@ -80,9 +80,14 @@ describe("§11.243 #4 → P3b — 빈 차트 정직 empty(가짜 분포 0)", () 
   });
 });
 
-describe("§11.243 #5/#6 — 이슈 요약 + 인텔리전스 빈 상태", () => {
-  it("이슈 감지 안내 (납기 지연 / 가격 이상 / 재고 소진 중 1+)", () => {
-    expect(page).toMatch(/(납기 지연|가격 이상|재고 소진|이런 이슈|자동으로 감지)/);
+describe("§11.243 #5/#6→shifan P-fid1 — 이슈 감지 awareness 이전(운영인텔 폐지)", () => {
+  it("이슈 감지 awareness 가 ActionInbox 로 이전(레거시 운영 인텔리전스 카드 폐지)", () => {
+    // §dashboard-shifan-fidelity P-fid1 — 레거시 운영 인텔리전스("자동 감지된 이슈" 카드,
+    //   납기지연/가격이상/재고소진 안내) 360행 폐지. 이슈 감지 awareness 는 ActionInbox
+    //   ("오늘 처리해야 할 일", dashboardPriorityActions: 만료/SLA/재고/입고/승인)가 흡수.
+    //   보호 의도(이슈 감지 안내 무손실) 보존: 흡수 surface present + 레거시 운영인텔 absent.
+    expect(page).toMatch(/<ActionInbox/); // 흡수 surface present
+    expect(page).not.toMatch(/운영 인텔리전스/); // 레거시 운영인텔 블록 absent(되살아나면 잡음)
   });
 });
 

@@ -26,8 +26,10 @@ describe("§dashboard-shifan-adopt P3b (A) — 중단 2-col 재구성", () => {
     expect(PAGE).toMatch(/import \{ BudgetSpendCard \} from "@\/components\/dashboard\/budget-spend-card"/);
     expect(PAGE).toMatch(/<BudgetSpendCard/);
   });
-  it("2-col: BudgetSpendCard → OperatorQuickActions (lg:grid-cols-2)", () => {
-    expect(PAGE).toMatch(/lg:grid-cols-2[\s\S]{0,200}<BudgetSpendCard[\s\S]{0,260}<OperatorQuickActions/);
+  it("2-col: BudgetSpendCard → side-col(OperatorQuickActions + RecentActivity) (lg:grid-cols-2)", () => {
+    // §dashboard-shifan-fidelity P-fid1 — 우측 side-col(빠른작업+최근활동) 래퍼로 거리 늘어 window 확장.
+    expect(PAGE).toMatch(/lg:grid-cols-2[\s\S]{0,240}<BudgetSpendCard[\s\S]{0,460}<OperatorQuickActions/);
+    expect(PAGE).toMatch(/<OperatorQuickActions[\s\S]{0,460}<RecentActivityCard/);
   });
   it("BudgetSpendCard = summarySection 단일 진실 주입(신규 fetch 0)", () => {
     expect(PAGE).toMatch(/<BudgetSpendCard[\s\S]{0,120}state=\{summarySection\.state\}/);
