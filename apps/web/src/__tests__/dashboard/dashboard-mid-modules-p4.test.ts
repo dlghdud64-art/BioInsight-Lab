@@ -65,11 +65,7 @@ describe("§main-dashboard-redesign P4 (B) — 가드③ Pipeline 전이 canonic
 });
 
 // ── (C) ActionInbox 통합 ────────────────────────────────────────────────
-describe("§main-dashboard-redesign P4 (C) — ActionInbox 통합", () => {
-  it("max-h-[412px] 내부 스크롤", () => {
-    expect(read(INBOX)).toMatch(/max-h-\[412px\]/);
-    expect(read(INBOX)).toMatch(/overflow-y-auto/);
-  });
+describe("§main-dashboard-redesign P4 (C) — ActionInbox 통합 (§dashboard-shifan-fidelity P-fid2 시안 .task 행)", () => {
   it("행 클릭 라우팅(href) + 터치 ≥44px", () => {
     const src = read(INBOX);
     expect(src).toMatch(/href=\{it\.href\}/);
@@ -81,12 +77,20 @@ describe("§main-dashboard-redesign P4 (C) — ActionInbox 통합", () => {
   it("dead button 0 — count>0 항목만 렌더(0건 행 미노출)", () => {
     expect(read(INBOX)).toMatch(/filter\(\(it\)\s*=>\s*it\.count\s*>\s*0\)/);
   });
-  it("§11.302 신호등 톤(danger/warn/info/ok)", () => {
+  it("§dashboard-shifan-fidelity — 시안 행 구성(상태 배지 pill + 설명 + 액션 버튼)", () => {
+    const src = read(INBOX);
+    // §P-fid2: 행 = 아이콘 + (제목+배지) + 설명 + 액션 버튼. 단조 dot+건수 행 폐지.
+    expect(src).toMatch(/TONE_PILL_LABEL/);  // 긴급/검토 필요 배지
+    expect(src).toMatch(/it\.cta/);          // 우측 액션 버튼 라벨
+    expect(src).toMatch(/it\.detail/);       // 설명
+  });
+  it("§11.302 신호등 톤(danger/warn/info/ok, amber 금지·yellow)", () => {
     const src = read(INBOX);
     expect(src).toMatch(/danger/);
     expect(src).toMatch(/warn/);
-    expect(src).toMatch(/bg-red-600/);
-    expect(src).toMatch(/bg-yellow-500/);
+    expect(src).toMatch(/bg-red-/);
+    expect(src).toMatch(/bg-yellow-/);
+    expect(src).not.toMatch(/-amber-|-orange-/);
   });
 });
 

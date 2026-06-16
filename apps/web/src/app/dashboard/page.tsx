@@ -465,6 +465,14 @@ function DashboardPageInner() {
   //   dashboardPriorityActions(만료/SLA/재고/입고/승인) → ActionInboxItem. count>0 필터·
   //   empty 정직은 ActionInbox 내부(dead button 0). 레거시 "가장 먼저 처리" 배너와 동일
   //   소스 = awareness 공백 0. tone: severityRank 1만료/2SLA→danger, 3재고/4입고→warn, 5승인→info.
+  // §dashboard-shifan-fidelity P-fid2 — 행 액션 버튼 라벨(시안 정합). id별 동선 verb.
+  const ACTION_CTA: Record<string, string> = {
+    expiring: "폐기 처리",
+    sla: "즉시 처리",
+    inventory: "재고 처리",
+    receiving: "입고 처리",
+    approval: "검토하기",
+  };
   const actionInboxItems: ActionInboxItem[] = dashboardPriorityActions.map((a) => ({
     id: a.id,
     label: a.label,
@@ -472,6 +480,7 @@ function DashboardPageInner() {
     href: a.href,
     detail: a.helper,
     tone: a.severityRank <= 2 ? "danger" : a.severityRank <= 4 ? "warn" : "info",
+    cta: ACTION_CTA[a.id] ?? "처리하기",
   }));
 
   const isBlocked = processingRequiredCount > 0 || approvalPendingCount > 0 || riskOrBlockerCount > 0;
