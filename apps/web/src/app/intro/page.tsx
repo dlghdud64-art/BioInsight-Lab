@@ -205,11 +205,24 @@ export default function IntroPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.25 }}
-              className="text-base md:text-lg max-w-2xl mx-auto mb-10 leading-relaxed"
+              className="text-base md:text-lg max-w-2xl mx-auto mb-5 leading-relaxed"
               style={{ color: D.text2 }}
             >
               시약·장비 검색, 후보 정리, 비교·선택, 요청 생성, 발주 준비까지<br className="hidden md:block" />
               분리된 구매 작업을 하나의 운영 흐름으로 정리합니다.
+            </motion.p>
+
+            {/* §intro-persona-broadening — 타겟 산업 폭 1줄(ICP 명시). 페르소나가
+                좁아 보이지 않도록 바이오 R&D 조직 범위를 소개 섹션에 명시.
+                "연구원만" 좁음 / "전 산업" 흐림 사이 — 바이오·제약·진단 R&D 구매·재고 운영. */}
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.32 }}
+              className="text-sm md:text-[15px] max-w-2xl mx-auto mb-10 leading-relaxed"
+              style={{ color: D.text2, opacity: 0.85 }}
+            >
+              바이오텍 · 제약 · 진단 · CRO · 대학/병원 연구실의 구매 운영
             </motion.p>
 
             <motion.div
@@ -426,7 +439,10 @@ export default function IntroPage() {
             <div className="flex flex-col gap-5">
               {[
                 {
-                  role: "연구원",
+                  // §intro-persona-broadening — 직무명("연구원") → 포괄 역할("연구·QC 담당").
+                  //   학술 연구자 편향 제거: QC·실험실 현장까지 포괄(바이오솔루션 QC 팀 등).
+                  //   마케팅 페르소나(표시 레이어)일 뿐 — ontology role(요청자/승인권자/조직관리자)과 무관.
+                  role: "연구·QC 담당",
                   before: "여러 벤더를 따로 열고 품목을 수기로 모아 비교 준비",
                   after: "검색 결과에서 후보를 바로 정리하고 비교 단계로 이동",
                 },

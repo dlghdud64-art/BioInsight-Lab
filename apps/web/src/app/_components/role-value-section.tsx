@@ -3,8 +3,9 @@ import { Beaker, ShoppingCart, ClipboardList, Shield } from "lucide-react";
 const ROLES = [
   {
     icon: Beaker,
-    role: "연구원",
-    tagline: "검색과 비교에 쓰는 시간을 줄이고, 실험에 집중",
+    // §intro-persona-broadening — 직무명→포괄 역할(학술 편향 제거, QC·실험실 포괄). 표시 레이어.
+    role: "연구·QC 담당",
+    tagline: "검색·비교 시간을 줄이고, 실험·QC 업무에 집중",
     items: [
       "시약·장비를 글로벌 공급사에서 한 번에 검색",
       "대체품 비교 결과를 저장하고 다음 구매에 재활용",

@@ -3,7 +3,8 @@ import { Beaker, ShoppingCart, ClipboardList, Shield } from "lucide-react";
 const ROLES = [
   {
     icon: Beaker,
-    role: "연구원",
+    // §intro-persona-broadening — 직무명→포괄 역할(학술 편향 제거, QC·실험실 포괄). 표시 레이어.
+    role: "연구·QC 담당",
     benefit: "통합 검색 + 비교표 자동 생성으로 시약 선정 시간 단축",
     color: "text-yellow-400",
   },
