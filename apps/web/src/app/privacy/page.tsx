@@ -10,7 +10,7 @@ export default function PrivacyPage() {
         <div className="mb-10 border-b border-[#1E2D40] pb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight mb-2">LabAxis 개인정보처리방침</h1>
           <div className="flex flex-wrap gap-3 text-xs text-[#8794AA]">
-            <span>시행일: 2026.03.24</span><span>·</span><span>최종 개정일: 2026.03.24</span><span>·</span><span>버전: v1.0</span>
+            <span>시행일: 2026.03.24</span><span>·</span><span>최종 개정일: 2026.06.15</span><span>·</span><span>버전: v1.1</span>
           </div>
         </div>
         <div className="space-y-10 text-sm md:text-[15px] leading-relaxed text-[#BAC6D9]">
@@ -22,7 +22,7 @@ export default function PrivacyPage() {
               <table className="w-full text-xs md:text-sm border-collapse min-w-[640px]">
                 <thead><tr className="border-b-2 border-[#26364C] text-left text-[#8794AA]"><th className="py-2.5 px-3 font-semibold">처리 목적</th><th className="py-2.5 px-3 font-semibold">수집 항목</th><th className="py-2.5 px-3 font-semibold">처리 근거</th><th className="py-2.5 px-3 font-semibold">보유기간</th></tr></thead>
                 <tbody className="text-[#BAC6D9]">
-                  <tr className="border-b border-[#1E2D40]"><td className="py-2.5 px-3 text-white font-medium">회원가입 및 로그인</td><td className="py-2.5 px-3">이메일, 이름, 비밀번호(암호화), 소속 조직명, 접속기록</td><td className="py-2.5 px-3">동의, 계약 이행</td><td className="py-2.5 px-3">탈퇴 시까지 (법령상 보존 의무 시 해당 기간)</td></tr>
+                  <tr className="border-b border-[#1E2D40]"><td className="py-2.5 px-3 text-white font-medium">회원가입 및 로그인</td><td className="py-2.5 px-3">이메일, 이름, 프로필 이미지, 소셜 로그인 계정 식별자(Google OAuth 및 기업 SSO 연동 정보), 소속 조직명, 접속기록</td><td className="py-2.5 px-3">동의, 계약 이행</td><td className="py-2.5 px-3">탈퇴 시까지 (법령상 보존 의무 시 해당 기간)</td></tr>
                   <tr className="border-b border-[#1E2D40]"><td className="py-2.5 px-3 text-white font-medium">워크스페이스 관리</td><td className="py-2.5 px-3">조직명, 부서명, 직책, 권한, 초대 이력, 관리자 설정</td><td className="py-2.5 px-3">계약 이행, 정당한 이익</td><td className="py-2.5 px-3">이용 종료 후 6개월 또는 분쟁 종결 시</td></tr>
                   <tr className="border-b border-[#1E2D40]"><td className="py-2.5 px-3 text-white font-medium">검색·비교·견적·발주·입고·재고</td><td className="py-2.5 px-3">품목명, 카탈로그번호, 제조사, 거래기록, 입고/재고, 첨부문서, 승인이력, 행동로그</td><td className="py-2.5 px-3">계약 이행</td><td className="py-2.5 px-3">이용 종료 후 6개월 (법령상 보관의무 시 해당 기간)</td></tr>
                   <tr className="border-b border-[#1E2D40]"><td className="py-2.5 px-3 text-white font-medium">고객/도입 문의</td><td className="py-2.5 px-3">이름, 회사명, 이메일, 연락처, 문의내용, 첨부파일</td><td className="py-2.5 px-3">동의, 정당한 이익</td><td className="py-2.5 px-3">완료 후 1년 또는 분쟁 해결 시</td></tr>
