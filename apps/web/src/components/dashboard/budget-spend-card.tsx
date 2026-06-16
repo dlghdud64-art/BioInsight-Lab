@@ -10,22 +10,37 @@
  *
  * ★ 정직성(가드② empty 정직):
  *   - 가짜 집행률 금지 — 예산 미설정(isSet=false) 시 "미설정" 정직 + 집행률 미표시
- *     (회색 바, "예산 설정 시 집행률이 표시됩니다") + [예산 설정] 단일 CTA(→/dashboard/budget).
+ *     (회색 바 + 안내 문구). §dashboard-shifan-polish B4 — 예산 설정 CTA는 NextStepBanner 단독
+ *     보유(중복 3곳→1곳). 카드는 정직 상태만 표시(설정 동선 미보유, dead button 0).
+ *   - §A5/B1 — 카테고리 비중을 카드 내부 임베드(bare). 빈 분포 정직 empty(가짜 0).
  *   - 이번 달 누적 = summary.spend.thisMonth 실데이터(예산 무관). mock 0.
  *   - §11.302 신호등: ok=emerald / warn(≥80%)=yellow / danger(≥100%)=red (yellow 톤, 구 경고색 미사용).
  *
  * 4상태(P2 capMs): loading 스켈레톤 / error 재시도 / else(ready·empty) 정직 렌더.
  */
 
-import Link from "next/link";
-import { RotateCw, Wallet, ArrowRight } from "lucide-react";
+import { RotateCw, Wallet } from "lucide-react";
 import type { SectionState } from "@/lib/dashboard/section-state";
 import { won, type DashboardSummary } from "@/lib/dashboard/summary-derive";
+import dynamic_import from "next/dynamic";
+
+// §dashboard-shifan-polish A5/B1 — 카테고리 비중 카드 내부 통합(시안 "예산&지출 카드 내부").
+//   recharts 코드분할 유지 위해 dynamic import(ssr:false) — BudgetSpendCard 가 eager 라도
+//   recharts(~150KB)는 lazy chunk. bare 모드로 카드 chrome 없이 임베드.
+const CategoryDistributionCard = dynamic_import(
+  () =>
+    import("@/components/dashboard/category-distribution-card").then((m) => ({
+      default: m.CategoryDistributionCard,
+    })),
+  { ssr: false, loading: () => null },
+);
 
 export interface BudgetSpendCardProps {
   state: SectionState;
   summary: DashboardSummary | undefined;
   onRetry: () => void;
+  /** §dashboard-shifan-polish A5/B1 — 카드 내부 카테고리 비중(stats.categorySpending). 정직 empty. */
+  categorySpending?: Array<{ category: string; amount: number }>;
 }
 
 /** §11.302 신호등 — budTone → 진행바/텍스트 색(yellow 톤). */
@@ -42,7 +57,7 @@ const TONE_TEXT: Record<string, string> = {
   danger: "text-red-700",
 };
 
-export function BudgetSpendCard({ state, summary, onRetry }: BudgetSpendCardProps) {
+export function BudgetSpendCard({ state, summary, onRetry, categorySpending = [] }: BudgetSpendCardProps) {
   if (state === "loading") {
     return (
       <div
@@ -112,21 +127,20 @@ export function BudgetSpendCard({ state, summary, onRetry }: BudgetSpendCardProp
         />
       </div>
 
-      {/* 미설정 정직 안내 + 단일 설정 CTA(시안 정합). */}
+      {/* §dashboard-shifan-polish B4 — 예산 설정 CTA는 NextStepBanner 단독 보유(중복 3→1).
+          카드는 정직 상태(미설정·₩0·회색 바)와 안내만 — 설정 동선은 배너가 소유(dead button 0). */}
       {!isSet && (
-        <div className="mt-auto pt-3">
-          <p className="text-[11px] text-slate-500 mb-2 break-keep">
-            예산을 설정하면 집행률·초과 경고를 자동으로 받아볼 수 있어요.
-          </p>
-          <Link
-            href="/dashboard/budget"
-            className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 h-10 min-h-[44px] text-[13px] font-semibold text-white hover:bg-blue-700 transition-colors"
-          >
-            예산 설정
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
+        <p className="pt-3 text-[11px] text-slate-500 break-keep">
+          예산을 설정하면 집행률·초과 경고가 자동으로 표시됩니다.
+        </p>
       )}
+
+      {/* §dashboard-shifan-polish A5/B1 — 카테고리 비중 카드 내부 통합(시안 "예산&지출 카드 내부").
+          bare 임베드(카드 chrome 0). 정직 empty 유지 — 빈 분포 가짜 0(예시 42/25/20/13% 금지),
+          데이터 쌓이면 실분포 자동(canonical stats.categorySpending 바인딩). */}
+      <div className="mt-4 pt-4 border-t border-slate-100">
+        <CategoryDistributionCard categorySpending={categorySpending} bare />
+      </div>
     </div>
   );
 }

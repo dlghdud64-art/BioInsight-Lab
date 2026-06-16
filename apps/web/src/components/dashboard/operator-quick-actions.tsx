@@ -102,8 +102,9 @@ export function OperatorQuickActions({
           가장 자주 쓰는 운영 동선 4개
         </p>
       </div>
-      {/* §11.247 #2 — 반응형 grid auto-fit. 모바일 grid-cols-2 (2x2 컴팩트). */}
-      <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3">
+      {/* §dashboard-shifan-fidelity P-fid3 — side-col(반폭) 2×2 고정. auto-fit가 반폭(~540px)에서
+          1×4로 무너지던 것 시정(라이브 실측). 모바일·데스크탑 일관 2×2(시안 빠른작업 정합). */}
+      <div className="grid grid-cols-2 gap-3">
         {ACTIONS.map((action) => {
           const Icon = action.icon;
           // §11.243 #5 — count display-only (caller forward).
@@ -113,7 +114,7 @@ export function OperatorQuickActions({
               key={action.countKey}
               href={action.href}
               /* §11.364 D-2 — 좌측 컬러바 제거(데코 색면적 0). 본문 무채색. */
-              className="group rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm transition-all duration-300 ease-in-out hover:shadow-md hover:border-slate-300 cursor-pointer min-h-[110px] sm:min-h-[140px]"
+              className="group rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm transition-all duration-300 ease-in-out hover:shadow-md hover:border-slate-300 cursor-pointer min-h-[96px]"
             >
               <div className="flex items-start justify-between mb-2">
                 {/* §11.364 D-2 — 아이콘 박스 무채색(동선 식별, 상태 아님). */}

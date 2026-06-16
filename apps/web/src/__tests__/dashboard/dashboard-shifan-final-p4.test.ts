@@ -40,7 +40,8 @@ describe("§dashboard-shifan-adopt P4 (A) — 시안 최종 순서", () => {
 describe("§dashboard-shifan-adopt P4 (B) — 중단 2-col 반응형", () => {
   it("grid-cols-1 lg:grid-cols-2 (모바일 stack → 데스크탑 2-col) + side-col(빠른작업+최근활동)", () => {
     // §dashboard-shifan-fidelity P-fid1 — 우측 side-col 래퍼로 window 확장 + 최근활동 스택 정합.
-    expect(PAGE).toMatch(/grid grid-cols-1 lg:grid-cols-2[\s\S]{0,260}<BudgetSpendCard[\s\S]{0,460}<OperatorQuickActions/);
+    // §dashboard-shifan-polish A5/B1 — categorySpending prop 추가로 블록 거리 증가 → 460→580 확장.
+    expect(PAGE).toMatch(/grid grid-cols-1 lg:grid-cols-2[\s\S]{0,260}<BudgetSpendCard[\s\S]{0,580}<OperatorQuickActions/);
     expect(PAGE).toMatch(/<OperatorQuickActions[\s\S]{0,460}<RecentActivityCard/);
   });
   it("예산 카드 summarySection 단일 진실 주입(신규 fetch 0)", () => {
@@ -54,9 +55,10 @@ describe("§dashboard-shifan-adopt P4 (C) — 정직성 lock", () => {
     expect(BUD).toMatch(/summary\?\.budget/);
     expect(BUD).toMatch(/summary\?\.derived\.budTone/);
   });
-  it("예산 미설정 정직(가짜 집행률 0) + 설정 CTA canonical 라우트", () => {
+  it("예산 미설정 정직(가짜 집행률 0) — §B4: 설정 CTA는 NextStepBanner 단독(카드서 제거)", () => {
     expect(BUD).toMatch(/예산 미설정/);
-    expect(BUD).toMatch(/href="\/dashboard\/budget"/);
+    // §dashboard-shifan-polish B4 — 예산 설정 CTA 3곳→1곳: 배너 단독. 카드 내부 CTA 제거.
+    expect(BUD).not.toMatch(/href="\/dashboard\/budget"/);
     expect(BUD).not.toMatch(/MOCKUP|mockup/);
   });
   it("카테고리 도넛 가짜분포 0 — mockup const/예시 overlay/grayscale 제거", () => {

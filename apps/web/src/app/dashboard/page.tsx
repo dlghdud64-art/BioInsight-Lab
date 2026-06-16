@@ -50,13 +50,9 @@ const SpendTrendCard = dynamic_import(
     })),
   { ssr: false, loading: () => null },
 );
-const CategoryDistributionCard = dynamic_import(
-  () =>
-    import("@/components/dashboard/category-distribution-card").then((m) => ({
-      default: m.CategoryDistributionCard,
-    })),
-  { ssr: false, loading: () => null },
-);
+// §dashboard-shifan-polish A5/B1 — CategoryDistributionCard 는 BudgetSpendCard 내부로 이관(시안
+//   "예산&지출 카드 내부 통합"). 하단 분리 인스턴스 + 페이지 레벨 dynamic import 제거. recharts
+//   코드분할은 budget-spend-card 내부 dynamic import 가 계승. 하단은 SpendTrend 풀폭만.
 // §11.93 — 운영 바로가기 4 카드 (operator quick actions)
 import { OperatorQuickActions } from "@/components/dashboard/operator-quick-actions";
 // §dashboard-shifan-adopt P3b — 예산&지출 집행률 카드(시안 중단 좌). canonical summary.budget.
@@ -157,9 +153,9 @@ function DashboardPageInner() {
   const router = useRouter();
   const openOverlay = useWorkbenchOverlayOpen();
 
-  // §11.252b — 모바일 (<lg) 차트 영역 탭 전환 state (트렌드 / 카테고리).
-  // 데스크탑 (≥lg) 은 기존 grid 보존 (회귀 0).
-  const [activeChartTab, setActiveChartTab] = useState<"trend" | "category">("trend");
+  // §dashboard-shifan-polish A5/B1 — §11.252b 모바일 차트 탭(트렌드/카테고리) state 제거.
+  //   카테고리는 BudgetSpendCard 내부로 이관(중단 2-col 좌, 모바일도 카드 내부에 노출) →
+  //   하단은 SpendTrend 단일(풀폭)이라 탭 분기 불필요. 모바일 카테고리는 예산카드에서 본다.
 
   // §11.308a-v2 — isSmartReceivingOpen state 제거 (호영님 P0 2026-05-26).
   // 진입점이 글로벌 헤더로 승격되어 Header.tsx 에서 state 관리.
@@ -748,6 +744,7 @@ function DashboardPageInner() {
           state={summarySection.state}
           summary={summarySection.data}
           onRetry={summarySection.retry}
+          categorySpending={stats.categorySpending}
         />
         {/* §dashboard-shifan-fidelity P-fid1 — 우측 side-col: 빠른작업 + 최근활동 세로 스택(시안 정합).
             예산&지출(좌) 높이와 자동 정합(좌우 높낮이 불일치 해소). */}
@@ -769,55 +766,10 @@ function DashboardPageInner() {
           중단=차트(예산&지출)+빠른작업, 하단=최근활동 순(시안 흐름). */}
 
 
-      {/* §dashboard-shifan-adopt P3b — 지출 트렌드 + 카테고리 도넛(하단 이동, 시안 흐름).
-          중단 슬롯은 예산집행률 카드가 차지(위). 두 차트 모두 빈 계정 empty 정직:
-          SpendTrend(§main-dashboard-redesign P1 가드)·Category(P3b mockup 제거)는 차트 미렌더 +
-          컴팩트 정직 empty. dashboard/stats endpoint monthlySpending/categorySpending forward(새 endpoint 0). */}
-      {/* §11.252b — 모바일 차트 영역 탭 전환 (트렌드 / 카테고리). */}
-      <div className="lg:hidden">
-        <div className="flex border-b border-slate-200 mb-3" role="tablist" aria-label="차트 영역 탭">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeChartTab === "trend"}
-            onClick={() => setActiveChartTab("trend")}
-            className={`flex-1 min-h-[44px] text-sm font-semibold transition-colors ${
-              activeChartTab === "trend"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "border-b-2 border-transparent text-slate-500"
-            }`}
-          >
-            지출 트렌드
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeChartTab === "category"}
-            onClick={() => setActiveChartTab("category")}
-            className={`flex-1 min-h-[44px] text-sm font-semibold transition-colors ${
-              activeChartTab === "category"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "border-b-2 border-transparent text-slate-500"
-            }`}
-          >
-            카테고리 비중
-          </button>
-        </div>
-        {activeChartTab === "trend" ? (
-          <SpendTrendCard monthlySpending={stats.monthlySpendingChart} />
-        ) : (
-          <CategoryDistributionCard categorySpending={stats.categorySpending} />
-        )}
-      </div>
-      {/* §11.313 — items-stretch 로 두 grid cell 높이 정합 + CategoryDistributionCard h-full. */}
-      <div className="hidden lg:grid lg:grid-cols-3 gap-4 items-stretch">
-        <div className="lg:col-span-2">
-          <SpendTrendCard monthlySpending={stats.monthlySpendingChart} />
-        </div>
-        <div className="lg:col-span-1">
-          <CategoryDistributionCard categorySpending={stats.categorySpending} className="h-full" />
-        </div>
-      </div>
+      {/* §dashboard-shifan-polish A5/B1 — 카테고리 비중은 BudgetSpendCard 내부로 통합(시안 "예산&지출
+          카드 내부"). 하단 분리 도넛 + 모바일 차트 탭 폐지 → 하단은 지출 트렌드 단일(풀폭). 실데이터
+          ₩71.6M 보유라 풀폭 정당. 빈 계정 empty 정직(§main-dashboard-redesign P1 가드 — 차트 미렌더). */}
+      <SpendTrendCard monthlySpending={stats.monthlySpendingChart} />
 
       {/* --- 1순위: 오늘의 우선 작업 (모바일용 fallback, md 이하) --- */}
       <div className="md:hidden rounded-xl border border-slate-200/80 bg-white overflow-hidden">

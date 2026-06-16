@@ -66,11 +66,12 @@ describe("§main-dashboard-redesign P3 (A) — StatLine summary 단일 진실 KP
 
 // ── (B) GlobalEmpty ─────────────────────────────────────────────────────
 describe("§main-dashboard-redesign P3 (B) — GlobalEmpty 정직한 빈 + CTA", () => {
-  it("시작 유도 CTA(견적/예산 href)", () => {
+  it("§dashboard-shifan-polish B4 — 시작 CTA = 첫 견적 단독(예산 CTA는 배너로 이관)", () => {
     const src = read(EMPTY);
     expect(src).toMatch(/quoteHref/);
-    expect(src).toMatch(/budgetHref/);
-    expect(src).toMatch(/첫 견적 시작|예산 설정/);
+    // B4: budgetHref/예산 설정 CTA 제거 — 빈 계정 예산 동선은 NextStepBanner 단독(중복 3→1).
+    expect(src).not.toMatch(/budgetHref/);
+    expect(src).toMatch(/첫 견적 시작/);
   });
   it("정직 문구 — 데이터 쌓이면 채워짐(빈 상태 명시)", () => {
     expect(read(EMPTY)).toMatch(/채워집니다|빈 상태/);

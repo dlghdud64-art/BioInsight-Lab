@@ -86,6 +86,17 @@ function buildStages(s: DashboardSummary | undefined): PipelineStage[] {
   ];
 }
 
+// §dashboard-shifan-polish A2 — 단계별 아이콘 틴트(시안 직관성). §11.302 신호등과 분리:
+//   틴트는 단계 정체성(견적 blue/발주 indigo/입고 teal/재고 yellow) — amber/orange 금지.
+//   0건 비활성 단계는 §11.311 회색 비활성 유지(틴트 미적용). 상태 신호(주의 sub-count)는
+//   yellow-700 라인이 별도 소유 — 아이콘 틴트가 신호색을 침범하지 않음.
+const STAGE_TINT: Record<string, { icon: string; box: string }> = {
+  quote: { icon: "text-blue-600", box: "bg-blue-50" },
+  po: { icon: "text-indigo-600", box: "bg-indigo-50" },
+  receive: { icon: "text-teal-600", box: "bg-teal-50" },
+  stock: { icon: "text-yellow-600", box: "bg-yellow-50" },
+};
+
 export function Pipeline({ state, summary, onRetry }: PipelineProps) {
   if (state === "loading") {
     return (
@@ -130,7 +141,10 @@ export function Pipeline({ state, summary, onRetry }: PipelineProps) {
             }`}
           >
             <div className={`flex items-center gap-1.5 mb-1 ${active ? "text-slate-500" : "text-gray-400"}`}>
-              {stage.icon}
+              {/* §dashboard-shifan-polish A2 — 단계 아이콘 틴트 박스(active만). 0건은 회색 비활성(§11.311). */}
+              <span className={`flex items-center justify-center w-6 h-6 rounded-lg flex-shrink-0 ${active ? STAGE_TINT[stage.key]!.box : "bg-gray-100"}`}>
+                <span className={active ? STAGE_TINT[stage.key]!.icon : "text-gray-400"}>{stage.icon}</span>
+              </span>
               <span className="text-[11px] font-semibold uppercase tracking-[0.06em]">{stage.label}</span>
               {/* 단계 연결 화살표(마지막 제외) — 데스크탑만 */}
               {i < stages.length - 1 && (

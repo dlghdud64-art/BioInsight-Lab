@@ -13,18 +13,17 @@
  *   결정(별도 탑재). page 미배선(고립 빌드).
  */
 
-import { Sparkles, FileText, Wallet } from "lucide-react";
+import { Sparkles, FileText } from "lucide-react";
 
 export interface GlobalEmptyProps {
   /** 첫 견적 시작 CTA href. */
   quoteHref?: string;
-  /** 예산 설정 CTA href. */
-  budgetHref?: string;
 }
 
+// §dashboard-shifan-polish B4 — 예산 설정 CTA + 예산 라우트 prop 제거: 빈 계정 예산 동선은
+//   NextStepBanner 단독(중복 3→1). GlobalEmpty 는 예산 외 onboarding(첫 견적) 전담.
 export function GlobalEmpty({
   quoteHref = "/dashboard/quotes",
-  budgetHref = "/dashboard/budget",
 }: GlobalEmptyProps) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6">
@@ -36,8 +35,10 @@ export function GlobalEmpty({
           <h2 className="text-base font-bold text-slate-900 leading-tight">
             운영 데이터를 시작하세요
           </h2>
+          {/* §dashboard-shifan-polish A7 — 카피 구체화: 무엇을 쌓으면 무엇이 채워지는지 명시(action→result). */}
           <p className="mt-1 text-[13px] text-slate-500 break-keep leading-relaxed">
-            첫 견적과 예산을 등록하면 지출·발주·입고·재고 지표가 단일 진실로 채워집니다.
+            견적을 요청하면 파이프라인과 처리 항목이, 예산을 등록하면 집행률·잔여 예산이,
+            입고가 기록되면 재고·카테고리 분포가 자동으로 채워집니다.
             데이터가 쌓이기 전에는 빈 상태로 정직하게 표시됩니다.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -47,13 +48,6 @@ export function GlobalEmpty({
             >
               <FileText className="h-3.5 w-3.5" />
               첫 견적 시작
-            </a>
-            <a
-              href={budgetHref}
-              className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 h-10 min-h-[44px] text-[13px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-            >
-              <Wallet className="h-3.5 w-3.5" />
-              예산 설정
             </a>
           </div>
         </div>

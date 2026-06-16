@@ -86,9 +86,13 @@ describe("§11.364 — 회귀 0 (4 카드 구조 + wiring)", () => {
     expect(src).not.toMatch(/data-testid="dashboard-quote-dispatch-summary"/);
   });
 
-  it("모바일 grid-cols-2 + min-h-[110px] sm:min-h-[140px] 보존 (§11.252a)", () => {
+  it("shifan P-fid3 — grid-cols-2 고정 2×2 + 컴팩트 단일 min-h (§11.252a 진화)", () => {
+    // 라이브 실측: auto-fit 가 side-col 반폭에서 1×4 로 무너짐 → grid-cols-2 고정.
+    //   과대 sm:min-h-[140px] → 컴팩트 단일 min-h. auto-fit/과대 min-h 회귀 차단.
     const src = read(PATH);
-    expect(src).toMatch(/grid grid-cols-2 sm:grid-cols-\[repeat\(auto-fit,minmax\(280px,1fr\)\)\]/);
-    expect(src).toMatch(/min-h-\[110px\] sm:min-h-\[140px\]/);
+    expect(src).toMatch(/grid grid-cols-2/);
+    expect(src).not.toMatch(/grid-cols-\[repeat\(auto-fit/);
+    expect(src).toMatch(/min-h-\[(96|100|104|110|120)px\]/);
+    expect(src).not.toMatch(/sm:min-h-\[140px\]/);
   });
 });

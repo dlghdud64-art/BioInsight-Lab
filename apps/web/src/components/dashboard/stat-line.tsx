@@ -35,6 +35,14 @@ export interface StatLineProps {
   onRetry: () => void;
 }
 
+// §dashboard-shifan-polish A1 — KPI별 아이콘 틴트(시안 직관성·구분 강화). 단계 정체성 색이며
+//   §11.302 신호색 아님(amber/orange 금지). 0건 비활성은 §11.311 회색 유지(틴트 미적용).
+const KPI_TINT: Record<string, { icon: string; box: string }> = {
+  spend: { icon: "text-blue-600", box: "bg-blue-50" },
+  remaining: { icon: "text-emerald-600", box: "bg-emerald-50" },
+  confirmed: { icon: "text-indigo-600", box: "bg-indigo-50" },
+};
+
 export function StatLine({ state, summary, onRetry }: StatLineProps) {
   if (state === "loading") {
     return (
@@ -112,7 +120,14 @@ export function StatLine({ state, summary, onRetry }: StatLineProps) {
                 active ? "text-slate-500" : "text-gray-400"
               }`}
             >
-              {it.icon}
+              {/* §dashboard-shifan-polish A1 — KPI 아이콘 틴트 박스(active만). 0건은 회색 비활성(§11.311). */}
+              <span
+                className={`flex items-center justify-center w-6 h-6 rounded-lg flex-shrink-0 ${
+                  active ? KPI_TINT[it.key]!.box : "bg-gray-100"
+                }`}
+              >
+                <span className={active ? KPI_TINT[it.key]!.icon : "text-gray-400"}>{it.icon}</span>
+              </span>
               <span className="text-[11px] font-semibold uppercase tracking-[0.06em] break-keep">
                 {it.label}
               </span>

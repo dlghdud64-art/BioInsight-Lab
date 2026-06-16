@@ -1,16 +1,13 @@
 /**
- * §11.252b — 모바일 차트 영역 탭 전환 (SpendTrend + CategoryDistribution).
+ * §11.252b → §dashboard-shifan-polish A5/B1 진화 — 모바일 차트 탭 폐지(카테고리 카드 내부 통합)
  *
- * 호영님 spec:
- *   - 두 카드 (지출 트렌드 + 카테고리 비중) 모바일에서 풀 높이 → 1.5 화면 차지.
- *   - 탭 전환 (트렌드 | 카테고리) 으로 한 영역에 합치거나 기본 접힘 + "펼쳐 보기".
+ * 이전(§11.252b): 모바일 <lg 에서 지출트렌드/카테고리 탭 전환 + 데스크탑 lg:grid-cols-3.
+ * 변경(A5/B1, 시안 "예산&지출 카드 내부 통합"): 카테고리 비중을 BudgetSpendCard 내부로 이관.
+ *   → 하단 분리 도넛 + 모바일 차트 탭 폐지. 하단은 지출 트렌드 단일(풀폭, 모바일·데스크탑 동일).
  *
- * 본 구현: 모바일 (<lg) 탭 전환 + 데스크탑 (≥lg) grid 보존 (회귀 0).
- *
- * canonical truth lock:
- *   - SpendTrendCard / CategoryDistributionCard import + props 보존.
- *   - lg:col-span-2 / lg:col-span-1 데스크탑 layout 보존.
- *   - monthlySpendingChart / categorySpending data 흐름 변경 0.
+ * canonical truth lock(유지):
+ *   - SpendTrendCard dynamic import(recharts code split) 보존.
+ *   - stats.monthlySpendingChart → SpendTrend / stats.categorySpending → BudgetSpendCard 흐름 보존.
  */
 
 import { describe, it, expect } from "vitest";
@@ -24,45 +21,25 @@ function safeRead(p: string): string {
 const PAGE_PATH = resolve(__dirname, "../../app/dashboard/page.tsx");
 const code = safeRead(PAGE_PATH);
 
-describe("§11.252b #1 — 차트 탭 전환 (모바일)", () => {
-  it("탭 state (useState 또는 inline state) 추가", () => {
-    // 모바일 탭 전환 — 트렌드 / 카테고리 선택 state.
-    expect(code).toMatch(/§11\.252b/);
-    expect(code).toMatch(/(activeChartTab|chartTab|selectedChart)/);
+describe("§11.252b → A5/B1 — 모바일 차트 탭 폐지(회귀 차단)", () => {
+  it("모바일 차트 탭 state 제거 (activeChartTab/chartTab/selectedChart 0)", () => {
+    expect(code).not.toMatch(/activeChartTab|chartTab|selectedChart/);
   });
 
-  it("'트렌드' 또는 '지출' 탭 라벨", () => {
-    expect(code).toMatch(/(트렌드|지출\s*트렌드)/);
-  });
-
-  it("'카테고리' 탭 라벨", () => {
-    expect(code).toMatch(/(카테고리\s*비중|카테고리\s*분포|카테고리\s*탭|>카테고리<)/);
-  });
-
-  it("모바일 탭 컨테이너 lg:hidden 또는 분기 명시", () => {
-    // 모바일 only 탭 UI, lg+ 에서는 grid 보존.
-    expect(code).toMatch(/§11\.252b[\s\S]{0,4000}lg:hidden/);
+  it("하단 분리 카테고리 도넛 그리드(lg:grid-cols-3) 폐지", () => {
+    // 카테고리는 BudgetSpendCard 내부로 이관 — 하단 lg:grid-cols-3 차트 분리 인스턴스 0.
+    expect(code).not.toMatch(/lg:grid-cols-3 gap-4 items-stretch/);
   });
 });
 
-describe("§11.252b #2 — 데스크탑 grid 보존 (회귀 0)", () => {
-  it("lg:grid-cols-3 grid 또는 lg:col-span-2 보존 (데스크탑 layout)", () => {
-    expect(code).toMatch(/lg:(grid-cols-3|col-span-2)/);
-  });
-
-  it("SpendTrendCard import + render 보존", () => {
-    expect(code).toMatch(/SpendTrendCard/);
-    expect(code).toMatch(/monthlySpendingChart/);
-  });
-
-  it("CategoryDistributionCard import + render 보존", () => {
-    expect(code).toMatch(/CategoryDistributionCard/);
-    expect(code).toMatch(/categorySpending/);
+describe("§11.252b → A5/B1 — 카테고리 카드 내부 통합", () => {
+  it("BudgetSpendCard 에 categorySpending 주입(카드 내부 카테고리, 시안 정합)", () => {
+    expect(code).toMatch(/<BudgetSpendCard[\s\S]{0,200}categorySpending=\{stats\.categorySpending\}/);
   });
 });
 
 describe("§11.252b — invariant 보존", () => {
-  it("dynamic import (recharts code split) 보존", () => {
+  it("SpendTrend dynamic import (recharts code split) 보존", () => {
     expect(code).toMatch(/dynamic_import[\s\S]{0,500}SpendTrendCard/);
   });
 

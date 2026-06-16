@@ -39,6 +39,9 @@ interface CategoryDistributionCardProps {
   categorySpending: CategoryItem[];
   /** §11.313 — 부모 grid cell 높이 정합용 (예: "h-full"). */
   className?: string;
+  /** §dashboard-shifan-polish A5/B1 — bare 모드: 카드 chrome(border/bg/shadow/padding) 제거하고
+   *  헤더+차트만 렌더(BudgetSpendCard 내부 임베드용 — 시안 "예산&지출 카드 내부 통합"). */
+  bare?: boolean;
 }
 
 const CATEGORY_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#94a3b8"];
@@ -68,7 +71,7 @@ function ChartTooltip({
   );
 }
 
-export function CategoryDistributionCard({ categorySpending, className }: CategoryDistributionCardProps) {
+export function CategoryDistributionCard({ categorySpending, className, bare }: CategoryDistributionCardProps) {
   const data = useMemo(() => {
     if (!categorySpending || categorySpending.length === 0) return [];
     const total = categorySpending.reduce((s, c) => s + c.amount, 0);
@@ -90,8 +93,9 @@ export function CategoryDistributionCard({ categorySpending, className }: Catego
 
   return (
     /* §11.313 — flex flex-col + className(h-full) 로 부모 grid cell 높이 정합.
-       헤더는 고정, 차트 영역은 flex-1 로 남은 세로 공간 채워 중앙 정렬. */
-    <div className={`rounded-xl border border-slate-200 bg-white shadow-sm p-4 md:p-5 flex flex-col ${className ?? ""}`}>
+       헤더는 고정, 차트 영역은 flex-1 로 남은 세로 공간 채워 중앙 정렬.
+       §dashboard-shifan-polish A5/B1 — bare 모드는 카드 chrome 제거(부모 카드 내부 임베드). */
+    <div className={`${bare ? "" : "rounded-xl border border-slate-200 bg-white shadow-sm p-4 md:p-5 "}flex flex-col ${className ?? ""}`}>
       <div className="flex items-center justify-between mb-3">
         <div>
           <h3 className="text-[13px] font-extrabold text-slate-900">카테고리별 비중</h3>

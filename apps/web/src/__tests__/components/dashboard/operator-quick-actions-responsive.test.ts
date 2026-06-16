@@ -31,12 +31,15 @@ describe("§11.364 D-1 — Progressive Disclosure 폐기 (순수 네비 강등)"
   });
 });
 
-describe("§11.247 #2 — 반응형 grid auto-fit (보존)", () => {
-  it("grid-cols arbitrary auto-fit minmax(280px, 1fr) 패턴", () => {
-    expect(component).toMatch(/(grid-cols-\[repeat\(auto-fit,minmax\(280px,_?1fr\)\)\]|repeat\(auto-fit,\s*minmax\(280px,\s*1fr\)\))/);
+describe("§11.247 #2 → shifan P-fid3 — 2×2 고정 그리드(auto-fit 폐지)", () => {
+  it("grid-cols-2 고정 (side-col 반폭 일관 2×2)", () => {
+    // P-fid3: auto-fit minmax(280px) 가 side-col 반폭에서 1×4 로 무너짐(라이브 실측) →
+    //   grid-cols-2 고정으로 전환. 시안 빠른작업 2×2 정합.
+    expect(component).toMatch(/grid grid-cols-2/);
   });
 
-  it("기존 grid-cols-2 lg:grid-cols-4 제거 (auto-fit 으로 대체)", () => {
+  it("auto-fit / lg:grid-cols-4 회귀 차단", () => {
+    expect(component).not.toMatch(/grid-cols-\[repeat\(auto-fit/);
     expect(component).not.toMatch(/grid grid-cols-2 lg:grid-cols-4/);
   });
 });

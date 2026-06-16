@@ -12,8 +12,9 @@
  *   - 견적 발송 카드 Progressive Disclosure (§11.247) 보존.
  *   - count > 0 badge + href 모두 보존.
  *
- * canonical reference: ≥800px 에서 기존 auto-fit grid 유지 (desktop 4 carriers
- * 가 동일 row 안 배치). 모바일 (<800px) 만 2x2 강제.
+ * §dashboard-shifan-fidelity P-fid3 진화 — 라이브 실측 결과 auto-fit minmax(280px) 가
+ * side-col 반폭(~540px)에서 1×4 로 무너짐(시안 2×2 위반). grid-cols-2 고정으로 전환:
+ * 모바일·데스크탑 일관 2×2. 과대 sm:min-h-[140px] → 컴팩트 단일 min-h 로 전환.
  */
 
 import { describe, it, expect } from "vitest";
@@ -38,9 +39,11 @@ describe("§11.252a #1 — 모바일 2x2 grid (1열 fallback 제거)", () => {
     expect(code).toMatch(/grid-cols-2/);
   });
 
-  it("≥800px 또는 sm/md/lg breakpoint 에서 기존 auto-fit 또는 4열 분기 보존", () => {
-    // 데스크탑 4열 또는 auto-fit 보존 — sm: 또는 md: 또는 lg: 분기 안.
-    expect(code).toMatch(/(sm:|md:|lg:)(grid-cols|grid)/);
+  it("§dashboard-shifan-fidelity P-fid3 — side-col 반폭 2×2 고정(auto-fit 폐지)", () => {
+    // 라이브 실측: auto-fit minmax(280px) 가 side-col 반폭(~540px)에서 1×4 로 무너짐.
+    //   시안 빠른작업 정합 위해 grid-cols-2 고정(모바일·데스크탑 일관 2×2). auto-fit 회귀 차단.
+    expect(code).toMatch(/grid grid-cols-2/);
+    expect(code).not.toMatch(/grid-cols-\[repeat\(auto-fit/);
   });
 
   it("모바일 2x2 정합 — grid-cols-2 보존 (§11.252a 의도, §11.247/§11.364 마커 통합)", () => {
@@ -54,10 +57,10 @@ describe("§11.252a #2 — 카드 높이 모바일 축소 + 설명 1줄 축약",
     expect(code).toMatch(/(line-clamp-1|truncate)/);
   });
 
-  it("min-h 모바일 분기 (기존 min-h-[140px] 데스크탑만 + 모바일 축소)", () => {
-    // min-h-[140px] 보존하되 모바일 분기 또는 작은 min-h 추가.
-    //   sm:min-h-[140px] 또는 min-h-[100px] sm:min-h-[140px] 같은 분기.
-    expect(code).toMatch(/(min-h-\[100px\]|min-h-\[110px\]|min-h-\[120px\]|sm:min-h-\[140px\]|md:min-h-\[140px\])/);
+  it("§P-fid3 — 타일 컴팩트 단일 min-h (2×2 정합, 과대 min-h-[140px] 폐지)", () => {
+    // 2×2 고정 후 타일 컴팩트화: 단일 min-h (96~120px). 과대 sm:min-h-[140px] 폐지.
+    expect(code).toMatch(/(min-h-\[96px\]|min-h-\[100px\]|min-h-\[104px\]|min-h-\[110px\]|min-h-\[120px\])/);
+    expect(code).not.toMatch(/sm:min-h-\[140px\]/);
   });
 });
 
