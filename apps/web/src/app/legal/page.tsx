@@ -30,6 +30,7 @@ const DEFAULT_ID = "terms";
 export default function LegalHubPage() {
   const [activeId, setActiveId] = useState<string>(DEFAULT_ID);
   const [showTop, setShowTop] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
   const switchRef = useRef<HTMLDivElement>(null);
   const indRef = useRef<HTMLSpanElement>(null);
 
@@ -76,6 +77,26 @@ export default function LegalHubPage() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // 조항 앵커 딥링크 복사 + 토스트(지시문 ②) — "약관 제13조"를 정확히 공유.
+  const copyAnchor = useCallback((anchor: string) => {
+    const url = `${window.location.origin}/legal#${anchor}`;
+    history.replaceState(null, "", `#${anchor}`);
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(url)
+        .then(() => setToast("조항 링크가 복사되었습니다"))
+        .catch(() => setToast("복사에 실패했습니다"));
+    } else {
+      setToast("복사에 실패했습니다");
+    }
+  }, []);
+
+  // 토스트 자동 해제.
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 2000);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   const doc = LEGAL_DOC_MAP[activeId] ?? LEGAL_DOCS[0]!;
   const minutes = useMemo(() => readingMinutes(doc), [doc]);
@@ -208,7 +229,15 @@ export default function LegalHubPage() {
                   <section key={anchor} id={anchor} className="legal-section">
                     <h2>
                       <span className="legal-section-no">{s.no}</span>
-                      {s.title}
+                      <span className="legal-h2-title">{s.title}</span>
+                      <button
+                        type="button"
+                        className="legal-anchor-btn"
+                        aria-label={`${s.no} 링크 복사`}
+                        onClick={() => copyAnchor(anchor)}
+                      >
+                        #
+                      </button>
                     </h2>
                     {s.body}
                   </section>
@@ -237,6 +266,11 @@ export default function LegalHubPage() {
         >
           <ArrowUp className="h-5 w-5" />
         </button>
+      )}
+
+      {/* 조항 링크 복사 토스트(지시문 ②) */}
+      {toast && (
+        <div className="legal-toast" role="status" aria-live="polite">{toast}</div>
       )}
 
       {/* 허브 전용 스타일(콘텐츠/표현 분리 — .legal-prose 가 본문 styling 소유) */}
@@ -271,7 +305,14 @@ export default function LegalHubPage() {
         .legal-prose td:first-child { color: #121a2c; font-weight: 500; }
         .legal-ind { position: absolute; top: 4px; bottom: 4px; left: 0; border-radius: 8px; background: linear-gradient(135deg, #3b6ee5, #4f7cea); transition: transform .28s cubic-bezier(.4,0,.2,1), width .28s cubic-bezier(.4,0,.2,1); z-index: 0; }
         @media (prefers-reduced-motion: reduce) { .legal-ind { transition: none; } }
-        @media print { .legal-paper { background: #fff; } }
+        .legal-anchor-btn { opacity: 0; margin-left: 4px; color: #3b6ee5; font-weight: 700; font-size: 14px; line-height: 1; cursor: pointer; transition: opacity .15s; }
+        .legal-section:hover .legal-anchor-btn, .legal-anchor-btn:focus-visible { opacity: 1; }
+        .legal-body { animation: legalSwap .32s cubic-bezier(.4,0,.2,1); }
+        @keyframes legalSwap { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        .legal-toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: #0a1124; color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; box-shadow: 0 10px 28px -10px rgba(0,0,0,.45); z-index: 50; animation: legalToast .25s ease; }
+        @keyframes legalToast { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+        @media (prefers-reduced-motion: reduce) { .legal-body, .legal-toast { animation: none; } }
+        @media print { .legal-paper { background: #fff; } .legal-anchor-btn, .legal-toast { display: none; } }
       `}</style>
     </MainLayout>
   );

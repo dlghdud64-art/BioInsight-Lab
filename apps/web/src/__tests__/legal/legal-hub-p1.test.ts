@@ -82,3 +82,24 @@ describe("§P-leg P1 (B) — 허브 셸 배선", () => {
     expect(PAGE).toMatch(/<MainFooter \/>/);
   });
 });
+
+describe("§P-leg P2 — 고도화 인터랙션(앵커 복사·토스트·크로스페이드)", () => {
+  it("② 조항 앵커 딥링크 복사 + clipboard + 토스트", () => {
+    expect(PAGE).toMatch(/copyAnchor/);
+    expect(PAGE).toMatch(/navigator\.clipboard/);
+    expect(PAGE).toMatch(/조항 링크가 복사되었습니다/);
+    expect(PAGE).toMatch(/legal-anchor-btn/);
+  });
+  it("② 토스트 element(role=status, aria-live) + 자동 해제", () => {
+    expect(PAGE).toMatch(/legal-toast/);
+    expect(PAGE).toMatch(/role="status"/);
+    expect(PAGE).toMatch(/setToast\(null\)/);
+  });
+  it("④ 탭 전환 크로스페이드(legalSwap) + reduced-motion 존중", () => {
+    expect(PAGE).toMatch(/legalSwap/);
+    expect(PAGE).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.legal-body/);
+  });
+  it("인쇄 시 앵커/토스트 숨김(법무 출력 정합)", () => {
+    expect(PAGE).toMatch(/@media print[\s\S]{0,120}legal-anchor-btn/);
+  });
+});
