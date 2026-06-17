@@ -21,6 +21,7 @@ const read = (rel: string) => readFileSync(join(REPO_ROOT, rel), "utf8");
 const STAT = read("src/components/dashboard/stat-line.tsx");
 const PIPE = read("src/components/dashboard/pipeline.tsx");
 const EMPTY = read("src/components/dashboard/global-empty.tsx");
+const CAT = read("src/components/dashboard/category-distribution-card.tsx");
 
 // ── (A1) StatLine KPI 아이콘 틴트 ─────────────────────────────────────────
 describe("§dashboard-shifan-polish A1 — StatLine 아이콘 구분 강화", () => {
@@ -77,5 +78,20 @@ describe("§dashboard-shifan-polish A7 — GlobalEmpty 카피 구체화", () => 
     expect(EMPTY).toMatch(/빈 상태로 정직하게/);
     expect(EMPTY).toMatch(/min-h-\[44px\]/);
     expect(EMPTY).not.toMatch(/MOCKUP|mockup/);
+  });
+});
+
+// ── (A5/B1) 카테고리 empty 높이 reserve + 분포 암시 금지 ───────────────────
+describe("§dashboard-shifan-polish A5/B1 — 카테고리 empty 차트높이 reserve + 분포 암시 0", () => {
+  it("empty 가 차트 실높이 reserve(min-h) + 중앙 안내(CLS 방지)", () => {
+    // 납작 squash 방지 + 데이터 들어와도 카드 높이 불변(레이아웃 점프 0).
+    expect(CAT).toMatch(/min-h-\[180px\]/);
+    expect(CAT).toMatch(/items-center justify-center/);
+    expect(CAT).toMatch(/발주가 시작되면 카테고리 분포가 표시됩니다/);
+  });
+  it("empty skeleton = 동일 길이 bar(flex-1) — 가짜 분포(막대별 inline width) 금지", () => {
+    // 길이 차등 막대 = 가짜 분포 암시 → 금지(시안 42/25/20/13% 재발 차단). 라벨만 + 동일 길이.
+    expect(CAT).not.toMatch(/style=\{\{\s*width/);
+    expect(CAT).not.toMatch(/const MOCKUP_CATEGORY/);
   });
 });

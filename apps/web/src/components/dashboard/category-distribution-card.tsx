@@ -118,13 +118,24 @@ export function CategoryDistributionCard({ categorySpending, className, bare }: 
            이전 §11.243b#4 회색 mockup 도넛 + "예시 데이터" overlay 는 빈 계정에 가짜
            분포(42/25/20/13%)를 그려 정직성 위반. SpendTrendCard 패턴으로 정합 —
            차트 미렌더 + 컴팩트 "데이터 쌓이면 표시" 정직 empty. mock 0. */
-        <div className="flex h-[160px] flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 text-center">
+        <div className="flex min-h-[180px] flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-5 text-center">
           <p className="text-sm font-semibold text-slate-600 mb-1">
             발주가 시작되면 카테고리 분포가 표시됩니다
           </p>
-          <p className="text-[11px] text-slate-400 break-keep">
+          <p className="text-[11px] text-slate-400 break-keep mb-3">
             첫 지출이 기록되면 카테고리별 비중이 자동으로 그려집니다.
           </p>
+          {/* §dashboard-shifan-polish — 차트 실높이만큼 영역 reserve(데이터 시 카드 높이 안 튐, CLS 방지).
+              skeleton 은 분포 암시 0: 모든 bar 동일 길이(flex-1, inline width 미사용) + 라벨만.
+              길이 차등 = 가짜 분포이므로 금지(시안 예시 분포 재발 차단). */}
+          <div className="w-full max-w-[200px] space-y-1.5" aria-hidden>
+            {["시약", "소모품", "장비", "기타"].map((label) => (
+              <div key={label} className="flex items-center gap-2">
+                <span className="w-10 shrink-0 text-left text-[10px] text-slate-400">{label}</span>
+                <span className="h-2 flex-1 rounded-full bg-slate-200" />
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-center flex-1">
