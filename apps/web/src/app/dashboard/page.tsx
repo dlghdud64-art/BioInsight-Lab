@@ -739,28 +739,28 @@ function DashboardPageInner() {
       {/* §dashboard-shifan-adopt P3b — 시안 중단 2-col: 예산&지출 집행률 카드(좌) + 빠른작업(우).
           예산집행률 = canonical summary.budget 단일 진실(미설정→"미설정" 정직, 가짜 집행률 0).
           지출 트렌드 + 카테고리 도넛은 하단으로 이동(아래, 최근활동 뒤). */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
         <BudgetSpendCard
           state={summarySection.state}
           summary={summarySection.data}
           onRetry={summarySection.retry}
           categorySpending={stats.categorySpending}
         />
-        {/* §dashboard-shifan-fidelity P-fid1 — 우측 side-col: 빠른작업 + 최근활동 세로 스택(시안 정합).
-            예산&지출(좌) 높이와 자동 정합(좌우 높낮이 불일치 해소). */}
-        <div className="space-y-4">
-          {/* §11.93 — 운영 바로가기(빠른작업). canonical truth: stats forward, count mutation 0. */}
-          <OperatorQuickActions
-            counts={{
-              quotes: stats.activeQuotes,
-              purchases: stats.respondedQuotes,
-              receiving: stats.compareStats.purchaseToReceivingCount,
-              inventory: stats.lowStockAlerts,
-            }}
-          />
-          <RecentActivityCard />
-        </div>
+        {/* §dashboard-rightcol-rebalance(호영님) — 우측 = 운영 바로가기 단독(세로 1열, 좌측 예산+도넛
+            높이까지 auto-rows-fr 로 채움). 최근활동은 2-col 아래 풀폭으로 이동(가로 확대). */}
+        {/* §11.93 — 운영 바로가기(빠른작업). canonical truth: stats forward, count mutation 0. */}
+        <OperatorQuickActions
+          counts={{
+            quotes: stats.activeQuotes,
+            purchases: stats.respondedQuotes,
+            receiving: stats.compareStats.purchaseToReceivingCount,
+            inventory: stats.lowStockAlerts,
+          }}
+        />
       </div>
+
+      {/* §dashboard-rightcol-rebalance(호영님) — 최근활동 풀폭(좁은 side-col 탈출 → 활동 로그 가로 확대·가독성↑). */}
+      <RecentActivityCard />
 
       {/* §dashboard-shifan-adopt P3a — Pipeline은 ActionInbox 직후로 상승(위 참조). 원위치 제거.
           중단=차트(예산&지출)+빠른작업, 하단=최근활동 순(시안 흐름). */}

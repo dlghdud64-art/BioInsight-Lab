@@ -32,23 +32,20 @@ const COMPONENT_PATH = resolve(
 
 const code = safeRead(COMPONENT_PATH);
 
-describe("§11.252a #1 — 모바일 2x2 grid (1열 fallback 제거)", () => {
-  it("grid 안 모바일 grid-cols-2 명시 (1열 fallback 차단)", () => {
-    // 호영님 spec 충족: 모바일 viewport <800px 에서 1열 → 2열 (2x2).
-    // grid-cols-2 가 default 또는 모바일 분기로 명시.
-    expect(code).toMatch(/grid-cols-2/);
+describe("§11.252a → §dashboard-rightcol-rebalance — 우측 단독 세로 1열(호영님)", () => {
+  it("grid-cols-1 세로 1열 (구 2×2 side-col 폐지)", () => {
+    // 우측 = 빠른작업 단독(최근활동 풀폭 분리) → 세로 1열로 좌측(예산+도넛) 높이까지 채움.
+    expect(code).toMatch(/grid grid-cols-1/);
+    expect(code).not.toMatch(/grid grid-cols-2/);
   });
 
-  it("§dashboard-shifan-fidelity P-fid3 — side-col 반폭 2×2 고정(auto-fit 폐지)", () => {
-    // 라이브 실측: auto-fit minmax(280px) 가 side-col 반폭(~540px)에서 1×4 로 무너짐.
-    //   시안 빠른작업 정합 위해 grid-cols-2 고정(모바일·데스크탑 일관 2×2). auto-fit 회귀 차단.
-    expect(code).toMatch(/grid grid-cols-2/);
+  it("auto-rows-fr + flex-1 로 컬럼 높이 균등 분할(좌측 정합)", () => {
+    expect(code).toMatch(/auto-rows-fr/);
+    expect(code).toMatch(/flex h-full flex-col/);
+  });
+
+  it("auto-fit 회귀 차단", () => {
     expect(code).not.toMatch(/grid-cols-\[repeat\(auto-fit/);
-  });
-
-  it("모바일 2x2 정합 — grid-cols-2 보존 (§11.252a 의도, §11.247/§11.364 마커 통합)", () => {
-    // §11.364: trace marker(§11.252a)가 §11.247 로 통합. 기능 보존 증거 = grid-cols-2(모바일 2x2).
-    expect(code).toMatch(/grid-cols-2/);
   });
 });
 

@@ -32,10 +32,11 @@ describe("§11.364 D-1 — Progressive Disclosure 폐기 (순수 네비 강등)"
 });
 
 describe("§11.247 #2 → shifan P-fid3 — 2×2 고정 그리드(auto-fit 폐지)", () => {
-  it("grid-cols-2 고정 (side-col 반폭 일관 2×2)", () => {
-    // P-fid3: auto-fit minmax(280px) 가 side-col 반폭에서 1×4 로 무너짐(라이브 실측) →
-    //   grid-cols-2 고정으로 전환. 시안 빠른작업 2×2 정합.
-    expect(component).toMatch(/grid grid-cols-2/);
+  it("§dashboard-rightcol-rebalance — 우측 단독 세로 1열(grid-cols-1)", () => {
+    // 우측 = 빠른작업 단독(최근활동 풀폭 분리) → 세로 1열 + auto-rows-fr 로 좌측 높이 채움.
+    //   (구 P-fid3 2×2 side-col 폐지). auto-fit 회귀 차단(아래).
+    expect(component).toMatch(/grid grid-cols-1/);
+    expect(component).not.toMatch(/grid grid-cols-2/);
   });
 
   it("auto-fit / lg:grid-cols-4 회귀 차단", () => {

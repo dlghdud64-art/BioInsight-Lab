@@ -95,16 +95,16 @@ export function OperatorQuickActions({
   counts,
 }: OperatorQuickActionsProps = {}) {
   return (
-    <div>
+    <div className="flex h-full flex-col">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-[13px] font-extrabold text-slate-900">운영 바로가기</h3>
         <p className="text-[11px] text-slate-500 break-keep">
           가장 자주 쓰는 운영 동선 4개
         </p>
       </div>
-      {/* §dashboard-shifan-fidelity P-fid3 — side-col(반폭) 2×2 고정. auto-fit가 반폭(~540px)에서
-          1×4로 무너지던 것 시정(라이브 실측). 모바일·데스크탑 일관 2×2(시안 빠른작업 정합). */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* §dashboard-rightcol-rebalance(호영님) — 우측 단독 컬럼에서 세로 1열로 좌측(예산+도넛) 높이까지
+          채움. flex-1 + auto-rows-fr 로 4 타일이 컬럼 높이 균등 분할. (구 P-fid3 2×2 side-col 폐지) */}
+      <div className="grid grid-cols-1 gap-3 flex-1 auto-rows-fr">
         {ACTIONS.map((action) => {
           const Icon = action.icon;
           // §11.243 #5 — count display-only (caller forward).

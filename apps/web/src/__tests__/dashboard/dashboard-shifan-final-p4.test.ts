@@ -38,11 +38,11 @@ describe("§dashboard-shifan-adopt P4 (A) — 시안 최종 순서", () => {
 
 // ── (B) 중단 2-col 반응형 ────────────────────────────────────────────────
 describe("§dashboard-shifan-adopt P4 (B) — 중단 2-col 반응형", () => {
-  it("grid-cols-1 lg:grid-cols-2 (모바일 stack → 데스크탑 2-col) + side-col(빠른작업+최근활동)", () => {
-    // §dashboard-shifan-fidelity P-fid1 — 우측 side-col 래퍼로 window 확장 + 최근활동 스택 정합.
-    // §dashboard-shifan-polish A5/B1 — categorySpending prop 추가로 블록 거리 증가 → 460→580 확장.
+  it("grid-cols-1 lg:grid-cols-2 (모바일 stack → 데스크탑 2-col) + 빠른작업 우 단독·최근활동 풀폭", () => {
+    // §dashboard-rightcol-rebalance(호영님) — 우측 side-col 폐지: 우측 = 빠른작업 단독(세로 1열),
+    //   최근활동은 2-col 아래 풀폭(가로 확대). 순서(예산→빠른작업→최근활동) 보존.
     expect(PAGE).toMatch(/grid grid-cols-1 lg:grid-cols-2[\s\S]{0,260}<BudgetSpendCard[\s\S]{0,580}<OperatorQuickActions/);
-    expect(PAGE).toMatch(/<OperatorQuickActions[\s\S]{0,460}<RecentActivityCard/);
+    expect(PAGE).toMatch(/<OperatorQuickActions[\s\S]{0,460}<RecentActivityCard/); // 순서 보존(풀폭 이동)
   });
   it("예산 카드 summarySection 단일 진실 주입(신규 fetch 0)", () => {
     expect(PAGE).toMatch(/<BudgetSpendCard[\s\S]{0,120}state=\{summarySection\.state\}/);

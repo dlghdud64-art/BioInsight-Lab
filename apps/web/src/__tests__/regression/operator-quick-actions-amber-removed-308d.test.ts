@@ -90,7 +90,9 @@ describe("§11.364 — 회귀 0 (4 카드 구조 + wiring)", () => {
     // 라이브 실측: auto-fit 가 side-col 반폭에서 1×4 로 무너짐 → grid-cols-2 고정.
     //   과대 sm:min-h-[140px] → 컴팩트 단일 min-h. auto-fit/과대 min-h 회귀 차단.
     const src = read(PATH);
-    expect(src).toMatch(/grid grid-cols-2/);
+    // §dashboard-rightcol-rebalance — 우측 단독 세로 1열(구 2×2 side-col 폐지).
+    expect(src).toMatch(/grid grid-cols-1/);
+    expect(src).not.toMatch(/grid grid-cols-2/);
     expect(src).not.toMatch(/grid-cols-\[repeat\(auto-fit/);
     expect(src).toMatch(/min-h-\[(96|100|104|110|120)px\]/);
     expect(src).not.toMatch(/sm:min-h-\[140px\]/);

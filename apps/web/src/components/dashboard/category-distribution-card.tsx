@@ -107,7 +107,7 @@ export function CategoryDistributionCard({ categorySpending, className, bare }: 
               총 지출
             </p>
             <p className="text-sm font-bold text-slate-900 tabular-nums">
-              ₩{(total / 1_000_000).toFixed(1)}M
+              ₩{total.toLocaleString("ko-KR")}
             </p>
           </div>
         )}

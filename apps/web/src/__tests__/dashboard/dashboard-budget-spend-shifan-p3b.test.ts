@@ -26,12 +26,11 @@ describe("§dashboard-shifan-adopt P3b (A) — 중단 2-col 재구성", () => {
     expect(PAGE).toMatch(/import \{ BudgetSpendCard \} from "@\/components\/dashboard\/budget-spend-card"/);
     expect(PAGE).toMatch(/<BudgetSpendCard/);
   });
-  it("2-col: BudgetSpendCard → side-col(OperatorQuickActions + RecentActivity) (lg:grid-cols-2)", () => {
-    // §dashboard-shifan-fidelity P-fid1 — 우측 side-col(빠른작업+최근활동) 래퍼로 거리 늘어 window 확장.
-    // §dashboard-shifan-polish A5/B1 — BudgetSpendCard 에 categorySpending prop 추가(카드 내부 카테고리)로
-    //   블록 거리 증가 → window 460→580 확장(2-col 순서 의도 동일, 거리는 incidental).
+  it("2-col: BudgetSpendCard(좌) → OperatorQuickActions(우 단독) + RecentActivity 풀폭 하단", () => {
+    // §dashboard-rightcol-rebalance(호영님) — 우측 side-col 폐지: 우측 = 빠른작업 단독(세로 1열),
+    //   최근활동은 2-col 아래 풀폭으로 이동(가로 확대). 순서(예산→빠른작업→최근활동) 보존.
     expect(PAGE).toMatch(/lg:grid-cols-2[\s\S]{0,240}<BudgetSpendCard[\s\S]{0,580}<OperatorQuickActions/);
-    expect(PAGE).toMatch(/<OperatorQuickActions[\s\S]{0,460}<RecentActivityCard/);
+    expect(PAGE).toMatch(/<OperatorQuickActions[\s\S]{0,460}<RecentActivityCard/); // 순서 보존(풀폭 이동, 거리 incidental)
   });
   it("BudgetSpendCard = summarySection 단일 진실 주입(신규 fetch 0)", () => {
     expect(PAGE).toMatch(/<BudgetSpendCard[\s\S]{0,120}state=\{summarySection\.state\}/);
