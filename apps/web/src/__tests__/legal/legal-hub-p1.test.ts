@@ -183,3 +183,14 @@ describe("§P-leg 스크롤 진행바(지시문)", () => {
     expect(PAGE).toMatch(/className="legal-progress"[\s\S]{0,80}aria-hidden/);
   });
 });
+
+describe("§P-leg ⑤ 도트 모티프(지시문)", () => {
+  it("히어로 우상단 도트 element(장식 aria-hidden) + relative z-10 콘텐츠", () => {
+    expect(PAGE).toMatch(/className="legal-hero-dots" aria-hidden/);
+    expect(PAGE).toMatch(/pt-8 md:pt-16 relative z-10/);
+  });
+  it("radial-gradient 도트 + 마스크 페이드 CSS", () => {
+    expect(PAGE).toMatch(/\.legal-hero-dots \{ position: absolute;[\s\S]{0,200}radial-gradient\(circle/);
+    expect(PAGE).toMatch(/mask-image: radial-gradient\(ellipse at top right/);
+  });
+});

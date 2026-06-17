@@ -162,7 +162,10 @@ export default function LegalHubPage() {
       <div ref={progressRef} className="legal-progress" data-legal-theme={theme} aria-hidden />
 
       {/* ── 히어로 + 문서 스위처 + 메타바 ── */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 md:pt-16">
+      <div className="relative">
+        {/* §P-leg ⑤ 도트 모티프 — 히어로 우상단 네트워크 배경(radial-gradient 도트 + 마스크 페이드). 장식. */}
+        <div className="legal-hero-dots" aria-hidden />
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 md:pt-16 relative z-10">
         <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8794AA] mb-3">
           법적 고지 · Legal
         </div>
@@ -227,6 +230,7 @@ export default function LegalHubPage() {
               인쇄 · PDF
             </button>
           </div>
+        </div>
         </div>
       </div>
 
@@ -402,6 +406,12 @@ export default function LegalHubPage() {
         .legal-progress { position: fixed; top: 0; left: 0; height: 3px; width: 0; z-index: 120; background: linear-gradient(90deg, #6f97ee, #3b6ee5); box-shadow: 0 0 12px rgba(59,110,229,.45); transition: width .12s linear; pointer-events: none; }
         .legal-progress[data-legal-theme="dark"] { background: linear-gradient(90deg, #5b86f0, #3b6ee5); box-shadow: 0 0 12px rgba(59,110,229,.5); }
         @media (prefers-reduced-motion: reduce) { .legal-progress { transition: none; } }
+        /* §P-leg ⑤ 도트 모티프 — 히어로 우상단 네트워크 배경. radial 도트 + 마스크 페이드. 장식(z 0, 텍스트 뒤). */
+        .legal-hero-dots { position: absolute; top: 0; right: 0; width: 360px; height: 220px; z-index: 0; pointer-events: none;
+          background-image: radial-gradient(circle, rgba(91,134,240,0.30) 1.2px, transparent 1.7px); background-size: 18px 18px;
+          -webkit-mask-image: radial-gradient(ellipse at top right, #000 28%, transparent 72%);
+          mask-image: radial-gradient(ellipse at top right, #000 28%, transparent 72%); }
+        @media (max-width: 640px) { .legal-hero-dots { width: 200px; height: 150px; } }
         /* 인쇄 — 다크여도 항상 라이트 출력(지시문 ⑦) */
         @media print {
           .legal-paper, .legal-paper[data-legal-theme="dark"] { background: #fff; }
