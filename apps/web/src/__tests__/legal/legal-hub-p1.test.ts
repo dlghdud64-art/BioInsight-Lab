@@ -107,11 +107,13 @@ describe("§P-leg P2 — 고도화 인터랙션(앵커 복사·토스트·크로
 });
 
 describe("§P-leg P3 — 다크 리딩 모드(지시문 ⑦)", () => {
-  it("theme state + 토글 + localStorage + prefers-color-scheme 초기화", () => {
+  it("theme state + 토글 + localStorage(기본 라이트 고정, OS 자동다크 제거)", () => {
     expect(PAGE).toMatch(/useState<"light" \| "dark">/);
     expect(PAGE).toMatch(/toggleTheme/);
     expect(PAGE).toMatch(/lab_legal_theme/);
-    expect(PAGE).toMatch(/prefers-color-scheme: dark/);
+    // §기본 라이트 고정(호영님) — init 에서 prefers-color-scheme 자동 다크 제거. localStorage="dark"만 override.
+    expect(PAGE).not.toMatch(/prefers-color-scheme: dark/);
+    expect(PAGE).toMatch(/getItem\("lab_legal_theme"\) === "dark"/);
   });
   it("본문 paper 에 data-legal-theme 적용 + 토글 버튼(aria-pressed)", () => {
     expect(PAGE).toMatch(/data-legal-theme=\{theme\}/);
@@ -149,5 +151,35 @@ describe("§P-leg P4 — 라우팅 cutover(구 페이지 → /legal#앵커)", ()
     expect(footer).toMatch(/\/legal#policy/);
     expect(footer).not.toMatch(/href="\/operations-policy"/);
     expect(footer).not.toMatch(/href:\s*"\/terms"/);
+  });
+});
+
+describe("§P-leg 모바일 최적화(호영님)", () => {
+  it("문서 스위처 wrap 금지 → 가로 스크롤(슬라이딩 인디케이터 Y 깨짐 방지)", () => {
+    expect(PAGE).toMatch(/@media \(max-width: 640px\)/);
+    expect(PAGE).toMatch(/\.legal-switch \{ max-width: 100%; overflow-x: auto/);
+    expect(PAGE).not.toMatch(/\.legal-switch \{ flex-wrap: wrap/);
+  });
+  it("모바일 본문/표 폰트·패딩 최적화", () => {
+    expect(PAGE).toMatch(/@media \(max-width: 640px\)[\s\S]{0,400}\.legal-prose \{ font-size: 14px/);
+  });
+});
+
+describe("§P-leg 스크롤 진행바(지시문)", () => {
+  it("진행바 element + ref + 읽은 비율 계산(분모 0 가드)", () => {
+    expect(PAGE).toMatch(/className="legal-progress"/);
+    expect(PAGE).toMatch(/progressRef/);
+    expect(PAGE).toMatch(/scrollHeight - window\.innerHeight/);
+    expect(PAGE).toMatch(/h > 0 \?/); // 분모 0 → 0%
+  });
+  it("passive 스크롤 + resize + 초기 1회", () => {
+    expect(PAGE).toMatch(/addEventListener\("scroll", onScroll, \{ passive: true \}\)/);
+    expect(PAGE).toMatch(/addEventListener\("resize", onScroll\)/);
+  });
+  it("CSS — fixed top z-120 + 그라데이션 + 다크 액센트 + 인쇄 숨김 + 장식(aria-hidden)", () => {
+    expect(PAGE).toMatch(/\.legal-progress \{ position: fixed; top: 0;[\s\S]{0,120}z-index: 120/);
+    expect(PAGE).toMatch(/\.legal-progress\[data-legal-theme="dark"\] \{ background: linear-gradient\(90deg, #5b86f0/);
+    expect(PAGE).toMatch(/legal-anchor-btn, \.legal-toast, \.legal-progress \{ display: none/);
+    expect(PAGE).toMatch(/className="legal-progress"[\s\S]{0,80}aria-hidden/);
   });
 });

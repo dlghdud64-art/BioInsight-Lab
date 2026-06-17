@@ -34,6 +34,7 @@ export default function LegalHubPage() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const switchRef = useRef<HTMLDivElement>(null);
   const indRef = useRef<HTMLSpanElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
 
   // 해시 라우팅: #privacy / #privacy-5 진입 시 문서 선택(+ 앵커 스크롤).
   useEffect(() => {
@@ -99,13 +100,12 @@ export default function LegalHubPage() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  // 다크 리딩 모드 초기화(localStorage 우선, 없으면 OS prefers-color-scheme) — 지시문 ⑦.
+  // 다크 리딩 모드 초기화 — §P-leg 기본 라이트 고정(호영님). OS prefers-color-scheme 자동 다크
+  //   제거: 사용자가 명시적으로 토글한 경우(localStorage="dark")만 다크 유지. 기본은 항상 라이트.
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("lab_legal_theme");
-      if (saved === "dark" || saved === "light") { setTheme(saved); return; }
+      if (localStorage.getItem("lab_legal_theme") === "dark") setTheme("dark");
     } catch { /* 차단 환경 — 기본 light */ }
-    if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) setTheme("dark");
   }, []);
 
   const toggleTheme = useCallback(() => {
@@ -114,6 +114,25 @@ export default function LegalHubPage() {
       try { localStorage.setItem("lab_legal_theme", next); } catch { /* noop */ }
       return next;
     });
+  }, []);
+
+  // §스크롤 진행바(지시문) — 읽은 비율 = scrollY ÷ (scrollHeight − innerHeight) × 100. 분모 0 → 0%.
+  //   passive 스크롤 리스너 + resize + 초기 1회. 장식(aria-hidden).
+  useEffect(() => {
+    const bar = progressRef.current;
+    if (!bar) return;
+    const onScroll = () => {
+      const h = document.documentElement.scrollHeight - window.innerHeight;
+      const p = h > 0 ? (window.scrollY / h) * 100 : 0;
+      bar.style.width = `${Math.min(100, Math.max(0, p))}%`;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    onScroll();
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
   }, []);
 
   const doc = LEGAL_DOC_MAP[activeId] ?? LEGAL_DOCS[0]!;
@@ -139,8 +158,11 @@ export default function LegalHubPage() {
     <MainLayout>
       <MainHeader />
 
+      {/* §스크롤 진행바(지시문) — 뷰포트 최상단 고정. 장식이라 aria-hidden. 다크 액센트 자동. */}
+      <div ref={progressRef} className="legal-progress" data-legal-theme={theme} aria-hidden />
+
       {/* ── 히어로 + 문서 스위처 + 메타바 ── */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-16">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 md:pt-16">
         <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8794AA] mb-3">
           법적 고지 · Legal
         </div>
@@ -361,17 +383,31 @@ export default function LegalHubPage() {
         .legal-paper[data-legal-theme="dark"] .legal-toc-item { color: #9aa6c2; }
         .legal-paper[data-legal-theme="dark"] .legal-toc-item:hover { background: #16284c; color: #e7edf8; }
         .legal-paper[data-legal-theme="dark"] .legal-toc-select { background: #0f1b34; color: #e7edf8; border-color: #2a3a5e; }
-        /* §P-leg P3 — 모바일 견고화(≤640px): 히어로/탭 폭 안전 + 본문 패딩 */
+        /* §P-leg 모바일 최적화(≤640px, 호영님) */
         @media (max-width: 640px) {
-          .legal-switch { flex-wrap: wrap; }
-          .legal-grid { gap: 16px; }
+          /* 문서 스위처: wrap 금지(슬라이딩 인디케이터 Y 미보정으로 깨짐) → 가로 스크롤 */
+          .legal-switch { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+          .legal-switch::-webkit-scrollbar { display: none; }
+          .legal-switch button { white-space: nowrap; flex-shrink: 0; }
+          .legal-grid { gap: 14px; }
+          .legal-prose { font-size: 14px; line-height: 1.7; }
+          .legal-prose h2 { font-size: 16px; }
+          .legal-section { padding: 18px 0; }
+          .legal-prose ol, .legal-prose ul { padding-left: 18px; }
+          .legal-prose table { font-size: 12px; min-width: 460px; }
+          .legal-toc-select { font-size: 15px; padding: 12px; }
+          .legal-toc-sticky { position: static; }
         }
+        /* §스크롤 진행바(지시문) — 뷰포트 최상단 고정, 네비(z 100) 위. 다크 액센트 자동. */
+        .legal-progress { position: fixed; top: 0; left: 0; height: 3px; width: 0; z-index: 120; background: linear-gradient(90deg, #6f97ee, #3b6ee5); box-shadow: 0 0 12px rgba(59,110,229,.45); transition: width .12s linear; pointer-events: none; }
+        .legal-progress[data-legal-theme="dark"] { background: linear-gradient(90deg, #5b86f0, #3b6ee5); box-shadow: 0 0 12px rgba(59,110,229,.5); }
+        @media (prefers-reduced-motion: reduce) { .legal-progress { transition: none; } }
         /* 인쇄 — 다크여도 항상 라이트 출력(지시문 ⑦) */
         @media print {
           .legal-paper, .legal-paper[data-legal-theme="dark"] { background: #fff; }
           .legal-paper[data-legal-theme="dark"] .legal-prose,
           .legal-paper[data-legal-theme="dark"] .legal-prose * { color: #121a2c !important; }
-          .legal-anchor-btn, .legal-toast { display: none; }
+          .legal-anchor-btn, .legal-toast, .legal-progress { display: none; }
         }
       `}</style>
     </MainLayout>
