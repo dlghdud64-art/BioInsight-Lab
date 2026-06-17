@@ -16,7 +16,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { MainLayout } from "../_components/main-layout";
 import { MainHeader } from "../_components/main-header";
 import { MainFooter } from "../_components/main-footer";
-import { Printer, ArrowUp } from "lucide-react";
+import { Printer, ArrowUp, Sun, Moon } from "lucide-react";
 import { LEGAL_DOCS, LEGAL_DOC_MAP, legalAnchorId, type LegalDoc } from "@/lib/legal/legal-docs";
 
 /** 본문 글자 수로 예상 읽기 시간(550자/분, 지시문 ③). */
@@ -31,6 +31,7 @@ export default function LegalHubPage() {
   const [activeId, setActiveId] = useState<string>(DEFAULT_ID);
   const [showTop, setShowTop] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
   const switchRef = useRef<HTMLDivElement>(null);
   const indRef = useRef<HTMLSpanElement>(null);
 
@@ -97,6 +98,23 @@ export default function LegalHubPage() {
     const t = setTimeout(() => setToast(null), 2000);
     return () => clearTimeout(t);
   }, [toast]);
+
+  // 다크 리딩 모드 초기화(localStorage 우선, 없으면 OS prefers-color-scheme) — 지시문 ⑦.
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("lab_legal_theme");
+      if (saved === "dark" || saved === "light") { setTheme(saved); return; }
+    } catch { /* 차단 환경 — 기본 light */ }
+    if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) setTheme("dark");
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+      try { localStorage.setItem("lab_legal_theme", next); } catch { /* noop */ }
+      return next;
+    });
+  }, []);
 
   const doc = LEGAL_DOC_MAP[activeId] ?? LEGAL_DOCS[0]!;
   const minutes = useMemo(() => readingMinutes(doc), [doc]);
@@ -167,19 +185,31 @@ export default function LegalHubPage() {
           <span className="rounded-md bg-[#16284c] px-1.5 py-0.5 font-semibold text-[#a9c2f5]">{doc.version}</span>
           <span className="text-[#46506a]">·</span>
           <span>약 {minutes}분 분량</span>
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-[#1E2D40] px-2.5 py-1 font-semibold text-[#BAC6D9] transition-colors hover:bg-[#16284c]"
-          >
-            <Printer className="h-3.5 w-3.5" />
-            인쇄 · PDF
-          </button>
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={theme === "dark" ? "라이트 모드로 전환" : "다크 모드로 전환"}
+              aria-pressed={theme === "dark"}
+              className="inline-flex items-center gap-1.5 rounded-md border border-[#1E2D40] px-2.5 py-1 font-semibold text-[#BAC6D9] transition-colors hover:bg-[#16284c]"
+            >
+              {theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+              {theme === "dark" ? "라이트" : "다크"}
+            </button>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="inline-flex items-center gap-1.5 rounded-md border border-[#1E2D40] px-2.5 py-1 font-semibold text-[#BAC6D9] transition-colors hover:bg-[#16284c]"
+            >
+              <Printer className="h-3.5 w-3.5" />
+              인쇄 · PDF
+            </button>
+          </div>
         </div>
       </div>
 
       {/* ── 라이트 본문 영역(목차 + 본문) ── */}
-      <div className="legal-paper mt-8">
+      <div className="legal-paper mt-8" data-legal-theme={theme}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
           <div className="legal-grid">
             {/* 스티키 목차(920↓ select) */}
@@ -312,7 +342,37 @@ export default function LegalHubPage() {
         .legal-toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: #0a1124; color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; box-shadow: 0 10px 28px -10px rgba(0,0,0,.45); z-index: 50; animation: legalToast .25s ease; }
         @keyframes legalToast { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
         @media (prefers-reduced-motion: reduce) { .legal-body, .legal-toast { animation: none; } }
-        @media print { .legal-paper { background: #fff; } .legal-anchor-btn, .legal-toast { display: none; } }
+        /* §P-leg P3 — 다크 리딩 모드(지시문 ⑦). 네이비 셸은 양쪽 유지, 본문(paper)만 토글. */
+        .legal-paper[data-legal-theme="dark"] { background: #0a1124; }
+        .legal-paper[data-legal-theme="dark"] .legal-prose { color: #e7edf8; }
+        .legal-paper[data-legal-theme="dark"] .legal-prose h2,
+        .legal-paper[data-legal-theme="dark"] .legal-prose strong,
+        .legal-paper[data-legal-theme="dark"] .legal-prose td:first-child { color: #f3f6fc; }
+        .legal-paper[data-legal-theme="dark"] .legal-intro,
+        .legal-paper[data-legal-theme="dark"] .legal-prose ul,
+        .legal-paper[data-legal-theme="dark"] .legal-prose td { color: #b7c2da; }
+        .legal-paper[data-legal-theme="dark"] .legal-note { color: #8b97b4; }
+        .legal-paper[data-legal-theme="dark"] .legal-section { border-bottom-color: #1b2b4d; }
+        .legal-paper[data-legal-theme="dark"] .legal-prose th { color: #8b97b4; border-bottom-color: #2a3a5e; }
+        .legal-paper[data-legal-theme="dark"] .legal-prose td { border-bottom-color: #1b2b4d; }
+        .legal-paper[data-legal-theme="dark"] .legal-section-no,
+        .legal-paper[data-legal-theme="dark"] .legal-toc-no,
+        .legal-paper[data-legal-theme="dark"] .legal-anchor-btn { color: #5b86f0; }
+        .legal-paper[data-legal-theme="dark"] .legal-toc-item { color: #9aa6c2; }
+        .legal-paper[data-legal-theme="dark"] .legal-toc-item:hover { background: #16284c; color: #e7edf8; }
+        .legal-paper[data-legal-theme="dark"] .legal-toc-select { background: #0f1b34; color: #e7edf8; border-color: #2a3a5e; }
+        /* §P-leg P3 — 모바일 견고화(≤640px): 히어로/탭 폭 안전 + 본문 패딩 */
+        @media (max-width: 640px) {
+          .legal-switch { flex-wrap: wrap; }
+          .legal-grid { gap: 16px; }
+        }
+        /* 인쇄 — 다크여도 항상 라이트 출력(지시문 ⑦) */
+        @media print {
+          .legal-paper, .legal-paper[data-legal-theme="dark"] { background: #fff; }
+          .legal-paper[data-legal-theme="dark"] .legal-prose,
+          .legal-paper[data-legal-theme="dark"] .legal-prose * { color: #121a2c !important; }
+          .legal-anchor-btn, .legal-toast { display: none; }
+        }
       `}</style>
     </MainLayout>
   );

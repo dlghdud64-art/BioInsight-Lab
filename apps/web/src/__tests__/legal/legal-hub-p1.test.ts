@@ -100,6 +100,28 @@ describe("§P-leg P2 — 고도화 인터랙션(앵커 복사·토스트·크로
     expect(PAGE).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.legal-body/);
   });
   it("인쇄 시 앵커/토스트 숨김(법무 출력 정합)", () => {
-    expect(PAGE).toMatch(/@media print[\s\S]{0,120}legal-anchor-btn/);
+    // §P-leg P3 — @media print 안에 다크→라이트 강제 규칙(color !important)이 삽입되며
+    //   @media print → legal-anchor-btn 거리 120→266 확대. print-hide 의도는 보존, window 확대.
+    expect(PAGE).toMatch(/@media print[\s\S]{0,400}legal-anchor-btn/);
+  });
+});
+
+describe("§P-leg P3 — 다크 리딩 모드(지시문 ⑦)", () => {
+  it("theme state + 토글 + localStorage + prefers-color-scheme 초기화", () => {
+    expect(PAGE).toMatch(/useState<"light" \| "dark">/);
+    expect(PAGE).toMatch(/toggleTheme/);
+    expect(PAGE).toMatch(/lab_legal_theme/);
+    expect(PAGE).toMatch(/prefers-color-scheme: dark/);
+  });
+  it("본문 paper 에 data-legal-theme 적용 + 토글 버튼(aria-pressed)", () => {
+    expect(PAGE).toMatch(/data-legal-theme=\{theme\}/);
+    expect(PAGE).toMatch(/aria-pressed=\{theme === "dark"\}/);
+  });
+  it("다크 팔레트 override + 네이비 셸 유지(본문만 토글)", () => {
+    expect(PAGE).toMatch(/\.legal-paper\[data-legal-theme="dark"\]\s*\{\s*background:\s*#0a1124/);
+    expect(PAGE).toMatch(/data-legal-theme="dark"\] \.legal-prose \{ color: #e7edf8/);
+  });
+  it("인쇄는 다크여도 항상 라이트(지시문 ⑦)", () => {
+    expect(PAGE).toMatch(/@media print[\s\S]{0,400}data-legal-theme="dark"\][\s\S]{0,120}color: #121a2c !important/);
   });
 });
