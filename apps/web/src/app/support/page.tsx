@@ -1,454 +1,423 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
+/**
+ * §contact-redesign P1 — 도입·문의 페이지(시안 A) 리디자인.
+ *
+ * 정본: contact/도입 문의 페이지 구현 지시문 + LabAxis 도입 문의 시안.html.
+ * 호영님 룰링:
+ *   ① 공개 예외 OK — 단 경계 = ontology 무접촉. 본 도우미는 제품 DB/실데이터(재고·가격·계정)
+ *      조회 0, 정적 공개 FAQ(아래 TOPICS 큐레이션 + 제품사실)에만 근거. 넘으면 즉시 금지.
+ *   ② P1 = 룰베이스 분류기 + 큐레이션 폴백(라이브 LLM 0). "AI" 라벨 금지 → "문의 도우미/빠른 답변"
+ *      (라이브 모델 붙는 P2에서 "AI" 부여). 비용·키·인젝션·레이트리밋 전부 회피.
+ *   ③ 정직성: 가격·SLA·고객사 단정 금지 → "문의 시 안내". 1인 운영 = "빠른 답변 + 담당자 비동기 회신"
+ *      (전화·전담매니저·실시간 SLA 약속 금지). 신뢰 사이드바 = 실값 없으면 비움(가짜 숫자/고객사 0).
+ *   - 제출: 기존 POST /api/support/inquiry 재사용(신규 API 0). classifyTopic 결과 → inquiryType 매핑.
+ *
+ * P2(후속): /api/support/ai-assist 라이브 AI(시스템프롬프트+looksListy/trimAns+폴백+레이트리밋·인젝션 가드).
+ */
+
+import { useMemo, useState, useRef } from "react";
 import { MainHeader } from "../_components/main-header";
 import { MainFooter } from "../_components/main-footer";
-import { Button } from "@/components/ui/button";
-import {
-  Search,
-  Building2,
-  FileText,
-  LogIn,
-  Mail,
-  ArrowRight,
-  CheckCircle2,
-  Copy,
-  Check,
-} from "lucide-react";
+import { Sparkles, Send, Copy, Check, ArrowRight, FileText, ShieldCheck, Workflow, Mail } from "lucide-react";
 
-const INQUIRY_TYPES = [
+// ── 주제 분류기(룰베이스) — 키워드 → 주제. inquiryType(API 계약: service/pricing/sourcing/account)에 매핑.
+//   ontology 무접촉: 키워드 매칭만, DB 조회 0.
+type Topic = {
+  id: string;
+  inquiryType: "service" | "pricing" | "sourcing" | "account";
+  label: string;
+  keywords: string[];
+  // 큐레이션 즉답(정직 2문장, 가격·SLA·고객사 단정 0 → "문의 시 안내").
+  answer: string;
+};
+
+const TOPICS: Topic[] = [
   {
-    key: "service",
-    icon: Search,
-    label: "기능",
-    title: "서비스 이용 문의",
-    description: "플랫폼 기능 사용 중 궁금한 점",
-    formTitle: "어떤 기능을 검토 중이신가요?",
-    placeholder: "사용 중인 기능, 발생한 문제, 기대하는 동작 등을 구체적으로 남겨주세요.",
+    id: "pricing",
+    inquiryType: "pricing",
+    label: "가격·플랜",
+    keywords: ["가격", "요금", "비용", "플랜", "무료", "유료", "팀", "기관", "견적가", "단가"],
+    answer:
+      "무료로 시작해 팀·기관 플랜으로 확장하는 구조이며, 기관 플랜은 사용 범위에 맞춰 상담으로 안내드립니다. 정확한 금액은 도입 규모에 따라 달라져 문의를 남겨주시면 담당자가 확인 후 회신드립니다.",
   },
   {
-    key: "pricing",
-    icon: Building2,
-    label: "도입",
-    title: "도입 및 요금 문의",
-    description: "기관·기업 단위 도입, 플랜, 계약 조건",
-    formTitle: "팀 규모와 도입 목적을 알려주세요",
-    placeholder: "기관/기업명, 예상 사용자 수, 필요한 기능, 도입 희망 시기 등을 남겨주세요.",
+    id: "integration",
+    inquiryType: "account",
+    label: "연동·SSO·보안",
+    keywords: ["연동", "erp", "sso", "보안", "계정", "권한", "암호화", "접속기록", "통합", "api"],
+    answer:
+      "ERP·SSO 연동은 기관 플랜 상담 범위에서 지원하며, 보안은 최소 권한·암호화·접속기록 보관을 기본으로 합니다. 연동 대상·환경을 문의에 적어주시면 담당자가 가능 범위를 확인해 안내드립니다.",
   },
   {
-    key: "sourcing",
-    icon: FileText,
-    label: "견적",
-    title: "견적·소싱 관련 문의",
-    description: "특정 품목 소싱 지원이나 맞춤 견적 요청",
-    formTitle: "어떤 품목 또는 흐름에서 도움이 필요한가요?",
-    placeholder: "필요한 품목, 용도, 수량, 희망 제조사 또는 조건 등을 남겨주세요.",
+    id: "sourcing",
+    inquiryType: "sourcing",
+    label: "소싱·공급사·견적",
+    keywords: ["소싱", "공급사", "벤더", "vendor", "rfq", "견적", "발주", "구매대행"],
+    answer:
+      "시약·소모품 검색·비교 후 견적 요청(RFQ)과 발주·입고·재고까지 한 흐름으로 처리할 수 있습니다. 취급 품목·공급사 범위가 궁금하시면 문의를 남겨주시면 구체적으로 안내드립니다.",
   },
   {
-    key: "account",
-    icon: LogIn,
-    label: "계정",
-    title: "계정 및 로그인 문제",
-    description: "로그인 오류, 계정 연동, 비밀번호",
-    formTitle: "문제가 발생한 계정 정보를 알려주세요",
-    placeholder: "문제가 발생한 계정, 로그인 오류 내용, 발생 시점 등을 적어주세요.",
+    id: "feature",
+    inquiryType: "service",
+    label: "기능·도입",
+    keywords: ["기능", "검색", "비교", "재고", "lot", "유효기간", "도입", "시작", "사용법", "브리핑", "추출"],
+    answer:
+      "검색·비교·견적·발주·입고·재고와 Lot/유효기간 관리, AI 기반 비교·추출·브리핑 보조를 제공합니다. 도입 절차가 궁금하시면 문의를 남겨주시면 담당자가 단계별로 안내드립니다.",
   },
 ];
 
-const DEFAULT_FORM_TITLE = "문의 내용을 남겨주세요";
-const DEFAULT_PLACEHOLDER = "문의 내용을 자세히 적어주세요. 도입 문의라면 기관/기업 정보를 함께 남겨주시면 더 빠르게 안내해드립니다.";
+const DEFAULT_ANSWER =
+  "문의 주신 내용은 담당자가 직접 확인해 영업일 기준 1일 이내 등록하신 이메일로 안내드립니다. 아래에 내용을 남겨주시면 더 정확히 도와드릴 수 있어요.";
 
-export default function SupportPage() {
-  const [submitted, setSubmitted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [referenceId, setReferenceId] = useState<string | null>(null);
-  const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: "", email: "", message: "" });
+/** 룰베이스 분류 — 키워드 매칭 최다 주제. 매칭 0이면 null(기본 안내). ontology 무접촉. */
+function classifyTopic(text: string): Topic | null {
+  const q = text.toLowerCase();
+  let best: Topic | null = null;
+  let bestScore = 0;
+  for (const t of TOPICS) {
+    const score = t.keywords.reduce((n, k) => (q.includes(k) ? n + 1 : n), 0);
+    if (score > bestScore) {
+      bestScore = score;
+      best = t;
+    }
+  }
+  return bestScore > 0 ? best : null;
+}
+
+const EXAMPLE_CHIPS = ["기관 도입은 어떻게 시작하나요?", "ERP 연동 되나요?", "어떤 기능이 있나요?", "보안은 어떤가요?"];
+const DOC_LINKS = [
+  { label: "서비스 소개", href: "/intro" },
+  { label: "요금 & 도입", href: "/pricing" },
+  { label: "자주 묻는 질문", href: "/faq" },
+  { label: "도움말", href: "/help" },
+];
+const SUPPORT_EMAIL = "support@labaxis.co.kr";
+
+export default function SupportContactPage() {
+  // ── 문의 도우미(룰베이스 빠른 답변) ──
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState<{ topic: Topic | null; text: string } | null>(null);
+
+  // ── 적응형 문의 폼 ──
+  const [category, setCategory] = useState<Topic["inquiryType"]>("service");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [agree, setAgree] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; refId?: string; error?: string } | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [refCopied, setRefCopied] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
 
-  const selectedInquiry = INQUIRY_TYPES.find((t) => t.key === selectedType);
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2200);
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitError(null);
-    setIsSubmitting(true);
+  const ask = (text: string) => {
+    const q = text.trim();
+    if (!q) return;
+    const topic = classifyTopic(q);
+    setAnswer({ topic, text: topic ? topic.answer : DEFAULT_ANSWER });
+    setQuestion("");
+  };
 
+  // 도우미 → 폼 핸드오프: 질문 주제로 카테고리 자동 분류 + 내용 prefill 후 폼으로 이동.
+  const handoffToForm = () => {
+    if (answer?.topic) setCategory(answer.topic.inquiryType);
+    if (answer && !message) {
+      setMessage(`[${answer.topic?.label ?? "일반 문의"}] 관련해 문의드립니다.\n\n`);
+    }
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const emailValid = email.includes("@") && email.includes(".");
+  const canSubmit = name.trim().length > 0 && emailValid && message.trim().length >= 10 && agree && !submitting;
+
+  const submit = async () => {
+    if (!canSubmit) return;
+    setSubmitting(true);
+    setResult(null);
     try {
       const res = await fetch("/api/support/inquiry", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          inquiryType: selectedType ?? "service",
-          name: form.name,
-          email: form.email,
-          message: form.message,
-        }),
+        body: JSON.stringify({ inquiryType: category, name, email, message }),
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        setSubmitError(data.error ?? "문의 접수 중 오류가 발생했습니다.");
-        return;
+      if (res.ok && data.success) {
+        setResult({ ok: true, refId: data.referenceId });
+        showToast("문의가 접수되었습니다.");
+      } else {
+        setResult({ ok: false, error: data.error ?? "접수 중 오류가 발생했습니다." });
       }
-
-      setReferenceId(data.referenceId ?? null);
-      setSubmitted(true);
     } catch {
-      setSubmitError("네트워크 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+      setResult({ ok: false, error: "네트워크 오류가 발생했습니다. 잠시 후 다시 시도해 주세요." });
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
-  const handleCopyRef = () => {
-    if (referenceId) {
-      navigator.clipboard.writeText(referenceId);
-      setRefCopied(true);
-      setTimeout(() => setRefCopied(false), 2000);
+  const copyEmail = async () => {
+    try {
+      await navigator.clipboard.writeText(SUPPORT_EMAIL);
+      setCopied(true);
+      showToast("이메일이 복사되었습니다.");
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      showToast("복사에 실패했습니다.");
     }
   };
 
-  const handleReset = () => {
-    setSubmitted(false);
-    setSelectedType(null);
-    setForm({ name: "", email: "", message: "" });
-  };
-
-  const handleCopyEmail = () => {
-    navigator.clipboard.writeText("support@labaxis.io");
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const CATEGORY_OPTIONS: { value: Topic["inquiryType"]; label: string }[] = useMemo(
+    () => [
+      { value: "service", label: "기능·도입" },
+      { value: "pricing", label: "가격·플랜" },
+      { value: "sourcing", label: "소싱·공급사" },
+      { value: "account", label: "연동·SSO·보안" },
+    ],
+    [],
+  );
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-[#f4f6f9]">
       <MainHeader />
 
-      {/* ═══ LAYER 1: Branded Hero — deep navy, 짧고 간결 ═══ */}
-      <section
-        className="pt-14"
-        style={{
-          background: "linear-gradient(180deg, #020617 0%, #0B1A33 60%, #1A2D4D 100%)",
-        }}
-      >
-        <div className="mx-auto max-w-3xl px-4 md:px-6 py-12 md:py-14 text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-400/70 mb-3">
-            SUPPORT
-          </p>
-          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2 tracking-tight">
-            도입 문의 및 서비스 안내
+      {/* ── 히어로 + 문의 도우미 ── */}
+      <div className="cp-hero relative overflow-hidden">
+        <div className="cp-hero-dots" aria-hidden />
+        <div className="relative z-10 max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 text-center">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#a9c2f5] mb-3">도입 및 문의 · Contact</div>
+          <h1 className="text-2xl md:text-[34px] font-bold text-white tracking-tight leading-tight mb-2">
+            궁금한 점을 묻고, 그대로 문의를 남기세요
           </h1>
-          <p className="text-sm md:text-base text-slate-400 leading-relaxed">
-            담당팀이 확인 후 빠르게 안내해드립니다.
+          <p className="text-sm md:text-[15px] text-[#c7d4ee] max-w-2xl mx-auto leading-relaxed">
+            빠른 답변으로 먼저 확인하고, 답변 맥락 그대로 문의 폼으로 이어집니다. 정확한 안내는 담당자가 직접 확인해 드립니다.
           </p>
-        </div>
-      </section>
 
-      {/* ═══ LAYER 2: Execution Surface — 밝은 중성 배경 ═══ */}
-      <div className="flex-1" style={{ backgroundColor: "#F3F6FB" }}>
-        <div className="mx-auto max-w-3xl px-4 md:px-6 py-10 md:py-14 space-y-10">
-
-          {/* ── 문의 유형 selector ── */}
-          <section>
-            <h2 style={{ color: "#0F1728" }} className="text-base font-bold mb-5">
-              어떤 문의가 필요하신가요?
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {INQUIRY_TYPES.map((item) => {
-                const Icon = item.icon;
-                const isSelected = selectedType === item.key;
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => setSelectedType(item.key)}
-                    className="w-full text-left transition-all duration-150 rounded-lg p-4"
-                    style={{
-                      backgroundColor: isSelected ? "#FFFFFF" : "#FFFFFF",
-                      border: isSelected ? "2px solid #2F6BFF" : "1px solid #E3EAF4",
-                      boxShadow: isSelected ? "0 2px 8px rgba(47,107,255,0.10)" : "none",
-                    }}
-                  >
-                    {/* accent bar on selected */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                        style={{
-                          backgroundColor: isSelected ? "#EBF1FF" : "#F3F6FB",
-                        }}
-                      >
-                        <Icon
-                          className="h-4 w-4"
-                          style={{ color: isSelected ? "#2F6BFF" : "#8A97AA" }}
-                        />
-                      </div>
-                      {isSelected && (
-                        <CheckCircle2 className="h-3.5 w-3.5 ml-auto flex-shrink-0" style={{ color: "#2F6BFF" }} />
-                      )}
-                    </div>
-                    <p
-                      className="text-sm font-semibold mb-0.5"
-                      style={{ color: isSelected ? "#0F1728" : "#3D4A5C" }}
-                    >
-                      {item.title}
-                    </p>
-                    <p className="text-xs leading-relaxed" style={{ color: "#8A97AA" }}>
-                      {item.description}
-                    </p>
-                    <span
-                      className="inline-block mt-2 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded"
-                      style={{
-                        backgroundColor: isSelected ? "#EBF1FF" : "#F3F6FB",
-                        color: isSelected ? "#2F6BFF" : "#A0AABB",
-                      }}
-                    >
-                      {item.label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* ── 문의 폼 — light execution panel ── */}
-          <section
-            className="rounded-xl p-6 md:p-8"
-            style={{
-              backgroundColor: "#FFFFFF",
-              border: "1px solid #E3EAF4",
-            }}
-          >
-            <h2 className="text-base font-bold mb-1" style={{ color: "#0F1728" }}>
-              {selectedInquiry?.formTitle ?? DEFAULT_FORM_TITLE}
-            </h2>
-            <p className="text-xs mb-6" style={{ color: "#8A97AA" }}>
-              확인 후 순차적으로 답변드립니다. 도입 상담은 우선 검토 후 별도 안내드립니다.
-            </p>
-
-            {submitted ? (
-              <div className="text-center py-8">
-                <CheckCircle2 className="h-8 w-8 mx-auto mb-3" style={{ color: "#10B981" }} />
-                <p className="text-base font-semibold mb-1" style={{ color: "#0F1728" }}>
-                  문의가 접수되었습니다.
-                </p>
-                <p className="text-sm mb-4" style={{ color: "#5B6678" }}>
-                  영업일 기준 1일 이내 등록하신 이메일(<span className="font-medium">{form.email}</span>)로 안내드립니다.
-                </p>
-                {referenceId && (
-                  <div
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg mb-4"
-                    style={{ backgroundColor: "#F0F4FF", border: "1px solid #D5DFEF" }}
-                  >
-                    <span className="text-xs" style={{ color: "#5B6678" }}>접수 번호</span>
-                    <span className="text-sm font-bold tracking-wide" style={{ color: "#0F1728" }}>
-                      {referenceId}
-                    </span>
-                    <button
-                      onClick={handleCopyRef}
-                      className="ml-1 p-1 rounded transition-colors"
-                      style={{ color: refCopied ? "#10B981" : "#8A97AA" }}
-                    >
-                      {refCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                    </button>
-                  </div>
-                )}
-                <p className="text-xs mb-5" style={{ color: "#A0AABB" }}>
-                  접수 번호를 기록해 두시면 추후 확인 시 도움이 됩니다.
-                </p>
-                <button
-                  onClick={handleReset}
-                  className="text-sm font-medium px-5 py-2 rounded-lg transition-colors"
-                  style={{
-                    color: "#2F6BFF",
-                    border: "1px solid #D5DFEF",
-                    backgroundColor: "#F8FAFC",
-                  }}
-                >
-                  다른 문의 남기기
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {selectedInquiry && (
-                  <div
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
-                    style={{
-                      backgroundColor: "#F0F4FF",
-                      border: "1px solid #D5DFEF",
-                      color: "#2F6BFF",
-                    }}
-                  >
-                    <span className="font-semibold">선택:</span>
-                    <span>{selectedInquiry.title}</span>
-                  </div>
-                )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold mb-1.5" style={{ color: "#3D4A5C" }}>
-                      이름 또는 기관명
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="홍길동 / BioLab Institute"
-                      value={form.name}
-                      onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      className="w-full rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                      style={{
-                        backgroundColor: "#F8FAFC",
-                        border: "1px solid #E3EAF4",
-                        color: "#0F1728",
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold mb-1.5" style={{ color: "#3D4A5C" }}>
-                      이메일
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      placeholder="your@email.com"
-                      value={form.email}
-                      onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      className="w-full rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                      style={{
-                        backgroundColor: "#F8FAFC",
-                        border: "1px solid #E3EAF4",
-                        color: "#0F1728",
-                      }}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold mb-1.5" style={{ color: "#3D4A5C" }}>
-                    문의 내용
-                  </label>
-                  <textarea
-                    required
-                    rows={6}
-                    placeholder={selectedInquiry?.placeholder ?? DEFAULT_PLACEHOLDER}
-                    value={form.message}
-                    onChange={(e) => setForm({ ...form, message: e.target.value })}
-                    className="w-full rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
-                    style={{
-                      backgroundColor: "#F8FAFC",
-                      border: "1px solid #E3EAF4",
-                      color: "#0F1728",
-                    }}
-                  />
-                  <p className="text-xs mt-1" style={{ color: "#A0AABB" }}>
-                    구체적으로 작성할수록 빠르게 안내해드릴 수 있습니다.
-                  </p>
-                </div>
-                {submitError && (
-                  <div
-                    className="flex items-start gap-2 px-3.5 py-2.5 rounded-lg text-sm"
-                    style={{ backgroundColor: "#FEF2F2", border: "1px solid #FECACA", color: "#DC2626" }}
-                  >
-                    <span className="flex-shrink-0 mt-0.5">!</span>
-                    <span>{submitError}</span>
-                  </div>
-                )}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-2">
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="font-semibold h-11 px-7 flex items-center gap-2 rounded-lg text-sm shadow-sm disabled:opacity-60"
-                    style={{ backgroundColor: "#2F6BFF", color: "#FFFFFF" }}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        접수 중...
-                      </>
-                    ) : (
-                      <>
-                        문의 남기기
-                        <ArrowRight className="h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
-                  <p className="text-xs" style={{ color: "#A0AABB" }}>
-                    평일 기준 순차적으로 답변드립니다.
-                  </p>
-                </div>
-              </form>
-            )}
-          </section>
-
-          {/* ── 이메일 직접 문의 — compact strip ── */}
-          <div
-            className="flex items-center justify-between gap-3 rounded-lg px-5 py-3"
-            style={{
-              backgroundColor: "#EDF2F8",
-              border: "1px solid #E3EAF4",
-            }}
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <Mail className="h-4 w-4 flex-shrink-0" style={{ color: "#8A97AA" }} />
-              <span className="text-xs" style={{ color: "#5B6678" }}>
-                이메일로 직접 문의
+          {/* 문의 도우미 박스(룰베이스 빠른 답변 — "AI" 라벨 아님). */}
+          <div className="cp-assist mt-7 mx-auto max-w-2xl rounded-2xl bg-white p-4 md:p-5 text-left shadow-xl">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-[#ecf2fe]">
+                <Sparkles className="h-4 w-4 text-[#3b6ee5]" />
               </span>
-              <a
-                href="mailto:support@labaxis.io"
-                className="text-xs font-medium hover:underline"
-                style={{ color: "#2F6BFF" }}
+              <span className="text-[13px] font-bold text-slate-900">문의 도우미</span>
+              <span className="rounded-full bg-[#ecf2fe] px-2 py-0.5 text-[10px] font-bold text-[#244e9e]">빠른 답변</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") ask(question); }}
+                placeholder="예: 기관 도입은 어떻게 시작하나요?"
+                aria-label="문의 도우미 질문 입력"
+                className="flex-1 min-h-[44px] rounded-lg border border-slate-200 px-3 text-sm text-slate-900 outline-none focus:border-[#3b6ee5]"
+              />
+              <button
+                type="button"
+                onClick={() => ask(question)}
+                disabled={!question.trim()}
+                aria-label="질문 전송"
+                className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg bg-[#3b6ee5] text-white transition-colors hover:bg-[#3461cf] disabled:opacity-40"
               >
-                support@labaxis.io
-              </a>
+                <Send className="h-4 w-4" />
+              </button>
             </div>
-            <button
-              onClick={handleCopyEmail}
-              className="flex items-center gap-1 text-xs flex-shrink-0 px-2.5 py-1.5 rounded-md transition-colors"
-              style={{
-                color: copied ? "#10B981" : "#8A97AA",
-                backgroundColor: "#FFFFFF",
-                border: "1px solid #E3EAF4",
-              }}
-            >
-              {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-              {copied ? "복사됨" : "복사"}
-            </button>
+
+            {/* 예시 칩(답변 전에만) */}
+            {!answer && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {EXAMPLE_CHIPS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => ask(c)}
+                    className="rounded-full border border-slate-200 px-3 py-1 text-[12px] text-slate-600 transition-colors hover:border-[#3b6ee5] hover:text-[#3b6ee5]"
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* 답변 블록(최신 1건) */}
+            {answer && (
+              <div className="mt-3 rounded-xl bg-[#f4f6f9] p-3.5">
+                <p className="text-[13.5px] leading-relaxed text-slate-700">{answer.text}</p>
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  <span className="text-[11px] text-slate-400">
+                    {answer.topic ? `주제: ${answer.topic.label}` : "담당자 확인이 필요한 문의"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handoffToForm}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#0f1b34] px-3 py-2 text-[12.5px] font-bold text-white transition-colors hover:bg-[#16284c]"
+                  >
+                    이 내용으로 문의 남기기
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-
-          {/* ── 추가 문서 — compact utility links ── */}
-          <nav>
-            <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#8A97AA" }}>
-              추가로 확인할 수 있는 문서
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {[
-                { href: "/", label: "서비스 소개" },
-                { href: "/pricing", label: "요금 & 도입" },
-                { href: "/auth/signin", label: "로그인" },
-                { href: "/privacy", label: "개인정보처리방침" },
-              ].map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="text-xs font-medium px-3 py-2.5 rounded-lg text-center transition-colors"
-                  style={{
-                    color: "#5B6678",
-                    backgroundColor: "#FFFFFF",
-                    border: "1px solid #E3EAF4",
-                  }}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </div>
-          </nav>
-
         </div>
       </div>
 
-      {/* ═══ LAYER 3: Footer ═══ */}
+      {/* ── 본문: 적응형 폼(좌) + 신뢰 사이드바(우) ── */}
+      <div className="cp-body flex-1">
+        <div className="max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-6 items-start">
+            {/* 폼 */}
+            <div ref={formRef} className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 shadow-sm">
+              <h2 className="text-lg font-bold text-slate-900 mb-1">문의 남기기</h2>
+              <p className="text-[13px] text-slate-500 mb-5">담당자가 직접 확인해 영업일 기준 1일 이내 회신드립니다.</p>
+
+              {result?.ok ? (
+                <div className="rounded-xl border border-[#cfe8d8] bg-[#e6f5ec] p-5 text-center">
+                  <Check className="mx-auto h-8 w-8 text-[#1b9e5a]" />
+                  <p className="mt-2 text-sm font-bold text-slate-900">문의가 접수되었습니다</p>
+                  <p className="mt-1 text-[13px] text-slate-600">
+                    접수번호 <span className="font-bold tabular-nums">{result.refId}</span> · 영업일 기준 1일 이내 이메일로 안내드립니다.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">문의 유형</label>
+                    <div className="flex flex-wrap gap-2">
+                      {CATEGORY_OPTIONS.map((o) => (
+                        <button
+                          key={o.value}
+                          type="button"
+                          onClick={() => setCategory(o.value)}
+                          className={`rounded-full px-3.5 py-1.5 text-[12.5px] font-semibold transition-colors ${
+                            category === o.value
+                              ? "bg-[#3b6ee5] text-white"
+                              : "border border-slate-200 text-slate-600 hover:border-[#3b6ee5]"
+                          }`}
+                        >
+                          {o.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label htmlFor="cp-name" className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">이름 · 기관명</label>
+                      <input id="cp-name" value={name} onChange={(e) => setName(e.target.value)}
+                        className="w-full min-h-[44px] rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-[#3b6ee5]" />
+                    </div>
+                    <div>
+                      <label htmlFor="cp-email" className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">이메일</label>
+                      <input id="cp-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                        className="w-full min-h-[44px] rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-[#3b6ee5]" />
+                      {email.length > 0 && !emailValid && <p className="mt-1 text-[11px] text-[#c0443a]">올바른 이메일을 입력해 주세요.</p>}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="cp-msg" className="block text-[12.5px] font-semibold text-slate-700 mb-1.5">문의 내용</label>
+                    <textarea id="cp-msg" value={message} onChange={(e) => setMessage(e.target.value)} rows={5}
+                      placeholder="도입 환경·규모·연동 대상 등 구체적으로 적어주시면 더 정확히 안내드립니다."
+                      className="w-full rounded-lg border border-slate-200 p-3 text-sm outline-none focus:border-[#3b6ee5] resize-y" />
+                    <p className="mt-1 text-[11px] text-slate-400">{message.trim().length < 10 ? "10자 이상 입력해 주세요." : `${message.trim().length}자`}</p>
+                  </div>
+
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 h-4 w-4" />
+                    <span className="text-[12px] text-slate-600 leading-relaxed">
+                      문의 처리를 위한 개인정보(이름·이메일·문의내용) 수집·이용에 동의합니다. 자세한 내용은{" "}
+                      <a href="/legal#privacy" className="text-[#3b6ee5] underline">개인정보처리방침</a>을 따릅니다.
+                    </span>
+                  </label>
+
+                  {result?.error && <p className="text-[12.5px] text-[#c0443a]">{result.error}</p>}
+
+                  <button type="button" onClick={submit} disabled={!canSubmit}
+                    className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[#3b6ee5] px-5 text-sm font-bold text-white transition-colors hover:bg-[#3461cf] disabled:opacity-40">
+                    {submitting ? "접수 중…" : "문의 접수"}
+                    {!submitting && <ArrowRight className="h-4 w-4" />}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 신뢰 사이드바 — 실값 없는 항목(도입 기관·실적 숫자)은 비움(가짜 금지). 정직한 운영 방식만. */}
+            <aside className="lg:sticky lg:top-[86px] space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <ShieldCheck className="h-4 w-4 text-[#3b6ee5]" />
+                  <h3 className="text-[13px] font-bold text-slate-900">응답 방식</h3>
+                </div>
+                <p className="text-[12.5px] leading-relaxed text-slate-600">
+                  빠른 답변으로 먼저 확인하고, 정확한 안내는 담당자가 직접 확인해 <strong className="text-slate-900">영업일 기준 1일 이내</strong> 이메일로 회신드립니다. (전화·실시간 상담은 운영하지 않습니다.)
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <Workflow className="h-4 w-4 text-[#3b6ee5]" />
+                  <h3 className="text-[13px] font-bold text-slate-900">진행 방식</h3>
+                </div>
+                <ol className="text-[12.5px] leading-relaxed text-slate-600 space-y-1.5 list-decimal pl-4">
+                  <li>문의 접수 (접수번호 발급)</li>
+                  <li>담당자 내용 확인</li>
+                  <li>이메일로 안내 회신</li>
+                </ol>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <Mail className="h-4 w-4 text-[#3b6ee5]" />
+                  <h3 className="text-[13px] font-bold text-slate-900">이메일 직접 문의</h3>
+                </div>
+                <div className="flex items-center justify-between gap-2 rounded-lg bg-[#f4f6f9] px-3 py-2">
+                  <span className="text-[12.5px] text-slate-700 truncate">{SUPPORT_EMAIL}</span>
+                  <button type="button" onClick={copyEmail} aria-label="이메일 복사"
+                    className="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md hover:bg-slate-200">
+                    {copied ? <Check className="h-4 w-4 text-[#1b9e5a]" /> : <Copy className="h-4 w-4 text-slate-500" />}
+                  </button>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <FileText className="h-4 w-4 text-[#3b6ee5]" />
+                  <h3 className="text-[13px] font-bold text-slate-900">관련 문서</h3>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  {DOC_LINKS.map((d) => (
+                    <a key={d.href} href={d.href} className="text-[12.5px] text-slate-600 hover:text-[#3b6ee5] transition-colors">{d.label} →</a>
+                  ))}
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+
       <MainFooter />
+
+      {toast && (
+        <div className="cp-toast" role="status" aria-live="polite">{toast}</div>
+      )}
+
+      <style jsx global>{`
+        .cp-hero { background: linear-gradient(160deg, #0a1124 0%, #0f1b34 60%, #16284c 130%); }
+        .cp-hero-dots { position: absolute; top: 0; right: 0; width: 360px; height: 240px; z-index: 0; pointer-events: none;
+          background-image: radial-gradient(circle, rgba(91,134,240,0.30) 1.2px, transparent 1.7px); background-size: 18px 18px;
+          -webkit-mask-image: radial-gradient(ellipse at top right, #000 28%, transparent 72%);
+          mask-image: radial-gradient(ellipse at top right, #000 28%, transparent 72%); }
+        .cp-body { background: #f4f6f9; }
+        .cp-toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: #0a1124; color: #fff;
+          padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 60;
+          box-shadow: 0 10px 28px -10px rgba(0,0,0,.45); animation: cpToast .25s ease; }
+        @keyframes cpToast { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+        @media (prefers-reduced-motion: reduce) { .cp-toast { animation: none; } }
+        @media print { .cp-assist, .cp-toast { display: none; } }
+      `}</style>
     </div>
   );
 }
