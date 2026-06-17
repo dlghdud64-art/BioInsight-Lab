@@ -125,3 +125,29 @@ describe("§P-leg P3 — 다크 리딩 모드(지시문 ⑦)", () => {
     expect(PAGE).toMatch(/@media print[\s\S]{0,400}data-legal-theme="dark"\][\s\S]{0,120}color: #121a2c !important/);
   });
 });
+
+describe("§P-leg P4 — 라우팅 cutover(구 페이지 → /legal#앵커)", () => {
+  const rd = (rel: string) => readFileSync(join(ROOT, rel), "utf8");
+  it("구 3페이지 redirect 전환(MainLayout 본문 폐지)", () => {
+    const terms = rd("app/terms/page.tsx");
+    const privacy = rd("app/privacy/page.tsx");
+    const policy = rd("app/operations-policy/page.tsx");
+    expect(terms).toMatch(/redirect\("\/legal#terms"\)/);
+    expect(privacy).toMatch(/redirect\("\/legal#privacy"\)/);
+    expect(policy).toMatch(/redirect\("\/legal#policy"\)/);
+    // 구 본문(MainLayout 직접 렌더) 폐지 — 단일 진실은 legal-docs.
+    expect(terms).not.toMatch(/<MainLayout>/);
+    expect(privacy).not.toMatch(/<MainLayout>/);
+  });
+  it("지시문 단축 라우트 /policy 신규(→ #policy)", () => {
+    expect(rd("app/policy/page.tsx")).toMatch(/redirect\("\/legal#policy"\)/);
+  });
+  it("푸터 링크 = canonical /legal#앵커(redirect hop 제거)", () => {
+    const footer = rd("app/_components/main-footer.tsx");
+    expect(footer).toMatch(/\/legal#terms/);
+    expect(footer).toMatch(/\/legal#privacy/);
+    expect(footer).toMatch(/\/legal#policy/);
+    expect(footer).not.toMatch(/href="\/operations-policy"/);
+    expect(footer).not.toMatch(/href:\s*"\/terms"/);
+  });
+});

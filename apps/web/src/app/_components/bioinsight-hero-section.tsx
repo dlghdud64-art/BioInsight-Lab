@@ -195,8 +195,8 @@ function MobileMenu() {
 
               {/* Policy links */}
               <div className="flex items-center justify-center gap-4 mt-4 pb-1">
-                <Link href="/terms" onClick={close} className="text-[11px]" style={{ color: "#4A5E78" }}>이용약관</Link>
-                <Link href="/privacy" onClick={close} className="text-[11px]" style={{ color: "#4A5E78" }}>개인정보처리방침</Link>
+                <Link href="/legal#terms" onClick={close} className="text-[11px]" style={{ color: "#4A5E78" }}>이용약관</Link>
+                <Link href="/legal#privacy" onClick={close} className="text-[11px]" style={{ color: "#4A5E78" }}>개인정보처리방침</Link>
               </div>
             </div>
           </div>

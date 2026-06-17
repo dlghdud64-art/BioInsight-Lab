@@ -45,9 +45,9 @@ export function MainFooter() {
     {
       title: "법적 고지",
       links: [
-        { label: "이용약관", href: "/terms", onClick: null },
-        { label: "개인정보처리방침", href: "/privacy", onClick: null },
-        { label: "운영정책", href: "/operations-policy", onClick: null },
+        { label: "이용약관", href: "/legal#terms", onClick: null },
+        { label: "개인정보처리방침", href: "/legal#privacy", onClick: null },
+        { label: "운영정책", href: "/legal#policy", onClick: null },
       ],
     },
   ];
@@ -163,15 +163,15 @@ export function MainFooter() {
         <div className="mt-8 flex flex-col md:flex-row md:justify-between gap-2 pt-5 text-center md:text-left text-[11px]" style={{ borderTop: "1px solid rgba(217,226,241,0.10)", color: "#8A97AA" }}>
           <span>&copy; {year} LabAxis. All rights reserved.</span>
           <div className="flex items-center justify-center md:justify-end gap-3">
-            <Link href="/terms" className="transition-colors"
+            <Link href="/legal#terms" className="transition-colors"
                 onMouseEnter={(e) => { e.currentTarget.style.color = "#D9E2F1"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = "inherit"; }}>이용약관</Link>
             <span style={{ color: "rgba(217,226,241,0.15)" }}>|</span>
-            <Link href="/privacy" className="transition-colors"
+            <Link href="/legal#privacy" className="transition-colors"
                 onMouseEnter={(e) => { e.currentTarget.style.color = "#D9E2F1"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = "inherit"; }}>개인정보처리방침</Link>
             <span style={{ color: "rgba(217,226,241,0.15)" }}>|</span>
-            <Link href="/operations-policy" className="transition-colors"
+            <Link href="/legal#policy" className="transition-colors"
                 onMouseEnter={(e) => { e.currentTarget.style.color = "#D9E2F1"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = "inherit"; }}>운영정책</Link>
           </div>
