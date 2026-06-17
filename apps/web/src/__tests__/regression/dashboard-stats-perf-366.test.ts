@@ -102,10 +102,12 @@ describe("§11.366 (b) GREEN — 집계 truth 산식 byte-보존", () => {
       "totalAssetValue += unitPrice * Number(inventory.quantity || 0);",
     );
   });
-  it("categorySpending = unitPrice × quantity", () => {
-    expect(ROUTE).toContain(
-      "const amount = (item.unitPrice || 0) * (item.quantity || 0);",
-    );
+  it("categorySpending = PurchaseRecord.category 합산 (§category-source-drift — Order파생→PurchaseRecord파생)", () => {
+    // §category-source-drift: categorySpending 을 canonical 지출원장(PurchaseRecord.category)으로 파생.
+    //   이전 Order/OrderItem(unitPrice×quantity) → guest-demo 등 PurchaseRecord-only 계정에서 카테고리
+    //   영구 empty 시정. spend 와 동일 소스 정합. perf 의도(쿼리 절감)는 product 조회 1개 제거로 강화.
+    expect(ROUTE).toContain("categorySpending[category] = (categorySpending[category] || 0) + (pr.amount || 0);");
+    expect(ROUTE).toContain('pr.category || "기타"');
   });
   it("monthlySpending = 최근 6개월 루프", () => {
     expect(ROUTE).toContain("for (let i = 5; i >= 0; i--) {");

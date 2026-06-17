@@ -274,7 +274,8 @@ export async function GET(request: NextRequest) {
       await Promise.all([
         db.purchaseRecord.findMany({
           where: { ...purchaseOwnerWhere, purchasedAt: { gte: sixMonthsAgo, lte: thisMonthEnd } },
-          select: { amount: true, purchasedAt: true },
+          // §category-source-drift — category 추가(카테고리별 지출을 PurchaseRecord 에서 파생).
+          select: { amount: true, purchasedAt: true, category: true },
           orderBy: { purchasedAt: "desc" },
           take: 1000,
         }),
@@ -334,27 +335,19 @@ export async function GET(request: NextRequest) {
     // ── Phase 4: N+1 제거 배치 조회 2개 동시 실행 ──────────────────────
     // 이전: userInventories 루프에서 매 항목마다 db.orderItem.findUnique 호출 (N+1)
     // 이후: orderItemId 목록으로 한 번에 batch 조회
-    const allProductIds = ordersWithItems
-      .flatMap((o: any) => o.items.map((i: any) => i.productId))
-      .filter(Boolean) as string[];
+    // §category-source-drift — categorySpending 을 PurchaseRecord.category 로 파생(아래)하면서
+    //   product category 조회(allProductIds/products)는 불필요 → 제거(쿼리 1개 절감). orderItems 만 유지.
     const orderItemIds = (userInventories as any[])
       .map((inv) => inv.orderItemId)
       .filter(Boolean) as string[];
 
-    const [products, orderItems] = await Promise.all([
-      allProductIds.length > 0
-        ? db.product.findMany({
-            where: { id: { in: allProductIds } },
-            select: { id: true, category: true },
-          })
-        : Promise.resolve([] as { id: string; category: string | null }[]),
+    const orderItems =
       orderItemIds.length > 0
-        ? db.orderItem.findMany({
+        ? await db.orderItem.findMany({
             where: { id: { in: orderItemIds } },
             select: { id: true, unitPrice: true },
           })
-        : Promise.resolve([] as { id: string; unitPrice: number | null }[]),
-    ]);
+        : ([] as { id: string; unitPrice: number | null }[]);
 
     // ── 데이터 가공 ────────────────────────────────────────────────────
 
@@ -483,19 +476,14 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    // 카테고리별 지출 (Phase 4 products 결과 활용)
-    const productCategoryMap = new Map<string, string>();
-    products.forEach((p: { id: string; category: string | null }) =>
-      productCategoryMap.set(p.id, p.category || "기타")
-    );
+    // §category-source-drift — 카테고리별 지출 = canonical 지출원장(PurchaseRecord.category) 기준 파생.
+    //   이전: Order/OrderItem(ordersWithItems) 파생 → PurchaseRecord 로만 채워진 계정(guest-demo 등)에선
+    //   지출 트렌드는 뜨는데 카테고리만 영구 empty(소스 모델 drift). spend 와 동일 소스(PurchaseRecord)로
+    //   정합 — 6개월 window(recentPurchaseRecords)의 category 별 amount 합산. category NULL→"기타".
     const categorySpending: Record<string, number> = {};
-    ordersWithItems.forEach((order: any) => {
-      order.items.forEach((item: any) => {
-        const category =
-          (item.productId && productCategoryMap.get(item.productId)) || "기타";
-        const amount = (item.unitPrice || 0) * (item.quantity || 0);
-        categorySpending[category] = (categorySpending[category] || 0) + amount;
-      });
+    (recentPurchaseRecords as Array<{ amount: number | null; category: string | null }>).forEach((pr) => {
+      const category = pr.category || "기타";
+      categorySpending[category] = (categorySpending[category] || 0) + (pr.amount || 0);
     });
     const categorySpendingArray = Object.entries(categorySpending).map(
       ([category, amount]) => ({ category, amount: amount as number })
