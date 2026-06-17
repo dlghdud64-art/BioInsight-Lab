@@ -95,9 +95,10 @@ const DOC_LINKS = [
 const SUPPORT_EMAIL = "support@labaxis.co.kr";
 
 export default function SupportContactPage() {
-  // ── 문의 도우미(룰베이스 빠른 답변) ──
+  // ── 문의 도우미(P2: 라이브 AI + P1 큐레이션 폴백) ──
   const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState<{ topic: Topic | null; text: string } | null>(null);
+  const [answer, setAnswer] = useState<{ topic: Topic | null; text: string; live: boolean } | null>(null);
+  const [asking, setAsking] = useState(false);
 
   // ── 적응형 문의 폼 ──
   const [category, setCategory] = useState<Topic["inquiryType"]>("service");
@@ -116,12 +117,33 @@ export default function SupportContactPage() {
     setTimeout(() => setToast(null), 2200);
   };
 
-  const ask = (text: string) => {
+  // P2: 라이브 AI(/api/support/ai-assist) 호출 → 실패/폴백 시 P1 룰베이스 큐레이션으로 복귀(항상 동작).
+  const ask = async (text: string) => {
     const q = text.trim();
-    if (!q) return;
-    const topic = classifyTopic(q);
-    setAnswer({ topic, text: topic ? topic.answer : DEFAULT_ANSWER });
+    if (!q || asking) return;
     setQuestion("");
+    setAsking(true);
+    const toFallback = () => {
+      const topic = classifyTopic(q);
+      setAnswer({ topic, text: topic ? topic.answer : DEFAULT_ANSWER, live: false });
+    };
+    try {
+      const res = await fetch("/api/support/ai-assist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: q }),
+      });
+      const data = await res.json();
+      if (res.ok && data?.answer) {
+        setAnswer({ topic: classifyTopic(q), text: data.answer, live: true });
+      } else {
+        toFallback(); // { fallback:true } 또는 비정상 → P1 큐레이션
+      }
+    } catch {
+      toFallback();
+    } finally {
+      setAsking(false);
+    }
   };
 
   // 도우미 → 폼 핸드오프: 질문 주제로 카테고리 자동 분류 + 내용 prefill 후 폼으로 이동.
@@ -220,7 +242,7 @@ export default function SupportContactPage() {
               <button
                 type="button"
                 onClick={() => ask(question)}
-                disabled={!question.trim()}
+                disabled={!question.trim() || asking}
                 aria-label="질문 전송"
                 className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg bg-[#3b6ee5] text-white transition-colors hover:bg-[#3461cf] disabled:opacity-40"
               >
@@ -228,8 +250,15 @@ export default function SupportContactPage() {
               </button>
             </div>
 
-            {/* 예시 칩(답변 전에만) */}
-            {!answer && (
+            {/* 로딩 — 점 3개 타이핑 인디케이터(지시문 04) */}
+            {asking && (
+              <div className="mt-3 flex items-center gap-1.5 px-1" aria-live="polite" aria-label="답변 작성 중">
+                <span className="cp-dot" /><span className="cp-dot" /><span className="cp-dot" />
+              </div>
+            )}
+
+            {/* 예시 칩(답변 전·로딩 아닐 때만) */}
+            {!answer && !asking && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {EXAMPLE_CHIPS.map((c) => (
                   <button
@@ -244,9 +273,12 @@ export default function SupportContactPage() {
               </div>
             )}
 
-            {/* 답변 블록(최신 1건) */}
-            {answer && (
+            {/* 답변 블록(최신 1건) — 라이브 AI면 "AI 답변", 폴백 큐레이션이면 "빠른 답변"(룰링: AI 라벨은 라이브만). */}
+            {answer && !asking && (
               <div className="mt-3 rounded-xl bg-[#f4f6f9] p-3.5">
+                <div className="mb-1.5 inline-flex items-center rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-[#244e9e]">
+                  {answer.live ? "AI 답변" : "빠른 답변"}
+                </div>
                 <p className="text-[13.5px] leading-relaxed text-slate-700">{answer.text}</p>
                 <div className="mt-3 flex items-center justify-between gap-2">
                   <span className="text-[11px] text-slate-400">
@@ -416,6 +448,11 @@ export default function SupportContactPage() {
           box-shadow: 0 10px 28px -10px rgba(0,0,0,.45); animation: cpToast .25s ease; }
         @keyframes cpToast { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
         @media (prefers-reduced-motion: reduce) { .cp-toast { animation: none; } }
+        .cp-dot { width: 6px; height: 6px; border-radius: 9999px; background: #9aa6c2; display: inline-block; animation: cpDot 1s infinite ease-in-out; }
+        .cp-dot:nth-child(2) { animation-delay: .15s; }
+        .cp-dot:nth-child(3) { animation-delay: .3s; }
+        @keyframes cpDot { 0%, 80%, 100% { opacity: .3; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+        @media (prefers-reduced-motion: reduce) { .cp-dot { animation: none; } }
         @media print { .cp-assist, .cp-toast { display: none; } }
       `}</style>
     </div>
