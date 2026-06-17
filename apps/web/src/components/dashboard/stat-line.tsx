@@ -43,6 +43,16 @@ const KPI_TINT: Record<string, { icon: string; box: string }> = {
   confirmed: { icon: "text-indigo-600", box: "bg-indigo-50" },
 };
 
+// §kpi-status-chip(호영님, 스캔허브 지시문 00·5) — KPI 우측 상태칩 톤.
+//   §11.302 신호등 준수: warn=yellow(amber 금지), up=red, ok=emerald, act=blue, idle=gray.
+const CHIP_TONE: Record<string, string> = {
+  act: "bg-blue-50 text-blue-700",
+  ok: "bg-emerald-100 text-emerald-700",
+  idle: "bg-gray-100 text-gray-500",
+  warn: "bg-yellow-100 text-yellow-700",
+  up: "bg-red-50 text-red-700",
+};
+
 export function StatLine({ state, summary, onRetry }: StatLineProps) {
   if (state === "loading") {
     return (
@@ -101,10 +111,30 @@ export function StatLine({ state, summary, onRetry }: StatLineProps) {
     },
   ];
 
+  // §kpi-status-chip — KPI 우측 상태칩(canonical summary.budget 단일 진실, 가짜 0).
+  //   지출: 예산 미설정→idle / 집행률 act(<80)·warn(80~99)·up(≥100). 잔여: 설정 시 추적중(ok)·미설정 설정필요(idle).
+  //   확정발주: >0 추적중(ok)·0 발주 0건(idle).
+  const isSet = s?.budget.isSet ?? false;
+  const usageRate = s?.budget.usageRate ?? 0;
+  const chipFor = (key: string): { label: string; tone: string } => {
+    if (key === "spend") {
+      if (!isSet) return { label: "예산 미설정", tone: "idle" };
+      const tone = usageRate >= 100 ? "up" : usageRate >= 80 ? "warn" : "act";
+      return { label: `예산의 ${usageRate}%`, tone };
+    }
+    if (key === "remaining") {
+      return isSet ? { label: "추적 중", tone: "ok" } : { label: "설정 필요", tone: "idle" };
+    }
+    return (s?.modules.po.confirmedAmount ?? 0) > 0
+      ? { label: "추적 중", tone: "ok" }
+      : { label: "발주 0건", tone: "idle" };
+  };
+
   return (
     <div className="grid grid-cols-3 gap-2">
       {items.map((it) => {
         const active = it.value > 0;
+        const chip = chipFor(it.key);
         return (
           <a
             key={it.key}
@@ -116,20 +146,26 @@ export function StatLine({ state, summary, onRetry }: StatLineProps) {
             }`}
           >
             <div
-              className={`flex items-center gap-1.5 mb-1 ${
+              className={`flex items-center justify-between gap-1.5 mb-1 ${
                 active ? "text-slate-500" : "text-gray-400"
               }`}
             >
-              {/* §dashboard-shifan-polish A1 — KPI 아이콘 틴트 박스(active만). 0건은 회색 비활성(§11.311). */}
-              <span
-                className={`flex items-center justify-center w-6 h-6 rounded-lg flex-shrink-0 ${
-                  active ? KPI_TINT[it.key]!.box : "bg-gray-100"
-                }`}
-              >
-                <span className={active ? KPI_TINT[it.key]!.icon : "text-gray-400"}>{it.icon}</span>
-              </span>
-              <span className="text-[11px] font-semibold uppercase tracking-[0.06em] break-keep">
-                {it.label}
+              <div className="flex items-center gap-1.5 min-w-0">
+                {/* §dashboard-shifan-polish A1 — KPI 아이콘 틴트 박스(active만). 0건은 회색 비활성(§11.311). */}
+                <span
+                  className={`flex items-center justify-center w-6 h-6 rounded-lg flex-shrink-0 ${
+                    active ? KPI_TINT[it.key]!.box : "bg-gray-100"
+                  }`}
+                >
+                  <span className={active ? KPI_TINT[it.key]!.icon : "text-gray-400"}>{it.icon}</span>
+                </span>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.06em] break-keep truncate">
+                  {it.label}
+                </span>
+              </div>
+              {/* §kpi-status-chip(호영님, 스캔허브 지시문 00·5) — 우측 상태칩. canonical summary.budget 단일 진실. */}
+              <span className={`flex-shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold tabular-nums ${CHIP_TONE[chip.tone]}`}>
+                {chip.label}
               </span>
             </div>
             <p
