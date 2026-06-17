@@ -8,7 +8,7 @@ import { OrderDeliveredEmail } from "@/emails/order-delivered";
 // RESEND_API_KEY 필요 - 환경변수에 설정해주세요
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
-const FROM_EMAIL = process.env.EMAIL_FROM || "noreply@biocompare.kr";
+const FROM_EMAIL = process.env.EMAIL_FROM || "noreply@labaxis.co.kr";
 
 interface EmailOptions {
   to: string | string[];
@@ -38,7 +38,7 @@ interface SendQuoteCompletedEmailParams {
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   // SendGrid 또는 다른 이메일 서비스 사용
   const apiKey = process.env.SENDGRID_API_KEY;
-  const fromEmail = process.env.SENDGRID_FROM_EMAIL || "noreply@labaxis.io";
+  const fromEmail = process.env.SENDGRID_FROM_EMAIL || "noreply@labaxis.co.kr";
 
   if (!apiKey) {
     console.warn("SENDGRID_API_KEY가 설정되지 않았습니다. 이메일 발송을 건너뜁니다.");
@@ -167,9 +167,9 @@ export async function sendQuoteReceivedEmail({
 
   try {
     const { data, error } = await resend.emails.send({
-      from: `BioCompare <${FROM_EMAIL}>`,
+      from: `LabAxis <${FROM_EMAIL}>`,
       to: [to],
-      subject: `[BioCompare] 견적 요청이 접수되었습니다 (요청번호: #${quoteNumber})`,
+      subject: `[LabAxis] 견적 요청이 접수되었습니다 (요청번호: #${quoteNumber})`,
       react: QuoteReceivedEmail({
         customerName,
         quoteNumber,
@@ -213,9 +213,9 @@ export async function sendQuoteCompletedEmail({
 
   try {
     const { data, error } = await resend.emails.send({
-      from: `BioCompare <${FROM_EMAIL}>`,
+      from: `LabAxis <${FROM_EMAIL}>`,
       to: [to],
-      subject: `[BioCompare] 견적서가 도착했습니다! (견적번호: #${quoteNumber})`,
+      subject: `[LabAxis] 견적서가 도착했습니다! (견적번호: #${quoteNumber})`,
       react: QuoteCompletedEmail({
         customerName,
         quoteNumber,
@@ -260,12 +260,12 @@ export async function sendQuoteRejectedEmail({
 
   try {
     const { data, error } = await resend.emails.send({
-      from: `BioCompare <${FROM_EMAIL}>`,
+      from: `LabAxis <${FROM_EMAIL}>`,
       to: [to],
-      subject: `[BioCompare] 견적 요청 관련 안내 (요청번호: #${quoteNumber})`,
+      subject: `[LabAxis] 견적 요청 관련 안내 (요청번호: #${quoteNumber})`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #1e40af;">BioCompare</h2>
+          <h2 style="color: #1e40af;">LabAxis</h2>
           <p>${customerName} 님, 안녕하세요.</p>
           <p>요청하신 견적(#${quoteNumber})에 대해 안내드립니다.</p>
           <p>죄송합니다만, 요청하신 견적을 진행하기 어려운 상황입니다.</p>
@@ -274,7 +274,7 @@ export async function sendQuoteRejectedEmail({
           <p>감사합니다.</p>
           <hr style="border-color: #e2e8f0;" />
           <p style="color: #94a3b8; font-size: 12px;">
-            © ${new Date().getFullYear()} BioCompare. All rights reserved.
+            © ${new Date().getFullYear()} LabAxis. All rights reserved.
           </p>
         </div>
       `,
@@ -323,9 +323,9 @@ export async function sendOrderDeliveredEmail({
 
   try {
     const { data, error } = await resend.emails.send({
-      from: `BioCompare <${FROM_EMAIL}>`,
+      from: `LabAxis <${FROM_EMAIL}>`,
       to: [to],
-      subject: `[BioCompare] 배송이 완료되었습니다! (주문번호: ${orderNumber})`,
+      subject: `[LabAxis] 배송이 완료되었습니다! (주문번호: ${orderNumber})`,
       react: OrderDeliveredEmail({
         customerName,
         orderNumber,

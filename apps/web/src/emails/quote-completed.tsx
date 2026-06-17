@@ -28,17 +28,17 @@ export function QuoteCompletedEmail({
   completedDate = new Date().toLocaleDateString("ko-KR"),
   itemCount = 0,
   totalAmount,
-  dashboardUrl = "https://biocompare.kr/dashboard",
+  dashboardUrl = "https://labaxis.co.kr/dashboard",
 }: QuoteCompletedEmailProps) {
   return (
     <Html>
       <Head />
-      <Preview>견적서가 도착했습니다! - BioCompare</Preview>
+      <Preview>견적서가 도착했습니다! - LabAxis</Preview>
       <Body style={main}>
         <Container style={container}>
           {/* Header */}
           <Section style={header}>
-            <Text style={logo}>BioCompare</Text>
+            <Text style={logo}>LabAxis</Text>
           </Section>
 
           {/* Main Content */}
@@ -86,25 +86,14 @@ export function QuoteCompletedEmail({
               )}
             </Section>
 
-            {/* Status Timeline - Completed */}
+            {/* Status Timeline - Completed — §rebrand: CSS 원형 배지는 Gmail 미렌더(깨짐)라
+                모든 메일 클라이언트 안전한 텍스트 기반으로 교체. */}
             <Section style={timeline}>
               <Text style={timelineTitle}>진행 상태</Text>
-              <Row>
-                <Column style={stepCompleted}>
-                  <Text style={stepNumberCompleted}>✓</Text>
-                  <Text style={stepText}>접수 완료</Text>
-                </Column>
-                <Column style={stepLineCompleted}></Column>
-                <Column style={stepCompleted}>
-                  <Text style={stepNumberCompleted}>✓</Text>
-                  <Text style={stepText}>검토 완료</Text>
-                </Column>
-                <Column style={stepLineCompleted}></Column>
-                <Column style={stepActive}>
-                  <Text style={stepNumberActive}>✓</Text>
-                  <Text style={stepTextActive}>견적 완료</Text>
-                </Column>
-              </Row>
+              <Text style={timelineSteps}>
+                <span style={{ color: "#10b981" }}>✓ 접수 완료 → ✓ 검토 완료 → </span>
+                <strong style={{ color: "#047857" }}>✓ 견적 완료</strong>
+              </Text>
             </Section>
 
             <Text style={highlightBox}>
@@ -120,8 +109,8 @@ export function QuoteCompletedEmail({
 
             <Text style={helpText}>
               견적 내용에 대해 문의사항이 있으시면{" "}
-              <Link href="mailto:sales@biocompare.kr" style={link}>
-                sales@biocompare.kr
+              <Link href="mailto:sales@labaxis.co.kr" style={link}>
+                sales@labaxis.co.kr
               </Link>
               로 연락주세요.
             </Text>
@@ -130,21 +119,21 @@ export function QuoteCompletedEmail({
           {/* Footer */}
           <Section style={footer}>
             <Text style={footerText}>
-              본 메일은 BioCompare 견적 완료에 대한 자동 발송 메일입니다.
+              본 메일은 LabAxis 견적 완료에 대한 자동 발송 메일입니다.
             </Text>
             <Text style={footerText}>
-              © {new Date().getFullYear()} BioCompare. All rights reserved.
+              © {new Date().getFullYear()} LabAxis. All rights reserved.
             </Text>
             <Text style={footerLinks}>
-              <Link href="https://biocompare.kr" style={footerLink}>
+              <Link href="https://labaxis.co.kr" style={footerLink}>
                 홈페이지
               </Link>
               {" | "}
-              <Link href="https://biocompare.kr/privacy" style={footerLink}>
+              <Link href="https://labaxis.co.kr/privacy" style={footerLink}>
                 개인정보처리방침
               </Link>
               {" | "}
-              <Link href="https://biocompare.kr/terms" style={footerLink}>
+              <Link href="https://labaxis.co.kr/terms" style={footerLink}>
                 이용약관
               </Link>
             </Text>
@@ -274,62 +263,11 @@ const timelineTitle = {
   textAlign: "center" as const,
 };
 
-const stepCompleted = {
-  textAlign: "center" as const,
-  width: "80px",
-};
-
-const stepActive = {
-  textAlign: "center" as const,
-  width: "80px",
-};
-
-const stepNumberCompleted = {
-  backgroundColor: "#10b981",
-  borderRadius: "50%",
-  color: "#ffffff",
-  display: "inline-block",
-  fontSize: "12px",
-  fontWeight: "bold" as const,
-  height: "24px",
-  lineHeight: "24px",
-  margin: "0 0 4px",
-  textAlign: "center" as const,
-  width: "24px",
-};
-
-const stepNumberActive = {
-  backgroundColor: "#047857",
-  borderRadius: "50%",
-  color: "#ffffff",
-  display: "inline-block",
-  fontSize: "12px",
-  fontWeight: "bold" as const,
-  height: "24px",
-  lineHeight: "24px",
-  margin: "0 0 4px",
-  textAlign: "center" as const,
-  width: "24px",
-};
-
-const stepText = {
-  color: "#6b7280",
-  fontSize: "12px",
-  margin: "0",
-};
-
-const stepTextActive = {
-  color: "#047857",
-  fontSize: "12px",
+const timelineSteps = {
+  fontSize: "14px",
   fontWeight: "600" as const,
+  textAlign: "center" as const,
   margin: "0",
-};
-
-const stepLineCompleted = {
-  backgroundColor: "#10b981",
-  height: "2px",
-  margin: "12px 0",
-  width: "40px",
 };
 
 const highlightBox = {
