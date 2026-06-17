@@ -19,8 +19,8 @@ describe("§contact-redesign P1 (①) — ontology 무접촉 + inquiry 재사용
     expect(SRC).toMatch(/function classifyTopic/);
     expect(SRC).toMatch(/const TOPICS/);
   });
-  it("제품 DB/ontology API fetch 0 — 문의 인입만", () => {
-    expect(SRC).toMatch(/fetch\("\/api\/support\/inquiry"/);
+  it("제품 DB/ontology API fetch 0 — 문의 인입만(§support-csrf-fix: csrfFetch)", () => {
+    expect(SRC).toMatch(/csrfFetch\("\/api\/support\/inquiry"/);
     expect(SRC).not.toMatch(/\/api\/(inventory|quotes|dashboard|orders|stock|purchase)/);
   });
   it("inquiry API 재사용 + classifyTopic→inquiryType 매핑(신규 API 0)", () => {

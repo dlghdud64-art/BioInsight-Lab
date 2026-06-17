@@ -55,8 +55,8 @@ describe("§contact-redesign P2 — 라우트 가드 + 정직성", () => {
 });
 
 describe("§contact-redesign P2 — 클라이언트 wiring(라이브→폴백)", () => {
-  it("도우미가 /api/support/ai-assist 호출", () => {
-    expect(PAGE).toMatch(/fetch\("\/api\/support\/ai-assist"/);
+  it("도우미가 /api/support/ai-assist 호출(§support-csrf-fix: csrfFetch)", () => {
+    expect(PAGE).toMatch(/csrfFetch\("\/api\/support\/ai-assist"/);
   });
   it("실패/폴백 시 P1 룰베이스 큐레이션 복귀(항상 동작)", () => {
     expect(PAGE).toMatch(/toFallback/);

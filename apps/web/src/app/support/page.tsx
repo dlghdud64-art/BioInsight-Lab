@@ -17,6 +17,7 @@
  */
 
 import { useMemo, useState, useRef } from "react";
+import { csrfFetch } from "@/lib/api-client";
 import { MainHeader } from "../_components/main-header";
 import { MainFooter } from "../_components/main-footer";
 import { Sparkles, Send, Copy, Check, ArrowRight, FileText, ShieldCheck, Workflow, Mail } from "lucide-react";
@@ -128,7 +129,10 @@ export default function SupportContactPage() {
       setAnswer({ topic, text: topic ? topic.answer : DEFAULT_ANSWER, live: false });
     };
     try {
-      const res = await fetch("/api/support/ai-assist", {
+      // §support-csrf-fix — 공개 폼도 CSRF required(레지스트리 기본값). raw fetch → 토큰 미부착
+      //   → "보안 검증 미완" 403. csrfFetch 가 쿠키/부트스트랩(/api/security/csrf-token)으로 토큰
+      //   자동 부착(로그아웃 방문자도 발급). CAPTCHA·Resend 무관.
+      const res = await csrfFetch("/api/support/ai-assist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: q }),
@@ -163,7 +167,8 @@ export default function SupportContactPage() {
     setSubmitting(true);
     setResult(null);
     try {
-      const res = await fetch("/api/support/inquiry", {
+      // §support-csrf-fix — 제출도 CSRF required. csrfFetch 로 x-labaxis-csrf-token 자동 부착.
+      const res = await csrfFetch("/api/support/inquiry", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ inquiryType: category, name, email, message }),
