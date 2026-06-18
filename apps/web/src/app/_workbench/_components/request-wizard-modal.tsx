@@ -2,6 +2,7 @@
 
 import { csrfFetch } from "@/lib/api-client";
 import { useState, useEffect, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -100,6 +101,7 @@ export function RequestWizardModal({
   onQuoteManagementOpen,
 }: RequestWizardModalProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(0);
   const [purpose, setPurpose] = useState("");
@@ -263,6 +265,10 @@ export function RequestWizardModal({
       }
 
       setSubmittedRequestId(submittedId);
+      // §quote-list-stale-fix — 견적 생성 성공 후 목록 캐시 무효화. 누락 시 /dashboard/quotes
+      //   도착 때 stale 캐시 표시(생성된 견적 미노출 → "추가 안 됐나?" 오인). queryKey ["quotes"]
+      //   = 목록 useQuery(["quotes", statusFilter]) prefix 매칭 → 다음 mount 시 refetch.
+      queryClient.invalidateQueries({ queryKey: ["quotes"] });
       onSubmitSuccess?.();
 
       // Move to step 3 — handoff
