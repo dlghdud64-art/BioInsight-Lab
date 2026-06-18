@@ -1,9 +1,10 @@
 /**
- * §11.348-SEND-A (회귀) — 견적 요청 발송 reply-to(연구소/요청자) 명의 sentinel
+ * §11.348-SEND-A → §inbound-rfq-autocapture P1 (진화) — 견적 발송 reply-to sentinel
  *
- * A 원칙: LabAxis = 발송 도구, 책임·관계는 연구소. 발송은 from=noreply@labaxis 라도
- * reply-to 를 요청자(연구소) 이메일로 두어 공급사 답장이 연구소로 가야 함.
- * (이전: replyTo 미설정 → 답장이 noreply 로 가서 유실 = A 원칙 위반.)
+ * A 원칙(불변): LabAxis = 발송 도구, 회신 유실 0. from=noreply 라도 reply-to 로 회신을 회수.
+ * 진화(호영님 2026-06-18 승인): reply-to 를 요청자 이메일(직접수신)에서 자동수신 주소
+ *   rfq+<token>@inbound.<domain> 로 전환 → 공급사 회신이 LabAxis 로 집약(QuoteReply).
+ *   enabled=false(opt-out) 시에만 요청자 직접수신 폴백 보존. "유실 0"은 유지·강화.
  *
  * 문자열 매칭은 toContain (esbuild ts-loader 모호성 회피).
  */
@@ -29,10 +30,20 @@ describe("§11.348-SEND-A — sender.ts replyTo 지원", () => {
   });
 });
 
-describe("§11.348-SEND-A — vendor-requests 가 요청자 이메일을 replyTo 로", () => {
-  it("sendEmail 호출에 replyTo = 요청자(session) 이메일", () => {
+describe("§inbound-rfq-autocapture P1 — vendor-requests reply-to 자동수신 전환", () => {
+  it("sendEmail 호출의 replyTo = rfq 자동수신 주소(rfqReplyAddress)", () => {
     const src = read(ROUTE);
-    expect(src).toContain("replyTo: session?.user?.email ?? undefined");
+    expect(src).toContain("replyTo: rfqReplyAddress");
+  });
+  it("발송 전 quote당 RFQ 토큰 보장 + 주소 빌더 사용", () => {
+    const src = read(ROUTE);
+    expect(src).toContain("ensureRfqToken(id)");
+    expect(src).toContain("buildRfqReplyAddress(rfqToken)");
+  });
+  it("enabled→시스템 집약 / opt-out→요청자 직접수신 폴백(유실 0 보존)", () => {
+    const src = read(ROUTE);
+    expect(src).toContain("rfqEnabled");
+    expect(src).toContain("session?.user?.email ?? undefined");
   });
 });
 

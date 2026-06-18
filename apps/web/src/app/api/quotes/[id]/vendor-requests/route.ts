@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { getOrCreateGuestKey } from "@/lib/api/guest-key";
 import { generateVendorRequestToken } from "@/lib/api/vendor-request-token";
 import { sendEmail } from "@/lib/email/sender";
+import { ensureRfqToken, buildRfqReplyAddress } from "@/lib/email/rfq-reply-address";
 import {
   generateVendorQuoteRequestEmail,
   generateVendorQuoteReminderEmail,
@@ -250,6 +251,15 @@ export async function POST(
       })),
     };
 
+    // §inbound-rfq-autocapture P1 — 발송 reply-to 를 자동수신 주소로 전환(루프 클로즈).
+    //   quote당 1개 RFQ 토큰 보장 → reply-to=rfq+<token>@inbound.<domain> → 공급사 회신이
+    //   inbound parse 로 들어와 QuoteReply 자동 생성. enabled=false(opt-out) 시에만 §11.348-SEND-A
+    //   직접수신(요청자 이메일) 폴백 보존. canonical = QuoteReply(DB).
+    const { token: rfqToken, enabled: rfqEnabled } = await ensureRfqToken(id);
+    const rfqReplyAddress = rfqEnabled
+      ? buildRfqReplyAddress(rfqToken)
+      : (session?.user?.email ?? undefined);
+
     // Create vendor requests
     const createdRequests = [];
     const emailResults = [];
@@ -321,8 +331,10 @@ export async function POST(
           html: emailTemplate.html,
           text: emailTemplate.text,
           vendorId: vendor.id,
-          // §11.348-SEND-A — 회신 주소를 요청자(연구소)로 → 공급사 답장이 연구소로 (A 명의, LabAxis 도구화).
-          replyTo: session?.user?.email ?? undefined,
+          // §inbound-rfq-autocapture P1 (§11.348-SEND-A 진화) — reply-to 를 자동수신 주소로.
+          //   enabled 면 rfq+<token>@inbound(시스템 집약→QuoteReply), opt-out 시 요청자 직접수신 폴백.
+          //   회신 유실 0은 유지(직접수신→LabAxis 집약으로 진화).
+          replyTo: rfqReplyAddress,
         });
 
         emailResults.push({ email: vendor.email, success: true });

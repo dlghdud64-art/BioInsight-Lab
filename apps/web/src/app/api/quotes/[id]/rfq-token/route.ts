@@ -5,6 +5,7 @@ import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import crypto from "crypto";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { buildRfqReplyAddress } from "@/lib/email/rfq-reply-address";
 
 const logger = createLogger("api/quotes/[id]/rfq-token");
 
@@ -98,8 +99,8 @@ export async function POST(
     if (rfqToken) {
       logger.info(`Returning existing RFQ token for quote ${quoteId}`);
 
-      // Build reply address
-      const replyAddress = `rfq+${rfqToken.token}@inbound.${process.env.NEXT_PUBLIC_DOMAIN || "yourdomain.com"}`;
+      // Build reply address (§inbound-rfq-autocapture P1 — 공용 빌더 DRY, placeholder 제거)
+      const replyAddress = buildRfqReplyAddress(rfqToken.token);
 
       return NextResponse.json({
         token: rfqToken.token,
@@ -125,8 +126,8 @@ export async function POST(
       tokenLength: token.length,
     });
 
-    // Build reply address
-    const replyAddress = `rfq+${rfqToken.token}@inbound.${process.env.NEXT_PUBLIC_DOMAIN || "yourdomain.com"}`;
+    // Build reply address (§inbound-rfq-autocapture P1 — 공용 빌더, fallback labaxis.co.kr)
+    const replyAddress = buildRfqReplyAddress(rfqToken.token);
 
     enforcement.complete({});
 
@@ -184,8 +185,8 @@ export async function GET(
       );
     }
 
-    // Build reply address
-    const replyAddress = `rfq+${rfqToken.token}@inbound.${process.env.NEXT_PUBLIC_DOMAIN || "yourdomain.com"}`;
+    // Build reply address (§inbound-rfq-autocapture P1 — 공용 빌더, fallback labaxis.co.kr)
+    const replyAddress = buildRfqReplyAddress(rfqToken.token);
 
     return NextResponse.json({
       token: rfqToken.token,
@@ -253,8 +254,8 @@ export async function PATCH(
       enabled: rfqToken.enabled,
     });
 
-    // Build reply address
-    const replyAddress = `rfq+${rfqToken.token}@inbound.${process.env.NEXT_PUBLIC_DOMAIN || "yourdomain.com"}`;
+    // Build reply address (§inbound-rfq-autocapture P1 — 공용 빌더, fallback labaxis.co.kr)
+    const replyAddress = buildRfqReplyAddress(rfqToken.token);
 
     enforcement.complete({});
 
