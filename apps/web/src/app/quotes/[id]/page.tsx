@@ -59,6 +59,7 @@ import { cn } from "@/lib/utils";
 import { ActivityTimeline } from "@/components/ai/activity-timeline";
 import { VendorRequestModal } from "@/components/quotes/dispatch/vendor-dispatch-workbench";
 import { resolveSuppliers, buildDraftMessage } from "@/components/quotes/dispatch/resolve-suppliers";
+import { EmailRepliesSection } from "@/components/quotes/email-replies-section";
 import {
   Select,
   SelectContent,
@@ -891,6 +892,8 @@ export default function QuoteDetailPage() {
                       <div className="text-center py-8 text-sm text-muted-foreground">벤더 정보 로딩 중...</div>
                     ) : (
                     <>
+                    {/* §inbound-rfq-autocapture P3 — 공급사 이메일 자동수신 회신(읽기 전용, same-canvas 흡수) */}
+                    <EmailRepliesSection quoteId={quoteId} />
                     {/* 벤더 가격 회신 입력 */}
                     <div>
                       <h3 className="text-sm font-bold text-slate-200 mb-1">벤더 견적 입력</h3>
