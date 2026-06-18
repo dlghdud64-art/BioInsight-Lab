@@ -70,12 +70,14 @@ describe("§11.303b — Basic/Pro 견적·PO 무제한 + 히어로 제목 복원
       );
     });
 
-    it("FREE: maxQuotesPerMonth 5 + maxPurchaseOrdersPerMonth 5", () => {
+    it("FREE: maxQuotesPerMonth 3 + maxPurchaseOrdersPerMonth 3 (§pricing-refresh P1 — 5→3)", () => {
+      // §pricing-refresh P1(호영님): Free 한도 5→3 확정. 303b 보호 의도(Free 유한 한도 / 유료 무제한)는
+      //   유지, Free 유한값만 3 으로 정합. paid(TEAM/ORG) null(무제한)은 아래 it 가 계속 강제.
       expect(PLANS_SRC).toMatch(
-        /SubscriptionPlan\.FREE\][\s\S]*?maxQuotesPerMonth:\s*5/,
+        /SubscriptionPlan\.FREE\][\s\S]*?maxQuotesPerMonth:\s*3/,
       );
       expect(PLANS_SRC).toMatch(
-        /SubscriptionPlan\.FREE\][\s\S]*?maxPurchaseOrdersPerMonth:\s*5/,
+        /SubscriptionPlan\.FREE\][\s\S]*?maxPurchaseOrdersPerMonth:\s*3/,
       );
     });
 

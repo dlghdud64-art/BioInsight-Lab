@@ -149,13 +149,13 @@ export interface PlanLimits {
 
 export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
   [SubscriptionPlan.FREE]: {
-    maxMembers: 1,        // 개인 전용
-    // §11.303b — Free maxQuotesPerMonth 10 → 5 (호영님 spec 정합)
-    maxQuotesPerMonth: 5,
-    // §11.303b — Free maxPurchaseOrdersPerMonth 5 (신규)
-    maxPurchaseOrdersPerMonth: 5,
+    maxMembers: 1,        // 개인 전용(사용자 1명, 현행 유지)
+    // §pricing-refresh(호영님 2026-06-18) — Free RFQ 5 → 3 (조이기). 실제 enforce 는 P2.
+    maxQuotesPerMonth: 3,
+    // §pricing-refresh — Free PO 5 → 3 (조이기).
+    maxPurchaseOrdersPerMonth: 3,
     maxSharedLinks: 5,
-    maxItems: 10,         // 품목 등록 10개
+    maxItems: 10,         // 품목 등록 10개(재고, 현행 유지 — 호영님 확정)
     features: {
       exportPack: false,
       advancedReports: false,
