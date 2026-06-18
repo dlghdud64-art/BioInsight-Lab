@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { createLogger } from "@/lib/logger";
 import crypto from "crypto";
+import {
+  uploadQuoteReplyAttachment,
+  AttachmentStorageNotConfiguredError,
+} from "@/lib/email/quote-reply-attachment-storage";
 
 const logger = createLogger("api/inbound/sendgrid");
 
@@ -41,39 +45,6 @@ function extractMessageId(
   // Fallback: create hash from email metadata
   const fallback = `${from}|${subject}|${Date.now()}`;
   return `synthetic-${crypto.createHash("sha256").update(fallback).digest("hex").substring(0, 32)}`;
-}
-
-/**
- * Upload attachment to Supabase Storage
- * TODO: Implement Supabase storage client
- */
-async function uploadAttachment(
-  file: File,
-  quoteId: string,
-  replyId: string
-): Promise<{ bucket: string; path: string; sizeBytes: number }> {
-  // For MVP, we'll skip actual upload and just return metadata
-  // In production, use @supabase/storage-js to upload
-
-  const timestamp = Date.now();
-  const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-  const path = `quote/${quoteId}/reply/${replyId}/${timestamp}_${sanitizedFileName}`;
-
-  logger.warn("Attachment upload not implemented - storing metadata only", {
-    fileName: file.name,
-    size: file.size,
-    path,
-  });
-
-  // TODO: Actual upload code
-  // const supabase = createClient(...)
-  // await supabase.storage.from('quote-replies').upload(path, file)
-
-  return {
-    bucket: "quote-replies",
-    path,
-    sizeBytes: file.size,
-  };
 }
 
 /**
@@ -277,14 +248,18 @@ export async function POST(
         }
 
         try {
-          // Upload to storage
-          const { bucket, path, sizeBytes } = await uploadAttachment(
-            file,
+          // §inbound-rfq-autocapture P2 — 실제 object storage 업로드(메타-only placeholder 제거).
+          //   storage 성공 시에만 QuoteReplyAttachment 생성 → 누락을 fake success 로 가리지 않음.
+          const buffer = Buffer.from(await file.arrayBuffer());
+          const { bucket, path, sizeBytes } = await uploadQuoteReplyAttachment({
+            buffer,
+            filename: file.name,
             quoteId,
-            newReply.id
-          );
+            replyId: newReply.id,
+            contentType: file.type || "application/octet-stream",
+          });
 
-          // Create attachment record
+          // Create attachment record (실 bucket/path — 업로드 성공 시에만)
           await tx.quoteReplyAttachment.create({
             data: {
               replyId: newReply.id,
@@ -296,15 +271,23 @@ export async function POST(
             },
           });
 
-          logger.info("Attachment uploaded", {
-            fileName: file.name,
-            path,
-          });
+          logger.info("Attachment uploaded", { fileName: file.name, path });
         } catch (error) {
-          logger.error("Failed to upload attachment", {
-            fileName: file.name,
-            error,
-          });
+          // §inbound-rfq-autocapture P2 — storage 미설정/실패 시 placeholder success 금지.
+          //   QuoteReply 는 보존(원문 InboundEmail 도 보존)하되, 첨부는 명시 skip + 명확 로그.
+          //   인프라(STORAGE_PROVIDER/bucket) 준비 후 원본에서 재처리 가능(누락을 silent 로 숨기지 않음).
+          if (error instanceof AttachmentStorageNotConfiguredError) {
+            logger.warn("Attachment storage 미설정 — 첨부 skip(메타 placeholder 생성 안 함)", {
+              fileName: file.name,
+              replyId: newReply.id,
+            });
+          } else {
+            logger.error("Attachment 업로드 실패 — skip", {
+              fileName: file.name,
+              replyId: newReply.id,
+              error,
+            });
+          }
           // Continue processing other attachments
         }
       }
