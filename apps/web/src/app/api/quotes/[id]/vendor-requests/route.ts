@@ -251,14 +251,17 @@ export async function POST(
       })),
     };
 
-    // §inbound-rfq-autocapture P1 — 발송 reply-to 를 자동수신 주소로 전환(루프 클로즈).
-    //   quote당 1개 RFQ 토큰 보장 → reply-to=rfq+<token>@inbound.<domain> → 공급사 회신이
-    //   inbound parse 로 들어와 QuoteReply 자동 생성. enabled=false(opt-out) 시에만 §11.348-SEND-A
-    //   직접수신(요청자 이메일) 폴백 보존. canonical = QuoteReply(DB).
-    const { token: rfqToken, enabled: rfqEnabled } = await ensureRfqToken(id);
-    const rfqReplyAddress = rfqEnabled
-      ? buildRfqReplyAddress(rfqToken)
-      : (session?.user?.email ?? undefined);
+    // §inbound-rfq-autocapture P1+P5 — 발송 reply-to 자동수신 전환 + rollout gate.
+    //   reply-to=rfq+<token>@inbound.<domain> → 공급사 회신이 inbound parse 로 들어와 QuoteReply 생성.
+    //   ★ P5 cutover 안전: INBOUND_RFQ_ENABLED 미설정/false 면 직접수신(요청자 이메일) 유지 —
+    //     인프라(MX·SendGrid Parse) 준비 전 배포돼도 회신 유실 0(§11.348-SEND-A 현행 보존).
+    //     인프라 준비 후 env on → 자동수신 활성. quote별 enabled=false(opt-out)도 직접수신 폴백.
+    const autocaptureOn = process.env.INBOUND_RFQ_ENABLED === "true";
+    let rfqReplyAddress: string | undefined = session?.user?.email ?? undefined;
+    if (autocaptureOn) {
+      const { token: rfqToken, enabled: rfqEnabled } = await ensureRfqToken(id);
+      if (rfqEnabled) rfqReplyAddress = buildRfqReplyAddress(rfqToken);
+    }
 
     // Create vendor requests
     const createdRequests = [];

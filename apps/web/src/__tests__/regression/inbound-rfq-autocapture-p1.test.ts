@@ -38,9 +38,10 @@ describe("§inbound-rfq-autocapture P1 — vendor-requests 발송 배선", () =>
   it("공용 lib import", () => {
     expect(VR).toMatch(/import \{ ensureRfqToken, buildRfqReplyAddress \} from "@\/lib\/email\/rfq-reply-address"/);
   });
-  it("발송 루프 전 토큰 보장 + reply 주소 계산(1회)", () => {
+  it("발송 루프 전 토큰 보장 + reply 주소 계산(P5 flag gate)", () => {
+    // §P5 rollout gate 진화: 자동수신 on 일 때만 토큰 보장 + rfq 주소. off 면 직접수신 유지.
     expect(VR).toMatch(/ensureRfqToken\(id\)/);
-    expect(VR).toMatch(/rfqEnabled\s*\n?\s*\?\s*buildRfqReplyAddress\(rfqToken\)/);
+    expect(VR).toMatch(/if \(rfqEnabled\) rfqReplyAddress = buildRfqReplyAddress\(rfqToken\)/);
   });
   it("sendEmail replyTo = rfqReplyAddress(자동수신)", () => {
     expect(VR).toContain("replyTo: rfqReplyAddress");
