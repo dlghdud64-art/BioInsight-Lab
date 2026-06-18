@@ -8,6 +8,7 @@ import { createActivityLogServer } from "@/lib/api/activity-logs";
 import { ActivityType } from "@prisma/client";
 import { generateShareToken } from "@/lib/api/share-token";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforcePlanLimit, PlanLimitError } from "@/lib/billing/enforce-plan-limit";
 // #quote-payload-zod-schema — §11.203 silent assumption 후속 안전장치.
 // payload validation 의 single source. invalid payload → structured 400
 // + 운영자 친화 한국어 메시지 + enforcement.fail() (§11.21 lock 정합).
@@ -26,6 +27,19 @@ export async function POST(request: NextRequest) {
     session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // §pricing-refresh P2 — Free RFQ 한도 enforce(grandfather/유료/env미설정은 통과). 초과 시 429+안내.
+    try {
+      await enforcePlanLimit(session.user.id, "quotes");
+    } catch (e) {
+      if (e instanceof PlanLimitError) {
+        return NextResponse.json(
+          { error: e.message, code: e.code, limit: e.limit, used: e.used },
+          { status: 429 },
+        );
+      }
+      throw e;
     }
 
     // ── Security enforcement ──

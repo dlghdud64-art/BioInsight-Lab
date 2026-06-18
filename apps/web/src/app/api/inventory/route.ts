@@ -7,6 +7,7 @@ import {
   summarizeInventoryDisposalPriorities,
 } from "@/lib/inventory/disposal-readiness";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforcePlanLimit, PlanLimitError } from "@/lib/billing/enforce-plan-limit";
 
 // 재고 목록 조회
 export async function GET(request: NextRequest) {
@@ -190,6 +191,19 @@ export async function POST(request: NextRequest) {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // §pricing-refresh P2 — Free 재고 품목 한도 enforce(grandfather/유료/env미설정은 통과). 초과 시 429+안내.
+    try {
+      await enforcePlanLimit(session.user.id, "inventory");
+    } catch (e) {
+      if (e instanceof PlanLimitError) {
+        return NextResponse.json(
+          { error: e.message, code: e.code, limit: e.limit, used: e.used },
+          { status: 429 },
+        );
+      }
+      throw e;
     }
 
     const body = await request.json();
