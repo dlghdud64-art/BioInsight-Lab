@@ -6,6 +6,8 @@ import {
   uploadQuoteReplyAttachment,
   AttachmentStorageNotConfiguredError,
 } from "@/lib/email/quote-reply-attachment-storage";
+import { sendEmail } from "@/lib/email/sender";
+import { getAppUrl } from "@/lib/env";
 
 const logger = createLogger("api/inbound/sendgrid");
 
@@ -317,6 +319,39 @@ export async function POST(
       replyId: reply.id,
       quoteId,
     });
+
+    // §inbound-rfq-autocapture P4 — 새 회신 도착 시 연구소(quote owner) 알림(best-effort).
+    //   §11.348-SEND-A 직접수신 폐기 보완: 원문은 LabAxis 에 집약되고, 연구소는 알림으로 인지 →
+    //   quotes received 탭에서 확인. 알림 실패해도 수신(QuoteReply)은 보존(webhook 200 유지).
+    try {
+      const owner = tokenRecord.quote.userId
+        ? await db.user.findUnique({
+            where: { id: tokenRecord.quote.userId },
+            select: { email: true },
+          })
+        : null;
+      if (owner?.email) {
+        const quoteTitle = tokenRecord.quote.title || "견적";
+        const link = `${getAppUrl()}/quotes/${quoteId}`;
+        const attachLine =
+          attachmentsMeta.length > 0 ? `\n첨부 ${attachmentsMeta.length}건이 함께 도착했습니다.` : "";
+        await sendEmail({
+          to: owner.email,
+          subject: `[LabAxis] 새 견적 회신 도착 — ${quoteTitle}`,
+          html: `<div style="font-family:system-ui,sans-serif;font-size:14px;line-height:1.7;color:#0f172a">
+  <p style="margin:0 0 12px"><strong>공급사 견적 회신이 도착했습니다.</strong></p>
+  <p style="margin:0 0 6px;color:#64748b">견적: ${quoteTitle}</p>
+  <p style="margin:0 0 6px;color:#64748b">발신: ${from}</p>
+  ${attachmentsMeta.length > 0 ? `<p style="margin:0 0 12px;color:#64748b">첨부 ${attachmentsMeta.length}건</p>` : ""}
+  <p style="margin:14px 0"><a href="${link}" style="display:inline-block;background:#2563eb;color:#fff;border-radius:6px;padding:10px 18px;text-decoration:none;font-weight:600">회신 확인하기</a></p>
+  <p style="margin:0;color:#94a3b8;font-size:12px">회신 원문과 첨부는 LabAxis 견적 화면의 ‘회신’ 영역에서 확인하실 수 있습니다.</p>
+</div>`,
+          text: `공급사 견적 회신이 도착했습니다.\n\n견적: ${quoteTitle}\n발신: ${from}${attachLine}\n\n회신 확인: ${link}`,
+        });
+      }
+    } catch (notifyError) {
+      logger.warn("회신 도착 알림 발송 실패(수신은 정상)", { quoteId, error: notifyError });
+    }
 
     return NextResponse.json({ ok: true, matched: true, replyId: reply.id });
   } catch (error) {
