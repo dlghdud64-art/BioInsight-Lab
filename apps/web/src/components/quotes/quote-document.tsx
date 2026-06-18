@@ -56,7 +56,7 @@ export function QuoteDocument({ quote, companyInfo }: QuoteDocumentProps) {
     businessNumber: companyInfo?.businessNumber || "123-45-67890",
     address: companyInfo?.address || "서울특별시 강남구 테헤란로 123",
     phone: companyInfo?.phone || "02-1234-5678",
-    email: companyInfo?.email || "info@labaxis.io",
+    email: companyInfo?.email || "support@labaxis.co.kr",
   };
 
   return (

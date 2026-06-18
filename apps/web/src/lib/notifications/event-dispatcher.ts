@@ -181,7 +181,7 @@ function buildInitialPayload(
 
   // 이메일 초안은 추후 action-executor에서 본문 생성
   if (actionType === "EMAIL_DRAFT") {
-    base.emailSubject = `[BioCompare] ${meta.label}`;
+    base.emailSubject = `[LabAxis] ${meta.label}`;
     base.emailBody = null; // executor에서 생성
   }
 

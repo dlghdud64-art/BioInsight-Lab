@@ -257,7 +257,7 @@ const RUNBOOK_ITEMS: RunbookItem[] = [
     symptom: "팀원이 초대 이메일을 받지 못함",
     impact: "팀 합류 지연",
     possibleCauses: ["입력한 이메일 주소 오류", "스팸/정크 폴더로 분류", "회사 이메일 보안 정책으로 외부 메일 차단"],
-    immediateActions: ["수신자에게 스팸/정크 폴더 확인 요청", "조직 관리자가 이메일 주소 정확성 재확인", "IT 부서에 noreply@labaxis.io 도메인 허용 요청"],
+    immediateActions: ["수신자에게 스팸/정크 폴더 확인 요청", "조직 관리자가 이메일 주소 정확성 재확인", "IT 부서에 noreply@labaxis.co.kr 도메인 허용 요청"],
     escalation: "위 조치 후에도 미수신이면 지원 티켓으로 수동 초대 요청",
     cta: { label: "조직 설정으로 이동", href: "/dashboard/organizations" },
   },

@@ -311,15 +311,15 @@ function generateEmailContent(
   const label = (metadata.label as string) ?? eventType;
 
   return {
-    subject: `[BioCompare] ${label}`,
+    subject: `[LabAxis] ${label}`,
     body: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #1e40af;">BioCompare 알림</h2>
+        <h2 style="color: #1e40af;">LabAxis 알림</h2>
         <p><strong>${label}</strong></p>
-        <p>상세 내용은 BioCompare 대시보드에서 확인해주세요.</p>
+        <p>상세 내용은 LabAxis 대시보드에서 확인해주세요.</p>
         <hr style="border-color: #e2e8f0;" />
         <p style="color: #94a3b8; font-size: 12px;">
-          이 이메일은 BioCompare 시스템에서 자동 생성되었습니다.
+          이 이메일은 LabAxis 시스템에서 자동 생성되었습니다.
           발송 전 관리자 검토가 필요합니다.
         </p>
       </div>

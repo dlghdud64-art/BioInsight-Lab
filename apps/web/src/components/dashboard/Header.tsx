@@ -589,7 +589,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                     청구 및 구독
                   </Link>
                   <a
-                    href="mailto:support@labaxis.io"
+                    href="mailto:support@labaxis.co.kr"
                     role="menuitem"
                     onClick={() => setIsProfileOpen(false)}
                     className="flex items-center gap-3 px-3 py-3 text-sm text-slate-700 hover:bg-slate-100 rounded-md cursor-pointer"

@@ -103,7 +103,7 @@ export function UserMenu() {
               <CreditCard className="mr-2 h-4 w-4" />
               청구 및 구독
             </Link>
-            <a href="mailto:support@labaxis.io" role="menuitem" onClick={() => setIsUserMenuOpen(false)} className="flex items-center px-3 py-2 text-sm hover:bg-slate-100">
+            <a href="mailto:support@labaxis.co.kr" role="menuitem" onClick={() => setIsUserMenuOpen(false)} className="flex items-center px-3 py-2 text-sm hover:bg-slate-100">
               <HelpCircle className="mr-2 h-4 w-4" />
               고객센터
             </a>

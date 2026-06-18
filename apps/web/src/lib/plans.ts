@@ -109,7 +109,7 @@ export const ENTERPRISE_INFO = {
   tagline: "기관 · 계약형 운영 · 좌석/운영량 협의",
   description: "보안·연동·대규모 운영이 필요한 기관용 플랜",
   priceDisplay: "별도 문의",
-  contactEmail: "sales@labaxis.io",
+  contactEmail: "support@labaxis.co.kr",
   features: [
     // §11.304 — features 선두 라벨 "R&D Operations" → "Pro" 정합.
     "Pro 전체 +",

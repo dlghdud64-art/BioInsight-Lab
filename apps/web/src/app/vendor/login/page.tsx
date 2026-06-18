@@ -113,8 +113,8 @@ export default function VendorLoginPage() {
         <div className="mt-4 text-center">
           <p className="text-xs text-slate-500">
             문의사항이 있으신가요?{" "}
-            <a href="mailto:support@labaxis.io" className="text-blue-600 hover:underline">
-              support@labaxis.io
+            <a href="mailto:support@labaxis.co.kr" className="text-blue-600 hover:underline">
+              support@labaxis.co.kr
             </a>
           </p>
         </div>

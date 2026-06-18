@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Shared Quote - AI BioCompare",
+  title: "Shared Quote - LabAxis",
   description: "View shared quote information",
   robots: {
     index: false,

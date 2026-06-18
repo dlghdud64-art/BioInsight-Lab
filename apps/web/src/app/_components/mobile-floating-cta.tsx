@@ -22,7 +22,7 @@ export function MobileFloatingCTA() {
           </Button>
         </Link>
         <a
-          href="mailto:contact@labaxis.io"
+          href="mailto:support@labaxis.co.kr"
           className="flex-1 max-w-[200px]"
         >
           <Button

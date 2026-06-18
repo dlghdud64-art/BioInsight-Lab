@@ -39,7 +39,7 @@ export function MainFooter() {
       title: "고객지원",
       links: [
         { label: "도입 문의", href: "/support", onClick: null },
-        { label: "이메일 문의", href: "mailto:contact@labaxis.io", onClick: null },
+        { label: "이메일 문의", href: "mailto:support@labaxis.co.kr", onClick: null },
       ],
     },
     {
@@ -85,7 +85,7 @@ export function MainFooter() {
               </a>
               {/* Mail */}
               <a
-                href="mailto:contact@labaxis.io"
+                href="mailto:support@labaxis.co.kr"
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors"
                 style={{ border: "1px solid rgba(217,226,241,0.10)", color: "#8A97AA" }}
                 onMouseEnter={(e) => { e.currentTarget.style.color = "#D9E2F1"; }}

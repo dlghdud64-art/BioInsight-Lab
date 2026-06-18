@@ -333,7 +333,7 @@ export default function SharePage() {
           This shared quote link was created on {shareInfo ? formatDate(shareInfo.createdAt) : "N/A"}
         </p>
         <p className="mt-2">
-          Powered by AI BioCompare
+          Powered by LabAxis
         </p>
       </div>
     </div>

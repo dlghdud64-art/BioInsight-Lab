@@ -138,21 +138,21 @@ describe("validateInviteInput — helper contract (§11.116)", () => {
 
 describe("buildInviteLink — helper contract (§11.116)", () => {
   it("기본 형식: baseUrl + /auth/signin?email=encoded", () => {
-    const link = buildInviteLink("user@example.com", "https://labaxis.io");
+    const link = buildInviteLink("user@example.com", "https://labaxis.co.kr");
     expect(link).toBe(
-      "https://labaxis.io/auth/signin?email=user%40example.com",
+      "https://labaxis.co.kr/auth/signin?email=user%40example.com",
     );
   });
 
   it("baseUrl 의 trailing slash 정규화", () => {
-    const link = buildInviteLink("user@example.com", "https://labaxis.io/");
+    const link = buildInviteLink("user@example.com", "https://labaxis.co.kr/");
     expect(link).toBe(
-      "https://labaxis.io/auth/signin?email=user%40example.com",
+      "https://labaxis.co.kr/auth/signin?email=user%40example.com",
     );
   });
 
   it("special chars (+, .) 정상 encode", () => {
-    const link = buildInviteLink("a.b+tag@example.com", "https://labaxis.io");
+    const link = buildInviteLink("a.b+tag@example.com", "https://labaxis.co.kr");
     expect(link).toContain("a.b%2Btag%40example.com");
   });
 });

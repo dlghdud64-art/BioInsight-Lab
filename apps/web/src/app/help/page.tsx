@@ -86,7 +86,7 @@ export default function HelpPage() {
               <div>
                 <h3 className="font-semibold mb-2">Q: 문의는 어디로 하나요?</h3>
                 <p className="text-sm text-muted-foreground">
-                  A: <a href="mailto:contact@labaxis.io" className="text-primary hover:underline">contact@labaxis.io</a>으로 문의주세요.
+                  A: <a href="mailto:support@labaxis.co.kr" className="text-primary hover:underline">support@labaxis.co.kr</a>으로 문의주세요.
                 </p>
               </div>
             </CardContent>

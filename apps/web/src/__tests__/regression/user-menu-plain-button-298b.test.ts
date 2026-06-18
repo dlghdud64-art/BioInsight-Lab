@@ -41,7 +41,9 @@ describe("§11.298b — user-menu plain button", () => {
     expect(SRC).toMatch(/href="\/dashboard\/inventory"[\s\S]{0,300}재고 관리/);
     expect(SRC).toMatch(/href="\/dashboard\/settings"[\s\S]{0,300}설정/);
     expect(SRC).toMatch(/href="\/dashboard\/settings\?tab=billing"[\s\S]{0,300}청구 및 구독/);
-    expect(SRC).toMatch(/mailto:support@labaxis\.io[\s\S]{0,300}고객센터/);
+    // §ui-rebrand — 연락처 도메인 labaxis.io(미verified) → labaxis.co.kr(Resend/Zoho verified) 통일.
+    //   298b 보호 의도(고객센터 mailto menuItem 보존)는 유지, 도메인만 정합.
+    expect(SRC).toMatch(/mailto:support@labaxis\.co\.kr[\s\S]{0,300}고객센터/);
   });
 
   it("로그아웃 button — signOut + resetWorkbenchSessionOnLogout + invalidateWorkbenchQueryCache 보존", () => {
