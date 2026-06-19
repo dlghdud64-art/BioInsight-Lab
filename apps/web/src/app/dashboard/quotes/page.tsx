@@ -16,7 +16,10 @@ import { AppPageHeader } from "@/components/layout/page-header";
 import { QuoteFunnel } from "@/components/quotes/quote-funnel";
 // §quote-management P3b — 회신 셀 공급사 실명 아바타(vendorRequests canonical, C 하이브리드: progressbar 유지).
 import { SupplierAvatars, toSuppliers } from "@/components/quotes/supplier-avatars";
-import { type Stage } from "@/lib/quote-management/derive";
+// §quote-management P4-core-B — 우선 추천 카드 + 우선순위 단일화(computePriority 룰베이스, deriveRailState는 status/rail/게이팅 유지).
+import { PriorityRecommendationCard } from "@/components/quotes/priority-recommendation-card";
+import { computePriority, type Stage } from "@/lib/quote-management/derive";
+import { toQuoteCase } from "@/lib/quote-management/from-quote";
 import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { useOperationalBriefPopup } from "@/components/operational-brief/popup-context";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -1913,16 +1916,8 @@ function QuotesPageContent() {
   const inProgressQuotes = filteredQuotes.filter(q => !urgentQuotes.includes(q) && q.status !== "COMPLETED" && q.status !== "CANCELLED");
   const completedQuotes = filteredQuotes.filter(q => q.status === "COMPLETED" || q.status === "CANCELLED");
 
-  // §11.217 Phase 1B (Issue 5) — AI 추천 page-top banner 1회.
-  // 기존: card 마다 inline AI 추천 row 반복 (4번) → 정보 노이즈.
-  // 신규: page header 직후 1줄 banner — priority highest = urgentQuotes[0]
-  //       → inProgressQuotes[0] fallback. 없으면 banner 0 (no-op).
-  // canonical truth: getOpSignals 의 aiRecommendation 그대로 사용 (rail map
-  // 의 single source).
-  const priorityQuoteForBanner = urgentQuotes[0] ?? inProgressQuotes[0] ?? null;
-  const priorityAiRecommendation = priorityQuoteForBanner
-    ? getOpSignals(priorityQuoteForBanner).aiRecommendation
-    : null;
+  // §quote-management P4-core-B — 기존 "AI 추천" 배너 파생 제거(가드② 정정).
+  //   우선 추천은 PriorityRecommendationCard(computePriority 룰베이스)가 렌더 시 직접 산출(저장 0).
 
   // §11.217 Phase 3 — batch dispatch preflight 합산.
   // selectedQuotes = selectedQuoteIds 에서 실제 quote object 복원 (filteredQuotes 안).
@@ -2183,15 +2178,11 @@ function QuotesPageContent() {
         }}
       />
 
-      {/* ── §11.217 Phase 1B — AI 추천 page-top banner (priority highest 1줄) ── */}
-      {priorityAiRecommendation && (
-        <div className="rounded-lg border border-violet-200 bg-violet-50/60 px-3 py-2 flex items-center gap-2">
-          <Sparkles className="h-3.5 w-3.5 text-violet-600 shrink-0" />
-          <p className="text-[12px] sm:text-xs text-violet-900 line-clamp-1">
-            {priorityAiRecommendation}
-          </p>
-        </div>
-      )}
+      {/* §quote-management P4-core-B — 우선 추천 카드(computePriority 룰베이스 1위). §11.217 Phase 1B "AI 추천" 배너 대체(가드② 정정: 룰베이스를 AI로 라벨 금지). */}
+      <PriorityRecommendationCard
+        quotes={filteredQuotes}
+        onOpen={(id) => openQuoteContextRail(id, "row")}
+      />
 
       {/* §11.279 — 게이트 블록 2종 제거 (호영님 P0 spec).
           §11.279a verification-summary section unmount + §11.279b fixed-flow section unmount.
@@ -2789,10 +2780,15 @@ function QuotesPageContent() {
                 //   critical: response_delayed / external_approval_required (호영님 "긴급").
                 //   high: compare_review_required (호영님 "높음").
                 //   normal: 그 외 (보더 없음).
+                // §quote-management P4-core-B — 우선순위 단일화: railState 매핑 → computePriority(가중합).
+                //   high→critical(red) / mid→high(yellow) / low·퍼널외→normal. border·dot·aria 소비처 무변경.
+                //   deriveRailState 는 status 뱃지/rail/발송 게이팅 용도로 계속 사용(제거 아님).
+                const priorityCase = toQuoteCase(quote);
+                const priorityResult = priorityCase ? computePriority(priorityCase) : null;
                 const priorityLevel: "critical" | "high" | "normal" =
-                  railState === "response_delayed" || railState === "external_approval_required"
+                  priorityResult?.level === "high"
                     ? "critical"
-                    : railState === "compare_review_required"
+                    : priorityResult?.level === "mid"
                       ? "high"
                       : "normal";
                 // §11.242 #5 — 중복 품목 그룹핑 derive (인접 prev row 의 firstItemName 비교).

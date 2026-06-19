@@ -48,11 +48,13 @@ describe("§quote-management P3b — 정렬 재정렬 + price 정렬 추가", ()
 });
 
 describe("§quote-management P3b — 회귀 0(P4 선점 금지·기존 보존)", () => {
-  it("우선순위는 현행 deriveRailState/priorityLevel 유지(computePriority 미도입 = 이중화 0)", () => {
-    expect(PAGE).toMatch(/deriveRailState/);
+  it("우선순위 단일화 — priorityLevel=computePriority(P4-core-B 도입), deriveRailState는 status 전용 유지", () => {
+    // §quote-management-p4-core-b: P3b가 P4 까지 보류했던 computePriority 를 P4 가 도입(우선순위 단일 진실).
+    //   이중화 방지 의도는 보존 — priorityLevel 이 computePriority 단일 소스, deriveRailState 는 status/rail/게이팅 전용
+    //   (별개 축). 컬럼·카드 모두 computePriority 라 이중화 0.
+    expect(PAGE).toMatch(/deriveRailState/); // status/rail 축 유지
     expect(PAGE).toMatch(/priorityLevel/);
-    // P4 전까지 computePriority 호출 금지(우선순위 이중화 방지). 주석 언급은 허용(call 패턴만 검사).
-    expect(PAGE).not.toMatch(/computePriority\(/);
+    expect(PAGE).toMatch(/computePriority\(/); // P4 우선순위 단일 진실 도입
   });
   it("기존 정렬 키 보존(title/status/itemCount/responseCount/createdAt)", () => {
     expect(PAGE).toMatch(/sortState\.key === "title"/);

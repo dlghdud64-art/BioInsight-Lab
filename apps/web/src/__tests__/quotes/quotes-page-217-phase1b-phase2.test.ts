@@ -24,25 +24,17 @@ import { resolve } from "node:path";
 const PATH = resolve(__dirname, "../../app/dashboard/quotes/page.tsx");
 const source = readFileSync(PATH, "utf8");
 
-describe("§11.217 Phase 1B — AI 추천 page-top banner regression guard", () => {
-  it("priorityQuoteForBanner 변수 존재 (urgentQuotes[0] ?? inProgressQuotes[0] fallback)", () => {
-    expect(source).toMatch(/priorityQuoteForBanner\s*=\s*urgentQuotes\[0\]\s*\?\?\s*inProgressQuotes\[0\]/);
+describe("§11.217 Phase 1B → §quote-management P4-core-B — '우선 추천' 카드(배너 대체)", () => {
+  // 진화: 룰베이스를 'AI 추천'으로 라벨하던 page-top 배너(violet+Sparkles)를
+  //   computePriority 기반 PriorityRecommendationCard 로 대체(가드② 정정).
+  it("PriorityRecommendationCard 렌더로 배너 대체", () => {
+    expect(source).toMatch(/<PriorityRecommendationCard/);
+    expect(source).toMatch(/onOpen=\{\(id\) => openQuoteContextRail\(id, "row"\)\}/);
   });
 
-  it("priorityAiRecommendation 변수 존재 (getOpSignals 의 aiRecommendation)", () => {
-    expect(source).toMatch(/priorityAiRecommendation/);
-    expect(source).toMatch(/getOpSignals\(priorityQuoteForBanner\)\.aiRecommendation/);
-  });
-
-  it("AI 추천 banner JSX — violet-50 + Sparkles + line-clamp-1", () => {
-    expect(source).toMatch(/priorityAiRecommendation\s*&&/);
-    expect(source).toMatch(/border-violet-200/);
-    expect(source).toMatch(/bg-violet-50\/60/);
-    expect(source).toMatch(/line-clamp-1/);
-  });
-
-  it("§11.217 Phase 1B 주석 marker", () => {
-    expect(source).toMatch(/§11\.217 Phase 1B/);
+  it("구 'AI 추천' 배너 파생/JSX 폐기(priorityAiRecommendation · violet 배너)", () => {
+    expect(source).not.toMatch(/priorityAiRecommendation/);
+    expect(source).not.toMatch(/bg-violet-50\/60/);
   });
 });
 
