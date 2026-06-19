@@ -34,7 +34,7 @@ export interface UserPreferencesJson {
   quotesView?: {
     mode?: "card" | "table";
     sort?: {
-      key?: "title" | "status" | "itemCount" | "responseCount" | "createdAt" | null;
+      key?: "title" | "status" | "itemCount" | "responseCount" | "price" | "createdAt" | null;
       direction?: "asc" | "desc";
     };
   };
@@ -91,7 +91,7 @@ export interface UserPreferencesJson {
 export type QuotesViewPatch = {
   mode?: "card" | "table";
   sort?: {
-    key?: "title" | "status" | "itemCount" | "responseCount" | "createdAt" | null;
+    key?: "title" | "status" | "itemCount" | "responseCount" | "price" | "createdAt" | null;
     direction?: "asc" | "desc";
   };
 };

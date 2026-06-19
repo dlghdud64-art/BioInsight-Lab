@@ -14,6 +14,8 @@ import { StatusCountGrid } from "@/components/layout/status-count-grid";
 import { AppPageHeader } from "@/components/layout/page-header";
 // §quote-management P2 — 파이프라인 퍼널(stage 파생 집계).
 import { QuoteFunnel } from "@/components/quotes/quote-funnel";
+// §quote-management P3b — 회신 셀 공급사 실명 아바타(vendorRequests canonical, C 하이브리드: progressbar 유지).
+import { SupplierAvatars, toSuppliers } from "@/components/quotes/supplier-avatars";
 import { type Stage } from "@/lib/quote-management/derive";
 import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { useOperationalBriefPopup } from "@/components/operational-brief/popup-context";
@@ -85,6 +87,8 @@ interface Quote {
   title: string;
   status: QuoteStatus;
   createdAt: string;
+  // §quote-management P4-core-A — computePriority money 요인(미상이면 null = unknown 가중, 근사 금지).
+  totalAmount?: number | null;
   deliveryDate?: string;
   deliveryLocation?: string;
   items: Array<{ id: string; product: { id: string; name: string }; quantity: number }>;
@@ -100,6 +104,8 @@ interface Quote {
     vendorEmail?: string | null;
     createdAt: string;
     respondedAt?: string | null;
+    // §quote-management P4-core-A — responseWindowDays 실값(expiresAt−createdAt). 미상이면 마감 "—".
+    expiresAt?: string | null;
   }>;
   // §11.218 카드 구분자 — sub-context 표시용 (요청자 / 부서).
   user?: { id: string; name: string | null; email: string | null } | null;
@@ -961,7 +967,8 @@ function QuotesPageContent() {
   // §11.227 #9 — 테이블 sort state. column header 클릭 시 sortable.
   //   key = null (initial) → DB 순서 그대로. key 설정 시 sortedQuotes derive.
   const [sortState, setSortState] = useState<{
-    key: "title" | "status" | "itemCount" | "responseCount" | "createdAt" | null;
+    // §quote-management P3b — price 정렬 키 추가(우선순위 정렬은 P4: computePriority 도입과 묶음).
+    key: "title" | "status" | "itemCount" | "responseCount" | "price" | "createdAt" | null;
     direction: "asc" | "desc";
   }>({ key: null, direction: "desc" });
   const [searchQuery, setSearchQuery] = useState("");
@@ -1373,6 +1380,7 @@ function QuotesPageContent() {
         "status",
         "itemCount",
         "responseCount",
+        "price",
         "createdAt",
       ] as const;
       const k = view.sort.key;
@@ -1803,7 +1811,22 @@ function QuotesPageContent() {
       } else if (sortState.key === "itemCount") {
         cmp = (a.items?.length ?? 0) - (b.items?.length ?? 0);
       } else if (sortState.key === "responseCount") {
-        cmp = (a.responses?.length ?? 0) - (b.responses?.length ?? 0);
+        // §quote-management P3b — 회신 셀이 vendorRequests 실명 아바타로 바뀌어 정렬도
+        //   공급사 회신수 기준으로 재정렬(sort↔cell 정합). responses(legacy)와 독립 모델.
+        const repliedOf = (q: typeof a) =>
+          (q.vendorRequests ?? []).filter((v) => v.respondedAt != null || v.status === "RESPONDED").length;
+        cmp = repliedOf(a) - repliedOf(b);
+      } else if (sortState.key === "price") {
+        // §quote-management P3b — price 정렬(responses[].totalPrice 최저가 기준, 값 없음은 asc 뒤로).
+        const minPriceOf = (q: typeof a) => {
+          const ps = (q.responses ?? [])
+            .map((r) => r.totalPrice)
+            .filter((v): v is number => typeof v === "number" && v > 0);
+          return ps.length ? Math.min(...ps) : null;
+        };
+        const pa = minPriceOf(a);
+        const pb = minPriceOf(b);
+        cmp = pa == null && pb == null ? 0 : pa == null ? 1 : pb == null ? -1 : pa - pb;
       } else if (sortState.key === "createdAt") {
         cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       }
@@ -1872,7 +1895,7 @@ function QuotesPageContent() {
 
   // §11.227 #9 — column header 클릭 시 sort 전환. 같은 컬럼 재클릭 시 direction toggle.
   const handleSortColumn = useCallback(
-    (key: "title" | "status" | "itemCount" | "responseCount" | "createdAt") => {
+    (key: "title" | "status" | "itemCount" | "responseCount" | "price" | "createdAt") => {
       pendingSortFocusAnchorRef.current = true;
       setSortState((prev) => {
         if (prev.key === key) {
@@ -2685,7 +2708,7 @@ function QuotesPageContent() {
                 </th>
                 {visibleColumns.map((key) => {
                   const width = columnPrefs.widths[key];
-                  const isSortable = key === "title" || key === "status" || key === "itemCount" || key === "responseCount" || key === "createdAt";
+                  const isSortable = key === "title" || key === "status" || key === "itemCount" || key === "responseCount" || key === "price" || key === "createdAt";
                   const isCenter = key === "itemCount" || key === "responseCount" || key === "priority";
                   const isRight = key === "price" || key === "actions";
                   const label = COLUMN_LABEL[key];
@@ -2983,29 +3006,34 @@ function QuotesPageContent() {
                       if (key === "responseCount") {
                         return (
                           <td key={key} style={{ width }} className="px-3 py-2 text-center">
-                            {(quote.status === "SENT" || quote.status === "RESPONDED") && itemCount > 0 ? (
-                              <div className="flex items-center justify-center gap-1.5">
-                                <span className="text-[10px] tabular-nums text-slate-600">
-                                  {responseCount}/{itemCount}
-                                </span>
-                                <div className="w-12 h-1 bg-slate-200 rounded-full overflow-hidden">
-                                  <div
-                                    role="progressbar"
-                                    aria-valuenow={responseCount}
-                                    aria-valuemin={0}
-                                    aria-valuemax={itemCount}
-                                    className={`h-full rounded-full ${
-                                      responseCount === 0 ? "bg-slate-200"
-                                      : responseCount >= itemCount ? "bg-emerald-500"
-                                      : "bg-blue-500"
-                                    }`}
-                                    style={{ width: `${Math.min(100, (responseCount / itemCount) * 100)}%` }}
-                                  />
-                                </div>
+                            {/* §quote-management P3b — C 하이브리드: 공급사 실명 아바타(vendorRequests canonical, 0=공급사 미정)
+                                + 기존 회신 진행 progressbar(responseCount/itemCount) 유지. 익명 점 폐기(§05). */}
+                            <div className="flex flex-col items-center gap-1">
+                              <div className="flex justify-center">
+                                <SupplierAvatars suppliers={toSuppliers(quote.vendorRequests)} />
                               </div>
-                            ) : (
-                              <span className="text-[10px] text-slate-400">—</span>
-                            )}
+                              {(quote.status === "SENT" || quote.status === "RESPONDED") && itemCount > 0 ? (
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <span className="text-[10px] tabular-nums text-slate-600">
+                                    {responseCount}/{itemCount}
+                                  </span>
+                                  <div className="w-12 h-1 bg-slate-200 rounded-full overflow-hidden">
+                                    <div
+                                      role="progressbar"
+                                      aria-valuenow={responseCount}
+                                      aria-valuemin={0}
+                                      aria-valuemax={itemCount}
+                                      className={`h-full rounded-full ${
+                                        responseCount === 0 ? "bg-slate-200"
+                                        : responseCount >= itemCount ? "bg-emerald-500"
+                                        : "bg-blue-500"
+                                      }`}
+                                      style={{ width: `${Math.min(100, (responseCount / itemCount) * 100)}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              ) : null}
+                            </div>
                           </td>
                         );
                       }

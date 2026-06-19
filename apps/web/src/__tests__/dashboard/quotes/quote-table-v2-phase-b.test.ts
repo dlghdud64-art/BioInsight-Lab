@@ -37,7 +37,8 @@ describe("§11.227 #9 — 테이블 default + sort by column header", () => {
 
   it("sortState 타입 — column key + direction", () => {
     // 타입: { key: ... | null; direction: 'asc' | 'desc' }
-    expect(page).toMatch(/sortState[\s\S]{0,200}direction[\s\S]{0,100}"asc"\s*\|\s*"desc"|sortState[\s\S]{0,200}direction[\s\S]{0,100}'asc'\s*\|\s*'desc'/);
+    // §quote-management-p3b — key union 에 "price" 추가로 sortState→direction 거리 확대(200→300 window).
+    expect(page).toMatch(/sortState[\s\S]{0,300}direction[\s\S]{0,100}"asc"\s*\|\s*"desc"|sortState[\s\S]{0,300}direction[\s\S]{0,100}'asc'\s*\|\s*'desc'/);
   });
 
   it("thead 컬럼 헤더 onClick → sort callback 호출 (sortable column)", () => {
