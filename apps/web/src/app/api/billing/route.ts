@@ -292,6 +292,25 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      // §pricing-refresh P4b-2 — 유료 업그레이드 시 아카이브 복구(보존 무제한). org 멤버 전체 archivedAt=null.
+      //   FREE 보존 만료로 숨겨졌던 데이터를 다시 노출(soft 복구). hard delete 0.
+      if (plan !== "FREE") {
+        const memberIds = (
+          await db.organizationMember.findMany({
+            where: { organizationId: membership.organization.id },
+            select: { userId: true },
+          })
+        ).map((m: { userId: string }) => m.userId);
+        if (memberIds.length > 0) {
+          const restoreWhere = { userId: { in: memberIds }, archivedAt: { not: null } };
+          await Promise.all([
+            db.quote.updateMany({ where: restoreWhere, data: { archivedAt: null } }),
+            db.order.updateMany({ where: restoreWhere, data: { archivedAt: null } }),
+            db.productInventory.updateMany({ where: restoreWhere, data: { archivedAt: null } }),
+          ]);
+        }
+      }
+
       // 인보이스 생성 (유료 플랜인 경우)
       if (planInfo.price && planInfo.price > 0) {
         await db.invoice.create({
