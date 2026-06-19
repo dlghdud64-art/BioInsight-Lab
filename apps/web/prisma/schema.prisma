@@ -573,6 +573,8 @@ model Quote {
   selectedReplyId String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  // §pricing-refresh P3 — 무료 보존 만료 아카이브(soft). null=노출, 세팅=숨김(조회 필터). 복구 시 null. hard delete 0.
+  archivedAt     DateTime?
 
   // 관?
   user            User?                  @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -843,6 +845,8 @@ model ProductInventory {
   notes                String?   @db.Text
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
+  // §pricing-refresh P3 — 무료 보존 만료 아카이브(soft). null=노출, 세팅=숨김. 복구 시 null. hard delete 0.
+  archivedAt           DateTime?
 
   // 관?
   user         User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1820,6 +1824,8 @@ model Order {
   poDocumentGeneratedAt DateTime? // PDF 생성 시각 (재생성 정합)
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
+  // §pricing-refresh P3 — 무료 보존 만료 아카이브(soft). null=노출, 세팅=숨김. 복구 시 null. hard delete 0.
+  archivedAt     DateTime?
 
   // Relations
   user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
