@@ -440,10 +440,12 @@ export async function GET(request: NextRequest) {
       ],
     };
 
-    const where: Record<string, unknown> =
+    // §pricing-refresh P4b — 아카이브분(archivedAt 세팅) 조회 숨김. env 미설정 시 전부 null=영향 0.
+    const baseWhere: Record<string, unknown> =
       statusFilter && statusFilter !== "all"
         ? { AND: [ownerCondition, { status: statusFilter }] }
         : ownerCondition;
+    const where: Record<string, unknown> = { ...baseWhere, archivedAt: null };
 
     const orderBy: Record<string, string> =
       sortBy === "oldest"

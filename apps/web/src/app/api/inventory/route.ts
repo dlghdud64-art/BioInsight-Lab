@@ -122,6 +122,8 @@ export async function GET(request: NextRequest) {
       ...ownerCondition,
       ...(andFilters.length > 0 ? { AND: andFilters } : {}),
     };
+    // §pricing-refresh P4b — 아카이브분(archivedAt 세팅) 조회 숨김. env 미설정 시 전부 null=영향 0.
+    where.archivedAt = null;
 
     const inventories = await db.productInventory.findMany({
       where,

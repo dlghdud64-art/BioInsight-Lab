@@ -476,6 +476,8 @@ export async function GET(request: NextRequest) {
     if (status) {
       where.status = status;
     }
+    // §pricing-refresh P4b — 아카이브분(archivedAt 세팅) 조회 숨김. env 미설정 시 전부 null=영향 0.
+    where.archivedAt = null;
 
     const [orders, total] = await Promise.all([
       db.order.findMany({
