@@ -500,6 +500,9 @@ export async function GET(request: NextRequest) {
             vendorName: true,
             respondedAt: true,
             createdAt: true,
+            // §quote-management P4-core-A — responseWindowDays(=expiresAt−createdAt) 실값 산출용.
+            //   computePriority 마감 파생을 근사 없이 정직하게(미상이면 "—").
+            expiresAt: true,
           },
         },
         // §11.218 — requester / organization forward (card disambiguation).
@@ -534,6 +537,7 @@ export async function GET(request: NextRequest) {
       vendorName?: string | null;
       respondedAt?: Date | null;
       createdAt?: Date;
+      expiresAt?: Date | null;
     };
     type MappedUser = { id: string; name: string | null; email: string | null } | null;
     type MappedOrganization = { id: string; name: string } | null;
@@ -543,6 +547,7 @@ export async function GET(request: NextRequest) {
       description?: string | null;
       status: string;
       createdAt: Date;
+      totalAmount?: number | null;
       items?: MappedItem[];
       responses?: MappedResponse[];
       vendorRequests?: MappedVendorRequest[];
@@ -557,6 +562,8 @@ export async function GET(request: NextRequest) {
       description: q.description ?? null,
       status: q.status,
       createdAt: q.createdAt.toISOString(),
+      // §quote-management P4-core-A — computePriority money 요인 실값(근사 금지, 미상이면 null).
+      totalAmount: q.totalAmount ?? null,
       deliveryDate: null,
       deliveryLocation: null,
       // §11.218 카드 구분자 — requester forward (UI sub-context).
@@ -596,6 +603,7 @@ export async function GET(request: NextRequest) {
         vendorName: vr.vendorName ?? null,
         respondedAt: vr.respondedAt ? vr.respondedAt.toISOString() : null,
         createdAt: vr.createdAt ? vr.createdAt.toISOString() : null,
+        expiresAt: vr.expiresAt ? vr.expiresAt.toISOString() : null,
       })),
     }));
 
