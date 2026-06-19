@@ -1,6 +1,6 @@
 # PLAN: §ledger-seed — PurchaseRecord 지출 시드 (멱등·충돌 안전)
 
-- Status: ⏳ 설계 락(prod 쿼리 1건 대기) — 코드 미작성
+- Status: ✅ 종결(2026-06-17) — 원 문제 소멸. 신규 스크립트 불필요. 후속 = §category-source-drift(별도).
 - Date: 2026-06-16
 - Owner: 호영 (총괄관리자)
 - Governance: labaxis-bug-hunter (Truth Reconciliation) + ADR-002 규율 상속
@@ -8,7 +8,27 @@
 
 ---
 
-## 0. Truth Reconciliation (확정)
+## ✅ 종결 요약 (2026-06-17) — Truth Reconciliation 결과 전제 3개 폐기
+
+read-only prod 쿼리(operator) + 코드 추적으로 PLAN 원 전제가 전부 뒤집힘:
+
+| 원 전제 | 실상 |
+|---|---|
+| 514행 시드 필요 | 실제 **15행** 존재 |
+| 출처 미문서화 ₩71.6M | `prisma/seed.ts`(L463–731)가 **scopeKey="guest-demo"로 이미 멱등 시드**(deleteMany + 재생성), ₩115.369M(이번달 subset ₩10.81M) |
+| scopeKey NULL / 멀티테넌트 격리 위험 | **거짓 경보** — operator 프로브의 casing 버그(`r.scopekey` 소문자→undefined→NULL 오독). 재쿼리: 전 15행 `guest-demo`, NULL 0행, prod=seed.ts 정확 일치(drift 0) |
+| 정체불명 데이터 위 적층 위험 | drift 0, 시드 메커니즘 seed.ts에 이미 존재·멱등·scope-gated |
+
+- 호영 `young a`가 데모를 보는 이유 = `src/lib/guest-key.ts` `DEMO_GUEST_KEY="guest-demo"` + reports/purchase "개발 단계엔 모든 사용자에게 guest-demo 표시" **설계**(의도된 데모 노출, 누수 아님).
+- ⇒ **신규 `ledger-seed.ts`/`ledger-cleanup.ts` 불필요.** 데모 강화가 필요하면 seed.ts의 PurchaseRecord 블록 확장(멱등 유지)이 canonical 경로.
+
+### 규명이 surface한 실버그 → §category-source-drift (수리 완료 2026-06-17)
+- `dashboard/stats` 의 `categorySpending` 만 Order/OrderItem 파생, 나머지 지출은 PurchaseRecord 파생 → PurchaseRecord 로만 채워진 계정(guest-demo)에서 카테고리 비중 영구 empty(A5/B1 카드가 실데이터로 안 켜지던 원인).
+- Fix: `categorySpending` 을 `recentPurchaseRecords`(PurchaseRecord.category, 6개월 window)에서 파생. 불필요 product 조회(allProductIds/products/productCategoryMap) 제거(쿼리 1개 절감). sentinel: `__tests__/regression/dashboard-category-source-drift.test.ts`.
+
+---
+
+## 0. Truth Reconciliation (확정) — ⚠️ 아래는 종결 전 설계 기록(위 종결 요약이 최신)
 
 - 지출 소스 모델 = **`PurchaseRecord`**(schema.prisma:989), NOT `Purchase`/`Order`. 대시보드 `monthlySpending`/`thisMonthPurchaseAmount`/`recentPurchases` 가 여기서 파생.
 - 라이브 ₩71.6M(이번달 ₩10.81M) = PurchaseRecord 행. **ADR-002 pilot seed 산물 아님**(pilot-seed.ts는 org/workspace/member/product/vendor/quote/inventory/order만, **PurchaseRecord 0**).
