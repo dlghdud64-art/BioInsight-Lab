@@ -12,6 +12,9 @@ import { MetricCell } from "@/components/operational-brief/metric-cell";
 import { StatusCountGrid } from "@/components/layout/status-count-grid";
 // §11.374 P3.4 — 헤더 단일 문법(AppPageHeader). 스캔 포함 액션 우측 통합.
 import { AppPageHeader } from "@/components/layout/page-header";
+// §quote-management P2 — 파이프라인 퍼널(stage 파생 집계).
+import { QuoteFunnel } from "@/components/quotes/quote-funnel";
+import { type Stage } from "@/lib/quote-management/derive";
 import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { useOperationalBriefPopup } from "@/components/operational-brief/popup-context";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -2144,6 +2147,18 @@ function QuotesPageContent() {
           </div>
         </div>
       )}
+
+      {/* §quote-management P2 — 파이프라인 퍼널(stage 집계·현재집중·0 흐리게). 빈 계정 전부 0(가짜 데이터 0). */}
+      <QuoteFunnel
+        quotes={quotesData?.quotes ?? []}
+        activeStage={
+          (({ PENDING: "s1", PARSED: "s1", SENT: "s2", RESPONDED: "s3", COMPLETED: "s4", PURCHASED: "s5" } as Record<string, Stage>)[statusFilter]) ?? null
+        }
+        onStageClick={(s) => {
+          const map: Record<Stage, string> = { s1: "PENDING", s2: "SENT", s3: "RESPONDED", s4: "COMPLETED", s5: "PURCHASED" };
+          setStatusFilter((prev) => (prev === map[s] ? "all" : map[s]));
+        }}
+      />
 
       {/* ── §11.217 Phase 1B — AI 추천 page-top banner (priority highest 1줄) ── */}
       {priorityAiRecommendation && (
