@@ -557,7 +557,7 @@ export default function AdminOrdersPage() {
                       상태
                     </TableHead>
                     <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-slate-500">
-                      운영자 / 조직
+                      사용자 / 조직
                     </TableHead>
                     <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-slate-500">
                       품목

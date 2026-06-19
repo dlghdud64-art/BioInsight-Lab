@@ -84,8 +84,8 @@ function formatOperatingVolume(descriptor: PlanDescriptor): string[] {
   // §11.303b — Basic/Pro: 견적/PO null (무제한) + 재고 quota 있음
   const seatsLine =
     descriptor.seatsRecommended !== null
-      ? `운영자 ${descriptor.seatsRecommended}명 권장`
-      : "운영자 무제한 (계약)";
+      ? `사용자 ${descriptor.seatsRecommended}명 권장`
+      : "사용자 무제한 (계약)";
   const rfqPoLine =
     descriptor.operatingVolume.monthlyRfq === null ||
     descriptor.operatingVolume.monthlyPo === null

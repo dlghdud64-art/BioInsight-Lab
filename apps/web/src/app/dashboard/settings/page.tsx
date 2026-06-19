@@ -63,7 +63,7 @@ import { cn } from "@/lib/utils";
 
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: "관리자 (Admin)",
-  USER: "운영자 (Operator)",
+  USER: "사용자 (User)",
   RESEARCHER: "연구실 관리자 (Lab Manager)",
   BUYER: "구매 담당자 (Procurement)",
   SUPPLIER: "공급사 (Supplier)",
@@ -129,7 +129,7 @@ const NAV_GROUPS: { group: string; items: { id: SettingsSection; label: string; 
   {
     group: "메뉴",
     items: [
-      { id: "operator", label: "운영자 및 워크스페이스", sublabel: "식별 정보 및 운영 정보", icon: Fingerprint },
+      { id: "operator", label: "사용자 및 워크스페이스", sublabel: "식별 정보 및 운영 정보", icon: Fingerprint },
       { id: "security", label: "보안 및 접근 제어", sublabel: "역할 권한 및 승인 라우팅", icon: ShieldCheck },
       // §11.332 — 온톨로지 엔진(AI 추론 매개변수)·시스템 연동(ERP) 메뉴 제거.
       //   둘 다 미구현(useState only 저장 0 / 하드코딩 mock) → dead 노출 차단(CLAUDE.md dead-button 원칙).
@@ -494,7 +494,7 @@ function SettingsPageContent() {
   };
 
   const userRole = (session?.user?.role as string) || "USER";
-  const roleLabel = ROLE_LABELS[userRole] || "운영자 (Operator)";
+  const roleLabel = ROLE_LABELS[userRole] || "사용자 (User)";
 
   const toggleNotification = (id: string, field: "inApp" | "email") => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, [field]: !n[field] } : n)));
@@ -527,7 +527,7 @@ function SettingsPageContent() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold text-slate-900">시스템 및 워크스페이스 설정</h1>
-              <p className="text-sm text-slate-500 mt-0.5">운영자 권한, 온톨로지 엔진 및 외부 시스템 연동을 구성합니다.</p>
+              <p className="text-sm text-slate-500 mt-0.5">사용자 권한, 온톨로지 엔진 및 외부 시스템 연동을 구성합니다.</p>
             </div>
             {/* §11.76: Save section section-aware conditional render — operator/
                 notifications 외 section (ontology/security/integrations/billing)
@@ -635,7 +635,7 @@ function SettingsPageContent() {
                     §11.197b — 운영 역할 카드 (ASSIGNED BY ADMIN) 와 통일된
                     topRightLabel 패턴. 운영자 self-edit 영역임을 명시. */}
                 <SectionCard
-                  title="운영자 식별 정보"
+                  title="사용자 식별 정보"
                   icon={Fingerprint}
                   topRightLabel="직접 관리"
                 >
@@ -658,7 +658,7 @@ function SettingsPageContent() {
                         "운영 역할 및 업무 범위" SectionCard 에서 read-only 로
                         표시. 사용자는 자유 입력 불가. */}
                     <div className="space-y-4">
-                      <FieldBlock label="운영자 성명">
+                      <FieldBlock label="사용자 성명">
                         <Input value={profileName} onChange={(e) => setProfileName(e.target.value)} className="bg-white border-slate-200 text-slate-900 h-9 text-sm" />
                       </FieldBlock>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
