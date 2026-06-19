@@ -191,7 +191,7 @@ const RAIL_STATE_MAP: Record<RailState, {
     status: "요청 생성 완료", blocker: "공급사 미전송", nextAction: "견적 요청 발송", compareReady: "불가 · 수신 견적 없음", poReady: "불가 · 비교 전 단계",
     snapshotNote: "견적 요청이 아직 발송되지 않아 수신 견적이 없습니다",
     handoffTarget: "견적 요청 발송 흐름", handoffStatus: "아직 다음 단계 이동 전",
-    aiRecommendation: "AI 추천: 현재는 비교나 검토보다 견적 요청 발송이 우선입니다",
+    aiRecommendation: "우선 추천: 현재는 비교나 검토보다 견적 요청 발송이 우선입니다",
     ctaLabel: "견적 요청 발송", railCtaLabel: "견적 요청 발송", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "닫기",
     actionKey: "request_send",
   },
@@ -200,7 +200,7 @@ const RAIL_STATE_MAP: Record<RailState, {
     status: "회신 수집 중", blocker: "응답 대기 공급사 존재", nextAction: "새 회신 확인", compareReady: "불가 · 응답 대기", poReady: "불가 · 회신 수집 단계",
     snapshotNote: "현재 회신 수를 기준으로 비교 가능 여부가 달라질 수 있습니다",
     handoffTarget: "회신 수집 유지", handoffStatus: "유효 견적 확보 후 비교 검토",
-    aiRecommendation: "AI 추천: 회신 수집이 끝날 때까지 비교 확정보다 응답 추적이 더 중요합니다",
+    aiRecommendation: "우선 추천: 회신 수집이 끝날 때까지 비교 확정보다 응답 추적이 더 중요합니다",
     ctaLabel: "새 회신 보기", railCtaLabel: "회신 검토 시작", ctaVariant: "outline", secondaryCta: "전체 상세 열기", tertiaryCta: "닫기",
     actionKey: "compare_review",
   },
@@ -209,7 +209,7 @@ const RAIL_STATE_MAP: Record<RailState, {
     status: "회신 지연", blocker: "기대 응답 기한 경과", nextAction: "재요청 보내기", compareReady: "불안정 · 추가 회신 필요", poReady: "불가 · 응답 확보 전",
     snapshotNote: "회신 지연 공급사를 정리하지 않으면 비교 일정이 밀릴 수 있습니다",
     handoffTarget: "재요청 / 공급사 재확인", handoffStatus: "회신 확보 전 비교 보류",
-    aiRecommendation: "AI 추천: 기존 거래 이력이 있다면 신규 탐색보다 재요청이 우선일 수 있습니다",
+    aiRecommendation: "우선 추천: 기존 거래 이력이 있다면 신규 탐색보다 재요청이 우선일 수 있습니다",
     ctaLabel: "재요청 보내기", railCtaLabel: "재요청 검토 시작", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "보류",
     actionKey: "followup_send",
   },
@@ -218,7 +218,7 @@ const RAIL_STATE_MAP: Record<RailState, {
     status: "비교 준비 부족", blocker: "유효 견적 수 부족", nextAction: "추가 공급사 회신 확보", compareReady: "불가 또는 제한적", poReady: "불가 · 선택안 없음",
     snapshotNote: "유효 견적 수가 부족해 비교 후보가 아직 안정적으로 만들어지지 않았습니다",
     handoffTarget: "추가 회신 확보", handoffStatus: "비교 준비 중",
-    aiRecommendation: "AI 추천: 유효 견적 수를 먼저 확보해야 비교 결과의 신뢰도가 올라갑니다",
+    aiRecommendation: "우선 추천: 유효 견적 수를 먼저 확보해야 비교 결과의 신뢰도가 올라갑니다",
     ctaLabel: "추가 회신 확보", railCtaLabel: "추가 확보 검토", ctaVariant: "outline", secondaryCta: "전체 상세 열기", tertiaryCta: "보류",
     actionKey: "followup_send",
   },
@@ -227,7 +227,7 @@ const RAIL_STATE_MAP: Record<RailState, {
     status: "비교 검토 가능", blocker: "선택안 미확정", nextAction: "비교 결과 정리", compareReady: "가능", poReady: "조건부 · 선택안 확정 필요",
     snapshotNote: "비교는 가능하지만 선택안 확정과 예외 정리가 남아 있습니다",
     handoffTarget: "비교 검토 확정", handoffStatus: "선택안 확정 필요",
-    aiRecommendation: "AI 추천: 현재는 추가 수집보다 비교 결과 정리와 선택안 확정이 우선입니다",
+    aiRecommendation: "우선 추천: 현재는 추가 수집보다 비교 결과 정리와 선택안 확정이 우선입니다",
     ctaLabel: "비교 결과 정리", railCtaLabel: "비교 검토 시작", ctaVariant: "default", secondaryCta: "비교 열기", tertiaryCta: "닫기",
     actionKey: "compare_review",
   },
@@ -236,7 +236,7 @@ const RAIL_STATE_MAP: Record<RailState, {
     status: "확정 전 조건 확인", blocker: "SDS/CoA/MOQ/납기 조건 확인 필요", nextAction: "조건 확인", compareReady: "가능", poReady: "불가 · 조건 해소 전",
     snapshotNote: "비교 결과는 있으나 문서 또는 조건 확인 전에는 확정할 수 없습니다",
     handoffTarget: "조건 확인 / 문서 정리", handoffStatus: "해소 후 발주 실행 검토 가능",
-    aiRecommendation: "AI 추천: 문서나 조건 이슈를 해소하면 바로 다음 단계로 넘길 수 있습니다",
+    aiRecommendation: "우선 추천: 문서나 조건 이슈를 해소하면 바로 다음 단계로 넘길 수 있습니다",
     ctaLabel: "조건 확인", railCtaLabel: "조건 검토 시작", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "보류",
     actionKey: "compare_review",
   },
@@ -245,7 +245,7 @@ const RAIL_STATE_MAP: Record<RailState, {
     status: "외부 승인 확인 대기", blocker: "외부 승인 미확인", nextAction: "승인 증빙 연결", compareReady: "완료", poReady: "불가 · 승인 확인 필요",
     snapshotNote: "선택안은 정리되었고 외부 승인 결과만 연결되면 다음 단계로 이동할 수 있습니다",
     handoffTarget: "승인 증빙 연결", handoffStatus: "외부 승인 확인 후 발주 실행",
-    aiRecommendation: "AI 추천: 외부 승인 결과를 연결하면 발주 실행으로 바로 이어질 수 있습니다",
+    aiRecommendation: "우선 추천: 외부 승인 결과를 연결하면 발주 실행으로 바로 이어질 수 있습니다",
     ctaLabel: "승인 증빙 연결", railCtaLabel: "승인 검토 시작", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "보류",
     actionKey: "approval_prep",
   },
@@ -254,7 +254,7 @@ const RAIL_STATE_MAP: Record<RailState, {
     status: "실행 준비 완료", blocker: "차단 없음", nextAction: "발주 실행 준비", compareReady: "완료", poReady: "가능",
     snapshotNote: "현재 케이스는 비교와 확인 단계를 통과해 발주 실행 준비가 가능합니다",
     handoffTarget: "발주 실행 워크벤치", handoffStatus: "즉시 실행 가능",
-    aiRecommendation: "AI 추천: 현재 케이스는 추가 검토보다 발주 실행 준비를 우선해도 됩니다",
+    aiRecommendation: "우선 추천: 현재 케이스는 추가 검토보다 발주 실행 준비를 우선해도 됩니다",
     ctaLabel: "발주 실행 준비", railCtaLabel: "발주 실행 검토", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "닫기",
     actionKey: "po_conversion",
   },
@@ -3807,7 +3807,7 @@ function QuotesPageContent() {
             <p className="text-xs text-slate-700 leading-relaxed">{selectedSignals.summary}</p>
             {selectedSignals.aiRecommendation && (
               <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-1.5">
-                <Sparkles className="h-3 w-3 text-slate-600 shrink-0" />{selectedSignals.aiRecommendation}
+                {selectedSignals.aiRecommendation}
               </p>
             )}
           </div>
@@ -4306,7 +4306,7 @@ function QuotesPageContent() {
             {/* AI recommendation */}
             {selectedSignals.aiRecommendation && (
               <p className="text-[11px] text-slate-500 flex items-center gap-1">
-                <Sparkles className="h-3 w-3 text-slate-600 shrink-0" />{selectedSignals.aiRecommendation}
+                {selectedSignals.aiRecommendation}
               </p>
             )}
           </div>
