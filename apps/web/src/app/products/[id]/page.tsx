@@ -422,8 +422,8 @@ export default function ProductDetailPage() {
                 </CardHeader>
               </Card>
 
-              {/* 실험/제품 정보 블록 */}
-              <Card className="bg-pn/80 backdrop-blur-sm shadow-sm rounded-3xl p-6 md:p-8 border border-gray-100/50 relative overflow-hidden group">
+              {/* §product-detail PD-N(§05) — 래퍼 박스 투명화 → 하위 섹션(제품 사양·안전·규제)을 각각 독립 카드로(시안 정합). */}
+              <Card className="bg-transparent border-0 shadow-none p-0 relative space-y-6 md:space-y-8">
                 {/* 배경 효과 */}
                 <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-50/20 rounded-full blur-3xl opacity-30 -mr-12 -mt-12 transition-all group-hover:opacity-50 -z-0" />
                 {/* §product-detail PD-M(§05) — 시안엔 "실험/제품 정보" 제목 없음 → 제거(클린 흐름). */}
@@ -537,8 +537,9 @@ export default function ProductDetailPage() {
                   )}
 
                   {/* §product-detail PD-J(§05 레이아웃) — "제품 사양" 통합 카드(시안): 카탈로그 번호 + 분류 + 추가 스펙(출처 등).
-                      독립 Cat.No 블록·추가스펙 카드 통합. §03 매핑·grade 숨김(getDisplaySpecs) 유지. §125 "상세 스펙(규격/규제)" 그리드는 별도 보존. */}
-                  <div className="mb-6 md:mb-8">
+                      독립 Cat.No 블록·추가스펙 카드 통합. §03 매핑·grade 숨김(getDisplaySpecs) 유지. §125 "상세 스펙(규격/규제)" 그리드는 별도 보존.
+                      PD-N: 독립 카드 스타일(테두리·그림자) — 시안 정합. */}
+                  <div className="mb-6 md:mb-8 rounded-3xl border border-gray-100/50 bg-pn/80 shadow-sm overflow-hidden">
                     <div className="px-6 md:px-8 py-4 border-b border-gray-100/50 flex items-center gap-3 bg-pg/30 rounded-t-3xl">
                       <Check className="w-5 h-5 text-blue-600" />
                       <h3 className="text-lg font-bold text-slate-900">제품 사양</h3>
@@ -584,23 +585,18 @@ export default function ProductDetailPage() {
 
                   {/* 사용 용도 — §1-2⑤ AI 생성 버튼 제거(관통원칙: 별도 AI UI 금지 + non-persist).
                       product.usageDescription(DB 캐노니컬)만 노출. */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-sm md:text-base">사용 용도</h3>
-                    </div>
-                    {product.usageDescription ? (
+                  {/* PD-N: 사용 용도 — 값 있을 때만 독립 카드(빈 섹션은 완성도가 안내, 시안 정합). */}
+                  {product.usageDescription && (
+                    <div className="rounded-3xl border border-gray-100/50 bg-pn/80 shadow-sm p-6 md:p-8">
+                      <h3 className="font-semibold text-sm md:text-base mb-2">사용 용도</h3>
                       <p className="text-xs md:text-sm text-slate-700 whitespace-pre-wrap">
                         {product.usageDescription}
                       </p>
-                    ) : (
-                      <p className="text-xs md:text-sm text-slate-400 italic">
-                        등록된 사용 용도 정보가 없습니다.
-                      </p>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
-                  {/* 안전 · 규제 정보 - 항상 표시 */}
-                  <div className="pt-4 border-t">
+                  {/* 안전 · 규제 정보 - 항상 표시. PD-N: 독립 카드 스타일(시안 정합). */}
+                  <div className="rounded-3xl border border-gray-100/50 bg-pn/80 shadow-sm p-6 md:p-8">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <Shield className="h-4 w-4 text-yellow-600" />
