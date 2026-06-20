@@ -35,7 +35,14 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const result = await logCronExecution("/api/cron/catalog-ingest", () => runCatalogIngest());
+    // ★ 가드3 — 소량 시드 모드(operator 수동 트리거): ?maxRequests=N&segments=12 로 첫 배치를 좁게.
+    //   파라미터 없으면 기본 nightly(전체). prod 배치 전 소량 시드 → 검증 → 확대 절차용.
+    const sp = request.nextUrl.searchParams;
+    const seedMaxRequests = sp.get("maxRequests") ? Math.max(1, Number(sp.get("maxRequests"))) : undefined;
+    const seedSegments = sp.get("segments")?.split(",").map((s) => s.trim()).filter(Boolean);
+    const result = await logCronExecution("/api/cron/catalog-ingest", () =>
+      runCatalogIngest({ maxRequests: seedMaxRequests, segments: seedSegments }),
+    );
 
     return NextResponse.json({
       success: true,
@@ -56,9 +63,10 @@ const MAX_REQUESTS_PER_RUN = 400;
 const NUM_OF_ROWS = 500;
 const UNIT8_PAGE_ROWS = 1000;
 
-async function runCatalogIngest() {
+async function runCatalogIngest(opts?: { maxRequests?: number; segments?: string[] }) {
   const flagOn = process.env.CATALOG_PUBLIC_INGEST === "1";
-  const serviceKey = process.env.PROCUREMENT_API_KEY ?? "";
+  // ★ 가드4 — env 키(환경변수 전용). 호영님 명명 DATA_GO_KR_SERVICE_KEY 우선 + 기존 PROCUREMENT_API_KEY 호환.
+  const serviceKey = process.env.DATA_GO_KR_SERVICE_KEY ?? process.env.PROCUREMENT_API_KEY ?? "";
 
   // no-op 보고 — fake success 아님(skipped 명시), throw 아님(cron red 방지).
   if (!flagOn || !serviceKey) {
@@ -74,10 +82,27 @@ async function runCatalogIngest() {
     return res.json();
   };
 
+  // 소량 시드(가드3) — 요청 세그먼트/예산 override. 잘못된 세그먼트는 화이트리스트로 정정.
+  const reqSegs = opts?.segments?.length ? opts.segments : [...CATALOG_INGEST_SEGMENTS];
+  const filteredSegs = reqSegs.filter((s): s is (typeof CATALOG_INGEST_SEGMENTS)[number] =>
+    (CATALOG_INGEST_SEGMENTS as readonly string[]).includes(s),
+  );
+  const useSegments = filteredSegs.length ? filteredSegs : [...CATALOG_INGEST_SEGMENTS];
+  const maxRequests = opts?.maxRequests ?? MAX_REQUESTS_PER_RUN;
+  const seedMode = opts?.maxRequests != null || (opts?.segments?.length ?? 0) > 0;
+
+  // ★ 가드1 — 헬스체크: 게이트웨이 1건 호출 성공부터(과거 500 장애 이력). 실패 시 배치 중단(무작정 ingest 금지).
+  try {
+    const hcUrl = buildUnit8RangeUrl({ serviceKey, segment: useSegments[0], pageNo: 1, numOfRows: 1 });
+    parseUnit8Codes(await fetchJson(hcUrl), useSegments[0]); // resultCode !== "00" 이면 throw → catch
+  } catch (e) {
+    return { skipped: true, reason: "gateway_unhealthy", detail: String(e), upserted: 0 };
+  }
+
   // 1) 세그먼트별 8자리 코드 런타임 해석(Unit8 range).
   const codes: string[] = [];
   let codeResolveRequests = 0;
-  for (const segment of CATALOG_INGEST_SEGMENTS) {
+  for (const segment of useSegments) {
     let pageNo = 1;
     let total = Infinity;
     while ((pageNo - 1) * UNIT8_PAGE_ROWS < total) {
@@ -106,12 +131,15 @@ async function runCatalogIngest() {
     },
   };
   const ingest = await runIngest(
-    { codes: orderedCodes, maxRequests: MAX_REQUESTS_PER_RUN, numOfRows: NUM_OF_ROWS },
+    { codes: orderedCodes, maxRequests, numOfRows: NUM_OF_ROWS },
     deps,
   );
 
   return {
     skipped: false,
+    seedMode, // 가드3 — 소량 시드 호출 여부(operator 검증용)
+    segments: useSegments,
+    maxRequests,
     resolvedCodes: codes.length,
     codeResolveRequests,
     startIndex,
