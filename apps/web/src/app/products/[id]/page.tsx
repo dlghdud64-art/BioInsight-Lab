@@ -389,10 +389,12 @@ export default function ProductDetailPage() {
                   {(() => {
                     const heroSpecs = getDisplaySpecs(product.specifications);
                     const source = heroSpecs.find((s) => s.label === "출처")?.value;
+                    const internalGrade = heroSpecs.find((s) => s.label === "내부 등급")?.value;
                     const safety = getProductSafetyLevel(product);
                     const facts: Array<{ label: string; value: string }> = [];
                     if (product.category) facts.push({ label: "분류", value: PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES] });
                     if (source) facts.push({ label: "출처", value: source });
+                    if (internalGrade) facts.push({ label: "내부 등급", value: internalGrade }); // 호영님 재결정: 시안대로 노출
                     if (product.manufacturer) facts.push({ label: "제조사", value: product.manufacturer });
                     if (safety?.label) facts.push({ label: "안전 위험도", value: safety.label });
                     if (facts.length === 0) return null;
@@ -407,6 +409,16 @@ export default function ProductDetailPage() {
                       </div>
                     );
                   })()}
+                  {/* §product-detail PD-M(§05) — 시안 히어로: Cat.No 배지 + 완성도 인라인(한 카드). */}
+                  {product.catalogNumber && (
+                    <div className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-bd bg-pg/50 px-2.5 py-1">
+                      <span className="text-[11px] text-slate-500">Cat.No</span>
+                      <span className="text-xs font-mono font-semibold text-slate-900">{product.catalogNumber}</span>
+                    </div>
+                  )}
+                  <div className="mt-4">
+                    <ProductCompleteness product={product} />
+                  </div>
                 </CardHeader>
               </Card>
 
@@ -414,9 +426,7 @@ export default function ProductDetailPage() {
               <Card className="bg-pn/80 backdrop-blur-sm shadow-sm rounded-3xl p-6 md:p-8 border border-gray-100/50 relative overflow-hidden group">
                 {/* 배경 효과 */}
                 <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-50/20 rounded-full blur-3xl opacity-30 -mr-12 -mt-12 transition-all group-hover:opacity-50 -z-0" />
-                <CardHeader className="px-0 pt-0 pb-3">
-                  <CardTitle className="text-sm md:text-lg">실험/제품 정보</CardTitle>
-                </CardHeader>
+                {/* §product-detail PD-M(§05) — 시안엔 "실험/제품 정보" 제목 없음 → 제거(클린 흐름). */}
                 <CardContent className="px-0 pb-0 space-y-4 md:space-y-6 relative z-10">
                   {/* §product-detail PD-K(§05) — 큰 이미지 박스 제거 → 히어로 소형 썸네일로 이전(시안, bloat 0). */}
 
@@ -473,8 +483,7 @@ export default function ProductDetailPage() {
 
                   {/* §product-detail PD-J(§05) — 독립 Cat.No 블록 제거 → 아래 "제품 사양" 카드로 통합. */}
 
-                  {/* §product-detail PD-B(§04·§05) — 제품 정보 완성도(8필드 고정) + 미등록 1줄 축약 + 정보 요청. 100%면 자동 숨김. */}
-                  <ProductCompleteness product={product} />
+                  {/* §product-detail PD-M(§05) — 완성도는 히어로로 이동(시안 한 카드). 여기선 제거. */}
 
                   {/* 주요 스펙 요약 카드 - Data Grid 스타일 (Glassmorphism) */}
                   {/* §product-detail PD-L(§05) — 빈 상세 스펙 카드는 buyer 에게 숨김(시안: 빈 카드가 화면 지배 방지).

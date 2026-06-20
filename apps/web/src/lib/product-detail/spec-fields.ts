@@ -13,15 +13,17 @@
 export const SPEC_FIELD_LABELS: Record<string, string> = {
   SOURCE: "출처",
   TESTITEM: "시험 항목",
+  INTERNALGRADE: "내부 등급",
   PURCHASEYEARS: "구매 이력",
+  GRADE: "등급",
   FORMAT: "형태",
   SENSITIVITY: "감도",
   TARGET: "대상",
   "SAMPLE TYPE": "시료 종류",
   MAKER: "제조사",
 };
-// ★ §11.344(호영님 2026-06-20): 자사 grade(A~E)·INTERNALGRADE 는 상세 미노출.
-//   GRADE/INTERNALGRADE 등 grade 계열 키는 매핑하지 않고 아래 getDisplaySpecs 에서 숨김.
+// 호영님 결정(2026-06-20 재결정): 시안대로 내부 등급(INTERNALGRADE) 노출. 화이트리스트 매핑.
+//   (product.grade 직접 렌더는 §sourcing-product-surface 가드대로 계속 미사용 — specifications 값만 노출.)
 
 /** 대문자/언더스코어 위주의 raw 컬럼형 키(=내부 필드)인지. */
 const RAW_COLUMN_KEY = /^[A-Z][A-Z0-9_ ]*$/;
@@ -46,7 +48,6 @@ export function getDisplaySpecs(specifications: unknown): DisplaySpec[] {
   const out: DisplaySpec[] = [];
   for (const [key, value] of Object.entries(specifications as Record<string, unknown>)) {
     if (isEmpty(value)) continue; // §02 원칙1 — null/빈값 미렌더
-    if (/grade/i.test(key)) continue; // ★ §11.344 — grade 계열(자사 A~E·INTERNALGRADE) 상세 미노출(호영님 결정)
     const norm = key.trim().toUpperCase();
     const mapped = SPEC_FIELD_LABELS[norm];
     if (mapped) {
