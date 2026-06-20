@@ -7,8 +7,8 @@
  *   - rail/sheet aiRecommendation 렌더 옆 Sparkles(AI 신호) 제거(§368 패턴 정합).
  *   - 실제 LLM 자리(P6)는 무변경.
  *
- * 범위 밖(flag): "AI 판단" 섹션 헤더는 operational-brief-3-section-compress 가 앵커로
- *   강제 → 별도 결정(후속). 본 배치 미적용.
+ * 후속 완료(AI 판단 micro-batch): rail "AI 판단" 섹션 헤더 → "운영 판단"(가드② 마무리).
+ *   operational-brief-3-section-compress 앵커도 "운영 판단"으로 진화(섹션 collapse 검사 보존).
  */
 
 import { describe, it, expect } from "vitest";
@@ -19,6 +19,13 @@ const PAGE = readFileSync(
   join(__dirname, "..", "..", "app/dashboard/quotes/page.tsx"),
   "utf8",
 );
+
+describe("§quote-management P4-label (AI 판단 micro-batch) — rail 섹션 헤더 정정", () => {
+  it("rail '운영 판단' 헤더 + 'AI 판단' 라벨 0(가드②)", () => {
+    expect(PAGE).toMatch(/>운영 판단<\/div>/);
+    expect(PAGE).not.toMatch(/AI 판단/); // 헤더·주석 전수 정정 → page-wide 0
+  });
+});
 
 describe("§quote-management P4-label — 'AI 추천' → '우선 추천' (가드②)", () => {
   it("RAIL_STATE_MAP aiRecommendation 값 = '우선 추천:' (룰베이스 정정)", () => {

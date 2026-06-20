@@ -945,7 +945,7 @@ function QuotesPageContent() {
   // #operational-brief-3-section-compress (Phase B-2) — state 통합 + scope 확장.
   //   호영님 redesign: 7 섹션 → 3 섹션 (한 줄 요약 + 다음 액션 + 상세 아코디언).
   //   default 접힘 — visible: § 1 narrative + § 2 한 줄 + § 4 다음 조치 + bottom CTA.
-  //   collapsed: § 2 4 cell + § 2 cont 회신·비교 + 최근 활동 + § 3 리스크 + AI 판단.
+  //   collapsed: § 2 4 cell + § 2 cont 회신·비교 + 최근 활동 + § 3 리스크 + 운영 판단.
   //   chip click → 자동 setBriefDetailExpanded(true) + scrollIntoView (collapsed 시
   //   anchor 가 mount 되어야 scrollIntoView 작동 — expand 후 scroll).
   // §11.298d quotes header utility plain dropdown state.
@@ -3665,7 +3665,7 @@ function QuotesPageContent() {
 
           {/* #operational-brief-3-section-compress Phase B-2 — 5 섹션 collapse.
               호영님 redesign: 7 섹션 → 3 섹션 (한 줄 요약 + 다음 액션 + 상세).
-              brief-facts2 / 최근 활동 / brief-risks / AI 판단 4 영역 모두
+              brief-facts2 / 최근 활동 / brief-risks / 운영 판단 4 영역 모두
               briefDetailExpanded conditional 안 wrap. visible 보존: brief-summary
               (§ 1) + brief-facts (§ 2 한 줄) + brief-next (§ 4) + bottom CTA. */}
           {briefDetailExpanded && (<>
@@ -3801,9 +3801,9 @@ function QuotesPageContent() {
             </div>
           </section>
 
-          {/* (was E. Decision summary + AI) — § 1 상황 요약 의 AI 판단 보조 */}
+          {/* (was E. Decision summary + AI) — § 1 상황 요약 의 운영 판단 보조 */}
           <div className="px-4 py-3 border-b border-bd/50">
-            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">AI 판단</div>
+            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">운영 판단</div>
             <p className="text-xs text-slate-700 leading-relaxed">{selectedSignals.summary}</p>
             {selectedSignals.aiRecommendation && (
               <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-1.5">

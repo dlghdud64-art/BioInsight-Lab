@@ -10,7 +10,7 @@
  *   - always visible: § 1 brief-summary (narrative) + § 2 brief-facts 한 줄
  *     (Phase B-1 helper output) + § 4 brief-next + bottom CTA.
  *   - briefDetailExpanded === false 시: § 2 4 cell + brief-facts2 + 최근 활동
- *     + brief-risks + AI 판단 모두 hidden (5 섹션 collapse).
+ *     + brief-risks + 운영 판단 모두 hidden (5 섹션 collapse).
  *   - chip click → 자동 setBriefDetailExpanded(true) + scrollIntoView.
  *   - "상세 보기" / "접기" toggle button.
  *
@@ -47,9 +47,9 @@ describe("#operational-brief-3-section-compress — 5 섹션 collapse", () => {
     expect(page).toMatch(/briefDetailExpanded\s*&&[\s\S]{0,12000}brief-risks/);
   });
 
-  it("AI 판단 영역 / 최근 활동 영역 모두 conditional 안", () => {
-    // "AI 판단" 섹션 + "최근 활동" 섹션 모두 briefDetailExpanded conditional 안.
-    expect(page).toMatch(/briefDetailExpanded\s*&&[\s\S]{0,12000}AI 판단/);
+  it("운영 판단 영역 / 최근 활동 영역 모두 conditional 안", () => {
+    // "운영 판단" 섹션 + "최근 활동" 섹션 모두 briefDetailExpanded conditional 안.
+    expect(page).toMatch(/briefDetailExpanded\s*&&[\s\S]{0,12000}운영 판단/);
   });
 });
 
