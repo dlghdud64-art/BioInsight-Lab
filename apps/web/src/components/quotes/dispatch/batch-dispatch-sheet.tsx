@@ -152,7 +152,8 @@ export function BatchDispatchSheet({
 }: BatchDispatchSheetProps) {
   const { toast } = useToast();
   const [message, setMessage] = useState("");
-  const [expiresInDays] = useState(14);
+  // §quote-management P4-dispatch — 응답 기한 operator 선택(서버 expiresAt=now+선택일 → s2 마감·computePriority 반영).
+  const [expiresInDays, setExpiresInDays] = useState(14);
   const [isDispatching, setIsDispatching] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
 
@@ -338,6 +339,30 @@ export function BatchDispatchSheet({
             />
             <p className="text-[11px] text-slate-500 mt-1">
               공급사별 다른 메시지가 필요하면 단일 발송으로 진행해 주세요.
+            </p>
+          </section>
+
+          {/* §quote-management P4-dispatch — 응답 기한(expiresInDays) operator 선택.
+              expiresAt = now + 선택일 → s2 마감/우선순위(computePriority)에 그대로 반영(P4-core-A 읽음). */}
+          <section>
+            <label htmlFor="batch-dispatch-window" className="text-xs font-semibold text-slate-700 uppercase tracking-wider block mb-2">
+              응답 기한
+            </label>
+            <select
+              id="batch-dispatch-window"
+              value={expiresInDays}
+              onChange={(e) => setExpiresInDays(Number(e.target.value))}
+              disabled={isDispatching}
+              className="h-9 min-h-[44px] sm:min-h-0 w-full sm:w-[180px] rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 disabled:opacity-50"
+            >
+              <option value={3}>3일 이내</option>
+              <option value={5}>5일 이내</option>
+              <option value={7}>7일 이내</option>
+              <option value={14}>14일 이내</option>
+              <option value={30}>30일 이내</option>
+            </select>
+            <p className="text-[11px] text-slate-500 mt-1">
+              공급사 회신 마감일이 됩니다. 회신 추적·우선순위에 반영됩니다.
             </p>
           </section>
         </div>
