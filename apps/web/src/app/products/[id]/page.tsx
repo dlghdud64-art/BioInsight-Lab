@@ -55,6 +55,8 @@ import { filterComplianceLinksForProduct, getRuleDescription } from "@/lib/compl
 import { PersonalizedRecommendations } from "@/components/products/personalized-recommendations";
 // §product-detail PD-B(§04·§05) — 완성도(8필드 고정) + 미등록 1줄 축약.
 import { ProductCompleteness } from "@/components/products/product-completeness";
+// §product-detail PD-D(§09) — 견적함 정직 트레이바(데스크탑).
+import { QuoteTrayBar } from "@/components/products/quote-tray-bar";
 import { Disclaimer } from "@/components/legal/disclaimer";
 // #quote-cta-truth — 견적함 저장 계층 단일 출처 (fake success 제거, 호영님 2026-06-11)
 import { addToQuoteCart, readQuoteCart } from "@/lib/quote/quote-cart-storage";
@@ -584,7 +586,8 @@ export default function ProductDetailPage() {
                               variant="outline"
                               className={`${safetyLevel.bgColor} ${safetyLevel.color} ${safetyLevel.borderColor} border-2 font-semibold text-xs`}
                             >
-                              위험도: {safetyLevel.label}
+                              {/* §product-detail PD-C(§07) — 시안: 위험도 + MSDS 유무 병기 배지. */}
+                              위험도: {safetyLevel.label} · MSDS {product.msdsUrl ? "등록" : "없음"}
                             </Badge>
                           );
                         })()}
@@ -710,8 +713,16 @@ export default function ProductDetailPage() {
                               <ExternalLink className="h-3 w-3 ml-1.5" />
                             </Button>
                           ) : (
-                            <div className="text-xs text-slate-400 italic p-2 bg-pg rounded border border-bd">
-                              MSDS/SDS 문서 정보가 없습니다.
+                            /* §product-detail PD-C(§07) — 시안: MSDS 없음 = 회색텍스트 대신 경고 배너 + SDS 요청(실 이동 /support). */
+                            <div className="flex items-start gap-2 p-2.5 bg-yellow-50 border border-yellow-200 rounded-lg">
+                              <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium text-yellow-900">MSDS/SDS 미등록</p>
+                                <p className="text-[11px] text-yellow-800/80 mt-0.5">안전 자료가 아직 없습니다. 취급 전 공급사·관리자에 요청하세요.</p>
+                                <Link href="/support" className="inline-flex items-center mt-1.5 text-[11px] font-semibold text-yellow-900 underline underline-offset-2">
+                                  SDS 요청
+                                </Link>
+                              </div>
                             </div>
                           )}
                           {/* §11.348-B-1 B1-2 — 업로드된 SDS 문서 목록/업로드/열람 (서명URL).
@@ -948,6 +959,7 @@ export default function ProductDetailPage() {
                           const result = addToQuoteCart(product);
                           if (result.ok) {
                             setInQuoteCart(true);
+                window.dispatchEvent(new Event("quote-cart-changed")); // §PD-D 트레이 갱신
                             toast({
                               title: "견적 담기 완료",
                               description: "제품이 견적함에 추가되었습니다.",
@@ -1056,6 +1068,7 @@ export default function ProductDetailPage() {
               const result = addToQuoteCart(product);
               if (result.ok) {
                 setInQuoteCart(true);
+                window.dispatchEvent(new Event("quote-cart-changed")); // §PD-D 트레이 갱신
                 toast({
                   title: "견적 담기 완료",
                   description: "제품이 견적함에 추가되었습니다.",
@@ -1076,6 +1089,9 @@ export default function ProductDetailPage() {
         {/* §product-detail PD-A(§06) — 견적 신뢰 문구(모바일). */}
         <p className="text-[10px] text-slate-500 text-center mt-1">견적 요청은 무료이며 구매 의무가 없습니다.</p>
       </div>
+
+      {/* §product-detail PD-D(§09) — 견적함 정직 트레이바(데스크탑). 비교 destination 없어 견적함만(dead button 0). */}
+      <QuoteTrayBar />
 
       {/* #catalog-spec-backfill ② — 규격 편집 모달 (safety 모달 동형) */}
       {isSpecEditing && (
