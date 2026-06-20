@@ -43,9 +43,11 @@ describe("§product-detail PD-B(§04·§05) — 완성도 바 + 미등록 축약
     expect(COMP).toMatch(/href="\/support"/);
     expect(COMP).toMatch(/정보 요청/);
   });
-  it("§11.302 — yellow 중립톤(빨강·amber·orange 0)", () => {
-    expect(COMP).toMatch(/bg-yellow-/);
-    expect(COMP).not.toMatch(/-amber-|-orange-/);
+  it("§PD-flat 시안 amber-hex 완성도(빨강 0, amber/orange 클래스 0 — app-wide 가드 정합)", () => {
+    // CEO 2026-06-21 §11.302 예외 승인: 완성도 = 시안 amber 톤(arbitrary hex #fbf0db/#dd9011).
+    //   단 amber/orange Tailwind 클래스는 0(app-wide-amber-removed 가드 정합), 빨강 금지 보존.
+    expect(COMP).toMatch(/bg-\[#fbf0db\]/);
+    expect(COMP).not.toMatch(/-amber-\d|-orange-\d/);
     expect(COMP).not.toMatch(/bg-red-|text-red-|border-red-/);
   });
 });

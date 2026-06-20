@@ -12,7 +12,7 @@ import Image from "next/image";
 import {
   Package,
   ShoppingCart,
-  PenLine,
+  GitCompare,
   ExternalLink,
   ClipboardCopy,
   Languages,
@@ -526,28 +526,31 @@ export default function ProductDetailPage() {
                         </Button>
                       )}
                     </div>
-                    <div className="p-4 md:p-5 grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-white">
+                    <div className="p-4 md:p-5 bg-white">
+                      {/* §PD-flat(시안 spec-grid) — hairline 정의그리드(gap-px+bg-line, 셀 흰배경). 박스 폐기. */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-gray-100 rounded-lg overflow-hidden border border-gray-100">
                       {/* §1-2⑤ ① — spec tautology 제거: identity 필드(브랜드·카테고리·
                           카탈로그번호)는 헤더가 표시 — spec 그리드는 실 spec 만 (라벨 정직화).
                           실 spec 부재 시 정직한 empty 노출 (catalog spec backfill 별도 트랙). */}
                       {(product.specification || product.regulatoryCompliance) ? (
                         <>
                           {product.specification && (
-                            <div className="flex flex-col gap-0.5 p-3 rounded-lg bg-gray-50/60 hover:bg-blue-50/40 transition-colors border border-gray-100">
+                            <div className="flex flex-col gap-0.5 px-4 py-3 bg-white">
                               <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">규격/용량</span>
-                              <span className="text-sm md:text-lg font-bold text-slate-900 break-words line-clamp-2">{product.specification}</span>
+                              <span className="text-sm font-semibold text-slate-900 break-words line-clamp-2">{product.specification}</span>
                             </div>
                           )}
                           {product.regulatoryCompliance && (
-                            <div className="flex flex-col gap-0.5 p-3 rounded-lg bg-gray-50/60 hover:bg-blue-50/40 transition-colors border border-gray-100">
+                            <div className="flex flex-col gap-0.5 px-4 py-3 bg-white">
                               <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">규제 규격</span>
-                              <span className="text-sm md:text-lg font-bold text-slate-900 break-words">{product.regulatoryCompliance}</span>
+                              <span className="text-sm font-semibold text-slate-900 break-words">{product.regulatoryCompliance}</span>
                             </div>
                           )}
                         </>
                       ) : (
-                        <div className="col-span-full text-center text-gray-400 py-4 text-xs">등록된 상세 스펙이 없습니다.</div>
+                        <div className="col-span-full text-center text-gray-400 py-4 text-xs bg-white">등록된 상세 스펙이 없습니다.</div>
                       )}
+                      </div>
                     </div>
                   </div>
                   )}
@@ -567,9 +570,11 @@ export default function ProductDetailPage() {
                         ) : null;
                       })()}
                     </div>
-                    <div className="p-4 md:p-5 grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-white">
+                    <div className="p-4 md:p-5 bg-white">
+                      {/* §PD-flat(시안 spec-grid) — hairline 정의그리드(gap-px+bg-line, 셀 흰배경). */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-gray-100 rounded-lg overflow-hidden border border-gray-100">
                       {product.catalogNumber && (
-                        <div className="flex flex-col gap-0.5 p-3 rounded-lg bg-gray-50/60 border border-gray-100">
+                        <div className="flex flex-col gap-0.5 px-4 py-3 bg-white">
                           <span className="text-[10px] md:text-xs font-semibold text-gray-500 tracking-wider flex items-center gap-1">
                             Cat.No (카탈로그 번호)
                             <button
@@ -588,21 +593,22 @@ export default function ProductDetailPage() {
                               <ClipboardCopy className="h-3 w-3" />
                             </button>
                           </span>
-                          <span className="text-sm md:text-lg font-bold text-slate-900 font-mono break-words">{product.catalogNumber}</span>
+                          <span className="text-sm font-semibold text-slate-900 font-mono break-words">{product.catalogNumber}</span>
                         </div>
                       )}
                       {product.category && (
-                        <div className="flex flex-col gap-0.5 p-3 rounded-lg bg-gray-50/60 border border-gray-100">
+                        <div className="flex flex-col gap-0.5 px-4 py-3 bg-white">
                           <span className="text-[10px] md:text-xs font-semibold text-gray-500 tracking-wider">분류</span>
-                          <span className="text-sm md:text-lg font-bold text-slate-900 break-words">{PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES]}</span>
+                          <span className="text-sm font-semibold text-slate-900 break-words">{PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES]}</span>
                         </div>
                       )}
                       {getDisplaySpecs(product.specifications).map((spec, i) => (
-                        <div key={`${spec.label}-${i}`} className="flex flex-col gap-0.5 p-3 rounded-lg bg-gray-50/60 hover:bg-blue-50/40 transition-colors border border-gray-100">
+                        <div key={`${spec.label}-${i}`} className="flex flex-col gap-0.5 px-4 py-3 bg-white">
                           <span className="text-[10px] md:text-xs font-semibold text-gray-500 tracking-wider">{spec.label}</span>
-                          <span className="text-sm md:text-lg font-bold text-slate-900 break-words">{spec.value}</span>
+                          <span className="text-sm font-semibold text-slate-900 break-words">{spec.value}</span>
                         </div>
                       ))}
+                      </div>
                     </div>
                   </div>
 
@@ -622,7 +628,7 @@ export default function ProductDetailPage() {
                   <div className="rounded-[18px] border border-gray-200 bg-white shadow-sm p-6 md:p-8">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <Shield className="h-4 w-4 text-yellow-600" />
+                        <Shield className="h-4 w-4 text-[#c47d10]" />
                         <h3 className="font-semibold text-sm md:text-base">안전 · 규제 정보</h3>
                       </div>
                       <div className="flex items-center gap-2">
@@ -709,12 +715,12 @@ export default function ProductDetailPage() {
 
                         {/* 안전 취급 요약 */}
                         {product.safetyNote && (
-                          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          <div className="p-3 bg-[#fbf0db] border border-[#f0dcae] rounded-lg">
                             <div className="flex items-start gap-2">
-                              <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                              <AlertTriangle className="h-4 w-4 text-[#c47d10] mt-0.5 flex-shrink-0" />
                               <div className="flex-1">
-                                <p className="text-xs font-medium text-yellow-900 mb-1">안전 취급 요약</p>
-                                <p className="text-xs text-yellow-800 leading-relaxed whitespace-pre-wrap">
+                                <p className="text-xs font-medium text-[#7a4f0a] mb-1">안전 취급 요약</p>
+                                <p className="text-xs text-[#92610c] leading-relaxed whitespace-pre-wrap">
                                   {product.safetyNote}
                                 </p>
                               </div>
@@ -761,12 +767,12 @@ export default function ProductDetailPage() {
                             </Button>
                           ) : (
                             /* §product-detail PD-C(§07) — 시안: MSDS 없음 = 회색텍스트 대신 경고 배너 + SDS 요청(실 이동 /support). */
-                            <div className="flex items-start gap-2 p-2.5 bg-yellow-50 border border-yellow-200 rounded-lg">
-                              <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                            <div className="flex items-start gap-2 p-2.5 bg-[#fbf0db] border border-[#f0dcae] rounded-lg">
+                              <AlertTriangle className="h-4 w-4 text-[#c47d10] mt-0.5 flex-shrink-0" />
                               <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium text-yellow-900">MSDS/SDS 미등록</p>
-                                <p className="text-[11px] text-yellow-800/80 mt-0.5">안전 자료가 아직 없습니다. 취급 전 공급사·관리자에 요청하세요.</p>
-                                <Link href="/support" className="inline-flex items-center mt-1.5 text-[11px] font-semibold text-yellow-900 underline underline-offset-2">
+                                <p className="text-xs font-medium text-[#7a4f0a]">MSDS/SDS 미등록</p>
+                                <p className="text-[11px] text-[#92610c]/80 mt-0.5">안전 자료가 아직 없습니다. 취급 전 공급사·관리자에 요청하세요.</p>
+                                <Link href="/support" className="inline-flex items-center mt-1.5 text-[11px] font-semibold text-[#7a4f0a] underline underline-offset-2">
                                   SDS 요청
                                 </Link>
                               </div>
@@ -994,7 +1000,7 @@ export default function ProductDetailPage() {
                         <div className="flex items-center gap-1.5">
                           {hasProduct(id) && (
                             <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200">
-                              <PenLine className="h-3 w-3" />비교에 포함됨
+                              <GitCompare className="h-3 w-3" />비교에 포함됨
                             </span>
                           )}
                           {inQuoteCart && (
@@ -1058,7 +1064,7 @@ export default function ProductDetailPage() {
                           }
                         }}
                       >
-                          <PenLine className="w-4 h-4" />
+                          <GitCompare className="w-4 h-4" />
                           비교 추가
                         </Button>
                       </div>
@@ -1319,20 +1325,20 @@ function AlternativeProductsSection({
             const isInCompare = hasProduct(alt.id);
 
             return (
-              <Card key={alt.id} className="hover:-translate-y-1 hover:shadow-md rounded-xl transition-all">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start gap-3">
+              <Card key={alt.id} className="border-gray-200 hover:border-blue-300 hover:shadow-sm rounded-xl transition-all">
+                <CardHeader className="pb-2">
+                  <div className="flex items-start gap-2.5">
                     {alt.imageUrl ? (
                       <Image
                         src={alt.imageUrl}
                         alt={alt.name}
-                        width={48}
-                        height={48}
-                        className="w-12 h-12 object-cover rounded"
+                        width={40}
+                        height={40}
+                        className="w-10 h-10 object-cover rounded-lg flex-shrink-0"
                       />
                     ) : (
-                      <div className="w-12 h-12 bg-el rounded flex items-center justify-center">
-                        <Package className="h-6 w-6 text-gray-300" />
+                      <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Package className="h-5 w-5 text-gray-400" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
@@ -1394,15 +1400,15 @@ function AlternativeProductsSection({
                         });
                       }}
                     >
-                      <PenLine className="h-3 w-3 mr-1" />
-                      {isInCompare ? "비교 제거" : "비교 추가"}
+                      <GitCompare className="h-3 w-3 mr-1" />
+                      {isInCompare ? "비교 제거" : "비교"}
                     </Button>
-                    {/* §product-detail PD-G(§08) — 상세 보기(제품 간 이동, §09 연결). */}
+                    {/* §product-detail PD-G(§08) — 상세(제품 간 이동, §09 연결). */}
                     <Link
                       href={`/products/${alt.id}`}
-                      className="flex-1 inline-flex items-center justify-center text-xs border border-bd rounded-md px-2 py-1.5 hover:bg-slate-50 text-slate-700"
+                      className="flex-1 inline-flex items-center justify-center gap-0.5 text-xs border border-gray-200 rounded-md px-2 py-1.5 hover:bg-slate-50 text-slate-700"
                     >
-                      상세 보기
+                      상세 <ChevronRight className="h-3 w-3" />
                     </Link>
                   </div>
                 </CardContent>

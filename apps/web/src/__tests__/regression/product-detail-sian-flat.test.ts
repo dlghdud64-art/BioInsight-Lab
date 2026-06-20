@@ -121,9 +121,10 @@ describe("§PD-flat P5 — Cat.No 위치 · 공급가 카드 · 사양 밀도 ·
     expect(DETAIL).toMatch(/bg-\[#2f6be0\] text-white flex items-center justify-center flex-shrink-0/);
     expect(DETAIL).toMatch(/최소 주문/);
   });
-  it("제품 사양/상세스펙 = 2열 컴팩트(시안 밀도)", () => {
-    // 양성 단언만(규제포털 그리드는 별개로 3열 반응형 정당 — 전역 not 금지).
-    expect(DETAIL).toMatch(/p-4 md:p-5 grid grid-cols-1 sm:grid-cols-2 gap-2\.5 bg-white/);
+  it("제품 사양/상세스펙 = 시안 hairline 정의그리드(gap-px+bg-line, 셀 흰배경)", () => {
+    // §PD-flat: 박스 폐기 → 시안 spec-grid(gap-px + bg-line + 셀 흰배경 + border/rounded/overflow-hidden).
+    expect(DETAIL).toMatch(/grid grid-cols-1 sm:grid-cols-2 gap-px bg-gray-100 rounded-lg overflow-hidden border border-gray-100/);
+    expect(DETAIL).toMatch(/flex flex-col gap-0\.5 px-4 py-3 bg-white/);
   });
   it("accent = 시안 #2f6be0(arbitrary hex)", () => {
     expect(DETAIL).toMatch(/bg-\[#2f6be0\]/);
