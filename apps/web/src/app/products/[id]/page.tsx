@@ -1289,29 +1289,63 @@ function AlternativeProductsSection({
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-2 pt-0">
+                  {/* §product-detail PD-G(§08) — 분류·Cat.No (시안 카드 = 제품명·분류·Cat.No). */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {alt.category && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                        {PRODUCT_CATEGORIES[alt.category as keyof typeof PRODUCT_CATEGORIES] ?? alt.category}
+                      </span>
+                    )}
+                    {alt.catalogNumber && (
+                      <span className="text-[10px] text-slate-500 font-mono">Cat.No {alt.catalogNumber}</span>
+                    )}
+                  </div>
+                  {/* §product-detail PD-G(§08) — "왜 대체 가능한지" 유사 근거 태그. grade 누출 방지: "Grade" 근거 제외(§sourcing-product-surface 정합). */}
+                  {Array.isArray(alt.similarityReasons) &&
+                    alt.similarityReasons.filter((r: string) => !/grade/i.test(r)).length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {alt.similarityReasons
+                          .filter((r: string) => !/grade/i.test(r))
+                          .slice(0, 3)
+                          .map((r: string, i: number) => (
+                            <span key={i} className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">
+                              {r}
+                            </span>
+                          ))}
+                      </div>
+                    )}
                   {minPrice !== undefined && (
                     <div className="text-sm font-semibold">
                       ₩{minPrice.toLocaleString("ko-KR")}
                     </div>
                   )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full text-xs"
-                    onClick={() => {
-                      if (isInCompare) {
-                        removeProduct(alt.id);
-                      } else {
-                        addProduct(alt.id);
-                      }
-                      toast({
-                        title: isInCompare ? "비교에서 제거됨" : "비교에 추가됨",
-                      });
-                    }}
-                  >
-                    <PenLine className="h-3 w-3 mr-1" />
-                    {isInCompare ? "비교 제거" : "비교 추가"}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 text-xs"
+                      onClick={() => {
+                        if (isInCompare) {
+                          removeProduct(alt.id);
+                        } else {
+                          addProduct(alt.id);
+                        }
+                        toast({
+                          title: isInCompare ? "비교에서 제거됨" : "비교에 추가됨",
+                        });
+                      }}
+                    >
+                      <PenLine className="h-3 w-3 mr-1" />
+                      {isInCompare ? "비교 제거" : "비교 추가"}
+                    </Button>
+                    {/* §product-detail PD-G(§08) — 상세 보기(제품 간 이동, §09 연결). */}
+                    <Link
+                      href={`/products/${alt.id}`}
+                      className="flex-1 inline-flex items-center justify-center text-xs border border-bd rounded-md px-2 py-1.5 hover:bg-slate-50 text-slate-700"
+                    >
+                      상세 보기
+                    </Link>
+                  </div>
                 </CardContent>
               </Card>
             );
