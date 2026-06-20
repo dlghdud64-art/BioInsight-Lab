@@ -299,7 +299,8 @@ export default function ProductDetailPage() {
       {/* §1-2② — floating 원형 back 제거(breadcrumb과 중복·겹침). breadcrumb이 회귀 경로 담당.
           전역 헤더 없음 + viewportFit:cover → breadcrumb이 모바일 최상단이라 safe-area 인식 pt. */}
       <div className="container mx-auto px-4 md:px-4 lg:px-8 pt-[calc(env(safe-area-inset-top)+1rem)] md:py-8 relative z-0">
-        <div className="max-w-7xl mx-auto">
+        {/* §product-detail PD-flat — 콘텐츠 영역만 시안 플랫(.q-embed 스코프). 전역 셸 불변(호영님 2026-06-20). */}
+        <div className="max-w-7xl mx-auto q-embed">
           {/* Breadcrumb */}
           <nav className="flex items-center space-x-1 md:space-x-2 text-sm text-slate-500 mb-6 md:mb-8 px-1 overflow-x-auto whitespace-nowrap" aria-label="Breadcrumb">
             <Link
@@ -326,9 +327,8 @@ export default function ProductDetailPage() {
             {/* 제품 정보 (8칸) */}
             <div className="lg:col-span-8 space-y-6 md:space-y-8">
               {/* 상단: 제품명, 벤더, 카테고리, Grade/규격 배지 */}
-              <Card className="bg-pn/80 backdrop-blur-sm shadow-sm rounded-3xl p-6 md:p-8 border border-gray-100/50 relative overflow-hidden group">
-                {/* 배경 효과 */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50/30 rounded-full blur-3xl opacity-50 -mr-16 -mt-16 transition-all group-hover:opacity-70 -z-0" />
+              {/* §product-detail PD-flat(시안 §05) — 히어로: 플랫 흰 카드(글래스/blur orb 폐기, radius 18px, hairline). */}
+              <Card className="bg-white shadow-sm rounded-[18px] p-6 md:p-7 border border-gray-200 relative overflow-hidden">
                 <CardHeader className="px-0 pt-0 pb-4 relative z-10">
                   {/* 데스크톱 뒤로가기 링크 */}
                   <div className="hidden md:block mb-4">
@@ -341,8 +341,8 @@ export default function ProductDetailPage() {
                     </button>
                   </div>
                   <div className="flex items-start gap-4">
-                    {/* §product-detail PD-K(§05) — 시안: 히어로 옆 제품 썸네일(소형). 빈 이미지는 컴팩트 아이콘(big 박스 bloat 제거). */}
-                    <div className="flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl border border-bd bg-el/60 flex items-center justify-center overflow-hidden">
+                    {/* §product-detail PD-K/PD-flat(시안 §05) — 히어로 썸네일 96px(시안 정합) + accent 그라데이션. 빈 이미지는 아이콘. */}
+                    <div className="flex-shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-slate-50 flex items-center justify-center overflow-hidden">
                       {product.imageUrl ? (
                         <img
                           src={product.imageUrl}
@@ -353,14 +353,14 @@ export default function ProductDetailPage() {
                           onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                         />
                       ) : (
-                        <Package className="h-7 w-7 text-gray-300" strokeWidth={1.5} />
+                        <Package className="h-9 w-9 text-blue-300" strokeWidth={1.5} />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-4">
                         {/* 재고 상태는 표시하지 않음 (확실하지 않은 정보) */}
                       </div>
-                      <CardTitle className="text-2xl md:text-4xl font-bold text-slate-900 leading-tight mb-3 break-words">{product.name}</CardTitle>
+                      <CardTitle className="text-2xl md:text-[27px] font-bold text-slate-900 leading-tight mb-3 break-words">{product.name}</CardTitle>
                       {product.nameEn && (
                         <CardDescription className="text-sm md:text-base break-words">{product.nameEn}</CardDescription>
                       )}
@@ -399,11 +399,11 @@ export default function ProductDetailPage() {
                     if (safety?.label) facts.push({ label: "안전 위험도", value: safety.label });
                     if (facts.length === 0) return null;
                     return (
-                      <div className="flex flex-wrap gap-x-6 gap-y-2 mt-4 pt-3 border-t border-gray-100">
-                        {facts.map((f) => (
-                          <div key={f.label} className="flex flex-col gap-0.5">
-                            <span className="text-[10px] md:text-xs text-slate-400">{f.label}</span>
-                            <span className="text-sm md:text-base font-bold text-slate-900">{f.value}</span>
+                      <div className="flex flex-wrap gap-y-2 mt-4 pt-4 border-t border-gray-100">
+                        {facts.map((f, i) => (
+                          <div key={f.label} className={`flex flex-col gap-0.5 px-5 ${i === 0 ? "pl-0" : "border-l border-gray-100"}`}>
+                            <span className="text-[11px] font-bold text-slate-400">{f.label}</span>
+                            <span className="text-sm md:text-[15px] font-bold text-slate-900">{f.value}</span>
                           </div>
                         ))}
                       </div>

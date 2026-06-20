@@ -16,8 +16,9 @@ const DETAIL = readFileSync(
 );
 
 describe("§product-detail PD-K(§05) — 히어로 이미지 썸네일", () => {
-  it("히어로 소형 썸네일 + 큰 이미지 박스 폐기", () => {
-    expect(DETAIL).toMatch(/w-16 h-16 md:w-20 md:h-20/);
+  it("히어로 썸네일 96px(시안 정합) + 큰 이미지 박스 폐기", () => {
+    // §PD-flat(2026-06-20): 시안 정합으로 80→96px(w-20 h-20 md:w-24 md:h-24). bloat 0 의도 보존.
+    expect(DETAIL).toMatch(/w-20 h-20 md:w-24 md:h-24/);
     expect(DETAIL).not.toMatch(/max-h-\[400px\]/);
   });
 });
