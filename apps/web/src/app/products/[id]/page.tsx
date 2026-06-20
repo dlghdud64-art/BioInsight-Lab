@@ -53,6 +53,8 @@ import { getProductSafetyLevel, HAZARD_CODE_DESCRIPTIONS } from "@/lib/utils/saf
 import { getRegulationLinksForProduct } from "@/lib/regulation/links";
 import { filterComplianceLinksForProduct, getRuleDescription } from "@/lib/compliance-links";
 import { PersonalizedRecommendations } from "@/components/products/personalized-recommendations";
+// §product-detail PD-B(§04·§05) — 완성도(8필드 고정) + 미등록 1줄 축약.
+import { ProductCompleteness } from "@/components/products/product-completeness";
 import { Disclaimer } from "@/components/legal/disclaimer";
 // #quote-cta-truth — 견적함 저장 계층 단일 출처 (fake success 제거, 호영님 2026-06-11)
 import { addToQuoteCart, readQuoteCart } from "@/lib/quote/quote-cart-storage";
@@ -481,6 +483,9 @@ export default function ProductDetailPage() {
                       <p className="text-sm text-slate-700 font-mono">{product.catalogNumber}</p>
                     </div>
                   )}
+
+                  {/* §product-detail PD-B(§04·§05) — 제품 정보 완성도(8필드 고정) + 미등록 1줄 축약 + 정보 요청. 100%면 자동 숨김. */}
+                  <ProductCompleteness product={product} />
 
                   {/* 주요 스펙 요약 카드 - Data Grid 스타일 (Glassmorphism) */}
                   <div className="mb-6 md:mb-8">
