@@ -57,6 +57,8 @@ import { PersonalizedRecommendations } from "@/components/products/personalized-
 import { ProductCompleteness } from "@/components/products/product-completeness";
 // §product-detail PD-D(§09) — 견적함 정직 트레이바(데스크탑).
 import { QuoteTrayBar } from "@/components/products/quote-tray-bar";
+// §product-detail PD-F(§03/§01) — 추가 스펙 raw key 한글화 + null/빈값 숨김.
+import { getDisplaySpecs } from "@/lib/product-detail/spec-fields";
 import { Disclaimer } from "@/components/legal/disclaimer";
 // #quote-cta-truth — 견적함 저장 계층 단일 출처 (fake success 제거, 호영님 2026-06-11)
 import { addToQuoteCart, readQuoteCart } from "@/lib/quote/quote-cart-storage";
@@ -366,6 +368,13 @@ export default function ProductDetailPage() {
                       </Badge>
                     )}
                   </div>
+                  {/* §product-detail PD-E(§05) — 히어로 키 팩트(아는 값만): 제조사 상단 노출(빈 값 숨김).
+                      grade 는 §sourcing-product-surface 정직성 가드(내부값=상세 미노출, DB 보존)대로 미렌더. 분류는 위 태그, Cat.No·완성도는 본문. */}
+                  {product.manufacturer && (
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[11px] md:text-xs text-slate-600">
+                      <span><span className="text-slate-400">제조사</span> <span className="font-semibold text-slate-800">{product.manufacturer}</span></span>
+                    </div>
+                  )}
                 </CardHeader>
               </Card>
 
@@ -537,17 +546,19 @@ export default function ProductDetailPage() {
                   </div>
 
                   {/* 상세 스펙 정보 - Data Grid 스타일 (추가 스펙) */}
-                  {product.specifications && typeof product.specifications === "object" && Object.keys(product.specifications).length > 0 && (
+                  {/* §product-detail PD-F(§03/§01) — 추가 스펙: raw 대문자 컬럼명(SOURCE·TESTITEM 등) 한글 매핑 +
+                      null/빈값·매핑없는 raw 컬럼 숨김(내부 필드 누출 방지). 표시할 게 0개면 섹션 자체 숨김. */}
+                  {getDisplaySpecs(product.specifications).length > 0 && (
                     <div className="mb-6 md:mb-8">
                       <div className="px-6 md:px-8 py-4 border-b border-gray-100/50 flex items-center gap-3 bg-pg/30 rounded-t-3xl">
                         <Check className="w-5 h-5 text-blue-600" />
                         <h3 className="text-lg font-bold text-slate-900">추가 스펙 정보</h3>
                       </div>
                       <div className="p-4 md:p-8 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 bg-pn/50 rounded-b-3xl">
-                        {Object.entries(product.specifications as Record<string, any>).map(([key, value]) => (
-                          <div key={key} className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-pg/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
-                            <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">{key}</span>
-                            <span className="text-sm md:text-lg font-bold text-slate-900 break-words">{String(value)}</span>
+                        {getDisplaySpecs(product.specifications).map((spec, i) => (
+                          <div key={`${spec.label}-${i}`} className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-pg/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
+                            <span className="text-[10px] md:text-xs font-semibold text-gray-500 tracking-wider">{spec.label}</span>
+                            <span className="text-sm md:text-lg font-bold text-slate-900 break-words">{spec.value}</span>
                           </div>
                         ))}
                       </div>
