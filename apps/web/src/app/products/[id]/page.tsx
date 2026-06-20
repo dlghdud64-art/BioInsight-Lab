@@ -886,8 +886,9 @@ export default function ProductDetailPage() {
             {/* 가격 및 액션 - Sticky Right Panel (4칸) - 데스크톱 전용 */}
             <div className="hidden lg:block lg:col-span-4">
               <div className="sticky top-24 h-fit space-y-6">
-                <Card className="bg-pn/90 backdrop-blur-sm shadow-xl shadow-blue-900/5 rounded-3xl p-6 md:p-8 border border-gray-100/50 relative overflow-hidden">
-                  {/* 상단 강조 선 */}
+                {/* §PD-flat P4(시안 §06) — 견적 카드: 글래스→플랫 흰 카드 + qc-accent(상단 4px 그라데이션 유지). */}
+                <Card className="bg-white shadow-sm rounded-[18px] p-6 md:p-8 border border-gray-200 relative overflow-hidden">
+                  {/* 상단 강조 선(qc-accent) */}
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-600" />
                   <CardHeader className="px-0 pt-2 pb-6">
                     <div className="mb-4">
@@ -909,7 +910,7 @@ export default function ProductDetailPage() {
                         {vendors.map((pv: any) => (
                           <div
                             key={pv.id}
-                            className="border border-bd/50 rounded-xl p-4 space-y-2 bg-pg/50 backdrop-blur-sm"
+                            className="border border-gray-200 rounded-xl p-4 space-y-2 bg-gray-50/60"
                           >
                             {pv.vendor?.name && (
                               <div className="text-sm font-medium text-gray-700">{pv.vendor.name}</div>
@@ -926,7 +927,7 @@ export default function ProductDetailPage() {
                             )}
                             {/* 재고/납기 정보는 표시하지 않음 (확실하지 않은 정보) */}
                             <div className="space-y-2 pt-2">
-                              <div className="flex items-center justify-between p-2 bg-pn/50 rounded-lg">
+                              <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
                                 <span className="flex items-center gap-1.5 text-xs text-gray-600">
                                   <Calendar className="w-3 h-3" /> 납기
                                 </span>
@@ -975,7 +976,7 @@ export default function ProductDetailPage() {
                         </div>
                       )}
                       <Button
-                        className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-blue-500/25 transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 group"
+                        className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-base shadow-sm transition-colors flex items-center justify-center gap-2 group"
                         onClick={() => {
                           // #quote-cta-truth — 구 GET-only fake success 제거: 실 견적함
                           //   (provider 동일 truth) 에 추가하고 결과로만 toast (조건부).
@@ -1011,7 +1012,7 @@ export default function ProductDetailPage() {
                       <div className="grid grid-cols-2 gap-3">
                         <Button
                           variant="outline"
-                          className="py-3 bg-pn/80 border border-bd/50 hover:border-blue-400 text-gray-700 hover:text-blue-600 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+                          className="py-3 bg-white border border-gray-200 hover:border-blue-300 text-gray-700 hover:text-blue-600 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2"
                         onClick={() => {
                           if (isInCompare) {
                             removeProduct(id);
@@ -1036,13 +1037,23 @@ export default function ProductDetailPage() {
                   </CardContent>
                 </Card>
 
-                {/* 추가 배너 */}
+                {/* §PD-flat P4(시안) — stock-mini: 재고 동선 실연결(/dashboard/inventory). dead button 0. */}
+                <Link
+                  href="/dashboard/inventory"
+                  className="flex items-center gap-3 bg-white border border-gray-200 rounded-[13px] px-4 py-3 shadow-sm hover:border-blue-300 transition-colors"
+                >
+                  <Package className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                  <span className="flex-1 text-xs text-slate-600">재고 현황을 <b className="font-semibold text-slate-900">재고 조회</b>로 확인하세요</span>
+                  <span className="text-xs font-bold text-blue-700">조회</span>
+                </Link>
+
+                {/* 맞춤 견적 배너(다크) — 영업 동선 실연결(/support). no-op 제거. */}
                 <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 text-white text-center shadow-lg">
                   <p className="text-sm text-gray-300 mb-2">대량 구매 또는 특수 요구사항이 있으신가요?</p>
                   <h4 className="font-bold text-lg mb-4">맞춤 견적 문의</h4>
-                  <button className="text-xs bg-pn/10 hover:bg-pn/20 px-4 py-2 rounded-lg transition-colors border border-white/10">
-                    영업 담당자 연결 →
-                  </button>
+                  <Link href="/support" className="inline-flex items-center gap-1.5 text-xs bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors border border-white/10">
+                    영업 담당자 연결 <ChevronRight className="h-3.5 w-3.5" />
+                  </Link>
                 </div>
               </div>
             </div>
@@ -1085,7 +1096,7 @@ export default function ProductDetailPage() {
         </div>
         <div className="flex items-center justify-end">
           <Button
-            className="flex-shrink-0 py-3 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold text-base shadow-lg hover:shadow-blue-500/25 transition-all flex items-center justify-center gap-2"
+            className="flex-shrink-0 py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-base shadow-sm transition-colors flex items-center justify-center gap-2"
             onClick={() => {
               // #quote-cta-truth — 모바일 하단 바도 동일 truth 결선 (fake success 0)
               if (inQuoteCart) {
@@ -1254,7 +1265,7 @@ function AlternativeProductsSection({
 
   if (isLoading) {
     return (
-      <Card className="bg-pn/80 backdrop-blur-sm shadow-sm rounded-3xl p-6 md:p-8 border border-gray-100/50 mt-6">
+      <Card className="bg-white shadow-sm rounded-[18px] p-6 md:p-8 border border-gray-200 mt-6">
         <CardContent>
           <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
         </CardContent>
@@ -1267,7 +1278,7 @@ function AlternativeProductsSection({
   }
 
   return (
-    <Card className="bg-pn/80 backdrop-blur-sm shadow-sm rounded-3xl p-6 md:p-8 border border-gray-100/50 mt-6">
+    <Card className="bg-white shadow-sm rounded-[18px] p-6 md:p-8 border border-gray-200 mt-6">
       <CardHeader>
         <CardTitle className="text-lg font-semibold">대체품 추천</CardTitle>
         <CardDescription>유사 스펙의 대체 제품을 찾았습니다.</CardDescription>

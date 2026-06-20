@@ -78,3 +78,34 @@ describe("§PD-flat P3 — 제품사양/안전 카드 플랫", () => {
     expect(DETAIL).toMatch(/<h3 className="text-lg font-bold text-slate-900">제품 사양<\/h3>/);
   });
 });
+
+describe("§PD-flat P4 — 우측 레일 + 대체품 플랫", () => {
+  it("콘텐츠 글래스 잔재 0 — rounded-3xl 전무(전 phase 완료)", () => {
+    expect(DETAIL).not.toMatch(/rounded-3xl/);
+  });
+  it("레일 견적 카드 = 플랫 흰 카드(글래스 폐기)", () => {
+    expect(DETAIL).toMatch(/bg-white shadow-sm rounded-\[18px\] p-6 md:p-8 border border-gray-200 relative overflow-hidden/);
+  });
+  it("주 CTA gradient 폐기 → 플랫 accent(데스크탑·모바일)", () => {
+    expect(DETAIL).not.toMatch(/from-blue-600 to-indigo-600/);
+    expect(DETAIL).toMatch(/w-full py-3\.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl/);
+  });
+  it("대체품 섹션 카드 플랫", () => {
+    expect(DETAIL).toMatch(/bg-white shadow-sm rounded-\[18px\] p-6 md:p-8 border border-gray-200 mt-6/);
+  });
+});
+
+describe("§PD-flat P4 — dead button 0(시안 요소 실동선 배선)", () => {
+  it("stock-mini 재고 조회 = /dashboard/inventory 실 이동(no-op 0)", () => {
+    expect(DETAIL).toMatch(/href="\/dashboard\/inventory"/);
+    expect(DETAIL).toMatch(/재고 현황을 <b className="font-semibold text-slate-900">재고 조회<\/b>/);
+  });
+  it("영업 담당자 연결 = /support 실 이동(no-op button 폐기)", () => {
+    expect(DETAIL).toMatch(/<Link href="\/support"[^>]*>\s*영업 담당자 연결/);
+    expect(DETAIL).not.toMatch(/<button[^>]*>\s*영업 담당자 연결/);
+  });
+  it("회귀 0 — 견적 신뢰 문구 + 가격 대비(slate-900) 보존", () => {
+    expect(DETAIL).toMatch(/견적 요청은 무료이며 구매 의무가 없습니다/);
+    expect(DETAIL).toMatch(/text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight/);
+  });
+});
