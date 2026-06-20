@@ -368,13 +368,30 @@ export default function ProductDetailPage() {
                       </Badge>
                     )}
                   </div>
-                  {/* §product-detail PD-E(§05) — 히어로 키 팩트(아는 값만): 제조사 상단 노출(빈 값 숨김).
-                      grade 는 §sourcing-product-surface 정직성 가드(내부값=상세 미노출, DB 보존)대로 미렌더. 분류는 위 태그, Cat.No·완성도는 본문. */}
-                  {product.manufacturer && (
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[11px] md:text-xs text-slate-600">
-                      <span><span className="text-slate-400">제조사</span> <span className="font-semibold text-slate-800">{product.manufacturer}</span></span>
-                    </div>
-                  )}
+                  {/* §product-detail PD-H(§05 레이아웃) — 시안 히어로 키 팩트 행(분류·출처·제조사·안전 위험도, 아는 값만).
+                      ★ product.grade(자사 A~E) + 내부 등급(specifications.INTERNALGRADE)은 §11.344/§sourcing-product-surface
+                        grade 미노출 정책으로 제외(호영님 결정 대기). 출처(SOURCE)는 §03 매핑값. */}
+                  {(() => {
+                    const heroSpecs = getDisplaySpecs(product.specifications);
+                    const source = heroSpecs.find((s) => s.label === "출처")?.value;
+                    const safety = getProductSafetyLevel(product);
+                    const facts: Array<{ label: string; value: string }> = [];
+                    if (product.category) facts.push({ label: "분류", value: PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES] });
+                    if (source) facts.push({ label: "출처", value: source });
+                    if (product.manufacturer) facts.push({ label: "제조사", value: product.manufacturer });
+                    if (safety?.label) facts.push({ label: "안전 위험도", value: safety.label });
+                    if (facts.length === 0) return null;
+                    return (
+                      <div className="flex flex-wrap gap-x-6 gap-y-2 mt-4 pt-3 border-t border-gray-100">
+                        {facts.map((f) => (
+                          <div key={f.label} className="flex flex-col gap-0.5">
+                            <span className="text-[10px] md:text-xs text-slate-400">{f.label}</span>
+                            <span className="text-sm md:text-base font-bold text-slate-900">{f.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </CardHeader>
               </Card>
 
@@ -464,36 +481,7 @@ export default function ProductDetailPage() {
                     </div>
                   )}
 
-                  {product.catalogNumber && (
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold text-sm">Cat.No (카탈로그 번호)</h3>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={async () => {
-                            try {
-                              await navigator.clipboard.writeText(product.catalogNumber);
-                              toast({
-                                title: "복사 완료",
-                                description: "카탈로그 번호가 클립보드에 복사되었습니다.",
-                              });
-                            } catch (error) {
-                              toast({
-                                title: "복사 실패",
-                                variant: "destructive",
-                              });
-                            }
-                          }}
-                          className="h-7 text-xs"
-                        >
-                          <ClipboardCopy className="h-3 w-3 mr-1" />
-                          복사
-                        </Button>
-                      </div>
-                      <p className="text-sm text-slate-700 font-mono">{product.catalogNumber}</p>
-                    </div>
-                  )}
+                  {/* §product-detail PD-J(§05) — 독립 Cat.No 블록 제거 → 아래 "제품 사양" 카드로 통합. */}
 
                   {/* §product-detail PD-B(§04·§05) — 제품 정보 완성도(8필드 고정) + 미등록 1줄 축약 + 정보 요청. 100%면 자동 숨김. */}
                   <ProductCompleteness product={product} />
@@ -545,25 +533,51 @@ export default function ProductDetailPage() {
                     </div>
                   </div>
 
-                  {/* 상세 스펙 정보 - Data Grid 스타일 (추가 스펙) */}
-                  {/* §product-detail PD-F(§03/§01) — 추가 스펙: raw 대문자 컬럼명(SOURCE·TESTITEM 등) 한글 매핑 +
-                      null/빈값·매핑없는 raw 컬럼 숨김(내부 필드 누출 방지). 표시할 게 0개면 섹션 자체 숨김. */}
-                  {getDisplaySpecs(product.specifications).length > 0 && (
-                    <div className="mb-6 md:mb-8">
-                      <div className="px-6 md:px-8 py-4 border-b border-gray-100/50 flex items-center gap-3 bg-pg/30 rounded-t-3xl">
-                        <Check className="w-5 h-5 text-blue-600" />
-                        <h3 className="text-lg font-bold text-slate-900">추가 스펙 정보</h3>
-                      </div>
-                      <div className="p-4 md:p-8 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 bg-pn/50 rounded-b-3xl">
-                        {getDisplaySpecs(product.specifications).map((spec, i) => (
-                          <div key={`${spec.label}-${i}`} className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-pg/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
-                            <span className="text-[10px] md:text-xs font-semibold text-gray-500 tracking-wider">{spec.label}</span>
-                            <span className="text-sm md:text-lg font-bold text-slate-900 break-words">{spec.value}</span>
-                          </div>
-                        ))}
-                      </div>
+                  {/* §product-detail PD-J(§05 레이아웃) — "제품 사양" 통합 카드(시안): 카탈로그 번호 + 분류 + 추가 스펙(출처 등).
+                      독립 Cat.No 블록·추가스펙 카드 통합. §03 매핑·grade 숨김(getDisplaySpecs) 유지. §125 "상세 스펙(규격/규제)" 그리드는 별도 보존. */}
+                  <div className="mb-6 md:mb-8">
+                    <div className="px-6 md:px-8 py-4 border-b border-gray-100/50 flex items-center gap-3 bg-pg/30 rounded-t-3xl">
+                      <Check className="w-5 h-5 text-blue-600" />
+                      <h3 className="text-lg font-bold text-slate-900">제품 사양</h3>
                     </div>
-                  )}
+                    <div className="p-4 md:p-8 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 bg-pn/50 rounded-b-3xl">
+                      {product.catalogNumber && (
+                        <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-pg/80 border border-transparent">
+                          <span className="text-[10px] md:text-xs font-semibold text-gray-500 tracking-wider flex items-center gap-1">
+                            Cat.No (카탈로그 번호)
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                try {
+                                  await navigator.clipboard.writeText(product.catalogNumber);
+                                  toast({ title: "복사 완료", description: "카탈로그 번호가 클립보드에 복사되었습니다." });
+                                } catch {
+                                  toast({ title: "복사 실패", variant: "destructive" });
+                                }
+                              }}
+                              className="text-gray-400 hover:text-blue-600"
+                              aria-label="카탈로그 번호 복사"
+                            >
+                              <ClipboardCopy className="h-3 w-3" />
+                            </button>
+                          </span>
+                          <span className="text-sm md:text-lg font-bold text-slate-900 font-mono break-words">{product.catalogNumber}</span>
+                        </div>
+                      )}
+                      {product.category && (
+                        <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-pg/80 border border-transparent">
+                          <span className="text-[10px] md:text-xs font-semibold text-gray-500 tracking-wider">분류</span>
+                          <span className="text-sm md:text-lg font-bold text-slate-900 break-words">{PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES]}</span>
+                        </div>
+                      )}
+                      {getDisplaySpecs(product.specifications).map((spec, i) => (
+                        <div key={`${spec.label}-${i}`} className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-pg/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
+                          <span className="text-[10px] md:text-xs font-semibold text-gray-500 tracking-wider">{spec.label}</span>
+                          <span className="text-sm md:text-lg font-bold text-slate-900 break-words">{spec.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
 
                   {/* 사용 용도 — §1-2⑤ AI 생성 버튼 제거(관통원칙: 별도 AI UI 금지 + non-persist).
                       product.usageDescription(DB 캐노니컬)만 노출. */}

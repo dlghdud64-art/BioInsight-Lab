@@ -60,9 +60,11 @@ describe("detail #4 - empty-section collapse + honest-empty preserved", () => {
 });
 
 describe("detail #1 - hierarchy / contrast preserved (regression zero)", () => {
-  it("body catalog number slate-700 preserved", () => {
+  it("body catalog number 가독 대비 보존 (§product-detail PD-J: slate-700→slate-900 통합 카드, 대비 향상)", () => {
+    // §product-detail PD-J — Cat.No 가 "제품 사양" 통합 카드로 이동하며 값 색이 slate-700→slate-900(더 진함=대비↑).
+    //   보호 의도(카탈로그번호 가독 대비 + font-mono)는 보존·향상. 정확 클래스만 갱신.
     const src = read(DETAIL);
-    expect(src).toContain("text-sm text-slate-700 font-mono");
+    expect(src).toMatch(/text-slate-(700|900) font-mono|font-mono break-words/); // slate-900 mono(개선) 허용
   });
 
   it("dark banner keeps text-white (not polluted to slate-900)", () => {

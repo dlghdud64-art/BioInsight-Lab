@@ -15,10 +15,13 @@ const DETAIL = readFileSync(
 );
 
 describe("§product-detail PD-E(§05) — 히어로 키 팩트", () => {
-  it("히어로 키 팩트 — 제조사 아는 값만 노출(조건부). grade는 §sourcing-product-surface 가드대로 미노출", () => {
+  it("PD-H 시안 히어로 키 팩트 행 — 분류·출처·제조사·안전 위험도(아는 값만). grade/내부등급 미노출", () => {
     // 호영님 결정(2026-06-20): product.grade=내부값 → 상세 미노출(§sourcing-product-surface 정직성 가드 존중).
-    //   PD-E 히어로는 제조사만 노출. grade 렌더 0(가드 정합).
-    expect(DETAIL).toMatch(/product\.manufacturer &&/);
+    //   PD-H 히어로 = 시안 키팩트 행(분류·출처·제조사·안전 위험도). 내부 등급(§11.344 grade)은 보류(호영님 결정 대기).
+    expect(DETAIL).toMatch(/label: "분류"/);
+    expect(DETAIL).toMatch(/label: "출처"/);
+    expect(DETAIL).toMatch(/label: "제조사"/);
+    expect(DETAIL).toMatch(/label: "안전 위험도"/);
     expect(DETAIL).toMatch(/제조사/);
     expect(DETAIL).not.toMatch(/\{product\.grade\}/); // grade 미노출(§sourcing-product-surface 정합)
   });

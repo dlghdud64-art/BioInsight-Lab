@@ -18,10 +18,12 @@ describe("§product-detail PD-F — getDisplaySpecs 매핑/숨김(순수함수)"
       INTERNALGRADE: "E",
       PURCHASEYEARS: "",
     });
-    expect(out).toEqual([
-      { label: "출처", value: "대장" },
-      { label: "내부 등급", value: "E" },
-    ]);
+    // ★ §11.344(호영님 2026-06-20): INTERNALGRADE(자사 A~E)는 상세 미노출 → 출처만 표시.
+    expect(out).toEqual([{ label: "출처", value: "대장" }]);
+  });
+  it("§11.344 — grade 계열(INTERNALGRADE/GRADE) 숨김", () => {
+    expect(getDisplaySpecs({ INTERNALGRADE: "E" })).toEqual([]);
+    expect(getDisplaySpecs({ GRADE: "A" })).toEqual([]);
   });
   it('"null" 문자열도 숨김', () => {
     expect(getDisplaySpecs({ TESTITEM: "null" })).toEqual([]);
@@ -32,11 +34,12 @@ describe("§product-detail PD-F — getDisplaySpecs 매핑/숨김(순수함수)"
   it("사람 가독 키(pH 등)는 그대로 노출", () => {
     expect(getDisplaySpecs({ pH: "7.4" })).toEqual([{ label: "pH", value: "7.4" }]);
   });
-  it("화이트리스트에 핵심 raw 컬럼 4종 존재", () => {
+  it("화이트리스트 핵심 raw 컬럼 매핑 + grade 계열 비매핑(§11.344)", () => {
     expect(SPEC_FIELD_LABELS.SOURCE).toBe("출처");
     expect(SPEC_FIELD_LABELS.TESTITEM).toBe("시험 항목");
-    expect(SPEC_FIELD_LABELS.INTERNALGRADE).toBe("내부 등급");
     expect(SPEC_FIELD_LABELS.PURCHASEYEARS).toBe("구매 이력");
+    expect(SPEC_FIELD_LABELS.INTERNALGRADE).toBeUndefined(); // grade 미노출
+    expect(SPEC_FIELD_LABELS.GRADE).toBeUndefined();
   });
 });
 
