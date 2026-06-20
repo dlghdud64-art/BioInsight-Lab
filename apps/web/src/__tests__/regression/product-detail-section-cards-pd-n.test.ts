@@ -18,11 +18,12 @@ describe("§product-detail PD-N(§05) — 하위 섹션 독립 카드", () => {
   it("래퍼 박스 투명화(이중 박스 제거)", () => {
     expect(DETAIL).toMatch(/<Card className="bg-transparent border-0 shadow-none p-0 relative space-y-6/);
   });
-  it("제품 사양 — 독립 카드 스타일(테두리·그림자)", () => {
-    expect(DETAIL).toMatch(/mb-6 md:mb-8 rounded-3xl border border-gray-100\/50 bg-pn\/80 shadow-sm/);
+  it("제품 사양 — 독립 카드 스타일(시안 플랫: hairline·radius18)", () => {
+    // §PD-flat(2026-06-20): 글래스(rounded-3xl bg-pn/80) → 시안 플랫(rounded-[18px] border-gray-200 bg-white). 독립 카드 의도 보존.
+    expect(DETAIL).toMatch(/mb-6 md:mb-8 rounded-\[18px\] border border-gray-200 bg-white shadow-sm/);
   });
-  it("안전·규제 — 독립 카드 스타일", () => {
-    expect(DETAIL).toMatch(/안전 · 규제 정보 - 항상 표시\. PD-N[\s\S]{0,120}rounded-3xl border border-gray-100\/50 bg-pn\/80 shadow-sm p-6/);
+  it("안전·규제 — 독립 카드 스타일(시안 플랫)", () => {
+    expect(DETAIL).toMatch(/안전 · 규제 정보 - 항상 표시\. PD-N[\s\S]{0,160}rounded-\[18px\] border border-gray-200 bg-white shadow-sm p-6/);
   });
   it("사용 용도 — 값 있을 때만(빈 섹션 숨김, 시안 정합)", () => {
     expect(DETAIL).toMatch(/\{product\.usageDescription && \(/);

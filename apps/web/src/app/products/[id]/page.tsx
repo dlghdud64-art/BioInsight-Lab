@@ -424,8 +424,7 @@ export default function ProductDetailPage() {
 
               {/* §product-detail PD-N(§05) — 래퍼 박스 투명화 → 하위 섹션(제품 사양·안전·규제)을 각각 독립 카드로(시안 정합). */}
               <Card className="bg-transparent border-0 shadow-none p-0 relative space-y-6 md:space-y-8">
-                {/* 배경 효과 */}
-                <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-50/20 rounded-full blur-3xl opacity-30 -mr-12 -mt-12 transition-all group-hover:opacity-50 -z-0" />
+                {/* §PD-flat — 글래스 blur orb 제거(콘텐츠 플랫). */}
                 {/* §product-detail PD-M(§05) — 시안엔 "실험/제품 정보" 제목 없음 → 제거(클린 흐름). */}
                 <CardContent className="px-0 pb-0 space-y-4 md:space-y-6 relative z-10">
                   {/* §product-detail PD-K(§05) — 큰 이미지 박스 제거 → 히어로 소형 썸네일로 이전(시안, bloat 0). */}
@@ -489,8 +488,8 @@ export default function ProductDetailPage() {
                   {/* §product-detail PD-L(§05) — 빈 상세 스펙 카드는 buyer 에게 숨김(시안: 빈 카드가 화면 지배 방지).
                       canEditSpec(공급사/관리자)일 때만 빈 상태 노출(첫 스펙 등록 affordance 보존). 미등록 안내는 완성도(ProductCompleteness)가 담당. */}
                   {(product.specification || product.regulatoryCompliance || canEditSpec) && (
-                  <div className="mb-6 md:mb-8">
-                    <div className="px-6 md:px-8 py-4 border-b border-gray-100/50 flex items-center gap-3 bg-pg/30 rounded-t-3xl">
+                  <div className="mb-6 md:mb-8 rounded-[18px] border border-gray-200 bg-white shadow-sm overflow-hidden">
+                    <div className="px-6 md:px-8 py-4 border-b border-gray-100 flex items-center gap-3 bg-gray-50/60">
                       <Check className="w-5 h-5 text-blue-600" />
                       <h3 className="text-lg font-bold text-slate-900">상세 스펙 (Specifications)</h3>
                       {/* #catalog-spec-backfill ② — 공급사/관리자 규격 직접 충전 */}
@@ -510,20 +509,20 @@ export default function ProductDetailPage() {
                         </Button>
                       )}
                     </div>
-                    <div className="p-4 md:p-8 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 bg-pn/50 rounded-b-3xl">
+                    <div className="p-4 md:p-8 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 bg-white">
                       {/* §1-2⑤ ① — spec tautology 제거: identity 필드(브랜드·카테고리·
                           카탈로그번호)는 헤더가 표시 — spec 그리드는 실 spec 만 (라벨 정직화).
                           실 spec 부재 시 정직한 empty 노출 (catalog spec backfill 별도 트랙). */}
                       {(product.specification || product.regulatoryCompliance) ? (
                         <>
                           {product.specification && (
-                            <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-pg/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
+                            <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-lg bg-gray-50/60 hover:bg-blue-50/40 transition-colors border border-gray-100">
                               <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">규격/용량</span>
                               <span className="text-sm md:text-lg font-bold text-slate-900 break-words line-clamp-2">{product.specification}</span>
                             </div>
                           )}
                           {product.regulatoryCompliance && (
-                            <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-pg/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
+                            <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-lg bg-gray-50/60 hover:bg-blue-50/40 transition-colors border border-gray-100">
                               <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">규제 규격</span>
                               <span className="text-sm md:text-lg font-bold text-slate-900 break-words">{product.regulatoryCompliance}</span>
                             </div>
@@ -539,14 +538,21 @@ export default function ProductDetailPage() {
                   {/* §product-detail PD-J(§05 레이아웃) — "제품 사양" 통합 카드(시안): 카탈로그 번호 + 분류 + 추가 스펙(출처 등).
                       독립 Cat.No 블록·추가스펙 카드 통합. §03 매핑·grade 숨김(getDisplaySpecs) 유지. §125 "상세 스펙(규격/규제)" 그리드는 별도 보존.
                       PD-N: 독립 카드 스타일(테두리·그림자) — 시안 정합. */}
-                  <div className="mb-6 md:mb-8 rounded-3xl border border-gray-100/50 bg-pn/80 shadow-sm overflow-hidden">
-                    <div className="px-6 md:px-8 py-4 border-b border-gray-100/50 flex items-center gap-3 bg-pg/30 rounded-t-3xl">
+                  <div className="mb-6 md:mb-8 rounded-[18px] border border-gray-200 bg-white shadow-sm overflow-hidden">
+                    <div className="px-6 md:px-8 py-4 border-b border-gray-100 flex items-center gap-3 bg-gray-50/60">
                       <Check className="w-5 h-5 text-blue-600" />
                       <h3 className="text-lg font-bold text-slate-900">제품 사양</h3>
+                      {/* §PD-flat(시안 §05) — "N개 항목 확인" 배지(확인된 사양 수, 정직). */}
+                      {(() => {
+                        const specCount = (product.catalogNumber ? 1 : 0) + (product.category ? 1 : 0) + getDisplaySpecs(product.specifications).length;
+                        return specCount > 0 ? (
+                          <span className="ml-auto inline-flex items-center rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">{specCount}개 항목 확인</span>
+                        ) : null;
+                      })()}
                     </div>
-                    <div className="p-4 md:p-8 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 bg-pn/50 rounded-b-3xl">
+                    <div className="p-4 md:p-8 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 bg-white">
                       {product.catalogNumber && (
-                        <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-pg/80 border border-transparent">
+                        <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-lg bg-gray-50/60 border border-gray-100">
                           <span className="text-[10px] md:text-xs font-semibold text-gray-500 tracking-wider flex items-center gap-1">
                             Cat.No (카탈로그 번호)
                             <button
@@ -569,13 +575,13 @@ export default function ProductDetailPage() {
                         </div>
                       )}
                       {product.category && (
-                        <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-pg/80 border border-transparent">
+                        <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-lg bg-gray-50/60 border border-gray-100">
                           <span className="text-[10px] md:text-xs font-semibold text-gray-500 tracking-wider">분류</span>
                           <span className="text-sm md:text-lg font-bold text-slate-900 break-words">{PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES]}</span>
                         </div>
                       )}
                       {getDisplaySpecs(product.specifications).map((spec, i) => (
-                        <div key={`${spec.label}-${i}`} className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-pg/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
+                        <div key={`${spec.label}-${i}`} className="flex flex-col gap-0.5 p-3 md:p-4 rounded-lg bg-gray-50/60 hover:bg-blue-50/40 transition-colors border border-gray-100">
                           <span className="text-[10px] md:text-xs font-semibold text-gray-500 tracking-wider">{spec.label}</span>
                           <span className="text-sm md:text-lg font-bold text-slate-900 break-words">{spec.value}</span>
                         </div>
@@ -587,7 +593,7 @@ export default function ProductDetailPage() {
                       product.usageDescription(DB 캐노니컬)만 노출. */}
                   {/* PD-N: 사용 용도 — 값 있을 때만 독립 카드(빈 섹션은 완성도가 안내, 시안 정합). */}
                   {product.usageDescription && (
-                    <div className="rounded-3xl border border-gray-100/50 bg-pn/80 shadow-sm p-6 md:p-8">
+                    <div className="rounded-[18px] border border-gray-200 bg-white shadow-sm p-6 md:p-8">
                       <h3 className="font-semibold text-sm md:text-base mb-2">사용 용도</h3>
                       <p className="text-xs md:text-sm text-slate-700 whitespace-pre-wrap">
                         {product.usageDescription}
@@ -596,7 +602,7 @@ export default function ProductDetailPage() {
                   )}
 
                   {/* 안전 · 규제 정보 - 항상 표시. PD-N: 독립 카드 스타일(시안 정합). */}
-                  <div className="rounded-3xl border border-gray-100/50 bg-pn/80 shadow-sm p-6 md:p-8">
+                  <div className="rounded-[18px] border border-gray-200 bg-white shadow-sm p-6 md:p-8">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <Shield className="h-4 w-4 text-yellow-600" />
