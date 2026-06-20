@@ -340,7 +340,22 @@ export default function ProductDetailPage() {
                       검색 결과 목록
                     </button>
                   </div>
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-4">
+                    {/* §product-detail PD-K(§05) — 시안: 히어로 옆 제품 썸네일(소형). 빈 이미지는 컴팩트 아이콘(big 박스 bloat 제거). */}
+                    <div className="flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl border border-bd bg-el/60 flex items-center justify-center overflow-hidden">
+                      {product.imageUrl ? (
+                        <img
+                          src={product.imageUrl}
+                          alt={product.name}
+                          className="w-full h-full object-contain"
+                          loading="lazy"
+                          decoding="async"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                        />
+                      ) : (
+                        <Package className="h-7 w-7 text-gray-300" strokeWidth={1.5} />
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-4">
                         {/* 재고 상태는 표시하지 않음 (확실하지 않은 정보) */}
@@ -403,32 +418,7 @@ export default function ProductDetailPage() {
                   <CardTitle className="text-sm md:text-lg">실험/제품 정보</CardTitle>
                 </CardHeader>
                 <CardContent className="px-0 pb-0 space-y-4 md:space-y-6 relative z-10">
-                  {product.imageUrl ? (
-                    <div className="w-full max-w-md mx-auto max-h-[400px] md:aspect-video lg:max-h-[400px]">
-                      <img
-                        src={product.imageUrl}
-                        alt={product.name}
-                        className="w-full h-full object-contain rounded-lg border border-bd"
-                        loading="lazy"
-                        decoding="async"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          const parent = target.parentElement;
-                          if (parent) {
-                            parent.style.display = 'none';
-                          }
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    /* §detail-page ④ — 빈 이미지 섹션 collapse: 400px aspect-video 빈 박스 →
-                       honest-empty compact 바(h-20). 이미지 부재는 정직하게 알리되 비대 제거. */
-                    <div className="w-full max-w-md mx-auto h-20 bg-el rounded-xl flex items-center justify-center gap-2 text-gray-400">
-                      <Package className="h-5 w-5" strokeWidth={1.5} />
-                      <span className="text-xs">제품 이미지 없음</span>
-                    </div>
-                  )}
+                  {/* §product-detail PD-K(§05) — 큰 이미지 박스 제거 → 히어로 소형 썸네일로 이전(시안, bloat 0). */}
 
                   {product.description && (
                     <div>
@@ -487,6 +477,9 @@ export default function ProductDetailPage() {
                   <ProductCompleteness product={product} />
 
                   {/* 주요 스펙 요약 카드 - Data Grid 스타일 (Glassmorphism) */}
+                  {/* §product-detail PD-L(§05) — 빈 상세 스펙 카드는 buyer 에게 숨김(시안: 빈 카드가 화면 지배 방지).
+                      canEditSpec(공급사/관리자)일 때만 빈 상태 노출(첫 스펙 등록 affordance 보존). 미등록 안내는 완성도(ProductCompleteness)가 담당. */}
+                  {(product.specification || product.regulatoryCompliance || canEditSpec) && (
                   <div className="mb-6 md:mb-8">
                     <div className="px-6 md:px-8 py-4 border-b border-gray-100/50 flex items-center gap-3 bg-pg/30 rounded-t-3xl">
                       <Check className="w-5 h-5 text-blue-600" />
@@ -532,6 +525,7 @@ export default function ProductDetailPage() {
                       )}
                     </div>
                   </div>
+                  )}
 
                   {/* §product-detail PD-J(§05 레이아웃) — "제품 사양" 통합 카드(시안): 카탈로그 번호 + 분류 + 추가 스펙(출처 등).
                       독립 Cat.No 블록·추가스펙 카드 통합. §03 매핑·grade 숨김(getDisplaySpecs) 유지. §125 "상세 스펙(규격/규제)" 그리드는 별도 보존. */}

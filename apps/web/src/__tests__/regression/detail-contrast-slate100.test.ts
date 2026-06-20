@@ -48,9 +48,11 @@ describe("detail #4 - empty-section collapse + honest-empty preserved", () => {
     expect(src).not.toContain("h-16 w-16 text-gray-300");
   });
 
-  it("empty image: honest-empty compact bar kept", () => {
+  it("PD-K: 이미지 = 히어로 소형 썸네일(big 박스 bloat 제거, 빈 이미지는 아이콘)", () => {
     const src = read(DETAIL);
-    expect(src).toContain("h-20 bg-el rounded-xl");
+    // §product-detail PD-K(§05): 큰 이미지 박스(max-h-400) 폐기 → 히어로 소형 썸네일. anti-bloat 의도 보존.
+    expect(src).not.toContain("max-h-[400px]");
+    expect(src).toContain("w-16 h-16 md:w-20 md:h-20");
   });
 
   it("empty spec: compacted py-4", () => {
