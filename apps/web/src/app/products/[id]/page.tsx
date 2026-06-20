@@ -31,6 +31,7 @@ import {
   Calendar,
   Clock,
   Home,
+  Mail,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -369,6 +370,28 @@ export default function ProductDetailPage() {
                           {product.vendors[0].vendor.name}
                         </p>
                       )}
+                      {/* §PD-flat(시안 pd-catno) — Cat.No 를 제품명 바로 아래로(+복사 버튼). */}
+                      {product.catalogNumber && (
+                        <div className="mt-2.5 inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5">
+                          <span className="text-[11px] text-slate-500">Cat.No</span>
+                          <span className="text-[13px] font-mono font-semibold text-slate-900">{product.catalogNumber}</span>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                await navigator.clipboard.writeText(product.catalogNumber);
+                                toast({ title: "복사 완료", description: "카탈로그 번호가 클립보드에 복사되었습니다." });
+                              } catch {
+                                toast({ title: "복사 실패", variant: "destructive" });
+                              }
+                            }}
+                            className="text-gray-400 hover:text-[#2456bd] border-l border-gray-200 pl-2"
+                            aria-label="카탈로그 번호 복사"
+                          >
+                            <ClipboardCopy className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-1.5 md:gap-2 mt-3 md:mt-4">
@@ -409,13 +432,7 @@ export default function ProductDetailPage() {
                       </div>
                     );
                   })()}
-                  {/* §product-detail PD-M(§05) — 시안 히어로: Cat.No 배지 + 완성도 인라인(한 카드). */}
-                  {product.catalogNumber && (
-                    <div className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-bd bg-pg/50 px-2.5 py-1">
-                      <span className="text-[11px] text-slate-500">Cat.No</span>
-                      <span className="text-xs font-mono font-semibold text-slate-900">{product.catalogNumber}</span>
-                    </div>
-                  )}
+                  {/* §product-detail PD-M(§05) — Cat.No 는 제품명 아래로 이동(위). 여기선 완성도만. */}
                   <div className="mt-4">
                     <ProductCompleteness product={product} />
                   </div>
@@ -509,20 +526,20 @@ export default function ProductDetailPage() {
                         </Button>
                       )}
                     </div>
-                    <div className="p-4 md:p-8 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 bg-white">
+                    <div className="p-4 md:p-5 grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-white">
                       {/* §1-2⑤ ① — spec tautology 제거: identity 필드(브랜드·카테고리·
                           카탈로그번호)는 헤더가 표시 — spec 그리드는 실 spec 만 (라벨 정직화).
                           실 spec 부재 시 정직한 empty 노출 (catalog spec backfill 별도 트랙). */}
                       {(product.specification || product.regulatoryCompliance) ? (
                         <>
                           {product.specification && (
-                            <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-lg bg-gray-50/60 hover:bg-blue-50/40 transition-colors border border-gray-100">
+                            <div className="flex flex-col gap-0.5 p-3 rounded-lg bg-gray-50/60 hover:bg-blue-50/40 transition-colors border border-gray-100">
                               <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">규격/용량</span>
                               <span className="text-sm md:text-lg font-bold text-slate-900 break-words line-clamp-2">{product.specification}</span>
                             </div>
                           )}
                           {product.regulatoryCompliance && (
-                            <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-lg bg-gray-50/60 hover:bg-blue-50/40 transition-colors border border-gray-100">
+                            <div className="flex flex-col gap-0.5 p-3 rounded-lg bg-gray-50/60 hover:bg-blue-50/40 transition-colors border border-gray-100">
                               <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">규제 규격</span>
                               <span className="text-sm md:text-lg font-bold text-slate-900 break-words">{product.regulatoryCompliance}</span>
                             </div>
@@ -550,9 +567,9 @@ export default function ProductDetailPage() {
                         ) : null;
                       })()}
                     </div>
-                    <div className="p-4 md:p-8 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 bg-white">
+                    <div className="p-4 md:p-5 grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-white">
                       {product.catalogNumber && (
-                        <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-lg bg-gray-50/60 border border-gray-100">
+                        <div className="flex flex-col gap-0.5 p-3 rounded-lg bg-gray-50/60 border border-gray-100">
                           <span className="text-[10px] md:text-xs font-semibold text-gray-500 tracking-wider flex items-center gap-1">
                             Cat.No (카탈로그 번호)
                             <button
@@ -575,13 +592,13 @@ export default function ProductDetailPage() {
                         </div>
                       )}
                       {product.category && (
-                        <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-lg bg-gray-50/60 border border-gray-100">
+                        <div className="flex flex-col gap-0.5 p-3 rounded-lg bg-gray-50/60 border border-gray-100">
                           <span className="text-[10px] md:text-xs font-semibold text-gray-500 tracking-wider">분류</span>
                           <span className="text-sm md:text-lg font-bold text-slate-900 break-words">{PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES]}</span>
                         </div>
                       )}
                       {getDisplaySpecs(product.specifications).map((spec, i) => (
-                        <div key={`${spec.label}-${i}`} className="flex flex-col gap-0.5 p-3 md:p-4 rounded-lg bg-gray-50/60 hover:bg-blue-50/40 transition-colors border border-gray-100">
+                        <div key={`${spec.label}-${i}`} className="flex flex-col gap-0.5 p-3 rounded-lg bg-gray-50/60 hover:bg-blue-50/40 transition-colors border border-gray-100">
                           <span className="text-[10px] md:text-xs font-semibold text-gray-500 tracking-wider">{spec.label}</span>
                           <span className="text-sm md:text-lg font-bold text-slate-900 break-words">{spec.value}</span>
                         </div>
@@ -890,19 +907,9 @@ export default function ProductDetailPage() {
                 <Card className="bg-white shadow-sm rounded-[18px] p-6 md:p-8 border border-gray-200 relative overflow-hidden">
                   {/* 상단 강조 선(qc-accent) */}
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-600" />
-                  <CardHeader className="px-0 pt-2 pb-6">
-                    <div className="mb-4">
-                      <p className="text-xs font-medium text-gray-500 mb-1">
-                        공급가 (VAT 별도)
-                      </p>
-                    </div>
-                    <CardTitle className="text-base font-semibold text-slate-900 mb-2">가격 정보</CardTitle>
-                    {product.vendors?.[0]?.vendor?.name && (
-                      <p className="text-sm text-gray-600 mt-1">{product.vendors[0].vendor.name}</p>
-                    )}
-                    {product.catalogNumber && (
-                      <p className="text-xs text-gray-500 mt-1 font-mono">Cat.No: {product.catalogNumber}</p>
-                    )}
+                  {/* §PD-flat(시안 qc) — "가격 정보" 제목 제거, qc-pricelabel 만(시안 정합). */}
+                  <CardHeader className="px-0 pt-2 pb-4">
+                    <p className="text-xs font-medium text-gray-500">공급가 (VAT 별도)</p>
                   </CardHeader>
                   <CardContent className="px-0 space-y-4">
                     {vendors.length > 0 ? (
@@ -949,12 +956,34 @@ export default function ProductDetailPage() {
                         ))}
                       </div>
                     ) : (
-                      <div className="mb-6">
-                        {/* §product-detail PD-A(§06) — 거대 "가격 문의" → "견적가 안내 품목" 상태 카드(파랑) + 사유. */}
-                        <div className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 border border-blue-200 px-3 py-1.5">
-                          <span className="text-sm font-bold text-blue-700">견적가 안내 품목</span>
+                      <div className="mb-4">
+                        {/* §PD-flat PD-A(시안 qc-state) — 견적가 안내 상태 박스(아이콘+사유) + qc-meta 행. */}
+                        <div className="flex items-center gap-3 p-3.5 bg-[#eaf1fd] border border-[#cdddf9] rounded-xl">
+                          <span className="w-9 h-9 rounded-lg bg-[#2f6be0] text-white flex items-center justify-center flex-shrink-0">
+                            <Mail className="h-4 w-4" />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-[#2456bd] leading-tight">견적가 안내 품목</p>
+                            <p className="text-[11px] text-slate-600 mt-0.5">가격이 공개되지 않아 견적으로 안내됩니다</p>
+                          </div>
                         </div>
-                        <p className="text-xs text-slate-500 mt-2">등록된 공급가가 없어 견적으로 안내됩니다. 견적 담기 후 요청하면 공급사 회신가를 받습니다.</p>
+                        {/* qc-meta — Cat.No / 납기 / 최소 주문 */}
+                        <div className="mt-3 text-xs">
+                          {product.catalogNumber && (
+                            <div className="flex items-center justify-between py-1">
+                              <span className="text-slate-400">Cat.No</span>
+                              <span className="font-mono font-medium text-slate-900">{product.catalogNumber}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between py-1">
+                            <span className="text-slate-400">납기</span>
+                            <span className="font-medium text-slate-900">견적 시 안내</span>
+                          </div>
+                          <div className="flex items-center justify-between py-1">
+                            <span className="text-slate-400">최소 주문</span>
+                            <span className="font-medium text-slate-900">견적 시 안내</span>
+                          </div>
+                        </div>
                       </div>
                     )}
 
@@ -976,7 +1005,7 @@ export default function ProductDetailPage() {
                         </div>
                       )}
                       <Button
-                        className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-base shadow-sm transition-colors flex items-center justify-center gap-2 group"
+                        className="w-full py-3.5 bg-[#2f6be0] hover:bg-[#2456bd] text-white rounded-xl font-bold text-base shadow-sm transition-colors flex items-center justify-center gap-2 group"
                         onClick={() => {
                           // #quote-cta-truth — 구 GET-only fake success 제거: 실 견적함
                           //   (provider 동일 truth) 에 추가하고 결과로만 toast (조건부).
@@ -1096,7 +1125,7 @@ export default function ProductDetailPage() {
         </div>
         <div className="flex items-center justify-end">
           <Button
-            className="flex-shrink-0 py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-base shadow-sm transition-colors flex items-center justify-center gap-2"
+            className="flex-shrink-0 py-3 px-6 bg-[#2f6be0] hover:bg-[#2456bd] text-white rounded-xl font-bold text-base shadow-sm transition-colors flex items-center justify-center gap-2"
             onClick={() => {
               // #quote-cta-truth — 모바일 하단 바도 동일 truth 결선 (fake success 0)
               if (inQuoteCart) {

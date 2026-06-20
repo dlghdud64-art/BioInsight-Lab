@@ -86,9 +86,9 @@ describe("§PD-flat P4 — 우측 레일 + 대체품 플랫", () => {
   it("레일 견적 카드 = 플랫 흰 카드(글래스 폐기)", () => {
     expect(DETAIL).toMatch(/bg-white shadow-sm rounded-\[18px\] p-6 md:p-8 border border-gray-200 relative overflow-hidden/);
   });
-  it("주 CTA gradient 폐기 → 플랫 accent(데스크탑·모바일)", () => {
+  it("주 CTA gradient 폐기 → 시안 accent #2f6be0 플랫(데스크탑·모바일)", () => {
     expect(DETAIL).not.toMatch(/from-blue-600 to-indigo-600/);
-    expect(DETAIL).toMatch(/w-full py-3\.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl/);
+    expect(DETAIL).toMatch(/w-full py-3\.5 bg-\[#2f6be0\] hover:bg-\[#2456bd\] text-white rounded-xl/);
   });
   it("대체품 섹션 카드 플랫", () => {
     expect(DETAIL).toMatch(/bg-white shadow-sm rounded-\[18px\] p-6 md:p-8 border border-gray-200 mt-6/);
@@ -107,5 +107,25 @@ describe("§PD-flat P4 — dead button 0(시안 요소 실동선 배선)", () =>
   it("회귀 0 — 견적 신뢰 문구 + 가격 대비(slate-900) 보존", () => {
     expect(DETAIL).toMatch(/견적 요청은 무료이며 구매 의무가 없습니다/);
     expect(DETAIL).toMatch(/text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight/);
+  });
+});
+
+describe("§PD-flat P5 — Cat.No 위치 · 공급가 카드 · 사양 밀도 · accent(시안 정밀)", () => {
+  it("Cat.No = 제품명 바로 아래 + 복사 버튼(시안 pd-catno)", () => {
+    expect(DETAIL).toMatch(/Cat\.No 를 제품명 바로 아래로/);
+    expect(DETAIL).toMatch(/text-\[13px\] font-mono font-semibold text-slate-900">\{product\.catalogNumber\}/);
+    expect(DETAIL).toMatch(/aria-label="카탈로그 번호 복사"/);
+  });
+  it("공급가 카드 = qc-state(아이콘) + qc-meta(Cat.No/납기/최소주문), '가격 정보' 제목 폐기", () => {
+    expect(DETAIL).not.toMatch(/<CardTitle className="text-base font-semibold text-slate-900 mb-2">가격 정보/);
+    expect(DETAIL).toMatch(/bg-\[#2f6be0\] text-white flex items-center justify-center flex-shrink-0/);
+    expect(DETAIL).toMatch(/최소 주문/);
+  });
+  it("제품 사양/상세스펙 = 2열 컴팩트(시안 밀도)", () => {
+    // 양성 단언만(규제포털 그리드는 별개로 3열 반응형 정당 — 전역 not 금지).
+    expect(DETAIL).toMatch(/p-4 md:p-5 grid grid-cols-1 sm:grid-cols-2 gap-2\.5 bg-white/);
+  });
+  it("accent = 시안 #2f6be0(arbitrary hex)", () => {
+    expect(DETAIL).toMatch(/bg-\[#2f6be0\]/);
   });
 });

@@ -2,16 +2,14 @@
 
 import { csrfFetch } from "@/lib/api-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { usePersonalizedRecommendations } from "@/hooks/use-personalized-recommendations";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 // §11.368 §0 — Sparkles(AI 마케팅 데코) 제거.
 // §1-2③ — TrendingUp(유사도 배지) 제거: score는 유사도가 아니라 빈도 카운트라 % 표기는 fake-metric.
-import { Package, ThumbsUp, ThumbsDown, DollarSign, Zap, Info } from "lucide-react";
+import { Package, ThumbsUp, ThumbsDown, Zap, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -34,21 +32,10 @@ export function PersonalizedRecommendations({
   limit = 5,
   category,
 }: PersonalizedRecommendationsProps) {
-  const router = useRouter();
   const { data, isLoading } = usePersonalizedRecommendations(productId, limit, category);
   const { addProduct, removeProduct, hasProduct } = useCompareStore();
 
   const recommendations = data?.recommendations || [];
-  
-  // 현재 제품의 최소 가격 계산
-  let currentMinPrice: number | null = null;
-  if (currentProduct?.vendors && currentProduct.vendors.length > 0) {
-    for (const v of currentProduct.vendors) {
-      if (v.priceInKRW && (currentMinPrice === null || v.priceInKRW < currentMinPrice)) {
-        currentMinPrice = v.priceInKRW;
-      }
-    }
-  }
 
   if (isLoading) {
     return (
@@ -81,141 +68,58 @@ export function PersonalizedRecommendations({
           검색·구매 이력과 가격대를 반영해 추천된 제품입니다
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      {/* §PD-flat(시안 rel-list) — 연관추천: 과폭/세로스택 폐기 → 컴팩트 1행(썸네일+이름+분류+인라인 버튼). */}
+      <CardContent className="divide-y divide-gray-100 py-0">
         {recommendations.map((rec) => {
           const product = rec.product;
           let minPrice: number | null = null;
-          let maxPrice: number | null = null;
-          let minLeadTime: number | null = null;
-          
           if (product.vendors && product.vendors.length > 0) {
             for (const v of product.vendors) {
-              if (v.priceInKRW) {
-                if (minPrice === null || v.priceInKRW < minPrice) {
-                  minPrice = v.priceInKRW;
-                }
-                if (maxPrice === null || v.priceInKRW > maxPrice) {
-                  maxPrice = v.priceInKRW;
-                }
-              }
-              if (v.leadTime !== null && v.leadTime !== undefined && (minLeadTime === null || v.leadTime < minLeadTime)) {
-                minLeadTime = v.leadTime;
-              }
+              if (v.priceInKRW && (minPrice === null || v.priceInKRW < minPrice)) minPrice = v.priceInKRW;
             }
           }
           const inCompare = hasProduct(product.id);
-
-          // §1-2③ — score는 빈도 카운트(카테고리·브랜드 검색수)라 유사도 % 아님. 배지 제거(fake 0%/200% 금지). 정렬용으로만 사용.
-
-          // 가격 비교 (현재 제품 대비)
-          const priceDiff = currentMinPrice && minPrice
-            ? ((minPrice - currentMinPrice) / currentMinPrice) * 100
-            : null;
-          const priceRange = minPrice && maxPrice && minPrice !== maxPrice
-            ? `₩${minPrice.toLocaleString()} ~ ₩${maxPrice.toLocaleString()}`
-            : minPrice
-            ? `₩${minPrice.toLocaleString()}`
-            : null;
+          const priceText = minPrice ? `₩${minPrice.toLocaleString()}` : null;
 
           return (
             <div
               key={product.id}
-              className="flex items-start gap-4 p-4 border rounded-lg hover:border-bs hover:bg-pg transition-all"
+              className="flex items-center gap-3.5 py-3.5 first:pt-4 last:pb-4"
             >
-              <div className="flex-1 space-y-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1">
-                    <Link
-                      href={`/products/${product.id}`}
-                      className="font-semibold text-slate-900 hover:text-blue-600 transition-colors"
-                    >
-                      {product.name}
-                    </Link>
-                    {product.brand && (
-                      <p className="text-sm text-slate-500 mt-0.5">{product.brand}</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* 가격대 범위 및 비교 */}
-                <div className="space-y-2">
-                  <div className="flex flex-wrap items-center gap-2 text-xs">
-                    {product.category && (
-                      <Badge variant="outline" className="text-[10px]">
-                        {PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES]}
-                      </Badge>
-                    )}
-                    {(product as any).grade && (
-                      <Badge variant="secondary" className="text-[10px]">
-                        {(product as any).grade}
-                      </Badge>
-                    )}
-                    {(product as any).specification && (
-                      <Badge variant="outline" className="text-[10px]">
-                        {(product as any).specification}
-                      </Badge>
-                    )}
-                  </div>
-
-                  {priceRange && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <DollarSign className="h-3 w-3 text-slate-500" />
-                      <span className="font-medium text-slate-700">{priceRange}</span>
-                      {priceDiff !== null && (
-                        <Badge
-                          variant={priceDiff < -10 ? "default" : priceDiff > 10 ? "destructive" : "secondary"}
-                          className="text-[10px]"
-                        >
-                          {priceDiff > 0 ? "+" : ""}
-                          {priceDiff.toFixed(0)}%
-                        </Badge>
-                      )}
-                    </div>
+              <span className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                <Package className="h-4 w-4 text-gray-400" />
+              </span>
+              <div className="flex-1 min-w-0">
+                <Link
+                  href={`/products/${product.id}`}
+                  className="block font-semibold text-sm text-slate-900 hover:text-[#2456bd] transition-colors truncate"
+                >
+                  {product.name}
+                </Link>
+                <div className="flex items-center gap-1.5 mt-1">
+                  {product.category && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#eaf1fd] text-[#2456bd]">
+                      {PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES]}
+                    </span>
                   )}
-
-                  {minLeadTime && (
-                    <div className="flex items-center gap-2 text-xs text-slate-600">
-                      <Package className="h-3 w-3" />
-                      <span>납기: {minLeadTime}일</span>
-                    </div>
-                  )}
+                  {priceText && <span className="text-[11px] text-slate-500">{priceText}</span>}
                 </div>
-
-                {/* 추천 근거 (Explainability) */}
+                {/* §1-2③/honesty — 추천 근거(reason) 인라인 보존: 무근거 푸시 금지(정직성). 컴팩트 1줄. */}
                 {rec.reason && (
-                  <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-start gap-2">
-                      <Info className="h-3 w-3 mt-0.5 text-blue-600 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-xs font-medium text-blue-900 mb-1">추천 근거</p>
-                        <p className="text-xs text-blue-700">{rec.reason}</p>
-                        {(rec as any).source === "purchase_pattern" && (
-                          <Badge variant="outline" className="text-[10px] mt-1 bg-green-50 text-green-700 border-green-200">
-                            구매 패턴 기반
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
+                  <div className="flex items-center gap-1.5 mt-1 min-w-0">
+                    <span className="text-[10px] text-slate-400 flex-shrink-0">추천 근거</span>
+                    <span className="text-[11px] text-slate-600 truncate">{rec.reason}</span>
+                    {(rec as any).source === "purchase_pattern" && (
+                      <span className="text-[9px] px-1 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 flex-shrink-0 whitespace-nowrap">구매 패턴 기반</span>
+                    )}
                   </div>
-                )}
-
-                {/* 성능 차이 하이라이트 (스펙 차이가 있는 경우) */}
-                {currentProduct && (product as any).specification && (currentProduct as any).specification && (
-                  (product as any).specification !== (currentProduct as any).specification && (
-                    <div className="flex items-center gap-2 text-xs">
-                      <Zap className="h-3 w-3 text-yellow-500" />
-                      <span className="text-slate-600">
-                        규격 차이: {(currentProduct as any).specification} → {(product as any).specification}
-                      </span>
-                    </div>
-                  )
                 )}
               </div>
-
-              <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <Button
-                  variant={inCompare ? "outline" : "default"}
+                  variant="outline"
                   size="sm"
+                  className="text-xs"
                   onClick={() => {
                     if (inCompare) {
                       removeProduct(product.id);
@@ -224,15 +128,14 @@ export function PersonalizedRecommendations({
                     }
                   }}
                 >
-                  {inCompare ? "비교에서 제거" : "비교 추가"}
+                  {inCompare ? "비교 제거" : "비교"}
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => router.push(`/products/${product.id}`)}
+                <Link
+                  href={`/products/${product.id}`}
+                  className="inline-flex items-center gap-0.5 text-xs font-medium text-slate-600 hover:text-[#2456bd] px-2 py-1.5"
                 >
-                  상세 보기
-                </Button>
+                  상세 <ChevronRight className="h-3 w-3" />
+                </Link>
                 <RecommendationFeedbackButton recommendationId={(rec as any).id || ""} />
               </div>
             </div>
