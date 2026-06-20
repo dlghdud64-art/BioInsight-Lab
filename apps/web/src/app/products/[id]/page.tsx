@@ -876,7 +876,7 @@ export default function ProductDetailPage() {
                                 <span className="text-lg font-medium text-gray-400">KRW</span>
                               </div>
                             ) : (
-                              <div className="text-base font-semibold text-gray-500">가격 문의</div>
+                              <div className="inline-flex items-center rounded-md bg-blue-50 border border-blue-200 px-2 py-1 text-sm font-bold text-blue-700">견적가 안내 품목</div>
                             )}
                             {/* 재고/납기 정보는 표시하지 않음 (확실하지 않은 정보) */}
                             <div className="space-y-2 pt-2">
@@ -903,9 +903,11 @@ export default function ProductDetailPage() {
                       </div>
                     ) : (
                       <div className="mb-6">
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-3xl md:text-4xl font-extrabold text-gray-400 tracking-tight">가격 문의</span>
+                        {/* §product-detail PD-A(§06) — 거대 "가격 문의" → "견적가 안내 품목" 상태 카드(파랑) + 사유. */}
+                        <div className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 border border-blue-200 px-3 py-1.5">
+                          <span className="text-sm font-bold text-blue-700">견적가 안내 품목</span>
                         </div>
+                        <p className="text-xs text-slate-500 mt-2">등록된 공급가가 없어 견적으로 안내됩니다. 견적 담기 후 요청하면 공급사 회신가를 받습니다.</p>
                       </div>
                     )}
 
@@ -957,6 +959,8 @@ export default function ProductDetailPage() {
                         <ShoppingCart className="w-5 h-5 group-hover:scale-110 transition-transform" />
                         {inQuoteCart ? "견적함에 담김" : "견적 담기"}
                       </Button>
+                      {/* §product-detail PD-A(§06) — 견적 신뢰 문구. */}
+                      <p className="text-[11px] text-slate-500 text-center">견적 요청은 무료이며 구매 의무가 없습니다.</p>
                       <div className="grid grid-cols-2 gap-3">
                         <Button
                           variant="outline"
@@ -1021,7 +1025,7 @@ export default function ProductDetailPage() {
                 <span className="text-sm font-medium text-gray-400">KRW</span>
               </div>
             ) : (
-              <div className="text-base font-semibold text-gray-500">가격 문의</div>
+              <div className="inline-flex items-center rounded-md bg-blue-50 border border-blue-200 px-2 py-1 text-sm font-bold text-blue-700">견적가 안내 품목</div>
             )}
           </div>
         </div>
@@ -1064,6 +1068,8 @@ export default function ProductDetailPage() {
             {inQuoteCart ? "견적함에 담김" : "견적 담기"}
           </Button>
         </div>
+        {/* §product-detail PD-A(§06) — 견적 신뢰 문구(모바일). */}
+        <p className="text-[10px] text-slate-500 text-center mt-1">견적 요청은 무료이며 구매 의무가 없습니다.</p>
       </div>
 
       {/* #catalog-spec-backfill ② — 규격 편집 모달 (safety 모달 동형) */}
