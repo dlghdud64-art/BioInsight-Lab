@@ -24,8 +24,11 @@ describe("§quote-flat Q4 — 빈 상태 온보딩(3단계)", () => {
   it("CTA '견적 케이스 만들기' → /app/search Link(실배선)", () => {
     expect(page).toMatch(/href="\/app\/search"[\s\S]{0,300}견적 케이스 만들기/);
   });
-  it("CTA '견적서 스캔으로 시작' → setAiParseModalOpen(real, dead button 0)", () => {
-    expect(page).toMatch(/onClick=\{\(\) => setAiParseModalOpen\(true\)\}[\s\S]{0,200}견적서 스캔으로 시작/);
+  it("CTA '견적서 스캔으로 시작' → handleScanOpen(real, dead button 0)", () => {
+    // §quote-perm-gate(§10): 스캔 진입이 inline setAiParseModalOpen → handleScanOpen(perm 사전체크 후 모달)로
+    //   리팩터. CTA 식별자만 갱신, real/dead-button-0 의도는 불변 — 핸들러가 실제 모달을 여는지 함께 검증.
+    expect(page).toMatch(/onClick=\{handleScanOpen\}[\s\S]{0,200}견적서 스캔으로 시작/);
+    expect(page).toMatch(/const handleScanOpen = useCallback\([\s\S]{0,200}setAiParseModalOpen\(true\)/);
   });
   it("§11.302 — 온보딩 amber/orange 0", () => {
     const start = page.indexOf("§quote-flat Q4 — 빈 상태 온보딩");

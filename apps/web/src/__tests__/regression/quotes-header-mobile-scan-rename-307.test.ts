@@ -94,7 +94,9 @@ describe("§11.307 — (3) 버튼 순서 [+ 새 견적 요청] → [스캔] → 
   it("DOM 순서: 새 견적 요청 < 스캔 button < 더보기 button", () => {
     const src = read(QUOTES_PAGE_PATH);
     const idxNewQuote = src.indexOf('PermissionGate permission="quotes.create"');
-    const idxScan = src.indexOf("setAiParseModalOpen(true)");
+    // §quote-perm-gate(§10): 헤더 스캔 onClick 이 inline setAiParseModalOpen → handleScanOpen 으로 리팩터.
+    //   스캔버튼 식별자를 헤더 onClick={handleScanOpen}(첫 출현=헤더 버튼)로 갱신 — 버튼 DOM 순서 의도 불변.
+    const idxScan = src.indexOf("onClick={handleScanOpen}");
     const idxMore = src.indexOf('data-testid="quote-header-more-actions-mobile"');
     expect(idxNewQuote).toBeGreaterThan(0);
     expect(idxScan).toBeGreaterThan(0);

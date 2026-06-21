@@ -80,6 +80,7 @@ import { PermissionGate } from "@/components/permission-gate";
 import { OpsExecutionContext } from "@/components/ops/ops-execution-context";
 import { CenterWorkWindow } from "@/components/work-window/center-work-window";
 import { AiQuoteParseModal } from "@/components/quotes/ai-quote-parse-modal";
+import { PermissionNotice } from "@/components/quotes/permission-notice";
 import { QuoteIntakeDock } from "@/components/quotes/intake/quote-intake-dock";
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
@@ -1004,6 +1005,13 @@ function QuotesPageContent() {
   const [aiCompareResult, setAiCompareResult] = useState<{ comparison: Array<{ vendor: string; price: string; leadTime: string; shippingFee: string }>; recommendation: string; negotiationGuide: string } | null>(null);
   const [aiCompareError, setAiCompareError] = useState<string | null>(null);
   const [aiParseModalOpen, setAiParseModalOpen] = useState(false);
+  // §quote-perm-gate (지시문 §10) — 비교·스캔 권한 사전체크 게이트. 빨간 403 dead-end 대신 품위 안내.
+  const { organizationId: permOrganizationId, role: permRole } = usePermission();
+  const [permGate, setPermGate] = useState<null | "compare" | "scan">(null);
+  const handleScanOpen = useCallback(() => {
+    if (!permOrganizationId) { setPermGate("scan"); return; }
+    setAiParseModalOpen(true);
+  }, [permOrganizationId]);
 
   // ── Intake dock state (Smart Sourcing → workqueue 내부 통합) ──
   // §11.55 — manual_upload 분기 제거. backend (`create-from-intake` /
@@ -1622,6 +1630,8 @@ function QuotesPageContent() {
   // ── AI 견적서 비교 실행 ──
   const runAiQuoteCompare = useCallback(async () => {
     if (!quotes || quotes.length === 0) return;
+    // §quote-perm-gate (§10) — 조직 미소속이면 비교 불가: 모달 열지 않고 품위 안내(빨간 403 dead-end 방지).
+    if (!permOrganizationId) { setPermGate("compare"); return; }
     setAiCompareLoading(true);
     setAiCompareError(null);
     setAiCompareResult(null);
@@ -1640,6 +1650,8 @@ function QuotesPageContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quotes: quotePayload }),
       });
+      // §quote-perm-gate (§10) — 권한 부족(403)은 빨간 에러 대신 품위 안내로 전환.
+      if (res.status === 403) { setAiCompareOpen(false); setPermGate("compare"); return; }
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "AI 비교 분석 실패");
       setAiCompareResult(data.data);
@@ -1648,7 +1660,7 @@ function QuotesPageContent() {
     } finally {
       setAiCompareLoading(false);
     }
-  }, [quotes]);
+  }, [quotes, permOrganizationId]);
 
   const today = new Date().toDateString();
   const selectedQuote = selectedQuoteId ? quotes.find(q => q.id === selectedQuoteId) : null;
@@ -2021,7 +2033,7 @@ function QuotesPageContent() {
           {/* §11.307 — 견적서 스캔 (이전 "파싱"). Upload icon → ScanLine icon (문서
               읽어들이는 동작 정합). 모바일 + tablet + desktop 모두 노출 (주요 액션). */}
           <button
-            onClick={() => setAiParseModalOpen(true)}
+            onClick={handleScanOpen}
             className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition-colors active:scale-95 shrink-0 min-w-[80px] sm:min-w-[120px]"
           >
             <ScanLine className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
@@ -3105,7 +3117,7 @@ function QuotesPageContent() {
                   size="sm"
                   variant="outline"
                   className="h-9 text-xs gap-1.5 border-bd"
-                  onClick={() => setAiParseModalOpen(true)}
+                  onClick={handleScanOpen}
                 >
                   <ScanLine className="h-4 w-4" /> 견적서 스캔으로 시작
                 </Button>
@@ -4212,6 +4224,22 @@ function QuotesPageContent() {
           toast({ title: "AI 견적서 스캔 완료", description: "벤더 응답이 등록되었습니다." });
         }}
       />
+
+      {/* §quote-perm-gate (지시문 §10) — 비교·스캔 권한 안내(빨간 403 dead-end 대체, 사전체크/403 공통) */}
+      <Dialog open={permGate !== null} onOpenChange={(o) => { if (!o) setPermGate(null); }}>
+        <DialogContent className="max-w-md bg-white border-slate-200">
+          <DialogHeader>
+            <DialogTitle className="text-base text-slate-900">
+              {permGate === "scan" ? "견적서 스캔 권한 필요" : "견적 비교 권한 필요"}
+            </DialogTitle>
+          </DialogHeader>
+          <PermissionNotice
+            title={permGate === "scan" ? "견적서 스캔은 조직 권한이 필요합니다" : "견적 비교는 조직 권한이 필요합니다"}
+            currentRole={permRole}
+            neededLabel={permGate === "scan" ? "견적서 스캔" : "견적 비교"}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* ═══ AI 견적서 비교 모달 ═══ */}
       <Dialog open={aiCompareOpen} onOpenChange={setAiCompareOpen}>
