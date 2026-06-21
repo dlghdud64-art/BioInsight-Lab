@@ -136,7 +136,9 @@ describe("§11.264g #3 — invariant 보존 (canonical truth)", () => {
       /const\s+\[briefSheetOpen,\s+setBriefSheetOpen\]\s*=\s*useState/,
     );
     expect(page).toMatch(/aria-label="운영 브리핑 열기"/);
-    expect(page).toMatch(/data-testid="quote-kpi-scroll-dots"/);
+    // §quote-flat KPI-dedup(170222b3) — quote-kpi-scroll-dots 는 KPI 모바일 바와 함께 제거됨.
+    //   '보존' 핀 → '제거 유지' 부재-lock 전환(272c/§11.374 부재-lock family 정합). briefSheetOpen·운영 브리핑은 보존.
+    expect(page).not.toMatch(/data-testid="quote-kpi-scroll-dots"/);
   });
 
   it("§11.264j 공급사별 회신 현황 보존", () => {

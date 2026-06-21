@@ -48,7 +48,9 @@ describe("§11.226 #2 — 테이블 액션 버튼 nowrap + min-width + 축약", 
 
   it("tbody 액션 Button whitespace-nowrap + min-w-[80px]", () => {
     // 테이블 분기 안 Button className 에 nowrap + min-w-[80px]
-    expect(page).toMatch(/viewMode === "table"[\s\S]*?Button[\s\S]{0,500}whitespace-nowrap[\s\S]{0,200}min-w-\[80px\]|viewMode === "table"[\s\S]*?Button[\s\S]{0,500}min-w-\[80px\][\s\S]{0,200}whitespace-nowrap/);
+    // §quote-table-sian P3 — tbody 액션 <Button> 안 onClick(§11.279d 주석블록)이 className 까지 거리를
+    //   1409자로 확대(min-w-[80px]·whitespace-nowrap 은 L2979 실재). 거리 한도 500→1600(impl 정상, 보호 의도 불변).
+    expect(page).toMatch(/viewMode === "table"[\s\S]*?Button[\s\S]{0,1600}whitespace-nowrap[\s\S]{0,200}min-w-\[80px\]|viewMode === "table"[\s\S]*?Button[\s\S]{0,1600}min-w-\[80px\][\s\S]{0,200}whitespace-nowrap/);
   });
 
   it("shortenActionLabel 함수 정의 (테이블 한정 축약)", () => {
@@ -143,7 +145,8 @@ describe("§11.226 #8 — CTA min-width 강제", () => {
 
   it("테이블 분기 Button min-w-[80px] (이미 #2 에서 검증)", () => {
     // #2 에서 검증한 패턴 재확인
-    expect(page).toMatch(/viewMode === "table"[\s\S]*?Button[\s\S]{0,800}min-w-\[80px\]/);
+    // §quote-table-sian P3 — 거리 800→1600(위 #2 와 동일, onClick 주석블록 1409자).
+    expect(page).toMatch(/viewMode === "table"[\s\S]*?Button[\s\S]{0,1600}min-w-\[80px\]/);
   });
 });
 
