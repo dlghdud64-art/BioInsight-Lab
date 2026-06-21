@@ -29,7 +29,8 @@ describe("§11.217 Phase 1B → §quote-management P4-core-B — '우선 추천'
   //   computePriority 기반 PriorityRecommendationCard 로 대체(가드② 정정).
   it("PriorityRecommendationCard 렌더로 배너 대체", () => {
     expect(source).toMatch(/<PriorityRecommendationCard/);
-    expect(source).toMatch(/onOpen=\{\(id\) => openQuoteContextRail\(id, "row"\)\}/);
+    // §quote-screen-sian P6.3 §07 — onOpen 이 다음 액션(handleQuoteCardSelect) 직접 연결로 진화(발송 단계→발송 모달).
+    expect(source).toMatch(/onOpen=\{\(id\) =>[\s\S]{0,260}handleQuoteCardSelect/);
   });
 
   it("구 'AI 추천' 배너 파생/JSX 폐기(priorityAiRecommendation · violet 배너)", () => {

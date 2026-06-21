@@ -11,6 +11,7 @@
  *   - navy: #0f1b34→#16284c. §11.302 색: high=red·mid=yellow·low=중립(amber/orange 금지).
  */
 
+import { useState } from "react";
 import { computePriority, dDayLabel, type Stage } from "@/lib/quote-management/derive";
 import { toQuoteCase, type QuoteLike } from "@/lib/quote-management/from-quote";
 import { ListChecks, ArrowRight } from "lucide-react";
@@ -49,6 +50,8 @@ export function PriorityRecommendationCard({
   quotes: QuoteLike[];
   onOpen: (id: string) => void;
 }) {
+  // §quote-screen-sian P6.3 §07 — "나중에" 일시 보류(추천 제외). 세션 메모리(새로고침 복귀 = 일시 보류 의미).
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   let best: {
     id: string;
     name: string;
@@ -62,6 +65,7 @@ export function PriorityRecommendationCard({
   for (const q of quotes) {
     const c = toQuoteCase(q);
     if (!c) continue; // 퍼널 외(CANCELLED 등)
+    if (dismissed.has(c.id)) continue; // §07 일시 보류된 케이스 제외
     const r = computePriority(c);
     // ★ 상시 노출 — level별 skip 없음(최우선 1건). 真 level 표시(가짜 격상 0).
     if (r.score > bestScore) {
@@ -112,15 +116,26 @@ export function PriorityRecommendationCard({
           {best.reason ? ` (${best.reason})` : ""}
         </p>
       </div>
-      <button
-        type="button"
-        onClick={() => onOpen(best.id)}
-        className="relative z-10 flex-none inline-flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-[13px] font-extrabold text-[#0f1b34] shadow-sm transition-colors hover:bg-[#eef2fe] min-h-[44px] sm:min-h-0"
-        aria-label={`우선 추천 케이스 ${best.name} 열기`}
-      >
-        케이스 열기
-        <ArrowRight className="h-4 w-4" />
-      </button>
+      {/* §quote-screen-sian P6.3 §07 — 실행 버튼(다음 액션 = next.label) + "나중에"(일시 보류). */}
+      <div className="relative z-10 flex-none flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => onOpen(best!.id)}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-[13px] font-extrabold text-[#0f1b34] shadow-sm transition-colors hover:bg-[#eef2fe] min-h-[44px] sm:min-h-0"
+          aria-label={`우선 추천 케이스 ${best.name} — ${nextStep}`}
+        >
+          {nextStep}
+          <ArrowRight className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setDismissed((prev) => { const n = new Set(prev); n.add(best!.id); return n; })}
+          className="inline-flex items-center rounded-lg bg-white/10 px-3 py-2 text-[13px] font-semibold text-white/80 transition-colors hover:bg-white/20 min-h-[44px] sm:min-h-0"
+          aria-label={`우선 추천 ${best.name} 나중에`}
+        >
+          나중에
+        </button>
+      </div>
     </div>
   );
 }

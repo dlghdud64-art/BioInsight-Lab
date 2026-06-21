@@ -39,8 +39,11 @@ describe("§quote-management P4-core-B — 우선 추천 카드(룰베이스)", 
     expect(CARD).not.toMatch(/<Sparkles/);
     expect(CARD).not.toMatch(/from "lucide-react".*Sparkles/);
   });
-  it("CTA = 케이스 열기(real, dead button 0)", () => {
-    expect(CARD).toMatch(/onClick=\{\(\) => onOpen\(best\.id\)\}/);
+  it("CTA = 다음 액션(next.label) 직접 연결 + '나중에' 보류 (§quote-screen-sian P6.3 §07, dead button 0)", () => {
+    // P6.3: "케이스 열기" → next.label 실행 버튼(onOpen=다음 액션) + "나중에"(일시 보류, dead 아님).
+    expect(CARD).toMatch(/onClick=\{\(\) => onOpen\(best!\.id\)\}/);
+    expect(CARD).toMatch(/나중에/);
+    expect(CARD).toMatch(/setDismissed/);
   });
   it("§11.302 — amber/orange 0", () => {
     expect(CARD).not.toMatch(/-amber-|-orange-/);
@@ -67,7 +70,8 @@ describe("§quote-management P4-core-B — 우선순위 단일화(computePriorit
 describe("§quote-management P4-core-B — 회귀 0(deriveRailState 유지·배너 폐기)", () => {
   it("deriveRailState 는 status/rail 용도 유지(제거 아님)", () => {
     expect(PAGE).toMatch(/const railState = deriveRailState\(quote\)/);
-    expect(PAGE).toMatch(/railState === "response_delayed" \? "bg-slate-100/);
+    // §quote-screen-sian P6.1 — 단계 칩 색이 §12 stage 매핑으로 진화(발송=blue). railState 소비 의도 보존.
+    expect(PAGE).toMatch(/railState === "request_not_sent" \? "bg-blue-100/);
   });
   it("구 'AI 추천' 배너(priorityAiRecommendation) 폐기", () => {
     expect(PAGE).not.toMatch(/priorityAiRecommendation/);

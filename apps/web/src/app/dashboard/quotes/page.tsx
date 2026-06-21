@@ -927,11 +927,16 @@ const RESPONSE_TRACK_STATES = new Set(["request_not_sent", "awaiting_responses",
 const BLOCKED_STATES = new Set(["condition_check_required", "external_approval_required", "compare_not_ready"]);
 const COMPARE_STATES = new Set(["compare_not_ready", "compare_review_required", "condition_check_required"]);
 
+// §quote-screen-sian P6.2 — 시안 §08 빠른 필터(교체, CEO 결정): 마감 임박·높음 우선(위험=빨강) · 회신 정체(주의=앰버).
+//   우선순위·마감은 computePriority 파생(저장 0). reason="회신정체" = 정체가 최대 기여 요인인 케이스.
+//   기존(우선 처리·차단 있음·오늘 처리·전환 가능) 제거. modeChip/setModeChip wiring·AND 결합은 보존.
 const MODE_CHIPS = [
-  { key: "urgent",      label: "우선 처리",  filter: (q: Quote) => { const s = deriveRailState(q); return s === "response_delayed" || s === "condition_check_required" || s === "external_approval_required" || (q.deliveryDate && new Date(q.deliveryDate).toDateString() === new Date().toDateString()); } },
-  { key: "blocked",     label: "차단 있음",  filter: (q: Quote) => BLOCKED_STATES.has(deriveRailState(q)) },
-  { key: "today",       label: "오늘 처리",  filter: (q: Quote) => q.deliveryDate && new Date(q.deliveryDate).toDateString() === new Date().toDateString() && q.status !== "COMPLETED" && q.status !== "CANCELLED" },
-  { key: "convertible", label: "전환 가능",  filter: (q: Quote) => deriveRailState(q) === "ready_for_po_conversion" },
+  { key: "deadline_soon", label: "마감 임박", tone: "danger" as const,
+    filter: (q: Quote) => { const c = toQuoteCase(q); if (!c) return false; const dd = computePriority(c).dd; return dd != null && dd <= 2; } },
+  { key: "high_priority", label: "높음 우선", tone: "danger" as const,
+    filter: (q: Quote) => { const c = toQuoteCase(q); return c ? computePriority(c).level === "high" : false; } },
+  { key: "stalled",       label: "회신 정체", tone: "warn" as const,
+    filter: (q: Quote) => { const c = toQuoteCase(q); return c ? computePriority(c).reason === "회신정체" : false; } },
 ];
 
 function QuotesPageContent() {
@@ -2123,7 +2128,13 @@ function QuotesPageContent() {
       {/* §quote-management P4-core-B — 우선 추천 카드(computePriority 룰베이스 1위). §11.217 Phase 1B "AI 추천" 배너 대체(가드② 정정: 룰베이스를 AI로 라벨 금지). */}
       <PriorityRecommendationCard
         quotes={filteredQuotes}
-        onOpen={(id) => openQuoteContextRail(id, "row")}
+        /* §quote-screen-sian P6.3 §07 — 실행 버튼 = 해당 케이스 다음 액션 직접 연결(발송 단계→발송 모달).
+           라벨(카드 next.label)과 동작(signals.ctaLabel) 단계 일치 — honesty(라벨≠동작 0). */
+        onOpen={(id) => {
+          const q = filteredQuotes.find((x) => x.id === id);
+          if (q) handleQuoteCardSelect(id, getOpSignals(q).ctaLabel);
+          else openQuoteContextRail(id, "row");
+        }}
       />
 
       {/* §11.279 — 게이트 블록 2종 제거 (호영님 P0 spec).
@@ -2262,14 +2273,19 @@ function QuotesPageContent() {
                    min-h-[44px] 추가 → Apple HIG / Material / WCAG 2.1 SC 2.5.5
                    Target Size 정합. text-[11px] 시각 사이즈 보존 (44px height
                    안에 items-center 로 가운데 정렬). */
+                disabled={chipCount === 0}
+                /* §quote-screen-sian P6.2 — §08 신호색: 위험(마감임박·높음)=빨강 · 주의(회신정체)=앰버.
+                   0건 비활성(honesty — 빈 필터 클릭 차단). active=진한 톤, inactive=옅은 톤. */
                 className={`inline-flex items-center gap-1 text-[11px] min-h-[44px] px-2.5 py-1 rounded-full border font-medium transition-all whitespace-nowrap ${
-                  isActive
-                    ? "bg-blue-600/10 text-blue-600 border-blue-600/30"
-                    : "text-slate-500 border-bd/50 hover:border-bd hover:text-slate-900"
+                  chipCount === 0
+                    ? "text-slate-300 border-bd/30 cursor-not-allowed"
+                    : isActive
+                      ? (chip.tone === "danger" ? "bg-red-50 text-red-700 border-red-300" : "bg-yellow-100 text-yellow-700 border-yellow-300")
+                      : (chip.tone === "danger" ? "bg-white text-red-600 border-red-200 hover:bg-red-50" : "bg-white text-yellow-700 border-yellow-200 hover:bg-yellow-50")
                 }`}>
                 {chip.label}
                 {chipCount > 0 && (
-                  <span className={`text-[9px] ${isActive ? "text-blue-300" : "text-slate-600"}`}>
+                  <span className={`text-[9px] ${chip.tone === "danger" ? "text-red-500" : "text-yellow-600"}`}>
                     {chipCount}
                   </span>
                 )}
@@ -2823,20 +2839,23 @@ function QuotesPageContent() {
                       if (key === "status") {
                         // §quote-table-sian P3 — 단계 칩: 색 dot + 라벨(§11.302 신호색 보존, rounded-full).
                         //   §11.231 railState enum drift fix(compare_review_required / external_approval_required) 정합.
+                        // §quote-screen-sian P6.1 — 단계 칩 색을 §12 stage(s1~s5)에 정합:
+                        //   발송(request_not_sent)=파랑 · 회신(awaiting/delayed)=노랑 · 비교(compare*)=보라 ·
+                        //   승인(external_approval)=초록 · 발주(ready_for_po)·그 외=회색. (P3 railState 임의매핑 hotfix)
                         const stageDot =
-                          railState === "response_delayed" ? "bg-slate-400"
-                          : railState === "compare_not_ready" ? "bg-blue-500"
-                          : railState === "compare_review_required" ? "bg-purple-500"
-                          : railState === "external_approval_required" ? "bg-yellow-500"
-                          : "bg-emerald-500";
+                          railState === "request_not_sent" ? "bg-blue-500"
+                          : railState === "awaiting_responses" || railState === "response_delayed" ? "bg-yellow-500"
+                          : railState === "compare_not_ready" || railState === "compare_review_required" || railState === "condition_check_required" ? "bg-purple-500"
+                          : railState === "external_approval_required" ? "bg-emerald-500"
+                          : "bg-slate-400";
                         return (
                           <td key={key} style={{ width }} className="px-3 py-2">
                             <span className={`inline-flex items-center gap-1.5 whitespace-nowrap min-w-[72px] px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                              railState === "response_delayed" ? "bg-slate-100 text-slate-700"
-                              : railState === "compare_not_ready" ? "bg-blue-100 text-blue-700"
-                              : railState === "compare_review_required" ? "bg-purple-100 text-purple-700"
-                              : railState === "external_approval_required" ? "bg-yellow-100 text-yellow-700"
-                              : "bg-emerald-100 text-emerald-700"
+                              railState === "request_not_sent" ? "bg-blue-100 text-blue-700"
+                              : railState === "awaiting_responses" || railState === "response_delayed" ? "bg-yellow-100 text-yellow-700"
+                              : railState === "compare_not_ready" || railState === "compare_review_required" || railState === "condition_check_required" ? "bg-purple-100 text-purple-700"
+                              : railState === "external_approval_required" ? "bg-emerald-100 text-emerald-700"
+                              : "bg-slate-100 text-slate-700"
                             }`}>
                               <span className={`inline-block w-1.5 h-1.5 rounded-full ${stageDot}`} aria-hidden="true" />
                               {signals.badge}

@@ -104,8 +104,10 @@ describe("§quote-table-sian P3 — 셀 re-skin (시안 시각 정합)", () => {
   });
 
   it("단계 — 색 dot(stageDot) + rounded-full 칩(§11.302 신호색)", () => {
-    expect(page).toMatch(/key === "status"[\s\S]{0,400}const stageDot\s*=/);
-    expect(page).toMatch(/key === "status"[\s\S]{0,900}rounded-full[\s\S]{0,300}stageDot/);
+    // §quote-screen-sian P6 — 단계칩 §12 색 정합 주석(P6.1) 추가로 거리 확대 → if(key==="status") 렌더 앵커 +
+    //   한도 확대. stageDot(L2845, 703자)·outer 칩 rounded-full text-[10px](L2853)→dot ${stageDot}(L2860) 실재.
+    expect(page).toMatch(/if \(key === "status"\)[\s\S]{0,900}const stageDot\s*=/);
+    expect(page).toMatch(/if \(key === "status"\)[\s\S]{0,1600}rounded-full text-\[10px\][\s\S]{0,1200}stageDot/);
   });
 
   it("우선순위 — pill + 사유(priorityResult.reason 재사용), dot 색 패턴 보존", () => {

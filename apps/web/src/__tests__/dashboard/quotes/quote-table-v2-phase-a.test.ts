@@ -31,12 +31,13 @@ describe("§11.226 #1 — 테이블 상태 뱃지 nowrap + min-width lock", () =
   });
 
   it("tbody 상태 뱃지 whitespace-nowrap", () => {
-    // viewMode === 'table' 분기 안 상태 td 의 span 에 whitespace-nowrap
-    expect(page).toMatch(/viewMode === "table"[\s\S]*?signals\.badge[\s\S]{0,800}whitespace-nowrap|viewMode === "table"[\s\S]*?whitespace-nowrap[\s\S]{0,800}signals\.badge/);
+    // §quote-screen-sian P6 — 상태칩 §12 색 정합으로 status 셀 verbose 주석 추가 → 앵커를 키보드핸들러
+    //   (viewMode==="table" L1460)가 아닌 tbody 렌더 분기 if(key==="status")로 교정. nowrap+min-w-[72px]은 L2853 실재.
+    expect(page).toMatch(/if \(key === "status"\)[\s\S]{0,1700}whitespace-nowrap[\s\S]{0,1200}signals\.badge/);
   });
 
   it("tbody 상태 뱃지 min-w-[72px]", () => {
-    expect(page).toMatch(/viewMode === "table"[\s\S]*?signals\.badge[\s\S]{0,800}min-w-\[72px\]|viewMode === "table"[\s\S]*?min-w-\[72px\][\s\S]{0,800}signals\.badge/);
+    expect(page).toMatch(/if \(key === "status"\)[\s\S]{0,1700}min-w-\[72px\][\s\S]{0,1200}signals\.badge/);
   });
 });
 
