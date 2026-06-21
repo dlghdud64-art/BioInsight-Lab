@@ -23,14 +23,18 @@ const page = readFileSync(PAGE_PATH, "utf8");
 
 describe("§11.230a #1 — 제목 셀 truncate 시 native title attribute", () => {
   it("tbody 제목 td 에 title={tableDisplayTitle} 또는 동등 attribute", () => {
-    // truncate text 의 full text hover 노출 — native title 사용
-    expect(page).toMatch(/tableDisplayTitle[\s\S]{0,400}title=\{tableDisplayTitle\}|title=\{tableDisplayTitle\}[\s\S]{0,400}tableDisplayTitle/);
+    // truncate text 의 full text hover 노출 — native title 사용.
+    // §quote-table-sian P3 — 2단 re-skin(ref+품목명)으로 두 tableDisplayTitle 참조 거리 확대.
+    //   tbody 렌더 분기(if) 앵커 → title attr(L2810, 630자) 매치(헤더 occurrence 회피).
+    expect(page).toMatch(/if \(key === "title"\)[\s\S]{0,800}title=\{tableDisplayTitle\}/);
   });
 
-  it("기존 truncate 클래스 보존 (§11.230b 후 inline maxWidth: width)", () => {
-    // §11.230b dynamic refactor 후 max-w-[280px] hardcoded → inline style maxWidth: width
-    // (title 컬럼 DEFAULT_COLUMN_PREFS.widths.title = 280)
-    expect(page).toMatch(/key === ["']title["'][\s\S]{0,400}truncate|truncate[\s\S]{0,400}title=\{tableDisplayTitle\}|max-w-\[280px\][\s\S]{0,80}truncate/);
+  it("기존 truncate 클래스 보존 (§quote-table-sian P3 — 2단 inner span truncate + inline maxWidth)", () => {
+    // §quote-table-sian P3 re-skin: truncate 가 td → inner span(ref·품목명) 으로 이동(overflow 보호 의도 보존).
+    //   inline maxWidth: width(컬럼 폭) + title attr(hover full text) 동반 보존.
+    expect(page).toMatch(/if \(key === "title"\)[\s\S]{0,1000}truncate/);
+    // maxWidth: width 는 title td 전용(타 셀은 style={{ width }}) — 앵커 없이 존재 확인(거리 무관).
+    expect(page).toMatch(/maxWidth: width/);
   });
 });
 

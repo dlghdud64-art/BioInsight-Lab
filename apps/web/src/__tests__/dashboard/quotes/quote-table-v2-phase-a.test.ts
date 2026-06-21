@@ -114,8 +114,8 @@ describe("§quote-table-sian P2 #4 — 예상금액 always 노출 (이전 §11.2
     expect(page).toMatch(/key === "supplier"[\s\S]{0,400}<SupplierAvatars suppliers=\{toSuppliers\(quote\.vendorRequests\)\}/);
   });
 
-  it("tbody 예상금액 td — 회신 0 시 약화(가짜 금액 금지)", () => {
-    expect(page).toMatch(/key\s*===\s*["']price["'][\s\S]{0,2000}responseCount === 0/);
+  it("tbody 예상금액 td — 실값 없음 시 '견적 대기' 약화(§quote-table-sian P3, 가짜 금액 금지)", () => {
+    expect(page).toMatch(/key\s*===\s*["']price["'][\s\S]{0,2000}prices\.length === 0[\s\S]{0,200}견적 대기/);
   });
 
   it("납기(delivery) 컬럼 키 제거 — tbody/visibleColumns delivery 분기 부재", () => {

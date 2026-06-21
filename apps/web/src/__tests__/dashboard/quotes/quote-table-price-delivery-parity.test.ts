@@ -37,8 +37,9 @@ describe("#quote-table-price-delivery-parity — tbody 예상금액 분기 (§11
     expect(page).toMatch(/viewMode === "table"[\s\S]*?prices[\s\S]*?Math\.min[\s\S]*?Math\.max/);
   });
 
-  it("미수신 시 '미수신' fallback (가짜 금액 금지)", () => {
-    expect(page).toMatch(/viewMode === "table"[\s\S]*?(responseCount === 0|prices\.length === 0)[\s\S]*?미수신/);
+  it("실값 없음 시 '견적 대기' fallback (§quote-table-sian P3, 가짜 금액 금지)", () => {
+    // P3 hybrid: 미회신·가격 미기재 통합 → "견적 대기"(이전 "미수신"/"가격 미기재").
+    expect(page).toMatch(/viewMode === "table"[\s\S]*?prices\.length === 0[\s\S]{0,200}견적 대기/);
   });
 
   it("수신 + range — minPrice === maxPrice 시 단일가, 다르면 range (~ 문자)", () => {

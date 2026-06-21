@@ -96,6 +96,36 @@ describe("§quote-table-sian P2 — 셀 정합", () => {
   });
 });
 
+describe("§quote-table-sian P3 — 셀 re-skin (시안 시각 정합)", () => {
+  it("견적케이스 — quoteRef(ref mono) + 품목명 2단", () => {
+    expect(page).toMatch(/const quoteRef = quoteDisplayRef\(quote\)/);
+    // tbody 렌더 분기(if) 앵커 — 헤더 isSortable/width occurrence 회피 + P3 verbose 주석 거리 수용.
+    expect(page).toMatch(/if \(key === "title"\)[\s\S]{0,1000}font-mono[\s\S]{0,80}\{quoteRef\}/);
+  });
+
+  it("단계 — 색 dot(stageDot) + rounded-full 칩(§11.302 신호색)", () => {
+    expect(page).toMatch(/key === "status"[\s\S]{0,400}const stageDot\s*=/);
+    expect(page).toMatch(/key === "status"[\s\S]{0,900}rounded-full[\s\S]{0,300}stageDot/);
+  });
+
+  it("우선순위 — pill + 사유(priorityResult.reason 재사용), dot 색 패턴 보존", () => {
+    expect(page).toMatch(/const priorityReason = priorityResult\?\.reason/);
+    expect(page).toMatch(/key === "priority"[\s\S]{0,800}priorityReason/);
+    expect(page).toMatch(/priorityLevel === "critical" \? "bg-red-500" : "bg-yellow-500"/);
+  });
+
+  it("예상금액 — hybrid(실값 ₩range / 없으면 '견적 대기')", () => {
+    expect(page).toMatch(/if \(key === "price"\)[\s\S]{0,700}prices\.length === 0[\s\S]{0,150}견적 대기/);
+    expect(page).toMatch(/if \(key === "price"\)[\s\S]{0,1000}₩\{minPrice/);
+  });
+
+  it("다음단계 — rounded-full pill + send-cta wiring 보존", () => {
+    expect(page).toMatch(/if \(key === "actions"\)[\s\S]{0,2600}rounded-full text-\[11px\]/);
+    expect(page).toMatch(/data-testid=\{signals\.ctaLabel === "견적 요청 발송" \? "quote-table-direct-send-cta" : undefined\}/);
+    expect(page).toMatch(/handleQuoteCardSelect\(quote\.id, signals\.ctaLabel\)/);
+  });
+});
+
 describe("§quote-table-sian P2 — 운영 wiring 무회귀(셀만 시안·골격 유지)", () => {
   it("send-cta data-testid 보존", () => {
     expect(page).toMatch(

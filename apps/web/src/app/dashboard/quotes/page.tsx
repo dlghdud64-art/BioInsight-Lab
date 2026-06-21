@@ -2657,6 +2657,8 @@ function QuotesPageContent() {
                     ? `${firstItemName} 외 ${moreCount}건`
                     : firstItemName
                   : quote.title;
+                // §quote-table-sian P3 — 견적케이스 ref(quoteDisplayRef, P1 헬퍼 재사용·cuid 원본 미노출).
+                const quoteRef = quoteDisplayRef(quote);
                 return (
                   <tr
                     key={quote.id}
@@ -2798,35 +2800,45 @@ function QuotesPageContent() {
                     {visibleColumns.map((key) => {
                       const width = columnPrefs.widths[key];
                       if (key === "title") {
-                        // §11.242 #5 — 중복 품목: prev row 와 같은 firstItemName 이면 text-gray-400 + "〃"
-                        //   첫 표시 row 만 강조, 연속 row 는 시각 noise ↓.
+                        // §quote-table-sian P3 — 견적케이스 = ref(상단 mono 약하게) + 품목명(하단 강조).
+                        //   §11.242 #5 중복 품목: prev row 와 같은 firstItemName 이면 품목명 text-gray-400 + "〃" (ref 는 항상 노출).
                         return (
                           <td
                             key={key}
                             style={{ width, maxWidth: width }}
-                            className={`px-4 py-3 truncate ${
-                              isDuplicateOfPrev
-                                ? "font-normal text-gray-400 pl-6"
-                                : "font-medium text-gray-900"
-                            }`}
+                            className={`px-4 py-3 ${isDuplicateOfPrev ? "pl-6" : ""}`}
                             title={tableDisplayTitle}
                           >
-                            {isDuplicateOfPrev ? `〃 ${tableDisplayTitle}` : tableDisplayTitle}
+                            <div className="flex flex-col gap-0.5 min-w-0">
+                              <span className="text-[10px] font-mono text-slate-400 truncate">{quoteRef}</span>
+                              <span className={`text-xs truncate ${
+                                isDuplicateOfPrev ? "font-normal text-gray-400" : "font-medium text-gray-900"
+                              }`}>
+                                {isDuplicateOfPrev ? `〃 ${tableDisplayTitle}` : tableDisplayTitle}
+                              </span>
+                            </div>
                           </td>
                         );
                       }
                       if (key === "status") {
+                        // §quote-table-sian P3 — 단계 칩: 색 dot + 라벨(§11.302 신호색 보존, rounded-full).
+                        //   §11.231 railState enum drift fix(compare_review_required / external_approval_required) 정합.
+                        const stageDot =
+                          railState === "response_delayed" ? "bg-slate-400"
+                          : railState === "compare_not_ready" ? "bg-blue-500"
+                          : railState === "compare_review_required" ? "bg-purple-500"
+                          : railState === "external_approval_required" ? "bg-yellow-500"
+                          : "bg-emerald-500";
                         return (
                           <td key={key} style={{ width }} className="px-3 py-2">
-                            {/* §11.231 — railState enum drift fix: compare_review → compare_review_required,
-                                approval_prep → external_approval_required (canonical RailState enum 정합). */}
-                            <span className={`inline-flex justify-center whitespace-nowrap min-w-[72px] px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                            <span className={`inline-flex items-center gap-1.5 whitespace-nowrap min-w-[72px] px-2 py-0.5 rounded-full text-[10px] font-semibold ${
                               railState === "response_delayed" ? "bg-slate-100 text-slate-700"
                               : railState === "compare_not_ready" ? "bg-blue-100 text-blue-700"
                               : railState === "compare_review_required" ? "bg-purple-100 text-purple-700"
                               : railState === "external_approval_required" ? "bg-yellow-100 text-yellow-700"
                               : "bg-emerald-100 text-emerald-700"
                             }`}>
+                              <span className={`inline-block w-1.5 h-1.5 rounded-full ${stageDot}`} aria-hidden="true" />
                               {signals.badge}
                             </span>
                           </td>
@@ -2872,15 +2884,14 @@ function QuotesPageContent() {
                         );
                       }
                       if (key === "price") {
-                        // §quote-table-sian P2 — 예상금액 always 노출(visibleColumns price 무조건 통과).
-                        //   회신/가격 미수신 시 약화 표기(가짜 금액 금지). 실제 견적금 캡처는 별도 트랙.
+                        // §quote-table-sian P3 — 예상금액 hybrid: 회신 totalPrice 실값 있으면 ₩range(canonical 노출),
+                        //   없으면(미회신·가격 미기재 통합) "견적 대기"(시안 정합, 가짜 금액 금지·truth 미가림).
+                        //   실제 견적금 단일 필드 캡처는 별도 트랙(Out of Scope).
                         return (
                           <td key={key} style={{ width }} className="px-3 py-2 text-right text-[11px] tabular-nums">
                             {/* §11.242 #8 — 빈 데이터 색상 약화 (호영님 spec: text-gray-300). */}
-                            {responseCount === 0 ? (
-                              <span className="text-gray-300">미수신</span>
-                            ) : prices.length === 0 ? (
-                              <span className="text-gray-300">가격 미기재</span>
+                            {prices.length === 0 ? (
+                              <span className="text-gray-300">견적 대기</span>
                             ) : minPrice === maxPrice ? (
                               <span className="text-slate-700">₩{minPrice!.toLocaleString("ko-KR")}</span>
                             ) : (
@@ -2890,17 +2901,29 @@ function QuotesPageContent() {
                         );
                       }
                       if (key === "priority") {
-                        // §11.231 — priority derive (railState 기반, signals 의 priority 부재 fix).
-                        //   §11.242 — outer tr scope priorityLevel reuse (shadow drop).
-                        //   delayed/external_approval_required = critical, compare_review_required = high,
-                        //   그 외 = normal. canonical RailState 정합 + 시각화 분기 보존.
+                        // §quote-table-sian P3 — 우선순위 pill + 사유(priorityResult.reason 재사용, p4-core-b).
+                        //   §11.302 신호색: critical=red / high=yellow pill + 사유. normal(사유 null)=약한 dot(빈 셀 방지).
+                        //   reason = computePriority 기여 최대 요인(마감임박/고액/회신정체/재고위급), 低는 null.
+                        const priorityReason = priorityResult?.reason ?? null;
                         return (
                           <td key={key} style={{ width }} className="px-3 py-2 text-center">
-                            <span className={`inline-block w-2 h-2 rounded-full ${
-                              priorityLevel === "critical" ? "bg-red-500"
-                              : priorityLevel === "high" ? "bg-yellow-500"
-                              : "bg-slate-300"
-                            }`} aria-label={`우선순위 ${priorityLevel}`} />
+                            {priorityLevel === "normal" ? (
+                              <span className="inline-block w-2 h-2 rounded-full bg-slate-300" aria-label="우선순위 보통" />
+                            ) : (
+                              <span
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                                  priorityLevel === "critical"
+                                    ? "bg-red-50 text-red-700 border border-red-200"
+                                    : "bg-yellow-100 text-yellow-700"
+                                }`}
+                                aria-label={`우선순위 ${priorityLevel === "critical" ? "긴급" : "높음"}${priorityReason ? ` (${priorityReason})` : ""}`}
+                              >
+                                <span className={`inline-block w-1.5 h-1.5 rounded-full ${
+                                  priorityLevel === "critical" ? "bg-red-500" : "bg-yellow-500"
+                                }`} aria-hidden="true" />
+                                {priorityReason ?? (priorityLevel === "critical" ? "긴급" : "높음")}
+                              </span>
+                            )}
                           </td>
                         );
                       }
@@ -2953,7 +2976,7 @@ function QuotesPageContent() {
                                 // 토글만 = 발송 워크플로우 진입 안 됨 회귀 fix.
                                 handleQuoteCardSelect(quote.id, signals.ctaLabel);
                               }}
-                              className={`h-7 text-[11px] whitespace-nowrap min-w-[80px] ${signals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
+                              className={`h-7 rounded-full text-[11px] whitespace-nowrap min-w-[80px] ${signals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
                             >
                               {shortenActionLabel(signals.ctaLabel)}
                             </Button>
