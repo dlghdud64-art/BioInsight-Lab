@@ -53,26 +53,28 @@ describe("§11.242 #2 — 호버 강화", () => {
 });
 
 describe("§11.242 #3 — 5색 status 뱃지", () => {
-  it("OP_STATUS map 안 amber (회신 대기) + red (요청 발송 전) + blue + purple + green/emerald 5색 정합", () => {
-    // OP_STATUS map line 95~ 의 bg- 색상 5계열 — 호영님 spec 매핑
-    expect(page).toMatch(/bg-amber-(50|100)[\s\S]{0,2000}(bg-red-(50|100)|bg-rose-(50|100))/);
+  // §11.302 정합 진화(2026-06-21): OP_STATUS 회신_대기/우선순위 warning 색이 amber→yellow 로 sweep됨.
+  //   sentinel 기대도 yellow 로 갱신. 5색 신호등(warning+danger+info+review+ok) 보호 의도는 불변.
+  it("OP_STATUS map 안 yellow (회신 대기) + red (요청 발송 전) + blue + purple + green/emerald 5색 정합", () => {
+    // OP_STATUS map line 127~ 의 bg- 색상 5계열 — 호영님 spec 매핑 (§11.302 yellow)
+    expect(page).toMatch(/bg-yellow-(50|100)[\s\S]{0,2000}(bg-red-(50|100)|bg-rose-(50|100))/);
     expect(page).toMatch(/bg-(blue|sky)-(50|100)/);
     expect(page).toMatch(/bg-purple-(50|100)/);
     expect(page).toMatch(/bg-(green|emerald)-(50|100)/);
   });
 
   it("뱃지 안 좌측 컬러 도트 (rounded-full + bg-{color}-500)", () => {
-    expect(page).toMatch(/rounded-full[\s\S]{0,200}bg-(amber|red|blue|purple|emerald|green)-500/);
+    expect(page).toMatch(/rounded-full[\s\S]{0,200}bg-(yellow|amber|red|blue|purple|emerald|green)-500/);
   });
 });
 
-describe("§11.242 #4 — 우선순위 left border (긴급 red / 높음 amber)", () => {
+describe("§11.242 #4 — 우선순위 left border (긴급 red / 높음 yellow §11.302)", () => {
   it("tbody tr 안 priorityLevel === 'critical' 시 border-l-4 border-red-500", () => {
     expect(page).toMatch(/priorityLevel[\s\S]{0,400}(border-l-4 border-red-500|border-l-red-500)/);
   });
 
-  it("priorityLevel === 'high' 시 border-l-4 border-amber-400 또는 -500", () => {
-    expect(page).toMatch(/priorityLevel[\s\S]{0,400}border-l-(4 border-)?amber-(400|500)/);
+  it("priorityLevel === 'high' 시 border-l-4 border-yellow-400 또는 -500 (§11.302 amber→yellow)", () => {
+    expect(page).toMatch(/priorityLevel[\s\S]{0,400}border-l-(4 border-)?yellow-(400|500)/);
   });
 });
 
