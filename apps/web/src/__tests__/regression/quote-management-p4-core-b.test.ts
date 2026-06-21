@@ -1,8 +1,11 @@
 /**
- * §quote-management P4-core-B — 우선 추천 카드 + 우선순위 단일화
+ * §quote-management P4-core-B + §quote-flat Q2 — 우선 추천 카드 + 우선순위 단일화
  *
  * - 우선 추천 카드: computePriority(룰베이스) score 1위. "AI" 라벨/Sparkles 금지(가드②).
- *   高/中만 추천, 0이면 노출 0(정직). CTA = 케이스 열기(real, dead button 0).
+ *   ★ Q2 진화(CEO 2026-06-21): 최우선 1건 **상시 노출** + 真 level(높음/보통/낮음) 표시.
+ *     "高/中만 노출 → return null" 정책 폐기. 단 정직 불변식 보존:
+ *       ① 케이스 0건이면 노출 0(!best) ② 가짜 격상 0(best.level 真값) ③ 低 사유 생략(derive reason=null).
+ *   CTA = 케이스 열기(real, dead button 0). 다음 단계는 본문 텍스트 안내(가짜 액션 금지).
  * - 단일화: priorityLevel 정의를 computePriority 로 교체(high→critical/mid→high/low→normal).
  *   border·dot·aria 소비처 무변경. deriveRailState 는 status/rail/게이팅 유지(제거 아님).
  * - 회귀: "AI 추천" 배너(priorityAiRecommendation) 폐기.
@@ -22,9 +25,14 @@ describe("§quote-management P4-core-B — 우선 추천 카드(룰베이스)", 
     expect(CARD).toMatch(/toQuoteCase\(q\)/);
     expect(CARD).toMatch(/computePriority\(c\)/);
   });
-  it("정직 — 高/中만 추천(低 skip), 0이면 노출 0", () => {
-    expect(CARD).toMatch(/r\.level === "low"/);
+  it("정직 — 최우선 1건 상시 노출 + 真 level(가짜 격상 0), 케이스 0이면 노출 0", () => {
+    // 케이스 0건 → 노출 0(빈 상태 별도)
     expect(CARD).toMatch(/if \(!best\) return null/);
+    // 低 skip 폐기 — 상시 노출(level별 continue 제거)
+    expect(CARD).not.toMatch(/r\.level === "low"/);
+    // 真 level 사용(가짜 격상 0) + 낮음까지 정직 표기
+    expect(CARD).toMatch(/best\.level/);
+    expect(CARD).toMatch(/low: "낮음"/);
   });
   it('"우선 추천" 라벨 + "AI"/Sparkles 금지(가드②)', () => {
     expect(CARD).toMatch(/<span className="font-semibold">우선 추천<\/span>/);

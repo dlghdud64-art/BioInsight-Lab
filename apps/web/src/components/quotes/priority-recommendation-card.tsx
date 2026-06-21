@@ -1,19 +1,46 @@
 "use client";
 
 /**
- * §quote-management P4-core-B — 우선 추천 카드(룰베이스 computePriority)
+ * §quote-management P4-core-B + §quote-flat Q2 — 우선 추천 카드(navy, 시안 A ② 정합)
  *
- * 지시문 §07. 기존 "AI 추천" 배너(룰베이스를 AI로 라벨 = 가드② 위반) 대체.
- *   - computePriority(가중합) score 1위 케이스 1줄 추천 + 사유 배지 + 다음 액션 CTA.
- *   - ★ "AI" 라벨/Sparkles 금지(룰베이스). 진짜 LLM(종합추천·협상)은 P6에서만 "AI".
- *   - ★ 정직: 高/中(level !== low)만 추천. 추천 대상 0이면 노출 0(가짜 풍부 금지, no-op 아님).
- *   - CTA = 실제 액션(케이스 열기 → rail). dead button 0.
- *   - §11.302 색: high=red, mid=yellow (amber/orange 금지).
+ * 지시문 §07 + 시안 ②(.ai-action). computePriority(룰베이스) score 1위 케이스 상시 노출.
+ *   - ★ "AI" 라벨/Sparkles 금지(룰베이스). orb(spark) 제거(제품상세 P6 선례).
+ *   - ★ 정직(CEO 2026-06-21): 최우선 1건 상시 노출 + 真 level(높음/보통/낮음) 표시(가짜 격상 0).
+ *     케이스 0건이면 노출 0(!best). 사유는 高·中만(低는 derive reason=null → 생략).
+ *   - CTA = 케이스 열기(real → rail). dead button 0. 다음 단계는 본문 텍스트로 안내(가짜 액션 금지).
+ *   - navy: #0f1b34→#16284c. §11.302 색: high=red·mid=yellow·low=중립(amber/orange 금지).
  */
 
-import { computePriority, dDayLabel } from "@/lib/quote-management/derive";
+import { computePriority, dDayLabel, type Stage } from "@/lib/quote-management/derive";
 import { toQuoteCase, type QuoteLike } from "@/lib/quote-management/from-quote";
-import { ListChecks } from "lucide-react";
+import { ListChecks, ArrowRight } from "lucide-react";
+
+const STAGE_LABEL: Record<Stage, string> = {
+  s1: "발송 대기",
+  s2: "회신 추적",
+  s3: "비교 검토",
+  s4: "승인/예외",
+  s5: "발주 전환",
+};
+// 단계별 다음 단계(시안 §07 next). 본문 안내용 — CTA는 케이스 열기(real).
+const NEXT_STEP: Record<Stage, string> = {
+  s1: "견적 요청 발송",
+  s2: "회신 독려",
+  s3: "견적 비교",
+  s4: "승인 요청",
+  s5: "발주 전환",
+};
+// 真 우선순위 라벨(가짜 격상 0).
+const LEVEL_LABEL: Record<"high" | "mid" | "low", string> = {
+  high: "높음",
+  mid: "보통",
+  low: "낮음",
+};
+const LEVEL_TEXT: Record<"high" | "mid" | "low", string> = {
+  high: "text-red-300 font-bold",
+  mid: "text-yellow-300 font-bold",
+  low: "text-white/70",
+};
 
 export function PriorityRecommendationCard({
   quotes,
@@ -22,43 +49,77 @@ export function PriorityRecommendationCard({
   quotes: QuoteLike[];
   onOpen: (id: string) => void;
 }) {
-  let best: { id: string; name: string; reason: string; dd: number | null; level: "high" | "mid" } | null = null;
+  let best: {
+    id: string;
+    name: string;
+    stage: Stage;
+    vendors: number;
+    reason: string | null;
+    dd: number | null;
+    level: "high" | "mid" | "low";
+  } | null = null;
   let bestScore = -1;
   for (const q of quotes) {
     const c = toQuoteCase(q);
     if (!c) continue; // 퍼널 외(CANCELLED 등)
     const r = computePriority(c);
-    if (r.level === "low") continue; // 低 = 추천 안 함(정직)
+    // ★ 상시 노출 — level별 skip 없음(최우선 1건). 真 level 표시(가짜 격상 0).
     if (r.score > bestScore) {
       bestScore = r.score;
-      best = { id: c.id, name: c.name, reason: r.reason ?? "우선 처리", dd: r.dd, level: r.level };
+      best = {
+        id: c.id,
+        name: c.name,
+        stage: c.stage,
+        vendors: c.suppliers.length,
+        reason: r.reason,
+        dd: r.dd,
+        level: r.level,
+      };
     }
   }
-  if (!best) return null; // 추천 대상 0 → 노출 0
+  if (!best) return null; // 케이스 0 → 노출 0(빈 상태는 §01 별도)
 
-  const tone =
-    best.level === "high"
-      ? "border-red-200 bg-red-50 text-red-700"
-      : "border-yellow-200 bg-yellow-50 text-yellow-700";
+  const nextStep = NEXT_STEP[best.stage];
 
   return (
-    <div className={`rounded-lg border ${tone} px-3 py-2 flex items-center gap-2`}>
-      <ListChecks className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-      <p className="text-[12px] sm:text-xs min-w-0 flex-1 truncate">
-        <span className="font-semibold">우선 추천</span>
-        {" · "}
-        {best.name}
-        {" · "}
-        {best.reason}
-        {best.dd != null ? ` · ${dDayLabel(best.dd)}` : ""}
-      </p>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0f1b34] to-[#16284c] text-white px-5 py-4 shadow-sm flex items-center gap-4">
+      {/* 장식 도트(데이터 무관, aria-hidden) */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-60"
+        style={{
+          backgroundImage: "radial-gradient(rgba(127,163,243,.18) 1px, transparent 1.5px)",
+          backgroundSize: "22px 22px",
+          WebkitMaskImage: "radial-gradient(90% 130% at 92% 50%, #000, transparent 62%)",
+          maskImage: "radial-gradient(90% 130% at 92% 50%, #000, transparent 62%)",
+        }}
+      />
+      <span className="relative z-10 flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-[#2f6be0] text-white">
+        <ListChecks className="h-5 w-5" aria-hidden="true" />
+      </span>
+      <div className="relative z-10 min-w-0 flex-1">
+        <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#9cc0ff] mb-1">
+          <span className="font-semibold">우선 추천</span>
+        </p>
+        <h3 className="text-[15px] sm:text-base font-bold leading-snug truncate">
+          <span className="rounded-md bg-[#6f97ee]/25 px-1.5 py-0.5 font-extrabold">{best.name}</span>
+          {" — "}
+          {nextStep} 단계입니다.
+        </h3>
+        <p className="text-[12px] text-white/60 mt-0.5">
+          {STAGE_LABEL[best.stage]} · 마감 {dDayLabel(best.dd)} · 공급사 {best.vendors}곳 · 우선순위{" "}
+          <span className={LEVEL_TEXT[best.level]}>{LEVEL_LABEL[best.level]}</span>
+          {best.reason ? ` (${best.reason})` : ""}
+        </p>
+      </div>
       <button
         type="button"
         onClick={() => onOpen(best.id)}
-        className="shrink-0 text-[11px] font-semibold underline underline-offset-2 px-2 py-1.5 min-h-[44px] sm:min-h-0 inline-flex items-center"
+        className="relative z-10 flex-none inline-flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-[13px] font-extrabold text-[#0f1b34] shadow-sm transition-colors hover:bg-[#eef2fe] min-h-[44px] sm:min-h-0"
         aria-label={`우선 추천 케이스 ${best.name} 열기`}
       >
         케이스 열기
+        <ArrowRight className="h-4 w-4" />
       </button>
     </div>
   );
