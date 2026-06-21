@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Upload, FileText, Loader2, CheckCircle2, AlertTriangle, X,
-  ChevronRight, Edit3, Save,
+  ChevronRight, Edit3, Save, ScanLine, Lock,
 } from "lucide-react";
 import type {
   ParsedQuoteDocument,
@@ -241,16 +241,24 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="w-full max-w-2xl mx-4 rounded-xl border border-slate-200 bg-white shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 shrink-0">
-          <div className="flex items-center gap-2">
-            {/* §11.368 §0 — ✨ 제거, "AI 견적서 파싱" → 기능명. */}
-            <span className="text-sm font-semibold text-slate-900">견적서 자동 인식</span>
-            <span className="text-[10px] font-mono text-slate-500 bg-slate-100 rounded px-1.5 py-0.5">
-              Gemini 2.5 Flash
-            </span>
+        {/* Header — §quote-scan-sian P5 §11: 아이콘 박스(accent) + 제목 + Gemini 배지 + 설명 한 줄. */}
+        <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
+              <ScanLine className="h-5 w-5 text-white" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                {/* §11.368 §0 — ✨ 제거, "AI 견적서 파싱" → 기능명. */}
+                <span className="text-sm font-semibold text-slate-900">견적서 자동 인식</span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-mono text-slate-500 bg-slate-100 rounded px-1.5 py-0.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />Gemini 2.5 Flash
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-0.5">견적서를 올리면 공급사·단가·납기·조건을 자동 추출합니다</p>
+            </div>
           </div>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-600 transition-colors">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors shrink-0">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -291,30 +299,56 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
                   if (file) handleFileSelect(file);
                 }}
               />
-              <p className="text-[10px] text-slate-600 text-center">
-                Gemini 2.5 Flash가 견적서를 분석하여 공급사명, 품목별 단가, 납기, 조건 등을 자동 추출합니다.
+              <p className="text-[10px] text-slate-500 text-center">
+                Gemini 2.5 Flash가 공급사명·품목별 단가·납기·조건을 자동 추출합니다.
+              </p>
+              {/* §quote-scan-sian P5 §11 — 암호화 보관 안내(시안). */}
+              <p className="flex items-center justify-center gap-1 text-[10px] text-slate-400">
+                <Lock className="h-3 w-3" aria-hidden="true" />업로드한 견적서는 추출 후 암호화 보관됩니다
               </p>
             </div>
           )}
 
-          {/* Step: Parsing */}
+          {/* Step: Parsing — §quote-scan-sian P5 §11: 파일 카드 + 진행 인디케이터 + 단계 리스트.
+              ★ 단일 fetch라 단계별 실시간 이벤트 없음 → 업로드만 실완료(✓), 구조인식·추출·매칭은
+              "진행 중"(pulse dot)으로만 표기(가짜 완료 체크 0, no-op/fake progress 금지). */}
           {step === "parsing" && (
-            <div className="flex flex-col items-center gap-4 py-12">
-              <div className="relative">
-                <div className="h-14 w-14 rounded-xl bg-blue-500/10 flex items-center justify-center animate-pulse">
-                  {/* §11.368 §0 — ✨ → 기능 로딩 아이콘. */}
-                  <Loader2 className="h-6 w-6 text-blue-400 animate-spin" />
+            <div className="space-y-4 py-2">
+              {/* 파일 카드 */}
+              <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                <div className="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                  <FileText className="h-5 w-5 text-blue-600" />
                 </div>
-                <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-blue-500 animate-ping" />
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-medium text-slate-600">AI가 견적서를 분석하고 있습니다</p>
-                <p className="text-[11px] text-slate-500 mt-1">{fileName}</p>
-                <div className="mt-3 flex items-center gap-2 text-[10px] text-slate-600">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  <span>문서 구조 인식 → 품목 추출 → 단가/조건 파싱 중...</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-slate-700 truncate">{fileName || "견적서"}</p>
+                  <p className="text-[11px] text-slate-500">Gemini 2.5 Flash로 분석 중…</p>
                 </div>
+                <Loader2 className="h-4 w-4 text-blue-500 animate-spin shrink-0" />
               </div>
+              {/* indeterminate 진행바 — 실제 진척률 미상이라 부정(indeterminate) 표기(가짜 % 금지). */}
+              <div className="h-1 w-full overflow-hidden rounded-full bg-slate-100">
+                <div className="h-full w-1/3 rounded-full bg-blue-500 animate-pulse" />
+              </div>
+              {/* 단계 리스트 — 업로드 실완료만 ✓, 나머지는 진행 중(완료 단정 0). */}
+              <ul className="space-y-1.5 pl-0.5">
+                {[
+                  { label: "업로드", done: true },
+                  { label: "문서 구조 인식", done: false },
+                  { label: "품목·단가 추출", done: false },
+                  { label: "견적 품목 매칭", done: false },
+                ].map((s, i) => (
+                  <li key={i} className="flex items-center gap-2 text-xs">
+                    {s.done ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                    ) : (
+                      <span className="h-3.5 w-3.5 flex items-center justify-center shrink-0" aria-hidden="true">
+                        <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse" />
+                      </span>
+                    )}
+                    <span className={s.done ? "text-slate-600" : "text-slate-400"}>{s.label}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
