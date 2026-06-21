@@ -56,38 +56,29 @@ describe("§11.374 StatusCountGrid 단일 컴포넌트 계약", () => {
   });
 });
 
-describe("§11.374 견적 모바일 바 — StatusCountGrid 채택", () => {
-  it("StatusCountGrid import + 사용", () => {
-    expect(quotes).toMatch(/import \{ StatusCountGrid \} from "@\/components\/layout\/status-count-grid"/);
-    expect(quotes).toMatch(/<StatusCountGrid/);
+describe("§11.374 [SUPERSEDED — §quote-flat KPI-dedup 2026-06-21] 견적 모바일 바 제거", () => {
+  // KPI Control Cards(데스크탑 5-cell + 모바일 StatusCountGrid 바)는 퍼널(§quote-management P2)과
+  // 단계 카운트가 중복이라 제거(호영님 2026-06-21). 퍼널이 모바일에서도 wrap → 단계 카운트 커버.
+  // StatusCountGrid 컴포넌트 계약(위 describe) + P3 구매/재고/대시보드 rollout(아래)은 유지 —
+  // 여기선 '견적 페이지의 모바일 바 채택'만 폐기→부재-lock 전환(272c/272c-2/259a 와 동일 family).
+  it("견적 모바일 바(StatusCountGrid 채택) 제거 — 부재 유지", () => {
+    expect(quotes).not.toMatch(/import \{ StatusCountGrid \} from "@\/components\/layout\/status-count-grid"/);
+    expect(quotes).not.toMatch(/<StatusCountGrid/);
+    expect(quotes).not.toMatch(/data-testid="quote-kpi-mobile-summary-bar"/);
   });
 
-  it("회귀: 옛 가로 5-탭 바(flex items-stretch border-y) 제거", () => {
-    expect(quotes).not.toMatch(/sm:hidden flex items-stretch border-y/);
-    // 옛 per-item activeText 배열 구조 제거
-    expect(quotes).not.toMatch(/activeText: "text-yellow-600"/);
+  it("KPI 의존 dead-code(summaryStats / isLoadingTimeout) 제거 유지", () => {
+    expect(quotes).not.toMatch(/const summaryStats = useMemo/);
+    expect(quotes).not.toMatch(/const \[isLoadingTimeout, setIsLoadingTimeout\]/);
   });
 
-  it("canonical count 소스 보존(summaryStats.*.count 주입)", () => {
-    expect(quotes).toMatch(/summaryStats\.dispatchPending\.count/);
-    expect(quotes).toMatch(/summaryStats\.responseTracking\.count/);
-    expect(quotes).toMatch(/summaryStats\.compareReview\.count/);
-    expect(quotes).toMatch(/summaryStats\.approvalException\.count/);
-    expect(quotes).toMatch(/summaryStats\.readyToConvert\.count/);
+  it("데스크탑 5-cell grid 제거 유지(lg:grid-cols-5 부재)", () => {
+    expect(quotes).not.toMatch(/lg:grid-cols-5/);
   });
 
-  it("필터 wiring 보존(setStatusFilter 토글) + 비교 0건 가드", () => {
-    expect(quotes).toMatch(/setStatusFilter\(\(prev\) => \(prev === it\.key \? "all" : it\.key\)\)/);
-    expect(quotes).toMatch(/it\.key === "RESPONDED" && isZero/);
-  });
-
-  it("isLoadingTimeout fallback 보존", () => {
-    expect(quotes).toMatch(/quote-kpi-mobile-summary-fallback/);
-    expect(quotes).toMatch(/불러오기 실패/);
-  });
-
-  it("데스크탑 5-cell grid 유지(lg:grid-cols-5) — P2 모바일만 교체", () => {
-    expect(quotes).toMatch(/lg:grid-cols-5/);
+  it("단계 카운트/필터는 퍼널 + 상태 Select 로 보존(회귀 0)", () => {
+    expect(quotes).toMatch(/<QuoteFunnel/);
+    expect(quotes).toMatch(/value="DEADLINE_TODAY"/);
   });
 });
 

@@ -117,8 +117,11 @@ describe("§11.279f — invariant 보존 (canonical truth)", () => {
     expect(PAGE).toMatch(/<BatchActionBar/);
   });
 
-  it("KPI grid (hidden sm:grid) 보존 (§11.272c 데스크탑 KPI)", () => {
-    expect(PAGE).toMatch(/hidden sm:grid sm:overflow-visible/);
+  it("KPI grid (hidden sm:grid) 제거 유지 (§quote-flat KPI-dedup — 퍼널 단일 surface, §11.272c/§11.374 retire 정합)", () => {
+    // §quote-flat KPI-dedup(호영님 2026-06-21): 데스크탑 KPI grid 제거 — 퍼널(§quote-management P2)이
+    //   canonical 단계 카운트 단일 surface. 279f 의 KPI-grid cross-guard 를 '존재 보존' → '제거 유지'
+    //   부재-lock 으로 진화(272c/272c-2/259a/§11.374 와 동일 KPI-grid family). dispatch banner 본연 단언은 불변.
+    expect(PAGE).not.toMatch(/hidden sm:grid sm:overflow-visible/);
   });
 
   it("STATE_PROFILE 9 entries 보존 (canonical truth)", () => {

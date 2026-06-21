@@ -38,36 +38,5 @@ describe("§11.217 Phase 1B → §quote-management P4-core-B — '우선 추천'
   });
 });
 
-describe("§11.217 Phase 2 — KPI 의미 분리 regression guard", () => {
-  it("dispatchPending bucket (request_not_sent only) 정의", () => {
-    expect(source).toMatch(/dispatchPending\s*=\s*quotesWithState\.filter/);
-    expect(source).toMatch(/state\s*===\s*"request_not_sent"/);
-  });
-
-  it("responseTracking bucket (awaiting + delayed only, request_not_sent 제외)", () => {
-    expect(source).toMatch(/state\s*===\s*"awaiting_responses"\s*\|\|\s*state\s*===\s*"response_delayed"/);
-  });
-
-  it('KPI label "발송 대기" 추가 (filter "PENDING")', () => {
-    expect(source).toMatch(/label:\s*"발송 대기"/);
-    expect(source).toMatch(/filter:\s*"PENDING"/);
-  });
-
-  it('KPI label "회신 추적" — 기존 "회신 추적 필요" 에서 "필요" 제거', () => {
-    expect(source).toMatch(/label:\s*"회신 추적"/);
-    // "회신 추적 필요" label 은 더 이상 KPI 에 없음 (insight text 는 가능)
-    const kpiArrayRegion = source.match(/\{\s*label:\s*"발송 대기"[\s\S]+?label:\s*"발주 전환 가능"/);
-    expect(kpiArrayRegion).toBeTruthy();
-    if (kpiArrayRegion) {
-      expect(kpiArrayRegion[0]).not.toMatch(/"회신 추적 필요"/);
-    }
-  });
-
-  it("KPI grid 5 cells (md:grid-cols-3 lg:grid-cols-5)", () => {
-    expect(source).toMatch(/md:grid-cols-3\s+lg:grid-cols-5/);
-  });
-
-  it("§11.217 Phase 2 주석 marker", () => {
-    expect(source).toMatch(/§11\.217 Phase 2/);
-  });
-});
+// §11.217 Phase 2(KPI 의미 분리) describe 제거 — §quote-flat KPI-dedup(2026-06-21)로 KPI Control Cards 자체 폐기.
+//   dispatchPending/responseTracking bucket·KPI 라벨·grid-cols-5 단언은 더 이상 유효하지 않음. Phase 1B(우선 추천 카드)만 유지.

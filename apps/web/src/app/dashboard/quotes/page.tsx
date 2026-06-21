@@ -9,7 +9,6 @@ import { OperationalBriefFloatingEntry } from "@/components/operational-brief/fl
 import { MobileBriefInlineButton } from "@/components/operational-brief/mobile-inline-button";
 import { MetricCell } from "@/components/operational-brief/metric-cell";
 // §11.374 — 모바일 상태요약 단일 컴포넌트(가로 5탭 빽빽 → 2x2). 표현만, count 주입.
-import { StatusCountGrid } from "@/components/layout/status-count-grid";
 // §11.374 P3.4 — 헤더 단일 문법(AppPageHeader). 스캔 포함 액션 우측 통합.
 import { AppPageHeader } from "@/components/layout/page-header";
 // §quote-management P2 — 파이프라인 퍼널(stage 파생 집계).
@@ -1025,7 +1024,6 @@ function QuotesPageContent() {
   //   isLoading true 진입 후 5s 경과 시 setIsLoadingTimeout(true) → mobile-summary-bar
   //   내부에서 5 KPI 자리에 "불러오기 실패" + [새로고침] CTA fallback UI 노출.
   //   isLoading false 시 clearTimeout + reset (timeout 진입 차단).
-  const [isLoadingTimeout, setIsLoadingTimeout] = useState(false);
   // §11.228 #quote-management-v2-phase-c1 — 일괄 처리 강화 sheet state.
   // BatchReminderSheet (responseCount === 0 filter) + BatchStatusChangeSheet
   // (PATCH /api/quotes/[id]/status 일괄). BatchDispatchSheet 와 동등한 lifecycle.
@@ -1592,16 +1590,7 @@ function QuotesPageContent() {
   // 필터 변경 중 indicator (기존 list 유지하면서 상단에만 표시)
   const isFilterChanging = isFetching && !isLoading;
 
-  // §11.272c-2 — KPI 모바일 요약 바 5초 timeout fallback (호영님 P2 spec, §11.272c 후속).
-  //   isLoading true 5s 후 setIsLoadingTimeout(true). isLoading false 시 clearTimeout + reset.
-  useEffect(() => {
-    if (!isLoading) {
-      setIsLoadingTimeout(false);
-      return;
-    }
-    const timeoutId = setTimeout(() => setIsLoadingTimeout(true), 5000);
-    return () => clearTimeout(timeoutId);
-  }, [isLoading]);
+  // §quote-flat KPI-dedup — KPI 모바일 요약 바 timeout fallback useEffect 제거(바 제거 동반).
 
   const quotes: Quote[] = useMemo(() => {
     const baseQuotes: Quote[] = quotesData?.quotes || [];
@@ -1723,52 +1712,7 @@ function QuotesPageContent() {
 
   // 운영 요약 — canonical state 기반 집계 (row/rail과 같은 selector 사용)
   const quotesWithState = useMemo(() => quotes.map(q => ({ quote: q, state: deriveRailState(q) })), [quotes]);
-  const summaryStats = useMemo(() => {
-    // §11.217 Phase 2 (Issue 2) — "회신 추적 필요" 의미 분리.
-    // 기존: request_not_sent + awaiting_responses + response_delayed 모두 합산 →
-    //       "회신 추적 필요" label 이 "미발송" 케이스까지 포함 = 의미 mismatch.
-    // 신규: dispatchPending (미발송) + responseTracking (회신 대기/지연) 으로
-    //       2-bucket 분리. 각 bucket 별 filter 도 분리.
-    const dispatchPending = quotesWithState.filter(({ state }) => state === "request_not_sent");
-    const tracking = quotesWithState.filter(({ state }) => state === "awaiting_responses" || state === "response_delayed");
-    const delayedCount = tracking.filter(({ state }) => state === "response_delayed").length;
-    const review = quotesWithState.filter(({ state }) => COMPARE_STATES.has(state));
-    const condCount = review.filter(({ state }) => state === "condition_check_required").length;
-    const approval = quotesWithState.filter(({ state }) => state === "external_approval_required" || state === "condition_check_required");
-    const convertible = quotesWithState.filter(({ state }) => state === "ready_for_po_conversion");
-    return {
-      dispatchPending: {
-        count: dispatchPending.length,
-        insight: dispatchPending.length > 0
-          ? "공급사 견적 요청 발송 우선 — 첫 액션 필요"
-          : "미발송 케이스 없음",
-      },
-      responseTracking: {
-        count: tracking.length,
-        insight: tracking.length > 0
-          ? (delayedCount > 0 ? `${delayedCount}건 회신 지연 — 오늘 재요청 판단 필요` : "응답 수집 중 — 비교 가능 여부 대기")
-          : "회신 추적 대상 없음",
-      },
-      compareReview: {
-        count: review.length,
-        insight: review.length > 0
-          ? (condCount > 0 ? `${condCount}건 조건 확인 필요 — 선택안 확정 전` : "선택안 확정 또는 비교 준비 단계")
-          : "검토 대상 없음",
-      },
-      approvalException: {
-        count: approval.length,
-        insight: approval.length > 0
-          ? "승인 패키지 준비 또는 조건 해소 필요"
-          : "승인/예외 처리 대상 없음",
-      },
-      readyToConvert: {
-        count: convertible.length,
-        insight: convertible.length > 0
-          ? "차단 없이 PO 전환 준비 가능"
-          : "전환 대상 없음 — 비교/조건 정리 먼저",
-      },
-    };
-  }, [quotesWithState]);
+  // §quote-flat KPI-dedup — summaryStats(KPI 카드 전용 집계) 제거. 단계 카운트는 퍼널이 직접 산출.
 
   // §11.279e-cont-2 — primaryDispatch* helper 10개 정의 전면 제거 (호영님 P1 sprint).
   //   §11.279 cluster 가 §11.279a/b section unmount + §11.279e validity/lifecycle 2 helper
@@ -2265,117 +2209,10 @@ function QuotesPageContent() {
         onClearSelection={clearSelection}
       />
 
-      {/* ── KPI Control Cards — §11.272c 데스크탑 (sm+) 만 5 cell grid 표시.
-          §11.272c — 모바일 가로 스크롤 (호영님 spec "뒤쪽 카드를 못 봄") 제거.
-            모바일은 아래 <quote-kpi-mobile-summary-bar> 1줄 요약 바 (방안 A).
-          §11.259a #5 — 0건 카드 회색 톤다운 (isZero opacity-50 + text-slate-300/400 보존).
-          데스크탑 breakpoint: sm 2열 / md 3열 / lg 5열 보존. (§11.217 Phase 2 발송 대기
-          cell + §11.248c P0 라벨 wrap 보존) ── */}
-      <div className="hidden sm:grid sm:overflow-visible sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-        {[
-          { label: "발송 대기", ...summaryStats.dispatchPending, icon: Send, filter: "PENDING", color: "slate", iconBg: "bg-slate-50", iconText: "text-slate-600", activeBorder: "border-slate-400/50", activeRing: "ring-slate-400/20", activeBg: "bg-slate-50/50", hoverBorder: "hover:border-slate-300", hoverShadow: "hover:shadow-slate-100" },
-          { label: "회신 추적", ...summaryStats.responseTracking, icon: Clock, filter: "SENT", color: "amber", iconBg: "bg-yellow-50", iconText: "text-yellow-600", activeBorder: "border-yellow-400/50", activeRing: "ring-yellow-400/20", activeBg: "bg-yellow-50/50", hoverBorder: "hover:border-yellow-300", hoverShadow: "hover:shadow-yellow-100" },
-          { label: "비교 검토 필요", ...summaryStats.compareReview, icon: RefreshCw, filter: "RESPONDED", color: "purple", iconBg: "bg-purple-50", iconText: "text-purple-600", activeBorder: "border-purple-400/50", activeRing: "ring-purple-400/20", activeBg: "bg-purple-50/50", hoverBorder: "hover:border-purple-300", hoverShadow: "hover:shadow-purple-100" },
-          { label: "승인 / 예외 처리", ...summaryStats.approvalException, icon: AlertCircle, filter: "DEADLINE_TODAY", color: "red", iconBg: "bg-red-50", iconText: "text-red-500", activeBorder: "border-red-400/50", activeRing: "ring-red-400/20", activeBg: "bg-red-50/50", hoverBorder: "hover:border-red-300", hoverShadow: "hover:shadow-red-100" },
-          { label: "발주 전환 가능", ...summaryStats.readyToConvert, icon: FileCheck2, filter: "COMPLETED", color: "emerald", iconBg: "bg-emerald-50", iconText: "text-emerald-600", activeBorder: "border-emerald-400/50", activeRing: "ring-emerald-400/20", activeBg: "bg-emerald-50/50", hoverBorder: "hover:border-emerald-300", hoverShadow: "hover:shadow-emerald-100" },
-        ].map(({ label, count, insight, icon: Icon, filter, iconBg, iconText, activeBorder, activeRing, activeBg, hoverBorder, hoverShadow }, idx) => {
-          const isActive = statusFilter === filter;
-          const isZero = !isLoading && count === 0;
-          const isCompareReviewZero = label === "비교 검토 필요" && isZero;
-          return (
-            <button
-              key={label}
-              onClick={() => {
-                if (isCompareReviewZero) return;
-                setStatusFilter(prev => prev === filter ? "all" : filter);
-              }}
-              disabled={isCompareReviewZero}
-              aria-disabled={isCompareReviewZero}
-              className={`animate-stagger-up text-left rounded-xl border bg-pn p-3 sm:p-3.5 transition-all duration-200 cursor-pointer group min-w-[140px] sm:min-w-0 shrink-0 sm:shrink snap-start
-                ${hoverBorder} ${hoverShadow} hover:shadow-md hover:-translate-y-1
-                ${isActive ? `${activeBorder} ${activeBg} ring-1 ${activeRing}` : "border-bd/80"}
-                ${isZero && !isActive ? "opacity-50 hover:opacity-100" : ""}
-                ${isCompareReviewZero ? "cursor-not-allowed hover:translate-y-0 hover:shadow-none" : ""}
-              `}
-              style={{ animationDelay: `${idx * 80}ms` }}>
-              <div className="flex items-center gap-2 mb-2">
-                <div className={`w-8 h-8 rounded-lg ${iconBg} flex items-center justify-center transition-transform group-hover:scale-110`}>
-                  <Icon className={`h-4 w-4 ${iconText}`} />
-                </div>
-                {/* §11.248c — label truncate 제거 (호영님 spec "라벨 우선순위 배치 — 잘리지 않도록"). break-keep 으로 어절 단위 wrap 허용. */}
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider break-keep">{label}</span>
-              </div>
-              <div className={`text-3xl font-extrabold tracking-tight mb-1 ${isZero ? "text-slate-300" : "text-slate-900"}`}>
-                {isLoading ? <span className="inline-block w-8 h-7 bg-el/50 rounded animate-pulse" /> : count}
-              </div>
-              <p className={`text-[11px] leading-snug line-clamp-2 ${isZero ? "text-slate-400" : "text-slate-500"}`}>
-                {isLoading ? "집계 확인 중" : insight}
-              </p>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* §11.272c — 모바일 KPI 1줄 숫자 요약 바 (호영님 spec 방안 A).
-          가로 스크롤 카드 + 페이지네이션 도트 (§11.264i) supersede.
-          5 KPI 짧은 라벨 + count 1줄 균등 분배. count > 0 = tone color
-          ($activeText), count === 0 = text-slate-400 (회색). 활성 statusFilter
-          (선택) = bg-slate-100 ring. 탭 → setStatusFilter (기존 카드 onClick 와
-          동일 분기) — canonical truth (summaryStats / isCompareReviewZero) 보존.
-          sm:hidden — 데스크탑은 5 cell grid 카드 유지. */}
-      {/* §11.272c-2 — isLoadingTimeout 시 5 KPI map 대신 "불러오기 실패" fallback UI */}
-      {/* §11.374 — 모바일 상태요약: 가로 5-탭(빽빽) → StatusCountGrid 2x2 통일.
-          canonical summaryStats/statusFilter wiring + isCompareReviewZero(비교 0건)
-          가드 + isLoadingTimeout fallback 전수 보존. count 주입만(데이터 경로 불변).
-          sm:hidden — 데스크탑 5-cell grid 는 별도 유지(P4 통일 예정). */}
-      <div
-        data-testid="quote-kpi-mobile-summary-bar"
-        className="sm:hidden -mx-3 px-3 py-2"
-      >
-        {isLoadingTimeout ? (
-          <div
-            data-testid="quote-kpi-mobile-summary-fallback"
-            className="inline-flex w-full items-center justify-between rounded-xl border border-rose-200 bg-rose-50 px-3 min-h-[44px]"
-            role="alert"
-            aria-live="polite"
-          >
-            <span className="text-[13px] font-medium text-rose-600">불러오기 실패</span>
-            <button
-              type="button"
-              onClick={() => {
-                setIsLoadingTimeout(false);
-                refetch();
-              }}
-              className="text-[13px] font-semibold text-blue-600 hover:text-blue-700 px-2 min-h-[44px] inline-flex items-center"
-              aria-label="견적 데이터 새로고침"
-            >
-              새로고침
-            </button>
-          </div>
-        ) : (
-          <StatusCountGrid
-            ariaLabel="견적 상태별 요약"
-            loading={isLoading}
-            items={[
-              { key: "PENDING", label: "발송", tone: "neutral" as const, count: summaryStats.dispatchPending.count },
-              { key: "SENT", label: "회신", tone: "warning" as const, count: summaryStats.responseTracking.count },
-              { key: "RESPONDED", label: "비교", tone: "review" as const, count: summaryStats.compareReview.count },
-              { key: "DEADLINE_TODAY", label: "승인", tone: "danger" as const, count: summaryStats.approvalException.count },
-              { key: "COMPLETED", label: "전환", tone: "success" as const, count: summaryStats.readyToConvert.count },
-            ].map((it) => {
-              const isZero = !isLoading && it.count === 0;
-              // §11.272c 보존 — 비교(RESPONDED) 0건은 클릭 무효(비교 불가).
-              const compareGuard = it.key === "RESPONDED" && isZero;
-              return {
-                ...it,
-                active: statusFilter === it.key,
-                disabled: compareGuard,
-                onClick: () => setStatusFilter((prev) => (prev === it.key ? "all" : it.key)),
-              };
-            })}
-          />
-        )}
-      </div>
+      {/* §quote-flat KPI-dedup (호영님 2026-06-21) — KPI Control Cards(데스크탑 5-cell §11.272c
+          + 모바일 요약 바 §11.272c-2) 제거. 퍼널(§quote-management P2)이 단계 카운트 canonical 단일 surface.
+          필터: 단계=퍼널 onStageClick, 마감임박(구 DEADLINE_TODAY)=상태 Select "오늘 마감" + MODE_CHIPS "오늘 처리".
+          summaryStats / isLoadingTimeout / StatusCountGrid 의존 동반 제거. */}
 
       {/* ── 검색 + 필터 ──
           §11.259c — 호영님 spec 견적 관리 모바일 #3 "필터 + 뷰 전환 영역 1줄 압축".
