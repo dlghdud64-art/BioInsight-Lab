@@ -639,7 +639,9 @@ function QuoteCard({
       data-testid="quote-request-card"
       data-card-index={cardIndex}
       tabIndex={0}
-      className={`bg-pn rounded-xl border border-l-[3px] transition-all duration-200 p-4 cursor-pointer hover:shadow-md hover:-translate-y-0.5 animate-stagger-up focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2 ${opStatus.leftBorder} ${
+      /* §quote-screen-sian P6.5 §01 — 카드 좌측 세로 accent 띠(Claude 트로프) 제거.
+         선택/강조는 전체 테두리 + ring 으로만(시안 정합). border-l-[3px]·opStatus.leftBorder 삭제. */
+      className={`bg-pn rounded-xl border transition-all duration-200 p-4 cursor-pointer hover:shadow-md hover:-translate-y-0.5 animate-stagger-up focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2 ${
         isSelectedForBatch ? "border-violet-500/60 ring-1 ring-violet-500/30 bg-violet-50/40"
         : isSelected ? "border-blue-600/40 ring-1 ring-blue-600/20 bg-blue-600/5"
         : delayed ? "border-red-600/30"
@@ -2780,17 +2782,15 @@ function QuotesPageContent() {
                       // §11.242c #2 — tr 행 높이 h-12 통일 (호영님 P0 가독성 백로그 close).
                       //   px-3 py-2 ~ px-4 py-3 혼재 → h-12 강제로 일관 행 간격 확보.
                       const focusRing = "focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-inset";
-                      const priorityBorder =
-                        priorityLevel === "critical" ? "border-l-4 border-red-500"
-                        : priorityLevel === "high" ? "border-l-4 border-yellow-400"
-                        : "border-l-4 border-transparent";
+                      // §quote-screen-sian P6.5 §01 — 우선순위 좌측 세로 띠(border-l-4) 제거(Claude 트로프 금지).
+                      //   우선순위는 priority 컬럼 pill(P3)로 표시 — 좌측 띠 중복 제거. 선택 강조도 좌측 border-l-blue 대신 전체 ring.
                       const isBatchSelected = selectedQuoteIds.has(quote.id);
                       const bgClass = isBatchSelected
-                        ? "bg-blue-50 border-l-blue-500 hover:bg-blue-100"
+                        ? "bg-blue-50 ring-1 ring-inset ring-blue-500 hover:bg-blue-100"
                         : isSelected
                           ? "bg-blue-50/60 hover:bg-blue-100/60"
                           : `${rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100`;
-                      return `h-12 ${bgClass} ${priorityBorder} cursor-pointer transition-colors duration-150 ${focusRing}`;
+                      return `h-12 ${bgClass} cursor-pointer transition-colors duration-150 ${focusRing}`;
                     })()}
                   >
                     {/* §11.240 + §11.242 #10 — 첫 td = row checkbox + sticky left-0. */}

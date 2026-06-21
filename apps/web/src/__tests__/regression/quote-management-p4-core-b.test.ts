@@ -57,7 +57,7 @@ describe("§quote-management P4-core-B — 우선순위 단일화(computePriorit
     expect(PAGE).toMatch(/priorityResult\?\.level === "mid"/);
   });
   it("border·dot 소비처 무변경(critical/high/normal 시각 버킷 유지)", () => {
-    expect(PAGE).toMatch(/priorityLevel === "critical" \? "border-l-4 border-red-500"/);
+    // §quote-screen-sian P6.5 — 우선순위 좌측 띠(border-l-4) 제거(Claude 트로프 금지). priority 컬럼 pill dot 로 표시.
     expect(PAGE).toMatch(/priorityLevel === "critical" \? "bg-red-500"/);
   });
   it("카드 렌더 + import(computePriority/toQuoteCase/카드)", () => {

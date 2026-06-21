@@ -68,13 +68,15 @@ describe("§11.242 #3 — 5색 status 뱃지", () => {
   });
 });
 
-describe("§11.242 #4 — 우선순위 left border (긴급 red / 높음 yellow §11.302)", () => {
-  it("tbody tr 안 priorityLevel === 'critical' 시 border-l-4 border-red-500", () => {
-    expect(page).toMatch(/priorityLevel[\s\S]{0,400}(border-l-4 border-red-500|border-l-red-500)/);
+describe("§quote-screen-sian P6.5 — 우선순위 시각(좌측 띠 제거 → priority pill, Claude 트로프 금지)", () => {
+  // 시안 §01: 카드/행 좌측 세로 accent 띠 금지. 우선순위는 priority 컬럼 pill(P3)로 표시.
+  it("tbody tr 우선순위 좌측 세로 띠(border-l-4) 제거", () => {
+    expect(page).not.toMatch(/border-l-4 border-red-500/);
+    expect(page).not.toMatch(/border-l-4 border-yellow-400/);
   });
 
-  it("priorityLevel === 'high' 시 border-l-4 border-yellow-400 또는 -500 (§11.302 amber→yellow)", () => {
-    expect(page).toMatch(/priorityLevel[\s\S]{0,400}border-l-(4 border-)?yellow-(400|500)/);
+  it("우선순위는 priority 컬럼 pill(critical=red / high=yellow dot)로 표시", () => {
+    expect(page).toMatch(/priorityLevel === "critical" \? "bg-red-500" : "bg-yellow-500"/);
   });
 });
 

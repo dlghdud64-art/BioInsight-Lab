@@ -106,7 +106,8 @@ export function PriorityRecommendationCard({
           <span className="font-semibold">우선 추천</span>
         </p>
         <h3 className="text-[15px] sm:text-base font-bold leading-snug truncate">
-          <span className="rounded-md bg-[#6f97ee]/25 px-1.5 py-0.5 font-extrabold">{best.name}</span>
+          {/* §quote-screen-sian P6.5 — 품목명 배경 highlight 제거(시안 평문 정합). */}
+          <span className="font-extrabold">{best.name}</span>
           {" — "}
           {nextStep} 단계입니다.
         </h3>

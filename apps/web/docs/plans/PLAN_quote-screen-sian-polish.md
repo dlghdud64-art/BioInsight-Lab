@@ -29,9 +29,22 @@
 - "나중에" 보류 버튼(추천 일시 보류 state) + 액션 버튼 라벨 next.label("견적 요청 발송"). PriorityRecommendationCard. dead button 0(나중에=실제 보류 동작).
 - Gate: computePriority 1위 추천 보존, 실행 버튼 다음 액션 연결, build.
 
-### P6.4: 발송 검토 모달 §09 — [ ]
-- 라이브 중복 상태 블록 4개 → 단일 스텝퍼(공급사 선택✓→연락처 확인✓→메시지 검토✓→전송) 통합. cuid 노출(quote ID) 봉합(quoteDisplayRef). 2상태 분기(공급사 유=전송 준비 완료 / 무=공급사 추가 — honesty 발송 0곳 비활성 유지). 받는 공급사 카드·메시지 초안·응답 기한 보존.
-- Gate: 발송 wiring(공급사 선별·전송·honesty 0곳 비활성) 무회귀, fake handoff 0, build.
+### P6.4: 발송 검토 모달 §09 — [ ] ★ 대규모·신선 세션 구현 (설계 확정·2026-06-21)
+**대상**: components/quotes/dispatch/vendor-dispatch-workbench.tsx (`VendorRequestModal`, 1097줄). 호출처: page.tsx·_workbench/quote/request·quotes/[id].
+**설계(다음 세션 착수용)**:
+- **props 계약 확장**: 현재 `quoteId?: string`(cuid)만 받음 → quote ref(quoteNumber/quoteDisplayRef 결과) + 공급사 표시 데이터(이름·이메일·연락처 확인 상태)를 props로 전달. ★ 3개 caller 모두 변경(wiring).
+- **cuid 봉합**: line 472·890 `quote ID: {sentTracking?.quoteId ?? quoteId}` + 374 PDF 파일명 `quoteId.slice(0,8)` → ref 표기.
+- **단일 스텝퍼**: 중복 4블록(handoff-line 458 / review-visible 3배지 474 / recipient-summary 501 / readiness 섹션) → 공급사 선택✓→연락처 확인✓→메시지 검토✓→전송 단일 스텝퍼.
+- **2상태**: 공급사 유=전송 준비 완료 카드 + 받는 공급사 카드(아바타·이메일·확인 배지) + 메시지 초안(편집) + 응답 기한 / 무=공급사 추가(honesty 0곳 비활성 유지).
+- **testid 맵**: ★보존(wiring/honesty): quote-dispatch-direct-send-cta·send-readiness·전송 핸들러·sendReadiness 게이트(948 disabled). 제거/통합(중복): supplier-badge·contact-badge-top·send-readiness-badge·recipient-summary·selected-supplier-names → 스텝퍼로. → sentinel 대량 진화(quote-dispatch-* · vendor-dispatch-workbench-aria-274 · dispatch-supplier-wiring 등).
+- sub-phase: 4a props 확장+cuid+헤더 / 4b 중복 4블록→스텝퍼 / 4c 받는 공급사 카드·메시지·기한 / 4d sentinel sweep+게이트.
+- **불변(절대 보존)**: sendReadiness(ready/needs_review/blocked)·전송 mutation·honesty(0곳 비활성·fake handoff 0)·PDF 생성·csrfFetch. 전면 재작성 금지 — 섹션별 최소 diff.
+- Gate: 발송 wiring 무회귀, fake handoff 0, dead button 0, build, Chrome 2상태 대조.
+
+### P6.5: 카드/행 좌측 띠 금지 + 품목 배경 삭제 (시안 §01) — [x] 구현 완료·게이트 대기 (2026-06-21)
+- 카드(QuoteCard) `border-l-[3px] opStatus.leftBorder` 제거 → 전체 테두리+ring. 테이블 tr priorityLevel `border-l-4` 제거(우선순위는 priority 컬럼 pill 표시) + 선택 `border-l-blue-500`→전체 ring. AI 추천 카드 품목명 `bg-[#6f97ee]/25` highlight 제거(시안 평문).
+- sentinel 진화: readability §11.242 #4(좌측 border→pill) · p4-core-b :57(border-l-4 제거).
+- 라이브 land: 카드/테이블 토글·정렬·내림·필터(스크린샷 확인) — 미세 gap은 라이브 대조 후.
 
 ### P6.5: 카드형 레이아웃·운영 브리핑 (지시문 3) — [ ] (라이브 대조 후 실 미정합만)
 - 카드 리스트(상태칩·RFQ·담당자·미니 진행스텝·공급사 응답·마감) + 우측 운영 브리핑 패널. ≥1100px 고정 / <1100px 슬라이드 드로어(딤·X). accent 세로 띠 금지(선택=전체 테두리+링). 대부분 §11.248 land — 라이브 대조로 gap만.
