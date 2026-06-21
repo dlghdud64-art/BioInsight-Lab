@@ -3236,15 +3236,44 @@ function QuotesPageContent() {
               </div>
             </>
           ) : (
-            <>
-              <Package className="h-8 w-8 text-slate-600" />
-              <p className="text-sm text-slate-700">현재 처리 중인 견적 케이스가 없습니다</p>
-              <p className="text-xs text-slate-500">새 견적 요청을 만들거나, BOM/외부 견적서를 업로드할 수 있습니다</p>
-              <div className="flex gap-2 mt-2">
-                <Link href="/app/search"><Button size="sm" className="h-8 text-xs bg-blue-600 hover:bg-blue-700">새 요청 만들기</Button></Link>
-                <Link href="/dashboard/inventory"><Button size="sm" variant="outline" className="h-8 text-xs text-slate-400 border-bd">재고 확인</Button></Link>
+            // §quote-flat Q4 — 빈 상태 온보딩(시안 §01·§11). 3단계 안내 + 견적 케이스 만들기/스캔으로 시작.
+            //   compact(큰 일러스트·장문 금지, CLAUDE.md mobile empty-state). 두 CTA 모두 실배선(dead button 0):
+            //   만들기→/app/search(신규 RFQ), 스캔→setAiParseModalOpen(견적서 스캔 모달, 헤더 스캔과 동일 wiring).
+            <div className="w-full max-w-lg text-center">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-[#2f6be0]">
+                <Package className="h-6 w-6" />
               </div>
-            </>
+              <h2 className="text-base font-bold text-slate-900 break-keep">첫 견적 케이스를 만들어 파이프라인을 시작하세요</h2>
+              <p className="mt-1 text-xs text-slate-500 break-keep">요청 발송 → 회신 비교 → 발주 전환까지 한 흐름으로 추적합니다.</p>
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2 text-left">
+                {[
+                  { n: 1, t: "견적 케이스 생성", d: "필요한 품목을 묶어 RFQ 케이스를 만듭니다." },
+                  { n: 2, t: "공급사에 발송", d: "후보 공급사를 골라 한 번에 보냅니다." },
+                  { n: 3, t: "회신 비교·발주", d: "도착한 견적을 비교해 발주로 전환합니다." },
+                ].map((s) => (
+                  <div key={s.n} className="rounded-lg border border-bd bg-white p-3">
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-[#2f6be0] text-xs font-bold">{s.n}</span>
+                    <p className="mt-1.5 text-xs font-semibold text-slate-800 break-keep">{s.t}</p>
+                    <p className="mt-0.5 text-[11px] text-slate-500 leading-snug break-keep">{s.d}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <Link href="/app/search">
+                  <Button size="sm" className="h-9 text-xs gap-1.5 bg-[#2f6be0] hover:bg-[#244e9e]">
+                    <Plus className="h-4 w-4" /> 견적 케이스 만들기
+                  </Button>
+                </Link>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-9 text-xs gap-1.5 border-bd"
+                  onClick={() => setAiParseModalOpen(true)}
+                >
+                  <ScanLine className="h-4 w-4" /> 견적서 스캔으로 시작
+                </Button>
+              </div>
+            </div>
           )}
         </div>
       )}
