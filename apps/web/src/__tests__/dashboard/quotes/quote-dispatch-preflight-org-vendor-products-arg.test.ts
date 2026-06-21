@@ -105,9 +105,11 @@ describe("#quote-dispatch-preflight-org-vendor-products-arg — invariant 보존
     expect(page).toMatch(/\/api\/organization-vendor-products/);
   });
 
-  it("§11.224 테이블 뷰 9 컬럼 + §11.223 RelativeDeliveryText 보존 (§11.230b dynamic 정합)", () => {
-    expect(page).toMatch(/(<th[^>]{0,80}>가격<\/th>|price:\s*"가격")/);
-    expect(page).toMatch(/(<th[^>]{0,80}>납기<\/th>|delivery:\s*"납기")/);
+  it("§quote-table-sian P2 테이블 뷰 8 컬럼(예상금액 포함·납기 제거) + §11.223 RelativeDeliveryText(카드) 보존", () => {
+    // §quote-table-sian P2 cross-guard 진화: 가격→예상금액, 납기 컬럼 제거.
+    // RelativeDeliveryText 는 카드 뷰에서 잔존(테이블 delivery 셀과 무관).
+    expect(page).toMatch(/(<th[^>]{0,80}>예상금액<\/th>|price:\s*"예상금액")/);
+    expect(page).not.toMatch(/delivery:\s*"납기"/);
     expect(page).toMatch(/<RelativeDeliveryText/);
   });
 

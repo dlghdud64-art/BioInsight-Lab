@@ -42,10 +42,9 @@ describe("§11.217 Phase 6 — quote list 카드 ↔ 테이블 toggle", () => {
     expect(src).toMatch(/viewMode\s*===\s*["']table["']/);
   });
 
-  it("table column header — 제목 / 상태 / 품목 / 회신 (§11.230b COLUMN_LABEL 매핑)", () => {
-    // §11.230b dynamic refactor 후 thead = visibleColumns.map() + COLUMN_LABEL.
-    // 한국어 라벨 string 자체는 module-scope COLUMN_LABEL 안 잔존.
-    expect(src).toMatch(/"제목"/);
+  it("table column header — 견적케이스 / 단계 / 회신 (§quote-table-sian P2 COLUMN_LABEL 매핑)", () => {
+    // §quote-table-sian P2 — 제목→견적케이스, 상태→단계, 품목 컬럼 제거.
+    expect(src).toMatch(/"견적케이스"/);
     expect(src).toMatch(/"회신"/);
   });
 

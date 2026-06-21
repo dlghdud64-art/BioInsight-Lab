@@ -56,14 +56,14 @@ describe("§11.248d #2 — 가로 스크롤 fade hint (좌우 gradient overlay)"
 });
 
 describe("§11.248d #3 — invariant 보존", () => {
-  it("DEFAULT_COLUMN_PREFS 10 컬럼 보존 (§quote-flat Q3a: dueDate 추가 — 기존 9 순서 손실/재배열 0)", () => {
-    // §quote-flat Q3a — 마감(dueDate) 컬럼 신규 추가. 보호 의도(기존 컬럼 손실·재배열 방지)는
-    //   불변: dueDate 는 createdAt 과 actions 사이에 삽입, 기존 9 컬럼의 상대 순서 그대로 보존.
-    expect(page).toMatch(/title:\s*\d+,\s*[\s\S]{0,80}status:\s*\d+,\s*[\s\S]{0,80}itemCount/);
-    expect(page).toMatch(/order:\s*\[\s*"title",\s*"status",\s*"itemCount",\s*"responseCount",\s*"price",\s*"delivery",\s*"priority",\s*"createdAt",\s*"dueDate",\s*"actions"\s*\]/);
+  it("DEFAULT_COLUMN_PREFS 8 컬럼 보존 (§quote-table-sian P2 — itemCount/delivery/createdAt 제거·supplier 추가, 상대 순서 보존)", () => {
+    // §quote-table-sian P2 — 시안 A 8컬럼. 보호 의도(컬럼 손실·임의 재배열 방지)는 불변:
+    //   order 는 견적케이스→공급사→단계→회신→우선순위→예상금액→마감→다음단계 고정.
+    expect(page).toMatch(/title:\s*\d+,\s*[\s\S]{0,80}supplier:\s*\d+,\s*[\s\S]{0,80}status/);
+    expect(page).toMatch(/order:\s*\[\s*"title",\s*"supplier",\s*"status",\s*"responseCount",\s*"priority",\s*"price",\s*"dueDate",\s*"actions"\s*\]/);
   });
 
-  it("COLUMN_LABEL 매핑 보존 (제목/상태/품목/회신/가격/납기/우선순위/등록/마감/액션)", () => {
+  it("COLUMN_LABEL 매핑 보존 (견적케이스/공급사/단계/회신/우선순위/예상금액/마감/다음단계)", () => {
     expect(page).toMatch(/COLUMN_LABEL:\s*Record<ColumnKey,\s*string>/);
   });
 

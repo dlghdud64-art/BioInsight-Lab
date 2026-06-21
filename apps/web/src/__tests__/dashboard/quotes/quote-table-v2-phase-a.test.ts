@@ -103,31 +103,23 @@ describe("§11.226 #3 — 테이블 진입 시 popup auto-close", () => {
   });
 });
 
-describe("§11.226 #4 — 빈 컬럼 자동 hide (가격/납기)", () => {
-  it("priceColumnHasData useMemo 정의 (filteredQuotes scan)", () => {
-    expect(page).toMatch(/priceColumnHasData[\s\S]{0,80}useMemo|const priceColumnHasData/);
+describe("§quote-table-sian P2 #4 — 예상금액 always 노출 (이전 §11.226 빈컬럼 hide supersede)", () => {
+  // CEO 2026-06-21 시안 정합: 납기 컬럼 제거 + 예상금액 always. priceColumnHasData/
+  // deliveryColumnHasData 게이트는 제거됨(canonical truth quote.responses 변경 0, 표시 정책만 진화).
+  it("예상금액(price) 컬럼 visibleColumns 무조건 통과", () => {
+    expect(page).toMatch(/key\s*===\s*["']price["']\)\s*return true/);
   });
 
-  it("deliveryColumnHasData useMemo 정의", () => {
-    expect(page).toMatch(/deliveryColumnHasData[\s\S]{0,80}useMemo|const deliveryColumnHasData/);
+  it("공급사(supplier) 컬럼 — vendorRequests 아바타 분리 td", () => {
+    expect(page).toMatch(/key === "supplier"[\s\S]{0,400}<SupplierAvatars suppliers=\{toSuppliers\(quote\.vendorRequests\)\}/);
   });
 
-  it("thead 가격 컬럼 조건 render — priceColumnHasData (§11.230b visibleColumns 분기)", () => {
-    // §11.230b dynamic refactor — visibleColumns useMemo 안 if (key === "price") return priceColumnHasData
-    expect(page).toMatch(/key\s*===\s*["']price["'][\s\S]{0,300}return priceColumnHasData|priceColumnHasData\s*&&/);
-  });
-
-  it("thead 납기 컬럼 조건 render — deliveryColumnHasData (§11.230b visibleColumns 분기)", () => {
-    expect(page).toMatch(/key\s*===\s*["']delivery["'][\s\S]{0,300}return deliveryColumnHasData|deliveryColumnHasData\s*&&/);
-  });
-
-  it("tbody 가격 td 조건 render — visibleColumns price 분기", () => {
-    // §11.230b — tbody dynamic td: if (key === "price") { ... responseCount === 0 ... }
+  it("tbody 예상금액 td — 회신 0 시 약화(가짜 금액 금지)", () => {
     expect(page).toMatch(/key\s*===\s*["']price["'][\s\S]{0,2000}responseCount === 0/);
   });
 
-  it("tbody 납기 td 조건 render — visibleColumns delivery 분기", () => {
-    expect(page).toMatch(/key\s*===\s*["']delivery["'][\s\S]{0,1500}quote\.deliveryDate/);
+  it("납기(delivery) 컬럼 키 제거 — tbody/visibleColumns delivery 분기 부재", () => {
+    expect(page).not.toMatch(/key\s*===\s*["']delivery["']/);
   });
 });
 
@@ -174,11 +166,10 @@ describe("§11.226 invariant 보존 (cluster lineage)", () => {
     expect(page).toMatch(/RelativeDeliveryText/);
   });
 
-  it("§11.224 테이블 thead 9 컬럼 유지 — 가격 + 납기 포함 (§11.230b dynamic 정합)", () => {
-    // §11.230b dynamic visibleColumns.map() + COLUMN_LABEL 매핑 → inline 또는
-    // COLUMN_LABEL price/delivery 양방향 매칭.
-    expect(page).toMatch(/(<th[^>]{0,200}>가격<\/th>|price:\s*"가격")/);
-    expect(page).toMatch(/(<th[^>]{0,200}>납기<\/th>|delivery:\s*"납기")/);
+  it("§quote-table-sian P2 — 테이블 thead 8 컬럼: 예상금액 포함·납기 제거", () => {
+    // CEO 시안 정합: 가격→예상금액(always), 납기 컬럼 제거.
+    expect(page).toMatch(/(<th[^>]{0,200}>예상금액<\/th>|price:\s*"예상금액")/);
+    expect(page).not.toMatch(/delivery:\s*"납기"/);
   });
 
   it("§11.225 organizationVendorProducts 인자 3 caller forward 보존", () => {

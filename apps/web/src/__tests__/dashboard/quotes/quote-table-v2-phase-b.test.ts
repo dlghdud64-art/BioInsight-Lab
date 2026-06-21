@@ -96,9 +96,9 @@ describe("§11.227 invariant 보존 (cluster lineage)", () => {
     expect(page).toMatch(/RelativeDeliveryText/);
   });
 
-  it("§11.224 thead 9 컬럼 (가격/납기 conditional) 보존 (§11.230b dynamic 정합)", () => {
-    expect(page).toMatch(/(<th[^>]{0,200}>가격<\/th>|price:\s*"가격")/);
-    expect(page).toMatch(/(<th[^>]{0,200}>납기<\/th>|delivery:\s*"납기")/);
+  it("§quote-table-sian P2 — thead 8 컬럼: 예상금액 포함·납기 제거", () => {
+    expect(page).toMatch(/(<th[^>]{0,200}>예상금액<\/th>|price:\s*"예상금액")/);
+    expect(page).not.toMatch(/delivery:\s*"납기"/);
   });
 
   it("§11.225 organizationVendorProducts 인자 forward 보존", () => {
@@ -110,9 +110,10 @@ describe("§11.227 invariant 보존 (cluster lineage)", () => {
     expect(page).toMatch(/견적 요청 발송[\s\S]{0,200}["']발송["']/);
   });
 
-  it("§11.226 #4 priceColumnHasData / deliveryColumnHasData 보존", () => {
-    expect(page).toMatch(/priceColumnHasData/);
-    expect(page).toMatch(/deliveryColumnHasData/);
+  it("§quote-table-sian P2 — 예상금액 always(hasData 게이트 제거) + 공급사 분리", () => {
+    // 이전 §11.226 #4 price/delivery hasData 게이트는 시안 P2 에서 supersede.
+    expect(page).toMatch(/key\s*===\s*["']price["']\)\s*return true/);
+    expect(page).toMatch(/key === "supplier"[\s\S]{0,400}<SupplierAvatars suppliers=\{toSuppliers\(quote\.vendorRequests\)\}/);
   });
 
   it("§11.226b popup auto-close (briefIsOpen dep) 보존", () => {

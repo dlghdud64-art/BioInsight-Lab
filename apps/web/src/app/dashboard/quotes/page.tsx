@@ -308,15 +308,16 @@ function shortenActionLabel(ctaLabel: string): string {
 //   index signature constraint 를 깬다 (PageProps never 강제). 본 module 안에서만
 //   사용되는 상수/타입은 `export` 키워드 제거. grep sentinel 기반 test 는 source
 //   text 매칭이므로 import path 변경 없음.
+// §quote-table-sian P2 — 시안 A 8컬럼 정합: itemCount(품목)·createdAt(등록)·delivery(납기)
+//   제거, supplier(공급사 아바타) 신규 분리. 견적케이스(title)·공급사·단계(status)·
+//   회신(responseCount)·우선순위·예상금액(price)·마감(dueDate)·다음단계(actions).
 type ColumnKey =
   | "title"
+  | "supplier"
   | "status"
-  | "itemCount"
   | "responseCount"
-  | "price"
-  | "delivery"
   | "priority"
-  | "createdAt"
+  | "price"
   | "dueDate"
   | "actions";
 
@@ -329,42 +330,36 @@ interface ColumnPrefs {
 const DEFAULT_COLUMN_PREFS: ColumnPrefs = {
   widths: {
     title: 280,
+    supplier: 140,
     status: 100,
-    itemCount: 80,
     responseCount: 120,
-    price: 140,
-    delivery: 120,
     priority: 80,
-    createdAt: 120,
+    price: 140,
     dueDate: 100,
     actions: 120,
   },
   visibility: {
     title: true,
+    supplier: true,
     status: true,
-    itemCount: true,
     responseCount: true,
-    price: true,
-    delivery: true,
     priority: true,
-    createdAt: true,
+    price: true,
     dueDate: true,
     actions: true,
   },
-  order: ["title", "status", "itemCount", "responseCount", "price", "delivery", "priority", "createdAt", "dueDate", "actions"],
+  order: ["title", "supplier", "status", "responseCount", "priority", "price", "dueDate", "actions"],
 };
 
 const COLUMN_LABEL: Record<ColumnKey, string> = {
-  title: "제목",
-  status: "상태",
-  itemCount: "품목",
+  title: "견적케이스",
+  supplier: "공급사",
+  status: "단계",
   responseCount: "회신",
-  price: "가격",
-  delivery: "납기",
   priority: "우선순위",
-  createdAt: "등록",
+  price: "예상금액",
   dueDate: "마감",
-  actions: "액션",
+  actions: "다음단계",
 };
 
 // localStorage key
@@ -1932,30 +1927,16 @@ function QuotesPageContent() {
   //   scan 으로 데이터 존재 여부 derive — useMemo 비용 negligible (100건 기준).
   //   §11.142 lock 정합: canonical truth (quote.responses[].totalPrice / quote.deliveryDate)
   //   변경 0. 표시만 hide.
-  const priceColumnHasData = useMemo(
-    () =>
-      filteredQuotes.some((q) =>
-        (q.responses ?? []).some(
-          (r) => typeof r.totalPrice === "number" && r.totalPrice > 0,
-        ),
-      ),
-    [filteredQuotes],
-  );
-  const deliveryColumnHasData = useMemo(
-    () => filteredQuotes.some((q) => Boolean(q.deliveryDate)),
-    [filteredQuotes],
-  );
-
-  // §11.230b — 컬럼 visibility filter (§11.226 #4 hasData 우선 — 가격/납기 컬럼은
-  //   데이터 있으면 사용자 visibility false 라도 노출. canonical truth 보호).
-  //   columnPrefs.order 기반 + visibility 분기. 9 컬럼 모두 노출 가능 키.
+  // §quote-table-sian P2 — 컬럼 visibility filter. 예상금액(price)은 항상 노출
+  //   ("견적 대기" tbd 포함 — 견적 케이스의 핵심 신호라 hide 불가). 그 외 컬럼은
+  //   사용자 visibility 선호 존중. (이전 §11.226 #4 price/delivery hasData 게이트는
+  //   납기 컬럼 제거 + 예상금액 always 정책으로 대체.)
   const visibleColumns = useMemo<ColumnKey[]>(() => {
     return columnPrefs.order.filter((key) => {
-      if (key === "price") return priceColumnHasData;
-      if (key === "delivery") return deliveryColumnHasData;
+      if (key === "price") return true;
       return columnPrefs.visibility[key];
     });
-  }, [columnPrefs.order, columnPrefs.visibility, priceColumnHasData, deliveryColumnHasData]);
+  }, [columnPrefs.order, columnPrefs.visibility]);
 
   return (
     <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
@@ -2421,7 +2402,8 @@ function QuotesPageContent() {
                         체크박스로 보임/숨김 · 손잡이를 끌어 순서 변경
                       </p>
                       {columnPrefs.order.map((key) => {
-                        const isProtected = (key === "price" && priceColumnHasData) || (key === "delivery" && deliveryColumnHasData);
+                        // §quote-table-sian P2 — 예상금액(price)은 always 노출 → 컬럼 설정에서 hide 불가(보호).
+                        const isProtected = key === "price";
                         return (
                           <div
                             key={key}
@@ -2500,7 +2482,7 @@ function QuotesPageContent() {
           §11.226 #quote-management-v2-phase-a — 호영님 v2 P0 CRITICAL spec:
             #1 상태 뱃지 nowrap + min-width 72px / 컬럼 100px
             #2 액션 버튼 nowrap + min-width 80px + shortenActionLabel 축약
-            #4 빈 컬럼 (가격/납기) 자동 hide — priceColumnHasData/deliveryColumnHasData
+            #4 (§quote-table-sian P2 supersede) 예상금액 always 노출·납기 컬럼 제거 — 빈컬럼 hide 게이트 폐기
             #5 제목 열 = firstItemName + 외 N건 (§11.217 helper inline reuse)
             #8 카드 CTA min-w-[140px] / 테이블 CTA min-w-[80px] 강제 */}
       {!isLoading && viewMode === "table" && sortedQuotes.length > 0 && (
@@ -2514,8 +2496,8 @@ function QuotesPageContent() {
             <table className="w-full text-xs">
             {/* §11.230b #quote-table-column-prefs — 호영님 v2 #23 (a+b).
                 visibleColumns.map() 으로 dynamic generate. canonical truth:
-                - sortState (§11.227) sortable 5 컬럼 유지
-                - priceColumnHasData / deliveryColumnHasData (§11.226 #4) 우선
+                - sortState (§11.227) sortable 컬럼 유지(title/status/responseCount/price)
+                - §quote-table-sian P2 — 예상금액(price) always 노출, 납기 컬럼 제거
                 - tbody td 순서 일치 — 같은 visibleColumns.map() */}
             {/* §11.242 #6 — 헤더 sticky + 배경 강화 (bg-gray-100 + uppercase + tracking-wide + border-b-2). */}
             <thead className="bg-gray-100 border-b-2 border-gray-200 sticky top-0 z-10">
@@ -2553,8 +2535,10 @@ function QuotesPageContent() {
                 </th>
                 {visibleColumns.map((key) => {
                   const width = columnPrefs.widths[key];
-                  const isSortable = key === "title" || key === "status" || key === "itemCount" || key === "responseCount" || key === "price" || key === "createdAt";
-                  const isCenter = key === "itemCount" || key === "responseCount" || key === "priority";
+                  // §quote-table-sian P2 — itemCount·createdAt 컬럼 제거로 정렬 키에서 제외.
+                  //   supplier(공급사 아바타)는 좌측 정렬·비정렬(아바타라 정렬 의미 없음).
+                  const isSortable = key === "title" || key === "status" || key === "responseCount" || key === "price";
+                  const isCenter = key === "responseCount" || key === "priority";
                   const isRight = key === "price" || key === "actions";
                   const label = COLUMN_LABEL[key];
                   // §11.226 #1/#2 invariant — column-specific min-width 보존
@@ -2848,47 +2832,48 @@ function QuotesPageContent() {
                           </td>
                         );
                       }
-                      if (key === "itemCount") {
+                      if (key === "supplier") {
+                        // §quote-table-sian P2 — 공급사 아바타 전용 컬럼(회신 바에서 분리, 지시문 §05). vendorRequests canonical, 0건 empty state("공급사 미정").
                         return (
-                          <td key={key} style={{ width }} className="px-3 py-2 text-center text-slate-600 tabular-nums">{itemCount}</td>
+                          <td key={key} style={{ width }} className="px-3 py-2">
+                            <SupplierAvatars suppliers={toSuppliers(quote.vendorRequests)} />
+                          </td>
                         );
                       }
                       if (key === "responseCount") {
+                        // §quote-table-sian P2 — 회신 진행 바만(공급사 아바타는 supplier 컬럼으로 분리).
+                        //   미발송/회신 0 = "—" 약화(빈 셀 방지, §11.242 #8 가짜 데이터 금지).
                         return (
                           <td key={key} style={{ width }} className="px-3 py-2 text-center">
-                            {/* §quote-management P3b — C 하이브리드: 공급사 실명 아바타(vendorRequests canonical, 0=공급사 미정)
-                                + 기존 회신 진행 progressbar(responseCount/itemCount) 유지. 익명 점 폐기(§05). */}
-                            <div className="flex flex-col items-center gap-1">
-                              <div className="flex justify-center">
-                                <SupplierAvatars suppliers={toSuppliers(quote.vendorRequests)} />
-                              </div>
-                              {(quote.status === "SENT" || quote.status === "RESPONDED") && itemCount > 0 ? (
-                                <div className="flex items-center justify-center gap-1.5">
-                                  <span className="text-[10px] tabular-nums text-slate-600">
-                                    {responseCount}/{itemCount}
-                                  </span>
-                                  <div className="w-12 h-1 bg-slate-200 rounded-full overflow-hidden">
-                                    <div
-                                      role="progressbar"
-                                      aria-valuenow={responseCount}
-                                      aria-valuemin={0}
-                                      aria-valuemax={itemCount}
-                                      className={`h-full rounded-full ${
-                                        responseCount === 0 ? "bg-slate-200"
-                                        : responseCount >= itemCount ? "bg-emerald-500"
-                                        : "bg-blue-500"
-                                      }`}
-                                      style={{ width: `${Math.min(100, (responseCount / itemCount) * 100)}%` }}
-                                    />
-                                  </div>
+                            {(quote.status === "SENT" || quote.status === "RESPONDED") && itemCount > 0 ? (
+                              <div className="flex items-center justify-center gap-1.5">
+                                <span className="text-[10px] tabular-nums text-slate-600">
+                                  {responseCount}/{itemCount}
+                                </span>
+                                <div className="w-12 h-1 bg-slate-200 rounded-full overflow-hidden">
+                                  <div
+                                    role="progressbar"
+                                    aria-valuenow={responseCount}
+                                    aria-valuemin={0}
+                                    aria-valuemax={itemCount}
+                                    className={`h-full rounded-full ${
+                                      responseCount === 0 ? "bg-slate-200"
+                                      : responseCount >= itemCount ? "bg-emerald-500"
+                                      : "bg-blue-500"
+                                    }`}
+                                    style={{ width: `${Math.min(100, (responseCount / itemCount) * 100)}%` }}
+                                  />
                                 </div>
-                              ) : null}
-                            </div>
+                              </div>
+                            ) : (
+                              <span className="text-gray-300 text-[11px]">—</span>
+                            )}
                           </td>
                         );
                       }
                       if (key === "price") {
-                        // §11.226 #4 — priceColumnHasData 우선 (visibleColumns 가 이미 hasData 분기).
+                        // §quote-table-sian P2 — 예상금액 always 노출(visibleColumns price 무조건 통과).
+                        //   회신/가격 미수신 시 약화 표기(가짜 금액 금지). 실제 견적금 캡처는 별도 트랙.
                         return (
                           <td key={key} style={{ width }} className="px-3 py-2 text-right text-[11px] tabular-nums">
                             {/* §11.242 #8 — 빈 데이터 색상 약화 (호영님 spec: text-gray-300). */}
@@ -2900,17 +2885,6 @@ function QuotesPageContent() {
                               <span className="text-slate-700">₩{minPrice!.toLocaleString("ko-KR")}</span>
                             ) : (
                               <span className="text-slate-700">₩{minPrice!.toLocaleString("ko-KR")} ~ ₩{maxPrice!.toLocaleString("ko-KR")}</span>
-                            )}
-                          </td>
-                        );
-                      }
-                      if (key === "delivery") {
-                        return (
-                          <td key={key} style={{ width }} className="px-3 py-2 text-[11px]">
-                            {quote.deliveryDate ? (
-                              <RelativeDeliveryText iso={quote.deliveryDate} className="text-slate-600" />
-                            ) : (
-                              <span className="text-slate-400">—</span>
                             )}
                           </td>
                         );
@@ -2927,13 +2901,6 @@ function QuotesPageContent() {
                               : priorityLevel === "high" ? "bg-yellow-500"
                               : "bg-slate-300"
                             }`} aria-label={`우선순위 ${priorityLevel}`} />
-                          </td>
-                        );
-                      }
-                      if (key === "createdAt") {
-                        return (
-                          <td key={key} style={{ width }} className="px-3 py-2 text-slate-500">
-                            <RelativeTimeText iso={quote.createdAt} />
                           </td>
                         );
                       }

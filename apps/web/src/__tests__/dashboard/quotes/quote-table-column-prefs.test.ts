@@ -24,16 +24,16 @@ const PAGE_PATH = resolve(__dirname, "../../../app/dashboard/quotes/page.tsx");
 const page = readFileSync(PAGE_PATH, "utf8");
 
 describe("§11.230b #1 — ColumnKey enum + DEFAULT_COLUMN_PREFS 상수", () => {
-  it("ColumnKey type 정의 (9 컬럼)", () => {
-    // type ColumnKey = "title" | "status" | "itemCount" | "responseCount" | "price" | "delivery" | "priority" | "createdAt" | "actions"
-    // 또는 const COLUMN_KEYS = [...] as const + ColumnKey = typeof COLUMN_KEYS[number]
+  it("ColumnKey type 정의 (§quote-table-sian P2 — 8 컬럼)", () => {
+    // §quote-table-sian P2: itemCount(품목)·delivery(납기)·createdAt(등록) 제거, supplier(공급사) 추가.
+    // type ColumnKey = "title" | "supplier" | "status" | "responseCount" | "priority" | "price" | "dueDate" | "actions"
     expect(page).toMatch(/ColumnKey/);
     expect(page).toMatch(/"title"[\s\S]{0,400}"status"[\s\S]{0,400}"actions"|"title"[\s\S]{0,800}"actions"/);
   });
 
-  it("9 컬럼 키 모두 포함 — title/status/itemCount/responseCount/price/delivery/priority/createdAt/actions", () => {
-    // 9 컬럼 모두 ColumnKey 정의 안 또는 DEFAULT_COLUMN_PREFS 안 노출
-    for (const key of ["title", "status", "itemCount", "responseCount", "price", "delivery", "priority", "createdAt", "actions"]) {
+  it("8 컬럼 키 모두 포함 — title/supplier/status/responseCount/priority/price/dueDate/actions", () => {
+    // §quote-table-sian P2 — 시안 A 8컬럼.
+    for (const key of ["title", "supplier", "status", "responseCount", "priority", "price", "dueDate", "actions"]) {
       expect(page).toMatch(new RegExp(`["']${key}["']`));
     }
   });
@@ -110,19 +110,19 @@ describe("§11.230b #5 — 컬럼 순서 재정렬 HTML5 native drag-and-drop (b
   });
 });
 
-describe("§11.230b #6 — §11.226 #4 hasData 우선 (canonical truth 보호)", () => {
-  it("priceColumnHasData 보존 (§11.226 invariant)", () => {
-    expect(page).toMatch(/priceColumnHasData/);
+describe("§quote-table-sian P2 #6 — 예상금액(price) always 노출 (이전 §11.226 #4 hasData 게이트 supersede)", () => {
+  // CEO 2026-06-21 시안 정합: 납기 컬럼 제거 + 예상금액 always. 이전 빈컬럼 자동 hide 의도는
+  // "견적 케이스 핵심 신호(예상금액)는 항상 보여라"로 진화. canonical truth(quote.responses) 변경 0.
+  it("예상금액(price) 컬럼은 visibleColumns 무조건 통과 (hide 불가)", () => {
+    expect(page).toMatch(/key\s*===\s*["']price["']\)\s*return true/);
   });
 
-  it("deliveryColumnHasData 보존 (§11.226 invariant)", () => {
-    expect(page).toMatch(/deliveryColumnHasData/);
+  it("예상금액 컬럼 설정에서 보호(isProtected) — 사용자 hide 차단", () => {
+    expect(page).toMatch(/isProtected\s*=\s*key\s*===\s*["']price["']/);
   });
 
-  it("가격 컬럼 render 조건 — hasData OR visibility (hasData 우선)", () => {
-    // visibleColumns useMemo 안 분기: if (key === "price") return priceColumnHasData
-    // 또는 thead 안 priceColumnHasData && 패턴
-    expect(page).toMatch(/key\s*===\s*["']price["'][\s\S]{0,200}return priceColumnHasData|priceColumnHasData\s*&&|priceColumnHasData\s*\)/);
+  it("공급사(supplier) 컬럼 분리 — vendorRequests 아바타 전용", () => {
+    expect(page).toMatch(/key === "supplier"[\s\S]{0,400}<SupplierAvatars suppliers=\{toSuppliers\(quote\.vendorRequests\)\}/);
   });
 });
 
