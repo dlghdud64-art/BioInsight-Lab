@@ -1,6 +1,7 @@
 "use client";
 
 import { csrfFetch } from "@/lib/api-client";
+import { quoteDisplayRef } from "@/lib/quote-management/quote-display-ref";
 import { useState, useEffect, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -671,8 +672,8 @@ export function RequestWizardModal({
                     </div>
                     <div className="space-y-2 text-left">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-500">요청 ID</span>
-                        <span className="font-mono text-slate-700">{submittedRequestId ?? "—"}</span>
+                        <span className="text-slate-500">견적요청(RFQ) 번호</span>
+                        <span className="font-mono text-slate-700">{submittedRequestId ? quoteDisplayRef({ id: submittedRequestId }) : "—"}</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-slate-500">요청 목적</span>

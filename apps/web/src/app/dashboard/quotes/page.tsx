@@ -81,6 +81,7 @@ import { OpsExecutionContext } from "@/components/ops/ops-execution-context";
 import { CenterWorkWindow } from "@/components/work-window/center-work-window";
 import { AiQuoteParseModal } from "@/components/quotes/ai-quote-parse-modal";
 import { PermissionNotice } from "@/components/quotes/permission-notice";
+import { quoteDisplayRef } from "@/lib/quote-management/quote-display-ref";
 import { QuoteIntakeDock } from "@/components/quotes/intake/quote-intake-dock";
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
@@ -618,7 +619,7 @@ function QuoteCard({
   //   단일 값. prices.length === 0 시 "회신 N건 (가격 미기재)".
   const maxPrice = prices.length ? Math.max(...prices) : null;
   const delayed = isDelayed(quote);
-  const quoteRef = `#${quote.id.slice(0, 8).toUpperCase()}`;
+  const quoteRef = quoteDisplayRef(quote);
   // §11.212 — daysSinceCreated 인라인 계산 제거 (SSR-CSR Date.now() drift 차단).
   // <RelativeTimeText iso={quote.createdAt} /> 가 useEffect mount 후 set.
 
@@ -3149,7 +3150,7 @@ function QuotesPageContent() {
                   <span className={`inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded border font-medium ${selectedOpStatus.bg} ${selectedOpStatus.text} ${selectedOpStatus.border}`}>
                     {selectedSignals.badge}
                   </span>
-                  <span className="text-[11px] text-slate-500 font-mono">#{selectedQuote.id.slice(0, 8).toUpperCase()}</span>
+                  <span className="text-[11px] text-slate-500 font-mono">{quoteDisplayRef(selectedQuote)}</span>
                 </div>
                 {/* §11.264i — "✦ 운영 브리핑" 진입 버튼 (호영님 spec P0 견적 모바일 2중 겹침 fix).
                     기존: selectedQuote set 시 §11.248e + §11.155 둘 다 자동 렌더 → 겹침.
@@ -3425,7 +3426,7 @@ function QuotesPageContent() {
                 <span className={`inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded border font-medium ${selectedOpStatus.bg} ${selectedOpStatus.text} ${selectedOpStatus.border}`}>
                   {selectedSignals.badge}
                 </span>
-                <span className="text-[11px] text-slate-500 font-mono">#{selectedQuote.id.slice(0, 8).toUpperCase()}</span>
+                <span className="text-[11px] text-slate-500 font-mono">{quoteDisplayRef(selectedQuote)}</span>
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <Link href={`/quotes/${selectedQuote.id}`}>
@@ -4021,7 +4022,7 @@ function QuotesPageContent() {
                 <span className={`inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded border font-medium ${selectedOpStatus?.bg} ${selectedOpStatus?.text} ${selectedOpStatus?.border}`}>
                   {selectedSignals.badge}
                 </span>
-                <span className="text-xs text-slate-400">#{selectedQuote.id.slice(0, 8).toUpperCase()}</span>
+                <span className="text-xs text-slate-400">{quoteDisplayRef(selectedQuote)}</span>
               </div>
               <h3 className="text-sm font-semibold text-slate-900 mb-1">{selectedQuote.title}</h3>
               <p className="text-xs text-slate-400">{selectedSignals.summary}</p>

@@ -97,7 +97,9 @@ describe("§11.264j #2 — 공급사별 회신 현황 section 렌더", () => {
 describe("§11.264j #3 — invariant 보존 (canonical truth)", () => {
   it("§11.248e mobile context sheet 구조 보존 (header)", () => {
     expect(page).toMatch(/selectedSignals\.badge/);
-    expect(page).toMatch(/selectedQuote\.id\.slice\(0,\s*8\)\.toUpperCase\(\)/);
+    // §quote-table-sian-realign P1 — sheet 헤더 ref 가 cuid 유출(id.slice(0,8)) → quoteDisplayRef(저장0·파생,
+    //   internal-key 미노출)로 교체(CEO cuid 노출 지적 봉합). 헤더 구조(badge+ref+title) 보존 의도 불변, ref 토큰만 안전 헬퍼로.
+    expect(page).toMatch(/quoteDisplayRef\(selectedQuote\)/);
     expect(page).toMatch(
       /<h3\s+className="text-sm font-semibold text-slate-900 truncate">\{selectedQuote\.title\}</,
     );
