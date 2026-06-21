@@ -56,12 +56,14 @@ describe("§11.248d #2 — 가로 스크롤 fade hint (좌우 gradient overlay)"
 });
 
 describe("§11.248d #3 — invariant 보존", () => {
-  it("DEFAULT_COLUMN_PREFS 9 컬럼 보존", () => {
+  it("DEFAULT_COLUMN_PREFS 10 컬럼 보존 (§quote-flat Q3a: dueDate 추가 — 기존 9 순서 손실/재배열 0)", () => {
+    // §quote-flat Q3a — 마감(dueDate) 컬럼 신규 추가. 보호 의도(기존 컬럼 손실·재배열 방지)는
+    //   불변: dueDate 는 createdAt 과 actions 사이에 삽입, 기존 9 컬럼의 상대 순서 그대로 보존.
     expect(page).toMatch(/title:\s*\d+,\s*[\s\S]{0,80}status:\s*\d+,\s*[\s\S]{0,80}itemCount/);
-    expect(page).toMatch(/order:\s*\[\s*"title",\s*"status",\s*"itemCount",\s*"responseCount",\s*"price",\s*"delivery",\s*"priority",\s*"createdAt",\s*"actions"\s*\]/);
+    expect(page).toMatch(/order:\s*\[\s*"title",\s*"status",\s*"itemCount",\s*"responseCount",\s*"price",\s*"delivery",\s*"priority",\s*"createdAt",\s*"dueDate",\s*"actions"\s*\]/);
   });
 
-  it("COLUMN_LABEL 매핑 보존 (제목/상태/품목/회신/가격/납기/우선순위/등록/액션)", () => {
+  it("COLUMN_LABEL 매핑 보존 (제목/상태/품목/회신/가격/납기/우선순위/등록/마감/액션)", () => {
     expect(page).toMatch(/COLUMN_LABEL:\s*Record<ColumnKey,\s*string>/);
   });
 

@@ -316,6 +316,7 @@ type ColumnKey =
   | "delivery"
   | "priority"
   | "createdAt"
+  | "dueDate"
   | "actions";
 
 interface ColumnPrefs {
@@ -334,6 +335,7 @@ const DEFAULT_COLUMN_PREFS: ColumnPrefs = {
     delivery: 120,
     priority: 80,
     createdAt: 120,
+    dueDate: 100,
     actions: 120,
   },
   visibility: {
@@ -345,9 +347,10 @@ const DEFAULT_COLUMN_PREFS: ColumnPrefs = {
     delivery: true,
     priority: true,
     createdAt: true,
+    dueDate: true,
     actions: true,
   },
-  order: ["title", "status", "itemCount", "responseCount", "price", "delivery", "priority", "createdAt", "actions"],
+  order: ["title", "status", "itemCount", "responseCount", "price", "delivery", "priority", "createdAt", "dueDate", "actions"],
 };
 
 const COLUMN_LABEL: Record<ColumnKey, string> = {
@@ -359,6 +362,7 @@ const COLUMN_LABEL: Record<ColumnKey, string> = {
   delivery: "납기",
   priority: "우선순위",
   createdAt: "등록",
+  dueDate: "마감",
   actions: "액션",
 };
 
@@ -3080,6 +3084,25 @@ function QuotesPageContent() {
                         return (
                           <td key={key} style={{ width }} className="px-3 py-2 text-slate-500">
                             <RelativeTimeText iso={quote.createdAt} />
+                          </td>
+                        );
+                      }
+                      if (key === "dueDate") {
+                        // §quote-flat Q3 — 마감(D-day) 컬럼(신규, 지시문 §04).
+                        //   priorityResult.dd = daysUntil(computeDue) canonical 재사용(별도 compute 0).
+                        //   soon(D-2 이하·지남) = red 강조. 마감 미정(null) = "—" 약화(가짜 마감 금지 §11.242 #8).
+                        const dd = priorityResult?.dd ?? null;
+                        const soon = dd != null && dd <= 2;
+                        const dueLabel =
+                          dd == null ? "—"
+                          : dd < 0 ? `${-dd}일 지남`
+                          : dd === 0 ? "D-day"
+                          : `D-${dd}`;
+                        return (
+                          <td key={key} style={{ width }} className="px-3 py-2 text-[11px] tabular-nums">
+                            <span className={soon ? "text-red-600 font-semibold" : dd == null ? "text-gray-300" : "text-slate-500"}>
+                              {dueLabel}
+                            </span>
                           </td>
                         );
                       }
