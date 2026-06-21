@@ -58,6 +58,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ActivityTimeline } from "@/components/ai/activity-timeline";
 import { VendorRequestModal } from "@/components/quotes/dispatch/vendor-dispatch-workbench";
+import { quoteDisplayRef } from "@/lib/quote-management/quote-display-ref";
 import { resolveSuppliers, buildDraftMessage } from "@/components/quotes/dispatch/resolve-suppliers";
 import { EmailRepliesSection } from "@/components/quotes/email-replies-section";
 import {
@@ -1671,6 +1672,7 @@ export default function QuoteDetailPage() {
         open={showSendDialog}
         onOpenChange={setShowSendDialog}
         quoteId={quoteId}
+        quoteRef={quote ? quoteDisplayRef(quote) : undefined}
         quoteSummary={quote?.title}
         resolvedSuppliers={resolveSuppliers({ quote, vendorRequests })}
         draftMessage={buildDraftMessage(quote)}

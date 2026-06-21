@@ -3952,6 +3952,7 @@ function QuotesPageContent() {
           open={true}
           onOpenChange={(open) => { if (!open) setActiveWorkWindow(null); }}
           quoteId={selectedQuote.id}
+          quoteRef={quoteDisplayRef(selectedQuote)}
           quoteSummary={selectedQuote.title}
           // #user-supplier-registration Phase 5 — org_book source forward.
           resolvedSuppliers={resolveSuppliers({ quote: selectedQuote, organizationVendors, organizationVendorProducts })}

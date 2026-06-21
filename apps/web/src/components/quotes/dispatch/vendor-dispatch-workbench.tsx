@@ -42,6 +42,8 @@ interface VendorRequestModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   quoteId?: string;
+  /** §quote-screen-sian P6.4 — 사람이 읽는 견적 ref(quoteDisplayRef 결과). cuid 노출 봉합용. */
+  quoteRef?: string;
   /** AI-resolved supplier candidates from request assembly / compare flow */
   resolvedSuppliers?: ResolvedSupplier[];
   /** Pre-built draft message from request assembly */
@@ -107,6 +109,7 @@ export function VendorRequestModal({
   open,
   onOpenChange,
   quoteId,
+  quoteRef,
   resolvedSuppliers: resolvedSuppliersInput,
   draftMessage: draftMessageInput,
   quoteSummary,
@@ -371,7 +374,7 @@ export function VendorRequestModal({
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `견적요청서-${quoteId.slice(0, 8)}.pdf`;
+      a.download = `견적요청서-${quoteRef ?? quoteId.slice(0, 8)}.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -469,7 +472,7 @@ export function VendorRequestModal({
             <span aria-hidden="true">·</span>
             <span data-testid="quote-dispatch-sent-owner">담당자: {sentTracking?.operatorName ?? "발송 운영자"}</span>
             <span aria-hidden="true">·</span>
-            <span data-testid="quote-dispatch-sent-quote-id">quote ID: {sentTracking?.quoteId ?? quoteId ?? "저장 필요"}</span>
+            <span data-testid="quote-dispatch-sent-quote-id">견적: {quoteRef ?? "저장 필요"}</span>
           </div>
           <div
             data-testid="quote-dispatch-review-visible"
@@ -887,7 +890,7 @@ export function VendorRequestModal({
               {sentTracking.recipientCount}개 수신처 발송 이력이 남았습니다. 새로고침 후에도 이 견적의 vendor request로 추적합니다.
             </p>
             <p data-testid="quote-dispatch-sent-refresh-proof" className="mt-1 text-xs text-emerald-700">
-              dispatch event · 전송 추적 · 담당자: {sentTracking.operatorName} · quote ID: {sentTracking.quoteId}
+              dispatch event · 전송 추적 · 담당자: {sentTracking.operatorName} · 견적: {quoteRef ?? sentTracking.quoteId}
             </p>
           </div>
         )}
