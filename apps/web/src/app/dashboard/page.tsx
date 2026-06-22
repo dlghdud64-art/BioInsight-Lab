@@ -914,7 +914,8 @@ function DashboardPageInner() {
       </div>
 
       {/* ======= 모바일 전용 레이아웃 ======= */}
-      <div className="md:hidden space-y-3 pb-20">
+      {/* §11.272e — 하단 FAB 클리어런스는 shell main(pb 확보)이 소유 → 섹션 중복 패딩 축소. */}
+      <div className="md:hidden space-y-3 pb-2">
 
         {/* KPI 판단 카드 2x2
             §11.196b — statsLoading skeleton 분기 제거 (pageReady gate cover). */}

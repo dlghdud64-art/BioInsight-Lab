@@ -57,6 +57,43 @@ function useBodyScrollLocked(): boolean {
   return locked;
 }
 
+/**
+ * §11.272e #fab-cta-overlap-hide-on-scroll — 호영님 P0 모바일 라이브 4장.
+ *
+ * FAB(fixed bottom-right)가 스크롤 콘텐츠의 CTA(예: "견적 요청 발송")를 상시
+ * 덮어 tap 불가 → dead button 화. 패딩만으론 중간 카드 CTA 가림 미해결.
+ * Fix: 스크롤 컨테이너(#main-content) 아래로 스크롤 시 FAB 를 translate +
+ * pointer-events-none 으로 비키게(탭이 CTA 로 통과), 위로/최상단 시 복귀.
+ * #main-content 부재(비-shell surface) 시 no-op (항상 노출).
+ */
+function useHideOnScrollDown(): boolean {
+  const [hidden, setHidden] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const scroller = document.getElementById("main-content");
+    if (!scroller) return;
+    let last = scroller.scrollTop;
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const cur = scroller.scrollTop;
+        if (cur < 24) setHidden(false);
+        else if (cur - last > 8) setHidden(true);
+        else if (last - cur > 8) setHidden(false);
+        last = cur;
+      });
+    };
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      scroller.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+  return hidden;
+}
+
 interface OperationalBriefFloatingEntryProps {
   /**
    * 클릭 핸들러 (선택).
@@ -81,6 +118,8 @@ export function OperationalBriefFloatingEntry({
   const popup = useOperationalBriefPopup();
   // §11.272d — Sheet/Dialog open (body scroll lock) 시 FAB hidden
   const bodyScrollLocked = useBodyScrollLocked();
+  // §11.272e — 아래로 스크롤 시 FAB 가 CTA 비키도록 hide(탭 통과)
+  const hiddenOnScroll = useHideOnScrollDown();
   // §11.181b — onClick ?? popup.open 패턴이 prod build minify 후 closure 캡처
   // stale 되는 이슈 발견. useCallback + explicit ternary 로 swap (always-fresh popup ref).
   const handleClick = useCallback(() => {
@@ -110,7 +149,8 @@ export function OperationalBriefFloatingEntry({
         // §11.252c — 모바일 (<lg) FAB 하단 72px+ 강제 (BottomNav h-14 = 56px +
         //   16px 안전 마진). 데스크탑 (≥lg) 은 BottomNav 없어서 기존 bottom-6
         //   유지. 가로 마진도 모바일 right-4 + 데스크탑 right-6 분기.
-        "fixed bottom-[72px] right-4 lg:bottom-6 lg:right-6 z-40",
+        // §11.272e — safe-area-inset 반영(노치폰 BottomNav 위 정렬).
+        "fixed bottom-[calc(72px_+_env(safe-area-inset-bottom))] right-4 lg:bottom-6 lg:right-6 z-40",
         "inline-flex items-center gap-2",
         "h-12 px-5 rounded-full",
         "bg-slate-900 text-white",
@@ -119,6 +159,8 @@ export function OperationalBriefFloatingEntry({
         "transition-all duration-150",
         "disabled:opacity-40 disabled:cursor-not-allowed",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2",
+        // §11.272e — 아래로 스크롤 시 CTA 비키기(탭 통과). 위로/최상단 복귀.
+        hiddenOnScroll && "translate-y-24 opacity-0 pointer-events-none",
         className,
       )}
     >
