@@ -18,8 +18,8 @@ Required JSON format:
   "brand": "manufacturer name (e.g. Sigma-Aldrich, Merck, Thermo Fisher)",
   "productName": "chemical/reagent name",
   "catalogNo": "catalog/product/reference number",
-  "lotNo": "lot/batch number",
-  "expirationDate": "expiration date in YYYY-MM-DD format (or YYYY-MM if day unknown)",
+  "lotNo": "lot/batch number (also labeled: Lot, Batch, Batch No.)",
+  "expirationDate": "validity/expiration date in YYYY-MM-DD format (or YYYY-MM if day unknown)",
   "casNumber": "CAS registry number (format: XXXXX-XX-X)",
   "quantity": "amount with unit (e.g. 500g, 100mL)"
 }
@@ -29,7 +29,14 @@ Rules:
 - If a field is not visible or unreadable, set it to null.
 - For dates, always normalize to YYYY-MM-DD or YYYY-MM format.
 - For brand, use the official name (e.g. "Sigma-Aldrich" not "Sigma").
-- The text on the label may be in English, Korean, Japanese, or mixed.`;
+- The text on the label may be in English, Korean, Japanese, Spanish, or mixed.
+- expirationDate = the validity/use-by date. Reagent labels rarely say "Expiration"
+  literally — map ANY of these to expirationDate: "Exp", "Exp. Date", "Expiry",
+  "Use By", "Best Before", "Valid Until", "Valid to", "Retest", "Retest Date",
+  "Next Retest", "Cad." / "Caducidad" (Spanish), "유효기간", "유효기한", "사용기한".
+  e.g. Condalab prints "NEXT RETEST: 2028/06" → expirationDate "2028-06".
+  Sigma-Aldrich/Merck often print "Retest Date" or "Recommended Retest Date".
+- Do NOT invent or guess a date. If no validity/retest/expiry date is printed, set expirationDate to null (never default to today).`;
 
 interface GeminiParseResponse {
   brand: string | null;

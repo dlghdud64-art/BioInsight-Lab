@@ -1232,7 +1232,9 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                     </span>
                   )}
                   {onDirectReceive && commitGate.fieldMarks.lot === "needs-confirm" && (
-                    <span className="text-[10px] font-medium text-red-600">· 확인 필요</span>
+                    /* §label-scan-qc — 녹색 "라벨 스캔 확인" + 빨강 "확인 필요" 모순 완화:
+                       검토 권고는 §11.302 yellow(주의)로, red(위험) 톤 과함 해소. 게이트(터치 강제)는 유지. */
+                    <span className="text-[10px] font-medium text-yellow-700">· 확인 권장</span>
                   )}
                 </div>
                 <Input
@@ -1259,7 +1261,8 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                     </span>
                   )}
                   {onDirectReceive && commitGate.fieldMarks.expiry === "needs-confirm" && (
-                    <span className="text-[10px] font-medium text-red-600">· 확인 필요</span>
+                    /* §label-scan-qc — 모순 완화: 검토 권고 §11.302 yellow. 게이트(터치 강제)는 유지. */
+                    <span className="text-[10px] font-medium text-yellow-700">· 확인 권장</span>
                   )}
                 </div>
                 {/* §11.371-4b — type=date 모바일 native 비대(min-height) 차단. appearance-none 으로
@@ -1271,6 +1274,13 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                   onChange={(e) => updateField("expirationDate", e.target.value)}
                   className="mt-1 h-9 text-sm appearance-none [&::-webkit-calendar-picker-indicator]:opacity-100"
                 />
+                {/* §label-scan-qc — EXP 미추출 시 QC 안전 안내(당일 만료 오등록 방지).
+                    type=date 는 placeholder 미지원 → 빈값일 때 명시 hint. 값은 항상 빈값 기본(코드 |"") . */}
+                {!formData.expirationDate && (
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    라벨의 유효기간(EXP)을 직접 입력하세요. 비워두면 미입력으로 저장됩니다(오늘 날짜 자동 아님).
+                  </p>
+                )}
               </div>
               <div>
                 <Label className="text-xs font-medium text-slate-600">규격 (통 1개의 함량)</Label>

@@ -28,6 +28,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { parseReagentLabel } from "@/lib/ocr/label-parser";
 import { runOcrPipeline } from "@/lib/ocr/run-ocr-pipeline";
+import { isTransientGeminiError } from "@/lib/ocr/gemini-config";
 import { parseGs1 } from "@/lib/scan/gs1-parser";
 import { mergeGs1WithOcr, type MergedLabelResult } from "@/lib/ocr/merge-gs1-ocr";
 
@@ -110,9 +111,17 @@ export async function POST(req: NextRequest) {
         if (text) {
           parsed = parseReagentLabel(text);
         } else {
+          // §scan-stability — 정직성: backoff 재시도(gemini-config) 후에도 실패한 게
+          //   일시적(429/timeout/5xx)이면 "실패" 단정 금지 → 재시도 안내. 영구 오류만 "실패".
+          const transient = isTransientGeminiError(geminiErr);
           return NextResponse.json(
-            { error: "AI 라벨 분석에 실패했습니다. 텍스트를 직접 입력해주세요." },
-            { status: 422 }
+            {
+              error: transient
+                ? "일시적 오류로 분석이 지연되고 있습니다. 잠시 후 다시 시도하거나, 텍스트를 직접 입력해주세요."
+                : "AI 라벨 분석에 실패했습니다. 텍스트를 직접 입력해주세요.",
+              transient,
+            },
+            { status: transient ? 503 : 422 }
           );
         }
       }

@@ -70,7 +70,10 @@ describe("§11.315-a — gemini-config 모듈 (env-aware + fallback)", () => {
         throw new Error("RATE_LIMIT_EXCEEDED");
       }),
     ).rejects.toThrow(/RATE_LIMIT_EXCEEDED/);
-    expect(calls).toEqual([GEMINI_PRIMARY_MODEL]);
+    // §11 transient backoff — RATE_LIMIT(transient)은 primary 를 backoff 재시도(같은 모델) 후 throw.
+    //   보호 의도(404 아닌 에러는 model-fallback=보조 모델 0회)는 불변: 호출 전부 primary, 보조 모델 미호출.
+    expect(calls.length).toBeGreaterThanOrEqual(1);
+    expect(calls.every((m) => m === GEMINI_PRIMARY_MODEL)).toBe(true);
   });
 
   it("friendlyGeminiErrorMessage — raw JSON 차단, context 별 한국어 메시지", () => {
