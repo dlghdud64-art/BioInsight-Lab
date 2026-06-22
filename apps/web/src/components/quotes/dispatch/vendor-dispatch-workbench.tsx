@@ -131,6 +131,8 @@ export function VendorRequestModal({
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [sentTracking, setSentTracking] = useState<SentTrackingEvidence | null>(null);
   const [remediationOpened, setRemediationOpened] = useState(false);
+  // §4c-rebloat(호영님) — 받는 공급사 카드와 후보 리스트 중복 노출 → 선택됨(includedCount>0) 시 후보 리스트(Section 1·2) 접기.
+  const [candidatesExpanded, setCandidatesExpanded] = useState(false);
   const manualEmailInputRef = useRef<HTMLInputElement | null>(null);
   const trackingStorageKey = getDispatchTrackingStorageKey(quoteId);
 
@@ -613,7 +615,14 @@ export function VendorRequestModal({
               3 section 으로 grouping (Tabs 도입 0 — same-canvas 보존). */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+              {/* §4c-rebloat — 선택됨 시 후보 리스트 접기 토글(받는 공급사 카드와 중복 해소). 미선택 시 비활성(항상 펼침). */}
+              <button
+                type="button"
+                onClick={() => { if (includedCount > 0) setCandidatesExpanded((v) => !v); }}
+                disabled={includedCount === 0}
+                aria-expanded={includedCount === 0 || candidatesExpanded}
+                className="flex items-center gap-2 text-left disabled:cursor-default"
+              >
                 <Building2 className="h-4 w-4 text-blue-600" />
                 <span className="text-sm font-semibold text-slate-900">
                   공급사 후보
@@ -624,7 +633,10 @@ export function VendorRequestModal({
                     {excludedSuppliers.length > 0 && ` · ${excludedSuppliers.length}개 제외`}
                   </span>
                 )}
-              </div>
+                {includedCount > 0 && (
+                  <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform ${candidatesExpanded ? "rotate-180" : ""}`} />
+                )}
+              </button>
               {hasResolved && (
                 <Badge className="text-xs px-1.5 py-0.5 border-0 bg-blue-50 text-blue-700 font-medium">
                   <Sparkles className="h-3 w-3 mr-1" />플랫폼 선별
@@ -632,6 +644,9 @@ export function VendorRequestModal({
               )}
             </div>
 
+            {/* §4c-rebloat — 후보 리스트(Section 1·2)는 선택 후 접힘. 직접 입력(Section 3)은 항상 노출. */}
+            {(includedCount === 0 || candidatesExpanded) && (
+            <>
             {/* Section 1 — 등록된 공급사 (recent_rfq + org_book + supplier_book) */}
             <div className="space-y-1.5">
               <div className="flex items-center gap-2 px-1">
@@ -682,6 +697,8 @@ export function VendorRequestModal({
                 </p>
               )}
             </div>
+            </>
+            )}
 
             {/* Section 3 — 이메일 직접 입력 (manual, always-visible form) */}
             <div

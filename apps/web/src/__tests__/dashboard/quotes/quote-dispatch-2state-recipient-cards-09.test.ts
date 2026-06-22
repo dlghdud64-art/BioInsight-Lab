@@ -65,3 +65,16 @@ describe("§09 4c #3 — honesty 보존 (회귀 0)", () => {
     expect(src).toContain("const includedSuppliers = suppliers.filter");
   });
 });
+
+describe("§4c-rebloat — 후보 리스트 접기 (받는 공급사 카드 중복 해소, 호영님)", () => {
+  it("선택됨(includedCount>0) 시 후보 리스트(Section 1·2) 접기 토글", () => {
+    expect(src).toContain("candidatesExpanded");
+    expect(src).toContain("setCandidatesExpanded");
+    expect(src).toMatch(/includedCount === 0 \|\| candidatesExpanded/);
+  });
+
+  it("직접 입력(Section 3)·받는 공급사 카드는 접기와 무관하게 보존", () => {
+    expect(src).toContain('data-testid="quote-dispatch-manual-supplier-panel"');
+    expect(src).toContain('data-testid="quote-dispatch-recipient-cards"');
+  });
+});
