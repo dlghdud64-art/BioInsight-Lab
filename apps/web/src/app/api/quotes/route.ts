@@ -503,6 +503,10 @@ export async function GET(request: NextRequest) {
             // §quote-management P4-core-A — responseWindowDays(=expiresAt−createdAt) 실값 산출용.
             //   computePriority 마감 파생을 근사 없이 정직하게(미상이면 "—").
             expiresAt: true,
+            // §10 Phase 2 — per-RFQ 공급사 비교용 회신 단가/납기/moq(canonical, QuoteVendorResponseItem).
+            responseItems: {
+              select: { quoteItemId: true, unitPrice: true, leadTimeDays: true, moq: true },
+            },
           },
         },
         // §11.218 — requester / organization forward (card disambiguation).
@@ -538,6 +542,8 @@ export async function GET(request: NextRequest) {
       respondedAt?: Date | null;
       createdAt?: Date;
       expiresAt?: Date | null;
+      // §10 Phase 2 — per-RFQ 공급사 비교용 회신 라인(단가/납기/moq).
+      responseItems?: Array<{ quoteItemId: string; unitPrice?: number | null; leadTimeDays?: number | null; moq?: number | null }>;
     };
     type MappedUser = { id: string; name: string | null; email: string | null } | null;
     type MappedOrganization = { id: string; name: string } | null;
@@ -604,6 +610,13 @@ export async function GET(request: NextRequest) {
         respondedAt: vr.respondedAt ? vr.respondedAt.toISOString() : null,
         createdAt: vr.createdAt ? vr.createdAt.toISOString() : null,
         expiresAt: vr.expiresAt ? vr.expiresAt.toISOString() : null,
+        // §10 Phase 2 — 회신 단가/납기/moq forward(공급사 비교 세부표 canonical).
+        responseItems: (vr.responseItems || []).map((it) => ({
+          quoteItemId: it.quoteItemId,
+          unitPrice: it.unitPrice ?? null,
+          leadTimeDays: it.leadTimeDays ?? null,
+          moq: it.moq ?? null,
+        })),
       })),
     }));
 

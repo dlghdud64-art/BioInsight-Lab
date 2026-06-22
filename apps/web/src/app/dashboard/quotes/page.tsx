@@ -110,6 +110,8 @@ interface Quote {
     respondedAt?: string | null;
     // §quote-management P4-core-A — responseWindowDays 실값(expiresAt−createdAt). 미상이면 마감 "—".
     expiresAt?: string | null;
+    // §10 Phase 2 — 회신 단가/납기/moq(per-RFQ 공급사 비교 세부표 canonical).
+    responseItems?: Array<{ quoteItemId: string; unitPrice?: number | null; leadTimeDays?: number | null; moq?: number | null }>;
   }>;
   // §11.218 카드 구분자 — sub-context 표시용 (요청자 / 부서).
   user?: { id: string; name: string | null; email: string | null } | null;
@@ -1029,7 +1031,18 @@ function QuotesPageContent() {
   const [activeWorkWindow, setActiveWorkWindow] = useState<WorkWindowKey>(null);
   const [aiCompareOpen, setAiCompareOpen] = useState(false);
   const [aiCompareLoading, setAiCompareLoading] = useState(false);
-  const [aiCompareResult, setAiCompareResult] = useState<{ comparison: Array<{ vendor: string; price: string; leadTime: string; shippingFee: string }>; recommendation: string; negotiationGuide: string } | null>(null);
+  // §10 비교 모달 풀 빌드(시안 CompareModal) — 순위 카드·세부표·협상 포인트·추천 열 리치 shape.
+  const [aiCompareResult, setAiCompareResult] = useState<{
+    vendors: string[];
+    recommendedIdx: number | null;
+    recommendation: string;
+    ranks: Array<{ vendor: string; rank: number | null; score: number | null; totalDisplay: string; reason: string; recommended: boolean }>;
+    rows: Array<{ label: string; hint?: string; values: string[]; bestIdx: number | null }>;
+    totalRow: { values: string[]; bestIdx: number | null };
+    negotiationPoints: string[];
+    note: string;
+    dataState: "ready" | "partial";
+  } | null>(null);
   const [aiCompareError, setAiCompareError] = useState<string | null>(null);
   const [aiParseModalOpen, setAiParseModalOpen] = useState(false);
   // §quote-perm-gate (지시문 §10) — 비교·스캔 권한 사전체크 게이트. 빨간 403 dead-end 대신 품위 안내.
@@ -1659,23 +1672,59 @@ function QuotesPageContent() {
     if (!quotes || quotes.length === 0) return;
     // §quote-perm-gate (§10) — 조직 미소속이면 비교 불가: 모달 열지 않고 품위 안내(빨간 403 dead-end 방지).
     if (!permOrganizationId) { setPermGate("compare"); return; }
+
+    // §10 Phase 2 — per-RFQ 공급사 비교: 단가/납기/moq 회신(QuoteVendorResponseItem)이 2곳+ 인 견적 선택.
+    //   우선순위: 선택된 견적 → 회신 2곳+ 첫 견적. canonical truth(저장 0·읽을 때 파생).
+    const hasVendorData = (q: Quote) =>
+      (q.vendorRequests ?? []).filter((vr) => (vr.responseItems ?? []).length > 0).length >= 2;
+    const targetQuote =
+      (selectedQuoteId ? quotes.find((q) => q.id === selectedQuoteId && hasVendorData(q)) : undefined) ||
+      quotes.find((q) => q.status !== "CANCELLED" && hasVendorData(q)) ||
+      null;
+
     setAiCompareLoading(true);
     setAiCompareError(null);
     setAiCompareResult(null);
     setAiCompareOpen(true);
     try {
-      const quotePayload = quotes
-        .filter((q: Quote) => q.status !== "CANCELLED")
+      if (!targetQuote) {
+        throw new Error("비교할 공급사 회신이 부족합니다 — 단가·납기를 제출한 공급사가 한 견적에 2곳 이상 필요합니다.");
+      }
+      // 품목 수량 맵(QuoteListItem id → quantity) — 공급사별 회신 총액 집계용(Σ 단가×수량).
+      const qtyById = new Map<string, number>((targetQuote.items ?? []).map((it) => [it.id, it.quantity || 1]));
+      const vendorPayload = (targetQuote.vendorRequests ?? [])
+        .filter((vr) => (vr.responseItems ?? []).length > 0)
         .slice(0, 5)
-        .map((q: Quote) => ({
-          vendor: (q.items?.[0]?.product as Record<string, unknown>)?.brand as string || q.items?.[0]?.product?.name || "미지정 공급사",
-          items: q.items?.map((item) => `${item.product?.name || "품목"} x${item.quantity || 1}`).join(", ") || q.title,
-          rawText: `${q.title} — ${q.items?.length || 0}건 품목`,
-        }));
+        .map((vr) => {
+          const lines = vr.responseItems ?? [];
+          let total = 0;
+          let totalQty = 0;
+          const leads: number[] = [];
+          const moqs: number[] = [];
+          for (const it of lines) {
+            const qty = qtyById.get(it.quoteItemId) ?? 1;
+            if (typeof it.unitPrice === "number" && it.unitPrice > 0) {
+              total += it.unitPrice * qty;
+              totalQty += qty;
+            }
+            if (typeof it.leadTimeDays === "number") leads.push(it.leadTimeDays);
+            if (typeof it.moq === "number") moqs.push(it.moq);
+          }
+          return {
+            vendor: vr.vendorName || vr.vendorEmail || "미지정 공급사",
+            items: `${lines.length}개 품목`,
+            rawText: targetQuote.title,
+            // canonical: 단가=유효 총액÷수량(가중), 총액=Σ단가×수량. 회신 없으면 null(미수집).
+            totalPrice: totalQty > 0 ? total : null,
+            unitPrice: totalQty > 0 ? Math.round(total / totalQty) : null,
+            leadTimeDays: leads.length ? Math.max(...leads) : null,
+            moq: moqs.length ? Math.max(...moqs) : null,
+          };
+        });
       const res = await csrfFetch("/api/ai/quote-compare", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quotes: quotePayload }),
+        body: JSON.stringify({ quotes: vendorPayload }),
       });
       // §quote-perm-gate (§10) — 권한 부족(403)은 빨간 에러 대신 품위 안내로 전환.
       if (res.status === 403) { setAiCompareOpen(false); setPermGate("compare"); return; }
@@ -1687,7 +1736,7 @@ function QuotesPageContent() {
     } finally {
       setAiCompareLoading(false);
     }
-  }, [quotes, permOrganizationId]);
+  }, [quotes, selectedQuoteId, permOrganizationId]);
 
   const today = new Date().toDateString();
   const selectedQuote = selectedQuoteId ? quotes.find(q => q.id === selectedQuoteId) : null;
@@ -4308,7 +4357,7 @@ function QuotesPageContent() {
 
       {/* ═══ AI 견적서 비교 모달 ═══ */}
       <Dialog open={aiCompareOpen} onOpenChange={setAiCompareOpen}>
-        <DialogContent className="max-w-2xl bg-white border-slate-200 p-0 gap-0">
+        <DialogContent className="max-w-3xl bg-white border-slate-200 p-0 gap-0">
           <div className="px-6 pt-6 pb-4 border-b border-slate-100">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-lg text-slate-900">
@@ -4340,54 +4389,124 @@ function QuotesPageContent() {
 
             {aiCompareResult && (
               <>
-                {/* 공급사별 비교 테이블 */}
-                {aiCompareResult.comparison.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-slate-900 mb-2">공급사 비교</h4>
-                    <div className="rounded-lg border border-slate-200 overflow-hidden">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="bg-slate-50 text-slate-600">
-                            <th className="text-left px-3 py-2 font-medium">공급사</th>
-                            <th className="text-left px-3 py-2 font-medium">가격</th>
-                            <th className="text-left px-3 py-2 font-medium">납기</th>
-                            <th className="text-left px-3 py-2 font-medium">배송비</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {aiCompareResult.comparison.map((row, i) => (
-                            <tr key={i} className="hover:bg-slate-50/50">
-                              <td className="px-3 py-2 font-medium text-slate-900">{row.vendor}</td>
-                              <td className="px-3 py-2 text-slate-700">{row.price}</td>
-                              <td className="px-3 py-2 text-slate-700">{row.leadTime}</td>
-                              <td className="px-3 py-2 text-slate-700">{row.shippingFee}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-
-                {/* 추천 */}
+                {/* §10 시안 CompareModal — AI 종합 추천(네이비, 균형 기준) */}
                 {aiCompareResult.recommendation && (
-                  <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <CheckCircle2 className="h-4 w-4 text-blue-600" />
-                      <span className="text-sm font-semibold text-blue-900">추천</span>
+                  <div className="flex items-center gap-3 overflow-hidden rounded-xl bg-gradient-to-r from-[#0f1b34] to-[#16284c] px-4 py-3 text-white">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-400">
+                      <Sparkles className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <span className="block text-[10px] font-extrabold uppercase tracking-wider text-blue-300">AI 종합 추천</span>
+                      <p className="text-[13px] font-semibold leading-snug text-white/90">{aiCompareResult.recommendation}</p>
                     </div>
-                    <p className="text-sm text-slate-700 leading-relaxed">{aiCompareResult.recommendation}</p>
                   </div>
                 )}
 
-                {/* 협상 가이드 */}
-                {aiCompareResult.negotiationGuide && (
-                  <div className="rounded-lg border border-yellow-200 bg-yellow-50/50 p-4">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                      <span className="text-sm font-semibold text-yellow-900">협상 포인트</span>
-                    </div>
-                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{aiCompareResult.negotiationGuide}</p>
+                {/* §10 공급사 순위 카드 3 (종합점수·총액·이유·추천 리본) */}
+                {aiCompareResult.ranks.some((r) => r.rank !== null) && (
+                  <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+                    {aiCompareResult.ranks
+                      .filter((r) => r.rank !== null)
+                      .slice(0, 3)
+                      .map((r, i) => (
+                        <div
+                          key={i}
+                          className={`relative rounded-xl border p-4 ${r.recommended ? "border-blue-400 bg-gradient-to-b from-blue-50 to-white shadow-sm" : "border-slate-200 bg-white"}`}
+                        >
+                          {r.recommended && (
+                            <span className="absolute -top-2.5 left-3.5 rounded-full bg-blue-600 px-2.5 py-0.5 text-[10px] font-extrabold text-white shadow">
+                              AI 추천
+                            </span>
+                          )}
+                          {r.score !== null && (
+                            <span className={`absolute right-3.5 top-3.5 text-right text-xs font-extrabold tabular-nums ${r.recommended ? "text-blue-700" : "text-slate-400"}`}>
+                              <span className="block text-[9px] font-bold tracking-wide text-slate-400">종합점수</span>
+                              {r.score}
+                            </span>
+                          )}
+                          <div className={`mb-2 flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wide ${r.recommended ? "text-blue-700" : "text-slate-400"}`}>
+                            <span className={`flex h-[18px] w-[18px] items-center justify-center rounded-full text-[10px] font-extrabold ${r.recommended ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-500"}`}>{r.rank}</span>
+                            {r.rank}순위
+                          </div>
+                          <div className="mb-2 truncate text-[15px] font-extrabold tracking-tight text-slate-900">{r.vendor}</div>
+                          <div className="text-xl font-extrabold tabular-nums tracking-tight text-slate-900">{r.totalDisplay}</div>
+                          <div className={`mt-1.5 text-[11.5px] leading-snug ${r.recommended ? "font-semibold text-blue-700" : "text-slate-500"}`}>{r.reason}</div>
+                        </div>
+                      ))}
+                  </div>
+                )}
+
+                {/* §10 세부 비교표 — 단가·납기·최소주문 + 예상 총액, 행별 최적값 ✓, 추천 열 accent */}
+                <div className="overflow-hidden overflow-x-auto rounded-xl border border-slate-200">
+                  <table className="w-full min-w-[480px] text-[13px]">
+                    <thead>
+                      <tr>
+                        <th className="border-b-[1.5px] border-slate-200 bg-slate-50 px-3.5 py-2.5 text-left text-[11px] font-extrabold text-slate-500">비교 항목</th>
+                        {aiCompareResult.vendors.map((v, i) => (
+                          <th
+                            key={i}
+                            className={`border-b-[1.5px] px-3.5 py-2.5 text-left text-[13px] font-extrabold ${i === aiCompareResult.recommendedIdx ? "border-blue-200 bg-gradient-to-b from-blue-100/60 to-blue-50 text-slate-900" : "border-slate-200 bg-slate-50 text-slate-900"}`}
+                          >
+                            {v}
+                            {i === aiCompareResult.recommendedIdx && <span className="block text-[10px] font-bold text-blue-700">★ 추천</span>}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {aiCompareResult.rows.map((row, ri) => (
+                        <tr key={ri}>
+                          <td className="border-b border-slate-100 bg-slate-50/60 px-3.5 py-2.5 text-[12.5px] font-bold text-slate-600">
+                            {row.label}
+                            {row.hint && <span className="block text-[10px] font-semibold text-slate-400">{row.hint}</span>}
+                          </td>
+                          {row.values.map((val, vi) => (
+                            <td
+                              key={vi}
+                              className={`border-b border-slate-100 px-3.5 py-2.5 font-semibold tabular-nums ${vi === row.bestIdx ? "bg-emerald-50 font-extrabold text-emerald-700" : vi === aiCompareResult.recommendedIdx ? "bg-blue-50/60 text-slate-900" : "text-slate-800"}`}
+                            >
+                              {val}
+                              {vi === row.bestIdx && <span className="ml-1.5 inline-grid h-[15px] w-[15px] place-items-center rounded-full bg-emerald-500 align-middle text-[10px] font-extrabold text-white">✓</span>}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                      <tr>
+                        <td className="border-t-[1.5px] border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-[14px] font-extrabold text-slate-900">예상 총액</td>
+                        {aiCompareResult.totalRow.values.map((val, vi) => (
+                          <td
+                            key={vi}
+                            className={`border-t-[1.5px] border-slate-200 px-3.5 py-2.5 text-[14px] font-extrabold tabular-nums ${vi === aiCompareResult.totalRow.bestIdx ? "bg-emerald-50 text-emerald-700" : vi === aiCompareResult.recommendedIdx ? "bg-blue-50/60 text-slate-900" : "text-slate-900"}`}
+                          >
+                            {val}
+                            {vi === aiCompareResult.totalRow.bestIdx && <span className="ml-1.5 inline-grid h-[15px] w-[15px] place-items-center rounded-full bg-emerald-500 align-middle text-[10px] font-extrabold text-white">✓</span>}
+                          </td>
+                        ))}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* §10 납기/데이터 주석 */}
+                {aiCompareResult.note && (
+                  <p className="text-[11.5px] leading-relaxed text-slate-500">{aiCompareResult.note}</p>
+                )}
+
+                {/* §10 AI 협상 포인트 */}
+                {aiCompareResult.negotiationPoints.length > 0 && (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <h4 className="mb-3 flex items-center gap-1.5 text-[12.5px] font-extrabold text-slate-900">
+                      <Sparkles className="h-3.5 w-3.5 text-blue-600" />
+                      AI 협상 포인트
+                    </h4>
+                    <ul className="flex flex-col gap-2.5">
+                      {aiCompareResult.negotiationPoints.map((p, i) => (
+                        <li key={i} className="flex gap-2.5 text-[13px] leading-relaxed text-slate-700">
+                          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-blue-50 text-[11px] font-extrabold text-blue-700">{i + 1}</span>
+                          <span>{p}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </>
