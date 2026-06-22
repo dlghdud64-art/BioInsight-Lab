@@ -180,6 +180,11 @@ export function VendorRequestModal({
   const includedSuppliers = suppliers.filter((s) => s.included);
   const excludedSuppliers = suppliers.filter((s) => !s.included);
   const hasResolved = suppliers.length > 0;
+  // §quote-screen-sian §09b — no-supplier 통합 히어로 게이트(호영님 이미지 시안
+  //   2026-06-23). 후보 0 + 미펼침일 때만 시안 히어로(이메일 추가 hero +
+  //   추천 탐색). "탐색" 클릭 → candidatesExpanded=true → 기존 후보 브라우저
+  //   노출(same-canvas, dead button 0). 기존 markup 은 source 보존(sentinel GREEN).
+  const showNoSupplierHero = !hasResolved && !candidatesExpanded;
   const resolvedCount = suppliers.length;
   const includedCount = includedSuppliers.length;
 
@@ -492,7 +497,7 @@ export function VendorRequestModal({
           <DialogDescription className="text-slate-500">
             {hasResolved
               ? `플랫폼이 ${resolvedCount}개 공급사 후보를 선별했습니다. 검토 후 전달을 승인하세요.`
-              : "공급사를 직접 추가하거나 플랫폼 DB 보강을 기다려 주세요."}
+              : "전송하려면 공급사가 1곳 이상 필요합니다. 아래에서 직접 추가해 주세요."}
           </DialogDescription>
           {/* §09 sian — 케이스 ref + 담당자 칩(시안 헤더 정합). cuid 미노출(quoteRef 파생). */}
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
@@ -575,7 +580,7 @@ export function VendorRequestModal({
                 </li>
               ))}
             </ol>
-            {sendReadiness === "blocked" && (
+            {sendReadiness === "blocked" && !showNoSupplierHero && (
               <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2.5">
                 <p className="text-xs font-medium text-yellow-700">
                   {firstReadinessBlocker ?? "공급사를 먼저 추가하세요"}
@@ -630,6 +635,76 @@ export function VendorRequestModal({
                     ? "공급사 선별 · 연락 채널 · 메시지 · 견적 연결까지 모두 확인됐습니다."
                     : `공급사 ${includedCount}곳 선택됨 · 연락처·메시지 확인이 필요합니다.`}
                 </p>
+              </div>
+            </div>
+          ) : showNoSupplierHero ? (
+            <div data-testid="quote-dispatch-no-supplier-hero" className="space-y-3">
+              {/* 통합 안내 배너 */}
+              <div className="flex items-start gap-2.5 rounded-lg border border-yellow-200 bg-yellow-50 px-3.5 py-3">
+                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-yellow-400 text-white">
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-yellow-800">공급사를 먼저 추가하세요</p>
+                  <p className="mt-0.5 text-xs text-yellow-700">이 품목에 매칭되는 공급사가 없습니다. 이메일로 직접 추가하면 바로 전송할 수 있어요.</p>
+                </div>
+              </div>
+
+              {/* 받는 공급사 헤더 */}
+              <div className="flex items-center gap-2 px-1">
+                <Building2 className="h-4 w-4 text-slate-500" />
+                <span className="text-sm font-semibold text-slate-700">받는 공급사</span>
+              </div>
+
+              {/* 이메일로 공급사 추가 — 히어로(직접 입력 폼 승격) */}
+              <div className="space-y-3 rounded-xl border border-blue-200 bg-blue-50/40 p-4">
+                <div className="flex items-center gap-2">
+                  <UserPlus className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-bold text-slate-900">이메일로 공급사 추가</span>
+                </div>
+                <p className="text-xs text-slate-500">견적 요청을 받을 공급사의 이메일을 입력하세요. 추가하면 바로 전송할 수 있습니다.</p>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Input
+                    ref={manualEmailInputRef}
+                    type="email"
+                    placeholder="공급사 이메일 *"
+                    value={manualEmail}
+                    onChange={(e) => setManualEmail(e.target.value)}
+                    className="h-9 flex-1 border-slate-200 bg-white text-xs text-slate-900"
+                  />
+                  <Input
+                    type="text"
+                    placeholder="공급사명 (선택)"
+                    value={manualName}
+                    onChange={(e) => setManualName(e.target.value)}
+                    className="h-9 border-slate-200 bg-white text-xs text-slate-900 sm:w-40"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={addManualVendor}
+                    disabled={!manualEmail.trim()}
+                    data-testid="quote-dispatch-no-supplier-add"
+                    className="h-9 shrink-0 gap-1 bg-blue-600 text-xs text-white hover:bg-blue-700"
+                  >
+                    <UserPlus className="h-3.5 w-3.5" /> 추가
+                  </Button>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="h-px flex-1 bg-slate-200" />
+                  <span className="text-[11px] text-slate-400">또는</span>
+                  <span className="h-px flex-1 bg-slate-200" />
+                </div>
+                {/* LabAxis 추천 공급사 탐색 — 기존 후보 브라우저 펼침(dead button 0) */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setCandidatesExpanded(true)}
+                  data-testid="quote-dispatch-explore-recommended"
+                  className="h-10 w-full gap-2 border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  <Sparkles className="h-4 w-4 text-blue-500" /> LabAxis 추천 공급사 탐색
+                </Button>
               </div>
             </div>
           ) : (
@@ -710,6 +785,8 @@ export function VendorRequestModal({
           {/* ═══ §11.229 #quote-management-v2-phase-c2 — 3 source grouping ═══
               호영님 v2 #21 공급사 DB UI 3 경로 modal. 단일 scroll list 안
               3 section 으로 grouping (Tabs 도입 0 — same-canvas 보존). */}
+          {/* §09b — no-supplier 히어로 표시 중엔 숨김(탐색 클릭 시 노출). markup source 보존. */}
+          {!showNoSupplierHero && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               {/* §4c-rebloat — 선택됨 시 후보 리스트 접기 토글(받는 공급사 카드와 중복 해소). 미선택 시 비활성(항상 펼침). */}
@@ -876,6 +953,7 @@ export function VendorRequestModal({
               </div>
             )}
           </div>
+          )}
 
           {/* ═══ Message Preview — read-only by default ═══ */}
           {message && (
