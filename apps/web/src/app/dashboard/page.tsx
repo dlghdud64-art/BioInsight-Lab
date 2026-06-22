@@ -21,6 +21,9 @@ import { Badge } from "@/components/ui/badge";
 // 본 dead import 가 recharts (~150KB gzipped) 를 page chunk 에 포함시키고
 // 있어 initial bundle 부담. 제거 후 recharts 는 chart component lazy chunk 만.
 import { getGuestKey } from "@/lib/guest-key";
+// §session-expiry-global — 대시보드 GET 을 csrfFetch 경유 → 401 시 raw fetch 우회로 인한
+//   "가짜 empty-state" 폴백 대신 전역 재로그인 유도(api-client redirectToSignInOn401).
+import { csrfFetch } from "@/lib/api-client";
 import { useWorkbenchOverlayOpen } from "@/hooks/use-workbench-overlay-open";
 // §dashboard-shifan-adopt P3a — ExecutiveSummarySection 제거(운영 KPI3=ActionInbox/Pipeline/
 //   StatLine 중복 + 레거시 SystemInsightCard=NextStepBanner 중복). 컴포넌트 파일은 dormant
@@ -192,7 +195,7 @@ function DashboardPageInner() {
       const guestKey = getGuestKey();
       const headers: Record<string, string> = {};
       if (guestKey) headers["x-guest-key"] = guestKey;
-      const response = await fetch("/api/dashboard/stats", { headers });
+      const response = await csrfFetch("/api/dashboard/stats", { headers });
       if (!response.ok) {
         // §11.361-1b — 이전엔 return null → react-query 가 "성공(null)"으로 처리해
         //   retry 미작동 → 간헐 500(콜드스타트 Prisma transient) 1회로 stats 영구 null

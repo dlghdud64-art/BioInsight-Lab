@@ -287,6 +287,35 @@ export const api = {
 };
 
 // ═══════════════════════════════════════════════════════
+// §session-expiry-global — 401(세션 만료) 전역 처리 헬퍼
+// ═══════════════════════════════════════════════════════
+
+/**
+ * 401(세션 만료) 시 만료 안내 toast + /auth/signin 재로그인 유도.
+ *   - 401 만 처리(403=권한거부는 redirect-loop 위험으로 제외, retry 보존).
+ *   - 이미 signin 페이지면 skip(loop 차단).
+ *   - GET 포함 모든 method 의 csrfFetch 응답에 적용 — raw fetch 우회로 인한
+ *     "401 → 가짜 empty-state" 폴백(대시보드 KPI 0·무한 스켈레톤) 차단.
+ */
+function redirectToSignInOn401(response: Response): void {
+  if (response.status !== 401 || typeof window === "undefined") return;
+  if (window.location.pathname.startsWith("/auth/signin")) return;
+  try {
+    toast({
+      title: "세션이 만료되었습니다",
+      description: "다시 로그인해 주세요.",
+      variant: "destructive",
+    });
+  } catch {
+    // toast 실패는 redirect 를 막지 않음
+  }
+  const callbackUrl = encodeURIComponent(
+    window.location.pathname + window.location.search,
+  );
+  window.location.href = `/auth/signin?callbackUrl=${callbackUrl}`;
+}
+
+// ═══════════════════════════════════════════════════════
 // csrfFetch — native fetch() drop-in with CSRF auto-attach
 // ═══════════════════════════════════════════════════════
 
@@ -314,9 +343,11 @@ export async function csrfFetch(
 ): Promise<Response> {
   const method = (init?.method || 'GET').toUpperCase();
 
-  // Safe method → bypass, 원본 fetch 그대로
+  // Safe method → CSRF 미부착이지만 §session-expiry-global 401 처리는 적용(GET 포함 전역).
   if (!STATE_CHANGING_METHODS.has(method)) {
-    return fetch(input, init);
+    const res = await fetch(input, init);
+    redirectToSignInOn401(res);
+    return res;
   }
 
   // State-changing → CSRF 토큰 부착
@@ -353,15 +384,9 @@ export async function csrfFetch(
     }
   }
 
-  // §11.371-1 — 세션 만료(401) 시 dead-end("보안검증 미완") 대신 재로그인 유도.
-  //   apiClient 의 401 정책을 csrfFetch(스캔·입고·재고 mutation 실경로)에도 적용.
-  //   401(미인증)만 처리 — 403(권한거부)은 redirect loop 위험으로 제외(retry 보존).
-  if (response.status === 401 && typeof window !== "undefined") {
-    const callbackUrl = encodeURIComponent(
-      window.location.pathname + window.location.search,
-    );
-    window.location.href = `/auth/signin?callbackUrl=${callbackUrl}`;
-  }
+  // §11.371-1 + §session-expiry-global — 세션 만료(401) 시 dead-end 대신 재로그인 유도.
+  //   401(미인증)만 — 403(권한거부)은 redirect loop 위험으로 제외(retry 보존).
+  redirectToSignInOn401(response);
 
   return response;
 }

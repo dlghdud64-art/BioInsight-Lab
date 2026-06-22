@@ -19,6 +19,8 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getGuestKey } from "@/lib/guest-key";
+// §session-expiry-global — GET 을 csrfFetch 경유 → 401 시 전역 재로그인 유도(가짜 empty 폴백 차단).
+import { csrfFetch } from "@/lib/api-client";
 import {
   deriveSectionState,
   CAPMS_DEFAULT,
@@ -63,7 +65,7 @@ export function useDashboardSection<T>({
       const guestKey = getGuestKey();
       const headers: Record<string, string> = {};
       if (guestKey) headers["x-guest-key"] = guestKey;
-      const response = await fetch(url, { headers });
+      const response = await csrfFetch(url, { headers });
       if (!response.ok) {
         // §11.361-1b — !ok 는 throw(return null 금지) → react-query retry 동작.
         throw new Error(`${url} ${response.status}`);

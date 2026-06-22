@@ -25,7 +25,9 @@ describe("§11.371-1 — csrfFetch 401 재로그인(systemic)", () => {
     expect(src).toMatch(/let response = await fetch/); // 403 retry 재할당용 mutable
     expect(src).toMatch(/response\.status === 401/);
     expect(src).toMatch(/auth\/signin\?callbackUrl=/);
-    expect(src).toMatch(/typeof window !== "undefined"/);
+    // §session-expiry-global — inline 401 → redirectToSignInOn401 헬퍼 통합. SSR-safe window 가드는
+    //   `typeof window !== "undefined"`(positive) → `typeof window === "undefined"` early-return(반전)으로 표현. 의도 불변.
+    expect(src).toMatch(/typeof window === "undefined"/);
   });
   it("회귀: 403 CSRF retry 보존 + 403 자동 redirect 미도입(loop 방지)", () => {
     const src = read(API);
