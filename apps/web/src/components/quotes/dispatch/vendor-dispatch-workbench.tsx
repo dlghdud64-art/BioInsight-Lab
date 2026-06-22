@@ -285,6 +285,13 @@ export function VendorRequestModal({
     return base.map((s, i) => {
       const current = i === firstPendingIdx;
       const blocked = current && sendReadiness === "blocked";
+      const state: "done" | "blocked" | "current" | "pending" = s.ready
+        ? "done"
+        : blocked
+          ? "blocked"
+          : current
+            ? "current"
+            : "pending";
       const tone = s.ready
         ? "border-emerald-200 bg-emerald-50 text-emerald-700"
         : blocked
@@ -292,7 +299,17 @@ export function VendorRequestModal({
           : current
             ? "border-blue-200 bg-blue-50 text-blue-700"
             : "border-slate-200 bg-slate-50 text-slate-400";
-      return { key: s.key, label: s.label, done: s.ready, current, blocked, tone };
+      // §quote-screen-sian §09 stepper — 시안 2단 라벨의 sub 문구. 하드코딩이
+      //   아니라 실제 step state(공급사/연락처/메시지/전송 readiness) 파생.
+      //   거짓 "완료" 표기 0 — done 일 때만 "선택 완료/확인됨/초안 준비됨/바로 가능".
+      const subMap: Record<string, Record<typeof state, string>> = {
+        supplier: { done: "선택 완료", blocked: "후보 없음", current: "선택 필요", pending: "대기" },
+        contact: { done: "확인됨", blocked: "연락처 필요", current: "확인 필요", pending: "대기" },
+        draft: { done: "초안 준비됨", blocked: "검토 필요", current: "검토 필요", pending: "초안 준비됨" },
+        send: { done: "바로 가능", blocked: "대기", current: "검토 후 전송", pending: "대기" },
+      };
+      const sub = subMap[s.key]?.[state] ?? "";
+      return { key: s.key, label: s.label, done: s.ready, current, blocked, tone, state, sub };
     });
   }, [includedCount, contactBlocker, message, sendReadiness]);
 
@@ -497,24 +514,64 @@ export function VendorRequestModal({
             data-testid="quote-dispatch-stepper"
             className="rounded-lg border border-slate-200 bg-white px-3 py-3"
           >
-            <ol className="flex items-stretch gap-1.5">
+            {/* §quote-screen-sian §09 — 시안 원형 노드 스텝퍼(호영님 2026-06-22
+                지시: 사각칩 철회, 시안 1:1). sdot 30px 원 + 연결선(sline) +
+                2단 라벨(slabel/ssub). 상태/문구는 dispatchSteps(실제 readiness)
+                파생 — 거짓 완료 0. */}
+            <ol className="flex items-start gap-0">
               {dispatchSteps.map((step, i) => (
                 <li
                   key={step.key}
                   data-testid={`quote-dispatch-step-${step.key}`}
-                  data-step-state={step.done ? "done" : step.blocked ? "blocked" : step.current ? "current" : "pending"}
-                  className="min-w-0 flex-1"
+                  data-step-state={step.state}
+                  className="relative flex min-w-0 flex-1 flex-col items-center gap-1.5 text-center"
                 >
-                  <div className={`flex items-center gap-1.5 rounded-md border px-2 py-1.5 ${step.tone}`}>
+                  {/* 연결선 — 시안 .sline (첫 노드 제외, 진행 도달 시 emerald) */}
+                  {i > 0 && (
+                    <span
+                      aria-hidden
+                      className={`absolute right-1/2 top-[14px] z-0 h-0.5 w-full ${
+                        step.done || step.current ? "bg-emerald-500" : "bg-slate-200"
+                      }`}
+                    />
+                  )}
+                  {/* 원형 노드 — 시안 .sdot 30px */}
+                  <span
+                    className={`relative z-[1] grid h-[30px] w-[30px] shrink-0 place-items-center rounded-full border ${
+                      step.done
+                        ? "border-emerald-500 bg-emerald-500 text-white"
+                        : step.blocked
+                          ? "border-yellow-300 bg-yellow-50 text-yellow-600"
+                          : step.current
+                            ? "border-blue-600 bg-blue-600 text-white ring-4 ring-blue-100"
+                            : "border-slate-200 bg-white text-slate-400"
+                    }`}
+                  >
                     {step.done ? (
-                      <Check className="h-3.5 w-3.5 shrink-0" />
+                      <Check className="h-[15px] w-[15px]" />
                     ) : step.blocked ? (
-                      <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                      <AlertTriangle className="h-3.5 w-3.5" />
                     ) : (
-                      <span className="shrink-0 text-[10px] font-bold tabular-nums">{i + 1}</span>
+                      <span className="text-[12px] font-extrabold tabular-nums">{i + 1}</span>
                     )}
-                    <span className="truncate text-[11px] font-medium md:text-xs">{step.label}</span>
-                  </div>
+                  </span>
+                  {/* 2단 라벨 — 시안 .slabel / .ssub (ssub 모바일 숨김) */}
+                  <span
+                    className={`text-[12px] font-bold leading-tight tracking-tight ${
+                      step.current
+                        ? "text-blue-700"
+                        : step.blocked
+                          ? "text-yellow-700"
+                          : step.done
+                            ? "text-slate-700"
+                            : "text-slate-400"
+                    }`}
+                  >
+                    {step.label}
+                  </span>
+                  <span className="hidden text-[10.5px] leading-tight text-slate-400 sm:block">
+                    {step.sub}
+                  </span>
                 </li>
               ))}
             </ol>
