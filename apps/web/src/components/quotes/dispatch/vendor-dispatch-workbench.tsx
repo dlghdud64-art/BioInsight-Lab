@@ -551,21 +551,29 @@ export function VendorRequestModal({
             <div
               data-testid="quote-dispatch-state-banner"
               data-state="ready"
-              className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 ${
+              className={`flex items-start gap-2.5 rounded-lg border px-3 py-2.5 ${
                 sendReadiness === "ready"
                   ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                   : "border-yellow-200 bg-yellow-50 text-yellow-800"
               }`}
             >
               {sendReadiness === "ready" ? (
-                <Check className="h-4 w-4 shrink-0" />
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+                  <Check className="h-3.5 w-3.5" />
+                </span>
               ) : (
-                <Clock className="h-4 w-4 shrink-0" />
+                <Clock className="mt-0.5 h-4 w-4 shrink-0" />
               )}
-              <span className="text-sm font-semibold">
-                {sendReadiness === "ready" ? "전송 준비 완료" : "전송 전 검토 필요"}
-              </span>
-              <span className="text-xs">· 공급사 {includedCount}곳 선택됨</span>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold">
+                  {sendReadiness === "ready" ? "전송 준비 완료" : "전송 전 검토 필요"}
+                </p>
+                <p className="text-xs">
+                  {sendReadiness === "ready"
+                    ? "공급사 선별 · 연락 채널 · 메시지 · 견적 연결까지 모두 확인됐습니다."
+                    : `공급사 ${includedCount}곳 선택됨 · 연락처·메시지 확인이 필요합니다.`}
+                </p>
+              </div>
             </div>
           ) : (
             <div
@@ -598,27 +606,42 @@ export function VendorRequestModal({
               <div className="max-h-[160px] space-y-1.5 overflow-y-auto overflow-x-hidden">
                 {includedSuppliers.map((supplier) => {
                   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(supplier.email);
+                  // §09 시안 — 공급사별 컬러 아바타(왼쪽 이미지 차용, 결정론 팔레트).
+                  const avatarPalette = ["bg-violet-100 text-violet-700", "bg-blue-100 text-blue-700", "bg-teal-100 text-teal-700", "bg-yellow-100 text-yellow-700", "bg-rose-100 text-rose-700", "bg-indigo-100 text-indigo-700"];
+                  const avatarTone = avatarPalette[(supplier.vendorName.charCodeAt(0) || 0) % avatarPalette.length];
                   return (
                     <div
                       key={supplier.vendorId}
                       data-testid="quote-dispatch-recipient-card"
-                      className="flex items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-3 py-2"
+                      className={`flex items-center gap-2.5 rounded-lg border px-3 py-2 ${
+                        emailValid ? "border-emerald-200 bg-emerald-50/40" : "border-rose-200 bg-rose-50/40"
+                      }`}
                     >
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs font-semibold text-blue-700">
+                      {/* §09 시안 — 확인된 수신처는 초록 ✓ 원(honesty: 이메일 무효 시 미표시). */}
+                      {emailValid && (
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+                          <Check className="h-3 w-3" />
+                        </span>
+                      )}
+                      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${avatarTone}`}>
                         {supplier.vendorName.slice(0, 1)}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-medium text-slate-900">{supplier.vendorName}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="truncate text-xs font-medium text-slate-900">{supplier.vendorName}</p>
+                          <span
+                            className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                              emailValid ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+                            }`}
+                          >
+                            {emailValid ? "연락처 확인" : "확인 필요"}
+                          </span>
+                        </div>
                         <p className="truncate text-[11px] text-slate-500">{supplier.email || "연락처 없음"}</p>
                       </div>
-                      <span
-                        className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] ${
-                          emailValid
-                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                            : "border-rose-200 bg-rose-50 text-rose-700"
-                        }`}
-                      >
-                        {emailValid ? "연락처 확인됨" : "연락처 확인 필요"}
+                      {/* §09 시안 — 우측 "전송 대상" 라벨(무효 시 "보류"로 정직 표기). */}
+                      <span className={`shrink-0 text-[11px] font-medium ${emailValid ? "text-emerald-600" : "text-rose-500"}`}>
+                        {emailValid ? "전송 대상" : "보류"}
                       </span>
                     </div>
                   );
@@ -918,7 +941,14 @@ export function VendorRequestModal({
             <span className="text-xs sm:text-right">{sendGateDetail}</span>
           </div>
         </div>
-        <DialogFooter className="gap-2 pt-2 border-t border-slate-200 flex-col md:flex-row">
+        <DialogFooter className="gap-2 pt-2 border-t border-slate-200 flex-col md:flex-row md:items-center">
+          {/* §09 시안 — 준비 완료 시 좌측 검증 상태문(정직: ready 일 때만). */}
+          {sendReadiness === "ready" && !sentTracking && (
+            <span className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-600 md:mr-auto">
+              <Check className="h-3.5 w-3.5" />
+              미리보기·수신자 검증 완료
+            </span>
+          )}
           <Button
             type="button"
             variant="ghost"

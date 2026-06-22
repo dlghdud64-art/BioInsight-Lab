@@ -44,9 +44,11 @@ describe("§09 4c #2 — 받는 공급사 카드", () => {
     expect(src).toContain("supplier.email");
   });
 
-  it("연락처 확인 배지 (확인됨/확인 필요)", () => {
-    expect(src).toContain("연락처 확인됨");
-    expect(src).toContain("연락처 확인 필요");
+  it("연락처 확인 배지 (verified '연락처 확인' / invalid '확인 필요') — §09 시안 정합 문구", () => {
+    // §09 시안 하단 — verified 배지 "연락처 확인됨"→"연락처 확인", invalid "연락처 확인 필요"→"확인 필요"/"보류".
+    //   verified/invalid 2상태 구분(honesty: 이메일 무효 시 ✓ 대신 확인 필요)은 불변.
+    expect(src).toContain("연락처 확인");
+    expect(src).toContain("확인 필요");
   });
 });
 
