@@ -1530,9 +1530,12 @@ function QuotesPageContent() {
             .sort(
               (a, b) => a.boundingClientRect.top - b.boundingClientRect.top,
             );
+          // §quote-brief-rail-tabs-sian — 시안 1:1 탭 전환 도입. scroll-spy 가
+          //   탭 클릭(setActiveChipId)을 덮어쓰지 않도록 override 제거. observer
+          //   구조/관측은 보존(향후 재사용 여지). targetId 는 derive 만 유지하여
+          //   no-unused / no-unreachable 회피.
           if (visible.length > 0) {
-            const targetId = visible[0].target.id.replace("brief-", "");
-            setActiveChipId(targetId);
+            void visible[0].target.id.replace("brief-", "");
           }
         },
         { rootMargin: "-20% 0px -50% 0px", threshold: 0 },
@@ -3494,36 +3497,32 @@ function QuotesPageContent() {
             </div>
           </div>
 
-          {/* §11.144 4 preset chips — anchor jump to brief sections.
-              §11.217 Phase 5 — scroll-spy active highlight (activeChipId 매칭 시 blue tone). */}
-          <div className="px-4 py-2 border-b border-bd/50 flex flex-wrap gap-1.5">
+          {/* §quote-brief-rail-tabs-sian — 시안 BriefPanel 1:1 탭 전환 (호영님 결정:
+              "시안 1:1 엄격(단순화)"). 기존 preset chips(scroll anchor) → 탭 selector.
+              4 탭: 상태 요약 / 회신 현황 / 비교 진행 / 발주 전환. 활성 탭 콘텐츠만 표시.
+              onClick = setActiveChipId 만 (scroll·setBriefDetailExpanded 제거 → 탭 단순 전환).
+              활성 = blue 밑줄/강조. 회귀: activeChipId/setActiveChipId wiring 보존. */}
+          <div className="px-4 border-b border-bd/50 flex gap-1" role="tablist" aria-label="운영 브리핑 탭">
             {[
               { id: "summary", label: "상태 요약" },
-              { id: "facts",   label: "회신 현황" },
-              { id: "facts2",  label: "비교 진행" },
-              { id: "next",    label: "발주 전환" },
+              { id: "reply",   label: "회신 현황" },
+              { id: "compare", label: "비교 진행" },
+              { id: "order",   label: "발주 전환" },
             ].map((c) => (
               <button
                 key={c.id}
                 type="button"
+                role="tab"
                 onClick={(e) => {
                   e.stopPropagation();
-                  // #operational-brief-3-section-compress — collapsed 시 anchor 가
-                  //   mount 되어야 scrollIntoView 작동 → 자동 expand 후 next tick 에 scroll.
-                  if (c.id !== "summary" && c.id !== "next") {
-                    setBriefDetailExpanded(true);
-                  }
                   setActiveChipId(c.id);
-                  requestAnimationFrame(() => {
-                    const el = document.getElementById(`brief-${c.id}`);
-                    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-                  });
                 }}
+                aria-selected={activeChipId === c.id}
                 aria-pressed={activeChipId === c.id}
                 className={
                   activeChipId === c.id
-                    ? "px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700 transition-colors"
-                    : "px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors"
+                    ? "px-2 py-2 text-[11px] font-semibold text-blue-700 border-b-2 border-blue-600 -mb-px transition-colors"
+                    : "px-2 py-2 text-[11px] font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-900 transition-colors"
                 }
               >
                 {c.label}
@@ -3550,11 +3549,23 @@ function QuotesPageContent() {
             <h3 className="text-sm font-semibold text-slate-900 truncate mb-1">{selectedQuote.title}</h3>
             <p className="text-[11px] text-slate-500">{selectedQuote.items.length}건 · 회신 {sqResponseCount}/{selectedQuote.items.length} · <RelativeTimeText iso={selectedQuote.createdAt} /></p>
             <p className="text-[11px] text-slate-400 mt-0.5">{selectedSignals.urgency}</p>
+            {/* §quote-brief-rail-tabs-sian — 시안 lead 줄. canonical truth(status/회신 수)
+                기반 1줄 상태 안내. 새 추정 없음. */}
+            <p className="text-[11px] font-medium text-slate-600 mt-1">
+              {selectedQuote.status !== "SENT"
+                ? "첫 액션이 필요합니다"
+                : sqResponseCount < selectedQuote.items.length
+                  ? "회신을 기다리는 중입니다"
+                  : "비교할 견적이 모였습니다"}
+            </p>
           </div>
 
           {/* Rail scrollable body */}
           <div className="flex-1 overflow-y-auto">
 
+          {/* §quote-brief-rail-tabs-sian — "상태 요약" 탭: brief-summary(상황 요약)
+              + brief-facts(판단 근거) 그대로. activeChipId === "summary" 게이트. */}
+          {activeChipId === "summary" && (<>
           {/* § 1. 상황 요약 — resolver-derived 1-line + §11.161 LLM narrative hook.
               §11.248e — selectedQuote.title / summary 영역 break-keep (어절 단위 wrap)
               으로 좁은 너비에서도 어색한 줄바꿈 방지 (호영님 spec). */}
@@ -3676,6 +3687,71 @@ function QuotesPageContent() {
               </>
             )}
           </div>
+          </>)}{/* end §quote-brief-rail-tabs-sian "상태 요약" 탭 게이트 */}
+
+          {/* §quote-brief-rail-tabs-sian — "회신 현황" 탭 (신규, 단순). kv 4칸.
+              canonical truth: items.length / sqResponseCount / status / sqDaysToDeadline 만. */}
+          {activeChipId === "reply" && (
+            <div className="px-4 py-3 border-b border-bd/50">
+              <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">회신 현황</div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                  <div className="text-[10px] text-slate-400">발송 공급사</div>
+                  <div className="text-sm font-semibold text-slate-900 mt-0.5">{selectedQuote.items.length}곳</div>
+                </div>
+                <div className={`rounded-lg border px-3 py-2 ${sqResponseCount === 0 ? "border-red-200 bg-red-50" : "border-slate-200 bg-white"}`}>
+                  <div className={`text-[10px] ${sqResponseCount === 0 ? "text-red-600" : "text-slate-400"}`}>회신 수신</div>
+                  <div className={`text-sm font-semibold mt-0.5 ${sqResponseCount === 0 ? "text-red-700" : "text-slate-900"}`}>{sqResponseCount}/{selectedQuote.items.length}</div>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                  <div className="text-[10px] text-slate-400">상태</div>
+                  <div className="text-sm font-semibold text-slate-900 mt-0.5">
+                    {selectedQuote.status !== "SENT"
+                      ? "미발송"
+                      : sqResponseCount < selectedQuote.items.length
+                        ? "수집 중"
+                        : "완료"}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                  <div className="text-[10px] text-slate-400">마감</div>
+                  <div className="text-sm font-semibold text-slate-900 mt-0.5">
+                    {sqDaysToDeadline === null
+                      ? "—"
+                      : sqDaysToDeadline < 0
+                        ? `${Math.abs(sqDaysToDeadline)}일 초과`
+                        : `D-${sqDaysToDeadline}`}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* §quote-brief-rail-tabs-sian — "비교 진행" 탭 (신규). 회신 2곳 미만 안내,
+              2곳 이상 시 실제 동작하는 "견적 비교 열기" 버튼(setActiveWorkWindow("compare_review")).
+              dead button 금지 — compare_review work window 가 실제 비교 진입점. */}
+          {activeChipId === "compare" && (
+            <div className="px-4 py-3 border-b border-bd/50">
+              <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">비교 진행</div>
+              {sqResponseCount < 2 ? (
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  비교하려면 회신이 2곳 이상 필요합니다. 현재 {sqResponseCount}곳 수신.
+                </p>
+              ) : (
+                <div className="space-y-2.5">
+                  <p className="text-xs text-slate-700 leading-relaxed">견적 비교를 시작할 수 있습니다.</p>
+                  <Button
+                    data-testid="quote-brief-compare-open-cta"
+                    size="sm"
+                    className="w-full h-8 text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white"
+                    onClick={(e) => { e.stopPropagation(); setActiveWorkWindow("compare_review"); }}
+                  >
+                    견적 비교 열기<ArrowRight className="h-3 w-3 ml-1.5" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* #operational-brief-3-section-compress Phase B-2 — 5 섹션 collapse.
               호영님 redesign: 7 섹션 → 3 섹션 (한 줄 요약 + 다음 액션 + 상세).
@@ -3828,11 +3904,10 @@ function QuotesPageContent() {
 
           </>)}{/* end #operational-brief-3-section-compress collapse */}
 
-          {/* § 4. 다음 조치 — 연결 작업 + 발주 전환 정보.
-              §11.222 #quote-brief-next-prune — 호영님 spec #5: 값이 "없음"/
-              "불필요"/"해당없음" 인 hardcoded row 는 hide (해당없는 정보가
-              "할 게 있다" 정보만큼 면적 점유). 실제 액션 항목 (handoffTarget +
-              handoffStatus) 만 노출. */}
+          {/* §quote-brief-rail-tabs-sian — "발주 전환" 탭: brief-next(다음 조치) 그대로.
+              activeChipId === "order" 게이트. */}
+          {/* §11.222 #quote-brief-next-prune — handoffTarget/handoffStatus 실제 액션만 노출. */}
+          {activeChipId === "order" && (
           <section id="brief-next" className="px-4 py-3 scroll-mt-4">
             <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">다음 조치</div>
             <div className="space-y-1.5">
@@ -3840,6 +3915,7 @@ function QuotesPageContent() {
               <div className="flex justify-between text-xs"><span className="text-slate-400">전환 상태</span><span className={selectedSignals.poReady === "가능" ? "text-emerald-400" : "text-yellow-600"}>{selectedSignals.handoffStatus}</span></div>
             </div>
           </section>
+          )}
 
           {/* §11.55 — G-pre "공급사 회신 견적서 등록" 블록 제거.
               backend (`/api/quotes/[id]/attach-document`) 미구현으로
