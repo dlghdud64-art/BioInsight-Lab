@@ -37,12 +37,19 @@ describe("§11.284d — 구매 운영 base status whitelist + empty state", () =
     expect(PAGE).toMatch(/PURCHASE_STAGE_STATUSES\.has\(i\.conversionStatus\)/);
   });
 
-  it("empty state 메시지 호영님 spec 정합 — '발주 인계 대기 중인 건이 없습니다'", () => {
-    expect(PAGE).toMatch(/발주 인계 대기 중인 건이 없습니다/);
+  // §11.334 supersede — 호영님 시안 결정으로 데이터 0건 빈상태는 얇은 텍스트
+  //   카피 대신 온보딩(히어로+파이프라인+할 일)로 전환. 옛 §11.284d 카피("발주
+  //   인계 대기 중인 건이 없습니다" / "견적 비교가 완료되면 여기에 표시")는
+  //   의도적으로 제거됨 → 온보딩 컴포넌트 렌더로 정합. whitelist 로직(위 3개
+  //   it)은 그대로 유효하므로 보존.
+  it("§11.334 — 데이터 0건 빈상태는 온보딩(PurchasesOnboarding)으로 전환", () => {
+    expect(PAGE).toContain("PurchasesOnboarding");
+    expect(PAGE).toMatch(/items\.length === 0 \?\s*\(\s*<PurchasesOnboarding/);
   });
 
-  it("empty state 부카피 호영님 spec — '견적 비교가 완료되면 여기에 표시'", () => {
-    expect(PAGE).toMatch(/견적 비교가 완료되면 여기에 표시/);
+  it("§11.334 — 검색/탭 무결과 얇은 안내는 보존(회귀 0)", () => {
+    expect(PAGE).toMatch(/에 해당하는 항목이 없습니다/);
+    expect(PAGE).toMatch(/선택한 탭에 항목이 없습니다/);
   });
 
   it("기존 queueTab + searchQuery filter 보존 (회귀 0)", () => {

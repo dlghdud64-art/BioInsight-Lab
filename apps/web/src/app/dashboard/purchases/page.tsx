@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import {
   Search, Package, CheckCircle2, Clock, AlertCircle, AlertTriangle,
   ArrowRight, X, ListChecks, CircleCheck, ChevronRight, ChevronDown, ChevronUp, FileText,
-  Sparkles, Truck, Check,
+  Sparkles, Truck, Check, Send, ShoppingCart, Columns3, ScanLine,
 } from "lucide-react";
 import Link from "next/link";
 import { csrfFetch } from "@/lib/api-client";
@@ -35,6 +35,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+// §11.334 — 빈상태 온보딩 "견적서 스캔" CTA wiring. §10 에서 land 한 모달 재사용.
+import { QuoteScannerModal } from "@/components/inventory/QuoteScannerModal";
 
 import type {
   PurchaseConversionItem,
@@ -181,6 +183,9 @@ export default function PurchasesPage() {
 
   // §11.209d-history-expand — "이전 결재 이력" expand state
   const [historyExpanded, setHistoryExpanded] = useState(false);
+
+  // §11.334 — 빈상태 온보딩 "견적서 스캔" 모달 open state.
+  const [scanOpen, setScanOpen] = useState(false);
 
   const { data, isLoading, isError, error } = useQuery<ConversionResponse>({
     queryKey: ["purchase-conversion-queue"],
@@ -710,36 +715,35 @@ export default function PurchasesPage() {
               </div>
             )}
 
+            {/* §11.334 — 빈상태 분기. (a) 검색 무결과 / (c) 탭 무결과 = 얇은
+                안내 유지. (b) 데이터 0건(items.length===0 && 검색 X) = 시안
+                Improved 온보딩(히어로+파이프라인+할일+미리보기)로 전환. 파이프라인
+                상태는 stats(canonical)에서 파생 — 거짓 "완료" 표기 0.
+                ⚠️ 옛 텍스트 empty 카피("발주 인계 대기…"/"견적 비교가 완료되면…")
+                제거는 의도된 §11.334 디자인 — desync reversion 아님. */}
             {!isLoading && !isError && filteredItems.length === 0 && (
-              <div className="rounded-xl border border-slate-200 bg-white p-10 text-center">
-                <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
-                  <Package className="h-6 w-6 text-slate-400" />
+              searchQuery.trim() ? (
+                <div className="rounded-xl border border-slate-200 bg-white p-10 text-center">
+                  <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                    <Package className="h-6 w-6 text-slate-400" />
+                  </div>
+                  <p className="text-sm text-slate-500 mb-1">{`'${searchQuery.trim()}'에 해당하는 항목이 없습니다`}</p>
+                  <p className="text-xs text-slate-400">다른 키워드로 검색해 보세요.</p>
                 </div>
-                <p className="text-sm text-slate-500 mb-1">
-                  {searchQuery.trim()
-                    ? `'${searchQuery.trim()}'에 해당하는 항목이 없습니다`
-                    : items.length === 0
-                      ? "발주 인계 대기 중인 건이 없습니다"
-                      : "선택한 탭에 항목이 없습니다"}
-                </p>
-                {/* §11.284d — 호영님 P1 spec: 발주 단계만 표시 정책 정합.
-                    "견적 비교 완료되면 여기에 표시" 명시로 구매 운영 surface
-                    의 정체성 (발주 관리) 강화. */}
-                <p className="text-xs text-slate-400 mb-4">
-                  {searchQuery.trim()
-                    ? "다른 키워드로 검색해 보세요."
-                    : items.length === 0
-                      ? "견적 비교가 완료되면 여기에 표시됩니다. 회신을 비교한 뒤 '발주 인계'로 정리하면, 발주 관리에서 외부 발주·입고 상태를 추적합니다."
-                      : "다른 탭을 확인해 보세요."}
-                </p>
-                {!searchQuery.trim() && items.length === 0 && (
-                  <Link href="/app/search">
-                    <Button size="sm" className="h-9 px-4 text-sm shadow-sm">
-                      소싱 열기 <ArrowRight className="h-3.5 w-3.5 ml-1" />
-                    </Button>
-                  </Link>
-                )}
-              </div>
+              ) : items.length === 0 ? (
+                <PurchasesOnboarding
+                  hasSentRequest={stats.total > 0}
+                  onScanOpen={() => setScanOpen(true)}
+                />
+              ) : (
+                <div className="rounded-xl border border-slate-200 bg-white p-10 text-center">
+                  <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                    <Package className="h-6 w-6 text-slate-400" />
+                  </div>
+                  <p className="text-sm text-slate-500 mb-1">선택한 탭에 항목이 없습니다</p>
+                  <p className="text-xs text-slate-400">다른 탭을 확인해 보세요.</p>
+                </div>
+              )
             )}
 
             {!isLoading && !isError && filteredItems.map((item) => {
@@ -1645,6 +1649,20 @@ export default function PurchasesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* §11.334 — 견적서 스캔 모달 (빈상태 온보딩 CTA wiring). 스캔 완료 시
+          큐 invalidate → 새 후보가 목록에 반영. dead button 0. */}
+      <QuoteScannerModal
+        open={scanOpen}
+        onOpenChange={setScanOpen}
+        onScanComplete={() => {
+          queryClient.invalidateQueries({ queryKey: ["purchase-conversion-queue"] });
+          toast({
+            title: "견적서 스캔 완료",
+            description: "스캔한 견적을 견적 관리에서 확인하세요.",
+          });
+        }}
+      />
     </div>
   );
 }
@@ -1677,5 +1695,154 @@ function KpiCard({ icon, iconBg, label, value, valueColor, sub, active, onClick 
       </p>
       <p className="text-xs text-slate-500 mt-1">{sub}</p>
     </button>
+  );
+}
+
+/* ── §11.334 빈상태 온보딩 (시안 Improved) ──
+   데이터 0건일 때 얇은 empty 대신 "다음 행동 안내" 히어로 + 진행 파이프라인
+   + 할 일 카드 + 미리보기. 파이프라인 상태는 canonical(stats.total 파생
+   hasSentRequest)에서만 도출 — 거짓 "완료" 표기 0. 모든 CTA 는 실제 라우트
+   또는 실제 모달 wiring (dead button 0). */
+function PurchasesOnboarding({ hasSentRequest, onScanOpen }: {
+  hasSentRequest: boolean;
+  onScanOpen: () => void;
+}) {
+  type StepState = "done" | "active" | "todo";
+  // 거짓 done 금지: 견적 요청 전이면 done 0. 보낸 뒤에도 "회신 수집"은
+  //   active(수집 중)까지만 — 실제 회신 도착 확증 없이 done 표기 안 함.
+  const steps: { n: string; label: string; sub: string; icon: React.ReactNode; s: StepState }[] = [
+    { n: "01", label: "소싱 검색",       sub: "품목 찾기",   icon: <Search className="h-4 w-4" />,       s: hasSentRequest ? "done" : "active" },
+    { n: "02", label: "견적 요청",       sub: "공급사 발송", icon: <Send className="h-4 w-4" />,         s: hasSentRequest ? "done" : "todo" },
+    { n: "03", label: "회신 수집",       sub: "견적 도착",   icon: <FileText className="h-4 w-4" />,     s: hasSentRequest ? "active" : "todo" },
+    { n: "04", label: "비교 · 발주 전환", sub: "여기서 처리", icon: <Columns3 className="h-4 w-4" />,     s: "todo" },
+    { n: "05", label: "발주 인계",       sub: "발주 관리로", icon: <ShoppingCart className="h-4 w-4" />, s: "todo" },
+  ];
+
+  return (
+    <div className="space-y-4" data-testid="purchases-onboarding">
+      {/* 온보딩 히어로 — 네이비 */}
+      <div className="rounded-2xl bg-slate-900 px-5 py-6 md:px-7 md:py-7 text-white">
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-blue-300 mb-2">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-blue-400" />
+          </span>
+          다음 단계 안내
+        </span>
+        <h2 className="text-lg md:text-xl font-extrabold tracking-tight mb-2">
+          {hasSentRequest
+            ? "견적 요청을 보냈어요 — 회신이 도착하면 여기에 모입니다"
+            : "아직 비교할 견적이 없어요 — 견적 회신부터 모아볼까요?"}
+        </h2>
+        <p className="text-sm text-slate-300 leading-relaxed max-w-2xl mb-4">
+          {hasSentRequest ? (
+            <>회신이 도착하면 자동으로 <b className="text-white">비교 후보</b>로 쌓입니다. 진행 상황은 견적 관리에서 추적할 수 있어요.</>
+          ) : (
+            <>구매 운영은 <b className="text-white">회신 받은 견적을 비교해 발주로 전환</b>하는 단계입니다. 회신이 도착하면 자동으로 여기에 쌓입니다. 지금은 소싱에서 견적 요청을 보내는 것이 가장 빠른 시작입니다.</>
+          )}
+        </p>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Link href="/app/search" className="w-full sm:w-auto">
+            <Button className="h-11 px-5 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold gap-2">
+              <Search className="h-4 w-4" /> 소싱에서 견적 요청
+            </Button>
+          </Link>
+          <Link href="/dashboard/quotes" className="w-full sm:w-auto">
+            <Button variant="outline" className="h-11 px-5 w-full sm:w-auto bg-transparent border-slate-600 text-slate-200 hover:bg-slate-800 hover:text-white font-semibold">
+              견적 관리 보기
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* 진행 파이프라인 — 지금 어디인지 (canonical 파생) */}
+      <div data-testid="purchases-onboarding-pipeline" className="rounded-xl border border-slate-200 bg-white px-4 py-4 md:px-5">
+        <div className="flex items-start gap-0 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+          {steps.map((st, i) => (
+            <div key={st.n} className="relative flex min-w-[84px] flex-1 flex-col items-center gap-1.5 text-center">
+              {i > 0 && (
+                <span aria-hidden className={`absolute right-1/2 top-[15px] z-0 h-0.5 w-full ${st.s === "todo" ? "bg-slate-200" : "bg-emerald-500"}`} />
+              )}
+              <span className={`relative z-[1] grid h-8 w-8 shrink-0 place-items-center rounded-full border ${
+                st.s === "done"
+                  ? "border-emerald-500 bg-emerald-500 text-white"
+                  : st.s === "active"
+                    ? "border-blue-600 bg-blue-600 text-white ring-4 ring-blue-100"
+                    : "border-slate-200 bg-white text-slate-400"
+              }`}>
+                {st.s === "done" ? <Check className="h-4 w-4" /> : st.icon}
+              </span>
+              {st.s === "active" && (
+                <span className="text-[9px] font-bold uppercase tracking-wide text-blue-600">현재 단계</span>
+              )}
+              <span className={`text-[11px] font-bold leading-tight ${
+                st.s === "active" ? "text-blue-700" : st.s === "done" ? "text-slate-700" : "text-slate-400"
+              }`}>{st.label}</span>
+              <span className="hidden sm:block text-[10px] leading-tight text-slate-400">{st.sub}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 지금 할 수 있는 일 + 미리보기 */}
+      <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+        <div className="flex items-center gap-2 px-4 md:px-5 py-3 border-b border-slate-100">
+          <Sparkles className="h-4 w-4 text-blue-500" />
+          <h2 className="text-sm font-bold text-slate-900">지금 할 수 있는 일</h2>
+        </div>
+        <div className="p-4 md:p-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold mb-2">1</span>
+              <h4 className="text-sm font-bold text-slate-900 mb-1">소싱에서 견적 요청</h4>
+              <p className="text-xs text-slate-500 leading-relaxed mb-3">필요한 품목을 검색하고 공급사에 견적을 요청하면, 회신이 이 화면으로 들어옵니다.</p>
+              <Link href="/app/search" className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700">
+                소싱 열기 <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-600 text-xs font-bold mb-2">2</span>
+              <h4 className="text-sm font-bold text-slate-900 mb-1">진행 중 견적 확인</h4>
+              <p className="text-xs text-slate-500 leading-relaxed mb-3">이미 요청한 견적이 있다면 견적 관리에서 회신 상태를 추적할 수 있습니다.</p>
+              <Link href="/dashboard/quotes" className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-slate-900">
+                견적 관리 <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-600 text-xs font-bold mb-2">3</span>
+              <h4 className="text-sm font-bold text-slate-900 mb-1">견적서 스캔으로 시작</h4>
+              <p className="text-xs text-slate-500 leading-relaxed mb-3">이미 받은 견적서 PDF가 있다면 업로드해 바로 비교 후보로 등록할 수 있습니다.</p>
+              <button
+                type="button"
+                data-testid="purchases-onboarding-scan-cta"
+                onClick={onScanOpen}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-slate-900"
+              >
+                <ScanLine className="h-3 w-3" /> 견적서 스캔 <ArrowRight className="h-3 w-3" />
+              </button>
+            </div>
+          </div>
+
+          {/* 미리보기(ghost) — 회신 도착 시 표시 예시. 실제 데이터 아님 명시. */}
+          <div className="mt-4 flex items-center gap-1.5 text-[11px] text-slate-400">
+            <Package className="h-3 w-3" /> 회신이 도착하면 이렇게 표시됩니다 (미리보기)
+          </div>
+          <div className="mt-2 space-y-2">
+            {[0, 1].map((i) => (
+              <div key={i} className="flex items-center gap-3 rounded-lg border border-dashed border-slate-200 bg-slate-50/50 px-3 py-3">
+                <span className="h-7 w-7 rounded-full bg-slate-200" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-2.5 w-1/3 rounded bg-slate-200" />
+                  <div className="h-2 w-1/4 rounded bg-slate-100" />
+                </div>
+                <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> 발주 승인 대기
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

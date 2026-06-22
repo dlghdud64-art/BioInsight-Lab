@@ -49,9 +49,11 @@ describe("§11.352 — dead-end 해소 (발주 관리 전진)", () => {
     expect(src).toContain('href="/dashboard/purchase-orders"');
     expect(src).toContain("발주 관리에서 외부 발주·입고 추적");
   });
-  it("빈 상태 카피가 발주 관리 추적으로 전진 안내", () => {
+  it("빈 상태 카피가 발주 관리 추적으로 전진 안내 (§11.334 온보딩 supersede)", () => {
+    // §11.334 — 빈상태 온보딩이 §11.284d 카피 supersede: "…상태를 추적" → "…를 추적하세요".
+    //   전진 안내(발주 관리에서 외부 발주·입고 추적) 의도는 불변, 문구만 시안 정합.
     const src = read(PAGE);
-    expect(src).toContain("발주 관리에서 외부 발주·입고 상태를 추적");
+    expect(src).toContain("발주 관리에서 외부 발주·입고를 추적");
   });
 });
 
