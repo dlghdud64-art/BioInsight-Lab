@@ -172,6 +172,101 @@ function PurchaseOrderLandingPageInner() {
     allItems.length > 0 &&
     allItems.every((i) => i.bucketKey === "waiting_external");
 
+  // ── 시안 Phase 1 — 트리아지 derive (canonical only) ───────────────
+  // "내 차례(지금 실행 가능)" vs "외부 대기(공급사 응답 대기)" 분리.
+  //   - actionable(내 차례) canonical = headerStats.readyToExecute
+  //       (triageGroup='now' && !blockedReason). 목록 = buckets.ready.
+  //   - external(외부 대기) canonical = headerStats.waitingExternal
+  //       (triageGroup='waiting_external'). 목록 = buckets.waiting_external.
+  //   - overdue = headerStats.overdue / total = headerStats.openActionable.
+  // 모든 count 는 headerStats/buckets 에서 derive (하드코딩 0).
+  const actionableItems = buckets.ready ?? [];
+  const externalItems = buckets.waiting_external ?? [];
+  // "입고로 인계" 카운트 = downstream 합산 (canonical buildModuleDownstream).
+  const handoffTotal = useMemo(
+    () => downstream.reduce((sum, ds) => sum + ds.count, 0),
+    [downstream],
+  );
+
+  // 발주 흐름 파이프라인 — 3 단계 (canonical count). active = 내 차례 우선,
+  // 없으면 외부 대기, 없으면 입고 인계.
+  const pipelineStages = useMemo(
+    () => [
+      {
+        key: "ready" as ModuleBucketKey,
+        index: 1,
+        label: "발행 가능",
+        sub: "내 차례",
+        count: headerStats.readyToExecute,
+      },
+      {
+        key: "waiting_external" as ModuleBucketKey,
+        index: 2,
+        label: "공급사 확인",
+        sub: "외부 대기",
+        count: headerStats.waitingExternal,
+      },
+      {
+        key: "handoff" as ModuleBucketKey,
+        index: 3,
+        label: "입고 인계",
+        sub: "다음 단계",
+        count: handoffTotal,
+      },
+    ],
+    [headerStats.readyToExecute, headerStats.waitingExternal, handoffTotal],
+  );
+  const activePipelineKey: ModuleBucketKey =
+    headerStats.readyToExecute > 0
+      ? "ready"
+      : headerStats.waitingExternal > 0
+        ? "waiting_external"
+        : "handoff";
+
+  // 트리아지 KPI 4 — 전부 headerStats canonical. count=0 회색 톤다운은 카드 렌더에서.
+  const triageKpis = useMemo(
+    () => [
+      {
+        key: "ready",
+        label: "실행 가능",
+        sub: "내 차례",
+        count: headerStats.readyToExecute,
+        tone: "blue" as const,
+        bucket: "ready" as ModuleBucketKey,
+      },
+      {
+        key: "waiting",
+        label: "외부 대기",
+        sub: "공급사 응답",
+        count: headerStats.waitingExternal,
+        tone: "amber" as const,
+        bucket: "waiting_external" as ModuleBucketKey,
+      },
+      {
+        key: "overdue",
+        label: "기한 초과",
+        sub: "지연",
+        count: headerStats.overdue,
+        tone: "rose" as const,
+        bucket: undefined,
+      },
+      {
+        key: "total",
+        label: "전체 진행",
+        sub: "발주 작업",
+        count: headerStats.openActionable,
+        tone: "slate" as const,
+        bucket: undefined,
+      },
+    ],
+    [
+      headerStats.readyToExecute,
+      headerStats.waitingExternal,
+      headerStats.overdue,
+      headerStats.openActionable,
+    ],
+  );
+
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-6 space-y-5">
       {/* ── 1. Header (§11.374 P3.4 — AppPageHeader 채택, white card 제거 → card-less 단일 문법) ── */}
@@ -275,6 +370,242 @@ function PurchaseOrderLandingPageInner() {
 
       {!isEmpty && (
         <>
+          {/* ── 시안 Phase 1 (1) 발주 흐름 파이프라인 ──────────────────
+              발행 가능(내 차례) → 공급사 확인(외부 대기) → 입고 인계(다음).
+              §11.334 파이프라인·견적 §09 스텝퍼 톤: 원형 번호 노드 + chevron,
+              blue=active / slate=todo. count 전부 headerStats canonical. */}
+          <div>
+            <h2 className="text-xs font-medium uppercase tracking-wider text-slate-600 mb-2">
+              발주 흐름
+            </h2>
+            <div className="bg-white border border-slate-200 rounded-lg p-3 md:p-4">
+              <ol className="flex items-center gap-1.5 md:gap-2">
+                {pipelineStages.map((stage, i) => {
+                  const isActive = stage.key === activePipelineKey;
+                  return (
+                    <li
+                      key={stage.key}
+                      className="flex items-center gap-1.5 md:gap-2 flex-1 min-w-0"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums ${
+                            isActive
+                              ? "bg-blue-600 text-white"
+                              : "bg-slate-100 text-slate-500 border border-slate-200"
+                          }`}
+                        >
+                          {stage.index}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="flex items-baseline gap-1.5">
+                            <span
+                              className={`text-xs font-medium truncate ${
+                                isActive ? "text-blue-700" : "text-slate-600"
+                              }`}
+                            >
+                              {stage.label}
+                            </span>
+                            <span
+                              className={`text-sm font-semibold tabular-nums ${
+                                isActive
+                                  ? "text-blue-700"
+                                  : stage.count === 0
+                                    ? "text-slate-400"
+                                    : "text-slate-700"
+                              }`}
+                            >
+                              {stage.count}
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-slate-400 truncate block">
+                            {isActive ? "현재 집중 · " : ""}
+                            {stage.sub}
+                          </span>
+                        </div>
+                      </div>
+                      {i < pipelineStages.length - 1 && (
+                        <ChevronRight className="h-4 w-4 text-slate-300 flex-shrink-0 ml-auto" />
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+          </div>
+
+          {/* ── 시안 Phase 1 (2) 트리아지 KPI 4 ──────────────────────────
+              실행 가능(blue)/외부 대기(amber·neutral)/기한 초과(rose,0 회색)/
+              전체 진행(slate). count 전부 headerStats canonical. §11.311 한 줄
+              압축(grid-cols-2 md:grid-cols-4, p-3). bucket 있는 카드는 클릭 →
+              setActiveTab (기존 bucket tab wiring 재사용), 없으면 표시 전용. */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {triageKpis.map((kpi) => {
+              const isZero = kpi.count === 0;
+              const toneText = isZero
+                ? "text-gray-400"
+                : kpi.tone === "blue"
+                  ? "text-blue-700"
+                  : kpi.tone === "amber"
+                    ? "text-yellow-700"
+                    : kpi.tone === "rose"
+                      ? "text-red-700"
+                      : "text-slate-900";
+              const toneCard = isZero
+                ? "bg-gray-50 border-gray-200"
+                : kpi.tone === "rose"
+                  ? "bg-red-50 border-red-200"
+                  : "bg-white border-slate-300 shadow-sm";
+              const interactive = Boolean(kpi.bucket);
+              const cardClass = `rounded-lg border p-3 md:p-4 text-left transition-colors min-h-[44px] ${toneCard} ${
+                interactive ? "hover:border-slate-400 cursor-pointer" : ""
+              }`;
+              const inner = (
+                <>
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      className={`text-xs font-medium ${isZero ? "text-gray-400" : "text-slate-500"}`}
+                    >
+                      {kpi.label}
+                    </span>
+                    <span
+                      className={`text-lg md:text-xl font-bold tabular-nums ${toneText}`}
+                    >
+                      {kpi.count}
+                    </span>
+                  </div>
+                  <span
+                    className={`text-[11px] mt-0.5 block ${isZero ? "text-gray-400" : "text-slate-400"}`}
+                  >
+                    {kpi.sub}
+                  </span>
+                </>
+              );
+              if (interactive) {
+                return (
+                  <button
+                    key={kpi.key}
+                    type="button"
+                    onClick={() => setActiveTab(kpi.bucket as ModuleBucketKey)}
+                    className={`${cardClass} w-full`}
+                    aria-label={`${kpi.label} ${kpi.count}건 — 상태별 분류 보기`}
+                  >
+                    {inner}
+                  </button>
+                );
+              }
+              return (
+                <div
+                  key={kpi.key}
+                  className={cardClass}
+                  aria-label={`${kpi.label} ${kpi.count}건`}
+                >
+                  {inner}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ── 시안 Phase 1 (3) "지금 내 차례" ──────────────────────────
+              actionable(발행 가능·승인 검토 등 지금 실행 가능) = buckets.ready.
+              기존 ActionableRow 렌더 + PDF/email quick-action mutation 재사용. */}
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900 mb-2">
+              지금 내 차례{" "}
+              <span className="text-slate-500 font-normal">
+                · {actionableItems.length}건
+              </span>
+            </h2>
+            <div className="bg-white border border-slate-300 rounded-lg overflow-hidden">
+              {actionableItems.length === 0 ? (
+                <EmptyState
+                  icon={CheckCircle2}
+                  title="지금 실행할 항목이 없습니다"
+                  description="공급사 응답을 기다리거나 입고 인계 단계를 확인하세요."
+                />
+              ) : (
+                <div className="divide-y divide-slate-200">
+                  {actionableItems.map((item) => (
+                    <ActionableRow
+                      key={item.entityId}
+                      item={item}
+                      onClick={() =>
+                        openOverlay({
+                          routePath: `/dashboard/purchase-orders/${item.entityId}`,
+                          origin: "queue",
+                          mode: "progress",
+                        })
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── 시안 Phase 1 (4) "공급사 응답 대기" ─────────────────────
+              external(waiting_external) = buckets.waiting_external. 회색
+              de-emphasize. 리마인더는 표시 전용 (자동발송 wiring 없음 →
+              버튼 추가 안 함, Phase 2). 문구 "리마인더" 통일. */}
+          {externalItems.length > 0 && (
+            <div>
+              <h2 className="text-sm font-semibold text-slate-600 mb-2">
+                공급사 응답 대기{" "}
+                <span className="text-slate-400 font-normal">
+                  · {externalItems.length}건
+                </span>
+              </h2>
+              <div className="bg-gray-50 border border-slate-200 rounded-lg divide-y divide-slate-200">
+                {externalItems.map((item) => (
+                  <div
+                    key={item.entityId}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() =>
+                      openOverlay({
+                        routePath: `/dashboard/purchase-orders/${item.entityId}`,
+                        origin: "queue",
+                        mode: "progress",
+                      })
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        openOverlay({
+                          routePath: `/dashboard/purchase-orders/${item.entityId}`,
+                          origin: "queue",
+                          mode: "progress",
+                        });
+                      }
+                    }}
+                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-100 transition-colors cursor-pointer"
+                  >
+                    <Clock className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm text-slate-700 font-mono truncate block">
+                        {item.title}
+                      </span>
+                      {item.vendorName && (
+                        <span className="text-[11px] text-slate-500 truncate block mt-0.5">
+                          <span className="text-slate-400">공급사 ·</span>{" "}
+                          {item.vendorName}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-slate-500 flex-shrink-0">
+                      {item.waitingExternalLabel ?? "공급사 확인 대기"}
+                    </span>
+                    {/* 리마인더 — 자동발송 wiring 없음(Phase 2). 표시 전용 라벨. */}
+                    <span className="text-[11px] text-slate-400 flex-shrink-0">
+                      리마인더 대상
+                    </span>
+                    <ChevronRight className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* ── 2. Priority Queue ───────────────────────────────────── */}
           {priorityQueue.length > 0 && (
             <div>
@@ -354,11 +685,16 @@ function PurchaseOrderLandingPageInner() {
             </div>
           </div>
 
-          {/* ── 5. Downstream ──────────────────────────────────────── */}
+          {/* ── 5. Downstream → 시안 Phase 1 (5) "입고로 인계" ──────────
+              buildModuleDownstream 결과 재사용. 제목만 "입고로 인계"로
+              (전문용어 "다운스트림" 비노출). 렌더/라우팅 wiring 불변. */}
           {downstream.length > 0 && (
             <div>
-              <h2 className="text-xs font-medium uppercase tracking-wider text-slate-600 mb-2">
-                다운스트림 인계
+              <h2 className="text-sm font-semibold text-slate-900 mb-2">
+                입고로 인계{" "}
+                <span className="text-slate-500 font-normal">
+                  · {handoffTotal}건
+                </span>
               </h2>
               <div className="grid gap-2 md:grid-cols-2">
                 {downstream.map((ds) => (
