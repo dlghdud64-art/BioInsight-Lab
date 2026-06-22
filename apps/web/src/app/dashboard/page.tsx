@@ -11,7 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 // store fetch 처리 (이전 mount 동작 회복).
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Package, AlertTriangle, DollarSign, FileText, Search, Plus, TrendingUp, Truck, ChevronRight, Beaker, Calendar, GitCompare, CheckCircle2, Clock, ClipboardList, ShieldAlert, ArrowRight, X } from "lucide-react";
+import { Package, AlertTriangle, FileText, Search, Plus, TrendingUp, Truck, ChevronRight, Beaker, Calendar, GitCompare, CheckCircle2, Clock, ClipboardList, ShieldAlert, ArrowRight, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -510,14 +510,6 @@ function DashboardPageInner() {
     return "해당 품목의 개별 발주를 검토하세요";
   };
 
-  const getSpendingInsight = () => {
-    const change = stats.monthOverMonthChange;
-    if (stats.monthlySpending === 0) return "이번 달 지출이 없어 추이를 표시할 수 없습니다";
-    if (change > 10) return `전월 대비 ${change.toFixed(0)}% 증가 — 지출 항목을 확인하세요`;
-    if (change < -10) return `전월 대비 ${Math.abs(change).toFixed(0)}% 절감 — 정상 범위`;
-    return "전월과 유사한 수준을 유지하고 있습니다";
-  };
-
   const getQuoteInsight = () => {
     if (stats.activeQuotes === 0) return "진행 중인 견적이 없어 응답 대기 건이 없습니다";
     if (stats.respondedQuotes > 0) return `${stats.respondedQuotes}건 응답 수신 — 확정 또는 반려가 필요합니다`;
@@ -527,7 +519,6 @@ function DashboardPageInner() {
   // -- KPI risk level --
   const inventoryRisk = stats.lowStockAlerts > 0 ? "amber" : "none";
   const stockRisk = stats.lowStockAlerts >= 3 ? "red" : stats.lowStockAlerts > 0 ? "amber" : "none";
-  const spendingRisk = stats.monthOverMonthChange > 10 ? "amber" : "none";
   const quoteRisk = stats.respondedQuotes > 0 ? "amber" : "none";
 
   const riskBorder = (risk: string) => {
@@ -920,7 +911,7 @@ function DashboardPageInner() {
 
         {/* KPI 판단 카드 2x2
             §11.196b — statsLoading skeleton 분기 제거 (pageReady gate cover). */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           {renderKpiCard({
             href: "/dashboard/inventory",
             icon: <Package className="h-3 w-3 text-emerald-700" />,
@@ -938,15 +929,6 @@ function DashboardPageInner() {
             insight: getStockInsight(),
             action: stats.lowStockAlerts > 0 ? "부족 품목 확인" : undefined,
             risk: stockRisk,
-          })}
-          {renderKpiCard({
-            href: "/dashboard/purchases",
-            icon: <DollarSign className="h-3 w-3 text-blue-700" />,
-            label: "이번 달 지출",
-            value: stats.monthlySpending > 0 ? `₩${stats.monthlySpending.toLocaleString("ko-KR")}` : "—",
-            insight: getSpendingInsight(),
-            action: stats.monthlySpending === 0 ? "첫 구매 등록" : undefined,
-            risk: spendingRisk,
           })}
           {renderKpiCard({
             href: "/dashboard/quotes?status=PENDING",

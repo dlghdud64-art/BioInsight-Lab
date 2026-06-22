@@ -56,11 +56,11 @@ const CHIP_TONE: Record<string, string> = {
 export function StatLine({ state, summary, onRetry }: StatLineProps) {
   if (state === "loading") {
     return (
-      <div className="flex gap-2 overflow-x-auto snap-x md:grid md:grid-cols-3 md:overflow-visible" aria-busy="true" aria-label="KPI 로딩 중">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2" aria-busy="true" aria-label="KPI 로딩 중">
         {[0, 1, 2].map((i) => (
           <div
             key={i}
-            className="h-[76px] shrink-0 min-w-[150px] snap-start md:min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3 md:p-4 animate-pulse"
+            className="h-[76px] rounded-xl border border-slate-200 bg-slate-50 p-3 md:p-4 animate-pulse"
           />
         ))}
       </div>
@@ -134,7 +134,7 @@ export function StatLine({ state, summary, onRetry }: StatLineProps) {
     // §dashboard-mobile-kpi — ₩ 금액이 모바일 grid-cols-3 폭을 넘쳐 잘림(정확값 위반).
     //   모바일=가로 스크롤(카드가 금액 길이만큼 확장 → 잘림 0, §11.311 compact 1줄·first-fold 보존),
     //   md+=기존 grid-cols-3.
-    <div className="flex gap-2 overflow-x-auto snap-x md:grid md:grid-cols-3 md:overflow-visible">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
       {items.map((it) => {
         const active = it.value > 0;
         const chip = chipFor(it.key);
@@ -142,7 +142,7 @@ export function StatLine({ state, summary, onRetry }: StatLineProps) {
           <a
             key={it.key}
             href={it.href}
-            className={`block shrink-0 min-w-[150px] snap-start md:min-w-0 rounded-xl border p-3 md:p-4 transition-colors ${
+            className={`block rounded-xl border p-3 md:p-4 transition-colors ${
               active
                 ? "bg-white border-slate-300 shadow-sm hover:border-slate-400"
                 : "bg-gray-50 border-gray-200"

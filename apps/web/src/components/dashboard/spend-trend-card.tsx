@@ -183,9 +183,10 @@ export function SpendTrendCard({ monthlySpending }: SpendTrendCardProps) {
               <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-0.5">
                 최고 지출 월
               </p>
-              <p className="text-sm font-bold text-slate-900 tabular-nums">
-                {stats!.peak.month} · {wonCompact(stats!.peak.amount)}원
+              <p className="text-[13px] font-bold text-slate-900 tabular-nums leading-tight whitespace-nowrap">
+                {wonCompact(stats!.peak.amount)}원
               </p>
+              <p className="text-[10px] text-slate-400 tabular-nums">{stats!.peak.month}</p>
             </div>
             <div>
               <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-0.5">

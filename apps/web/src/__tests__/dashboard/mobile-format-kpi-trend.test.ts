@@ -13,11 +13,13 @@ const STATLINE = readFileSync(resolve(__dirname, "../../components/dashboard/sta
 const TREND = readFileSync(resolve(__dirname, "../../components/dashboard/spend-trend-card.tsx"), "utf8");
 const DERIVE = readFileSync(resolve(__dirname, "../../lib/dashboard/summary-derive.ts"), "utf8");
 
-describe("§dashboard-mobile-format #7 — StatLine 금액 잘림 봉합", () => {
-  it("모바일 가로 스크롤 + md grid-cols-3 (카드가 금액만큼 확장 → 잘림 0)", () => {
-    expect(STATLINE).toContain("overflow-x-auto");
-    expect(STATLINE).toContain("md:grid-cols-3");
-    expect(STATLINE).toContain("min-w-[150px]");
+describe("§dashboard-mobile-재검 #7 — StatLine 세로 스택(carousel 폐기)", () => {
+  it("모바일 세로 1열 + md grid-cols-3 (carousel 잘림 오판 폐기, 호영님 라이브 재검)", () => {
+    // §dashboard-mobile-재검 — #7 가로 carousel(첫 카드 잘려 깨짐)을 세로 스택으로 교정.
+    //   모바일 grid-cols-1 풀폭(₩정확값), md+ grid-cols-3. overflow-x/min-w(carousel) 제거.
+    expect(STATLINE).toContain("grid grid-cols-1 md:grid-cols-3");
+    expect(STATLINE).not.toContain("overflow-x-auto");
+    expect(STATLINE).not.toContain("min-w-[150px]");
     expect(STATLINE).toContain("whitespace-nowrap");
   });
 

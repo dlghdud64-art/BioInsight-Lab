@@ -73,11 +73,12 @@ describe("§11.302d-6a-4-γ — yellow swap 정합", () => {
 });
 
 describe("§11.302d-6a-4-γ — severity literal 'amber' 보존 (risk 시스템 key)", () => {
-  it("inventoryRisk / stockRisk / spendingRisk / quoteRisk = 'amber' 보존", () => {
+  it("inventoryRisk / quoteRisk = 'amber' 보존 (§dashboard-mobile-재검: 이번달지출 KPI 중복 제거로 spendingRisk decl 동반 삭제)", () => {
     const src = read(PATH);
     expect(src).toMatch(/inventoryRisk\s*=\s*stats\.lowStockAlerts > 0 \? "amber"/);
-    expect(src).toMatch(/spendingRisk\s*=\s*stats\.monthOverMonthChange > 10 \? "amber"/);
     expect(src).toMatch(/quoteRisk\s*=\s*stats\.respondedQuotes > 0 \? "amber"/);
+    // 상·하단 "이번 달 지출" 중복 제거 → 지출 KPI 카드와 함께 spendingRisk(전용 var) 삭제
+    expect(src).not.toMatch(/spendingRisk/);
   });
 
   it("urgentItems severity 'red' | 'amber' type 보존", () => {
