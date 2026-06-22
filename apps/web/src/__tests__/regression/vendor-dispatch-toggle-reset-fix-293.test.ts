@@ -63,9 +63,11 @@ describe("§11.293 — 공급사 발송 검토 모달 toggle reset 버그 fix", 
   });
 
   it("기존 sendReadiness + includedCount UI 동적 메시지 보존", () => {
+    // §09 스텝퍼 — includedCount 동적 메시지 wording이 "공급사 {n}곳 선택됨" → "{n}개 선택"으로 변경.
+    //   canonical(includedCount·supplierOk·sendReadiness) 보존, 동적 includedCount UI 노출 의도 불변(L548-550).
     expect(SRC).toMatch(/const includedCount = includedSuppliers\.length/);
     expect(SRC).toMatch(/supplierOk = includedCount > 0/);
-    expect(SRC).toMatch(/공급사 \{includedCount\}곳 선택됨/);
+    expect(SRC).toMatch(/\{includedCount\}개 선택/);
   });
 
   it("기존 message / manual fallback / sentTracking init 로직 보존", () => {

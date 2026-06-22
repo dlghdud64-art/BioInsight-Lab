@@ -262,20 +262,37 @@ export function VendorRequestModal({
   }, [readinessChecks]);
   const firstReadinessBlocker = readinessChecks.find((check) => !check.ready)?.blocker;
   const contactBlocker = readinessChecks.find((check) => check.key === "contact" && !check.ready)?.blocker;
-  const selectedStateLabel = includedCount > 0 ? `${includedCount}개 선택됨` : "공급사 미선택";
-  const contactStateLabel = contactBlocker ? "연락처 필요" : includedCount > 0 ? "연락처 확인됨" : "연락처 필요";
-  const validContactCount = includedSuppliers.filter((supplier) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(supplier.email)).length;
-  const selectedSupplierNames = includedSuppliers.map((supplier) => supplier.vendorName).join(", ") || "공급사 미선택";
-  const selectedContactList = includedSuppliers
-    .map((supplier) => `${supplier.vendorName}: ${supplier.email || "연락처 없음"}`)
-    .join(", ") || "연락처 필요";
-  const previewStateLabel = message.trim().length > 10 ? "미리보기 준비됨" : "미리보기 필요";
   const sendStateLabel =
     sendReadiness === "ready" ? "전송 가능" : sendReadiness === "needs_review" ? "검토 필요" : "연락처 필요";
   const sendGateDetail =
     sendReadiness === "ready"
       ? "전송 전 미리보기와 수신자 검증이 완료되었습니다."
       : firstReadinessBlocker ?? "검토가 필요합니다.";
+
+  // §quote-screen-sian P6.4 §09 — 단일 가로 스텝퍼 파생.
+  //   readinessChecks(supplier/contact/draft) + sendReadiness 재사용 — 로직 0 변경, 표현만 통합.
+  //   완료(ready)=초록 / 현재(첫 미완)=파랑 / 막힘(hard blocker)=앰버 / 이후 대기=회색.
+  const dispatchSteps = useMemo(() => {
+    const base = [
+      { key: "supplier", label: "공급사 선택", ready: includedCount > 0 },
+      { key: "contact", label: "연락처 확인", ready: includedCount > 0 && !contactBlocker },
+      { key: "draft", label: "메시지 검토", ready: message.trim().length > 10 },
+      { key: "send", label: "전송", ready: sendReadiness === "ready" },
+    ];
+    const firstPendingIdx = base.findIndex((s) => !s.ready);
+    return base.map((s, i) => {
+      const current = i === firstPendingIdx;
+      const blocked = current && sendReadiness === "blocked";
+      const tone = s.ready
+        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+        : blocked
+          ? "border-yellow-200 bg-yellow-50 text-yellow-700"
+          : current
+            ? "border-blue-200 bg-blue-50 text-blue-700"
+            : "border-slate-200 bg-slate-50 text-slate-400";
+      return { key: s.key, label: s.label, done: s.ready, current, blocked, tone };
+    });
+  }, [includedCount, contactBlocker, message, sendReadiness]);
 
   // ── Actions ──
   const toggleSupplier = useCallback((vendorId: string) => {
@@ -458,159 +475,43 @@ export function VendorRequestModal({
               ? `플랫폼이 ${resolvedCount}개 공급사 후보를 선별했습니다. 검토 후 전달을 승인하세요.`
               : "공급사를 직접 추가하거나 플랫폼 DB 보강을 기다려 주세요."}
           </DialogDescription>
-          <div
-            data-testid="quote-dispatch-sent-handoff-line"
-            className={`mt-3 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold ${
-              sentTracking
-                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                : "border-blue-200 bg-blue-50 text-blue-900"
-            }`}
-          >
-            <span data-testid="quote-dispatch-sent-status">{sentTracking ? "전송 완료" : "전송 대기"}</span>
-            <span aria-hidden="true">·</span>
-            <span data-testid="quote-dispatch-sent-tracking-top">{sentTracking ? "추적 중" : "전송 추적 준비"}</span>
-            <span aria-hidden="true">·</span>
-            <span data-testid="quote-dispatch-sent-owner">담당자: {sentTracking?.operatorName ?? "발송 운영자"}</span>
-            <span aria-hidden="true">·</span>
-            <span data-testid="quote-dispatch-sent-quote-id">견적: {quoteRef ?? "저장 필요"}</span>
-          </div>
-          <div
-            data-testid="quote-dispatch-review-visible"
-            className="mt-3 flex flex-wrap gap-2"
-            aria-label="견적 발송 전 검증 상태"
-          >
-            <Badge
-              variant="outline"
-              data-testid="quote-dispatch-supplier-badge"
-              className={includedCount > 0 ? "border-blue-200 bg-blue-50 text-blue-800" : "border-yellow-200 bg-yellow-50 text-yellow-800"}
-            >
-              공급사 · {selectedStateLabel}
-            </Badge>
-            <Badge
-              variant="outline"
-              data-testid="quote-dispatch-contact-badge-top"
-              className={contactBlocker ? "border-yellow-200 bg-yellow-50 text-yellow-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}
-            >
-              연락처 · {contactStateLabel}
-            </Badge>
-            <Badge
-              variant="outline"
-              data-testid="quote-dispatch-send-readiness-badge"
-              className={sendReadiness === "ready" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-yellow-200 bg-yellow-50 text-yellow-800"}
-            >
-              발송 · {sendStateLabel}
-            </Badge>
-          </div>
-          <div
-            data-testid="quote-dispatch-recipient-summary"
-            className="mt-3 rounded-lg border border-blue-100 bg-blue-50/70 px-3 py-2 text-xs text-slate-700"
-          >
-            <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
-              <Badge
-                variant="outline"
-                data-testid="quote-dispatch-recipient-count-badge"
-                className={sendReadiness === "ready" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-yellow-200 bg-yellow-50 text-yellow-800"}
-              >
-                공급사 {includedCount}곳 선택됨 · 회신 담당자 {validContactCount}명 확인됨
-              </Badge>
-              <span
-                data-testid="quote-dispatch-next-required-action"
-                className={sendReadiness === "ready" ? "text-emerald-700" : "text-yellow-700"}
-              >
-                {sendReadiness === "ready" ? "다음: 메시지 미리보기 확인" : `다음: ${firstReadinessBlocker ?? "공급사 선택"}`}
-              </span>
-            </div>
-            <div className="grid gap-1 sm:grid-cols-2">
-              <p data-testid="quote-dispatch-selected-supplier-names" className="truncate">
-                <span className="font-semibold text-slate-900">공급사</span> · {selectedSupplierNames}
-              </p>
-              <p data-testid="quote-dispatch-selected-contact-list" className="truncate">
-                <span className="font-semibold text-slate-900">연락처</span> · {selectedContactList}
-              </p>
-            </div>
-          </div>
         </DialogHeader>
 
         <div className="space-y-4 py-3">
+          {/* ═══ §quote-screen-sian P6.4 §09 — 단일 가로 스텝퍼 ═══
+              중복 4블록(handoff-line·review-visible·recipient-summary·recipient-evidence)
+              + readiness strip 통합. 공급사 선택→연락처 확인→메시지 검토→전송.
+              완료=초록 / 현재=파랑 / 막힘=앰버 / 이후 대기=회색. honesty CTA(보강)는 막힘 시 하단. */}
           <div
-            className="grid gap-2 rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700 md:grid-cols-4"
-            data-testid="quote-dispatch-recipient-evidence"
+            data-testid="quote-dispatch-stepper"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-3"
           >
-            <div>
-              <span className="block text-[10px] uppercase tracking-wide text-slate-500">공급사</span>
-              <strong className="font-semibold text-slate-950" data-testid="quote-dispatch-selected-state">
-                {selectedStateLabel}
-              </strong>
-            </div>
-            <div>
-              <span className="block text-[10px] uppercase tracking-wide text-slate-500">연락처</span>
-              <strong className="font-semibold text-slate-950" data-testid="quote-dispatch-contact-state">
-                {contactStateLabel}
-              </strong>
-            </div>
-            <div>
-              <span className="block text-[10px] uppercase tracking-wide text-slate-500">미리보기</span>
-              <strong className="font-semibold text-slate-950" data-testid="quote-dispatch-preview-state">
-                {previewStateLabel}
-              </strong>
-            </div>
-            <div>
-              <span className="block text-[10px] uppercase tracking-wide text-slate-500">전송 상태</span>
-              <strong className="font-semibold text-slate-950" data-testid="quote-dispatch-send-state">
-                {sendStateLabel}
-              </strong>
-            </div>
-          </div>
-
-          {/* ═══ Readiness Strip ═══ */}
-          <div
-            data-testid="quote-dispatch-blocker-summary"
-            className={`rounded-lg border px-4 py-3 ${
-            sendReadiness === "ready"
-              ? "border-emerald-200 bg-emerald-50"
-              : "border-yellow-200 bg-yellow-50"
-          }`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                {sendReadiness === "ready" ? (
-                  <Check className="h-4 w-4 text-emerald-600" />
-                ) : (
-                  <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                )}
-                <span className={`text-sm font-semibold ${
-                  sendReadiness === "ready" ? "text-emerald-700" : "text-yellow-700"
-                }`}>
-                  {sendReadiness === "ready" ? "전달 준비 완료" : sendReadiness === "needs_review" ? "보완 필요" : "공급사 추가 필요"}
-                </span>
-              </div>
-              {sendReadiness === "ready" && (
-                <span className="text-xs text-emerald-600">바로 전달 가능</span>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-3">
-              {readinessChecks.map((check) => (
-                <div key={check.label} className="flex items-center gap-1.5">
-                  {check.ready ? (
-                    <Check className="h-3 w-3 text-emerald-600" />
-                  ) : (
-                    <Clock className="h-3 w-3 text-yellow-500" />
-                  )}
-                  <span className={`text-xs ${check.ready ? "text-slate-700" : "text-slate-500"}`}>
-                    {check.label}
-                  </span>
-                </div>
+            <ol className="flex items-stretch gap-1.5">
+              {dispatchSteps.map((step, i) => (
+                <li
+                  key={step.key}
+                  data-testid={`quote-dispatch-step-${step.key}`}
+                  data-step-state={step.done ? "done" : step.blocked ? "blocked" : step.current ? "current" : "pending"}
+                  className="min-w-0 flex-1"
+                >
+                  <div className={`flex items-center gap-1.5 rounded-md border px-2 py-1.5 ${step.tone}`}>
+                    {step.done ? (
+                      <Check className="h-3.5 w-3.5 shrink-0" />
+                    ) : step.blocked ? (
+                      <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                    ) : (
+                      <span className="shrink-0 text-[10px] font-bold tabular-nums">{i + 1}</span>
+                    )}
+                    <span className="truncate text-[11px] font-medium md:text-xs">{step.label}</span>
+                  </div>
+                </li>
               ))}
-            </div>
-            {readinessChecks.some((c) => !c.ready) && (
-              <div className="mt-2 space-y-0.5">
-                {readinessChecks.filter((c) => !c.ready).map((c) => (
-                  <p key={c.label} className="text-xs text-slate-500">{c.blocker}</p>
-                ))}
-              </div>
-            )}
+            </ol>
             {sendReadiness === "blocked" && (
-              <div className="mt-3 border-t border-yellow-200 pt-3">
+              <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2.5">
+                <p className="text-xs font-medium text-yellow-700">
+                  {firstReadinessBlocker ?? "공급사를 먼저 추가하세요"}
+                </p>
                 <Button
                   type="button"
                   size="sm"
@@ -621,16 +522,16 @@ export function VendorRequestModal({
                   <UserPlus className="mr-2 h-4 w-4" />
                   공급사 후보 보강
                 </Button>
-                {remediationOpened && (
-                  <p
-                    role="status"
-                    data-testid="quote-dispatch-remediation-result"
-                    className="mt-2 text-xs font-medium text-yellow-800"
-                  >
-                    보강 필요: 아래에서 공급사 연락처를 직접 추가하세요.
-                  </p>
-                )}
               </div>
+            )}
+            {remediationOpened && sendReadiness === "blocked" && (
+              <p
+                role="status"
+                data-testid="quote-dispatch-remediation-result"
+                className="mt-2 text-xs font-medium text-yellow-800"
+              >
+                보강 필요: 아래에서 공급사 연락처를 직접 추가하세요.
+              </p>
             )}
           </div>
 
@@ -921,30 +822,21 @@ export function VendorRequestModal({
             취소
           </Button>
           {sendReadiness === "blocked" ? (
-            <>
-              <Button
-                type="button"
-                disabled
-                variant="secondary"
-                data-testid="quote-dispatch-send-disabled"
-                // §11.274 — aria-label 한국어 정합 lock (Phase B smoke 발견).
-                // §11.279c-cont — comment 안 영문 인용 한글 swap.
-                //   기존 영문 aria-label (공급사 발송 비활성) → SR 사용자가 영문 청취 위험.
-                //   visible "선택 공급사에 요청 전달" 와 정합 + (비활성) suffix.
-                aria-label="공급사 요청 전달 (비활성)"
-              >
-                <Send className="h-4 w-4 mr-2" />
-                선택 공급사에 요청 전달
-              </Button>
-              <Button
-                onClick={openSupplierRemediation}
-                disabled={isSubmitting}
-                className="min-h-[40px] font-semibold active:scale-95 bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <UserPlus className="h-4 w-4 mr-2" />
-                공급사 직접 추가
-              </Button>
-            </>
+            <Button
+              type="button"
+              disabled
+              variant="secondary"
+              data-testid="quote-dispatch-send-disabled"
+              // §11.274 — aria-label 한국어 정합 lock (Phase B smoke 발견).
+              // §11.279c-cont — comment 안 영문 인용 한글 swap.
+              //   기존 영문 aria-label (공급사 발송 비활성) → SR 사용자가 영문 청취 위험.
+              //   visible "선택 공급사에 요청 전달" 와 정합 + (비활성) suffix.
+              //   §09 P6.4 — 중복 active 보강 버튼 제거(보강 CTA는 스텝퍼 막힘 배너 단일점).
+              aria-label="공급사 요청 전달 (비활성)"
+            >
+              <Send className="h-4 w-4 mr-2" />
+              선택 공급사에 요청 전달
+            </Button>
           ) : (
             <Button
               onClick={() => setConfirmationOpen(true)}

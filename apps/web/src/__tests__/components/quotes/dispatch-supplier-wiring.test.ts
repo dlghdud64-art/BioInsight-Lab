@@ -88,15 +88,15 @@ describe("#quote-dispatch-final-confirmation - send gate evidence", () => {
     expect(source).toContain('disabled={isSubmitting || sendReadiness !== "ready"}');
   });
 
+  // §quote-screen-sian P6.4 — sent-handoff-line/sent-owner 제거(§09 스텝퍼 통합).
+  //   dispatchEventId/vendorRequestBatchId/createdRequests 는 §11.314-b PDF flow 전환으로
+  //   vendor-requests API 가 제거되며 이미 stale → PDF tracking evidence 로 정합.
   it("shows sent tracking evidence after a successful dispatch", () => {
     expect(source).toContain("quote-dispatch-sent-tracking-state");
     expect(source).toContain("quote-dispatch-sent-tracking-id");
-    expect(source).toContain("quote-dispatch-sent-handoff-line");
-    expect(source).toContain("quote-dispatch-sent-owner");
     expect(source).toContain("quote-dispatch-sent-refresh-proof");
-    expect(source).toContain("dispatchEventId");
-    expect(source).toContain("vendorRequestBatchId");
-    expect(source).toContain("createdRequests?.[0]?.id");
+    expect(source).toContain("PDF 다운로드 완료");
+    expect(source).toContain("recipientCount");
   });
 
   it("persists sent tracking by quote ID so refresh reopens the same handoff evidence", () => {
@@ -104,24 +104,35 @@ describe("#quote-dispatch-final-confirmation - send gate evidence", () => {
     expect(source).toContain("window.localStorage.getItem(trackingStorageKey)");
     expect(source).toContain("window.localStorage.setItem(trackingStorageKey, JSON.stringify(trackingEvidence))");
     expect(source).toContain("담당자: {sentTracking.operatorName}");
-    expect(source).toContain("quote ID: {sentTracking.quoteId}");
+    // §quote-screen-sian P6.4 4a — cuid 봉합: quote ID 원본 → quoteRef.
+    expect(source).toContain("견적: {quoteRef ?? sentTracking.quoteId}");
   });
 });
 
-describe("#quote-dispatch-recipient-summary - top evidence", () => {
+describe("#quote-dispatch-stepper - §09 단일 스텝퍼", () => {
   const source = readFileSync(WORKBENCH_PATH, "utf8");
 
-  it("pins selected supplier names and contacts above the send flow", () => {
-    expect(source).toContain("quote-dispatch-recipient-summary");
-    expect(source).toContain("quote-dispatch-recipient-count-badge");
-    expect(source).toContain("quote-dispatch-selected-supplier-names");
-    expect(source).toContain("quote-dispatch-selected-contact-list");
-    expect(source).toContain("quote-dispatch-next-required-action");
+  it("replaces the 4 duplicate status blocks with one horizontal stepper", () => {
+    expect(source).toContain("quote-dispatch-stepper");
+    expect(source).toContain("dispatchSteps");
+    expect(source).toContain("quote-dispatch-step-${step.key}");
+    expect(source).not.toContain("quote-dispatch-sent-handoff-line");
+    expect(source).not.toContain("quote-dispatch-review-visible");
+    expect(source).not.toContain("quote-dispatch-recipient-summary");
+    expect(source).not.toContain("quote-dispatch-recipient-evidence");
+    expect(source).not.toContain("quote-dispatch-blocker-summary");
   });
 
-  it("shows supplier count, verified contact count, and the next action in Korean", () => {
-    expect(source).toContain("공급사 {includedCount}곳 선택됨");
-    expect(source).toContain("회신 담당자 {validContactCount}명 확인됨");
-    expect(source).toContain("다음: 메시지 미리보기 확인");
+  it("derives step tone from readiness without storing it (완료 초록 / 현재 파랑 / 막힘 앰버)", () => {
+    expect(source).toContain("includedCount > 0");
+    expect(source).toContain('sendReadiness === "blocked"');
+    expect(source).toContain("border-emerald-200 bg-emerald-50 text-emerald-700");
+    expect(source).toContain("border-blue-200 bg-blue-50 text-blue-700");
+    expect(source).toContain("border-yellow-200 bg-yellow-50 text-yellow-700");
+  });
+
+  it("keeps the honesty remediation CTA when blocked (no dead button)", () => {
+    expect(source).toContain("quote-dispatch-supplier-remediation-visible-cta");
+    expect(source).toContain("openSupplierRemediation");
   });
 });

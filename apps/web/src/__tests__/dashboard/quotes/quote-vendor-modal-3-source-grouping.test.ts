@@ -64,14 +64,12 @@ describe("quote dispatch supplier readiness badges", () => {
     expect(modal).toMatch(/sendReadiness\s*===\s*"blocked"/);
   });
 
-  it("recipient evidence is fixed above the send action", () => {
-    expect(modal).toContain("quote-dispatch-recipient-evidence");
-    expect(modal).toContain("quote-dispatch-selected-state");
-    expect(modal).toContain("quote-dispatch-contact-state");
-    expect(modal).toContain("quote-dispatch-preview-state");
-    expect(modal).toContain("quote-dispatch-send-state");
-    expect(modal).toContain("공급사 미선택");
-    expect(modal).toContain("연락처 필요");
+  // §quote-screen-sian P6.4 §09 — recipient-evidence 4칼럼 → 단일 스텝퍼 통합.
+  it("renders the §09 single stepper above the send action", () => {
+    expect(modal).toContain("quote-dispatch-stepper");
+    expect(modal).toContain("quote-dispatch-step-${step.key}");
+    expect(modal).not.toContain("quote-dispatch-recipient-evidence");
+    expect(modal).not.toContain("quote-dispatch-blocker-summary");
     expect(modal).toContain("전송 가능");
     expect(modal).toContain("검토 필요");
   });
@@ -83,10 +81,12 @@ describe("quote dispatch supplier readiness badges", () => {
     expect(modal).toContain("전송 전 미리보기와 수신자 검증이 완료되었습니다.");
   });
 
-  it("blocked readiness shows disabled send plus manual add path", () => {
+  it("blocked readiness shows disabled send plus remediation path", () => {
+    // §09 스텝퍼 — 명시 "공급사 직접 추가" 버튼 라벨이 단일점 remediation CTA로 대체됨(honesty 보존:
+    //   막힘 시 disabled send + supplier-remediation-visible-cta 노출). 보호 의도(blocked→disabled+해소경로) 불변.
     expect(modal).toContain("quote-dispatch-send-disabled");
     expect(modal).toMatch(/sendReadiness\s*===\s*"blocked"[\s\S]{0,600}disabled/);
-    expect(modal).toContain("공급사 직접 추가");
+    expect(modal).toContain("supplier-remediation-visible-cta");
   });
 });
 
