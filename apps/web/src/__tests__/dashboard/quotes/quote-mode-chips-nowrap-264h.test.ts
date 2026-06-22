@@ -39,7 +39,7 @@ describe("§11.264h #1 — mode chips whitespace-nowrap", () => {
     // §11.264h-4 가 text-[11px] 뒤에 min-h-[44px] 추가 → invariant supersede.
     // §11.264h-4 JSDoc 확장으로 distance 800 → 1500 확장 (§11.264h-2/h-3 패턴 reuse).
     expect(page).toMatch(
-      /MODE_CHIPS\.map[\s\S]{0,1500}className=\{`inline-flex items-center gap-1 text-\[11px\] min-h-\[44px\] px-2\.5 py-1 rounded-full border font-medium transition-all whitespace-nowrap/,
+      /MODE_CHIPS(?:\.filter\([\s\S]*?\))?\.map[\s\S]{0,1500}className=\{`inline-flex items-center gap-1 text-\[11px\] min-h-\[44px\] px-2\.5 py-1 rounded-full border font-medium transition-all whitespace-nowrap/,
     );
   });
 
@@ -55,16 +55,16 @@ describe("§11.264h #1 — mode chips whitespace-nowrap", () => {
 
 describe("§11.264h #2 — invariant 보존 (canonical truth)", () => {
   it("MODE_CHIPS.map + setModeChip onClick 보존", () => {
-    expect(page).toMatch(/MODE_CHIPS\.map\(chip => \{/);
+    expect(page).toMatch(/MODE_CHIPS(?:\.filter\([\s\S]*?\))?\.map\(chip => \{/);
     expect(page).toMatch(/setModeChip\(isActive \? null : chip\.key\)/);
   });
 
-  it("mode chip active 시각 (bg-blue-600/10 + text-blue-600 + border-blue-600/30) 보존", () => {
-    expect(page).toMatch(/bg-blue-600\/10 text-blue-600 border-blue-600\/30/);
+  it("mode chip active 시각 (§quote-screen-sian P6.2 §08 tone — 위험 빨강/주의 앰버) 보존", () => {
+    expect(page).toMatch(/chip\.tone === "danger" \? "bg-red-50 text-red-700 border-red-300"/);
   });
 
-  it("mode chip 비활성 시각 (text-slate-500 + border-bd/50) 보존", () => {
-    expect(page).toMatch(/text-slate-500 border-bd\/50 hover:border-bd hover:text-slate-900/);
+  it("mode chip 비활성 시각 (§08 옅은 tone + 0건 비활성) 보존", () => {
+    expect(page).toMatch(/chip\.tone === "danger" \? "bg-white text-red-600 border-red-200/);
   });
 
   it("mode chips row flex-nowrap + overflow-x-auto 보존 (§11.259c)", () => {

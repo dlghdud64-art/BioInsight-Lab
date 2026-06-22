@@ -46,20 +46,20 @@ describe("§11.264h-4 #1 — mode chip 44x44 touch target", () => {
 
   it("mode chip className 에 min-h-[44px] 추가 (MODE_CHIPS.map 안)", () => {
     expect(page).toMatch(
-      /MODE_CHIPS\.map[\s\S]{0,1500}className=\{`inline-flex items-center gap-1 text-\[11px\] min-h-\[44px\] px-2\.5 py-1 rounded-full/,
+      /MODE_CHIPS(?:\.filter\([\s\S]*?\))?\.map[\s\S]{0,1500}className=\{`inline-flex items-center gap-1 text-\[11px\] min-h-\[44px\] px-2\.5 py-1 rounded-full/,
     );
   });
 
   it("text-[11px] 시각 사이즈 보존 (44px height 안에 가운데 정렬)", () => {
     // text-[11px] 가 min-h-[44px] 앞에 와야 함 (className 순서 정합)
     expect(page).toMatch(
-      /MODE_CHIPS\.map[\s\S]{0,1500}text-\[11px\] min-h-\[44px\]/,
+      /MODE_CHIPS(?:\.filter\([\s\S]*?\))?\.map[\s\S]{0,1500}text-\[11px\] min-h-\[44px\]/,
     );
   });
 
   it("rounded-full 보존 (44px height + rounded-full = 22px radius 자연)", () => {
     expect(page).toMatch(
-      /MODE_CHIPS\.map[\s\S]{0,1500}min-h-\[44px\] px-2\.5 py-1 rounded-full/,
+      /MODE_CHIPS(?:\.filter\([\s\S]*?\))?\.map[\s\S]{0,1500}min-h-\[44px\] px-2\.5 py-1 rounded-full/,
     );
   });
 });
@@ -67,7 +67,7 @@ describe("§11.264h-4 #1 — mode chip 44x44 touch target", () => {
 describe("§11.264h-4 #2 — invariant 보존 (canonical truth)", () => {
   it("§11.264h whitespace-nowrap 보존", () => {
     expect(page).toMatch(
-      /MODE_CHIPS\.map[\s\S]{0,1500}whitespace-nowrap/,
+      /MODE_CHIPS(?:\.filter\([\s\S]*?\))?\.map[\s\S]{0,1500}whitespace-nowrap/,
     );
   });
 
@@ -75,16 +75,17 @@ describe("§11.264h-4 #2 — invariant 보존 (canonical truth)", () => {
     expect(page).toMatch(/setModeChip\(isActive \? null : chip\.key\)/);
   });
 
-  it("active 시각 (bg-blue-600/10 + text-blue-600 + border-blue-600/30) 보존", () => {
-    expect(page).toMatch(/bg-blue-600\/10 text-blue-600 border-blue-600\/30/);
+  it("active 시각 (§quote-screen-sian P6.2 §08 tone — 위험 빨강/주의 앰버) 보존", () => {
+    expect(page).toMatch(/chip\.tone === "danger" \? "bg-red-50 text-red-700 border-red-300"/);
   });
 
-  it("비활성 시각 (text-slate-500 + border-bd/50 + hover) 보존", () => {
-    expect(page).toMatch(/text-slate-500 border-bd\/50 hover:border-bd hover:text-slate-900/);
+  it("비활성 시각 (§08 옅은 tone) + 0건 비활성 보존", () => {
+    expect(page).toMatch(/chip\.tone === "danger" \? "bg-white text-red-600 border-red-200/);
+    expect(page).toMatch(/chipCount === 0[\s\S]{0,140}cursor-not-allowed/);
   });
 
   it("chipCount 표시 (text-[9px]) 보존", () => {
-    expect(page).toMatch(/chipCount > 0 && <span className=\{`text-\[9px\]/);
+    expect(page).toMatch(/chipCount > 0 &&[\s\S]{0,80}text-\[9px\]/);
   });
 
   it("§11.259c flex-nowrap + overflow-x-auto row container 보존", () => {
