@@ -86,13 +86,13 @@ describe("§11.364 — 회귀 0 (4 카드 구조 + wiring)", () => {
     expect(src).not.toMatch(/data-testid="dashboard-quote-dispatch-summary"/);
   });
 
-  it("shifan P-fid3 — grid-cols-2 고정 2×2 + 컴팩트 단일 min-h (§11.252a 진화)", () => {
-    // 라이브 실측: auto-fit 가 side-col 반폭에서 1×4 로 무너짐 → grid-cols-2 고정.
-    //   과대 sm:min-h-[140px] → 컴팩트 단일 min-h. auto-fit/과대 min-h 회귀 차단.
+  it("모바일 2×2 + 데스크탑 레일 1열 (responsive) + 컴팩트 단일 min-h", () => {
+    // §dashboard-mobile #9(호영님 승인) — 반폭 side-col 은 lg+ 에서만(layout grid-cols-1 lg:grid-cols-2).
+    //   lg:grid-cols-1 로 레일 1열 유지 → §11.364 라이브 1×4 무너짐 재현 불가(의도 보존).
+    //   모바일/태블릿(<lg, 풀폭)=2×2(시안). auto-fit/4-col/과대 min-h 회귀는 계속 차단.
     const src = read(PATH);
-    // §dashboard-rightcol-rebalance — 우측 단독 세로 1열(구 2×2 side-col 폐지).
-    expect(src).toMatch(/grid grid-cols-1/);
-    expect(src).not.toMatch(/grid grid-cols-2/);
+    expect(src).toMatch(/grid grid-cols-2 lg:grid-cols-1/);
+    expect(src).not.toMatch(/grid grid-cols-2 lg:grid-cols-4/);
     expect(src).not.toMatch(/grid-cols-\[repeat\(auto-fit/);
     expect(src).toMatch(/min-h-\[(96|100|104|110|120)px\]/);
     expect(src).not.toMatch(/sm:min-h-\[140px\]/);

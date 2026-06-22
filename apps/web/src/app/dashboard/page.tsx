@@ -626,9 +626,9 @@ function DashboardPageInner() {
     href: string; icon: React.ReactNode; label: string; value: React.ReactNode;
     insight: string; action?: string; risk: string; className?: string;
   }) => (
-    <Link href={config.href}>
-      <Card className={`overflow-hidden cursor-pointer transition-colors hover:bg-slate-50/80 bg-white border border-slate-200/80 rounded-xl ${riskBorder(config.risk)} ${config.className ?? ""}`}>
-        <CardContent className="p-3.5 md:p-4 flex flex-col gap-1">
+    <Link href={config.href} className="block h-full">
+      <Card className={`h-full flex flex-col overflow-hidden cursor-pointer transition-colors hover:bg-slate-50/80 bg-white border border-slate-200/80 rounded-xl ${riskBorder(config.risk)} ${config.className ?? ""}`}>
+        <CardContent className="p-3.5 md:p-4 flex flex-col gap-1 h-full">
           <div className="flex items-center gap-1.5">
             <span className="flex items-center justify-center w-5 h-5 rounded-md bg-slate-100/80">
               {config.icon}
@@ -638,7 +638,8 @@ function DashboardPageInner() {
           <div className="text-[22px] md:text-[28px] font-extrabold text-slate-900 leading-none tracking-tight">{config.value}</div>
           <p className="text-[10px] md:text-[11px] text-slate-500 leading-snug truncate">{config.insight}</p>
           {config.action && (
-            <p className="text-[10px] md:text-[11px] text-blue-600 font-semibold mt-0.5">{config.action} →</p>
+            /* §dashboard-mobile #9 — CTA 하단 고정(mt-auto): 같은 행 KPI 카드 높이 일치(CTA 유무 무관). */
+            <p className="text-[10px] md:text-[11px] text-blue-600 font-semibold mt-auto pt-1">{config.action} →</p>
           )}
         </CardContent>
       </Card>

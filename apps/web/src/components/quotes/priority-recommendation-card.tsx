@@ -86,7 +86,7 @@ export function PriorityRecommendationCard({
   const nextStep = NEXT_STEP[best.stage];
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0f1b34] to-[#16284c] text-white px-5 py-4 shadow-sm flex items-center gap-4">
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0f1b34] to-[#16284c] text-white px-5 py-4 shadow-sm flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
       {/* 장식 도트(데이터 무관, aria-hidden) */}
       <span
         aria-hidden="true"
@@ -98,31 +98,35 @@ export function PriorityRecommendationCard({
           maskImage: "radial-gradient(90% 130% at 92% 50%, #000, transparent 62%)",
         }}
       />
-      <span className="relative z-10 flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-[#2f6be0] text-white">
-        <ListChecks className="h-5 w-5" aria-hidden="true" />
-      </span>
-      <div className="relative z-10 min-w-0 flex-1">
-        <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#9cc0ff] mb-1">
-          <span className="font-semibold">우선 추천</span>
-        </p>
-        <h3 className="text-[15px] sm:text-base font-bold leading-snug truncate">
-          {/* §quote-screen-sian P6.5 — 품목명 배경 highlight 제거(시안 평문 정합). */}
-          <span className="font-extrabold">{best.name}</span>
-          {" — "}
-          {nextStep} 단계입니다.
-        </h3>
-        <p className="text-[12px] text-white/60 mt-0.5">
-          {STAGE_LABEL[best.stage]} · 마감 {dDayLabel(best.dd)} · 공급사 {best.vendors}곳 · 우선순위{" "}
-          <span className={LEVEL_TEXT[best.level]}>{LEVEL_LABEL[best.level]}</span>
-          {best.reason ? ` (${best.reason})` : ""}
-        </p>
+      {/* §dashboard-mobile #9 — 모바일: 아이콘+본문 한 행, CTA 아래 스택(가로 경쟁 제거).
+          제목 truncate 해제(모바일 2줄 허용), 본문 1줄 요약. */}
+      <div className="relative z-10 flex min-w-0 items-center gap-3 sm:flex-1">
+        <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-[#2f6be0] text-white">
+          <ListChecks className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#9cc0ff] mb-1">
+            <span className="font-semibold">우선 추천</span>
+          </p>
+          <h3 className="text-[15px] sm:text-base font-bold leading-snug line-clamp-2 sm:truncate">
+            {/* §quote-screen-sian P6.5 — 품목명 배경 highlight 제거(시안 평문 정합). */}
+            <span className="font-extrabold">{best.name}</span>
+            {" — "}
+            {nextStep} 단계입니다.
+          </h3>
+          <p className="text-[12px] text-white/60 mt-0.5 line-clamp-2 sm:line-clamp-1">
+            {STAGE_LABEL[best.stage]} · 마감 {dDayLabel(best.dd)} · 공급사 {best.vendors}곳 · 우선순위{" "}
+            <span className={LEVEL_TEXT[best.level]}>{LEVEL_LABEL[best.level]}</span>
+            {best.reason ? ` (${best.reason})` : ""}
+          </p>
+        </div>
       </div>
       {/* §quote-screen-sian P6.3 §07 — 실행 버튼(다음 액션 = next.label) + "나중에"(일시 보류). */}
-      <div className="relative z-10 flex-none flex items-center gap-2">
+      <div className="relative z-10 flex w-full items-center gap-2 sm:w-auto sm:flex-none">
         <button
           type="button"
           onClick={() => onOpen(best!.id)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-[13px] font-extrabold text-[#0f1b34] shadow-sm transition-colors hover:bg-[#eef2fe] min-h-[44px] sm:min-h-0"
+          className="inline-flex flex-1 sm:flex-none items-center justify-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-[13px] font-extrabold text-[#0f1b34] shadow-sm transition-colors hover:bg-[#eef2fe] min-h-[44px] sm:min-h-0"
           aria-label={`우선 추천 케이스 ${best.name} — ${nextStep}`}
         >
           {nextStep}

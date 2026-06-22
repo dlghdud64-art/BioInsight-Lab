@@ -33,10 +33,12 @@ const COMPONENT_PATH = resolve(
 const code = safeRead(COMPONENT_PATH);
 
 describe("§11.252a → §dashboard-rightcol-rebalance — 우측 단독 세로 1열(호영님)", () => {
-  it("grid-cols-1 세로 1열 (구 2×2 side-col 폐지)", () => {
-    // 우측 = 빠른작업 단독(최근활동 풀폭 분리) → 세로 1열로 좌측(예산+도넛) 높이까지 채움.
-    expect(code).toMatch(/grid grid-cols-1/);
-    expect(code).not.toMatch(/grid grid-cols-2/);
+  it("모바일 2×2 + 데스크탑 레일 1열 (grid-cols-2 lg:grid-cols-1, §11.364 의도 보존)", () => {
+    // §dashboard-mobile #9(호영님 승인) — 페이지 레이아웃은 grid-cols-1 lg:grid-cols-2 →
+    //   반폭 side-col 은 lg+ 에서만. 모바일/태블릿(<lg, 풀폭)=2×2(시안), 데스크탑 레일(lg+)=1열로
+    //   §11.364 라이브 "반폭 1×4 무너짐" 방지 의도를 lg:grid-cols-1 이 그대로 보존. 4-col 회귀만 차단.
+    expect(code).toMatch(/grid grid-cols-2 lg:grid-cols-1/);
+    expect(code).not.toMatch(/grid grid-cols-2 lg:grid-cols-4/);
   });
 
   it("auto-rows-fr + flex-1 로 컬럼 높이 균등 분할(좌측 정합)", () => {

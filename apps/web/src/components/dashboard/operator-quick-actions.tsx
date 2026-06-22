@@ -104,7 +104,8 @@ export function OperatorQuickActions({
       </div>
       {/* §dashboard-rightcol-rebalance(호영님) — 우측 단독 컬럼에서 세로 1열로 좌측(예산+도넛) 높이까지
           채움. flex-1 + auto-rows-fr 로 4 타일이 컬럼 높이 균등 분할. (구 P-fid3 2×2 side-col 폐지) */}
-      <div className="grid grid-cols-1 gap-3 flex-1 auto-rows-fr">
+      {/* §dashboard-mobile #9 — 모바일/태블릿 2×2(세로 1열 폭주 해소), 데스크탑 우측 레일은 1열 유지. */}
+      <div className="grid grid-cols-2 lg:grid-cols-1 gap-3 flex-1 auto-rows-fr">
         {ACTIONS.map((action) => {
           const Icon = action.icon;
           // §11.243 #5 — count display-only (caller forward).

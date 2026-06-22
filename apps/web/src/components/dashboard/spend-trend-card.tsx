@@ -35,6 +35,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { wonCompact } from "@/lib/dashboard/summary-derive";
 
 interface MonthlyPoint {
   month: string;
@@ -111,7 +112,7 @@ export function SpendTrendCard({ monthlySpending }: SpendTrendCardProps) {
         {!isEmpty && stats?.peak && (
           <div className="text-right flex-shrink-0">
             <p className={`text-2xl md:text-[26px] font-black tracking-tighter tabular-nums leading-none text-slate-900`}>
-              ₩{(stats.peak.amount / 1_000_000).toFixed(1)}M
+              {wonCompact(stats.peak.amount)}원
             </p>
             <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400 mt-1">
               최고 지출액
@@ -155,7 +156,7 @@ export function SpendTrendCard({ monthlySpending }: SpendTrendCardProps) {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fontSize: 10, fill: "#94a3b8" }}
-                  tickFormatter={(v) => (v >= 1_000_000 ? `${(v / 1_000_000).toFixed(0)}M` : v >= 1_000 ? `${(v / 1_000).toFixed(0)}K` : `${v}`)}
+                  tickFormatter={(v) => wonCompact(v)}
                 />
                 <Tooltip content={<ChartTooltip />} cursor={{ stroke: "#cbd5e1", strokeDasharray: 3 }} />
                 <Area
@@ -175,7 +176,7 @@ export function SpendTrendCard({ monthlySpending }: SpendTrendCardProps) {
                 이번 달
               </p>
               <p className="text-sm font-bold text-slate-900 tabular-nums">
-                ₩{stats!.lastMonth.amount.toLocaleString("ko-KR")}
+                {wonCompact(stats!.lastMonth.amount)}원
               </p>
             </div>
             <div>
@@ -183,7 +184,7 @@ export function SpendTrendCard({ monthlySpending }: SpendTrendCardProps) {
                 최고 지출 월
               </p>
               <p className="text-sm font-bold text-slate-900 tabular-nums">
-                {stats!.peak.month} · ₩{(stats!.peak.amount / 1_000_000).toFixed(1)}M
+                {stats!.peak.month} · {wonCompact(stats!.peak.amount)}원
               </p>
             </div>
             <div>

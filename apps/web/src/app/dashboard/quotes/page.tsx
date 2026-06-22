@@ -131,7 +131,8 @@ const OP_STATUS: Record<string, { label: string; bg: string; text: string; borde
   비교_검토:      { label: "비교 검토 필요",  bg: "bg-purple-100", text: "text-purple-800",  border: "border-purple-300",  leftBorder: "border-l-purple-500",  dotColor: "bg-purple-500" },
   일부_회신:      { label: "일부 회신 도착",  bg: "bg-blue-100",   text: "text-blue-800",    border: "border-blue-300",    leftBorder: "border-l-blue-500",    dotColor: "bg-blue-500" },
   회신_대기:      { label: "회신 대기 중",    bg: "bg-yellow-100",  text: "text-yellow-800",   border: "border-yellow-300",   leftBorder: "border-l-yellow-500",   dotColor: "bg-yellow-500" },
-  요청_접수:      { label: "요청 발송 전",    bg: "bg-red-100",    text: "text-red-800",     border: "border-red-300",     leftBorder: "border-l-red-400",     dotColor: "bg-red-500" },
+  // §dashboard-mobile #9 — "요청 발송 전"은 위험(red)이 아니라 §12 s1 발송 단계(파랑·중립 대기). red 오독 해소.
+  요청_접수:      { label: "요청 발송 전",    bg: "bg-blue-100",   text: "text-blue-800",    border: "border-blue-300",    leftBorder: "border-l-blue-400",    dotColor: "bg-blue-500" },
   발주_완료:      { label: "발주 전환 가능",  bg: "bg-emerald-100",text: "text-emerald-800", border: "border-emerald-300", leftBorder: "border-l-emerald-500", dotColor: "bg-emerald-500" },
   취소됨:         { label: "취소됨",          bg: "bg-slate-100",  text: "text-slate-600",   border: "border-slate-300",   leftBorder: "border-l-slate-300",   dotColor: "bg-slate-400" },
 };

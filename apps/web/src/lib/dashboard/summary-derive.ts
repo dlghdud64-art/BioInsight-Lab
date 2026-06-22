@@ -110,6 +110,24 @@ export function won(amount: number): string {
 }
 
 /**
+ * §dashboard-mobile-format — 컴팩트 원화(만원/억). 차트 축·트렌드 요약 전용.
+ *   영문 M/K 금지(한국어 일관). ≥1억: "X.X억" · ≥1만: "X,XXX만" · 그 외: 원 단위 숫자.
+ *   ★ 정확값이 필요한 KPI(StatLine 등)는 won() 사용 — 본 함수는 만 단위 반올림(트렌드 근사).
+ */
+export function wonCompact(amount: number): string {
+  const n = Number.isFinite(amount) ? Math.round(amount) : 0;
+  const abs = Math.abs(n);
+  if (abs >= 100_000_000) {
+    const v = Math.round((n / 100_000_000) * 10) / 10;
+    return `${v.toLocaleString("ko-KR")}억`;
+  }
+  if (abs >= 10_000) {
+    return `${Math.round(n / 10_000).toLocaleString("ko-KR")}만`;
+  }
+  return n.toLocaleString("ko-KR");
+}
+
+/**
  * 정규화 입력 → 단일 진실 summary 계약.
  * 빈 입력(모든 카운트 0 + budget null)은 allEmpty=true 로 파생 — 빈 데이터 차트
  * 금지(가드①)의 상류 신호. 목업 분포 생성 0(가드②).
