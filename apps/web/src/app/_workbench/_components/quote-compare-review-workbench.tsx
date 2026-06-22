@@ -224,7 +224,17 @@ export function QuoteCompareReviewWorkbench({
                           : field === "재고" ? (line.normalizedStockAvailability === "in_stock" ? "있음" : line.normalizedStockAvailability === "unknown" ? "미확인" : "없음")
                           : line.substituteOffered ? "제안 있음" : "—";
                         const isMissing = typeof val === "string" && val === "누락";
-                        return <td key={q.id} className={`px-3 py-1.5 border-l border-bd/20 tabular-nums ${isMissing ? "text-red-400" : "text-slate-300"}`}>{val}</td>;
+                        // §10 행별 최적값 하이라이트 — diff 엔진이 산출한 최저단가/최단납기 winner(advantageVendor)와
+                        //   대조해 canonical 최적 셀을 emerald + ✓ 강조(누락 셀 제외). moq/재고/대체는 정량 순위 미산출 → 강조 안 함.
+                        const isBest = !isMissing && (
+                          (field === "단가" && diffSummary.lowestPrice?.advantageVendor === q.vendorTargetId) ||
+                          (field === "납기" && diffSummary.fastestLeadTime?.advantageVendor === q.vendorTargetId)
+                        );
+                        return (
+                          <td key={q.id} className={`px-3 py-1.5 border-l border-bd/20 tabular-nums ${isMissing ? "text-red-400" : isBest ? "text-emerald-300 font-semibold bg-emerald-600/[0.06]" : "text-slate-300"}`}>
+                            {isBest && <Check className="inline h-2.5 w-2.5 mr-0.5 text-emerald-400" />}{val}
+                          </td>
+                        );
                       })}
                     </tr>
                   ))}
