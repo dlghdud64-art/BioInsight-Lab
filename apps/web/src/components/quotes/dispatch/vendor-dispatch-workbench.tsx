@@ -535,14 +535,14 @@ export function VendorRequestModal({
                   {i > 0 && (
                     <span
                       aria-hidden
-                      className={`absolute right-1/2 top-[14px] z-0 h-0.5 w-full ${
+                      className={`absolute right-1/2 top-[14px] max-[680px]:top-[12px] z-0 h-0.5 w-full ${
                         step.done || step.current ? "bg-emerald-500" : "bg-slate-200"
                       }`}
                     />
                   )}
                   {/* 원형 노드 — 시안 .sdot 30px */}
                   <span
-                    className={`relative z-[1] grid h-[30px] w-[30px] shrink-0 place-items-center rounded-full border ${
+                    className={`relative z-[1] grid h-[30px] w-[30px] max-[680px]:h-[26px] max-[680px]:w-[26px] shrink-0 place-items-center rounded-full border ${
                       step.done
                         ? "border-emerald-500 bg-emerald-500 text-white"
                         : step.blocked
@@ -562,7 +562,7 @@ export function VendorRequestModal({
                   </span>
                   {/* 2단 라벨 — 시안 .slabel / .ssub (ssub 모바일 숨김) */}
                   <span
-                    className={`text-[12px] font-bold leading-tight tracking-tight ${
+                    className={`text-[12px] max-[680px]:text-[11px] max-[560px]:text-[10px] font-bold leading-tight tracking-tight ${
                       step.current
                         ? "text-blue-700"
                         : step.blocked
@@ -574,7 +574,7 @@ export function VendorRequestModal({
                   >
                     {step.label}
                   </span>
-                  <span className="hidden text-[10.5px] leading-tight text-slate-400 sm:block">
+                  <span className="hidden text-[10.5px] leading-tight text-slate-400 min-[681px]:block">
                     {step.sub}
                   </span>
                 </li>
@@ -663,7 +663,7 @@ export function VendorRequestModal({
                   <span className="text-sm font-bold text-slate-900">이메일로 공급사 추가</span>
                 </div>
                 <p className="text-xs text-slate-500">견적 요청을 받을 공급사의 이메일을 입력하세요. 추가하면 바로 전송할 수 있습니다.</p>
-                <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="flex flex-col gap-2 min-[561px]:flex-row">
                   <Input
                     ref={manualEmailInputRef}
                     type="email"
@@ -745,7 +745,7 @@ export function VendorRequestModal({
                     <div
                       key={supplier.vendorId}
                       data-testid="quote-dispatch-recipient-card"
-                      className={`flex items-center gap-2.5 rounded-lg border px-3 py-2 ${
+                      className={`flex items-center gap-2.5 rounded-lg border px-3 py-2 max-[560px]:flex-wrap ${
                         emailValid ? "border-emerald-200 bg-emerald-50/40" : "border-rose-200 bg-rose-50/40"
                       }`}
                     >
