@@ -24,4 +24,13 @@ describe("§quote-card-sian — 카드 테두리 + 커스텀 체크박스", () =
     // 구 네이티브 체크박스 className 제거 확인
     expect(src).not.toMatch(/h-4 w-4 rounded border-slate-300 text-violet-600 focus-visible/);
   });
+
+  it("테이블 뷰 select 체크박스(thead 전체선택·행)도 커스텀(네이티브 accent 제거, 부분선택 dash)", () => {
+    // 구 네이티브 select 체크박스 className(accent-violet-600 cursor-pointer h-4 w-4) 제거
+    expect(src).not.toContain("accent-violet-600 cursor-pointer h-4 w-4");
+    // peer-checked 커스텀 박스 2+ (카드 + 테이블 행)
+    expect((src.match(/peer-checked:bg-violet-600/g) ?? []).length).toBeGreaterThanOrEqual(2);
+    // thead 부분선택 indeterminate dash 비주얼
+    expect(src).toContain("h-0.5 w-2.5 rounded-full bg-white");
+  });
 });

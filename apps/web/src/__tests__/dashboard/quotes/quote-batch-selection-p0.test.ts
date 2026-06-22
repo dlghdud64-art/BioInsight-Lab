@@ -44,20 +44,22 @@ describe("§11.240 #1 — 테이블 row + thead 체크박스", () => {
   });
 
   it("tbody row 별 checkbox (data-batch-select-row)", () => {
+    // §quote-card-sian — 행 체크박스 커스텀 전환(label 래퍼 + peer sr-only input). type=checkbox 보존(숨김).
+    //   label 래퍼로 data-batch-select-row→input 거리 712자 확대 → 한도 500→900.
     expect(page).toMatch(
-      /<td[\s\S]{0,500}data-batch-select-row[\s\S]{0,500}<input[\s\S]{0,200}type="checkbox"/,
+      /<td[\s\S]{0,500}data-batch-select-row[\s\S]{0,900}<input[\s\S]{0,200}type="checkbox"/,
     );
   });
 
-  it("thead checkbox = indeterminate state 표현 (ref + DOM property)", () => {
-    // indeterminate 는 native checkbox property — ref + useEffect 또는 inline ref callback
-    expect(page).toMatch(/indeterminate/);
+  it("thead 부분선택 state 표현 (§quote-card-sian: native ref-indeterminate → dash 비주얼)", () => {
+    // 커스텀 전환 — native indeterminate property 대신 sortedQuotes.some(선택) 분기 + dash span(h-0.5)으로 표현.
+    expect(page).toMatch(/sortedQuotes\.some\(\(q\) => selectedQuoteIds\.has\(q\.id\)\)/);
   });
 
   it("row checkbox onChange → toggleQuoteSelection 재사용 (canonical state lock)", () => {
-    // data-batch-select-row 안 onChange 가 toggleQuoteSelection(quote.id) 호출
+    // data-batch-select-row 안 onChange 가 toggleQuoteSelection(quote.id) 호출 (label 래퍼로 거리 800→1100)
     expect(page).toMatch(
-      /data-batch-select-row[\s\S]{0,800}toggleQuoteSelection\(quote\.id\)/,
+      /data-batch-select-row[\s\S]{0,1100}toggleQuoteSelection\(quote\.id\)/,
     );
   });
 
