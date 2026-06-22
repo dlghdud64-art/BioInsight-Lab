@@ -642,11 +642,12 @@ function QuoteCard({
       tabIndex={0}
       /* §quote-screen-sian P6.5 §01 — 카드 좌측 세로 accent 띠(Claude 트로프) 제거.
          선택/강조는 전체 테두리 + ring 으로만(시안 정합). border-l-[3px]·opStatus.leftBorder 삭제. */
-      className={`bg-pn rounded-xl border transition-all duration-200 p-4 cursor-pointer hover:shadow-md hover:-translate-y-0.5 animate-stagger-up focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2 ${
+      /* §quote-card-sian — 카드 바깥 테두리 강화(border-slate-200) + shadow-sm 으로 시안 정합(평면 borderless 해소). */
+      className={`bg-pn rounded-xl border shadow-sm transition-all duration-200 p-4 cursor-pointer hover:shadow-md hover:-translate-y-0.5 animate-stagger-up focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2 ${
         isSelectedForBatch ? "border-violet-500/60 ring-1 ring-violet-500/30 bg-violet-50/40"
         : isSelected ? "border-blue-600/40 ring-1 ring-blue-600/20 bg-blue-600/5"
-        : delayed ? "border-red-600/30"
-        : "border-bd/80 hover:border-bd"
+        : delayed ? "border-red-600/40"
+        : "border-slate-200 hover:border-slate-300"
       }`}
       onClick={() => onSelect?.()}
       onKeyDown={(e) => {
@@ -676,14 +677,19 @@ function QuoteCard({
       {/* §11.217 Phase 3 — batch dispatch checkbox (PENDING quote 만 노출) */}
       {isSelectable && (
         <div className="flex items-center gap-2 mb-2" onClick={(e) => e.stopPropagation()}>
-          <input
-            type="checkbox"
-            checked={!!isSelectedForBatch}
-            onChange={onToggleSelect}
-            onClick={(e) => e.stopPropagation()}
-            className="h-4 w-4 rounded border-slate-300 text-violet-600 focus-visible:ring-2 focus-visible:ring-violet-500 cursor-pointer"
-            aria-label={`${displayTitle} 일괄 발송 선택`}
-          />
+          {/* §quote-card-sian — 네이티브 체크박스(옛 디자인) → 커스텀 토글(시안 정합). onChange 핸들러 보존. */}
+          <label className="relative inline-flex cursor-pointer items-center" onClick={(e) => e.stopPropagation()}>
+            <input
+              type="checkbox"
+              checked={!!isSelectedForBatch}
+              onChange={onToggleSelect}
+              className="peer sr-only"
+              aria-label={`${displayTitle} 일괄 발송 선택`}
+            />
+            <span className="flex h-5 w-5 items-center justify-center rounded-md border border-slate-300 bg-white transition-colors peer-checked:border-violet-600 peer-checked:bg-violet-600 peer-focus-visible:ring-2 peer-focus-visible:ring-violet-500">
+              <CheckCircle2 className="h-3 w-3 text-white" />
+            </span>
+          </label>
           <span className="sr-only">일괄 발송 선택</span>
           {isSelectedForBatch && (
             <span className="text-[11px] text-violet-700 font-medium">선택됨</span>
@@ -974,6 +980,23 @@ function QuotesPageContent() {
   //   "실무자는 12건 이상을 한 화면에서 스캔" — 카드는 보조 뷰.
   //   localStorage 우선 (§11.217 Phase 6) 정합 — 처음 1회만 영향.
   const [viewMode, setViewMode] = useState<"card" | "table">("table");
+
+  // §quote-view-hint(시안 §12) — 첫 방문 1회 "카드·테이블 전환" 안내 말풍선. 누르거나 닫으면 재노출 0.
+  const [showViewHint, setShowViewHint] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.localStorage.getItem("labaxis-quote-view-hint-dismissed") !== "1") {
+      setShowViewHint(true);
+    }
+  }, []);
+  const dismissViewHint = useCallback(() => {
+    setShowViewHint(false);
+    try {
+      window.localStorage.setItem("labaxis-quote-view-hint-dismissed", "1");
+    } catch {
+      /* localStorage 실패는 무시 */
+    }
+  }, []);
 
   // §11.227 #9 — 테이블 sort state. column header 클릭 시 sortable.
   //   key = null (initial) → DB 순서 그대로. key 설정 시 sortedQuotes derive.
@@ -2350,11 +2373,28 @@ function QuotesPageContent() {
             검색/필터 wrapper 안 sub-wrapper 안으로 이동. 호영님 §11.259 spec
             "필터 + 뷰 전환 영역 1줄 압축" 완전 정합. */}
         {!isLoading && filteredQuotes.length > 0 && (
-          <div className="flex items-center justify-end gap-1.5 shrink-0">
+          <div className="relative flex items-center justify-end gap-1.5 shrink-0">
+            {/* §quote-view-hint(시안 §12) — 첫 방문 1회 안내 말풍선. 누르거나 X 시 재노출 0. */}
+            {showViewHint && (
+              <div className="absolute right-0 top-full z-20 mt-2 w-max max-w-[240px] rounded-lg bg-slate-900 px-3 py-2 text-[11px] text-white shadow-lg">
+                <span className="absolute -top-1 right-6 h-2 w-2 rotate-45 bg-slate-900" aria-hidden="true" />
+                <span className="inline-flex items-center gap-2">
+                  카드·테이블 보기를 여기서 전환할 수 있어요
+                  <button
+                    type="button"
+                    onClick={dismissViewHint}
+                    aria-label="안내 닫기"
+                    className="shrink-0 text-slate-300 hover:text-white"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              </div>
+            )}
             <span className="text-[11px] text-slate-500 mr-1">보기</span>
             <button
               type="button"
-              onClick={() => setViewMode("card")}
+              onClick={() => { setViewMode("card"); dismissViewHint(); }}
               aria-pressed={viewMode === "card"}
               aria-label="카드 보기"
               className={
@@ -2368,7 +2408,7 @@ function QuotesPageContent() {
             </button>
             <button
               type="button"
-              onClick={() => setViewMode("table")}
+              onClick={() => { setViewMode("table"); dismissViewHint(); }}
               aria-pressed={viewMode === "table"}
               aria-label="테이블 보기"
               className={
