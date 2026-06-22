@@ -87,6 +87,7 @@ describe("§11.302d-6b-2 — 회귀 0 (ready/완료 emerald + low red 보존)", 
 
   it("vendor-dispatch sendReadiness ready emerald 보존", () => {
     const src = read("src/components/quotes/dispatch/vendor-dispatch-workbench.tsx");
-    expect(src).toMatch(/sendReadiness === "ready" \? "bg-emerald-600 hover:bg-emerald-700 text-white"/);
+    // §quote-screen-sian drift — ready 삼항이 §11.314-b PDF flow 로 multi-line 포맷됨. 공백/개행 허용(\s*) 으로 거리 결함 봉합(impl emerald 보존, 색 변경 0).
+    expect(src).toMatch(/sendReadiness === "ready"\s*\?\s*"bg-emerald-600 hover:bg-emerald-700 text-white"/);
   });
 });

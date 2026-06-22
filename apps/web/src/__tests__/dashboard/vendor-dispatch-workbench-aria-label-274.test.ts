@@ -15,6 +15,11 @@
  *   - active:   aria-label="공급사에 전송"
  *     (visible sendReadiness 4 분기 변동 → intent 안정화, WCAG 2.1 SC 2.5.3)
  *
+ * ※ Drift 갱신 (§quote-screen-sian): §11.274 의도(한국어 정합·intent 안정화) 유지하되
+ *   후속 변경으로 앵커 갱신 — active aria "공급사에 전송"→"견적서 PDF 다운로드"(§11.314-b PDF flow),
+ *   footer "공급사 직접 추가" 제거→스텝퍼 "공급사 후보 보강" 단일점(§09 P6.4),
+ *   not-ready 색 amber-500→yellow-500(§11.302d-6b-2 amber BAN). 구현 정상·sentinel 앵커만 정합.
+ *
  * canonical truth lock:
  *   - data-testid 2개 (quote-dispatch-send-disabled / quote-dispatch-confirm-before-send)
  *   - sendReadiness === "blocked" 분기 + variant="secondary" + disabled prop
@@ -42,8 +47,9 @@ describe("§11.274 #1 — aria-label 한국어 swap 검증", () => {
     expect(vdw).toContain('aria-label="공급사 요청 전달 (비활성)"');
   });
 
-  it("active 분기 aria-label '공급사에 전송' 적용", () => {
-    expect(vdw).toContain('aria-label="공급사에 전송"');
+  // §11.314-b PDF flow — active 버튼이 견적서 PDF 다운로드 흐름으로 전환되며 aria-label 정합 갱신(§11.274 intent 계승).
+  it("active 분기 aria-label '견적서 PDF 다운로드' 적용", () => {
+    expect(vdw).toContain('aria-label="견적서 PDF 다운로드"');
   });
 
   it("영문 aria-label 'Send to supplier' 제거 확인", () => {
@@ -66,9 +72,10 @@ describe("§11.274 #2 — §11.142 invariant 보존 (canonical truth)", () => {
     expect(vdw).toMatch(/variant="secondary"[\s\S]{0,200}data-testid="quote-dispatch-send-disabled"/);
   });
 
-  it("visible label 6종 보존 (선택 공급사에 요청 전달 / 공급사 직접 추가 / 전달 중 / 전송 추적 확인됨 / 전송 전 확인 필요 / 최종 확인 후 전송)", () => {
+  // §09 P6.4 — footer 중복 "공급사 직접 추가" 제거 → 보강 CTA는 스텝퍼 "공급사 후보 보강" 단일점.
+  it("visible label 6종 보존 (선택 공급사에 요청 전달 / 공급사 후보 보강 / 전달 중 / 전송 추적 확인됨 / 전송 전 확인 필요 / 최종 확인 후 전송)", () => {
     expect(vdw).toContain("선택 공급사에 요청 전달");
-    expect(vdw).toContain("공급사 직접 추가");
+    expect(vdw).toContain("공급사 후보 보강");
     expect(vdw).toContain("전달 중…");
     expect(vdw).toContain("전송 추적 확인됨");
     expect(vdw).toContain("전송 전 확인 필요");
@@ -93,8 +100,9 @@ describe("§11.274 #2 — §11.142 invariant 보존 (canonical truth)", () => {
     expect(vdw).toContain("sendReadiness");
   });
 
-  it("emerald-600 (ready) / amber-500 (not ready) className 보존", () => {
+  // §11.302d-6b-2 — amber BANNED, not-ready 톤은 yellow.
+  it("emerald-600 (ready) / yellow-500 (not ready) className 보존", () => {
     expect(vdw).toContain("bg-emerald-600 hover:bg-emerald-700 text-white");
-    expect(vdw).toContain("bg-amber-500 hover:bg-amber-600 text-white");
+    expect(vdw).toContain("bg-yellow-500 hover:bg-yellow-600 text-white");
   });
 });
