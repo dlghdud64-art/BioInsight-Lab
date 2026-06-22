@@ -1265,14 +1265,17 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                     <span className="text-[10px] font-medium text-yellow-700">· 확인 권장</span>
                   )}
                 </div>
-                {/* §11.371-4b — type=date 모바일 native 비대(min-height) 차단. appearance-none 으로
-                    native control 박스 제거 → 다른 필드와 동일 h-9 적용. 달력 picker indicator 는
-                    명시 유지(날짜 입력 UX 보존). */}
+                {/* §label-scan-qc(호영님 라이브 확정) — 빈 type=date 가 모바일 브라우저에서 오늘로
+                    자동 채워지며 onChange 발화 → "수기 입력" 오인 + 당일 만료 오등록 위험.
+                    SmartReceiving 과 동일하게 type=text + placeholder 로 전환:
+                    ① 빈값 보장(자동 today 0, QC 안전) ② "2028-06" 같은 YYYY-MM 재시험일도 수용. */}
                 <Input
-                  type="date"
+                  type="text"
+                  inputMode="numeric"
                   value={formData.expirationDate}
                   onChange={(e) => updateField("expirationDate", e.target.value)}
-                  className="mt-1 h-9 text-sm appearance-none [&::-webkit-calendar-picker-indicator]:opacity-100"
+                  placeholder="예: 2026-12 또는 2026-12-31"
+                  className="mt-1 h-9 text-sm"
                 />
                 {/* §label-scan-qc — EXP 미추출 시 QC 안전 안내(당일 만료 오등록 방지).
                     type=date 는 placeholder 미지원 → 빈값일 때 명시 hint. 값은 항상 빈값 기본(코드 |"") . */}

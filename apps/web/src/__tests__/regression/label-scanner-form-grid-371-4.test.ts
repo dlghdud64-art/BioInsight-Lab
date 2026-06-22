@@ -37,13 +37,14 @@ describe("§11.371-4 — review 폼 모바일 1열화", () => {
   });
 });
 
-describe("§11.371-4b — 유효기간 type=date 모바일 비대 차단", () => {
-  it("유효기간 type=date 에 appearance-none(native 비대 제거) + h-9 통일 유지", () => {
+describe("§11.371-4b — 유효기간 모바일 비대 차단 (#10 type=text 진화)", () => {
+  it("유효기간 type=text(native picker 비대 원천 차단) + h-9 통일 유지", () => {
     const src = read(MODAL);
-    // appearance-none 으로 native date control 박스 제거 → h-9 적용(다른 필드와 동일)
-    expect(src).toMatch(/className="mt-1 h-9 text-sm appearance-none \[&::-webkit-calendar-picker-indicator\]:opacity-100"/);
-    // picker indicator 명시 유지(날짜 입력 UX 보존)
-    expect(src).toMatch(/webkit-calendar-picker-indicator\]:opacity-100/);
+    // §10 — type=date(auto-today 버그 + native picker 비대) → type=text 전환. picker 자체가 없어
+    //   appearance-none 불필요(비대 원천 0). 목표(모바일 비대 차단 + h-9 통일) 더 철저히 달성.
+    expect(src).toMatch(/className="mt-1 h-9 text-sm"/);
+    // EXP 입력에 type=date 잔존 0(auto-today 차단 §10)
+    expect(src).not.toMatch(/expirationDate[\s\S]{0,200}type="date"/);
   });
 });
 

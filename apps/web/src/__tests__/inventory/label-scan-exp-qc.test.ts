@@ -28,6 +28,12 @@ describe("§label-scan-qc — EXP 디폴트 빈값 + 안내 (today 자동채움 
     expect(SRC).toContain("오늘 날짜 자동 아님");
     expect(SRC).toMatch(/!formData\.expirationDate\s*&&/);
   });
+
+  it("EXP 입력 type=text + placeholder (type=date auto-today 근본 제거, YYYY-MM 재시험일 수용)", () => {
+    // 빈 type=date 가 모바일에서 오늘로 자동 채워지는 브라우저 동작을 원천 차단(SmartReceiving 과 동일 패턴).
+    expect(SRC).toContain("예: 2026-12 또는 2026-12-31");
+    expect(SRC).toMatch(/type="text"[\s\S]{0,80}expirationDate/);
+  });
 });
 
 describe("§label-scan-qc — Lot/EXP 이중 배지 모순 완화", () => {
