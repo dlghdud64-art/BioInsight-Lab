@@ -2376,8 +2376,7 @@ function QuotesPageContent() {
           <div className="relative flex items-center justify-end gap-1.5 shrink-0">
             {/* §quote-view-hint(시안 §12) — 첫 방문 1회 안내 말풍선. 누르거나 X 시 재노출 0. */}
             {showViewHint && (
-              <div className="absolute right-0 top-full z-20 mt-2 w-max max-w-[240px] rounded-lg bg-slate-900 px-3 py-2 text-[11px] text-white shadow-lg">
-                <span className="absolute -top-1 right-6 h-2 w-2 rotate-45 bg-slate-900" aria-hidden="true" />
+              <div className="absolute right-0 top-full z-30 mt-1.5 w-max max-w-[240px] rounded-lg bg-slate-900 px-3 py-2 text-[11px] text-white shadow-lg">
                 <span className="inline-flex items-center gap-2">
                   카드·테이블 보기를 여기서 전환할 수 있어요
                   <button
@@ -2568,29 +2567,37 @@ function QuotesPageContent() {
                   className="px-2 py-2 text-center sticky left-0 bg-gray-100 z-20"
                   aria-label="전체 견적 선택/해제"
                 >
-                  <input
-                    type="checkbox"
-                    aria-label="전체 견적 선택/해제"
-                    className="accent-violet-600 cursor-pointer h-4 w-4"
-                    checked={sortedQuotes.length > 0 && sortedQuotes.every((q) => selectedQuoteIds.has(q.id))}
-                    ref={(el) => {
-                      if (el) {
-                        const selectedCount = sortedQuotes.filter((q) => selectedQuoteIds.has(q.id)).length;
-                        el.indeterminate = selectedCount > 0 && selectedCount < sortedQuotes.length;
-                      }
-                    }}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        sortedQuotes.forEach((q) => {
-                          if (!selectedQuoteIds.has(q.id)) toggleQuoteSelection(q.id);
-                        });
-                      } else {
-                        sortedQuotes.forEach((q) => {
-                          if (selectedQuoteIds.has(q.id)) toggleQuoteSelection(q.id);
-                        });
-                      }
-                    }}
-                  />
+                  {/* §quote-card-sian — thead 전체선택 커스텀 체크박스(시안 정합). 부분선택=dash. 핸들러 보존. */}
+                  <label className="relative inline-flex cursor-pointer items-center align-middle">
+                    <input
+                      type="checkbox"
+                      aria-label="전체 견적 선택/해제"
+                      className="peer sr-only"
+                      checked={sortedQuotes.length > 0 && sortedQuotes.every((q) => selectedQuoteIds.has(q.id))}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          sortedQuotes.forEach((q) => {
+                            if (!selectedQuoteIds.has(q.id)) toggleQuoteSelection(q.id);
+                          });
+                        } else {
+                          sortedQuotes.forEach((q) => {
+                            if (selectedQuoteIds.has(q.id)) toggleQuoteSelection(q.id);
+                          });
+                        }
+                      }}
+                    />
+                    <span className={`flex h-5 w-5 items-center justify-center rounded-md border transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-violet-500 ${
+                      sortedQuotes.some((q) => selectedQuoteIds.has(q.id))
+                        ? "border-violet-600 bg-violet-600"
+                        : "border-slate-300 bg-white"
+                    }`}>
+                      {sortedQuotes.length > 0 && sortedQuotes.every((q) => selectedQuoteIds.has(q.id)) ? (
+                        <CheckCircle2 className="h-3 w-3 text-white" />
+                      ) : sortedQuotes.some((q) => selectedQuoteIds.has(q.id)) ? (
+                        <span className="h-0.5 w-2.5 rounded-full bg-white" aria-hidden="true" />
+                      ) : null}
+                    </span>
+                  </label>
                 </th>
                 {visibleColumns.map((key) => {
                   const width = columnPrefs.widths[key];
@@ -2843,13 +2850,19 @@ function QuotesPageContent() {
                       }`}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <input
-                        type="checkbox"
-                        aria-label={`견적 ${tableDisplayTitle} 선택/해제`}
-                        className="accent-violet-600 cursor-pointer h-4 w-4"
-                        checked={selectedQuoteIds.has(quote.id)}
-                        onChange={() => toggleQuoteSelection(quote.id)}
-                      />
+                      {/* §quote-card-sian — 행 선택 커스텀 체크박스(시안 정합). onChange 핸들러 보존. */}
+                      <label className="relative inline-flex cursor-pointer items-center align-middle">
+                        <input
+                          type="checkbox"
+                          aria-label={`견적 ${tableDisplayTitle} 선택/해제`}
+                          className="peer sr-only"
+                          checked={selectedQuoteIds.has(quote.id)}
+                          onChange={() => toggleQuoteSelection(quote.id)}
+                        />
+                        <span className="flex h-5 w-5 items-center justify-center rounded-md border border-slate-300 bg-white transition-colors peer-checked:border-violet-600 peer-checked:bg-violet-600 peer-focus-visible:ring-2 peer-focus-visible:ring-violet-500">
+                          <CheckCircle2 className="h-3 w-3 text-white" />
+                        </span>
+                      </label>
                     </td>
                     {/* §11.230b — visibleColumns.map() dynamic td. column key 별 render
                         분기. §11.224 가격/납기 분기 + §11.226 #4 hasData 우선 +

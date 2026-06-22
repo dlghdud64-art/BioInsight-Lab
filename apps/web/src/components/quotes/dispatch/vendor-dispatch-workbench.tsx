@@ -477,6 +477,15 @@ export function VendorRequestModal({
               ? `플랫폼이 ${resolvedCount}개 공급사 후보를 선별했습니다. 검토 후 전달을 승인하세요.`
               : "공급사를 직접 추가하거나 플랫폼 DB 보강을 기다려 주세요."}
           </DialogDescription>
+          {/* §09 sian — 케이스 ref + 담당자 칩(시안 헤더 정합). cuid 미노출(quoteRef 파생). */}
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+              케이스 {quoteRef ?? "저장 필요"}
+            </span>
+            <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+              담당 발송 운영자
+            </span>
+          </div>
         </DialogHeader>
 
         <div className="space-y-4 py-3">
@@ -577,6 +586,14 @@ export function VendorRequestModal({
                 <Mail className="h-3.5 w-3.5 text-slate-500" />
                 <span className="text-xs font-semibold text-slate-700">받는 공급사</span>
                 <span className="text-[11px] text-slate-500 tabular-nums">{includedCount}곳</span>
+                {/* §09 sian — "다시 선택" = 후보 리스트 펼쳐 수신처 변경(접기 토글 재사용). */}
+                <button
+                  type="button"
+                  onClick={() => setCandidatesExpanded(true)}
+                  className="ml-auto inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-0.5 text-[11px] font-medium text-slate-600 hover:bg-slate-50"
+                >
+                  다시 선택
+                </button>
               </div>
               <div className="max-h-[160px] space-y-1.5 overflow-y-auto overflow-x-hidden">
                 {includedSuppliers.map((supplier) => {
