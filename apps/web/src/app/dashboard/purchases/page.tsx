@@ -667,6 +667,8 @@ export default function PurchasesPage() {
             §11.260b — 호영님 §11.259c 패턴 reuse. 모바일에서도 가로 1줄 압축
             (sm:flex-row → flex-row 강제). 탭 영역 flex-1 min-w-0 (좌측 차지 +
             가로 스크롤). 검색 input 모바일 w-[140px] 고정, sm+ flex-1 + max-w-xs. */}
+        {/* §11.334 — 온보딩(데이터 0건·검색 X) 시 탭/검색 숨김(시안 Improved 정합). */}
+        {!(items.length === 0 && !searchQuery.trim()) && (
         <div className="flex flex-row items-center gap-2">
           <div className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0" style={{ scrollbarWidth: "none" }}>
             {([
@@ -695,6 +697,7 @@ export default function PurchasesPage() {
               className="pl-9 h-10 text-sm bg-white border-slate-200" />
           </div>
         </div>
+        )}
 
         {/* ═══ Queue + Rail ═══ */}
         <div className="flex gap-5">

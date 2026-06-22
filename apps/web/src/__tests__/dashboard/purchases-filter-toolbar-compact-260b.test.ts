@@ -38,8 +38,9 @@ describe("§11.260b #1 — 탭/검색 row 모바일 1줄 압축", () => {
     expect(page).not.toMatch(
       /═══ 탭 \+ 검색 ═══[\s\S]{0,200}flex flex-col sm:flex-row sm:items-center gap-2/,
     );
+    // §11.334 — 온보딩(데이터 0·검색X) 시 탭/검색 숨김 조건부 wrapping이 앵커↔div 거리 562자로 확대. 1줄 압축(flex-row) 의도 불변.
     expect(page).toMatch(
-      /═══ 탭 \+ 검색 ═══[\s\S]{0,300}flex flex-row items-center gap-2/,
+      /═══ 탭 \+ 검색 ═══[\s\S]{0,700}flex flex-row items-center gap-2/,
     );
   });
 
