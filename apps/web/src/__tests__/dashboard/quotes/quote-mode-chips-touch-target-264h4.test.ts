@@ -85,7 +85,9 @@ describe("§11.264h-4 #2 — invariant 보존 (canonical truth)", () => {
   });
 
   it("chipCount 표시 (text-[9px]) 보존", () => {
-    expect(page).toMatch(/chipCount > 0 &&[\s\S]{0,80}text-\[9px\]/);
+    // §quotes-mobile-redesign Part3 — chipCount > 0 && → 삼항(? :)으로 진화(0건에 "· 해당 0건" 사유 노출 추가).
+    //   > 0 분기는 여전히 text-[9px]로 카운트 표시 = 보존 의도 불변. && / ? 둘 다 허용.
+    expect(page).toMatch(/chipCount > 0 [&?][\s\S]{0,80}text-\[9px\]/);
   });
 
   it("§11.259c flex-nowrap + overflow-x-auto row container 보존", () => {

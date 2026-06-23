@@ -982,6 +982,8 @@ function QuotesPageContent() {
   //   "실무자는 12건 이상을 한 화면에서 스캔" — 카드는 보조 뷰.
   //   localStorage 우선 (§11.217 Phase 6) 정합 — 처음 1회만 영향.
   const [viewMode, setViewMode] = useState<"card" | "table">("table");
+  // §quotes-mobile-redesign — 모바일(<768px)은 카드 단일 고정(테이블/토글 비노출). 데스크톱은 현행 유지.
+  const [isMobile, setIsMobile] = useState(false);
 
   // §quote-view-hint(시안 §12) — 첫 방문 1회 "카드·테이블 전환" 안내 말풍선. 누르거나 닫으면 재노출 0.
   const [showViewHint, setShowViewHint] = useState(false);
@@ -1417,6 +1419,19 @@ function QuotesPageContent() {
       // ignore
     }
   }, [viewMode]);
+
+  // §quotes-mobile-redesign — 뷰포트 추적(reactive). 모바일이면 effectiveViewMode=card 강제.
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(max-width: 767px)");
+    const apply = () => setIsMobile(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  // §quotes-mobile-redesign — 모바일 카드 단일 고정. 데스크톱은 사용자 viewMode 유지.
+  const effectiveViewMode: "card" | "table" = isMobile ? "card" : viewMode;
 
   // §11.230c (a)-3 #quotes-view-server-persist — server-first hydration.
   //   preferences.quotesView 도착 시 setViewMode + setSortState (server canonical).
@@ -1915,7 +1930,7 @@ function QuotesPageContent() {
   //   필터 연동 (§11.241 #5) — sortedQuotes 가 filteredQuotes 기반이므로 자동 정합.
   useEffect(() => {
     const handleSelectAll = (e: KeyboardEvent) => {
-      if (viewMode !== "table") return;
+      if (effectiveViewMode !== "table") return;
       if (!(e.ctrlKey || e.metaKey)) return;
       if (e.key !== "a" && e.key !== "A") return;
       const target = e.target as HTMLElement | null;
@@ -1933,7 +1948,7 @@ function QuotesPageContent() {
     };
     document.addEventListener("keydown", handleSelectAll);
     return () => document.removeEventListener("keydown", handleSelectAll);
-  }, [viewMode, sortedQuotes]);
+  }, [effectiveViewMode, sortedQuotes]);
 
   // §11.227 #9 — column header 클릭 시 sort 전환. 같은 컬럼 재클릭 시 direction toggle.
   const handleSortColumn = useCallback(
@@ -2362,10 +2377,13 @@ function QuotesPageContent() {
                       : (chip.tone === "danger" ? "bg-white text-red-600 border-red-200 hover:bg-red-50" : "bg-white text-yellow-700 border-yellow-200 hover:bg-yellow-50")
                 }`}>
                 {chip.label}
-                {chipCount > 0 && (
+                {chipCount > 0 ? (
                   <span className={`text-[9px] ${chip.tone === "danger" ? "text-red-500" : "text-yellow-600"}`}>
                     {chipCount}
                   </span>
+                ) : (
+                  /* §quotes-mobile-redesign Part3 — 0건 disabled 사유 노출(회색 침묵 금지). wiring은 정상, 데이터 0이 사유. */
+                  <span className="text-[9px] text-slate-400 font-normal">· 해당 0건</span>
                 )}
               </button>
             );
@@ -2425,7 +2443,8 @@ function QuotesPageContent() {
             검색/필터 wrapper 안 sub-wrapper 안으로 이동. 호영님 §11.259 spec
             "필터 + 뷰 전환 영역 1줄 압축" 완전 정합. */}
         {!isLoading && filteredQuotes.length > 0 && (
-          <div className="relative flex items-center justify-end gap-1.5 shrink-0">
+          /* §quotes-mobile-redesign — 뷰 토글·컬럼 설정은 데스크톱 전용(모바일 카드 단일 고정). hidden md:flex. */
+          <div className="relative hidden md:flex items-center justify-end gap-1.5 shrink-0">
             {/* §quote-view-hint(시안 §12) — 첫 방문 1회 안내 말풍선. 누르거나 X 시 재노출 0. */}
             {showViewHint && (
               <div className="absolute right-0 top-full z-30 mt-1.5 w-max max-w-[240px] rounded-lg bg-slate-900 px-3 py-2 text-[11px] text-white shadow-lg">
@@ -2474,7 +2493,7 @@ function QuotesPageContent() {
             {/* §11.230b #quote-table-column-prefs — 컬럼 설정 popover trigger.
                 테이블 뷰 한정 노출 + popover 안 9 컬럼 visibility checkbox +
                 HTML5 drag-and-drop reorder (호영님 v2 #23 b1+b2). */}
-            {viewMode === "table" && (
+            {effectiveViewMode === "table" && (
               <div className="relative">
                 <button
                   type="button"
@@ -2595,7 +2614,7 @@ function QuotesPageContent() {
             #4 (§quote-table-sian P2 supersede) 예상금액 always 노출·납기 컬럼 제거 — 빈컬럼 hide 게이트 폐기
             #5 제목 열 = firstItemName + 외 N건 (§11.217 helper inline reuse)
             #8 카드 CTA min-w-[140px] / 테이블 CTA min-w-[80px] 강제 */}
-      {!isLoading && viewMode === "table" && sortedQuotes.length > 0 && (
+      {!isLoading && effectiveViewMode === "table" && sortedQuotes.length > 0 && (
         /* §11.248d #quote-table-fade-hint — 호영님 P0 견적 관리 #4 (scope 축소).
            가로 스크롤 존재 시 좌우 fade gradient overlay 으로 스크롤 가능 표시.
            CSS-only 패턴 (JS scroll position 감지 별도 §11.248d-2 백로그).
@@ -3148,7 +3167,7 @@ function QuotesPageContent() {
       )}
 
       {/* ── 섹션: 즉시 처리 필요 ── */}
-      {!isLoading && viewMode === "card" && urgentQuotes.length > 0 && (
+      {!isLoading && effectiveViewMode === "card" && urgentQuotes.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-red-600" />
@@ -3160,7 +3179,7 @@ function QuotesPageContent() {
       )}
 
       {/* ── 섹션: 진행 중 ── */}
-      {!isLoading && viewMode === "card" && inProgressQuotes.length > 0 && (
+      {!isLoading && effectiveViewMode === "card" && inProgressQuotes.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-yellow-600" />
@@ -3172,7 +3191,7 @@ function QuotesPageContent() {
       )}
 
       {/* ── 섹션: 완료 ── */}
-      {!isLoading && viewMode === "card" && completedQuotes.length > 0 && (
+      {!isLoading && effectiveViewMode === "card" && completedQuotes.length > 0 && (
         <details className="group">
           <summary className="flex items-center gap-2 cursor-pointer list-none select-none">
             <CheckCircle2 className="h-4 w-4 text-emerald-400" />

@@ -76,9 +76,11 @@ describe("§11.259b #2 — invariant 보존 (canonical truth)", () => {
   });
 
   it("viewMode === 'card' / 'table' 분기 렌더 모두 보존", () => {
-    expect(page).toMatch(/viewMode === "table" && sortedQuotes\.length > 0/);
-    expect(page).toMatch(/viewMode === "card" && urgentQuotes\.length > 0/);
-    expect(page).toMatch(/viewMode === "card" && inProgressQuotes\.length > 0/);
-    expect(page).toMatch(/viewMode === "card" && completedQuotes\.length > 0/);
+    // §quotes-mobile-redesign Part2 — 렌더 분기를 viewMode → effectiveViewMode(=isMobile ? "card" : viewMode)로
+    //   전환(모바일 카드 단일 고정). 토글 aria-pressed는 viewMode 유지(위 #2 보존). card/table 양 분기 렌더 의도 불변.
+    expect(page).toMatch(/effectiveViewMode === "table" && sortedQuotes\.length > 0/);
+    expect(page).toMatch(/effectiveViewMode === "card" && urgentQuotes\.length > 0/);
+    expect(page).toMatch(/effectiveViewMode === "card" && inProgressQuotes\.length > 0/);
+    expect(page).toMatch(/effectiveViewMode === "card" && completedQuotes\.length > 0/);
   });
 });

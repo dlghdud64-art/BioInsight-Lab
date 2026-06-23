@@ -14,9 +14,9 @@
  *   - ★ 가짜 데이터 0: quotes(실데이터)에서만 집계. 빈 계정은 전부 0(흐리게).
  */
 
-import { Fragment } from "react";
 import { deriveStage, type Stage } from "@/lib/quote-management/derive";
-import { Send, Clock, GitCompare, CheckCircle2, Package, ChevronRight } from "lucide-react";
+import { Send, Clock, GitCompare, CheckCircle2, Package, Inbox } from "lucide-react";
+import { getFlag } from "@/lib/feature-flags";
 
 const STAGES: {
   key: Stage;
@@ -47,74 +47,68 @@ export function QuoteFunnel({
     const s = deriveStage(q.status);
     if (s) counts[s] += 1;
   }
-  const total = quotes.length || 1;
-  // 현재 집중 = 케이스 존재하는 가장 앞 단계.
-  const focus = STAGES.find((s) => counts[s.key] > 0)?.key ?? null;
+  // §quotes-mobile-redesign — 발주 전환(s5)은 발주 hide 결정과 일관: ENABLE_PURCHASING off 시 제외.
+  //   STAGES const 는 보존(소스 유지), 렌더 목록만 필터. 되살리기 = flag flip.
+  const purchasingOn = getFlag("ENABLE_PURCHASING");
+  const visibleStages = STAGES.filter((s) => purchasingOn || s.key !== "s5");
+  // 현재 집중 = 케이스 존재하는 가장 앞(보이는) 단계.
+  const focus = visibleStages.find((s) => counts[s.key] > 0)?.key ?? null;
+  const allZero = visibleStages.every((s) => counts[s.key] === 0);
 
+  // §quotes-mobile-redesign — 전 단계 0건이면 0 카드 나열 금지, 단일 라인 collapse.
+  if (allZero) {
+    return (
+      <div className="flex items-center gap-2 rounded-2xl border border-bd bg-white px-4 py-3 shadow-sm">
+        <Inbox className="h-4 w-4 text-slate-400 flex-none" />
+        <span className="text-[13px] text-slate-500">진행 중 견적 없음</span>
+      </div>
+    );
+  }
+
+  // §quotes-mobile-redesign — 가로 1행 컴팩트 칩(아이콘+카운트+라벨). 2행 대형 카드 폐지.
   return (
-    <div className="flex flex-wrap md:flex-nowrap items-stretch rounded-2xl border border-bd bg-white p-1.5 shadow-sm">
-      {STAGES.map((s, i) => {
+    <div className="flex items-stretch gap-2 rounded-2xl border border-bd bg-white p-1.5 shadow-sm">
+      {visibleStages.map((s) => {
         const n = counts[s.key];
         const dim = n === 0;
         const isFocus = s.key === focus;
         const isActive = activeStage === s.key;
-        // 강조(시안 .fstage.active) = 클릭 필터 단계 또는 (필터 없을 때) 현재집중 단계.
         const highlight = isActive || (isFocus && activeStage == null);
         const Icon = s.icon;
-        const pct = Math.min((n / total) * 100, 100);
         return (
-          <Fragment key={s.key}>
-            <button
-              type="button"
-              onClick={() => n > 0 && onStageClick?.(s.key)}
-              disabled={n === 0}
-              aria-pressed={isActive}
-              className={`relative basis-[30%] grow md:basis-0 md:flex-1 min-w-0 text-left rounded-xl px-4 pt-4 pb-5 transition-colors ${
-                dim ? "opacity-50 cursor-default hover:opacity-75" : "hover:bg-slate-50"
-              } ${highlight ? "bg-[#eaf1fd] ring-[1.5px] ring-inset ring-[#cdddf9]" : ""}`}
+          <button
+            key={s.key}
+            type="button"
+            onClick={() => n > 0 && onStageClick?.(s.key)}
+            disabled={n === 0}
+            aria-pressed={isActive}
+            aria-label={`${s.label} ${n}건`}
+            className={`flex-1 min-w-0 flex flex-col items-center gap-1 rounded-xl px-2 py-2.5 transition-colors ${
+              dim ? "opacity-50 cursor-default" : "hover:bg-slate-50"
+            } ${highlight ? "bg-[#eaf1fd] ring-[1.5px] ring-inset ring-[#cdddf9]" : ""}`}
+          >
+            <span
+              className={`flex items-center justify-center w-7 h-7 rounded-lg flex-none ${
+                highlight ? "bg-[#2f6be0] text-white" : `${s.tint.bg} ${s.tint.text}`
+              }`}
             >
-              {isFocus && (
-                <span className="absolute top-2.5 right-3 text-[9.5px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded-full bg-[#2f6be0] text-white whitespace-nowrap">
-                  현재 집중
-                </span>
-              )}
-              <div className="flex items-center gap-2.5 mb-2">
-                <span
-                  className={`flex items-center justify-center w-9 h-9 rounded-[9px] flex-none ${
-                    highlight ? "bg-[#2f6be0] text-white" : `${s.tint.bg} ${s.tint.text}`
-                  }`}
-                >
-                  <Icon className="h-[18px] w-[18px]" />
-                </span>
-                <span
-                  className={`text-3xl font-extrabold tabular-nums leading-none tracking-tight ${
-                    dim ? "text-[#c2c8d4]" : highlight ? "text-[#244e9e]" : "text-slate-900"
-                  }`}
-                >
-                  {n}
-                </span>
-              </div>
-              <div
-                className={`text-[12.5px] font-bold leading-tight break-keep ${
-                  highlight ? "text-[#244e9e]" : "text-slate-600"
-                }`}
-              >
-                {s.label}
-              </div>
-              <div className="text-[11px] text-slate-400 leading-tight break-keep mt-0.5">{s.sub}</div>
-              {/* 하단 progress mini-bar — 단계 케이스/전체 비율(실데이터). 0건 숨김. */}
-              {!dim && (
-                <span className="absolute left-4 right-4 bottom-2 h-[3px] rounded-full bg-slate-100 overflow-hidden">
-                  <span className="block h-full rounded-full bg-[#2f6be0]" style={{ width: `${pct}%` }} />
-                </span>
-              )}
-            </button>
-            {i < STAGES.length - 1 && (
-              <div className="hidden md:flex items-center justify-center w-6 flex-none text-[#c2c8d4]">
-                <ChevronRight className="h-4 w-4" />
-              </div>
-            )}
-          </Fragment>
+              <Icon className="h-[16px] w-[16px]" />
+            </span>
+            <span
+              className={`text-lg font-extrabold tabular-nums leading-none ${
+                dim ? "text-[#c2c8d4]" : highlight ? "text-[#244e9e]" : "text-slate-900"
+              }`}
+            >
+              {n}
+            </span>
+            <span
+              className={`text-[11px] font-semibold leading-tight break-keep text-center ${
+                highlight ? "text-[#244e9e]" : "text-slate-500"
+              }`}
+            >
+              {s.label}
+            </span>
+          </button>
         );
       })}
     </div>
