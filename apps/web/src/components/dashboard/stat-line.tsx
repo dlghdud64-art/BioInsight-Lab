@@ -19,6 +19,7 @@
 import { TrendingDown, Wallet, ClipboardCheck, RotateCw } from "lucide-react";
 import type { SectionState } from "@/lib/dashboard/section-state";
 import { won, type DashboardSummary } from "@/lib/dashboard/summary-derive";
+import { getFlag } from "@/lib/feature-flags";
 
 interface StatItem {
   key: string;
@@ -54,10 +55,19 @@ const CHIP_TONE: Record<string, string> = {
 };
 
 export function StatLine({ state, summary, onRetry }: StatLineProps) {
+  // §purchasing-hide — 발주/구매 off 시 "확정 발주액" KPI 제외(2 KPI). 0건 표기가 "미완 기능"으로
+  //   읽히는 문제 차단. items 의 confirmed 객체는 보존(소스 = sentinel GREEN), 렌더만 필터.
+  const purchasingOn = getFlag("ENABLE_PURCHASING");
+  // §purchasing-hide — purchasing on=3 KPI(md:grid-cols-3, §dashboard-mobile-format 보존),
+  //   off=2 KPI(확정 발주액 제외, md:grid-cols-2). 연속 className 리터럴 유지(sentinel GREEN).
+  const kpiGridClass = purchasingOn
+    ? "grid grid-cols-1 md:grid-cols-3 gap-2"
+    : "grid grid-cols-1 md:grid-cols-2 gap-2";
+
   if (state === "loading") {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2" aria-busy="true" aria-label="KPI 로딩 중">
-        {[0, 1, 2].map((i) => (
+      <div className={kpiGridClass} aria-busy="true" aria-label="KPI 로딩 중">
+        {(purchasingOn ? [0, 1, 2] : [0, 1]).map((i) => (
           <div
             key={i}
             className="h-[76px] rounded-xl border border-slate-200 bg-slate-50 p-3 md:p-4 animate-pulse"
@@ -134,8 +144,8 @@ export function StatLine({ state, summary, onRetry }: StatLineProps) {
     // §dashboard-mobile-kpi — ₩ 금액이 모바일 grid-cols-3 폭을 넘쳐 잘림(정확값 위반).
     //   모바일=가로 스크롤(카드가 금액 길이만큼 확장 → 잘림 0, §11.311 compact 1줄·first-fold 보존),
     //   md+=기존 grid-cols-3.
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-      {items.map((it) => {
+    <div className={kpiGridClass}>
+      {items.filter((it) => purchasingOn || it.key !== "confirmed").map((it) => {
         const active = it.value > 0;
         const chip = chipFor(it.key);
         return (

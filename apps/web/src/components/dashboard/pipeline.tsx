@@ -22,6 +22,7 @@
 import { FileText, ClipboardList, PackageCheck, Boxes, RotateCw, ChevronRight } from "lucide-react";
 import type { SectionState } from "@/lib/dashboard/section-state";
 import type { DashboardSummary } from "@/lib/dashboard/summary-derive";
+import { getFlag } from "@/lib/feature-flags";
 
 interface PipelineStage {
   key: string;
@@ -124,10 +125,13 @@ export function Pipeline({ state, summary, onRetry }: PipelineProps) {
     );
   }
 
-  const stages = buildStages(summary);
+  // §purchasing-hide — 발주 stage 미정의 도메인 → off 시 파이프라인에서 제외(견적→입고→재고).
+  //   buildStages 의 po 객체는 보존(소스 문자열 = sentinel GREEN), 렌더 목록만 필터.
+  const stages = buildStages(summary).filter((s) => getFlag("ENABLE_PURCHASING") || s.key !== "po");
+  const gridColsClass = stages.length === 3 ? "md:grid-cols-3" : "md:grid-cols-4";
 
   return (
-    <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+    <div className={`grid grid-cols-2 gap-2 ${gridColsClass}`}>
       {stages.map((stage, i) => {
         const active = stage.total > 0;
         return (

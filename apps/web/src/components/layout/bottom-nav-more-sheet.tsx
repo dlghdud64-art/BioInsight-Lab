@@ -25,6 +25,10 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getFlag } from "@/lib/feature-flags";
+
+// §purchasing-hide — 발주/구매 off 시 더보기 시트에서 숨길 발주 진입점(소스 보존, 렌더 필터).
+const PURCHASING_HREFS = ["/dashboard/orders", "/dashboard/purchase-orders", "/dashboard/purchases"];
 
 interface MoreSheetProps {
   open: boolean;
@@ -86,6 +90,10 @@ export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {
 
   const userRole = (session?.user?.role as string) || "";
   const isAdminOrOwner = userRole === "ADMIN" || userRole === "OWNER";
+
+  // §purchasing-hide — 발주/구매 off 시 발주 진입점 렌더 제외(menuGroups const 는 보존).
+  const purchasingOn = getFlag("ENABLE_PURCHASING");
+  const itemVisible = (item: MoreMenuItem) => purchasingOn || !PURCHASING_HREFS.includes(item.href);
 
   const handleNav = (href: string) => {
     onOpenChange(false);
@@ -152,16 +160,20 @@ export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {
         </SheetHeader>
 
         <div className="space-y-4 mt-2">
-          {menuGroups.map((group) => (
-            <div key={group.title}>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 px-3 mb-1">
-                {group.title}
-              </p>
-              <div className="space-y-0.5">
-                {group.items.map(renderItem)}
+          {menuGroups.map((group) => {
+            const items = group.items.filter(itemVisible);
+            if (items.length === 0) return null;
+            return (
+              <div key={group.title}>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 px-3 mb-1">
+                  {group.title}
+                </p>
+                <div className="space-y-0.5">
+                  {items.map(renderItem)}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {isAdminOrOwner && (
             <div>

@@ -31,6 +31,13 @@ export interface FeatureFlags {
   ENABLE_CONTRACT_INBOX: boolean;
   /** Sourcing flow strip */
   ENABLE_SOURCING_FLOW_STRIP: boolean;
+  /**
+   * §purchasing-hide (호영님 P1 2026-06-23) — 발주/구매 라이브 표면 노출.
+   * 기본 false = 진입점 숨김(hide, not delete). 도메인(구매담당자 ≠ 직접구매자)
+   * 미정의 stage 가 거짓 흐름을 보이지 않도록 차단. DB/orders/procurement/API 라우트는
+   * 존치. 되살리기: false→true flip 또는 NEXT_PUBLIC_FF_PURCHASING="true".
+   */
+  ENABLE_PURCHASING: boolean;
 }
 
 // ===========================================================================
@@ -45,6 +52,8 @@ export const DEFAULT_FLAGS: FeatureFlags = {
   ENABLE_CONTRACT_EXECUTION_CONSOLE: false,
   ENABLE_CONTRACT_INBOX: false,
   ENABLE_SOURCING_FLOW_STRIP: false,
+  // §purchasing-hide — 발주/구매 표면 기본 숨김.
+  ENABLE_PURCHASING: false,
 };
 
 // ===========================================================================
@@ -59,6 +68,9 @@ export const PREVIEW_FLAGS: FeatureFlags = {
   ENABLE_CONTRACT_EXECUTION_CONSOLE: true,
   ENABLE_CONTRACT_INBOX: true,
   ENABLE_SOURCING_FLOW_STRIP: true,
+  // §purchasing-hide — preview route 에서도 발주/구매는 숨김 유지(계약 preview 와 무관).
+  //   되살리기는 DEFAULT flip 또는 env override 로만.
+  ENABLE_PURCHASING: false,
 };
 
 // ===========================================================================
@@ -105,6 +117,10 @@ export function loadEnvFlags(): Partial<FeatureFlags> {
   }
   if (process.env.NEXT_PUBLIC_FF_TODAY_HUB_STRIP === 'true') {
     env.ENABLE_TODAY_HUB_STRIP = true;
+  }
+  // §purchasing-hide — 발주/구매 표면 되살리기 env override.
+  if (process.env.NEXT_PUBLIC_FF_PURCHASING === 'true') {
+    env.ENABLE_PURCHASING = true;
   }
   return env;
 }
