@@ -368,6 +368,9 @@ const ACTION_PRIORITY_STYLE: Record<string, string> = {
   low: "border-l-slate-500",
 };
 
+// §inventory-redesign A-③ — 위치 미지정 인라인 지정 프리셋(시안 MoveModal 정합).
+const LOCATION_PRESETS = ["시약장 A-1", "냉장고 1", "냉동고 -20℃", "선반 B-3", "실험실 B"];
+
 /* ── Component ── */
 interface InventoryContextPanelProps {
   item: ContextPanelItem;
@@ -378,6 +381,8 @@ interface InventoryContextPanelProps {
   onDispose?: (item: ContextPanelItem) => void;
   /** Lot 전체 추적 surface로 drill-down 진입 */
   onLotDrillDown?: () => void;
+  /** §inventory-redesign A-③ — 위치 미지정 인라인 지정(프리셋 → location PATCH, dead button 아님). */
+  onAssignLocation?: (location: string) => void;
   className?: string;
 }
 
@@ -389,6 +394,7 @@ export function InventoryContextPanel({
   onEdit,
   onDispose,
   onLotDrillDown,
+  onAssignLocation,
   className = "",
 }: InventoryContextPanelProps) {
   // §11.320 Phase 2 — 상태 배너 onClick → operationalBriefPopup.open (풀 패널 진입)
@@ -402,6 +408,8 @@ export function InventoryContextPanel({
   const [isFlowSectionExpanded, setIsFlowSectionExpanded] = useState(true);
   const [isHistorySectionExpanded, setIsHistorySectionExpanded] = useState(false);
   const [isActionsSectionExpanded, setIsActionsSectionExpanded] = useState(true);
+  // §inventory-redesign A-③ — 위치 미지정 risk 인라인 지정 picker 토글.
+  const [locPickerOpen, setLocPickerOpen] = useState(false);
   const lots = realLots(item);
   const risks = generateMockRisks(item);
   // §11.322 Phase 3 — D. 리스크 섹션 = 상태 배너 흡수(below_safety) 제외, 부가 리스크만.
@@ -873,6 +881,38 @@ export function InventoryContextPanel({
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-slate-700">{risk.label}</p>
                     <p className="text-[11px] text-slate-500 mt-0.5">{risk.detail}</p>
+                    {/* §inventory-redesign A-③ — 위치 미지정은 인라인 지정으로 한 동작 해소(프리셋 → location PATCH). */}
+                    {risk.type === "location_issue" && onAssignLocation && (
+                      locPickerOpen ? (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {LOCATION_PRESETS.map((loc) => (
+                            <button
+                              key={loc}
+                              type="button"
+                              onClick={() => { onAssignLocation(loc); setLocPickerOpen(false); }}
+                              className="inline-flex items-center rounded-md border border-bd bg-white px-2 py-1 text-[11px] font-medium text-slate-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                            >
+                              {loc}
+                            </button>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => setLocPickerOpen(false)}
+                            className="inline-flex items-center rounded-md px-2 py-1 text-[11px] text-slate-400 hover:text-slate-600"
+                          >
+                            취소
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setLocPickerOpen(true)}
+                          className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-700"
+                        >
+                          <MapPin className="h-3 w-3" /> 위치 지정
+                        </button>
+                      )
+                    )}
                   </div>
                 </div>
               ))}

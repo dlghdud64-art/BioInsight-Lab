@@ -2747,6 +2747,19 @@ function InventoryPageContent() {
               isOpen={contextPanelOpen}
               onClose={() => setContextPanelItem(null)}
               onLotDrillDown={() => setActiveInventoryTab("lot-tracking")}
+              onAssignLocation={(location) => {
+                // §inventory-redesign A-③ — 위치 미지정 인라인 지정 → 실 location PATCH(기존 update mutation).
+                const match = displayInventories.find((inv) => inv.id === contextPanelItem?.id);
+                if (match) {
+                  createOrUpdateMutation.mutate({
+                    id: match.id,
+                    productId: match.productId,
+                    currentQuantity: match.currentQuantity,
+                    unit: match.unit || "ea",
+                    location,
+                  });
+                }
+              }}
               onReorder={(cpItem) => {
                 // §11.158 cache-bust — reorder 진입 시 inventory brief stale
                 invalidateBriefNarrative({
