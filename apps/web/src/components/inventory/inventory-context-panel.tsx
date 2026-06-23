@@ -406,6 +406,8 @@ interface InventoryContextPanelProps {
   onLotDrillDown?: () => void;
   /** §inventory-redesign A-③ — 위치 미지정 인라인 지정(프리셋 → location PATCH, dead button 아님). */
   onAssignLocation?: (location: string) => void;
+  /** §inventory-redesign A-①' P1 — 진입 맥락. 'reorder'면 상단 강조를 재발주로(섹션 정보는 동일, 통합 패널). 기본 'detail'(회귀 0). */
+  mode?: "detail" | "reorder";
   className?: string;
 }
 
@@ -418,6 +420,7 @@ export function InventoryContextPanel({
   onDispose,
   onLotDrillDown,
   onAssignLocation,
+  mode = "detail",
   className = "",
 }: InventoryContextPanelProps) {
   // §11.320 Phase 2 — 상태 배너 onClick → operationalBriefPopup.open (풀 패널 진입)
@@ -496,7 +499,7 @@ export function InventoryContextPanel({
     >
       {/* §11.146 Brief header — 운영 브리핑 + 선택한 재고 (lock §11.142, §11.179 eyebrow 통일) */}
       <div className="sticky top-0 z-10 px-5 py-2 border-b border-bd bg-el flex items-center justify-between">
-        <span className="text-[11px] font-bold text-blue-700">운영 브리핑</span>
+        <span className="text-[11px] font-bold text-blue-700">{mode === "reorder" ? "재발주 검토" : "운영 브리핑"}</span>
         <span className="text-[10px] text-slate-500 uppercase tracking-wide">선택한 재고</span>
       </div>
 
