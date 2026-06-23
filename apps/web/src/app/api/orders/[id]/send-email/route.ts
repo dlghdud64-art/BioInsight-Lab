@@ -190,8 +190,9 @@ export async function POST(
       pdfAttachment = undefined;
     }
 
-    // sendEmail 호출 — 현재 mock (host config 후 실제 송부).
-    // 실패 시 catch 에서 500 반환 (mutation atomic 외라 audit 도 fail).
+    // sendEmail 호출 — Resend SDK 실발송 (§11.314 Phase 2, sender.ts).
+    //   production: noreply@labaxis.co.kr 발송 / dev: 콘솔 로깅 / pilot vendor: dry-run.
+    //   실패 시 throw → catch 에서 500 반환 (silent success 금지).
     await sendEmail({
       to: order.vendor.email,
       // §11.348-A-1 — 공급사 답장이 발주자(연구소)에게 가도록 reply-to(SEND-A 동형).
