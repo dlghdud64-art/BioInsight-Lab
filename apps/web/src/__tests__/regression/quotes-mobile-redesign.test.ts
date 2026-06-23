@@ -76,3 +76,33 @@ describe("§quotes-mobile-redesign — 회귀 0 (B)", () => {
     expect(src).toMatch(/회신 \$\{responseCount\}건 \(가격 미기재\)|건 수신/);
   });
 });
+
+describe("§quotes-filter-popover — 다축 필터 popover + 빠른 필터(호영님 시안)", () => {
+  it("필터 facet state(우선순위/회신상태/견적상태)", () => {
+    const src = read(PAGE);
+    expect(src).toMatch(/priorityFilter/);
+    expect(src).toMatch(/replyFilter/);
+    expect(src).toMatch(/arrivalFilter/);
+  });
+  it("canonical 와이어링(computePriority.level / responses / vendorRequests) — 가짜 0", () => {
+    const src = read(PAGE);
+    expect(src).toMatch(/priorityFilter\.includes\(computePriority\(c\)\.level\)/);
+    expect(src).toMatch(/q\.vendorRequests\?\.length/);
+    expect(src).toMatch(/q\.responses\?\.length/);
+  });
+  it("필터 popover 3 facet 그룹 라벨", () => {
+    const src = read(PAGE);
+    expect(src).toContain("우선순위");
+    expect(src).toContain("회신 상태");
+    expect(src).toContain("견적 상태");
+  });
+  it("초기화/적용 + 빠른 필터 라벨", () => {
+    const src = read(PAGE);
+    expect(src).toContain("초기화");
+    expect(src).toContain("적용");
+    expect(src).toContain("빠른 필터");
+  });
+  it("상태 Select 제거(필터 popover로 대체) — <Select 미사용", () => {
+    expect(read(PAGE)).not.toMatch(/<Select\b/);
+  });
+});

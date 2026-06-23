@@ -30,9 +30,6 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import { Search, Filter, Package, CheckCircle2, Clock, AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon, Loader2, ScanLine, ChevronDown, ChevronUp, ChevronsRight, ChevronsLeft, Settings2, GripVertical, MoreHorizontal } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -1017,6 +1014,15 @@ function QuotesPageContent() {
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") ?? "all");
   const [modeChip, setModeChip] = useState<string | null>(null);
+  // §quotes-filter-popover (호영님 시안) — 다축 필터 popover. 전부 canonical 파생(computePriority.level /
+  //   responses·vendorRequests). 상태 Select 대체. 다중 선택 chip.
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [priorityFilter, setPriorityFilter] = useState<string[]>([]); // high | medium | low
+  const [replyFilter, setReplyFilter] = useState<string[]>([]); // none | collecting | all
+  const [arrivalFilter, setArrivalFilter] = useState<string[]>([]); // arrived | waiting
+  const filterActiveCount = priorityFilter.length + replyFilter.length + arrivalFilter.length;
+  const toggleInArray = (set: (updater: (prev: string[]) => string[]) => void, val: string) =>
+    set((prev) => (prev.includes(val) ? prev.filter((x) => x !== val) : [...prev, val]));
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(searchParams.get("selected") ?? null);
   // §11.264i — briefSheetOpen 분리 (호영님 spec P0 견적 모바일 2중 겹침 fix).
   //   기존: §11.155 MobileOperationalBriefSheet 가 selectedQuote 와 단일 truth 공유
@@ -1850,8 +1856,24 @@ function QuotesPageContent() {
       if (chip) result = result.filter(chip.filter);
     }
 
+    // §quotes-filter-popover — 다축 필터(canonical 파생, 가짜 0). 우선순위/회신상태/견적상태.
+    if (priorityFilter.length > 0) {
+      result = result.filter((q) => { const c = toQuoteCase(q); return c ? priorityFilter.includes(computePriority(c).level) : false; });
+    }
+    if (replyFilter.length > 0) {
+      result = result.filter((q) => {
+        const invited = q.vendorRequests?.length ?? 0;
+        const received = q.responses?.length ?? 0;
+        const s = received === 0 ? "none" : invited > 0 && received >= invited ? "all" : "collecting";
+        return replyFilter.includes(s);
+      });
+    }
+    if (arrivalFilter.length > 0) {
+      result = result.filter((q) => arrivalFilter.includes((q.responses?.length ?? 0) > 0 ? "arrived" : "waiting"));
+    }
+
     return result.sort((a, b) => getOpPriority(a) - getOpPriority(b));
-  }, [quotes, debouncedSearchQuery, statusFilter, modeChip, today]);
+  }, [quotes, debouncedSearchQuery, statusFilter, modeChip, today, priorityFilter, replyFilter, arrivalFilter]);
 
   // §11.227 #9 — 테이블 sortedQuotes (sortState 가 set 됐을 때 column 별 정렬).
   //   sortState.key === null 시 filteredQuotes 그대로 (default priority order).
@@ -2324,20 +2346,73 @@ function QuotesPageContent() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
             <Input placeholder="견적명 / 품목명 / 요청 번호 검색..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9 h-9 text-sm" />
           </div>
-          <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setModeChip(null); }}>
-            <SelectTrigger className="w-[110px] sm:w-[160px] h-9 text-sm shrink-0">
-              <Filter className="h-3.5 w-3.5 mr-2 text-slate-400" /><SelectValue placeholder="상태 필터" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">전체 상태</SelectItem>
-              <SelectItem value="DEADLINE_TODAY">오늘 마감</SelectItem>
-              <SelectItem value="PENDING">요청 접수</SelectItem>
-              <SelectItem value="SENT">회신 대기 중</SelectItem>
-              <SelectItem value="RESPONDED">비교 검토 필요</SelectItem>
-              <SelectItem value="COMPLETED">발주 완료</SelectItem>
-              <SelectItem value="CANCELLED">취소됨</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* §quotes-filter-popover (호영님 시안) — 상태 Select → 다축 필터 popover. 우선순위/회신상태/견적상태. */}
+          <div className="relative shrink-0">
+            <button
+              type="button"
+              onClick={() => setFilterOpen((o) => !o)}
+              aria-expanded={filterOpen}
+              aria-label="필터"
+              className={`h-9 px-3 inline-flex items-center gap-1.5 rounded-md border text-sm transition-colors ${
+                filterActiveCount > 0
+                  ? "border-blue-300 bg-blue-50 text-blue-700"
+                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              <Filter className="h-3.5 w-3.5" /> 필터
+              {filterActiveCount > 0 && (
+                <span className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-blue-600 text-white text-[10px] font-bold">
+                  {filterActiveCount}
+                </span>
+              )}
+            </button>
+            {filterOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setFilterOpen(false)} aria-hidden />
+                <div className="absolute right-0 top-full z-50 mt-1.5 w-64 rounded-xl border border-slate-200 bg-white shadow-lg p-3 space-y-3">
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-500 mb-1.5">우선순위</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[["high", "높음"], ["medium", "보통"], ["low", "낮음"]].map(([val, lbl]) => (
+                        <button key={val} type="button" onClick={() => toggleInArray(setPriorityFilter, val)}
+                          className={`px-2.5 py-1 rounded-full text-[12px] font-medium border transition-colors ${priorityFilter.includes(val) ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"}`}>
+                          {lbl}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-500 mb-1.5">회신 상태</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[["none", "회신 없음"], ["collecting", "수집 중"], ["all", "전원 회신"]].map(([val, lbl]) => (
+                        <button key={val} type="button" onClick={() => toggleInArray(setReplyFilter, val)}
+                          className={`px-2.5 py-1 rounded-full text-[12px] font-medium border transition-colors ${replyFilter.includes(val) ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"}`}>
+                          {lbl}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-500 mb-1.5">견적 상태</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[["arrived", "견적 도착"], ["waiting", "견적 대기"]].map(([val, lbl]) => (
+                        <button key={val} type="button" onClick={() => toggleInArray(setArrivalFilter, val)}
+                          className={`px-2.5 py-1 rounded-full text-[12px] font-medium border transition-colors ${arrivalFilter.includes(val) ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"}`}>
+                          {lbl}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                    <button type="button" onClick={() => { setPriorityFilter([]); setReplyFilter([]); setArrivalFilter([]); }}
+                      className="text-[12px] text-slate-400 hover:text-slate-600">초기화</button>
+                    <button type="button" onClick={() => setFilterOpen(false)}
+                      className="px-3 py-1 rounded-md bg-blue-600 text-white text-[12px] font-semibold hover:bg-blue-500">적용</button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
         {/* §11.259c-2 — mode chips + 뷰 toggle 데스크탑 1줄 통합 sub-wrapper.
             모바일: 2 sub-row (chips 위, 뷰 toggle 아래). 데스크탑 sm+: 같은 줄.
@@ -2351,6 +2426,8 @@ function QuotesPageContent() {
         <div className="relative flex-1 min-w-0">
         {/* Operating mode chips — §11.259c 가로 스크롤 (1줄 강제) + §11.259c-2 sm+ 좌측 flex-1. */}
         <div className="flex items-center gap-1.5 flex-nowrap overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 pb-1 sm:pb-0">
+          {/* §quotes-filter-popover (호영님 시안) — 빠른 필터 라벨. */}
+          <span className="text-[11px] font-semibold text-slate-400 shrink-0 mr-1 whitespace-nowrap">빠른 필터</span>
           {MODE_CHIPS.filter(chip => !(isBrowserPilotQuoteDispatch && chip.key === "urgent")).map(chip => {
             const isActive = modeChip === chip.key;
             const chipCount = quotes.filter(chip.filter).length;
