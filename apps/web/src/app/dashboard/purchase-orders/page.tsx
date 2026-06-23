@@ -23,7 +23,16 @@ import {
   type ModuleBucketKey,
   type ModuleLandingItem,
 } from "@/lib/ops-console/module-landing-adapter";
-import { ChevronRight, ArrowRight, AlertCircle, Clock, Zap, Sparkles, Loader2, ShieldAlert, ShieldCheck, DollarSign, AlertTriangle, CheckCircle2, FlaskConical, Inbox, Filter, FileText, Mail } from "lucide-react";
+import { ChevronRight, ArrowRight, AlertCircle, Clock, Zap, Sparkles, Loader2, ShieldAlert, ShieldCheck, DollarSign, AlertTriangle, CheckCircle2, FlaskConical, Inbox, Filter, FileText, Mail, Send, Download } from "lucide-react";
+// 시안 Phase 2 — 발행 모달 / 리마인더 모달 (실 endpoint 연결, 확인 모달 경유).
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { buildDetailHref } from "@/lib/ops-console/navigation-context";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
 // §11.258-sweep-2 — 모바일 좌측 하단 ✨ 진입 (방안 1 위치 분리).
@@ -557,10 +566,9 @@ function PurchaseOrderLandingPageInner() {
               </h2>
               <div className="bg-gray-50 border border-slate-200 rounded-lg divide-y divide-slate-200">
                 {externalItems.map((item) => (
-                  <div
+                  <ExternalWaitingRow
                     key={item.entityId}
-                    role="button"
-                    tabIndex={0}
+                    item={item}
                     onClick={() =>
                       openOverlay({
                         routePath: `/dashboard/purchase-orders/${item.entityId}`,
@@ -568,39 +576,7 @@ function PurchaseOrderLandingPageInner() {
                         mode: "progress",
                       })
                     }
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        openOverlay({
-                          routePath: `/dashboard/purchase-orders/${item.entityId}`,
-                          origin: "queue",
-                          mode: "progress",
-                        });
-                      }
-                    }}
-                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-100 transition-colors cursor-pointer"
-                  >
-                    <Clock className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <span className="text-sm text-slate-700 font-mono truncate block">
-                        {item.title}
-                      </span>
-                      {item.vendorName && (
-                        <span className="text-[11px] text-slate-500 truncate block mt-0.5">
-                          <span className="text-slate-400">공급사 ·</span>{" "}
-                          {item.vendorName}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-xs text-slate-500 flex-shrink-0">
-                      {item.waitingExternalLabel ?? "공급사 확인 대기"}
-                    </span>
-                    {/* 리마인더 — 자동발송 wiring 없음(Phase 2). 표시 전용 라벨. */}
-                    <span className="text-[11px] text-slate-400 flex-shrink-0">
-                      리마인더 대상
-                    </span>
-                    <ChevronRight className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                  </div>
+                  />
                 ))}
               </div>
             </div>
@@ -802,6 +778,9 @@ function ActionableRow({
   onClick: () => void;
 }) {
   const { toast } = useToast();
+  // 시안 Phase 2 — 발행 모달 open 상태. 이메일 quick-action 은 직접 발송 대신
+  // 확인 모달(IssueModal) 경유. mutation 자체는 기존 emailMutation 재사용.
+  const [issueModalOpen, setIssueModalOpen] = useState(false);
   const borderClass = item.dueState.isOverdue
     ? "border-l-2 border-l-red-500"
     : item.blockerSummary
@@ -945,26 +924,22 @@ function ActionableRow({
               >
                 <FileText className="h-3.5 w-3.5" />
               </button>
+              {/* 시안 Phase 2 — 공급사 발행. 직접 발송 대신 발행 확인 모달
+                  (IssueModal) open. 발송은 모달 풋터에서 기존 emailMutation
+                  재사용 (중복 mutation 0). orderResolving 중엔 disable. */}
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  emailMutation.mutate();
+                  setIssueModalOpen(true);
                 }}
-                disabled={
-                  emailMutation.isPending ||
-                  orderResolving ||
-                  !resolvedOrderId ||
-                  !item.vendorEmail
-                }
+                disabled={orderResolving || !resolvedOrderId}
                 title={
                   !resolvedOrderId
                     ? orderResolving
                       ? "발주 정보 확인 중…"
                       : "발주 row 가 아직 변환되지 않았습니다"
-                    : item.vendorEmail
-                      ? "공급사 이메일 발송"
-                      : "공급사 이메일이 설정되지 않아 발송할 수 없습니다."
+                    : "공급사 발행 — 발주서 발행 모달 열기"
                 }
                 className="p-1 rounded text-slate-500 hover:text-slate-700 hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -976,7 +951,463 @@ function ActionableRow({
         </div>
       </div>
       <AiAnalysisPanel item={item} />
+      {/* 시안 Phase 2 — 발행 모달. 트리거 = 위 공급사 발행 버튼. 발송은
+          기존 emailMutation, 미리보기는 기존 pdfMutation 재사용. */}
+      <IssueModal
+        open={issueModalOpen}
+        onOpenChange={setIssueModalOpen}
+        item={item}
+        resolvedOrderId={resolvedOrderId}
+        pdfMutation={pdfMutation}
+        emailMutation={emailMutation}
+      />
     </div>
+  );
+}
+
+// ── 시안 Phase 2 — 발행 모달 (IssueModal) ─────────────────────────
+// "지금 내 차례" PO 의 공급사 발행 확인 모달. 값은 canonical(order detail:
+// 공급사·총액·이메일). 발송 = 기존 emailMutation 재사용(중복 mutation 0),
+// 미리보기 = 기존 pdfMutation 재사용. vendor.email 없으면 발송 disabled +
+// "공급사 이메일 미설정" (dead button 0, 서버도 422).
+function IssueModal({
+  open,
+  onOpenChange,
+  item,
+  resolvedOrderId,
+  pdfMutation,
+  emailMutation,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  item: ModuleLandingItem;
+  resolvedOrderId: string | null;
+  // §po-issue-reminder — 실 mutation 추론 타입(<void, Error, void>)과 정합(invariant). 빈 <typeof useMutation>=<unknown>은 불일치.
+  pdfMutation: ReturnType<typeof useMutation<void, Error, void>>;
+  emailMutation: ReturnType<typeof useMutation<void, Error, void>>;
+}) {
+  // 모달 open 시에만 canonical 발주 상세(총액·공급사명·수신 이메일) 조회.
+  // entityId → /api/orders/[id] (기존 order-resolve 와 동일 endpoint).
+  const { data: detail } = useQuery<{
+    totalAmount: number;
+    vendorName: string | null;
+    vendorEmail: string | null;
+    orderNumber: string | null;
+  } | null>({
+    queryKey: ["po-issue-modal-detail", item.entityId],
+    queryFn: async () => {
+      const res = await csrfFetch(`/api/orders/${item.entityId}`);
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error("발주 상세 조회 실패");
+      const data = (await res.json()) as {
+        order?: {
+          totalAmount?: number | null;
+          orderNumber?: string | null;
+          vendor?: { name?: string | null; email?: string | null } | null;
+        } | null;
+      };
+      const order = data.order;
+      if (!order) return null;
+      return {
+        totalAmount: order.totalAmount ?? 0,
+        vendorName: order.vendor?.name ?? item.vendorName ?? null,
+        vendorEmail: order.vendor?.email ?? item.vendorEmail ?? null,
+        orderNumber: order.orderNumber ?? null,
+      };
+    },
+    enabled: open && Boolean(item.entityId),
+    staleTime: 60_000,
+    retry: false,
+  });
+
+  // 수신 이메일 canonical — 상세 도착 시 상세 우선, 미도착 시 row 의 vendorEmail.
+  const vendorEmail = detail?.vendorEmail ?? item.vendorEmail ?? null;
+  const vendorName = detail?.vendorName ?? item.vendorName ?? "공급사";
+  const fileName = `${item.title.replace(/[^\w-]/g, "_")}.pdf`;
+  const totalAmount = detail?.totalAmount ?? null;
+
+  // 발송 성공 시 모달 닫기 (성공 toast 는 emailMutation.onSuccess 재사용).
+  const handleSend = () => {
+    emailMutation.mutate(undefined, {
+      onSuccess: () => onOpenChange(false),
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="text-base">공급사 발행</DialogTitle>
+          <DialogDescription className="text-xs">
+            발주서를 공급사에 이메일로 발행합니다.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          {/* 발행 준비 배너 */}
+          <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+            <Send className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+            <span>발행 준비 완료 — 발주서 PDF 가 이메일에 첨부되어 발송됩니다.</span>
+          </div>
+
+          {/* 발주서 PDF doc 행 (파일명·공급사·총액 + 미리보기=generate-pdf) */}
+          <div className="rounded-md border border-slate-200 bg-white p-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-slate-100">
+                <FileText className="h-4 w-4 text-slate-500" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-slate-900 truncate">
+                  {fileName}
+                </p>
+                <p className="text-[11px] text-slate-500 truncate">
+                  {vendorName}
+                  {totalAmount !== null && (
+                    <>
+                      {" · "}
+                      <span className="tabular-nums">
+                        ₩{totalAmount.toLocaleString("ko-KR")}
+                      </span>
+                    </>
+                  )}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => pdfMutation.mutate()}
+                disabled={pdfMutation.isPending || !resolvedOrderId}
+                className="inline-flex items-center gap-1 rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+              >
+                {pdfMutation.isPending ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Download className="h-3 w-3" />
+                )}
+                미리보기
+              </button>
+            </div>
+          </div>
+
+          {/* 수신(공급사 이메일) + 담당 필드 */}
+          <div className="grid grid-cols-1 gap-2">
+            <div className="rounded-md border border-slate-200 px-3 py-2">
+              <p className="text-[11px] text-slate-400">수신 (공급사 이메일)</p>
+              {vendorEmail ? (
+                <p className="text-sm text-slate-900 truncate">{vendorEmail}</p>
+              ) : (
+                <p className="text-sm text-red-600">공급사 이메일 미설정</p>
+              )}
+            </div>
+            <div className="rounded-md border border-slate-200 px-3 py-2">
+              <p className="text-[11px] text-slate-400">담당 (공급사)</p>
+              <p className="text-sm text-slate-900 truncate">{vendorName}</p>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter className="gap-2">
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className="inline-flex items-center justify-center rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors min-h-[44px]"
+          >
+            취소
+          </button>
+          {/* 발행하고 이메일 발송 — 기존 emailMutation 재사용. vendor.email
+              없으면 disabled (dead button 0, 서버도 422). */}
+          <button
+            type="button"
+            onClick={handleSend}
+            disabled={
+              emailMutation.isPending || !resolvedOrderId || !vendorEmail
+            }
+            title={
+              !vendorEmail
+                ? "공급사 이메일이 설정되지 않아 발송할 수 없습니다."
+                : "발주서 발행 (이메일 발송)"
+            }
+            className="inline-flex items-center justify-center gap-1.5 rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+          >
+            {emailMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            발행하고 이메일 발송
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── 시안 Phase 2 — 공급사 응답 대기 row (리마인더 모달 트리거) ──────
+// 기존 inline div 의 navigation/표시 wiring 보존 + 리마인더 버튼 추가.
+// 리마인더 버튼 → ReminderModal open (실 send-email 1회). 자동발송 예약 없음.
+function ExternalWaitingRow({
+  item,
+  onClick,
+}: {
+  item: ModuleLandingItem;
+  onClick: () => void;
+}) {
+  const { toast } = useToast();
+  const [reminderModalOpen, setReminderModalOpen] = useState(false);
+
+  // §11.211 패턴 재사용 — entityId → DB Order.id resolve (발송 대상 검증).
+  const { data: orderData, isLoading: orderResolving } = useQuery<
+    { id: string } | null
+  >({
+    queryKey: ["po-external-row-order-resolve", item.entityId],
+    queryFn: async () => {
+      const res = await csrfFetch(`/api/orders/${item.entityId}`);
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error("Order resolve 실패");
+      const data = (await res.json()) as { order?: { id: string } | null };
+      return data.order ?? null;
+    },
+    enabled: Boolean(item.vendorName),
+    staleTime: 60_000,
+    retry: false,
+  });
+  const resolvedOrderId: string | null = orderData?.id ?? null;
+
+  // 리마인더 1회 발송 — 기존 send-email endpoint 재사용 (PO 메일 + PDF + audit).
+  const reminderMutation = useMutation({
+    mutationFn: async () => {
+      if (!resolvedOrderId)
+        throw new Error("발주 row 가 아직 변환되지 않았습니다");
+      const res = await csrfFetch(`/api/orders/${resolvedOrderId}/send-email`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error ?? "리마인더 발송 실패");
+      }
+      return res.json();
+    },
+    onSuccess: () =>
+      toast({
+        title: "리마인더 발송 완료",
+        description: "공급사에게 리마인더를 발송했습니다.",
+      }),
+    onError: (err: Error) =>
+      toast({
+        title: "발송 실패",
+        description: err.message,
+        variant: "destructive",
+      }),
+  });
+
+  return (
+    <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-100 transition-colors">
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onClick}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onClick();
+          }
+        }}
+        className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+      >
+        <Clock className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <span className="text-sm text-slate-700 font-mono truncate block">
+            {item.title}
+          </span>
+          {item.vendorName && (
+            <span className="text-[11px] text-slate-500 truncate block mt-0.5">
+              <span className="text-slate-400">공급사 ·</span>{" "}
+              {item.vendorName}
+            </span>
+          )}
+        </div>
+        <span className="text-xs text-slate-500 flex-shrink-0">
+          {item.waitingExternalLabel ?? "공급사 확인 대기"}
+        </span>
+      </div>
+      {/* 시안 Phase 2 — 리마인더 버튼. 자동발송 예약 아님 — 클릭 시 모달 열고
+          모달에서 "지금 1회 발송". vendor row(resolve) 만 활성. */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setReminderModalOpen(true);
+        }}
+        disabled={orderResolving || !resolvedOrderId}
+        title={
+          resolvedOrderId
+            ? "리마인더 — 응답 재촉 메일 발송"
+            : orderResolving
+              ? "발주 정보 확인 중…"
+              : "발주 row 가 아직 변환되지 않았습니다"
+        }
+        className="inline-flex items-center gap-1 rounded border border-slate-300 px-2 py-1 text-[11px] text-slate-600 hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+      >
+        <Mail className="h-3 w-3" />
+        리마인더
+      </button>
+      <ChevronRight className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+      <ReminderModal
+        open={reminderModalOpen}
+        onOpenChange={setReminderModalOpen}
+        item={item}
+        resolvedOrderId={resolvedOrderId}
+        reminderMutation={reminderMutation}
+      />
+    </div>
+  );
+}
+
+// ── 시안 Phase 2 — 리마인더 모달 (ReminderModal) ──────────────────
+// "공급사 응답 대기" PO 의 리마인더 모달. 무응답 배너 + order-followup 자동
+// 초안(실 생성) + "리마인더 발송"(send-email 1회). 자동발송 예약/간격 설정은
+// 스케줄러 backend 부재 → 미구현(시안 pm-auto 블록 전체 생략). 초안 생성
+// 실패 시 기본 메시지로 graceful, 발송은 실 send-email.
+function ReminderModal({
+  open,
+  onOpenChange,
+  item,
+  resolvedOrderId,
+  reminderMutation,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  item: ModuleLandingItem;
+  resolvedOrderId: string | null;
+  // §po-issue-reminder — 실 reminderMutation 추론 타입(<any, Error, void>)과 정합(invariant 불일치 해소).
+  reminderMutation: ReturnType<typeof useMutation<any, Error, void>>;
+}) {
+  // 모달 open 시 order-followup 초안 자동 생성(실 endpoint). 실패 시 기본
+  // 메시지 graceful — 발송 자체는 실 send-email 이므로 초안은 표시용 미리보기.
+  const { data: draft, isLoading: draftLoading } = useQuery<{
+    emailSubject: string;
+    emailBody: string;
+    daysSinceOrder: number | null;
+  }>({
+    queryKey: ["po-reminder-followup-draft", resolvedOrderId],
+    queryFn: async () => {
+      const fallback = {
+        emailSubject: `[Follow-up] ${item.title} 진행 상황 확인 요청`,
+        emailBody: `${item.vendorName ?? "공급사"} 담당자님께,\n\n발주 진행 상황과 예상 납기일 회신을 요청드립니다.`,
+        daysSinceOrder: null as number | null,
+      };
+      if (!resolvedOrderId) return fallback;
+      try {
+        const res = await csrfFetch("/api/ai-actions/generate/order-followup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId: resolvedOrderId }),
+        });
+        if (!res.ok) return fallback;
+        const data = (await res.json()) as {
+          preview?: {
+            emailSubject?: string;
+            emailBody?: string;
+            daysSinceOrder?: number | null;
+          };
+        };
+        return {
+          emailSubject: data.preview?.emailSubject ?? fallback.emailSubject,
+          emailBody: data.preview?.emailBody ?? fallback.emailBody,
+          daysSinceOrder: data.preview?.daysSinceOrder ?? null,
+        };
+      } catch {
+        return fallback;
+      }
+    },
+    enabled: open && Boolean(resolvedOrderId),
+    staleTime: 60_000,
+    retry: false,
+  });
+
+  // 무응답 경과 배너 — waitingExternalLabel(canonical) 우선, 없으면 초안의
+  // daysSinceOrder. 둘 다 없으면 일반 문구.
+  const elapsedLabel =
+    item.waitingExternalLabel ??
+    (draft?.daysSinceOrder != null
+      ? `${draft.daysSinceOrder}일째 응답 없음`
+      : "공급사 응답 대기 중");
+
+  const handleSend = () => {
+    reminderMutation.mutate(undefined, {
+      onSuccess: () => onOpenChange(false),
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="text-base">리마인더</DialogTitle>
+          <DialogDescription className="text-xs">
+            응답이 없는 공급사에게 리마인더를 1회 발송합니다.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          {/* 무응답 경과 배너 */}
+          <div className="flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-700">
+            <Clock className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+            <span>
+              {elapsedLabel} — {item.vendorName ?? "공급사"}
+            </span>
+          </div>
+
+          {/* 리마인더 메시지 (order-followup 자동 초안, 실 생성) */}
+          <div className="rounded-md border border-slate-200 bg-white p-3">
+            <p className="text-[11px] text-slate-400 mb-1">리마인더 메시지</p>
+            {draftLoading ? (
+              <div className="flex items-center gap-2 text-xs text-slate-500 py-2">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                초안 생성 중…
+              </div>
+            ) : (
+              <>
+                <p className="text-sm font-medium text-slate-900 mb-1">
+                  {draft?.emailSubject}
+                </p>
+                <p className="text-xs text-slate-600 whitespace-pre-line">
+                  {draft?.emailBody}
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+
+        <DialogFooter className="gap-2">
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className="inline-flex items-center justify-center rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors min-h-[44px]"
+          >
+            취소
+          </button>
+          {/* 리마인더 발송 — send-email 1회 재사용. resolve 안 된 row 는 disabled. */}
+          <button
+            type="button"
+            onClick={handleSend}
+            disabled={reminderMutation.isPending || !resolvedOrderId}
+            title={
+              resolvedOrderId
+                ? "리마인더 1회 발송"
+                : "발주 row 가 아직 변환되지 않았습니다"
+            }
+            className="inline-flex items-center justify-center gap-1.5 rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+          >
+            {reminderMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            리마인더 발송
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

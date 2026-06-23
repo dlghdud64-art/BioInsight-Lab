@@ -138,20 +138,23 @@ describe("§시안-PO-Phase1 honesty — 리마인더 통일 / 독려 부재", (
   });
 });
 
-describe("§시안-PO-Phase1 honesty — AI 패널 / 모달 미도입(Phase 2)", () => {
+describe("§시안-PO-Phase2 honesty — AI mock 부재 + 모달 도입(Phase 2 발효)", () => {
   const src = read(PAGE);
 
   it("AI_DATA mock 부재", () => {
     expect(src).not.toContain("AI_DATA");
   });
 
-  it("IssueModal / ReminderModal 포팅 부재", () => {
-    expect(src).not.toContain("IssueModal");
-    expect(src).not.toContain("ReminderModal");
+  // Phase 2 발효 — 발행/리마인더 모달은 실 endpoint 연결로 도입됨(상세는
+  // po-issue-reminder-modals-sian.test.ts). 여기선 도입 사실만 확인.
+  it("IssueModal / ReminderModal 도입(Phase 2)", () => {
+    expect(src).toContain("IssueModal");
+    expect(src).toContain("ReminderModal");
   });
 
-  it("리마인더 자동발송 mutation 신규 도입 부재", () => {
-    expect(src).not.toMatch(/reminderMutation/);
+  // 리마인더 발송은 기존 send-email 재사용(reminderMutation = send-email 래퍼).
+  // 가짜 스케줄러 endpoint(send-reminder)는 여전히 부재 = honesty 보존.
+  it("리마인더는 send-email 재사용 — 가짜 send-reminder endpoint 부재", () => {
     expect(src).not.toMatch(/send-reminder/);
   });
 });
