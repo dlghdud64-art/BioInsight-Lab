@@ -416,7 +416,17 @@ export function InventoryContextPanel({
   const afterDisposalQty = isExpiredLotWithQty ? 0 : item.currentQuantity;
   const belowSafetyAfterDisposal =
     item.safetyStock !== null ? afterDisposalQty < item.safetyStock : afterDisposalQty <= 0;
-  const expiryLabel = item.expiryDate ? format(new Date(item.expiryDate), "yyyy.MM.dd") : "-";
+  // §inventory-redesign A-④ — 먼 미래 만료는 raw 일수(D-1454) 대신 사람이 읽는 상대표현 병기.
+  //   canonical 파생(expiryDate). 근접(≤30일)은 D-N/경과 유지(긴급 신호 보존).
+  const expiryRel =
+    expiryDays === null ? "" :
+    expiryDays < 0 ? `${Math.abs(expiryDays)}일 경과` :
+    expiryDays <= 30 ? `D-${expiryDays}` :
+    expiryDays < 365 ? `약 ${Math.round(expiryDays / 30)}개월 후` :
+    `약 ${Math.round(expiryDays / 365)}년 후`;
+  const expiryLabel = item.expiryDate
+    ? `${format(new Date(item.expiryDate), "yyyy.MM.dd")}${expiryDays !== null && expiryDays > 30 ? ` (${expiryRel})` : ""}`
+    : "-";
   const disposalReason =
     expiryDays !== null ? `유효기간 만료 ${Math.abs(expiryDays)}일 경과` : "유효기간 만료";
   const stockImpactLabel = `${item.currentQuantity} ${item.unit} → ${afterDisposalQty} ${item.unit}`;
