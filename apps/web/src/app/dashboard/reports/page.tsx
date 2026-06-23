@@ -8,8 +8,8 @@ import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
-import { ArrowUpRight, ArrowDownRight, AlertTriangle, TrendingUp, CloudUpload, FileText, RefreshCcw, FileDown, BarChart2, Layers, Activity } from "lucide-react";
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
+import { ArrowUpRight, ArrowDownRight, AlertTriangle, CloudUpload, FileText, RefreshCcw, FileDown, BarChart2, Layers, Activity, CheckCircle2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -112,6 +112,47 @@ function deriveInsights(
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// KPI 미니 시각 — 전부 canonical 데이터 기반(가짜 추이 0). 시안 흰 카드 하단 요소.
+// ---------------------------------------------------------------------------
+function MiniSparkline({ values, stroke }: { values: number[]; stroke: string }) {
+  const pts = values.filter((v) => Number.isFinite(v));
+  if (pts.length < 2) {
+    return <div className="h-6 mt-2" aria-hidden />;
+  }
+  const max = Math.max(...pts, 1);
+  const w = 100;
+  const h = 24;
+  const d = pts
+    .map((v, i) => `${i === 0 ? "M" : "L"}${((i / (pts.length - 1)) * w).toFixed(1)} ${(h - (v / max) * h).toFixed(1)}`)
+    .join(" ");
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} width="100%" height="24" preserveAspectRatio="none" className="mt-2" aria-hidden>
+      <path d={d} fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ShareBar({ pct, color }: { pct: number; color: string }) {
+  return (
+    <div className="mt-2 h-2 rounded-full bg-slate-100 overflow-hidden" aria-hidden>
+      <div className="h-full rounded-full" style={{ width: `${Math.min(Math.max(pct, 0), 100)}%`, background: color }} />
+    </div>
+  );
+}
+
+function DashMeter({ total, bad }: { total: number; bad: number }) {
+  const n = Math.min(total, 12);
+  if (n === 0) return <div className="h-2 mt-2" aria-hidden />;
+  return (
+    <div className="mt-2 flex items-center gap-1" aria-hidden>
+      {Array.from({ length: n }).map((_, i) => (
+        <span key={i} className={`flex-1 h-1.5 rounded-full ${i < bad ? "bg-red-400" : "bg-emerald-400"}`} />
+      ))}
+    </div>
+  );
+}
 
 export default function ReportsPage() {
   const { data: session, status } = useSession();
@@ -285,6 +326,15 @@ export default function ReportsPage() {
     [categoryData, vendorData, monthlyData, details, totalAmount],
   );
 
+  // KPI 스파크라인용 — 실 월별 데이터 파생(가짜 0). 누적 = 월별 running sum.
+  const monthlyAmounts = monthlyData.map((m) => m.amount);
+  const cumulativeSpend = monthlyData.reduce<number[]>((acc, m) => {
+    acc.push((acc[acc.length - 1] ?? 0) + m.amount);
+    return acc;
+  }, []);
+  const catTotal = categoryData.reduce((s, c) => s + (c.amount || 0), 0);
+  const CAT_BAR_PALETTE = ["#3b82f6", "#10b981", "#8b5cf6", "#0ea5e9", "#64748b"];
+
   // Budget usage helpers
   const budgetUsage = reportData?.budgetUsage;
   const budgetUsedPct =
@@ -293,8 +343,6 @@ export default function ReportsPage() {
       : 0;
   const budgetOvershoot = budgetUsedPct > 100;
 
-  // Chart color palette
-  const CHART_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
   return (
     <div className="flex-1 space-y-5 bg-sh min-h-screen p-3 sm:p-4 md:p-6 max-w-7xl mx-auto w-full">
@@ -609,78 +657,75 @@ export default function ReportsPage() {
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">이번 기간 핵심 인사이트</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {/* Insight 1: Spend Change Driver */}
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 flex flex-col gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <TrendingUp className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <span className="text-xs font-semibold text-blue-700">지출 변화 추이</span>
+              {/* §reports-fidelity — 시안 흰 카드 + 코너칩 + 하단 미니 시각(실 canonical 데이터). 컬러배경 폐지. */}
+              {/* Insight 1: 지출 변화 추이 — 실 월별 스파크라인 */}
+              <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="w-7 h-7 rounded-lg grid place-items-center bg-emerald-50 text-emerald-600">
+                    {insights.trendDelta > 0 ? <ArrowUpRight className="h-4 w-4 text-red-500" /> : <ArrowDownRight className="h-4 w-4" />}
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-400">전월 대비</span>
                 </div>
-                <div>
-                  <p className="text-2xl font-extrabold text-blue-900 leading-tight">
-                    {insights.trendDelta > 0 ? "+" : ""}{insights.trendDelta}%
-                    {insights.trendDelta > 0 && <ArrowUpRight className="inline h-5 w-5 text-red-500 ml-1" />}
-                    {insights.trendDelta < 0 && <ArrowDownRight className="inline h-5 w-5 text-emerald-500 ml-1" />}
-                  </p>
-                  <p className="text-xs text-blue-600/70 mt-1.5 leading-relaxed">
-                    {insights.topCat ? `전월 대비 지출 감소 (기저효과)` : "데이터 부족"}
-                  </p>
-                </div>
+                <p className={`text-2xl font-extrabold leading-none ${insights.trendDelta > 0 ? "text-red-600" : "text-emerald-600"}`}>
+                  {insights.trendDelta > 0 ? "+" : ""}{insights.trendDelta}%
+                </p>
+                <p className="text-[11px] text-slate-500 mt-1">지출 변화 추이</p>
+                <MiniSparkline values={monthlyAmounts} stroke={insights.trendDelta > 0 ? "#ef4444" : "#10b981"} />
+                {monthlyAmounts.length >= 2 && (
+                  <p className="text-[10px] text-slate-400 mt-1">최근 {monthlyAmounts.length}개월 월별 지출</p>
+                )}
               </div>
 
-              {/* Insight 2: Outlier Detection */}
-              <div className="bg-yellow-50 border border-yellow-100 rounded-xl p-5 flex flex-col gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-yellow-100 flex items-center justify-center">
-                    <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                  </div>
-                  <span className="text-xs font-semibold text-yellow-700">이상치 감지</span>
+              {/* Insight 2: 이상치 감지 — 실 거래건수 대비 이상치 메터 */}
+              <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col">
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`w-7 h-7 rounded-lg grid place-items-center ${insights.outlierCount > 0 ? "bg-yellow-50 text-yellow-600" : "bg-slate-100 text-slate-500"}`}>
+                    {insights.outlierCount > 0 ? <AlertTriangle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-400">{insights.outlierCount > 0 ? "검토" : "정상"}</span>
                 </div>
-                <div>
-                  <p className="text-2xl font-extrabold text-yellow-900 leading-tight">
-                    {insights.outlierCount}건
-                  </p>
-                  <p className="text-xs text-yellow-600/70 mt-1.5 leading-relaxed">
-                    평균 단가 대비 2배 이상 항목 건수
-                  </p>
-                </div>
+                <p className="text-2xl font-extrabold text-slate-900 leading-none">{insights.outlierCount}건</p>
+                <p className="text-[11px] text-slate-500 mt-1">이상치 감지</p>
+                <DashMeter total={details.length} bad={insights.outlierCount} />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  {details.length > 0
+                    ? insights.outlierCount > 0
+                      ? `${details.length}건 중 ${insights.outlierCount}건 이상`
+                      : `${details.length}건 모두 정상`
+                    : "거래 내역 없음"}
+                </p>
               </div>
 
-              {/* Insight 3: Cost Concentration */}
-              <div className="bg-violet-50 border border-violet-100 rounded-xl p-5 flex flex-col gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
-                    <Layers className="h-4 w-4 text-violet-600" />
-                  </div>
-                  <span className="text-xs font-semibold text-violet-700">비용 집중 구간</span>
+              {/* Insight 3: 비용 집중 구간 — 실 카테고리 점유율 */}
+              <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="w-7 h-7 rounded-lg grid place-items-center bg-violet-50 text-violet-600">
+                    <Layers className="h-4 w-4" />
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-400">집중</span>
                 </div>
-                <div>
-                  <p className="text-2xl font-extrabold text-violet-900 leading-tight">
-                    {insights.concentrationPct}%
-                  </p>
-                  <p className="text-xs text-violet-600/70 mt-1.5 leading-relaxed">
-                    {insights.topCat ? `${insights.topCat.name} 카테고리에 지출 집중` : "카테고리 분포 균등"}
-                  </p>
-                </div>
+                <p className="text-2xl font-extrabold text-violet-700 leading-none">{insights.concentrationPct}%</p>
+                <p className="text-[11px] text-slate-500 mt-1">비용 집중 구간</p>
+                <ShareBar pct={insights.concentrationPct} color="#8b5cf6" />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  {insights.topCat
+                    ? `${PRODUCT_CATEGORIES[insights.topCat.name] || insights.topCat.name} ${insights.concentrationPct}% · 기타 ${Math.max(0, 100 - insights.concentrationPct)}%`
+                    : "카테고리 분포 균등"}
+                </p>
               </div>
 
-              {/* Insight 4: Total Spend — 벤더 의존도는 상단 배너로 승격(중복 제거, README §중복주의) */}
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center">
-                    <BarChart2 className="h-4 w-4 text-slate-600" />
-                  </div>
-                  <span className="text-xs font-semibold text-slate-700">총 지출액</span>
+              {/* Insight 4: 총 지출액 — 실 월별 누적. 벤더 의존도는 상단 배너로 승격(중복 제거, README §중복주의) */}
+              <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="w-7 h-7 rounded-lg grid place-items-center bg-blue-50 text-blue-600">
+                    <BarChart2 className="h-4 w-4" />
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-400">이번 기간</span>
                 </div>
-                <div>
-                  <p className="text-2xl font-extrabold text-slate-900 leading-tight tabular-nums">
-                    {formatCurrency(totalAmount, "KRW")}
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
-                    분석 기간 {itemCount > 0 ? `${itemCount}건` : "거래 내역"} 합계
-                  </p>
-                </div>
+                <p className="text-xl font-extrabold text-slate-900 leading-none tabular-nums">{formatCurrency(totalAmount, "KRW")}</p>
+                <p className="text-[11px] text-slate-500 mt-1">총 지출액</p>
+                <MiniSparkline values={cumulativeSpend} stroke="#3b82f6" />
+                <p className="text-[10px] text-slate-400 mt-1">기간 누적 · {itemCount > 0 ? `${itemCount}건` : "0건"}</p>
               </div>
             </div>
           </div>
@@ -700,67 +745,27 @@ export default function ReportsPage() {
                   </Button>
                 </Link>
               </div>
+              {/* §reports-fidelity — 시안: 가로 막대(이름·비중%·금액). 깨지던 파이 + 중복 리스트 폐지. */}
               {categoryData.length > 0 && categoryData.some((c) => c.amount > 0) ? (
-                <div className="flex-1 min-h-0" style={{ height: 260 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        // pre-map raw enum (REAGENT) → 한국어 라벨(시약) for legend/tooltip
-                        data={categoryData
-                          .filter((c) => c.amount > 0)
-                          .map((c) => ({ ...c, displayName: PRODUCT_CATEGORIES[c.name] || c.name }))}
-                        cx="50%"
-                        cy="45%"
-                        innerRadius={55}
-                        outerRadius={90}
-                        fill="#8884d8"
-                        dataKey="amount"
-                        nameKey="displayName"
-                        stroke="#ffffff"
-                        strokeWidth={3}
-                        cursor="pointer"
-                        paddingAngle={2}
-                      >
-                        {categoryData.filter((c) => c.amount > 0).map((_entry: CategoryItem, index: number) => (
-                          <Cell key={`cell-${index}`} fill={_entry.color || CHART_COLORS[index % CHART_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", color: "#334155", boxShadow: "0 4px 16px rgba(0,0,0,0.1)", padding: "10px 14px" }}
-                        formatter={(value: number) => formatCurrency(value, "KRW")}
-                      />
-                      <Legend
-                        verticalAlign="bottom"
-                        align="center"
-                        iconType="circle"
-                        iconSize={8}
-                        wrapperStyle={{ fontSize: "11px", color: "#64748b", paddingTop: "12px" }}
-                        formatter={(value: string) => <span className="text-slate-600 ml-1">{value}</span>}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-[260px] text-slate-500 text-xs">데이터 없음</div>
-              )}
-              {/* Category budget comparison list */}
-              {insights.sortedCats.length > 0 && (
-                <div className="mt-3 space-y-2 border-t border-bd pt-3">
-                  {insights.sortedCats.slice(0, 4).map((cat) => {
-                    const pct = totalAmount > 0 ? Math.round((cat.amount / totalAmount) * 100) : 0;
+                <div className="flex-1 flex flex-col justify-center gap-4 mt-1">
+                  {insights.sortedCats.slice(0, 5).map((cat, i) => {
+                    const pct = catTotal > 0 ? Math.round((cat.amount / catTotal) * 100) : 0;
                     return (
-                      <div key={cat.name} className="flex items-center justify-between text-xs">
-                        <span className="text-slate-600 truncate mr-2">{PRODUCT_CATEGORIES[cat.name] || cat.name}</span>
-                        <div className="flex items-center gap-2">
-                          <div className="w-20 h-1.5 bg-el rounded-full overflow-hidden">
-                            <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min(pct, 100)}%` }} />
-                          </div>
-                          <span className="text-slate-400 w-16 text-right font-mono">{formatCurrency(cat.amount, "KRW")}</span>
+                      <div key={cat.name}>
+                        <div className="flex items-center mb-1.5">
+                          <span className="text-[13px] font-semibold text-slate-800">{PRODUCT_CATEGORIES[cat.name] || cat.name}</span>
+                          <span className="ml-2 text-[11px] font-semibold text-slate-400 tabular-nums">{pct}%</span>
+                          <span className="ml-auto text-[13px] font-bold text-slate-900 tabular-nums">{formatCurrency(cat.amount, "KRW")}</span>
+                        </div>
+                        <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden">
+                          <div className="h-full rounded-full" style={{ width: `${pct}%`, background: CAT_BAR_PALETTE[i % CAT_BAR_PALETTE.length] }} />
                         </div>
                       </div>
                     );
                   })}
                 </div>
+              ) : (
+                <div className="flex items-center justify-center h-[200px] text-slate-500 text-xs">데이터 없음</div>
               )}
             </div>
 
