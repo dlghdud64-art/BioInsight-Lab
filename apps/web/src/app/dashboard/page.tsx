@@ -191,7 +191,7 @@ function DashboardPageInner() {
     }
   };
 
-  const { data: dashboardStats, isLoading: statsLoading, refetch: refetchStats } = useQuery({
+  const { data: dashboardStats, isLoading: statsLoading, isError: statsError, refetch: refetchStats } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
       const guestKey = getGuestKey();
@@ -313,6 +313,35 @@ function DashboardPageInner() {
         >
           다시 시도
         </Button>
+      </div>
+    );
+  }
+
+  // §auth-empty-state-fix (호영님 P1) — stats fetch 실패(401 세션만료/네트워크/5xx)를 신규유저
+  //   onboarding(빈상태)으로 오인하지 않도록 에러를 명시 분기. onboarding 은 query 성공 + allEmpty
+  //   일 때만(아래 hasAnyData). "데이터 없음"과 "인증 실패"를 분리(빈 스켈레톤·거짓 빈상태 금지).
+  //   csrfFetch 전역 401 redirect 가 1차 방어이나, redirect 레이스/미발화 시 이 게이트가 안전망.
+  if (status === "authenticated" && statsError && !dashboardStats) {
+    return (
+      <div className="p-4 pt-4 md:p-8 md:pt-6 flex flex-col items-center justify-center gap-3 min-h-[40vh] text-center">
+        <AlertTriangle className="h-8 w-8 text-yellow-500" />
+        <p className="text-sm font-semibold text-slate-800">세션이 만료되었거나 데이터를 불러오지 못했습니다</p>
+        <p className="text-xs text-slate-500">데이터가 사라진 것이 아닙니다. 다시 로그인하거나 잠시 후 재시도해 주세요.</p>
+        <div className="flex items-center gap-2 mt-1">
+          <Button size="sm" variant="outline" onClick={() => refetchStats()}>
+            다시 시도
+          </Button>
+          <Button
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-500 text-white"
+            onClick={() => {
+              const cb = encodeURIComponent(window.location.pathname + window.location.search);
+              window.location.href = `/auth/signin?callbackUrl=${cb}`;
+            }}
+          >
+            다시 로그인
+          </Button>
+        </div>
       </div>
     );
   }
