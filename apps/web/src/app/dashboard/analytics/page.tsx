@@ -28,7 +28,7 @@ import {
   AlertTriangle, RotateCcw,
   CreditCard, Users, ExternalLink,
   ArrowRight, Sparkles, Loader2,
-  AlertCircle, Building2,
+  AlertCircle, Building2, FileText, X,
 } from "lucide-react";
 import TeamAnalyticsView from "./_components/team-analytics-view";
 
@@ -179,6 +179,11 @@ export default function AnalyticsPage() {
   const [aiInsight, setAiInsight] = useState<{ summary: string; dataPoints: number; analyzedAt: string } | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  // §analytics-ai-report-sian — 호영님 P1 "리포트 예시 명시".
+  //   시안형 AI 지출 리포트(분기요약·절감Top3·공급사 의존도·AI 권고)를 생성하는
+  //   실 endpoint 는 없음 (/api/reports/purchase=구매내역, /api/budget/report=XLSX).
+  //   따라서 정직하게 "예시 미리보기"(format preview) 로만 노출. 모든 수치 = 샘플.
+  const [reportModalOpen, setReportModalOpen] = useState(false);
 
   const runAiAnalysis = async () => {
     setAiLoading(true);
@@ -430,6 +435,16 @@ export default function AnalyticsPage() {
           {/* §11.244 #6 — 호영님 P0: 데이터 부족 시 AI 리포트 disabled + tooltip.
               dataInsufficient = !hasMonthlyData (월별 지출 0건 시). aiLoading 과
               OR 처리 → 데이터 없을 때 mutation 호출 자체 차단. */}
+          {/* §analytics-ai-report-sian — 호영님 P1 "리포트 예시 명시".
+              실 endpoint 부재 → "예시 미리보기" 모달만 오픈 (dead button 아님:
+              실제 모달 노출 동작). 기존 "AI 리포트 생성"(실 endpoint) 과 별개. */}
+          <button
+            onClick={() => setReportModalOpen(true)}
+            className="px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold bg-pn border border-bd text-slate-600 hover:bg-el hover:text-slate-800 shadow-sm transition-colors flex items-center gap-1.5 ml-auto whitespace-nowrap touch-manipulation active:scale-95"
+          >
+            <FileText className="h-3.5 w-3.5" />
+            AI 리포트 예시
+          </button>
           <button
             onClick={runAiAnalysis}
             disabled={aiLoading || dataInsufficient}
@@ -438,13 +453,177 @@ export default function AnalyticsPage() {
                 ? "리포트 생성에 최소 1건의 완료된 발주 데이터가 필요합니다"
                 : undefined
             }
-            className="px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1.5 ml-auto whitespace-nowrap touch-manipulation active:scale-95"
+            className="px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1.5 whitespace-nowrap touch-manipulation active:scale-95"
           >
             {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
             AI 리포트 생성
           </button>
         </div>
       </div>
+
+      {/* ══════════════════════════════════════════════════════════ */}
+      {/* §analytics-ai-report-sian — AI 지출 리포트 · 예시 미리보기 모달 */}
+      {/* 실 endpoint 부재 → 형식(format) 미리보기 전용. 모든 수치 = 샘플.       */}
+      {/* honesty: 헤더 "예시 미리보기" + 상단 배너 + 풋터 고지 = 3곳 명시.       */}
+      {/* dead button 0: PDF 저장 버튼 없음 (실 다운로드 부재). 닫기만.          */}
+      {/* ══════════════════════════════════════════════════════════ */}
+      {reportModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/50 backdrop-blur-sm p-0 sm:p-4"
+          onClick={() => setReportModalOpen(false)}
+          data-testid="ai-report-modal"
+        >
+          <div
+            className="bg-pn w-full sm:max-w-2xl max-h-[92vh] sm:max-h-[88vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-bd shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* ── 모달 헤더 ── */}
+            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-5 py-4 border-b border-bd bg-pn">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                  <FileText className="h-4 w-4" />
+                </span>
+                <div className="min-w-0">
+                  <h3 className="text-sm md:text-base font-bold text-slate-900 truncate">
+                    AI 지출 리포트 · 예시 미리보기
+                  </h3>
+                  <p className="text-[11px] text-slate-400 hidden sm:block">
+                    발주 데이터가 쌓이면 이 형식으로 자동 생성됩니다
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setReportModalOpen(false)}
+                aria-label="닫기"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-el hover:text-slate-700 transition-colors touch-manipulation active:scale-95"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* ── 상단 예시 고지 배너 (prominent) ── */}
+            <div className="mx-5 mt-4 rounded-xl border border-blue-200 bg-blue-50/70 px-4 py-3">
+              <div className="flex items-start gap-2.5">
+                <Sparkles className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-blue-800 break-keep">예시 리포트입니다.</p>
+                  <p className="text-xs text-blue-700 mt-0.5 leading-relaxed break-keep">
+                    실제 발주 데이터가 쌓이면 이 형식으로 AI가 자동 생성합니다. (아래 수치는 샘플)
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* ── 본문 섹션 ── */}
+            <div className="p-5 space-y-5">
+
+              {/* 섹션 1: 분기 요약 (샘플) */}
+              <section>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">
+                  분기 요약 <span className="text-slate-400 font-semibold normal-case tracking-normal">· 샘플</span>
+                </h4>
+                <div className="grid grid-cols-3 gap-2.5">
+                  <div className="rounded-xl border border-bd bg-el/30 p-3">
+                    <p className="text-[11px] font-semibold text-slate-500">총지출</p>
+                    <p className="text-lg font-extrabold text-slate-900 mt-1 tracking-tight">₩2,840만</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">예시</p>
+                  </div>
+                  <div className="rounded-xl border border-bd bg-el/30 p-3">
+                    <p className="text-[11px] font-semibold text-slate-500">예산 소진율</p>
+                    <p className="text-lg font-extrabold text-slate-900 mt-1 tracking-tight">71%</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">예시</p>
+                  </div>
+                  <div className="rounded-xl border border-bd bg-el/30 p-3">
+                    <p className="text-[11px] font-semibold text-slate-500">AI 절감</p>
+                    <p className="text-lg font-extrabold text-blue-600 mt-1 tracking-tight">₩340만</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">예시</p>
+                  </div>
+                </div>
+              </section>
+
+              {/* 섹션 2: AI 절감 기회 Top3 (샘플) */}
+              <section>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">
+                  AI 절감 기회 Top 3 <span className="text-slate-400 font-semibold normal-case tracking-normal">· 샘플</span>
+                </h4>
+                <ul className="space-y-2">
+                  {[
+                    { rank: 1, title: "대체품 전환", desc: "동급 시약 대체 시 단가 18% 절감 가능 (예시)", save: "₩150만" },
+                    { rank: 2, title: "통합 발주", desc: "반복 소모품 3종 통합 발주로 배송·단가 절감 (예시)", save: "₩120만" },
+                    { rank: 3, title: "단가 재협상", desc: "상위 공급사 거래량 기준 단가 재협상 여지 (예시)", save: "₩70만" },
+                  ].map((opp) => (
+                    <li key={opp.rank} className="flex items-center gap-3 rounded-xl border border-bd bg-pn px-3.5 py-3">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 text-xs font-bold">
+                        {opp.rank}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-slate-800">{opp.title}</p>
+                        <p className="text-xs text-slate-500 mt-0.5 break-keep">{opp.desc}</p>
+                      </div>
+                      <span className="text-sm font-bold text-emerald-600 shrink-0 tabular-nums">{opp.save}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              {/* 섹션 3: 공급사 의존도 (샘플 바) */}
+              <section>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">
+                  공급사 의존도 <span className="text-slate-400 font-semibold normal-case tracking-normal">· 샘플</span>
+                </h4>
+                <ul className="space-y-2.5 rounded-xl border border-bd bg-pn p-3.5">
+                  {[
+                    { name: "공급사 A", pct: 42, color: "#3b82f6" },
+                    { name: "공급사 B", pct: 28, color: "#10b981" },
+                    { name: "공급사 C", pct: 18, color: "#8b5cf6" },
+                    { name: "기타", pct: 12, color: "#94a3b8" },
+                  ].map((bar) => (
+                    <li key={bar.name} className="flex items-center gap-3">
+                      <span className="text-xs font-medium text-slate-700 w-16 truncate">{bar.name}</span>
+                      <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${bar.pct}%`, backgroundColor: bar.color }} />
+                      </div>
+                      <span className="text-xs font-semibold text-slate-700 w-10 text-right tabular-nums">{bar.pct}%</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              {/* 섹션 4: AI 권고 (샘플) */}
+              <section>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">
+                  AI 권고 <span className="text-slate-400 font-semibold normal-case tracking-normal">· 샘플</span>
+                </h4>
+                <ul className="space-y-2 rounded-xl border border-blue-200 bg-blue-50/40 p-3.5">
+                  {[
+                    "공급사 A 집중도(42%)가 높아 분산 검토를 권고합니다. (예시)",
+                    "반복 소모품의 통합 발주 주기를 월 1회로 조정하면 단가 절감이 기대됩니다. (예시)",
+                    "Q 예산 소진율 71% — 잔여 분기 지출 페이스 유지 시 예산 내 마감 가능합니다. (예시)",
+                  ].map((rec, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <Sparkles className="h-3.5 w-3.5 text-blue-500 shrink-0 mt-0.5" />
+                      <p className="text-xs text-slate-700 leading-relaxed break-keep">{rec}</p>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </div>
+
+            {/* ── 풋터: 예시 고지 + 닫기 (PDF 저장 버튼 없음 — dead button 금지) ── */}
+            <div className="sticky bottom-0 flex items-center justify-between gap-3 px-5 py-4 border-t border-bd bg-pn">
+              <p className="text-[11px] text-slate-500 break-keep min-w-0">
+                예시 데이터 기준 · 실제 리포트는 발주 누적 시 생성
+              </p>
+              <button
+                onClick={() => setReportModalOpen(false)}
+                className="shrink-0 inline-flex items-center justify-center h-10 px-5 rounded-lg text-sm font-semibold bg-slate-900 text-white hover:bg-slate-800 transition-colors touch-manipulation active:scale-95"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* §11.244 Phase C #2 — 호영님 P0: 데이터 오류 + 10초 timeout + 재시도 button.
           AbortController abort 시 "데이터 로딩이 지연되고 있습니다 (Timeout 10s)"
