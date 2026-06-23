@@ -31,3 +31,22 @@ describe("§inventory-panel-unify P1 — mode prop + 헤더 맥락 분기", () =
     expect(read(PANEL)).toContain("운영 브리핑");
   });
 });
+
+const CONTENT = "src/app/dashboard/inventory/inventory-content.tsx";
+
+describe("§inventory-panel-unify P2 — reorderRecommendation 흡수", () => {
+  it("panel reorderQty prop(canonical, null이면 미표시)", () => {
+    const src = read(PANEL);
+    expect(src).toMatch(/reorderQty\?:\s*number\s*\|\s*null/);
+    expect(src).toMatch(/reorderQty != null && reorderQty > 0/); // 가짜 0(>0만 표시)
+    expect(src).toContain("재발주 우선순위");
+  });
+  it("재발주 CTA = onReorder(실 핸들러, dead button 0)", () => {
+    expect(read(PANEL)).toMatch(/재발주안 검토[\s\S]{0,80}|onReorder\?\.\(item\)/);
+  });
+  it("content가 canonical reorder-recommendations 수량 forward", () => {
+    const src = read(CONTENT);
+    expect(src).toMatch(/reorderQty=\{[\s\S]{0,160}recommendedQty/);
+    expect(src).toContain("reorder-recommendations");
+  });
+});

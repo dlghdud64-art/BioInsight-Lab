@@ -408,6 +408,8 @@ interface InventoryContextPanelProps {
   onAssignLocation?: (location: string) => void;
   /** §inventory-redesign A-①' P1 — 진입 맥락. 'reorder'면 상단 강조를 재발주로(섹션 정보는 동일, 통합 패널). 기본 'detail'(회귀 0). */
   mode?: "detail" | "reorder";
+  /** §inventory-redesign A-①' P2 — 재발주 권장 수량(canonical: /api/inventory/reorder-recommendations). null이면 섹션 미표시(가짜 0). */
+  reorderQty?: number | null;
   className?: string;
 }
 
@@ -421,6 +423,7 @@ export function InventoryContextPanel({
   onLotDrillDown,
   onAssignLocation,
   mode = "detail",
+  reorderQty = null,
   className = "",
 }: InventoryContextPanelProps) {
   // §11.320 Phase 2 — 상태 배너 onClick → operationalBriefPopup.open (풀 패널 진입)
@@ -643,6 +646,36 @@ export function InventoryContextPanel({
           </div>
         );
       })()}
+
+      {/* §inventory-panel-unify P2 — 재발주 우선순위(AiAssistant reorderRecommendation 흡수).
+          canonical recommendedQty(/api/inventory/reorder-recommendations) — null/0이면 미표시(가짜 수량 0).
+          mode='reorder' 진입 시 강조(시안 ① 상단 강조). CTA=onReorder(실 핸들러, dead button 0). */}
+      {reorderQty != null && reorderQty > 0 && (
+        <div className={`border-b border-bd/50 px-5 py-3 ${mode === "reorder" ? "bg-blue-50/40" : ""}`}>
+          <div className="flex items-center gap-2 mb-2">
+            <ShoppingCart className="h-3.5 w-3.5 text-blue-600" />
+            <span className="text-xs font-bold text-slate-700">재발주 우선순위</span>
+            {mode === "reorder" && (
+              <Badge className="border-none bg-red-500/15 text-red-600 text-[10px] px-1.5 py-0">긴급</Badge>
+            )}
+          </div>
+          <div className="rounded-lg border border-bd bg-pn px-3 py-2.5 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] text-slate-500">권장 발주 수량</p>
+              <p className="text-lg font-bold text-slate-900 tabular-nums leading-none mt-0.5">
+                {reorderQty}<span className="text-xs font-medium text-slate-500 ml-0.5">{item.unit}</span>
+              </p>
+            </div>
+            <Button
+              size="sm"
+              className="h-8 text-xs bg-blue-600 hover:bg-blue-500 text-white shrink-0"
+              onClick={() => onReorder?.(item)}
+            >
+              <ShoppingCart className="h-3 w-3 mr-1" /> 재발주안 검토
+            </Button>
+          </div>
+        </div>
+      )}
 
       {isExpiredLotWithQty && (
         <div
