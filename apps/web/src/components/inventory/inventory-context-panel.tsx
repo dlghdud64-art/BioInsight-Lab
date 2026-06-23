@@ -97,23 +97,46 @@ export interface RecommendedAction {
 
 /* ── Mock data generators ── */
 function realLots(item: ContextPanelItem): ContextLotInfo[] {
-  // #inventory-lot-entity — 실 입고 lot(InventoryRestock) 매핑. 가짜 생성 금지(restock 0건 = 빈 lot).
-  return (item.restocks ?? []).map((r) => {
-    const days = r.expiryDate
-      ? Math.ceil((new Date(r.expiryDate).getTime() - Date.now()) / 86400000)
+  // #inventory-lot-entity — 실 입고 lot(InventoryRestock) 매핑. 가짜 생성 금지.
+  const restocks = item.restocks ?? [];
+  if (restocks.length > 0) {
+    return restocks.map((r) => {
+      const days = r.expiryDate
+        ? Math.ceil((new Date(r.expiryDate).getTime() - Date.now()) / 86400000)
+        : null;
+      const status: ContextLotInfo["status"] =
+        days === null ? "active" : days <= 0 ? "expired" : days <= 7 ? "expiring" : "active";
+      return {
+        restockId: r.id,
+        lotNumber: r.lotNumber || "(lot 미지정)",
+        quantity: r.quantity,
+        receivedDate: r.restockedAt,
+        expiryDate: r.expiryDate ?? null,
+        location: item.location ?? null,
+        status,
+      };
+    });
+  }
+  // §inventory-redesign A-② — restock 이력이 없어도 현재 재고/lot이 있으면 item 자체를 단일 lot으로 표기.
+  //   "Lot 0건 ↔ 하단 Lot 존재" 모순 제거. canonical 파생(item.currentQuantity/lotNumber/expiryDate) — 가짜 생성 아님.
+  //   입고일(restockedAt) 소스 없음 → receivedDate 빈값(렌더 "—"), 날짜 날조 금지.
+  if (item.currentQuantity > 0 || item.lotNumber) {
+    const days = item.expiryDate
+      ? Math.ceil((new Date(item.expiryDate).getTime() - Date.now()) / 86400000)
       : null;
     const status: ContextLotInfo["status"] =
       days === null ? "active" : days <= 0 ? "expired" : days <= 7 ? "expiring" : "active";
-    return {
-      restockId: r.id,
-      lotNumber: r.lotNumber || "(lot 미지정)",
-      quantity: r.quantity,
-      receivedDate: r.restockedAt,
-      expiryDate: r.expiryDate ?? null,
+    return [{
+      restockId: item.id,
+      lotNumber: item.lotNumber || "(lot 미지정)",
+      quantity: item.currentQuantity,
+      receivedDate: "",
+      expiryDate: item.expiryDate ?? null,
       location: item.location ?? null,
       status,
-    };
-  });
+    }];
+  }
+  return [];
 }
 
 function generateMockRisks(item: ContextPanelItem): ContextRisk[] {
@@ -819,7 +842,7 @@ export function InventoryContextPanel({
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-600">입고일</span>
-                    <span className="text-slate-400">{format(new Date(lot.receivedDate), "yyyy.MM.dd")}</span>
+                    <span className="text-slate-400">{lot.receivedDate ? format(new Date(lot.receivedDate), "yyyy.MM.dd") : "—"}</span>
                   </div>
                   {lot.expiryDate && (
                     <div className="flex justify-between">
