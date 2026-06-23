@@ -631,41 +631,147 @@ export default function BudgetPage() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Empty State
+// 반원 게이지 (소진율 미리보기) — currentColor stroke로 톤 제어
+// ═══════════════════════════════════════════════════════════════════
+function Gauge({ pct, colorClass }: { pct: number; colorClass: string }) {
+  const r = 46;
+  const circ = Math.PI * r;
+  const off = circ * (1 - Math.min(Math.max(pct, 0), 100) / 100);
+  return (
+    <svg viewBox="0 0 120 70" className={`w-[120px] h-[70px] ${colorClass}`} role="img" aria-label={`소진율 ${pct}%`}>
+      <path d="M14 62 A46 46 0 0 1 106 62" fill="none" stroke="#e2e8f0" strokeWidth="11" strokeLinecap="round" />
+      <path d="M14 62 A46 46 0 0 1 106 62" fill="none" stroke="currentColor" strokeWidth="11" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={off} />
+      <text x="60" y="58" textAnchor="middle" fontSize="22" fontWeight="800" fill="#0f172a">{pct}%</text>
+    </svg>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Empty State — 예산 0건 온보딩(통제 시작 유도)
+// CTA는 실 동작만 연결: onCreateClick(실 등록 다이얼로그) / purchases 링크.
+// 임계치는 시스템 자동(소진율 60% 주의·80% 위험·100% 초과, deriveBudgetControl).
 // ═══════════════════════════════════════════════════════════════════
 function EmptyState({ onCreateClick }: { onCreateClick: () => void }) {
+  const previews: { name: string; pct: number; colorClass: string; badge: string; badgeClass: string }[] = [
+    { name: "2026 Q2 시약", pct: 55, colorClass: "text-emerald-500", badge: "정상", badgeClass: "text-emerald-600" },
+    { name: "장비 구매", pct: 72, colorClass: "text-yellow-500", badge: "주의 구간", badgeClass: "text-yellow-600" },
+    { name: "공용 소모품", pct: 96, colorClass: "text-red-500", badge: "위험 — 차단 임계", badgeClass: "text-red-600" },
+  ];
   return (
-    <div className="bg-white rounded-xl border border-slate-200">
-      <div className="px-6 py-12 text-center">
-        <ShieldAlert className="h-10 w-10 mx-auto text-slate-300 mb-4" />
-        <p className="text-base font-semibold text-slate-700 mb-1.5">예산이 아직 등록되지 않았습니다</p>
-        <p className="text-sm text-slate-500 max-w-lg mx-auto leading-relaxed mb-6">
-          예산을 등록하면 요청·견적·발주 흐름에서 예산 초과 여부를 사전에 확인하고,
-          임계치에 도달하면 자동으로 경고합니다.
+    <div className="space-y-5">
+      {/* ── 온보딩 히어로 ── */}
+      <div className="rounded-2xl bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 p-6 md:p-8 text-white">
+        <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-blue-300 mb-3">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 animate-ping" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-400" />
+          </span>
+          예산 통제 시작하기
+        </span>
+        <h2 className="text-xl md:text-2xl font-extrabold tracking-tight leading-snug max-w-xl">
+          예산 풀을 만들면 초과 지출을 사전에 막을 수 있어요
+        </h2>
+        <p className="text-sm text-white/70 leading-relaxed mt-2.5 max-w-2xl">
+          예산을 등록하면 요청·견적·발주 흐름에서 <b className="text-white font-semibold">예산 초과를 미리 차단</b>하고,
+          소진율이 임계 구간에 도달하면 자동으로 경고합니다. 2분이면 첫 분기 예산을 설정할 수 있어요.
         </p>
-        <div className="flex items-center justify-center gap-3">
-          <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={onCreateClick}>
-            <Plus className="h-3.5 w-3.5 mr-1.5" />첫 예산 풀 만들기
+        <div className="flex flex-col sm:flex-row gap-2.5 mt-5">
+          <Button onClick={onCreateClick} className="bg-blue-600 hover:bg-blue-500 text-white">
+            <Plus className="h-4 w-4 mr-1.5" />첫 예산 풀 만들기
           </Button>
           <Link href="/dashboard/purchases">
-            <Button size="sm" variant="outline">구매 요청과 예산 연결</Button>
+            <Button variant="outline" className="w-full sm:w-auto border-white/20 bg-white/5 text-white hover:bg-white/10 hover:text-white">
+              기존 요청과 연결
+            </Button>
           </Link>
         </div>
       </div>
-      <div className="border-t border-slate-100 px-6 py-4">
-        <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-3">예산 등록 후 가능한 통제</p>
+
+      {/* ── 설정 3단계 ── */}
+      <div className="bg-white rounded-xl border border-slate-200 p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-slate-900">예산 설정 3단계</h3>
+          <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">0 / 3 완료</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* Step 1 — 실 등록 다이얼로그 */}
+          <div className="rounded-xl border border-blue-200 bg-blue-50/40 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">1</span>
+              <h4 className="text-sm font-semibold text-slate-900">예산 풀 만들기</h4>
+            </div>
+            <p className="text-[12px] text-slate-500 leading-relaxed mb-3">분기·팀·과제 단위로 예산 풀을 만들고 총액을 입력합니다.</p>
+            <button onClick={onCreateClick} className="inline-flex items-center gap-1 text-[12px] font-medium text-blue-600 hover:text-blue-700">
+              지금 만들기 <ArrowUpRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          {/* Step 2 — 자동 임계(시스템 고정) 설명, 데드/데모 버튼 없음 */}
+          <div className="rounded-xl border border-slate-200 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-6 h-6 rounded-full bg-slate-200 text-slate-600 text-xs font-bold flex items-center justify-center">2</span>
+              <h4 className="text-sm font-semibold text-slate-900">자동 임계 경고</h4>
+            </div>
+            <p className="text-[12px] text-slate-500 leading-relaxed mb-3">소진율에 따라 자동 분류됩니다 — 60% 주의 · 80% 위험 · 100% 초과.</p>
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400">
+              <Clock className="h-3.5 w-3.5" /> 예산 생성 시 자동 적용
+            </span>
+          </div>
+          {/* Step 3 — 구매 흐름 연결(실 링크) */}
+          <div className="rounded-xl border border-slate-200 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-6 h-6 rounded-full bg-slate-200 text-slate-600 text-xs font-bold flex items-center justify-center">3</span>
+              <h4 className="text-sm font-semibold text-slate-900">구매 흐름 연결</h4>
+            </div>
+            <p className="text-[12px] text-slate-500 leading-relaxed mb-3">요청·견적·발주에 예산을 연결하면 자동 통제가 켜집니다.</p>
+            <Link href="/dashboard/purchases" className="inline-flex items-center gap-1 text-[12px] font-medium text-blue-600 hover:text-blue-700">
+              요청 연결하기 <ArrowUpRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 등록 후 미리보기(예시) ── */}
+      <div className="bg-white rounded-xl border border-slate-200 p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-slate-900">등록하면 이렇게 보입니다</h3>
+          <span className="text-[11px] font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">예시 미리보기</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {previews.map((p) => (
+            <div key={p.name} className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 text-center">
+              <div className="text-[13px] font-semibold text-slate-800 mb-1.5">{p.name}</div>
+              <div className="flex justify-center"><Gauge pct={p.pct} colorClass={p.colorClass} /></div>
+              <div className={`text-[11px] font-semibold mt-1.5 ${p.badgeClass}`}>{p.badge}</div>
+            </div>
+          ))}
+        </div>
+        <p className="text-[11px] text-slate-400 mt-3">* 실제 데이터가 아닌 예시입니다. 예산을 등록하면 집행 현황이 실시간 게이지로 표시됩니다.</p>
+      </div>
+
+      {/* ── 등록 후 자동으로 켜지는 통제 ── */}
+      <div className="bg-white rounded-xl border border-slate-200 p-5">
+        <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-3">예산 등록 후 자동으로 켜지는 통제</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="text-xs">
-            <span className="font-medium text-slate-700">요청 차단</span>
-            <span className="block mt-0.5 text-[11px] text-slate-400">예산 잔액 부족 시 요청 단계에서 자동 차단</span>
+          <div className="flex items-start gap-2.5">
+            <ShieldAlert className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+            <div className="text-xs">
+              <span className="font-medium text-slate-700">요청 차단</span>
+              <span className="block mt-0.5 text-[11px] text-slate-400">예산 잔액 부족 시 요청 단계에서 자동 차단</span>
+            </div>
           </div>
-          <div className="text-xs">
-            <span className="font-medium text-slate-700">AI 대체 제안</span>
-            <span className="block mt-0.5 text-[11px] text-slate-400">초과 위험 시 대체 시약·절감 옵션 자동 분석</span>
+          <div className="flex items-start gap-2.5">
+            <Sparkles className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+            <div className="text-xs">
+              <span className="font-medium text-slate-700">대체 제안</span>
+              <span className="block mt-0.5 text-[11px] text-slate-400">초과 위험 시 대체 시약·절감 옵션 자동 분석</span>
+            </div>
           </div>
-          <div className="text-xs">
-            <span className="font-medium text-slate-700">승인 라우팅</span>
-            <span className="block mt-0.5 text-[11px] text-slate-400">임계치 도달 시 예외 승인 경로로 자동 분기</span>
+          <div className="flex items-start gap-2.5">
+            <CheckCircle2 className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+            <div className="text-xs">
+              <span className="font-medium text-slate-700">승인 라우팅</span>
+              <span className="block mt-0.5 text-[11px] text-slate-400">임계치 도달 시 예외 승인 경로로 자동 분기</span>
+            </div>
           </div>
         </div>
       </div>
