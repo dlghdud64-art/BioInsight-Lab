@@ -367,6 +367,28 @@ export default function AnalyticsPage() {
     });
   }, [categoryItems]);
 
+  // ══════════════════════════════════════════════════════════════
+  // §11.244-sian Phase 1 — 빈상태 온보딩 (호영님 시안 honesty 무위험 부분)
+  // ══════════════════════════════════════════════════════════════
+  // canonical 빈상태 판정: 월별 지출 0건 AND topSpending 0건 = 발주 데이터 미수집.
+  //   데이터 1건+ 시 자동 false → 기존 실제 차트 경로 그대로 (변경 0).
+  const spendDataEmpty = !hasMonthlyData && topSpending.length === 0;
+  // 예산 등록 여부 = canonical budget.total > 0.
+  const budgetRegistered = budget.total > 0;
+  // 활성화 3단계 (canonical derive — 하드코딩 금지):
+  //   ① 워크스페이스 생성 (페이지 도달 = 항상 done)
+  //   ② 예산 등록 (done = budget.total > 0)
+  //   ③ 첫 발주 완료 (done = 지출 데이터 존재 = !spendDataEmpty)
+  const onboardingSteps = [
+    { id: "workspace", label: "워크스페이스 생성", done: true, href: null as string | null, cta: null as string | null },
+    { id: "budget", label: "예산 등록", done: budgetRegistered, href: "/dashboard/budget", cta: "예산 등록" },
+    { id: "first-order", label: "첫 발주 완료", done: !spendDataEmpty, href: "/app/search", cta: "소싱에서 시작" },
+  ];
+  const onboardingDoneCount = onboardingSteps.filter((s) => s.done).length;
+  const onboardingRemaining = onboardingSteps.length - onboardingDoneCount;
+  // 미리보기 sparkline 좌표 (장식 — 실수치 아님, "미리보기" 명시).
+  const PREVIEW_SPARK_POINTS = "0,46 40,38 80,42 120,28 160,32 200,18 240,22 280,8";
+
   // ── Tab 구성 ──
   const tabs: { id: AnalyticsTab; label: string; isButton?: boolean }[] = [
     { id: "overview", label: "종합 현황" },
@@ -480,6 +502,196 @@ export default function AnalyticsPage() {
       {/* ══════════════════════════════════════════════════════════ */}
       {activeTab === "overview" && (<>
 
+        {/* ══════════════════════════════════════════════════════════ */}
+        {/* §11.244-sian Phase 1 — 빈상태 온보딩 (발주 데이터 0건일 때만) */}
+        {/* 데이터 1건+ 시 spendDataEmpty=false → 아래 기존 차트 경로 그대로 노출 */}
+        {/* ══════════════════════════════════════════════════════════ */}
+        {!isLoading && spendDataEmpty && (
+          <div className="space-y-5" data-testid="analytics-onboarding">
+            {/* ── 온보딩 히어로 (네이비) ── */}
+            <div className="rounded-2xl bg-slate-900 text-white p-5 md:p-7 overflow-hidden relative">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-300/90">
+                분석 활성화까지 {onboardingRemaining}단계
+              </p>
+              <h2 className="text-lg md:text-2xl font-extrabold tracking-tight mt-1.5 break-keep">
+                첫 발주가 완료되면 지출 분석이 자동으로 켜집니다
+              </h2>
+              <p className="text-sm text-slate-300 mt-2 leading-relaxed max-w-2xl break-keep">
+                예산 소진율, 공급사 의존도, 이상 지출 신호는 모두 실제 발주 데이터에서 계산됩니다.
+                지금은 0건 수집됨 — 첫 발주가 완료되면 아래 미리보기가 실제 차트로 전환됩니다.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2.5 mt-4">
+                <Link
+                  href="/app/search"
+                  className="inline-flex items-center justify-center gap-1.5 h-11 px-4 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors touch-manipulation active:scale-95"
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  소싱에서 시작
+                </Link>
+                <Link
+                  href="/dashboard/budget"
+                  className="inline-flex items-center justify-center gap-1.5 h-11 px-4 rounded-lg bg-white/10 text-white text-sm font-semibold border border-white/20 hover:bg-white/20 transition-colors touch-manipulation active:scale-95"
+                >
+                  <CreditCard className="h-4 w-4" />
+                  예산 먼저 등록
+                </Link>
+              </div>
+            </div>
+
+            {/* ── 활성화 3단계 체크리스트 ── */}
+            <div className="rounded-xl border border-bd bg-pn p-4 md:p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold text-slate-700">활성화 단계</h3>
+                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                  {onboardingDoneCount} / {onboardingSteps.length} 완료
+                </span>
+              </div>
+              <ol className="space-y-2.5">
+                {onboardingSteps.map((step, idx) => {
+                  // 현재 단계 = 첫 미완료 단계 (primary 강조)
+                  const isCurrent = !step.done && onboardingSteps.slice(0, idx).every((s) => s.done);
+                  return (
+                    <li
+                      key={step.id}
+                      className={`flex items-center gap-3 rounded-lg border px-3.5 py-3 ${
+                        step.done
+                          ? "border-emerald-200 bg-emerald-50/50"
+                          : isCurrent
+                            ? "border-blue-300 bg-blue-50/50"
+                            : "border-bd bg-pn"
+                      }`}
+                    >
+                      <span
+                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                          step.done
+                            ? "bg-emerald-600 text-white"
+                            : isCurrent
+                              ? "bg-blue-600 text-white"
+                              : "bg-slate-100 text-slate-400"
+                        }`}
+                      >
+                        {step.done ? "✓" : idx + 1}
+                      </span>
+                      <span
+                        className={`flex-1 text-sm font-medium ${
+                          step.done ? "text-slate-700" : isCurrent ? "text-slate-900" : "text-slate-400"
+                        }`}
+                      >
+                        {step.label}
+                      </span>
+                      {!step.done && step.href && step.cta && (
+                        <Link
+                          href={step.href}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 shrink-0"
+                        >
+                          {step.cta} <ArrowRight className="h-3 w-3" />
+                        </Link>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+
+            {/* ── KPI 4 고도화 (언제 채워지는지 힌트 + ghost bar) ── */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+              {/* KPI 1: Q 예산 소진율 */}
+              <div className="rounded-xl border border-bd bg-pn p-3 md:p-4">
+                <p className="text-xs font-semibold text-slate-500">Q{Math.ceil((new Date().getMonth() + 1) / 3)} 예산 소진율</p>
+                <p className="text-lg md:text-xl font-extrabold text-slate-900 mt-1.5 tracking-tight">
+                  {budgetRegistered ? `${budget.usageRate}%` : "미등록"}
+                </p>
+                <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                  <div className="h-full rounded-full bg-slate-200" style={{ width: "30%" }} />
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1.5 break-keep">예산 등록 시 채워집니다</p>
+              </div>
+              {/* KPI 2: 이번 달 누적 지출 */}
+              <div className="rounded-xl border border-bd bg-pn p-3 md:p-4">
+                <p className="text-xs font-semibold text-slate-500">이번 달 누적 지출</p>
+                <p className="text-lg md:text-xl font-extrabold text-slate-900 mt-1.5 tracking-tight">₩0</p>
+                <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                  <div className="h-full rounded-full bg-slate-200" style={{ width: "20%" }} />
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1.5 break-keep">발주 완료 시 채워집니다</p>
+              </div>
+              {/* KPI 3: AI 식별 절감 기회 */}
+              <div className="rounded-xl border border-bd bg-pn p-3 md:p-4">
+                <p className="text-xs font-semibold text-slate-500">AI 식별 절감 기회</p>
+                <p className="text-lg md:text-xl font-extrabold text-slate-900 mt-1.5 tracking-tight">--</p>
+                <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                  <div className="h-full rounded-full bg-slate-200" style={{ width: "25%" }} />
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1.5 break-keep">발주 데이터로 AI 자동 산출</p>
+              </div>
+              {/* KPI 4: 특정 공급사 의존도 */}
+              <div className="rounded-xl border border-bd bg-pn p-3 md:p-4">
+                <p className="text-xs font-semibold text-slate-500">특정 공급사 의존도</p>
+                <p className="text-lg md:text-xl font-extrabold text-slate-900 mt-1.5 tracking-tight">--</p>
+                <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                  <div className="h-full rounded-full bg-slate-200" style={{ width: "40%" }} />
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1.5 break-keep">발주 3건+ 누적 시 산출</p>
+              </div>
+            </div>
+
+            {/* ── 미리보기 차트 2개 ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+              {/* 월별 지출 추이 미리보기 (점선 sparkline = 장식) */}
+              <div className="lg:col-span-3 rounded-xl border border-bd bg-pn p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-slate-400" />
+                    월별 지출 추이
+                  </h3>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
+                    미리보기
+                  </span>
+                </div>
+                <svg viewBox="0 0 280 56" className="w-full h-[120px]" preserveAspectRatio="none" aria-hidden="true">
+                  <polyline
+                    points={PREVIEW_SPARK_POINTS}
+                    fill="none"
+                    stroke="#cbd5e1"
+                    strokeWidth="2"
+                    strokeDasharray="4 4"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <p className="text-xs text-slate-400 mt-2 break-keep">
+                  발주 데이터가 쌓이면 이렇게 표시됩니다 (예시 — 실제 수치 아님)
+                </p>
+              </div>
+
+              {/* 지출 인사이트 미리보기 (ghost rows) */}
+              <div className="lg:col-span-2 rounded-xl border border-bd bg-pn p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-slate-300" />
+                    지출 인사이트
+                  </h3>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
+                    대기
+                  </span>
+                </div>
+                <div className="space-y-2.5">
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className="rounded-lg border border-bd bg-el/30 p-3 space-y-2">
+                      <div className="h-2.5 w-2/3 rounded bg-slate-200" />
+                      <div className="h-2 w-full rounded bg-slate-100" />
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-400 mt-3 break-keep">
+                  데이터가 축적되면 자동 생성됩니다 (예시 미리보기)
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ═══ 데이터-있음 경로 (기존 차트/KPI/테이블 전부 보존, spendDataEmpty 시 hide) ═══ */}
+        {!spendDataEmpty && (<>
         {/* ═══ 4 KPI 카드 ═══ */}
         {isLoading ? (
           <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 scrollbar-hide sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:gap-4 sm:overflow-visible sm:pb-0">
@@ -833,6 +1045,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
         )}
+        </>)}
 
       </>)}
 
