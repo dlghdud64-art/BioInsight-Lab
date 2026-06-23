@@ -215,6 +215,8 @@ describe("§시안-PO-Phase1 canonical — 하드코딩 count 부재", () => {
 
   it("새 추가 섹션에 리터럴 '1건'/'2건' 등 숫자 하드코딩 부재", () => {
     // 동적 보간({...}건)은 허용, 숫자 literal 바로 앞 "건"은 금지.
-    expect(src).not.toMatch(/[>"\s]\d+건/);
+    // §po-ai-canonical — 주석(// …)의 설명 텍스트(예: "활성 예산 1건의")는 UI 하드코딩 아님 → 주석 제거 후 검사(보호 의도=UI 리터럴 차단 불변).
+    const codeOnly = src.replace(/\/\/[^\n]*/g, "");
+    expect(codeOnly).not.toMatch(/[>"\s]\d+건/);
   });
 });

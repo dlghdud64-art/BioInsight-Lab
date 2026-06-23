@@ -1043,36 +1043,125 @@ const BURN_COLORS: Record<string, { bg: string; text: string; icon: string }> = 
   NORMAL:   { bg: "bg-slate-100",   text: "text-slate-600",   icon: "text-slate-500" },
 };
 
+// §11.392 honesty — AI 분석 입력은 canonical PO 상세 + 실 예산에서만 유래.
+// 하드코딩 금액/예산/카테고리 제거. 데이터 부재 시 가짜 호출 금지 + 정직 표기.
+interface PoOrderDetail {
+  totalAmount: number;
+  itemName: string | null;
+}
+
+interface ActiveBudget {
+  name: string;
+  totalAmount: number;
+  usedAmount: number;
+}
+
 function AiAnalysisPanel({ item }: { item: ModuleLandingItem }) {
   const [isLoading, setIsLoading] = useState(false);
   const [budgetResult, setBudgetResult] = useState<BudgetAnomalyResult | null>(null);
   const [safetyResult, setSafetyResult] = useState<SafetyCheckResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // 예산/금액 canonical 부재 시 budget-anomaly 호출하지 않고 정직 표기.
+  const [budgetNotice, setBudgetNotice] = useState<string | null>(null);
+
+  // §11.392 — 실 PO 상세 (totalAmount = 실 발주 금액, items[0].name = 실 품목명).
+  // entityId 가 DB Order.id 가 아니면 404 → null (가짜 금액으로 호출하지 않음).
+  const { data: poDetail } = useQuery<PoOrderDetail | null>({
+    queryKey: ["po-ai-order-detail", item.entityId],
+    queryFn: async () => {
+      const res = await csrfFetch(`/api/orders/${item.entityId}`);
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error("발주 상세 조회 실패");
+      const data = (await res.json()) as {
+        order?: {
+          totalAmount?: number | null;
+          items?: Array<{ name?: string | null }> | null;
+        } | null;
+      };
+      const order = data.order;
+      if (!order) return null;
+      return {
+        totalAmount: order.totalAmount ?? 0,
+        itemName: order.items?.[0]?.name ?? null,
+      };
+    },
+    enabled: Boolean(item.entityId),
+    staleTime: 60_000,
+    retry: false,
+  });
+
+  // §11.392 — 실 워크스페이스 예산 (UserBudget/Budget 통합). 활성 예산 1건의
+  // totalAmount(=budgetTotal), usedAmount(=budgetCurrent) 를 canonical 로 사용.
+  const { data: activeBudget } = useQuery<ActiveBudget | null>({
+    queryKey: ["po-ai-active-budget"],
+    queryFn: async () => {
+      const res = await csrfFetch("/api/user-budgets");
+      if (!res.ok) throw new Error("예산 조회 실패");
+      const data = (await res.json()) as {
+        budgets?: Array<{
+          name?: string | null;
+          totalAmount?: number | null;
+          usedAmount?: number | null;
+        }> | null;
+      };
+      const first = data.budgets?.find(
+        (b) => (b.totalAmount ?? 0) > 0,
+      );
+      if (!first) return null;
+      return {
+        name: first.name ?? "연구 예산",
+        totalAmount: first.totalAmount ?? 0,
+        usedAmount: first.usedAmount ?? 0,
+      };
+    },
+    staleTime: 60_000,
+    retry: false,
+  });
 
   const runAnalysis = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    setBudgetNotice(null);
+
+    // canonical 입력 — 실 PO 금액·실 품목명·실 예산. 부재 시 가짜 대체 금지.
+    const orderAmount = poDetail?.totalAmount ?? 0;
+    const realItemName = poDetail?.itemName || item.title || "발주 품목";
+    const budgetTotal = activeBudget?.totalAmount ?? 0;
+    const budgetCurrent = activeBudget?.usedAmount ?? 0;
+
+    // 예산 미등록/조회 실패(budgetTotal 0) 또는 PO 금액 조회 실패 시
+    // budget-anomaly 호출하지 않고 정직 표기. 하드코딩 예산으로 호출 금지.
+    const canRunBudget = budgetTotal > 0 && orderAmount > 0;
+    if (!canRunBudget) {
+      setBudgetNotice(
+        budgetTotal <= 0
+          ? "예산 정보가 없어 분석할 수 없습니다 · 예산을 먼저 등록하세요"
+          : "발주 금액 정보가 없어 예산 분석을 할 수 없습니다",
+      );
+    }
 
     try {
       const [budgetRes, safetyRes] = await Promise.allSettled([
-        csrfFetch("/api/ai/budget-anomaly", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            itemName: item.title || "발주 품목",
-            orderAmount: 350000,
-            budgetTotal: 50000000,
-            budgetCurrent: 28000000,
-            budgetName: "연구비",
-            budgetPeriod: "2026년 상반기",
-          }),
-        }).then((r) => r.json()),
+        canRunBudget
+          ? csrfFetch("/api/ai/budget-anomaly", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                itemName: realItemName,
+                orderAmount,
+                budgetTotal,
+                budgetCurrent,
+                budgetName: activeBudget?.name ?? "연구 예산",
+              }),
+            }).then((r) => r.json())
+          : Promise.resolve({ success: false, skipped: true }),
+        // 안전 분석 — 실 품목명으로 호출. OrderItem 에 category 필드가 없어
+        // 임의 카테고리 강제는 honesty 위반 → category 미전송(서버 optional).
         csrfFetch("/api/ai/safety-check", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            itemName: item.title || "품목",
-            category: "REAGENT",
+            itemName: realItemName,
           }),
         }).then((r) => r.json()),
       ]);
@@ -1083,10 +1172,13 @@ function AiAnalysisPanel({ item }: { item: ModuleLandingItem }) {
       if (safetyRes.status === "fulfilled" && safetyRes.value.success) {
         setSafetyResult(safetyRes.value.data);
       }
-      if (
-        (budgetRes.status === "rejected" || !budgetRes.value?.success) &&
-        (safetyRes.status === "rejected" || !safetyRes.value?.success)
-      ) {
+      // canRunBudget 일 때만 budget 실패를 전역 error 로 승격 (skip 은 정직 표기).
+      const budgetFailed =
+        canRunBudget &&
+        (budgetRes.status === "rejected" || !budgetRes.value?.success);
+      const safetyFailed =
+        safetyRes.status === "rejected" || !safetyRes.value?.success;
+      if (budgetFailed && safetyFailed) {
         setError("AI 분석에 실패했습니다.");
       }
     } catch {
@@ -1094,9 +1186,16 @@ function AiAnalysisPanel({ item }: { item: ModuleLandingItem }) {
     } finally {
       setIsLoading(false);
     }
-  }, [item.title]);
+  }, [
+    item.title,
+    poDetail?.totalAmount,
+    poDetail?.itemName,
+    activeBudget?.totalAmount,
+    activeBudget?.usedAmount,
+    activeBudget?.name,
+  ]);
 
-  const hasResults = budgetResult || safetyResult;
+  const hasResults = budgetResult || safetyResult || budgetNotice;
 
   return (
     <div className="mt-2" onClick={(e) => e.stopPropagation()}>
@@ -1126,6 +1225,19 @@ function AiAnalysisPanel({ item }: { item: ModuleLandingItem }) {
 
       {hasResults && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-1">
+          {/* §11.392 — 예산/금액 canonical 부재 시 가짜 분석 대신 정직 표기. */}
+          {budgetNotice && !budgetResult && (
+            <div className="rounded border border-slate-300 bg-slate-100 p-2.5 space-y-1.5">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
+                <DollarSign className="h-3 w-3 text-blue-600" />
+                Budget & Anomaly
+              </div>
+              <div className="flex items-start gap-1.5 rounded px-2 py-1.5 bg-slate-100 text-xs text-slate-500">
+                <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0 text-slate-400" />
+                <span>{budgetNotice}</span>
+              </div>
+            </div>
+          )}
           {budgetResult && (
             <div className="rounded border border-slate-300 bg-slate-100 p-2.5 space-y-1.5">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
