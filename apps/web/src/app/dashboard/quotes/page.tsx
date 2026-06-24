@@ -308,9 +308,9 @@ function shortenActionLabel(ctaLabel: string): string {
 //   index signature constraint 를 깬다 (PageProps never 강제). 본 module 안에서만
 //   사용되는 상수/타입은 `export` 키워드 제거. grep sentinel 기반 test 는 source
 //   text 매칭이므로 import path 변경 없음.
-// §quote-table-sian P2 — 시안 A 8컬럼 정합: itemCount(품목)·createdAt(등록)·delivery(납기)
-//   제거, supplier(공급사 아바타) 신규 분리. 견적케이스(title)·공급사·단계(status)·
-//   회신(responseCount)·우선순위·예상금액(price)·마감(dueDate)·다음단계(actions).
+// §quote-table-sian P2 — itemCount(품목)·createdAt(등록)·delivery(납기) 제거, supplier(공급사 아바타) 신규 분리.
+// §quote-management-redesign P1b — 마감(dueDate) 제거(우선순위 중심) → 7컬럼: 견적케이스(title)·공급사·
+//   단계(status)·회신(responseCount)·우선순위·예상금액(price)·다음단계(actions).
 type ColumnKey =
   | "title"
   | "supplier"
@@ -318,7 +318,6 @@ type ColumnKey =
   | "responseCount"
   | "priority"
   | "price"
-  | "dueDate"
   | "actions";
 
 interface ColumnPrefs {
@@ -335,7 +334,6 @@ const DEFAULT_COLUMN_PREFS: ColumnPrefs = {
     responseCount: 120,
     priority: 80,
     price: 140,
-    dueDate: 100,
     actions: 120,
   },
   visibility: {
@@ -345,10 +343,10 @@ const DEFAULT_COLUMN_PREFS: ColumnPrefs = {
     responseCount: true,
     priority: true,
     price: true,
-    dueDate: true,
     actions: true,
   },
-  order: ["title", "supplier", "status", "responseCount", "priority", "price", "dueDate", "actions"],
+  // §quote-management-redesign P1b(호영님 시안) — 마감(dueDate) 열 제거(우선순위 중심). dd 파생은 빠른필터/정렬 보존.
+  order: ["title", "supplier", "status", "responseCount", "priority", "price", "actions"],
 };
 
 const COLUMN_LABEL: Record<ColumnKey, string> = {
@@ -358,7 +356,6 @@ const COLUMN_LABEL: Record<ColumnKey, string> = {
   responseCount: "회신",
   priority: "우선순위",
   price: "예상금액",
-  dueDate: "마감",
   actions: "다음단계",
 };
 
@@ -3151,25 +3148,8 @@ function QuotesPageContent() {
                           </td>
                         );
                       }
-                      if (key === "dueDate") {
-                        // §quote-flat Q3 — 마감(D-day) 컬럼(신규, 지시문 §04).
-                        //   priorityResult.dd = daysUntil(computeDue) canonical 재사용(별도 compute 0).
-                        //   soon(D-2 이하·지남) = red 강조. 마감 미정(null) = "—" 약화(가짜 마감 금지 §11.242 #8).
-                        const dd = priorityResult?.dd ?? null;
-                        const soon = dd != null && dd <= 2;
-                        const dueLabel =
-                          dd == null ? "—"
-                          : dd < 0 ? `${-dd}일 지남`
-                          : dd === 0 ? "D-day"
-                          : `D-${dd}`;
-                        return (
-                          <td key={key} style={{ width }} className="px-3 py-2 text-[11px] tabular-nums">
-                            <span className={soon ? "text-red-600 font-semibold" : dd == null ? "text-gray-300" : "text-slate-500"}>
-                              {dueLabel}
-                            </span>
-                          </td>
-                        );
-                      }
+                      // §quote-management-redesign P1b — 마감(dueDate) 셀 렌더 제거(컬럼 폐지, 우선순위 중심).
+                      //   dd 파생(computePriority.dd)은 빠른필터 deadline_soon·정렬에서 계속 사용(컬럼 비의존).
                       if (key === "actions") {
                         // §11.242c #1 — tbody 액션 td sticky right-0. zebra bg + selected blue-50
                         //   분기로 가로 스크롤 시 행 배경 매칭 보존 (§11.242 first td sticky 대칭).

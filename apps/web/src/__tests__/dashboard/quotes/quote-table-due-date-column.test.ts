@@ -1,12 +1,10 @@
 /**
- * §quote-flat Q3 — 견적 테이블 마감(D-day) 컬럼 신규 (시안 A 정합)
+ * §quote-management-redesign P1b — 마감(D-day) 컬럼 제거 (호영님 시안 정합)
  *
- * 지시문 §04 + 시안 테이블 "마감" 컬럼. CEO 2026-06-21 결정: 신규 컬럼 추가(등록=createdAt 유지).
- *   - canonical: priorityResult.dd = daysUntil(computeDue) 재사용(별도 compute 0, 저장 0).
- *   - soon(D-2 이하·지남) = red 강조(지시문 §04). 마감 미정(null) = "—" 약화(가짜 마감 금지 §11.242 #8).
- *   - 컬럼프리퍼런스 시스템(ColumnKey/order/widths/visibility/COLUMN_LABEL) 정합 추가.
- *
- * 회귀 0 lock: 기존 컬럼·정렬·SupplierAvatars·우선순위 dot·액션 send-cta wiring 보존.
+ * ★ §quote-flat Q3(마감 컬럼 신규) 역전: 시안 README "마감(D-day) 열 제거(우선순위 중심 운영)".
+ *   - 컬럼 정의(ColumnKey/order/widths/visibility/COLUMN_LABEL) + tbody dueDate 셀 렌더 제거.
+ *   - dd 파생(computePriority.dd)은 **저장/제거 아님** — 빠른필터(deadline_soon)·정렬에서 계속 사용(컬럼 비의존).
+ *   - 회귀 0: 기존 컬럼(예상금액/다음단계)·SupplierAvatars·우선순위 dot·send-cta·정렬 보존.
  */
 
 import { describe, it, expect } from "vitest";
@@ -16,48 +14,39 @@ import { resolve } from "node:path";
 const PAGE_PATH = resolve(__dirname, "../../../app/dashboard/quotes/page.tsx");
 const page = readFileSync(PAGE_PATH, "utf8");
 
-describe("§quote-flat Q3 — 마감(D-day) 컬럼 정의", () => {
-  it("ColumnKey union 에 dueDate 추가", () => {
-    expect(page).toMatch(/\|\s*"dueDate"/);
+describe("§quote-management-redesign P1b — 마감 컬럼 제거", () => {
+  it("ColumnKey union 에 dueDate 부재", () => {
+    expect(page).not.toMatch(/\|\s*"dueDate"/);
   });
-  it('COLUMN_LABEL dueDate = "마감"', () => {
-    expect(page).toMatch(/dueDate:\s*"마감"/);
+  it("COLUMN_LABEL 에 dueDate '마감' 부재", () => {
+    expect(page).not.toMatch(/dueDate:\s*"마감"/);
   });
-  it("DEFAULT_COLUMN_PREFS order 에 dueDate 포함(컬럼프리퍼런스 정합)", () => {
-    // §quote-table-sian P2 — createdAt(등록) 제거로 dueDate 앞이 price 로 이동.
-    expect(page).toMatch(/"price",\s*"dueDate",\s*"actions"/);
+  it("order 에 dueDate 부재 — price 다음 actions(마감 빠짐)", () => {
+    expect(page).toMatch(/"price",\s*"actions"/);
+    expect(page).not.toMatch(/"price",\s*"dueDate"/);
   });
-  it("widths/visibility dueDate 정의(망라성)", () => {
-    expect(page).toMatch(/dueDate:\s*\d+,/); // widths
-    expect(page).toMatch(/dueDate:\s*true,/); // visibility
+  it("widths/visibility dueDate 키 부재", () => {
+    expect(page).not.toMatch(/dueDate:\s*\d+,/);
+    expect(page).not.toMatch(/dueDate:\s*true,/);
   });
-});
-
-describe("§quote-flat Q3 — 마감 셀 렌더(canonical 재사용·가짜 마감 금지)", () => {
-  it('tbody key === "dueDate" 분기', () => {
-    expect(page).toMatch(/if \(key === "dueDate"\)/);
-  });
-  it("priorityResult.dd canonical 재사용(별도 compute 0)", () => {
-    expect(page).toMatch(/key === "dueDate"[\s\S]{0,400}priorityResult\?\.dd/);
-  });
-  it("soon(D-2 이하) red 강조 + 마감 미정 '—' 약화", () => {
-    expect(page).toMatch(/key === "dueDate"[\s\S]{0,700}dd <= 2/);
-    expect(page).toMatch(/key === "dueDate"[\s\S]{0,1400}text-red-600/);
-    expect(page).toMatch(/key === "dueDate"[\s\S]{0,900}dd == null \? "—"/);
-  });
-  it("§11.302 — 마감 셀 amber/orange 0", () => {
-    const cell = page.slice(page.indexOf('if (key === "dueDate")'), page.indexOf('if (key === "actions")'));
-    expect(cell).not.toMatch(/-amber-|-orange-/);
+  it("tbody key === 'dueDate' 분기 제거", () => {
+    expect(page).not.toMatch(/if \(key === "dueDate"\)/);
   });
 });
 
-describe("§quote-flat Q3 — 회귀 0(기존 컬럼·정렬·셀 보존)", () => {
-  it("기존 컬럼 라벨 보존(§quote-table-sian P2 — 예상금액/다음단계)", () => {
-    // createdAt(등록)·delivery(납기) 컬럼은 시안 P2 에서 제거. 잔존 라벨 정합 확인.
+describe("§quote-management-redesign P1b — dd 파생 보존(저장/제거 아님)", () => {
+  it("computePriority.dd 빠른필터(deadline_soon)에서 계속 사용", () => {
+    expect(page).toMatch(/computePriority\(c\)\.dd/);
+    expect(page).toMatch(/deadline_soon/);
+  });
+});
+
+describe("§quote-management-redesign P1b — 회귀 0(기존 컬럼·셀·정렬 보존)", () => {
+  it("기존 컬럼 라벨 보존(예상금액/다음단계)", () => {
     expect(page).toMatch(/price:\s*"예상금액"/);
     expect(page).toMatch(/actions:\s*"다음단계"/);
   });
-  it("SupplierAvatars 공급사 셀 보존(§05·P3b → sian P2 분리)", () => {
+  it("SupplierAvatars 공급사 셀 + 회신 진행바 보존", () => {
     expect(page).toMatch(/<SupplierAvatars suppliers=\{toSuppliers\(quote\.vendorRequests\)\}/);
     expect(page).toMatch(/aria-valuenow=\{responseCount\}/);
   });

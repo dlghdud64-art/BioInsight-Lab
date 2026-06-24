@@ -23,9 +23,9 @@ describe("§quote-table-sian P2 — ColumnKey 8 셋 (제거 키 부재)", () => 
     expect(page).toMatch(/\|\s*"supplier"/);
   });
 
-  it("DEFAULT_COLUMN_PREFS order = 시안 A 8컬럼 순서 고정", () => {
+  it("DEFAULT_COLUMN_PREFS order = 7컬럼 순서 고정 (§quote-management-redesign P1b — 마감 제거)", () => {
     expect(page).toMatch(
-      /order:\s*\[\s*"title",\s*"supplier",\s*"status",\s*"responseCount",\s*"priority",\s*"price",\s*"dueDate",\s*"actions"\s*\]/,
+      /order:\s*\[\s*"title",\s*"supplier",\s*"status",\s*"responseCount",\s*"priority",\s*"price",\s*"actions"\s*\]/,
     );
   });
 
@@ -40,12 +40,15 @@ describe("§quote-table-sian P2 — ColumnKey 8 셋 (제거 키 부재)", () => 
     expect(page).not.toMatch(/(?<!\.)key === "itemCount"/);
     expect(page).not.toMatch(/(?<!\.)key === "createdAt"/);
     expect(page).not.toMatch(/(?<!\.)key === "delivery"/);
+    // §quote-management-redesign P1b — 마감 tbody 분기 제거(sort comparator는 비대상).
+    expect(page).not.toMatch(/(?<!\.)key === "dueDate"/);
   });
 
-  it("제거 컬럼 라벨 부재 — COLUMN_LABEL 품목/등록/납기 0", () => {
+  it("제거 컬럼 라벨 부재 — COLUMN_LABEL 품목/등록/납기/마감 0", () => {
     expect(page).not.toMatch(/itemCount:\s*"품목"/);
     expect(page).not.toMatch(/createdAt:\s*"등록"/);
     expect(page).not.toMatch(/delivery:\s*"납기"/);
+    expect(page).not.toMatch(/dueDate:\s*"마감"/);
   });
 });
 
@@ -57,7 +60,6 @@ describe("§quote-table-sian P2 — COLUMN_LABEL 시안 라벨", () => {
     ["responseCount", "회신"],
     ["priority", "우선순위"],
     ["price", "예상금액"],
-    ["dueDate", "마감"],
     ["actions", "다음단계"],
   ];
   for (const [key, label] of cases) {

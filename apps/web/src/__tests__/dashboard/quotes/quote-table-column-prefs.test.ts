@@ -24,18 +24,24 @@ const PAGE_PATH = resolve(__dirname, "../../../app/dashboard/quotes/page.tsx");
 const page = readFileSync(PAGE_PATH, "utf8");
 
 describe("§11.230b #1 — ColumnKey enum + DEFAULT_COLUMN_PREFS 상수", () => {
-  it("ColumnKey type 정의 (§quote-table-sian P2 — 8 컬럼)", () => {
+  it("ColumnKey type 정의 (§quote-management-redesign P1b — 7 컬럼, 마감 제거)", () => {
     // §quote-table-sian P2: itemCount(품목)·delivery(납기)·createdAt(등록) 제거, supplier(공급사) 추가.
-    // type ColumnKey = "title" | "supplier" | "status" | "responseCount" | "priority" | "price" | "dueDate" | "actions"
+    // §quote-management-redesign P1b: dueDate(마감) 제거(우선순위 중심) → 7 컬럼.
+    // type ColumnKey = "title" | "supplier" | "status" | "responseCount" | "priority" | "price" | "actions"
     expect(page).toMatch(/ColumnKey/);
     expect(page).toMatch(/"title"[\s\S]{0,400}"status"[\s\S]{0,400}"actions"|"title"[\s\S]{0,800}"actions"/);
   });
 
-  it("8 컬럼 키 모두 포함 — title/supplier/status/responseCount/priority/price/dueDate/actions", () => {
-    // §quote-table-sian P2 — 시안 A 8컬럼.
-    for (const key of ["title", "supplier", "status", "responseCount", "priority", "price", "dueDate", "actions"]) {
+  it("7 컬럼 키 모두 포함 — title/supplier/status/responseCount/priority/price/actions (마감 제거)", () => {
+    // §quote-management-redesign P1b — dueDate 제거 후 7컬럼.
+    for (const key of ["title", "supplier", "status", "responseCount", "priority", "price", "actions"]) {
       expect(page).toMatch(new RegExp(`["']${key}["']`));
     }
+  });
+
+  it("§quote-management-redesign P1b — dueDate 컬럼 키 부재", () => {
+    expect(page).not.toMatch(/\|\s*"dueDate"/);
+    expect(page).not.toMatch(/dueDate:\s*"마감"/);
   });
 
   it("DEFAULT_COLUMN_PREFS 또는 동등 상수 정의 (widths / visibility / order)", () => {
