@@ -12,6 +12,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 import { QueryProvider } from "@/providers/query-provider";
 import { AuthSessionProvider } from "@/providers/session-provider";
+import { AuthFocusGuard } from "@/components/auth/auth-focus-guard";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { LocaleProvider } from "@/components/layout/locale-provider";
 import { QRScannerProviderWrapper } from "@/providers/qr-scanner-provider";
@@ -111,6 +112,8 @@ export default function RootLayout({
                 <Toaster />
                 <SonnerToaster position="top-center" richColors closeButton />
                 <CompareFlowGuard />
+                {/* §auth §2 — 재포커스 세션 유효성 선제 게이트(보수적 additive, 기존 401 redirect 재사용). */}
+                <AuthFocusGuard />
 
                 <Analytics />
               </QueryProvider>
