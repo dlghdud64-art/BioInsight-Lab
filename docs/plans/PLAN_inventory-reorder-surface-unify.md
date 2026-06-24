@@ -274,9 +274,13 @@ All phases must strictly follow Red-Green-Refactor. Sentinel = readFileSync + re
 **✋ Quality Gate:** dead button/no-op 0(바로발주 disabled=사유 있는 정직 상태), 견적요청 live 유지, front-only success 0, loading/error/empty/disabled 상태, mode eyebrow·dispose 우선 보존, §11.310/310b sentinel GREEN
 **Rollback:** 패널 prop + 6 site wiring + 발주 게이팅 revert (preparePanel 복원)
 
-#### Phase 4: AiAssistant Wrapper Retire + Smoke/Rollback
+#### Phase 4: AiAssistant Wrapper Retire + Smoke/Rollback ✅ COMPLETE (2026-06-24)
 **Goal:** 대체 표면(P2·P3) 확인 후 inventory AiAssistant **분석 래퍼** 트리거 제거. ReorderReviewSheet는 보존(이미 content 승격).
-- Status: [ ] Pending
+- Status: [x] Complete
+
+**Land (2026-06-24):** inventory-content.tsx에서 6 클러스터 retire — `useInventoryAiPanel` import, `InventoryAiAssistantPanel` dynamic import, `aiPanelParam`, `const aiPanel`, `?ai_panel` deep-link useEffect, `<InventoryAiAssistantPanel>` 렌더. **orphan 0**(content 내 aiPanel/useInventoryAiPanel/<InventoryAiAssistantPanel 참조 0, grep 확인). 보존: ReorderReviewSheet·InventoryReorderReviewSheet 래퍼·AiAssistant 컴포넌트 파일(rollback, inventory-main legacy가 여전히 import). sentinel: `inventory-reorder-surface-unify-p4.test.ts`(retire 4 + 보존 4). 297e prepareCount=MAIN(legacy) 무관.
+
+**★ 회귀 봉합(baseline-delta 1건 — §11.381c):** P4 1차안이 `<InventoryAiAssistantPanel>`를 통째 retire하며 `onViewVendors`의 **소싱 검색 진입점(`/app/search?q=`)** 까지 inventory-content에서 소실 → §11.381c "inventory 소싱 진입점 유지" 위반(실 회귀, sentinel 정당). **(A) 재배치**로 봉합: 소싱 검색을 생존 표면 ReorderReviewSheet "추천 벤더" 섹션의 **공급사 검색** 액션(`data-testid="reorder-review-search-vendors"`)으로 옮김. `onSearchVendors` prop을 ReorderReviewSheet→래퍼→content로 통과, `/app/search?q=` URL 리터럴은 inventory-content에 유지(§11.381c 정합). retire ≠ 진입점 삭제 원칙 준수. (교훈: retire 시 클러스터 내 canonical 진입점을 grep으로 선식별해 동반 제거 방지 — Phase 0 risk에 적었으나 실행 누락, baseline-delta가 봉합.)
 
 **🔴 RED:** Phase 1 ⓕ sentinel + `aiPanel`/preparePanel inventory 미사용 grep 기대.
 **🟢 GREEN:** `<InventoryAiAssistantPanel>` 렌더(content L4003) 제거, `?ai_panel=` deep-link useEffect(L360) 제거, `useInventoryAiPanel` import/호출 제거(타 사용 0 확인). InventoryAiAssistantPanel·ReorderReviewSheet 컴포넌트 파일은 보존.
@@ -343,17 +347,17 @@ touching: inventory reorder / dispose 우선순위.
 
 ## 11. Progress Tracking
 
-- Overall completion: 85% (Phase 0·1·2·3 완료)
-- Current phase: Phase 4 (AiAssistant 분석 래퍼 retire) 잔여
+- Overall completion: 100% (Phase 0~4 완료, operator 게이트 대기)
+- Current phase: 완료 — operator P4 게이트 후 PLAN 종료
 - Current blocker: 없음
-- Next validation step: P4 — `<InventoryAiAssistantPanel>` 렌더(L4003)+`?ai_panel=` deep-link(L360)+`useInventoryAiPanel` import 제거(타 사용 0 확인), ReorderReviewSheet 보존, orphan 0
+- Next validation step: P4 operator 게이트(orphan 0 build typecheck + baseline-delta 0)
 
 **Phase Checklist:**
 - [x] Phase 0 complete
 - [x] Phase 1 complete
 - [x] Phase 2 complete
 - [x] Phase 3 complete (P3a rewire + P3b 발주 게이팅)
-- [ ] Phase 4 — AiAssistant 분석 래퍼 retire
+- [x] Phase 4 complete (AiAssistant 분석 래퍼 retire, orphan 0)
 - [ ] Phase 4 complete
 
 ---

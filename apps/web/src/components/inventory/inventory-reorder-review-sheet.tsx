@@ -30,6 +30,8 @@ export interface InventoryReorderReviewSheetProps {
   recommendedQty: number | null;
   unit?: string;
   storageLocation?: string | null;
+  /** §inventory-reorder-surface-unify P4 — 공급사 소싱 검색 진입(/app/search?q=, §11.381c 재배선). */
+  onSearchVendors?: () => void;
 }
 
 export function InventoryReorderReviewSheet({
@@ -40,6 +42,7 @@ export function InventoryReorderReviewSheet({
   recommendedQty,
   unit,
   storageLocation,
+  onSearchVendors,
 }: InventoryReorderReviewSheetProps) {
   // productName null/닫힘 시 hook 호출 0(enabled 가드). open 시에만 벤더·최근구매 fetch.
   const rec = useReorderRecommendation(open ? productName : null);
@@ -66,5 +69,5 @@ export function InventoryReorderReviewSheet({
         }
       : null;
 
-  return <ReorderReviewSheet open={open} onClose={onClose} data={data} />;
+  return <ReorderReviewSheet open={open} onClose={onClose} data={data} onSearchVendors={onSearchVendors} />;
 }

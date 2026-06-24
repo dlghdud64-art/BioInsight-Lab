@@ -50,7 +50,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Info, FileText, BellRing, Save, Sparkles, Archive } from "lucide-react";
 import { type LotRecord, type LotStatusFilter, computeLotStatus, sortLots, computeLotSummary, filterLotsByStatus, searchLots, getLotStatusLabel, getLotStatusColor } from "@/lib/inventory/lot-tracking-engine";
 import { getStorageConditionLabel } from "@/lib/constants";
-import { useInventoryAiPanel } from "@/hooks/use-inventory-ai-panel";
 import { resolveDisposal, type DisposalReason } from "@/lib/ontology/contextual-action/disposal-resolver";
 import type { SmartReceiveFormData } from "@/components/inventory/LabelScannerModal";
 // §11.371-3 — 라벨 직접 입고 영속화 단일점(내부에서 §11.326 mapLabelToReceiving 사용).
@@ -63,7 +62,6 @@ const ImportStagingWorkbench = dynamic(() => import("@/components/inventory/impo
 const StockLifespanGauge = dynamic(() => import("@/components/inventory/stock-lifespan-gauge").then((m) => m.StockLifespanGauge), { ssr: false });
 const InventoryTable = dynamic(() => import("@/components/inventory/InventoryTable").then((m) => m.InventoryTable), { ssr: false });
 const AddInventoryModal = dynamic(() => import("@/components/inventory/AddInventoryModal").then((m) => m.AddInventoryModal), { ssr: false });
-const InventoryAiAssistantPanel = dynamic(() => import("@/components/ai/inventory-ai-assistant-panel").then((m) => m.InventoryAiAssistantPanel), { ssr: false });
 const LotDisposalPanel = dynamic(() => import("@/components/inventory/lot-disposal-panel").then((m) => m.LotDisposalPanel), { ssr: false });
 const OpsExecutionContext = dynamic(() => import("@/components/ops/ops-execution-context").then((m) => m.OpsExecutionContext), { ssr: false });
 const PriorityActionQueue = dynamic(() => import("@/components/inventory/priority-action-queue").then((m) => m.PriorityActionQueue), { ssr: false });
@@ -138,7 +136,6 @@ function InventoryPageContent() {
   const { toast } = useToast();
   const { open: openQRScanner } = useQRScanner();
   const searchParams = useSearchParams();
-  const aiPanelParam = searchParams.get("ai_panel") === "open";
   const pilotProfile = searchParams.get("labaxisPilot") ?? searchParams.get("pilot");
   const isBrowserPilotInventoryDisposal = pilotProfile === "inventory-disposal";
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -303,7 +300,6 @@ function InventoryPageContent() {
   const [sheetSafetyStock, setSheetSafetyStock] = useState("");
   const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
   const [isExportingLabels, setIsExportingLabels] = useState(false);
-  const aiPanel = useInventoryAiPanel();
 
   // ── Lot Disposal Panel (object-scoped disposal dock) state ──
   const [disposalTarget, setDisposalTarget] = useState<import("@/components/inventory/lot-disposal-panel").DisposalTarget | null>(null);
@@ -368,12 +364,7 @@ function InventoryPageContent() {
 
   const entityIdParam = searchParams.get("entity_id");
 
-  // Deep-link: ?ai_panel=open 시 패널 자동 오픈
-  useEffect(() => {
-    if (aiPanelParam && !aiPanel.isOpen) {
-      aiPanel.setIsOpen(true);
-    }
-  }, [aiPanelParam]); // eslint-disable-line react-hooks/exhaustive-deps
+  // §inventory-reorder-surface-unify P4 — ?ai_panel deep-link retire (AiAssistant 분석 래퍼 미오픈, ReorderReviewSheet 승격으로 대체).
 
   useEffect(() => {
     if (isBrowserPilotInventoryDisposal) {
@@ -3925,41 +3916,8 @@ function InventoryPageContent() {
         )}
       </AnimatePresence>
 
-      {/* 재고 운영 AI 보조 패널 */}
-      <InventoryAiAssistantPanel
-        open={aiPanel.isOpen}
-        onOpenChange={aiPanel.setIsOpen}
-        state={aiPanel.panelState}
-        data={aiPanel.panelData}
-        onRetry={aiPanel.retry}
-        onReviewReorder={(r) => {
-          toast({
-            title: "재발주안 검토",
-            description: `${r.productName} ${r.recommendedQty}ea 재발주를 검토합니다.`,
-          });
-        }}
-        onViewVendors={(productName) => {
-          router.push(`/app/search?q=${encodeURIComponent(productName)}`);
-          aiPanel.setIsOpen(false);
-        }}
-        onViewLotDetail={(lotNumber) => {
-          toast({
-            title: "Lot 상세",
-            description: `Lot #${lotNumber} 상세 정보를 확인합니다.`,
-          });
-        }}
-        onReviewDisposal={(lotNumber) => {
-          toast({
-            title: "폐기/우선사용 검토",
-            description: `Lot #${lotNumber}에 대한 조치를 검토합니다.`,
-          });
-        }}
-        onViewActions={() => {
-          router.push("/dashboard/inventory?filter=low");
-          aiPanel.setIsOpen(false);
-        }}
-        isAnalyzing={aiPanel.isAnalyzing}
-      />
+      {/* §inventory-reorder-surface-unify P4 — InventoryAiAssistantPanel(분석 래퍼) inventory 트리거 retire.
+          재발주 검토는 ReorderReviewSheet 승격(InventoryReorderReviewSheet)으로 대체. 컴포넌트 파일은 보존(rollback). */}
 
       {/* §inventory-reorder-surface-unify P2 — content-level 재발주안 검토 시트(ReorderReviewSheet 승격).
           recommendedQty = canonical(/reorder-recommendations) — 데스크탑 패널과 동일 소스. null이면 미표시(가짜 0 금지). */}
@@ -3971,6 +3929,10 @@ function InventoryPageContent() {
         recommendedQty={reorderRecommendedQtyFor(reorderReviewItem?.id)}
         unit={reorderReviewItem?.unit ?? undefined}
         storageLocation={reorderReviewItem?.location ?? undefined}
+        onSearchVendors={() => {
+          // §inventory-reorder-surface-unify P4 / §11.381c — 공급사 소싱 검색 진입(AiAssistant onViewVendors 대체).
+          if (reorderReviewItem) router.push(`/app/search?q=${encodeURIComponent(reorderReviewItem.product.name)}`);
+        }}
       />
 
       {/* ── LOT Disposal Panel (object-scoped disposal dock) ── */}

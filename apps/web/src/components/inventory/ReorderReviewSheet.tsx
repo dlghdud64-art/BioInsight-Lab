@@ -65,9 +65,12 @@ interface ReorderReviewSheetProps {
   open: boolean;
   onClose: () => void;
   data: ReorderReviewInput | null;
+  /** §inventory-reorder-surface-unify P4 — 공급사 소싱 검색 진입(/app/search?q=). caller(content)가 주입.
+   *  §11.381c canonical 재배선(inventory 소싱 진입점 유지) — AiAssistant retire로 잃은 onViewVendors 대체. */
+  onSearchVendors?: () => void;
 }
 
-export function ReorderReviewSheet({ open, onClose, data }: ReorderReviewSheetProps) {
+export function ReorderReviewSheet({ open, onClose, data, onSearchVendors }: ReorderReviewSheetProps) {
   const router = useRouter();
 
   if (!data) return null;
@@ -165,9 +168,22 @@ export function ReorderReviewSheet({ open, onClose, data }: ReorderReviewSheetPr
 
           {/* ── 추천 벤더 ── */}
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-slate-500" />
-              <p className="text-xs font-bold text-slate-700">추천 벤더</p>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-slate-500" />
+                <p className="text-xs font-bold text-slate-700">추천 벤더</p>
+              </div>
+              {/* §inventory-reorder-surface-unify P4 — 공급사 소싱 검색 진입(§11.381c). AiAssistant onViewVendors 대체. */}
+              {onSearchVendors && (
+                <button
+                  type="button"
+                  data-testid="reorder-review-search-vendors"
+                  onClick={onSearchVendors}
+                  className="text-[11px] font-semibold text-blue-600 hover:text-blue-700"
+                >
+                  공급사 검색
+                </button>
+              )}
             </div>
             {data.vendors.length === 0 ? (
               <div
