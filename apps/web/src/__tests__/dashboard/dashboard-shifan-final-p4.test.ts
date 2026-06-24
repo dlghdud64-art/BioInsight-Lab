@@ -29,20 +29,20 @@ describe("§dashboard-shifan-adopt P4 (A) — 시안 최종 순서", () => {
     expect(idx("<NextStepBanner")).toBeLessThan(idx("<ActionInbox"));
     expect(idx("<ActionInbox")).toBeLessThan(idx("<Pipeline"));
   });
-  it("Pipeline→예산카드(2-col)→빠른작업→차트(하단)", () => {
+  it("Pipeline→2-col(예산카드→지출트렌드) — §dashboard-home-redesign P1 (빠른작업 제거)", () => {
     expect(idx("<Pipeline")).toBeLessThan(idx("<BudgetSpendCard"));
-    expect(idx("<BudgetSpendCard")).toBeLessThan(idx("<OperatorQuickActions"));
-    expect(idx("<OperatorQuickActions")).toBeLessThan(idx("<SpendTrendCard"));
+    expect(idx("<BudgetSpendCard")).toBeLessThan(idx("<SpendTrendCard"));
+    expect(PAGE).not.toMatch(/<OperatorQuickActions/);
   });
 });
 
 // ── (B) 중단 2-col 반응형 ────────────────────────────────────────────────
 describe("§dashboard-shifan-adopt P4 (B) — 중단 2-col 반응형", () => {
-  it("grid-cols-1 lg:grid-cols-2 (모바일 stack → 데스크탑 2-col) + 빠른작업 우 단독·최근활동 풀폭", () => {
-    // §dashboard-rightcol-rebalance(호영님) — 우측 side-col 폐지: 우측 = 빠른작업 단독(세로 1열),
-    //   최근활동은 2-col 아래 풀폭(가로 확대). 순서(예산→빠른작업→최근활동) 보존.
-    expect(PAGE).toMatch(/grid grid-cols-1 lg:grid-cols-2[\s\S]{0,260}<BudgetSpendCard[\s\S]{0,580}<OperatorQuickActions/);
-    expect(PAGE).toMatch(/<OperatorQuickActions[\s\S]{0,460}<RecentActivityCard/); // 순서 보존(풀폭 이동)
+  it("grid-cols-1 lg:grid-cols-2 (모바일 stack → 데스크탑 2-col): 예산&지출 + 지출트렌드 · 최근활동 풀폭", () => {
+    // §dashboard-home-redesign P1 (호영님 시안) — 2-col = 예산&지출 ↔ 지출 트렌드(빠른작업 제거).
+    //   최근활동은 2-col 아래 풀폭(가로 확대). 순서(예산→트렌드→최근활동) 보존.
+    expect(PAGE).toMatch(/grid grid-cols-1 lg:grid-cols-2[\s\S]{0,260}<BudgetSpendCard[\s\S]{0,800}<SpendTrendCard/);
+    expect(PAGE).toMatch(/<SpendTrendCard[\s\S]{0,700}<RecentActivityCard/);
   });
   it("예산 카드 summarySection 단일 진실 주입(신규 fetch 0)", () => {
     expect(PAGE).toMatch(/<BudgetSpendCard[\s\S]{0,120}state=\{summarySection\.state\}/);

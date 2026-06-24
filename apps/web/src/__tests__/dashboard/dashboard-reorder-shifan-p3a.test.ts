@@ -26,10 +26,10 @@ describe("§dashboard-shifan-adopt P3a (A) — 시안 순서 재배열", () => {
   const iInbox = PAGE.indexOf("<ActionInbox");
   const iPipe = PAGE.indexOf("<Pipeline");
   const iChart = PAGE.indexOf("<SpendTrendCard");
-  const iQuick = PAGE.indexOf("<OperatorQuickActions");
+  const iBudget = PAGE.indexOf("<BudgetSpendCard");
 
   it("핵심 모듈 전부 렌더(인덱스 양수)", () => {
-    for (const [n, v] of Object.entries({ iStat, iNext, iInbox, iPipe, iChart, iQuick })) {
+    for (const [n, v] of Object.entries({ iStat, iNext, iInbox, iPipe, iChart, iBudget })) {
       expect(v, n).toBeGreaterThan(0);
     }
   });
@@ -38,10 +38,11 @@ describe("§dashboard-shifan-adopt P3a (A) — 시안 순서 재배열", () => {
     expect(iNext).toBeLessThan(iInbox);
     expect(iInbox).toBeLessThan(iPipe);
   });
-  it("Pipeline → 빠른작업(2-col) → 차트(하단) 순 — P3b 중단 재구성 반영", () => {
-    // §dashboard-shifan-adopt P3b — 중단=예산&지출 카드+빠른작업(2-col), 지출트렌드/카테고리는 하단 이동.
-    expect(iPipe).toBeLessThan(iQuick);
-    expect(iQuick).toBeLessThan(iChart);
+  it("Pipeline → 2-col(예산&지출 → 지출트렌드) 순 — §dashboard-home-redesign P1 (빠른작업 제거)", () => {
+    // §dashboard-home-redesign P1 (호영님 시안) — 빠른작업 제거, 2-col = 예산&지출 ↔ 지출 트렌드.
+    //   §dashboard-shifan-adopt P3b(중단=예산+빠른작업, 트렌드 하단) 역전.
+    expect(iPipe).toBeLessThan(iBudget);
+    expect(iBudget).toBeLessThan(iChart);
   });
   it("재배열 마커 주석", () => {
     expect(PAGE).toMatch(/§dashboard-shifan-adopt P3a — 시안 단일 흐름 재배열/);

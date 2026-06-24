@@ -42,8 +42,11 @@ describe("§main-dashboard-redesign P5→shifan P-fid1 (B) — 최근활동 awar
 
 // ── (C) QuickActions + RecentActivity 보존 ──────────────────────────────
 describe("§main-dashboard-redesign P5 (C) — QuickActions/RecentActivity 보존", () => {
-  it("OperatorQuickActions(운영 바로가기) 보존", () => {
-    expect(PAGE).toMatch(/OperatorQuickActions/);
+  it("OperatorQuickActions(운영 바로가기) page 렌더 제거 — §dashboard-home-redesign P1 (동선 Pipeline 흡수, 컴포넌트 파일 dormant 보존)", () => {
+    // §dashboard-home-redesign P1 — 제거 설명 주석(// …, {/* … */})의 'OperatorQuickActions' 언급은 live 아님
+    //   → 주석 제거 후 검사(보호 의도=실 import/렌더 부재 불변).
+    const code = PAGE.replace(/\{?\/\*[\s\S]*?\*\/\}?/g, "").replace(/\/\/[^\n]*/g, "");
+    expect(code).not.toMatch(/OperatorQuickActions/);
   });
   it("RecentActivity(최근 처리 이력) + empty 정직 보존", () => {
     expect(PAGE).toMatch(/최근 처리 이력/);

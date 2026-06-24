@@ -56,8 +56,8 @@ const SpendTrendCard = dynamic_import(
 // §dashboard-shifan-polish A5/B1 — CategoryDistributionCard 는 BudgetSpendCard 내부로 이관(시안
 //   "예산&지출 카드 내부 통합"). 하단 분리 인스턴스 + 페이지 레벨 dynamic import 제거. recharts
 //   코드분할은 budget-spend-card 내부 dynamic import 가 계승. 하단은 SpendTrend 풀폭만.
-// §11.93 — 운영 바로가기 4 카드 (operator quick actions)
-import { OperatorQuickActions } from "@/components/dashboard/operator-quick-actions";
+// §dashboard-home-redesign P1 — 빠른작업(운영 바로가기) 카드 page 렌더 제거(동선 Pipeline 흡수).
+//   컴포넌트 파일(components/dashboard/operator-quick-actions.tsx)은 dormant 보존(rollback). import 제거(unused).
 // §dashboard-shifan-adopt P3b — 예산&지출 집행률 카드(시안 중단 좌). canonical summary.budget.
 import { BudgetSpendCard } from "@/components/dashboard/budget-spend-card";
 // §dashboard-shifan-fidelity P-fid1 — 우측 side-col 하단 최근활동 카드(시안 정합, 높이 정합).
@@ -773,17 +773,10 @@ function DashboardPageInner() {
           onRetry={summarySection.retry}
           categorySpending={stats.categorySpending}
         />
-        {/* §dashboard-rightcol-rebalance(호영님) — 우측 = 운영 바로가기 단독(세로 1열, 좌측 예산+도넛
-            높이까지 auto-rows-fr 로 채움). 최근활동은 2-col 아래 풀폭으로 이동(가로 확대). */}
-        {/* §11.93 — 운영 바로가기(빠른작업). canonical truth: stats forward, count mutation 0. */}
-        <OperatorQuickActions
-          counts={{
-            quotes: stats.activeQuotes,
-            purchases: stats.respondedQuotes,
-            receiving: stats.compareStats.purchaseToReceivingCount,
-            inventory: stats.lowStockAlerts,
-          }}
-        />
+        {/* §dashboard-home-redesign P1 (호영님 시안) — 빠른작업 카드 제거: 동선은
+            Pipeline 카드 클릭 진입이 흡수(중복 제거). 우측 = 지출 트렌드 분석(시안 2-col: 예산&지출 ↔ 트렌드).
+            빠른작업 컴포넌트 파일은 dormant 보존(rollback / 발주 on 복원 시 재배치 가능). */}
+        <SpendTrendCard monthlySpending={stats.monthlySpendingChart} />
       </div>
 
       {/* §dashboard-rightcol-rebalance(호영님) — 최근활동 풀폭(좁은 side-col 탈출 → 활동 로그 가로 확대·가독성↑). */}
@@ -793,10 +786,8 @@ function DashboardPageInner() {
           중단=차트(예산&지출)+빠른작업, 하단=최근활동 순(시안 흐름). */}
 
 
-      {/* §dashboard-shifan-polish A5/B1 — 카테고리 비중은 BudgetSpendCard 내부로 통합(시안 "예산&지출
-          카드 내부"). 하단 분리 도넛 + 모바일 차트 탭 폐지 → 하단은 지출 트렌드 단일(풀폭). 실데이터
-          ₩71.6M 보유라 풀폭 정당. 빈 계정 empty 정직(§main-dashboard-redesign P1 가드 — 차트 미렌더). */}
-      <SpendTrendCard monthlySpending={stats.monthlySpendingChart} />
+      {/* §dashboard-home-redesign P1 (호영님 시안) — 지출 트렌드는 2-col 우측(예산&지출 ↔ 트렌드)로 이동.
+          하단 풀폭 단일 SpendTrend 폐지(시안: 2-col 뒤는 최근활동 풀폭). 카테고리 도넛은 BudgetSpendCard 내부 유지. */}
 
       {/* --- 1순위: 오늘의 우선 작업 (모바일용 fallback, md 이하) --- */}
       <div className="md:hidden rounded-xl border border-slate-200/80 bg-white overflow-hidden">
