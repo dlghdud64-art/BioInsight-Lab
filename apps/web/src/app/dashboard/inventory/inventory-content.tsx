@@ -311,6 +311,8 @@ function InventoryPageContent() {
 
   // ── Context Panel (right-side detail drawer) state ──
   const [contextPanelItem, setContextPanelItem] = useState<ContextPanelItem | null>(null);
+  // §inventory-panel-unify P3 — 진입 맥락(detail/reorder). 재발주 진입 시 통합 패널 상단 강조 전환(AiAssistant 미오픈).
+  const [contextPanelMode, setContextPanelMode] = useState<"detail" | "reorder">("detail");
   const contextPanelOpen = contextPanelItem !== null;
 
   // ── Inventory tab (controlled) ──
@@ -320,7 +322,8 @@ function InventoryPageContent() {
   const [lotSearchQuery, setLotSearchQuery] = useState("");
   const [selectedLotId, setSelectedLotId] = useState<string | null>(null);
 
-  const openContextPanel = (inv: ProductInventory) => {
+  const openContextPanel = (inv: ProductInventory, mode: "detail" | "reorder" = "detail") => {
+    setContextPanelMode(mode);
     setContextPanelItem({
       id: inv.id,
       productId: inv.productId,
@@ -345,25 +348,10 @@ function InventoryPageContent() {
     });
   };
 
+  // §inventory-panel-unify P3 — 재발주 진입 = 통합 패널(ContextPanel mode='reorder')로 라우팅.
+  //   별도 AiAssistant 패널 미오픈(시안 ① 단일 패널, 상단 강조만 재발주). reorderQty/추천은 패널이 canonical 흡수(P2).
   const openReorderReview = (inventory: ProductInventory) => {
-    aiPanel.preparePanel({
-      id: inventory.id,
-      productId: inventory.productId,
-      productName: inventory.product.name,
-      brand: inventory.product.brand || undefined,
-      catalogNumber: inventory.product.catalogNumber || undefined,
-      currentQuantity: inventory.currentQuantity,
-      unit: inventory.unit || undefined,
-      safetyStock: inventory.safetyStock || undefined,
-      minOrderQty: inventory.minOrderQty || undefined,
-      location: inventory.location || undefined,
-      expiryDate: inventory.expiryDate || undefined,
-      lotNumber: inventory.lotNumber || undefined,
-      autoReorderEnabled: inventory.autoReorderEnabled || false,
-      averageDailyUsage: inventory.averageDailyUsage || undefined,
-      leadTimeDays: inventory.leadTimeDays || undefined,
-      lastInspectedAt: undefined,
-    });
+    openContextPanel(inventory, "reorder");
   };
 
   const entityIdParam = searchParams.get("entity_id");
@@ -2746,6 +2734,7 @@ function InventoryPageContent() {
             <InventoryContextPanel
               item={contextPanelItem}
               isOpen={contextPanelOpen}
+              mode={contextPanelMode}
               onClose={() => setContextPanelItem(null)}
               onLotDrillDown={() => setActiveInventoryTab("lot-tracking")}
               reorderQty={reorderRecommendationsData?.recommendations?.find((r) => r.inventoryId === contextPanelItem?.id)?.recommendedQty ?? null}

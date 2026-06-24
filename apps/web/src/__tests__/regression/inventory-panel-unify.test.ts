@@ -50,3 +50,18 @@ describe("§inventory-panel-unify P2 — reorderRecommendation 흡수", () => {
     expect(src).toContain("reorder-recommendations");
   });
 });
+
+describe("§inventory-panel-unify P3a — 재발주 진입 통합 패널 라우팅(mode plumbing)", () => {
+  it("contextPanelMode state + openContextPanel mode 파라미터", () => {
+    const src = read(CONTENT);
+    expect(src).toMatch(/contextPanelMode/);
+    expect(src).toMatch(/openContextPanel = \(inv: ProductInventory, mode:/);
+  });
+  it("openReorderReview → 통합 패널(reorder) 라우팅 (AiAssistant 직접 오픈 아님)", () => {
+    const src = read(CONTENT);
+    expect(src).toMatch(/openReorderReview = \(inventory: ProductInventory\) => \{\s*openContextPanel\(inventory, "reorder"\)/);
+  });
+  it("ContextPanel 렌더에 mode={contextPanelMode} 전달", () => {
+    expect(read(CONTENT)).toMatch(/mode=\{contextPanelMode\}/);
+  });
+});
