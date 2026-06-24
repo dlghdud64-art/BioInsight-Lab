@@ -122,12 +122,22 @@
 **✋ Gate:** PDF GET 다운로드·status 오염 0·pdf-font-bundling-326 GREEN(진화 0)·314b2 자기모순(generate-pdf 호출 0→GET export) 교정·build EXIT 0
 **Rollback:** 버튼 + executeDownloadPdf + state revert
 
-#### Phase 3: Smoke / Rollback / sentinel 마무리
-- Status: [ ] Pending
-**🔴 RED:** §11.314-b-2/c 진화 sentinel 최종.
-**🟢 GREEN:** dev/prod 거동 정직 문구 확정, audit EMAIL_SENT 경로 확인, smoke(단일·일괄 둘 다 실 발송).
-**✋ Gate:** baseline-delta 0, build EXIT 0, rollback 문서화
-**Rollback:** env/flag 없음 — 핸들러 git revert
+#### Phase 3: Smoke / Rollback / sentinel 마무리 ✅ COMPLETE (2026-06-24)
+- Status: [x] Complete
+
+**Smoke 경계(안전 기본값 — 실 vendor 발송 금지):** 실 Resend 발송은 외부 부수효과 → smoke에서 실 vendor 대상 prod 발송 **트리거 안 함**. read-only wiring 정합 + dev 거동만 확인.
+
+**Wiring smoke (read-only, 2026-06-24 확인):**
+- 발송: `executeDispatch` → `csrfFetch POST /api/quotes/{id}/vendor-requests`(L394), 결과 `summary.emailsSent/emailsFailed`(L422-423) 기반 토스트(가짜 성공 0).
+- PDF: `executeDownloadPdf` → `csrfFetch GET /api/quotes/{id}/generate-pdf`(L476, status 전이 0=발송 오염 0), 푸터 버튼(L1140).
+- 라벨: "공급사에 발송"(L1208)·aria "공급사에 견적 요청 발송".
+- dev: `sender.ts` dev 모드 console.log(실 발송 0) — batch와 동일 거동(특수 분기 없음). prod: Resend SMTP.
+- 실 발송(Resend) 송출 자체는 기존 `email-sender-resend-integration-314p2`·`email-sender-smtp-314-p2` sentinel + 라이브 일괄 흐름이 보증(본 PLAN 범위 밖 신규 코드 0).
+
+**prod 라이브 확인(선택, 호영님 직접):** 실 전달을 눈으로 확인하려면 **테스트 vendor 주소**로 단일 발송 1건 — 실 거래처 주소 사용 금지(부수효과). cowork는 실 발송 트리거 안 함.
+
+**✋ Gate:** baseline-delta 0(P1+P2 land 시 79→78), build EXIT 0, rollback 문서화 ✓
+**Rollback:** env/flag 없음 — `executeDispatch`/`executeDownloadPdf`/푸터 버튼/3 sentinel git revert(generate-pdf+mailto 복원). HEAD af597015.
 
 ## 8. Addenda
 **Workflow/Ontology(적용):** dispatch resolver — 발송 전(PENDING)→발송 후(SENT) 전이는 **실 발송 성공 시에만**(placeholder 금지). row CTA "견적 요청 발송"=실 발송. PDF=별도 export.
@@ -146,9 +156,9 @@
 - P1: sentinel revert. P2: dispatch 핸들러 generate-pdf+mailto 복원. P3: 문구/진화 revert. (env/flag 없음, git revert 단순.)
 
 ## 11. Progress Tracking
-- Overall: 90% (P0 + P1/wire + P2/pdf 완료) · Current: P3(smoke/rollback) · Blocker: 없음 · Next: smoke(단일·일괄 실 발송 + PDF 다운로드) + 마무리
-**Checklist:** [x] P0 [x] P1+wire [x] P2(pdf export) [ ] P3(smoke)
-✅ transient PDF gap 해소(P2 동일 배치 병합).
+- Overall: 100% (P0~P3 완료) · Current: 종결 — operator 게이트 완료(af597015 land) + P3 문서 종결 · Blocker: 없음
+**Checklist:** [x] P0 [x] P1+wire [x] P2(pdf export) [x] P3(smoke/rollback)
+✅ §quote-dispatch-real-send-unify 종결 — 단일 발송 실 이메일 통합 + PDF 별도 export. §11.314-b-2 옵션 A 정상 역전.
 
 ## 12. Notes & Learnings
 **Decisions (2026-06-24, 호영님):**
