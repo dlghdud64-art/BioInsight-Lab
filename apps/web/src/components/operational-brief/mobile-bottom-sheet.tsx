@@ -50,6 +50,10 @@ export interface MobileOperationalBriefSheetProps {
   risks?: React.ReactNode;
   next?: React.ReactNode;
   primaryCta?: MobileBriefPrimaryCta;
+  /** §inventory-reorder-surface-unify P1 — 진입 맥락. 'reorder'면 헤더 eyebrow를 "재발주 검토"로
+   *  (데스크탑 InventoryContextPanel mode 분기와 동형). 기본 'detail' = 회귀 0(운영 브리핑 보존).
+   *  공유 컴포넌트이므로 inventory 외 4 surface는 기본값으로 거동 불변. */
+  mode?: "detail" | "reorder";
 }
 
 const DEFAULT_CHIPS: MobileBriefChip[] = [
@@ -69,6 +73,7 @@ export function MobileOperationalBriefSheet({
   risks,
   next,
   primaryCta,
+  mode = "detail",
 }: MobileOperationalBriefSheetProps) {
   // §11.264a — 4 chip 을 탭으로 전환 (호영님 spec 견적 모바일 #3-1 긴급).
   //   기존 §11.183: chip onClick = scrollToBrief (anchor link) → 모든 4 section
@@ -121,7 +126,7 @@ export function MobileOperationalBriefSheet({
 
         {/* Brief header */}
         <div className="px-4 pt-2 pb-2 flex items-center justify-between border-b border-slate-200">
-          <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">운영 브리핑</span>
+          <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">{mode === "reorder" ? "재발주 검토" : "운영 브리핑"}</span>
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-slate-500 uppercase tracking-wide">{objectLabel}</span>
             <button
