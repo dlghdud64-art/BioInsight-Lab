@@ -40,9 +40,13 @@ describe("§11.252d-2→shifan P-fid1 — 빠른시작/OnboardingHero 중복 부
 });
 
 describe("§11.252d-2 — invariant 보존", () => {
-  it("dashboardState 분기 (zero/blocked/active) 보존", () => {
-    expect(code).toMatch(/dashboardState\s*===\s*["']zero["']/);
-    expect(code).toMatch(/dashboardState\s*===\s*["']active["']/);
+  it("dashboardState 3상태(zero/blocked/active) state machine 보존", () => {
+    // §dashboard-home-redesign P2 진화 — 헤더 description의 `=== "zero"`/`"blocked"` 리터럴 소비는
+    //   날짜(todayLabel)로 대체되며 제거. state machine 정의(ternary)는 보존 → 핀을 소비 리터럴 →
+    //   정의 기준으로 이전(invariant 의도[3상태 분기 존재] 불변·강화). === "active" 소비는 mobile fallback 잔존.
+    expect(code).toMatch(/["']blocked["']\s*\|\s*["']zero["']\s*\|\s*["']active["']/); // 3상태 union 정의
+    expect(code).toMatch(/isZero\s*\?\s*["']zero["']\s*:\s*["']active["']/);            // zero 분기(state machine)
+    expect(code).toMatch(/dashboardState\s*===\s*["']active["']/);                      // active 소비(mobile) 보존
   });
 
   // §dashboard-shifan-fidelity P-fid1 — "빠른 시작 3 link" it 제거: 빠른시작 카드 폐지로

@@ -154,7 +154,8 @@ function PlanOnboardingBanner() {
 }
 
 function DashboardPageInner() {
-  const { data: session, status } = useSession();
+  // §dashboard-home-redesign P2 — 헤더 인사("○○님") 제거로 session.user.name 미사용 → status 만 구독(unused 0).
+  const { status } = useSession();
   const router = useRouter();
   const openOverlay = useWorkbenchOverlayOpen();
 
@@ -178,6 +179,16 @@ function DashboardPageInner() {
     } catch {
       // localStorage 접근 실패 (private mode 등) — silent fallback, default false 유지.
     }
+  }, []);
+
+  // §dashboard-home-redesign P2 (호영님 시안) — 헤더 기능 맥락 = 날짜. 장식성 인사·중복 카운트 제거.
+  //   SSR-safe: default "" + mount 시 채움(hydration mismatch 0, onboardingDismissed 패턴 동일).
+  //   워크스페이스명은 canonical org 소스 부재로 보류(날조 금지) — 날짜만 노출.
+  const [todayLabel, setTodayLabel] = useState("");
+  useEffect(() => {
+    setTodayLabel(
+      new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric", weekday: "long" }),
+    );
   }, []);
   // §dashboard-shifan-adopt P2 — dismissOnboarding 제거(시작하기 hero 폐지 → NextStepBanner).
   //   onboardingDismissed(localStorage)는 "빠른 시작" hide 조건(아래)에서 계속 읽힘 — useState/effect 유지.
@@ -694,15 +705,11 @@ function DashboardPageInner() {
       {/* §11.374 P3.4 — AppPageHeader 채택(인라인 헤더 제거, card-less 단일 문법).
           동적 greeting/state → description, AIInsightDialog+온보딩 툴팁 → actions render 보존.
           ⚠️ KPI 판단카드(아래 본문)는 상태 카운트 그리드 미적용 — trend/risk 정보 보존. */}
+      {/* §dashboard-home-redesign P2 (호영님 시안) — 장식성 인사("○○님") 제거 + 중복 카운트("확인이 필요한 항목 N건")
+          제거(ActionInbox가 카운트 소유, awareness 공백 0). description = 기능 맥락(날짜)만. */}
       <AppPageHeader
         title="대시보드"
-        description={`${session?.user?.name ? `${session.user.name}님, ` : ""}${
-          dashboardState === "blocked"
-            ? `확인이 필요한 항목 ${processingRequiredCount + approvalPendingCount + riskOrBlockerCount}건이 있습니다.`
-            : dashboardState === "zero"
-              ? "견적 요청을 시작하면 운영 데이터가 쌓이기 시작합니다."
-              : "오늘 즉시 처리할 운영 이슈가 없습니다."
-        }`}
+        description={todayLabel}
         actions={
           // §11.374 P4 — 온보딩(데이터 0)이면 리포트 entry 자체를 숨김(회색 disabled 붕뜸 제거).
           //   리포트는 완료 견적 ≥1 필요 → 데이터 없으면 헤더에 둘 이유 없음(온보딩 히어로가 안내).
