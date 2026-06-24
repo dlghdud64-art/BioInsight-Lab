@@ -33,7 +33,11 @@ export async function POST() {
     enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
-      action: 'sensitive_data_export',
+      // §ai-insight-role-fix (호영님 P1) — 운영 리포트는 자기 조직 데이터의 읽기전용 AI 요약(원본 export 아님).
+      //   기존 'sensitive_data_export'(buyer/ops_admin 한정)는 오분류 → requester/approver(또는 role 미populate)
+      //   에서 ROLE_INSUFFICIENT. targetEntityType='ai_action' 정합되게 'ai_action_create'(전 역할 허용)로 교정.
+      //   enforceAction(인증·CSRF·audit·rate-limit) 유지 = 보안 약화 아님(실 export 게이트는 export 액션에 보존).
+      action: 'ai_action_create',
       targetEntityType: 'ai_action',
       targetEntityId: session.user.id, // §11.369-2 — 'unknown' 고정 = 전역 lock 충돌. per-user 격리.
       sourceSurface: 'web_app',
