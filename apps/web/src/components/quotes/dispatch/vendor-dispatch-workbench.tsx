@@ -124,6 +124,8 @@ export function VendorRequestModal({
   const [messageEditing, setMessageEditing] = useState(false);
   const [expiresInDays, setExpiresInDays] = useState(14);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // §quote-dispatch-real-send-unify P2 — 견적서 PDF 다운로드(별도 export, generate-pdf GET) 로딩 상태.
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [showManualFallback, setShowManualFallback] = useState(false);
   const [manualEmail, setManualEmail] = useState("");
   const [manualName, setManualName] = useState("");
@@ -386,17 +388,21 @@ export function VendorRequestModal({
 
     setIsSubmitting(true);
     try {
-      // §11.314-b-2 (호영님 옵션 A) — 이메일(vendor-requests, sender mock =
-      //   실제 발송 0) 흐름을 견적서 PDF 다운로드 + mailto 로 교체.
-      //   실제 전송 = 사용자가 다운로드된 PDF 를 메일 첨부 (mailto 로 공급사
-      //   이메일 + 제목/본문 pre-fill). canonical: PDF = Quote snapshot.
-      const response = await csrfFetch(`/api/quotes/${quoteId}/generate-pdf`, {
+      // §quote-dispatch-real-send-unify P1 (호영님 옵션 2) — 단일 발송 = 실 이메일 발송(/vendor-requests,
+      //   일괄과 동일 경로). §11.314-b-2 PDF+mailto(실 발송 0) 역전 — Resend 라이브 전제.
+      //   첫 발송 = quote_request_submit (requester 허용, §11.314-a). PDF는 별도 "견적서 다운로드"로 분리(P2).
+      const response = await csrfFetch(`/api/quotes/${quoteId}/vendor-requests`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          vendors: validVendors,
+          message: message.trim() || undefined,
+          expiresInDays: clampedExpires,
+        }),
       });
 
       if (!response.ok) {
-        // §11.326 (호영님 P0) — server 응답 status + body 추출하여 root cause 진단 가능하게.
-        //   서버 로그용 raw error 와 사용자 안내 메시지 분리.
+        // §11.326 — server status + body 추출(root cause 진단). raw 는 console, 사용자엔 errorTag.
         const status = response.status;
         let serverDetail = "";
         try {
@@ -405,44 +411,30 @@ export function VendorRequestModal({
         } catch {
           // body 가 JSON 아닐 수 있음 — silent.
         }
-        console.error("[§11.326] PDF 생성 실패", { status, serverDetail, quoteId });
+        console.error("[§quote-dispatch] 공급사 발송 실패", { status, serverDetail, quoteId });
         const errorTag = status === 403 ? "인증/권한" : status === 404 ? "견적 없음" : status >= 500 ? "서버 오류" : "요청 오류";
         throw new Error(`${errorTag} (${status})${serverDetail ? ` · ${serverDetail}` : ""}`);
       }
 
-      // PDF blob 다운로드
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `견적요청서-${quoteRef ?? quoteId.slice(0, 8)}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-
-      // mailto — 공급사 이메일 pre-fill (사용자가 PDF 첨부하여 직접 전송)
-      const recipients = validVendors.map((v) => v.email).filter(Boolean).join(",");
-      const mailSubject = encodeURIComponent("견적 요청서");
-      const mailBody = encodeURIComponent(
-        (message.trim() ? message.trim() + "\n\n" : "") +
-          "첨부된 견적 요청서를 확인하시고 견적가를 기재하여 회신 부탁드립니다.",
-      );
-      if (recipients && typeof window !== "undefined") {
-        window.location.href = `mailto:${recipients}?subject=${mailSubject}&body=${mailBody}`;
-      }
-
+      // 실 발송 결과(canonical: server summary). 가짜 성공 금지 — emailsSent/Failed 기반.
+      const result: any = await response.json().catch(() => ({}));
       const recipientCount = validVendors.length;
+      const sent: number = result?.summary?.emailsSent ?? result?.createdRequests?.length ?? recipientCount;
+      const failed: number = result?.summary?.emailsFailed ?? 0;
       toast({
-        title: "견적서 PDF 다운로드 완료",
-        description: `다운로드된 견적 요청서를 ${recipientCount}개 공급사 메일에 첨부하여 전송하세요.`,
+        title: failed > 0 ? "일부 공급사 발송 실패" : "공급사 발송 완료",
+        description:
+          failed > 0
+            ? `${sent}개 발송 완료 · ${failed}개 실패. 실패분은 다시 시도해 주세요.`
+            : `${sent}개 공급사에 견적 요청을 발송했습니다.`,
+        variant: failed > 0 ? "destructive" : undefined,
       });
 
       const trackingEvidence: SentTrackingEvidence = {
-        id: `quote-pdf-${quoteId}-${Date.now()}`,
+        id: `quote-send-${quoteId}-${Date.now()}`,
         quoteId,
         recipientCount,
-        statusLabel: "PDF 다운로드 완료",
+        statusLabel: failed > 0 ? `발송 ${sent}/${recipientCount}` : "발송 완료",
         operatorName: "발송 운영자",
         recordedAt: new Date().toISOString(),
       };
@@ -461,6 +453,54 @@ export function VendorRequestModal({
       //   raw error.message 는 console.error 만 (Sentry 추적), 사용자에게는 임시 우회 안내.
       const reason = typeof error?.message === "string" ? error.message : "";
       toast({
+        title: "공급사 발송 실패",
+        description:
+          (reason ? `사유: ${reason}\n\n` : "") +
+          "견적 요청을 발송하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // §quote-dispatch-real-send-unify P2 — 견적서 PDF 다운로드(별도 export). generate-pdf GET = status 전이 0(발송 아님).
+  //   §11.326 PDF 폰트/생성 실패 완화 토스트·로깅은 PDF 생성 행위인 여기로 이전(보호 의도 보존).
+  const executeDownloadPdf = async () => {
+    if (!quoteId) {
+      toast({ title: "견적 ID 없음", description: "견적을 먼저 저장해주세요.", variant: "destructive" });
+      return;
+    }
+    setIsDownloadingPdf(true);
+    try {
+      const response = await csrfFetch(`/api/quotes/${quoteId}/generate-pdf`, { method: "GET" });
+      if (!response.ok) {
+        const status = response.status;
+        let serverDetail = "";
+        try {
+          const body = await response.json();
+          serverDetail = body?.error ?? body?.message ?? "";
+        } catch {
+          // body 가 JSON 아닐 수 있음 — silent.
+        }
+        console.error("[§11.326] PDF 생성 실패", { status, serverDetail, quoteId });
+        const errorTag = status === 403 ? "인증/권한" : status === 404 ? "견적 없음" : status >= 500 ? "서버 오류" : "요청 오류";
+        throw new Error(`${errorTag} (${status})${serverDetail ? ` · ${serverDetail}` : ""}`);
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `견적요청서-${quoteRef ?? quoteId.slice(0, 8)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast({ title: "견적서를 다운로드했습니다" });
+    } catch (error: any) {
+      // §11.326 (호영님 P0 spec §5) — friendly + actionable 메시지.
+      const reason = typeof error?.message === "string" ? error.message : "";
+      toast({
         title: "견적서 PDF를 만들 수 없습니다",
         description:
           (reason ? `사유: ${reason}\n\n` : "") +
@@ -468,7 +508,7 @@ export function VendorRequestModal({
         variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false);
+      setIsDownloadingPdf(false);
     }
   };
 
@@ -1093,6 +1133,27 @@ export function VendorRequestModal({
           >
             취소
           </Button>
+          {/* §quote-dispatch-real-send-unify P2 — 견적서 PDF 다운로드(발송과 분리된 별도 export, generate-pdf GET). */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={executeDownloadPdf}
+            disabled={isSubmitting || isDownloadingPdf}
+            aria-label="견적서 PDF 다운로드"
+            className="min-h-[40px] border-slate-200 text-slate-700 active:scale-95"
+          >
+            {isDownloadingPdf ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                다운로드 중…
+              </>
+            ) : (
+              <>
+                <Mail className="h-4 w-4 mr-2" />
+                견적서 다운로드
+              </>
+            )}
+          </Button>
           {sendReadiness === "blocked" ? (
             <Button
               type="button"
@@ -1118,23 +1179,23 @@ export function VendorRequestModal({
               //   visible label 은 sendReadiness 분기로 4종 (전달 중… /
               //   전송 추적 확인됨 / 전송 전 확인 필요 / 최종 확인 후 전송)
               //   변동 — aria-label 은 button intent ("공급사에 전송") 안정화.
-              aria-label="견적서 PDF 다운로드"
+              aria-label="공급사에 견적 요청 발송"
               className={`min-h-[40px] font-semibold active:scale-95 ${
                 sendReadiness === "ready"
                   ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                   : "bg-yellow-500 hover:bg-yellow-600 text-white"
               }`}
             >
-              {/* §11.314-b-2 — 이메일 mock 교체: PDF 다운로드 + mailto 흐름. 라벨 정합. */}
+              {/* §quote-dispatch-real-send-unify P1 — 실 이메일 발송(/vendor-requests). 라벨 정합. */}
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  견적서 생성 중…
+                  발송 중…
                 </>
               ) : sentTracking ? (
                 <>
                   <Check className="h-4 w-4 mr-2" />
-                  PDF 다운로드 완료
+                  발송 완료
                 </>
               ) : sendReadiness !== "ready" ? (
                 <>
@@ -1144,7 +1205,7 @@ export function VendorRequestModal({
               ) : (
                 <>
                   <Send className="h-4 w-4 mr-2" />
-                  견적서 PDF 다운로드
+                  공급사에 발송
                 </>
               )}
             </Button>

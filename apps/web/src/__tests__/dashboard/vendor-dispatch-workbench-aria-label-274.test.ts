@@ -47,9 +47,10 @@ describe("§11.274 #1 — aria-label 한국어 swap 검증", () => {
     expect(vdw).toContain('aria-label="공급사 요청 전달 (비활성)"');
   });
 
-  // §11.314-b PDF flow — active 버튼이 견적서 PDF 다운로드 흐름으로 전환되며 aria-label 정합 갱신(§11.274 intent 계승).
-  it("active 분기 aria-label '견적서 PDF 다운로드' 적용", () => {
-    expect(vdw).toContain('aria-label="견적서 PDF 다운로드"');
+  // §quote-dispatch-real-send-unify P1 — 단일 발송 = 실 이메일 발송 역전. active aria-label
+  //   "견적서 PDF 다운로드" → "공급사에 견적 요청 발송"(§11.274 intent[버튼 의도 한국어 정합] 계승).
+  it("active 분기 aria-label '공급사에 견적 요청 발송' 적용", () => {
+    expect(vdw).toContain('aria-label="공급사에 견적 요청 발송"');
   });
 
   it("영문 aria-label 'Send to supplier' 제거 확인", () => {

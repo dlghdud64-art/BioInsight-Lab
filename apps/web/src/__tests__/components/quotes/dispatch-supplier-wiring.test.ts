@@ -88,14 +88,13 @@ describe("#quote-dispatch-final-confirmation - send gate evidence", () => {
     expect(source).toContain('disabled={isSubmitting || sendReadiness !== "ready"}');
   });
 
-  // §quote-screen-sian P6.4 — sent-handoff-line/sent-owner 제거(§09 스텝퍼 통합).
-  //   dispatchEventId/vendorRequestBatchId/createdRequests 는 §11.314-b PDF flow 전환으로
-  //   vendor-requests API 가 제거되며 이미 stale → PDF tracking evidence 로 정합.
+  // §quote-dispatch-real-send-unify P1 — 단일 발송 = 실 이메일 발송(vendor-requests) 역전.
+  //   tracking evidence statusLabel "PDF 다운로드 완료" → "발송 완료"(실 발송 결과 기반). 보호 의도(발송 후 추적 증적) 유지.
   it("shows sent tracking evidence after a successful dispatch", () => {
     expect(source).toContain("quote-dispatch-sent-tracking-state");
     expect(source).toContain("quote-dispatch-sent-tracking-id");
     expect(source).toContain("quote-dispatch-sent-refresh-proof");
-    expect(source).toContain("PDF 다운로드 완료");
+    expect(source).toContain("발송 완료");
     expect(source).toContain("recipientCount");
   });
 

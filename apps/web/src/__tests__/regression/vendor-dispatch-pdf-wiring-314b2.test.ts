@@ -1,14 +1,13 @@
 /**
- * §11.314-b-2 #vendor-dispatch-pdf-wiring — Regression sentinel (client)
+ * §quote-dispatch-real-send-unify P1 #vendor-dispatch-real-send — Regression sentinel (client)
+ *   (PLAN: docs/plans/PLAN_quote-dispatch-real-send-unify.md)
  *
- * 호영님 §11.308 옵션 C + 옵션 A (PDF 다운로드로 교체, 이메일 mock 숨김):
- *   vendor-dispatch-workbench executeDispatch 를 vendor-requests(이메일 mock)
- *   → generate-pdf 다운로드 + mailto 로 교체. 버튼 라벨 PDF 정합.
+ * ★ §11.314-b-2 옵션 A 역전 (호영님 2026-06-24):
+ *   단일 발송을 generate-pdf + mailto(실 발송 0) → vendor-requests(실 Resend 발송, 일괄과 동일 경로)로
+ *   교체. Resend 라이브 전제. 첫 발송 = quote_request_submit(requester 허용, §11.314-a).
+ *   PDF는 별도 "견적서 다운로드"(generate-pdf GET, status 전이 0)로 분리(P2).
  *
- * 보존:
- *   - 공급사 선택/이메일 검증/expiresInDays 흐름 (mailto recipient 용)
- *   - sentTracking + localStorage (다운로드 추적)
- *   - sendReadiness 분기 (전송 전 확인 필요)
+ * 보존(불변): 공급사 선택/이메일 검증/expiresInDays · sentTracking + localStorage · sendReadiness 분기.
  */
 
 import { describe, it, expect } from "vitest";
@@ -22,86 +21,83 @@ function read(rel: string): string {
   return readFileSync(join(REPO_ROOT, rel), "utf8");
 }
 
-describe("§11.314-b-2 — executeDispatch PDF 다운로드 + mailto 교체", () => {
-  it("generate-pdf endpoint 호출 (vendor-requests 교체)", () => {
+describe("§quote-dispatch-real-send-unify P1 — executeDispatch 실 이메일 발송 교체", () => {
+  it("vendor-requests endpoint 호출 (실 발송)", () => {
     const src = read(PATH);
-    expect(src).toMatch(/csrfFetch\(`\/api\/quotes\/\$\{quoteId\}\/generate-pdf`/);
+    expect(src).toMatch(/csrfFetch\(`\/api\/quotes\/\$\{quoteId\}\/vendor-requests`/);
+    expect(src).toMatch(/vendors: validVendors/);
+    expect(src).toMatch(/expiresInDays: clampedExpires/);
   });
 
-  it("vendor-requests POST 호출 0 (executeDispatch 에서 제거)", () => {
+  it("PDF는 발송 아닌 별도 export — generate-pdf GET(status 전이 0)으로만 호출", () => {
     const src = read(PATH);
-    // executeDispatch 가 vendor-requests 로 POST 하지 않음 (generate-pdf 로 교체)
-    expect(src).not.toMatch(/csrfFetch\(`\/api\/quotes\/\$\{quoteId\}\/vendor-requests`/);
+    // 발송 경로는 vendor-requests(위). generate-pdf 는 다운로드 전용 GET 만 — POST(발송 행위) 호출 0.
+    expect(src).toMatch(/csrfFetch\(`\/api\/quotes\/\$\{quoteId\}\/generate-pdf`,\s*\{\s*method:\s*"GET"/);
   });
 
-  it("PDF blob 다운로드 (createObjectURL + a.download)", () => {
+  it("mailto 흐름 제거 (실 발송이므로 수동 메일 0)", () => {
     const src = read(PATH);
-    expect(src).toMatch(/await response\.blob\(\)/);
-    expect(src).toMatch(/URL\.createObjectURL\(blob\)/);
-    expect(src).toMatch(/a\.download = `견적요청서-/);
-    expect(src).toMatch(/URL\.revokeObjectURL\(url\)/);
+    expect(src).not.toMatch(/window\.location\.href = `mailto:/);
   });
 
-  it("mailto 공급사 이메일 pre-fill (recipients + subject + body)", () => {
+  it("실 발송 결과 기반 토스트 (emailsSent/Failed, 가짜 성공 0)", () => {
     const src = read(PATH);
-    expect(src).toMatch(/validVendors\.map\(\(v\)\s*=>\s*v\.email\)\.filter\(Boolean\)\.join\(","\)/);
-    expect(src).toMatch(/window\.location\.href = `mailto:\$\{recipients\}/);
+    expect(src).toMatch(/result\?\.summary\?\.emailsSent/);
+    expect(src).toMatch(/result\?\.summary\?\.emailsFailed/);
+    expect(src).toMatch(/title:\s*failed > 0 \? "일부 공급사 발송 실패" : "공급사 발송 완료"/);
   });
 
-  it("성공 toast — 'PDF 다운로드 완료'", () => {
+  it("에러 메시지 — '공급사 발송 실패'", () => {
     const src = read(PATH);
-    expect(src).toMatch(/title:\s*"견적서 PDF 다운로드 완료"/);
-  });
-
-  it("에러 메시지 개선 — '견적서 생성에 실패' (이전 '견적 요청 전달 실패')", () => {
-    const src = read(PATH);
-    expect(src).toMatch(/견적서 생성에 실패했습니다\. 다시 시도해 주세요\./);
-    expect(src).toMatch(/title:\s*"견적서 생성 실패"/);
+    expect(src).toMatch(/title:\s*"공급사 발송 실패"/);
   });
 });
 
-describe("§11.314-b-2 — 버튼 라벨 PDF 정합", () => {
-  it("aria-label '견적서 PDF 다운로드'", () => {
+describe("§quote-dispatch-real-send-unify P1 — 버튼 라벨 발송 정합", () => {
+  it("aria-label '공급사에 견적 요청 발송'", () => {
     const src = read(PATH);
-    expect(src).toMatch(/aria-label="견적서 PDF 다운로드"/);
+    expect(src).toMatch(/aria-label="공급사에 견적 요청 발송"/);
   });
 
-  it("visible 라벨 '견적서 PDF 다운로드' (이전 '최종 확인 후 전송')", () => {
+  it("visible 라벨 발송 (공급사에 발송 / 발송 중… / 발송 완료)", () => {
     const src = read(PATH);
-    expect(src).toMatch(/견적서 PDF 다운로드/);
-    expect(src).toMatch(/견적서 생성 중…/);
-    expect(src).toMatch(/PDF 다운로드 완료/);
+    expect(src).toMatch(/공급사에 발송/);
+    expect(src).toMatch(/발송 중…/);
+    expect(src).toMatch(/발송 완료/);
+  });
+
+  it("옛 PDF 라벨 제거 (견적서 PDF 다운로드 = 발송 버튼 아님)", () => {
+    const src = read(PATH);
+    expect(src).not.toMatch(/PDF 다운로드 완료/);
+  });
+
+  it("P2 — 견적서 다운로드 별도 버튼(executeDownloadPdf) 존치 (발송과 분리, dead button 0)", () => {
+    const src = read(PATH);
+    expect(src).toMatch(/executeDownloadPdf/);
+    expect(src).toMatch(/견적서 다운로드/);
   });
 });
 
-describe("§11.314-b-2 — 회귀 0 (공급사 선택/검증 + sendReadiness 보존)", () => {
+describe("§quote-dispatch-real-send-unify P1 — 회귀 0 (선택/검증 + tracking + sendReadiness 보존)", () => {
+  const src = read(PATH);
   it("공급사 이메일 형식 검증 보존", () => {
-    const src = read(PATH);
     expect(src).toMatch(/emailRegex/);
     expect(src).toMatch(/이메일 형식 오류/);
   });
-
   it("includedSuppliers → validVendors (email/name) 보존", () => {
-    const src = read(PATH);
     expect(src).toMatch(/const validVendors = includedSuppliers\.map/);
     expect(src).toMatch(/email:\s*s\.email/);
   });
-
-  it("sentTracking + localStorage 보존 (다운로드 추적)", () => {
-    const src = read(PATH);
+  it("sentTracking + localStorage 보존", () => {
     expect(src).toMatch(/setSentTracking/);
     expect(src).toMatch(/trackingStorageKey/);
     expect(src).toMatch(/window\.localStorage\.setItem/);
   });
-
-  it("sendReadiness 분기 (전송 전 확인 필요) 보존", () => {
-    const src = read(PATH);
+  it("sendReadiness 분기 보존", () => {
     expect(src).toMatch(/sendReadiness !== "ready"/);
     expect(src).toMatch(/전송 전 확인 필요/);
   });
-
   it("setConfirmationOpen + onSuccess 보존", () => {
-    const src = read(PATH);
     expect(src).toMatch(/setConfirmationOpen\(false\)/);
     expect(src).toMatch(/onSuccess\?\.\(\)/);
   });
