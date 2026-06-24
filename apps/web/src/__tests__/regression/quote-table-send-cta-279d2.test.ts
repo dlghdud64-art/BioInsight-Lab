@@ -42,10 +42,13 @@ describe("§11.279d-2 — 테이블 뷰 발송 버튼 모달 wiring", () => {
     );
   });
 
-  it("기존 handleQuoteCardSelect 분기 보존 — '견적 요청 발송' → setActiveWorkWindow('request_send')", () => {
+  it("handleQuoteCardSelect 분기 — '견적 요청 발송' → 발송 인텐트(2-step) 게이트 (§quote-management-redesign P2)", () => {
+    // 진화: 분기 보존(패널 토글 회귀 0) + 1-tap 직접 발송이 인텐트 모달 경유로 오발송 방지.
+    //   워크플로우 진입(request_send)은 인텐트 "발송 검토 계속"에서 setSelectedQuoteId 동반 보존.
     expect(PAGE).toMatch(/if \(ctaLabel === "견적 요청 발송"\)/);
-    expect(PAGE).toMatch(/setActiveWorkWindow\("request_send"\)/);
-    expect(PAGE).toMatch(/setSelectedQuoteId\(quoteId\)/);
+    expect(PAGE).toMatch(/setSendIntentQuoteId\(quoteId\)/);
+    expect(PAGE).toMatch(/quote-send-intent-continue[\s\S]{0,200}setActiveWorkWindow\("request_send"\)/);
+    expect(PAGE).toMatch(/setSelectedQuoteId\(sendIntentQuoteId\)/);
   });
 
   it("§11.279d 카드 [발송] CTA wiring 보존 (회귀 0)", () => {

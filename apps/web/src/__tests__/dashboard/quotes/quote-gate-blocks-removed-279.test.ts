@@ -89,11 +89,16 @@ describe("§11.279d — QuoteCard request_not_sent 분기 직접 [발송] button
     expect(PAGE).toMatch(/"quote-card-direct-send-cta"[\s\S]{0,300}e\.stopPropagation\(\)/);
   });
 
-  it("handleQuoteCardSelect ctaLabel === '견적 요청 발송' → setActiveWorkWindow('request_send') 직진 (VendorRequestModal)", () => {
-    // §11.279d — 카드 CTA 클릭 → handleQuoteCardSelect(quoteId, ctaLabel) →
-    //   ctaLabel === "견적 요청 발송" 분기에서 setActiveWorkWindow("request_send") 직접 호출
+  it("handleQuoteCardSelect ctaLabel === '견적 요청 발송' → 발송 인텐트(2-step) 게이트 (§quote-management-redesign P2)", () => {
+    // §11.279d → §quote-management-redesign P2 진화: 1-tap 직접 발송이 패널 토글 회귀 없이
+    //   발송 워크플로우로 진입하되, 오발송 방지 위해 ConfirmSendModal(인텐트) 2-step 경유.
+    //   보호의도(발송 워크플로우 진입·토글 회귀 금지) 불변, 진입 경로만 인텐트 게이트로 진화.
     expect(PAGE).toMatch(
-      /ctaLabel === "견적 요청 발송"[\s\S]{0,200}setActiveWorkWindow\(["']request_send["']\)/,
+      /ctaLabel === "견적 요청 발송"[\s\S]{0,260}setSendIntentQuoteId\(quoteId\)/,
+    );
+    // 워크플로우 진입(request_send)은 인텐트 "발송 검토 계속"에서 보존.
+    expect(PAGE).toMatch(
+      /quote-send-intent-continue[\s\S]{0,200}setActiveWorkWindow\(["']request_send["']\)/,
     );
   });
 

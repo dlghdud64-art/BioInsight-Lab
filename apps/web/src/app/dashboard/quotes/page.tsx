@@ -1034,6 +1034,9 @@ function QuotesPageContent() {
   const [autoScrollToVendorSection, setAutoScrollToVendorSection] = useState<boolean>(false);
   const vendorResponseSectionRef = useRef<HTMLDivElement | null>(null);
   const [activeWorkWindow, setActiveWorkWindow] = useState<WorkWindowKey>(null);
+  // §quote-management-redesign P2 — 발송 인텐트(2-step) 게이트 대상 caseId. 리스트 1-tap 직접
+  //   발송(§11.279d) → ConfirmSendModal 확인 → "발송 검토 계속" 시에만 VendorRequestModal 진입(오발송 방지).
+  const [sendIntentQuoteId, setSendIntentQuoteId] = useState<string | null>(null);
   const [aiCompareOpen, setAiCompareOpen] = useState(false);
   const [aiCompareLoading, setAiCompareLoading] = useState(false);
   // §10 비교 모달 풀 빌드(시안 CompareModal) — 순위 카드·세부표·협상 포인트·추천 열 리치 shape.
@@ -1332,8 +1335,9 @@ function QuotesPageContent() {
   //   전 setSelectedQuoteId + setActiveWorkWindow("request_send") 직접 호출.
   const handleQuoteCardSelect = useCallback((quoteId: string, ctaLabel?: string) => {
     if (ctaLabel === "견적 요청 발송") {
-      setSelectedQuoteId(quoteId);
-      setActiveWorkWindow("request_send");
+      // §quote-management-redesign P2 — 직접 VendorRequestModal 진입 대신 발송 인텐트(2-step)
+      //   게이트. 오발송 방지: ConfirmSendModal "발송 검토 계속" 시에만 request_send 진입.
+      setSendIntentQuoteId(quoteId);
       return;
     }
     openQuoteContextRail(quoteId, "row");
@@ -4208,6 +4212,75 @@ function QuotesPageContent() {
           } : undefined}
         />
       )}
+
+      {/* ═══ §quote-management-redesign P2 — 발송 인텐트(2-step) 확인 모달 ═══
+          리스트 1-tap 직접 발송 → 케이스 요약 + "아직 발송 안됨" 확인 → "발송 검토 계속" 시에만
+          VendorRequestModal 진입(오발송 방지). 취소·계속 모두 실 동작(dead button 0). */}
+      {sendIntentQuoteId && (() => {
+        const intentQuote = quotes.find((q) => q.id === sendIntentQuoteId);
+        if (!intentQuote) return null;
+        const intentCase = toQuoteCase(intentQuote);
+        const intentDd = intentCase ? computePriority(intentCase).dd : null;
+        const intentSuppliers = toSuppliers(intentQuote.vendorRequests);
+        const intentSignals = getOpSignals(intentQuote);
+        const intentFirstItem = intentQuote.items?.[0] as { product?: { name?: string }; name?: string } | undefined;
+        const intentFirstName = intentFirstItem?.product?.name ?? intentFirstItem?.name ?? null;
+        const intentMore = Math.max(0, (intentQuote.items?.length ?? 0) - 1);
+        const intentTitle = intentFirstName
+          ? intentMore > 0 ? `${intentFirstName} 외 ${intentMore}건` : intentFirstName
+          : intentQuote.title;
+        const intentDueLabel =
+          intentDd == null ? "마감 미정"
+          : intentDd < 0 ? `${-intentDd}일 지남`
+          : intentDd === 0 ? "오늘 마감"
+          : `D-${intentDd}`;
+        return (
+          <Dialog open onOpenChange={(open) => { if (!open) setSendIntentQuoteId(null); }}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>견적 요청을 발송할까요?</DialogTitle>
+                <DialogDescription>{intentSignals.summary}</DialogDescription>
+              </DialogHeader>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-500">견적케이스</span>
+                  <span className="font-medium text-slate-900 text-right truncate">{intentTitle}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-500">참조</span>
+                  <span className="font-mono text-[12px] text-slate-600">{quoteDisplayRef(intentQuote)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-500">공급사 후보</span>
+                  <span className={intentSuppliers.length > 0 ? "font-medium text-slate-900" : "text-slate-500"}>
+                    {intentSuppliers.length > 0 ? `${intentSuppliers.length}곳` : "미지정 — 발송 검토에서 추가"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-500">마감</span>
+                  <span className={intentDd != null && intentDd <= 2 ? "font-semibold text-red-600" : "text-slate-700"}>
+                    {intentDueLabel}
+                  </span>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-1">
+                <Button variant="outline" onClick={() => setSendIntentQuoteId(null)}>취소</Button>
+                <Button
+                  data-testid="quote-send-intent-continue"
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={() => {
+                    setSelectedQuoteId(sendIntentQuoteId);
+                    setActiveWorkWindow("request_send");
+                    setSendIntentQuoteId(null);
+                  }}
+                >
+                  발송 검토 계속
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
 
       {/* ═══ 견적 발송 워크벤치 (request_send) ═══ */}
       {activeWorkWindow === "request_send" && selectedQuote && (
