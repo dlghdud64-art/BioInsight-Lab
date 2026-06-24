@@ -34,7 +34,8 @@ describe("§quotes-workbench-rail A — 테이블 min-w 강제", () => {
 describe("§quotes-workbench-rail A — supplier 빈상태 nowrap", () => {
   it("'공급사 미정' span whitespace-nowrap (글자 중간 깨짐 방지)", () => {
     const src = read(AVATARS);
-    expect(src).toMatch(/text-xs text-slate-400 whitespace-nowrap">공급사 미정/);
+    // §dashboard-home-redesign 동반(호영님 대비 개선) — 색 slate-400→slate-500. nowrap(글자 깨짐 방지) 보호 의도 보존, 색은 비의존.
+    expect(src).toMatch(/whitespace-nowrap">공급사 미정/);
   });
   it("회귀 0 — SupplierAvatars 0건 empty state 보존", () => {
     const src = read(AVATARS);

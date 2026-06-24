@@ -37,7 +37,7 @@ export function SupplierAvatars({ suppliers }: { suppliers: Supplier[] }) {
   if (suppliers.length === 0) {
     // §quotes-workbench-rail A — whitespace-nowrap: 셀 압축 시 "공급사 미정"이 글자 중간에서
     //   잘리거나 줄바꿈되지 않도록(깨진 라벨 "공급 미경" 방지). 잘려도 셀 폭은 테이블 min-w 가 보호.
-    return <span className="text-xs text-slate-400 whitespace-nowrap">공급사 미정</span>;
+    return <span className="text-xs text-slate-500 whitespace-nowrap">공급사 미정</span>;
   }
   const shown = suppliers.slice(0, 3);
   const extra = suppliers.length - shown.length;

@@ -3031,7 +3031,7 @@ function QuotesPageContent() {
                             title={tableDisplayTitle}
                           >
                             <div className="flex flex-col gap-0.5 min-w-0">
-                              <span className="text-[10px] font-mono text-slate-400 truncate">{quoteRef}</span>
+                              <span className="text-[10px] font-mono text-slate-500 truncate">{quoteRef}</span>
                               <span className={`text-xs truncate ${
                                 isDuplicateOfPrev ? "font-normal text-gray-400" : "font-medium text-gray-900"
                               }`}>
@@ -3115,7 +3115,7 @@ function QuotesPageContent() {
                           <td key={key} style={{ width }} className="px-3 py-2 text-right text-[11px] tabular-nums">
                             {/* §11.242 #8 — 빈 데이터 색상 약화 (호영님 spec: text-gray-300). */}
                             {prices.length === 0 ? (
-                              <span className="text-gray-300">견적 대기</span>
+                              <span className="text-slate-500">견적 대기</span>
                             ) : minPrice === maxPrice ? (
                               <span className="text-slate-700">₩{minPrice!.toLocaleString("ko-KR")}</span>
                             ) : (
@@ -3132,7 +3132,7 @@ function QuotesPageContent() {
                         return (
                           <td key={key} style={{ width }} className="px-3 py-2 text-center">
                             {priorityLevel === "normal" ? (
-                              <span className="inline-block w-2 h-2 rounded-full bg-slate-300" aria-label="우선순위 보통" />
+                              <span className="inline-block w-2 h-2 rounded-full bg-slate-400" aria-label="우선순위 보통" />
                             ) : (
                               <span
                                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
