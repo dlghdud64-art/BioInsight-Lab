@@ -32,6 +32,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Package, Building2, History, DollarSign, FileText, ShoppingCart, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+// §inventory-reorder-surface-unify P3b — 바로 발주(PO)는 ENABLE_PURCHASING off 시 정직 disabled+사유(§purchasing-hide 일관).
+import { getFlag } from "@/lib/feature-flags";
 
 /** 추천 벤더 (PurchaseRecord 집계, 최근 3개월 해당 품목). */
 export interface VendorSuggestion {
@@ -76,6 +78,8 @@ export function ReorderReviewSheet({ open, onClose, data }: ReorderReviewSheetPr
     ? data.recommendedQty * primaryVendor.unitPrice
     : 0;
   const hasVendor = data.vendors.length > 0;
+  // §inventory-reorder-surface-unify P3b — 발주(PO) 라이브 표면 게이팅. off면 바로 발주 disabled+사유, 견적 요청은 live.
+  const purchasingOn = getFlag("ENABLE_PURCHASING");
 
   /** §11.310 Q30 — 견적 요청 = query string pre-fill (DB write 0) */
   const handleRequestQuote = () => {
@@ -93,7 +97,7 @@ export function ReorderReviewSheet({ open, onClose, data }: ReorderReviewSheetPr
 
   /** §11.310 Q31 — 바로 발주 = query string + PO 화면 진입 시 draft auto-create */
   const handleDirectPurchase = () => {
-    if (!hasVendor) return;
+    if (!hasVendor || !purchasingOn) return;
     const params = new URLSearchParams({
       productName: data.productName,
       quantity: String(data.recommendedQty),
@@ -266,13 +270,22 @@ export function ReorderReviewSheet({ open, onClose, data }: ReorderReviewSheetPr
               type="button"
               data-testid="reorder-review-direct-purchase-cta"
               onClick={handleDirectPurchase}
-              disabled={!hasVendor}
+              disabled={!hasVendor || !purchasingOn}
               className="flex-1 h-11 min-h-[44px] text-sm bg-green-600 hover:bg-green-700 text-white font-semibold disabled:opacity-50"
             >
               <ShoppingCart className="h-4 w-4 mr-1.5" />
               바로 발주
             </Button>
           </div>
+          {/* §inventory-reorder-surface-unify P3b — 발주 OFF 정직 사유(dead button 아님, 견적 요청은 live). */}
+          {!purchasingOn && (
+            <p
+              data-testid="reorder-review-purchasing-off"
+              className="pt-1 text-[11px] text-slate-500"
+            >
+              발주 기능은 준비 중입니다. 지금은 견적 요청으로 진행하세요.
+            </p>
+          )}
         </div>
       </SheetContent>
     </Sheet>

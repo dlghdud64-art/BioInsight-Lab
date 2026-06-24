@@ -66,7 +66,8 @@ describe("§11.310 — ReorderReviewSheet 컴포넌트", () => {
     expect(src).toMatch(/data-testid="reorder-review-direct-purchase-cta"/);
     expect(src).toMatch(/router\.push\(`\/dashboard\/purchase-orders\/new\?\$\{params\.toString\(\)\}`\)/);
     expect(src).toMatch(/prefill:\s*["']reorder-recommendation["']/);
-    expect(src).toMatch(/disabled=\{!hasVendor\}/);
+    // §inventory-reorder-surface-unify P3b 진화 — vendor-0 disable 의도 보존 + purchasing-off 조건 추가 허용.
+    expect(src).toMatch(/disabled=\{!hasVendor( \|\| !purchasingOn)?\}/);
   });
 
   it("색상 — green-600 (실행 가능 액션 — 호영님 spec)", () => {

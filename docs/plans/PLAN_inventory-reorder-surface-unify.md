@@ -259,7 +259,7 @@ All phases must strictly follow Red-Green-Refactor. Sentinel = readFileSync + re
   - 패널 proceed(site 5, onReorder): canonical qty 있으면 `openReorderReviewSheet`(승격 시트), 없으면 `setContextPanelMode("reorder")` flip(빈 시트/no-op 방지). §11.158 cache-bust 보존.
 - sentinel: `inventory-reorder-surface-unify-p3a.test.ts`(preparePanel 0건 + 사이트별 라우팅 + guard).
 
-**P3b 잔여:** `ReorderReviewSheet` "바로 발주"(PO, L273)에 `ENABLE_PURCHASING` off → disabled + 정직 사유. [견적 요청]·검토는 불변(live). §11.310 reorder-review-sheet/api-310b sentinel 보존(query-string/draft wiring 유지, disabled 조건만 추가).
+**P3b Land (2026-06-24):** `ReorderReviewSheet` "바로 발주"(PO)에 `getFlag("ENABLE_PURCHASING")` 게이팅 — off 시 `disabled={!hasVendor || !purchasingOn}` + 정직 사유(`data-testid="reorder-review-purchasing-off"`, "발주 기능은 준비 중입니다…"). handleDirectPurchase 가드도 purchasing-off 포함. [견적 요청]·PO draft wiring·vendor-0 disable·amber 0 전부 불변(§11.310 보존). sentinel: `inventory-reorder-surface-unify-p3b.test.ts` 신규 + `reorder-review-sheet-310` L69 진화(`disabled={!hasVendor( || !purchasingOn)?}` — vendor-0 의도 보존).
 
 **✋ Quality Gate (P3a):** preparePanel 0건, dead button/no-op 0(진입은 패널 항상 열림, proceed는 guard), §11.310 무손, build EXIT 0
 **Rollback:** 5 site rewire revert (preparePanel 복원)
@@ -343,16 +343,17 @@ touching: inventory reorder / dispose 우선순위.
 
 ## 11. Progress Tracking
 
-- Overall completion: 75% (Phase 0·1·2 + P3a 완료)
-- Current phase: Phase 3 P3b (바로발주 게이팅) 잔여
+- Overall completion: 85% (Phase 0·1·2·3 완료)
+- Current phase: Phase 4 (AiAssistant 분석 래퍼 retire) 잔여
 - Current blocker: 없음
-- Next validation step: P3b — ReorderReviewSheet "바로 발주" purchasing-off disabled+사유 (§11.310 sentinel 보존)
+- Next validation step: P4 — `<InventoryAiAssistantPanel>` 렌더(L4003)+`?ai_panel=` deep-link(L360)+`useInventoryAiPanel` import 제거(타 사용 0 확인), ReorderReviewSheet 보존, orphan 0
 
 **Phase Checklist:**
 - [x] Phase 0 complete
 - [x] Phase 1 complete
 - [x] Phase 2 complete
-- [~] Phase 3 — P3a(rewire) 완료 / P3b(발주 게이팅) 잔여
+- [x] Phase 3 complete (P3a rewire + P3b 발주 게이팅)
+- [ ] Phase 4 — AiAssistant 분석 래퍼 retire
 - [ ] Phase 4 complete
 
 ---
