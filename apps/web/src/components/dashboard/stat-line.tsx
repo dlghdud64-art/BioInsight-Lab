@@ -182,9 +182,11 @@ export function StatLine({ state, summary, onRetry }: StatLineProps) {
                 {chip.label}
               </span>
             </div>
+            {/* §dashboard-home-redesign P3 — 0건 value 가독성 slate-500(시안 README L11). 아이콘/라벨은
+                §11.311 gray-400 비활성 톤 유지(de-emphasis 위계 보존 + 0건 카드 bg-gray-50). */}
             <p
               className={`text-lg md:text-xl font-black tracking-tighter tabular-nums leading-none whitespace-nowrap ${
-                active ? "text-slate-900" : "text-gray-400"
+                active ? "text-slate-900" : "text-slate-500"
               }`}
             >
               {won(it.value)}

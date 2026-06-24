@@ -129,6 +129,8 @@ export function Pipeline({ state, summary, onRetry }: PipelineProps) {
   //   buildStages 의 po 객체는 보존(소스 문자열 = sentinel GREEN), 렌더 목록만 필터.
   const stages = buildStages(summary).filter((s) => getFlag("ENABLE_PURCHASING") || s.key !== "po");
   const gridColsClass = stages.length === 3 ? "md:grid-cols-3" : "md:grid-cols-4";
+  // §dashboard-home-redesign P3 — 퍼널 하단 진행바 비율(시안 .pbar). canonical=stage.total(파생만, 가짜 0).
+  const maxTotal = Math.max(...stages.map((s) => s.total), 1);
 
   return (
     <div className={`grid grid-cols-2 gap-2 ${gridColsClass}`}>
@@ -155,7 +157,8 @@ export function Pipeline({ state, summary, onRetry }: PipelineProps) {
                 <ChevronRight className="hidden md:block h-3 w-3 text-slate-300 ml-auto" aria-hidden />
               )}
             </div>
-            <p className={`text-lg md:text-xl font-black tracking-tighter tabular-nums leading-none ${active ? "text-slate-900" : "text-gray-400"}`}>
+            {/* §dashboard-home-redesign P3 — 0건 value 가독성 slate-500(시안 README, de-emphasis는 bg-gray-50 유지). */}
+            <p className={`text-lg md:text-xl font-black tracking-tighter tabular-nums leading-none ${active ? "text-slate-900" : "text-slate-500"}`}>
               {stage.total}
               <span className="text-[11px] font-semibold ml-0.5">건</span>
             </p>
@@ -164,7 +167,16 @@ export function Pipeline({ state, summary, onRetry }: PipelineProps) {
                 {stage.attentionLabel} {stage.attention}건
               </p>
             ) : (
-              <p className="mt-1 text-[11px] text-gray-400">{active ? "이상 없음" : "데이터 없음"}</p>
+              <p className="mt-1 text-[11px] text-slate-500">{active ? "이상 없음" : "데이터 없음"}</p>
+            )}
+            {/* §dashboard-home-redesign P3 — 퍼널 진행바(시안 .pbar). active만, 폭=total/maxTotal. 0건은 미표시(흐림 유지). */}
+            {active && (
+              <div className="mt-2 h-1 rounded-full bg-slate-100 overflow-hidden" aria-hidden="true">
+                <i
+                  className="block h-full rounded-full bg-blue-500"
+                  style={{ width: `${Math.min((stage.total / maxTotal) * 100, 100)}%` }}
+                />
+              </div>
             )}
           </a>
         );
