@@ -69,6 +69,8 @@ const OpsExecutionContext = dynamic(() => import("@/components/ops/ops-execution
 const PriorityActionQueue = dynamic(() => import("@/components/inventory/priority-action-queue").then((m) => m.PriorityActionQueue), { ssr: false });
 const InventoryContextPanel = dynamic(() => import("@/components/inventory/inventory-context-panel").then((m) => m.InventoryContextPanel), { ssr: false });
 const MobileOperationalBriefSheet = dynamic(() => import("@/components/operational-brief/mobile-bottom-sheet").then((m) => m.MobileOperationalBriefSheet), { ssr: false });
+// §inventory-reorder-surface-unify P2 — ReorderReviewSheet content-level 승격 래퍼(AiAssistant 비의존 직접 오픈).
+const InventoryReorderReviewSheet = dynamic(() => import("@/components/inventory/inventory-reorder-review-sheet").then((m) => m.InventoryReorderReviewSheet), { ssr: false });
 const OperationalBriefFloatingEntry = dynamic(() => import("@/components/operational-brief/floating-entry").then((m) => m.OperationalBriefFloatingEntry), { ssr: false });
 // §11.258-sweep-2 — 모바일 한정 좌측 하단 floating 진입 (방안 1 위치 분리).
 //   BarcodeScanFab (right-4) 와 분리 (left-4). dashboard inline link 와 별개.
@@ -314,6 +316,16 @@ function InventoryPageContent() {
   // §inventory-panel-unify P3 — 진입 맥락(detail/reorder). 재발주 진입 시 통합 패널 상단 강조 전환(AiAssistant 미오픈).
   const [contextPanelMode, setContextPanelMode] = useState<"detail" | "reorder">("detail");
   const contextPanelOpen = contextPanelItem !== null;
+
+  // §inventory-reorder-surface-unify P2 — ReorderReviewSheet content-level 승격.
+  //   AiAssistant 내부 state 비의존 → ContextPanel/모바일이 openReorderReviewSheet(item)로 직접 오픈.
+  const [reorderReviewItem, setReorderReviewItem] = useState<ProductInventory | null>(null);
+  const openReorderReviewSheet = (item: ProductInventory) => setReorderReviewItem(item);
+  // canonical recommendedQty 조회(데스크탑 패널 reorderQty와 동일 소스 /reorder-recommendations). 가짜 0 금지.
+  const reorderRecommendedQtyFor = (inventoryId: string | undefined): number | null =>
+    inventoryId
+      ? reorderRecommendationsData?.recommendations?.find((r) => r.inventoryId === inventoryId)?.recommendedQty ?? null
+      : null;
 
   // ── Inventory tab (controlled) ──
   const [activeInventoryTab, setActiveInventoryTab] = useState("manage");
@@ -2631,6 +2643,7 @@ function InventoryPageContent() {
         {contextPanelOpen && contextPanelItem && (
           <MobileOperationalBriefSheet
             open={contextPanelOpen}
+            mode={contextPanelMode}
             onClose={() => setContextPanelItem(null)}
             objectLabel="선택한 재고"
             chips={[
@@ -2666,33 +2679,21 @@ function InventoryPageContent() {
             }
             risks={contextPanelItem.expiryDate && new Date(contextPanelItem.expiryDate).getTime() < Date.now() ? <p className="text-xs text-rose-700">유효기간 만료</p> : <p className="text-xs text-slate-500">차단 없음</p>}
             next={<p className="text-xs text-slate-700">재발주 또는 정보 수정</p>}
-            primaryCta={{
-              label: "재발주",
-              onClick: () => {
-                const match = displayInventories.find((inv) => inv.id === contextPanelItem.id);
-                if (match) {
-                  aiPanel.preparePanel({
-                    id: match.id,
-                    productId: match.productId,
-                    productName: match.product.name,
-                    brand: match.product.brand || undefined,
-                    catalogNumber: match.product.catalogNumber || undefined,
-                    currentQuantity: match.currentQuantity,
-                    unit: match.unit || undefined,
-                    safetyStock: match.safetyStock || undefined,
-                    minOrderQty: match.minOrderQty || undefined,
-                    location: match.location || undefined,
-                    expiryDate: match.expiryDate || undefined,
-                    lotNumber: match.lotNumber || undefined,
-                    autoReorderEnabled: match.autoReorderEnabled || false,
-                    averageDailyUsage: match.averageDailyUsage || undefined,
-                    leadTimeDays: match.leadTimeDays || undefined,
-                    lastInspectedAt: undefined,
-                  });
-                }
-                setContextPanelItem(null);
-              },
-            }}
+            primaryCta={(() => {
+              // §inventory-reorder-surface-unify P2 — 모바일 재발주 진입 = ReorderReviewSheet(승격) 직접 오픈.
+              //   recommendedQty = canonical(/reorder-recommendations). 추천 없으면 disabled(dead button 0, 가짜 0 금지).
+              const qty = reorderRecommendedQtyFor(contextPanelItem.id);
+              const hasRec = qty != null && qty > 0;
+              return {
+                label: hasRec ? `재발주안 검토 (${qty}${contextPanelItem.unit})` : "재발주 권장 없음",
+                disabled: !hasRec,
+                onClick: () => {
+                  const match = displayInventories.find((inv) => inv.id === contextPanelItem.id);
+                  setContextPanelItem(null);
+                  if (match) openReorderReviewSheet(match);
+                },
+              };
+            })()}
           />
         )}
 
@@ -4033,6 +4034,18 @@ function InventoryPageContent() {
           aiPanel.setIsOpen(false);
         }}
         isAnalyzing={aiPanel.isAnalyzing}
+      />
+
+      {/* §inventory-reorder-surface-unify P2 — content-level 재발주안 검토 시트(ReorderReviewSheet 승격).
+          recommendedQty = canonical(/reorder-recommendations) — 데스크탑 패널과 동일 소스. null이면 미표시(가짜 0 금지). */}
+      <InventoryReorderReviewSheet
+        open={reorderReviewItem !== null}
+        onClose={() => setReorderReviewItem(null)}
+        productId={reorderReviewItem?.productId ?? null}
+        productName={reorderReviewItem?.product.name ?? null}
+        recommendedQty={reorderRecommendedQtyFor(reorderReviewItem?.id)}
+        unit={reorderReviewItem?.unit ?? undefined}
+        storageLocation={reorderReviewItem?.location ?? undefined}
       />
 
       {/* ── LOT Disposal Panel (object-scoped disposal dock) ── */}

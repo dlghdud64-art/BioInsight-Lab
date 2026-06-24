@@ -220,9 +220,23 @@ All phases must strictly follow Red-Green-Refactor. Sentinel = readFileSync + re
 **✋ Quality Gate:** RED 실 실패 확인(operator), 기존 sentinel(panel-unify/297e/310/310b) baseline-delta 0, 297e prepareCount=MAIN(legacy) 무관 재확인
 **Rollback:** sentinel/스캐폴딩 revert
 
-#### Phase 2: Extract ReorderReviewSheet + Mobile Reorder Surface
-**Goal:** ReorderReviewSheet를 content-level로 승격(독립 오픈 가능) + 모바일 시트 reorder mode.
-- Status: [ ] Pending
+#### Phase 2: Extract ReorderReviewSheet + Mobile Reorder Surface ✅ COMPLETE (2026-06-24)
+**Goal:** ReorderReviewSheet를 content-level로 승격(독립 오픈 가능) + 모바일 시트 reorder 진입.
+- Status: [x] Complete
+
+**Land 내용:**
+- `components/inventory/inventory-reorder-review-sheet.tsx` (신규) — `InventoryReorderReviewSheet` 래퍼: AiAssistant 비의존, `useReorderRecommendation`(벤더·최근구매) + `ReorderReviewSheet` 렌더. recommendedQty null/0 → data null(가짜 0 금지).
+- `inventory-content.tsx` — `reorderReviewItem` state + `openReorderReviewSheet(item)` + `reorderRecommendedQtyFor`(canonical `/reorder-recommendations`, 데스크탑 L2708과 동일 소스) + 래퍼 content-level 렌더.
+- `inventory-content.tsx` 모바일 브리프시트(L2632) — `mode={contextPanelMode}` 전달 + primaryCta를 canonical 기반 reorder 진입으로 교체(추천 있으면 `재발주안 검토 (N단위)` → openReorderReviewSheet, 없으면 disabled "재발주 권장 없음"). **preparePanel(AiAssistant) 제거 = site 4(모바일) 조기 rewire.**
+- `__tests__/regression/inventory-reorder-surface-unify-p2.test.ts` (신규 sentinel).
+
+**Phase 경계 정정:** PLAN 원안의 6-site rewire는 P3였으나, **site 4(모바일 primaryCta)는 "모바일 reorder 섹션"의 본체**라 P2로 이동. 잔여 5 site(1·2·3·5·6) + 패널 split + 발주 게이팅 = P3.
+
+**✋ Quality Gate:** ReorderReviewSheet content 직접 오픈 작동(§11.310 sentinel 보존), 모바일 canonical 수량(가짜 0 금지)·dead button 0(추천 없으면 disabled), 297e prepareCount=MAIN(legacy) 무관, build EXIT 0
+**Rollback:** 래퍼 파일 + content state/render/모바일 primaryCta revert (preparePanel 복원)
+
+#### Phase 2 (원안 — 참고): Extract + Mobile
+- Status: [x] (위로 집행)
 
 **🔴 RED:** Phase 1 ⓐⓑ sentinel.
 **🟢 GREEN:**
@@ -316,15 +330,15 @@ touching: inventory reorder / dispose 우선순위.
 
 ## 11. Progress Tracking
 
-- Overall completion: 40% (Phase 0·1 완료)
-- Current phase: Phase 2 (미착수)
+- Overall completion: 60% (Phase 0·1·2 완료)
+- Current phase: Phase 3 (미착수)
 - Current blocker: 없음
-- Next validation step: Phase 2 — ReorderReviewSheet content 승격 + 모바일 reorder 섹션 (sentinel 동반)
+- Next validation step: Phase 3 — 패널 onReorder split + 잔여 5 site rewire + 바로발주 purchasing-off disabled+사유
 
 **Phase Checklist:**
 - [x] Phase 0 complete
 - [x] Phase 1 complete
-- [ ] Phase 2 complete
+- [x] Phase 2 complete
 - [ ] Phase 3 complete
 - [ ] Phase 4 complete
 
