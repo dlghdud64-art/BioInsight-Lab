@@ -1440,24 +1440,8 @@ function InventoryPageContent() {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onReorder={(inventory) => {
-            aiPanel.preparePanel({
-              id: inventory.id,
-              productId: inventory.productId,
-              productName: inventory.product.name,
-              brand: inventory.product.brand || undefined,
-              catalogNumber: inventory.product.catalogNumber || undefined,
-              currentQuantity: inventory.currentQuantity,
-              unit: inventory.unit || undefined,
-              safetyStock: inventory.safetyStock || undefined,
-              minOrderQty: inventory.minOrderQty || undefined,
-              location: inventory.location || undefined,
-              expiryDate: inventory.expiryDate || undefined,
-              lotNumber: inventory.lotNumber || undefined,
-              autoReorderEnabled: inventory.autoReorderEnabled || false,
-              averageDailyUsage: inventory.averageDailyUsage || undefined,
-              leadTimeDays: inventory.leadTimeDays || undefined,
-              lastInspectedAt: undefined,
-            });
+            // §inventory-reorder-surface-unify P3 — 모바일 리스트 재발주 진입 = 통합 패널(reorder mode). AiAssistant 직접 오픈 retire.
+            openReorderReview(inventory);
           }}
           onEdit={(inventory) => {
             setEditingInventory(inventory);
@@ -1990,24 +1974,8 @@ function InventoryPageContent() {
                             }
                           }}
                           onReorder={(inventory) => {
-                            aiPanel.preparePanel({
-                              id: inventory.id,
-                              productId: inventory.productId,
-                              productName: inventory.product.name,
-                              brand: inventory.product.brand || undefined,
-                              catalogNumber: inventory.product.catalogNumber || undefined,
-                              currentQuantity: inventory.currentQuantity,
-                              unit: inventory.unit || undefined,
-                              safetyStock: inventory.safetyStock || undefined,
-                              minOrderQty: inventory.minOrderQty || undefined,
-                              location: inventory.location || undefined,
-                              expiryDate: inventory.expiryDate || undefined,
-                              lotNumber: inventory.lotNumber || undefined,
-                              autoReorderEnabled: inventory.autoReorderEnabled || false,
-                              averageDailyUsage: inventory.averageDailyUsage || undefined,
-                              leadTimeDays: inventory.leadTimeDays || undefined,
-                              lastInspectedAt: undefined,
-                            });
+                            // §inventory-reorder-surface-unify P3 — 테이블 행 재발주 진입 = 통합 패널(reorder mode).
+                            openReorderReview(inventory);
                           }}
                           onDetailClick={(inventory) => {
                             // Open context panel (right-side) on desktop; Sheet on mobile
@@ -2274,24 +2242,8 @@ function InventoryPageContent() {
                                           className={`h-7 px-2 text-[11px] whitespace-nowrap gap-1 ${issueType === "out_of_stock" ? "text-red-700 border-red-500/30 hover:bg-red-50" : "text-red-700 border-red-500/30 hover:bg-red-50"}`}
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            aiPanel.preparePanel({
-                                              id: inv.id,
-                                              productId: inv.productId,
-                                              productName: inv.product.name,
-                                              brand: inv.product.brand || undefined,
-                                              catalogNumber: inv.product.catalogNumber || undefined,
-                                              currentQuantity: inv.currentQuantity,
-                                              unit: inv.unit || undefined,
-                                              safetyStock: inv.safetyStock || undefined,
-                                              minOrderQty: inv.minOrderQty || undefined,
-                                              location: inv.location || undefined,
-                                              expiryDate: inv.expiryDate || undefined,
-                                              lotNumber: inv.lotNumber || undefined,
-                                              autoReorderEnabled: inv.autoReorderEnabled || false,
-                                              averageDailyUsage: inv.averageDailyUsage || undefined,
-                                              leadTimeDays: inv.leadTimeDays || undefined,
-                                              lastInspectedAt: undefined,
-                                            });
+                                            // §inventory-reorder-surface-unify P3 — 이슈얼럿 재발주 진입 = 통합 패널(reorder mode).
+                                            openReorderReview(inv);
                                           }}
                                         >
                                           <Sparkles className="h-3 w-3 shrink-0" />
@@ -2728,27 +2680,16 @@ function InventoryPageContent() {
                   sourceUpdatedAt: new Date(),
                 });
                 const match = displayInventories.find((inv) => inv.id === cpItem.id);
-                if (match) {
-                  aiPanel.preparePanel({
-                    id: match.id,
-                    productId: match.productId,
-                    productName: match.product.name,
-                    brand: match.product.brand || undefined,
-                    catalogNumber: match.product.catalogNumber || undefined,
-                    currentQuantity: match.currentQuantity,
-                    unit: match.unit || undefined,
-                    safetyStock: match.safetyStock || undefined,
-                    minOrderQty: match.minOrderQty || undefined,
-                    location: match.location || undefined,
-                    expiryDate: match.expiryDate || undefined,
-                    lotNumber: match.lotNumber || undefined,
-                    autoReorderEnabled: match.autoReorderEnabled || false,
-                    averageDailyUsage: match.averageDailyUsage || undefined,
-                    leadTimeDays: match.leadTimeDays || undefined,
-                    lastInspectedAt: undefined,
-                  });
+                if (!match) return;
+                // §inventory-reorder-surface-unify P3 — 추천(canonical /reorder-recommendations) 있으면
+                //   ReorderReviewSheet(승격) 직접 오픈, 없으면 reorder mode 강조 유지(빈 시트/no-op 방지).
+                const qty = reorderRecommendedQtyFor(match.id);
+                if (qty != null && qty > 0) {
+                  setContextPanelItem(null);
+                  openReorderReviewSheet(match);
+                } else {
+                  setContextPanelMode("reorder");
                 }
-                setContextPanelItem(null);
               }}
               onEdit={(cpItem) => {
                 const match = displayInventories.find((inv) => inv.id === cpItem.id);
@@ -3231,25 +3172,9 @@ function InventoryPageContent() {
                   <Button
                     className="flex-1 bg-blue-600 hover:bg-blue-700"
                     onClick={() => {
+                      // §inventory-reorder-surface-unify P3 — 상세 Sheet 재발주 진입 = 통합 패널(reorder mode). AiAssistant retire.
                       setIsSheetOpen(false);
-                      aiPanel.preparePanel({
-                        id: selectedItem.id,
-                        productId: selectedItem.productId,
-                        productName: selectedItem.product.name,
-                        brand: selectedItem.product.brand || undefined,
-                        catalogNumber: selectedItem.product.catalogNumber || undefined,
-                        currentQuantity: selectedItem.currentQuantity,
-                        unit: selectedItem.unit || undefined,
-                        safetyStock: selectedItem.safetyStock || undefined,
-                        minOrderQty: selectedItem.minOrderQty || undefined,
-                        location: selectedItem.location || undefined,
-                        expiryDate: selectedItem.expiryDate || undefined,
-                        lotNumber: selectedItem.lotNumber || undefined,
-                        autoReorderEnabled: selectedItem.autoReorderEnabled || false,
-                        averageDailyUsage: selectedItem.averageDailyUsage || undefined,
-                        leadTimeDays: selectedItem.leadTimeDays || undefined,
-                        lastInspectedAt: undefined,
-                      });
+                      openReorderReview(selectedItem);
                     }}
                   >
                     <Sparkles className="h-4 w-4 mr-1.5" />

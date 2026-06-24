@@ -247,9 +247,22 @@ All phases must strictly follow Red-Green-Refactor. Sentinel = readFileSync + re
 **✋ Quality Gate:** ReorderReviewSheet content 직접 오픈 작동(§11.310 sentinel GREEN 유지), 모바일 reorder 노출(loop 0), dispose 우선 보존, 빈/로딩 상태, build EXIT 0
 **Rollback:** content state/render + 시트 mode revert
 
-#### Phase 3: Panel CTA Split + 6 Site Rewire + 발주 게이팅
-**Goal:** 패널 onReorder 분리 + 6 site rewire + ReorderReviewSheet "바로 발주" purchasing-off disabled+사유.
-- Status: [ ] Pending
+#### Phase 3: Panel CTA + Site Rewire + 발주 게이팅
+**Goal:** 잔여 site rewire + ReorderReviewSheet "바로 발주" purchasing-off disabled+사유.
+- Status: 🔄 P3a 완료(2026-06-24) / P3b 잔여
+
+**설계 정정(P3a):** PLAN 원안의 패널 `onReorderEmphasis`/`onReorderProceed` prop split은 **불필요** — 패널 `onReorder` 단일 prop 유지하고 **content-side guard**로 no-op 차단. → `InventoryContextPanel` 무수정(restructure-320·panel-unify·rail-inventory sentinel 전부 보존).
+
+**P3a Land (2026-06-24):**
+- inventory-content.tsx 잔여 5 site rewire(`aiPanel.preparePanel` → 0건):
+  - 진입 4: 모바일 리스트(L1442)·테이블 행(L1992)·이슈얼럿(L2245)·상세 Sheet(L3174) → `openReorderReview`(통합 패널 reorder mode, 항상 열림 = no-op 0).
+  - 패널 proceed(site 5, onReorder): canonical qty 있으면 `openReorderReviewSheet`(승격 시트), 없으면 `setContextPanelMode("reorder")` flip(빈 시트/no-op 방지). §11.158 cache-bust 보존.
+- sentinel: `inventory-reorder-surface-unify-p3a.test.ts`(preparePanel 0건 + 사이트별 라우팅 + guard).
+
+**P3b 잔여:** `ReorderReviewSheet` "바로 발주"(PO, L273)에 `ENABLE_PURCHASING` off → disabled + 정직 사유. [견적 요청]·검토는 불변(live). §11.310 reorder-review-sheet/api-310b sentinel 보존(query-string/draft wiring 유지, disabled 조건만 추가).
+
+**✋ Quality Gate (P3a):** preparePanel 0건, dead button/no-op 0(진입은 패널 항상 열림, proceed는 guard), §11.310 무손, build EXIT 0
+**Rollback:** 5 site rewire revert (preparePanel 복원)
 
 **🔴 RED:** Phase 1 ⓒⓓⓔ sentinel.
 **🟢 GREEN:**
@@ -330,16 +343,16 @@ touching: inventory reorder / dispose 우선순위.
 
 ## 11. Progress Tracking
 
-- Overall completion: 60% (Phase 0·1·2 완료)
-- Current phase: Phase 3 (미착수)
+- Overall completion: 75% (Phase 0·1·2 + P3a 완료)
+- Current phase: Phase 3 P3b (바로발주 게이팅) 잔여
 - Current blocker: 없음
-- Next validation step: Phase 3 — 패널 onReorder split + 잔여 5 site rewire + 바로발주 purchasing-off disabled+사유
+- Next validation step: P3b — ReorderReviewSheet "바로 발주" purchasing-off disabled+사유 (§11.310 sentinel 보존)
 
 **Phase Checklist:**
 - [x] Phase 0 complete
 - [x] Phase 1 complete
 - [x] Phase 2 complete
-- [ ] Phase 3 complete
+- [~] Phase 3 — P3a(rewire) 완료 / P3b(발주 게이팅) 잔여
 - [ ] Phase 4 complete
 
 ---
