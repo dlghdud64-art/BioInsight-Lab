@@ -3577,7 +3577,12 @@ function QuotesPageContent() {
             breakpoint lg (1024px) → min-[1200px] 상향. 1024-1199px 구간 = bottom-sheet 자동 적용
             (테이블 가용 너비 회복). 1200px+ 에서만 우측 480px 패널.
             §11.248e-2 — isBriefingCollapsed 분기 + 헤더 우측 접기 button 추가. */
-        <div className="hidden min-[1200px]:flex w-[480px] shrink-0 border-l border-bd flex-col bg-pn ml-5 rounded-xl overflow-hidden self-start sticky top-20" style={{ maxHeight: "calc(100vh - 120px)" }}>
+        /* §quotes-workbench-rail B — push↔overlay breakpoint 분기(호영님 a, threshold 1440px).
+            · ≥1440px: push(min-[1440px]:sticky, in-flow 480px 나란히 — 기존 거동).
+            · 1200–1439px: overlay drawer(min-[1200px]:fixed right-4 top-20 z-30 shadow-2xl) — queue 위에 떠서 덮음, queue 폭 불침범(가로 스크롤 지옥 방지).
+            · <1200px: hidden(모바일 bottom-sheet 분기 — 불변).
+            canonical: rail ≥1200 노출 + w-[480px] 보존(§11.248e sentinel 의도 불변, 위치만 분기). */
+        <div className="hidden min-[1200px]:flex w-[480px] shrink-0 border-l border-bd flex-col bg-pn rounded-xl overflow-hidden min-[1200px]:fixed min-[1200px]:right-4 min-[1200px]:top-20 min-[1200px]:z-30 min-[1200px]:shadow-2xl min-[1440px]:sticky min-[1440px]:right-auto min-[1440px]:z-auto min-[1440px]:shadow-none min-[1440px]:ml-5 min-[1440px]:self-start" style={{ maxHeight: "calc(100vh - 120px)" }}>
           {/* §11.144 Brief header — 운영 브리핑 + 선택한 견적 (lock §11.142, §11.179 eyebrow 통일).
               §11.248e-2 — 우측에 접기 button (ChevronsRight) 추가. 클릭 시 패널 hide + floating expand button 노출. */}
           <div className="px-4 py-2 border-b border-bd bg-el/30 flex items-center justify-between gap-2">
