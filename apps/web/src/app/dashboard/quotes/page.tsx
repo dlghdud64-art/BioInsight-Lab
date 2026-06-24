@@ -2699,7 +2699,10 @@ function QuotesPageContent() {
            pointer-events-none 으로 테이블 상호작용 방해 0. */
         <div className="relative">
           <div className="overflow-x-auto bg-pn rounded-xl border border-bd/80">
-            <table className="w-full text-xs">
+            {/* §quotes-workbench-rail A — min-w-[900px]: rail push 로 queue 가 좁아져도 컬럼이 찌그러지지 않고
+                래퍼(overflow-x-auto)가 실제로 가로 스크롤하도록 강제. 옛 w-full 단독은 컨테이너 폭에 맞춰
+                압축만 되어 컬럼 붕괴+글자 깨짐 발생(fade-hint 의도와 불일치). */}
+            <table className="w-full min-w-[900px] text-xs">
             {/* §11.230b #quote-table-column-prefs — 호영님 v2 #23 (a+b).
                 visibleColumns.map() 으로 dynamic generate. canonical truth:
                 - sortState (§11.227) sortable 컬럼 유지(title/status/responseCount/price)
