@@ -95,13 +95,28 @@
 
 **★ missed-sweep 봉합(baseline-delta):** P2가 헤더 description의 `dashboardState === "zero"`/`"blocked"` 리터럴 소비 제거 → `quick-start-duplicate-252d2`(§11.252d-2) L44(`=== "zero"` 핀) RED. state machine 정의(union `"blocked"|"zero"|"active"` + `isZero ? "zero" : "active"` ternary)는 **보존** → 핀을 **소비 리터럴 → state machine 정의** 기준으로 진화(invariant[3상태 분기 존재] 불변·강화, `=== "active"` mobile 소비는 잔존 유지). 교훈: 헤더 카피 변경도 상태 리터럴을 핀하는 sentinel을 깰 수 있음 — 소비 리터럴 변경 시 grep 선식별.
 
-#### Phase 3: 컴포넌트 시각 정합
-- Status: [ ] Pending
-**🟢:** Pipeline 퍼널 시각·StatLine 0건 slate-500·NextStep gradient·BudgetSpend 도넛 내부·ActionInbox 신호등·최근활동 풀폭. per-component Tailwind. **✋ Gate:** 시각만(canonical 0), build EXIT 0. **Rollback:** per-component revert.
+#### Phase 3: 컴포넌트 시각 정합 ✅ COMPLETE (2026-06-24)
+- Status: [x] Complete
 
-#### Phase 4: 반응형 + smoke
-- Status: [ ] Pending
-**🟢:** ≤1080(사이드바 숨김·KPI 1열·파이프 2×2·2-col 1열)·≤600·≤380. read-only + 호영님 라이브 확인. **✋ Gate:** 375px 잘림 0, baseline-delta 0. **Rollback:** 반응형 클래스 revert.
+**정찰 결과 — 대부분 이미 정합**(시안=기존 정제): Pipeline 아이콘박스·큰숫자·화살표·0건흐림·신호색(amber 0) 이미 존재 · StatLine 2 KPI·상태칩·틴트 이미 존재 · **NextStep blue gradient 이미 존재**(next-step-banner L120) · **BudgetSpend 도넛 내부 이미 통합**(categorySpending). → 실 차이 2건만:
+- **Pipeline 퍼널 진행바(시안 .pbar) 부재 → 추가**: active 단계 하단 `bg-blue-500` 바, 폭=`total/maxTotal`(canonical 파생, 0건 미표시).
+- **0건 value 가독성**: 시안 README L11 "0건 slate-500" → Pipeline/StatLine 0건 **value** `text-gray-400`→`text-slate-500`. 아이콘/라벨은 §11.311 gray-400 유지(de-emphasis 위계 + bg-gray-50) → **sentinel 진화 0**(top-modules-p3 `text-gray-400` 핀 GREEN 유지).
+**sentinel:** `dashboard-home-redesign-visual-p3.test.ts` 신규. **진화 0**(0건 톤은 value만 변경, label/icon gray-400 잔존). NextStep/도넛/ActionInbox 무변경.
+**✋ Gate:** 시각만(canonical 0)·amber 0·§11.311 de-emphasis 보존·build EXIT 0. **Rollback:** pipeline/stat-line per-component revert.
+
+#### Phase 4: 반응형 + smoke ✅ COMPLETE (2026-06-24)
+- Status: [x] Complete (read-only — 코드 0)
+
+**반응형 정합 확인(read-only, 2026-06-24):** P1~P3 변경이 반응형 구조 무손 — 기존 shifan/§11.311 패스의 반응형 클래스 그대로:
+- StatLine `grid grid-cols-1 md:grid-cols-2`(KPI 모바일 1열 → md 2열). ✓
+- Pipeline `grid grid-cols-2 gap-2 md:grid-cols-3`(모바일 2열) + 연결 화살표 `hidden md:block`(모바일 숨김). ✓ 진행바 `mt-2 h-1`(폭 무관, 375px 안전).
+- 2-col `grid grid-cols-1 lg:grid-cols-2`(모바일 1열 → lg 2열, 예산&지출↔트렌드). ✓
+- 헤더 `p-3 pt-4 md:p-8 md:pt-7`(모바일 패딩 압축). ✓
+- 터치 ≥44px: error/retry·nav 버튼 `min-h-[44px]`, 카드=대형 `<a>`. ✓ NextStep 모바일 CTA `md:hidden min-h-[44px]`.
+- ≤600/≤380(다음단계 세로 스택·트렌드 컴팩트): NextStepBanner(md:hidden CTA)·SpendTrendCard 내부 반응형 기존 보유.
+
+**런타임(라이브 375px 잘림 0·first-fold) = 호영님 라이브 확인 권고**(sandbox 시각 검증 불가).
+**✋ Gate:** 반응형 클래스 정합·375px 잘림 위험 0(read-only)·baseline-delta 0. **Rollback:** 코드 0(추가 변경 없음).
 
 ## 8. Risk
 | Risk | P | Impact | Mitigation |
@@ -114,8 +129,9 @@
 - P1: page.tsx 배치+sentinel revert. P2~3: per-component revert. P4: 반응형 revert. env/flag 없음 — git revert.
 
 ## 10. Progress
-- Overall: 60%(P0·P1·P2 완료) · Current: P3(컴포넌트 시각 정합) · Blocker: 없음 · Next: Pipeline 퍼널·StatLine 0건 톤·NextStep gradient·도넛 내부 정독
-**Checklist:** [x] P0 [x] P1 [x] P2 [ ] P3 [ ] P4
+- Overall: 100%(P0~P4 완료) · Current: 종결 · Blocker: 없음
+**Checklist:** [x] P0 [x] P1 [x] P2 [x] P3 [x] P4
+✅ §dashboard-home-redesign 완결 — 빠른작업 제거+2-col 재구성·헤더 정리·Pipeline 퍼널 진행바·0건 가독성. 발주 off 정합 유지(getFlag).
 
 ## 11. Notes
 **Decisions (2026-06-24, 호영님):** dashhome 시안 정합, "메인대시보드부터". 빠른시작 제거·2-col 재구성·발주 off 유지.
