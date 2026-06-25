@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { createAuditLog, AuditAction, AuditEntityType } from "@/lib/audit";
+import { validateUsageForTrackingMode } from "@/lib/inventory/tracking-mode";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 // 알림 고도화 #notif-inventory-low-dispatch — 출고/사용으로 currentQuantity 가
 // safetyStock 임계 아래로 "최초 진입"(prevQty > safetyStock && newQty <= safetyStock)
@@ -87,6 +88,27 @@ export async function POST(
 
     const { quantity, unit, type, lotNumber, destination, operator, notes } = validation.data;
 
+    // §inventory-phaseB P3 — trackingMode 게이팅(canonical 정책 = inventory.trackingMode).
+    //   GMP_STRICT 시 lot·operator·destination 필수. 누락이면 차감 거부(placeholder success 0).
+    const usageGate = validateUsageForTrackingMode(inventory.trackingMode, { lotNumber, destination, operator });
+    if (!usageGate.ok) {
+      const FIELD_LABEL_KO: Record<string, string> = {
+        lotNumber: "로트번호",
+        operator: "담당자",
+        destination: "사용처",
+      };
+      const missingKo = usageGate.missing.map((k) => FIELD_LABEL_KO[k] ?? k);
+      return NextResponse.json(
+        {
+          error: "GMP 추적 필수 항목 누락",
+          trackingMode: inventory.trackingMode,
+          missing: usageGate.missing,
+          message: `이 품목은 ${inventory.trackingMode} 추적 모드입니다. 필수 항목 누락: ${missingKo.join(", ")}`,
+        },
+        { status: 422 }
+      );
+    }
+
     const quantityBefore = inventory.currentQuantity;
     const willBeNegative = quantityBefore - quantity < 0;
 
@@ -133,6 +155,7 @@ export async function POST(
               usageId: usage.id,
               inventoryId: id,
               type,
+              trackingMode: inventory.trackingMode, // §inventory-phaseB P3 — GMP 추적 정책 감사 기록
               quantity,
               lotNumber: lotNumber || null,
               destination: destination || null,
