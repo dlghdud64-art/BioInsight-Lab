@@ -3017,7 +3017,8 @@ function QuotesPageContent() {
                         ? "bg-blue-50 ring-1 ring-inset ring-blue-500 hover:bg-blue-100"
                         : isSelected
                           ? "bg-blue-50/60 hover:bg-blue-100/60"
-                          : `${rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100`;
+                          // §quote-case-bg-sian — zebra(짝/홀 흰·회색) 제거 → 시안 uniform 흰 행. 행 구분은 tbody divide-y 보더. 호버 slate-100.
+                          : "bg-white hover:bg-slate-100";
                       return `h-12 ${bgClass} cursor-pointer transition-colors duration-150 ${focusRing}`;
                     })()}
                   >
@@ -3026,7 +3027,7 @@ function QuotesPageContent() {
                       data-batch-select-row
                       style={{ width: 40, minWidth: 40 }}
                       className={`px-2 py-3 text-center sticky left-0 z-10 ${
-                        selectedQuoteIds.has(quote.id) ? "bg-blue-50" : rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"
+                        selectedQuoteIds.has(quote.id) ? "bg-blue-50" : "bg-white" /* §quote-case-bg-sian — zebra 제거(uniform 흰) */
                       }`}
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -3195,11 +3196,10 @@ function QuotesPageContent() {
                       if (key === "actions") {
                         // §11.242c #1 — tbody 액션 td sticky right-0. zebra bg + selected blue-50
                         //   분기로 가로 스크롤 시 행 배경 매칭 보존 (§11.242 first td sticky 대칭).
+                        // §quote-case-bg-sian — zebra 제거(uniform 흰). 선택만 blue-50.
                         const actionBg = selectedQuoteIds.has(quote.id)
                           ? "bg-blue-50"
-                          : rowIndex % 2 === 0
-                            ? "bg-white"
-                            : "bg-gray-50";
+                          : "bg-white";
                         return (
                           <td
                             key={key}

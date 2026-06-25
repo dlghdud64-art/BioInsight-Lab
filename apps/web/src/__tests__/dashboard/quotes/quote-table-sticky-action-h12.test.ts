@@ -20,7 +20,8 @@ describe("#quote-table-sticky-action-h12 action column", () => {
 
   it("keeps tbody actions sticky with row background preservation", () => {
     expect(page).toMatch(/if \(key === "actions"\)[\s\S]{0,600}sticky\s+right-0/);
-    expect(page).toMatch(/actionBg[\s\S]{0,240}rowIndex % 2/);
+    // §quote-case-bg-sian 진화 — zebra 제거 후 actionBg = 행과 동일 uniform 흰(선택만 blue-50). 가로 스크롤 시 배경 일치 보존(보호의도 불변).
+    expect(page).toMatch(/const actionBg = selectedQuoteIds\.has\(quote\.id\)\s*\?\s*"bg-blue-50"\s*:\s*"bg-white"/);
   });
 
   it("keeps tbody row height stable", () => {

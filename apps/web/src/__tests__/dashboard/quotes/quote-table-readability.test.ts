@@ -31,14 +31,17 @@ import { resolve } from "node:path";
 const PAGE_PATH = resolve(__dirname, "../../../app/dashboard/quotes/page.tsx");
 const page = readFileSync(PAGE_PATH, "utf8");
 
-describe("§11.242 #1 — zebra striping", () => {
-  it("tbody tr className 안 zebra 분기 (짝수 bg-gray-50 또는 bg-slate-50)", () => {
-    // rowIndex % 2 === 0 ? bg-white : bg-gray-50 분기 또는 동등 패턴
-    expect(page).toMatch(/rowIndex\s*%\s*2[\s\S]{0,200}(bg-gray-50|bg-slate-50|bg-white)/);
+describe("§11.242 #1 → §quote-case-bg-sian — 행 배경(zebra 제거, 시안 uniform 흰)", () => {
+  it("zebra(rowIndex%2 흰/회색 교대) 제거 — 행 배경 uniform 흰색", () => {
+    // 진화: 호영님 시안 정합 — 견적별 배경색 교대(zebra) 제거. 행 구분은 tbody divide-y 보더로.
+    expect(page).not.toMatch(/rowIndex % 2 === 0 \? "bg-white" : "bg-gray-50"/);
+    expect(page).toMatch(/: "bg-white hover:bg-slate-100"/); // 비선택 행 uniform 흰 + 호버
   });
-
-  it("선택된 row = bg-blue-50 + border-l-blue-500 (zebra 무시)", () => {
-    expect(page).toMatch(/selectedQuoteIds\.has\(quote\.id\)[\s\S]{0,300}(bg-blue-50|border-l-blue-500)/);
+  it("행 구분 보더 보존(tbody divide-y) — 가독성 유지", () => {
+    expect(page).toMatch(/<tbody className="divide-y/);
+  });
+  it("선택된 row = bg-blue-50 보존(가독성·강조)", () => {
+    expect(page).toMatch(/selectedQuoteIds\.has\(quote\.id\)[\s\S]{0,300}bg-blue-50/);
   });
 });
 
