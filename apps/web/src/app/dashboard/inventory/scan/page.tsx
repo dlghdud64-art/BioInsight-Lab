@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { csrfFetch } from "@/lib/api-client";
+import { requiredUsageFields, DEFAULT_TRACKING_MODE, type TrackingMode } from "@/lib/inventory/tracking-mode";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -78,11 +79,24 @@ function InventoryScanContent() {
   const [showUseForm, setShowUseForm] = useState(false);
   const [useQty, setUseQty] = useState("1");
   const [useNotes, setUseNotes] = useState("");
+  // §inventory-phaseB P3-UI-a — GMP/LOT 추적 품목 차감 시 lot·operator·destination 수집.
+  const [useLot, setUseLot] = useState("");
+  const [useOperator, setUseOperator] = useState("");
+  const [useDestination, setUseDestination] = useState("");
+  const trackingMode: TrackingMode = (inventory?.trackingMode as TrackingMode) ?? DEFAULT_TRACKING_MODE;
+  const usageRequired = requiredUsageFields(trackingMode);
+  const needsField = (f: "lotNumber" | "operator" | "destination") => usageRequired.includes(f);
+  const gmpMissing: string[] = [];
+  if (needsField("lotNumber") && !useLot.trim()) gmpMissing.push("로트번호");
+  if (needsField("operator") && !useOperator.trim()) gmpMissing.push("담당자");
+  if (needsField("destination") && !useDestination.trim()) gmpMissing.push("사용처");
+  const gmpOk = gmpMissing.length === 0;
   const deductMutation = useMutation({
     mutationFn: async () => {
       if (!inventory) throw new Error("재고 정보 없음");
       const qty = parseFloat(useQty);
       if (isNaN(qty) || qty <= 0) throw new Error("올바른 수량을 입력하세요.");
+      if (!gmpOk) throw new Error(`필수 항목 누락: ${gmpMissing.join(", ")}`); // GMP 추적 게이트(서버도 422)
       const res = await csrfFetch(`/api/inventory/${inventory.id}/use`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -90,6 +104,10 @@ function InventoryScanContent() {
           quantity: qty,
           unit: inventory.unit ?? undefined,
           notes: useNotes.trim() || undefined,
+          // §inventory-phaseB P3-UI-a — GMP/LOT 추적 필드(QUANTITY 시 빈 값 → undefined).
+          lotNumber: useLot.trim() || undefined,
+          operator: useOperator.trim() || undefined,
+          destination: useDestination.trim() || undefined,
         }),
       });
       if (!res.ok) {
@@ -106,6 +124,7 @@ function InventoryScanContent() {
       setShowUseForm(false);
       setUseQty("1");
       setUseNotes("");
+      setUseLot(""); setUseOperator(""); setUseDestination("");
       queryClient.invalidateQueries({ queryKey: ["inventory-item", inventoryId] });
     },
     onError: (err: Error) => {
@@ -411,11 +430,31 @@ function InventoryScanContent() {
                       className="h-11"
                       placeholder="메모 (선택) — 사용 목적·실험명 등"
                     />
+
+                    {/* §inventory-phaseB P3-UI-a — GMP/LOT 추적 품목 필수 필드(QUANTITY 품목은 미노출). */}
+                    {trackingMode !== "QUANTITY" && (
+                      <div className="space-y-2 rounded-lg border border-blue-200 bg-blue-50 p-2.5">
+                        <p className="text-[11px] font-medium text-blue-700">
+                          {trackingMode === "GMP_STRICT"
+                            ? "GMP 추적 품목 — 로트·담당자·사용처 필수"
+                            : "로트 추적 품목 — 로트번호 필수"}
+                        </p>
+                        <Input value={useLot} onChange={(e) => setUseLot(e.target.value)} className="h-10" placeholder={`로트번호${needsField("lotNumber") ? " *" : ""}`} />
+                        {trackingMode === "GMP_STRICT" && (
+                          <>
+                            <Input value={useOperator} onChange={(e) => setUseOperator(e.target.value)} className="h-10" placeholder="담당자 *" />
+                            <Input value={useDestination} onChange={(e) => setUseDestination(e.target.value)} className="h-10" placeholder="사용처 *" />
+                          </>
+                        )}
+                        {!gmpOk && <p className="text-[11px] text-red-600">필수 항목 누락: {gmpMissing.join(", ")}</p>}
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-2 gap-2">
                       <Button
                         variant="outline"
                         className="h-11"
-                        onClick={() => { setShowUseForm(false); setUseQty("1"); setUseNotes(""); }}
+                        onClick={() => { setShowUseForm(false); setUseQty("1"); setUseNotes(""); setUseLot(""); setUseOperator(""); setUseDestination(""); }}
                         disabled={deductMutation.isPending}
                       >
                         취소
@@ -423,7 +462,7 @@ function InventoryScanContent() {
                       <Button
                         className="h-11 bg-blue-600 hover:bg-blue-700 text-white gap-1.5"
                         onClick={() => deductMutation.mutate()}
-                        disabled={deductMutation.isPending}
+                        disabled={deductMutation.isPending || !gmpOk}
                       >
                         {deductMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                         차감 확인
