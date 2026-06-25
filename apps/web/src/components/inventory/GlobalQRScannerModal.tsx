@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { csrfFetch } from "@/lib/api-client";
+import { requiredUsageFields, DEFAULT_TRACKING_MODE, type TrackingMode } from "@/lib/inventory/tracking-mode";
 import { useQRScanner } from "@/contexts/QRScannerContext";
 import { QRScanner } from "./QRScanner";
 import { useToast } from "@/hooks/use-toast";
@@ -48,6 +49,7 @@ interface InventoryResult {
   location: string | null;
   expiryDate: string | null;
   lotNumber: string | null;
+  trackingMode?: string | null; // §inventory-phaseB P3-UI-a — 차감 게이팅 정책(lookup 반환).
   notes: string | null;
   product: {
     name: string;
@@ -68,6 +70,18 @@ function ScannerContent() {
   const [inventoryResult, setInventoryResult] = useState<InventoryResult | null>(null);
   const [useQty, setUseQty] = useState("1");
   const [useNotes, setUseNotes] = useState("");
+  // §inventory-phaseB P3-UI-a2 — GMP/LOT 추적 품목 차감 시 lot·operator·destination 수집.
+  const [useLot, setUseLot] = useState("");
+  const [useOperator, setUseOperator] = useState("");
+  const [useDestination, setUseDestination] = useState("");
+  const trackingMode: TrackingMode = (inventoryResult?.trackingMode as TrackingMode) ?? DEFAULT_TRACKING_MODE;
+  const usageRequired = requiredUsageFields(trackingMode);
+  const needsField = (f: "lotNumber" | "operator" | "destination") => usageRequired.includes(f);
+  const gmpMissing: string[] = [];
+  if (needsField("lotNumber") && !useLot.trim()) gmpMissing.push("로트번호");
+  if (needsField("operator") && !useOperator.trim()) gmpMissing.push("담당자");
+  if (needsField("destination") && !useDestination.trim()) gmpMissing.push("사용처");
+  const gmpOk = gmpMissing.length === 0;
   // 직접 입력 전환 시 포커스 대상
   const manualInputRef = useRef<HTMLInputElement>(null);
 
@@ -137,6 +151,7 @@ function ScannerContent() {
       if (!inventoryResult) throw new Error("재고 정보 없음");
       const qty = parseFloat(useQty);
       if (isNaN(qty) || qty <= 0) throw new Error("올바른 수량을 입력하세요.");
+      if (!gmpOk) throw new Error(`필수 항목 누락: ${gmpMissing.join(", ")}`); // GMP 추적 게이트(서버도 422)
 
       const res = await csrfFetch(`/api/inventory/${inventoryResult.id}/use`, {
         method: "POST",
@@ -145,6 +160,10 @@ function ScannerContent() {
           quantity: qty,
           unit: inventoryResult.unit ?? undefined,
           notes: useNotes.trim() || undefined,
+          // §inventory-phaseB P3-UI-a2 — GMP/LOT 추적 필드(QUANTITY 시 빈 값 → undefined).
+          lotNumber: useLot.trim() || undefined,
+          operator: useOperator.trim() || undefined,
+          destination: useDestination.trim() || undefined,
         }),
       });
 
@@ -166,6 +185,7 @@ function ScannerContent() {
       setModalState("result");
       setUseQty("1");
       setUseNotes("");
+      setUseLot(""); setUseOperator(""); setUseDestination("");
     },
     onError: (err: Error) => {
       toast({ title: "차감 실패", description: err.message, variant: "destructive" });
@@ -296,20 +316,39 @@ function ScannerContent() {
               onChange={(e) => setUseNotes(e.target.value)}
             />
           </div>
+
+          {/* §inventory-phaseB P3-UI-a2 — GMP/LOT 추적 품목 필수 필드(QUANTITY 미노출). */}
+          {trackingMode !== "QUANTITY" && (
+            <div className="space-y-2 rounded-lg border border-blue-200 bg-blue-50 p-2.5">
+              <p className="text-[11px] font-medium text-blue-700">
+                {trackingMode === "GMP_STRICT"
+                  ? "GMP 추적 품목 — 로트·담당자·사용처 필수"
+                  : "로트 추적 품목 — 로트번호 필수"}
+              </p>
+              <Input value={useLot} onChange={(e) => setUseLot(e.target.value)} placeholder={`로트번호${needsField("lotNumber") ? " *" : ""}`} />
+              {trackingMode === "GMP_STRICT" && (
+                <>
+                  <Input value={useOperator} onChange={(e) => setUseOperator(e.target.value)} placeholder="담당자 *" />
+                  <Input value={useDestination} onChange={(e) => setUseDestination(e.target.value)} placeholder="사용처 *" />
+                </>
+              )}
+              {!gmpOk && <p className="text-[11px] text-red-600">필수 항목 누락: {gmpMissing.join(", ")}</p>}
+            </div>
+          )}
         </div>
 
         <div className="flex gap-2 pt-1">
           <Button
             variant="outline"
             className="flex-1"
-            onClick={() => setModalState("result")}
+            onClick={() => { setModalState("result"); setUseLot(""); setUseOperator(""); setUseDestination(""); }}
           >
             취소
           </Button>
           <Button
             className="flex-1 bg-red-600 hover:bg-red-700 text-white gap-2"
             onClick={() => useMutation_.mutate()}
-            disabled={useMutation_.isPending}
+            disabled={useMutation_.isPending || !gmpOk}
           >
             {useMutation_.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
