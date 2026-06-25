@@ -1037,6 +1037,16 @@ function QuotesPageContent() {
   // §quote-management-redesign P2 — 발송 인텐트(2-step) 게이트 대상 caseId. 리스트 1-tap 직접
   //   발송(§11.279d) → ConfirmSendModal 확인 → "발송 검토 계속" 시에만 VendorRequestModal 진입(오발송 방지).
   const [sendIntentQuoteId, setSendIntentQuoteId] = useState<string | null>(null);
+  // §quote-management-redesign P3 — 우선순위 클릭 세션 override(prioMap). canonical computePriority
+  //   위 UI-state 레이어로만 작동(truth 대체 아님) — DB 저장 0, 새로고침 시 computePriority 파생 복귀.
+  const [prioMap, setPrioMap] = useState<Record<string, "high" | "mid" | "low">>({});
+  const cyclePriorityOverride = useCallback((quoteId: string, base: "high" | "mid" | "low") => {
+    setPrioMap((prev) => {
+      const current = prev[quoteId] ?? base;
+      const next = current === "high" ? "mid" : current === "mid" ? "low" : "high";
+      return { ...prev, [quoteId]: next };
+    });
+  }, []);
   const [aiCompareOpen, setAiCompareOpen] = useState(false);
   const [aiCompareLoading, setAiCompareLoading] = useState(false);
   // §10 비교 모달 풀 빌드(시안 CompareModal) — 순위 카드·세부표·협상 포인트·추천 열 리치 shape.
@@ -1881,7 +1891,20 @@ function QuotesPageContent() {
   //   key 별 사람-친화 비교: title (한국어 localeCompare), status/createdAt/itemCount/responseCount
   //   모두 stable sort + ascending 또는 descending.
   const sortedQuotes = useMemo(() => {
-    if (sortState.key === null) return filteredQuotes;
+    if (sortState.key === null) {
+      // §quote-management-redesign P3 — 기본 정렬 = effective 우선순위(prioMap override ?? computePriority.level).
+      //   세션 override 우선 → 상단 재배치. 동순위는 기존 순서 유지(stable). 저장 0·새로고침 시 canonical 복귀.
+      const rankOf = (q: Quote): number => {
+        const c = toQuoteCase(q);
+        const base: "high" | "mid" | "low" = c ? computePriority(c).level : "low";
+        const lvl = prioMap[q.id] ?? base;
+        return lvl === "high" ? 0 : lvl === "mid" ? 1 : 2;
+      };
+      return filteredQuotes
+        .map((q, i) => ({ q, i }))
+        .sort((a, b) => (rankOf(a.q) - rankOf(b.q)) || (a.i - b.i))
+        .map((x) => x.q);
+    }
     const sorted = [...filteredQuotes].sort((a, b) => {
       let cmp = 0;
       if (sortState.key === "title") {
@@ -1913,7 +1936,7 @@ function QuotesPageContent() {
       return sortState.direction === "asc" ? cmp : -cmp;
     });
     return sorted;
-  }, [filteredQuotes, sortState]);
+  }, [filteredQuotes, sortState, prioMap]);
 
   const focusQuoteTableRow = useCallback((rowIndex: number) => {
     if (typeof document === "undefined" || rowIndex < 0) return;
@@ -2841,10 +2864,15 @@ function QuotesPageContent() {
                 //   deriveRailState 는 status 뱃지/rail/발송 게이팅 용도로 계속 사용(제거 아님).
                 const priorityCase = toQuoteCase(quote);
                 const priorityResult = priorityCase ? computePriority(priorityCase) : null;
+                // §quote-management-redesign P3 — effective 우선순위 = 세션 override(prioMap) ?? canonical computePriority.level.
+                //   override 부재 시 canonical 파생 그대로(truth 보존). overridden 시 "수동 지정" 표기.
+                const baseLevel: "high" | "mid" | "low" = priorityResult?.level ?? "low";
+                const effectiveLevel: "high" | "mid" | "low" = prioMap[quote.id] ?? baseLevel;
+                const isPriorityOverridden = prioMap[quote.id] != null;
                 const priorityLevel: "critical" | "high" | "normal" =
-                  priorityResult?.level === "high"
+                  effectiveLevel === "high"
                     ? "critical"
-                    : priorityResult?.level === "mid"
+                    : effectiveLevel === "mid"
                       ? "high"
                       : "normal";
                 // §11.242 #5 — 중복 품목 그룹핑 derive (인접 prev row 의 firstItemName 비교).
@@ -3132,6 +3160,15 @@ function QuotesPageContent() {
                         const priorityReason = priorityResult?.reason ?? null;
                         return (
                           <td key={key} style={{ width }} className="px-3 py-2 text-center">
+                            {/* §quote-management-redesign P3 — 우선순위 pill 클릭 = 세션 override 순환(high→mid→low). 새로고침 시 canonical 복귀. */}
+                            <button
+                              type="button"
+                              data-testid="quote-priority-override-toggle"
+                              onClick={(e) => { e.stopPropagation(); cyclePriorityOverride(quote.id, baseLevel); }}
+                              title={`클릭하여 우선순위 변경${isPriorityOverridden ? " · 수동 지정(새로고침 시 자동 복귀)" : ""}`}
+                              aria-label={`우선순위 변경${isPriorityOverridden ? " (수동 지정됨)" : ""}`}
+                              className={`inline-flex items-center justify-center rounded-full min-h-[28px] min-w-[28px] px-1 hover:bg-slate-100 transition-colors ${isPriorityOverridden ? "ring-1 ring-blue-300" : ""}`}
+                            >
                             {priorityLevel === "normal" ? (
                               <span className="inline-block w-2 h-2 rounded-full bg-slate-400" aria-label="우선순위 보통" />
                             ) : (
@@ -3149,6 +3186,7 @@ function QuotesPageContent() {
                                 {priorityReason ?? (priorityLevel === "critical" ? "긴급" : "높음")}
                               </span>
                             )}
+                            </button>
                           </td>
                         );
                       }

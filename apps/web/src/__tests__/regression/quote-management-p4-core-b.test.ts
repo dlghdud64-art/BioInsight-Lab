@@ -51,10 +51,12 @@ describe("§quote-management P4-core-B — 우선 추천 카드(룰베이스)", 
 });
 
 describe("§quote-management P4-core-B — 우선순위 단일화(computePriority)", () => {
-  it("priorityLevel 정의 = computePriority(toQuoteCase) 기반", () => {
+  it("priorityLevel 정의 = computePriority(toQuoteCase) 기반 (P3 override는 canonical 위 UI-state 레이어)", () => {
+    // §quote-management-redesign P3 — pill/정렬 소비가 priorityResult?.level 직접 → effectiveLevel(override ?? canonical)로 이동.
+    //   '우선순위 단일화(computePriority)' 보호의도 불변: base=computePriority(priorityResult), override는 ??로 위에만 얹힘(truth 대체 0).
     expect(PAGE).toMatch(/const priorityResult = priorityCase \? computePriority\(priorityCase\)/);
-    expect(PAGE).toMatch(/priorityResult\?\.level === "high"/);
-    expect(PAGE).toMatch(/priorityResult\?\.level === "mid"/);
+    expect(PAGE).toMatch(/baseLevel[^=]*=\s*priorityResult\?\.level/);                        // base = canonical computePriority
+    expect(PAGE).toMatch(/effectiveLevel[^=]*=\s*prioMap\[[^\]]+\]\s*\?\?\s*baseLevel/);       // override ?? canonical (truth 보존)
   });
   it("border·dot 소비처 무변경(critical/high/normal 시각 버킷 유지)", () => {
     // §quote-screen-sian P6.5 — 우선순위 좌측 띠(border-l-4) 제거(Claude 트로프 금지). priority 컬럼 pill dot 로 표시.
