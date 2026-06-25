@@ -371,7 +371,7 @@ export default function OrganizationsPage() {
 
         {/* ═══ §org-management-redesign P2 — 시안 요약 바(포트폴리오 요약 데이터 컴팩트화, 우측 군더더기 패널 대체) ═══ */}
         {!isFetching && organizations.length > 0 && (
-          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-600">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-600">
             <Building2 className="h-4 w-4 flex-none text-slate-400" />
             <span>총 <b className="text-slate-900">{organizations.length}</b>개 조직 · 멤버 <b className="text-slate-900">{totalMembers}</b>명</span>
             <span className="flex-1" />
