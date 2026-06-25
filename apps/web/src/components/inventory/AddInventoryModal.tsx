@@ -42,6 +42,7 @@ interface AddInventoryModalProps {
     lotNumber?: string;
     storageCondition?: string;
     testPurpose?: string;
+    trackingMode?: string; // §inventory-phaseB P3-UI-b — 추적 모드(QUANTITY/LOT/GMP_STRICT).
     catalogNumber?: string | null; // §11.336 — 편집모드 Cat.No 수동 입력(Product 마스터 반영).
   }) => void;
   inventory?: any;
@@ -69,6 +70,8 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
   );
   const [notes, setNotes] = useState(inventory?.notes || "");
   const [lotNumber, setLotNumber] = useState(inventory?.lotNumber ?? "");
+  // §inventory-phaseB P3-UI-b — 추적 모드(차감 게이팅 정책). 기본 QUANTITY(마찰 0).
+  const [trackingMode, setTrackingMode] = useState<string>(inventory?.trackingMode ?? "QUANTITY");
   const [storageCondition, setStorageCondition] = useState(inventory?.storageCondition ?? "");
   const [testPurpose, setTestPurpose] = useState(inventory?.testPurpose ?? "");
   // §11.336 — 편집모드 Cat.No 수동 입력 state(Product 마스터 catalogNumber).
@@ -166,6 +169,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
       lotNumber: lotNumber.trim() || undefined,
       storageCondition: storageCondition || undefined,
       testPurpose: testPurpose.trim() || undefined,
+      trackingMode, // §inventory-phaseB P3-UI-b — 추적 모드 저장(QUANTITY 기본).
       // §11.336 — 편집모드: 사용자가 입력/수정한 Cat.No (빈 값이면 null 로 명시 전송).
       ...(inventory ? { catalogNumber: editableCatNo.trim() || null } : {}),
     };
@@ -256,6 +260,22 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                     placeholder="예: 25200-056"
                   />
                 </div>
+              </div>
+
+              {/* §inventory-phaseB P3-UI-b — 추적 모드(차감 게이팅 정책). 기본 QUANTITY = 마찰 0. */}
+              <div className="grid gap-2">
+                <Label htmlFor="trackingMode" className="font-semibold text-slate-600">추적 모드</Label>
+                <Select value={trackingMode} onValueChange={setTrackingMode}>
+                  <SelectTrigger id="trackingMode">
+                    <SelectValue placeholder="추적 모드 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="QUANTITY">수량만 (기본)</SelectItem>
+                    <SelectItem value="LOT">로트 추적 (로트번호 필수)</SelectItem>
+                    <SelectItem value="GMP_STRICT">GMP 엄격 (로트·담당자·사용처 필수)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-slate-400">차감 시 추적 강도. GMP는 차감 시 로트·담당자·사용처 입력을 강제합니다.</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

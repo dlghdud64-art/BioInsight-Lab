@@ -137,6 +137,7 @@ export async function PATCH(
       autoReorderEnabled,
       autoReorderThreshold,
       lotNumber,
+      trackingMode, // §inventory-phaseB P3-UI-b — 추적 모드(QUANTITY/LOT/GMP_STRICT).
       catalogNumber, // §11.336 — Product 마스터 Cat.No 편집(수동 입력 동선).
     } = body;
 
@@ -162,6 +163,11 @@ export async function PATCH(
     }
 
     if (location !== undefined) updateData.location = location || null;
+
+    // §inventory-phaseB P3-UI-b — 추적 모드 화이트리스트(임의 값 차단). 미전달/무효 시 변경 안 함.
+    if (trackingMode === "QUANTITY" || trackingMode === "LOT" || trackingMode === "GMP_STRICT") {
+      updateData.trackingMode = trackingMode;
+    }
 
     if (lotNumber !== undefined) {
       updateData.lotNumber = typeof lotNumber === "string" && lotNumber.trim() !== ""

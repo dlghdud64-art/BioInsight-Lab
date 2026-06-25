@@ -746,7 +746,7 @@ function InventoryPageContent() {
   });
 
   const createOrUpdateMutation = useMutation({
-    mutationFn: async (formPayload: { id?: string; productId: string; currentQuantity: number; unit: string; safetyStock?: number; minOrderQty?: number; location?: string; expiryDate?: string; autoReorderEnabled?: boolean; autoReorderThreshold?: number; notes?: string; lotNumber?: string; storageCondition?: string; testPurpose?: string; catalogNumber?: string | null }) => {
+    mutationFn: async (formPayload: { id?: string; productId: string; currentQuantity: number; unit: string; safetyStock?: number; minOrderQty?: number; location?: string; expiryDate?: string; autoReorderEnabled?: boolean; autoReorderThreshold?: number; notes?: string; lotNumber?: string; storageCondition?: string; testPurpose?: string; trackingMode?: string; catalogNumber?: string | null }) => {
       const isEdit = Boolean(formPayload.id);
 
       const url = isEdit ? `/api/inventory/${formPayload.id}` : "/api/inventory";
@@ -761,6 +761,7 @@ function InventoryPageContent() {
             lotNumber: formPayload.lotNumber ?? undefined,
             storageCondition: formPayload.storageCondition ?? undefined,
             testPurpose: formPayload.testPurpose ?? undefined,
+            trackingMode: formPayload.trackingMode ?? undefined, // §inventory-phaseB P3-UI-b
             // §11.336 — 편집모드 Cat.No 수동 입력 → PATCH 로 Product 마스터 반영.
             catalogNumber: formPayload.catalogNumber,
           }

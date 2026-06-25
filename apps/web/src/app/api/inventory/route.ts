@@ -245,6 +245,7 @@ export async function POST(request: NextRequest) {
       // 아래 필드는 스키마에 없으므로 notes에 병합 처리
       lotNumber,
       testPurpose,
+      trackingMode, // §inventory-phaseB P3-UI-b — 추적 모드(QUANTITY/LOT/GMP_STRICT).
     } = body;
 
     // productId가 없거나 "manual-" 접두사(수기 임시 ID)인 경우 수기 입력으로 판별
@@ -285,6 +286,8 @@ export async function POST(request: NextRequest) {
       location: location || null,
       expiryDate: expiryDate ? new Date(expiryDate) : null,
       lotNumber: lotNumber?.trim() || null,
+      // §inventory-phaseB P3-UI-b — 화이트리스트(임의 값 차단) + 기본 QUANTITY(회귀 0).
+      trackingMode: trackingMode === "LOT" || trackingMode === "GMP_STRICT" ? trackingMode : "QUANTITY",
       notes: mergedNotes,
       autoReorderEnabled: Boolean(autoReorderEnabled),
       autoReorderThreshold:
