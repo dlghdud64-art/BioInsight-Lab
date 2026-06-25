@@ -8,7 +8,9 @@
  *   - ★ 정직(CEO 2026-06-21): 최우선 1건 상시 노출 + 真 level(높음/보통/낮음) 표시(가짜 격상 0).
  *     케이스 0건이면 노출 0(!best). 사유는 高·中만(低는 derive reason=null → 생략).
  *   - CTA = 케이스 열기(real → rail). dead button 0. 다음 단계는 본문 텍스트로 안내(가짜 액션 금지).
- *   - navy: #0f1b34→#16284c. §11.302 색: high=red·mid=yellow·low=중립(amber/orange 금지).
+ *   - navy: §quote-management-redesign P4 — 대시보드 NextStepBanner 토큰 재사용
+ *     (linear-gradient #1b2b50→#243a72→#2f6be0 + 광택 boxShadow, 시안 정합).
+ *     §11.302 색: high=red·mid=yellow·low=중립(amber/orange 금지).
  */
 
 import { useState } from "react";
@@ -86,7 +88,14 @@ export function PriorityRecommendationCard({
   const nextStep = NEXT_STEP[best.stage];
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0f1b34] to-[#16284c] text-white px-5 py-4 shadow-sm flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+    <div
+      className="relative overflow-hidden rounded-2xl text-white px-5 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4"
+      style={{
+        // §quote-management-redesign P4 — 대시보드 NextStepBanner navy 토큰 재사용(시안 정합). §11.302 amber/orange 0.
+        background: "linear-gradient(100deg, #1b2b50 0%, #243a72 55%, #2f6be0 130%)",
+        boxShadow: "0 6px 18px -8px rgba(20,38,80,.55)",
+      }}
+    >
       {/* 장식 도트(데이터 무관, aria-hidden) */}
       <span
         aria-hidden="true"
@@ -105,7 +114,7 @@ export function PriorityRecommendationCard({
           <ListChecks className="h-5 w-5" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#9cc0ff] mb-1">
+          <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#a9c2f5] mb-1">
             <span className="font-semibold">우선 추천</span>
           </p>
           <h3 className="text-[15px] sm:text-base font-bold leading-snug line-clamp-2 sm:truncate">
