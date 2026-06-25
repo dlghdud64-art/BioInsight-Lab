@@ -154,6 +154,9 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
 
   // 관리 탭 상태
   const [editName, setEditName] = useState("");
+  // §org-management-redesign P4 — 조직 삭제(type-to-confirm) 모달 상태.
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editSlug, setEditSlug] = useState("");
   const [isSavingName, setIsSavingName] = useState(false);
@@ -265,6 +268,25 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
 
   const currentUserMember = members.find((m) => m.user?.id === session?.user?.id);
   const isAdmin = currentUserMember?.role === "ADMIN" || currentUserMember?.role === "OWNER";
+  const isOwner = currentUserMember?.role === "OWNER";
+
+  // §org-management-redesign P4 — 조직 삭제 mutation(canonical DELETE /api/organizations/[id]). 성공 시 목록 복귀.
+  const deleteOrgMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/organizations/${params.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error || "조직 삭제에 실패했습니다.");
+      }
+      return res.json().catch(() => ({}));
+    },
+    onSuccess: () => {
+      toast({ title: "조직 삭제 완료", description: "조직이 삭제되었습니다." });
+      router.push("/dashboard/organizations");
+    },
+    onError: (e: Error) =>
+      toast({ title: "조직 삭제 실패", description: e.message, variant: "destructive" }),
+  });
 
   // 통계
   const totalMembers = members.length;
@@ -1360,7 +1382,16 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                       <p className="text-sm font-medium text-slate-600">조직 삭제</p>
                       <p className="text-xs text-slate-500">조직과 모든 데이터가 영구적으로 삭제됩니다.</p>
                     </div>
-                    <Button variant="outline" size="sm" className="border-red-800 text-red-400 hover:bg-red-950/30 hover:text-red-300" disabled>
+                    {/* §org-management-redesign P4 — dead button 봉합: 삭제 모달(type-to-confirm) 연결.
+                        소유자만 활성(권한 게이팅 — 비소유자는 사유 표기 disabled). */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-red-800 text-red-400 hover:bg-red-950/30 hover:text-red-300"
+                      onClick={() => { setDeleteConfirm(""); setDeleteModalOpen(true); }}
+                      disabled={!isOwner}
+                      title={isOwner ? undefined : "조직 소유자만 삭제할 수 있습니다"}
+                    >
                       <Trash2 className="h-3.5 w-3.5 mr-1.5" />
                       조직 삭제
                     </Button>
@@ -1371,6 +1402,40 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
           </TabsContent>
         )}
       </Tabs>
+
+      {/* §org-management-redesign P4 — 조직 삭제(type-to-confirm) 모달. 조직명 정확 입력 시에만 활성(오삭제 방지). */}
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent className="sm:max-w-[440px] bg-white border-slate-200">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">조직 삭제</DialogTitle>
+            <DialogDescription className="text-slate-500">
+              이 작업은 되돌릴 수 없습니다. 조직과 모든 데이터가 영구 삭제됩니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label className="text-sm text-slate-600">
+              확인을 위해 조직명 <b className="text-slate-900">{organization?.name}</b> 을(를) 입력하세요.
+            </Label>
+            <Input
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              placeholder={organization?.name ?? "조직명"}
+              className="bg-slate-100 border-slate-200 text-slate-900"
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>취소</Button>
+            <Button
+              variant="destructive"
+              data-testid="org-delete-confirm"
+              disabled={deleteConfirm.trim() !== (organization?.name ?? "").trim() || deleteOrgMutation.isPending}
+              onClick={() => deleteOrgMutation.mutate()}
+            >
+              {deleteOrgMutation.isPending ? "삭제 중..." : "영구 삭제"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* 멤버 초대 모달 */}
       <Dialog open={inviteModalOpen} onOpenChange={setInviteModalOpen}>
