@@ -6,7 +6,7 @@ import { csrfFetch } from "@/lib/api-client";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Plus, Users, Loader2, ExternalLink, Clock, AlertTriangle, Building2, Shield, ChevronRight, Zap, UserCheck, MailWarning, Search, LayoutGrid, List, MoreVertical, Sparkles, AlertCircle } from "lucide-react";
+import { Plus, Users, Loader2, ExternalLink, AlertTriangle, Building2, Shield, ChevronRight, Zap, UserCheck, MailWarning, Search, LayoutGrid, List, MoreVertical, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -107,18 +107,16 @@ function getAvatarColor(name: string) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Mock 활동 데이터                                                    */
+/*  조직 상태 라인 (실 필드 파생 — 가짜 활동/시간 금지 §11.318)          */
 /* ------------------------------------------------------------------ */
 
-const MOCK_ACTIVITIES: Record<string, { text: string; time: string }> = {};
-
-function getRecentActivity(org: OrgRow): { text: string; time: string } {
-  // 실제 API 없으므로 mock 데이터 반환
-  if (org.adminCount === 0) return { text: "승인권자 미지정 (3건 대기)", time: "10분 전 활동" };
-  if (org.pendingCount > 0) return { text: `새로운 견적 요청 ${org.pendingCount}건`, time: "30분 전 활동" };
-  if (org.plan === "TEAM") return { text: "MSDS 안전 점검 완료", time: "2시간 전 활동" };
-  if (org.memberCount <= 5) return { text: "프로젝트 생성됨", time: "1일 전 활동" };
-  return { text: `시약 재고 ${Math.floor(org.memberCount / 2)}건 업데이트됨`, time: "10분 전 활동" };
+// §org-management-redesign P6 — list 카드 가짜 활동(getRecentActivity) 제거(§11.318 honesty).
+//   org 활동/audit 엔드포인트 부재 → 날조(가짜 텍스트·"30분 전 활동" 시간) 금지.
+//   실 org 필드(adminCount/pendingCount)로 파생한 실행 가능 상태만 표기(없으면 null → 미표기).
+function getOrgStatusLine(org: OrgRow): string | null {
+  if (org.adminCount === 0) return "승인권자 미지정";
+  if (org.pendingCount > 0) return `초대 대기 ${org.pendingCount}명`;
+  return null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -574,7 +572,7 @@ function OrgCard({
   const warnings = getOrgWarnings(org);
   const hasWarnings = warnings.length > 0;
   const avatar = getAvatarColor(org.name);
-  const activity = getRecentActivity(org);
+  const statusLine = getOrgStatusLine(org);
 
   return (
     <div className={`rounded-xl border border-slate-200 bg-white hover:shadow-md hover:border-slate-300 transition-all ${viewMode === "list" ? "flex items-center" : ""}`}>
@@ -606,23 +604,19 @@ function OrgCard({
           </div>
         </div>
 
-        {/* 멤버 수 + 최종 활동 */}
+        {/* 멤버 수 (§org-management-redesign P6 — 가짜 "최종 활동" 시간 제거, §11.318) */}
         <div className={`flex items-center gap-4 text-xs text-slate-500 ${viewMode === "list" ? "" : "mb-3"}`}>
           <span className="flex items-center gap-1.5">
             <Users className="h-3.5 w-3.5 text-slate-400" />
             멤버 {org.memberCount}명
           </span>
-          <span className="flex items-center gap-1.5">
-            <Clock className="h-3.5 w-3.5 text-slate-400" />
-            {activity.time}
-          </span>
         </div>
 
-        {/* 최근 활동 요약 */}
-        {viewMode === "grid" && (
+        {/* 조직 상태 라인 (실 필드 파생 — 없으면 미표기, 가짜 0) */}
+        {viewMode === "grid" && statusLine && (
           <div className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-slate-50 mb-2">
-            <Sparkles className="h-3 w-3 text-slate-400 flex-shrink-0" />
-            <span className="text-[11px] text-slate-600 truncate">{activity.text}</span>
+            <AlertCircle className="h-3 w-3 text-slate-400 flex-shrink-0" />
+            <span className="text-[11px] text-slate-600 truncate">{statusLine}</span>
           </div>
         )}
 
