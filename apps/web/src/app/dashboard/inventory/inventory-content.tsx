@@ -12,6 +12,7 @@ import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useUserPreferences } from "@/lib/preferences/user-preferences";
 import { csrfFetch } from "@/lib/api-client";
+import { requiredUsageFields, DEFAULT_TRACKING_MODE, type TrackingMode } from "@/lib/inventory/tracking-mode";
 import { invalidateBriefNarrative } from "@/lib/hooks/use-operational-brief";
 // §11.317 — 헤더 1줄 배너 → 운영 브리핑 popup open (canonical truth 보존, dead button 0)
 import { useOperationalBriefPopup } from "@/components/operational-brief/popup-context";
@@ -110,6 +111,7 @@ interface ProductInventory {
   expiryDate: string | null;
   notes: string | null;
   lotNumber?: string | null;
+  trackingMode?: string | null; // §inventory-phaseB P3-UI-a3 — 차감 게이팅 정책.
   storageCondition?: string | null;
   hazard?: boolean;
   testPurpose?: string | null;
@@ -797,11 +799,18 @@ function InventoryPageContent() {
   });
 
   const recordUsageMutation = useMutation({
-    mutationFn: async (usagePayload: { inventoryId: string; quantity: number; unit?: string; notes?: string }) => {
-      const response = await csrfFetch("/api/inventory/usage", {
+    mutationFn: async (usagePayload: { inventoryId: string; quantity: number; unit?: string; notes?: string; trackingMode?: string | null; lotNumber?: string; operator?: string; destination?: string }) => {
+      // §inventory-phaseB P3-UI-a3 — 추적 품목(LOT/GMP_STRICT)은 lot/operator/destination 지원하는
+      //   canonical [id]/use 로 라우팅(legacy /usage 는 P3-server에서 비-QUANTITY 422 차단). QUANTITY는 기존 legacy.
+      const tracked = !!usagePayload.trackingMode && usagePayload.trackingMode !== "QUANTITY";
+      const url = tracked ? `/api/inventory/${usagePayload.inventoryId}/use` : "/api/inventory/usage";
+      const body = tracked
+        ? { quantity: usagePayload.quantity, unit: usagePayload.unit, notes: usagePayload.notes, lotNumber: usagePayload.lotNumber, destination: usagePayload.destination, operator: usagePayload.operator }
+        : { inventoryId: usagePayload.inventoryId, quantity: usagePayload.quantity, unit: usagePayload.unit, notes: usagePayload.notes };
+      const response = await csrfFetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(usagePayload),
+        body: JSON.stringify(body),
       });
       if (!response.ok) throw new Error("Failed to record usage");
       return response.json();
@@ -3615,12 +3624,16 @@ function InventoryPageContent() {
                               setEditingInventory(inventory);
                               setIsDialogOpen(true);
                             }}
-                            onRecordUsage={(quantity, notes) => {
+                            onRecordUsage={(quantity, notes, gmp) => {
                               recordUsageMutation.mutate({
                                 inventoryId: inventory.id,
                                 quantity,
                                 unit: inventory.unit,
                                 notes,
+                                trackingMode: inventory.trackingMode,
+                                lotNumber: gmp?.lotNumber,
+                                operator: gmp?.operator,
+                                destination: gmp?.destination,
                               });
                             }}
                             onRestockRequest={() => {
@@ -3987,12 +4000,24 @@ function InventoryPageContent() {
   );
 }
 
-function InventoryCard({ inventory, onEdit, onRecordUsage, onRestockRequest, onPrintLabel, onDispose, isRestockRequested = false, isRequestingRestock = false, isRecommended = false }: { inventory: ProductInventory; onEdit: () => void; onRecordUsage: (quantity: number, notes?: string) => void; onRestockRequest?: () => void; onPrintLabel?: () => void; onDispose?: () => void; isRestockRequested?: boolean; isRequestingRestock?: boolean; isRecommended?: boolean }) {
+function InventoryCard({ inventory, onEdit, onRecordUsage, onRestockRequest, onPrintLabel, onDispose, isRestockRequested = false, isRequestingRestock = false, isRecommended = false }: { inventory: ProductInventory; onEdit: () => void; onRecordUsage: (quantity: number, notes?: string, gmp?: { lotNumber?: string; operator?: string; destination?: string }) => void; onRestockRequest?: () => void; onPrintLabel?: () => void; onDispose?: () => void; isRestockRequested?: boolean; isRequestingRestock?: boolean; isRecommended?: boolean }) {
   const [showUsageDialog, setShowUsageDialog] = useState(false);
   // §11.297d InventoryCard plain dropdown state.
   const [openContentCardMenuId, setOpenContentCardMenuId] = useState<string | null>(null);
   const [usageQuantity, setUsageQuantity] = useState("");
   const [usageNotes, setUsageNotes] = useState("");
+  // §inventory-phaseB P3-UI-a3 — GMP/LOT 추적 품목 차감 시 lot·operator·destination 수집.
+  const [usageLot, setUsageLot] = useState("");
+  const [usageOperator, setUsageOperator] = useState("");
+  const [usageDestination, setUsageDestination] = useState("");
+  const usageTrackingMode: TrackingMode = (inventory.trackingMode as TrackingMode) ?? DEFAULT_TRACKING_MODE;
+  const usageRequired = requiredUsageFields(usageTrackingMode);
+  const usageNeeds = (f: "lotNumber" | "operator" | "destination") => usageRequired.includes(f);
+  const usageGmpMissing: string[] = [];
+  if (usageNeeds("lotNumber") && !usageLot.trim()) usageGmpMissing.push("로트번호");
+  if (usageNeeds("operator") && !usageOperator.trim()) usageGmpMissing.push("담당자");
+  if (usageNeeds("destination") && !usageDestination.trim()) usageGmpMissing.push("사용처");
+  const usageGmpOk = usageGmpMissing.length === 0;
 
   const isLowStock = inventory.safetyStock !== null && inventory.currentQuantity <= inventory.safetyStock;
   const isOutOfStock = inventory.currentQuantity <= 0;
@@ -4003,11 +4028,17 @@ function InventoryCard({ inventory, onEdit, onRecordUsage, onRestockRequest, onP
 
   const handleRecordUsage = () => {
     const qty = parseFloat(usageQuantity);
+    if (!usageGmpOk) return; // §inventory-phaseB P3-UI-a3 — GMP 필수 누락 차단(서버도 422)
     if (qty > 0 && qty <= inventory.currentQuantity) {
-      onRecordUsage(qty, usageNotes || undefined);
+      onRecordUsage(qty, usageNotes || undefined, {
+        lotNumber: usageLot.trim() || undefined,
+        operator: usageOperator.trim() || undefined,
+        destination: usageDestination.trim() || undefined,
+      });
       setShowUsageDialog(false);
       setUsageQuantity("");
       setUsageNotes("");
+      setUsageLot(""); setUsageOperator(""); setUsageDestination("");
     }
   };
 
@@ -4163,11 +4194,31 @@ function InventoryCard({ inventory, onEdit, onRecordUsage, onRestockRequest, onP
                     <Label>비고 (선택)</Label>
                     <Textarea value={usageNotes} onChange={(e) => setUsageNotes(e.target.value)} placeholder="예: 실험 A에 사용" rows={3} />
                   </div>
+
+                  {/* §inventory-phaseB P3-UI-a3 — GMP/LOT 추적 품목 필수 필드(QUANTITY 미노출). */}
+                  {usageTrackingMode !== "QUANTITY" && (
+                    <div className="space-y-2 rounded-lg border border-blue-200 bg-blue-50 p-2.5">
+                      <p className="text-[11px] font-medium text-blue-700">
+                        {usageTrackingMode === "GMP_STRICT"
+                          ? "GMP 추적 품목 — 로트·담당자·사용처 필수"
+                          : "로트 추적 품목 — 로트번호 필수"}
+                      </p>
+                      <Input value={usageLot} onChange={(e) => setUsageLot(e.target.value)} placeholder={`로트번호${usageNeeds("lotNumber") ? " *" : ""}`} />
+                      {usageTrackingMode === "GMP_STRICT" && (
+                        <>
+                          <Input value={usageOperator} onChange={(e) => setUsageOperator(e.target.value)} placeholder="담당자 *" />
+                          <Input value={usageDestination} onChange={(e) => setUsageDestination(e.target.value)} placeholder="사용처 *" />
+                        </>
+                      )}
+                      {!usageGmpOk && <p className="text-[11px] text-red-600">필수 항목 누락: {usageGmpMissing.join(", ")}</p>}
+                    </div>
+                  )}
+
                   <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => setShowUsageDialog(false)} className="flex-1">
+                    <Button variant="outline" onClick={() => { setShowUsageDialog(false); setUsageLot(""); setUsageOperator(""); setUsageDestination(""); }} className="flex-1">
                       취소
                     </Button>
-                    <Button onClick={handleRecordUsage} disabled={!usageQuantity || parseFloat(usageQuantity) <= 0} className="flex-1">
+                    <Button onClick={handleRecordUsage} disabled={!usageQuantity || parseFloat(usageQuantity) <= 0 || !usageGmpOk} className="flex-1">
                       기록
                     </Button>
                   </div>
