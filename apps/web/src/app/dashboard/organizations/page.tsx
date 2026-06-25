@@ -6,7 +6,7 @@ import { csrfFetch } from "@/lib/api-client";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Plus, Users, Loader2, ExternalLink, Clock, AlertTriangle, Building2, Shield, ChevronRight, Zap, UserCheck, MailWarning, Search, LayoutGrid, List, MoreVertical, Sparkles, TrendingUp, AlertCircle } from "lucide-react";
+import { Plus, Users, Loader2, ExternalLink, Clock, AlertTriangle, Building2, Shield, ChevronRight, Zap, UserCheck, MailWarning, Search, LayoutGrid, List, MoreVertical, Sparkles, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,9 +15,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-// §11.201 — shadcn Select 제거: 조직 유형 필드를 native <select> 로 대체.
-//   Radix Dialog × Select portal 충돌을 글로벌 workaround 로 패치하지 않음.
+// §org-management-redesign P2 — 조직 유형 필드 = ODropdown(시안 통일). §11.201(Radix Select × Dialog
+//   portal 충돌) 회피는 ODropdown 자체 absolute 메뉴(portal 미사용)로 무관.
 import { Input } from "@/components/ui/input";
+import { ODropdown } from "@/components/organizations/odropdown";
+import { ORG_TYPES } from "@/lib/organizations/org-constants";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -367,6 +369,18 @@ export default function OrganizationsPage() {
           </div>
         </div>
 
+        {/* ═══ §org-management-redesign P2 — 시안 요약 바(포트폴리오 요약 데이터 컴팩트화, 우측 군더더기 패널 대체) ═══ */}
+        {!isFetching && organizations.length > 0 && (
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-600">
+            <Building2 className="h-4 w-4 flex-none text-slate-400" />
+            <span>총 <b className="text-slate-900">{organizations.length}</b>개 조직 · 멤버 <b className="text-slate-900">{totalMembers}</b>명</span>
+            <span className="flex-1" />
+            <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${totalPending > 0 ? "bg-yellow-100 text-yellow-700" : "bg-slate-100 text-slate-500"}`}>
+              초대 대기 {totalPending}
+            </span>
+          </div>
+        )}
+
         {/* ═══ 조직 생성 다이얼로그 (리디자인) ═══
             §11.201 — 조직 유형 dropdown 안정화 path 결정. Radix Dialog ×
             Select portal 충돌을 modal=false / onInteractOutside / pointerdown
@@ -408,23 +422,16 @@ export default function OrganizationsPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="org-type" className="text-sm font-semibold text-slate-700">조직 유형</Label>
-                {/* §11.201 — Radix Select 의 Dialog × portal 충돌 회피.
-                    조직 유형은 옵션 5개 + 한 번 선택하는 governance field —
-                    검색/grouping 기능 불필요. native <select> 로 안정화하여
-                    portal/z-index/inert 문제 0. 전역 shadcn Select 보존. */}
-                <select
-                  id="org-type"
+                {/* §org-management-redesign P2 — 조직 유형 입력을 ODropdown 으로 통일(시안 정합).
+                    §11.201 의 Radix Select × Dialog portal 충돌은 ODropdown(자체 absolute 메뉴, portal 미사용)으로 무관.
+                    wiring 보존: value/onChange → formData.organizationType. */}
+                <ODropdown
                   value={formData.organizationType}
-                  onChange={(e) => setFormData({ ...formData, organizationType: e.target.value })}
-                  className="flex h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all"
-                >
-                  <option value="" disabled>조직 유형을 선택하세요</option>
-                  <option value="R&D 연구소">R&D 연구소</option>
-                  <option value="QC/QA 품질관리">QC/QA 품질관리</option>
-                  <option value="시험·검사 기관">시험·검사 기관</option>
-                  <option value="대학 연구실">대학 연구실</option>
-                  <option value="기타">기타</option>
-                </select>
+                  options={ORG_TYPES}
+                  onChange={(v) => setFormData({ ...formData, organizationType: v })}
+                  placeholder="조직 유형을 선택하세요"
+                  ariaLabel="조직 유형"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="org-desc" className="text-sm text-slate-500">
@@ -492,37 +499,8 @@ export default function OrganizationsPage() {
               )}
             </div>
 
-            {/* ── 오른쪽: 사이드바 ── */}
+            {/* ── 오른쪽: 사이드바 (§org-management-redesign P2 — 포트폴리오 요약은 상단 요약 바로 이동, 중복 생성 CTA 제거) ── */}
             <div className="space-y-3 sticky top-20">
-              {/* 포트폴리오 요약 */}
-              <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-                <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2">
-                  <span className="text-sm font-bold text-slate-900">포트폴리오 요약</span>
-                  <TrendingUp className="h-4 w-4 text-emerald-500" />
-                </div>
-                <div className="p-4 space-y-3">
-                  <SidebarStatRow
-                    icon={<Building2 className="h-4.5 w-4.5 text-blue-500" />}
-                    iconBg="bg-blue-50"
-                    label="총 조직"
-                    value={organizations.length}
-                  />
-                  <SidebarStatRow
-                    icon={<Users className="h-4.5 w-4.5 text-violet-500" />}
-                    iconBg="bg-violet-50"
-                    label="총 멤버"
-                    value={totalMembers}
-                  />
-                  <SidebarStatRow
-                    icon={<Clock className="h-4.5 w-4.5 text-yellow-500" />}
-                    iconBg="bg-yellow-50"
-                    label="초대 대기"
-                    value={totalPending}
-                    highlight={totalPending > 0}
-                  />
-                </div>
-              </div>
-
               {/* 바로 처리할 항목 */}
               <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
                 <div className="px-5 py-3.5 border-b border-slate-100">
@@ -568,17 +546,7 @@ export default function OrganizationsPage() {
                 </div>
               </div>
 
-              {/* 조직 생성 CTA — 축소 (상단에 이미 primary CTA 있음) */}
-              <div className="rounded-xl bg-blue-50 border border-blue-200 p-4">
-                <p className="text-xs font-semibold text-blue-800 mb-1">새로운 조직이 필요한가요?</p>
-                <p className="text-[11px] text-blue-600/70 mb-3">팀이나 프로젝트를 위한 새로운 공간을 만들고 멤버를 초대하세요.</p>
-                <button
-                  onClick={() => setIsOpen(true)}
-                  className="w-full py-2 rounded-lg bg-white border border-blue-200 text-blue-600 text-xs font-semibold hover:bg-blue-50 transition-colors"
-                >
-                  조직 만들기
-                </button>
-              </div>
+              {/* §org-management-redesign P2 — 중복 조직 생성 CTA 제거(단일 CTA = 상단 primary). */}
             </div>
           </div>
         )}
@@ -690,33 +658,7 @@ function OrgCard({
 
 /* -- Sidebar stat row --------------------------------------------- */
 
-function SidebarStatRow({
-  icon,
-  iconBg,
-  label,
-  value,
-  highlight,
-}: {
-  icon: React.ReactNode;
-  iconBg: string;
-  label: string;
-  value: number;
-  highlight?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between py-1">
-      <div className="flex items-center gap-3">
-        <div className={`w-9 h-9 rounded-lg ${iconBg} flex items-center justify-center flex-shrink-0`}>
-          {icon}
-        </div>
-        <span className="text-sm text-slate-600">{label}</span>
-      </div>
-      <span className={`text-xl font-extrabold ${highlight ? "text-yellow-600" : "text-slate-900"}`}>
-        {value}
-      </span>
-    </div>
-  );
-}
+/* §org-management-redesign P2 — SidebarStatRow 제거(포트폴리오 요약 패널 폐지, 데이터는 상단 요약 바). */
 
 /* -- Loading skeleton --------------------------------------------- */
 
