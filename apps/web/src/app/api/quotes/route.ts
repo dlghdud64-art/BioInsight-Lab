@@ -384,6 +384,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // §quote-userid-fk-honest — userId FK(Quote_userId_fkey) 위반 = 세션 user.id 가 User 테이블에
+    //   없음(orphan 세션 드리프트: User row 삭제/환경 불일치인데 JWT 는 옛 id 유지). "존재하지 않는
+    //   제품 또는 조직" 오해 메시지 대신 재로그인 안내(honest). 재로그인 시 auth jwt 콜백이 email 로
+    //   User 재해결/재생성(provision) → 자동 복구. (진단: 2026-06-26 P2003 Quote_userId_fkey 재현)
+    if (error?.code === "P2003" && /Quote_userId_fkey|userId_fkey/i.test(error?.message ?? "")) {
+      return NextResponse.json(
+        {
+          error: "세션 사용자 정보가 유효하지 않습니다. 다시 로그인해 주세요.",
+          code: "SESSION_USER_INVALID",
+          _debug: { message: error?.message, code: error?.code },
+        },
+        { status: 409 }
+      );
+    }
+
     // 클라이언트에 의미있는 에러 메시지 반환
     let clientMessage = "견적 생성에 실패했습니다.";
     if (error?.code === "P2003" || error?.message?.includes("Foreign key")) {
