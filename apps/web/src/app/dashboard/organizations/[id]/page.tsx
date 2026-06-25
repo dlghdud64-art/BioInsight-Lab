@@ -309,15 +309,9 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   });
 
   // 활동 피드 (target: 하이라이트할 대상)
-  const organizationLogs: Array<{ id: string; actor: string; action: string; time: string; target?: string }> = [
-    { id: "1", actor: "이매니저", action: "DMEM 시약을 5병 입고 반영했습니다.", time: "10분 전", target: "DMEM 시약" },
-    { id: "2", actor: "김연구", action: "FBS 견적 요청을 제출했습니다.", time: "25분 전", target: "FBS" },
-    { id: "3", actor: "박승인", action: "Pipette Tips 구매를 승인했습니다.", time: "40분 전", target: "Pipette Tips" },
-    { id: "4", actor: "이매니저", action: "예산 2026 상반기 시약비를 변경했습니다.", time: "1시간 전", target: "예산 2026 상반기 시약비" },
-    { id: "5", actor: "최연구원", action: "Trypsin-EDTA 재고를 등록했습니다.", time: "2시간 전", target: "Trypsin-EDTA" },
-    { id: "6", actor: "이매니저", action: "김연구님의 권한을 승인자로 변경했습니다.", time: "3시간 전", target: "김연구" },
-    { id: "7", actor: "시스템", action: "박신입님이 조직 초대를 수락했습니다.", time: "어제", target: "박신입" },
-  ];
+  // §org-management-redesign P3 — 가짜 활동 데이터 제거(§11.318 honesty). org-scoped 활동/audit
+  //   엔드포인트 부재 → 정직 빈 상태. 실 audit 연동은 후속(엔드포인트 신설 별 트랙).
+  const organizationLogs: Array<{ id: string; actor: string; action: string; time: string; target?: string }> = [];
 
   // 활동 필터
   const filteredLogs = activityTypeFilter === "all"
@@ -544,86 +538,21 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
         </div>
       </div>
 
-      {/* 6칸 KPI strip */}
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-        {/* 총 멤버 */}
-        <Card className="shadow-sm border-slate-200 bg-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-slate-400">총 멤버</span>
-              <div className="bg-blue-50 p-1.5 rounded-full">
-                <Users className="h-3.5 w-3.5 text-blue-500" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-slate-900">{totalMembers}<span className="text-sm font-normal text-slate-400 ml-0.5">명</span></p>
-            <p className="text-[11px] text-slate-500 mt-1">조직 전체 인원</p>
-          </CardContent>
-        </Card>
-        {/* 활성 멤버 */}
-        <Card className="shadow-sm border-slate-200 bg-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-slate-400">활성 멤버</span>
-              <div className="bg-emerald-50 p-1.5 rounded-full">
-                <span className="block h-3.5 w-3.5 rounded-full bg-emerald-500" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-slate-900">{activeCount}<span className="text-sm font-normal text-slate-400 ml-0.5">명</span></p>
-            <p className="text-[11px] text-slate-500 mt-1">현재 활동 중</p>
-          </CardContent>
-        </Card>
-        {/* 초대 대기 */}
-        <Card className="shadow-sm border-slate-200 bg-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-slate-400">초대 대기</span>
-              <div className="bg-yellow-50 p-1.5 rounded-full">
-                <Mail className="h-3.5 w-3.5 text-yellow-500" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-slate-900">{pendingCount}<span className="text-sm font-normal text-slate-400 ml-0.5">명</span></p>
-            <p className="text-[11px] text-yellow-500 mt-1">{pendingCount > 0 ? "응답 대기 중" : "대기 없음"}</p>
-          </CardContent>
-        </Card>
-        {/* 승인 필요 */}
-        <Card className="shadow-sm border-slate-200 bg-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-slate-400">승인 필요</span>
-              <div className="bg-blue-50 p-1.5 rounded-full">
-                <ClipboardCheck className="h-3.5 w-3.5 text-blue-500" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-slate-900">{approverCount}<span className="text-sm font-normal text-slate-400 ml-0.5">명</span></p>
-            <p className="text-[11px] text-slate-500 mt-1">승인 권한 보유자</p>
-          </CardContent>
-        </Card>
-        {/* 최근 7일 활동 */}
-        <Card className="shadow-sm border-slate-200 bg-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-slate-400">최근 7일 활동</span>
-              <div className="bg-violet-50 p-1.5 rounded-full">
-                <Activity className="h-3.5 w-3.5 text-violet-500" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-slate-900">{organizationLogs.length}<span className="text-sm font-normal text-slate-400 ml-0.5">건</span></p>
-            <p className="text-[11px] text-slate-500 mt-1">조직 내 이벤트</p>
-          </CardContent>
-        </Card>
-        {/* 플랜 상태 */}
-        <Card className="shadow-sm border-slate-200 bg-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-slate-400">플랜 상태</span>
-              <div className="bg-indigo-50 p-1.5 rounded-full">
-                <CreditCard className="h-3.5 w-3.5 text-indigo-500" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-slate-900">{planLabel}</p>
-            <p className="text-[11px] text-slate-500 mt-1">좌석 {seatUsagePercent}% 사용</p>
-          </CardContent>
-        </Card>
+      {/* §org-management-redesign P3 — KPI 6박스 → 요약 한 줄 바(시안). 실 5지표 유지, 가짜 "최근 7일 활동"(mock count) 제거. */}
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
+        <span className="flex items-center gap-1.5 text-slate-600">
+          <Users className="h-4 w-4 text-blue-500" />멤버 <b className="text-slate-900">{totalMembers}</b>명
+        </span>
+        <span className="text-slate-300">·</span>
+        <span className="text-slate-600">활성 <b className="text-slate-900">{activeCount}</b></span>
+        <span className="text-slate-300">·</span>
+        <span className="text-slate-600">초대 대기 <b className={pendingCount > 0 ? "text-yellow-600" : "text-slate-900"}>{pendingCount}</b></span>
+        <span className="text-slate-300">·</span>
+        <span className="text-slate-600">승인 권한 <b className="text-slate-900">{approverCount}</b></span>
+        <span className="flex-1" />
+        <span className="flex items-center gap-1.5 text-slate-600">
+          <CreditCard className="h-4 w-4 text-indigo-500" /><b className="text-slate-900">{planLabel}</b> · 좌석 {seatUsagePercent}%
+        </span>
       </div>
 
       {/* 탭 구조 — 5탭 */}
@@ -722,7 +651,10 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                 <CardTitle className="text-sm font-semibold text-slate-900">최근 활동</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                {organizationLogs.slice(0, 5).map((log, idx) => {
+                {/* §org-management-redesign P3 — 활동 데이터 없음 정직 표기(가짜 0). */}
+                {organizationLogs.length === 0 ? (
+                  <div className="py-8 text-center text-sm text-slate-400">활동 내역이 아직 없습니다.</div>
+                ) : organizationLogs.slice(0, 5).map((log, idx) => {
                   const category = getActivityCategory(log.action);
                   const style = ACTIVITY_CATEGORY_STYLES[category] || ACTIVITY_CATEGORY_STYLES.inventory;
                   const Icon = style.icon;
@@ -1188,7 +1120,10 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                   {filteredLogs.length === 0 ? (
                     <div className="py-12 text-center">
                       <Activity className="h-10 w-10 text-slate-600 mx-auto mb-3" />
-                      <p className="text-sm text-slate-400">해당 유형의 활동이 없습니다</p>
+                      {/* §org-management-redesign P3 — 활동 데이터 없음 정직 표기(가짜 0). */}
+                      <p className="text-sm text-slate-400">
+                        {activityTypeFilter === "all" ? "활동 내역이 아직 없습니다" : "해당 유형의 활동이 없습니다"}
+                      </p>
                     </div>
                   ) : (
                     filteredLogs.map((log, idx) => {
