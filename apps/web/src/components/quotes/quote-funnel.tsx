@@ -65,16 +65,19 @@ export function QuoteFunnel({
     );
   }
 
-  // §quotes-mobile-redesign — 가로 1행 컴팩트 칩(아이콘+카운트+라벨). 2행 대형 카드 폐지.
+  // §quotes-mobile-density P2 — 퍼널을 얇은 1줄 세그먼트 칩으로(라벨·카운트 인라인).
+  //   기존 세로스택(아이콘 box + text-lg)이 퍼스트뷰 ~80px 점유 → 인라인 ~36px 로 압축.
+  //   §quotes-mobile-redesign 래퍼(flex items-stretch gap-2)·로직(counts/focus/allZero/disabled)·
+  //   §quote-management P2(deriveStage/s1~s5/현재집중/onStageClick) 전부 보존 — render 밀도만 변경.
+  //   아이콘 box/text-lg 폐지(STAGES.icon·tint 소스는 보존, 되살리기 용이). highlight=active/focus ring 유지.
   return (
-    <div className="flex items-stretch gap-2 rounded-2xl border border-bd bg-white p-1.5 shadow-sm">
+    <div className="flex items-stretch gap-2 rounded-xl border border-bd bg-white p-1 shadow-sm overflow-x-auto">
       {visibleStages.map((s) => {
         const n = counts[s.key];
         const dim = n === 0;
         const isFocus = s.key === focus;
         const isActive = activeStage === s.key;
         const highlight = isActive || (isFocus && activeStage == null);
-        const Icon = s.icon;
         return (
           <button
             key={s.key}
@@ -83,30 +86,23 @@ export function QuoteFunnel({
             disabled={n === 0}
             aria-pressed={isActive}
             aria-label={`${s.label} ${n}건`}
-            className={`flex-1 min-w-0 flex flex-col items-center gap-1 rounded-xl px-2 py-2.5 transition-colors ${
+            className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 transition-colors ${
               dim ? "opacity-50 cursor-default" : "hover:bg-slate-50"
             } ${highlight ? "bg-[#eaf1fd] ring-[1.5px] ring-inset ring-[#cdddf9]" : ""}`}
           >
             <span
-              className={`flex items-center justify-center w-7 h-7 rounded-lg flex-none ${
-                highlight ? "bg-[#2f6be0] text-white" : `${s.tint.bg} ${s.tint.text}`
-              }`}
-            >
-              <Icon className="h-[16px] w-[16px]" />
-            </span>
-            <span
-              className={`text-lg font-extrabold tabular-nums leading-none ${
-                dim ? "text-[#c2c8d4]" : highlight ? "text-[#244e9e]" : "text-slate-900"
-              }`}
-            >
-              {n}
-            </span>
-            <span
-              className={`text-[11px] font-semibold leading-tight break-keep text-center ${
+              className={`text-[11px] font-semibold break-keep truncate ${
                 highlight ? "text-[#244e9e]" : "text-slate-500"
               }`}
             >
               {s.label}
+            </span>
+            <span
+              className={`text-sm font-extrabold tabular-nums leading-none ${
+                dim ? "text-[#c2c8d4]" : highlight ? "text-[#244e9e]" : "text-slate-900"
+              }`}
+            >
+              {n}
             </span>
           </button>
         );
