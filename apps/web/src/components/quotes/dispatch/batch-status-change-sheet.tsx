@@ -142,11 +142,15 @@ export function BatchStatusChangeSheet({
           successCount += 1;
         } else {
           failCount += 1;
-          failureMessages.push(`${r.value.quoteId.slice(0, 8)}: ${r.value.message}`);
+          // §quote-status-toast-honesty — raw 견적 cuid(internal key) 노출 금지(CLAUDE.md).
+          //   사용자 토스트엔 사람이 읽는 견적 제목만(없으면 메시지 단독). 내부 ID 는 비노출.
+          const failTitle = selectedQuotes.find((q) => q.id === r.value.quoteId)?.title;
+          failureMessages.push(failTitle ? `${failTitle}: ${r.value.message}` : r.value.message);
         }
       } else {
         failCount += 1;
-        failureMessages.push(`unknown: ${r.reason}`);
+        // §quote-status-toast-honesty — reject reason(객체/스택) 노출 금지 → 품위 있는 안내.
+        failureMessages.push("처리 중 오류가 발생했습니다.");
       }
     }
 
