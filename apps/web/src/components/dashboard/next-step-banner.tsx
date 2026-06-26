@@ -115,56 +115,44 @@ export function NextStepBanner({ summary }: NextStepBannerProps) {
 
   return (
     <div
-      className="relative overflow-hidden rounded-[14px] p-4 md:px-[18px] md:py-[15px] text-white"
+      // §quotes-mobile-density 정합 — 견적 우선추천 카드와 동일한 thin inline 1행(navy 토큰 공유,
+      //   룰베이스 next-action 배너 = 동일 역할 → 크기 일치). 3행 스택(~80px) → 단일 truncate 행(~52px).
+      className="relative overflow-hidden rounded-[14px] px-3.5 py-2 text-white flex items-center gap-2.5"
       style={{
         background: "linear-gradient(100deg, #1b2b50 0%, #243a72 55%, #2f6be0 130%)",
         boxShadow: "0 6px 18px -8px rgba(20,38,80,.55)",
       }}
     >
-      {/* 우상단 광택 ::after 레이어 — pointer-events-none, 콘텐츠 아래(z-0). */}
+      {/* 우상단 광택 레이어 — pointer-events-none, 콘텐츠 아래. */}
       <div
         className="pointer-events-none absolute inset-0"
         aria-hidden
         style={{ background: "radial-gradient(120% 180% at 92% 0%, rgba(255,255,255,0.10), transparent 60%)" }}
       />
-      <div className="relative z-10 flex items-center gap-[15px] pr-8">
-        <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[11px] bg-white/[0.13]">
-          <Icon className="h-5 w-5 text-white" />
+      <Icon className="relative z-10 h-4 w-4 flex-none text-white" aria-hidden="true" />
+      {/* 단일 행 요약 — eyebrow + 제목 + 설명 inline. truncate 로 폭 초과 시 한 줄 유지. */}
+      <p className="relative z-10 min-w-0 flex-1 text-[12.5px] leading-snug truncate">
+        <span className="mr-1.5 font-extrabold uppercase tracking-[0.09em] text-[10px]" style={{ color: "#a9c2f5" }}>
+          {ins.eyebrow}
         </span>
-        <div className="min-w-0 flex-1 flex flex-col gap-0.5">
-          <span className="text-[10.5px] font-extrabold uppercase tracking-[0.09em]" style={{ color: "#a9c2f5" }}>
-            {ins.eyebrow}
-          </span>
-          <b className="text-[15px] font-bold leading-tight text-white break-keep">{ins.title}</b>
-          <span className="text-[12.5px] leading-snug break-keep" style={{ color: "#c7d4ee" }}>{ins.desc}</span>
-        </div>
-        {ins.cta && (
-          <a
-            href={ins.cta.href}
-            className="hidden md:inline-flex flex-shrink-0 items-center gap-1.5 rounded-[11px] bg-white px-3.5 py-2 text-[13px] font-bold transition-colors hover:bg-[#eef2fb]"
-            style={{ color: "#1b2b50" }}
-          >
-            {ins.cta.label}
-            <ChevronRight className="h-[15px] w-[15px]" />
-          </a>
-        )}
-      </div>
-      {/* 모바일 CTA — 풀폭(아이콘 정렬). */}
+        <b className="font-bold text-white">{ins.title}</b>
+        <span style={{ color: "#c7d4ee" }}>{" — "}{ins.desc}</span>
+      </p>
       {ins.cta && (
         <a
           href={ins.cta.href}
-          className="relative z-10 md:hidden mt-3 ml-[55px] inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-[11px] bg-white px-3.5 text-[13px] font-bold"
+          className="relative z-10 inline-flex flex-none items-center gap-1 rounded-[11px] bg-white px-2.5 py-1.5 text-[12px] font-bold min-h-[44px] sm:min-h-0 transition-colors hover:bg-[#eef2fb]"
           style={{ color: "#1b2b50" }}
         >
-          {ins.cta.label}
-          <ChevronRight className="h-[15px] w-[15px]" />
+          <span className="hidden sm:inline">{ins.cta.label}</span>
+          <ChevronRight className="h-4 w-4" />
         </a>
       )}
       <button
         type="button"
         onClick={handleDismiss}
         aria-label="다음 단계 추천 닫기"
-        className="absolute top-3 right-3 z-10 inline-flex h-[30px] w-[30px] items-center justify-center rounded-lg transition-colors hover:bg-white/[0.14] hover:text-white"
+        className="relative z-10 inline-flex h-7 w-7 flex-none items-center justify-center rounded-lg transition-colors hover:bg-white/[0.14] hover:text-white"
         style={{ color: "#b9c8e6" }}
       >
         <X className="h-4 w-4" />
