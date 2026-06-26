@@ -22,9 +22,10 @@ describe("§quote-management-redesign P3 — 세션 override state(DB 0)", () =>
   it("prioMap 세션 state(useState, 저장/PATCH 아님)", () => {
     expect(PAGE).toMatch(/const \[prioMap, setPrioMap\] = useState<Record<string, "high" \| "mid" \| "low">>\(\{\}\)/);
   });
-  it("순환 핸들러 high→mid→low(setPrioMap, 세션만)", () => {
-    expect(PAGE).toMatch(/cyclePriorityOverride = useCallback/);
-    expect(PAGE).toMatch(/current === "high" \? "mid" : current === "mid" \? "low" : "high"/);
+  // §quote-priority-picker 진화 — 클릭 순환(추측) → 팝오버 직접 선택(direct-set). 세션 override(setPrioMap)·DB 0 보호의도 불변.
+  it("direct-set 핸들러(setPrioMap 직접, 세션만 — 순환 추측 제거)", () => {
+    expect(PAGE).toMatch(/setPriorityOverride = useCallback/);
+    expect(PAGE).toMatch(/setPrioMap\(\(prev\) => \(\{ \.\.\.prev, \[quoteId\]: level \}\)\)/);
   });
   it("prioMap 은 localStorage/server PATCH 비대상(세션 only — 새로고침 복귀)", () => {
     expect(PAGE).not.toMatch(/localStorage[\s\S]{0,40}prioMap/);
@@ -43,9 +44,11 @@ describe("§quote-management-redesign P3 — effective level(canonical 보존)",
 });
 
 describe("§quote-management-redesign P3 — pill 클릭 wiring + 상단 재정렬", () => {
-  it("우선순위 pill = 클릭 버튼(override 순환, row onClick stopPropagation)", () => {
+  it("우선순위 pill = 팝오버 선택기 트리거(direct-set onSet, test-id 보존)", () => {
     expect(PAGE).toMatch(/data-testid="quote-priority-override-toggle"/);
-    expect(PAGE).toMatch(/e\.stopPropagation\(\);\s*cyclePriorityOverride\(quote\.id, baseLevel\)/);
+    // §quote-priority-picker 진화 — 셀이 QuotePriorityPicker 사용, onSet → setPriorityOverride(직접). 순환 onClick 제거.
+    expect(PAGE).toMatch(/<QuotePriorityPicker/);
+    expect(PAGE).toMatch(/onSet=\{\(lvl\) => setPriorityOverride\(quote\.id, lvl\)\}/);
   });
   it("수동 지정 시 시각 표기(honesty — canonical 아님 명시)", () => {
     expect(PAGE).toMatch(/isPriorityOverridden/);

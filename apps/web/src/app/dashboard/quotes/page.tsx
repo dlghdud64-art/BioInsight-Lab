@@ -30,7 +30,7 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, Package, CheckCircle2, Clock, AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon, Loader2, ScanLine, ChevronDown, ChevronUp, ChevronsRight, ChevronsLeft, Settings2, GripVertical, MoreHorizontal } from "lucide-react";
+import { Search, Filter, Package, CheckCircle2, Clock, AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon, Loader2, ScanLine, ChevronDown, ChevronUp, ChevronsRight, ChevronsLeft, Settings2, GripVertical, MoreHorizontal, Check } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -944,6 +944,114 @@ const MODE_CHIPS = [
     filter: (q: Quote) => { const c = toQuoteCase(q); return c ? computePriority(c).reason === "회신정체" : false; } },
 ];
 
+// §quote-priority-picker — 우선순위 팝오버 선택기 (cycle 순환 → 직접 선택).
+//   3단계(긴급/높음/보통 = high/mid/low, 호영님 결정 — 낮음 미도입). 색 점 + 설명 + 현재값 체크.
+//   pill 표시(critical red/high yellow/normal grey)는 기존 신호색 그대로 보존. onSet=direct setPrioMap.
+const PRIORITY_PICKER_OPTS = [
+  { key: "high" as const, label: "긴급", desc: "즉시 처리 · 최상단 고정", dot: "bg-red-500", text: "text-red-700" },
+  { key: "mid" as const, label: "높음", desc: "우선 처리", dot: "bg-yellow-500", text: "text-yellow-700" },
+  { key: "low" as const, label: "보통", desc: "일반", dot: "bg-slate-400", text: "text-slate-600" },
+];
+
+function QuotePriorityPicker({
+  level,
+  priorityLevel,
+  reason,
+  overridden,
+  onSet,
+}: {
+  level: "high" | "mid" | "low";
+  priorityLevel: "critical" | "high" | "normal";
+  reason: string | null;
+  overridden: boolean;
+  onSet: (level: "high" | "mid" | "low") => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  // priorityLevel(critical/high/normal) = 셀에서 계산된 canonical 표시 등급 prop (단일화 표식 보존).
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onEsc);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onEsc);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative inline-block" ref={ref}>
+      <button
+        type="button"
+        data-testid="quote-priority-override-toggle"
+        onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }}
+        title={`클릭하여 우선순위 변경${overridden ? " · 수동 지정(새로고침 시 자동 복귀)" : ""}`}
+        aria-label={`우선순위 변경${overridden ? " (수동 지정됨)" : ""}`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className={`inline-flex items-center gap-1 rounded-full min-h-[28px] px-1.5 hover:bg-slate-100 transition-colors ${overridden ? "ring-1 ring-blue-300" : ""} ${open ? "bg-slate-100" : ""}`}
+      >
+        {priorityLevel === "normal" ? (
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500">
+            <span className="inline-block w-2 h-2 rounded-full bg-slate-400" aria-hidden="true" />
+            보통
+          </span>
+        ) : (
+          <span
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+              priorityLevel === "critical"
+                ? "bg-red-50 text-red-700 border border-red-200"
+                : "bg-yellow-100 text-yellow-700"
+            }`}
+            aria-label={`우선순위 ${priorityLevel === "critical" ? "긴급" : "높음"}${reason ? ` (${reason})` : ""}`}
+          >
+            <span className={`inline-block w-1.5 h-1.5 rounded-full ${
+              priorityLevel === "critical" ? "bg-red-500" : "bg-yellow-500"
+            }`} aria-hidden="true" />
+            {reason ?? (priorityLevel === "critical" ? "긴급" : "높음")}
+          </span>
+        )}
+        <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true" />
+      </button>
+      {open && (
+        <div
+          role="listbox"
+          aria-label="우선순위 선택"
+          className="absolute top-[calc(100%+5px)] left-0 z-[60] min-w-[184px] rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_14px_38px_-10px_rgba(15,23,42,0.28)]"
+        >
+          {PRIORITY_PICKER_OPTS.map((opt) => {
+            const on = opt.key === level;
+            return (
+              <button
+                key={opt.key}
+                type="button"
+                role="option"
+                aria-selected={on}
+                onClick={(e) => { e.stopPropagation(); onSet(opt.key); setOpen(false); }}
+                className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-slate-50 ${on ? "bg-blue-50" : ""}`}
+              >
+                <span className={`inline-block w-2.5 h-2.5 rounded-[3px] flex-none ${opt.dot}`} aria-hidden="true" />
+                <span className="flex-1 min-w-0 flex flex-col gap-px">
+                  <b className={`text-[13px] font-bold ${opt.text}`}>{opt.label}</b>
+                  <span className="text-[11px] text-slate-500 font-medium">{opt.desc}</span>
+                </span>
+                {on && <Check className="h-3.5 w-3.5 flex-none text-blue-700" aria-hidden="true" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function QuotesPageContent() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
@@ -1040,12 +1148,9 @@ function QuotesPageContent() {
   // §quote-management-redesign P3 — 우선순위 클릭 세션 override(prioMap). canonical computePriority
   //   위 UI-state 레이어로만 작동(truth 대체 아님) — DB 저장 0, 새로고침 시 computePriority 파생 복귀.
   const [prioMap, setPrioMap] = useState<Record<string, "high" | "mid" | "low">>({});
-  const cyclePriorityOverride = useCallback((quoteId: string, base: "high" | "mid" | "low") => {
-    setPrioMap((prev) => {
-      const current = prev[quoteId] ?? base;
-      const next = current === "high" ? "mid" : current === "mid" ? "low" : "high";
-      return { ...prev, [quoteId]: next };
-    });
+  // §quote-priority-picker — 클릭 순환(추측) → 팝오버 직접 선택. 세션 override(setPrioMap 직접)·DB 0 보존.
+  const setPriorityOverride = useCallback((quoteId: string, level: "high" | "mid" | "low") => {
+    setPrioMap((prev) => ({ ...prev, [quoteId]: level }));
   }, []);
   const [aiCompareOpen, setAiCompareOpen] = useState(false);
   const [aiCompareLoading, setAiCompareLoading] = useState(false);
@@ -3161,33 +3266,14 @@ function QuotesPageContent() {
                         const priorityReason = priorityResult?.reason ?? null;
                         return (
                           <td key={key} style={{ width }} className="px-3 py-2 text-center">
-                            {/* §quote-management-redesign P3 — 우선순위 pill 클릭 = 세션 override 순환(high→mid→low). 새로고침 시 canonical 복귀. */}
-                            <button
-                              type="button"
-                              data-testid="quote-priority-override-toggle"
-                              onClick={(e) => { e.stopPropagation(); cyclePriorityOverride(quote.id, baseLevel); }}
-                              title={`클릭하여 우선순위 변경${isPriorityOverridden ? " · 수동 지정(새로고침 시 자동 복귀)" : ""}`}
-                              aria-label={`우선순위 변경${isPriorityOverridden ? " (수동 지정됨)" : ""}`}
-                              className={`inline-flex items-center justify-center rounded-full min-h-[28px] min-w-[28px] px-1 hover:bg-slate-100 transition-colors ${isPriorityOverridden ? "ring-1 ring-blue-300" : ""}`}
-                            >
-                            {priorityLevel === "normal" ? (
-                              <span className="inline-block w-2 h-2 rounded-full bg-slate-400" aria-label="우선순위 보통" />
-                            ) : (
-                              <span
-                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                                  priorityLevel === "critical"
-                                    ? "bg-red-50 text-red-700 border border-red-200"
-                                    : "bg-yellow-100 text-yellow-700"
-                                }`}
-                                aria-label={`우선순위 ${priorityLevel === "critical" ? "긴급" : "높음"}${priorityReason ? ` (${priorityReason})` : ""}`}
-                              >
-                                <span className={`inline-block w-1.5 h-1.5 rounded-full ${
-                                  priorityLevel === "critical" ? "bg-red-500" : "bg-yellow-500"
-                                }`} aria-hidden="true" />
-                                {priorityReason ?? (priorityLevel === "critical" ? "긴급" : "높음")}
-                              </span>
-                            )}
-                            </button>
+                            {/* §quote-priority-picker — 우선순위 팝오버 직접 선택(순환 추측 제거). 세션 override(prioMap), 새로고침 시 canonical 복귀. */}
+                            <QuotePriorityPicker
+                              level={effectiveLevel}
+                              priorityLevel={priorityLevel}
+                              reason={priorityReason}
+                              overridden={isPriorityOverridden}
+                              onSet={(lvl) => setPriorityOverride(quote.id, lvl)}
+                            />
                           </td>
                         );
                       }
