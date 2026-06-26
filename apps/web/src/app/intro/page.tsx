@@ -8,7 +8,7 @@ import {
   ArrowRight, Shield, History, Wallet, BarChart3, Zap, CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { type ReactNode, useState, useEffect, useRef, useCallback } from "react";
 
 /* ── Palette ─────────────────────────────────────────────────────
@@ -147,12 +147,13 @@ function IntroNavbar() {
 function Reveal({ children, delay = 0, y = 40, className = "" }: {
   children: ReactNode; delay?: number; y?: number; className?: string;
 }) {
+  const reduce = useReducedMotion();
   return (
     <motion.div
-      initial={{ opacity: 0, y }}
+      initial={reduce ? false : { opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.7, delay, ease: [0.25, 0.1, 0.25, 1] }}
+      transition={{ duration: reduce ? 0 : 0.7, delay: reduce ? 0 : delay, ease: [0.25, 0.1, 0.25, 1] }}
       className={className}
     >
       {children}
@@ -311,7 +312,7 @@ export default function IntroPage() {
             <Reveal>
               <div className="text-center mb-14">
                 <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">LabAxis 운영 연결 포인트</h2>
-                <p className="text-base" style={{ color: L.text3 }}>각 단계가 다음 작업으로 자연스럽게 이어집니다.</p>
+                <p className="text-base" style={{ color: L.text3 }}>각 단계가 다음 작업으로 자연스럽게 이어집니다. <span style={{ color: L.text4, fontSize: "13px" }}>(막대는 연결 강도 예시)</span></p>
               </div>
             </Reveal>
 
@@ -321,7 +322,7 @@ export default function IntroPage() {
                 { icon: GitCompare, label: "비교 → 선택안 확정", pct: 85 },
                 { icon: FileText, label: "요청 생성 → 초안 작성", pct: 78 },
                 { icon: ShoppingCart, label: "발주 준비 → 전환 검토", pct: 70 },
-                { icon: ClipboardCheck, label: "입고 반영 → lot 기록", pct: 65 },
+                { icon: ClipboardCheck, label: "입고 반영 → Lot 기록", pct: 65 },
               ].map((item, i) => (
                 <Reveal key={item.label} delay={i * 0.08}>
                   <div className="rounded-xl p-5" style={{ backgroundColor: L.bgSoft, border: `1px solid ${L.border}` }}>
@@ -511,15 +512,15 @@ export default function IntroPage() {
                       <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#F59E0B" }} />
                       <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#22C55E" }} />
                     </div>
-                    <span className="text-[10px] font-medium" style={{ color: L.text4 }}>구매 의사결정 효율 · 최근 8주</span>
+                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded" style={{ color: L.blueText, backgroundColor: L.blueSoft }}>예시 화면 · 실제 데이터 아님</span>
                   </div>
 
                   {/* KPI summary */}
                   <div className="grid grid-cols-3 gap-px" style={{ backgroundColor: L.border }}>
                     {[
-                      { label: "평균 소요 시간", value: "2.1일", change: "8주 전 대비 −58%" },
-                      { label: "주간 처리 건수", value: "34건", change: "8주 전 대비 +142%" },
-                      { label: "재사용 선택안", value: "68%", change: "이전 결정 기반 비율" },
+                      { label: "평균 소요 시간", value: "리드타임", change: "요청→발주 추적" },
+                      { label: "주간 처리 건수", value: "처리량", change: "주차별 흐름" },
+                      { label: "재사용 선택안", value: "재사용", change: "이전 결정 활용" },
                     ].map((kpi) => (
                       <div key={kpi.label} className="px-4 py-3" style={{ backgroundColor: L.bg }}>
                         <p className="text-[9px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: L.text4 }}>{kpi.label}</p>
