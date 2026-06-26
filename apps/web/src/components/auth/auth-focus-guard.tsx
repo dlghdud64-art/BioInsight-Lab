@@ -41,6 +41,27 @@ export function AuthFocusGuard() {
     if (status === "authenticated") wasAuthedRef.current = true;
   }, [status]);
 
+  // §auth §4 #auth-status-subscription — 상태 구독 가드(이벤트 비종속).
+  //   status 가 "unauthenticated" 로 전이되면(재탭 같은 same-route no-op·크로스탭
+  //   로그아웃·rolling 만료 무음 실패 등 focus/navigation 이벤트가 안 도는 경우 포함)
+  //   focus/navigation 트리거를 기다리지 않고 선제 redirect → 스켈레톤 영구 체류 차단.
+  //   §1 api-client(반응형 401) / §2 focus getSession / §3 SessionProvider rolling 과
+  //   목적지 동일(signin?callbackUrl) → idempotent, 중복 redirect 무해.
+  // 안전장치(=§2 재사용): wasAuthedRef(로그인 적 있던 세션만 → 공개 방문자 무동작) +
+  //   isProtectedPath(보호 경로 한정) + signin-path guard(redirect loop 0).
+  //   deps [status] — wasAuthedRef(ref)·isProtectedPath(모듈 순수 함수)라 stale closure 0.
+  useEffect(() => {
+    if (status !== "unauthenticated") return;
+    if (!wasAuthedRef.current) return; // 공개 방문자/미인증 초기 무동작
+    if (typeof window === "undefined") return;
+    const path = window.location.pathname;
+    if (!isProtectedPath(path) || path.startsWith("/auth/signin")) return;
+    const callbackUrl = encodeURIComponent(
+      window.location.pathname + window.location.search,
+    );
+    window.location.href = `/auth/signin?callbackUrl=${callbackUrl}`;
+  }, [status]);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     let timer: ReturnType<typeof setTimeout> | null = null;
