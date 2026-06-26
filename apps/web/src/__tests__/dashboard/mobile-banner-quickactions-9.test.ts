@@ -15,10 +15,12 @@ const QUOTES = readFileSync(resolve(__dirname, "../../app/dashboard/quotes/page.
 const DASH = readFileSync(resolve(__dirname, "../../app/dashboard/page.tsx"), "utf8");
 
 describe("§dashboard-mobile #9", () => {
-  it("배너 모바일 스택(flex-col sm:flex-row) + 제목 2줄 + CTA 아래", () => {
-    expect(BANNER).toContain("flex flex-col gap-3 sm:flex-row");
-    expect(BANNER).toContain("line-clamp-2 sm:truncate");
-    expect(BANNER).toContain("w-full items-center gap-2 sm:w-auto");
+  it("배너 inline 1행(§quotes-mobile-density P3 supersession) + truncate + CTA inline", () => {
+    // §quotes-mobile-density P3(호영님 시안) — 배너 mobile-stack(flex-col·제목 2줄·CTA 아래) → inline 1행 truncate로
+    //   supersede(chrome 30%↓). #9 보호의도(배너가 정의된 모바일 레이아웃 + CTA 존재)는 불변, 레이아웃만 dense 갱신(§11.307 supersession 동형).
+    expect(BANNER).toContain("flex items-center gap-2.5");          // inline 1행(옛 flex-col 스택 대체)
+    expect(BANNER).toContain("truncate");                            // 단일 행(옛 line-clamp-2 대체)
+    expect(BANNER).toContain("inline-flex flex-none items-center");  // CTA 인라인(옛 w-full sm:w-auto 대체, onOpen dead button 0)
   });
 
   it("운영 바로가기 모바일 2×2(데스크탑 레일 1열)", () => {

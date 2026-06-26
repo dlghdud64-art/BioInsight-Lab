@@ -2481,7 +2481,9 @@ function QuotesPageContent() {
           상태 Select width 모바일 압축 (w-[110px] sm:w-[160px]). mode chips 는
           가로 스크롤 (flex-nowrap + overflow-x-auto) 으로 무한 줄바꿈 차단.
           뷰 toggle 위치 이동은 별도 backlog (line 2014-2044 = 80+ line, 큰 구조 변경). */}
-      <div className="flex flex-col gap-2">
+      {/* §quotes-mobile-density P3 — 검색+필터 sticky 1행(리스트 스크롤 시 상단 고정, 퍼널/배너는 위로 흘러감).
+          bg-white 로 스크롤 콘텐츠 비침 방지. z-20(테이블 sticky 헤더 z-20 동급, 행 위). */}
+      <div className="sticky top-0 z-20 bg-white flex flex-col gap-2 pb-2">
         <div className="flex flex-row gap-2">
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
