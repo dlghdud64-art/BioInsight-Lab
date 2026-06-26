@@ -110,7 +110,7 @@ function InventoryOpsMockupContent() {
             { label: "전체 재고", value: "47", color: "#3B82F6" },
           ].map((kpi) => (
             <div key={kpi.label} className="px-2 md:px-3 py-1.5 md:py-2" style={{ backgroundColor: C.base }}>
-              <p className="text-[7px] md:text-[9px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: C.text4 }}>{kpi.label}</p>
+              <p className="text-[8px] md:text-[9px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: C.text3 }}>{kpi.label}</p>
               <p className="text-[11px] md:text-[14px] font-bold" style={{ color: kpi.color }}>{kpi.value}</p>
             </div>
           ))}
@@ -149,7 +149,7 @@ function InventoryOpsMockupContent() {
                   <p className="text-[11px] md:text-[12px] font-bold leading-snug truncate"
                     style={{ color: item.selected ? "#FFFFFF" : C.text1 }}
                   >{item.title}</p>
-                  <p className="text-[9px] md:text-[10px] mt-0.5" style={{ color: C.text3 }}>{item.sub}</p>
+                  <p className="text-[9px] md:text-[11px] mt-0.5 font-medium" style={{ color: C.text2 }}>{item.sub}</p>
                 </div>
 
                 <button className="text-[9px] md:text-[10px] font-semibold px-2 md:px-3 py-1 md:py-1.5 rounded-lg flex items-center gap-0.5 md:gap-1 whitespace-nowrap flex-shrink-0"
@@ -238,7 +238,7 @@ const LT = {
 
 export function FinalCTASection() {
   return (
-    <section className="relative py-20 md:py-28" style={{
+    <section className="relative pt-12 md:pt-16 pb-20 md:pb-28" style={{
       backgroundColor: LT.bg,
       borderTop: `1px solid ${LT.border}`,
     }}>
@@ -255,7 +255,7 @@ export function FinalCTASection() {
               <span className="text-sm font-bold tracking-wide" style={{ color: LT.blue }}>Inventory Operations</span>
             </div>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-3" style={{ color: LT.text1 }}>
-              재고와 lot 상태를 한눈에 관리합니다
+              재고와 Lot 상태를 한눈에 관리합니다
             </h2>
             <p className="text-base" style={{ color: LT.text3 }}>
               만료 폐기, 부족 재발주, 점검 기록까지 하나의 운영 흐름으로 이어집니다.

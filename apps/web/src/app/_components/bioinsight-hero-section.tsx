@@ -214,8 +214,13 @@ const PIPELINE_STEPS = [
   { icon: PackageCheck, label: "입고/재고", sub: "재고 연동 추적" },
 ];
 
+// §landing-plexus-perf — PlexusCanvas drop-in 개선 (룩 보존, 내부 동작만)
+//  1. prefers-reduced-motion 존중(정적 1프레임) 2. DPR(레티나) 또렷
+//  3. 입자 상한(데스크탑 150/모바일 70) 4. 화면 밖·탭 비활성 루프 정지
+//  5. 모바일 터치 인터랙션 6. 셀 그리드 인접 탐색 O(n²)→근사 O(n)
 function PlexusCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -223,22 +228,44 @@ function PlexusCanvas() {
     if (!ctx) return;
     const parent = canvas.parentElement;
     if (!parent) return;
-    let animId: number;
-    let particles: { x: number; y: number; vx: number; vy: number; r: number; cluster: boolean }[] = [];
+
+    // 1) reduced-motion 감지
+    const reduceMQ = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    type P = { x: number; y: number; vx: number; vy: number; r: number; cluster: boolean };
+    let particles: P[] = [];
     let mouse = { x: -9999, y: -9999 };
+    let animId = 0;
+    let running = false;
+    let dpr = 1;
+    let cssW = 0, cssH = 0;
+
+    const LINK_DIST = 150;          // 연결 거리
+    const PARTICLE_CAP = 150;       // 3) 입자 상한 (데스크탑)
+    const MOBILE_CAP = 70;          // 5) 모바일 상한
 
     const init = () => {
-      canvas.width = parent.clientWidth;
-      canvas.height = parent.clientHeight;
-      const count = Math.floor((canvas.width * canvas.height) / 9000);
+      dpr = Math.min(window.devicePixelRatio || 1, 2); // 2배까지만 (성능)
+      cssW = parent.clientWidth;
+      cssH = parent.clientHeight;
+      // 2) DPR 대응 — 버퍼는 물리 픽셀, 그리기는 CSS 픽셀 좌표
+      canvas.width = Math.round(cssW * dpr);
+      canvas.height = Math.round(cssH * dpr);
+      canvas.style.width = cssW + "px";
+      canvas.style.height = cssH + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const isMobile = cssW < 768;
+      const cap = isMobile ? MOBILE_CAP : PARTICLE_CAP;
+      const count = Math.min(Math.floor((cssW * cssH) / 9000), cap);
+
       particles = [];
-      const cx = canvas.width / 2, cy = canvas.height / 2;
+      const cx = cssW / 2, cy = cssH / 2;
+      const maxDist = Math.sqrt(cx * cx + cy * cy);
       for (let i = 0; i < count; i++) {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
-        // cluster = outer 30% of each edge → stronger visibility
+        const x = Math.random() * cssW;
+        const y = Math.random() * cssH;
         const distFromCenter = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
-        const maxDist = Math.sqrt(cx * cx + cy * cy);
         const isCluster = distFromCenter > maxDist * 0.45;
         particles.push({
           x, y,
@@ -249,67 +276,156 @@ function PlexusCanvas() {
         });
       }
     };
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const rect = canvas.getBoundingClientRect();
-      const adjMouseY = mouse.y !== -9999 ? mouse.y - rect.top : -9999;
-      // Lines
+
+    // 6) 셀 그리드로 인접 입자만 비교
+    const buildGrid = () => {
+      const cell = LINK_DIST;
+      const cols = Math.max(1, Math.ceil(cssW / cell));
+      const grid = new Map<number, number[]>();
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
-        for (let j = i + 1; j < particles.length; j++) {
-          const p2 = particles[j];
-          const dx = p.x - p2.x, dy = p.y - p2.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 150) {
-            const bothCluster = p.cluster && p2.cluster;
-            const alpha = bothCluster
-              ? 0.55 - (dist / 150) * 0.40
-              : 0.30 - (dist / 150) * 0.22;
-            ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = bothCluster
-              ? `rgba(130,180,240,${alpha})`
-              : `rgba(110,160,220,${alpha})`;
-            ctx.lineWidth = bothCluster ? 1.3 : 0.9; ctx.stroke();
+        const gx = Math.min(cols - 1, Math.max(0, Math.floor(p.x / cell)));
+        const gy = Math.max(0, Math.floor(p.y / cell));
+        const key = gx + gy * cols;
+        const arr = grid.get(key);
+        if (arr) arr.push(i); else grid.set(key, [i]);
+      }
+      return { grid, cols, cell };
+    };
+
+    const drawScene = () => {
+      ctx.clearRect(0, 0, cssW, cssH);
+      const rect = canvas.getBoundingClientRect();
+      const adjMouseY = mouse.y !== -9999 ? mouse.y - rect.top : -9999;
+      const adjMouseX = mouse.x !== -9999 ? mouse.x - rect.left : -9999;
+
+      const { grid, cols, cell } = buildGrid();
+
+      // Lines — 인접 9셀만 비교
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const gx = Math.min(cols - 1, Math.max(0, Math.floor(p.x / cell)));
+        const gy = Math.max(0, Math.floor(p.y / cell));
+        for (let ox = -1; ox <= 1; ox++) {
+          for (let oy = -1; oy <= 1; oy++) {
+            const key = (gx + ox) + (gy + oy) * cols;
+            const bucket = grid.get(key);
+            if (!bucket) continue;
+            for (const j of bucket) {
+              if (j <= i) continue;
+              const p2 = particles[j];
+              const dx = p.x - p2.x, dy = p.y - p2.y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < LINK_DIST) {
+                const bothCluster = p.cluster && p2.cluster;
+                const alpha = bothCluster
+                  ? 0.55 - (dist / LINK_DIST) * 0.40
+                  : 0.30 - (dist / LINK_DIST) * 0.22;
+                ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y);
+                ctx.strokeStyle = bothCluster ? `rgba(130,180,240,${alpha})` : `rgba(110,160,220,${alpha})`;
+                ctx.lineWidth = bothCluster ? 1.3 : 0.9; ctx.stroke();
+              }
+            }
           }
         }
-        // Mouse interaction lines
+        // Mouse/touch interaction lines
         if (adjMouseY !== -9999) {
-          const dxm = p.x - mouse.x, dym = p.y - adjMouseY;
+          const dxm = p.x - adjMouseX, dym = p.y - adjMouseY;
           const distm = Math.sqrt(dxm * dxm + dym * dym);
           if (distm < 200) {
-            ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(mouse.x, adjMouseY);
+            ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(adjMouseX, adjMouseY);
             ctx.strokeStyle = `rgba(90,170,255,${0.6 - (distm / 200) * 0.55})`;
             ctx.lineWidth = 1.4; ctx.stroke();
           }
         }
       }
+
       // Nodes
       for (const p of particles) {
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.cluster ? "rgba(140,190,250,1.0)" : "rgba(120,170,230,0.75)";
+        ctx.fill();
+      }
+    };
+
+    const step = () => {
+      const rect = canvas.getBoundingClientRect();
+      const adjMouseY = mouse.y !== -9999 ? mouse.y - rect.top : -9999;
+      const adjMouseX = mouse.x !== -9999 ? mouse.x - rect.left : -9999;
+      for (const p of particles) {
         if (adjMouseY !== -9999) {
-          const dxm = p.x - mouse.x, dym = p.y - adjMouseY;
+          const dxm = p.x - adjMouseX, dym = p.y - adjMouseY;
           const distm = Math.sqrt(dxm * dxm + dym * dym);
           if (distm < 120) { p.x += dxm * 0.015; p.y += dym * 0.015; }
           else { p.x += p.vx; p.y += p.vy; }
         } else { p.x += p.vx; p.y += p.vy; }
-        if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0;
-        if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = p.cluster
-          ? "rgba(140,190,250,1.0)"
-          : "rgba(120,170,230,0.75)";
-        ctx.fill();
+        if (p.x < 0) p.x = cssW; if (p.x > cssW) p.x = 0;
+        if (p.y < 0) p.y = cssH; if (p.y > cssH) p.y = 0;
       }
-      animId = requestAnimationFrame(draw);
     };
-    init(); draw();
-    const onResize = () => init();
+
+    const loop = () => {
+      step();
+      drawScene();
+      animId = requestAnimationFrame(loop);
+    };
+
+    const start = () => {
+      if (running) return;
+      if (reduceMQ.matches) { drawScene(); return; } // 1) 정적 1프레임
+      running = true;
+      animId = requestAnimationFrame(loop);
+    };
+    const stop = () => {
+      running = false;
+      cancelAnimationFrame(animId);
+    };
+
+    init();
+    start();
+
+    // 4) 화면 밖이면 정지 (IntersectionObserver)
+    const io = new IntersectionObserver(
+      (entries) => { entries.forEach((e) => (e.isIntersecting ? start() : stop())); },
+      { threshold: 0 }
+    );
+    io.observe(canvas);
+
+    // 4) 탭 비활성이면 정지
+    const onVis = () => { if (document.hidden) stop(); else start(); };
+    document.addEventListener("visibilitychange", onVis);
+
+    const onResize = () => { init(); if (!running && !reduceMQ.matches) start(); else drawScene(); };
     const onMove = (e: MouseEvent) => { mouse.x = e.clientX; mouse.y = e.clientY; };
     const onLeave = () => { mouse.x = -9999; mouse.y = -9999; };
+    // 5) 터치 인터랙션
+    const onTouch = (e: TouchEvent) => {
+      if (e.touches.length) { mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; }
+    };
+    const onTouchEnd = () => { mouse.x = -9999; mouse.y = -9999; };
+    // 1) reduced-motion 토글 실시간 반영
+    const onReduceChange = () => { stop(); init(); start(); };
+
     window.addEventListener("resize", onResize);
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseleave", onLeave);
-    return () => { window.removeEventListener("resize", onResize); window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseleave", onLeave); cancelAnimationFrame(animId); };
+    window.addEventListener("touchmove", onTouch, { passive: true });
+    window.addEventListener("touchend", onTouchEnd);
+    reduceMQ.addEventListener?.("change", onReduceChange);
+
+    return () => {
+      stop();
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseleave", onLeave);
+      window.removeEventListener("touchmove", onTouch);
+      window.removeEventListener("touchend", onTouchEnd);
+      reduceMQ.removeEventListener?.("change", onReduceChange);
+    };
   }, []);
+
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />;
 }
 
@@ -521,7 +637,7 @@ export function BioInsightHeroSection() {
       </div>
 
       {/* Hero 하단 여유 — support 시작까지 리듬감 유지하되 narrative drop 방지 */}
-      <div className="h-14 md:h-20" />
+      <div className="h-8 md:h-12" />
     </section>
   );
 }
