@@ -2263,9 +2263,11 @@ function QuotesPageContent() {
               핸들러·모달 코드는 잔존(dead 노출 0, 필요 시 복구 용이). 모바일 더보기 항목도 제거. */}
           {/* §11.307 — 견적서 스캔 (이전 "파싱"). Upload icon → ScanLine icon (문서
               읽어들이는 동작 정합). 모바일 + tablet + desktop 모두 노출 (주요 액션). */}
+          {/* §quotes-mobile-density — 모바일 버튼바 슬림: 새 요청만 primary 노출, 스캔은 모바일 ⋯ 메뉴로 이동(hidden sm:inline-flex).
+              데스크탑/태블릿(sm+)은 스캔 주요 액션 노출 보존(§11.307). 모바일은 ⋯ menuitem 으로 동일 wiring(handleScanOpen). */}
           <button
             onClick={handleScanOpen}
-            className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition-colors active:scale-95 shrink-0 min-w-[80px] sm:min-w-[120px]"
+            className="hidden sm:inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition-colors active:scale-95 shrink-0 min-w-[80px] sm:min-w-[120px]"
           >
             <ScanLine className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
             <span className="hidden sm:inline">견적서 스캔</span><span className="sm:hidden">스캔</span>
@@ -2290,6 +2292,16 @@ function QuotesPageContent() {
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setIsMobileMoreOpen(false)} aria-hidden="true" />
                 <div role="menu" className="absolute right-0 top-full mt-1 w-52 rounded-md border border-slate-200 bg-white shadow-lg z-50 py-1">
+                  {/* §quotes-mobile-density — 모바일 스캔 진입(표준 버튼 모바일 hide 후 ⋯ 메뉴로 흡수). handleScanOpen 동일 wiring. */}
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => { handleScanOpen(); setIsMobileMoreOpen(false); }}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left hover:bg-slate-100"
+                  >
+                    <ScanLine className="h-4 w-4 text-emerald-600" />
+                    견적서 스캔
+                  </button>
                   <button
                     type="button"
                     role="menuitem"

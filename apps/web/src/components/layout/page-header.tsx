@@ -157,9 +157,9 @@ export function AppPageHeader({
               </span>
             )}
           </div>
-          {/* Row 3: description */}
+          {/* Row 3: description — §11.311 #7 모바일 first-fold 절약: 설명문 hidden md:block(모바일 군더더기 제거, 데스크탑 보존). */}
           {description && (
-            <p className="text-sm text-slate-500 leading-relaxed">{description}</p>
+            <p className="hidden md:block text-sm text-slate-500 leading-relaxed">{description}</p>
           )}
         </div>
 
