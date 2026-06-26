@@ -76,9 +76,13 @@ describe("§11.374 [SUPERSEDED — §quote-flat KPI-dedup 2026-06-21] 견적 모
     expect(quotes).not.toMatch(/lg:grid-cols-5/);
   });
 
-  it("단계 카운트/필터는 퍼널 + 상태 Select 로 보존(회귀 0)", () => {
+  it("단계 카운트/필터는 퍼널 + 마감 진입점으로 보존(회귀 0)", () => {
+    // §quotes-filter-popover(이번 세션) — 상태 Select '오늘 마감'(value="DEADLINE_TODAY" 옵션)이 다축 필터
+    //   popover로 폐지·마감 진입점은 MODE_CHIPS 'deadline_soon'(dd≤2)으로 이전(quote-kpi-dedup 동형).
+    //   DEADLINE_TODAY 술어는 URL ?status / 저장 필터 경유 reachable 잔존 → 단계 카운트/필터 보존 의도 불변.
     expect(quotes).toMatch(/<QuoteFunnel/);
-    expect(quotes).toMatch(/value="DEADLINE_TODAY"/);
+    expect(quotes).toMatch(/key:\s*"deadline_soon"/);              // 마감 진입점(Select 옵션 대체)
+    expect(quotes).toMatch(/statusFilter === "DEADLINE_TODAY"/);   // 술어 잔존(reachable)
   });
 });
 
@@ -155,11 +159,13 @@ describe("§11.374 P3.4 AppPageHeader 4탭 채택 [RED until P3.4]", () => {
   });
 });
 
-describe("§11.374 P3.4 견적 스캔버튼 우측 이동 [RED until P3.4]", () => {
-  it("스캔 액션이 AppPageHeader actions 로 이동(우측 고정)", () => {
-    // actions 배열 안에서 스캔 핸들러(setAiParseModalOpen)가 연결되어야 함.
-    // 윈도우 5000자: 견적 actions 클러스터(PermissionGate+BOM+비교)가 스캔 앞에 ~3.8K자.
-    expect(quotes).toMatch(/actions=\{[\s\S]{0,5000}setAiParseModalOpen/);
+describe("§11.374 P3.4 견적 스캔버튼 우측 이동 — §quote-perm-gate handleScanOpen 정합", () => {
+  it("스캔 액션이 AppPageHeader actions 안(우측 고정) — perm-gate handleScanOpen", () => {
+    // §quote-perm-gate 진화: 스캔 onClick 이 setAiParseModalOpen 직접 호출 → handleScanOpen(권한
+    //   사전체크 후 모달) 으로 감쌈. 스캔은 AppPageHeader actions 안에 위치(P3.4 우측 이동 충족).
+    //   handleScanOpen 이 setAiParseModalOpen(true) 호출 → wiring 보존(dead button 0). 보호의도 불변.
+    expect(quotes).toMatch(/actions=\{[\s\S]{0,5000}onClick=\{handleScanOpen\}/);
+    expect(quotes).toMatch(/const handleScanOpen = useCallback\(\(\) => \{[\s\S]{0,160}setAiParseModalOpen\(true\)/);
   });
 });
 
