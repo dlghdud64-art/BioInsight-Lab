@@ -36,7 +36,15 @@ Rules:
   "Next Retest", "Cad." / "Caducidad" (Spanish), "유효기간", "유효기한", "사용기한".
   e.g. Condalab prints "NEXT RETEST: 2028/06" → expirationDate "2028-06".
   Sigma-Aldrich/Merck often print "Retest Date" or "Recommended Retest Date".
-- Do NOT invent or guess a date. If no validity/retest/expiry date is printed, set expirationDate to null (never default to today).`;
+- Do NOT invent or guess a date. If no validity/retest/expiry date is printed, set expirationDate to null (never default to today).
+- catalogNo = catalog/product/reference number. Thermo Fisher / Gibco / Invitrogen labels print this as "REF" (next to a barcode), also "Cat", "Cat. No.", "Catalog", "Catalog No.", "Product No.", "P/N". Map any of these to catalogNo.
+- quantity = amount with unit. Also labeled "NET", "Net", "Net Wt", "Net Weight", "Content", "내용량". Forms like "477.5 g/pkg", "500 mL", "100 g" → quantity. Keep the unit.
+- expirationDate may appear next to an hourglass pictogram (⧗ / a small hourglass icon) with NO "Exp" text — common on Gibco/Thermo. If a date sits beside an hourglass/calendar icon, treat it as expirationDate. A date beside a small factory/clock icon next to "LOT" is the manufacture date (NOT expiration) — do not map manufacture date to expirationDate.
+- Read every visible field even if some are unclear; fill what you can read and set only truly-unreadable fields to null. Do NOT return all-null for a legible label.
+
+Example (different product, for format only):
+Label text: "Sigma-Aldrich  Sodium chloride  Cat No. S9888  Lot# SLBT1234  Retest 2027-05  500 g  CAS 7647-14-5"
+→ {"brand":"Sigma-Aldrich","productName":"Sodium chloride","catalogNo":"S9888","lotNo":"SLBT1234","expirationDate":"2027-05","casNumber":"7647-14-5","quantity":"500 g"}`;
 
 interface GeminiParseResponse {
   brand: string | null;
@@ -46,6 +54,23 @@ interface GeminiParseResponse {
   expirationDate: string | null;
   casNumber: string | null;
   quantity: string | null;
+}
+
+/**
+ * §label-scan-extraction — Gemini 응답에서 JSON 객체를 견고하게 추출.
+ *   기존: ```json``` fence 만 처리 → unfenced/앞말("Here is…")/trailing 텍스트면
+ *   JSON.parse(rawText) throw → silent catch → 전 필드 null(선명 라벨인데 빈 폼).
+ *   개선: (1) fence 우선 (2) fence 없으면 첫 '{' ~ 마지막 '}' balanced 슬라이스.
+ *   순수 함수 — unit test 로 회귀 고정(Gemini 호출 불요).
+ */
+export function extractLabelJsonString(raw: string): string | null {
+  if (!raw) return null;
+  const fence = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fence) return fence[1].trim();
+  const start = raw.indexOf("{");
+  const end = raw.lastIndexOf("}");
+  if (start !== -1 && end > start) return raw.slice(start, end + 1).trim();
+  return null;
 }
 
 /**
@@ -91,18 +116,21 @@ export async function parseWithGemini(imageBase64: string): Promise<LabelParseRe
 
   const rawText = response.text ?? "";
 
-  // JSON 추출 (마크다운 코드블록 대응)
-  let jsonStr = rawText;
-  const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (jsonMatch) {
-    jsonStr = jsonMatch[1].trim();
-  }
+  // §label-scan-extraction — 견고한 JSON 추출(fence/unfenced/앞말 대응).
+  const jsonStr = extractLabelJsonString(rawText) ?? rawText;
 
   let parsed: GeminiParseResponse;
   try {
     parsed = JSON.parse(jsonStr);
-  } catch {
-    // JSON 파싱 실패 시 빈 결과
+  } catch (err) {
+    // §label-scan-extraction — silent blank 제거: 실패 분해 로깅(rawText 가시화).
+    //   다음 실제 스캔에서 OCR 실패(빈 응답) vs 파싱 실패(텍스트有) 즉시 판별.
+    console.error(
+      "[label-parser] JSON 파싱 실패 — Gemini rawText(앞 800자):",
+      rawText.slice(0, 800),
+      "| err:",
+      (err as Error).message,
+    );
     parsed = {
       brand: null,
       productName: null,
@@ -122,6 +150,15 @@ export async function parseWithGemini(imageBase64: string): Promise<LabelParseRe
     parsed.productName,
     parsed.casNumber,
   ].filter(Boolean).length;
+
+  // §label-scan-extraction — valid JSON 인데 0필드(프롬프트/레이아웃 미스매치 H_C) 도 로깅.
+  //   파싱은 됐는데 전부 null = 모델이 읽고도 매핑 못 함 → rawText 로 원인 확정.
+  if (matchedFields === 0) {
+    console.warn(
+      "[label-parser] 0 필드 추출 — Gemini rawText(앞 800자):",
+      rawText.slice(0, 800),
+    );
+  }
 
   const confidence: "high" | "medium" | "low" =
     matchedFields >= 4 ? "high" : matchedFields >= 2 ? "medium" : "low";
