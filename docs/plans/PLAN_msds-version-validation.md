@@ -92,8 +92,9 @@ POST /sds 버전 메타 저장. MSDS 다이얼로그 메타 실 저장(“미저
 - P4 실패: UI/route 배선 revert(컬럼 유지, 데이터 무손실).
 
 ## 10. Progress
-- Overall: ~88% · Current: P4-surface 코드완료(operator 게이트 대기) · Next: ③ 3단계 마법사 reorg + 체크리스트 export(선택적 폴리시)
-- [x] P0 [x] P2(migration d4ebdcdb) [x] P3 [x] P1 [x] P4-core(메타 persistence) [x] P4-surface(버전상태 단일 소스 노출) [~] ③ 3단계 reorg+export(잔여) [ ] P5
+- Overall: ~98% (구현 완료, operator 게이트 대기) · Current: ③ 마법사 코드완료 · Next: operator 게이트 → P5 smoke
+- [x] P0 [x] P2(migration d4ebdcdb) [x] P3 [x] P1 [x] P4-core(메타 persistence) [x] P4-surface(단일 소스 노출) [x] ③ 3단계 마법사+export [ ] P5(operator smoke)
+- **③ 마법사 배치(2026-06-27, migration 0):** AI 준비 패널 → 3단계 마법사 reorg(① 범위: MSDS/점검 토글 + 버전검증 패널 단일 소스 / ② 담당·일정: 담당자·마감 / ③ 패키지: 체크리스트 목록 + 예상). 종착 = **체크리스트 CSV export(실 Blob 다운로드, no-op 0)** — prepScope 범위 필터 canonical items, 대상 0이면 disabled. 가짜 "분석 실행(준비 중)"·"준비 중" notice 제거. 헤더/요약 CTA = openPrepWizard(step 리셋). sentinel `msds-prep-wizard.test.ts`. ⏳ operator: vitest·tsc·build.
 - **P4-surface 배치(2026-06-27, migration 0):** /api/safety/products sdsDocuments 에 버전 메타 include → adapter classifyMsdsVersion 으로 `msdsVersionSummary`(current/stale/unknown, 단일 소스) 집계 → 안전 페이지가 캡처 → MSDS 점검 준비 패널에 "MSDS 버전 검증"(최신본/구버전 의심/출처 없음) 표기. "메타 기반 추정 · 라이브 대조 아님" 정직 라벨 + GMP 이력 보관 노트. sentinel `msds-version-surface.test.ts`. ⏳ operator: vitest·tsc·build.
 - **잔여(선택):** ③ 패널을 범위/담당·일정/패키지 3단계 모달로 reorg + 체크리스트 CSV export. 현 패널은 이미 honest(대상목록+버전검증+disabled 사유)라 substantive 가치는 land됨.
 - **P3+P4-core 배치(2026-06-27, migration 0):**

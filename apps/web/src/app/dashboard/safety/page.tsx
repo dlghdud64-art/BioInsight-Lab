@@ -224,6 +224,12 @@ export default function SafetyManagerPage() {
   const [completedQueueIds, setCompletedQueueIds] = useState<Set<number>>(new Set());
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [aiPanelPhase, setAiPanelPhase] = useState<"closed" | "preparing" | "ready" | "running" | "success" | "error">("closed");
+  // §msds-version-validation ③ — 점검 준비 마법사(3단계: 범위 → 담당·일정 → 패키지). 종착 = 체크리스트 CSV export(실 산출물).
+  const [prepStep, setPrepStep] = useState<1 | 2 | 3>(1);
+  const [prepScope, setPrepScope] = useState({ msds: true, insp: true });
+  const [prepAssignee, setPrepAssignee] = useState("");
+  const [prepDue, setPrepDue] = useState<"today" | "2days" | "week" | "custom">("week");
+  const openPrepWizard = () => { setPrepStep(1); setAiPanelOpen(true); };
 
   // ── MSDS Dialog ──
   const [msdsDialogOpen, setMsdsDialogOpen] = useState(false);
@@ -377,6 +383,37 @@ export default function SafetyManagerPage() {
   //   KOSHA 준비도 = MSDS 보유율, GMP 준비도 = MSDS+점검 동시 완료율.
   const koshaReadiness = totalCount > 0 ? Math.round(((totalCount - msdsMissingCount) / totalCount) * 100) : 0;
   const gmpReadiness = totalCount > 0 ? Math.round((items.filter((i) => i.hasMsds && i.lastInspection).length / totalCount) * 100) : 0;
+
+  // §msds-version-validation ③ — 준비 대상(범위 토글 반영) + 체크리스트 CSV export(실 산출물, no-op 0).
+  const prepTargets = items.filter(
+    (i) => (prepScope.msds && !i.hasMsds) || (prepScope.insp && !i.lastInspection),
+  );
+  const exportPrepChecklist = () => {
+    if (prepTargets.length === 0) return;
+    const header = ["물질명", "CAS", "위험등급", "MSDS", "최근점검", "권장조치"];
+    const csvRows = prepTargets.map((i) => [
+      i.name,
+      i.cas || "-",
+      i.level === "HIGH" ? "고위험" : i.level === "MEDIUM" ? "주의" : "일반",
+      i.hasMsds ? "등록" : "미등록",
+      i.lastInspection || "미점검",
+      !i.hasMsds ? "MSDS 등록" : !i.lastInspection ? "점검 기록" : "-",
+    ]);
+    const meta = `담당자,${prepAssignee || "미지정"}\n마감,${prepDue}\n생성일,${new Date().toISOString().slice(0, 10)}\n준비대상,${prepTargets.length}종\n`;
+    const body = [header, ...csvRows]
+      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob(["﻿" + meta + "\n" + body], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `MSDS_점검준비_체크리스트_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast({ title: "체크리스트 생성 완료", description: `준비 대상 ${prepTargets.length}종이 CSV로 내보내졌습니다.` });
+  };
   const recentInspCount = items.filter((i) => {
     if (!i.lastInspection) return false;
     return (Date.now() - new Date(i.lastInspection).getTime()) < 7 * 86400000;
@@ -517,7 +554,7 @@ export default function SafetyManagerPage() {
               }`}
               disabled={priorityBacklogCount === 0}
               onClick={() => {
-                if (priorityBacklogCount > 0) setAiPanelOpen(true);
+                if (priorityBacklogCount > 0) openPrepWizard();
               }}
               title={priorityBacklogCount === 0 ? "분석 대상 항목이 없습니다" : `우선 점검 대상 ${priorityBacklogCount}건`}
             >
@@ -777,7 +814,7 @@ export default function SafetyManagerPage() {
             <Button
               className="w-full h-10 text-sm font-semibold gap-2 bg-blue-600 hover:bg-blue-700 text-white disabled:bg-slate-100 disabled:text-slate-400"
               disabled={msdsMissingCount === 0}
-              onClick={() => { if (msdsMissingCount > 0) setAiPanelOpen(true); }}
+              onClick={() => { if (msdsMissingCount > 0) openPrepWizard(); }}
               title={msdsMissingCount === 0 ? "미등록 MSDS가 없습니다" : `미등록 ${msdsMissingCount}종 준비`}
             >
               <FileWarning className="h-4 w-4" />MSDS 일괄 등록 시작
@@ -1306,103 +1343,136 @@ export default function SafetyManagerPage() {
               </div>
             </div>
 
-            {/* 요약 strip */}
-            <div className="shrink-0 px-5 py-3 bg-slate-50 border-b border-slate-100">
-              <div className="flex items-center gap-4 text-xs">
-                <span className="text-red-600 font-semibold">긴급 {immediateCount}</span>
-                <span className="text-slate-300">|</span>
-                <span className="text-yellow-600 font-semibold">문서보완 {docRemCount}</span>
-                <span className="text-slate-300">|</span>
-                <span className="text-slate-500">MSDS 미등록 {msdsMissingCount}</span>
-                <span className="ml-auto text-slate-400">분석 대상 {priorityBacklogCount}건</span>
-              </div>
+            {/* §msds-version ③ — 3단계 스텝 인디케이터 */}
+            <div className="shrink-0 px-5 py-3 border-b border-slate-100 flex items-center gap-1">
+              {[{ n: 1, label: "범위" }, { n: 2, label: "담당·일정" }, { n: 3, label: "패키지" }].map((s, idx) => (
+                <div key={s.n} className="flex items-center gap-1.5">
+                  <span className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center ${prepStep >= (s.n as 1 | 2 | 3) ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-400"}`}>{s.n}</span>
+                  <span className={`text-xs font-semibold ${prepStep === s.n ? "text-slate-900" : "text-slate-400"}`}>{s.label}</span>
+                  {idx < 2 && <span className="w-3 h-px bg-slate-200 mx-1" />}
+                </div>
+              ))}
             </div>
 
-            {/* §msds-version-validation — MSDS 버전 검증(저장 메타 기반 휴리스틱, KOSHA 라이브 대조 아님). 단일 카운트 소스(adapter 집계). */}
-            <div className="shrink-0 px-5 pt-4">
-              <div className="rounded-lg border border-slate-200 overflow-hidden">
-                <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border-b border-slate-100">
-                  <FileWarning className="h-3.5 w-3.5 text-slate-400" />
-                  <span className="text-[11px] font-bold text-slate-600">MSDS 버전 검증</span>
-                  <span className="ml-auto text-[10px] font-medium text-slate-400">메타 기반 추정 · 라이브 대조 아님</span>
-                </div>
-                <div className="divide-y divide-slate-50">
-                  {[
-                    { dot: "bg-emerald-500", label: "최신본 확보", desc: "버전·개정일 메타 + 미만료·미교체", n: msdsVersionSummary.current },
-                    { dot: "bg-yellow-500", label: "구버전 의심 · 교체 권장", desc: "개정일 3년 경과 / 만료 / 교체됨", n: msdsVersionSummary.stale },
-                    { dot: "bg-slate-300", label: "출처 없음 · 메타 미상", desc: "버전·개정일 메타 없음(업로드 시 입력)", n: msdsVersionSummary.unknown },
-                  ].map((r) => (
-                    <div key={r.label} className="flex items-center gap-2.5 px-3 py-2">
-                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${r.dot}`} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-slate-800">{r.label}</p>
-                        <p className="text-[10px] text-slate-400">{r.desc}</p>
-                      </div>
-                      <span className={`text-sm font-bold tabular-nums ${r.n > 0 ? "text-slate-900" : "text-slate-300"}`}>{r.n}<span className="text-[10px] font-medium text-slate-400 ml-0.5">종</span></span>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex items-start gap-1.5 px-3 py-2 bg-slate-50 text-[10px] leading-relaxed text-slate-500">
-                  <ShieldCheck className="h-3 w-3 text-slate-400 flex-shrink-0 mt-0.5" />
-                  구버전·출처 없음은 최신본 등록으로 교체되며, 구버전 원본은 삭제 없이 이력 보관됩니다(GMP 추적성).
-                </div>
-              </div>
-            </div>
-
-            {/* 대상 목록 */}
-            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
-              {queueItems.length === 0 ? (
-                <div className="text-center py-12">
-                  <ShieldCheck className="h-10 w-10 text-emerald-400 mx-auto mb-3" />
-                  <p className="text-sm font-medium text-slate-500">분석 대상 항목이 없습니다</p>
-                  <p className="text-xs text-slate-400 mt-1">모든 항목이 정상 상태입니다</p>
-                </div>
-              ) : (
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+              {/* STEP 1 — 범위 선택 */}
+              {prepStep === 1 && (
                 <>
-                  <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">분석 대상 목록</p>
-                  {queueItems.map((q: ClassifiedSafetyItem, i: number) => {
-                    const style = CLASS_STYLE[q.classification];
-                    return (
-                      <div key={q.id} className="rounded-lg border border-slate-200 bg-white p-3">
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <span className="text-xs font-bold text-slate-300">{i + 1}</span>
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${style.bg} ${style.text}`}>{style.label}</span>
-                          <span className="text-sm font-semibold text-slate-900 truncate">{q.name.split("(")[0].trim()}</span>
-                        </div>
-                        <p className="text-xs text-slate-500 leading-relaxed">{q.priorityReason}</p>
+                  <div className="flex items-center gap-4 text-xs rounded-lg bg-slate-50 px-3 py-2">
+                    <span className="text-red-600 font-semibold">긴급 {immediateCount}</span>
+                    <span className="text-slate-300">|</span>
+                    <span className="text-yellow-600 font-semibold">문서보완 {docRemCount}</span>
+                    <span className="text-slate-300">|</span>
+                    <span className="text-slate-500">미등록 {msdsMissingCount}</span>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">준비 범위</p>
+                    <label className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2.5 cursor-pointer">
+                      <span className="text-sm text-slate-700">MSDS 등록 <span className="text-slate-400">· 미등록 {msdsMissingCount}종</span></span>
+                      <input type="checkbox" checked={prepScope.msds} onChange={(e) => setPrepScope((s) => ({ ...s, msds: e.target.checked }))} className="h-4 w-4 rounded border-slate-300" />
+                    </label>
+                    <label className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2.5 cursor-pointer">
+                      <span className="text-sm text-slate-700">점검 기록 <span className="text-slate-400">· 미점검 {uninspectedCount}건</span></span>
+                      <input type="checkbox" checked={prepScope.insp} onChange={(e) => setPrepScope((s) => ({ ...s, insp: e.target.checked }))} className="h-4 w-4 rounded border-slate-300" />
+                    </label>
+                    <p className="text-xs text-slate-500">준비 대상 <span className="font-bold text-slate-900">{prepTargets.length}건</span></p>
+                  </div>
+
+                  {/* §msds-version-validation — MSDS 버전 검증(메타 기반 휴리스틱, 라이브 대조 아님). 단일 카운트 소스. MSDS 범위 on일 때. */}
+                  {prepScope.msds && (
+                    <div className="rounded-lg border border-slate-200 overflow-hidden">
+                      <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border-b border-slate-100">
+                        <FileWarning className="h-3.5 w-3.5 text-slate-400" />
+                        <span className="text-[11px] font-bold text-slate-600">MSDS 버전 검증</span>
+                        <span className="ml-auto text-[10px] font-medium text-slate-400">메타 기반 추정 · 라이브 대조 아님</span>
                       </div>
-                    );
-                  })}
+                      <div className="divide-y divide-slate-50">
+                        {[
+                          { dot: "bg-emerald-500", label: "최신본 확보", desc: "버전·개정일 메타 + 미만료·미교체", n: msdsVersionSummary.current },
+                          { dot: "bg-yellow-500", label: "구버전 의심 · 교체 권장", desc: "개정일 3년 경과 / 만료 / 교체됨", n: msdsVersionSummary.stale },
+                          { dot: "bg-slate-300", label: "출처 없음 · 메타 미상", desc: "버전·개정일 메타 없음(업로드 시 입력)", n: msdsVersionSummary.unknown },
+                        ].map((r) => (
+                          <div key={r.label} className="flex items-center gap-2.5 px-3 py-2">
+                            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${r.dot}`} />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-slate-800">{r.label}</p>
+                              <p className="text-[10px] text-slate-400">{r.desc}</p>
+                            </div>
+                            <span className={`text-sm font-bold tabular-nums ${r.n > 0 ? "text-slate-900" : "text-slate-300"}`}>{r.n}<span className="text-[10px] font-medium text-slate-400 ml-0.5">종</span></span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex items-start gap-1.5 px-3 py-2 bg-slate-50 text-[10px] leading-relaxed text-slate-500">
+                        <ShieldCheck className="h-3 w-3 text-slate-400 flex-shrink-0 mt-0.5" />
+                        구버전·출처 없음은 최신본 등록으로 교체되며, 구버전 원본은 삭제 없이 이력 보관됩니다(GMP 추적성).
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
 
-              {/* 안내: 점검 실행 저장 기능 준비 중 (Option 1 · Hide-until-wired) */}
-              {queueItems.length > 0 && (
-                <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 text-slate-400" />
-                    <span className="text-xs font-bold text-slate-600">점검 실행 저장 기능은 준비 중입니다</span>
+              {/* STEP 2 — 담당·일정 */}
+              {prepStep === 2 && (
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">담당자</p>
+                    <input value={prepAssignee} onChange={(e) => setPrepAssignee(e.target.value)} placeholder="안전관리책임자 이름" className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 focus:outline-none focus:border-blue-300" />
                   </div>
-                  <p className="text-[11px] leading-relaxed text-slate-500">
-                    현재는 우선 점검 대상 {priorityBacklogCount}건의 목록 확인만 지원합니다. 개별 항목은 상단 테이블에서 "폐기 처리" 또는 행 액션으로 처리해 주세요.
-                  </p>
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">마감</p>
+                    <div className="flex gap-1.5">
+                      {[{ k: "today", l: "오늘" }, { k: "2days", l: "2일 내" }, { k: "week", l: "이번 주" }, { k: "custom", l: "직접" }].map((d) => (
+                        <button key={d.k} type="button" onClick={() => setPrepDue(d.k as "today" | "2days" | "week" | "custom")}
+                          className={`flex-1 h-8 rounded-lg text-xs font-medium border transition-colors ${prepDue === d.k ? "bg-slate-900 text-white border-slate-900" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}>{d.l}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-slate-400">담당자·마감은 생성 체크리스트 머리말에 기록됩니다.</p>
+                </div>
+              )}
+
+              {/* STEP 3 — 패키지 (종착 = 체크리스트 CSV export, 실 산출물) */}
+              {prepStep === 3 && (
+                <div className="space-y-3">
+                  <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">생성될 패키지</p>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2.5 rounded-lg border border-slate-200 px-3 py-2.5">
+                      <FileText className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                      <span className="text-sm text-slate-700 flex-1">점검 준비 체크리스트 (CSV)</span>
+                      <span className="text-xs font-bold text-slate-900">{prepTargets.length}종</span>
+                    </div>
+                    {prepScope.msds && msdsVersionSummary.stale > 0 && (
+                      <div className="flex items-center gap-2.5 rounded-lg border border-slate-200 px-3 py-2.5">
+                        <FileWarning className="h-4 w-4 text-yellow-500 flex-shrink-0" />
+                        <span className="text-sm text-slate-700 flex-1">버전 검증 · 교체 권장 표기</span>
+                        <span className="text-xs font-bold text-slate-900">{msdsVersionSummary.stale}종</span>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-400">담당 {prepAssignee || "미지정"} · 마감 {prepDue === "today" ? "오늘" : prepDue === "2days" ? "2일 내" : prepDue === "week" ? "이번 주" : "직접 지정"}</p>
+                  {prepTargets.length === 0 && <p className="text-[11px] text-slate-400">선택 범위에 준비 대상이 없습니다. 범위를 조정하세요.</p>}
                 </div>
               )}
             </div>
 
-            {/* 하단 액션 dock */}
+            {/* dock — 스텝 네비게이션 */}
             <div className="shrink-0 px-5 py-3 border-t border-slate-200 bg-slate-50/60 flex items-center justify-between">
-              <Button variant="ghost" size="sm" className="text-xs text-slate-500" onClick={() => { setAiPanelOpen(false); setAiPanelPhase("closed"); }}>
-                닫기
-              </Button>
-              <Button
-                size="sm"
-                className="h-9 px-5 text-xs font-semibold bg-slate-200 text-slate-400 cursor-not-allowed"
-                disabled
-                title="점검 실행 저장 기능은 준비 중입니다."
-              >
-                분석 실행 (준비 중)
-              </Button>
+              {prepStep > 1 ? (
+                <Button variant="ghost" size="sm" className="text-xs text-slate-500" onClick={() => setPrepStep((s) => (s - 1) as 1 | 2 | 3)}>이전</Button>
+              ) : (
+                <Button variant="ghost" size="sm" className="text-xs text-slate-500" onClick={() => { setAiPanelOpen(false); setAiPanelPhase("closed"); }}>닫기</Button>
+              )}
+              {prepStep < 3 ? (
+                <Button size="sm" className="h-9 px-5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white disabled:bg-slate-100 disabled:text-slate-400"
+                  disabled={!prepScope.msds && !prepScope.insp}
+                  onClick={() => setPrepStep((s) => (s + 1) as 1 | 2 | 3)}>다음</Button>
+              ) : (
+                <Button size="sm" className="h-9 px-5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white gap-1.5 disabled:bg-slate-100 disabled:text-slate-400"
+                  disabled={prepTargets.length === 0}
+                  onClick={exportPrepChecklist}>
+                  <Download className="h-3.5 w-3.5" />체크리스트 생성
+                </Button>
+              )}
             </div>
           </div>
         </>
