@@ -303,8 +303,24 @@ export default function PricingPage() {
             정합. featured 카드는 "가장 많이 선택" 추천 (Basic 티어) — dark navy. */}
         <section id="plans" className="py-8 md:py-12" style={{ backgroundColor: P.bgSoft }}>
           <div className="max-w-7xl mx-auto px-6 md:px-8">
-            {/* §11.201e — items-stretch + 카드 h-full 로 4 카드 높이 통일 강제. */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+            {/* §pricing-carousel — 모바일 전용 스와이프 힌트(≤560). 데스크톱/태블릿 숨김. */}
+            <div
+              className="flex min-[561px]:hidden items-center justify-center gap-2 mb-4 text-xs font-semibold"
+              style={{ color: P.text3 }}
+            >
+              <ArrowRight className="h-3.5 w-3.5 rotate-180" style={{ color: P.blue }} />
+              좌우로 넘겨 플랜을 비교하세요
+              <ArrowRight className="h-3.5 w-3.5" style={{ color: P.blue }} />
+            </div>
+            {/* §pricing-carousel (호영님 2026-06-27) — 데스크톱(≥981) 4열 / 태블릿(561~980) 2열 /
+                모바일(≤560) 가로 스와이프 캐러셀(peek 84% + snap). 기능 목록 항상 노출(아코디언 X).
+                §11.201e — items-stretch + 카드 h-full 로 카드 높이 통일 유지. */}
+            <div
+              className="flex snap-x snap-mandatory overflow-x-auto gap-4 pt-6 pb-2 items-stretch
+                [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
+                min-[561px]:grid min-[561px]:grid-cols-2 min-[561px]:gap-6 min-[561px]:overflow-x-visible min-[561px]:pt-0
+                min-[981px]:grid-cols-4"
+            >
               {PLAN_INTENT_VALUES.map((intent, i) => {
                 const descriptor = PLAN_DESCRIPTOR[intent];
                 const { price, period } = formatPlanPrice(descriptor, annual);
@@ -315,7 +331,11 @@ export default function PricingPage() {
                   descriptor.recommendTag !== null &&
                   /가장\s*많이\s*선택/.test(descriptor.recommendTag);
                 return (
-                  <Reveal key={descriptor.intent} delay={i * 0.08} className="h-full">
+                  <Reveal
+                    key={descriptor.intent}
+                    delay={i * 0.08}
+                    className="h-full shrink-0 basis-[84%] snap-center min-[561px]:basis-auto min-[561px]:shrink"
+                  >
                     <PlanCard
                       descriptor={descriptor}
                       price={price}
