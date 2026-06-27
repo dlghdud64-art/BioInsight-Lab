@@ -14,6 +14,9 @@ import {
   PLAN_DESCRIPTOR,
   type PlanDescriptor,
 } from "@/lib/billing/plan-descriptor";
+// §pricing-assistant / §pricing-고도화 — AI 즉답 카드 + 상단 스크롤 진행바.
+import { PricingAssistant } from "@/app/pricing/_components/pricing-assistant";
+import { ScrollProgress } from "@/app/pricing/_components/scroll-progress";
 
 /* ── Light palette — 인트로 editorial과 동일 톤 ───────────────── */
 const P = {
@@ -241,6 +244,7 @@ export default function PricingPage() {
 
   return (
     <MainLayout>
+      <ScrollProgress />
       <MainHeader />
       <div className="w-full" style={{ backgroundColor: P.bg }}>
 
@@ -342,6 +346,7 @@ export default function PricingPage() {
                       period={period}
                       operatingVolume={operatingVolume}
                       featured={featured}
+                      annualBilling={annual}
                       onSelect={handlePlanSelect}
                       loading={loadingPlan === descriptor.intent}
                       disabled={
@@ -508,6 +513,12 @@ export default function PricingPage() {
                 자주 묻는 질문
               </h2>
             </Reveal>
+
+            {/* §pricing-assistant — AI 즉답 카드(아코디언 위). 정적 FAQ 보존. */}
+            <Reveal>
+              <PricingAssistant />
+            </Reveal>
+
             <div className="flex flex-col gap-4">
               {FAQ_DATA.map((faq, i) => (
                 <Reveal key={faq.q} delay={i * 0.06}>
@@ -581,13 +592,15 @@ function CellValue({ value, label, highlight }: { value: string; label?: string;
 
 /* ── Plan Card Component — descriptor 통과 (light or featured navy) ──────────────────────── */
 function PlanCard({
-  descriptor, price, period, operatingVolume, featured, onSelect, loading, disabled,
+  descriptor, price, period, operatingVolume, featured, annualBilling, onSelect, loading, disabled,
 }: {
   descriptor: PlanDescriptor;
   price: string;
   period?: string;
   operatingVolume: string[];
   featured?: boolean;
+  // §pricing-고도화 P1/P2 — 결제주기 라인(월간/연간) 표기를 위해 카드가 현재 토글 상태를 받음.
+  annualBilling?: boolean;
   onSelect: (plan: PlanIntent) => void | Promise<void>;
   loading?: boolean;
   disabled?: boolean;
@@ -598,9 +611,6 @@ function PlanCard({
     void onSelect(intent);
   };
 
-  // §11.201 — featured (dark navy) vs default (light) 두 variant.
-  //   recommendTag 가 있고 "단일 연구실" 추천이면 featured, 그 외는 default.
-  //   recommendTag 가 있고 "R&D 센터" 같은 다른 추천은 light + outline blue badge.
   const isDarkNavy = featured === true;
   const labelColor = isDarkNavy ? D.text1 : P.text1;
   const taglineColor = isDarkNavy ? D.text2 : P.text3;
@@ -646,6 +656,15 @@ function PlanCard({
         <div className="mb-6 min-h-[44px]">
           <span className="text-[30px] font-bold leading-none" style={{ color: labelColor }}>{price}</span>
           {period && <span className="text-sm ml-1" style={{ color: taglineColor }}>{period}</span>}
+
+          {/* §pricing-고도화 P2 — 결제주기 명시(카드만 봐도 월간/연간 구분). Free/Custom 제외. */}
+          {price !== "Free" && price !== "Custom" && (
+            <div className="mt-1.5 text-[12px]" style={{ color: taglineColor }}>
+              {annualBilling ? <>연간 결제 · <b>약 11% 할인</b> (출시 후 적용)</> : "월간 결제"}
+            </div>
+          )}
+          {/* §pricing-고도화 P1 — 무료체험 pill 보류: trial-START 결제 백엔드 부재 → 노출 시 fake claim(§pricing-prelaunch 불변).
+              trialEligible 데이터 플래그는 유지. 실노출은 §pricing-billing-backend(trial_period_days) land 후. */}
         </div>
 
         {/* §11.201 — 운영량 / Credit 정량 근거 (descriptor.seatsRecommended /
