@@ -51,7 +51,9 @@ describe("§pricing-refresh P2 — 2곳 POST 배선(초과 429 + 안내)", () =>
   ];
   for (const [name, src, kind] of CASES) {
     it(`${name} POST — enforcePlanLimit("${kind}") + PlanLimitError 429`, () => {
-      expect(src).toMatch(/import \{ enforcePlanLimit, PlanLimitError \} from "@\/lib\/billing\/enforce-plan-limit"/);
+      // §pricing-enforce-p2 — inventory POST가 enforce-plan-limit 에서 trackingMode 게이트(assertTrackingModeAllowed 등)도
+      //   같은 import 라인에 추가 → 정확히 2개 핀이 깨짐. 보호의도(enforcePlanLimit + PlanLimitError import) 불변, 추가 import 허용.
+      expect(src).toMatch(/import \{[^}]*\benforcePlanLimit\b[^}]*\bPlanLimitError\b[^}]*\} from "@\/lib\/billing\/enforce-plan-limit"/);
       expect(src).toMatch(new RegExp(`enforcePlanLimit\\(session\\.user\\.id, "${kind}"\\)`));
       expect(src).toMatch(/instanceof PlanLimitError/);
       expect(src).toMatch(/status: 429/);

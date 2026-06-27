@@ -11,6 +11,7 @@
 
 import { db } from "@/lib/db";
 import { SubscriptionPlan, getPlanLimits } from "@/lib/plans";
+import type { TrackingMode } from "@/lib/inventory/tracking-mode";
 
 // §pricing-redesign (호영님 2026-06-27) — "orders"(PO) kind 제거 (PO 한도 폐기).
 export type PlanLimitKind = "quotes" | "inventory";
@@ -95,5 +96,38 @@ export async function enforcePlanLimit(
   // 생성 전 체크: 이미 limit 도달이면 새 1건 추가가 한도 초과 → 차단.
   if (used >= limit) {
     throw new PlanLimitError(kind, limit, used);
+  }
+}
+
+/**
+ * §pricing-enforce-p2 (호영님 2026-06-27) — 추적 모드 플랜 게이팅.
+ *   LOT / GMP_STRICT 는 plan.allowedTrackingModes 에 포함된 플랜(Pro)만 설정 가능.
+ *   QUANTITY 는 모든 플랜 허용(다운그레이드 자유). 미허용 시 throw → 라우트 403 + 품위 안내.
+ *   read-only plan 조회만(migration 0). grandfather 없음(파일럿, 호영님 결정).
+ */
+export class TrackingModePlanError extends Error {
+  readonly code = "TRACKING_MODE_PLAN";
+  constructor(
+    public readonly mode: TrackingMode,
+    public readonly plan: SubscriptionPlan,
+  ) {
+    super(
+      `${mode} 추적 모드는 Pro 플랜에서만 사용할 수 있습니다. ` +
+        `LOT / GMP 추적이 필요하면 플랜을 업그레이드해 주세요.`,
+    );
+    this.name = "TrackingModePlanError";
+  }
+}
+
+/** 설정 직전 호출. 미허용 plan 이 LOT/GMP_STRICT 설정 시 TrackingModePlanError throw. */
+export async function assertTrackingModeAllowed(
+  userId: string,
+  mode: TrackingMode,
+): Promise<void> {
+  if (mode === "QUANTITY") return; // 항상 허용
+  const plan = await resolvePlan(userId);
+  const limits = getPlanLimits(plan);
+  if (!limits.allowedTrackingModes.includes(mode)) {
+    throw new TrackingModePlanError(mode, plan);
   }
 }

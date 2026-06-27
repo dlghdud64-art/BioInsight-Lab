@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { assertTrackingModeAllowed, TrackingModePlanError } from "@/lib/billing/enforce-plan-limit";
 import { dispatchNotificationEvent } from "@/lib/notifications/event-dispatcher";
 import { sendPushNotification } from "@/lib/notifications/push-sender";
 
@@ -163,6 +164,21 @@ export async function PATCH(
     }
 
     if (location !== undefined) updateData.location = location || null;
+
+    // §pricing-enforce-p2 — LOT/GMP_STRICT 는 Pro 플랜만(서버 게이트). 미허용 plan 403 품위 안내.
+    if (trackingMode === "LOT" || trackingMode === "GMP_STRICT") {
+      try {
+        await assertTrackingModeAllowed(session.user.id, trackingMode);
+      } catch (e) {
+        if (e instanceof TrackingModePlanError) {
+          return NextResponse.json(
+            { error: e.message, code: e.code, mode: e.mode },
+            { status: 403 },
+          );
+        }
+        throw e;
+      }
+    }
 
     // §inventory-phaseB P3-UI-b — 추적 모드 화이트리스트(임의 값 차단). 미전달/무효 시 변경 안 함.
     if (trackingMode === "QUANTITY" || trackingMode === "LOT" || trackingMode === "GMP_STRICT") {

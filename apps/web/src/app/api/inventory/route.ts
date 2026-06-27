@@ -7,7 +7,7 @@ import {
   summarizeInventoryDisposalPriorities,
 } from "@/lib/inventory/disposal-readiness";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
-import { enforcePlanLimit, PlanLimitError } from "@/lib/billing/enforce-plan-limit";
+import { enforcePlanLimit, PlanLimitError, assertTrackingModeAllowed, TrackingModePlanError } from "@/lib/billing/enforce-plan-limit";
 
 // 재고 목록 조회
 export async function GET(request: NextRequest) {
@@ -210,6 +210,21 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const productId = body.productId || 'unknown';
+
+    // §pricing-enforce-p2 — LOT/GMP_STRICT 는 Pro 플랜만(서버 게이트, lock 획득 전). 미허용 plan 403 품위 안내.
+    if (body.trackingMode === "LOT" || body.trackingMode === "GMP_STRICT") {
+      try {
+        await assertTrackingModeAllowed(session.user.id, body.trackingMode);
+      } catch (e) {
+        if (e instanceof TrackingModePlanError) {
+          return NextResponse.json(
+            { error: e.message, code: e.code, mode: e.mode },
+            { status: 403 },
+          );
+        }
+        throw e;
+      }
+    }
 
     enforcement = enforceAction({
       userId: session.user.id,
