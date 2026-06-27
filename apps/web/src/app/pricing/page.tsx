@@ -50,20 +50,21 @@ function fmt(n: number) {
   return `₩${n.toLocaleString("ko-KR")}`;
 }
 
-/** §11.201 — descriptor.priceMonthlyKrw 를 표시 문자열로 변환 (discount 배수 적용).
- *  §pricing-redesign — 연간은 1개월 무료(11/12) 배수. Enterprise (null) 은 "Custom". */
-function formatPlanPrice(descriptor: PlanDescriptor, discount: number): {
+/** §pricing-prelaunch — 연간은 명시 월환산(priceAnnualMonthlyKrw, ×11/12 배수 폐기).
+ *  Enterprise (null) 은 "Custom". 연간 가격은 "출시 후 적용"(토글 라벨). */
+function formatPlanPrice(descriptor: PlanDescriptor, annual: boolean): {
   price: string;
   period: string;
 } {
-  if (descriptor.priceMonthlyKrw === null) {
+  const krw = annual ? descriptor.priceAnnualMonthlyKrw : descriptor.priceMonthlyKrw;
+  if (krw === null) {
     return { price: "Custom", period: "" };
   }
-  if (descriptor.priceMonthlyKrw === 0) {
+  if (krw === 0) {
     return { price: "Free", period: "" };
   }
   return {
-    price: fmt(Math.round(descriptor.priceMonthlyKrw * discount)),
+    price: fmt(krw),
     period: "/월",
   };
 }
@@ -137,8 +138,7 @@ const FAQ_DATA = [
 
 export default function PricingPage() {
   const [annual, setAnnual] = useState(false);
-  // §pricing-redesign (호영님 2026-06-27) — 연간 = 1개월 무료(11/12 배수). 이전 연 할인 배수 폐기.
-  const discount = annual ? 11 / 12 : 1;
+  // §pricing-prelaunch — 연간 가격은 명시 월환산(priceAnnualMonthlyKrw). 배수 계산 폐기.
   const router = useRouter();
   const [loadingPlan, setLoadingPlan] = useState<PlanIntent | null>(null);
   const [selectError, setSelectError] = useState<string | null>(null);
@@ -234,7 +234,7 @@ export default function PricingPage() {
                 <span className="text-sm font-medium" style={{ color: annual ? P.text1 : P.text4 }}>연간</span>
                 {annual && (
                   <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ backgroundColor: P.blueSoft, color: P.blueText }}>
-                    1개월 무료
+                    약 11% 할인 · 출시 후 적용
                   </span>
                 )}
               </div>
@@ -253,7 +253,7 @@ export default function PricingPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
               {PLAN_INTENT_VALUES.map((intent, i) => {
                 const descriptor = PLAN_DESCRIPTOR[intent];
-                const { price, period } = formatPlanPrice(descriptor, discount);
+                const { price, period } = formatPlanPrice(descriptor, annual);
                 const operatingVolume = formatOperatingVolume(descriptor);
                 // §11.304 — featured = "가장 많이 선택" 추천 카드 (Basic 티어)
                 //   — dark navy 톤. recommendTag 등급화 정합.

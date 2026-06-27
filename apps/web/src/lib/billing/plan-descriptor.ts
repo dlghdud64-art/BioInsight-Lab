@@ -19,7 +19,7 @@
 import type { PlanIntent } from "./plan-select";
 // §pricing-sot-unify-p4 — 가격 단일 SoT. priceMonthlyKrw 는 PLAN_PRICES 에서 파생(수기 중복 제거).
 //   단방향 import (plans.ts 는 descriptor 를 import 하지 않음 → cycle 0).
-import { PLAN_PRICES, SubscriptionPlan } from "@/lib/plans";
+import { PLAN_PRICES, PLAN_PRICES_ANNUAL_MONTHLY, SubscriptionPlan } from "@/lib/plans";
 
 /** 운영량 권장치 — pricing 카드 카피의 정량 근거 */
 export interface OperatingVolume {
@@ -41,6 +41,8 @@ export interface PlanDescriptor {
   tagline: string;
   /** 월 가격 (KRW) — Enterprise 는 null (계약 기반) */
   priceMonthlyKrw: number | null;
+  /** §pricing-prelaunch — 연간 결제 시 월 환산(명시 절사값). Enterprise null. */
+  priceAnnualMonthlyKrw: number | null;
   /** 권장 좌석 수 — Enterprise 는 null (무제한 / 계약) */
   seatsRecommended: number | null;
   /** 운영량 권장치 (RFQ / PO / 재고) */
@@ -102,6 +104,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     tagline: "도입 검토 · 1인 사용에 적합",
     // §pricing-sot-unify-p4 — Free 가격 = PLAN_PRICES[FREE] 파생(현 0).
     priceMonthlyKrw: PLAN_PRICES[SubscriptionPlan.FREE],
+    priceAnnualMonthlyKrw: PLAN_PRICES_ANNUAL_MONTHLY[SubscriptionPlan.FREE],
     seatsRecommended: 1,
     operatingVolume: {
       // §pricing-redesign P3 (호영님 2026-06-27) — 표기=enforce 정직 정합.
@@ -137,6 +140,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     tagline: "소규모 운영 · 3명 규모에 적합",
     // §pricing-sot-unify-p4 — Basic 가격 = PLAN_PRICES[TEAM] 파생(현 89,000).
     priceMonthlyKrw: PLAN_PRICES[SubscriptionPlan.TEAM],
+    priceAnnualMonthlyKrw: PLAN_PRICES_ANNUAL_MONTHLY[SubscriptionPlan.TEAM],
     // §11.304 — 기본 운영자 5→3 (1→5 점프 완화, 2~3명 소규모 랩 진입 문턱
     //   낮춤). backend includedSeats 필드 변경 = §11.303b 별도 batch.
     seatsRecommended: 3,
@@ -183,6 +187,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     tagline: "다중 운영 · 통제 기능 · 10명 규모에 적합",
     // §pricing-sot-unify-p4 — Pro 가격 = PLAN_PRICES[ORGANIZATION] 파생(현 259,000).
     priceMonthlyKrw: PLAN_PRICES[SubscriptionPlan.ORGANIZATION],
+    priceAnnualMonthlyKrw: PLAN_PRICES_ANNUAL_MONTHLY[SubscriptionPlan.ORGANIZATION],
     // §11.304 — 기본 운영자 15→10 (점프 완화 + Quartzy Pro 동등 인당 단가).
     //   backend includedSeats 변경 = §11.303b 별도.
     seatsRecommended: 10,
@@ -226,6 +231,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     // §11.304 — 권장형 (계약형 운영 명시, 조직 유형 규정 X).
     tagline: "기관 · 계약형 운영 · 좌석/운영량 협의",
     priceMonthlyKrw: null,
+    priceAnnualMonthlyKrw: null,
     seatsRecommended: null,
     operatingVolume: {
       monthlyRfq: null,

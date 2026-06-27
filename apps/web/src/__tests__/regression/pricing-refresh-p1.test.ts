@@ -58,10 +58,14 @@ describe("§pricing-redesign P1 — 신규 entitlement field + 가격/연간", (
     expect(PLANS).toMatch(/allowedTrackingModes: \["QUANTITY"\]/);
     expect(PLANS).toMatch(/allowedTrackingModes: \["QUANTITY", "LOT", "GMP_STRICT"\]/);
   });
-  it("가격 89k/259k · 연간 1mo-free(월×11)", () => {
+  // §pricing-prelaunch (호영님 2026-06-27) — 연간 = 명시 절사값(79k/229k), ×11/12 파생 폐기.
+  it("가격 89k/259k · 연간 명시 79k/229k(약 11%)", () => {
     expect(PLANS).toMatch(/SubscriptionPlan\.TEAM\]: 89_000/);
     expect(PLANS).toMatch(/SubscriptionPlan\.ORGANIZATION\]: 259_000/);
-    expect(PLANS).toMatch(/PLAN_PRICES\[plan\] \* 11/);
+    expect(PLANS).toMatch(/PLAN_PRICES_ANNUAL_MONTHLY/);
+    expect(PLANS).toMatch(/SubscriptionPlan\.TEAM\]: 79_000/);
+    expect(PLANS).toMatch(/SubscriptionPlan\.ORGANIZATION\]: 229_000/);
     expect(PLANS).not.toMatch(/ANNUAL_DISCOUNT_RATE/);
+    expect(PLANS).not.toMatch(/PLAN_PRICES\[plan\] \* 11/);
   });
 });

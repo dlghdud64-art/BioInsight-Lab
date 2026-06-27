@@ -41,8 +41,10 @@ describe("§pricing-redesign P3 — /pricing 비교표 행", () => {
 });
 
 describe("§pricing-redesign P3 — 게이트(회귀 0)", () => {
-  it("연간 1개월 무료 표기 유지 · 10% 할인 0", () => {
-    expect(PRICING).toMatch(/1개월 무료/);
+  // §pricing-prelaunch — 연간 = 약 11% 할인 · 출시 후 적용. "1개월 무료"/"10% 할인" 폐기.
+  it("연간 약 11% 할인 표기 · 1개월무료/10%할인 0", () => {
+    expect(PRICING).toMatch(/약 11% 할인/);
+    expect(PRICING).not.toMatch(/1개월 무료/);
     expect(PRICING).not.toMatch(/10% 할인/);
   });
   it("Enterprise 정찰가 미표기 — Custom + 영업 문의 CTA", () => {

@@ -885,7 +885,7 @@ function PlansPageContent() {
  </p>
  {isAnnual && (
  <p className="text-xs text-green-600 text-green-600 mt-0.5">
- 연간 결제 1개월 무료 적용
+ 연간 결제 약 11% 할인 (출시 후 적용)
  </p>
  )}
  </div>
@@ -1022,7 +1022,7 @@ function PlansPageContent() {
  :"bg-green-100 text-green-700 bg-green-100 text-green-600"
  )}
  >
- 1개월 무료
+ 약 11% 할인
  </span>
  </button>
  </div>
@@ -1135,7 +1135,7 @@ function PlansPageContent() {
  </div>
  {isAnnual && price > 0 && (
  <p className="text-xs text-green-600 text-green-600 mt-1">
- 연 {formatPrice(getAnnualTotalPrice(card.id))} (1개월 무료)
+ 연 {formatPrice(getAnnualTotalPrice(card.id))} (약 11% 할인 · 출시 후 적용)
  </p>
  )}
  </div>

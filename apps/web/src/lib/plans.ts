@@ -35,14 +35,23 @@ export const PLAN_PRICES = {
 // §pricing-redesign (호영님 2026-06-27) — 연간 결제 = 1개월 무료(12개월 결제 시
 //   11개월 금액). 이전 연 할인율 상수 폐기.
 
-/** 연간 결제 시 연 합계 — 월 단가 × 11 (1개월 무료) */
-export function getAnnualTotalPrice(plan: SubscriptionPlan): number {
-  return PLAN_PRICES[plan] * 11;
+// §pricing-prelaunch (호영님 2026-06-27) — 연간 월환산 = 명시 절사값(×11/12 파생 폐기).
+//   체험 혼동되는 "1개월 무료" 대신 "약 11% 할인". 출시 후 적용(PG 연동 전 표시만).
+//   검산: 79k×12=948k vs 89k×12=1,068k → 11.2% / 229k×12=2,748k vs 259k×12=3,108k → 11.6%.
+export const PLAN_PRICES_ANNUAL_MONTHLY = {
+  [SubscriptionPlan.FREE]: 0,
+  [SubscriptionPlan.TEAM]: 79_000,
+  [SubscriptionPlan.ORGANIZATION]: 229_000,
+} as const;
+
+/** 연간 결제 시 월 환산 단가 — 명시 절사값(SoT). */
+export function getAnnualMonthlyPrice(plan: SubscriptionPlan): number {
+  return PLAN_PRICES_ANNUAL_MONTHLY[plan];
 }
 
-/** 연간 결제 시 월 환산 단가 — 연 합계 / 12 (반올림) */
-export function getAnnualMonthlyPrice(plan: SubscriptionPlan): number {
-  return Math.round(getAnnualTotalPrice(plan) / 12);
+/** 연간 결제 시 연 합계 — 월환산 × 12. */
+export function getAnnualTotalPrice(plan: SubscriptionPlan): number {
+  return getAnnualMonthlyPrice(plan) * 12;
 }
 
 // §pricing-sot-unify-p4 (호영님 2026-06-27) — 월 가격 표시 문자열 = PLAN_PRICES 단일 SoT 파생.
