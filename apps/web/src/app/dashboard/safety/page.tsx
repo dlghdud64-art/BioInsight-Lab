@@ -392,7 +392,7 @@ export default function SafetyManagerPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 p-4 md:p-8 pt-4 md:pt-6">
+    <div className="min-h-screen bg-white p-4 md:p-8 pt-4 md:pt-6">
       {/* §11.333 Part A — 운영 화면 wide 정책 정합. 옛 max-w-7xl(1280px) → max-w-full
           (다른 운영 화면 dashboard/quotes/inventory/purchase-orders/receiving 와 동일). */}
       <div className="max-w-full mx-auto space-y-5">

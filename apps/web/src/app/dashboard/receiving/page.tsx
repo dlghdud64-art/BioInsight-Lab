@@ -118,7 +118,7 @@ export default function ReceivingLandingPage() {
   const isEmpty = allItems.length === 0;
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-6 space-y-5">
+    <div className="min-h-screen bg-white p-4 md:p-6 space-y-5">
       {/* §11.348-A-4b — 공급사 입고 회신(PENDING_REVIEW) 검토. 0건 시 자동 숨김. */}
       <ReceivingReviewPanel />
 

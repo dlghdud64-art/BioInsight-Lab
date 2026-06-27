@@ -277,7 +277,7 @@ function PurchaseOrderLandingPageInner() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-6 space-y-5">
+    <div className="min-h-screen bg-white p-4 md:p-6 space-y-5">
       {/* ── 1. Header (§11.374 P3.4 — AppPageHeader 채택, white card 제거 → card-less 단일 문법) ── */}
       <div className="space-y-3">
         <AppPageHeader

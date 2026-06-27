@@ -511,7 +511,7 @@ export default function PurchasesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 p-4 md:p-6 pt-4 md:pt-4">
+    <div className="min-h-screen bg-white p-4 md:p-6 pt-4 md:pt-4">
       {/* §11.333 Part A — 운영 화면 wide 정책 정합. 옛 max-w-7xl(1280px) → max-w-full
           (다른 운영 화면 dashboard/quotes/inventory/purchase-orders/receiving 와 동일). */}
       <div className="max-w-full mx-auto space-y-4">
@@ -1681,19 +1681,20 @@ function KpiCard({ icon, iconBg, label, value, valueColor, sub, active, onClick 
   active: boolean;
   onClick: () => void;
 }) {
-  // §11.260a — 0건 카드 시각 우선순위 낮춤 (§11.259a #5 견적 패턴 reuse).
-  //   active 시 opacity-100 (활성 카드 톤다운 안 함). hover 시 opacity-100 복원.
+  // §11.260a → §bg-unify-kpi-zero — 0건 카드 시각 우선순위 낮춤.
+  //   진화: 카드 전체 opacity-50(흰 캔버스 위 탁한 회색 박스 원인) 폐지 → 숫자 색만 톤다운(text-slate-300).
+  //   카드는 선명한 흰색 + border 유지(구획 보존), 값 생기면 valueColor 컬러 강조. active/hover 또렷.
   const isZero = value === 0 && !active;
   return (
     <button type="button" onClick={onClick}
       className={`rounded-xl border bg-white p-5 text-left transition-all hover:shadow-md ${
         active ? "border-blue-300 ring-1 ring-blue-100 shadow-md" : "border-slate-200 hover:border-slate-300"
-      } ${isZero ? "opacity-50 hover:opacity-100" : ""}`}>
+      }`}>
       <div className="flex items-center justify-between mb-3">
         <div className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center`}>{icon}</div>
         <span className="text-xs text-slate-400">{label}</span>
       </div>
-      <p className={`text-3xl font-extrabold ${valueColor}`}>
+      <p className={`text-3xl font-extrabold ${isZero ? "text-slate-300" : valueColor}`}>
         {value}<span className="text-base font-normal text-slate-400 ml-0.5">건</span>
       </p>
       <p className="text-xs text-slate-500 mt-1">{sub}</p>

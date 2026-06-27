@@ -509,7 +509,7 @@ function InventoryScanContent() {
 
   // ─── ID 없을 때 — 스캐너 뷰 ────────────────────────────────────
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* 헤더 */}
       <div className="flex items-center gap-3 p-4 border-b border-slate-200 bg-white">
         <Link href="/dashboard/inventory">

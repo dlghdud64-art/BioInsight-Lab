@@ -226,7 +226,7 @@ export default function StockRiskPage() {
   const isHubEmpty = allItems.length === 0;
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-6 space-y-5">
+    <div className="min-h-screen bg-white p-4 md:p-6 space-y-5">
       {/* ── 1. Module Header ─────────────────────────────────────── */}
       <div className="bg-white border border-slate-200 rounded-lg p-4">
         <div className="flex items-start justify-between">

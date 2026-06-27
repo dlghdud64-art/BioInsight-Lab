@@ -33,8 +33,11 @@ describe("§11.260a #1 — KpiCard 내부 0건 톤다운 (isZero)", () => {
     expect(page).toMatch(/const isZero = value === 0 && !active/);
   });
 
-  it("isZero 시 opacity-50 적용 (active 시 opacity-100 복원)", () => {
-    expect(page).toMatch(/isZero[\s\S]{0,80}opacity-50/);
+  // §bg-unify-kpi-zero 진화(2026-06-27) — 카드 전체 opacity-50(흰 캔버스 위 탁한 회색 박스 원인) 폐지 →
+  //   숫자 색만 톤다운(text-slate-300). 0건 비활성 표현 보호의도 불변(메커니즘만 카드 투명 → 숫자 색).
+  it("isZero 시 숫자 색 톤다운(text-slate-300) — 카드 전체 opacity-50 폐지", () => {
+    expect(page).toMatch(/text-3xl font-extrabold \$\{isZero \? "text-slate-300" : valueColor\}/);
+    expect(page).not.toMatch(/isZero \? "opacity-50 hover:opacity-100"/);
   });
 });
 
