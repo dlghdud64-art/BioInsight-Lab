@@ -974,7 +974,9 @@ export default function SafetyManagerPage() {
             {/* §safety-redesign ② 밀집 테이블 (정렬·14행 페이지네이션) — 반복 카드 제거 */}
             <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
               {filteredItems.length === 0 ? (
-                <div className="text-center py-16 text-slate-400 text-sm">조건에 맞는 데이터가 없습니다.</div>
+                <div className="text-center py-16 text-slate-400 text-sm">
+                  {totalCount === 0 ? "등록된 화학물질이 없습니다. 재고에 품목이 추가되면 여기에 표시됩니다." : "조건에 맞는 데이터가 없습니다."}
+                </div>
               ) : (
                 <>
                   <div className="overflow-x-auto">

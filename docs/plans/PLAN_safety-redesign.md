@@ -111,8 +111,10 @@
 - phase 독립 revert. 데이터 경로(useQuery/buildSafetyDecision) 무변경이 안전판 — 레이아웃 revert해도 데이터 정상.
 
 ## 10. Progress
-- Overall: ~60% · Current: ②(테이블·필터칩·bulkbar) 코드완료(operator 게이트 대기) · Blocker: 없음 · Next: ③ 3단계 점검 준비 마법사
-- [x] P0 · [x] P3(큐 cap8+스크롤) · [x] write no-op 해소(①) · [x] ②밀집테이블/필터칩/bulkbar · [ ] 3단계 마법사 · [ ] 톤/empty/smoke
+- Overall: ~90% (③ 보류) · Current: 마무리(톤/empty) 코드완료(operator 게이트 대기) · Blocker: 없음 · Next: ③ 마법사는 패키지 생성 백엔드 follow-up 후
+- [x] P0 · [x] P3(큐 cap8+스크롤) · [x] write no-op 해소(①) · [x] ②밀집테이블/필터칩/bulkbar · [~] ③ 마법사=보류(백엔드 미존재, 호영님 결정) · [x] 톤/empty/mockup-잔재0
+- **③ 결정(2026-06-27):** 패키지 생성/점검 일정 생성 전용 백엔드 부재(audit) → 비완결 마법사 신축은 soft dead-end. 호영님 "③ 보류 + 마무리" 선택. 현 honest 패널(대상목록+disabled 사유) 유지, ③는 백엔드 트랙 후.
+- **마무리 서브배치(2026-06-27):** 톤 — amber-*/orange-* tailwind 클래스 0(muted yellow만, 형광 노랑 미사용) 확인. empty-state — 0종(등록 없음) vs 필터 0건 구분. mockup scaffolding(current/improved 토글·localStorage view) 0 확인(실배선 페이지). sentinel `safety-finalize.test.ts`. ⏳ operator: vitest/tsc/build.
 - **② 서브배치(2026-06-27):** 반복 카드 → 밀집 테이블(☑·물질명·CAS·위험·보관·MSDS·점검·작업). 정렬(물질명·위험·보관 toggleSort), 14행 페이지네이션. 필터 칩 4종(전체/MSDS미등록/미점검/고위험, canonical=items 집계 단일 소스) + "N종 중 M종 표시". 다중선택 bulkbar(선택해제 real, MSDS/점검 일괄=③ 마법사 연결 전까지 disabled+사유=no-op 금지). dead Filter 버튼 제거. 행클릭=우측 rail 유지. sentinel `safety-chem-table.test.ts`. ⏳ operator: vitest/tsc/build.
 - **P0 결론(수정):** write 엔드포인트 audit 결과 — 안전 페이지=product-scoped 인데 점검=inventory-scoped·폐기=엔드포인트 없음·MSDS=파일+스토리지 필요. "배선만으로 해소"는 MSDS만 성립.
 - **write 서브배치(2026-06-27, 호영님 ① 선택 = 정직한 최소):**
