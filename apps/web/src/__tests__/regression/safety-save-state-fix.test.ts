@@ -51,20 +51,20 @@ describe("§safety-save-state-fix — 자동 PATCH 차단(mount/hydration echo)"
   });
 });
 
-describe("§safety-save-state-fix — failure 칩 정상 first-load 미노출", () => {
-  it("failure 칩은 isPatchError||isError 게이트 뒤에서만 렌더", () => {
+describe("§safety-redesign 상단정합 — 저장 상태 바 제거(시안 §0)", () => {
+  // 저장 상태 바 자체가 제거되어 failure 칩/저장상태 표시는 더 이상 존재하지 않는다.
+  //   (자동 PATCH 버그 가드는 위 effect 로직 블록으로 계속 보장 — 화면 클러터만 제거.)
+  it("저장 상태 바 UI(testid·표시 파생) 제거", () => {
     const src = read(SAFETY_PATH);
-    expect(src).toMatch(
-      /\(userPrefs\.isPatchError \|\| userPrefs\.isError\) &&[\s\S]{0,200}data-testid="safety-preferences-failure-reason"/,
-    );
+    expect(src).not.toMatch(/safety-preferences-save-state/);
+    expect(src).not.toMatch(/safety-preferences-failure-reason/);
+    expect(src).not.toMatch(/safety-preferences-saved-badge/);
+    expect(src).not.toMatch(/safetySaveBoundaryLabel/);
   });
 
-  it("정상 상태 상시 slate '실패 사유 없음' 칩 노출 패턴 제거", () => {
+  it("activeFrame persistence(hydration+PATCH effect)는 보존", () => {
     const src = read(SAFETY_PATH);
-    // 기존: 칩이 항상 렌더되며 정상 시 slate 톤으로 "실패 사유 없음" 노출.
-    //   조건부 렌더로 바뀌었으므로 무조건 노출 패턴(삼항 slate fallback className)이 없어야 함.
-    expect(src).not.toMatch(
-      /border-slate-200 bg-slate-50 text-slate-600"\s*\}`\}\s*>\s*\{safetySaveFailureReason\}/,
-    );
+    expect(src).toMatch(/userPrefs\.updateSafetyFilter\(\{ activeFrame \}\)/);
+    expect(src).toMatch(/setActiveFrame/);
   });
 });

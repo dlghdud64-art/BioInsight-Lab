@@ -46,30 +46,23 @@ describe("§11.230c (a)-7 #1 — preferences route zod 확장", () => {
   });
 });
 
-describe("§11.230c (a)-7b — safety save state evidence", () => {
-  it("safety page exposes numeric applied/pending badges near the save boundary", () => {
-    expect(safety).toMatch(/safety-preferences-save-state/);
-    expect(safety).toMatch(/현재 적용됨[\s\S]{0,120}\{safetyAppliedCount\}/);
-    expect(safety).toMatch(/저장 대기[\s\S]{0,120}\{safetyPendingCount\}/);
+describe("§safety-redesign 상단정합 — 저장 상태 바 제거(시안 §0)", () => {
+  // §11.230c (a)-7b 의 화면 저장상태 바는 시안 정합으로 제거.
+  //   persistence 인프라(route zod·helper·hydration·PATCH effect)는 아래 블록들로 계속 보장.
+  it("safety page 저장 상태 바 UI 제거(testid 부재)", () => {
+    expect(safety).not.toMatch(/safety-preferences-save-state/);
+    expect(safety).not.toMatch(/safety-preferences-failure-reason/);
+    expect(safety).not.toMatch(/safety-preferences-saved-badge/);
   });
 
-  it("safety page shows a fixed Korean server failure reason", () => {
-    expect(safety).toMatch(/safety-preferences-failure-reason/);
-    expect(safety).toMatch(/서버 반영 실패/);
-    expect(safety).toMatch(/실패 사유 없음/);
-  });
-
-  it("safety page keeps saved confirmation visible and ties it to purchase review", () => {
-    expect(safety).toMatch(/safety-preferences-saved-badge/);
-    expect(safety).toMatch(/저장됨/);
-    expect(safety).toMatch(/구매 검토에 반영됨/);
-    expect(safety).toMatch(/duration:\s*3000/);
-  });
-
-  it("useUserPreferences exposes preference patch boundary state", () => {
+  it("useUserPreferences 는 patch boundary state 를 계속 노출(헬퍼 보존)", () => {
     expect(helper).toMatch(/isPatchError/);
     expect(helper).toMatch(/isPatchSuccess/);
     expect(helper).toMatch(/patchErrorMessage/);
+  });
+
+  it("safety activeFrame persistence(updateSafetyFilter) 보존", () => {
+    expect(safety).toMatch(/updateSafetyFilter/);
   });
 });
 

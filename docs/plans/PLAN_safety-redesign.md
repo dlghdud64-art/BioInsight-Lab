@@ -110,6 +110,17 @@
 ## 9. Rollback
 - phase 독립 revert. 데이터 경로(useQuery/buildSafetyDecision) 무변경이 안전판 — 레이아웃 revert해도 데이터 정상.
 
+## 10b. 상단정합 (라이브 vs 시안 — 2026-06-27, 내 1차 누락 보완)
+- **발견:** 1차 델타 분석에서 상단(요약 패널·KPI)을 "거의 구현됨"으로 과대평가 → ②(테이블)만 land, 상단은 시안 미반영. 라이브 스샷으로 확인(호영님 "시안 미정합 재전달"). 내 미스.
+- **호영님 결정:** 전체 정합 · 트렌드 차트 제거 · MSDS 버전검증은 백엔드 트랙(상단정합 후).
+- **A 저장 상태 바 제거**(시안 §0): 바 JSX + 표시 파생(applied/pending/saved/failureReason/boundaryLabel) 제거. activeFrame persistence(hydration+PATCH effect)·updateSafetyFilter 보존. sentinel 2개(safety-save-state-fix·preferences-safety) 바-UI 블록 → 바 제거 정합으로 갱신(persistence/helper 보존).
+- **B 트렌드 차트 제거**(시안 기준): TREND_DATA(mock 상수)+LineChart 렌더+recharts/TrendingUp import 제거.
+- **C 안전 판단 요약 패널 신축**(시안 §3): "오늘의 안전 판단"→"안전 판단 요약". 도넛+범례(0값 회색)+가장 시급 배너+GMP/KOSHA 준비도 바(canonical 충족률 파생: koshaReadiness=MSDS보유율, gmpReadiness=MSDS+점검 완료율)+MSDS 일괄 CTA(패널 open, 미등록 0이면 disabled)+lg:sticky.
+- **D KPI 코너 배지**(시안 §2): 대장 등록/규정 준수 불가/미분류/점검 이력 없음 + 0값 회색 + 아이콘 박스→inline(CLAUDE.md §1). 호버 팝오버 보존. "전월 대비 +2" 가짜 델타→"재고 대장 기준"(honesty).
+- **E AI 큐 전체보기 푸터**(시안 §4): "전체 N건 보기"→`#safety-chem-list` scroll(실 동작).
+- **KPI축소(핸드오프-KPI축소, 같은 배치 폴드):** 같은 KPI 카드 className 압축 — 패딩 p-5→p-3.5 md:p-4, 값 text-3xl→text-2xl md:text-3xl, 코너 배지 모바일 숨김(hidden sm:inline-flex), 2열 유지(grid-cols-2 lg:grid-cols-4). 호버 팝오버 보존. CLAUDE.md §1 정합. (보조설명 모바일 숨김은 4개 조건부라 생략.)
+- sentinel `safety-top-redesign.test.ts`(상단정합+KPI축소). ⏳ operator: vitest(신규+갱신 2개 GREEN·baseline)·tsc·build.
+
 ## 10. Progress
 - Overall: ~90% (③ 보류) · Current: 마무리(톤/empty) 코드완료(operator 게이트 대기) · Blocker: 없음 · Next: ③ 마법사는 패키지 생성 백엔드 follow-up 후
 - [x] P0 · [x] P3(큐 cap8+스크롤) · [x] write no-op 해소(①) · [x] ②밀집테이블/필터칩/bulkbar · [~] ③ 마법사=보류(백엔드 미존재, 호영님 결정) · [x] 톤/empty/mockup-잔재0
