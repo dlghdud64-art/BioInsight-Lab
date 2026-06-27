@@ -13,12 +13,13 @@ import { db } from "@/lib/db";
 import { SubscriptionPlan, getPlanLimits } from "@/lib/plans";
 import type { TrackingMode } from "@/lib/inventory/tracking-mode";
 
-// §pricing-redesign (호영님 2026-06-27) — "orders"(PO) kind 제거 (PO 한도 폐기).
-export type PlanLimitKind = "quotes" | "inventory";
+// §pricing-redesign — "orders"(PO) kind 제거. §pricing-enforce-p2 — "labelScan" 추가.
+export type PlanLimitKind = "quotes" | "inventory" | "labelScan";
 
 const KIND_LABEL: Record<PlanLimitKind, string> = {
   quotes: "견적 요청(RFQ)",
   inventory: "재고 품목",
+  labelScan: "라벨 스캔",
 };
 
 /** 한도 초과 시 throw. 라우트가 instanceof 분기로 429 + 안내 응답. */
@@ -29,7 +30,7 @@ export class PlanLimitError extends Error {
     public readonly limit: number,
     public readonly used: number,
   ) {
-    const unit = kind === "inventory" ? "품목" : "건";
+    const unit = kind === "inventory" ? "품목" : kind === "labelScan" ? "회" : "건";
     const per = kind === "inventory" ? "" : "/월";
     super(
       `무료 플랜 ${KIND_LABEL[kind]} 한도(${limit}${unit}${per})에 도달했습니다. ` +
@@ -87,6 +88,11 @@ export async function enforcePlanLimit(
     limit = limits.maxQuotesPerMonth;
     if (limit === null) return; // 무제한
     used = await db.quote.count({ where: { userId, createdAt: { gte: monthStart } } });
+  } else if (kind === "labelScan") {
+    // §pricing-enforce-p2 — 라벨 스캔 월 한도(Free 10/이상 null). 이번달 LabelScanEvent count.
+    limit = limits.maxLabelScansPerMonth;
+    if (limit === null) return; // 무제한(Basic 이상)
+    used = await db.labelScanEvent.count({ where: { userId, createdAt: { gte: monthStart } } });
   } else {
     limit = limits.maxItems;
     if (limit === null) return;

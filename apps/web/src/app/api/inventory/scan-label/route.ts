@@ -26,6 +26,7 @@ import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-en
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { enforcePlanLimit, PlanLimitError } from "@/lib/billing/enforce-plan-limit";
 import { parseReagentLabel } from "@/lib/ocr/label-parser";
 import { runOcrPipeline } from "@/lib/ocr/run-ocr-pipeline";
 import { isTransientGeminiError } from "@/lib/ocr/gemini-config";
@@ -38,6 +39,20 @@ export async function POST(req: NextRequest) {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+
+    // §pricing-enforce-p2 — Free 라벨 스캔 월 한도(10회) enforce. OCR 비용 발생 前 차단.
+    //   grandfather/유료(null)/env미설정은 통과. 초과 시 429 + 한도·사용량·업그레이드 안내.
+    try {
+      await enforcePlanLimit(session.user.id, "labelScan");
+    } catch (e) {
+      if (e instanceof PlanLimitError) {
+        return NextResponse.json(
+          { error: e.message, code: e.code, limit: e.limit, used: e.used },
+          { status: 429 },
+        );
+      }
+      throw e;
     }
     // §11.369-1 — targetEntityId 를 요청별 유니크로(이전 'unknown' 하드코딩 시
     //   sensitive_data_import:unknown 단일 키 lock 으로 cross-user/cross-item 409 발생).
@@ -231,6 +246,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // §pricing-enforce-p2 — 성공 스캔 1건 카운트(실패/일시오류 경로는 미카운트 — 정직). enforce SoT.
+    await db.labelScanEvent.create({ data: { userId: session.user.id } });
     // §11.369-1 — 성공 응답 직전 lock 해제(이전 complete() 부재로 5분 잔존 → 후속 스캔 409).
     enforcement.complete();
     return NextResponse.json({

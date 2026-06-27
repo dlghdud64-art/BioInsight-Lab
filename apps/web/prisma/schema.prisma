@@ -205,9 +205,26 @@ model User {
   devices             Device[]
   // §11.348-A — 검증 대기 입고안 소유자(발주 주체/감사).
   receivingDrafts     ReceivingDraft[]
+  // §pricing-enforce-p2 P2b — 라벨 스캔 월 한도(Free 10) enforce 카운트 SoT.
+  labelScanEvents     LabelScanEvent[]
 
   @@index([email])
   @@index([role])
+}
+
+// §pricing-enforce-p2 P2b (호영님 2026-06-27) — 라벨 스캔 enforce 카운트 SoT.
+//   scan-label 성공 1건당 1 row insert. enforcePlanLimit("labelScan") 이 이번달
+//   row 수를 maxLabelScansPerMonth(Free 10/이상 null)와 비교. 경량(append-only) —
+//   OcrJob(STORAGE_PROVIDER 의존, 불신뢰) 대체. 신규 빈 테이블 = migration 파괴성 0.
+model LabelScanEvent {
+  id             String   @id @default(cuid())
+  userId         String
+  organizationId String?
+  createdAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 // NextAuth.js v5??한 모델

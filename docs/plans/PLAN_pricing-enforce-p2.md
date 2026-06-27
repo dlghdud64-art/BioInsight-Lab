@@ -91,7 +91,7 @@
 **🔵** 중복 제거·same-canvas
 **✋ Gate:** dead-end 0·품위 안내·기존 trackingMode 흐름(usage 게이팅) 회귀 0  **Rollback:** 2 라우트 게이트 revert
 
-### Phase 3 — 라벨스캔 카운터 + migration — [ ]
+### Phase 3 — 라벨스캔 카운터 + migration — [~] (2026-06-27 코드/스키마 완료, migration apply 게이트 대기)
 **🔴** rollout 실패모드·smoke 정의 · enforce 카운트 단위테스트
 **🟢** ① `LabelScanEvent` 모델 추가 → **migration dry-run → 한글 보고 → "진행" → apply(operator-shell)** ② enforce "labelScan" kind(count=이번달 LabelScanEvent, 한도=maxLabelScansPerMonth, null=통과) ③ scan-label 성공 직전 LabelScanEvent insert + enforce 선제 호출(enforceAction·OCR lock/complete 보존)
 **🔵** 임시 계측 제거
@@ -122,8 +122,8 @@
 - P4 실패: `PRICING_ENFORCE_CUTOFF` 미설정으로 전원 통과(즉시 무력화)
 
 ## 11. Progress Tracking
-- Overall: 60%  · Current phase: P2a land 대기(push)  · Blocker: 없음  · Next: P3(LabelScanEvent migration — dry-run 게이트)
-- [x] P0  [x] P1  [x] P2  [ ] P3  [ ] P4
+- Overall: 80%  · Current phase: P3 migration apply 게이트 대기  · Blocker: 없음(호영님 "진행" 대기)  · Next: P4 smoke/rollback
+- [x] P0  [x] P1  [x] P2  [~] P3(코드/스키마 완료·migration 대기)  [ ] P4
 
 ## 12. Notes & Learnings
 - 2026-06-27: 계획 생성. P2b 카운트 소스=신규 경량 LabelScanEvent(호영님 결정). P2a(trackingMode 게이팅, migration 0)를 P2b(카운터, migration)보다 먼저 land.
