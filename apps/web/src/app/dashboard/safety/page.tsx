@@ -18,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Shield, ShieldAlert, ShieldCheck, AlertTriangle, Download, FileWarning, Flame, FlameKindling, Skull, Droplets, Search, Hand, Glasses, Shirt, Loader2, CheckCircle2, ChevronRight, ArrowRight, X, Calendar, FileText, Filter, TrendingUp, ClipboardCheck } from "lucide-react";
+import { Shield, ShieldAlert, ShieldCheck, AlertTriangle, Download, FileWarning, Flame, FlameKindling, Skull, Droplets, Search, Hand, Glasses, Shirt, Loader2, CheckCircle2, ChevronRight, ArrowRight, X, Calendar, FileText, TrendingUp, ClipboardCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -139,6 +139,13 @@ export default function SafetyManagerPage() {
   const [msdsFilter, setMsdsFilter] = useState<string>("all");
   const [locationFilter, setLocationFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  // §safety-redesign ② — 화학물질 대장 테이블: 필터 칩·정렬·페이지네이션·다중선택.
+  const [chipFilter, setChipFilter] = useState<"all" | "msds" | "insp" | "high">("all");
+  const [sortKey, setSortKey] = useState<"name" | "risk" | "loc">("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const ROWS_PER_PAGE = 14;
 
   // ── Mutable item state ──
   // §11.348-B-1 B1-3 — 초기값 []; 실데이터(/api/safety/products) 도착 시 동기화.
@@ -303,12 +310,50 @@ export default function SafetyManagerPage() {
     if (msdsFilter === "registered" && !item.hasMsds) return false;
     if (msdsFilter === "missing" && item.hasMsds) return false;
     if (locationFilter !== "all" && item.loc !== locationFilter) return false;
+    // §safety-redesign ② — 필터 칩(전체/MSDS 미등록/미점검/고위험).
+    if (chipFilter === "msds" && item.hasMsds) return false;
+    if (chipFilter === "insp" && item.lastInspection) return false;
+    if (chipFilter === "high" && item.level !== "HIGH" && !item.isHighRisk) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       if (!item.name.toLowerCase().includes(q) && !item.cas.includes(q)) return false;
     }
     return true;
   });
+
+  // §safety-redesign ② — 정렬(물질명·위험·보관) + 14행 페이지네이션. canonical=filteredItems 순수 파생.
+  const sortedItems = useMemo(() => {
+    const arr = [...filteredItems];
+    const dir = sortDir === "asc" ? 1 : -1;
+    const rank = (x: SafetyItem) => (x.level === "HIGH" ? 3 : x.level === "MEDIUM" ? 2 : 1);
+    arr.sort((a, b) => {
+      if (sortKey === "name") return a.name.localeCompare(b.name) * dir;
+      if (sortKey === "loc") return (a.loc || "").localeCompare(b.loc || "") * dir;
+      return (rank(a) - rank(b)) * dir;
+    });
+    return arr;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredItems, sortKey, sortDir]);
+  const totalPages = Math.max(1, Math.ceil(sortedItems.length / ROWS_PER_PAGE));
+  const pageItems = sortedItems.slice((currentPage - 1) * ROWS_PER_PAGE, currentPage * ROWS_PER_PAGE);
+  useEffect(() => { if (currentPage > totalPages) setCurrentPage(1); }, [totalPages, currentPage]);
+  const toggleSort = (key: "name" | "risk" | "loc") => {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortKey(key); setSortDir("asc"); }
+  };
+  // 다중선택(현재 필터·페이지 기준). canonical id(로컬 number) 집합.
+  const pageAllSelected = pageItems.length > 0 && pageItems.every((i) => selectedIds.has(i.id));
+  const toggleSelectAllOnPage = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (pageAllSelected) pageItems.forEach((i) => next.delete(i.id));
+      else pageItems.forEach((i) => next.add(i.id));
+      return next;
+    });
+  };
+  const toggleSelectOne = (id: number) => {
+    setSelectedIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
+  };
 
   // ── AI Decision Engine ──
   const decision = useMemo(() => buildSafetyDecision(items), [items]);
@@ -342,6 +387,8 @@ export default function SafetyManagerPage() {
   const totalCount = items.length;
   const highRiskCount = items.filter((i) => i.isHighRisk).length;
   const msdsMissingCount = items.filter((i) => !i.hasMsds).length;
+  // §safety-redesign ② — 필터 칩 건수(canonical 단일 소스 = items 집계).
+  const uninspectedCount = items.filter((i) => !i.lastInspection).length;
   const recentInspCount = items.filter((i) => {
     if (!i.lastInspection) return false;
     return (Date.now() - new Date(i.lastInspection).getTime()) < 7 * 86400000;
@@ -880,79 +927,147 @@ export default function SafetyManagerPage() {
         {/* ═══ 화학물질 목록 ═══ */}
         <div className="flex gap-4">
           <div className="flex-1 min-w-0 space-y-3">
-            {/* 필터 바 */}
+            {/* §safety-redesign ② 필터 칩 + 검색 (dead Filter 버튼 제거, canonical 건수) */}
             <div className="flex flex-wrap items-center justify-between gap-2 py-2.5 px-3 rounded-xl border border-slate-200 bg-white">
-              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                <div className="relative w-full sm:w-56">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input className="pl-9 h-9 text-sm border-slate-200 rounded-lg" placeholder="물질명 / CAS 검색"
-                    value={searchQuery} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)} />
-                </div>
-                <button className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 text-xs text-slate-600 hover:bg-slate-50 transition-colors">
-                  <Filter className="h-3.5 w-3.5" />
-                </button>
-              </div>
-              <span className="text-xs text-slate-400">총 {filteredItems.length}개 물질</span>
-            </div>
-
-            {/* 목록 */}
-            <div className="space-y-2">
-              {filteredItems.length === 0 ? (
-                <div className="text-center py-16 text-slate-400 text-sm rounded-xl border border-slate-200 bg-white">
-                  조건에 맞는 데이터가 없습니다.
-                </div>
-              ) : (
-                filteredItems.map((item) => {
-                  const classified = classifiedMap.get(item.id);
-                  const classStyle = classified ? CLASS_STYLE[classified.classification] : null;
-                  const isSelected = selectedItemId === item.id;
-                  const borderColor = item.level === "HIGH" ? "border-l-red-400" : item.level === "MEDIUM" ? "border-l-yellow-400" : "border-l-slate-200";
-
+              <div className="flex flex-wrap items-center gap-1.5">
+                {([
+                  { key: "all", label: "전체", count: totalCount },
+                  { key: "msds", label: "MSDS 미등록", count: msdsMissingCount },
+                  { key: "insp", label: "미점검", count: uninspectedCount },
+                  { key: "high", label: "고위험", count: highRiskCount },
+                ] as const).map((c) => {
+                  const active = chipFilter === c.key;
                   return (
-                    <button key={item.id} type="button" onClick={() => setSelectedItemId(item.id)}
-                      className={`w-full text-left p-4 rounded-xl border-l-4 border transition-all ${borderColor} ${
-                        isSelected ? "bg-blue-50/50 border-blue-200" : "border-slate-200 hover:bg-slate-50 bg-white"
+                    <button key={c.key} type="button"
+                      onClick={() => { setChipFilter(c.key); setCurrentPage(1); }}
+                      className={`inline-flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-semibold border transition-colors ${
+                        active ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
                       }`}>
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="flex gap-1 flex-shrink-0">
-                            {item.icons.map((icon: string) => <GHSIcon key={icon} type={icon} />)}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              {classStyle && (
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold ${classStyle.bg} ${classStyle.text} flex-shrink-0`}>
-                                  {classStyle.label}
-                                </span>
-                              )}
-                              <span className="text-sm font-bold text-slate-900 truncate">{item.name}</span>
-                              <span className="text-xs text-slate-400 font-mono flex-shrink-0">{item.cas}</span>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-xs text-slate-500">
-                              <span>{item.loc}</span>
-                              <span className="text-slate-300 hidden sm:inline">·</span>
-                              <span className="hidden sm:inline">{item.storageCondition}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-4 flex-shrink-0 text-xs">
-                          <div className="text-right hidden md:block">
-                            <span className="text-slate-400">MSDS 상태</span>
-                            <div className={`font-semibold mt-0.5 ${item.hasMsds ? "text-emerald-600" : "text-yellow-600"}`}>
-                              {item.hasMsds ? "● 등록" : "● 미등록"}
-                            </div>
-                          </div>
-                          <div className="text-right hidden md:block">
-                            <span className="text-slate-400">최근 점검</span>
-                            <div className="text-slate-700 font-medium mt-0.5">{item.lastInspection || "미점검"}</div>
-                          </div>
-                          <ChevronRight className="h-4 w-4 text-slate-300" />
-                        </div>
-                      </div>
+                      {c.label}
+                      <span className={`tabular-nums ${active ? "text-white/80" : c.count > 0 ? "text-slate-900" : "text-slate-300"}`}>{c.count}</span>
                     </button>
                   );
-                })
+                })}
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="relative w-44 sm:w-56">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input className="pl-9 h-9 text-sm border-slate-200 rounded-lg" placeholder="물질명 / CAS 검색"
+                    value={searchQuery} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setSearchQuery(e.target.value); setCurrentPage(1); }} />
+                </div>
+                <span className="text-xs text-slate-400 whitespace-nowrap hidden sm:inline">{totalCount}종 중 {filteredItems.length}종 표시</span>
+              </div>
+            </div>
+
+            {/* §safety-redesign ② 일괄작업 바 (선택 시) — bulk CTA 는 ③ 준비 마법사 연결 전까지 disabled+사유(no-op 금지) */}
+            {selectedIds.size > 0 && (
+              <div className="flex flex-wrap items-center justify-between gap-2 py-2 px-3 rounded-xl border border-slate-300 bg-slate-50">
+                <span className="text-xs font-semibold text-slate-700">{selectedIds.size}종 선택됨</span>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" disabled className="h-8 px-3 text-xs bg-slate-100 text-slate-400 cursor-not-allowed" title="일괄 처리는 점검 준비 마법사에서 진행됩니다 (준비 중).">MSDS 일괄 등록</Button>
+                  <Button size="sm" disabled className="h-8 px-3 text-xs bg-slate-100 text-slate-400 cursor-not-allowed" title="점검은 재고(lot) 단위에서 기록됩니다.">점검 기록 생성</Button>
+                  <button type="button" onClick={() => setSelectedIds(new Set())} className="text-xs text-slate-500 hover:text-slate-700 px-2">선택 해제</button>
+                </div>
+              </div>
+            )}
+
+            {/* §safety-redesign ② 밀집 테이블 (정렬·14행 페이지네이션) — 반복 카드 제거 */}
+            <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+              {filteredItems.length === 0 ? (
+                <div className="text-center py-16 text-slate-400 text-sm">조건에 맞는 데이터가 없습니다.</div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-100 bg-slate-50/50 text-left">
+                          <th className="w-10 px-3 py-2.5">
+                            <input type="checkbox" checked={pageAllSelected} onChange={toggleSelectAllOnPage} className="h-4 w-4 rounded border-slate-300" aria-label="페이지 전체 선택" />
+                          </th>
+                          <th className="px-3 py-2.5">
+                            <button type="button" onClick={() => toggleSort("name")} className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-700">
+                              물질명 {sortKey === "name" && <span className="text-slate-400">{sortDir === "asc" ? "▲" : "▼"}</span>}
+                            </button>
+                          </th>
+                          <th className="px-3 py-2.5 text-xs font-semibold text-slate-500 hidden md:table-cell">CAS</th>
+                          <th className="px-3 py-2.5">
+                            <button type="button" onClick={() => toggleSort("risk")} className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-700">
+                              위험 {sortKey === "risk" && <span className="text-slate-400">{sortDir === "asc" ? "▲" : "▼"}</span>}
+                            </button>
+                          </th>
+                          <th className="px-3 py-2.5 hidden lg:table-cell">
+                            <button type="button" onClick={() => toggleSort("loc")} className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-700">
+                              보관 위치 {sortKey === "loc" && <span className="text-slate-400">{sortDir === "asc" ? "▲" : "▼"}</span>}
+                            </button>
+                          </th>
+                          <th className="px-3 py-2.5 text-xs font-semibold text-slate-500">MSDS</th>
+                          <th className="px-3 py-2.5 text-xs font-semibold text-slate-500 hidden sm:table-cell">최근 점검</th>
+                          <th className="px-3 py-2.5 text-xs font-semibold text-slate-500 text-right">작업</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pageItems.map((item) => {
+                          const isSelected = selectedItemId === item.id;
+                          const checked = selectedIds.has(item.id);
+                          const riskLabel = item.level === "HIGH" ? "고위험" : item.level === "MEDIUM" ? "주의" : "일반";
+                          const riskCls = item.level === "HIGH" ? "bg-red-50 text-red-700 border-red-200" : item.level === "MEDIUM" ? "bg-yellow-100 text-yellow-700 border-yellow-200" : "bg-slate-50 text-slate-400 border-slate-200";
+                          return (
+                            <tr key={item.id} onClick={() => setSelectedItemId(item.id)}
+                              className={`border-b border-slate-50 last:border-0 cursor-pointer transition-colors ${isSelected ? "bg-blue-50/50" : "hover:bg-slate-50"}`}>
+                              <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
+                                <input type="checkbox" checked={checked} onChange={() => toggleSelectOne(item.id)} className="h-4 w-4 rounded border-slate-300" aria-label={`${item.name} 선택`} />
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <div className="flex gap-0.5 flex-shrink-0">{item.icons.slice(0, 2).map((icon: string) => <GHSIcon key={icon} type={icon} />)}</div>
+                                  <span className="font-semibold text-slate-900 truncate">{item.name}</span>
+                                </div>
+                              </td>
+                              <td className="px-3 py-2.5 text-xs text-slate-400 font-mono hidden md:table-cell">{item.cas || "—"}</td>
+                              <td className="px-3 py-2.5">
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[11px] font-semibold ${riskCls}`}>{riskLabel}</span>
+                              </td>
+                              <td className="px-3 py-2.5 text-xs text-slate-500 hidden lg:table-cell">{item.loc || item.storageCondition || "—"}</td>
+                              <td className="px-3 py-2.5">
+                                <span className={`text-xs font-semibold ${item.hasMsds ? "text-emerald-600" : "text-red-600"}`}>{item.hasMsds ? "● 등록" : "● 미등록"}</span>
+                              </td>
+                              <td className="px-3 py-2.5 text-xs text-slate-500 hidden sm:table-cell">{item.lastInspection || <span className="text-slate-400">미점검</span>}</td>
+                              <td className="px-3 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
+                                {!item.hasMsds ? (
+                                  <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs text-yellow-700 border-yellow-200 hover:bg-yellow-50" onClick={() => openMsdsDialog(item)}>등록</Button>
+                                ) : !item.lastInspection ? (
+                                  <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs text-blue-700 border-blue-200 hover:bg-blue-50" onClick={() => openInspDialog(item)}>점검</Button>
+                                ) : (
+                                  <span className="text-xs text-slate-300">—</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  {/* 페이지네이션 (14행/페이지) */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between px-3 py-2.5 border-t border-slate-100">
+                      <span className="text-xs text-slate-400">{(currentPage - 1) * ROWS_PER_PAGE + 1}–{Math.min(currentPage * ROWS_PER_PAGE, sortedItems.length)} / {sortedItems.length}종</span>
+                      <div className="flex items-center gap-1">
+                        <button type="button" disabled={currentPage === 1} onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                          className="h-7 w-7 inline-flex items-center justify-center rounded-md border border-slate-200 text-slate-500 disabled:opacity-40 hover:bg-slate-50" aria-label="이전 페이지">
+                          <ChevronRight className="h-3.5 w-3.5 rotate-180" />
+                        </button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).slice(Math.max(0, currentPage - 4), Math.max(0, currentPage - 4) + 8).map((p) => (
+                          <button key={p} type="button" onClick={() => setCurrentPage(p)}
+                            className={`h-7 min-w-7 px-2 inline-flex items-center justify-center rounded-md text-xs font-medium border ${p === currentPage ? "bg-slate-900 text-white border-slate-900" : "border-slate-200 text-slate-500 hover:bg-slate-50"}`}>{p}</button>
+                        ))}
+                        <button type="button" disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                          className="h-7 w-7 inline-flex items-center justify-center rounded-md border border-slate-200 text-slate-500 disabled:opacity-40 hover:bg-slate-50" aria-label="다음 페이지">
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

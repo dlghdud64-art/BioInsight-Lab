@@ -111,8 +111,9 @@
 - phase 독립 revert. 데이터 경로(useQuery/buildSafetyDecision) 무변경이 안전판 — 레이아웃 revert해도 데이터 정상.
 
 ## 10. Progress
-- Overall: ~40% · Current: write-wiring 서브배치 코드완료(operator 게이트 대기) · Blocker: 없음 · Next: ②밀집 테이블·필터칩·일괄바
-- [x] P0 · [x] P3(큐 cap8+스크롤) · [x] write no-op 해소(호영님 ① 선택) · [ ] 밀집테이블/필터/일괄 · [ ] 3단계 마법사 · [ ] 톤/empty/smoke
+- Overall: ~60% · Current: ②(테이블·필터칩·bulkbar) 코드완료(operator 게이트 대기) · Blocker: 없음 · Next: ③ 3단계 점검 준비 마법사
+- [x] P0 · [x] P3(큐 cap8+스크롤) · [x] write no-op 해소(①) · [x] ②밀집테이블/필터칩/bulkbar · [ ] 3단계 마법사 · [ ] 톤/empty/smoke
+- **② 서브배치(2026-06-27):** 반복 카드 → 밀집 테이블(☑·물질명·CAS·위험·보관·MSDS·점검·작업). 정렬(물질명·위험·보관 toggleSort), 14행 페이지네이션. 필터 칩 4종(전체/MSDS미등록/미점검/고위험, canonical=items 집계 단일 소스) + "N종 중 M종 표시". 다중선택 bulkbar(선택해제 real, MSDS/점검 일괄=③ 마법사 연결 전까지 disabled+사유=no-op 금지). dead Filter 버튼 제거. 행클릭=우측 rail 유지. sentinel `safety-chem-table.test.ts`. ⏳ operator: vitest/tsc/build.
 - **P0 결론(수정):** write 엔드포인트 audit 결과 — 안전 페이지=product-scoped 인데 점검=inventory-scoped·폐기=엔드포인트 없음·MSDS=파일+스토리지 필요. "배선만으로 해소"는 MSDS만 성립.
 - **write 서브배치(2026-06-27, 호영님 ① 선택 = 정직한 최소):**
   - MSDS: setTimeout+로컬flip+가짜토스트 제거 → `POST /api/products/[id]/sds`(multipart file), 503/400/401 분기, 성공 시 `safetyQuery.refetch()`(canonical=sdsDocuments 기반 hasMsds 재계산). `productIdByLocalId` 맵 캡처(기존 버려짐). 버튼 file 미첨부 시 disabled.
