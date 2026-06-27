@@ -17,6 +17,9 @@
  */
 
 import type { PlanIntent } from "./plan-select";
+// §pricing-sot-unify-p4 — 가격 단일 SoT. priceMonthlyKrw 는 PLAN_PRICES 에서 파생(수기 중복 제거).
+//   단방향 import (plans.ts 는 descriptor 를 import 하지 않음 → cycle 0).
+import { PLAN_PRICES, SubscriptionPlan } from "@/lib/plans";
 
 /** 운영량 권장치 — pricing 카드 카피의 정량 근거 */
 export interface OperatingVolume {
@@ -91,7 +94,8 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     label: "Free",
     // §11.304 — 권장형 (조직 유형 규정 X)
     tagline: "도입 검토 · 1인 사용에 적합",
-    priceMonthlyKrw: 0,
+    // §pricing-sot-unify-p4 — Free 가격 = PLAN_PRICES[FREE] 파생(현 0).
+    priceMonthlyKrw: PLAN_PRICES[SubscriptionPlan.FREE],
     seatsRecommended: 1,
     operatingVolume: {
       // §pricing-redesign P3 (호영님 2026-06-27) — 표기=enforce 정직 정합.
@@ -125,8 +129,8 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     //   approvalPolicy='none' → 결재/승인 약속 visible 0 lock 정합.
     // §11.304 — 권장형 + 인원 구간 정합 (5→3명, 점프 완화).
     tagline: "소규모 운영 · 3명 규모에 적합",
-    // §pricing-redesign (호영님 2026-06-27) — Basic 129k→89k.
-    priceMonthlyKrw: 89000,
+    // §pricing-sot-unify-p4 — Basic 가격 = PLAN_PRICES[TEAM] 파생(현 89,000).
+    priceMonthlyKrw: PLAN_PRICES[SubscriptionPlan.TEAM],
     // §11.304 — 기본 운영자 5→3 (1→5 점프 완화, 2~3명 소규모 랩 진입 문턱
     //   낮춤). backend includedSeats 필드 변경 = §11.303b 별도 batch.
     seatsRecommended: 3,
@@ -170,8 +174,8 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     label: "Pro",
     // §11.304 — 권장형 + 인원 구간 정합 (15→10명).
     tagline: "다중 운영 · 통제 기능 · 10명 규모에 적합",
-    // §pricing-redesign (호영님 2026-06-27) — Pro 349k→259k.
-    priceMonthlyKrw: 259000,
+    // §pricing-sot-unify-p4 — Pro 가격 = PLAN_PRICES[ORGANIZATION] 파생(현 259,000).
+    priceMonthlyKrw: PLAN_PRICES[SubscriptionPlan.ORGANIZATION],
     // §11.304 — 기본 운영자 15→10 (점프 완화 + Quartzy Pro 동등 인당 단가).
     //   backend includedSeats 변경 = §11.303b 별도.
     seatsRecommended: 10,

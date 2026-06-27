@@ -45,6 +45,12 @@ export function getAnnualMonthlyPrice(plan: SubscriptionPlan): number {
   return Math.round(getAnnualTotalPrice(plan) / 12);
 }
 
+// §pricing-sot-unify-p4 (호영님 2026-06-27) — 월 가격 표시 문자열 = PLAN_PRICES 단일 SoT 파생.
+/** 월 가격(KRW) → "₩89,000/월" 표시 문자열. */
+export function formatKrwMonthly(krw: number): string {
+  return `₩${krw.toLocaleString("ko-KR")}/월`;
+}
+
 // ── 플랜 표시 정보 ──
 export interface PlanDisplayInfo {
   /** DB enum key */
@@ -82,8 +88,9 @@ export const PLAN_DISPLAY: Record<SubscriptionPlan, PlanDisplayInfo> = {
     displayName: "Basic",
     tagline: "소규모 운영 · 3명 규모에 적합",
     description: "소규모 운영과 3명 규모 협업에 적합한 플랜",
-    monthlyPrice: 89_000,
-    priceDisplay: "₩89,000/월",
+    // §pricing-sot-unify-p4 — PLAN_PRICES 단일 SoT 파생(수기 중복 제거).
+    monthlyPrice: PLAN_PRICES[SubscriptionPlan.TEAM],
+    priceDisplay: formatKrwMonthly(PLAN_PRICES[SubscriptionPlan.TEAM]),
     isRecommended: false,
   },
   [SubscriptionPlan.ORGANIZATION]: {
@@ -91,8 +98,9 @@ export const PLAN_DISPLAY: Record<SubscriptionPlan, PlanDisplayInfo> = {
     displayName: "Pro",
     tagline: "다중 운영 · 통제 기능 · 10명 규모에 적합",
     description: "다중 운영과 통제 기능이 필요한 조직용 플랜 (10명 규모)",
-    monthlyPrice: 259_000,
-    priceDisplay: "₩259,000/월",
+    // §pricing-sot-unify-p4 — PLAN_PRICES 단일 SoT 파생(수기 중복 제거).
+    monthlyPrice: PLAN_PRICES[SubscriptionPlan.ORGANIZATION],
+    priceDisplay: formatKrwMonthly(PLAN_PRICES[SubscriptionPlan.ORGANIZATION]),
     isRecommended: true,
   },
 };
