@@ -57,6 +57,12 @@ export interface PlanDescriptor {
   /** 추천 tag (한국어) — null = 비추천 */
   recommendTag: string | null;
   /**
+   * §pricing-copy-cleanup (호영님 2026-06-27) — 체험(trial) 자격. Basic 만 true.
+   * ⚠️ 데이터 플래그 전용 — 체험 사용자 노출(예: "30일")은 trial-START 메커니즘(결제 백엔드)
+   *    구현 후. 현재 노출 0(메커니즘 부재 → 노출 시 fake claim).
+   */
+  trialEligible: boolean;
+  /**
    * §11.209b Phase 1 — Tier 별 결재 정책 default.
    *
    * Schema 의 ApprovalPolicy enum (§11.209b-pre 통일) 정합:
@@ -108,9 +114,8 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
       "견적 비교 후보 3개 확인",
       "운영자 1명 포함",
       "통합 검색 / 카탈로그",
-      // §pricing-redesign P3 — RFQ 3(enforce 정합)·PO 무제한(한도 폐기).
+      // §pricing-copy-cleanup — RFQ 3(enforce 정합). PO/발주 문구 제거(P1 PO 한도 폐기 정합).
       "견적 요청 (월 3건)",
-      "PO 발행 무제한",
       "재고 등록 (10 품목)",
       // §pricing-redesign P3 — 라벨 스캔 훅(Free 월 10회, P2b enforce 정합).
       "라벨 스캔 (월 10회)",
@@ -119,6 +124,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     // §11.304 — CTA 새 티어명 정합. "파일럿" 단어 제거 (사용자 유형 규정).
     ctaLabel: "무료로 시작",
     recommendTag: null,
+    trialEligible: false, // Free = 영구 무료, 체험 개념 무관
     approvalPolicy: "none",
   },
   team: {
@@ -150,11 +156,11 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     //   대비 약간 저렴 → 확장 장려, Quartzy Starter 동등).
     features: [
       "Free 전체 +",
-      "요청 후 PO 추적",
+      "요청·구매 진행 추적",
       "운영자 3명 포함 (추가 1명당 ₩35,000/월)",
       // §11.303b — Basic 견적/PO "무제한" (backend null + UI literal 동시)
       "견적 요청 무제한",
-      "PO 발행 무제한",
+      "구매 처리 무제한",
       "재고 운영 (50 품목)",
       "라벨 스캔 무제한",
       "AI 견적 비교 / 문서 추출 / 운영 브리핑",
@@ -165,6 +171,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     ctaLabel: "Basic 시작하기",
     // §11.304 — 추천 배지 등급화 (조직 유형 규정 X).
     recommendTag: "가장 많이 선택",
+    trialEligible: true, // §pricing-copy-cleanup — 체험은 Basic 한정(메인 전환 타깃)
     approvalPolicy: "none",
   },
   business: {
@@ -192,11 +199,11 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     //   저렴, Quartzy Pro $30 < 보다 저렴 → 확장 장려).
     features: [
       "Basic 전체 +",
-      "발주 전 승인 1단계",
+      "구매 전 승인 1단계",
       "운영자 10명 포함 (추가 1명당 ₩28,000/월)",
       // §11.303b — Pro 견적/PO "무제한" (backend null + UI literal 동시)
       "견적 요청 무제한",
-      "PO 발행 무제한",
+      "구매 처리 무제한",
       "재고 운영 (200 품목)",
       "라벨 스캔 무제한",
       "LOT / GMP 추적",
@@ -210,6 +217,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     ctaLabel: "Pro 시작하기",
     // §11.304 — 추천 배지 등급화 (조직 유형 규정 X).
     recommendTag: "성장 단계 추천",
+    trialEligible: false, // §pricing-copy-cleanup — Pro 는 체험 없음(고비용 기능, Basic→업그레이드 경로)
     approvalPolicy: "in_app_approval",
   },
   enterprise: {
@@ -228,7 +236,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     // §11.304 — features 선두 라벨 "R&D Operations" → "Pro" 정합.
     features: [
       "Pro 전체 +",
-      "기관 승인 매트릭스 · PO 감사 추적",
+      "기관 승인 매트릭스 · 구매 감사 추적",
       "전용 좌석 / 운영량 협의",
       "SSO / SAML / 감사 통제",
       "전담 온보딩 매니저",
@@ -238,6 +246,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     ctaRoute: "/support?topic=enterprise",
     ctaLabel: "영업 문의하기",
     recommendTag: null,
+    trialEligible: false, // Enterprise = 계약형, 체험 무관
     approvalPolicy: "in_app_approval",
   },
 };

@@ -123,15 +123,16 @@ describe("§11.303b — Basic/Pro 견적·PO 무제한 + 히어로 제목 복원
   });
 
   describe("plan-descriptor.ts features 무제한 swap", () => {
-    it("team features: \"견적 요청 무제한\" + \"PO 발행 무제한\"", () => {
+    // §pricing-copy-cleanup (호영님 2026-06-27) — PO/발주 문구 → 구매 가치 치환. 무제한 promise 유지.
+    it("team features: \"견적 요청 무제한\" + \"구매 처리 무제한\"", () => {
       expect(DESCRIPTOR_SRC).toMatch(
-        /intent:\s*"team"[\s\S]*?"견적 요청 무제한"[\s\S]*?"PO 발행 무제한"/,
+        /intent:\s*"team"[\s\S]*?"견적 요청 무제한"[\s\S]*?"구매 처리 무제한"/,
       );
     });
 
-    it("business features: \"견적 요청 무제한\" + \"PO 발행 무제한\"", () => {
+    it("business features: \"견적 요청 무제한\" + \"구매 처리 무제한\"", () => {
       expect(DESCRIPTOR_SRC).toMatch(
-        /intent:\s*"business"[\s\S]*?"견적 요청 무제한"[\s\S]*?"PO 발행 무제한"/,
+        /intent:\s*"business"[\s\S]*?"견적 요청 무제한"[\s\S]*?"구매 처리 무제한"/,
       );
     });
 
@@ -142,18 +143,18 @@ describe("§11.303b — Basic/Pro 견적·PO 무제한 + 히어로 제목 복원
       expect(DESCRIPTOR_SRC).not.toMatch(/"PO 발행 \(월 80건\)"/);
     });
 
-    // §pricing-redesign P3 — Free features 정직 정합: RFQ 3(enforce)·PO 무제한(한도 폐기).
-    it("starter(Free) features: \"견적 요청 (월 3건)\" + \"PO 발행 무제한\"", () => {
+    // §pricing-copy-cleanup — Free features: RFQ 3(enforce). PO/발주 문구 제거(전 티어 PO 카피 0).
+    it("starter(Free) features: \"견적 요청 (월 3건)\" · PO 문구 0", () => {
       expect(DESCRIPTOR_SRC).toMatch(/"견적 요청 \(월 3건\)"/);
-      expect(DESCRIPTOR_SRC).toMatch(/"PO 발행 무제한"/);
       expect(DESCRIPTOR_SRC).not.toMatch(/"견적 요청 \(월 5건\)"/);
       expect(DESCRIPTOR_SRC).not.toMatch(/"PO 발행 \(월 5건\)"/);
     });
   });
 
   describe("pricing/page.tsx formatOperatingVolume 무제한 분기", () => {
-    it('null 분기 시 "견적·발주 무제한" 표기', () => {
-      expect(PRICING_SRC).toMatch(/"견적·발주 무제한"/);
+    // §pricing-copy-cleanup — 발주 → 구매 카피.
+    it('null 분기 시 "견적·구매 무제한" 표기', () => {
+      expect(PRICING_SRC).toMatch(/"견적·구매 무제한"/);
     });
 
     it("seatsLine + rfqPoLine + itemsLine 3 line 구조 보존", () => {
@@ -162,10 +163,10 @@ describe("§11.303b — Basic/Pro 견적·PO 무제한 + 히어로 제목 복원
       expect(PRICING_SRC).toMatch(/itemsLine/);
     });
 
-    // §pricing-redesign P3 — Free 비대칭(RFQ 유한·PO 무제한) 정직 라인.
-    it("starter 비대칭 표기 (견적 요청 월 N건 · 발주 무제한)", () => {
+    // §pricing-copy-cleanup — Free 비대칭(RFQ 유한·구매 무제한) 정직 라인(발주→구매).
+    it("starter 비대칭 표기 (견적 요청 월 N건 · 구매 무제한)", () => {
       expect(PRICING_SRC).toMatch(
-        /`견적 요청 월 \$\{descriptor\.operatingVolume\.monthlyRfq\}건 · 발주 무제한`/,
+        /`견적 요청 월 \$\{descriptor\.operatingVolume\.monthlyRfq\}건 · 구매 무제한`/,
       );
     });
   });

@@ -69,7 +69,7 @@ function formatPlanPrice(descriptor: PlanDescriptor, discount: number): {
 }
 
 /** §11.201 — 운영량 / Credit 한 줄 요약. 카드 안의 "왜 이 가격인가" 정량 근거.
- *  §11.303b — Basic/Pro 견적/PO null (무제한) 시 "견적·발주 무제한" 표기 분기.
+ *  §11.303b — Basic/Pro 견적/PO null (무제한) 시 "견적·구매 무제한" 표기 분기.
  *    backend maxQuotesPerMonth null 과 UI literal 동시 정합 (§pricing-redesign: PO 한도 field 폐기).
  */
 function formatOperatingVolume(descriptor: PlanDescriptor): string[] {
@@ -89,8 +89,8 @@ function formatOperatingVolume(descriptor: PlanDescriptor): string[] {
   // §pricing-redesign P3 — PO 한도 폐기(전 플랜 무제한). Free 는 RFQ 만 유한(3) → 비대칭 정직 표기.
   const rfqPoLine =
     descriptor.operatingVolume.monthlyRfq === null
-      ? "견적·발주 무제한"
-      : `견적 요청 월 ${descriptor.operatingVolume.monthlyRfq}건 · 발주 무제한`;
+      ? "견적·구매 무제한"
+      : `견적 요청 월 ${descriptor.operatingVolume.monthlyRfq}건 · 구매 무제한`;
   const itemsLine =
     descriptor.operatingVolume.inventoryItems !== null
       ? `재고 ${descriptor.operatingVolume.inventoryItems.toLocaleString("ko-KR")} 품목`
@@ -294,7 +294,7 @@ export default function PricingPage() {
                 <div>
                   <h3 className="text-xl md:text-2xl font-bold mb-2" style={{ color: P.text1 }}>맞춤형 솔루션이 필요하신가요?</h3>
                   <p className="text-sm md:text-base" style={{ color: P.text3 }}>
-                    조직 운영에 맞는 도입 범위를 함께 설계합니다. 검색·비교 중심으로 시작하고, 요청·발주·입고·재고 운영까지 확장할 수 있습니다.
+                    조직 운영에 맞는 도입 범위를 함께 설계합니다. 검색·비교 중심으로 시작하고, 요청·구매·입고·재고 운영까지 확장할 수 있습니다.
                   </p>
                 </div>
                 <Link href="/support" className="flex-shrink-0">
@@ -331,7 +331,7 @@ export default function PricingPage() {
                       { feature: "검색·후보 정리", starter: "기본", team: "팀 공유", business: "check", businessLabel: "조직 공용", enterprise: "check", enterpriseLabel: "멀티 조직" },
                       { feature: "비교·선택안 정리", starter: "none", team: "기본", business: "check", businessLabel: "운영형 비교", enterprise: "check", enterpriseLabel: "조직 기준" },
                       { feature: "요청 생성·기록 공유", starter: "none", team: "초안·공유", business: "check", businessLabel: "운영형 관리", enterprise: "check", enterpriseLabel: "조직 기준" },
-                      { feature: "발주 준비·운영 큐", starter: "none", team: "none", business: "check", enterprise: "check" },
+                      { feature: "구매 준비·운영 큐", starter: "none", team: "none", business: "check", enterprise: "check" },
                       { feature: "입고 반영·재고 운영", starter: "기본 등록", team: "상태 공유", business: "check", businessLabel: "운영 반영", enterprise: "check", enterpriseLabel: "조직 운영" },
                       // §pricing-redesign P3 — 라벨 스캔 훅(Free 월 10회 / 이상 무제한, P2b enforce 정합) + LOT/GMP 추적(Pro, P2a 게이팅 정합).
                       { feature: "라벨 스캔 (월)", starter: "10회", team: "무제한", business: "무제한", enterprise: "무제한" },
@@ -381,7 +381,7 @@ export default function PricingPage() {
                   조직 운영에 맞는 도입 범위를 함께 설계합니다
                 </h2>
                 <p className="text-base mb-8 max-w-2xl mx-auto" style={{ color: P.text3 }}>
-                  검색·비교 중심으로 먼저 시작하고, 이후 요청·발주 준비·입고·재고 운영까지 확장할 수 있습니다.
+                  검색·비교 중심으로 먼저 시작하고, 이후 요청·구매 준비·입고·재고 운영까지 확장할 수 있습니다.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                   <Link href="/support">

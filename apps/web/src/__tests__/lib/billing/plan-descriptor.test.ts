@@ -98,7 +98,8 @@ describe("§11.201 plan-descriptor — features + CTA + recommend tag", () => {
     // Lab Team 부터 핵심 워크플로 모두 포함
     const teamFeatures = PLAN_DESCRIPTOR.team.features.join(" ");
     expect(teamFeatures).toMatch(/견적/);
-    expect(teamFeatures).toMatch(/PO|발주/);
+    // §pricing-copy-cleanup — PO/발주 → 구매 가치 치환. 구매 워크플로 항목 노출 검증.
+    expect(teamFeatures).toMatch(/구매|PO|발주/);
     expect(teamFeatures).toMatch(/재고/);
   });
 
