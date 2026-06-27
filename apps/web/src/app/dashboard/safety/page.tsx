@@ -7,6 +7,8 @@ import { useUserPreferences } from "@/lib/preferences/user-preferences";
 import { useQuery } from "@tanstack/react-query";
 // §11.348-B-1 B1-3 — 안전 페이지 mock→실데이터(/api/safety/products) 어댑터.
 import { adaptSafetyProducts, type SafetyApiProduct } from "@/lib/safety/product-to-safety-item";
+// §msds-version-validation — 버전상태 집계(단일 카운트 소스) 타입.
+import type { MsdsVersionSummary } from "@/lib/safety/msds-version";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -143,6 +145,8 @@ export default function SafetyManagerPage() {
   // §safety-redesign write — 로컬 number id(1..N) → 실 Product.id(cuid) 맵.
   //   MSDS 실 업로드(POST /api/products/[id]/sds) deep-link 용. 기존엔 버려졌음.
   const [productIdByLocalId, setProductIdByLocalId] = useState<Record<number, string>>({});
+  // §msds-version-validation — 버전상태 집계(최신본/구버전 의심/출처 없음). 단일 카운트 소스.
+  const [msdsVersionSummary, setMsdsVersionSummary] = useState<MsdsVersionSummary>({ current: 0, stale: 0, unknown: 0, total: 0 });
   const safetyQuery = useQuery({
     queryKey: ["safety-products"],
     queryFn: async () => {
@@ -154,9 +158,10 @@ export default function SafetyManagerPage() {
   });
   useEffect(() => {
     if (!safetyQuery.data) return;
-    const { items: adapted, productIdByLocalId: idMap } = adaptSafetyProducts(safetyQuery.data);
+    const { items: adapted, productIdByLocalId: idMap, msdsVersionSummary: vsum } = adaptSafetyProducts(safetyQuery.data);
     setItems(adapted);
     setProductIdByLocalId(idMap);
+    setMsdsVersionSummary(vsum);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [safetyQuery.data]);
 
@@ -1310,6 +1315,37 @@ export default function SafetyManagerPage() {
                 <span className="text-slate-300">|</span>
                 <span className="text-slate-500">MSDS 미등록 {msdsMissingCount}</span>
                 <span className="ml-auto text-slate-400">분석 대상 {priorityBacklogCount}건</span>
+              </div>
+            </div>
+
+            {/* §msds-version-validation — MSDS 버전 검증(저장 메타 기반 휴리스틱, KOSHA 라이브 대조 아님). 단일 카운트 소스(adapter 집계). */}
+            <div className="shrink-0 px-5 pt-4">
+              <div className="rounded-lg border border-slate-200 overflow-hidden">
+                <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border-b border-slate-100">
+                  <FileWarning className="h-3.5 w-3.5 text-slate-400" />
+                  <span className="text-[11px] font-bold text-slate-600">MSDS 버전 검증</span>
+                  <span className="ml-auto text-[10px] font-medium text-slate-400">메타 기반 추정 · 라이브 대조 아님</span>
+                </div>
+                <div className="divide-y divide-slate-50">
+                  {[
+                    { dot: "bg-emerald-500", label: "최신본 확보", desc: "버전·개정일 메타 + 미만료·미교체", n: msdsVersionSummary.current },
+                    { dot: "bg-yellow-500", label: "구버전 의심 · 교체 권장", desc: "개정일 3년 경과 / 만료 / 교체됨", n: msdsVersionSummary.stale },
+                    { dot: "bg-slate-300", label: "출처 없음 · 메타 미상", desc: "버전·개정일 메타 없음(업로드 시 입력)", n: msdsVersionSummary.unknown },
+                  ].map((r) => (
+                    <div key={r.label} className="flex items-center gap-2.5 px-3 py-2">
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${r.dot}`} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-slate-800">{r.label}</p>
+                        <p className="text-[10px] text-slate-400">{r.desc}</p>
+                      </div>
+                      <span className={`text-sm font-bold tabular-nums ${r.n > 0 ? "text-slate-900" : "text-slate-300"}`}>{r.n}<span className="text-[10px] font-medium text-slate-400 ml-0.5">종</span></span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-start gap-1.5 px-3 py-2 bg-slate-50 text-[10px] leading-relaxed text-slate-500">
+                  <ShieldCheck className="h-3 w-3 text-slate-400 flex-shrink-0 mt-0.5" />
+                  구버전·출처 없음은 최신본 등록으로 교체되며, 구버전 원본은 삭제 없이 이력 보관됩니다(GMP 추적성).
+                </div>
               </div>
             </div>
 

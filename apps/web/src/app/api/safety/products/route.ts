@@ -181,11 +181,16 @@ export async function GET(request: NextRequest) {
             take: 3,
           },
           sdsDocuments: {
+            // §msds-version-validation — 버전상태 휴리스틱 분류 입력 메타 포함.
             select: {
               id: true,
               fileName: true,
               source: true,
               createdAt: true,
+              docVersion: true,
+              issuedAt: true,
+              expiresAt: true,
+              supersededAt: true,
             },
             orderBy: {
               createdAt: "desc",

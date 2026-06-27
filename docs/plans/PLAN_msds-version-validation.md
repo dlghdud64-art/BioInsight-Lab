@@ -92,8 +92,10 @@ POST /sds 버전 메타 저장. MSDS 다이얼로그 메타 실 저장(“미저
 - P4 실패: UI/route 배선 revert(컬럼 유지, 데이터 무손실).
 
 ## 10. Progress
-- Overall: ~70% · Current: P1+P3+P4-core 코드완료(operator 게이트 대기) · Next: P4-wizard(③ 3단계 + export) 다음 배치
-- [x] P0 [x] P2(migration land d4ebdcdb) [x] P3(classify/summarize) [x] P1(sentinel) [~] P4(core 완료 / 마법사+export 다음 배치) [ ] P5
+- Overall: ~88% · Current: P4-surface 코드완료(operator 게이트 대기) · Next: ③ 3단계 마법사 reorg + 체크리스트 export(선택적 폴리시)
+- [x] P0 [x] P2(migration d4ebdcdb) [x] P3 [x] P1 [x] P4-core(메타 persistence) [x] P4-surface(버전상태 단일 소스 노출) [~] ③ 3단계 reorg+export(잔여) [ ] P5
+- **P4-surface 배치(2026-06-27, migration 0):** /api/safety/products sdsDocuments 에 버전 메타 include → adapter classifyMsdsVersion 으로 `msdsVersionSummary`(current/stale/unknown, 단일 소스) 집계 → 안전 페이지가 캡처 → MSDS 점검 준비 패널에 "MSDS 버전 검증"(최신본/구버전 의심/출처 없음) 표기. "메타 기반 추정 · 라이브 대조 아님" 정직 라벨 + GMP 이력 보관 노트. sentinel `msds-version-surface.test.ts`. ⏳ operator: vitest·tsc·build.
+- **잔여(선택):** ③ 패널을 범위/담당·일정/패키지 3단계 모달로 reorg + 체크리스트 CSV export. 현 패널은 이미 honest(대상목록+버전검증+disabled 사유)라 substantive 가치는 land됨.
 - **P3+P4-core 배치(2026-06-27, migration 0):**
   - P3: `lib/safety/msds-version.ts` — classifyMsdsVersion(current/stale/unknown, 3년·만료·superseded 휴리스틱) + summarizeMsdsVersions(단일 카운트). 단위테스트 `msds-version-classify.test.ts`.
   - P4-core: `POST /sds` docVersion/issuedAt/expiresAt 파싱·SDSDocument 저장. MSDS 다이얼로그 메타 전송 + "미저장" 표기 해소 + 라벨 "개정·발행일" 정합. sentinel `msds-version-persistence.test.ts`.
