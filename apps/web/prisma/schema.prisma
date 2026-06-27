@@ -3371,6 +3371,11 @@ model SDSDocument {
   sizeBytes        Int?
   extractionStatus String?   // queued / processing / done / failed (null=미추출)
   extractionResult Json?     // 추출된 안전 필드(검증 전 derived 제안)
+  // §msds-version-validation — 버전 메타(버전상태 휴리스틱 분류 입력). 전부 nullable additive(CHECK `SDSDocument_coa_lot_check` 무영향, data loss 0).
+  docVersion       String?   // 공급사 제공 문서 버전/Rev
+  issuedAt         DateTime? // 개정/발행일(작성·개정일)
+  expiresAt        DateTime? // 만료일(있으면)
+  supersededAt     DateTime? // 최신본 등록으로 교체되어 이력 보관 중이면 set. null=현행 유효본. soft-delete 금지(GMP 추적성).
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
