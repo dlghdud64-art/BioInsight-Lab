@@ -94,18 +94,22 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     priceMonthlyKrw: 0,
     seatsRecommended: 1,
     operatingVolume: {
-      monthlyRfq: 5,
-      monthlyPo: 5,
-      // §pricing-redesign (호영님 2026-06-27) — 표기=enforce(maxItems) 정직 정합. 50→10.
+      // §pricing-redesign P3 (호영님 2026-06-27) — 표기=enforce 정직 정합.
+      //   RFQ 5→3(plans.ts FREE maxQuotesPerMonth=3), PO 5→null(PO 한도 폐기=무제한).
+      monthlyRfq: 3,
+      monthlyPo: null,
       inventoryItems: 10,
     },
     features: [
       "견적 비교 후보 3개 확인",
       "운영자 1명 포함",
       "통합 검색 / 카탈로그",
-      "견적 요청 (월 5건)",
-      "PO 발행 (월 5건)",
+      // §pricing-redesign P3 — RFQ 3(enforce 정합)·PO 무제한(한도 폐기).
+      "견적 요청 (월 3건)",
+      "PO 발행 무제한",
       "재고 등록 (10 품목)",
+      // §pricing-redesign P3 — 라벨 스캔 훅(Free 월 10회, P2b enforce 정합).
+      "라벨 스캔 (월 10회)",
     ],
     ctaRoute: "/dashboard",
     // §11.304 — CTA 새 티어명 정합. "파일럿" 단어 제거 (사용자 유형 규정).
@@ -148,6 +152,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
       "견적 요청 무제한",
       "PO 발행 무제한",
       "재고 운영 (50 품목)",
+      "라벨 스캔 무제한",
       "AI 견적 비교 / 문서 추출 / 운영 브리핑",
       "활동 로그 / 권한 관리",
     ],
@@ -189,6 +194,8 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
       "견적 요청 무제한",
       "PO 발행 무제한",
       "재고 운영 (200 품목)",
+      "라벨 스캔 무제한",
+      "LOT / GMP 추적",
       "AI 견적 작성 보조",
       "다중 부서 / 비용센터 분리",
       "감사 로그 PDF 내보내기",

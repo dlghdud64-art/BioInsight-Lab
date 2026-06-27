@@ -86,11 +86,11 @@ function formatOperatingVolume(descriptor: PlanDescriptor): string[] {
     descriptor.seatsRecommended !== null
       ? `사용자 ${descriptor.seatsRecommended}명 권장`
       : "사용자 무제한 (계약)";
+  // §pricing-redesign P3 — PO 한도 폐기(전 플랜 무제한). Free 는 RFQ 만 유한(3) → 비대칭 정직 표기.
   const rfqPoLine =
-    descriptor.operatingVolume.monthlyRfq === null ||
-    descriptor.operatingVolume.monthlyPo === null
+    descriptor.operatingVolume.monthlyRfq === null
       ? "견적·발주 무제한"
-      : `RFQ ${descriptor.operatingVolume.monthlyRfq}건 / PO ${descriptor.operatingVolume.monthlyPo}건 (월)`;
+      : `견적 요청 월 ${descriptor.operatingVolume.monthlyRfq}건 · 발주 무제한`;
   const itemsLine =
     descriptor.operatingVolume.inventoryItems !== null
       ? `재고 ${descriptor.operatingVolume.inventoryItems.toLocaleString("ko-KR")} 품목`
@@ -333,6 +333,9 @@ export default function PricingPage() {
                       { feature: "요청 생성·기록 공유", starter: "none", team: "초안·공유", business: "check", businessLabel: "운영형 관리", enterprise: "check", enterpriseLabel: "조직 기준" },
                       { feature: "발주 준비·운영 큐", starter: "none", team: "none", business: "check", enterprise: "check" },
                       { feature: "입고 반영·재고 운영", starter: "기본 등록", team: "상태 공유", business: "check", businessLabel: "운영 반영", enterprise: "check", enterpriseLabel: "조직 운영" },
+                      // §pricing-redesign P3 — 라벨 스캔 훅(Free 월 10회 / 이상 무제한, P2b enforce 정합) + LOT/GMP 추적(Pro, P2a 게이팅 정합).
+                      { feature: "라벨 스캔 (월)", starter: "10회", team: "무제한", business: "무제한", enterprise: "무제한" },
+                      { feature: "LOT / GMP 추적", starter: "none", team: "none", business: "check", businessLabel: "GMP 추적", enterprise: "check", enterpriseLabel: "조직 정책" },
                       { feature: "예산·권한 기준", starter: "none", team: "기본 권한", business: "check", businessLabel: "운영 기준", enterprise: "check", enterpriseLabel: "정책/감사" },
                       { feature: "외부 시스템 연결", starter: "none", team: "기본", business: "check", businessLabel: "확장", enterprise: "check", enterpriseLabel: "내부 연동" },
                     ] as TableRow[]).map((row, i) => (

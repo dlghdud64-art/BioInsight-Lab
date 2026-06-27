@@ -113,9 +113,11 @@ describe("§11.303b — Basic/Pro 견적·PO 무제한 + 히어로 제목 복원
       );
     });
 
-    it("starter(Free) 유지: monthlyRfq 5 + monthlyPo 5", () => {
+    // §pricing-redesign P3 (호영님 2026-06-27) — Free 표기=enforce 정직 정합:
+    //   monthlyRfq 5→3(plans.ts FREE maxQuotesPerMonth=3), monthlyPo 5→null(PO 한도 폐기=무제한).
+    it("starter(Free): monthlyRfq 3 + monthlyPo null (RFQ enforce 정합·PO 무제한)", () => {
       expect(DESCRIPTOR_SRC).toMatch(
-        /intent:\s*"starter"[\s\S]*?monthlyRfq:\s*5[\s\S]*?monthlyPo:\s*5/,
+        /intent:\s*"starter"[\s\S]*?monthlyRfq:\s*3[\s\S]*?monthlyPo:\s*null/,
       );
     });
   });
@@ -140,9 +142,12 @@ describe("§11.303b — Basic/Pro 견적·PO 무제한 + 히어로 제목 복원
       expect(DESCRIPTOR_SRC).not.toMatch(/"PO 발행 \(월 80건\)"/);
     });
 
-    it("starter(Free) features 유지: \"견적 요청 (월 5건)\" + \"PO 발행 (월 5건)\"", () => {
-      expect(DESCRIPTOR_SRC).toMatch(/"견적 요청 \(월 5건\)"/);
-      expect(DESCRIPTOR_SRC).toMatch(/"PO 발행 \(월 5건\)"/);
+    // §pricing-redesign P3 — Free features 정직 정합: RFQ 3(enforce)·PO 무제한(한도 폐기).
+    it("starter(Free) features: \"견적 요청 (월 3건)\" + \"PO 발행 무제한\"", () => {
+      expect(DESCRIPTOR_SRC).toMatch(/"견적 요청 \(월 3건\)"/);
+      expect(DESCRIPTOR_SRC).toMatch(/"PO 발행 무제한"/);
+      expect(DESCRIPTOR_SRC).not.toMatch(/"견적 요청 \(월 5건\)"/);
+      expect(DESCRIPTOR_SRC).not.toMatch(/"PO 발행 \(월 5건\)"/);
     });
   });
 
@@ -157,9 +162,10 @@ describe("§11.303b — Basic/Pro 견적·PO 무제한 + 히어로 제목 복원
       expect(PRICING_SRC).toMatch(/itemsLine/);
     });
 
-    it("starter(5건) 표기 보존 (operatingVolume.monthlyRfq 5 분기)", () => {
+    // §pricing-redesign P3 — Free 비대칭(RFQ 유한·PO 무제한) 정직 라인.
+    it("starter 비대칭 표기 (견적 요청 월 N건 · 발주 무제한)", () => {
       expect(PRICING_SRC).toMatch(
-        /`RFQ \$\{descriptor\.operatingVolume\.monthlyRfq\}건 \/ PO \$\{descriptor\.operatingVolume\.monthlyPo\}건 \(월\)`/,
+        /`견적 요청 월 \$\{descriptor\.operatingVolume\.monthlyRfq\}건 · 발주 무제한`/,
       );
     });
   });
