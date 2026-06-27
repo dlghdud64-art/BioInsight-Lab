@@ -104,8 +104,11 @@
 - phase 독립 revert. 연간(P2)·CTA(P3)·폼(P5) 각 단독. 값/카피 변경이라 무해.
 
 ## 10. Progress
-- Overall: 60% · Current: P1·P2·P4 land 준비(push 대기) · Blocker: 없음 · Next: P3(CTA)+P5(리드폼) 게이트 sub-batch(LeadSignup migration)
-- [x] P0 [x] P1 [x] P2 [ ] P3 [x] P4 [ ] P5 [ ] P6
+- **2026-06-27 재구조화:** P1/P2/P4(가격·연간·미노출) = land(e1175a8d), 트랙1과 일치 유지. **P3/P5(출시 알림 신청 lead + LeadSignup)는 §pricing-launch-manual(트랙1)이 흡수 — push 보류, "도입 신청"+EnrollmentRequest로 재활용.** 이 문서 P3/P5/P6은 launch-manual에서 진행.
+- Overall: P1/P2/P4 land · P3/P5 → launch-manual 흡수
+- [x] P0 [x] P1 [x] P2 [x] P3 [x] P4 [~] P5(코드 완료·migration 게이트) [ ] P6
+
+**P3/P5 Notes (2026-06-27):** Basic/Pro CTA "출시 알림 신청" → handlePlanSelect 가로채기(team/business → #notify 스크롤, 결제 resolver 미호출). /pricing 인라인 폼(이메일+plan select → /api/leads, 결제수단 0). 신규 LeadSignup 모델(migration). FAQ "결제 후 바로 활성화" fake 제거. 정적 24/24 GREEN. 진화: plan-descriptor.test ctaLabel · plan-tier-naming-304(Basic/Pro→출시 알림 신청). 신규 sentinel pricing-prelaunch-cta-lead. **migration = §9.9 dry-run→진행 게이트(CTA+폼은 migration apply 후 push — dead button 회피).**
 
 **Notes:** 2026-06-27 Q1=(a)신규 경량 리드폼·Q2=(b)출시 후 적용 확정. P2(연간 명시 79k/229k·약11%·출시후적용, ×11/12 폐기)+P4(미노출 체험/자동결제/정기결제 0)+P1 sentinel land 준비. 정적 31/31 GREEN. 진화: pricing-refresh-p1(연간 명시값)·plan-tier-naming-304·pricing-label-scan-tracking-p3(약11%). 신규 sentinel pricing-prelaunch. **P3 CTA "출시 알림 신청" + P5 리드폼은 LeadSignup migration(§9.9 게이트) 동반 sub-batch — dead button 회피 위해 동시 land.**
 

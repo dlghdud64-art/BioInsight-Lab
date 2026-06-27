@@ -227,6 +227,32 @@ model LabelScanEvent {
   @@index([userId, createdAt])
 }
 
+// §pricing-launch-manual P2 (호영님 2026-06-27) — 수동 결제 즉시 출시: 도입 신청 + 운영 lifecycle.
+//   PG(포트원)는 트랙2 백로그. 본 모델은 신청/운영 상태일 뿐 entitlement 아님 —
+//   active 전환 시에만 canonical 경로(subscription.upsert)로 부여. 신규 빈 테이블 = migration 파괴성 0.
+//   status: requested(신청) → invoiced(인보이스 발행) → payment_pending(입금 대기) → active(활성) → expired/renewal.
+model EnrollmentRequest {
+  id            String    @id @default(cuid())
+  company       String?
+  contactName   String?
+  contactEmail  String
+  contactPhone  String?
+  planIntent    String // "team" | "business"
+  billingCycle  String // "monthly" | "yearly"
+  status        String    @default("requested")
+  invoiceAmount Int? // 수동 인보이스 금액(KRW)
+  invoiceNote   String? // 세금계산서/인보이스 메모
+  note          String?
+  workspaceId   String? // 활성화 대상 워크스페이스(부여 시 매핑)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  activatedAt   DateTime? // entitlement 부여 시점
+  expiresAt     DateTime? // 만료(수동 갱신 안내용)
+
+  @@index([status, createdAt])
+  @@index([contactEmail])
+}
+
 // NextAuth.js v5??한 모델
 model Account {
   id                String  @id @default(cuid())

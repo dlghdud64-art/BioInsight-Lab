@@ -172,7 +172,8 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     ],
     ctaRoute: "/dashboard/settings/plans?plan=team&intent=checkout",
     // §11.304 — CTA 새 티어명 정합.
-    ctaLabel: "Basic 시작하기",
+    // §pricing-prelaunch — PG 미연동, 결제 대신 리드 수집. CTA → 출시 알림 신청.
+    ctaLabel: "도입 신청",
     // §11.304 — 추천 배지 등급화 (조직 유형 규정 X).
     recommendTag: "가장 많이 선택",
     trialEligible: true, // §pricing-copy-cleanup — 체험은 Basic 한정(메인 전환 타깃)
@@ -219,7 +220,8 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     ],
     ctaRoute: "/dashboard/settings/plans?plan=business&intent=checkout",
     // §11.304 — CTA 새 티어명 정합.
-    ctaLabel: "Pro 시작하기",
+    // §pricing-prelaunch — PG 미연동, 결제 대신 리드 수집. CTA → 출시 알림 신청.
+    ctaLabel: "도입 신청",
     // §11.304 — 추천 배지 등급화 (조직 유형 규정 X).
     recommendTag: "성장 단계 추천",
     trialEligible: false, // §pricing-copy-cleanup — Pro 는 체험 없음(고비용 기능, Basic→업그레이드 경로)

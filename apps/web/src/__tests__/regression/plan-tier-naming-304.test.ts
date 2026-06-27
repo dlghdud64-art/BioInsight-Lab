@@ -165,12 +165,15 @@ describe("§11.304 — 플랜 티어명 등급화 (Free / Basic / Pro / Enterpri
       expect(DESCRIPTOR_SRC).toMatch(/ctaLabel:\s*"무료로 시작"/);
     });
 
-    it("team.ctaLabel = \"Basic 시작하기\"", () => {
-      expect(DESCRIPTOR_SRC).toMatch(/ctaLabel:\s*"Basic 시작하기"/);
+    // §pricing-launch-manual (호영님 2026-06-27) — 수동 결제 즉시 출시 → Basic/Pro CTA "도입 신청".
+    it("team.ctaLabel = \"도입 신청\" (수동 결제 도입)", () => {
+      expect(DESCRIPTOR_SRC).toMatch(/ctaLabel:\s*"도입 신청"/);
+      expect(DESCRIPTOR_SRC).not.toMatch(/ctaLabel:\s*"Basic 시작하기"/);
     });
 
-    it("business.ctaLabel = \"Pro 시작하기\"", () => {
-      expect(DESCRIPTOR_SRC).toMatch(/ctaLabel:\s*"Pro 시작하기"/);
+    it("business.ctaLabel = \"도입 신청\" (수동 결제 도입)", () => {
+      expect(DESCRIPTOR_SRC).toMatch(/ctaLabel:\s*"도입 신청"/);
+      expect(DESCRIPTOR_SRC).not.toMatch(/ctaLabel:\s*"Pro 시작하기"/);
     });
 
     it("enterprise.ctaLabel = \"영업 문의하기\" 유지", () => {

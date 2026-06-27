@@ -1,7 +1,10 @@
 # Implementation Plan: §pricing-billing-backend — Stripe 결제 백엔드 (연간·trial·메인 플로우) 코드 READY (env 게이트 dormant)
 
 - **Status:** ⏸️ Parked / Backlog (2026-06-27 — §pricing-prelaunch 우선. 결제 인프라는 추후 필요하나 PG 선정·법무 선결 후 착수)
-- **재명명:** §billing-infrastructure (백로그). 착수 트리거 = 셀프서비스 수요가 PG 정당화 + 법무(전자상거래법·약관·환불정책·자동결제 동의) 선결. PG 선정(토스/포트원/나이스 등) = CEO.
+- **재명명:** §billing-infrastructure (트랙2, 병행 구축). **PG = 포트원(코리아포트원, 빌링키 기반)** 확정.
+- **포트원 6-phase (CEO 2026-06-27)**: P1 포트원 연동+빌링키 발급(카드 등록→빌링키→서버 안전저장·customerKey 매핑) · P2 단건 결제(빌링키 1회 청구 검증) · P3 정기결제 스케줄러(월/연 자동 청구 = **LabAxis 서버 직접 스케줄링**, 실패율 높음→실패 안내+새 카드 흐름·웹훅·카드만료/잔액부족 재시도) · P4 trial→유료 전환(§basic-trial-autopay: Basic 30일·카드 등록 필수·D-30 first charge·**D-3/D-1 사전 고지**·"체험 후 자동결제·언제든 해지" 명시·Basic 전용) · P5 해지(다음 결제일 미승인+빌링키 삭제·즉시/만기·잔여기간) · P6 환불(포트원 API·부분/전액·정책·기록).
+- **법무 선결(P4 이전 필수)**: 이용약관·환불정책·자동결제 동의 플로우. 자동전환 전 사전 고지·동의 = 법적 의무(전자상거래법).
+- **전환 시점**: 트랙2 P1~P5 완성 → 트랙1 "도입 신청(수동)"을 셀프서비스 자동결제로 전환 + §basic-trial-autopay 카피 노출. 수동 운영 화면은 Enterprise·예외용 잔존.
 - **Started:** 2026-06-27
 - **Last Updated:** 2026-06-27
 - **Work Type:** Billing / Entitlement (Stripe, prod-payment) — **scope A: 코드 READY, env 게이트 dormant**

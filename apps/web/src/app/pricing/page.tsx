@@ -128,7 +128,7 @@ const FAQ_DATA = [
   },
   {
     q: "바로 시작할 수 있나요?",
-    a: "Starter 플랜은 가입 즉시 무료로 이용할 수 있습니다. Team 및 Business 플랜은 결제 후 바로 활성화되며, 추가 설정 없이 팀원을 초대할 수 있습니다.",
+    a: "Starter 플랜은 가입 즉시 무료로 이용할 수 있습니다. Team·Business 플랜은 출시 준비 중이며, 출시 알림을 신청하시면 출시 시 가장 먼저 안내드립니다.",
   },
   {
     q: "Enterprise 도입은 어떤 절차로 진행되나요?",
@@ -142,6 +142,13 @@ export default function PricingPage() {
   const router = useRouter();
   const [loadingPlan, setLoadingPlan] = useState<PlanIntent | null>(null);
   const [selectError, setSelectError] = useState<string | null>(null);
+  // §pricing-prelaunch P5 — 출시 알림 신청 리드폼(인라인). 결제수단 0, 이메일만.
+  const [leadPlan, setLeadPlan] = useState<"team" | "business" | "">("");
+  const [leadEmail, setLeadEmail] = useState("");
+  const [leadStatus, setLeadStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [leadMsg, setLeadMsg] = useState("");
+  const [leadCompany, setLeadCompany] = useState("");
+  const [leadName, setLeadName] = useState("");
 
   /**
    * 플랜 선택 단일 진입점.
@@ -150,6 +157,14 @@ export default function PricingPage() {
    */
   const handlePlanSelect = useCallback(
     async (plan: PlanIntent) => {
+      // §pricing-prelaunch — Basic/Pro 는 PG 미연동 → 결제 대신 인라인 출시 알림 신청.
+      if (plan === "team" || plan === "business") {
+        setLeadPlan(plan);
+        if (typeof document !== "undefined") {
+          document.getElementById("notify")?.scrollIntoView({ behavior: "smooth" });
+        }
+        return;
+      }
       setSelectError(null);
       setLoadingPlan(plan);
       try {
@@ -184,6 +199,45 @@ export default function PricingPage() {
     },
     [router]
   );
+
+  // §pricing-launch-manual P3 — 도입 신청 제출(EnrollmentRequest, 결제수단 0).
+  const submitLead = useCallback(async () => {
+    if (!leadEmail.trim()) {
+      setLeadMsg("이메일을 입력해 주세요.");
+      setLeadStatus("error");
+      return;
+    }
+    if (leadPlan !== "team" && leadPlan !== "business") {
+      setLeadMsg("도입할 플랜(Basic/Pro)을 선택해 주세요.");
+      setLeadStatus("error");
+      return;
+    }
+    setLeadStatus("loading");
+    setLeadMsg("");
+    try {
+      const res = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contactEmail: leadEmail.trim(),
+          company: leadCompany.trim() || undefined,
+          contactName: leadName.trim() || undefined,
+          planIntent: leadPlan,
+          billingCycle: annual ? "yearly" : "monthly",
+        }),
+      });
+      if (!res.ok) {
+        const d = (await res.json().catch(() => ({}))) as { error?: string };
+        setLeadMsg(d.error || "도입 신청 처리 중 오류가 발생했습니다.");
+        setLeadStatus("error");
+        return;
+      }
+      setLeadStatus("done");
+    } catch {
+      setLeadMsg("네트워크 오류로 신청을 완료하지 못했습니다.");
+      setLeadStatus("error");
+    }
+  }, [leadEmail, leadPlan, leadCompany, leadName, annual]);
 
   return (
     <MainLayout>
@@ -282,6 +336,78 @@ export default function PricingPage() {
               <div className="max-w-3xl mx-auto mt-6 px-6 py-4 rounded-xl text-sm" style={{ backgroundColor: "#FEF2F2", color: "#991B1B", border: "1px solid #FECACA" }}>
                 {selectError}
               </div>
+            )}
+          </div>
+        </section>
+
+        {/* ══ 도입 신청 — §pricing-launch-manual P3 (수동 결제) ════════ */}
+        <section id="notify" className="py-12 md:py-16" style={{ backgroundColor: P.bg }}>
+          <div className="max-w-2xl mx-auto px-6 md:px-8 text-center">
+            <h2 className="text-2xl md:text-3xl font-bold mb-3" style={{ color: P.text1 }}>도입 신청</h2>
+            <p className="text-sm md:text-base mb-6" style={{ color: P.text3 }}>
+              신청해 주시면 담당자가 도입 절차(견적·인보이스·활성화)를 안내드립니다. (이 단계에서는 결제 정보를 받지 않습니다.)
+            </p>
+            {leadStatus === "done" ? (
+              <div className="rounded-xl px-6 py-5 text-sm font-medium" style={{ backgroundColor: P.bgSoft, color: P.text1, border: `1px solid ${P.border}` }}>
+                도입 신청이 접수되었습니다. 담당자가 안내드리겠습니다.
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3 max-w-md mx-auto text-left">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="text"
+                    value={leadCompany}
+                    onChange={(e) => setLeadCompany(e.target.value)}
+                    placeholder="회사·기관명 (선택)"
+                    className="flex-1 px-4 py-3 rounded-xl text-sm"
+                    style={{ border: `1px solid ${P.border}`, backgroundColor: P.bg, color: P.text1 }}
+                  />
+                  <input
+                    type="text"
+                    value={leadName}
+                    onChange={(e) => setLeadName(e.target.value)}
+                    placeholder="담당자명 (선택)"
+                    className="flex-1 px-4 py-3 rounded-xl text-sm"
+                    style={{ border: `1px solid ${P.border}`, backgroundColor: P.bg, color: P.text1 }}
+                  />
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <select
+                    aria-label="도입 플랜"
+                    value={leadPlan}
+                    onChange={(e) => setLeadPlan(e.target.value as "team" | "business" | "")}
+                    className="px-4 py-3 rounded-xl text-sm"
+                    style={{ border: `1px solid ${P.border}`, backgroundColor: P.bg, color: P.text1 }}
+                  >
+                    <option value="">도입 플랜 선택</option>
+                    <option value="team">Basic</option>
+                    <option value="business">Pro</option>
+                  </select>
+                  <input
+                    type="email"
+                    value={leadEmail}
+                    onChange={(e) => setLeadEmail(e.target.value)}
+                    placeholder="이메일 주소"
+                    className="flex-1 px-4 py-3 rounded-xl text-sm"
+                    style={{ border: `1px solid ${P.border}`, backgroundColor: P.bg, color: P.text1 }}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void submitLead()}
+                  disabled={leadStatus === "loading"}
+                  className="w-full px-6 py-3 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: P.blue }}
+                >
+                  {leadStatus === "loading" ? "신청 중…" : "도입 신청"}
+                </button>
+                <p className="text-xs" style={{ color: P.text4 }}>
+                  선택 결제 주기: {annual ? "연간" : "월간"} (상단 토글에서 변경)
+                </p>
+              </div>
+            )}
+            {leadStatus === "error" && leadMsg && (
+              <p className="mt-3 text-sm" style={{ color: "#991B1B" }}>{leadMsg}</p>
             )}
           </div>
         </section>
