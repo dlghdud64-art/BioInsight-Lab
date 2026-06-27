@@ -885,7 +885,7 @@ function PlansPageContent() {
  </p>
  {isAnnual && (
  <p className="text-xs text-green-600 text-green-600 mt-0.5">
- 연간 결제 10% 할인 적용
+ 연간 결제 1개월 무료 적용
  </p>
  )}
  </div>
@@ -1022,7 +1022,7 @@ function PlansPageContent() {
  :"bg-green-100 text-green-700 bg-green-100 text-green-600"
  )}
  >
- 10% 할인
+ 1개월 무료
  </span>
  </button>
  </div>
@@ -1135,7 +1135,7 @@ function PlansPageContent() {
  </div>
  {isAnnual && price > 0 && (
  <p className="text-xs text-green-600 text-green-600 mt-1">
- 연 {formatPrice(getAnnualTotalPrice(card.id))} (10% 할인)
+ 연 {formatPrice(getAnnualTotalPrice(card.id))} (1개월 무료)
  </p>
  )}
  </div>
@@ -1334,7 +1334,7 @@ function PlansPageContent() {
  <tbody>
  {/* #settings-plans-comparison-table-redesign — 정량 row 매트릭스
      PLAN_DESCRIPTOR single source. fake '무제한' (Business=ORGANIZATION
-     SKU) 폐기 → 정량 (15명, 2,000 품목). Enterprise 만 계약 기반
+     SKU) 폐기 → 정량 (10명, 200 품목 · §pricing-redesign 2026-06-27). Enterprise 만 계약 기반
      '무제한' 보존 (descriptor.enterprise 의 null 값 정합). */}
  <tr className="border-b border-slate-100 border-slate-200 bg-slate-50/50 bg-slate-100/30">
  <td className="py-2.5 px-4 font-medium text-slate-400">팀원 수</td>

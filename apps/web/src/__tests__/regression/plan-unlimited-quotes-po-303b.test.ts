@@ -64,38 +64,28 @@ describe("§11.303b — Basic/Pro 견적·PO 무제한 + 히어로 제목 복원
   });
 
   describe("plans.ts PlanLimits 정합", () => {
-    it("PlanLimits interface 에 maxPurchaseOrdersPerMonth field 추가", () => {
-      expect(PLANS_SRC).toMatch(
-        /maxPurchaseOrdersPerMonth:\s*number\s*\|\s*null/,
-      );
+    // §pricing-redesign (호영님 2026-06-27) — maxPurchaseOrdersPerMonth field 완전 폐기
+    //   (PO 한도 = pricing/entitlement 범위에서 제거). 303b 의 "Basic/Pro 견적 무제한" 보호
+    //   의도는 maxQuotesPerMonth null 로 계속 강제.
+    it("PO 한도 field 완전 제거 (maxPurchaseOrdersPerMonth 잔재 0)", () => {
+      expect(PLANS_SRC).not.toMatch(/maxPurchaseOrdersPerMonth/);
     });
 
-    it("FREE: maxQuotesPerMonth 3 + maxPurchaseOrdersPerMonth 3 (§pricing-refresh P1 — 5→3)", () => {
-      // §pricing-refresh P1(호영님): Free 한도 5→3 확정. 303b 보호 의도(Free 유한 한도 / 유료 무제한)는
-      //   유지, Free 유한값만 3 으로 정합. paid(TEAM/ORG) null(무제한)은 아래 it 가 계속 강제.
+    it("FREE: maxQuotesPerMonth 3 (§pricing-refresh P1 — 5→3)", () => {
       expect(PLANS_SRC).toMatch(
         /SubscriptionPlan\.FREE\][\s\S]*?maxQuotesPerMonth:\s*3/,
       );
-      expect(PLANS_SRC).toMatch(
-        /SubscriptionPlan\.FREE\][\s\S]*?maxPurchaseOrdersPerMonth:\s*3/,
-      );
     });
 
-    it("TEAM(Basic): maxQuotesPerMonth null + maxPurchaseOrdersPerMonth null", () => {
+    it("TEAM(Basic): maxQuotesPerMonth null (무제한)", () => {
       expect(PLANS_SRC).toMatch(
         /SubscriptionPlan\.TEAM\][\s\S]*?maxQuotesPerMonth:\s*null/,
       );
-      expect(PLANS_SRC).toMatch(
-        /SubscriptionPlan\.TEAM\][\s\S]*?maxPurchaseOrdersPerMonth:\s*null/,
-      );
     });
 
-    it("ORGANIZATION(Pro): maxQuotesPerMonth null + maxPurchaseOrdersPerMonth null", () => {
+    it("ORGANIZATION(Pro): maxQuotesPerMonth null (무제한)", () => {
       expect(PLANS_SRC).toMatch(
         /SubscriptionPlan\.ORGANIZATION\][\s\S]*?maxQuotesPerMonth:\s*null/,
-      );
-      expect(PLANS_SRC).toMatch(
-        /SubscriptionPlan\.ORGANIZATION\][\s\S]*?maxPurchaseOrdersPerMonth:\s*null/,
       );
     });
 
@@ -110,15 +100,16 @@ describe("§11.303b — Basic/Pro 견적·PO 무제한 + 히어로 제목 복원
   });
 
   describe("plan-descriptor.ts operatingVolume null swap", () => {
-    it("team(Basic).operatingVolume: monthlyRfq null + monthlyPo null + inventoryItems 500", () => {
+    // §pricing-redesign (호영님 2026-06-27) — inventoryItems 표기=enforce 정직 정합 (500→50 / 2000→200).
+    it("team(Basic).operatingVolume: monthlyRfq null + monthlyPo null + inventoryItems 50", () => {
       expect(DESCRIPTOR_SRC).toMatch(
-        /intent:\s*"team"[\s\S]*?operatingVolume:\s*\{[\s\S]*?monthlyRfq:\s*null[\s\S]*?monthlyPo:\s*null[\s\S]*?inventoryItems:\s*500/,
+        /intent:\s*"team"[\s\S]*?operatingVolume:\s*\{[\s\S]*?monthlyRfq:\s*null[\s\S]*?monthlyPo:\s*null[\s\S]*?inventoryItems:\s*50/,
       );
     });
 
-    it("business(Pro).operatingVolume: monthlyRfq null + monthlyPo null + inventoryItems 2000", () => {
+    it("business(Pro).operatingVolume: monthlyRfq null + monthlyPo null + inventoryItems 200", () => {
       expect(DESCRIPTOR_SRC).toMatch(
-        /intent:\s*"business"[\s\S]*?operatingVolume:\s*\{[\s\S]*?monthlyRfq:\s*null[\s\S]*?monthlyPo:\s*null[\s\S]*?inventoryItems:\s*2000/,
+        /intent:\s*"business"[\s\S]*?operatingVolume:\s*\{[\s\S]*?monthlyRfq:\s*null[\s\S]*?monthlyPo:\s*null[\s\S]*?inventoryItems:\s*200/,
       );
     });
 

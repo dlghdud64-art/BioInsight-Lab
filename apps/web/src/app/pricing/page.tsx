@@ -50,8 +50,8 @@ function fmt(n: number) {
   return `₩${n.toLocaleString("ko-KR")}`;
 }
 
-/** §11.201 — descriptor.priceMonthlyKrw 를 annual 할인 적용 후 표시 문자열로 변환.
- *  Enterprise (null) 은 "Custom" — 거짓 약속 회피 (PLAN.md §11.201). */
+/** §11.201 — descriptor.priceMonthlyKrw 를 표시 문자열로 변환 (discount 배수 적용).
+ *  §pricing-redesign — 연간은 1개월 무료(11/12) 배수. Enterprise (null) 은 "Custom". */
 function formatPlanPrice(descriptor: PlanDescriptor, discount: number): {
   price: string;
   period: string;
@@ -70,7 +70,7 @@ function formatPlanPrice(descriptor: PlanDescriptor, discount: number): {
 
 /** §11.201 — 운영량 / Credit 한 줄 요약. 카드 안의 "왜 이 가격인가" 정량 근거.
  *  §11.303b — Basic/Pro 견적/PO null (무제한) 시 "견적·발주 무제한" 표기 분기.
- *    backend maxQuotesPerMonth/maxPurchaseOrdersPerMonth null 과 UI literal 동시 정합.
+ *    backend maxQuotesPerMonth null 과 UI literal 동시 정합 (§pricing-redesign: PO 한도 field 폐기).
  */
 function formatOperatingVolume(descriptor: PlanDescriptor): string[] {
   // Enterprise — 모두 null (계약 기반)
@@ -137,7 +137,8 @@ const FAQ_DATA = [
 
 export default function PricingPage() {
   const [annual, setAnnual] = useState(false);
-  const discount = annual ? 0.9 : 1;
+  // §pricing-redesign (호영님 2026-06-27) — 연간 = 1개월 무료(11/12 배수). 이전 연 할인 배수 폐기.
+  const discount = annual ? 11 / 12 : 1;
   const router = useRouter();
   const [loadingPlan, setLoadingPlan] = useState<PlanIntent | null>(null);
   const [selectError, setSelectError] = useState<string | null>(null);
@@ -233,7 +234,7 @@ export default function PricingPage() {
                 <span className="text-sm font-medium" style={{ color: annual ? P.text1 : P.text4 }}>연간</span>
                 {annual && (
                   <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ backgroundColor: P.blueSoft, color: P.blueText }}>
-                    10% 할인
+                    1개월 무료
                   </span>
                 )}
               </div>

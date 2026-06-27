@@ -7,7 +7,6 @@ import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { extractRequestMeta } from "@/lib/audit";
 import { logStateTransition } from "@/lib/operations/state-transition-logger";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
-import { enforcePlanLimit, PlanLimitError } from "@/lib/billing/enforce-plan-limit";
 // #post-approval-purchase-order-flow Phase 1.3-wiring-K — vendor-aware
 // service. POCandidate ≥ 1 → vendor 별 N Order, 0개 시 legacy quote.items
 // 기반 1 NULL-vendor Order fallback (backward compat).
@@ -52,19 +51,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // §pricing-refresh P2 — Free PO 한도 enforce(grandfather/유료/env미설정은 통과). 초과 시 429+안내.
-    try {
-      await enforcePlanLimit(session.user.id, "orders");
-    } catch (e) {
-      if (e instanceof PlanLimitError) {
-        return NextResponse.json(
-          { error: e.message, code: e.code, limit: e.limit, used: e.used },
-          { status: 429 },
-        );
-      }
-      throw e;
-    }
-
+    // §pricing-redesign (호영님 2026-06-27) — PO 월 한도 폐기 → orders enforce 제거.
     const body = await request.json();
     const { quoteId, shippingAddress, notes, expectedDelivery, budgetId } = body;
 

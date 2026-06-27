@@ -5,7 +5,7 @@
  * - column 라벨: "Team" / "Business" → "Lab Team" / "R&D Operations"
  *   (PLAN_DESCRIPTOR.label single source 정합)
  * - "팀원 수" row: 1명 / 5명 / 15명 / 무제한 (fake "무제한" 제거)
- * - "품목 등록 수" row: 50 / 500 / 2,000 / 무제한 (정량화)
+ * - "품목 등록 수" row: 10 / 50 / 200 / 무제한 (§pricing-redesign 2026-06-27, 표기=enforce 정합)
  *
  * canonical truth:
  *   - PLAN_DESCRIPTOR.{starter,team,business,enterprise}.seatsRecommended
@@ -53,7 +53,7 @@ describe("#settings-plans-comparison-table-redesign — 정량 row 정합", () =
 
   it("'품목 등록 수' row — descriptor.{intent}.operatingVolume.inventoryItems single source 통과", () => {
     const src = read(SETTINGS);
-    expect(src).toMatch(/품목\s*등록\s*수[\s\S]*?(50[\s\S]*?500[\s\S]*?2,?000|PLAN_DESCRIPTOR\.starter\.operatingVolume\.inventoryItems[\s\S]*?PLAN_DESCRIPTOR\.team\.operatingVolume\.inventoryItems[\s\S]*?PLAN_DESCRIPTOR\.business\.operatingVolume\.inventoryItems)/);
+    expect(src).toMatch(/품목\s*등록\s*수[\s\S]*?(10[\s\S]*?50[\s\S]*?200|PLAN_DESCRIPTOR\.starter\.operatingVolume\.inventoryItems[\s\S]*?PLAN_DESCRIPTOR\.team\.operatingVolume\.inventoryItems[\s\S]*?PLAN_DESCRIPTOR\.business\.operatingVolume\.inventoryItems)/);
   });
 
   it("'팀원 수' Business column — fake '무제한' 폐기 (descriptor 정합)", () => {
@@ -62,9 +62,9 @@ describe("#settings-plans-comparison-table-redesign — 정량 row 정합", () =
     expect(src).toMatch(/팀원\s*수[\s\S]*?(15\s*명|PLAN_DESCRIPTOR\.business\.seatsRecommended)/);
   });
 
-  it("'품목 등록 수' Business column — 2,000 정량 (fake '무제한' 폐기)", () => {
+  it("'품목 등록 수' Business column — 200 정량 (fake '무제한' 폐기, §pricing-redesign)", () => {
     const src = read(SETTINGS);
-    expect(src).toMatch(/품목\s*등록\s*수[\s\S]*?(2,?000|PLAN_DESCRIPTOR\.business\.operatingVolume\.inventoryItems)/);
+    expect(src).toMatch(/품목\s*등록\s*수[\s\S]*?(200|PLAN_DESCRIPTOR\.business\.operatingVolume\.inventoryItems)/);
   });
 });
 

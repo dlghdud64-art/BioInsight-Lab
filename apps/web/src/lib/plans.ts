@@ -6,14 +6,16 @@
  *
  * 가격 기준 (Single Source of Truth): 퍼블릭 pricing 페이지 (/pricing)
  *   Starter  → 무료
- *   Team     → ₩129,000/월 (연간 10% 할인)
- *   Business → ₩349,000/월 (연간 10% 할인)
+ *   Team     → ₩89,000/월 (연간 1개월 무료 = 11개월 금액)
+ *   Business → ₩259,000/월 (연간 1개월 무료 = 11개월 금액)
  *   Enterprise → 별도 문의
  *
  * ⚠️ 이 파일의 가격은 반드시 /pricing 페이지와 일치해야 한다.
  *    /pricing 페이지는 현재 자체 하드코딩을 쓰지만, Phase 2에서
  *    이 파일의 PLAN_CATALOG를 import하도록 일원화된다(billing-lifecycle.md §5).
  */
+
+import type { TrackingMode } from "./inventory/tracking-mode";
 
 // ── DB Enum (Prisma SubscriptionPlan과 동일) ──
 export enum SubscriptionPlan {
@@ -25,22 +27,22 @@ export enum SubscriptionPlan {
 // ── 가격 상수 ──
 export const PLAN_PRICES = {
   [SubscriptionPlan.FREE]: 0,
-  [SubscriptionPlan.TEAM]: 129_000,
-  [SubscriptionPlan.ORGANIZATION]: 349_000,
+  // §pricing-redesign (호영님 2026-06-27) — TEAM 129k→89k · ORG 349k→259k.
+  [SubscriptionPlan.TEAM]: 89_000,
+  [SubscriptionPlan.ORGANIZATION]: 259_000,
 } as const;
 
-/** 연간 결제 시 할인율 (10%) */
-export const ANNUAL_DISCOUNT_RATE = 0.1;
+// §pricing-redesign (호영님 2026-06-27) — 연간 결제 = 1개월 무료(12개월 결제 시
+//   11개월 금액). 이전 연 할인율 상수 폐기.
 
-/** 연간 결제 시 월 단가 */
-export function getAnnualMonthlyPrice(plan: SubscriptionPlan): number {
-  const base = PLAN_PRICES[plan];
-  return Math.round(base * (1 - ANNUAL_DISCOUNT_RATE));
+/** 연간 결제 시 연 합계 — 월 단가 × 11 (1개월 무료) */
+export function getAnnualTotalPrice(plan: SubscriptionPlan): number {
+  return PLAN_PRICES[plan] * 11;
 }
 
-/** 연간 결제 시 연 합계 */
-export function getAnnualTotalPrice(plan: SubscriptionPlan): number {
-  return getAnnualMonthlyPrice(plan) * 12;
+/** 연간 결제 시 월 환산 단가 — 연 합계 / 12 (반올림) */
+export function getAnnualMonthlyPrice(plan: SubscriptionPlan): number {
+  return Math.round(getAnnualTotalPrice(plan) / 12);
 }
 
 // ── 플랜 표시 정보 ──
@@ -80,8 +82,8 @@ export const PLAN_DISPLAY: Record<SubscriptionPlan, PlanDisplayInfo> = {
     displayName: "Basic",
     tagline: "소규모 운영 · 3명 규모에 적합",
     description: "소규모 운영과 3명 규모 협업에 적합한 플랜",
-    monthlyPrice: 129_000,
-    priceDisplay: "₩129,000/월",
+    monthlyPrice: 89_000,
+    priceDisplay: "₩89,000/월",
     isRecommended: false,
   },
   [SubscriptionPlan.ORGANIZATION]: {
@@ -89,8 +91,8 @@ export const PLAN_DISPLAY: Record<SubscriptionPlan, PlanDisplayInfo> = {
     displayName: "Pro",
     tagline: "다중 운영 · 통제 기능 · 10명 규모에 적합",
     description: "다중 운영과 통제 기능이 필요한 조직용 플랜 (10명 규모)",
-    monthlyPrice: 349_000,
-    priceDisplay: "₩349,000/월",
+    monthlyPrice: 259_000,
+    priceDisplay: "₩259,000/월",
     isRecommended: true,
   },
 };
@@ -122,15 +124,18 @@ export const ENTERPRISE_INFO = {
 } as const;
 
 // ── 플랜별 기능 제한 ──
-// §11.303b — maxPurchaseOrdersPerMonth field 신규 (Free 5, Basic/Pro/Enterprise null).
-//   UI "무제한" 표기와 backend enforce 정합 (현재 enforce throw 0건이라
-//   field 정의 + client 전달만으로 정합 보장).
+// §pricing-redesign (호영님 2026-06-27) — PO 월 한도 field 제거
+//   (PO 한도 = pricing/entitlement 범위에서 폐기). 라벨스캔 월 한도 +
+//   추적 모드 게이팅 field 신규.
 export interface PlanLimits {
   maxMembers: number | null;
   maxQuotesPerMonth: number | null;
-  maxPurchaseOrdersPerMonth: number | null;
   maxSharedLinks: number | null;
   maxItems: number | null;
+  /** 라벨 스캔 월 한도 — null = 무제한 (Basic 이상) */
+  maxLabelScansPerMonth: number | null;
+  /** 허용 재고 추적 모드 — Pro 만 LOT / GMP_STRICT 게이팅 */
+  allowedTrackingModes: readonly TrackingMode[];
   features: {
     exportPack: boolean;
     advancedReports: boolean;
@@ -152,10 +157,11 @@ export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
     maxMembers: 1,        // 개인 전용(사용자 1명, 현행 유지)
     // §pricing-refresh(호영님 2026-06-18) — Free RFQ 5 → 3 (조이기). 실제 enforce 는 P2.
     maxQuotesPerMonth: 3,
-    // §pricing-refresh — Free PO 5 → 3 (조이기).
-    maxPurchaseOrdersPerMonth: 3,
     maxSharedLinks: 5,
     maxItems: 10,         // 품목 등록 10개(재고, 현행 유지 — 호영님 확정)
+    // §pricing-redesign — Free 라벨 스캔 월 10회 / QUANTITY 추적만.
+    maxLabelScansPerMonth: 10,
+    allowedTrackingModes: ["QUANTITY"],
     features: {
       exportPack: false,
       advancedReports: false,
@@ -172,13 +178,15 @@ export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
     },
   },
   [SubscriptionPlan.TEAM]: {
-    maxMembers: 5,          // 팀원 5명 — §11.303b-3 grandfather 결정 대기 (3 으로 축소 검토)
+    // §pricing-redesign (호영님 2026-06-27) — Basic 팀원 5→3 (grandfather 없음, 파일럿).
+    maxMembers: 3,
     // §11.303b — TEAM(Basic) maxQuotesPerMonth 100 → null (무제한)
     maxQuotesPerMonth: null,
-    // §11.303b — TEAM(Basic) maxPurchaseOrdersPerMonth null (신규, 무제한)
-    maxPurchaseOrdersPerMonth: null,
     maxSharedLinks: 50,
     maxItems: 50,           // 품목 등록 50개
+    // §pricing-redesign — Basic 라벨 스캔 무제한 / QUANTITY 추적만.
+    maxLabelScansPerMonth: null,
+    allowedTrackingModes: ["QUANTITY"],
     features: {
       exportPack: true,
       advancedReports: false,
@@ -195,12 +203,14 @@ export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
     },
   },
   [SubscriptionPlan.ORGANIZATION]: {
-    maxMembers: null,         // 무제한 — §11.303b-3 grandfather: 10 으로 축소 검토 (현재 null 유지)
+    // §pricing-redesign (호영님 2026-06-27) — Pro 팀원 10명, 재고 200 품목 (정직 정합).
+    maxMembers: 10,
     maxQuotesPerMonth: null,  // 무제한
-    // §11.303b — ORGANIZATION(Pro) maxPurchaseOrdersPerMonth null (신규, 무제한)
-    maxPurchaseOrdersPerMonth: null,
     maxSharedLinks: null,     // 무제한
-    maxItems: null,           // 무제한
+    maxItems: 200,            // 품목 등록 200개 (광고 표기와 일치)
+    // §pricing-redesign — Pro 라벨 스캔 무제한 / QUANTITY+LOT+GMP_STRICT 추적.
+    maxLabelScansPerMonth: null,
+    allowedTrackingModes: ["QUANTITY", "LOT", "GMP_STRICT"],
     features: {
       exportPack: true,
       advancedReports: true,

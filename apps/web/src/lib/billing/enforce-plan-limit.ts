@@ -5,18 +5,18 @@
  *   - grandfather: env PRICING_ENFORCE_CUTOFF(ISO date) 이후 가입자만 enforce.
  *     미설정/무효 = 전원 grandfather(enforce 0 = 현행 무해). §inbound-rfq P5 flag gate 패턴 정합.
  *   - plan: org Subscription(없으면 FREE). 유료(maxX=null) = 무제한 통과.
- *   - 카운트: RFQ·PO = 이번 달(createdAt>=월초), 재고 = 누적 총 품목.
+ *   - 카운트: RFQ = 이번 달(createdAt>=월초), 재고 = 누적 총 품목. (§pricing-redesign: PO 한도 폐기)
  *   - 초과 시 PlanLimitError throw → 라우트가 429 + 한도·사용량·업그레이드 안내(정직).
  */
 
 import { db } from "@/lib/db";
 import { SubscriptionPlan, getPlanLimits } from "@/lib/plans";
 
-export type PlanLimitKind = "quotes" | "orders" | "inventory";
+// §pricing-redesign (호영님 2026-06-27) — "orders"(PO) kind 제거 (PO 한도 폐기).
+export type PlanLimitKind = "quotes" | "inventory";
 
 const KIND_LABEL: Record<PlanLimitKind, string> = {
   quotes: "견적 요청(RFQ)",
-  orders: "발주(PO)",
   inventory: "재고 품목",
 };
 
@@ -86,10 +86,6 @@ export async function enforcePlanLimit(
     limit = limits.maxQuotesPerMonth;
     if (limit === null) return; // 무제한
     used = await db.quote.count({ where: { userId, createdAt: { gte: monthStart } } });
-  } else if (kind === "orders") {
-    limit = limits.maxPurchaseOrdersPerMonth;
-    if (limit === null) return;
-    used = await db.order.count({ where: { userId, createdAt: { gte: monthStart } } });
   } else {
     limit = limits.maxItems;
     if (limit === null) return;

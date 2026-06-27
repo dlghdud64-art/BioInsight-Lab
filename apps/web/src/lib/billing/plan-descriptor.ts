@@ -96,7 +96,8 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     operatingVolume: {
       monthlyRfq: 5,
       monthlyPo: 5,
-      inventoryItems: 50,
+      // §pricing-redesign (호영님 2026-06-27) — 표기=enforce(maxItems) 정직 정합. 50→10.
+      inventoryItems: 10,
     },
     features: [
       "견적 비교 후보 3개 확인",
@@ -104,7 +105,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
       "통합 검색 / 카탈로그",
       "견적 요청 (월 5건)",
       "PO 발행 (월 5건)",
-      "재고 등록 (50 품목)",
+      "재고 등록 (10 품목)",
     ],
     ctaRoute: "/dashboard",
     // §11.304 — CTA 새 티어명 정합. "파일럿" 단어 제거 (사용자 유형 규정).
@@ -120,7 +121,8 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     //   approvalPolicy='none' → 결재/승인 약속 visible 0 lock 정합.
     // §11.304 — 권장형 + 인원 구간 정합 (5→3명, 점프 완화).
     tagline: "소규모 운영 · 3명 규모에 적합",
-    priceMonthlyKrw: 129000,
+    // §pricing-redesign (호영님 2026-06-27) — Basic 129k→89k.
+    priceMonthlyKrw: 89000,
     // §11.304 — 기본 운영자 5→3 (1→5 점프 완화, 2~3명 소규모 랩 진입 문턱
     //   낮춤). backend includedSeats 필드 변경 = §11.303b 별도 batch.
     seatsRecommended: 3,
@@ -128,7 +130,8 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
       // §11.303b — Basic 견적/PO 무제한 (UI literal + backend null 동시).
       monthlyRfq: null,
       monthlyPo: null,
-      inventoryItems: 500,
+      // §pricing-redesign — 표기=enforce(maxItems) 정직 정합. 500→50.
+      inventoryItems: 50,
     },
     // §11.303 — AI 기능 등급별 명시 (호영님 Q1=C UI batch).
     //   Quartzy/Benchling 벤치마크 정합: AI 기능 = 플랜 등급별 포함,
@@ -144,7 +147,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
       // §11.303b — Basic 견적/PO "무제한" (backend null + UI literal 동시)
       "견적 요청 무제한",
       "PO 발행 무제한",
-      "재고 운영 (500 품목)",
+      "재고 운영 (50 품목)",
       "AI 견적 비교 / 문서 추출 / 운영 브리핑",
       "활동 로그 / 권한 관리",
     ],
@@ -162,7 +165,8 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     label: "Pro",
     // §11.304 — 권장형 + 인원 구간 정합 (15→10명).
     tagline: "다중 운영 · 통제 기능 · 10명 규모에 적합",
-    priceMonthlyKrw: 349000,
+    // §pricing-redesign (호영님 2026-06-27) — Pro 349k→259k.
+    priceMonthlyKrw: 259000,
     // §11.304 — 기본 운영자 15→10 (점프 완화 + Quartzy Pro 동등 인당 단가).
     //   backend includedSeats 변경 = §11.303b 별도.
     seatsRecommended: 10,
@@ -170,7 +174,8 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
       // §11.303b — Pro 견적/PO 무제한 (UI literal + backend null 동시).
       monthlyRfq: null,
       monthlyPo: null,
-      inventoryItems: 2000,
+      // §pricing-redesign — 표기=enforce(maxItems) 정직 정합. 2,000→200 (fake 무제한 폐기 방향).
+      inventoryItems: 200,
     },
     // §11.303 — AI 견적 작성 보조 추가 + CTA "상담" → "시작하기" (셀프
     //   결제 전환율 정합). 건수 보존 (Q3, §11.303b 후속).
@@ -183,7 +188,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
       // §11.303b — Pro 견적/PO "무제한" (backend null + UI literal 동시)
       "견적 요청 무제한",
       "PO 발행 무제한",
-      "재고 운영 (2,000 품목)",
+      "재고 운영 (200 품목)",
       "AI 견적 작성 보조",
       "다중 부서 / 비용센터 분리",
       "감사 로그 PDF 내보내기",

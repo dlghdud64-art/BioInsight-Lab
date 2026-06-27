@@ -221,10 +221,12 @@ describe("§11.304 — 플랜 티어명 등급화 (Free / Basic / Pro / Enterpri
   });
 
   describe("pricing/page.tsx 월간/연간 토글 + 카드 정합", () => {
-    it("월간/연간 토글 보존 (10% 할인 표기)", () => {
+    // §pricing-redesign (호영님 2026-06-27) — 연간 = 1개월 무료(×11). "10% 할인" 폐기.
+    it("월간/연간 토글 보존 (1개월 무료 표기)", () => {
       expect(PRICING_SRC).toMatch(/월간/);
       expect(PRICING_SRC).toMatch(/연간/);
-      expect(PRICING_SRC).toMatch(/10% 할인/);
+      expect(PRICING_SRC).toMatch(/1개월 무료/);
+      expect(PRICING_SRC).not.toMatch(/10% 할인/);
     });
 
     it("featured regex 새 추천 \"가장 많이 선택\" 매칭", () => {

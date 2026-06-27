@@ -31,10 +31,11 @@ describe("§11.201 plan-descriptor — enum coverage + 한국어 라벨", () => 
     }
   });
 
-  it("한국어 라벨 정합 (Starter / Lab Team / R&D Operations / Enterprise)", () => {
-    expect(PLAN_DESCRIPTOR.starter.label).toBe("Starter");
-    expect(PLAN_DESCRIPTOR.team.label).toBe("Lab Team");
-    expect(PLAN_DESCRIPTOR.business.label).toBe("R&D Operations");
+  // §11.304 티어명 등급화(Free/Basic/Pro) 반영 — 현행 소스 정합.
+  it("한국어 라벨 정합 (Free / Basic / Pro / Enterprise)", () => {
+    expect(PLAN_DESCRIPTOR.starter.label).toBe("Free");
+    expect(PLAN_DESCRIPTOR.team.label).toBe("Basic");
+    expect(PLAN_DESCRIPTOR.business.label).toBe("Pro");
     expect(PLAN_DESCRIPTOR.enterprise.label).toBe("Enterprise");
   });
 
@@ -50,34 +51,38 @@ describe("§11.201 plan-descriptor — enum coverage + 한국어 라벨", () => 
 });
 
 describe("§11.201 plan-descriptor — 가격 / 좌석 / 운영량 / Credit 매트릭스", () => {
-  it("priceMonthlyKrw — Starter 0 / Lab Team 129000 / R&D Operations 349000 / Enterprise null (계약)", () => {
+  // §pricing-redesign (호영님 2026-06-27) — 가격 89k/259k.
+  it("priceMonthlyKrw — Free 0 / Basic 89000 / Pro 259000 / Enterprise null (계약)", () => {
     expect(PLAN_DESCRIPTOR.starter.priceMonthlyKrw).toBe(0);
-    expect(PLAN_DESCRIPTOR.team.priceMonthlyKrw).toBe(129000);
-    expect(PLAN_DESCRIPTOR.business.priceMonthlyKrw).toBe(349000);
+    expect(PLAN_DESCRIPTOR.team.priceMonthlyKrw).toBe(89000);
+    expect(PLAN_DESCRIPTOR.business.priceMonthlyKrw).toBe(259000);
     expect(PLAN_DESCRIPTOR.enterprise.priceMonthlyKrw).toBeNull();
   });
 
-  it("seatsRecommended — 1 / 5 / 15 / null", () => {
+  // §11.304 — 좌석 3/10 (현행 소스 정합).
+  it("seatsRecommended — 1 / 3 / 10 / null", () => {
     expect(PLAN_DESCRIPTOR.starter.seatsRecommended).toBe(1);
-    expect(PLAN_DESCRIPTOR.team.seatsRecommended).toBe(5);
-    expect(PLAN_DESCRIPTOR.business.seatsRecommended).toBe(15);
+    expect(PLAN_DESCRIPTOR.team.seatsRecommended).toBe(3);
+    expect(PLAN_DESCRIPTOR.business.seatsRecommended).toBe(10);
     expect(PLAN_DESCRIPTOR.enterprise.seatsRecommended).toBeNull();
   });
 
-  it("operatingVolume.monthlyRfq — Starter 5 / Lab Team 30 / R&D Operations 80 / Enterprise null", () => {
+  // §11.303b — Basic/Pro 견적·발주 무제한(null).
+  it("operatingVolume.monthlyRfq — Free 5 / Basic null / Pro null / Enterprise null", () => {
     expect(PLAN_DESCRIPTOR.starter.operatingVolume.monthlyRfq).toBe(5);
-    expect(PLAN_DESCRIPTOR.team.operatingVolume.monthlyRfq).toBe(30);
-    expect(PLAN_DESCRIPTOR.business.operatingVolume.monthlyRfq).toBe(80);
+    expect(PLAN_DESCRIPTOR.team.operatingVolume.monthlyRfq).toBeNull();
+    expect(PLAN_DESCRIPTOR.business.operatingVolume.monthlyRfq).toBeNull();
     expect(PLAN_DESCRIPTOR.enterprise.operatingVolume.monthlyRfq).toBeNull();
   });
 
+  // §pricing-redesign — inventoryItems 표기=enforce 정직 정합 (10/50/200).
   it("operatingVolume.monthlyPo / inventoryItems 정합", () => {
     expect(PLAN_DESCRIPTOR.starter.operatingVolume.monthlyPo).toBe(5);
-    expect(PLAN_DESCRIPTOR.team.operatingVolume.monthlyPo).toBe(30);
-    expect(PLAN_DESCRIPTOR.business.operatingVolume.monthlyPo).toBe(80);
-    expect(PLAN_DESCRIPTOR.starter.operatingVolume.inventoryItems).toBe(50);
-    expect(PLAN_DESCRIPTOR.team.operatingVolume.inventoryItems).toBe(500);
-    expect(PLAN_DESCRIPTOR.business.operatingVolume.inventoryItems).toBe(2000);
+    expect(PLAN_DESCRIPTOR.team.operatingVolume.monthlyPo).toBeNull();
+    expect(PLAN_DESCRIPTOR.business.operatingVolume.monthlyPo).toBeNull();
+    expect(PLAN_DESCRIPTOR.starter.operatingVolume.inventoryItems).toBe(10);
+    expect(PLAN_DESCRIPTOR.team.operatingVolume.inventoryItems).toBe(50);
+    expect(PLAN_DESCRIPTOR.business.operatingVolume.inventoryItems).toBe(200);
   });
 
   // §11.303b-2 — labOpsCreditMonthly assertion 제거 (field 자체 제거됨)
@@ -123,16 +128,17 @@ describe("§11.201 plan-descriptor — features + CTA + recommend tag", () => {
     }
   });
 
-  it("recommendTag — Lab Team 또는 R&D Operations 한 곳만 noteworthy", () => {
+  // §11.304 recommendTag 등급화 카피("가장 많이 선택" / "성장 단계 추천") 반영 — 현행 소스 정합.
+  it("recommendTag — Basic 또는 Pro 한 곳만 noteworthy", () => {
     const recommended = PLAN_INTENT_VALUES.filter(
       (intent) => PLAN_DESCRIPTOR[intent].recommendTag !== null,
     );
-    // 정확히 하나 또는 두 plan 만 추천 (운영 OS 정합 — 단일 연구실 / R&D 센터 분리)
+    // 정확히 하나 또는 두 plan 만 추천
     expect(recommended.length).toBeGreaterThanOrEqual(1);
     expect(recommended.length).toBeLessThanOrEqual(2);
     // recommendTag 한국어 (Most Popular 같은 영문 0)
     for (const intent of recommended) {
-      expect(PLAN_DESCRIPTOR[intent].recommendTag).toMatch(/추천/);
+      expect(PLAN_DESCRIPTOR[intent].recommendTag).toMatch(/추천|가장 많이 선택/);
       expect(PLAN_DESCRIPTOR[intent].recommendTag).not.toMatch(/Most Popular/i);
     }
   });
@@ -188,16 +194,16 @@ describe("§11.201 plan-descriptor — helper functions", () => {
   });
 
   it("getPlanLabel(intent) 한국어 라벨 반환", () => {
-    expect(getPlanLabel("starter")).toBe("Starter");
-    expect(getPlanLabel("team")).toBe("Lab Team");
-    expect(getPlanLabel("business")).toBe("R&D Operations");
+    expect(getPlanLabel("starter")).toBe("Free");
+    expect(getPlanLabel("team")).toBe("Basic");
+    expect(getPlanLabel("business")).toBe("Pro");
     expect(getPlanLabel("enterprise")).toBe("Enterprise");
   });
 
   it("getPlanPriceMonthly(intent) 반환 — number 또는 null (Enterprise)", () => {
     expect(getPlanPriceMonthly("starter")).toBe(0);
-    expect(getPlanPriceMonthly("team")).toBe(129000);
-    expect(getPlanPriceMonthly("business")).toBe(349000);
+    expect(getPlanPriceMonthly("team")).toBe(89000);
+    expect(getPlanPriceMonthly("business")).toBe(259000);
     expect(getPlanPriceMonthly("enterprise")).toBeNull();
   });
 
@@ -227,6 +233,6 @@ describe("§11.201 plan-descriptor — type contract", () => {
   it("PlanIntent narrowing — ts compile time + runtime safety", () => {
     const intent: PlanIntent = "team";
     const d = PLAN_DESCRIPTOR[intent];
-    expect(d.label).toBe("Lab Team");
+    expect(d.label).toBe("Basic");
   });
 });
