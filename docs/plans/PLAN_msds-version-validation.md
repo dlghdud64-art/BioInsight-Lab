@@ -92,8 +92,13 @@ POST /sds 버전 메타 저장. MSDS 다이얼로그 메타 실 저장(“미저
 - P4 실패: UI/route 배선 revert(컬럼 유지, 데이터 무손실).
 
 ## 10. Progress
-- Overall: ~15%(P0) · Current: P1 대기 · Next: 계약 sentinel + migration draft(§9.9 dry-run)
-- [x] P0 [ ] P1 [ ] P2 [ ] P3 [ ] P4 [ ] P5
+- Overall: ~70% · Current: P1+P3+P4-core 코드완료(operator 게이트 대기) · Next: P4-wizard(③ 3단계 + export) 다음 배치
+- [x] P0 [x] P2(migration land d4ebdcdb) [x] P3(classify/summarize) [x] P1(sentinel) [~] P4(core 완료 / 마법사+export 다음 배치) [ ] P5
+- **P3+P4-core 배치(2026-06-27, migration 0):**
+  - P3: `lib/safety/msds-version.ts` — classifyMsdsVersion(current/stale/unknown, 3년·만료·superseded 휴리스틱) + summarizeMsdsVersions(단일 카운트). 단위테스트 `msds-version-classify.test.ts`.
+  - P4-core: `POST /sds` docVersion/issuedAt/expiresAt 파싱·SDSDocument 저장. MSDS 다이얼로그 메타 전송 + "미저장" 표기 해소 + 라벨 "개정·발행일" 정합. sentinel `msds-version-persistence.test.ts`.
+  - 다음 배치(P4-wizard): /api/safety/products 메타 include + adapter 버전상태 surfacing + 요약/KPI/③ step1 단일 소스 + ③ 3단계 마법사 + 체크리스트 export.
+  - ⏳ operator: vitest(신규 2 GREEN·baseline)·tsc·build.
 
 ## 11. Notes
 - 2026-06-27: 생성. 호영님 승인(feasible 코어, ③ 종착=export). OCR/KOSHA/주기재검증=OOS. 9/19/72 = 휴리스틱 파생(목업 상수 아님). cowork 구현 → operator-shell 게이트(migration §9.9 포함).

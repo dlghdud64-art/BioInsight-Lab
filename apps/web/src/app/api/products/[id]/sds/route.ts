@@ -111,6 +111,19 @@ export async function POST(
     const rawDocType = form.get("docType");
     const docType = rawDocType === "coa" ? "coa" : "sds";
 
+    // §msds-version-validation — 버전 메타(버전상태 휴리스틱 분류 입력). 전부 optional.
+    const docVersionRaw = form.get("docVersion");
+    const issuedAtRaw = form.get("issuedAt");
+    const expiresAtRaw = form.get("expiresAt");
+    const docVersion = typeof docVersionRaw === "string" && docVersionRaw.trim() ? docVersionRaw.trim() : null;
+    const parseDate = (v: FormDataEntryValue | null): Date | null => {
+      if (typeof v !== "string" || !v) return null;
+      const d = new Date(v);
+      return Number.isNaN(d.getTime()) ? null : d;
+    };
+    const issuedAt = parseDate(issuedAtRaw);
+    const expiresAt = parseDate(expiresAtRaw);
+
     // 조직 스코프: 요청자의 조직 목록(첫 조직 = 문서 org, 없으면 공용 null).
     const memberships = await db.organizationMember.findMany({
       where: { userId: session.user.id },
@@ -188,6 +201,10 @@ export async function POST(
         docType,
         contentType: f.type || null,
         sizeBytes: buffer.length,
+        // §msds-version-validation — 버전 메타 저장(휴리스틱 분류 입력).
+        docVersion,
+        issuedAt,
+        expiresAt,
       },
       select: { id: true, fileName: true, source: true, createdAt: true },
     });

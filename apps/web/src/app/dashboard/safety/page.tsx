@@ -246,6 +246,10 @@ export default function SafetyManagerPage() {
       const fd = new FormData();
       fd.append("file", msdsFile);
       fd.append("docType", "sds");
+      // §msds-version-validation — 버전 메타 전송(버전상태 휴리스틱 입력). 등록일 → issuedAt(개정·발행일 proxy).
+      if (msdsForm.docVersion) fd.append("docVersion", msdsForm.docVersion);
+      if (msdsForm.registeredAt) fd.append("issuedAt", msdsForm.registeredAt);
+      if (msdsForm.expiresAt) fd.append("expiresAt", msdsForm.expiresAt);
       const res = await fetch(`/api/products/${productId}/sds`, { method: "POST", body: fd });
       if (!res.ok) {
         const data = await res.json().catch(() => ({} as { error?: string }));
@@ -1187,11 +1191,11 @@ export default function SafetyManagerPage() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="space-y-1.5"><Label className="text-xs font-medium text-slate-700">문서 버전 *</Label><Input value={msdsForm.docVersion} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMsdsForm((f) => ({ ...f, docVersion: e.target.value }))} placeholder="1.0" className="h-9 text-xs" /></div>
-              <div className="space-y-1.5"><Label className="text-xs font-medium text-slate-700">등록일 *</Label><Input type="date" value={msdsForm.registeredAt} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMsdsForm((f) => ({ ...f, registeredAt: e.target.value }))} className="h-9 text-xs" /></div>
+              <div className="space-y-1.5"><Label className="text-xs font-medium text-slate-700">개정·발행일 *</Label><Input type="date" value={msdsForm.registeredAt} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMsdsForm((f) => ({ ...f, registeredAt: e.target.value }))} className="h-9 text-xs" /></div>
               <div className="space-y-1.5"><Label className="text-xs font-medium text-slate-700">만료일</Label><Input type="date" value={msdsForm.expiresAt} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMsdsForm((f) => ({ ...f, expiresAt: e.target.value }))} className="h-9 text-xs" /></div>
             </div>
           </div>
-          <p className="text-[11px] text-slate-400 px-0.5">문서 파일이 보관되며, 목록의 MSDS 상태가 즉시 갱신됩니다. (버전·만료 메타 자동 저장은 준비 중)</p>
+          <p className="text-[11px] text-slate-400 px-0.5">문서 파일 + 버전·개정일·만료일이 함께 저장되며, 목록의 MSDS 상태가 즉시 갱신됩니다.</p>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" size="sm" onClick={() => setMsdsDialogOpen(false)} disabled={msdsSaving}>취소</Button>
             <Button
