@@ -144,6 +144,9 @@ export default function SafetyManagerPage() {
   // §11.348-B-1 B1-3 — 초기값 []; 실데이터(/api/safety/products) 도착 시 동기화.
   //   mock(safetyItems) 는 제거 — 하드코딩 4건 대신 실 Product 안전필드 기반.
   const [items, setItems] = useState<SafetyItem[]>([]);
+  // §safety-redesign write — 로컬 number id(1..N) → 실 Product.id(cuid) 맵.
+  //   MSDS 실 업로드(POST /api/products/[id]/sds) deep-link 용. 기존엔 버려졌음.
+  const [productIdByLocalId, setProductIdByLocalId] = useState<Record<number, string>>({});
   const safetyQuery = useQuery({
     queryKey: ["safety-products"],
     queryFn: async () => {
@@ -155,8 +158,9 @@ export default function SafetyManagerPage() {
   });
   useEffect(() => {
     if (!safetyQuery.data) return;
-    const { items: adapted } = adaptSafetyProducts(safetyQuery.data);
+    const { items: adapted, productIdByLocalId: idMap } = adaptSafetyProducts(safetyQuery.data);
     setItems(adapted);
+    setProductIdByLocalId(idMap);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [safetyQuery.data]);
 
@@ -224,59 +228,72 @@ export default function SafetyManagerPage() {
   const [msdsDialogOpen, setMsdsDialogOpen] = useState(false);
   const [msdsTarget, setMsdsTarget] = useState<SafetyItem | null>(null);
   const [msdsForm, setMsdsForm] = useState({ docVersion: "", registeredAt: new Date().toISOString().split("T")[0], expiresAt: "", fileName: "" });
+  const [msdsFile, setMsdsFile] = useState<File | null>(null);
   const [msdsSaving, setMsdsSaving] = useState(false);
 
   const openMsdsDialog = (item: SafetyItem | ClassifiedSafetyItem) => {
     setMsdsTarget(item as SafetyItem);
     setMsdsForm({ docVersion: "1.0", registeredAt: new Date().toISOString().split("T")[0], expiresAt: "", fileName: "" });
+    setMsdsFile(null);
     setMsdsDialogOpen(true);
   };
+  // §safety-redesign write — 실 업로드 배선(no-op 해소). 기존 setTimeout+로컬flip+가짜토스트 제거.
+  //   POST /api/products/[id]/sds (multipart file). 성공 시 refetch → adapter 가 sdsDocuments 로
+  //   hasMsds 재계산(canonical). 로컬 낙관 flip 없음 — 서버 진실만 반영.
   const handleMsdsSave = async () => {
     if (!msdsTarget) return;
-    if (!msdsForm.docVersion || !msdsForm.registeredAt) { toast({ title: "필수 항목 누락", description: "문서 버전과 등록일은 필수입니다.", variant: "destructive" }); return; }
+    const productId = productIdByLocalId[msdsTarget.id];
+    if (!productId) { toast({ title: "대상 식별 실패", description: "제품 식별자를 찾지 못했습니다. 새로고침 후 다시 시도하세요.", variant: "destructive" }); return; }
+    if (!msdsFile) { toast({ title: "파일 필요", description: "MSDS 문서 파일을 첨부하세요.", variant: "destructive" }); return; }
     setMsdsSaving(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setItems((prev) => prev.map((i) => i.id === msdsTarget.id ? { ...i, hasMsds: true, msdsUpdatedAt: msdsForm.registeredAt, actionStatus: i.lastInspection ? "normal" as const : i.actionStatus === "action_required" ? "caution" as const : i.actionStatus } : i));
-    toast({ title: "MSDS 등록 완료", description: `${msdsTarget.name}의 MSDS가 등록되었습니다.` });
-    setMsdsSaving(false);
-    setMsdsDialogOpen(false);
+    try {
+      const fd = new FormData();
+      fd.append("file", msdsFile);
+      fd.append("docType", "sds");
+      const res = await fetch(`/api/products/${productId}/sds`, { method: "POST", body: fd });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({} as { error?: string }));
+        const msg = res.status === 503
+          ? "파일 스토리지가 설정되지 않았습니다. 관리자에게 문의하세요."
+          : res.status === 400
+            ? "MSDS 문서 파일이 필요합니다."
+            : res.status === 401
+              ? "로그인이 필요합니다."
+              : (data.error || "MSDS 업로드에 실패했습니다.");
+        toast({ title: "등록 실패", description: msg, variant: "destructive" });
+        return;
+      }
+      toast({ title: "MSDS 문서 업로드 완료", description: `${msdsTarget.name} 문서가 보관되었습니다. 목록을 갱신합니다.` });
+      await safetyQuery.refetch();
+      setMsdsDialogOpen(false);
+    } catch {
+      toast({ title: "등록 실패", description: "네트워크 오류로 업로드하지 못했습니다.", variant: "destructive" });
+    } finally {
+      setMsdsSaving(false);
+    }
   };
 
   // ── Inspection Dialog ──
   const [inspDialogOpen, setInspDialogOpen] = useState(false);
   const [inspTarget, setInspTarget] = useState<SafetyItem | null>(null);
   const [inspForm, setInspForm] = useState({ inspectedAt: new Date().toISOString().split("T")[0], inspector: "", storageOk: true, ppeOk: true, hasIssue: false, actionTaken: "" });
-  const [inspSaving, setInspSaving] = useState(false);
 
   const openInspDialog = (item: SafetyItem | ClassifiedSafetyItem) => {
     setInspTarget(item as SafetyItem);
     setInspForm({ inspectedAt: new Date().toISOString().split("T")[0], inspector: "", storageOk: true, ppeOk: true, hasIssue: false, actionTaken: "" });
     setInspDialogOpen(true);
   };
-  const handleInspSave = async () => {
-    if (!inspTarget) return;
-    if (!inspForm.inspector || !inspForm.inspectedAt) { toast({ title: "필수 항목 누락", description: "점검일과 점검자는 필수입니다.", variant: "destructive" }); return; }
-    setInspSaving(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setItems((prev) => prev.map((i) => i.id === inspTarget.id ? { ...i, lastInspection: inspForm.inspectedAt, actionStatus: i.hasMsds && !inspForm.hasIssue ? "normal" as const : inspForm.hasIssue ? "caution" as const : i.actionStatus } : i));
-    toast({ title: "점검 기록 완료", description: `${inspTarget.name}의 점검이 기록되었습니다.` });
-    setInspSaving(false);
-    setInspDialogOpen(false);
-  };
+  // §safety-redesign write — 점검 기록은 재고(lot, ProductInventory) 단위 엔드포인트(/api/inventory/[id]/inspection).
+  //   본 화면은 물질(Product) 단위라 inventoryId 가 없음 → 가짜 성공(setTimeout+로컬flip) 제거.
+  //   확정 배선은 product↔inventory scope 정합(별도 트랙) 후. 그 전까지 다이얼로그 confirm = disabled+사유.
 
   // ── Dispose Dialog ──
   const [disposeDialogOpen, setDisposeDialogOpen] = useState(false);
   const [disposeTarget, setDisposeTarget] = useState<SafetyItem | null>(null);
 
   const openDisposeDialog = (item: SafetyItem | ClassifiedSafetyItem) => { setDisposeTarget(item as SafetyItem); setDisposeDialogOpen(true); };
-  const handleDispose = () => {
-    if (!disposeTarget) return;
-    setItems((prev) => prev.filter((i) => i.id !== disposeTarget.id));
-    toast({ title: "폐기 처리 완료", description: `${disposeTarget.name}이(가) 목록에서 제거되었습니다.` });
-    setDisposeDialogOpen(false);
-    setDisposeTarget(null);
-    if (selectedItemId === disposeTarget.id) setSelectedItemId(null);
-  };
+  // §safety-redesign write — 폐기는 재고(lot) 단위 처리(물질 단위 전용 엔드포인트 없음).
+  //   가짜 제거(로컬 filter+토스트) 제거 → 다이얼로그 confirm = disabled+사유. 확정 배선은 별도 트랙.
 
   // ── Filters ──
   const filteredItems = (items || []).filter((item) => {
@@ -726,11 +743,18 @@ export default function SafetyManagerPage() {
           <div id="ai-action-queue" className="rounded-xl border border-slate-200 bg-white p-5">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-base font-bold text-slate-900">AI 권장 처리 큐</h3>
-              <span className="text-xs text-slate-400">운영 균형 우선 기준</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400">운영 균형 우선 기준</span>
+                {queueItems.length > 0 && (
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">전체 {queueItems.length}건</span>
+                )}
+              </div>
             </div>
 
-            <div className="space-y-0 divide-y divide-slate-100">
-              {queueItems.map((q: ClassifiedSafetyItem, i: number) => {
+            {/* §safety-redesign P3 (핸드오프 §4) — 큐 무제한 → 페이지 세로 폭증 방지.
+                상한 8건 + 내부 스크롤(max-h). 전체는 하단 화학물질 대장에서 확인. */}
+            <div className="max-h-[480px] overflow-y-auto space-y-0 divide-y divide-slate-100">
+              {queueItems.slice(0, 8).map((q: ClassifiedSafetyItem, i: number) => {
                 const style = CLASS_STYLE[q.classification];
                 const isCompleted = completedQueueIds.has(q.id);
                 // §11.291 — immediate_action classification 시 data-priority="urgent"
@@ -1054,7 +1078,11 @@ export default function SafetyManagerPage() {
             <div className="space-y-1.5">
               <Label className="text-xs font-medium text-slate-700">문서 파일</Label>
               <Input type="file" accept=".pdf,.doc,.docx" className="h-9 text-xs"
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMsdsForm((f) => ({ ...f, fileName: e.target.files?.[0]?.name || "" }))} />
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const f = e.target.files?.[0] ?? null;
+                  setMsdsFile(f);
+                  setMsdsForm((prev) => ({ ...prev, fileName: f?.name || "" }));
+                }} />
               {msdsForm.fileName && <p className="text-xs text-emerald-600 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />{msdsForm.fileName}</p>}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -1063,10 +1091,17 @@ export default function SafetyManagerPage() {
               <div className="space-y-1.5"><Label className="text-xs font-medium text-slate-700">만료일</Label><Input type="date" value={msdsForm.expiresAt} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMsdsForm((f) => ({ ...f, expiresAt: e.target.value }))} className="h-9 text-xs" /></div>
             </div>
           </div>
+          <p className="text-[11px] text-slate-400 px-0.5">문서 파일이 보관되며, 목록의 MSDS 상태가 즉시 갱신됩니다. (버전·만료 메타 자동 저장은 준비 중)</p>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" size="sm" onClick={() => setMsdsDialogOpen(false)} disabled={msdsSaving}>취소</Button>
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5" onClick={handleMsdsSave} disabled={msdsSaving}>
-              {msdsSaving ? <><Loader2 className="h-3 w-3 animate-spin" />저장 중...</> : "MSDS 등록"}
+            <Button
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5 disabled:bg-slate-100 disabled:text-slate-400"
+              onClick={handleMsdsSave}
+              disabled={msdsSaving || !msdsFile}
+              title={!msdsFile ? "MSDS 문서 파일을 첨부하세요." : undefined}
+            >
+              {msdsSaving ? <><Loader2 className="h-3 w-3 animate-spin" />업로드 중...</> : "MSDS 문서 업로드"}
             </Button>
           </div>
         </DialogContent>
@@ -1099,11 +1134,12 @@ export default function SafetyManagerPage() {
               </div>
             )}
           </div>
+          <p className="text-[11px] text-slate-500 bg-slate-50 border border-slate-200 rounded-md px-3 py-2 mt-1">
+            점검 기록은 재고(lot) 단위로 관리됩니다. 입고된 재고 항목에서 점검을 기록하세요. (현재 화면은 물질 단위 — 점검 연계 준비 중)
+          </p>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" size="sm" onClick={() => setInspDialogOpen(false)} disabled={inspSaving}>취소</Button>
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5" onClick={handleInspSave} disabled={inspSaving}>
-              {inspSaving ? <><Loader2 className="h-3 w-3 animate-spin" />저장 중...</> : "점검 기록 저장"}
-            </Button>
+            <Button variant="outline" size="sm" onClick={() => setInspDialogOpen(false)}>닫기</Button>
+            <Button size="sm" disabled className="bg-slate-100 text-slate-400 cursor-not-allowed" title="점검은 재고(lot) 단위에서 기록됩니다.">점검 기록 (재고 단위)</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -1128,9 +1164,12 @@ export default function SafetyManagerPage() {
               <p className="text-xs text-slate-500">폐기 전 MSDS에 명시된 폐기 절차를 반드시 확인하세요.</p>
             </div>
           )}
+          <p className="text-[11px] text-slate-500 bg-slate-50 border border-slate-200 rounded-md px-3 py-2">
+            폐기는 재고(lot) 단위 처리입니다. 입고된 재고 항목에서 폐기를 진행하세요. (현재 화면은 물질 단위)
+          </p>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" size="sm" onClick={() => setDisposeDialogOpen(false)}>취소</Button>
-            <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" onClick={handleDispose}>폐기 처리</Button>
+            <Button variant="outline" size="sm" onClick={() => setDisposeDialogOpen(false)}>닫기</Button>
+            <Button size="sm" disabled className="bg-slate-100 text-slate-400 cursor-not-allowed" title="폐기는 재고(lot) 단위에서 처리됩니다.">폐기 처리 (재고 단위)</Button>
           </div>
         </DialogContent>
       </Dialog>
