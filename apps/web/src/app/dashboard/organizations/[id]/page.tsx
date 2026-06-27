@@ -150,7 +150,8 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   const [permissionDialogOpen, setPermissionDialogOpen] = useState(false);
   const [permissionDialogMember, setPermissionDialogMember] = useState<TeamMemberRow | null>(null);
   const [memberStatusFilter, setMemberStatusFilter] = useState<"all" | "active" | "pending" | "inactive">("all");
-  const [activityTypeFilter, setActivityTypeFilter] = useState<string>("all");
+  // §org-activity-actor-filter — 카테고리 칩(멤버·권한·설정 등 항상 빈 필터) 제거 → 실제 행위자 필터.
+  const [activityActorFilter, setActivityActorFilter] = useState<string>("전체");
 
   // 관리 탭 상태
   const [editName, setEditName] = useState("");
@@ -335,10 +336,11 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   //   엔드포인트 부재 → 정직 빈 상태. 실 audit 연동은 후속(엔드포인트 신설 별 트랙).
   const organizationLogs: Array<{ id: string; actor: string; action: string; time: string; target?: string }> = [];
 
-  // 활동 필터
-  const filteredLogs = activityTypeFilter === "all"
+  // §org-activity-actor-filter — 실제 로그 행위자에서 자동 도출(가짜 이름 0). 로그 0건이면 행위자 0 → 드롭다운 미노출.
+  const activityActors = ["전체", ...Array.from(new Set(organizationLogs.map((l) => l.actor)))];
+  const filteredLogs = activityActorFilter === "전체"
     ? organizationLogs
-    : organizationLogs.filter((log) => getActivityCategory(log.action) === activityTypeFilter);
+    : organizationLogs.filter((log) => log.actor === activityActorFilter);
 
   // 초대 재발송
   const resendInviteMutation = useMutation({
@@ -1108,32 +1110,21 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
           <div className="space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <h3 className="font-bold text-lg text-slate-900">활동 및 감사 로그</h3>
-            </div>
-
-            {/* 유형별 필터 */}
-            <div className="flex flex-wrap gap-2">
-              {[
-                { key: "all", label: "전체" },
-                { key: "inventory", label: "재고" },
-                { key: "purchase", label: "구매" },
-                { key: "budget", label: "예산" },
-                { key: "approval", label: "승인" },
-                { key: "team", label: "멤버" },
-                { key: "permission", label: "권한" },
-                { key: "settings", label: "설정" },
-              ].map((f) => (
-                <button
-                  key={f.key}
-                  onClick={() => setActivityTypeFilter(f.key)}
-                  className={`px-3 py-1.5 rounded-lg border text-xs transition-colors ${
-                    activityTypeFilter === f.key
-                      ? "bg-blue-50 border-blue-200 text-blue-700 font-semibold"
-                      : "bg-slate-100/50 border-slate-200 text-slate-400 hover:border-slate-200 hover:text-slate-600"
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
+              {/* §org-activity-actor-filter — 카테고리 칩(전체·재고·구매·예산·승인·멤버·권한·설정) 제거.
+                  멤버·권한·설정은 로그가 생성되지 않아 항상 빈 결과였음(가짜 필터). 카테고리 분류는 각 로그 행
+                  태그로 유지, 필터는 "누가" 중심 행위자 드롭다운으로. 실제 행위자 있을 때만 노출(가짜 컨트롤 0). */}
+              {activityActors.length > 1 && (
+                <Select value={activityActorFilter} onValueChange={setActivityActorFilter}>
+                  <SelectTrigger className="w-[180px] h-9 text-sm border-slate-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activityActors.map((a) => (
+                      <SelectItem key={a} value={a}>{a === "전체" ? "전체 행위자" : a}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             <Card className="shadow-sm border-slate-200 bg-white">
@@ -1144,7 +1135,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                       <Activity className="h-10 w-10 text-slate-600 mx-auto mb-3" />
                       {/* §org-management-redesign P3 — 활동 데이터 없음 정직 표기(가짜 0). */}
                       <p className="text-sm text-slate-400">
-                        {activityTypeFilter === "all" ? "활동 내역이 아직 없습니다" : "해당 유형의 활동이 없습니다"}
+                        {activityActorFilter === "전체" ? "활동 내역이 아직 없습니다" : `${activityActorFilter} 님의 활동 기록이 없습니다`}
                       </p>
                     </div>
                   ) : (
@@ -1348,22 +1339,42 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                   <CardTitle className="text-base text-slate-900">역할 정책</CardTitle>
                   <CardDescription className="text-slate-400">역할별 권한 범위를 정의합니다.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-2">
-                  {[
-                    { role: "VIEWER", desc: "조직 내 데이터 조회만 가능" },
-                    { role: "REQUESTER", desc: "견적 요청, 재고 등록 등 요청 생성 가능" },
-                    { role: "APPROVER", desc: "요청된 견적/구매를 승인 또는 반려" },
-                    { role: "ADMIN", desc: "멤버 관리, 설정 변경, 전체 운영 관리" },
-                    { role: "OWNER", desc: "최고 관리자. 조직 삭제, 소유권 이전 가능" },
-                  ].map((item) => (
-                    <div key={item.role} className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
-                      <div>
-                        <p className="text-sm font-medium text-slate-600">{ROLE_LABELS[item.role]}</p>
-                        <p className="text-xs text-slate-500">{item.desc}</p>
-                      </div>
-                      <Badge variant="secondary" className="bg-slate-100 text-slate-400 text-xs">{item.role}</Badge>
+                <CardContent>
+                  {/* §org-role-matrix — 기존 역할 설명 리스트 → capability 매트릭스(조회/요청/승인/관리/삭제 누적).
+                      별도 모달/surface 신규 0(기존 역할 정책 카드 강화). 정보성 표시(편집 아님). */}
+                  <p className="text-xs text-slate-500 mb-3">아래로 갈수록 권한이 누적됩니다. 색이 채워진 항목이 해당 역할이 가진 권한입니다.</p>
+                  <div className="rounded-lg border border-slate-200 overflow-hidden">
+                    <div className="grid grid-cols-[1fr_repeat(5,38px)] items-center bg-slate-50 border-b border-slate-200 px-3 py-2">
+                      <span />
+                      {["조회", "요청", "승인", "관리", "삭제"].map((c) => (
+                        <span key={c} className="text-[10px] font-bold text-slate-400 text-center">{c}</span>
+                      ))}
                     </div>
-                  ))}
+                    {[
+                      { role: "VIEWER", desc: "조직 내 데이터 조회만 가능", caps: [1, 0, 0, 0, 0] },
+                      { role: "REQUESTER", desc: "견적 요청, 재고 등록 등 요청 생성", caps: [1, 1, 0, 0, 0] },
+                      { role: "APPROVER", desc: "요청된 견적/구매를 승인 또는 반려", caps: [1, 1, 1, 0, 0] },
+                      { role: "ADMIN", desc: "멤버 관리, 설정 변경, 전체 운영", caps: [1, 1, 1, 1, 0] },
+                      { role: "OWNER", desc: "최고 관리자. 조직 삭제, 소유권 이전", caps: [1, 1, 1, 1, 1] },
+                    ].map((item) => (
+                      <div key={item.role} className="grid grid-cols-[1fr_repeat(5,38px)] items-center px-3 py-2.5 border-b border-slate-100 last:border-b-0">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-slate-700">{ROLE_LABELS[item.role]}</p>
+                            <Badge variant="secondary" className="bg-slate-100 text-slate-400 text-[9px] px-1.5 py-0">{item.role}</Badge>
+                          </div>
+                          <p className="text-[11px] text-slate-500 mt-0.5">{item.desc}</p>
+                        </div>
+                        {item.caps.map((on, i) => (
+                          <span
+                            key={i}
+                            className={`w-5 h-5 mx-auto rounded-md ${on ? "bg-emerald-500" : "bg-slate-100"}`}
+                            aria-label={on ? "허용" : "미허용"}
+                          />
+                        ))}
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
 
