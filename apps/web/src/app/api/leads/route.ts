@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { z } from "zod";
+import { sendEmail } from "@/lib/email/sender";
 
 /**
  * POST /api/leads — §pricing-launch-manual P3 (도입 신청 접수)
@@ -34,6 +35,33 @@ export async function POST(req: NextRequest) {
         status: "requested",
       },
     });
+
+    // §pricing-launch-manual (b) — 영업 알림(best-effort, 실패해도 신청은 성공: non-blocking).
+    try {
+      const opsTo =
+        process.env.ENROLLMENT_NOTIFY_EMAIL ||
+        process.env.EMAIL_FROM ||
+        "support@labaxis.co.kr";
+      const planLabel = data.planIntent === "business" ? "Pro" : "Basic";
+      const cycleLabel = data.billingCycle === "yearly" ? "연간" : "월간";
+      const lines = [
+        `새 도입 신청이 접수되었습니다.`,
+        `플랜: ${planLabel} (${cycleLabel})`,
+        `회사·기관: ${data.company ?? "-"}`,
+        `담당자: ${data.contactName ?? "-"}`,
+        `이메일: ${data.contactEmail}`,
+        `연락처: ${data.contactPhone ?? "-"}`,
+      ];
+      await sendEmail({
+        to: opsTo,
+        subject: `[도입 신청] ${planLabel} · ${data.company ?? data.contactEmail}`,
+        text: lines.join("\n"),
+        html: lines.join("<br/>"),
+      });
+    } catch (e) {
+      console.error("[leads] 영업 알림 발송 실패(non-blocking):", e);
+    }
+
     return NextResponse.json({ ok: true });
   } catch (e) {
     if (e instanceof z.ZodError) {

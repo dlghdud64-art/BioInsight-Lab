@@ -1,6 +1,7 @@
 # Implementation Plan: §pricing-launch-manual — 수동 결제 즉시 출시 (트랙 1)
 
-- **Status:** 🔄 In Progress (P0)
+- **Status:** ✅ Complete (Batch A land) — **Batch B(P4 admin lifecycle·P5 수동 entitlement) 취소** (호영님 2026-06-27: 입금-수동-대기 운영 과함)
+- **결정:** 도입 신청 = 리드 수집만(Batch A, land 6cd1b5cc). 활성화 = 영업 오프라인 협의 + **기존 billing settings canonical 경로 수동**(신규 admin 화면·인보이스/입금 lifecycle 미구축). 본 결제 경로는 트랙2 §billing-infrastructure(포트원 자동결제).
 - **Started:** 2026-06-27
 - **Last Updated:** 2026-06-27
 - **Work Type:** Billing / Entitlement + Admin UI + Migration
@@ -102,8 +103,9 @@
 - phase 독립. entitlement 부여(P5)는 canonical 비활성 경로로 revert. 모델(P2)은 빈 테이블 drop. CTA/폼(P3) revert.
 
 ## 10. Progress
-- Overall: 50% · Current: Batch A(P1·P2·P3 코드 완료, EnrollmentRequest migration dry-run 게이트) · Next: P2 apply → Batch B(P4 admin + P5 entitlement)
-- [x] P0 [x] P1 [~] P2(코드·migration 게이트) [x] P3 [ ] P4 [ ] P5 [ ] P6
+- Overall: Batch A land(6cd1b5cc) · Batch B 취소 · 트랙 종료
+- [x] P0 [x] P1 [x] P2(apply 6cd1b5cc) [x] P3 [~] P4 취소 [~] P5 취소(기존 billing settings 수동) [~] P6 취소
+- **2026-06-27 결정:** Batch B 무거운 수동 입금 lifecycle 미구축. 도입 신청(EnrollmentRequest)은 리드로 적재 → 영업이 기존 billing settings(canonical subscription.upsert)로 수동 활성. 자동결제는 트랙2 포트원.
 
 **Batch A Notes (2026-06-27):** prelaunch P3/P5 변환 — CTA "도입 신청"(descriptor) · `EnrollmentRequest` 모델(LeadSignup 대체, 미apply였음) · `/api/leads` → EnrollmentRequest insert(status=requested, 결제수단 0) · /pricing 인라인 도입신청 폼(회사·담당자·이메일·플랜·주기) · handlePlanSelect team/business→#notify. sentinel: pricing-prelaunch-cta-lead(도입신청/EnrollmentRequest)·plan-tier-naming-304(ctaLabel 도입 신청)·plan-descriptor.test(/신청/ 매칭). 정적 35/35 GREEN. **P2 EnrollmentRequest migration = §9.9 dry-run→진행 게이트(코드+migration 원자 land).** Batch B = P4 admin 운영 화면 + P5 entitlement canonical 부여.
 

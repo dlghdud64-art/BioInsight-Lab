@@ -53,6 +53,11 @@ describe("§pricing-launch-manual P3 — 인라인 도입 신청 폼", () => {
     expect(LEADS).toMatch(/billingCycle:\s*z\.enum\(\["monthly", "yearly"\]\)/);
     expect(LEADS).toMatch(/status:\s*"requested"/);
   });
+  it("(b) 영업 알림 — sendEmail best-effort(non-blocking try/catch)", () => {
+    expect(LEADS).toMatch(/import \{ sendEmail \} from "@\/lib\/email\/sender"/);
+    expect(LEADS).toMatch(/도입 신청/);
+    expect(LEADS).toMatch(/non-blocking/);
+  });
   it("schema EnrollmentRequest 모델(contactEmail·planIntent·billingCycle·status·lifecycle)", () => {
     expect(SCHEMA).toMatch(/model EnrollmentRequest \{/);
     expect(SCHEMA).toMatch(/contactEmail\s+String/);
