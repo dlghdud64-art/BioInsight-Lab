@@ -240,7 +240,7 @@ function SignInContent() {
       <div className="w-full lg:flex-1 relative flex flex-col min-h-[100dvh]" style={{ backgroundColor: "#F3F5F9" }}>
 
         {/* Mobile: dark brand header */}
-        <div className="lg:hidden flex justify-center pt-8 pb-4" style={{ backgroundColor: "#07162D" }}>
+        <div className="lg:hidden flex justify-center py-6" style={{ backgroundColor: "#07162D" }}>
           <Link href="/" className="text-xl font-bold tracking-tight text-slate-100">LabAxis</Link>
         </div>
 
