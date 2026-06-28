@@ -9,6 +9,7 @@ import Link from "next/link";
 import {
   Search, GitCompare, FileText, ShoppingCart, PackageCheck,
   Warehouse, ChevronRight, Menu, X, LayoutDashboard, User, LogOut, Settings,
+  ClipboardList, Package, Headset,
 } from "lucide-react";
 import { OpsConsoleMockupContent } from "./ops-console-preview-section";
 
@@ -25,10 +26,12 @@ function AccountMenu({ userName }: { userName?: string | null }) {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 w-48 z-50 rounded-lg border border-white/10 shadow-xl py-1" style={{ backgroundColor: "#1a1e26" }}>
+          <div className="absolute right-0 top-full mt-1 w-52 z-50 rounded-lg border border-white/10 shadow-xl py-1" style={{ backgroundColor: "#0D1A2D" }}>
             <Link href="/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-white/5"><LayoutDashboard className="h-3.5 w-3.5 text-slate-400" />대시보드</Link>
-            <Link href="/app/search" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-white/5"><Search className="h-3.5 w-3.5 text-slate-400" />검색</Link>
-            <Link href="/dashboard/settings" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-white/5"><Settings className="h-3.5 w-3.5 text-slate-400" />계정 설정</Link>
+            <Link href="/dashboard/quotes" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-white/5"><ClipboardList className="h-3.5 w-3.5 text-slate-400" />견적 관리</Link>
+            <Link href="/dashboard/purchases" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-white/5"><ShoppingCart className="h-3.5 w-3.5 text-slate-400" />구매 운영</Link>
+            <Link href="/dashboard/inventory" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-white/5"><Package className="h-3.5 w-3.5 text-slate-400" />재고 관리</Link>
+            <Link href="/support" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-white/5"><Headset className="h-3.5 w-3.5 text-slate-400" />고객 지원 및 문의</Link>
             <div className="border-t border-white/10 my-1" />
             <button onClick={() => { setOpen(false); resetWorkbenchSessionOnLogout(); invalidateWorkbenchQueryCache(queryClient); signOut({ callbackUrl: "/" }); }} className="flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-950/30 w-full text-left"><LogOut className="h-3.5 w-3.5" />로그아웃</button>
           </div>
@@ -84,7 +87,7 @@ function MobileMenu() {
             aria-label="사이트 메뉴"
             className="fixed inset-0 z-[1000] flex flex-col"
             style={{
-              backgroundColor: "#080C14",
+              backgroundColor: "#0D1A2D",
               paddingTop: "max(env(safe-area-inset-top, 0px), 12px)",
               paddingBottom: "max(env(safe-area-inset-bottom, 0px), 12px)",
             }}
@@ -106,10 +109,20 @@ function MobileMenu() {
             <nav className="flex-1 overflow-y-auto overscroll-contain px-5 py-6">
               {isLoggedIn ? (
                 <div className="flex flex-col gap-1">
+                  {/* §menu-unify (호영님 2026-06-28) — 로그인 메뉴 캐논 풀셋 통일(프로필 + 제품 메뉴). 축약(검색/계정설정) 폐기. */}
+                  <div className="flex items-center gap-3 px-3 py-3 mb-2 rounded-xl" style={{ backgroundColor: "rgba(37,99,235,0.10)" }}>
+                    <div className="h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0" style={{ backgroundColor: "#2563EB" }}>{(session?.user?.name || "U").charAt(0).toUpperCase()}</div>
+                    <div className="min-w-0">
+                      <p className="text-[14px] font-bold truncate" style={{ color: "#F1F5F9" }}>{session?.user?.name || "계정"}</p>
+                      <p className="text-[12px] truncate" style={{ color: "#8A99AF" }}>{session?.user?.email || ""}</p>
+                    </div>
+                  </div>
                   {([
                     { href: "/dashboard", icon: LayoutDashboard, label: "대시보드", primary: true },
-                    { href: "/app/search", icon: Search, label: "검색", primary: false },
-                    { href: "/dashboard/settings", icon: Settings, label: "계정 설정", primary: false },
+                    { href: "/dashboard/quotes", icon: ClipboardList, label: "견적 관리", primary: false },
+                    { href: "/dashboard/purchases", icon: ShoppingCart, label: "구매 운영", primary: false },
+                    { href: "/dashboard/inventory", icon: Package, label: "재고 관리", primary: false },
+                    { href: "/support", icon: Headset, label: "고객 지원 및 문의", primary: false },
                   ] as const).map(({ href, icon: Icon, label, primary }) => (
                     <Link
                       key={href}
