@@ -141,7 +141,7 @@ const FAQ_DATA = [
   },
 ];
 
-/* §pricing-handoff D12 — 도입 범위 비교 9행 (데스크탑 표 + 모바일 세로 스택 공유 SoT). */
+/* §pricing-handoff D12/D13 — 도입 범위 비교 9행 (데스크탑/모바일 압축 표 공유 SoT). */
 const COMPARISON_ROWS: TableRow[] = [
                       { feature: "검색·후보 정리", starter: "기본", team: "팀 공유", business: "check", businessLabel: "조직 공용", enterprise: "check", enterpriseLabel: "멀티 조직" },
                       { feature: "비교·선택안 정리", starter: "none", team: "기본", business: "check", businessLabel: "운영형 비교", enterprise: "check", enterpriseLabel: "조직 기준" },
@@ -155,18 +155,6 @@ const COMPARISON_ROWS: TableRow[] = [
                       { feature: "외부 시스템 연결", starter: "none", team: "기본", business: "check", businessLabel: "확장", enterprise: "check", enterpriseLabel: "내부 연동" },
 ];
 
-/* §pricing-handoff D12 — 모바일 세로 스택용 플랜 열 메타. */
-const COMPARE_PLANS: {
-  key: "starter" | "team" | "business" | "enterprise";
-  labelKey?: "businessLabel" | "enterpriseLabel";
-  label: string;
-  highlight?: boolean;
-}[] = [
-  { key: "starter", label: "Free" },
-  { key: "team", label: "Basic" },
-  { key: "business", labelKey: "businessLabel", label: "Pro", highlight: true },
-  { key: "enterprise", labelKey: "enterpriseLabel", label: "Enterprise" },
-];
 
 export default function PricingPage() {
   const [annual, setAnnual] = useState(false);
@@ -525,48 +513,30 @@ export default function PricingPage() {
             </Reveal>
             <Reveal delay={0.1}>
               {/* §pricing-handoff D12 — 데스크탑/태블릿(md+): 표 */}
-              <div className="hidden md:block overflow-x-auto rounded-2xl -mx-2 px-2 md:mx-0 md:px-0" style={{ border: `1px solid ${P.border}`, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-                <table className="w-full min-w-[640px] text-left border-separate border-spacing-0" style={{ backgroundColor: P.bg }}>
+              <div className="overflow-x-auto rounded-2xl -mx-2 px-2 md:mx-0 md:px-0" style={{ border: `1px solid ${P.border}`, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+                <table className="w-full text-left border-separate border-spacing-0" style={{ backgroundColor: P.bg }}>
                   <thead>
                     <tr style={{ backgroundColor: P.bgSoft }}>
-                      <th className="p-3 md:p-5 text-xs uppercase tracking-wider font-bold whitespace-nowrap" style={{ color: P.text4 }}>운영 항목</th>
+                      <th className="px-2 py-3 md:p-5 text-xs uppercase tracking-wider font-bold whitespace-nowrap" style={{ color: P.text4 }}>운영 항목</th>
                       {/* §11.304 — 비교 표 헤더 티어명 정합 (Starter→Free / Lab Team→Basic / R&D Operations→Pro). */}
-                      <th className="p-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap" style={{ color: P.text2 }}>Free</th>
-                      <th className="p-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap" style={{ color: P.text1 }}>Basic</th>
-                      <th className="p-3 md:p-5 text-center text-xs md:text-sm font-bold whitespace-nowrap" style={{ color: P.text1 }}>Pro</th>
-                      <th className="p-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap" style={{ color: P.text2 }}>Enterprise</th>
+                      <th className="px-2 py-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap" style={{ color: P.text2 }}>Free</th>
+                      <th className="px-2 py-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap" style={{ color: P.text1 }}>Basic</th>
+                      <th className="px-2 py-3 md:p-5 text-center text-xs md:text-sm font-bold whitespace-nowrap" style={{ color: P.text1 }}>Pro</th>
+                      <th className="px-2 py-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap" style={{ color: P.text2 }}>Enterprise</th>
                     </tr>
                   </thead>
                   <tbody>
                     {COMPARISON_ROWS.map((row, i) => (
                       <tr key={row.feature} style={{ borderTop: `1px solid ${P.border}`, backgroundColor: i % 2 === 0 ? P.bg : P.bgSoft }}>
-                        <td className="p-3 md:p-5 font-medium text-xs md:text-sm whitespace-nowrap" style={{ color: P.text1 }}>{row.feature}</td>
-                        <td className="p-3 md:p-5 text-center"><CellValue value={row.starter} /></td>
-                        <td className="p-3 md:p-5 text-center"><CellValue value={row.team} /></td>
-                        <td className="p-3 md:p-5 text-center"><CellValue value={row.business} label={row.businessLabel} highlight /></td>
-                        <td className="p-3 md:p-5 text-center"><CellValue value={row.enterprise} label={row.enterpriseLabel} /></td>
+                        <td className="px-2 py-3 md:p-5 font-medium text-[11px] md:text-sm leading-tight whitespace-normal md:whitespace-nowrap" style={{ color: P.text1 }}>{row.feature}</td>
+                        <td className="px-2 py-3 md:p-5 text-center"><CellValue value={row.starter} /></td>
+                        <td className="px-2 py-3 md:p-5 text-center"><CellValue value={row.team} /></td>
+                        <td className="px-2 py-3 md:p-5 text-center"><CellValue value={row.business} label={row.businessLabel} highlight /></td>
+                        <td className="px-2 py-3 md:p-5 text-center"><CellValue value={row.enterprise} label={row.enterpriseLabel} /></td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              </div>
-              {/* §pricing-handoff D12 (호영님 2026-06-28) — 모바일: 플랜별 세로 스택 (가로 스크롤 폐기). */}
-              <div className="md:hidden space-y-4">
-                {COMPARE_PLANS.map((plan) => (
-                  <div key={plan.key} className="rounded-2xl overflow-hidden" style={{ border: `1px solid ${P.border}`, backgroundColor: P.bg }}>
-                    <div className="px-4 py-3 text-sm font-bold" style={{ backgroundColor: P.bgSoft, color: P.text1 }}>{plan.label}</div>
-                    <dl>
-                      {COMPARISON_ROWS.map((row) => (
-                        <div key={row.feature} className="flex items-center justify-between gap-3 px-4 py-2.5" style={{ borderTop: `1px solid ${P.border}` }}>
-                          <dt className="text-xs" style={{ color: P.text3 }}>{row.feature}</dt>
-                          <dd className="text-right text-sm">
-                            <CellValue value={row[plan.key]} label={plan.labelKey ? row[plan.labelKey] : undefined} highlight={plan.highlight} />
-                          </dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </div>
-                ))}
               </div>
             </Reveal>
           </div>
@@ -650,11 +620,11 @@ function CellValue({ value, label, highlight }: { value: string; label?: string;
     return (
       <span className="inline-flex items-center gap-1.5">
         <CheckCircle2 className="h-[18px] w-[18px] flex-shrink-0" style={{ color: P.green }} />
-        {label && <span className={`text-sm ${highlight ? "font-semibold" : ""}`} style={{ color: highlight ? P.text1 : P.text2 }}>{label}</span>}
+        {label && <span className={`hidden md:inline text-sm ${highlight ? "font-semibold" : ""}`} style={{ color: highlight ? P.text1 : P.text2 }}>{label}</span>}
       </span>
     );
   }
-  return <span className="text-sm" style={{ color: P.text4 }}>{value}</span>;
+  return <span className="text-[11px] md:text-sm" style={{ color: P.text4 }}>{value}</span>;
 }
 
 /* ── Plan Card Component — descriptor 통과 (light or featured navy) ──────────────────────── */
