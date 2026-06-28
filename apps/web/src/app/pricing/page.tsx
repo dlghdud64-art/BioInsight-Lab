@@ -339,7 +339,7 @@ export default function PricingPage() {
                   <Reveal
                     key={descriptor.intent}
                     delay={i * 0.08}
-                    className="h-full shrink-0 basis-[84%] snap-center min-[561px]:basis-auto min-[561px]:shrink"
+                    className="shrink-0 basis-[84%] snap-center min-[561px]:basis-auto min-[561px]:shrink"
                   >
                     <PlanCard
                       descriptor={descriptor}
@@ -645,8 +645,8 @@ function PlanCard({
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onCardSelect?.(intent); } }}
         className={
           isDarkNavy
-            ? "cursor-pointer p-9 md:p-10 rounded-3xl flex flex-col h-full transition-shadow duration-200 hover:shadow-[0_24px_56px_rgba(0,0,0,0.2)]"
-            : "cursor-pointer p-9 md:p-10 rounded-3xl flex flex-col h-full transition-all duration-200 hover:translate-y-[-4px] hover:shadow-xl"
+            ? "cursor-pointer p-6 md:p-10 rounded-3xl flex flex-col h-full transition-shadow duration-200 hover:shadow-[0_24px_56px_rgba(0,0,0,0.2)]"
+            : "cursor-pointer p-6 md:p-10 rounded-3xl flex flex-col h-full transition-all duration-200 hover:translate-y-[-4px] hover:shadow-xl"
         }
         style={
           isDarkNavy
