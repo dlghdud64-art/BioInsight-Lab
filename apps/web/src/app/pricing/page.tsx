@@ -145,6 +145,8 @@ export default function PricingPage() {
   const router = useRouter();
   const [loadingPlan, setLoadingPlan] = useState<PlanIntent | null>(null);
   const [selectError, setSelectError] = useState<string | null>(null);
+  // §pricing-final §2 — 카드 클릭 선택형. 기본 선택 = Basic(team). navy 셸이 선택 카드로 이동.
+  const [selectedPlan, setSelectedPlan] = useState<PlanIntent>("team");
   // §pricing-prelaunch P5 — 출시 알림 신청 리드폼(인라인). 결제수단 0, 이메일만.
   const [leadPlan, setLeadPlan] = useState<"team" | "business" | "">("");
   const [leadEmail, setLeadEmail] = useState("");
@@ -329,11 +331,8 @@ export default function PricingPage() {
                 const descriptor = PLAN_DESCRIPTOR[intent];
                 const { price, period } = formatPlanPrice(descriptor, annual);
                 const operatingVolume = formatOperatingVolume(descriptor);
-                // §11.304 — featured = "가장 많이 선택" 추천 카드 (Basic 티어)
-                //   — dark navy 톤. recommendTag 등급화 정합.
-                const featured =
-                  descriptor.recommendTag !== null &&
-                  /가장\s*많이\s*선택/.test(descriptor.recommendTag);
+                // §pricing-final §2 — navy 셸은 선택 상태로 구동(클릭 선택형). "가장 많이 선택"
+                //   배지는 PlanCard 내부 recommendTag(Basic 고정)로 독립 노출.
                 return (
                   <Reveal
                     key={descriptor.intent}
@@ -345,7 +344,8 @@ export default function PricingPage() {
                       price={price}
                       period={period}
                       operatingVolume={operatingVolume}
-                      featured={featured}
+                      selected={selectedPlan === intent}
+                      onCardSelect={setSelectedPlan}
                       annualBilling={annual}
                       onSelect={handlePlanSelect}
                       loading={loadingPlan === descriptor.intent}
@@ -592,13 +592,15 @@ function CellValue({ value, label, highlight }: { value: string; label?: string;
 
 /* ── Plan Card Component — descriptor 통과 (light or featured navy) ──────────────────────── */
 function PlanCard({
-  descriptor, price, period, operatingVolume, featured, annualBilling, onSelect, loading, disabled,
+  descriptor, price, period, operatingVolume, selected, onCardSelect, annualBilling, onSelect, loading, disabled,
 }: {
   descriptor: PlanDescriptor;
   price: string;
   period?: string;
   operatingVolume: string[];
-  featured?: boolean;
+  // §pricing-final §2 — 클릭 선택형: 선택된 카드만 dark navy + 체크 배지. navy = 선택 상태 구동.
+  selected?: boolean;
+  onCardSelect?: (plan: PlanIntent) => void;
   // §pricing-고도화 P1/P2 — 결제주기 라인(월간/연간) 표기를 위해 카드가 현재 토글 상태를 받음.
   annualBilling?: boolean;
   onSelect: (plan: PlanIntent) => void | Promise<void>;
@@ -611,7 +613,8 @@ function PlanCard({
     void onSelect(intent);
   };
 
-  const isDarkNavy = featured === true;
+  // §pricing-final §2 — dark navy = 선택 상태. "가장 많이 선택" 배지는 recommendTag(Basic 고정)로 독립.
+  const isDarkNavy = selected === true;
   const labelColor = isDarkNavy ? D.text1 : P.text1;
   const taglineColor = isDarkNavy ? D.text2 : P.text3;
 
@@ -626,11 +629,22 @@ function PlanCard({
           {recommendTag}
         </div>
       )}
+      {/* §pricing-final §2 — 선택 시 우상단 체크 배지 */}
+      {selected && (
+        <div className="absolute top-4 right-4 z-20 h-7 w-7 rounded-full flex items-center justify-center text-white" style={{ backgroundColor: P.blue, boxShadow: `0 4px 12px -2px ${P.blue}` }}>
+          <CheckCircle2 className="h-4 w-4" />
+        </div>
+      )}
       <div
+        role="button"
+        tabIndex={0}
+        aria-pressed={selected}
+        onClick={() => onCardSelect?.(intent)}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onCardSelect?.(intent); } }}
         className={
           isDarkNavy
-            ? "p-9 md:p-10 rounded-3xl flex flex-col h-full transition-shadow duration-200 hover:shadow-[0_24px_56px_rgba(0,0,0,0.2)]"
-            : "p-9 md:p-10 rounded-3xl flex flex-col h-full transition-all duration-200 hover:translate-y-[-4px] hover:shadow-xl"
+            ? "cursor-pointer p-9 md:p-10 rounded-3xl flex flex-col h-full transition-shadow duration-200 hover:shadow-[0_24px_56px_rgba(0,0,0,0.2)]"
+            : "cursor-pointer p-9 md:p-10 rounded-3xl flex flex-col h-full transition-all duration-200 hover:translate-y-[-4px] hover:shadow-xl"
         }
         style={
           isDarkNavy
@@ -706,7 +720,7 @@ function PlanCard({
 
         <button
           type="button"
-          onClick={handleClick}
+          onClick={(e) => { e.stopPropagation(); handleClick(); }}
           disabled={loading || disabled}
           aria-busy={loading || undefined}
           className={

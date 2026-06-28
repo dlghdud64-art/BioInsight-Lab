@@ -233,11 +233,15 @@ describe("§11.304 — 플랜 티어명 등급화 (Free / Basic / Pro / Enterpri
       expect(PRICING_SRC).not.toMatch(/10% 할인/);
     });
 
-    it("featured regex 새 추천 \"가장 많이 선택\" 매칭", () => {
-      expect(PRICING_SRC).toMatch(/\/가장\\s\*많이\\s\*선택\//);
+    // §pricing-final §2 — featured-regex(page 리터럴 패턴) 폐기 → 추천 배지는 descriptor.recommendTag(SoT, L186에서 핀)를
+    //   PlanCard가 {recommendTag} 로 렌더. page 측은 배지 렌더 배선을 검증(리터럴은 descriptor로 이동).
+    it("추천 배지 = descriptor.recommendTag 렌더 배선(featured regex 폐기)", () => {
+      expect(PRICING_SRC).toMatch(/\{recommendTag\}/);
+      expect(PRICING_SRC).toMatch(/recommendTag !== null/);
     });
 
-    it("featured regex 기존 \"단일 연구실\" 매칭 0", () => {
+    it("page 측 featured-regex 리터럴(가장 많이 선택 / 단일 연구실) 0", () => {
+      // 추천 텍스트 리터럴은 page 가 아닌 descriptor 단일 소스에만 존재.
       expect(PRICING_SRC).not.toMatch(/\/단일\\s\*연구실\//);
     });
   });
