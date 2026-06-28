@@ -128,12 +128,12 @@ export function Pipeline({ state, summary, onRetry }: PipelineProps) {
   // §purchasing-hide — 발주 stage 미정의 도메인 → off 시 파이프라인에서 제외(견적→입고→재고).
   //   buildStages 의 po 객체는 보존(소스 문자열 = sentinel GREEN), 렌더 목록만 필터.
   const stages = buildStages(summary).filter((s) => getFlag("ENABLE_PURCHASING") || s.key !== "po");
-  const gridColsClass = stages.length === 3 ? "md:grid-cols-3" : "md:grid-cols-4";
+  const gridColsClass = stages.length === 3 ? "grid-cols-3" : "grid-cols-2 md:grid-cols-4";
   // §dashboard-home-redesign P3 — 퍼널 하단 진행바 비율(시안 .pbar). canonical=stage.total(파생만, 가짜 0).
   const maxTotal = Math.max(...stages.map((s) => s.total), 1);
 
   return (
-    <div className={`grid grid-cols-2 gap-2 ${gridColsClass}`}>
+    <div className={`grid gap-2 ${gridColsClass}`}>
       {stages.map((stage, i) => {
         const active = stage.total > 0;
         return (
@@ -151,7 +151,7 @@ export function Pipeline({ state, summary, onRetry }: PipelineProps) {
               <span className={`flex items-center justify-center w-6 h-6 rounded-lg flex-shrink-0 ${active ? STAGE_TINT[stage.key]!.box : "bg-gray-100"}`}>
                 <span className={active ? STAGE_TINT[stage.key]!.icon : "text-gray-400"}>{stage.icon}</span>
               </span>
-              <span className="text-[11px] font-semibold uppercase tracking-[0.06em]">{stage.label}</span>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.06em] truncate min-w-0">{stage.label}</span>
               {/* 단계 연결 화살표(마지막 제외) — 데스크탑만 */}
               {i < stages.length - 1 && (
                 <ChevronRight className="hidden md:block h-3 w-3 text-slate-300 ml-auto" aria-hidden />
@@ -163,11 +163,11 @@ export function Pipeline({ state, summary, onRetry }: PipelineProps) {
               <span className="text-[11px] font-semibold ml-0.5">건</span>
             </p>
             {stage.attention > 0 ? (
-              <p className="mt-1 text-[11px] font-semibold text-yellow-700">
+              <p className="mt-1 text-[11px] font-semibold text-yellow-700 line-clamp-1">
                 {stage.attentionLabel} {stage.attention}건
               </p>
             ) : (
-              <p className="mt-1 text-[11px] text-slate-500">{active ? "이상 없음" : "데이터 없음"}</p>
+              <p className="mt-1 text-[11px] text-slate-500 line-clamp-1">{active ? "이상 없음" : "데이터 없음"}</p>
             )}
             {/* §dashboard-home-redesign P3 — 퍼널 진행바(시안 .pbar). active만, 폭=total/maxTotal. 0건은 미표시(흐림 유지). */}
             {active && (

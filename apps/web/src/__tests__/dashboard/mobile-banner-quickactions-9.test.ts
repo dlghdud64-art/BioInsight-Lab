@@ -12,7 +12,6 @@ import { resolve } from "node:path";
 const BANNER = readFileSync(resolve(__dirname, "../../components/quotes/priority-recommendation-card.tsx"), "utf8");
 const QUICK = readFileSync(resolve(__dirname, "../../components/dashboard/operator-quick-actions.tsx"), "utf8");
 const QUOTES = readFileSync(resolve(__dirname, "../../app/dashboard/quotes/page.tsx"), "utf8");
-const DASH = readFileSync(resolve(__dirname, "../../app/dashboard/page.tsx"), "utf8");
 
 describe("§dashboard-mobile #9", () => {
   it("배너 inline 1행(§quotes-mobile-density P3 supersession) + truncate + CTA inline", () => {
@@ -32,8 +31,10 @@ describe("§dashboard-mobile #9", () => {
     expect(QUOTES).not.toMatch(/요청_접수:[\s\S]{0,80}bg-red-100/);
   });
 
-  it("KPI 카드 행 높이 정렬(h-full + CTA mt-auto)", () => {
-    expect(DASH).toContain('href={config.href} className="block h-full"');
-    expect(DASH).toContain("mt-auto pt-1");
+  it("운영 바로가기 카드 행 높이 정렬(h-full) — §dashboard-dedup: page 중복 바로가기 제거, OperatorQuickActions 보존", () => {
+    // §dashboard-dedup(호영님 2026-06-28) — page.tsx 바로가기 KPI 카드(href={config.href}·mt-auto pt-1)는
+    //   OperatorQuickActions 중복이라 제거(동선은 OperatorQuickActions + Pipeline 클릭이 흡수). #9 행 높이
+    //   정렬 의도는 canonical OperatorQuickActions(flex h-full flex-col)가 그대로 보존 → 보호 공백 0.
+    expect(QUICK).toContain("h-full");
   });
 });

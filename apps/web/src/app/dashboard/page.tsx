@@ -11,7 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 // store fetch 처리 (이전 mount 동작 회복).
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Package, AlertTriangle, FileText, Search, Plus, TrendingUp, Truck, ChevronRight, Beaker, Calendar, GitCompare, CheckCircle2, Clock, ClipboardList, ShieldAlert, ArrowRight, X } from "lucide-react";
+import { AlertTriangle, FileText, Search, Plus, Truck, ChevronRight, Beaker, GitCompare, CheckCircle2, ClipboardList } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -65,7 +65,6 @@ import { RecentActivityCard } from "@/components/dashboard/recent-activity-card"
 // §11.308e — 스마트 입고 본문 awareness + status 카드 (호영님 P2 옵션 B).
 // §main-dashboard-redesign P4-B1 — SmartReceiving 카드 → Pipeline 대체(입고 awareness 흡수).
 import { Pipeline } from "@/components/dashboard/pipeline";
-// §main-dashboard-redesign P3-B2 — StatLine(재무 KPI3, summary 실데이터) 상단 배선.
 import { StatLine } from "@/components/dashboard/stat-line";
 // §purchasing-hide — 발주/구매 표면 게이트(파이프라인 subtitle·추후 진입점).
 import { getFlag } from "@/lib/feature-flags";
@@ -554,99 +553,10 @@ function DashboardPageInner() {
   const isZero = !isBlocked && inProgressCount === 0 && !hasOperationalFootprint;
   const dashboardState: "blocked" | "zero" | "active" = isBlocked ? "blocked" : isZero ? "zero" : "active";
 
-  // 하위 호환
-  const hasAnyData = hasOperationalFootprint;
-  const hasActionItems = isBlocked;
-  const actionCount = (stats.lowStockAlerts > 0 ? 1 : 0) + (stats.activeQuotes > 0 ? 1 : 0) + (stats.expiringCount > 0 ? 1 : 0) + (stats.undecidedCompareCount > 0 ? 1 : 0);
-
-
   const formatPurchaseDate = (dateStr: string) => {
     const d = new Date(dateStr);
     return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
   };
-
-  // -- KPI 해석 문구 --
-  const getInventoryInsight = () => {
-    if (stats.totalInventory === 0) return "등록된 품목이 없어 비교·요청 이력이 아직 없습니다";
-    if (stats.lowStockAlerts > 0) return `${stats.lowStockAlerts}개 품목 부족 — 발주 검토 필요`;
-    return "전체 품목 정상 운영 중";
-  };
-
-  const getStockInsight = () => {
-    if (stats.lowStockAlerts === 0) return "모든 품목이 안전재고 이상으로 유지되고 있습니다";
-    if (stats.lowStockAlerts >= 3) return "3건 이상 부족 — 일괄 발주를 검토하세요";
-    return "해당 품목의 개별 발주를 검토하세요";
-  };
-
-  const getQuoteInsight = () => {
-    if (stats.activeQuotes === 0) return "진행 중인 견적이 없어 응답 대기 건이 없습니다";
-    if (stats.respondedQuotes > 0) return `${stats.respondedQuotes}건 응답 수신 — 확정 또는 반려가 필요합니다`;
-    return "공급사 응답 대기 중 — 평균 1~2일 소요";
-  };
-
-  // -- KPI risk level --
-  const inventoryRisk = stats.lowStockAlerts > 0 ? "amber" : "none";
-  const stockRisk = stats.lowStockAlerts >= 3 ? "red" : stats.lowStockAlerts > 0 ? "amber" : "none";
-  const quoteRisk = stats.respondedQuotes > 0 ? "amber" : "none";
-
-  const riskBorder = (risk: string) => {
-    if (risk === "red") return "border-l-2 border-l-red-500";
-    if (risk === "amber") return "border-l-2 border-l-yellow-500";
-    return "";
-  };
-
-  // -- 즉시 처리 항목 생성 --
-  const urgentItems: Array<{ id: string; icon: React.ReactNode; label: string; desc: string; href: string; severity: "red" | "amber" }> = [];
-  if (stats.lowStockAlerts > 0) {
-    urgentItems.push({
-      id: "u-low",
-      icon: <AlertTriangle className="h-4 w-4 text-red-500" />,
-      label: `재고 부족 ${stats.lowStockAlerts}건`,
-      desc: "안전재고 이하 품목 -- 발주 검토",
-      href: "/dashboard/inventory?filter=low",
-      severity: stats.lowStockAlerts >= 3 ? "red" : "amber",
-    });
-  }
-  if (stats.respondedQuotes > 0) {
-    urgentItems.push({
-      id: "u-responded",
-      icon: <CheckCircle2 className="h-4 w-4 text-green-600" />,
-      label: `견적 응답 ${stats.respondedQuotes}건`,
-      desc: "공급사 응답 수신 -- 검토 후 확정",
-      href: "/dashboard/quotes?status=RESPONDED",
-      severity: "amber",
-    });
-  }
-  if (stats.expiringCount > 0) {
-    urgentItems.push({
-      id: "u-expiring",
-      icon: <Calendar className="h-4 w-4 text-yellow-700" />,
-      label: `유통기한 임박 ${stats.expiringCount}건`,
-      desc: "30일 이내 만료 예정",
-      href: "/dashboard/inventory",
-      severity: "amber",
-    });
-  }
-  if (stats.undecidedCompareCount > 0) {
-    urgentItems.push({
-      id: "u-compare",
-      icon: <GitCompare className="h-4 w-4 text-slate-400" />,
-      label: `비교 판정 대기 ${stats.undecidedCompareCount}건`,
-      desc: stats.compareStats.slaBreachedCount > 0 ? `SLA 초과 ${stats.compareStats.slaBreachedCount}건 포함` : "비교 결과 검토 필요",
-      href: "/compare",
-      severity: stats.compareStats.slaBreachedCount > 0 ? "red" : "amber",
-    });
-  }
-  if (stats.activeQuotes > 0 && stats.respondedQuotes === 0) {
-    urgentItems.push({
-      id: "u-pending-quote",
-      icon: <Clock className="h-4 w-4 text-yellow-700" />,
-      label: `승인 대기 견적 ${stats.activeQuotes}건`,
-      desc: "공급사 응답 대기 중",
-      href: "/dashboard/quotes?status=PENDING",
-      severity: "amber",
-    });
-  }
 
   // -- 상태 기반 추천 작업 --
   const recommendedActions: Array<{ id: string; icon: React.ReactNode; label: string; desc: string; href: string; state: "idle" | "ready" | "blocked" }> = [];
@@ -665,45 +575,8 @@ function DashboardPageInner() {
     recommendedActions.push({ id: "r-compare", icon: <GitCompare className="h-3.5 w-3.5 text-slate-400" />, label: "제품 비교", desc: "비교 대기 항목 없음 — 검색에서 후보를 추가하세요", href: "/app/search", state: "idle" });
   }
 
-  // 견적 상태
-  if (stats.respondedQuotes > 0) {
-    recommendedActions.push({ id: "r-quote", icon: <FileText className="h-3.5 w-3.5 text-yellow-700" />, label: "견적 검토", desc: `${stats.respondedQuotes}건 응답 수신 — 확정 대기`, href: "/dashboard/quotes?status=RESPONDED", state: "ready" });
-  } else if (stats.activeQuotes > 0) {
-    recommendedActions.push({ id: "r-quote", icon: <FileText className="h-3.5 w-3.5 text-slate-400" />, label: "견적 현황", desc: `${stats.activeQuotes}건 응답 대기 중`, href: "/dashboard/quotes?status=PENDING", state: "idle" });
-  } else {
-    recommendedActions.push({ id: "r-quote", icon: <FileText className="h-3.5 w-3.5 text-slate-400" />, label: "견적 요청", desc: "작성 대기 요청 없음 — 비교 결과에서 견적을 시작하세요", href: "/app/quote", state: "idle" });
-  }
-
-  // 발주 전환 — §11.162: /dashboard/purchases?view=conversion-ready (legacy redirect 직접 destination)
-  recommendedActions.push({ id: "r-po-conversion", icon: <ClipboardList className="h-3.5 w-3.5 text-blue-700" />, label: "발주 전환", desc: "발주 전환 후보를 검토하고 승인·발송을 준비하세요", href: "/dashboard/purchases?view=conversion-ready", state: "idle" });
-
   // 검색
   recommendedActions.push({ id: "r-search", icon: <Search className="h-3.5 w-3.5 text-slate-400" />, label: "시약·장비 검색", desc: "주요 시약·장비에서 후보 탐색", href: "/app/search", state: "idle" });
-
-  // -- KPI 판단 카드 렌더 (공통) --
-  const renderKpiCard = (config: {
-    href: string; icon: React.ReactNode; label: string; value: React.ReactNode;
-    insight: string; action?: string; risk: string; className?: string;
-  }) => (
-    <Link href={config.href} className="block h-full">
-      <Card className={`h-full flex flex-col overflow-hidden cursor-pointer transition-colors hover:bg-slate-50/80 bg-white border border-slate-200/80 rounded-xl ${riskBorder(config.risk)} ${config.className ?? ""}`}>
-        <CardContent className="p-3.5 md:p-4 flex flex-col gap-1 h-full">
-          <div className="flex items-center gap-1.5">
-            <span className="flex items-center justify-center w-5 h-5 rounded-md bg-slate-100/80">
-              {config.icon}
-            </span>
-            <span className="text-[10px] md:text-[11px] font-bold text-slate-400 uppercase tracking-wider">{config.label}</span>
-          </div>
-          <div className="text-[22px] md:text-[28px] font-extrabold text-slate-900 leading-none tracking-tight">{config.value}</div>
-          <p className="text-[10px] md:text-[11px] text-slate-500 leading-snug truncate">{config.insight}</p>
-          {config.action && (
-            /* §dashboard-mobile #9 — CTA 하단 고정(mt-auto): 같은 행 KPI 카드 높이 일치(CTA 유무 무관). */
-            <p className="text-[10px] md:text-[11px] text-blue-600 font-semibold mt-auto pt-1">{config.action} →</p>
-          )}
-        </CardContent>
-      </Card>
-    </Link>
-  );
 
   return (
     // §11.252d-4 — 모바일 스크롤 ~40% 축소 (호영님 spec).
@@ -749,7 +622,7 @@ function DashboardPageInner() {
 
       {/* §main-dashboard-redesign P3-B2 — StatLine(재무 KPI3: 이번달 지출·잔여 예산·
           확정 발주액) summary 단일 진실. summarySection 훅 재사용(신규 fetch 0) + capMs 4상태.
-          §dashboard-shifan-adopt P3a 갭1 — "재무 현황" h2 제거(시안=헤더 직하 3카드, 라벨 없음). */}
+          §dashboard-dedup 복원(호영님 2026-06-28) — StatLine 은 확정 발주액 단독 보유라 중복 아님(BudgetSpendCard 미흡수). */}
       <section className="space-y-2">
         <StatLine
           state={summarySection.state}
@@ -819,212 +692,15 @@ function DashboardPageInner() {
       {/* §dashboard-home-redesign P1 (호영님 시안) — 지출 트렌드는 2-col 우측(예산&지출 ↔ 트렌드)로 이동.
           하단 풀폭 단일 SpendTrend 폐지(시안: 2-col 뒤는 최근활동 풀폭). 카테고리 도넛은 BudgetSpendCard 내부 유지. */}
 
-      {/* --- 1순위: 오늘의 우선 작업 (모바일용 fallback, md 이하) --- */}
-      <div className="md:hidden rounded-xl border border-slate-200/80 bg-white overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {hasActionItems ? (
-              <>
-                <span className="relative flex h-2 w-2 flex-shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-60" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-yellow-500" />
-                </span>
-                <h3 className="text-[13px] font-extrabold text-slate-900">오늘의 우선 작업</h3>
-              </>
-            ) : (
-              <>
-                <span className={`inline-flex h-2 w-2 rounded-full flex-shrink-0 ${hasAnyData ? "bg-emerald-500" : "bg-slate-300"}`} />
-                <h3 className="text-[13px] font-extrabold text-slate-900">
-                  {dashboardState === "active" ? "오늘 처리할 이슈 없음" : "시작 안내"}
-                </h3>
-              </>
-            )}
-          </div>
-        </div>
-        {hasActionItems ? (
-          <div className="divide-y divide-slate-100 sm:divide-y-0 sm:grid sm:divide-x sm:divide-slate-100" style={{ gridTemplateColumns: `repeat(${actionCount}, 1fr)` }}>
-            {stats.lowStockAlerts > 0 && (
-              <button type="button" onClick={() => handleNavigateOrOverlay("/dashboard/inventory?filter=low", "dashboard")} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors group text-left w-full">
-                <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-bold text-slate-900">{stats.lowStockAlerts}건 재고 부족</p>
-                  <p className="text-[11px] text-slate-500">즉시 발주 검토 필요</p>
-                </div>
-                <ChevronRight className="h-4 w-4 text-slate-400 flex-shrink-0 group-hover:text-slate-600 transition-colors" />
-              </button>
-            )}
-            {stats.activeQuotes > 0 && (
-              <button type="button" onClick={() => handleNavigateOrOverlay("/dashboard/quotes?status=PENDING", "dashboard")} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors group text-left w-full">
-                <FileText className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-bold text-slate-900">{stats.activeQuotes}건 견적 대기</p>
-                  <p className="text-[11px] text-slate-500">
-                    {stats.respondedQuotes > 0 ? `${stats.respondedQuotes}건 응답 수신 -- 검토 필요` : "공급사 응답 대기 중"}
-                  </p>
-                </div>
-                <ChevronRight className="h-4 w-4 text-slate-400 flex-shrink-0 group-hover:text-slate-600 transition-colors" />
-              </button>
-            )}
-            {stats.expiringCount > 0 && (
-              <button type="button" onClick={() => handleNavigateOrOverlay("/dashboard/inventory", "dashboard")} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors group text-left w-full">
-                <Calendar className="h-4 w-4 text-yellow-500 flex-shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-bold text-slate-900">{stats.expiringCount}건 유통기한 임박</p>
-                  <p className="text-[11px] text-slate-500">30일 이내 만료 예정</p>
-                </div>
-                <ChevronRight className="h-4 w-4 text-slate-400 flex-shrink-0 group-hover:text-slate-600 transition-colors" />
-              </button>
-            )}
-            {stats.undecidedCompareCount > 0 && (
-              <button type="button" onClick={() => handleNavigateOrOverlay("/compare", "dashboard")} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors group text-left w-full">
-                <GitCompare className={`h-4 w-4 flex-shrink-0 ${stats.compareStats.slaBreachedCount > 0 ? "text-red-500" : "text-slate-400"}`} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-slate-900">{stats.undecidedCompareCount}건 비교 판정 대기</p>
-                  <p className="text-xs text-slate-500">
-                    {stats.compareStats.slaBreachedCount > 0
-                      ? `SLA 초과 ${stats.compareStats.slaBreachedCount}건 -- 즉시 처리 필요`
-                      : "비교 결과를 검토하고 판정하세요"}
-                  </p>
-                  {Object.keys(stats.compareStats.substatusBreakdown).length > 0 && (
-                    <p className="text-[10px] text-slate-500 mt-0.5">
-                      {Object.entries(stats.compareStats.substatusBreakdown)
-                        .filter(([, count]) => count > 0)
-                        .map(([key, count]) => `${COMPARE_SUBSTATUS_DEFS[key]?.label ?? key} ${count}`)
-                        .join(" · ")}
-                    </p>
-                  )}
-                  {(stats.compareStats.avgTurnaroundDays > 0 || stats.compareStats.conversionRate > 0) && (
-                    <p className="text-[10px] text-slate-500 mt-0.5">
-                      {stats.compareStats.avgTurnaroundDays > 0 ? `평균 ${stats.compareStats.avgTurnaroundDays}일` : ""}
-                      {stats.compareStats.avgTurnaroundDays > 0 && stats.compareStats.conversionRate > 0 ? " · " : ""}
-                      {stats.compareStats.conversionRate > 0 ? `견적 전환 ${stats.compareStats.conversionRate}%` : ""}
-                    </p>
-                  )}
-                  {Object.keys(stats.compareStats.resolutionPathDistribution).length > 0 && (
-                    <p className="text-[10px] text-slate-500 mt-0.5">
-                      {Object.entries(stats.compareStats.resolutionPathDistribution)
-                        .filter(([, count]) => count > 0)
-                        .map(([key, count]) => `${RESOLUTION_PATH_LABELS[key as keyof typeof RESOLUTION_PATH_LABELS] ?? key} ${count}`)
-                        .join(" · ")}
-                    </p>
-                  )}
-                  {stats.compareStats.noMovementCount > 0 && (
-                    <p className="text-[10px] text-yellow-600 font-medium mt-0.5">
-                      다음 단계 없음 {stats.compareStats.noMovementCount}건
-                    </p>
-                  )}
-                  {stats.compareStats.compareToQuoteCount > 0 && (
-                    <p className="text-[10px] text-slate-500 mt-0.5">
-                      {"견적 "}{stats.compareStats.compareToQuoteCount}
-                      {" -> 발주 "}{stats.compareStats.quoteToPurchaseCount}
-                      {" -> 입고 "}{stats.compareStats.purchaseToReceivingCount}
-                      {" -> 완료 "}{stats.compareStats.receivingToInventoryCount}
-                      {stats.compareStats.handoffStallPoint !== "none" && (
-                        <span className="text-yellow-600 ml-1">
-                          ({HANDOFF_STALL_LABELS[stats.compareStats.handoffStallPoint as keyof typeof HANDOFF_STALL_LABELS]})
-                        </span>
-                      )}
-                    </p>
-                  )}
-                </div>
-                <ChevronRight className="h-4 w-4 text-slate-400 flex-shrink-0 group-hover:text-slate-600 transition-colors" />
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="px-4 py-4">
-            {hasAnyData ? (
-              <p className="text-sm text-slate-500">오늘 즉시 처리할 운영 이슈가 없습니다. 수동 빠른 실행에서 업무를 시작하세요.</p>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-sm text-slate-500">견적 요청을 시작하면 운영 데이터가 쌓이기 시작합니다. 아래에서 첫 업무를 시작하세요.</p>
-                <div className="flex flex-wrap gap-2">
-                  <Link href="/dashboard/inventory">
-                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5 border-slate-200">
-                      <Package className="h-3.5 w-3.5" /> 품목 등록
-                    </Button>
-                  </Link>
-                  <Link href="/app/search">
-                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5 border-slate-200">
-                      <GitCompare className="h-3.5 w-3.5" /> 비교 시작
-                    </Button>
-                  </Link>
-                  <Link href="/dashboard/quotes">
-                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5 border-slate-200">
-                      <FileText className="h-3.5 w-3.5" /> 견적 요청
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
       {/* ======= 모바일 전용 레이아웃 ======= */}
       {/* §11.272e — 하단 FAB 클리어런스는 shell main(pb 확보)이 소유 → 섹션 중복 패딩 축소. */}
       <div className="md:hidden space-y-3 pb-2">
 
-        {/* KPI 판단 카드 2x2
-            §11.196b — statsLoading skeleton 분기 제거 (pageReady gate cover). */}
-        <div className="grid grid-cols-3 gap-3">
-          {renderKpiCard({
-            href: "/dashboard/inventory",
-            icon: <Package className="h-3 w-3 text-emerald-700" />,
-            label: "등록 품목",
-            value: stats.totalInventory.toLocaleString("ko-KR"),
-            insight: getInventoryInsight(),
-            action: stats.totalInventory === 0 ? "품목 등록 시작" : undefined,
-            risk: inventoryRisk,
-          })}
-          {renderKpiCard({
-            href: "/dashboard/inventory?filter=low",
-            icon: <AlertTriangle className="h-3 w-3 text-yellow-700" />,
-            label: "재고 부족",
-            value: stats.lowStockAlerts,
-            insight: getStockInsight(),
-            action: stats.lowStockAlerts > 0 ? "부족 품목 확인" : undefined,
-            risk: stockRisk,
-          })}
-          {renderKpiCard({
-            href: "/dashboard/quotes?status=PENDING",
-            icon: <FileText className="h-3 w-3 text-violet-700" />,
-            label: "진행 중 견적",
-            value: stats.activeQuotes,
-            insight: getQuoteInsight(),
-            action: stats.activeQuotes === 0 ? "견적 요청 시작" : stats.respondedQuotes > 0 ? "응답 검토" : undefined,
-            risk: quoteRisk,
-          })}
-        </div>
-
         {/* 운영 패널: 즉시 처리 + 추천 작업 */}
         <Card className="bg-white border-slate-200/80 rounded-xl">
           <CardContent className="p-3 space-y-3">
-            {/* 즉시 처리 */}
-            {urgentItems.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">즉시 처리</p>
-                {/* §11.266b — dashboard sidebar urgent + recommended action button
-                    44x44 touch target (§11.266 P1 cluster 2/5, §11.264h family
-                    cross-cutting concern 확장). min-h-[44px] 추가 → Apple HIG /
-                    Material / WCAG 2.1 SC 2.5.5 표준 정합. p-2 / rounded-lg /
-                    severity border / ChevronRight / handleNavigateOrOverlay 보존. */}
-                {urgentItems.map((item) => (
-                  <button key={item.id} type="button" onClick={() => handleNavigateOrOverlay(item.href, "dashboard")} className={`w-full flex items-center gap-2.5 min-h-[44px] p-2 rounded-lg hover:bg-slate-50 transition-colors text-left ${item.severity === "red" ? "border-l-2 border-l-red-500" : "border-l-2 border-l-yellow-500"}`}>
-                    {item.icon}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-slate-900">{item.label}</p>
-                      <p className="text-[10px] text-slate-500">{item.desc}</p>
-                    </div>
-                    <ChevronRight className="h-3.5 w-3.5 text-slate-500 flex-shrink-0" />
-                  </button>
-                ))}
-              </div>
-            )}
-
             {/* 상태 기반 추천 */}
             <div className="space-y-1.5">
-              {urgentItems.length > 0 && <div className="border-t border-slate-200" />}
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">다음 작업</p>
               <div className="space-y-1">
                 {/* §11.266b — recommendedActions button 44x44 (same pattern as urgentItems). */}

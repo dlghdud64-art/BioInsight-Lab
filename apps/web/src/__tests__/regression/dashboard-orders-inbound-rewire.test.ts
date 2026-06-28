@@ -10,6 +10,13 @@
  *   - example/regex match → 변경 0 (legacy URL pattern 보존)
  *
  * deferred 까지 갔던 §11.160 cleanup 의 마지막 회수.
+ *
+ * §dashboard-dedup 진화(호영님 2026-06-28):
+ *   dashboard quick-action 트림으로 "발주 전환"(r-po-conversion, conversion-ready
+ *   네비) 제거 수용 — dashboard/page.tsx caller 소멸. 해당 it/REWIRED 항목 retire.
+ *   나머지 caller(ORDER pathMap·AI inbox·ledger·budget·overlay)와 legacy 제거·PO
+ *   landing 보존 가드는 불변. dashboard 가 더 이상 /dashboard/orders 로 가지 않음은
+ *   아래 "legacy git tree 제거" 가드가 계속 강제(보호 공백 0).
  */
 
 import { describe, it, expect } from "vitest";
@@ -32,9 +39,10 @@ function gitTrackedFiles(pattern: string): string[] {
   }
 }
 
+// §dashboard-dedup — dashboard/page.tsx "발주 전환 recommendedAction" 항목 retire
+//   (quick-action 트림으로 caller 소멸).
 const REWIRED_FILES: { path: string; label: string }[] = [
   { path: "src/app/dashboard/budget/[id]/page.tsx",                              label: "budget detail 발주 보기 Link" },
-  { path: "src/app/dashboard/page.tsx",                                          label: "dashboard 발주 전환 recommendedAction" },
   { path: "src/components/dashboard/action-ledger.tsx",                          label: "Fast-Track navigation" },
   { path: "src/components/dashboard/ai-action-inbox.tsx",                        label: "AI action approve href" },
   { path: "src/components/dashboard/console/queue-detail-panel.tsx",             label: "ORDER pathMap" },
@@ -57,14 +65,14 @@ describe("§11.162 dashboard/orders inbound rewire", () => {
     expect(consoleSrc).toMatch(/ORDER:\s*["']\/dashboard\/purchase-orders["']/);
   });
 
-  it("발주 전환 recommendedAction 이 /dashboard/purchases?view=conversion-ready 로 직접 navigate", () => {
+  it("dashboard 가 더 이상 /dashboard/orders 로 발주 전환 navigate 안 함 (§dashboard-dedup 트림)", () => {
     const dashboardSrc = readFileSync(
       resolve(APPS_WEB, "src/app/dashboard/page.tsx"),
       "utf8",
     );
-    expect(dashboardSrc).toMatch(/\/dashboard\/purchases\?view=conversion-ready/);
-    // 발주 전환 recommendedAction 의 href 가 더 이상 /dashboard/orders 가 아님
+    // 발주 전환 quick-action 제거 — 레거시 /dashboard/orders href 부재(회귀 가드)
     expect(dashboardSrc).not.toMatch(/r-po-conversion[\s\S]{0,200}href:\s*["']\/dashboard\/orders["']/);
+    expect(dashboardSrc).not.toMatch(/href:\s*["']\/dashboard\/orders["']/);
   });
 
   it("AI action approveHref + ledger Fast-Track + budget 발주 보기 가 /dashboard/purchase-orders 사용", () => {
@@ -110,3 +118,6 @@ describe("§11.162 dashboard/orders inbound rewire", () => {
     expect(tracked).toContain("apps/web/src/app/dashboard/purchase-orders/page.tsx");
   });
 });
+
+// REWIRED_FILES 는 caller 인벤토리 문서 — 각 it 가 개별 파일을 직접 검증.
+void REWIRED_FILES;

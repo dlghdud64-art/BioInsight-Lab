@@ -43,10 +43,12 @@ describe("§11.252d-2 — invariant 보존", () => {
   it("dashboardState 3상태(zero/blocked/active) state machine 보존", () => {
     // §dashboard-home-redesign P2 진화 — 헤더 description의 `=== "zero"`/`"blocked"` 리터럴 소비는
     //   날짜(todayLabel)로 대체되며 제거. state machine 정의(ternary)는 보존 → 핀을 소비 리터럴 →
-    //   정의 기준으로 이전(invariant 의도[3상태 분기 존재] 불변·강화). === "active" 소비는 mobile fallback 잔존.
+    //   정의 기준으로 이전(invariant 의도[3상태 분기 존재] 불변·강화).
+    // §dashboard-dedup 진화 — `=== "active"` 소비처(모바일 KPI fallback 블록)는 ActionInbox 중복으로
+    //   제거. 머신 정의(union + isZero ternary, 3상태 전부 L554)는 보존 → invariant 의도(3상태 분기 존재)는
+    //   정의 핀(union+ternary)이 그대로 강제. 소비 form 핀은 retire(머신 무손실).
     expect(code).toMatch(/["']blocked["']\s*\|\s*["']zero["']\s*\|\s*["']active["']/); // 3상태 union 정의
-    expect(code).toMatch(/isZero\s*\?\s*["']zero["']\s*:\s*["']active["']/);            // zero 분기(state machine)
-    expect(code).toMatch(/dashboardState\s*===\s*["']active["']/);                      // active 소비(mobile) 보존
+    expect(code).toMatch(/isZero\s*\?\s*["']zero["']\s*:\s*["']active["']/);            // zero/active 분기(state machine 정의)
   });
 
   // §dashboard-shifan-fidelity P-fid1 — "빠른 시작 3 link" it 제거: 빠른시작 카드 폐지로

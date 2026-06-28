@@ -27,11 +27,13 @@ const PAGE_PATH = resolve(__dirname, "../../app/dashboard/page.tsx");
 const SUMMARY_PATH = resolve(__dirname, "../../components/dashboard/executive-summary-section.tsx");
 const SPEND_PATH = resolve(__dirname, "../../components/dashboard/spend-trend-card.tsx");
 const CATEGORY_PATH = resolve(__dirname, "../../components/dashboard/category-distribution-card.tsx");
+const GLOBAL_EMPTY_PATH = resolve(__dirname, "../../components/dashboard/global-empty.tsx");
 
 const page = readFileSync(PAGE_PATH, "utf8");
 const summary = readFileSync(SUMMARY_PATH, "utf8");
 const spend = readFileSync(SPEND_PATH, "utf8");
 const category = readFileSync(CATEGORY_PATH, "utf8");
+const globalEmpty = readFileSync(GLOBAL_EMPTY_PATH, "utf8");
 
 describe("§11.243 #1 — 온보딩 모드 분기", () => {
   it("isOnboardingMode derive (quoteStats === 0 기반)", () => {
@@ -115,9 +117,12 @@ describe("§11.243 #9 — 바로가기 4 카드 건수 뱃지", () => {
   });
 });
 
-describe("§11.243 #10 — 빈 상태 텍스트 행동 유도형 swap", () => {
-  it("부정형 → 행동 유도형 (자동으로 / 활성화 / 쌓이기 시작 등)", () => {
-    expect(page).toMatch(/(자동으로|활성화됩니다|쌓이기 시작|자동으로 기록|자동으로 감지)/);
+describe("§11.243 #10 — 빈 상태 텍스트 행동 유도형 swap (§dashboard-dedup: GlobalEmpty 로 이전)", () => {
+  it("부정형 → 행동 유도형 (자동으로 / 쌓이기 등) — GlobalEmpty 보존(page 가 렌더)", () => {
+    // §dashboard-dedup(호영님 2026-06-28) — page.tsx 인라인 빈상태 카피는 GlobalEmpty/NextStepBanner
+    //   중복이라 제거. 행동 유도형 빈상태 메시징 의도는 canonical GlobalEmpty(page 가 <GlobalEmpty/> 렌더)
+    //   가 보존("…자동으로 채워집니다" / "데이터가 쌓이기 전에는…") → 보호 공백 0.
+    expect(globalEmpty).toMatch(/(자동으로|쌓이기|채워집니다)/);
   });
 });
 
