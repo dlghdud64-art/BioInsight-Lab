@@ -143,17 +143,25 @@ const FAQ_DATA = [
 
 /* §pricing-handoff D12/D13 — 도입 범위 비교 9행 (데스크탑/모바일 압축 표 공유 SoT). */
 const COMPARISON_ROWS: TableRow[] = [
-                      { feature: "검색·후보 정리", starter: "기본", team: "팀 공유", business: "check", businessLabel: "조직 공용", enterprise: "check", enterpriseLabel: "멀티 조직" },
-                      { feature: "비교·선택안 정리", starter: "none", team: "기본", business: "check", businessLabel: "운영형 비교", enterprise: "check", enterpriseLabel: "조직 기준" },
-                      { feature: "요청 생성·기록 공유", starter: "none", team: "초안·공유", business: "check", businessLabel: "운영형 관리", enterprise: "check", enterpriseLabel: "조직 기준" },
-                      { feature: "구매 준비·운영 큐", starter: "none", team: "none", business: "check", enterprise: "check" },
-                      { feature: "입고 반영·재고 운영", starter: "기본 등록", team: "상태 공유", business: "check", businessLabel: "운영 반영", enterprise: "check", enterpriseLabel: "조직 운영" },
-                      // §pricing-redesign P3 — 라벨 스캔 훅(Free 월 10회 / 이상 무제한, P2b enforce 정합) + LOT/GMP 추적(Pro, P2a 게이팅 정합).
-                      { feature: "라벨 스캔 (월)", starter: "10회", team: "무제한", business: "무제한", enterprise: "무제한" },
-                      { feature: "LOT / GMP 추적", starter: "none", team: "none", business: "check", businessLabel: "GMP 추적", enterprise: "check", enterpriseLabel: "조직 정책" },
-                      { feature: "예산·권한 기준", starter: "none", team: "기본 권한", business: "check", businessLabel: "운영 기준", enterprise: "check", enterpriseLabel: "정책/감사" },
-                      { feature: "외부 시스템 연결", starter: "none", team: "기본", business: "check", businessLabel: "확장", enterprise: "check", enterpriseLabel: "내부 연동" },
+  // §pricing-handoff D16 — 도입 범위 비교 9행(데스크탑 표 + 모바일 카드 스택 공유 SoT, 4플랜+칩).
+  { feature: "검색·후보 정리", starter: "기본", team: "팀 공유", business: "check", businessLabel: "조직 공용", enterprise: "check", enterpriseLabel: "멀티 조직" },
+  { feature: "비교·선택안 정리", starter: "none", team: "기본", business: "check", businessLabel: "운영형 비교", enterprise: "check", enterpriseLabel: "조직 기준" },
+  { feature: "요청 생성·기록 공유", starter: "none", team: "초안·공유", business: "check", businessLabel: "운영형 관리", enterprise: "check", enterpriseLabel: "조직 기준" },
+  { feature: "구매 준비·운영 큐", starter: "none", team: "none", business: "check", enterprise: "check" },
+  { feature: "입고 반영·재고 운영", starter: "기본 등록", team: "상태 공유", business: "check", businessLabel: "운영 반영", enterprise: "check", enterpriseLabel: "조직 운영" },
+  { feature: "라벨 스캔 (월)", starter: "10회", team: "무제한", business: "무제한", enterprise: "무제한" },
+  { feature: "LOT / GMP 추적", starter: "none", team: "none", business: "check", businessLabel: "GMP 추적", enterprise: "check", enterpriseLabel: "조직 정책" },
+  { feature: "예산·권한 기준", starter: "none", team: "기본 권한", business: "check", businessLabel: "운영 기준", enterprise: "check", enterpriseLabel: "정책/감사" },
+  { feature: "외부 시스템 연결", starter: "none", team: "기본", business: "check", businessLabel: "확장", enterprise: "check", enterpriseLabel: "내부 연동" },
 ];
+
+/* §pricing-handoff D16 — 모바일 카드 스택용 플랜 메타(이름/좌석/값키/라벨키/Basic accent). */
+const CMP_PLANS = [
+  { name: "Free", seat: "1인", vKey: "starter", lKey: undefined, feat: false },
+  { name: "Basic", seat: "3명", vKey: "team", lKey: undefined, feat: true },
+  { name: "Pro", seat: "10명", vKey: "business", lKey: "businessLabel", feat: false },
+  { name: "Enterprise", seat: "협의", vKey: "enterprise", lKey: "enterpriseLabel", feat: false },
+] as const;
 
 
 export default function PricingPage() {
@@ -512,31 +520,55 @@ export default function PricingPage() {
               <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center" style={{ color: P.text1 }}>도입 범위 비교</h2>
             </Reveal>
             <Reveal delay={0.1}>
-              {/* §pricing-handoff D12 — 데스크탑/태블릿(md+): 표 */}
-              <div className="overflow-x-auto rounded-2xl -mx-2 px-2 md:mx-0 md:px-0" style={{ border: `1px solid ${P.border}`, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+              {/* §pricing-handoff D16 — 데스크탑(>560): 비교 표(4플랜+칩). 모바일은 아래 카드 스택. */}
+              <div className="hidden min-[561px]:block overflow-x-auto rounded-2xl" style={{ border: `1px solid ${P.border}`, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
                 <table className="w-full text-left border-separate border-spacing-0" style={{ backgroundColor: P.bg }}>
                   <thead>
                     <tr style={{ backgroundColor: P.bgSoft }}>
-                      <th className="px-2 py-3 md:p-5 text-xs uppercase tracking-wider font-bold whitespace-nowrap" style={{ color: P.text4 }}>운영 항목</th>
-                      {/* §11.304 — 비교 표 헤더 티어명 정합 (Starter→Free / Lab Team→Basic / R&D Operations→Pro). */}
-                      <th className="px-2 py-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap border-l border-slate-200" style={{ color: P.text2 }}>Free</th>
-                      <th className="px-2 py-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap border-l border-slate-200" style={{ color: P.text1 }}>Basic</th>
-                      <th className="px-2 py-3 md:p-5 text-center text-xs md:text-sm font-bold whitespace-nowrap border-l border-slate-200" style={{ color: P.text1 }}>Pro</th>
-                      <th className="px-2 py-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap border-l border-slate-200" style={{ color: P.text2 }}>Enterprise</th>
+                      <th className="p-4 lg:p-5 text-xs uppercase tracking-wider font-bold whitespace-nowrap" style={{ color: P.text4 }}>운영 항목</th>
+                      <th className="p-4 lg:p-5 text-center text-sm font-semibold whitespace-nowrap border-l border-slate-200" style={{ color: P.text2 }}>Free</th>
+                      <th className="p-4 lg:p-5 text-center text-sm font-bold whitespace-nowrap border-l border-slate-200" style={{ color: P.blueText, backgroundColor: "rgba(59,130,246,0.06)" }}>Basic</th>
+                      <th className="p-4 lg:p-5 text-center text-sm font-semibold whitespace-nowrap border-l border-slate-200" style={{ color: P.text1 }}>Pro</th>
+                      <th className="p-4 lg:p-5 text-center text-sm font-semibold whitespace-nowrap border-l border-slate-200" style={{ color: P.text2 }}>Enterprise</th>
                     </tr>
                   </thead>
                   <tbody>
                     {COMPARISON_ROWS.map((row) => (
                       <tr key={row.feature} style={{ borderTop: `1px solid ${P.border}`, backgroundColor: P.bg }}>
-                        <td className="px-2 py-3 md:p-5 font-medium text-[11px] md:text-sm leading-tight whitespace-normal md:whitespace-nowrap" style={{ color: P.text1 }}>{row.feature}</td>
-                        <td className="px-2 py-3 md:p-5 text-center border-l border-slate-200"><CellValue value={row.starter} /></td>
-                        <td className="px-2 py-3 md:p-5 text-center border-l border-slate-200"><CellValue value={row.team} /></td>
-                        <td className="px-2 py-3 md:p-5 text-center border-l border-slate-200"><CellValue value={row.business} label={row.businessLabel} highlight /></td>
-                        <td className="px-2 py-3 md:p-5 text-center border-l border-slate-200"><CellValue value={row.enterprise} label={row.enterpriseLabel} /></td>
+                        <td className="p-4 lg:p-5 font-medium text-sm whitespace-nowrap" style={{ color: P.text1 }}>{row.feature}</td>
+                        <td className="p-4 lg:p-5 text-center border-l border-slate-200"><CellValue value={row.starter} /></td>
+                        <td className="p-4 lg:p-5 text-center border-l border-slate-200" style={{ backgroundColor: "rgba(59,130,246,0.04)" }}><CellValue value={row.team} highlight /></td>
+                        <td className="p-4 lg:p-5 text-center border-l border-slate-200"><CellValue value={row.business} label={row.businessLabel} /></td>
+                        <td className="p-4 lg:p-5 text-center border-l border-slate-200"><CellValue value={row.enterprise} label={row.enterpriseLabel} /></td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+              </div>
+              {/* §pricing-handoff D16 — 모바일(≤560): 플랜별 세로 카드 스택(가로 스크롤 0, Basic accent). */}
+              <div className="min-[561px]:hidden flex flex-col gap-3.5">
+                {CMP_PLANS.map((plan) => (
+                  <div key={plan.name} className="rounded-2xl overflow-hidden" style={{ border: `1px solid ${P.border}`, backgroundColor: P.bg, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+                    <div
+                      className="flex items-baseline gap-2 px-4 py-3 text-base font-bold"
+                      style={plan.feat
+                        ? { color: P.blueText, backgroundColor: "rgba(59,130,246,0.06)" }
+                        : { color: P.text1, backgroundColor: P.bgSoft }}
+                    >
+                      {plan.name}<span className="text-xs font-semibold" style={{ color: P.text4 }}>{plan.seat}</span>
+                    </div>
+                    <div>
+                      {COMPARISON_ROWS.map((row) => (
+                        <div key={row.feature} className="flex items-center justify-between gap-3 px-4 py-2.5" style={{ borderTop: `1px solid ${P.border}` }}>
+                          <span className="text-[13px] font-semibold" style={{ color: P.text3 }}>{row.feature}</span>
+                          <span className="flex-shrink-0 text-right">
+                            <CellValue value={row[plan.vKey]} label={plan.lKey ? row[plan.lKey] : undefined} highlight={plan.feat} />
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             </Reveal>
           </div>
@@ -613,18 +645,19 @@ type TableRow = {
 
 /* ── Cell Value Component ──────────────────────────────────────── */
 function CellValue({ value, label, highlight }: { value: string; label?: string; highlight?: boolean }) {
+  // §pricing-handoff D16 — none(—) / check(✓ + 칩 라벨) / 수량값 텍스트.
   if (value === "none") {
     return <Minus className="h-4 w-4 mx-auto" style={{ color: P.text4 }} />;
   }
   if (value === "check") {
     return (
-      <span className="inline-flex items-center gap-1.5">
+      <span className="inline-flex items-center justify-center gap-1.5">
         <CheckCircle2 className="h-[18px] w-[18px] flex-shrink-0" style={{ color: P.green }} />
-        {label && <span className={`hidden md:inline text-sm ${highlight ? "font-semibold" : ""}`} style={{ color: highlight ? P.text1 : P.text2 }}>{label}</span>}
+        {label && <span className={`text-xs md:text-sm ${highlight ? "font-semibold" : ""}`} style={{ color: highlight ? P.text1 : P.text2 }}>{label}</span>}
       </span>
     );
   }
-  return <span className="text-[11px] md:text-sm" style={{ color: P.text4 }}>{value}</span>;
+  return <span className="text-xs md:text-sm font-medium" style={{ color: highlight ? P.text1 : P.text2 }}>{value}</span>;
 }
 
 /* ── Plan Card Component — descriptor 통과 (light or featured navy) ──────────────────────── */
