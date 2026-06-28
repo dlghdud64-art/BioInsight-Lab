@@ -2,7 +2,7 @@
  * §pricing-assistant + §pricing-고도화 — AI 즉답 카드 + 무료체험 pill + 결제주기 + 스크롤바
  * (호영님 2026-06-27)
  *
- * AI 카드 = 실 백엔드(/api/pricing-assistant → Anthropic), 키 없음/에러 = 항상 200+폴백(5xx 금지).
+ * AI 카드 = 실 백엔드(/api/pricing-assistant → 공유 LLM 래퍼 callAnthropicMessage), 키 없음/에러 = 항상 200+폴백(5xx 금지).
  * 무료체험 pill = descriptor.trialEligible(Basic) 재사용. 결제주기 라인 = annualBilling. 스크롤 진행바.
  */
 import { describe, it, expect } from "vitest";
@@ -16,21 +16,22 @@ describe("§pricing-assistant — 실 백엔드(항상 200+폴백)", () => {
   const ROUTE = read("src/app/api/pricing-assistant/route.ts");
   // 주석 strip — 설명 주석의 "window.claude" 언급이 not.toMatch 오탐 내지 않도록.
   const ROUTE_CODE = ROUTE.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
-  it("Anthropic SDK + 서버 전용 키", () => {
-    expect(ROUTE).toMatch(/@anthropic-ai\/sdk/);
-    expect(ROUTE).toMatch(/process\.env\.ANTHROPIC_API_KEY/);
-    // ROUTE_CODE(주석 strip): "NEXT_PUBLIC_ 금지" 설명 주석이 오탐 내지 않도록 코드만 검사.
+  it("공유 LLM 래퍼 경유(callAnthropicMessage) — provider/키 추상화", () => {
+    // §pricing-assistant-fix — 직접 @anthropic-ai/sdk + raw ANTHROPIC_API_KEY 우회 폐기.
+    //   (LABAXIS_AI_PROVIDER=openai 등 환경/키 변수 불일치 시 항상 폴백되던 버그.) 래퍼가 키/provider 해석.
+    expect(ROUTE_CODE).toMatch(/callAnthropicMessage/);
+    expect(ROUTE_CODE).toMatch(/from "@\/lib\/ai\/anthropic"/);
+    expect(ROUTE_CODE).not.toMatch(/process\.env\.ANTHROPIC_API_KEY/);
     expect(ROUTE_CODE).not.toMatch(/NEXT_PUBLIC_/);
   });
   it("키 없음/에러 = 200 + 폴백(5xx 금지, window.claude 아님)", () => {
-    expect(ROUTE).toMatch(/if \(!key\) return NextResponse\.json\(\{ answer: FB\[fbKey\] \}, \{ status: 200 \}\)/);
     expect(ROUTE).toMatch(/catch \{\s*return NextResponse\.json\(\{ answer: FB\[fbKey\] \}, \{ status: 200 \}\)/);
     expect(ROUTE_CODE).not.toMatch(/window\.claude/);
     expect(ROUTE_CODE).not.toMatch(/status: 5\d\d/);
   });
   it("인젝션·과금 방어(slice 400) + 2문장 강제(max_tokens 작게) + clean", () => {
     expect(ROUTE).toMatch(/\.slice\(0, 400\)/);
-    expect(ROUTE).toMatch(/max_tokens: 220/);
+    expect(ROUTE).toMatch(/maxTokens: 220/);
     expect(ROUTE).toMatch(/const clean = /);
   });
   it("SYSTEM 가격 SSOT 정합(89,000 / 259,000)", () => {

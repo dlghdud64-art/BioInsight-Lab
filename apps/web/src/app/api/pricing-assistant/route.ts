@@ -5,10 +5,11 @@
  *   라이브에 없으므로 서버 라우트 → Anthropic 으로 실배선. 핵심 규약:
  *   - 절대 5xx 던지지 않음: 키 없음/타임아웃/에러 전부 200 + 폴백 문구(프런트 불깨짐).
  *   - max_tokens 작게(2문장 강제) + slice(0,400)로 인젝션·과금 방어.
- *   - ANTHROPIC_API_KEY 서버 전용(NEXT_PUBLIC_ 금지).
+ *   - LLM 키/provider 는 공유 래퍼(lib/ai/anthropic, LABAXIS_AI_PROVIDER) 가 해석(서버 전용).
  *   - 가격 89,000 / 259,000 = plan-descriptor SSOT 정합.
  */
 import { NextResponse } from "next/server";
+import { callAnthropicMessage } from "@/lib/ai/anthropic";
 
 export const runtime = "nodejs";
 
@@ -45,23 +46,19 @@ export async function POST(req: Request) {
   }
   if (!q) return NextResponse.json({ answer: FB.def }, { status: 200 });
 
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return NextResponse.json({ answer: FB[fbKey] }, { status: 200 }); // 키 없으면 폴백
-
+  // §pricing-assistant-fix (호영님) — 공유 LLM 래퍼(callAnthropicMessage) 경유.
+  //   기존: @anthropic-ai/sdk 직접 + raw ANTHROPIC_API_KEY → LABAXIS_AI_PROVIDER(openai 등)
+  //   환경/키 변수 불일치 시 모든 질문이 폴백되던 버그. 래퍼가 provider(anthropic fetch /
+  //   openai) + 키 해석을 단일화(작동하는 AI 전부 이 경유). 키 부재·HTTP·empty 는 throw → catch 폴백.
   try {
-    // §11.290 정합 — @anthropic-ai/sdk dynamic import(sandbox vitest 호환 + tree-shake).
-    const { default: Anthropic } = await import("@anthropic-ai/sdk");
-    const client = new Anthropic({ apiKey: key });
-    const msg = await client.messages.create({
-      model: "claude-3-5-haiku-latest", // 즉답·저비용. 필요 시 sonnet 으로.
-      max_tokens: 220,
-      system: SYSTEM,
-      messages: [{ role: "user", content: q }],
+    const r = await callAnthropicMessage({
+      systemPrompt: SYSTEM,
+      userPrompt: q,
+      maxTokens: 220,
     });
-    const raw = msg.content.map((b) => (b.type === "text" ? b.text : "")).join(" ");
-    const answer = clean(raw) || FB[fbKey];
+    const answer = clean(r.content) || FB[fbKey];
     return NextResponse.json({ answer }, { status: 200 });
   } catch {
-    return NextResponse.json({ answer: FB[fbKey] }, { status: 200 }); // 실패해도 항상 200 + 폴백
+    return NextResponse.json({ answer: FB[fbKey] }, { status: 200 }); // 키 없음/에러 전부 200 + 폴백
   }
 }
