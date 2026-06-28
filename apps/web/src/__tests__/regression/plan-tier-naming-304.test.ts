@@ -161,8 +161,8 @@ describe("§11.304 — 플랜 티어명 등급화 (Free / Basic / Pro / Enterpri
   });
 
   describe("plan-descriptor.ts 4 ctaLabel 새 티어명 정합", () => {
-    it("starter.ctaLabel = \"무료로 시작\" (파일럿 단어 제거)", () => {
-      expect(DESCRIPTOR_SRC).toMatch(/ctaLabel:\s*"무료로 시작"/);
+    it("starter.ctaLabel = \"무료로 시작하기\" (§pricing-handoff D10 — 앱 문구 통일)", () => {
+      expect(DESCRIPTOR_SRC).toMatch(/ctaLabel:\s*"무료로 시작하기"/);
     });
 
     // §pricing-launch-manual (호영님 2026-06-27) — 수동 결제 즉시 출시 → Basic/Pro CTA "도입 신청".

@@ -125,7 +125,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     ],
     ctaRoute: "/dashboard",
     // §11.304 — CTA 새 티어명 정합. "파일럿" 단어 제거 (사용자 유형 규정).
-    ctaLabel: "무료로 시작",
+    ctaLabel: "무료로 시작하기",
     recommendTag: null,
     trialEligible: false, // Free = 영구 무료, 체험 개념 무관
     approvalPolicy: "none",
