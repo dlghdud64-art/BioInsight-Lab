@@ -1,15 +1,21 @@
 /**
- * §11.248e-2 #quote-briefing-collapse-toggle — 호영님 P0 §11.248 #5 잔여 백로그
+ * §11.248e-2 #quote-briefing-collapse-toggle — [SUPERSEDED by §quote-briefing-rail-overlay]
  *
- * 호영님 spec ("일정 너비 이하... 접힘 토글" + 1200px+ 운영자 선택권 확장):
- *   - 1200px+ Briefing 패널 접힘/펼침 토글 (현재 항상 노출)
- *   - 접힘 = full hide (호영님 결정 옵션 A) + 우측 edge floating button
- *   - localStorage 으로 사용자 선택 영구화 (reload 보존)
+ * 원래 §11.248e-2 (호영님 P0 §11.248 #5): 1200px+ Briefing 패널 접힘/펼침 토글 +
+ *   우측 edge floating button(writing-mode-vertical "BRIEFING") + localStorage 영구화.
  *
- * canonical truth lock:
- *   - §11.248e breakpoint min-[1200px]:flex 보존 (1200px+ 만 적용, <1200px bottom-sheet 분기 유지)
- *   - selectedQuote / selectedSignals / selectedOpStatus 시스템 보존
- *   - 패널 내부 모든 invariant 보존 (w-[480px] / OPERATIONAL BRIEFING / closeQuoteContextRail / 44px button / break-keep)
+ * ⚠️ 폐기됨 — §quote-briefing-rail-overlay (호영님 directed 2026-06-29, 업로드
+ *   "견적관리 브리핑 레일 수정 핸드오프"): 레일을 ≥1200 항상 overlay(테이블 풀폭)로
+ *   전환 → "접어서 폭 회복" 목적 소멸. 접기 메커니즘(isBriefingCollapsed state · LS ·
+ *   서버영속 wiring · 세로 edge tab · collapse button) 전면 retire. 진입 = 행 선택 /
+ *   닫기 = X(헤더, 기존 3772) · Esc(기존 1496). canonical = 레일 항상 overlay.
+ *
+ * 본 sentinel 정리:
+ *   - 접기 state/LS/edge-tab/collapse-button 단언 RETIRE — 폐기되어 더 이상 유효 X.
+ *   - 생존 invariant 유지: 레일 ≥1200 노출(w-480) + mobile sheet + 운영 브리핑 + gating
+ *     + closeQuoteContextRail.
+ *   - 신 invariant: 세로 edge tab(writing-mode/floating expand) 0 · isBriefingCollapsed 0 ·
+ *     레일 항상 overlay(min-[1200px]:fixed 노출, min-[1440px]:sticky push 0).
  */
 
 import { describe, it, expect } from "vitest";
@@ -19,61 +25,50 @@ import { resolve } from "node:path";
 const PAGE_PATH = resolve(__dirname, "../../../app/dashboard/quotes/page.tsx");
 const page = readFileSync(PAGE_PATH, "utf8");
 
-describe("§11.248e-2 #1 — isBriefingCollapsed state + localStorage 영구화", () => {
-  it("isBriefingCollapsed useState (default false)", () => {
-    expect(page).toMatch(/(isBriefingCollapsed|briefingCollapsed)[\s\S]{0,80}useState/);
+describe("§quote-briefing-rail-overlay — 접기 메커니즘 폐기(RETIRED)", () => {
+  it("isBriefingCollapsed state 0", () => {
+    expect(page).not.toMatch(/isBriefingCollapsed/);
+    expect(page).not.toMatch(/setIsBriefingCollapsed/);
   });
 
-  it("BRIEFING_COLLAPSED_LS_KEY localStorage key", () => {
-    expect(page).toMatch(/labaxis-briefing-collapsed/);
+  it("BRIEFING_COLLAPSED localStorage key 0", () => {
+    expect(page).not.toMatch(/BRIEFING_COLLAPSED_LS_KEY/);
+    expect(page).not.toMatch(/labaxis-briefing-collapsed/);
   });
 
-  it("localStorage hydration useEffect (window 존재 시)", () => {
-    // mount 시 localStorage.getItem 호출 + setIsBriefingCollapsed
-    expect(page).toMatch(/localStorage\.getItem\([\s\S]{0,100}briefing|labaxis-briefing-collapsed/);
+  it("세로 edge tab (writing-mode-vertical / floating expand) 0", () => {
+    expect(page).not.toMatch(/writing-mode-vertical/);
+    expect(page).not.toMatch(/writingMode/);
+    expect(page).not.toMatch(/briefing-floating-expand/);
   });
 
-  it("localStorage persistence useEffect (collapsed 변경 시 setItem)", () => {
-    expect(page).toMatch(/localStorage\.setItem\([\s\S]{0,150}(briefingCollapsed|isBriefingCollapsed|labaxis-briefing-collapsed)/);
-  });
-});
-
-describe("§11.248e-2 #2 — 접기 button + 펼치기 floating button", () => {
-  it("패널 header 안 접기 button (ChevronsRight + setIsBriefingCollapsed(true) 양방향)", () => {
-    // onClick={() => setIsBriefingCollapsed(true)} ... <ChevronsRight /> 또는 반대
-    expect(page).toMatch(
-      /(ChevronsRight|ChevronRight)[\s\S]{0,500}setIsBriefingCollapsed\(true\)|setIsBriefingCollapsed\(true\)[\s\S]{0,500}(ChevronsRight|ChevronRight)/,
-    );
-  });
-
-  it("패널 자체 conditional render — isBriefingCollapsed 분기 (early return 또는 !cond)", () => {
-    // (a) if (isBriefingCollapsed) return null; 또는 (b) !isBriefingCollapsed 조건
-    expect(page).toMatch(/(if\s*\(\s*isBriefingCollapsed\s*\)\s*return\s+null|!isBriefingCollapsed|!\s*briefingCollapsed)/);
-  });
-
-  it("floating expand button — ChevronsLeft + setIsBriefingCollapsed(false) 양방향", () => {
-    expect(page).toMatch(
-      /(ChevronsLeft|ChevronLeft)[\s\S]{0,500}setIsBriefingCollapsed\(false\)|setIsBriefingCollapsed\(false\)[\s\S]{0,500}(ChevronsLeft|ChevronLeft)/,
-    );
-  });
-
-  it("floating expand button — min-[1200px] 한정 + sticky top + right-0", () => {
-    // hidden min-[1200px]:flex 또는 비슷 분기 + sticky + right
-    expect(page).toMatch(/min-\[1200px\]:(?:flex|block|inline-flex)[\s\S]{0,400}(sticky|fixed)[\s\S]{0,200}right-0/);
+  it("collapse button (briefing-collapse-button) 0", () => {
+    expect(page).not.toMatch(/briefing-collapse-button/);
   });
 });
 
-describe("§11.248e-2 #3 — invariant 보존", () => {
-  it("§11.248e breakpoint min-[1200px]:flex w-[480px] 보존", () => {
+describe("§quote-briefing-rail-overlay — 레일 항상 overlay", () => {
+  it("레일 ≥1200 overlay: min-[1200px]:fixed 노출", () => {
+    expect(page).toMatch(/min-\[1200px\]:fixed/);
+  });
+
+  it("1440 push 폐기 — min-[1440px]:sticky / self-start / ml-5 0", () => {
+    expect(page).not.toMatch(/min-\[1440px\]:sticky/);
+    expect(page).not.toMatch(/min-\[1440px\]:self-start/);
+    expect(page).not.toMatch(/min-\[1440px\]:ml-5/);
+  });
+});
+
+describe("§quote-briefing-rail-overlay — 생존 invariant 보존", () => {
+  it("레일 ≥1200 노출 + 480px (hidden min-[1200px]:flex … w-[480px])", () => {
     expect(page).toMatch(/hidden\s+min-\[1200px\]:flex[\s\S]{0,200}w-\[480px\]/);
   });
 
-  it("mobile bottom-sheet min-[1200px]:hidden 보존", () => {
+  it("mobile bottom-sheet min-[1200px]:hidden fixed inset-0 보존", () => {
     expect(page).toMatch(/min-\[1200px\]:hidden\s+fixed\s+inset-0/);
   });
 
-  // §11.279c — OPERATIONAL BRIEFING → 운영 브리핑 한글 swap (호영님 P2 sprint)
-  it("운영 브리핑 헤더 보존 (한글, §11.279c)", () => {
+  it("운영 브리핑 헤더 보존", () => {
     expect(page).toMatch(/운영 브리핑/);
   });
 
@@ -81,16 +76,7 @@ describe("§11.248e-2 #3 — invariant 보존", () => {
     expect(page).toMatch(/selectedQuote && selectedSignals && selectedOpStatus/);
   });
 
-  it("closeQuoteContextRail mutation 보존", () => {
+  it("closeQuoteContextRail mutation 보존 (X·Esc 닫기 경로)", () => {
     expect(page).toMatch(/closeQuoteContextRail/);
-  });
-
-  it("§11.248e break-keep + 44px Button 보존", () => {
-    expect(page).toMatch(/leading-relaxed break-keep/);
-    expect(page).toMatch(/min-h-\[44px\]\s+h-11/);
-  });
-
-  it("§11.248e-2 trace marker comment", () => {
-    expect(page).toMatch(/§11\.248e-2[\s\S]{0,300}(collapse|접힘|토글|briefing|패널)/i);
   });
 });

@@ -97,7 +97,7 @@ describe("§quote-brief-rail-tabs-sian — 회귀 0 (기존 markup/testid/id 보
 
   it("기존 핵심 data-testid 보존", () => {
     const src = readWeb(QUOTES_PAGE);
-    expect(src).toMatch(/data-testid="briefing-collapse-button"/);
+    // §quote-briefing-rail-overlay — briefing-collapse-button testid 단언 retire(접기 폐기, 닫기=X·Esc).
     expect(src).toMatch(/data-testid="quote-dispatch-blocker-summary"/);
     expect(src).toMatch(/data-testid="quote-dispatch-readiness-strip"/);
   });

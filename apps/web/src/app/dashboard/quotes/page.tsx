@@ -30,7 +30,7 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, Package, CheckCircle2, Clock, AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon, Loader2, ScanLine, ChevronDown, ChevronUp, ChevronsRight, ChevronsLeft, Settings2, GripVertical, MoreHorizontal, Check } from "lucide-react";
+import { Search, Filter, Package, CheckCircle2, Clock, AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon, Loader2, ScanLine, ChevronDown, ChevronUp, Settings2, GripVertical, MoreHorizontal, Check } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -362,8 +362,7 @@ const COLUMN_LABEL: Record<ColumnKey, string> = {
 // localStorage key
 const COLUMN_PREFS_LS_KEY = "labaxis-quote-column-prefs";
 
-// §11.248e-2 #quote-briefing-collapse-toggle — 1200px+ Briefing 패널 접힘/펼침 영구화 key.
-const BRIEFING_COLLAPSED_LS_KEY = "labaxis-briefing-collapsed";
+// §quote-briefing-rail-overlay — 접기 영구화 localStorage key 제거(접기 폐기, 레일 항상 overlay).
 
 // 컬럼 폭 guard (px)
 const COLUMN_MIN_WIDTH = 60;
@@ -1226,29 +1225,11 @@ function QuotesPageContent() {
   //   으로 tracking — 별도 state 없이 querySelector("[data-card-index]") + element.focus()
   //   으로 충분. minimum-diff (state 폭증 회피).
 
-  // §11.248e-2 #quote-briefing-collapse-toggle — 호영님 P0 §11.248 #5 잔여 백로그.
-  //   1200px+ Briefing 패널 접힘/펼침 토글 + localStorage 영구화. <1200px 영향 0.
-  //   §11.230c (a)-2 — server-persist 추가 (preferences endpoint reuse).
-  const [isBriefingCollapsed, setIsBriefingCollapsed] = useState(false);
-  // §11.248e-2 — localStorage hydration (backwards compat, server fallback).
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = localStorage.getItem(BRIEFING_COLLAPSED_LS_KEY);
-      if (raw === "true") setIsBriefingCollapsed(true);
-    } catch {
-      // localStorage 차단 환경 graceful fallback (default false)
-    }
-  }, []);
-  // §11.248e-2 — localStorage write on toggle.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      localStorage.setItem(BRIEFING_COLLAPSED_LS_KEY, String(isBriefingCollapsed));
-    } catch {
-      // sandboxed iframe 등에서 localStorage 차단 시 silent skip
-    }
-  }, [isBriefingCollapsed]);
+  // §quote-briefing-rail-overlay (호영님 2026-06-29) — 접기(collapse) 메커니즘 폐기.
+  //   레일 ≥1200 항상 overlay(테이블 풀폭)라 "접어서 폭 회복" 목적 소멸.
+  //   접기 state · 영구화 localStorage key · 세로 edge tab · 서버영속 wiring(§11.230c
+  //   (a)-2 page side) 제거. 닫기 = X(헤더) · Esc(기존). server 필드(preferences route
+  //   zod + helper hook)는 backwards-compat 으로 보존.
 
   // §11.230b hydrate from localStorage (mount only) — backwards compat fallback.
   //   §11.230c (a) server-first 의 fallback chain: server → localStorage → DEFAULT.
@@ -1303,26 +1284,8 @@ function QuotesPageContent() {
     });
   }, [userPrefs.preferences]);
 
-  // §11.230c (a)-2 #briefing-collapsed-server-persist — server-first hydration.
-  //   preferences.briefingCollapsed override localStorage (server canonical).
-  //   server null → §11.248e-2 localStorage hydration 그대로 (backwards compat).
-  useEffect(() => {
-    const serverCollapsed = userPrefs.preferences?.briefingCollapsed;
-    if (typeof serverCollapsed !== "boolean") return;
-    setIsBriefingCollapsed(serverCollapsed);
-  }, [userPrefs.preferences]);
-
-  // §11.230c (a)-2 — debounced server PATCH on isBriefingCollapsed change.
-  //   §11.248e-2 localStorage write 와 양립 (3-layer: state + localStorage + server).
-  //   debounce 400ms = 마지막 클릭만 server 도달 (rapid toggle 차단).
-  // §11.327 — hydratedRef 가드 (feedback loop 차단).
-  useEffect(() => {
-    if (!hydratedRef.current) return; // §11.327 — 첫 hydration 전 skip
-    userPrefs.updateBriefingCollapsed(isBriefingCollapsed);
-    // userPrefs 는 외부 deps 이지만 hook signature 가 stable 보장 (useCallback X
-    // 이지만 react-query setQueryData 가 referential stability 유지).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isBriefingCollapsed]);
+  // §quote-briefing-rail-overlay — §11.230c (a)-2 briefingCollapsed server hydration +
+  //   debounced PATCH effect 제거(접기 폐기). columnPrefs server-persist 는 불변.
 
   // §11.230b write on mutation — localStorage immediate.
   //   §11.230c (a) server-first: localStorage + debounced server PATCH 동시.
@@ -3667,22 +3630,8 @@ function QuotesPageContent() {
       )}
 
       {/* ═══ Quote Context Rail (lg+) ═══ */}
-      {/* §11.248e-2 — 1200px+ Briefing 패널 접힘 시 floating expand button.
-          collapsed && selectedQuote 일 때만 노출. min-[1200px]:flex 으로 1200px+ 한정,
-          <1200px 는 bottom-sheet 분기 유지. sticky top-20 right-0 으로 화면 우측 가장자리 고정. */}
-      {selectedQuote && selectedSignals && selectedOpStatus && isBriefingCollapsed && (
-        <button
-          type="button"
-          onClick={() => setIsBriefingCollapsed(false)}
-          aria-label="Briefing 패널 펼치기"
-          data-testid="briefing-floating-expand"
-          className="hidden min-[1200px]:flex fixed top-20 right-0 z-30 items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold px-2 py-3 rounded-l-md shadow-md transition-colors writing-mode-vertical"
-          style={{ writingMode: "vertical-rl" }}
-        >
-          <ChevronsLeft className="h-4 w-4" />
-          BRIEFING
-        </button>
-      )}
+      {/* §quote-briefing-rail-overlay — 우측 세로 "BRIEFING" edge tab 제거(접기 폐기).
+          레일 진입 = 행 선택, 닫기 = X(헤더) · Esc(기존). 진입점은 우하단 운영 브리핑 FAB(별개 popup)과 분리. */}
       {selectedQuote && selectedSignals && selectedOpStatus && (() => {
         const sqResponseCount = selectedQuote.responses?.length ?? 0;
         // §11.212 — sqDaysSince 인라인 계산 제거 (SSR-CSR Date.now() drift 차단).
@@ -3691,36 +3640,21 @@ function QuotesPageContent() {
         const sqDeadline = selectedQuote.deliveryDate ? new Date(selectedQuote.deliveryDate) : null;
         const sqDaysToDeadline = sqDeadline ? Math.ceil((sqDeadline.getTime() - Date.now()) / 86400000) : null;
 
-        // §11.248e-2 — isBriefingCollapsed=true 시 패널 자체 mount 0 (full hide).
-        //   floating expand button (위쪽 분기) 으로만 펼치기.
-        if (isBriefingCollapsed) return null;
         return (
         /* §11.248e #quote-briefing-panel-responsive — 호영님 P0 견적 관리 #5.
             breakpoint lg (1024px) → min-[1200px] 상향. 1024-1199px 구간 = bottom-sheet 자동 적용
-            (테이블 가용 너비 회복). 1200px+ 에서만 우측 480px 패널.
-            §11.248e-2 — isBriefingCollapsed 분기 + 헤더 우측 접기 button 추가. */
-        /* §quotes-workbench-rail B — push↔overlay breakpoint 분기(호영님 a, threshold 1440px).
-            · ≥1440px: push(min-[1440px]:sticky, in-flow 480px 나란히 — 기존 거동).
-            · 1200–1439px: overlay drawer(min-[1200px]:fixed right-4 top-20 z-30 shadow-2xl) — queue 위에 떠서 덮음, queue 폭 불침범(가로 스크롤 지옥 방지).
+            (테이블 가용 너비 회복). 1200px+ 에서만 우측 480px 패널. */
+        /* §quote-briefing-rail-overlay (호영님 2026-06-29) — 레일 ≥1200 항상 overlay.
+            · ≥1200px: overlay drawer(min-[1200px]:fixed right-4 top-20 z-30 shadow-2xl) — 테이블 위에 떠서 덮음, 테이블 폭 불침범(항상 풀폭, 가로 스크롤 0).
             · <1200px: hidden(모바일 bottom-sheet 분기 — 불변).
-            canonical: rail ≥1200 노출 + w-[480px] 보존(§11.248e sentinel 의도 불변, 위치만 분기). */
-        <div className="hidden min-[1200px]:flex w-[480px] shrink-0 border-l border-bd flex-col bg-pn rounded-xl overflow-hidden min-[1200px]:fixed min-[1200px]:right-4 min-[1200px]:top-20 min-[1200px]:z-30 min-[1200px]:shadow-2xl min-[1440px]:sticky min-[1440px]:right-auto min-[1440px]:z-auto min-[1440px]:shadow-none min-[1440px]:ml-5 min-[1440px]:self-start" style={{ maxHeight: "calc(100vh - 120px)" }}>
+            §quotes-workbench-rail B(1440+ push) supersede — push 폐기, 전 구간 overlay 통일.
+            canonical: rail ≥1200 노출 + w-[480px] 보존. */
+        <div className="hidden min-[1200px]:flex w-[480px] shrink-0 border-l border-bd flex-col bg-pn rounded-xl overflow-hidden min-[1200px]:fixed min-[1200px]:right-4 min-[1200px]:top-20 min-[1200px]:z-30 min-[1200px]:shadow-2xl" style={{ maxHeight: "calc(100vh - 120px)" }}>
           {/* §11.144 Brief header — 운영 브리핑 + 선택한 견적 (lock §11.142, §11.179 eyebrow 통일).
-              §11.248e-2 — 우측에 접기 button (ChevronsRight) 추가. 클릭 시 패널 hide + floating expand button 노출. */}
+              §quote-briefing-rail-overlay — 접기 button 제거. 닫기는 하단 X(closeQuoteContextRail) · Esc. */}
           <div className="px-4 py-2 border-b border-bd bg-el/30 flex items-center justify-between gap-2">
             <span className="text-[11px] font-bold text-blue-700">운영 브리핑</span>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-slate-500 uppercase tracking-wide">선택한 견적</span>
-              <button
-                type="button"
-                onClick={() => setIsBriefingCollapsed(true)}
-                aria-label="Briefing 패널 접기"
-                data-testid="briefing-collapse-button"
-                className="inline-flex items-center justify-center h-6 w-6 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-              >
-                <ChevronsRight className="h-3.5 w-3.5" />
-              </button>
-            </div>
+            <span className="text-[10px] text-slate-500 uppercase tracking-wide">선택한 견적</span>
           </div>
 
           {/* §quote-brief-rail-tabs-sian — 시안 BriefPanel 1:1 탭 전환 (호영님 결정:

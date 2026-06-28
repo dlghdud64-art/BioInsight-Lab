@@ -66,14 +66,14 @@ describe("§11.230c (a)-2 #2 — useUserPreferences hook 확장", () => {
   });
 });
 
-describe("§11.230c (a)-2 #3 — quotes/page.tsx isBriefingCollapsed server-first", () => {
-  it("server hydration useEffect (preferences.briefingCollapsed → setIsBriefingCollapsed)", () => {
-    // server preferences 안 briefingCollapsed 도착 시 setIsBriefingCollapsed 호출 매칭
-    expect(page).toMatch(/preferences[\s\S]{0,500}briefingCollapsed[\s\S]{0,500}setIsBriefingCollapsed/);
-  });
-
-  it("persistence — userPrefs.updateBriefingCollapsed 호출 (debounced server PATCH)", () => {
-    expect(page).toMatch(/updateBriefingCollapsed/);
+// §11.230c (a)-2 #3 — [RETIRED by §quote-briefing-rail-overlay, 호영님 2026-06-29]
+//   접기(collapse) 메커니즘 폐기로 quotes/page.tsx 의 isBriefingCollapsed client
+//   wiring(server hydration + debounced updateBriefingCollapsed PATCH) 제거.
+//   server 필드(route zod + helper hook)는 backwards-compat 으로 보존(#1/#2 GREEN 유지).
+describe("§quote-briefing-rail-overlay — page client 접기 wiring 폐기(RETIRED)", () => {
+  it("page.tsx 에 setIsBriefingCollapsed / updateBriefingCollapsed 호출 0", () => {
+    expect(page).not.toMatch(/setIsBriefingCollapsed/);
+    expect(page).not.toMatch(/updateBriefingCollapsed/);
   });
 });
 
@@ -92,9 +92,10 @@ describe("§11.230c (a)-2 #4 — invariant 보존", () => {
     expect(helper).toMatch(/updateColumnPrefs/);
   });
 
-  it("§11.248e-2 BRIEFING_COLLAPSED_LS_KEY localStorage 보존 (backwards compat)", () => {
-    expect(page).toMatch(/BRIEFING_COLLAPSED_LS_KEY/);
-    expect(page).toMatch(/labaxis-briefing-collapsed/);
+  // §11.248e-2 BRIEFING_COLLAPSED_LS_KEY — [RETIRED] 접기 폐기로 page LS key 제거.
+  it("page.tsx BRIEFING_COLLAPSED_LS_KEY / labaxis-briefing-collapsed 0", () => {
+    expect(page).not.toMatch(/BRIEFING_COLLAPSED_LS_KEY/);
+    expect(page).not.toMatch(/labaxis-briefing-collapsed/);
   });
 
   it("§11.230c (a) columnPrefs server hydration 보존", () => {

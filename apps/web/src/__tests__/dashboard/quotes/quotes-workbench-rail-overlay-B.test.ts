@@ -1,14 +1,14 @@
 /**
- * §quotes-workbench-rail Layer B — rail push↔overlay breakpoint 분기 (호영님 a, threshold 1440px)
+ * §quotes-workbench-rail Layer B — [EVOLVED by §quote-briefing-rail-overlay]
  *
- * 문제: 1200–1439px band에서 rail(480px push)이 queue를 min-width 아래로 밀어 압축.
- * 수정: rail 위치를 breakpoint로 분기 —
- *   · 1200–1439px: overlay drawer(min-[1200px]:fixed right-4 z-30 shadow) — queue 폭 불침범.
- *   · ≥1440px: push(min-[1440px]:sticky, in-flow 480px 나란히).
- *   · <1200px: hidden(모바일 bottom-sheet, 불변).
+ * 원래 §rail B (호영님 a, threshold 1440px): 1200–1439 overlay / ≥1440 push(sticky in-flow 480px 나란히).
  *
- * sentinel 진화 0: 기존 §11.248e 핀(hidden min-[1200px]:flex … w-[480px], 200자 간격)은
- *   className에서 w-[480px]를 flex 직후 유지해 GREEN 보존 — "rail ≥1200 노출+480px" 의도 불변.
+ * ⚠️ 1440 push 반전 (호영님 directed 2026-06-29, 업로드 "견적관리 브리핑 레일 수정 핸드오프"):
+ *   "운영 브리핑은 테이블을 밀어내면 안 되고 위로 떠야 한다." → 레일 ≥1200 **항상 overlay**,
+ *   테이블 항상 풀폭. ≥1440 push(sticky/right-auto/z-auto/shadow-none/ml-5/self-start) 폐기.
+ *
+ * sentinel 진화: push 단언 RETIRE, overlay 단언이 canonical(전 ≥1200 구간 적용).
+ *   회귀 핀(w-[480px] 인접, mobile sheet, 옛 base 무분기 시퀀스 0)은 보존.
  */
 
 import { describe, it, expect } from "vitest";
@@ -18,43 +18,41 @@ import { resolve } from "node:path";
 const PAGE_PATH = resolve(__dirname, "../../../app/dashboard/quotes/page.tsx");
 const page = readFileSync(PAGE_PATH, "utf8");
 
-describe("§quotes-workbench-rail B — push↔overlay 분기", () => {
-  it("1200–1439 overlay: min-[1200px]:fixed + right-4 + z-30 + shadow-2xl", () => {
+describe("§quote-briefing-rail-overlay — 레일 ≥1200 항상 overlay", () => {
+  it("overlay: min-[1200px]:fixed + right-4 + z-30 + shadow-2xl", () => {
     expect(page).toMatch(/min-\[1200px\]:fixed/);
     expect(page).toMatch(/min-\[1200px\]:right-4/);
     expect(page).toMatch(/min-\[1200px\]:z-30/);
     expect(page).toMatch(/min-\[1200px\]:shadow-2xl/);
   });
 
-  it("≥1440 push: min-[1440px]:sticky + right-auto + z-auto + shadow-none (overlay override)", () => {
-    expect(page).toMatch(/min-\[1440px\]:sticky/);
-    expect(page).toMatch(/min-\[1440px\]:right-auto/);
-    expect(page).toMatch(/min-\[1440px\]:z-auto/);
-    expect(page).toMatch(/min-\[1440px\]:shadow-none/);
+  it("≥1440 push 폐기: min-[1440px]:sticky / right-auto / z-auto / shadow-none 0", () => {
+    expect(page).not.toMatch(/min-\[1440px\]:sticky/);
+    expect(page).not.toMatch(/min-\[1440px\]:right-auto/);
+    expect(page).not.toMatch(/min-\[1440px\]:z-auto/);
+    expect(page).not.toMatch(/min-\[1440px\]:shadow-none/);
   });
 
-  it("push band 전용 ml-5 + self-start (in-flow 나란히)", () => {
-    expect(page).toMatch(/min-\[1440px\]:ml-5/);
-    expect(page).toMatch(/min-\[1440px\]:self-start/);
+  it("in-flow 나란히(ml-5 / self-start) 폐기", () => {
+    expect(page).not.toMatch(/min-\[1440px\]:ml-5/);
+    expect(page).not.toMatch(/min-\[1440px\]:self-start/);
   });
 
-  it("§quotes-workbench-rail B trace marker", () => {
-    expect(page).toMatch(/§quotes-workbench-rail B/);
+  it("§quote-briefing-rail-overlay trace marker", () => {
+    expect(page).toMatch(/§quote-briefing-rail-overlay/);
   });
 });
 
-describe("§quotes-workbench-rail B — 회귀 0 (기존 §11.248e 핀 의도 보존)", () => {
-  it("rail ≥1200 노출 + 480px 보존 (hidden min-[1200px]:flex … w-[480px], 진화 0)", () => {
+describe("§quote-briefing-rail-overlay — 회귀 0 (기존 핀 보존)", () => {
+  it("rail ≥1200 노출 + 480px (hidden min-[1200px]:flex … w-[480px])", () => {
     expect(page).toMatch(/hidden\s+min-\[1200px\]:flex[\s\S]{0,200}w-\[480px\]/);
   });
 
-  it("모바일 bottom-sheet min-[1200px]:hidden 불변", () => {
+  it("모바일 bottom-sheet min-[1200px]:hidden fixed inset-0 불변", () => {
     expect(page).toMatch(/min-\[1200px\]:hidden\s+fixed\s+inset-0/);
   });
 
-  it("옛 base 절대 위치(ml-5/sticky/self-start 무분기) 제거 — push는 min-[1440px] 한정", () => {
-    // 옛 className: '...bg-pn ml-5 rounded-xl overflow-hidden self-start sticky top-20'
-    //   → base ml-5/self-start/sticky 무분기 시퀀스 제거(분기로 이전). 회귀 가드.
+  it("옛 base 절대 위치(무분기 sticky/self-start 시퀀스) 0", () => {
     expect(page).not.toMatch(/bg-pn ml-5 rounded-xl overflow-hidden self-start sticky top-20/);
   });
 });

@@ -155,8 +155,9 @@ describe("§11.230c (a) #6 — invariant 보존", () => {
     expect(page).toMatch(/labaxis-quote-column-prefs/);
   });
 
-  it("§11.248e-2 BRIEFING_COLLAPSED_LS_KEY 보존 (별도 cluster)", () => {
-    expect(page).toMatch(/BRIEFING_COLLAPSED_LS_KEY/);
+  // §11.248e-2 BRIEFING_COLLAPSED_LS_KEY — [RETIRED by §quote-briefing-rail-overlay] 접기 폐기.
+  it("§quote-briefing-rail-overlay — page 접기 localStorage key 0", () => {
+    expect(page).not.toMatch(/BRIEFING_COLLAPSED_LS_KEY/);
   });
 
   it("§11.230c (a) trace marker", () => {
