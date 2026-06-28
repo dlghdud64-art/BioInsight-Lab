@@ -25,7 +25,7 @@ describe("§pricing-assistant — 실 백엔드(항상 200+폴백)", () => {
     expect(ROUTE_CODE).not.toMatch(/NEXT_PUBLIC_/);
   });
   it("키 없음/에러 = 200 + 폴백(5xx 금지, window.claude 아님)", () => {
-    expect(ROUTE).toMatch(/catch \{\s*return NextResponse\.json\(\{ answer: FB\[fbKey\] \}, \{ status: 200 \}\)/);
+    expect(ROUTE).toMatch(/catch\s*(?:\([^)]*\))?\s*\{[\s\S]*?return NextResponse\.json\(\{ answer: FB\[fbKey\] \}, \{ status: 200 \}\)/);
     expect(ROUTE_CODE).not.toMatch(/window\.claude/);
     expect(ROUTE_CODE).not.toMatch(/status: 5\d\d/);
   });

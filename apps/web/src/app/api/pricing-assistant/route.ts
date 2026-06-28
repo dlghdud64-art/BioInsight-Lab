@@ -58,7 +58,12 @@ export async function POST(req: Request) {
     });
     const answer = clean(r.content) || FB[fbKey];
     return NextResponse.json({ answer }, { status: 200 });
-  } catch {
+  } catch (e) {
+    // §pricing-assistant-diag (임시 진단) — silent fallback 원인 가시화. 키 값 노출 0, 에러 클래스/HTTP status 만.
+    //   AnthropicKeyMissingError = 키/provider 미설정 · AnthropicHttpError = 인증/모델/rate. 원인 확정 후 제거.
+    const errName = e instanceof Error ? e.name : "unknown";
+    const errStatus = e && typeof e === "object" && "status" in e ? (e as { status?: number }).status : undefined;
+    console.error("[pricing-assistant] LLM fallback:", errName, errStatus ?? "");
     return NextResponse.json({ answer: FB[fbKey] }, { status: 200 }); // 키 없음/에러 전부 200 + 폴백
   }
 }
