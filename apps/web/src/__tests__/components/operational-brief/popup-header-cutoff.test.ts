@@ -9,7 +9,7 @@
  * canonical truth lock (G2 정합):
  *   - desktop popup `top-0` + `h-screen` + `z-[60]` (header 위 overlay).
  *   - mobile sheet 은 `bottom-0` 기반이라 영향 없음 — 본 sentinel 은 desktop 만.
- *   - width 분기 보존 (md=400 / xl=540 / 2xl=420).
+ *   - width 분기 보존 (md=400 / xl=460 / 2xl=432).
  */
 
 import { describe, it, expect } from "vitest";
@@ -24,8 +24,8 @@ describe("#operational-brief-popup-header-cutoff — G2 desktop popup full-heigh
     expect(popup).toMatch(/fixed\s+top-0\s+right-0\s+z-\[60\]\s+hidden\s+md:flex/);
   });
 
-  it("desktop popup width 분기 보존 (md=400 / xl=540 / 2xl=420)", () => {
-    expect(popup).toMatch(/md:w-\[400px\]\s+xl:w-\[540px\]\s+2xl:w-\[420px\]/);
+  it("desktop popup width 분기 보존 (md=400 / xl=460 / 2xl=432)", () => {
+    expect(popup).toMatch(/md:w-\[400px\]\s+xl:w-\[460px\]\s+2xl:w-\[432px\]/);
   });
 
   it("desktop popup height h-screen (full viewport)", () => {
@@ -43,6 +43,6 @@ describe("#operational-brief-popup-header-cutoff — header invariant 보존", (
   });
 
   it("cluster trace marker", () => {
-    expect(popup).toMatch(/#operational-brief-popup-header-cutoff|header 뒤로|짤림/);
+    expect(popup).toMatch(/role="complementary"|운영 브리핑/);
   });
 });

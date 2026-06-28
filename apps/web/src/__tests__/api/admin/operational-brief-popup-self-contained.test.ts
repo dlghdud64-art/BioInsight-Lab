@@ -2,6 +2,10 @@
  * §11.181 #operational-brief-popup-self-contained
  *
  * Provider + Popup + DashboardShell mount + FloatingEntry default 검증.
+ *
+ * §brief-redesign(2026-06-28): 구 구조 블록(3-tier drill-down·6-section·priority/owner·
+ * flex-shrink·ctaLabel/entityRoute) retire. context/shell/FAB/minimize/useIsMobile/
+ * aside·Sheet/eyebrow/shortenCtaLabel-export 보존.
  */
 
 import { describe, it, expect } from "vitest";
@@ -32,7 +36,8 @@ describe("§11.181 OperationalBriefPopupProvider + hook", () => {
   it("context value — isOpen / open / close / selectedItemId / setSelectedItemId", () => {
     const src = read(PATH);
     expect(src).toMatch(/isOpen[^;]*?boolean/);
-    expect(src).toMatch(/open:\s*\(\)\s*=>\s*void/);
+    // §operational-brief-redesign — open 이 open({ category }) 옵션 시그니처로 확장(인자 허용).
+    expect(src).toMatch(/open:\s*\([^)]*\)\s*=>\s*void/);
     expect(src).toMatch(/close:\s*\(\)\s*=>\s*void/);
     expect(src).toMatch(/selectedItemId/);
   });
@@ -89,7 +94,6 @@ describe("§11.181 OperationalBriefPopup Sheet 컴포넌트", () => {
     expect(src).not.toMatch(/md:w-\[480px\]/);
     // desktop rail 너비 400 + flex sibling 강제
     expect(src).toMatch(/md:w-\[400px\]/);
-    expect(src).toMatch(/md:flex-shrink-0/);
     // mobile bottom sheet 는 그대로 fixed bottom-0 (Portal Sheet 패턴)
     expect(src).toMatch(/inset-x-0[\s\S]*?bottom-0[\s\S]*?h-\[85vh\][\s\S]*?rounded-t-2xl/);
   });
@@ -103,86 +107,18 @@ describe("§11.181 OperationalBriefPopup Sheet 컴포넌트", () => {
     expect(src).not.toMatch(/if\s*\(\s*!isMobile\s*\)\s*e\.preventDefault/);
   });
 
-  it("§11.194 3-tier drill-down: category → list → inline expand 분기", () => {
-    const src = read(PATH);
-    // viewMode 'category' (1단계) | 'list' (2+3단계 inline expand)
-    expect(src).toMatch(/viewMode[\s\S]*?["']category["'][\s\S]*?["']list["']/);
-    // PopupCategoryGrid (1단계 카드 grid)
-    expect(src).toMatch(/PopupCategoryGrid/);
-    // PopupCategoryListWithExpand (2단계 list + 3단계 inline expand)
-    expect(src).toMatch(/PopupCategoryListWithExpand/);
-    // PopupItemWithExpand + PopupBriefInline (row card + 3단계 inline AI brief)
-    expect(src).toMatch(/PopupItemWithExpand/);
-    expect(src).toMatch(/PopupBriefInline/);
-    // CATEGORIES array (4 카테고리 매핑) — quote/po/receiving/stock_risk
-    expect(src).toMatch(/module:\s*["']quote["'][\s\S]*?label:\s*["']견적 관리["']/);
-    expect(src).toMatch(/module:\s*["']po["'][\s\S]*?label:\s*["']발주 관리["']/);
-    expect(src).toMatch(/module:\s*["']receiving["'][\s\S]*?label:\s*["']입고 및 검수["']/);
-    expect(src).toMatch(/module:\s*["']stock_risk["'][\s\S]*?label:\s*["']재고 관리["']/);
-  });
-
-  it("§11.198 brief detail — 시안 정합 6-section (AI INSIGHT brand + CRITICAL EVIDENCE + DETECTED RISKS rose + 추천 해결책 + 큰 CTA)", () => {
-    const src = read(PATH);
-    // §11.198 — AI INSIGHT brand banner (LABAXIS AI INSIGHT label + Live indicator)
-    expect(src).toMatch(/LABAXIS AI INSIGHT/);
-    expect(src).toMatch(/Real-time Operations Analysis/);
-    // CRITICAL EVIDENCE 영문 emphasis (시안 정합)
-    expect(src).toMatch(/Critical Evidence/);
-    // DETECTED RISKS — rose 톤 (이전 amber → rose 시안 정합)
-    expect(src).toMatch(/Detected Risks/);
-    expect(src).toMatch(/bg-rose-50[\s\S]*?border-rose-200/);
-    // 추천 해결책 영역 신규 (emerald check)
-    expect(src).toMatch(/추천 해결책/);
-    expect(src).toMatch(/bg-emerald-50[\s\S]*?border-emerald-200/);
-    // 큰 primary CTA (h-12 + text-base)
-    expect(src).toMatch(/h-12 text-base/);
-    // §11.198 — 4-cell MetricCell grid → 2 evidence card 로 변경 (RBAC 정합)
-    const metricCells = src.match(/<MetricCell\b/g) ?? [];
-    expect(metricCells.length).toBe(0);
-  });
-
   it("§11.182/198 — 한국어 eyebrow + raw key 제거 (OPERATIONAL BRIEFING 0)", () => {
     const src = read(PATH);
     // 한국어 "운영 브리핑" eyebrow 사용 (popup top + dock chip)
     expect(src).toMatch(/운영 브리핑/);
     // 영문 OPERATIONAL BRIEFING 비노출
     expect(src).not.toMatch(/OPERATIONAL BRIEFING/);
-    // §11.198 — "상황 요약" / "판단 근거" / "다음 조치" 라벨은 제거 (시안 정합).
-    //   Critical Evidence + Detected Risks + 추천 해결책 + 큰 CTA 로 대체.
-    expect(src).toMatch(/Critical Evidence/);
-    expect(src).toMatch(/추천 해결책/);
-  });
-
-  it("§11.182 — priority enum → 사람 라벨 (즉시/높음/보통/낮음)", () => {
-    const src = read(PATH);
-    expect(src).toMatch(/PRIORITY_HUMAN[\s\S]*?p0:\s*"즉시"/);
-    expect(src).toMatch(/p1:\s*"높음"/);
-    expect(src).toMatch(/p2:\s*"보통"/);
-    expect(src).toMatch(/p3:\s*"낮음"/);
-  });
-
-  it("§11.182/184 — owner raw ID → 사람 라벨 매핑 + prefix fallback + 미배정", () => {
-    const src = read(PATH);
-    expect(src).toMatch(/OWNER_HUMAN_LABEL/);
-    expect(src).toMatch(/"user-inv-001":\s*"재고 운영"/);
-    expect(src).toMatch(/formatOwner/);
-    expect(src).toMatch(/미배정/);
-    // §11.184 — prefix-based smart fallback (raw ID 노출 0)
-    expect(src).toMatch(/OWNER_PREFIX_LABEL/);
-    expect(src).toMatch(/prefix:\s*"user-inv-",\s*label:\s*"재고 운영"/);
-    expect(src).toMatch(/prefix:\s*"user-proc-",\s*label:\s*"구매 운영"/);
-    // 마지막 fallback "담당자" — raw ID 노출 절대 0
-    expect(src).toMatch(/"담당자"/);
   });
 
   it("§11.182/185 — CTA copy = shortenCtaLabel(item.nextAction) + dead button 0", () => {
     const src = read(PATH);
     // §11.185 — shortenCtaLabel 함수 사용
     expect(src).toMatch(/shortenCtaLabel\(item\.nextAction\)/);
-    // ctaLabel falsy 시 CTA 미렌더 (dead button 0)
-    expect(src).toMatch(/\{ctaLabel\s*&&/);
-    // CTA 클릭 시 popup close + entityRoute navigate
-    expect(src).toMatch(/onClose\(\)[\s\S]*?router\.push\(item\.entityRoute\)/);
   });
 
   it("§11.185 — shortenCtaLabel: explicit pattern + 14자 cap + truncate ellipsis", () => {

@@ -73,6 +73,8 @@ export interface UnifiedInboxItem {
     label: string;
     isOverdue: boolean;
     tone: 'normal' | 'due_soon' | 'overdue';
+    /** §brief-redesign — 마감까지 남은 일수(임박마감 계산용). 음수=초과, null=기한없음. resolveDueState 가 항상 채움; optional 로 타 생산처 안전. */
+    daysUntil?: number | null;
   };
   blockedReason?: string;
   /** Korean - what to do next */
@@ -109,7 +111,7 @@ function hoursSince(iso: string): number {
 function resolveDueState(
   dueAt: string | undefined,
 ): UnifiedInboxItem['dueState'] {
-  if (!dueAt) return { label: '기한 없음', isOverdue: false, tone: 'normal' };
+  if (!dueAt) return { label: '기한 없음', isOverdue: false, tone: 'normal', daysUntil: null };
   const now = new Date();
   const due = new Date(dueAt);
   const diffMs = due.getTime() - now.getTime();
@@ -120,6 +122,7 @@ function resolveDueState(
       label: `${Math.abs(Math.floor(diffDays))}일 초과`,
       isOverdue: true,
       tone: 'overdue',
+      daysUntil: Math.ceil(diffDays),
     };
   }
   if (diffDays <= 3) {
@@ -128,12 +131,14 @@ function resolveDueState(
       label: remaining === 0 ? '오늘 마감' : `${remaining}일 남음`,
       isOverdue: false,
       tone: 'due_soon',
+      daysUntil: remaining,
     };
   }
   return {
     label: `${Math.ceil(diffDays)}일 남음`,
     isOverdue: false,
     tone: 'normal',
+    daysUntil: Math.ceil(diffDays),
   };
 }
 

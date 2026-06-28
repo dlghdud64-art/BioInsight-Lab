@@ -1,7 +1,8 @@
 /**
  * #operational-brief-cta-shorten-d1 + #operational-brief-last-updated-label-d2
  *
- * 호영님 production 검증 후 5 axis redesign 의 Batch 1 (D1 + D2).
+ * 호영님 production 검증 후 5 axis redesign 의 Batch 1 (D1).
+ * §brief-redesign(2026-06-28): D2 'last-updated 라벨' 블록 retire — 리디자인에서 마지막분석 라벨 제거.
  *
  * D1 — CTA 잘림: popup primary CTA "비교표 검토 후 공급사 선..." 말줄임. 호영님
  *      spec: "이 패널에서 가장 중요한 액션이거든요. 텍스트가 잘리면 안 돼요."
@@ -32,19 +33,6 @@ describe("#operational-brief-cta-shorten-d1 — 비교표 검토 매핑 source g
 
   it("CTA_MAX_LENGTH 14 보존 (기존 truncate 패턴)", () => {
     expect(popup).toMatch(/CTA_MAX_LENGTH\s*=\s*14/);
-  });
-});
-
-describe("#operational-brief-last-updated-label-d2 — '마지막 분석' 라벨", () => {
-  it("popup.tsx 의 'Last Updated' 라벨이 한국어 '마지막 분석' 으로 swap", () => {
-    // Line 754 영역 — `Last Updated · {lastUpdatedLabel}` → `마지막 분석 · ...`.
-    // 영문 "Last Updated" 잔존하지 않음.
-    expect(popup).not.toMatch(/Last Updated\s*·/);
-    expect(popup).toMatch(/마지막 분석\s*·/);
-  });
-
-  it("cluster trace marker", () => {
-    expect(popup).toMatch(/#operational-brief-last-updated-label-d2|마지막 분석|D2/);
   });
 });
 

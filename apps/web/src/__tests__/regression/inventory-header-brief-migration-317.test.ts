@@ -7,7 +7,7 @@
  *
  *   spec §11.313 의 5 phase 계획:
  *   - Phase 2: 헤더 폐기 strip 제거 + KPI 4 + 배너
- *   - Phase 3: 운영 브리핑 stock_risk 카드 강화 (5 카드)
+ *   - Phase 3: 운영 브리핑 stock_risk 카드 강화 (5 카드) [§brief-redesign 2026-06-28 retire — 단일큐 리디자인으로 5카드 제거, 본 sentinel 의 popup 5-card describe retire]
  *   - Phase 4: banner onClick → openBrief({ category: "stock_risk" }) wiring
  *   - Phase 5: 모바일 patterns + 회귀 통합
  *
@@ -31,7 +31,6 @@ function read(rel: string): string {
 }
 
 const INVENTORY_CONTENT = "src/app/dashboard/inventory/inventory-content.tsx";
-const POPUP = "src/components/operational-brief/popup.tsx";
 const POPUP_CONTEXT = "src/components/operational-brief/popup-context.tsx";
 
 describe("§11.317 — 재고 헤더: 폐기 strip 제거 + KPI 4 + 1줄 배너", () => {
@@ -84,23 +83,6 @@ describe("§11.317 — 재고 헤더: 폐기 strip 제거 + KPI 4 + 1줄 배너"
   });
 });
 
-describe("§11.317 — 운영 브리핑 stock_risk 카드 강화 (5 카드)", () => {
-  it("폐기 처분 / 만료 Lot / 폐기 영향 분석 / 처리 우선순위 / Lot 점검 5 카드 노출", () => {
-    const src = read(POPUP);
-    expect(src).toMatch(/data-testid="operational-brief-stock-risk-disposal-card"/);
-    expect(src).toMatch(/data-testid="operational-brief-stock-risk-expired-lot-card"/);
-    expect(src).toMatch(/data-testid="operational-brief-stock-risk-disposal-impact-card"/);
-    expect(src).toMatch(/data-testid="operational-brief-stock-risk-priority-card"/);
-    expect(src).toMatch(/data-testid="operational-brief-stock-risk-lot-check-card"/);
-  });
-
-  it("각 카드 액션 = 폐기 검토 탭 deep link (dead button 0, real route)", () => {
-    const src = read(POPUP);
-    // 308e SmartReceivingStatusCard 와 동일 deep link
-    expect(src).toMatch(/\/dashboard\/inventory\?filter=lot_issue&tab=overview/);
-  });
-});
-
 describe("§11.317 — popup-context selectedCategory API 확장 + open({ category })", () => {
   it("OperationalBriefPopupContextValue 에 selectedCategory + setSelectedCategory 노출", () => {
     const src = read(POPUP_CONTEXT);
@@ -115,7 +97,9 @@ describe("§11.317 — popup-context selectedCategory API 확장 + open({ catego
 
   it("noop fallback 도 selectedCategory + setSelectedCategory 포함", () => {
     const src = read(POPUP_CONTEXT);
-    expect(src).toMatch(/NOOP_VALUE[\s\S]{0,400}selectedCategory:/);
-    expect(src).toMatch(/NOOP_VALUE[\s\S]{0,400}setSelectedCategory:/);
+    // §operational-brief-redesign — noop open() 의 multi-line console.warn 으로 selectedCategory 까지 거리 542자.
+    //   window 400→700 (기능: NOOP_VALUE 가 selectedCategory/setSelectedCategory 포함, 거리만 늘어남).
+    expect(src).toMatch(/NOOP_VALUE[\s\S]{0,700}selectedCategory:/);
+    expect(src).toMatch(/NOOP_VALUE[\s\S]{0,700}setSelectedCategory:/);
   });
 });
