@@ -59,11 +59,13 @@ export async function POST(req: Request) {
     const answer = clean(r.content) || FB[fbKey];
     return NextResponse.json({ answer }, { status: 200 });
   } catch (e) {
-    // §pricing-assistant-diag (임시 진단) — silent fallback 원인 가시화. 키 값 노출 0, 에러 클래스/HTTP status 만.
-    //   AnthropicKeyMissingError = 키/provider 미설정 · AnthropicHttpError = 인증/모델/rate. 원인 확정 후 제거.
+    // §pricing-assistant-diag (임시 진단) — silent fallback 원인 가시화. 키 값 노출 0, 에러 클래스/HTTP status/응답 본문(provider 에러 type)만.
+    //   AnthropicKeyMissingError = 키/provider 미설정 · AnthropicHttpError = 인증/모델/rate.
+    //   bodyText = provider 의 에러 JSON (예: insufficient_quota / rate_limit_exceeded / invalid_api_key) — 키 값 미포함. 원인 확정 후 제거.
     const errName = e instanceof Error ? e.name : "unknown";
     const errStatus = e && typeof e === "object" && "status" in e ? (e as { status?: number }).status : undefined;
-    console.error("[pricing-assistant] LLM fallback:", errName, errStatus ?? "");
+    const errBody = e && typeof e === "object" && "bodyText" in e ? String((e as { bodyText?: string }).bodyText ?? "").slice(0, 300) : "";
+    console.error("[pricing-assistant] LLM fallback:", errName, errStatus ?? "", errBody);
     return NextResponse.json({ answer: FB[fbKey] }, { status: 200 }); // 키 없음/에러 전부 200 + 폴백
   }
 }
