@@ -35,7 +35,7 @@ const DEFAULT_CONFIG: CsrfRouteConfig = {
 };
 
 // ═══════════════════════════════════════════════════════
-// Exempt Routes (9건)
+// Exempt Routes (10건)
 // CSRF 보호 대상에서 제외 — 각각 고유한 인증 방식 보유
 // ═══════════════════════════════════════════════════════
 
@@ -51,6 +51,7 @@ const EXEMPT_ROUTES: ReadonlyArray<{ pattern: string; reason: string }> = [
   { pattern: '/api/mobile/auth/refresh',                reason: 'bearer_token_auth' },
   { pattern: '/api/vendor/auth/send-link',              reason: 'vendor_token_auth' },
   { pattern: '/api/vendor/quotes/[quoteId]/response',   reason: 'vendor_token_auth' },
+  { pattern: '/api/pricing-assistant',                  reason: 'public_stateless_llm' },
 ];
 
 // ═══════════════════════════════════════════════════════
