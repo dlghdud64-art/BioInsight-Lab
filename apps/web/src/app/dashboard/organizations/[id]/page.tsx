@@ -149,6 +149,8 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   const [searchQuery, setSearchQuery] = useState("");
   const [permissionDialogOpen, setPermissionDialogOpen] = useState(false);
   const [permissionDialogMember, setPermissionDialogMember] = useState<TeamMemberRow | null>(null);
+  // §org-role-review (호영님 2026-06-27) — 헤더 "권한 검토" → 역할 매트릭스 + 멤버 권한 모달.
+  const [roleReviewOpen, setRoleReviewOpen] = useState(false);
   const [memberStatusFilter, setMemberStatusFilter] = useState<"all" | "active" | "pending" | "inactive">("all");
   // §org-activity-actor-filter — 카테고리 칩(멤버·권한·설정 등 항상 빈 필터) 제거 → 실제 행위자 필터.
   const [activityActorFilter, setActivityActorFilter] = useState<string>("전체");
@@ -543,10 +545,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                 variant="outline"
                 size="sm"
                 className="border-slate-200 text-slate-600 hover:bg-slate-100"
-                onClick={() => {
-                  const tabEl = document.querySelector('[data-state][value="members"]') as HTMLElement;
-                  tabEl?.click();
-                }}
+                onClick={() => setRoleReviewOpen(true)}
               >
                 <ShieldCheck className="h-4 w-4 mr-1.5" />
                 권한 검토
@@ -561,6 +560,82 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
           </Link>
         </div>
       </div>
+
+      {/* §org-role-review — 권한 검토 모달: 실 멤버 권한 + 역할별 권한 범위 매트릭스(정보성, 편집 아님). */}
+      <Dialog open={roleReviewOpen} onOpenChange={setRoleReviewOpen}>
+        <DialogContent className="sm:max-w-2xl bg-white max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-slate-900">
+              <ShieldCheck className="h-5 w-5 text-emerald-600" />권한 검토
+            </DialogTitle>
+            <DialogDescription>멤버별 역할과 역할별 권한 범위를 확인합니다.</DialogDescription>
+          </DialogHeader>
+
+          {/* 멤버 권한 — 실 멤버 데이터 */}
+          <div>
+            <p className="text-sm font-semibold text-slate-900 mb-2">멤버 권한 <span className="text-slate-400">({teamMembers.length})</span></p>
+            <div className="rounded-lg border border-slate-200 divide-y divide-slate-100">
+              {teamMembers.length === 0 ? (
+                <p className="px-3 py-6 text-center text-sm text-slate-400">멤버가 없습니다.</p>
+              ) : (
+                teamMembers.map((m) => (
+                  <div key={m.memberId} className="flex items-center gap-3 px-3 py-2.5">
+                    <span className="h-8 w-8 rounded-full bg-slate-100 text-slate-600 text-xs font-bold flex items-center justify-center flex-shrink-0">{m.initial}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-800 truncate">{m.name}{m.isMe && <span className="text-[10px] text-blue-500 ml-1">(나)</span>}</p>
+                      <p className="text-xs text-slate-400 truncate">{m.email}</p>
+                    </div>
+                    <Badge variant="secondary" className="bg-slate-100 text-slate-600 text-xs flex-shrink-0">{ROLE_LABELS[m.rawRole || ""] ?? m.rawRole ?? "—"}</Badge>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* 역할별 권한 범위 — 누적 매트릭스(정보성) */}
+          <div>
+            <p className="text-sm font-semibold text-slate-900 mb-1">역할별 권한 범위</p>
+            <p className="text-[11px] text-slate-500 mb-2">아래로 갈수록 권한이 누적됩니다. 색이 채워진 항목이 해당 역할이 가진 권한입니다.</p>
+            <div className="rounded-lg border border-slate-200 overflow-hidden">
+              <div className="grid grid-cols-[1fr_repeat(5,38px)] items-center bg-slate-50 border-b border-slate-200 px-3 py-2">
+                <span />
+                {["조회", "요청", "승인", "관리", "삭제"].map((c) => (
+                  <span key={c} className="text-[10px] font-bold text-slate-400 text-center">{c}</span>
+                ))}
+              </div>
+              {[
+                { role: "VIEWER", desc: "조직 내 데이터 조회만 가능", caps: [1, 0, 0, 0, 0] },
+                { role: "REQUESTER", desc: "견적 요청, 재고 등록 등 요청 생성", caps: [1, 1, 0, 0, 0] },
+                { role: "APPROVER", desc: "요청된 견적/구매를 승인 또는 반려", caps: [1, 1, 1, 0, 0] },
+                { role: "ADMIN", desc: "멤버 관리, 설정 변경, 전체 운영", caps: [1, 1, 1, 1, 0] },
+                { role: "OWNER", desc: "최고 관리자. 조직 삭제, 소유권 이전", caps: [1, 1, 1, 1, 1] },
+              ].map((item) => (
+                <div key={item.role} className="grid grid-cols-[1fr_repeat(5,38px)] items-center px-3 py-2.5 border-b border-slate-100 last:border-b-0">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-slate-700">{ROLE_LABELS[item.role]}</p>
+                      <Badge variant="secondary" className="bg-slate-100 text-slate-400 text-[9px] px-1.5 py-0">{item.role}</Badge>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-0.5">{item.desc}</p>
+                  </div>
+                  {item.caps.map((on, i) => (
+                    <span key={i} className={`w-5 h-5 mx-auto rounded-md ${on ? "bg-emerald-500" : "bg-slate-100"}`} aria-label={on ? "허용" : "미허용"} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-1">
+            <Button variant="outline" size="sm" onClick={() => setRoleReviewOpen(false)}>닫기</Button>
+            {isAdmin && (
+              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => { setRoleReviewOpen(false); const tabEl = document.querySelector('[data-state][value="members"]') as HTMLElement; tabEl?.click(); }}>
+                멤버 역할 편집
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* §org-management-redesign P3 — KPI 6박스 → 요약 한 줄 바(시안). 실 5지표 유지, 가짜 "최근 7일 활동"(mock count) 제거. */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
