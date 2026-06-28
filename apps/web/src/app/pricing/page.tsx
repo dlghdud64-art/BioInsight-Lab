@@ -141,6 +141,33 @@ const FAQ_DATA = [
   },
 ];
 
+/* §pricing-handoff D12 — 도입 범위 비교 9행 (데스크탑 표 + 모바일 세로 스택 공유 SoT). */
+const COMPARISON_ROWS: TableRow[] = [
+                      { feature: "검색·후보 정리", starter: "기본", team: "팀 공유", business: "check", businessLabel: "조직 공용", enterprise: "check", enterpriseLabel: "멀티 조직" },
+                      { feature: "비교·선택안 정리", starter: "none", team: "기본", business: "check", businessLabel: "운영형 비교", enterprise: "check", enterpriseLabel: "조직 기준" },
+                      { feature: "요청 생성·기록 공유", starter: "none", team: "초안·공유", business: "check", businessLabel: "운영형 관리", enterprise: "check", enterpriseLabel: "조직 기준" },
+                      { feature: "구매 준비·운영 큐", starter: "none", team: "none", business: "check", enterprise: "check" },
+                      { feature: "입고 반영·재고 운영", starter: "기본 등록", team: "상태 공유", business: "check", businessLabel: "운영 반영", enterprise: "check", enterpriseLabel: "조직 운영" },
+                      // §pricing-redesign P3 — 라벨 스캔 훅(Free 월 10회 / 이상 무제한, P2b enforce 정합) + LOT/GMP 추적(Pro, P2a 게이팅 정합).
+                      { feature: "라벨 스캔 (월)", starter: "10회", team: "무제한", business: "무제한", enterprise: "무제한" },
+                      { feature: "LOT / GMP 추적", starter: "none", team: "none", business: "check", businessLabel: "GMP 추적", enterprise: "check", enterpriseLabel: "조직 정책" },
+                      { feature: "예산·권한 기준", starter: "none", team: "기본 권한", business: "check", businessLabel: "운영 기준", enterprise: "check", enterpriseLabel: "정책/감사" },
+                      { feature: "외부 시스템 연결", starter: "none", team: "기본", business: "check", businessLabel: "확장", enterprise: "check", enterpriseLabel: "내부 연동" },
+];
+
+/* §pricing-handoff D12 — 모바일 세로 스택용 플랜 열 메타. */
+const COMPARE_PLANS: {
+  key: "starter" | "team" | "business" | "enterprise";
+  labelKey?: "businessLabel" | "enterpriseLabel";
+  label: string;
+  highlight?: boolean;
+}[] = [
+  { key: "starter", label: "Free" },
+  { key: "team", label: "Basic" },
+  { key: "business", labelKey: "businessLabel", label: "Pro", highlight: true },
+  { key: "enterprise", labelKey: "enterpriseLabel", label: "Enterprise" },
+];
+
 export default function PricingPage() {
   const [annual, setAnnual] = useState(false);
   // §pricing-prelaunch — 연간 가격은 명시 월환산(priceAnnualMonthlyKrw). 배수 계산 폐기.
@@ -354,7 +381,7 @@ export default function PricingPage() {
                 §11.201e — items-stretch + 카드 h-full 로 카드 높이 통일 유지. */}
             <div
               ref={carouselRef}
-              className="flex snap-x snap-mandatory overflow-x-auto gap-4 pt-6 pb-2 items-stretch
+              className="flex snap-x snap-mandatory overflow-x-auto gap-4 pt-12 pb-2 items-stretch
                 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
                 min-[561px]:grid min-[561px]:grid-cols-2 min-[561px]:gap-6 min-[561px]:overflow-x-visible min-[561px]:pt-0
                 min-[981px]:grid-cols-4"
@@ -497,7 +524,8 @@ export default function PricingPage() {
               <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center" style={{ color: P.text1 }}>도입 범위 비교</h2>
             </Reveal>
             <Reveal delay={0.1}>
-              <div className="overflow-x-auto rounded-2xl -mx-2 px-2 md:mx-0 md:px-0" style={{ border: `1px solid ${P.border}`, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+              {/* §pricing-handoff D12 — 데스크탑/태블릿(md+): 표 */}
+              <div className="hidden md:block overflow-x-auto rounded-2xl -mx-2 px-2 md:mx-0 md:px-0" style={{ border: `1px solid ${P.border}`, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
                 <table className="w-full min-w-[640px] text-left border-separate border-spacing-0" style={{ backgroundColor: P.bg }}>
                   <thead>
                     <tr style={{ backgroundColor: P.bgSoft }}>
@@ -510,18 +538,7 @@ export default function PricingPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {([
-                      { feature: "검색·후보 정리", starter: "기본", team: "팀 공유", business: "check", businessLabel: "조직 공용", enterprise: "check", enterpriseLabel: "멀티 조직" },
-                      { feature: "비교·선택안 정리", starter: "none", team: "기본", business: "check", businessLabel: "운영형 비교", enterprise: "check", enterpriseLabel: "조직 기준" },
-                      { feature: "요청 생성·기록 공유", starter: "none", team: "초안·공유", business: "check", businessLabel: "운영형 관리", enterprise: "check", enterpriseLabel: "조직 기준" },
-                      { feature: "구매 준비·운영 큐", starter: "none", team: "none", business: "check", enterprise: "check" },
-                      { feature: "입고 반영·재고 운영", starter: "기본 등록", team: "상태 공유", business: "check", businessLabel: "운영 반영", enterprise: "check", enterpriseLabel: "조직 운영" },
-                      // §pricing-redesign P3 — 라벨 스캔 훅(Free 월 10회 / 이상 무제한, P2b enforce 정합) + LOT/GMP 추적(Pro, P2a 게이팅 정합).
-                      { feature: "라벨 스캔 (월)", starter: "10회", team: "무제한", business: "무제한", enterprise: "무제한" },
-                      { feature: "LOT / GMP 추적", starter: "none", team: "none", business: "check", businessLabel: "GMP 추적", enterprise: "check", enterpriseLabel: "조직 정책" },
-                      { feature: "예산·권한 기준", starter: "none", team: "기본 권한", business: "check", businessLabel: "운영 기준", enterprise: "check", enterpriseLabel: "정책/감사" },
-                      { feature: "외부 시스템 연결", starter: "none", team: "기본", business: "check", businessLabel: "확장", enterprise: "check", enterpriseLabel: "내부 연동" },
-                    ] as TableRow[]).map((row, i) => (
+                    {COMPARISON_ROWS.map((row, i) => (
                       <tr key={row.feature} style={{ borderTop: `1px solid ${P.border}`, backgroundColor: i % 2 === 0 ? P.bg : P.bgSoft }}>
                         <td className="p-3 md:p-5 font-medium text-xs md:text-sm whitespace-nowrap" style={{ color: P.text1 }}>{row.feature}</td>
                         <td className="p-3 md:p-5 text-center"><CellValue value={row.starter} /></td>
@@ -532,6 +549,24 @@ export default function PricingPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+              {/* §pricing-handoff D12 (호영님 2026-06-28) — 모바일: 플랜별 세로 스택 (가로 스크롤 폐기). */}
+              <div className="md:hidden space-y-4">
+                {COMPARE_PLANS.map((plan) => (
+                  <div key={plan.key} className="rounded-2xl overflow-hidden" style={{ border: `1px solid ${P.border}`, backgroundColor: P.bg }}>
+                    <div className="px-4 py-3 text-sm font-bold" style={{ backgroundColor: P.bgSoft, color: P.text1 }}>{plan.label}</div>
+                    <dl>
+                      {COMPARISON_ROWS.map((row) => (
+                        <div key={row.feature} className="flex items-center justify-between gap-3 px-4 py-2.5" style={{ borderTop: `1px solid ${P.border}` }}>
+                          <dt className="text-xs" style={{ color: P.text3 }}>{row.feature}</dt>
+                          <dd className="text-right text-sm">
+                            <CellValue value={row[plan.key]} label={plan.labelKey ? row[plan.labelKey] : undefined} highlight={plan.highlight} />
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                ))}
               </div>
             </Reveal>
           </div>

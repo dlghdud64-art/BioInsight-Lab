@@ -44,7 +44,8 @@ describe("§pricing-redesign P3 — 게이트(회귀 0)", () => {
   // §pricing-prelaunch — 연간 = 약 11% 할인 · 출시 후 적용. "1개월 무료"/"10% 할인" 폐기.
   it("연간 약 11% 할인 표기 · 1개월무료/10%할인 0", () => {
     expect(PRICING).toMatch(/약 11% 할인/);
-    expect(PRICING).not.toMatch(/1개월 무료/);
+    // §pricing-handoff D4 — 연간 할인 "1개월 무료" 프레이밍만 금지, trial "1개월 무료체험" 허용.
+    expect(PRICING).not.toMatch(/1개월 무료(?!체험)/);
     expect(PRICING).not.toMatch(/10% 할인/);
   });
   it("Enterprise 정찰가 미표기 — Custom + 영업 문의 CTA", () => {
