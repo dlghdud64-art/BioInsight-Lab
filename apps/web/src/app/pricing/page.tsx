@@ -519,20 +519,20 @@ export default function PricingPage() {
                     <tr style={{ backgroundColor: P.bgSoft }}>
                       <th className="px-2 py-3 md:p-5 text-xs uppercase tracking-wider font-bold whitespace-nowrap" style={{ color: P.text4 }}>운영 항목</th>
                       {/* §11.304 — 비교 표 헤더 티어명 정합 (Starter→Free / Lab Team→Basic / R&D Operations→Pro). */}
-                      <th className="px-2 py-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap" style={{ color: P.text2 }}>Free</th>
-                      <th className="px-2 py-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap" style={{ color: P.text1 }}>Basic</th>
-                      <th className="px-2 py-3 md:p-5 text-center text-xs md:text-sm font-bold whitespace-nowrap" style={{ color: P.text1 }}>Pro</th>
-                      <th className="px-2 py-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap" style={{ color: P.text2 }}>Enterprise</th>
+                      <th className="px-2 py-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap border-l border-slate-200" style={{ color: P.text2 }}>Free</th>
+                      <th className="px-2 py-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap border-l border-slate-200" style={{ color: P.text1 }}>Basic</th>
+                      <th className="px-2 py-3 md:p-5 text-center text-xs md:text-sm font-bold whitespace-nowrap border-l border-slate-200" style={{ color: P.text1 }}>Pro</th>
+                      <th className="px-2 py-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap border-l border-slate-200" style={{ color: P.text2 }}>Enterprise</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {COMPARISON_ROWS.map((row, i) => (
-                      <tr key={row.feature} style={{ borderTop: `1px solid ${P.border}`, backgroundColor: i % 2 === 0 ? P.bg : P.bgSoft }}>
+                    {COMPARISON_ROWS.map((row) => (
+                      <tr key={row.feature} style={{ borderTop: `1px solid ${P.border}`, backgroundColor: P.bg }}>
                         <td className="px-2 py-3 md:p-5 font-medium text-[11px] md:text-sm leading-tight whitespace-normal md:whitespace-nowrap" style={{ color: P.text1 }}>{row.feature}</td>
-                        <td className="px-2 py-3 md:p-5 text-center"><CellValue value={row.starter} /></td>
-                        <td className="px-2 py-3 md:p-5 text-center"><CellValue value={row.team} /></td>
-                        <td className="px-2 py-3 md:p-5 text-center"><CellValue value={row.business} label={row.businessLabel} highlight /></td>
-                        <td className="px-2 py-3 md:p-5 text-center"><CellValue value={row.enterprise} label={row.enterpriseLabel} /></td>
+                        <td className="px-2 py-3 md:p-5 text-center border-l border-slate-200"><CellValue value={row.starter} /></td>
+                        <td className="px-2 py-3 md:p-5 text-center border-l border-slate-200"><CellValue value={row.team} /></td>
+                        <td className="px-2 py-3 md:p-5 text-center border-l border-slate-200"><CellValue value={row.business} label={row.businessLabel} highlight /></td>
+                        <td className="px-2 py-3 md:p-5 text-center border-l border-slate-200"><CellValue value={row.enterprise} label={row.enterpriseLabel} /></td>
                       </tr>
                     ))}
                   </tbody>
