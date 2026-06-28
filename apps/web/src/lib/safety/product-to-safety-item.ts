@@ -17,6 +17,8 @@
  *  - loc/lastInspection = Product 에 없음 → "" / null (입고·점검 연계는 후속)
  */
 import type { SafetyItemInput, SafetyLevel, ActionStatus } from "@/lib/ai/safety-decision-engine";
+// §msds-version-validation — 버전상태 휴리스틱 분류(단일 카운트 소스).
+import { classifyMsdsVersion, type MsdsVersionStatus, type MsdsVersionSummary } from "@/lib/safety/msds-version";
 
 export interface SafetyApiProduct {
   id: string;
@@ -28,7 +30,15 @@ export interface SafetyApiProduct {
   pictograms?: unknown;
   ppe?: unknown;
   createdAt?: string | null;
-  sdsDocuments?: Array<{ id: string; createdAt?: string | null }>;
+  sdsDocuments?: Array<{
+    id: string;
+    createdAt?: string | null;
+    // §msds-version-validation — 버전상태 분류 입력.
+    docVersion?: string | null;
+    issuedAt?: string | null;
+    expiresAt?: string | null;
+    supersededAt?: string | null;
+  }>;
 }
 
 const PICTO_KEYS = ["corrosive", "toxic", "flammable", "oxidizer"] as const;
@@ -43,11 +53,14 @@ export interface SafetyAdapterResult {
   items: SafetyItemInput[];
   /** 로컬 number id → 실 Product.id (SDS/액션 deep-link). */
   productIdByLocalId: Record<number, string>;
+  /** §msds-version-validation — 버전상태 집계(단일 카운트 소스). 출처 없음=문서/메타 없음. */
+  msdsVersionSummary: MsdsVersionSummary;
 }
 
 export function adaptSafetyProducts(products: SafetyApiProduct[]): SafetyAdapterResult {
   const items: SafetyItemInput[] = [];
   const productIdByLocalId: Record<number, string> = {};
+  const msdsVersionSummary: MsdsVersionSummary = { current: 0, stale: 0, unknown: 0, total: products.length };
 
   products.forEach((p, idx) => {
     const localId = idx + 1;
@@ -64,6 +77,9 @@ export function adaptSafetyProducts(products: SafetyApiProduct[]): SafetyAdapter
     const level: SafetyLevel = isHighRisk ? "HIGH" : pictograms.length > 0 ? "MEDIUM" : "LOW";
     const actionStatus: ActionStatus = hasMsds ? "normal" : "action_required";
     const latestSds = p.sdsDocuments && p.sdsDocuments.length > 0 ? p.sdsDocuments[0] : null;
+    // §msds-version-validation — 최신 SDS 문서 메타로 버전상태 분류. 문서 없으면 출처 없음(unknown).
+    const versionStatus: MsdsVersionStatus = latestSds ? classifyMsdsVersion(latestSds) : "unknown";
+    msdsVersionSummary[versionStatus] += 1;
 
     items.push({
       id: localId,
@@ -83,5 +99,5 @@ export function adaptSafetyProducts(products: SafetyApiProduct[]): SafetyAdapter
     });
   });
 
-  return { items, productIdByLocalId };
+  return { items, productIdByLocalId, msdsVersionSummary };
 }
