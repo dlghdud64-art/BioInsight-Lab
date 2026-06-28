@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { MainHeader } from "@/app/_components/main-header";
 import { MainFooter } from "@/app/_components/main-footer";
 import { MainLayout } from "@/app/_components/main-layout";
@@ -157,6 +157,19 @@ export default function PricingPage() {
   const [leadCompany, setLeadCompany] = useState("");
   const [leadName, setLeadName] = useState("");
 
+  // §pricing-handoff D9 (호영님 2026-06-28) — 모바일 캐러셀: 스크롤바 숨김 + 터치 외(데스크탑 협폭)
+  //   넘길 수단 부재 → 힌트 ← → 를 실 클릭 버튼으로 전환(터치 스와이프 병행). dead hint 해소.
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const scrollCarousel = useCallback((dir: -1 | 1) => {
+    const el = carouselRef.current;
+    if (!el) return;
+    const firstCard = el.firstElementChild as HTMLElement | null;
+    const amount = firstCard
+      ? firstCard.getBoundingClientRect().width + 16
+      : Math.round(el.clientWidth * 0.85);
+    el.scrollBy({ left: dir * amount, behavior: "smooth" });
+  }, []);
+
   /**
    * 플랜 선택 단일 진입점.
    * 여기서 하드코딩 /auth/signin 으로 보내지 않고, 서버 resolver 를 통해
@@ -311,19 +324,36 @@ export default function PricingPage() {
             정합. featured 카드는 "가장 많이 선택" 추천 (Basic 티어) — dark navy. */}
         <section id="plans" className="py-8 md:py-12" style={{ backgroundColor: P.bgSoft }}>
           <div className="max-w-7xl mx-auto px-6 md:px-8">
-            {/* §pricing-carousel — 모바일 전용 스와이프 힌트(≤560). 데스크톱/태블릿 숨김. */}
+            {/* §pricing-carousel — 모바일 전용 스와이프 힌트(≤560). §pricing-handoff D9 — ← → 실 버튼(넘김 수단). */}
             <div
-              className="flex min-[561px]:hidden items-center justify-center gap-2 mb-4 text-xs font-semibold"
+              className="flex min-[561px]:hidden items-center justify-center gap-3 mb-4 text-xs font-semibold"
               style={{ color: P.text3 }}
             >
-              <ArrowRight className="h-3.5 w-3.5 rotate-180" style={{ color: P.blue }} />
+              <button
+                type="button"
+                aria-label="이전 플랜"
+                onClick={() => scrollCarousel(-1)}
+                className="h-10 w-10 flex items-center justify-center rounded-full transition-all hover:brightness-95 active:scale-95"
+                style={{ border: `1px solid ${P.border}`, backgroundColor: P.bg }}
+              >
+                <ArrowRight className="h-4 w-4 rotate-180" style={{ color: P.blue }} />
+              </button>
               좌우로 넘겨 플랜을 비교하세요
-              <ArrowRight className="h-3.5 w-3.5" style={{ color: P.blue }} />
+              <button
+                type="button"
+                aria-label="다음 플랜"
+                onClick={() => scrollCarousel(1)}
+                className="h-10 w-10 flex items-center justify-center rounded-full transition-all hover:brightness-95 active:scale-95"
+                style={{ border: `1px solid ${P.border}`, backgroundColor: P.bg }}
+              >
+                <ArrowRight className="h-4 w-4" style={{ color: P.blue }} />
+              </button>
             </div>
             {/* §pricing-carousel (호영님 2026-06-27) — 데스크톱(≥981) 4열 / 태블릿(561~980) 2열 /
                 모바일(≤560) 가로 스와이프 캐러셀(peek 84% + snap). 기능 목록 항상 노출(아코디언 X).
                 §11.201e — items-stretch + 카드 h-full 로 카드 높이 통일 유지. */}
             <div
+              ref={carouselRef}
               className="flex snap-x snap-mandatory overflow-x-auto gap-4 pt-6 pb-2 items-stretch
                 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
                 min-[561px]:grid min-[561px]:grid-cols-2 min-[561px]:gap-6 min-[561px]:overflow-x-visible min-[561px]:pt-0
