@@ -123,11 +123,13 @@ export default auth(async (req) => {
   // disappears entirely — there is no /test/* or /_workbench/* URL
   // for an unauthenticated request to hit. The /test/ branch in
   // §11.23's defense-in-depth gate is retired with this rename.
+  // §auth-logout-guard — bare route(`/dashboard` 등)는 `startsWith('/dashboard/')`
+  //   (슬래시 포함)가 놓쳐 비로그인 redirect 누락 → 홈만 false-empty 렌더.
+  //   exact match 를 추가해 홈 라우트까지 가드 (하위는 기존 startsWith 유지).
   if (
-    pathname.startsWith('/app/') ||
-    pathname.startsWith('/dashboard/') ||
-    pathname === '/admin' ||
-    pathname.startsWith('/admin/')
+    pathname === '/app' || pathname.startsWith('/app/') ||
+    pathname === '/dashboard' || pathname.startsWith('/dashboard/') ||
+    pathname === '/admin' || pathname.startsWith('/admin/')
   ) {
     const isLoggedIn = !!req.auth;
     if (!isLoggedIn) {

@@ -328,6 +328,29 @@ function DashboardPageInner() {
     );
   }
 
+  // §auth-logout-guard (호영님 P1) — status === "unauthenticated" 명시 분기.
+  //   middleware bare-route 가드(/dashboard exact)가 1차 방어이나, 직접진입/세션
+  //   드롭 레이스 시 이 게이트가 안전망. 비로그인을 0 KPI·거짓 "처리할 항목 없음"
+  //   으로 렌더하지 않고 로그인 유도 surface 로 분기 (false-empty 차단).
+  if (status === "unauthenticated") {
+    return (
+      <div className="p-4 pt-4 md:p-8 md:pt-6 flex flex-col items-center justify-center gap-3 min-h-[40vh] text-center">
+        <p className="text-sm font-semibold text-slate-800">로그인이 필요합니다</p>
+        <p className="text-xs text-slate-500">대시보드를 보려면 로그인해 주세요.</p>
+        <Button
+          size="sm"
+          className="bg-blue-600 hover:bg-blue-500 text-white"
+          onClick={() => {
+            const cb = encodeURIComponent(window.location.pathname + window.location.search);
+            window.location.href = `/auth/signin?callbackUrl=${cb}`;
+          }}
+        >
+          로그인
+        </Button>
+      </div>
+    );
+  }
+
   // §auth-empty-state-fix (호영님 P1) — stats fetch 실패(401 세션만료/네트워크/5xx)를 신규유저
   //   onboarding(빈상태)으로 오인하지 않도록 에러를 명시 분기. onboarding 은 query 성공 + allEmpty
   //   일 때만(아래 hasAnyData). "데이터 없음"과 "인증 실패"를 분리(빈 스켈레톤·거짓 빈상태 금지).
