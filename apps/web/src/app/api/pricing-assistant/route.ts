@@ -55,7 +55,7 @@ export async function POST(req: Request) {
       systemPrompt: SYSTEM,
       userPrompt: q,
       maxTokens: 220,
-    });
+    }, { provider: "openai" }); // §pricing-assistant-openai — Anthropic org 429 회피, 검증된 OPENAI_API_KEY(gpt-4o-mini) 핀. (env LABAXIS_AI_PROVIDER 무관, pricing 전용 전환)
     const answer = clean(r.content) || FB[fbKey];
     return NextResponse.json({ answer }, { status: 200 });
   } catch (e) {

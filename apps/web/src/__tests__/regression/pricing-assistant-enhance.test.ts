@@ -21,6 +21,8 @@ describe("§pricing-assistant — 실 백엔드(항상 200+폴백)", () => {
     //   (LABAXIS_AI_PROVIDER=openai 등 환경/키 변수 불일치 시 항상 폴백되던 버그.) 래퍼가 키/provider 해석.
     expect(ROUTE_CODE).toMatch(/callAnthropicMessage/);
     expect(ROUTE_CODE).toMatch(/from "@\/lib\/ai\/anthropic"/);
+    // §pricing-assistant-openai — Anthropic org 429 회피, OpenAI(gpt-4o-mini) 핀.
+    expect(ROUTE_CODE).toMatch(/provider:\s*["\x27]openai["\x27]/);
     expect(ROUTE_CODE).not.toMatch(/process\.env\.ANTHROPIC_API_KEY/);
     expect(ROUTE_CODE).not.toMatch(/NEXT_PUBLIC_/);
   });
