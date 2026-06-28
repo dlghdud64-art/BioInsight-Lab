@@ -40,8 +40,10 @@ describe("§pricing-copy-cleanup — /pricing PO/발주 카피 0", () => {
     expect(PRICING).not.toMatch(/"발주 준비·운영 큐"/);
   });
   it("구매 카피로 치환", () => {
-    expect(PRICING).toMatch(/"견적·구매 무제한"/);
-    expect(PRICING).toMatch(/· 구매 무제한`/);
+    // §pricing-handoff D2 — formatOperatingVolume rfqPoLine → formatStatBadges 분리.
+    //   PO→구매 치환은 statBadge label "견적·구매"(발주 아님)에 보존, "무제한"은 value 로 분리.
+    expect(PRICING).toMatch(/label: "견적·구매"/);
+    expect(PRICING).toMatch(/=== null \? "무제한"/);
     expect(PRICING).toMatch(/"구매 준비·운영 큐"/);
   });
 });
@@ -56,9 +58,13 @@ describe("§pricing-copy-cleanup — trialEligible 데이터 플래그(Basic onl
     expect((DESC.match(/trialEligible:\s*false/g) || []).length).toBe(3);
     expect((DESC.match(/trialEligible:\s*true/g) || []).length).toBe(1);
   });
-  it("⚠️ trial 사용자 노출 0 (메커니즘 부재 — fake claim 회피)", () => {
-    expect(DESC).not.toMatch(/무료 체험/);
-    expect(PRICING).not.toMatch(/무료 체험/);
-    expect(PRICING).not.toMatch(/30일 체험/);
+  it("trial 라벨 노출 (§pricing-handoff D4) — descriptor 카피 0 · dead 체험-시작 CTA 0", () => {
+    // §pricing-handoff D4 (호영님 2026-06-28) — 직전 honesty 결정(trial 미노출)의 명시적 반전.
+    //   "1개월 무료체험"을 page.tsx 정보성 라벨로 노출(시안 §1). PG+trial 백엔드는 후속 예정.
+    //   descriptor SSOT 엔 trial 카피 0(trialEligible 플래그만), 노출은 page 라벨. dead "체험 시작" CTA 금지.
+    expect(DESC).not.toMatch(/무료 ?체험/);            // descriptor SSOT: trial 카피 0(플래그만)
+    expect(PRICING).toMatch(/1개월 무료체험/);          // page 라벨 노출(D4)
+    expect(PRICING).not.toMatch(/30일 체험/);           // 미확정 기간(30일) 클레임 금지 — 라벨은 "1개월"
+    expect(PRICING).not.toMatch(/체험 시작/);           // dead trial-start CTA 금지(CTA="도입 신청")
   });
 });

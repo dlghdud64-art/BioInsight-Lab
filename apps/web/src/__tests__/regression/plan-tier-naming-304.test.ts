@@ -229,7 +229,8 @@ describe("§11.304 — 플랜 티어명 등급화 (Free / Basic / Pro / Enterpri
       expect(PRICING_SRC).toMatch(/월간/);
       expect(PRICING_SRC).toMatch(/연간/);
       expect(PRICING_SRC).toMatch(/약 11% 할인/);
-      expect(PRICING_SRC).not.toMatch(/1개월 무료/);
+      // §pricing-handoff D4 — 연간 할인 "1개월 무료" 프레이밍만 금지. trial "1개월 무료체험"(D4 노출)은 허용.
+      expect(PRICING_SRC).not.toMatch(/1개월 무료(?!체험)/);
       expect(PRICING_SRC).not.toMatch(/10% 할인/);
     });
 

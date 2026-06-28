@@ -151,45 +151,50 @@ describe("§11.303b — Basic/Pro 견적·PO 무제한 + 히어로 제목 복원
     });
   });
 
-  describe("pricing/page.tsx formatOperatingVolume 무제한 분기", () => {
-    // §pricing-copy-cleanup — 발주 → 구매 카피.
-    it('null 분기 시 "견적·구매 무제한" 표기', () => {
-      expect(PRICING_SRC).toMatch(/"견적·구매 무제한"/);
+  describe("pricing/page.tsx 카드 스탯배지 무제한 표기 (§pricing-handoff D2 진화)", () => {
+    // §pricing-handoff D2 (호영님 2026-06-28) — "운영 범위" 텍스트박스(formatOperatingVolume,
+    //   seatsLine/rfqPoLine/itemsLine) → 시안 3 스탯배지(formatStatBadges: 사용자/견적·구매/재고).
+    //   보호 의도(Basic/Pro 견적·구매 "무제한" 카드 가시성)는 스탯배지 quote="무제한"으로 보존.
+    it('formatStatBadges 파생(구 formatOperatingVolume 폐기)', () => {
+      expect(PRICING_SRC).toMatch(/formatStatBadges/);
+      expect(PRICING_SRC).not.toMatch(/formatOperatingVolume/);
     });
 
-    it("seatsLine + rfqPoLine + itemsLine 3 line 구조 보존", () => {
-      expect(PRICING_SRC).toMatch(/seatsLine/);
-      expect(PRICING_SRC).toMatch(/rfqPoLine/);
-      expect(PRICING_SRC).toMatch(/itemsLine/);
+    it('Basic/Pro 견적·구매 무제한 가시성 보존 (monthlyRfq null → "무제한")', () => {
+      expect(PRICING_SRC).toMatch(/ov\.monthlyRfq === null \? "무제한"/);
     });
 
-    // §pricing-copy-cleanup — Free 비대칭(RFQ 유한·구매 무제한) 정직 라인(발주→구매).
-    it("starter 비대칭 표기 (견적 요청 월 N건 · 구매 무제한)", () => {
-      expect(PRICING_SRC).toMatch(
-        /`견적 요청 월 \$\{descriptor\.operatingVolume\.monthlyRfq\}건 · 구매 무제한`/,
-      );
+    it("Free 비대칭 표기 보존 (월 N건)", () => {
+      expect(PRICING_SRC).toMatch(/`월 \$\{ov\.monthlyRfq\}건`/);
+    });
+
+    it("3 스탯배지 라벨 (사용자 / 견적·구매 / 재고 품목)", () => {
+      expect(PRICING_SRC).toMatch(/label: "사용자"/);
+      expect(PRICING_SRC).toMatch(/label: "견적·구매"/);
+      expect(PRICING_SRC).toMatch(/label: "재고 품목"/);
     });
   });
 
-  describe("/pricing 히어로 제목 복원 (가벼운 정체성)", () => {
-    it('"요금 안내" 제목 + 부제 보존', () => {
-      expect(PRICING_SRC).toMatch(/요금 안내/);
-      expect(PRICING_SRC).toMatch(/연구 구매 운영 규모에 맞는 플랜을 선택하세요/);
+  describe("/pricing 네이비 히어로 복원 (§pricing-handoff D1 진화)", () => {
+    // §pricing-handoff D1 (호영님 2026-06-28) — §11.304 라이트 "요금 안내" → 시안 §7 네이비 히어로.
+    //   보호 의도(페이지 정체성 + 무거운 구 히어로 미복원)는 유지·갱신.
+    it('네이비 히어로 — ph-tag + h1 + 서브카피', () => {
+      expect(PRICING_SRC).toMatch(/연구 구매 운영 플랫폼/);
+      expect(PRICING_SRC).toMatch(/운영 규모에 맞는 플랜을 선택하세요/);
+      expect(PRICING_SRC).toMatch(/검색·비교 중심으로 시작하고/);
+    });
+
+    it("구 라이트 미니멀 제목('요금 안내') 미잔존", () => {
+      expect(PRICING_SRC).not.toMatch(/요금 안내\s*<\/h1>/);
     });
 
     it("이전 무거운 히어로 (4단계 탭 / 데모 보기 / decision-status 칩) 복원 0", () => {
-      // §11.304 에서 제거된 요소들이 복원 안 됐는지 확인
+      // §11.304 에서 제거된 요소들이 복원 안 됐는지 확인(불변)
       expect(PRICING_SRC).not.toMatch(/pricing-operations-flow/);
       expect(PRICING_SRC).not.toMatch(/데모 보기/);
       expect(PRICING_SRC).not.toMatch(/pricing-decision-status/);
       expect(PRICING_SRC).not.toMatch(/연구소 조달 운영 OS/);
       expect(PRICING_SRC).not.toMatch(/검색부터 승인까지/);
-    });
-
-    it("text-2xl font-bold + text-sm 가벼운 스타일", () => {
-      expect(PRICING_SRC).toMatch(
-        /<h1 className="text-2xl font-bold"[\s\S]*?요금 안내/,
-      );
     });
   });
 });

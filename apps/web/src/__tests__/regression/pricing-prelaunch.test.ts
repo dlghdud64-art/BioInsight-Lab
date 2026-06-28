@@ -42,7 +42,9 @@ describe("§pricing-prelaunch — 연간 토글 카피", () => {
   it("/pricing: 약 11% 할인 · 출시 후 적용 · 1개월 무료 0", () => {
     expect(PRICING).toMatch(/약 11% 할인/);
     expect(PRICING).toMatch(/출시 후 적용/);
-    expect(PRICING).not.toMatch(/1개월 무료/);
+    // §pricing-handoff D4 (호영님 2026-06-28) — 연간 할인 "1개월 무료" 프레이밍만 금지.
+    //   trial "1개월 무료체험"(D4 노출, PG+trial 후속 예정)은 허용. 자동결제/정기결제 카피는 여전히 0.
+    expect(PRICING).not.toMatch(/1개월 무료(?!체험)/);
     expect(PRICING).not.toMatch(/10% 할인/);
   });
   it("/pricing formatPlanPrice 연간 명시값 사용(배수 계산 폐기)", () => {

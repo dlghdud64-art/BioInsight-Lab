@@ -56,14 +56,16 @@ describe("§pricing-assistant — 클라이언트 카드 + 페이지 삽입", ()
   });
 });
 
-describe("§pricing-고도화 — 무료체험 미노출(honesty) + 결제주기 라인", () => {
+describe("§pricing-handoff D4 — 무료체험 노출(정보성 라벨) + 결제주기 라인", () => {
   const PAGE = read("src/app/pricing/page.tsx");
-  // 호영님 결정 — 무료체험 pill 보류: trial-START 결제 백엔드 부재 → 노출 시 fake claim(§pricing-prelaunch 불변).
-  //   trialEligible 데이터 플래그는 유지하되 "1개월 무료체험" 문구는 노출 0. 실노출은 §pricing-billing-backend 후.
-  it("무료체험 문구 미노출(fake claim 0) — pricing-prelaunch 불변", () => {
-    // 주석 strip — "무료체험 pill 보류" 기록 주석이 오탐 내지 않도록 렌더 코드만 검사.
+  // §pricing-handoff D4 (호영님 2026-06-28) — 무료체험 노출 결정(시안 §1). PG+trial 후속 예정.
+  //   "1개월 무료체험"은 trialEligible(Basic) 정보성 라벨로 노출. dead "무료체험 시작" CTA 금지(CTA="도입 신청" 유지).
+  it('무료체험 정보성 라벨 노출 (trialEligible 게이트, "1개월 무료체험")', () => {
     const PAGE_CODE = PAGE.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
-    expect(PAGE_CODE).not.toMatch(/무료 ?체험/);
+    expect(PAGE_CODE).toMatch(/descriptor\.trialEligible/);
+    expect(PAGE_CODE).toMatch(/1개월 무료체험/);
+    // dead "무료체험 시작" CTA 금지 — 라벨만(honesty).
+    expect(PAGE_CODE).not.toMatch(/무료체험 시작/);
   });
   it("결제주기 라인 = annualBilling(월간↔연간) + Free/Custom 제외", () => {
     expect(PAGE).toMatch(/annualBilling \? <>연간 결제/);

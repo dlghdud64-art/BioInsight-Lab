@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { MainHeader } from "@/app/_components/main-header";
 import { MainFooter } from "@/app/_components/main-footer";
 import { MainLayout } from "@/app/_components/main-layout";
-import { CheckCircle2, ArrowRight, Minus, ChevronDown, Loader2 } from "lucide-react";
+import { CheckCircle2, ArrowRight, Minus, ChevronDown, Loader2, Users, FileText, Package } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -46,6 +46,19 @@ const D = {
   border: "rgba(59,130,246,0.25)",
 } as const;
 
+/* §pricing-handoff D1 — 시안 네이비 히어로 토큰(딥 네이비 + accent glow). */
+const H = {
+  bg: "#0A1124",
+  surface: "#0F1B34",
+  glow: "rgba(59,130,246,0.22)",
+  text1: "#F1F5F9",
+  text2: "#AEB9D0",
+  text3: "#6B7488",
+  tagText: "#9DBBF5",
+  tagBorder: "rgba(59,130,246,0.30)",
+  toggleTrack: "#16284C",
+} as const;
+
 /* §11.201 — 가격 / 운영량 / Credit 매트릭스는 lib/billing/plan-descriptor.ts
    single source. Hard-coded TEAM_MONTHLY / BUSINESS_MONTHLY magic number 폐기. */
 
@@ -72,34 +85,23 @@ function formatPlanPrice(descriptor: PlanDescriptor, annual: boolean): {
   };
 }
 
-/** §11.201 — 운영량 / Credit 한 줄 요약. 카드 안의 "왜 이 가격인가" 정량 근거.
- *  §11.303b — Basic/Pro 견적/PO null (무제한) 시 "견적·구매 무제한" 표기 분기.
- *    backend maxQuotesPerMonth null 과 UI literal 동시 정합 (§pricing-redesign: PO 한도 field 폐기).
- */
-function formatOperatingVolume(descriptor: PlanDescriptor): string[] {
-  // Enterprise — 모두 null (계약 기반)
-  if (
-    descriptor.operatingVolume.monthlyRfq === null &&
-    descriptor.operatingVolume.monthlyPo === null &&
-    descriptor.operatingVolume.inventoryItems === null
-  ) {
-    return ["좌석·운영량 모두 계약 기반"];
-  }
-  // §11.303b — Basic/Pro: 견적/PO null (무제한) + 재고 quota 있음
-  const seatsLine =
-    descriptor.seatsRecommended !== null
-      ? `사용자 ${descriptor.seatsRecommended}명 권장`
-      : "사용자 무제한 (계약)";
-  // §pricing-redesign P3 — PO 한도 폐기(전 플랜 무제한). Free 는 RFQ 만 유한(3) → 비대칭 정직 표기.
-  const rfqPoLine =
-    descriptor.operatingVolume.monthlyRfq === null
-      ? "견적·구매 무제한"
-      : `견적 요청 월 ${descriptor.operatingVolume.monthlyRfq}건 · 구매 무제한`;
-  const itemsLine =
-    descriptor.operatingVolume.inventoryItems !== null
-      ? `재고 ${descriptor.operatingVolume.inventoryItems.toLocaleString("ko-KR")} 품목`
-      : "재고 무제한 (계약)";
-  return [seatsLine, rfqPoLine, itemsLine];
+/** §pricing-handoff D2 (호영님 2026-06-28) — 시안 카드 상단 3 스탯배지(사용자 / 견적·구매 / 재고 품목).
+ *  descriptor SSOT 파생. Enterprise(전 항목 null = 계약형) → 협의/계약/협의. */
+function formatStatBadges(descriptor: PlanDescriptor): { label: string; value: string }[] {
+  const ov = descriptor.operatingVolume;
+  const isContract =
+    descriptor.seatsRecommended === null &&
+    ov.monthlyRfq === null &&
+    ov.monthlyPo === null &&
+    ov.inventoryItems === null;
+  const seats = descriptor.seatsRecommended !== null ? `${descriptor.seatsRecommended}명` : "협의";
+  const quote = isContract ? "계약" : ov.monthlyRfq === null ? "무제한" : `월 ${ov.monthlyRfq}건`;
+  const items = ov.inventoryItems !== null ? ov.inventoryItems.toLocaleString("ko-KR") : "협의";
+  return [
+    { label: "사용자", value: seats },
+    { label: "견적·구매", value: quote },
+    { label: "재고 품목", value: items },
+  ];
 }
 
 /* ── Scroll animation wrapper ──────────────────────────────────── */
@@ -251,49 +253,49 @@ export default function PricingPage() {
       <div className="w-full" style={{ backgroundColor: P.bg }}>
 
         {/* ══ Header spacer — MainHeader(h-14, z-40) 위에 배경 보장 ══ */}
-        <div className="h-14" style={{ backgroundColor: "#0B1120" }} />
+        <div className="h-14" style={{ backgroundColor: H.bg }} />
 
-        {/* ══ §11.304 — Hero 섹션 제거 (서비스 소개 /intro 와 역할 중복).
-            §11.303b 추가 — 페이지 정체성 제목만 가볍게 복원 ("요금 안내").
-            ═══════════════════════════════════════════════════════════ */}
-
-        {/* §11.303b — 페이지 제목 복원 (휑한 상단 정리, 가볍게).
-            대시보드 페이지 제목 체계 정합 (text-2xl font-bold + 부제 sm/gray-500).
-            이전 무거운 히어로 (4단계 탭/칩/데모 버튼) 는 복원 0 — /intro 가 책임. */}
-        <section className="pt-12 pb-2 text-center" style={{ backgroundColor: P.bgSoft }}>
+        {/* ══ §pricing-handoff D1 (호영님 2026-06-28) — 시안 네이비 히어로 복원.
+            §11.304 의 라이트 "요금 안내" → 시안 §7 네이비 그라데이션 히어로
+            (ph-tag 칩 + h1 + 서브카피 + 빌링 토글 in-hero). /intro 일부 중복은 호영님 감수. */}
+        <section
+          className="relative overflow-hidden pt-14 pb-12 md:pt-16 md:pb-14 text-center"
+          style={{
+            background: `radial-gradient(120% 90% at 85% 0%, ${H.glow} 0%, rgba(0,0,0,0) 55%), linear-gradient(180deg, ${H.surface} 0%, ${H.bg} 100%)`,
+          }}
+        >
           <div className="max-w-4xl mx-auto px-6">
             <Reveal>
-              <h1 className="text-2xl font-bold" style={{ color: P.text1 }}>
-                요금 안내
+              <span
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold mb-5"
+                style={{ backgroundColor: "rgba(59,130,246,0.14)", color: H.tagText, border: `1px solid ${H.tagBorder}` }}
+              >
+                <span style={{ color: P.blue }}>◆</span> 연구 구매 운영 플랫폼
+              </span>
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight" style={{ color: H.text1 }}>
+                운영 규모에 맞는 플랜을 선택하세요
               </h1>
-              <p className="mt-2 text-sm" style={{ color: P.text4 }}>
-                연구 구매 운영 규모에 맞는 플랜을 선택하세요.
+              <p className="mt-3 text-sm md:text-base max-w-2xl mx-auto" style={{ color: H.text2 }}>
+                검색·비교 중심으로 시작하고, 요청·구매·입고·재고 운영까지 확장할 수 있습니다.
               </p>
-            </Reveal>
-          </div>
-        </section>
 
-        {/* §11.304 — 월간/연간 토글 (plan cards 직전 별도 section).
-            §11.303b — 제목 복원 후 spacing 정리 (제목과 토글 간격 좁힘). */}
-        <section className="pt-4 pb-2 md:pt-5 md:pb-3" style={{ backgroundColor: P.bgSoft }}>
-          <div className="max-w-4xl mx-auto px-6">
-            <Reveal>
-              <div className="flex items-center justify-center gap-4">
-                <span className="text-sm font-medium" style={{ color: !annual ? P.text1 : P.text4 }}>월간</span>
+              {/* §11.304 월간/연간 토글 — §pricing-handoff D1: 히어로 내부 이동(네이비 스타일). */}
+              <div className="mt-8 flex items-center justify-center gap-4">
+                <span className="text-sm font-medium" style={{ color: !annual ? H.text1 : H.text3 }}>월간</span>
                 <button
                   onClick={() => setAnnual(!annual)}
                   className="w-14 h-7 rounded-full p-1 flex items-center relative transition-colors"
-                  style={{ backgroundColor: annual ? P.blue : P.bgMuted, border: `1px solid ${P.border}` }}
+                  style={{ backgroundColor: annual ? P.blue : H.toggleTrack, border: `1px solid ${H.tagBorder}` }}
                   aria-label={annual ? "연간 결제 선택됨, 월간으로 전환" : "월간 결제 선택됨, 연간으로 전환"}
                 >
                   <div className="w-5 h-5 rounded-full transition-all shadow-sm" style={{
-                    backgroundColor: annual ? "#FFFFFF" : P.text4,
+                    backgroundColor: "#FFFFFF",
                     transform: annual ? "translateX(28px)" : "translateX(0)",
                   }} />
                 </button>
-                <span className="text-sm font-medium" style={{ color: annual ? P.text1 : P.text4 }}>연간</span>
+                <span className="text-sm font-medium" style={{ color: annual ? H.text1 : H.text3 }}>연간</span>
                 {annual && (
-                  <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ backgroundColor: P.blueSoft, color: P.blueText }}>
+                  <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ backgroundColor: "rgba(59,130,246,0.18)", color: H.tagText }}>
                     약 11% 할인 · 출시 후 적용
                   </span>
                 )}
@@ -330,7 +332,7 @@ export default function PricingPage() {
               {PLAN_INTENT_VALUES.map((intent, i) => {
                 const descriptor = PLAN_DESCRIPTOR[intent];
                 const { price, period } = formatPlanPrice(descriptor, annual);
-                const operatingVolume = formatOperatingVolume(descriptor);
+                const statBadges = formatStatBadges(descriptor);
                 // §pricing-final §2 — navy 셸은 선택 상태로 구동(클릭 선택형). "가장 많이 선택"
                 //   배지는 PlanCard 내부 recommendTag(Basic 고정)로 독립 노출.
                 return (
@@ -343,7 +345,7 @@ export default function PricingPage() {
                       descriptor={descriptor}
                       price={price}
                       period={period}
-                      operatingVolume={operatingVolume}
+                      statBadges={statBadges}
                       selected={selectedPlan === intent}
                       onCardSelect={setSelectedPlan}
                       annualBilling={annual}
@@ -592,12 +594,12 @@ function CellValue({ value, label, highlight }: { value: string; label?: string;
 
 /* ── Plan Card Component — descriptor 통과 (light or featured navy) ──────────────────────── */
 function PlanCard({
-  descriptor, price, period, operatingVolume, selected, onCardSelect, annualBilling, onSelect, loading, disabled,
+  descriptor, price, period, statBadges, selected, onCardSelect, annualBilling, onSelect, loading, disabled,
 }: {
   descriptor: PlanDescriptor;
   price: string;
   period?: string;
-  operatingVolume: string[];
+  statBadges: { label: string; value: string }[];
   // §pricing-final §2 — 클릭 선택형: 선택된 카드만 dark navy + 체크 배지. navy = 선택 상태 구동.
   selected?: boolean;
   onCardSelect?: (plan: PlanIntent) => void;
@@ -677,36 +679,41 @@ function PlanCard({
               {annualBilling ? <>연간 결제 · <b>약 11% 할인</b> (출시 후 적용)</> : "월간 결제"}
             </div>
           )}
-          {/* §pricing-고도화 P1 — 무료체험 pill 보류: trial-START 결제 백엔드 부재 → 노출 시 fake claim(§pricing-prelaunch 불변).
-              trialEligible 데이터 플래그는 유지. 실노출은 §pricing-billing-backend(trial_period_days) land 후. */}
+          {/* §pricing-handoff D4 (호영님 2026-06-28) — Basic "1개월 무료체험" 정보성 라벨 노출.
+              CTA 는 "도입 신청" 유지(체험-시작 dead CTA 0). PG+trial 착지 시 실 trial-start 전환(최소 diff). */}
+          {descriptor.trialEligible && (
+            <div
+              className="mt-2 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold"
+              style={{
+                backgroundColor: isDarkNavy ? "rgba(16,185,129,0.18)" : P.greenSoft,
+                color: isDarkNavy ? "#6EE7B7" : P.greenText,
+              }}
+            >
+              1개월 무료체험
+            </div>
+          )}
         </div>
 
-        {/* §11.201 — 운영량 / Credit 정량 근거 (descriptor.seatsRecommended /
-            operatingVolume / labOpsCreditMonthly 통과). 카드 안의 "왜 이 가격인가". */}
-        <div
-          className="mb-6 p-4 rounded-xl min-h-[148px]"
-          style={{
-            backgroundColor: isDarkNavy ? D.surface : P.bgSoft,
-            border: `1px solid ${isDarkNavy ? D.border : P.border}`,
-          }}
-        >
-          <div
-            className="text-[10px] font-bold uppercase tracking-[0.08em] mb-2"
-            style={{ color: isDarkNavy ? D.text2 : P.text4 }}
-          >
-            운영 범위
-          </div>
-          <ul className="flex flex-col gap-1.5">
-            {operatingVolume.map((line) => (
-              <li
-                key={line}
-                className="text-[12px] leading-snug"
-                style={{ color: isDarkNavy ? D.text1 : P.text2 }}
+        {/* §pricing-handoff D2 — 시안 카드 상단 3 스탯배지(사용자 / 견적·구매 / 재고 품목).
+            descriptor 파생. 구 "운영 범위" 텍스트 박스 대체. */}
+        <div className="mb-6 grid grid-cols-3 gap-2 min-h-[88px]">
+          {statBadges.map((stat, si) => {
+            const StatIcon = [Users, FileText, Package][si] ?? Users;
+            return (
+              <div
+                key={stat.label}
+                className="flex flex-col items-center justify-center text-center px-2 py-3 rounded-xl"
+                style={{
+                  backgroundColor: isDarkNavy ? D.surface : P.bgSoft,
+                  border: `1px solid ${isDarkNavy ? D.border : P.border}`,
+                }}
               >
-                {line}
-              </li>
-            ))}
-          </ul>
+                <StatIcon className="h-4 w-4 mb-1.5 flex-shrink-0" style={{ color: P.blue }} />
+                <span className="text-sm font-bold leading-tight" style={{ color: isDarkNavy ? D.text1 : P.text1 }}>{stat.value}</span>
+                <span className="text-[10px] mt-0.5 leading-tight" style={{ color: isDarkNavy ? D.text2 : P.text4 }}>{stat.label}</span>
+              </div>
+            );
+          })}
         </div>
 
         <ul className="flex flex-col gap-3 mb-6 flex-grow">

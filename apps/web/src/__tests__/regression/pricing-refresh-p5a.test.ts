@@ -17,9 +17,11 @@ const P = read("app/pricing/page.tsx");
 const D = read("app/dashboard/pricing/page.tsx");
 
 describe("§pricing-refresh P5a — pricing 카드 사용자 용어", () => {
-  it("pricing/page seatsLine 사용자(운영자 0)", () => {
-    expect(P).toMatch(/사용자 \$\{descriptor\.seatsRecommended\}명 권장/);
-    expect(P).toMatch(/사용자 무제한 \(계약\)/);
+  it("pricing/page 스탯배지 사용자 용어(운영자 0) — §pricing-handoff D2 진화", () => {
+    // §pricing-handoff D2 (호영님 2026-06-28) — seatsLine(운영범위 텍스트박스) → formatStatBadges
+    //   3 스탯배지. "사용자" 과금 시트 용어 보존(label "사용자" + seats 값), "운영자" 0 불변.
+    expect(P).toMatch(/label: "사용자"/);
+    expect(P).toMatch(/\$\{descriptor\.seatsRecommended\}명/);
     expect(P).not.toMatch(/운영자 \$\{descriptor\.seatsRecommended\}/);
     expect(P).not.toMatch(/운영자 무제한/);
   });
