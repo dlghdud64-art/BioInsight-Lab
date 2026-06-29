@@ -108,7 +108,7 @@ function hoursSince(iso: string): number {
   return Math.max(0, (NOW_MS() - new Date(iso).getTime()) / (1000 * 60 * 60));
 }
 
-function resolveDueState(
+export function resolveDueState(
   dueAt: string | undefined,
 ): UnifiedInboxItem['dueState'] {
   if (!dueAt) return { label: '기한 없음', isOverdue: false, tone: 'normal', daysUntil: null };

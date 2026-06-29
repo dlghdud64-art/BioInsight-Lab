@@ -22,16 +22,25 @@ const ROUTE = read("app/api/operational-brief/inbox/route.ts");
 const POPUP = read("components/operational-brief/popup.tsx");
 
 describe("§brief-realdata-quotes — 어댑터(실 Quote → inbox, honesty)", () => {
-  it("buildRealQuoteInbox export + db.quote.findMany SENT 스코프", () => {
+  it("buildRealQuoteInbox export + db.quote.findMany SENT+RESPONDED 스코프", () => {
     expect(ADAPTER).toMatch(/export async function buildRealQuoteInbox/);
     expect(ADAPTER).toMatch(/db\.quote\.findMany/);
-    expect(ADAPTER).toMatch(/status:\s*QuoteStatus\.SENT/);
+    // §brief-realdata-responded — SENT(응답 대기) + RESPONDED(응답 도착) 둘 다.
+    expect(ADAPTER).toMatch(/QuoteStatus\.SENT,\s*QuoteStatus\.RESPONDED/);
   });
-  it("SENT만 매핑 → contract status 'sent'(응답 대기)", () => {
+  it("SENT → contract status 'sent'(응답 대기)", () => {
     expect(ADAPTER).toMatch(/status:\s*"sent"/);
   });
   it("buildInboxFromQuotes 재사용 + comparisons=[] (비교 검토 아이템 미생성·drift 0)", () => {
     expect(ADAPTER).toMatch(/buildInboxFromQuotes\(reqs,\s*resps,\s*\[\]\)/);
+  });
+  it("§brief-realdata-responded — RESPONDED → quote_review_required 직접 emit(canonical 재사용)", () => {
+    expect(ADAPTER).toMatch(/q\.status === QuoteStatus\.RESPONDED/);
+    expect(ADAPTER).toMatch(/workType:\s*"quote_review_required"/);
+    expect(ADAPTER).toContain("응답 도착");
+    expect(ADAPTER).toMatch(/resolveDueState\(/);
+    expect(ADAPTER).toMatch(/calculateInboxPriority\(item\)/);
+    expect(ADAPTER).toMatch(/sortInboxItems\(/);
   });
   it("userId 스코프(본인 견적)", () => {
     expect(ADAPTER).toMatch(/where:\s*\{\s*userId/);
