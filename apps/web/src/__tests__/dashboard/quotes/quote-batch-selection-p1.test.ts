@@ -71,11 +71,13 @@ describe("§11.241 #6c — Ctrl/Cmd+A 전체 선택", () => {
     expect(page).toMatch(/(ctrlKey\s*\|\|\s*[^)]*metaKey|metaKey\s*\|\|\s*[^)]*ctrlKey)/);
   });
 
-  it("Ctrl/Cmd+A — sortedQuotes 전체 setSelectedQuoteIds 호출 (intermediate allIds 변수 허용)", () => {
-    // a key 분기 (!== / === 양방향) + setSelectedQuoteIds + sortedQuotes.map 동시 grep
+  // §11.351 진화 (호영님 2026-06-30) — 전체 선택이 발송 대상(request_not_sent)만 선택하도록
+  //   §11.351에서 new Set(sortedQuotes.filter(...).map(...)) 멀티라인화 → 옛 단언 stale. 코드 변경 0, sentinel만 현행 매칭.
+  it("Ctrl/Cmd+A — sortedQuotes(발송 대상) 전체 setSelectedQuoteIds 호출 (allIds 변수 허용)", () => {
+    // a key 분기 (!== / === 양방향) + setSelectedQuoteIds + sortedQuotes.filter(...).map (§11.351 발송 대상 한정)
     expect(page).toMatch(/e\.key.{0,10}(!==|===).{0,3}"[aA]"/);
     expect(page).toMatch(/setSelectedQuoteIds/);
-    expect(page).toMatch(/new Set\(sortedQuotes\.map/);
+    expect(page).toMatch(/new Set\(\s*sortedQuotes\.filter\([\s\S]{0,160}\.map\(/);
   });
 });
 
