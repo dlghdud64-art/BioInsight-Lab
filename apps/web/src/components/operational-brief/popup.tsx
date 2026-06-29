@@ -34,8 +34,17 @@ import {
   ChevronRight,
   ChevronDown,
   CheckCircle2,
+  Send,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { csrfFetch } from "@/lib/api-client";
+import { validateTransition } from "@/lib/operations/state-machine";
+import {
+  quoteStatusEmailSubject,
+  quoteStatusEmailBody,
+  type QuoteStatusEmailKind,
+} from "@/lib/email/quote-status-email-content";
 import { cn } from "@/lib/utils";
 import { useOpsStore } from "@/lib/ops-console/ops-store";
 import {
@@ -759,6 +768,209 @@ function BriefCardInline({
             넘기기
           </button>
         ))}
+
+      {/* §brief-quote-status-email — 견적 모듈: 고객 완료/취소 통보(발송 전 미리보기→확인→발송). */}
+      {brief.module === "quote" && <QuoteNotifyAction quoteId={item.entityId} />}
+    </div>
+  );
+}
+
+/* ─────────────────── §brief-quote-status-email — 견적 상태 통보(미리보기→확인→발송) ─────────────────── */
+
+function QuoteNotifyAction({ quoteId }: { quoteId: string }) {
+  const [phase, setPhase] = useState<
+    "idle" | "loading" | "preview" | "ineligible" | "sending" | "done" | "error"
+  >("idle");
+  const [kind, setKind] = useState<QuoteStatusEmailKind>("completed");
+  const [recipient, setRecipient] = useState("");
+  const [customerName, setCustomerName] = useState("고객");
+  const [itemCount, setItemCount] = useState<number | null>(null);
+  const [reason, setReason] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const quoteNumber = quoteId.slice(-8).toUpperCase();
+
+  async function openPreview(k: QuoteStatusEmailKind) {
+    setKind(k);
+    setPhase("loading");
+    setErrorMsg("");
+    try {
+      const res = await fetch(`/api/quotes/${quoteId}/detail`);
+      if (!res.ok) throw new Error("견적 정보를 불러오지 못했습니다.");
+      const j = await res.json();
+      const d = j?.data;
+      const status: string = d?.quote?.status ?? "";
+      const target = k === "completed" ? "COMPLETED" : "CANCELLED";
+      if (!validateTransition("QUOTE", status, target).valid) {
+        setPhase("ineligible");
+        return;
+      }
+      setRecipient(d?.customer?.email ?? "");
+      setCustomerName(d?.customer?.name || "고객");
+      setItemCount(typeof d?.totals?.itemCount === "number" ? d.totals.itemCount : null);
+      setPhase("preview");
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : "오류가 발생했습니다.");
+      setPhase("error");
+    }
+  }
+
+  async function send() {
+    if (kind === "cancelled" && !reason.trim()) return;
+    setPhase("sending");
+    setErrorMsg("");
+    try {
+      const res = await csrfFetch(`/api/quotes/${quoteId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: kind === "completed" ? "COMPLETED" : "CANCELLED",
+          ...(kind === "cancelled" ? { reason: reason.trim() } : {}),
+        }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => null);
+        throw new Error((j && j.error) || "발송에 실패했습니다.");
+      }
+      setPhase("done");
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : "발송에 실패했습니다.");
+      setPhase("error");
+    }
+  }
+
+  if (phase === "done") {
+    return (
+      <div className="flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
+        <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
+        <p className="text-[12px] text-emerald-800">
+          {recipient}님께 {kind === "completed" ? "완료" : "취소"} 통보 이메일을 발송했습니다.
+        </p>
+      </div>
+    );
+  }
+
+  if (phase === "ineligible") {
+    return (
+      <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2">
+        <p className="text-[12px] text-slate-500">현재 상태에서는 이 통보를 보낼 수 없습니다.</p>
+        <button
+          type="button"
+          onClick={() => setPhase("idle")}
+          className="flex-shrink-0 text-[11px] text-slate-400 hover:text-slate-600"
+        >
+          닫기
+        </button>
+      </div>
+    );
+  }
+
+  if (phase === "error") {
+    return (
+      <div className="flex items-center justify-between gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2">
+        <p className="min-w-0 flex-1 text-[12px] text-rose-700">{errorMsg}</p>
+        <button
+          type="button"
+          onClick={() => setPhase("idle")}
+          className="flex-shrink-0 text-[11px] text-rose-500 hover:text-rose-700"
+        >
+          닫기
+        </button>
+      </div>
+    );
+  }
+
+  if (phase === "preview" || phase === "sending") {
+    const subject = quoteStatusEmailSubject(kind, quoteNumber);
+    const body = quoteStatusEmailBody(kind, { customerName, reason });
+    const blocked = !recipient || (kind === "cancelled" && !reason.trim());
+    return (
+      <div className="space-y-2 rounded-lg border border-blue-200 bg-blue-50/50 p-3">
+        <p className="text-[11px] font-bold text-blue-800">
+          발송 전 미리보기 — 이 내용 그대로 전송됩니다
+        </p>
+        <div className="space-y-1 rounded-md border border-slate-200 bg-white p-2.5 text-[12px]">
+          <p>
+            <span className="text-slate-400">받는사람 </span>
+            <span className="font-medium text-slate-800">{recipient || "(이메일 없음)"}</span>
+          </p>
+          <p>
+            <span className="text-slate-400">제목 </span>
+            <span className="font-medium text-slate-800">{subject}</span>
+          </p>
+          {itemCount !== null && (
+            <p>
+              <span className="text-slate-400">견적 </span>
+              <span className="text-slate-700">#{quoteNumber} · 품목 {itemCount}개</span>
+            </p>
+          )}
+          <div className="mt-1 space-y-0.5 border-t border-slate-100 pt-1.5">
+            {body.map((line, i) => (
+              <p key={i} className="text-[12px] leading-relaxed text-slate-700">
+                {line}
+              </p>
+            ))}
+          </div>
+        </div>
+        {kind === "cancelled" && (
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="취소 사유를 입력하세요 (본문에 포함됩니다)"
+            rows={2}
+            className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-[12px]"
+          />
+        )}
+        {!recipient && (
+          <p className="text-[11px] text-rose-600">고객 이메일이 없어 발송할 수 없습니다.</p>
+        )}
+        <div className="flex gap-2">
+          <Button
+            className="h-9 flex-1 text-[12px] font-semibold"
+            disabled={blocked || phase === "sending"}
+            onClick={send}
+          >
+            {phase === "sending" ? (
+              <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Send className="mr-1 h-3.5 w-3.5" />
+            )}
+            확인하고 발송
+          </Button>
+          <Button
+            variant="outline"
+            className="h-9 text-[12px]"
+            disabled={phase === "sending"}
+            onClick={() => setPhase("idle")}
+          >
+            닫기
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // idle / loading
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[11px] text-slate-400">고객 통보</span>
+      <button
+        type="button"
+        disabled={phase === "loading"}
+        onClick={() => openPreview("completed")}
+        className="rounded-full border border-slate-300 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+      >
+        완료 통보
+      </button>
+      <button
+        type="button"
+        disabled={phase === "loading"}
+        onClick={() => openPreview("cancelled")}
+        className="rounded-full border border-slate-300 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+      >
+        취소 통보
+      </button>
+      {phase === "loading" && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />}
     </div>
   );
 }

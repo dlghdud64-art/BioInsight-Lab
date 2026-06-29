@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { getAppUrl } from "./env";
 import { QuoteReceivedEmail } from "@/emails/quote-received";
 import { QuoteCompletedEmail } from "@/emails/quote-completed";
+import { quoteStatusEmailSubject, quoteStatusEmailBody } from "@/lib/email/quote-status-email-content";
 import { OrderDeliveredEmail } from "@/emails/order-delivered";
 
 // RESEND_API_KEY 필요 - 환경변수에 설정해주세요
@@ -215,7 +216,7 @@ export async function sendQuoteCompletedEmail({
     const { data, error } = await resend.emails.send({
       from: `LabAxis <${FROM_EMAIL}>`,
       to: [to],
-      subject: `[LabAxis] 견적서가 도착했습니다! (견적번호: #${quoteNumber})`,
+      subject: quoteStatusEmailSubject("completed", quoteNumber),
       react: QuoteCompletedEmail({
         customerName,
         quoteNumber,
@@ -262,15 +263,14 @@ export async function sendQuoteRejectedEmail({
     const { data, error } = await resend.emails.send({
       from: `LabAxis <${FROM_EMAIL}>`,
       to: [to],
-      subject: `[LabAxis] 견적 요청 관련 안내 (요청번호: #${quoteNumber})`,
+      subject: quoteStatusEmailSubject("cancelled", quoteNumber),
+      // §brief-quote-status-email — 본문은 공유 카피(미리보기 ≡ 발송). 문구 복제 0.
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #1e40af;">LabAxis</h2>
-          <p>${customerName} 님, 안녕하세요.</p>
-          <p>요청하신 견적(#${quoteNumber})에 대해 안내드립니다.</p>
-          <p>죄송합니다만, 요청하신 견적을 진행하기 어려운 상황입니다.</p>
-          ${reason ? `<p><strong>사유:</strong> ${reason}</p>` : ""}
-          <p>다른 문의사항이 있으시면 언제든지 연락주세요.</p>
+          ${quoteStatusEmailBody("cancelled", { customerName, reason })
+            .map((line) => `<p>${line}</p>`)
+            .join("\n          ")}
           <p>감사합니다.</p>
           <hr style="border-color: #e2e8f0;" />
           <p style="color: #94a3b8; font-size: 12px;">

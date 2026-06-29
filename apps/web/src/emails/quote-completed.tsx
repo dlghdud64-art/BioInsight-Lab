@@ -12,6 +12,7 @@ import {
   Row,
   Column,
 } from "@react-email/components";
+import { quoteStatusEmailBody } from "@/lib/email/quote-status-email-content";
 
 interface QuoteCompletedEmailProps {
   customerName: string;
@@ -30,6 +31,8 @@ export function QuoteCompletedEmail({
   totalAmount,
   dashboardUrl = "https://labaxis.co.kr/dashboard",
 }: QuoteCompletedEmailProps) {
+  // §brief-quote-status-email — 본문 문구 = 공유 카피(미리보기 ≡ 발송).
+  const completedBody = quoteStatusEmailBody("completed", { customerName });
   return (
     <Html>
       <Head />
@@ -51,12 +54,11 @@ export function QuoteCompletedEmail({
             <Heading style={h1}>견적서가 도착했습니다!</Heading>
 
             <Text style={greeting}>
-              {customerName} 님, 안녕하세요.
+              {completedBody[0]}
             </Text>
 
             <Text style={paragraph}>
-              요청하신 견적이 <strong>완료</strong>되었습니다.
-              대시보드에서 상세 내용을 확인하시고, 주문을 진행해 주세요.
+              {completedBody[1]}
             </Text>
 
             {/* Quote Info Box */}
