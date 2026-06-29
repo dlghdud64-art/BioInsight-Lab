@@ -23,7 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Camera, ScanLine, Type, CheckCircle2, AlertTriangle,
   Loader2, ChevronRight, RotateCcw, Package, FlaskConical,
-  X, Sparkles, Upload, FileText, Edit,
+  X, Sparkles, Upload, FileText,
 } from "lucide-react";
 import type { LabelParseResult } from "@/lib/ocr/label-parser";
 // §1-2/PLAN — 라벨 저신뢰 commit 게이트(rule 2: Lot·유효기간 신뢰도 무관 명시 확인).
@@ -154,49 +154,13 @@ function ConfidenceBadge({ level }: { level: "high" | "medium" | "low" }) {
  *  CLOUD_VISION_CLAUDE (Tier 2 fallback) / REGEX (Tier 3 fallback).
  *  STORAGE_PROVIDER 미설정 (현재 production) 시 GEMINI 기본값.
  */
-function ProviderBadge({ provider }: { provider: "GEMINI" | "CLOUD_VISION_CLAUDE" | "REGEX" }) {
-  const pathLabel =
-    provider === "GEMINI"
-      ? "Gemini T1"
-      : provider === "CLOUD_VISION_CLAUDE"
-        ? "Cloud Vision T2 (Claude 구조화)"
-        : "정규식 T3";
-  const fallbackActive = provider !== "GEMINI";
-  return (
-    <>
-      <Badge
-        className="bg-slate-100 text-slate-700 border-0 text-[10px]"
-        data-testid="ocr-provider-badge"
-      >
-        사용 경로: {pathLabel}
-      </Badge>
-      <Badge
-        className={fallbackActive
-          ? "bg-yellow-100 text-yellow-700 border-0 text-[10px]"
-          : "bg-emerald-100 text-emerald-700 border-0 text-[10px]"}
-        data-testid="ocr-fallback-badge"
-      >
-        폴백: {fallbackActive ? "활성" : "비활성"}
-      </Badge>
-    </>
-  );
-}
+/* §scan-card-declutter (호영님 2026-06-30) — ProviderBadge(provider/fallback) removed: internal observability, not user-facing. §11.290 Phase 4b supersede. */
 
 /* ── §11.290 Phase 4b — Cache Hit 표시 ──
  *  imageHash 기반 cache lookup 적중 시 API 호출 0. 비용 절감 + UX 개선.
  *  Phase 1 schema OcrJob.imageHash @@index + Phase 2 findCachedOcrJob 활용.
  */
-function CacheHitIndicator() {
-  return (
-    <span
-      className="inline-flex items-center gap-1 text-[10px] text-slate-500"
-      data-testid="ocr-cache-hit"
-    >
-      <RotateCcw className="h-3 w-3" />
-      캐시 적중
-    </span>
-  );
-}
+/* §scan-card-declutter — CacheHitIndicator removed: internal observability. */
 
 /* ── 스캔 애니메이션 CSS ── */
 const scanAnimationStyle = `
@@ -1000,98 +964,9 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                 <p className="text-sm font-semibold text-slate-900">AI 분석 완료</p>
                 {scanResult && <ConfidenceBadge level={mapOcrConfidence(scanResult.parsed.confidence)} />}
-                {scanResult?.ocrMetadata?.providerUsed && (
-                  <ProviderBadge provider={scanResult.ocrMetadata.providerUsed} />
-                )}
-                {scanResult?.ocrMetadata?.cached && <CacheHitIndicator />}
-                {/* §11.290 Phase 4e — retry button (provider swap 재처리).
-                    jobId null (STORAGE_PROVIDER 미설정 = Phase 5 이전) 시 disabled.
-                    503 graceful response 시 alert. Phase 5 SDK install + Vercel env
-                    설정 후 실제 multi-provider fallback 자동 활성. */}
-                <button
-                  type="button"
-                  disabled={!scanResult?.ocrMetadata?.jobId}
-                  data-testid="ocr-retry-button"
-                  onClick={async () => {
-                    const jobId = scanResult?.ocrMetadata?.jobId;
-                    if (!jobId) return;
-                    try {
-                      const res = await csrfFetch(`/api/ocr/retry/${jobId}`, {
-                        method: "POST",
-                      });
-                      const data = await res.json();
-                      if (res.status === 503) {
-                        alert(data?.error || "재처리는 Phase 5 후 활성됩니다.");
-                      } else if (!res.ok) {
-                        alert(data?.error || "재처리 실패");
-                      } else {
-                        // Phase 5 후: 결과로 scanResult 업데이트
-                        alert("재처리 완료. (Phase 5 wiring 후 결과 자동 반영)");
-                      }
-                    } catch (err: any) {
-                      alert(`재처리 요청 실패: ${err?.message || "알 수 없는 오류"}`);
-                    }
-                  }}
-                  className="inline-flex items-center gap-1 rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
-                  title={
-                    scanResult?.ocrMetadata?.jobId
-                      ? "다른 OCR provider로 재처리"
-                      : "재처리는 Phase 5 활성 후 가능"
-                  }
-                >
-                  <RotateCcw className="h-3 w-3" />
-                  재처리
-                </button>
-                {/* §11.290 Phase 4e-2 — correct (수동 보정) button. 사용자가
-                    form input 편집한 결과 (formData) 를 correctedFields body 로
-                    POST /api/ocr/correct/[jobId]. jobId null 시 disabled.
-                    Phase 5 후 실제 OcrResult INSERT (provider=MANUAL,
-                    confidence=1.0) + finalResultId update + status SUCCESS. */}
-                <button
-                  type="button"
-                  disabled={!scanResult?.ocrMetadata?.jobId}
-                  data-testid="ocr-correct-button"
-                  onClick={async () => {
-                    const jobId = scanResult?.ocrMetadata?.jobId;
-                    if (!jobId) return;
-                    try {
-                      // formData (SmartReceiveFormData) 를 correctedFields body 로 전송
-                      const correctedFields = {
-                        productName: formData.productName,
-                        catalogNo: formData.catalogNumber,
-                        lotNo: formData.lotNumber,
-                        expirationDate: formData.expirationDate,
-                        brand: formData.brand,
-                        casNumber: formData.casNumber,
-                        quantity: formData.packSize ?? formData.receivedQuantity,
-                      };
-                      const res = await csrfFetch(`/api/ocr/correct/${jobId}`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ correctedFields }),
-                      });
-                      const data = await res.json();
-                      if (res.status === 503) {
-                        alert(data?.error || "수동 보정 저장은 Phase 5 후 활성됩니다.");
-                      } else if (!res.ok) {
-                        alert(data?.error || "수동 보정 저장 실패");
-                      } else {
-                        alert("수동 보정 저장 완료. (Phase 5 wiring 후 결과 자동 반영)");
-                      }
-                    } catch (err: any) {
-                      alert(`수동 보정 요청 실패: ${err?.message || "알 수 없는 오류"}`);
-                    }
-                  }}
-                  className="inline-flex items-center gap-1 rounded border border-blue-300 bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
-                  title={
-                    scanResult?.ocrMetadata?.jobId
-                      ? "사용자 보정 결과 저장 (Phase 5 후 OcrResult INSERT)"
-                      : "수동 보정 저장은 Phase 5 활성 후 가능"
-                  }
-                >
-                  <Edit className="h-3 w-3" />
-                  보정 저장
-                </button>
+{/* §scan-card-declutter (호영님 2026-06-30) — provider/fallback/cache badges + retry/correct CTA removed.
+                    internal observability; prod jobId null => dead button. Keep ConfidenceBadge only.
+                    OCR retry/correct route(/api/ocr/*) and QuoteScannerModal unchanged (separate track). */}
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
                 추출된 데이터를 확인하고 필요 시 수정하세요

@@ -1,26 +1,17 @@
 /**
- * §11.290 Phase 4b #label-scanner-metadata — LabelScannerModal 강화:
- *   confidence badge (이미 존재) + ProviderBadge (NEW) + CacheHitIndicator (NEW)
- *   + ocrMetadata 응답 노출.
+ * §11.290 Phase 4b #label-scanner-metadata — (route) ocrMetadata 응답 노출 유지.
  *
- * 호영님 P1 spec (2026-05-23):
- *   Phase 4a (route swap) 후 Phase 4b 진입. LabelScannerModal review step 에
- *   - confidence badge (high/medium/low) — 이미 land
- *   - providerUsed badge (Gemini / Vision+Claude / 정규식) — NEW
- *   - cached indicator (캐시 적중) — NEW
- *   - ocrMetadata 응답 필드 (jobId / providerUsed / cached) — NEW
+ * ★ §scan-card-declutter (호영님 2026-06-30) supersede:
+ *   LabelScannerModal user 카드에서 ProviderBadge(사용 경로/폴백) + CacheHitIndicator(캐시 적중)
+ *   제거 — 내부 관측용 메타라 작업자에게 불필요. route 의 ocrMetadata 응답은 유지(수신은 하되 표시 안 함).
+ *   ConfidenceBadge(신뢰도)만 유지 — 자동 인식값 확인 신호.
  *
- * Lock:
- *   - Phase 1 OcrJob model + Phase 4a wrapper 의 RunOcrPipelineResult 활용
- *   - STORAGE_PROVIDER 미설정 시 providerUsed="GEMINI", cached=false 기본값
- *
- * Test scope:
- *   1. scan-label/route.ts: ocrMetadata 응답 필드 노출 (providerUsed + cached)
- *   2. LabelScannerModal.tsx: ProviderBadge 컴포넌트 정의
- *   3. LabelScannerModal.tsx: CacheHitIndicator 컴포넌트 정의
- *   4. LabelScannerModal.tsx: data-testid="ocr-provider-badge" 존재
- *   5. LabelScannerModal.tsx: data-testid="ocr-cache-hit" 존재
- *   6. LabelScannerModal.tsx: ScanApiResponse type 에 ocrMetadata optional 필드
+ * 잔존 lock(유지):
+ *   - scan-label/route.ts: ocrMetadata 응답 필드(jobId/providerUsed/cached) — 변경 0
+ *   - LabelScannerModal: ScanApiResponse.ocrMetadata optional 타입(응답 수신)
+ *   - ConfidenceBadge 보존
+ * 진화 lock(제거 강제):
+ *   - ProviderBadge / CacheHitIndicator 컴포넌트 정의 + ocr-provider-badge / ocr-cache-hit testid 제거
  */
 
 import { describe, it, expect } from "vitest";
@@ -37,63 +28,41 @@ const LABEL_SCANNER_MODAL = readFileSync(
   "utf8",
 );
 
-describe("§11.290 Phase 4b — LabelScannerModal metadata 강화", () => {
-  // ─── (1) scan-label/route.ts response 에 ocrMetadata 노출 ───
-  describe("/api/inventory/scan-label/route.ts ocrMetadata 응답", () => {
-    it("§11.290 Phase 4b trace marker 존재", () => {
-      expect(SCAN_LABEL_ROUTE).toMatch(/§11\.290 Phase 4b/);
-    });
-
-    it("ocrMetadata 변수 outer scope retain (runOcrPipeline 결과 보존)", () => {
-      expect(SCAN_LABEL_ROUTE).toMatch(/let ocrMetadata.*\{/);
-    });
-
-    it("response JSON 에 ocrMetadata 필드 포함", () => {
-      expect(SCAN_LABEL_ROUTE).toMatch(/ocrMetadata,?\s*\n/);
-    });
-
-    it("ocrMetadata 가 jobId + providerUsed + cached 3 field 보존", () => {
-      expect(SCAN_LABEL_ROUTE).toMatch(/jobId:\s*pipelineResult\.jobId/);
-      expect(SCAN_LABEL_ROUTE).toMatch(/providerUsed:\s*pipelineResult\.providerUsed/);
-      expect(SCAN_LABEL_ROUTE).toMatch(/cached:\s*pipelineResult\.cached/);
-    });
+describe("§11.290 Phase 4b — scan-label route ocrMetadata 응답(유지)", () => {
+  it("§11.290 Phase 4b trace marker 존재", () => {
+    expect(SCAN_LABEL_ROUTE).toMatch(/§11\.290 Phase 4b/);
   });
+  it("ocrMetadata 변수 outer scope retain (runOcrPipeline 결과 보존)", () => {
+    expect(SCAN_LABEL_ROUTE).toMatch(/let ocrMetadata.*\{/);
+  });
+  it("response JSON 에 ocrMetadata 필드 포함", () => {
+    expect(SCAN_LABEL_ROUTE).toMatch(/ocrMetadata,?\s*\n/);
+  });
+  it("ocrMetadata 가 jobId + providerUsed + cached 3 field 보존", () => {
+    expect(SCAN_LABEL_ROUTE).toMatch(/jobId:\s*pipelineResult\.jobId/);
+    expect(SCAN_LABEL_ROUTE).toMatch(/providerUsed:\s*pipelineResult\.providerUsed/);
+    expect(SCAN_LABEL_ROUTE).toMatch(/cached:\s*pipelineResult\.cached/);
+  });
+});
 
-  // ─── (2) LabelScannerModal — Provider badge + Cache hit indicator ───
-  describe("LabelScannerModal.tsx 강화", () => {
-    it("§11.290 Phase 4b trace marker 존재", () => {
-      expect(LABEL_SCANNER_MODAL).toMatch(/§11\.290 Phase 4b/);
-    });
-
-    it("ProviderBadge 컴포넌트 정의 (provider 분기)", () => {
-      expect(LABEL_SCANNER_MODAL).toMatch(/function ProviderBadge\(/);
-    });
-
-    it("CacheHitIndicator 컴포넌트 정의", () => {
-      expect(LABEL_SCANNER_MODAL).toMatch(/function CacheHitIndicator\(/);
-    });
-
-    it("data-testid='ocr-provider-badge' 존재 (review step)", () => {
-      expect(LABEL_SCANNER_MODAL).toMatch(/data-testid=["']ocr-provider-badge["']/);
-    });
-
-    it("data-testid='ocr-cache-hit' 존재 (review step)", () => {
-      expect(LABEL_SCANNER_MODAL).toMatch(/data-testid=["']ocr-cache-hit["']/);
-    });
-
-    it("ScanApiResponse type 에 ocrMetadata optional field 추가", () => {
-      expect(LABEL_SCANNER_MODAL).toMatch(/ocrMetadata\?:/);
-    });
-
-    it("ProviderBadge — 3 provider label 매핑 (Gemini / Vision\\+Claude / 정규식)", () => {
-      expect(LABEL_SCANNER_MODAL).toMatch(/Gemini/);
-      expect(LABEL_SCANNER_MODAL).toMatch(/Vision/);
-      expect(LABEL_SCANNER_MODAL).toMatch(/정규식/);
-    });
-
-    it("기존 ConfidenceBadge 보존 (이미 land, 회귀 0)", () => {
-      expect(LABEL_SCANNER_MODAL).toMatch(/function ConfidenceBadge\(/);
-      expect(LABEL_SCANNER_MODAL).toMatch(/<ConfidenceBadge level=/);
-    });
+describe("§scan-card-declutter — LabelScannerModal 관측 배지 제거(진화)", () => {
+  it("ProviderBadge 정의 제거 (사용 경로/폴백 = 내부 관측용)", () => {
+    expect(LABEL_SCANNER_MODAL).not.toMatch(/function ProviderBadge\(/);
+    expect(LABEL_SCANNER_MODAL).not.toMatch(/data-testid=["']ocr-provider-badge["']/);
+    expect(LABEL_SCANNER_MODAL).not.toMatch(/data-testid=["']ocr-fallback-badge["']/);
+  });
+  it("CacheHitIndicator 정의 + ocr-cache-hit testid 제거", () => {
+    expect(LABEL_SCANNER_MODAL).not.toMatch(/function CacheHitIndicator\(/);
+    expect(LABEL_SCANNER_MODAL).not.toMatch(/data-testid=["']ocr-cache-hit["']/);
+  });
+  it("§scan-card-declutter trace marker 존재", () => {
+    expect(LABEL_SCANNER_MODAL).toMatch(/§scan-card-declutter/);
+  });
+  it("ConfidenceBadge 보존 (신뢰도만 유지, 회귀 0)", () => {
+    expect(LABEL_SCANNER_MODAL).toMatch(/function ConfidenceBadge\(/);
+    expect(LABEL_SCANNER_MODAL).toMatch(/<ConfidenceBadge level=/);
+  });
+  it("ScanApiResponse ocrMetadata optional 타입 보존(응답 수신은 유지)", () => {
+    expect(LABEL_SCANNER_MODAL).toMatch(/ocrMetadata\?:/);
   });
 });

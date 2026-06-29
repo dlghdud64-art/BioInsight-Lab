@@ -100,11 +100,13 @@ describe("§11.319 Phase 3 — 회귀 0 (기존 경로 보존)", () => {
     expect(src).toMatch(/manualMode/);
   });
 
-  it("503-정직 보정 저장 / 재처리 + provider badge 보존", () => {
+  // §scan-card-declutter (호영님 2026-06-30) supersede — 보정 저장/재처리 CTA + ProviderBadge 제거
+  //   (내부 관측용·현 prod jobId null 로 dead button). ConfidenceBadge(신뢰도)만 유지.
+  it("§scan-card-declutter — 보정저장/재처리/provider 제거 + ConfidenceBadge 보존", () => {
     const src = read(MODAL);
-    expect(src).toMatch(/ocr-correct-button|보정 저장/);
-    expect(src).toMatch(/ocr-retry-button|재처리/);
-    expect(src).toMatch(/ProviderBadge/);
+    expect(src).not.toMatch(/data-testid=["']ocr-correct-button["']/);
+    expect(src).not.toMatch(/data-testid=["']ocr-retry-button["']/);
+    expect(src).not.toMatch(/function ProviderBadge\(/);
     expect(src).toMatch(/ConfidenceBadge/);
   });
 
