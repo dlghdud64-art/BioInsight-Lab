@@ -40,6 +40,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { csrfFetch } from "@/lib/api-client";
 import { validateTransition } from "@/lib/operations/state-machine";
+import { usePermission } from "@/hooks/use-permission";
 import {
   quoteStatusEmailSubject,
   quoteStatusEmailBody,
@@ -863,6 +864,9 @@ function QuoteNotifyAction({ quoteId }: { quoteId: string }) {
 
   const quoteNumber = quoteId.slice(-8).toUpperCase();
   const refetchInbox = useContext(BriefRefetchContext);
+  // §brief-notify-rolegate — 견적 상태 변경(통보) 권한. 서버 PATCH(enforceAction)가 권위, 클라는 UX 게이트.
+  const { can, isLoading: permLoading } = usePermission();
+  const canNotify = can("quotes.update");
 
   async function openPreview(k: QuoteStatusEmailKind) {
     setKind(k);
@@ -913,6 +917,13 @@ function QuoteNotifyAction({ quoteId }: { quoteId: string }) {
       setErrorMsg(e instanceof Error ? e.message : "발송에 실패했습니다.");
       setPhase("error");
     }
+  }
+
+  if (!permLoading && !canNotify) {
+    // §brief-notify-rolegate — 통보 권한 없음(VIEWER 등). 정직 안내(dead button 0). 서버가 최종 차단.
+    return (
+      <p className="text-[11px] text-slate-400">견적 상태 변경 권한이 없어 통보를 보낼 수 없습니다.</p>
+    );
   }
 
   if (phase === "done") {

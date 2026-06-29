@@ -77,6 +77,12 @@ describe("§brief-quote-status-email — popup 미리보기→확인→발송", 
   it("취소는 사유 필수", () => {
     expect(POPUP).toMatch(/kind === "cancelled" && !reason\.trim\(\)/);
   });
+  it("§brief-notify-rolegate — 권한 없으면 통보 비활성(dead button 0, 서버 권위)", () => {
+    expect(POPUP).toMatch(/usePermission\(\)/);
+    expect(POPUP).toMatch(/can\("quotes\.update"\)/);
+    expect(POPUP).toMatch(/!permLoading && !canNotify/);
+    expect(POPUP).toContain("견적 상태 변경 권한이 없어");
+  });
 });
 
 describe("§brief-quote-status-email — 보존(회귀 0)", () => {
