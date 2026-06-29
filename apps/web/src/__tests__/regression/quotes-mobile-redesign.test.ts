@@ -42,15 +42,19 @@ describe("§quotes-mobile-redesign — 퍼널 (A)", () => {
   });
 });
 
-describe("§quotes-mobile-redesign — 모바일 카드 고정 (A)", () => {
+// §B2-C (호영님 2026-06-29) supersede — 모바일도 카드↔테이블 토글 honor(effectiveViewMode=viewMode).
+//   토글 모바일 노출(flex), 컬럼 설정만 데스크탑 전용(hidden md:block), 모바일 압축 테이블은 visibleColumns 축소.
+//   "모바일 카드 단일 고정"은 토글 노출로 supersede — 기본 카드(matchMedia 초기값)는 259b가 계속 잠금.
+describe("§quotes-mobile-redesign — 모바일 뷰 토글(§B2-C 진화) (A)", () => {
   it("isMobile matchMedia + effectiveViewMode", () => {
     const src = read(PAGE);
     expect(src).toMatch(/matchMedia\("\(max-width: 767px\)"\)/);
     expect(src).toMatch(/effectiveViewMode/);
   });
-  it("뷰 토글·컬럼 설정 데스크톱 전용 (hidden md:flex)", () => {
+  it("뷰 토글 모바일 노출(flex) + 컬럼 설정 데스크탑 전용(hidden md:block)", () => {
     const src = read(PAGE);
-    expect(src).toMatch(/hidden md:flex items-center justify-end/);
+    expect(src).toMatch(/relative flex items-center justify-end gap-1\.5 shrink-0/);
+    expect(src).toMatch(/relative hidden md:block/);
     expect(src).toMatch(/effectiveViewMode === "table"/);
   });
 });

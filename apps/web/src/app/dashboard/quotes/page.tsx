@@ -358,6 +358,10 @@ const COLUMN_LABEL: Record<ColumnKey, string> = {
   actions: "다음단계",
 };
 
+// §B2-C (호영님 2026-06-29) — 모바일 압축 테이블 핵심 컬럼: 견적케이스·단계·다음단계만(가로 스크롤 0).
+//   데스크탑은 전 컬럼(컬럼 설정 popover 존중). 모바일은 이 세트로 축소.
+const MOBILE_TABLE_COLS = new Set<ColumnKey>(["title", "status", "actions"]);
+
 // localStorage key
 const COLUMN_PREFS_LS_KEY = "labaxis-quote-column-prefs";
 
@@ -1514,8 +1518,9 @@ function QuotesPageContent() {
     return () => mq.removeEventListener("change", apply);
   }, []);
 
-  // §quotes-mobile-redesign — 모바일 카드 단일 고정. 데스크톱은 사용자 viewMode 유지.
-  const effectiveViewMode: "card" | "table" = isMobile ? "card" : viewMode;
+  // §B2-C (호영님 2026-06-29) — 모바일도 카드↔테이블 토글 honor(기본 카드는 matchMedia 초기값, 이후 사용자 선택 유지).
+  //   isMobile 은 압축 테이블 컬럼 축소(visibleColumns)로만 사용 — 뷰 모드 강제 아님.
+  const effectiveViewMode: "card" | "table" = viewMode;
 
   // §11.230c (a)-3 #quotes-view-server-persist — server-first hydration.
   //   preferences.quotesView 도착 시 setViewMode + setSortState (server canonical).
@@ -2144,10 +2149,12 @@ function QuotesPageContent() {
   //   납기 컬럼 제거 + 예상금액 always 정책으로 대체.)
   const visibleColumns = useMemo<ColumnKey[]>(() => {
     return columnPrefs.order.filter((key) => {
+      // §B2-C — 모바일 압축 테이블: 핵심 컬럼만(가로 스크롤 0). 데스크탑은 기존 정책.
+      if (isMobile) return MOBILE_TABLE_COLS.has(key);
       if (key === "price") return true;
       return columnPrefs.visibility[key];
     });
-  }, [columnPrefs.order, columnPrefs.visibility]);
+  }, [columnPrefs.order, columnPrefs.visibility, isMobile]);
 
   return (
     <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
@@ -2625,8 +2632,8 @@ function QuotesPageContent() {
             검색/필터 wrapper 안 sub-wrapper 안으로 이동. 호영님 §11.259 spec
             "필터 + 뷰 전환 영역 1줄 압축" 완전 정합. */}
         {!isLoading && filteredQuotes.length > 0 && (
-          /* §quotes-mobile-redesign — 뷰 토글·컬럼 설정은 데스크톱 전용(모바일 카드 단일 고정). hidden md:flex. */
-          <div className="relative hidden md:flex items-center justify-end gap-1.5 shrink-0">
+          /* §B2-C (호영님 2026-06-29) — 뷰 토글 모바일 노출(카드↔테이블 선택 가능). 컬럼 설정만 데스크탑 전용. */
+          <div className="relative flex items-center justify-end gap-1.5 shrink-0">
             {/* §quote-view-hint(시안 §12) — 첫 방문 1회 안내 말풍선. 누르거나 X 시 재노출 0. */}
             {showViewHint && (
               <div className="absolute right-0 top-full z-30 mt-1.5 w-max max-w-[240px] rounded-lg bg-slate-900 px-3 py-2 text-[11px] text-white shadow-lg">
@@ -2676,7 +2683,8 @@ function QuotesPageContent() {
                 테이블 뷰 한정 노출 + popover 안 9 컬럼 visibility checkbox +
                 HTML5 drag-and-drop reorder (호영님 v2 #23 b1+b2). */}
             {effectiveViewMode === "table" && (
-              <div className="relative">
+              /* §B2-C — 컬럼 설정 popover 는 데스크탑 전용(모바일 압축 테이블은 고정 컬럼). */
+              <div className="relative hidden md:block">
                 <button
                   type="button"
                   onClick={() => setColumnPrefsPopoverOpen((prev) => !prev)}
@@ -2807,7 +2815,7 @@ function QuotesPageContent() {
             {/* §quotes-workbench-rail A — min-w-[900px]: rail push 로 queue 가 좁아져도 컬럼이 찌그러지지 않고
                 래퍼(overflow-x-auto)가 실제로 가로 스크롤하도록 강제. 옛 w-full 단독은 컨테이너 폭에 맞춰
                 압축만 되어 컬럼 붕괴+글자 깨짐 발생(fade-hint 의도와 불일치). */}
-            <table className="w-full min-w-[900px] text-xs">
+            <table className="w-full min-w-0 md:min-w-[900px] text-xs">
             {/* §11.230b #quote-table-column-prefs — 호영님 v2 #23 (a+b).
                 visibleColumns.map() 으로 dynamic generate. canonical truth:
                 - sortState (§11.227) sortable 컬럼 유지(title/status/responseCount/price)
