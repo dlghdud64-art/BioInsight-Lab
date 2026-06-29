@@ -116,11 +116,11 @@ function useIsMobile(): boolean {
 }
 
 /** Popup root — 단일 큐(칩 필터 + 2섹션 + 인라인 1줄 AI). */
-/* §brief-demo-guard (호영님 2026-06-29) — 운영 브리핑은 현재 시드(데모) 데이터
-   (createInitialGraph / ALL_QUOTE_REQUESTS). 서버 hydration(실 quotes/PO/inventory 집계)
-   미구현 → 실데이터 연동 전까지: (1) 헤더 "데모 데이터" 배지, (2) 견적 통보(실 PATCH) 가드.
-   실데이터 연동 트랙에서 true 로 플립하면 배지 사라지고 통보 활성화. */
-const BRIEF_DATA_IS_LIVE = false;
+/* §brief-realdata-quotes (호영님 2026-06-29) — LIVE: 운영 브리핑 quotes 실데이터 연동.
+   true → (1) GET /api/operational-brief/inbox 의 실 SENT 견적(quote_response_pending)만 노출,
+   (2) "데모 데이터" 배지 제거, (3) 견적 통보(실 PATCH) 활성화.
+   PO/입고/재고·비교 카드는 0(미조회 — 가짜 채우기 0). false 복귀 시 시드로 롤백. */
+const BRIEF_DATA_IS_LIVE = true;
 
 /* §brief-proposal-ui (호영님 2026-06-29) — 넘기기(dismiss) 사유. 정직 라벨 only.
    가짜 진척 주장(자동화/모델 반영 류) 0 — dismiss 는 순수 view-state 숨김(서버 변형 0). */
@@ -167,7 +167,32 @@ export function OperationalBriefPopup() {
     }
   }, [isOpen, setSelectedItemId]);
 
-  const allItems = useMemo(
+  // §brief-realdata-quotes — LIVE 시 실데이터 inbox(quote_response_pending) fetch. 시드 store 불침범.
+  const [liveItems, setLiveItems] = useState<UnifiedInboxItem[] | null>(null);
+  const [liveLoading, setLiveLoading] = useState(false);
+  const [liveError, setLiveError] = useState(false);
+  useEffect(() => {
+    if (!isOpen || !BRIEF_DATA_IS_LIVE) return;
+    let cancelled = false;
+    setLiveLoading(true);
+    setLiveError(false);
+    fetch("/api/operational-brief/inbox")
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("load failed"))))
+      .then((j) => {
+        if (!cancelled) setLiveItems(Array.isArray(j?.items) ? j.items : []);
+      })
+      .catch(() => {
+        if (!cancelled) setLiveError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLiveLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
+
+  const seedInbox = useMemo(
     () =>
       buildFullInbox(
         store.quoteRequests,
@@ -194,6 +219,9 @@ export function OperationalBriefPopup() {
       store.expiryActions,
     ],
   );
+
+  // §brief-realdata-quotes — LIVE = 실데이터 inbox, 아니면 시드.
+  const allItems = BRIEF_DATA_IS_LIVE ? (liveItems ?? []) : seedInbox;
 
   const sortedItems = useMemo(() => sortInboxItems(allItems), [allItems]);
 
@@ -261,6 +289,8 @@ export function OperationalBriefPopup() {
       onToggleExpand={(id) => setSelectedItemId(id === selectedItemId ? null : id)}
       onDismiss={dismissItem}
       onRestore={restoreItem}
+      loading={BRIEF_DATA_IS_LIVE && liveLoading && liveItems === null}
+      error={BRIEF_DATA_IS_LIVE && liveError}
       onClose={close}
     />
   );
@@ -356,10 +386,14 @@ function BriefQueue({
   onToggleExpand,
   onDismiss,
   onRestore,
+  loading,
+  error,
   onClose,
 }: {
   items: UnifiedInboxItem[];
   dismissedItems: UnifiedInboxItem[];
+  loading?: boolean;
+  error?: boolean;
   moduleCounts: Record<InboxSourceModule, { total: number; urgent: number }>;
   totalCount: number;
   selectedModule: InboxSourceModule | null;
@@ -444,7 +478,19 @@ function BriefQueue({
 
       {/* 리스트 — 2섹션 */}
       <div className="flex flex-col">
-        {items.length === 0 && (
+        {error && (
+          <div className="mx-5 flex items-center gap-2.5 rounded-xl border border-rose-200 bg-rose-50 p-4">
+            <AlertCircle className="h-4 w-4 flex-shrink-0 text-rose-500" />
+            <p className="text-[13px] text-rose-700">운영 브리핑을 불러오지 못했습니다.</p>
+          </div>
+        )}
+        {!error && loading && items.length === 0 && (
+          <div className="mx-5 flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white p-4">
+            <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin text-slate-400" />
+            <p className="text-[13px] text-slate-500">불러오는 중…</p>
+          </div>
+        )}
+        {!error && !loading && items.length === 0 && (
           <div className="mx-5 flex items-start gap-2.5 rounded-xl border border-slate-200 bg-white p-4">
             <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" />
             <div className="min-w-0">
