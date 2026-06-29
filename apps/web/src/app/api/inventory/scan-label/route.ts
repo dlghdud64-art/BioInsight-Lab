@@ -179,27 +179,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // catalogNo로 못 찾으면 CAS Number로 시도
-    if (!matchedProduct && merged.casNumber) {
-      const product = await db.product.findFirst({
-        where: {
-          casNumber: {
-            equals: merged.casNumber,
-            mode: "insensitive",
-          },
-        },
-        select: {
-          id: true,
-          name: true,
-          brand: true,
-          catalogNumber: true,
-        },
-      });
-
-      if (product) {
-        matchedProduct = product;
-      }
-    }
+    // §scan-casnumber-500-fix (호영님 2026-06-30) — CAS 기반 제품 매칭 제거.
+    //   Product 모델에 casNumber 컬럼이 없어 CAS 조건으로 product.findFirst 시
+    //   PrismaClientValidationError → outer catch 500 으로 스캔 전체 실패(OCR 이 CAS 추출 + catalogNo
+    //   미매칭 시 항상). §11.341 동류(schema/코드 드리프트). catalogNo 매칭(위)만 유지.
+    //   merged.casNumber 는 응답 parsed 에 그대로 노출(표시용) — DB *매칭*만 제거.
+    //   CAS 자동매칭 복원은 실제 casNumber 컬럼 마이그레이션 후 별도 트랙.
 
     // ── 기존 재고에서도 매칭 시도 ──
     // §11.253b-1 — matchedInventory shape 확장: updatedAt + user.name 추가.
