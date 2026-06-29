@@ -116,6 +116,12 @@ function useIsMobile(): boolean {
 }
 
 /** Popup root — 단일 큐(칩 필터 + 2섹션 + 인라인 1줄 AI). */
+/* §brief-demo-guard (호영님 2026-06-29) — 운영 브리핑은 현재 시드(데모) 데이터
+   (createInitialGraph / ALL_QUOTE_REQUESTS). 서버 hydration(실 quotes/PO/inventory 집계)
+   미구현 → 실데이터 연동 전까지: (1) 헤더 "데모 데이터" 배지, (2) 견적 통보(실 PATCH) 가드.
+   실데이터 연동 트랙에서 true 로 플립하면 배지 사라지고 통보 활성화. */
+const BRIEF_DATA_IS_LIVE = false;
+
 /* §brief-proposal-ui (호영님 2026-06-29) — 넘기기(dismiss) 사유. 정직 라벨 only.
    가짜 진척 주장(자동화/모델 반영 류) 0 — dismiss 는 순수 view-state 숨김(서버 변형 0). */
 type DismissReason = "done" | "unnecessary" | "later";
@@ -398,6 +404,11 @@ function BriefQueue({
               </>
             )}
           </span>
+          {!BRIEF_DATA_IS_LIVE && (
+            <span className="inline-flex items-center rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold text-yellow-700" title="실데이터 연동 전 — 표시 항목은 예시입니다">
+              데모 데이터
+            </span>
+          )}
         </div>
       </div>
 
@@ -769,8 +780,16 @@ function BriefCardInline({
           </button>
         ))}
 
-      {/* §brief-quote-status-email — 견적 모듈: 고객 완료/취소 통보(발송 전 미리보기→확인→발송). */}
-      {brief.module === "quote" && <QuoteNotifyAction quoteId={item.entityId} />}
+      {/* §brief-quote-status-email — 견적 모듈: 고객 완료/취소 통보(발송 전 미리보기→확인→발송).
+          §brief-demo-guard — 시드 데이터에서는 실 PATCH 차단(정직 안내). 실데이터 연동 시 활성화. */}
+      {brief.module === "quote" &&
+        (BRIEF_DATA_IS_LIVE ? (
+          <QuoteNotifyAction quoteId={item.entityId} />
+        ) : (
+          <p className="text-[11px] text-slate-400">
+            데모 데이터 — 고객 통보 발송은 실데이터 연동 후 활성화됩니다.
+          </p>
+        ))}
     </div>
   );
 }
