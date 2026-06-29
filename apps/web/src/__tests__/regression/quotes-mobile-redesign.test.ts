@@ -32,9 +32,11 @@ describe("§quotes-mobile-redesign — 퍼널 (A)", () => {
     expect(src).toMatch(/allZero/);
     expect(src).toMatch(/진행 중 견적 없음/);
   });
-  it("가로 1행 컴팩트 (2행 wrap·chevron·progress 폐지)", () => {
+  it("모바일 압축 1행 유지 / 데스크탑 리치 (§quote-funnel-sian-restore — 2행 wrap·basis 폐지 보존)", () => {
+    // §quote-funnel-sian-restore — 반응형: 모바일(<md) 압축 1행 칩 보존, 데스크탑(md+) 시안 리치(chevron 복원).
     const src = read(FUNNEL);
-    expect(src).toMatch(/flex items-stretch gap-2/);
+    expect(src).toMatch(/flex md:hidden items-stretch gap-2/); // 모바일 압축 분기 보존
+    expect(src).toMatch(/hidden md:flex items-stretch/); // 데스크탑 리치 분기
     expect(src).not.toMatch(/flex-wrap md:flex-nowrap/);
     expect(src).not.toMatch(/basis-\[30%\]/);
   });

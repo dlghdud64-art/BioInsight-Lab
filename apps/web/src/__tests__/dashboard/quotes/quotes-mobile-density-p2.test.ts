@@ -23,9 +23,14 @@ describe("§quotes-mobile-density P2 — 얇은 인라인 칩", () => {
     expect(FUNNEL).toMatch(/flex items-center justify-center gap-1\.5 rounded-lg px-2 py-1\.5/);
     expect(FUNNEL).toMatch(/text-sm font-extrabold tabular-nums/);
   });
-  it("아이콘 <Icon> 렌더 제거(STAGES.icon 소스는 보존)", () => {
-    expect(FUNNEL).not.toMatch(/<Icon className=/);
-    expect(FUNNEL).toMatch(/icon: Send/); // STAGES 소스 보존(되살리기)
+  // §quote-funnel-sian-restore (호영님 2026-06-29) — 반응형 복원: 데스크탑 리치(아이콘+현재집중 배지+chevron),
+  //   모바일은 P2 압축 칩 유지(밀도). 아이콘은 데스크탑(md+)에서만 렌더.
+  it("반응형 — 데스크탑 리치(아이콘/chevron 복원) + 모바일 압축(칩)", () => {
+    expect(FUNNEL).toMatch(/hidden md:flex/); // 데스크탑 리치 분기
+    expect(FUNNEL).toMatch(/flex md:hidden/); // 모바일 압축 분기
+    expect(FUNNEL).toMatch(/<Icon className=/); // 데스크탑 아이콘 복원
+    expect(FUNNEL).toMatch(/ChevronRight/); // 단계 사이 chevron
+    expect(FUNNEL).toMatch(/icon: Send/); // STAGES 소스 보존
   });
 });
 
@@ -39,7 +44,7 @@ describe("§quotes-mobile-density P2 — canonical 보존(회귀 0)", () => {
     expect(FUNNEL).toMatch(/opacity-50/);
   });
   it("§quotes-mobile-redesign 래퍼/게이트/collapse 보존", () => {
-    expect(FUNNEL).toMatch(/flex items-stretch gap-2/);
+    expect(FUNNEL).toMatch(/items-stretch gap-2/); // §sian-restore — 모바일 압축 래퍼(md:hidden) 보존
     expect(FUNNEL).toMatch(/진행 중 견적 없음/);
     expect(FUNNEL).toMatch(/getFlag\("ENABLE_PURCHASING"\)/);
     expect(FUNNEL).toMatch(/s\.key !== "s5"/);
