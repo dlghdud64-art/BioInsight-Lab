@@ -3190,7 +3190,7 @@ function QuotesPageContent() {
                       }
                       if (key === "responseCount") {
                         // §quote-table-sian P2 — 회신 진행 바만(공급사 아바타는 supplier 컬럼으로 분리).
-                        //   미발송/회신 0 = "—" 약화(빈 셀 방지, §11.242 #8 가짜 데이터 금지).
+                        //   §quote-floating-selbar §5 — 미발송/회신 0 = 의도적 muted "회신 전" 태그(disabled 회색 — 금지, §11.242 #8 가짜 데이터 0).
                         return (
                           <td key={key} style={{ width }} className="px-3 py-2 text-center">
                             {(quote.status === "SENT" || quote.status === "RESPONDED") && itemCount > 0 ? (
@@ -3214,7 +3214,7 @@ function QuotesPageContent() {
                                 </div>
                               </div>
                             ) : (
-                              <span className="text-gray-300 text-[11px]">—</span>
+                              <span className="text-[11px] text-slate-400 whitespace-nowrap">회신 전</span>
                             )}
                           </td>
                         );

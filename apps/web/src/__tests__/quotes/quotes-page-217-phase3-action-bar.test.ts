@@ -1,7 +1,7 @@
 /**
  * §11.217 Phase 3 — BatchActionBar regression guard
  *
- * Goal: selectedCount > 0 시 sticky action bar 노출.
+ * Goal: selectedCount > 0 시 floating action bar 노출(§quote-floating-selbar: fixed 하단중앙).
  *       dispatchable / hard-block 분리 표시 (preflight 합산).
  *       "검토 시작" CTA → batchSheetOpen=true.
  *       "선택 해제" → clearSelection.
@@ -49,10 +49,13 @@ describe("§11.217 Phase 3 — BatchActionBar component contract", () => {
     expect(source).toMatch(/(selectedCount\s*===\s*0|selectedQuotes\.length\s*===\s*0).*return\s+null/s);
   });
 
-  it("sticky positioning (top + z-index)", () => {
+  // §quote-floating-selbar (호영님 2026-06-29) — outer wrapper sticky top-2 → fixed 하단중앙
+  //   floating(테이블 안 밀림). 드롭다운 내부 sticky top-0 헤더는 별개(불변).
+  it("floating positioning (fixed bottom-center + z-index) [§quote-floating-selbar]", () => {
     if (!existsSync(ACTION_BAR_PATH)) return;
     const source = readFileSync(ACTION_BAR_PATH, "utf8");
-    expect(source).toMatch(/sticky/);
+    expect(source).toMatch(/fixed\s+left-1\/2/);
+    expect(source).toMatch(/bottom-/);
     expect(source).toMatch(/z-/);
   });
 

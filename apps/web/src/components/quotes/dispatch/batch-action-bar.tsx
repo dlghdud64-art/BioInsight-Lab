@@ -7,8 +7,9 @@
  * §11.251a — 모바일 UX: "선택 해제" → "전체 해제" + 44px 터치 영역 + X 버튼
  *   잘림 방지 (min-w-[44px] hit area 확장).
  *
- * 견적 관리 surface 의 PENDING quote 들을 batch 로 선택했을 때 노출되는 sticky
- * action bar. selectedCount > 0 시에만 render.
+ * §quote-floating-selbar (호영님 2026-06-29) — 하단중앙 floating action bar.
+ * 견적 관리 surface 의 PENDING quote 들을 batch 로 선택했을 때 노출되는 floating
+ * action bar(fixed bottom-center, 테이블 안 밀림). selectedCount > 0 시에만 render.
  *
  * canonical truth lock:
  *   - selectedCount === 0 시 null return (conditional render).
@@ -80,7 +81,7 @@ export function BatchActionBar({
   // §11.240 — dropdown 토글 state.
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // §11.217 Phase 3 — selectedCount === 0 시 sticky bar 0 (no-op render).
+  // §11.217 Phase 3 — selectedCount === 0 시 floating bar 0 (no-op render).
   if (selectedCount === 0) {
     return null;
   }
@@ -103,7 +104,7 @@ export function BatchActionBar({
   return (
     <div
       data-testid="batch-action-bar"
-      className="sticky top-2 z-30 rounded-xl border border-violet-200 bg-violet-50/95 backdrop-blur-sm shadow-sm px-3 sm:px-4 py-2.5 flex items-center gap-2 sm:gap-3 flex-wrap"
+      className="fixed left-1/2 -translate-x-1/2 bottom-6 z-40 w-auto max-w-[calc(100vw-40px)] rounded-xl border border-violet-200 bg-violet-50/95 backdrop-blur-sm shadow-lg px-3 sm:px-4 py-2.5 flex items-center gap-2 sm:gap-3 flex-wrap animate-in slide-in-from-bottom-4 fade-in duration-200"
     >
       {/* 선택 카운트 + 분리 라벨 + §11.240 dropdown */}
       <div className="flex items-center gap-2 min-w-0 flex-1 relative">
