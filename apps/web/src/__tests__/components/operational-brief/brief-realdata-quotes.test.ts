@@ -42,8 +42,11 @@ describe("§brief-realdata-quotes — 어댑터(실 Quote → inbox, honesty)", 
     expect(ADAPTER).toMatch(/calculateInboxPriority\(item\)/);
     expect(ADAPTER).toMatch(/sortInboxItems\(/);
   });
-  it("userId 스코프(본인 견적)", () => {
-    expect(ADAPTER).toMatch(/where:\s*\{\s*userId/);
+  it("§brief-realdata-orgscope — 본인 OR 소속 조직 견적(detail/PATCH 권한 정합)", () => {
+    expect(ADAPTER).toMatch(/db\.organizationMember\.findMany/);
+    expect(ADAPTER).toMatch(/OR:\s*\[/);
+    expect(ADAPTER).toMatch(/\{ userId \}/);
+    expect(ADAPTER).toMatch(/organizationId:\s*\{ in: orgIds \}/);
   });
 });
 

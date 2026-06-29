@@ -43,12 +43,27 @@ function deriveDueAt(
 }
 
 /**
- * 사용자 본인 견적(SENT·RESPONDED)을 운영 브리핑 inbox 아이템으로 변환.
+ * 본인 견적 + 소속 조직 견적(SENT·RESPONDED)을 운영 브리핑 inbox 아이템으로 변환.
+ * §brief-realdata-orgscope — 스코프 = owner(userId) OR 조직 멤버십(organizationMember).
+ *   detail/PATCH 권한(isOwner || isTeamMember)과 100% 정합 → 보여준 카드는 모두 통보 가능(dead button 0).
  * @returns UnifiedInboxItem[] — SENT=quote_response_pending / RESPONDED=quote_review_required.
  */
 export async function buildRealQuoteInbox(userId: string): Promise<UnifiedInboxItem[]> {
+  // 사용자가 속한 조직 목록(권한 = detail/PATCH의 isTeamMember 기준과 동일).
+  const memberships = await db.organizationMember.findMany({
+    where: { userId },
+    select: { organizationId: true },
+  });
+  const orgIds = memberships.map((m: { organizationId: string }) => m.organizationId);
+
   const quotes = await db.quote.findMany({
-    where: { userId, status: { in: [QuoteStatus.SENT, QuoteStatus.RESPONDED] } },
+    where: {
+      status: { in: [QuoteStatus.SENT, QuoteStatus.RESPONDED] },
+      OR: [
+        { userId },
+        ...(orgIds.length > 0 ? [{ organizationId: { in: orgIds } }] : []),
+      ],
+    },
     select: {
       id: true,
       quoteNumber: true,
