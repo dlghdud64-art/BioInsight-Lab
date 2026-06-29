@@ -233,6 +233,8 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
   const expiryVerified = isFieldVerified(scanResult?.fieldSources?.expirationDate ?? null, scanResult?.fieldConflicts?.expirationDate ?? false);
   const [error, setError] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  // §scan-card-polish (호영님 2026-06-30) — 스캔 이미지 클릭 확대(zoom overlay).
+  const [imageZoomed, setImageZoomed] = useState(false);
   const [formData, setFormData] = useState<SmartReceiveFormData>(emptyFormData());
   // §11.340 — Lot/유효기한 출처 추적. 라벨 스캔으로 채워졌고(scanFilled) 사용자가
   //   수정 안 했으면 "라벨 스캔 확인", 수정했거나 수기 입력이면 "수기 입력"(§11.335 출처 정책).
@@ -953,9 +955,15 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
           {/* 스캔 이미지 미니 프리뷰 + AI 상태 */}
           <div className="flex items-center gap-3">
             {previewImage && (
-              <div className="relative w-14 h-14 rounded-lg overflow-hidden border border-slate-200 shrink-0">
-                <img src={previewImage} alt="스캔된 라벨" className="w-full h-full object-cover" />
-              </div>
+              <button
+                type="button"
+                onClick={() => setImageZoomed(true)}
+                className="relative w-14 h-14 rounded-lg overflow-hidden border border-slate-200 shrink-0 cursor-zoom-in hover:ring-2 hover:ring-blue-400 transition"
+                aria-label="스캔 이미지 크게 보기"
+                title="클릭하여 크게 보기"
+              >
+                <img src={previewImage} alt="스캔된 라벨" className="w-full h-full object-cover pointer-events-none" />
+              </button>
             )}
             <div className="flex-1 min-w-0">
               {/* §11.290 Phase 4b — confidence badge + provider badge + cache hit
@@ -973,6 +981,18 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
               </p>
             </div>
           </div>
+
+          {/* §scan-card-polish — 스캔 이미지 확대 오버레이(클릭/Esc 닫힘은 backdrop 클릭). */}
+          {imageZoomed && previewImage && (
+            <div
+              className="fixed inset-0 z-[90] bg-black/70 flex items-center justify-center p-6 cursor-zoom-out"
+              onClick={() => setImageZoomed(false)}
+              role="dialog"
+              aria-label="스캔 이미지 확대"
+            >
+              <img src={previewImage} alt="스캔된 라벨 확대" className="max-h-[90vh] max-w-[90vw] rounded-lg shadow-2xl object-contain" />
+            </div>
+          )}
 
           {/* DB 매칭 정보 */}
           {scanResult?.matchedProduct && (
@@ -1074,7 +1094,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
           {/* ── 편집 가능한 폼 ── */}
           <div className="space-y-3">
             <div>
-              <Label className="text-xs font-medium text-slate-600">제품명</Label>
+              <Label className="text-xs font-medium text-slate-600 flex h-5 items-center">제품명</Label>
               <Input
                 value={formData.productName}
                 onChange={(e) => updateField("productName", e.target.value)}
@@ -1085,7 +1105,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs font-medium text-slate-600">카탈로그 번호</Label>
+                <Label className="text-xs font-medium text-slate-600 flex h-5 items-center">카탈로그 번호</Label>
                 <Input
                   value={formData.catalogNumber}
                   onChange={(e) => updateField("catalogNumber", e.target.value)}
@@ -1094,8 +1114,8 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                 />
               </div>
               <div>
-                <div className="flex items-center gap-1.5">
-                  <Label className="text-xs font-medium text-slate-600">Lot 번호</Label>
+                <div className="flex items-center gap-1.5 h-5">
+                  <Label className="text-xs font-medium text-slate-600 flex h-5 items-center">Lot 번호</Label>
                   {(() => {
                     const b = fieldSourceBadge(formData.lotNumber, lotScanFilled, lotDirty);
                     return b ? <span data-testid="lot-source-badge" className={`text-[9px] px-1.5 py-0 rounded ${b.cls}`}>{b.label}</span> : null;
@@ -1123,8 +1143,8 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <div className="flex items-center gap-1.5">
-                  <Label className="text-xs font-medium text-slate-600">유효기간</Label>
+                <div className="flex items-center gap-1.5 h-5">
+                  <Label className="text-xs font-medium text-slate-600 flex h-5 items-center">유효기간</Label>
                   {(() => {
                     const b = fieldSourceBadge(formData.expirationDate, expiryScanFilled, expiryDirty);
                     return b ? <span data-testid="expiry-source-badge" className={`text-[9px] px-1.5 py-0 rounded ${b.cls}`}>{b.label}</span> : null;
@@ -1161,7 +1181,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                 )}
               </div>
               <div>
-                <Label className="text-xs font-medium text-slate-600">규격 (통 1개의 함량)</Label>
+                <Label className="text-xs font-medium text-slate-600 flex h-5 items-center">규격 (통 1개의 함량)</Label>
                 <div className="flex gap-2 mt-1">
                   <Input
                     type="number"
@@ -1184,7 +1204,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs font-medium text-slate-600">제조사</Label>
+                <Label className="text-xs font-medium text-slate-600 flex h-5 items-center">제조사</Label>
                 <Input
                   value={formData.brand}
                   onChange={(e) => updateField("brand", e.target.value)}
@@ -1193,7 +1213,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                 />
               </div>
               <div>
-                <Label className="text-xs font-medium text-slate-600">CAS 번호</Label>
+                <Label className="text-xs font-medium text-slate-600 flex h-5 items-center">CAS 번호</Label>
                 <Input
                   value={formData.casNumber}
                   onChange={(e) => updateField("casNumber", e.target.value)}
