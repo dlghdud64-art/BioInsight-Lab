@@ -74,6 +74,12 @@ describe("§brief-realdata-quotes — popup LIVE 연동", () => {
     expect(POPUP).toContain("불러오는 중");
     expect(POPUP).toContain("운영 브리핑을 불러오지 못했습니다");
   });
+  it("§brief-realdata-refetch — 발송 후 inbox 재조회(context 트리거)", () => {
+    expect(POPUP).toContain("BriefRefetchContext");
+    expect(POPUP).toMatch(/setRefreshKey\(\(k\) => k \+ 1\)/);
+    expect(POPUP).toMatch(/\}, \[isOpen, refreshKey\]\);/);
+    expect(POPUP).toMatch(/setTimeout\(\(\) => refetchInbox\(\), 2000\)/);
+  });
 });
 
 describe("§brief-realdata-quotes — 보존(회귀 0)", () => {

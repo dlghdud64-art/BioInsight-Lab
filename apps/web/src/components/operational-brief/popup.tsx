@@ -19,7 +19,7 @@
 
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 import {
@@ -131,6 +131,10 @@ const DISMISS_REASONS: { key: DismissReason; label: string }[] = [
   { key: "later", label: "나중에" },
 ];
 
+// §brief-realdata-refetch (호영님 2026-06-29) — 견적 통보 발송 후 inbox 재조회 트리거.
+//   prop drilling 회피용 경량 context. 발송 성공 → status 변경 → 다음 fetch 에서 카드 자동 제거.
+const BriefRefetchContext = createContext<() => void>(() => {});
+
 export function OperationalBriefPopup() {
   const {
     isOpen,
@@ -171,6 +175,8 @@ export function OperationalBriefPopup() {
   const [liveItems, setLiveItems] = useState<UnifiedInboxItem[] | null>(null);
   const [liveLoading, setLiveLoading] = useState(false);
   const [liveError, setLiveError] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const refetchInbox = () => setRefreshKey((k) => k + 1);
   useEffect(() => {
     if (!isOpen || !BRIEF_DATA_IS_LIVE) return;
     let cancelled = false;
@@ -190,7 +196,7 @@ export function OperationalBriefPopup() {
     return () => {
       cancelled = true;
     };
-  }, [isOpen]);
+  }, [isOpen, refreshKey]);
 
   const seedInbox = useMemo(
     () =>
@@ -275,6 +281,7 @@ export function OperationalBriefPopup() {
   if (!isOpen) return null;
 
   const briefBody = (
+    <BriefRefetchContext.Provider value={refetchInbox}>
     <BriefQueue
       items={visibleItems}
       dismissedItems={dismissedItems}
@@ -293,6 +300,7 @@ export function OperationalBriefPopup() {
       error={BRIEF_DATA_IS_LIVE && liveError}
       onClose={close}
     />
+    </BriefRefetchContext.Provider>
   );
 
   // mobile: Radix Sheet (Portal + dim + bottom sheet).
@@ -854,6 +862,7 @@ function QuoteNotifyAction({ quoteId }: { quoteId: string }) {
   const [errorMsg, setErrorMsg] = useState("");
 
   const quoteNumber = quoteId.slice(-8).toUpperCase();
+  const refetchInbox = useContext(BriefRefetchContext);
 
   async function openPreview(k: QuoteStatusEmailKind) {
     setKind(k);
@@ -898,6 +907,8 @@ function QuoteNotifyAction({ quoteId }: { quoteId: string }) {
         throw new Error((j && j.error) || "발송에 실패했습니다.");
       }
       setPhase("done");
+      // §brief-realdata-refetch — 발송 성공 후 inbox 재조회(2초 뒤; "발송됨" 확인 노출 후 카드 제거).
+      setTimeout(() => refetchInbox(), 2000);
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : "발송에 실패했습니다.");
       setPhase("error");
