@@ -107,6 +107,15 @@ function useIsMobile(): boolean {
 }
 
 /** Popup root — 단일 큐(칩 필터 + 2섹션 + 인라인 1줄 AI). */
+/* §brief-proposal-ui (호영님 2026-06-29) — 넘기기(dismiss) 사유. 정직 라벨 only.
+   가짜 진척 주장(자동화/모델 반영 류) 0 — dismiss 는 순수 view-state 숨김(서버 변형 0). */
+type DismissReason = "done" | "unnecessary" | "later";
+const DISMISS_REASONS: { key: DismissReason; label: string }[] = [
+  { key: "done", label: "이미 처리함" },
+  { key: "unnecessary", label: "불필요" },
+  { key: "later", label: "나중에" },
+];
+
 export function OperationalBriefPopup() {
   const {
     isOpen,
@@ -122,11 +131,24 @@ export function OperationalBriefPopup() {
   // 칩 필터(게이트 아님). null = 전체.
   const [selectedModule, setSelectedModule] = useState<InboxSourceModule | null>(null);
 
-  // popup close 시 필터/선택 초기화.
+  // §brief-proposal-ui — 넘기기(dismiss)는 client view-state only(서버/canonical truth 0 변형).
+  //   새로고침 시 리셋(백엔드 영속 없음 = 정직). 사유는 honest 라벨(가짜 진척 주장 0).
+  const [dismissed, setDismissed] = useState<Map<string, DismissReason>>(new Map());
+  const dismissItem = (id: string, reason: DismissReason) =>
+    setDismissed((prev) => new Map(prev).set(id, reason));
+  const restoreItem = (id: string) =>
+    setDismissed((prev) => {
+      const next = new Map(prev);
+      next.delete(id);
+      return next;
+    });
+
+  // popup close 시 필터/선택/숨김 초기화.
   useEffect(() => {
     if (!isOpen) {
       setSelectedModule(null);
       setSelectedItemId(null);
+      setDismissed(new Map());
     }
   }, [isOpen, setSelectedItemId]);
 
@@ -169,19 +191,29 @@ export function OperationalBriefPopup() {
       stock_risk: { total: 0, urgent: 0 },
     };
     for (const it of sortedItems) {
+      if (dismissed.has(it.id)) continue; // §brief-proposal-ui — 숨김 제외(recalc)
       c[it.sourceModule].total += 1;
       if (it.priority === "p0") c[it.sourceModule].urgent += 1;
     }
     return c;
-  }, [sortedItems]);
+  }, [sortedItems, dismissed]);
 
-  // 보이는 항목(필터 적용).
-  const visibleItems = useMemo(
-    () =>
-      selectedModule
-        ? sortedItems.filter((i) => i.sourceModule === selectedModule)
-        : sortedItems,
-    [sortedItems, selectedModule],
+  // 보이는 항목(필터 + 숨김 제외 = 활성). §brief-proposal-ui.
+  const visibleItems = useMemo(() => {
+    const active = sortedItems.filter((i) => !dismissed.has(i.id));
+    return selectedModule ? active.filter((i) => i.sourceModule === selectedModule) : active;
+  }, [sortedItems, selectedModule, dismissed]);
+
+  // 숨긴 항목(되돌리기 섹션용). 필터 연동.
+  const dismissedItems = useMemo(() => {
+    const d = sortedItems.filter((i) => dismissed.has(i.id));
+    return selectedModule ? d.filter((i) => i.sourceModule === selectedModule) : d;
+  }, [sortedItems, selectedModule, dismissed]);
+
+  // 활성 전체 건수(헤더·전체 칩 — 숨김 제외, 모듈 무관).
+  const activeTotal = useMemo(
+    () => sortedItems.filter((i) => !dismissed.has(i.id)).length,
+    [sortedItems, dismissed],
   );
 
   const totalUrgent =
@@ -202,8 +234,9 @@ export function OperationalBriefPopup() {
   const briefBody = (
     <BriefQueue
       items={visibleItems}
+      dismissedItems={dismissedItems}
       moduleCounts={moduleCounts}
-      totalCount={sortedItems.length}
+      totalCount={activeTotal}
       selectedModule={selectedModule}
       onSelectModule={(m) => {
         setSelectedModule(m);
@@ -211,6 +244,8 @@ export function OperationalBriefPopup() {
       }}
       expandedItemId={selectedItemId}
       onToggleExpand={(id) => setSelectedItemId(id === selectedItemId ? null : id)}
+      onDismiss={dismissItem}
+      onRestore={restoreItem}
       onClose={close}
     />
   );
@@ -297,21 +332,27 @@ export function OperationalBriefPopup() {
 
 function BriefQueue({
   items,
+  dismissedItems,
   moduleCounts,
   totalCount,
   selectedModule,
   onSelectModule,
   expandedItemId,
   onToggleExpand,
+  onDismiss,
+  onRestore,
   onClose,
 }: {
   items: UnifiedInboxItem[];
+  dismissedItems: UnifiedInboxItem[];
   moduleCounts: Record<InboxSourceModule, { total: number; urgent: number }>;
   totalCount: number;
   selectedModule: InboxSourceModule | null;
   onSelectModule: (m: InboxSourceModule | null) => void;
   expandedItemId: string | null;
   onToggleExpand: (id: string) => void;
+  onDismiss: (id: string, reason: DismissReason) => void;
+  onRestore: (id: string) => void;
   onClose: () => void;
 }) {
   const briefs = useMemo(() => items.map(deriveBriefingItem), [items]);
@@ -384,9 +425,12 @@ function BriefQueue({
       {/* 리스트 — 2섹션 */}
       <div className="flex flex-col">
         {items.length === 0 && (
-          <div className="mx-5 flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white p-4">
-            <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-500" />
-            <p className="text-[13px] text-slate-600">처리할 항목 없음 — 즉시 조치가 필요한 작업이 없습니다.</p>
+          <div className="mx-5 flex items-start gap-2.5 rounded-xl border border-slate-200 bg-white p-4">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" />
+            <div className="min-w-0">
+              <p className="text-[13px] font-semibold text-slate-700">오늘 확인할 항목을 모두 처리했습니다</p>
+              <p className="mt-0.5 text-[12px] text-slate-500">견적·발주·입고·재고 4개 모듈을 모니터링 중입니다.</p>
+            </div>
           </div>
         )}
 
@@ -405,6 +449,7 @@ function BriefQueue({
                 item={it}
                 expanded={expandedItemId === it.id}
                 onToggle={() => onToggleExpand(it.id)}
+                onDismiss={onDismiss}
                 onClose={onClose}
               />
             ))}
@@ -425,10 +470,36 @@ function BriefQueue({
                 item={it}
                 expanded={expandedItemId === it.id}
                 onToggle={() => onToggleExpand(it.id)}
+                onDismiss={onDismiss}
                 onClose={onClose}
               />
             ))}
           </>
+        )}
+
+        {/* §brief-proposal-ui — 오늘 숨김(넘기기) 섹션. 되돌리기 가능(view-state only). */}
+        {dismissedItems.length > 0 && (
+          <div className="mt-2 border-t border-slate-100">
+            <div className="px-5 pb-1.5 pt-3">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">오늘 숨김</span>
+              <span className="ml-1.5 text-[11px] text-slate-400">— {dismissedItems.length}건 · 되돌릴 수 있음</span>
+            </div>
+            {dismissedItems.map((it) => {
+              const b = deriveBriefingItem(it);
+              return (
+                <div key={it.id} className="flex items-center gap-2 border-b border-slate-100 px-5 py-2">
+                  <span className="min-w-0 flex-1 truncate text-[12px] text-slate-400">{b.title}</span>
+                  <button
+                    type="button"
+                    onClick={() => onRestore(it.id)}
+                    className="flex-shrink-0 text-[11px] font-medium text-slate-500 hover:text-slate-900"
+                  >
+                    되돌리기
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>
@@ -517,11 +588,13 @@ function BriefCard({
   item,
   expanded,
   onToggle,
+  onDismiss,
   onClose,
 }: {
   item: UnifiedInboxItem;
   expanded: boolean;
   onToggle: () => void;
+  onDismiss: (id: string, reason: DismissReason) => void;
   onClose: () => void;
 }) {
   const brief: BriefingItem = deriveBriefingItem(item);
@@ -568,7 +641,7 @@ function BriefCard({
           <ChevronRight className="h-4 w-4 flex-shrink-0 text-slate-400" />
         )}
       </button>
-      {expanded && <BriefCardInline item={item} brief={brief} onClose={onClose} />}
+      {expanded && <BriefCardInline item={item} brief={brief} onDismiss={onDismiss} onClose={onClose} />}
     </div>
   );
 }
@@ -578,13 +651,16 @@ function BriefCard({
 function BriefCardInline({
   item,
   brief,
+  onDismiss,
   onClose,
 }: {
   item: UnifiedInboxItem;
   brief: BriefingItem;
+  onDismiss?: (id: string, reason: DismissReason) => void;
   onClose: () => void;
 }) {
   const router = useRouter();
+  const [dismissOpen, setDismissOpen] = useState(false);
 
   const { narrative } = useOperationalBriefNarrative({
     sourceTrace: {
@@ -647,6 +723,42 @@ function BriefCardInline({
           <ChevronRight className="ml-1 h-3.5 w-3.5" aria-hidden="true" />
         </Button>
       </div>
+
+      {/* §brief-proposal-ui — 넘기기(dismiss): 정직 view-state 숨김. 실 비즈니스 액션 0·가짜 진척 주장 0. */}
+      {onDismiss &&
+        (dismissOpen ? (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] text-slate-500">넘기기 사유</span>
+            {DISMISS_REASONS.map((r) => (
+              <button
+                key={r.key}
+                type="button"
+                onClick={() => {
+                  onDismiss(item.id, r.key);
+                  setDismissOpen(false);
+                }}
+                className="rounded-full border border-slate-300 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-100"
+              >
+                {r.label}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setDismissOpen(false)}
+              className="text-[11px] text-slate-400 hover:text-slate-600"
+            >
+              취소
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setDismissOpen(true)}
+            className="text-[12px] text-slate-400 hover:text-slate-600"
+          >
+            넘기기
+          </button>
+        ))}
     </div>
   );
 }
