@@ -496,12 +496,12 @@ export function VendorRequestModal({
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      toast({ title: "견적서를 다운로드했습니다" });
+      toast({ title: "견적요청서를 다운로드했습니다" });
     } catch (error: any) {
       // §11.326 (호영님 P0 spec §5) — friendly + actionable 메시지.
       const reason = typeof error?.message === "string" ? error.message : "";
       toast({
-        title: "견적서 PDF를 만들 수 없습니다",
+        title: "견적요청서 PDF를 만들 수 없습니다",
         description:
           (reason ? `사유: ${reason}\n\n` : "") +
           "현재 PDF 생성이 불안정합니다. 잠시 후 다시 시도하거나, 메시지 미리보기 내용을 복사해서 직접 메일로 보내실 수 있습니다.",
@@ -1139,7 +1139,7 @@ export function VendorRequestModal({
             variant="outline"
             onClick={executeDownloadPdf}
             disabled={isSubmitting || isDownloadingPdf}
-            aria-label="견적서 PDF 다운로드"
+            aria-label="견적요청서 PDF 다운로드"
             className="min-h-[40px] border-slate-200 text-slate-700 active:scale-95"
           >
             {isDownloadingPdf ? (
@@ -1150,7 +1150,7 @@ export function VendorRequestModal({
             ) : (
               <>
                 <Mail className="h-4 w-4 mr-2" />
-                견적서 다운로드
+                견적요청서 다운로드
               </>
             )}
           </Button>

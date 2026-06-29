@@ -5,8 +5,7 @@ export const dynamic = 'force-dynamic';
 import { csrfFetch } from "@/lib/api-client";
 import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobile-bottom-sheet";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
-// §11.258-sweep-2 — 모바일 좌측 하단 ✨ 진입 (방안 1 위치 분리).
-import { MobileBriefInlineButton } from "@/components/operational-brief/mobile-inline-button";
+// §B2-E (호영님 2026-06-29) — 모바일 운영브리핑 인라인 진입 제거: import 폐기(데스크탑 FAB만 유지).
 import { MetricCell } from "@/components/operational-brief/metric-cell";
 // §11.374 — 모바일 상태요약 단일 컴포넌트(가로 5탭 빽빽 → 2x2). 표현만, count 주입.
 // §11.374 P3.4 — 헤더 단일 문법(AppPageHeader). 스캔 포함 액션 우측 통합.
@@ -4842,8 +4841,8 @@ function QuotesPageContent() {
       <div className="hidden lg:block">
         <OperationalBriefFloatingEntry controls="operational-brief-popup" />
       </div>
-      {/* §11.258-sweep-2 — 모바일 좌측 하단 ✨ 운영 브리핑 진입 (방안 1). */}
-      <MobileBriefInlineButton />
+      {/* §B2-E (호영님 2026-06-29) — 모바일 운영브리핑 인라인 진입(✦) 제거: 모바일은 브리핑 불필요.
+          데스크탑 진입(OperationalBriefFloatingEntry, hidden lg:block)은 위에서 유지. */}
     </div>
   );
 }

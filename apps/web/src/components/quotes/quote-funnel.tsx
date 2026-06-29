@@ -86,7 +86,7 @@ export function QuoteFunnel({
                   highlight
                     ? "bg-[#eaf1fd] ring-[1.5px] ring-inset ring-[#cdddf9]"
                     : dim
-                      ? "opacity-60 cursor-default"
+                      ? "cursor-default"
                       : "hover:bg-slate-50"
                 }`}
               >
@@ -110,7 +110,7 @@ export function QuoteFunnel({
                   </span>
                   <span
                     className={`mt-0.5 block text-[13px] font-bold truncate ${
-                      highlight ? "text-[#244e9e]" : "text-slate-700"
+                      highlight ? "text-[#244e9e]" : "text-slate-900"
                     }`}
                   >
                     {s.label}
@@ -147,7 +147,7 @@ export function QuoteFunnel({
             >
               <span
                 className={`text-[11px] font-semibold break-keep truncate ${
-                  highlight ? "text-[#244e9e]" : "text-slate-500"
+                  highlight ? "text-[#244e9e]" : "text-slate-700"
                 }`}
               >
                 {s.label}

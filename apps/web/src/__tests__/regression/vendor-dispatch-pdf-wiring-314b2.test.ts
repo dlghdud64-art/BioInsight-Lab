@@ -71,10 +71,12 @@ describe("§quote-dispatch-real-send-unify P1 — 버튼 라벨 발송 정합", 
     expect(src).not.toMatch(/PDF 다운로드 완료/);
   });
 
-  it("P2 — 견적서 다운로드 별도 버튼(executeDownloadPdf) 존치 (발송과 분리, dead button 0)", () => {
+  // §B2-D (호영님 2026-06-29) — 라벨 정명: 버튼이 받는 파일은 우리 RFQ(견적요청서-*.pdf)라
+  //   "견적서"(공급사 회신 견적서) → "견적요청서"로 정정(honesty: 라벨 ≡ 실제 산출물).
+  it("P2 — 견적요청서 다운로드 별도 버튼(executeDownloadPdf) 존치 (발송과 분리, dead button 0)", () => {
     const src = read(PATH);
     expect(src).toMatch(/executeDownloadPdf/);
-    expect(src).toMatch(/견적서 다운로드/);
+    expect(src).toMatch(/견적요청서 다운로드/);
   });
 });
 
