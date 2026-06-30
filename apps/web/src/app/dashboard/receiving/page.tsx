@@ -33,7 +33,7 @@ const RCV_BUCKET_TABS: { key: ModuleBucketKey; label: string }[] = [
 // ── Priority badge color ──────────────────────────────────────────
 const PRIORITY_DOT: Record<string, string> = {
   p0: "bg-red-500",
-  p1: "bg-yellow-500",
+  p1: "bg-[#b45821]",
   p2: "bg-blue-500",
   p3: "bg-slate-500",
 };
@@ -123,13 +123,14 @@ export default function ReceivingLandingPage() {
       <ReceivingReviewPanel />
 
       {/* ── 1. Header ──────────────────────────────────────────────── */}
-      <div className="bg-white border border-slate-200 rounded-lg p-4">
+      {/* §labaxis-web-mobile-reskin Phase 4 — 모바일 navy 헤더(목업 §04) / 데스크탑 white 유지. */}
+      <div className="-mx-4 -mt-4 rounded-b-[22px] bg-slate-900 p-4 md:mx-0 md:mt-0 md:rounded-lg md:bg-white md:border md:border-slate-200">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-lg font-bold text-slate-900">입고 관리</h1>
-            <p className="text-xs text-slate-600 mt-0.5">{orientation.role}</p>
+            <h1 className="text-[22px] md:text-lg font-extrabold md:font-bold text-white md:text-slate-900">입고 관리</h1>
+            <p className="text-[12.5px] md:text-xs text-white/60 md:text-slate-600 mt-0.5">{orientation.role}</p>
           </div>
-          <p className="text-xs text-slate-500 max-w-xs text-right">
+          <p className="text-xs text-white/60 md:text-slate-500 max-w-xs text-right">
             {headerStats.nextActionSummary}
           </p>
         </div>
@@ -317,7 +318,7 @@ function PriorityCard({
   const borderClass = item.dueState.isOverdue
     ? "border-l-red-500"
     : item.blockerSummary
-      ? "border-l-yellow-500"
+      ? "border-l-[#b45821]"
       : "border-l-slate-700";
 
   return (
@@ -371,7 +372,7 @@ function ActionableRow({
   const borderClass = item.dueState.isOverdue
     ? "border-l-2 border-l-red-500"
     : item.blockerSummary
-      ? "border-l-2 border-l-yellow-500"
+      ? "border-l-2 border-l-[#b45821]"
       : "";
 
   return (
@@ -421,7 +422,7 @@ function DueStateBadge({
   const cls =
     dueState.tone === "overdue"
       ? "text-red-600"
-      : "text-yellow-600";
+      : "text-[#b45821]";
 
   return (
     <span className={`text-xs flex items-center gap-0.5 ${cls}`}>

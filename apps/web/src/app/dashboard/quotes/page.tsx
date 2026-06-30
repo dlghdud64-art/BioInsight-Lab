@@ -79,6 +79,7 @@ import { AiQuoteParseModal } from "@/components/quotes/ai-quote-parse-modal";
 import { PermissionNotice } from "@/components/quotes/permission-notice";
 import { quoteDisplayRef } from "@/lib/quote-management/quote-display-ref";
 import { QuoteIntakeDock } from "@/components/quotes/intake/quote-intake-dock";
+import { MobileQuotesView } from "@/components/quotes/mobile-quotes-view";
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 
@@ -2804,7 +2805,7 @@ function QuotesPageContent() {
             #4 (§quote-table-sian P2 supersede) 예상금액 always 노출·납기 컬럼 제거 — 빈컬럼 hide 게이트 폐기
             #5 제목 열 = firstItemName + 외 N건 (§11.217 helper inline reuse)
             #8 카드 CTA min-w-[140px] / 테이블 CTA min-w-[80px] 강제 */}
-      {!isLoading && effectiveViewMode === "table" && sortedQuotes.length > 0 && (
+      {!isLoading && !isMobile && effectiveViewMode === "table" && sortedQuotes.length > 0 && (
         /* §11.248d #quote-table-fade-hint — 호영님 P0 견적 관리 #4 (scope 축소).
            가로 스크롤 존재 시 좌우 fade gradient overlay 으로 스크롤 가능 표시.
            CSS-only 패턴 (JS scroll position 감지 별도 §11.248d-2 백로그).
@@ -3338,8 +3339,13 @@ function QuotesPageContent() {
         </div>
       )}
 
+      {/* §labaxis-web-mobile-reskin Phase 2 — 모바일 전용 견적 뷰(목업 §02). 데스크탑(md+)=기존 카드/테이블. */}
+      {!isLoading && isMobile && (
+        <MobileQuotesView quotes={filteredQuotes} onSelect={(id) => handleQuoteCardSelect(id)} />
+      )}
+
       {/* ── 섹션: 즉시 처리 필요 ── */}
-      {!isLoading && effectiveViewMode === "card" && urgentQuotes.length > 0 && (
+      {!isLoading && !isMobile && effectiveViewMode === "card" && urgentQuotes.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-red-600" />
@@ -3351,7 +3357,7 @@ function QuotesPageContent() {
       )}
 
       {/* ── 섹션: 진행 중 ── */}
-      {!isLoading && effectiveViewMode === "card" && inProgressQuotes.length > 0 && (
+      {!isLoading && !isMobile && effectiveViewMode === "card" && inProgressQuotes.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-yellow-600" />
@@ -3363,7 +3369,7 @@ function QuotesPageContent() {
       )}
 
       {/* ── 섹션: 완료 ── */}
-      {!isLoading && effectiveViewMode === "card" && completedQuotes.length > 0 && (
+      {!isLoading && !isMobile && effectiveViewMode === "card" && completedQuotes.length > 0 && (
         <details className="group">
           <summary className="flex items-center gap-2 cursor-pointer list-none select-none">
             <CheckCircle2 className="h-4 w-4 text-emerald-400" />

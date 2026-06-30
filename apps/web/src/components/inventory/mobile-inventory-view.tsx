@@ -148,7 +148,7 @@ function getRecommendedAction(inv: ProductInventory): { label: string; shortLabe
 // §11.283d #status-config-traffic-light — 호영님 P0+ 보고 (위험/부족/정상/검토
 //   카드 색상 옅은 베이지 잔존): §11.283c-2 sweep 가 색상명만 amber→yellow
 //   바꿨고 dark mode `/40` opacity 패턴 (bg-yellow-900/40) 그대로 잔존 → 호영님
-//   spec light mode 신호등 (bg-yellow-100 text-yellow-700) 정합 swap.
+//   spec light mode 신호등 (bg-[#fdf3ec] text-[#b45821]) 정합 swap.
 const STATUS_CONFIG: Record<StatusType, { label: string; dotCls: string; badgeCls: string }> = {
   normal: {
     label: "정상",
@@ -162,8 +162,8 @@ const STATUS_CONFIG: Record<StatusType, { label: string; dotCls: string; badgeCl
   },
   expiring: {
     label: "임박",
-    dotCls: "bg-yellow-500",
-    badgeCls: "bg-yellow-100 text-yellow-700 border-yellow-200",
+    dotCls: "bg-[#b45821]",
+    badgeCls: "bg-[#fdf3ec] text-[#b45821] border-[#f3d4bf]",
   },
   danger: {
     label: "위험",
@@ -209,9 +209,9 @@ function MobileSummaryStrip({ inventories }: { inventories: ProductInventory[] }
   //   amber/orange/violet → red/yellow 신호등 체계로 통일. visual 강도 차별화.
   const cards = [
     { label: "재주문 필요", count: reorderCount, color: "text-red-700", bg: "bg-red-100", border: "border-red-200", icon: ShoppingCart },
-    { label: "만료 임박", count: expiringCount, color: "text-yellow-700", bg: "bg-yellow-100", border: "border-yellow-200", icon: Clock },
+    { label: "만료 임박", count: expiringCount, color: "text-[#b45821]", bg: "bg-[#fdf3ec]", border: "border-[#f3d4bf]", icon: Clock },
     { label: "폐기 검토", count: disposeCount, color: "text-red-700", bg: "bg-red-100", border: "border-red-200", icon: Trash2 },
-    { label: "점검 이슈", count: issueCount, color: "text-yellow-700", bg: "bg-yellow-100", border: "border-yellow-200", icon: AlertTriangle },
+    { label: "점검 이슈", count: issueCount, color: "text-[#b45821]", bg: "bg-[#fdf3ec]", border: "border-[#f3d4bf]", icon: AlertTriangle },
   ];
 
   // §11.374 P3.3 — 모바일 상태요약을 StatusCountGrid(2x2)로 정합. count 경로 불변
@@ -318,7 +318,7 @@ function MobilePriorityQueue({
                  none = slate. shortLabel === undefined 또는 type === "none" 일 때 slate. */
               className={`w-full text-left rounded-xl border border-l-4 border-bd bg-pn p-3 active:bg-el transition-colors ${
                 action.shortLabel === "긴급" || action.shortLabel === "재주문" ? "border-l-red-500" :
-                action.shortLabel === "검토" || action.shortLabel === "임박" ? "border-l-yellow-500" :
+                action.shortLabel === "검토" || action.shortLabel === "임박" ? "border-l-[#b45821]" :
                 action.shortLabel === "폐기" ? "border-l-red-500" :
                 action.shortLabel === "위치" ? "border-l-violet-500" :
                 "border-l-slate-300"
@@ -335,7 +335,7 @@ function MobilePriorityQueue({
                     {daysLeft != null && daysLeft <= 30 && (
                       <>
                         <span className="text-slate-700">|</span>
-                        <span className={daysLeft <= 0 ? "text-red-400" : "text-yellow-700"}>
+                        <span className={daysLeft <= 0 ? "text-red-400" : "text-[#b45821]"}>
                           {daysLeft <= 0 ? "만료됨" : `D-${daysLeft}`}
                         </span>
                       </>
@@ -346,8 +346,8 @@ function MobilePriorityQueue({
                     옅은 tone (bg-red-950/30 text-red-400) → 진한 단색 배경 + 흰색/검정
                     텍스트로 대비 강화. shortLabel 기반 6 분기 (긴급/검토/폐기/임박/재주문/
                     위치). 좌측 카드 보더 색상도 동일 톤 매칭 (line 271 분기).
-                    §11.283e — 검토 + 임박 (bg-yellow-500 text-slate-900) → light mode
-                    신호등 (bg-yellow-100 text-yellow-700) swap. 호영님 P0+ production
+                    §11.283e — 검토 + 임박 (bg-[#b45821] text-slate-900) → light mode
+                    신호등 (bg-[#fdf3ec] text-[#b45821]) swap. 호영님 P0+ production
                     smoke 결과 §11.273c lot_issue 분기가 §11.283d STATUS_CONFIG hot fix
                     가 cover 못한 source — 검토 배지가 진한 노랑 + 어두운 텍스트로 렌더링.
                     긴급/폐기 (bg-red-600 text-white §11.283d 정합) + 재주문/위치 (다른
@@ -357,9 +357,9 @@ function MobilePriorityQueue({
                     <span
                       className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md max-w-[64px] truncate whitespace-nowrap ${
                         action.shortLabel === "긴급" ? "bg-red-600 text-white" :
-                        action.shortLabel === "검토" ? "bg-yellow-100 text-yellow-700" :
+                        action.shortLabel === "검토" ? "bg-[#fdf3ec] text-[#b45821]" :
                         action.shortLabel === "폐기" ? "bg-red-600 text-white" :
-                        action.shortLabel === "임박" ? "bg-yellow-100 text-yellow-700" :
+                        action.shortLabel === "임박" ? "bg-[#fdf3ec] text-[#b45821]" :
                         action.shortLabel === "재주문" ? "bg-blue-500 text-white" :
                         action.shortLabel === "위치" ? "bg-violet-500 text-white" :
                         "bg-slate-200 text-slate-700"
@@ -447,7 +447,7 @@ function MobileItemCard({
             <span className={(() => {
               const d = getDaysUntilExpiry(inv);
               if (d != null && d <= 0) return "text-red-400";
-              if (d != null && d <= 30) return "text-yellow-700";
+              if (d != null && d <= 30) return "text-[#b45821]";
               return "text-slate-400";
             })()}>
               {expiryDate}
@@ -456,13 +456,29 @@ function MobileItemCard({
         )}
       </div>
 
+      {/* Row 2.5: 안전재고 게이지 (목업 §03) */}
+      {inv.safetyStock != null && inv.safetyStock > 0 && (
+        <div className="mb-2 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
+          <div
+            className={`h-full rounded-full ${
+              status === "danger" || status === "low"
+                ? "bg-red-500"
+                : status === "expiring"
+                  ? "bg-[#b45821]"
+                  : "bg-emerald-500"
+            }`}
+            style={{ width: `${Math.min(100, Math.round((inv.currentQuantity / inv.safetyStock) * 100))}%` }}
+          />
+        </div>
+      )}
+
       {/* Row 3: Recommended action */}
       {action.type !== "none" && (
         <div className="flex items-center justify-between">
           <span className={`text-[11px] font-medium ${
             action.type === "reorder" ? "text-red-400/80" :
             action.type === "dispose" ? "text-red-600/80" :
-            action.type === "use_first" ? "text-yellow-700/80" :
+            action.type === "use_first" ? "text-[#b45821]/80" :
             "text-violet-400/80"
           }`}>
             {action.label}
@@ -541,7 +557,7 @@ function MobileDetailSheet({
             </Badge>
             {daysLeft != null && daysLeft <= 30 && (
               <Badge className={`text-[10px] px-1.5 py-0 border-none ${
-                daysLeft <= 0 ? "bg-red-600 text-white" : "bg-yellow-100 text-yellow-700"
+                daysLeft <= 0 ? "bg-red-600 text-white" : "bg-[#fdf3ec] text-[#b45821]"
               }`}>
                 {daysLeft <= 0 ? "만료됨" : `D-${daysLeft}`}
               </Badge>
@@ -679,7 +695,7 @@ function MobileDetailSheet({
             <section className={`rounded-xl border p-3.5 ${
               action.type === "reorder" ? "border-red-500/20 bg-red-950/10" :
               action.type === "dispose" ? "border-red-500/20 bg-red-900/10" :
-              action.type === "use_first" ? "border-yellow-500/20 bg-yellow-900/10" :
+              action.type === "use_first" ? "border-[#f3d4bf] bg-[#fdf3ec]" :
               "border-violet-500/20 bg-violet-950/10"
             }`}>
               <h5 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
@@ -689,7 +705,7 @@ function MobileDetailSheet({
               <p className={`text-sm font-semibold mb-1 ${
                 action.type === "reorder" ? "text-red-400" :
                 action.type === "dispose" ? "text-red-600" :
-                action.type === "use_first" ? "text-yellow-700" :
+                action.type === "use_first" ? "text-[#b45821]" :
                 "text-violet-400"
               }`}>
                 {action.label}
@@ -771,6 +787,8 @@ export function MobileInventoryView({
 }: MobileInventoryViewProps) {
   const [detailItem, setDetailItem] = useState<ProductInventory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  // 목업 §03 — 필터 칩(전체/부족/만료임박/위치미지정). 같은 화면 필터(same-canvas).
+  const [statusFilter, setStatusFilter] = useState<"all" | "low" | "expiring" | "no_location">("all");
 
   const openDetail = (inv: ProductInventory) => {
     setDetailItem(inv);
@@ -782,9 +800,21 @@ export function MobileInventoryView({
   };
 
   const filtered = useMemo(() => {
-    if (!searchQuery.trim()) return inventories;
+    let list = inventories;
+    if (statusFilter !== "all") {
+      list = list.filter((inv) => {
+        if (statusFilter === "low") {
+          const st = getItemStatus(inv);
+          return st === "low" || st === "danger";
+        }
+        if (statusFilter === "expiring") return getItemStatus(inv) === "expiring";
+        if (statusFilter === "no_location") return !inv.location;
+        return true;
+      });
+    }
     const q = searchQuery.toLowerCase().trim();
-    return inventories.filter((inv) => {
+    if (!q) return list;
+    return list.filter((inv) => {
       const name = (inv.product?.name ?? "").toLowerCase();
       const brand = (inv.product?.brand ?? "").toLowerCase();
       const cat = (inv.product?.catalogNumber ?? "").toLowerCase();
@@ -792,7 +822,7 @@ export function MobileInventoryView({
       const vendor = (inv.vendor ?? "").toLowerCase();
       return name.includes(q) || brand.includes(q) || cat.includes(q) || lot.includes(q) || vendor.includes(q);
     });
-  }, [inventories, searchQuery]);
+  }, [inventories, searchQuery, statusFilter]);
 
   return (
     <div className="space-y-5">
@@ -801,6 +831,35 @@ export function MobileInventoryView({
 
       {/* 2. Priority Queue */}
       <MobilePriorityQueue inventories={inventories} onItemTap={openDetail} />
+
+      {/* 2.5 필터 칩 (목업 §03, same-canvas 필터) */}
+      <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-0.5">
+        {([
+          { k: "all", label: "전체" },
+          { k: "low", label: "부족", danger: true },
+          { k: "expiring", label: "만료 임박" },
+          { k: "no_location", label: "위치 미지정" },
+        ] as const).map((c) => {
+          const on = statusFilter === c.k;
+          return (
+            <button
+              key={c.k}
+              type="button"
+              onClick={() => setStatusFilter(c.k)}
+              aria-pressed={on}
+              className={`shrink-0 min-h-[40px] px-3.5 rounded-full border text-[13px] font-semibold transition-colors ${
+                on
+                  ? "bg-slate-900 border-slate-900 text-white"
+                  : "danger" in c && c.danger
+                    ? "bg-rose-50 border-rose-200 text-rose-700"
+                    : "bg-white border-slate-200 text-slate-600"
+              }`}
+            >
+              {c.label}
+            </button>
+          );
+        })}
+      </div>
 
       {/* 3. Search */}
       <div className="relative">
@@ -819,8 +878,17 @@ export function MobileInventoryView({
           <div className="flex flex-col items-center py-10 text-center">
             <Package className="h-10 w-10 text-slate-700 mb-3" />
             <p className="text-sm text-slate-500">
-              {searchQuery.trim() ? "검색 결과가 없습니다" : "등록된 재고가 없습니다"}
+              {searchQuery.trim() || statusFilter !== "all" ? "조건에 맞는 재고가 없습니다" : "등록된 재고가 없습니다"}
             </p>
+            {(searchQuery.trim() || statusFilter !== "all") && (
+              <button
+                type="button"
+                onClick={() => { onSearchChange(""); setStatusFilter("all"); }}
+                className="mt-3 min-h-[40px] px-4 rounded-lg border border-slate-200 text-sm font-semibold text-slate-600"
+              >
+                필터 초기화
+              </button>
+            )}
           </div>
         ) : (
           filtered.map((inv) => (

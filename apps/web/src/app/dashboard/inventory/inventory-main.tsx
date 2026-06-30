@@ -998,8 +998,10 @@ export function InventoryMain() {
     <div className="w-full max-w-full px-3 sm:px-4 md:px-6 py-4 md:py-8 pb-20 lg:pb-8">
       {/* ── Mobile View (below md breakpoint) ── */}
       <div className="md:hidden">
-        <div className="flex flex-col space-y-1 mb-4">
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">재고 관리</h1>
+        {/* 목업 §03 — navy 헤더 밴드(full-bleed, rounded-b). 데스크탑 무영향(md:hidden). */}
+        <div className="-mx-3 sm:-mx-4 -mt-4 mb-4 bg-slate-900 rounded-b-[22px] px-4 pt-5 pb-4">
+          <h1 className="text-[22px] font-extrabold tracking-tight text-white">재고 관리</h1>
+          <p className="text-[12.5px] text-white/60 mt-0.5">실시간 재고 상태를 관리하세요</p>
         </div>
         <div className="flex flex-wrap items-start gap-2 mb-5">
           {/* §11.308a — 스마트 입고 진입점 (mobile view, 호영님 P1 2026-05-26).
