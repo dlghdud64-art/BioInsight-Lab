@@ -157,7 +157,10 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
         id={tooltipId}
         role="tooltip"
         className={cn(
-          "absolute z-50 rounded-md border border-bd bg-pn px-3 py-1.5 text-sm text-slate-50 shadow-md whitespace-nowrap",
+          // §tooltip-contrast-fix (호영님 2026-06-30): 이전 패널 배경 토큰(--app-panel-3=#FFFFFF 흰색) +
+          //   text-slate-50(흰색) = 흰 글자 안 보임. 화살표(border-t-[#1a1a1e])와 동일 다크 배경으로
+          //   다크 툴팁 복원 → 흰 글자 가독성 확보. 전 앱 공유 primitive 일괄 수정.
+          "absolute z-50 rounded-md border border-[#1a1a1e] bg-[#1a1a1e] px-3 py-1.5 text-sm text-slate-50 shadow-md whitespace-nowrap",
           "bottom-full left-1/2 -translate-x-1/2 mb-2",
           "before:content-[''] before:absolute before:top-full before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-t-[#1a1a1e]",
           className

@@ -98,6 +98,12 @@ describe("§11.230c (b)-1 #5 — invariant 보존 (canonical API)", () => {
     expect(tooltip).toMatch(/(rounded-md|border-bd|shadow-md)/);
   });
 
+  it("§tooltip-contrast-fix — 흰 글자(text-slate-50)는 다크 배경과 페어 (white-on-white 회귀 0)", () => {
+    // bg-pn(=#FFFFFF) + text-slate-50(흰색) = 흰 글자 안 보임 버그 재발 차단.
+    expect(tooltip).toMatch(/bg-\[#1a1a1e\]/); // 다크 배경 복원
+    expect(tooltip).not.toMatch(/bg-pn[^a-z-]/); // 흰색 패널 토큰 배경 금지
+  });
+
   it("§11.230c (b)-1 trace marker comment", () => {
     expect(tooltip).toMatch(/§11\.230c[\s\S]{0,200}(tooltip|delay|focus|ARIA|aria)/i);
   });
