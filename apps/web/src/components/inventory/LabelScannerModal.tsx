@@ -241,9 +241,12 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
   // §pubchem-enrich (호영님 2026-06-30) — Tier 2 substance 보강(승인형). canonical(db.product) 무접촉.
   const [enrichment, setEnrichment] = useState<{ source: string; canonicalName: string; iupacName: string | null; molecularFormula: string | null; synonyms: string[] } | null>(null);
   const [enrichLoading, setEnrichLoading] = useState(false);
+  // §scan-synonym-bridge (호영님 2026-06-30) — PubChem 동의어 기반 후보(reverse-match 0일 때 fallback). canonical 무접촉.
+  const [synonymCandidates, setSynonymCandidates] = useState<{ id: string; name: string; brand: string | null; catalogNumber: string | null; confidence?: number; level?: "high" | "medium" | "low"; basis?: string }[]>([]);
   // scanResult 세팅 후 CAS/제품명으로 PubChem 비동기 조회(미매칭일 때만, best-effort). 실패/무결과 → null.
   useEffect(() => {
     setEnrichment(null);
+    setSynonymCandidates([]);
     const cas = scanResult?.parsed?.casNumber?.trim();
     const nm = scanResult?.parsed?.productName?.trim();
     if (!scanResult || scanResult.matchedProduct || (!cas && !nm)) return;
@@ -254,8 +257,8 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
     if (nm) qs.set("name", nm);
     csrfFetch(`/api/catalog/enrich?${qs.toString()}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (!cancelled) setEnrichment(d?.enrichment ?? null); })
-      .catch(() => { if (!cancelled) setEnrichment(null); })
+      .then((d) => { if (!cancelled) { setEnrichment(d?.enrichment ?? null); setSynonymCandidates(d?.synonymCandidates ?? []); } })
+      .catch(() => { if (!cancelled) { setEnrichment(null); setSynonymCandidates([]); } })
       .finally(() => { if (!cancelled) setEnrichLoading(false); });
     return () => { cancelled = true; };
   }, [scanResult]);
@@ -1030,7 +1033,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
           )}
           {/* §scan-manual-path (호영님 2026-06-30) — 미매칭 = 실패 아님. 신규 품목 등록 정상 경로 calm 안내(에러톤 0). */}
           {/* §scan-secondary-match — fuzzy 후보가 있으면 "신규 품목" 단정 대신 후보 행으로 양보(런타임 숨김, 토큰 보존). */}
-          {scanResult && !scanResult.matchedProduct && (scanResult.matchType !== "fuzzy_name" || !scanResult.productCandidates?.length) && (
+          {scanResult && !scanResult.matchedProduct && (scanResult.matchType !== "fuzzy_name" || !scanResult.productCandidates?.length) && synonymCandidates.length === 0 && (
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
               <div className="flex items-center gap-2">
                 <Package className="h-3.5 w-3.5 text-slate-400" />
@@ -1046,6 +1049,46 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
               </p>
               <div className="space-y-1.5">
                 {scanResult.productCandidates.slice(0, 3).map((c) => (
+                  <div key={c.id} className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        {c.level && (
+                          <span className={`shrink-0 rounded px-1 py-0.5 text-[9px] ${c.level === "high" ? "bg-emerald-100 text-emerald-700" : c.level === "medium" ? "bg-yellow-100 text-yellow-700" : "bg-slate-100 text-slate-500"}`}>
+                            {c.level === "high" ? "높음" : c.level === "medium" ? "보통" : "낮음"}
+                          </span>
+                        )}
+                        <p className="text-xs text-slate-700 truncate">{c.name}</p>
+                      </div>
+                      <p className="text-[10px] text-slate-400 truncate">
+                        {[c.brand, c.catalogNumber].filter(Boolean).join(" · ") || "추가 정보 없음"}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 px-2 text-[11px] shrink-0 text-blue-700 border-blue-300 hover:bg-blue-100 hover:text-blue-800"
+                      onClick={() => {
+                        updateField("productName", c.name);
+                        updateField("brand", c.brand ?? "");
+                        updateField("catalogNumber", c.catalogNumber ?? "");
+                      }}
+                    >
+                      이 품목 선택
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* §scan-synonym-bridge — reverse-match 0 + PubChem 동의어 매칭 시 "표준명 기준" 후보(승인형). 자동확정 X. */}
+          {scanResult && !scanResult.matchedProduct && !(scanResult.matchType === "fuzzy_name" && scanResult.productCandidates && scanResult.productCandidates.length > 0) && synonymCandidates.length > 0 && (
+            <div className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 space-y-2">
+              <p className="text-[11px] font-semibold text-slate-600">
+                유사 품목 후보 <span className="text-slate-400">(표준명 기준 · 확인 필요)</span>
+              </p>
+              <div className="space-y-1.5">
+                {synonymCandidates.slice(0, 3).map((c) => (
                   <div key={c.id} className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">

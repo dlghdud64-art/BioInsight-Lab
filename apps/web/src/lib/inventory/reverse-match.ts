@@ -25,7 +25,7 @@ export interface ScoredCandidate {
   catalogNumber: string | null;
   confidence: number; // 0..1 (per-candidate)
   level: "high" | "medium" | "low";
-  basis: "exact" | "contains" | "token";
+  basis: "exact" | "contains" | "token" | "synonym";
 }
 
 interface RawProduct {
@@ -147,4 +147,56 @@ export async function rankReverseCandidates(
 
   scored.sort((a, b) => b.confidence - a.confidence);
   return scored.slice(0, MAX_CANDIDATES);
+}
+
+/** §scan-synonym-bridge (호영님 2026-06-30) — PubChem 동의어로 약어↔풀네임 역매칭(Tier 3). */
+export interface SynonymMatchInput {
+  synonyms: string[];
+  canonicalName?: string | null;
+}
+
+const MIN_ALIAS_LEN = 3;
+
+/**
+ * PubChem 동의어(+정규화명)로 기존 품목 역매칭 — reverse-match(name/token) 0건일 때 fallback.
+ * synonym=간접 신호 → 보수 점수(상한 0.8). alias 최소 3자(짧은 약어 FP 억제). dedupe·정렬·cap 3.
+ * canonical 무접촉 — 후보는 suggestion(자동확정 X).
+ */
+export async function rankSynonymCandidates(
+  input: SynonymMatchInput,
+  deps: { db: ReverseMatcherDb },
+): Promise<ScoredCandidate[]> {
+  const raw = [input.canonicalName ?? "", ...(input.synonyms ?? [])];
+  const aliases = Array.from(new Set(raw.map(norm))).filter((a) => a.length >= MIN_ALIAS_LEN).slice(0, 10);
+  if (aliases.length === 0) return [];
+
+  const pool = await deps.db.product.findMany({
+    where: { OR: aliases.map((a) => ({ name: { contains: a, mode: "insensitive" } })) },
+    take: POOL_TAKE,
+    select: { id: true, name: true, brand: true, catalogNumber: true },
+  });
+
+  const byId = new Map<string, ScoredCandidate>();
+  for (const p of pool) {
+    const eName = norm(p.name);
+    if (eName.length < MIN_ALIAS_LEN) continue;
+    let best = 0;
+    for (const a of aliases) {
+      if (eName === a) best = Math.max(best, 0.75);
+      else if (eName.includes(a) || a.includes(eName)) {
+        const ratio = Math.min(a.length, eName.length) / Math.max(a.length, eName.length);
+        best = Math.max(best, 0.55 + 0.1 * ratio);
+      }
+    }
+    if (best <= 0) continue;
+    const confidence = Math.min(best, 0.8); // synonym=간접 → high 상한 억제
+    const level: ScoredCandidate["level"] = confidence >= 0.8 ? "high" : confidence >= 0.55 ? "medium" : "low";
+    const cand: ScoredCandidate = {
+      id: p.id, name: p.name, brand: p.brand, catalogNumber: p.catalogNumber,
+      confidence: Number(confidence.toFixed(2)), level, basis: "synonym",
+    };
+    const prev = byId.get(p.id);
+    if (!prev || cand.confidence > prev.confidence) byId.set(p.id, cand);
+  }
+  return [...byId.values()].sort((a, b) => b.confidence - a.confidence).slice(0, MAX_CANDIDATES);
 }

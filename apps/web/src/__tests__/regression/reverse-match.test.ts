@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
-import { rankReverseCandidates, type ScoredCandidate } from "@/lib/inventory/reverse-match";
+import { rankReverseCandidates, rankSynonymCandidates, type ScoredCandidate } from "@/lib/inventory/reverse-match";
 
 type Raw = { id: string; name: string; brand: string | null; catalogNumber: string | null };
 function dbWith(pool: Raw[]) {
@@ -96,5 +96,39 @@ describe("§scan-reverse-match-v2 — 정렬·cap·빈입력", () => {
     expect(r[0]).toHaveProperty("confidence");
     expect(r[0]).toHaveProperty("level");
     expect(r[0]).toHaveProperty("basis");
+  });
+});
+
+describe("§scan-synonym-bridge — rankSynonymCandidates", () => {
+  it("동의어에 등록 약어 포함 → 후보(약어↔풀네임 다리)", async () => {
+    // 스캔 'Bromocresol Purple' → PubChem 동의어에 'BCP' → 기존 'BCP' 매칭
+    const r = await rankSynonymCandidates(
+      { synonyms: ["BCP", "115-40-2", "BROMCRESOL PURPLE"], canonicalName: "Bromocresol Purple" },
+      { db: dbWith([P("a", "BCP", "Sigma", "B9673")]) },
+    );
+    expect(r.length).toBe(1);
+    expect(r[0].basis).toBe("synonym");
+    expect(r[0].confidence).toBeLessThanOrEqual(0.8); // synonym=간접 → 상한 0.8
+  });
+
+  it("alias <3자 → FP 가드(미매칭)", async () => {
+    const r = await rankSynonymCandidates({ synonyms: ["xy"], canonicalName: "ab" }, { db: dbWith([P("a", "XY")]) });
+    expect(r).toEqual([]);
+  });
+
+  it("빈 동의어 + 정규화명 없음 → [] (fetch 미호출)", async () => {
+    const db = dbWith([]);
+    const r = await rankSynonymCandidates({ synonyms: [], canonicalName: null }, { db });
+    expect(r).toEqual([]);
+    expect(db.product.findMany).not.toHaveBeenCalled();
+  });
+
+  it("동일 품목 다중 alias 매칭 → dedupe(1건) + cap 3", async () => {
+    const r = await rankSynonymCandidates(
+      { synonyms: ["Bromocresol Purple", "Bromocresol"], canonicalName: "Bromocresol Purple" },
+      { db: dbWith([P("dup", "Bromocresol Purple Solution")]) },
+    );
+    expect(r.length).toBe(1);
+    expect(r[0].id).toBe("dup");
   });
 });

@@ -9,6 +9,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { pubchemEnrich } from "@/lib/catalog/pubchem-enrich";
+import { db } from "@/lib/db";
+// §scan-synonym-bridge (호영님 2026-06-30) — PubChem 동의어로 약어↔풀네임 역매칭(Tier 3).
+import { rankSynonymCandidates, type ReverseMatcherDb } from "@/lib/inventory/reverse-match";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -26,5 +29,14 @@ export async function GET(req: NextRequest) {
 
   // best-effort — 실패/무결과는 enrichment:null(에러 아님). 스캔 흐름 차단 0.
   const enrichment = await pubchemEnrich({ cas, name });
-  return NextResponse.json({ enrichment });
+  // §scan-synonym-bridge — PubChem 동의어(+정규화명)로 기존 품목 역매칭(약어↔풀네임 다리).
+  //   동의어 없음/무결과 → []. canonical 무접촉·suggestion(승인형). reverse-match 0일 때 모달이 노출.
+  const synonymCandidates =
+    enrichment && enrichment.synonyms.length > 0
+      ? await rankSynonymCandidates(
+          { synonyms: enrichment.synonyms, canonicalName: enrichment.canonicalName },
+          { db: db as unknown as ReverseMatcherDb },
+        )
+      : [];
+  return NextResponse.json({ enrichment, synonymCandidates });
 }
