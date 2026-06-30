@@ -44,6 +44,8 @@ import { RelativeTimeText } from "@/components/ui/relative-time-text";
 import { useInventoryEditBroadcast } from "@/hooks/use-inventory-edit-broadcast";
 // §11.374 — 인앱 스캔 공통 가이드 프레임(라벨/QR 통일)
 import { ScanGuideFrame } from "./ScanGuideFrame";
+// §scan-multi-capture-merge (호영님 2026-06-30) — 다장 캡처 fill-empty 병합(catalogNo 누적 보완).
+import { mergeFormData } from "@/lib/inventory/scan-form-merge";
 
 // §11.382 — 정지 이미지(data URI)에서 datamatrix/QR 디코드(@zxing/browser).
 //   성공 → raw GS1 string(서버 parseGs1 single impl 으로 전달). 실패/없음 → null(Gemini fallback).
@@ -272,6 +274,9 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
   // §11.378 — 제품명 사용자 수정 추적. OCR 저신뢰도 시 미보정이면 입고 완료 차단,
   //   사용자가 제품명을 직접 수정(보정)하면 차단 해제(무효 통과 = fake success 방지).
   const [productNameDirty, setProductNameDirty] = useState(false);
+  // §scan-multi-capture-merge — 누적 촬영 횟수 + 다음 스캔 병합 의도(ref, closure 무영향).
+  const [scanCount, setScanCount] = useState(0);
+  const mergeNextRef = useRef(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [manualMode, setManualMode] = useState(false);
   const [manualText, setManualText] = useState("");
@@ -323,6 +328,8 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
   const resetState = useCallback(() => {
     setStep("upload");
     setScanResult(null);
+    setScanCount(0);
+    mergeNextRef.current = false;
     setError(null);
     setPreviewImage(null);
     setFormData(emptyFormData());
@@ -385,7 +392,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
   });
 
   /* ── base64(data URI) → scan-label API (파일/카메라 공통) ── */
-  const runScan = useCallback(async (base64: string) => {
+  const runScan = useCallback(async (base64: string, merge = false) => {
     setPreviewImage(base64);
     setStep("scanning");
     setError(null);
@@ -402,13 +409,15 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
         throw new Error(errData.error || "분석 실패");
       }
       const data: ScanApiResponse = await res.json();
-      setScanResult(data);
-      setFormData(mapScanToForm(data));
-      // §11.340 — 스캔 결과에 Lot/유효기한 있었는지 출처 기록(이후 수정 시 dirty 로 전환).
-      setLotScanFilled(Boolean(data.parsed.lotNo));
-      setExpiryScanFilled(Boolean(data.parsed.expirationDate));
-      setLotDirty(false);
-      setExpiryDirty(false);
+      const incoming = mapScanToForm(data);
+      // §scan-multi-capture-merge — merge 시 빈 필드만 채움(채워진/dirty 보존), 새 매칭이면 scanResult 채택.
+      setScanResult((prev) => (!merge || data.matchedProduct || !prev ? data : prev));
+      setFormData((prev) => (merge ? mergeFormData(prev, incoming) : incoming));
+      setScanCount((c) => (merge ? c + 1 : 1));
+      // §11.340 — Lot/유효기한 출처 기록(merge=OR 누적, 단일=교체).
+      setLotScanFilled((prev) => (merge ? prev || Boolean(data.parsed.lotNo) : Boolean(data.parsed.lotNo)));
+      setExpiryScanFilled((prev) => (merge ? prev || Boolean(data.parsed.expirationDate) : Boolean(data.parsed.expirationDate)));
+      if (!merge) { setLotDirty(false); setExpiryDirty(false); }
       setStep("review");
     } catch (err) {
       console.error("[LabelScanner] Gemini parse error:", err);
@@ -421,7 +430,9 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
   const processFile = async (file: File) => {
     const reader = new FileReader();
     reader.onload = async () => {
-      await runScan(reader.result as string);
+      const m = mergeNextRef.current;
+      mergeNextRef.current = false;
+      await runScan(reader.result as string, m);
     };
     reader.readAsDataURL(file);
   };
@@ -457,7 +468,9 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
       ctx.drawImage(video, 0, 0, w, h);
       const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
       stopCamera();
-      void runScan(dataUrl);
+      const mergeShot = mergeNextRef.current;
+      mergeNextRef.current = false;
+      void runScan(dataUrl, mergeShot);
     };
     captureRef.current = capture;
 
@@ -1397,6 +1410,23 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
             </div>
           )}
 
+          {/* §scan-multi-capture-merge — catalogNo 미충전 시 다른 각도 재촬영(병합) calm 유도. 채워지면 사라짐. */}
+          {scanResult && !scanResult.matchedProduct && !formData.catalogNumber.trim() && (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 flex items-center justify-between gap-2">
+              <span className="text-[11px] text-slate-500">
+                카탈로그 번호가 안 읽혔어요 — 다른 각도로 한 번 더 촬영하면 채울 수 있어요{scanCount > 1 ? ` · ${scanCount}회 병합됨` : ""}
+              </span>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-[11px] shrink-0 text-blue-700 border-blue-300 hover:bg-blue-600 hover:text-white"
+                onClick={() => { mergeNextRef.current = true; setStep("upload"); }}
+              >
+                다른 각도 재촬영
+              </Button>
+            </div>
+          )}
           {/* ── 액션 버튼 ── */}
           <div className="flex items-center gap-3 mt-auto pt-3 border-t border-slate-100">
             <Button variant="outline" onClick={resetState} className="gap-1.5">
