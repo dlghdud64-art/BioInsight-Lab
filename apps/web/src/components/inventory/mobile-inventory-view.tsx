@@ -824,13 +824,34 @@ export function MobileInventoryView({
     });
   }, [inventories, searchQuery, statusFilter]);
 
+  const topReorder = useMemo(() => {
+    const def = inventories
+      .filter((i) => { const s = getItemStatus(i); return s === "low" || s === "danger"; })
+      .map((i) => ({ i, gap: (i.safetyStock ?? 0) - i.currentQuantity }))
+      .sort((x, y) => y.gap - x.gap);
+    return def[0]?.i ?? null;
+  }, [inventories]);
+
   return (
     <div className="space-y-5">
-      {/* 1. Summary Strip */}
-      <MobileSummaryStrip inventories={inventories} />
-
-      {/* 2. Priority Queue */}
-      <MobilePriorityQueue inventories={inventories} onItemTap={openDetail} />
+      {/* 1. 재발주 추천 배너 (목업 §03, rose) — 가장 부족한 1건 → onReorder(실 핸들러). */}
+      {topReorder ? (
+        <button
+          type="button"
+          onClick={() => onReorder(topReorder)}
+          className="w-full text-left bg-rose-50 border border-rose-200 rounded-xl px-3.5 py-3 flex items-center gap-3 active:bg-rose-100 transition-colors"
+        >
+          <AlertTriangle className="h-4 w-4 text-rose-500 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-[13.5px] font-bold text-rose-700 truncate">{topReorder.product.name} 재발주 검토 권장</p>
+            <p className="text-[12px] text-rose-600">
+              현재 {topReorder.currentQuantity}{topReorder.unit}
+              {topReorder.safetyStock != null ? ` · 안전재고 ${topReorder.safetyStock} 대비 ${Math.max(0, topReorder.safetyStock - topReorder.currentQuantity)} 부족` : ""}
+            </p>
+          </div>
+          <span className="bg-rose-600 text-white text-[12px] font-bold px-3 py-1.5 rounded-full shrink-0">재발주</span>
+        </button>
+      ) : null}
 
       {/* 2.5 필터 칩 (목업 §03, same-canvas 필터) */}
       <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-0.5">
