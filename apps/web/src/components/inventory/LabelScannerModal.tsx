@@ -786,6 +786,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                             ? "warn"
                             : "idle"
                       }
+                      aligned={!!quality?.alignment?.ok}
                     />
                     {quality && (
                       <div

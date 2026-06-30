@@ -20,6 +20,9 @@ interface ScanGuideFrameProps {
    *   미지정 시 idle(기존 blue) — 하위호환.
    */
   status?: "idle" | "good" | "warn";
+  /** §scan-guide-alignment-hint — 비차단 정합 시각 큐(advisory). quality.alignment.ok 매핑.
+   *  verdict/자동촬영 무관(§11.375 보존) — 게이팅 아님, glow 만. */
+  aligned?: boolean;
   /** 바깥 absolute 래퍼에 추가할 클래스(모서리 둥글기/overflow 등). */
   className?: string;
   /** E2E/회귀 hook 보존용 data-testid(예: 라벨의 "camera-guide-frame"). */
@@ -29,6 +32,7 @@ interface ScanGuideFrameProps {
 export function ScanGuideFrame({
   showScanLine = false,
   status = "idle",
+  aligned = false,
   className = "",
   testId,
 }: ScanGuideFrameProps) {
@@ -56,6 +60,13 @@ export function ScanGuideFrame({
           코너 마커가 프리뷰 밖으로 오버플로우(화면 밖). 프리뷰 height 상대(78%) + aspect-square
           로 클램프 → 어떤 프리뷰 비율에서도 항상 안쪽. max-h-56 으로 대형 화면 상한. */}
       <div className="relative h-[78%] aspect-square max-h-56">
+        {/* §scan-guide-alignment-hint — 비차단 정합 glow(advisory). verdict/촬영 무관(§11.375). */}
+        {aligned && (
+          <div
+            data-scan-aligned="true"
+            className="pointer-events-none absolute inset-0 rounded-lg ring-2 ring-emerald-400/70 bg-emerald-400/10 transition-opacity duration-200"
+          />
+        )}
         {/* accent 코너 4마커 (공통 시각 언어). §11.374-vivino 정합 시 색 전환. */}
         {(["tl", "tr", "bl", "br"] as const).map((pos) => (
           <div
