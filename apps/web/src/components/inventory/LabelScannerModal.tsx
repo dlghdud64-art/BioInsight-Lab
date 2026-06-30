@@ -1004,6 +1004,15 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
               </div>
             </div>
           )}
+          {/* §scan-manual-path (호영님 2026-06-30) — 미매칭 = 실패 아님. 신규 품목 등록 정상 경로 calm 안내(에러톤 0). */}
+          {scanResult && !scanResult.matchedProduct && (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+              <div className="flex items-center gap-2">
+                <Package className="h-3.5 w-3.5 text-slate-400" />
+                <span className="text-xs font-medium text-slate-600">DB에 없는 신규 품목입니다 — 값을 확인하고 새로 등록합니다.</span>
+              </div>
+            </div>
+          )}
 
           {/* §11.253b-3 — case 1 Info banner (본인 다른 탭). BroadcastChannel
               으로 같은 origin 의 다른 탭이 동일 productId/lotNumber 작업 중일 때
@@ -1230,10 +1239,10 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
           {scanResult &&
             mapOcrConfidence(scanResult.parsed.confidence) === "low" &&
             !productNameDirty && (
-              <div className="flex items-start gap-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-3">
-                <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+              <div className="flex items-start gap-2 text-xs text-yellow-800 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 mt-3">
+                <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5 text-yellow-600" />
                 <span>
-                  라벨 인식 신뢰도가 낮습니다. 라벨이 맞는지 확인하고 제품명을 수정한 뒤 진행하세요.
+                  일부 값이 흐릿하게 인식됐어요(신뢰도가 낮습니다). 라벨을 확인하고 제품명을 채운 뒤 진행하면 됩니다.
                 </span>
               </div>
             )}
