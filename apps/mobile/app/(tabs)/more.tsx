@@ -5,7 +5,7 @@ import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import {
   LogOut, Info, User, Bell, Building2, Settings, ChevronRight,
-  Shield, HelpCircle, ExternalLink, BellRing,
+  Shield, HelpCircle, ExternalLink, BellRing, ShoppingCart, PlusCircle,
 } from "lucide-react-native";
 import { iconColor } from "../../theme/colors";
 // §11.209d-notification-inapp-mobile-screen — unread count badge for menu entry
@@ -56,6 +56,26 @@ export default function MoreScreen() {
       color: iconColor.violet,
       bgColor: "bg-purple-50",
       onPress: () => Alert.alert("조직 관리", "웹에서 조직 설정을 관리할 수 있습니다."),
+    },
+  ];
+
+  // §labaxis-mobile-reskin Phase 4 — 탭에서 강등된 "구매 운영" 진입(실라우트만, dead button 0).
+  const purchaseOpsItems: MenuItem[] = [
+    {
+      icon: ShoppingCart,
+      label: "구매 내역",
+      description: "발주·구매 기록 조회",
+      color: iconColor.primary,
+      bgColor: "bg-blue-50",
+      onPress: () => router.push("/(tabs)/purchases"),
+    },
+    {
+      icon: PlusCircle,
+      label: "구매 등록",
+      description: "새 구매·발주 기록 추가",
+      color: iconColor.success,
+      bgColor: "bg-emerald-50",
+      onPress: () => router.push("/purchases/register"),
     },
   ];
 
@@ -153,6 +173,7 @@ export default function MoreScreen() {
       <AppHeader title="설정" />
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
+        {renderSection("구매 운영", purchaseOpsItems)}
         {renderSection("계정", accountItems)}
         {renderSection("설정", settingsItems)}
         {renderSection("지원", supportItems)}

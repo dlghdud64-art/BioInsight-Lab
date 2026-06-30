@@ -1,7 +1,16 @@
 import { Tabs } from "expo-router";
-import { Home, FileText, ShoppingCart, Package, Settings } from "lucide-react-native";
+import {
+  Home,
+  FileText,
+  ArrowDownToLine,
+  Package,
+  Menu,
+} from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+// §labaxis-mobile-reskin Phase 4 — 탭 IA 5탭(호영님 2026-06-30 확정):
+//   대시보드 · 견적 · 입고 · 재고 · 더보기. (홈→대시보드, 입고 신규 승격,
+//   구매·분석·설정 → 더보기 강등. iOS ≤5탭 권장 — 6탭 44px 깨짐 회피.)
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
 
@@ -26,7 +35,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "홈",
+          title: "대시보드",
           tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
         }}
       />
@@ -34,17 +43,15 @@ export default function TabsLayout() {
         name="quotes"
         options={{
           title: "견적",
-          tabBarIcon: ({ color, size }) => (
-            <FileText size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <FileText size={size} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="purchases"
+        name="inbound"
         options={{
-          title: "구매",
+          title: "입고",
           tabBarIcon: ({ color, size }) => (
-            <ShoppingCart size={size} color={color} />
+            <ArrowDownToLine size={size} color={color} />
           ),
         }}
       />
@@ -52,19 +59,18 @@ export default function TabsLayout() {
         name="inventory"
         options={{
           title: "재고",
-          tabBarIcon: ({ color, size }) => (
-            <Package size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Package size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="more"
         options={{
-          title: "설정",
-          tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
+          title: "더보기",
+          tabBarIcon: ({ color, size }) => <Menu size={size} color={color} />,
         }}
       />
-      {/* 기존 탭 숨김 처리 */}
+      {/* 강등/숨김 — 라우트는 유지(더보기 메뉴에서 접근). */}
+      <Tabs.Screen name="purchases" options={{ href: null }} />
       <Tabs.Screen name="search" options={{ href: null }} />
     </Tabs>
   );
