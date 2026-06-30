@@ -32,9 +32,9 @@ import { runOcrPipeline } from "@/lib/ocr/run-ocr-pipeline";
 import { isTransientGeminiError } from "@/lib/ocr/gemini-config";
 import { parseGs1 } from "@/lib/scan/gs1-parser";
 import { mergeGs1WithOcr, type MergedLabelResult } from "@/lib/ocr/merge-gs1-ocr";
-// §scan-secondary-match (호영님 2026-06-30) — catalogNo 미매칭 시 name+brand fuzzy 후보(승인형).
-//   기존 §11.309b matcher 재사용. catalogNumber 생략 호출 → Tier1(catalog) skip, fuzzy tier만.
-import { matchProduct, type ProductCandidate, type ProductMatcherDb } from "@/lib/inventory/product-matcher";
+// §scan-reverse-match-v2 (호영님 2026-06-30) — catalogNo 미매칭 시 양방향·토큰·신뢰도 역매칭(승인형).
+//   §scan-secondary-match(matchProduct 단방향) 보정: 양방향 정규화 contains + 토큰(≥2 가드) + per-candidate 신뢰도·정렬·cap3.
+import { rankReverseCandidates, type ScoredCandidate, type ReverseMatcherDb } from "@/lib/inventory/reverse-match";
 
 export async function POST(req: NextRequest) {
   let enforcement: InlineEnforcementHandle | undefined;
@@ -189,22 +189,19 @@ export async function POST(req: NextRequest) {
     //   merged.casNumber 는 응답 parsed 에 그대로 노출(표시용) — DB *매칭*만 제거.
     //   CAS 자동매칭 복원은 실제 casNumber 컬럼 마이그레이션 후 별도 트랙.
 
-    // ── §scan-secondary-match — catalogNo 미매칭 시 name+brand fuzzy 후보(승인형) ──
-    //   곡면 라벨(원형 병) 등 catalogNo OCR 실패 시, 이름으로 기존 품목 후보를 제시.
-    //   자동확정 금지: matchedProduct 는 fuzzy 로 세팅하지 않음(canonical 무접촉, 오매칭 방지).
+    // ── §scan-reverse-match-v2 — catalogNo 미매칭 시 양방향·토큰·신뢰도 역매칭(승인형) ──
+    //   곡면 라벨(원형 병) 등 catalogNo OCR 실패 시, 이름으로 기존 품목 후보를 신뢰도순으로 제시.
+    //   자동확정 금지: matchedProduct 는 역매칭으로 세팅하지 않음(canonical 무접촉, 오매칭 방지).
     //   사용자가 후보 선택 → 폼 채움 → 입고 완료 시 기존 find-or-create(name+catalog)로 연결.
-    let productCandidates: ProductCandidate[] = [];
+    let productCandidates: ScoredCandidate[] = [];
     let matchType: "fuzzy_name" | null = null;
     if (!matchedProduct && (merged.productName || merged.brand)) {
-      // catalogNumber 생략 → matchProduct Tier1(catalog) skip, fuzzy(name/brand substring)만.
-      const fuzzy = await matchProduct(
+      // 양방향 정규화 contains + 토큰(≥2 가드) + per-candidate 신뢰도, 정렬·cap3. brand 보조 only.
+      productCandidates = await rankReverseCandidates(
         { productName: merged.productName, brand: merged.brand },
-        { db: db as unknown as ProductMatcherDb },
+        { db: db as unknown as ReverseMatcherDb },
       );
-      if (fuzzy.type === "fuzzy_name") {
-        productCandidates = fuzzy.candidates;
-        matchType = "fuzzy_name";
-      }
+      if (productCandidates.length > 0) matchType = "fuzzy_name";
     }
 
     // ── 기존 재고에서도 매칭 시도 ──

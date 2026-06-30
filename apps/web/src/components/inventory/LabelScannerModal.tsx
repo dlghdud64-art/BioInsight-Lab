@@ -86,7 +86,7 @@ interface ScanApiResponse {
   } | null;
   // §scan-secondary-match — catalogNo 미매칭 시 name+brand fuzzy 후보(승인형, 자동확정 X).
   matchType?: "fuzzy_name" | null;
-  productCandidates?: { id: string; name: string; brand: string | null; catalogNumber: string | null }[];
+  productCandidates?: { id: string; name: string; brand: string | null; catalogNumber: string | null; confidence?: number; level?: "high" | "medium" | "low"; basis?: string }[];
   // §11.290 Phase 4b — OCR pipeline metadata (provider / cache / jobId).
   // null = regex fallback path (text-only input, image 미사용).
   ocrMetadata?: {
@@ -1045,10 +1045,17 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                 유사 품목 후보 — 같은 품목이면 선택해 연결하세요 <span className="text-slate-400">(확인 필요)</span>
               </p>
               <div className="space-y-1.5">
-                {scanResult.productCandidates.slice(0, 5).map((c) => (
+                {scanResult.productCandidates.slice(0, 3).map((c) => (
                   <div key={c.id} className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="text-xs text-slate-700 truncate">{c.name}</p>
+                      <div className="flex items-center gap-1.5">
+                        {c.level && (
+                          <span className={`shrink-0 rounded px-1 py-0.5 text-[9px] ${c.level === "high" ? "bg-emerald-100 text-emerald-700" : c.level === "medium" ? "bg-yellow-100 text-yellow-700" : "bg-slate-100 text-slate-500"}`}>
+                            {c.level === "high" ? "높음" : c.level === "medium" ? "보통" : "낮음"}
+                          </span>
+                        )}
+                        <p className="text-xs text-slate-700 truncate">{c.name}</p>
+                      </div>
                       <p className="text-[10px] text-slate-400 truncate">
                         {[c.brand, c.catalogNumber].filter(Boolean).join(" · ") || "추가 정보 없음"}
                       </p>
