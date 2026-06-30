@@ -84,6 +84,9 @@ interface ScanApiResponse {
     updatedAt: string;
     user: { name: string | null } | null;
   } | null;
+  // §scan-secondary-match — catalogNo 미매칭 시 name+brand fuzzy 후보(승인형, 자동확정 X).
+  matchType?: "fuzzy_name" | null;
+  productCandidates?: { id: string; name: string; brand: string | null; catalogNumber: string | null }[];
   // §11.290 Phase 4b — OCR pipeline metadata (provider / cache / jobId).
   // null = regex fallback path (text-only input, image 미사용).
   ocrMetadata?: {
@@ -1026,11 +1029,45 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
             </div>
           )}
           {/* §scan-manual-path (호영님 2026-06-30) — 미매칭 = 실패 아님. 신규 품목 등록 정상 경로 calm 안내(에러톤 0). */}
-          {scanResult && !scanResult.matchedProduct && (
+          {/* §scan-secondary-match — fuzzy 후보가 있으면 "신규 품목" 단정 대신 후보 행으로 양보(런타임 숨김, 토큰 보존). */}
+          {scanResult && !scanResult.matchedProduct && (scanResult.matchType !== "fuzzy_name" || !scanResult.productCandidates?.length) && (
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
               <div className="flex items-center gap-2">
                 <Package className="h-3.5 w-3.5 text-slate-400" />
                 <span className="text-xs font-medium text-slate-600">DB에 없는 신규 품목입니다 — 값을 확인하고 새로 등록합니다.</span>
+              </div>
+            </div>
+          )}
+          {/* §scan-secondary-match — name+brand fuzzy 유사 품목 후보(승인형). 후보 있을 때만, 자동확정 X(canonical 무접촉). */}
+          {scanResult && !scanResult.matchedProduct && scanResult.matchType === "fuzzy_name" && scanResult.productCandidates && scanResult.productCandidates.length > 0 && (
+            <div className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 space-y-2">
+              <p className="text-[11px] font-semibold text-slate-600">
+                유사 품목 후보 — 같은 품목이면 선택해 연결하세요 <span className="text-slate-400">(확인 필요)</span>
+              </p>
+              <div className="space-y-1.5">
+                {scanResult.productCandidates.slice(0, 5).map((c) => (
+                  <div key={c.id} className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-xs text-slate-700 truncate">{c.name}</p>
+                      <p className="text-[10px] text-slate-400 truncate">
+                        {[c.brand, c.catalogNumber].filter(Boolean).join(" · ") || "추가 정보 없음"}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 px-2 text-[11px] shrink-0 text-blue-700 border-blue-300 hover:bg-blue-100 hover:text-blue-800"
+                      onClick={() => {
+                        updateField("productName", c.name);
+                        updateField("brand", c.brand ?? "");
+                        updateField("catalogNumber", c.catalogNumber ?? "");
+                      }}
+                    >
+                      이 품목 선택
+                    </Button>
+                  </div>
+                ))}
               </div>
             </div>
           )}
