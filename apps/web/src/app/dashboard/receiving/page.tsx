@@ -17,6 +17,7 @@ import {
   type ModuleBucketKey,
   type ModuleLandingItem,
 } from "@/lib/ops-console/module-landing-adapter";
+import { MobileReceivingView } from "@/components/receiving/mobile-receiving-view";
 import { ChevronRight, ArrowRight, AlertCircle, Clock, Zap } from "lucide-react";
 import { buildDetailHref } from "@/lib/ops-console/navigation-context";
 // §11.348-A-4b — 공급사 입고 회신 검토 패널(same-canvas).
@@ -199,8 +200,19 @@ export default function ReceivingLandingPage() {
         </div>
       )}
 
+      {/* §web-mobile-reskin-fidelity #receiving — 모바일 전용 문서게이트 뷰(목업 §04). */}
       {!isEmpty && (
-        <>
+        <div className="md:hidden">
+          <MobileReceivingView
+            items={allItems}
+            onItemClick={(item) => router.push(`/dashboard/receiving/${item.entityId}`)}
+          />
+        </div>
+      )}
+
+      {/* 데스크탑(md+) 전용 — 기존 우선처리/상태탭/다운스트림 (무변경) */}
+      {!isEmpty && (
+        <div className="hidden md:block space-y-5">
           {/* ── 2. Priority Queue ───────────────────────────────────── */}
           {priorityQueue.length > 0 && (
             <div>
@@ -301,7 +313,7 @@ export default function ReceivingLandingPage() {
               </div>
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );
