@@ -55,6 +55,8 @@ import {
 } from "lucide-react-native";
 import { lookupInventory, scanLabel, type LabelScanResponse } from "../hooks/useApi";
 import { mapOcrConfidence } from "../lib/ocr/capture-quality";
+// §scan-mobile-align-merge B — 다장 캡처 fill-empty 병합(순수). canonical 무접촉(draft 병합).
+import { mergeLabelForm, type LabelForm } from "../lib/inventory/merge-label-form";
 // §gs1-datamatrix — 시약 라벨 2D datamatrix(GS1) 결정적 디코드. OCR보다 Lot/유효기간 신뢰 ↑.
 import { parseGs1 } from "../lib/scan/gs1-parser";
 // §1-2/PLAN — 라벨 저신뢰 commit 게이트(rule 2 Lot·EXP 명시확인, rule 3 datamatrix verified 우회).
@@ -81,21 +83,8 @@ interface MatchResult {
   scannedData: string;
 }
 
-// §11.319 — 라벨 OCR 추출 결과 편집 폼
-interface LabelForm {
-  productName: string;
-  catalogNumber: string;
-  lotNumber: string;
-  expirationDate: string;
-  // §11.326 — 라벨 규격(통 1개 함량). 입고 수량 아님.
-  packSize: string;
-  packUnit: string;
-  // §11.326 — 입고 정보(사용자 입력). 받은 통/박스 개수.
-  receivedQuantity: string;
-  receivedUnit: string;
-  brand: string;
-  casNumber: string;
-}
+// §11.319 — 라벨 OCR 추출 결과 편집 폼. §scan-mobile-align-merge: LabelForm 타입은
+//   ../lib/inventory/merge-label-form 에서 import(병합 util 과 단일 출처 → drift 방지).
 
 function emptyLabelForm(): LabelForm {
   return {
@@ -157,6 +146,13 @@ export default function ScanScreen() {
   const lockRuntimeRef = useRef(initialLockRuntime());
   const [labelResult, setLabelResult] = useState<LabelScanResponse | null>(null);
   const [labelForm, setLabelForm] = useState<LabelForm>(emptyLabelForm());
+  // §scan-mobile-multi-merge — 누적 병합 시 직전 draft 동기 참조(stale closure 회피).
+  const labelFormRef = useRef<LabelForm>(labelForm);
+  useEffect(() => {
+    labelFormRef.current = labelForm;
+  }, [labelForm]);
+  // §scan-mobile-multi-merge — "다른 각도 재촬영(누적)" 모드. true 면 다음 촬영이 fill-empty 병합.
+  const [accumulate, setAccumulate] = useState(false);
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
   // §11.340 — Lot/유효기한 출처 추적(라벨 스캔 확인 vs 수기 입력, §11.335 정책).
   const [lotScanFilled, setLotScanFilled] = useState(false);
@@ -184,6 +180,7 @@ export default function ScanScreen() {
     setLotDirty(false); setExpiryDirty(false);
     setLotVerified(false); setExpiryVerified(false);
     setProductNameDirty(false);
+    setAccumulate(false);
     setCapturedUri(null);
     scanLockRef.current = false;
     lockRuntimeRef.current = initialLockRuntime();
@@ -325,7 +322,10 @@ export default function ScanScreen() {
   }, [manualInput, performLookup]);
 
   // §11.319 — 라벨 촬영 → OCR 분석
-  const handleCaptureLabel = useCallback(async () => {
+  // §scan-mobile-multi-merge — merge=true("다른 각도 재촬영"): 직전 draft 의 빈 필드만 새 스캔으로
+  //   채우고 채워진/수기 값은 보존(곡면 병 catalogNo 누적 보완). merge=false(기본)=단일 촬영=교체(회귀 0).
+  //   canonical 무접촉(draft 병합).
+  const handleCaptureLabel = useCallback(async (merge = false) => {
     if (state === "label-capture") return;
     setState("label-capture");
     logEvent("label_scan_started", {});
@@ -349,20 +349,32 @@ export default function ScanScreen() {
       const dataUri = `data:image/jpeg;base64,${base64}`;
       const result = await scanLabel(dataUri);
       setLabelResult(result);
-      setLabelForm(mapLabelToForm(result));
+      // §scan-mobile-multi-merge — 누적이면 직전 draft(ref) 기준 fill-empty, 아니면 교체.
+      const prev = labelFormRef.current;
+      const incoming = mapLabelToForm(result);
+      setLabelForm(merge ? mergeLabelForm(prev, incoming) : incoming);
       // §11.340 — 스캔 결과 Lot/유효기한 출처 기록.
-      setLotScanFilled(Boolean(result.parsed.lotNo));
-      setExpiryScanFilled(Boolean(result.parsed.expirationDate));
-      setLotDirty(false);
-      setExpiryDirty(false);
-      // §1-2/PLAN rule 3 — OCR-fill 은 verified 아님(결정적 아님). datamatrix 경로만 verified.
-      setLotVerified(false);
-      setExpiryVerified(false);
+      //   병합: 직전이 비어있던 필드만 이번 스캔이 채웠으므로 그 필드 한정 출처 갱신.
+      //   직전에 이미 채워진(보존된) 필드의 출처/dirty/verified 는 그대로 둔다.
+      const lotWasEmpty = !String(prev.lotNumber ?? "").trim();
+      const expWasEmpty = !String(prev.expirationDate ?? "").trim();
+      if (!merge || lotWasEmpty) {
+        setLotScanFilled(Boolean(result.parsed.lotNo));
+        setLotDirty(false);
+        // §1-2/PLAN rule 3 — OCR-fill 은 verified 아님(결정적 아님). datamatrix 경로만 verified.
+        setLotVerified(false);
+      }
+      if (!merge || expWasEmpty) {
+        setExpiryScanFilled(Boolean(result.parsed.expirationDate));
+        setExpiryDirty(false);
+        setExpiryVerified(false);
+      }
       logEvent("label_scan_success", {
         confidence: result.parsed.confidence,
         matched: result.matchedProduct ? 1 : 0,
         provider: result.ocrMetadata?.providerUsed ?? "REGEX",
       });
+      setAccumulate(false);
       setState("label-review");
     } catch (err) {
       logEvent("label_scan_failed", { error: String(err) });
@@ -785,6 +797,21 @@ export default function ScanScreen() {
             </View>
           </View>
 
+          {/* §scan-mobile-multi-merge — 다장 캡처 누적: 폼 유지한 채 카메라 복귀 → 다음 촬영은
+              빈 항목만 채움(곡면 병 catalogNo 누적 보완). 채워진/수기 값 보존. */}
+          <Pressable
+            className="flex-row items-center justify-center gap-1.5 border border-emerald-200 bg-emerald-50 rounded-xl py-3 px-4 mt-4"
+            onPress={() => {
+              setAccumulate(true);
+              setState("scanning");
+            }}
+          >
+            <RotateCcw size={15} color="#059669" />
+            <Text className="text-sm font-semibold text-emerald-700">
+              다른 각도 재촬영 (빈 항목 채우기)
+            </Text>
+          </Pressable>
+
           {/* 액션 */}
           <View className="flex-row gap-3 mt-6">
             <Pressable
@@ -1157,6 +1184,14 @@ export default function ScanScreen() {
                 isLocked ? "border-emerald-400/80" : "border-white/60"
               }`}
             >
+              {/* §scan-mobile-align-glow — 비차단 Vivino 정합 글로우(advisory). isLocked(라이브 lock
+                  신호) 시 emerald 채움. verdict/촬영 게이팅 아님(§11.375). pointerEvents none → 촬영 무간섭. */}
+              {isLocked && (
+                <View
+                  pointerEvents="none"
+                  className="absolute inset-0 rounded-2xl bg-emerald-400/10 border border-emerald-400/40"
+                />
+              )}
               <View
                 className={`absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 rounded-tl-2xl ${
                   isLocked ? "border-emerald-400" : "border-white"
@@ -1204,7 +1239,7 @@ export default function ScanScreen() {
                   className={`w-16 h-16 rounded-full items-center justify-center ${
                     isBusy ? "bg-white/40" : isLocked ? "bg-emerald-500" : "bg-white"
                   }`}
-                  onPress={handleCaptureLabel}
+                  onPress={() => handleCaptureLabel(accumulate)}
                   disabled={isBusy}
                 >
                   {state === "label-capture" ? (
