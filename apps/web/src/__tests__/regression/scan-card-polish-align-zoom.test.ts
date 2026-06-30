@@ -57,3 +57,15 @@ describe("§scan-card-polish — 보존(회귀 0)", () => {
     expect(MODAL).not.toMatch(/data-testid=["']ocr-retry-button["']/);
   });
 });
+
+describe("§scan-card-polish ③ — 모달 위치/신뢰도/사유문구(호영님 2026-06-30)", () => {
+  it("모달 lg+ 콘텐츠 영역 중앙 보정(per-modal lg:ml-64, 사이드바 w-64)", () => {
+    expect(MODAL).toMatch(/max-w-md p-0 gap-0[^"]*lg:ml-64/);
+  });
+  it("신뢰도 배지는 low 일 때만 노출(보통/높음 숨김)", () => {
+    expect(MODAL).toMatch(/=== "low" && <ConfidenceBadge level="low"/);
+  });
+  it("사유 괄호(재고 오염) 문구 전부 제거 — 지시문만 유지", () => {
+    expect(MODAL).not.toMatch(/재고 오염/);
+  });
+});

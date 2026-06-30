@@ -971,7 +971,8 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
               <div className="flex items-center gap-2 flex-wrap">
                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                 <p className="text-sm font-semibold text-slate-900">AI 분석 완료</p>
-                {scanResult && <ConfidenceBadge level={mapOcrConfidence(scanResult.parsed.confidence)} />}
+                {/* §scan-card-polish — 신뢰도 배지는 low 일 때만 노출(보통/높음은 노이즈). 저신뢰는 아래 전용 배너로도 안내. */}
+                {scanResult && mapOcrConfidence(scanResult.parsed.confidence) === "low" && <ConfidenceBadge level="low" />}
 {/* §scan-card-declutter (호영님 2026-06-30) — provider/fallback/cache badges + retry/correct CTA removed.
                     internal observability; prod jobId null => dead button. Keep ConfidenceBadge only.
                     OCR retry/correct route(/api/ocr/*) and QuoteScannerModal unchanged (separate track). */}
@@ -1232,8 +1233,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
               <div className="flex items-start gap-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-3">
                 <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
                 <span>
-                  라벨 인식 신뢰도가 낮습니다. 라벨이 맞는지 확인하고 제품명을 수정한 뒤
-                  진행하세요. (잘못된 사진은 재고 오염을 일으킬 수 있습니다.)
+                  라벨 인식 신뢰도가 낮습니다. 라벨이 맞는지 확인하고 제품명을 수정한 뒤 진행하세요.
                 </span>
               </div>
             )}
@@ -1244,7 +1244,6 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
               <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
               <span>
                 Lot 번호·유효기한을 확인(터치/수정)해 주세요. 자동 인식값은 확인 후 입고됩니다.
-                (재고 오염 방지)
               </span>
             </div>
           )}
@@ -1296,7 +1295,8 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0 gap-0 bg-white text-slate-900 border-slate-200 z-[60]">
+      {/* §scan-card-polish (호영님 2026-06-30) — lg+ 사이드바(w-64) 보정: 콘텐츠 영역 중앙 정렬(per-modal, 전역 Dialog 불변). */}
+      <DialogContent className="max-w-md p-0 gap-0 bg-white text-slate-900 border-slate-200 z-[60] lg:ml-64">
         <DialogHeader className="px-4 pt-4 pb-2">
           <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
             <ScanLine className="h-4 w-4 text-blue-600" />
