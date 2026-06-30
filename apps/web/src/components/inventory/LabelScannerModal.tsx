@@ -235,6 +235,27 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   // §scan-card-polish (호영님 2026-06-30) — 스캔 이미지 클릭 확대(zoom overlay).
   const [imageZoomed, setImageZoomed] = useState(false);
+  // §pubchem-enrich (호영님 2026-06-30) — Tier 2 substance 보강(승인형). canonical(db.product) 무접촉.
+  const [enrichment, setEnrichment] = useState<{ source: string; canonicalName: string; iupacName: string | null; molecularFormula: string | null; synonyms: string[] } | null>(null);
+  const [enrichLoading, setEnrichLoading] = useState(false);
+  // scanResult 세팅 후 CAS/제품명으로 PubChem 비동기 조회(미매칭일 때만, best-effort). 실패/무결과 → null.
+  useEffect(() => {
+    setEnrichment(null);
+    const cas = scanResult?.parsed?.casNumber?.trim();
+    const nm = scanResult?.parsed?.productName?.trim();
+    if (!scanResult || scanResult.matchedProduct || (!cas && !nm)) return;
+    let cancelled = false;
+    setEnrichLoading(true);
+    const qs = new URLSearchParams();
+    if (cas) qs.set("cas", cas);
+    if (nm) qs.set("name", nm);
+    csrfFetch(`/api/catalog/enrich?${qs.toString()}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled) setEnrichment(d?.enrichment ?? null); })
+      .catch(() => { if (!cancelled) setEnrichment(null); })
+      .finally(() => { if (!cancelled) setEnrichLoading(false); });
+    return () => { cancelled = true; };
+  }, [scanResult]);
   const [formData, setFormData] = useState<SmartReceiveFormData>(emptyFormData());
   // §11.340 — Lot/유효기한 출처 추적. 라벨 스캔으로 채워졌고(scanFilled) 사용자가
   //   수정 안 했으면 "라벨 스캔 확인", 수정했거나 수기 입력이면 "수기 입력"(§11.335 출처 정책).
@@ -1011,6 +1032,37 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                 <Package className="h-3.5 w-3.5 text-slate-400" />
                 <span className="text-xs font-medium text-slate-600">DB에 없는 신규 품목입니다 — 값을 확인하고 새로 등록합니다.</span>
               </div>
+            </div>
+          )}
+          {/* §pubchem-enrich — PubChem 표준 정보 제안(승인형 [적용]). 무결과/실패 → 미노출(calm). canonical 무접촉. */}
+          {scanResult && !scanResult.matchedProduct && enrichLoading && (
+            <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 flex items-center gap-2 text-[11px] text-slate-400">
+              <Loader2 className="h-3 w-3 animate-spin" /> PubChem에서 표준 정보를 찾는 중…
+            </div>
+          )}
+          {scanResult && !scanResult.matchedProduct && enrichment && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50/60 px-3 py-2.5 space-y-1.5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold text-blue-700">PubChem 표준 정보</p>
+                  <p className="text-xs text-slate-700 truncate">
+                    {enrichment.canonicalName}
+                    {enrichment.molecularFormula ? <span className="text-slate-400"> · {enrichment.molecularFormula}</span> : null}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-[11px] shrink-0 text-blue-700 border-blue-300 hover:bg-blue-100 hover:text-blue-800"
+                  onClick={() => updateField("productName", enrichment.canonicalName)}
+                >
+                  제품명에 적용
+                </Button>
+              </div>
+              {enrichment.synonyms.length > 0 && (
+                <p className="text-[10px] text-slate-400 truncate">동의어: {enrichment.synonyms.slice(0, 5).join(", ")}</p>
+              )}
             </div>
           )}
 
