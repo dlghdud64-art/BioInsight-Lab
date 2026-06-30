@@ -155,8 +155,63 @@ export function MobileQuotesView({
     return [...list].sort((a, b) => order[stageOf(a)] - order[stageOf(b)]);
   }, [quotes, filter]);
 
+  const kpi = useMemo(() => {
+    let active = 0, waiting = 0, review = 0;
+    for (const q of quotes) {
+      const s = stageOf(q);
+      if (s === "s1" || s === "s2" || s === "s3") active++;
+      if (s === "s2") waiting++;
+      if (s === "s3") review++;
+    }
+    return { active, waiting, review };
+  }, [quotes]);
+
+  const topTask = useMemo(() => {
+    const byOld = (x: QuoteLite, y: QuoteLite) => new Date(x.createdAt).getTime() - new Date(y.createdAt).getTime();
+    const s2 = quotes.filter((q) => stageOf(q) === "s2").sort(byOld);
+    if (s2[0]) return s2[0];
+    const s1 = quotes.filter((q) => stageOf(q) === "s1").sort(byOld);
+    return s1[0] ?? null;
+  }, [quotes]);
+
   return (
     <div className="space-y-3">
+      {/* navy 헤더 + KPI 요약 (목업 §02) */}
+      <div className="bg-slate-900 rounded-2xl px-4 pt-4 pb-4">
+        <h1 className="text-[22px] font-extrabold tracking-tight text-white">견적 관리</h1>
+        <p className="text-[12.5px] text-white/60 mt-0.5">발송 → 회신 → 비교 → 승인</p>
+        <div className="flex gap-2 mt-3.5">
+          {[
+            { l: "진행 중", v: kpi.active, alert: false },
+            { l: "회신 대기", v: kpi.waiting, alert: true },
+            { l: "비교 검토", v: kpi.review, alert: false },
+          ].map((k) => (
+            <div key={k.l} className={`flex-1 rounded-[14px] px-3 py-2.5 ${k.alert && k.v > 0 ? "bg-rose-500/15" : "bg-white/[0.06]"}`}>
+              <p className="text-white text-xl font-extrabold">{k.v}</p>
+              <p className={`text-[11px] mt-0.5 ${k.alert && k.v > 0 ? "text-rose-200" : "text-white/60"}`}>{k.l}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 지금 할 일 (contextual next-step, AI 아님) */}
+      {topTask ? (
+        <button
+          type="button"
+          onClick={() => onSelect(topTask.id)}
+          className="w-full text-left bg-slate-900 rounded-2xl px-4 py-3.5 active:opacity-90 transition-opacity"
+        >
+          <div className="flex items-center gap-1.5">
+            <Clock className="h-3 w-3 text-blue-200" />
+            <span className="text-[11px] font-bold text-blue-200">지금 할 일</span>
+          </div>
+          <p className="text-white text-[15px] font-extrabold mt-1.5 line-clamp-1">{displayTitle(topTask)}</p>
+          <p className="text-white/60 text-[12.5px] mt-0.5">{STAGE_META[stageOf(topTask)].label} · {relTime(topTask.createdAt)}</p>
+          <span className="inline-flex items-center gap-1 bg-white text-slate-900 text-[13px] font-bold px-3.5 py-2 rounded-full mt-3">
+            바로 열기 <ChevronRight className="h-3.5 w-3.5" />
+          </span>
+        </button>
+      ) : null}
       {/* 단계 칩 */}
       <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-0.5">
         {CHIPS.map((c) => {

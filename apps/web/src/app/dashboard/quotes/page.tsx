@@ -2165,6 +2165,7 @@ function QuotesPageContent() {
           AppPageHeader actions render 로 이동(우측 고정). 모든 wiring(setAiParseModalOpen/runAiQuoteCompare/
           PermissionGate/드롭다운 state) verbatim 보존. */}
       <AppPageHeader
+        className="hidden md:block"
         title="견적 관리"
         description="처리가 필요한 견적 케이스를 우선순위 순으로 확인합니다."
         actions={[
