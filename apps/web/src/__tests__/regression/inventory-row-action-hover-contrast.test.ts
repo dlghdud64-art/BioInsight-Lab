@@ -1,33 +1,33 @@
 /**
- * §inventory-row-hover-contrast (호영님 2026-06-30) — 재고 행 재발주/입고 버튼 호버 글자 대비
+ * §inventory-row-hover-contrast → §inventory-row-hover-solid 진화 (호영님 2026-06-30)
  *
- * 증상: 재발주(yellow)/입고(emerald) 버튼에 마우스 올리면 글자가 회색(slate)으로 변함.
- * 원인: Button outline variant 의 hover:text-slate-900 가 커스텀 브랜드색(text-yellow-600/
- *   emerald-600)을 호버 시 덮음(커스텀에 hover:text- 미지정). + 정상 입고 버튼은
- *   border-emerald-800 + hover:bg-emerald-950(어두운 호버 bg) 대비 붕괴.
- * Fix: 호버 텍스트를 브랜드색(hover:text-yellow-700 / hover:text-emerald-700)으로 오버라이드 +
- *   정상 입고 버튼 톤 표준화(emerald-200/50).
+ * d086784a(outline-darken: hover:text-yellow-700/emerald-700)는 yellow-700/emerald-700이
+ * 어두운 머스터드/올리브라 pale bg 위에서 칙칙 → 호영님 "회색 그대로" 재보고(라이브 CSSOM 측정으로 확인).
+ * Fix(supersede): 재발주/입고 hover = 솔리드 브랜드색 채움 + 흰 글자(명확 피드백, 회색 인상 0).
  */
 
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-const TABLE = readFileSync(
-  resolve(__dirname, "../../components/inventory/InventoryTable.tsx"),
-  "utf8",
-);
+const TABLE = readFileSync(resolve(__dirname, "../..", "components/inventory/InventoryTable.tsx"), "utf8");
 
-describe("§inventory-row-hover-contrast — 호버 글자 브랜드색 유지", () => {
-  it("재발주(yellow) 호버 텍스트 = yellow-700 (slate 회색 덮임 방지) 2곳", () => {
-    const m = TABLE.match(/hover:bg-yellow-50 hover:text-yellow-700/g) ?? [];
-    expect(m.length).toBe(2);
+describe("§inventory-row-hover-solid — 재발주/입고 솔리드 채움 hover (d086784a supersede)", () => {
+  it("재발주(부족 yellow / 긴급 blue) → 솔리드 채움 + 흰 글자", () => {
+    expect(TABLE).toMatch(/text-yellow-600 border-yellow-300 hover:bg-yellow-600 hover:text-white/);
+    expect(TABLE).toMatch(/text-blue-600 border-blue-300 hover:bg-blue-600 hover:text-white/);
   });
-  it("입고(emerald) 호버 텍스트 = emerald-700 3곳(부족 2 + 정상 1)", () => {
-    const m = TABLE.match(/hover:bg-emerald-50 hover:text-emerald-700/g) ?? [];
+
+  it("입고(emerald) → 솔리드 채움 + 흰 글자 3곳(부족·정상·컴팩트)", () => {
+    const m = TABLE.match(/hover:bg-emerald-600 hover:text-white/g) ?? [];
     expect(m.length).toBe(3);
   });
-  it("정상 입고 어두운 호버(emerald-950) 제거 — 대비 붕괴 0", () => {
-    expect(TABLE).not.toMatch(/hover:bg-emerald-950/);
+
+  it("정상 재발주(slate, hover:text 부재 갭) → 솔리드 채움 + 흰 글자", () => {
+    expect(TABLE).toMatch(/text-slate-500 border-slate-200 hover:bg-slate-600 hover:text-white/);
+  });
+
+  it("muddy darken 제거 — 입고 hover:bg-emerald-50 hover:text-emerald-700 부재(회색 인상 0)", () => {
+    expect(TABLE).not.toMatch(/hover:bg-emerald-50 hover:text-emerald-700/);
   });
 });

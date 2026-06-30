@@ -450,7 +450,7 @@ export function InventoryTable({
                         }
                         // 정상: 입고 또는 조정
                         return onRestock ? (
-                          <Button variant="outline" size="sm" className="h-7 px-2.5 text-[11px] gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700" onClick={() => onRestock(group.lots[0])}>
+                          <Button variant="outline" size="sm" className="h-7 px-2.5 text-[11px] gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-600 hover:text-white" onClick={() => onRestock(group.lots[0])}>
                             <PackagePlus className="h-3 w-3 shrink-0" />입고
                           </Button>
                         ) : (
@@ -806,8 +806,8 @@ export function InventoryTable({
                                       size="sm"
                                       className={`h-7 px-2 text-[11px] gap-1 ${
                                         groupStatus === "부족"
-                                          ? "text-yellow-600 border-yellow-300 hover:bg-yellow-50 hover:text-yellow-700"
-                                          : "text-blue-600 border-blue-300 hover:bg-blue-50"
+                                          ? "text-yellow-600 border-yellow-300 hover:bg-yellow-600 hover:text-white"
+                                          : "text-blue-600 border-blue-300 hover:bg-blue-600 hover:text-white"
                                       }`}
                                       onClick={() => onReorder(group.lots[0])}
                                     >
@@ -825,7 +825,7 @@ export function InventoryTable({
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        className="h-7 px-2 text-[11px] gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+                                        className="h-7 px-2 text-[11px] gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-600 hover:text-white"
                                         onClick={() => onRestock(group.lots[0])}
                                       >
                                         <PackagePlus className="h-3 w-3 shrink-0" />
@@ -847,7 +847,7 @@ export function InventoryTable({
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        className="h-7 px-2 text-[11px] gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+                                        className="h-7 px-2 text-[11px] gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-600 hover:text-white"
                                         onClick={() => onRestock(group.lots[0])}
                                       >
                                         <PackagePlus className="h-3 w-3 shrink-0" />
@@ -864,7 +864,7 @@ export function InventoryTable({
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="h-7 px-2 text-[11px] gap-1 text-slate-500 border-slate-200 hover:bg-slate-50"
+                                      className="h-7 px-2 text-[11px] gap-1 text-slate-500 border-slate-200 hover:bg-slate-600 hover:text-white"
                                       onClick={() => onReorder(group.lots[0])}
                                     >
                                       <RotateCcw className="h-3 w-3 shrink-0" />
