@@ -39,7 +39,9 @@ describe("§11.338 Part A — 하단 바 확정가만 합산", () => {
 describe("§11.338 Part B — cart 스키마 버전(잔존 정리)", () => {
   it("STORAGE_KEY v2 + legacy 키 목록", () => {
     const src = read(PROVIDER);
-    expect(src).toMatch(/STORAGE_KEY = "quote-cart-storage-v2"/);
+    // canonical key 는 lib/quote/quote-cart-storage 의 QUOTE_CART_STORAGE_KEY(="quote-cart-storage-v2") SSOT 참조.
+    expect(src).toMatch(/STORAGE_KEY = QUOTE_CART_STORAGE_KEY/);
+    expect(src).toMatch(/from "@\/lib\/quote\/quote-cart-storage"/);
     expect(src).toMatch(/LEGACY_STORAGE_KEYS = \["quote-cart-storage"\]/);
   });
   it("복원 시 구버전 키 removeItem", () => {

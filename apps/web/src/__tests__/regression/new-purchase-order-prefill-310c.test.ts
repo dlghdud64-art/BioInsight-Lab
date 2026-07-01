@@ -115,9 +115,11 @@ describe("§11.310c — CTA wiring (dead button 0)", () => {
     expect(src).toMatch(/!form\.supplier\.trim\(\)[\s\S]{0,100}toast\.error/);
   });
 
-  it("handleCreate — MVP toast.info + redirect (실제 POST 는 §11.310d)", () => {
+  it("handleCreate — 실제 POST /api/orders/draft + redirect (§11.310d 구현 완료)", () => {
+    // MVP toast.info stub → §11.310d 에서 실 POST(PurchaseRecord create)로 대체.
     const src = read(PATH);
-    expect(src).toMatch(/toast\.info[\s\S]{0,200}발주 생성 흐름은 후속 단계에서 활성화/);
+    expect(src).toMatch(/fetch\(["']\/api\/orders\/draft["'][\s\S]{0,80}method:\s*["']POST["']/);
+    expect(src).toMatch(/toast\.success\(["']발주 draft가 등록되었습니다/);
     expect(src).toMatch(/router\.push\(["']\/dashboard\/purchase-orders["']\)/);
   });
 
@@ -157,7 +159,7 @@ describe("§11.310c — §11.302 색상 정합 (amber 0)", () => {
 
   it("예상 금액 — emerald 톤 (§11.302 정합)", () => {
     const src = read(PATH);
-    expect(src).toMatch(/bg-emerald-50 border-emerald-200/);
+    expect(src).toMatch(/bg-emerald-50 border border-emerald-200/);
   });
 });
 

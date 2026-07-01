@@ -45,12 +45,13 @@ describe("§11.348-B-1 B1-4 — 컴포넌트 docType prop + COA 마운트", () =
   it("컴포넌트 docType prop + ?docType 조회 + 업로드 append", () => {
     const src = read(COMP);
     expect(src).toContain('docType?: "sds" | "coa"');
-    expect(src).toContain("?docType=${docType}");
+    // qs 조립이 `docType=${docType}` (상위서 ? prefix, #inventory-lot-entity P4 restockId 병합).
+    expect(src).toContain("docType=${docType}");
     expect(src).toContain('form.append("docType", docType)');
   });
-  it("product 페이지에 sds + coa 두 섹션", () => {
+  it("product 페이지 SDS 섹션 (COA는 §detail-page P1-1 로 inventory 패널 lot-scope 이전)", () => {
     const src = read(PAGE);
     expect(src).toContain('docType="sds"');
-    expect(src).toContain('docType="coa"');
+    expect(src).not.toContain('docType="coa"');
   });
 });

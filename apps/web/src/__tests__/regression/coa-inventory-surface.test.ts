@@ -40,11 +40,13 @@ describe("P3-surface — InventoryContextPanel COA 섹션", () => {
     expect(src).toContain("SdsDocumentsSection");
     expect(src).toContain('docType="coa"');
   });
-  it("COA에 inventoryId(item.id) 전달", () => {
-    expect(read(PANEL)).toContain("inventoryId={item.id}");
+  it("COA는 lot(restockId) 단위 전달 (#inventory-lot-entity P4)", () => {
+    // COA 는 §detail-page P1-1 로 inventory 패널 lot(InventoryRestock) 단위로 이전.
+    expect(read(PANEL)).toContain("restockId={lot.restockId}");
   });
-  it("mock 재고는 COA 비활성 게이트(real id만)", () => {
-    expect(read(PANEL)).toContain('startsWith("mock")');
+  it("COA 게이트 — 실 입고 lot(restockId) 기반 (mock 가짜 lot 게이트 대체, dead button 0)", () => {
+    expect(read(PANEL)).toContain("restockId={lot.restockId}");
+    expect(read(PANEL)).not.toContain('startsWith("mock")');
   });
 });
 

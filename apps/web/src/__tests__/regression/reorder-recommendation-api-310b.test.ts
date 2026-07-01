@@ -118,7 +118,8 @@ describe("§11.310b — panel wiring (hook → reorderReviewInput)", () => {
   it("useReorderRecommendation import + 호출", () => {
     const src = read(PANEL_PATH);
     expect(src).toMatch(/import\s*\{\s*useReorderRecommendation\s*\}\s*from\s*["']@\/hooks\/use-reorder-recommendation["']/);
-    expect(src).toMatch(/recommendationData\s*=\s*useReorderRecommendation\(\s*selectedReorderForReview\?\.productName\s*\?\?\s*null\s*\)/);
+    // 멀티라인 호출 + trailing comma 허용 (prettier 서식). 인자 계약 동일.
+    expect(src).toMatch(/recommendationData\s*=\s*useReorderRecommendation\(\s*selectedReorderForReview\?\.productName\s*\?\?\s*null\s*,?\s*\)/);
   });
 
   it("vendors fallback chain — hook 데이터 우선 → suggestedVendor MVP fallback", () => {
