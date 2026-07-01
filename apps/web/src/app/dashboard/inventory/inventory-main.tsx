@@ -807,6 +807,8 @@ export function InventoryMain() {
 
   // §11.302c — 재주문 필요 KPI 색상 분기 (위험 red-600 vs 긴급 red-100).
   //   currentQuantity === 0 (재고 0 = 즉시 결품) → 위험 격상.
+  // §11.302d-1 #inventory-badge-traffic-light — 재고부족 Badge 3곳=긴급 red-100(dot=red),
+  //   우선사용=검토 yellow-100, 설정필요=utility yellow 보존. 데스크탑 yellow 정책(Q1=b, §11.302 모바일 한정).
   const outOfStockCount = displayInventories.filter(
     (inv) => inv.currentQuantity === 0
   ).length;

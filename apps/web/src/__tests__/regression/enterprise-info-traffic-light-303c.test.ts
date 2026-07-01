@@ -32,9 +32,9 @@ describe("§11.303c — ENTERPRISE_INFO + PLAN_DESCRIPTOR.enterprise 정합", ()
   });
 
   describe("ENTERPRISE_INFO.features — §11.303 spec 정합", () => {
-    it('"R&D Operations 전체 +" 라벨 (이전 "Business 전체 기능" 정정)', () => {
-      expect(PLANS_SRC).toMatch(/"R&D Operations 전체 \+"/);
-      // named import identifier 아닌 주석 내 언급은 허용 — 비주석 라인만 차단
+    it('"Pro 전체 +" 라벨 (§11.304 R&D Operations→Pro 정합)', () => {
+      expect(PLANS_SRC).toMatch(/"Pro 전체 \+"/);
+      // 이전 "Business 전체 기능" 비주석 라인 차단 (§11.303c 회귀 방지 유지)
       expect(PLANS_SRC).not.toMatch(/^\s+"Business 전체 기능"/m);
     });
 
@@ -62,8 +62,8 @@ describe("§11.303c — ENTERPRISE_INFO + PLAN_DESCRIPTOR.enterprise 정합", ()
       expect(PLANS_SRC).not.toMatch(/"무제한 데이터 저장"/);
     });
 
-    it('tagline — "기관 / 법인 — 계약 기반 좌석·운영량" 정합', () => {
-      expect(PLANS_SRC).toMatch(/tagline:\s*"기관 \/ 법인 — 계약 기반 좌석·운영량"/);
+    it('tagline — "기관 · 계약형 운영 · 좌석/운영량 협의" 정합 (§11.304)', () => {
+      expect(PLANS_SRC).toMatch(/tagline:\s*"기관 · 계약형 운영 · 좌석\/운영량 협의"/);
     });
   });
 
@@ -72,7 +72,7 @@ describe("§11.303c — ENTERPRISE_INFO + PLAN_DESCRIPTOR.enterprise 정합", ()
       // PLAN_DESCRIPTOR.enterprise.features 와 ENTERPRISE_INFO.features 가
       // 같은 6 항목 (label 통일 후 정합)
       const sharedFeatures = [
-        '"R&D Operations 전체 +"',
+        '"Pro 전체 +"',
         '"전용 좌석 / 운영량 협의"',
         '"SSO / SAML / 감사 통제"',
         '"전담 온보딩 매니저"',
@@ -90,7 +90,7 @@ describe("§11.303c — ENTERPRISE_INFO + PLAN_DESCRIPTOR.enterprise 정합", ()
     it("ENTERPRISE_INFO displayName / priceDisplay / contactEmail 보존", () => {
       expect(PLANS_SRC).toMatch(/displayName:\s*"Enterprise"/);
       expect(PLANS_SRC).toMatch(/priceDisplay:\s*"별도 문의"/);
-      expect(PLANS_SRC).toMatch(/contactEmail:\s*"sales@labaxis\.io"/);
+      expect(PLANS_SRC).toMatch(/contactEmail:\s*"support@labaxis\.co\.kr"/);
     });
 
     it("PlanLimits interface + maxQuotesPerMonth field 보존 (§11.303b 후속)", () => {
