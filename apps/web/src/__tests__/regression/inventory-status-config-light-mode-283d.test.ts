@@ -43,8 +43,9 @@ describe("§11.283d — STATUS_CONFIG light mode 신호등", () => {
     expect(VIEW).toMatch(/low:[\s\S]{0,300}bg-red-100 text-red-700 border-red-200/);
   });
 
-  it("STATUS_CONFIG.expiring — bg-yellow-100 text-yellow-700 border-yellow-200", () => {
-    expect(VIEW).toMatch(/expiring:[\s\S]{0,300}bg-yellow-100 text-yellow-700 border-yellow-200/);
+  // §11.302 재앵커 — expiring 주의색 yellow → muted amber #b45821 (호영님 2026-06-30).
+  it("STATUS_CONFIG.expiring — bg-[#fdf3ec] text-[#b45821] border-[#f3d4bf] (§11.302 amber)", () => {
+    expect(VIEW).toMatch(/expiring:[\s\S]{0,300}bg-\[#fdf3ec\] text-\[#b45821\] border-\[#f3d4bf\]/);
   });
 
   it("STATUS_CONFIG.danger — bg-red-600 text-white border-red-700 (Critical)", () => {

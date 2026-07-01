@@ -147,6 +147,10 @@ function getRecommendedAction(inv: ProductInventory): { label: string; shortLabe
 //   카드 색상 옅은 베이지 잔존): §11.283c-2 sweep 가 색상명만 amber→yellow
 //   바꿨고 dark mode `/40` opacity 패턴 (bg-yellow-900/40) 그대로 잔존 → 호영님
 //   spec light mode 신호등 (bg-[#fdf3ec] text-[#b45821]) 정합 swap.
+// §11.283e #lot-strip-badge — lot_issue 색상 분기는 §web-mobile-reskin 에서
+//   STATUS_CONFIG.expiring 단일 소스로 통합(별도 shortLabel 색상 ternary 제거).
+// §11.302 — expiring 주의색 = muted amber #b45821 (쨍한 yellow 금지, 호영님 2026-06-30).
+//   ⚠ dotCls 는 §web-mobile-reskin 카드 재설계 후 미사용(정의만 보존, 렌더 제거).
 const STATUS_CONFIG: Record<StatusType, { label: string; dotCls: string; badgeCls: string }> = {
   normal: {
     label: "정상",

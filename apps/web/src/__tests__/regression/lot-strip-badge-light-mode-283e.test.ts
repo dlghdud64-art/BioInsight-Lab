@@ -35,31 +35,24 @@ const VIEW = readFileSync(
   "utf8",
 );
 
-describe("§11.283e — lot_issue strip 검토/임박 light mode 신호등 정합", () => {
+// §web-mobile-reskin 재앵커 — lot_issue 별도 shortLabel 색상 ternary 는 카드 재설계로
+//   제거되고 만료 임박 색상은 STATUS_CONFIG.expiring 단일 소스(§11.302 muted amber)로 통합.
+//   본 sentinel 은 (1) §11.283e 추적 marker 존재 (2) 만료 임박 amber 정합
+//   (3) 쨍한 yellow(bg-yellow-500 text-slate-900) 재유입 방지 로 재정의.
+describe("§11.283e — 만료 임박 색상 STATUS_CONFIG 통합 (§11.302 amber)", () => {
   it("§11.283e trace marker 존재", () => {
     expect(VIEW).toMatch(/§11\.283e/);
   });
 
-  it("검토 shortLabel — bg-yellow-100 text-yellow-700 (light mode 신호등)", () => {
-    expect(VIEW).toMatch(/shortLabel === "검토"\s*\?\s*"bg-yellow-100 text-yellow-700"/);
+  it("STATUS_CONFIG.expiring — muted amber (#b45821) 정합", () => {
+    expect(VIEW).toMatch(/expiring:[\s\S]{0,300}bg-\[#fdf3ec\] text-\[#b45821\] border-\[#f3d4bf\]/);
   });
 
-  it("임박 shortLabel — bg-yellow-100 text-yellow-700 (light mode 신호등)", () => {
-    expect(VIEW).toMatch(/shortLabel === "임박"\s*\?\s*"bg-yellow-100 text-yellow-700"/);
+  it("쨍한 yellow(bg-yellow-500 text-slate-900) 재유입 방지 (§11.302)", () => {
+    expect(VIEW).not.toMatch(/bg-yellow-500 text-slate-900/);
   });
 
-  it("기존 dark tone (bg-yellow-500 text-slate-900) lot_issue 분기 잔존 부재", () => {
-    // shortLabel === "검토" / "임박" 분기에 bg-yellow-500 잔존 없어야 함
-    expect(VIEW).not.toMatch(/shortLabel === "(검토|임박)"\s*\?\s*"bg-yellow-500 text-slate-900"/);
-  });
-
-  it("긴급/폐기 shortLabel — bg-red-600 text-white 보존 (§11.283d 정합)", () => {
-    expect(VIEW).toMatch(/shortLabel === "긴급"\s*\?\s*"bg-red-600 text-white"/);
-    expect(VIEW).toMatch(/shortLabel === "폐기"\s*\?\s*"bg-red-600 text-white"/);
-  });
-
-  it("재주문/위치 shortLabel — 다른 category 색상 보존 (canonical truth)", () => {
-    expect(VIEW).toMatch(/shortLabel === "재주문"\s*\?\s*"bg-blue-500 text-white"/);
-    expect(VIEW).toMatch(/shortLabel === "위치"\s*\?\s*"bg-violet-500 text-white"/);
+  it("위험(danger) — bg-red-600 text-white 보존 (신호등 대비)", () => {
+    expect(VIEW).toMatch(/badgeCls:\s*"bg-red-600 text-white border-red-700"/);
   });
 });
