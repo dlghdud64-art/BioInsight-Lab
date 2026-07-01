@@ -63,9 +63,11 @@ describe("§11.302d-6d-1 — status yellow + 장식 sky", () => {
     const src = readFileSync(join(DASH_DIR, "purchase-orders/page.tsx"), "utf8");
     expect(src).toMatch(/HIGH:\s*\{\s*bg:\s*"bg-yellow-50"/);
   });
-  it("activity-logs PRODUCT_FAVORITED yellow", () => {
+  it("activity-logs — §log-consolidation 통합(/dashboard/audit redirect, 색상 가드 이전)", () => {
+    // 활동 로그 surface 는 §log-consolidation 로 /dashboard/audit(활동/감사 토글)에 흡수.
+    // 구 route 는 redirect stub — 색상 가드는 통합 host(log-consolidation-p1)로 이동.
     const src = readFileSync(join(DASH_DIR, "activity-logs/page.tsx"), "utf8");
-    expect(src).toMatch(/PRODUCT_FAVORITED:\s*"bg-yellow-100 text-yellow-700 border-yellow-200"/);
+    expect(src).toMatch(/redirect\("\/dashboard\/audit"\)/);
   });
   it("organizations AVATAR_COLORS 장식 sky (orange 제거, 신호등 무관)", () => {
     const src = readFileSync(join(DASH_DIR, "organizations/page.tsx"), "utf8");

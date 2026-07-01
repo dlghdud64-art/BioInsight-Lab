@@ -89,18 +89,22 @@ describe("§11.302d-6a-2 — CategorySpendingWidget.tsx amber swap (warning)", (
   });
 });
 
-describe("§11.302d-6a-2 — soft_limit orange 보존 (의미 분석 후속)", () => {
-  it("soft_limit STATUS_CONFIG orange 보존 (yellow/red 중간 강도, 별도 batch 검토)", () => {
+describe("§11.302d-6a-2 — soft_limit orange→red 확정 (호영님 Q=A, 2026-05-27)", () => {
+  // §11.302d-6a-2-soft-limit: soft_limit 을 §11.302 신호등 3색(red)으로 정합,
+  //   over_budget 과는 라벨("소프트 리밋" vs "예산 초과 위험")로 구분. orange 폐기.
+  it("soft_limit STATUS_CONFIG red 정합 (§11.302 신호등, orange 폐기)", () => {
     const src = read(CATEGORY_PATH);
-    expect(src).toMatch(/soft_limit:\s*\{[\s\S]{0,200}bgColor:\s*"bg-orange-50"/);
-    expect(src).toMatch(/soft_limit:\s*\{[\s\S]{0,200}textColor:\s*"text-orange-700"/);
-    expect(src).toMatch(/soft_limit:\s*\{[\s\S]{0,200}dotColor:\s*"bg-orange-500"/);
-    expect(src).toMatch(/soft_limit:\s*\{[\s\S]{0,200}borderColor:\s*"border-orange-200"/);
+    expect(src).toMatch(/soft_limit:\s*\{[\s\S]{0,200}bgColor:\s*"bg-red-50"/);
+    expect(src).toMatch(/soft_limit:\s*\{[\s\S]{0,200}textColor:\s*"text-red-700"/);
+    expect(src).toMatch(/soft_limit:\s*\{[\s\S]{0,200}dotColor:\s*"bg-red-500"/);
+    expect(src).toMatch(/soft_limit:\s*\{[\s\S]{0,200}borderColor:\s*"border-red-200"/);
+    // orange 재유입 방지 guard
+    expect(src).not.toMatch(/soft_limit:\s*\{[\s\S]{0,200}orange/);
   });
 
-  it("soft_limit 주석 명시 — 후속 호영님 Q 후 결정", () => {
+  it("soft_limit 라벨 구분 — '소프트 리밋' (over_budget 과 색상 동일, 라벨로 구분)", () => {
     const src = read(CATEGORY_PATH);
-    expect(src).toMatch(/soft_limit.*orange[\s\S]{0,400}별도 의미 분석 필요/);
+    expect(src).toMatch(/soft_limit:\s*\{[\s\S]{0,80}label:\s*"소프트 리밋"/);
   });
 });
 

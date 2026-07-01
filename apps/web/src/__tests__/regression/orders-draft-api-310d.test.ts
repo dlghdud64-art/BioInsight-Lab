@@ -122,7 +122,7 @@ describe("§11.310d — new page handleCreate fetch wiring", () => {
 
   it("§11.310d 안내문 — emerald 톤 (이전 slate-50 → emerald-50)", () => {
     const src = read(PAGE_PATH);
-    expect(src).toMatch(/bg-emerald-50 border-emerald-200[\s\S]{0,300}PurchaseRecord에 등록/);
+    expect(src).toMatch(/bg-emerald-50 border border-emerald-200[\s\S]{0,300}PurchaseRecord에 등록/);
   });
 });
 
