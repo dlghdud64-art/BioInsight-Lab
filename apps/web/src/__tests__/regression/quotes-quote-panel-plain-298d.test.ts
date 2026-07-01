@@ -33,7 +33,8 @@ describe("§11.298d — quotes + quote-panel inline plain dropdown", () => {
     it("모바일 더보기 — quote-header-more-actions-mobile testid + 견적서 비교/초안", () => {
       expect(QUOTES).toMatch(/data-testid="quote-header-more-actions-mobile"/);
       expect(QUOTES).toMatch(/runAiQuoteCompare\(\)/);
-      expect(QUOTES).toMatch(/openQuoteDraftWorkbench\(\)/);
+      // openQuoteDraftWorkbench 는 bare 핸들러 참조(onClick={openQuoteDraftWorkbench})로 wiring.
+      expect(QUOTES).toMatch(/openQuoteDraftWorkbench\b/);
     });
 
     it("BOM upload — setIntakeDockSource('bom_import') + setIntakeDockOpen(true)", () => {

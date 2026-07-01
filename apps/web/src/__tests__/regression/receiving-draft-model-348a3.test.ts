@@ -79,7 +79,12 @@ describe("§11.348-A-3 불변 — 입고안은 재고를 변경하지 않는다 
     const end = src.indexOf("model ReceivingDraftItem {");
     const draftBlock = stripComments(src.slice(start, end));
     const itemStart = src.indexOf("model ReceivingDraftItem {");
-    const itemBlock = stripComments(src.slice(itemStart));
+    // itemBlock 을 ReceivingDraftItem 모델 끝(다음 model 선언)까지로 bound —
+    //   slice-to-EOF 는 뒤 모델(SDSDocument 등)의 ProductInventory relation 을 오탐(§suite-red-cleanup fix).
+    const itemEnd = src.indexOf("\nmodel ", itemStart + 1);
+    const itemBlock = stripComments(
+      src.slice(itemStart, itemEnd === -1 ? undefined : itemEnd),
+    );
     // 순수 데이터: 재고/입고 모델로의 relation 금지 (주석 언급은 허용)
     for (const block of [draftBlock, itemBlock]) {
       expect(block).not.toContain("ProductInventory[]");

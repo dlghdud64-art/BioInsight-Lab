@@ -48,14 +48,9 @@ describe("§11.327 — hydratedRef 가드 신설 (Phase 3 GREEN target)", () => 
   });
 });
 
-describe("§11.327 — 4 mutation useEffect hydratedRef 가드 (Phase 3 GREEN target)", () => {
-  it("Mutation 1 (briefingCollapsed) hydratedRef 가드 + skip pattern", () => {
-    const src = read(PAGE_PATH);
-    expect(src).toMatch(
-      /if \(!hydratedRef\.current\) return[\s\S]{0,200}userPrefs\.updateBriefingCollapsed/,
-    );
-  });
-
+describe("§11.327 — 3 mutation useEffect hydratedRef 가드 (briefingCollapsed 제거 반영)", () => {
+  // Mutation 1 (briefingCollapsed) 은 §briefing-rail-overlay 개편으로 접기 pref/PATCH 제거 →
+  //   updateBriefingCollapsed 소스 부재. 해당 assertion 은퇴(columnPrefs/quotesView/quotesFilter 유지).
   it("Mutation 2 (columnPrefs) hydratedRef 가드 + userPrefs dep 제거", () => {
     const src = read(PAGE_PATH);
     // hydratedRef 가드 + updateColumnPrefs 호출
@@ -87,10 +82,10 @@ describe("§11.327 — canonical 보존 (hydration + debounce + 다른 caller �
     expect(src).toMatch(/const userPrefs = useUserPreferences\(\)/);
   });
 
-  it("4 hydration useEffect 로직 보존 (columnPrefs/briefingCollapsed/quotesView/quotesFilter)", () => {
+  it("hydration useEffect 로직 보존 (columnPrefs/quotesView/quotesFilter)", () => {
     const src = read(PAGE_PATH);
     expect(src).toMatch(/userPrefs\.preferences\?\.columnPrefs\?\.quotes/);
-    expect(src).toMatch(/userPrefs\.preferences\?\.briefingCollapsed/);
+    // briefingCollapsed pref hydration 은 §quote-briefing-rail-overlay 개편으로 제거됨(quotes page 미사용).
     expect(src).toMatch(/userPrefs\.preferences\?\.quotesView/);
     expect(src).toMatch(/userPrefs\.preferences\?\.quotesFilter/);
   });

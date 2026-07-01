@@ -245,7 +245,7 @@ export async function GET(request: NextRequest) {
   </div>
   <article class="doc">
     <header class="report-header">
-      <img src="/brand/Bio-Insight.png" alt="BioInsight Lab" class="logo" />
+      <img src="/brand/Bio-Insight.png" alt="LabAxis" class="logo" />
       <div class="title-block">
         <h1>LabAxis 감사 추적 (Audit Trail)</h1>
         <div class="subtitle">컴플라이언스 보존 양식 — 운영자 검토용</div>
