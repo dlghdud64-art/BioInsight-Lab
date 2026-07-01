@@ -23,11 +23,30 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { execSync } from "node:child_process";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { resolve, join } from "node:path";
 
 const REPO_ROOT = resolve(__dirname, "../../../../..");
+
+// §suite-red-cleanup: execSync grep → readFileSync walk 전환 (vitest 환경 execSync
+//   STACK_TRACE 회피, smoke 패턴 정합). app-wide import 스캔은 정적 walk 로 대체.
+function importHits(needle: string): string[] {
+  const SCAN = resolve(REPO_ROOT, "apps/web/src");
+  const hits: string[] = [];
+  const walk = (dir: string) => {
+    for (const name of readdirSync(dir)) {
+      if (name === "node_modules" || name === ".next" || name === "__tests__") continue;
+      const full = join(dir, name);
+      const st = statSync(full);
+      if (st.isDirectory()) walk(full);
+      else if ((full.endsWith(".ts") || full.endsWith(".tsx")) && readFileSync(full, "utf8").includes(needle)) {
+        hits.push(full);
+      }
+    }
+  };
+  walk(SCAN);
+  return hits;
+}
 const DROPDOWN_MENU_FILE = resolve(
   REPO_ROOT,
   "apps/web/src/components/ui/dropdown-menu.tsx",
@@ -53,31 +72,10 @@ describe("§11.302a — dropdown-menu.tsx dead file + package 제거", () => {
   });
 
   it("application-wide @/components/ui/dropdown-menu import 0 (silent fail 제거)", () => {
-    let matches = "";
-    try {
-      matches = execSync(
-        `grep -rE 'from "@/components/ui/dropdown-menu"' apps/web/src --include='*.tsx' --include='*.ts' -l`,
-        { cwd: REPO_ROOT, encoding: "utf8" },
-      ).trim();
-    } catch (err: any) {
-      // grep exit code 1 = no match (success). 다른 exit code 만 fail.
-      if (err.status !== 1) throw err;
-      matches = "";
-    }
-    expect(matches).toBe("");
+    expect(importHits('from "@/components/ui/dropdown-menu"')).toHaveLength(0);
   });
 
   it("application-wide @radix-ui/react-dropdown-menu import 0", () => {
-    let matches = "";
-    try {
-      matches = execSync(
-        `grep -rE 'from "@radix-ui/react-dropdown-menu"' apps/web/src --include='*.tsx' --include='*.ts' -l`,
-        { cwd: REPO_ROOT, encoding: "utf8" },
-      ).trim();
-    } catch (err: any) {
-      if (err.status !== 1) throw err;
-      matches = "";
-    }
-    expect(matches).toBe("");
+    expect(importHits('from "@radix-ui/react-dropdown-menu"')).toHaveLength(0);
   });
 });

@@ -60,13 +60,13 @@ describe("§11.297e — inventory issue alert ActionMenu + Radix import 정리",
       expect(CONTENT).toMatch(/menuId=\{`inv-content-issue-\$\{inv\.id\}`\}/);
     });
 
-    it("D3 filter Radix 잔존 (Select form 포함) — §11.297f 별도", () => {
-      // 1개 Radix DropdownMenu 잔존 (D3 filter)
-      expect(CONTENT).toMatch(/<DropdownMenu>/);
+    it("D3 filter Radix DropdownMenu 제거 완료 (§11.297f ActionMenu 이관)", () => {
+      // §11.297f + §298f anti-Radix 로 D3 filter Radix DropdownMenu 제거. 부재-lock.
+      expect(CONTENT).not.toMatch(/<DropdownMenu>/);
     });
 
-    it("Radix import 그대로 (D3 filter swap 후 §11.297f 에서 제거)", () => {
-      expect(CONTENT).toMatch(/from "@\/components\/ui\/dropdown-menu"/);
+    it("Radix dropdown-menu import 제거 완료 (§11.297f)", () => {
+      expect(CONTENT).not.toMatch(/from "@\/components\/ui\/dropdown-menu"/);
     });
   });
 });

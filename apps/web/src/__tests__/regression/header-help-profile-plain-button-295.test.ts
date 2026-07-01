@@ -90,9 +90,12 @@ describe("§11.295 — Header 도움말 + 프로필 plain button 단순화", () 
     });
   });
 
-  describe("회귀 0 — 알림 dropdown + 햄버거 button 보존", () => {
-    it("알림 DropdownMenu (isNotificationOpen) 보존 — 별도 batch", () => {
-      expect(HEADER).toMatch(/<DropdownMenu open=\{isNotificationOpen\}/);
+  describe("회귀 0 — 알림 UI(plain button) + 햄버거 button 보존", () => {
+    it("알림 UI 보존 — plain button + isNotificationOpen (§11.295/296 Radix swap 완료)", () => {
+      // 알림 dropdown 은 §11.295/296 에서 Radix → plain button + useState(isNotificationOpen)
+      //   swap 완료(Header.tsx L22-23). 기능 보존, Radix DropdownMenu 부재.
+      expect(HEADER).toMatch(/isNotificationOpen/);
+      expect(HEADER).not.toMatch(/<DropdownMenu open=\{isNotificationOpen\}/);
     });
 
     it("§11.282-a 모바일 햄버거 button (Menu icon pointer-events-none) 보존", () => {

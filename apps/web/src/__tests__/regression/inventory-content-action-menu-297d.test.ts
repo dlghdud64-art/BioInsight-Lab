@@ -38,10 +38,9 @@ describe("§11.297d — inventory-content D1+D2+D5 ActionMenu", () => {
     expect(SRC).toMatch(/setShowUsageDialog\(false\)/);
   });
 
-  it("D3 (filter) + D4 (issue alert) Radix 잔존 — 별도 batch §11.297e", () => {
-    // 2개 Radix DropdownMenu 잔존 (filter + issue alert)
+  it("D3 (filter) + D4 (issue alert) Radix DropdownMenu 제거 완료 (§11.297e/f ActionMenu 이관)", () => {
+    // §11.297e/f + §298f anti-Radix 로 Radix DropdownMenu → ActionMenu 이관 완료. 부재-lock.
     const dropdownCount = (SRC.match(/<DropdownMenu>/g) || []).length;
-    expect(dropdownCount).toBe(2);
-    expect(SRC).toMatch(/§11\.297e/);
+    expect(dropdownCount).toBe(0);
   });
 });
