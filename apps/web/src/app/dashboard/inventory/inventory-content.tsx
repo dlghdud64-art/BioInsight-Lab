@@ -1408,12 +1408,23 @@ function InventoryPageContent() {
       )}
       {/* ── Mobile View (below md breakpoint) ── */}
       <div className="md:hidden">
-        {/* §11.374 P3.4 — 인라인 h1 → AppPageHeader(단일 헤더 문법). 액션 버튼은 아래 보존. */}
-        <AppPageHeader
-          title="재고 관리"
-          description="실험실 재고와 lot 상태를 관리합니다."
-          className="mb-4"
-        />
+        {/* §web-mobile-reskin-fidelity #inventory — navy 헤더 + 3 KPI(시안 §03). full-bleed. */}
+        <div className="-mx-3 sm:-mx-4 -mt-4 mb-4 bg-slate-900 rounded-b-[22px] px-4 pt-5 pb-4">
+          <h1 className="text-[22px] font-extrabold tracking-tight text-white">재고 관리</h1>
+          <p className="text-[12.5px] text-white/60 mt-0.5">Lot 단위 추적 · QR 스캔 입·출고</p>
+          <div className="flex gap-2 mt-3.5">
+            {[
+              { label: "전체 품목", value: displayInventories.length, unit: "종", alert: false },
+              { label: "안전재고 미달", value: displayInventories.filter((i) => i.currentQuantity === 0 || (i.safetyStock != null && i.currentQuantity <= i.safetyStock)).length, unit: "", alert: true },
+              { label: "만료 임박", value: displayInventories.filter((i) => { if (!i.expiryDate) return false; const dd = Math.ceil((new Date(i.expiryDate).getTime() - Date.now()) / 86400000); return dd > 0 && dd <= 30; }).length, unit: "", alert: false },
+            ].map((k) => (
+              <div key={k.label} className={`flex-1 rounded-[14px] px-3 py-2.5 ${k.alert && k.value > 0 ? "bg-rose-500/15" : "bg-white/[0.06]"}`}>
+                <p className="text-white text-xl font-extrabold">{k.value}<span className="text-white/70 text-xs font-semibold">{k.unit ? ` ${k.unit}` : ""}</span></p>
+                <p className={`text-[11px] mt-0.5 ${k.alert && k.value > 0 ? "text-rose-200" : "text-white/60"}`}>{k.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
         <div className="flex flex-wrap items-start gap-2 mb-5">
           <Button size="sm" onClick={() => setIsDialogOpen(true)}>
             <Plus className="h-3.5 w-3.5 mr-1.5" />

@@ -2340,6 +2340,9 @@ function QuotesPageContent() {
         </div>
       )}
 
+      {/* §web-mobile-reskin-fidelity #quotes — 퍼널·추천은 데스크탑 전용(모바일=MobileQuotesView). */}
+      {!isMobile && (
+        <>
       {/* §quote-management P2 — 파이프라인 퍼널(stage 집계·현재집중·0 흐리게). 빈 계정 전부 0(가짜 데이터 0). */}
       <QuoteFunnel
         quotes={quotesData?.quotes ?? []}
@@ -2363,6 +2366,8 @@ function QuotesPageContent() {
           else openQuoteContextRail(id, "row");
         }}
       />
+        </>
+      )}
 
       {/* §11.279 — 게이트 블록 2종 제거 (호영님 P0 spec).
           §11.279a verification-summary section unmount + §11.279b fixed-flow section unmount.
@@ -2378,7 +2383,7 @@ function QuotesPageContent() {
           액션 실행 시에만 표시). dispatchableCount > 0 일 때만 노출, 0 건이면 hidden.
           tap → openQuoteDraftWorkbench (워크벤치 안에서 4 단계 진행 — same-canvas).
           데스크탑 (sm+) 은 위 §11.279f 데스크탑 배너 신규. */}
-      {dispatchableCount > 0 && (
+      {!isMobile && dispatchableCount > 0 && (
         <>
           {/* §11.279f 데스크탑 배너 */}
           <div
@@ -2454,7 +2459,7 @@ function QuotesPageContent() {
           뷰 toggle 위치 이동은 별도 backlog (line 2014-2044 = 80+ line, 큰 구조 변경). */}
       {/* §quotes-mobile-density P3 — 검색+필터 sticky 1행(리스트 스크롤 시 상단 고정, 퍼널/배너는 위로 흘러감).
           bg-white 로 스크롤 콘텐츠 비침 방지. z-20(테이블 sticky 헤더 z-20 동급, 행 위). */}
-      <div className="sticky top-0 z-20 bg-white flex flex-col gap-2 pb-2">
+      <div className="sticky top-0 z-20 bg-white hidden md:flex flex-col gap-2 pb-2">
         <div className="flex flex-row gap-2">
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
