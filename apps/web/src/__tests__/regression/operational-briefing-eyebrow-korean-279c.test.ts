@@ -133,13 +133,13 @@ describe("§11.279c — sent tracking 영문 statusLabel 부재 (vendor-dispatch
     expect(FILES.vendorDispatchWorkbench).not.toMatch(/"sent tracking"/);
   });
 
-  it("vendor-dispatch-workbench — 한글 \"전송 추적\" statusLabel 존재", () => {
-    expect(FILES.vendorDispatchWorkbench).toMatch(/"전송 추적"/);
+  it("vendor-dispatch-workbench — 한글 발송 statusLabel 존재 (§dispatch-real-send: 전송 추적→발송 완료)", () => {
+    // statusLabel 이 실 발송 결과 기반 한글로 진화("전송 추적" → "발송 완료"/`발송 X/Y`).
+    expect(FILES.vendorDispatchWorkbench).toMatch(/statusLabel:[\s\S]{0,80}"발송 완료"/);
   });
 
-  it("vendor-dispatch-workbench — failedCount 분기 보존 (canonical setSentTracking 호출)", () => {
-    expect(FILES.vendorDispatchWorkbench).toMatch(/setSentTracking/);
-    expect(FILES.vendorDispatchWorkbench).toMatch(/failedCount > 0/);
+  it("vendor-dispatch-workbench — 발송 실패 분기 보존 (failed > 0, 한글 라벨)", () => {
+    expect(FILES.vendorDispatchWorkbench).toMatch(/failed > 0/);
   });
 });
 

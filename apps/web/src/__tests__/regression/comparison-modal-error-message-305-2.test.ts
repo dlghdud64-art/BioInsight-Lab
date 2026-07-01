@@ -22,8 +22,9 @@ function read(rel: string): string {
 }
 
 describe("§11.305-2 — 에러 메시지 misleading 제거", () => {
-  it("'네트워크 상태를 확인해 주세요' 하드코딩 0 (misleading 제거)", () => {
-    const src = read(PATH);
+  it("'네트워크 상태를 확인해 주세요' 하드코딩 0 (주석 제외 render)", () => {
+    // 주석(제거 사유 설명)은 제외하고 실제 render 에서 misleading 하드코딩 0 검증.
+    const src = read(PATH).replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
     expect(src).not.toMatch(/네트워크 상태를 확인해 주세요/);
   });
 

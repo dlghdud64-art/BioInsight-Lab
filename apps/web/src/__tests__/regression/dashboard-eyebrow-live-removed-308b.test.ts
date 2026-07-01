@@ -26,8 +26,9 @@ function read(rel: string): string {
 }
 
 describe("§11.308b — 영문 eyebrow + Live 배지 완전 제거", () => {
-  it("'Operational Intelligence Dashboard' 영문 텍스트 0 occurrence", () => {
-    const src = read(PATH);
+  it("'Operational Intelligence Dashboard' 영문 텍스트 0 (주석 제외 render)", () => {
+    // 주석(제거 사유 설명)은 제외하고 실제 render 에서 영문 eyebrow 0 검증.
+    const src = read(PATH).replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
     expect(src).not.toMatch(/Operational Intelligence Dashboard/);
   });
 
@@ -50,32 +51,27 @@ describe("§11.308b — 영문 eyebrow + Live 배지 완전 제거", () => {
   });
 });
 
-describe("§11.308b — 헤더 한국어 title 보존", () => {
-  it("'대시보드' h2 title 보존", () => {
+describe("§11.308b — 헤더 한국어 title 보존 (§11.374 P3.4 AppPageHeader 이전)", () => {
+  it("'대시보드' title 보존 — AppPageHeader 단일 문법", () => {
     const src = read(PATH);
-    expect(src).toMatch(/<h2[^>]*>\s*\n?\s*대시보드\s*\n?\s*<\/h2>/);
+    expect(src).toMatch(/<AppPageHeader/);
+    expect(src).toMatch(/title="대시보드"/);
   });
 
-  it("title 폰트 클래스 보존 (text-2xl md:text-[28px] font-black tracking-tighter)", () => {
-    const src = read(PATH);
-    expect(src).toMatch(/text-2xl md:text-\[28px\] font-black tracking-tighter text-slate-900/);
-  });
-
-  it("greeting (session.user.name) 보존", () => {
-    const src = read(PATH);
-    expect(src).toMatch(/session\?\.user\?\.name\s*\?\s*`\$\{session\.user\.name\}님,/);
-  });
+  // 인라인 h2 폰트 클래스 + greeting("○○님") assertion 은 §11.374 P3.4(AppPageHeader
+  //   헤더 단일화) + §dashboard-home-redesign P2(헤더 인사 제거)로 은퇴. title 은 위에서 보존.
 });
 
 describe("§11.308b — 회귀 0 (§11.308a-v2 + §11.243 보존)", () => {
-  it("§11.243 isOnboardingMode + OnboardingHero 분기 보존", () => {
+  it("§11.243 isOnboardingMode 모드 파생 보존", () => {
     const src = read(PATH);
-    expect(src).toMatch(/isOnboardingMode\s*&&\s*!onboardingDismissed/);
+    // OnboardingHero 렌더 게이팅은 진화, isOnboardingMode 파생(데이터 유무)은 canonical 보존.
+    expect(src).toMatch(/const isOnboardingMode = !hasAnyOperationalData/);
   });
 
-  it("§11.243 AIInsightDialog 보존", () => {
+  it("§11.243 AIInsightDialog 보존 (§P2 disabled={false} + !isOnboardingMode 게이트)", () => {
     const src = read(PATH);
-    expect(src).toMatch(/<AIInsightDialog disabled=\{isOnboardingMode\}/);
+    expect(src).toMatch(/!isOnboardingMode && <AIInsightDialog disabled=\{false\}/);
   });
 
   it("§11.308a-v2 SmartReceivingScannerModal 임포트 0 (헤더로 승격, 본문 제거)", () => {
