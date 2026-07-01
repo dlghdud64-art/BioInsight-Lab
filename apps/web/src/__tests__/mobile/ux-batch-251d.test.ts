@@ -1,14 +1,13 @@
 /**
  * §11.251d — 모바일 재고 관리 UX (FAB + 카드 배지 + 중복 경고).
  *
- * 호영님 spec (이미지4):
- *   - FAB ⇄ 버튼이 BottomNav "재고" 위 겹침 → bottom 72px+ 마진 확보.
- *   - "긴급 재발주 필요" 배지 줄바꿈 → 짧은 라벨 ("긴급") + max-w 처리.
- *   - 카드 안 status dot + currentQuantity 빨강 + action 배지 중복 경고 정리
- *     → quantity 는 톤다운, action 배지는 유지.
+ * 재앵커 (§307 + §web-mobile-reskin): FAB 는 §307 에서 화면 고정(fixed bottom)
+ *   → 헤더 inline(relative inline-flex)로 이전. 카드 배지 라벨 줄바꿈 차단은
+ *   재발주 배너 truncate 로 유지. STATUS_CONFIG 4-status + getRecommendedAction
+ *   invariant 는 그대로 보존. 본 sentinel 은 현행 truth 로 재정의.
  *
  * canonical truth lock:
- *   - BarcodeScanFab fixed bottom + right + lg:hidden 시그니처 보존.
+ *   - BarcodeScanFab export + openScanner + lg:hidden 시그니처 보존.
  *   - getRecommendedAction return type (label/type) 보존.
  *   - STATUS_CONFIG 4 status (normal/low/expiring/danger) 보존.
  */
@@ -30,33 +29,29 @@ const INVENTORY_VIEW_PATH = resolve(
 const fab = safeRead(FAB_PATH);
 const inventoryView = safeRead(INVENTORY_VIEW_PATH);
 
-describe("§11.251d #1 — FAB bottom 72px+ (탭 바 위 16px 간격)", () => {
-  it("FAB bottom-[72px] 또는 bottom-24 이상 (BottomNav h-14=56 + 16px=72)", () => {
-    // 기존 bottom-20 (80px) 가 호영님 spec "72px+" 충족이지만 시각적으로 약함
-    //   → bottom-[72px] (정확 spec) 또는 bottom-24 (96px) 으로 명시.
-    expect(fab).toMatch(/fixed\s+bottom-\[72px\]|fixed\s+bottom-24/);
+describe("§11.251d #1 — FAB (§307 헤더 inline 이전)", () => {
+  it("FAB relative inline-flex + lg:hidden (헤더 inline, 모바일 전용)", () => {
+    expect(fab).toMatch(/relative\s+inline-flex[\s\S]{0,250}lg:hidden/);
   });
 
-  it("FAB lg:hidden + right-4 보존 (모바일 전용 위치)", () => {
-    expect(fab).toMatch(/right-4[\s\S]{0,200}lg:hidden/);
+  it("FAB 버튼 className 이 relative(헤더 inline) — 화면 고정 아님", () => {
+    // 버튼 className 속성에 relative 사용(구 fixed 좌표 제거). 이력 주석은 제외.
+    expect(fab).toMatch(/className="relative\s+inline-flex/);
   });
 });
 
-describe("§11.251d #2 — 카드 배지 짧은 라벨 (호영님 spec '긴급' 축약)", () => {
-  it("getRecommendedAction 또는 별도 helper 안 'shortLabel' 또는 짧은 라벨 매핑", () => {
-    // 짧은 라벨 매핑 — 카드 안 노출용. 상세 (권장 액션) 섹션은 기존 라벨 유지.
+describe("§11.251d #2 — 카드 배지 짧은 라벨 + 줄바꿈 차단", () => {
+  it("getRecommendedAction shortLabel 매핑 보존", () => {
     expect(inventoryView).toMatch(/shortLabel|짧은\s*라벨|action\.short/);
   });
 
-  it("카드 안 action 배지 max-w + truncate (긴 한국어 줄바꿈 차단)", () => {
-    // 카드 안 inline-block badge 가 max-w + truncate 으로 줄바꿈 안 됨.
-    //   §11.251d 안 max-w 또는 truncate 추가.
+  it("카드/배너 라벨 줄바꿈 차단 (truncate/max-w/whitespace-nowrap)", () => {
     expect(inventoryView).toMatch(/§11\.251d[\s\S]{0,5000}(max-w|truncate|whitespace-nowrap)/);
   });
 });
 
-describe("§11.251d #3 — 카드 안 중복 경고 톤다운 (호영님 spec '0 bottle 빨강 + 위험 배지' 중 하나만)", () => {
-  it("§11.251d trace marker (mobile-inventory-view 안 톤다운 정합)", () => {
+describe("§11.251d #3 — trace marker + STATUS_CONFIG 보존", () => {
+  it("§11.251d trace marker (mobile-inventory-view)", () => {
     expect(inventoryView).toMatch(/§11\.251d|11\.251d/);
   });
 

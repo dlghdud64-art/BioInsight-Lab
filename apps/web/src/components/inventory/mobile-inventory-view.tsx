@@ -151,6 +151,9 @@ function getRecommendedAction(inv: ProductInventory): { label: string; shortLabe
 //   STATUS_CONFIG.expiring 단일 소스로 통합(별도 shortLabel 색상 ternary 제거).
 // §11.302 — expiring 주의색 = muted amber #b45821 (쨍한 yellow 금지, 호영님 2026-06-30).
 //   ⚠ dotCls 는 §web-mobile-reskin 카드 재설계 후 미사용(정의만 보존, 렌더 제거).
+// §11.273d #inventory-mobile-badge-contrast — 배지 대비: §web-mobile-reskin 이후
+//   긴급도 차별화는 STATUS_CONFIG 신호등(danger=bg-red-600 text-white) + action.type
+//   기반 색상(text-red-400 / text-[#b45821])으로 대체. 구 6색 shortLabel 배지·border-l-* 제거.
 const STATUS_CONFIG: Record<StatusType, { label: string; dotCls: string; badgeCls: string }> = {
   normal: {
     label: "정상",
@@ -619,6 +622,8 @@ export function MobileInventoryView({
   return (
     <div className="space-y-5">
       {/* 1. 재발주 추천 배너 (목업 §03, rose) — 가장 부족한 1건 → onReorder(실 핸들러). */}
+      {/* §11.251d #mobile-inventory-ux — 카드 배지 긴 라벨 줄바꿈 차단(truncate). FAB 는
+          §307 에서 헤더 inline(relative)로 이전. STATUS_CONFIG 4-status·getRecommendedAction 보존. */}
       {topReorder ? (
         <button
           type="button"
