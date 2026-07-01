@@ -1430,17 +1430,14 @@ function InventoryPageContent() {
             <Plus className="h-3.5 w-3.5 mr-1.5" />
             재고 등록
           </Button>
-          <Button size="sm" variant="outline" onClick={() => router.push("/dashboard/purchases")}>
-            <PackagePlus className="h-3.5 w-3.5 mr-1.5" />
-            구매 반영
-          </Button>
-          {/* §11.297d D1 utility-mobile */}
+          {/* §web-mobile-reskin-fidelity — 구매 반영도 kebab 흡수(모바일 헤더 정돈, §11.311). 재고 등록만 primary. */}
           <ActionMenu
             menuId="inv-content-utility-mobile"
             currentOpenId={openInvContentMenuId}
             onOpenChange={setOpenInvContentMenuId}
             width="w-48"
             items={[
+              { label: "구매 반영", icon: <PackagePlus className="h-3.5 w-3.5" />, onClick: () => router.push("/dashboard/purchases") },
               { label: "재고 파일 가져오기", icon: <Upload className="h-3.5 w-3.5" />, onClick: () => setIsImportStagingOpen(true) },
               { label: "QR 스캔", icon: <QrCode className="h-3.5 w-3.5" />, onClick: () => router.push("/dashboard/inventory/scan") },
               { label: "라벨 인쇄", icon: <Printer className="h-3.5 w-3.5" />, onClick: () => handleBulkLabelPrint() },

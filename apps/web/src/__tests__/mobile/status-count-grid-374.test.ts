@@ -115,28 +115,37 @@ describe("§11.374 P3.2 구매 — canonical/wiring 보존 [회귀 0, GREEN]", (
   });
 });
 
-describe("§11.374 P3.3 재고 — StatusCountGrid 채택 [RED until P3.3]", () => {
-  it("StatusCountGrid import + 사용(mobile-inventory-view)", () => {
-    expect(inventoryMobile).toMatch(
+describe("§11.374 P3.3 [SUPERSEDED — §web-mobile-reskin-fidelity 2026-07-01] 재고 집계 → navy 헤더 이전", () => {
+  // 재고 모바일 상태요약(StatusCountGrid 2x2)은 §web-mobile-reskin-fidelity(navy 헤더 3 KPI +
+  //   우선처리 배너 + 요약 칩, inventory-content.tsx)로 이전(호영님 2026-07-01 승인, ce01fb02/2e73063c).
+  //   집계를 담던 MobileSummaryStrip 은 render-unreachable dead 로 orphan → 제거(견적 바 line 59 와 동형 폐기).
+  //   canonical count 소스 + expired-우선 신호등은 아래 블록에서 inventory-content 로 재앵커(intent 보존).
+  it("mobile-inventory-view StatusCountGrid 채택 폐기 — 부재 유지", () => {
+    expect(inventoryMobile).not.toMatch(
       /import \{ StatusCountGrid \} from "@\/components\/layout\/status-count-grid"/,
     );
-    expect(inventoryMobile).toMatch(/<StatusCountGrid/);
+    expect(inventoryMobile).not.toMatch(/<StatusCountGrid/);
   });
 });
 
-describe("§11.374 P3.3 재고 — canonical/§11.311 보존 [회귀 0, GREEN]", () => {
-  it("canonical count 소스 보존(reorder/expiring/dispose/issue)", () => {
-    expect(inventoryMobile).toMatch(/reorderCount/);
-    expect(inventoryMobile).toMatch(/expiringCount/);
-    expect(inventoryMobile).toMatch(/disposeCount/);
-    expect(inventoryMobile).toMatch(/issueCount/);
+describe("§11.374 P3.3 재고 — canonical/§11.311 보존 [navy 헤더 재앵커, GREEN]", () => {
+  it("canonical count 소스 보존(navy 헤더 KPI + 우선처리 배너, inventory-content)", () => {
+    // 집계 산출이 inventory-content.tsx 로 이전 — 안전재고 미달·만료 임박(navy 헤더) +
+    //   재고 부족·만료 임박 우선처리(priority 배너). reorder/expiring/dispose/issue 의미 보존.
+    expect(inventoryContent).toMatch(/안전재고 미달/);
+    expect(inventoryContent).toMatch(/expiringSoonCount/);
+    expect(inventoryContent).toMatch(/lowOrOutOfStockCount/);
+    expect(inventoryContent).toMatch(/issuesCount/);
   });
-  it("§11.311 expired-lot 우선 정렬 보존(danger 0 우선)", () => {
-    expect(inventoryMobile).toMatch(/danger: 0, expiring: 1, low: 2, normal: 3/);
+  it("§11.311 expired-lot 우선 정렬 보존(priorityExpiredLot danger 우선)", () => {
+    // danger(만료 lot) 가 generic reorder 보다 먼저 뜨는 §11.311 원칙 — priorityExpiredLot 최상단 분기.
+    expect(inventoryContent).toMatch(
+      /priorityExpiredLot \?[\s\S]{0,120}expiringSoonCount > 0 \?[\s\S]{0,120}lowOrOutOfStockCount > 0/,
+    );
   });
   it("폐기 검토 danger(red) 톤 보존 — generic reorder 가 dispose 가리지 않음", () => {
-    expect(inventoryMobile).toMatch(/폐기 검토/);
-    expect(inventoryMobile).toMatch(/dispose/);
+    expect(inventoryContent).toMatch(/폐기 처리/);
+    expect(inventoryContent).toMatch(/priorityExpiredLot/);
   });
 });
 
