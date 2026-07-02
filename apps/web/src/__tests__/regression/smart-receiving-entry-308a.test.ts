@@ -71,33 +71,15 @@ describe("§11.308a — SmartReceivingPlaceholderModal 컴포넌트", () => {
   });
 });
 
-describe("§11.308a — dashboard/page.tsx 헤더 진입점", () => {
-  it("ScanLine import (lucide-react)", () => {
+describe("§11.308a — dashboard/page.tsx 헤더 진입점 [SUPERSEDED §11.308a-v2 → Header registry]", () => {
+  // §11.308a-v2(호영님 P0 2026-05-26): dashboard 본문 스마트입고 진입점 → 글로벌 Header 로 승격.
+  //   §11.371-3: Header 진입점은 다시 global-modal registry(openModal "scan_hub")로 이전.
+  //   → dashboard 인라인 진입점/모달/state 부재-lock(회귀 재유입 차단). 진입점 계약은 v2/371-3 sentinel 소유.
+  it("dashboard 인라인 smart-receiving 진입점 부재 (Header registry 로 이전)", () => {
     const src = read(DASHBOARD_PAGE_PATH);
-    expect(src).toMatch(/import\s*\{[^}]*ScanLine[^}]*\}\s*from\s*["']lucide-react["']/);
-  });
-
-  it("SmartReceivingPlaceholderModal import", () => {
-    const src = read(DASHBOARD_PAGE_PATH);
-    expect(src).toMatch(/import\s*\{[^}]*SmartReceivingPlaceholderModal[^}]*\}\s*from\s*["']@\/components\/inventory\/SmartReceivingPlaceholderModal["']/);
-  });
-
-  it("isSmartReceivingOpen state + setter", () => {
-    const src = read(DASHBOARD_PAGE_PATH);
-    expect(src).toMatch(/isSmartReceivingOpen/);
-    expect(src).toMatch(/setIsSmartReceivingOpen/);
-  });
-
-  it("스마트 입고 button (testid + onClick wiring) — dead button 0", () => {
-    const src = read(DASHBOARD_PAGE_PATH);
-    expect(src).toMatch(/data-testid="dashboard-smart-receiving-entry"/);
-    expect(src).toMatch(/setIsSmartReceivingOpen\(true\)/);
-  });
-
-  it("Modal 렌더 (open + onClose 정합)", () => {
-    const src = read(DASHBOARD_PAGE_PATH);
-    expect(src).toMatch(/<SmartReceivingPlaceholderModal[^>]*open=\{isSmartReceivingOpen\}/);
-    expect(src).toMatch(/onClose=\{\(\)\s*=>\s*setIsSmartReceivingOpen\(false\)\}/);
+    expect(src).not.toMatch(/data-testid="dashboard-smart-receiving-entry"/);
+    expect(src).not.toMatch(/SmartReceivingPlaceholderModal/);
+    expect(src).not.toMatch(/setIsSmartReceivingOpen/);
   });
 });
 
@@ -107,9 +89,9 @@ describe("§11.308a — inventory-main.tsx 헤더 진입점 (mobile + desktop)",
     expect(src).toMatch(/\bScanLine\b/);
   });
 
-  it("SmartReceivingPlaceholderModal import", () => {
+  it("SmartReceivingScannerModal import (Placeholder→Scanner 진화, 인라인 유지)", () => {
     const src = read(INVENTORY_MAIN_PATH);
-    expect(src).toMatch(/import\s*\{[^}]*SmartReceivingPlaceholderModal[^}]*\}/);
+    expect(src).toMatch(/import\s*\{[^}]*SmartReceivingScannerModal[^}]*\}/);
   });
 
   it("isSmartReceivingOpen state (1회)", () => {
@@ -132,16 +114,18 @@ describe("§11.308a — inventory-main.tsx 헤더 진입점 (mobile + desktop)",
     expect(openCalls?.length ?? 0).toBeGreaterThanOrEqual(2);
   });
 
-  it("Modal 렌더 (open + onClose) — 1회 (mobile/desktop 공유)", () => {
+  it("Modal 렌더 (open + onClose) — 1회 (mobile/desktop 공유, Scanner)", () => {
     const src = read(INVENTORY_MAIN_PATH);
-    expect(src).toMatch(/<SmartReceivingPlaceholderModal[^>]*open=\{isSmartReceivingOpen\}/);
+    expect(src).toMatch(/<SmartReceivingScannerModal[^>]*open=\{isSmartReceivingOpen\}/);
   });
 });
 
 describe("§11.308a — 회귀 0 (기존 컴포넌트 보존)", () => {
-  it("dashboard/page.tsx — OnboardingHero (isOnboardingMode + !onboardingDismissed) 보존", () => {
+  it("dashboard/page.tsx — isOnboardingMode 파생 보존 (OnboardingHero 렌더 게이팅 진화)", () => {
+    // OnboardingHero 인라인 렌더 게이팅은 진화(sub-surface 이전), isOnboardingMode 파생(데이터 유무)은
+    //   canonical 보존 — 308b와 동일 앵커.
     const src = read(DASHBOARD_PAGE_PATH);
-    expect(src).toMatch(/isOnboardingMode\s*&&\s*!onboardingDismissed/);
+    expect(src).toMatch(/const isOnboardingMode = !hasAnyOperationalData/);
   });
 
   it("inventory-main.tsx — §11.297c ActionMenu 보존 (재고 utility menu)", () => {

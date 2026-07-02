@@ -34,29 +34,21 @@ describe("§11.308a-v2 — Header.tsx 글로벌 진입점", () => {
     expect(src).toMatch(/import\s*\{[^}]*ScanLine[^}]*\}\s*from\s*["']lucide-react["']/);
   });
 
-  it("SmartReceivingPlaceholderModal import", () => {
+  it("글로벌 스캔 진입점 — openModal(scan_hub) registry (§11.371-3 인라인 모달 은퇴)", () => {
+    // §11.371-3 진화: 인라인 SmartReceivingPlaceholderModal(+isSmartReceivingOpen state) →
+    //   global-modal registry 이전. Header 는 openModal("scan_hub") 호출만(모달 렌더는 registry 소유).
     const src = read(HEADER_PATH);
-    expect(src).toMatch(/import\s*\{[^}]*SmartReceivingPlaceholderModal[^}]*\}\s*from\s*["']@\/components\/inventory\/SmartReceivingPlaceholderModal["']/);
+    expect(src).toMatch(/openModal\("scan_hub"\)/);
+    expect(src).not.toMatch(/isSmartReceivingOpen/); // 인라인 state 은퇴
+    expect(src).not.toMatch(/<SmartReceivingPlaceholderModal/); // 인라인 모달 렌더 은퇴
   });
 
-  it("isSmartReceivingOpen state + setter", () => {
+  it("스캔 button — testid + aria + ScanLine icon + onClick wiring (dead button 0)", () => {
     const src = read(HEADER_PATH);
-    expect(src).toMatch(/isSmartReceivingOpen.*useState\(false\)/);
-    expect(src).toMatch(/setIsSmartReceivingOpen/);
-  });
-
-  it("스마트 입고 button — testid + ScanLine icon + onClick wiring (dead button 0)", () => {
-    const src = read(HEADER_PATH);
-    expect(src).toMatch(/data-testid="header-smart-receiving-entry"/);
-    expect(src).toMatch(/aria-label="스마트 입고"/);
+    expect(src).toMatch(/data-testid="header-scan-entry"/);
+    expect(src).toMatch(/aria-label="스캔"/);
     expect(src).toMatch(/<ScanLine className="h-5 w-5 pointer-events-none"/);
-    expect(src).toMatch(/setIsSmartReceivingOpen\(true\)/);
-  });
-
-  it("Modal 렌더 (open + onClose 정합)", () => {
-    const src = read(HEADER_PATH);
-    expect(src).toMatch(/<SmartReceivingPlaceholderModal[^>]*open=\{isSmartReceivingOpen\}/);
-    expect(src).toMatch(/onClose=\{\(\)\s*=>\s*setIsSmartReceivingOpen\(false\)\}/);
+    expect(src).toMatch(/openModal\("scan_hub"\)/);
   });
 
   it("터치 영역 ≥ 44px (모바일 a11y — h-10 w-10)", () => {
@@ -87,9 +79,11 @@ describe("§11.308a-v2 — dashboard/page.tsx 본문 button 제거", () => {
     expect(src).not.toMatch(/data-testid="dashboard-smart-receiving-entry"/);
   });
 
-  it("AIInsightDialog 보존 (§11.243 회귀 0)", () => {
+  it("AIInsightDialog 보존 (§11.243 회귀 0, disabled={false} — !isOnboardingMode 게이트)", () => {
+    // §dashboard-home-redesign: AIInsightDialog 는 !isOnboardingMode 조건 렌더 + disabled={false}.
+    //   (온보딩 시엔 미렌더 → disabled prop 대신 게이팅으로 진화). 컴포넌트 보존.
     const src = read(DASHBOARD_PAGE_PATH);
-    expect(src).toMatch(/<AIInsightDialog disabled=\{isOnboardingMode\}/);
+    expect(src).toMatch(/<AIInsightDialog disabled=\{false\}/);
   });
 });
 
@@ -104,9 +98,10 @@ describe("§11.308a-v2 — 재고 탭 진입점 보존 (호영님 spec — 별�
     expect(src).toMatch(/data-testid="inventory-smart-receiving-entry-desktop"/);
   });
 
-  it("inventory-main.tsx SmartReceivingPlaceholderModal 렌더 보존", () => {
+  it("inventory-main.tsx SmartReceivingScannerModal 렌더 보존 (Placeholder→Scanner swap, 인라인 유지)", () => {
+    // 재고 탭은 registry 이전 대상 아님 — 인라인 모달 유지. 단 컴포넌트 Placeholder→Scanner 진화.
     const src = read(INVENTORY_MAIN_PATH);
-    expect(src).toMatch(/<SmartReceivingPlaceholderModal[^>]*open=\{isSmartReceivingOpen\}/);
+    expect(src).toMatch(/<SmartReceivingScannerModal[^>]*open=\{isSmartReceivingOpen\}/);
   });
 
   it("inventory-main.tsx isSmartReceivingOpen state 보존", () => {

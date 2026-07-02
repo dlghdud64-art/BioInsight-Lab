@@ -117,9 +117,12 @@ describe("§11.302d-6a-1 — Header.tsx NOTIFICATION_TYPE_MAP swap", () => {
 });
 
 describe("§11.302d-6a-1 — 회귀 0 (기존 신호등 + 헤더 진입점 보존)", () => {
-  it("§11.308a-v2 Header ScanLine 진입점 보존", () => {
+  it("§11.371-3 Header 글로벌 스캔 진입점 보존 (openModal scan_hub)", () => {
+    // §11.371-3 진화: 인라인 smart-receiving 모달 → global-modal registry.
+    //   Header ScanLine button → openModal("scan_hub") + aria-label="스캔"(접근성 보존).
     const src = read(HEADER_PATH);
-    expect(src).toMatch(/data-testid="header-smart-receiving-entry"/);
+    expect(src).toMatch(/openModal\("scan_hub"\)/);
+    expect(src).toMatch(/aria-label="스캔"/);
   });
 
   it("§11.295/§11.296 plain button 패턴 보존 (Radix 0)", () => {
