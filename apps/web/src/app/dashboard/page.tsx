@@ -72,6 +72,7 @@ import { getFlag } from "@/lib/feature-flags";
 import { ActionInbox, type ActionInboxItem } from "@/components/dashboard/action-inbox";
 // §dashboard-shifan-adopt P2 — NextStepBanner("다음 단계 추천") 가 레거시 "시작하기 3단계" hero 대체.
 import { NextStepBanner } from "@/components/dashboard/next-step-banner";
+import { MobileDashboardView } from "@/components/dashboard/mobile-dashboard-view";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
 // §main-dashboard-redesign P3-B1 — GlobalEmpty(allEmpty 종합 빈) + summary 단일 진실 훅.
 //   비차단 추가: 기존 stats useQuery 렌더 경로 무수정(§11.199b stuck 위험 격리).
@@ -614,6 +615,22 @@ function DashboardPageInner() {
         </div>
       </div>
 
+      {/* §dashboard-mobile-v2 — 전용 모바일 뷰(md:hidden). 데스크탑(hidden md:block) 무접촉. */}
+      <div className="md:hidden">
+        <MobileDashboardView
+          summary={summarySection.data}
+          state={summarySection.state}
+          onRetry={summarySection.retry}
+          categorySpending={stats.categorySpending}
+          monthlySpending={stats.monthlySpendingChart}
+          actionInboxItems={actionInboxItems}
+          thisMonthSpend={stats.monthlySpending}
+          monthOverMonthChange={stats.monthOverMonthChange}
+          activeQuotesCount={stats.activeQuotes + stats.respondedQuotes}
+          stockAlertCount={stats.lowStockAlerts}
+        />
+      </div>
+
       {/* 데스크탑(md+) 전용 — 기존 AppPageHeader 무변경 */}
       <div className="hidden md:block">
       <AppPageHeader
@@ -637,6 +654,8 @@ function DashboardPageInner() {
       {/* §main-dashboard-redesign P3-B2 — StatLine(재무 KPI3: 이번달 지출·잔여 예산·
           확정 발주액) summary 단일 진실. summarySection 훅 재사용(신규 fetch 0) + capMs 4상태.
           §dashboard-dedup 복원(호영님 2026-06-28) — StatLine 은 확정 발주액 단독 보유라 중복 아님(BudgetSpendCard 미흡수). */}
+      {/* §dashboard-mobile-v2 — 아래 공유 섹션은 데스크탑 전용(모바일=위 MobileDashboardView). */}
+      <div className="hidden md:block space-y-4">
       <section className="space-y-2">
         <StatLine
           state={summarySection.state}
@@ -698,6 +717,8 @@ function DashboardPageInner() {
 
       {/* §dashboard-rightcol-rebalance(호영님) — 최근활동 풀폭(좁은 side-col 탈출 → 활동 로그 가로 확대·가독성↑). */}
       <RecentActivityCard />
+      </div>
+      {/* /§dashboard-mobile-v2 데스크탑 전용 wrapper */}
 
       {/* §dashboard-shifan-adopt P3a — Pipeline은 ActionInbox 직후로 상승(위 참조). 원위치 제거.
           중단=차트(예산&지출)+빠른작업, 하단=최근활동 순(시안 흐름). */}
@@ -706,67 +727,7 @@ function DashboardPageInner() {
       {/* §dashboard-home-redesign P1 (호영님 시안) — 지출 트렌드는 2-col 우측(예산&지출 ↔ 트렌드)로 이동.
           하단 풀폭 단일 SpendTrend 폐지(시안: 2-col 뒤는 최근활동 풀폭). 카테고리 도넛은 BudgetSpendCard 내부 유지. */}
 
-      {/* ======= 모바일 전용 레이아웃 ======= */}
-      {/* §11.272e — 하단 FAB 클리어런스는 shell main(pb 확보)이 소유 → 섹션 중복 패딩 축소. */}
-      <div className="md:hidden space-y-3 pb-2">
-
-        {/* 운영 패널: 즉시 처리 + 추천 작업 */}
-        <Card className="bg-white border-slate-200/80 rounded-xl">
-          <CardContent className="p-3 space-y-3">
-            {/* 상태 기반 추천 */}
-            <div className="space-y-1.5">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">다음 작업</p>
-              <div className="space-y-1">
-                {/* §11.266b — recommendedActions button 44x44 (same pattern as urgentItems). */}
-                {recommendedActions.map((action) => (
-                  <button key={action.id} type="button" onClick={() => handleNavigateOrOverlay(action.href, "card")} className="w-full flex items-center gap-2.5 min-h-[44px] p-2 rounded-lg hover:bg-slate-50 transition-colors text-left">
-                    {action.icon}
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-semibold ${action.state === "blocked" ? "text-slate-400" : action.state === "ready" ? "text-slate-900" : "text-slate-500"}`}>{action.label}</p>
-                      <p className="text-[10px] text-slate-400 truncate">{action.desc}</p>
-                    </div>
-                    <ChevronRight className="h-3 w-3 text-slate-600 flex-shrink-0" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* §main-dashboard-redesign P5 — "최근 알림" 카드 제거(호영님 결정).
-            상단바 NotificationCenter(header-notification-wiring)가 알림 단일 진입 →
-            대시보드 중복 카드 제거(중복 0). notifications 데이터는 "최근 운영 활동"
-            타임라인(중앙 패널)에서 계속 소비 — awareness 손실 0. */}
-
-        {/* 최근 처리 이력 (축소) */}
-        <Card className="bg-white border-slate-200/80 rounded-xl">
-          <CardHeader className="pb-2 p-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-[13px] font-extrabold text-slate-900">최근 처리 이력</CardTitle>
-              <Link href="/dashboard/purchases"><Button variant="ghost" size="sm" className="text-[11px] h-6 px-2">전체 보기</Button></Link>
-            </div>
-          </CardHeader>
-          <CardContent className="p-3 pt-0 space-y-2">
-            {stats.recentPurchases.length === 0 ? (
-              <p className="text-xs text-slate-500 py-2">첫 업무가 완료되면 처리 이력이 여기에 기록됩니다</p>
-            ) : (
-              stats.recentPurchases.slice(0, 3).map((p, i) => (
-                <div key={p.id || `p-${i}`} className="flex items-center gap-2.5 py-1.5 border-b border-slate-100 last:border-0">
-                  <Beaker className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-slate-900 truncate">{p.itemName || "품목명 미등록"}</p>
-                    <p className="text-[10px] text-slate-500">{formatPurchaseDate(p.purchasedAt)}</p>
-                  </div>
-                  <span className="text-xs font-semibold text-slate-700 flex-shrink-0">
-                    {p.amount ? `₩${p.amount.toLocaleString("ko-KR")}` : "—"}
-                  </span>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
+      {/* §dashboard-mobile-v2 — 기존 모바일 전용 보조 카드 제거(MobileDashboardView 로 대체). 데스크탑 무접촉. */}
 
       {/* 모바일 하단 고정 빠른 실행 바 */}
       <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/97 backdrop-blur-sm border-t border-slate-200/80 px-4 py-2.5">
