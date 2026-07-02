@@ -38,6 +38,8 @@ import {
 import { buildReceivingCommandSurface } from "@/lib/ops-console/command-adapters";
 import type { CommandSurface } from "@/lib/ops-console/action-model";
 import { buildReceivingOwnership } from "@/lib/ops-console/ownership-adapter";
+// §inbound-detail-mobile-redesign (호영님 2026-07-02) — 모바일 입고 상세 시안 시트.
+import { MobileReceivingDetail } from "@/components/receiving/mobile-receiving-detail";
 import { buildReceivingBlockers } from "@/lib/ops-console/blocker-adapter";
 import { buildReceivingExceptionReentryContext } from "@/lib/ops-console/reentry-context";
 import { injectReentryCommand } from "@/lib/ops-console/command-adapters";
@@ -251,6 +253,19 @@ export default function ReceivingDetailPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
+      {/* §inbound-detail-mobile-redesign — 모바일(lg 미만)은 시안 시트(#07), 데스크탑은 기존 shell 무접촉 */}
+      <MobileReceivingDetail
+        reference={rb.id}
+        poNumber={linkedPO?.poNumber ?? rb.receivingNumber}
+        vendorName={vendorName}
+        arrivalLabel={model.origin.arrivalLabel}
+        currentPhase={currentPhase}
+        phaseLabel={model.receivingExecutionState.phaseLabel}
+        phaseTone={model.receivingExecutionState.phaseTone}
+        model={model}
+        commandSurface={commandSurface}
+      />
+      <div className="hidden lg:block">
       <OperationalDetailShell
         contextStrip={contextStrip}
         header={header}
@@ -296,6 +311,7 @@ export default function ReceivingDetailPage() {
           <InventoryReleaseHandoffPanel model={model} />
         )}
       </OperationalDetailShell>
+      </div>
     </div>
   );
 }
