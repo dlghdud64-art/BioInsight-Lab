@@ -280,16 +280,16 @@ export function resolveReceivingExecutionPhase(rb: ReceivingBatchContract): Rece
   if (rb.status === "expected") return { phase: "expected", phaseLabel: "입고 예정", phaseTone: "neutral" };
 
   const hasDocMissing = rb.lineReceipts.some((l) => l.documentStatus === "partial" || l.documentStatus === "missing");
-  const hasQuarantine = rb.lineReceipts.some((l) => l.lotRecords.some((lot) => lot.quarantineStatus === "quarantined" || lot.quarantineStatus === "blocked"));
+  // §inbound-quarantine-temp-exclude: 격리·온도이탈은 입고 posting 게이트에서 제외 (호영님 2026-07-02).
+  // 격리 lot도 재고반영을 차단하지 않는다. stockPosition 격리(재고 lifecycle)는 별도 유지.
   const hasInspectionPending = rb.lineReceipts.some(
     (l) => l.inspectionRequired && (l.inspectionStatus === "pending" || l.inspectionStatus === "in_progress"),
   );
   const isPosted = (rb.status as any) === "posted" || (rb.status as any) === "closed";
-  const canPost = !hasDocMissing && !hasQuarantine && !hasInspectionPending && !isPosted;
+  const canPost = !hasDocMissing && !hasInspectionPending && !isPosted;
 
   if (rb.status === "issue_flagged") return { phase: "issue_flagged", phaseLabel: "이슈 발생", phaseTone: "danger" };
 
-  if (hasQuarantine) return { phase: "quarantine_active", phaseLabel: "격리 활성", phaseTone: "danger" };
   if (hasDocMissing) return { phase: "docs_missing", phaseLabel: "문서 누락", phaseTone: "warning" };
 
   if (rb.status === "inspection_in_progress" || hasInspectionPending) {
@@ -476,8 +476,8 @@ export function buildLotDetails(rb: ReceivingBatchContract): LotDetailRow[] {
       const docCoverage = docs.length > 0 ? docs.join(" · ") : "없음";
 
       // Posting state
-      let postingState = lot.inventoryPostingId ? "반영됨" : "미반영";
-      if (lot.quarantineStatus === "quarantined" || lot.quarantineStatus === "blocked") postingState = "차단";
+      // §inbound-quarantine-temp-exclude: 격리는 입고 반영을 차단하지 않는다 (posting state에서 제외).
+      const postingState = lot.inventoryPostingId ? "반영됨" : "미반영";
 
       // Risk badges
       const riskBadges: string[] = [];
@@ -539,10 +539,7 @@ export function buildPostingReadiness(rb: ReceivingBatchContract): PostingReadin
       if (!blockers.includes("검수 미완료 라인 존재")) blockers.push("검수 미완료 라인 존재");
       lineBlocked = true;
     }
-    if (line.lotRecords.some((lot) => lot.quarantineStatus === "quarantined" || lot.quarantineStatus === "blocked")) {
-      if (!blockers.includes("격리 품목 미해결")) blockers.push("격리 품목 미해결");
-      lineBlocked = true;
-    }
+    // §inbound-quarantine-temp-exclude: 격리는 입고 반영을 차단하지 않는다.
     if (lineBlocked) blockedCount++;
   }
 
