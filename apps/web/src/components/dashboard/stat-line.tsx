@@ -184,8 +184,10 @@ export function StatLine({ state, summary, onRetry }: StatLineProps) {
             </div>
             {/* §dashboard-home-redesign P3 — 0건 value 가독성 slate-500(시안 README L11). 아이콘/라벨은
                 §11.311 gray-400 비활성 톤 유지(de-emphasis 위계 보존 + 0건 카드 bg-gray-50). */}
+            {/* §dashboard-kpi-won-glyph(호영님 2026-07-02) — ₩ 글리프가 tracking-tighter(−0.05em)로
+                첫 숫자와 겹쳐 취소선처럼 보이는 현상 수정. tracking-normal 로 ₩·숫자 분리(가독성). */}
             <p
-              className={`text-lg md:text-xl font-black tracking-tighter tabular-nums leading-none whitespace-nowrap ${
+              className={`text-lg md:text-xl font-black tracking-normal tabular-nums leading-none whitespace-nowrap ${
                 active ? "text-slate-900" : "text-slate-500"
               }`}
             >
