@@ -14,7 +14,11 @@ import type {
   ApprovalExecutionContract,
   PurchaseOrderAcknowledgementContract,
 } from '../review-queue/po-approval-contract';
-import type { ReceivingBatchContract } from '../review-queue/receiving-inbound-contract';
+import type {
+  ReceivingBatchContract,
+  ReceivingLineReceiptContract,
+  ReceivingDocumentStatus,
+} from '../review-queue/receiving-inbound-contract';
 import type {
   InventoryStockPositionContract,
   ReorderRecommendationContract,
@@ -55,9 +59,40 @@ export type TransitionAction =
   | { type: 'acknowledge_po'; poId: string }
   | { type: 'complete_inspection'; receivingBatchId: string; lineId: string; passed: boolean }
   | { type: 'post_to_inventory'; receivingBatchId: string }
+  | {
+      type: 'attach_receiving_document';
+      receivingBatchId: string;
+      lineId: string;
+      docType: 'coa' | 'msds' | 'validation' | 'warranty';
+      lotId?: string;
+    }
   | { type: 'create_quote_from_reorder'; recommendationId: string }
   | { type: 'complete_expiry_action'; actionId: string }
   | { type: 'resolve_reorder_blocker'; recommendationId: string };
+
+/**
+ * §inbound-quarantine-temp-exclude (P2): 라인 documentStatus 파생 규칙.
+ * 필수문서 세트 = COA + MSDS (라인의 모든 lot 기준). 둘 다 충족 시 complete,
+ * 일부만 있으면 partial, 무첨부 missing. not_required는 유지.
+ * (호영님 2026-07-03 canonical — 첨부가 게이트를 실제로 푼다)
+ */
+export function deriveLineDocStatus(line: ReceivingLineReceiptContract): ReceivingDocumentStatus {
+  if (line.documentStatus === 'not_required') return 'not_required';
+  const lots = line.lotRecords;
+  if (lots.length === 0) return line.documentStatus;
+  const allCoa = lots.every((l) => l.coaAttached);
+  const allMsds = lots.every((l) => l.msdsAttached);
+  if (allCoa && allMsds) return 'complete';
+  const anyDoc = lots.some((l) => l.coaAttached || l.msdsAttached || l.validationAttached || l.warrantyAttached);
+  return anyDoc ? 'partial' : 'missing';
+}
+
+const DOC_FLAG_KEY: Record<'coa' | 'msds' | 'validation' | 'warranty', 'coaAttached' | 'msdsAttached' | 'validationAttached' | 'warrantyAttached'> = {
+  coa: 'coaAttached',
+  msds: 'msdsAttached',
+  validation: 'validationAttached',
+  warranty: 'warrantyAttached',
+};
 
 /**
  * Apply a transition action to an entity graph.
@@ -152,6 +187,25 @@ export function applyTransition(graph: EntityGraph, action: TransitionAction): E
           ? { ...rb, status: 'posted' as const }
           : rb,
       );
+      break;
+    }
+
+    case 'attach_receiving_document': {
+      const flagKey = DOC_FLAG_KEY[action.docType];
+      g.receivingBatches = g.receivingBatches.map((rb) => {
+        if (rb.id !== action.receivingBatchId) return rb;
+        const lineReceipts = rb.lineReceipts.map((line) => {
+          if (line.id !== action.lineId) return line;
+          const lotRecords = line.lotRecords.map((lot) =>
+            action.lotId == null || lot.id === action.lotId
+              ? { ...lot, [flagKey]: true }
+              : lot,
+          );
+          const updated = { ...line, lotRecords };
+          return { ...updated, documentStatus: deriveLineDocStatus(updated) };
+        });
+        return { ...rb, lineReceipts };
+      });
       break;
     }
 

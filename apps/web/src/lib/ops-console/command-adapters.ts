@@ -283,22 +283,27 @@ export interface ReceivingCommandContext {
   rb: ReceivingBatchContract;
   onCompleteInspection: (lineId: string) => void;
   onPostToInventory: () => void;
+  /**
+   * §inbound-quarantine-temp-exclude (P2): 문서 해소(첨부) 진입 콜백.
+   * 제공 시 rcv-resolve-docs가 실행 가능 명령이 된다(첨부 모달/스캔 — P3에서 wiring).
+   * 미제공 시 기존 blocker 표시 유지(신규 dead button 없음).
+   */
+  onResolveDocs?: () => void;
 }
 
 export function buildReceivingCommandSurface(ctx: ReceivingCommandContext): CommandSurface {
-  const { rb, onCompleteInspection, onPostToInventory } = ctx;
+  const { rb, onCompleteInspection, onPostToInventory, onResolveDocs } = ctx;
 
+  // §inbound-quarantine-temp-exclude: 격리·온도는 입고 posting 게이트에서 제외 (호영님 2026-07-02).
   const hasDocMissing = rb.lineReceipts.some((l) => l.documentStatus === 'partial' || l.documentStatus === 'missing');
-  const hasQuarantine = rb.lineReceipts.some((l) => l.lotRecords.some((lot) => lot.quarantineStatus === 'quarantined'));
   const hasInspectionPending = rb.lineReceipts.some(
     (l) => l.inspectionRequired && (l.inspectionStatus === 'pending' || l.inspectionStatus === 'in_progress'),
   );
   const isPosted = rb.status === 'posted' || rb.status === 'closed';
-  const canPost = !hasDocMissing && !hasQuarantine && !hasInspectionPending && !isPosted;
+  const canPost = !hasDocMissing && !hasInspectionPending && !isPosted;
 
   const blockedReasons: string[] = [];
   if (hasDocMissing) blockedReasons.push('문서 미첨부 라인 존재');
-  if (hasQuarantine) blockedReasons.push('격리 품목 미해결');
   if (hasInspectionPending) blockedReasons.push('검수 미완료');
 
   // Primary: post to inventory
@@ -332,27 +337,29 @@ export function buildReceivingCommandSurface(ctx: ReceivingCommandContext): Comm
   // Triage: blocker resolution
   const triageCommands = [];
   if (hasDocMissing) {
+    // §inbound-quarantine-temp-exclude (P2): "문서 해소"를 실 첨부 액션에 연결.
+    // onResolveDocs 제공 시 실행 가능(첨부 모달/스캔 — P3 wiring), 미제공 시 기존 blocker 유지.
     triageCommands.push(
-      createBlockerCommand(
-        'rcv-resolve-docs',
-        '문서 확보 요청',
-        () => {},
-        ['필수 문서 미첨부 — 검수 진행 불가'],
-        { canExecute: false },
-      ),
+      onResolveDocs
+        ? createExecuteCommand(
+            'rcv-resolve-docs',
+            '문서 첨부',
+            onResolveDocs,
+            {
+              priority: 'triage',
+              postActionSummary: '필수 문서 첨부 → 검수 진행 가능',
+            },
+          )
+        : createBlockerCommand(
+            'rcv-resolve-docs',
+            '문서 확보 요청',
+            () => {},
+            ['필수 문서 미첨부 — 검수 진행 불가'],
+            { canExecute: false },
+          ),
     );
   }
-  if (hasQuarantine) {
-    triageCommands.push(
-      createBlockerCommand(
-        'rcv-resolve-quarantine',
-        '격리 검사 판정',
-        () => {},
-        ['온도 이탈/손상 품목 격리 중'],
-        { canExecute: false },
-      ),
-    );
-  }
+  // §inbound-quarantine-temp-exclude: rcv-resolve-quarantine 제거 — 격리는 입고를 차단하지 않음.
 
   // Context: navigation
   const contextCommands = [];

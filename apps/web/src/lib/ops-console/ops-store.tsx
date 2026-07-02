@@ -111,6 +111,16 @@ export interface OpsStore {
   recordArrival: (receivingBatchId: string) => void;
   completeInspection: (receivingBatchId: string, lineId: string, passed: boolean) => void;
   postToInventory: (receivingBatchId: string) => void;
+  /**
+   * §inbound-quarantine-temp-exclude (P2): 입고 라인에 필수문서 첨부.
+   * 필수세트(COA+MSDS) 충족 시 documentStatus가 complete로 전이(게이트 실제 해제).
+   */
+  attachReceivingDocument: (
+    receivingBatchId: string,
+    lineId: string,
+    docType: 'coa' | 'msds' | 'validation' | 'warranty',
+    lotId?: string,
+  ) => void;
 
   // Actions - Stock Risk
   createQuoteFromReorder: (recommendationId: string) => void;
@@ -497,6 +507,16 @@ export function OpsStoreProvider({ children }: OpsStoreProviderProps) {
     [dispatch],
   );
 
+  const attachReceivingDocument = useCallback(
+    (
+      receivingBatchId: string,
+      lineId: string,
+      docType: 'coa' | 'msds' | 'validation' | 'warranty',
+      lotId?: string,
+    ) => dispatch({ type: 'attach_receiving_document', receivingBatchId, lineId, docType, lotId }),
+    [dispatch],
+  );
+
   const createQuoteFromReorder = useCallback(
     (recommendationId: string) =>
       dispatch({ type: 'create_quote_from_reorder', recommendationId }),
@@ -552,6 +572,7 @@ export function OpsStoreProvider({ children }: OpsStoreProviderProps) {
       recordArrival,
       completeInspection,
       postToInventory,
+      attachReceivingDocument,
       createQuoteFromReorder,
       completeExpiryAction,
       resolveReorderBlocker,
@@ -562,7 +583,7 @@ export function OpsStoreProvider({ children }: OpsStoreProviderProps) {
     [
       graph, inboxItems, unifiedInboxItems,
       selectVendor, convertQuoteToPO, issuePO, acknowledgePO,
-      recordArrival, completeInspection, postToInventory,
+      recordArrival, completeInspection, postToInventory, attachReceivingDocument,
       createQuoteFromReorder, completeExpiryAction, resolveReorderBlocker,
       refreshInbox, resetToInitial, dispatch,
     ],
