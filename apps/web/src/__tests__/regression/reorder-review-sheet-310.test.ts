@@ -157,10 +157,14 @@ describe("§11.310 — 카드 내부 button 분리 (호영님 spec)", () => {
     const src = read(PANEL_PATH);
     // ReorderSection 안 (line 470~596) "재발주안 검토하기" button 제거 확인
     // sticky CTA (line 793~) 에는 보존 — 단일 위치
-    const reorderSectionMatch = src.match(/function ReorderSection\([\s\S]{0,8000}\n\}\n\n\/\/ ── 5\. Lot/);
+    const reorderSectionMatch = src.match(/function ReorderSection\(([\s\S]*?)\n\/\/ ── 5\. Lot/);
     expect(reorderSectionMatch).toBeTruthy();
     if (reorderSectionMatch) {
-      expect(reorderSectionMatch[0]).not.toMatch(/재발주안 검토하기/);
+      // §11.310 구조 진화: 추출 마커 non-greedy(// ── 5. Lot). 주석(button 제거 설명)은 strip 후 검증.
+      const body = reorderSectionMatch[1]
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .split("\n").map((l) => l.replace(/\/\/.*$/, "")).join("\n");
+      expect(body).not.toMatch(/재발주안 검토하기/);
     }
   });
 
@@ -197,11 +201,11 @@ describe("§11.310 — 색상 정합 (§11.302 신호등 체계, amber → yello
 
   it("ReorderSection 안 amber-50 / amber-600 / orange-50 잔여 0 (§11.310 scope)", () => {
     const src = read(PANEL_PATH);
-    const reorderSectionMatch = src.match(/function ReorderSection\([\s\S]{0,8000}\n\}\n\n\/\/ ── 5\. Lot/);
+    const reorderSectionMatch = src.match(/function ReorderSection\(([\s\S]*?)\n\/\/ ── 5\. Lot/);
     expect(reorderSectionMatch).toBeTruthy();
     if (reorderSectionMatch) {
-      expect(reorderSectionMatch[0]).not.toMatch(/bg-amber-50 text-amber-600/);
-      expect(reorderSectionMatch[0]).not.toMatch(/bg-orange-50\/50/);
+      expect(reorderSectionMatch[1]).not.toMatch(/bg-amber-50 text-amber-600/);
+      expect(reorderSectionMatch[1]).not.toMatch(/bg-orange-50\/50/);
     }
   });
 });

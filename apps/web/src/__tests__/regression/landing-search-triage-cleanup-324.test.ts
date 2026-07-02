@@ -88,10 +88,11 @@ describe("§11.324 — 3단계 다이어그램 + 가입 CTA 신설 (Phase 2 GREE
     expect(src).toMatch(/data-testid="landing-search-flow-steps"/);
   });
 
-  it("3단계 라벨 — 검색 / 비교 / 견적", () => {
+  it("3단계 라벨 — 검색 / 비교 / 견적 (flowSteps 데이터 배열)", () => {
     const src = read(PAGE_PATH);
-    // 다이어그램 안 세 단계 라벨
-    expect(src).toMatch(/landing-search-flow-steps[\s\S]{0,1500}검색[\s\S]{0,300}비교[\s\S]{0,300}견적/);
+    // §11.324 진화: 라벨이 flowSteps 배열(data-driven, {step.title} 매핑)로 이전 — 마커 + 3 title 검증.
+    expect(src).toMatch(/data-testid="landing-search-flow-steps"/);
+    expect(src).toMatch(/const flowSteps = \[[\s\S]{0,800}title: "검색"[\s\S]{0,300}title: "비교"[\s\S]{0,300}title: "견적"/);
   });
 
   it("큰 가입 CTA — '무료로 시작하기' 또는 '30초 가입' Link to /auth/signin", () => {
