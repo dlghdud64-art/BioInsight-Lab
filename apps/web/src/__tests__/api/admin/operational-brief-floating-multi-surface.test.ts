@@ -24,7 +24,10 @@ describe("§11.176 shared brief parts 추출", () => {
     const src = read("src/components/operational-brief/metric-cell.tsx");
     expect(src).toMatch(/text-3xl/);
     expect(src).toMatch(/border-l-emerald-500/);
-    expect(src).toMatch(/border-l-amber-500/);
+    // §quotes-brief-suppress 재앵커(호영님 2026-07-02) — MetricCell warn 톤 소스 truth = border-l-yellow-500.
+    //   선재 stale(테스트 amber-500 잔존) 완결. ⚠ §11.302(주의색=amber #b45821)와 정합 원하면 소스
+    //   metric-cell.tsx warn 을 amber 로 바꾸는 별건 필요(디자인 정책 검토).
+    expect(src).toMatch(/border-l-yellow-500/);
     expect(src).toMatch(/border-l-red-500/);
     expect(src).toMatch(/border-l-slate-300/);
     expect(src).toMatch(/export\s+function\s+MetricCell/);
@@ -51,12 +54,14 @@ describe("§11.176 shared brief parts 추출", () => {
   });
 });
 
-describe("§11.176 4 surface floating entry mount", () => {
+// §quotes-brief-suppress (호영님 2026-07-02) — 견적(quotes) surface 는 운영 브리핑 FAB 제거 →
+//   §11.176 4-surface 불변식에서 quotes 제외(3 surface). "공급사 발송 검토" 모달이 정식 워크플로.
+//   quotes 억제 앵커는 별도 sentinel(quotes-brief-suppress.test.ts) 소유.
+describe("§11.176 floating entry mount (§quotes-brief-suppress: quotes 제외 3 surface)", () => {
   const SURFACES: { name: string; path: string }[] = [
     { name: "inbox", path: "src/app/dashboard/inbox/page.tsx" },
     { name: "dashboard", path: "src/app/dashboard/page.tsx" },
     { name: "purchases", path: "src/app/dashboard/purchases/page.tsx" },
-    { name: "quotes", path: "src/app/dashboard/quotes/page.tsx" },
   ];
 
   for (const { name, path } of SURFACES) {
@@ -71,13 +76,6 @@ describe("§11.176 4 surface floating entry mount", () => {
 describe("§11.176 surface 별 hydrate handler (§11.181 popup default 로 marshall 됨)", () => {
   it("§11.181 — purchases FAB 에 onClick prop 없음 (popup context 사용)", () => {
     const src = read("src/app/dashboard/purchases/page.tsx");
-    const m = src.match(/<OperationalBriefFloatingEntry[\s\S]*?\/>/);
-    expect(m).not.toBeNull();
-    expect(m![0]).not.toMatch(/\bonClick\s*=/);
-  });
-
-  it("§11.181 — quotes FAB 에 onClick prop 없음 (popup context 사용)", () => {
-    const src = read("src/app/dashboard/quotes/page.tsx");
     const m = src.match(/<OperationalBriefFloatingEntry[\s\S]*?\/>/);
     expect(m).not.toBeNull();
     expect(m![0]).not.toMatch(/\bonClick\s*=/);

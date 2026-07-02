@@ -4,8 +4,8 @@ export const dynamic = 'force-dynamic';
 
 import { csrfFetch } from "@/lib/api-client";
 import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobile-bottom-sheet";
-import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
-// §B2-E (호영님 2026-06-29) — 모바일 운영브리핑 인라인 진입 제거: import 폐기(데스크탑 FAB만 유지).
+// §quotes-brief-suppress (호영님 2026-07-02) — 운영 브리핑 FAB import 제거:
+//   견적 관리는 운영 브리핑 FAB 미제공("공급사 발송 검토" 모달이 정식 워크플로). dead import 차단.
 import { MetricCell } from "@/components/operational-brief/metric-cell";
 // §11.374 — 모바일 상태요약 단일 컴포넌트(가로 5탭 빽빽 → 2x2). 표현만, count 주입.
 // §11.374 P3.4 — 헤더 단일 문법(AppPageHeader). 스캔 포함 액션 우측 통합.
@@ -1605,11 +1605,14 @@ function QuotesPageContent() {
   //   차단. briefIsOpen dep 추가로 popup open 변경 시점마다 viewMode 'table'
   //   분기 trigger. open() 호출 → render → useEffect → close() 즉시.
   const { isOpen: briefIsOpen, close: closeOperationalBrief } = useOperationalBriefPopup();
+  // §quotes-brief-suppress (호영님 2026-07-02) — 견적 관리는 "공급사 발송 검토" 모달이 정식 워크플로.
+  //   그 위에 뜨는 운영 브리핑을 견적 surface 에선 사용하지 않음 → 열려 있으면 항상 닫음(viewMode 무관,
+  //   타 surface 에서 open 된 채 진입한 경우 포함). §11.226b table-view close 를 포함·확장.
   useEffect(() => {
-    if (viewMode === "table" && briefIsOpen) {
+    if (briefIsOpen) {
       closeOperationalBrief();
     }
-  }, [viewMode, briefIsOpen, closeOperationalBrief]);
+  }, [briefIsOpen, closeOperationalBrief]);
 
   // §11.217 Phase 5 — chip scroll-spy. detail panel 의 4 brief section
   //   (brief-summary / brief-facts / brief-facts2 / brief-next) 을 IntersectionObserver
@@ -4855,14 +4858,9 @@ function QuotesPageContent() {
         }}
       />
 
-      {/* §11.181 — 운영 브리핑 floating entry (default = popup open).
-          §11.258-sweep — §11.257 후속: 모바일 (<lg) BarcodeScanFab 겹침 해소,
-          데스크탑 한정 노출. 모바일 inline 진입은 §11.258-sweep-2 백로그. */}
-      <div className="hidden lg:block">
-        <OperationalBriefFloatingEntry controls="operational-brief-popup" />
-      </div>
-      {/* §B2-E (호영님 2026-06-29) — 모바일 운영브리핑 인라인 진입(✦) 제거: 모바일은 브리핑 불필요.
-          데스크탑 진입(OperationalBriefFloatingEntry, hidden lg:block)은 위에서 유지. */}
+      {/* §quotes-brief-suppress (호영님 2026-07-02) — 견적 관리 운영 브리핑 FAB 제거(진입 차단).
+          "공급사 발송 검토" 모달이 정식 워크플로라 견적에선 브리핑을 사용하지 않음. 위 useEffect 가
+          open 상태로 진입한 경우 자동 close. 타 surface(대시보드/재고/입고/구매/발주/inbox)의 FAB 는 유지. */}
     </div>
   );
 }
