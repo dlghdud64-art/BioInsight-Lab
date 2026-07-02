@@ -40,6 +40,7 @@ import type { CommandSurface } from "@/lib/ops-console/action-model";
 import { buildReceivingOwnership } from "@/lib/ops-console/ownership-adapter";
 // §inbound-detail-mobile-redesign (호영님 2026-07-02) — 모바일 입고 상세 시안 시트.
 import { MobileReceivingDetail } from "@/components/receiving/mobile-receiving-detail";
+import { ReceivingDocAttachModal } from "@/components/receiving/receiving-doc-attach-modal";
 import { buildReceivingBlockers } from "@/lib/ops-console/blocker-adapter";
 import { buildReceivingExceptionReentryContext } from "@/lib/ops-console/reentry-context";
 import { injectReentryCommand } from "@/lib/ops-console/command-adapters";
@@ -55,7 +56,7 @@ import {
 const PHASE_STEPS: { key: string; label: string; matchPhases: ReceivingExecutionPhase[] }[] = [
   { key: "arrival", label: "도착 확인", matchPhases: ["expected", "arrived"] },
   { key: "inspection", label: "검수/문서", matchPhases: ["inspection_pending", "inspection_in_progress", "docs_missing"] },
-  { key: "lot_capture", label: "Lot/격리", matchPhases: ["quarantine_active"] },
+  { key: "lot_capture", label: "Lot 등록", matchPhases: [] },
   { key: "posting", label: "재고 반영", matchPhases: ["ready_to_post", "partial_posting"] },
   { key: "handoff", label: "재고 위험", matchPhases: ["posted", "closed"] },
 ];
@@ -92,12 +93,6 @@ const EXPIRY_TONE_COLOR: Record<string, string> = {
   missing: "text-slate-500",
 };
 
-const QUARANTINE_TONE_COLOR: Record<string, string> = {
-  neutral: "text-slate-400",
-  warning: "text-yellow-400",
-  danger: "text-red-400",
-  success: "text-emerald-400",
-};
 
 // ── Component ──────────────────────────────────────────────────────
 export default function ReceivingDetailPage() {
@@ -175,7 +170,6 @@ export default function ReceivingDetailPage() {
     ],
     riskBadges: [
       ...(model.document.tone === "danger" ? ["문서 누락"] : []),
-      ...(model.lotCapture.quarantinedLots > 0 ? ["격리 품목"] : []),
       ...(model.inspection.blockerLabel ? ["검수 미완료"] : []),
       ...(model.receiptProgress.missingLines > 0 ? ["미도착 라인"] : []),
       ...(model.lotCapture.expiredLots > 0 ? ["만료 lot"] : []),
@@ -190,10 +184,7 @@ export default function ReceivingDetailPage() {
 
     if (model.document.missingLines > 0)
       blockers.push({ label: `${model.document.missingLines}건 필수 문서 미첨부 — 검수 진행 불가`, actionable: true });
-    if (model.lotCapture.blockedLots > 0)
-      blockers.push({ label: `${model.lotCapture.blockedLots}건 차단 lot — 재고 반영 불가`, actionable: true });
-    if (model.lotCapture.quarantinedLots > 0)
-      blockers.push({ label: `${model.lotCapture.quarantinedLots}건 격리 중 — 판정 필요`, actionable: true });
+    // §inbound-quarantine-temp-exclude: 격리·차단 lot은 입고 반영을 막지 않는다(blocker 제외).
     if (model.inspection.failed > 0)
       blockers.push({ label: `${model.inspection.failed}건 불합격 — 재검수 또는 반품`, actionable: true });
 
@@ -220,18 +211,20 @@ export default function ReceivingDetailPage() {
 
   const hasException =
     model.document.tone === "danger" ||
-    model.lotCapture.quarantinedLots > 0 ||
     model.receiptProgress.missingLines > 0;
   const reentryCtx = useMemo(
     () => (hasException ? buildReceivingExceptionReentryContext(rb) : undefined),
     [rb, hasException],
   );
 
+  const [docModalOpen, setDocModalOpen] = useState(false);
   const commandSurface: CommandSurface = useMemo(() => {
     const base = buildReceivingCommandSurface({
       rb,
       onCompleteInspection: (lineId: string) => store.completeInspection(rb.id, lineId, true),
       onPostToInventory: () => store.postToInventory(rb.id),
+      // §inbound-quarantine-temp-exclude (P3): 문서 해소 = 실 첨부 모달.
+      onResolveDocs: () => setDocModalOpen(true),
     });
     return injectReentryCommand(base, reentryCtx);
   }, [rb, store, reentryCtx]);
@@ -253,6 +246,12 @@ export default function ReceivingDetailPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
+      <ReceivingDocAttachModal
+        open={docModalOpen}
+        onOpenChange={setDocModalOpen}
+        rb={rb}
+        onAttach={(lineId, docType, lotId) => store.attachReceivingDocument(rb.id, lineId, docType, lotId)}
+      />
       {/* §inbound-detail-mobile-redesign — 모바일(lg 미만)은 시안 시트(#07), 데스크탑은 기존 shell 무접촉 */}
       <MobileReceivingDetail
         reference={rb.id}
@@ -575,7 +574,6 @@ function LotDetailSurface({
                 <th className="text-left px-3 py-2 font-medium text-slate-500">Lot#</th>
                 <th className="text-left px-3 py-2 font-medium text-slate-500">수량</th>
                 <th className="text-left px-3 py-2 font-medium text-slate-500">유효기한</th>
-                <th className="text-left px-3 py-2 font-medium text-slate-500">격리</th>
                 <th className="text-left px-3 py-2 font-medium text-slate-500">문서</th>
                 <th className="text-left px-3 py-2 font-medium text-slate-500">반영</th>
                 <th className="text-left px-3 py-2 font-medium text-slate-500">리스크</th>
@@ -592,9 +590,6 @@ function LotDetailSurface({
                     {lot.quantity} {lot.unit}
                   </td>
                   <td className={`px-3 py-2 ${EXPIRY_TONE_COLOR[lot.expiryTone]}`}>{lot.expiryLabel}</td>
-                  <td className={`px-3 py-2 ${QUARANTINE_TONE_COLOR[lot.quarantineTone]}`}>
-                    {lot.quarantineLabel}
-                  </td>
                   <td className="px-3 py-2 text-slate-400">{lot.documentCoverage}</td>
                   <td className="px-3 py-2 text-slate-400">{lot.postingState}</td>
                   <td className="px-3 py-2">
@@ -694,7 +689,6 @@ function InventoryReleaseHandoffPanel({ model }: { model: ReceivingExecutionMode
   // Inventory risk signals from lots
   const expiringLots = lots.filter(l => l.expiryTone === "expiring_soon");
   const expiredLots = lots.filter(l => l.expiryTone === "expired");
-  const quarantinedLots = lots.filter(l => l.quarantineTone === "danger" || l.quarantineTone === "warning");
 
   return (
     <div className="space-y-3">
@@ -703,17 +697,15 @@ function InventoryReleaseHandoffPanel({ model }: { model: ReceivingExecutionMode
         <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
           재고 반영 결과
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div className="grid grid-cols-2 gap-3 text-xs">
           <StatCell label="반영 lot" value={rel.postedLots} tone="success" />
-          <StatCell label="격리 lot" value={rel.quarantinedLots} tone={rel.quarantinedLots > 0 ? "danger" : undefined} />
           <StatCell label="가용 수량" value={rel.availableAfterPosting} tone="success" />
-          <StatCell label="격리 수량" value={rel.quarantinedAfterPosting} tone={rel.quarantinedAfterPosting > 0 ? "warning" : undefined} />
         </div>
         <div className="mt-2 text-xs text-slate-400">{rel.label}</div>
       </div>
 
       {/* Inventory Risk Assessment */}
-      {(expiringLots.length > 0 || expiredLots.length > 0 || quarantinedLots.length > 0) && (
+      {(expiringLots.length > 0 || expiredLots.length > 0) && (
         <div className="bg-slate-900 border border-yellow-800/40 rounded p-3">
           <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
             재고 리스크 평가
@@ -735,15 +727,6 @@ function InventoryReleaseHandoffPanel({ model }: { model: ReceivingExecutionMode
                   <span className="text-yellow-300">만료 임박 lot {expiringLots.length}건 — 우선 사용 권장</span>
                 </div>
                 <Link href="/dashboard/inventory" className="text-[10px] text-yellow-400 hover:text-yellow-300">확인 →</Link>
-              </div>
-            )}
-            {quarantinedLots.length > 0 && (
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <ShieldAlert className="h-3 w-3 text-red-400" />
-                  <span className="text-red-300">격리 lot {quarantinedLots.length}건 — 판정 필요</span>
-                </div>
-                <span className="text-[10px] text-slate-500">격리 유지</span>
               </div>
             )}
           </div>

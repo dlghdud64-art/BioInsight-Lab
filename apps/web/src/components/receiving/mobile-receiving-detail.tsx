@@ -23,7 +23,7 @@ import type { CommandSurface, OperationalCommand } from "@/lib/ops-console/actio
 const PHASE_STEPS: { key: string; label: string; matchPhases: ReceivingExecutionPhase[] }[] = [
   { key: "arrival", label: "도착 확인", matchPhases: ["expected", "arrived"] },
   { key: "inspection", label: "검수·문서", matchPhases: ["inspection_pending", "inspection_in_progress", "docs_missing"] },
-  { key: "lot_capture", label: "Lot 등록", matchPhases: ["quarantine_active"] },
+  { key: "lot_capture", label: "Lot 등록", matchPhases: [] },
   { key: "posting", label: "재고 반영", matchPhases: ["ready_to_post", "partial_posting"] },
   { key: "handoff", label: "재고 위험", matchPhases: ["posted", "closed"] },
 ];
@@ -219,7 +219,6 @@ export function MobileReceivingDetail({
               <div className="text-[13px] font-semibold text-slate-900 tracking-tight">LOT {lot.totalLots}건 등록됨</div>
               <div className="text-[11.5px] text-slate-500 mt-0.5">
                 {lot.usableLots} 사용 가능
-                {lot.quarantinedLots > 0 && <> · <b className="text-rose-700 font-semibold">{lot.quarantinedLots} 검수 대기</b></>}
               </div>
             </div>
           </div>
