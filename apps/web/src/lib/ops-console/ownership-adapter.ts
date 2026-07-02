@@ -22,6 +22,19 @@ import type {
 } from '../review-queue/reorder-expiry-stock-risk-contract';
 
 // ---------------------------------------------------------------------------
+// 0. Internal actor-id mask (§ownership-actor-id-mask, 호영님 2026-07-02)
+// ---------------------------------------------------------------------------
+//   문제: currentOwnerName 에 raw 내부 유저키(예: "user-inv-001")가 그대로 들어가 UI("담당/실행 주체")에
+//   노출 — 제품원칙 "raw label / internal key 금지" 위반(실기기 입고 상세 확인).
+//   해결: 내부 id 패턴(user-/actor-/usr-)이면 undefined 반환 → 소비 컴포넌트가 currentOwnerRole 로 폴백.
+//   실 데이터(실 user id)도 동일 패턴이라 seed 한정 아닌 프로덕션 안전 가드.
+const INTERNAL_ACTOR_ID = /^(user|actor|usr)[-_]/i;
+function maskInternalActor(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  return INTERNAL_ACTOR_ID.test(value.trim()) ? undefined : value;
+}
+
+// ---------------------------------------------------------------------------
 // 1. Assignment State Taxonomy
 // ---------------------------------------------------------------------------
 
@@ -194,7 +207,7 @@ export function buildPOOwnership(
   }
 
   return {
-    currentOwnerName: po.ownerId ?? undefined,
+    currentOwnerName: maskInternalActor(po.ownerId ?? undefined),
     currentOwnerRole: '구매 실행 담당자',
     assignmentState,
     approverNames: approverNames.length > 0 ? approverNames : undefined,
@@ -247,7 +260,7 @@ export function buildReceivingOwnership(
   }
 
   return {
-    currentOwnerName: rb.receivedBy ?? undefined,
+    currentOwnerName: maskInternalActor(rb.receivedBy ?? undefined),
     currentOwnerRole: '입고 검수 담당자',
     assignmentState,
     reviewerNames: hasQuarantine ? ['품질/준법 검토자'] : undefined,
@@ -330,7 +343,7 @@ export function buildInboxItemOwnership(item: {
   }
 
   return {
-    currentOwnerName: item.owner,
+    currentOwnerName: maskInternalActor(item.owner),
     assignmentState,
     waitingExternalLabel: isExternal ? '외부 응답 대기' : undefined,
     escalationOwnerName: isOverdue ? 'team_lead' : undefined,
