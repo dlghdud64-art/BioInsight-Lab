@@ -3350,7 +3350,16 @@ function QuotesPageContent() {
 
       {/* §labaxis-web-mobile-reskin Phase 2 — 모바일 전용 견적 뷰(목업 §02). 데스크탑(md+)=기존 카드/테이블. */}
       {!isLoading && isMobile && (
-        <MobileQuotesView quotes={filteredQuotes} onSelect={(id) => handleQuoteCardSelect(id)} />
+        <MobileQuotesView
+          quotes={filteredQuotes}
+          onSelect={(id) => handleQuoteCardSelect(id)}
+          onAction={(id) => {
+            // §quote-mobile-v2 — 단계 액션(발송/리마인더/비교/승인/입고)은 데스크탑과 동일 라우팅.
+            //   발송 → getOpSignals.ctaLabel "견적 요청 발송" → request_send → VendorRequestModal 재사용.
+            const q = filteredQuotes.find((x) => x.id === id);
+            if (q) handleQuoteCardSelect(id, getOpSignals(q).ctaLabel);
+          }}
+        />
       )}
 
       {/* ── 섹션: 즉시 처리 필요 ── */}
