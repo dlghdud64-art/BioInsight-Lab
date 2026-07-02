@@ -65,15 +65,16 @@ describe("§11.309d — SmartReceivingScannerModal 컴포넌트", () => {
     expect(src).toMatch(/confirmedData:/);
   });
 
-  it("사용자 form 모든 필드 input (productName / brand / catalogNumber / lotNumber / expirationDate / quantity / unit / storageCondition / notes)", () => {
+  it("사용자 form 모든 필드 input (productName / brand / catalogNumber / lotNumber / expirationDate / receivedQuantity / receivedUnit / storageCondition / notes)", () => {
     const src = read(SCANNER_PATH);
     expect(src).toMatch(/id="srm-productName"/);
     expect(src).toMatch(/id="srm-brand"/);
     expect(src).toMatch(/id="srm-catalogNumber"/);
     expect(src).toMatch(/id="srm-lotNumber"/);
     expect(src).toMatch(/id="srm-expirationDate"/);
-    expect(src).toMatch(/id="srm-quantity"/);
-    expect(src).toMatch(/id="srm-unit"/);
+    // §11.348 수령 시맨틱 rename: quantity→receivedQuantity, unit→receivedUnit(발주 vs 수령 구분).
+    expect(src).toMatch(/id="srm-receivedQuantity"/);
+    expect(src).toMatch(/id="srm-receivedUnit"/);
     expect(src).toMatch(/id="srm-storageCondition"/);
     expect(src).toMatch(/id="srm-notes"/);
   });
@@ -114,7 +115,7 @@ describe("§11.309d — SmartReceivingScannerModal 컴포넌트", () => {
   it("input validation (productName + quantity > 0)", () => {
     const src = read(SCANNER_PATH);
     expect(src).toMatch(/!form\.productName\.trim\(\)/);
-    expect(src).toMatch(/form\.quantity\s*<=\s*0/);
+    expect(src).toMatch(/form\.receivedQuantity\s*<=\s*0/);
   });
 
   it("camera capture attribute (모바일 카메라 직접 호출)", () => {
@@ -124,23 +125,20 @@ describe("§11.309d — SmartReceivingScannerModal 컴포넌트", () => {
   });
 });
 
-describe("§11.309d — Header.tsx swap (placeholder → ScannerModal)", () => {
-  it("SmartReceivingScannerModal import (PlaceholderModal import 0)", () => {
+describe("§11.309d — Header.tsx 글로벌 진입점 [SUPERSEDED §11.371-3 → global-modal registry]", () => {
+  // §11.371-3: Header 스캔 진입은 인라인 모달(Placeholder/Scanner) → openModal("scan_hub") registry.
+  //   Scanner 모달 렌더는 registry 소유. Header 는 인라인 모달/isSmartReceivingOpen 미보유.
+  it("Header registry 진입 (openModal scan_hub) + 인라인 모달 부재", () => {
     const src = read(HEADER_PATH);
-    expect(src).toMatch(/import\s*\{[^}]*SmartReceivingScannerModal[^}]*\}/);
-    expect(src).not.toMatch(/import\s*\{[^}]*SmartReceivingPlaceholderModal[^}]*\}/);
-  });
-
-  it("<SmartReceivingScannerModal> 렌더 (PlaceholderModal 렌더 0)", () => {
-    const src = read(HEADER_PATH);
-    expect(src).toMatch(/<SmartReceivingScannerModal[^>]*open=\{isSmartReceivingOpen\}/);
+    expect(src).toMatch(/openModal\("scan_hub"\)/);
+    expect(src).not.toMatch(/<SmartReceivingScannerModal/);
     expect(src).not.toMatch(/<SmartReceivingPlaceholderModal/);
   });
 
-  it("§11.308a-v2 헤더 button + state 보존 (회귀 0)", () => {
+  it("스캔 button testid (header-scan-entry) + isSmartReceivingOpen state 은퇴", () => {
     const src = read(HEADER_PATH);
-    expect(src).toMatch(/data-testid="header-smart-receiving-entry"/);
-    expect(src).toMatch(/isSmartReceivingOpen.*useState/);
+    expect(src).toMatch(/data-testid="header-scan-entry"/);
+    expect(src).not.toMatch(/isSmartReceivingOpen/);
   });
 });
 
