@@ -105,9 +105,9 @@ describe("§11.379 — 회귀 0 (scan.tsx 기존 보존)", () => {
     expect(src).toMatch(/scanMode === "barcode"/);
   });
 
-  it("카메라 권한 fallback 보존", () => {
+  it("카메라 권한 fallback 보존 (§11.380 VisionCamera hasPermission)", () => {
     const src = readRepo(SCAN_PATH);
-    expect(src).toMatch(/permission\.granted/);
+    expect(src).toMatch(/hasPermission/); // 구 expo permission.granted → VisionCamera hasPermission
     expect(src).toMatch(/수동 검색/);
   });
 

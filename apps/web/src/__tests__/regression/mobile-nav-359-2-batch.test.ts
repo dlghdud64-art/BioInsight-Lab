@@ -52,15 +52,18 @@ describe("§11.359-2 — 더보기 시트 출구", () => {
 });
 
 describe("§11.359 — 알림 패널 모바일 폭", () => {
-  it("고정 380px → 반응형(calc viewport - margin, max 380)", () => {
+  it("고정 380px → 반응형(모바일 calc viewport, md 380)", () => {
     const src = read(HEADER);
-    expect(src).toMatch(/w-\[calc\(100vw-1\.5rem\)\]\s*max-w-\[380px\]/);
+    // §11.359 진화: 모바일 fixed 반응형 폭 w-[min(20rem,calc(100vw-1.5rem))] + max-w-[calc(...)], md=380px.
+    expect(src).toMatch(/w-\[min\(20rem,calc\(100vw-1\.5rem\)\)\]/);
+    expect(src).toMatch(/max-w-\[calc\(100vw-1\.5rem\)\]/);
     expect(src).not.toMatch(/className="absolute right-0 top-full mt-2 w-\[380px\]/);
   });
 
-  it("위치 유지 — right-0 top-full(헤더 아래, 헤더 가림 0)", () => {
+  it("위치 유지 — md 데스크탑 right-0 top-full(헤더 아래) + 모바일 fixed", () => {
     const src = read(HEADER);
-    expect(src).toMatch(/absolute right-0 top-full mt-2 w-\[calc/);
+    expect(src).toMatch(/md:absolute md:right-0 md:top-full md:mt-2/);
+    expect(src).toMatch(/fixed right-3 top-14/);
   });
 });
 

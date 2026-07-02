@@ -71,9 +71,9 @@ describe("§11.319 Phase 2 — scan.tsx OCR 라벨 모드", () => {
     expect(src).toMatch(/scanMode|captureMode|mode === ["']label["']/);
   });
 
-  it("takePictureAsync 로 촬영 후 scanLabel 호출", () => {
+  it("takePhoto 로 촬영 후 scanLabel 호출 (§11.380 VisionCamera v4 이전)", () => {
     const src = readRepo(SCAN_PATH);
-    expect(src).toMatch(/takePictureAsync/);
+    expect(src).toMatch(/takePhoto/); // 구 expo takePictureAsync → VisionCamera takePhoto
     expect(src).toMatch(/scanLabel/);
     expect(src).toMatch(/base64/);
   });
@@ -120,12 +120,12 @@ describe("§11.319 Phase 2 — register prefill 확장(additive)", () => {
 });
 
 describe("§11.319 Phase 2 — 회귀 0 (바코드 모드 보존)", () => {
-  it("기존 바코드 스캔 핵심 wiring 보존", () => {
+  it("바코드 스캔 핵심 wiring 보존 (§11.380 VisionCamera CodeScanner)", () => {
     const src = readRepo(SCAN_PATH);
-    expect(src).toMatch(/handleBarCodeScanned/);
+    // 구 expo handleBarCodeScanned/barcodeScannerSettings/onBarcodeScanned → VisionCamera useCodeScanner/codeScanner prop.
+    expect(src).toMatch(/useCodeScanner/);
     expect(src).toMatch(/lookupInventory/);
-    expect(src).toMatch(/barcodeScannerSettings/);
-    expect(src).toMatch(/onBarcodeScanned/);
+    expect(src).toMatch(/codeScanner=\{/);
   });
 
   it("기존 상태/액션 분기 보존", () => {
@@ -133,7 +133,7 @@ describe("§11.319 Phase 2 — 회귀 0 (바코드 모드 보존)", () => {
     expect(src).toMatch(/matched/);
     expect(src).toMatch(/unmatched/);
     expect(src).toMatch(/manual/);
-    expect(src).toMatch(/useCameraPermissions/);
+    expect(src).toMatch(/useCameraPermission\b/); // 구 expo useCameraPermissions → VisionCamera useCameraPermission
   });
 
   it("매칭 성공 액션(입고/출고/라벨/위치) 보존", () => {

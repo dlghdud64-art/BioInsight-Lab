@@ -55,7 +55,8 @@ describe("§11.340 — 모바일 출처 배지", () => {
     const src = readRepo(SCAN);
     expect(src).toMatch(/const \[lotScanFilled, setLotScanFilled\]/);
     expect(src).toMatch(/setLotScanFilled\(Boolean\(result\.parsed\.lotNo\)\)/);
-    expect(src).toMatch(/if \(key === "lotNumber"\) setLotDirty\(true\)/);
+    // §11.380 진화: 수정 시 setLotDirty + setLotVerified(false) 블록(검증 초기화 동반).
+    expect(src).toMatch(/if \(key === "lotNumber"\) \{ setLotDirty\(true\)/);
   });
   it("배지 헬퍼 + 라벨 스캔 확인/수기 입력", () => {
     const src = readRepo(SCAN);

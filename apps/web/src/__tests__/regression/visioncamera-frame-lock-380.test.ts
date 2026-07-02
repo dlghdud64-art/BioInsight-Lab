@@ -56,15 +56,18 @@ describe("§11.380 Phase 3 — frame processor 배선", () => {
 });
 
 describe("§11.380 Phase 3 — 경계/회귀", () => {
-  it("§11.375 경계: 라이브 UI 에 '정합' 단어 0(감지 신호일 뿐 진위 아님)", () => {
+  it("§11.375 경계: 라이브 UI 에 '정합' 단어 0 (주석 제외 render)", () => {
     const src = read(SCAN);
-    expect(src).not.toMatch(/정합/);
+    // §scan-mobile-align-glow 주석(글로우 advisory 설명)은 제외 — 라이브 UI text 만 검증(false-positive 방지).
+    const stripped = src.replace(/\/\*[\s\S]*?\*\//g, "").split("\n").map((l) => l.replace(/\/\/.*$/, "")).join("\n");
+    expect(stripped).not.toMatch(/정합/);
   });
 
   it("dead-end 금지: 촬영 버튼 disabled 는 isBusy 만(idle 여도 수동 촬영 가능)", () => {
     const src = read(SCAN);
-    // 라벨 촬영 버튼은 isLocked 가 아니라 isBusy 로만 비활성(검출 실패해도 막히지 않음).
-    expect(src).toMatch(/onPress=\{handleCaptureLabel\}\s*\n\s*disabled=\{isBusy\}/);
+    // §11.380 VisionCamera: onPress 는 wrapped(() => handleCaptureLabel(accumulate)), disabled 는 isBusy 만.
+    expect(src).toMatch(/onPress=\{\(\) => handleCaptureLabel\(accumulate\)\}/);
+    expect(src).toMatch(/disabled=\{isBusy\}/);
   });
 
   it("§11.378 후단 게이트 보존(회귀 0)", () => {

@@ -43,7 +43,9 @@ describe("§11.378-native — 신뢰도 게이트", () => {
     const src = read(SCAN);
     // receiveBlocked = 제품명 빈값 OR (저신뢰 + 미보정) → 버튼 disabled 결합(우회 0)
     expect(src).toMatch(/receiveBlocked[\s\S]*lowConf && !productNameDirty/);
-    expect(src).toMatch(/disabled=\{receiveBlocked\}/);
+    // §11.37x(c): 버튼 disabled = commitBlocked(입고 맥락 = receiveBlocked, 소싱 맥락 = 검색어 게이트).
+    expect(src).toMatch(/disabled=\{commitBlocked\}/);
+    expect(src).toMatch(/commitBlocked[\s\S]{0,120}:\s*receiveBlocked/);
   });
 
   it("저신뢰도 차단 경고 카피 노출", () => {
