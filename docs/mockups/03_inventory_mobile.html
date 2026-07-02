@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LabAxis — 재고 관리 (모바일)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#0f172a"/><rect x="30" y="22" width="40" height="56" rx="8" fill="#fff"/><path d="M40 38h20M40 48h20" stroke="#e2e8f0" stroke-width="3" stroke-linecap="round"/><rect x="40" y="58" width="13" height="6" rx="3" fill="#e11d48"/></svg></template>
+<style>
+:root{
+  --navy-900:#0f172a; --navy-800:#1e293b;
+  --accent:#2563eb; --accent-strong:#1d4ed8; --accent-weak:#eff6ff; --accent-line:#bfdbfe;
+  --emerald:#059669; --emerald-weak:#ecfdf5; --emerald-line:#a7f3d0; --emerald-deep:#047857;
+  --ink:#0f172a; --ink-2:#475569; --ink-3:#64748b; --ink-4:#94a3b8;
+  --bg:#eef1f5; --paper:#fff; --line:#e2e8f0; --line-soft:#f1f5f9; --hover:#f8fafc;
+  --amber:#b45821; --amber-weak:#fdf3ec; --amber-line:#f3d4bf;
+  --rose:#e11d48; --rose-weak:#fff1f2; --rose-line:#fecdd3; --rose-deep:#be123c;
+  --r-lg:18px; --r-md:13px; --r-sm:9px;
+  --sh-card:0 1px 2px rgba(15,23,42,.05), 0 10px 26px -18px rgba(15,23,42,.20);
+  --mono:"SFMono-Regular",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:#cdd4de;color:var(--ink);
+  font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;
+  line-height:1.5;-webkit-font-smoothing:antialiased;font-feature-settings:"tnum" 1;
+  min-height:100vh;display:grid;place-items:center;padding:40px 16px;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;}
+.tnum{font-variant-numeric:tabular-nums;}
+.mono{font-family:var(--mono);}
+svg{display:block;}
+
+.stage{display:flex;gap:46px;align-items:flex-start;flex-wrap:wrap;justify-content:center;}
+.phone{width:392px;height:836px;background:#000;border-radius:52px;padding:11px;
+  box-shadow:0 50px 90px -30px rgba(15,23,42,.55), 0 0 0 2px rgba(255,255,255,.06) inset;flex:none;}
+.screen{position:relative;width:100%;height:100%;background:var(--bg);border-radius:42px;overflow:hidden;
+  display:flex;flex-direction:column;}
+.phone-cap{width:392px;text-align:center;color:#46506180;font-size:12.5px;font-weight:700;
+  letter-spacing:.02em;margin-top:16px;}
+
+.statusbar{height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;
+  padding:0 26px 7px;font-size:13px;font-weight:700;color:#fff;background:var(--navy-900);}
+.statusbar .sb-r{display:flex;gap:6px;align-items:center;}
+
+.body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.body::-webkit-scrollbar{width:0;}
+
+/* header */
+.phead{background:var(--navy-900);padding:10px 18px 18px;color:#fff;border-radius:0 0 22px 22px;}
+.phead-top{display:flex;align-items:center;gap:11px;margin-bottom:14px;}
+.brand{font-size:16px;font-weight:800;letter-spacing:-.01em;}
+.phead-top .sp{flex:1;}
+.phead-top .ic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;
+  color:rgba(255,255,255,.8);background:rgba(255,255,255,.07);position:relative;}
+.phead-top .ic.scan{background:rgba(96,165,250,.18);color:#bfdbfe;}
+.phead-top .ic svg{width:19px;height:19px;}
+.phead-top .ic .badge{position:absolute;top:7px;right:7px;width:8px;height:8px;border-radius:50%;
+  background:var(--rose);border:2px solid var(--navy-900);}
+.phead h1{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:0 0 4px;}
+.phead .sub{font-size:12.5px;color:rgba(255,255,255,.6);margin:0 0 15px;}
+.sumstrip{display:flex;gap:9px;}
+.sumcard{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  border-radius:14px;padding:11px 12px;}
+.sumcard.alert{background:rgba(225,29,72,.16);border-color:rgba(254,205,211,.28);}
+.sumcard .n{font-size:24px;font-weight:800;letter-spacing:-.02em;line-height:1;
+  display:flex;align-items:baseline;gap:3px;}
+.sumcard .n small{font-size:12px;font-weight:700;color:rgba(255,255,255,.55);}
+.sumcard.alert .n{color:#fecdd3;}
+.sumcard .lb{font-size:11px;font-weight:600;color:rgba(255,255,255,.62);margin-top:6px;}
+.sumcard.alert .lb{color:rgba(254,205,211,.78);}
+
+/* 재발주 추천 배너 */
+.reco{margin:15px 16px 0;background:var(--rose-weak);border:1px solid var(--rose-line);
+  border-radius:var(--r-lg);padding:13px 14px;display:flex;align-items:center;gap:12px;}
+.reco-ic{width:38px;height:38px;flex:none;border-radius:11px;background:#fff;border:1px solid var(--rose-line);
+  color:var(--rose);display:grid;place-items:center;}
+.reco-ic svg{width:20px;height:20px;}
+.reco-tx{flex:1;min-width:0;}
+.reco-tx b{font-size:13.5px;font-weight:800;color:var(--rose-deep);letter-spacing:-.01em;display:block;}
+.reco-tx span{font-size:11.5px;color:var(--ink-3);}
+.reco-btn{flex:none;display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:800;
+  color:#fff;background:var(--rose);border-radius:10px;padding:9px 13px;white-space:nowrap;
+  box-shadow:0 8px 18px -8px rgba(225,29,72,.55);}
+.reco-btn svg{width:14px;height:14px;}
+
+/* filter chips */
+.chiprow{display:flex;gap:8px;overflow-x:auto;padding:16px 16px 4px;scrollbar-width:none;}
+.chiprow::-webkit-scrollbar{display:none;}
+.chip{flex:none;display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 14px;
+  border-radius:999px;background:var(--paper);border:1px solid var(--line);
+  font-size:13px;font-weight:700;color:var(--ink-2);transition:all .14s;white-space:nowrap;}
+.chip .c{font-size:11.5px;font-weight:800;min-width:17px;height:17px;padding:0 4px;border-radius:9px;
+  display:inline-grid;place-items:center;background:var(--bg);color:var(--ink-3);}
+.chip.on{background:var(--navy-900);border-color:var(--navy-900);color:#fff;}
+.chip.on .c{background:rgba(255,255,255,.2);color:#fff;}
+.chip.danger.on{background:var(--rose-deep);border-color:var(--rose-deep);}
+
+/* list */
+.list{padding:9px 16px 24px;display:flex;flex-direction:column;gap:11px;}
+
+.item{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);
+  box-shadow:var(--sh-card);overflow:hidden;}
+.item.low{border-color:var(--rose-line);}
+.item-h{display:flex;align-items:flex-start;gap:11px;padding:14px 15px 0;}
+.item-ic{width:40px;height:40px;flex:none;border-radius:11px;display:grid;place-items:center;
+  background:var(--line-soft);color:var(--ink-3);}
+.item-ic svg{width:21px;height:21px;}
+.item.low .item-ic{background:var(--rose-weak);color:var(--rose);}
+.item-bd{flex:1;min-width:0;}
+.item-top{display:flex;align-items:center;gap:7px;margin-bottom:3px;}
+.st{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;}
+.st .d{width:7px;height:7px;border-radius:50%;}
+.st.low{color:var(--rose-deep);}
+.st.low .d{background:var(--rose);}
+.st.ok{color:var(--emerald-deep);}
+.st.ok .d{background:var(--emerald);}
+.st.exp{color:var(--amber);}
+.st.exp .d{background:var(--amber);}
+.item-top .sp{flex:1;}
+.item-cat{font-size:10.5px;font-weight:700;color:var(--ink-4);background:var(--bg);
+  border-radius:6px;padding:2px 7px;}
+.item-nm{font-size:16px;font-weight:800;letter-spacing:-.01em;}
+.item-meta{font-size:12px;color:var(--ink-3);margin-top:1px;}
+
+.item-mid{padding:12px 15px 0;}
+.qbar-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;}
+.qbar-q{font-size:14px;font-weight:800;letter-spacing:-.01em;}
+.qbar-q.low{color:var(--rose-deep);}
+.qbar-q .u{font-size:11px;font-weight:700;color:var(--ink-4);margin-left:1px;}
+.qbar-safe{font-size:11px;font-weight:600;color:var(--ink-4);}
+.qbar{height:7px;border-radius:7px;background:var(--bg);overflow:hidden;}
+.qbar i{display:block;height:100%;border-radius:7px;}
+.qbar i.low{background:linear-gradient(90deg,var(--rose),#fb7185);}
+.qbar i.ok{background:linear-gradient(90deg,var(--emerald),#34d399);}
+.qbar i.exp{background:linear-gradient(90deg,var(--amber),#d98a5a);}
+
+.item-f{display:flex;align-items:center;gap:10px;padding:12px 15px 13px;margin-top:12px;
+  border-top:1px solid var(--line-soft);}
+.fmeta{display:flex;align-items:center;gap:13px;flex:1;min-width:0;}
+.fm{display:flex;flex-direction:column;gap:1px;}
+.fm .k{font-size:10px;font-weight:600;color:var(--ink-4);}
+.fm .v{font-size:12.5px;font-weight:750;color:var(--ink-2);display:flex;align-items:center;gap:4px;}
+.fm .v svg{width:12px;height:12px;color:var(--ink-4);}
+.fm .v.miss{color:var(--rose-deep);}
+.fm .v.miss svg{color:var(--rose);}
+.lotpill{font-size:11px;font-weight:800;color:var(--ink-2);background:var(--bg);
+  border-radius:7px;padding:3px 8px;}
+.item-act{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  height:38px;padding:0 14px;border-radius:11px;font-size:12.5px;font-weight:800;}
+.item-act svg{width:14px;height:14px;}
+.item-act.reorder{background:var(--rose);color:#fff;box-shadow:0 8px 18px -8px rgba(225,29,72,.5);}
+.item-act.detail{background:var(--hover);color:var(--ink-2);border:1px solid var(--line);}
+
+/* bottom nav */
+.tabbar{flex:none;height:64px;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);
+  border-top:1px solid var(--line);display:flex;padding:6px 4px 0;}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--ink-4);
+  font-size:10.5px;font-weight:700;padding-top:5px;text-decoration:none;}
+.tab svg{width:21px;height:21px;}
+.tab.on{color:var(--accent);}
+
+/* 더보기 sheet */
+.sheet-scrim{position:absolute;inset:0;background:rgba(15,23,42,.42);opacity:0;visibility:hidden;
+  transition:opacity .26s ease,visibility .26s;z-index:40;}
+.sheet-scrim.show{opacity:1;visibility:visible;}
+.msheet{position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);z-index:50;}
+.msheet.show{transform:translateY(0);}
+.msheet-head{flex:none;background:var(--navy-900);color:#fff;padding:14px 18px 16px;display:flex;align-items:center;}
+.msheet-head .ttl{font-size:18px;font-weight:800;letter-spacing:-.02em;}
+.msheet-head .x{margin-left:auto;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+  background:rgba(255,255,255,.08);color:rgba(255,255,255,.85);}
+.msheet-head .x svg{width:19px;height:19px;}
+.msheet-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 24px;
+  display:flex;flex-direction:column;gap:16px;}
+.msheet-body::-webkit-scrollbar{width:0;}
+.ws-card{display:flex;align-items:center;gap:12px;background:var(--paper);border:1px solid var(--line);
+  border-radius:var(--r-md);box-shadow:var(--sh-card);padding:14px;}
+.ws-mk{width:42px;height:42px;flex:none;border-radius:12px;display:grid;place-items:center;color:#fff;
+  font-size:17px;font-weight:800;background:linear-gradient(135deg,var(--accent),#5b86f0);}
+.ws-tx{flex:1;min-width:0;}
+.ws-tx b{font-size:14.5px;font-weight:800;letter-spacing:-.01em;display:block;}
+.ws-tx span{font-size:12px;color:var(--ink-3);}
+.ws-card .chev{flex:none;color:var(--ink-4);}
+.ws-card .chev svg{width:18px;height:18px;}
+.mgrp-h{font-size:11px;font-weight:800;letter-spacing:.04em;color:var(--ink-4);
+  text-transform:uppercase;padding:0 4px 7px;}
+.mlist{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);
+  box-shadow:var(--sh-card);overflow:hidden;}
+.mrow{display:flex;align-items:center;gap:13px;width:100%;padding:14px 14px;text-align:left;
+  border-bottom:1px solid var(--line-soft);text-decoration:none;}
+.mrow:last-child{border-bottom:0;}
+.mrow .mic{width:34px;height:34px;flex:none;border-radius:9px;display:grid;place-items:center;
+  background:var(--line-soft);color:var(--ink-2);}
+.mrow .mic svg{width:18px;height:18px;}
+.mrow .mtx{flex:1;min-width:0;font-size:14px;font-weight:650;letter-spacing:-.01em;color:var(--ink);}
+.mrow .mtx small{display:block;font-size:11.5px;font-weight:500;color:var(--ink-4);margin-top:1px;}
+.mrow .marr{flex:none;color:var(--ink-4);}
+.mrow .marr svg{width:17px;height:17px;}
+.mrow.danger .mtx{color:var(--rose-deep);}
+.mrow.danger .mic{background:var(--rose-weak);color:var(--rose);}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div>
+    <div class="phone">
+      <div class="screen">
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="sb-r">
+            <svg width="17" height="12" viewBox="0 0 18 12" fill="none"><rect x="0" y="7" width="3" height="5" rx="1" fill="#fff"/><rect x="5" y="4" width="3" height="8" rx="1" fill="#fff"/><rect x="10" y="1.5" width="3" height="10.5" rx="1" fill="#fff"/><rect x="15" y="0" width="3" height="12" rx="1" fill="#fff" opacity=".4"/></svg>
+            <svg width="16" height="12" viewBox="0 0 16 12" fill="none"><path d="M8 2.5C10.5 2.5 12.8 3.5 14.5 5.2M8 6C9.4 6 10.7 6.6 11.6 7.5M8 9.4l1.6 1.6L11.2 9.4A4.5 4.5 0 0 0 8 9.4z" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/></svg>
+            <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="1" y="1" width="21" height="10" rx="3" stroke="#fff" stroke-opacity=".5" stroke-width="1"/><rect x="2.5" y="2.5" width="16" height="7" rx="1.5" fill="#fff"/><rect x="23" y="4" width="1.5" height="4" rx="1" fill="#fff" opacity=".5"/></svg>
+          </span>
+        </div>
+
+        <div class="body">
+          <div class="phead">
+            <div class="phead-top">
+              <span class="brand">재고 관리</span>
+              <span class="sp"></span>
+              <span class="ic scan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M3 12h18"/></svg></span>
+              <span class="ic"><span class="badge"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
+            </div>
+            <h1>재고 관리</h1>
+            <p class="sub">Lot 단위로 추적 · QR 스캔으로 입·출고</p>
+            <div class="sumstrip">
+              <div class="sumcard"><div class="n tnum">5<small>종</small></div><div class="lb">전체 품목</div></div>
+              <div class="sumcard alert"><div class="n tnum">1<small>건</small></div><div class="lb">안전재고 미달</div></div>
+              <div class="sumcard"><div class="n tnum">1<small>건</small></div><div class="lb">만료 임박</div></div>
+            </div>
+          </div>
+
+          <!-- 우선순위 원칙(§재해석 2026-07-02): expired lot(qty>0) 폐기 > critical-low 재발주 > 만료 임박 > 정상.
+               현재 데이터엔 실제 만료(expired) lot 없음 → critical-low(BCP)가 최상위. 만료 임박(Trizol)은 amber blocker 톤 유지.
+               ⚠ generic reorder 가 expired dispose 보다 위로 오지 않도록 배너는 object-scoped(BCP) 로 한정. -->
+          <!-- 우선 처리 배너 (object-scoped: BCP critical-low) -->
+          <div class="reco">
+            <span class="reco-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 22a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM20 22a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg></span>
+            <div class="reco-tx"><b>BCP 재발주 검토 권장</b><span>안전재고의 10% · 권장 발주 9개</span></div>
+            <button class="reco-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> 재발주</button>
+          </div>
+
+          <!-- 필터 칩 -->
+          <div class="chiprow">
+            <button class="chip on">전체 <span class="c">5</span></button>
+            <button class="chip danger">부족 <span class="c">1</span></button>
+            <button class="chip">만료 임박 <span class="c">1</span></button>
+            <button class="chip">위치 미지정 <span class="c">1</span></button>
+          </div>
+
+          <div class="list">
+            <!-- BCP — 부족 -->
+            <div class="item low">
+              <div class="item-h">
+                <span class="item-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6.5L5.2 18a2 2 0 0 0 1.8 3h10a2 2 0 0 0 1.8-3L14 9.5V3"/><path d="M7.5 14h9"/></svg></span>
+                <div class="item-bd">
+                  <div class="item-top"><span class="st low"><span class="d"></span>부족</span><span class="sp"></span><span class="item-cat">시약</span></div>
+                  <div class="item-nm">BCP</div>
+                  <div class="item-meta">Sigma · B9673</div>
+                </div>
+              </div>
+              <div class="item-mid">
+                <div class="qbar-top"><span class="qbar-q low">1<span class="u">개</span></span><span class="qbar-safe">안전재고 10개</span></div>
+                <div class="qbar"><i class="low" style="width:10%"></i></div>
+              </div>
+              <div class="item-f">
+                <div class="fmeta">
+                  <div class="fm"><span class="k">LOT</span><span class="v"><span class="lotpill">1개</span></span></div>
+                  <div class="fm"><span class="k">위치</span><span class="v miss"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="2.5"/></svg> 미지정</span></div>
+                </div>
+                <button class="item-act reorder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 22a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM20 22a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg> 재발주</button>
+              </div>
+            </div>
+
+            <!-- Trizol — 만료 임박 -->
+            <div class="item">
+              <div class="item-h">
+                <span class="item-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6.5L5.2 18a2 2 0 0 0 1.8 3h10a2 2 0 0 0 1.8-3L14 9.5V3"/><path d="M7.5 14h9"/></svg></span>
+                <div class="item-bd">
+                  <div class="item-top"><span class="st exp"><span class="d"></span>만료 임박</span><span class="sp"></span><span class="item-cat">시약</span></div>
+                  <div class="item-nm">Trizol Reagent</div>
+                  <div class="item-meta">Invitrogen · 15596026</div>
+                </div>
+              </div>
+              <div class="item-mid">
+                <div class="qbar-top"><span class="qbar-q">6<span class="u">개</span></span><span class="qbar-safe">안전재고 4개</span></div>
+                <div class="qbar"><i class="exp" style="width:100%"></i></div>
+              </div>
+              <div class="item-f">
+                <div class="fmeta">
+                  <div class="fm"><span class="k">LOT</span><span class="v"><span class="lotpill">2개</span></span></div>
+                  <div class="fm"><span class="k">최단 유효기간</span><span class="v" style="color:var(--amber)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="9"/></svg> 2026.08 (D-58)</span></div>
+                </div>
+                <button class="item-act detail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg> 상세</button>
+              </div>
+            </div>
+
+            <!-- DPBS — 정상 -->
+            <div class="item">
+              <div class="item-h">
+                <span class="item-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6.5L5.2 18a2 2 0 0 0 1.8 3h10a2 2 0 0 0 1.8-3L14 9.5V3"/><path d="M7.5 14h9"/></svg></span>
+                <div class="item-bd">
+                  <div class="item-top"><span class="st ok"><span class="d"></span>정상</span><span class="sp"></span><span class="item-cat">시약</span></div>
+                  <div class="item-nm">DPBS (1×)</div>
+                  <div class="item-meta">Gibco · 14190144</div>
+                </div>
+              </div>
+              <div class="item-mid">
+                <div class="qbar-top"><span class="qbar-q">24<span class="u">병</span></span><span class="qbar-safe">안전재고 8병</span></div>
+                <div class="qbar"><i class="ok" style="width:100%"></i></div>
+              </div>
+              <div class="item-f">
+                <div class="fmeta">
+                  <div class="fm"><span class="k">LOT</span><span class="v"><span class="lotpill">3개</span></span></div>
+                  <div class="fm"><span class="k">위치</span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="2.5"/></svg> 냉장 A-2</span></div>
+                </div>
+                <button class="item-act detail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg> 상세</button>
+              </div>
+            </div>
+
+            <!-- 정밀 저울 — 정상 (기구) -->
+            <div class="item">
+              <div class="item-h">
+                <span class="item-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 7h18M7 7l-3 7a4 4 0 0 0 6 0zM17 7l3 7a4 4 0 0 1-6 0z"/></svg></span>
+                <div class="item-bd">
+                  <div class="item-top"><span class="st ok"><span class="d"></span>정상</span><span class="sp"></span><span class="item-cat">기구</span></div>
+                  <div class="item-nm">정밀 저울 소모품</div>
+                  <div class="item-meta">Mettler · 칭량지·교정분동</div>
+                </div>
+              </div>
+              <div class="item-mid">
+                <div class="qbar-top"><span class="qbar-q">12<span class="u">세트</span></span><span class="qbar-safe">안전재고 5세트</span></div>
+                <div class="qbar"><i class="ok" style="width:100%"></i></div>
+              </div>
+              <div class="item-f">
+                <div class="fmeta">
+                  <div class="fm"><span class="k">LOT</span><span class="v"><span class="lotpill">1개</span></span></div>
+                  <div class="fm"><span class="k">위치</span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="2.5"/></svg> 실온 B-1</span></div>
+                </div>
+                <button class="item-act detail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg> 상세</button>
+              </div>
+            </div>
+
+            <!-- 멸균 소모품 — 정상 -->
+            <div class="item">
+              <div class="item-h">
+                <span class="item-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16zM3.3 7L12 12l8.7-5M12 22V12"/></svg></span>
+                <div class="item-bd">
+                  <div class="item-top"><span class="st ok"><span class="d"></span>정상</span><span class="sp"></span><span class="item-cat">소모품</span></div>
+                  <div class="item-nm">멸균 피펫 팁 정기분</div>
+                  <div class="item-meta">Axygen · 200μL 필터팁</div>
+                </div>
+              </div>
+              <div class="item-mid">
+                <div class="qbar-top"><span class="qbar-q">18<span class="u">박스</span></span><span class="qbar-safe">안전재고 6박스</span></div>
+                <div class="qbar"><i class="ok" style="width:100%"></i></div>
+              </div>
+              <div class="item-f">
+                <div class="fmeta">
+                  <div class="fm"><span class="k">LOT</span><span class="v"><span class="lotpill">4개</span></span></div>
+                  <div class="fm"><span class="k">위치</span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="2.5"/></svg> 실온 C-3</span></div>
+                </div>
+                <button class="item-act detail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg> 상세</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tabbar">
+          <a class="tab" href="../dashhome/메인 대시보드 모바일.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>대시보드</a>
+          <a class="tab" href="../quote/견적 관리 모바일.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16zM21 21l-4.3-4.3"/></svg>견적</a>
+          <a class="tab" href="../inventory/입고관리 모바일 리디자인.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>입고</a>
+          <a class="tab on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16zM3.3 7L12 12l8.7-5M12 22V12"/></svg>재고</a>
+          <a class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M7 16l4-6 4 3 5-7"/></svg>분석</a>
+          <a class="tab" id="moreTab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>더보기</a>
+        </div>
+
+        <!-- 더보기 시트 -->
+        <div class="sheet-scrim" id="moreScrim"></div>
+        <div class="msheet" id="moreSheet">
+          <div class="msheet-head">
+            <span class="ttl">메뉴</span>
+            <button class="x" id="moreClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+          </div>
+          <div class="msheet-body">
+            <div class="ws-card">
+              <span class="ws-mk">T</span>
+              <div class="ws-tx"><b>Test 워크스페이스</b><span>권오현 · 관리자</span></div>
+              <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+            </div>
+            <div>
+              <div class="mgrp-h">구매 및 예산</div>
+              <div class="mlist">
+                <a class="mrow"><span class="mic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg></span><span class="mtx">구매 운영<small>발주 생성·진행 관리</small></span><span class="marr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></a>
+                <a class="mrow"><span class="mic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.2 15.9A10 10 0 1 1 8.1 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg></span><span class="mtx">지출 분석<small>카테고리·트렌드 집계</small></span><span class="marr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></a>
+                <a class="mrow"><span class="mic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M7 14l3-3 3 2 5-6"/></svg></span><span class="mtx">구매 리포트<small>월별 운영 리포트</small></span><span class="marr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></a>
+                <a class="mrow"><span class="mic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg></span><span class="mtx">예산 관리<small>집행률·초과 경고</small></span><span class="marr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></a>
+              </div>
+            </div>
+            <div>
+              <div class="mgrp-h">랩 운영</div>
+              <div class="mlist">
+                <a class="mrow"><span class="mic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-3"/><path d="M9 9v.01M9 12v.01M9 15v.01"/></svg></span><span class="mtx">조직 관리<small>멤버·권한·워크스페이스</small></span><span class="marr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></a>
+                <a class="mrow"><span class="mic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/></svg></span><span class="mtx">안전 관리<small>MSDS·관리대장</small></span><span class="marr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></a>
+              </div>
+            </div>
+            <div>
+              <div class="mgrp-h">시스템</div>
+              <div class="mlist">
+                <a class="mrow"><span class="mic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.92.99V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 7 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 3 14.6 1.65 1.65 0 0 0 2 13H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 7a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 2.6 1.65 1.65 0 0 0 11 1a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 17 4.6"/></svg></span><span class="mtx">설정</span><span class="marr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></a>
+                <a class="mrow danger"><span class="mic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></span><span class="mtx">로그아웃</span><span class="marr"></span></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-cap">재고 관리 · 모바일</div>
+  </div>
+</div>
+<script>
+  var moreScrim=document.getElementById('moreScrim');
+  var moreSheet=document.getElementById('moreSheet');
+  function openMore(){moreScrim.classList.add('show');moreSheet.classList.add('show');}
+  function closeMore(){moreScrim.classList.remove('show');moreSheet.classList.remove('show');}
+  document.getElementById('moreTab').addEventListener('click',openMore);
+  document.getElementById('moreClose').addEventListener('click',closeMore);
+  moreScrim.addEventListener('click',closeMore);
+
+  document.querySelectorAll('.chiprow .chip').forEach(function(ch){
+    ch.addEventListener('click',function(){
+      document.querySelectorAll('.chiprow .chip').forEach(function(c){c.classList.remove('on');});
+      ch.classList.add('on');
+    });
+  });
+</script>
+</body>
+</html>
