@@ -1,14 +1,20 @@
 /**
- * §11.315-b #smart-receiving-naming-split — Regression sentinel (명칭 분리)
+ * §11.315-b #smart-receiving-naming-split — Regression sentinel (§suite-red-cleanup 재앵커)
  *
- * 호영님 P1 옵션 B (spec Part C, 2026-05-28):
- *   두 컴포넌트가 같은 "스마트 입고" 라벨을 공유해 운영자 혼동.
- *   조사 결과 진짜 다른 용도이므로 명칭으로 분리 (입구 통합 X).
+ * 재앵커 ((B), 호영님 2026-07): §11.315-b 의 명칭 분리
+ *   (LabelScanner="스마트 재고 등록 (AI 라벨 스캔)" / Receiving="스마트 입고")는
+ *   §11.371-3(global-modal registry) + §11.37x(LabelScannerModal 맥락 분기)로 대체됨.
+ *   현행 canon:
+ *   - global-modal registry: label_scanner defaultTitle "라벨 직접등록"(scan_hub 진입 "스캔")
+ *   - LabelScannerModal scanTitle 맥락 분기: 검색="라벨 스캔 검색" / 등록(non-search)="스마트 입고"
+ *   - 인라인 등록 surface(inventory-content CTA · SmartReceivingScannerModal ·
+ *     SmartReceivingStatusCard · inventory-main): "스마트 입고"
+ *   - Header 글로벌 진입: aria-label "스캔"(scan_hub)
+ *   본 sentinel 은 §37x/§371-3 현행 명칭 정합으로 재정의(테스트 전용, 소스 무접촉).
  *
- *   - LabelScannerModal       = 라벨 OCR → 재고 직접 등록(PO 없음)  → "스마트 재고 등록 (AI 라벨 스캔)"
- *   - SmartReceivingScannerModal = 거래명세서 → PO 매칭 → 입고 처리   → "스마트 입고" (보존)
- *
- *   컴포넌트 동작/라우팅/wiring 변경 0 — UX 라벨/제목만 swap.
+ *   ⚠ 잔여 관찰(별건): LabelScanner(라벨 OCR 등록)·SmartReceivingScanner(PO 입고) 인라인
+ *     제목이 모두 "스마트 입고" — §37x 는 검색 맥락 conflation 만 해소. registry
+ *     ("라벨 직접등록" vs "거래명세서 입고")로 진입 시 구분. 인라인 동명 여부는 UX 별건.
  */
 
 import { describe, it, expect } from "vitest";
@@ -20,80 +26,52 @@ function read(rel: string): string {
   return readFileSync(join(REPO_ROOT, rel), "utf8");
 }
 
-describe("§11.315-b — LabelScannerModal '스마트 재고 등록 (AI 라벨 스캔)' 명칭 적용", () => {
+describe("§11.315-b 재앵커 — LabelScannerModal §37x 맥락 명칭", () => {
   const PATH = "src/components/inventory/LabelScannerModal.tsx";
 
-  it("Dialog/Sheet 제목 3곳 모두 새 라벨로 swap", () => {
+  it("scanTitle 맥락 분기 — 검색='라벨 스캔 검색' / 등록='스마트 입고'", () => {
     const src = read(PATH);
-    // 새 라벨이 정확히 3개 위치(H3 / SheetTitle / DialogTitle 인접 텍스트) 노출
-    const matches = src.match(/스마트 재고 등록 \(AI 라벨 스캔\)/g) ?? [];
-    expect(matches.length).toBeGreaterThanOrEqual(3);
+    expect(src).toMatch(/scanTitle = isSearchContext \? "라벨 스캔 검색" : "스마트 입고"/);
   });
 
-  it("옛 '스마트 입고 (AI 스캔)' 라벨 0 (file 내 잔존 0)", () => {
+  it("§37x 맥락 분기(onDirectReceive = 등록 맥락) 보존", () => {
     const src = read(PATH);
-    expect(src).not.toMatch(/스마트 입고 \(AI 스캔\)/);
-    // 단독 "스마트 입고" 라벨/주석/JSX text도 0 (LabelScannerModal 안에서는 모두 swap)
-    expect(src).not.toMatch(/스마트 입고/);
-  });
-
-  it("comment + onDirectReceive prop 의미 정합 (라벨 OCR → 재고 직접 등록)", () => {
-    const src = read(PATH);
-    expect(src).toMatch(/스마트 재고 등록.*직접 등록/);
     expect(src).toMatch(/onDirectReceive/);
+    expect(src).toMatch(/isSearchContext/);
   });
 });
 
-describe("§11.315-b — inventory-content 본문 trigger '스마트 재고 등록' swap", () => {
-  const PATH = "src/app/dashboard/inventory/inventory-content.tsx";
-
-  it("ActionMenu label + Primary CTA Button text 모두 '스마트 재고 등록'", () => {
-    const src = read(PATH);
-    // ActionMenu label
-    expect(src).toMatch(/label:\s*"스마트 재고 등록"/);
-    // Primary CTA button text + ScanLine/Sparkles 아이콘 wiring 보존
-    expect(src).toMatch(/setIsSmartReceiveOpen\(true\)[\s\S]{0,200}스마트 재고 등록/);
-  });
-
-  it("inventory-content 안 사용자 노출 '스마트 입고' 라벨 0 (주석/§ comment 만 제외)", () => {
-    const src = read(PATH);
-    // Button 안에 "스마트 입고" 텍스트가 그대로 노출되면 안 됨
-    expect(src).not.toMatch(/<Button[^>]*>[\s\S]{0,200}스마트 입고[\s\S]{0,50}<\/Button>/);
-    // JSX text node 로 단독 노출되는 옛 라벨도 0
-    expect(src).not.toMatch(/>\s*스마트 입고\s*</);
-  });
-});
-
-describe("§11.315-b — global-modal defaultTitle/Subtitle swap", () => {
+describe("§11.315-b 재앵커 — global-modal registry '라벨 직접등록'(§371-3)", () => {
   const PATH = "src/components/global-modal.tsx";
 
-  it("label_scanner registry 가 '스마트 재고 등록' 으로 등록", () => {
+  it("label_scanner defaultTitle '라벨 직접등록' + 재고 직접 등록 subtitle", () => {
     const src = read(PATH);
-    expect(src).toMatch(/defaultTitle:\s*"스마트 재고 등록 \(AI 라벨 스캔\)"/);
+    expect(src).toMatch(/defaultTitle:\s*"라벨 직접등록"/);
     expect(src).toMatch(/재고에 직접 등록/);
-    expect(src).not.toMatch(/defaultTitle:\s*"스마트 입고/);
   });
 });
 
-describe("§11.315-b — SmartReceivingScannerModal/Header/308e 의 '스마트 입고' 보존(회귀 가드)", () => {
-  it("SmartReceivingScannerModal Dialog 제목 '스마트 입고' 유지 (거래명세서/PO)", () => {
-    const src = read("src/components/inventory/SmartReceivingScannerModal.tsx");
-    expect(src).toMatch(/스마트 입고/);
+describe("§11.315-b 재앵커 — 인라인 등록 surface '스마트 입고' 보존", () => {
+  it("inventory-content 라벨 등록 CTA '스마트 입고'", () => {
+    expect(read("src/app/dashboard/inventory/inventory-content.tsx")).toMatch(/스마트 입고/);
   });
 
-  it("Header 글로벌 진입 aria-label '스마트 입고' 유지", () => {
+  it("SmartReceivingScannerModal(거래명세서/PO 입고) '스마트 입고'", () => {
+    expect(read("src/components/inventory/SmartReceivingScannerModal.tsx")).toMatch(/스마트 입고/);
+  });
+
+  it("308e SmartReceivingStatusCard '스마트 입고'", () => {
+    expect(read("src/components/dashboard/SmartReceivingStatusCard.tsx")).toMatch(/스마트 입고/);
+  });
+
+  it("inventory-main '스마트 입고' trigger", () => {
+    expect(read("src/app/dashboard/inventory/inventory-main.tsx")).toMatch(/스마트 입고/);
+  });
+});
+
+describe("§11.315-b 재앵커 — Header 글로벌 진입 §371-3 scan_hub", () => {
+  it("Header aria-label '스캔'(scan_hub registry 진입, §371-3)", () => {
     const src = read("src/components/dashboard/Header.tsx");
-    expect(src).toMatch(/aria-label="스마트 입고"/);
-  });
-
-  it("308e SmartReceivingStatusCard 본문 '스마트 입고' 유지", () => {
-    const src = read("src/components/dashboard/SmartReceivingStatusCard.tsx");
-    expect(src).toMatch(/스마트 입고/);
-  });
-
-  it("inventory-main 의 SmartReceivingScannerModal trigger '스마트 입고' button 유지", () => {
-    const src = read("src/app/dashboard/inventory/inventory-main.tsx");
-    // 진짜 스마트 입고 (PO 입고) — inventory-main 의 button text 보존
-    expect(src).toMatch(/스마트 입고/);
+    expect(src).toMatch(/aria-label="스캔"/);
   });
 });
