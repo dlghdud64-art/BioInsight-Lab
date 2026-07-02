@@ -56,9 +56,10 @@ describe("§11.160 dashboard cleanup — git tree hygiene", () => {
     expect(tracked).toEqual([]);
   });
 
-  it("회귀 0: dashboard/orders/page.tsx 는 git index 에 보존 (deferred 트랙)", () => {
+  it("dashboard/orders/page.tsx 제거 완료 (§dashboard-orders-inbound-rewire deferred 트랙 완료)", () => {
+    // deferred 트랙 완료: orders 는 inbound/inbox 로 통합되어 git tree 에서 제거(의도 삭제, 호영님 확정).
     const tracked = gitTrackedFiles("apps/web/src/app/dashboard/orders/page.tsx");
-    expect(tracked).toContain("apps/web/src/app/dashboard/orders/page.tsx");
+    expect(tracked).toEqual([]);
   });
 
   it("회귀 0: 핵심 surface 보존 (purchases/quotes/inbox/inventory/work-queue/settings)", () => {
