@@ -283,6 +283,21 @@ div.quote-table td.no-column-cell {
   display: none;  /* Chrome, Safari and Opera */
 }
 
+/* ── Sidebar scroll — 헤더/푸터 고정 + 가운데 메뉴만 스크롤 (사이드바 스크롤 개선).
+   위·아래 페이드 마스크로 "더 있다" 암시, 얇은 오버레이 바는 평소 숨김 → hover 시 6px 노출.
+   레이아웃 폭을 먹지 않아 항목 정렬 x-axis 유지. overscroll-contain 은 컴포넌트 className 에서 적용. ── */
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  -webkit-mask: linear-gradient(180deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+          mask: linear-gradient(180deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+}
+.sidebar-scroll::-webkit-scrollbar { width: 6px; }
+.sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+.sidebar-scroll::-webkit-scrollbar-thumb { background: transparent; border-radius: 10px; }
+.sidebar-scroll:hover { scrollbar-color: rgba(255, 255, 255, 0.22) transparent; }
+.sidebar-scroll:hover::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.22); }
+
 /* ── App surface hierarchy utilities (기존 호환) ── */
 @layer utilities {
   .bg-sh { background-color: var(--app-bg); }

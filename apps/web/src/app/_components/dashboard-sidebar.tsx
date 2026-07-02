@@ -261,8 +261,9 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
         </Link>
       </div>
 
-      {/* 메뉴 영역 (스크롤 가능) */}
-      <div className="flex-1 overflow-y-auto p-3 md:p-4 pt-16 lg:pt-8">
+      {/* 메뉴 영역 (스크롤 가능) — §사이드바 스크롤 개선: 페이드 마스크 + 얇은 오버레이 바 + overscroll-contain.
+          헤더(h-16 flex-shrink-0)·푸터(mt-auto flex-shrink-0)는 이미 고정, 이 영역만 스크롤. */}
+      <div className="flex-1 overflow-y-auto overscroll-contain sidebar-scroll p-3 md:p-4 pt-16 lg:pt-8">
         {/* 모바일/태블릿 헤더 */}
         <div className="flex items-center justify-between mb-6 lg:hidden">
           <h2 className="text-xs font-semibold text-white">메뉴</h2>
