@@ -112,6 +112,21 @@ const CLASS_STYLE: Record<OperationalClassification, { label: string; bg: string
 // ── Mock data ────────────────────────────────────────────────────────────────
 type SafetyItem = SafetyItemInput;
 
+// §cas-hazard-classification P3 (호영님 2026-07-04) — 위험등급 라벨/톤(canonical, §11.302 신호등).
+//   미분류(classified===false)는 "일반" 대신 "미분류"(slate muted). 분류 안 된 물질을 저위험으로 오도 금지.
+function riskLabelOf(item: { level: SafetyItem["level"]; classified?: boolean }): string {
+  if (item.classified === false) return "미분류";
+  return item.level === "HIGH" ? "고위험" : item.level === "MEDIUM" ? "주의" : "일반";
+}
+function riskClsOf(item: { level: SafetyItem["level"]; classified?: boolean }): string {
+  if (item.classified === false) return "bg-slate-100 text-slate-500 border-slate-300";
+  return item.level === "HIGH"
+    ? "bg-red-50 text-red-700 border-red-200"
+    : item.level === "MEDIUM"
+    ? "bg-[#fdf3ec] text-[#b45821] border-[#f3d4bf]"
+    : "bg-emerald-50 text-emerald-700 border-emerald-200";
+}
+
 // §11.348-B-1 B1-3 — mock safetyItems 제거(실데이터 /api/safety/products 로 대체).
 
 const LOCATIONS = ["시약장 A (산성)", "시약장 B (염기성)", "방폭 캐비닛 1", "일반 캐비닛"];
@@ -394,7 +409,7 @@ export default function SafetyManagerPage() {
     const csvRows = prepTargets.map((i) => [
       i.name,
       i.cas || "-",
-      i.level === "HIGH" ? "고위험" : i.level === "MEDIUM" ? "주의" : "일반",
+      riskLabelOf(i),
       i.hasMsds ? "등록" : "미등록",
       i.lastInspection || "미점검",
       !i.hasMsds ? "MSDS 등록" : !i.lastInspection ? "점검 기록" : "-",
@@ -467,7 +482,7 @@ export default function SafetyManagerPage() {
       toast({ title: "내보낼 데이터 없음", description: "내보낼 제품이 없습니다.", variant: "destructive" }); return;
     }
     const headers = ["제품명", "CAS", "위험도", "MSDS 상태", "최종 업데이트", "보관 위치"];
-    const rows = filteredItems.map((item) => [item.name, item.cas, item.level === "HIGH" ? "고위험" : item.level === "MEDIUM" ? "중위험" : "일반", item.hasMsds ? "등록" : "누락", item.msdsUpdatedAt || "-", item.loc]);
+    const rows = filteredItems.map((item) => [item.name, item.cas, riskLabelOf(item), item.hasMsds ? "등록" : "누락", item.msdsUpdatedAt || "-", item.loc]);
     const csv = [headers, ...rows].map((row: string[]) => row.map((cell: string) => `"${cell}"`).join(",")).join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
@@ -1040,8 +1055,8 @@ export default function SafetyManagerPage() {
                         {pageItems.map((item) => {
                           const isSelected = selectedItemId === item.id;
                           const checked = selectedIds.has(item.id);
-                          const riskLabel = item.level === "HIGH" ? "고위험" : item.level === "MEDIUM" ? "주의" : "일반";
-                          const riskCls = item.level === "HIGH" ? "bg-red-50 text-red-700 border-red-200" : item.level === "MEDIUM" ? "bg-yellow-100 text-yellow-700 border-yellow-200" : "bg-slate-50 text-slate-400 border-slate-200";
+                          const riskLabel = riskLabelOf(item);
+                          const riskCls = riskClsOf(item);
                           return (
                             <tr key={item.id} onClick={() => setSelectedItemId(item.id)}
                               className={`border-b border-slate-50 last:border-0 cursor-pointer transition-colors ${isSelected ? "bg-blue-50/50" : "hover:bg-slate-50"}`}>

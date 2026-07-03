@@ -26,6 +26,8 @@ export interface SafetyItemInput {
   cas: string;
   isHighRisk: boolean;
   level: SafetyLevel;
+  // §cas-hazard-classification P3 — 분류 여부(canonical). false=미분류(unknown): level=LOW 라도 '일반' 오도 금지.
+  classified?: boolean;
   actionStatus: ActionStatus;
   hasMsds: boolean;
   msdsUpdatedAt: string | null;

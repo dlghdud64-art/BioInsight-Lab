@@ -49,6 +49,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+// §cas-hazard-classification P3b — 입고 시 OCR casNumber → casNo 저장 + 정적 위험분류.
+import { buildProductHazardFields } from "@/lib/safety/product-hazard-fields";
 import { Prisma, ProductCategory } from "@prisma/client";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 // 알림 고도화 #notif-inventory-received — 입고 완료 시 INVENTORY_RECEIVED 알림(best-effort).
@@ -74,6 +76,8 @@ interface SmartReceivingBody {
     storageCondition?: string | null;
     category?: string | null;
     notes?: string | null;
+    // §cas-hazard-classification P3b — CAS(선택 override). 미전달 시 OcrJob.finalResult 에서 파생.
+    casNumber?: string | null;
   };
   // §scan-cat-guard — Cat.No. 없이 신규 등록 override(기본 false = 서버 방어).
   allowMissingCatalog?: boolean;
@@ -114,7 +118,7 @@ export async function POST(request: NextRequest) {
     // ── OcrJob 검증 (multi-tenant + 존재) ──
     const ocrJob = await db.ocrJob.findUnique({
       where: { id: ocrJobId },
-      select: { id: true, organizationId: true, userId: true, type: true },
+      select: { id: true, organizationId: true, userId: true, type: true, finalResult: { select: { parsedFields: true } } },
     });
 
     if (!ocrJob) {
@@ -316,6 +320,10 @@ export async function POST(request: NextRequest) {
     const created = await db.$transaction(
       async (tx: Prisma.TransactionClient) => {
         // 1) Product create
+        // §cas-hazard-classification P3b — CAS 소스: confirmedData override → OcrJob 파싱값.
+        //   casNo 저장 + 정적 CAS→GHS 분류로 hazardCodes/pictograms 채움(위험물질만).
+        const ocrParsed = ocrJob.finalResult?.parsedFields as { casNumber?: string | null } | null;
+        const hazardFields = buildProductHazardFields(confirmedData.casNumber ?? ocrParsed?.casNumber ?? null);
         const product = await tx.product.create({
           data: {
             name: confirmedData.productName!.trim(),
@@ -326,6 +334,7 @@ export async function POST(request: NextRequest) {
             packSize: typeof confirmedData.packSize === "number" ? confirmedData.packSize : null,
             packUnit: confirmedData.packUnit ?? null,
             storageCondition: confirmedData.storageCondition ?? null,
+            ...hazardFields,
           },
           select: { id: true, name: true, brand: true, catalogNumber: true },
         });

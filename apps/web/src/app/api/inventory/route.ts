@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+// §cas-hazard-classification P3b — 수기/API 입고 시 CAS→casNo 저장 + 정적 위험분류.
+import { buildProductHazardFields } from "@/lib/safety/product-hazard-fields";
 import { getAuthUser } from "@/lib/auth/mobile-jwt";
 import {
   buildInventoryDisposalPriority,
@@ -257,6 +259,8 @@ export async function POST(request: NextRequest) {
       // §11.326 — 라벨 추출 규격(통 1개 함량). 입고 수량과 분리, Product 마스터에 저장.
       packSize,
       packUnit,
+      // §cas-hazard-classification P3b — CAS(선택). 수기/스캔/API import 경로 공용.
+      casNumber,
       // 아래 필드는 스키마에 없으므로 notes에 병합 처리
       lotNumber,
       testPurpose,
@@ -380,6 +384,8 @@ export async function POST(request: NextRequest) {
                 // §11.326 — 라벨 규격(통 1개 함량). 입고 수량과 분리.
                 packSize: typeof packSize === "number" ? packSize : null,
                 packUnit: packUnit ?? null,
+                // §cas-hazard-classification P3b — casNo + 정적 위험분류(hazardCodes/pictograms) 저장.
+                ...buildProductHazardFields(casNumber),
               },
               select: { id: true },
             });

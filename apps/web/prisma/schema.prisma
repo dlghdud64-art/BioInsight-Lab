@@ -334,6 +334,7 @@ model Product {
   // 안전·규제 정보 (P1)
   msdsUrl    String? // MSDS/SDS 문서 URL
   safetyNote String? @db.Text // 안전 취급 요약/주의사항
+  casNo      String? // CAS 등록번호 (예: "7647-14-5") — §cas-hazard-classification 위험분류 키. OCR 추출값 저장.
 
   // 안전 필드 구조화 (P2)
   hazardCodes      Json? // 위험 코드 배열 (예: ["H314", "H290"])
