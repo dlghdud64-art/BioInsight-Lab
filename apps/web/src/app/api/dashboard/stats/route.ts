@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { isReorderNeeded } from "@/lib/inventory/reorder-need";
 import { createWorkItem } from "@/lib/work-queue/work-queue-service";
 import { COMPARE_SUBSTATUS_DEFS, determineHandoffStallPoint } from "@/lib/work-queue/compare-queue-semantics";
 import { determineOpsStallPoint } from "@/lib/work-queue/ops-queue-semantics";
@@ -505,17 +506,8 @@ export async function GET(request: NextRequest) {
     }
 
     // 재고 현황
-    const reorderNeededCount = (allInventories as any[]).filter((inv) => {
-      const dailyUsage = inv.averageDailyUsage ?? 0;
-      const leadTime = inv.leadTimeDays ?? 0;
-      if (dailyUsage > 0 && leadTime > 0) {
-        if (inv.currentQuantity <= dailyUsage * leadTime) return true;
-      }
-      if (inv.safetyStock !== null) {
-        return inv.currentQuantity <= inv.safetyStock;
-      }
-      return inv.currentQuantity <= 0;
-    }).length;
+    // §stock-risk-consolidation P3 — canonical isReorderNeeded(공유 lib). 인라인 복합 정의 제거(inventory·recommendations와 단일).
+    const reorderNeededCount = (allInventories as any[]).filter((inv) => isReorderNeeded(inv)).length;
 
     const lowStockItems = (allInventories as any[])
       .filter((inv) => inv.safetyStock !== null && inv.currentQuantity <= inv.safetyStock)

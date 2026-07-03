@@ -25,6 +25,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 // Dialog kept static — radix portal needed for SSR hydration
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { isReorderNeeded, isReorderNeededByLeadTime } from "@/lib/inventory/reorder-need";
 import { Switch } from "@/components/ui/switch";
 // §11.297f Radix DropdownMenu* import 제거 — 5 dropdown 모두 ActionMenu
 // (utility/card/issue alert) 또는 plain dropdown (filter) 으로 swap 완료.
@@ -466,19 +467,8 @@ function InventoryPageContent() {
   const inventories = inventoryView === "my" ? myInventories : teamInventories;
 
   // 리드 타임 기반 재주문 필요: current_stock <= average_daily_usage * lead_time_days
-  const isReorderNeededByLeadTime = (inv: ProductInventory) => {
-    const dailyUsage = inv.averageDailyUsage ?? 0;
-    const leadTime = inv.leadTimeDays ?? 0;
-    if (dailyUsage > 0 && leadTime > 0) {
-      return inv.currentQuantity <= dailyUsage * leadTime;
-    }
-    return false;
-  };
-  const lowStockItems = inventories.filter((inv) => {
-    const bySafetyStock = inv.safetyStock !== null && inv.currentQuantity <= inv.safetyStock;
-    const byLeadTime = isReorderNeededByLeadTime(inv);
-    return bySafetyStock || byLeadTime || inv.currentQuantity === 0;
-  });
+  // §stock-risk-consolidation P3 — 재주문 필요 판정 = canonical isReorderNeeded(공유 lib). 각자 계산 제거(drift 0).
+  const lowStockItems = inventories.filter((inv) => isReorderNeeded(inv));
 
   // §11.317 — 헤더 KPI 4 source (전체 품목 / 안전재고 미달 / 만료 임박 / 격리 Lot).
   //   canonical truth: inventories (mutation 0, derived projection 만).

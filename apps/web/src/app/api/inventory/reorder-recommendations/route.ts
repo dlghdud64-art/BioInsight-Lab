@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { isReorderNeeded } from "@/lib/inventory/reorder-need";
 
 // ì¬ì£¼ë¬¸ ì¶ì² ëª©ë¡ ì¡°í
 export async function GET(request: NextRequest) {
@@ -63,7 +64,8 @@ export async function GET(request: NextRequest) {
         const safetyStock = inventory.safetyStock || 0;
 
         // ìì  ì¬ê³  ì´íì¸ ê²½ì°
-        if (currentQty <= safetyStock) {
+        // §stock-risk-consolidation P3 — canonical isReorderNeeded(공유, 복합: 리드타임 OR 안전재고 OR 소진). 단순 safety-stock → 통일.
+        if (isReorderNeeded({ currentQuantity: currentQty, safetyStock: inventory.safetyStock, averageDailyUsage: inventory.averageDailyUsage, leadTimeDays: inventory.leadTimeDays })) {
           // ì¬ì©ë ì¶ì  (ìµê·¼ 30ì¼ íê·  ì¬ì©ë)
           let estimatedMonthlyUsage = 0;
           if (inventory.usageRecords.length > 0) {
@@ -97,6 +99,7 @@ export async function GET(request: NextRequest) {
             currentQuantity: currentQty,
             safetyStock,
             recommendedQuantity: recommendedQty,
+            recommendedQty, // §stock-risk-consolidation P3 — 소비처(inventory·panel·sheets) 필드명 정렬(alias, 권장수량 null 버그 해소).
             estimatedMonthlyUsage,
             unit: inventory.unit || "ê°",
             urgency: currentQty <= 0 ? "urgent" : currentQty <= safetyStock * 0.5 ? "high" : "medium",
