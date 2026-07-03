@@ -246,7 +246,7 @@ export function CommandPalette() {
             REJECT: "/dashboard/purchases",
             DISPATCH_NOW: "/dashboard/purchases",
             RECEIVE_ORDER: "/dashboard/inventory",
-            TRIGGER_REORDER: "/dashboard/stock-risk",
+            TRIGGER_REORDER: "/dashboard/inventory?filter=low",
           };
           const href = actionRouteMap[primary?.actionType] ?? "/dashboard/purchases";
           setOpen(false);
@@ -416,7 +416,7 @@ export function CommandPalette() {
                     { label: "견적 관리", href: "/dashboard/quotes" },
                     { label: "구매 운영", href: "/dashboard/purchases" },
                     { label: "예산 현황", href: "/dashboard/analytics" },
-                    { label: "재고 부족 품목", href: "/dashboard/stock-risk" },
+                    { label: "재고 부족 품목", href: "/dashboard/inventory?filter=low" },
                   ].map((link) => (
                     <button
                       key={link.href}

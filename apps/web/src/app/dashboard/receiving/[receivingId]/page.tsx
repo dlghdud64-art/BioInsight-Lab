@@ -717,7 +717,7 @@ function InventoryReleaseHandoffPanel({ model }: { model: ReceivingExecutionMode
                   <AlertCircle className="h-3 w-3 text-red-400" />
                   <span className="text-red-300">만료 lot {expiredLots.length}건 — 폐기/격리 필요</span>
                 </div>
-                <Link href="/dashboard/stock-risk" className="text-[10px] text-red-400 hover:text-red-300">검토 →</Link>
+                <Link href="/dashboard/inventory?filter=expiring" className="text-[10px] text-red-400 hover:text-red-300">검토 →</Link>
               </div>
             )}
             {expiringLots.length > 0 && (
@@ -743,12 +743,12 @@ function InventoryReleaseHandoffPanel({ model }: { model: ReceivingExecutionMode
             <div className="flex items-center gap-2"><Package className="h-3 w-3 text-slate-500" /><span className="text-slate-600">재고 위치 관리</span></div>
             <ChevronRight className="h-3 w-3 text-slate-600" />
           </Link>
-          <Link href="/dashboard/stock-risk" className="flex items-center justify-between text-xs py-1 hover:bg-slate-800/30 rounded px-1 -mx-1 transition-colors">
+          <Link href="/dashboard/inventory?filter=low" className="flex items-center justify-between text-xs py-1 hover:bg-slate-800/30 rounded px-1 -mx-1 transition-colors">
             <div className="flex items-center gap-2"><AlertCircle className="h-3 w-3 text-slate-500" /><span className="text-slate-600">재주문 후보 확인</span></div>
             <ChevronRight className="h-3 w-3 text-slate-600" />
           </Link>
           {expiringLots.length > 0 && (
-            <Link href="/dashboard/stock-risk" className="flex items-center justify-between text-xs py-1 hover:bg-slate-800/30 rounded px-1 -mx-1 transition-colors">
+            <Link href="/dashboard/inventory?filter=expiring" className="flex items-center justify-between text-xs py-1 hover:bg-slate-800/30 rounded px-1 -mx-1 transition-colors">
               <div className="flex items-center gap-2"><Clock className="h-3 w-3 text-yellow-400" /><span className="text-yellow-300">Expiry 주의 항목 {expiringLots.length}건</span></div>
               <ChevronRight className="h-3 w-3 text-slate-600" />
             </Link>

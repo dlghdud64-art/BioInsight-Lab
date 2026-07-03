@@ -83,7 +83,7 @@ export function MobileDashboardView({
             <div className="text-[22px] font-extrabold text-slate-900 tabular-nums mt-1">{activeQuotesCount}<small className="text-[11px] font-bold text-slate-400 ml-0.5">건</small></div>
             <div className="text-[10.5px] text-slate-400 mt-0.5">발송·회신 대기 포함</div>
           </Link>
-          <Link href="/dashboard/stock-risk" className={`rounded-[13px] border shadow-sm p-3.5 active:opacity-90 ${stockAlertCount > 0 ? "bg-rose-50 border-rose-200" : "bg-white border-slate-200"}`}>
+          <Link href="/dashboard/inventory?filter=low" className={`rounded-[13px] border shadow-sm p-3.5 active:opacity-90 ${stockAlertCount > 0 ? "bg-rose-50 border-rose-200" : "bg-white border-slate-200"}`}>
             <div className={`flex items-center gap-1.5 text-[11px] font-semibold ${stockAlertCount > 0 ? "text-rose-500" : "text-slate-400"}`}><PackageX className="h-3.5 w-3.5" />재고 경고</div>
             <div className={`text-[22px] font-extrabold tabular-nums mt-1 ${stockAlertCount > 0 ? "text-rose-700" : "text-slate-900"}`}>{stockAlertCount}<small className="text-[11px] font-bold text-slate-400 ml-0.5">건</small></div>
             <div className={`text-[10.5px] mt-0.5 ${stockAlertCount > 0 ? "text-rose-500" : "text-slate-400"}`}>안전재고 미달</div>
