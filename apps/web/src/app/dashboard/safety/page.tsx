@@ -403,7 +403,7 @@ export default function SafetyManagerPage() {
     const body = [header, ...csvRows]
       .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
       .join("\n");
-    const blob = new Blob(["﻿" + meta + "\n" + body], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\uFEFF" + meta + "\n" + body], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -810,14 +810,14 @@ export default function SafetyManagerPage() {
               </div>
             </div>
 
-            {/* CTA — MSDS 일괄 등록 시작 (준비 패널 open, 실 동작). 미등록 0이면 disabled. */}
+            {/* CTA — MSDS 점검 준비 목록 내보내기 (준비 마법사 open → 체크리스트 CSV export, 실 산출물). 미등록 0이면 disabled. */}
             <Button
               className="w-full h-10 text-sm font-semibold gap-2 bg-blue-600 hover:bg-blue-700 text-white disabled:bg-slate-100 disabled:text-slate-400"
               disabled={msdsMissingCount === 0}
               onClick={() => { if (msdsMissingCount > 0) openPrepWizard(); }}
               title={msdsMissingCount === 0 ? "미등록 MSDS가 없습니다" : `미등록 ${msdsMissingCount}종 준비`}
             >
-              <FileWarning className="h-4 w-4" />MSDS 일괄 등록 시작
+              <FileWarning className="h-4 w-4" />MSDS 점검 준비 목록 내보내기
             </Button>
           </div>
 
@@ -993,7 +993,7 @@ export default function SafetyManagerPage() {
               <div className="flex flex-wrap items-center justify-between gap-2 py-2 px-3 rounded-xl border border-slate-300 bg-slate-50">
                 <span className="text-xs font-semibold text-slate-700">{selectedIds.size}종 선택됨</span>
                 <div className="flex items-center gap-2">
-                  <Button size="sm" disabled className="h-8 px-3 text-xs bg-slate-100 text-slate-400 cursor-not-allowed" title="일괄 처리는 점검 준비 마법사에서 진행됩니다 (준비 중).">MSDS 일괄 등록</Button>
+                  <Button size="sm" disabled className="h-8 px-3 text-xs bg-slate-100 text-slate-400 cursor-not-allowed" title="선택 항목은 상단 'MSDS 점검 준비'에서 체크리스트로 내보냅니다 (준비 중).">선택 항목 점검 준비</Button>
                   <Button size="sm" disabled className="h-8 px-3 text-xs bg-slate-100 text-slate-400 cursor-not-allowed" title="점검은 재고(lot) 단위에서 기록됩니다.">점검 기록 생성</Button>
                   <button type="button" onClick={() => setSelectedIds(new Set())} className="text-xs text-slate-500 hover:text-slate-700 px-2">선택 해제</button>
                 </div>

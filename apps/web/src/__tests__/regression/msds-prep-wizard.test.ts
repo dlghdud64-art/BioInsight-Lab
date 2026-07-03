@@ -61,3 +61,29 @@ describe("§msds-version ③ — 버전 검증 패널(step1 단일 소스)", () 
     expect(CODE).toMatch(/메타 기반 추정/);
   });
 });
+
+describe("§msds-registration Track A — 라벨 정직화 (호영님 2026-07-03, fake-success 해소)", () => {
+  it("safety 전역에 '일괄 등록' 거짓 라벨 0건 (CSV 산출물을 등록으로 오인 금지)", () => {
+    expect(PAGE).not.toMatch(/일괄 등록/);
+    expect(PAGE).not.toMatch(/등록 완료/);
+  });
+  it("primary CTA = 실동작(CSV export)과 일치하는 라벨", () => {
+    expect(CODE).toMatch(/MSDS 점검 준비 목록 내보내기/);
+    expect(CODE).toMatch(/onClick=\{\(\) => \{ if \(msdsMissingCount > 0\) openPrepWizard\(\); \}\}/);
+  });
+  it("선택-바 bulk 버튼 = 정직 라벨 + disabled 유지(no-op 금지)", () => {
+    expect(CODE).toMatch(/선택 항목 점검 준비/);
+  });
+  it("prep 체크리스트 CSV = \\uFEFF BOM 이스케이프(리터럴 BOM 금지, Excel 인코딩 정합)", () => {
+    expect(CODE).toMatch(/new Blob\(\["\\uFEFF" \+ meta/);
+  });
+});
+
+describe("§msds-registration 회귀 — 단일 실 등록(option b) 무접촉 보존", () => {
+  it("단일 MSDS 실 업로드 경로 보존(POST /api/products/[id]/sds, 파일 필수)", () => {
+    expect(CODE).toMatch(/const handleMsdsSave = async/);
+    expect(CODE).toMatch(/fetch\(`\/api\/products\/\$\{productId\}\/sds`/);
+    expect(CODE).toMatch(/MSDS 문서 업로드/);
+    expect(CODE).toMatch(/disabled=\{msdsSaving \|\| !msdsFile\}/);
+  });
+});
