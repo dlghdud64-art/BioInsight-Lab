@@ -208,7 +208,11 @@ export async function runOcrPipeline(
   }
 
   // (3) Gemini confidence high → SUCCESS, Tier 2 skip
-  if (geminiConfidence >= CONFIDENCE_HIGH_THRESHOLD) {
+  // §ocr-cat-critical (호영님 2026-07-03) — Cat.No.(품목 유일 식별키)가 비면 high confidence여도
+  //   Tier 2 rescue 를 시도한다. confidence 가 필드 *개수*(matchedFields≥4) 기반이라, 라벨의
+  //   brand/name/lot/expiry/CAS 만 읽히고 작은 "Cat No." 를 놓친 스캔(Sigma/Gibco 곡면 라벨 등)이
+  //   high 로 판정돼 Tier 2 를 건너뛰고 Cat 이 영구 누락되던 결함 보정. Cat 존재 시에만 skip(기존 fast-path 유지).
+  if (geminiConfidence >= CONFIDENCE_HIGH_THRESHOLD && !!geminiResult.catalogNo) {
     if (jobId && geminiResultId) {
       try {
         const { db } = await import("@/lib/db");
