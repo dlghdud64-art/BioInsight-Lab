@@ -75,6 +75,8 @@ interface SmartReceivingBody {
     category?: string | null;
     notes?: string | null;
   };
+  // §scan-cat-guard — Cat.No. 없이 신규 등록 override(기본 false = 서버 방어).
+  allowMissingCatalog?: boolean;
 }
 
 // §11.309c — Prisma ProductCategory enum 의 default fallback.
@@ -89,7 +91,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = (await request.json()) as SmartReceivingBody;
-    const { ocrJobId, inventoryId, organizationId, confirmedData } = body;
+    const { ocrJobId, inventoryId, organizationId, confirmedData, allowMissingCatalog } = body;
 
     // ── Input validation ──
     if (!ocrJobId || typeof ocrJobId !== "string") {
@@ -290,6 +292,22 @@ export async function POST(request: NextRequest) {
             "신규 품목 등록 시 confirmedData.productName이 필수입니다.",
         },
         { status: 400 },
+      );
+    }
+
+    // §scan-cat-guard (호영님 2026-07-03) — Cat.No.(품목 유일 식별키) 없이 신규 Product 생성 방어.
+    //   override 미승인 시 거절(422). UI 우회·직접 API 호출도 차단(defense-in-depth).
+    if (
+      (!confirmedData.catalogNumber || confirmedData.catalogNumber.trim() === "") &&
+      !allowMissingCatalog
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "식별 정보(Cat.No.)가 없어 신규 품목을 등록할 수 없습니다 — Cat.No.를 입력하거나 확인 후 진행하세요.",
+          code: "catalog_required",
+        },
+        { status: 422 },
       );
     }
 

@@ -227,6 +227,8 @@ export function SmartReceivingScannerModal({
   //   웹 모달은 datamatrix 없음(verified false) → 사용자 확인이 유일 경로.
   const [lotConfirmed, setLotConfirmed] = useState(false);
   const [expiryConfirmed, setExpiryConfirmed] = useState(false);
+  // §scan-cat-guard — Cat.No. 없이 신규 등록 override(기본 false = 보류).
+  const [ackNewWithoutCat, setAckNewWithoutCat] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {
@@ -379,6 +381,11 @@ export function SmartReceivingScannerModal({
       toast.error("입고 수량(받은 통 개수)은 0보다 커야 합니다.");
       return;
     }
+    // §scan-cat-guard — Cat.No.(식별키) 없이 신규 등록 확정 금지(중복·Lot추적 붕괴 방지). override 시 허용.
+    if (!selectedOrderId && form.catalogNumber.trim() === "" && !ackNewWithoutCat) {
+      toast.error("Cat.No.(식별 정보)가 없어 신규 등록을 확정할 수 없습니다 — Cat.No.를 입력하거나 확인 후 진행하세요.");
+      return;
+    }
 
     setStep("submitting");
     try {
@@ -401,6 +408,8 @@ export function SmartReceivingScannerModal({
             storageCondition: form.storageCondition.trim() || null,
             notes: form.notes.trim() || null,
           },
+          // §scan-cat-guard — Cat.No. 없이 신규 등록 override 전달(서버 방어).
+          allowMissingCatalog: ackNewWithoutCat,
         }),
       });
       const data: SmartReceivingApiResponse = await response.json();
@@ -691,6 +700,16 @@ export function SmartReceivingScannerModal({
                 Lot 번호·유효기한을 확인(터치/수정)해 주세요. 자동 인식값은 확인 후 입고됩니다. (재고 오염 방지)
               </div>
             )}
+            {/* §scan-cat-guard — Cat.No. 미추출 시 신규 확정 보류(중복 등록·GMP Lot 추적 붕괴 방지). */}
+            {!selectedOrderId && form.catalogNumber.trim() === "" && (
+              <div className="rounded-lg border border-[#f3d4bf] bg-[#fdf3ec] px-3 py-2.5 space-y-2">
+                <p className="text-[11px] font-semibold text-[#b45821]">식별 정보(Cat.No.) 부족 — 신규 여부를 확정할 수 없습니다. Cat.No.를 입력하면 중복 등록을 막을 수 있어요.</p>
+                <label className="flex items-center gap-2 text-[11px] font-medium text-[#b45821] cursor-pointer">
+                  <input type="checkbox" checked={ackNewWithoutCat} onChange={(e) => setAckNewWithoutCat(e.target.checked)} className="h-3.5 w-3.5 rounded border-[#f3d4bf]" />
+                  식별 정보 없이 신규로 등록(중복 위험 확인함)
+                </label>
+              </div>
+            )}
             <div className="space-y-2 pt-1">
               <Button
                 type="button"
@@ -700,7 +719,9 @@ export function SmartReceivingScannerModal({
                   (!selectedOrderId &&
                     scanResult?.confidence === "low" &&
                     !productNameDirty) ||
-                  criticalUnconfirmed
+                  criticalUnconfirmed ||
+                  // §scan-cat-guard — Cat.No. 없이 신규 등록 확정 차단(override 전).
+                  (!selectedOrderId && form.catalogNumber.trim() === "" && !ackNewWithoutCat)
                 }
                 className="w-full h-11 min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
