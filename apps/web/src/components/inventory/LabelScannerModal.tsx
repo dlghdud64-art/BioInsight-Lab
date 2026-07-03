@@ -104,7 +104,9 @@ interface ScanApiResponse {
     isNewProduct: boolean;
     isNewLot: boolean;
     isExistingLot: boolean;
-    action: "restock" | "new_lot" | "new_product";
+    // §scan-cat-guard — Cat.No. 미추출 시 true(신규 확정 보류 신호).
+    catalogMissing?: boolean;
+    action: "restock" | "new_lot" | "new_product" | "identify_required";
   };
 }
 
@@ -122,6 +124,8 @@ export interface SmartReceiveFormData {
   receivedUnit: string;
   brand: string;
   casNumber: string;
+  // §scan-cat-guard — Cat.No. 없이 신규 등록 명시적 override(서버 방어 우회 승인 전달).
+  allowMissingCatalog?: boolean;
 }
 
 interface LabelScannerModalProps {
@@ -265,6 +269,8 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
     return () => { cancelled = true; };
   }, [scanResult]);
   const [formData, setFormData] = useState<SmartReceiveFormData>(emptyFormData());
+  // §scan-cat-guard — Cat.No. 없이 신규 등록 강행 override(기본 false = 보류).
+  const [ackNewWithoutCat, setAckNewWithoutCat] = useState(false);
   // §11.340 — Lot/유효기한 출처 추적. 라벨 스캔으로 채워졌고(scanFilled) 사용자가
   //   수정 안 했으면 "라벨 스캔 확인", 수정했거나 수기 입력이면 "수기 입력"(§11.335 출처 정책).
   const [lotScanFilled, setLotScanFilled] = useState(false);
@@ -647,8 +653,14 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
       toast.error("Lot 번호·유효기한을 확인(터치/수정)한 뒤 입고할 수 있습니다.");
       return;
     }
+    // §scan-cat-guard — Cat.No.(식별키) 없이 신규 등록 확정 금지(중복·Lot추적 붕괴 방지). override 시 허용.
+    if (onDirectReceive && scanResult && !scanResult.matchedProduct && formData.catalogNumber.trim() === "" && !ackNewWithoutCat) {
+      toast.error("Cat.No.(식별 정보)가 없어 신규 등록을 확정할 수 없습니다 — Cat.No.를 입력하거나 기존 품목을 선택하세요.");
+      return;
+    }
     if (onDirectReceive) {
-      onDirectReceive(formData, scanResult);
+      // §scan-cat-guard — override(ackNewWithoutCat)를 서버 방어로 전달.
+      onDirectReceive({ ...formData, allowMissingCatalog: ackNewWithoutCat }, scanResult);
     } else if (onScanComplete && scanResult) {
       onScanComplete(scanResult);
     }
@@ -681,6 +693,13 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
     !!onDirectReceive &&
     (commitGate.blockers.includes("lot-unconfirmed") ||
       commitGate.blockers.includes("expiry-unconfirmed"));
+  // §scan-cat-guard — 입고 맥락 + 신규(미매칭) + Cat.No. 공란 + override 미체크 → 등록 차단.
+  const catIdentifyBlocked =
+    !!onDirectReceive &&
+    !!scanResult &&
+    !scanResult.matchedProduct &&
+    formData.catalogNumber.trim() === "" &&
+    !ackNewWithoutCat;
 
   const content = (
     <div className="flex flex-col h-full">
@@ -1045,9 +1064,26 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
               </div>
             </div>
           )}
+          {/* §scan-cat-guard (호영님 2026-07-03) — Cat.No.(식별키) 미추출 시 신규 확정 보류.
+              Cat 없이 등록하면 기존 품목을 신규로 오판 → 중복 등록·GMP Lot 추적 붕괴. */}
+          {onDirectReceive && scanResult && !scanResult.matchedProduct && formData.catalogNumber.trim() === "" && (
+            <div className="rounded-lg border border-[#f3d4bf] bg-[#fdf3ec] px-3 py-2.5 space-y-2">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-3.5 w-3.5 text-[#b45821] mt-0.5 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-[#b45821]">식별 정보(Cat.No.) 부족 — 신규 여부를 확정할 수 없습니다</p>
+                  <p className="text-[11px] text-slate-600 mt-0.5">Cat.No.를 입력하거나 아래 유사 품목을 선택하세요. 그대로 등록하면 기존 품목이 중복 등록될 수 있습니다.</p>
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-[11px] font-medium text-[#b45821] cursor-pointer">
+                <input type="checkbox" checked={ackNewWithoutCat} onChange={(e) => setAckNewWithoutCat(e.target.checked)} className="h-3.5 w-3.5 rounded border-[#f3d4bf]" />
+                식별 정보 없이 신규로 등록(중복 위험 확인함)
+              </label>
+            </div>
+          )}
           {/* §scan-manual-path (호영님 2026-06-30) — 미매칭 = 실패 아님. 신규 품목 등록 정상 경로 calm 안내(에러톤 0). */}
           {/* §scan-secondary-match — fuzzy 후보가 있으면 "신규 품목" 단정 대신 후보 행으로 양보(런타임 숨김, 토큰 보존). */}
-          {scanResult && !scanResult.matchedProduct && (scanResult.matchType !== "fuzzy_name" || !scanResult.productCandidates?.length) && synonymCandidates.length === 0 && (
+          {scanResult && !scanResult.matchedProduct && formData.catalogNumber.trim() !== "" && (scanResult.matchType !== "fuzzy_name" || !scanResult.productCandidates?.length) && synonymCandidates.length === 0 && (
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
               <div className="flex items-center gap-2">
                 <Package className="h-3.5 w-3.5 text-slate-400" />
@@ -1442,7 +1478,9 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                   mapOcrConfidence(scanResult.parsed.confidence) === "low" &&
                   !productNameDirty) ||
                 // §1-2/PLAN rule 2 — 직접 입고 시 Lot·유효기간 미확인 차단.
-                criticalUnconfirmed
+                criticalUnconfirmed ||
+                // §scan-cat-guard — Cat.No. 없이 신규 등록 확정 차단(override 전).
+                catIdentifyBlocked
               }
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white gap-2"
             >

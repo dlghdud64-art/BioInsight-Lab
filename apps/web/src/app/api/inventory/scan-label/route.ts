@@ -271,11 +271,17 @@ export async function POST(req: NextRequest) {
         isNewProduct: !matchedProduct,
         isNewLot: matchedProduct && !matchedInventory,
         isExistingLot: !!matchedInventory,
+        // §scan-cat-guard (호영님 2026-07-03) — Cat.No.(품목 유일 식별키) 미추출 시 신규 단정 금지.
+        //   Cat 없이 신규 등록하면 실제 DB 존재 품목을 신규로 오판 → 중복 등록·GMP Lot 추적 붕괴.
+        //   catalogMissing=true → 소비 UI가 신규 확정 보류(Cat 입력/기존 선택/override 전까지).
+        catalogMissing: !merged.catalogNo,
         action: matchedInventory
           ? "restock"
           : matchedProduct
             ? "new_lot"
-            : "new_product",
+            : merged.catalogNo
+              ? "new_product"
+              : "identify_required",
       },
     });
   } catch (error) {

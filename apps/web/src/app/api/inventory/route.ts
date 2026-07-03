@@ -261,6 +261,8 @@ export async function POST(request: NextRequest) {
       lotNumber,
       testPurpose,
       trackingMode, // §inventory-phaseB P3-UI-b — 추적 모드(QUANTITY/LOT/GMP_STRICT).
+      // §scan-cat-guard — Cat.No. 없이 신규 등록 override(기본 false = 서버 방어).
+      allowMissingCatalog,
     } = body;
 
     // productId가 없거나 "manual-" 접두사(수기 임시 ID)인 경우 수기 입력으로 판별
@@ -332,6 +334,26 @@ export async function POST(request: NextRequest) {
       const resolvedBrand = (brand || manufacturer || "").trim() || null;
       const resolvedCatalog = (catalogNumber || "").trim() || null;
       const resolvedName = productName.trim();
+
+      // §scan-cat-guard (호영님 2026-07-03) — Cat.No.(품목 유일 식별키) 없이 신규 Product 생성 방어.
+      //   Cat 미지정 + override 미승인 + 이름 매칭 기존 품목 없음 → 신규 create 보류(422).
+      //   (이름 매칭 기존 품목 있으면 재사용 → 통과). UI 우회·직접 API 호출도 차단(defense-in-depth).
+      if (!resolvedCatalog && !allowMissingCatalog) {
+        const nameMatch = await db.product.findFirst({
+          where: { name: { equals: resolvedName, mode: "insensitive" } },
+          select: { id: true },
+        });
+        if (!nameMatch) {
+          return NextResponse.json(
+            {
+              error:
+                "식별 정보(Cat.No.)가 없어 신규 품목을 등록할 수 없습니다 — Cat.No.를 입력하거나 확인 후 진행하세요.",
+              code: "catalog_required",
+            },
+            { status: 422 },
+          );
+        }
+      }
 
       const inventory = await db.$transaction(async (tx: any) => {
         // 1. 동일 품목명+카탈로그번호로 기존 제품 검색 (중복 생성 방지)

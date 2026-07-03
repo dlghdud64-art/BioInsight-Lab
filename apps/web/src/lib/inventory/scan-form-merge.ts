@@ -20,8 +20,12 @@ export function mergeFormData(
 ): SmartReceiveFormData {
   const out: SmartReceiveFormData = { ...prev };
   (Object.keys(incoming) as (keyof SmartReceiveFormData)[]).forEach((k) => {
+    const v = incoming[k];
+    // §scan-cat-guard — 비-문자열 필드(allowMissingCatalog 등 submit-time override flag)는
+    //   fill-empty 병합 대상 아님(스캔 폼 문자열 필드만 누적). string 아니면 스킵.
+    if (typeof v !== "string") return;
     const cur = String(prev[k] ?? "").trim();
-    if (cur === "") out[k] = incoming[k];
+    if (cur === "") (out as unknown as Record<string, unknown>)[k] = v;
   });
   return out;
 }

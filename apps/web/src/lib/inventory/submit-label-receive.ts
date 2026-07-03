@@ -41,6 +41,8 @@ export function buildLabelReceivingPayload(data: SmartReceiveFormData) {
     // 통 1개 함량(규격)은 품목 마스터로 분리 저장
     packSize: m.packSize,
     packUnit: m.packUnit,
+    // §scan-cat-guard — Cat.No. 없이 신규 등록 override(서버가 신규 create 방어).
+    allowMissingCatalog: data.allowMissingCatalog ?? false,
   };
 }
 
