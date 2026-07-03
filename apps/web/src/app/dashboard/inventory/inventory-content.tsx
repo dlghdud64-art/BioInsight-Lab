@@ -320,6 +320,9 @@ function InventoryPageContent() {
   const [reorderReviewItem, setReorderReviewItem] = useState<ProductInventory | null>(null);
   const openReorderReviewSheet = (item: ProductInventory) => setReorderReviewItem(item);
   // canonical recommendedQty 조회(데스크탑 패널 reorderQty와 동일 소스 /reorder-recommendations). 가짜 0 금지.
+  // §stock-risk-consolidation P2 — 재발주 차단 사유(canonical /reorder-recommendations 파생). stock-risk 흡수.
+  const reorderBlockReasonsFor = (inventoryId: string | undefined): string[] =>
+    (inventoryId ? reorderRecommendationsData?.recommendations?.find((r) => r.inventoryId === inventoryId) : undefined)?.blockReasons ?? [];
   const reorderRecommendedQtyFor = (inventoryId: string | undefined): number | null =>
     inventoryId
       ? reorderRecommendationsData?.recommendations?.find((r) => r.inventoryId === inventoryId)?.recommendedQty ?? null
@@ -566,7 +569,7 @@ function InventoryPageContent() {
   // 재구매 추천 목록 조회 (인벤토리 하이라이트용)
   const { data: reorderRecommendationsData } = useQuery<{
     // §inventory-panel-unify P2 — recommendedQty 보강(/api/inventory/reorder-recommendations 반환). optional → 없으면 패널 섹션 미표시(가짜 0).
-    recommendations: Array<{ inventoryId: string; recommendedQty?: number }>;
+    recommendations: Array<{ inventoryId: string; recommendedQty?: number; blocked?: boolean; blockReasons?: string[] }>;
   }>({
     queryKey: ["reorder-recommendations-for-highlight"],
     queryFn: async () => {
@@ -2638,17 +2641,25 @@ function InventoryPageContent() {
                 )}
               </div>
             }
-            risks={contextPanelItem.expiryDate && new Date(contextPanelItem.expiryDate).getTime() < Date.now() ? <p className="text-xs text-rose-700">유효기간 만료</p> : <p className="text-xs text-slate-500">차단 없음</p>}
+            risks={(() => {
+              // §stock-risk-consolidation P2 — 재발주 차단 사유(RFQ 진행·예산 초과) 실데이터 노출.
+              const blk = reorderBlockReasonsFor(contextPanelItem.id);
+              if (blk.length > 0) return <div className="space-y-0.5">{blk.map((b, i) => <p key={i} className="text-xs font-semibold text-[#b45821]">차단 · {b}</p>)}</div>;
+              return contextPanelItem.expiryDate && new Date(contextPanelItem.expiryDate).getTime() < Date.now() ? <p className="text-xs text-rose-700">유효기간 만료</p> : <p className="text-xs text-slate-500">차단 없음</p>;
+            })()}
             next={<p className="text-xs text-slate-700">재발주 또는 정보 수정</p>}
             primaryCta={(() => {
               // §inventory-reorder-surface-unify P2 — 모바일 재발주 진입 = ReorderReviewSheet(승격) 직접 오픈.
               //   recommendedQty = canonical(/reorder-recommendations). 추천 없으면 disabled(dead button 0, 가짜 0 금지).
               const qty = reorderRecommendedQtyFor(contextPanelItem.id);
+              const blocked = reorderBlockReasonsFor(contextPanelItem.id).length > 0;
               const hasRec = qty != null && qty > 0;
               return {
-                label: hasRec ? `재발주안 검토 (${qty}${contextPanelItem.unit})` : "재발주 권장 없음",
-                disabled: !hasRec,
+                // §stock-risk-consolidation P2 — 차단(RFQ 진행·예산 초과) 시 재발주 flow 차단(dead button 방지, 사유는 risks에 노출).
+                label: blocked ? "재발주 차단됨" : hasRec ? `재발주안 검토 (${qty}${contextPanelItem.unit})` : "재발주 권장 없음",
+                disabled: blocked || !hasRec,
                 onClick: () => {
+                  if (blocked) return;
                   const match = displayInventories.find((inv) => inv.id === contextPanelItem.id);
                   setContextPanelItem(null);
                   if (match) openReorderReviewSheet(match);
@@ -2692,8 +2703,10 @@ function InventoryPageContent() {
                 if (!match) return;
                 // §inventory-reorder-surface-unify P3 — 추천(canonical /reorder-recommendations) 있으면
                 //   ReorderReviewSheet(승격) 직접 오픈, 없으면 reorder mode 강조 유지(빈 시트/no-op 방지).
+                // §stock-risk-consolidation P2 — 차단 시 재발주 sheet 미오픈(dead button 방지). reorder mode로 사유 노출.
                 const qty = reorderRecommendedQtyFor(match.id);
-                if (qty != null && qty > 0) {
+                const blocked = reorderBlockReasonsFor(match.id).length > 0;
+                if (!blocked && qty != null && qty > 0) {
                   setContextPanelItem(null);
                   openReorderReviewSheet(match);
                 } else {
@@ -3629,6 +3642,7 @@ function InventoryPageContent() {
                           <InventoryCard
                             key={inventory.id}
                             inventory={inventory}
+                            blockReasons={reorderBlockReasonsFor(inventory.id)}
                             onEdit={() => {
                               setEditingInventory(inventory);
                               setIsDialogOpen(true);
@@ -4009,7 +4023,7 @@ function InventoryPageContent() {
   );
 }
 
-function InventoryCard({ inventory, onEdit, onRecordUsage, onRestockRequest, onPrintLabel, onDispose, isRestockRequested = false, isRequestingRestock = false, isRecommended = false }: { inventory: ProductInventory; onEdit: () => void; onRecordUsage: (quantity: number, notes?: string, gmp?: { lotNumber?: string; operator?: string; destination?: string }) => void; onRestockRequest?: () => void; onPrintLabel?: () => void; onDispose?: () => void; isRestockRequested?: boolean; isRequestingRestock?: boolean; isRecommended?: boolean }) {
+function InventoryCard({ inventory, onEdit, onRecordUsage, onRestockRequest, onPrintLabel, onDispose, isRestockRequested = false, isRequestingRestock = false, isRecommended = false, blockReasons = [] }: { inventory: ProductInventory; onEdit: () => void; onRecordUsage: (quantity: number, notes?: string, gmp?: { lotNumber?: string; operator?: string; destination?: string }) => void; onRestockRequest?: () => void; onPrintLabel?: () => void; onDispose?: () => void; isRestockRequested?: boolean; isRequestingRestock?: boolean; isRecommended?: boolean; blockReasons?: string[] }) {
   const [showUsageDialog, setShowUsageDialog] = useState(false);
   // §11.297d InventoryCard plain dropdown state.
   const [openContentCardMenuId, setOpenContentCardMenuId] = useState<string | null>(null);
@@ -4062,6 +4076,12 @@ function InventoryCard({ inventory, onEdit, onRecordUsage, onRestockRequest, onP
                 {isRecommended && (
                   <Badge variant="outline" dot="blue" className="bg-blue-50 text-blue-400 border-blue-800 text-[11px]">
                     재구매 추천
+                  </Badge>
+                )}
+                {/* §stock-risk-consolidation P2 — 재발주 차단 배지(사유 hover). RFQ 진행·예산 초과 실데이터. */}
+                {blockReasons.length > 0 && (
+                  <Badge variant="outline" className="bg-[#fdf3ec] text-[#b45821] border-[#f3d4bf] text-[11px]" title={blockReasons.join(" · ")}>
+                    재발주 차단
                   </Badge>
                 )}
                 {isExpiredLotWithQty && (

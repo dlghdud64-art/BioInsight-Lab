@@ -113,7 +113,65 @@ export async function GET(request: NextRequest) {
         return (urgencyOrder[a.urgency as string] || 0) - (urgencyOrder[b.urgency as string] || 0);
       });
 
-    return NextResponse.json({ recommendations });
+    // §stock-risk-consolidation P2 (호영님 2026-07-03) — 재발주 차단 사유 실데이터 파생(canonical).
+    //   stock-risk 폐기 흡수. (a) RFQ 진행 중: 동일 productId 활성 견적. (b) 예산 초과: 재발주비용(qty×최저가벤더) > 잔여 예산.
+    //   가짜 0: 단가 미상/예산 미설정 시 예산차단 미판정. dead button(막힌 재발주) 방지의 canonical 신호.
+    const productIds: string[] = recommendations
+      .map((r: any) => r.product?.id)
+      .filter((id: any): id is string => typeof id === "string");
+
+    const quoteByProduct = new Map<string, string>();
+    if (productIds.length > 0) {
+      const activeQuotes = await db.quote.findMany({
+        where: {
+          status: { in: ["PENDING", "PARSED", "SENT", "RESPONDED"] },
+          quoteItems: { some: { productId: { in: productIds } } },
+          OR: [
+            { userId: session.user.id },
+            ...(orgIds.length ? [{ organizationId: { in: orgIds } }] : []),
+          ],
+        },
+        select: {
+          id: true,
+          quoteNumber: true,
+          quoteItems: {
+            where: { productId: { in: productIds } },
+            select: { productId: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      for (const q of activeQuotes as any[]) {
+        const ref = q.quoteNumber ?? `RFQ-${String(q.id).slice(0, 8).toUpperCase()}`;
+        for (const it of q.quoteItems as any[]) {
+          if (!quoteByProduct.has(it.productId)) quoteByProduct.set(it.productId, ref);
+        }
+      }
+    }
+
+    const activeBudget = await db.userBudget.findFirst({
+      where: { userId: session.user.id, isActive: true },
+      select: { remainingAmount: true },
+    });
+    const budgetRemaining: number | null = activeBudget?.remainingAmount ?? null;
+
+    const enriched = recommendations.map((r: any) => {
+      const blockReasons: string[] = [];
+      const rfqRef = r.product?.id ? quoteByProduct.get(r.product.id) : undefined;
+      if (rfqRef) blockReasons.push(`동일 품목 견적 진행 중 (${rfqRef})`);
+      const unitPrice: number | null = r.product?.vendors?.[0]?.priceInKRW ?? null;
+      if (budgetRemaining != null && unitPrice != null) {
+        const reorderCost = r.recommendedQuantity * unitPrice;
+        if (reorderCost > budgetRemaining) {
+          blockReasons.push(
+            `예산 한도 초과 (재발주 ₩${reorderCost.toLocaleString("ko-KR")} > 잔여 ₩${budgetRemaining.toLocaleString("ko-KR")})`,
+          );
+        }
+      }
+      return { ...r, blocked: blockReasons.length > 0, blockReasons };
+    });
+
+    return NextResponse.json({ recommendations: enriched });
   } catch (error) {
     console.error("Error fetching reorder recommendations:", error);
     return NextResponse.json(
