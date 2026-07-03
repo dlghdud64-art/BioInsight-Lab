@@ -604,15 +604,13 @@ function DashboardPageInner() {
           ⚠️ KPI 판단카드(아래 본문)는 상태 카운트 그리드 미적용 — trend/risk 정보 보존. */}
       {/* §dashboard-home-redesign P2 (호영님 시안) — 장식성 인사("○○님") 제거 + 중복 카운트("확인이 필요한 항목 N건")
           제거(ActionInbox가 카운트 소유, awareness 공백 0). description = 기능 맥락(날짜)만. */}
-      {/* §labaxis-web-mobile-reskin Phase 3 — 모바일 navy 헤더 밴드(목업 §01). full-bleed rounded-b. AI 리포트 진입 보존. */}
-      <div className="md:hidden -mx-3 -mt-4 mb-1 bg-slate-900 rounded-b-[22px] px-4 pt-5 pb-4">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <h1 className="text-[22px] font-extrabold tracking-tight text-white">대시보드</h1>
-            <p className="text-[12.5px] text-white/60 mt-0.5">{todayLabel}</p>
-          </div>
-          {!isOnboardingMode && <AIInsightDialog disabled={false} />}
+      {/* §dashboard-mobile-v2 — 모바일 phead(목업 §01 흰색 paper). 이전 navy 밴드 교체 — 네이비는 GNB(앱바)·우선추천 배너만. */}
+      <div className="md:hidden mb-2 pt-0.5 flex items-start justify-between gap-2">
+        <div>
+          <h1 className="text-[22px] font-extrabold tracking-tight text-slate-900">대시보드</h1>
+          <p className="text-[12.5px] text-slate-500 mt-0.5">{todayLabel}</p>
         </div>
+        {!isOnboardingMode && <AIInsightDialog disabled={false} />}
       </div>
 
       {/* §dashboard-mobile-v2 — 전용 모바일 뷰(md:hidden). 데스크탑(hidden md:block) 무접촉. */}
