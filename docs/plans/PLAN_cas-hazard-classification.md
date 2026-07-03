@@ -135,7 +135,7 @@ Post-release 데이터 정합 (P2 상단). 규제 착시가 화면에 상존 →
 - P4 실패: 배선 비활성 fallback
 
 ## 11. Progress Tracking
-- Overall: 90% (P1·P2·P3a·P3b·P4 완료 / P3c=MSDS backfill deferred)
+- Overall: 100% (P1~P3c + P4 완료)
 - Current phase: 커밋 대기 (operator build+migration)
 - Next: 커밋·push·migration apply → (선택) P3c
 
@@ -167,5 +167,12 @@ Post-release 데이터 정합 (P2 상단). 규제 착시가 화면에 상존 →
 - P2: cas-ghs-table.ts / product-hazard-fields.ts 제거.
 - P1: `DROP COLUMN "casNo"` + migration 폴더 제거 + 타입 revert.
 
-## Deferred — P3c (② MSDS backfill)
-기존 100종을 MSDS 업로드 시 safety-extractor(PDF→텍스트→OpenAI)로 hazardCodes backfill. OPENAI_API_KEY 의존 → 별도 트랙. 현 딜리버로도 신규분류 + 정직한 미분류는 완결.
+## P3c (② MSDS backfill) — 완료 (2026-07-04)
+기존 제품을 MSDS 업로드 시 organic 분류. 기존 파이프라인 재사용(extractTextFromPDF + extractSafetyInfoFromMSDS).
+- `lib/safety/msds-hazard-backfill.ts` — fill-empty·best-effort 헬퍼. 가드: sds만·OPENAI_API_KEY·PDF만·이미분류 보존(canonical 우선). **never throw**(업로드 무해).
+- `api/products/[id]/sds/route.ts` — 업로드 성공 후 backfill 호출 + 응답 `hazardBackfilled`.
+- sentinel `cas-hazard-classification-p3c.test.ts` 10/10.
+- 런타임: OPENAI_API_KEY 미설정 시 조용히 skip(가짜 성공 없음) — 실 backfill 은 키 설정 후 MSDS 업로드 시.
+- 문서: DEV_RUNBOOK §9.2 에 migrate 연결 경로(session pooler 5432, 직결 host unreachable) 추가.
+
+**전체 완결:** P1~P3c + P4. CAS 위험분류 3층(저장·분류·backfill) 완성.

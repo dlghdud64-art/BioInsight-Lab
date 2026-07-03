@@ -3,6 +3,8 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 // §11.348-B-1 B1-1 — SDS 파일 업로드(스토리지 + 메타).
 import { uploadSdsFile, StorageNotConfiguredError } from "@/lib/safety/sds-storage";
+// §cas-hazard-classification P3c — MSDS 업로드 시 위험분류 backfill(best-effort, fill-empty).
+import { backfillHazardFromMsds } from "@/lib/safety/msds-hazard-backfill";
 
 // 제품의 SDS 문서 목록 조회
 export async function GET(
@@ -209,7 +211,15 @@ export async function POST(
       select: { id: true, fileName: true, source: true, createdAt: true },
     });
 
-    return NextResponse.json({ ok: true, sdsDocument: doc }, { status: 201 });
+    // §cas-hazard-classification P3c — sds(PDF) 업로드면 위험분류 backfill.
+    //   best-effort·fill-empty — 실패/무키/이미분류 시 조용히 skip(업로드는 이미 성공, canonical).
+    let hazardBackfilled = false;
+    if (docType === "sds") {
+      const bf = await backfillHazardFromMsds({ productId, buffer, contentType: f.type, docType });
+      hazardBackfilled = bf.backfilled;
+    }
+
+    return NextResponse.json({ ok: true, sdsDocument: doc, hazardBackfilled }, { status: 201 });
   } catch (error: any) {
     console.error("Error uploading SDS document:", error);
     return NextResponse.json({ error: "Failed to upload SDS document" }, { status: 500 });

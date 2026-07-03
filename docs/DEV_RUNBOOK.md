@@ -249,6 +249,17 @@ write-chain smoke 에서 검증된 동일 패턴.
    ```
    `npm run prisma:migrate` 도 동일.
 
+   > ⚠️ **연결 경로 (2026-07-04 §cas-hazard-classification 학습):** `migrate deploy` 의
+   > DDL 은 **session pooler `:5432`** 로 실행해야 한다. transaction pooler `:6543`
+   > 는 advisory-lock 미지원 → DDL 실패/락. 또한 `.env.local` 의 direct host
+   > `db.<project-ref>.supabase.co:5432` 는 **unreachable**(Supabase IPv4 direct
+   > deprecated → P1001, DB 무변경). 표준 override:
+   > ```sh
+   > DATABASE_URL="postgresql://…@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres" \
+   >   pnpm -C apps/web exec prisma migrate deploy
+   > ```
+   > (= `DATABASE_URL_PILOT` 과 동일 session pooler host. §9 pooler 표 참조.)
+
 4. **Smoke probe 로 적용 확인:**
    - 영향받은 route 1~2개를 직접 호출 (예: `/api/health`, 또는 변경된
      entity 의 list/detail endpoint)
