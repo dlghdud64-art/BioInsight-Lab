@@ -1003,8 +1003,10 @@ export const STOCK_POSITION_002: InventoryStockPositionContract = {
   expiredQuantity: 0,
   damagedQuantity: 0,
   unit: 'bottle',
-  coverageDays: 60,
-  averageConsumptionRate: 0.7,
+  // §stock-risk-consolidation P5 (호영님 2026-07-03) — expiry_replacement 데모 정합: 소비율을 낮춰
+  //   만료 전 소진 불가(0.4×45=18 < 만료 30병)를 산술적으로 성립시킴. 이전 0.7(31.5>30)은 reasonCode 모순.
+  coverageDays: 100,
+  averageConsumptionRate: 0.4,
   riskStatus: 'expiry_risk',
   riskFlags: ['만료 임박 30병 (45일 이내)'],
 };
