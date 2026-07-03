@@ -1002,18 +1002,18 @@ export function InventoryMain() {
       <div className="md:hidden">
         {/* 목업 §03 — navy 헤더 밴드(full-bleed, rounded-b). 데스크탑 무영향(md:hidden). */}
         {/* 목업 §03 — navy 헤더(타이틀+요약 KPI 3 내장). 데스크탑 무영향(md:hidden). */}
-        <div className="-mx-3 sm:-mx-4 -mt-4 mb-4 bg-slate-900 rounded-b-[22px] px-4 pt-5 pb-4">
-          <h1 className="text-[22px] font-extrabold tracking-tight text-white">재고 관리</h1>
-          <p className="text-[12.5px] text-white/60 mt-0.5">Lot 단위 추적 · QR 스캔 입·출고</p>
+        <div className="mb-4">
+          <h1 className="text-[22px] font-extrabold tracking-tight text-slate-900">재고 관리</h1>
+          <p className="text-[12.5px] text-slate-500 mt-0.5">Lot 단위 추적 · QR 스캔 입·출고</p>
           <div className="flex gap-2 mt-3.5">
             {[
               { label: "전체 품목", value: displayInventories.length, unit: "종", alert: false },
               { label: "안전재고 미달", value: displayInventories.filter((i) => i.currentQuantity === 0 || (i.safetyStock != null && i.currentQuantity <= i.safetyStock)).length, unit: "", alert: true },
               { label: "만료 임박", value: displayInventories.filter((i) => { if (!i.expiryDate) return false; const dd = Math.ceil((new Date(i.expiryDate).getTime() - Date.now()) / 86400000); return dd > 0 && dd <= 30; }).length, unit: "", alert: false },
             ].map((k) => (
-              <div key={k.label} className={`flex-1 rounded-[14px] px-3 py-2.5 ${k.alert && k.value > 0 ? "bg-rose-500/15" : "bg-white/[0.06]"}`}>
-                <p className="text-white text-xl font-extrabold">{k.value}<span className="text-white/70 text-xs font-semibold">{k.unit ? ` ${k.unit}` : ""}</span></p>
-                <p className={`text-[11px] mt-0.5 ${k.alert && k.value > 0 ? "text-rose-200" : "text-white/60"}`}>{k.label}</p>
+              <div key={k.label} className={`flex-1 rounded-[13px] px-3 py-2.5 border ${k.alert && k.value > 0 ? "bg-rose-50 border-rose-200" : "bg-white border-slate-200 shadow-sm"}`}>
+                <p className={`text-xl font-extrabold ${k.alert && k.value > 0 ? "text-rose-700" : "text-slate-900"}`}>{k.value}<span className="text-slate-400 text-xs font-semibold">{k.unit ? ` ${k.unit}` : ""}</span></p>
+                <p className={`text-[11px] mt-0.5 ${k.alert && k.value > 0 ? "text-rose-600" : "text-slate-500"}`}>{k.label}</p>
               </div>
             ))}
           </div>

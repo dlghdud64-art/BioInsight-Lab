@@ -124,14 +124,14 @@ export default function ReceivingLandingPage() {
       <ReceivingReviewPanel />
 
       {/* ── 1. Header ──────────────────────────────────────────────── */}
-      {/* §labaxis-web-mobile-reskin Phase 4 — 모바일 navy 헤더(목업 §04) / 데스크탑 white 유지. */}
-      <div className="-mx-4 -mt-4 rounded-b-[22px] bg-slate-900 p-4 md:mx-0 md:mt-0 md:rounded-lg md:bg-white md:border md:border-slate-200">
+      {/* §dashboard-mobile-v2 통일 — 모바일 white phead(대시보드 정합) / 데스크탑 white 카드 유지. */}
+      <div className="mb-2 md:mb-0 md:rounded-lg md:bg-white md:border md:border-slate-200 md:p-4">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-[22px] md:text-lg font-extrabold md:font-bold text-white md:text-slate-900">입고 관리</h1>
-            <p className="text-[12.5px] md:text-xs text-white/60 md:text-slate-600 mt-0.5">{orientation.role}</p>
+            <h1 className="text-[22px] md:text-lg font-extrabold md:font-bold text-slate-900">입고 관리</h1>
+            <p className="text-[12.5px] md:text-xs text-slate-500 md:text-slate-600 mt-0.5">{orientation.role}</p>
           </div>
-          <p className="text-xs text-white/60 md:text-slate-500 max-w-xs text-right">
+          <p className="text-xs text-slate-500 max-w-xs text-right">
             {headerStats.nextActionSummary}
           </p>
         </div>
