@@ -2161,7 +2161,9 @@ function QuotesPageContent() {
   }, [columnPrefs.order, columnPrefs.visibility, isMobile]);
 
   return (
-    <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full bg-[#e9edf4] min-h-full">
+    <div className="w-full bg-[#e9edf4] min-h-full">
+      {/* §quotes-surface-canvas-b 풀블리드 (호영님 2026-07-04): 외부 = 회색 캔버스 full-width(초광폭 좌우 흰 여백 0), 내부 = max-w-7xl 중앙(가독성 유지). */}
+      <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
 
       {/* ── 헤더 (§11.374 P3.4 — AppPageHeader 채택, 스캔 포함 액션 우측 통합) ──
           §11.248b #quote-header-actions-responsive 반응형 액션(새 견적/BOM/비교/스캔/모바일 더보기)을
@@ -3160,9 +3162,13 @@ function QuotesPageContent() {
                             title={tableDisplayTitle}
                           >
                             <div className="flex flex-col gap-0.5 min-w-0">
-                              <span className="text-[10px] font-mono text-slate-500 truncate">{quoteRef}</span>
+                              {/* §quotes-surface-canvas-b #5(a) — RFQ ref 모노 태그(약한 회색 칩). 품목명 primary 대비 secondary. */}
+                              {quoteRef && (
+                                <span className="self-start max-w-full truncate rounded bg-slate-100 px-1 text-[10px] font-mono text-slate-500">{quoteRef}</span>
+                              )}
+                              {/* §quotes-surface-canvas-b #5(a) — 품목명 컬럼 굵게(#0b1220 700). 중복행(§11.242 #5 dedup 신호)은 gray-400 유지. */}
                               <span className={`text-xs truncate ${
-                                isDuplicateOfPrev ? "font-normal text-gray-400" : "font-medium text-gray-900"
+                                isDuplicateOfPrev ? "font-normal text-gray-400" : "font-bold text-[#0b1220]"
                               }`}>
                                 {isDuplicateOfPrev ? `〃 ${tableDisplayTitle}` : tableDisplayTitle}
                               </span>
@@ -4870,6 +4876,7 @@ function QuotesPageContent() {
       {/* §quotes-brief-suppress (호영님 2026-07-02) — 견적 관리 운영 브리핑 FAB 제거(진입 차단).
           "공급사 발송 검토" 모달이 정식 워크플로라 견적에선 브리핑을 사용하지 않음. 위 useEffect 가
           open 상태로 진입한 경우 자동 close. 타 surface(대시보드/재고/입고/구매/발주/inbox)의 FAB 는 유지. */}
+      </div>
     </div>
   );
 }

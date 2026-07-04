@@ -27,4 +27,14 @@ describe("§quotes-surface-canvas-b — 면 구분 토큰", () => {
   it("⑥ 발송 대기 배지 #dce8ff/#1d4ed8/#bcd3fb", () => {
     expect(PAGE).toMatch(/발송 대기[\s\S]*?bg-\[#dce8ff\][\s\S]*?text-\[#1d4ed8\][\s\S]*?border-\[#bcd3fb\]/);
   });
+  it("⑦ 풀블리드 — 회색 캔버스 full-width 외부 래퍼 + max-w-7xl 중앙 내부(초광폭 흰 여백 0)", () => {
+    // 회색은 full-width 외부 래퍼에만(max-w-7xl 과 같은 요소 결합 금지 — 결합이 좌우 흰 여백 원인).
+    expect(PAGE).toMatch(/<div className="w-full bg-\[#e9edf4\] min-h-full">/);
+    expect(PAGE).not.toMatch(/max-w-7xl[^"]*bg-\[#e9edf4\]/);
+    expect(PAGE).not.toMatch(/bg-\[#e9edf4\][^"]*max-w-7xl/);
+  });
+  it("⑧ #5(a) 견적케이스 톤 — 품목명 굵게 #0b1220 + RFQ 모노 태그", () => {
+    expect(PAGE).toMatch(/font-bold text-\[#0b1220\]/);
+    expect(PAGE).toMatch(/rounded bg-slate-100 px-1 text-\[10px\] font-mono text-slate-500/);
+  });
 });
