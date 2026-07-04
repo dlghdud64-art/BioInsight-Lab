@@ -146,7 +146,7 @@ export default function SafetyManagerPage() {
   const [locationFilter, setLocationFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   // §safety-redesign ② — 화학물질 대장 테이블: 필터 칩·정렬·페이지네이션·다중선택.
-  const [chipFilter, setChipFilter] = useState<"all" | "msds" | "insp" | "high">("all");
+  const [chipFilter, setChipFilter] = useState<"all" | "msds" | "insp" | "high" | "unclassified">("all");
   const [sortKey, setSortKey] = useState<"name" | "risk" | "loc">("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -333,6 +333,8 @@ export default function SafetyManagerPage() {
     if (chipFilter === "msds" && item.hasMsds) return false;
     if (chipFilter === "insp" && item.lastInspection) return false;
     if (chipFilter === "high" && item.level !== "HIGH" && !item.isHighRisk) return false;
+    // §cas-hazard-classification T2 — 미분류(classified===false) 능동 노출.
+    if (chipFilter === "unclassified" && item.classified !== false) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       if (!item.name.toLowerCase().includes(q) && !item.cas.includes(q)) return false;
@@ -392,6 +394,8 @@ export default function SafetyManagerPage() {
   const totalCount = items.length;
   const highRiskCount = items.filter((i) => i.isHighRisk).length;
   const msdsMissingCount = items.filter((i) => !i.hasMsds).length;
+  // §cas-hazard-classification T2 — 미분류(위험분류 안 됨) 카운트. 규제 리스크 능동 노출.
+  const unclassifiedCount = items.filter((i) => i.classified === false).length;
   // §safety-redesign ② — 필터 칩 건수(canonical 단일 소스 = items 집계).
   const uninspectedCount = items.filter((i) => !i.lastInspection).length;
   // §safety-redesign 상단정합 — 요약 패널 준비도(canonical 파생, 충족률 기반). 파일럿 0% 정상.
@@ -979,6 +983,7 @@ export default function SafetyManagerPage() {
                   { key: "msds", label: "MSDS 미등록", count: msdsMissingCount },
                   { key: "insp", label: "미점검", count: uninspectedCount },
                   { key: "high", label: "고위험", count: highRiskCount },
+                  { key: "unclassified", label: "미분류", count: unclassifiedCount },
                 ] as const).map((c) => {
                   const active = chipFilter === c.key;
                   return (

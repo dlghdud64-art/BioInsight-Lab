@@ -1,9 +1,11 @@
 /**
  * 안전 정보 시각화 유틸리티
  */
+// §cas-hazard-classification T1 — 미분류(unknown) 판정용 canonical 분류기.
+import { classifyByCas } from "@/lib/safety/cas-ghs-table";
 
 export interface SafetyLevel {
-  level: "low" | "medium" | "high" | "critical";
+  level: "low" | "medium" | "high" | "critical" | "unknown";
   color: string;
   bgColor: string;
   borderColor: string;
@@ -127,8 +129,25 @@ export function getProductSafetyLevel(product: {
   hazardCodes?: string[] | null;
   pictograms?: string[] | null;
   msdsUrl?: string | null;
+  casNo?: string | null;
 }): SafetyLevel {
-  const hazardLevel = getSafetyLevelFromHazardCodes(product.hazardCodes);
+  // §cas-hazard-classification T1 — 미분류(unknown) 정합(안전페이지 어댑터와 동일 판정).
+  //   저장 hazardCodes/pictograms 없고 casNo 정적표 미매칭 → "미분류"(낮음으로 오도 금지).
+  const hasCodes = Array.isArray(product.hazardCodes) && product.hazardCodes.length > 0;
+  const hasPictos = Array.isArray(product.pictograms) && product.pictograms.length > 0;
+  const casResult = classifyByCas(product.casNo);
+  if (!hasCodes && !hasPictos && !casResult.matched) {
+    return {
+      level: "unknown",
+      color: "text-slate-500",
+      bgColor: "bg-slate-100",
+      borderColor: "border-slate-300",
+      label: "미분류",
+    };
+  }
+  // casNo 매칭이나 저장 코드 없으면 정적표 코드로 파생(어댑터 정합).
+  const effectiveHazardCodes = hasCodes ? product.hazardCodes! : casResult.hazardCodes;
+  const hazardLevel = getSafetyLevelFromHazardCodes(effectiveHazardCodes);
   const pictogramLevel = getSafetyLevelFromPictograms(product.pictograms);
 
   // 더 높은 수준을 반환
