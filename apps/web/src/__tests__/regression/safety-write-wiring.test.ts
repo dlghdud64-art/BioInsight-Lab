@@ -4,9 +4,9 @@
  * 안전 페이지는 product-scoped(/api/safety/products → Product). write 핸들러가
  * front-only no-op(setTimeout+로컬 setItems+성공 토스트, 영속 0) 이던 기존 LabAxis 위반 해소:
  *  - MSDS  = 실 업로드(POST /api/products/[id]/sds, multipart file) → 성공 시 refetch(canonical 재계산).
- *  - 점검  = 재고(lot, ProductInventory) 단위 엔드포인트 → 물질 단위 화면에선 disabled+사유.
- *  - 폐기  = 재고 단위 처리 → disabled+사유.
- * 가짜 성공(setTimeout 지연 + 로컬 flip + 등록/기록/제거 완료 토스트) 전면 제거.
+ *  - 점검  = §SM-P4b 물질(Product) 단위 실저장(POST /api/products/[id]/inspection, handleInspSaveMaterial) → 서버 201 게이트.
+ *  - 폐기  = 재고 단위 처리 → disabled+사유(미배선 유지).
+ * 가짜 성공(setTimeout 지연 + 로컬 flip) 전면 제거. (점검·MSDS 성공 토스트는 서버 성공 후 canonical.)
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
@@ -48,24 +48,25 @@ describe("§safety-redesign write — 가짜 성공 제거(no-op 0)", () => {
     expect(CODE).not.toMatch(/setTimeout\(r,/);
     expect(CODE).not.toMatch(/await new Promise\(\(r\) => setTimeout/);
   });
-  it("로컬 가짜 성공 토스트(등록/기록/제거 완료) 없음", () => {
+  it("로컬 가짜 성공 토스트(MSDS/폐기) 없음 — 점검은 §SM-P4b 서버 201 후 canonical(제외)", () => {
     expect(SRC).not.toMatch(/MSDS가 등록되었습니다/);
-    expect(SRC).not.toMatch(/점검이 기록되었습니다/);
-    expect(SRC).not.toMatch(/목록에서 제거되었습니다/);
+    // 점검 성공 토스트("점검이 기록되었습니다")는 handleInspSaveMaterial 내부 res.ok 이후만 — 실저장 canonical(가짜 아님).
+    expect(SRC).not.toMatch(/목록에서 제거되었습니다/); // 폐기는 여전히 disabled(가짜 토스트 금지)
   });
 });
 
-describe("§safety-redesign write — 점검·폐기 disable+사유", () => {
-  it("점검 confirm disabled + 재고 단위 사유", () => {
-    expect(CODE).toMatch(/점검 기록 \(재고 단위\)/);
-    expect(SRC).toMatch(/점검 기록은 재고\(lot\) 단위/);
+describe("§safety-redesign write — 점검(§SM-P4b 실배선)·폐기(disabled)", () => {
+  it("§SM-P4b 점검 물질 단위 실저장 배선(재고 단위 disabled 사유 반전)", () => {
+    expect(CODE).toMatch(/handleInspSaveMaterial/);
+    expect(CODE).toMatch(/\/api\/products\/\$\{productId\}\/inspection/);
+    expect(CODE).not.toMatch(/점검 기록 \(재고 단위\)/);
   });
-  it("폐기 confirm disabled + 재고 단위 사유", () => {
+  it("폐기 confirm disabled + 재고 단위 사유(미배선 유지)", () => {
     expect(CODE).toMatch(/폐기 처리 \(재고 단위\)/);
     expect(SRC).toMatch(/폐기는 재고\(lot\) 단위 처리/);
   });
-  it("점검·폐기 가짜 핸들러 제거(handleInspSave/handleDispose 부재)", () => {
-    expect(CODE).not.toMatch(/handleInspSave/);
+  it("가짜 성공 0 — 점검 로컬 flip(setTimeout) 없음 + 폐기 가짜 핸들러(handleDispose) 부재", () => {
+    expect(CODE).not.toMatch(/setTimeout\([^)]*setInspDialogOpen/);
     expect(CODE).not.toMatch(/handleDispose/);
   });
 });

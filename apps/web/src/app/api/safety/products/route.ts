@@ -20,40 +20,44 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "50");
     const offset = parseInt(searchParams.get("offset") || "0");
 
-    // 권한 확인: safety_admin 또는 admin
+    // §safety-modal-upgrade SM-P4c (호영님 2026-07-04) — 안전 목록 owner/org 스코프 정합.
+    //   기존: organizationId 파라미터 없으면 세션만 확인하고 where 무스코프 → 임의 로그인
+    //   사용자에게 전 테넌트 제품 노출(멀티테넌트 과다노출) + POST 점검(owner/org 게이트)과
+    //   읽기/쓰기 불일치(목록엔 보이나 점검 403). 아래로 GET where 를 owner/org 로 스코프해
+    //   목록 = 실행가능집합(POST 게이트와 동일), 과다노출 동시 해소.
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const memberships = await db.organizationMember.findMany({
+      where: { userId: session.user.id },
+      select: { organizationId: true, role: true },
+    });
+    const userOrgIds = memberships.map((m: { organizationId: string }) => m.organizationId);
+
+    // 필터 조건 구성
+    const where: any = {};
+
     if (organizationId) {
-      if (!session?.user?.id) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-
-      const membership = await db.organizationMember.findFirst({
-        where: {
-          userId: session.user.id,
-          organizationId,
-          role: {
-            in: [OrganizationRole.ADMIN, OrganizationRole.VIEWER], // VIEWER = safety_admin
-          },
-        },
-      });
-
-      if (!membership && session.user.role !== "ADMIN") {
+      // 명시 org 스코프: 해당 org 의 safety_admin(VIEWER)/ADMIN 멤버 또는 플랫폼 ADMIN 만.
+      const isMember = memberships.some(
+        (m: { organizationId: string; role: OrganizationRole }) =>
+          m.organizationId === organizationId &&
+          (m.role === OrganizationRole.ADMIN || m.role === OrganizationRole.VIEWER)
+      );
+      if (!isMember && session.user.role !== "ADMIN") {
         return NextResponse.json(
           { error: "Forbidden: safety_admin or admin role required" },
           { status: 403 }
         );
       }
+      where.organizationId = organizationId;
     } else {
-      // 조직이 없으면 guest는 read-only 또는 금지
-      if (!session?.user?.id) {
-        return NextResponse.json(
-          { error: "Unauthorized: organization scope required" },
-          { status: 401 }
-        );
-      }
+      // 무파라미터(안전 페이지 기본): 세션 사용자 소유 OR 속한 org 제품만 = POST 점검 게이트와 동일 집합.
+      where.OR = userOrgIds.length > 0
+        ? [{ userId: session.user.id }, { organizationId: { in: userOrgIds } }]
+        : [{ userId: session.user.id }];
     }
-
-    // 필터 조건 구성
-    const where: any = {};
 
     // SDS 없는 품목 필터
     if (missingSds) {

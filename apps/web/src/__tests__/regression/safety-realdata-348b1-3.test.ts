@@ -54,7 +54,8 @@ describe("§11.348-B-1 B1-3 — 페이지 wiring", () => {
   it("mock 제거 + useQuery /api/safety/products + 어댑터 sync", () => {
     const src = read(PAGE);
     expect(src).toContain("adaptSafetyProducts");
-    expect(src).toContain('"/api/safety/products?limit=100"');
+    // §safety-modal-upgrade P1 — 시약 필터(category=REAGENT) 추가된 canonical fetch.
+    expect(src).toContain('"/api/safety/products?limit=100&category=REAGENT"');
     expect(src).toContain("const [items, setItems] = useState<SafetyItem[]>([])");
     // mock 하드코딩 배열 제거(코드 참조 0)
     expect(src).not.toContain("const safetyItems: SafetyItem[] = [");
