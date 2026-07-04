@@ -321,9 +321,49 @@ export default function SafetyManagerPage() {
     setInspPhoto(null);
     setInspDialogOpen(true);
   };
-  // §safety-redesign write — 점검 기록은 재고(lot, ProductInventory) 단위 엔드포인트(/api/inventory/[id]/inspection).
-  //   본 화면은 물질(Product) 단위라 inventoryId 가 없음 → 가짜 성공(setTimeout+로컬flip) 제거.
-  //   확정 배선은 product↔inventory scope 정합(별도 트랙) 후. 그 전까지 다이얼로그 confirm = disabled+사유.
+  // §safety-modal-upgrade P4b (호영님 2026-07-04) — 물질(Product) 대표 점검 실저장 배선.
+  //   POST /api/products/[id]/inspection. 성공(201) 시 refetch → adapter lastInspection 갱신(canonical).
+  //   가짜성공 0: 서버 성공만 반영. 사진(inspPhoto)은 후속(1차 텍스트 점검).
+  const [inspSaving, setInspSaving] = useState(false);
+  const handleInspSaveMaterial = async () => {
+    if (!inspTarget) return;
+    const productId = productIdByLocalId[inspTarget.id];
+    if (!productId) { toast({ title: "대상 식별 실패", description: "제품 식별자를 찾지 못했습니다. 새로고침 후 다시 시도하세요.", variant: "destructive" }); return; }
+    if (inspForm.hasIssue && (!inspForm.actionTaken.trim() || !inspForm.severity)) {
+      toast({ title: "입력 필요", description: "이상 발견 시 심각도와 조치 내용을 입력하세요.", variant: "destructive" }); return;
+    }
+    setInspSaving(true);
+    try {
+      const res = await fetch(`/api/products/${productId}/inspection`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          inspectedAt: inspForm.inspectedAt,
+          storageOk: inspForm.storageOk,
+          ppeOk: inspForm.ppeOk,
+          hasIssue: inspForm.hasIssue,
+          severity: inspForm.hasIssue ? inspForm.severity : null,
+          actionTaken: inspForm.hasIssue ? inspForm.actionTaken : null,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({} as { error?: string }));
+        const msg = res.status === 401 ? "로그인이 필요합니다."
+          : res.status === 403 ? "이 물질을 점검할 권한이 없습니다."
+          : res.status === 400 ? (data.error || "입력값을 확인하세요.")
+          : (data.error || "점검 기록 저장에 실패했습니다.");
+        toast({ title: "저장 실패", description: msg, variant: "destructive" });
+        return;
+      }
+      toast({ title: "점검 기록 저장 완료", description: `${inspTarget.name} 점검이 기록되었습니다. 목록을 갱신합니다.` });
+      await safetyQuery.refetch();
+      setInspDialogOpen(false);
+    } catch {
+      toast({ title: "저장 실패", description: "네트워크 오류로 저장하지 못했습니다.", variant: "destructive" });
+    } finally {
+      setInspSaving(false);
+    }
+  };
 
   // ── Dispose Dialog ──
   const [disposeDialogOpen, setDisposeDialogOpen] = useState(false);
@@ -1385,8 +1425,8 @@ export default function SafetyManagerPage() {
           </p>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" size="sm" onClick={() => setInspDialogOpen(false)}>닫기</Button>
-            {/* §safety-modal-upgrade P4b (operator) — 물질 대표 점검 저장 엔드포인트(POST /api/products/[id]/inspection) 배선 후 이 버튼 enable + onClick=handleInspSaveMaterial. 그 전까지 정직-disabled(가짜성공 금지). */}
-            <Button size="sm" disabled className="bg-slate-100 text-slate-400 cursor-not-allowed" title="물질 대표 점검 저장 배선 준비 중(엔드포인트 후속)">점검 기록 저장</Button>
+            {/* §safety-modal-upgrade P4b (operator) — POST /api/products/[id]/inspection 배선 완료. 이상 발견 시 심각도·조치 필수(가짜성공 0). */}
+            <Button size="sm" onClick={handleInspSaveMaterial} disabled={inspSaving || (inspForm.hasIssue && (!inspForm.actionTaken.trim() || !inspForm.severity))}>{inspSaving ? "저장 중…" : "점검 기록 저장"}</Button>
           </div>
         </DialogContent>
       </Dialog>

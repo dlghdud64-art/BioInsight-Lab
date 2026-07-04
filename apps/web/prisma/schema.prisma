@@ -352,6 +352,8 @@ model Product {
 
   createdAt       DateTime                @default(now())
   updatedAt       DateTime                @updatedAt
+  // §safety-modal-upgrade P4b — 물질 대표 점검 최근 시각(안전 어댑터 lastInspection 파생 소스).
+  lastInspectedAt DateTime?
   // 관?
   vendors         ProductVendor[]
   comparisons     ComparisonProduct[]
@@ -365,6 +367,8 @@ model Product {
   quoteListItems  QuoteListItem[]
   inventories     ProductInventory[]
   cartItems       CartItem[]
+  // §safety-modal-upgrade P4b — 물질 대표 점검 이력 역관계.
+  inspections     Inspection[]
   // #vendor-catalog-product-matching Phase 1 — 조직 단위 vendor-product carry.
   organizationVendorLinks OrganizationVendorProduct[]
 
@@ -1003,19 +1007,27 @@ enum InspectionResult {
 // 재고 점검 기록
 model Inspection {
   id              String           @id @default(cuid())
-  inventoryId     String
+  // §safety-modal-upgrade P4b — inventoryId(lot 점검)를 nullable 전환, productId(물질 대표 점검) 추가.
+  //   둘 중 하나만 채워짐(lot 점검=inventoryId, 물질 점검=productId). 무손실(기존 row 전부 inventoryId 유지).
+  inventoryId     String?
+  productId       String?
   userId          String
   organizationId  String?
   result          InspectionResult
   checklist       Json             // { storageOk, labelOk, expiryOk, conditionOk }
   notes           String?          @db.Text
+  // §safety-modal-upgrade P4b — 물질 점검 이상 심각도(minor|attention|urgent) + 증빙 사진(후속).
+  severity        String?
+  photoUrl        String?
   inspectedAt     DateTime         @default(now())
   createdAt       DateTime         @default(now())
 
-  inventory ProductInventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inventory ProductInventory? @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  product   Product?          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([inventoryId])
+  @@index([productId])
   @@index([userId])
   @@index([organizationId])
 }
