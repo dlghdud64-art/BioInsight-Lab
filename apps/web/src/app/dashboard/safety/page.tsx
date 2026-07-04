@@ -19,7 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Shield, ShieldAlert, ShieldCheck, AlertTriangle, Download, FileWarning, Flame, FlameKindling, Skull, Droplets, Search, Hand, Glasses, Shirt, Loader2, CheckCircle2, ChevronRight, ArrowRight, X, Calendar, FileText, ClipboardCheck } from "lucide-react";
+import { Shield, ShieldAlert, ShieldCheck, AlertTriangle, Download, Upload, FileWarning, Flame, FlameKindling, Skull, Droplets, Search, Hand, Glasses, Shirt, Loader2, CheckCircle2, ChevronRight, ArrowRight, X, Calendar, FileText, ClipboardCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -30,6 +30,8 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+// §msds-bulk-registration B-P4 — 일괄 MSDS 등록 워크벤치.
+import { MsdsBulkRegisterModal } from "@/components/safety/MsdsBulkRegisterModal";
 import {
   Tooltip,
   TooltipContent,
@@ -139,6 +141,8 @@ const DONUT_COLORS = ["#10b981", "#f59e0b", "#ef4444", "#e2e8f0"];
 // ══════════════════════════════════════════════════════════════════════════════
 export default function SafetyManagerPage() {
   const { toast } = useToast();
+  // §msds-bulk-registration B-P4 — 일괄 등록 모달 토글.
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   // ── Filters ──
   const [riskFilter, setRiskFilter] = useState<string>("all");
@@ -838,6 +842,14 @@ export default function SafetyManagerPage() {
             >
               <FileWarning className="h-4 w-4" />MSDS 점검 준비 목록 내보내기
             </Button>
+            {/* §msds-bulk-registration B-P4 — 진짜 실 등록(문서 첨부). 점검 준비(체크리스트)와 구분. */}
+            <Button
+              variant="outline"
+              className="w-full h-10 text-sm font-semibold gap-2 mt-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+              onClick={() => setBulkOpen(true)}
+            >
+              <Upload className="h-4 w-4" />MSDS 일괄 등록 (문서 첨부)
+            </Button>
           </div>
 
           {/* AI 권장 처리 큐 — §11.291 id="ai-action-queue" scroll anchor.
@@ -1225,6 +1237,9 @@ export default function SafetyManagerPage() {
       </div>
 
       {/* ═══ Dialogs ═══ */}
+
+      {/* §msds-bulk-registration B-P4 — 일괄 등록 워크벤치(실 등록 → refetch 로 지수·상태 갱신). */}
+      <MsdsBulkRegisterModal open={bulkOpen} onOpenChange={setBulkOpen} onRegistered={() => { void safetyQuery.refetch(); }} />
 
       {/* MSDS Dialog */}
       <Dialog open={msdsDialogOpen} onOpenChange={setMsdsDialogOpen}>

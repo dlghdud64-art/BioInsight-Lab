@@ -63,8 +63,16 @@ describe("§msds-version ③ — 버전 검증 패널(step1 단일 소스)", () 
 });
 
 describe("§msds-registration Track A — 라벨 정직화 (호영님 2026-07-03, fake-success 해소)", () => {
-  it("safety 전역에 '일괄 등록' 거짓 라벨 0건 (CSV 산출물을 등록으로 오인 금지)", () => {
-    expect(PAGE).not.toMatch(/일괄 등록/);
+  it("가짜 '일괄 등록' 라벨 0건 (CSV 산출물을 등록으로 오인 금지)", () => {
+    // §msds-bulk-registration B-P4(2026-07-04): 진짜 일괄 등록(문서 첨부)이 추가됨.
+    //   가짜 라벨('일괄 등록 시작' = CSV export)만 금지. 실 등록 '일괄 등록 (문서 첨부)'는 허용.
+    expect(PAGE).not.toMatch(/일괄 등록 시작/);
+    // 실 등록 버튼이면 setBulkOpen(실 워크벤치)로 연결돼야 함(CSV export 아님).
+    if (/일괄 등록/.test(PAGE)) {
+      expect(PAGE).toMatch(/MSDS 일괄 등록 \(문서 첨부\)/);
+      expect(PAGE).toMatch(/setBulkOpen\(true\)/);
+    }
+    // 안전페이지 본문(모달 컴포넌트 제외)엔 '등록 완료' 토스트 없음(단일/일괄 토스트는 별도 파일).
     expect(PAGE).not.toMatch(/등록 완료/);
   });
   it("primary CTA = 실동작(CSV export)과 일치하는 라벨", () => {

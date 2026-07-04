@@ -4,6 +4,9 @@ import { parseAiJsonResponse } from "./json-cleaner";
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 export interface SafetySummary {
+  // §msds-bulk-registration B-P1 — 일괄 등록 매칭용 문서 식별자(MSDS §1 제품명·§3 CAS).
+  productName?: string | null;
+  casNumber?: string | null;
   hazardCodes?: string[];
   pictograms?: string[];
   storageCondition?: string;
@@ -29,6 +32,7 @@ export async function extractSafetyInfoFromMSDS(msdsText: string): Promise<Safet
 이 문서에서 안전 취급에 필요한 핵심 정보를 추출해주세요.
 
 중요 지침:
+0. 제품명 (Product identifier, 섹션 1)과 CAS 등록번호 (섹션 3 구성성분, 형식 XXXXX-XX-X)를 추출하세요. 없으면 null.
 1. 위험 코드 (Hazard Codes, 예: H314, H290)를 모두 추출하세요.
 2. GHS 피크토그램 (예: corrosive, exclamation, skull, flame 등)을 추출하세요.
 3. 보관 조건 (Storage conditions)을 추출하세요.
@@ -42,6 +46,8 @@ ${truncatedText}
 
 다음 JSON 형식으로 응답해주세요:
 {
+  "productName": "제품명 (섹션 1 Product identifier) 또는 null",
+  "casNumber": "CAS 등록번호 (예: 7647-14-5) 또는 null",
   "hazardCodes": ["H314", "H290", ...],
   "pictograms": ["corrosive", "exclamation", ...],
   "storageCondition": "보관 조건 설명 (예: 2~8°C 냉장 보관, 빛을 피해 서늘한 곳에 보관)",
