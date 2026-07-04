@@ -71,7 +71,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <main
               id="main-content"
               tabIndex={-1}
-              className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-8 pb-[calc(8rem_+_env(safe-area-inset-bottom))] lg:pb-8"
+              className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden pb-[calc(8rem_+_env(safe-area-inset-bottom))] lg:pb-8"
             >
               {children}
             </main>
