@@ -155,7 +155,7 @@ export function StatLine({ state, summary, onRetry }: StatLineProps) {
             className={`block rounded-xl border p-3 md:p-4 transition-colors ${
               active
                 ? "bg-white border-slate-300 shadow-sm hover:border-slate-400"
-                : "bg-gray-50 border-gray-200"
+                : "bg-white border-dashed border-slate-200"
             }`}
           >
             <div
@@ -167,7 +167,7 @@ export function StatLine({ state, summary, onRetry }: StatLineProps) {
                 {/* §dashboard-shifan-polish A1 — KPI 아이콘 틴트 박스(active만). 0건은 회색 비활성(§11.311). */}
                 <span
                   className={`flex items-center justify-center w-6 h-6 rounded-lg flex-shrink-0 ${
-                    active ? KPI_TINT[it.key]!.box : "bg-gray-100"
+                    active ? KPI_TINT[it.key]!.box : "bg-slate-50"
                   }`}
                 >
                   <span className={active ? KPI_TINT[it.key]!.icon : "text-gray-400"}>{it.icon}</span>

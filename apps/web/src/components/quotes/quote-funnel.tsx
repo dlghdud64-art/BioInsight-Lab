@@ -93,23 +93,22 @@ export function QuoteFunnel({
                 <span className={`inline-flex h-9 w-9 flex-none items-center justify-center rounded-lg ${s.tint.bg}`}>
                   <Icon className={`h-4 w-4 ${s.tint.text}`} aria-hidden="true" />
                 </span>
+                {/* §quote-funnel-kpi-align (호영님 2026-07-04) — 숫자 왼쪽 크게, "현재 집중"은 상단 eyebrow, 라벨·서브는 우측 하강. */}
+                <span
+                  className={`flex-none text-2xl font-extrabold tabular-nums leading-none ${
+                    dim ? "text-[#c2c8d4]" : highlight ? "text-[#244e9e]" : "text-slate-900"
+                  }`}
+                >
+                  {n}
+                </span>
                 <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-1.5">
-                    <span
-                      className={`text-xl font-extrabold tabular-nums leading-none ${
-                        dim ? "text-[#c2c8d4]" : highlight ? "text-[#244e9e]" : "text-slate-900"
-                      }`}
-                    >
-                      {n}
+                  {highlight && (
+                    <span className="mb-0.5 inline-flex flex-none items-center rounded-full bg-[#dbe7fb] px-1.5 py-0.5 text-[10px] font-semibold text-[#244e9e]">
+                      현재 집중
                     </span>
-                    {highlight && (
-                      <span className="inline-flex flex-none items-center rounded-full bg-[#dbe7fb] px-1.5 py-0.5 text-[10px] font-semibold text-[#244e9e]">
-                        현재 집중
-                      </span>
-                    )}
-                  </span>
+                  )}
                   <span
-                    className={`mt-0.5 block text-[13px] font-bold truncate ${
+                    className={`block text-[13px] font-bold truncate ${
                       highlight ? "text-[#244e9e]" : "text-slate-900"
                     }`}
                   >

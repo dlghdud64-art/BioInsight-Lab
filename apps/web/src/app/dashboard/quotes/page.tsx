@@ -2161,9 +2161,9 @@ function QuotesPageContent() {
   }, [columnPrefs.order, columnPrefs.visibility, isMobile]);
 
   return (
-    <div className="w-full bg-[#e9edf4] min-h-full">
-      {/* §quotes-surface-canvas-b 풀블리드 (호영님 2026-07-04): 외부 = 회색 캔버스 full-width(초광폭 좌우 흰 여백 0), 내부 = max-w-7xl 중앙(가독성 유지). */}
-      <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
+    <div className="w-full bg-[#f1f5f9] min-h-full">
+      {/* §quotes-surface-canvas-b 풀블리드+꽉채움 (호영님 2026-07-04): 외부 = 회색 캔버스 full-width, 내부 = 전체 폭 채움(max-w 제거). */}
+      <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 w-full">
 
       {/* ── 헤더 (§11.374 P3.4 — AppPageHeader 채택, 스캔 포함 액션 우측 통합) ──
           §11.248b #quote-header-actions-responsive 반응형 액션(새 견적/BOM/비교/스캔/모바일 더보기)을

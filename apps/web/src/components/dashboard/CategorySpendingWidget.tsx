@@ -302,7 +302,7 @@ export default function CategorySpendingWidget({
     spendingSummary.categories.length === 0
   ) {
     return (
-      <div className="text-sm text-slate-500 bg-slate-50 border border-slate-200 rounded-lg p-4 text-center">
+      <div className="text-sm text-slate-500 bg-white border border-dashed border-slate-200 rounded-lg p-4 text-center">
         <p className="font-medium mb-1">카테고리별 지출 데이터가 없습니다</p>
         <p className="text-xs text-slate-400">
           카테고리를 설정하고 구매 내역이 기록되면 여기에 표시됩니다.

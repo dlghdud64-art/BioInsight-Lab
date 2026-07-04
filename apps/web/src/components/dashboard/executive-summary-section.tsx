@@ -573,7 +573,7 @@ export function ExecutiveSummarySection({
       {onboardingMode && (
         <div
           data-onboarding-kpi-guide
-          className="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3 flex items-start gap-2"
+          className="rounded-lg bg-white border border-dashed border-slate-200 px-4 py-3 flex items-start gap-2"
         >
           <AlertCircle className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />
           <div>

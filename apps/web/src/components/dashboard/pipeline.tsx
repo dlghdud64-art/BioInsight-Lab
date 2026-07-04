@@ -143,12 +143,12 @@ export function Pipeline({ state, summary, onRetry }: PipelineProps) {
             className={`relative block rounded-xl border p-3 transition-colors ${
               active
                 ? "bg-white border-slate-300 shadow-sm hover:border-slate-400"
-                : "bg-gray-50 border-gray-200"
+                : "bg-white border-dashed border-slate-200"
             }`}
           >
             <div className={`flex items-center gap-1.5 mb-1 ${active ? "text-slate-500" : "text-gray-400"}`}>
               {/* §dashboard-shifan-polish A2 — 단계 아이콘 틴트 박스(active만). 0건은 회색 비활성(§11.311). */}
-              <span className={`flex items-center justify-center w-6 h-6 rounded-lg flex-shrink-0 ${active ? STAGE_TINT[stage.key]!.box : "bg-gray-100"}`}>
+              <span className={`flex items-center justify-center w-6 h-6 rounded-lg flex-shrink-0 ${active ? STAGE_TINT[stage.key]!.box : "bg-slate-50"}`}>
                 <span className={active ? STAGE_TINT[stage.key]!.icon : "text-gray-400"}>{stage.icon}</span>
               </span>
               <span className="text-[11px] font-semibold uppercase tracking-[0.06em] truncate min-w-0">{stage.label}</span>

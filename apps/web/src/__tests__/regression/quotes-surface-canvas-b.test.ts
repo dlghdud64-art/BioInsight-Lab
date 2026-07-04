@@ -8,8 +8,8 @@ import { join } from "node:path";
 const PAGE = readFileSync(join(__dirname, "..", "..", "app/dashboard/quotes/page.tsx"), "utf8");
 
 describe("§quotes-surface-canvas-b — 면 구분 토큰", () => {
-  it("① 회색 캔버스 배경 #e9edf4", () => {
-    expect(PAGE).toMatch(/bg-\[#e9edf4\]/);
+  it("① 회색 캔버스 배경 #f1f5f9", () => {
+    expect(PAGE).toMatch(/bg-\[#f1f5f9\]/);
   });
   it("② 카드 그림자 강화(스펙 shadow)", () => {
     expect(PAGE).toMatch(/shadow-\[0_1px_2px_rgba\(15,23,42,0\.05\),0_4px_12px_rgba\(15,23,42,0\.06\)\]/);
@@ -27,11 +27,10 @@ describe("§quotes-surface-canvas-b — 면 구분 토큰", () => {
   it("⑥ 발송 대기 배지 #dce8ff/#1d4ed8/#bcd3fb", () => {
     expect(PAGE).toMatch(/발송 대기[\s\S]*?bg-\[#dce8ff\][\s\S]*?text-\[#1d4ed8\][\s\S]*?border-\[#bcd3fb\]/);
   });
-  it("⑦ 풀블리드 — 회색 캔버스 full-width 외부 래퍼 + max-w-7xl 중앙 내부(초광폭 흰 여백 0)", () => {
-    // 회색은 full-width 외부 래퍼에만(max-w-7xl 과 같은 요소 결합 금지 — 결합이 좌우 흰 여백 원인).
-    expect(PAGE).toMatch(/<div className="w-full bg-\[#e9edf4\] min-h-full">/);
-    expect(PAGE).not.toMatch(/max-w-7xl[^"]*bg-\[#e9edf4\]/);
-    expect(PAGE).not.toMatch(/bg-\[#e9edf4\][^"]*max-w-7xl/);
+  it("⑦ 풀블리드+꽉채움 — 회색 캔버스 full-width 외부 래퍼 + 콘텐츠 전체 폭(max-w-7xl 제거, 우측 빈 공간 0)", () => {
+    expect(PAGE).toMatch(/<div className="w-full bg-\[#f1f5f9\] min-h-full">/);
+    // 꽉채움: 콘텐츠 wrapper 폭 제한 없음 — 페이지 전역 max-w-7xl 잔재 0.
+    expect(PAGE).not.toMatch(/max-w-7xl/);
   });
   it("⑧ #5(a) 견적케이스 톤 — 품목명 굵게 #0b1220 + RFQ 모노 태그", () => {
     expect(PAGE).toMatch(/font-bold text-\[#0b1220\]/);
