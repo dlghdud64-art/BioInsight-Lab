@@ -258,6 +258,8 @@ export default function SafetyManagerPage() {
   const [msdsTarget, setMsdsTarget] = useState<SafetyItem | null>(null);
   const [msdsForm, setMsdsForm] = useState({ docVersion: "", registeredAt: new Date().toISOString().split("T")[0], expiresAt: "", fileName: "" });
   const [msdsFile, setMsdsFile] = useState<File | null>(null);
+  // §safety-modal-upgrade P3 (호영님 2026-07-04) — 드래그&드롭 하이라이트.
+  const [msdsDragging, setMsdsDragging] = useState(false);
   const [msdsSaving, setMsdsSaving] = useState(false);
 
   const openMsdsDialog = (item: SafetyItem | ClassifiedSafetyItem) => {
@@ -309,11 +311,14 @@ export default function SafetyManagerPage() {
   // ── Inspection Dialog ──
   const [inspDialogOpen, setInspDialogOpen] = useState(false);
   const [inspTarget, setInspTarget] = useState<SafetyItem | null>(null);
-  const [inspForm, setInspForm] = useState({ inspectedAt: new Date().toISOString().split("T")[0], inspector: "", storageOk: true, ppeOk: true, hasIssue: false, actionTaken: "" });
+  const [inspForm, setInspForm] = useState({ inspectedAt: new Date().toISOString().split("T")[0], inspector: "", storageOk: true, ppeOk: true, hasIssue: false, severity: "", actionTaken: "" });
+  // §safety-modal-upgrade P4 (호영님 2026-07-04) — 이상 발견 시 현장 증빙 사진.
+  const [inspPhoto, setInspPhoto] = useState<File | null>(null);
 
   const openInspDialog = (item: SafetyItem | ClassifiedSafetyItem) => {
     setInspTarget(item as SafetyItem);
-    setInspForm({ inspectedAt: new Date().toISOString().split("T")[0], inspector: "", storageOk: true, ppeOk: true, hasIssue: false, actionTaken: "" });
+    setInspForm({ inspectedAt: new Date().toISOString().split("T")[0], inspector: "", storageOk: true, ppeOk: true, hasIssue: false, severity: "", actionTaken: "" });
+    setInspPhoto(null);
     setInspDialogOpen(true);
   };
   // §safety-redesign write — 점검 기록은 재고(lot, ProductInventory) 단위 엔드포인트(/api/inventory/[id]/inspection).
@@ -1247,19 +1252,54 @@ export default function SafetyManagerPage() {
             <DialogDescription className="text-xs text-slate-500">{msdsTarget?.name} ({msdsTarget?.cas})의 안전보건자료를 등록합니다.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
+            {/* §safety-modal-upgrade P3 — 맥락 배너(규정 준수 상태 안내) */}
+            <div className="flex items-start gap-2 rounded-lg bg-[#fdf3ec] border border-[#f3d4bf] px-3 py-2">
+              <AlertTriangle className="h-3.5 w-3.5 text-[#b45821] mt-0.5 flex-shrink-0" />
+              <p className="text-[11px] text-[#b45821] leading-relaxed">MSDS 미등록으로 규정 준수 불가 상태입니다. 공식 문서를 등록하면 안전지수가 회복됩니다.</p>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5"><Label className="text-xs font-medium text-slate-700">물질명</Label><Input value={msdsTarget?.name || ""} disabled className="h-9 text-xs bg-slate-50" /></div>
               <div className="space-y-1.5"><Label className="text-xs font-medium text-slate-700">CAS No.</Label><Input value={msdsTarget?.cas || ""} disabled className="h-9 text-xs bg-slate-50" /></div>
             </div>
+            <p className="text-[11px] text-slate-400 px-0.5">공단 화학물질정보 자동 대조(물질명·GHS)는 Open API 연동 후 제공됩니다. 현재는 재고 기준 표시이며, 공식 MSDS는 공급사 제공 문서를 업로드하세요.</p>
+            {/* §safety-modal-upgrade P3 — 드래그&드롭 업로드 + 프리뷰(파일명·용량·삭제). 파일 없으면 제출 비활성(하단 유지). */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-slate-700">문서 파일</Label>
-              <Input type="file" accept=".pdf,.doc,.docx" className="h-9 text-xs"
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  const f = e.target.files?.[0] ?? null;
-                  setMsdsFile(f);
-                  setMsdsForm((prev) => ({ ...prev, fileName: f?.name || "" }));
-                }} />
-              {msdsForm.fileName && <p className="text-xs text-emerald-600 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />{msdsForm.fileName}</p>}
+              <Label className="text-xs font-medium text-slate-700">공급사 MSDS 선택 *</Label>
+              {!msdsFile ? (
+                <label
+                  onDragOver={(e: React.DragEvent) => { e.preventDefault(); setMsdsDragging(true); }}
+                  onDragLeave={() => setMsdsDragging(false)}
+                  onDrop={(e: React.DragEvent) => {
+                    e.preventDefault(); setMsdsDragging(false);
+                    const f = e.dataTransfer.files?.[0] ?? null;
+                    if (f) { setMsdsFile(f); setMsdsForm((prev) => ({ ...prev, fileName: f.name })); }
+                  }}
+                  className={`flex flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed px-4 py-6 cursor-pointer transition-colors ${msdsDragging ? "border-blue-400 bg-blue-50" : "border-slate-200 bg-slate-50/50 hover:border-slate-300"}`}
+                >
+                  <Upload className="h-5 w-5 text-slate-400" />
+                  <span className="text-xs font-medium text-slate-600">파일을 끌어다 놓거나 클릭해 선택</span>
+                  <span className="text-[11px] text-slate-400">PDF · 최대 20MB · 공급사가 제공한 공식 안전보건자료</span>
+                  <input type="file" accept=".pdf,.doc,.docx" className="hidden"
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      const f = e.target.files?.[0] ?? null;
+                      setMsdsFile(f);
+                      setMsdsForm((prev) => ({ ...prev, fileName: f?.name || "" }));
+                    }} />
+                </label>
+              ) : (
+                <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+                  <FileText className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold text-slate-800 truncate">{msdsFile.name}</p>
+                    <p className="text-[11px] text-emerald-600">{(msdsFile.size / 1024 / 1024).toFixed(2)}MB · 업로드 준비됨</p>
+                  </div>
+                  <button type="button" title="파일 제거"
+                    onClick={() => { setMsdsFile(null); setMsdsForm((prev) => ({ ...prev, fileName: "" })); }}
+                    className="p-1 rounded hover:bg-emerald-100 text-slate-400 hover:text-slate-600 flex-shrink-0">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="space-y-1.5"><Label className="text-xs font-medium text-slate-700">문서 버전 *</Label><Input value={msdsForm.docVersion} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMsdsForm((f) => ({ ...f, docVersion: e.target.value }))} placeholder="1.0" className="h-9 text-xs" /></div>
@@ -1290,6 +1330,7 @@ export default function SafetyManagerPage() {
             <DialogTitle className="flex items-center gap-2 text-base text-slate-900">
               <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center"><ClipboardCheck className="h-4 w-4 text-blue-500" /></div>
               점검 기록
+              <span className="ml-1 inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">물질 대표 점검</span>
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">{inspTarget?.name} ({inspTarget?.cas})의 안전 점검을 기록합니다.</DialogDescription>
           </DialogHeader>
@@ -1301,21 +1342,51 @@ export default function SafetyManagerPage() {
             <div className="space-y-3">
               <div className="flex items-center justify-between"><div><Label className="text-xs font-medium text-slate-700">보관 상태 정상</Label><p className="text-[11px] text-slate-400">보관 조건 및 용기 상태가 적합합니다.</p></div><Switch checked={inspForm.storageOk} onCheckedChange={(v: boolean) => setInspForm((f) => ({ ...f, storageOk: v }))} /></div>
               <div className="flex items-center justify-between"><div><Label className="text-xs font-medium text-slate-700">PPE 확인</Label><p className="text-[11px] text-slate-400">필수 보호구가 비치되어 있습니다.</p></div><Switch checked={inspForm.ppeOk} onCheckedChange={(v: boolean) => setInspForm((f) => ({ ...f, ppeOk: v }))} /></div>
-              <div className="flex items-center justify-between"><div><Label className="text-xs font-medium text-yellow-600">이상 여부</Label><p className="text-[11px] text-slate-400">점검 중 이상이 발견되었습니다.</p></div><Switch checked={inspForm.hasIssue} onCheckedChange={(v: boolean) => setInspForm((f) => ({ ...f, hasIssue: v }))} /></div>
+              <div className="flex items-center justify-between"><div><Label className="text-xs font-medium text-red-600">이상 발견</Label><p className="text-[11px] text-slate-400">켜면 조치 내용·심각도·사진을 기록합니다.</p></div><Switch checked={inspForm.hasIssue} onCheckedChange={(v: boolean) => setInspForm((f) => ({ ...f, hasIssue: v }))} /></div>
             </div>
             {inspForm.hasIssue && (
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-slate-700">조치 내용</Label>
-                <Textarea value={inspForm.actionTaken} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInspForm((f) => ({ ...f, actionTaken: e.target.value }))} placeholder="발견된 이상 및 조치 내용을 기록하세요." rows={3} className="text-xs" />
+              <div className="space-y-3 rounded-lg border border-red-200 bg-red-50 p-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-red-700">이상 내용·조치 *</Label>
+                  <Textarea value={inspForm.actionTaken} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInspForm((f) => ({ ...f, actionTaken: e.target.value }))} placeholder="파손·누출·라벨 훼손 등 발견 내용과 조치를 기록하세요." rows={3} className="text-xs bg-white" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-red-700">심각도 *</Label>
+                  <div className="flex gap-1.5">
+                    {[{ v: "minor", l: "경미·관찰" }, { v: "attention", l: "주의·조치 필요" }, { v: "urgent", l: "긴급·즉시 격리" }].map((o) => (
+                      <button key={o.v} type="button" onClick={() => setInspForm((f) => ({ ...f, severity: o.v }))}
+                        className={`flex-1 h-8 rounded-md text-[11px] font-semibold border transition-colors ${inspForm.severity === o.v ? "bg-red-600 text-white border-red-600" : "bg-white text-slate-600 border-slate-200 hover:bg-red-50"}`}>
+                        {o.l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-red-700">현장 사진 (증빙)</Label>
+                  {!inspPhoto ? (
+                    <label className="flex items-center gap-2 rounded-md border border-dashed border-red-200 bg-white px-3 py-2 cursor-pointer hover:border-red-300">
+                      <Upload className="h-3.5 w-3.5 text-red-400" />
+                      <span className="text-[11px] text-slate-500">사진 첨부 (선택)</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInspPhoto(e.target.files?.[0] ?? null)} />
+                    </label>
+                  ) : (
+                    <div className="flex items-center gap-2 rounded-md border border-red-200 bg-white px-3 py-2">
+                      <FileText className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
+                      <span className="text-[11px] text-slate-700 truncate flex-1">{inspPhoto.name}</span>
+                      <button type="button" title="사진 제거" onClick={() => setInspPhoto(null)} className="text-slate-400 hover:text-slate-600"><X className="h-3.5 w-3.5" /></button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
           <p className="text-[11px] text-slate-500 bg-slate-50 border border-slate-200 rounded-md px-3 py-2 mt-1">
-            점검 기록은 재고(lot) 단위로 관리됩니다. 입고된 재고 항목에서 점검을 기록하세요. (현재 화면은 물질 단위 — 점검 연계 준비 중)
+            물질 대표 점검으로 기록됩니다(lot 단위 아님). 저장 시 최근 점검일이 갱신되고 감사 로그에 남습니다.
           </p>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" size="sm" onClick={() => setInspDialogOpen(false)}>닫기</Button>
-            <Button size="sm" disabled className="bg-slate-100 text-slate-400 cursor-not-allowed" title="점검은 재고(lot) 단위에서 기록됩니다.">점검 기록 (재고 단위)</Button>
+            {/* §safety-modal-upgrade P4b (operator) — 물질 대표 점검 저장 엔드포인트(POST /api/products/[id]/inspection) 배선 후 이 버튼 enable + onClick=handleInspSaveMaterial. 그 전까지 정직-disabled(가짜성공 금지). */}
+            <Button size="sm" disabled className="bg-slate-100 text-slate-400 cursor-not-allowed" title="물질 대표 점검 저장 배선 준비 중(엔드포인트 후속)">점검 기록 저장</Button>
           </div>
         </DialogContent>
       </Dialog>
