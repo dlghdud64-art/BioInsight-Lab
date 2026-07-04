@@ -63,8 +63,9 @@ describe("§cas-hazard P2 — pictogramsFromHazardCodes", () => {
 });
 
 describe("§cas-hazard P2 — 표 무결성", () => {
-  it("시작셋 36종 이상", () => {
-    expect(Object.keys(CAS_GHS_TABLE).length).toBeGreaterThanOrEqual(36);
+  it("시작셋 규모(§cas-table-seed-expansion 반영, 56종 이상)", () => {
+    // 36종 시작 → LabAxis 실보유 시약 유래 20종 확장. floor 상향으로 확장 회귀 보호.
+    expect(Object.keys(CAS_GHS_TABLE).length).toBeGreaterThanOrEqual(56);
   });
   it("모든 key = 정규화된 CAS", () => {
     for (const k of Object.keys(CAS_GHS_TABLE)) expect(normalizeCas(k)).toBe(k);

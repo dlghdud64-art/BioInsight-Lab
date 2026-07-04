@@ -27,7 +27,7 @@ export interface CasGhsEntry {
 
 /**
  * 정적 CAS→GHS 표. key = normalizeCas() 정규화된 CAS.
- * 실험실 빈번 시약(산·염기·용매·산화제·독성·발암·생물시약) 중심 시작셋.
+ * 실험실 빈번 시약(산·염기·용매·산화제·독성·발암·생물시약) 중심. LabAxis 실보유 시약 확장 반영.
  */
 export const CAS_GHS_TABLE: Record<string, CasGhsEntry> = {
   // ── 산 / 부식성 ──
@@ -74,6 +74,30 @@ export const CAS_GHS_TABLE: Record<string, CasGhsEntry> = {
   "7732-18-5": { name: "정제수 (Water)", hazardCodes: [] },
   "56-81-5": { name: "글리세롤 (Glycerol)", hazardCodes: [] },
   "50-99-7": { name: "포도당 (D-Glucose)", hazardCodes: [] },
+
+  // ── §cas-table-seed-expansion (호영님 2026-07-04, LabAxis_seed 88종 유래) ──
+  //   실 보유 시약 중 단일 CAS 도출 가능한 순수 화학물질. 표준 GHS(공급사 SDS 정합) 기반 큐레이션.
+  //   ⚠ 안전관리자(호영님) 검토·확정 전제. 생물시약·배지·키트·혈청·항체는 단일 CAS 없어 제외(미분류 정당).
+  "109-70-6": { name: "BCP (1-Bromo-3-chloropropane)", hazardCodes: ["H315", "H319", "H335"] },
+  "7758-99-8": { name: "황산구리 5수화물 (Copper(II) sulfate pentahydrate)", hazardCodes: ["H302", "H315", "H319", "H410"] },
+  "52-89-1": { name: "L-시스테인 염산염 (L-Cysteine HCl)", hazardCodes: ["H315", "H319", "H335"] },
+  "329-98-6": { name: "PMSF (Phenylmethylsulfonyl fluoride)", hazardCodes: ["H301", "H314"] },
+  "127-09-3": { name: "아세트산나트륨 (Sodium acetate)", hazardCodes: [] },
+  "9002-93-1": { name: "Triton X-100", hazardCodes: ["H302", "H318", "H411"] },
+  "9012-36-6": { name: "아가로스 (Agarose)", hazardCodes: [] },
+  "1330-20-7": { name: "자일렌 (Xylene)", hazardCodes: ["H226", "H304", "H312", "H315", "H319", "H332", "H335", "H373"] },
+  "7705-08-0": { name: "염화철(III) 용액 (Ferric chloride)", hazardCodes: ["H290", "H302", "H314"] },
+  "67-68-5": { name: "DMSO (Dimethyl sulfoxide)", hazardCodes: [] },
+  "298-93-1": { name: "MTT", hazardCodes: ["H301"] },
+  "1405-41-0": { name: "겐타마이신 황산염 (Gentamicin sulfate)", hazardCodes: ["H317", "H334"] },
+  "9001-73-4": { name: "파파인 (Papain)", hazardCodes: ["H315", "H319", "H334", "H335"] },
+  "1609-47-8": { name: "DEPC (Diethyl pyrocarbonate)", hazardCodes: ["H302", "H315", "H319", "H335"] },
+  "493-52-7": { name: "메틸레드 (Methyl red)", hazardCodes: ["H228"] },
+  "76-60-4": { name: "브로모크레졸 그린 (Bromocresol green)", hazardCodes: [] },
+  "477-73-6": { name: "사프라닌 O (Safranin O)", hazardCodes: [] },
+  "2353-45-9": { name: "패스트 그린 FCF (Fast green FCF)", hazardCodes: [] },
+  "517-28-2": { name: "헤마톡실린 (Hematoxylin)", hazardCodes: [] },
+  "139-33-3": { name: "EDTA 이나트륨 (Na2 EDTA)", hazardCodes: ["H319"] },
 };
 
 const CAS_RE = /^\d{2,7}-\d{2}-\d$/;
