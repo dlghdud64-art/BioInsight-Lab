@@ -1076,35 +1076,69 @@ function SettingsPageContent() {
             {/* ═══ SECURITY & RBAC ═══ */}
             {activeSection === "security" && (
               <div className="space-y-5 animate-in fade-in-50 duration-200">
-                <SectionCard title="결재선 라우팅 규칙" icon={ShieldCheck} description="금액별 전결 규정을 설정합니다. 각 단계의 금액 기준을 초과하면 상위 승인자에게 자동 라우팅됩니다." topRightLabel="관리자 지정">
-                  <div className="space-y-4">
-                    <ApprovalTierRow tier={1} label="자동 승인" description="이 금액 이하는 AI 자동 승인" value={approvalTier1} onChange={setApprovalTier1} color="emerald" />
-                    <div className="h-px bg-slate-200" />
-                    <ApprovalTierRow tier={2} label="팀장 승인" description="이 금액 이하는 팀장 승인" value={approvalTier2} onChange={setApprovalTier2} color="blue" />
-                    <div className="h-px bg-slate-200" />
-                    <ApprovalTierRow tier={3} label="CFO 승인" description="이 금액 초과 시 CFO 승인 필요" value={approvalTier3} onChange={setApprovalTier3} color="amber" />
-                  </div>
+                {/* §설정-고도화 §2.1 (호영님 2026-07-04) — "결재선 라우팅 규칙"→
+                    "금액별 승인 규정". 운영자 직관 명칭. */}
+                <SectionCard title="금액별 승인 규정" icon={ShieldCheck} description="구매 금액에 따라 승인자가 자동으로 정해집니다." topRightLabel="관리자 지정">
+                  {(() => {
+                    // §설정-고도화 §2.2 — 티어 적용 구간/비례 막대는 canonical
+                    //   입력값(approvalTier1~3)에서 파생. 별도 상태·저장 없음 —
+                    //   표현만. 금액 입력·저장 로직(onChange/value) 불변.
+                    const won = (n: number) => `₩${n.toLocaleString("ko-KR")}`;
+                    const t1 = Number(approvalTier1) || 0;
+                    const t2 = Number(approvalTier2) || 0;
+                    const t3 = Number(approvalTier3) || 0;
+                    const maxTier = Math.max(t1, t2, t3, 1);
+                    return (
+                      <div className="space-y-4">
+                        <ApprovalTierRow tier={1} label="자동 승인" description="이 금액 이하는 AI 자동 승인" value={approvalTier1} onChange={setApprovalTier1} color="emerald" rangeLabel={`${won(t1)} 이하`} barPct={(t1 / maxTier) * 100} />
+                        <div className="h-px bg-slate-200" />
+                        <ApprovalTierRow tier={2} label="팀장 승인" description="이 금액 이하는 팀장 승인" value={approvalTier2} onChange={setApprovalTier2} color="blue" rangeLabel={`${won(t1)} 초과 ~ ${won(t2)}`} barPct={(t2 / maxTier) * 100} />
+                        <div className="h-px bg-slate-200" />
+                        <ApprovalTierRow tier={3} label="CFO 승인" description="이 금액 초과 시 CFO 승인 필요" value={approvalTier3} onChange={setApprovalTier3} color="amber" rangeLabel={`${won(t3)} 초과`} barPct={(t3 / maxTier) * 100} />
+                      </div>
+                    );
+                  })()}
                 </SectionCard>
 
-                <SectionCard title="역할 기반 접근 제어" icon={Users} topRightLabel="관리자 지정">
+                {/* §설정-고도화 §2.3 (호영님 2026-07-04) — 역할 접근 정리.
+                    기존 4역할 하드코딩 mock + 가짜 인원 count(1·3·2·5) 제거
+                    (canonical 아님 → no-fake-data). 3역할 표준 템플릿
+                    (관리자 필수 / 구매·운영 담당 / 열람자)으로 표현 정리.
+                    ⚠ RBAC role enum·권한 판정 로직 무변경 — 라벨/템플릿 표현 한정.
+                    실 멤버 수 기반 규모-적응 요약은 멤버 API 배선 필요 → 별도 트랙
+                    (#settings-role-member-count, 승인 게이트). */}
+                <SectionCard title="역할별 권한 템플릿" icon={Users} description="조직에서 부여하는 표준 역할과 권한 범위입니다. 실제 멤버 배정은 조직 관리에서 진행합니다." topRightLabel="관리자 지정">
                   <div className="space-y-3">
                     {[
-                      { role: "관리자", permissions: "전체 설정 / 사용자 관리 / 결재선 변경", count: 1, color: "text-red-600" },
-                      { role: "연구실 관리자", permissions: "발주 / 재고 / 예산 관리", count: 3, color: "text-blue-600" },
-                      { role: "구매 담당", permissions: "견적 / PO / 공급사 관리", count: 2, color: "text-emerald-600" },
-                      { role: "열람자", permissions: "읽기 전용 / 리포트 열람", count: 5, color: "text-slate-400" },
+                      { role: "관리자", badge: "필수", permissions: "전체 설정 / 사용자 관리 / 승인 규정 변경", color: "text-red-600" },
+                      { role: "구매·운영 담당", badge: "", permissions: "견적 / 발주 / 공급사 / 재고 / 예산 관리", color: "text-blue-600" },
+                      { role: "열람자", badge: "", permissions: "읽기 전용 / 리포트 열람", color: "text-slate-400" },
                     ].map((r) => (
                       <div key={r.role} className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-slate-50 border border-slate-200">
-                        <div className="flex items-center gap-3">
-                          <Shield className={cn("h-4 w-4", r.color)} />
-                          <div>
-                            <p className="text-sm font-medium text-slate-800">{r.role}</p>
-                            <p className="text-[10px] text-slate-500">{r.permissions}</p>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Shield className={cn("h-4 w-4 shrink-0", r.color)} />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-slate-800 break-keep">{r.role}</p>
+                            <p className="text-[10px] text-slate-500 break-keep">{r.permissions}</p>
                           </div>
                         </div>
-                        <Badge className="bg-slate-100 text-slate-600 border-slate-200 text-[10px]">{r.count}명</Badge>
+                        {r.badge && (
+                          <Badge className="bg-slate-100 text-slate-600 border-slate-200 text-[10px] shrink-0 ml-3">{r.badge}</Badge>
+                        )}
                       </div>
                     ))}
+                  </div>
+                  {/* §2.3 — 실 멤버·역할 배정은 조직 관리로 배선(dead-button 아님). */}
+                  <div className="mt-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 gap-1.5"
+                      onClick={() => router.push("/dashboard/organizations")}
+                    >
+                      멤버 및 역할 관리
+                      <ArrowRight className="h-3 w-3" />
+                    </Button>
                   </div>
                 </SectionCard>
               </div>
@@ -1503,39 +1537,58 @@ function SliderField({ label, description, value, onChange, min, max, unit }: {
   );
 }
 
-function ApprovalTierRow({ tier, label, description, value, onChange, color }: {
+function ApprovalTierRow({ tier, label, description, value, onChange, color, rangeLabel, barPct }: {
   tier: number;
   label: string;
   description: string;
   value: string;
   onChange: (v: string) => void;
   color: "emerald" | "blue" | "amber";
+  // §설정-고도화 §2.2 — 적용 구간 칩 + 비례 막대(호영님 2026-07-04). 표현 전용.
+  rangeLabel?: string;
+  barPct?: number;
 }) {
   const colorMap = {
-    emerald: { bg: "bg-emerald-50", text: "text-emerald-600", border: "border-emerald-200" },
-    blue: { bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-200" },
-    amber: { bg: "bg-yellow-50", text: "text-yellow-600", border: "border-yellow-200" },
+    emerald: { bg: "bg-emerald-50", text: "text-emerald-600", border: "border-emerald-200", bar: "bg-emerald-500" },
+    blue: { bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-200", bar: "bg-blue-500" },
+    // §2.2 + CLAUDE §9 — 쨍한 yellow(bg-yellow-*) 금지, muted amber(#b45821) 톤 적용.
+    amber: { bg: "bg-[#fdf3ec]", text: "text-[#b45821]", border: "border-[#f3d4bf]", bar: "bg-[#b45821]" },
   };
   const c = colorMap[color];
+  const pct = Math.max(0, Math.min(100, Math.round(barPct ?? 0)));
 
   return (
-    <div className="flex items-center gap-4">
-      <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold", c.bg, c.text)}>
-        T{tier}
+    <div className="space-y-2">
+      <div className="flex items-center gap-4">
+        <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold border", c.bg, c.text, c.border)}>
+          T{tier}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm font-medium text-slate-800">{label}</p>
+            {rangeLabel && (
+              <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium tabular-nums", c.bg, c.text, c.border)}>
+                {rangeLabel}
+              </span>
+            )}
+          </div>
+          <p className="text-[10px] text-slate-500">{description}</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-xs text-slate-500">₩</span>
+          <Input
+            type="text"
+            value={Number(value).toLocaleString("ko-KR")}
+            onChange={(e) => onChange(e.target.value.replace(/[^0-9]/g, ""))}
+            className="bg-white border-slate-200 text-slate-800 h-8 text-sm w-36 text-right"
+          />
+        </div>
       </div>
-      <div className="flex-1">
-        <p className="text-sm font-medium text-slate-800">{label}</p>
-        <p className="text-[10px] text-slate-500">{description}</p>
-      </div>
-      <div className="flex items-center gap-2 shrink-0">
-        <span className="text-xs text-slate-500">₩</span>
-        <Input
-          type="text"
-          value={Number(value).toLocaleString("ko-KR")}
-          onChange={(e) => onChange(e.target.value.replace(/[^0-9]/g, ""))}
-          className="bg-white border-slate-200 text-slate-800 h-8 text-sm w-36 text-right"
-        />
-      </div>
+      {barPct !== undefined && (
+        <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden ml-12">
+          <div className={cn("h-full rounded-full transition-all", c.bar)} style={{ width: `${pct}%` }} />
+        </div>
+      )}
     </div>
   );
 }
