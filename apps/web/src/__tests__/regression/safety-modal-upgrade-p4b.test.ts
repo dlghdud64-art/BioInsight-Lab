@@ -19,10 +19,11 @@ describe("§safety-modal-upgrade P4b — 물질 점검 엔드포인트", () => {
     expect(ROUTE).toMatch(/productId: params\.id/);
     expect(ROUTE).toMatch(/lastInspectedAt/);
   });
-  it("auth·권한(owner/org)·enforcement·감사 게이트", () => {
+  it("auth·권한(ProductInventory 소유)·enforcement·감사 게이트", () => {
     expect(ROUTE).toMatch(/await auth\(\)/);
-    expect(ROUTE).toMatch(/isOwner/);
-    expect(ROUTE).toMatch(/isOrgMember/);
+    // Product 는 글로벌 카탈로그 → 소유·권한은 ProductInventory(userId/org) 기준(SM-P4c-fix).
+    expect(ROUTE).toMatch(/productInventory\.findFirst/);
+    expect(ROUTE).toMatch(/ownedInv/);
     expect(ROUTE).toMatch(/enforceAction/);
     expect(ROUTE).toMatch(/createAuditLog/);
     expect(ROUTE).toMatch(/AuditEntityType\.INSPECTION/);

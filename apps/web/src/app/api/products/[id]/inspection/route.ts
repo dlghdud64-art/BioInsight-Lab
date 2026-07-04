@@ -39,28 +39,34 @@ export async function POST(
 
     const product = await db.product.findUnique({
       where: { id: params.id },
-      select: { id: true, userId: true, organizationId: true },
+      select: { id: true },
     });
 
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    // isOwner OR isOrgMember 분기(lot route 정확 mirror, multi-tenant info leak 방지).
-    {
-      const isOwner = product.userId === session.user.id;
-      let isOrgMember = false;
-      if (!isOwner && product.organizationId) {
-        const membership = await db.organizationMember.findFirst({
-          where: { userId: session.user.id, organizationId: product.organizationId },
-          select: { id: true },
-        });
-        isOrgMember = !!membership;
-      }
-      if (!isOwner && !isOrgMember) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
+    // §SM-P4c-fix — Product 는 글로벌 카탈로그(userId/organizationId 없음). 소유·권한은
+    //   ProductInventory(userId/organizationId)로 판정: 세션 사용자/속한 org 이 이 제품 재고를
+    //   보유해야 점검 가능(GET 안전 목록 스코프와 동일 집합, multi-tenant 무접촉).
+    const memberships = await db.organizationMember.findMany({
+      where: { userId: session.user.id },
+      select: { organizationId: true },
+    });
+    const userOrgIds = memberships.map((m: { organizationId: string }) => m.organizationId);
+    const ownedInv = await db.productInventory.findFirst({
+      where: {
+        productId: params.id,
+        OR: userOrgIds.length > 0
+          ? [{ userId: session.user.id }, { organizationId: { in: userOrgIds } }]
+          : [{ userId: session.user.id }],
+      },
+      select: { organizationId: true },
+    });
+    if (!ownedInv) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+    const scopeOrganizationId = ownedInv.organizationId;
 
     const body = await request.json();
     const {
@@ -103,7 +109,7 @@ export async function POST(
         data: {
           productId: params.id,
           userId: session.user.id,
-          organizationId: product.organizationId,
+          organizationId: scopeOrganizationId,
           result,
           checklist,
           severity: hasIssue ? severity : null,
@@ -120,7 +126,7 @@ export async function POST(
       await createAuditLog(
         {
           userId: session.user.id,
-          organizationId: product.organizationId,
+          organizationId: scopeOrganizationId,
           action: AuditAction.CREATE,
           entityType: AuditEntityType.INSPECTION,
           entityId: created.id,

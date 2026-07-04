@@ -25,6 +25,8 @@ export async function GET(request: NextRequest) {
     //   사용자에게 전 테넌트 제품 노출(멀티테넌트 과다노출) + POST 점검(owner/org 게이트)과
     //   읽기/쓰기 불일치(목록엔 보이나 점검 403). 아래로 GET where 를 owner/org 로 스코프해
     //   목록 = 실행가능집합(POST 게이트와 동일), 과다노출 동시 해소.
+    //   ⚠ Product 는 글로벌 카탈로그(userId/organizationId 없음) — 소유·스코프는 ProductInventory
+    //     (userId/organizationId 보유)로만 가능. inventories relation 으로 스코프(SM-P4c-fix).
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -51,12 +53,15 @@ export async function GET(request: NextRequest) {
           { status: 403 }
         );
       }
-      where.organizationId = organizationId;
+      // 해당 org 이 재고를 보유한 제품만(ProductInventory 스코프).
+      where.inventories = { some: { organizationId } };
     } else {
-      // 무파라미터(안전 페이지 기본): 세션 사용자 소유 OR 속한 org 제품만 = POST 점검 게이트와 동일 집합.
-      where.OR = userOrgIds.length > 0
-        ? [{ userId: session.user.id }, { organizationId: { in: userOrgIds } }]
-        : [{ userId: session.user.id }];
+      // 무파라미터(안전 페이지 기본): 세션 사용자/속한 org 이 재고 보유한 제품만 = POST 점검 게이트와 동일 집합.
+      where.inventories = {
+        some: userOrgIds.length > 0
+          ? { OR: [{ userId: session.user.id }, { organizationId: { in: userOrgIds } }] }
+          : { userId: session.user.id },
+      };
     }
 
     // SDS 없는 품목 필터
