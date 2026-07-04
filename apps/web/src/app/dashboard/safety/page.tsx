@@ -5,6 +5,9 @@ export const dynamic = "force-dynamic";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useUserPreferences } from "@/lib/preferences/user-preferences";
 import { useQuery } from "@tanstack/react-query";
+// §safety-csrf-fix (호영님 2026-07-04) — 안전 모달 POST(sds·inspection)는 CSRF 토큰 필수(레지스트리 기본 required).
+//   raw fetch → csrfFetch(x-csrf-token 부착)로 edge-middleware 403 해소. GET은 무관.
+import { csrfFetch } from "@/lib/api-client";
 // §11.348-B-1 B1-3 — 안전 페이지 mock→실데이터(/api/safety/products) 어댑터.
 import { adaptSafetyProducts, type SafetyApiProduct } from "@/lib/safety/product-to-safety-item";
 // §msds-version-validation — 버전상태 집계(단일 카운트 소스) 타입.
@@ -285,7 +288,7 @@ export default function SafetyManagerPage() {
       if (msdsForm.docVersion) fd.append("docVersion", msdsForm.docVersion);
       if (msdsForm.registeredAt) fd.append("issuedAt", msdsForm.registeredAt);
       if (msdsForm.expiresAt) fd.append("expiresAt", msdsForm.expiresAt);
-      const res = await fetch(`/api/products/${productId}/sds`, { method: "POST", body: fd });
+      const res = await csrfFetch(`/api/products/${productId}/sds`, { method: "POST", body: fd });
       if (!res.ok) {
         const data = await res.json().catch(() => ({} as { error?: string }));
         const msg = res.status === 503
@@ -334,7 +337,7 @@ export default function SafetyManagerPage() {
     }
     setInspSaving(true);
     try {
-      const res = await fetch(`/api/products/${productId}/inspection`, {
+      const res = await csrfFetch(`/api/products/${productId}/inspection`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
