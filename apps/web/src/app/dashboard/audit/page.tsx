@@ -284,6 +284,28 @@ function DetailField({
   );
 }
 
+// §audit-log-enhancement P2 — 활동 피드 헬퍼(아바타 이니셜·카테고리·톤). 색 규칙: 카테고리색=dot만, 빨강=실패행만.
+function actorInitials(name?: string | null, email?: string | null): string {
+  const src = (name || email || "").trim();
+  if (!src) return "SY";
+  const parts = src.split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return src.slice(0, 2).toUpperCase();
+}
+const ACT_CAT_DOT: Record<string, string> = {
+  create: "bg-[#0b7a4b]", update: "bg-[#2258c9]", delete: "bg-[#c8324f]",
+  secu: "bg-[#6b3fc4]", system: "bg-slate-400", fail: "bg-[#c8324f]",
+};
+function activityCategory(t: string): "create" | "update" | "delete" | "secu" | "system" | "fail" {
+  const u = (t || "").toUpperCase();
+  if (u.includes("FAIL")) return "fail";
+  if (u.includes("LOGIN") || u.includes("PERMISSION") || u.includes("ROLE") || u.includes("SECUR")) return "secu";
+  if (u.includes("CREATE") || u.includes("GENERATED") || u.includes("REGISTERED")) return "create";
+  if (u.includes("DELET") || u.includes("CANCEL") || u.includes("REVERS")) return "delete";
+  if (u.includes("UPDATE") || u.includes("CHANGED") || u.includes("REVIEWED") || u.includes("STATUS")) return "update";
+  return "system";
+}
+
 export default function AuditTrailPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -305,6 +327,8 @@ export default function AuditTrailPage() {
   // 활동 모드 필터(자기 모델 ActivityLog 읽기 — 모델 병합 없음)
   const [activityTypeFilter, setActivityTypeFilter] = useState<string>("all");
   const [entityTypeFilter, setEntityTypeFilter] = useState<string>("all");
+  // §audit-log-enhancement P2b — 활동 피드 멤버 필터(client-side).
+  const [activityMember, setActivityMember] = useState<string>("all");
 
   const userRole = session?.user?.role as string | undefined;
   const canAccessAudit = userRole === "ADMIN" || (userRole as string)?.toLowerCase() === "manager";
@@ -734,55 +758,85 @@ export default function AuditTrailPage() {
                 </p>
               </div>
             ) : (
-              <ul className="divide-y divide-slate-100">
-                {activityLogs.map((log: any) => {
-                  const label = ACTIVITY_TYPE_LABELS[log.activityType] || log.activityType;
-                  const colorClass =
-                    ACTIVITY_TYPE_COLORS[log.activityType] ||
-                    "bg-slate-100 text-slate-700 border-slate-200";
-                  const entityLabel = log.entityType
-                    ? ACTIVITY_ENTITY_LABELS[log.entityType] || log.entityType
-                    : "";
+              <div data-testid="activity-feed">
+                {(() => {
+                  const mm = new Map<string, { id: string; name: string; count: number }>();
+                  for (const lg of activityLogs as any[]) {
+                    const id = String(lg.user?.id ?? "system");
+                    const name = lg.user?.name || lg.user?.email || "시스템";
+                    const e = mm.get(id) ?? { id, name, count: 0 };
+                    e.count += 1; mm.set(id, e);
+                  }
+                  const chips = [...mm.values()].sort((x, y) => y.count - x.count);
+                  if (chips.length <= 1) return null;
                   return (
-                    <li
-                      key={log.id}
-                      className="flex items-start gap-3 p-3 md:p-4 hover:bg-slate-50/50"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                          <Badge
-                            variant="outline"
-                            className={`text-[10px] md:text-xs font-bold ${colorClass}`}
-                          >
-                            {label}
-                          </Badge>
-                          {entityLabel && (
-                            <span className="text-[10px] text-slate-400">· {entityLabel}</span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-3 text-xs text-slate-500 flex-wrap">
-                          {log.user && (
-                            <span className="break-keep">{log.user.name || log.user.email}</span>
-                          )}
-                          {log.organization && (
-                            <span className="break-keep">{log.organization.name}</span>
-                          )}
-                          <span className="font-mono text-slate-400">
-                            {new Date(log.createdAt).toLocaleString("ko-KR", {
-                              year: "numeric",
-                              month: "2-digit",
-                              day: "2-digit",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              timeZone: "Asia/Seoul",
-                            })}
-                          </span>
-                        </div>
-                      </div>
-                    </li>
+                    <div className="flex flex-wrap items-center gap-1.5 px-3 py-2.5 border-b border-slate-100">
+                      <button type="button" onClick={() => setActivityMember("all")}
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 h-7 text-[11px] font-semibold border transition-colors ${activityMember === "all" ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"}`}>
+                        전체 <span className="tabular-nums opacity-70">{activityLogs.length}</span>
+                      </button>
+                      {chips.map((c) => (
+                        <button key={c.id} type="button" onClick={() => setActivityMember(c.id)}
+                          className={`inline-flex items-center gap-1.5 rounded-full px-2 h-7 text-[11px] font-semibold border transition-colors ${activityMember === c.id ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"}`}>
+                          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-slate-100 text-[8px] font-bold text-slate-600">{actorInitials(c.name)}</span>
+                          {c.name}<span className="tabular-nums opacity-70">{c.count}</span>
+                        </button>
+                      ))}
+                    </div>
                   );
-                })}
-              </ul>
+                })()}
+                {(() => {
+                  const fmtDay = (d: string) =>
+                    new Date(d).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric", weekday: "short", timeZone: "Asia/Seoul" });
+                  const groups: { day: string; items: any[] }[] = [];
+                  for (const log of (activityLogs as any[]).filter((l: any) => activityMember === "all" || String(l.user?.id ?? "system") === activityMember)) {
+                    const day = fmtDay(log.createdAt);
+                    let g = groups[groups.length - 1];
+                    if (!g || g.day !== day) { g = { day, items: [] }; groups.push(g); }
+                    g.items.push(log);
+                  }
+                  return groups.map((g) => (
+                    <div key={g.day}>
+                      <div className="sticky top-0 z-[1] bg-slate-50/95 px-4 py-1.5 text-[11px] font-semibold text-slate-500 border-b border-slate-100 backdrop-blur">
+                        {g.day}
+                      </div>
+                      <ul className="divide-y divide-slate-100">
+                        {g.items.map((log: any) => {
+                          const cat = activityCategory(log.activityType);
+                          const isFail = cat === "fail";
+                          const label = ACTIVITY_TYPE_LABELS[log.activityType] || log.activityType;
+                          const entityLabel = log.entityType ? (ACTIVITY_ENTITY_LABELS[log.entityType] || log.entityType) : "";
+                          const actor = log.user?.name || log.user?.email || "시스템";
+                          const time = new Date(log.createdAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Seoul" });
+                          return (
+                            <li key={log.id} className={`flex items-start gap-3 px-4 py-2.5 ${isFail ? "bg-red-50" : "hover:bg-slate-50/50"}`}>
+                              <span className="relative flex-none">
+                                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-[11px] font-bold text-slate-600">
+                                  {actorInitials(log.user?.name, log.user?.email)}
+                                </span>
+                                <span className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white ${ACT_CAT_DOT[cat]}`} aria-hidden="true" />
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <p className={`text-[13px] leading-snug break-keep ${isFail ? "text-red-700" : "text-slate-700"}`}>
+                                  <b className="font-semibold">{actor}</b>님이 {entityLabel && (<><b className="font-semibold">{entityLabel}</b> </>)}{label}
+                                </p>
+                                <div className="mt-0.5 flex items-center gap-2 flex-wrap">
+                                  {log.beforeStatus && log.afterStatus && (
+                                    <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] text-slate-500 tabular-nums">
+                                      {log.beforeStatus} → {log.afterStatus}
+                                    </span>
+                                  )}
+                                  <span className="text-[11px] text-slate-400 tabular-nums">{time}</span>
+                                </div>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  ));
+                })()}
+              </div>
             )}
           </div>
         </div>
@@ -876,6 +930,19 @@ export default function AuditTrailPage() {
         </div>
       </div>
 
+      {/* §audit-log-enhancement P1 (호영님 2026-07-04) — 신뢰 배지 바(정직 문구).
+          ⚠ 근거 없는 "해시 검증됨" 미주장(AuditLog 에 hash chain 필드 없음). append-only·KST·Part11 정합만 사실 주장.
+          §11.64 Part11 톤 제거 반전(호영님 신 지시 재도입). 중립 톤(빨강/카테고리색 미사용). */}
+      <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 print:hidden" data-testid="audit-trust-bar">
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-600">
+          <Lock className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
+          변조 방지 · 자동 기록
+        </span>
+        <span className="text-[11px] text-slate-500">수정·삭제 불가 (append-only)</span>
+        <span className="text-[11px] text-slate-500">KST 고정 표기</span>
+        <span className="text-[11px] text-slate-500">21 CFR Part 11 정합</span>
+      </div>
+
       {/* §11.337 — 내보내기 Sheet (인쇄/정형 PDF/CSV 묶음). 새로 고침은 분리 아이콘. */}
       <Sheet open={isActionsSheetOpen} onOpenChange={(next) => { if (!next) setIsActionsSheetOpen(false); }}>
         <SheetContent side="bottom" className="max-h-[60vh]" data-testid="audit-actions-sheet">
@@ -915,6 +982,31 @@ export default function AuditTrailPage() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* §audit-log-enhancement P3 — 감사 요약 스트립(4카드). accent 미사용(중립 통일). 실패만 빨강. display-only(dead button 0). */}
+      {(() => {
+        if (rows.length === 0) return null;
+        const total = rows.length;
+        const dataChange = rows.filter((r) => r.before && r.after).length;
+        const access = rows.filter((r) => /login|permission|role|access|member|auth|권한|접근|로그인|열람/i.test(`${r.action} ${r.entityType} ${r.reason}`)).length;
+        const fails = rows.filter((r) => r.reason.startsWith("[실패]")).length;
+        const cards = [
+          { label: "총 이벤트", value: total, danger: false },
+          { label: "데이터 변경", value: dataChange, danger: false },
+          { label: "권한·접근", value: access, danger: false },
+          { label: "실패 이벤트", value: fails, danger: fails > 0 },
+        ];
+        return (
+          <div className="mb-3 grid grid-cols-2 md:grid-cols-4 gap-2 print:hidden" data-testid="audit-summary">
+            {cards.map((c) => (
+              <div key={c.label} className={`rounded-lg border px-3.5 py-2.5 ${c.danger ? "border-red-200 bg-red-50" : "border-slate-200 bg-white"}`}>
+                <p className="text-[11px] text-slate-500">{c.label}</p>
+                <p className={`text-xl font-extrabold tabular-nums leading-tight ${c.danger ? "text-red-700" : "text-slate-900"}`}>{c.value.toLocaleString("ko-KR")}</p>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* §11.81 — 필터 row 복원: real fetcher 와 함께 wired (eventType + period
           + search 모두 query params 로 forward → /api/audit-logs).
