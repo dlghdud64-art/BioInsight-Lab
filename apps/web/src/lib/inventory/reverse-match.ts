@@ -25,7 +25,7 @@ export interface ScoredCandidate {
   catalogNumber: string | null;
   confidence: number; // 0..1 (per-candidate)
   level: "high" | "medium" | "low";
-  basis: "exact" | "contains" | "token" | "synonym";
+  basis: "exact" | "contains" | "token" | "synonym" | "cas";
 }
 
 interface RawProduct {

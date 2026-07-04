@@ -32,6 +32,8 @@ import { runOcrPipeline } from "@/lib/ocr/run-ocr-pipeline";
 import { isTransientGeminiError } from "@/lib/ocr/gemini-config";
 import { parseGs1 } from "@/lib/scan/gs1-parser";
 import { mergeGs1WithOcr, type MergedLabelResult } from "@/lib/ocr/merge-gs1-ocr";
+// §scan-cas-match-restore — casNo 컬럼(P1) 복원. CAS 정규화(매칭 키).
+import { normalizeCas } from "@/lib/safety/cas-ghs-table";
 // §scan-reverse-match-v2 (호영님 2026-06-30) — catalogNo 미매칭 시 양방향·토큰·신뢰도 역매칭(승인형).
 //   §scan-secondary-match(matchProduct 단방향) 보정: 양방향 정규화 contains + 토큰(≥2 가드) + per-candidate 신뢰도·정렬·cap3.
 import { rankReverseCandidates, type ScoredCandidate, type ReverseMatcherDb } from "@/lib/inventory/reverse-match";
@@ -182,12 +184,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // §scan-casnumber-500-fix (호영님 2026-06-30) — CAS 기반 제품 매칭 제거.
-    //   Product 모델에 casNumber 컬럼이 없어 CAS 조건으로 product.findFirst 시
-    //   PrismaClientValidationError → outer catch 500 으로 스캔 전체 실패(OCR 이 CAS 추출 + catalogNo
-    //   미매칭 시 항상). §11.341 동류(schema/코드 드리프트). catalogNo 매칭(위)만 유지.
-    //   merged.casNumber 는 응답 parsed 에 그대로 노출(표시용) — DB *매칭*만 제거.
-    //   CAS 자동매칭 복원은 실제 casNumber 컬럼 마이그레이션 후 별도 트랙.
+    // §scan-cas-match-restore (호영님 2026-07-04) — CAS 매칭 복원(casNo 컬럼 P1 이후).
+    //   과거 §scan-casnumber-500-fix(2026-06-30)는 casNumber 컬럼 부재로 500 회피차 제거했으나,
+    //   casNo 컬럼 추가로 복원. 단 CAS = 물질 식별자(SKU 아님) → **auto-match 금지**,
+    //   아래 후보(candidate) 블록에서 동일 CAS 제품을 승인형 후보로만 제시(오매칭 방지).
 
     // ── §scan-reverse-match-v2 — catalogNo 미매칭 시 양방향·토큰·신뢰도 역매칭(승인형) ──
     //   곡면 라벨(원형 병) 등 catalogNo OCR 실패 시, 이름으로 기존 품목 후보를 신뢰도순으로 제시.
@@ -195,12 +195,34 @@ export async function POST(req: NextRequest) {
     //   사용자가 후보 선택 → 폼 채움 → 입고 완료 시 기존 find-or-create(name+catalog)로 연결.
     let productCandidates: ScoredCandidate[] = [];
     let matchType: "fuzzy_name" | null = null;
-    if (!matchedProduct && (merged.productName || merged.brand)) {
-      // 양방향 정규화 contains + 토큰(≥2 가드) + per-candidate 신뢰도, 정렬·cap3. brand 보조 only.
-      productCandidates = await rankReverseCandidates(
-        { productName: merged.productName, brand: merged.brand },
-        { db: db as unknown as ReverseMatcherDb },
-      );
+    if (!matchedProduct) {
+      // 양방향 정규화 contains + 토큰(≥2 가드) + per-candidate 신뢰도. brand 보조 only.
+      const nameCands = (merged.productName || merged.brand)
+        ? await rankReverseCandidates(
+            { productName: merged.productName, brand: merged.brand },
+            { db: db as unknown as ReverseMatcherDb },
+          )
+        : [];
+      // §scan-cas-match-restore (호영님 2026-07-04) — casNo 컬럼 복원 후 CAS 매칭 복구.
+      //   ⚠ CAS = 물질 식별자(같은 CAS·다른 brand/grade/pack = 다른 SKU) → **auto-match 금지**.
+      //   동일 CAS 제품을 후보로만 제시(승인형, 오매칭 방지·canonical 무접촉·중복 마스터 방지).
+      const normCas = normalizeCas(merged.casNumber);
+      let casCands: ScoredCandidate[] = [];
+      if (normCas) {
+        const rows = await db.product.findMany({
+          where: { casNo: normCas },
+          select: { id: true, name: true, brand: true, catalogNumber: true },
+          take: 3,
+        });
+        casCands = (rows as Array<{ id: string; name: string; brand: string | null; catalogNumber: string | null }>).map((p) => ({
+          id: p.id, name: p.name, brand: p.brand, catalogNumber: p.catalogNumber,
+          confidence: 0.9, level: "high" as const, basis: "cas" as const,
+        }));
+      }
+      // 병합: CAS(동일물질) 우선 dedup → 신뢰도 정렬 → cap3.
+      const byId = new Map<string, ScoredCandidate>();
+      for (const c of [...casCands, ...nameCands]) if (!byId.has(c.id)) byId.set(c.id, c);
+      productCandidates = [...byId.values()].sort((a, b) => b.confidence - a.confidence).slice(0, 3);
       if (productCandidates.length > 0) matchType = "fuzzy_name";
     }
 

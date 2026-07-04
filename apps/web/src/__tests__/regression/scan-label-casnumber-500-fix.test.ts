@@ -7,10 +7,12 @@
  *   → outer catch 500 → 스캔 전체 실패(OCR 이 CAS 추출 + catalogNo 미매칭 시 항상).
  *   §11.341 동류(schema/코드 드리프트 — prod 에 없는 컬럼 쿼리).
  *
- * Fix: CAS 기반 product 매칭 블록 제거. catalogNo 매칭만 유지.
- *   merged.casNumber 는 응답(parsed spread)에 그대로 노출(표시용) — DB *매칭*만 제거.
+ * Fix(2026-06-30): CAS 매칭 블록 제거(당시 casNumber 컬럼 부재).
+ * 갱신(2026-07-04 §scan-cas-match-restore): casNo 컬럼(P1) 추가로 CAS 매칭 복원.
+ *   ⚠ 여전히 **비스키마 `casNumber` 컬럼 쿼리는 금지**(실 컬럼은 `casNo`) — 이 500 보호는 영구 유지.
+ *   CAS 는 auto-match 아닌 후보로만(오매칭 방지). 상세: scan-cas-match-restore.test.ts.
  *
- * 가드 2축: (A) 비스키마 casNumber 쿼리 금지, (B) 회귀 0(catalogNo 매칭·응답 spread·인증 게이트 보존).
+ * 가드 2축: (A) 비스키마 `casNumber:` 쿼리 금지(500 보호), (B) 회귀 0(catalogNo 매칭·응답 spread·인증 게이트 보존).
  */
 
 import { describe, it, expect } from "vitest";
@@ -25,8 +27,9 @@ describe("§scan-casnumber-500-fix — 비스키마 casNumber 쿼리 금지 (A)"
     // 활성 쿼리 패턴 casNumber: { ... } 가 없어야 함(주석 언급은 허용).
     expect(route).not.toMatch(/casNumber:\s*\{/);
   });
-  it("§scan-casnumber-500-fix trace marker 존재", () => {
-    expect(route).toMatch(/§scan-casnumber-500-fix/);
+  it("500 보호 marker 존재(제거 이력 또는 복원 marker)", () => {
+    // §scan-cas-match-restore(2026-07-04)로 marker 갱신. 500 보호(casNo 사용)는 유지.
+    expect(route).toMatch(/§scan-cas-match-restore|§scan-casnumber-500-fix/);
   });
 });
 

@@ -1095,7 +1095,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
           {scanResult && !scanResult.matchedProduct && scanResult.matchType === "fuzzy_name" && scanResult.productCandidates && scanResult.productCandidates.length > 0 && (
             <div className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 space-y-2">
               <p className="text-[11px] font-semibold text-slate-600">
-                유사 품목 후보 — 같은 품목이면 선택해 연결하세요 <span className="text-slate-400">(확인 필요)</span>
+                일치 가능 품목 후보 — 같은 품목이면 선택해 연결하세요 <span className="text-slate-400">(확인 필요)</span>
               </p>
               <div className="space-y-1.5">
                 {scanResult.productCandidates.slice(0, 3).map((c) => (
