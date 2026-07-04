@@ -6,5 +6,10 @@ export const metadata = {
 };
 
 export default function WorkQueuePage() {
-  return <WorkQueueConsole />;
+  return (
+    // §dashboard-padding-unify — 셸 패딩 제거에 따라 위임 콘솔에 자체 패딩 부여.
+    <div className="p-4 md:p-8">
+      <WorkQueueConsole />
+    </div>
+  );
 }
