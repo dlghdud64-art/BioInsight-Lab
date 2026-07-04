@@ -3,11 +3,8 @@
 export const dynamic = "force-dynamic";
 
 import { csrfFetch } from "@/lib/api-client";
-// §11.99 — audit event label helper (settings recent activity 와 audit page 일관)
-import {
-  AUDIT_EVENT_LABELS,
-  AUDIT_TONE_DOT_CLASSES,
-} from "@/lib/audit/event-labels";
+// §설정-고도화 §1.7 — audit event label helper import 제거(최근 활동 로그
+//   프리뷰 카드 삭제로 AUDIT_EVENT_LABELS / AUDIT_TONE_DOT_CLASSES orphaned).
 // §11.193d Phase 2.3 — workflow capabilities canonical resolver + 라벨/색상 매핑.
 //   single role badge → multi-badge (1인 동시 Lab Manager + Approver + Requester).
 import {
@@ -54,7 +51,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Upload, Lock, Bell, Mail, Shield, Loader2, ChevronRight, ChevronLeft, Package, CreditCard, Receipt, Check, RotateCcw, AlertCircle, Clock, FileText, AlertTriangle, XCircle, Zap, ClipboardCheck, Server, Trash2, UserPlus, KeyRound, Crown, Settings, Brain, Link2, Building2, Globe, Fingerprint, Activity, Database, Webhook, ShieldCheck, Users, ArrowRight } from "lucide-react";
+import { User, Upload, Lock, Bell, Mail, Shield, Loader2, ChevronRight, ChevronLeft, Package, CreditCard, Receipt, Check, RotateCcw, AlertCircle, Clock, FileText, AlertTriangle, XCircle, Zap, ClipboardCheck, Server, Trash2, UserPlus, KeyRound, Crown, Settings, Brain, Link2, Building2, Globe, Fingerprint, Database, Webhook, ShieldCheck, Users, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ══════════════════════════════════════════════
@@ -375,33 +372,9 @@ function SettingsPageContent() {
     staleTime: 5 * 60_000,
   });
 
-  // §11.86 #settings-recent-activity-fetcher
-  // mock 4-row → real /api/audit-logs?userId={current}&limit=5 wiring.
-  // session.user.id 기반 본인 변경 이력만 표시 (operator surface 정합).
-  // operator section 활성화될 때만 fetch — 다른 section 진입 시 비호출.
-  const { data: recentActivityData } = useQuery<{
-    logs: Array<{
-      id: string;
-      eventType: string;
-      action: string;
-      entityType: string;
-      createdAt: string;
-      success: boolean;
-    }>;
-  }>({
-    queryKey: ["settings-recent-activity", session?.user?.id],
-    queryFn: async () => {
-      if (!session?.user?.id) return { logs: [] };
-      const params = new URLSearchParams();
-      params.set("userId", session.user.id);
-      params.set("limit", "5");
-      const response = await fetch(`/api/audit-logs?${params.toString()}`);
-      if (!response.ok) return { logs: [] };
-      return response.json();
-    },
-    enabled: !!session?.user?.id && activeSection === "operator",
-    staleTime: 60_000,
-  });
+  // §설정-고도화 §1.7 (호영님 2026-07-04) — recentActivityData query 제거.
+  //   operator 섹션 "최근 활동 로그" 프리뷰 카드 삭제로 orphaned. 감사 로그는
+  //   /dashboard/audit 전용 페이지가 single source of truth.
 
   // ── Profile mutation ──
   const profileMutation = useMutation({
@@ -637,7 +610,7 @@ function SettingsPageContent() {
                 <SectionCard
                   title="사용자 식별 정보"
                   icon={Fingerprint}
-                  topRightLabel="직접 관리"
+                  governance="editable"
                 >
                   <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6">
                     {/* Avatar */}
@@ -669,10 +642,9 @@ function SettingsPageContent() {
                           <Input value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} className="bg-white border-slate-200 text-slate-900 h-9 text-sm" />
                         </FieldBlock>
                       </div>
-                      <div className="flex items-center gap-2 pt-1">
-                        <Badge className="bg-blue-50 text-blue-600 border-blue-200 text-[10px] font-medium">{roleLabel}</Badge>
-                        <Badge className="bg-emerald-50 text-emerald-600 border-emerald-200 text-[10px] font-medium">접근 등급 3</Badge>
-                      </div>
+                      {/* §설정-고도화 P1 (호영님 2026-07-04) — 신원 카드는 아바타·성명·연락처·이메일만.
+                          역할({roleLabel})은 아래 "운영 역할 및 업무 범위" 카드가 canonical(중복 배지 제거).
+                          "접근 등급 3" 배지는 실 데이터 가시성 무제어 → 삭제(무의미 배지). */}
                     </div>
                   </div>
                 </SectionCard>
@@ -689,7 +661,7 @@ function SettingsPageContent() {
                   title="운영 역할 및 업무 범위"
                   icon={Shield}
                   description="시스템 권한(RBAC)과 승인 워크플로우에 영향을 줍니다. 직접 변경할 수 없습니다."
-                  topRightLabel="관리자 지정"
+                  governance="locked"
                 >
                   <div className="space-y-5">
                     {/* §11.87 + §11.193d Phase 2.3 활성 운영 역할 (workflow capabilities multi-badge).
@@ -771,7 +743,7 @@ function SettingsPageContent() {
                               ₩{Number(userData.approvalLimit).toLocaleString("ko-KR")}
                             </span>
                           ) : (
-                            <span className="text-sm font-medium text-slate-400 tabular-nums">운영 정책 미설정</span>
+                            <span className="inline-flex items-center rounded-md border border-dashed border-[#f3d4bf] bg-[#fdf3ec] px-2 py-0.5 text-xs font-medium text-[#b45821]">운영 정책 미설정</span>
                           )}
                         </div>
                         <div className="flex items-center justify-between px-4 py-3">
@@ -780,7 +752,7 @@ function SettingsPageContent() {
                             const budgets = userBudgetsData?.budgets ?? [];
                             const active = budgets.find((b) => b.isActive !== false) ?? budgets[0];
                             if (!active) {
-                              return <span className="text-sm font-medium text-slate-400 tabular-nums">예산 미설정</span>;
+                              return <span className="inline-flex items-center rounded-md border border-dashed border-[#f3d4bf] bg-[#fdf3ec] px-2 py-0.5 text-xs font-medium text-[#b45821]">예산 미설정</span>;
                             }
                             return (
                               <div className="text-right">
@@ -847,7 +819,7 @@ function SettingsPageContent() {
                   title="현재 워크스페이스 정보"
                   icon={Building2}
                   description="워크스페이스 기본값은 조직 관리자만 변경할 수 있습니다."
-                  topRightLabel="관리자 지정"
+                  governance="locked"
                 >
                   {/* §ko-ux ② — 영문 워크스페이스 eyebrow 제거(본제목 "현재 워크스페이스 정보" +
                       topRightLabel "관리자 지정"과 의미 중복). */}
@@ -886,6 +858,33 @@ function SettingsPageContent() {
                         return `${getPlanLabel("starter")} 플랜`;
                       return p ? `${p} 플랜` : "플랜 미지정";
                     })();
+                    // §설정-고도화 §1.5 (호영님 2026-07-04) — 워크스페이스 미연결
+                    //   fallback. "워크스페이스 미연결" 텍스트만 뜨던 dead 신호를
+                    //   점선 카드 + 실 배선 CTA(→ /dashboard/organizations)로 교체.
+                    //   activeWs 있을 때는 기존 3-col grid 정상 경로 그대로 반환.
+                    if (!activeWs) {
+                      return (
+                        <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/60 px-4 py-6 flex flex-col items-center text-center gap-3">
+                          <div className="h-10 w-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center">
+                            <Building2 className="h-5 w-5 text-slate-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-slate-700 break-keep">연결된 워크스페이스가 없습니다</p>
+                            <p className="text-xs text-slate-500 mt-1 break-keep">조직에서 워크스페이스를 연결하면 여기에 정보가 표시됩니다.</p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-2 text-xs"
+                            onClick={() => router.push("/dashboard/organizations")}
+                          >
+                            <span aria-hidden>＋</span>
+                            워크스페이스 연결
+                            <ArrowRight className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      );
+                    }
                     return (
                       // §11.373 — 단일 필드 full-box 적층 제거(§11.311). 모바일: 한 카드
                       //   안 compact row(label 좌 · value 우 인라인, meta 숨김). md+: 기존
@@ -921,8 +920,9 @@ function SettingsPageContent() {
                 <SectionCard
                   title="보안 자격 증명"
                   icon={Lock}
-                  topRightLabel="직접 관리"
+                  governance="editable"
                 >
+                  <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-slate-700">비밀번호</p>
@@ -958,92 +958,29 @@ function SettingsPageContent() {
                       </DialogContent>
                     </Dialog>
                   </div>
-                </SectionCard>
-
-                {/* §11.86 #settings-recent-activity-fetcher
-                    mock 4-row → real /api/audit-logs?userId={current}&limit=5.
-                    EVENT_TYPE → 한국어 라벨 + tone 5분류 매핑. 빈 결과 시
-                    명시적 empty state (no fake fallback). 시간 표기는
-                    상대 (방금/N분 전/N시간 전/어제/N일 전) format. */}
-                <SectionCard
-                  title="최근 보안 및 활동 로그"
-                  icon={Activity}
-                  description="식별 정보·워크스페이스 설정·접근 권한 변경 이력. 전체 감사 추적은 별도 페이지에서 확인."
-                  topRightLabel="감사 추적"
-                >
-                  <div className="space-y-2">
-                    {(() => {
-                      const logs = recentActivityData?.logs ?? [];
-                      if (logs.length === 0) {
-                        return (
-                          <div className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-6 text-center">
-                            <p className="text-xs text-slate-500 break-keep">
-                              아직 운영 활동 이력이 없습니다.
-                            </p>
-                            <p className="text-[10px] text-slate-400 mt-1 break-keep">
-                              프로필·권한·워크스페이스 변경 이력이 여기에 표시됩니다.
-                            </p>
-                          </div>
-                        );
-                      }
-
-                      // §11.99 — AUDIT_EVENT_LABELS helper 사용 (audit page 와
-                      // 일관 — 향후 enum 추가 시 본 helper 만 update).
-
-                      // 상대 시간 derive
-                      const formatRelative = (iso: string) => {
-                        const diff = Date.now() - new Date(iso).getTime();
-                        const min = Math.floor(diff / 60000);
-                        if (min < 1) return "방금";
-                        if (min < 60) return `${min}분 전`;
-                        const hr = Math.floor(min / 60);
-                        if (hr < 24) return `${hr}시간 전`;
-                        const day = Math.floor(hr / 24);
-                        if (day === 1) return "어제";
-                        if (day < 7) return `${day}일 전`;
-                        const week = Math.floor(day / 7);
-                        if (week < 5) return `${week}주 전`;
-                        return new Date(iso).toLocaleDateString("ko-KR", { month: "short", day: "numeric" });
-                      };
-
-                      return logs.map((log) => {
-                        const meta = AUDIT_EVENT_LABELS[log.eventType];
-                        const label = meta?.label ?? log.action ?? log.eventType;
-                        const dotCls = meta
-                          ? AUDIT_TONE_DOT_CLASSES[meta.tone]
-                          : "bg-slate-400";
-                        return (
-                          <div
-                            key={log.id}
-                            className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2.5 hover:border-slate-300 transition-colors"
-                          >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotCls}`} />
-                              <span className="text-sm text-slate-700 break-keep">
-                                {label}
-                                {!log.success && <span className="text-rose-500 ml-1">(실패)</span>}
-                              </span>
-                            </div>
-                            <span className="text-[11px] text-slate-400 font-mono flex-shrink-0 ml-3">
-                              {formatRelative(log.createdAt)}
-                            </span>
-                          </div>
-                        );
-                      });
-                    })()}
-                    <div className="pt-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 gap-1.5"
-                        onClick={() => router.push("/dashboard/audit")}
-                      >
-                        전체 감사 추적 보기
-                        <ArrowRight className="h-3 w-3" />
-                      </Button>
+                  {/* §설정-고도화 §1.6 (호영님 2026-07-04) — 활성 세션 행.
+                      현재 로그인 세션 read-only 표시. 다기기 세션 관리 백엔드는
+                      미결 트랙(HANDOFF §미결)이라 관리 버튼(dead-button) 미노출.
+                      Google 통합 인증 사용 → 자체 2FA 버튼 금지(dead-button 회피). */}
+                  <div className="h-px bg-slate-100 -mx-3 md:-mx-5" />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm text-slate-700">활성 세션 · 현재 기기</p>
+                        <p className="text-xs text-slate-500 break-keep">이 브라우저에서 로그인됨 · Google 통합 인증</p>
+                      </div>
                     </div>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600 shrink-0 ml-3">활성</span>
+                  </div>
                   </div>
                 </SectionCard>
+
+                {/* §설정-고도화 §1.7 (호영님 2026-07-04) — operator 섹션 내
+                    "최근 보안 및 활동 로그" 프리뷰 카드 제거. 사이드바
+                    `활동·감사 로그` 전용 페이지(/dashboard/audit)가 single source
+                    of truth — 중복 프리뷰 제거로 정보구조 정리. orphaned 되는
+                    recentActivityData fetch(§11.86 query 블록)도 함께 제거. */}
 
                 {/* §11.209d-approver-routing — 결재 임계치 admin form (ADMIN 만 visible).
                     workspaceId / currentUserId 가 있을 때만 mount. workspace 별
@@ -1474,7 +1411,7 @@ function SettingsPageContent() {
 // Shared Components
 // ══════════════════════════════════════════════
 
-function SectionCard({ title, icon: Icon, description, children, topRightLabel }: {
+function SectionCard({ title, icon: Icon, description, children, topRightLabel, governance }: {
   title: string;
   icon: React.ElementType;
   description?: string;
@@ -1482,6 +1419,11 @@ function SectionCard({ title, icon: Icon, description, children, topRightLabel }
   // §11.197 — 우상단 작은 라벨 (예: "ASSIGNED BY ADMIN"). 시안 정합 — 운영
   // 역할 카드 같은 read-only 영역에서 "이 값은 누가 결정하는가" signal.
   topRightLabel?: string;
+  // §설정-고도화 §1.3 (호영님 2026-07-04) — 거버넌스 칩. 흐린 topRightLabel
+  //   텍스트 대신 "누가 이 값을 통제하는가"를 명시 칩으로. editable=운영자
+  //   직접 편집 가능(blue), locked=관리자만 변경(gray). governance 지정 시
+  //   topRightLabel 대신 칩 렌더(폴백 하위호환 유지 — 미지정 카드는 기존 텍스트).
+  governance?: "editable" | "locked";
 }) {
   return (
     // §11.373 — 카드 compact 토큰(§11.311). 모바일 패딩 축소(px-4 py-3 / p-3),
@@ -1491,11 +1433,21 @@ function SectionCard({ title, icon: Icon, description, children, topRightLabel }
         <div className="flex items-center gap-2">
           <Icon className="h-4 w-4 text-slate-500" />
           <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
-          {topRightLabel && (
+          {governance ? (
+            <span
+              className={`ml-auto inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                governance === "editable"
+                  ? "bg-blue-50 text-blue-600 border-blue-200"
+                  : "bg-slate-100 text-slate-500 border-slate-200"
+              }`}
+            >
+              {governance === "editable" ? "✎ 편집 가능" : "🔒 관리자 잠금"}
+            </span>
+          ) : topRightLabel ? (
             <span className="ml-auto text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400">
               {topRightLabel}
             </span>
-          )}
+          ) : null}
         </div>
         {description && <p className="text-xs text-slate-500 mt-1 ml-6">{description}</p>}
       </div>
