@@ -1456,6 +1456,9 @@ enum ActivityType {
   COMPARE_INQUIRY_DRAFT_STATUS_CHANGED // 문의 초안 상태 변경
   COMPARE_RESULT_VIEWED              // 비교 결과 조회
   COMPARE_SESSION_REOPENED           // 비교 세션 재개 (판정 취소)
+
+  // ── 안전관리 (§msds-audit-versioning) ──
+  MSDS_REGISTERED                    // MSDS 문서 실 등록(누가·언제 감사)
 }
 
 model ActivityLog {

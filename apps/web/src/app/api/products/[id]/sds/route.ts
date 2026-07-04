@@ -5,6 +5,9 @@ import { db } from "@/lib/db";
 import { uploadSdsFile, StorageNotConfiguredError } from "@/lib/safety/sds-storage";
 // §cas-hazard-classification P3c — MSDS 업로드 시 위험분류 backfill(best-effort, fill-empty).
 import { backfillHazardFromMsds } from "@/lib/safety/msds-hazard-backfill";
+import { supersedePriorSds } from "@/lib/safety/supersede-sds";
+import { createActivityLog } from "@/lib/activity-log";
+import { ActivityType } from "@prisma/client";
 
 // 제품의 SDS 문서 목록 조회
 export async function GET(
@@ -215,6 +218,15 @@ export async function POST(
     //   best-effort·fill-empty — 실패/무키/이미분류 시 조용히 skip(업로드는 이미 성공, canonical).
     let hazardBackfilled = false;
     if (docType === "sds") {
+      // §msds-audit-versioning — 개정본 대체(이전 현행본 supersede) + 감사(누가·언제). best-effort(등록은 canonical).
+      try { await supersedePriorSds(productId, doc.id); } catch (e) { console.error("MSDS supersede 실패:", e); }
+      try {
+        await createActivityLog({
+          activityType: ActivityType.MSDS_REGISTERED, entityType: "PRODUCT", entityId: productId,
+          userId: session.user.id, organizationId,
+          metadata: { fileName: f.name, docVersion, source: "single" },
+        });
+      } catch (e) { console.error("MSDS 감사 로그 실패:", e); }
       const bf = await backfillHazardFromMsds({ productId, buffer, contentType: f.type, docType });
       hazardBackfilled = bf.backfilled;
     }

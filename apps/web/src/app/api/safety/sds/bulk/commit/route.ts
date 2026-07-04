@@ -3,6 +3,9 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { uploadSdsFile, StorageNotConfiguredError } from "@/lib/safety/sds-storage";
 import { backfillHazardFromMsds } from "@/lib/safety/msds-hazard-backfill";
+import { supersedePriorSds } from "@/lib/safety/supersede-sds";
+import { createActivityLog } from "@/lib/activity-log";
+import { ActivityType } from "@prisma/client";
 
 /**
  * §msds-bulk-registration B-P3 — 일괄 MSDS 등록 확정(commit).
@@ -71,14 +74,24 @@ export async function POST(request: NextRequest) {
           if (e instanceof StorageNotConfiguredError) { results.push({ fileName: f.name, productId, status: "storage_not_configured" }); continue; }
           throw e;
         }
-        await db.sDSDocument.create({
+        const doc = await db.sDSDocument.create({
           data: {
             productId, organizationId, fileName: f.name || "sds.pdf",
             bucket: stored.bucket, path: stored.path, source: "upload", docType: "sds",
             contentType: f.type || null, sizeBytes: buffer.length,
             docVersion: m.docVersion?.trim() || null, issuedAt: parseDate(m.issuedAt), expiresAt: parseDate(m.expiresAt),
           },
+          select: { id: true },
         });
+        // §msds-audit-versioning — 개정본 대체(이전 현행본 supersede) + 감사(누가·언제). best-effort(등록은 canonical).
+        try { await supersedePriorSds(productId, doc.id); } catch (e) { console.error("MSDS supersede 실패:", e); }
+        try {
+          await createActivityLog({
+            activityType: ActivityType.MSDS_REGISTERED, entityType: "PRODUCT", entityId: productId,
+            userId: session.user.id, organizationId,
+            metadata: { fileName: f.name, docVersion: m.docVersion?.trim() || null, source: "bulk" },
+          });
+        } catch (e) { console.error("MSDS 감사 로그 실패:", e); }
         const bf = await backfillHazardFromMsds({ productId, buffer, contentType: f.type, docType: "sds" });
         registeredCount += 1;
         results.push({ fileName: f.name, productId, status: "registered", hazardBackfilled: bf.backfilled });
