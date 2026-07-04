@@ -131,7 +131,7 @@ const OP_STATUS: Record<string, { label: string; bg: string; text: string; borde
   일부_회신:      { label: "일부 회신 도착",  bg: "bg-blue-100",   text: "text-blue-800",    border: "border-blue-300",    leftBorder: "border-l-blue-500",    dotColor: "bg-blue-500" },
   회신_대기:      { label: "회신 대기 중",    bg: "bg-yellow-100",  text: "text-yellow-800",   border: "border-yellow-300",   leftBorder: "border-l-yellow-500",   dotColor: "bg-yellow-500" },
   // §dashboard-mobile #9 — "요청 발송 전"은 위험(red)이 아니라 §12 s1 발송 단계(파랑·중립 대기). red 오독 해소.
-  요청_접수:      { label: "발송 대기",    bg: "bg-blue-100",   text: "text-blue-800",    border: "border-blue-300",    leftBorder: "border-l-blue-400",    dotColor: "bg-blue-500" },
+  요청_접수:      { label: "발송 대기",    bg: "bg-[#dce8ff]",   text: "text-[#1d4ed8]",    border: "border-[#bcd3fb]",    leftBorder: "border-l-blue-400",    dotColor: "bg-blue-500" },
   발주_완료:      { label: "발주 전환 가능",  bg: "bg-emerald-100",text: "text-emerald-800", border: "border-emerald-300", leftBorder: "border-l-emerald-500", dotColor: "bg-emerald-500" },
   취소됨:         { label: "취소됨",          bg: "bg-slate-100",  text: "text-slate-600",   border: "border-slate-300",   leftBorder: "border-l-slate-300",   dotColor: "bg-slate-400" },
 };
@@ -642,7 +642,7 @@ function QuoteCard({
       /* §quote-screen-sian P6.5 §01 — 카드 좌측 세로 accent 띠(Claude 트로프) 제거.
          선택/강조는 전체 테두리 + ring 으로만(시안 정합). border-l-[3px]·opStatus.leftBorder 삭제. */
       /* §quote-card-sian — 카드 바깥 테두리 강화(border-slate-200) + shadow-sm 으로 시안 정합(평면 borderless 해소). */
-      className={`bg-pn rounded-xl border shadow-sm transition-all duration-200 p-4 cursor-pointer hover:shadow-md hover:-translate-y-0.5 animate-stagger-up focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2 ${
+      className={`bg-pn rounded-xl border border-[#dbe2ec] shadow-[0_1px_2px_rgba(15,23,42,0.05),0_4px_12px_rgba(15,23,42,0.06)] transition-all duration-200 p-4 cursor-pointer hover:shadow-md hover:-translate-y-0.5 animate-stagger-up focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2 ${
         isSelectedForBatch ? "border-violet-500/60 ring-1 ring-violet-500/30 bg-violet-50/40"
         : isSelected ? "border-blue-600/40 ring-1 ring-blue-600/20 bg-blue-600/5"
         : delayed ? "border-red-600/40"
@@ -685,13 +685,13 @@ function QuoteCard({
               className="peer sr-only"
               aria-label={`${displayTitle} 일괄 발송 선택`}
             />
-            <span className="flex h-5 w-5 items-center justify-center rounded-md border border-slate-300 bg-white transition-colors peer-checked:border-violet-600 peer-checked:bg-violet-600 peer-focus-visible:ring-2 peer-focus-visible:ring-violet-500">
+            <span className="flex h-[17px] w-[17px] items-center justify-center rounded-[5px] border-[1.5px] border-[#e2e8f0] bg-white transition-colors peer-checked:border-[#2563eb] peer-checked:bg-[#2563eb] peer-focus-visible:ring-2 peer-focus-visible:ring-[#2563eb]">
               <CheckCircle2 className="h-3 w-3 text-white" />
             </span>
           </label>
           <span className="sr-only">일괄 발송 선택</span>
           {isSelectedForBatch && (
-            <span className="text-[11px] text-violet-700 font-medium">선택됨</span>
+            <span className="text-[11px] text-[#2563eb] font-medium">선택됨</span>
           )}
         </div>
       )}
@@ -2161,7 +2161,7 @@ function QuotesPageContent() {
   }, [columnPrefs.order, columnPrefs.visibility, isMobile]);
 
   return (
-    <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
+    <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full bg-[#e9edf4] min-h-full">
 
       {/* ── 헤더 (§11.374 P3.4 — AppPageHeader 채택, 스캔 포함 액션 우측 통합) ──
           §11.248b #quote-header-actions-responsive 반응형 액션(새 견적/BOM/비교/스캔/모바일 더보기)을
@@ -2821,7 +2821,7 @@ function QuotesPageContent() {
            title 컬럼 min-width 240px 보장 (DEFAULT_COLUMN_PREFS.widths.title = 280, 호영님 spec 정합).
            pointer-events-none 으로 테이블 상호작용 방해 0. */
         <div className="relative">
-          <div className="overflow-x-auto bg-pn rounded-xl border border-bd/80">
+          <div className="overflow-x-auto bg-pn rounded-xl border border-[#dbe2ec] shadow-[0_1px_2px_rgba(15,23,42,0.05),0_4px_12px_rgba(15,23,42,0.06)]">
             {/* §quotes-workbench-rail A — min-w-[900px]: rail push 로 queue 가 좁아져도 컬럼이 찌그러지지 않고
                 래퍼(overflow-x-auto)가 실제로 가로 스크롤하도록 강제. 옛 w-full 단독은 컨테이너 폭에 맞춰
                 압축만 되어 컬럼 붕괴+글자 깨짐 발생(fade-hint 의도와 불일치). */}
@@ -2832,13 +2832,13 @@ function QuotesPageContent() {
                 - §quote-table-sian P2 — 예상금액(price) always 노출, 납기 컬럼 제거
                 - tbody td 순서 일치 — 같은 visibleColumns.map() */}
             {/* §11.242 #6 — 헤더 sticky + 배경 강화 (bg-gray-100 + uppercase + tracking-wide + border-b-2). */}
-            <thead className="bg-gray-100 border-b-2 border-gray-200 sticky top-0 z-10">
+            <thead className="bg-[#f8fafc] border-b border-[#e2e8f0] sticky top-0 z-10">
               <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
                 {/* §11.240 + §11.242 #10 — 첫 column = batch selection checkbox + sticky left-0. */}
                 <th
                   data-batch-select-header
                   style={{ width: 40, minWidth: 40 }}
-                  className="px-2 py-2 text-center sticky left-0 bg-gray-100 z-20"
+                  className="px-2 py-2 text-center sticky left-0 bg-[#f8fafc] z-20"
                   aria-label="전체 견적 선택/해제"
                 >
                   {/* §quote-card-sian — thead 전체선택 커스텀 체크박스(시안 정합). 부분선택=dash. 핸들러 보존. */}
@@ -2860,10 +2860,10 @@ function QuotesPageContent() {
                         }
                       }}
                     />
-                    <span className={`flex h-5 w-5 items-center justify-center rounded-md border transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-violet-500 ${
+                    <span className={`flex h-[17px] w-[17px] items-center justify-center rounded-[5px] border-[1.5px] transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-[#2563eb] ${
                       sortedQuotes.some((q) => selectedQuoteIds.has(q.id))
-                        ? "border-violet-600 bg-violet-600"
-                        : "border-slate-300 bg-white"
+                        ? "border-[#2563eb] bg-[#2563eb]"
+                        : "border-[#e2e8f0] bg-white"
                     }`}>
                       {sortedQuotes.length > 0 && sortedQuotes.every((q) => selectedQuoteIds.has(q.id)) ? (
                         <CheckCircle2 className="h-3 w-3 text-white" />
@@ -3113,11 +3113,11 @@ function QuotesPageContent() {
                       //   우선순위는 priority 컬럼 pill(P3)로 표시 — 좌측 띠 중복 제거. 선택 강조도 좌측 border-l-blue 대신 전체 ring.
                       const isBatchSelected = selectedQuoteIds.has(quote.id);
                       const bgClass = isBatchSelected
-                        ? "bg-blue-50 ring-1 ring-inset ring-blue-500 hover:bg-blue-100"
+                        ? "bg-blue-600/5 shadow-[inset_3px_0_0_#2563eb] hover:bg-blue-600/10"
                         : isSelected
                           ? "bg-blue-50/60 hover:bg-blue-100/60"
                           // §quote-case-bg-sian — zebra(짝/홀 흰·회색) 제거 → 시안 uniform 흰 행. 행 구분은 tbody divide-y 보더. 호버 slate-100.
-                          : "bg-white hover:bg-slate-100";
+                          : "bg-white hover:bg-[#f8fafc]";
                       return `h-12 ${bgClass} cursor-pointer transition-colors duration-150 ${focusRing}`;
                     })()}
                   >
@@ -3139,7 +3139,7 @@ function QuotesPageContent() {
                           checked={selectedQuoteIds.has(quote.id)}
                           onChange={() => toggleQuoteSelection(quote.id)}
                         />
-                        <span className="flex h-5 w-5 items-center justify-center rounded-md border border-slate-300 bg-white transition-colors peer-checked:border-violet-600 peer-checked:bg-violet-600 peer-focus-visible:ring-2 peer-focus-visible:ring-violet-500">
+                        <span className="flex h-[17px] w-[17px] items-center justify-center rounded-[5px] border-[1.5px] border-[#e2e8f0] bg-white transition-colors peer-checked:border-[#2563eb] peer-checked:bg-[#2563eb] peer-focus-visible:ring-2 peer-focus-visible:ring-[#2563eb]">
                           <CheckCircle2 className="h-3 w-3 text-white" />
                         </span>
                       </label>
