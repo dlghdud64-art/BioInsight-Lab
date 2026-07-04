@@ -2161,8 +2161,8 @@ function QuotesPageContent() {
   }, [columnPrefs.order, columnPrefs.visibility, isMobile]);
 
   return (
-    <div className="w-full bg-[#f1f5f9] min-h-full">
-      {/* §quotes-surface-canvas-b 풀블리드+꽉채움 (호영님 2026-07-04): 외부 = 회색 캔버스 full-width, 내부 = 전체 폭 채움(max-w 제거). */}
+    <div className="w-full bg-canvas min-h-full">
+      {/* §dashboard-surface-unify — 회색 캔버스 canonical(bg-canvas=#F1F5F9) 단일 소스화. 풀블리드+꽉채움: 외부 full-width, 내부 전체 폭. */}
       <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 w-full">
 
       {/* ── 헤더 (§11.374 P3.4 — AppPageHeader 채택, 스캔 포함 액션 우측 통합) ──

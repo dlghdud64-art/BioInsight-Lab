@@ -449,7 +449,7 @@ export default function SupportCenterPage() {
   }, [globalSearch, activeTab]);
 
   return (
-    <div className="flex-1 pt-4 md:pt-6 w-full px-4 md:px-8 lg:px-10">
+    <div className="flex-1 min-h-screen bg-canvas pt-4 md:pt-6 w-full px-4 md:px-8 lg:px-10">
       {/* ── 헤더: 좌 title/desc, 우 search ── */}
       <div className="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>

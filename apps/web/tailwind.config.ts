@@ -47,6 +47,7 @@ const config: Config = {
 
         // ── 전역 surface hierarchy (product dark, CSS vars 참조) ──
         sh: "var(--surface-shell)",       // shell — blue-charcoal base
+        canvas: "var(--surface-canvas)",  // §dashboard-surface-unify — 작업 페이지 회색 캔버스(#F1F5F9)
         pg: "var(--surface-page)",        // page — work area
         pn: "var(--surface-panel)",       // panel — card/section
         el: "var(--surface-elevated)",    // elevated — input/search

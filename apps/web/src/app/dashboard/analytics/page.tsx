@@ -402,7 +402,9 @@ export default function AnalyticsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-sh p-4 md:p-6 lg:p-8 pt-4 md:pt-5 space-y-5 max-w-7xl mx-auto w-full">
+    <div className="w-full bg-canvas min-h-screen">
+      {/* §dashboard-surface-unify — 회색 캔버스 full-width 외곽 + 콘텐츠 max-w-7xl 중앙(중앙 회색 컬럼 방지). */}
+      <div className="p-4 md:p-6 lg:p-8 pt-4 md:pt-5 space-y-5 max-w-7xl mx-auto w-full">
 
       {/* ══ 페이지 헤더 ══ */}
       <div className="space-y-3">
@@ -1473,6 +1475,7 @@ export default function AnalyticsPage() {
         )}
       </>)}
 
+      </div>
     </div>
   );
 }

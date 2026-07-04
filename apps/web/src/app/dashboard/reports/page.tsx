@@ -345,7 +345,9 @@ export default function ReportsPage() {
 
 
   return (
-    <div className="flex-1 space-y-5 bg-sh min-h-screen p-3 sm:p-4 md:p-6 max-w-7xl mx-auto w-full">
+    <div className="w-full bg-canvas min-h-screen">
+      {/* §dashboard-surface-unify — 회색 캔버스 full-width 외곽 + 콘텐츠 max-w-7xl 중앙(중앙 회색 컬럼 방지). */}
+      <div className="flex-1 space-y-5 p-3 sm:p-4 md:p-6 max-w-7xl mx-auto w-full">
       {/* ================================================================
           HEADER
           ================================================================ */}
@@ -951,6 +953,7 @@ export default function ReportsPage() {
           )}
         </>
       )}
+      </div>
     </div>
   );
 }

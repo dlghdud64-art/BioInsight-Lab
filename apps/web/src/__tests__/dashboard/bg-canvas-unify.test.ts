@@ -5,6 +5,12 @@
  *       + 구매운영 0건 KPI가 카드 전체 opacity-50으로 흰 캔버스 위 탁한 회색 박스처럼 보임.
  * Fix: 대시보드 라우트 페이지 최상위 래퍼 min-h-screen bg-slate-50* → bg-white(8 페이지).
  *      카드/레일/칩 내부 bg-slate-50 톤은 구획용이라 유지(미변경). KpiCard §B는 260a 진화에서 커버.
+ *
+ * ⚠ 진화 (§dashboard-surface-unify, 호영님 2026-07-04 결정 반전): 작업 페이지를 다시 회색
+ *   캔버스(bg-canvas=#F1F5F9)로 통일. budget·organizations·safety·purchases 는 이제 bg-canvas
+ *   → 본 흰색 테스트 대상에서 제외(canvas 검증은 dashboard-surface-unify.test.ts 소유).
+ *   stock-risk 는 redirect stub(§stock-risk-consolidation)으로 페이지 래퍼 부재 → 제외.
+ *   receiving·purchase-orders·inventory/scan 은 신규 지시 범위 밖이라 흰색 유지(가드 존속).
  */
 
 import { describe, it, expect } from "vitest";
@@ -15,13 +21,9 @@ const ROOT = join(__dirname, "..", "..");
 const read = (rel: string) => readFileSync(join(ROOT, rel), "utf8");
 
 const PAGES: Array<[string, string]> = [
-  ["budget", "app/dashboard/budget/page.tsx"],
-  ["organizations", "app/dashboard/organizations/page.tsx"],
-  ["safety", "app/dashboard/safety/page.tsx"],
+  // 신규 canvas 지시 범위 밖 — 흰색 유지 대상만 존속.
   ["receiving", "app/dashboard/receiving/page.tsx"],
   ["purchase-orders", "app/dashboard/purchase-orders/page.tsx"],
-  ["purchases", "app/dashboard/purchases/page.tsx"],
-  ["stock-risk", "app/dashboard/stock-risk/page.tsx"],
   ["inventory/scan", "app/dashboard/inventory/scan/page.tsx"],
 ];
 

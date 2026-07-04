@@ -516,7 +516,7 @@ function SettingsPageContent() {
   // ══════════════════════════════════════════════
 
   return (
-    <div className="w-full min-h-screen bg-[#F8FAFC]">
+    <div className="w-full min-h-screen bg-canvas">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {/* ═══ Page Header ═══ */}
         <div className="mb-6">

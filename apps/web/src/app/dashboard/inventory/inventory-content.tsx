@@ -1353,7 +1353,7 @@ function InventoryPageContent() {
   };
 
   return (
-    <div className="w-full max-w-full px-3 sm:px-4 md:px-6 py-4 md:py-8 pb-20 lg:pb-8">
+    <div className="w-full max-w-full min-h-screen bg-canvas px-3 sm:px-4 md:px-6 py-4 md:py-8 pb-20 lg:pb-8">
       {/* §11.326 Phase 4 — 의심 입고 데이터 검토 배너(의심 0건이면 미노출, 세션 dismiss).
           닫아도 아래 "검토 권장 N건" 칩으로 재진입 가능(dead-end 방지). */}
       {suspectCount > 0 && !suspectBannerDismissed && (

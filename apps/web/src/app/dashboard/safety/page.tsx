@@ -167,9 +167,11 @@ export default function SafetyManagerPage() {
   // §msds-version-validation — 버전상태 집계(최신본/구버전 의심/출처 없음). 단일 카운트 소스.
   const [msdsVersionSummary, setMsdsVersionSummary] = useState<MsdsVersionSummary>({ current: 0, stale: 0, unknown: 0, total: 0 });
   const safetyQuery = useQuery({
-    queryKey: ["safety-products"],
+    queryKey: ["safety-products", "REAGENT"],
     queryFn: async () => {
-      const res = await fetch("/api/safety/products?limit=100");
+      // §safety-modal-upgrade P1 (호영님 2026-07-04) — 안전 관리 = 시약(REAGENT) 한정(핸드오프 §0).
+      //   비시약(기구·장비·원료·소모품) 제외 → 목록·미등록·GMP/KOSHA 준비도 KPI 시약 기준 정상화.
+      const res = await fetch("/api/safety/products?limit=100&category=REAGENT");
       if (!res.ok) throw new Error("안전 데이터를 불러오지 못했습니다.");
       const data = await res.json();
       return (data.products ?? []) as SafetyApiProduct[];
@@ -240,7 +242,8 @@ export default function SafetyManagerPage() {
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
   // ── AI Queue completion ──
-  const [completedQueueIds, setCompletedQueueIds] = useState<Set<number>>(new Set());
+  // §safety-modal-upgrade P2 (호영님 2026-07-04) — AI 큐 "완료 처리" 로컬 state 제거.
+  //   저장 안 되는 no-op(새로고침 리셋) = canonical truth 위반. 완료는 MSDS·점검 등록으로 canonical 상태가 바뀌면 큐에서 자동 이탈.
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [aiPanelPhase, setAiPanelPhase] = useState<"closed" | "preparing" | "ready" | "running" | "success" | "error">("closed");
   // §msds-version-validation ③ — 점검 준비 마법사(3단계: 범위 → 담당·일정 → 패키지). 종착 = 체크리스트 CSV export(실 산출물).
@@ -504,7 +507,7 @@ export default function SafetyManagerPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white p-4 md:p-8 pt-4 md:pt-6">
+    <div className="min-h-screen bg-canvas p-4 md:p-8 pt-4 md:pt-6">
       {/* §11.333 Part A — 운영 화면 wide 정책 정합. 옛 max-w-7xl(1280px) → max-w-full
           (다른 운영 화면 dashboard/quotes/inventory/purchase-orders/receiving 와 동일). */}
       <div className="max-w-full mx-auto space-y-5">
@@ -870,14 +873,13 @@ export default function SafetyManagerPage() {
             <div className="max-h-[480px] overflow-y-auto space-y-0 divide-y divide-slate-100">
               {queueItems.slice(0, 8).map((q: ClassifiedSafetyItem, i: number) => {
                 const style = CLASS_STYLE[q.classification];
-                const isCompleted = completedQueueIds.has(q.id);
                 // §11.291 — immediate_action classification 시 data-priority="urgent"
                 // 배너 CTA 의 querySelectorAll target. 3초 ring-red-500 animate-pulse.
                 const isUrgent = q.classification === "immediate_action";
                 return (
                   <div key={q.id}
                     data-priority={isUrgent ? "urgent" : "normal"}
-                    className={`py-4 first:pt-0 last:pb-0 rounded transition-opacity ${isCompleted ? "opacity-40" : ""}`}>
+                    className="py-4 first:pt-0 last:pb-0 rounded">
                     <div className="flex items-start gap-3">
                       <span className="text-sm font-bold text-slate-300 w-4 flex-shrink-0 mt-0.5">{i + 1}</span>
                       <div className="flex-1 min-w-0">
@@ -895,13 +897,6 @@ export default function SafetyManagerPage() {
                           {q.nextAction} <ArrowRight className="h-3 w-3" />
                         </button>
                       </div>
-                      <button
-                        onClick={() => setCompletedQueueIds((prev) => { const next = new Set(prev); if (next.has(q.id)) next.delete(q.id); else next.add(q.id); return next; })}
-                        className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${isCompleted ? "text-emerald-500 bg-emerald-50" : "text-slate-300 hover:text-slate-500 hover:bg-slate-50"}`}
-                        title="완료 처리"
-                      >
-                        <CheckCircle2 className="h-4 w-4" />
-                      </button>
                     </div>
                     {/* §11.291b #safety-card-mobile-inline-expand — 호영님 P0
                         audit: 카드 큐 nextAction button click → setSelectedItemId

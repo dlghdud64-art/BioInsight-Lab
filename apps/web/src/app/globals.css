@@ -158,6 +158,8 @@ div.quote-table td.no-column-cell {
     --surface-panel: var(--app-panel-3);
     --surface-elevated: #F1F5F9;
     --surface-strong: #E2E8F0;
+    /* §dashboard-surface-unify (호영님 2026-07-04) — 작업 페이지 회색 캔버스 canonical. 카드(흰색)를 부양. 홈(bg-sh=#F8FAFC)·admin 제외. */
+    --surface-canvas: #F1F5F9;
     --border-default: #E2E8F0;
     --border-strong: #CBD5E1;
 

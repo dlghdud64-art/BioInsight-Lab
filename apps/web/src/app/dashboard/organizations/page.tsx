@@ -317,7 +317,7 @@ export default function OrganizationsPage() {
   /* ================================================================ */
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-canvas">
       <div className="mx-auto w-full max-w-7xl p-4 md:p-8 space-y-6">
 
         {/* ═══ 페이지 헤더 ═══ */}
