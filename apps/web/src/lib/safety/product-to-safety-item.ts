@@ -14,7 +14,8 @@
  *  - icons = pictograms(안전 페이지 키: corrosive/toxic/flammable/oxidizer)
  *  - ppe   = product.ppe → [{type, required:true}]
  *  - cas   = Product 에 필드 없음 → "" (페이지는 빈 표시)
- *  - loc/lastInspection = Product 에 없음 → "" / null (입고·점검 연계는 후속)
+ *  - loc = Product 에 없음 → "" (입고 연계는 후속)
+ *  - lastInspection = §SM-P4f product.lastInspectedAt 투영(P4b 물질 점검 저장 시 갱신), 없으면 null
  */
 import type { SafetyItemInput, SafetyLevel, ActionStatus } from "@/lib/ai/safety-decision-engine";
 // §msds-version-validation — 버전상태 휴리스틱 분류(단일 카운트 소스).
@@ -33,6 +34,8 @@ export interface SafetyApiProduct {
   pictograms?: unknown;
   ppe?: unknown;
   createdAt?: string | null;
+  // §SM-P4f — 물질 대표 점검 최근 시각(P4b inspection 저장 시 갱신). GET include 로 반환.
+  lastInspectedAt?: string | null;
   sdsDocuments?: Array<{
     id: string;
     createdAt?: string | null;
@@ -110,7 +113,8 @@ export function adaptSafetyProducts(products: SafetyApiProduct[]): SafetyAdapter
       hasMsds,
       msdsUpdatedAt: latestSds?.createdAt ?? null,
       registeredAt: p.createdAt ?? new Date().toISOString(),
-      lastInspection: null,
+      // §SM-P4f — 물질 대표 점검 투영(P4b lastInspectedAt). YYYY-MM-DD(파싱·표시 양립), null 가드.
+      lastInspection: p.lastInspectedAt ? new Date(p.lastInspectedAt).toISOString().split("T")[0] : null,
       storageCondition: p.storageCondition ?? "",
       loc: "",
       icons,
