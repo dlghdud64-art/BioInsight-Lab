@@ -6,8 +6,9 @@
  * ⚠️ 정직: 별도 receiving API 없음. 실데이터 = ops-console ModuleLandingItem(blockerSummary/
  *   dueState/bucketKey). 문서게이트 매핑: bucketKey "blocked"=문서 대기(차단) / "ready"=반영 가능.
  *   blockerSummary = 문서 미첨부 사유(성적서/MSDS 등) 그대로. 가짜 데이터 0.
- * 목업 §04: 2 KPI(문서 대기/반영 가능) + 칩(전체/문서대기/반영가능) + 문서게이트 카드(좌측 레일·
- *   상태 pill·문서 라벨·CTA). CTA → onItemClick(실 라우팅). no-op 0.
+ * 핸드오프(입고 모바일웹): 2 KPI(흰 카드·숫자색·7px 도트, 꽉 찬 배경 미사용) + 칩(전체/문서대기/
+ *   반영가능) + 문서게이트 카드(상태=테두리 색만·좌측 세로띠 없음·상태 pill·문서 라벨·CTA).
+ *   CTA → onItemClick(실 라우팅). no-op 0.
  * §11.302: 차단/문서대기=rose · 반영가능=emerald · 주의(due_soon)=amber #b45821.
  */
 import { useMemo, useState } from "react";
@@ -44,10 +45,11 @@ function GateCard({
     <button
       type="button"
       onClick={() => onClick(item)}
-      className="w-full text-left rounded-xl border border-slate-200 bg-white overflow-hidden flex active:bg-slate-50 transition-colors"
+      className={`relative w-full text-left rounded-xl border bg-white overflow-hidden active:bg-slate-50 active:scale-[0.99] transition ${
+        blocked ? "border-rose-300" : "border-emerald-300"
+      }`}
     >
-      <div className={`w-1 shrink-0 ${blocked ? "bg-rose-500" : "bg-emerald-500"}`} />
-      <div className="flex-1 min-w-0 p-3.5">
+      <div className="min-w-0 p-3.5">
         <div className="flex items-center justify-between gap-2 mb-1.5">
           <span
             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold ${
@@ -122,15 +124,22 @@ export function MobileReceivingView({
 
   return (
     <div className="space-y-3">
-      {/* 2 KPI (목업 §04) */}
+      {/* 2 KPI (핸드오프 정합) — 흰 카드 + 숫자만 색 강조 + 7px 상태 도트.
+          꽉 찬 배경색 미사용(절제). 0건 = 회색 비활성 톤(§11.311). */}
       <div className="flex gap-2">
-        <div className={`flex-1 rounded-[14px] px-3 py-2.5 border ${blockedCount > 0 ? "bg-rose-50 border-rose-200" : "bg-slate-50 border-slate-200"}`}>
-          <p className={`text-xl font-extrabold ${blockedCount > 0 ? "text-rose-700" : "text-slate-400"}`}>{blockedCount}<span className="text-[11px] font-semibold"> 건</span></p>
-          <p className={`text-[11px] mt-0.5 ${blockedCount > 0 ? "text-rose-600" : "text-slate-400"}`}>문서 대기</p>
+        <div className={`flex-1 rounded-[14px] px-3 py-2.5 border bg-white ${blockedCount > 0 ? "border-slate-300 shadow-sm" : "border-slate-200"}`}>
+          <p className={`text-xl font-extrabold ${blockedCount > 0 ? "text-rose-600" : "text-slate-400"}`}>{blockedCount}<span className="text-[11px] font-semibold"> 건</span></p>
+          <p className={`text-[11px] mt-0.5 flex items-center gap-1.5 ${blockedCount > 0 ? "text-slate-600" : "text-slate-400"}`}>
+            <span className={`h-[7px] w-[7px] rounded-full shrink-0 ${blockedCount > 0 ? "bg-rose-500" : "bg-slate-300"}`} />
+            문서 대기
+          </p>
         </div>
-        <div className="flex-1 rounded-[14px] px-3 py-2.5 border bg-emerald-50 border-emerald-200">
-          <p className="text-xl font-extrabold text-emerald-700">{readyCount}<span className="text-[11px] font-semibold"> 건</span></p>
-          <p className="text-[11px] mt-0.5 text-emerald-600">반영 가능</p>
+        <div className={`flex-1 rounded-[14px] px-3 py-2.5 border bg-white ${readyCount > 0 ? "border-slate-300 shadow-sm" : "border-slate-200"}`}>
+          <p className={`text-xl font-extrabold ${readyCount > 0 ? "text-emerald-600" : "text-slate-400"}`}>{readyCount}<span className="text-[11px] font-semibold"> 건</span></p>
+          <p className={`text-[11px] mt-0.5 flex items-center gap-1.5 ${readyCount > 0 ? "text-slate-600" : "text-slate-400"}`}>
+            <span className={`h-[7px] w-[7px] rounded-full shrink-0 ${readyCount > 0 ? "bg-emerald-500" : "bg-slate-300"}`} />
+            반영 가능
+          </p>
         </div>
       </div>
 
