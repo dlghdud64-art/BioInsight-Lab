@@ -242,6 +242,12 @@ function SettingsPageContent() {
   const [cancelReason, setCancelReason] = useState<CancelReason | null>(null);
   const [cancelFeedback, setCancelFeedback] = useState("");
 
+  // ── §설정-고도화 §4.3 결제 수단 등록 모달 state (호영님 2026-07-04) ──
+  //   🛑 PCI: 카드번호 등 민감정보는 component state 에 보관하지 않음(카드
+  //   입력은 uncontrolled shell). 방식 토글 + 모달 open 만 상태로 관리.
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "invoice">("card");
+
   // ── Save state ──
   const [isSavingNotifications, setIsSavingNotifications] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -1274,9 +1280,19 @@ function SettingsPageContent() {
                       현재 플랜
                     </Badge>
                     <h3 className="text-2xl md:text-3xl font-extrabold mb-2 break-keep">LabAxis Enterprise</h3>
-                    <p className="text-xs md:text-sm text-slate-300 mb-6 break-keep">
+                    <p className="text-xs md:text-sm text-slate-300 mb-4 break-keep">
                       대규모 연구소 및 R&D 센터를 위한 무제한 엔터프라이즈 플랜
                     </p>
+                    {/* §설정-고도화 §4.1 (호영님 2026-07-04) — 플랜 포함 특전 칩.
+                        추상 플랜명 아래 실제 제공 가치 노출(운영자 판단 근거). */}
+                    <div className="flex flex-wrap gap-1.5 mb-6">
+                      {["견적·구매 무제한", "LOT·GMP 추적", "승인자 매트릭스", "감사 로그 내보내기"].map((perk) => (
+                        <span key={perk} className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-800/60 px-2.5 py-1 text-[10px] font-medium text-slate-200">
+                          <Check className="h-3 w-3 text-emerald-400" />
+                          {perk}
+                        </span>
+                      ))}
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-4">
                         <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">다음 청구일</p>
@@ -1304,7 +1320,7 @@ function SettingsPageContent() {
                         variant="outline"
                         size="sm"
                         className="h-9 px-4 text-xs bg-transparent border-slate-700 text-slate-200 hover:bg-slate-800 hover:text-white font-medium rounded-lg"
-                        onClick={() => toast({ title: "결제 수단 변경", description: "엔터프라이즈 결제는 청구서 발행 방식입니다. 운영 지원 센터로 문의해 주세요." })}
+                        onClick={() => { setPaymentMethod("card"); setIsPaymentOpen(true); }}
                       >
                         결제 수단 변경
                       </Button>
@@ -1398,12 +1414,140 @@ function SettingsPageContent() {
                     })()}
                   </div>
                 </SectionCard>
+
+                {/* §설정-고도화 §4.2 (호영님 2026-07-04) — 결제 수단 카드 신설.
+                    다크 카드의 "결제 수단 변경" 버튼이 대상 없이 떠 있던 것 정합
+                    → 결제 수단 canonical surface. 엔터프라이즈는 현재 청구서 발행
+                    (계좌이체) 방식이라 자동 결제 수단 미등록 상태를 정직하게 표시.
+                    등록 CTA 는 §4.3 모달로 배선(dead-button 아님). */}
+                <SectionCard title="결제 수단" icon={CreditCard} topRightLabel="직접 관리">
+                  <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/60 px-4 py-6 flex flex-col items-center text-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center">
+                      <CreditCard className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-700 break-keep">등록된 자동 결제 수단이 없습니다</p>
+                      <p className="text-xs text-slate-500 mt-1 break-keep">현재 엔터프라이즈는 청구서 발행(계좌이체) 방식입니다. 신용카드 자동결제 또는 세금계산서 발행을 등록할 수 있습니다.</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="gap-2 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => { setPaymentMethod("card"); setIsPaymentOpen(true); }}
+                    >
+                      <CreditCard className="h-3.5 w-3.5" />
+                      결제 수단 등록
+                    </Button>
+                  </div>
+                </SectionCard>
               </div>
             )}
 
           </div>
         </div>
       </div>
+
+      {/* §설정-고도화 §4.3 (호영님 2026-07-04) — 결제 수단 등록 모달.
+          🛑 PCI: 카드번호를 자체 API 로 POST 하지 않음. 카드 입력은 uncontrolled
+          shell(state 미보관, value/onChange 없음). 실제 등록은 PG(토스페이먼츠)
+          보안 토큰화 또는 운영 지원 센터 handoff — fake "저장 완료" 성공 없음
+          (no-op 금지). 실 PG 빌링키 연동은 별도 트랙(#billing-pg-billingkey). */}
+      <Dialog open={isPaymentOpen} onOpenChange={setIsPaymentOpen}>
+        <DialogContent className="bg-white border-slate-200 rounded-2xl max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-slate-900">결제 수단 등록</DialogTitle>
+            <DialogDescription className="text-slate-500">신용카드 자동결제 또는 세금계산서·계좌이체 방식을 선택하세요.</DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setPaymentMethod("card")}
+              className={cn(
+                "rounded-lg border px-3 py-2.5 text-xs font-medium transition-colors",
+                paymentMethod === "card" ? "border-blue-500 bg-blue-50 text-blue-700" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
+              )}
+            >
+              신용카드 자동결제
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaymentMethod("invoice")}
+              className={cn(
+                "rounded-lg border px-3 py-2.5 text-xs font-medium transition-colors",
+                paymentMethod === "invoice" ? "border-blue-500 bg-blue-50 text-blue-700" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
+              )}
+            >
+              세금계산서·계좌이체
+            </button>
+          </div>
+
+          {paymentMethod === "card" ? (
+            <div className="space-y-3 pt-1">
+              <FieldBlock label="카드 번호">
+                <Input inputMode="numeric" autoComplete="off" placeholder="0000 0000 0000 0000" className="bg-white border-slate-200 text-slate-900 h-10 rounded-xl" />
+              </FieldBlock>
+              <div className="grid grid-cols-2 gap-3">
+                <FieldBlock label="유효기간 (MM/YY)">
+                  <Input autoComplete="off" placeholder="MM/YY" className="bg-white border-slate-200 text-slate-900 h-10 rounded-xl" />
+                </FieldBlock>
+                <FieldBlock label="CVC">
+                  <Input inputMode="numeric" autoComplete="off" placeholder="000" className="bg-white border-slate-200 text-slate-900 h-10 rounded-xl" />
+                </FieldBlock>
+              </div>
+              <FieldBlock label="소유자명">
+                <Input autoComplete="off" placeholder="카드에 표기된 이름" className="bg-white border-slate-200 text-slate-900 h-10 rounded-xl" />
+              </FieldBlock>
+              <div className="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+                <Lock className="h-3.5 w-3.5 text-slate-400 mt-0.5 shrink-0" />
+                <p className="text-[11px] text-slate-500 break-keep leading-relaxed">
+                  카드 정보는 PG사(토스페이먼츠)의 보안 결제창에서 직접 토큰화되어 처리되며, LabAxis 서버에는 카드번호를 저장하지 않습니다.
+                </p>
+              </div>
+              <Button
+                type="button"
+                className="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                onClick={() => {
+                  // 🛑 fake save·카드 POST 없음 — 정직한 PG handoff.
+                  toast({ title: "PG 보안 결제 등록 안내", description: "카드 자동결제는 PG사 보안 결제창에서 토큰화 방식으로 등록됩니다. 현재 PG 연동 준비 중이며, 운영 지원 센터로 문의해 주세요." });
+                  setIsPaymentOpen(false);
+                }}
+              >
+                PG 보안 결제로 등록
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3 pt-1">
+              <FieldBlock label="사업자등록번호">
+                <Input inputMode="numeric" autoComplete="off" placeholder="000-00-00000" className="bg-white border-slate-200 text-slate-900 h-10 rounded-xl" />
+              </FieldBlock>
+              <FieldBlock label="상호 (법인명)">
+                <Input autoComplete="off" placeholder="사업자등록증상 상호" className="bg-white border-slate-200 text-slate-900 h-10 rounded-xl" />
+              </FieldBlock>
+              <FieldBlock label="대표자명">
+                <Input autoComplete="off" placeholder="대표자 성명" className="bg-white border-slate-200 text-slate-900 h-10 rounded-xl" />
+              </FieldBlock>
+              <FieldBlock label="세금계산서 수신 이메일">
+                <Input type="email" autoComplete="off" placeholder="tax@company.com" className="bg-white border-slate-200 text-slate-900 h-10 rounded-xl" />
+              </FieldBlock>
+              <div className="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+                <FileText className="h-3.5 w-3.5 text-slate-400 mt-0.5 shrink-0" />
+                <p className="text-[11px] text-slate-500 break-keep leading-relaxed">
+                  세금계산서·계좌이체 등록은 운영 지원 센터를 통해 처리됩니다. 위 정보를 준비해 문의해 주세요.
+                </p>
+              </div>
+              <Button
+                type="button"
+                className="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                onClick={() => {
+                  toast({ title: "세금계산서·계좌이체 등록 안내", description: "세금계산서 발행 및 계좌이체 등록은 운영 지원 센터에서 도와드립니다. 준비하신 사업자 정보로 운영 지원 센터에 문의해 주세요." });
+                  setIsPaymentOpen(false);
+                }}
+              >
+                운영 지원 센터로 등록 요청
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Cancel dialog */}
       <Dialog open={isCancelOpen} onOpenChange={(o) => { if (!o) resetCancelFlow(); else setIsCancelOpen(true); }}>
