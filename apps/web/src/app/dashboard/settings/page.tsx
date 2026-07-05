@@ -51,7 +51,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Upload, Lock, Bell, Mail, Shield, Loader2, ChevronRight, ChevronLeft, Package, CreditCard, Receipt, Check, RotateCcw, AlertCircle, Clock, FileText, AlertTriangle, XCircle, Zap, ClipboardCheck, Server, Trash2, UserPlus, KeyRound, Crown, Settings, Brain, Link2, Building2, Globe, Fingerprint, Database, Webhook, ShieldCheck, Users, ArrowRight } from "lucide-react";
+import { User, Upload, Lock, Bell, Shield, Loader2, ChevronRight, ChevronLeft, CreditCard, Receipt, Check, RotateCcw, FileText, Zap, Server, Settings, Brain, Link2, Building2, Globe, Fingerprint, Database, Webhook, ShieldCheck, Users, ArrowRight } from "lucide-react";
+// #settings-notification-persist (호영님 2026-07-05) — 알림 선호 canonical 지속.
+//   useUserPreferences.notificationToggles(7 카테고리) = dispatch(preference-filter) 소비 truth.
+import { useUserPreferences } from "@/lib/preferences/user-preferences";
+import type { NotificationCategory } from "@/lib/notifications/event-category-map";
 import { cn } from "@/lib/utils";
 
 // ══════════════════════════════════════════════
@@ -74,19 +78,6 @@ type SettingsSection =
   | "notifications"
   | "billing";
 
-type DeliveryMode = "immediate" | "daily";
-
-interface NotificationItem {
-  id: string;
-  category: string;
-  label: string;
-  description: string;
-  icon: React.ElementType;
-  inApp: boolean;
-  email: boolean;
-  deliveryOverride: DeliveryMode | null;
-}
-
 type CancelReason = "price" | "features" | "frequency" | "team" | "alternative" | "performance" | "other";
 
 const CANCEL_REASONS: { value: CancelReason; label: string }[] = [
@@ -99,7 +90,19 @@ const CANCEL_REASONS: { value: CancelReason; label: string }[] = [
   { value: "other", label: "기타" },
 ];
 
-const SAFETY_CRITICAL_IDS = new Set(["stock_low", "stock_expiry", "safety_compliance", "system_security"]);
+// #settings-notification-persist — canonical 7 카테고리(event-category-map.ts 정합).
+//   dispatch(preference-filter)가 notificationToggles[key]===false 만 차단(default ON).
+//   17 항목 UI 매트릭스를 7 카테고리로 통합 — 다대일 상호오염·미소비 토글 제거.
+//   immediate=안전 중요(항상 즉시 전송, 표시용 배지).
+const NOTIFICATION_CATEGORIES: { key: NotificationCategory; label: string; description: string; immediate?: boolean }[] = [
+  { key: "stock_alert", label: "재고 부족", description: "안전 재고 수량 이하로 떨어진 품목 알림", immediate: true },
+  { key: "expiry_warning", label: "유효기간 임박·폐기", description: "유효기간 임박 및 만료·손상 품목 폐기 검토 알림", immediate: true },
+  { key: "quote_arrived", label: "견적 수신·응답", description: "공급사 견적 도착 및 응답 지연 알림" },
+  { key: "approval_pending", label: "승인 대기", description: "구매 요청·견적·발주 승인 대기 알림" },
+  { key: "safety_alert", label: "안전·규정", description: "MSDS 미등록, 보관·라벨링 규정 위반 등 안전 알림", immediate: true },
+  { key: "delivery_complete", label: "배송·입고 완료", description: "주문 배송 완료 및 입고 처리 알림" },
+  { key: "system", label: "시스템·조직·결제", description: "PDF 분석 실패·보안 알림, 조직 초대·권한 변경, 결제·구독 상태 포함", immediate: true },
+];
 
 function getSaveOffer(reason: CancelReason | null): { title: string; description: string; cta: string } {
   switch (reason) {
@@ -214,27 +217,17 @@ function SettingsPageContent() {
   const [approvalTier2, setApprovalTier2] = useState("5000000");
   const [approvalTier3, setApprovalTier3] = useState("10000000");
 
-  // ── Notification state ──
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    { id: "stock_low", category: "재고", label: "재고 부족", description: "안전 재고 수량 이하로 떨어진 품목 알림", icon: Package, inApp: true, email: false, deliveryOverride: "immediate" },
-    { id: "stock_expiry", category: "재고", label: "만료 임박", description: "유효기간 7일 이내 품목 자동 알림", icon: AlertTriangle, inApp: true, email: false, deliveryOverride: "immediate" },
-    { id: "stock_disposal", category: "재고", label: "폐기 검토", description: "만료·손상 품목의 폐기 절차 검토 요청", icon: Trash2, inApp: true, email: false, deliveryOverride: null },
-    { id: "quote_new", category: "견적/구매", label: "견적 도착", description: "요청한 견적에 대한 공급사 응답 도착", icon: FileText, inApp: true, email: false, deliveryOverride: null },
-    { id: "quote_approval", category: "견적/구매", label: "승인 필요", description: "구매 요청 또는 견적 승인 대기 알림", icon: ClipboardCheck, inApp: true, email: true, deliveryOverride: null },
-    { id: "quote_delay", category: "견적/구매", label: "공급사 응답 지연", description: "견적 요청 후 48시간 이상 미응답", icon: Clock, inApp: true, email: false, deliveryOverride: null },
-    { id: "org_invite", category: "조직/권한", label: "초대", description: "조직 또는 워크스페이스 초대 수신", icon: UserPlus, inApp: true, email: true, deliveryOverride: null },
-    { id: "org_role_change", category: "조직/권한", label: "권한 변경", description: "내 역할 또는 팀원 권한 변경 알림", icon: KeyRound, inApp: true, email: false, deliveryOverride: null },
-    { id: "org_owner_transfer", category: "조직/권한", label: "Owner 이전", description: "조직 소유권 이전 요청 또는 완료", icon: Crown, inApp: true, email: true, deliveryOverride: null },
-    { id: "safety_compliance", category: "안전", label: "규정 위반", description: "보관 조건, 라벨링 등 규정 위반 경고", icon: AlertCircle, inApp: true, email: false, deliveryOverride: "immediate" },
-    { id: "safety_msds", category: "안전", label: "MSDS 미등록", description: "안전보건자료 미등록 또는 누락 품목 알림", icon: Shield, inApp: true, email: false, deliveryOverride: null },
-    { id: "billing_failed", category: "결제/구독", label: "결제 실패", description: "카드 만료 또는 결제 수단 오류", icon: XCircle, inApp: true, email: true, deliveryOverride: null },
-    { id: "billing_plan_change", category: "결제/구독", label: "구독 상태 변경", description: "플랜 업그레이드·다운그레이드·갱신 알림", icon: CreditCard, inApp: true, email: true, deliveryOverride: null },
-    { id: "billing_cancel", category: "결제/구독", label: "해지", description: "구독 해지 예정 또는 해지 완료 안내", icon: RotateCcw, inApp: true, email: true, deliveryOverride: null },
-    { id: "system_pdf_fail", category: "시스템", label: "PDF 분석 실패", description: "업로드한 PDF의 자동 분석 실패 알림", icon: FileText, inApp: true, email: false, deliveryOverride: null },
-    { id: "system_security", category: "시스템", label: "보안 알림", description: "비정상 로그인 시도 및 권한 변경", icon: Lock, inApp: true, email: true, deliveryOverride: "immediate" },
-    { id: "system_daily_digest", category: "시스템", label: "일일 요약 메일", description: "하루 동안의 주요 활동을 정리한 요약 메일", icon: Mail, inApp: false, email: true, deliveryOverride: null },
-  ]);
-  const [notificationFrequency, setNotificationFrequency] = useState<DeliveryMode>("immediate");
+  // ── Notification preferences (canonical server-persist) ──
+  // #settings-notification-persist — User.preferences.notificationToggles(7 카테고리)
+  //   useQuery(GET) hydrate + updateNotificationToggles(debounce PATCH). truth = server.
+  const {
+    preferences: userPreferences,
+    updateNotificationToggles,
+    isLoading: isPreferencesLoading,
+  } = useUserPreferences({ enabled: !!session });
+  const notificationToggles = (userPreferences?.notificationToggles ?? {}) as Partial<Record<NotificationCategory, boolean>>;
+  // default ON — 명시 false 만 OFF 표시(dispatch filter 정합).
+  const isCategoryOn = (key: NotificationCategory): boolean => notificationToggles[key] !== false;
 
   // ── Cancel flow state ──
   const [isCancelOpen, setIsCancelOpen] = useState(false);
@@ -248,15 +241,9 @@ function SettingsPageContent() {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"card" | "invoice">("card");
 
-  // ── Save state ──
-  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+  // ── Save state (operator profile 전용) ──
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState(false);
-
-  const [initialNotifications, setInitialNotifications] = useState(() =>
-    JSON.stringify(notifications.map((n) => ({ id: n.id, inApp: n.inApp, email: n.email, deliveryOverride: n.deliveryOverride })))
-  );
-  const [initialFrequency, setInitialFrequency] = useState<DeliveryMode>("immediate");
 
   // ── Queries ──
   const { data: userData } = useQuery({
@@ -432,40 +419,19 @@ function SettingsPageContent() {
     return profileName !== (session?.user?.name || "") || fullPhone !== (savedPhone || "") || profileBio !== "" || profileUrl !== "";
   }, [profileName, session?.user?.name, fullPhone, savedPhone, profileBio, profileUrl]);
 
-  const isNotificationsDirty = useMemo(() => {
-    const currentSnap = JSON.stringify(notifications.map((n) => ({ id: n.id, inApp: n.inApp, email: n.email, deliveryOverride: n.deliveryOverride })));
-    return currentSnap !== initialNotifications || notificationFrequency !== initialFrequency;
-  }, [notifications, initialNotifications, notificationFrequency, initialFrequency]);
-
-  const isDirty = activeSection === "operator" ? isProfileDirty : activeSection === "notifications" ? isNotificationsDirty : false;
+  // #settings-notification-persist — 알림 토글은 자동저장(debounce PATCH)이라
+  //   dirty/저장 버튼 불필요. 저장바는 operator profile 전용.
+  const isDirty = activeSection === "operator" ? isProfileDirty : false;
 
   const handleRevert = useCallback(() => {
-    if (activeSection === "operator") {
-      setProfileName(session?.user?.name || ""); setProfileBio(""); setProfileUrl("");
-      if (userData?.phone && typeof userData.phone === "string") {
-        const match = userData.phone.match(/^(\+\d+)\s*(.*)$/);
-        if (match) { setCountryCode(match[1]); setProfilePhone(match[2].trim()); }
-        else setProfilePhone(userData.phone);
-      } else setProfilePhone("");
-    } else {
-      const parsed = JSON.parse(initialNotifications) as { id: string; inApp: boolean; email: boolean; deliveryOverride: DeliveryMode | null }[];
-      setNotifications((prev) => prev.map((n) => { const saved = parsed.find((s) => s.id === n.id); return saved ? { ...n, inApp: saved.inApp, email: saved.email, deliveryOverride: saved.deliveryOverride } : n; }));
-      setNotificationFrequency(initialFrequency);
-    }
+    setProfileName(session?.user?.name || ""); setProfileBio(""); setProfileUrl("");
+    if (userData?.phone && typeof userData.phone === "string") {
+      const match = userData.phone.match(/^(\+\d+)\s*(.*)$/);
+      if (match) { setCountryCode(match[1]); setProfilePhone(match[2].trim()); }
+      else setProfilePhone(userData.phone);
+    } else setProfilePhone("");
     setSaveSuccess(false); setSaveError(false);
-  }, [activeSection, session?.user?.name, userData?.phone, initialNotifications, initialFrequency]);
-
-  const handleNotificationSave = async () => {
-    setIsSavingNotifications(true); setSaveSuccess(false); setSaveError(false);
-    try {
-      await new Promise((r) => setTimeout(r, 1000));
-      toast({ title: "설정 저장 완료", description: "알림 설정이 반영되었습니다." });
-      setInitialNotifications(JSON.stringify(notifications.map((n) => ({ id: n.id, inApp: n.inApp, email: n.email, deliveryOverride: n.deliveryOverride }))));
-      setInitialFrequency(notificationFrequency);
-      setSaveSuccess(true); setTimeout(() => setSaveSuccess(false), 2000);
-    } catch { setSaveError(true); setTimeout(() => setSaveError(false), 3000); }
-    finally { setIsSavingNotifications(false); }
-  };
+  }, [session?.user?.name, userData?.phone]);
 
   const getInitials = () => {
     if (session?.user?.name) return session.user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
@@ -474,19 +440,6 @@ function SettingsPageContent() {
 
   const userRole = (session?.user?.role as string) || "USER";
   const roleLabel = ROLE_LABELS[userRole] || "사용자 (User)";
-
-  const toggleNotification = (id: string, field: "inApp" | "email") => {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, [field]: !n[field] } : n)));
-  };
-
-  const notificationsByCategory = useMemo(() => {
-    const grouped: { category: string; items: NotificationItem[] }[] = [];
-    const seen = new Set<string>();
-    for (const n of notifications) {
-      if (!seen.has(n.category)) { seen.add(n.category); grouped.push({ category: n.category, items: notifications.filter((x) => x.category === n.category) }); }
-    }
-    return grouped;
-  }, [notifications]);
 
   const resetCancelFlow = () => { setIsCancelOpen(false); setCancelStep(1); setCancelReason(null); setCancelFeedback(""); };
 
@@ -512,7 +465,7 @@ function SettingsPageContent() {
                 notifications 외 section (ontology/security/integrations/billing)
                 에서는 button 자체 hidden (dead button 회귀 차단). 시안 검정 primary
                 button 모양 (bg-slate-900 + rounded-lg + shadow-sm) 적용. */}
-            {(activeSection === "operator" || activeSection === "notifications") ? (
+            {activeSection === "operator" ? (
               // §11.372 — 저장바는 콘텐츠에 종속 → 모바일 메뉴 뷰에선 숨김(detail 전용). lg+ 항상.
               <div className={cn("flex items-center gap-2", !mobileDetail && "hidden lg:flex")}>
                 {isDirty && (
@@ -529,13 +482,10 @@ function SettingsPageContent() {
                 <Button
                   size="sm"
                   className="h-9 px-5 text-xs bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-lg shadow-sm transition-all"
-                  disabled={!isDirty || profileMutation.isPending || isSavingNotifications}
-                  onClick={() => {
-                    if (activeSection === "operator") handleProfileSubmit();
-                    else if (activeSection === "notifications") handleNotificationSave();
-                  }}
+                  disabled={!isDirty || profileMutation.isPending}
+                  onClick={() => handleProfileSubmit()}
                 >
-                  {(profileMutation.isPending || isSavingNotifications) ? (
+                  {profileMutation.isPending ? (
                     <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />저장 중</>
                   ) : saveSuccess ? (
                     <><Check className="h-3.5 w-3.5 mr-1.5" />저장 완료</>
@@ -545,8 +495,7 @@ function SettingsPageContent() {
                 </Button>
               </div>
             ) : (
-              // 운영자/notifications 외 section 은 read-only 또는 별도 mutation —
-              // header 의 통합 "설정 저장" button 의미 없음.
+              // operator 외 section(알림 포함) 은 자체 컨트롤로 즉시 반영(알림=자동저장).
               <div className={cn("text-[11px] text-slate-400 break-keep", !mobileDetail && "hidden lg:block")}>
                 이 영역의 변경은 자체 컨트롤로 즉시 반영됩니다.
               </div>
@@ -1200,69 +1149,70 @@ function SettingsPageContent() {
               </div>
             )}
 
-            {/* ═══ NOTIFICATIONS ═══ */}
+            {/* ═══ NOTIFICATIONS ═══
+                #settings-notification-persist (호영님 2026-07-05) — 17항목 매트릭스를
+                canonical 7 카테고리로 통합. 인앱 토글 = User.preferences.notificationToggles
+                실지속(useUserPreferences, debounce PATCH) + dispatch(preference-filter) 실효.
+                메일 채널·전역빈도는 canonical 미지원 → 정직 비활성(fake-persist 금지). */}
             {activeSection === "notifications" && (
               <div className="space-y-5 animate-in fade-in-50 duration-200">
-                <SectionCard title="전역 알림 빈도" icon={Bell} topRightLabel="직접 관리">
+                <SectionCard title="전역 알림 빈도" icon={Bell} topRightLabel="준비 중">
                   <div className="flex items-center gap-4">
-                    <Select value={notificationFrequency} onValueChange={(v: string) => setNotificationFrequency(v as DeliveryMode)}>
-                      <SelectTrigger className="w-48 bg-white border-slate-200 text-slate-900 h-9 text-sm">
+                    <Select value="immediate" disabled>
+                      <SelectTrigger className="w-48 bg-slate-50 border-slate-200 text-slate-400 h-9 text-sm">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="immediate">즉시 전송</SelectItem>
-                        <SelectItem value="daily">일일 요약</SelectItem>
                       </SelectContent>
                     </Select>
-                    <span className="text-xs text-slate-500">안전 중요 알림은 항상 즉시 전송됩니다.</span>
+                    <span className="text-xs text-slate-400">빈도 설정(일일 요약)은 준비 중입니다. 현재 모든 알림은 즉시 전송됩니다.</span>
                   </div>
                 </SectionCard>
 
-                {/* §설정-고도화 §3.1 (호영님 2026-07-04) — 상단 "알림 카테고리
-                    (서버 동기화)" 마스터 토글 묶음 제거. 아래 카테고리별 세부
-                    매트릭스(인앱/메일)와 이중 제어였음 → 세부 매트릭스를 단일
-                    제어면으로. NotificationPreferenceToggles import도 orphaned 제거.
-                    ⚠ server-persist 경로: 매트릭스 저장(handleNotificationSave)이
-                    지속성 담당하는지 operator 런타임 검증 권장. */}
-
-                {notificationsByCategory.map((group) => (
-                  <SectionCard key={group.category} title={group.category} icon={group.items[0].icon} topRightLabel="직접 관리">
-                    <div className="space-y-1">
-                      {/* §설정-고도화 §3.2 (호영님 2026-07-04) — 2열 매트릭스 헤더
-                          (항목 | 인앱 | 메일). 행별 인라인 "앱/메일" 텍스트 라벨을
-                          컬럼 헤더로 승격 → 스캔성 개선. 스위치 열 정렬(w-9 center). */}
-                      <div className="flex items-center justify-between px-3 pb-1.5 mb-1 border-b border-slate-100">
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">항목</span>
+                <SectionCard title="알림 카테고리 (서버 동기화)" icon={Bell} topRightLabel="직접 관리">
+                  <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">
+                    카테고리별 인앱·푸시 알림 수신 여부입니다. 기본값은 모두 ON이며, 변경은 자동 저장되어 모든 기기에 즉시 반영됩니다.
+                  </p>
+                  <div className="space-y-1">
+                    {/* 2열 헤더(인앱|메일). 메일 채널은 준비 중(비활성). */}
+                    <div className="flex items-center justify-between px-3 pb-1.5 mb-1 border-b border-slate-100">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">카테고리</span>
+                      <div className="flex items-center gap-4">
+                        <span className="w-9 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-400">인앱</span>
+                        <span className="w-9 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-300">메일</span>
+                      </div>
+                    </div>
+                    {NOTIFICATION_CATEGORIES.map((cat) => (
+                      <div key={cat.key} className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-slate-50 transition-colors">
+                        <div className="flex-1 min-w-0 mr-4">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-slate-800">{cat.label}</p>
+                            {cat.immediate && <Badge className="bg-red-50 text-red-600 border-red-200 text-[9px] py-0">즉시</Badge>}
+                          </div>
+                          <p className="text-[10px] text-slate-500 mt-0.5">{cat.description}</p>
+                        </div>
                         <div className="flex items-center gap-4">
-                          <span className="w-9 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-400">인앱</span>
-                          <span className="w-9 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-400">메일</span>
+                          <div className="w-9 flex justify-center">
+                            <Switch
+                              checked={isCategoryOn(cat.key)}
+                              onCheckedChange={(next: boolean) => updateNotificationToggles({ [cat.key]: next })}
+                              disabled={isPreferencesLoading}
+                              aria-label={`${cat.label} 인앱 알림 수신 토글`}
+                              className="scale-75"
+                            />
+                          </div>
+                          <div className="w-9 flex justify-center">
+                            <Switch checked={false} disabled aria-label={`${cat.label} 메일 알림 (준비 중)`} className="scale-75 opacity-40" />
+                          </div>
                         </div>
                       </div>
-                      {group.items.map((n) => {
-                        const isSafety = SAFETY_CRITICAL_IDS.has(n.id);
-                        return (
-                          <div key={n.id} className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-slate-50 transition-colors">
-                            <div className="flex-1 min-w-0 mr-4">
-                              <div className="flex items-center gap-2">
-                                <p className="text-sm font-medium text-slate-800">{n.label}</p>
-                                {isSafety && <Badge className="bg-red-50 text-red-600 border-red-200 text-[9px] py-0">즉시</Badge>}
-                              </div>
-                              <p className="text-[10px] text-slate-500 mt-0.5">{n.description}</p>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <div className="w-9 flex justify-center">
-                                <Switch checked={n.inApp} onCheckedChange={() => toggleNotification(n.id, "inApp")} className="scale-75" />
-                              </div>
-                              <div className="w-9 flex justify-center">
-                                <Switch checked={n.email} onCheckedChange={() => toggleNotification(n.id, "email")} className="scale-75" />
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </SectionCard>
-                ))}
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-3 pl-3">
+                    메일 알림 채널은 준비 중입니다. 현재는 인앱·푸시 알림만 적용됩니다.
+                  </p>
+                </SectionCard>
               </div>
             )}
 
