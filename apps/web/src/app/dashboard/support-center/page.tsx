@@ -166,17 +166,37 @@ const GUIDE_ENTRIES: GuideEntry[] = [
    Tab 2: 문제 해결 — 시나리오 런북 데이터
    ═══════════════════════════════════════════════════════════════════ */
 
+// §설정-고도화 §3 (호영님 2026-07-05) — 칩 9개 → 6개 통합. 안전·규제 신설.
 const RUNBOOK_CATEGORIES = [
   { value: "all", label: "전체" },
-  { value: "account", label: "계정/로그인" },
-  { value: "search-compare", label: "검색/비교/견적" },
-  { value: "purchase-inventory", label: "구매/재고" },
-  { value: "org-role", label: "조직/권한" },
-  { value: "notification", label: "알림/이메일" },
-  { value: "ai-pdf", label: "PDF/BOM/AI" },
-  { value: "billing", label: "구독/결제" },
-  { value: "error", label: "오류 해결" },
+  { value: "account", label: "계정·로그인" },
+  { value: "search-purchase", label: "검색·견적·구매" },
+  { value: "safety", label: "안전·규제" },
+  { value: "noti-billing", label: "알림·결제" },
+  { value: "error-etc", label: "오류·기타" },
 ];
+
+// 기존 세분 category → 6 chip 그룹 매핑(item.category 값은 유지, 필터·표시만 그룹화).
+const RUNBOOK_GROUP: Record<string, string> = {
+  account: "account",
+  "search-compare": "search-purchase",
+  "purchase-inventory": "search-purchase",
+  safety: "safety",
+  notification: "noti-billing",
+  billing: "noti-billing",
+  "org-role": "error-etc",
+  "ai-pdf": "error-etc",
+  error: "error-etc",
+};
+
+// 티켓 프리필 시 6 그룹 → 티켓 관련 기능 카테고리(TICKET_CATEGORIES) best-fit 매핑.
+const RUNBOOK_TO_TICKET_CAT: Record<string, string> = {
+  account: "account",
+  "search-purchase": "quote",
+  safety: "inventory",
+  "noti-billing": "account",
+  "error-etc": "search",
+};
 
 interface RunbookItem {
   id: string;
@@ -191,6 +211,37 @@ interface RunbookItem {
 }
 
 const RUNBOOK_ITEMS: RunbookItem[] = [
+  // ── 안전·규제 (§3 안전 전면 배치) ──
+  {
+    id: "rb-safety-1", category: "safety",
+    symptom: "MSDS가 없다고 입고가 막힘",
+    impact: "위험물질 입고·사용 지연",
+    possibleCauses: ["품목에 MSDS(안전보건자료) 미등록", "물질명·CAS 번호 불일치로 자동 조회 실패"],
+    immediateActions: ["안전 관리 > 품목에서 물질명 또는 CAS 번호로 MSDS 자동 조회·첨부", "자동 조회 실패 시 공급사 제공 MSDS 파일을 직접 업로드", "MSDS 연계 후 입고 재시도"],
+    escalation: "CAS 번호가 있는데도 조회되지 않으면 지원 티켓으로 물질 DB 추가 요청",
+    relatedGuide: { label: "MSDS 등록·연계 가이드", href: "/dashboard/support-center" },
+    cta: { label: "안전 관리 열기", href: "/dashboard/safety" },
+  },
+  {
+    id: "rb-safety-2", category: "safety",
+    symptom: "유효기간이 만료된 시약의 폐기 절차를 모름",
+    impact: "만료 시약 사용 위험 · 규정 위반",
+    possibleCauses: ["폐기 절차·기록 방법 미숙지", "폐기 승인 권한 부재"],
+    immediateActions: ["재고 관리에서 '유효기간 임박·만료' 필터로 대상 품목 확인", "품목별 폐기 요청 → 사유 입력 → 승인자 승인", "폐기 완료 시 LOT·수량이 감사 추적에 기록되는지 확인"],
+    escalation: "폐기 승인자가 지정되지 않았으면 조직 관리자에게 승인 권한 설정 요청",
+    relatedGuide: { label: "유효기간·폐기 관리 가이드", href: "/dashboard/support-center" },
+    cta: { label: "재고 관리 열기", href: "/dashboard/inventory" },
+  },
+  {
+    id: "rb-safety-3", category: "safety",
+    symptom: "위험물질 보관 조건 위반 경고가 표시됨",
+    impact: "안전사고·규제 위반 위험",
+    possibleCauses: ["GHS 분류상 분리보관 대상인데 동일 위치 보관", "보관 온도 조건 미충족"],
+    immediateActions: ["안전 관리에서 해당 품목의 GHS 분류·보관 조건 확인", "분리보관 규정에 맞게 보관 위치 재지정", "냉장·냉동 등 온도 조건 품목은 지정 보관소로 이동"],
+    escalation: "보관 조건 판단이 어려우면 지원 티켓으로 안전 담당 문의",
+    relatedGuide: { label: "GHS 라벨링·보관 가이드", href: "/dashboard/support-center" },
+    cta: { label: "안전 관리 열기", href: "/dashboard/safety" },
+  },
   // ── 계정/로그인 ──
   {
     id: "rb-acc-1", category: "account",
@@ -543,12 +594,13 @@ export default function SupportCenterPage() {
       {activeTab === "manual" && <ManualTab />}
       {activeTab === "troubleshoot" && (
         <TroubleshootTab
-          onCreateTicketFromRunbook={(title, body) => {
-            // 티켓 탭으로 전환 + prefill URL params 주입
+          onCreateTicketFromRunbook={(title, body, category) => {
+            // 티켓 탭으로 전환 + prefill URL params 주입(§3 — 카테고리 포함).
             const params = new URLSearchParams(searchParams?.toString() ?? "");
             params.set("tab", "ticket");
             params.set("ticketTitle", title);
             params.set("ticketBody", body);
+            if (category) params.set("ticketCategory", category);
             router.replace(`${pathname}?${params.toString()}`, { scroll: false });
             setActiveTab("ticket");
           }}
@@ -1058,7 +1110,7 @@ function ManualContent({
    Tab 2: 문제 해결 (시나리오 런북)
    ═══════════════════════════════════════════════════════════════════ */
 
-function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunbook?: (title: string, body: string) => void }) {
+function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunbook?: (title: string, body: string, category?: string) => void }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
   // 첫 항목 기본 open
@@ -1080,7 +1132,7 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
   const filteredItems = useMemo(() => {
     let items = RUNBOOK_ITEMS;
     if (activeCategory !== "all") {
-      items = items.filter((r) => r.category === activeCategory);
+      items = items.filter((r) => RUNBOOK_GROUP[r.category] === activeCategory);
     }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -1094,22 +1146,16 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
     return items;
   }, [activeCategory, searchQuery]);
 
+  // §3 — 카테고리 색은 중립 통일, 안전·규제만 muted amber(#b45821)로 강조.
   const getCategoryColor = (cat: string) => {
-    const colorMap: Record<string, string> = {
-      account: "bg-violet-50 text-violet-600 border-violet-200",
-      "search-compare": "bg-blue-50 text-blue-600 border-blue-200",
-      "purchase-inventory": "bg-emerald-50 text-emerald-600 border-emerald-200",
-      "org-role": "bg-yellow-50 text-yellow-600 border-yellow-200",
-      notification: "bg-cyan-50 text-cyan-600 border-cyan-200",
-      "ai-pdf": "bg-indigo-50 text-indigo-600 border-indigo-200",
-      billing: "bg-pink-50 text-pink-600 border-pink-200",
-      error: "bg-red-50 text-red-600 border-red-200",
-    };
-    return colorMap[cat] || "bg-slate-50 text-slate-500 border-slate-200";
+    const group = RUNBOOK_GROUP[cat] ?? cat;
+    if (group === "safety") return "bg-[#fdf3ec] text-[#b45821] border-[#f3d4bf]";
+    return "bg-slate-50 text-slate-500 border-slate-200";
   };
 
   const getCategoryLabel = (cat: string) => {
-    return RUNBOOK_CATEGORIES.find((c) => c.value === cat)?.label || cat;
+    const group = RUNBOOK_GROUP[cat] ?? cat;
+    return RUNBOOK_CATEGORIES.find((c) => c.value === group)?.label || cat;
   };
 
   return (
@@ -1129,15 +1175,15 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
       <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide snap-x mb-5">
         {RUNBOOK_CATEGORIES.map((cat) => {
           const isActive = activeCategory === cat.value;
-          const count = cat.value === "all" ? RUNBOOK_ITEMS.length : RUNBOOK_ITEMS.filter((r) => r.category === cat.value).length;
+          const count = cat.value === "all" ? RUNBOOK_ITEMS.length : RUNBOOK_ITEMS.filter((r) => RUNBOOK_GROUP[r.category] === cat.value).length;
           return (
             <button
               key={cat.value}
               onClick={() => {
                 setActiveCategory(cat.value);
                 setShowAll(false);
-                // 카테고리 변경 시 첫 항목 기본 open
-                const firstInCat = cat.value === "all" ? RUNBOOK_ITEMS[0] : RUNBOOK_ITEMS.find((r) => r.category === cat.value);
+                // 카테고리 변경 시 첫 항목 기본 open (그룹 기준)
+                const firstInCat = cat.value === "all" ? RUNBOOK_ITEMS[0] : RUNBOOK_ITEMS.find((r) => RUNBOOK_GROUP[r.category] === cat.value);
                 setExpandedIds(firstInCat ? new Set([firstInCat.id]) : new Set());
               }}
               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[11px] font-bold whitespace-nowrap transition-all flex-shrink-0 snap-start ${
@@ -1182,8 +1228,8 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
               >
                 {/* 증상 헤더 */}
                 <button onClick={() => toggleExpand(item.id)} className="w-full text-left px-5 md:px-6 py-5 flex items-start gap-3.5 group">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${isExpanded ? "bg-yellow-100" : "bg-slate-100"}`}>
-                    <AlertTriangle className={`h-3.5 w-3.5 transition-colors ${isExpanded ? "text-yellow-600" : "text-slate-400"}`} />
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors motion-reduce:transition-none ${isExpanded ? "bg-[#fdf3ec]" : "bg-slate-100"}`}>
+                    <AlertTriangle className={`h-3.5 w-3.5 transition-colors motion-reduce:transition-none ${isExpanded ? "text-[#b45821]" : "text-slate-400"}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className={`text-[15px] font-extrabold leading-snug transition-colors mb-1.5 ${isExpanded ? "text-slate-900" : "text-slate-700 group-hover:text-slate-900"}`}>
@@ -1198,10 +1244,11 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
                   {isExpanded ? <ChevronUp className="h-4 w-4 text-slate-400 flex-shrink-0 mt-1.5" /> : <ChevronDown className="h-4 w-4 text-slate-300 flex-shrink-0 mt-1.5 group-hover:text-slate-500" />}
                 </button>
 
-                {/* 런북 상세 */}
-                {isExpanded && (
-                  <div className="px-5 md:px-6 pb-6 border-t border-slate-100">
-                    <div className="space-y-6 pt-6">
+                {/* 런북 상세 — §3 부드러운 펼침(grid-rows 0fr→1fr 전환) */}
+                <div className={`grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none ${isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                  <div className="overflow-hidden">
+                    <div className="px-5 md:px-6 pb-6 border-t border-slate-100">
+                      <div className="space-y-6 pt-6">
                       {/* 가능한 원인 */}
                       <div>
                         <div className="flex items-center gap-2 mb-2.5">
@@ -1234,12 +1281,12 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
                       </div>
 
                       {/* 에스컬레이션 기준 */}
-                      <div className="rounded-xl bg-yellow-50 border border-yellow-200 px-4 py-3.5">
+                      <div className="rounded-xl bg-[#fdf3ec] border border-[#f3d4bf] px-4 py-3.5">
                         <div className="flex items-start gap-2.5">
-                          <ArrowUpRight className="h-3.5 w-3.5 text-yellow-500 flex-shrink-0 mt-0.5" />
+                          <ArrowUpRight className="h-3.5 w-3.5 text-[#b45821] flex-shrink-0 mt-0.5" />
                           <div>
-                            <span className="text-[11px] font-extrabold text-yellow-600 uppercase tracking-wider">에스컬레이션 기준</span>
-                            <p className="text-[13px] text-yellow-700 leading-relaxed mt-1">{item.escalation}</p>
+                            <span className="text-[11px] font-extrabold text-[#b45821] uppercase tracking-wider">에스컬레이션 기준</span>
+                            <p className="text-[13px] text-[#b45821] leading-relaxed mt-1">{item.escalation}</p>
                           </div>
                         </div>
                       </div>
@@ -1266,14 +1313,16 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
                           <Button
                             variant="outline"
                             size="sm"
-                            className="gap-1.5 text-xs border-yellow-200 text-yellow-600 bg-transparent hover:bg-yellow-50 hover:text-yellow-700"
+                            className="gap-1.5 text-xs border-[#f3d4bf] text-[#b45821] bg-transparent hover:bg-[#fdf3ec]"
                             onClick={() => {
+                              // §3 프리필 — 증상·카테고리·이미 시도한 조치 자동 채움.
                               const body = [
                                 `증상: ${item.symptom}`,
+                                `카테고리: ${getCategoryLabel(item.category)}`,
                                 `영향: ${item.impact}`,
                                 `가능한 원인: ${item.possibleCauses.join(", ")}`,
                                 "",
-                                "즉시 조치 수행 결과:",
+                                "이미 시도한 조치:",
                                 ...item.immediateActions.map((a, i) => `${i + 1}. ${a} → (결과 기입)`),
                                 "",
                                 "추가 설명:",
@@ -1281,6 +1330,7 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
                               onCreateTicketFromRunbook(
                                 `[문제 해결] ${item.symptom}`,
                                 body,
+                                RUNBOOK_TO_TICKET_CAT[RUNBOOK_GROUP[item.category] ?? ""] ?? "",
                               );
                             }}
                           >
@@ -1291,7 +1341,8 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
                       </div>
                     </div>
                   </div>
-                )}
+                    </div>
+                  </div>
               </div>
             );
           })
@@ -1339,6 +1390,9 @@ function TicketTab() {
   // §1 ⌘K 딥링크 — 티켓 상세 직접 선택(존재하는 티켓만).
   const ticketIdParam = searchParams?.get("ticketId") ?? null;
   const deepTicketId = ticketIdParam && MOCK_TICKETS.some((t) => t.id === ticketIdParam) ? ticketIdParam : null;
+  // §3 프리필 — 런북에서 넘어온 티켓 카테고리(유효 TICKET_CATEGORIES 값만 채택).
+  const ticketCategoryParam = searchParams?.get("ticketCategory") ?? null;
+  const prefillCategory = ticketCategoryParam && TICKET_CATEGORIES.some((c) => c.value === ticketCategoryParam) ? ticketCategoryParam : "";
   const hasSourceContext = Boolean(srcFromRoute || srcEntityId || ticketTitleParam);
 
   // 빈 상태 시 compose 기본 open, 티켓 있으면 첫 번째 자동 선택
@@ -1348,7 +1402,7 @@ function TicketTab() {
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(
     deepTicketId ?? (!hasSourceContext && MOCK_TICKETS.length > 0 ? MOCK_TICKETS[0].id : null),
   );
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(prefillCategory);
   const [relatedResource, setRelatedResource] = useState(() => {
     if (srcEntityId) {
       return srcEntityType
