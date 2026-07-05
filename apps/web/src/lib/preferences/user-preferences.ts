@@ -19,6 +19,10 @@
 
 import { useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+// #settings-notification-persist smoke (호영님 2026-07-05) — PATCH가 raw fetch라
+//   CSRF 403(엣지 미들웨어). csrfFetch(drop-in, SM-P4e 선례)로 교체 → 전역
+//   preferences 지속(컬럼·필터·알림토글) 실동작. GET(안전메서드)도 401 처리 일관.
+import { csrfFetch } from "@/lib/api-client";
 
 export interface UserPreferencesJson {
   columnPrefs?: {
@@ -179,7 +183,7 @@ const QUERY_KEY = ["user-preferences"];
 const DEBOUNCE_MS = 400;
 
 async function fetchUserPreferences(): Promise<UserPreferencesResponse> {
-  const res = await fetch("/api/user/preferences");
+  const res = await csrfFetch("/api/user/preferences");
   if (!res.ok) {
     throw new Error(`Failed to fetch user preferences (${res.status})`);
   }
@@ -189,7 +193,8 @@ async function fetchUserPreferences(): Promise<UserPreferencesResponse> {
 async function patchUserPreferences(
   patch: UserPreferencesPatch,
 ): Promise<UserPreferencesResponse> {
-  const res = await fetch("/api/user/preferences", {
+  // csrfFetch — PATCH(상태변경)에 x-csrf-token 자동 부착(403 해소).
+  const res = await csrfFetch("/api/user/preferences", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(patch),

@@ -11,6 +11,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 const PAGE = readFileSync(join(__dirname, "..", "..", "app/dashboard/settings/page.tsx"), "utf8");
+const HOOK = readFileSync(join(__dirname, "..", "..", "lib/preferences/user-preferences.ts"), "utf8");
 
 describe("#settings-notification-persist — canonical 배선", () => {
   it("useUserPreferences.updateNotificationToggles 로 실지속 배선", () => {
@@ -46,5 +47,15 @@ describe("#settings-notification-persist — no-op 제거(placeholder success �
 describe("#settings-notification-persist — §3 무회귀", () => {
   it("즉시 배지 보존(안전 중요 카테고리)", () => {
     expect(PAGE).toMatch(/즉시<\/Badge>/);
+  });
+});
+
+describe("#settings-notification-persist — CSRF fix(라이브 smoke 403 해소)", () => {
+  it("useUserPreferences PATCH 는 csrfFetch(raw fetch PATCH 금지 — SM-P4e 선례)", () => {
+    // 라이브 smoke: PATCH /api/user/preferences 403(엣지 CSRF). csrfFetch로 해소.
+    expect(HOOK).toMatch(/import\s*\{\s*csrfFetch\s*\}\s*from\s*"@\/lib\/api-client"/);
+    expect(HOOK).toMatch(/csrfFetch\("\/api\/user\/preferences",\s*\{[\s\S]*?method:\s*"PATCH"/);
+    // raw fetch("/api/user/preferences" ...) 잔재 0(GET·PATCH 모두 csrfFetch 경유).
+    expect(HOOK).not.toMatch(/[^f]fetch\("\/api\/user\/preferences"/);
   });
 });
