@@ -20,8 +20,8 @@ import { ApprovalThresholdSection } from "@/components/settings/approval-thresho
 import { WorkspaceMembersApprovalLimitSection } from "@/components/settings/workspace-members-approval-limit-section";
 // #approver-routing-per-user-limit-organization-member-admin-ui — org OWNER/ADMIN 결재 한도
 import { OrgMembersApprovalLimitSection } from "@/components/settings/org-members-approval-limit-section";
-// §11.250-pref-ui — 7 카테고리 server-persist 알림 토글 (notifications 섹션 mount).
-import { NotificationPreferenceToggles } from "@/components/settings/notification-preference-toggles";
+// §설정-고도화 §3.1 — NotificationPreferenceToggles import 제거(상단 서버동기화
+//   마스터 토글 묶음 삭제로 orphaned. 세부 매트릭스가 단일 제어면).
 import { useState, Suspense, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -216,17 +216,17 @@ function SettingsPageContent() {
 
   // ── Notification state ──
   const [notifications, setNotifications] = useState<NotificationItem[]>([
-    { id: "stock_low", category: "재고", label: "재고 부족", description: "안전 재고 수량 이하로 떨어진 품목 알림", icon: Package, inApp: true, email: true, deliveryOverride: "immediate" },
-    { id: "stock_expiry", category: "재고", label: "만료 임박", description: "유효기간 7일 이내 품목 자동 알림", icon: AlertTriangle, inApp: true, email: true, deliveryOverride: "immediate" },
+    { id: "stock_low", category: "재고", label: "재고 부족", description: "안전 재고 수량 이하로 떨어진 품목 알림", icon: Package, inApp: true, email: false, deliveryOverride: "immediate" },
+    { id: "stock_expiry", category: "재고", label: "만료 임박", description: "유효기간 7일 이내 품목 자동 알림", icon: AlertTriangle, inApp: true, email: false, deliveryOverride: "immediate" },
     { id: "stock_disposal", category: "재고", label: "폐기 검토", description: "만료·손상 품목의 폐기 절차 검토 요청", icon: Trash2, inApp: true, email: false, deliveryOverride: null },
-    { id: "quote_new", category: "견적/구매", label: "견적 도착", description: "요청한 견적에 대한 공급사 응답 도착", icon: FileText, inApp: true, email: true, deliveryOverride: null },
+    { id: "quote_new", category: "견적/구매", label: "견적 도착", description: "요청한 견적에 대한 공급사 응답 도착", icon: FileText, inApp: true, email: false, deliveryOverride: null },
     { id: "quote_approval", category: "견적/구매", label: "승인 필요", description: "구매 요청 또는 견적 승인 대기 알림", icon: ClipboardCheck, inApp: true, email: true, deliveryOverride: null },
     { id: "quote_delay", category: "견적/구매", label: "공급사 응답 지연", description: "견적 요청 후 48시간 이상 미응답", icon: Clock, inApp: true, email: false, deliveryOverride: null },
     { id: "org_invite", category: "조직/권한", label: "초대", description: "조직 또는 워크스페이스 초대 수신", icon: UserPlus, inApp: true, email: true, deliveryOverride: null },
     { id: "org_role_change", category: "조직/권한", label: "권한 변경", description: "내 역할 또는 팀원 권한 변경 알림", icon: KeyRound, inApp: true, email: false, deliveryOverride: null },
     { id: "org_owner_transfer", category: "조직/권한", label: "Owner 이전", description: "조직 소유권 이전 요청 또는 완료", icon: Crown, inApp: true, email: true, deliveryOverride: null },
-    { id: "safety_compliance", category: "안전", label: "규정 위반", description: "보관 조건, 라벨링 등 규정 위반 경고", icon: AlertCircle, inApp: true, email: true, deliveryOverride: "immediate" },
-    { id: "safety_msds", category: "안전", label: "MSDS 미등록", description: "안전보건자료 미등록 또는 누락 품목 알림", icon: Shield, inApp: true, email: true, deliveryOverride: null },
+    { id: "safety_compliance", category: "안전", label: "규정 위반", description: "보관 조건, 라벨링 등 규정 위반 경고", icon: AlertCircle, inApp: true, email: false, deliveryOverride: "immediate" },
+    { id: "safety_msds", category: "안전", label: "MSDS 미등록", description: "안전보건자료 미등록 또는 누락 품목 알림", icon: Shield, inApp: true, email: false, deliveryOverride: null },
     { id: "billing_failed", category: "결제/구독", label: "결제 실패", description: "카드 만료 또는 결제 수단 오류", icon: XCircle, inApp: true, email: true, deliveryOverride: null },
     { id: "billing_plan_change", category: "결제/구독", label: "구독 상태 변경", description: "플랜 업그레이드·다운그레이드·갱신 알림", icon: CreditCard, inApp: true, email: true, deliveryOverride: null },
     { id: "billing_cancel", category: "결제/구독", label: "해지", description: "구독 해지 예정 또는 해지 완료 안내", icon: RotateCcw, inApp: true, email: true, deliveryOverride: null },
@@ -1212,12 +1212,26 @@ function SettingsPageContent() {
                   </div>
                 </SectionCard>
 
-                {/* §11.250-pref-ui — 7 카테고리 server-persist 토글 (cross-device sync). */}
-                <NotificationPreferenceToggles />
+                {/* §설정-고도화 §3.1 (호영님 2026-07-04) — 상단 "알림 카테고리
+                    (서버 동기화)" 마스터 토글 묶음 제거. 아래 카테고리별 세부
+                    매트릭스(인앱/메일)와 이중 제어였음 → 세부 매트릭스를 단일
+                    제어면으로. NotificationPreferenceToggles import도 orphaned 제거.
+                    ⚠ server-persist 경로: 매트릭스 저장(handleNotificationSave)이
+                    지속성 담당하는지 operator 런타임 검증 권장. */}
 
                 {notificationsByCategory.map((group) => (
                   <SectionCard key={group.category} title={group.category} icon={group.items[0].icon} topRightLabel="직접 관리">
                     <div className="space-y-1">
+                      {/* §설정-고도화 §3.2 (호영님 2026-07-04) — 2열 매트릭스 헤더
+                          (항목 | 인앱 | 메일). 행별 인라인 "앱/메일" 텍스트 라벨을
+                          컬럼 헤더로 승격 → 스캔성 개선. 스위치 열 정렬(w-9 center). */}
+                      <div className="flex items-center justify-between px-3 pb-1.5 mb-1 border-b border-slate-100">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">항목</span>
+                        <div className="flex items-center gap-4">
+                          <span className="w-9 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-400">인앱</span>
+                          <span className="w-9 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-400">메일</span>
+                        </div>
+                      </div>
                       {group.items.map((n) => {
                         const isSafety = SAFETY_CRITICAL_IDS.has(n.id);
                         return (
@@ -1230,12 +1244,10 @@ function SettingsPageContent() {
                               <p className="text-[10px] text-slate-500 mt-0.5">{n.description}</p>
                             </div>
                             <div className="flex items-center gap-4">
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-[9px] text-slate-500">앱</span>
+                              <div className="w-9 flex justify-center">
                                 <Switch checked={n.inApp} onCheckedChange={() => toggleNotification(n.id, "inApp")} className="scale-75" />
                               </div>
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-[9px] text-slate-500">메일</span>
+                              <div className="w-9 flex justify-center">
                                 <Switch checked={n.email} onCheckedChange={() => toggleNotification(n.id, "email")} className="scale-75" />
                               </div>
                             </div>
