@@ -401,7 +401,7 @@ export function buildApprovalProgress(
     const typeLabel = APPROVAL_STEP_TYPE_DESCRIPTIONS[activeStep.stepType]?.label ?? activeStep.stepType;
     blockerLabel = `${typeLabel} — ${assigneeStr} 승인 대기`;
     if (overdueSteps.length > 0) {
-      blockerLabel = `${typeLabel} — ${assigneeStr} 승인 SLA 초과`;
+      blockerLabel = `${typeLabel} — ${assigneeStr} 승인 기한 초과`;
     }
   }
 

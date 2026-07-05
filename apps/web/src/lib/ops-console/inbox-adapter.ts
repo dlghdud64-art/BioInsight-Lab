@@ -548,7 +548,7 @@ export function buildInboxFromReceiving(
         priority: 'p1', // placeholder
         owner: rb.receivedBy,
         dueState: {
-          label: hoursSince(rb.receivedAt) > 8 ? 'SLA 초과' : '8시간 이내',
+          label: hoursSince(rb.receivedAt) > 8 ? '기한 초과' : '8시간 이내',
           isOverdue: hoursSince(rb.receivedAt) > 8,
           tone: hoursSince(rb.receivedAt) > 8 ? 'overdue' : 'due_soon',
         },

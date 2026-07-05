@@ -12,7 +12,7 @@
  * §11.302: 차단/문서대기=rose · 반영가능=emerald · 주의(due_soon)=amber #b45821.
  */
 import { useMemo, useState } from "react";
-import { ChevronRight, AlertTriangle, CheckCircle2, Clock, FileText } from "lucide-react";
+import { ArrowRight, AlertTriangle, CheckCircle2, Clock, FileText } from "lucide-react";
 import type { ModuleLandingItem } from "@/lib/ops-console/module-landing-adapter";
 
 type Gate = "blocked" | "ready";
@@ -70,29 +70,46 @@ function GateCard({
             </span>
           )}
         </div>
-        <h4 className="text-[15px] font-bold text-slate-900 leading-snug line-clamp-2">
+        <h4 className="text-[15px] font-bold text-slate-900 leading-snug line-clamp-2 mt-2">
           {item.title}
         </h4>
-        <p
-          className={`text-[12.5px] mt-1.5 flex items-center gap-1.5 ${
-            blocked ? "text-rose-600" : "text-slate-500"
+        {item.vendorName && (
+          <p className="text-[12px] text-slate-500 mt-1">{item.vendorName}</p>
+        )}
+        {/* 문서 상태 박스(핸드오프) — 차단=rose-weak / 반영가능=emerald-weak */}
+        <div
+          className={`mt-3 flex items-start gap-2 rounded-lg border px-3 py-2.5 ${
+            blocked ? "bg-rose-50 border-rose-100" : "bg-emerald-50 border-emerald-100"
           }`}
         >
-          <FileText className="h-3.5 w-3.5 shrink-0" />
-          <span className="truncate">{docLabel(item)}</span>
-        </p>
-        {item.summary && (
-          <p className="text-[12px] text-slate-500 mt-1 line-clamp-1">{item.summary}</p>
-        )}
-        <div className="flex items-center justify-end mt-3 pt-2.5 border-t border-slate-100">
-          <span
-            className={`inline-flex items-center gap-1 text-[12.5px] font-bold ${
-              blocked ? "text-blue-600" : "text-emerald-600"
-            }`}
-          >
-            {blocked ? "문서 검토" : "재고 반영"}
-            <ChevronRight className="h-3.5 w-3.5" />
-          </span>
+          {blocked ? (
+            <FileText className="h-4 w-4 text-rose-500 mt-0.5 shrink-0" />
+          ) : (
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
+          )}
+          <div className="min-w-0">
+            <p
+              className={`text-[13px] font-bold leading-snug ${
+                blocked ? "text-rose-700" : "text-emerald-700"
+              }`}
+            >
+              {docLabel(item)}
+            </p>
+            {item.summary && (
+              <p className="text-[11.5px] text-slate-500 mt-0.5 leading-snug line-clamp-2">
+                {item.summary}
+              </p>
+            )}
+          </div>
+        </div>
+        {/* 큰 primary CTA(핸드오프) — 카드 탭 = 상세 라우팅(문서 첨부/재고 반영 실행 surface) */}
+        <div
+          className={`mt-3 flex h-11 items-center justify-center gap-1.5 rounded-lg text-[14px] font-bold text-white ${
+            blocked ? "bg-blue-600" : "bg-emerald-600"
+          }`}
+        >
+          {blocked ? "문서 첨부" : "재고 반영"}
+          <ArrowRight className="h-4 w-4" />
         </div>
       </div>
     </button>
@@ -143,17 +160,18 @@ export function MobileReceivingView({
         </div>
       </div>
 
-      {/* 칩 */}
+      {/* 칩 — 카운트 인라인(핸드오프 정합: 전체 N / 문서 대기 N / 반영 가능 N) */}
       <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-0.5">
         {CHIPS.map((c) => {
           const on = filter === c.k;
+          const count = c.k === "all" ? items.length : c.k === "blocked" ? blockedCount : readyCount;
           return (
             <button
               key={c.k}
               type="button"
               onClick={() => setFilter(c.k)}
               aria-pressed={on}
-              className={`shrink-0 min-h-[40px] px-3.5 rounded-full border text-[13px] font-semibold transition-colors ${
+              className={`shrink-0 min-h-[40px] px-3.5 rounded-full border text-[13px] font-semibold transition-colors inline-flex items-center gap-1.5 ${
                 on
                   ? "bg-slate-900 border-slate-900 text-white"
                   : "danger" in c && c.danger
@@ -162,6 +180,7 @@ export function MobileReceivingView({
               }`}
             >
               {c.label}
+              <span className={`text-[11px] font-bold tabular-nums ${on ? "text-white/80" : "text-slate-400"}`}>{count}</span>
             </button>
           );
         })}

@@ -28,7 +28,7 @@ const RCV_BUCKET_TABS: { key: ModuleBucketKey; label: string }[] = [
   { key: "ready", label: "반영 가능" },
   { key: "needs_review", label: "검수/문서" },
   { key: "blocked", label: "차단" },
-  { key: "waiting_external", label: "격리/후속" },
+  { key: "waiting_external", label: "외부 대기" },
 ];
 
 // ── Priority badge color ──────────────────────────────────────────
