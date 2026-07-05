@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useUserPreferences } from "@/lib/preferences/user-preferences";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 // §safety-csrf-fix (호영님 2026-07-04) — 안전 모달 POST(sds·inspection)는 CSRF 토큰 필수(레지스트리 기본 required).
 //   raw fetch → csrfFetch(x-csrf-token 부착)로 edge-middleware 403 해소. GET은 무관.
 import { csrfFetch } from "@/lib/api-client";
@@ -142,6 +142,23 @@ const DONUT_COLORS = ["#10b981", "#f59e0b", "#ef4444", "#e2e8f0"];
 // §safety-redesign 상단정합 — 안전 지수 트렌드(7일) 차트 제거(시안 기준). 데이터는 mock 상수였음 → honesty상 mock 시각화 미노출.
 
 // ══════════════════════════════════════════════════════════════════════════════
+// §SM-S1 P3 — /api/organizations 항목 중 안전 카테고리 설정에 필요한 필드만.
+interface SafetyOrg {
+  id: string;
+  name: string;
+  role: string;
+  safetyCategories?: string[];
+}
+
+// §SM-S1 — 안전 대상 선택 가능 카테고리(REAGENT 고정, 나머지 옵션).
+const SAFETY_CATEGORY_OPTIONS: { value: string; label: string; fixed?: boolean }[] = [
+  { value: "REAGENT", label: "시약 (Reagent)", fixed: true },
+  { value: "RAW_MATERIAL", label: "원료 (Raw material)" },
+  { value: "CONSUMABLE", label: "소모품 (Consumable)" },
+  { value: "EQUIPMENT", label: "장비 (Equipment)" },
+  { value: "TOOL", label: "기구 (Tool)" },
+];
+
 export default function SafetyManagerPage() {
   const { toast } = useToast();
   // §msds-bulk-registration B-P4 — 일괄 등록 모달 토글.
@@ -169,17 +186,68 @@ export default function SafetyManagerPage() {
   const [productIdByLocalId, setProductIdByLocalId] = useState<Record<number, string>>({});
   // §msds-version-validation — 버전상태 집계(최신본/구버전 의심/출처 없음). 단일 카운트 소스.
   const [msdsVersionSummary, setMsdsVersionSummary] = useState<MsdsVersionSummary>({ current: 0, stale: 0, unknown: 0, total: 0 });
-  const safetyQuery = useQuery({
-    queryKey: ["safety-products", "REAGENT"],
+  // ── §SM-S1 P3 (호영님 2026-07-05) — 안전 대상 카테고리 org 설정 ──
+  //   /api/organizations 가 safetyCategories(P1 신설, 기본 ["REAGENT"]) + role 반환.
+  //   사용자 소속 org 들의 safetyCategories 합집합 = 안전 관리 대상. 없으면 REAGENT(무회귀).
+  const queryClient = useQueryClient();
+  const orgsQuery = useQuery({
+    queryKey: ["safety-orgs"],
     queryFn: async () => {
-      // §safety-modal-upgrade P1 (호영님 2026-07-04) — 안전 관리 = 시약(REAGENT) 한정(핸드오프 §0).
-      //   비시약(기구·장비·원료·소모품) 제외 → 목록·미등록·GMP/KOSHA 준비도 KPI 시약 기준 정상화.
-      const res = await fetch("/api/safety/products?limit=100&category=REAGENT");
+      const res = await fetch("/api/organizations");
+      if (!res.ok) return [] as SafetyOrg[];
+      const data = await res.json();
+      return (data.organizations ?? []) as SafetyOrg[];
+    },
+  });
+  const orgs = useMemo(() => orgsQuery.data ?? [], [orgsQuery.data]);
+  const effectiveCategories = useMemo(() => {
+    const set = new Set<string>();
+    for (const o of orgs) for (const c of o.safetyCategories ?? []) set.add(c);
+    if (set.size === 0) set.add("REAGENT"); // 무회귀 — 설정 없으면 시약(REAGENT) 한정.
+    return Array.from(set);
+  }, [orgs]);
+  const categoryParam = effectiveCategories.join(",");
+  // ADMIN/OWNER 인 org 만 카테고리 설정 편집 가능(엔드포인트도 게이트).
+  const adminOrgs = useMemo(() => orgs.filter((o) => o.role === "ADMIN" || o.role === "OWNER"), [orgs]);
+
+  const safetyQuery = useQuery({
+    queryKey: ["safety-products", categoryParam],
+    queryFn: async () => {
+      // §SM-S1 P3 — 안전 관리 대상 category 는 org 설정(safetyCategories) 기반.
+      //   기본은 REAGENT(무회귀, 2026-07-04 결정 보존), org 가 RAW_MATERIAL 등 추가 시
+      //   콤마조인 → /api/safety/products 가 in[] 파싱(P2).
+      const res = await fetch(`/api/safety/products?limit=100&category=${encodeURIComponent(categoryParam)}`);
       if (!res.ok) throw new Error("안전 데이터를 불러오지 못했습니다.");
       const data = await res.json();
       return (data.products ?? []) as SafetyApiProduct[];
     },
+    // orgs 확정 후 1회 fetch(로딩 중 REAGENT 로 선-fetch 후 재조회 방지).
+    enabled: !orgsQuery.isLoading,
   });
+
+  // §SM-S1 P3a — 안전 대상 카테고리 실 저장(csrfFetch PATCH). 저장 후 orgs 무효화
+  //   → effectiveCategories 갱신 → safetyQuery 재조회(즉시 반영). dead-button 아님.
+  const [savingOrgId, setSavingOrgId] = useState<string | null>(null);
+  const saveSafetyCategories = async (orgId: string, next: string[]) => {
+    setSavingOrgId(orgId);
+    try {
+      const res = await csrfFetch(`/api/organizations/${orgId}/safety-settings`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ safetyCategories: next }),
+      });
+      if (!res.ok) {
+        toast({ title: "저장 실패", description: "안전 대상 카테고리 저장에 실패했습니다.", variant: "destructive" });
+        return;
+      }
+      await queryClient.invalidateQueries({ queryKey: ["safety-orgs"] });
+      toast({ title: "저장되었습니다", description: "안전 관리 대상 카테고리가 업데이트되었습니다." });
+    } catch {
+      toast({ title: "네트워크 오류", description: "잠시 후 다시 시도해 주세요.", variant: "destructive" });
+    } finally {
+      setSavingOrgId(null);
+    }
+  };
   useEffect(() => {
     if (!safetyQuery.data) return;
     const { items: adapted, productIdByLocalId: idMap, msdsVersionSummary: vsum } = adaptSafetyProducts(safetyQuery.data);
@@ -559,6 +627,59 @@ export default function SafetyManagerPage() {
       {/* §11.333 Part A — 운영 화면 wide 정책 정합. 옛 max-w-7xl(1280px) → max-w-full
           (다른 운영 화면 dashboard/quotes/inventory/purchase-orders/receiving 와 동일). */}
       <div className="max-w-full mx-auto space-y-5">
+
+        {/* ═══ §SM-S1 P3a — 안전 관리 대상 카테고리 org 설정 (ADMIN/OWNER) ═══ */}
+        {adminOrgs.length > 0 && (
+          <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-5">
+            <div className="flex items-center gap-2 mb-1">
+              <Shield className="h-4 w-4 text-slate-500" />
+              <h3 className="text-sm font-semibold text-slate-900">안전 관리 대상 카테고리</h3>
+              <span className="ml-auto inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">🔒 관리자</span>
+            </div>
+            <p className="text-xs text-slate-500 mb-3 break-keep">안전 관리(MSDS·GHS·점검) 대상 품목 카테고리를 조직별로 지정합니다. 시약(REAGENT)은 화학물질로 항상 포함됩니다.</p>
+            <div className="space-y-3">
+              {adminOrgs.map((org) => {
+                const current = new Set(org.safetyCategories?.length ? org.safetyCategories : ["REAGENT"]);
+                const saving = savingOrgId === org.id;
+                return (
+                  <div key={org.id} className="rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2.5">
+                    {adminOrgs.length > 1 && <p className="text-[11px] font-bold text-slate-600 mb-1.5 break-keep">{org.name}</p>}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {SAFETY_CATEGORY_OPTIONS.map((opt) => {
+                        const checked = current.has(opt.value);
+                        const disabled = opt.fixed || saving;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => {
+                              if (opt.fixed) return;
+                              const next = new Set(current);
+                              if (next.has(opt.value)) next.delete(opt.value);
+                              else next.add(opt.value);
+                              next.add("REAGENT"); // 시약 고정.
+                              saveSafetyCategories(org.id, Array.from(next));
+                            }}
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                              checked
+                                ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                                : "border-slate-200 bg-white text-slate-500 hover:border-slate-300"
+                            } ${disabled ? "opacity-70 cursor-not-allowed" : ""}`}
+                          >
+                            {checked && <CheckCircle2 className="h-3 w-3" />}
+                            {opt.label}{opt.fixed ? " · 고정" : ""}
+                          </button>
+                        );
+                      })}
+                      {saving && <Loader2 className="h-3.5 w-3.5 text-slate-400 animate-spin self-center" />}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ═══ 긴급 안전 알림 배너 ═══ */}
         {immediateCount > 0 && !bannerDismissed && (
