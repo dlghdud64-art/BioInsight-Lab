@@ -66,6 +66,9 @@ model Organization {
   logoUrl           String?          // 조직 로고 이미지 URL
   slug              String?          @unique // 조직 고유 주소 (예: my-lab)
   timezone          String           @default("Asia/Seoul") // IANA timezone — 예산 기간 기준
+  // §SM-S1 P1 (호영님 2026-07-05) — 안전(MSDS) 관리 대상 ProductCategory. 기본 REAGENT(화학물질 확정).
+  //   org 이 RAW_MATERIAL 등 추가 시 안전 페이지가 콤마조인으로 GET(P2 다중값 파싱). additive·무회귀.
+  safetyCategories  String[]         @default(["REAGENT"])
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 
