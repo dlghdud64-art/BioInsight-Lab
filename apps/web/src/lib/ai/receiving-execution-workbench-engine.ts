@@ -187,10 +187,10 @@ export function evaluateExecutionReadiness(state: ReceivingExecutionWorkbenchSta
   // Quarantine guard
   const quarantineLines = lines.filter(l => l.quarantineFlag);
   if (quarantineLines.length > 0 && !state.decision.quarantineResolutionPath) {
-    blockers.push("격리 대상 존재하나 격리 경로 미지정");
+    blockers.push("보류 대상 존재하나 보류 경로 미지정");
   }
   if (quarantineLines.length > 0) {
-    warnings.push(`${quarantineLines.length}개 라인 격리 대상`);
+    warnings.push(`${quarantineLines.length}개 라인 보류 대상`);
   }
 
   // Damage guard

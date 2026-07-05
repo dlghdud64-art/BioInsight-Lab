@@ -69,7 +69,7 @@ export interface InventoryStockHealthVM {
 // ---------------------------------------------------------------------------
 
 /**
- * 로트 위험 뷰모델 — 개별 로트의 만료·격리·사용 가능 상태를 UI에 표시
+ * 로트 위험 뷰모델 — 개별 로트의 만료·보류·사용 가능 상태를 UI에 표시
  */
 export interface InventoryLotRiskVM {
   /** 뷰모델 ID */
@@ -80,7 +80,7 @@ export interface InventoryLotRiskVM {
   itemLabel: string;
   /** 로트 번호 */
   lotNumber: string;
-  /** 수량 요약 (예: "가용 8 / 격리 2 / 만료 0") */
+  /** 수량 요약 (예: "가용 8 / 보류 2 / 만료 0") */
   quantitySummary: string;
   /** 만료 상태 */
   expiryState: {
@@ -95,9 +95,9 @@ export interface InventoryLotRiskVM {
   usabilityLabel: string;
   /** 사용 가능 상태 톤 */
   usabilityTone: string;
-  /** 격리 상태 라벨 (한국어) */
+  /** 보류 상태 라벨 (한국어) */
   quarantineLabel: string;
-  /** 격리 상태 톤 */
+  /** 보류 상태 톤 */
   quarantineTone: string;
   /** 위험 뱃지 목록 */
   riskBadges: string[];
@@ -216,7 +216,7 @@ export interface StockRiskSnapshotVM {
   criticalShortageCount: number;
   /** 만료 임박 로트 수 */
   expiringLotCount: number;
-  /** 격리 제약 품목 수 */
+  /** 보류 제약 품목 수 */
   quarantineConstraintCount: number;
   /** 차단된 재주문 수 */
   blockedReorderCount: number;

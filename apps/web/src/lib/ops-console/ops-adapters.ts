@@ -245,7 +245,7 @@ const STOCK_RISK_STATUS_LABELS: Record<string, { label: string; tone: string }> 
   reorder_due: { label: '재주문 필요', tone: 'warning' },
   critical_shortage: { label: '긴급 부족', tone: 'danger' },
   expiry_risk: { label: '유효기간 위험', tone: 'warning' },
-  quarantine_constrained: { label: '격리 제약', tone: 'danger' },
+  quarantine_constrained: { label: '보류 제약', tone: 'danger' },
   blocked: { label: '차단', tone: 'blocked' },
 };
 
@@ -280,7 +280,7 @@ const EXPIRY_ACTION_TYPE_LABELS: Record<string, string> = {
   monitor: '모니터링',
   consume_first: '우선 사용',
   transfer: '이관',
-  quarantine: '격리',
+  quarantine: '보류',
   dispose: '폐기',
   replace_order: '교체 발주',
   review: '검토',
@@ -649,7 +649,7 @@ export function toReceivingBatchListItemVM(
   const riskBadges: string[] = [];
   if (batch.lineReceipts.some((l) => l.conditionStatus === 'temperature_excursion')) riskBadges.push('온도 이탈');
   if (batch.lineReceipts.some((l) => l.documentStatus === 'partial' || l.documentStatus === 'missing')) riskBadges.push('문서 누락');
-  if (batch.lineReceipts.some((l) => l.lotRecords.some((lot) => lot.quarantineStatus === 'quarantined'))) riskBadges.push('격리');
+  if (batch.lineReceipts.some((l) => l.lotRecords.some((lot) => lot.quarantineStatus === 'quarantined'))) riskBadges.push('보류');
 
   return {
     id: batch.id,
@@ -754,7 +754,7 @@ export function toInventoryStockHealthVM(
     inventoryItemId: pos.inventoryItemId,
     itemLabel: pos.inventoryItemId,
     locationName: pos.locationId,
-    availableVsThresholdSummary: `가용 ${pos.availableQuantity} / 보유 ${pos.onHandQuantity} (격리 ${pos.quarantinedQuantity})`,
+    availableVsThresholdSummary: `가용 ${pos.availableQuantity} / 보유 ${pos.onHandQuantity} (보류 ${pos.quarantinedQuantity})`,
     coverageSummary: pos.coverageDays !== undefined
       ? `현재 소비율 기준 ${pos.coverageDays}일분`
       : undefined,

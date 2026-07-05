@@ -145,9 +145,9 @@ export interface ReceivedLotRecordVM {
   };
   /** 문서 구비율 요약 (한국어) */
   documentCoverageSummary: string;
-  /** 격리 상태 라벨 (한국어) */
+  /** 보류 상태 라벨 (한국어) */
   quarantineLabel: string;
-  /** 격리 상태 톤 */
+  /** 보류 상태 톤 */
   quarantineTone: "released" | "quarantined" | "blocked" | "pending" | "not_applicable";
   /** 재고 반영 상태 */
   inventoryPostingState: { label: string; isPosted: boolean };
@@ -175,7 +175,7 @@ export interface InventoryInboundPostingVM {
   postableLineCount: number;
   /** 차단된 라인 수 */
   blockedLineCount: number;
-  /** 격리 라인 수 */
+  /** 보류 라인 수 */
   quarantineLineCount: number;
   /** 반영 준비 상태 */
   postingReadiness: "ready" | "partial" | "blocked";
@@ -197,7 +197,7 @@ export interface ReceivingDecisionSummaryVM {
   inventoryReleaseReadiness: "ready" | "partial" | "blocked";
   /** 미해결 이슈 수 */
   openIssueCount: number;
-  /** 격리 lot 수 */
+  /** 보류 lot 수 */
   quarantineLotCount: number;
   /** 누락 문서 수 */
   missingDocumentCount: number;
@@ -424,7 +424,7 @@ export function resolveInventoryReleaseReadiness(
     (l) => l.inventoryStatusAfterPosting === "quarantined" || l.inventoryStatusAfterPosting === "restricted",
   );
   if (quarantineBlocked.length > 0) {
-    blockers.push(`격리/제한 상태 ${quarantineBlocked.length}건`);
+    blockers.push(`보류/제한 상태 ${quarantineBlocked.length}건`);
   }
 
   const expired = posting.postingLines.filter(

@@ -280,8 +280,8 @@ function generateLegacyInboxItems(
       items.push({
         id: `gen-rb-quar-${rb.id}`,
         itemType: 'inventory_action',
-        title: `${rb.receivingNumber} 격리 품목`,
-        description: '온도 이탈 또는 손상으로 격리 보관 중',
+        title: `${rb.receivingNumber} 보류 품목`,
+        description: '온도 이탈 또는 손상으로 보류 보관 중',
         status: 'receiving_quarantine',
         priority: 'p0',
         ownershipState: 'assigned_to_me',
@@ -290,7 +290,7 @@ function generateLegacyInboxItems(
         elapsedHours: Math.round(hoursSince(rb.receivedAt)),
         isOverdue: hoursSince(rb.receivedAt) > 24,
         isBlocked: true,
-        blockedReason: '격리 검사 완료 전 출고 불가',
+        blockedReason: '보류 검사 완료 전 출고 불가',
         sourceContext: {
           type: 'receiving_batch',
           entityId: rb.id,
@@ -339,7 +339,7 @@ function generateLegacyInboxItems(
         id: `gen-sp-reorder-${sp.id}`,
         itemType: 'inventory_action',
         title: `${sp.inventoryItemId} 재주문 필요`,
-        description: `가용 ${sp.availableQuantity}${sp.unit} (격리 ${sp.quarantinedQuantity})`,
+        description: `가용 ${sp.availableQuantity}${sp.unit} (보류 ${sp.quarantinedQuantity})`,
         status: 'reorder_due',
         priority: sp.riskStatus === 'critical_shortage' ? 'p0' : 'p1',
         ownershipState: 'assigned_to_team',

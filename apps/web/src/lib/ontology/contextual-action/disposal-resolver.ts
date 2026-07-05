@@ -55,7 +55,7 @@ export interface DisposalResolution {
   /** 기본 폐기 사유 */
   defaultReason: DisposalReason;
 
-  /** 격리 필요 여부 */
+  /** 보류 필요 여부 */
   requiresQuarantine: boolean;
 
   /** 폐기 후 안전재고 미달 여부 */
@@ -113,13 +113,13 @@ export function resolveDisposal(input: DisposalInput): DisposalResolution {
     };
   }
 
-  // 위험물 또는 격리 필요
+  // 위험물 또는 보류 필요
   const requiresQuarantine = !!input.isHazardous || !!input.requiresIsolation;
   if (requiresQuarantine) {
     return {
       route: "quarantine_then_dispose",
-      title: "격리 후 폐기",
-      description: "위험물 또는 격리 대상입니다. 격리 조치 후 폐기를 진행합니다.",
+      title: "보류 후 폐기",
+      description: "위험물 또는 보류 대상입니다. 보류 조치 후 폐기를 진행합니다.",
       defaultReason,
       requiresQuarantine: true,
       causesStockBreach,

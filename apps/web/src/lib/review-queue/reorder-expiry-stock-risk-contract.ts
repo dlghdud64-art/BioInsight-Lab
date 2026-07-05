@@ -25,7 +25,7 @@
  * - reorder_due: 가용 재고가 재주문 기준 이하
  * - critical_shortage: 가용 재고가 안전 재고 이하로 운영에 즉시 영향
  * - expiry_risk: 사용 가능 재고 중 만료 임박 비율이 높음
- * - quarantine_constrained: 물리적 재고는 있으나 격리로 가용 불가
+ * - quarantine_constrained: 물리적 재고는 있으나 보류로 가용 불가
  * - blocked: 재고 운영이 차단됨
  */
 export type InventoryStockRiskStatus =
@@ -46,7 +46,7 @@ export type InventoryStockRiskStatus =
  *
  * - usable: 정상 사용 가능
  * - restricted: 제한 사용 (조건부 승인 등)
- * - quarantined: 격리 보관 중 (사용 불가)
+ * - quarantined: 보류 보관 중 (사용 불가)
  * - expired: 유효기간 만료
  * - damaged: 손상
  * - blocked: 운영 차단
@@ -155,7 +155,7 @@ export interface InventoryStockPositionContract {
   availableQuantity: number;
   /** 예약 수량 (프로젝트·실험 등에 배정됨) */
   reservedQuantity: number;
-  /** 격리 수량 */
+  /** 보류 수량 */
   quarantinedQuantity: number;
   /** 만료 수량 */
   expiredQuantity: number;
@@ -182,10 +182,10 @@ export interface InventoryStockPositionContract {
 // ---------------------------------------------------------------------------
 
 /**
- * 로트 위험 계약 — 개별 로트의 수량·만료·격리·사용 가능 상태
+ * 로트 위험 계약 — 개별 로트의 수량·만료·보류·사용 가능 상태
  *
  * lot-level 수량 분해: quantityOnHand = quantityAvailable + quantityQuarantined + quantityReserved + quantityExpired
- * 격리 상태(quarantineStatus)와 사용 가능 상태(usabilityStatus) 분리
+ * 보류 상태(quarantineStatus)와 사용 가능 상태(usabilityStatus) 분리
  * receiving lot / posting line과의 연결로 입고 추적
  */
 export interface InventoryLotRiskContract {
@@ -207,7 +207,7 @@ export interface InventoryLotRiskContract {
   quantityOnHand: number;
   /** 로트 가용 수량 */
   quantityAvailable: number;
-  /** 로트 격리 수량 */
+  /** 로트 보류 수량 */
   quantityQuarantined: number;
   /** 로트 예약 수량 */
   quantityReserved: number;
@@ -215,7 +215,7 @@ export interface InventoryLotRiskContract {
   quantityExpired: number;
   /** 단위 */
   unit: string;
-  /** 격리 상태 */
+  /** 보류 상태 */
   quarantineStatus:
     | "not_applicable"
     | "pending"
@@ -450,7 +450,7 @@ export interface StockRiskSnapshotContract {
     criticalShortageCount: number;
     /** 만료 위험 품목 수 */
     expiryRiskCount: number;
-    /** 격리 제약 품목 수 */
+    /** 보류 제약 품목 수 */
     quarantineConstrainedCount: number;
     /** 차단 품목 수 */
     blockedCount: number;
@@ -459,7 +459,7 @@ export interface StockRiskSnapshotContract {
   lowStockItemIds: string[];
   /** 만료 임박 로트 참조 목록 */
   expiringLotRefs: StockLotReferenceContract[];
-  /** 격리 로트 참조 목록 */
+  /** 보류 로트 참조 목록 */
   quarantineLotRefs: StockLotReferenceContract[];
   /** 차단된 재주문 추천 ID 목록 */
   blockedReorderIds: string[];
@@ -526,9 +526,9 @@ export const STOCK_RISK_STATUS_DESCRIPTIONS: Record<
     nextActions: ["우선 사용", "교체 발주"],
   },
   quarantine_constrained: {
-    label: "격리 제약",
-    description: "물리적 재고는 있으나 격리로 가용 불가",
-    nextActions: ["격리 해제 검토", "대체품 확인"],
+    label: "보류 제약",
+    description: "물리적 재고는 있으나 보류로 가용 불가",
+    nextActions: ["보류 해제 검토", "대체품 확인"],
   },
   blocked: {
     label: "차단",
@@ -594,8 +594,8 @@ export const EXPIRY_ACTION_TYPE_DESCRIPTIONS: Record<
     description: "다른 위치/팀으로 이관",
   },
   quarantine: {
-    label: "격리",
-    description: "사용 제한 및 격리 보관",
+    label: "보류",
+    description: "사용 제한 및 보류 보관",
   },
   dispose: {
     label: "폐기",
@@ -625,7 +625,7 @@ export const STOCK_RISK_THRESHOLDS = {
   coverageDangerDays: 7,
   /** 커버리지 경고 (일) — 이 이하이면 warning */
   coverageWarningDays: 14,
-  /** 격리 제약 비율 (%) — onHand 중 quarantined가 이 비율 이상이면 제약 */
+  /** 보류 제약 비율 (%) — onHand 중 quarantined가 이 비율 이상이면 제약 */
   quarantineConstraintPercent: 50,
 } as const;
 

@@ -584,7 +584,7 @@ export function resolveReceivingOperationalState(
       domainPhase: 'posted',
       domainPhaseLabel: '반영 완료',
       blockerClass: null, blockerReasons: [],
-      reviewReasons: hasRemainingQuarantine ? ['격리 잔여 확인'] : [],
+      reviewReasons: hasRemainingQuarantine ? ['보류 잔여 확인'] : [],
       waitingExternalSummary: null,
       handoff: {
         ready: true,
@@ -605,14 +605,14 @@ export function resolveReceivingOperationalState(
   // Blocked: docs missing or quarantine
   const blockerReasons: string[] = [];
   if (hasDocMissing) blockerReasons.push('문서 미첨부');
-  if (hasQuarantine) blockerReasons.push('격리 품목 미해결');
+  if (hasQuarantine) blockerReasons.push('보류 품목 미해결');
 
   if (blockerReasons.length > 0 && !canPost) {
     return {
       entityType: 'receiving', entityId: rb.id,
       readiness: hasDocMissing ? 'waiting_external' : 'blocked',
       domainPhase: hasDocMissing ? 'docs_missing' : 'quarantine_active',
-      domainPhaseLabel: hasDocMissing ? '문서 누락' : '격리 활성',
+      domainPhaseLabel: hasDocMissing ? '문서 누락' : '보류 활성',
       blockerClass: hasDocMissing ? 'external_wait' : 'hard_block',
       blockerReasons,
       reviewReasons: [],
@@ -628,7 +628,7 @@ export function resolveReceivingOperationalState(
       currentOwnerName: rb.receivedBy ?? null,
       nextOwnerName: hasQuarantine ? 'QC 담당자' : null,
       followUpOwnerName: hasDocMissing ? rb.receivedBy ?? null : null,
-      nextActionSummary: hasDocMissing ? '문서 확보' : '격리 검사',
+      nextActionSummary: hasDocMissing ? '문서 확보' : '보류 검사',
       nextRoute: `/dashboard/receiving/${rb.id}`,
     };
   }

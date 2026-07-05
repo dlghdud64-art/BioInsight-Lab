@@ -165,7 +165,7 @@ export function evaluateIntakeAxes(intakeCase: ReceivingIntakeCase, decision: Re
     const hasHandlingIssue = decision.exceptionFlags.includes("handling_instruction_missing");
 
     if (hasQuarantineIssue) {
-      results.push({ axis: "exception_intake_ready", status: "blocked", detail: "격리 대상이나 격리 경로 미정의" });
+      results.push({ axis: "exception_intake_ready", status: "blocked", detail: "보류 대상이나 보류 경로 미정의" });
     } else if (hasPartialIssue) {
       results.push({ axis: "exception_intake_ready", status: "blocked", detail: "부분 입고 불허인데 부분 입고 이슈 미해결" });
     } else if (hasHandlingIssue) {
@@ -213,7 +213,7 @@ export function evaluateReceivingIntakeReadiness(state: ReceivingIntakeWorkbench
     }
     // Quarantine guard
     if (state.decision.quarantineCandidate && state.decision.exceptionFlags.includes("quarantine_path_missing")) {
-      blockers.push("격리 대상이나 격리 경로 미정의");
+      blockers.push("보류 대상이나 보류 경로 미정의");
     }
     // Mandatory capture guard
     if (state.decision.lotCaptureRequired && state.decision.exceptionFlags.includes("lot_capture_undefined")) {

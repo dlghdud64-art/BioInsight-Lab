@@ -326,7 +326,7 @@ export function ReceivingExecutionGovernanceWorkbench({
             <div><span className="text-slate-500">수락</span><p className="text-emerald-400 tabular-nums">{surface.acceptedCount}</p></div>
             <div><span className="text-slate-500">거부</span><p className="text-red-400 tabular-nums">{surface.rejectedCount}</p></div>
             <div><span className="text-slate-500">대기</span><p className="text-slate-400 tabular-nums">{surface.pendingCount}</p></div>
-            <div><span className="text-slate-500">격리</span><p className="text-red-400 tabular-nums">{surface.quarantinedCount}</p></div>
+            <div><span className="text-slate-500">보류</span><p className="text-red-400 tabular-nums">{surface.quarantinedCount}</p></div>
           </div>
         </div>
 
@@ -360,7 +360,7 @@ export function ReceivingExecutionGovernanceWorkbench({
               <button onClick={onReopenPrep} className="min-h-[40px] flex-1 md:flex-none rounded border border-yellow-500/20 bg-yellow-500/10 hover:bg-yellow-500/20 active:scale-95 px-3 py-1.5 text-xs text-yellow-300 transition-colors">Receiving Prep 재열기</button>
             )}
             {surface.canQuarantine && (
-              <button onClick={onQuarantine} className="min-h-[40px] flex-1 md:flex-none rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 active:scale-95 px-3 py-1.5 text-xs text-red-300 transition-colors">격리</button>
+              <button onClick={onQuarantine} className="min-h-[40px] flex-1 md:flex-none rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 active:scale-95 px-3 py-1.5 text-xs text-red-300 transition-colors">보류</button>
             )}
             {surface.canMarkDiscrepancy && (
               <button onClick={onMarkDiscrepancy} className="min-h-[40px] flex-1 md:flex-none rounded border border-yellow-500/20 bg-yellow-500/10 hover:bg-yellow-500/20 active:scale-95 px-3 py-1.5 text-xs text-yellow-300 transition-colors">불일치 보고</button>

@@ -281,7 +281,7 @@ export function buildTodayHeaderStats(items: UnifiedInboxItem[]): TodayHeaderSta
  * 운영 영향도 기준 상위 항목 추출.
  *
  * 우선순위 순서:
- *  1. P0: 승인 발행 지연 PO, 입고 격리/문서 차단, 긴급 부족+차단 재주문, 만료 기한 초과
+ *  1. P0: 승인 발행 지연 PO, 입고 보류/문서 차단, 긴급 부족+차단 재주문, 만료 기한 초과
  *  2. P1: 견적 검토 필요(대체품/문서), 확인 대기+납기 압박, 부분 반영 차단
  *  3. 하위: 외부 대기만, 모니터 만료
  *
@@ -452,7 +452,7 @@ export function buildReadyActions(items: UnifiedInboxItem[]): ReadyAction[] {
         handoffTarget = '공급사';
         break;
       case 'quarantine_constrained':
-        whyReady = '격리 검사 실행 대기';
+        whyReady = '보류 검사 실행 대기';
         handoffTarget = 'QC 담당';
         break;
       case 'receiving_issue':
@@ -590,7 +590,7 @@ export const DASHBOARD_ITEM_TYPE_LABELS: Record<DashboardItemType, string> = {
   quote_response_pending: '공급사 응답 대기',
   receiving_blocked: '입고 차단',
   receiving_postable: '재고 반영 가능',
-  quarantine_active: '격리 진행 중',
+  quarantine_active: '보류 진행 중',
   reorder_due: '재주문 필요',
   reorder_blocked: '재주문 차단',
   expiry_action_due: '만료 조치 필요',

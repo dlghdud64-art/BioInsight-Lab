@@ -152,7 +152,7 @@ export function calculateInboxPriority(item: UnifiedInboxItem): InboxPriority {
   // P0: receiving_issue + quarantine + doc missing
   if (
     workType === 'receiving_issue' &&
-    (riskBadges.includes('격리') || riskBadges.includes('문서 누락'))
+    (riskBadges.includes('보류') || riskBadges.includes('문서 누락'))
   ) {
     return 'p0';
   }
@@ -470,7 +470,7 @@ export function buildInboxFromReceiving(
       const quarantineLines = rb.lineReceipts.filter((l) =>
         l.lotRecords.some((lot) => lot.quarantineStatus === 'quarantined'),
       );
-      const riskBadges: string[] = ['격리'];
+      const riskBadges: string[] = ['보류'];
       if (hasTempExcursion) riskBadges.push('온도 이탈');
 
       const quarItem: UnifiedInboxItem = {
@@ -478,12 +478,12 @@ export function buildInboxFromReceiving(
         workType: 'quarantine_constrained',
         entityId: rb.id,
         entityRoute: `/dashboard/receiving/${rb.id}`,
-        title: `${rb.receivingNumber} 격리 품목`,
-        summary: `${quarantineLines.length}개 라인 격리 보관 중, 검사 완료 필요`,
+        title: `${rb.receivingNumber} 보류 품목`,
+        summary: `${quarantineLines.length}개 라인 보류 보관 중, 검사 완료 필요`,
         priority: 'p0', // placeholder
         owner: rb.receivedBy,
         dueState: { label: '즉시 처리', isOverdue: true, tone: 'overdue' },
-        nextAction: '격리 검사 실행 후 판정',
+        nextAction: '보류 검사 실행 후 판정',
         sourceModule: 'receiving',
         riskBadges,
         updatedAt: rb.receivedAt,
@@ -535,7 +535,7 @@ export function buildInboxFromReceiving(
     ) {
       const blockers: string[] = [];
       if (hasDocMissing) blockers.push('문서 누락');
-      if (hasQuarantine) blockers.push('격리 미해결');
+      if (hasQuarantine) blockers.push('보류 미해결');
       if (hasInspectionPending) blockers.push('검수 미완료');
 
       const postItem: UnifiedInboxItem = {
@@ -674,12 +674,12 @@ export function buildInboxFromStockRisk(
         workType: 'quarantine_constrained',
         entityId: sp.id,
         entityRoute: `/dashboard/stock-risk`,
-        title: `${sp.inventoryItemId} 격리 제약`,
-        summary: `격리 ${sp.quarantinedQuantity}${sp.unit}, 가용 ${sp.availableQuantity}${sp.unit}`,
+        title: `${sp.inventoryItemId} 보류 제약`,
+        summary: `보류 ${sp.quarantinedQuantity}${sp.unit}, 가용 ${sp.availableQuantity}${sp.unit}`,
         priority: 'p0',
         owner: undefined,
         dueState: { label: '즉시 처리', isOverdue: true, tone: 'overdue' },
-        nextAction: '격리 해제 검사 또는 폐기 결정',
+        nextAction: '보류 해제 검사 또는 폐기 결정',
         sourceModule: 'stock_risk',
         riskBadges,
         updatedAt: sp.snapshotAt,
@@ -854,7 +854,7 @@ export const WORK_TYPE_LABELS: Record<InboxWorkType, string> = {
   posting_blocked: '반영 차단',
   reorder_due: '재주문',
   expiry_action_due: '만료 조치',
-  quarantine_constrained: '격리',
+  quarantine_constrained: '보류',
 };
 
 export const SOURCE_MODULE_COLORS: Record<InboxSourceModule, string> = {

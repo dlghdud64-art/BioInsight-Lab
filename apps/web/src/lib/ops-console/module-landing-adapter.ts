@@ -221,7 +221,7 @@ function resolveReadySummary(item: UnifiedInboxItem): string | undefined {
     case 'po_ready_to_issue':
       return '승인 완료, 발행 실행 가능';
     case 'quarantine_constrained':
-      return '격리 검사 실행 대기';
+      return '보류 검사 실행 대기';
     case 'receiving_issue':
       return '문서 재요청 또는 검수 진행 가능';
     case 'reorder_due':

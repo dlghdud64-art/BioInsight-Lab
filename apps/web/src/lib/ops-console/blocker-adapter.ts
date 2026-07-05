@@ -392,14 +392,14 @@ export function buildReceivingBlockers(rb: ReceivingBatchContract): AggregatedBl
       blockerType: 'quarantine_active',
       severity: 'hard_block',
       summaryKey: `rb-${rb.id}-quarantine`,
-      whatIsBlocked: '재고 반영 (격리 품목)',
-      whyBlocked: `${quarantineLines.length}건 라인 온도 이탈/손상 — 격리 중`,
-      whatCanResolveIt: '격리 검사 실행 후 해제/폐기 판정',
+      whatIsBlocked: '재고 반영 (보류 품목)',
+      whyBlocked: `${quarantineLines.length}건 라인 온도 이탈/손상 — 보류 중`,
+      whatCanResolveIt: '보류 검사 실행 후 해제/폐기 판정',
       resolutionOwnerRole: '품질/준법 검토자',
       canPartiallyContinue: true,
-      partialContinuationLabel: '격리 외 라인은 검수 가능',
+      partialContinuationLabel: '보류 외 라인은 검수 가능',
       recommendedResolutionAction: 'request_internal_review',
-      recommendedResolutionLabel: '격리 검사 판정',
+      recommendedResolutionLabel: '보류 검사 판정',
       escalationRequired: false,
       resolvedStateTarget: 'ready_to_post',
     });
@@ -546,13 +546,13 @@ export function buildStockRiskBlockers(
       severity: 'review_gate',
       summaryKey: `sp-${sp.id}-quarantine`,
       whatIsBlocked: `${sp.inventoryItemId} 가용량 제한`,
-      whyBlocked: `격리 ${sp.quarantinedQuantity}${sp.unit} — 사용 불가`,
-      whatCanResolveIt: '격리 검사 판정 후 해제 또는 폐기',
+      whyBlocked: `보류 ${sp.quarantinedQuantity}${sp.unit} — 사용 불가`,
+      whatCanResolveIt: '보류 검사 판정 후 해제 또는 폐기',
       resolutionOwnerRole: '품질 관리자',
       canPartiallyContinue: true,
       partialContinuationLabel: `가용 ${sp.availableQuantity}${sp.unit} 사용 가능`,
       recommendedResolutionAction: 'request_internal_review',
-      recommendedResolutionLabel: '격리 검사 판정',
+      recommendedResolutionLabel: '보류 검사 판정',
       escalationRequired: false,
     });
   }
@@ -576,7 +576,7 @@ export function buildInboxItemBlockers(item: {
     const reason = item.blockedReason;
     const isBudget = reason.includes('예산') || reason.includes('한도');
     const isDoc = reason.includes('문서') || reason.includes('COA');
-    const isQuarantine = reason.includes('격리');
+    const isQuarantine = reason.includes('보류');
     const isInspection = reason.includes('검수') || reason.includes('검사');
     const isDuplicate = reason.includes('중복');
 

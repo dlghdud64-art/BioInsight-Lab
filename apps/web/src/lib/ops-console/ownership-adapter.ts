@@ -250,7 +250,7 @@ export function buildReceivingOwnership(
     ownerBlockedReason = '필수 문서 미첨부 — 공급사 제공 필요';
   } else if (hasQuarantine) {
     assignmentState = 'awaiting_internal_review';
-    ownerBlockedReason = '격리 품목 검사 판정 필요';
+    ownerBlockedReason = '보류 품목 검사 판정 필요';
   } else if (hasInspectionPending) {
     assignmentState = 'awaiting_internal_review';
   } else if (canPost) {

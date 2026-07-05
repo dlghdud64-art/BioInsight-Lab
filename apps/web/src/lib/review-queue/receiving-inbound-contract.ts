@@ -138,15 +138,15 @@ export type ReceivingInspectionStatus =
   | "reinspect_required";
 
 // ---------------------------------------------------------------------------
-// 6. Lot 격리(검역) 상태
+// 6. Lot 보류(검역) 상태
 // ---------------------------------------------------------------------------
 
 /**
- * Lot 격리 상태 — lot 단위 quarantine 관리
+ * Lot 보류 상태 — lot 단위 quarantine 관리
  *
- * - not_applicable: 격리 불요
- * - pending: 격리 판정 대기
- * - quarantined: 격리 중
+ * - not_applicable: 보류 불요
+ * - pending: 보류 판정 대기
+ * - quarantined: 보류 중
  * - released: 출고 허가
  * - blocked: 출고 차단
  */
@@ -376,7 +376,7 @@ export interface ReceivedLotRecordContract {
   warrantyAttached: boolean;
   /** 라벨 상태 */
   labelStatus: "ok" | "missing" | "mismatch";
-  /** Lot 격리 상태 */
+  /** Lot 보류 상태 */
   quarantineStatus: LotQuarantineStatus;
   /** 연결된 재고 반영 ID */
   inventoryPostingId?: string;

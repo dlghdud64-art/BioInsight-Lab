@@ -579,7 +579,7 @@ Quotes/PO/Receiving/Stock-Risk 4개 module landing 페이지를
    - Downstream: stock_risk_handoff 항목에서 stock-risk 링크
 
 5. Stock-Risk Landing (stock-risk/page.tsx):
-   - Header: 리스크 총건, 부족, 만료 임박, 격리, 재주문 후보
+   - Header: 리스크 총건, 부족, 만료 임박, 보류, 재주문 후보
    - Priority Queue: p0~p1 리스크 목록
    - Category Tabs: shortage → expiry → quarantine → reorder_candidate
    - Recovery: 재주문 CTA → sourcing flow 진입 (re-entry context 설정)

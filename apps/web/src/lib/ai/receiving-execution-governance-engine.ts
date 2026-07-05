@@ -566,7 +566,7 @@ export function buildReceivingExecutionGovSurface(state: ReceivingExecutionGover
     : state.status === "discrepancy"
       ? `불일치 ${state.discrepancies.length}건 — ${unresolvedCount}건 미해결`
     : state.status === "quarantined"
-      ? `${state.quarantinedLineIds.length}건 격리 — ${state.quarantineReason}`
+      ? `${state.quarantinedLineIds.length}건 보류 — ${state.quarantineReason}`
     : "입고 취소됨";
 
   const nextAction = state.status === "awaiting_receipt"
@@ -578,9 +578,9 @@ export function buildReceivingExecutionGovSurface(state: ReceivingExecutionGover
     : state.status === "received"
       ? "Stock Release Gate 진입"
     : state.status === "discrepancy"
-      ? "불일치 처리 (격리/수락/반품)"
+      ? "불일치 처리 (보류/수락/반품)"
     : state.status === "quarantined"
-      ? "격리 해제 또는 반품 결정"
+      ? "보류 해제 또는 반품 결정"
     : "재시작하려면 Receiving Prep 재진입";
 
   const lineDelta = state.expectedLines.map(expected => {

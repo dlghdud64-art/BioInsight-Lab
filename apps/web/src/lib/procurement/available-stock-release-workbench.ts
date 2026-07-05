@@ -29,7 +29,7 @@ export type StockAvailabilitySubstatus =
 export const STOCK_AVAILABILITY_SUBSTATUS_LABELS: Record<StockAvailabilitySubstatus, string> = {
   awaiting_release_review: "가용 검토 대기",
   lot_release_pending: "Lot 해제 대기",
-  quarantine_hold_remaining: "격리/보류 잔존",
+  quarantine_hold_remaining: "보류 잔존",
   release_blocked: "가용 전환 차단",
   partially_available: "부분 가용",
   available_release_completed: "가용 전환 완료",
@@ -193,7 +193,7 @@ export function evaluateLotReleaseEligibility(
 
     // Quarantine
     if (line.disposition === "quarantine") {
-      blockReasons.push("격리 상태 미해제");
+      blockReasons.push("보류 상태 미해제");
     }
 
     const lotEntry: LotEligibility = {
@@ -219,7 +219,7 @@ export function evaluateLotReleaseEligibility(
 
   const quarantineLots = blocked.filter(l => l.currentDisposition === "quarantine");
   if (quarantineLots.length > 0) {
-    globalWarnings.push({ code: "quarantine_remaining", message: `격리 Lot ${quarantineLots.length}건이 남아 있습니다.` });
+    globalWarnings.push({ code: "quarantine_remaining", message: `보류 Lot ${quarantineLots.length}건이 남아 있습니다.` });
   }
 
   const damagedLots = blocked.filter(l => l.currentDisposition === "damaged");
@@ -253,8 +253,8 @@ export type HoldResolutionType =
 
 export const HOLD_RESOLUTION_TYPE_LABELS: Record<HoldResolutionType, string> = {
   inspection_cleared: "검사 통과",
-  quarantine_maintained: "격리 유지",
-  quarantine_released: "격리 해제",
+  quarantine_maintained: "보류 유지",
+  quarantine_released: "보류 해제",
   damaged_kept_blocked: "파손 차단 유지",
   discard_pending: "폐기 대기",
   supplier_issue_pending: "공급사 이슈 보류",
@@ -350,7 +350,7 @@ export function validateAvailabilityReleaseBeforeFinalize(
       missingItems.push("가용 가능 Lot");
     }
     if (eligibility.quarantineQtySummary > 0) {
-      warnings.push({ code: "quarantine_remaining", message: `격리 수량 ${eligibility.quarantineQtySummary}이(가) 남아 있습니다.` });
+      warnings.push({ code: "quarantine_remaining", message: `보류 수량 ${eligibility.quarantineQtySummary}이(가) 남아 있습니다.` });
     }
     // Propagate eligibility blocking
     for (const issue of eligibility.blockingIssues) {
@@ -587,7 +587,7 @@ export function buildStockReleaseWorkbenchModel(input: {
 
   const secondaryActions: StockReleaseWorkbenchModel["secondaryActions"] = [];
   if (eligibility && eligibility.blockedLots.length > 0 && !tracking.availabilityReleaseEventId) {
-    secondaryActions.push({ id: "resolve_holds", label: "보류/격리 해제", enabled: true, reason: null });
+    secondaryActions.push({ id: "resolve_holds", label: "보류 해제", enabled: true, reason: null });
   }
   if (tracking.availabilityReleaseEventId && primaryAction.id !== "open_inventory") {
     secondaryActions.push({ id: "open_inventory", label: "재고 상세 확인", enabled: true, reason: null });
@@ -600,7 +600,7 @@ export function buildStockReleaseWorkbenchModel(input: {
   const checklist: StockReleaseWorkbenchModel["checklistItems"] = [
     { label: "가용 검토 시작", status: tracking.stockReleaseStartedAt ? "done" : "pending" },
     { label: "Lot 가용성 평가", status: hasEligibility ? "done" : "pending" },
-    { label: "보류/격리 해결", status: hasEligibility ? (noBlocked ? "done" : "pending") : "pending" },
+    { label: "보류 해결", status: hasEligibility ? (noBlocked ? "done" : "pending") : "pending" },
     { label: "가용 전환 완료", status: hasRelease ? "done" : tracking.releaseBlockedFlag ? "blocked" : "pending" },
   ];
 
@@ -641,7 +641,7 @@ export function buildStockReleaseQueueRowBadge(
   if (!tracking.stockReleaseStartedAt) nextAction = "가용 검토 시작 필요";
   else if (tracking.releaseBlockedFlag) nextAction = tracking.releaseBlockedReason ?? "차단 항목 확인";
   else if (!tracking.availabilityReleaseEventId) nextAction = "가용 전환 완료 필요";
-  else if (tracking.stockAvailabilityStatus === "quarantine_hold_remaining") nextAction = "격리 해제 대기";
+  else if (tracking.stockAvailabilityStatus === "quarantine_hold_remaining") nextAction = "보류 해제 대기";
   else nextAction = "가용 전환 완료";
 
   return {

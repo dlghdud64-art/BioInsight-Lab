@@ -152,7 +152,7 @@ export const STATUS_GRAMMAR: readonly StatusGrammar[] = [
   { status: "partially_received",     domain: "receiving_execution", category: "in_progress", label: "부분 입고",      isTerminal: false, allowsIrreversibleAction: false },
   { status: "received",              domain: "receiving_execution", category: "completed",   label: "입고 완료",      isTerminal: true,  allowsIrreversibleAction: false },
   { status: "discrepancy",           domain: "receiving_execution", category: "blocked",     label: "불일치 발생",    isTerminal: false, allowsIrreversibleAction: false },
-  { status: "quarantined",           domain: "receiving_execution", category: "blocked",     label: "격리 보관",      isTerminal: false, allowsIrreversibleAction: false },
+  { status: "quarantined",           domain: "receiving_execution", category: "blocked",     label: "보류 보관",      isTerminal: false, allowsIrreversibleAction: false },
   { status: "cancelled",             domain: "receiving_execution", category: "cancelled",   label: "취소됨",         isTerminal: true,  allowsIrreversibleAction: false },
 
   // ── Stock Release ──
@@ -339,7 +339,7 @@ export const DOCK_ACTION_GRAMMAR: readonly DockActionGrammar[] = [
   // ── Receiving Execution ──
   { actionKey: "confirm_receipt",       label: "입고 확인",        domain: "receiving_execution",   risk: "irreversible", requiresConfirmation: true,  blockedByHardBlocker: true,  blockedByStale: true },
   { actionKey: "report_discrepancy",    label: "불일치 신고",       domain: "receiving_execution",   risk: "reversible",   requiresConfirmation: false, blockedByHardBlocker: false, blockedByStale: false },
-  { actionKey: "quarantine",            label: "격리 보관",        domain: "receiving_execution",   risk: "reversible",   requiresConfirmation: true,  blockedByHardBlocker: false, blockedByStale: false },
+  { actionKey: "quarantine",            label: "보류 보관",        domain: "receiving_execution",   risk: "reversible",   requiresConfirmation: true,  blockedByHardBlocker: false, blockedByStale: false },
   { actionKey: "cancel_receiving",      label: "입고 취소",        domain: "receiving_execution",   risk: "irreversible", requiresConfirmation: true,  blockedByHardBlocker: false, blockedByStale: true },
 
   // ── Stock Release ──

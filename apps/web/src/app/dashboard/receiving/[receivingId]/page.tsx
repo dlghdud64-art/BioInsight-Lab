@@ -143,7 +143,7 @@ export default function ReceivingDetailPage() {
     ? {
         workTypeLabel:
           primaryInbox.workType === "quarantine_constrained"
-            ? "격리"
+            ? "보류"
             : primaryInbox.workType === "receiving_issue"
               ? "입고 이슈"
               : "반영 차단",
@@ -184,7 +184,7 @@ export default function ReceivingDetailPage() {
 
     if (model.document.missingLines > 0)
       blockers.push({ label: `${model.document.missingLines}건 필수 문서 미첨부 — 검수 진행 불가`, actionable: true });
-    // §inbound-quarantine-temp-exclude: 격리·차단 lot은 입고 반영을 막지 않는다(blocker 제외).
+    // §inbound-quarantine-temp-exclude: 보류·차단 lot은 입고 반영을 막지 않는다(blocker 제외).
     if (model.inspection.failed > 0)
       blockers.push({ label: `${model.inspection.failed}건 불합격 — 재검수 또는 반품`, actionable: true });
 
@@ -715,7 +715,7 @@ function InventoryReleaseHandoffPanel({ model }: { model: ReceivingExecutionMode
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <AlertCircle className="h-3 w-3 text-red-400" />
-                  <span className="text-red-300">만료 lot {expiredLots.length}건 — 폐기/격리 필요</span>
+                  <span className="text-red-300">만료 lot {expiredLots.length}건 — 폐기/보류 필요</span>
                 </div>
                 <Link href="/dashboard/inventory?filter=expiring" className="text-[10px] text-red-400 hover:text-red-300">검토 →</Link>
               </div>

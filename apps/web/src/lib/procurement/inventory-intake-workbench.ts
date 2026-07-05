@@ -42,7 +42,7 @@ export type StockDisposition = "available" | "hold" | "quarantine" | "damaged" |
 export const STOCK_DISPOSITION_LABELS: Record<StockDisposition, string> = {
   available: "사용 가능",
   hold: "보류",
-  quarantine: "격리",
+  quarantine: "보류",
   damaged: "파손",
   discard: "폐기 대기",
 };
@@ -316,7 +316,7 @@ export function finalizeInventoryIntake(
 
   const now = new Date().toISOString();
   const dispositionSummary = movement
-    ? `가용 ${movement.availableQty} / 보류 ${movement.holdQty} / 격리 ${movement.quarantineQty} / 파손 ${movement.damagedQty}`
+    ? `가용 ${movement.availableQty} / 보류 ${movement.holdQty} / 보류 ${movement.quarantineQty} / 파손 ${movement.damagedQty}`
     : null;
 
   return {

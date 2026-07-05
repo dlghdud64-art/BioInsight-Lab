@@ -926,11 +926,11 @@ export const RECEIVING_BATCH_001: ReceivingBatchContract = {
           warrantyAttached: false,
           labelStatus: 'ok',
           quarantineStatus: 'quarantined',
-          notes: '배송 중 온도 이탈 감지 - 격리 보관 중',
+          notes: '배송 중 온도 이탈 감지 - 보류 보관 중',
         },
       ],
       deviationNotes: ['배송 중 온도 이탈 감지', '5병 중 3병만 수령, 2병 미도착'],
-      riskFlags: ['온도 이탈', '부분 수령', '격리 보관'],
+      riskFlags: ['온도 이탈', '부분 수령', '보류 보관'],
     },
   ],
 };
@@ -957,7 +957,7 @@ export const STOCK_POSITION_001: InventoryStockPositionContract = {
   averageConsumptionRate: 1.5,
   incomingQuantity: 0,
   riskStatus: 'reorder_due',
-  riskFlags: ['가용 재고 부족', '재주문 기준 미달', '격리 수량 과다'],
+  riskFlags: ['가용 재고 부족', '재주문 기준 미달', '보류 수량 과다'],
 };
 
 export const REORDER_RECOMMENDATION_001: ReorderRecommendationContract = {
@@ -1217,8 +1217,8 @@ export const INBOX_ITEMS: OperatorInboxItem[] = [
   {
     id: 'inbox-005',
     itemType: 'inventory_action',
-    title: 'RCV-2026-0031 온도 이탈 격리',
-    description: 'HEPES Buffer (LOT-HEP-2026C) 배송 중 온도 이탈 — 3병 격리 보관 중',
+    title: 'RCV-2026-0031 온도 이탈 보류',
+    description: 'HEPES Buffer (LOT-HEP-2026C) 배송 중 온도 이탈 — 3병 보류 보관 중',
     status: 'receiving_quarantine',
     priority: 'p0',
     ownershipState: 'assigned_to_me',
@@ -1235,7 +1235,7 @@ export const INBOX_ITEMS: OperatorInboxItem[] = [
       label: 'RCV-2026-0031',
       href: '/dashboard/receiving/rb-001',
     },
-    impactLabel: 'HEPES Buffer 격리 3병 — 실험 일정 지연 가능',
+    impactLabel: 'HEPES Buffer 보류 3병 — 실험 일정 지연 가능',
     workspaceId: WORKSPACE_ID,
   },
   // Scenario 4 — posting blocked (P1)
@@ -1243,7 +1243,7 @@ export const INBOX_ITEMS: OperatorInboxItem[] = [
     id: 'inbox-006',
     itemType: 'inventory_action',
     title: 'RCV-2026-0031 재고 반영 차단',
-    description: 'COA 누락 + 격리 품목으로 부분 반영만 가능',
+    description: 'COA 누락 + 보류 품목으로 부분 반영만 가능',
     status: 'posting_blocked',
     priority: 'p1',
     ownershipState: 'assigned_to_team',
@@ -1252,7 +1252,7 @@ export const INBOX_ITEMS: OperatorInboxItem[] = [
     elapsedHours: 20,
     isOverdue: true,
     isBlocked: true,
-    blockedReason: 'COA 누락 라인 + 격리 라인 미해결',
+    blockedReason: 'COA 누락 라인 + 보류 라인 미해결',
     sourceContext: {
       type: 'receiving_batch',
       entityId: 'rb-001',
@@ -1267,7 +1267,7 @@ export const INBOX_ITEMS: OperatorInboxItem[] = [
     id: 'inbox-007',
     itemType: 'inventory_action',
     title: 'DMEM 재주문 필요',
-    description: '가용 재고 5병 (기준: 20) — 격리 10병 사용 불가',
+    description: '가용 재고 5병 (기준: 20) — 보류 10병 사용 불가',
     status: 'reorder_due',
     priority: 'p1',
     ownershipState: 'assigned_to_team',

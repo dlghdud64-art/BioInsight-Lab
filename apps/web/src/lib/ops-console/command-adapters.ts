@@ -294,7 +294,7 @@ export interface ReceivingCommandContext {
 export function buildReceivingCommandSurface(ctx: ReceivingCommandContext): CommandSurface {
   const { rb, onCompleteInspection, onPostToInventory, onResolveDocs } = ctx;
 
-  // §inbound-quarantine-temp-exclude: 격리·온도는 입고 posting 게이트에서 제외 (호영님 2026-07-02).
+  // §inbound-quarantine-temp-exclude: 보류·온도는 입고 posting 게이트에서 제외 (호영님 2026-07-02).
   const hasDocMissing = rb.lineReceipts.some((l) => l.documentStatus === 'partial' || l.documentStatus === 'missing');
   const hasInspectionPending = rb.lineReceipts.some(
     (l) => l.inspectionRequired && (l.inspectionStatus === 'pending' || l.inspectionStatus === 'in_progress'),
@@ -359,7 +359,7 @@ export function buildReceivingCommandSurface(ctx: ReceivingCommandContext): Comm
           ),
     );
   }
-  // §inbound-quarantine-temp-exclude: rcv-resolve-quarantine 제거 — 격리는 입고를 차단하지 않음.
+  // §inbound-quarantine-temp-exclude: rcv-resolve-quarantine 제거 — 보류는 입고를 차단하지 않음.
 
   // Context: navigation
   const contextCommands = [];
