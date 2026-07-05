@@ -99,6 +99,7 @@ const GUIDE_CATEGORIES = [
   { id: "search-compare", label: "검색과 비교", icon: GitCompareArrows },
   { id: "quote-purchase", label: "견적 요청과 구매", icon: ShoppingCart },
   { id: "inventory", label: "입고와 재고 운영", icon: Package },
+  { id: "safety", label: "안전·규제 (MSDS·LOT·GMP)", icon: Shield },
   { id: "org-role", label: "조직/권한 관리", icon: Users },
   { id: "notification", label: "알림/설정/구독", icon: Bell },
   { id: "ai-bom-pdf", label: "AI/BOM/PDF 활용", icon: Brain },
@@ -134,6 +135,12 @@ const GUIDE_ENTRIES: GuideEntry[] = [
   { id: "inv-2", category: "inventory", icon: Shield, title: "안전재고·유효기간·재주문", what: "품목별 안전재고 기준을 설정하고, 유효기간 임박 시 자동 알림을 받습니다. 재고 부족 품목은 재주문 요청으로 바로 연결됩니다.", when: "재고 부족이나 기한 만료를 사전에 방지하고 싶을 때", keyInputs: ["안전재고 수량", "알림 기준일", "재주문 수량"], nextAction: "부족 품목 자동 견적 요청", link: { label: "재고 관리 열기", href: "/dashboard/inventory" } },
   { id: "inv-3", category: "inventory", icon: Search, title: "바코드 스캔 입고", what: "스마트폰 카메라로 바코드를 스캔하여 빠르게 입고를 처리합니다.", when: "다량의 품목을 빠르게 입고할 때", keyInputs: ["바코드 (카메라 스캔)"], nextAction: "수량 확인 후 입고 완료", link: { label: "스캔 입고 열기", href: "/dashboard/inventory/scan" } },
   { id: "inv-4", category: "inventory", icon: Brain, title: "재고 운영 도우미 (AI 어시스턴트)", what: "AI가 Lot 번호 추적, 유효기간 만료 예측, 사용량 기반 재주문 시점을 제안합니다.", when: "재고 운영에 대한 조언이나 자동화된 추천이 필요할 때", keyInputs: ["현재 재고 데이터 (자동 참조)"], nextAction: "추천 사항 검토 → 재주문/폐기 결정", link: { label: "재고 관리 열기", href: "/dashboard/inventory" } },
+  // ── 안전·규제 (MSDS·LOT·GMP) ──
+  { id: "sf-1", category: "safety", icon: Shield, title: "MSDS(안전보건자료) 등록·연계", what: "물질명 또는 CAS 번호로 GHS 분류·H코드를 자동 조회하고, 품목에 MSDS를 첨부합니다. 미등록 품목은 입고·사용 단계에서 경고됩니다.", when: "위험물질을 입고하거나 안전 규정을 준수해야 할 때", keyInputs: ["물질명 또는 CAS 번호", "MSDS 파일(선택)"], nextAction: "품목별 MSDS 연계 상태 확인", link: { label: "안전 관리 열기", href: "/dashboard/safety" } },
+  { id: "sf-2", category: "safety", icon: AlertTriangle, title: "GHS 라벨링·보관 조건 관리", what: "GHS 픽토그램·신호어·유해문구를 기준으로 품목의 라벨링과 보관 조건(온도·분리보관)을 관리합니다.", when: "라벨링 점검이나 보관 규정 위반을 예방하고 싶을 때", keyInputs: ["GHS 분류(자동)", "보관 위치·조건"], nextAction: "보관 조건 위반 품목 점검", link: { label: "안전 관리 열기", href: "/dashboard/safety" } },
+  { id: "sf-3", category: "safety", icon: Search, title: "LOT 번호 추적", what: "입고 시 등록한 LOT 번호로 시약의 수령·사용·폐기 이력을 추적합니다. 리콜·이상 발생 시 해당 LOT을 즉시 식별합니다.", when: "품질 이슈나 감사에서 특정 LOT의 이력을 확인해야 할 때", keyInputs: ["LOT 번호", "품목"], nextAction: "LOT별 사용·폐기 이력 확인", link: { label: "재고 관리 열기", href: "/dashboard/inventory" } },
+  { id: "sf-4", category: "safety", icon: RotateCcw, title: "유효기간·폐기 관리", what: "유효기간 임박·만료 품목을 자동 감지하고, 폐기 절차(승인·기록)를 관리합니다. 만료 시약의 사용을 사전에 차단합니다.", when: "만료 시약 사용을 방지하거나 폐기를 기록해야 할 때", keyInputs: ["유효기간(입고 시 등록)", "폐기 사유"], nextAction: "만료 임박 품목 폐기 검토", link: { label: "재고 관리 열기", href: "/dashboard/inventory" } },
+  { id: "sf-5", category: "safety", icon: FileText, title: "GMP 문서·감사 대응", what: "구매·입고·사용·폐기의 감사 추적(audit trail)을 기록하여 GMP 및 규제 감사에 대응할 수 있는 증적을 확보합니다.", when: "GMP 심사나 내부·외부 감사를 준비할 때", keyInputs: [], nextAction: "감사 추적 로그 내보내기", link: { label: "감사 로그 보기", href: "/dashboard/audit" } },
   // ── 조직/권한 관리 ──
   { id: "org-1", category: "org-role", icon: Users, title: "멤버 초대 및 역할 관리", what: "팀원에게 Viewer, Requester, Approver, Admin, Owner 역할을 부여합니다.", when: "새 팀원이 합류하거나 권한을 변경할 때", keyInputs: ["이메일 주소", "역할 선택"], nextAction: "초대 이메일 발송 확인", link: { label: "조직 설정으로 이동", href: "/dashboard/organizations" } },
   { id: "org-2", category: "org-role", icon: Shield, title: "승인 체계 설정", what: "견적 확정·발주 시 Approver의 승인을 거치도록 워크플로를 설정합니다.", when: "고액 구매나 팀 내부 승인 프로세스가 필요할 때", keyInputs: ["승인 필수 금액 기준", "승인자 지정"], nextAction: "승인 요청 테스트", link: { label: "조직 설정으로 이동", href: "/dashboard/organizations" } },
@@ -640,6 +647,11 @@ export default function SupportCenterPage() {
 
 function ManualTab() {
   const [activeCategory, setActiveCategory] = useState("getting-started");
+  // §2 슬라이드 리더 패널 대상 가이드.
+  const [readerGuide, setReaderGuide] = useState<GuideEntry | null>(null);
+  // §5 AI 도우미 — 근거 기반 검색형(자연어 생성 없음).
+  const [aiQuery, setAiQuery] = useState("");
+  const [aiSubmitted, setAiSubmitted] = useState("");
 
   const filteredEntries = useMemo(() => {
     return GUIDE_ENTRIES.filter((e) => e.category === activeCategory);
@@ -647,8 +659,142 @@ function ManualTab() {
 
   const activeCategoryMeta = GUIDE_CATEGORIES.find((c) => c.id === activeCategory);
 
+  // §2 인기 가이드 3카드 (큐레이션 — 첫 견적 / 라벨 스캔 입고 / MSDS 등록).
+  const popularGuides = useMemo(
+    () => (["qp-1", "inv-3", "sf-1"].map((id) => GUIDE_ENTRIES.find((e) => e.id === id)).filter(Boolean) as GuideEntry[]),
+    [],
+  );
+
+  // §5 AI 도우미 — 매뉴얼/시나리오 인덱스 실매칭. LLM 생성·할루시네이션 없음.
+  //   근거(매뉴얼 문서)를 찾으면 출처와 함께 노출, 없으면 "문제 해결/새 문의" 안내.
+  const aiAnswer = useMemo(() => {
+    const q = aiSubmitted.trim().toLowerCase();
+    if (!q) return null;
+    const guideHits = GUIDE_ENTRIES.filter(
+      (e) =>
+        e.title.toLowerCase().includes(q) ||
+        e.what.toLowerCase().includes(q) ||
+        e.when.toLowerCase().includes(q) ||
+        e.keyInputs.some((k) => k.toLowerCase().includes(q)),
+    ).slice(0, 3);
+    const runbookHits = RUNBOOK_ITEMS.filter(
+      (r) => r.symptom.toLowerCase().includes(q) || r.possibleCauses.some((c) => c.toLowerCase().includes(q)),
+    ).slice(0, 2);
+    return { guideHits, runbookHits, found: guideHits.length > 0 || runbookHits.length > 0 };
+  }, [aiSubmitted]);
+
+  const AI_PROMPTS = ["MSDS는 어떻게 등록하나요?", "라벨 스캔으로 입고하는 방법", "승인 한도는 어디서 바꾸나요?"];
+
   return (
     <div>
+      {/* ── §5 AI 도우미 (근거 기반 검색 — 매뉴얼 인덱스. 자연어 생성 없음) ── */}
+      <div className="mb-6 rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50/60 to-white p-5">
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center">
+            <Sparkles className="h-3.5 w-3.5 text-white" />
+          </div>
+          <span className="text-[14px] font-extrabold text-slate-900">AI 도우미</span>
+          <Badge className="bg-blue-100 text-blue-600 border-0 text-[9px] font-bold px-1.5 py-0">BETA</Badge>
+        </div>
+        <p className="text-[12px] text-slate-500 mb-3">질문하면 운영 매뉴얼을 근거로 관련 문서를 찾아 출처와 함께 보여줍니다.</p>
+        <form onSubmit={(e) => { e.preventDefault(); setAiSubmitted(aiQuery); }} className="flex gap-2">
+          <Input
+            value={aiQuery}
+            onChange={(e) => setAiQuery(e.target.value)}
+            placeholder="예: 견적 요청 메일이 안 보내질 때 어떻게 하나요?"
+            className="flex-1 h-10 bg-white border-slate-200 text-sm rounded-xl"
+          />
+          <Button type="submit" className="h-10 px-4 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl gap-1.5">
+            <Sparkles className="h-3.5 w-3.5" />질문하기
+          </Button>
+        </form>
+        <div className="flex flex-wrap gap-1.5 mt-2.5">
+          {AI_PROMPTS.map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => { setAiQuery(p); setAiSubmitted(p); }}
+              className="px-2.5 py-1 rounded-full border border-slate-200 bg-white text-[11px] font-medium text-slate-500 hover:border-blue-300 hover:text-blue-600 transition-colors motion-reduce:transition-none"
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+        {aiAnswer && (
+          <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+            {aiAnswer.found ? (
+              <>
+                <p className="text-[12px] font-bold text-slate-700 mb-2.5">&quot;{aiSubmitted}&quot; — 매뉴얼에서 찾은 근거</p>
+                <div className="space-y-2">
+                  {aiAnswer.guideHits.map((g) => (
+                    <button
+                      key={g.id}
+                      onClick={() => setReaderGuide(g)}
+                      className="w-full text-left flex items-start gap-2.5 rounded-lg border border-slate-200 hover:border-blue-300 hover:bg-blue-50/40 px-3 py-2.5 transition-colors motion-reduce:transition-none"
+                    >
+                      <BookOpen className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+                      <div className="min-w-0">
+                        <p className="text-[13px] font-bold text-slate-800">{g.title}</p>
+                        <p className="text-[11px] text-slate-500 line-clamp-2">{g.what}</p>
+                        <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-bold text-blue-600">
+                          <FileText className="h-3 w-3" />출처: 운영 매뉴얼 · {GUIDE_CATEGORIES.find((c) => c.id === g.category)?.label}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                  {aiAnswer.runbookHits.map((r) => (
+                    <div key={r.id} className="flex items-start gap-2.5 rounded-lg border border-slate-200 px-3 py-2.5">
+                      <Wrench className="h-4 w-4 text-[#b45821] shrink-0 mt-0.5" />
+                      <div className="min-w-0">
+                        <p className="text-[13px] font-bold text-slate-800">{r.symptom}</p>
+                        <p className="text-[11px] text-slate-500">문제 해결 탭에서 단계별 조치를 확인하세요.</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div>
+                <p className="text-[13px] font-bold text-slate-700 mb-1">매뉴얼에서 근거를 찾지 못했습니다</p>
+                <p className="text-[12px] text-slate-500 mb-3">할루시네이션을 피하기 위해 확인된 문서만 안내합니다. 문제 해결 탭에서 증상을 검색하거나 새 문의를 남겨 주세요.</p>
+                <Button variant="outline" size="sm" className="text-xs border-slate-200" onClick={() => { setAiSubmitted(""); setAiQuery(""); }}>
+                  다시 검색
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── §2 인기 가이드 3카드 (클릭 → 슬라이드 리더) ── */}
+      <div className="mb-6">
+        <div className="flex items-center gap-1.5 mb-3">
+          <Sparkles className="h-3.5 w-3.5 text-blue-500" />
+          <p className="text-[13px] font-extrabold text-slate-700">인기 가이드</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {popularGuides.map((g) => {
+            const Icon = g.icon;
+            return (
+              <button
+                key={g.id}
+                onClick={() => setReaderGuide(g)}
+                className="text-left rounded-xl border border-slate-200 bg-white hover:border-blue-300 hover:shadow-sm transition-all motion-reduce:transition-none p-4 group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center mb-2.5 group-hover:bg-blue-100 transition-colors motion-reduce:transition-none">
+                  <Icon className="h-4 w-4 text-blue-600" />
+                </div>
+                <p className="text-[14px] font-extrabold text-slate-900 mb-1 leading-snug">{g.title}</p>
+                <p className="text-[11px] text-slate-500 line-clamp-2">{g.what}</p>
+                <span className="inline-flex items-center gap-1 mt-2 text-[10px] font-bold text-slate-400">
+                  <Clock className="h-3 w-3" />{g.when}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* 메인 레이아웃: 사이드바 + 콘텐츠 */}
       <div className="flex gap-8">
         {/* 데스크탑 사이드바 — 확장 (w-64 = 256px) */}
@@ -702,13 +848,97 @@ function ManualTab() {
               );
             })}
           </div>
-          <ManualContent entries={filteredEntries} activeCategoryMeta={activeCategoryMeta} />
+          <ManualContent entries={filteredEntries} activeCategoryMeta={activeCategoryMeta} onOpenReader={setReaderGuide} />
         </div>
 
         {/* 데스크탑 콘텐츠 */}
         <div className="hidden md:block flex-1 min-w-0">
-          <ManualContent entries={filteredEntries} activeCategoryMeta={activeCategoryMeta} />
+          <ManualContent entries={filteredEntries} activeCategoryMeta={activeCategoryMeta} onOpenReader={setReaderGuide} />
         </div>
+      </div>
+
+      {/* ── §2 슬라이드 리더 패널 (right dock, same-canvas — 페이지 이동 없음) ── */}
+      {readerGuide && (
+        <div className="fixed inset-0 z-[90] flex justify-end" onClick={() => setReaderGuide(null)}>
+          <div className="absolute inset-0 bg-slate-900/30 animate-in fade-in-0 duration-200 motion-reduce:animate-none" />
+          <div
+            className="relative w-full max-w-md h-full bg-white shadow-2xl overflow-y-auto animate-in slide-in-from-right duration-300 motion-reduce:animate-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ReaderPanel guide={readerGuide} onClose={() => setReaderGuide(null)} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* §2 매뉴얼 슬라이드 리더 — 가이드 실 필드(what/when/keyInputs/nextAction/link)를
+   단계별로 구조화해 읽기. 내용 위조 없이 canonical 가이드 데이터만 표시. */
+function ReaderPanel({ guide, onClose }: { guide: GuideEntry; onClose: () => void }) {
+  const Icon = guide.icon;
+  const catLabel = GUIDE_CATEGORIES.find((c) => c.id === guide.category)?.label ?? guide.category;
+  return (
+    <div>
+      {/* 헤더 */}
+      <div className="sticky top-0 bg-white border-b border-slate-100 px-5 py-4 flex items-start justify-between gap-3 z-10">
+        <div className="flex items-start gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+            <Icon className="h-4.5 w-4.5 text-blue-600" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">{catLabel}</p>
+            <h3 className="text-[16px] font-extrabold text-slate-900 leading-snug break-keep">{guide.title}</h3>
+          </div>
+        </div>
+        <button type="button" onClick={onClose} className="shrink-0 text-slate-400 hover:text-slate-700 transition-colors" aria-label="닫기">
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+
+      <div className="px-5 py-5 space-y-6">
+        {/* 개요 */}
+        <div>
+          <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-2">개요</p>
+          <p className="text-[13px] text-slate-700 leading-relaxed break-keep">{guide.what}</p>
+        </div>
+        {/* 언제 보나요 */}
+        <div className="rounded-xl bg-slate-50 border border-slate-200 px-4 py-3">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Clock className="h-3.5 w-3.5 text-slate-500" />
+            <span className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">이럴 때 보세요</span>
+          </div>
+          <p className="text-[13px] text-slate-600 leading-relaxed break-keep">{guide.when}</p>
+        </div>
+        {/* 준비물 체크리스트 */}
+        {guide.keyInputs.length > 0 && (
+          <div>
+            <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-2.5">준비물 / 입력값</p>
+            <div className="space-y-2">
+              {guide.keyInputs.map((k, i) => (
+                <div key={i} className="flex items-start gap-2.5">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <p className="text-[13px] text-slate-700 leading-relaxed break-keep">{k}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {/* 다음 단계 */}
+        <div className="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3">
+          <div className="flex items-center gap-1.5 mb-1">
+            <ChevronRight className="h-3.5 w-3.5 text-blue-600" />
+            <span className="text-[11px] font-extrabold text-blue-600 uppercase tracking-wider">다음 단계</span>
+          </div>
+          <p className="text-[13px] text-blue-700 leading-relaxed break-keep">{guide.nextAction}</p>
+        </div>
+        {/* CTA (실 기능으로 이동) */}
+        <Link href={guide.link.href} className="block">
+          <Button className="w-full h-11 bg-blue-600 hover:bg-blue-500 text-white font-extrabold rounded-xl gap-2">
+            {guide.link.label}
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </Link>
       </div>
     </div>
   );
@@ -717,9 +947,12 @@ function ManualTab() {
 function ManualContent({
   entries,
   activeCategoryMeta,
+  onOpenReader,
 }: {
   entries: GuideEntry[];
   activeCategoryMeta: (typeof GUIDE_CATEGORIES)[number] | undefined;
+  // §2 — 카드 클릭 시 슬라이드 리더 오픈(페이지 이동 대신 same-canvas).
+  onOpenReader: (guide: GuideEntry) => void;
 }) {
   if (entries.length === 0) {
     return (
@@ -755,7 +988,11 @@ function ManualContent({
         {featured.map((entry) => {
           const Icon = entry.icon;
           return (
-            <Card key={entry.id} className="bg-white border-slate-200 hover:border-blue-200 transition-all overflow-hidden rounded-xl">
+            <Card
+              key={entry.id}
+              onClick={() => onOpenReader(entry)}
+              className="bg-white border-slate-200 hover:border-blue-300 hover:shadow-sm transition-all motion-reduce:transition-none overflow-hidden rounded-xl cursor-pointer"
+            >
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
                   <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
@@ -768,19 +1005,13 @@ function ManualContent({
                       <Clock className="h-3 w-3 inline mr-1 -mt-0.5" />
                       {entry.when}
                     </p>
-                    {/* §11.62: flex-wrap + break-keep — 좁은 카드에서 한국어
-                        텍스트가 글자 단위로 세로 stacking 되던 회귀 차단.
-                        button + nextAction 라벨이 같은 row 에 squeeze 되며
-                        한국어 default `word-break: normal` 이 글자 단위로
-                        wrap 시킴. flex-wrap 으로 button → row1, span → row2
-                        자연 줄바꿈 + break-keep 으로 단어 단위 wrap 강제. */}
+                    {/* §2 — 카드 전체 클릭 = 리더 오픈. CTA 는 리더 내부에서 실 기능
+                        으로 이동. flex-wrap + break-keep 은 §11.62 회귀 보호 유지. */}
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                      <Link href={entry.link.href}>
-                        <Button variant="outline" size="sm" className="gap-1.5 text-xs font-bold border-blue-200 text-blue-600 bg-transparent hover:bg-blue-50 h-8 rounded-lg">
-                          {entry.link.label}
-                          <ArrowRight className="h-3 w-3" />
-                        </Button>
-                      </Link>
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 h-8 px-3 rounded-lg border border-blue-200 bg-blue-50/50">
+                        가이드 읽기
+                        <ArrowRight className="h-3 w-3" />
+                      </span>
                       <span className="text-[11px] text-emerald-600 font-bold flex items-center gap-1 break-keep">
                         <ChevronRight className="h-3 w-3 flex-shrink-0" />
                         {entry.nextAction}
@@ -802,8 +1033,8 @@ function ManualContent({
             {rest.map((entry) => {
               const Icon = entry.icon;
               return (
-                <Link key={entry.id} href={entry.link.href}>
-                  <div className="flex items-center gap-3.5 px-4 py-3 rounded-xl border border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all group cursor-pointer">
+                <button key={entry.id} onClick={() => onOpenReader(entry)} className="w-full text-left">
+                  <div className="flex items-center gap-3.5 px-4 py-3 rounded-xl border border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all motion-reduce:transition-none group cursor-pointer">
                     <div className="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-blue-50 flex items-center justify-center flex-shrink-0 transition-colors">
                       <Icon className="h-4 w-4 text-slate-400 group-hover:text-blue-600 transition-colors" />
                     </div>
@@ -813,7 +1044,7 @@ function ManualContent({
                     </div>
                     <ArrowRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-blue-500 flex-shrink-0 transition-colors" />
                   </div>
-                </Link>
+                </button>
               );
             })}
           </div>
