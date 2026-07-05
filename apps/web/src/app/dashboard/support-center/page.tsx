@@ -418,40 +418,55 @@ export default function SupportCenterPage() {
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  // ── 통합 검색 (Phase 5) ──
-  // 문서 / 런북 / 티켓을 한 입력창에서 탐색. same-canvas 유지.
-  const [globalSearch, setGlobalSearch] = useState("");
-  const globalSearchResults = useMemo(() => {
-    const q = globalSearch.trim().toLowerCase();
-    if (!q) return null;
+  // ── §설정-고도화 §0/§1 통합 검색 + ⌘K 커맨드 팔레트 (검색 전용 오버레이) ──
+  //   매뉴얼·문제해결·티켓을 한 입력창에서 탐색. same-canvas 유지(도메인 조작
+  //   아님 — 탐색·이동 전용). ⌘K/Ctrl+K 토글, Esc·배경 클릭 닫힘.
+  const [isCmdkOpen, setIsCmdkOpen] = useState(false);
+  const [cmdkQuery, setCmdkQuery] = useState("");
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && (e.key === "k" || e.key === "K")) {
+        e.preventDefault();
+        setIsCmdkOpen((v) => !v);
+      } else if (e.key === "Escape") {
+        setIsCmdkOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
-    const manualHits = GUIDE_ENTRIES.filter(
+  // ⌘K 결과 — 매뉴얼 / 문제 해결 / 티켓 3그룹 실시간 필터
+  const cmdkResults = useMemo(() => {
+    const q = cmdkQuery.trim().toLowerCase();
+    if (!q) return { manual: [], troubleshoot: [], ticket: [], total: 0 };
+    const manual = GUIDE_ENTRIES.filter(
       (e) => e.title.toLowerCase().includes(q) || e.what.toLowerCase().includes(q) || e.when.toLowerCase().includes(q),
-    ).slice(0, 4).map((e) => ({ type: "manual" as const, id: e.id, title: e.title, desc: e.what, href: e.link.href }));
-
-    const runbookHits = RUNBOOK_ITEMS.filter(
+    ).slice(0, 6);
+    const troubleshoot = RUNBOOK_ITEMS.filter(
       (r) => r.symptom.toLowerCase().includes(q) || r.possibleCauses.some((c) => c.toLowerCase().includes(q)),
-    ).slice(0, 4).map((r) => ({ type: "troubleshoot" as const, id: r.id, title: r.symptom, desc: r.impact, href: null }));
-
-    const ticketHits = MOCK_TICKETS.filter(
+    ).slice(0, 6);
+    const ticket = MOCK_TICKETS.filter(
       (t) => t.title.toLowerCase().includes(q) || t.id.toLowerCase().includes(q),
-    ).slice(0, 3).map((t) => ({ type: "ticket" as const, id: t.id, title: t.title, desc: t.id, href: null }));
+    ).slice(0, 4);
+    return { manual, troubleshoot, ticket, total: manual.length + troubleshoot.length + ticket.length };
+  }, [cmdkQuery]);
 
-    // 현재 탭 결과를 우선 정렬
-    const all = [...manualHits, ...runbookHits, ...ticketHits];
-    all.sort((a, b) => {
-      const aMatch = a.type === activeTab ? 0 : 1;
-      const bMatch = b.type === activeTab ? 0 : 1;
-      return aMatch - bMatch;
-    });
-
-    return all.length > 0 ? all : null;
-  }, [globalSearch, activeTab]);
+  // 결과 클릭 = 해당 탭으로 이동(딥링크). 티켓은 상세 선택 param 주입.
+  const goToResult = (type: TabId, opts?: { ticketId?: string; category?: string }) => {
+    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    params.set("tab", type);
+    if (opts?.ticketId) params.set("ticketId", opts.ticketId);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    setActiveTab(type);
+    setIsCmdkOpen(false);
+    setCmdkQuery("");
+  };
 
   return (
     <div className="flex-1 min-h-screen bg-canvas pt-4 md:pt-6 w-full px-4 md:px-8 lg:px-10">
-      {/* ── 헤더: 좌 title/desc, 우 search ── */}
-      <div className="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+      {/* ── 헤더: title/desc (§0 — 검색은 아래 통합 바로 승격) ── */}
+      <div className="mb-5">
         <div>
           <h1 className="text-[24px] md:text-[28px] font-extrabold text-slate-900 tracking-tight leading-tight">운영 지원 센터</h1>
           <p className="text-[13px] text-slate-400 font-medium mt-1">매뉴얼, 문제 해결, 지원 요청을 한곳에서 처리합니다.</p>
@@ -482,40 +497,18 @@ export default function SupportCenterPage() {
             );
           })()}
         </div>
-        {/* 우측 통합 검색 */}
-        <div className="relative w-full md:w-80 flex-shrink-0">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <Input
-            placeholder="매뉴얼, 증상, 티켓 검색…"
-            value={globalSearch}
-            onChange={(e) => setGlobalSearch(e.target.value)}
-            className="pl-10 h-10 bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 rounded-xl text-sm"
-          />
-          {/* 통합 검색 결과 dropdown */}
-          {globalSearchResults && globalSearch.trim() && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-72 overflow-y-auto">
-              {globalSearchResults.map((r) => (
-                <button
-                  key={`${r.type}-${r.id}`}
-                  className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors flex items-start gap-3 border-b border-slate-100 last:border-0"
-                  onClick={() => {
-                    if (r.type !== activeTab) handleTabChange(r.type);
-                    setGlobalSearch("");
-                  }}
-                >
-                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-slate-200 text-slate-400 font-bold shrink-0 mt-0.5">
-                    {r.type === "manual" ? "매뉴얼" : r.type === "troubleshoot" ? "런북" : "티켓"}
-                  </Badge>
-                  <div className="min-w-0">
-                    <p className="text-[13px] font-bold text-slate-800 truncate">{r.title}</p>
-                    <p className="text-[11px] text-slate-400 truncate">{r.desc}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
+
+      {/* ── §0/§1 통합 검색 바 (⌘K 오버레이 트리거) ── */}
+      <button
+        type="button"
+        onClick={() => setIsCmdkOpen(true)}
+        className="w-full flex items-center gap-3 mb-6 px-5 h-14 rounded-2xl border border-slate-200 bg-white hover:border-blue-300 hover:shadow-sm transition-all motion-reduce:transition-none text-left group"
+      >
+        <Search className="h-5 w-5 text-slate-400 group-hover:text-blue-500 transition-colors motion-reduce:transition-none" />
+        <span className="flex-1 text-[14px] md:text-[15px] text-slate-400 truncate">무엇을 도와드릴까요? — 매뉴얼·증상·티켓을 한 번에 검색하세요</span>
+        <kbd className="hidden sm:inline-flex items-center gap-0.5 px-2 py-1 rounded-md border border-slate-200 bg-slate-50 text-[11px] font-mono font-semibold text-slate-400">⌘K</kbd>
+      </button>
 
       {/* ── 탭 네비게이션 ── */}
       <div className="flex gap-1 border-b border-slate-200 mb-8">
@@ -555,6 +548,88 @@ export default function SupportCenterPage() {
         />
       )}
       {activeTab === "ticket" && <TicketTab />}
+
+      {/* ── §1 ⌘K 커맨드 팔레트 오버레이 (검색·이동 전용, 도메인 조작 아님) ── */}
+      {isCmdkOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] px-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in-0 duration-150 motion-reduce:animate-none"
+          onClick={() => setIsCmdkOpen(false)}
+        >
+          <div
+            className="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 px-5 h-14 border-b border-slate-100">
+              <Search className="h-5 w-5 text-slate-400 shrink-0" />
+              <input
+                autoFocus
+                value={cmdkQuery}
+                onChange={(e) => setCmdkQuery(e.target.value)}
+                placeholder="매뉴얼·증상·티켓 검색…"
+                className="flex-1 bg-transparent outline-none text-[15px] text-slate-900 placeholder:text-slate-400"
+              />
+              <button type="button" onClick={() => setIsCmdkOpen(false)} className="shrink-0" aria-label="닫기">
+                <kbd className="inline-flex items-center px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-[10px] font-mono font-semibold text-slate-400 hover:text-slate-600">Esc</kbd>
+              </button>
+            </div>
+            <div className="max-h-[55vh] overflow-y-auto py-2">
+              {!cmdkQuery.trim() ? (
+                <p className="px-5 py-8 text-center text-[13px] text-slate-400">검색어를 입력하면 매뉴얼·문제 해결·티켓을 한 번에 찾습니다.</p>
+              ) : cmdkResults.total === 0 ? (
+                <div className="px-5 py-8 text-center">
+                  <p className="text-[13px] font-bold text-slate-500 mb-1">검색 결과가 없습니다</p>
+                  <p className="text-[11px] text-slate-400">문제 해결 탭 또는 새 문의로 안내받으세요.</p>
+                </div>
+              ) : (
+                <>
+                  {cmdkResults.manual.length > 0 && (
+                    <div className="mb-1">
+                      <p className="px-5 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">운영 매뉴얼</p>
+                      {cmdkResults.manual.map((e) => (
+                        <button key={e.id} onClick={() => goToResult("manual")} className="w-full text-left px-5 py-2.5 hover:bg-slate-50 flex items-start gap-3 transition-colors motion-reduce:transition-none">
+                          <BookOpen className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+                          <div className="min-w-0">
+                            <p className="text-[13px] font-bold text-slate-800 truncate">{e.title}</p>
+                            <p className="text-[11px] text-slate-400 truncate">{e.what}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {cmdkResults.troubleshoot.length > 0 && (
+                    <div className="mb-1">
+                      <p className="px-5 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">문제 해결</p>
+                      {cmdkResults.troubleshoot.map((r) => (
+                        <button key={r.id} onClick={() => goToResult("troubleshoot")} className="w-full text-left px-5 py-2.5 hover:bg-slate-50 flex items-start gap-3 transition-colors motion-reduce:transition-none">
+                          <Wrench className="h-4 w-4 text-[#b45821] shrink-0 mt-0.5" />
+                          <div className="min-w-0">
+                            <p className="text-[13px] font-bold text-slate-800 truncate">{r.symptom}</p>
+                            <p className="text-[11px] text-slate-400 truncate">{r.impact}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {cmdkResults.ticket.length > 0 && (
+                    <div className="mb-1">
+                      <p className="px-5 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">지원 티켓</p>
+                      {cmdkResults.ticket.map((t) => (
+                        <button key={t.id} onClick={() => goToResult("ticket", { ticketId: t.id })} className="w-full text-left px-5 py-2.5 hover:bg-slate-50 flex items-start gap-3 transition-colors motion-reduce:transition-none">
+                          <MessageSquare className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                          <div className="min-w-0">
+                            <p className="text-[13px] font-bold text-slate-800 truncate">{t.title}</p>
+                            <p className="text-[11px] font-mono text-slate-400 truncate">{t.id}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1030,14 +1105,17 @@ function TicketTab() {
   const srcLabel = searchParams?.get("sourceLabel") ?? null;
   const ticketTitleParam = searchParams?.get("ticketTitle") ?? null;
   const ticketBodyParam = searchParams?.get("ticketBody") ?? null;
+  // §1 ⌘K 딥링크 — 티켓 상세 직접 선택(존재하는 티켓만).
+  const ticketIdParam = searchParams?.get("ticketId") ?? null;
+  const deepTicketId = ticketIdParam && MOCK_TICKETS.some((t) => t.id === ticketIdParam) ? ticketIdParam : null;
   const hasSourceContext = Boolean(srcFromRoute || srcEntityId || ticketTitleParam);
 
   // 빈 상태 시 compose 기본 open, 티켓 있으면 첫 번째 자동 선택
   const [view, setView] = useState<"list" | "compose">(
-    hasSourceContext || MOCK_TICKETS.length === 0 ? "compose" : "list",
+    deepTicketId ? "list" : hasSourceContext || MOCK_TICKETS.length === 0 ? "compose" : "list",
   );
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(
-    !hasSourceContext && MOCK_TICKETS.length > 0 ? MOCK_TICKETS[0].id : null,
+    deepTicketId ?? (!hasSourceContext && MOCK_TICKETS.length > 0 ? MOCK_TICKETS[0].id : null),
   );
   const [category, setCategory] = useState("");
   const [relatedResource, setRelatedResource] = useState(() => {
