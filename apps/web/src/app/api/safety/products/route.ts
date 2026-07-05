@@ -168,9 +168,17 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    // 카테고리 필터
+    // 카테고리 필터 — §SM-S1 (호영님 2026-07-05): 콤마구분 다중 카테고리 in[] 지원.
+    //   단일 값(category=REAGENT)은 스칼라 유지 = 하위호환·무회귀. 복수(a,b)면 in[].
+    //   기본 안전 대상은 REAGENT 이나, org 설정(safetyCategories, P1 operator)이
+    //   RAW_MATERIAL 등을 추가하면 안전 페이지가 콤마구분으로 넘긴다.
     if (category) {
-      where.category = category;
+      const cats = category.split(",").map((c) => c.trim()).filter(Boolean);
+      if (cats.length > 1) {
+        where.category = { in: cats };
+      } else if (cats.length === 1) {
+        where.category = cats[0];
+      }
     }
 
     // 제품 조회
