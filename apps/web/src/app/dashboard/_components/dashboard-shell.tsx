@@ -60,9 +60,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         />
 
         <div className="flex flex-col flex-1 overflow-hidden lg:pl-64">
-          <DashboardHeader
-            onMenuClick={() => setIsMobileMenuOpen((prev) => !prev)}
-          />
+          {/* §11.331 — 모바일 상단 우측 햄버거 제거(호영님 2026-07-07). 하단 BottomNav
+              '더보기'(동일 lg:hidden 브레이크포인트)로 네비게이션 일원화 = 진입 중복 제거.
+              onMenuClick 미주입 → Header 햄버거 미렌더. 모바일 사이드 drawer 진입점 제거. */}
+          <DashboardHeader />
 
           {/* §11.202 — main + 운영 브리핑 rail 을 flex row 로 배치.
               rail 은 desktop 에서 main 옆 sibling 으로 폭을 차지하며 main 이 reflow.
