@@ -43,6 +43,12 @@ describe("입고 모바일 리디자인 — 상단 필터 카운트(핸드오프
     expect(VIEW).toMatch(/c\.k === "all" \? items\.length : c\.k === "blocked" \? blockedCount : readyCount/);
     expect(VIEW).toMatch(/tabular-nums/);
   });
+  it("시안 정합 — 비활성 칩 중립, danger 색은 활성 시에만(항상-rose 틴트 제거)", () => {
+    // 활성 문서대기 칩 = rose-600 filled(.danger.on)
+    expect(VIEW).toMatch(/bg-rose-600 border-rose-600 text-white/);
+    // 구: 비활성 danger 칩 상시 rose 틴트(bg-rose-50 border-rose-200 text-rose-700) 잔재 0
+    expect(VIEW).not.toMatch(/bg-rose-50 border-rose-200 text-rose-700/);
+  });
 });
 
 describe("입고 모바일 리디자인 — 무회귀(no-op 0·wiring 보존)", () => {

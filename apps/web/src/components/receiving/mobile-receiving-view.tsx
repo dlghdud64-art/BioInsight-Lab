@@ -171,12 +171,12 @@ export function MobileReceivingView({
               type="button"
               onClick={() => setFilter(c.k)}
               aria-pressed={on}
-              className={`shrink-0 min-h-[40px] px-3.5 rounded-full border text-[13px] font-semibold transition-colors inline-flex items-center gap-1.5 ${
+              className={`shrink-0 min-h-[40px] px-3.5 rounded-full border text-[13px] font-bold transition-colors inline-flex items-center gap-1.5 ${
                 on
-                  ? "bg-slate-900 border-slate-900 text-white"
-                  : "danger" in c && c.danger
-                    ? "bg-rose-50 border-rose-200 text-rose-700"
-                    : "bg-white border-slate-200 text-slate-600"
+                  ? "danger" in c && c.danger
+                    ? "bg-rose-600 border-rose-600 text-white"
+                    : "bg-slate-900 border-slate-900 text-white"
+                  : "bg-white border-slate-200 text-slate-600"
               }`}
             >
               {c.label}

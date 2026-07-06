@@ -1,23 +1,29 @@
 "use client";
 
 /**
- * §inbound-quarantine-temp-exclude (P3) — 문서 해소(첨부) 모달.
+ * #receiving-doc-attach-sheet (호영님 2026-07-06) — 문서 첨부 same-canvas 바텀시트.
  *
- * "문서 해소" CTA(rcv-resolve-docs)의 실 첨부 진입점. 기존 dead button(canExecute:false)을
- * 실제 store 액션(attachReceivingDocument)에 연결한다. 필수세트(COA+MSDS) 충족 시
- * documentStatus가 complete로 전이되어 posting 게이트가 실제로 풀린다(fake success 0).
+ * 시안 정합: Dialog → Sheet(bottom). 문서별 상태 체크리스트(미첨부 rose / 첨부됨 emerald) +
+ *   진행률("필수 N건 남음") + "문서 첨부 완료" CTA(필수 충족 시에만 활성).
  *
- * same-canvas overlay(Dialog) — 신규 페이지 금지.입고 게이트에서 제외된 상태 정보는 노출하지 않는다.
+ * 배선(정직):
+ *   - "첨부" = store.attachReceivingDocument(실 게이트 전이). 필수세트(COA+MSDS) 충족 시
+ *     documentStatus=complete → posting 게이트 실제 해제(fake success 0).
+ *   - 촬영/파일 선택(실 파일 업로드)은 입고 상세가 데모(ops-store) 데이터라 실 저장 대상 부재 →
+ *     정직-disabled. 실 파일 업로드는 입고 DB-backed 트랙(PLAN_receiving-doc-attach-dbbacked)에서.
+ *
+ * same-canvas overlay(Sheet) — 신규 페이지 금지.
  */
 
-import { FileCheck2, Paperclip } from "lucide-react";
+import { FileText, CheckCircle2, Plus, Camera, Upload, AlertTriangle } from "lucide-react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 import type { ReceivingBatchContract } from "@/lib/review-queue/receiving-inbound-contract";
 
 type DocType = "coa" | "msds";
@@ -26,14 +32,14 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   rb: ReceivingBatchContract;
-  /** store.attachReceivingDocument 로 wiring — 실제 첨부(플래그 전이) */
+  /** store.attachReceivingDocument 로 wiring — 실제 첨부(게이트 전이) */
   onAttach: (lineId: string, docType: DocType, lotId?: string) => void;
 }
 
 // 필수문서 세트 — deriveLineDocStatus(scenario-transition-runner)와 동일 기준.
-const REQUIRED: { type: DocType; label: string }[] = [
-  { type: "coa", label: "COA" },
-  { type: "msds", label: "MSDS" },
+const REQUIRED: { type: DocType; label: string; sub: string }[] = [
+  { type: "coa", label: "성적서 (CoA)", sub: "Lot별 시험성적서 — GMP 필수" },
+  { type: "msds", label: "MSDS", sub: "물질안전보건자료" },
 ];
 
 export function ReceivingDocAttachModal({ open, onOpenChange, rb, onAttach }: Props) {
@@ -42,33 +48,50 @@ export function ReceivingDocAttachModal({ open, onOpenChange, rb, onAttach }: Pr
     (l) => l.documentStatus === "missing" || l.documentStatus === "partial",
   );
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileCheck2 className="h-4 w-4 text-blue-600" />
-            문서 첨부 — {rb.receivingNumber}
-          </DialogTitle>
-          <DialogDescription>
-            필수 문서(COA·MSDS)를 첨부하면 검수·재고 반영을 진행할 수 있습니다.
-          </DialogDescription>
-        </DialogHeader>
+  // 필수 미첨부 건수(진행률) — pending 라인 × 필수문서 중 미첨부.
+  const remaining = pendingLines.reduce((acc, line) => {
+    const lots = line.lotRecords;
+    return (
+      acc +
+      REQUIRED.filter(({ type }) => {
+        const attached =
+          lots.length > 0 &&
+          lots.every((lot) => (type === "coa" ? lot.coaAttached : lot.msdsAttached));
+        return !attached;
+      }).length
+    );
+  }, 0);
+  const allDone = remaining === 0;
 
-        {pendingLines.length === 0 ? (
-          <div className="py-8 text-center text-sm text-slate-500">
-            모든 라인의 필수 문서가 첨부되었습니다.
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2.5 max-h-[60vh] overflow-y-auto">
-            {pendingLines.map((line) => {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="bottom"
+        className="rounded-t-2xl max-h-[85vh] overflow-y-auto p-0"
+      >
+        <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-slate-200" aria-hidden />
+        <SheetHeader className="px-4 pt-3 pb-2 text-left space-y-0.5">
+          <SheetTitle className="flex items-center gap-2 text-[17px]">
+            <FileText className="h-[18px] w-[18px] text-blue-600" />
+            문서 첨부
+          </SheetTitle>
+          <SheetDescription className="text-[13px] text-slate-500">
+            {rb.receivingNumber} · 총 {rb.lineReceipts.length}개 라인 중 {pendingLines.length}건 미완
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="px-4 pb-4 space-y-4">
+          {pendingLines.length === 0 ? (
+            <div className="py-10 text-center">
+              <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-3" />
+              <p className="text-sm text-slate-600">모든 라인의 필수 문서가 첨부되었습니다.</p>
+            </div>
+          ) : (
+            pendingLines.map((line) => {
               const lots = line.lotRecords;
               return (
-                <div
-                  key={line.id}
-                  className="border border-slate-200 rounded-lg px-3 py-2.5"
-                >
-                  <div className="flex items-center gap-2 mb-2">
+                <div key={line.id} className="space-y-2">
+                  <div className="flex items-center gap-2">
                     <span className="h-5 min-w-5 px-1 rounded grid place-items-center bg-slate-100 text-slate-600 text-[11px] font-bold font-mono">
                       {line.lineNumber}
                     </span>
@@ -76,40 +99,114 @@ export function ReceivingDocAttachModal({ open, onOpenChange, rb, onAttach }: Pr
                       {line.itemName}
                     </span>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {REQUIRED.map(({ type, label }) => {
+
+                  {/* 문서별 상태 카드 */}
+                  <div className="space-y-2">
+                    {REQUIRED.map(({ type, label, sub }) => {
                       const attached =
                         lots.length > 0 &&
-                        lots.every((lot) =>
-                          type === "coa" ? lot.coaAttached : lot.msdsAttached,
-                        );
-                      return attached ? (
-                        <span
+                        lots.every((lot) => (type === "coa" ? lot.coaAttached : lot.msdsAttached));
+                      return (
+                        <div
                           key={type}
-                          className="inline-flex items-center gap-1 text-[12px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 h-8 rounded-md"
+                          className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${
+                            attached
+                              ? "bg-emerald-50 border-emerald-200"
+                              : "bg-rose-50 border-rose-200"
+                          }`}
                         >
-                          <FileCheck2 className="h-3.5 w-3.5" />
-                          {label} 첨부됨
-                        </span>
-                      ) : (
-                        <button
-                          key={type}
-                          type="button"
-                          onClick={() => onAttach(line.id, type)}
-                          className="inline-flex items-center gap-1 text-[12px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2.5 h-8 rounded-md active:scale-95 hover:bg-blue-100"
-                        >
-                          <Paperclip className="h-3.5 w-3.5" />
-                          {label} 첨부
-                        </button>
+                          <div
+                            className={`h-9 w-9 rounded-lg grid place-items-center shrink-0 ${
+                              attached ? "bg-emerald-100" : "bg-white border border-rose-200"
+                            }`}
+                          >
+                            {attached ? (
+                              <CheckCircle2 className="h-[18px] w-[18px] text-emerald-600" />
+                            ) : (
+                              <FileText className="h-[18px] w-[18px] text-rose-500" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-[13px] font-bold text-slate-900">{label}</p>
+                              <span className="text-[10px] font-semibold text-rose-600 bg-white border border-rose-200 rounded px-1 py-px">
+                                필수
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                              {attached ? "첨부 완료" : sub}
+                            </p>
+                          </div>
+                          {attached ? (
+                            <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-emerald-700 shrink-0">
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              첨부됨
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => onAttach(line.id, type)}
+                              className="inline-flex items-center gap-1 text-[12px] font-bold text-blue-600 bg-white border border-blue-300 px-2.5 h-8 rounded-lg active:scale-95 hover:bg-blue-50 shrink-0"
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                              추가
+                            </button>
+                          )}
+                        </div>
                       );
                     })}
                   </div>
                 </div>
               );
-            })}
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+            })
+          )}
+
+          {pendingLines.length > 0 && (
+            <>
+              {/* 촬영/파일 선택 — 정직-disabled(실 파일 업로드는 입고 DB 연동 후) */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  disabled
+                  className="flex flex-col items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 py-3.5 text-slate-400 cursor-not-allowed"
+                >
+                  <Camera className="h-5 w-5" />
+                  <span className="text-[12px] font-semibold">촬영</span>
+                </button>
+                <button
+                  type="button"
+                  disabled
+                  className="flex flex-col items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 py-3.5 text-slate-400 cursor-not-allowed"
+                >
+                  <Upload className="h-5 w-5" />
+                  <span className="text-[12px] font-semibold">파일 선택</span>
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-400 text-center -mt-1.5">
+                실 파일 업로드는 입고 DB 연동 후 제공됩니다. 지금은 &lsquo;추가&rsquo;로 문서 확인을 표시하세요.
+              </p>
+
+              {/* 진행률 */}
+              {!allDone && (
+                <div className="flex items-center gap-1.5 text-[12.5px] font-semibold text-rose-600 justify-center">
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  필수 {remaining}건 남음
+                </div>
+              )}
+            </>
+          )}
+
+          {/* 완료 CTA — 필수 충족 시에만 활성 */}
+          <Button
+            type="button"
+            disabled={!allDone && pendingLines.length > 0}
+            onClick={() => onOpenChange(false)}
+            className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold disabled:bg-slate-200 disabled:text-slate-400"
+          >
+            문서 첨부 완료
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
