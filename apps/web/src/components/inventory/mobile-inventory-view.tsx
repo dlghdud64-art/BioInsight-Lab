@@ -477,10 +477,37 @@ function MobileDetailSheet({
             )}
           </section>
 
-          {/* Recommended Action + Reasoning */}
-          {action.type !== "none" && (
+          {/* Recommended Action + Reasoning
+              §11.327 — reorder 권장 카드 톤 개선: rose 홍수 제거. AI 제안 = accent(blue) 카드,
+              심각도는 rose 도트+숫자 강조로만. dispose/use_first/assign_location 은 §11.302 신호등 유지. */}
+          {action.type === "reorder" ? (
+            <section className="rounded-[18px] border border-blue-200 bg-blue-50 p-3.5">
+              <div className="flex items-center gap-2 mb-2.5">
+                <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-white px-2.5 py-1 text-[11.5px] font-extrabold text-blue-700">
+                  <Sparkles className="h-[13px] w-[13px]" />
+                  AI 권장
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-[11.5px] font-bold text-rose-700">
+                  <span className="h-[7px] w-[7px] rounded-full bg-rose-500" aria-hidden />
+                  {inv.currentQuantity === 0 ? "재고 소진" : "안전재고 미달"}
+                </span>
+              </div>
+              <h5 className="text-base font-extrabold text-slate-900 leading-tight mb-1">
+                {action.label}
+              </h5>
+              <p className="text-[13px] text-slate-600 leading-relaxed">
+                {inv.safetyStock != null ? (
+                  <>
+                    현재 재고 <b className="font-extrabold text-rose-700">{inv.currentQuantity}{inv.unit}</b>가
+                    {" "}안전재고 <b className="font-extrabold text-rose-700">{inv.safetyStock}{inv.unit}</b> 이하입니다.
+                  </>
+                ) : (
+                  getReasonText(inv)
+                )}
+              </p>
+            </section>
+          ) : action.type !== "none" ? (
             <section className={`rounded-xl border p-3.5 ${
-              action.type === "reorder" ? "border-red-500/20 bg-red-950/10" :
               action.type === "dispose" ? "border-red-500/20 bg-red-900/10" :
               action.type === "use_first" ? "border-[#f3d4bf] bg-[#fdf3ec]" :
               "border-violet-500/20 bg-violet-950/10"
@@ -490,7 +517,6 @@ function MobileDetailSheet({
                 권장 액션
               </h5>
               <p className={`text-sm font-semibold mb-1 ${
-                action.type === "reorder" ? "text-red-400" :
                 action.type === "dispose" ? "text-red-600" :
                 action.type === "use_first" ? "text-[#b45821]" :
                 "text-violet-400"
@@ -502,7 +528,7 @@ function MobileDetailSheet({
                 {getReasonText(inv)}
               </p>
             </section>
-          )}
+          ) : null}
 
           {/* Action Button */}
           <div className="pt-1">
