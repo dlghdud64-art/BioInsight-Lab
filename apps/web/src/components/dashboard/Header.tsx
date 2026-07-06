@@ -251,8 +251,9 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
     );
   };
 
+  // §11.332 — 모바일 글로벌 앱바 네이비 통일(시안 §0). lg+ 데스크탑은 흰 헤더 복원.
   return (
-    <header className="sticky top-0 z-50 h-14 md:h-16 border-b border-slate-200 backdrop-blur-sm bg-white/97">
+    <header className="sticky top-0 z-50 h-14 md:h-16 border-b border-transparent bg-slate-900 backdrop-blur-sm lg:border-slate-200 lg:bg-white/97">
       <div className="flex h-full items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
         {/* 좌측 영역: 모바일=로고, 데스크탑=브레드크럼 */}
         <div className="flex items-center gap-4 min-w-0 flex-shrink-0">
@@ -268,10 +269,10 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               min-h/min-w-[44px] + px-3 -mx-3 + hover/active + aria-label 보존. */}
           <Link
             href="/"
-            className="flex-shrink-0 lg:hidden inline-flex items-center min-h-[44px] min-w-[44px] px-3 -mx-3 rounded-md hover:bg-slate-100 active:bg-slate-200 transition-colors"
+            className="flex-shrink-0 lg:hidden inline-flex items-center min-h-[44px] min-w-[44px] px-3 -mx-3 rounded-md hover:bg-white/10 active:bg-white/20 transition-colors"
             aria-label="LabAxis 홈으로 이동"
           >
-            <span className="text-xl font-bold tracking-tight text-slate-900">LabAxis</span>
+            <span className="text-xl font-bold tracking-tight text-white">LabAxis</span>
           </Link>
 
           {/* 브레드크럼 (데스크탑 전용) */}
@@ -310,7 +311,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 md:hidden flex-shrink-0 p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            className="h-10 w-10 md:hidden flex-shrink-0 p-2 text-white/85 hover:text-white hover:bg-white/10 transition-colors"
             onClick={() => router.push("/app/search")}
             aria-label="검색"
           >
@@ -340,7 +341,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               }
               openModal("scan_hub");
             }}
-            className="inline-flex items-center justify-center h-10 w-10 md:h-9 md:w-9 flex-shrink-0 p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
+            className="inline-flex items-center justify-center h-10 w-10 md:h-9 md:w-9 flex-shrink-0 p-2 text-white/85 hover:text-white hover:bg-white/10 lg:text-slate-500 lg:hover:text-emerald-600 lg:hover:bg-emerald-50 rounded-md transition-colors"
           >
             <ScanLine className="h-5 w-5 pointer-events-none" />
           </button>
@@ -358,7 +359,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               aria-expanded={isNotificationOpen}
               aria-haspopup="menu"
               onClick={() => setIsNotificationOpen((v) => !v)}
-              className="inline-flex items-center justify-center h-10 w-10 md:h-9 md:w-9 relative flex-shrink-0 p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+              className="inline-flex items-center justify-center h-10 w-10 md:h-9 md:w-9 relative flex-shrink-0 p-2 text-white/85 hover:text-white hover:bg-white/10 lg:text-slate-500 lg:hover:text-blue-600 lg:hover:bg-blue-50 rounded-md transition-colors"
             >
               <Bell className="h-5 w-5 pointer-events-none" />
               {unreadCount > 0 && (
