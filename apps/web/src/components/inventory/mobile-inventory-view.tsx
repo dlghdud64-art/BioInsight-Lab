@@ -654,17 +654,19 @@ export function MobileInventoryView({
         <button
           type="button"
           onClick={() => onReorder(topReorder)}
-          className="w-full text-left bg-rose-50 border border-rose-200 rounded-xl px-3.5 py-3 flex items-center gap-3 active:bg-rose-100 transition-colors"
+          className="w-full text-left bg-blue-50 border border-blue-200 rounded-xl px-3.5 py-3 flex items-center gap-3 active:bg-blue-100 transition-colors"
         >
-          <AlertTriangle className="h-4 w-4 text-rose-500 shrink-0" />
+          <span className="flex-none h-9 w-9 rounded-[11px] bg-white border border-blue-200 grid place-items-center text-blue-700">
+            <ShoppingCart className="h-[18px] w-[18px]" />
+          </span>
           <div className="flex-1 min-w-0">
-            <p className="text-[13.5px] font-bold text-rose-700 truncate">{topReorder.product.name} 재발주 검토 권장</p>
-            <p className="text-[12px] text-rose-600">
-              현재 {topReorder.currentQuantity}{topReorder.unit}
+            <p className="text-[13.5px] font-extrabold text-slate-900 truncate">{topReorder.product.name} 재발주 검토 권장</p>
+            <p className="text-[12px] text-slate-500">
+              현재 <b className="font-extrabold text-rose-700">{topReorder.currentQuantity}{topReorder.unit}</b>
               {topReorder.safetyStock != null ? ` · 안전재고 ${topReorder.safetyStock} 대비 ${Math.max(0, topReorder.safetyStock - topReorder.currentQuantity)} 부족` : ""}
             </p>
           </div>
-          <span className="bg-rose-600 text-white text-[12px] font-bold px-3 py-1.5 rounded-full shrink-0">재발주</span>
+          <span className="bg-blue-600 text-white text-[12px] font-extrabold px-3 py-1.5 rounded-full shrink-0">재발주</span>
         </button>
       ) : null}
 

@@ -1401,41 +1401,48 @@ function InventoryPageContent() {
       )}
       {/* ── Mobile View (below md breakpoint) ── */}
       <div className="md:hidden">
-        {/* §web-mobile-reskin-fidelity #inventory — navy 헤더 + 3 KPI(시안 §03). full-bleed. */}
-        <div className="mb-4">
-          <h1 className="text-[22px] font-extrabold tracking-tight text-slate-900">재고 관리</h1>
-          <p className="text-[12.5px] text-slate-500 mt-0.5">Lot 단위 추적 · QR 스캔 입·출고</p>
-          <div className="flex gap-2 mt-3.5">
+        {/* §11.328 #inventory-mobile-header — 시안 §03 정합: 흰 헤더 + 제목 우측 액션 클러스터(재고등록/⋮) + 흰 KPI(숫자만 색·상태 도트). */}
+        <div className="mb-5">
+          <div className="flex items-start gap-2.5 mb-3.5">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-[22px] font-extrabold tracking-tight text-slate-900">재고 관리</h1>
+              <p className="text-[12.5px] text-slate-500 mt-0.5">Lot 단위 추적 · QR 스캔 입·출고</p>
+            </div>
+            {/* §11.328 — 주 액션(등록)·오버플로를 헤더 제목 우측으로. 본문 부유 제거. */}
+            <div className="flex items-center gap-2 flex-none">
+              <Button size="sm" onClick={() => setIsDialogOpen(true)}>
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
+                재고 등록
+              </Button>
+              <ActionMenu
+                menuId="inv-content-utility-mobile"
+                currentOpenId={openInvContentMenuId}
+                onOpenChange={setOpenInvContentMenuId}
+                width="w-48"
+                items={[
+                  { label: "구매 반영", icon: <PackagePlus className="h-3.5 w-3.5" />, onClick: () => router.push("/dashboard/purchases") },
+                  { label: "재고 파일 가져오기", icon: <Upload className="h-3.5 w-3.5" />, onClick: () => setIsImportStagingOpen(true) },
+                  { label: "QR 스캔", icon: <QrCode className="h-3.5 w-3.5" />, onClick: () => router.push("/dashboard/inventory/scan") },
+                  { label: "라벨 인쇄", icon: <Printer className="h-3.5 w-3.5" />, onClick: () => handleBulkLabelPrint() },
+                ]}
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
             {[
               { label: "전체 품목", value: displayInventories.length, unit: "종", alert: false },
               { label: "안전재고 미달", value: displayInventories.filter((i) => i.currentQuantity === 0 || (i.safetyStock != null && i.currentQuantity <= i.safetyStock)).length, unit: "", alert: true },
               { label: "만료 임박", value: displayInventories.filter((i) => { if (!i.expiryDate) return false; const dd = Math.ceil((new Date(i.expiryDate).getTime() - Date.now()) / 86400000); return dd > 0 && dd <= 30; }).length, unit: "", alert: false },
             ].map((k) => (
-              <div key={k.label} className={`flex-1 rounded-[13px] px-3 py-2.5 border ${k.alert && k.value > 0 ? "bg-rose-50 border-rose-200" : "bg-white border-slate-200 shadow-sm"}`}>
+              <div key={k.label} className={`flex-1 rounded-[13px] px-3 py-2.5 border bg-white shadow-sm ${k.alert && k.value > 0 ? "border-rose-200" : "border-slate-200"}`}>
                 <p className={`text-xl font-extrabold ${k.alert && k.value > 0 ? "text-rose-700" : "text-slate-900"}`}>{k.value}<span className="text-slate-400 text-xs font-semibold">{k.unit ? ` ${k.unit}` : ""}</span></p>
-                <p className={`text-[11px] mt-0.5 ${k.alert && k.value > 0 ? "text-rose-600" : "text-slate-500"}`}>{k.label}</p>
+                <p className="text-[11px] mt-0.5 text-slate-500 flex items-center gap-1.5">
+                  <span className={`h-[7px] w-[7px] rounded-full ${k.alert && k.value > 0 ? "bg-rose-500" : "bg-slate-300"}`} aria-hidden />
+                  {k.label}
+                </p>
               </div>
             ))}
           </div>
-        </div>
-        <div className="flex flex-wrap items-start gap-2 mb-5">
-          <Button size="sm" onClick={() => setIsDialogOpen(true)}>
-            <Plus className="h-3.5 w-3.5 mr-1.5" />
-            재고 등록
-          </Button>
-          {/* §web-mobile-reskin-fidelity — 구매 반영도 kebab 흡수(모바일 헤더 정돈, §11.311). 재고 등록만 primary. */}
-          <ActionMenu
-            menuId="inv-content-utility-mobile"
-            currentOpenId={openInvContentMenuId}
-            onOpenChange={setOpenInvContentMenuId}
-            width="w-48"
-            items={[
-              { label: "구매 반영", icon: <PackagePlus className="h-3.5 w-3.5" />, onClick: () => router.push("/dashboard/purchases") },
-              { label: "재고 파일 가져오기", icon: <Upload className="h-3.5 w-3.5" />, onClick: () => setIsImportStagingOpen(true) },
-              { label: "QR 스캔", icon: <QrCode className="h-3.5 w-3.5" />, onClick: () => router.push("/dashboard/inventory/scan") },
-              { label: "라벨 인쇄", icon: <Printer className="h-3.5 w-3.5" />, onClick: () => handleBulkLabelPrint() },
-            ]}
-          />
         </div>
         <MobileInventoryView
           inventories={displayInventories}
