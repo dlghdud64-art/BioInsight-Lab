@@ -703,21 +703,23 @@ export function VendorRequestModal({
                   <span className="text-sm font-bold text-slate-900">이메일로 공급사 추가</span>
                 </div>
                 <p className="text-xs text-slate-500">견적 요청을 받을 공급사의 이메일을 입력하세요. 추가하면 바로 전송할 수 있습니다.</p>
-                <div className="flex flex-col gap-2 min-[561px]:flex-row">
+                <div className="flex flex-col gap-2 min-[561px]:flex-row min-[561px]:items-center">
                   <Input
                     ref={manualEmailInputRef}
                     type="email"
                     placeholder="공급사 이메일 *"
                     value={manualEmail}
                     onChange={(e) => setManualEmail(e.target.value)}
-                    className="h-9 flex-1 border-slate-200 bg-white text-xs text-slate-900"
+                    // §11.330 — flex-1(basis-0) 이 형제 고정폭에 밀려 0폭으로 쪼그라들던 버그 수정.
+                    //   w-full + min-w-[10rem] 로 이메일 입력칸 최소폭 보장(가로/세로 모두 값 노출).
+                    className="h-9 w-full min-w-[10rem] flex-1 border-slate-200 bg-white text-xs text-slate-900"
                   />
                   <Input
                     type="text"
                     placeholder="공급사명 (선택)"
                     value={manualName}
                     onChange={(e) => setManualName(e.target.value)}
-                    className="h-9 border-slate-200 bg-white text-xs text-slate-900 sm:w-40"
+                    className="h-9 w-full border-slate-200 bg-white text-xs text-slate-900 min-[561px]:w-32 min-[561px]:flex-none"
                   />
                   <Button
                     type="button"
