@@ -10,11 +10,12 @@ function read(rel: string): string {
 const HEADER = "src/components/dashboard/Header.tsx";
 
 describe("§11.332 — 모바일 앱바 네이비(max-lg), 데스크탑 원본 흰 헤더 보존", () => {
-  it("컨테이너 데스크탑 원본(흰 배경) + 네이비는 max-lg 모바일 전용", () => {
+  it("컨테이너 데스크탑 흰 배경 + 네이비는 max-lg 모바일 전용 (하단 줄 제거)", () => {
     const src = read(HEADER);
-    // 데스크탑 base = 원본 흰색
-    expect(src).toMatch(/border-b border-slate-200 backdrop-blur-sm bg-white\/97 max-lg:border-transparent max-lg:bg-slate-900/);
-    // 구 lg-override 방식(데스크탑 네이비 누수 원인) 잔재 0
+    // 데스크탑 흰 배경 + 하단 border 없음(호영님 2026-07-08 상단 줄 제거). 모바일만 네이비.
+    expect(src).toMatch(/border-b border-transparent backdrop-blur-sm bg-white\/97 max-lg:bg-slate-900/);
+    // 구 slate-200 하단 줄·lg-override 잔재 0
+    expect(src).not.toMatch(/border-b border-slate-200 backdrop-blur-sm/);
     expect(src).not.toMatch(/bg-slate-900[^"]*lg:bg-white\/97/);
   });
 

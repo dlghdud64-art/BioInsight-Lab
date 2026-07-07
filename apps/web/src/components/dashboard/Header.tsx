@@ -253,7 +253,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
   // §11.332 — 모바일 글로벌 앱바 네이비 통일(시안 §0). lg+ 데스크탑은 흰 헤더 복원.
   return (
-    <header className="sticky top-0 z-50 h-14 md:h-16 border-b border-slate-200 backdrop-blur-sm bg-white/97 max-lg:border-transparent max-lg:bg-slate-900">
+    <header className="sticky top-0 z-50 h-14 md:h-16 border-b border-transparent backdrop-blur-sm bg-white/97 max-lg:bg-slate-900">
       <div className="flex h-full items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
         {/* 좌측 영역: 모바일=로고, 데스크탑=브레드크럼 */}
         <div className="flex items-center gap-4 min-w-0 flex-shrink-0">

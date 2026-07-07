@@ -14,6 +14,7 @@ import {
   ShoppingCart,
   Building2,
   Package,
+  Truck,
   FileText,
   BarChart3,
   Settings,
@@ -117,6 +118,12 @@ const sidebarGroups: SidebarGroup[] = [
         title: "재고 관리",
         href: "/dashboard/inventory",
         icon: Package,
+      },
+      {
+        // §nav-receiving(호영님 2026-07-08) — 입고 관리 사이드바 진입점 추가(라우트 존재했으나 메뉴 누락).
+        title: "입고 관리",
+        href: "/dashboard/receiving",
+        icon: Truck,
       },
       {
         title: "조직 관리",
