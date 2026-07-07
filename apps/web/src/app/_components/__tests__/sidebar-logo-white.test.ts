@@ -10,10 +10,12 @@ function read(rel: string): string {
 const SIDEBAR = "src/app/_components/dashboard-sidebar.tsx";
 
 describe("§11.333 — 사이드바 상단 로고 칸 흰색(헤더 정합)", () => {
-  it("로고 칸이 흰 배경 + 밝은 보더", () => {
+  it("로고 칸이 흰 배경 + 하단 border 없음(§11.333-hotfix: 상단 줄 제거)", () => {
     const src = read(SIDEBAR);
-    expect(src).toMatch(/h-16 hidden lg:flex items-center px-4 border-b border-slate-200 bg-white/);
-    expect(src).not.toMatch(/h-16 hidden lg:flex items-center px-4 border-b border-slate-800 flex-shrink-0/);
+    expect(src).toMatch(/h-16 hidden lg:flex items-center px-4 bg-white flex-shrink-0/);
+    // 흰 로고칸 하단 border 잔재 0 (좌측 상단 줄 원인)
+    expect(src).not.toMatch(/px-4 border-b border-slate-200 bg-white/);
+    expect(src).not.toMatch(/border-b border-slate-800/);
   });
 
   it("로고 텍스트가 검정(흰 배경 가독)", () => {
