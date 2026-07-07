@@ -40,9 +40,9 @@ const LEVEL_LABEL: Record<"high" | "mid" | "low", string> = {
   low: "낮음",
 };
 const LEVEL_TEXT: Record<"high" | "mid" | "low", string> = {
-  high: "text-red-600 font-bold",
-  mid: "text-[#b45821] font-bold",
-  low: "text-slate-400",
+  high: "text-red-300 font-bold",
+  mid: "text-yellow-300 font-bold",
+  low: "text-white/70",
 };
 
 export function PriorityRecommendationCard({
@@ -89,17 +89,22 @@ export function PriorityRecommendationCard({
 
   return (
     <div
-      // §11.329 — navy 파란 띠 제거(호영님 2026-07-07). 중립 흰 카드로 전환.
-      //   "우선 추천"·CTA(케이스 열기)·나중에·眞 level(§11.302 색) 보존. 파란 배경만 제거.
-      className="relative overflow-hidden rounded-xl bg-white border border-slate-200 shadow-sm px-3.5 py-2 flex items-center gap-2.5"
+      // §quotes-mobile-density P3 — 우선추천 카드 → 얇은 inline 1행(퍼스트뷰 ~88px→~48px).
+      //   2행(제목 line-clamp + 본문) → 단일 truncate 행. navy 토큰·"우선 추천"·CTA·나중에 보존.
+      className="relative overflow-hidden rounded-xl text-white px-3.5 py-2 flex items-center gap-2.5"
+      style={{
+        // §quote-management-redesign P4 — 대시보드 NextStepBanner navy 토큰 재사용(시안 정합). §11.302 amber/orange 0.
+        background: "linear-gradient(100deg, #1b2b50 0%, #243a72 55%, #2f6be0 130%)",
+        boxShadow: "0 6px 18px -8px rgba(20,38,80,.55)",
+      }}
     >
-      <ListChecks className="relative z-10 h-4 w-4 flex-none text-slate-400" aria-hidden="true" />
+      <ListChecks className="relative z-10 h-4 w-4 flex-none text-[#a9c2f5]" aria-hidden="true" />
       {/* 단일 행 요약 — 우선 추천 eyebrow + 케이스명 + 다음 단계 + 메타·眞 level. truncate 로 모바일 1줄. */}
-      <p className="relative z-10 min-w-0 flex-1 text-[12.5px] leading-snug truncate text-slate-600">
-        <span className="text-slate-500 mr-1.5 font-extrabold uppercase tracking-wide text-[10px]">
+      <p className="relative z-10 min-w-0 flex-1 text-[12.5px] leading-snug truncate">
+        <span className="text-[#a9c2f5] mr-1.5 font-extrabold uppercase tracking-wide text-[10px]">
           <span className="font-semibold">우선 추천</span>
         </span>
-        <span className="font-bold text-slate-900">{best.name}</span>
+        <span className="font-bold">{best.name}</span>
         {" — "}
         {nextStep} 단계 · {STAGE_LABEL[best.stage]} · 마감 {dDayLabel(best.dd)} · 공급사 {best.vendors}곳 · 우선순위{" "}
         <span className={LEVEL_TEXT[best.level]}>{LEVEL_LABEL[best.level]}</span>
@@ -109,7 +114,7 @@ export function PriorityRecommendationCard({
       <button
         type="button"
         onClick={() => onOpen(best!.id)}
-        className="relative z-10 inline-flex flex-none items-center justify-center gap-1 rounded-lg bg-slate-900 px-2.5 py-1.5 text-[12px] font-extrabold text-white shadow-sm transition-colors hover:bg-slate-800 min-h-[36px]"
+        className="relative z-10 inline-flex flex-none items-center justify-center gap-1 rounded-lg bg-white px-2.5 py-1.5 text-[12px] font-extrabold text-[#0f1b34] shadow-sm transition-colors hover:bg-[#eef2fe] min-h-[36px]"
         aria-label={`우선 추천 케이스 ${best.name} — ${nextStep}`}
       >
         <span className="hidden sm:inline">{nextStep}</span>
@@ -118,7 +123,7 @@ export function PriorityRecommendationCard({
       <button
         type="button"
         onClick={() => setDismissed((prev) => { const n = new Set(prev); n.add(best!.id); return n; })}
-        className="relative z-10 inline-flex flex-none items-center justify-center rounded-lg bg-slate-100 px-2 py-1.5 text-[12px] font-semibold text-slate-500 transition-colors hover:bg-slate-200 min-h-[36px]"
+        className="relative z-10 inline-flex flex-none items-center justify-center rounded-lg bg-white/10 px-2 py-1.5 text-[12px] font-semibold text-white/80 transition-colors hover:bg-white/20 min-h-[36px]"
         aria-label={`우선 추천 ${best.name} 나중에`}
       >
         <span className="hidden sm:inline">나중에</span>
