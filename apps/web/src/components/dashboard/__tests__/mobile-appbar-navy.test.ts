@@ -9,28 +9,31 @@ function read(rel: string): string {
 
 const HEADER = "src/components/dashboard/Header.tsx";
 
-describe("§11.332 — 모바일 글로벌 앱바 네이비 통일(시안 §0)", () => {
-  it("헤더 컨테이너가 모바일 네이비 + lg 데스크탑 흰색 복원", () => {
+describe("§11.332 — 모바일 앱바 네이비(max-lg), 데스크탑 원본 흰 헤더 보존", () => {
+  it("컨테이너 데스크탑 원본(흰 배경) + 네이비는 max-lg 모바일 전용", () => {
     const src = read(HEADER);
-    expect(src).toMatch(/bg-slate-900[^"]*lg:bg-white\/97/);
-    expect(src).toMatch(/border-transparent[^"]*lg:border-slate-200/);
+    // 데스크탑 base = 원본 흰색
+    expect(src).toMatch(/border-b border-slate-200 backdrop-blur-sm bg-white\/97 max-lg:border-transparent max-lg:bg-slate-900/);
+    // 구 lg-override 방식(데스크탑 네이비 누수 원인) 잔재 0
+    expect(src).not.toMatch(/bg-slate-900[^"]*lg:bg-white\/97/);
   });
 
-  it("로고 텍스트가 모바일 white", () => {
+  it("로고 텍스트 데스크탑 slate 원본 + max-lg white", () => {
     const src = read(HEADER);
-    expect(src).toMatch(/text-xl font-bold tracking-tight text-white/);
+    expect(src).toMatch(/text-xl font-bold tracking-tight text-slate-900 max-lg:text-white/);
   });
 
-  it("모바일 유틸 아이콘이 white/85 + lg 데스크탑 slate 복원", () => {
+  it("스캔·알림 아이콘 데스크탑 slate 원본 + max-lg white (데스크탑 무변)", () => {
     const src = read(HEADER);
-    // 스캔 아이콘: 모바일 white → lg emerald 복원
-    expect(src).toMatch(/text-white\/85 hover:text-white hover:bg-white\/10 lg:text-slate-500 lg:hover:text-emerald-600/);
-    // 알림 아이콘: 모바일 white → lg blue 복원
-    expect(src).toMatch(/text-white\/85 hover:text-white hover:bg-white\/10 lg:text-slate-500 lg:hover:text-blue-600/);
+    expect(src).toMatch(/text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 max-lg:text-white\/85 max-lg:hover:text-white max-lg:hover:bg-white\/10/);
+    expect(src).toMatch(/text-slate-500 hover:text-blue-600 hover:bg-blue-50 max-lg:text-white\/85 max-lg:hover:text-white max-lg:hover:bg-white\/10/);
+    // 구 lg-override 방식 잔재 0
+    expect(src).not.toMatch(/lg:text-slate-500 lg:hover:text-emerald-600/);
+    expect(src).not.toMatch(/lg:text-slate-500 lg:hover:text-blue-600/);
   });
 });
 
-describe("§11.332 — 회귀 보호 (wiring·데스크탑 유지)", () => {
+describe("§11.332 — 회귀 보호 (wiring·데스크탑 계약 유지)", () => {
   it("유틸 wiring 유지 (검색·스캔·알림)", () => {
     const src = read(HEADER);
     expect(src).toMatch(/router\.push\("\/app\/search"\)/);
