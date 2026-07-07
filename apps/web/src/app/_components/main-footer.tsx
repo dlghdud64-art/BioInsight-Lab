@@ -159,8 +159,32 @@ export function MainFooter() {
           </div>
         </div>
 
+        {/* §biz-info(호영님 2026-07-08) — 사업자 정보. 현재 정식 개시 전 준비(휴업) 단계이므로
+            전자상거래법 §10 법정 표시사항(사업자등록번호·통신판매업 신고번호·대표자·주소 등)은
+            정식 서비스 개시(런칭) 시점에 고지. 상호·문의처만 우선 표기. 실제 등록정보 확정 시 교체. */}
+        <div className="mt-8 pt-5 text-[11px] leading-relaxed" style={{ borderTop: "1px solid rgba(217,226,241,0.10)", color: "#8A97AA" }}>
+          <p className="mb-1.5 font-bold" style={{ color: "#A7B2C6" }}>사업자 정보</p>
+          <p>
+            상호: LabAxis · 문의:{" "}
+            <a
+              href="mailto:support@labaxis.co.kr"
+              className="transition-colors"
+              style={{ color: "#8A97AA" }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "#D9E2F1"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "#8A97AA"; }}
+            >
+              support@labaxis.co.kr
+            </a>
+          </p>
+          <p className="mt-1 max-w-2xl">
+            현재 서비스는 정식 개시 전 준비 단계입니다. 사업자 등록번호, 통신판매업 신고번호, 대표자,
+            사업장 주소 등 「전자상거래 등에서의 소비자보호에 관한 법률」상 표시사항은 정식 서비스
+            개시(런칭) 시점에 고지합니다.
+          </p>
+        </div>
+
         {/* 하단 바 */}
-        <div className="mt-8 flex flex-col md:flex-row md:justify-between gap-2 pt-5 text-center md:text-left text-[11px]" style={{ borderTop: "1px solid rgba(217,226,241,0.10)", color: "#8A97AA" }}>
+        <div className="mt-6 flex flex-col md:flex-row md:justify-between gap-2 pt-5 text-center md:text-left text-[11px]" style={{ borderTop: "1px solid rgba(217,226,241,0.10)", color: "#8A97AA" }}>
           <span>&copy; {year} LabAxis. All rights reserved.</span>
           <div className="flex items-center justify-center md:justify-end gap-3">
             <Link href="/legal#terms" className="transition-colors"

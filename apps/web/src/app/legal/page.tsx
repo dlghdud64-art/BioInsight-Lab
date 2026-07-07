@@ -333,7 +333,12 @@ export default function LegalHubPage() {
       <style jsx global>{`
         .legal-paper { background: #f4f6f9; }
         .legal-grid { display: grid; gap: 40px; grid-template-columns: 248px minmax(0, 1fr); }
-        @media (max-width: 920px) { .legal-grid { grid-template-columns: 1fr; gap: 20px; } }
+        @media (max-width: 920px) { .legal-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; } }
+        /* §P-leg-hotfix(호영님 2026-07-08) — 모바일 본문 우측 잘림 정정.
+           grid item(.legal-body) min-width auto 로 표(min-width 460)만큼 셀이 늘어 뷰포트 초과 → 우측 잘림.
+           min-width:0 으로 셀 축소 허용 → 표는 .legal-table-wrap(overflow-x auto) 내부 스크롤로 흡수. */
+        .legal-toc, .legal-body { min-width: 0; }
+        .legal-prose { overflow-wrap: anywhere; }
         .legal-toc-sticky { position: sticky; top: 88px; }
         .legal-toc-list { display: flex; flex-direction: column; gap: 2px; }
         @media (max-width: 920px) { .legal-toc-list { display: none; } }
