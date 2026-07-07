@@ -39,6 +39,7 @@ import { RelativeTimeText } from "@/components/ui/relative-time-text";
 import { RelativeDeliveryText } from "@/components/quotes/relative-delivery-text";
 import { NoSSR } from "@/components/ui/no-ssr";
 import { VendorRequestModal } from "@/components/quotes/dispatch/vendor-dispatch-workbench";
+import { useOverlayChromeStore } from "@/lib/store/overlay-chrome-store";
 import { resolveSuppliers, buildDraftMessage } from "@/components/quotes/dispatch/resolve-suppliers";
 // #quote-rationale-inventory-context Phase 2 — 인과관계 helper + inventory match.
 // #operational-brief-emoji-sweep — 새 structured helper (case + tone + icon).
@@ -1145,6 +1146,14 @@ function QuotesPageContent() {
   const [autoScrollToVendorSection, setAutoScrollToVendorSection] = useState<boolean>(false);
   const vendorResponseSectionRef = useRef<HTMLDivElement | null>(null);
   const [activeWorkWindow, setActiveWorkWindow] = useState<WorkWindowKey>(null);
+  // §ops-briefing-fab (호영님 2026-07-08) — 발송 진행 컨텍스트 제외.
+  //   발송 검토 모달(request_send)이 곧 그 케이스의 단계·차단·액션 브리핑이므로,
+  //   그 위에 progress overlay("현재 단계" 운영 브리핑)가 같은 정보를 이중 표시하는 것을 제거.
+  //   store 에 dispatch 상태를 넣지 않고 closeOverlay 만 호출(canonical 경계 준수).
+  const closeOverlay = useOverlayChromeStore((s) => s.closeOverlay);
+  useEffect(() => {
+    if (activeWorkWindow === "request_send") closeOverlay();
+  }, [activeWorkWindow, closeOverlay]);
   // §quote-management-redesign P2 — 발송 인텐트(2-step) 게이트 대상 caseId. 리스트 1-tap 직접
   //   발송(§11.279d) → ConfirmSendModal 확인 → "발송 검토 계속" 시에만 VendorRequestModal 진입(오발송 방지).
   const [sendIntentQuoteId, setSendIntentQuoteId] = useState<string | null>(null);
