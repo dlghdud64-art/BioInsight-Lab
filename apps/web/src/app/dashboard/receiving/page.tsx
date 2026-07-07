@@ -1,132 +1,54 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useOpsStore } from "@/lib/ops-console/ops-store";
-import { useUserPreferences } from "@/lib/preferences/user-preferences";
 import {
   buildModuleHeaderStats,
-  buildModulePriorityQueue,
   buildModuleLandingItems,
-  buildModuleBuckets,
-  buildModuleDownstream,
   MODULE_ORIENTATION,
-  MODULE_HEADER_STAT_META,
-  BUCKET_COLORS,
-  type ModuleBucketKey,
   type ModuleLandingItem,
 } from "@/lib/ops-console/module-landing-adapter";
 import { MobileReceivingView } from "@/components/receiving/mobile-receiving-view";
-import { ChevronRight, ArrowRight, AlertCircle, Clock, Zap } from "lucide-react";
-import { buildDetailHref } from "@/lib/ops-console/navigation-context";
+import { ReceivingDesktopList } from "@/components/receiving/receiving-desktop-list";
+import { ReceivingQuickviewDrawer } from "@/components/receiving/receiving-quickview-drawer";
+import { ArrowRight } from "lucide-react";
 // §11.348-A-4b — 공급사 입고 회신 검토 패널(same-canvas).
 import { ReceivingReviewPanel } from "@/components/receiving/receiving-review-panel";
 
-// ── Bucket tab config (Receiving-specific labels) ─────────────────
-const RCV_BUCKET_TABS: { key: ModuleBucketKey; label: string }[] = [
-  { key: "ready", label: "반영 가능" },
-  { key: "needs_review", label: "검수/문서" },
-  { key: "blocked", label: "차단" },
-  { key: "waiting_external", label: "외부 대기" },
-];
-
-// ── Priority badge color ──────────────────────────────────────────
-const PRIORITY_DOT: Record<string, string> = {
-  p0: "bg-red-500",
-  p1: "bg-[#b45821]",
-  p2: "bg-blue-500",
-  p3: "bg-slate-500",
-};
-
-// ── Stat key → filter mapping ─────────────────────────────────────
-const STAT_FILTER_MAP: Record<string, string> = {
-  openActionable: "all",
-  blocked: "blocked",
-  overdue: "overdue",
-  waitingExternal: "waiting_external",
-  readyToExecute: "ready",
-};
-
 // ── Component ─────────────────────────────────────────────────────
+// §11.334 P2 — 입고 목록 데스크탑 리디자인(시안: 입고 목록 웹 리디자인.html).
+//   기존 우선처리 카드/bucket 상태탭/다운스트림 → 파이프라인 퍼널 + 탭툴바 + 카드리스트.
+//   데이터(allItems) 불변, 파생은 receiving-list-view-model(순수함수). 모바일 뷰 유지.
 export default function ReceivingLandingPage() {
   const router = useRouter();
   const { unifiedInboxItems } = useOpsStore();
-  const [activeTab, setActiveTab] = useState<ModuleBucketKey>("ready");
 
-  // §11.230c (a)-5 #inventory-receiving-filter-sync — server-first hydration.
-  //   preferences.receivingFilter.activeTab 도착 시 ModuleBucketKey validation
-  //   (RCV_BUCKET_TABS key 정합) 후 setActiveTab.
-  const userPrefs = useUserPreferences();
-  useEffect(() => {
-    const serverTab = userPrefs.preferences?.receivingFilter?.activeTab;
-    if (!serverTab) return;
-    const validKey = RCV_BUCKET_TABS.find((t) => t.key === serverTab)?.key;
-    if (validKey) setActiveTab(validKey as ModuleBucketKey);
-  }, [userPrefs.preferences]);
-
-  // §11.230c (a)-5 — debounced server PATCH on activeTab change.
-  useEffect(() => {
-    userPrefs.updateReceivingFilter({ activeTab });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
-
-  // Header stats
   const headerStats = useMemo(
     () => buildModuleHeaderStats(unifiedInboxItems, "receiving"),
     [unifiedInboxItems],
   );
-
-  // Priority queue (top 6)
-  const priorityQueue = useMemo(
-    () => buildModulePriorityQueue(unifiedInboxItems, "receiving", 6),
-    [unifiedInboxItems],
-  );
-
-  // All landing items → buckets
   const allItems = useMemo(
     () => buildModuleLandingItems(unifiedInboxItems, "receiving"),
     [unifiedInboxItems],
   );
 
-  const buckets = useMemo(() => buildModuleBuckets(allItems), [allItems]);
-
-  // Downstream handoff
-  const downstream = useMemo(
-    () => buildModuleDownstream("receiving", unifiedInboxItems),
-    [unifiedInboxItems],
-  );
-
-  // Active bucket items
-  const activeBucketItems = buckets[activeTab] ?? [];
-
-  // Bucket counts for tab badges
-  const bucketCounts = useMemo(() => {
-    const counts: Record<ModuleBucketKey, number> = {
-      ready: 0,
-      blocked: 0,
-      needs_review: 0,
-      waiting_external: 0,
-      handoff: 0,
-    };
-    for (const item of allItems) {
-      counts[item.bucketKey]++;
-    }
-    return counts;
-  }, [allItems]);
-
   const orientation = MODULE_ORIENTATION.receiving;
   const isEmpty = allItems.length === 0;
+
+  // §11.334 P3 — 퀵뷰 드로어(same-canvas). 행클릭 = 드로어 오픈(라우트 이동 대체).
+  const [quickviewItem, setQuickviewItem] = useState<ModuleLandingItem | null>(null);
+  const goDetail = (item: ModuleLandingItem) => router.push(`/dashboard/receiving/${item.entityId}`);
 
   return (
     <div className="min-h-screen bg-white p-4 md:p-6 space-y-5">
       {/* §11.348-A-4b — 공급사 입고 회신(PENDING_REVIEW) 검토. 0건 시 자동 숨김. */}
       <ReceivingReviewPanel />
 
-      {/* ── 1. Header ──────────────────────────────────────────────── */}
-      {/* §dashboard-mobile-v2 통일 — 모바일 white phead(대시보드 정합) / 데스크탑 white 카드 유지. */}
+      {/* ── Header ─────────────────────────────────────────────────── */}
       <div className="mb-2 md:mb-0 md:rounded-lg md:bg-white md:border md:border-slate-200 md:p-4">
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-[22px] md:text-lg font-extrabold md:font-bold text-slate-900">입고 관리</h1>
             <p className="text-[12.5px] md:text-xs text-slate-500 md:text-slate-600 mt-0.5">{orientation.role}</p>
@@ -135,57 +57,9 @@ export default function ReceivingLandingPage() {
             {headerStats.nextActionSummary}
           </p>
         </div>
-
-        {/* Stat pills — §11.191c self-filter (inbox redirect 제거, 자체
-            페이지 bucket tab 으로 즉시 분기). matching bucket 있으면 button,
-            없으면 display-only span (dead-link 0). */}
-        <div className="flex flex-wrap gap-2 mt-3">
-          {(
-            Object.keys(MODULE_HEADER_STAT_META) as Array<
-              keyof typeof MODULE_HEADER_STAT_META
-            >
-          ).map((key) => {
-            const value = headerStats[key];
-            const meta = MODULE_HEADER_STAT_META[key];
-            const filterKey = STAT_FILTER_MAP[key] ?? key;
-            const matchingTab = RCV_BUCKET_TABS.find((t) => t.key === filterKey);
-            const baseClass =
-              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 border border-slate-200 text-xs";
-            const labelSpan = (
-              <>
-                <span className="text-slate-600">{meta.label}</span>
-                <span className="font-mono font-medium text-slate-700 tabular-nums">
-                  {value}
-                </span>
-              </>
-            );
-            if (matchingTab) {
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setActiveTab(matchingTab.key)}
-                  className={`${baseClass} hover:border-slate-300 transition-colors`}
-                  aria-label={`${meta.label} ${value}건 — 상태별 분류 ${matchingTab.label} 보기`}
-                >
-                  {labelSpan}
-                </button>
-              );
-            }
-            return (
-              <span
-                key={key}
-                className={baseClass}
-                aria-label={`${meta.label} ${value}건`}
-              >
-                {labelSpan}
-              </span>
-            );
-          })}
-        </div>
       </div>
 
-      {/* ── Fallback: Empty ────────────────────────────────────────── */}
+      {/* ── Empty ──────────────────────────────────────────────────── */}
       {isEmpty && (
         <div className="bg-white border border-slate-200 rounded-lg p-8 text-center">
           <p className="text-sm text-slate-600">
@@ -200,7 +74,7 @@ export default function ReceivingLandingPage() {
         </div>
       )}
 
-      {/* §web-mobile-reskin-fidelity #receiving — 모바일 전용 문서게이트 뷰(목업 §04). */}
+      {/* ── Mobile (below md) ──────────────────────────────────────── */}
       {!isEmpty && (
         <div className="md:hidden">
           <MobileReceivingView
@@ -210,236 +84,28 @@ export default function ReceivingLandingPage() {
         </div>
       )}
 
-      {/* 데스크탑(md+) 전용 — 기존 우선처리/상태탭/다운스트림 (무변경) */}
+      {/* ── Desktop (md+) — §11.334 P2 시안 리디자인 ────────────────── */}
       {!isEmpty && (
-        <div className="hidden md:block space-y-5">
-          {/* ── 2. Priority Queue ───────────────────────────────────── */}
-          {priorityQueue.length > 0 && (
-            <div>
-              <h2 className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
-                우선 처리
-              </h2>
-              <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                {priorityQueue.map((item) => (
-                  <PriorityCard
-                    key={item.entityId}
-                    item={item}
-                    onClick={() => router.push(buildDetailHref(item.targetRoute, { type: 'list', route: '/dashboard/receiving', summary: item.title, returnLabel: '입고 목록으로' }))}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ── 3. State-Split Tabs ────────────────────────────────── */}
-          <div>
-            <h2 className="text-xs font-medium uppercase tracking-wider text-slate-600 mb-2">
-              상태별 분류
-            </h2>
-            <div className="flex gap-1 border-b border-slate-200 mb-3">
-              {RCV_BUCKET_TABS.map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
-                    activeTab === tab.key
-                      ? "border-blue-500 text-blue-600"
-                      : "border-transparent text-slate-600 hover:text-slate-700"
-                  }`}
-                >
-                  {tab.label}
-                  {bucketCounts[tab.key] > 0 && (
-                    <span className="ml-1.5 tabular-nums text-slate-500">
-                      {bucketCounts[tab.key]}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {/* ── 4. Actionable Queue (bucket items) ───────────────── */}
-            <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-              {activeBucketItems.length === 0 ? (
-                <div className="px-4 py-8 text-center text-sm text-slate-600">
-                  이 분류에 해당하는 항목이 없습니다
-                </div>
-              ) : (
-                <div className="divide-y divide-slate-200">
-                  {activeBucketItems.map((item) => (
-                    <ActionableRow
-                      key={item.entityId}
-                      item={item}
-                      onClick={() =>
-                        router.push(
-                          `/dashboard/receiving/${item.entityId}`,
-                        )
-                      }
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* ── 5. Downstream ──────────────────────────────────────── */}
-          {downstream.length > 0 && (
-            <div>
-              <h2 className="text-xs font-medium uppercase tracking-wider text-slate-600 mb-2">
-                다운스트림 인계
-              </h2>
-              <div className="grid gap-2 md:grid-cols-2">
-                {downstream.map((ds) => (
-                  <Link
-                    key={ds.label}
-                    href={ds.targetRoute}
-                    className="bg-white border border-slate-200 rounded-lg p-3 hover:border-slate-300 transition-colors group"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-700">
-                        {ds.label}
-                      </span>
-                      <span className="text-xs font-mono text-emerald-600 tabular-nums">
-                        {ds.count}건
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-1">
-                      {ds.description}
-                    </p>
-                    <div className="flex items-center gap-1 mt-2 text-xs text-slate-600 group-hover:text-slate-700 transition-colors">
-                      이동 <ArrowRight className="h-3 w-3" />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
+        <div className="hidden md:block">
+          <ReceivingDesktopList
+            items={allItems}
+            onRowClick={(item) => setQuickviewItem(item)}
+          />
         </div>
       )}
-    </div>
-  );
-}
 
-// ── Priority Card ─────────────────────────────────────────────────
-function PriorityCard({
-  item,
-  onClick,
-}: {
-  item: ModuleLandingItem;
-  onClick: () => void;
-}) {
-  const borderClass = item.dueState.isOverdue
-    ? "border-l-red-500"
-    : item.blockerSummary
-      ? "border-l-[#b45821]"
-      : "border-l-slate-700";
-
-  return (
-    <button
-      onClick={onClick}
-      className={`text-left bg-white border border-slate-200 border-l-2 ${borderClass} rounded-lg p-3 hover:bg-slate-50 transition-colors w-full`}
-    >
-      <div className="flex items-center gap-2 mb-1">
-        <span
-          className={`h-1.5 w-1.5 rounded-full ${PRIORITY_DOT[item.priority] ?? PRIORITY_DOT.p3}`}
-        />
-        <span className="text-xs font-mono text-slate-700 truncate">
-          {item.title}
-        </span>
-      </div>
-      <p className="text-xs text-slate-600 line-clamp-1">{item.summary}</p>
-      <div className="flex items-center justify-between mt-2">
-        <div className="flex items-center gap-2">
-          {item.currentOwnerName && (
-            <span className="text-xs text-slate-600">
-              {item.currentOwnerName}
-            </span>
-          )}
-          <DueStateBadge dueState={item.dueState} />
-        </div>
-        {item.blockerSummary && (
-          <span className="text-xs text-red-600 flex items-center gap-1">
-            <AlertCircle className="h-3 w-3" />
-            차단
-          </span>
-        )}
-        {item.readySummary && !item.blockerSummary && (
-          <span className="text-xs text-emerald-600 flex items-center gap-1">
-            <Zap className="h-3 w-3" />
-            실행 가능
-          </span>
-        )}
-      </div>
-    </button>
-  );
-}
-
-// ── Actionable Row ────────────────────────────────────────────────
-function ActionableRow({
-  item,
-  onClick,
-}: {
-  item: ModuleLandingItem;
-  onClick: () => void;
-}) {
-  const borderClass = item.dueState.isOverdue
-    ? "border-l-2 border-l-red-500"
-    : item.blockerSummary
-      ? "border-l-2 border-l-[#b45821]"
-      : "";
-
-  return (
-    <button
-      onClick={onClick}
-      className={`w-full text-left px-4 py-2.5 hover:bg-slate-100 transition-colors flex items-center gap-3 ${borderClass}`}
-    >
-      <span
-        className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${PRIORITY_DOT[item.priority] ?? PRIORITY_DOT.p3}`}
+      {/* ── P3 퀵뷰 드로어 (same-canvas) ────────────────────────────── */}
+      <ReceivingQuickviewDrawer
+        item={quickviewItem}
+        onClose={() => setQuickviewItem(null)}
+        onDetail={(item) => goDetail(item)}
+        onAction={(_action, item) => {
+          // §11.334 P3 — coa/post/inspect 모두 상세 라우트(실 동작, no-op 0).
+          //   P4 에서 coa/post 를 same-canvas 모달로 승격 예정.
+          setQuickviewItem(null);
+          goDetail(item);
+        }}
       />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-900 font-mono truncate">
-            {item.title}
-          </span>
-          <span
-            className={`text-xs px-1.5 py-0.5 rounded ${BUCKET_COLORS[item.bucketKey]}`}
-          >
-            {item.nextAction}
-          </span>
-        </div>
-        <p className="text-xs text-slate-600 truncate mt-0.5">
-          {item.summary}
-        </p>
-      </div>
-      <div className="flex items-center gap-3 flex-shrink-0">
-        {item.currentOwnerName && (
-          <span className="text-xs text-slate-600">
-            {item.currentOwnerName}
-          </span>
-        )}
-        <DueStateBadge dueState={item.dueState} />
-        <ChevronRight className="h-3.5 w-3.5 text-slate-500" />
-      </div>
-    </button>
-  );
-}
-
-// ── Due State Badge ───────────────────────────────────────────────
-function DueStateBadge({
-  dueState,
-}: {
-  dueState: ModuleLandingItem["dueState"];
-}) {
-  if (dueState.tone === "normal") return null;
-
-  const cls =
-    dueState.tone === "overdue"
-      ? "text-red-600"
-      : "text-[#b45821]";
-
-  return (
-    <span className={`text-xs flex items-center gap-0.5 ${cls}`}>
-      <Clock className="h-3 w-3" />
-      {dueState.label}
-    </span>
+    </div>
   );
 }

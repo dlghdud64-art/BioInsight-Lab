@@ -76,3 +76,36 @@ export function resolveReceivingRowVisual(bucketKey: ModuleBucketKey): Receiving
       return { tone: "slate", badgeLabel: "입고 대기", action: "none" };
   }
 }
+
+// ── 퀵뷰 드로어 진행 스텝 (시안 §quickview setSteps: kind+idx 0-base) ──
+//   4단계: 입고(0) · 검수(1) · 문서(2) · 반영(3). i<idx=done, i===idx=kind(cur/alert/done).
+export type ReceivingStepKind = "done" | "cur" | "alert" | "idle";
+
+export function resolveReceivingStepCode(bucketKey: ModuleBucketKey): string {
+  switch (bucketKey) {
+    case "waiting_external": return "cur0";
+    case "needs_review": return "cur1";
+    case "blocked": return "alert2";
+    case "ready": return "cur3";
+    case "handoff": return "done4";
+  }
+}
+
+/** step code → 4단계 상태 배열 (시안 setSteps 로직 이식) */
+export function resolveReceivingStepStates(code: string): ReceivingStepKind[] {
+  const kind = code.replace(/[0-9]/g, "");
+  const idx = parseInt(code.replace(/[^0-9]/g, ""), 10);
+  const cur: ReceivingStepKind = kind === "alert" ? "alert" : kind === "done" ? "done" : "cur";
+  const out: ReceivingStepKind[] = [0, 1, 2, 3].map((i) => {
+    if (kind === "done") return "done";
+    if (i < idx) return "done";
+    if (i === idx) return cur;
+    return "idle";
+  });
+  return out;
+}
+
+/** 문서 상태 파생 (blocked=필수문서 미첨부 → miss, 그 외 ok) */
+export function resolveReceivingDocState(bucketKey: ModuleBucketKey): "ok" | "miss" {
+  return bucketKey === "blocked" ? "miss" : "ok";
+}
