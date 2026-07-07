@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useOpsStore } from "@/lib/ops-console/ops-store";
@@ -13,7 +13,8 @@ import {
 import { MobileReceivingView } from "@/components/receiving/mobile-receiving-view";
 import { ReceivingDesktopList } from "@/components/receiving/receiving-desktop-list";
 import { ReceivingQuickviewDrawer } from "@/components/receiving/receiving-quickview-drawer";
-import { ArrowRight } from "lucide-react";
+import { ReceivingPostModal } from "@/components/receiving/receiving-post-modal";
+import { ArrowRight, Check } from "lucide-react";
 // §11.348-A-4b — 공급사 입고 회신 검토 패널(same-canvas).
 import { ReceivingReviewPanel } from "@/components/receiving/receiving-review-panel";
 
@@ -23,7 +24,7 @@ import { ReceivingReviewPanel } from "@/components/receiving/receiving-review-pa
 //   데이터(allItems) 불변, 파생은 receiving-list-view-model(순수함수). 모바일 뷰 유지.
 export default function ReceivingLandingPage() {
   const router = useRouter();
-  const { unifiedInboxItems } = useOpsStore();
+  const { unifiedInboxItems, postToInventory } = useOpsStore();
 
   const headerStats = useMemo(
     () => buildModuleHeaderStats(unifiedInboxItems, "receiving"),
@@ -40,6 +41,15 @@ export default function ReceivingLandingPage() {
   // §11.334 P3 — 퀵뷰 드로어(same-canvas). 행클릭 = 드로어 오픈(라우트 이동 대체).
   const [quickviewItem, setQuickviewItem] = useState<ModuleLandingItem | null>(null);
   const goDetail = (item: ModuleLandingItem) => router.push(`/dashboard/receiving/${item.entityId}`);
+
+  // §11.334 P4 — 재고 반영 same-canvas 모달 + 토스트.
+  const [postModalItem, setPostModalItem] = useState<ModuleLandingItem | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 2600);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   return (
     <div className="min-h-screen bg-white p-4 md:p-6 space-y-5">
@@ -99,13 +109,36 @@ export default function ReceivingLandingPage() {
         item={quickviewItem}
         onClose={() => setQuickviewItem(null)}
         onDetail={(item) => goDetail(item)}
-        onAction={(_action, item) => {
-          // §11.334 P3 — coa/post/inspect 모두 상세 라우트(실 동작, no-op 0).
-          //   P4 에서 coa/post 를 same-canvas 모달로 승격 예정.
+        onAction={(action, item) => {
           setQuickviewItem(null);
-          goDetail(item);
+          // §11.334 P4 — post 는 same-canvas 재고반영 모달로 승격. coa/inspect 는 상세 라우트.
+          if (action === "post") {
+            setPostModalItem(item);
+          } else {
+            goDetail(item);
+          }
         }}
       />
+
+      {/* ── P4 재고 반영 모달 (same-canvas) ──────────────────────────── */}
+      <ReceivingPostModal
+        item={postModalItem}
+        onClose={() => setPostModalItem(null)}
+        onConfirm={(item) => {
+          // 실 mutation — store.postToInventory(rb.id) (상세 페이지와 동일 경로, front-only 아님).
+          postToInventory(item.entityId);
+          setPostModalItem(null);
+          setToast(`재고에 반영되었습니다 · ${item.title}`);
+        }}
+      />
+
+      {/* ── 토스트 (시안 §qv-toast) ─────────────────────────────────── */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] inline-flex items-center gap-2.5 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl text-[13px] font-semibold">
+          <Check className="h-4 w-4 text-emerald-300" />
+          {toast}
+        </div>
+      )}
     </div>
   );
 }
