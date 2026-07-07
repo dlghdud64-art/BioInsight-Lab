@@ -251,13 +251,15 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
           결정 ("양쪽 모두 /dashboard") 를 의도적으로 reversal — 사용자 mental
           model 정합 ("LabAxis" = 최상위 홈, /dashboard = 구매 운영 surface).
           aria-label / hover/opacity 시각 피드백 / w-full 보존. */}
-      <div className="h-16 hidden lg:flex items-center px-4 border-b border-slate-800 flex-shrink-0">
+      {/* §11.333 — 사이드바 상단 로고 칸만 흰색(호영님 2026-07-07). 흰 헤더와 상단 라인 연속.
+          본문 메뉴는 네이비(bg-slate-900) 유지. 로고 텍스트 검정. */}
+      <div className="h-16 hidden lg:flex items-center px-4 border-b border-slate-200 bg-white flex-shrink-0">
         <Link
           href="/"
           aria-label="LabAxis 홈으로 이동"
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity relative z-50 w-full"
         >
-          <span className="text-xl font-bold tracking-tight text-white">LabAxis</span>
+          <span className="text-xl font-bold tracking-tight text-slate-900">LabAxis</span>
         </Link>
       </div>
 
