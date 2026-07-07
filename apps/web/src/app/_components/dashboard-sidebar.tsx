@@ -433,8 +433,10 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
 
   return (
     <>
-      {/* ── 데스크탑 고정 사이드바 (lg 이상) ── */}
-      <aside className="hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-64 bg-slate-900 border-r border-slate-800 z-30">
+      {/* ── 데스크탑 고정 사이드바 (lg 이상) ──
+          §nav-hotfix(호영님 2026-07-08) — 사이드바↔본문 세로 구분선(border-r) 제거.
+          네이비 사이드바 ↔ 흰 본문은 색 대비로 이미 구분되므로 선 불필요. */}
+      <aside className="hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-64 bg-slate-900 z-30">
         <SidebarContent />
       </aside>
 

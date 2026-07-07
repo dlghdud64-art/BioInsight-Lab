@@ -23,8 +23,10 @@ describe("§11.333 — 사이드바 상단 로고 칸 흰색(헤더 정합)", ()
     expect(src).toMatch(/text-xl font-bold tracking-tight text-slate-900">LabAxis/);
   });
 
-  it("본문 사이드바는 네이비 유지 (회귀 0)", () => {
+  it("본문 사이드바는 네이비 유지 + 세로 구분선(border-r) 제거", () => {
     const src = read(SIDEBAR);
-    expect(src).toMatch(/w-64 bg-slate-900 border-r border-slate-800/);
+    // 데스크탑 고정 사이드바 = 네이비, border-r 없음(호영님 2026-07-08 세로 구분선 제거)
+    expect(src).toMatch(/hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-64 bg-slate-900 z-30/);
+    expect(src).not.toMatch(/w-64 bg-slate-900 border-r border-slate-800/);
   });
 });
