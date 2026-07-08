@@ -109,8 +109,10 @@ export function ReceivingQuickviewDrawer({
               </button>
             </div>
 
-            {/* body */}
-            <div className="flex-1 overflow-y-auto px-5 py-5">
+            {/* body — §receiving-quickview-compact(호영님 2026-07-08): flex-1 제거로 콘텐츠 높이만
+                차지 → 액션 footer 가 콘텐츠 바로 밑에 붙음(시안 정합). 이전엔 flex-1 로 body 가 늘어나
+                footer 를 드로어 맨 아래로 밀어 중간 빈 공간이 크게 남던 것 정정. */}
+            <div className="overflow-y-auto px-5 py-5">
               {/* progress steps */}
               <div className="flex items-start mb-6">
                 {STEP_LABELS.map((label, i) => {
