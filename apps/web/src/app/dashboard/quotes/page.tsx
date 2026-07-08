@@ -40,6 +40,7 @@ import { RelativeDeliveryText } from "@/components/quotes/relative-delivery-text
 import { NoSSR } from "@/components/ui/no-ssr";
 import { VendorRequestModal } from "@/components/quotes/dispatch/vendor-dispatch-workbench";
 import { useOverlayChromeStore } from "@/lib/store/overlay-chrome-store";
+import { labToast } from "@/lib/toast/lab-toast";
 import { resolveSuppliers, buildDraftMessage } from "@/components/quotes/dispatch/resolve-suppliers";
 // #quote-rationale-inventory-context Phase 2 — 인과관계 helper + inventory match.
 // #operational-brief-emoji-sweep — 새 structured helper (case + tone + icon).
@@ -1389,16 +1390,38 @@ function QuotesPageContent() {
   // ── AI 견적서 비교 실행 — quotes 선언 뒤로 이동 (아래 참조) ──
 
   // ── 견적 발송 성공 후 갱신 ──
-  const handleSendSuccess = useCallback(() => {
+  const handleSendSuccess = useCallback((result?: { sent: number; failed: number; recipientCount: number }) => {
+    const quoteId = selectedQuoteId;
     queryClient.invalidateQueries({ queryKey: ["quotes"] });
-    if (selectedQuoteId) {
-      queryClient.invalidateQueries({ queryKey: ["quote", selectedQuoteId] });
-      queryClient.invalidateQueries({ queryKey: ["vendor-requests", selectedQuoteId] });
+    if (quoteId) {
+      queryClient.invalidateQueries({ queryKey: ["quote", quoteId] });
+      queryClient.invalidateQueries({ queryKey: ["vendor-requests", quoteId] });
       // §11.158 cache-bust — vendor request 발송 직후 brief stale (quote_detail + purchase_conversion)
-      invalidateBriefNarrative({ quoteId: selectedQuoteId, module: "quote_detail", sourceUpdatedAt: new Date() });
-      invalidateBriefNarrative({ quoteId: selectedQuoteId, module: "purchase_conversion", sourceUpdatedAt: new Date() });
+      invalidateBriefNarrative({ quoteId, module: "quote_detail", sourceUpdatedAt: new Date() });
+      invalidateBriefNarrative({ quoteId, module: "purchase_conversion", sourceUpdatedAt: new Date() });
     }
+    // §action-toast P3 + §ops-briefing-scope 케이스3 — 발송 후 모달·견적 rail 정리(이어짐 방지) → 결과 토스트.
     setActiveWorkWindow(null);
+    setSelectedQuoteId(null);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("selected");
+      url.searchParams.delete("task");
+      window.history.replaceState({}, "", url.toString());
+    }
+    const sent = result?.sent ?? 0;
+    const failed = result?.failed ?? 0;
+    const recipients = result?.recipientCount ?? sent;
+    if (failed > 0) {
+      // 부분 성공 — 실 API 집계(sent/failed) 분기. "다시 검토"로 발송 rail 재열기(dead 아님).
+      labToast.partial("견적 발송 부분 완료", `<b>${sent}건 발송</b> · 실패 ${failed}건`, {
+        actions: [{ label: "발송 검토 다시", primary: true, onClick: () => { if (quoteId) setSelectedQuoteId(quoteId); } }],
+      });
+    } else {
+      labToast.success("견적 요청 발송 완료", `<b>${recipients}곳</b> 공급사에 요청을 전달했습니다.`, {
+        actions: [{ label: "회신 추적 보기", onClick: () => { if (quoteId) setSelectedQuoteId(quoteId); } }],
+      });
+    }
   }, [queryClient, selectedQuoteId]);
 
   // §11.264e — "새 회신 보기" CTA → vendor response section auto-scroll.

@@ -50,7 +50,8 @@ interface VendorRequestModalProps {
   draftMessage?: string;
   /** Quote title / line summary for context display */
   quoteSummary?: string;
-  onSuccess?: () => void;
+  // §action-toast P3(호영님 2026-07-08) — 발송 결과 집계 전달(부분 성공 분기용). sent<recipientCount → partial.
+  onSuccess?: (result?: { sent: number; failed: number; recipientCount: number }) => void;
 }
 
 type SendReadiness = "ready" | "needs_review" | "blocked";
@@ -447,7 +448,7 @@ export function VendorRequestModal({
         }
       }
       setConfirmationOpen(false);
-      onSuccess?.();
+      onSuccess?.({ sent, failed, recipientCount });
     } catch (error: any) {
       // §11.326 (호영님 P0 spec §5) — friendly + actionable 메시지.
       //   raw error.message 는 console.error 만 (Sentry 추적), 사용자에게는 임시 우회 안내.
