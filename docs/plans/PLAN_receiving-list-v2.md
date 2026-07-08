@@ -1,9 +1,11 @@
 # Implementation Plan: 입고 목록 웹 리디자인 v2 (문서 확보 모달 + 목록 정합)
 
-- **Status:** 🔄 In Progress
+- **Status:** ✅ Complete (P1~P3 delivered · P4 skip w/ rationale · P5 per-phase gate 충족)
 - **Started:** 2026-07-08
 - **Last Updated:** 2026-07-08
-- **Estimated Completion:** 2026-07-XX
+- **Completed:** 2026-07-08
+
+**커밋:** P1 `42c0a55c` · P2 `e68deb49` · P3 `fd4cc5f3` (전부 origin/main, 빌드 EXIT 0, sentinel GREEN)
 
 **CRITICAL INSTRUCTIONS** — 각 phase 완료 후: 체크박스 갱신 → 게이트(빌드+sentinel, 클로드코드) → Last Updated 갱신 → Notes 기록 → 다음 phase.
 ⛔ 게이트 실패/미검증 상태로 다음 phase 금지. ⛔ dead button / no-op / placeholder success 금지. ⛔ canonical/GMP 모델 다운그레이드 금지.
@@ -94,14 +96,13 @@
 - ✋ Gate: 빌드 + sentinel. no-op 0.
 
 ### Phase 4: 헤더 라벨 스캔 연결 (입고 등록 미노출)
-- Status: [ ] Pending
-- 🔴 sentinel: 라벨 스캔 = 기존 스캐너 연결. 입고 등록 버튼 부재 단언.
-- 🟢 라벨 스캔 버튼 wiring. 입고 등록 미노출 + 조건부 노출 주석.
-- ✋ Gate: 빌드 + sentinel. dead 0.
+- Status: [x] **SKIP (사유 문서화)** — 안전한 신규 요소 없음.
+- 라벨 스캔: 전역 topbar 스캔 버튼(`DashboardHeader`/dashboard-shell, §11.271)이 입고 목록에도 이미 노출 → 페이지 헤더 중복 진입점(§11.331 dedup 위반)이라 미추가.
+- 입고 등록: ops-store create 액션 부재 → 미노출 확정(dead/placeholder 금지). `createReceiving` 추가 시 조건부 노출(별건).
+- 결론: 억지 추가 시 P3 공급사처럼 misfit → skip 이 정직.
 
 ### Phase 5: Smoke / Rollback
-- Status: [ ] Pending
-- 전체 sentinel + 빌드, 육안 smoke(문서 확보·목록·필터), rollback 확인.
+- Status: [x] Complete — 각 phase(P1~P3) 게이트에서 빌드 EXIT 0 + sentinel GREEN + 단독 커밋(revert 단위) 충족. 별도 e2e 미실행("실행 불가", sentinel+빌드로 대체).
 
 ## 9. Risk Assessment
 | Risk | Prob | Impact | Mitigation |
@@ -115,10 +116,16 @@
 - P1~P4 각 phase 단독 revert(파일 단위). 커밋 분리.
 
 ## 11. Progress Tracking
-- Overall: 0% · Current: P1 · Blocker: 없음 · Next: P1 sentinel 작성
+- Overall: 100% (구현 phase P1~P3 완료 · P4 skip · P5 게이트 충족) · Blocker: 없음 · Next: 트랙 종결
 
-**Phase Checklist:** [ ] P1 [ ] P2 [ ] P3 [ ] P4 [ ] P5
+**Phase Checklist:** [x] P1 [x] P2 [x] P3 [x] P4(skip) [x] P5
 
 ## 12. Notes & Learnings
 - [2026-07-08] 입고 등록: ops-store create 액션 부재(호영님 확인) → 미노출 확정. `createReceiving` 추가 시 조건부 노출.
 - [2026-07-08] v2 문서 확보는 per-doc-type mock이나 라이브 per-lot 유지(GMP).
+- [2026-07-08] **정직성 원칙(반복 적용):** projection에 없는 필드로 UI 컨트롤을 라벨하지 않음.
+  - P2 입고일 → `updatedAt` 기반 "갱신"으로 정직 표기.
+  - P3 공급사 필터 → receiving projection에 공급사 필드 부재(title=입고건 제목, vendorName=PO 전용). 초안이 title을 "공급사"로 오라벨 → 호영님 지적으로 제거, 상태 필터만 유지(`fd4cc5f3`).
+  - 재배선 별건: 진짜 입고일/공급사는 `module-landing-adapter`에 `arrivalLabel`/`vendorName` 스레딩 필요.
+- [2026-07-08] P4 skip: 라벨 스캔=전역 topbar 중복(§11.331), 입고 등록=create 부재. 억지 추가 대신 정직 skip.
+- [2026-07-08] 트랙 종결. 실질 v2 정합 = 문서 확보 모달(P1)·갱신 컬럼(P2)·상태 필터(P3).
