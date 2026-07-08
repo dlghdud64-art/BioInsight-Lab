@@ -73,7 +73,7 @@ export function ReceivingPostModal({
                 <div>
                   <b className="text-[13px]">반영 준비 완료</b>
                   <p className="text-[12px] mt-0.5 leading-relaxed">
-                    검수와 필수 문서가 확인된 수령 품목을 재고에 반영합니다.
+                    검수와 필수 문서가 모두 확인되어 재고에 반영할 수 있습니다.
                   </p>
                 </div>
               </div>
@@ -86,6 +86,13 @@ export function ReceivingPostModal({
                   <span className="text-slate-500">상태 요약</span>
                   <span className="font-bold text-slate-700 truncate ml-3">{item.summary}</span>
                 </div>
+              </div>
+
+              {/* §receiving-post-v2 (호영님 2026-07-08, 시안 §mPost checkline) — post 액션은
+                  ready(검수 완료·필수 문서 확보) 상태에서만 노출되므로 진술 정직(조작 아님). */}
+              <div className="mt-3 flex items-center gap-2 px-3 py-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-[12.5px] font-bold text-emerald-700">
+                <Check className="h-4 w-4 flex-none" />
+                검수 완료 · 필수 문서 확보됨
               </div>
             </div>
 
