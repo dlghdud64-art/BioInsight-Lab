@@ -20,6 +20,7 @@ import type { ModuleLandingItem } from "@/lib/ops-console/module-landing-adapter
 import {
   buildReceivingFunnel,
   buildReceivingTabCounts,
+  resolveReceivingFocusIndex,
   resolveReceivingRowVisual,
   type ReceivingRowTone,
 } from "@/lib/receiving/receiving-list-view-model";
@@ -69,11 +70,16 @@ export function ReceivingDesktopList({
     return items.filter((i) => i.bucketKey !== "handoff");
   }, [items, tab]);
 
+  // §receiving-funnel-focus(호영님 2026-07-08, 입고 퍼널 현재집중 규칙.md) —
+  //   "현재 집중"을 하드코딩(검수 대기 고정)하지 않고 건수>0 최소 index 단계에 배치.
+  //   0건 단계엔 절대 집중 없음(흐리게). 전부 0이면 focusIdx=-1(집중 없음).
+  const focusIdx = resolveReceivingFocusIndex(funnel);
+
   const stages = [
-    { key: "waiting", label: "입고 대기", sub: "도착 예정 · 미도착", n: funnel.waiting, icon: Package, active: false, alert: false },
-    { key: "review", label: "검수 대기", sub: "도착 후 검수 필요", n: funnel.review, icon: Clock, active: true, alert: false },
-    { key: "blocked", label: "문서·판단", sub: "반영 차단 · 보류", n: funnel.blocked, icon: AlertTriangle, active: false, alert: true },
-    { key: "posted", label: "재고 반영", sub: "반영 대기 · 완료", n: funnel.posted, icon: Check, active: false, alert: false },
+    { key: "waiting", label: "입고 대기", sub: "도착 예정 · 미도착", n: funnel.waiting, icon: Package, alert: false },
+    { key: "review", label: "검수 대기", sub: "도착 후 검수 필요", n: funnel.review, icon: Clock, alert: false },
+    { key: "blocked", label: "문서·판단", sub: "반영 차단 · 보류", n: funnel.blocked, icon: AlertTriangle, alert: true },
+    { key: "posted", label: "재고 반영", sub: "반영 대기 · 완료", n: funnel.posted, icon: Check, alert: false },
   ] as const;
 
   const tabs: { key: TabKey; label: string; n: number }[] = [
@@ -89,27 +95,41 @@ export function ReceivingDesktopList({
         {stages.map((s, idx) => {
           const Icon = s.icon;
           const muted = s.n === 0;
+          const isFocus = idx === focusIdx; // 건수>0 최소 index 단계에만 집중
+          const isAlertFocus = isFocus && s.alert; // 문서·판단에 집중 → rose 톤
           return (
             <div key={s.key} className="flex items-stretch flex-1 min-w-0">
               <div
-                className={`flex items-center gap-3 px-4 py-3.5 rounded-lg flex-1 min-w-0 ${
-                  s.active ? "bg-blue-50 ring-1 ring-inset ring-blue-200" : ""
-                }`}
+                className={`flex items-center gap-3 px-4 py-3.5 rounded-lg flex-1 min-w-0 transition-opacity ${
+                  isAlertFocus
+                    ? "bg-rose-50 ring-1 ring-inset ring-rose-200"
+                    : isFocus
+                      ? "bg-blue-50 ring-1 ring-inset ring-blue-200"
+                      : ""
+                } ${muted ? "opacity-40" : ""}`}
               >
                 <span
                   className={`h-9 w-9 rounded-lg grid place-items-center flex-none ${
-                    s.active
-                      ? "bg-blue-600 text-white"
-                      : s.alert
-                        ? "bg-rose-50 text-rose-700"
-                        : "bg-slate-50 text-slate-400"
+                    muted
+                      ? "bg-slate-50 text-slate-400"
+                      : isFocus && !s.alert
+                        ? "bg-blue-600 text-white"
+                        : s.alert
+                          ? "bg-rose-50 text-rose-700"
+                          : "bg-slate-50 text-slate-400"
                   }`}
                 >
                   <Icon className="h-[18px] w-[18px]" />
                 </span>
                 <div className="min-w-0">
-                  {s.active && (
-                    <div className="text-[10px] font-extrabold text-blue-600 tracking-wide">현재 집중</div>
+                  {isFocus && (
+                    <div
+                      className={`text-[10px] font-extrabold tracking-wide ${
+                        isAlertFocus ? "text-rose-600" : "text-blue-600"
+                      }`}
+                    >
+                      현재 집중
+                    </div>
                   )}
                   <div className="flex items-baseline gap-1.5">
                     <span

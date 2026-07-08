@@ -38,6 +38,23 @@ export function buildReceivingFunnel(items: ReadonlyArray<ModuleLandingItem>): R
   return c;
 }
 
+// ── 파이프라인 "현재 집중" 배치 규칙 (입고 퍼널 현재집중 규칙.md, 호영님 2026-07-08) ──
+//   순서: waiting → review → blocked → posted.
+//   건수>0 인 단계 중 파이프라인상 가장 앞선(index 최소) 단계에만 "현재 집중"을 붙인다.
+//   0건 단계엔 절대 집중을 붙이지 않는다(흐리게 처리). 전부 0이면 -1(집중 없음).
+//   blocked(문서·판단)에 집중이 오면 rose 톤, 그 외 단계는 accent(blue) 톤.
+export const RECEIVING_FUNNEL_ORDER: readonly ReceivingFunnelKey[] = [
+  "waiting",
+  "review",
+  "blocked",
+  "posted",
+] as const;
+
+/** 현재 집중 단계 index (0=waiting … 3=posted). 건수>0 최소 index, 전부 0이면 -1. */
+export function resolveReceivingFocusIndex(funnel: ReceivingFunnelCounts): number {
+  return RECEIVING_FUNNEL_ORDER.findIndex((k) => funnel[k] > 0);
+}
+
 // ── 탭 카운트 (시안 §toolbar: 처리 필요 / 전체 / 완료) ─────────────
 export interface ReceivingTabCounts {
   actionable: number;
