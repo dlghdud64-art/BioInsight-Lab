@@ -71,15 +71,31 @@ export function ReceivingDesktopList({
   onRowClick: (item: ModuleLandingItem) => void;
 }) {
   const [tab, setTab] = useState<TabKey>("actionable");
+  // §receiving-list-v2 P3 — 상태 실 클라이언트 필터(v2 "공급사·상태" 버튼을 실 필터로, dead button 금지).
+  //   공급사 필터는 미구현 — receiving projection(ModuleLandingItem)에 공급사 필드 부재
+  //   (title=입고건 제목, vendorName=PO 전용·receiving undefined). 오라벨 방지로 상태 필터만 노출
+  //   (호영님 2026-07-08 결정). 진짜 공급사는 inbox-adapter vendorName 스레딩 필요(별건).
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const funnel = useMemo(() => buildReceivingFunnel(items), [items]);
   const tabCounts = useMemo(() => buildReceivingTabCounts(items), [items]);
 
+  const statusOptions = useMemo(
+    () => Array.from(new Set(items.map((i) => resolveReceivingRowVisual(i.bucketKey).badgeLabel))),
+    [items],
+  );
+
   const visibleItems = useMemo(() => {
-    if (tab === "all") return items;
-    if (tab === "done") return items.filter((i) => i.bucketKey === "handoff");
-    return items.filter((i) => i.bucketKey !== "handoff");
-  }, [items, tab]);
+    let list =
+      tab === "all"
+        ? items
+        : tab === "done"
+          ? items.filter((i) => i.bucketKey === "handoff")
+          : items.filter((i) => i.bucketKey !== "handoff");
+    if (statusFilter !== "all")
+      list = list.filter((i) => resolveReceivingRowVisual(i.bucketKey).badgeLabel === statusFilter);
+    return list;
+  }, [items, tab, statusFilter]);
 
   // §receiving-funnel-focus(호영님 2026-07-08, 입고 퍼널 현재집중 규칙.md) —
   //   "현재 집중"을 하드코딩(검수 대기 고정)하지 않고 건수>0 최소 index 단계에 배치.
@@ -192,12 +208,39 @@ export function ReceivingDesktopList({
             );
           })}
         </div>
+
+        <span className="flex-1" />
+
+        {/* §receiving-list-v2 P3 — 상태 실 필터(가로 인라인, LabAxis 필터 문법). 파생 옵션(존재 값만).
+            공급사 필터는 projection 필드 부재로 미노출(오라벨 방지, 호영님 2026-07-08 결정). */}
+        <select
+          aria-label="상태 필터"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="h-9 rounded-lg border border-slate-200 bg-white text-[13px] font-semibold text-slate-600 px-2.5 shadow-sm max-w-[140px]"
+        >
+          <option value="all">상태 전체</option>
+          {statusOptions.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* ── 카드 리스트 ──────────────────────────────────── */}
       {visibleItems.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-xl px-4 py-10 text-center text-sm text-slate-500">
-          이 분류에 해당하는 입고 건이 없습니다
+          <p>이 분류에 해당하는 입고 건이 없습니다</p>
+          {statusFilter !== "all" && (
+            <button
+              type="button"
+              onClick={() => setStatusFilter("all")}
+              className="mt-3 text-[13px] font-bold text-blue-600 hover:text-blue-700"
+            >
+              필터 초기화
+            </button>
+          )}
         </div>
       ) : (
         <div className="flex flex-col gap-2.5">
