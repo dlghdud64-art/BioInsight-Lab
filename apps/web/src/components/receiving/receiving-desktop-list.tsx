@@ -52,6 +52,17 @@ function StatIcon({ tone }: { tone: ReceivingRowTone }) {
   return <Clock className={cls} />;
 }
 
+// §receiving-list-v2 P2 — 카드 날짜 컬럼. 시안은 "입고일"이나 projection(ModuleLandingItem)에
+//   입고일 필드 부재, updatedAt(최근 갱신)만 존재 → "갱신"으로 정직 표기(오라벨 방지).
+//   진짜 입고일은 module-landing-adapter 에 arrivalLabel 스레딩 필요(별건).
+function formatCardDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${mm}·${dd}`;
+}
+
 export function ReceivingDesktopList({
   items,
   onRowClick,
@@ -206,6 +217,11 @@ export function ReceivingDesktopList({
                   <div className="font-mono text-[11.5px] font-bold text-slate-400 tracking-wide">{item.entityId}</div>
                   <h3 className="text-[15px] font-extrabold text-slate-900 truncate mt-0.5">{item.title}</h3>
                   <p className="text-[12.5px] text-slate-500 truncate mt-1">{item.summary}</p>
+                </div>
+                {/* §receiving-list-v2 P2 — 갱신 컬럼(시안 입고일 슬롯, updatedAt 정직 표기) */}
+                <div className="hidden lg:flex flex-col items-start gap-0.5 min-w-[64px]">
+                  <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wide">갱신</span>
+                  <span className="text-[13px] font-bold text-slate-700 font-mono">{formatCardDate(item.updatedAt)}</span>
                 </div>
                 {item.currentOwnerName && (
                   <div className="hidden lg:flex flex-col items-start gap-0.5 min-w-[80px]">
