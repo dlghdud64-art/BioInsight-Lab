@@ -8,7 +8,8 @@ import type {
   ToastProps,
 } from "@/components/ui/toast"
 
-const TOAST_LIMIT = 1
+// §action-toast(호영님 2026-07-08) — 지시문 배치 규칙: 동시 최대 3개.
+const TOAST_LIMIT = 3
 const TOAST_REMOVE_DELAY = 1000000
 
 type ToasterToast = ToastProps & {
@@ -16,6 +17,8 @@ type ToasterToast = ToastProps & {
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
+  /** §action-toast — progress(진행) 타입 하단 바(0~100). Radix Root prop 아님 → Toaster 에서 분리 렌더. */
+  progress?: number
 }
 
 const actionTypes = {

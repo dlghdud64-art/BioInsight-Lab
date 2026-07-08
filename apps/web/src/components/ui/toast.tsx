@@ -32,6 +32,12 @@ const toastVariants = cva(
         default: "border bg-background text-foreground",
         destructive:
           "destructive group border-destructive bg-destructive text-destructive-foreground",
+        // §action-toast(호영님 2026-07-08) — 5타입은 흰 배경 공통, 상태 구분은 아이콘 색만(컬러줄·뱃지 없음).
+        success: "border-slate-200 bg-white text-slate-900",
+        warning: "border-slate-200 bg-white text-slate-900",
+        error: "border-slate-200 bg-white text-slate-900",
+        info: "border-slate-200 bg-white text-slate-900",
+        undo: "border-slate-200 bg-white text-slate-900",
       },
     },
     defaultVariants: {
