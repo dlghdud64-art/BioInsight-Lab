@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Send, Mail, AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { labToast } from "@/lib/toast/lab-toast";
 import { resolveSuppliers } from "./resolve-suppliers";
 
 // ── Types ──
@@ -212,24 +213,26 @@ export function BatchDispatchSheet({
 
     setIsDispatching(false);
 
-    // toast 합산
-    if (failCount === 0 && hardBlockCount === 0) {
-      toast({
-        title: "일괄 발송 완료",
-        description: `${successCount}건 견적 요청이 발송되었습니다.`,
-      });
-    } else {
-      toast({
-        title: failCount > 0 ? "일괄 발송 부분 완료" : "일괄 발송 완료 (보류 포함)",
-        description: `완료 ${successCount}건${failCount > 0 ? ` · 실패 ${failCount}건` : ""}${hardBlockCount > 0 ? ` · 제외 ${hardBlockCount}건` : ""}`,
-        variant: failCount > 0 ? "destructive" : "default",
-      });
-    }
-
-    // §11.217 Phase 3 — onSuccess: page-level refetch + clearSelection + sheet close.
+    // §action-toast P3(호영님 2026-07-08) — 결과 토스트(실 집계 분기). 전건 성공=success·자동 닫힘,
+    //   실패/제외 있으면 partial(수동)+액션. Before 회색 결과 박스 대체.
     onSuccess();
     setMessage("");
-    onOpenChange(false);
+    if (failCount === 0 && hardBlockCount === 0) {
+      labToast.success("일괄 발송 완료", `<b>${successCount}건</b> 견적 요청이 발송되었습니다.`);
+      onOpenChange(false);
+    } else {
+      labToast.partial(
+        failCount > 0 ? "일괄 발송 부분 완료" : "일괄 발송 완료 (보류 포함)",
+        `<b>${successCount}건 발송</b>${failCount > 0 ? ` · 실패 ${failCount}건` : ""}${hardBlockCount > 0 ? ` · 제외 ${hardBlockCount}건` : ""}`,
+        {
+          actions:
+            failCount > 0
+              ? [{ label: "다시 시도", primary: true, onClick: () => { void handleDispatch(); } }]
+              : [{ label: `제외 ${hardBlockCount}건 보기`, primary: true, keepOpen: true }],
+        },
+      );
+      // partial(실패/제외)은 sheet 유지 → 제외·실패 건 preflight 노출("제외 N건 보기"). 전건 성공만 자동 닫힘.
+    }
   };
 
   return (
