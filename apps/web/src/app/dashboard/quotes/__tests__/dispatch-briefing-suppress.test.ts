@@ -22,3 +22,18 @@ describe("§ops-briefing-fab — 발송 진행 컨텍스트에서 progress overl
     expect(src).not.toMatch(/setDispatchReady|store.*sendStatus|overlay.*dispatch/i);
   });
 });
+
+describe("§ops-briefing-scope 케이스3 — 발송 검토 모달 위/후 견적 케이스 rail 미노출", () => {
+  it("견적 rail 렌더(양 브레이크포인트)가 request_send 를 배제", () => {
+    const src = read(PAGE);
+    // <1200 bottom-sheet + ≥1200 overlay 둘 다 request_send 배제
+    expect(src).toMatch(/activeWorkWindow !== "request_send" && selectedQuote && selectedSignals && selectedOpStatus && \(\n\s+<div className="min-\[1200px\]:hidden/);
+    expect(src).toMatch(/activeWorkWindow !== "request_send" && selectedQuote && selectedSignals && selectedOpStatus && \(\(\) => \{/);
+  });
+
+  it("발송 모달 닫을 때 closeQuoteContextRail 로 selectedQuoteId 정리(rail 이어짐 방지)", () => {
+    const src = read(PAGE);
+    expect(src).toMatch(/if \(!open\) closeQuoteContextRail\("dispatch_close"\)/);
+    expect(src).not.toMatch(/if \(!open\) setActiveWorkWindow\(null\); \}\}/);
+  });
+});

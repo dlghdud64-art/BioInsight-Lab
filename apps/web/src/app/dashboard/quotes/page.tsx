@@ -3479,7 +3479,8 @@ function QuotesPageContent() {
             호영님 P0 견적 관리 #5: breakpoint 1024px → 1200px 상향 (1024-1199px 구간
             bottom-sheet 적용, 테이블 가용 너비 회복). word-break 어절 단위 wrap +
             "전체 상세 열기" / "닫기" Button 44px 터치 영역 확보. ═══ */}
-      {selectedQuote && selectedSignals && selectedOpStatus && (
+      {/* §ops-briefing-scope 케이스3 — 발송 검토 모달(request_send) 중엔 견적 케이스 rail 미노출(중복). */}
+      {activeWorkWindow !== "request_send" && selectedQuote && selectedSignals && selectedOpStatus && (
         <div className="min-[1200px]:hidden fixed inset-0 z-40" onClick={() => closeQuoteContextRail("overlay_click")}>
           <div className="absolute inset-0 bg-black/30" />
           <div
@@ -3678,7 +3679,7 @@ function QuotesPageContent() {
       {/* ═══ Quote Context Rail (lg+) ═══ */}
       {/* §quote-briefing-rail-overlay — 우측 세로 "BRIEFING" edge tab 제거(접기 폐기).
           레일 진입 = 행 선택, 닫기 = X(헤더) · Esc(기존). 진입점은 우하단 운영 브리핑 FAB(별개 popup)과 분리. */}
-      {selectedQuote && selectedSignals && selectedOpStatus && (() => {
+      {activeWorkWindow !== "request_send" && selectedQuote && selectedSignals && selectedOpStatus && (() => {
         const sqResponseCount = selectedQuote.responses?.length ?? 0;
         // §11.212 — sqDaysSince 인라인 계산 제거 (SSR-CSR Date.now() drift 차단).
         // <RelativeTimeText iso={selectedQuote.createdAt} /> 가 useEffect mount 후 set.
@@ -4404,7 +4405,10 @@ function QuotesPageContent() {
       {activeWorkWindow === "request_send" && selectedQuote && (
         <VendorRequestModal
           open={true}
-          onOpenChange={(open) => { if (!open) setActiveWorkWindow(null); }}
+          // §ops-briefing-scope 케이스3(호영님 2026-07-08) — 발송 검토 모달이 곧 그 케이스 브리핑.
+          //   닫을 때 setActiveWorkWindow(null) 만 하면 selectedQuoteId 잔존 → 견적 케이스 rail 브리핑이
+          //   이어서 뜸(중복). closeQuoteContextRail 로 selectedQuoteId·brief·URL 까지 완전 정리 → rail 미노출.
+          onOpenChange={(open) => { if (!open) closeQuoteContextRail("dispatch_close"); }}
           quoteId={selectedQuote.id}
           quoteRef={quoteDisplayRef(selectedQuote)}
           quoteSummary={selectedQuote.title}
