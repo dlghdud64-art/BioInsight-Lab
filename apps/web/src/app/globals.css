@@ -106,6 +106,12 @@ div.quote-table td.no-column-cell {
    ============================================ */
 @layer base {
   :root {
+    /* ══ 0. Dashboard Sidebar Navy ══════════════════════════════════
+       §sidebar-navy-top(호영님 2026-07-08) — 사이드바 풀하이트 네이비.
+       로고칸+메뉴를 하나의 네이비 바닥으로 감싸고 흰 헤더는 콘텐츠 영역만.
+       네이비 톤은 여기 한 곳에서만 조정(전역 토큰). 기존 slate-900 대비 한 톤 업. */
+    --sidebar-navy: #2c3c63;
+    --sidebar-navy-hover: #354876;
     /* ══ 1. Public Role Tokens ══════════════════════════════════════ */
     /* brand-field = hero / flagship scene */
     --public-brand-field-strong: #0F172A;

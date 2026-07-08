@@ -44,7 +44,9 @@ describe("§사이드바 스크롤 개선 — 회귀 0 (헤더/푸터 고정 보
     expect(SRC).toMatch(/h-16 hidden lg:flex[^"]*flex-shrink-0/);
   });
   it("하단 서비스 홈으로 mt-auto flex-shrink-0 고정", () => {
-    expect(SRC).toMatch(/mt-auto p-4 border-t border-slate-800 flex-shrink-0/);
+    // §sidebar-navy-top — footer 상단 구분선 slate-800 → white/10(네이비 정합).
+    //   고정 intent(mt-auto flex-shrink-0)는 보존, 구분선 색만 갱신.
+    expect(SRC).toMatch(/mt-auto p-4 border-t border-white\/10 flex-shrink-0/);
     expect(SRC).toMatch(/서비스 홈으로/);
   });
   it("스크롤 영역 flex-1 overflow-y-auto 보존", () => {

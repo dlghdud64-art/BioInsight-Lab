@@ -258,17 +258,17 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
           결정 ("양쪽 모두 /dashboard") 를 의도적으로 reversal — 사용자 mental
           model 정합 ("LabAxis" = 최상위 홈, /dashboard = 구매 운영 surface).
           aria-label / hover/opacity 시각 피드백 / w-full 보존. */}
-      {/* §11.333 — 사이드바 상단 로고 칸만 흰색(호영님 2026-07-07). 흰 헤더와 상단 라인 연속.
-          본문 메뉴는 네이비(bg-slate-900) 유지. 로고 텍스트 검정.
-          §11.333-hotfix(2026-07-08) — 흰 로고칸 하단 border-b 제거(호영님: 상단 줄).
-          흰/네이비 색 경계로 구분되므로 선 불필요. */}
-      <div className="h-16 hidden lg:flex items-center px-4 bg-white flex-shrink-0">
+      {/* §sidebar-navy-top(호영님 2026-07-08) — 로고칸을 네이비로 되돌림(§11.333 흰칸 reversal).
+          로고가 흰 바닥 위에 떠 보이던 상단 이음매 제거. 로고칸+메뉴를 하나의 네이비 바닥으로
+          감싸고, 흰 헤더는 오른쪽 콘텐츠 영역(.main)에서만 시작. 로고 텍스트 흰색.
+          네이비 톤은 --sidebar-navy 전역 토큰(globals.css :root) 한 곳에서 조정. */}
+      <div className="h-16 hidden lg:flex items-center px-4 bg-[var(--sidebar-navy)] flex-shrink-0">
         <Link
           href="/"
           aria-label="LabAxis 홈으로 이동"
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity relative z-50 w-full"
         >
-          <span className="text-xl font-bold tracking-tight text-slate-900">LabAxis</span>
+          <span className="text-xl font-bold tracking-tight text-white">LabAxis</span>
         </Link>
       </div>
 
@@ -306,8 +306,8 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                   className={cn(
                     "group/nav flex items-center gap-2.5 px-2 md:px-2.5 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-colors",
                     isActive
-                      ? "text-white font-semibold bg-blue-600"
-                      : "text-slate-300 hover:text-white hover:bg-slate-800"
+                      ? "bg-white text-[#2c3c63] font-bold"
+                      : "text-[#d3dbec] hover:text-white hover:bg-[var(--sidebar-navy-hover)]"
                   )}
                 >
                   <IconBox icon={item.icon} isActive={isActive} tint={tint} />
@@ -322,7 +322,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
         <div className="space-y-6">
           {visibleGroups.map((group, groupIndex) => (
             <div key={groupIndex}>
-              <h3 className="text-xs font-bold uppercase tracking-wider mb-2 px-2 md:px-3 mt-6 first:mt-0" style={{ color: "#94A3B8" }}>
+              <h3 className="text-xs font-bold uppercase tracking-wider mb-2 px-2 md:px-3 mt-6 first:mt-0" style={{ color: "#7b88a8" }}>
                 {group.label}
               </h3>
               <nav className="space-y-0.5">
@@ -338,8 +338,8 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                       className={cn(
                         "group/nav flex items-center gap-2.5 px-2 md:px-2.5 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-colors",
                         isActive
-                          ? "text-white font-semibold bg-blue-600"
-                          : "text-slate-300 hover:text-white hover:bg-slate-800"
+                          ? "bg-white text-[#2c3c63] font-bold"
+                          : "text-[#d3dbec] hover:text-white hover:bg-[var(--sidebar-navy-hover)]"
                       )}
                     >
                       <IconBox icon={item.icon} isActive={isActive} tint={tint} />
@@ -359,8 +359,8 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
 
         {/* 관리자 전용 메뉴 (시스템 관리) */}
         {isAdminOrOwner && (
-          <div className="mt-8 pt-6 border-t border-slate-800">
-            <p className="mb-2 px-2 md:px-3 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#94A3B8" }}>
+          <div className="mt-8 pt-6 border-t border-white/10">
+            <p className="mb-2 px-2 md:px-3 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#7b88a8" }}>
               시스템 관리
             </p>
             <nav className="space-y-0.5">
@@ -375,8 +375,8 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                     className={cn(
                       "group/nav flex items-center gap-2.5 px-2 md:px-2.5 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-colors",
                       isActive
-                        ? "text-white font-semibold bg-blue-600"
-                        : "text-slate-300 hover:text-white hover:bg-slate-800"
+                        ? "bg-white text-[#2c3c63] font-bold"
+                        : "text-[#d3dbec] hover:text-white hover:bg-[var(--sidebar-navy-hover)]"
                     )}
                   >
                     <IconBox icon={item.icon} isActive={isActive} tint={tint} />
@@ -389,8 +389,8 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
         )}
 
         {/* 웹사이트 기본 링크 (서비스 소개 / 요금제 / 고객 지원) */}
-        <div className="mt-8 pt-6 border-t border-slate-800">
-          <p className="mb-2 px-2 md:px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+        <div className="mt-8 pt-6 border-t border-white/10">
+          <p className="mb-2 px-2 md:px-3 text-[10px] font-semibold text-[#7b88a8] uppercase tracking-wider">
             LabAxis
           </p>
           <nav className="space-y-1">
@@ -403,7 +403,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsMobileOpen(false)}
-                className="flex items-center px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+                className="flex items-center px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium text-[#93a0bd] hover:bg-[var(--sidebar-navy-hover)] hover:text-white transition-colors"
               >
                 <span className="truncate whitespace-nowrap">{item.title}</span>
               </Link>
@@ -413,7 +413,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
       </div>
 
       {/* 하단 고정 영역 (서비스 홈으로) - 브랜드 컬러 강조 */}
-      <div className="mt-auto p-4 border-t border-slate-800 flex-shrink-0">
+      <div className="mt-auto p-4 border-t border-white/10 flex-shrink-0">
         <Link
           href="/"
           onClick={() => setIsMobileOpen(false)}
@@ -436,7 +436,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
       {/* ── 데스크탑 고정 사이드바 (lg 이상) ──
           §nav-hotfix(호영님 2026-07-08) — 사이드바↔본문 세로 구분선(border-r) 제거.
           네이비 사이드바 ↔ 흰 본문은 색 대비로 이미 구분되므로 선 불필요. */}
-      <aside className="hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-64 bg-slate-900 z-30">
+      <aside className="hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-64 bg-[var(--sidebar-navy)] z-30">
         <SidebarContent />
       </aside>
 
@@ -453,7 +453,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
         aria-modal={isMobileOpen ? "true" : undefined}
         aria-label="대시보드 메뉴"
         className={cn(
-          "fixed top-0 left-0 h-full w-64 min-w-[16rem] bg-slate-900 border-r border-slate-800 z-50 mobile-sidebar transition-transform duration-300 shrink-0 lg:hidden",
+          "fixed top-0 left-0 h-full w-64 min-w-[16rem] bg-[var(--sidebar-navy)] border-r border-white/10 z-50 mobile-sidebar transition-transform duration-300 shrink-0 lg:hidden",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

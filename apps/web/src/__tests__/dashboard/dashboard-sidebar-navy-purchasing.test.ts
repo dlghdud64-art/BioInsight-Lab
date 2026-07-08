@@ -16,14 +16,18 @@ const SRC = readFileSync(
   "utf8",
 );
 
-describe("§sidebar-navy — 네이비 다크 테마", () => {
-  it("aside 배경 navy(bg-slate-900) — 라이트 bg-white 제거", () => {
-    expect(SRC).toMatch(/bg-slate-900 border-r border-slate-800/);
-    expect(SRC).not.toMatch(/bg-white border-r border-slate-200/);
+describe("§sidebar-navy — 네이비 테마(§sidebar-navy-top: --sidebar-navy 토큰)", () => {
+  it("aside 배경 = --sidebar-navy 전역 토큰(bg-slate-900 하드코딩 제거)", () => {
+    expect(SRC).toMatch(/bg-\[var\(--sidebar-navy\)\] border-r border-white\/10/);
+    expect(SRC).not.toMatch(/bg-slate-900/);
   });
-  it("nav active = bg-blue-600 text-white / inactive = text-slate-300(다크 정합)", () => {
-    expect(SRC).toMatch(/"text-white font-semibold bg-blue-600"/);
-    expect(SRC).toMatch(/"text-slate-300 hover:text-white hover:bg-slate-800"/);
+  it("nav active = 흰 알약(bg-white text-#2c3c63 bold) / inactive = #d3dbec + hover navy", () => {
+    expect(SRC).toMatch(/"bg-white text-\[#2c3c63\] font-bold"/);
+    expect(SRC).toMatch(
+      /"text-\[#d3dbec\] hover:text-white hover:bg-\[var\(--sidebar-navy-hover\)\]"/,
+    );
+    // 이전 blue-600 active 회귀 차단(호영님 흰 알약 spec)
+    expect(SRC).not.toMatch(/font-semibold bg-blue-600/);
   });
 });
 
