@@ -32,7 +32,9 @@ describe("§action-toast — Toaster 렌더(아이콘·progress·닫기 규칙)"
     const src = read(TOASTER);
     expect(src).toMatch(/VARIANT_ICON/);
     expect(src).toMatch(/text-emerald-600/);
-    expect(src).toMatch(/text-amber-600/);
+    // §11.302 정합 — warning 아이콘색은 muted amber #b45821(쨍한 amber Tailwind class 금지,
+    //   app-wide-amber-removed sentinel 정합). 구 text-amber-600 → text-[#b45821] swap.
+    expect(src).toMatch(/text-\[#b45821\]/);
     expect(src).toMatch(/text-rose-600/);
   });
   it("progress bar + info(progress)는 닫기 없음", () => {

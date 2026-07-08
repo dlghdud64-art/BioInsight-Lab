@@ -13,13 +13,13 @@ import { Check, AlertTriangle, X, Loader2, RotateCcw } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // §action-toast(호영님 2026-07-08) — 5타입 아이콘·색(상태 구분은 아이콘 색만).
-//   success 초록 · partial(warning) 주황 · error 빨강 · progress(info) 파랑 · undo 먹색.
+//   success 초록 · partial(warning) muted amber #b45821(§11.302 신호등) · error 빨강 · progress(info) 파랑 · undo 먹색.
 const VARIANT_ICON: Record<
   string,
   { Icon: typeof Check; color: string; spin?: boolean }
 > = {
   success: { Icon: Check, color: "text-emerald-600" },
-  warning: { Icon: AlertTriangle, color: "text-amber-600" },
+  warning: { Icon: AlertTriangle, color: "text-[#b45821]" },
   error: { Icon: X, color: "text-rose-600" },
   info: { Icon: Loader2, color: "text-blue-600", spin: true },
   undo: { Icon: RotateCcw, color: "text-slate-900" },
