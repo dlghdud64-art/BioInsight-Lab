@@ -25,6 +25,8 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import type { ReceivingBatchContract } from "@/lib/review-queue/receiving-inbound-contract";
+// §action-toast P3 — 필수세트 완료 시 success 토스트(앱 전역 단일 렌더러).
+import { labToast } from "@/lib/toast/lab-toast";
 
 type DocType = "coa" | "msds";
 
@@ -62,6 +64,19 @@ export function ReceivingDocAttachModal({ open, onOpenChange, rb, onAttach }: Pr
     );
   }, 0);
   const allDone = remaining === 0;
+
+  // §action-toast P3 — 실 첨부(store.attachReceivingDocument) 후, 이번 첨부가 마지막 미첨부(remaining===1)면
+  //   필수세트 완료 → success 토스트 1회. 개별 첨부는 인라인 카드(rose→emerald)로 피드백(토스트 스팸 0).
+  //   reducer: onAttach(line,type)는 lotId 미전달 → 해당 라인 전체 lot 채움 → remaining 정확히 1 감소.
+  const handleAttach = (lineId: string, docType: DocType, lotId?: string) => {
+    onAttach(lineId, docType, lotId); // 실 mutation(게이트 전이) — front-only 아님.
+    if (remaining === 1) {
+      labToast.success(
+        "문서 첨부 완료",
+        `<b>${rb.receivingNumber}</b> 필수 문서(CoA·MSDS)가 모두 첨부되었습니다.`,
+      );
+    }
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -145,7 +160,7 @@ export function ReceivingDocAttachModal({ open, onOpenChange, rb, onAttach }: Pr
                           ) : (
                             <button
                               type="button"
-                              onClick={() => onAttach(line.id, type)}
+                              onClick={() => handleAttach(line.id, type)}
                               className="inline-flex items-center gap-1 text-[12px] font-bold text-blue-600 bg-white border border-blue-300 px-2.5 h-8 rounded-lg active:scale-95 hover:bg-blue-50 shrink-0"
                             >
                               <Plus className="h-3.5 w-3.5" />
