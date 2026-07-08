@@ -21,10 +21,11 @@ describe("§sidebar-navy — 네이비 테마(§sidebar-navy-top: --sidebar-navy
     expect(SRC).toMatch(/bg-\[var\(--sidebar-navy\)\] border-r border-white\/10/);
     expect(SRC).not.toMatch(/bg-slate-900/);
   });
-  it("nav active = 흰 알약(bg-white text-#2c3c63 bold) / inactive = #d3dbec + hover navy", () => {
-    expect(SRC).toMatch(/"bg-white text-\[#2c3c63\] font-bold"/);
+  it("nav active = 흰 알약(bg-white text-#222d47 bold) / inactive = #c7d0e4 + hover navy", () => {
+    // §sidebar-handoff(호영님 2026-07-08): 네이비 #222d47 로 어두워짐 → active 텍스트·본문 텍스트 갱신.
+    expect(SRC).toMatch(/"bg-white text-\[#222d47\] font-bold"/);
     expect(SRC).toMatch(
-      /"text-\[#d3dbec\] hover:text-white hover:bg-\[var\(--sidebar-navy-hover\)\]"/,
+      /"text-\[#c7d0e4\] hover:text-white hover:bg-\[var\(--sidebar-navy-hover\)\]"/,
     );
     // 이전 blue-600 active 회귀 차단(호영님 흰 알약 spec)
     expect(SRC).not.toMatch(/font-semibold bg-blue-600/);

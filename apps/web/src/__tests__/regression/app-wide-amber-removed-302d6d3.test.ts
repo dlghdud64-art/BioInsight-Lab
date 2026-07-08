@@ -80,8 +80,10 @@ describe("§11.302d-6d-3 — 대표 file 분류별 swap 검증", () => {
   });
 
   it("dashboard-sidebar safety nav icon → sky (장식 theme)", () => {
+    // §sidebar-handoff(호영님 2026-07-08): 네이비 어두워져 inactive 아이콘 400 솔리드로 상향
+    //   (sky-400/70 → sky-400). 안전=sky 정체성(§11.302 amber→sky)은 그대로 보존.
     const src = read("app/_components/dashboard-sidebar.tsx");
-    expect(src).toMatch(/"\/dashboard\/safety":\s*\{\s*active:\s*"text-sky-500",\s*inactive:\s*"text-sky-400\/70"/);
+    expect(src).toMatch(/"\/dashboard\/safety":\s*\{\s*active:\s*"text-sky-500",\s*inactive:\s*"text-sky-400"/);
   });
 
   it("not-found 404 badge → sky (장식)", () => {
