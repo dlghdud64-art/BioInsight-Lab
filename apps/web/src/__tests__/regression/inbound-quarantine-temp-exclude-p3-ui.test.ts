@@ -51,7 +51,9 @@ describe("§inbound-quarantine-temp-exclude P3 — 문서 해소 첨부 wiring (
   });
   it("모달이 실제 store 첨부 액션(onAttach)에 연결 — placeholder success 없음", () => {
     const src = read(MODAL);
-    expect(src).toMatch(/onAttach\(line\.id,\s*type\)/);
+    // §receiving-doc-attach-v2 — 버튼은 handleAttach 래퍼 경유(§action-toast 정합), 래퍼 내부가 onAttach 실 호출.
+    expect(src).toMatch(/onClick=\{\(\) => handleAttach\(line\.id, type\)\}/);
+    expect(src).toMatch(/onAttach\(lineId, docType, lotId\)/);
     expect(src).not.toMatch(/quarantineStatus|quarantineLabel|격리/);
   });
 });
