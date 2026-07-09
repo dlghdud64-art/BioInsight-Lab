@@ -23,9 +23,11 @@ const WORK_PAGES = [
 ];
 
 describe("§dashboard-surface-unify — 작업 페이지 회색 캔버스 통일", () => {
-  it("canonical 토큰 정의 — tailwind canvas + globals --surface-canvas #F1F5F9", () => {
+  it("canonical 토큰 정의 — tailwind canvas + globals --surface-canvas #E9EEF4", () => {
+    // §canvas-contrast(호영님 2026-07-10) — #F1F5F9(slate-100)가 흰색과 구분 안 돼 카드 부양감
+    //   없음 → #E9EEF4 로 살짝 진하게. tailwind canvas 는 var 참조라 무변경.
     expect(rd("../tailwind.config.ts")).toMatch(/canvas:\s*"var\(--surface-canvas\)"/);
-    expect(rd("app/globals.css")).toMatch(/--surface-canvas:\s*#F1F5F9/i);
+    expect(rd("app/globals.css")).toMatch(/--surface-canvas:\s*#E9EEF4/i);
   });
   it("각 작업 페이지가 bg-canvas 사용", () => {
     for (const p of WORK_PAGES) {

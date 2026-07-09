@@ -164,8 +164,9 @@ div.quote-table td.no-column-cell {
     --surface-panel: var(--app-panel-3);
     --surface-elevated: #F1F5F9;
     --surface-strong: #E2E8F0;
-    /* §dashboard-surface-unify (호영님 2026-07-04) — 작업 페이지 회색 캔버스 canonical. 카드(흰색)를 부양. 홈(bg-sh=#F8FAFC)·admin 제외. */
-    --surface-canvas: #F1F5F9;
+    /* §dashboard-surface-unify (호영님 2026-07-04) — 작업 페이지 회색 캔버스 canonical. 카드(흰색)를 부양. 홈(bg-sh=#F8FAFC)·admin 제외.
+       §canvas-contrast(호영님 2026-07-10) — #F1F5F9(slate-100)가 흰색과 거의 구분 안 돼 카드 부양감 없음 → #E9EEF4 로 살짝 진하게(전역, 모든 작업 페이지 bg-canvas 공유). */
+    --surface-canvas: #E9EEF4;
     --border-default: #E2E8F0;
     --border-strong: #CBD5E1;
 
