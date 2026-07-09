@@ -33,15 +33,13 @@ describe("§11.320 — 상태 배너 통합 (Phase 2 GREEN target)", () => {
     expect(src).toMatch(/data-testid="inventory-context-status-banner"/);
   });
 
-  it("배너 상태별 분기 3 case — 정상 emerald / 만료 임박 yellow / 위험 red", () => {
+  it("배너 상태별 분기 3 case — 정상 emerald / 만료 임박 yellow / 위험 rose (§inventory-redesign P2a de-red: 흰 카드 + 톤 텍스트)", () => {
     const src = read(PATH);
-    // 배너 색상은 toneClass[tone] 변수로 적용(danger/warn/ok). 신호등 3색 정합.
-    // 위험 = bg-red-50 + text-red-700 (toneClass.danger)
-    expect(src).toMatch(/danger:\s*"[^"]*bg-red-50[^"]*text-red-700/);
-    // 정상 = bg-emerald-50 (toneClass.ok)
-    expect(src).toMatch(/bg-emerald-50|bg-green-50/);
-    // 주의 = bg-yellow-50 (toneClass.warn)
-    expect(src).toMatch(/bg-yellow-50/);
+    // §inventory-redesign P2a(호영님 2026-07-09) — 신호등 배경 채움 제거 → 흰 카드 + 톤 border/텍스트.
+    //   §11.320 배너 bg-red-50/bg-yellow-50/bg-emerald-50 채움 supersede(핸드오프 §4.1).
+    expect(src).toMatch(/danger:\s*"[^"]*bg-white[^"]*text-rose-700/);
+    expect(src).toMatch(/ok:\s*"[^"]*text-emerald-700/);
+    expect(src).toMatch(/warn:\s*"[^"]*text-yellow-700/);
   });
 
   it("탭 4 (상태 요약/보유량/리스크/재발주) 제거", () => {

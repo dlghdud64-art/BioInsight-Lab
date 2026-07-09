@@ -23,12 +23,14 @@ describe("§inventory-panel-unify P1 — mode prop + 헤더 맥락 분기", () =
     expect(src).toMatch(/mode\?:\s*"detail"\s*\|\s*"reorder"/);
     expect(src).toMatch(/mode = "detail"/); // default detail = 회귀 0
   });
-  it("헤더 eyebrow mode 분기(재발주 검토 / 운영 브리핑)", () => {
+  it("헤더 eyebrow mode 분기(재발주 검토 / 품목 브리핑)", () => {
+    // §inventory-redesign P2a(호영님 2026-07-09) — detail eyebrow "운영 브리핑" → "품목 브리핑"
+    //   (품목 하나의 브리핑). reorder 분기("재발주 검토")는 보존.
     const src = read(PANEL);
-    expect(src).toMatch(/mode === "reorder" \? "재발주 검토" : "운영 브리핑"/);
+    expect(src).toMatch(/mode === "reorder" \? "재발주 검토" : "품목 브리핑"/);
   });
-  it("회귀 0 — '운영 브리핑' eyebrow 문자열 보존", () => {
-    expect(read(PANEL)).toContain("운영 브리핑");
+  it("회귀 0 — '품목 브리핑' eyebrow 문자열 보존", () => {
+    expect(read(PANEL)).toContain("품목 브리핑");
   });
 });
 

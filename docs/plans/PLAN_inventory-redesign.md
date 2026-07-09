@@ -105,8 +105,10 @@ Sentinel(readFileSync+regex): phase별 신규 패턴 + 금지 패턴(reorder>dis
 - phase별 단독 커밋 revert. 서버/스키마 변경 없음(UI/정합).
 
 ## 11. Progress
-- Overall: ~15% · Current: P1(게이트 대기) · Blocker: 없음 · Next: P2 품목 브리핑
-- [x] P0(매핑 완료) [x] P1(KPI 재설계 — 게이트 대기) [ ] P2 [ ] P3 [ ] P4 [ ] P5 [ ] P6
+- Overall: ~30% · Current: P2(게이트 대기) · Blocker: 없음 · Next: P3 재고 테이블
+- [x] P0(매핑) [x] P1(KPI — a11ae05a) [x] P2(품목 브리핑 rename+de-red — 게이트 대기) [ ] P3 [ ] P4 [ ] P5 [ ] P6
+
+**P2 매핑:** 패널 이미 대부분 정합 — 접이식 Sec(§11.320 Phase 3 기구현)·이슈 dispose>reorder(온톨로지 L287)·no-AI(재발주안 검토)·위치 인라인 지정 존재. P2 델타 = rename "운영→품목 브리핑" + de-red 배너(흰 카드+rose). §11.320 배너 bg-red-50 채움 supersede(sentinel 갱신).
 
 **P0 매핑 요약:** 라이브 이미 대부분 정합(§11.317 KPI 통합·InventoryContextPanel=품목브리핑·만료임박=yellow). 신규=추천벤더/이력 모달·Lot 추적 overlay. §11.302 KPI 순서만 역전이었음(P1에서 정정).
 **P1 델타:** dispose>reorder 순서·de-red·0값✓정상·안전재고미달 클릭→low 필터. §11.317 testid/배너 보존.

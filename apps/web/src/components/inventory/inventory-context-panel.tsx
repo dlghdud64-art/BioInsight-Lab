@@ -500,9 +500,10 @@ export function InventoryContextPanel({
     <div
       className={`w-[480px] shrink-0 border-l border-bd bg-el overflow-y-auto h-full ${className}`}
     >
-      {/* §11.146 Brief header — 운영 브리핑 + 선택한 재고 (lock §11.142, §11.179 eyebrow 통일) */}
+      {/* §inventory-redesign P2a(호영님 2026-07-09) — 헤더 명칭 "운영 브리핑" → "품목 브리핑"
+          (특정 품목 하나의 브리핑이므로, 핸드오프 §4). 재발주 진입 시 "재발주 검토" 유지. */}
       <div className="sticky top-0 z-10 px-5 py-2 border-b border-bd bg-el flex items-center justify-between">
-        <span className="text-[11px] font-bold text-blue-700">{mode === "reorder" ? "재발주 검토" : "운영 브리핑"}</span>
+        <span className="text-[11px] font-bold text-blue-700">{mode === "reorder" ? "재발주 검토" : "품목 브리핑"}</span>
         <span className="text-[10px] text-slate-500 uppercase tracking-wide">선택한 재고</span>
       </div>
 
@@ -555,10 +556,12 @@ export function InventoryContextPanel({
         const isDanger = isOutOfStock || isBelowSafety;
         const isWarn = !isDanger && isExpiringSoon;
         const tone: "danger" | "warn" | "ok" = isDanger ? "danger" : isWarn ? "warn" : "ok";
+        // §inventory-redesign P2a(호영님 2026-07-09) — de-red: 신호등 배경 채움 제거 →
+        //   흰 카드 + 톤 border/텍스트(위험=rose). 핸드오프 §4.1·§9(경고=배경 대신 강조).
         const toneClass: Record<typeof tone, string> = {
-          danger: "border-red-200 bg-red-50 text-red-700",
-          warn: "border-yellow-200 bg-yellow-50 text-yellow-700",
-          ok: "border-emerald-200 bg-emerald-50 text-emerald-700",
+          danger: "border-rose-200 bg-white text-rose-700",
+          warn: "border-yellow-200 bg-white text-yellow-700",
+          ok: "border-emerald-200 bg-white text-emerald-700",
         };
         const toneIcon =
           tone === "danger" ? "🔴" : tone === "warn" ? "🟡" : "✅";
