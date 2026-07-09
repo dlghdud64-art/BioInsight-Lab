@@ -85,8 +85,12 @@ Sentinel(readFileSync+regex): phase별 신규 패턴 + 금지 패턴(reorder>dis
 - sentinel: `inventory-move-location-wire-p3.test.ts` (fake toast 부재 + 편집 배선 + PATCH location truth + 회귀 0).
 
 ### Phase 4 — 추천 벤더 + 구매 이력(스파크라인) 모달
-- Status: [ ] Pending
+- Status: [x] Done (게이트 대기) — 2026-07-10. 정합 확인만(신규 0).
 - 발주 초안/PO 이동 = 실배선 or 정직-disabled/토스트(실 대상 확인 후).
+- **매핑 결론:** 추천 벤더+최근 구매 이력은 재발주안 검토 시트(ReorderReviewSheet 309줄)에 이미 완전 구현. API=reorder-recommendation(PurchaseRecord 집계), hook=use-reorder-recommendation. 신규 모달 = page-per-feature 회귀 → 불가. 신규 컴포넌트/API 0.
+- **정직-disabled 확인:** 벤더 0건 시 "바로 발주" disabled+사유("발주 기능은 준비 중"), "견적 요청" live. 발주/견적=query prefill(DB write 0, placeholder success 아님). 최근 구매 length>0 조건부(가짜 0 금지).
+- **스파크라인:** recentPurchases 최대 3건(표본 부족) → 가짜 추이 금지 원칙상 생략(호영님 P4 종결 결정 2026-07-10). list 형태 유지.
+- sentinel: `inventory-reorder-vendor-history-p4.test.ts` (현재 구현 회귀 가드 — 신규 모달 재발 방지).
 
 ### Phase 5 — Lot 추적 풀스크린 overlay
 - Status: [ ] Pending
@@ -108,8 +112,8 @@ Sentinel(readFileSync+regex): phase별 신규 패턴 + 금지 패턴(reorder>dis
 - phase별 단독 커밋 revert. 서버/스키마 변경 없음(UI/정합).
 
 ## 11. Progress
-- Overall: ~45% · Current: P3(게이트 대기) · Blocker: 없음 · Next: P4 추천벤더/이력 모달
-- [x] P0(매핑) [x] P1(KPI — a11ae05a) [x] P2(품목 브리핑 rename+de-red) [x] P3(위치이동 실배선 — 게이트 대기) [ ] P4 [ ] P5 [ ] P6
+- Overall: ~60% · Current: P4(게이트 대기) · Blocker: 없음 · Next: P5 Lot 추적 overlay
+- [x] P0(매핑) [x] P1(KPI — a11ae05a) [x] P2(품목 브리핑 rename+de-red) [x] P3(위치이동 실배선) [x] P4(추천벤더/이력 정합확인 — 게이트 대기) [ ] P5 [ ] P6
 
 **P2 매핑:** 패널 이미 대부분 정합 — 접이식 Sec(§11.320 Phase 3 기구현)·이슈 dispose>reorder(온톨로지 L287)·no-AI(재발주안 검토)·위치 인라인 지정 존재. P2 델타 = rename "운영→품목 브리핑" + de-red 배너(흰 카드+rose). §11.320 배너 bg-red-50 채움 supersede(sentinel 갱신).
 
