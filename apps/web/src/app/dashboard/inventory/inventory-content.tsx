@@ -1595,7 +1595,14 @@ function InventoryPageContent() {
               canonical truth: 카드 = count display-only. 폐기/처분 상세는 운영 브리핑(stock_risk)으로 이관.
               배너 onClick → operationalBriefPopup.open() (Phase 4 에서 category="stock_risk" hint 추가). */}
           <div data-testid="dashboard-inventory-header-kpi-grid" className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm md:p-4">
+            {/* §inventory-redesign P1 (호영님 2026-07-09) — KPI 재설계:
+                ① §11.302 순서: dispose(만료임박·격리) 먼저, reorder(안전재고미달) 마지막.
+                ② de-red: 경고 배경 채움 제거 → 배경 중립 + 숫자만 색(핸드오프 §1·§9).
+                ③ 0값 dim KPI(만료임박·격리) → 큰 0 대신 "✓ 정상"(emerald).
+                ④ 안전재고미달 클릭 → 표를 '재발주 필요'(low) 필터(N-safe·투명). 0건이면 비활성.
+                testid 4종 보존(§11.317). */}
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
+              {/* 1. 전체 품목 (중립) */}
               <div
                 data-testid="dashboard-inventory-header-kpi-total-items"
                 className={`rounded-lg border px-3 py-2 ${headerKpiTotalItems > 0 ? "border-slate-300 bg-white" : "border-slate-200 bg-gray-50"}`}
@@ -1606,36 +1613,56 @@ function InventoryPageContent() {
                   <span className="ml-0.5 text-[10px] font-bold text-slate-500">종</span>
                 </span>
               </div>
+              {/* 2. 만료 임박 (dispose · §11.302 우선) — de-red, 0=✓정상 */}
               <div
-                data-testid="dashboard-inventory-header-kpi-low-stock"
-                className={`rounded-lg border px-3 py-2 ${headerKpiLowStock > 0 ? "border-red-200 bg-red-50" : "border-slate-200 bg-gray-50"}`}
+                data-testid="dashboard-inventory-header-kpi-expiring-soon"
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2"
               >
-                <span className={`block text-[10px] font-semibold ${headerKpiLowStock > 0 ? "text-red-700" : "text-slate-500"}`}>안전재고 미달</span>
-                <span className={`mt-0.5 block text-lg font-extrabold leading-none md:text-xl ${headerKpiLowStock > 0 ? "text-red-700" : "text-gray-400"}`}>
+                <span className={`block text-[10px] font-semibold ${headerKpiExpiringSoon > 0 ? "text-yellow-700" : "text-slate-500"}`}>만료 임박</span>
+                {headerKpiExpiringSoon > 0 ? (
+                  <span className="mt-0.5 block text-lg font-extrabold leading-none md:text-xl text-yellow-700">
+                    {headerKpiExpiringSoon}
+                    <span className="ml-0.5 text-[10px] font-bold">건</span>
+                  </span>
+                ) : (
+                  <span className="mt-0.5 block text-sm font-bold text-emerald-600">✓ 정상</span>
+                )}
+              </div>
+              {/* 3. 격리 Lot (dispose · §11.302 우선) — de-red, 0=✓정상 */}
+              <div
+                data-testid="dashboard-inventory-header-kpi-quarantine-lot"
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2"
+              >
+                <span className={`block text-[10px] font-semibold ${headerKpiQuarantineLot > 0 ? "text-rose-700" : "text-slate-500"}`}>격리 Lot</span>
+                {headerKpiQuarantineLot > 0 ? (
+                  <span className="mt-0.5 block text-lg font-extrabold leading-none md:text-xl text-rose-700">
+                    {headerKpiQuarantineLot}
+                    <span className="ml-0.5 text-[10px] font-bold">건</span>
+                  </span>
+                ) : (
+                  <span className="mt-0.5 block text-sm font-bold text-emerald-600">✓ 정상</span>
+                )}
+              </div>
+              {/* 4. 안전재고 미달 (reorder · §11.302 dispose 뒤) — de-red + 클릭 시 low 필터(N-safe) */}
+              <button
+                type="button"
+                data-testid="dashboard-inventory-header-kpi-low-stock"
+                onClick={() => setStatusFilter("low")}
+                disabled={headerKpiLowStock === 0}
+                aria-label="안전재고 미달 품목만 보기"
+                className={`group rounded-lg border border-slate-200 bg-white px-3 py-2 text-left transition-colors ${headerKpiLowStock > 0 ? "cursor-pointer hover:border-rose-200 hover:bg-rose-50/40" : "cursor-default"}`}
+              >
+                <span className="flex items-center justify-between gap-1">
+                  <span className={`block text-[10px] font-semibold ${headerKpiLowStock > 0 ? "text-rose-700" : "text-slate-500"}`}>안전재고 미달</span>
+                  {headerKpiLowStock > 0 && (
+                    <span className="hidden items-center text-[10px] font-bold text-rose-600 group-hover:flex">자세히 →</span>
+                  )}
+                </span>
+                <span className={`mt-0.5 block text-lg font-extrabold leading-none md:text-xl ${headerKpiLowStock > 0 ? "text-rose-700" : "text-gray-400"}`}>
                   {headerKpiLowStock}
                   <span className="ml-0.5 text-[10px] font-bold">건</span>
                 </span>
-              </div>
-              <div
-                data-testid="dashboard-inventory-header-kpi-expiring-soon"
-                className={`rounded-lg border px-3 py-2 ${headerKpiExpiringSoon > 0 ? "border-yellow-200 bg-yellow-50" : "border-slate-200 bg-gray-50"}`}
-              >
-                <span className={`block text-[10px] font-semibold ${headerKpiExpiringSoon > 0 ? "text-yellow-700" : "text-slate-500"}`}>만료 임박</span>
-                <span className={`mt-0.5 block text-lg font-extrabold leading-none md:text-xl ${headerKpiExpiringSoon > 0 ? "text-yellow-700" : "text-gray-400"}`}>
-                  {headerKpiExpiringSoon}
-                  <span className="ml-0.5 text-[10px] font-bold">건</span>
-                </span>
-              </div>
-              <div
-                data-testid="dashboard-inventory-header-kpi-quarantine-lot"
-                className={`rounded-lg border px-3 py-2 ${headerKpiQuarantineLot > 0 ? "border-red-200 bg-red-50" : "border-slate-200 bg-gray-50"}`}
-              >
-                <span className={`block text-[10px] font-semibold ${headerKpiQuarantineLot > 0 ? "text-red-700" : "text-slate-500"}`}>격리 Lot</span>
-                <span className={`mt-0.5 block text-lg font-extrabold leading-none md:text-xl ${headerKpiQuarantineLot > 0 ? "text-red-700" : "text-gray-400"}`}>
-                  {headerKpiQuarantineLot}
-                  <span className="ml-0.5 text-[10px] font-bold">건</span>
-                </span>
-              </div>
+              </button>
             </div>
             {/* 운영 조치 1줄 배너 — 합산 0건이면 hide */}
             {(lotIssueDisposalReviewCount + lotIssueApprovalPendingCount + lotIssueExecutableCount) > 0 && (
