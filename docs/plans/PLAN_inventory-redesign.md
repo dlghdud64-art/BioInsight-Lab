@@ -78,8 +78,11 @@ Sentinel(readFileSync+regex): phase별 신규 패턴 + 금지 패턴(reorder>dis
 - 단일 배너 de-red(::before 제거), 접이식 Sec, 이슈 dispose>reorder, rename. 실 wiring 보존.
 
 ### Phase 3 — 재고 테이블 (Lot 펼침·inline 위치지정)
-- Status: [ ] Pending
+- Status: [x] Done (게이트 대기) — 2026-07-10
 - 위치지정 = 실 저장 있으면 배선, 없으면 정직-disabled.
+- **매핑 결론:** Lot 펼침(expandedProducts/toggleExpand)·inline 위치 UI(onMoveLocation→"위치 이동"/"보관 위치 변경") 라이브 이미 정합. 유일 이슈 = onMoveLocation fake toast("곧 제공").
+- **델타:** 실 mutation(PATCH /api/inventory/[id] location 저장) 존재 → 편집 모달(setEditingInventory+setIsDialogOpen, location Input) 재사용 배선. fake toast 2곳(content L2040·main L1503) 제거. 신규 컴포넌트/mutation 0.
+- sentinel: `inventory-move-location-wire-p3.test.ts` (fake toast 부재 + 편집 배선 + PATCH location truth + 회귀 0).
 
 ### Phase 4 — 추천 벤더 + 구매 이력(스파크라인) 모달
 - Status: [ ] Pending
@@ -105,8 +108,8 @@ Sentinel(readFileSync+regex): phase별 신규 패턴 + 금지 패턴(reorder>dis
 - phase별 단독 커밋 revert. 서버/스키마 변경 없음(UI/정합).
 
 ## 11. Progress
-- Overall: ~30% · Current: P2(게이트 대기) · Blocker: 없음 · Next: P3 재고 테이블
-- [x] P0(매핑) [x] P1(KPI — a11ae05a) [x] P2(품목 브리핑 rename+de-red — 게이트 대기) [ ] P3 [ ] P4 [ ] P5 [ ] P6
+- Overall: ~45% · Current: P3(게이트 대기) · Blocker: 없음 · Next: P4 추천벤더/이력 모달
+- [x] P0(매핑) [x] P1(KPI — a11ae05a) [x] P2(품목 브리핑 rename+de-red) [x] P3(위치이동 실배선 — 게이트 대기) [ ] P4 [ ] P5 [ ] P6
 
 **P2 매핑:** 패널 이미 대부분 정합 — 접이식 Sec(§11.320 Phase 3 기구현)·이슈 dispose>reorder(온톨로지 L287)·no-AI(재발주안 검토)·위치 인라인 지정 존재. P2 델타 = rename "운영→품목 브리핑" + de-red 배너(흰 카드+rose). §11.320 배너 bg-red-50 채움 supersede(sentinel 갱신).
 

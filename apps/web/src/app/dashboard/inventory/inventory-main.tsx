@@ -1501,10 +1501,10 @@ export function InventoryMain() {
                       });
                     }}
                     onMoveLocation={(inventory) => {
-                      toast({
-                        title: "위치 이동",
-                        description: `${inventory.product.name} 위치 이동 기능은 곧 제공될 예정입니다.`,
-                      });
+                      // §inventory-redesign P3(호영님 2026-07-10) — fake success 제거.
+                      //   위치 저장은 편집 모달(location Input → PATCH /api/inventory/[id]) 실 배선 재사용.
+                      setEditingInventory(inventory);
+                      setIsDialogOpen(true);
                     }}
                     onPrintLabel={(productName, lots) => {
                       setLabelPrintTitle(productName);
