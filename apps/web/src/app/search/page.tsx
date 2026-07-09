@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useCallback } from "react";
+import { Suspense, useState, useCallback, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -41,11 +41,25 @@ const flowSteps = [
 ];
 
 function PublicSearchContent() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  // §search-logged-in-redirect — session?.user 를 여기서 추출(full Session|null 타입). 아래
+  //   `if (status === "authenticated") return` early return 이 session 을 null 로 좁혀 render 의
+  //   session?.user 가 never 접근 타입에러 나던 것 회피(동작 동일: 비로그인 배너 조건).
+  const user = session?.user;
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams?.get("q") || "");
   // §11.324 — publicTriageStage / publicTriageAction state 제거 (Triage 데모 영역 함께 제거).
+
+  // §search-logged-in-redirect(호영님 2026-07-09) — /search 는 비로그인 마케팅 랜딩(앱 셸/헤더/nav
+  //   없는 단독 페이지). 로그인 사용자가 여기 오면(공개 페이지·404·도움말 링크 경유) 탈출구 없는
+  //   dead-end. → 인앱 워크벤치(/app/search, MainHeader 햄버거 nav 셸)로 리다이렉트. q 파라미터 보존.
+  //   공개 랜딩은 비로그인 전용으로 유지(가입 conversion 무손상).
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    const q = searchParams?.get("q");
+    router.replace(q ? `/app/search?q=${encodeURIComponent(q)}` : "/app/search");
+  }, [status, searchParams, router]);
 
   const buildWorkbenchPath = useCallback((stage?: "compare" | "request") => {
     const trimmed = query.trim() || searchParams?.get("q") || "PBS";
@@ -95,12 +109,22 @@ function PublicSearchContent() {
 
   // §11.324 — handleTriageAction / handleStepAction 제거 (Triage 데모 + Step 2/3 button 함께 제거).
 
+  // §search-logged-in-redirect — 로그인 사용자는 위 useEffect 로 /app/search 이동 중.
+  //   마케팅 랜딩(3단계·가입 CTA) flash 방지 — 이동 중 로딩만 표시.
+  if (status === "authenticated") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-slate-400">이동 중…</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* §11.267b — 호영님 spec 검색 체험 페이지 상단 가입 배너 (logged-out 한정).
           검색 입력 전에도 가입 경로 visible — 기존에는 검색해야 비로소 로그인
           modal 노출 → 이탈 지점. 페이지 상단 sticky 영역 위 banner 로 상시 노출. */}
-      {!session?.user && (
+      {!user && (
         <Link
           href="/auth/signin"
           data-testid="search-signup-banner"
@@ -178,7 +202,7 @@ function PublicSearchContent() {
         </section>
 
         {/* §11.324 — 큰 가입 CTA (primary conversion). 옛 Step 2/3 button + 로그인 후 계속 link 흡수. */}
-        {!session?.user && (
+        {!user && (
           <div className="flex flex-col items-center gap-3 pt-2">
             <Link
               href="/auth/signin"
