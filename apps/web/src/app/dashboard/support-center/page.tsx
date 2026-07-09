@@ -1587,7 +1587,7 @@ function TicketTab() {
       {/* 지원 안내 (compact) */}
       <div className="mt-4 rounded-xl bg-slate-50 border border-slate-200 p-3.5">
         <p className="text-[10px] font-extrabold text-slate-500 mb-1.5">지원 안내</p>
-        <p className="text-[10px] text-slate-400 leading-relaxed">평일 09-18시 접수 기준 당일 1차 확인</p>
+        <p className="text-[10px] text-slate-400 leading-relaxed">평일 09-18시 접수 · 영업일 기준 1일 이내 회신</p>
         <p className="text-[10px] text-slate-400 leading-relaxed">접수 → 배정 → 확인 → 답변 → 완료</p>
       </div>
     </div>
@@ -1757,7 +1757,7 @@ function TicketTab() {
           <MessageCircle className="h-5 w-5 text-blue-300 shrink-0 mt-0.5" />
           <div className="min-w-0">
             <p className="text-[14px] font-extrabold">찾는 답이 없으신가요?</p>
-            <p className="text-[12px] text-slate-300 break-keep">매뉴얼·문제 해결로 해결되지 않으면 담당자에게 바로 문의하세요. 평일 09-18시 당일 1차 확인.</p>
+            <p className="text-[12px] text-slate-300 break-keep">매뉴얼·문제 해결로 해결되지 않으면 담당자에게 바로 문의하세요. 평일 09-18시 접수 · 영업일 기준 1일 이내 회신.</p>
           </div>
         </div>
         <div className="flex gap-2 shrink-0">
