@@ -49,8 +49,13 @@ describe("§11.333 Part A — 운영 화면 wide 정책 정합", () => {
   it("inventory-main + inventory-content max-w-full 보존 (이미 wide)", () => {
     const main = read("src/app/dashboard/inventory/inventory-main.tsx");
     const content = read("src/app/dashboard/inventory/inventory-content.tsx");
+    // inventory-main 은 연속 유지 (bg-canvas 미삽입).
     expect(main).toMatch(/w-full max-w-full px-3 sm:px-4 md:px-6 py-4 md:py-8/);
-    expect(content).toMatch(/w-full max-w-full px-3 sm:px-4 md:px-6 py-4 md:py-8/);
+    // §dashboard-surface-unify(19a20fe3) — inventory-content root 에 min-h-screen bg-canvas 삽입되어
+    //   max-w-full 과 px-3 사이 연속 깨짐. wide(max-w-full) + 반응형 패딩 intent 는 보존되므로
+    //   삽입 토큰 허용하도록 연속 매칭 → 분리 매칭 (§canvas-contrast 정합).
+    expect(content).toMatch(/w-full max-w-full/);
+    expect(content).toMatch(/px-3 sm:px-4 md:px-6 py-4 md:py-8/);
   });
 });
 
