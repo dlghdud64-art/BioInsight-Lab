@@ -22,8 +22,13 @@ export interface LotRecord {
   brand: string | null;
   /** Catalog number (denormalized) */
   catalogNumber: string | null;
-  /** Current quantity on hand */
+  /** Status-driving quantity (received qty for restock lots, current qty for fallback). Not shown as 잔량. */
   qtyOnHand: number;
+  /**
+   * #inventory-lot-overlay P5 (A) — 표시용 입고량(InventoryRestock.quantity).
+   * lot별 잔량은 정밀 추적 전까지 표기 금지(가짜 재고 truth 방지). null = 입고 기록 없음("—").
+   */
+  receivedQty?: number | null;
   /** Unit */
   unit: string;
   /** Storage location */

@@ -49,8 +49,8 @@ import { useQRScanner } from "@/contexts/QRScannerContext";
 const DatePicker = dynamic(() => import("@/components/ui/date-picker").then((m) => m.DatePicker), { ssr: false });
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 // Sheet is kept static as it wraps children — radix portal
-import { Info, FileText, BellRing, Save, Sparkles, Archive } from "lucide-react";
-import { type LotRecord, type LotStatusFilter, computeLotStatus, sortLots, computeLotSummary, filterLotsByStatus, searchLots, getLotStatusLabel, getLotStatusColor } from "@/lib/inventory/lot-tracking-engine";
+import { Info, FileText, BellRing, Save, Sparkles, Archive, Maximize2 } from "lucide-react";
+import { type LotRecord, type LotEvent, type LotStatusFilter, computeLotStatus, sortLots, computeLotSummary, filterLotsByStatus, searchLots, getLotStatusLabel, getLotStatusColor } from "@/lib/inventory/lot-tracking-engine";
 import { getStorageConditionLabel } from "@/lib/constants";
 import { resolveDisposal, type DisposalReason } from "@/lib/ontology/contextual-action/disposal-resolver";
 import type { SmartReceiveFormData } from "@/components/inventory/LabelScannerModal";
@@ -124,6 +124,15 @@ interface ProductInventory {
   autoReorderThreshold?: number;
   averageDailyUsage?: number;
   leadTimeDays?: number;
+  // #inventory-lot-overlay P5 — GET /api/inventory 가 include 로 반환하는 실 입고 lot 이력.
+  //   Lot 추적의 canonical lot 소스(품목당 다중 lot). 없으면 undefined.
+  restockRecords?: Array<{
+    id: string;
+    lotNumber: string | null;
+    expiryDate: string | null;
+    quantity: number;
+    restockedAt: string;
+  }>;
   product: {
     id: string;
     name: string;
@@ -335,6 +344,9 @@ function InventoryPageContent() {
   const [lotStatusFilter, setLotStatusFilter] = useState<LotStatusFilter>("all");
   const [lotSearchQuery, setLotSearchQuery] = useState("");
   const [selectedLotId, setSelectedLotId] = useState<string | null>(null);
+  // #inventory-lot-overlay P5 — same-canvas 풀스크린 overlay(새 route 금지) + 다건선택 상태.
+  const [isLotOverlayOpen, setIsLotOverlayOpen] = useState(false);
+  const [lotMultiSelect, setLotMultiSelect] = useState<Set<string>>(new Set());
 
   const openContextPanel = (inv: ProductInventory, mode: "detail" | "reorder" = "detail") => {
     setContextPanelMode(mode);
@@ -693,6 +705,10 @@ function InventoryPageContent() {
       unit: string | null;
       usageDate: string;
       notes: string | null;
+      // #inventory-lot-overlay P5 — usage route 가 include 로 이미 반환(스키마 존재). per-lot use 타임라인 소스.
+      //   lotNumber=null(과거 레코드)은 특정 lot 미귀속 → item 스코프로만 처리.
+      lotNumber: string | null;
+      type: string | null;
       inventory: {
         id: string;
         product: {
@@ -726,6 +742,120 @@ function InventoryPageContent() {
 
   const usageRecords = usageData?.records || [];
   const usageStats = usageData?.stats;
+
+  // #inventory-lot-overlay P5 — lot view 계산(탭·overlay 공유). 실 InventoryRestock/InventoryUsage 기반.
+  //   (A) 표시=입고량·입고일·유효기간, lot별 잔량 미표기. 소진은 타임라인 use 이벤트로만.
+  const lotView = useMemo(() => {
+    const now = new Date();
+    const usageByItem = new Map<string, Array<{ usageDate: string; lotNumber: string | null }>>();
+    for (const u of usageRecords) {
+      const arr = usageByItem.get(u.inventory.id) ?? [];
+      arr.push({ usageDate: u.usageDate, lotNumber: u.lotNumber ?? null });
+      usageByItem.set(u.inventory.id, arr);
+    }
+    const latestLotUsage = (itemId: string, lotCode: string | null): string | null => {
+      if (lotCode == null) return null;
+      const arr = usageByItem.get(itemId);
+      if (!arr?.length) return null;
+      const matching = arr.filter((x) => x.lotNumber === lotCode);
+      if (!matching.length) return null;
+      return matching.reduce((max, x) => (x.usageDate > max ? x.usageDate : max), matching[0].usageDate);
+    };
+    const allLots: LotRecord[] = displayInventories.flatMap((inv: ProductInventory) => {
+      const restocks = inv.restockRecords ?? [];
+      if (restocks.length > 0) {
+        return restocks.map((r) => {
+          const lotCode = r.lotNumber || "미지정";
+          const expiresAt = r.expiryDate ?? inv.expiryDate;
+          const lastUse = latestLotUsage(inv.id, r.lotNumber ?? null);
+          return {
+            lotId: r.id,
+            itemId: inv.id,
+            lotCode,
+            productName: inv.product.name,
+            brand: inv.product.brand,
+            catalogNumber: inv.product.catalogNumber,
+            qtyOnHand: r.quantity,
+            receivedQty: r.quantity,
+            unit: inv.unit,
+            location: inv.location,
+            receivedAt: r.restockedAt,
+            expiresAt,
+            status: computeLotStatus(r.quantity, expiresAt, now),
+            sourceDocumentId: r.id,
+            lastEventAt: lastUse && lastUse > r.restockedAt ? lastUse : r.restockedAt,
+            storageCondition: inv.storageCondition,
+          } as LotRecord;
+        });
+      }
+      if (inv.lotNumber) {
+        const lastUse = latestLotUsage(inv.id, inv.lotNumber);
+        return [{
+          lotId: `${inv.id}-${inv.lotNumber}`,
+          itemId: inv.id,
+          lotCode: inv.lotNumber,
+          productName: inv.product.name,
+          brand: inv.product.brand,
+          catalogNumber: inv.product.catalogNumber,
+          qtyOnHand: inv.currentQuantity,
+          receivedQty: null,
+          unit: inv.unit,
+          location: inv.location,
+          receivedAt: "",
+          expiresAt: inv.expiryDate,
+          status: computeLotStatus(inv.currentQuantity, inv.expiryDate, now),
+          sourceDocumentId: null,
+          lastEventAt: lastUse ?? "",
+          storageCondition: inv.storageCondition,
+        } as LotRecord];
+      }
+      return [];
+    });
+    // 안전장치(호영님 2026-07-10) — 현재고 있으나 입고 lot·lotNumber 모두 없어 Lot 추적 미노출되는 레거시 품목 수.
+    //   "데이터 누락" 오인 방지용 정직 안내.
+    const uncoveredCount = displayInventories.filter(
+      (inv) => (inv.restockRecords ?? []).length === 0 && !inv.lotNumber && inv.currentQuantity > 0
+    ).length;
+    return { allLots, summary: computeLotSummary(allLots), sorted: sortLots(allLots), uncoveredCount };
+  }, [displayInventories, usageRecords]);
+
+  // #inventory-lot-overlay P5 — 선택 lot 의 실 이벤트 타임라인.
+  //   receive = InventoryRestock(restockedAt). use = InventoryUsage(lotNumber 정확 귀속분만).
+  //   usage.lotNumber=null(과거) 은 특정 lot 미귀속 → 여기 미포함(overlay 에서 item 스코프로 별도 안내).
+  const buildLotTimeline = (lot: LotRecord | null): LotEvent[] => {
+    if (!lot) return [];
+    const inv = displayInventories.find((i) => i.id === lot.itemId);
+    const events: LotEvent[] = [];
+    for (const r of inv?.restockRecords ?? []) {
+      const code = r.lotNumber || "미지정";
+      if (code !== lot.lotCode) continue;
+      events.push({
+        id: `receive-${r.id}`,
+        lotId: lot.lotId,
+        type: "receive",
+        quantity: r.quantity,
+        delta: r.quantity,
+        operator: null,
+        note: null,
+        timestamp: r.restockedAt,
+      });
+    }
+    for (const u of usageRecords) {
+      if (u.inventory.id !== lot.itemId) continue;
+      if ((u.lotNumber ?? null) !== lot.lotCode) continue; // 정확 귀속만
+      events.push({
+        id: `use-${u.id}`,
+        lotId: lot.lotId,
+        type: "use",
+        quantity: u.quantity,
+        delta: -u.quantity,
+        operator: u.user?.name ?? u.user?.email ?? null,
+        note: u.notes ?? null,
+        timestamp: u.usageDate,
+      });
+    }
+    return events.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
+  };
 
   // 선택된 재고의 입고 이력 조회
   const { data: restockHistoryData, isLoading: isLoadingRestockHistory } = useQuery<{ records: any[] }>({
@@ -2391,38 +2521,33 @@ function InventoryPageContent() {
                     품목 관리로 돌아가기
                   </button>
                   {(() => {
-                    const now = new Date();
-                    // Build lot records from inventory data
-                    const allLots: LotRecord[] = displayInventories
-                      .filter((inv) => inv.lotNumber)
-                      .map((inv) => ({
-                        lotId: `${inv.id}-${inv.lotNumber}`,
-                        itemId: inv.id,
-                        lotCode: inv.lotNumber!,
-                        productName: inv.product.name,
-                        brand: inv.product.brand,
-                        catalogNumber: inv.product.catalogNumber,
-                        qtyOnHand: inv.currentQuantity,
-                        unit: inv.unit,
-                        location: inv.location,
-                        receivedAt: new Date(Date.now() - Math.random() * 90 * 86400000).toISOString(),
-                        expiresAt: inv.expiryDate,
-                        status: computeLotStatus(inv.currentQuantity, inv.expiryDate, now),
-                        sourceDocumentId: null,
-                        lastEventAt: new Date(Date.now() - Math.random() * 14 * 86400000).toISOString(),
-                        storageCondition: inv.storageCondition,
-                      }));
-
-                    const summary = computeLotSummary(allLots);
-                    const sorted = sortLots(allLots);
-
-                    // Local state isn't possible inside render — use URL-like approach with closure
-                    // Use parent-level state for lot filter and search (added above)
+                    // #inventory-lot-overlay P5 — 공유 lotView 소비(실 InventoryRestock/InventoryUsage 기반).
+                    const { summary, sorted, uncoveredCount } = lotView;
                     const filtered = filterLotsByStatus(sorted, lotStatusFilter);
                     const searched = lotSearchQuery.trim() ? searchLots(filtered, lotSearchQuery) : filtered;
 
                     return (
                       <>
+                        {/* #inventory-lot-overlay P5 — 전체 화면(same-canvas overlay) 진입 */}
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs text-slate-500">{summary.totalLots}개 Lot · 만료 임박 {summary.expiringSoonLots}건</p>
+                          <button
+                            type="button"
+                            onClick={() => setIsLotOverlayOpen(true)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 min-h-[44px] text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                          >
+                            <Maximize2 className="h-3.5 w-3.5" />
+                            전체 화면
+                          </button>
+                        </div>
+
+                        {/* 안전장치 — 입고 lot 기록 없는 현재고 품목 정직 안내(데이터 누락 오인 방지) */}
+                        {uncoveredCount > 0 && (
+                          <p className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-[11px] text-gray-500">
+                            입고 lot 기록이 없어 추적되지 않는 품목 {uncoveredCount}개 (현재고 있음). 입고 처리 시 Lot으로 표시됩니다.
+                          </p>
+                        )}
+
                         {/* Summary cards — clickable filters */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
                           {[
@@ -2508,7 +2633,7 @@ function InventoryPageContent() {
                                         </span>
                                       </div>
                                       <span className="text-xs font-bold text-slate-900">
-                                        {lot.qtyOnHand} {lot.unit}
+                                        {lot.receivedQty != null ? `${lot.receivedQty} ${lot.unit}` : "—"}
                                       </span>
                                     </div>
                                     <p className="text-[11px] truncate text-slate-700">{lot.productName}</p>
@@ -2539,7 +2664,7 @@ function InventoryPageContent() {
                                     <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">LOT 번호</th>
                                     <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">품목</th>
                                     <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">상태</th>
-                                    <th className="text-right px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">잔량</th>
+                                    <th className="text-right px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">입고량</th>
                                     <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">위치</th>
                                     <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">유효기간</th>
                                     <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">마지막 이벤트</th>
@@ -2581,8 +2706,14 @@ function InventoryPageContent() {
                                           </span>
                                         </td>
                                         <td className="px-4 py-3 text-right">
-                                          <span className="text-xs font-bold text-slate-900">{lot.qtyOnHand}</span>
-                                          <span className="text-[10px] ml-0.5 text-slate-500">{lot.unit}</span>
+                                          {lot.receivedQty != null ? (
+                                            <>
+                                              <span className="text-xs font-bold text-slate-900">{lot.receivedQty}</span>
+                                              <span className="text-[10px] ml-0.5 text-slate-500">{lot.unit}</span>
+                                            </>
+                                          ) : (
+                                            <span className="text-xs text-slate-400">—</span>
+                                          )}
                                         </td>
                                         <td className="px-4 py-3">
                                           <span className={`text-xs ${lot.location ? "text-slate-700" : "text-slate-400"}`}>{lot.location || "미지정"}</span>
@@ -2591,7 +2722,7 @@ function InventoryPageContent() {
                                           <span className="text-xs text-slate-700">{lot.expiresAt ? format(new Date(lot.expiresAt), "yyyy.MM.dd") : "—"}</span>
                                         </td>
                                         <td className="px-4 py-3">
-                                          <span className="text-[11px] text-slate-500">{format(new Date(lot.lastEventAt), "MM.dd HH:mm")}</span>
+                                          <span className="text-[11px] text-slate-500">{lot.lastEventAt ? format(new Date(lot.lastEventAt), "MM.dd HH:mm") : "—"}</span>
                                         </td>
                                       </tr>
                                     );
@@ -3994,6 +4125,195 @@ function InventoryPageContent() {
           if (reorderReviewItem) router.push(`/app/search?q=${encodeURIComponent(reorderReviewItem.product.name)}`);
         }}
       />
+
+      {/* ── #inventory-lot-overlay P5 — Lot 추적 same-canvas 풀스크린 overlay (새 route 금지) ── */}
+      {isLotOverlayOpen && (() => {
+        const { sorted, summary, uncoveredCount } = lotView;
+        const filtered = filterLotsByStatus(sorted, lotStatusFilter);
+        const searched = lotSearchQuery.trim() ? searchLots(filtered, lotSearchQuery) : filtered;
+        const selectedLot = selectedLotId ? searched.find((l) => l.lotId === selectedLotId) ?? sorted.find((l) => l.lotId === selectedLotId) ?? null : null;
+        const timeline = buildLotTimeline(selectedLot);
+        return (
+          <div
+            data-testid="lot-tracking-overlay"
+            className="fixed inset-0 z-50 flex flex-col bg-white"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Lot 추적"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 md:px-6">
+              <div className="flex items-center gap-2">
+                <Archive className="h-5 w-5 text-slate-700" />
+                <h2 className="text-sm font-bold text-slate-900">
+                  Lot 추적 <span className="font-medium text-slate-400">· {summary.totalLots}건</span>
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsLotOverlayOpen(false)}
+                className="inline-flex items-center justify-center h-10 w-10 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
+                aria-label="닫기"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Filter chips + search */}
+            <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-2.5 md:px-6">
+              {([
+                { key: "all" as LotStatusFilter, label: "전체", count: summary.totalLots },
+                { key: "expiring_soon" as LotStatusFilter, label: "만료 임박", count: summary.expiringSoonLots },
+                { key: "expired" as LotStatusFilter, label: "만료/소진", count: summary.expiredLots + summary.depletedLots },
+                { key: "active" as LotStatusFilter, label: "활성", count: summary.activeLots },
+              ]).map((c) => (
+                <button
+                  key={c.key}
+                  type="button"
+                  onClick={() => setLotStatusFilter(c.key)}
+                  className={`shrink-0 rounded-full px-3 min-h-[36px] text-xs font-medium border transition-colors ${lotStatusFilter === c.key ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"}`}
+                >
+                  {c.label} {c.count}
+                </button>
+              ))}
+              <div className="relative ml-auto hidden md:block">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input value={lotSearchQuery} onChange={(e) => setLotSearchQuery(e.target.value)} placeholder="LOT·품목·위치 검색..." className="pl-9 h-9 w-64 text-sm bg-white border-slate-200" />
+              </div>
+            </div>
+
+            {/* Body: list + timeline */}
+            <div className="flex flex-1 min-h-0 flex-col md:flex-row">
+              {/* Left — lot list */}
+              <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 md:px-6 md:border-r md:border-slate-100">
+                {uncoveredCount > 0 && (
+                  <p className="mb-2 rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-[11px] text-gray-500">
+                    입고 lot 기록이 없어 추적되지 않는 품목 {uncoveredCount}개 (현재고 있음).
+                  </p>
+                )}
+                {searched.length === 0 ? (
+                  <div className="rounded-xl px-6 py-10 text-center bg-white border border-slate-200">
+                    <Archive className="h-8 w-8 mx-auto mb-3 text-slate-400" />
+                    <p className="text-sm font-medium text-slate-500">{lotStatusFilter !== "all" ? `${getLotStatusLabel(lotStatusFilter as any)} 상태의 Lot이 없습니다` : "Lot 데이터가 없습니다"}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {searched.map((lot) => {
+                      const sc = getLotStatusColor(lot.status);
+                      const isSel = selectedLotId === lot.lotId;
+                      const isChecked = lotMultiSelect.has(lot.lotId);
+                      return (
+                        <div
+                          key={lot.lotId}
+                          className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 transition-all ${isSel ? "ring-2 ring-blue-500/50 border-blue-500 bg-blue-50" : "bg-white border-slate-200 hover:bg-slate-50"}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              setLotMultiSelect((prev) => {
+                                const next = new Set(prev);
+                                if (e.target.checked) next.add(lot.lotId); else next.delete(lot.lotId);
+                                return next;
+                              });
+                            }}
+                            aria-label={`${lot.lotCode} 선택`}
+                            className="h-4 w-4 shrink-0"
+                          />
+                          <button type="button" onClick={() => setSelectedLotId(lot.lotId)} className="flex-1 min-w-0 text-left">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="text-xs font-bold text-slate-900 shrink-0">{lot.lotCode}</span>
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border shrink-0" style={{ backgroundColor: sc.bg, color: sc.text, borderColor: sc.border }}>
+                                  {getLotStatusLabel(lot.status)}
+                                </span>
+                                <span className="text-[11px] text-slate-600 truncate">{lot.productName}</span>
+                              </div>
+                              <span className="text-xs font-bold text-slate-900 shrink-0">
+                                {lot.receivedQty != null ? `${lot.receivedQty} ${lot.unit}` : "—"}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 mt-1 text-[10px] text-slate-500">
+                              {lot.location && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{lot.location}</span>}
+                              {lot.expiresAt && <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />유효 {format(new Date(lot.expiresAt), "yy.MM.dd")}</span>}
+                              {lot.receivedAt && <span className="flex items-center gap-1"><PackagePlus className="h-3 w-3" />입고 {format(new Date(lot.receivedAt), "yy.MM.dd")}</span>}
+                            </div>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Right — lot event timeline */}
+              <div data-testid="lot-event-timeline" className="w-full md:w-96 shrink-0 overflow-y-auto border-t border-slate-100 md:border-t-0 px-4 py-3 md:px-6 bg-slate-50/50">
+                {!selectedLot ? (
+                  <div className="flex h-full items-center justify-center text-center">
+                    <p className="text-xs text-slate-400">Lot을 선택하면 입고·사용 이력이 표시됩니다.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="mb-3">
+                      <p className="text-xs font-bold text-slate-900">{selectedLot.lotCode} 이력</p>
+                      <p className="text-[11px] text-slate-500">{selectedLot.productName}</p>
+                    </div>
+                    {timeline.length === 0 ? (
+                      <p className="rounded-lg bg-white border border-slate-200 px-3 py-3 text-[11px] text-slate-400">이 Lot에 귀속된 입고·사용 이력이 없습니다.</p>
+                    ) : (
+                      <ol className="space-y-2">
+                        {timeline.map((ev) => {
+                          const isReceive = ev.type === "receive";
+                          return (
+                            <li key={ev.id} className="flex items-start gap-2 rounded-lg bg-white border border-slate-200 px-3 py-2">
+                              <span className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${isReceive ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
+                                {isReceive ? <PackagePlus className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-[11px] font-semibold text-slate-900">{isReceive ? "입고" : "사용"}</span>
+                                  <span className={`text-[11px] font-bold ${isReceive ? "text-emerald-700" : "text-slate-700"}`}>{isReceive ? "+" : "−"}{ev.quantity} {selectedLot.unit}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                                  <span>{format(new Date(ev.timestamp), "yyyy.MM.dd HH:mm", { locale: ko })}</span>
+                                  {ev.operator && <span className="truncate">· {ev.operator}</span>}
+                                </div>
+                                {ev.note && <p className="mt-0.5 text-[10px] text-slate-500 truncate">{ev.note}</p>}
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ol>
+                    )}
+                    <p className="mt-2 text-[10px] text-slate-400">사용 이력은 Lot 번호가 귀속된 기록만 표시됩니다. 과거 미귀속 사용은 품목 단위로만 집계됩니다.</p>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom bar — 다건 선택 시 일괄출고(정직-disabled) */}
+            {lotMultiSelect.size > 0 && (
+              <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 md:px-6">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-slate-700">{lotMultiSelect.size}개 Lot 선택됨</span>
+                  <button type="button" onClick={() => setLotMultiSelect(new Set())} className="text-[11px] text-slate-400 hover:text-slate-600">선택 해제</button>
+                </div>
+                <button
+                  type="button"
+                  disabled
+                  data-lot-bulk-dispatch-disabled="true"
+                  title="일괄 출고는 배치 API 배선 후 제공"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-4 min-h-[44px] text-xs font-semibold text-slate-400 cursor-not-allowed"
+                >
+                  <Truck className="h-4 w-4" />
+                  일괄 출고
+                  <span className="ml-1 text-[10px] font-normal">(준비중)</span>
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* ── LOT Disposal Panel (object-scoped disposal dock) ── */}
       <LotDisposalPanel

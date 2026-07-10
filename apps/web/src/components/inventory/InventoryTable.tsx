@@ -57,6 +57,8 @@ interface InventoryItem {
     lotNumber: string | null;
     expiryDate: string | null;
     quantity: number;
+    // #inventory-lot-overlay P5 — API(/api/inventory) 실 반환 필드. inventory-content ProductInventory 와 정합.
+    restockedAt: string;
   }>;
 }
 
