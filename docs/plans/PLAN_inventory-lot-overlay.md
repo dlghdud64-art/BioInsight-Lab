@@ -1,6 +1,6 @@
 # Implementation Plan: #inventory-lot-overlay — Lot 추적 same-canvas overlay (P5)
 
-- **Status:** ⏳ Pending
+- **Status:** ✅ SHIPPED (3185f68e, origin/main, build EXIT 0, baseline-delta 0)
 - **Started:** 2026-07-10
 - **Last Updated:** 2026-07-10
 - **Estimated Completion:** TBD (Large, 5 phases)

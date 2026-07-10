@@ -97,8 +97,10 @@ Sentinel(readFileSync+regex): phase별 신규 패턴 + 금지 패턴(reorder>dis
 - 필터·FEFO·타임라인·다건출고(다건출고 미배선 시 정직-disabled). same-canvas overlay(새 route 금지).
 
 ### Phase 6 — Smoke/Rollback + 색상 토큰 정합
-- Status: [ ] Pending
-- 전체 sentinel + build, 색상 토큰(de-red·accent/emerald/rose/warn) 정합, rollback 확인.
+- Status: [ ] Pending — ⚠️ **방향 재확정 필요**(HANDOFF_2026-07-10 §2)
+- 전체 sentinel + build, rollback 확인.
+- ⚠️ **truth 정정(2026-07-10):** "만료임박 yellow → #b45821" 방향은 실코드와 **역행**. 실코드 = §11.283c/§11.302d sweep 으로 amber/orange Tailwind class 제거 → 주의색 **yellow 통일**(`*-amber-removed*` sentinel 16개가 amber class 0 강제). 재고 yellow(~97 spot)는 이미 정합 결과. amber 커스텀 토큰 미정의.
+- 결정 대기: (A) yellow 유지 = 사실상 done vs (B) CLAUDE.md §9 #b45821 지향 전면 적용(별도 신중 배치·sentinel 재설계). 근거 없이 착수 금지.
 
 ## 9. Risk
 | Risk | P | I | Mitigation |
@@ -112,8 +114,8 @@ Sentinel(readFileSync+regex): phase별 신규 패턴 + 금지 패턴(reorder>dis
 - phase별 단독 커밋 revert. 서버/스키마 변경 없음(UI/정합).
 
 ## 11. Progress
-- Overall: ~60% · Current: P4(게이트 대기) · Blocker: 없음 · Next: P5 Lot 추적 overlay
-- [x] P0(매핑) [x] P1(KPI — a11ae05a) [x] P2(품목 브리핑 rename+de-red) [x] P3(위치이동 실배선) [x] P4(추천벤더/이력 정합확인 — 게이트 대기) [ ] P5 [ ] P6
+- Overall: ~60% · Current: P4(게이트 대기) · Blocker: 없음 · Next: 잔여 별트랙(다건 배치출고·per-lot 정밀잔량) 또는 규제·GMP 3건
+- [x] P0(매핑) [x] P1(KPI — a11ae05a) [x] P2(품목 브리핑 rename+de-red) [x] P3(위치이동 실배선) [x] P4(추천벤더/이력 정합확인 — 게이트 대기) [x] P5(Lot overlay — 3185f68e) [x] P6(색상 — A: yellow 신호등 유지 결정, 2026-07-10)
 
 **P2 매핑:** 패널 이미 대부분 정합 — 접이식 Sec(§11.320 Phase 3 기구현)·이슈 dispose>reorder(온톨로지 L287)·no-AI(재발주안 검토)·위치 인라인 지정 존재. P2 델타 = rename "운영→품목 브리핑" + de-red 배너(흰 카드+rose). §11.320 배너 bg-red-50 채움 supersede(sentinel 갱신).
 
@@ -122,3 +124,5 @@ Sentinel(readFileSync+regex): phase별 신규 패턴 + 금지 패턴(reorder>dis
 
 ## 12. Notes & Learnings
 - [2026-07-09] 승인(호영님): 데스크탑 2단부터. §11.302 dispose>reorder 재배치. 미배선=정직-disabled. 나머지 핸드오프대로.
+
+**P6 결정(2026-07-10, 호영님):** 색상 = **A(yellow 신호등 유지)**. 재고 yellow는 §11.283a/302c/302d 라이브 신호등이고 15+ sentinel이 잠금 → CLAUDE.md §9의 #b45821 지향은 미채택/보류(전환 시 source ~76 spot + sentinel ~15 재작성=대공사). CLAUDE.md §9 실코드 정합으로 정정 완료. Tailwind amber-*/orange- 금지(16 sentinel)는 유지. → P6 = 사실상 done(코드 델타 0, 문서 정정만).
