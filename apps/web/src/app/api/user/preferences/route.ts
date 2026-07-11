@@ -37,7 +37,7 @@ const QuotesViewSchema = z.object({
   sort: z
     .object({
       key: z
-        .enum(["title", "status", "itemCount", "responseCount", "createdAt"])
+        .enum(["title", "status", "itemCount", "responseCount", "price", "createdAt", "dday", "amount"])
         .nullable()
         .optional(),
       direction: z.enum(["asc", "desc"]).optional(),
@@ -143,7 +143,7 @@ interface UserPreferencesJson {
   quotesView?: {
     mode?: "card" | "table";
     sort?: {
-      key?: "title" | "status" | "itemCount" | "responseCount" | "createdAt" | null;
+      key?: "title" | "status" | "itemCount" | "responseCount" | "price" | "createdAt" | "dday" | "amount" | null;
       direction?: "asc" | "desc";
     };
   };

@@ -18,7 +18,7 @@ import { SupplierAvatars, toSuppliers } from "@/components/quotes/supplier-avata
 import { PriorityRecommendationCard } from "@/components/quotes/priority-recommendation-card";
 import { computePriority, type Stage } from "@/lib/quote-management/derive";
 import { toQuoteCase } from "@/lib/quote-management/from-quote";
-import { STATUS_PREDICATES, deriveQuote, periodMatch, mineMatch, chipCount as qfChipCount, type StatusChipKey, type PeriodKey, type QuickFilterQuote, type QuickFilterState } from "@/lib/quote-management/quick-filter";
+import { STATUS_PREDICATES, deriveQuote, periodMatch, mineMatch, chipCount as qfChipCount, sortQuotes as sortQuotesLib, type StatusChipKey, type PeriodKey, type QuickFilterQuote, type QuickFilterState } from "@/lib/quote-management/quick-filter";
 import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { useOperationalBriefPopup } from "@/components/operational-brief/popup-context";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -1119,7 +1119,7 @@ function QuotesPageContent() {
   //   key = null (initial) → DB 순서 그대로. key 설정 시 sortedQuotes derive.
   const [sortState, setSortState] = useState<{
     // §quote-management P3b — price 정렬 키 추가(우선순위 정렬은 P4: computePriority 도입과 묶음).
-    key: "title" | "status" | "itemCount" | "responseCount" | "price" | "createdAt" | null;
+    key: "title" | "status" | "itemCount" | "responseCount" | "price" | "createdAt" | "dday" | "amount" | null;
     direction: "asc" | "desc";
   }>({ key: null, direction: "desc" });
   const [searchQuery, setSearchQuery] = useState("");
@@ -1578,6 +1578,8 @@ function QuotesPageContent() {
         "responseCount",
         "price",
         "createdAt",
+        "dday",
+        "amount",
       ] as const;
       const k = view.sort.key;
       const validKey =
@@ -2015,6 +2017,10 @@ function QuotesPageContent() {
         .map((q, i) => ({ q, i }))
         .sort((a, b) => (rankOf(a.q) - rankOf(b.q)) || (a.i - b.i))
         .map((x) => x.q);
+    }
+    // §quotes-quick-filter-4a P3 — 정렬바 마감임박순/금액순(canonical lib 파생). 우선순위순(key null)·컬럼정렬은 불변.
+    if (sortState.key === "dday" || sortState.key === "amount") {
+      return sortQuotesLib(filteredQuotes as unknown as QuickFilterQuote[], sortState.key, new Date()) as unknown as Quote[];
     }
     const sorted = [...filteredQuotes].sort((a, b) => {
       let cmp = 0;
@@ -2768,6 +2774,50 @@ function QuotesPageContent() {
       {/* ═══ Main: List + Quote Context Rail ═══ */}
       <div className="flex gap-0">
       <div data-testid="quote-work-queue" className="flex-1 min-w-0 space-y-4">
+      {/* §quotes-quick-filter-4a P3 — 적용 요약 토큰 + 정렬 바(데스크탑). 우측 정렬 세그먼트. */}
+      {!isMobile && (
+        <div className="hidden md:flex flex-col gap-2">
+          {quickActive && (
+            <div className="flex items-center gap-1.5 flex-wrap text-[11px]">
+              <span className="text-slate-500 font-medium">적용 중 · {sortedQuotes.length}건 표시</span>
+              {quickMine && (
+                <button type="button" onClick={() => setQuickMine(false)} className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-blue-700 hover:bg-blue-100">
+                  내 담당 <X className="h-3 w-3" aria-label="내 담당 해제" />
+                </button>
+              )}
+              {quickPeriod !== "all" && (
+                <button type="button" onClick={() => setQuickPeriod("all")} className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-slate-700 hover:bg-slate-50">
+                  {quickPeriod === "week" ? "이번 주" : "3일 이내"} <X className="h-3 w-3" aria-label="기간 해제" />
+                </button>
+              )}
+              {[...quickStatus].map((k) => {
+                const meta = QUICK_CHIP_META.find((m) => m.key === k);
+                const cls = meta ? QUICK_CHIP_CLS[meta.tone] : QUICK_CHIP_CLS.info;
+                return (
+                  <button key={k} type="button" onClick={() => toggleQuickStatus(k)} className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 ${cls.active}`}>
+                    {meta?.label ?? k} <X className="h-3 w-3" aria-label={`${meta?.label ?? k} 해제`} />
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-slate-500">총 {quotes.length}건 중 {sortedQuotes.length}건</span>
+            <div role="radiogroup" aria-label="정렬" className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 p-0.5">
+              {(([[null, "우선순위순", "desc"], ["dday", "마감임박순", "asc"], ["amount", "금액 높은순", "desc"]] as [null | "dday" | "amount", string, "asc" | "desc"][]).map(([key, lbl, dir]) => {
+                const on = sortState.key === key;
+                return (
+                  <button key={lbl} type="button" role="radio" aria-checked={on} onClick={() => setSortState({ key, direction: dir })}
+                    className={`text-[11px] min-h-[36px] px-2.5 rounded-full font-medium transition-colors whitespace-nowrap ${on ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
+                    {lbl}
+                  </button>
+                );
+              }))}
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* §11.259c-2 — 뷰 toggle (보기 모드 + column prefs) 영역 검색/필터
           wrapper 안 sub-wrapper 로 이동. 기존 main column 위치는 비움.
