@@ -449,7 +449,8 @@ function SettingsPageContent() {
 
   return (
     <div className="w-full min-h-screen bg-canvas">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+      {/* §설정-고도화 #3/#4 — 회색 캔버스(bg-canvas 단일 토큰=§dashboard-surface-unify, #E9EEF4) + 중앙 mx-auto 제거(좌측정렬). max-w-[1600px]=초광폭 가독폭 상한(가드1). */}
+      <div className="max-w-[1600px] px-4 sm:px-6 py-6">
         {/* ═══ Page Header ═══ */}
         <div className="mb-6">
           <div className="flex items-center gap-2 text-[10px] text-slate-500 uppercase tracking-widest font-semibold mb-2">
@@ -1221,7 +1222,9 @@ function SettingsPageContent() {
             {activeSection === "billing" && (
               <div className="space-y-5 animate-in fade-in-50 duration-200">
                 {/* CURRENT PLAN — 큰 dark accent 카드 (시안 image 3) */}
-                <Card className="border-0 bg-slate-900 text-white overflow-hidden relative">
+                <Card className="border-0 text-white overflow-hidden relative bg-[linear-gradient(118deg,#0e1830_0%,#1b3568_52%,#2a5fb0_100%)]">
+                  {/* §설정-고도화 #1 — 우상단 블루 글로우(번개 뒤). 제품 공통 네이비→블루 규칙. */}
+                  <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_120%_at_88%_8%,rgba(59,130,246,0.40)_0%,rgba(59,130,246,0)_52%)]" />
                   <CardContent className="p-6 md:p-7 relative">
                     <div className="absolute top-4 right-4 opacity-20">
                       <Zap className="h-32 w-32 -rotate-12" strokeWidth={1.5} />
