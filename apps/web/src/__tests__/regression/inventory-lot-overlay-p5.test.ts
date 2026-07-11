@@ -74,12 +74,13 @@ describe("#inventory-lot-overlay P5 — same-canvas overlay (RED)", () => {
   });
 });
 
-describe("#inventory-lot-overlay P5 — 다건출고 정직-disabled (RED)", () => {
-  it("일괄출고 실행 disabled 마커 존재", () => {
-    expect(read(CONTENT)).toContain("data-lot-bulk-dispatch-disabled");
+describe("#inventory-lot-overlay P5 — 다건출고 (batch-dispatch 배선 후 enabled)", () => {
+  // #inventory-batch-dispatch 로 실배선 완료 — 정직-disabled 해제.
+  it("일괄출고 disabled 마커 제거(배선 완료)", () => {
+    expect(read(CONTENT)).not.toContain("data-lot-bulk-dispatch-disabled");
   });
-  it("일괄출고 미배선 사유 문구 정직 표기", () => {
-    expect(read(CONTENT)).toContain("일괄 출고는 배치 API 배선 후 제공");
+  it("일괄출고 배치 sheet 오픈 배선", () => {
+    expect(read(CONTENT)).toContain("data-lot-batch-dispatch-open");
   });
 });
 

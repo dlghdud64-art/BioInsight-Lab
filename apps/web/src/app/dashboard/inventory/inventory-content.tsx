@@ -65,6 +65,7 @@ const StockLifespanGauge = dynamic(() => import("@/components/inventory/stock-li
 const InventoryTable = dynamic(() => import("@/components/inventory/InventoryTable").then((m) => m.InventoryTable), { ssr: false });
 const AddInventoryModal = dynamic(() => import("@/components/inventory/AddInventoryModal").then((m) => m.AddInventoryModal), { ssr: false });
 const LotDisposalPanel = dynamic(() => import("@/components/inventory/lot-disposal-panel").then((m) => m.LotDisposalPanel), { ssr: false });
+const LotBatchDispatchSheet = dynamic(() => import("@/components/inventory/lot-batch-dispatch-sheet").then((m) => m.LotBatchDispatchSheet), { ssr: false });
 const OpsExecutionContext = dynamic(() => import("@/components/ops/ops-execution-context").then((m) => m.OpsExecutionContext), { ssr: false });
 const PriorityActionQueue = dynamic(() => import("@/components/inventory/priority-action-queue").then((m) => m.PriorityActionQueue), { ssr: false });
 const InventoryContextPanel = dynamic(() => import("@/components/inventory/inventory-context-panel").then((m) => m.InventoryContextPanel), { ssr: false });
@@ -347,6 +348,7 @@ function InventoryPageContent() {
   // #inventory-lot-overlay P5 — same-canvas 풀스크린 overlay(새 route 금지) + 다건선택 상태.
   const [isLotOverlayOpen, setIsLotOverlayOpen] = useState(false);
   const [lotMultiSelect, setLotMultiSelect] = useState<Set<string>>(new Set());
+  const [isBatchDispatchOpen, setIsBatchDispatchOpen] = useState(false);
 
   const openContextPanel = (inv: ProductInventory, mode: "detail" | "reorder" = "detail") => {
     setContextPanelMode(mode);
@@ -4300,20 +4302,26 @@ function InventoryPageContent() {
                 </div>
                 <button
                   type="button"
-                  disabled
-                  data-lot-bulk-dispatch-disabled="true"
-                  title="일괄 출고는 배치 API 배선 후 제공"
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-4 min-h-[44px] text-xs font-semibold text-slate-400 cursor-not-allowed"
+                  data-lot-batch-dispatch-open="true"
+                  onClick={() => setIsBatchDispatchOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 px-4 min-h-[44px] text-xs font-semibold text-white transition-colors"
                 >
                   <Truck className="h-4 w-4" />
                   일괄 출고
-                  <span className="ml-1 text-[10px] font-normal">(준비중)</span>
                 </button>
               </div>
             )}
           </div>
         );
       })()}
+
+      {/* ── #inventory-batch-dispatch — 다건 배치출고 sheet ── */}
+      <LotBatchDispatchSheet
+        open={isBatchDispatchOpen}
+        onOpenChange={setIsBatchDispatchOpen}
+        lots={lotView.sorted.filter((l) => lotMultiSelect.has(l.lotId)).map((l) => ({ inventoryId: l.itemId, lotCode: l.lotCode, productName: l.productName, unit: l.unit }))}
+        onDispatched={() => setLotMultiSelect(new Set())}
+      />
 
       {/* ── LOT Disposal Panel (object-scoped disposal dock) ── */}
       <LotDisposalPanel
