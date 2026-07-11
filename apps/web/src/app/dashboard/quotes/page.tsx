@@ -18,7 +18,7 @@ import { SupplierAvatars, toSuppliers } from "@/components/quotes/supplier-avata
 import { PriorityRecommendationCard } from "@/components/quotes/priority-recommendation-card";
 import { computePriority, type Stage } from "@/lib/quote-management/derive";
 import { toQuoteCase } from "@/lib/quote-management/from-quote";
-import { STATUS_PREDICATES, deriveQuote, periodMatch, mineMatch, chipCount as qfChipCount, sortQuotes as sortQuotesLib, type StatusChipKey, type PeriodKey, type QuickFilterQuote, type QuickFilterState } from "@/lib/quote-management/quick-filter";
+import { STATUS_PREDICATES, deriveQuote, periodMatch, mineMatch, chipCount as qfChipCount, sortQuotes as sortQuotesLib, parseStatusCsv, type StatusChipKey, type PeriodKey, type QuickFilterQuote, type QuickFilterState } from "@/lib/quote-management/quick-filter";
 import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { useOperationalBriefPopup } from "@/components/operational-brief/popup-context";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -26,7 +26,7 @@ import { useState, useEffect, useMemo, useCallback, useRef, Suspense } from "rea
 import { useSession } from "next-auth/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useUserPreferences } from "@/lib/preferences/user-preferences";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -1066,6 +1066,7 @@ function QuotePriorityPicker({
 function QuotesPageContent() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const pilotProfile = searchParams.get("labaxisPilot") ?? searchParams.get("pilot");
   const isBrowserPilotQuoteDispatch = pilotProfile === "quote-dispatch";
   const queryClient = useQueryClient();
@@ -1139,6 +1140,37 @@ function QuotesPageContent() {
   const toggleQuickStatus = (k: StatusChipKey) =>
     setQuickStatus((prev) => { const next = new Set(prev); if (next.has(k)) next.delete(k); else next.add(k); return next; });
   const resetQuick = () => { setQuickStatus(new Set()); setQuickMine(false); setQuickPeriod("all"); }; // 검색·정렬 유지
+  // §quotes-quick-filter-4a P4 — URL 동기화. 칩은 status(기존 statusFilter 파라미터)와 충돌 회피 위해 chips 사용.
+  //   복원 1회(mount) + 상태 변경 시 반영. 기존 파라미터(status/selected/dock/source/entity_id 등) 무손상.
+  const qfUrlHydratedRef = useRef(false);
+  useEffect(() => {
+    if (qfUrlHydratedRef.current) return;
+    qfUrlHydratedRef.current = true;
+    if (searchParams.get("mine") === "1") setQuickMine(true);
+    const period = searchParams.get("period");
+    if (period === "week" || period === "d3") setQuickPeriod(period);
+    const chips = parseStatusCsv(searchParams.get("chips"));
+    if (chips.size > 0) setQuickStatus(chips);
+    const sort = searchParams.get("sort");
+    if (sort === "dday") setSortState({ key: "dday", direction: "asc" });
+    else if (sort === "amount") setSortState({ key: "amount", direction: "desc" });
+    const qParam = searchParams.get("q");
+    if (qParam) setSearchQuery(qParam);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (!qfUrlHydratedRef.current || typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (quickMine) params.set("mine", "1"); else params.delete("mine");
+    if (quickPeriod !== "all") params.set("period", quickPeriod); else params.delete("period");
+    if (quickStatus.size > 0) params.set("chips", [...quickStatus].join(",")); else params.delete("chips");
+    if (sortState.key === "dday" || sortState.key === "amount") params.set("sort", sortState.key); else params.delete("sort");
+    const qv = debouncedSearchQuery.trim();
+    if (qv) params.set("q", qv); else params.delete("q");
+    const qs = params.toString();
+    router.replace(qs ? `?${qs}` : window.location.pathname, { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quickMine, quickPeriod, quickStatus, sortState, debouncedSearchQuery]);
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(searchParams.get("selected") ?? null);
   // §11.264i — briefSheetOpen 분리 (호영님 spec P0 견적 모바일 2중 겹침 fix).
   //   기존: §11.155 MobileOperationalBriefSheet 가 selectedQuote 와 단일 truth 공유
