@@ -9,7 +9,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
-import { ArrowUpRight, ArrowDownRight, AlertTriangle, CloudUpload, FileText, RefreshCcw, FileDown, BarChart2, Layers, Activity, CheckCircle2 } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, AlertTriangle, CloudUpload, FileText, RefreshCcw, FileDown, BarChart2, Layers, Activity, CheckCircle2, SlidersHorizontal, X } from "lucide-react";
+// §reports-filter-redesign — 필터 접기(팝오버) + 활성 칩.
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -166,6 +169,8 @@ export default function ReportsPage() {
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
   const [selectedVendor, setSelectedVendor] = useState<string>("all");
   const [selectedBudget, setSelectedBudget] = useState<string>("all");
+  // §reports-filter-redesign — 기간 프리셋 active(커스텀 선택 시 null). segment↔custom 일관.
+  const [activePreset, setActivePreset] = useState<string | null>(null);
 
   // CSV Import modal state
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
@@ -343,6 +348,33 @@ export default function ReportsPage() {
       : 0;
   const budgetOvershoot = budgetUsedPct > 100;
 
+  // §reports-filter-redesign — 5필터 → 기간(주) + 필터 팝오버(2컨트롤) 접기.
+  const VENDOR_LABELS: Record<string, string> = { sigma: "Sigma-Aldrich", thermo: "Thermo Fisher", eppendorf: "Eppendorf" };
+  const filterDefs = [
+    { key: "category", label: "카테고리", value: selectedCategory, set: setSelectedCategory, display: (v: string) => (PRODUCT_CATEGORIES as Record<string, string>)[v] ?? v },
+    { key: "team", label: "팀", value: selectedTeam, set: setSelectedTeam, display: (v: string) => (v === "team1" ? "1팀" : v === "team2" ? "2팀" : v) },
+    { key: "vendor", label: "벤더", value: selectedVendor, set: setSelectedVendor, display: (v: string) => VENDOR_LABELS[v] ?? v },
+    { key: "budget", label: "예산", value: selectedBudget, set: setSelectedBudget, display: (v: string) => (Array.isArray(budgets) ? budgets.find((b: any) => b.id === v)?.name : null) ?? v },
+  ] as const;
+  const activeFilters = filterDefs.filter((f) => f.value !== "all");
+  const activeFilterCount = activeFilters.length;
+  const clearAllFilters = () => { setSelectedCategory("all"); setSelectedTeam("all"); setSelectedVendor("all"); setSelectedBudget("all"); };
+  const REPORT_PRESETS: Array<{ id: string; label: string; days?: number; kind?: "quarter" | "year" }> = [
+    { id: "7d", label: "최근 7일", days: 7 },
+    { id: "30d", label: "최근 30일", days: 30 },
+    { id: "quarter", label: "분기", kind: "quarter" },
+    { id: "year", label: "올해", kind: "year" },
+  ];
+  const applyPreset = (p: (typeof REPORT_PRESETS)[number]) => {
+    const now = new Date();
+    let start = new Date(now);
+    if (p.days) start.setDate(now.getDate() - p.days);
+    else if (p.kind === "quarter") start.setMonth(now.getMonth() - 3);
+    else if (p.kind === "year") start = new Date(now.getFullYear(), 0, 1);
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
+    setStartDate(iso(start)); setEndDate(iso(now)); setActivePreset(p.id);
+  };
+
 
   return (
     <div className="w-full bg-canvas min-h-screen">
@@ -487,75 +519,88 @@ export default function ReportsPage() {
       {/* ================================================================
           FILTER BAR
           ================================================================ */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-sm">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
-          <div className="space-y-1">
-            <label className="text-xs font-medium uppercase tracking-wider text-slate-500">기간</label>
-            <DateRangePicker
-              startDate={startDate}
-              endDate={endDate}
-              onDateChange={(start, end) => {
-                setStartDate(start);
-                setEndDate(end);
-              }}
-            />
+      <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-sm relative">
+        {/* §reports-filter-redesign — 기간(주 컨트롤) + 필터 팝오버 2컨트롤. 부모 relative(오버레이 튀어나옴 방지, 시안 가드). */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex rounded-lg border border-slate-200 bg-el p-0.5">
+            {REPORT_PRESETS.map((p) => (
+              <button key={p.id} type="button" onClick={() => applyPreset(p)} className={cn("h-8 px-2.5 rounded-md text-xs font-medium transition-colors", activePreset === p.id ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>
+                {p.label}
+              </button>
+            ))}
           </div>
-          <div className="space-y-1">
-            <label htmlFor="category" className="text-xs font-medium uppercase tracking-wider text-slate-500">카테고리</label>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger id="category" className="bg-el border-bs text-slate-700">
-                <SelectValue placeholder="전체" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                {Object.entries(PRODUCT_CATEGORIES).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>{label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="team" className="text-xs font-medium uppercase tracking-wider text-slate-500">팀 / 조직</label>
-            <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-              <SelectTrigger id="team" className="bg-el border-bs text-slate-700">
-                <SelectValue placeholder="전체" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="team1">1팀</SelectItem>
-                <SelectItem value="team2">2팀</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="vendor" className="text-xs font-medium uppercase tracking-wider text-slate-500">벤더</label>
-            <Select value={selectedVendor} onValueChange={setSelectedVendor}>
-              <SelectTrigger id="vendor" className="bg-el border-bs text-slate-700">
-                <SelectValue placeholder="전체" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="sigma">Sigma-Aldrich</SelectItem>
-                <SelectItem value="thermo">Thermo Fisher</SelectItem>
-                <SelectItem value="eppendorf">Eppendorf</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="budget" className="text-xs font-medium uppercase tracking-wider text-slate-500">예산</label>
-            <Select value={selectedBudget} onValueChange={setSelectedBudget}>
-              <SelectTrigger id="budget" className="bg-el border-bs text-slate-700">
-                <SelectValue placeholder="전체" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                {Array.isArray(budgets) && budgets.map((budget: any) => (
-                  <SelectItem key={budget.id} value={budget.id}>{budget.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <DateRangePicker startDate={startDate} endDate={endDate} onDateChange={(start, end) => { setStartDate(start); setEndDate(end); setActivePreset(null); }} />
+          <Popover>
+            <PopoverTrigger asChild>
+              <button type="button" className="ml-auto inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50">
+                <SlidersHorizontal className="h-4 w-4" />
+                필터
+                {activeFilterCount > 0 && (
+                  <span className="inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-blue-600 text-white text-[10px] font-bold">{activeFilterCount}</span>
+                )}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-72 space-y-3">
+              <div className="space-y-1">
+                <label htmlFor="category" className="text-xs font-medium uppercase tracking-wider text-slate-500">카테고리</label>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger id="category" className="bg-el border-bs text-slate-700"><SelectValue placeholder="전체" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체</SelectItem>
+                    {Object.entries(PRODUCT_CATEGORIES).map(([value, label]) => (<SelectItem key={value} value={value}>{label}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="team" className="text-xs font-medium uppercase tracking-wider text-slate-500">팀 / 조직</label>
+                <Select value={selectedTeam} onValueChange={setSelectedTeam}>
+                  <SelectTrigger id="team" className="bg-el border-bs text-slate-700"><SelectValue placeholder="전체" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체</SelectItem>
+                    <SelectItem value="team1">1팀</SelectItem>
+                    <SelectItem value="team2">2팀</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="vendor" className="text-xs font-medium uppercase tracking-wider text-slate-500">벤더</label>
+                <Select value={selectedVendor} onValueChange={setSelectedVendor}>
+                  <SelectTrigger id="vendor" className="bg-el border-bs text-slate-700"><SelectValue placeholder="전체" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체</SelectItem>
+                    <SelectItem value="sigma">Sigma-Aldrich</SelectItem>
+                    <SelectItem value="thermo">Thermo Fisher</SelectItem>
+                    <SelectItem value="eppendorf">Eppendorf</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="budget" className="text-xs font-medium uppercase tracking-wider text-slate-500">예산</label>
+                <Select value={selectedBudget} onValueChange={setSelectedBudget}>
+                  <SelectTrigger id="budget" className="bg-el border-bs text-slate-700"><SelectValue placeholder="전체" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체</SelectItem>
+                    {Array.isArray(budgets) && budgets.map((budget: any) => (<SelectItem key={budget.id} value={budget.id}>{budget.name}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {activeFilterCount > 0 && (
+                <button type="button" onClick={clearAllFilters} className="text-xs text-slate-500 hover:text-slate-700">초기화</button>
+              )}
+            </PopoverContent>
+          </Popover>
         </div>
+        {activeFilterCount > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 mt-3">
+            {activeFilters.map((f) => (
+              <button key={f.key} type="button" onClick={() => f.set("all")} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 h-7 text-[11px] font-medium text-slate-700 hover:bg-slate-200">
+                {f.label}: {f.display(f.value)}
+                <X className="h-3 w-3" />
+              </button>
+            ))}
+            <button type="button" onClick={clearAllFilters} className="ml-1 text-[11px] text-slate-400 hover:text-slate-600">전체 해제</button>
+          </div>
+        )}
       </div>
 
       {/* ================================================================
