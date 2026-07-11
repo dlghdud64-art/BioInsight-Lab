@@ -20,6 +20,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PACK_UNIT_OPTIONS, normalizePackUnit } from "@/lib/inventory/pack-unit-options";
 import {
   Camera, ScanLine, Type, CheckCircle2, AlertTriangle,
   Loader2, ChevronRight, RotateCcw, Package, FlaskConical,
@@ -1081,6 +1083,47 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
               </label>
             </div>
           )}
+          {/* §11.378 — OCR 저신뢰도 + 사용자 미보정 시 입고 완료 차단(무효 통과 방지).
+              제품명을 직접 수정하면 해제. 라벨 아닌 사진(키보드 등)이 재고로 들어가는 것 차단. */}
+          {scanResult &&
+            mapOcrConfidence(scanResult.parsed.confidence) === "low" &&
+            !productNameDirty && (
+              <div className="flex items-start gap-2 text-xs text-yellow-800 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 mt-3">
+                <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5 text-yellow-600" />
+                <span>
+                  일부 값이 흐릿하게 인식됐어요(신뢰도가 낮습니다). 라벨을 확인하고 제품명을 채운 뒤 진행하면 됩니다.
+                </span>
+              </div>
+            )}
+
+          {/* §1-2/PLAN rule 2 — 직접 입고 시 Lot·유효기간 미확인 차단 사유(no-op 금지). */}
+          {criticalUnconfirmed && (
+            <div className="flex items-start gap-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-3">
+              <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+              <span>
+                Lot 번호·유효기한을 확인(터치/수정)해 주세요. 자동 인식값은 확인 후 입고됩니다.
+              </span>
+            </div>
+          )}
+
+          {/* §scan-multi-capture-merge — catalogNo 미충전 시 다른 각도 재촬영(병합) calm 유도. 채워지면 사라짐. */}
+          {scanResult && !scanResult.matchedProduct && !formData.catalogNumber.trim() && (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 flex items-center justify-between gap-2">
+              <span className="text-[11px] text-slate-500">
+                카탈로그 번호가 안 읽혔어요 — 다른 각도로 한 번 더 촬영하면 채울 수 있어요{scanCount > 1 ? ` · ${scanCount}회 병합됨` : ""}
+              </span>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-[11px] shrink-0 text-blue-700 border-blue-300 hover:bg-blue-600 hover:text-white"
+                onClick={() => { mergeNextRef.current = true; setStep("upload"); }}
+              >
+                다른 각도 재촬영
+              </Button>
+            </div>
+          )}
+
           {/* §scan-manual-path (호영님 2026-06-30) — 미매칭 = 실패 아님. 신규 품목 등록 정상 경로 calm 안내(에러톤 0). */}
           {/* §scan-secondary-match — fuzzy 후보가 있으면 "신규 품목" 단정 대신 후보 행으로 양보(런타임 숨김, 토큰 보존). */}
           {scanResult && !scanResult.matchedProduct && formData.catalogNumber.trim() !== "" && (scanResult.matchType !== "fuzzy_name" || !scanResult.productCandidates?.length) && synonymCandidates.length === 0 && (
@@ -1390,12 +1433,14 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                     placeholder="예: 100"
                     className="h-9 text-sm flex-1"
                   />
-                  <Input
-                    value={formData.packUnit}
-                    onChange={(e) => updateField("packUnit", e.target.value)}
-                    placeholder="CAPSULES"
-                    className="h-9 text-sm w-24"
-                  />
+                  <Select value={normalizePackUnit(formData.packUnit)} onValueChange={(v) => updateField("packUnit", v)}>
+                    <SelectTrigger className="h-9 text-sm w-28"><SelectValue placeholder="단위" /></SelectTrigger>
+                    <SelectContent>
+                      {PACK_UNIT_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value} className="text-sm">{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <p className="text-[11px] text-slate-400 mt-0.5">ⓘ 라벨에 표시된 통 1개의 용량입니다 (입고 수량 아님)</p>
               </div>
@@ -1423,46 +1468,6 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
             </div>
           </div>
 
-          {/* §11.378 — OCR 저신뢰도 + 사용자 미보정 시 입고 완료 차단(무효 통과 방지).
-              제품명을 직접 수정하면 해제. 라벨 아닌 사진(키보드 등)이 재고로 들어가는 것 차단. */}
-          {scanResult &&
-            mapOcrConfidence(scanResult.parsed.confidence) === "low" &&
-            !productNameDirty && (
-              <div className="flex items-start gap-2 text-xs text-yellow-800 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 mt-3">
-                <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5 text-yellow-600" />
-                <span>
-                  일부 값이 흐릿하게 인식됐어요(신뢰도가 낮습니다). 라벨을 확인하고 제품명을 채운 뒤 진행하면 됩니다.
-                </span>
-              </div>
-            )}
-
-          {/* §1-2/PLAN rule 2 — 직접 입고 시 Lot·유효기간 미확인 차단 사유(no-op 금지). */}
-          {criticalUnconfirmed && (
-            <div className="flex items-start gap-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-3">
-              <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-              <span>
-                Lot 번호·유효기한을 확인(터치/수정)해 주세요. 자동 인식값은 확인 후 입고됩니다.
-              </span>
-            </div>
-          )}
-
-          {/* §scan-multi-capture-merge — catalogNo 미충전 시 다른 각도 재촬영(병합) calm 유도. 채워지면 사라짐. */}
-          {scanResult && !scanResult.matchedProduct && !formData.catalogNumber.trim() && (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 flex items-center justify-between gap-2">
-              <span className="text-[11px] text-slate-500">
-                카탈로그 번호가 안 읽혔어요 — 다른 각도로 한 번 더 촬영하면 채울 수 있어요{scanCount > 1 ? ` · ${scanCount}회 병합됨` : ""}
-              </span>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-7 px-2 text-[11px] shrink-0 text-blue-700 border-blue-300 hover:bg-blue-600 hover:text-white"
-                onClick={() => { mergeNextRef.current = true; setStep("upload"); }}
-              >
-                다른 각도 재촬영
-              </Button>
-            </div>
-          )}
           {/* ── 액션 버튼 ── */}
           <div className="flex items-center gap-3 mt-auto pt-3 border-t border-slate-100">
             <Button variant="outline" onClick={resetState} className="gap-1.5">

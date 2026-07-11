@@ -39,6 +39,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PACK_UNIT_OPTIONS, normalizePackUnit } from "@/lib/inventory/pack-unit-options";
 import { toast } from "sonner";
 import {
   ScanLine,
@@ -635,10 +637,14 @@ export function SmartReceivingScannerModal({
                 </div>
                 <div>
                   <Label htmlFor="srm-packUnit" className="text-xs font-semibold">함량 단위</Label>
-                  <Input id="srm-packUnit"
-                    value={form.packUnit}
-                    onChange={(e) => setForm({ ...form, packUnit: e.target.value })}
-                    placeholder="CAPSULES / mL" className="mt-1 h-9 text-sm" />
+                  <Select value={normalizePackUnit(form.packUnit)} onValueChange={(v) => setForm({ ...form, packUnit: v })}>
+                    <SelectTrigger id="srm-packUnit" className="mt-1 h-9 text-sm"><SelectValue placeholder="단위 선택" /></SelectTrigger>
+                    <SelectContent>
+                      {PACK_UNIT_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value} className="text-sm">{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               {/* §11.326 — 입고 정보(받은 통 개수). */}

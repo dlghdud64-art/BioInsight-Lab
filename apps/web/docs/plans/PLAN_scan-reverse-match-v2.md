@@ -1,6 +1,6 @@
 # Implementation Plan: 스캔 역매칭 v2 (양방향·정규화·토큰가드·신뢰도 전파)
 
-- **Status:** ⏳ Pending
+- **Status:** ✅ Complete (Phase 0–4, 라이브 smoke GREEN — 신뢰도 배지·정렬 확인)
 - **Started:** 2026-06-30
 - **Last Updated:** 2026-06-30
 
@@ -109,9 +109,11 @@
 - P1 test revert / P2 lib 제거 / P3 wiring을 §scan-secondary-match로 복귀 / P4 동일. env/flag 불필요.
 
 ## 9. Progress
-- Overall: 0% / Phase 0 / blocker 없음 / Next: Phase 1.
+- Overall: 100% / 완료 / blocker 없음 / Next: 없음
 
-**Checklist:** [ ] P0 [ ] P1 [ ] P2 [ ] P3 [ ] P4
+**Checklist:** [x] P0 [x] P1 [x] P2 [x] P3 [x] P4
 
 ## 10. Notes
 - [2026-06-30] §scan-secondary-match 한계(단방향·result-level score·미정렬)를 v2가 보정. 단 약어↔풀네임(비-부분문자열·공유토큰0)은 synonym map 필요 → v2 범위 밖, 별 트랙(PubChem synonym 보조 검토).
+- [2026-06-30] 라이브 smoke(www.labaxis.co.kr, dpl_F4Luhxg): BCP 라벨(catalogNo 없음) → 후보 2건 신뢰도 배지·정렬 확인 — [높음] "BCP·Sigma·B9673"(exact) > [보통] "BCP (1-Bromo-3-chloropropane)·B9673"(contains). synonym 행 미노출=reverse-match 우선 게이트 정상. 호영님 지시 #4(후보 구분) 충족.
+- [2026-06-30] synonym-bridge 한계 확정: PubChem이 "Bromocresol Purple" 동의어 76개 반환하나 "BCP" 미포함 → 약어↔풀네임은 PubChem 깊이로 해결 불가(MAX_SYNONYMS 상향 무의미). 실효안=학습형 별칭(promotion-on-use), 별 트랙.
