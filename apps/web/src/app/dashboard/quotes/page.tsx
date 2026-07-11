@@ -18,6 +18,7 @@ import { SupplierAvatars, toSuppliers } from "@/components/quotes/supplier-avata
 import { PriorityRecommendationCard } from "@/components/quotes/priority-recommendation-card";
 import { computePriority, type Stage } from "@/lib/quote-management/derive";
 import { toQuoteCase } from "@/lib/quote-management/from-quote";
+import { STATUS_PREDICATES, deriveQuote, periodMatch, mineMatch, chipCount as qfChipCount, type StatusChipKey, type PeriodKey, type QuickFilterQuote, type QuickFilterState } from "@/lib/quote-management/quick-filter";
 import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { useOperationalBriefPopup } from "@/components/operational-brief/popup-context";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -939,15 +940,20 @@ const COMPARE_STATES = new Set(["compare_not_ready", "compare_review_required", 
 
 // §quote-screen-sian P6.2 — 시안 §08 빠른 필터(교체, CEO 결정): 마감 임박·높음 우선(위험=빨강) · 회신 정체(주의=앰버).
 //   우선순위·마감은 computePriority 파생(저장 0). reason="회신정체" = 정체가 최대 기여 요인인 케이스.
-//   기존(우선 처리·차단 있음·오늘 처리·전환 가능) 제거. modeChip/setModeChip wiring·AND 결합은 보존.
-const MODE_CHIPS = [
-  { key: "deadline_soon", label: "마감 임박", tone: "danger" as const,
-    filter: (q: Quote) => { const c = toQuoteCase(q); if (!c) return false; const dd = computePriority(c).dd; return dd != null && dd <= 2; } },
-  { key: "high_priority", label: "높음 우선", tone: "danger" as const,
-    filter: (q: Quote) => { const c = toQuoteCase(q); return c ? computePriority(c).level === "high" : false; } },
-  { key: "stalled",       label: "회신 정체", tone: "warn" as const,
-    filter: (q: Quote) => { const c = toQuoteCase(q); return c ? computePriority(c).reason === "회신정체" : false; } },
+//   §quotes-quick-filter-4a 로 대체: 5칩 다중선택(Set)·신호등·정직 배지·popover 일원화.
+const QUICK_CHIP_META: { key: StatusChipKey; label: string; tone: "danger" | "warn" | "info" }[] = [
+  { key: "deadline", label: "마감 임박", tone: "warn" },
+  { key: "stalled", label: "회신 정체", tone: "danger" },
+  { key: "priority", label: "높음 우선", tone: "warn" },
+  { key: "send", label: "발송 대기", tone: "info" },
+  { key: "reply", label: "회신 대기", tone: "info" },
 ];
+// §quotes-quick-filter-4a — 신호등 흡수(위험 red · 주의 yellow · 정보 blue). §9 sentinel/P6 잠금 정합, amber 클래스 0.
+const QUICK_CHIP_CLS = {
+  danger: { active: "bg-red-50 text-red-700 border-red-300", idle: "bg-white text-red-600 border-red-200 hover:bg-red-50", badge: "text-red-500" },
+  warn: { active: "bg-yellow-100 text-yellow-700 border-yellow-300", idle: "bg-white text-yellow-700 border-yellow-200 hover:bg-yellow-50", badge: "text-yellow-600" },
+  info: { active: "bg-blue-50 text-blue-700 border-blue-300", idle: "bg-white text-blue-600 border-blue-200 hover:bg-blue-50", badge: "text-blue-500" },
+} as const;
 
 // §quote-priority-picker — 우선순위 팝오버 선택기 (cycle 순환 → 직접 선택).
 //   3단계(긴급/높음/보통 = high/mid/low, 호영님 결정 — 낮음 미도입). 색 점 + 설명 + 현재값 체크.
@@ -1123,16 +1129,16 @@ function QuotesPageContent() {
   //   .filter() 매번 호출 부담 ↓ → 큰 quotes list 의 페이지 응답 성능 ↑.
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") ?? "all");
-  const [modeChip, setModeChip] = useState<string | null>(null);
-  // §quotes-filter-popover (호영님 시안) — 다축 필터 popover. 전부 canonical 파생(computePriority.level /
-  //   responses·vendorRequests). 상태 Select 대체. 다중 선택 chip.
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [priorityFilter, setPriorityFilter] = useState<string[]>([]); // high | medium | low
-  const [replyFilter, setReplyFilter] = useState<string[]>([]); // none | collecting | all
-  const [arrivalFilter, setArrivalFilter] = useState<string[]>([]); // arrived | waiting
-  const filterActiveCount = priorityFilter.length + replyFilter.length + arrivalFilter.length;
-  const toggleInArray = (set: (updater: (prev: string[]) => string[]) => void, val: string) =>
-    set((prev) => (prev.includes(val) ? prev.filter((x) => x !== val) : [...prev, val]));
+  // §quotes-quick-filter-4a — 빠른 필터 상태(다중 status Set + 내담당 + 마감기간). modeChip/popover 대체.
+  //   전부 canonical 파생(computePriority) — 저장 0, UI state 가 truth 대체 금지.
+  const [quickStatus, setQuickStatus] = useState<Set<StatusChipKey>>(new Set());
+  const [quickMine, setQuickMine] = useState(false);
+  const [quickPeriod, setQuickPeriod] = useState<PeriodKey>("all");
+  const currentUserId = session?.user?.id ?? null;
+  const quickActive = quickStatus.size > 0 || quickMine || quickPeriod !== "all";
+  const toggleQuickStatus = (k: StatusChipKey) =>
+    setQuickStatus((prev) => { const next = new Set(prev); if (next.has(k)) next.delete(k); else next.add(k); return next; });
+  const resetQuick = () => { setQuickStatus(new Set()); setQuickMine(false); setQuickPeriod("all"); }; // 검색·정렬 유지
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(searchParams.get("selected") ?? null);
   // §11.264i — briefSheetOpen 분리 (호영님 spec P0 견적 모바일 2중 겹침 fix).
   //   기존: §11.155 MobileOperationalBriefSheet 가 selectedQuote 와 단일 truth 공유
@@ -1609,22 +1615,19 @@ function QuotesPageContent() {
     if (!urlStatus && typeof filter.status === "string") {
       setStatusFilter(filter.status);
     }
-    if (filter.modeChip !== undefined) {
-      setModeChip(filter.modeChip);
-    }
+    // §quotes-quick-filter-4a — modeChip persist 제거. 빠른 필터 복원은 URL 동기화(P4)로 이관.
   }, [userPrefs.preferences, searchParams]);
 
-  // §11.230c (a)-4 — debounced server PATCH on statusFilter/modeChip change.
+  // §11.230c (a)-4 — debounced server PATCH on statusFilter change (§quotes-quick-filter-4a: modeChip persist 제거).
   //   localStorage 0 → server-only persistence. searchQuery 는 ad-hoc 제외.
   // §11.327 — hydratedRef 가드 (feedback loop 차단).
   useEffect(() => {
     if (!hydratedRef.current) return; // §11.327 — 첫 hydration 전 skip
     userPrefs.updateQuotesFilter({
       status: statusFilter,
-      modeChip: modeChip,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, modeChip]);
+  }, [statusFilter]);
 
   // §11.226 #3 — 테이블 뷰 진입 시 popup 자동 close.
   //   호영님 v2 spec sheet P0 #3: "테이블 뷰에서는 브리핑 패널을 기본 닫힘
@@ -1969,30 +1972,30 @@ function QuotesPageContent() {
         return quote.status === statusFilter;
       });
 
-    // Mode chip 필터
-    if (modeChip) {
-      const chip = MODE_CHIPS.find(c => c.key === modeChip);
-      if (chip) result = result.filter(chip.filter);
-    }
-
-    // §quotes-filter-popover — 다축 필터(canonical 파생, 가짜 0). 우선순위/회신상태/견적상태.
-    if (priorityFilter.length > 0) {
-      result = result.filter((q) => { const c = toQuoteCase(q); return c ? priorityFilter.includes(computePriority(c).level) : false; });
-    }
-    if (replyFilter.length > 0) {
+    // §quotes-quick-filter-4a — 빠른 필터(다중 status AND + 내담당 + 마감기간). 전부 canonical 파생.
+    if (quickMine || quickPeriod !== "all" || quickStatus.size > 0) {
+      const now = new Date();
+      const active = [...quickStatus];
       result = result.filter((q) => {
-        const invited = q.vendorRequests?.length ?? 0;
-        const received = q.responses?.length ?? 0;
-        const s = received === 0 ? "none" : invited > 0 && received >= invited ? "all" : "collecting";
-        return replyFilter.includes(s);
+        const qf = q as unknown as QuickFilterQuote;
+        if (quickMine && !mineMatch(qf, currentUserId)) return false;
+        const d = deriveQuote(qf, now);
+        if (!periodMatch(quickPeriod, d)) return false;
+        return active.every((k) => STATUS_PREDICATES[k](qf, d));
       });
-    }
-    if (arrivalFilter.length > 0) {
-      result = result.filter((q) => arrivalFilter.includes((q.responses?.length ?? 0) > 0 ? "arrived" : "waiting"));
     }
 
     return result.sort((a, b) => getOpPriority(a) - getOpPriority(b));
-  }, [quotes, debouncedSearchQuery, statusFilter, modeChip, today, priorityFilter, replyFilter, arrivalFilter]);
+  }, [quotes, debouncedSearchQuery, statusFilter, quickStatus, quickMine, quickPeriod, currentUserId, today]);
+
+  // §quotes-quick-filter-4a — 칩 배지 pool = statusFilter(퍼널) 스코프. 정직 배지(base=mine+period)는 lib chipCount 가 계산.
+  const quickChipPool = useMemo(() => (quotes.filter((quote) => {
+    if (statusFilter === "all") return true;
+    if (statusFilter === "DEADLINE_TODAY") return !!quote.deliveryDate && new Date(quote.deliveryDate).toDateString() === today && quote.status !== "COMPLETED" && quote.status !== "CANCELLED";
+    return quote.status === statusFilter;
+  }) as unknown as QuickFilterQuote[]), [quotes, statusFilter, today]);
+  const qfState: QuickFilterState = { q: "", mine: quickMine, period: quickPeriod, status: quickStatus, sort: "dday" };
+  const qfCtx = { currentUserId, now: new Date() };
 
   // §11.227 #9 — 테이블 sortedQuotes (sortState 가 set 됐을 때 column 별 정렬).
   //   sortState.key === null 시 filteredQuotes 그대로 (default priority order).
@@ -2502,73 +2505,6 @@ function QuotesPageContent() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
             <Input placeholder="견적명 / 품목명 / 요청 번호 검색..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9 h-9 text-sm" />
           </div>
-          {/* §quotes-filter-popover (호영님 시안) — 상태 Select → 다축 필터 popover. 우선순위/회신상태/견적상태. */}
-          <div className="relative shrink-0">
-            <button
-              type="button"
-              onClick={() => setFilterOpen((o) => !o)}
-              aria-expanded={filterOpen}
-              aria-label="필터"
-              className={`h-9 px-3 inline-flex items-center gap-1.5 rounded-md border text-sm transition-colors ${
-                filterActiveCount > 0
-                  ? "border-blue-300 bg-blue-50 text-blue-700"
-                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-              }`}
-            >
-              <Filter className="h-3.5 w-3.5" /> 필터
-              {filterActiveCount > 0 && (
-                <span className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-blue-600 text-white text-[10px] font-bold">
-                  {filterActiveCount}
-                </span>
-              )}
-            </button>
-            {filterOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setFilterOpen(false)} aria-hidden />
-                <div className="absolute right-0 top-full z-50 mt-1.5 w-64 rounded-xl border border-slate-200 bg-white shadow-lg p-3 space-y-3">
-                  <div>
-                    <p className="text-[11px] font-bold text-slate-500 mb-1.5">우선순위</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {[["high", "높음"], ["medium", "보통"], ["low", "낮음"]].map(([val, lbl]) => (
-                        <button key={val} type="button" onClick={() => toggleInArray(setPriorityFilter, val)}
-                          className={`px-2.5 py-1 rounded-full text-[12px] font-medium border transition-colors ${priorityFilter.includes(val) ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"}`}>
-                          {lbl}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-slate-500 mb-1.5">회신 상태</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {[["none", "회신 없음"], ["collecting", "수집 중"], ["all", "전원 회신"]].map(([val, lbl]) => (
-                        <button key={val} type="button" onClick={() => toggleInArray(setReplyFilter, val)}
-                          className={`px-2.5 py-1 rounded-full text-[12px] font-medium border transition-colors ${replyFilter.includes(val) ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"}`}>
-                          {lbl}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-slate-500 mb-1.5">견적 상태</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {[["arrived", "견적 도착"], ["waiting", "견적 대기"]].map(([val, lbl]) => (
-                        <button key={val} type="button" onClick={() => toggleInArray(setArrivalFilter, val)}
-                          className={`px-2.5 py-1 rounded-full text-[12px] font-medium border transition-colors ${arrivalFilter.includes(val) ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"}`}>
-                          {lbl}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                    <button type="button" onClick={() => { setPriorityFilter([]); setReplyFilter([]); setArrivalFilter([]); }}
-                      className="text-[12px] text-slate-400 hover:text-slate-600">초기화</button>
-                    <button type="button" onClick={() => setFilterOpen(false)}
-                      className="px-3 py-1 rounded-md bg-blue-600 text-white text-[12px] font-semibold hover:bg-blue-500">적용</button>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
         </div>
         {/* §11.259c-2 — mode chips + 뷰 toggle 데스크탑 1줄 통합 sub-wrapper.
             모바일: 2 sub-row (chips 위, 뷰 toggle 아래). 데스크탑 sm+: 같은 줄.
@@ -2584,50 +2520,49 @@ function QuotesPageContent() {
         <div className="flex items-center gap-1.5 flex-nowrap overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 pb-1 sm:pb-0">
           {/* §quotes-filter-popover (호영님 시안) — 빠른 필터 라벨. */}
           <span className="text-[11px] font-semibold text-slate-400 shrink-0 mr-1 whitespace-nowrap">빠른 필터</span>
-          {MODE_CHIPS.filter(chip => !(isBrowserPilotQuoteDispatch && chip.key === "urgent")).map(chip => {
-            const isActive = modeChip === chip.key;
-            const chipCount = quotes.filter(chip.filter).length;
+          {/* §quotes-quick-filter-4a — 내 담당(대상) */}
+          <button
+            type="button"
+            aria-pressed={quickMine}
+            onClick={() => setQuickMine((v) => !v)}
+            className={`inline-flex items-center gap-1 text-[11px] min-h-[44px] px-2.5 rounded-full border font-medium transition-all whitespace-nowrap shrink-0 ${quickMine ? "bg-blue-50 text-blue-700 border-blue-300" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"}`}
+          >
+            내 담당
+            {(() => { const n = quickChipPool.filter((qq) => mineMatch(qq, currentUserId)).length; return <span className={`text-[9px] ${quickMine ? "text-blue-500" : "text-slate-400"}`}>{n}</span>; })()}
+          </button>
+          {/* §quotes-quick-filter-4a — 마감 기간 세그먼트(radiogroup) */}
+          <div role="radiogroup" aria-label="마감 기간" className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 p-0.5 shrink-0">
+            {(([["all", "전체"], ["week", "이번 주"], ["d3", "3일 이내"]] as [PeriodKey, string][]).map(([val, lbl]) => {
+              const on = quickPeriod === val;
+              return (
+                <button key={val} type="button" role="radio" aria-checked={on} onClick={() => setQuickPeriod(val)}
+                  className={`text-[11px] min-h-[40px] px-2.5 rounded-full font-medium transition-colors whitespace-nowrap ${on ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
+                  {lbl}
+                </button>
+              );
+            }))}
+          </div>
+          {/* §quotes-quick-filter-4a — 상태 칩(다중 AND · 신호등 · 정직 배지 · 비활성 0건 숨김 · 활성 항상 노출) */}
+          {QUICK_CHIP_META.map((meta) => {
+            const active = quickStatus.has(meta.key);
+            const count = qfChipCount(quickChipPool, qfState, meta.key, qfCtx);
+            if (!active && count === 0) return null;
+            const cls = QUICK_CHIP_CLS[meta.tone];
             return (
               <button
-                key={chip.key}
-                onClick={() => setModeChip(isActive ? null : chip.key)}
-                /* §11.264h — chip 내부 텍스트 줄바꿈 차단 (호영님 spec 견적 모바일 #4).
-                   flex-nowrap 은 chip 끼리 줄바꿈 차단, whitespace-nowrap 은
-                   chip 내부 텍스트 wrap 차단 ("우선\n처리" 같은 깨짐 방지).
-                   §11.264h-4 — mode chips 44x44 touch target (호영님 모바일 spec
-                   a11y 일관성, §11.264h-3 cross-cutting concern follow-up).
-                   min-h-[44px] 추가 → Apple HIG / Material / WCAG 2.1 SC 2.5.5
-                   Target Size 정합. text-[11px] 시각 사이즈 보존 (44px height
-                   안에 items-center 로 가운데 정렬). */
-                disabled={chipCount === 0}
-                /* §quote-screen-sian P6.2 — §08 신호색: 위험(마감임박·높음)=빨강 · 주의(회신정체)=앰버.
-                   0건 비활성(honesty — 빈 필터 클릭 차단). active=진한 톤, inactive=옅은 톤. */
-                className={`inline-flex items-center gap-1 text-[11px] min-h-[44px] px-2.5 py-1 rounded-full border font-medium transition-all whitespace-nowrap ${
-                  chipCount === 0
-                    ? "text-slate-300 border-bd/30 cursor-not-allowed"
-                    : isActive
-                      ? (chip.tone === "danger" ? "bg-red-50 text-red-700 border-red-300" : "bg-yellow-100 text-yellow-700 border-yellow-300")
-                      : (chip.tone === "danger" ? "bg-white text-red-600 border-red-200 hover:bg-red-50" : "bg-white text-yellow-700 border-yellow-200 hover:bg-yellow-50")
-                }`}>
-                {chip.label}
-                {chipCount > 0 ? (
-                  <span className={`text-[9px] ${chip.tone === "danger" ? "text-red-500" : "text-yellow-600"}`}>
-                    {chipCount}
-                  </span>
-                ) : (
-                  /* §quotes-mobile-redesign Part3 — 0건 disabled 사유 노출(회색 침묵 금지). wiring은 정상, 데이터 0이 사유. */
-                  <span className="text-[9px] text-slate-400 font-normal">· 해당 0건</span>
-                )}
+                key={meta.key}
+                type="button"
+                aria-pressed={active}
+                onClick={() => toggleQuickStatus(meta.key)}
+                className={`inline-flex items-center gap-1 text-[11px] min-h-[44px] px-2.5 rounded-full border font-medium transition-all whitespace-nowrap shrink-0 ${active ? cls.active : cls.idle}`}
+              >
+                {meta.label}
+                <span className={`text-[9px] ${active ? cls.badge : "text-slate-400"}`}>{count}</span>
               </button>
             );
           })}
-          {modeChip && (
-            /* §11.264h-5 — 초기화 button 44x44 touch target (호영님 모바일 spec
-               a11y 일관성, §11.264h family final close). inline-flex items-center
-               + min-h-[44px] + px-2 추가 → mode chip (§11.264h-4 44px) + 전체
-               선택 텍스트 링크 (§11.264h-3 44px) 와 same-row sibling 일관성 확보.
-               text-[11px] + text-slate-500 + ml-1 보존. */
-            <button onClick={() => setModeChip(null)} className="inline-flex items-center text-[11px] min-h-[44px] px-2 text-slate-500 hover:text-slate-900 ml-1">초기화</button>
+          {quickActive && (
+            <button type="button" onClick={resetQuick} className="inline-flex items-center text-[11px] min-h-[44px] px-2 text-slate-500 hover:text-slate-900 ml-1 shrink-0">초기화</button>
           )}
 
           {/* §11.220 — 전체 선택 CTA (PENDING quote 일괄 선택). 호영님 피드백
@@ -3382,7 +3317,7 @@ function QuotesPageContent() {
       {isFilterChanging && (
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <div className="h-3 w-3 animate-spin rounded-full border border-blue-600 border-t-transparent" />
-          {statusFilter !== "all" || modeChip ? "필터 적용 중..." : "최신 상태를 확인 중"}
+          {statusFilter !== "all" || quickActive ? "필터 적용 중..." : "최신 상태를 확인 중"}
         </div>
       )}
 
@@ -3443,13 +3378,13 @@ function QuotesPageContent() {
       {/* ── 빈 상태: filter empty vs queue empty 분리 ── */}
       {!isLoading && filteredQuotes.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 gap-3">
-          {(searchQuery || statusFilter !== "all" || modeChip) ? (
+          {(searchQuery || statusFilter !== "all" || quickActive) ? (
             <>
               <Filter className="h-8 w-8 text-slate-600" />
               <p className="text-sm text-slate-700">현재 조건에 맞는 견적 케이스가 없습니다</p>
               <p className="text-xs text-slate-500">필터를 완화하거나 다른 상태군을 선택해 보세요</p>
               <div className="flex gap-2 mt-2">
-                <button onClick={() => { setSearchQuery(""); setStatusFilter("all"); setModeChip(null); }} className="text-xs text-blue-600 hover:underline">필터 초기화</button>
+                <button onClick={() => { setSearchQuery(""); setStatusFilter("all"); resetQuick(); }} className="text-xs text-blue-600 hover:underline">필터 초기화</button>
                 <button onClick={() => setStatusFilter("all")} className="text-xs text-slate-400 hover:underline">전체 보기</button>
               </div>
             </>

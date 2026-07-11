@@ -26,6 +26,10 @@
  *   - text-violet-700 톤 보존 (시각 연속성)
  *   - whitespace-nowrap 보존 (§11.264h)
  *   - mode chips row container 보존
+ *
+ * §quotes-quick-filter-4a P2 — 구 MODE_CHIPS(단일선택 mode chip)가 QUICK_CHIP_META 5칩
+ *   다중선택 빠른 필터로 교체됨. 아래 sibling mode-chip whitespace-nowrap cross-invariant을
+ *   신 QUICK_CHIP_META.map chip className으로 재앵커(전체 선택 텍스트 링크 본 검증은 불변).
  */
 
 import { describe, it, expect } from "vitest";
@@ -104,11 +108,12 @@ describe("§11.264h-2 #2 — invariant 보존 (canonical truth)", () => {
     );
   });
 
-  it("§11.264h mode chips className whitespace-nowrap 보존 (§11.264h-4 min-h-[44px] supersede)", () => {
-    // §11.264h-4 가 text-[11px] 뒤에 min-h-[44px] 추가 → invariant supersede.
-    // §11.264h-4 JSDoc 확장으로 distance 800 → 1500 확장.
+  it("§11.264h 빠른 필터 chip className whitespace-nowrap 보존 (§quotes-quick-filter-4a P2 supersede)", () => {
+    // §quotes-quick-filter-4a P2 supersession — 구 MODE_CHIPS.map mode-chip(py-1 포함) →
+    //   QUICK_CHIP_META.map 신 chip(min-h-[44px] + whitespace-nowrap, py-1 제거). 텍스트 링크와
+    //   시각 구분되는 sibling chip whitespace-nowrap invariant 재앵커.
     expect(page).toMatch(
-      /MODE_CHIPS\.map[\s\S]{0,1500}className=\{`inline-flex items-center gap-1 text-\[11px\] min-h-\[44px\] px-2\.5 py-1 rounded-full border font-medium transition-all whitespace-nowrap/,
+      /QUICK_CHIP_META\.map[\s\S]{0,1500}className=\{`inline-flex items-center gap-1 text-\[11px\] min-h-\[44px\] px-2\.5 rounded-full border font-medium transition-all whitespace-nowrap/,
     );
   });
 

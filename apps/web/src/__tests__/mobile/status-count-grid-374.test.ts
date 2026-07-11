@@ -3,6 +3,9 @@
  * 견적 모바일 바 2x2 채택 sentinel (P1 계약 / P2 견적 적용).
  *
  * readFileSync + regex (CLAUDE.md sentinel 패턴).
+ *
+ * §quotes-quick-filter-4a P2 — 마감 진입점 단언을 구 MODE_CHIPS 'deadline_soon'에서 신
+ *   QUICK_CHIP_META chip { key: "deadline" }로 재앵커(퍼널·DEADLINE_TODAY 술어 보존 의도 불변).
  */
 
 import { describe, it, expect } from "vitest";
@@ -77,11 +80,11 @@ describe("§11.374 [SUPERSEDED — §quote-flat KPI-dedup 2026-06-21] 견적 모
   });
 
   it("단계 카운트/필터는 퍼널 + 마감 진입점으로 보존(회귀 0)", () => {
-    // §quotes-filter-popover(이번 세션) — 상태 Select '오늘 마감'(value="DEADLINE_TODAY" 옵션)이 다축 필터
-    //   popover로 폐지·마감 진입점은 MODE_CHIPS 'deadline_soon'(dd≤2)으로 이전(quote-kpi-dedup 동형).
+    // §quotes-quick-filter-4a P2 — 상태 Select '오늘 마감'(value="DEADLINE_TODAY" 옵션)·MODE_CHIPS 단일선택이
+    //   QUICK_CHIP_META 5칩 다중선택으로 폐지·마감 진입점은 신 chip { key: "deadline", label: "마감 임박" }로 이전.
     //   DEADLINE_TODAY 술어는 URL ?status / 저장 필터 경유 reachable 잔존 → 단계 카운트/필터 보존 의도 불변.
     expect(quotes).toMatch(/<QuoteFunnel/);
-    expect(quotes).toMatch(/key:\s*"deadline_soon"/);              // 마감 진입점(Select 옵션 대체)
+    expect(quotes).toMatch(/key:\s*"deadline"/);                  // 마감 진입점(QUICK_CHIP_META, Select 옵션 대체)
     expect(quotes).toMatch(/statusFilter === "DEADLINE_TODAY"/);   // 술어 잔존(reachable)
   });
 });

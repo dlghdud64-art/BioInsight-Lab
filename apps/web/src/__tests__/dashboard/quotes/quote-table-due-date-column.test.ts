@@ -3,8 +3,11 @@
  *
  * ★ §quote-flat Q3(마감 컬럼 신규) 역전: 시안 README "마감(D-day) 열 제거(우선순위 중심 운영)".
  *   - 컬럼 정의(ColumnKey/order/widths/visibility/COLUMN_LABEL) + tbody dueDate 셀 렌더 제거.
- *   - dd 파생(computePriority.dd)은 **저장/제거 아님** — 빠른필터(deadline_soon)·정렬에서 계속 사용(컬럼 비의존).
+ *   - dd 파생(computePriority.dd)은 **저장/제거 아님** — 빠른필터(deadline chip)·정렬에서 계속 사용(컬럼 비의존).
  *   - 회귀 0: 기존 컬럼(예상금액/다음단계)·SupplierAvatars·우선순위 dot·send-cta·정렬 보존.
+ *
+ * §quotes-quick-filter-4a P2 — 빠른필터가 deriveQuote(→computePriority.dd) + STATUS_PREDICATES.deadline(d.dd≤3)로
+ *   마감 판정. dd 파생 사용처를 신 deriveQuote/STATUS_PREDICATES 경로로 재앵커(파생 보존 의도 불변).
  */
 
 import { describe, it, expect } from "vitest";
@@ -35,9 +38,13 @@ describe("§quote-management-redesign P1b — 마감 컬럼 제거", () => {
 });
 
 describe("§quote-management-redesign P1b — dd 파생 보존(저장/제거 아님)", () => {
-  it("computePriority.dd 빠른필터(deadline_soon)에서 계속 사용", () => {
-    expect(page).toMatch(/computePriority\(c\)\.dd/);
-    expect(page).toMatch(/deadline_soon/);
+  it("dd 파생 빠른필터(deriveQuote→STATUS_PREDICATES.deadline)에서 계속 사용", () => {
+    // §quotes-quick-filter-4a P2 — 구 컬럼/구 문자열 "deadline_soon" 대신 빠른필터가
+    //   deriveQuote(qf, now)(내부 computePriority.dd) + STATUS_PREDICATES.deadline(d.dd≤3)로 마감 판정.
+    //   dd 파생은 저장/제거 아님 — 파생 경로만 재앵커(컬럼 비의존).
+    expect(page).toMatch(/deriveQuote\(qf, now\)/);         // 빠른필터 dd 파생(→computePriority.dd)
+    expect(page).toMatch(/STATUS_PREDICATES\[k\]\(qf, d\)/); // deadline 술어(d.dd ≤ 3) 적용
+    expect(page).toMatch(/computePriority\([^)]*\)\.dd/);    // dd 소비 잔존(파생 미제거)
   });
 });
 

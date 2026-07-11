@@ -43,6 +43,7 @@ describe("§quote-flat Q4 — 회귀 0(filter-empty 분기 보존)", () => {
     expect(page).toMatch(/필터 초기화/);
   });
   it("queue vs filter empty 분기 조건 보존", () => {
-    expect(page).toMatch(/searchQuery \|\| statusFilter !== "all" \|\| modeChip/);
+    // §quotes-quick-filter-4a P2 — modeChip → quickActive(빠른 필터 활성) 로 분기 조건 진화.
+    expect(page).toMatch(/searchQuery \|\| statusFilter !== "all" \|\| quickActive/);
   });
 });

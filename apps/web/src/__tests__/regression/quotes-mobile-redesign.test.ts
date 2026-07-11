@@ -4,9 +4,14 @@
  * 호영님 P1 (2026-06-23):
  *   1. 퍼널 가로 1행 컴팩트 칩 + "발주 전환"(s5) ENABLE_PURCHASING 게이트 + 전 단계 0건 collapse.
  *   2. 모바일 카드 단일 고정 — 뷰 토글·컬럼 설정 데스크톱 전용(hidden md). effectiveViewMode.
- *   3. 필터 칩 0건 disabled 사유 노출(회색 침묵 금지). wiring은 기존 정상(setModeChip→filteredQuotes).
+ *   3. 필터 칩 0건 처리. wiring은 canonical 파생(quickStatus→deriveQuote/STATUS_PREDICATES→filteredQuotes).
  *
- * 검증 2축: (A) 게이트/구조 강제, (B) 회귀 0(발주 stage 소스·MODE_CHIPS wiring 보존).
+ * §quotes-quick-filter-4a P2 진화: MODE_CHIPS/setModeChip 단일선택 + priorityFilter/replyFilter/
+ *   arrivalFilter popover facet 이 5칩 다중선택 빠른 필터(quickStatus:Set)로 대체됨. 신 UI 전체
+ *   truth = quick-filter-4a-render.test.ts. "0건 disabled 사유" → "비활성 0건 숨김"(chipShow) 진화.
+ *   canonical 파생 배선(deriveQuote/STATUS_PREDICATES/mineMatch/periodMatch)로 repoint.
+ *
+ * 검증 2축: (A) 게이트/구조 강제, (B) 회귀 0(발주 stage 소스·빠른 필터 canonical wiring 보존).
  */
 
 import { describe, it, expect } from "vitest";
@@ -60,9 +65,11 @@ describe("§quotes-mobile-redesign — 모바일 뷰 토글(§B2-C 진화) (A)",
 });
 
 describe("§quotes-mobile-redesign — 필터 칩 사유 (A)", () => {
-  it("0건 disabled 사유 노출 (회색 침묵 금지)", () => {
+  it("비활성 0건 칩 숨김 (§quotes-quick-filter-4a — 회색 침묵 대신 hide)", () => {
+    // §quotes-quick-filter-4a P2 — "0건 disabled 사유 노출" → "비활성 0건 숨김"(chipShow) 로 진화.
+    //   활성 칩은 항상 노출(해제 데드락 방지), 비활성+0건 칩만 hide.
     const src = read(PAGE);
-    expect(src).toMatch(/해당 0건/);
+    expect(src).toMatch(/if \(!active && count === 0\) return null/);
   });
 });
 
@@ -72,10 +79,15 @@ describe("§quotes-mobile-redesign — 회귀 0 (B)", () => {
     expect(src).toMatch(/label: "발주 전환"/);
     expect(src).toMatch(/key: "s5"/);
   });
-  it("MODE_CHIPS / setModeChip wiring 보존", () => {
+  it("빠른 필터 canonical wiring 보존 (구 MODE_CHIPS/setModeChip 대체)", () => {
+    // §quotes-quick-filter-4a P2 — MODE_CHIPS/setModeChip 제거(의도). filteredQuotes 는
+    //   quickStatus/deriveQuote/STATUS_PREDICATES canonical 파생으로 필터.
     const src = read(PAGE);
-    expect(src).toMatch(/MODE_CHIPS/);
-    expect(src).toMatch(/setModeChip\(isActive \? null : chip\.key\)/);
+    // MODE_CHIPS.map/setModeChip 라이브 참조 제거 확인(잔여 MODE_CHIPS 문자열은 주석 1건뿐).
+    expect(src).not.toMatch(/MODE_CHIPS\.map/);
+    expect(src).not.toMatch(/setModeChip/);
+    expect(src).toMatch(/QUICK_CHIP_META\.map/);
+    expect(src).toMatch(/onClick=\{\(\) => toggleQuickStatus\(meta\.key\)\}/);
   });
   it("카드 본문 예상금액(canonical 회신가) 노출 보존", () => {
     const src = read(PAGE);
@@ -83,32 +95,39 @@ describe("§quotes-mobile-redesign — 회귀 0 (B)", () => {
   });
 });
 
-describe("§quotes-filter-popover — 다축 필터 popover + 빠른 필터(호영님 시안)", () => {
-  it("필터 facet state(우선순위/회신상태/견적상태)", () => {
+describe("§quotes-quick-filter-4a — 5칩 빠른 필터(구 popover 대체)", () => {
+  it("빠른 필터 상태 진화 (구 priorityFilter/replyFilter/arrivalFilter popover facet 제거)", () => {
+    // §quotes-quick-filter-4a P2 — popover 다축 facet state 제거(의도). Set 기반 빠른 필터로 대체.
     const src = read(PAGE);
-    expect(src).toMatch(/priorityFilter/);
-    expect(src).toMatch(/replyFilter/);
-    expect(src).toMatch(/arrivalFilter/);
+    expect(src).not.toMatch(/priorityFilter/);
+    expect(src).not.toMatch(/replyFilter/);
+    expect(src).not.toMatch(/arrivalFilter/);
+    expect(src).toMatch(/quickStatus/);
+    expect(src).toMatch(/quickMine/);
+    expect(src).toMatch(/quickPeriod/);
   });
-  it("canonical 와이어링(computePriority.level / responses / vendorRequests) — 가짜 0", () => {
+  it("canonical 파생 배선(deriveQuote/STATUS_PREDICATES/mine/period) — 가짜 0", () => {
     const src = read(PAGE);
-    expect(src).toMatch(/priorityFilter\.includes\(computePriority\(c\)\.level\)/);
-    expect(src).toMatch(/q\.vendorRequests\?\.length/);
-    expect(src).toMatch(/q\.responses\?\.length/);
+    expect(src).toMatch(/deriveQuote\(qf, now\)/);
+    expect(src).toMatch(/mineMatch\(qf, currentUserId\)/);
+    expect(src).toMatch(/periodMatch\(quickPeriod, d\)/);
+    expect(src).toMatch(/STATUS_PREDICATES\[k\]\(qf, d\)/);
   });
-  it("필터 popover 3 facet 그룹 라벨", () => {
+  it("5칩 신호등 라벨 (구 3-facet popover 그룹 라벨 대체)", () => {
+    // §quotes-quick-filter-4a P2 — 우선순위/회신상태/견적상태 popover facet → 5 신호등 칩.
     const src = read(PAGE);
-    expect(src).toContain("우선순위");
-    expect(src).toContain("회신 상태");
-    expect(src).toContain("견적 상태");
+    expect(src).toContain("마감 임박");
+    expect(src).toContain("회신 정체");
+    expect(src).toContain("발송 대기");
   });
-  it("초기화/적용 + 빠른 필터 라벨", () => {
+  it("대상/기간 + 빠른 필터 라벨 (내 담당·마감 기간·빠른 필터·초기화)", () => {
     const src = read(PAGE);
-    expect(src).toContain("초기화");
-    expect(src).toContain("적용");
     expect(src).toContain("빠른 필터");
+    expect(src).toContain("내 담당");
+    expect(src).toContain("마감 기간");
+    expect(src).toContain("초기화");
   });
-  it("상태 Select 제거(필터 popover로 대체) — <Select 미사용", () => {
+  it("상태 Select 제거(빠른 필터로 대체) — <Select 미사용", () => {
     expect(read(PAGE)).not.toMatch(/<Select\b/);
   });
 });

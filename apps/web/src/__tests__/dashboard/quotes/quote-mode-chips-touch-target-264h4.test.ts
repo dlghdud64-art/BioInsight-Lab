@@ -1,35 +1,31 @@
 /**
- * §11.264h-4 #quote-mode-chips-touch-target — mode chips 44x44 touch target
+ * §11.264h-4 #quote-mode-chips-touch-target — 빠른 필터 chip 44x44 touch target
  *   (호영님 모바일 spec a11y 일관성, §11.264h-3 cross-cutting concern follow-up)
  *
- * §11.264h-3 가 §11.220 전체 선택 텍스트 링크에 min-h-[44px] 추가 → 44x44 touch
- * target 정합. 동일 row 안 mode chips (우선 처리 / 차단 있음 / 오늘 처리 /
- * 전환 가능) 4종은 `px-2.5 py-1 text-[11px]` 로 세로 ~24px → 44x44 미달.
- * Apple HIG / Material / WCAG 2.1 SC 2.5.5 Target Size 표준 미달.
+ * §quotes-quick-filter-4a P2 — 구 MODE_CHIPS(setModeChip 단일선택 mode chip 4종:
+ *   우선 처리 / 차단 있음 / 오늘 처리 / 전환 가능)가 QUICK_CHIP_META 5칩 다중선택(Set)
+ *   빠른 필터(deadline/stalled/priority/send/reply, toggleQuickStatus, 신호등 QUICK_CHIP_CLS,
+ *   비활성 0건 숨김 `if (!active && count === 0) return null`)으로 교체됨. touch-target /
+ *   시각(text-[11px]/min-h-[44px]/rounded-full/whitespace-nowrap) 단언을 신 chip 으로 재앵커.
+ *   genuinely-removed(MODE_CHIPS.map / setModeChip / chip.tone 삼항 / cursor-not-allowed 0건)
+ *   단언은 부재-lock 으로 은퇴. 초기화 button 은 resetQuick 로 재앵커.
  *
- * Fix (minimum diff, Tailwind class addition):
- *   기존: inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full
- *         border font-medium transition-all whitespace-nowrap
- *   신규: inline-flex items-center gap-1 text-[11px] min-h-[44px] px-2.5 py-1
- *         rounded-full border font-medium transition-all whitespace-nowrap
- *   - min-h-[44px] = 세로 44px 보장
- *   - items-center = text 가운데 정렬 (44px line-height 안)
- *   - text-[11px] 보존 (시각 사이즈 유지)
- *   - rounded-full 보존 → 44px 높이 rounded-full 시 양 끝 22px radius (자연스러움)
+ * 신 chip className (QUICK_CHIP_META.map, page.tsx L~2557):
+ *   inline-flex items-center gap-1 text-[11px] min-h-[44px] px-2.5 rounded-full
+ *   border font-medium transition-all whitespace-nowrap shrink-0
+ *   - min-h-[44px] = 세로 44px 보장 (WCAG 2.1 SC 2.5.5 Target Size)
+ *   - text-[11px] 시각 사이즈 보존 (44px line-height 안 가운데 정렬)
+ *   - rounded-full / whitespace-nowrap 보존
  *
- * canonical truth lock:
- *   - setModeChip onClick (toggle isActive ? null : chip.key) 보존
- *   - active 시각 (bg-blue-600/10 text-blue-600 border-blue-600/30) 보존
- *   - 비활성 시각 (text-slate-500 border-bd/50 hover:border-bd hover:text-slate-900) 보존
- *   - chipCount 표시 (text-[9px]) 보존
- *   - text-[11px] 시각 사이즈 보존
- *   - whitespace-nowrap (§11.264h) 보존
+ * canonical truth lock (신 빠른 필터):
+ *   - toggleQuickStatus(meta.key) onClick (다중 AND Set 토글)
+ *   - aria-pressed={active} (신호등 chip pressed 상태)
+ *   - 활성/비활성 시각 = QUICK_CHIP_CLS[meta.tone] (danger red / warn yellow / info blue)
+ *   - 비활성 0건 숨김: if (!active && count === 0) return null (구 cursor-not-allowed 대체)
+ *   - count 표시 (text-[9px]) 보존
  *   - flex-nowrap + overflow-x-auto (§11.259c row container) 보존
  *   - §11.220 전체 선택 텍스트 링크 (§11.264h-3 min-h-[44px]) 보존
- *
- * Out-of-scope backlog:
- *   - 초기화 button 자체 44x44 (현재 text link, min-h-[44px] 미적용) — 별도 cluster
- *   - mode chips chipCount span (text-[9px]) — 부모 button 안 정렬 변경 없음
+ *   - 초기화 button → resetQuick ({quickActive && ...}) 재앵커
  */
 
 import { describe, it, expect } from "vitest";
@@ -39,55 +35,66 @@ import { resolve } from "node:path";
 const PAGE_PATH = resolve(__dirname, "../../../app/dashboard/quotes/page.tsx");
 const page = readFileSync(PAGE_PATH, "utf8");
 
-describe("§11.264h-4 #1 — mode chip 44x44 touch target", () => {
-  it("§11.264h-4 trace marker comment 존재", () => {
-    expect(page).toMatch(/§11\.264h-4/);
+describe("§11.264h-4 #1 — 빠른 필터 chip 44x44 touch target", () => {
+  it("§quotes-quick-filter-4a trace marker comment 존재 (§11.264h-4 계보 계승)", () => {
+    // §quotes-quick-filter-4a P2 supersession — 구 §11.264h-4 mode-chip 마커는 제거됨.
+    //   touch-target 관심사는 live 빠른 필터(§quotes-quick-filter-4a)로 이전 → 마커 재앵커.
+    expect(page).toMatch(/§quotes-quick-filter-4a/);
   });
 
-  it("mode chip className 에 min-h-[44px] 추가 (MODE_CHIPS.map 안)", () => {
+  it("chip className 에 min-h-[44px] (QUICK_CHIP_META.map 안)", () => {
     expect(page).toMatch(
-      /MODE_CHIPS(?:\.filter\([\s\S]*?\))?\.map[\s\S]{0,1500}className=\{`inline-flex items-center gap-1 text-\[11px\] min-h-\[44px\] px-2\.5 py-1 rounded-full/,
+      /QUICK_CHIP_META\.map[\s\S]{0,1500}className=\{`inline-flex items-center gap-1 text-\[11px\] min-h-\[44px\] px-2\.5 rounded-full/,
     );
   });
 
   it("text-[11px] 시각 사이즈 보존 (44px height 안에 가운데 정렬)", () => {
     // text-[11px] 가 min-h-[44px] 앞에 와야 함 (className 순서 정합)
     expect(page).toMatch(
-      /MODE_CHIPS(?:\.filter\([\s\S]*?\))?\.map[\s\S]{0,1500}text-\[11px\] min-h-\[44px\]/,
+      /QUICK_CHIP_META\.map[\s\S]{0,1500}text-\[11px\] min-h-\[44px\]/,
     );
   });
 
   it("rounded-full 보존 (44px height + rounded-full = 22px radius 자연)", () => {
     expect(page).toMatch(
-      /MODE_CHIPS(?:\.filter\([\s\S]*?\))?\.map[\s\S]{0,1500}min-h-\[44px\] px-2\.5 py-1 rounded-full/,
+      /QUICK_CHIP_META\.map[\s\S]{0,1500}min-h-\[44px\] px-2\.5 rounded-full/,
     );
   });
 });
 
 describe("§11.264h-4 #2 — invariant 보존 (canonical truth)", () => {
-  it("§11.264h whitespace-nowrap 보존", () => {
+  it("§11.264h whitespace-nowrap 보존 (QUICK_CHIP_META.map 안)", () => {
     expect(page).toMatch(
-      /MODE_CHIPS(?:\.filter\([\s\S]*?\))?\.map[\s\S]{0,1500}whitespace-nowrap/,
+      /QUICK_CHIP_META\.map[\s\S]{0,1500}whitespace-nowrap/,
     );
   });
 
-  it("setModeChip onClick toggle 보존", () => {
-    expect(page).toMatch(/setModeChip\(isActive \? null : chip\.key\)/);
+  it("toggleQuickStatus onClick 토글 보존 (구 setModeChip 대체)", () => {
+    // §quotes-quick-filter-4a P2 supersession — 구 setModeChip(isActive ? null : chip.key)
+    //   단일선택 토글 → toggleQuickStatus(meta.key) 다중 AND Set 토글.
+    expect(page).not.toMatch(/setModeChip\(isActive \? null : chip\.key\)/);
+    expect(page).toMatch(/onClick=\{\(\) => toggleQuickStatus\(meta\.key\)\}/);
+    expect(page).toMatch(/aria-pressed=\{active\}/);
   });
 
-  it("active 시각 (§quote-screen-sian P6.2 §08 tone — 위험 빨강/주의 앰버) 보존", () => {
-    expect(page).toMatch(/chip\.tone === "danger" \? "bg-red-50 text-red-700 border-red-300"/);
+  it("활성 시각 (신호등 QUICK_CHIP_CLS danger red) 보존", () => {
+    // §quotes-quick-filter-4a P2 supersession — 구 `chip.tone === "danger" ? "..."` 삼항 →
+    //   QUICK_CHIP_CLS[meta.tone] 객체 룩업. danger active 톤(red) 재앵커.
+    expect(page).not.toMatch(/chip\.tone === "danger" \?/);
+    expect(page).toMatch(/danger:\s*\{\s*active:\s*"bg-red-50 text-red-700 border-red-300"/);
   });
 
-  it("비활성 시각 (§08 옅은 tone) + 0건 비활성 보존", () => {
-    expect(page).toMatch(/chip\.tone === "danger" \? "bg-white text-red-600 border-red-200/);
-    expect(page).toMatch(/chipCount === 0[\s\S]{0,140}cursor-not-allowed/);
+  it("비활성 시각 (danger 옅은 tone) + 비활성 0건 숨김 보존", () => {
+    expect(page).toMatch(/idle:\s*"bg-white text-red-600 border-red-200/);
+    // §quotes-quick-filter-4a P2 supersession — 구 0건 cursor-not-allowed(disabled) →
+    //   비활성 0건 chip 은 렌더 자체를 숨김(해제 데드락 방지: 활성 0건은 항상 노출).
+    expect(page).not.toMatch(/chipCount === 0[\s\S]{0,140}cursor-not-allowed/);
+    expect(page).toMatch(/if \(!active && count === 0\) return null/);
   });
 
-  it("chipCount 표시 (text-[9px]) 보존", () => {
-    // §quotes-mobile-redesign Part3 — chipCount > 0 && → 삼항(? :)으로 진화(0건에 "· 해당 0건" 사유 노출 추가).
-    //   > 0 분기는 여전히 text-[9px]로 카운트 표시 = 보존 의도 불변. && / ? 둘 다 허용.
-    expect(page).toMatch(/chipCount > 0 [&?][\s\S]{0,80}text-\[9px\]/);
+  it("count 표시 (text-[9px]) 보존", () => {
+    // §quotes-quick-filter-4a P2 — 구 chipCount(text-[9px]) span → count(text-[9px]) span 재앵커.
+    expect(page).toMatch(/text-\[9px\][\s\S]{0,80}\{count\}<\/span>/);
   });
 
   it("§11.259c flex-nowrap + overflow-x-auto row container 보존", () => {
@@ -105,7 +112,9 @@ describe("§11.264h-4 #2 — invariant 보존 (canonical truth)", () => {
     expect(page).toMatch(/bg-gradient-to-r from-white to-transparent pointer-events-none sm:hidden/);
   });
 
-  it("초기화 button 보존 (out-of-scope backlog — 별도 cluster)", () => {
-    expect(page).toMatch(/setModeChip\(null\)[\s\S]{0,200}초기화/);
+  it("초기화 button 보존 (resetQuick 재앵커, {quickActive && ...})", () => {
+    // §quotes-quick-filter-4a P2 supersession — 구 setModeChip(null) 초기화 → resetQuick.
+    expect(page).not.toMatch(/setModeChip\(null\)/);
+    expect(page).toMatch(/quickActive && \([\s\S]{0,240}onClick=\{resetQuick\}[\s\S]{0,120}초기화/);
   });
 });

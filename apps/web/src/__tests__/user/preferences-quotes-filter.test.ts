@@ -109,10 +109,14 @@ describe("§11.230c (a)-4 #4 — invariant 보존", () => {
     expect(helper).toMatch(/updateQuotesView/);
   });
 
-  it("§11.227 MODE_CHIPS / setStatusFilter / setModeChip 시그니처 보존", () => {
-    expect(page).toMatch(/MODE_CHIPS/);
+  it("§11.227 setStatusFilter 시그니처 보존 (§quotes-quick-filter-4a: MODE_CHIPS/setModeChip page 제거)", () => {
+    // §quotes-quick-filter-4a P2 — page.tsx 의 MODE_CHIPS/setModeChip 및 modeChip persist 제거(의도).
+    //   statusFilter server-persist 는 유지(setStatusFilter). schema-level modeChip(route/helper zod)
+    //   는 그대로 보존 — 위 #1/#2 describe 가 계속 잠금.
     expect(page).toMatch(/setStatusFilter/);
-    expect(page).toMatch(/setModeChip/);
+    // MODE_CHIPS.map/setModeChip 라이브 참조 제거 확인(잔여 MODE_CHIPS 문자열은 주석 1건뿐).
+    expect(page).not.toMatch(/MODE_CHIPS\.map/);
+    expect(page).not.toMatch(/setModeChip/);
   });
 
   it("§11.230c (a)-4 trace marker", () => {
