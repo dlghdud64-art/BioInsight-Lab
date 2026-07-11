@@ -30,8 +30,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files — 실제 값(.env / .env.local 등)은 절대 커밋 금지.
+#   예시 파일(.env.example, 변수 이름만)은 커밋 허용(팀·Vercel 등록용 체크리스트).
 .env*
+!.env.example
 
 # vercel
 .vercel
