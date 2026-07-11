@@ -160,6 +160,15 @@ export async function parseWithGemini(imageBase64: string): Promise<LabelParseRe
     );
   }
 
+  // §label-scan-extraction 1단계 — 부분 추출(1~3필드) 진단. 선명 라벨 저신뢰 케이스 가시화(0필드만 로깅하던 사각지대 보강).
+  if (matchedFields > 0 && matchedFields < 4) {
+    console.warn(
+      "[OCR-DIAG] 부분 추출 " + matchedFields + "/6 — 필드별:",
+      JSON.stringify({ catalogNo: !!parsed.catalogNo, lotNo: !!parsed.lotNo, expirationDate: !!parsed.expirationDate, brand: !!parsed.brand, productName: !!parsed.productName, casNumber: !!parsed.casNumber }),
+      "| rawText(앞 400):", rawText.slice(0, 400),
+    );
+  }
+
   const confidence: "high" | "medium" | "low" =
     matchedFields >= 4 ? "high" : matchedFields >= 2 ? "medium" : "low";
 

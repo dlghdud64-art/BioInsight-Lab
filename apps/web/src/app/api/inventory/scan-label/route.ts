@@ -155,6 +155,22 @@ export async function POST(req: NextRequest) {
     const gs1 = gs1Raw ? parseGs1(gs1Raw) : null;
     const merged: MergedLabelResult = mergeGs1WithOcr(gs1 && gs1.isGs1 ? gs1 : null, parsed);
 
+    // §label-scan-extraction 1단계 — 실패 분해 진단(운영 로그 grep "[OCR-DIAG]"). 배포 후 골든 3종 실행으로 A/B/C/D 단계 확정. 동작 변경 0(로그만).
+    console.info("[OCR-DIAG] scan-label", JSON.stringify({
+      providerUsed: ocrMetadata?.providerUsed ?? null,
+      fallbackReason: ocrMetadata?.fallbackReason ?? null,
+      cached: ocrMetadata?.cached ?? null,
+      geminiMatchedFields: (parsed as { matchedFields?: number }).matchedFields ?? null,
+      geminiConfidence: (parsed as { confidence?: string }).confidence ?? null,
+      gs1Present: !!(gs1 && gs1.isGs1),
+      mergedSources: merged.sources,
+      fieldsPresent: {
+        productName: !!merged.productName, catalogNo: !!merged.catalogNo,
+        lotNo: !!merged.lotNo, expirationDate: !!merged.expirationDate,
+        brand: !!merged.brand, casNumber: !!merged.casNumber, quantity: !!merged.quantity,
+      },
+    }));
+
     // ── DB 매칭 단계: catalogNo로 기존 제품 검색 ──
     let matchedProduct: {
       id: string;
