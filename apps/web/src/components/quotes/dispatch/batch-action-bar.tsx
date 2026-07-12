@@ -25,12 +25,20 @@
  *     노출 + 개별 X 버튼 (onRemoveOne) 으로 individual 해제.
  *   - getQuoteDispatchPreflight (canonical) 결과를 page-level 에서 합산 후 props
  *     로 전달 — 본 component 는 truth 변형 0.
+ *
+ * §quotes-mgmt-enhance §2 (호영님 2026-07-12) — 하단 선택 바 정합 리팩토링:
+ *   - 서브카운트 = 선택의 "실제 분할": 발송 가능 + 보류(=발송 전) + 회신 대기 +
+ *     회신 도착 합 === selectedCount 불변식. 기존 "회신 대기"가 reminderEligibleCount
+ *     (회신 0건 — 발송 전 포함)를 표기해 발송 전 건이 이중 집계되던 불일치 해소.
+ *   - 액션별 대상수 배지: 상태 변경[selectedCount] · 리마인더[reminderEligibleCount]
+ *     · 검토 시작[dispatchableCount].
+ *   - 비활성 사유 인라인(바 안 상시 노출, yellow 주의) — §11.230c Tooltip 은 병행 유지.
  */
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { CheckCircle2, AlertTriangle, X, Send, Bell, RefreshCw, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { CheckCircle2, AlertTriangle, X, Send, Bell, RefreshCw, Clock, ChevronDown, ChevronUp, MailCheck } from "lucide-react";
 
 /** §11.240 — dropdown row 표시용 minimal Quote shape (canonical Quote 의 subset).
  *   items 는 직접 name 또는 nested product.name 둘 다 지원 (canonical Quote schema 정합). */
@@ -51,6 +59,12 @@ interface BatchActionBarProps {
   hardBlockCount: number;
   /** §11.228 — responseCount === 0 quote 수 (리마인더 대상). */
   reminderEligibleCount: number;
+  /** §quotes-mgmt-enhance §2 — 발송 후 회신 0건 (awaiting_responses/response_delayed) 수.
+   *  파티션 불변식: dispatchableCount + hardBlockCount + awaitingReplyCount +
+   *  respondedSelectedCount === selectedCount. */
+  awaitingReplyCount: number;
+  /** §quotes-mgmt-enhance §2 — 회신 도착(비교/검토/완료 단계) 수. */
+  respondedSelectedCount: number;
   /** §11.240 — dropdown list 용 selected quote 목록. */
   selectedQuotes: BatchActionBarQuote[];
   /** §11.240 — 상태 혼재 가드레일: 응답 없는 quote 포함 시 검토 시작 disabled. */
@@ -70,6 +84,8 @@ export function BatchActionBar({
   dispatchableCount,
   hardBlockCount,
   reminderEligibleCount,
+  awaitingReplyCount,
+  respondedSelectedCount,
   selectedQuotes,
   reviewDisabled: reviewDisabledByMixedState,
   onRemoveOne,
@@ -127,26 +143,38 @@ export function BatchActionBar({
               <ChevronDown className="h-3.5 w-3.5" />
             )}
           </button>
+          {/* §quotes-mgmt-enhance §2 — 서브카운트 = 선택의 실제 분할 (합 === selectedCount).
+              발송 가능 + 보류 = 발송 전 버킷 · 회신 대기 = 발송 후 회신 0건 · 회신 도착 = 비교/검토/완료.
+              기존 reminderEligibleCount "회신 대기" 표기(발송 전 이중 집계) 해소. */}
           <span className="text-[11px] text-violet-700/80 flex items-center gap-1.5 flex-wrap">
             <span className="inline-flex items-center gap-1">
               <CheckCircle2 className="h-3 w-3 text-emerald-600" />
               발송 가능 {dispatchableCount}건
             </span>
-            {reminderEligibleCount > 0 && (
-              <>
-                <span className="text-violet-300">·</span>
-                <span className="inline-flex items-center gap-1 text-blue-700">
-                  <Clock className="h-3 w-3" />
-                  회신 대기 {reminderEligibleCount}건
-                </span>
-              </>
-            )}
             {hardBlockCount > 0 && (
               <>
                 <span className="text-violet-300">·</span>
                 <span className="inline-flex items-center gap-1 text-yellow-700">
                   <AlertTriangle className="h-3 w-3" />
                   보류 {hardBlockCount}건
+                </span>
+              </>
+            )}
+            {awaitingReplyCount > 0 && (
+              <>
+                <span className="text-violet-300">·</span>
+                <span className="inline-flex items-center gap-1 text-blue-700">
+                  <Clock className="h-3 w-3" />
+                  회신 대기 {awaitingReplyCount}건
+                </span>
+              </>
+            )}
+            {respondedSelectedCount > 0 && (
+              <>
+                <span className="text-violet-300">·</span>
+                <span className="inline-flex items-center gap-1 text-purple-700">
+                  <MailCheck className="h-3 w-3" />
+                  회신 도착 {respondedSelectedCount}건
                 </span>
               </>
             )}
@@ -231,6 +259,10 @@ export function BatchActionBar({
         >
           <RefreshCw className="h-3.5 w-3.5 mr-1" />
           상태 변경
+          {/* §quotes-mgmt-enhance §2 — 액션 대상수 배지 (상태 변경 = 선택 전체 N건) */}
+          <span className="ml-1 rounded bg-violet-100 px-1 text-[10px] font-semibold tabular-nums text-violet-800">
+            {selectedCount}
+          </span>
         </Button>
         {/* §11.228 — 리마인더 CTA.
             §11.230c (b)-2 — 호영님 v2 Tooltip caller swap. native title attribute →
@@ -250,6 +282,10 @@ export function BatchActionBar({
             >
               <Bell className="h-3.5 w-3.5 mr-1" />
               리마인더
+              {/* §quotes-mgmt-enhance §2 — 액션 대상수 배지 (리마인더 = 회신 0건 N건) */}
+              <span className="ml-1 rounded bg-blue-100 px-1 text-[10px] font-semibold tabular-nums text-blue-800">
+                {reminderEligibleCount}
+              </span>
             </Button>
           </TooltipTrigger>
           <TooltipContent>{reminderTooltip}</TooltipContent>
@@ -265,11 +301,26 @@ export function BatchActionBar({
             >
               <Send className="h-3.5 w-3.5 mr-1" />
               검토 시작
+              {/* §2 배지: 발송 가능 N건 */}
+              <span className="ml-1 rounded bg-white/25 px-1 text-[10px] font-semibold tabular-nums">{dispatchableCount}</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent>{reviewTooltip}</TooltipContent>
         </Tooltip>
       </div>
+
+      {/* §quotes-mgmt-enhance §2 — 비활성 사유 인라인. 툴팁만으로는 disabled 사유가
+          숨어 실마찰 → 바 안 상시 노출(1줄, 우선순위 검토 시작 > 리마인더).
+          §11.230c (b)-2 Tooltip wrapper 는 a11y 용도로 병행 유지. yellow = 신호등 주의. */}
+      {(reviewDisabled || reminderDisabled) && (
+        <span
+          data-testid="batch-disabled-reason-inline"
+          className="basis-full inline-flex items-center gap-1 text-[11px] text-yellow-800"
+        >
+          <AlertTriangle className="h-3 w-3 shrink-0 text-yellow-600" />
+          {reviewDisabled ? reviewTooltip : reminderTooltip}
+        </span>
+      )}
     </div>
   );
 }

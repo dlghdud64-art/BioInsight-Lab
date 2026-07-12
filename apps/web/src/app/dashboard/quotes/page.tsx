@@ -2162,6 +2162,24 @@ function QuotesPageContent() {
     return count;
   }, [selectedQuotes]);
 
+  // §quotes-mgmt-enhance §2 — 하단 선택 바 서브카운트 = 선택의 "실제 분할" 파티션.
+  //   불변식: (dispatchableCount + hardBlockCount) + awaitingReplyCount + respondedSelectedCount
+  //   === selectedQuoteIds.size (합 = 선택수). canonical = deriveRailState (§11.351 발송 집계와 동일 축).
+  //   기존 서브라벨이 reminderEligibleCount(회신 0건 — 발송 전 포함)를 "회신 대기"로 표기해
+  //   발송 전 건이 발송 가능/회신 대기 양쪽에 이중 집계되던 카운트 불일치 해소.
+  //   reminderEligibleCount 파생은 무접촉 — 리마인더 CTA 대상수 배지/disabled 로만 사용.
+  const { awaitingReplyCount, respondedSelectedCount } = useMemo(() => {
+    let awaiting = 0;
+    let responded = 0;
+    for (const q of selectedQuotes) {
+      const rs = deriveRailState(q);
+      if (rs === "request_not_sent") continue; // 발송 전 버킷 = dispatchableCount + hardBlockCount
+      if (rs === "awaiting_responses" || rs === "response_delayed") awaiting += 1;
+      else responded += 1;
+    }
+    return { awaitingReplyCount: awaiting, respondedSelectedCount: responded };
+  }, [selectedQuotes]);
+
   // §11.240 #quote-batch-selection-p0 — 호영님 P0: row checkbox + dropdown + guardrail.
   //   P0 4 항목: (1) row+thead checkbox 3-state / (2) batch bar dropdown + 개별 X /
   //   (3) 상태 혼재 가드레일 (응답 없는 quote 포함 시 검토 시작 disabled) / (4) invariant
@@ -2476,6 +2494,8 @@ function QuotesPageContent() {
         dispatchableCount={dispatchableCount}
         hardBlockCount={hardBlockCount}
         reminderEligibleCount={reminderEligibleCount}
+        awaitingReplyCount={awaitingReplyCount}
+        respondedSelectedCount={respondedSelectedCount}
         selectedQuotes={selectedQuotes}
         reviewDisabled={reviewDisabled}
         onRemoveOne={(id) => toggleQuoteSelection(id)}
