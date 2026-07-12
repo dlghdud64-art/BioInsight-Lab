@@ -25,6 +25,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Send, Mail, AlertTriangle, CheckCircle2, Info } from "lucide-react";
@@ -157,6 +166,10 @@ export function BatchDispatchSheet({
   const [expiresInDays, setExpiresInDays] = useState(14);
   const [isDispatching, setIsDispatching] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
+  // §3-batch(호영님 견적 고도화 2026-07-13) — 배치 발송 확인 관문. "전체 발송" 클릭이
+  //   중간 확인 없이 allSettled 팬아웃 → 오발송 방지 위해 확인 AlertDialog 경유.
+  //   단일 경로 yellow/green 이분기 복제 아님 — 배치 구성 요약형(발송 가능 N · 보류 M 제외).
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   // canonical truth: preflight 으로 dispatchable / hardBlock 분류
   const { dispatchableQuotes, hardBlockQuotes } = useMemo(() => {
@@ -236,6 +249,7 @@ export function BatchDispatchSheet({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl bg-white border-slate-200 p-0 gap-0 max-h-[90vh] overflow-hidden flex flex-col">
         <div className="px-6 pt-6 pb-4 border-b border-slate-100">
@@ -390,7 +404,7 @@ export function BatchDispatchSheet({
             <Button
               type="button"
               size="sm"
-              onClick={handleDispatch}
+              onClick={() => setConfirmOpen(true)}
               disabled={isDispatching || dispatchableCount === 0}
               className="h-8 text-xs bg-violet-600 hover:bg-violet-700 text-white disabled:bg-violet-200 disabled:text-violet-400"
               title={dispatchableCount === 0 ? "발송 가능한 견적이 없습니다." : `${dispatchableCount}건 견적 일괄 발송`}
@@ -411,5 +425,49 @@ export function BatchDispatchSheet({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    {/* §3-batch — 배치 발송 확인 관문. 발송 가능분만 발송(보류 자동 제외, front-only success 0). */}
+    <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+      <AlertDialogContent data-testid="batch-dispatch-confirm-modal" className="bg-white border-slate-200">
+        <AlertDialogHeader>
+          <AlertDialogTitle>{dispatchableCount}건 견적을 발송할까요?</AlertDialogTitle>
+          <AlertDialogDescription>
+            선택한 공급사에게 실제 이메일이 발송됩니다. 발송 후 취소할 수 없습니다.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div
+          data-testid="batch-dispatch-confirm-summary"
+          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
+        >
+          <span className="font-medium text-slate-900">발송 가능 {dispatchableCount}건</span>
+          {hardBlockCount > 0 && (
+            <span className="text-slate-600">
+              {" · "}보류 {hardBlockCount}건 제외
+            </span>
+          )}
+          {hardBlockCount > 0 && (
+            <p className="mt-1 text-[11px] text-slate-500">
+              보류 견적은 발송 대상에서 빠집니다. 사유는 위 목록에서 확인해 주세요.
+            </p>
+          )}
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isDispatching}>다시 검토</AlertDialogCancel>
+          <Button
+            type="button"
+            disabled={isDispatching || dispatchableCount === 0}
+            className="bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-emerald-200 disabled:text-emerald-400"
+            onClick={() => {
+              setConfirmOpen(false);
+              void handleDispatch();
+            }}
+          >
+            <Send className="mr-2 h-4 w-4" />
+            확인 · {dispatchableCount}건 지금 발송
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
