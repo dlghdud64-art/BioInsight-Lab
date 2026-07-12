@@ -726,9 +726,22 @@ export function InventoryTable({
                         </span>
                         <span className="text-xs text-slate-400 ml-1">{group.unit}</span>
                         {group.safetyStock !== null && group.safetyStock > 0 && (
-                          <div className="text-[10px] text-slate-500 mt-0.5 whitespace-nowrap">
-                            안전재고 {group.safetyStock}
-                          </div>
+                          <>
+                            <div className="text-[10px] text-slate-500 mt-0.5 whitespace-nowrap">
+                              안전재고 {group.safetyStock}
+                            </div>
+                            {/* §inventory-safety-gauge (지시문 §2) — 안전재고 게이지 막대(신호등: 0 red / 미달 yellow / 정상 emerald) */}
+                            {(() => {
+                              const safety = group.safetyStock ?? 0;
+                              const pct = safety > 0 ? Math.min(100, Math.round((group.totalQuantity / safety) * 100)) : 0;
+                              const barColor = group.totalQuantity === 0 ? "bg-red-500" : group.totalQuantity < safety ? "bg-yellow-500" : "bg-emerald-500";
+                              return (
+                                <div className="mt-1 ml-auto w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden" role="img" aria-label={`안전재고 대비 ${pct}%`}>
+                                  <div className={`h-full rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
+                                </div>
+                              );
+                            })()}
+                          </>
                         )}
                       </TableCell>
 
@@ -757,9 +770,10 @@ export function InventoryTable({
                             }`}>
                               {format(new Date(group.earliestExpiry), "yyyy.MM.dd")}
                             </span>
-                            {expiryDays !== null && expiryDays <= 30 && (
+                            {/* §inventory-dday-90 (지시문 §2) — D-day ≤90 노출. ≤30 red, 31–90 yellow(신호등). */}
+                            {expiryDays !== null && expiryDays <= 90 && (
                               <span className={`text-[10px] ml-1 font-semibold ${
-                                expiryDays <= 0 ? "text-red-500" : "text-yellow-500"
+                                expiryDays <= 30 ? "text-red-500" : "text-yellow-500"
                               }`}>
                                 {expiryDays <= 0 ? "만료" : `D-${expiryDays}`}
                               </span>
