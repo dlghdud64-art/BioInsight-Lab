@@ -39,9 +39,10 @@ describe("#quote-card-batch1-density — 긴급도 뱃지 (delayed 시 solid red
 });
 
 describe("#quote-card-batch1-density — Progress bar 활성 단계 14px bold", () => {
-  it("readiness strip 의 current 분기 text-sm font-bold 강화", () => {
-    // current ? "text-blue-... font-bold text-sm" 패턴 매칭.
-    expect(page).toMatch(/current\s*\?\s*["`'][\s\S]{0,80}text-sm\s+font-bold|current\s*\?\s*["`'][\s\S]{0,80}font-bold[\s\S]{0,40}text-sm/);
+  it("현재 단계 라벨 text-sm font-bold 강화(§quotes-mgmt-enhance §1a 스텝퍼)", () => {
+    // §1a: readiness strip → 점 스텝퍼. 현재 단계만 라벨(14px bold) = text-sm font-bold text-blue-700 고정 span
+    //   (구 current ? ternary 대체). 활성 강조 의도 보존.
+    expect(page).toMatch(/text-sm font-bold text-blue-700[\s\S]{0,40}READINESS_LABELS\[signals\.readinessStage\]/);
   });
 
   it("readiness strip 의 미도달 (!active) 분기 text-slate-300 보존", () => {

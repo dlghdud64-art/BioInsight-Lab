@@ -69,19 +69,18 @@ describe("§11.264g #2 — 3 row 조건부 렌더 (progress / readiness / 공급
     );
   });
 
-  it("Readiness strip wrapper 에 isExpanded 분기", () => {
-    // {/* Readiness strip */}
-    // <div className={`mt-3 pt-2.5 border-t border-bd/50 ${isExpanded ? "" : "hidden md:block"}`}>
+  it("진행 단계 strip wrapper 에 isExpanded 분기 (§quotes-mgmt-enhance §1a)", () => {
+    // {/* §quotes-mgmt-enhance §1a — 카드 스텝퍼 경량화 */}
+    // <div className={`mt-3 pt-2.5 border-t border-bd/50 ${isExpanded ? "" : "hidden md:block"}`} aria-label="진행 단계">
     expect(page).toMatch(
-      /Readiness strip[\s\S]{0,300}mt-3 pt-2\.5 border-t border-bd\/50\s+\$\{isExpanded \? "" : "hidden md:block"\}/,
+      /§quotes-mgmt-enhance §1a[\s\S]{0,500}mt-3 pt-2\.5 border-t border-bd\/50\s+\$\{isExpanded \? "" : "hidden md:block"\}/,
     );
   });
 
-  it("공급사 응답 mini timeline wrapper 에 isExpanded 분기", () => {
-    // <div className={`mt-2.5 pt-2 border-t border-bd/50 ${isExpanded ? "" : "hidden md:block"}`} aria-label="공급사 응답 진행">
-    expect(page).toMatch(
-      /aria-label="공급사 응답 진행"[\s\S]{0,500}\$\{isExpanded \? "" : "hidden md:block"\}|\$\{isExpanded \? "" : "hidden md:block"\}[\s\S]{0,500}aria-label="공급사 응답 진행"/,
-    );
+  it("공급사 응답 ●●● 타임라인 은퇴 — 진행 단계 점 스텝퍼로 대체 (§quotes-mgmt-enhance §1a)", () => {
+    // §1a: 시각 소음(●●●) 제거, aria-label="진행 단계" 점 스텝퍼 + 우측 회신 요약으로 대체.
+    expect(page).not.toMatch(/aria-label="공급사 응답 진행"/);
+    expect(page).toMatch(/aria-label="진행 단계"/);
   });
 });
 
@@ -119,10 +118,11 @@ describe("§11.264g #3 — invariant 보존 (canonical truth)", () => {
     expect(page).toMatch(/signals\.readinessStage/);
   });
 
-  it("공급사 응답 mini timeline content 보존 (3 stage waiting amber)", () => {
-    expect(page).toMatch(/공급사 응답/);
-    // const waiting = quote.status === "SENT" && responseCount === 0
-    expect(page).toMatch(/quote\.status === "SENT" && responseCount === 0/);
+  it("§quotes-mgmt-enhance §1a — 공급사 응답 ●●● mini timeline 은퇴(회귀 가드)", () => {
+    // §11.227 #10c 타임라인(공급사 응답 stage 점 + waiting 파생)은 §1a 카드 스텝퍼로 대체·제거.
+    //   시각 소음 재도입 방지: 은퇴한 타임라인 고유 파생/라벨 부재 확인. 진행 단계 스텝퍼로 대체(sibling it).
+    expect(page).not.toMatch(/quote\.status === "SENT" && responseCount === 0/);
+    expect(page).not.toMatch(/aria-label="공급사 응답 진행"/);
   });
 
   it("§11.264h-2 전체 선택 텍스트 링크 보존", () => {

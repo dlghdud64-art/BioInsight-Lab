@@ -859,70 +859,31 @@ function QuoteCard({
         </div>
       )}
 
-      {/* Readiness strip
-          §11.264g — 모바일 collapsed 시 hidden, 데스크탑 always. */}
-      <div className={`mt-3 pt-2.5 border-t border-bd/50 ${isExpanded ? "" : "hidden md:block"}`}>
-        <div className="flex items-center gap-0.5 sm:gap-1">
-          {READINESS_LABELS.map((label, idx) => {
-            const active = idx <= signals.readinessStage;
-            const current = idx === signals.readinessStage;
-            return (
-              <div key={label} className="flex flex-col items-center gap-0.5 sm:gap-1 flex-1 min-w-0">
-                <div className={`h-1.5 sm:h-2 w-full rounded-full transition-all ${
-                  active
-                    ? current ? "bg-blue-500 shadow-sm shadow-blue-200" : "bg-emerald-500/50"
-                    : "bg-slate-100"
-                }`} />
-                {/* #quote-card-batch1-density — 호영님 spec #2: 활성 단계 강조.
-                    기존 text-[8/9px] 단일 → current 분기 시 text-sm font-bold
-                    (14px) 강조. 호영님 spec "활성 단계 라벨만 14px bold" 정합.
-                    나머지 단계는 기존 작은 크기 유지 (시각 위계 보존). */}
-                <span className={`leading-tight whitespace-nowrap ${
-                  current ? "text-sm font-bold text-blue-700"
-                  : active ? "text-[8px] sm:text-[9px] text-emerald-600/60"
-                  : "text-[8px] sm:text-[9px] text-slate-300"
-                }`}>{label}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* §11.227 #10c — 공급사 응답 미니 타임라인 (호영님 v2 P1 Phase B).
-          "발송 → 대기 → 수신" 3 stage 시각화. canonical truth = quote.status +
-          responseCount (별도 vendorRequests 데이터 모델 변경 0).
-          stage 분기:
-            - stage1 발송: quote.status !== 'PENDING' (SENT 이상)
-            - stage2 대기: quote.status === 'SENT' && responseCount === 0 (active amber)
-                         responseCount > 0 (done emerald) / PENDING (waiting slate)
-            - stage3 수신: responseCount > 0 (done emerald) / 미수신 (waiting slate) */}
-      {/* §11.264g — 모바일 collapsed 시 hidden, 데스크탑 always. */}
-      <div className={`mt-2.5 pt-2 border-t border-bd/50 ${isExpanded ? "" : "hidden md:block"}`} aria-label="공급사 응답 진행">
-        <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-          <span className="font-medium uppercase tracking-wider">공급사 응답</span>
-          {(() => {
-            const sent = quote.status !== "PENDING";
-            const waiting = quote.status === "SENT" && responseCount === 0;
-            const received = responseCount > 0;
-            // stage1 발송: sent → emerald / 미발송 → slate
-            const stage1Color = sent ? "bg-emerald-500" : "bg-slate-300";
-            // stage2 대기: received → emerald (지났음) / waiting → amber (active) / sent === false → slate
-            const stage2Color = received ? "bg-emerald-500" : waiting ? "bg-yellow-500" : "bg-slate-300";
-            // stage3 수신: received → emerald / 미수신 → slate
-            const stage3Color = received ? "bg-emerald-500" : "bg-slate-300";
-            return (
-              <div className="flex items-center gap-1 ml-1">
-                <span className={`inline-block w-2 h-2 rounded-full ${stage1Color}`} aria-label={sent ? "발송 완료" : "발송 전"} />
-                <span className="text-slate-300">·</span>
-                <span className={`inline-block w-2 h-2 rounded-full ${stage2Color}`} aria-label={received ? "응답 수집 완료" : waiting ? "응답 대기 중" : "응답 대기 전"} />
-                <span className="text-slate-300">·</span>
-                <span className={`inline-block w-2 h-2 rounded-full ${stage3Color}`} aria-label={received ? "수신 완료" : "수신 전"} />
-                <span className="ml-1.5 text-slate-500">
-                  {sent ? "발송" : "미발송"} → {received ? "수신" : waiting ? "대기" : "대기 전"} → {received ? "완료" : "대기 중"}
-                </span>
-              </div>
-            );
-          })()}
+      {/* §quotes-mgmt-enhance §1a — 카드 스텝퍼 경량화: 현재 단계만 라벨 · 완료=emerald·현재=blue·이후=slate 점.
+          공급사 응답 ●●● 타임라인 제거(시각 소음) → 우측 요약(발송 전 / 회신 N/M)으로 대체.
+          canonical = quote.status/responseCount 파생(§11.264g 모바일 collapsed hidden 보존). */}
+      <div className={`mt-3 pt-2.5 border-t border-bd/50 ${isExpanded ? "" : "hidden md:block"}`} aria-label="진행 단계">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 shrink-0">
+            {READINESS_LABELS.map((label, idx) => {
+              const active = idx <= signals.readinessStage;
+              const current = idx === signals.readinessStage;
+              return (
+                <span
+                  key={label}
+                  className={`inline-block h-2 w-2 rounded-full transition-colors ${
+                    current ? "bg-blue-500 ring-2 ring-blue-200" : active ? "bg-emerald-500" : "bg-slate-200"
+                  }`}
+                  aria-label={`${label}${current ? " · 현재" : active ? " · 완료" : ""}`}
+                />
+              );
+            })}
+          </div>
+          {/* #quote-card-batch1-density — 현재 단계 라벨만 14px bold(활성 강조). */}
+          <span className="text-sm font-bold text-blue-700 whitespace-nowrap">{READINESS_LABELS[signals.readinessStage]}</span>
+          <span className="ml-auto text-[11px] text-slate-500 whitespace-nowrap">
+            {quote.status === "PENDING" ? "발송 전" : `회신 ${responseCount}/${quote.vendorRequests?.length ?? itemCount}`}
+          </span>
         </div>
       </div>
 

@@ -60,23 +60,16 @@ describe("§11.227 #9 — 테이블 default + sort by column header", () => {
   });
 });
 
-describe("§11.227 #10c — 공급사 응답 미니 타임라인", () => {
-  it("미니 타임라인 component / element 정의", () => {
-    // 카드 분기 안 vendor 응답 3 stage element
-    // element 패턴: "공급사 응답" 또는 "발송 → 대기 → 수신" text 또는 vendor-timeline className
-    expect(page).toMatch(/공급사 응답[\s\S]{0,200}\b(timeline|진행|stage)\b|vendor-timeline|공급사\s*응답\s*진행/);
+describe("§quotes-mgmt-enhance §1a — #10c 공급사 응답 ●●● 타임라인 은퇴", () => {
+  it("구 미니 타임라인 제거(시각 소음) — 진행 단계 점 스텝퍼 + 회신 요약으로 대체", () => {
+    // §1a: "공급사 응답 ●●●"(발송 → 대기 → 수신) 3-stage 라인 제거.
+    expect(page).not.toMatch(/aria-label="공급사 응답 진행"/);
+    expect(page).not.toMatch(/발송 → 대기/);
   });
 
-  it("3 stage 분기 — sent / waiting / received (호영님 v2 '발송 → 대기 → 수신')", () => {
-    // canonical truth = quote.status + responseCount (vendorRequests model 변경 0).
-    // sent = quote.status !== 'PENDING', waiting = SENT && responseCount === 0,
-    // received = responseCount > 0
-    expect(page).toMatch(/공급사 응답[\s\S]{0,800}(sent|발송)[\s\S]{0,400}(waiting|대기)[\s\S]{0,400}(received|수신)/);
-  });
-
-  it("stage 색상 분기 — emerald (complete) / amber (pending) / slate (waiting)", () => {
-    // 미니 타임라인 stage dot 분기
-    expect(page).toMatch(/(bg-emerald-500|bg-emerald-400)[\s\S]{0,500}(bg-amber-500|bg-amber-400|bg-slate-300)/);
+  it("신 canonical 진행 지표 = readiness strip(점) + 우측 회신 요약", () => {
+    expect(page).toMatch(/READINESS_LABELS\[signals\.readinessStage\]/);
+    expect(page).toMatch(/회신 \$\{responseCount\}/);
   });
 });
 
