@@ -799,6 +799,23 @@ export function InventoryContextPanel({
                   <span className="text-slate-500">안전재고</span>
                   <span className="font-medium text-slate-700">{safetyValue}</span>
                 </div>
+                {/* §inventory-safety-gauge-drawer (지시문 §3.1 갭 게이지) — 재고 현황 섹션(정량 canonical 출처, §11.322)에
+                    현재/안전 게이지 막대. 신호등: 0 rose / 미달 yellow / 정상 emerald. 상태 카드는 결론 only 유지(§11.322). */}
+                {item.safetyStock !== null && item.safetyStock > 0 && (() => {
+                  const safety = item.safetyStock ?? 0;
+                  const pct = safety > 0 ? Math.min(100, Math.round((item.currentQuantity / safety) * 100)) : 0;
+                  const barColor = item.currentQuantity === 0 ? "bg-rose-500" : item.currentQuantity < safety ? "bg-yellow-500" : "bg-emerald-500";
+                  return (
+                    <div
+                      data-testid="inventory-context-safety-gauge"
+                      className="h-1.5 rounded-full bg-slate-100 overflow-hidden"
+                      role="img"
+                      aria-label={`안전재고 대비 ${pct}%`}
+                    >
+                      <div className={`h-full rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
+                    </div>
+                  );
+                })()}
                 <div
                   data-testid="inventory-context-kpi-expiring-soon"
                   className="flex justify-between items-center text-xs"
