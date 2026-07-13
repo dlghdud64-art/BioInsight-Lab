@@ -56,6 +56,7 @@ const BADGE = {
   blue:   { bg: "#EFF6FF", text: "#2563EB", border: "#BFDBFE" },
 } as const;
 
+// §랜딩 목업 갱신 P2 — 안전재고 게이지(현재÷안전). current===0 레드·미달 앰버·정상 그린.
 const INVENTORY_ITEMS = [
   {
     id: "inv-001",
@@ -64,6 +65,8 @@ const INVENTORY_ITEMS = [
     statusColor: "red" as const,
     sub: "남은 12일 · 잔량 2병",
     action: "재주문 검토",
+    current: 2,
+    safety: 2,
     selected: true,
   },
   {
@@ -73,6 +76,8 @@ const INVENTORY_ITEMS = [
     statusColor: "amber" as const,
     sub: "안전재고 미만 · 잔량 1병",
     action: "재주문 검토",
+    current: 1,
+    safety: 3,
     selected: false,
   },
   {
@@ -82,9 +87,19 @@ const INVENTORY_ITEMS = [
     statusColor: "blue" as const,
     sub: "입고 3건 · Lot 정보 미입력",
     action: "입고 반영",
+    current: 0,
+    safety: 2,
     selected: false,
   },
 ];
+
+// §랜딩 P2 — 게이지 색(§4 토큰): 0 레드 · 미달 앰버 · 정상 그린.
+const GAUGE = { zero: "#EF4444", low: "#F59E0B", ok: "#22C55E" } as const;
+function gaugeColor(current: number, safety: number): string {
+  if (current === 0) return GAUGE.zero;
+  if (current < safety) return GAUGE.low;
+  return GAUGE.ok;
+}
 
 const RAIL_DETAIL = {
   product: "Gibco FBS (500mL)",
@@ -150,6 +165,18 @@ function InventoryOpsMockupContent() {
                     style={{ color: item.selected ? "#FFFFFF" : C.text1 }}
                   >{item.title}</p>
                   <p className="text-[9px] md:text-[11px] mt-0.5 font-medium" style={{ color: C.text2 }}>{item.sub}</p>
+                  {/* §랜딩 P2 — 안전재고 게이지(현재÷안전, 0 레드·미달 앰버·정상 그린) */}
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <div className="h-1 flex-1 rounded-full overflow-hidden" style={{ backgroundColor: item.selected ? "rgba(255,255,255,0.18)" : C.sunken }}>
+                      <div className="h-full rounded-full" style={{
+                        width: `${Math.min(item.current / item.safety, 1) * 100}%`,
+                        backgroundColor: gaugeColor(item.current, item.safety),
+                      }} />
+                    </div>
+                    <span className="text-[8px] md:text-[9px] font-semibold whitespace-nowrap" style={{ color: item.selected ? "#CBD5E1" : C.text4 }}>
+                      {item.current}/{item.safety}
+                    </span>
+                  </div>
                 </div>
 
                 <button className="text-[9px] md:text-[10px] font-semibold px-2 md:px-3 py-1 md:py-1.5 rounded-lg flex items-center gap-0.5 md:gap-1 whitespace-nowrap flex-shrink-0"

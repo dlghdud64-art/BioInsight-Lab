@@ -28,9 +28,13 @@
   ⚠ bash mount stale → operator build+vitest 필수.
 
 ### Phase 2: 재고 운영 섹션 (실제 화면 반영) — `final-cta-section.tsx`
-- Status: [ ] Pending
-- **델타:** KPI4(오늘 처리3·부족/품절2·만료임박1·전체47) · 상태 pill(만료임박·재주문·입고미처리) · 안전재고 게이지(0 red·미달 amber·정상 green) · LOT 브리핑 드로어(다크) · 3기능카드.
-- **Gate:** 실제 재고 4탭 화면과 정합 · amber inline hex only.
+- **재정의(호영님 2026-07-13):** §2 요소 대부분 이미 충족 — KPI4·상태pill(만료임박/재주문/입고미처리)·LOT 브리핑 드로어(다크 #1A2840, Lot·유효기간레드·보관·잔량·최근입고 + 재주문검토/입고반영/Lot수정)·좌측 3기능카드 전량 존재. **유일 갭 = 안전재고 게이지 막대.**
+- **P2-gauge Status: [x] Complete (sandbox) → operator gate 대기**
+- **편집(1파일):** `INVENTORY_ITEMS`에 current/safety 추가(2/2 green·1/3 amber·0/2 red 3색 시연) + `gaugeColor` 헬퍼(0 레드 #EF4444·미달 앰버 #F59E0B·정상 그린 #22C55E) + 행 sub 아래 게이지 막대(width=min(현재/안전,1)*100%, inline hex, Tailwind amber-* 0).
+- **add-list(3):** final-cta-section.tsx · landing-inventory-gauge-p2.test.ts(신규) · 본 PLAN.
+- **sandbox 검증:** 게이지 헬퍼·3색 토큰·current/safety·render 반영 · Tailwind amber-* 0 · KPI4/pill/LOT드로어/3카드 보존.
+  ⚠ bash mount stale → operator build+vitest 필수.
+- **sweep:** 랜딩 5센티넬 중 final-cta 읽는 것(second-section-polish·reveal-trigger-364) — reveal/polish 잠금, 행 게이지 추가 무접촉 예상.
 
 ### Phase 3: 아이콘 통일
 - Status: [ ] Pending
@@ -44,4 +48,6 @@ sentinel(readFileSync) 광고-실물 truth guard. 랜딩 5센티넬 무회귀. o
 Phase별 단일 commit revert.
 
 ## 4. Progress
-Overall ~33%(P1 sandbox) · Next P2(재고 섹션) 정독→dry-run.
+Overall ~66%(P1 배포 2b305bfc · P2 sandbox) · Next P3(아이콘 통일).
+- P1 배포: `2b305bfc`(히어로 용어 정합).
+- P2 sandbox: 안전재고 게이지(§2 나머지 이미 충족).
