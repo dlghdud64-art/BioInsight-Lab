@@ -105,9 +105,23 @@ Must Not: page-per-feature · dead button/no-op · amber/orange Tailwind · prev
 - **Gate:** 스텝퍼=실상태(무접촉) · 경고 3→2 · CTA 공급사0 비활성(무접촉) · page.tsx 무접촉.
 
 ### Phase 5: §5 리마인더 (batch-reminder-sheet)
-- Status: [ ] Pending
-- **델타:** 미회신 공급사만 자동필터·D+ 배지 · 톤 프리셋 · 재응답 기한 · 개별발송+활동로그.
-- **Gate:** 대상=미회신만, 회신완료 제외, 로그 기록.
+- **재정의(호영님 2026-07-13):** §5 핵심(미회신 자동필터·회신완료 제외)은 이미 충족
+  (§11.228 `eligibleQuotes` responseCount===0 · "회신 수신(제외) N건" 배지). → Complete.
+  옵션 1(저위험 슬라이스) 채택 — 톤 프리셋 + 재응답 기한. D+/개별발송/활동로그는 backlog.
+- **P5-reminder-slice Status: [x] Complete (sandbox) → operator gate 대기**
+- **델타(2, sheet client-only):**
+  1. 톤 프리셋 3종(정중/표준/독촉) — `REMINDER_TONE_PRESETS` 상수 + `selectedTone` state(기본 '표준'=기존 기본문, 회귀 0),
+     pill 버튼 클릭 시 message 세팅(수동 편집 계속 허용).
+  2. 재응답 기한 선택 — `expiresInDays` 고정 7 → `setExpiresInDays` 노출 + select(3/5/7/14/30, 기본 7).
+     기존 발송 파이프라인(handleSendReminders→sendReminderForQuote)에 그대로 반영.
+- **add-list(3):** batch-reminder-sheet.tsx · quotes-mgmt-enhance-reminder-5.test.ts(신규) · 본 PLAN.
+- **sandbox 검증:** 프리셋 3종·selectedTone·setExpiresInDays·testid(tone-preset/expires-select) 반영 · amber 0 ·
+  필터/회신제외배지/isReminder/allSettled/vendor-requests 보존.
+  ⚠ bash mount stale(파일툴 view 검증) · sandbox vitest 불가 → operator build+전체 vitest 필수.
+- **sweep(3):** amber-removed-302d6b2 · vendor-requests-reminder(API, 무접촉) · batch-actions-c1(source-string 필터/라벨 보존→GREEN).
+- **backlog(별도 신중배치):** D+ 배지(sentAt/expiresAt page forward 필요) · 개별발송(sheet 구조변경) ·
+  활동로그(canonical/서버 라우트 확인 — client 조작 시 front-only 위험).
+- **Gate:** 대상=미회신만·회신완료 제외(무접촉 보존) · page.tsx·서버 무접촉.
 
 ## 6. Test Strategy
 Red-Green-Refactor. UI+파생 → sentinel(readFileSync) 회귀보호. **편집 전 `grep -rl <심볼> src/__tests__` sweep 필수.** 전체 vitest=operator.
@@ -126,7 +140,7 @@ Red-Green-Refactor. UI+파생 → sentinel(readFileSync) 회귀보호. **편집 
 ## 11. Progress
 Overall 15%(P0) · Current P1 · Blocker 없음 · Next P1 델타 lock(테이블 열 + QuoteCard 스텝퍼 정독).
 
-**Checklist:** [x]P0 [x]P1 [x]P2 [x]P3(§3단일 Complete·P3-batch sandbox) [x]P4(핵심 Complete·warn-dedup sandbox·full통합 backlog) [ ]P5
+**Checklist:** [x]P0 [x]P1 [x]P2 [x]P3(§3단일 Complete·P3-batch sandbox) [x]P4(핵심 Complete·warn-dedup sandbox·full통합 backlog) [x]P5(핵심 Complete·톤/기한 sandbox·D+/개별/로그 backlog)
 
 ## 12. Notes
 - 색상: yellow 신호등(amber Tailwind 0). 보라 하단바 유지.

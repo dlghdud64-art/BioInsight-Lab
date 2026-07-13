@@ -32,6 +32,29 @@ import { Loader2, Bell, Mail, AlertTriangle, CheckCircle2, Info } from "lucide-r
 import { useToast } from "@/hooks/use-toast";
 import { resolveSuppliers } from "./resolve-suppliers";
 
+// §5-reminder-slice(호영님 견적 고도화 2026-07-13) — 톤 프리셋 3종.
+//   자유 textarea 유지 + 프리셋 클릭 시 message 세팅(수동 편집 계속 허용).
+const REMINDER_TONE_PRESETS = [
+  {
+    key: "polite",
+    label: "정중",
+    message:
+      "안녕하세요. 견적 회신 기한이 다가오고 있어 다시 한 번 정중히 연락드립니다. 가능하실 때 회신 부탁드립니다.",
+  },
+  {
+    key: "standard",
+    label: "표준",
+    message:
+      "안녕하세요. 견적 회신 기한이 다가오고 있어 다시 한 번 연락드립니다. 빠른 회신 부탁드립니다.",
+  },
+  {
+    key: "urgent",
+    label: "독촉",
+    message:
+      "안녕하세요. 견적 회신 기한이 임박했습니다. 금일 중 회신 부탁드립니다.",
+  },
+] as const;
+
 // ── Types ──
 interface ReminderQuote {
   id: string;
@@ -153,10 +176,14 @@ export function BatchReminderSheet({
   organizationVendors = [],
 }: BatchReminderSheetProps) {
   const { toast } = useToast();
-  const [message, setMessage] = useState(
-    "안녕하세요. 견적 회신 기한이 다가오고 있어 다시 한 번 연락드립니다. 빠른 회신 부탁드립니다.",
+  // §5-reminder-slice — 기본 톤 '표준'(기존 기본문 유지, 회귀 0).
+  const [selectedTone, setSelectedTone] = useState<string>("standard");
+  const [message, setMessage] = useState<string>(
+    // §5-reminder-slice — as const 프리셋 리터럴로 좁혀지지 않게 string 명시(setMessage(tone.message) 타입 정합).
+    REMINDER_TONE_PRESETS.find((t) => t.key === "standard")!.message,
   );
-  const [expiresInDays] = useState(7);
+  // §5-reminder-slice — 재응답 기한 operator 선택(기존 고정 7 → setter 노출).
+  const [expiresInDays, setExpiresInDays] = useState(7);
   const [isSending, setIsSending] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
 
@@ -307,6 +334,28 @@ export function BatchReminderSheet({
               <label htmlFor="reminder-message" className="text-xs font-medium text-slate-700">
                 발송 사유 또는 추가 메시지 (선택)
               </label>
+              {/* §5-reminder-slice — 톤 프리셋(클릭 시 message 세팅, 수동 편집 계속 허용). */}
+              <div className="flex items-center gap-1.5">
+                {REMINDER_TONE_PRESETS.map((tone) => (
+                  <button
+                    key={tone.key}
+                    type="button"
+                    data-testid="reminder-tone-preset"
+                    aria-pressed={selectedTone === tone.key}
+                    onClick={() => {
+                      setSelectedTone(tone.key);
+                      setMessage(tone.message);
+                    }}
+                    className={`px-2.5 py-1 rounded-full border text-[11px] font-medium transition-colors ${
+                      selectedTone === tone.key
+                        ? "border-blue-300 bg-blue-50 text-blue-700"
+                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    {tone.label}
+                  </button>
+                ))}
+              </div>
               <Textarea
                 id="reminder-message"
                 value={message}
@@ -318,6 +367,27 @@ export function BatchReminderSheet({
               <p className="text-[11px] text-slate-500 break-keep">
                 입력한 메시지는 Reminder 메일 본문의 &quot;담당자 추가 메시지&quot; 섹션에 노출됩니다.
               </p>
+              {/* §5-reminder-slice — 재응답 기한 선택(기존 고정 7 → operator 선택, 서버 expiresInDays 반영). */}
+              <div className="flex items-center gap-2 pt-1">
+                <label htmlFor="reminder-expires" className="text-xs font-medium text-slate-700">
+                  재응답 기한
+                </label>
+                <select
+                  id="reminder-expires"
+                  data-testid="reminder-expires-select"
+                  value={expiresInDays}
+                  onChange={(e) => setExpiresInDays(Number(e.target.value))}
+                  disabled={isSending}
+                  className="h-8 min-h-[44px] sm:min-h-0 w-[120px] rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-900 disabled:opacity-50"
+                >
+                  <option value={3}>3일 이내</option>
+                  <option value={5}>5일 이내</option>
+                  <option value={7}>7일 이내</option>
+                  <option value={14}>14일 이내</option>
+                  <option value={30}>30일 이내</option>
+                </select>
+                <span className="text-[11px] text-slate-500">공급사 재응답 마감일이 됩니다.</span>
+              </div>
             </div>
           )}
 
