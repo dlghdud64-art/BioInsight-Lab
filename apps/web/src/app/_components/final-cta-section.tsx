@@ -297,9 +297,10 @@ export function FinalCTASection() {
           <Reveal className="lg:w-[300px] flex-shrink-0">
             <div className="flex flex-col gap-4">
               {[
-                { icon: PackageCheck, title: "입고 즉시 재고 반영", desc: "입고 확인과 동시에 재고 수량이 자동 갱신됩니다." },
-                { icon: Clock, title: "Lot / 유효기간 추적", desc: "Lot 번호와 유효기간을 기록하고 만료 임박 시 알림합니다." },
-                { icon: AlertTriangle, title: "부족·재주문 판단", desc: "안전재고 미만 품목을 감지하고 재주문 검토를 이어줍니다." },
+                // §랜딩 목업 갱신 P3 — 기능카드 아이콘 사각: 파랑 기본, 경고(부족·재주문)만 앰버(§3).
+                { icon: PackageCheck, title: "입고 즉시 재고 반영", desc: "입고 확인과 동시에 재고 수량이 자동 갱신됩니다.", tone: "blue" },
+                { icon: Clock, title: "Lot / 유효기간 추적", desc: "Lot 번호와 유효기간을 기록하고 만료 임박 시 알림합니다.", tone: "blue" },
+                { icon: AlertTriangle, title: "부족·재주문 판단", desc: "안전재고 미만 품목을 감지하고 재주문 검토를 이어줍니다.", tone: "amber" },
               ].map((pt, i) => (
                 <motion.div
                   key={pt.title}
@@ -310,8 +311,8 @@ export function FinalCTASection() {
                   className="rounded-xl p-4 flex items-start gap-3"
                   style={{ backgroundColor: "#FFFFFF", border: `1px solid ${LT.border}`, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
                 >
-                  <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: LT.blueSoft }}>
-                    <pt.icon className="h-4 w-4" style={{ color: LT.blueText }} strokeWidth={1.8} />
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: pt.tone === "amber" ? "#FFFBEB" : LT.blueSoft }}>
+                    <pt.icon className="h-4 w-4" style={{ color: pt.tone === "amber" ? "#D97706" : LT.blueText }} strokeWidth={1.8} />
                   </div>
                   <div>
                     <p className="font-semibold text-sm mb-0.5" style={{ color: LT.text1 }}>{pt.title}</p>

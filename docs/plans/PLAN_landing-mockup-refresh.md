@@ -1,6 +1,6 @@
 # Implementation Plan: 랜딩 제품 미리보기 목업 갱신 (§랜딩 목업 갱신)
 
-- **Status:** 🔄 In Progress (P1 sandbox 완료)
+- **Status:** ✅ Complete (P1 배포 2b305bfc · P2 배포 b351f895 · P3 sandbox)
 - **Started:** 2026-07-13
 - **Source:** 업로드 `랜딩 목업 갱신 핸드오프.md`(§0–5) + 단독 실행 목업 `랜딩 목업 갱신.html`(self-unpacking 번들, 시각 참조).
 
@@ -37,9 +37,11 @@
 - **sweep:** 랜딩 5센티넬 중 final-cta 읽는 것(second-section-polish·reveal-trigger-364) — reveal/polish 잠금, 행 게이지 추가 무접촉 예상.
 
 ### Phase 3: 아이콘 통일
-- Status: [ ] Pending
-- **델타:** 이모지 전면 제거 → LabAxis 라운드 사각 + 라인 SVG(stroke2, 24 viewBox). 기능카드 box/clock/alert(앰버) · 운영상태 doc/check/clock/shield · LOT grid/clock/pin/box/refresh.
-- **Gate:** 이모지 0 · 라인 SVG 통일.
+- **재정의(호영님 2026-07-13):** §3 핵심(이모지→라인 SVG 통일)은 **이미 충족** — 랜딩 3파일 데코 이모지 0(`→`는 타이포), 전부 lucide 라인 아이콘. 아이콘 셋·스타일도 표와 거의 정합(기능카드 파란 라운드 사각·운영상태 doc/check/clock/shield·LOT 라인 SVG). **유일 실델타 = §3 "경고만 앰버".**
+- **P3-warn-amber Status: [x] Complete (sandbox) → operator gate 대기**
+- **편집(1파일):** `final-cta-section.tsx` 기능 3카드에 `tone` 필드(box/clock=blue·부족재주문(alert)=amber) + 렌더 조건(amber → 사각 #FFFBEB·아이콘 #D97706, 그 외 파랑). inline hex, Tailwind amber-* 0.
+- **add-list(3):** final-cta-section.tsx · landing-icon-unify-p3.test.ts(신규) · 본 PLAN.
+- **sandbox 검증:** tone amber 조건 렌더 · 이모지 0 guard(3파일) · lucide 유지 · Tailwind amber-* 0. ⚠ operator build+vitest 필수.
 
 ## 2. Test Strategy
 sentinel(readFileSync) 광고-실물 truth guard. 랜딩 5센티넬 무회귀. operator=build+전체 vitest.
@@ -48,6 +50,7 @@ sentinel(readFileSync) 광고-실물 truth guard. 랜딩 5센티넬 무회귀. o
 Phase별 단일 commit revert.
 
 ## 4. Progress
-Overall ~66%(P1 배포 2b305bfc · P2 sandbox) · Next P3(아이콘 통일).
-- P1 배포: `2b305bfc`(히어로 용어 정합).
-- P2 sandbox: 안전재고 게이지(§2 나머지 이미 충족).
+Overall 100%(P1 배포 2b305bfc · P2 배포 b351f895 · P3 sandbox) · QA §5 전항 충족(발주전환 0·회신대기/비교가능·게이지·이모지0/라인SVG·3D plexus 기존·히어로 카피 유지).
+- P1 배포 `2b305bfc`: 히어로 용어 정합(발주 전환 제거).
+- P2 배포 `b351f895`: 안전재고 게이지(§2 나머지 이미 충족).
+- P3 sandbox: 경고 카드 앰버(§3 나머지 이미 충족).
