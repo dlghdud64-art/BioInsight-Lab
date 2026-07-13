@@ -11,7 +11,7 @@ import {
  * ── Product Proof — 구매 운영 워크큐 목업 ────────────────
  *
  * 현재 제품 구조에 맞게 업데이트:
- * - "발주 전환 큐" → "구매 운영"
+ * - 큐 명칭 "구매 운영" 정합 · order conversion 기능 제거 반영(§랜딩 목업 갱신 P1)
  * - "AI 선택안" 패널 → 운영 상태 요약 dock
  * - AI 전면 CTA 금지 원칙 적용
  * - 라이트 테마 기반 (현재 제품과 동일)
@@ -23,13 +23,13 @@ const QUEUE_ITEMS = [
     id: "pe-001",
     title: "PCR 튜브 (0.2mL) 회신 완료",
     summary: "PCR Tubes 0.2mL, Flat Cap, 1000ea/pk",
-    statusLabel: "발주 전환 가능",
+    statusLabel: "비교 가능",
     statusColor: "emerald" as const,
     blocker: null as string | null,
     replies: "3/3",
     price: "₩185,000",
     supplier: "BioKorea",
-    ctaLabel: "발주 전환 준비",
+    ctaLabel: "선택안 확정",
     ctaPrimary: true,
     selected: true,
   },
@@ -77,7 +77,7 @@ export function OpsConsoleMockupContent() {
       <div className="flex-1 md:border-r border-slate-200">
         {/* 탭 */}
         <div className="px-4 py-2.5 border-b border-slate-100 flex items-center gap-1">
-          {["전체 4", "선택 검토 2", "전환 가능 1", "보류 1"].map((tab, i) => (
+          {["전체 4", "선택 검토 2", "비교 가능 1", "보류 1"].map((tab, i) => (
             <span key={tab}
               className="text-[10px] font-medium px-2.5 py-1 rounded-md whitespace-nowrap"
               style={{
@@ -148,7 +148,7 @@ export function OpsConsoleMockupContent() {
         {/* KPI 미니 */}
         {[
           { icon: <FileText className="h-3 w-3 text-blue-500" />, label: "처리 필요", value: "2건", color: "#2563eb" },
-          { icon: <CheckCircle2 className="h-3 w-3 text-emerald-500" />, label: "전환 가능", value: "1건", color: "#059669" },
+          { icon: <CheckCircle2 className="h-3 w-3 text-emerald-500" />, label: "비교 가능", value: "1건", color: "#059669" },
           { icon: <Clock className="h-3 w-3 text-yellow-500" />, label: "승인 대기", value: "0건", color: "#94a3b8" },
           { icon: <ShieldAlert className="h-3 w-3 text-slate-400" />, label: "위험/차단", value: "0건", color: "#94a3b8" },
         ].map((kpi) => (

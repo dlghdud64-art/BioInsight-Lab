@@ -591,7 +591,7 @@ export function BioInsightHeroSection() {
 
         {/* ── Mockup 1 캡션 ── */}
         <p className="text-[11px] md:text-[13px] font-semibold tracking-wide mb-4 md:mb-5 animate-stagger-up" style={{ color: "#94A3B8", animationDelay: "240ms" }}>
-          견적 비교부터 발주 전환까지, 한 화면에서 운영합니다
+          견적 요청부터 선택안 확정까지, 한 화면에서 운영합니다
         </p>
 
         {/* ── Hero Mockup — 제품이 주인공 ── */}
@@ -632,7 +632,7 @@ export function BioInsightHeroSection() {
               style={{ backgroundColor: "rgba(255,255,255,0.04)" }}
             >
               {[
-                { label: "전환 대기", value: "12건", color: "#3B82F6" },
+                { label: "회신 대기", value: "12건", color: "#3B82F6" },
                 { label: "금주 처리", value: "₩2,450,000", color: "#93C5FD" },
                 { label: "검토 필요", value: "선택안 3건", color: "#CBD5E1" },
               ].map((kpi, idx) => (
