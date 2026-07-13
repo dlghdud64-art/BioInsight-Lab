@@ -1,9 +1,9 @@
 # Implementation Plan: 견적 관리 고도화 (리팩토링 델타)
 
-- **Status:** 🔄 In Progress
+- **Status:** ✅ Complete (§1–§5 배포, backlog 별도)
 - **Started:** 2026-07-12
-- **Last Updated:** 2026-07-12 (P2 sandbox 완료)
-- **Estimated Completion:** TBD (Large, §별 phase)
+- **Last Updated:** 2026-07-13 (§1–§5 전 phase 배포 완료)
+- **Estimated Completion:** 완료 — §1a c3ffe6a0 · §2 5bea2908 · §3 a2db6bf5 · §4 362a1115 · §5 45e76a8f
 
 **CRITICAL INSTRUCTIONS**: 각 phase 후 — ✅체크박스 · 🧪gate(sandbox tsc+sentinel 사전검증 / operator build+전체 vitest) · 📅Last Updated · 📝Notes · ➡️다음.
 ⛔ gate 실패 진행 금지 · ⛔ dead button/no-op 금지 · ⛔ amber/orange Tailwind class 금지(신호등).
@@ -138,7 +138,7 @@ Red-Green-Refactor. UI+파생 → sentinel(readFileSync) 회귀보호. **편집 
 §별 single-commit revert. 각 phase 독립.
 
 ## 11. Progress
-Overall 15%(P0) · Current P1 · Blocker 없음 · Next P1 델타 lock(테이블 열 + QuoteCard 스텝퍼 정독).
+Overall 100%(§1–§5 배포 완료) · Blocker 없음 · Next = backlog(별도 신중배치): §4 full 경고통합 · §5 D+배지/개별발송/활동로그.
 
 **Checklist:** [x]P0 [x]P1 [x]P2 [x]P3(§3단일 Complete·P3-batch sandbox) [x]P4(핵심 Complete·warn-dedup sandbox·full통합 backlog) [x]P5(핵심 Complete·톤/기한 sandbox·D+/개별/로그 backlog)
 
@@ -146,4 +146,9 @@ Overall 15%(P0) · Current P1 · Blocker 없음 · Next P1 델타 lock(테이블
 - 색상: yellow 신호등(amber Tailwind 0). 보라 하단바 유지.
 - greenfield 아님 — dispatch/*·QuoteCard 리팩토링.
 - 학습 이월: sentinel sweep 필수 · 대형 한글파일 bash 편집 · canonical 충돌 재배치.
+- **★ P5 operator-catch 학습(타입 narrowing):** `REMINDER_TONE_PRESETS as const` 배열 요소를
+  `useState(preset.message)` 초기값으로 쓰면 state가 그 리터럴 타입으로 좁혀져, 다른 프리셋 대입
+  (`setMessage(polite/urgent)`) 시 TS2345 빌드 실패. sandbox는 bash mount stale로 tsc 검증 불가 →
+  operator build(EXIT 1)가 포착·`useState<string>` 확장으로 해소. **규칙: `as const` 요소를 setter 있는
+  useState 초기값으로 쓸 때 제네릭 타입 명시 확장**(`useState<string>`). sandbox 미검증 항목은 operator build 필수.
 - **★ P1a operator-catch 학습:** "pre-verify 전량 GREEN" 주장이 틀림 — 264g/batch1-density 2건 실제 red였음. 원인 = 내가 *진화한 assertion만* 대조하고 **touched sentinel 파일의 나머지 assertion**(264g의 잔여 타임라인 파생 pin, batch1-density의 옛 `current ?` 삼항)은 신규 소스와 대조 안 함. **규칙 강화: sentinel 파일을 건드리거나 그 파일이 읽는 소스를 바꿀 때, 파일 내 `expect(...).toMatch/not.toMatch` 전수를 신규 소스에 하나씩 대조**(sandbox vitest 불가 → 수동 전수). operator가 264g/batch1-density inline 정합·add +1로 해소(배포 c3ffe6a0).
