@@ -84,10 +84,25 @@ Must Not: page-per-feature · dead button/no-op · amber/orange Tailwind · prev
   batch-actions-c1 · inventory-batch-dispatch.
 - **Gate:** front-only success 0 · 상태 분기 정확 · page.tsx 무접촉(279 금지패턴 재오염 0).
 
-### Phase 4: §4 발송 검토 모달 (batch-dispatch-sheet / workbench)
-- Status: [ ] Pending
-- **델타:** 스텝퍼 실제 진행 정합(가짜 체크 제거) · 경고 1개 통합 · 공급사 추가 히어로(파란 테두리) · 메시지/기한 접기.
-- **Gate:** 스텝퍼=실상태, 중복 경고 0, CTA 공급사0곳 비활성.
+### Phase 4: §4 발송 검토 모달 (vendor-dispatch-workbench)
+- **재정의(호영님 2026-07-13):** §4 핵심은 이미 충족(§quote-screen-sian P6.4 §09):
+  스텝퍼 실상태 파생(가짜 체크 0, `quote-dispatch-stepper` step.done/current/blocked=sendReadiness/readinessChecks) ·
+  공급사 추가 히어로(파란 테두리 L700) · CTA 공급사0곳 비활성(sendReadiness!=="ready") ·
+  메시지 접기(messageEditing/messageExpanded). → 이 항목들 Complete.
+- **P4-warn-dedup Status: [x] Complete (sandbox) → operator gate 대기**
+- **잔여 갭 = 경고 3겹 동시노출**(blocked+공급사선택 시 스텝퍼 막힘배너 L624 + 2상태 배너 L652 + send-gate L1107).
+  옵션 1(minimal de-dup) 채택 — full 1개 통합(옵션 2, 다중 센티넬 재작성)은 **backlog**.
+- **델타(2편집, workbench):**
+  1. L624 막힘배너 조건에 `&& includedCount === 0` → 공급사 선택 후 숨김(보강 CTA는 미선택 blocked 전용 잔존, 조준 정확).
+  2. L677 2상태 배너 blocked 하위문에 `firstReadinessBlocker` 흡수 → 특정 사유 승계, 정보 손실 0.
+  결과: blocked+선택 경고 3겹→2겹(2상태 enriched + send-gate). dead/no-warn 아님.
+- **add-list(3):** vendor-dispatch-workbench.tsx · quotes-mgmt-enhance-warn-dedup-4.test.ts(신규) · 본 PLAN.
+- **sandbox 검증:** 두 편집 반영(L628 게이팅·L682 흡수) · amber 0 · `공급사 후보 보강` 정확 1회 · stepper/state-banner/send-gate/히어로 보존.
+  ⚠ bash mount stale(파일툴 view 검증) · sandbox vitest 불가 → operator build+전체 vitest 필수.
+- **sweep(workbench 소스 읽는 7파일):** aria-274 · dispatch-supplier-wiring · no-supplier-hero-09b · stepper-sian-09 ·
+  2state-recipient-cards-09 · 3-source-grouping · remediation-visible-292(전부 source-string toContain, 보강 라벨 1회 보존→GREEN).
+- **메시지/기한 접기:** 메시지 이미 접기 존재(완료), 기한(L1062)은 단일 컴팩트 행 → 접기 실이득 미미로 미도입.
+- **Gate:** 스텝퍼=실상태(무접촉) · 경고 3→2 · CTA 공급사0 비활성(무접촉) · page.tsx 무접촉.
 
 ### Phase 5: §5 리마인더 (batch-reminder-sheet)
 - Status: [ ] Pending
@@ -111,7 +126,7 @@ Red-Green-Refactor. UI+파생 → sentinel(readFileSync) 회귀보호. **편집 
 ## 11. Progress
 Overall 15%(P0) · Current P1 · Blocker 없음 · Next P1 델타 lock(테이블 열 + QuoteCard 스텝퍼 정독).
 
-**Checklist:** [x]P0 [x]P1 [x]P2 [x]P3(§3단일 Complete·P3-batch sandbox) [ ]P4 [ ]P5
+**Checklist:** [x]P0 [x]P1 [x]P2 [x]P3(§3단일 Complete·P3-batch sandbox) [x]P4(핵심 Complete·warn-dedup sandbox·full통합 backlog) [ ]P5
 
 ## 12. Notes
 - 색상: yellow 신호등(amber Tailwind 0). 보라 하단바 유지.

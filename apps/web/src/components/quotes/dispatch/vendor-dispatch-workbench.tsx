@@ -621,7 +621,11 @@ export function VendorRequestModal({
                 </li>
               ))}
             </ol>
-            {sendReadiness === "blocked" && !showNoSupplierHero && (
+            {/* §4-warn-dedup(호영님 견적 고도화 2026-07-13) — 공급사 선택 후엔 이 막힘배너 숨김.
+                blocked+선택 상태의 3겹 경고(막힘배너·2상태배너·send-gate) 중 잉여 제거.
+                미선택(includedCount===0)·후보만 존재 상태에서만 노출 → 보강 CTA 조준 정확.
+                특정 사유(firstReadinessBlocker)는 2상태 배너 하위문으로 승계(정보 손실 0). */}
+            {sendReadiness === "blocked" && !showNoSupplierHero && includedCount === 0 && (
               <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2.5">
                 <p className="text-xs font-medium text-yellow-700">
                   {firstReadinessBlocker ?? "공급사를 먼저 추가하세요"}
@@ -674,7 +678,8 @@ export function VendorRequestModal({
                 <p className="text-xs">
                   {sendReadiness === "ready"
                     ? "공급사 선별 · 연락 채널 · 메시지 · 견적 연결까지 모두 확인됐습니다."
-                    : `공급사 ${includedCount}곳 선택됨 · 연락처·메시지 확인이 필요합니다.`}
+                    : /* §4-warn-dedup — 막힘배너 특정 사유(firstReadinessBlocker) 흡수(정보 손실 0). */
+                      `공급사 ${includedCount}곳 선택됨 · ${firstReadinessBlocker ?? "연락처·메시지 확인이 필요합니다."}`}
                 </p>
               </div>
             </div>
