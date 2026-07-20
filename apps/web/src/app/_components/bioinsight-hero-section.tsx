@@ -632,7 +632,7 @@ export function BioInsightHeroSection() {
               style={{ backgroundColor: "rgba(255,255,255,0.04)" }}
             >
               {[
-                { label: "회신 대기", value: "12건", color: "#3B82F6" },
+                { label: "회신 대기", value: "12건", color: "#93C5FD" },
                 { label: "금주 처리", value: "₩2,450,000", color: "#93C5FD" },
                 { label: "검토 필요", value: "선택안 3건", color: "#CBD5E1" },
               ].map((kpi, idx) => (

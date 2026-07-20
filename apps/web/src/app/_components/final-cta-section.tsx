@@ -114,10 +114,11 @@ function InventoryOpsMockupContent() {
         {/* KPI strip — 모바일 2x2, 데스크톱 4col */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-px" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
           {[
-            { label: "오늘 처리 대상", value: "3", color: "#EF4444" },
-            { label: "부족/품절", value: "2", color: "#F59E0B" },
-            { label: "만료 임박", value: "1", color: "#F97316" },
-            { label: "전체 재고", value: "47", color: "#3B82F6" },
+            // §랜딩 E — KPI 값색 목업 토큰 정합(오렌지 hex 제거 포함)
+            { label: "오늘 처리 대상", value: "3", color: "#DC2626" },
+            { label: "부족/품절", value: "2", color: "#B45309" },
+            { label: "만료 임박", value: "1", color: "#DC2626" },
+            { label: "전체 재고", value: "47", color: "#2563EB" },
           ].map((kpi) => (
             <div key={kpi.label} className="px-2 md:px-3 py-1.5 md:py-2" style={{ backgroundColor: C.base }}>
               <p className="text-[8px] md:text-[9px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: C.text3 }}>{kpi.label}</p>
@@ -224,13 +225,14 @@ function InventoryOpsMockupContent() {
             style={{ backgroundColor: C.accent }}>
             재주문 검토 <ArrowRight className="h-3 w-3" />
           </button>
+          {/* §랜딩 E — 드로어 보조버튼 다크 정합(목업 토큰). 라이트 토큰은 다크 드로어 위 대비 부적절. */}
           <div className="flex gap-1.5">
             <button className="flex-1 text-[10px] font-medium px-2 py-1.5 rounded-lg text-center"
-              style={{ color: C.text2, border: `1px solid ${C.divider}` }}>
+              style={{ color: "#CBD5E1", border: "1px solid #2F3D57", backgroundColor: "#1A2438" }}>
               입고 반영
             </button>
             <button className="flex-1 text-[10px] font-medium px-2 py-1.5 rounded-lg text-center"
-              style={{ color: C.text2, border: `1px solid ${C.divider}` }}>
+              style={{ color: "#CBD5E1", border: "1px solid #2F3D57", backgroundColor: "#1A2438" }}>
               Lot 수정
             </button>
           </div>

@@ -1,6 +1,6 @@
 # Implementation Plan: 랜딩 제품 미리보기 목업 갱신 (§랜딩 목업 갱신)
 
-- **Status:** 🔄 In Progress (P1~P3 배포 완료 · **P4 목업 정합 sandbox** · D·E 후속)
+- **Status:** ✅ Complete (P1~P3·P4+D 배포 · **E sandbox** — E 게이트 통과 시 전 phase 종결)
 - **⚠ 학습:** 시각 목업이 번들 형식이어도 **원본을 반드시 추출·대조한 뒤 구현**할 것. 산문 핸드오프만으로 채운 추정(카피·표시 아이템·색 규칙)이 원본과 어긋나 P4 재작업 발생. 번들 추출법: `script[type="__bundler/template"]` 디코드.
 - **Started:** 2026-07-13
 - **Source:** 업로드 `랜딩 목업 갱신 핸드오프.md`(§0–5) + 단독 실행 목업 `랜딩 목업 갱신.html`(self-unpacking 번들, 시각 참조).
@@ -52,7 +52,13 @@
 - **C 게이지:** P2의 `current÷safety` 비율 규칙(.md "0 레드" 문구 기반 추정) 폐기 → **목업 실값**(만료임박 85% `#F59E0B` · 재주문필요 22% `#EF4444` · 입고미처리 60% `#22C55E`). 색=행 심각도, 폭=재고 수준. 목업에 없는 N/M 라벨 제거.
 - **센티넬 진화 2:** `landing-ops-mockup-truth-p1`(카피·선택건 칩) · `landing-inventory-gauge-p2`(게이지 실값 + 폐기분 잔재 0). `landing-icon-unify-p3`는 무영향.
 - **add-list(6):** bioinsight-hero-section · ops-console-preview-section · final-cta-section · truth-p1(진화) · gauge-p2(진화) · 본 PLAN.
-- **잔여:** **E** 미세 색 토큰(KPI `#93c5fd`, 재고 KPI `#dc2626/#b45309`, 탭 활성 `#1e3a8a`, 드로어 보조버튼 `#2f3d57/#1a2438/#cbd5e1`, body `#f1f5fb`) — 후속 배치.
+### Phase E: 미세 색 토큰 목업 정합
+- **Status: [x] Complete (sandbox) → operator gate 대기**
+- **편집(3파일):** ① 히어로 KPI 값색 `#3B82F6`→`#93C5FD` ② 재고 KPI 4색 → `#DC2626/#B45309/#DC2626/#2563EB`(**오렌지 hex `#F97316` 제거** — 신호등 정합 부수효과) ③ 탭 활성 `#1e293b`→`#1E3A8A` ④ LOT 드로어 보조버튼 라이트 토큰 → 다크(`#CBD5E1/#2F3D57/#1A2438`, 다크 드로어 대비 정합).
+- **skip(사유):** body bg `#f1f5fb` — 목업은 grid 1장 배경, 구현은 흰 카드+slate dock 구조라 1:1 대응 없음 → 임의 적용 시 오히려 부정합.
+- **⚠ sandbox self-catch:** KPI **JS 배열 리터럴 안에 JSX 주석(`{/* */}`)** 을 넣으면 빈 객체가 원소로 추가되는 버그 — 즉시 `//` 주석으로 정정(§11.303 JSX 구조 교훈 유사, 신규 센티넬에 guard 포함).
+- **신규 센티넬:** `landing-color-token-e.test.ts` — 4토큰 신규값 + `#F97316` 잔재 0 + C 토큰 정의 불변(second-section-polish lock 정합) + 빈 객체 원소 0 + amber-* 0. 구값은 주석에도 미잔존(전수 grep 0 — P4 guard-trip 교훈 적용).
+- **add-list(5):** hero · ops-preview · final-cta · color-token-e(신규) · 본 PLAN.
 
 ### Phase D: 구매 행 아바타 아이콘 (7/19 개정본 신규)
 - **Status: [x] Complete (sandbox) → operator gate 대기** · ⚠ P4 미커밋 상태에서 이어 작업 → **P4+D 합본 커밋**.
@@ -67,8 +73,9 @@ sentinel(readFileSync) 광고-실물 truth guard. 랜딩 5센티넬 무회귀. o
 Phase별 단일 commit revert.
 
 ## 4. Progress
-P1 `2b305bfc` · P2 `b351f895` · P3 `d7fc4e97` 배포 · **P4(목업 정합 A·B·C) sandbox** · 잔여 D·E 후속 배치.
+P1 `2b305bfc` · P2 `b351f895` · P3 `d7fc4e97` · P4+D `7f5c3312` 배포 · **E sandbox**(마지막).
 - P1: 히어로 용어 정합(발주 전환 제거).
 - P2: 안전재고 게이지 도입(이후 P4에서 목업 실값으로 정정).
 - P3: 경고 카드 앰버.
-- P4: 목업 원본 대조 → 카피·선택건·게이지 정합(추정분 정정).
+- P4+D: 목업 원본 채택(카피·선택칩 공급사미정/마감임박 — 호영님 확인 결정·게이지 실값) + 행 아바타.
+- E: 미세 색 토큰 4건(오렌지 hex 제거 포함) + body bg skip 사유 기록.

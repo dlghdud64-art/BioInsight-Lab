@@ -103,7 +103,7 @@ export function OpsConsoleMockupContent() {
             <span key={tab}
               className="text-[10px] font-medium px-2.5 py-1 rounded-md whitespace-nowrap"
               style={{
-                color: i === 0 ? "#1e293b" : "#94a3b8",
+                color: i === 0 ? "#1E3A8A" : "#94a3b8",
                 backgroundColor: i === 0 ? "#f1f5f9" : "transparent",
               }}
             >{tab}</span>
