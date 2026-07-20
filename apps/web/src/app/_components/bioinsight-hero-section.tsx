@@ -591,7 +591,7 @@ export function BioInsightHeroSection() {
 
         {/* ── Mockup 1 캡션 ── */}
         <p className="text-[11px] md:text-[13px] font-semibold tracking-wide mb-4 md:mb-5 animate-stagger-up" style={{ color: "#94A3B8", animationDelay: "240ms" }}>
-          견적 요청부터 선택안 확정까지, 한 화면에서 운영합니다
+          견적 비교부터 재고 운영까지, 한 화면에서 관리합니다
         </p>
 
         {/* ── Hero Mockup — 제품이 주인공 ── */}
