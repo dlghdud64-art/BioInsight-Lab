@@ -32,6 +32,12 @@ export interface ActionInboxItem {
 
 export interface ActionInboxProps {
   items: ActionInboxItem[];
+  /**
+   * §dashboard-mobile-refine P3 (호영님 2026-07-20, 지시문 2a-1) — 헤더 `전체 보기 ›` 딥링크.
+   * **옵셔널**: 주입한 surface(모바일 뷰)에서만 렌더 → 데스크탑 page.tsx 무접촉(회귀 0).
+   * 미주입 시 아예 렌더하지 않으므로 dead button 0.
+   */
+  viewAllHref?: string;
 }
 
 // §11.302 신호등 — tone → 아이콘/배지(yellow, amber 금지).
@@ -60,7 +66,7 @@ const TONE_ICON: Record<ActionTone, typeof AlertTriangle> = {
   ok: CheckCircle2,
 };
 
-export function ActionInbox({ items }: ActionInboxProps) {
+export function ActionInbox({ items, viewAllHref }: ActionInboxProps) {
   const actionable = items.filter((it) => it.count > 0);
 
   if (actionable.length === 0) {
@@ -79,6 +85,15 @@ export function ActionInbox({ items }: ActionInboxProps) {
         <h2 className="text-[13px] font-bold text-slate-900">
           오늘 처리해야 할 일 <span className="text-slate-400 font-semibold">· {actionable.length}건</span>
         </h2>
+        {viewAllHref && (
+          <a
+            href={viewAllHref}
+            className="ml-auto inline-flex items-center gap-0.5 -my-1.5 -mr-1 px-1 min-h-[44px] text-[12px] font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+          >
+            전체 보기
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+          </a>
+        )}
       </div>
       <ul className="divide-y divide-slate-100">
         {actionable.map((it) => {

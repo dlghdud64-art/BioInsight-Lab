@@ -130,8 +130,12 @@ export function NextStepBanner({ summary }: NextStepBannerProps) {
         style={{ background: "radial-gradient(120% 180% at 92% 0%, rgba(255,255,255,0.10), transparent 60%)" }}
       />
       <Icon className="relative z-10 h-4 w-4 flex-none text-white" aria-hidden="true" />
-      {/* 단일 행 요약 — eyebrow + 제목 + 설명 inline. truncate 로 폭 초과 시 한 줄 유지. */}
-      <p className="relative z-10 min-w-0 flex-1 text-[12.5px] leading-snug truncate">
+      {/* eyebrow + 제목 + 설명 inline.
+       *  §dashboard-mobile-refine P2 (호영님 2026-07-20) — 모바일은 문구가 잘리면 다음 행동을 못 읽으므로
+       *  line-clamp-2 로 2줄 전문 노출(배너 높이 자동 확장). sm↑ 는 기존 thin 1행(truncate) 유지 →
+       *  견적 PriorityRecommendationCard 와의 데스크탑 밀도 정합(§nextstep-banner-density) 보존.
+       *  F5 판정(i): 모바일 한정 밀도 차는 역할 차이(대시보드=단일 배너 / 견적=리스트 즉시 노출)로 수용. */}
+      <p className="relative z-10 min-w-0 flex-1 text-[12.5px] leading-snug line-clamp-2 sm:line-clamp-none sm:truncate [text-wrap:pretty]">
         <span className="mr-1.5 font-extrabold uppercase tracking-[0.09em] text-[10px]" style={{ color: "#a9c2f5" }}>
           {ins.eyebrow}
         </span>
