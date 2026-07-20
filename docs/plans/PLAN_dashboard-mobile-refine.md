@@ -1,6 +1,6 @@
 # Implementation Plan: 메인 대시보드 모바일 개선 (1a 기본 + 2a 고도화)
 
-- **Status:** ⏳ Pending
+- **Status:** ✅ Complete (2026-07-20 종결 — 배포 `fbe91723` · `946bc8ef`)
 - **Started:** 2026-07-20
 - **Last Updated:** 2026-07-20 (Phase 2–3 배포 종결 `fbe91723`)
 - **Estimated Completion:** TBD
@@ -390,6 +390,9 @@ Red-Green-Refactor 엄수.
 >
 > → **sandbox 권고: 2a-5 미구현(현행 유지).** 지시문의 *메커니즘*이 지시문의 *목표*와 상충하며,
 > 목표는 이미 초과 달성되어 있다. 구현 시 P0 회귀 + sentinel 4종 파괴만 발생한다.
+>
+> ✅ **호영님 승인(2026-07-20): 현행 유지 확정.** operator 도 동의. 2a-5 는 **미구현으로 종결**하며
+> 재론 대상 아님(§11.272e P0 수정 보호). 향후 지시문에 FAB 축소안이 다시 등장하면 이 판정을 우선한다.
 
 ### Phase 4: dismiss 단건화 — ✅ Complete (2026-07-20) · FAB 은 F11 로 미구현 권고
 **Goal:** FAB pill/축소 + 온보딩 1/3 로테이션, 스모크·롤백 확정.
@@ -437,8 +440,10 @@ Red-Green-Refactor 엄수.
 - [x] F7(c) 범위 준수 — 진행 점 `1/3`·단계 텍스트·`onboardingSteps` **미도입** (sentinel 로 금지 고정)
 - [x] 회귀 0 — navy·thin 컨테이너·인라인 아이콘·P2 뷰포트 분기·deriveInsight 우선순위 문구·CTA·44px·allEmpty 폐지 유지
 - [x] canonical 침범 0 — dismiss 는 UI state(localStorage) 한정, summary 파생 무변경
-- [ ] `npm run build` (F10 — `.tsx` 변경이므로 **커밋 전 필수**) → operator 위임
-- [ ] operator full `vitest` baseline-delta 0 재확인
+- [x] **`npm run build` EXIT 0** (F10 준수)
+- [x] **operator full `vitest` baseline-delta 0** — `132 file fail / 293`, 직전(133/294) 대비 **감소**, 신규 실패 0
+- [x] 신규 p4 + mobile-refine 3 sentinel **61/61 GREEN**
+- [x] **커밋·푸시 `946bc8ef`** (`fbe91723..946bc8ef`, origin/main 격차 0). 단독 add 3파일, noise 미포함
 
 **⚠️ 사용자 영향(의도됨):** 레거시 영구 dismiss 사용자는 배너가 **1회 재노출**된다. 기존 동작이
 "✕ 한 번 → 이후 모든 운영 신호 영구 차단"이라는 결함이었으므로 복구가 맞다.
@@ -489,10 +494,10 @@ revert 시 기존 사용자 상태 그대로 복원됨.
 
 ## 11. Progress Tracking
 
-- Overall completion: **95%** — Phase 0–4 완료. Phase 2–3 배포(`fbe91723`), Phase 4 게이트 대기
-- Current phase: **Phase 4 ✅ 구현 완료 → operator 게이트(build + full vitest) 대기**
-- Current blocker: 없음. F7=(c)·F8=(a) 확정, F11 은 미구현 권고(호영님 확인 요)
-- Next validation step: `npm run build` + full `vitest` baseline-delta 0 → 커밋
+- Overall completion: **100% — ✅ 트랙 종결** (2026-07-20)
+- 배포: `fbe91723`(P2–P3) · `946bc8ef`(P4). origin/main 격차 0
+- Current blocker: **없음.** F5=(i) · F7=(c) · F8=(a) · F11=승인 전부 확정
+- 잔여: **2a-6 내비 뱃지 → backlog 등재**(착수 전 승인 필요)
 
 **Phase Checklist:**
 - [x] Phase 0 complete
@@ -513,8 +518,11 @@ revert 시 기존 사용자 상태 그대로 복원됨.
 | 2a-2 지출+예산 통합 | ✅ 이행 | Phase 3 · `fbe91723` |
 | 2a-3 역할 분리 | ✅ 이행 | Phase 3 · `fbe91723` |
 | 2a-4 온보딩 스텝 | ⚠️ **부분** — dismiss 단건화만 | F7=(c) 호영님 확정. 진행 점은 hero 폐지 결정 존중 |
-| 2a-5 FAB | ⛔ **미구현 권고** | F11 — 목표는 §11.272e 로 이미 초과 달성, 축소는 P0 회귀 |
-| 2a-6 내비 뱃지 | ⏸️ **defer** | F8=(a) 호영님 확정. **backlog 등재 필요** |
+| 2a-5 FAB | ⛔ **미구현 확정** | F11 호영님 승인 — 목표는 §11.272e 로 이미 초과 달성, 축소는 P0 회귀. **재론 불요** |
+| 2a-6 내비 뱃지 | ⏸️ **defer → backlog** | F8=(a) 호영님 확정 · backlog 등재(착수 전 승인) |
+
+**이행 6/8 · 미구현 1(근거 있는 반려) · defer 1.** 지시문 8항목 중 실제 코드 변경이 필요했던 것은
+6항목이었고(2a-1 은 헤더 delta 뿐), 2건은 각각 제품 결정(F11)과 canonical 부재(F8)로 종결.
 
 ---
 
