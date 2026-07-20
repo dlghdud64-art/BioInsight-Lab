@@ -29,6 +29,11 @@ export interface NextStepBannerProps {
 }
 
 interface Insight {
+  /**
+   * §dashboard-mobile-refine P4 — dismiss 단건화용 안정 키.
+   * 문구가 바뀌어도 dismiss 이력이 유지되도록 신호 종류를 식별한다.
+   */
+  id: string;
   icon: typeof Wallet;
   eyebrow: string;
   title: string;
@@ -36,78 +41,107 @@ interface Insight {
   cta: { label: string; href: string } | null;
 }
 
-/** 데이터로 메시지 결정 — 우선순위대로 첫 매칭 반환. */
-function deriveInsight(summary: DashboardSummary): Insight {
+/**
+ * 데이터로 후보 목록 생성 — **우선순위 순** 배열.
+ * (구) 첫 매칭 하나만 return → ✕ 한 번이면 이후 모든 신호가 영구히 가려졌다.
+ * (신) 후보를 모두 만들어 두고, dismiss 되지 않은 첫 후보를 노출한다.
+ */
+function deriveInsightCandidates(summary: DashboardSummary): Insight[] {
   const { budget, modules } = summary;
   const stockShort = modules.stock.lowStock ?? modules.stock.reorderNeeded ?? 0;
   const quoteOpen = modules.quote.total ?? 0;
+  const out: Insight[] = [];
 
   if (!budget.isSet) {
-    return {
+    out.push({
+      id: "budget-unset",
       icon: Wallet,
       eyebrow: "다음 단계 추천",
       title: "예산을 등록하면 지출 추적이 시작됩니다",
       desc: `${quoteOpen > 0 ? `견적 ${quoteOpen}건이 진행 중입니다. ` : ""}예산을 설정하면 발주·지출 소진율이 자동으로 집계돼요.`,
       cta: { label: "예산 설정", href: "/dashboard/budget" },
-    };
+    });
   }
-  if (budget.usageRate >= 100) {
-    return {
+  // 기존 early-return 구조에서는 !isSet 시 도달 불가였던 분기 — isSet 가드로 시맨틱 보존.
+  if (budget.isSet && budget.usageRate >= 100) {
+    out.push({
+      id: "budget-over",
       icon: Wallet,
       eyebrow: "확인 필요",
       title: "예산 한도를 초과했습니다",
       desc: `소진율 ${budget.usageRate.toFixed(0)}% — 추가 발주를 보류하고 예산을 점검하세요.`,
       cta: { label: "예산 관리", href: "/dashboard/budget" },
-    };
+    });
   }
   if (stockShort > 0) {
-    return {
+    out.push({
+      id: "stock-short",
       icon: Boxes,
       eyebrow: "확인 필요",
       title: `안전재고 미달 ${stockShort}건 — 재고 점검이 필요합니다`,
       desc: "실험 일정에 영향을 줄 수 있는 품목이 있습니다. 재주문 후보를 확인하세요.",
       cta: { label: "재고 점검", href: "/dashboard/inventory?filter=low" },
-    };
+    });
   }
   if (quoteOpen > 0) {
-    return {
+    out.push({
+      id: "quote-open",
       icon: Send,
       eyebrow: "처리 대기",
       title: `발송 대기 견적 ${quoteOpen}건이 있습니다`,
       desc: "워크벤치에서 견적을 발송하고 발주로 전환하세요.",
       cta: { label: "견적 워크벤치", href: "/dashboard/quotes" },
-    };
+    });
   }
-  return {
+  out.push({
+    id: "ok",
     icon: CheckCircle2,
     eyebrow: "정상",
     title: "지금은 처리할 운영 신호가 없습니다",
     desc: "새로운 신호가 생기면 이 자리에서 가장 먼저 안내해 드릴게요.",
     cta: null,
-  };
+  });
+  return out;
 }
 
+/** 우선순위 첫 매칭 — 단, dismiss 된 후보는 건너뛴다. 전부 dismiss 면 null(배너 숨김). */
+function deriveInsight(summary: DashboardSummary, dismissed: string[]): Insight | null {
+  return deriveInsightCandidates(summary).find((c) => !dismissed.includes(c.id)) ?? null;
+}
+
+/**
+ * §dashboard-mobile-refine P4 — dismiss 저장 키.
+ * 레거시 `lab_insight_dismissed="1"`(영구 **전역** 차단)은 승계하지 않는다 —
+ * 그 시맨틱 자체가 이번에 제거하는 결함이기 때문. 기존 사용자에게 배너가 1회 재노출되며 의도된 동작.
+ */
+const DISMISS_KEY = "lab_insight_dismissed_v2";
+
 export function NextStepBanner({ summary }: NextStepBannerProps) {
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState<string[]>([]);
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      if (window.localStorage.getItem("lab_insight_dismissed") === "1") setDismissed(true);
+      const raw = window.localStorage.getItem(DISMISS_KEY);
+      const parsed: unknown = raw ? JSON.parse(raw) : null;
+      if (Array.isArray(parsed)) setDismissed(parsed.filter((v): v is string => typeof v === "string"));
     } catch {
-      /* localStorage 차단 환경 — 기본 노출 */
+      /* localStorage 차단 / 손상 값 — 기본 노출 */
     }
   }, []);
 
-  // 데이터 미도착/dismiss 시에만 미렌더. allEmpty 여도 노출(시안 정합 — 데이터 기반 인사이트).
-  if (!summary || dismissed) return null;
+  // 데이터 미도착 시 미렌더. allEmpty 여도 노출(시안 정합 — 데이터 기반 인사이트).
+  if (!summary) return null;
 
-  const ins = deriveInsight(summary);
+  // 전 후보가 dismiss 된 경우에만 숨김(단건 ✕ 는 다음 추천으로 교체).
+  const ins = deriveInsight(summary, dismissed);
+  if (!ins) return null;
   const Icon = ins.icon;
 
   const handleDismiss = () => {
-    setDismissed(true);
+    const next = [...dismissed, ins.id];
+    setDismissed(next);
     try {
-      window.localStorage.setItem("lab_insight_dismissed", "1");
+      window.localStorage.setItem(DISMISS_KEY, JSON.stringify(next));
     } catch {
       /* 차단 환경 — state만 */
     }

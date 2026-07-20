@@ -2,7 +2,7 @@
 
 - **Status:** ⏳ Pending
 - **Started:** 2026-07-20
-- **Last Updated:** 2026-07-20 (Phase 3 완료 — 3/4)
+- **Last Updated:** 2026-07-20 (Phase 2–3 배포 종결 `fbe91723`)
 - **Estimated Completion:** TBD
 
 **CRITICAL INSTRUCTIONS**: 각 phase 완료 후:
@@ -108,6 +108,12 @@ operator full `vitest` 실측: `134 file fail / 295 test fail` — baseline(`374
 - **교체:** 하네스를 **테스트 파일에서 정규식을 추출해 실행**하는 방식으로 전환(`/tmp/sv/run.js`). 문자열 상수·`read()` 바인딩을 해석해 `expect(x).toMatch(/re/)` / `.not.toMatch` 를 원문 그대로 평가하고, 해석 불가한 복합 표현식은 **SKIP 으로 명시 카운트**해 은폐하지 않는다.
 - **재검증 결과(4개 파일 원문 실행): PASS 123 · FAIL 0 · SKIP 2.** SKIP 2건(substring 추출형)은 수동 확인 PASS.
 - **규칙화:** 이후 sandbox 는 "assertion 을 옮겨 적어" 검증했다고 보고하지 않는다. 원문 실행 결과 + 미해석 건수를 함께 보고한다. **operator full `vitest` 는 여전히 최종 판정.**
+
+**F10 — `vitest` 통과 ≠ 빌드 안전 (operator, 2026-07-20)**
+
+full `vitest` 는 **esbuild** 기반이라 **tsc strict 를 검증하지 않는다.** 이번 세션에만 sandbox 미포착 빌드 회귀
+3건 이력이 있으므로, **`.tsx` 소스가 바뀐 배치는 커밋 전 `npm run build` 를 별도로 반드시 실행한다.**
+→ 본 트랙 Phase 2–3: `BUILD_EXIT=0` 확인 후 커밋.
 
 **F6 — 실행 환경 확정**
 - `apps/web` scripts: `build`(next build) · `lint`(eslint) · `test`(vitest run)
@@ -342,7 +348,9 @@ Red-Green-Refactor 엄수.
 - [x] JSX brace/paren 균형 확인 (§11.311 #10 Vercel build 회귀 방지)
 - [x] **operator full `vitest` 실측 완료** (2026-07-20) — Phase 3 대상 `dashboard-mobile-refine-p3` **40/40 GREEN**
 - [x] **P2 sentinel 자기충돌 1건 적발·수정** — F9 참조. 수정 후 원문 실행 재검증 PASS 123 · FAIL 0 · SKIP 2(수동 PASS)
-- [ ] 수정분 반영한 **operator full `vitest` 재실행** — baseline(133/294) 대비 신규 실패 0 확인 필요
+- [x] **operator full `vitest` 재실행 — baseline-delta 0** (`133 file fail / 294` = token-E baseline 동일, 신규 실패 파일 **0**)
+- [x] **`npm run build` EXIT 0** — tsc strict 통과, 빌드 회귀 0 (F10 참조)
+- [x] **커밋·푸시 완료 — `fbe91723`** (`e870ed4e..fbe91723`, origin/main 격차 0). 단독 add 7파일(소스 3 + sentinel 3 + PLAN), `ai-insight-dialog`(0 diff noise)·mobile-density PLAN 미포함 확인
 
 **Rollback:** 항목별 독립 revert. `action-inbox.tsx` 는 prop 추가뿐이라 단독 revert 시 모바일 헤더만 사라지고 나머지 무영향.
 
@@ -357,12 +365,33 @@ Red-Green-Refactor 엄수.
 > **768~1024 구간에서는 데스크탑 대시보드와 함께 뱃지가 뜬다**(브레이크포인트 불일치).
 >
 > **선택지:**
-> - (a) **2a-6 defer** — 별도 배치로 분리. 이번 트랙은 3종으로 종결 ← **권장**
+> ✅ **호영님 확정(2026-07-20): (a) defer.** operator 도 동의. 이번 트랙은 3종으로 종결하고 2a-6 은 별도 배치.
+> 부수문제(768~1024 구간 데스크탑+뱃지 동시 노출)도 함께 회피됨. **backlog 등재 대상.**
+>
+> - (a) **2a-6 defer** — 별도 배치로 분리. 이번 트랙은 3종으로 종결 ← **권장·채택**
 > - (b) shell 레벨 canonical provider 신설(summary 훅 승격) — 정공법이나 **구조 변경**, Phase 3 "저위험" 범위 밖. 별도 계획 필요
 > - (c) `BottomNav` 내부 신규 fetch — 전 dashboard 라우트에서 실행되는 **overfetch**. 비권장
 > - (d) ops-store seed 경로 사용 — ❌ **가짜 카운트. 금지**
 
-### Phase 4: 2a 고위험 2종 + 롤아웃
+> ⛔ **F11 — 2a-5 FAB 재판정: 지시문대로 구현하면 P0 회귀 (2026-07-20 실측):**
+> 지시문 2a-5 의 요구 3가지를 현행 코드와 대조한 결과 **2개는 이미 충족, 1개는 구현 시 후퇴**다.
+>
+> | 지시문 요구 | 현행 | 판정 |
+> | :--- | :--- | :--- |
+> | 기본 = 라벨 있는 pill | `h-12 px-5` + `운영 브리핑` 라벨 (`floating-entry.tsx` L155·L168) | ✅ 이미 충족 |
+> | 콘텐츠 하단 FAB 높이만큼 여백 ≈88px | `#main-content` `pb-[calc(8rem_+_env(safe-area-inset-bottom))]` = **128px** (`dashboard-shell.tsx` L75) | ✅ 초과 충족 |
+> | 스크롤 다운 시 **46px 원형으로 축소** | §11.272e `useHideOnScrollDown` → `translate-y-24 opacity-0 pointer-events-none` = **완전 회피, 탭이 CTA 로 통과** | ⛔ **축소는 후퇴** |
+>
+> **핵심:** 지시문 2a-5 의 명시 목표는 *"콘텐츠 터치 타겟(특히 재고 경고 `처리 ›`)을 **어떤 상태에서도**
+> 가리지 않게"* 다. **46px 원형은 여전히 화면을 점유하고 `pointer-events` 를 가지므로 CTA 를 덮을 수 있다.**
+> 현행 구현은 아예 비켜나며 포인터 이벤트까지 해제해 **지시문의 목표를 더 강하게 달성**한다.
+> §11.272e 는 "호영님 P0 모바일 라이브 4장"(FAB 가 CTA 를 덮어 dead button 화) 근거의 **P0 수정**이고,
+> `fab-cta-overlap-272e.test.ts` L32 가 해당 클래스를 명시 pin 한다.
+>
+> → **sandbox 권고: 2a-5 미구현(현행 유지).** 지시문의 *메커니즘*이 지시문의 *목표*와 상충하며,
+> 목표는 이미 초과 달성되어 있다. 구현 시 P0 회귀 + sentinel 4종 파괴만 발생한다.
+
+### Phase 4: dismiss 단건화 — ✅ Complete (2026-07-20) · FAB 은 F11 로 미구현 권고
 **Goal:** FAB pill/축소 + 온보딩 1/3 로테이션, 스모크·롤백 확정.
 - Status: [ ] Pending
 
@@ -389,15 +418,33 @@ Red-Green-Refactor 엄수.
 > **sandbox 권고: (c) 절충** — 진행 점·단계 텍스트는 넣지 않고 **`✕` dismiss 단건화만** 채택.
 > 현행 `lab_insight_dismissed="1"` 은 **영구 dismiss** 라 한 번의 ✕ 로 이후 모든 운영 신호가 가려진다.
 > 이는 온보딩과 무관하게 고쳐야 할 결함이고, 단건화는 폐지 결정과 충돌하지 않는다.
+>
+> ✅ **호영님 확정(2026-07-20): (c) 채택.** 진행 점·`1/3`·단계 텍스트 **미구현**(§dashboard-shifan-adopt P2 (C)
+> hero 폐지 결정 존중). **dismiss 단건화만** Phase 4 에서 구현 → `deriveInsight` 의 "신호 하나" 원칙 유지.
 
-**🔴 RED:** FAB 4개 계약 + dismiss 계약 변경의 실패 모드 식별, 스모크 경로 정의
-**🟢 GREEN:**
-- `floating-entry.tsx` → 기본 pill(라벨), 스크롤 다운 시 46px 원형 축소, 최상단 복원. 콘텐츠 하단 ≈88px 여백 확보
-- 배너 온보딩 `· 1/3` + 진행 점 + 단계 텍스트, `✕` = 현재 추천만 dismiss(3단계 완료 시 숨김)
-**🔵 REFACTOR:** 임시 계측 제거, notes 확정
+- Status: [x] Complete (dismiss 단건화) · 2a-5 FAB = **F11 미구현 권고**, 2a-4 진행점 = **F7(c) 범위 밖**
 
-**✋ Quality Gate:** FAB 4개 sentinel 전부 통과, 터치 타겟 가림 0, dismiss 계약 변경이 canonical 침범 0, 롤백 문서화
-**Rollback:** FAB / 온보딩 각각 독립 revert. 실패 시 이 phase 만 defer 하고 Phase 0–3 성과는 유지
+**🔴 RED:** `dashboard-mobile-refine-p4.test.ts` 작성 → 하네스 원문 실행 **FAIL 9 / PASS 26** 확인 ✅
+**🟢 GREEN:** `next-step-banner.tsx`
+- `Insight` 에 안정 `id` 부여(`budget-unset`/`budget-over`/`stock-short`/`quote-open`/`ok`)
+- `deriveInsight`(첫 매칭 단일 return) → **`deriveInsightCandidates`(우선순위 배열) + dismiss 스킵 후 첫 후보** 로 전환
+- 저장소 `lab_insight_dismissed_v2`(JSON 배열). 레거시 `"1"` 전역 차단 **미승계**(그 시맨틱이 제거 대상)
+- 전 후보 dismiss 시에만 `return null`
+**🔵 REFACTOR:** `!budget.isSet` early-return 소실분을 `budget.isSet &&` 가드로 시맨틱 보존
+
+**✋ Quality Gate:**
+- [x] 신규 계약 **35/35 GREEN**, 관련 5개 sentinel 원문 실행 **PASS 158 · FAIL 0 · SKIP 2**(수동 PASS)
+- [x] F7(c) 범위 준수 — 진행 점 `1/3`·단계 텍스트·`onboardingSteps` **미도입** (sentinel 로 금지 고정)
+- [x] 회귀 0 — navy·thin 컨테이너·인라인 아이콘·P2 뷰포트 분기·deriveInsight 우선순위 문구·CTA·44px·allEmpty 폐지 유지
+- [x] canonical 침범 0 — dismiss 는 UI state(localStorage) 한정, summary 파생 무변경
+- [ ] `npm run build` (F10 — `.tsx` 변경이므로 **커밋 전 필수**) → operator 위임
+- [ ] operator full `vitest` baseline-delta 0 재확인
+
+**⚠️ 사용자 영향(의도됨):** 레거시 영구 dismiss 사용자는 배너가 **1회 재노출**된다. 기존 동작이
+"✕ 한 번 → 이후 모든 운영 신호 영구 차단"이라는 결함이었으므로 복구가 맞다.
+
+**Rollback:** `next-step-banner.tsx` 단독 revert(1파일). 저장 키가 신규(`_v2`)라 레거시 키와 충돌 0 —
+revert 시 기존 사용자 상태 그대로 복원됨.
 
 ---
 
@@ -442,17 +489,32 @@ Red-Green-Refactor 엄수.
 
 ## 11. Progress Tracking
 
-- Overall completion: 75% (Phase 0–3/5, Phase 3 은 3/4 항목)
-- Current phase: **Phase 3 ✅ 완료(3종) → Phase 4 는 판정 2건 대기**
-- Current blocker: **F7**(온보딩 3단계 — 제품 결정) · **F8**(내비 뱃지 canonical 부재 — operator 도 (a) defer 동의, 호영님 확정 대기)
-- Next validation step: P2 sentinel 수정분 반영 후 **operator full `vitest` 재실행**(신규 실패 0 확인) → 커밋 → F7·F8 판정
+- Overall completion: **95%** — Phase 0–4 완료. Phase 2–3 배포(`fbe91723`), Phase 4 게이트 대기
+- Current phase: **Phase 4 ✅ 구현 완료 → operator 게이트(build + full vitest) 대기**
+- Current blocker: 없음. F7=(c)·F8=(a) 확정, F11 은 미구현 권고(호영님 확인 요)
+- Next validation step: `npm run build` + full `vitest` baseline-delta 0 → 커밋
 
 **Phase Checklist:**
 - [x] Phase 0 complete
 - [x] Phase 1 complete
-- [x] Phase 2 complete
-- [x] Phase 3 complete (3/4 — 2a-6 은 F8 로 분리)
-- [ ] Phase 4 complete
+- [x] Phase 2 complete — 배포 `fbe91723`
+- [x] Phase 3 complete (3/4 — 2a-6 은 F8=(a) defer) — 배포 `fbe91723`
+- [x] Phase 4 complete (dismiss 단건화) — **미커밋**, 2a-5 는 F11 미구현 권고
+
+---
+
+## 13. 지시문 8항목 최종 이행 현황
+
+| 지시문 | 결과 | 근거 |
+| :--- | :--- | :--- |
+| 1a 재고 카드 톤다운 | ✅ 이행 | Phase 2 · `fbe91723` |
+| 1a 배너 2줄 | ✅ 이행(모바일 한정) | Phase 2 · F5(i) · `fbe91723` |
+| 2a-1 실행 큐 | ✅ 이행(헤더 delta) | Phase 3 — 본체는 기 구현 · `fbe91723` |
+| 2a-2 지출+예산 통합 | ✅ 이행 | Phase 3 · `fbe91723` |
+| 2a-3 역할 분리 | ✅ 이행 | Phase 3 · `fbe91723` |
+| 2a-4 온보딩 스텝 | ⚠️ **부분** — dismiss 단건화만 | F7=(c) 호영님 확정. 진행 점은 hero 폐지 결정 존중 |
+| 2a-5 FAB | ⛔ **미구현 권고** | F11 — 목표는 §11.272e 로 이미 초과 달성, 축소는 P0 회귀 |
+| 2a-6 내비 뱃지 | ⏸️ **defer** | F8=(a) 호영님 확정. **backlog 등재 필요** |
 
 ---
 
