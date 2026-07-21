@@ -11,7 +11,15 @@
  *   case.suppliers(공급사 아바타·회신수), quoteDisplayRef(RFQ ref), responses(최저가).
  * 액션 wiring(dead button 0): 카드탭→onSelect(id), 단계 액션·배너 CTA→onAction(id)
  *   (부모 handleQuoteCardSelect→getOpSignals.ctaLabel 라우팅; 발송=데스크탑 VendorRequestModal 재사용).
- * §11.302 색: s1 blue·s2 violet·s3 emerald·s4/s5 amber. 우선순위 high rose·mid amber·low slate.
+ * §11.302 색: s1 blue·s2 violet·s3 emerald·s4 yellow·s5 slate. 우선순위 high rose·mid yellow·low slate.
+ *
+ * §quotes-mobile-refine P1 (호영님 2026-07-21, 지시문 3a):
+ *   - 배너: 품목 1줄 + 액션 문장 1줄(ACTION_LINE, 압박 어휘 0) — 대시 연결 폐지. 메타 한 줄(section 중복 제거).
+ *   - 날짜 칩: 주차("N월 N주") → 오늘 날짜 `M.D (요일)`.
+ *   - 카드: 좌측 세로 색 띠 폐지(상태=상단 pill 만) · 빈 `⏱ —` 폐지(dd 없으면 미렌더) ·
+ *     공급사 미정 = yellow 칩 + CTA "공급사 추가"(동일 onAction 라우팅 — 발송 검토가 추가 흡수).
+ *   - RFQ: mono 서체 폐지 → 본문 폰트 세미볼드 + tracking .03em (한글-코드 이질감 제거).
+ *   - muted amber hex(CLAUDE.md §9 보류분의 sentinel 우회 반입) → yellow 토큰 규율 복구.
  */
 import { useMemo, useState } from "react";
 import { Send, Bell, Scale, ShieldCheck, PackageCheck, Clock, Calendar, ChevronRight, FileText } from "lucide-react";
@@ -41,21 +49,30 @@ export interface QuoteLite {
 type UiStage = "s1" | "s2" | "s3" | "s4" | "s5";
 
 const STAGE_META: Record<UiStage, {
-  section: string; pill: string; rail: string; pillCls: string; dot: string;
+  section: string; pill: string; pillCls: string; dot: string;
   act: string; actCls: string; amountLabel: string; mid: "due" | "reply" | "selected";
 }> = {
-  s1: { section: "발송 대기", pill: "발송 대기", rail: "bg-blue-500", pillCls: "bg-blue-50 text-blue-700", dot: "bg-blue-500", act: "발송", actCls: "bg-blue-600 text-white", amountLabel: "예상 금액", mid: "due" },
-  s2: { section: "회신 추적", pill: "회신 추적", rail: "bg-violet-500", pillCls: "bg-violet-50 text-violet-700", dot: "bg-violet-500", act: "리마인더", actCls: "bg-white text-slate-700 border border-slate-200", amountLabel: "예상 금액", mid: "reply" },
-  s3: { section: "비교 검토", pill: "비교 검토", rail: "bg-emerald-500", pillCls: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500", act: "비교", actCls: "bg-blue-600 text-white", amountLabel: "최저 견적", mid: "reply" },
-  s4: { section: "승인 · 입고 준비", pill: "승인 대기", rail: "bg-[#b45821]", pillCls: "bg-[#fdf3ec] text-[#b45821]", dot: "bg-[#b45821]", act: "승인", actCls: "bg-emerald-600 text-white", amountLabel: "선정 금액", mid: "due" },
-  s5: { section: "승인 · 입고 준비", pill: "입고 준비", rail: "bg-slate-700", pillCls: "bg-slate-100 text-slate-700", dot: "bg-slate-600", act: "입고", actCls: "bg-slate-800 text-white", amountLabel: "발주 금액", mid: "selected" },
+  s1: { section: "발송 대기", pill: "발송 대기", pillCls: "bg-blue-50 text-blue-700", dot: "bg-blue-500", act: "발송", actCls: "bg-blue-600 text-white", amountLabel: "예상 금액", mid: "due" },
+  s2: { section: "회신 추적", pill: "회신 추적", pillCls: "bg-violet-50 text-violet-700", dot: "bg-violet-500", act: "리마인더", actCls: "bg-white text-slate-700 border border-slate-200", amountLabel: "예상 금액", mid: "reply" },
+  s3: { section: "비교 검토", pill: "비교 검토", pillCls: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500", act: "비교", actCls: "bg-blue-600 text-white", amountLabel: "최저 견적", mid: "reply" },
+  s4: { section: "승인 · 입고 준비", pill: "승인 대기", pillCls: "bg-yellow-50 text-yellow-700", dot: "bg-yellow-500", act: "승인", actCls: "bg-emerald-600 text-white", amountLabel: "선정 금액", mid: "due" },
+  s5: { section: "승인 · 입고 준비", pill: "입고 준비", pillCls: "bg-slate-100 text-slate-700", dot: "bg-slate-600", act: "입고", actCls: "bg-slate-800 text-white", amountLabel: "발주 금액", mid: "selected" },
 };
 
 const PRIO = {
   high: { label: "높음", cls: "bg-rose-50 text-rose-700", dot: "bg-rose-500" },
-  mid: { label: "보통", cls: "bg-[#fdf3ec] text-[#b45821]", dot: "bg-[#b45821]" },
+  mid: { label: "보통", cls: "bg-yellow-50 text-yellow-700", dot: "bg-yellow-500" },
   low: { label: "낮음", cls: "bg-slate-100 text-slate-500", dot: "bg-slate-400" },
 } as const;
+
+// §quotes-mobile-refine P1 — 배너 액션 문장(품목 다음 줄). 압박 어휘 0, 대시 연결 0.
+const ACTION_LINE: Record<UiStage, string> = {
+  s1: "견적 요청을 발송할 차례예요",
+  s2: "공급사 회신을 확인할 차례예요",
+  s3: "도착한 견적을 비교할 차례예요",
+  s4: "승인을 진행할 차례예요",
+  s5: "발주 전환을 준비할 차례예요",
+};
 
 const CHIPS: { k: "all" | "s1" | "s2" | "s3" | "s45"; label: string }[] = [
   { k: "all", label: "전체" }, { k: "s1", label: "발송 대기" }, { k: "s2", label: "회신 추적" },
@@ -73,8 +90,8 @@ function displayTitle(q: QuoteLite): string {
   if (!first) return q.title || "(제목 없음)";
   return more > 0 ? `${first} 외 ${more}종` : first;
 }
-function ddText(dd: number | null): string {
-  if (dd == null) return "—";
+// §quotes-mobile-refine P1 — null → "—" 분기 폐지(빈 값 `⏱ —` 금지). 호출측이 dd != null 게이팅.
+function ddText(dd: number): string {
   if (dd < 0) return `${-dd}일 지남`;
   if (dd === 0) return "D-day";
   return `D-${dd}`;
@@ -116,10 +133,13 @@ function CaseCard({ vm, onSelect, onAction }: { vm: VM; onSelect: (id: string) =
   const extra = vm.totalCount - shown.length;
   const soon = vm.dd != null && vm.dd <= 1;
   const pct = vm.totalCount > 0 ? Math.round((vm.repliedCount / vm.totalCount) * 100) : 0;
+  // §quotes-mobile-refine P1 — 상황별 CTA: 공급사 미정 건은 발송이 아니라 공급사 추가가 다음 행동.
+  //   라우팅은 동일 onAction(발송 검토 진입이 공급사 추가를 흡수 — 5a 히어로) → dead button 0.
+  const needsSupplier = vm.stage === "s1" && vm.totalCount === 0;
   return (
-    <div className="rounded-[13px] border border-slate-200 bg-white overflow-hidden flex shadow-sm">
-      <div className={`w-1 shrink-0 ${m.rail}`} />
-      <div className="flex-1 min-w-0 p-3.5">
+    // 좌측 세로 색 띠 폐지(지시문 3a) — 상태는 상단 pill 만.
+    <div className="rounded-[13px] border border-slate-200 bg-white overflow-hidden shadow-sm">
+      <div className="min-w-0 p-3.5">
         <div className="flex items-center gap-2 mb-1.5">
           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold ${m.pillCls}`}>
             <span className={`h-1.5 w-1.5 rounded-full ${m.dot}`} />{m.pill}
@@ -130,19 +150,24 @@ function CaseCard({ vm, onSelect, onAction }: { vm: VM; onSelect: (id: string) =
           </span>
         </div>
         <button type="button" onClick={() => onSelect(vm.id)} className="block w-full text-left active:opacity-70">
-          <div className="text-[11px] font-bold text-slate-400 font-mono">{vm.ref}</div>
+          {/* RFQ — 본문 폰트 세미볼드 + 자간(.03em). mono 서체 폐지(한글-코드 이질감 제거, 지시문 3a). */}
+          <div className="text-[11px] font-semibold tracking-[.03em] text-slate-400">{vm.ref}</div>
           <div className="text-[15px] font-extrabold text-slate-900 leading-snug line-clamp-1 mt-0.5">{vm.title}</div>
         </button>
         <div className="flex items-center gap-2 mt-2.5">
-          <span className="flex -space-x-1.5">
+          <span className="flex -space-x-1.5 items-center">
             {shown.map((s, i) => (
               <span key={i} className="h-6 w-6 rounded-full bg-slate-100 border-2 border-white grid place-items-center text-[10px] font-bold text-slate-600">{s.name[0] ?? "?"}</span>
             ))}
             {extra > 0 && <span className="h-6 w-6 rounded-full bg-slate-200 border-2 border-white grid place-items-center text-[10px] font-bold text-slate-500">+{extra}</span>}
-            {vm.totalCount === 0 && <span className="text-[11px] text-slate-400">공급사 미정</span>}
+            {/* 공급사 미정 — plain text → yellow 칩(warm warning, 색상 표기 규약 07-20). */}
+            {vm.totalCount === 0 && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-yellow-50 text-yellow-700">공급사 미정</span>
+            )}
           </span>
           <span className="flex-1" />
-          {m.mid === "due" && (
+          {/* 빈 `⏱ —` 폐지 — dd 없으면 행 자체 미렌더(지시문 3a). */}
+          {m.mid === "due" && vm.dd != null && (
             <span className={`inline-flex items-center gap-1 text-[11.5px] font-bold ${soon ? "text-rose-600" : "text-slate-500"}`}>
               <Clock className="h-3.5 w-3.5" />{ddText(vm.dd)}
             </span>
@@ -162,8 +187,8 @@ function CaseCard({ vm, onSelect, onAction }: { vm: VM; onSelect: (id: string) =
               <div className="text-[15px] font-extrabold text-slate-900 tabular-nums">{vm.amount.toLocaleString("ko-KR")}<span className="text-[11px] font-bold text-slate-400 ml-0.5">원</span></div>
             ) : (<div className="text-[13px] font-bold text-slate-400">견적 대기</div>)}
           </div>
-          <button type="button" onClick={() => onAction(vm.id)} className={`inline-flex items-center gap-1 h-9 px-3.5 rounded-[10px] text-[13px] font-extrabold active:scale-95 ${m.actCls}`}>
-            {actIcon(vm.stage)}{m.act}
+          <button type="button" onClick={() => onAction(vm.id)} className={`inline-flex items-center gap-1 h-9 px-3.5 rounded-[10px] text-[13px] font-extrabold active:scale-95 ${needsSupplier ? "bg-white text-blue-700 border border-blue-200" : m.actCls}`}>
+            {needsSupplier ? <>공급사 추가<ChevronRight className="h-3.5 w-3.5" /></> : <>{actIcon(vm.stage)}{m.act}</>}
           </button>
         </div>
       </div>
@@ -183,11 +208,7 @@ function SumCard({ label, value, tone, bar, ddLabel }: { label: string; value: n
   );
 }
 
-function topReason(top: VM): string {
-  const next: Record<UiStage, string> = { s1: "견적 요청 발송", s2: "회신 독려", s3: "견적 비교", s4: "승인 요청", s5: "발주 전환" };
-  const soon = top.dd != null && top.dd <= 1;
-  return soon ? `의 회신 마감이 임박했어요 — ${next[top.stage]}이 다음 단계입니다.` : ` — ${next[top.stage]}이 다음 단계입니다.`;
-}
+// §quotes-mobile-refine P1 — topReason(대시 연결 문장) 폐지 → ACTION_LINE(품목 다음 줄 분리).
 
 export function MobileQuotesView({ quotes, onSelect, onAction }: {
   quotes: QuoteLite[];
@@ -237,8 +258,9 @@ export function MobileQuotesView({ quotes, onSelect, onAction }: {
     return groups;
   }, [filtered]);
 
+  // §quotes-mobile-refine P1 — 주차 표기 폐지 → 오늘 날짜만(`7.21 (화)`). 마감 D-day 는 KPI·배너 메타가 보유(중복 0).
   const now = new Date();
-  const periodLabel = `${now.getMonth() + 1}월 ${Math.ceil(now.getDate() / 7)}주`;
+  const todayLabel = `${now.getMonth() + 1}.${now.getDate()} (${["일", "월", "화", "수", "목", "금", "토"][now.getDay()]})`;
 
   return (
     <div className="space-y-3.5">
@@ -248,7 +270,7 @@ export function MobileQuotesView({ quotes, onSelect, onAction }: {
           <p className="text-[12.5px] text-slate-500 mt-0.5">처리가 필요한 견적을 우선순위 순으로</p>
         </div>
         <span className="inline-flex items-center gap-1 h-8 px-2.5 rounded-full bg-white border border-slate-200 text-[12px] font-bold text-slate-600 shrink-0">
-          <Calendar className="h-3.5 w-3.5" />{periodLabel}
+          <Calendar className="h-3.5 w-3.5" />{todayLabel}
         </span>
       </div>
 
@@ -259,9 +281,12 @@ export function MobileQuotesView({ quotes, onSelect, onAction }: {
             <span className="text-[12px] font-extrabold">우선 추천</span>
             <span className="text-[10.5px] font-bold px-1.5 py-0.5 rounded bg-white/[0.16]">다음 단계</span>
           </div>
-          <h3 className="text-[15px] font-bold leading-snug"><b className="font-extrabold">{top.title}</b>{topReason(top)}</h3>
+          {/* 품목 1줄 + 액션 문장 1줄 분리(지시문 3a) — 대시 연결·압박 어휘 0. */}
+          <h3 className="text-[15px] font-extrabold leading-snug line-clamp-1">{top.title}</h3>
+          <p className="text-[13px] font-semibold text-white/90 mt-0.5">{ACTION_LINE[top.stage]}</p>
+          {/* 메타 한 줄 — stage section 은 배너 라벨·카드 pill 과 중복이라 제거(지시문 3a). */}
           <p className="text-[11.5px] text-white/70 mt-1.5 flex items-center gap-1.5 flex-wrap">
-            <span className="font-mono">{top.ref}</span><span className="opacity-50">·</span><span>{STAGE_META[top.stage].section}</span>
+            <span className="font-semibold tracking-[.03em]">{top.ref}</span>
             {top.dd != null && (<><span className="opacity-50">·</span><span>마감 {ddText(top.dd)}</span></>)}
             {top.totalCount > 0 && (<><span className="opacity-50">·</span><span>공급사 {top.totalCount}곳</span></>)}
           </p>

@@ -11,6 +11,7 @@
  */
 
 import { type Supplier } from "@/lib/quote-management/derive";
+import { hasVendorReplied } from "@/lib/quote-management/reminder-targets";
 
 /** vendorRequests → Supplier[] 파생(이름·회신). 이름 없으면 이메일 도메인/fallback. */
 export function toSuppliers(
@@ -27,7 +28,9 @@ export function toSuppliers(
       (v.vendorEmail ? v.vendorEmail.split("@")[1] || v.vendorEmail : "공급사");
     return {
       name,
-      replied: v.respondedAt != null || v.status === "RESPONDED",
+      // §quotes-mobile-refine P2 — replied 판정을 hasVendorReplied 단일 술어로 통일
+      //   (reminder-targets 미회신 필터와 규칙 이원화 0). 시맨틱 동일: respondedAt != null || RESPONDED.
+      replied: hasVendorReplied(v),
       email: v.vendorEmail ?? undefined,
     };
   });

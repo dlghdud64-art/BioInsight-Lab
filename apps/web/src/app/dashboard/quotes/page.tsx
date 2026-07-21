@@ -83,6 +83,8 @@ import { PermissionNotice } from "@/components/quotes/permission-notice";
 import { quoteDisplayRef } from "@/lib/quote-management/quote-display-ref";
 import { QuoteIntakeDock } from "@/components/quotes/intake/quote-intake-dock";
 import { MobileQuotesView } from "@/components/quotes/mobile-quotes-view";
+// §quotes-mobile-refine P3 — 개별 케이스 리마인더 바텀 시트(모바일 4a). 발송은 기존 vendor-requests 계약.
+import { MobileReminderSheet } from "@/components/quotes/mobile-reminder-sheet";
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 
@@ -1212,6 +1214,8 @@ function QuotesPageContent() {
   // (PATCH /api/quotes/[id]/status 일괄). BatchDispatchSheet 와 동등한 lifecycle.
   const [batchReminderOpen, setBatchReminderOpen] = useState(false);
   const [batchStatusChangeOpen, setBatchStatusChangeOpen] = useState(false);
+  // §quotes-mobile-refine P3 — 모바일 개별 리마인더 시트 대상 케이스(null=닫힘).
+  const [mobileReminderQuote, setMobileReminderQuote] = useState<Quote | null>(null);
 
   // §11.230a #quote-table-keyboard-tooltip — 호영님 v2 #23 (c+d) 키보드 navigation.
   //   tbody tr 의 keyboard focus index. ArrowUp/Down 으로 인접 row 이동.
@@ -3390,13 +3394,37 @@ function QuotesPageContent() {
           quotes={filteredQuotes}
           onSelect={(id) => handleQuoteCardSelect(id)}
           onAction={(id) => {
-            // §quote-mobile-v2 — 단계 액션(발송/리마인더/비교/승인/입고)은 데스크탑과 동일 라우팅.
+            // §quote-mobile-v2 — 단계 액션(발송/비교/승인/입고)은 데스크탑과 동일 라우팅.
             //   발송 → getOpSignals.ctaLabel "견적 요청 발송" → request_send → VendorRequestModal 재사용.
+            // §quotes-mobile-refine P3 — 회신 추적(s2) 리마인더만 개별 케이스 바텀 시트로 분기(지시문 4a).
+            //   대상 파생·발송 계약은 시트 내부(deriveReminderTargets + 기존 vendor-requests POST).
             const q = filteredQuotes.find((x) => x.id === id);
-            if (q) handleQuoteCardSelect(id, getOpSignals(q).ctaLabel);
+            if (!q) return;
+            const qc = toQuoteCase(q);
+            if (qc && qc.stage === "s2") {
+              setMobileReminderQuote(q);
+              return;
+            }
+            handleQuoteCardSelect(id, getOpSignals(q).ctaLabel);
           }}
         />
       )}
+
+      {/* §quotes-mobile-refine P3 — 모바일 개별 리마인더 시트. 성공 시 refetch(캐시 무효화). */}
+      <MobileReminderSheet
+        quote={mobileReminderQuote}
+        open={mobileReminderQuote != null}
+        onOpenChange={(o) => { if (!o) setMobileReminderQuote(null); }}
+        ddLabel={(() => {
+          if (!mobileReminderQuote) return null;
+          const qc = toQuoteCase(mobileReminderQuote);
+          if (!qc) return null;
+          const { dd } = computePriority(qc);
+          if (dd == null) return null;
+          return dd < 0 ? `${-dd}일 지남` : dd === 0 ? "D-day" : `D-${dd}`;
+        })()}
+        onSuccess={() => refetch()}
+      />
 
       {/* ── 섹션: 즉시 처리 필요 ── */}
       {!isLoading && !isMobile && effectiveViewMode === "card" && urgentQuotes.length > 0 && (

@@ -28,7 +28,8 @@ const STAGE_LABEL: Record<Stage, string> = {
 // 단계별 다음 단계(시안 §07 next). 본문 안내용 — CTA는 케이스 열기(real).
 const NEXT_STEP: Record<Stage, string> = {
   s1: "견적 요청 발송",
-  s2: "회신 독려",
+  // §quotes-mobile-refine P1 (호영님 2026-07-21) — 압박 어휘 폐지(honesty 톤, PO surface 와 정합).
+  s2: "회신 확인",
   s3: "견적 비교",
   s4: "승인 요청",
   s5: "발주 전환",

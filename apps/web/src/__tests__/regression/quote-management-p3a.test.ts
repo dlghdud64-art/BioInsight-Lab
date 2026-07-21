@@ -21,7 +21,9 @@ describe("§quote-management P3a — toSuppliers 파생", () => {
     expect(SRC).toMatch(/export function toSuppliers/);
     expect(SRC).toMatch(/v\.vendorName\?\.trim\(\)/);
     expect(SRC).toMatch(/vendorEmail\.split\("@"\)\[1\]/);
-    expect(SRC).toMatch(/respondedAt != null \|\| v\.status === "RESPONDED"/);
+    // §quotes-mobile-refine P2 — replied 판정 단일 술어 통일: 인라인(respondedAt != null || RESPONDED)이
+    //   hasVendorReplied(v)로 추출·이동(규칙 이원화 0). 술어 내용은 reminder-targets.ts + 전용 unit test가 lock.
+    expect(SRC).toMatch(/replied:\s*hasVendorReplied\(v\)/);
   });
 });
 
