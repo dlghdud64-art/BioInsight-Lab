@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getFlag } from "@/lib/feature-flags";
+import { useInventoryAlertCount } from "@/hooks/use-inventory-alert-count";
 import { BottomNavMoreSheet } from "./bottom-nav-more-sheet";
 
 const tabs = [
@@ -30,6 +31,10 @@ const RECEIVING_TAB = { label: "입고", href: "/dashboard/receiving", icon: Tru
 export function BottomNav() {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
+
+  // §bottom-nav-badge P3 — 재고 탭 뱃지. canonical 훅(공유 isReorderNeeded 파생 count
+  // 라우트) 만 경유 — seed/ops-store·heavy stats fetch 금지(F8). 로딩·에러 = null = 미렌더.
+  const { count } = useInventoryAlertCount();
 
   // §purchasing-hide — purchasing off 면 "구매"(/dashboard/purchases) 탭을 입고로 스왑.
   const purchasingOn = getFlag("ENABLE_PURCHASING");
@@ -76,7 +81,20 @@ export function BottomNav() {
                 {active && (
                   <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-blue-400" />
                 )}
-                <tab.icon className="h-5 w-5" />
+                <span className="relative">
+                  <tab.icon className="h-5 w-5" />
+                  {/* §11.311-6 — 재고 탭 red 뱃지(아이콘 우상단). 0건·로딩·에러 미렌더(가짜 카운트 0). */}
+                  {tab.href === "/dashboard/inventory" &&
+                    count != null &&
+                    count > 0 && (
+                      <span
+                        aria-label={`재고 경고 ${count}건`}
+                        className="absolute -top-1 -right-2 min-w-[15px] h-[15px] px-0.5 rounded-full bg-red-500 text-white text-[9.5px] font-bold leading-none flex items-center justify-center"
+                      >
+                        {count > 99 ? "99+" : count}
+                      </span>
+                    )}
+                </span>
                 <span className="text-[10px] font-medium leading-none">{tab.label}</span>
               </Link>
             );
