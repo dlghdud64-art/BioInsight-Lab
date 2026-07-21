@@ -20,6 +20,8 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
+// §mobile-reports — <768px 전용 뷰(핸드오프 6a/6c). 데이터/파생은 본 파일 canonical 재사용.
+import { MobileReportView } from "./mobile-report-view";
 
 // ---------------------------------------------------------------------------
 // Derived insight helpers — pure functions over report data
@@ -375,11 +377,115 @@ export default function ReportsPage() {
     setStartDate(iso(start)); setEndDate(iso(now)); setActivePreset(p.id);
   };
 
+  // §mobile-reports — CSV 내보내기 단일 핸들러(데스크톱 버튼·모바일 다운로드 아이콘 공용).
+  const handleExportCsv = () => {
+    if (!details || details.length === 0) {
+      toast({ title: "내보낼 데이터가 없습니다", variant: "destructive" });
+      return;
+    }
+    const headers = ["날짜", "제품명", "벤더", "수량", "단가", "총액"];
+    const rows = details.map((d: DetailItem) => [
+      d.date || d.purchaseDate || "",
+      d.productName || d.product || "",
+      d.vendorName || d.vendor || "",
+      String(d.quantity ?? ""),
+      String(d.unitPrice ?? d.price ?? ""),
+      String(d.totalAmount ?? d.amount ?? ""),
+    ]);
+    const csvContent = [headers, ...rows]
+      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `labaxis-purchase-report-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "CSV 파일이 다운로드되었습니다" });
+  };
+
+  // §mobile-reports — 필터 컨트롤 단일 정의(데스크톱 팝오버·모바일 팝오버 공용 — 컨트롤 중복 0).
+  const filterControls = (
+    <>
+      <div className="space-y-1">
+        <label htmlFor="category" className="text-xs font-medium uppercase tracking-wider text-slate-500">카테고리</label>
+        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <SelectTrigger id="category" className="bg-el border-bs text-slate-700"><SelectValue placeholder="전체" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">전체</SelectItem>
+            {Object.entries(PRODUCT_CATEGORIES).map(([value, label]) => (<SelectItem key={value} value={value}>{label}</SelectItem>))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1">
+        <label htmlFor="team" className="text-xs font-medium uppercase tracking-wider text-slate-500">팀 / 조직</label>
+        <Select value={selectedTeam} onValueChange={setSelectedTeam}>
+          <SelectTrigger id="team" className="bg-el border-bs text-slate-700"><SelectValue placeholder="전체" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">전체</SelectItem>
+            <SelectItem value="team1">1팀</SelectItem>
+            <SelectItem value="team2">2팀</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1">
+        <label htmlFor="vendor" className="text-xs font-medium uppercase tracking-wider text-slate-500">벤더</label>
+        <Select value={selectedVendor} onValueChange={setSelectedVendor}>
+          <SelectTrigger id="vendor" className="bg-el border-bs text-slate-700"><SelectValue placeholder="전체" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">전체</SelectItem>
+            <SelectItem value="sigma">Sigma-Aldrich</SelectItem>
+            <SelectItem value="thermo">Thermo Fisher</SelectItem>
+            <SelectItem value="eppendorf">Eppendorf</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1">
+        <label htmlFor="budget" className="text-xs font-medium uppercase tracking-wider text-slate-500">예산</label>
+        <Select value={selectedBudget} onValueChange={setSelectedBudget}>
+          <SelectTrigger id="budget" className="bg-el border-bs text-slate-700"><SelectValue placeholder="전체" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">전체</SelectItem>
+            {Array.isArray(budgets) && budgets.map((budget: any) => (<SelectItem key={budget.id} value={budget.id}>{budget.name}</SelectItem>))}
+          </SelectContent>
+        </Select>
+      </div>
+      {activeFilterCount > 0 && (
+        <button type="button" onClick={clearAllFilters} className="text-xs text-slate-500 hover:text-slate-700">초기화</button>
+      )}
+    </>
+  );
+
 
   return (
     <div className="w-full bg-canvas min-h-screen">
       {/* §dashboard-surface-unify — 회색 캔버스 full-width 외곽 + 콘텐츠 max-w-7xl 중앙(중앙 회색 컬럼 방지). */}
-      <div className="flex-1 space-y-5 p-3 sm:p-4 md:p-6 max-w-7xl mx-auto w-full">
+      <div className="flex-1 p-3 sm:p-4 md:p-6 max-w-7xl mx-auto w-full">
+      {/* §mobile-reports — <768px 전용 뷰(핸드오프 6a/6c). 파생·필터·다운로드 전부 본 파일 canonical 재사용. */}
+      <div className="md:hidden">
+        <MobileReportView
+          isLoading={isLoading}
+          hasData={hasData}
+          totalAmount={totalAmount}
+          detailCount={details.length}
+          insights={insights}
+          monthlyData={monthlyData}
+          categoryData={categoryData}
+          vendorData={vendorData}
+          presets={REPORT_PRESETS}
+          activePreset={activePreset}
+          onPreset={(id) => { const preset = REPORT_PRESETS.find((x) => x.id === id); if (preset) applyPreset(preset); }}
+          startDate={startDate}
+          endDate={endDate}
+          activeFilterCount={activeFilterCount}
+          filterContent={filterControls}
+          onDownload={handleExportCsv}
+        />
+      </div>
+      {/* 데스크톱(≥768px) 기존 뷰 — 무접촉(§mobile-reports 경계) */}
+      <div className="hidden md:block space-y-5">
       {/* ================================================================
           HEADER
           ================================================================ */}
@@ -481,34 +587,7 @@ export default function ReportsPage() {
           <Button
             size="sm"
             className="bg-blue-600 hover:bg-blue-500 text-white"
-            onClick={() => {
-              if (!details || details.length === 0) {
-                toast({ title: "내보낼 데이터가 없습니다", variant: "destructive" });
-                return;
-              }
-              // CSV 생성 + 다운로드
-              const headers = ["날짜", "제품명", "벤더", "수량", "단가", "총액"];
-              const rows = details.map((d: DetailItem) => [
-                d.date || d.purchaseDate || "",
-                d.productName || d.product || "",
-                d.vendorName || d.vendor || "",
-                String(d.quantity ?? ""),
-                String(d.unitPrice ?? d.price ?? ""),
-                String(d.totalAmount ?? d.amount ?? ""),
-              ]);
-              const csvContent = [headers, ...rows]
-                .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
-                .join("\n");
-              const BOM = "\uFEFF";
-              const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = `labaxis-purchase-report-${new Date().toISOString().slice(0, 10)}.csv`;
-              a.click();
-              URL.revokeObjectURL(url);
-              toast({ title: "CSV 파일이 다운로드되었습니다" });
-            }}
+            onClick={handleExportCsv}
           >
             <FileDown className="h-4 w-4 mr-1.5" />
             <span className="hidden sm:inline">내보내기</span>
@@ -540,54 +619,7 @@ export default function ReportsPage() {
                 )}
               </button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-72 space-y-3">
-              <div className="space-y-1">
-                <label htmlFor="category" className="text-xs font-medium uppercase tracking-wider text-slate-500">카테고리</label>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger id="category" className="bg-el border-bs text-slate-700"><SelectValue placeholder="전체" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">전체</SelectItem>
-                    {Object.entries(PRODUCT_CATEGORIES).map(([value, label]) => (<SelectItem key={value} value={value}>{label}</SelectItem>))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <label htmlFor="team" className="text-xs font-medium uppercase tracking-wider text-slate-500">팀 / 조직</label>
-                <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-                  <SelectTrigger id="team" className="bg-el border-bs text-slate-700"><SelectValue placeholder="전체" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">전체</SelectItem>
-                    <SelectItem value="team1">1팀</SelectItem>
-                    <SelectItem value="team2">2팀</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <label htmlFor="vendor" className="text-xs font-medium uppercase tracking-wider text-slate-500">벤더</label>
-                <Select value={selectedVendor} onValueChange={setSelectedVendor}>
-                  <SelectTrigger id="vendor" className="bg-el border-bs text-slate-700"><SelectValue placeholder="전체" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">전체</SelectItem>
-                    <SelectItem value="sigma">Sigma-Aldrich</SelectItem>
-                    <SelectItem value="thermo">Thermo Fisher</SelectItem>
-                    <SelectItem value="eppendorf">Eppendorf</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <label htmlFor="budget" className="text-xs font-medium uppercase tracking-wider text-slate-500">예산</label>
-                <Select value={selectedBudget} onValueChange={setSelectedBudget}>
-                  <SelectTrigger id="budget" className="bg-el border-bs text-slate-700"><SelectValue placeholder="전체" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">전체</SelectItem>
-                    {Array.isArray(budgets) && budgets.map((budget: any) => (<SelectItem key={budget.id} value={budget.id}>{budget.name}</SelectItem>))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {activeFilterCount > 0 && (
-                <button type="button" onClick={clearAllFilters} className="text-xs text-slate-500 hover:text-slate-700">초기화</button>
-              )}
-            </PopoverContent>
+            <PopoverContent align="end" className="w-72 space-y-3">{filterControls}</PopoverContent>
           </Popover>
         </div>
         {activeFilterCount > 0 && (
@@ -998,6 +1030,7 @@ export default function ReportsPage() {
           )}
         </>
       )}
+      </div>{/* end 데스크톱 뷰 */}
       </div>
     </div>
   );
