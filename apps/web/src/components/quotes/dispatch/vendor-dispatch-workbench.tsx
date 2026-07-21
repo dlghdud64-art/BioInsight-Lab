@@ -289,8 +289,18 @@ export function VendorRequestModal({
       { key: "draft", label: "메시지 검토", ready: message.trim().length > 10 },
       { key: "send", label: "전송", ready: sendReadiness === "ready" },
     ];
-    const firstPendingIdx = base.findIndex((s) => !s.ready);
-    return base.map((s, i) => {
+    // §quotes-mobile-refine P4 (호영님 지시문 5a-1, 2026-07-21) — 누적 게이팅.
+    //   (구) draft.ready = message.length>10 이 선행 단계와 독립 → 공급사 0(막힘)에도
+    //   3단계 초록 체크가 뜨는 모순. (신) 선행 단계 미완이면 이후 단계는 done 이 될 수 없다 —
+    //   완료 체크는 실제 도달·완료한 단계에만(가짜 체크 0).
+    let prefix = true;
+    const gated = base.map((s) => {
+      const ready = prefix && s.ready;
+      prefix = ready;
+      return { ...s, ready };
+    });
+    const firstPendingIdx = gated.findIndex((s) => !s.ready);
+    return gated.map((s, i) => {
       const current = i === firstPendingIdx;
       const blocked = current && sendReadiness === "blocked";
       const state: "done" | "blocked" | "current" | "pending" = s.ready
@@ -545,7 +555,14 @@ export function VendorRequestModal({
             <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
               케이스 {quoteRef ?? "저장 필요"}
             </span>
-            <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+            {/* §quotes-mobile-refine P4 (지시문 5a-5) — 품목명 칩 추가(모바일 케이스 식별).
+                담당자 칩은 header-reselect-09 가 "4b 과제거분 복원"으로 핀 → 제거 대신 모바일 숨김 절충. */}
+            {quoteSummary && (
+              <span className="inline-flex max-w-[180px] items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                <span className="truncate">{quoteSummary}</span>
+              </span>
+            )}
+            <span className="hidden sm:inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
               담당 발송 운영자
             </span>
           </div>
@@ -685,14 +702,15 @@ export function VendorRequestModal({
             </div>
           ) : showNoSupplierHero ? (
             <div data-testid="quote-dispatch-no-supplier-hero" className="space-y-3">
-              {/* 통합 안내 배너 */}
-              <div className="flex items-start gap-2.5 rounded-lg border border-yellow-200 bg-yellow-50 px-3.5 py-3">
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-yellow-400 text-white">
-                  <AlertTriangle className="h-3.5 w-3.5" />
+              {/* §quotes-mobile-refine P4 (지시문 5a-2) — 경고 통합: yellow 경고 배너 폐지 →
+                  blue 안내 톤 단일 히어로(지시문 보더 #93c5fd ≈ blue-300). 같은 상태에 경고 2겹 금지. */}
+              <div className="flex items-start gap-2.5 rounded-lg border border-blue-300 bg-blue-50/60 px-3.5 py-3">
+                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-blue-500 text-white">
+                  <UserPlus className="h-3.5 w-3.5" />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-yellow-800">공급사를 먼저 추가하세요</p>
-                  <p className="mt-0.5 text-xs text-yellow-700">이 품목에 매칭되는 공급사가 없습니다. 이메일로 직접 추가하면 바로 전송할 수 있어요.</p>
+                  <p className="text-sm font-semibold text-blue-900">공급사를 먼저 추가하세요</p>
+                  <p className="mt-0.5 text-xs text-blue-700">이 품목에 매칭되는 공급사가 없습니다. 이메일로 직접 추가하면 바로 전송할 수 있어요.</p>
                 </div>
               </div>
 
@@ -1142,13 +1160,15 @@ export function VendorRequestModal({
             취소
           </Button>
           {/* §quote-dispatch-real-send-unify P2 — 견적서 PDF 다운로드(발송과 분리된 별도 export, generate-pdf GET). */}
+          {/* §quotes-mobile-refine P4 (지시문 5a-4) — 다운로드 = 플랫폼 밖 수동 전달용 폴백 명시.
+              공급사 1+곳(정상 발송 경로 존재) 상태에선 모바일 한정 숨김(P0 판정 — 데스크탑 접근성 유지). */}
           <Button
             type="button"
             variant="outline"
             onClick={executeDownloadPdf}
             disabled={isSubmitting || isDownloadingPdf}
-            aria-label="견적요청서 PDF 다운로드"
-            className="min-h-[40px] border-slate-200 text-slate-700 active:scale-95"
+            aria-label="견적요청서 PDF 다운로드 · 직접 전달용"
+            className={`min-h-[40px] border-slate-200 text-slate-700 active:scale-95 ${includedCount > 0 ? "hidden md:inline-flex" : ""}`}
           >
             {isDownloadingPdf ? (
               <>
@@ -1158,10 +1178,16 @@ export function VendorRequestModal({
             ) : (
               <>
                 <Mail className="h-4 w-4 mr-2" />
-                견적요청서 다운로드
+                견적요청서 다운로드 <span className="ml-1 font-normal text-slate-400">· 직접 전달용</span>
               </>
             )}
           </Button>
+          {/* §quotes-mobile-refine P4 (지시문 5a-4) — 비활성 사유 인라인(라벨 274 핀 무접촉). */}
+          {sendReadiness === "blocked" && (
+            <span className="text-[11px] font-medium text-slate-400 text-center md:text-right">
+              공급사 추가 후 전송 가능 · {includedCount}곳
+            </span>
+          )}
           {sendReadiness === "blocked" ? (
             <Button
               type="button"
