@@ -180,7 +180,7 @@ export default function ReportsPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // Report data query
-  const { data: reportData, isLoading } = useQuery({
+  const { data: reportData, isLoading, isError } = useQuery({
     queryKey: ["reports", "purchase", startDate, endDate, selectedCategory, selectedTeam, selectedVendor, selectedBudget],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -467,6 +467,7 @@ export default function ReportsPage() {
       <div className="md:hidden">
         <MobileReportView
           isLoading={isLoading}
+          isError={isError}
           hasData={hasData}
           totalAmount={totalAmount}
           detailCount={details.length}
@@ -482,6 +483,7 @@ export default function ReportsPage() {
           activeFilterCount={activeFilterCount}
           filterContent={filterControls}
           onDownload={handleExportCsv}
+          onRetry={() => queryClient.invalidateQueries({ queryKey: ["reports"] })}
         />
       </div>
       {/* 데스크톱(≥768px) 기존 뷰 — 무접촉(§mobile-reports 경계) */}

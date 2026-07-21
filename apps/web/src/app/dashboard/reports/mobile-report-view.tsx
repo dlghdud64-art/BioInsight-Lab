@@ -66,6 +66,8 @@ interface MobileInsights {
 
 export interface MobileReportViewProps {
   isLoading: boolean;
+  /** 조회 실패 — 빈 화면/가짜 0 대신 에러 카드 렌더(D2, P5 스모크 발견) */
+  isError: boolean;
   hasData: boolean;
   totalAmount: number;
   detailCount: number;
@@ -82,6 +84,8 @@ export interface MobileReportViewProps {
   /** page.tsx 필터 팝오버 콘텐츠 재사용(컨트롤 중복 0) */
   filterContent: ReactNode;
   onDownload: () => void;
+  /** 에러 카드 재시도 — 실제 refetch(동일 프리셋 no-op 방지) */
+  onRetry: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -141,10 +145,10 @@ function CollapsedRow({ icon, title, hint }: { icon: ReactNode; title: string; h
 
 export function MobileReportView(props: MobileReportViewProps) {
   const {
-    isLoading, hasData, totalAmount, detailCount, insights,
+    isLoading, isError, hasData, totalAmount, detailCount, insights,
     monthlyData, categoryData, vendorData,
     presets, activePreset, onPreset, startDate, endDate,
-    activeFilterCount, filterContent, onDownload,
+    activeFilterCount, filterContent, onDownload, onRetry,
   } = props;
 
   const emptyPeriod = hasData && totalAmount === 0 && detailCount === 0;
@@ -236,6 +240,22 @@ export function MobileReportView(props: MobileReportViewProps) {
               <div className="h-5 w-16 bg-slate-100 rounded" />
             </div>
           ))}
+        </div>
+      )}
+
+      {/* ── 조회 실패 — 모바일 dead-end 방지(D2). 재시도는 프리셋 재선택 = refetch ── */}
+      {!isLoading && isError && (
+        <div className="border-2 border-dashed border-[#e6eaf0] rounded-2xl bg-white/60 px-4 py-8 text-center">
+          <BarChart2 className="h-8 w-8 text-slate-300 mx-auto mb-2.5" />
+          <p className="text-[13px] font-semibold text-slate-600">데이터를 불러오지 못했어요</p>
+          <p className="text-[12px] text-slate-400 mt-1">잠시 후 다시 시도해주세요</p>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="mt-4 h-11 min-h-[44px] px-4 rounded-xl border border-[#e6eaf0] bg-white text-slate-700 text-[13px] font-semibold active:bg-slate-50"
+          >
+            다시 불러오기
+          </button>
         </div>
       )}
 

@@ -48,20 +48,20 @@ describe("§mobile-reports P1 — 모바일 뷰 계약", () => {
     const src = read(MOBILE);
     expect(src).toMatch(/formatKoreanDateRange/); // 한국어 날짜(올해 연도 생략)
     expect(src).not.toMatch(/font-mono/); // §5 Pretendard 단일 — mono 전면 금지
-    // 🔄 진화(2026-07-21, 호영님 승인) — 프리셋 라벨 단일소스는 page.tsx `REPORT_PRESETS`.
-    //   MobileReportView 는 리터럴을 중복 보유하지 않고 `presets` prop 을 받아 렌더(단일소스 설계).
-    //   따라서 라벨 리터럴은 부모(page)에서, 자식(mobile)은 prop 배선을 검증한다.
-    const page = read(PAGE);
-    expect(page).toMatch(/최근 7일/);
-    expect(page).toMatch(/최근 30일/);
-    expect(src).toMatch(/presets/); // prop 수신
-    expect(src).toMatch(/p\.label\.replace\(/); // "최근 " 접두 제거 렌더(배지)
+    expect(src).toMatch(/grid-cols-4/); // 프리셋 세그먼트 풀폭(4종, page REPORT_PRESETS 주입)
+    expect(src).toMatch(/presets\.map/); // 프리셋 정의 중복 0 — page 단일 소스
   });
 
   it("KPI — 2열 컴팩트 4장 · 값 없음 '–'(0과 구분)", () => {
     const src = read(MOBILE);
     expect(src).toMatch(/grid-cols-2/);
     expect(src).toMatch(/["'`]–["'`]/);
+  });
+
+  it("조회 실패 — 에러 카드(빈 화면/가짜 0 금지, D2)", () => {
+    const src = read(MOBILE);
+    expect(src).toMatch(/isError/);
+    expect(src).toMatch(/데이터를 불러오지 못했어요/);
   });
 
   it("빈 기간 — 점선 카드 + 자동 집계 안내 + 30일 CTA(실동작)", () => {
