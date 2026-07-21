@@ -101,6 +101,10 @@ describe("§quote-dispatch-real-send-unify P1 — 회귀 0 (선택/검증 + trac
   });
   it("setConfirmationOpen + onSuccess 보존", () => {
     expect(src).toMatch(/setConfirmationOpen\(false\)/);
-    expect(src).toMatch(/onSuccess\?\.\(\)/);
+    // 🔄 진화(2026-07-21, §quotes-mobile-refine housekeeping) — **보호의도 불변**:
+    //   보호 대상은 "발송 후 onSuccess 콜백 호출"이다. §action-toast P3(호영님 2026-07-08)가
+    //   부분 성공 분기용 결과 집계를 인자로 추가(`onSuccess?.({ sent, failed, recipientCount })`)
+    //   → 인자 없는 옛 형태 pin 이 stale. 집계 전달까지 포함해 더 강하게 pin 한다.
+    expect(src).toMatch(/onSuccess\?\.\(\{ sent, failed, recipientCount \}\)/);
   });
 });

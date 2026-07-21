@@ -32,8 +32,13 @@ describe("§quotes-mobile-density P3 — 우선추천 inline 1행", () => {
 });
 
 describe("§quotes-mobile-density P3 — 검색/필터 sticky", () => {
-  it("검색+필터 컨테이너 sticky top-0 + bg(비침 방지)", () => {
-    expect(PAGE).toMatch(/<div className="sticky top-0 z-20 bg-white flex flex-col gap-2 pb-2">/);
+  it("검색+필터 컨테이너 sticky top-0 + bg(비침 방지) — 데스크탑 한정 렌더 수용", () => {
+    // 🔄 진화(2026-07-21, §quotes-mobile-refine housekeeping) — **보호의도 불변**:
+    //   보호 대상은 "리스트 스크롤 시 검색+필터 상단 고정 + bg 비침 방지"다.
+    //   `221d42d0`(§web-mobile-reskin-fidelity, 시안 정합)이 견적 데스크탑 chrome 을 모바일에서
+    //   숨기며 `hidden md:` 를 추가(모바일은 MobileQuotesView 전용 뷰) → 옛 클래스열 pin 이 stale.
+    //   sticky·z-20·bg-white 의도는 그대로 강제하고, 모바일 숨김을 명시 수용한다.
+    expect(PAGE).toMatch(/<div className="sticky top-0 z-20 bg-white hidden md:flex flex-col gap-2 pb-2">/);
   });
 });
 
