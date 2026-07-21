@@ -145,12 +145,13 @@ export async function GET(request: NextRequest) {
         estimatedAmount += amount;
         totalAmount += amount;
 
-        const vendor = item.product.vendors?.[0]?.vendor;
+        // §reports-500-null-product — product 삭제/미연결 quote item 크래시 가드(프로덕션 500 원인)
+        const vendor = item.product?.vendors?.[0]?.vendor;
         if (vendor) {
           vendorMap.set(vendor.name, (vendorMap.get(vendor.name) || 0) + amount);
         }
 
-        if (item.product.category) {
+        if (item.product?.category) {
           categoryMap.set(
             item.product.category,
             (categoryMap.get(item.product.category) || 0) + amount
@@ -269,15 +270,15 @@ export async function GET(request: NextRequest) {
     quotes.forEach((quote: any) => {
       // 타입 에러 수정: item 파라미터에 타입 명시
       quote.items.forEach((item: any) => {
-        const vendor = item.product.vendors?.[0]?.vendor;
+        const vendor = item.product?.vendors?.[0]?.vendor; // §reports-500-null-product 가드
         details.push({
           id: item.id,
           date: quote.createdAt.toISOString().split("T")[0],
           organization: quote.organization?.name || "-",
           project: quote.description || "-",
           vendor: vendor?.name || "-",
-          category: item.product.category || "-",
-          productName: item.product.name,
+          category: item.product?.category || "-",
+          productName: item.product?.name || "-",
           amount: (item.unitPrice || 0) * item.quantity,
           notes: item.notes || "-",
           type: "quote",
