@@ -1,6 +1,6 @@
 # Implementation Plan: 모바일 예산 관리 · 지출 분석 개선 (§mobile-budgets)
 
-- **Status:** ⏳ Pending
+- **Status:** 🚧 P1–P4 Complete (2026-07-21 · 코드 `e2c195f4`) — P5 프로덕션 스모크만 잔여
 - **Started:** 2026-07-21
 - **Last Updated:** 2026-07-21
 - **Estimated Completion:** TBD
@@ -84,32 +84,49 @@
 
 ## 7. Implementation Phases
 
-### Phase 0: Context & Truth Lock
-- Status: [ ] Pending
-- 두 page.tsx 전체 + 프로토타입 7a/7b/8a 정독 · 임계/차단 저장 필드 실측(부재 시 스코프 판정 상신) ·
-  진입점 3곳 현행 배선 · queryKey 규약 · 기존 sentinel 목록
-- **✋ Gate:** 미해소 충돌 0 · 임계/차단 소스 확정 · phase 재산정
-- **Rollback:** 계획 단계 — 코드 0
+### Phase 0: Context & Truth Lock — ✅ Complete (2026-07-21)
+- Status: [x] Complete
 
-### Phase 1: Contract & RED
-- Status: [ ] Pending
+**실측 결과:**
+- 저장 소스: `/api/budgets` = `db.budget`(Budget 모델). **Budget 에 임계·차단 필드 0.**
+  임계 3필드(warningPercent 70 · softLimitPercent 90 · hardStopPercent 100)+`controlRules` 는
+  **CategoryBudget 에만 실재**(카테고리 단위 · 게이트 = `lib/budget/category-budget-gate.ts` ·
+  프론트 UI 사용처 0 — API만). → 7b 임계 구간 시각화 = **저장 없는 규약 안내**(70/90/100,
+  CategoryBudget 규약과 동일 수치 표기 — 이원화 0)로 처리 가능
+- **차단 토글 = 저장처 부재** → 판정 상신(아래 확정 판정 참조)
+- 활성화 3단계 = analytics L383 canonical derive(② 예산 등록 done = budget.total>0) —
+  7b 등록 성공 → `["analytics-dashboard"]` invalidate 로 2/3 자동 전환(규칙 재사용, 신설 0)
+- 동기화 규약: budget 페이지 = 수동 fetch(자체 reload 콜백) · analytics = react-query
+  `["analytics-dashboard"]`. 7b onSuccess = 호출측 reload 콜백 + invalidateQueries 병행
+- 진입점 3곳 현행: ① budget 헤더 `예산 등록` Dialog(L288, BudgetForm) ② 7a EmptyState CTA(L483 →
+  같은 Dialog) ③ 8a 단계 카드 = `/dashboard/budget` **페이지 이동**(시트 교체 대상)
+- 제거 대상 실증: 초록 대형 CTA(analytics L707 `bg-emerald-600 h-11`) · 배너(L695)+체크리스트
+  카드(L722) 중복
+- **확정 판정(호영님 2026-07-21): 차단 토글 = (a) v1 제외** — 저장처 없는 토글은 no-op 금지 원칙
+  위반이라 시트에서 제외, 임계 구간 시각화만. Budget 스키마 확장(blockOverspend)은 별도 트랙 후보
+- **✋ Gate:** [x] 임계/차단 소스 확정 [x] 마이그레이션 0 확정(rollback 단순) [x] phase 유지
+
+### Phase 1: Contract & RED — ✅ Complete (2026-07-21)
+- Status: [x] Complete
 - 🆕 `src/__tests__/regression/mobile-budgets-p1.test.ts` — QA 10항 정적 어서션 + 패리티/회귀 블록
-- **✋ Gate:** RED 실증 · 기존 GREEN 유지
+- **✋ Gate:** [x] RED 실증 → 구현 후 16/16 GREEN · [x] 기존 GREEN 유지
 - **Rollback:** 테스트 revert
 
-### Phase 2: 7b 등록 시트 + 진입점 3곳
-- Status: [ ] Pending
-- **✋ Gate:** 등록 mutation 실배선(no-op 0) · 양 화면 invalidation 실증 · 임계 단일 소스
+### Phase 2: 7b 등록 시트 + 진입점 3곳 — ✅ Complete (2026-07-21)
+- Status: [x] Complete
+- 비고: 7b 저장 = 기존 `POST /api/budgets` 무변경(name·amount·currency·periodStart·periodEnd·description, 신규 필드 0·마이그레이션 0) · 임계(70/90/100) = 표시 전용 규약(저장 0, CategoryBudget 수치와 동일 표기·이원화 0) · 차단 토글 = v1 제외(호영님 P0 판정, 저장처 부재) · budget 페이지 EOL 혼재 → LF 정규화 포함.
+- **✋ Gate:** [x] 등록 mutation 실배선(no-op 0) · [x] 양 화면 invalidation 실증 · [x] 임계 단일 소스
 - **Rollback:** 시트+배선 revert
 
-### Phase 3: 7a 예산 관리 모바일
-- Status: [ ] Pending
-- **✋ Gate:** 0건 요약↔카드 승격 분기 정직 · 배너 잘림 0 · 데스크톱 무변경
+### Phase 3: 7a 예산 관리 모바일 — ✅ Complete (2026-07-21)
+- Status: [x] Complete
+- **✋ Gate:** [x] 0건 요약↔카드 승격 분기 정직 · [x] 배너 잘림 0 · [x] 데스크톱 무변경
 - **Rollback:** budget 모바일 섹션 revert
 
-### Phase 4: 8a 지출 분석 모바일
-- Status: [ ] Pending
-- **✋ Gate:** 중복 카드 0 · CTA 1 · 초록 대형 CTA 0 · 데스크톱 무변경
+### Phase 4: 8a 지출 분석 모바일 — ✅ Complete (2026-07-21)
+- Status: [x] Complete
+- **게이트 종합:** P1 16/16 · baseline-delta 0 · build EXIT 0. 배포 대기(코드 `e2c195f4`).
+- **✋ Gate:** [x] 중복 카드 0 · [x] CTA 1 · [x] 초록 대형 CTA 0 · [x] 데스크톱 무변경
 - **Rollback:** analytics 모바일 섹션 revert
 
 ### Phase 5: 스모크 · 종결
