@@ -83,13 +83,28 @@
 
 ## 7. Implementation Phases
 
-### Phase 0: Context & Truth Lock
-- Status: [ ] Pending
-- audit/page.tsx 전독(모드 전환·필터·리스트·이벤트 타입 11종 매핑) · 프로토타입 1a/1b/1c/2a~2c 정독 ·
-  딥링크 대상 라우트 실재 매핑(도메인별) · log-consolidation sentinel 어서션 경계 확정 ·
-  select.tsx 소비처 파급 조사(bg-el 의존 화면)
-- **✋ Gate:** 딥링크 매핑 전건 실재 확인 · sentinel 충돌 0 판정 · phase 재산정
-- **Rollback:** 계획 단계 — 코드 0
+### Phase 0: Context & Truth Lock — ✅ Complete (2026-07-21)
+- Status: [x] Complete
+
+**실측 결과 (다음 배치 인수인계용 — 자족 기록):**
+- **모드 상태 구조:** `mode`("activity"|"audit") + `modeInitialized` (audit L349-350). 초기화 =
+  L367-373 useEffect `setMode(canAccessAudit ? "audit" : "activity")` — **P2 수정 지점**:
+  `useSearchParams()` 의 `tab` 파라미터 우선 → 없을 때만 기존 분기. `canAccessAudit` =
+  ADMIN 또는 manager(L358) — 감사 탭 노출 게이팅에 그대로 재사용
+- 비admin 감사 강등 메커니즘 L378-392(toast+활동 강등) — 무접촉 보존
+- **활동 데이터 계약:** `/api/activity-logs` (limit 100, activityType·entityType 파라미터) ·
+  ActivityLog { activityType, entityType(QUOTE/ORDER/INVENTORY/AI_ACTION/PRODUCT…), entityId?,
+  beforeStatus/afterStatus, metadata, createdAt } · 라벨 맵 = ENTITY_TYPE_LABELS(L185)·
+  ACTIVITY_TYPE_LABELS 기존 실재 — 도메인 칩·이니셜 칩 파생에 재사용(신설 0)
+- **딥링크 판정(중요):** 개별 상세 라우트 `[id]` 전부 **부재**(quotes·inventory·receiving·purchases·
+  purchase-orders X, budget/[id]만 존재) → 행 딥링크 = 라우트 신설 금지, **기존 오버레이 딥링크 규약
+  (`hooks/use-overlay-deep-link.ts`) 재사용**으로 방향 확정. 도메인별 실규약(쿼리 키) 매핑은 P2 착수
+  첫 작업으로 실측 — 규약 없는 도메인은 목록 라우트+필터 폴백(dead link 0 원칙)
+- **sentinel 경계:** `log-consolidation-p1.test.ts` 23 어서션(통합 host·활동 보존 가드) — P2~P4 편집 후
+  원문 GREEN 유지 강제. 충돌 발견 시 임의 진화 금지 — 호영님 판정 상신
+- select.tsx `bg-el` 2곳(trigger L29·content L85)만 교정 대상 재확인 — 별도 커밋·단독 revert 경로 유지
+- **✋ Gate:** [x] 딥링크 방향 확정(오버레이 규약 재사용, 신규 라우트 0) [x] sentinel 경계 식별
+  [x] phase 유지(P2 첫 작업 = 오버레이 규약 도메인별 실측)
 
 ### Phase 1: Contract & RED
 - Status: [ ] Pending
