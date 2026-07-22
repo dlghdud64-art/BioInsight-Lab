@@ -1,6 +1,6 @@
 # Implementation Plan: 모바일 예산 관리 · 지출 분석 개선 (§mobile-budgets)
 
-- **Status:** 🚧 P1–P4 Complete (2026-07-21 · 코드 `e2c195f4`) — P5 프로덕션 스모크만 잔여
+- **Status:** ✅ Complete (2026-07-21 · 코드 `e2c195f4`) — P1–P5 전건 종결
 - **Started:** 2026-07-21
 - **Last Updated:** 2026-07-21
 - **Estimated Completion:** TBD
@@ -129,11 +129,12 @@
 - **✋ Gate:** [x] 중복 카드 0 · [x] CTA 1 · [x] 초록 대형 CTA 0 · [x] 데스크톱 무변경
 - **Rollback:** analytics 모바일 섹션 revert
 
-### Phase 5: 스모크 · 종결
-- Status: [ ] Pending
+### Phase 5: 스모크 · 종결 — ✅ Complete (2026-07-21)
+- Status: [x] Complete
 - 프로덕션 스모크(직전 트랙 방식 — Chrome 500px + 실기기 375px 잔여 명기) · QA 10항 · 롤백 문서화
-- **✋ Gate:** QA 판정표 · baseline-delta 0 · build EXIT 0
-- **Rollback:** phase별 커밋 revert(데이터/마이그레이션 없음 전제 — P0 판정 후 확정)
+- **스모크 판정 요지:** 7b 등록 실동작(진입점 → `POST /api/budgets` 실배선, no-op 0) · 양 화면(budget·analytics) 동기화 실측 · 테스트 데이터 정리 완료 · 모바일 레이아웃 시각 검증 = 실기기 이관(프로덕션 브라우저 줌/스케일 특이로 뷰포트 강제 불가 명기).
+- **✋ Gate:** [x] 기능 체인 실측(등록→동기화) · [x] baseline-delta 0 · [x] build EXIT 0
+- **Rollback:** 전체 = `git revert e2c195f4` 단일(마이그레이션 0, 읽기/쓰기 모두 기존 계약).
 
 ## 8. Risk Assessment
 
