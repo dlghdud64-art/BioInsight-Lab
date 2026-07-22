@@ -88,11 +88,21 @@ function ChartTooltip({ active, payload, label }: any) {
   );
 }
 
+// §mobile-budgets 7b — 진입점 3곳 공용 등록 시트 + 등록 즉시 양 화면 동기화(analytics invalidate)
+import { BudgetRegisterSheet } from "@/components/budget/budget-register-sheet";
+import { useQueryClient } from "@tanstack/react-query";
+
 export default function BudgetPage() {
   const { status } = useSession();
   const { toast } = useToast();
   const router = useRouter();
   const { organizationId: activeOrgId } = usePermission();
+  const queryClient = useQueryClient();
+
+  // §mobile-budgets 7a/7b — 모바일 시트·요약 상세·온보딩 배너 상태
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [kpiDetailOpen, setKpiDetailOpen] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   // Zustand store
   const { budgets, isFetching, searchQuery, setBudgets, setIsFetching, setSearchQuery } = useBudgetStore();
@@ -277,17 +287,23 @@ export default function BudgetPage() {
             <div className="flex-1">
               <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-slate-900 mb-1">예산 관리</h1>
               <p className="text-sm text-slate-500">
-                예산 등록, 집행 현황, 승인 대기와 초과 위험을 관리합니다.
+                {/* §mobile-budgets §1 — 모바일 한 줄 압축, 데스크톱 원문 보존 */}
+                <span className="md:hidden">등록 · 집행 · 승인 대기 · 초과 위험을 한곳에서</span>
+                <span className="hidden md:inline">예산 등록, 집행 현황, 승인 대기와 초과 위험을 관리합니다.</span>
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Button variant="outline" size="sm" className="h-8 text-xs border-slate-200">
-                <Download className="h-3.5 w-3.5 mr-1.5" />
-                보고서 내보내기
+              <Button variant="outline" size="sm" className="h-8 text-xs border-slate-200" aria-label="보고서 내보내기">
+                <Download className="h-3.5 w-3.5 md:mr-1.5" />
+                <span className="hidden md:inline">보고서 내보내기</span>
+              </Button>
+              {/* §mobile-budgets 7b 진입점 ① — 모바일은 시트, 데스크톱은 기존 Dialog 보존 */}
+              <Button onClick={() => setIsSheetOpen(true)} size="sm" className="md:hidden h-8 text-xs bg-blue-600 hover:bg-blue-700">
+                <Plus className="h-3.5 w-3.5 mr-1.5" />예산 등록
               </Button>
               <Dialog open={isDialogOpen} onOpenChange={(open: boolean) => { setIsDialogOpen(open); if (!open) { setEditingBudget(null); setSubmitError(null); } }}>
                 <DialogTrigger asChild>
-                  <Button onClick={() => setEditingBudget(null)} size="sm" className="h-8 text-xs bg-blue-600 hover:bg-blue-700">
+                  <Button onClick={() => setEditingBudget(null)} size="sm" className="hidden md:inline-flex h-8 text-xs bg-blue-600 hover:bg-blue-700">
                     <Plus className="h-3.5 w-3.5 mr-1.5" />예산 등록
                   </Button>
                 </DialogTrigger>
@@ -310,8 +326,70 @@ export default function BudgetPage() {
             </div>
           </div>
         </div>
+
+        {/* §mobile-budgets §1 — 온보딩 배너(중형): 예산 0개 · 모바일 전용 · 잘림 금지(break-keep) */}
+        {budgets.length === 0 && !isFetching && !bannerDismissed && (
+          <div className="md:hidden rounded-2xl p-4 text-white" style={{ background: "linear-gradient(135deg,#16233f,#1d3157)" }}>
+            <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#93c5fd" }}>예산 통제 시작하기 · 2분</p>
+            <h3 className="text-[15px] font-extrabold mt-1 break-keep">첫 분기 예산을 설정하면 초과 위험을 자동으로 감시합니다</h3>
+            <p className="text-[12px] text-slate-300 mt-1 break-keep">발주 완료 건이 자동 집계되어 소진율·경고가 실계산됩니다</p>
+            <div className="flex items-center gap-2 mt-3">
+              <button type="button" onClick={() => setIsSheetOpen(true)} className="h-11 min-h-[44px] px-4 rounded-xl bg-[#2563eb] text-white text-[13px] font-bold active:bg-blue-700">
+                첫 분기 예산 설정 ›
+              </button>
+              <button type="button" onClick={() => setBannerDismissed(true)} className="h-11 min-h-[44px] px-3 text-[13px] font-semibold text-slate-300">
+                나중에
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* §mobile-budgets §1 — 0건 = 초록 한 줄 요약 · 1건+ = 해당 항목만 카드 승격(배경 채색 금지, 숫자·라벨만 레드) */}
+        <div className="md:hidden space-y-2">
+          {actionKpi.immediateReview === 0 && actionKpi.blockRisk === 0 && actionKpi.pendingApproval === 0 ? (
+            <div className="flex items-center gap-2 rounded-xl border border-[#e6eaf0] px-3.5" style={{ background: "#f0fdf4" }}>
+              <CheckCircle2 className="h-4 w-4 flex-none" style={{ color: "#15803d" }} />
+              <p className="flex-1 text-[13px] font-semibold py-3" style={{ color: "#15803d" }}>예산 상태 정상 · 0/0/0</p>
+              <button type="button" onClick={() => setKpiDetailOpen((v) => !v)} className="min-h-[44px] text-[12px] font-semibold text-slate-500">상세 ›</button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-2">
+              {[
+                { label: "즉시 확인", count: actionKpi.immediateReview, sub: "초과 항목 검토 필요" },
+                { label: "차단 위험", count: actionKpi.blockRisk, sub: "임계 구간 — 곧 차단 가능" },
+                { label: "승인 대기", count: actionKpi.pendingApproval, sub: "임계 구간 내 예약 건" },
+              ].filter((k) => k.count > 0).map((k) => (
+                <div key={k.label} className="bg-white rounded-xl border border-[#e6eaf0] px-3.5 py-3 flex items-center gap-3">
+                  <div className="flex-1">
+                    <p className="text-[12px] font-semibold" style={{ color: "#b91c1c" }}>{k.label}</p>
+                    <p className="text-[11px] text-slate-400">{k.sub}</p>
+                  </div>
+                  <p className="text-[20px] font-extrabold tabular-nums" style={{ color: "#b91c1c" }}>{k.count}건</p>
+                </div>
+              ))}
+              <button type="button" onClick={() => setKpiDetailOpen((v) => !v)} className="min-h-[44px] text-left text-[12px] font-semibold text-slate-500">상세 ›</button>
+            </div>
+          )}
+          {kpiDetailOpen && (
+            <div className="bg-white rounded-xl border border-[#e6eaf0] divide-y divide-slate-100">
+              {[
+                { label: "즉시 확인", value: `${actionKpi.immediateReview}건` },
+                { label: "차단 위험", value: `${actionKpi.blockRisk}건` },
+                { label: "승인 대기", value: `${actionKpi.pendingApproval}건` },
+                { label: "절감 가능", value: formatWonShort(actionKpi.altSavings) },
+                { label: "주간 소진", value: formatWonShort(actionKpi.weeklyBurn) },
+              ].map((k) => (
+                <div key={k.label} className="flex items-center justify-between px-3.5 py-2.5 text-[12px]">
+                  <span className="text-slate-500">{k.label}</span>
+                  <span className="font-bold text-slate-800 tabular-nums">{k.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* ═══ KPI Strip ═══ */}
-        <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 scrollbar-hide sm:grid sm:grid-cols-3 md:grid-cols-5 sm:gap-3 sm:overflow-visible sm:pb-0">
+        <div className="hidden md:grid md:grid-cols-5 gap-3">{/* §mobile-budgets — 모바일은 위 요약/승격 카드로 대체(패리티: 상세 › 전체) */}
           {[
             {
               icon: <AlertTriangle className="h-4 w-4" />,
@@ -370,16 +448,60 @@ export default function BudgetPage() {
           ))}
         </div>
 
+        {/* §mobile-budgets §1 — 모바일 접힌 행 2(카테고리별 지출·예산 풀별 소진율), 데이터 시 제자리 확장 */}
+        <div className="md:hidden bg-white rounded-2xl border border-[#e6eaf0] px-4 py-1.5 divide-y divide-slate-100">
+          {activeOrgId && budgets.length > 0 ? (
+            <div className="py-3.5">
+              <p className="text-[13px] font-bold text-slate-800 mb-2">카테고리별 지출</p>
+              <CategorySpendingWidget organizationId={activeOrgId} />
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 py-3 min-h-[44px]">
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold text-slate-700">카테고리별 지출</p>
+                <p className="text-[11px] text-slate-400">집계된 지출이 생기면 표시돼요</p>
+              </div>
+              <span className="text-[11px] text-slate-300" aria-disabled="true">›</span>
+            </div>
+          )}
+          {departmentTop3.length > 0 ? (
+            <div className="py-3.5">
+              <p className="text-[13px] font-bold text-slate-800 mb-2">예산 풀별 소진율</p>
+              <div className="space-y-2.5">
+                {departmentTop3.map((dept: DepartmentSpending) => (
+                  <div key={dept.department}>
+                    <div className="flex items-center justify-between mb-1 text-[12px]">
+                      <span className="font-semibold text-slate-700">{dept.department}</span>
+                      <span className="tabular-nums text-slate-500">{dept.rate}%</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                      <div className={`h-full rounded-full ${dept.rate > 100 ? "bg-red-500" : dept.rate >= 80 ? "bg-yellow-400" : "bg-emerald-500"}`} style={{ width: `${Math.min(dept.rate, 100)}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 py-3 min-h-[44px]">
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold text-slate-700">예산 풀별 소진율</p>
+                <p className="text-[11px] text-slate-400">예산 풀이 등록되면 소진율이 표시돼요</p>
+              </div>
+              <span className="text-[11px] text-slate-300" aria-disabled="true">›</span>
+            </div>
+          )}
+        </div>
+
         {/* ═══ 카테고리별 예산 사용 현황 ═══ */}
         {activeOrgId && (
-          <div className="bg-white rounded-xl border border-slate-200 p-5">
+          <div className="hidden md:block bg-white rounded-xl border border-slate-200 p-5">
             <CategorySpendingWidget organizationId={activeOrgId} />
           </div>
         )}
 
         {/* ═══ Chart + Department TOP 3 ═══ */}
         {budgets.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <div className="hidden md:grid grid-cols-1 lg:grid-cols-5 gap-4">
             {/* 월별 지출 추이 */}
             <div className="lg:col-span-3 bg-white rounded-xl border border-slate-200 p-5">
               <div className="flex items-center justify-between mb-4">
@@ -480,7 +602,7 @@ export default function BudgetPage() {
             ))}
           </div>
         ) : budgets.length === 0 ? (
-          <EmptyState onCreateClick={() => { setEditingBudget(null); setIsDialogOpen(true); }} />
+          <div className="hidden md:block"><EmptyState onCreateClick={() => { setEditingBudget(null); setIsDialogOpen(true); }} /></div>
         ) : (
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
             {/* Header */}
@@ -625,6 +747,18 @@ export default function BudgetPage() {
             </div>
           </div>
         )}
+
+      {/* §mobile-budgets 7b — 공용 등록 시트. onSuccess = 배너 dismiss + 목록 실계산 + analytics 활성화 2/3 invalidate */}
+      <BudgetRegisterSheet
+        open={isSheetOpen}
+        onOpenChange={setIsSheetOpen}
+        onSuccess={() => {
+          setBannerDismissed(true);
+          toast({ title: "예산 풀이 등록되었습니다." });
+          void fetchBudgets();
+          queryClient.invalidateQueries({ queryKey: ["analytics-dashboard"] });
+        }}
+      />
       </div>
     </div>
   );

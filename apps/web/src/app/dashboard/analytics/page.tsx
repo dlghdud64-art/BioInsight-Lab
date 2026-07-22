@@ -4,7 +4,9 @@ export const dynamic = "force-dynamic";
 
 import { csrfFetch } from "@/lib/api-client";
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+// §mobile-budgets 7b 진입점 ③ — 8a 단계 카드 `등록 ›` → 공용 시트(페이지 이동 대체)
+import { BudgetRegisterSheet } from "@/components/budget/budget-register-sheet";
 import Link from "next/link";
 // §11.246b-1 — Next.js route segment config `export const dynamic` 와 충돌 회피
 //   위해 alias 로 import (canonical Next.js convention).
@@ -394,6 +396,10 @@ export default function AnalyticsPage() {
   // 미리보기 sparkline 좌표 (장식 — 실수치 아님, "미리보기" 명시).
   const PREVIEW_SPARK_POINTS = "0,46 40,38 80,42 120,28 160,32 200,18 240,22 280,8";
 
+  // §mobile-budgets 8a — 공용 등록 시트(모바일 통합 카드 `등록 ›`)
+  const queryClient = useQueryClient();
+  const [budgetSheetOpen, setBudgetSheetOpen] = useState(false);
+
   // ── Tab 구성 ──
   const tabs: { id: AnalyticsTab; label: string; isButton?: boolean }[] = [
     { id: "overview", label: "종합 현황" },
@@ -420,6 +426,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* ── 탭 네비게이션 ── */}
+        <div className="relative">
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
           {tabs.map((tab) => (
             <button
@@ -460,6 +467,9 @@ export default function AnalyticsPage() {
             {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
             AI 리포트 생성
           </button>
+        </div>
+        {/* §mobile-budgets §3 — 탭 칩 잘림 우측 페이드 힌트(모바일) */}
+        <span className="md:hidden pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-canvas to-transparent" aria-hidden />
         </div>
       </div>
 
@@ -689,8 +699,49 @@ export default function AnalyticsPage() {
         {/* ══════════════════════════════════════════════════════════ */}
         {!isLoading && spendDataEmpty && (
           <div className="space-y-5" data-testid="analytics-onboarding">
+            {/* §mobile-budgets §3 — 모바일: 히어로+체크리스트 통합 단일 카드(중복 0). CTA = 현재 단계 1개만.
+                초록 = 완료 표시만(대형 초록 CTA 금지). 단계 데이터 = 기존 onboardingSteps canonical derive 소비. */}
+            <div className="md:hidden rounded-2xl p-4 text-white" style={{ background: "linear-gradient(135deg,#16233f,#1d3157)" }}>
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#93c5fd" }}>
+                  분석 활성화 · {onboardingDoneCount}/{onboardingSteps.length} 완료
+                </p>
+                <div className="flex gap-1" aria-hidden>
+                  {onboardingSteps.map((st) => (
+                    <span key={st.id} className={`w-1.5 h-1.5 rounded-full ${st.done ? "bg-emerald-400" : "bg-white/25"}`} />
+                  ))}
+                </div>
+              </div>
+              <h3 className="text-[15px] font-extrabold mt-1.5 break-keep">첫 발주가 완료되면 지출 분석이 자동으로 켜집니다</h3>
+              <ul className="mt-3 space-y-1.5">
+                {onboardingSteps.map((step, idx) => {
+                  const isCurrent = !step.done && onboardingSteps.slice(0, idx).every((x) => x.done);
+                  return (
+                    <li key={step.id} className="flex items-center gap-2.5 min-h-[44px]">
+                      <span className={`w-5 h-5 rounded-full grid place-items-center text-[10px] font-bold flex-none ${step.done ? "bg-emerald-500 text-white" : isCurrent ? "bg-blue-500 text-white" : "bg-white/15 text-slate-400"}`}>
+                        {step.done ? "✓" : idx + 1}
+                      </span>
+                      <span className={`flex-1 text-[13px] ${step.done ? "line-through text-slate-400" : isCurrent ? "font-bold text-white" : "text-slate-400"}`}>
+                        {step.label}
+                      </span>
+                      {isCurrent && step.id === "budget" && (
+                        <button type="button" onClick={() => setBudgetSheetOpen(true)} className="min-h-[44px] text-[12px] font-bold" style={{ color: "#93c5fd" }}>
+                          등록 ›
+                        </button>
+                      )}
+                      {isCurrent && step.id === "first-order" && (
+                        <Link href="/app/search" className="min-h-[44px] inline-flex items-center text-[12px] font-bold" style={{ color: "#93c5fd" }}>
+                          소싱에서 시작 ›
+                        </Link>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+
             {/* ── 온보딩 히어로 (네이비) ── */}
-            <div className="rounded-2xl bg-slate-900 text-white p-5 md:p-7 overflow-hidden relative">
+            <div className="hidden md:block rounded-2xl bg-slate-900 text-white p-5 md:p-7 overflow-hidden relative">
               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-300/90">
                 분석 활성화까지 {onboardingRemaining}단계
               </p>
@@ -720,7 +771,7 @@ export default function AnalyticsPage() {
             </div>
 
             {/* ── 활성화 3단계 체크리스트 ── */}
-            <div className="rounded-xl border border-bd bg-pn p-4 md:p-5">
+            <div className="hidden md:block rounded-xl border border-bd bg-pn p-4 md:p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold text-slate-700">활성화 단계</h3>
                 <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
@@ -774,8 +825,40 @@ export default function AnalyticsPage() {
               </ol>
             </div>
 
+            {/* §mobile-budgets §3 — 모바일 분석 미리보기: 접힌 행 3(소진율·의존도·이상 감지), 데이터 시 제자리 확장 */}
+            <div className="md:hidden bg-white rounded-2xl border border-[#e6eaf0] px-4 py-1.5 divide-y divide-slate-100">
+              {budgetRegistered ? (
+                <div className="py-3.5">
+                  <p className="text-[13px] font-bold text-slate-800">예산 소진율</p>
+                  <p className="text-[12px] text-slate-500 mt-0.5 tabular-nums">현재 {budget.usageRate}% · 발주가 쌓이면 추이가 그려져요</p>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 py-3 min-h-[44px]">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-slate-700">예산 소진율</p>
+                    <p className="text-[11px] text-slate-400">예산 등록 시 채워집니다</p>
+                  </div>
+                  <span className="text-[11px] text-slate-300" aria-disabled="true">›</span>
+                </div>
+              )}
+              <div className="flex items-center gap-3 py-3 min-h-[44px]">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold text-slate-700">공급사 의존도</p>
+                  <p className="text-[11px] text-slate-400">발주 공급사 비중을 분석해요</p>
+                </div>
+                <span className="text-[11px] text-slate-300" aria-disabled="true">›</span>
+              </div>
+              <div className="flex items-center gap-3 py-3 min-h-[44px]">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold text-slate-700">이상 지출 감지</p>
+                  <p className="text-[11px] text-slate-400">3개월 이상 데이터 축적 시 활성화</p>
+                </div>
+                <span className="text-[11px] text-slate-300" aria-disabled="true">›</span>
+              </div>
+            </div>
+
             {/* ── KPI 4 고도화 (언제 채워지는지 힌트 + ghost bar) ── */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
               {/* KPI 1: Q 예산 소진율 */}
               <div className="rounded-xl border border-bd bg-pn p-3 md:p-4">
                 <p className="text-xs font-semibold text-slate-500">Q{Math.ceil((new Date().getMonth() + 1) / 3)} 예산 소진율</p>
@@ -1475,6 +1558,15 @@ export default function AnalyticsPage() {
         )}
       </>)}
 
+
+      {/* §mobile-budgets 7b 진입점 ③ — 등록 성공 시 자체 데이터 invalidate → 활성화 2/3 즉시 전환(canonical derive) */}
+      <BudgetRegisterSheet
+        open={budgetSheetOpen}
+        onOpenChange={setBudgetSheetOpen}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["analytics-dashboard"] });
+        }}
+      />
       </div>
     </div>
   );
