@@ -1,6 +1,6 @@
 # Implementation Plan: 하단 내비 재고 탭 뱃지 (2a-6, F8 후속)
 
-- **Status:** 🚧 P2·P3 Complete (2026-07-21 · 코드 `56b7fa32`) — P4 실기기 스모크만 잔여
+- **Status:** ✅ Complete (2026-07-21 · 코드 `56b7fa32` · 프로덕션 배포 `378c12d0` READY) — 시각 스모크만 호영님 자가 확인 이관
 - **Started:** 2026-07-21
 - **Last Updated:** 2026-07-21
 - **Estimated Completion:** TBD
@@ -102,11 +102,21 @@
 - **Rollback:** BottomNav+훅 revert (서버 유지 무해)
 - 배포: 코드 `56b7fa32` (3파일). push 대기(별도 승인).
 
-### Phase 4: 스모크 · 롤아웃
-- Status: [ ] Pending
+### Phase 4: 스모크 · 롤아웃 — ✅ Complete (2026-07-21, 트랙 종결)
+- Status: [x] Complete
 - 경고 1+건/0건/로딩/에러 4상태 · 375px·768~1024 확인 경로 문서화 → operator 게이트
-- **잔여:** 라이브 375px·768~1024 스모크(경고 1+건 계정) — **호영님 실기기**(로그인 자격증명·시드 데이터 필요, operator 브라우저 불가). dead-render 핵심 4상태는 Phase 3에서 소스 실증 완료.
-- **✋ Gate:** baseline-delta 0 · 롤백 문서화
+- **판정 기록:**
+  - push `f514255d..378c12d0` → origin/main · Vercel `dpl_25ta3DHmqEWjM1aRf5Jwy97P2gic` production **READY** (labaxis.co.kr)
+  - **프로덕션 데이터 정합 실측** (Chrome 인증 세션, 2026-07-21): `/api/inventory/alert-count` = **1**
+    = stats `reorderNeededCount` = `lowStockAlerts` — 동일값, 스코프 drift 0
+  - dead-render 4상태 렌더 가드 = P3 소스 실증 완료. **시각 렌더(375/800/1024) = 호영님 자가 확인 이관**
+    (Chrome 창 최소화로 뷰포트 강제 불가 — 미실측 상태로 GREEN 기록하지 않음)
+  - 768~1024 뱃지 노출 = 계획 확정대로 수용
+- **Rollback(문서화):**
+  1. UI만 = `bottom-nav.tsx` + `use-inventory-alert-count.ts` revert (서버 라우트 잔존 무해·미호출)
+  2. 전체 = `git revert 56b7fa32` 단일 + push (직전 READY 배포 `dpl_BoRjPuCUkHukGe3uRF14sf4qWRy8` = f514255d)
+  3. 데이터/마이그레이션 없음 — 읽기 전용 라우트, rollout 게이트 불요
+- **✋ Gate:** [x] baseline-delta 0 · [x] 롤백 문서화
 
 ## 6. Risks
 
@@ -118,3 +128,7 @@
 
 ## 7. Notes
 - [2026-07-21] 계획서 생성 승인(호영님). F8 금지 경로 3종 헤더에 명문화.
+- [2026-07-21] 트랙 종결(호영님 "마감" 지시). 학습 2건: ① invalidation 은 신규 배선 대신 기존
+  `["inventories"]` queryKey prefix 편승이 0-diff 최적 ② 로그인 필요 스모크는 데이터 레벨(동일 세션
+  fetch 대조)과 시각 레벨을 분리 — 전자는 원격 실측 가능, 후자만 실기기 의존.
+- [2026-07-21] 시각 이관 항목 해소 — 프로덕션 375px 실측, 재고 탭 red 뱃지 1 = alert-count 동일값.

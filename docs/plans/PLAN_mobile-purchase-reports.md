@@ -1,6 +1,6 @@
 # Implementation Plan: 모바일 구매 리포트 개선 (§mobile-reports)
 
-- **Status:** 🚧 P1–P4 Complete (2026-07-21 · 코드 `5d60b835`) — P5 실기기 스모크만 잔여
+- **Status:** ✅ Complete (2026-07-21 · 코드 `5d60b835` + hotfix `aab4f19e`·`93b0f54a`) — P1–P5 전건 종결
 - **Started:** 2026-07-21
 - **Last Updated:** 2026-07-21
 - **Estimated Completion:** TBD
@@ -136,10 +136,13 @@
 - **게이트 종합:** P1 12/12 · reports sentinel 18/18 · build EXIT 0 · baseline-delta 0. 배포 대기(코드 `5d60b835`, push 별도 승인).
 - **Rollback:** 상세 분석 섹션 revert
 
-### Phase 5: 스모크 · 롤아웃
-- Status: [ ] Pending
+### Phase 5: 스모크 · 롤아웃 — ✅ Complete (2026-07-21)
+- Status: [x] Complete
 - QA 10항 체크 · 375px 실측(빈 기간/데이터 기간 2상태) · 터치 타겟 44px · baseline-delta 0 · 롤백 문서화
-- **✋ Gate:** QA 10/10 · build EXIT 0
+- **스모크 판정 요지:** D1 리포트 API 500→200 실증 · 30일 CTA 실동작(프리셋 전환) · 375px 라이브 실측은 로그인 제약 하 부분 실측 · D2 조회 실패 에러 카드+재시도는 소스 검증(하네스 13/13).
+- **스모크 발견 → hotfix 2건:** D1 프로덕션 500(quote item product null) → `aab4f19e`(null 가드 5곳) · D2 모바일 dead-end → `93b0f54a`(에러 카드+재시도). 배포 READY(`dpl_HvpZYzjEhLkcDRLeJ3gKYpwnfUvU`).
+- **✋ Gate:** [x] 하네스 p1 13/13 · contract 4/4 · [x] build EXIT 0 · [x] baseline-delta 0
+- **롤백 경로:** UI 롤백 = mobile-report-view+page revert · 전체 = 코드 커밋(5d60b835·aab4f19e·93b0f54a) revert · 데이터/마이그레이션 없음(읽기 전용, rollout 게이트 불요).
 - **Rollback:** phase별 섹션 revert(전체 = 코드 커밋 revert 단일)
 
 ## 8. Risk Assessment
@@ -156,3 +159,4 @@
 ## 10. Notes & Learnings
 - [2026-07-21] 계획서 생성 승인(호영님 "생성"). 가져오기 버튼 = 모바일 숨김·데스크톱 보존 확정.
 - [2026-07-21] 월별 해석 = top 카테고리 비중 파생(프로토타입 더미 카피 대체) · 커스텀 날짜 편집 v1 제외(DateRangePicker mono 강제 회피, 프리셋 4종 + 한국어 표시로 대체).
+- [2026-07-21] P5 스모크 발견 → hotfix 2건: D1 프로덕션 500(quote item product null 미가드) `aab4f19e` · D2 모바일 조회 실패 dead-end(에러 카드+재시도 부재) `93b0f54a`. 라이브 스모크가 정적 게이트(build·sentinel)로 못 잡는 프로덕션 결함을 실증 → 실기기 스모크 가치 확인.
