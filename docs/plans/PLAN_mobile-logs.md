@@ -1,6 +1,6 @@
 # Implementation Plan: 모바일 활동 로그 · 전역 드롭다운 개선 (§mobile-logs)
 
-- **Status:** 🚧 In Progress (P0·P1 ✅ / P2~P5 Pending)
+- **Status:** 🚧 In Progress (P0~P2 ✅ / P3~P5 Pending)
 - **Started:** 2026-07-21
 - **Last Updated:** 2026-07-22
 - **Estimated Completion:** TBD
@@ -122,12 +122,22 @@
   [x] 기존 GREEN 유지 — `log-consolidation-p1` 21 pass / 2 fail(P4 KPI stale — §P0 정정·판정 상신 참조)
 - **Rollback:** 테스트 revert
 
-### Phase 2: 라우팅 · 메뉴 (1c — 버그픽스 선행)
-- Status: [ ] Pending
-- `?tab=` 파라미터 반영(초기 모드 하드코딩 제거) · more-sheet 활동 로그 1항목(`/dashboard/audit?tab=activity`)
-  · 감사 탭 admin 게이팅 · 하이라이트 경로 정합
-- **✋ Gate:** 활동 클릭→활동 탭 실증 · 비admin 탭 미노출 · 기존 감사 접근 무회귀
-- **Rollback:** 라우팅/메뉴 revert
+### Phase 2: 라우팅 · 메뉴 (1c — 버그픽스 선행) — ✅ Complete (2026-07-22)
+- Status: [x] Complete — 커밋 `70e429eb` push 완료(F10 EXIT 0 · pre-commit GREEN)
+- 구현(2파일 최소 diff):
+  - audit `page.tsx` 초기 모드 useEffect → **`?tab=` 우선**(activity/audit 만 유효 · 비admin 의
+    `?tab=audit` 은 활동 폴백 — 기존 강등 메커니즘과 이중 안전) · tab 부재 시 기존 분기
+    (`setMode(canAccessAudit ? ...)`) **원문 보존**(폴백) · `force-dynamic` 페이지라 useSearchParams
+    Suspense 경계 불요(F10 실측: `/dashboard/audit` = ƒ Dynamic, prerender 에러 0)
+  - more-sheet → 활동 로그 **1항목**(`/dashboard/audit?tab=activity`) · 감사 추적 항목 제거 ·
+    하이라이트 `split("?")` pathname 정규화는 **startsWith 분기만**(exact 분기 = §11.359-2
+    sentinel 잠금 원문 보존) · `adminItems` const/`adminItems.map` 보존(§11.359 sentinel 정합)
+- **✋ Gate:** [x] F9 — mobile-logs-p1 **13 fail(P3/P4 계약만)/17 pass** = P2 계약 6 GREEN 전환 ·
+  회귀 4파일 delta 0(2 fail = log-consolidation P4 KPI 기왕 stale) [x] F10 EXIT 0
+  [ ] 런타임 스모크(더보기 활동 로그 → 활동 탭 진입, admin 포함) — P5 QA 10항에서 확정
+- 부수 실측: `audit-page-mobile-311b` "일시 / ID" 1 fail = **P2 이전부터 부재(기존 baseline,
+  무접촉)** · 재고 위험(`?filter=low`) 하이라이트가 정규화로 정상 활성화(동종 버그 동시 해소)
+- **Rollback:** 라우팅/메뉴 revert(70e429eb 단독)
 
 ### Phase 3: 필터 한 줄 + 세부 시트 (1a/1b)
 - Status: [ ] Pending
@@ -163,3 +173,7 @@
 - [2026-07-22] P0 커밋 `5685c75f` · P1 커밋 `55c6d174` push 완료. F9 계수 정확 일치(19/11 · 21/2).
   log-consolidation-p1 P4 KPI 2건 stale 실측(2026-07-04 KPI 제거 미진화) — (a) 진화 상신,
   P4 배치에서 호영님 승인 후 실행. P2~P4 구현은 새 배치 착수.
+- [2026-07-22] P2 커밋 `70e429eb` push 완료(진단 ① 라우팅 버그픽스 배포). F9 계수 일치 —
+  P2 계약 6 GREEN 전환, 회귀 delta 0. F10 EXIT 0. 다음 배치 = P3(필터 한 줄 + 세부 시트 1a/1b,
+  계약 6어서션 GREEN 목표 — testid: log-filter-row · log-domain-chip- · log-filter-sheet ·
+  log-filter-active-chip, CTA "필터 적용 · N개", 시트 h-11).
