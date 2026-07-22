@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   Download,
@@ -364,13 +364,25 @@ export default function AuditTrailPage() {
     }
   }, [status, router]);
 
-  // §log-consolidation P2 — 초기 모드: admin 은 감사, 그 외 org 멤버는 활동.
+  // §mobile-logs P2 — 탭 = URL `?tab=` 단일 소스(기본 탭 하드코딩 제거).
+  //   `?tab=` 이 있으면 항상 그대로 반영(더보기 "활동 로그" → admin 도 활동 탭 진입 —
+  //   진단 ① 라우팅 버그 해소). 단 감사 탭은 canAccessAudit 게이트(비admin 은 활동으로).
+  //   `?tab=` 부재 시에만 기존 분기 유지: admin 은 감사, 그 외 org 멤버는 활동.
+  //   (page 는 force-dynamic — useSearchParams CSR bailout 무관.)
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
   useEffect(() => {
-    if (status === "authenticated" && !modeInitialized) {
+    if (status !== "authenticated") return;
+    if (tabParam === "activity" || tabParam === "audit") {
+      setMode(tabParam === "audit" && !canAccessAudit ? "activity" : tabParam);
+      setModeInitialized(true);
+      return;
+    }
+    if (!modeInitialized) {
       setMode(canAccessAudit ? "audit" : "activity");
       setModeInitialized(true);
     }
-  }, [status, canAccessAudit, modeInitialized]);
+  }, [status, canAccessAudit, modeInitialized, tabParam]);
 
   // §log-consolidation P2 — 권한 분기(admin-gate 의미 보존):
   //   비admin 이 감사 모드에 진입하면 거부 안내 + 활동 모드로 강등.

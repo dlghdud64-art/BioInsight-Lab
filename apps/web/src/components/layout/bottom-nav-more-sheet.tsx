@@ -14,7 +14,6 @@ import {
   AlertTriangle,
   Settings,
   Activity,
-  ShieldCheck,
   BarChart3,
   Wallet,
   FileBarChart,
@@ -78,9 +77,11 @@ const menuGroups: { title: string; items: MoreMenuItem[] }[] = [
   },
 ];
 
+// §mobile-logs P2 — 로그 진입 1항목 통합: 활동 로그 = 통합 host 탭 딥링크(?tab=activity —
+//   redirect 경유 제거, admin 도 활동 탭 진입). 감사 추적 = 페이지 내 탭(canAccessAudit
+//   게이팅)으로 이동 — 별도 메뉴 항목 제거(2항목 병렬 해소, page-per-feature 회귀 0).
 const adminItems: MoreMenuItem[] = [
-  { label: "활동 로그", href: "/dashboard/activity-logs", icon: Activity },
-  { label: "감사 추적", href: "/dashboard/audit", icon: ShieldCheck },
+  { label: "활동 로그", href: "/dashboard/audit?tab=activity", icon: Activity },
 ];
 
 export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {
@@ -108,9 +109,11 @@ export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {
   };
 
   const renderItem = (item: MoreMenuItem) => {
+    // §mobile-logs P2 — 하이라이트 = 실제 경로: query 포함 href(?tab=/?filter=)는 pathname
+    //   부만 매칭(usePathname 은 query 미포함 — 기존 startsWith 는 query href 에서 항상 false).
     const active = item.exact
       ? pathname === item.href
-      : pathname.startsWith(item.href);
+      : pathname.startsWith(item.href.split("?")[0]);
     return (
       <button
         key={item.href}
