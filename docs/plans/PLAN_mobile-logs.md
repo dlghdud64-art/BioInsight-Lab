@@ -1,8 +1,8 @@
 # Implementation Plan: 모바일 활동 로그 · 전역 드롭다운 개선 (§mobile-logs)
 
-- **Status:** ⏳ Pending
+- **Status:** 🚧 In Progress (P0·P1 ✅ / P2~P5 Pending)
 - **Started:** 2026-07-21
-- **Last Updated:** 2026-07-21
+- **Last Updated:** 2026-07-22
 - **Estimated Completion:** TBD
 
 ⛔ quality gate skip 금지 · 미해소 충돌 진행 금지 · dead button/no-op/placeholder 금지
@@ -79,7 +79,8 @@
 | 모바일 필터/리스트 = §mobile-reports 패턴(md 분기) | 검증된 패턴 | audit 1,196줄 접촉 |
 
 ## 6. Global Test Strategy
-- 정적 sentinel + F9 원문 + F10 build + `log-consolidation-p1` 전건 GREEN 유지 + baseline-delta 0
+- 정적 sentinel + F9 원문 + F10 build + `log-consolidation-p1` GREEN 유지(**현행 21건 기준** —
+  P1 정정·P4 진화 판정 참조) + baseline-delta 0
 
 ## 7. Implementation Phases
 
@@ -102,15 +103,23 @@
   첫 작업으로 실측 — 규약 없는 도메인은 목록 라우트+필터 폴백(dead link 0 원칙)
 - **sentinel 경계:** `log-consolidation-p1.test.ts` 23 어서션(통합 host·활동 보존 가드) — P2~P4 편집 후
   원문 GREEN 유지 강제. 충돌 발견 시 임의 진화 금지 — 호영님 판정 상신
+  - **P1 정정(2026-07-22 실측 — 격리 node + F9 실 vitest 일치):** 현행 **21 GREEN / 2 RED**.
+    RED 2건 = P4 KPI describe(`log-activity-kpi-grid` · `isAiActivity`) — 2026-07-04 시안정합
+    (호영님, 활동 KPI 3카드 제거, audit L479 주석)로 **stale**(제거된 기능 기대). P0 기록 "23 GREEN"
+    은 부정확 → "전건 GREEN 유지" 게이트 = **21건 기준**으로 정정.
+  - **판정 상신:** (a) sentinel 진화(부재-lock 전환) = 2026-07-04 승인 결정과 정합 — **권장,
+    P4 배치에서 호영님 승인 후 별도 커밋**. (b) KPI 복원 = 승인 결정 회귀 — 비권장.
 - select.tsx `bg-el` 2곳(trigger L29·content L85)만 교정 대상 재확인 — 별도 커밋·단독 revert 경로 유지
 - **✋ Gate:** [x] 딥링크 방향 확정(오버레이 규약 재사용, 신규 라우트 0) [x] sentinel 경계 식별
   [x] phase 유지(P2 첫 작업 = 오버레이 규약 도메인별 실측)
 
-### Phase 1: Contract & RED
-- Status: [ ] Pending
-- 🆕 `src/__tests__/regression/mobile-logs-p1.test.ts` — QA 10항 정적 어서션 + 회귀 블록(통합 host·강등
-  메커니즘·log-consolidation 가드 보존)
-- **✋ Gate:** RED 실증 · 기존 GREEN 유지
+### Phase 1: Contract & RED — ✅ Complete (2026-07-22)
+- Status: [x] Complete — 커밋 `55c6d174` push 완료(origin/main, pre-push build 통과)
+- 🆕 `src/__tests__/regression/mobile-logs-p1.test.ts` **30 어서션** — 계약 19(P2 라우팅/메뉴 6 ·
+  P3 필터 한 줄+세부 시트 6 · P4 리스트 3 + 전역 select 토큰 4) + 회귀 가드 11(강등 메커니즘 ·
+  데이터 계약/라벨 맵 · GMP timestamp · select §11.73 · 더보기 §11.359)
+- **✋ Gate:** [x] RED 실증 — F9 실 vitest **19 fail(계약) / 11 pass(가드)** 정확 계수 일치
+  [x] 기존 GREEN 유지 — `log-consolidation-p1` 21 pass / 2 fail(P4 KPI stale — §P0 정정·판정 상신 참조)
 - **Rollback:** 테스트 revert
 
 ### Phase 2: 라우팅 · 메뉴 (1c — 버그픽스 선행)
@@ -151,3 +160,6 @@
 
 ## 10. Notes & Learnings
 - [2026-07-21] 계획서 생성 승인(호영님 "생성"). 라우트 drift(/logs→/dashboard/audit) · 진단 ①②④ 실증 완료.
+- [2026-07-22] P0 커밋 `5685c75f` · P1 커밋 `55c6d174` push 완료. F9 계수 정확 일치(19/11 · 21/2).
+  log-consolidation-p1 P4 KPI 2건 stale 실측(2026-07-04 KPI 제거 미진화) — (a) 진화 상신,
+  P4 배치에서 호영님 승인 후 실행. P2~P4 구현은 새 배치 착수.
