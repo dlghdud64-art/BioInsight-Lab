@@ -139,7 +139,7 @@
 ### Phase 5: 스모크 · 롤아웃 — ✅ Complete (2026-07-21)
 - Status: [x] Complete
 - QA 10항 체크 · 375px 실측(빈 기간/데이터 기간 2상태) · 터치 타겟 44px · baseline-delta 0 · 롤백 문서화
-- **스모크 판정 요지:** D1 리포트 API 500→200 실증 · 30일 CTA 실동작(프리셋 전환) · 375px 라이브 실측은 로그인 제약 하 부분 실측 · D2 조회 실패 에러 카드+재시도는 소스 검증(하네스 13/13).
+- **스모크 판정 요지:** D1 리포트 API 500→200 실증 · 30일 CTA 실동작(프리셋 전환) · 500px 라이브 실측(Chrome 최소 창폭 제한 — <768 모바일 분기 검증됨, 375px 정밀 확인은 실기기 잔여) · D2 조회 실패 에러 카드+재시도는 소스 검증(하네스 13/13).
 - **스모크 발견 → hotfix 2건:** D1 프로덕션 500(quote item product null) → `aab4f19e`(null 가드 5곳) · D2 모바일 dead-end → `93b0f54a`(에러 카드+재시도). 배포 READY(`dpl_HvpZYzjEhLkcDRLeJ3gKYpwnfUvU`).
 - **✋ Gate:** [x] 하네스 p1 13/13 · contract 4/4 · [x] build EXIT 0 · [x] baseline-delta 0
 - **롤백 경로:** UI 롤백 = mobile-report-view+page revert · 전체 = 코드 커밋(5d60b835·aab4f19e·93b0f54a) revert · 데이터/마이그레이션 없음(읽기 전용, rollout 게이트 불요).
