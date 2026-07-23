@@ -412,7 +412,7 @@ export default function ReportsPage() {
       <div className="space-y-1">
         <label htmlFor="category" className="text-xs font-medium uppercase tracking-wider text-slate-500">카테고리</label>
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger id="category" className="bg-el border-bs text-slate-700"><SelectValue placeholder="전체" /></SelectTrigger>
+          <SelectTrigger id="category" className="border-bs text-slate-700"><SelectValue placeholder="전체" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">전체</SelectItem>
             {Object.entries(PRODUCT_CATEGORIES).map(([value, label]) => (<SelectItem key={value} value={value}>{label}</SelectItem>))}
@@ -422,7 +422,7 @@ export default function ReportsPage() {
       <div className="space-y-1">
         <label htmlFor="team" className="text-xs font-medium uppercase tracking-wider text-slate-500">팀 / 조직</label>
         <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-          <SelectTrigger id="team" className="bg-el border-bs text-slate-700"><SelectValue placeholder="전체" /></SelectTrigger>
+          <SelectTrigger id="team" className="border-bs text-slate-700"><SelectValue placeholder="전체" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">전체</SelectItem>
             <SelectItem value="team1">1팀</SelectItem>
@@ -433,7 +433,7 @@ export default function ReportsPage() {
       <div className="space-y-1">
         <label htmlFor="vendor" className="text-xs font-medium uppercase tracking-wider text-slate-500">벤더</label>
         <Select value={selectedVendor} onValueChange={setSelectedVendor}>
-          <SelectTrigger id="vendor" className="bg-el border-bs text-slate-700"><SelectValue placeholder="전체" /></SelectTrigger>
+          <SelectTrigger id="vendor" className="border-bs text-slate-700"><SelectValue placeholder="전체" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">전체</SelectItem>
             <SelectItem value="sigma">Sigma-Aldrich</SelectItem>
@@ -445,7 +445,7 @@ export default function ReportsPage() {
       <div className="space-y-1">
         <label htmlFor="budget" className="text-xs font-medium uppercase tracking-wider text-slate-500">예산</label>
         <Select value={selectedBudget} onValueChange={setSelectedBudget}>
-          <SelectTrigger id="budget" className="bg-el border-bs text-slate-700"><SelectValue placeholder="전체" /></SelectTrigger>
+          <SelectTrigger id="budget" className="border-bs text-slate-700"><SelectValue placeholder="전체" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">전체</SelectItem>
             {Array.isArray(budgets) && budgets.map((budget: any) => (<SelectItem key={budget.id} value={budget.id}>{budget.name}</SelectItem>))}
