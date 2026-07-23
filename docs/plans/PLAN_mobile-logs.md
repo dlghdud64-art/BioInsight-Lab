@@ -1,8 +1,8 @@
 # Implementation Plan: 모바일 활동 로그 · 전역 드롭다운 개선 (§mobile-logs)
 
-- **Status:** 🚧 In Progress (P0~P3 ✅ / P4~P5 Pending)
+- **Status:** 🚧 In Progress (P0~P4 ✅ / P5 Pending)
 - **Started:** 2026-07-21
-- **Last Updated:** 2026-07-22
+- **Last Updated:** 2026-07-23
 - **Estimated Completion:** TBD
 
 ⛔ quality gate skip 금지 · 미해소 충돌 진행 금지 · dead button/no-op/placeholder 금지
@@ -156,11 +156,30 @@
   타입만 · 적용/해제 실동작 — 런타임 확정은 P5
 - **Rollback:** 필터 섹션 revert(74a5f923 단독)
 
-### Phase 4: 리스트 + 전역 select 토큰 (2a~2c)
-- Status: [ ] Pending
-- 날짜 그룹+이니셜 칩+행 딥링크 · select.tsx bg-el→흰 패널+그림자+44px+선택 ✓
-- **✋ Gate:** 딥링크 dead link 0 · 전역 시각 파급 스모크 경로 문서화
-- **Rollback:** 리스트 revert / select.tsx 단독 revert 가능(커밋 분리)
+### Phase 4: 리스트 + 전역 select 토큰 (2a~2c) — ✅ Complete (2026-07-23)
+- Status: [x] Complete — 커밋 `0da9d9ba` (A: select) · `bd0e2e9e` (B: sentinel 진화) · `7f499d55` (C: 리스트+계약) (아래 분리 순서)
+- **P0 전제 정정(실측 반박, 호영님 승인 2026-07-22 — 테스트 헤더 기록):** 상세 라우트 **실재**
+  (`quotes/[quoteId]`·`purchase-orders/[poId]`) · overlay 스토어 직접 호출 0건 · use-overlay-deep-link
+  didProcess 구조상 동일 마운트 재클릭 무시 → 행 딥링크 = **실재 라우트 직행(`activityDeepLink`)** 으로
+  계약 진화(오버레이 규약 재사용 폐기). ORDER 는 entityId=poId 동일성 미실측 → 목록 폴백(오연결 방지),
+  매핑 부재 도메인(PRODUCT/SEARCH/USER 등) = 비링크 행(가짜 링크 0) — 상세 시트 여부는 추후 판정.
+- 구현: 날짜 그룹(오늘/어제/날짜, sticky) + 도메인 이니셜 칩 + 행 탭 딥링크(매핑 실재 대상만
+  button+router.push, 그 외 비링크 행) · select.tsx bg-el 2곳→bg-white/bg-popover + 그림자
+  `0 12px 32px rgba(15,23,42,.14)` + item `min-h-[44px]` + 선택 ✓ `#eff6ff`/`#1d4ed8`
+  (§11.73 hover/open 톤 원문 보존) · log-consolidation-p1 KPI 2건 부재-lock 진화((a) 승인안)
+- **✋ Gate (2026-07-23 sandbox 격리 vitest 실측 — audit page 접촉 test 10파일 118 어서션):**
+  [x] mobile-logs-p1 **30/30 GREEN**(P4 계약 7 GREEN 전환 완료) [x] log-consolidation-p1
+  **23/23 GREEN**(부재-lock 진화 반영) [x] 회귀 delta 0 — 잔여 fail 3건(cleanup-300 `일시 / ID` 1 ·
+  311b `일시 / ID` 1 · log-activity-mode-preservation `grid-cols-3` 1) 전건 **HEAD 에도 부재 = 기왕
+  baseline**(git grep HEAD 0건 실측 — 2026-07-04 KPI 제거·헤더 개편 유래, 본 diff 무관) · 311b
+  CLAUDE.md 4 fail = 격리 환경 아티팩트(실 repo 실재) [x] 딥링크 dead link 0 — 매핑 대상 라우트
+  전건 실재 실측(quotes/[quoteId]·purchase-orders·purchases·inventory·vendor·inbox)
+  [x] 전역 시각 파급 스모크 경로 문서화 — P5 대표 3곳: **audit(데스크톱 필터 Select) ·
+  inventory-main(재고 필터) · reports** (SelectContent 사용 12 화면 중 트래픽 대표)
+  [ ] F10 build — operator pre-commit 실행(sandbox 불가)
+- 판정 상신(P5 이월): log-activity-mode-preservation `grid-cols-3` 1건 = log-consolidation KPI 와
+  동종 stale(제거된 KPI 기대) — 동일 (a) 부재-lock 진화 후보
+- **Rollback:** 리스트 revert(C 단독) / select.tsx 단독 revert(A 단독) / sentinel 진화 revert(B 단독)
 
 ### Phase 5: 스모크 · 종결
 - Status: [ ] Pending
@@ -189,6 +208,11 @@
   P2 계약 6 GREEN 전환, 회귀 delta 0. F10 EXIT 0. 다음 배치 = P3(필터 한 줄 + 세부 시트 1a/1b,
   계약 6어서션 GREEN 목표 — testid: log-filter-row · log-domain-chip- · log-filter-sheet ·
   log-filter-active-chip, CTA "필터 적용 · N개", 시트 h-11).
+- [2026-07-23] P4 검증 완료(sandbox 격리 vitest — 워킹트리 기구현분 실측 검증). mobile-logs-p1
+  30/30 · log-consolidation-p1 23/23 GREEN · 회귀 delta 0(기왕 3건 HEAD 부재 실측). 커밋 3분리
+  (A select 단독 / B sentinel 진화 단독 / C 리스트+계약) + D docs — operator 커밋·push 후
+  `<A>~<C>` 해시 기입. 다음 배치 = P5(QA 10항 런타임 스모크 + select 대표 3화면 시각 +
+  log-activity-mode-preservation stale 판정).
 - [2026-07-22] P3 커밋 `74a5f923` push 완료(1a/1b 배포). F9 계수 일치 — P3 계약 6 GREEN 전환,
   활동 피드 회귀 0(enhancement-p2/p3 전건 GREEN). 다음 배치 = P4(리스트 2a~2c + 전역 select 토큰,
   잔여 계약 7 — testid: log-date-group·log-entity-initial·log-row-link + overlay= 규약(도메인별
