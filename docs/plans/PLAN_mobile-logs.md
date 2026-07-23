@@ -1,6 +1,6 @@
 # Implementation Plan: 모바일 활동 로그 · 전역 드롭다운 개선 (§mobile-logs)
 
-- **Status:** 🚧 In Progress (P0~P4 ✅ / P5 Pending)
+- **Status:** ✅ Complete (P0~P5, 2026-07-23) — 후속 판정 1건 백로그(P5 기록 참조)
 - **Started:** 2026-07-21
 - **Last Updated:** 2026-07-23
 - **Estimated Completion:** TBD
@@ -181,10 +181,30 @@
   동종 stale(제거된 KPI 기대) — 동일 (a) 부재-lock 진화 후보
 - **Rollback:** 리스트 revert(C 단독) / select.tsx 단독 revert(A 단독) / sentinel 진화 revert(B 단독)
 
-### Phase 5: 스모크 · 종결
-- Status: [ ] Pending
-- 프로덕션 스모크(QA 10항 + 전역 드롭다운 대표 화면 3곳 시각) · 롤백 문서화
-- **✋ Gate:** QA 판정표 · baseline-delta 0 · build EXIT 0
+### Phase 5: 스모크 · 종결 — ✅ Complete (2026-07-23)
+- Status: [x] Complete — 프로덕션 런타임 스모크(Claude in Chrome, admin 계정, www.labaxis.co.kr,
+  모바일 657px + 데스크톱 1280px) + sentinel 진화 커밋 `6f7337f0`
+- **QA 판정표 (핸드오프 §4 — 전건 프로덕션 실측):**
+  | # | 항목 | 판정 |
+  |---|---|---|
+  | ① | 더보기 "활동 로그" → 활동 탭 진입(admin, `?tab=activity` URL 확인) | PASS |
+  | ② | 더보기 = 활동 로그 1항목 · 감사 추적 항목 부재 · 감사 = 페이지 내 탭(admin 노출) | PASS |
+  | ③ | 탭 = URL 반영(`?tab=activity` 직행 · 견적 이동 시 하단 메뉴 하이라이트 정합) | PASS |
+  | ④ | 필터 한 줄(도메인 칩 6+구분선+기간▾+담당자▾+⚙세부) 가로 스크롤 · 라벨 없는 "전체" 0 | PASS |
+  | ⑤ | ⚙세부 시트 = 선택 도메인 타입만(검색→"검색 수행" 1칩 확인) · 멀티 draft →<br>`필터 적용 · N개`(0→2 실계수) · 활성 칩 ✕ 즉시 해제(배지 2→1·리스트 갱신) · 도메인 전환 시 자동 정리 | PASS |
+  | ⑥ | 날짜 그룹(어제/2026년 7월 8일 수/…) sticky · 도메인 이니셜 칩("견") · 행 탭 →<br>견적 상세 직행(`/dashboard/quotes?selected={id}` 정규화, RFQ-2606-70DK 오픈) | PASS |
+  | ⑦ | 전역 select 흰 패널+그림자+44px+선택 ✓(`#eff6ff`/`#1d4ed8`) — 모바일 기간▾ +<br>데스크톱 3화면(audit·inventory·reports) 전건, 회색 패널 0 | PASS |
+  | ⑧ | 단일선택 ≤7 = 드롭다운(기간 4·위치 2·카테고리 5 확인, 내부 스크롤 0) · 멀티 = 바텀 시트 | PASS |
+  | ⑨ | 0건 상태 UI(검색 도메인 → "활동 내역이 없습니다" + 0건 계수) · 서버 재조회 로딩 상태 실재 | PASS |
+  | ⑩ | 감사 탭 전환 · 내보내기/append-only/KST/21 CFR 표기 보존 · 데스크톱 활동 모드 회귀 0 | PASS |
+  - 미검증 1(수용): 매핑 부재 도메인 비링크 행 — 프로덕션 활동 데이터 전건 QUOTE 로 실물 부재.
+    정적 계약(GREEN)으로 갈음, 데이터 발생 시 후속 확인
+- **✋ Gate:** [x] QA 판정표(10/10 PASS) [x] baseline-delta 0(P4 실측 승계 — P5 코드 변경 = sentinel
+  진화 1파일, F9 3/3 GREEN) [x] build EXIT 0(P4 operator 실측 + pre-push 게이트 승계)
+- **⚠️ 판정 상신(백로그 — 종결 비차단):** 데스크톱 활동 모드 **숨은 기간 필터** — P3 통합 필터 체인
+  (`filteredActivityLogs` 기본 7일)이 데스크톱에도 적용되나 기간 컨트롤은 모바일 전용 →
+  데스크톱 헤더 "8건" vs 표시 2건 불일치·조절 불가(프로덕션 실측). 옵션: (a) 데스크톱 기간
+  Select 추가 (b) 기간 필터 `<md` 한정. 호영님 판정 후 미니 배치
 - **Rollback:** phase별 커밋 revert(마이그레이션 0)
 
 ## 8. Risk Assessment
@@ -208,6 +228,11 @@
   P2 계약 6 GREEN 전환, 회귀 delta 0. F10 EXIT 0. 다음 배치 = P3(필터 한 줄 + 세부 시트 1a/1b,
   계약 6어서션 GREEN 목표 — testid: log-filter-row · log-domain-chip- · log-filter-sheet ·
   log-filter-active-chip, CTA "필터 적용 · N개", 시트 h-11).
+- [2026-07-23] **P5 종결 — PLAN Complete.** 프로덕션 런타임 스모크 QA 10/10 PASS(admin,
+  모바일+데스크톱, Claude in Chrome 실측). sentinel 진화 `6f7337f0`(mode-preservation 부재-lock,
+  호영님 승인). 진단 ①(admin 감사 진입 버그) 런타임 해소 확정. 백로그 1건: 데스크톱 활동 모드
+  숨은 기간 필터(P5 상신 참조 — 별도 미니 배치). 딥링크 실측 특기: quotes/[quoteId] 는
+  `?selected=` 목록 정규화로 착지(상세 오픈 정상 — dead link 아님).
 - [2026-07-23] P4 검증 완료(sandbox 격리 vitest — 워킹트리 기구현분 실측 검증). mobile-logs-p1
   30/30 · log-consolidation-p1 23/23 GREEN · 회귀 delta 0(기왕 3건 HEAD 부재 실측). 커밋 3분리
   (A select 단독 / B sentinel 진화 단독 / C 리스트+계약) + D docs — operator 커밋·push 후
