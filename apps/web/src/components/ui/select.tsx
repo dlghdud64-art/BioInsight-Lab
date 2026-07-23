@@ -27,7 +27,7 @@ const SelectTrigger = React.forwardRef<
       // - data-[state=open]: border-blue-400 + shadow-md (강조)
       // - chevron icon: data-state 따라 회전 (열림 시 180deg)
       // §mobile-logs P4 (진단 ④) — 회색 채색 토큰 제거 → 흰 배경(전역, 데스크톱 포함).
-      "group flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 bg-white border-bd transition-all duration-150 hover:border-blue-300 hover:shadow-sm data-[state=open]:border-blue-400 data-[state=open]:shadow-md",
+      "group flex h-10 w-full items-center justify-between rounded-md border border-input px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 bg-white border-bd transition-all duration-150 hover:border-blue-300 hover:shadow-sm data-[state=open]:border-blue-400 data-[state=open]:shadow-md",
       className
     )}
     {...props}
