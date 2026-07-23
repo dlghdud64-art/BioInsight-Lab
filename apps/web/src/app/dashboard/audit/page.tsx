@@ -20,6 +20,7 @@ import {
   Lock,
   Activity,
   RotateCcw,
+  SlidersHorizontal,
 } from "lucide-react";
 import {
   Sheet,
@@ -194,6 +195,16 @@ const ENTITY_TYPE_LABELS: Record<string, string> = {
   PRODUCT: "제품",
 };
 
+// §mobile-logs P3 — 모바일 필터 한 줄 상수(표시 파생). 도메인 값 = /api/activity-logs
+//   entityType param 과 동일(데스크톱 Select 옵션과 1:1 — 서버 실필터 재사용).
+const ACTIVITY_DOMAIN_CHIPS = ["quote", "product", "search", "order", "inventory", "vendor"] as const;
+const ACTIVITY_PERIOD_OPTIONS: { value: string; label: string }[] = [
+  { value: "today", label: "오늘" },
+  { value: "7", label: "7일" },
+  { value: "30", label: "30일" },
+  { value: "all", label: "전체 기간" },
+];
+
 function adaptLog(log: AuditLogResponse["logs"][number]): AuditRow {
   const meta = EVENT_TYPE_MAP[log.eventType] ?? {
     label: log.eventType,
@@ -353,6 +364,12 @@ export default function AuditTrailPage() {
   const [entityTypeFilter, setEntityTypeFilter] = useState<string>("all");
   // §audit-log-enhancement P2b — 활동 피드 멤버 필터(client-side).
   const [activityMember, setActivityMember] = useState<string>("all");
+  // §mobile-logs P3 — 모바일 필터 한 줄 + 세부 시트(1a/1b) 상태.
+  //   기간·타입 멀티 = client-side(limit 100 뷰 내 실필터) · 도메인 칩 = 서버 param 재사용.
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+  const [activityPeriod, setActivityPeriod] = useState<string>("7");
+  const [activityTypeMulti, setActivityTypeMulti] = useState<string[]>([]);
+  const [sheetDraftTypes, setSheetDraftTypes] = useState<string[]>([]);
 
   const userRole = session?.user?.role as string | undefined;
   const canAccessAudit = userRole === "ADMIN" || (userRole as string)?.toLowerCase() === "manager";
@@ -463,6 +480,45 @@ export default function AuditTrailPage() {
     setActivityTypeFilter("all");
     setEntityTypeFilter("all");
   };
+
+  // §mobile-logs P3 — 모바일 필터 파생값(표시 파생만 — canonical 은 ActivityLog).
+  const activityPeriodCutoff = useMemo(() => {
+    if (activityPeriod === "all") return null;
+    const d = new Date();
+    if (activityPeriod === "today") {
+      d.setHours(0, 0, 0, 0);
+      return d.getTime();
+    }
+    d.setDate(d.getDate() - Number(activityPeriod));
+    return d.getTime();
+  }, [activityPeriod]);
+  const filteredActivityLogs = useMemo(
+    () =>
+      (activityLogs as any[]).filter(
+        (l: any) =>
+          (activityMember === "all" || String(l.user?.id ?? "system") === activityMember) &&
+          (activityPeriodCutoff === null ||
+            new Date(l.createdAt).getTime() >= activityPeriodCutoff) &&
+          (activityTypeMulti.length === 0 || activityTypeMulti.includes(l.activityType)),
+      ),
+    [activityLogs, activityMember, activityPeriodCutoff, activityTypeMulti],
+  );
+  // §mobile-logs P3 — 세부 시트 = 선택 도메인의 활동 타입만(prefix 파생 — 라벨 맵 신설 0).
+  const sheetTypeOptions = useMemo(
+    () =>
+      Object.entries(ACTIVITY_TYPE_LABELS).filter(
+        ([key]) => entityTypeFilter === "all" || key.toLowerCase().startsWith(entityTypeFilter),
+      ),
+    [entityTypeFilter],
+  );
+  // §mobile-logs P3 — 담당자▾ 옵션(멤버 칩과 동일 파생 소스 — client-side).
+  const activityMemberOptions = useMemo(() => {
+    const mm = new Map<string, string>();
+    for (const l of activityLogs as any[]) {
+      mm.set(String(l.user?.id ?? "system"), l.user?.name || l.user?.email || "시스템");
+    }
+    return [...mm.entries()];
+  }, [activityLogs]);
 
   // §audit-log-enhancement P3b — 하루 단위(날짜 네비) + 카테고리 파생값.
   const auditDayList = useMemo(
@@ -656,7 +712,8 @@ export default function AuditTrailPage() {
             </p>
           </div>
 
-          <div className="flex flex-row gap-2 items-center">
+          {/* §mobile-logs P3 — 데스크톱 필터(기존 Select) 유지, 모바일은 아래 필터 한 줄로 대체. */}
+          <div className="hidden md:flex flex-row gap-2 items-center">
             <Select value={activityTypeFilter} onValueChange={setActivityTypeFilter}>
               <SelectTrigger className="h-9 w-[120px] md:w-[160px] text-xs">
                 <SelectValue />
@@ -697,6 +754,177 @@ export default function AuditTrailPage() {
             )}
           </div>
 
+          {/* §mobile-logs P3 — 모바일 필터 한 줄(1a): 도메인 칩 + 구분선 + 기간 + 담당자 +
+              ⚙세부(시트). 가로 스크롤 + 우측 페이드. 도메인 칩 = 서버 param(entityTypeFilter),
+              기간/담당자/타입 멀티 = client 실필터 — 가짜 필터 0. */}
+          <div className="relative md:hidden">
+            <div
+              data-testid="log-filter-row"
+              className="flex items-center gap-1.5 overflow-x-auto pb-1 pr-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              <button
+                type="button"
+                data-testid="log-domain-chip-all"
+                onClick={() => setEntityTypeFilter("all")}
+                className={`flex-none inline-flex items-center rounded-full border px-3 h-8 text-xs font-semibold transition-colors touch-manipulation ${entityTypeFilter === "all" ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200"}`}
+              >
+                전체 도메인
+              </button>
+              {ACTIVITY_DOMAIN_CHIPS.map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  data-testid={`log-domain-chip-${d}`}
+                  onClick={() => {
+                    setEntityTypeFilter(d);
+                    // 도메인 변경 시 타 도메인 타입 선택분 정리(불일치 필터 잔존 방지).
+                    setActivityTypeMulti((prev) => prev.filter((t) => t.toLowerCase().startsWith(d)));
+                  }}
+                  className={`flex-none inline-flex items-center rounded-full border px-3 h-8 text-xs font-semibold transition-colors touch-manipulation ${entityTypeFilter === d ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200"}`}
+                >
+                  {/* 라벨 = activity-labels ENTITY_TYPE_LABELS 재사용(alias) — 라벨 맵 신설 0 */}
+                  {ACTIVITY_ENTITY_LABELS[d] ?? d}
+                </button>
+              ))}
+              <span aria-hidden="true" className="flex-none h-5 w-px bg-slate-200 mx-0.5" />
+              <Select value={activityPeriod} onValueChange={setActivityPeriod}>
+                <SelectTrigger className="flex-none h-8 w-auto gap-1 rounded-full px-3 text-xs font-semibold">
+                  <span className="whitespace-nowrap">
+                    기간 · {ACTIVITY_PERIOD_OPTIONS.find((o) => o.value === activityPeriod)?.label}
+                  </span>
+                </SelectTrigger>
+                <SelectContent>
+                  {ACTIVITY_PERIOD_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={activityMember} onValueChange={setActivityMember}>
+                <SelectTrigger className="flex-none h-8 w-auto gap-1 rounded-full px-3 text-xs font-semibold">
+                  <span className="whitespace-nowrap">
+                    담당자 ·{" "}
+                    {activityMember === "all"
+                      ? "전체 담당자"
+                      : activityMemberOptions.find(([id]) => id === activityMember)?.[1] ??
+                        activityMember}
+                  </span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체 담당자</SelectItem>
+                  {activityMemberOptions.map(([id, name]) => (
+                    <SelectItem key={id} value={id}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <button
+                type="button"
+                data-testid="log-filter-detail-trigger"
+                onClick={() => {
+                  setSheetDraftTypes(activityTypeMulti);
+                  setIsFilterSheetOpen(true);
+                }}
+                className="flex-none relative inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 h-8 text-xs font-semibold text-slate-600 touch-manipulation"
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                세부
+                {activityTypeMulti.length > 0 && (
+                  <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white tabular-nums">
+                    {activityTypeMulti.length}
+                  </span>
+                )}
+              </button>
+            </div>
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent"
+            />
+          </div>
+
+          {/* §mobile-logs P3 — 활성 타입 필터 칩(✕ 즉시 해제 — 실동작). */}
+          {activityTypeMulti.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 md:hidden">
+              {activityTypeMulti.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  data-testid="log-filter-active-chip"
+                  onClick={() => setActivityTypeMulti((prev) => prev.filter((x) => x !== t))}
+                  className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 h-7 text-[11px] font-semibold text-blue-700 touch-manipulation"
+                >
+                  {ACTIVITY_TYPE_LABELS[t] ?? t}
+                  <X className="h-3 w-3" />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* §mobile-logs P3 — 세부 필터 바텀 시트(1b): 선택 도메인의 활동 타입만 · 멀티 선택 →
+              `필터 적용 · N개` 일괄 적용(draft→applied — 시트 열린 동안 리스트 불변). */}
+          <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
+            <SheetContent
+              side="bottom"
+              data-testid="log-filter-sheet"
+              className="rounded-t-2xl px-4 pb-6 safe-area-bottom bg-white max-h-[70vh] overflow-y-auto"
+            >
+              <SheetHeader className="text-left pb-1">
+                <SheetTitle className="text-base">세부 필터</SheetTitle>
+              </SheetHeader>
+              <p className="text-[11px] text-slate-400 mb-3 break-keep">
+                {entityTypeFilter === "all"
+                  ? "전체 도메인"
+                  : ACTIVITY_ENTITY_LABELS[entityTypeFilter] ?? entityTypeFilter}{" "}
+                활동 타입 · 복수 선택 가능
+              </p>
+              <div className="flex flex-wrap gap-1.5 mb-4">
+                {sheetTypeOptions.map(([key, label]) => {
+                  const selected = sheetDraftTypes.includes(key);
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() =>
+                        setSheetDraftTypes((prev) =>
+                          selected ? prev.filter((x) => x !== key) : [...prev, key],
+                        )
+                      }
+                      className={`inline-flex items-center rounded-full border px-3 h-11 text-xs font-semibold transition-colors touch-manipulation ${selected ? "bg-blue-50 text-blue-700 border-blue-300" : "bg-white text-slate-600 border-slate-200"}`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+                {sheetTypeOptions.length === 0 && (
+                  <p className="text-xs text-slate-400 py-2 break-keep">
+                    선택한 도메인에 해당하는 활동 타입이 없습니다.
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  className="h-11 flex-none text-xs"
+                  onClick={() => setSheetDraftTypes([])}
+                >
+                  초기화
+                </Button>
+                <Button
+                  className="h-11 flex-1 text-sm font-semibold"
+                  data-testid="log-filter-sheet-apply"
+                  onClick={() => {
+                    setActivityTypeMulti(sheetDraftTypes);
+                    setIsFilterSheetOpen(false);
+                  }}
+                >
+                  필터 적용 · {sheetDraftTypes.length}개
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
+
           <div className="border border-bd rounded-lg bg-white overflow-hidden shadow-sm">
             {activityQuery.isLoading ? (
               <div className="py-16 text-center">
@@ -729,7 +957,8 @@ export default function AuditTrailPage() {
                   const chips = [...mm.values()].sort((x, y) => y.count - x.count);
                   if (chips.length <= 1) return null;
                   return (
-                    <div className="flex flex-wrap items-center gap-1.5 px-3 py-2.5 border-b border-slate-100">
+                    // §mobile-logs P3 — 모바일은 필터 한 줄의 담당자▾ 로 대체(중복 제거), 데스크톱 유지.
+                    <div className="hidden md:flex flex-wrap items-center gap-1.5 px-3 py-2.5 border-b border-slate-100">
                       <button type="button" onClick={() => setActivityMember("all")}
                         className={`inline-flex items-center gap-1.5 rounded-full px-2.5 h-7 text-[11px] font-semibold border transition-colors ${activityMember === "all" ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"}`}>
                         전체 <span className="tabular-nums opacity-70">{activityLogs.length}</span>
@@ -748,11 +977,23 @@ export default function AuditTrailPage() {
                   const fmtDay = (d: string) =>
                     new Date(d).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric", weekday: "short", timeZone: "Asia/Seoul" });
                   const groups: { day: string; items: any[] }[] = [];
-                  for (const log of (activityLogs as any[]).filter((l: any) => activityMember === "all" || String(l.user?.id ?? "system") === activityMember)) {
+                  // §mobile-logs P3 — 멤버(§P2b)+기간+타입 멀티 통합 필터(filteredActivityLogs).
+                  for (const log of filteredActivityLogs) {
                     const day = fmtDay(log.createdAt);
                     let g = groups[groups.length - 1];
                     if (!g || g.day !== day) { g = { day, items: [] }; groups.push(g); }
                     g.items.push(log);
+                  }
+                  // §mobile-logs P3 — 필터 결과 0건 상태(빈 그룹 무표시 회귀 방지 — stateful UI).
+                  if (groups.length === 0) {
+                    return (
+                      <div className="py-12 text-center">
+                        <Activity className="h-6 w-6 text-slate-300 mx-auto mb-2" />
+                        <p className="text-xs text-slate-500 break-keep">
+                          선택한 필터에 해당하는 활동이 없습니다.
+                        </p>
+                      </div>
+                    );
                   }
                   return groups.map((g) => (
                     <div key={g.day}>
