@@ -508,6 +508,18 @@ export default function AuditTrailPage() {
     setEntityTypeFilter("all");
   };
 
+  // §mobile-logs 후속(P5 상신 해소) — 기간 필터는 모바일(<md) 전용. 기간 컨트롤(기간▾)이
+  //   md:hidden 이라 데스크톱에선 조절 불가 → 데스크톱 헤더 계수 vs 표시 불일치(숨은 필터).
+  //   데스크톱(md+)은 P3 이전대로 기간 미적용(전건 표시). max-width:767px = md:hidden 정합.
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsMobileViewport(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
   // §mobile-logs P3 — 모바일 필터 파생값(표시 파생만 — canonical 은 ActivityLog).
   const activityPeriodCutoff = useMemo(() => {
     if (activityPeriod === "all") return null;
@@ -524,11 +536,13 @@ export default function AuditTrailPage() {
       (activityLogs as any[]).filter(
         (l: any) =>
           (activityMember === "all" || String(l.user?.id ?? "system") === activityMember) &&
-          (activityPeriodCutoff === null ||
+          // 기간 조건은 모바일(<md)에서만 — 데스크톱은 기간 컨트롤 부재로 조절 불가 → 미적용(전건).
+          (!isMobileViewport ||
+            activityPeriodCutoff === null ||
             new Date(l.createdAt).getTime() >= activityPeriodCutoff) &&
           (activityTypeMulti.length === 0 || activityTypeMulti.includes(l.activityType)),
       ),
-    [activityLogs, activityMember, activityPeriodCutoff, activityTypeMulti],
+    [activityLogs, activityMember, activityPeriodCutoff, activityTypeMulti, isMobileViewport],
   );
   // §mobile-logs P3 — 세부 시트 = 선택 도메인의 활동 타입만(prefix 파생 — 라벨 맵 신설 0).
   const sheetTypeOptions = useMemo(
