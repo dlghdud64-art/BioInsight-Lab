@@ -205,6 +205,33 @@ const ACTIVITY_PERIOD_OPTIONS: { value: string; label: string }[] = [
   { value: "all", label: "전체 기간" },
 ];
 
+// §mobile-logs P4 — 활동 행 딥링크 대상(2026-07-22 실측 기반 — dead link 0).
+//   실재 상세 라우트 = quotes/[quoteId] (P0 "전부 부재" 기록은 실측 정정). ORDER 는
+//   entityId=poId 동일성 미실측 → 목록 폴백(오연결 방지). 그 외 = 실재 목록 라우트 폴백.
+//   매핑 부재 도메인(PRODUCT/SEARCH/USER/EMAIL 등) = null → 비링크 행(가짜 링크 금지,
+//   상세 시트 여부는 호영님 판정 상신).
+function activityDeepLink(
+  entityType: string | null | undefined,
+  entityId: string | null | undefined,
+): string | null {
+  switch ((entityType || "").toUpperCase()) {
+    case "QUOTE":
+      return entityId ? `/dashboard/quotes/${entityId}` : "/dashboard/quotes";
+    case "ORDER":
+      return "/dashboard/purchase-orders";
+    case "PURCHASE_REQUEST":
+      return "/dashboard/purchases";
+    case "INVENTORY":
+      return "/dashboard/inventory";
+    case "VENDOR":
+      return "/dashboard/vendor";
+    case "AI_ACTION":
+      return "/dashboard/inbox";
+    default:
+      return null;
+  }
+}
+
 function adaptLog(log: AuditLogResponse["logs"][number]): AuditRow {
   const meta = EVENT_TYPE_MAP[log.eventType] ?? {
     label: log.eventType,
@@ -976,12 +1003,24 @@ export default function AuditTrailPage() {
                 {(() => {
                   const fmtDay = (d: string) =>
                     new Date(d).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric", weekday: "short", timeZone: "Asia/Seoul" });
-                  const groups: { day: string; items: any[] }[] = [];
+                  // §mobile-logs P4 (2a) — 날짜 그룹 라벨: 오늘/어제/날짜. KST 기준 일자
+                  //   비교(GMP 표기 정합 — client tz 무관).
+                  const kstDay = (d: string | number | Date) =>
+                    new Date(d).toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
+                  const todayKst = kstDay(Date.now());
+                  const yesterdayKst = kstDay(Date.now() - 86400000);
+                  const dayLabel = (createdAt: string) => {
+                    const k = kstDay(createdAt);
+                    if (k === todayKst) return "오늘";
+                    if (k === yesterdayKst) return "어제";
+                    return fmtDay(createdAt);
+                  };
+                  const groups: { day: string; label: string; items: any[] }[] = [];
                   // §mobile-logs P3 — 멤버(§P2b)+기간+타입 멀티 통합 필터(filteredActivityLogs).
                   for (const log of filteredActivityLogs) {
                     const day = fmtDay(log.createdAt);
                     let g = groups[groups.length - 1];
-                    if (!g || g.day !== day) { g = { day, items: [] }; groups.push(g); }
+                    if (!g || g.day !== day) { g = { day, label: dayLabel(log.createdAt), items: [] }; groups.push(g); }
                     g.items.push(log);
                   }
                   // §mobile-logs P3 — 필터 결과 0건 상태(빈 그룹 무표시 회귀 방지 — stateful UI).
@@ -997,8 +1036,11 @@ export default function AuditTrailPage() {
                   }
                   return groups.map((g) => (
                     <div key={g.day}>
-                      <div className="sticky top-0 z-[1] bg-slate-50/95 px-4 py-1.5 text-[11px] font-semibold text-slate-500 border-b border-slate-100 backdrop-blur">
-                        {g.day}
+                      <div
+                        data-testid="log-date-group"
+                        className="sticky top-0 z-[1] bg-slate-50/95 px-4 py-1.5 text-[11px] font-semibold text-slate-500 border-b border-slate-100 backdrop-blur"
+                      >
+                        {g.label}
                       </div>
                       <ul className="divide-y divide-slate-100">
                         {g.items.map((log: any) => {
@@ -1008,8 +1050,12 @@ export default function AuditTrailPage() {
                           const entityLabel = log.entityType ? (ACTIVITY_ENTITY_LABELS[log.entityType] || log.entityType) : "";
                           const actor = log.user?.name || log.user?.email || "시스템";
                           const time = new Date(log.createdAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Seoul" });
-                          return (
-                            <li key={log.id} className={`flex items-start gap-3 px-4 py-2.5 ${isFail ? "bg-red-50" : "hover:bg-slate-50/50"}`}>
+                          // §mobile-logs P4 (2c) — 행 탭 딥링크: 실측 매핑 실재 대상만
+                          //   링크(오연결/dead link 0), 매핑 부재 행은 링크 affordance 없는
+                          //   비링크 행(가짜 링크 금지).
+                          const rowTarget = activityDeepLink(log.entityType, log.entityId);
+                          const rowInner = (
+                            <>
                               <span className="relative flex-none">
                                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-[11px] font-bold text-slate-600">
                                   {actorInitials(log.user?.name, log.user?.email)}
@@ -1021,6 +1067,16 @@ export default function AuditTrailPage() {
                                   <b className="font-semibold">{actor}</b>님이 {entityLabel && (<><b className="font-semibold">{entityLabel}</b> </>)}{label}
                                 </p>
                                 <div className="mt-0.5 flex items-center gap-2 flex-wrap">
+                                  {/* §mobile-logs P4 (2b) — 도메인 이니셜 칩 */}
+                                  {entityLabel && (
+                                    <span
+                                      data-testid="log-entity-initial"
+                                      aria-hidden="true"
+                                      className="inline-flex min-h-[18px] min-w-[18px] items-center justify-center rounded bg-slate-100 px-0.5 text-[9px] font-bold text-slate-500"
+                                    >
+                                      {entityLabel.charAt(0)}
+                                    </span>
+                                  )}
                                   {log.beforeStatus && log.afterStatus && (
                                     <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] text-slate-500 tabular-nums">
                                       {log.beforeStatus} → {log.afterStatus}
@@ -1029,6 +1085,25 @@ export default function AuditTrailPage() {
                                   <span className="text-[11px] text-slate-400 tabular-nums">{time}</span>
                                 </div>
                               </div>
+                              {rowTarget && (
+                                <ChevronRight className="h-4 w-4 flex-none self-center text-slate-300" aria-hidden="true" />
+                              )}
+                            </>
+                          );
+                          return (
+                            <li key={log.id} className={isFail ? "bg-red-50" : "hover:bg-slate-50/50"}>
+                              {rowTarget ? (
+                                <button
+                                  type="button"
+                                  data-testid="log-row-link"
+                                  onClick={() => router.push(rowTarget)}
+                                  className="flex w-full items-start gap-3 px-4 py-2.5 text-left touch-manipulation"
+                                >
+                                  {rowInner}
+                                </button>
+                              ) : (
+                                <div className="flex items-start gap-3 px-4 py-2.5">{rowInner}</div>
+                              )}
                             </li>
                           );
                         })}
