@@ -35,9 +35,14 @@ describe("§suite-red-cleanup — 활동 라벨 한글 보존 (구 §11.299 → 
   });
 });
 
-describe("§suite-red-cleanup — 활동 KPI §11.311 컴팩트 보존 (구 §11.311a → 통합 host)", () => {
-  it("audit 활동 모드 KPI grid-cols-3 컴팩트(§11.311, 모바일 한 줄)", () => {
+// §mobile-logs P5 진화(호영님 승인 2026-07-23): 활동 KPI 3카드는 2026-07-04 시안정합
+//   (호영님, audit page "활동 KPI 3카드 제거" 주석)으로 의도 제거 — 구 grid-cols-3 기대는
+//   제거된 기능을 기대하는 stale 이었음(log-consolidation-p1 P4 KPI 부재-lock 진화 bd0e2e9e
+//   와 동종·동일 근거). 부재-lock 으로 전환: 제거 상태가 canonical, KPI 재등장 = 회귀.
+describe("§suite-red-cleanup — 활동 KPI 제거 상태 보존 (2026-07-04 시안정합 부재-lock)", () => {
+  it("구 활동 KPI 그리드 재등장 0 (§11.311 컴팩트 요구는 시안정합으로 종료)", () => {
     const src = read(AUDIT);
-    expect(src).toMatch(/grid-cols-3/);
+    expect(src).not.toMatch(/data-testid="log-activity-kpi-grid"/);
+    expect(src).not.toMatch(/isAiActivity/);
   });
 });
