@@ -233,6 +233,10 @@
   호영님 승인). 진단 ①(admin 감사 진입 버그) 런타임 해소 확정. 백로그 1건: 데스크톱 활동 모드
   숨은 기간 필터(P5 상신 참조 — 별도 미니 배치). 딥링크 실측 특기: quotes/[quoteId] 는
   `?selected=` 목록 정규화로 착지(상세 오픈 정상 — dead link 아님).
+- [2026-07-23] 후속 fix `549a329d` 배포·런타임 검증 — 데스크톱 활동 탭 헤더 8건 = 표시 8건
+  전건 일치(숨은 기간 필터 해소, sandbox 프로덕션 실측). 모바일 7일 기본 = 코드 무변경 승계.
+- [2026-07-23] select trigger 회색 잔존(bg-background/bg-white 중복, 진단 ④ 잔존) 픽스
+  커밋 `d6f8f55b` — 배포 후 sandbox 트리거 흰색 재확인 예정.
 - [2026-07-23] P4 검증 완료(sandbox 격리 vitest — 워킹트리 기구현분 실측 검증). mobile-logs-p1
   30/30 · log-consolidation-p1 23/23 GREEN · 회귀 delta 0(기왕 3건 HEAD 부재 실측). 커밋 3분리
   (A select 단독 / B sentinel 진화 단독 / C 리스트+계약) + D docs — operator 커밋·push 후
