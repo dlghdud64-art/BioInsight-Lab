@@ -188,16 +188,19 @@ describe("§log-consolidation P3 — 메뉴 통합 + 구 route redirect", () => 
 // ────────────────────────────────────────────────────────────────────
 // 🟢 P4 — 통합 활동 모드 모바일 정합 + KPI 기능 동등성(구 activity-logs 회복)
 // ────────────────────────────────────────────────────────────────────
-describe("§log-consolidation P4 — 통합 활동 모드 KPI 기능 동등성", () => {
-  it("활동 모드 컴팩트 KPI 그리드(§11.311 grid-cols-3) 노출", () => {
+// §mobile-logs P4 진화(호영님 승인 2026-07-22): 활동 KPI 3카드는 2026-07-04 시안정합
+//   (호영님)으로 의도 제거(audit page "활동 KPI 3카드 제거" 주석) — 구 KPI 기대 어서션은
+//   제거된 기능을 기대하는 stale 이었음. 부재-lock 으로 전환: 제거 상태가 canonical,
+//   재등장 = 회귀. (근거: docs/plans/PLAN_mobile-logs.md P0 정정·판정 상신 기록.)
+describe("§log-consolidation P4 — 활동 KPI 제거 상태 보존(2026-07-04 시안정합 부재-lock)", () => {
+  it("구 활동 KPI 그리드 재등장 0", () => {
     const src = read(AUDIT_PATH);
-    expect(src).toMatch(/data-testid="log-activity-kpi-grid"/);
-    expect(src).toMatch(/grid-cols-3/);
+    expect(src).not.toMatch(/data-testid="log-activity-kpi-grid"/);
   });
 
-  it("활동 KPI 분류 헬퍼(isAiActivity/isAlertActivity) 사용 — 구 activity-logs 동등성", () => {
+  it("구 KPI 분류 헬퍼 사용 재등장 0 (동등성 요구는 시안정합으로 종료)", () => {
     const src = read(AUDIT_PATH);
-    expect(src).toMatch(/isAiActivity/);
-    expect(src).toMatch(/isAlertActivity/);
+    expect(src).not.toMatch(/isAiActivity/);
+    expect(src).not.toMatch(/isAlertActivity/);
   });
 });
