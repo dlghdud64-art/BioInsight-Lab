@@ -797,7 +797,7 @@ function PlansPageContent() {
  >
  <SelectTrigger
  id="team-select"
- className="w-[300px] bg-slate-100 border-slate-300"
+ className="w-[300px] border-slate-300"
  >
  <SelectValue placeholder="조직을 선택하세요"/>
  </SelectTrigger>

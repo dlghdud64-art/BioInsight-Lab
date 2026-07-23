@@ -1626,7 +1626,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                     setPermissionDialogOpen(false);
                   }}
                 >
-                  <SelectTrigger className="bg-slate-100 border-slate-200 text-slate-900">
+                  <SelectTrigger className="border-slate-200 text-slate-900">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

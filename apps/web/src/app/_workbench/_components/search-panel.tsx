@@ -85,7 +85,7 @@ export function SearchPanel() {
                 카테고리
               </Label>
               <Select value={searchCategory || "all"} onValueChange={(v) => setSearchCategory(v === "all" ? "" : v)}>
-                <SelectTrigger id="category" className="h-8 text-xs bg-pg border-bd focus:ring-2 focus:ring-blue-500">
+                <SelectTrigger id="category" className="h-8 text-xs border-bd focus:ring-2 focus:ring-blue-500">
                   <SelectValue placeholder="전체" />
                 </SelectTrigger>
                 <SelectContent>
@@ -107,7 +107,7 @@ export function SearchPanel() {
                 value={sortBy}
                 onValueChange={(v: any) => setSortBy(v)}
               >
-                <SelectTrigger id="sort" className="h-8 text-xs bg-pg border-bd focus:ring-2 focus:ring-blue-500">
+                <SelectTrigger id="sort" className="h-8 text-xs border-bd focus:ring-2 focus:ring-blue-500">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
