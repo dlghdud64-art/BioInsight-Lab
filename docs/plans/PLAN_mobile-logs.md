@@ -1,6 +1,6 @@
 # Implementation Plan: 모바일 활동 로그 · 전역 드롭다운 개선 (§mobile-logs)
 
-- **Status:** 🚧 In Progress (P0~P2 ✅ / P3~P5 Pending)
+- **Status:** 🚧 In Progress (P0~P3 ✅ / P4~P5 Pending)
 - **Started:** 2026-07-21
 - **Last Updated:** 2026-07-22
 - **Estimated Completion:** TBD
@@ -139,10 +139,22 @@
   무접촉)** · 재고 위험(`?filter=low`) 하이라이트가 정규화로 정상 활성화(동종 버그 동시 해소)
 - **Rollback:** 라우팅/메뉴 revert(70e429eb 단독)
 
-### Phase 3: 필터 한 줄 + 세부 시트 (1a/1b)
-- Status: [ ] Pending
-- **✋ Gate:** 라벨 없는 "전체" 0 · 시트 = 선택 도메인 타입만 · 적용/해제 실동작(가짜 필터 0)
-- **Rollback:** 필터 섹션 revert
+### Phase 3: 필터 한 줄 + 세부 시트 (1a/1b) — ✅ Complete (2026-07-22)
+- Status: [x] Complete — 커밋 `74a5f923` push 완료(audit `page.tsx` 단독 · F10 EXIT 0)
+- 구현(모바일 `md:hidden` 전용 — 데스크톱 Select/멤버 칩 `hidden md:flex` 보존, 회귀 0):
+  - 필터 한 줄(`log-filter-row`): 도메인 칩 6(= `/api/activity-logs` entityType **서버 param 재사용**,
+    라벨 = activity-labels ENTITY_TYPE_LABELS alias — 신설 0) + 구분선 + 기간▾(오늘/7일/30일/전체,
+    기본 7일, client-side) + 담당자▾(멤버 칩과 동일 파생 소스) + ⚙세부(배지 N) · 가로 스크롤+우측 페이드
+  - 세부 바텀 시트(`log-filter-sheet` side="bottom"): **선택 도메인의 활동 타입만**(prefix 파생) ·
+    멀티 draft→`필터 적용 · N개` 일괄 적용 · 항목 h-11(44px)
+  - 활성 타입 칩 ✕ 즉시 해제(`log-filter-active-chip`) · 도메인 변경 시 타 도메인 타입 선택분 자동 정리 ·
+    필터 결과 0건 상태 UI(빈 그룹 무표시 회귀 방지)
+  - 통합 필터 체인 = `filteredActivityLogs` memo(멤버 §P2b **원문 패턴 보존** + 기간 + 타입 멀티)
+- **✋ Gate:** [x] F9 — mobile-logs-p1 **7 fail(P4 계약만)/23 pass** = P3 계약 6 GREEN 전환 ·
+  log-consolidation 21/2(기왕) · enhancement-p2 4/4 · enhancement-p3 4/4(P2b 보존) · 311b 21/1(기왕)
+  [x] F10 EXIT 0 [x] 라벨 없는 "전체" 0(전체 도메인/전체 기간/전체 담당자) · 시트 = 선택 도메인
+  타입만 · 적용/해제 실동작 — 런타임 확정은 P5
+- **Rollback:** 필터 섹션 revert(74a5f923 단독)
 
 ### Phase 4: 리스트 + 전역 select 토큰 (2a~2c)
 - Status: [ ] Pending
@@ -177,3 +189,8 @@
   P2 계약 6 GREEN 전환, 회귀 delta 0. F10 EXIT 0. 다음 배치 = P3(필터 한 줄 + 세부 시트 1a/1b,
   계약 6어서션 GREEN 목표 — testid: log-filter-row · log-domain-chip- · log-filter-sheet ·
   log-filter-active-chip, CTA "필터 적용 · N개", 시트 h-11).
+- [2026-07-22] P3 커밋 `74a5f923` push 완료(1a/1b 배포). F9 계수 일치 — P3 계약 6 GREEN 전환,
+  활동 피드 회귀 0(enhancement-p2/p3 전건 GREEN). 다음 배치 = P4(리스트 2a~2c + 전역 select 토큰,
+  잔여 계약 7 — testid: log-date-group·log-entity-initial·log-row-link + overlay= 규약(도메인별
+  쿼리 키 실측 선행) · select.tsx bg-el 2곳→흰 패널/그림자 rgba(15,23,42,.14)/#eff6ff·#1d4ed8/
+  min-h-[44px], **별도 커밋**) + log-consolidation-p1 KPI sentinel (a) 진화(승인 대기, 별도 커밋).
