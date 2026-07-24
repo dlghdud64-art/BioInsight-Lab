@@ -16,30 +16,34 @@ const SRC = readFileSync(
   "utf8",
 );
 
-describe("§11.297f — inventory-content D3 filter plain + Radix 제거", () => {
-  it("§11.297f trace marker", () => {
+describe("§11.297f — inventory-content D3 filter (§global-filters 인라인 바로 진화)", () => {
+  // 🔄 진화(2026-07-24, 호영님 승인): §11.297f 필터-드롭다운 패널(필터 버튼 → 절대배치 role=menu
+  //   패널에 Select 내장) → §global-filters 데스크톱 공용 FilterBar 인라인으로 결정 교체
+  //   (reports 팝오버 폐기와 동종). 드롭다운 패널 pin(isFilterDropdownOpen·aria-label="필터"·
+  //   aria-expanded·role="menu"·backdrop)은 부재-lock. 모바일 Sheet·?filter/서버 persist 무접촉.
+  it("§11.297f trace marker (진화 이력 보존)", () => {
     expect(SRC).toMatch(/§11\.297f/);
   });
 
-  it("isFilterDropdownOpen useState (filter plain state)", () => {
-    expect(SRC).toMatch(/const \[isFilterDropdownOpen, setIsFilterDropdownOpen\] = useState\(false\)/);
+  it("데스크톱 필터 = 공용 FilterBar 인라인 소비(자체 드롭다운 패널 재발명 0)", () => {
+    expect(SRC).toMatch(/from ["']@\/components\/ui\/filter-bar["']/);
+    expect(SRC).toMatch(/FilterBar/);
   });
 
-  it('plain <button aria-label="필터"> + aria-expanded + Filter icon (pointer-events-none)', () => {
-    expect(SRC).toMatch(/aria-label="필터"/);
-    expect(SRC).toMatch(/aria-expanded=\{isFilterDropdownOpen\}/);
-    expect(SRC).toMatch(/<Filter[\s\S]{0,100}pointer-events-none/);
+  it("필터-드롭다운 패널 부재-lock — isFilterDropdownOpen·필터 버튼·role=menu 폐기", () => {
+    expect(SRC).not.toMatch(/isFilterDropdownOpen/);
+    expect(SRC).not.toMatch(/aria-expanded=\{isFilterDropdownOpen\}/);
+    expect(SRC).not.toMatch(/aria-label="필터 메뉴"/);
   });
 
-  it("activeFilterCount badge 보존 (pointer-events-none 추가)", () => {
-    expect(SRC).toMatch(/pointer-events-none[\s\S]{0,100}\{activeFilterCount\}/);
+  it("activeFilterCount 파생 보존 (표시 계층 — 화면 소유)", () => {
+    expect(SRC).toMatch(/activeFilterCount/);
   });
 
-  it("조건부 backdrop + role=\"menu\" + Select 2개 (위치/상태) + 초기화 button 보존", () => {
-    expect(SRC).toMatch(/\{isFilterDropdownOpen && \(/);
-    expect(SRC).toMatch(/aria-label="필터 메뉴"/);
-    expect(SRC).toMatch(/value=\{locationFilter\}/);
-    expect(SRC).toMatch(/value=\{statusFilter\}/);
+  it("필터 값(위치/상태) 화면 소유 유지 + 초기화 보존", () => {
+    // FilterBar 는 표시만 — locationFilter/statusFilter canonical 은 화면 state.
+    expect(SRC).toMatch(/locationFilter/);
+    expect(SRC).toMatch(/statusFilter/);
     expect(SRC).toMatch(/setLocationFilter\("all"\)[\s\S]{0,200}초기화/);
   });
 
