@@ -77,9 +77,11 @@ export async function GET(request: NextRequest) {
           },
           include: {
             organization: true,
-            // §reports-honesty P2 — 실벤더 = QuoteVendor(견적 발송 수신처). product 카탈로그
-            //   첫 벤더 매핑 폐기(오표기 원인). overfetch 최소 select.
+            // §reports-honesty P2/P4 — 실벤더. product 카탈로그 첫 벤더 매핑 폐기(오표기 원인).
+            //   P4 실측: QuoteVendor(vendors)는 프로덕션 전역 0행 — 실제 RFQ 수신처는
+            //   QuoteVendorRequest(vendorRequests)에 기록됨. 둘 다 포함해 폴백(overfetch 최소 select).
             vendors: { select: { vendorName: true } },
+            vendorRequests: { select: { vendorName: true } },
             items: {
               include: {
                 product: { select: { category: true, name: true } },
@@ -145,8 +147,12 @@ export async function GET(request: NextRequest) {
       estimatedAmount += quoteAmount;
       totalAmount += quoteAmount;
 
-      // 실벤더 = QuoteVendor(견적 발송 수신처). product 카탈로그 첫 벤더 매핑 폐기.
-      const quoteVendorName = quote.vendors?.[0]?.vendorName ?? quote.vendor ?? null;
+      // 실벤더 = QuoteVendor → (P4 폴백) QuoteVendorRequest → AI vendor. 카탈로그 첫 벤더 매핑 폐기.
+      const quoteVendorName =
+        quote.vendors?.[0]?.vendorName ??
+        quote.vendorRequests?.[0]?.vendorName ??
+        quote.vendor ??
+        null;
       if (quoteVendorName) {
         vendorMap.set(quoteVendorName, (vendorMap.get(quoteVendorName) || 0) + quoteAmount);
       }
@@ -268,7 +274,11 @@ export async function GET(request: NextRequest) {
       //      견적 단위 확정 총액은 quoteTotalAmount 로 별도 전달, 미확정 여부는 pending 로 표기(P3 UI).
       //   ② vendor: 견적 실벤더(QuoteVendor) → Quote.vendor(AI 추출) → "-" 순 폴백.
       //   ③ project: 요청 메시지 원문(description) 노출 폐기 → 견적 식별자(견적번호 ?? 제목).
-      const quoteVendorName = quote.vendors?.[0]?.vendorName ?? quote.vendor ?? "-";
+      const quoteVendorName =
+        quote.vendors?.[0]?.vendorName ??
+        quote.vendorRequests?.[0]?.vendorName ??
+        quote.vendor ??
+        "-";
       const quotePending = quote.totalAmount == null;
       quote.items.forEach((item: any) => {
         details.push({
