@@ -1,6 +1,6 @@
 # Implementation Plan: 구매 리포트 정직성 — 견적 금액·벤더·프로젝트 (§reports-honesty)
 
-- **Status:** 🚧 P0~P3 ✅ · P4 3/4 프로덕션 완결 + vendor(b) 수정 `ff7634fc` (2026-07-24) — vendor 배포후 재실측 잔여
+- **Status:** ✅ Complete (P0~P4, 2026-07-24) — 3결함 전건 프로덕션 종결(`ff7634fc` vendor 폴백 재실측 완결)
 - **Started:** 2026-07-23
 - **Last Updated:** 2026-07-23
 - **Estimated Completion:** TBD
@@ -241,8 +241,8 @@ project 로 오용하는 3결함을 정직하게 교정. 스키마 변경 0 — 
 - **✋ Gate:** [x] dead button/₩0 날조 0 · [x] loading/empty/미확정 상태 존재 · [x] 데스크톱/모바일 회귀 0(F9 전건) · [x] F10 EXIT 0
 - **Rollback:** UI 2파일 revert(`e9050fdb` 단독 — route P2 는 유지 가능)
 
-### Phase 4: Smoke & 종결 — 🚧 3/4 프로덕션 완결 + vendor 결함(b) 수정 (2026-07-24 · `ff7634fc`)
-- Status: [~] vendor 재실측만 잔여(배포 후 sandbox)
+### Phase 4: Smoke & 종결 — ✅ Complete (2026-07-24 · `ff7634fc`)
+- Status: [x] Complete — 3결함 전건 프로덕션 종결
 - **🟢 GREEN:** sandbox 프로덕션 스모크(`e9050fdb` 라이브) + operator DB 실측(vendor 진위).
 
 #### P4 프로덕션 스모크 판정표 (sandbox 실측 — `e9050fdb` 라이브)
@@ -268,7 +268,10 @@ project 로 오용하는 3결함을 정직하게 교정. 스키마 변경 0 — 
 - ⚠️ **sandbox 참조 ID 주의**: 호영님 전달 ID(cmqtqoebr000d…·cmqrnil470005…)는 **item.id**(details.id=item.id)로
   quote.id(…000b…·…0003…)와 상이 — findUnique NOT FOUND 였으나 **전수 조회로 (b) 결론 불변**.
 
-- **✋ Gate:** [x] ①③·지출오염·UI 프로덕션 PASS · [x] vendor (b) 확정+수정 · [ ] vendor 배포후 재실측(잔여) · [x] F10 EXIT 0
+- **✋ Gate:** [x] ①③·지출오염·UI 프로덕션 PASS · [x] vendor (b) 확정+수정 · [x] vendor 배포후 재실측 완결 · [x] F10 EXIT 0
+- **P4 vendor 재실측 완결(2026-07-24 · `ff7634fc` 라이브):** 상세행 vendor **"123"**(vendorRequests 폴백 resolve)
+  실표기 확인(sandbox). 벤더 발송 없는 견적은 정직한 **"-"**(6/24 기준). ①③·지출오염·UI 무회귀.
+  ⇒ **§reports-honesty 3결함 전건 프로덕션 종결.**
 - **Rollback:** phase별 커밋 revert(마이그레이션 0)
 
 ## 8. Optional Addenda
