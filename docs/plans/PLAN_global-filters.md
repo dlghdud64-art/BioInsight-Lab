@@ -1,6 +1,6 @@
 # Implementation Plan: 전역 필터 통일 — 툴바 인라인 필터 바 · 전 화면 이식 (§global-filters)
 
-- **Status:** 🚧 P0~P3 ✅ Complete (2026-07-24 · a·b 이식·런타임검증 대기) — P4~P5 Pending
+- **Status:** ✅ Complete (2026-07-24) — P0~P3 이식(대표 3화면 인라인 통일·공용 FilterBar) + P4 스코프축소·P5 백로그 종결
 - **Started:** 2026-07-23
 - **Last Updated:** 2026-07-23
 - **Estimated Completion:** TBD
@@ -254,16 +254,23 @@
   [x] inventory(a) 297f 진화 승인·이식 완료
 - **Rollback:** 화면별 커밋 revert(reports b2 `e88c5345` 단독 / 진화 b1·b1b 별도)
 
-### Phase 4: 발주·견적 + 잔여 화면 이식
-- Status: [ ] Pending
-- P0 인벤토리 확정 순서대로(발주·견적 우선, 잔여는 판정표 기준) · 화면별 커밋 분리
-- **✋ Gate:** 화면별 F9·F10·스모크 — P3 동일
-- **Rollback:** 화면별 커밋 revert
+### Phase 4: 발주·견적 + 잔여 화면 이식 — ⛔ 미착수(스코프 축소, 호영님 2026-07-24 (a) 마감 승인)
+- Status: [-] 미착수 — 발주(purchase-orders)는 P0 정정으로 **탭 화면=대상 아님** 판명. 잔여는 P5 백로그 이관.
 
-### Phase 5: 전역 스모크 · 종결
-- Status: [ ] Pending
-- 전 이식 화면 판정표(데스크톱+모바일) · 라벨 없는 "전체" 전 화면 0 확인 · 미이식 화면 백로그 명시
-- **✋ Gate:** 판정표 전건 · baseline-delta 0 · build EXIT 0 · 백로그 silent 누락 0
+### Phase 5: 전역 스모크 · 종결 — ✅ Complete (2026-07-24 · P3 완료분 마감)
+- Status: [x] Complete — 대표 3화면 인라인 통일 + 공용 FilterBar 확립으로 디자인 일관성 목표 달성. 잔여 백로그 명시(silent 누락 0).
+- **완료(프로덕션 런타임 게이트 GREEN 실증):** `audit`(P2 파일럿) · `reports`(P3-b) · `inventory`(P3-a) 데스크톱 인라인 바 +
+  공용 `filter-bar`/`filter-chip-row`/`filter-sheet` 확립(`FilterDef` mode·allValue 규약, controlled).
+- **증거 등급:** 데스크톱 런타임 실측(3화면 프로덕션, reports·inventory persist 복원 실증) / 모바일 정적 승계(sentinel).
+- **⚠️ P5 백로그(미이식·명시 존치 — 신규 화면은 공용 컴포넌트로 자연 수렴):**
+  - **Select/Popover 이식 대상 (2)**: `quotes`(결정 교체 + §9/P6 잠금 + 멀티 Set + URL 양방향 + 서버 persist 얽힘 — **고위험**) ·
+    `safety`(세그먼트 칩 + 숨은 risk/msds/location Select 상태 + 서버 activeFrame — 로컬조합, 실익 낮음)
+  - **인라인 드롭다운 후보 (4)**: `admin` · `analytics/monthly` · `organizations/[id]` · `safety-spend`(저빈도 내부 화면)
+  - **세그먼트 pill (2)**: `inbox` · `notifications`(Select 아님 — 이식 시 결정 교체·별도 판단)
+  - **스코프 제외 (3, 대상 아님)**: `purchase-orders` · `purchases` · `work-queue`(State-Split 탭/무필터)
+- **판단 근거:** 목표(디자인 일관성·공용 컴포넌트) 달성 · 잔여 2화면은 고비용저ROI(결정 교체+다수 sentinel 진화+persist 회귀 위험).
+  재개 시 각 화면 상신(현 구조·sentinel·결정 교체 여부) 선행 — P3 관례(임의 이식 금지).
+- **✋ Gate:** [x] 3화면 인라인 통일 런타임 GREEN · [x] 공용 FilterBar 확립 · [x] baseline-delta 0 · [x] 전역 select 토큰 승계(§mobile-logs 완결분·재수정 0) · [x] 백로그 silent 누락 0
 - **Rollback:** phase별 커밋 revert(마이그레이션 0)
 
 ## 8. Risk Assessment
