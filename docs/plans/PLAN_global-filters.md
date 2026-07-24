@@ -1,6 +1,6 @@
 # Implementation Plan: 전역 필터 통일 — 툴바 인라인 필터 바 · 전 화면 이식 (§global-filters)
 
-- **Status:** 🚧 P0 ✅ Complete (2026-07-24) — P1~P5 Pending(새 배치)
+- **Status:** 🚧 P0·P1 ✅ Complete (2026-07-24 · P1 `00f8522a`) — P2~P5 Pending
 - **Started:** 2026-07-23
 - **Last Updated:** 2026-07-23
 - **Estimated Completion:** TBD
@@ -168,12 +168,30 @@
 - **✋ Gate:** [x] 인벤토리 전수(44 라우트 대조·누락 0) · [x] 예외 9 판정 근거 명기 · [x] 프로토타입 부재 확정(잠정 계약) · [x] 컴포넌트 인터페이스 초안(FilterDef mode 정의계층) · [x] sentinel 충돌 계수(파일럿 0·모바일 통일 시 ~6) · [x] P2 스코프 정정 반영
 - **Rollback:** planning-only (코드 변경 0)
 
-### Phase 1: Contract & RED
-- Status: [ ] Pending
-- 신규 `global-filters-p1.test.ts` — 공용 컴포넌트 실재·토큰 소비·화면별 중복 트리거 금지 가드 +
-  파일럿(활동 로그 데스크톱) 이식 계약 RED
-- **✋ Gate:** RED 실증(정확 계수) · 기존 전체 GREEN 유지
-- **Rollback:** 테스트 revert
+### Phase 1: Contract & RED — ✅ Complete (2026-07-24 · `00f8522a`)
+- Status: [x] Complete
+- 신규 `global-filters-p1.test.ts` — 공용 컴포넌트 실재·토큰 소비·controlled·파일럿 이식 계약 RED + P3 존 가드
+
+#### P1 F9 실측 (operator 원문 실행)
+| 파일 | 결과 |
+| :--- | :--- |
+| `global-filters-p1` | **계약 4 RED** (a)파일 실재 (b)FilterDef mode 유니온 (c)select.tsx 소비 (d→e 순) (e)audit filter-bar import / **가드 2 GREEN** (d)controlled useState 0 (f)audit P3 존(log-filter-row·log-filter-sheet·domain-chip) 보존 → `4 failed \| 2 passed (6)` |
+| `mobile-logs-p1` | **30 GREEN** — 무회귀 |
+- F10 불요(테스트 파일 단독).
+
+#### P1 inventory 패턴 수용 여부 (인터페이스 조정분)
+- inventory(`inventory-content.tsx`) 기구현 실측: 필터 값 = `string`("all"=비활성), `activeFilterCount = [f].filter(f !== "all").length`,
+  데스크 `hidden md:flex` Select+Label병기(L757), 모바일 `Sheet side="bottom"`+초기화(L2042), 상태 = 화면 useState+URL+서버 persist(L170-212).
+- **인터페이스 수용 확정(재발명 0)**: `FilterDef`에 `allValue?: string`(기본 "all") 1필드 추가로 inventory 규약 흡수 →
+  `activeFilterCount = values[key] !== (def.allValue ?? "all")`. FilterBar(데스크)·FilterSheet(모바일 side=bottom)·FilterChipRow 매핑 직결.
+- ⇒ P2 공용 컴포넌트는 **inventory를 표준 레퍼런스로 흡수**(신규 발명 아님). 파일럿은 audit 데스크톱이나 인터페이스는 inventory 규약 기준.
+
+#### P1 파일럿 대상 좌표(P2 착수용)
+- audit 데스크톱 필터 블록 = `hidden md:flex`(L757) + `SelectTrigger`(L759·772) — **P2 교체 대상**.
+- audit 모바일 P3 존 = `log-filter-row`(L803)·`log-domain-chip-*`(L808·818)·`log-filter-sheet`(L911) — **무접촉**((f) 가드 강제).
+
+- **✋ Gate:** [x] RED 실증(계약 4 정확 계수) · [x] 기존 전체 GREEN 유지(mobile-logs-p1 30) · [x] inventory 패턴 수용 판정
+- **Rollback:** 테스트 revert(`00f8522a` 단독)
 
 ### Phase 2: 공용 컴포넌트 + 활동 로그 파일럿(=a 흡수)
 - Status: [ ] Pending
