@@ -77,17 +77,12 @@ export async function GET(request: NextRequest) {
           },
           include: {
             organization: true,
+            // §reports-honesty P2 — 실벤더 = QuoteVendor(견적 발송 수신처). product 카탈로그
+            //   첫 벤더 매핑 폐기(오표기 원인). overfetch 최소 select.
+            vendors: { select: { vendorName: true } },
             items: {
               include: {
-                product: {
-                  include: {
-                    vendors: {
-                      include: {
-                        vendor: true,
-                      },
-                    },
-                  },
-                },
+                product: { select: { category: true, name: true } },
               },
             },
           },
@@ -136,31 +131,31 @@ export async function GET(request: NextRequest) {
     const categoryMap = new Map<string, number>();
     const monthlyMap = new Map<string, number>();
 
-    // QuoteList 기반 계산 (예상 구매액)
-    // 타입 에러 수정: quote 파라미터에 타입 명시
+    // §reports-honesty P2 — 견적 기반 계산 (예상 구매액).
+    //   truth: 견적 측 유일 구조 금액 = `Quote.totalAmount`. QuoteItem 에는 가격 필드가 **부재**하여
+    //   기존의 품목 단가 × 수량 파생은 구조적으로 항상 0 → 미확정 견적을 ₩0 지출로 날조했음.
+    //   ⇒ totalAmount 미입력(미확정)은 합계/월별/벤더 집계에서 **제외**하고 건수만 반영.
+    let pendingQuoteCount = 0; // 회신 대기(금액 미확정) 견적 건수
     quotes.forEach((quote: any) => {
-      // 타입 에러 수정: item 파라미터에 타입 명시
-      quote.items.forEach((item: any) => {
-        const amount = (item.unitPrice || 0) * item.quantity;
-        estimatedAmount += amount;
-        totalAmount += amount;
+      const quoteAmount = quote.totalAmount ?? null;
+      if (quoteAmount == null) {
+        pendingQuoteCount += 1;
+        return; // 미확정 — 금액 단정 금지(0 가산 금지)
+      }
+      estimatedAmount += quoteAmount;
+      totalAmount += quoteAmount;
 
-        // §reports-500-null-product — product 삭제/미연결 quote item 크래시 가드(프로덕션 500 원인)
-        const vendor = item.product?.vendors?.[0]?.vendor;
-        if (vendor) {
-          vendorMap.set(vendor.name, (vendorMap.get(vendor.name) || 0) + amount);
-        }
+      // 실벤더 = QuoteVendor(견적 발송 수신처). product 카탈로그 첫 벤더 매핑 폐기.
+      const quoteVendorName = quote.vendors?.[0]?.vendorName ?? quote.vendor ?? null;
+      if (quoteVendorName) {
+        vendorMap.set(quoteVendorName, (vendorMap.get(quoteVendorName) || 0) + quoteAmount);
+      }
 
-        if (item.product?.category) {
-          categoryMap.set(
-            item.product.category,
-            (categoryMap.get(item.product.category) || 0) + amount
-          );
-        }
+      const month = quote.createdAt.toISOString().substring(0, 7);
+      monthlyMap.set(month, (monthlyMap.get(month) || 0) + quoteAmount);
 
-        const month = quote.createdAt.toISOString().substring(0, 7);
-        monthlyMap.set(month, (monthlyMap.get(month) || 0) + amount);
-      });
+      // 카테고리 집계 제외: 카테고리는 item 단위인데 Quote.totalAmount 는 견적 단위 —
+      //   item 가격 부재로 정직한 배분이 불가(임의 배분 = 날조). 카테고리는 실구매 기준만 집계.
     });
 
     // PurchaseRecord 기반 계산 (실제 구매액)
@@ -228,13 +223,12 @@ export async function GET(request: NextRequest) {
       const budgetMonth = budget.yearMonth; // "YYYY-MM" 형식
       let usedAmount = 0;
 
-      // QuoteList 기반 계산
+      // §reports-honesty P2 — 견적 사용액도 Quote.totalAmount 기준.
+      //   미확정 견적은 예산 사용액에 가산하지 않음(₩0 가산 = 무의미, 미확정 단정 금지).
       quotes.forEach((quote: any) => {
         const quoteMonth = quote.createdAt.toISOString().substring(0, 7);
-        if (quoteMonth === budgetMonth) {
-          quote.items.forEach((item: any) => {
-            usedAmount += (item.unitPrice || 0) * item.quantity;
-          });
+        if (quoteMonth === budgetMonth && quote.totalAmount != null) {
+          usedAmount += quote.totalAmount;
         }
       });
 
@@ -269,17 +263,25 @@ export async function GET(request: NextRequest) {
     // 타입 에러 수정: quote 파라미터에 타입 명시
     quotes.forEach((quote: any) => {
       // 타입 에러 수정: item 파라미터에 타입 명시
+      // §reports-honesty P2 — 상세행 3결함 교정.
+      //   ① amount: 품목 단가가 스키마상 부재 → 품목 금액은 구조적으로 미상. 0 단정 금지(null).
+      //      견적 단위 확정 총액은 quoteTotalAmount 로 별도 전달, 미확정 여부는 pending 로 표기(P3 UI).
+      //   ② vendor: 견적 실벤더(QuoteVendor) → Quote.vendor(AI 추출) → "-" 순 폴백.
+      //   ③ project: 요청 메시지 원문(description) 노출 폐기 → 견적 식별자(견적번호 ?? 제목).
+      const quoteVendorName = quote.vendors?.[0]?.vendorName ?? quote.vendor ?? "-";
+      const quotePending = quote.totalAmount == null;
       quote.items.forEach((item: any) => {
-        const vendor = item.product?.vendors?.[0]?.vendor; // §reports-500-null-product 가드
         details.push({
           id: item.id,
           date: quote.createdAt.toISOString().split("T")[0],
           organization: quote.organization?.name || "-",
-          project: quote.description || "-",
-          vendor: vendor?.name || "-",
+          project: quote.quoteNumber ?? quote.title,
+          vendor: quoteVendorName,
           category: item.product?.category || "-",
           productName: item.product?.name || "-",
-          amount: (item.unitPrice || 0) * item.quantity,
+          amount: null,
+          quoteTotalAmount: quote.totalAmount ?? null,
+          pending: quotePending,
           notes: item.notes || "-",
           type: "quote",
         });
@@ -317,6 +319,9 @@ export async function GET(request: NextRequest) {
         // 타입 에러 수정: sum, q 파라미터에 타입 명시
         itemCount: quotes.reduce((sum: number, q: any) => sum + q.items.length, 0) + purchaseRecords.length,
         listCount: quotes.length,
+        // §reports-honesty P2 — 금액 미확정(회신 대기) 견적 건수. 합계에서 제외된 몫을
+        //   숨기지 않고 건수로 정직하게 노출(P3 UI "회신 대기 N건" 표기 근거).
+        pendingQuoteCount,
       },
       monthlyData,
       vendorData,
