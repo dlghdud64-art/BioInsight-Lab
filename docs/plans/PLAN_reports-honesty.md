@@ -1,6 +1,6 @@
 # Implementation Plan: 구매 리포트 정직성 — 견적 금액·벤더·프로젝트 (§reports-honesty)
 
-- **Status:** ⏳ Pending (P0~P4)
+- **Status:** 🚧 P0 ✅ Complete (2026-07-24) — P1~P4 Pending(새 배치)
 - **Started:** 2026-07-23
 - **Last Updated:** 2026-07-23
 - **Estimated Completion:** TBD
@@ -117,13 +117,43 @@ project 로 오용하는 3결함을 정직하게 교정. 스키마 변경 0 — 
 
 ## 7. Implementation Phases
 
-### Phase 0: Context & Truth Lock
-- Status: [ ] Pending
+### Phase 0: Context & Truth Lock — ✅ Complete (2026-07-24)
+- Status: [x] Complete — operator 실측(코드 변경 0)
 - **🔴 RED:** 스키마 3결함 재확인(가격필드 부재·QuoteVendor·description) — §0 확정분 잠금
-- **🟢 GREEN:** route 실단가/벤더/프로젝트 계산 지점 라인 실측(L144·149·169·269~287) · 미확정 판정 규칙 확정
-- **🔵 REFACTOR:** 스코프 축소 — 이메일 파싱 제외 명시
-- **✋ Gate:** truth 충돌 0 · 수정 지점 라인 명기 · 미확정 정의 확정(totalAmount null ⇒ 미확정)
-- **Rollback:** planning-only
+- **🟢 GREEN:** route 실단가/벤더/프로젝트 계산 지점 라인 실측 · 미확정 판정 규칙 확정
+- **🔵 REFACTOR:** 스코프 축소 — 이메일 본문 금액 파싱 **제외 확정**
+
+#### P0 실측 ① — route.ts 수정 지점 라인 잠금 (`src/app/api/reports/purchase/route.ts`)
+| 대상 | 라인 | 현행 |
+| :--- | :--- | :--- |
+| amount(견적 파생) | **L144** | `const amount = (item.unitPrice \|\| 0) * item.quantity` — 단가 미기록 견적 → 0 |
+| amount(상세행) | **L281** | `amount: (item.unitPrice \|\| 0) * item.quantity` (details.push) |
+| vendor(집계) | **L149** | `item.product?.vendors?.[0]?.vendor` — product 카탈로그 첫 벤더(견적 실벤더 아님) |
+| vendor(상세행) | **L279** | 동일 파생 → `vendor?.name \|\| "-"` |
+| project(상세행) | **L278** | `project: quote.description \|\| "-"` — 요청 메시지 원문 노출 |
+| 지출 합산(견적) | **L145·146·162** | `estimatedAmount/totalAmount += amount` · `monthlyMap` |
+| 지출 합산(실구매) | **L169·170·174·180·184** | `actualAmount/totalAmount += record.amount` · vendor/category/monthly Map |
+
+#### P0 실측 ② — Quote 식별자 필드 (project 대체 후보) — **존재 확정**
+- `quoteNumber String? @unique` — 견적번호(Q-YYYYMMDD-XXXX), **nullable**
+- `title String` — 리스트 제목, **non-null 필수** → 폴백 안전
+- ⇒ project 교정안: `quoteNumber ?? title`(둘 다 실재, "-" 폴백 불요). `description`은 project에서 분리.
+
+#### P0 실측 ③ — 실벤더 관계 경로
+- `QuoteVendor`: `quote.vendors[]` · **`vendorName String`(non-null)** · `email String?`
+- `QuoteVendorRequest`: `quote.vendorRequests[]` · `vendorName String?`(nullable) · `vendorEmail` · `status` · `respondedAt`
+- **현행 include(L78~92)**: `organization` + `items.product.vendors.vendor`만 — `quote.vendors` / `quote.vendorRequests` **미포함** ⇒ 실벤더 접근 불가가 구조적 원인.
+- ⇒ 교정 시 include 추가 필요(overfetch 최소화: `vendors: { select: { vendorName: true } }` 수준).
+
+#### P0 실측 ④ — sentinel 어서션 경계
+| sentinel | 어서션 | 충돌 판정 |
+| :--- | :--- | :--- |
+| `mobile-reports-p1` | **37** | 충돌 후보 **1**(L55~58 KPI 값없음 `–`) — 대상이 **KPI**이고 상세행 amount/vendor/project는 **미pin** ⇒ P2~P3 충돌 **0** |
+| `purchase.contract` | **19** | 전부 **집계 배열 shape pin**(`categoryData/vendorData/monthlyData` = `{name, amount}`, client `c.amount > 0`·`dataKey="amount"`) ⇒ **값 변경은 무해, shape 변경 시에만 충돌** |
+- ⇒ P2~P3를 **details[] 필드 교정 + 집계 값 변화**로 한정하면 진화 불요. 집계 배열 **키 형태 변경 시에는 진화 판정 상신**(임의 진화 금지).
+
+- **✋ Gate:** [x] truth 충돌 0 · [x] 수정 지점 라인 명기 · [x] 미확정 정의(단가 미기록 견적 ⇒ 0원 단정 금지, "미확정" 표기) · [x] Quote 식별자 실재 확인 · [x] sentinel 경계 계수
+- **Rollback:** planning-only (코드 변경 0)
 
 ### Phase 1: Contract & RED
 - Status: [ ] Pending
