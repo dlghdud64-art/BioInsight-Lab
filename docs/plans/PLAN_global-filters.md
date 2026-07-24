@@ -136,10 +136,18 @@
 | `work-queue` | ConsoleViewTabs(뷰모드) | 단일 | 뷰 | 세그먼트 뷰탭(열필터 아님) | 클라 | 있음 | __tests__/lib/work-queue/* |
 
 #### P0-(a) 4버킷 분류
-- **인라인 드롭다운 (4)** — 단일 ≤7·데스크 툴바 Select 후보: `admin` · `analytics/monthly` · `organizations/[id]` · `safety-spend`
-- **바텀시트 (0)** — 순수 멀티/8+ 단독 화면 없음(멀티·8+ 케이스는 전부 서버 persist·URL·다차원과 얽혀 예외로 이동)
-- **예외·로컬조합 (9)** — 표준화 시 회귀 위험, **임의 이식 금지**: `audit` · `reports` · `safety` · `quotes` · `inventory` · `purchases` · `purchase-orders` · `inbox` · `work-queue`
-- **세그먼트→인라인 후보 (1)** — `notifications`(단일 7이나 현 트리거 pill → 인라인 이식 가능하나 회귀검토 대상)
+> ⚠️ **정정(2026-07-24, operator 실측 재분류)**: "라우트 존재 ≠ 필터 화면". grep 실측상 `purchase-orders`·`purchases`·
+> `work-queue`는 **SelectTrigger 0 + State-Split 탭(PO_BUCKET_TABS·queueTab)/무필터** → **필터 화면이 아니라 탭 화면**이므로
+> **§global-filters 스코프에서 제외**(탭→드롭다운 치환은 상태 스코프 재설계 = 별개 트랙). `inbox`·`notifications`는 Select가 아닌
+> **세그먼트 pill + URL 동기** → 이식 시 결정 교체 성격(별도 판단). 이식 대상은 실제 Select/Popover 필터 보유 화면으로 한정.
+
+- **✅ 이식 완료 (3)** — `audit`(P2 파일럿) · `reports`(P3-b) · `inventory`(P3-a)
+- **인라인 드롭다운 이식 후보 (4)** — 단일 ≤7·데스크 툴바 Select: `admin` · `analytics/monthly` · `organizations/[id]` · `safety-spend`
+- **잔여 Select/Popover 필터 이식 대상 (2~3)** — `quotes`(자식 컴포넌트 Popover+멀티 statusFilter, §9/P6 잠금·persist — **결정 교체 판정 필요**) ·
+  `safety`(SelectTrigger 1 + 세그먼트 칩 + 숨은 Select 상태 — 로컬조합, 판정 필요) · (`inbox` 세그먼트 pill — 이식 시 결정 교체)
+- **스코프 제외 — 탭/무필터 (3)** — `purchase-orders`(State-Split 탭) · `purchases`(탭) · `work-queue`(필터 없음). **필터 화면 아님.**
+- **세그먼트 pill (2)** — `inbox`(3차원 pill+URL 동기) · `notifications`(단일 7 pill) — Select 아님, 이식 시 결정 교체·별도 판단.
+- **바텀시트 (0)** — 순수 멀티/8+ 단독 화면 없음.
 - **제외 (13)** — 필터 아님/검색전용/폼/설정/리다이렉트/dead: `collaboration`·`organizations`(검색전용)·`receiving/[receivingId]`·`settings`·`settings/enterprise`·`settings/plans`·`vendor/quotes`·`budget`·`stock-risk`(리다이렉트)·`grants`·`supplier`·`shared-links`·`inventory-main.tsx`(**dead**, 라우트 미사용)
 
 #### P0-(a) 예외 9 회귀 위험 근거(요지 — 임의 이식 금지)
