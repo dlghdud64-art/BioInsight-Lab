@@ -30,12 +30,16 @@ describe("#reports-filter-redesign — 필터 2컨트롤 접기(§1)", () => {
     expect(s).toContain("setActivePreset(null)"); // DateRangePicker onDateChange
     expect(s).toMatch(/activePreset === p\.id/); // 세그먼트 active 표시
   });
-  it("필터 4종 팝오버 접기 + 개수 배지", () => {
+  it("필터 4종 데스크톱 인라인 바 + 개수 배지(§global-filters 결정 교체)", () => {
+    // 🔄 진화(2026-07-24, 호영님 승인): 07-11 §reports-filter-redesign 팝오버 접기 →
+    //   07-23 §global-filters 전역 인라인 필터 바로 결정 교체(§mobile-logs P3 데스크톱 보존 폐기와 동류).
+    //   데스크톱 = 공용 FilterBar 인라인(팝오버 폐기), 모바일은 현행 팝오버 유지(mobile-report-view.tsx, 별도).
+    //   보호 코어(활성 개수 배지·구 5필터 grid 부재)는 유지.
     const s = read(PAGE);
-    expect(s).toContain("<Popover>");
-    expect(s).toContain("PopoverContent");
+    expect(s).toMatch(/from ["']@\/components\/ui\/filter-bar["']/); // 공용 인라인 바 소비
+    expect(s).toContain("FilterBar");
     expect(s).toContain("activeFilterCount");
-    expect(s).not.toContain("lg:grid-cols-5 gap-3 items-end"); // 구 5필터 한줄 grid 제거
+    expect(s).not.toContain("lg:grid-cols-5 gap-3 items-end"); // 구 5필터 한줄 grid 제거(유지)
   });
   it("활성 칩: 개별 해제(상태 초기화) + 전체 해제", () => {
     const s = read(PAGE);
