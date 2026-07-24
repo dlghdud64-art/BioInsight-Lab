@@ -1,6 +1,6 @@
 # Implementation Plan: 전역 필터 통일 — 툴바 인라인 필터 바 · 전 화면 이식 (§global-filters)
 
-- **Status:** ⏳ Pending (P0~P5)
+- **Status:** 🚧 P0 ✅ Complete (2026-07-24) — P1~P5 Pending(새 배치)
 - **Started:** 2026-07-23
 - **Last Updated:** 2026-07-23
 - **Estimated Completion:** TBD
@@ -114,16 +114,59 @@
 
 ## 7. Implementation Phases
 
-### Phase 0: Context & Truth Lock
-- Status: [ ] Pending
-- **🔴 RED:** 필터 보유 화면 전수 인벤토리 — 대시보드 전 라우트 실측: 화면별 {필터 목록, 단일/멀티,
-  항목 수(≤7/8+), 현 트리거 유형(Select/팝오버/자체), 서버/클라 필터 여부, 기존 sentinel 접촉}
-  → **화면별 판정표**(드롭다운/바텀시트/예외·제외)
-- **🟢 GREEN:** 프로토타입 원본 확보·2a 스펙 잠금(토큰·구조·상태) · 공용 컴포넌트 3개 인터페이스 초안
-  (controlled props — 화면 상태 주입형)
-- **🔵 REFACTOR:** 제외 확정(admin·다크·disabled) · 특수 케이스(기간 프리셋·예산 등) 예외 규칙 1줄씩
-- **✋ Gate:** 인벤토리 전수(누락 0 — 라우트 목록 대조) · 예외 판정 근거 명기 · 스펙 충돌 0
-- **Rollback:** planning-only
+### Phase 0: Context & Truth Lock — ✅ Complete (2026-07-24)
+- Status: [x] Complete — operator 실측(코드 변경 0). 대시보드 44 라우트 전수 코드 확인(추정 0).
+
+#### P0-(a) 필터 보유 화면 전수 인벤토리 — **총 14 화면**
+| 화면 | 필터 | 단일/멀티 | 항목수 | 현 트리거 | 서버/클라 | 데/모 분기 | 접촉 sentinel |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `admin` | role·category(+검색) | 단일×2 | ≤7 | shadcn Select×2 | **서버** | 없음 | 없음 |
+| `analytics/monthly` | year | 단일 | ≤7 | shadcn Select | 클라 | 없음 | 없음 |
+| `organizations/[id]` | memberStatus(세그)·activityActor | 단일×2 | 4/동적 | 세그+Select | 클라 | 없음 | org-activity-actor-role-matrix |
+| `safety-spend` | period(+custom) | 단일 | 4 | Select+date | 클라 | 없음 | 없음 |
+| `notifications` | activeCategory | 단일 | 7 | 세그먼트 pill | 클라 | 없음 | 없음 |
+| `audit` | activityType·entity(+칩)·period·mode·sheetDraft(멀티) | 혼재 | 8+/6칩 | Select+칩+**바텀시트** | **서버** | **있음** | mobile-logs-p1 |
+| `reports` | category·team·vendor·budget(+기간) | 단일×4 | ≤7 | **자체 팝오버**+활성칩 | 클라 | 있음 | reports-filter-redesign·mobile-reports-p1 |
+| `safety` | chip(세그5)+검색+정렬(숨은 risk/msds/location 상태) | 단일 | 5칩 | 세그먼트 | 클라+서버프레임 | 없음 | preferences-safety |
+| `quotes` | statusFunnel·quickStatus(멀티 Set)·mine·period | **멀티** | 5+칩 | 퍼널+**자체 팝오버**+칩 | **서버**+persist | 있음 | quick-filter-4a*·quotes-filter-toolbar-compact-259c·preferences-quotes-filter |
+| `inventory` | location·status(7)·category(4)·owner·lotStatus | 단일 다수 | 7/4 | 데스크 Select+**모바일 Sheet** | **서버**+persist | **있음** | inventory-content-filter-plain-297f·inventory-filter-empty-state-361·preferences-inventory-locationcategory |
+| `purchases` | queueTab | 단일 | 버킷 | **State-Split Tabs** | **서버**+persist | 있음 | preferences-purchases-orders |
+| `purchase-orders` | activeTab+stat pills | 단일 | 버킷 | **State-Split Tabs** | **서버**+persist | 있음 | preferences-purchases-orders |
+| `inbox` | module(5)·state(5)·owner(7) | 단일×3 | 5/5/7 | 세그먼트 pill×3 | 클라+URL동기 | 있음 | ops-console adapter |
+| `work-queue` | ConsoleViewTabs(뷰모드) | 단일 | 뷰 | 세그먼트 뷰탭(열필터 아님) | 클라 | 있음 | __tests__/lib/work-queue/* |
+
+#### P0-(a) 4버킷 분류
+- **인라인 드롭다운 (4)** — 단일 ≤7·데스크 툴바 Select 후보: `admin` · `analytics/monthly` · `organizations/[id]` · `safety-spend`
+- **바텀시트 (0)** — 순수 멀티/8+ 단독 화면 없음(멀티·8+ 케이스는 전부 서버 persist·URL·다차원과 얽혀 예외로 이동)
+- **예외·로컬조합 (9)** — 표준화 시 회귀 위험, **임의 이식 금지**: `audit` · `reports` · `safety` · `quotes` · `inventory` · `purchases` · `purchase-orders` · `inbox` · `work-queue`
+- **세그먼트→인라인 후보 (1)** — `notifications`(단일 7이나 현 트리거 pill → 인라인 이식 가능하나 회귀검토 대상)
+- **제외 (13)** — 필터 아님/검색전용/폼/설정/리다이렉트/dead: `collaboration`·`organizations`(검색전용)·`receiving/[receivingId]`·`settings`·`settings/enterprise`·`settings/plans`·`vendor/quotes`·`budget`·`stock-risk`(리다이렉트)·`grants`·`supplier`·`shared-links`·`inventory-main.tsx`(**dead**, 라우트 미사용)
+
+#### P0-(a) 예외 9 회귀 위험 근거(요지 — 임의 이식 금지)
+- `audit`: 시트 초안-확정 2단 상태 + 모드 토글 + 서버 param 3종 얽힘 · `reports`: §reports-filter-redesign 팝오버+활성칩 전용 레이아웃(오버레이 가드) · `safety`: 숨은 risk/msds/location 상태 + 서버 activeFrame hydration · `quotes`: 멀티 Set + URL 동기 + 서버 persist + §9/P6 잠금·정직 배지 · `inventory`: 데스크 Select+모바일 Sheet **이미 구현**(URL>서버 우선순위) = 표준 레퍼런스이자 최고위험 · `purchases`/`purchase-orders`: State-Split 탭=필터, 탭→드롭다운 치환은 상태 스코프 재설계 · `inbox`: 3차원 pill 전부 URL 양방향 동기(auto_open 포커스) · `work-queue`: 뷰-모드 전환(열 필터 아님).
+
+#### P0-(b) 프로토타입 원본 — **repo 부재 확정**
+- `전역 필터 셀렉트 개선.dc.html` repo 전역 부재(html 전수 grep 0). 계획서 §5 인용 스펙은 **잠정 계약** 유지(Risk 표대로 — 원본 확보 시 대조 정정). 호영님 업로드 시 2a 토큰·구조·상태 대조.
+
+#### P0-(c) 공용 컴포넌트 3개 controlled 인터페이스 초안 (표시 계층만 · 필터 상태 = 화면 소유)
+- `FilterDef = { key: string; label: string; options: {value; label}[]; mode: "dropdown" | "sheet" }`
+  — **표시 모드 판정을 정의 계층이 소유**: `단일 && 항목 ≤7 → "dropdown"` · `멀티 || 항목 8+ → "sheet"`. **P0 판정표의 단일/멀티·항목수 열과 1:1 연동**(화면이 모드를 계산하지 않음).
+- `FilterBar { filters: FilterDef[]; values: Record<key,val>; onChange(key,val); className }` — 데스크 툴바 인라인.
+- `FilterChipRow { active: {key,label}[]; onClear(key); onClearAll }` — 활성 칩·초기화.
+- `FilterSheet { open; onOpenChange; options; selected; onApply(next); title }` — 멀티/8+ 모바일 바텀시트.
+- 3개 모두 **controlled**(props 주입) — canonical(각 화면 필터 상태) 침범 0.
+
+#### P0-(d) sentinel 충돌 — 파일럿(audit 데스크톱) **충돌 0**(조건부)
+- `mobile-logs-p1`(it 30) audit 참조 = **모바일 필터 P3 한 줄·바텀시트**(`md:hidden` 존) + select.tsx 토큰 + GUARD(모드토글·강등·데이터계약·GMP). **audit 데스크톱 Select 블록 markup 자체를 pin하는 어서션 0.**
+- ⇒ 조건: ① 데스크톱 필터 블록만 교체 · ② 모바일 필터 한 줄(P3) 무접촉 · ③ select.tsx 재사용(토큰 유지) · ④ 모드토글/강등/데이터계약/GMP 무접촉.
+- ⚠️ **모바일 칩행까지 통일 시** P3 어서션 **~6건**(필터 한 줄 컨테이너·바텀시트·활성 칩·`필터 적용 · N개`) **진화 판정 상신 필요**.
+
+#### ⚠️ P2 스코프 정정 (P0-(d) 실측이 강제 — 호영님 2026-07-24 승인)
+- **P2 파일럿 = audit 데스크톱 필터 블록만.** 계획서 P2 원문의 "모바일 칩행 공용 치환"은 **P2에서 제거**(모바일 필터 한 줄 P3 존 무접촉 → mobile-logs-p1 충돌 0 조건 준수).
+- **모바일 칩행 공용 치환 = 진화 상신 승인 후 별도 커밋**으로 이동(P4 또는 P5 전 단계). P3 어서션 ~6건 진화가 선행 게이트.
+
+- **✋ Gate:** [x] 인벤토리 전수(44 라우트 대조·누락 0) · [x] 예외 9 판정 근거 명기 · [x] 프로토타입 부재 확정(잠정 계약) · [x] 컴포넌트 인터페이스 초안(FilterDef mode 정의계층) · [x] sentinel 충돌 계수(파일럿 0·모바일 통일 시 ~6) · [x] P2 스코프 정정 반영
+- **Rollback:** planning-only (코드 변경 0)
 
 ### Phase 1: Contract & RED
 - Status: [ ] Pending
