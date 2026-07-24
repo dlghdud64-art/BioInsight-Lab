@@ -1,6 +1,6 @@
 # Implementation Plan: 구매 리포트 정직성 — 견적 금액·벤더·프로젝트 (§reports-honesty)
 
-- **Status:** 🚧 P0·P1 ✅ Complete (2026-07-24 · P1 `1e2dc56f`) — P2~P4 Pending
+- **Status:** 🚧 P0·P1·P2 ✅ Complete (2026-07-24 · P2 `b7749ef0`) — P3(UI)·P4 Pending
 - **Started:** 2026-07-23
 - **Last Updated:** 2026-07-23
 - **Estimated Completion:** TBD
@@ -177,16 +177,41 @@ project 로 오용하는 3결함을 정직하게 교정. 스키마 변경 0 — 
 - **✋ Gate:** [x] RED 실증(계약 6 정확 계수) · [x] 기존 GREEN 유지(mobile-reports-p1 13 · purchase.contract 4) · [x] F10 불요(테스트 파일 단독)
 - **Rollback:** 테스트 revert(`1e2dc56f` 단독)
 
-### Phase 2: Core Logic (route.ts 3결함)
-- Status: [ ] Pending
+### Phase 2: Core Logic (route.ts 3결함) — ✅ Complete (2026-07-24 · `b7749ef0`)
+- Status: [x] Complete
 - **🔴 RED:** Phase 1 sentinel red 유지 확인
 - **🟢 GREEN:** route.ts 교정 —
   - amount: `quote.totalAmount ?? null`(미확정) — `(item.unitPrice||0)*qty` 제거 · 미확정은 지출 합계(totalAmount/estimatedAmount/monthly/category) **제외**, count 로만 반영
   - vendor: `quote.vendors?.[0]?.vendorName ?? quote.vendor ?? "-"`(include 에 `vendors` 추가, `product.vendors` 벤더 매핑 제거)
   - details project: `quote.description` → 견적 식별자(번호/제목 필드 실측 후) 또는 "-" · 별도 `note` 로도 원문 노출 안 함
 - **🔵 REFACTOR:** include 최소화(product.vendors 불요 시 제거 — overfetch 감소)
-- **✋ Gate:** F9 sentinel 계약 GREEN 전환 · mobile-reports-p1 회귀 0 · truth-boundary(실지출 canonical) 위반 0 · overfetch 미증가
-- **Rollback:** route.ts revert
+
+#### P2 F9 실측 (operator 원문 실행)
+| 파일 | 결과 |
+| :--- | :--- |
+| `reports-honesty-p1` | **9 passed / 1 failed** — 계약 **(a)~(e) 5항 GREEN 전환**(route 스코프 전건) + 회귀 가드 4 GREEN. **(f) UI 표기만 RED 유지 = P3 스코프**(설계대로) |
+| `mobile-reports-p1` | 13 GREEN — 회귀 0 |
+| `purchase.contract` | 4 GREEN — 집계 배열 shape 무접촉(키 변경 0) |
+- **F10 build EXIT 0** · `/api/reports/purchase` = ƒ Dynamic 유지. 빌드 로그의 "Dynamic server usage"는
+  **P2 이전 빌드에도 동일 1건 존재**(기존 동작, 본 변경 무관 — 로그 대조 확인).
+
+#### P2 구현 실측 요점
+- **include**: quote 레벨 `vendors: { select: { vendorName: true } }` 추가 · `items.product`는
+  `select: { category, name }`로 축소하고 **`product.vendors` 중첩 제거** ⇒ overfetch **감소**(증가 0).
+- **결함① amount**: 품목 단가 파생 전건 제거(메트릭·예산 사용액·상세행 3곳). 견적 금액 = `quote.totalAmount ?? null`.
+  미확정은 `pendingQuoteCount`로만 반영하고 합계/월별/벤더에서 제외. 실지출(PurchaseRecord) 경로 **무접촉**.
+  - **카테고리 집계는 견적 제외 확정**: 카테고리는 item 단위인데 `Quote.totalAmount`는 견적 단위 —
+    품목 가격 부재로 정직한 배분 불가(임의 배분 = 날조). 카테고리는 실구매 기준만.
+- **결함② vendor**: `quote.vendors?.[0]?.vendorName ?? quote.vendor ?? "-"` (집계·상세행 공통).
+- **결함③ project**: `quote.quoteNumber ?? quote.title` — `description` 원문은 project·notes 어디에도 미노출.
+- **상세행 신규 필드**: `amount: null`(품목 금액 구조적 미상) · `quoteTotalAmount` · `pending` — P3 UI 표기 근거.
+- **응답 metrics**: `pendingQuoteCount` 추가(합계에서 빠진 몫을 숨기지 않고 건수로 정직 노출).
+- ⚠️ **P2 단독 배포 구간 주의**: 상세 테이블은 `item.totalAmount || item.amount || 0` 폴백이라
+  **크래시 0**이나 **₩0 표기는 그대로** 노출됨 — "미확정" 표기 전환은 **P3에서 완결**.
+- 🔒 self-trip 회피: 주석 내 옛 토큰(품목 단가 표현)을 서술로 교체 — 계약 (a) 전역 not-guard 자기충돌 방지.
+
+- **✋ Gate:** [x] 계약 route 5항 GREEN 전환 · [x] mobile-reports-p1 회귀 0 · [x] truth-boundary(실지출 canonical) 위반 0 · [x] overfetch 미증가(오히려 감소) · [x] F10 EXIT 0
+- **Rollback:** route.ts revert(`b7749ef0` 단독)
 
 ### Phase 3: UI Surface (reports/page.tsx)
 - Status: [ ] Pending
