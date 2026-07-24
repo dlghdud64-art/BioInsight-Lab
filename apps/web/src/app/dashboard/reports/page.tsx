@@ -60,6 +60,11 @@ interface DetailItem {
   price?: number;
   totalAmount?: number;
   amount?: number;
+  // §reports-honesty P3 — 견적행 정직 표기용(route P2 신규 필드).
+  //   품목 단가가 스키마상 부재하여 견적 품목 금액은 구조적으로 미상 ⇒ ₩0 단정 금지.
+  quoteTotalAmount?: number | null; // 견적 단위 확정 총액(있을 때만)
+  pending?: boolean; // true = 금액 미확정(회신 대기)
+  type?: string; // "quote" | "purchase"
 }
 
 function deriveInsights(
@@ -325,6 +330,8 @@ export default function ReportsPage() {
   const itemCount: number = metrics.itemCount || 0;
   const avgPrice = itemCount > 0 ? Math.round(totalAmount / itemCount) : 0;
   const vendorCount: number = metrics.vendorCount || 0;
+  // §reports-honesty P3 — 금액 미확정(회신 대기) 견적 건수. 합계에서 제외된 몫을 숨기지 않고 표기.
+  const pendingQuoteCount: number = metrics.pendingQuoteCount || 0;
   const hasData = reportData != null;
 
   // Derived insights
@@ -471,6 +478,7 @@ export default function ReportsPage() {
           hasData={hasData}
           totalAmount={totalAmount}
           detailCount={details.length}
+          pendingQuoteCount={pendingQuoteCount}
           insights={insights}
           monthlyData={monthlyData}
           categoryData={categoryData}
@@ -804,9 +812,15 @@ export default function ReportsPage() {
                   <span className="text-[10px] font-semibold text-slate-400">이번 기간</span>
                 </div>
                 <p className="text-xl font-extrabold text-slate-900 leading-none tabular-nums">{formatCurrency(totalAmount, "KRW")}</p>
-                <p className="text-[11px] text-slate-500 mt-1">총 지출액</p>
+                {/* §reports-honesty P3 — 라벨 명확화: 금액 미확정 견적은 합계에 포함하지 않음(₩0 날조 제거). */}
+                <p className="text-[11px] text-slate-500 mt-1">확정 지출액</p>
                 <MiniSparkline values={cumulativeSpend} stroke="#3b82f6" />
                 <p className="text-[10px] text-slate-400 mt-1">기간 누적 · {itemCount > 0 ? `${itemCount}건` : "0건"}</p>
+                {pendingQuoteCount > 0 && (
+                  <p className="text-[10px] text-yellow-700 mt-0.5">
+                    회신 대기 {pendingQuoteCount}건 — 금액 미확정으로 합계 제외
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -1000,20 +1014,42 @@ export default function ReportsPage() {
                     {details.map((item: DetailItem, index: number) => {
                       const unitPrice = item.unitPrice ?? item.price ?? 0;
                       const isOutlier = unitPrice > insights.avgUnitPrice * 2 && insights.avgUnitPrice > 0;
+                      // §reports-honesty P3 — 견적행 금액 정직 표기.
+                      //   품목 단가가 스키마상 부재 → 견적 품목 금액은 구조적으로 미상.
+                      //   pending(=Quote.totalAmount 미입력) 이면 ₩0 단정 대신 "미확정" + "회신 대기" 표기.
+                      const rowAmount = item.totalAmount ?? item.amount ?? item.quoteTotalAmount ?? null;
+                      const isPending = item.pending === true || rowAmount == null;
                       return (
                         <TableRow key={index} className="border-b border-bd/50 hover:bg-el/30">
                           <TableCell className="py-3 text-xs text-slate-600">
                             {formatDate(item.date || item.purchaseDate, { format: "date" })}
                           </TableCell>
-                          <TableCell className="py-3 text-xs text-slate-700">{item.productName || item.product || "-"}</TableCell>
+                          <TableCell className="py-3 text-xs text-slate-700">
+                            <span>{item.productName || item.product || "-"}</span>
+                            {isPending && (
+                              <span className="ml-1.5 inline-flex items-center rounded-full border border-yellow-200 bg-yellow-50 px-1.5 py-0.5 text-[10px] font-medium text-yellow-700 align-middle">
+                                회신 대기
+                              </span>
+                            )}
+                          </TableCell>
                           <TableCell className="py-3 text-xs text-slate-400">{item.vendorName || item.vendor || "-"}</TableCell>
                           <TableCell className="py-3 text-xs text-slate-600 text-right">{item.quantity ?? "-"}</TableCell>
                           <TableCell className={`py-3 text-xs text-right font-mono ${isOutlier ? "text-yellow-400" : "text-slate-600"}`}>
-                            {formatCurrency(unitPrice, "KRW")}
-                            {isOutlier && <AlertTriangle className="inline h-3 w-3 ml-1" />}
+                            {isPending && unitPrice <= 0 ? (
+                              <span className="text-slate-400">미확정</span>
+                            ) : (
+                              <>
+                                {formatCurrency(unitPrice, "KRW")}
+                                {isOutlier && <AlertTriangle className="inline h-3 w-3 ml-1" />}
+                              </>
+                            )}
                           </TableCell>
                           <TableCell className="py-3 text-xs text-right font-mono font-medium text-slate-900">
-                            {formatCurrency(item.totalAmount || item.amount || 0, "KRW")}
+                            {isPending ? (
+                              <span className="font-sans text-slate-400">미확정</span>
+                            ) : (
+                              formatCurrency(rowAmount ?? 0, "KRW")
+                            )}
                           </TableCell>
                         </TableRow>
                       );

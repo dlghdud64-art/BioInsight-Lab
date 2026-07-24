@@ -71,6 +71,8 @@ export interface MobileReportViewProps {
   hasData: boolean;
   totalAmount: number;
   detailCount: number;
+  /** §reports-honesty P3 — 금액 미확정(회신 대기) 견적 건수. 합계 제외분을 숨기지 않고 표기. */
+  pendingQuoteCount?: number;
   insights: MobileInsights;
   monthlyData: MonthlyItem[];
   categoryData: NamedAmount[];
@@ -145,7 +147,7 @@ function CollapsedRow({ icon, title, hint }: { icon: ReactNode; title: string; h
 
 export function MobileReportView(props: MobileReportViewProps) {
   const {
-    isLoading, isError, hasData, totalAmount, detailCount, insights,
+    isLoading, isError, hasData, totalAmount, detailCount, pendingQuoteCount = 0, insights,
     monthlyData, categoryData, vendorData,
     presets, activePreset, onPreset, startDate, endDate,
     activeFilterCount, filterContent, onDownload, onRetry,
@@ -300,7 +302,12 @@ export function MobileReportView(props: MobileReportViewProps) {
             chipClass="bg-blue-50 text-blue-600"
             aside="이번 기간"
             value={detailCount > 0 || totalAmount > 0 ? formatManwon(totalAmount) : "–"}
-            label={`기간 합계 · ${detailCount}건`}
+            // §reports-honesty P3 — 금액 미확정 견적은 합계 제외(₩0 날조 제거). 제외분은 건수로 정직 표기.
+            label={
+              pendingQuoteCount > 0
+                ? `확정 합계 · 회신 대기 ${pendingQuoteCount}건 미확정`
+                : `기간 합계 · ${detailCount}건`
+            }
           />
           <KpiCard
             icon={<Layers className="h-3.5 w-3.5" />}
