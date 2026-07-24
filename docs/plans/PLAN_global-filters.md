@@ -1,6 +1,6 @@
 # Implementation Plan: 전역 필터 통일 — 툴바 인라인 필터 바 · 전 화면 이식 (§global-filters)
 
-- **Status:** 🚧 P0·P1 ✅ · P2 코드완료(A `bf5c787e`·B `52a963ae`) 런타임검증 대기 (2026-07-24) — P3~P5 Pending
+- **Status:** 🚧 P0·P1·P2 ✅ Complete (2026-07-24 · 파일럿 게이트 GREEN) — P3~P5 Pending
 - **Started:** 2026-07-23
 - **Last Updated:** 2026-07-23
 - **Estimated Completion:** TBD
@@ -193,8 +193,11 @@
 - **✋ Gate:** [x] RED 실증(계약 4 정확 계수) · [x] 기존 전체 GREEN 유지(mobile-logs-p1 30) · [x] inventory 패턴 수용 판정
 - **Rollback:** 테스트 revert(`00f8522a` 단독)
 
-### Phase 2: 공용 컴포넌트 + 활동 로그 파일럿(=a 흡수) — 🚧 코드 완료·런타임 검증 대기 (2026-07-24)
-- Status: [~] 코드 배포 완료(A `bf5c787e` · B `52a963ae`) — sandbox 런타임 검증 통과 전 P3 금지
+### Phase 2: 공용 컴포넌트 + 활동 로그 파일럿(=a 흡수) — ✅ Complete (2026-07-24 · A `bf5c787e`·B `52a963ae`)
+- Status: [x] Complete — sandbox 프로덕션 런타임 검증 통과.
+- **게이트 검증(sandbox 프로덕션 6항 PASS):** 데스크톱 인라인 바·라벨 병기·**활성 강조(computed cls)**·
+  **8→4건 실필터링**·전역 select 토큰 승계 = 런타임 실측 PASS / 모바일 무회귀 = DOM+sentinel(mobile-logs-p1 30) 승계
+  (뷰포트 실측 제약 → 증거 등급 구분: 데스크톱=런타임 / 모바일=정적 승계).
 - 공용 filter-bar(데스크톱 인라인)·filter-chip-row·filter-sheet(바텀 시트) 구현(표시 계층·select.tsx 소비) ·
   audit 데스크톱 Select 2 → FilterBar 인라인 바 교체.
 - **⚠️ P2 스코프 정정 준수(P0-(d))**: 모바일 칩행 공용 치환은 **P2에서 제외**(P3 존 무접촉). 계획서 원문의
