@@ -46,6 +46,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FilterBar, type FilterDef } from "@/components/ui/filter-bar";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -198,6 +199,32 @@ const ENTITY_TYPE_LABELS: Record<string, string> = {
 // §mobile-logs P3 — 모바일 필터 한 줄 상수(표시 파생). 도메인 값 = /api/activity-logs
 //   entityType param 과 동일(데스크톱 Select 옵션과 1:1 — 서버 실필터 재사용).
 const ACTIVITY_DOMAIN_CHIPS = ["quote", "product", "search", "order", "inventory", "vendor"] as const;
+
+// §global-filters P2 파일럿 — audit 데스크톱 필터 정의(공용 FilterBar 주입). 단일·≤7 → dropdown.
+//   옵션/값 = 기존 데스크톱 Select 와 1:1(서버 param activityType/entityType 계약·라벨 무변경).
+const AUDIT_ENTITY_LABELS: Record<string, string> = {
+  quote: "견적", product: "제품", search: "검색", order: "발주", inventory: "재고", vendor: "공급사",
+};
+const AUDIT_DESKTOP_FILTERS: FilterDef[] = [
+  {
+    key: "activityType",
+    label: "활동 유형",
+    mode: "dropdown",
+    options: [
+      { value: "all", label: "전체 활동" },
+      ...Object.entries(ACTIVITY_TYPE_LABELS).map(([value, label]) => ({ value, label })),
+    ],
+  },
+  {
+    key: "entityType",
+    label: "대상",
+    mode: "dropdown",
+    options: [
+      { value: "all", label: "전체" },
+      ...ACTIVITY_DOMAIN_CHIPS.map((v) => ({ value: v, label: AUDIT_ENTITY_LABELS[v] })),
+    ],
+  },
+];
 const ACTIVITY_PERIOD_OPTIONS: { value: string; label: string }[] = [
   { value: "today", label: "오늘" },
   { value: "7", label: "7일" },
@@ -753,35 +780,17 @@ export default function AuditTrailPage() {
             </p>
           </div>
 
-          {/* §mobile-logs P3 — 데스크톱 필터(기존 Select) 유지, 모바일은 아래 필터 한 줄로 대체. */}
+          {/* §global-filters P2 파일럿 — 데스크톱 필터를 공용 FilterBar 인라인 바로 전환(라벨 병기).
+              모바일은 아래 P3 필터 한 줄(log-filter-row) 무접촉. 필터 state/파생은 무변경(표시 계층만). */}
           <div className="hidden md:flex flex-row gap-2 items-center">
-            <Select value={activityTypeFilter} onValueChange={setActivityTypeFilter}>
-              <SelectTrigger className="h-9 w-[120px] md:w-[160px] text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체 활동</SelectItem>
-                {Object.entries(ACTIVITY_TYPE_LABELS).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={entityTypeFilter} onValueChange={setEntityTypeFilter}>
-              <SelectTrigger className="h-9 w-[120px] md:w-[140px] text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="quote">견적</SelectItem>
-                <SelectItem value="product">제품</SelectItem>
-                <SelectItem value="search">검색</SelectItem>
-                <SelectItem value="order">발주</SelectItem>
-                <SelectItem value="inventory">재고</SelectItem>
-                <SelectItem value="vendor">공급사</SelectItem>
-              </SelectContent>
-            </Select>
+            <FilterBar
+              filters={AUDIT_DESKTOP_FILTERS}
+              values={{ activityType: activityTypeFilter, entityType: entityTypeFilter }}
+              onChange={(key, v) => {
+                if (key === "activityType") setActivityTypeFilter(v);
+                else if (key === "entityType") setEntityTypeFilter(v);
+              }}
+            />
             {isActivityFiltered && (
               <Button
                 variant="outline"
