@@ -9,9 +9,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
-import { ArrowUpRight, ArrowDownRight, AlertTriangle, CloudUpload, FileText, RefreshCcw, FileDown, BarChart2, Layers, Activity, CheckCircle2, SlidersHorizontal, X } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, AlertTriangle, CloudUpload, FileText, RefreshCcw, FileDown, BarChart2, Layers, Activity, CheckCircle2, X } from "lucide-react";
 // §reports-filter-redesign — 필터 접기(팝오버) + 활성 칩.
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+// §global-filters P3-b2 — 데스크톱 필터 인라인 바(공용). 모바일은 현행 팝오버 유지(mobile-report-view).
+import { FilterBar, type FilterDef } from "@/components/ui/filter-bar";
 import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
@@ -465,6 +466,62 @@ export default function ReportsPage() {
     </>
   );
 
+  // §global-filters P3-b2 — 데스크톱 인라인 필터 바 정의(옵션·값 = 기존 4 Select 와 1:1).
+  //   단일선택 · 데스크톱 인라인이므로 mode "dropdown". 필터 상태/파생은 화면 소유(표시 계층만).
+  const reportDesktopFilters: FilterDef[] = [
+    {
+      key: "category",
+      label: "카테고리",
+      mode: "dropdown",
+      options: [
+        { value: "all", label: "전체" },
+        ...Object.entries(PRODUCT_CATEGORIES).map(([value, label]) => ({ value, label: String(label) })),
+      ],
+    },
+    {
+      key: "team",
+      label: "팀 / 조직",
+      mode: "dropdown",
+      options: [
+        { value: "all", label: "전체" },
+        { value: "team1", label: "1팀" },
+        { value: "team2", label: "2팀" },
+      ],
+    },
+    {
+      key: "vendor",
+      label: "벤더",
+      mode: "dropdown",
+      options: [
+        { value: "all", label: "전체" },
+        { value: "sigma", label: "Sigma-Aldrich" },
+        { value: "thermo", label: "Thermo Fisher" },
+        { value: "eppendorf", label: "Eppendorf" },
+      ],
+    },
+    {
+      key: "budget",
+      label: "예산",
+      mode: "dropdown",
+      options: [
+        { value: "all", label: "전체" },
+        ...(Array.isArray(budgets) ? budgets.map((b: any) => ({ value: b.id, label: b.name })) : []),
+      ],
+    },
+  ];
+  const reportFilterValues: Record<string, string> = {
+    category: selectedCategory,
+    team: selectedTeam,
+    vendor: selectedVendor,
+    budget: selectedBudget,
+  };
+  const onReportFilterChange = (key: string, v: string) => {
+    if (key === "category") setSelectedCategory(v);
+    else if (key === "team") setSelectedTeam(v);
+    else if (key === "vendor") setSelectedVendor(v);
+    else if (key === "budget") setSelectedBudget(v);
+  };
+
 
   return (
     <div className="w-full bg-canvas min-h-screen">
@@ -619,18 +676,14 @@ export default function ReportsPage() {
             ))}
           </div>
           <DateRangePicker startDate={startDate} endDate={endDate} onDateChange={(start, end) => { setStartDate(start); setEndDate(end); setActivePreset(null); }} />
-          <Popover>
-            <PopoverTrigger asChild>
-              <button type="button" className="ml-auto inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50">
-                <SlidersHorizontal className="h-4 w-4" />
-                필터
-                {activeFilterCount > 0 && (
-                  <span className="inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-blue-600 text-white text-[10px] font-bold">{activeFilterCount}</span>
-                )}
-              </button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-72 space-y-3">{filterControls}</PopoverContent>
-          </Popover>
+          {/* §global-filters P3-b2 — 데스크톱: 팝오버 접기 폐기 → 공용 FilterBar 인라인(라벨 병기·활성 강조).
+              모바일은 mobile-report-view 의 현행 팝오버(filterControls) 유지(P2 스코프정정). */}
+          <FilterBar
+            filters={reportDesktopFilters}
+            values={reportFilterValues}
+            onChange={onReportFilterChange}
+            className="ml-auto"
+          />
         </div>
         {activeFilterCount > 0 && (
           <div className="flex flex-wrap items-center gap-1.5 mt-3">
