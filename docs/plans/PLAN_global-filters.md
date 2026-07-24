@@ -1,6 +1,6 @@
 # Implementation Plan: 전역 필터 통일 — 툴바 인라인 필터 바 · 전 화면 이식 (§global-filters)
 
-- **Status:** 🚧 P0·P1 ✅ Complete (2026-07-24 · P1 `00f8522a`) — P2~P5 Pending
+- **Status:** 🚧 P0·P1 ✅ · P2 코드완료(A `bf5c787e`·B `52a963ae`) 런타임검증 대기 (2026-07-24) — P3~P5 Pending
 - **Started:** 2026-07-23
 - **Last Updated:** 2026-07-23
 - **Estimated Completion:** TBD
@@ -193,13 +193,28 @@
 - **✋ Gate:** [x] RED 실증(계약 4 정확 계수) · [x] 기존 전체 GREEN 유지(mobile-logs-p1 30) · [x] inventory 패턴 수용 판정
 - **Rollback:** 테스트 revert(`00f8522a` 단독)
 
-### Phase 2: 공용 컴포넌트 + 활동 로그 파일럿(=a 흡수)
-- Status: [ ] Pending
-- 공용 filter-bar(데스크톱 인라인)·filter-chip-row(모바일)·filter-sheet(바텀 시트) 구현(표시 계층,
-  select.tsx 토큰 소비) · audit 데스크톱 Select 2 → 인라인 필터 바 교체(모바일 칩행은 공용으로 치환)
-- **✋ Gate:** F9 파일럿 계약 GREEN · audit 접촉 sentinel 전체 GREEN(mobile-logs-p1 30 포함 — 충돌 시
-  상신) · F10 EXIT 0 · **배포 후 sandbox 런타임 패턴 검증 통과 전 P3 진행 금지**
-- **Rollback:** 파일럿 커밋 단독 revert(공용 컴포넌트는 미사용 상태로 무해)
+### Phase 2: 공용 컴포넌트 + 활동 로그 파일럿(=a 흡수) — 🚧 코드 완료·런타임 검증 대기 (2026-07-24)
+- Status: [~] 코드 배포 완료(A `bf5c787e` · B `52a963ae`) — sandbox 런타임 검증 통과 전 P3 금지
+- 공용 filter-bar(데스크톱 인라인)·filter-chip-row·filter-sheet(바텀 시트) 구현(표시 계층·select.tsx 소비) ·
+  audit 데스크톱 Select 2 → FilterBar 인라인 바 교체.
+- **⚠️ P2 스코프 정정 준수(P0-(d))**: 모바일 칩행 공용 치환은 **P2에서 제외**(P3 존 무접촉). 계획서 원문의
+  "모바일 칩행 공용 치환"은 진화 상신 후 별도 커밋으로 이동.
+
+#### P2 F9/F10 실측
+| 항목 | 결과 |
+| :--- | :--- |
+| `global-filters-p1` | **6/6 GREEN** (계약 4 RED→GREEN 전환 + 가드 2 유지) |
+| `mobile-logs-p1` | **30 GREEN** — 모바일 P3 존 무회귀 |
+| audit 접촉 6종 | 85 pass / **311b 1 fail = 기왕 "일시/ID" drift**(mobile-logs P2~P4 내내 동일·본 변경 무관) → delta 0 |
+| F10 build | **EXIT 0** · `/dashboard/audit` ƒ Dynamic |
+
+#### P2 구현 요점
+- **커밋 A**(`bf5c787e`, 공용 3파일 additive·소비자 0 무해): `FilterBar`{filters,values,onChange}·`FilterChipRow`·`FilterSheet`(side=bottom·`필터 적용 · N개`·h-11). controlled(필터 useState 0, P1 (d) 유지). `FilterDef={key,label,options,mode:"dropdown"|"sheet",allValue?}` — inventory 규약 흡수.
+- **커밋 B**(`52a963ae`, audit 파일럿): 데스크톱 `hidden md:flex` Select 2 → `FilterBar` + `AUDIT_DESKTOP_FILTERS`(옵션·값·라벨 원본 1:1, 서버 param 계약 무변경). 필터 state/파생 무접촉(표시 계층만). 초기화 버튼 보존. 모바일 `log-filter-row`/`log-filter-sheet`/`log-domain-chip-*` **무접촉**.
+- 라벨 병기(`{label} · {현재값}`) → **라벨 없는 "전체" 해소**(P0 위반 사례 교정) · 활성(비-all) 파란 강조.
+
+- **✋ Gate:** [x] 파일럿 계약 GREEN(6/6) · [x] audit sentinel delta 0(311b 기왕) · [x] mobile-logs-p1 30 · [x] F10 EXIT 0 · [ ] **sandbox 런타임 패턴 검증**(데스크톱 인라인 바·라벨 병기·활성 강조·모바일 무회귀) — **통과 전 P3 금지**
+- **Rollback:** 파일럿 커밋 B 단독 revert(공용 A는 미사용 상태로 무해)
 
 ### Phase 3: 재고·리포트 이식
 - Status: [ ] Pending
