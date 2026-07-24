@@ -237,6 +237,16 @@
   전건 일치(숨은 기간 필터 해소, sandbox 프로덕션 실측). 모바일 7일 기본 = 코드 무변경 승계.
 - [2026-07-23] select trigger 회색 잔존(bg-background/bg-white 중복, 진단 ④ 잔존) 픽스
   커밋 `d6f8f55b` — 배포 후 sandbox 트리거 흰색 재확인 예정.
+- [2026-07-23] **진단 ④ 전역 완결.** 위 "재확인 예정" 클로즈. 3차 원인 = 컴포넌트 기본값을
+  호출부 className 회색 토큰이 덮음(`d6f8f55b` 단독으로는 미해소). **증거 등급 구분(오독 방지)**:
+  · **런타임 실측(computed rgb = 255,255,255)**: reports 필터 4곳(category·team·vendor·budget)
+    — `d6f8f55b`(컴포넌트 기본 흰색) + `d51def34`(호출부 `bg-el` 오버라이드 제거), sandbox 프로덕션 실측.
+  · **정적 검증 + 메커니즘 승계(rgb 미측정, 잔여 bg 소스 0)**: search-panel 2 · settings/plans 1 ·
+    organizations 1 (`f4fa09de`) — reports와 동일 컴포넌트·동일 결함·동일 1줄 수정이며, 제거 후
+    className에 **잔여 bg 유틸 0** 확인 → 컴포넌트 기본 `bg-white` 확정 적용. F9 18/18 · F10 EXIT 0.
+  · **회색 유지 = 정답(제외 5)**: settings:1163(disabled "준비 중" — 흰색 전환 시 활성 오표기) ·
+    governance-dev-panel 2(다크 패널 배경) · strategic-analytics 2(`cn()` 조건부 상태 스타일링).
+  ⚠️ "전 화면 rgb 실측 완료"가 아님 — 런타임 실측은 reports 대표 4곳 한정, 나머지는 정적 승계.
 - [2026-07-23] P4 검증 완료(sandbox 격리 vitest — 워킹트리 기구현분 실측 검증). mobile-logs-p1
   30/30 · log-consolidation-p1 23/23 GREEN · 회귀 delta 0(기왕 3건 HEAD 부재 실측). 커밋 3분리
   (A select 단독 / B sentinel 진화 단독 / C 리스트+계약) + D docs — operator 커밋·push 후
