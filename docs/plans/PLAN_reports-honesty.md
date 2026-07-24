@@ -1,6 +1,6 @@
 # Implementation Plan: 구매 리포트 정직성 — 견적 금액·벤더·프로젝트 (§reports-honesty)
 
-- **Status:** 🚧 P0·P1·P2 ✅ Complete (2026-07-24 · P2 `b7749ef0`) — P3(UI)·P4 Pending
+- **Status:** 🚧 P0~P3 ✅ Complete (2026-07-24 · P3 `e9050fdb`) — P4(프로덕션 스모크) Pending
 - **Started:** 2026-07-23
 - **Last Updated:** 2026-07-23
 - **Estimated Completion:** TBD
@@ -213,13 +213,33 @@ project 로 오용하는 3결함을 정직하게 교정. 스키마 변경 0 — 
 - **✋ Gate:** [x] 계약 route 5항 GREEN 전환 · [x] mobile-reports-p1 회귀 0 · [x] truth-boundary(실지출 canonical) 위반 0 · [x] overfetch 미증가(오히려 감소) · [x] F10 EXIT 0
 - **Rollback:** route.ts revert(`b7749ef0` 단독)
 
-### Phase 3: UI Surface (reports/page.tsx)
-- Status: [ ] Pending
+### Phase 3: UI Surface (reports/page.tsx) — ✅ Complete (2026-07-24 · `e9050fdb`)
+- Status: [x] Complete
 - **🔴 RED:** UI 계약 sentinel(미확정 표기·회신 대기 배지) red
-- **🟢 GREEN:** 상세 테이블 — amount null ⇒ "미확정"(₩0 금지) · 미확정 행 "회신 대기" 배지 · vendor/project 정직 표기 · 인사이트 "총 지출" = 실지출(PurchaseRecord)만 라벨 명확화
+- **🟢 GREEN:** 상세 테이블 — amount null ⇒ "미확정"(₩0 금지) · 미확정 행 "회신 대기" 배지 · vendor/project 정직 표기 · 인사이트 "총 지출" = 실지출 라벨 명확화
 - **🔵 REFACTOR:** same-canvas 유지 · 빈/미확정 상태 UI 정리
-- **✋ Gate:** dead button/₩0 날조 0 · loading/empty/미확정 상태 존재 · 데스크톱/모바일 회귀 0
-- **Rollback:** page.tsx revert
+
+#### P3 F9 실측 (operator 원문 실행)
+| 파일 | 결과 |
+| :--- | :--- |
+| `reports-honesty-p1` | **10 passed (10)** — 계약 **6/6 전건 GREEN 전환**((f) UI 표기 포함) + 회귀 가드 4 GREEN |
+| `mobile-reports-p1` | 13 GREEN — 회귀 0 |
+| `purchase.contract` | 4 GREEN — 집계 shape 무접촉 |
+- **F10 build EXIT 0** · `/dashboard/reports` = ƒ Dynamic 유지(48.6 kB).
+
+#### P3 구현 요점
+- **상세행 금액**: `rowAmount = totalAmount ?? amount ?? quoteTotalAmount ?? null` ·
+  `isPending = pending === true || rowAmount == null` ⇒ **"미확정"**(회색) 렌더, **₩0 표기 0**.
+  실구매행은 값이 있으므로 기존 통화 표기 유지(회귀 0).
+- **단가 셀**: pending & 단가 0 이하일 때만 "미확정" — 실단가 있는 행의 이상치(outlier) 강조 로직 보존.
+- **회신 대기 배지**: 품목명 옆 yellow 토큰(§11.302 신호등) — **상태 표기이며 클릭 요소 아님**(dead button 0).
+- **인사이트 카드**: 라벨 "총 지출액" → **"확정 지출액"**, `pendingQuoteCount > 0` 이면
+  "회신 대기 N건 — 금액 미확정으로 합계 제외" 보조 표기(제외분을 숨기지 않음).
+- **모바일**: `pendingQuoteCount` prop 추가(기본 0) · 기간 합계 KPI 라벨을
+  "확정 합계 · 회신 대기 N건 미확정"으로 분기 — 데스크톱/모바일 표기 일관.
+
+- **✋ Gate:** [x] dead button/₩0 날조 0 · [x] loading/empty/미확정 상태 존재 · [x] 데스크톱/모바일 회귀 0(F9 전건) · [x] F10 EXIT 0
+- **Rollback:** UI 2파일 revert(`e9050fdb` 단독 — route P2 는 유지 가능)
 
 ### Phase 4: Smoke & 종결
 - Status: [ ] Pending
