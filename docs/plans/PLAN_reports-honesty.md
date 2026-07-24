@@ -1,6 +1,6 @@
 # Implementation Plan: 구매 리포트 정직성 — 견적 금액·벤더·프로젝트 (§reports-honesty)
 
-- **Status:** 🚧 P0 ✅ Complete (2026-07-24) — P1~P4 Pending(새 배치)
+- **Status:** 🚧 P0·P1 ✅ Complete (2026-07-24 · P1 `1e2dc56f`) — P2~P4 Pending
 - **Started:** 2026-07-23
 - **Last Updated:** 2026-07-23
 - **Estimated Completion:** TBD
@@ -155,13 +155,27 @@ project 로 오용하는 3결함을 정직하게 교정. 스키마 변경 0 — 
 - **✋ Gate:** [x] truth 충돌 0 · [x] 수정 지점 라인 명기 · [x] 미확정 정의(단가 미기록 견적 ⇒ 0원 단정 금지, "미확정" 표기) · [x] Quote 식별자 실재 확인 · [x] sentinel 경계 계수
 - **Rollback:** planning-only (코드 변경 0)
 
-### Phase 1: Contract & RED
-- Status: [ ] Pending
+### Phase 1: Contract & RED — ✅ Complete (2026-07-24 · `1e2dc56f`)
+- Status: [x] Complete
 - **🔴 RED:** `reports-honesty-p1.test.ts` — §6 계약 6항 정적 sentinel(RED 실증)
-- **🟢 GREEN:** 최소 scaffolding(테스트 파일)
+- **🟢 GREEN:** 최소 scaffolding(테스트 파일) + 회귀 가드 4
 - **🔵 REFACTOR:** testid/명명 정리
-- **✋ Gate:** RED 실증(F9 fail 정확 계수) · 기존 GREEN 유지(mobile-reports-p1 등)
-- **Rollback:** 테스트 revert
+
+#### P1 F9 실측 (operator 원문 실행)
+| 파일 | 결과 |
+| :--- | :--- |
+| `reports-honesty-p1` | **계약 6 전건 RED** / 회귀 가드 4 GREEN (6 failed \| 4 passed, 10) |
+| `mobile-reports-p1` | **13 tests GREEN**(어서션 37) — 회귀 0 |
+| `purchase.contract` | **4 tests GREEN**(어서션 19) — 집계 shape 무접촉 |
+- 계수 표기: 계획서의 "37 / 19"는 **어서션(expect) 수**, 테스트(it) 수는 **13 / 4** — 동일 대상의 다른 단위.
+
+#### P1 false-pass 방지 설계(P0 실측 반영 — P2 구현 시 준수)
+- `totalAmount` 단순 매칭 **금지**: route 로컬 누산기/응답 필드(L132·146·170·312)가 이미 존재 ⇒ **`quote.totalAmount`** 로 정밀 pin.
+- `vendorName` 단순 매칭 **금지**: PurchaseRecord `record.vendorName` **5건** 기존재 ⇒ **`quote.vendors`** 경로로 정밀 pin.
+- (a)는 `item.unitPrice` **전건 제거**(L144·236·282) 요구 — L236(usedAmount)도 동일 구조적 0이므로 P2 스코프.
+
+- **✋ Gate:** [x] RED 실증(계약 6 정확 계수) · [x] 기존 GREEN 유지(mobile-reports-p1 13 · purchase.contract 4) · [x] F10 불요(테스트 파일 단독)
+- **Rollback:** 테스트 revert(`1e2dc56f` 단독)
 
 ### Phase 2: Core Logic (route.ts 3결함)
 - Status: [ ] Pending
