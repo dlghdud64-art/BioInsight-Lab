@@ -1,6 +1,6 @@
 # Implementation Plan: 구매 리포트 정직성 — 견적 금액·벤더·프로젝트 (§reports-honesty)
 
-- **Status:** 🚧 P0~P3 ✅ Complete (2026-07-24 · P3 `e9050fdb`) — P4(프로덕션 스모크) Pending
+- **Status:** 🚧 P0~P3 ✅ · P4 3/4 프로덕션 완결 + vendor(b) 수정 `ff7634fc` (2026-07-24) — vendor 배포후 재실측 잔여
 - **Started:** 2026-07-23
 - **Last Updated:** 2026-07-23
 - **Estimated Completion:** TBD
@@ -241,12 +241,34 @@ project 로 오용하는 3결함을 정직하게 교정. 스키마 변경 0 — 
 - **✋ Gate:** [x] dead button/₩0 날조 0 · [x] loading/empty/미확정 상태 존재 · [x] 데스크톱/모바일 회귀 0(F9 전건) · [x] F10 EXIT 0
 - **Rollback:** UI 2파일 revert(`e9050fdb` 단독 — route P2 는 유지 가능)
 
-### Phase 4: Smoke & 종결
-- Status: [ ] Pending
-- **🔴 RED:** rollout 실패 모드(미확정 견적 다수 시 지표 공백) 식별 · smoke path 정의
-- **🟢 GREEN:** sandbox 프로덕션 재실측 — RFQ-2606-70DK 벤더 실표기·"미확정" 표기·실지출 지표 견적 오염 0
-- **🔵 REFACTOR:** 임시 계측 제거 · Notes 종결
-- **✋ Gate:** QA 판정표 · baseline-delta 0 · build EXIT 0
+### Phase 4: Smoke & 종결 — 🚧 3/4 프로덕션 완결 + vendor 결함(b) 수정 (2026-07-24 · `ff7634fc`)
+- Status: [~] vendor 재실측만 잔여(배포 후 sandbox)
+- **🟢 GREEN:** sandbox 프로덕션 스모크(`e9050fdb` 라이브) + operator DB 실측(vendor 진위).
+
+#### P4 프로덕션 스모크 판정표 (sandbox 실측 — `e9050fdb` 라이브)
+| 결함 | 항목 | 판정 |
+| :--- | :--- | :--- |
+| ① amount | payload `amount=null`·UI "미확정"·₩0 표기 0·`pendingQuoteCount=2` 노출 | **PASS** |
+| ③ project | `description` 원문 폐기 → `title` 표시("[진단2]…"·"견적 요청 — 1개 품목") | **PASS** |
+| 지출 오염 | "확정 지출액" ₩0(실지출만)·"회신 대기 2건 — 합계 제외" 보조 표기·차트 견적 제외 | **PASS** |
+| UI | 상세행 "미확정"·"회신 대기" yellow 배지·dead button 0 | **PASS** |
+| ② vendor | 코드 경로 교정(sentinel (c) GREEN)이나 프로덕션 2건 "-" → 진위 판별 필요 | **(b) 확정→수정** |
+
+#### P4 vendor 진위 — operator DB 실측(read-only, SELECT only)
+- **결함(b) 확정**: 프로덕션 DB(Supabase) 전수 실측 —
+  - `QuoteVendor(vendors)` = **전 견적(5/5) 0행** ← P2 route 가 읽던 유일 경로 → 모든 견적 vendor "-".
+  - `QuoteVendorRequest(vendorRequests)` = 실 RFQ 수신처. `vendorName` 실값 존재:
+    **"Sigma-Aldrich (Merck)" · "test" · "123"**(email 첨부 y).
+  - ⇒ 벤더는 vendorRequests 에만 기록됨. P2 설계(vendors 만)가 구조적 한계 — 카탈로그 매핑 제거는 옳았으나
+    실데이터 경로를 놓침(QuoteVendor 미채워짐).
+- **수정(`ff7634fc`)**: vendor 파생 폴백 `vendors[0].vendorName ?? vendorRequests[0].vendorName ?? Quote.vendor ?? "-"`
+  (집계·상세행 공통) + include 에 `vendorRequests: { select: { vendorName: true } }` 추가. QuoteVendor 우선 유지
+  (향후 채워질 시 대비), 실데이터는 vendorRequests 로 resolve.
+- F9 6/6 유지(계약 (c) `quote.vendors` 참조 보존) · F10 EXIT 0.
+- ⚠️ **sandbox 참조 ID 주의**: 호영님 전달 ID(cmqtqoebr000d…·cmqrnil470005…)는 **item.id**(details.id=item.id)로
+  quote.id(…000b…·…0003…)와 상이 — findUnique NOT FOUND 였으나 **전수 조회로 (b) 결론 불변**.
+
+- **✋ Gate:** [x] ①③·지출오염·UI 프로덕션 PASS · [x] vendor (b) 확정+수정 · [ ] vendor 배포후 재실측(잔여) · [x] F10 EXIT 0
 - **Rollback:** phase별 커밋 revert(마이그레이션 0)
 
 ## 8. Optional Addenda
