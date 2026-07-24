@@ -109,9 +109,12 @@ describe("§mobile-reports P1 — 회귀 0 (데스크톱 보존)", () => {
     expect(page).toMatch(/\/api\/reports\/purchase/);
   });
 
-  it("§reports-filter-redesign 보존 — 필터 팝오버·활성 칩", () => {
+  it("데스크톱 필터 인라인 바 + 활성 개수(§global-filters 결정 교체·호영님 승인)", () => {
+    // 🔄 진화(2026-07-24): 07-11 팝오버 접기 → 07-23 §global-filters 데스크톱 인라인 바 결정 교체.
+    //   page.tsx 데스크톱 팝오버(SlidersHorizontal 트리거) 폐기 → 공용 FilterBar. 모바일 팝오버는
+    //   mobile-report-view.tsx 에서 현행 유지(별도 파일). 보호 코어 = activeFilterCount 개수 배지.
     const page = read(PAGE);
     expect(page).toMatch(/activeFilterCount/);
-    expect(page).toMatch(/SlidersHorizontal/);
+    expect(page).toMatch(/FilterBar/);
   });
 });
