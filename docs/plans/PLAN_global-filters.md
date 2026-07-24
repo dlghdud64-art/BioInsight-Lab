@@ -1,6 +1,6 @@
 # Implementation Plan: 전역 필터 통일 — 툴바 인라인 필터 바 · 전 화면 이식 (§global-filters)
 
-- **Status:** 🚧 P0~P2 ✅ · P3 reports(b) 코드완료·런타임검증 대기 / inventory(a) 297f 상신·halt (2026-07-24) — P4~P5 Pending
+- **Status:** 🚧 P0~P3 ✅ Complete (2026-07-24 · a·b 이식·런타임검증 대기) — P4~P5 Pending
 - **Started:** 2026-07-23
 - **Last Updated:** 2026-07-23
 - **Estimated Completion:** TBD
@@ -219,19 +219,19 @@
 - **✋ Gate:** [x] 파일럿 계약 GREEN(6/6) · [x] audit sentinel delta 0(311b 기왕) · [x] mobile-logs-p1 30 · [x] F10 EXIT 0 · [ ] **sandbox 런타임 패턴 검증**(데스크톱 인라인 바·라벨 병기·활성 강조·모바일 무회귀) — **통과 전 P3 금지**
 - **Rollback:** 파일럿 커밋 B 단독 revert(공용 A는 미사용 상태로 무해)
 
-### Phase 3: 재고·리포트 이식 — 🚧 reports(b) 완료·런타임검증 대기 / inventory(a) 297f 상신·halt (2026-07-24)
-- Status: [~] P3-b reports 배포(`aadbec7c`·`8d89e2f2`·`e88c5345`) / **P3-a inventory 보류(297f 진화 승인 대기)**
+### Phase 3: 재고·리포트 이식 — ✅ Complete (2026-07-24 · a·b 양건 코드완료·런타임검증 대기)
+- Status: [x] Complete — reports(b) `aadbec7c`·`8d89e2f2`·`e88c5345` / inventory(a) `ae30bddf`·`4b5bcbd4`. 화면별 런타임 스모크는 배포 후 sandbox.
 
-#### P3-a inventory — ⚠️ 297f 충돌·구현 halt (진화 상신)
-- **선행 실측 결과 = 충돌 확정**: inventory 데스크 필터는 인라인 Select가 아니라 **필터-드롭다운 패널** —
-  `필터` 버튼(L1926) → `isFilterDropdownOpen`(L158) → `role="menu"` 절대배치 패널(L1942, Select 위치/상태 내장).
-- `inventory-content-filter-plain-297f`가 이 패턴을 **잠금**: `isFilterDropdownOpen` useState · `aria-label="필터"`·
-  `aria-expanded` · `{isFilterDropdownOpen && (` 조건부 `필터 메뉴`·backdrop·`role="menu"` · Select 2(위치/상태) 내장.
-- ⇒ 인라인 FilterBar 전환 = 위 어서션 전부 파손. **§11.297f 진화 = 결정 교체**(reports와 동류)이나 **호영님 명시 승인 대기**
-  (지시문 P3-a step1 "충돌 시 구현 전 진화 상신" 발동). **미승인 구현 금지.**
-- 권고: 승인 시 reports와 동형 진화(297f 드롭다운패널 pin → FilterBar 인라인, isFilterDropdownOpen 등 부재-lock).
-  모바일 Sheet·`?filter`/서버 persist 무접촉. `filter-empty-state-361`(setLocationFilter/Status/Category("all") 초기화 CTA)는
-  값 계약이라 무접촉 예상, 착수 시 재실측.
+#### P3-a inventory — ✅ 코드 완료 (§11.297f 진화 승인·2026-07-23)
+- **결정 교체 승인(호영님)**: §11.297f 필터-드롭다운 패널(`필터` 버튼 → `isFilterDropdownOpen` → `role="menu"` 절대배치 패널)
+  → §global-filters 데스크톱 공용 FilterBar 인라인(reports 팝오버 폐기와 동종).
+- **커밋 2분리**: `ae30bddf`(a1 297f sentinel 진화 — 드롭다운패널 pin → FilterBar 인라인·부재-lock) ·
+  `4b5bcbd4`(a2 데스크톱 패널→FilterBar).
+- 구현: 데스크 필터-드롭다운 패널(위치/상태 Select 내장) → `inventoryDesktopFilters` FilterBar(옵션·값·라벨 1:1).
+  `isFilterDropdownOpen` useState·`Filter` 아이콘 미사용 제거. **모바일 Sheet(L2042)·`?filter`/서버 persist(L188-212)·
+  statusFilter 우선순위 무접촉**. activeFilterCount 파생·초기화(위치/상태/카테고리 리셋) 유지.
+- **F9**: 297f(진화)·filter-empty-state-361·preferences-inventory-locationcategory·global-filters-p1 6/6·action-menu-297d·
+  traffic-light-283c = **26 GREEN**. **F10 EXIT 0**. `filter-empty-state-361`은 값 계약(setLocationFilter("all") 등)이라 무접촉 확인.
 
 #### P3-b reports — ✅ 코드 완료(런타임 검증 대기)
 - **결정 교체**(호영님 07-11 §reports-filter-redesign 팝오버 접기 → 07-23 §global-filters 인라인, 승인).
@@ -243,7 +243,7 @@
 - **F9**: reports-filter-redesign(진화)·global-filters-p1 6/6·mobile-reports-p1(진화)·purchase.contract 19·dashboard-surface-unify = **37 GREEN**. **F10 EXIT 0**.
 
 - **✋ Gate:** [x] reports F9/F10 · [ ] **sandbox 런타임 스모크**(reports 데스크 인라인 바·실동작·모바일 무회귀) — P4 진행 전 필수 ·
-  [ ] inventory(a) 297f 진화 승인
+  [x] inventory(a) 297f 진화 승인·이식 완료
 - **Rollback:** 화면별 커밋 revert(reports b2 `e88c5345` 단독 / 진화 b1·b1b 별도)
 
 ### Phase 4: 발주·견적 + 잔여 화면 이식
