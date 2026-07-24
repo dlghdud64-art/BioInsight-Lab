@@ -1,6 +1,6 @@
 # Implementation Plan: 소싱 견적 담기 인터랙션 · AI 비교 분석 리포트 (§sourcing-quote-ux)
 
-- **Status:** ⏳ Pending (P0~P5)
+- **Status:** 🚧 P0 ✅ Complete (2026-07-25) — P1~P5 Pending(상신 3건 판정 선행)
 - **Started:** 2026-07-24
 - **Last Updated:** 2026-07-24
 - **Estimated Completion:** TBD
@@ -127,17 +127,55 @@
 
 ## 7. Implementation Phases
 
-### Phase 0: Context & Truth Lock
-- Status: [ ] Pending
-- **🔴 RED:** §0 추정 5건 전부 실측 — ① 소싱 실제 라우트(drift 정정) ② 담기/비교 현 구현(버튼·레일·
-  배지·대형 안내 박스 위치·현 토스트) ③ 담기 서버 반영 경로(optimistic 여부 — front-only 실재 시
-  결함 등록) ④ AI 리포트 현존 surface(ai-insight-dialog 확장 vs 신설 판별 — 신설이면 surface 상신)
-  ⑤ 회신 도착 자동 갱신 가용 경로(기존 invalidate/폴링)
-- **🟢 GREEN:** 프로토타입 2종 스펙 잠금(토큰·시퀀스 ms·베지어 — 핸드오프 §4 표와 대조) ·
-  프리필 딥링크 대상 플로우·파라미터 계약 확정 · 접촉 sentinel 경계 실측
-- **🔵 REFACTOR:** 스코프 확정(AI 로직 무접촉·플로우 무변경 재확인)
-- **✋ Gate:** 추정 5건 전부 실측 전환 · 수정 지점 파일·라인 명기 · 충돌/결함 발견 시 상신
-- **Rollback:** planning-only
+### Phase 0: Context & Truth Lock — ✅ Complete (2026-07-25)
+- Status: [x] Complete — operator + 서브에이전트 실측(코드 변경 0). 추정 5건 전부 실측 전환.
+
+#### ① 소싱 실제 라우트 — **drift 아님(정정)**
+- `/app/search`(`src/app/app/search/page.tsx`) = **인증 소싱 라우트** — `_workbench/search/page` 를 렌더(L7 import) + pending-action 처리.
+  핸드오프 `/app/search` **정확**. 구현 컴포넌트 = **`src/app/_workbench/search/page.tsx`(3241줄)**.
+- `/search`(276줄) = 비로그인 마케팅 랜딩(§search-logged-in-redirect 호영님 2026-07-09, 로그인 시 redirect). 소싱 아님.
+
+#### ② 담기/비교 현 구현 (파일:라인)
+- **견적 담기 버튼**: `sourcing-result-row.tsx:353`(데스크)·`:416`(모바일). 자체 toast 0 → 부모 `onToggleRequest`(`search/page.tsx:1185-1199`)가 toast 권한.
+- **비교 추가 버튼**: `sourcing-result-row.tsx:331`·`:402`. toast는 **행이 직접**(`toast.success("비교 후보에 추가되었습니다.")`).
+- **견적함 레일**: `QuoteCartPanel`(`page.tsx:1231`, `hidden lg:flex w-[360px]`) + 모바일 dock(`page.tsx:2359`). 탭 배지 `quote-cart-panel.tsx:145`(견적함 count)·`:146`(비교함).
+- **하단 Sticky Action Dock**: `page.tsx:1494-`(게이트 `showSourcingActionDock`), 비교/견적 카운트 배지.
+- **⚠️ "상단 중앙 대형 안내 박스"(제거 대상 추정) — 실측 불일치**: 실제로는 대형 박스 없음. `page.tsx:1116-1133`는
+  `sourcing-top-banner`(1줄 compact 배너, `text-[10px]`, 동적 `pickTopBanner`). §11.292 대형 Result Triage는 **이미 제거됨**(주석 `:1135`).
+  큰 박스는 empty state(`py-16`, "2글자 이상"·"검색 결과 없음")뿐. ⇒ **제거 대상 재정의 필요**(호영님 프로토타입 스펙 대조).
+- **담기 토스트**: `page.tsx:1197` `resolveAddToQuoteToast` → 문구 `resolve-add-to-quote-toast.ts:33-40`(added/vendorPending/merged). sonner.
+
+#### ③ 담기 서버 반영 — **front-only optimistic·rollback 부재 확정 (결함 등록 → P4 승격 판정 대기)**
+- 일반 견적 담기: `addProductToQuote`(`test-flow-provider.tsx:385`) → `computeAddToQuote`(`add-product-to-quote.ts` **순수함수·fetch 0**) → `setQuoteItems`(로컬) + `localStorage`만. **서버 POST 없음.**
+- 비교 추가: `toggleCompare` → zustand `compare-store`. `syncToSupabase`(`:179-200`) **존재하나 toggleCompare 경로 미호출 = dead sync**.
+- **예외(유일한 서버 확정형)**: 공공조달 ref 승격 `addRefToQuote`(`page.tsx:327`) = `csrfFetch("/api/catalog/promote", POST)` → 실패 시 `toast.error`+return(안 담음). (a) 서버 확정 후 반영.
+- **판정 뉘앙스**: `quote-cart-storage.ts:10` 주석 = "서버 영속은 견적 요청 생성 `POST /api/quotes` 단계부터 — 본 lib 스코프 밖" → 담기=로컬은 **설계 의도**일 수 있음(서버 확정=견적 요청 생성 단계). ⇒ **결함 vs 의도 설계 = 호영님 판정 필요**. 판정에 따라 P4 버그픽스 승격 or 현행 유지.
+
+#### ④ AI 비교 리포트 surface — **결정 교체 상신 필요 (별도 AI 패널 = 호영님 기제거)**
+- `ai-insight-dialog.tsx`(224줄) = **대시보드 "운영 리포트" 모달**(§11.368, AI 라벨 제거·결정형). 데이터·목적이 소싱 비교와 상이 → 직접 확장 부적합.
+- **⚠️ 소싱 AI 분석 시트는 호영님이 이미 제거**: `sourcing-mobile-ai-analysis-sheet-265b2`·`-trigger-265c`가 **§1-3/§4(호영님) 결정으로 SUPERSEDE** —
+  "별도 AI 버튼/패널 금지, ontology=inline 신호(상단 배너 + 행 chip)". `aiAnalysisSheetOpen`·`sourcing-ai-analysis-sheet`·`-trigger` **부재-lock**.
+- ⇒ §sourcing-quote-ux "AI 비교 분석 리포트"(별도 surface)는 **§1-3/§4 '별도 AI 패널 금지'와 결정 교체 충돌**. same-canvas 시트여도 기제거 패널 재도입 성격
+  → **호영님 명시 승인 게이트**(reports-redesign·297f 동류). 미승인 시 별도 AI 리포트 surface 신설 금지. 대안: inline 신호 확장(§1-3/§4 정합).
+
+#### ⑤ 회신 도착 자동 갱신 — **없음(invalidate/refetch/polling 전부 부재)**
+- 소싱 견적함(`quoteItems`) = 로컬 useState → 서버 queryKey 없음 → vendor 회신 자동 갱신 대상 아님.
+- `invalidateQueries`는 `quote-panel.tsx:1862,1967`·`request-wizard-modal.tsx:272`(견적 요청 생성/버전 단계)뿐 — 소싱 담기와 무관. `refetchInterval`·`setInterval` 히트 0(폴링 없음).
+- ⇒ 자동 갱신 원하면 **신설 필요**(폴링 신설 금지 원칙상 = 견적 요청 생성 후 quote 스테이지의 기존 invalidate 체인에 편승하는 방향 상신).
+
+#### 프리필 딥링크 — **store 핸드오프(URL param 계약 없음)**
+- 견적 요청서(`_workbench/quote/request/page.tsx`)는 `useTestFlow()`(quoteItems·products·compareIds) + `useCompareStore()`로 항목 수신 —
+  **URL param/딥링크 계약 없음**. ⇒ 프리필은 **기존 store 핸드오프 재사용**(URL param 신설 금지).
+
+#### 접촉 sentinel 경계 — **65개**
+- 소싱: sourcing-* 다수(bar/toolbar/filter/mobile/ai-analysis 등) · 담기: `resolve-add-to-quote-toast`·`quote-cart-panel-339v2`·`quote-cart-v2-stage2` ·
+  비교: `use-compare`·`product-detail-quote-tray` · AI: `ai-insight-dialog-nullsafe`·`ai-policy-tone-down-368`·`ai-stage-gate-wiring` · 워크벤치: `workbench-search-radix-298f`.
+- P1~P5 이식 시 화면별 접촉 sentinel 재실측 → 충돌 시 진화 판정 상신(임의 진화 금지).
+
+- **✋ Gate:** [x] 추정 5건 전부 실측 전환 · [x] 수정 지점 파일·라인 명기 · [x] 결함(③ front-only)·충돌(④ 결정 교체) 등록 · [x] sentinel 경계 계수(65)
+- **⚠️ 상신 3건(P1 착수 전 호영님 판정):** ③ 담기 front-only = 결함 vs 의도설계 판정(P4 승격 여부) · ④ 별도 AI 리포트 surface = 결정 교체 승인 여부 ·
+  ② "제거 대상 대형 박스" = 실측상 부재 → 프로토타입 스펙으로 재정의.
+- **Rollback:** planning-only (코드 변경 0)
 
 ### Phase 1: Contract & RED
 - Status: [ ] Pending
