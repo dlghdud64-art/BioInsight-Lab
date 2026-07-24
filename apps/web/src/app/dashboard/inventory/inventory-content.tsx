@@ -24,6 +24,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 // Dialog kept static — radix portal needed for SSR hydration
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+// §global-filters P3-a2 — 데스크톱 필터 인라인 바(공용). 모바일 Sheet·persist 무접촉(297f 진화).
+import { FilterBar, type FilterDef } from "@/components/ui/filter-bar";
 import { Badge } from "@/components/ui/badge";
 import { isReorderNeeded, isReorderNeededByLeadTime } from "@/lib/inventory/reorder-need";
 import { Switch } from "@/components/ui/switch";
@@ -33,7 +35,7 @@ import { ActionMenu } from "@/components/inventory/action-menu";
 // §11.196f — dead lucide imports 9 symbol 제거 (ArrowLeftRight Clock
 //   FlaskConical GitBranch LayoutDashboard List RotateCcw ShoppingCart X
 //   actual JSX/prop 사용 0). 나머지 보존.
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ArrowRight, Zap, Check, Upload, Download, Filter, Search, LayoutGrid, ListFilter, FileDown, QrCode, PackagePlus, MoreVertical, Eye, Printer, Truck, XCircle, ChevronRight, ScanLine, X } from "lucide-react";
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ArrowRight, Zap, Check, Upload, Download, Search, LayoutGrid, ListFilter, FileDown, QrCode, PackagePlus, MoreVertical, Eye, Printer, Truck, XCircle, ChevronRight, ScanLine, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -155,7 +157,6 @@ function InventoryPageContent() {
   // §11.297d utility dropdown plain state (mutually exclusive).
   const [openInvContentMenuId, setOpenInvContentMenuId] = useState<string | null>(null);
   // §11.297f filter dropdown plain state.
-  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isImportStagingOpen, setIsImportStagingOpen] = useState(false);
   const [isSmartReceiveOpen, setIsSmartReceiveOpen] = useState(false);
@@ -1074,6 +1075,35 @@ function InventoryPageContent() {
   // 고유 위치 목록 추출
   const uniqueLocations = Array.from(new Set(displayInventories.map((inv) => inv.location).filter(Boolean))) as string[];
 
+  // §global-filters P3-a2 (§11.297f 진화) — 데스크톱 인라인 필터 바 정의(위치/상태, 옵션·값 = 기존
+  //   드롭다운 패널 내장 Select 와 1:1). 단일선택·데스크톱 인라인 → mode "dropdown". 필터 상태는 화면 소유.
+  const inventoryDesktopFilters: FilterDef[] = [
+    {
+      key: "location",
+      label: "위치",
+      mode: "dropdown",
+      options: [
+        { value: "all", label: "전체 위치" },
+        { value: "none", label: "위치 미지정" },
+        ...uniqueLocations.map((loc) => ({ value: loc, label: loc })),
+      ],
+    },
+    {
+      key: "status",
+      label: "상태",
+      mode: "dropdown",
+      options: [
+        { value: "all", label: "전체 상태" },
+        { value: "low", label: "부족 / 재주문" },
+        { value: "expiring", label: "만료 임박" },
+        { value: "incoming", label: "입고 대기" },
+        { value: "lot_issue", label: "LOT 이슈" },
+        { value: "recent", label: "최근 변경" },
+        { value: "normal", label: "정상" },
+      ],
+    },
+  ];
+
   // 상단 KPI 카드용 요약 지표 (리드 타임 기반 재주문 포함).
   // §11.302d-5 — totalInventoryCount 제거 (요약 칩 "전체 재고" §11.302c
   //   정합 제거 후 orphan cleanup).
@@ -1918,80 +1948,31 @@ function InventoryPageContent() {
                       <InventorySearch value={searchQuery} onChange={setSearchQuery} isLoading={isLoading} />
                     </div>
 
-                    {/* §11.297f 필터 dropdown — Radix DropdownMenu → plain
-                        (Select form 포함, ActionMenu 부적합). */}
-                    <div className="relative">
-                      <button
-                        type="button"
-                        aria-label="필터"
-                        aria-expanded={isFilterDropdownOpen}
-                        aria-haspopup="menu"
-                        onClick={() => setIsFilterDropdownOpen((v) => !v)}
-                        className="inline-flex items-center justify-center h-9 w-9 shrink-0 relative rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                    {/* §global-filters P3-a2 (§11.297f 진화, 호영님 승인) — 필터-드롭다운 패널 폐기
+                        → 공용 FilterBar 인라인(위치/상태, 라벨 병기·활성 강조). 모바일 Sheet(하단)·
+                        ?filter/서버 persist·statusFilter 우선순위 무접촉. 필터 값은 화면 소유(표시 계층만). */}
+                    <FilterBar
+                      filters={inventoryDesktopFilters}
+                      values={{ location: locationFilter, status: statusFilter }}
+                      onChange={(key, v) => {
+                        if (key === "location") setLocationFilter(v);
+                        else if (key === "status") setStatusFilter(v);
+                      }}
+                    />
+                    {activeFilterCount > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 shrink-0 text-xs"
+                        onClick={() => {
+                          setLocationFilter("all");
+                          setStatusFilter("all");
+                          setCategoryFilter("all");
+                        }}
                       >
-                        <Filter className="h-4 w-4 pointer-events-none" />
-                        {activeFilterCount > 0 && (
-                          <span className="absolute -top-1 -right-1 h-4 min-w-[16px] flex items-center justify-center rounded-full bg-blue-600 text-white text-[9px] font-bold px-1 pointer-events-none">
-                            {activeFilterCount}
-                          </span>
-                        )}
-                      </button>
-                      {isFilterDropdownOpen && (
-                        <>
-                          <div className="fixed inset-0 z-40" onClick={() => setIsFilterDropdownOpen(false)} aria-hidden="true" />
-                          <div role="menu" aria-label="필터 메뉴" className="absolute right-0 top-full mt-1 w-56 p-3 space-y-3 rounded-md border border-slate-200 bg-white shadow-lg z-50">
-                            <div className="space-y-1.5">
-                              <label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">위치</label>
-                              <Select value={locationFilter} onValueChange={setLocationFilter}>
-                                <SelectTrigger className="h-8 text-xs">
-                                  <SelectValue placeholder="전체 위치" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="all">전체 위치</SelectItem>
-                                  <SelectItem value="none">위치 미지정</SelectItem>
-                                  {uniqueLocations.map((loc) => (
-                                    <SelectItem key={loc} value={loc}>
-                                      {loc}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="space-y-1.5">
-                              <label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">상태</label>
-                              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                <SelectTrigger className="h-8 text-xs">
-                                  <SelectValue placeholder="전체 상태" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="all">전체 상태</SelectItem>
-                                  <SelectItem value="low">부족 / 재주문</SelectItem>
-                                  <SelectItem value="expiring">만료 임박</SelectItem>
-                                  <SelectItem value="incoming">입고 대기</SelectItem>
-                                  <SelectItem value="lot_issue">LOT 이슈</SelectItem>
-                                  <SelectItem value="recent">최근 변경</SelectItem>
-                                  <SelectItem value="normal">정상</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="flex gap-2 pt-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="flex-1 h-7 text-xs"
-                                onClick={() => {
-                                  setLocationFilter("all");
-                                  setStatusFilter("all");
-                                  setCategoryFilter("all");
-                                }}
-                              >
-                                초기화
-                              </Button>
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
+                        초기화
+                      </Button>
+                    )}
 
                     {/* 라벨 인쇄 */}
                     <Button variant="outline" size="sm" className="h-9 gap-1.5 shrink-0 text-xs" onClick={() => setNewLabelPrintOpen(true)} title="라벨 인쇄">
