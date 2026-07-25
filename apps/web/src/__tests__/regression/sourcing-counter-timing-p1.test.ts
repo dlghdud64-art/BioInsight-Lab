@@ -44,11 +44,16 @@ describe("§sourcing-counter-timing P1 계약 — 신규 behavior (구현 후 GR
     expect(src).toMatch(/\b520\b/); // 범프 글로우
   });
 
-  it("(4) 하단 다크 pill 토스트 — #0f172a · 2600 · 문구 정직", () => {
+  it("(4) 하단 다크 pill 토스트 — #0f172a · 2600 · 문구 정직 · **하단 고정 위치**(QA-6 결함 방지)", () => {
     const src = readSafe(PAGE);
     expect(src).toMatch(/견적 후보에 담았어요 · 가격은 견적 요청 후 확정/); // 신규 pill 문구
     expect(src).toMatch(/2600/); // pill duration
     expect(src).toMatch(/#0f172a/i); // 다크 pill 배경
+    // QA-6: 담기 성공 pill 은 상단 sonner(top-center) 미경유 → 전용 하단 고정 컨테이너. 위치 미검증이 결함 누락 원인.
+    // (pill 은 body-append DOM 이라 testid 는 setAttribute 값형 — JSX/DOM 양형 매칭.)
+    expect(src).toMatch(/["']sourcing-add-pill["']/); // 전용 하단 pill 컨테이너
+    expect(src).toMatch(/position:fixed[\s\S]{0,120}bottom:\s*\d+px/); // 하단 고정(검색창 미가림)
+    expect(src).toMatch(/showSourcingAddPill\("견적 후보에 담았어요/); // 성공 경로 = 하단 pill(상단 토스트 아님)
   });
 
   it("(6) fly target 이동 — data-fly-target 이 하단 바 세그먼트 <Badge> 에 부여", () => {
