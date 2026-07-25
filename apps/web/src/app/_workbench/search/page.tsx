@@ -75,8 +75,20 @@ import { ApprovalHandoffGate } from "../_components/approval-handoff-gate";
 import { ApprovalWorkbench } from "../_components/approval-workbench";
 import { PoCreatedWorkbenchV2 } from "../_components/po-created-workbench-v2";
 import { calculateRequestReadiness } from "../_components/request-readiness";
-import { validateCompareCategoryIntegrity } from "@/lib/ai/compare-review-engine";
-import type { RequestCandidateHandoff, CompareDecisionSnapshot } from "@/lib/ai/compare-review-engine";
+import {
+  validateCompareCategoryIntegrity,
+  // §sourcing-quote-ux P3 — AI 비교 리포트: 기존 순수 엔진 재사용(신규 AI 호출 0).
+  buildCompareDifferenceSummary,
+  classifyCandidatesForReview,
+  buildAiVerdictSummary,
+  buildStrategyDecisionOptions,
+  buildCompareDecisionSnapshot,
+  buildRequestCandidateHandoffFromCompare,
+  createInitialCompareReviewState,
+} from "@/lib/ai/compare-review-engine";
+import type { RequestCandidateHandoff, CompareDecisionSnapshot, CompareCandidateInfo, StrategyDecisionOption } from "@/lib/ai/compare-review-engine";
+// §sourcing-quote-ux P3 — 1a 관문 판정(가격 보유 후보 <2) + 납기 필드 파생 보정.
+import { assessAnalysisDataAvailability, parseLeadDays } from "@/lib/ai/compare-analysis-data-gate";
 // ── Reopen chain imports ──
 import { buildCompareReopenHandoff, type CompareReopenHandoff } from "@/lib/ai/sourcing-result-review-engine";
 import type { SourcingResultReviewObject } from "@/lib/ai/sourcing-result-review-engine";
@@ -91,7 +103,7 @@ import type { RequestSubmissionEvent, QuoteWorkqueueHandoff } from "@/lib/ai/req
 import { buildQuoteWorkqueueHandoff as buildQWHandoff } from "@/lib/ai/request-submission-engine";
 import type { QuoteNormalizationHandoff } from "@/lib/ai/quote-workqueue-engine";
 import { buildQuoteNormalizationHandoff as buildNormHandoff } from "@/lib/ai/quote-workqueue-engine";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useSession } from "next-auth/react";
@@ -286,6 +298,8 @@ export default function SearchPage() {
   const [isStrategyOverlayOpen, setIsStrategyOverlayOpen] = useState(false);
   const [comparisonModalOpen, setComparisonModalOpen] = useState(false);
   const [requestWizardOpen, setRequestWizardOpen] = useState(false);
+  // §sourcing-quote-ux P3 — AI 비교 리포트(sourcing-compare-report) same-canvas 오버레이 개폐.
+  const [compareReportOpen, setCompareReportOpen] = useState(false);
 
   // §11.312 — sticky bar 바텀시트 (호영님 P1 2026-05-26).
   // bar 의 "비교 N" / "견적 N" / "⚠ 검토 N" 영역 탭 시 sheet 열림.
@@ -459,6 +473,85 @@ export default function SearchPage() {
     };
   }, [compareReady, compareIds, products]);
   const showSourcingActionDock = hasSearched && !!session?.user && isSourcingOwner && (compareIds.length > 0 || quoteItems.length > 0);
+
+  // ── §sourcing-quote-ux P3 — AI 비교 리포트 데이터(순수 파생, 서버 AI 0) ──
+  // 소스: compareIds 후보 → Product/ProductVendor 스냅샷. 납기는 leadTimeDays 부재 시 leadTime(string) 파생 보정.
+  const compareReportData = useMemo(() => {
+    const candidates: CompareCandidateInfo[] = compareIds
+      .map((id: string) => {
+        const p = products.find((pp: any) => pp.id === id);
+        if (!p) return null;
+        const v = p.vendors?.[0];
+        return {
+          id: p.id,
+          name: p.name,
+          brand: p.brand || "",
+          category: p.category || "",
+          catalogNumber: p.catalogNumber || "",
+          spec: p.specification || p.packSize || "",
+          priceKRW: v?.priceInKRW || 0,
+          // 납기 필드 불일치 파생 보정: leadTimeDays 부재 시 leadTime 문자열 파싱("3일"→3).
+          leadTimeDays: v?.leadTimeDays || parseLeadDays(v?.leadTime) || 0,
+        } as CompareCandidateInfo;
+      })
+      .filter(Boolean) as CompareCandidateInfo[];
+
+    // 1a 관문: 가격 보유 후보 <2 → 가격·납기 분석 억제(스펙은 즉시).
+    const gate = assessAnalysisDataAvailability(
+      candidates.map((c) => ({
+        id: c.id,
+        name: c.name,
+        price: c.priceKRW,
+        leadTime: c.leadTimeDays ? String(c.leadTimeDays) : null,
+        brand: c.brand,
+        catalogNumber: c.catalogNumber,
+        specification: c.spec,
+      })),
+    );
+    const category = validateCompareCategoryIntegrity(candidates);
+    const difference = buildCompareDifferenceSummary(candidates);
+    const classified = classifyCandidatesForReview(candidates, category, difference);
+    const verdict = buildAiVerdictSummary(classified);
+    const { options, header } = buildStrategyDecisionOptions(candidates, classified, category, difference);
+    const recommendedOption =
+      options.find((o: StrategyDecisionOption) => o.frame === header.recommendedFrame) || options[1] || options[0] || null;
+    const recommendedIds = recommendedOption ? recommendedOption.recommended.map((r) => r.id) : [];
+    return { candidates, gate, category, difference, classified, verdict, options, header, recommendedOption, recommendedIds };
+  }, [compareIds, products]);
+
+  // §sourcing-quote-ux P3 CTA `추천안으로 견적 요청 ›` — 기존 store 핸드오프 재사용(URL param 신설 0, dead button 0).
+  const handleCompareReportRequest = useCallback(() => {
+    handleProtectedAction(() => {
+      const recIds = compareReportData.recommendedIds;
+      // 추천 품목 프리필: 기존 addProductToQuote(store 핸드오프) 재사용.
+      recIds.forEach((id) => {
+        const p = products.find((pp: any) => pp.id === id);
+        if (p && !quoteItems.some((q: any) => q.productId === id)) addProductToQuote(p);
+      });
+      // 기존 compare→request 핸드오프 경로 재사용(setRequestHandoff + request-assembly work window).
+      const reviewState = createInitialCompareReviewState(
+        compareIds,
+        compareReportData.category,
+        "ai_apply",
+        compareReportData.header.recommendedFrame,
+      );
+      const snapshot = buildCompareDecisionSnapshot(
+        reviewState,
+        compareReportData.difference,
+        {
+          shortlistIds: recIds,
+          excludedIds: [],
+          heldIds: compareIds.filter((id: string) => !recIds.includes(id)),
+          requestCandidateIds: recIds,
+          decisionReasonSummary: `추천안 ${recIds.length}개 반영`,
+        },
+        { aiDefaultOptionId: compareReportData.header.recommendedFrame },
+      );
+      setRequestHandoff(buildRequestCandidateHandoffFromCompare(snapshot));
+      setCompareReportOpen(false);
+      setWorkWindowMode("request-assembly");
+    });
+  }, [compareReportData, compareIds, products, quoteItems, addProductToQuote]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Ontology Contextual Action Layer — sourcing detail ──
   const sourcingDetailForBridge = useMemo(() => {
@@ -1573,10 +1666,23 @@ export default function SearchPage() {
               )}
               <div className="ml-auto flex items-center gap-2 shrink-0">
                 {compareReady && (
-                  <Button size="sm" className="h-8 px-3 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={() => handleProtectedAction(() => setComparisonModalOpen(true))}>
-                    <Sparkles className="h-3.5 w-3.5 mr-1" />
-                    비교 검토
-                  </Button>
+                  <>
+                    {/* §sourcing-quote-ux P3 — AI 비교 리포트 진입(same-canvas 오버레이). 비교 검토와 병존. */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      data-testid="sourcing-compare-report-open"
+                      aria-label="AI 비교 리포트 열기"
+                      className="h-8 px-3 text-xs border-blue-400/50 bg-blue-500/10 text-blue-200 hover:bg-blue-500/20 font-medium"
+                      onClick={() => handleProtectedAction(() => setCompareReportOpen(true))}
+                    >
+                      <Sparkles className="h-3.5 w-3.5 mr-1" />
+                      비교 리포트
+                    </Button>
+                    <Button size="sm" className="h-8 px-3 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={() => handleProtectedAction(() => setComparisonModalOpen(true))}>
+                      비교 검토
+                    </Button>
+                  </>
                 )}
                 {/* §11.312 — 🗑 휴지통 button 제거: sheet 내 "전체 삭제" 통합 */}
               </div>
@@ -1691,6 +1797,229 @@ export default function SearchPage() {
 
       {/* §11.312 — Sourcing Candidates Sheet (compare / quote / review 3 mode 통합) */}
       {/* §11.339 v2 5 — 하단 SourcingCandidatesSheet(견적/비교/검토 드로어) 제거. 우측 탭 카트로 일원화. */}
+
+      {/* ═══ §sourcing-quote-ux P3 — AI 비교 리포트(same-canvas 오버레이, 신규 라우트 0) ═══ */}
+      {compareReportOpen && (
+        <div
+          data-testid="sourcing-compare-report"
+          role="dialog"
+          aria-label="AI 비교 리포트"
+          className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-black/40"
+          onClick={() => setCompareReportOpen(false)}
+        >
+          <div
+            className="w-full sm:max-w-2xl max-h-[92vh] overflow-y-auto bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header + 신선도 */}
+            <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-5 py-3 flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-bold text-slate-900 flex items-center gap-1.5">
+                  <Sparkles className="h-4 w-4 text-blue-600" /> AI 비교 리포트
+                </h2>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  방금 분석 · 후보 {compareReportData.candidates.length}개 기준
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCompareReportOpen(false)}
+                aria-label="리포트 닫기"
+                className="h-8 w-8 inline-flex items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="px-5 py-4 space-y-4">
+              {/* 스펙 비교 — 관문/데이터 무관 항상 즉시 노출(전면 차단 0) */}
+              <section>
+                <h3 className="text-xs font-semibold text-slate-500 mb-2 flex items-center gap-1">
+                  <Package className="h-3.5 w-3.5" /> 스펙 비교
+                </h3>
+                <div className="space-y-1.5">
+                  {compareReportData.candidates.map((c) => {
+                    const isRec = compareReportData.recommendedIds[0] === c.id;
+                    return (
+                      <div key={c.id} className="flex items-center gap-2 text-sm">
+                        <span className={`shrink-0 w-4 text-center ${isRec ? "text-amber-500" : "text-transparent"}`}>★</span>
+                        <span className="font-medium text-slate-800 truncate max-w-[160px]">{c.name}</span>
+                        <span className="text-xs text-slate-400 truncate">
+                          {[c.brand, c.spec, c.category].filter(Boolean).join(" · ") || "규격 미확인"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+
+              {compareReportData.gate.hasComparablePrice ? (
+                /* ── 1b 데이터 상태: 추천 요약 + 비교 표 + 리스크 노트 ── */
+                <>
+                  {/* 추천 요약 카드 */}
+                  <section
+                    className="rounded-lg border p-3"
+                    style={{ borderColor: "#2563eb", backgroundColor: "#f5f9ff", borderWidth: "1.5px" }}
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span
+                        className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                        style={{ backgroundColor: "#dbeafe", color: "#2563eb" }}
+                      >
+                        추천 · {compareReportData.recommendedOption?.title ?? "균형"}
+                      </span>
+                    </div>
+                    <p className="text-sm font-medium text-slate-800">
+                      {compareReportData.verdict.priorityLine}
+                    </p>
+                    {/* 핵심 수치 3 */}
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-slate-600">
+                      <span>후보 {compareReportData.candidates.length}개</span>
+                      {compareReportData.difference.priceAdvantage && (
+                        <span>· {compareReportData.difference.priceAdvantage.label} ({compareReportData.difference.priceAdvantage.delta})</span>
+                      )}
+                      {compareReportData.difference.leadTimeAdvantage && (
+                        <span>· {compareReportData.difference.leadTimeAdvantage.label}</span>
+                      )}
+                    </div>
+                  </section>
+
+                  {/* 비교 표 — 우위 값만 #15803d 강조, 추천 열 ★ */}
+                  <section className="overflow-x-auto">
+                    <table className="w-full text-sm border-collapse">
+                      <thead>
+                        <tr className="border-b border-slate-100">
+                          <th className="text-left font-medium text-slate-400 text-xs py-1.5 pr-2 whitespace-nowrap">항목</th>
+                          {compareReportData.candidates.map((c) => {
+                            const isRec = compareReportData.recommendedIds[0] === c.id;
+                            return (
+                              <th key={c.id} className="text-right font-semibold text-slate-700 text-xs py-1.5 px-2 whitespace-nowrap max-w-[120px] truncate">
+                                {isRec && <span className="text-amber-500 mr-0.5">★</span>}
+                                {c.brand || c.name}
+                              </th>
+                            );
+                          })}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {/* 단가 */}
+                        <tr className="border-b border-slate-50">
+                          <td className="text-slate-500 text-xs py-1.5 pr-2">단가</td>
+                          {compareReportData.candidates.map((c) => {
+                            const win = compareReportData.difference.priceAdvantage?.advantageId === c.id;
+                            return (
+                              <td
+                                key={c.id}
+                                className="text-right tabular-nums py-1.5 px-2 whitespace-nowrap"
+                                style={win ? { color: "#15803d", fontWeight: 700 } : undefined}
+                              >
+                                {c.priceKRW > 0 ? `₩${c.priceKRW.toLocaleString("ko-KR")}` : <span className="text-slate-300">견적 필요</span>}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                        {/* 납기 */}
+                        <tr className="border-b border-slate-50">
+                          <td className="text-slate-500 text-xs py-1.5 pr-2">납기</td>
+                          {compareReportData.candidates.map((c) => {
+                            const win = compareReportData.difference.leadTimeAdvantage?.advantageId === c.id;
+                            return (
+                              <td
+                                key={c.id}
+                                className="text-right tabular-nums py-1.5 px-2 whitespace-nowrap"
+                                style={win ? { color: "#15803d", fontWeight: 700 } : undefined}
+                              >
+                                {c.leadTimeDays > 0 ? `${c.leadTimeDays}영업일` : <span className="text-slate-300">확인 필요</span>}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                        {/* 최소 주문 · 구매 이력 — 데이터 배선 전(정직 empty, 날조 금지) */}
+                        <tr className="border-b border-slate-50">
+                          <td className="text-slate-500 text-xs py-1.5 pr-2">최소 주문</td>
+                          {compareReportData.candidates.map((c) => (
+                            <td key={c.id} className="text-right py-1.5 px-2 text-slate-300">—</td>
+                          ))}
+                        </tr>
+                        <tr>
+                          <td className="text-slate-500 text-xs py-1.5 pr-2">구매 이력</td>
+                          {compareReportData.candidates.map((c) => (
+                            <td key={c.id} className="text-right py-1.5 px-2 text-slate-300">—</td>
+                          ))}
+                        </tr>
+                      </tbody>
+                    </table>
+                    <p className="text-[10px] text-slate-400 mt-1">최소 주문·구매 이력은 견적/발주 이력 연동 시 표시됩니다.</p>
+                  </section>
+
+                  {/* 리스크 노트 */}
+                  {(compareReportData.difference.missingInfoItems.length > 0 || compareReportData.recommendedOption?.keyRisk) && (
+                    <section
+                      className="rounded-lg border p-3 text-xs"
+                      style={{ backgroundColor: "#fefce8", borderColor: "#fde68a", color: "#854d0e" }}
+                    >
+                      <div className="flex items-center gap-1 font-semibold mb-1">
+                        <AlertTriangle className="h-3.5 w-3.5" /> 리스크 노트
+                      </div>
+                      <ul className="space-y-0.5 list-disc list-inside">
+                        {compareReportData.recommendedOption?.keyRisk && (
+                          <li>{compareReportData.recommendedOption.keyRisk}</li>
+                        )}
+                        {compareReportData.difference.missingInfoItems.slice(0, 3).map((m, i) => (
+                          <li key={i}>{m}</li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
+                </>
+              ) : (
+                /* ── 1a 관문: 가격 보유 후보 <2 → 가격·납기 행 잠금(스펙은 위에서 이미 노출) ── */
+                <>
+                  <section className="rounded-lg p-3 border border-slate-100" style={{ backgroundColor: "#fafbfd" }}>
+                    <div className="flex items-center gap-1.5 text-sm" style={{ color: "#94a3b8" }}>
+                      <span aria-hidden>🔒</span>
+                      <span>가격 · 납기 분석은 견적 확보 후 완성돼요</span>
+                    </div>
+                  </section>
+                  {/* 관문 스트립 — 사유 + CTA + 자동 갱신 약속 */}
+                  <section className="rounded-lg border border-blue-100 bg-blue-50/60 p-3">
+                    <p className="text-xs text-slate-600 mb-2">
+                      {compareReportData.gate.reason || "비교할 가격·납기 데이터가 부족합니다. 견적을 먼저 요청하세요."}
+                    </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleProtectedAction(() => { setCompareReportOpen(false); setRequestWizardOpen(true); })}
+                        className="inline-flex items-center gap-1 h-8 px-3 rounded-md text-xs font-semibold bg-blue-600 text-white hover:bg-blue-500"
+                      >
+                        <FileText className="h-3.5 w-3.5" /> 견적 요청 만들기 ›
+                      </button>
+                      <span className="text-[11px] text-slate-400">회신 도착 시 리포트가 자동 갱신돼요</span>
+                    </div>
+                  </section>
+                </>
+              )}
+
+              {/* 푸터 고지 — 참고용 */}
+              <p className="text-[11px] text-slate-400 border-t border-slate-100 pt-3">
+                AI 분석은 참고용이에요 · 조건을 확인한 뒤 요청을 진행하세요
+              </p>
+
+              {/* 추천안 CTA — 1b(데이터 상태)일 때만. 기존 store 핸드오프로 즉시 배선(dead button 0). */}
+              {compareReportData.gate.hasComparablePrice && compareReportData.recommendedIds.length > 0 && (
+                <button
+                  type="button"
+                  data-testid="sourcing-compare-report-request"
+                  onClick={handleCompareReportRequest}
+                  className="w-full inline-flex items-center justify-center gap-1 h-11 rounded-lg text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-500"
+                >
+                  <Check className="h-4 w-4" /> 추천안으로 견적 요청 ›
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ═══ E. Center Work Window — Compare Review (difference-first decision surface) ═══ */}
       <CompareReviewWorkWindow
