@@ -40,3 +40,81 @@ export function computeCompleteness(product: Record<string, unknown> | null | un
   const pct = Math.round((known / total) * 100);
   return { pct, known, total, missingLabels: missing.map((f) => f.label) };
 }
+
+// ─────────────────────────────────────────────────────────────
+// §product-detail-refinement 계약② (D6) — 체크리스트 역할별 액션 파생
+//   정본: PLAN_product-detail-sourcing-refinement.md §0-B 매트릭스(라벨 × 역할).
+//   계산 로직·분모·COMPLETENESS_FIELDS 무변경. missingLabels 옆에 액션만 파생.
+//   buyer = 권한 밖(위험도/사용용도/보관조건 등 편집)은 `정보 요청`/`SDS 요청`(→/support)으로 수렴 → dead button 0.
+//   ADMIN·SUPPLIER = 편집 액션(스펙 편집·안전 정보 편집·SDS 업로드). disabled 버튼 미사용.
+// ─────────────────────────────────────────────────────────────
+
+export type CompletenessRole = "buyer" | "ADMIN" | "SUPPLIER";
+
+export type CompletenessActionKind =
+  | "info_request" // /support 정보 요청
+  | "sds_request" // /support SDS 요청
+  | "sds_upload" // SdsDocumentsSection 업로드
+  | "spec_edit" // 스펙 편집 Dialog
+  | "safety_edit"; // 안전 정보 편집 Dialog
+
+export interface CompletenessAction {
+  /** 미등록 필드 라벨(무엇이 비었는지). */
+  label: string;
+  /** 노출 액션 종류. */
+  actionKind: CompletenessActionKind;
+  /** 이동 링크(정보/SDS 요청). 편집 액션은 Dialog handler 라 href 없음. */
+  href?: string;
+  /** 노출 액션 라벨(버튼 텍스트). */
+  actionLabel: string;
+  /** 이 편집 액션에 필요한 역할(정보 요청은 undefined = 전 역할). */
+  requiresRole?: CompletenessRole[];
+}
+
+const PRIVILEGED: CompletenessRole[] = ["ADMIN", "SUPPLIER"];
+
+/** §0-B 매트릭스 — 완성도 필드 key → 역할별 액션(buyer / ADMIN·SUPPLIER). */
+export const ACTION_BY_FIELD: Record<
+  string,
+  { buyer: CompletenessAction; privileged: CompletenessAction }
+> = {
+  specification: {
+    buyer: { label: "규격/용량", actionKind: "info_request", href: "/support", actionLabel: "정보 요청" },
+    privileged: { label: "규격/용량", actionKind: "spec_edit", actionLabel: "스펙 편집", requiresRole: PRIVILEGED },
+  },
+  regulatoryCompliance: {
+    buyer: { label: "규제 규격", actionKind: "info_request", href: "/support", actionLabel: "정보 요청" },
+    privileged: { label: "규제 규격", actionKind: "info_request", href: "/support", actionLabel: "정보 요청" },
+  },
+  usageDescription: {
+    buyer: { label: "사용 용도", actionKind: "info_request", href: "/support", actionLabel: "정보 요청" },
+    privileged: { label: "사용 용도", actionKind: "spec_edit", actionLabel: "스펙 편집", requiresRole: PRIVILEGED },
+  },
+  storageCondition: {
+    buyer: { label: "보관 조건", actionKind: "info_request", href: "/support", actionLabel: "정보 요청" },
+    privileged: { label: "보관 조건", actionKind: "safety_edit", actionLabel: "안전 정보 편집", requiresRole: PRIVILEGED },
+  },
+  msdsUrl: {
+    buyer: { label: "SDS/MSDS", actionKind: "sds_request", href: "/support", actionLabel: "SDS 요청" },
+    privileged: { label: "SDS/MSDS", actionKind: "sds_upload", actionLabel: "SDS 업로드", requiresRole: PRIVILEGED },
+  },
+};
+
+/** 미등록 필드 key + 역할 → 노출 액션(buyer 는 요청 수렴, privileged 는 편집). 매핑 없으면 정보 요청 폴백. */
+export function resolveCompletenessAction(fieldKey: string, role: CompletenessRole, label?: string): CompletenessAction {
+  const entry = ACTION_BY_FIELD[fieldKey];
+  if (!entry) {
+    return { label: label ?? fieldKey, actionKind: "info_request", href: "/support", actionLabel: "정보 요청" };
+  }
+  return role === "buyer" ? entry.buyer : entry.privileged;
+}
+
+/** missingLabels 옆 파생 — 미등록 필드마다 역할별 액션. UI 는 이 배열만 소비(하드코딩 금지). */
+export function resolveCompletenessActions(
+  product: Record<string, unknown> | null | undefined,
+  role: CompletenessRole,
+): CompletenessAction[] {
+  return COMPLETENESS_FIELDS.filter((f) => isEmpty(product?.[f.key])).map((f) =>
+    resolveCompletenessAction(f.key, role, f.label),
+  );
+}

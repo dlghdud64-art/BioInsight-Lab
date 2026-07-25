@@ -51,3 +51,29 @@ export function addToQuoteCart(product: any, vendorId?: string): ComputeAddToQuo
   }
   return result;
 }
+
+export interface RemoveFromQuoteCartResult {
+  ok: boolean;
+  removed: number;
+  nextItems: any[];
+}
+
+/**
+ * 견적함에서 단일 품목 해제 — read → filter(productId) → write → 이벤트 발행.
+ *   front-only 가짜 성공 방지: 실 mutation(localStorage) + 결과 반환형.
+ *   미존재 id 는 throw 없이 { ok: true, removed: 0 } 반환(안전).
+ *   quote-cart-changed 이벤트로 하단 트레이·레일 동기화(동일 truth 파생).
+ *   QUOTE_CART_STORAGE_KEY 스키마 무변경(키·아이템 shape 불변).
+ */
+export function removeFromQuoteCart(productId: string): RemoveFromQuoteCartResult {
+  const currentItems = readQuoteCart();
+  const nextItems = currentItems.filter((item: any) => item?.productId !== productId);
+  const removed = currentItems.length - nextItems.length;
+  if (removed > 0) {
+    writeQuoteCart(nextItems);
+  }
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("quote-cart-changed"));
+  }
+  return { ok: true, removed, nextItems };
+}
