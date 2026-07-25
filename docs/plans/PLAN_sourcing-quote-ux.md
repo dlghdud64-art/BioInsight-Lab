@@ -1,6 +1,6 @@
 # Implementation Plan: 소싱 견적 담기 인터랙션 · AI 비교 분석 리포트 (§sourcing-quote-ux)
 
-- **Status:** 🚧 P0·P1·P2·P3 ✅ Complete (2026-07-25 · 계약 P3 3 GREEN 전환·F10 EXIT 0) — P4~P5 Pending
+- **Status:** 🚧 P0·P1·P2·P3·P4 ✅ Complete (2026-07-25 · P4 0-a 실배선+문구 정직화, 0-b 보류) — P5(스모크·종결) Pending
 - **Started:** 2026-07-24
 - **Last Updated:** 2026-07-25
 - **Estimated Completion:** TBD
@@ -277,12 +277,38 @@
 - **Rollback:** `2146d68b` revert(→ P3 3 RED 복귀)
 
 ### Phase 4: 배선 (§3 — 정직성)
-- Status: [ ] Pending
+- Status: [x] ✅ Complete (2026-07-25 · 0-a 실배선 + 문구 정직화 · 보강 계약 18 GREEN · F10 EXIT 0)
 - 담기/해제 서버 확정 후 UI 확정(실패 롤백 경로 실증) · 카운트 단일 소스(하단 바=레일=리포트 동일 파생) ·
-  CTA → 견적 요청서 생성 딥링크(추천 품목·수량 프리필 — dead link 0) · 회신 도착 시 리포트 자동
-  갱신(P0 실측 경로 재사용)
-- **✋ Gate:** F9 P4 계약 GREEN(front-only 가드 포함) · 프리필 파라미터 실전달 · F10 EXIT 0
-- **Rollback:** P4 커밋 revert
+  CTA → 견적 요청서 생성 딥링크(추천 품목·수량 프리필 — dead link 0) · ~~회신 도착 시 리포트 자동 갱신~~(0-b 보류)
+
+#### P4 step 0 실측 2건(데이터 경로)
+- **0-a 구매 이력·최소 주문 = ✅ 배선 가능(소규모)**: `PurchaseRecord`(schema:1062, productId FK 없음·catalogNumber/itemName 매칭) +
+  기존 `GET /api/sourcing/recommend?productId=` 재사용(VendorOption: purchaseCount·lastPurchasedAt). `ProductVendor.minOrderQty`(schema:469) 필드 실재,
+  검색 API 미반환 → select 1줄 신설. 둘 다 스키마 실재·대규모 아님. caveat: PurchaseRecord scopeKey 정합·실데이터 유무 배포 후 DB 실측 별도 게이트.
+- **0-b 회신→후보 자동 갱신 = 🛑 연결 부재(상신·보류)**: 회신 가격·납기 = `QuoteVendorResponseItem`(schema:1834, QuoteListItem 서브그래프),
+  비교 후보 가격 = **seed-only** `ProductVendor`(admin/seed 유일 write). 두 그래프 잇는 write·invalidate **0건**(`["search-products"]` invalidate 전무).
+  → 자동 갱신 = 데이터 연결 신설 = 대규모 스코프 확대 → **호영님 상신·보류 승인(0-a만 진행)**.
+- **정직성 결함**: P3 관문 문구 "회신 도착 시 리포트가 자동 갱신돼요" = 뒷받침 배선 전무한 미구현 능동 약속(가짜 성공, §reports-honesty 위반) → 교정.
+
+#### P4 구현(커밋 분리)
+- **test `75a5f696`**(보강): P4-a 약한 마커(P2부터 기GREEN)로 false-done 위험 → 실배선/정직성 앵커 5건 추가
+  (P4-b 최소주문·P4-c 구매이력 recommend 재사용·hasData 정직 empty·P4-d 신선도 헤더·P4-e 자동갱신 가짜약속 부재·P4-f 카운트 단일소스).
+- **feat `984b80de`**:
+  · `search/route.ts` — vendors 매핑에 minOrderQty 전달(기존 include 필드, overfetch 0).
+  · `page.tsx` — metaById(minOrderQty) · reportPurchaseHistory 상태 + 오픈 시 recommend 재사용 조회(on-demand, 폴링 0) ·
+    표 최소주문/구매이력 실데이터(부재 정직 —) · 신선도 헤더(compare-report-freshness: 후보 N·구매이력 N건 반영·HH:MM) ·
+    문구 정직화("회신을 받으면 가격·납기를 채워 다시 비교할 수 있어요" — 자동 갱신 약속 제거).
+
+#### P4 검증
+| 게이트 | 결과 |
+| :--- | :--- |
+| F9 `sourcing-quote-ux-p1` | **보강 계약 포함 18 passed (18)**(P4-b~f 5건 추가 GREEN, 기존 13 유지) |
+| 접촉 sentinel | **41 GREEN**(delta 0) — 검색 route 응답 1필드 추가 무저촉 |
+| F10 build | **EXIT 0**(✓ Compiled successfully) |
+
+- **✋ Gate:** [x] F9 보강 계약 GREEN(front-only·정직성 포함) · [x] 프리필 실전달(P3 CTA 유지) · [x] F10 EXIT 0
+- **Rollback:** feat `984b80de` revert(→ P4-b~e RED) / 보강 `75a5f696` 별도
+- **보류(0-b, 별도 상세 계획·상신 대상):** 회신→후보 가격·납기 자동 갱신 데이터 연결 신설(회신↔Product 매핑 + ProductVendor write/invalidate).
 
 ### Phase 5: 스모크 · 종결
 - Status: [ ] Pending
@@ -310,8 +336,8 @@
 - P2/P3/P4 커밋 분리 revert · 마이그레이션 0 · 애니메이션은 reduced-motion 경로가 사실상 기능 폴백.
 
 ## 11. Progress Tracking
-- Overall: 67% · Current: P3 ✅ 완료(`2146d68b`) · Next: P4 배선(구매 이력·회신 자동 갱신 실배선)
-- [x] P0 · [x] P1 · [x] P2 · [x] P3 · [ ] P4 · [ ] P5
+- Overall: 83% · Current: P4 ✅ 완료(`984b80de`, 0-a 실배선+문구 정직화·0-b 보류) · Next: P5 스모크·종결
+- [x] P0 · [x] P1 · [x] P2 · [x] P3 · [x] P4 · [ ] P5
 
 ## 12. Notes & Learnings
 - [2026-07-24] 계획 생성(호영님 "생성"). 핸드오프+프로토타입 2종 입력. 추정 5건은 P0 실측 전환 전까지
