@@ -26,11 +26,13 @@ const PAGE = "src/app/_workbench/search/page.tsx";
 const ROW = "src/app/_workbench/_components/sourcing-result-row.tsx";
 
 describe("§sourcing-counter-timing P1 계약 — 신규 behavior (구현 후 GREEN)", () => {
-  it("(1) 헤더 카운터 부재-lock — 상태바 직접 보간 카운터 제거(카드 nested형은 보존)", () => {
+  it("(1) 헤더 카운터 부재-lock — 상태바 직접 보간 카운터 제거(카드 nested·다이얼로그 문구는 보존)", () => {
     const src = readSafe(PAGE);
-    // 상태바(1025/1028) `비교 후보 {compareIds.length}` / `견적 후보 {quoteItems.length}` 직접형 제거.
-    expect(src).not.toMatch(/비교 후보 \{compareIds\.length\}/);
-    expect(src).not.toMatch(/견적 후보 \{quoteItems\.length\}/);
+    // 상태바(1025/1028)는 `비교 후보 {compareIds.length}</span>` 형(직후 `<` span 닫힘).
+    //   self-trip 회피: 이전선택맥락 카드는 `비교 후보 <span…{…}건`, clear-all 다이얼로그는 `견적 후보 {…}건`(직후 `건`).
+    //   → 직후 `<` 앵커로 상태바 카운터만 정밀 pin(카드·다이얼로그 무저촉).
+    expect(src).not.toMatch(/비교 후보 \{compareIds\.length\}</);
+    expect(src).not.toMatch(/견적 후보 \{quoteItems\.length\}</);
   });
 
   it("(3) 담기 타이밍 신값 pin — 모프 380·fly 820·hold 120·범프 520 (§트레이스 게이트)", () => {
