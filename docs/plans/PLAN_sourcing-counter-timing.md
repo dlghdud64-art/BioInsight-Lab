@@ -62,13 +62,12 @@
 소싱 화면의 담김 개수 **표시**를 하단 바 단일 위치로 모으고(헤더의 죽은 카운터 삭제), 하단 바를 2줄→1줄
 세그먼트(견적함/비교함 배지=레일 전환)로 통합. 담기 시퀀스를 ~600ms→≈1.3s로 완화(모프 380·플라잉
 820 arc·hold 120·범프 520 글로우)하고, 상단 대형 토스트를 검색창 미가림 하단 다크 pill(2.6s)로 이관.
-과경고 `차단 N` 레드 배지를 `가격 미정 N` yellow로 완화.
+~~과경고 `차단 N` 레드 배지를 yellow로 완화~~ **← P0 실측 후 철회**(§12 Notes 2026-07-25: `차단 N`=하드 차단(공급사 없음=요청 불가) → red 유지·무접촉).
 
 **Success Criteria (핸드오프 §4 QA 7항 = 인수 기준):**
 - [ ] 헤더에 담긴 개수 카운터 부재(결과 맥락만: `검색 결과 N건` + 매칭 품질 + 정렬/필터/재고)
 - [ ] 하단 바 1줄, 견적함/비교함 세그먼트로 레일 전환(dead 세그먼트 0)
 - [ ] 카운트가 하단 바·레일에서 항상 일치(단일 소스 — 값은 §quote-ux 파생 승계)
-- [ ] `차단 N` 레드 → `가격 미정 N` yellow(#fefce8/#a16207)
 - [ ] 담기 총 시간 ≈1.3s, 플라잉 칩 arc 궤적이 목적지 배지에 정확 도착(getBoundingClientRect 실좌표)
 - [ ] 토스트 하단 다크 pill(#0f172a)·2.6s·자동 소멸·검색창 미가림
 - [ ] prefers-reduced-motion 폴백(이동·범프 생략, 모프·카운트 상태 변화만)
@@ -80,7 +79,7 @@
 
 **User-Facing Outcome:**
 검색 결과 헤더는 결과 맥락만, 담김 개수·조언·CTA는 하단 1줄 바에 집약. 담기 시 어디로 담겼는지 시선
-추적 가능(느린 arc + 배지 범프 글로우), 토스트가 검색창 안 가림. 무가 품목 경고가 레드→yellow로 완화.
+추적 가능(느린 arc + 배지 범프 글로우), 토스트가 검색창 안 가림. (`차단 N` red 배지는 하드 차단이라 유지 — P0 판정.)
 
 ## 4. Product Constraints
 
@@ -207,12 +206,20 @@
   결정 교체 sentinel은 별도 커밋이라 독립 revert 가능.
 
 ## 11. Progress Tracking
-- Overall: 0% · Current: P0 대기 · Next: P0 실측(차단 배지·세그먼트 배선·옛 sentinel pin)
-- [ ] P0 · [ ] P1 · [ ] P2 · [ ] P3 · [ ] P4
+- Overall: 30% · Current: P1 계약/RED(sentinel 진화) · Next: P2 헤더 정리+하단 바 1줄
+- [x] P0 · [x] P1 · [ ] P2 · [ ] P3 · [ ] P4
 
 ## 12. Notes & Learnings
 - [2026-07-25] 계획 생성(호영님 "생성 교체 승인"). §sourcing-quote-ux 직속 후속. 결정 교체 3건 승인:
   ① 담기 타이밍(모프450→380·fly550→820 arc·hold+120·범프450→520 글로우) ② 토스트(상단1800→하단 다크
   pill 2600·문구 변경) ③ P5 카운트 검증 3면(top 포함)→2면(badge=bottom)+top 부재-lock. 카운트 **값**·
   서버 상태·리포트 관문 무접촉(§quote-ux 종결분 보존).
-- 미확인(P0 전환): `차단 N` 레드 배지 실위치 · 세그먼트 레일 전환 배선 · 옛 sentinel 어서션 실위치.
+- [2026-07-25] P0 Truth Lock 실측:
+  · **QA-4 배지 완화 거부(정직성 역행)**: `summary.blocked`=`calculateRequestReadiness` hard_blocker 산출, 유일 hard_blocker=
+    **"공급사 없음 → 견적 요청 불가"**(request-readiness.ts:93-98). `차단 N` red=진짜 하드 차단 → red→yellow 완화 시 "요청 불가"를
+    주의로 약화=정직성 역행 → **호영님 판정 'a'(red 유지·무접촉)**. 무가=이미 muted(slate-400)·검토=이미 yellow. §3 SC 배지 완화 항목 삭제.
+  · **3면 카운터 매핑**: 상태바 1025/1028(data-fly-target·현 fly 도착점)=**삭제** · 이전선택맥락 카드 1506/1509("N건")=**유지**(별개 semantic) ·
+    하단 바 세그먼트 배지=**단일 소스 유지**. self-trip 회피: 상태바 `비교 후보 {compareIds.length}`(직접) vs 카드 `…{…}건`(nested+건) 구분.
+  · **fly target**: 상태바 삭제 → `data-fly-target` 하단 바 세그먼트 배지 이동. 첫 담김 조건부 렌더(showSourcingActionDock) 엣지 → P3에서 바 마운트 후 rAF fly 시작으로 해소.
+- [2026-07-25] P1 sentinel 진화: 신규 `sourcing-counter-timing-p1.test.ts` RED + 결정 교체(sourcing-quote-ux-p1 P2-e `/1800/`→`/2600/`·상단→하단 pill·옛 1800 부재-lock, 별도 커밋·승인 주석).
+- **잔여 정리(P2 대상)**: PLAN 내 배지 완화 관련 잔여 스텝(§7 RED "차단 배지 실측"·§8 P2 "레드→yellow"·§9 Risk "배지 레드→yellow 토큰 교체")은 P0 판정으로 무효 → P2 착수 시 정리.
