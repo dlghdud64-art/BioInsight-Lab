@@ -127,6 +127,45 @@ type SourcingCandidateTriageState = "shortlist" | "hold" | "exclude";
 
 const SOURCING_TRIAGE_STORAGE_KEY = "labaxis-sourcing-triage-state";
 
+// §sourcing-quote-ux P2 — 담기/비교 플라잉 칩(버튼 → 목적지 배지). 좌표 = getBoundingClientRect 실측
+//   (하드코딩 0). prefers-reduced-motion 시 생략(폴백). 견적 #2563eb / 비교 #6d28d9 동일 문법.
+//   완료 후 DOM 정리. 표시 계층 전용 — 담기 canonical(로컬 draft)은 별도 handler 소유.
+function flySourcingChip(sourceEl: Element | null, kind: "quote" | "compare") {
+  if (typeof window === "undefined" || !sourceEl) return;
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+  const targets = Array.from(document.querySelectorAll(`[data-fly-target="${kind}"]`));
+  const targetEl = targets.find((el) => {
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0;
+  });
+  if (!targetEl) return;
+  const from = sourceEl.getBoundingClientRect();
+  const to = targetEl.getBoundingClientRect();
+  const color = kind === "quote" ? "#2563eb" : "#6d28d9";
+  const shadow =
+    kind === "quote"
+      ? "0 4px 12px rgba(37,99,235,.35)"
+      : "0 4px 12px rgba(109,40,217,.35)";
+  const chip = document.createElement("div");
+  chip.setAttribute("data-testid", "sourcing-flying-chip");
+  chip.setAttribute("aria-hidden", "true");
+  chip.style.cssText =
+    `position:fixed;left:${from.left + from.width / 2}px;top:${from.top + from.height / 2}px;` +
+    `width:14px;height:14px;border-radius:9999px;background:${color};box-shadow:${shadow};` +
+    `transform:translate(-50%,-50%) scale(1);opacity:1;z-index:9999;pointer-events:none;` +
+    `transition:transform 550ms cubic-bezier(.22,.9,.36,1),opacity 550ms cubic-bezier(.22,.9,.36,1);`;
+  document.body.appendChild(chip);
+  const dx = to.left + to.width / 2 - (from.left + from.width / 2);
+  const dy = to.top + to.height / 2 - (from.top + from.height / 2);
+  requestAnimationFrame(() => {
+    chip.style.transform = `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.35)`;
+    chip.style.opacity = "0";
+  });
+  const done = () => chip.remove();
+  chip.addEventListener("transitionend", done, { once: true });
+  setTimeout(done, 700);
+}
+
 export default function SearchPage() {
   const {
     products,
@@ -848,10 +887,10 @@ export default function SearchPage() {
                   <span className="text-slate-300 hidden sm:inline">|</span>
                 )}
                 {compareIds.length > 0 && (
-                  <span className="text-blue-600 font-semibold text-sm hidden sm:inline">비교 후보 {compareIds.length}</span>
+                  <span data-fly-target="compare" className="text-blue-600 font-semibold text-sm hidden sm:inline">비교 후보 {compareIds.length}</span>
                 )}
                 {quoteItems.length > 0 && (
-                  <span className="text-emerald-600 font-semibold text-sm hidden sm:inline">견적 후보 {quoteItems.length}</span>
+                  <span data-fly-target="quote" className="text-emerald-600 font-semibold text-sm hidden sm:inline">견적 후보 {quoteItems.length}</span>
                 )}
                 <span className="text-slate-400 text-xs hidden md:inline">
                   {(() => {
@@ -1181,8 +1220,16 @@ export default function SearchPage() {
                       isInRequest={quoteItems.some((q: any) => q.productId === product.id)}
                       isSelected={railProduct?.id === product.id}
                       compareSessionCount={compareStatuses[product.id]?.activeCount}
-                      onToggleCompare={() => handleProtectedAction(() => toggleCompare(product.id, { name: product.name, brand: product.brand }))}
-                      onToggleRequest={() => handleProtectedAction(() => {
+                      onToggleCompare={(e?: any) => handleProtectedAction(() => {
+                        const wasIn = compareIds.includes(product.id);
+                        toggleCompare(product.id, { name: product.name, brand: product.brand });
+                        // §sourcing-quote-ux P2 — 추가 시에만 플라잉 칩(rAF 지연 = 목적지 배지 렌더 후, srcEl 캡처).
+                        if (!wasIn) {
+                          const srcEl = e?.currentTarget ?? null;
+                          requestAnimationFrame(() => flySourcingChip(srcEl, "compare"));
+                        }
+                      })}
+                      onToggleRequest={(e?: any) => handleProtectedAction(() => {
                         const existing = quoteItems.find((q: any) => q.productId === product.id);
                         if (existing) {
                           removeQuoteItem(existing.id);
@@ -1194,7 +1241,11 @@ export default function SearchPage() {
                           // success toast.
                           const r = addProductToQuote(product);
                           const t = resolveAddToQuoteToast(r);
-                          toast[t.intent](t.message);
+                          // §sourcing-quote-ux P2 — 소형 pill 토스트 1.8s(1800ms). 문구는 result-mode 원문 유지
+                          //   (서버 저장 암시 0 — 담기는 로컬 draft).
+                          toast[t.intent](t.message, { duration: 1800 });
+                          const srcEl = e?.currentTarget ?? null;
+                          requestAnimationFrame(() => flySourcingChip(srcEl, "quote"));
                         }
                       })}
                       onSelect={() => setActiveResultId(product.id)}

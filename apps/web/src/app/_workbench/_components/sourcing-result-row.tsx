@@ -18,8 +18,9 @@ interface SourcingResultRowProps {
   isInCompare: boolean;
   isInRequest: boolean;
   isSelected: boolean;
-  onToggleCompare: () => void;
-  onToggleRequest: () => void;
+  // §sourcing-quote-ux P2 — 클릭 event 전달(플라잉 칩 시작 좌표 = 버튼 getBoundingClientRect).
+  onToggleCompare: (e?: React.MouseEvent) => void;
+  onToggleRequest: (e?: React.MouseEvent) => void;
   onSelect: () => void;
   compareSessionCount?: number;
   /** preview mode — 시각 1단 낮추고 click intercept (실행 금지) */
@@ -327,20 +328,26 @@ export function SourcingResultRow({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.95 }}
               className="h-8 px-3 rounded-md text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 transition-colors inline-flex items-center"
-              onClick={() => { onToggleCompare(); toast.success("비교 후보에 추가되었습니다."); }}>
+              onClick={(e) => { onToggleCompare(e); toast.success("비교 후보에 추가되었습니다."); }}>
               <PenLine className="h-3.5 w-3.5 mr-1" />비교 추가
             </motion.button>
           )}
           {/* Secondary: 견적 */}
           {isInRequest ? (
+            // §sourcing-quote-ux P2 — 담김 모프: ✓ 견적 후보(#eff6ff bg·#1d4ed8 텍스트·#93c5fd 보더) 팝
+            //   450ms cubic-bezier(.34,1.56,.64,1). 토글 해제 시 원상.
             <motion.button
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.45, ease: [0.34, 1.56, 0.64, 1] }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.95 }}
-              className="h-8 px-3 rounded-md text-sm font-semibold inline-flex items-center gap-1 bg-indigo-50 text-indigo-600 border border-indigo-200 cursor-default"
+              style={{ backgroundColor: "#eff6ff", color: "#1d4ed8", borderColor: "#93c5fd" }}
+              className="h-8 px-3 rounded-md text-sm font-semibold inline-flex items-center gap-1 border cursor-default"
               // #P02-e2e-blocker fix: toast was unconditionally success;
               // now the wrapping onToggleRequest is the toast authority
               // (it sees the addProductToQuote result mode).
-              onClick={() => { onToggleRequest(); }}
+              onClick={(e) => { onToggleRequest(e); }}
             >
               <Check className="h-3.5 w-3.5" />견적 후보
             </motion.button>
@@ -349,7 +356,7 @@ export function SourcingResultRow({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.95 }}
               className="h-8 px-3 rounded-md text-sm font-medium text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 transition-colors inline-flex items-center"
-              onClick={() => { onToggleRequest(); }}>
+              onClick={(e) => { onToggleRequest(e); }}>
               <FileText className="h-3.5 w-3.5 mr-1" />견적 담기
             </motion.button>
           )}
@@ -398,7 +405,7 @@ export function SourcingResultRow({
           ) : (
             <motion.button data-testid="compare-add-cta" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}
               className="h-8 px-3 rounded-md text-sm font-medium text-slate-600 border border-slate-200 inline-flex items-center"
-              onClick={() => { onToggleCompare(); toast.success("비교 후보에 추가되었습니다."); }}>
+              onClick={(e) => { onToggleCompare(e); toast.success("비교 후보에 추가되었습니다."); }}>
               <PenLine className="h-3.5 w-3.5 mr-1" />비교 추가
             </motion.button>
           )}
@@ -406,13 +413,13 @@ export function SourcingResultRow({
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}
               className="h-8 px-3 rounded-md text-sm font-semibold inline-flex items-center gap-1 bg-indigo-50 text-indigo-600 border border-indigo-200"
               // #P02-e2e-blocker fix: toast moved to wrapping onToggleRequest.
-              onClick={() => { onToggleRequest(); }}>
+              onClick={(e) => { onToggleRequest(e); }}>
               <Check className="h-3.5 w-3.5" />견적 후보
             </motion.button>
           ) : (
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}
               className="h-8 px-3 rounded-md text-sm font-medium text-slate-500 border border-slate-200 inline-flex items-center"
-              onClick={() => { onToggleRequest(); }}>
+              onClick={(e) => { onToggleRequest(e); }}>
               <FileText className="h-3.5 w-3.5 mr-1" />견적 담기
             </motion.button>
           )}
