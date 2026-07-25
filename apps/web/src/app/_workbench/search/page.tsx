@@ -216,6 +216,35 @@ function flySourcingChip(sourceEl: Element | null, kind: "quote" | "compare") {
   window.setTimeout(() => { try { chip.remove(); } catch { /* noop */ } }, CT_FLY_MS + 300);
 }
 
+// §sourcing-counter-timing P4 (QA-6 결함) — 담기 성공 pill 하단 고정(검색창 미가림).
+//   원인: 전역 SonnerToaster position="top-center"(layout.tsx) 공유 → 담기 pill 상단 렌더로 검색창 가림.
+//   수정: 담기 성공만 sonner 미경유 → body-append 하단·중앙 fixed pill(2600ms 자동 소멸). 제거/오류는 상단 sonner 유지.
+function showSourcingAddPill(message: string) {
+  if (typeof window === "undefined") return;
+  const pill = document.createElement("div");
+  pill.setAttribute("data-testid", "sourcing-add-pill");
+  pill.setAttribute("role", "status");
+  pill.setAttribute("aria-live", "polite");
+  pill.textContent = message;
+  pill.style.cssText =
+    "position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(8px);" +
+    "background:#0f172a;color:#f8fafc;border:1px solid rgba(255,255,255,.12);" +
+    "padding:10px 16px;border-radius:9999px;font-size:13px;font-weight:600;line-height:1.2;" +
+    "box-shadow:0 8px 24px rgba(0,0,0,.35);z-index:100;pointer-events:none;opacity:0;max-width:90vw;text-align:center;" +
+    "transition:opacity 180ms ease,transform 180ms ease;";
+  document.body.appendChild(pill);
+  requestAnimationFrame(() => {
+    pill.style.opacity = "1";
+    pill.style.transform = "translateX(-50%) translateY(0)";
+  });
+  const remove = () => {
+    pill.style.opacity = "0";
+    pill.style.transform = "translateX(-50%) translateY(8px)";
+    window.setTimeout(() => { try { pill.remove(); } catch { /* 이미 정리됨 */ } }, 220);
+  };
+  window.setTimeout(remove, 2600);
+}
+
 export default function SearchPage() {
   const {
     products,
@@ -1407,16 +1436,13 @@ export default function SearchPage() {
                           // success toast.
                           const r = addProductToQuote(product);
                           const t = resolveAddToQuoteToast(r);
-                          // §sourcing-counter-timing P3 — 하단 다크 pill(#0f172a·2600ms·자동 소멸). 성공(추가/무가)은
-                          //   통일 pill 문구, 병합·오류는 resolver 원문 유지(정직 — 서버 저장 암시 0, 로컬 draft).
-                          const pillMsg =
-                            r.ok && r.mode !== "merged"
-                              ? "견적 후보에 담았어요 · 가격은 견적 요청 후 확정"
-                              : t.message;
-                          toast[t.intent](pillMsg, {
-                            duration: 2600,
-                            style: { background: "#0f172a", color: "#f8fafc", border: "1px solid rgba(255,255,255,.12)" },
-                          });
+                          // §sourcing-counter-timing P4(QA-6) — 담기 성공(추가/무가)만 하단 다크 pill(#0f172a·2600ms·검색창 미가림).
+                          //   병합·오류는 기존 상단 sonner 시스템 유지(분리). 문구 정직(서버 저장 암시 0, 로컬 draft).
+                          if (r.ok && r.mode !== "merged") {
+                            showSourcingAddPill("견적 후보에 담았어요 · 가격은 견적 요청 후 확정");
+                          } else {
+                            toast[t.intent](t.message);
+                          }
                           const srcEl = e?.currentTarget ?? null;
                           // §sourcing-counter-timing P2 — 하단 바 배지로 fly 도착점 이동 → 첫 담김 시 바 마운트 후 double rAF.
                           requestAnimationFrame(() => requestAnimationFrame(() => flySourcingChip(srcEl, "quote")));
