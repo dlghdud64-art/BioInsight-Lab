@@ -1,6 +1,6 @@
 # Implementation Plan: 소싱 견적 담기 인터랙션 · AI 비교 분석 리포트 (§sourcing-quote-ux)
 
-- **Status:** 🚧 P0·P1·P2 ✅ Complete (2026-07-25 · 계약 P2 5 GREEN 전환·F10 EXIT 0) — P3~P5 Pending
+- **Status:** 🚧 P0·P1·P2·P3 ✅ Complete (2026-07-25 · 계약 P3 3 GREEN 전환·F10 EXIT 0) — P4~P5 Pending
 - **Started:** 2026-07-24
 - **Last Updated:** 2026-07-25
 - **Estimated Completion:** TBD
@@ -243,12 +243,38 @@
   P5 sandbox 프로덕션 런타임에서 육안+DOM 최종 검증(정적 sentinel 한계, 증거 등급 구분).
 
 ### Phase 3: AI 비교 분석 리포트 (§2 — 1a+1b)
-- Status: [ ] Pending
+- Status: [x] ✅ Complete (2026-07-25 · 계약 P3 3 GREEN 전환 · F10 EXIT 0 · `2146d68b`)
 - 1a 관문: 스펙 비교 즉시 + 가격·납기 행 🔒(bg #fafbfd·#94a3b8) + 관문 스트립(사유+CTA+자동 갱신 약속)
 - 1b: 추천 요약 카드(#f5f9ff·보더 #2563eb)·비교 표(추천 ★·우위 #15803d)·리스크 노트(yellow)·
-  신선도 헤더·참고용 푸터 고지 · CTA `추천안으로 견적 요청 ›`(P4 에서 배선)
-- **✋ Gate:** F9 P3 계약 GREEN · 관문 전면 차단 0 · 기존 AI surface 회귀 0 · F10 EXIT 0
-- **Rollback:** P3 커밋 revert
+  신선도 헤더·참고용 푸터 고지 · CTA `추천안으로 견적 요청 ›`(**P3 즉시 배선** — dead button 0)
+
+#### P3 step 0 실측(데이터 소스)
+- **AI 신규 호출 불요** — 기존 순수 엔진(서버 Gemini 미사용) 재사용으로 1a/1b 전건 구성:
+  `compare-review-engine`(buildCompareDifferenceSummary·classifyCandidatesForReview·buildAiVerdictSummary·
+  buildStrategyDecisionOptions) + `compare-analysis-data-gate`(assessAnalysisDataAvailability = countPrice≥2 = **1a 관문 그대로**).
+- **same-canvas 비교면 기존재**: `compare-review-work-window`(testid `compare-decision-surface`, 다크 결정면).
+  신규 `sourcing-compare-report`는 별도 라이트 리포트 오버레이 = 옛 이름 재사용 0(④ 충족).
+- **데이터 갭 2건**: ①납기 = `vendors[].leadTime`(string)만 오고 `leadTimeDays` 필드 불일치 → **parseLeadDays 파생 보정**(데이터 존재, AI 불요).
+  ②구매 이력 = 비교 후보에 PurchaseRecord 미연결 → **순수 파생 불가, 데이터 배선 필요**(P4). 최소 주문(MOQ)도 부재.
+  → 상신 게이트(AI 신규 호출)는 해당 없음. 구매 이력·최소 주문은 **날조 금지**(§reports-honesty) → 정직 empty(—) + 배선 예정 각주.
+
+#### P3 구현(`2146d68b`, page.tsx 단독)
+- compareReportData useMemo(순수 파생·서버 호출 0): 납기 파생 보정 → gate·category·difference·classified·verdict·strategyOptions·recommendedIds.
+- 비교 바 진입 CTA(sourcing-compare-report-open) — 비교 검토와 병존(inline 신호 대체 아님).
+- 오버레이(sourcing-compare-report): 스펙 즉시 → 1a 관문(#fafbfd/#94a3b8 잠금 + 스트립 CTA `견적 요청 만들기 ›` + 자동 갱신 약속) /
+  1b(추천 카드 #2563eb·#f5f9ff·배지 #dbeafe/#2563eb · 표 우위 #15803d · 리스크 #fefce8/#fde68a/#854d0e · 참고용 푸터).
+- CTA `추천안으로 견적 요청 ›`(sourcing-compare-report-request) = 즉시 배선: addProductToQuote 프리필 +
+  buildRequestCandidateHandoffFromCompare → setRequestHandoff + request-assembly(기존 핸드오프 재사용, URL param 0).
+
+#### P3 검증
+| 게이트 | 결과 |
+| :--- | :--- |
+| F9 `sourcing-quote-ux-p1` | **P3 3 GREEN 전환** → `13 passed (13)`(P4-a 약한 마커 P2부터 GREEN·가드 4 포함 전건) |
+| 265b2·265c·접촉 sentinel | **41 GREEN**(delta 0) — 새 testid 라 옛 이름 부재-lock 무저촉 |
+| F10 build | **EXIT 0**(useCallback import 보정 후 ✓ Compiled successfully) |
+
+- **✋ Gate:** [x] F9 P3 계약 3 GREEN · [x] 관문 전면 차단 0(스펙 항상 노출) · [x] 기존 AI surface 회귀 0 · [x] F10 EXIT 0
+- **Rollback:** `2146d68b` revert(→ P3 3 RED 복귀)
 
 ### Phase 4: 배선 (§3 — 정직성)
 - Status: [ ] Pending
@@ -284,8 +310,8 @@
 - P2/P3/P4 커밋 분리 revert · 마이그레이션 0 · 애니메이션은 reduced-motion 경로가 사실상 기능 폴백.
 
 ## 11. Progress Tracking
-- Overall: 50% · Current: P2 ✅ 완료(`bda97c39`) · Next: P3 AI 비교 리포트 착수
-- [x] P0 · [x] P1 · [x] P2 · [ ] P3 · [ ] P4 · [ ] P5
+- Overall: 67% · Current: P3 ✅ 완료(`2146d68b`) · Next: P4 배선(구매 이력·회신 자동 갱신 실배선)
+- [x] P0 · [x] P1 · [x] P2 · [x] P3 · [ ] P4 · [ ] P5
 
 ## 12. Notes & Learnings
 - [2026-07-24] 계획 생성(호영님 "생성"). 핸드오프+프로토타입 2종 입력. 추정 5건은 P0 실측 전환 전까지
