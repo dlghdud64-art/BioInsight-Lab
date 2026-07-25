@@ -5,6 +5,11 @@
  * §1-3/§4(현재 호영님): 별도 "AI 분석" 버튼/패널 폐기 → 신호는 상단 배너 + 행 chip inline.
  *   → AI 분석 트리거·시트 assertion 은 SUPERSEDE. 레이아웃(필터/정렬/결과수/재고/햄버거)은 PRESERVE.
  *   → 정렬 라벨 §1-2⑦ "AI 추천순"→"추천순".
+ *
+ * 🔄 결정 교체(§sourcing-quote-ux P1, 호영님 승인 2026-07-25): "별도 AI 분석" 폐기 결정이 07-24
+ *   핸드오프 1a/1b AI 비교 리포트로 대체. 단 **옛 트리거/시트 impl(sourcing-ai-analysis-trigger·
+ *   -sheet·setAiAnalysisSheetOpen)은 계속 부재-lock**(옛 이름 재도입 금지) — 신규 리포트는 별도 testid.
+ *   레이아웃 invariant(필터/정렬/결과수/재고/햄버거)·정렬 라벨은 PRESERVE 그대로.
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";

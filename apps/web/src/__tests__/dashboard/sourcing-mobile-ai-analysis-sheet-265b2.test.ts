@@ -8,7 +8,14 @@
  *   - §1-3/§4(현재 호영님): "별도 AI 버튼/패널 금지, ontology=inline 신호". → AI 분석
  *     시트·트리거 전면 제거, 신호는 상단 우선 배너 1개 + 행 inline chip 으로 전환.
  *
- * 따라서 본 가드는 "시트가 제거되고 inline 신호로 대체됐는지"를 검증한다(supersede).
+ * 🔄 결정 교체(§sourcing-quote-ux P1, 호영님 승인 2026-07-25): §1-3/§4 "별도 AI 패널 금지"의
+ *   **canonical 의도가 07-24 핸드오프 1a/1b AI 비교 리포트로 대체**됨. 조건 3 —
+ *     ① 리포트 = same-canvas 시트/오버레이(새 라우트 0) · ② **inline 신호(상단 배너·행 chip) 보존** ·
+ *     ③ 신규 리포트는 **별도 testid**(옛 `sourcing-ai-analysis-*` 이름 재사용 0).
+ *   따라서 본 가드는 그대로 유지된다: **옛 triage 시트 impl(aiAnalysisSheetOpen·sourcing-ai-analysis-*)은
+ *   계속 부재-lock**(재도입 금지), inline 신호는 보존 검증. 신규 리포트 surface 계약은 별도
+ *   `sourcing-quote-ux-p1.test.ts` 가 소유(이름 충돌 0).
+ *
  * 보존 invariant(햄버거 등)는 회귀 0 으로 유지.
  */
 import { describe, it, expect } from "vitest";
