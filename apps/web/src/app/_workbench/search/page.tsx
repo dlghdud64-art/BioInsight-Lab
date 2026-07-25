@@ -1017,15 +1017,11 @@ export default function SearchPage() {
                 {activeFilterCount > 0 && (
                   <span className="text-slate-400 text-xs">필터 {activeFilterCount}개</span>
                 )}
-                {/* 비교/견적 후보 + 다음 행동 */}
+                {/* §sourcing-counter-timing P2 — 헤더 담김 카운터 삭제(결과 맥락만). 담김 개수·fly 도착점은
+                    하단 바 세그먼트 배지(data-fly-target)로 단일화. 다음 행동 조언 1줄은 유지(하단 바 이관은 §11.252f
+                    1줄 재구성과 함께 별도 승인 대기). */}
                 {(compareIds.length > 0 || quoteItems.length > 0) && (
                   <span className="text-slate-300 hidden sm:inline">|</span>
-                )}
-                {compareIds.length > 0 && (
-                  <span data-fly-target="compare" className="text-blue-600 font-semibold text-sm hidden sm:inline">비교 후보 {compareIds.length}</span>
-                )}
-                {quoteItems.length > 0 && (
-                  <span data-fly-target="quote" className="text-emerald-600 font-semibold text-sm hidden sm:inline">견적 후보 {quoteItems.length}</span>
                 )}
                 <span className="text-slate-400 text-xs hidden md:inline">
                   {(() => {
@@ -1358,10 +1354,12 @@ export default function SearchPage() {
                       onToggleCompare={(e?: any) => handleProtectedAction(() => {
                         const wasIn = compareIds.includes(product.id);
                         toggleCompare(product.id, { name: product.name, brand: product.brand });
-                        // §sourcing-quote-ux P2 — 추가 시에만 플라잉 칩(rAF 지연 = 목적지 배지 렌더 후, srcEl 캡처).
+                        // §sourcing-quote-ux P2 — 추가 시에만 플라잉 칩(srcEl 캡처).
+                        // §sourcing-counter-timing P2 — fly 도착점이 하단 바 세그먼트 배지(조건부 렌더)로 이동 →
+                        //   첫 담김 시 바 마운트 후에 fly 시작하도록 double rAF(setState 커밋+페인트 후). 첫 담김 미표시 회귀 0.
                         if (!wasIn) {
                           const srcEl = e?.currentTarget ?? null;
-                          requestAnimationFrame(() => flySourcingChip(srcEl, "compare"));
+                          requestAnimationFrame(() => requestAnimationFrame(() => flySourcingChip(srcEl, "compare")));
                         }
                       })}
                       onToggleRequest={(e?: any) => handleProtectedAction(() => {
@@ -1380,7 +1378,8 @@ export default function SearchPage() {
                           //   (서버 저장 암시 0 — 담기는 로컬 draft).
                           toast[t.intent](t.message, { duration: 1800 });
                           const srcEl = e?.currentTarget ?? null;
-                          requestAnimationFrame(() => flySourcingChip(srcEl, "quote"));
+                          // §sourcing-counter-timing P2 — 하단 바 배지로 fly 도착점 이동 → 첫 담김 시 바 마운트 후 double rAF.
+                          requestAnimationFrame(() => requestAnimationFrame(() => flySourcingChip(srcEl, "quote")));
                         }
                       })}
                       onSelect={() => setActiveResultId(product.id)}
@@ -1692,7 +1691,7 @@ export default function SearchPage() {
               >
                 <PenLine className="h-4 w-4 text-blue-600 shrink-0" />
                 <span className="text-sm font-semibold text-slate-100 shrink-0">비교</span>
-                <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs bg-blue-600 text-white shrink-0">{compareIds.length}</Badge>
+                <Badge variant="secondary" data-fly-target="compare" className="h-5 min-w-5 px-1.5 text-xs bg-blue-600 text-white shrink-0">{compareIds.length}</Badge>
                 {/* §11.312 — 첫 항목명 미리보기 (모바일 truncate) */}
                 <span className="hidden sm:inline text-xs text-slate-300 truncate max-w-[140px]">
                   {(() => {
@@ -1744,7 +1743,7 @@ export default function SearchPage() {
               >
                 <FileText className="h-4 w-4 text-emerald-500 shrink-0" />
                 <span className="text-sm font-semibold text-slate-100 shrink-0">견적</span>
-                <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs bg-emerald-600 text-white shrink-0">{quoteItems.length}</Badge>
+                <Badge variant="secondary" data-fly-target="quote" className="h-5 min-w-5 px-1.5 text-xs bg-emerald-600 text-white shrink-0">{quoteItems.length}</Badge>
                 {/* §11.312 — 첫 항목명 미리보기 (모바일 truncate) */}
                 <span className="hidden sm:inline text-xs text-slate-300 truncate max-w-[140px]">
                   {(() => {
