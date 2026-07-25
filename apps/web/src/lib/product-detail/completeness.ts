@@ -98,23 +98,58 @@ export const ACTION_BY_FIELD: Record<
     buyer: { label: "SDS/MSDS", actionKind: "sds_request", href: "/support", actionLabel: "SDS 요청" },
     privileged: { label: "SDS/MSDS", actionKind: "sds_upload", actionLabel: "SDS 업로드", requiresRole: PRIVILEGED },
   },
+  // §product-detail-refinement D7 — 8필드 전수 매핑(누락 3필드 보강). privileged = 스펙 편집.
+  catalogNumber: {
+    buyer: { label: "카탈로그 번호", actionKind: "info_request", href: "/support", actionLabel: "정보 요청" },
+    privileged: { label: "카탈로그 번호", actionKind: "spec_edit", actionLabel: "스펙 편집", requiresRole: PRIVILEGED },
+  },
+  grade: {
+    buyer: { label: "등급", actionKind: "info_request", href: "/support", actionLabel: "정보 요청" },
+    privileged: { label: "등급", actionKind: "spec_edit", actionLabel: "스펙 편집", requiresRole: PRIVILEGED },
+  },
+  manufacturer: {
+    buyer: { label: "제조사", actionKind: "info_request", href: "/support", actionLabel: "정보 요청" },
+    privileged: { label: "제조사", actionKind: "spec_edit", actionLabel: "스펙 편집", requiresRole: PRIVILEGED },
+  },
 };
 
-/** 미등록 필드 key + 역할 → 노출 액션(buyer 는 요청 수렴, privileged 는 편집). 매핑 없으면 정보 요청 폴백. */
-export function resolveCompletenessAction(fieldKey: string, role: CompletenessRole, label?: string): CompletenessAction {
+/** 위험도 분류 행(D7) — 완성도 필드 아님(별도 소스, classified===false). 표시 전용. */
+const HAZARD_ACTION: { buyer: CompletenessAction; privileged: CompletenessAction } = {
+  buyer: { label: "위험도 분류", actionKind: "info_request", href: "/support", actionLabel: "정보 요청" },
+  privileged: { label: "위험도 분류", actionKind: "safety_edit", actionLabel: "안전 정보 편집", requiresRole: PRIVILEGED },
+};
+
+/**
+ * 미등록 필드 key + 역할 → 노출 액션(buyer 는 요청 수렴, privileged 는 편집).
+ *   D7: 매핑 누락은 조용히 삼키지 않는다 — privileged 폴백에 info_request 반환 금지. 미정의 필드는 loud throw.
+ *   ACTION_BY_FIELD 는 COMPLETENESS_FIELDS 8키 전수 매핑(폴백은 dead branch = 프로그래머 오류 방어).
+ */
+export function resolveCompletenessAction(fieldKey: string, role: CompletenessRole): CompletenessAction {
   const entry = ACTION_BY_FIELD[fieldKey];
   if (!entry) {
-    return { label: label ?? fieldKey, actionKind: "info_request", href: "/support", actionLabel: "정보 요청" };
+    throw new Error(
+      `[completeness] ACTION_BY_FIELD 매핑 누락: "${fieldKey}" — 조용한 info_request 폴백 금지(D7). 8필드 전수 매핑 필요.`,
+    );
   }
   return role === "buyer" ? entry.buyer : entry.privileged;
 }
 
-/** missingLabels 옆 파생 — 미등록 필드마다 역할별 액션. UI 는 이 배열만 소비(하드코딩 금지). */
+/**
+ * missingLabels 옆 파생 — 미등록 필드마다 역할별 액션 + (D7) 미분류 시 위험도 행.
+ *   UI 는 이 배열만 소비(하드코딩 금지). 항목 수는 데이터 파생(D8, `6` 하드코딩 금지).
+ *   위험도 행은 COMPLETENESS_FIELDS·분모 8 밖(표시 전용, classified===false 일 때만).
+ */
 export function resolveCompletenessActions(
   product: Record<string, unknown> | null | undefined,
   role: CompletenessRole,
+  opts?: { classified?: boolean },
 ): CompletenessAction[] {
-  return COMPLETENESS_FIELDS.filter((f) => isEmpty(product?.[f.key])).map((f) =>
-    resolveCompletenessAction(f.key, role, f.label),
+  const rows = COMPLETENESS_FIELDS.filter((f) => isEmpty(product?.[f.key])).map((f) =>
+    resolveCompletenessAction(f.key, role),
   );
+  // D7 — 미분류(classified === false)면 위험도 분류 행을 별도 소스로 추가(완성도 필드 아님).
+  if (opts?.classified === false) {
+    rows.push(role === "buyer" ? HAZARD_ACTION.buyer : HAZARD_ACTION.privileged);
+  }
+  return rows;
 }
