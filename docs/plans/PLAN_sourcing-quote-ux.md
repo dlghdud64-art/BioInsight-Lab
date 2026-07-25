@@ -1,6 +1,6 @@
 # Implementation Plan: 소싱 견적 담기 인터랙션 · AI 비교 분석 리포트 (§sourcing-quote-ux)
 
-- **Status:** 🚧 P0 ✅ Complete (2026-07-25) — P1~P5 Pending(상신 3건 판정 선행)
+- **Status:** 🚧 P0·P1 ✅ Complete (2026-07-25 · 판정 3건 반영·계약 9 RED) — P2~P5 Pending
 - **Started:** 2026-07-24
 - **Last Updated:** 2026-07-24
 - **Estimated Completion:** TBD
@@ -187,12 +187,30 @@
 - **백로그 등록(별건)**: 비교 `syncToSupabase` **dead sync**(compare-store에 존재하나 toggleCompare 경로 미호출) — §sourcing-quote-ux 스코프 밖, 별도 정리.
 - **Rollback:** planning-only (코드 변경 0)
 
-### Phase 1: Contract & RED
-- Status: [ ] Pending
-- 신규 `sourcing-quote-ux-p1.test.ts` — §6 계약(P2 인터랙션 · P3 리포트 · P4 배선 그룹) + 회귀 가드
-  (기존 담기/비교 서버 계약·레일 구조·접촉 sentinel 무저촉)
-- **✋ Gate:** RED 실증(그룹별 정확 계수) · 기존 전체 GREEN 유지
-- **Rollback:** 테스트 revert
+### Phase 1: Contract & RED — ✅ Complete (2026-07-25 · p1a `548fa5a0`·p1b `6fdbff67`)
+- Status: [x] Complete
+- 신규 `sourcing-quote-ux-p1.test.ts` — §6 계약(P2 인터랙션 · P3 리포트 · P4 배선) + 판정 조건 가드.
+
+#### P1 F9 실측 (operator 원문 실행)
+| 파일 | 결과 |
+| :--- | :--- |
+| `sourcing-quote-ux-p1` | **계약 9 RED**(P2 5 · P3 3 · P4 1) / **가드 4 GREEN** → `9 failed \| 4 passed (13)` |
+| `265b2`·`265c`(p1a 진화) | **14 GREEN** — 주석만 진화(어서션 불변), 옛 이름 부재-lock·inline·invariant 유지 |
+
+#### P1 커밋 분리 (지시문대로)
+- **p1a `548fa5a0`**(sentinel 진화, 결정 교체 주석): 265b2/265c 헤더에 §1-3/§4 "별도 AI 패널 금지" → §sourcing-quote-ux 1a/1b 리포트 대체 승인 명기.
+  옛 `aiAnalysisSheetOpen`·`sourcing-ai-analysis-*` **부재-lock 유지**(옛 이름 재도입 금지) · inline 신호·레이아웃 invariant PRESERVE. 신규 리포트는 별도 testid.
+- **p1b `6fdbff67`**(신규 RED 계약): P2(모프 색·플라잉 getBoundingClientRect·비교 #6d28d9·reduced-motion·pill 1800·서버저장암시 문구 0) ·
+  P3(sourcing-compare-report 시트·관문 #fafbfd 잠금·우위 #15803d·CTA "추천안으로 견적 요청"·새 라우트 0) · P4(store 핸드오프·URL param 신설 0).
+  가드: inline 신호(sourcing-top-banner)·옛 AI 이름 부재·resolveAddToQuoteToast 계약·카운트 단일 소스.
+
+#### P1 false-pass 방지(P0 실측 반영)
+- RED 앵커는 P0에서 **현재 부재(0) 실측된 마커만**: §sourcing-quote-ux·getBoundingClientRect·prefers-reduced-motion·sourcing-flying-chip·
+  sourcing-compare-report·색 토큰(#6d28d9/#93c5fd/#fafbfd/#15803d)·1800·"추천안으로 견적 요청". "견적 후 확정"(page.tsx 3건 기존재)은 앵커 미사용.
+- 가드 앵커는 존재 실측: sourcing-top-banner(1)·pickTopBanner(5)·resolveAddToQuoteToast(5)·quoteItems.length(29)·compareIds.length(30).
+
+- **✋ Gate:** [x] RED 그룹별 정확 계수(9 = 5+3+1) · [x] 가드 4 GREEN · [x] 265b2/265c 진화 GREEN 유지 · [x] F10 불요(테스트 파일 단독)
+- **Rollback:** 테스트 revert(p1b `6fdbff67` / 진화 p1a `548fa5a0` 별도)
 
 ### Phase 2: 담기/비교 마이크로 인터랙션 (§1)
 - Status: [ ] Pending
