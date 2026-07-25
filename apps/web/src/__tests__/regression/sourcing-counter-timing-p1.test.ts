@@ -58,6 +58,43 @@ describe("§sourcing-counter-timing P1 계약 — 신규 behavior (구현 후 GR
   });
 });
 
+describe("§sourcing-counter-timing step3 계약 — md+ 1줄 세그먼트(반응형, 호영님 승인 'b')", () => {
+  it("(s3-1) md+ 1줄 세그먼트 바(hidden md:flex) + 견적함/비교함 세그먼트 + 색(#2563eb 활성/#cbd5e1 비활성)", () => {
+    const src = readSafe(PAGE);
+    expect(src).toMatch(/hidden md:flex/);
+    expect(src).toMatch(/data-testid="sourcing-seg-compare"/);
+    expect(src).toMatch(/data-testid="sourcing-seg-quote"/);
+    expect(src).toMatch(/#2563eb/i);
+    expect(src).toMatch(/#cbd5e1/i);
+  });
+
+  it("(s3-2) 세그먼트 = 기존 focus key 레일 전환(신규 store 0)", () => {
+    const src = readSafe(PAGE);
+    expect(src).toMatch(/data-testid="sourcing-seg-compare"[\s\S]{0,220}setCompareFocusKey/);
+    expect(src).toMatch(/data-testid="sourcing-seg-quote"[\s\S]{0,220}setQuoteFocusKey/);
+  });
+
+  it("(s3-3) 우 주 CTA 견적 요청서 만들기 #16a34a", () => {
+    const src = readSafe(PAGE);
+    expect(src).toMatch(/#16a34a/i);
+    expect(src).toMatch(/견적 요청서 만들기/);
+  });
+
+  it("(s3-4) 모바일 2행 md:hidden 유지(§11.252f 보존)", () => {
+    const src = readSafe(PAGE);
+    expect(src).toMatch(/md:hidden/);
+  });
+
+  it("(s3-5) fly target = md+ 세그먼트 배지 + 모바일 2행 배지 양쪽(뷰포트별 visible 매칭)", () => {
+    const src = readSafe(PAGE);
+    // Badge 에 data-fly-target 이 compare/quote 각 2회 이상(md+ 세그먼트 + 모바일 2행).
+    const compareCount = (src.match(/data-fly-target="compare"/g) || []).length;
+    const quoteCount = (src.match(/data-fly-target="quote"/g) || []).length;
+    expect(compareCount).toBeGreaterThanOrEqual(2);
+    expect(quoteCount).toBeGreaterThanOrEqual(2);
+  });
+});
+
 describe("§sourcing-counter-timing P1 가드 — 보존(현재 GREEN 유지)", () => {
   it("(2) 하단 바 세그먼트 보존 — 견적함/비교함 Badge + focus key onClick", () => {
     const src = readSafe(PAGE);
