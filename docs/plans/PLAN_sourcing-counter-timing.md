@@ -110,7 +110,7 @@
 | 헤더 카운터 삭제·하단 바 단일 표시 | 죽은 텍스트 제거 + 표시 중복 3→1 | 헤더 상단 즉시 가시성 일부 감소(하단 바로 대체) |
 | 하단 바 세그먼트 = 레일 전환 트리거 | 기존 레일 탭 핸들러 재사용(신규 store 0) | 세그먼트↔레일 탭 2입구 — 동일 핸들러로 정합 유지 필요 |
 | 플라잉 arc = 베지어 path/키프레임 | 시선 추적 구간 820ms 곡선 | 직선 대비 구현 복잡 ↑(getBoundingClientRect 2점 + 제어점) |
-| 배지 레드→yellow 토큰 교체 | 과경고 완화(무가 = 차단 아님, 견적 필요) | 없음(표시 색만) |
+| ~~배지 레드→yellow 토큰 교체~~ | **← P0 철회**(a판정): `차단 N`=하드 차단(공급사 없음=요청 불가) → red 유지. 무가=이미 muted. | — |
 
 **Dependencies:**
 - Required Before Starting: §sourcing-quote-ux 종결(1624a272) — 완료
@@ -133,7 +133,7 @@
 ## 7. Implementation Phases
 
 ### Phase 0: Context & Truth Lock
-- Status: [ ] Pending
+- Status: [x] Done (2026-07-25 · 차단 red=하드 차단 판정·3면 매핑·fly target 확정)
 - **RED:** `차단 N` 레드 배지 실측(무가 품목 견적함 담기 → 하단 바) · 세그먼트 레일 전환 현 배선 · 옛 P2/P5
   sentinel 어서션 위치·pin 값 확정 · 헤더/하단 바/토스트/fly 실파일 경로 확정
 - **GREEN:** 결정 교체 대상 목록 pin(모프450→380·fly550→820·토스트 상단1800→하단2600·3면→2면) · 무접촉
@@ -143,11 +143,11 @@
 - **Rollback:** planning-only
 
 ### Phase 1: 계약 · Failing Tests (sentinel 진화)
-- Status: [ ] Pending
+- Status: [x] Done (2026-07-25 · 신규 RED 4 + 보존 가드 · P2-e 1800→2600 교체)
 - **RED:** 신규/진화 sentinel 작성(RED 확인):
   · 헤더 담김 카운터(`비교 후보`/`견적 후보` 헤더 노출) **부재-lock**
   · 하단 바 세그먼트(견적함/비교함 배지 + onClick 레일 전환) 존재
-  · 가격 미정 배지 yellow 토큰(#fefce8/#a16207) · 옛 레드 `차단` 부재-lock
+  · ~~가격 미정 배지 yellow · 옛 레드 `차단` 부재-lock~~ **← P0 철회(a판정): `차단 N` red 유지·무접촉**
   · 담기 타이밍 값(모프 380·fly 820·hold 120·범프 520) · 하단 pill(#0f172a·2600ms·문구)
   · reduced-motion 폴백 마커
 - **GREEN:** 최소 계약 스캐폴딩 · 옛 P2 어서션(550/1800/#2563eb 상단) → 신값 pin 교체(**결정 교체 주석**) ·
@@ -156,18 +156,17 @@
 - **✋ Gate:** RED 실재 · 기존 접촉 sentinel delta 0(교체분 제외 명시) · F10 무관(test-only)
 - **Rollback:** sentinel 커밋 revert
 
-### Phase 2: 헤더 정리 + 하단 바 1줄 세그먼트 + 배지 완화
-- Status: [ ] Pending
-- **RED:** P1 계약 GREEN 전환 목표
-- **GREEN:**
-  · 헤더: `비교 후보 N`/`견적 후보 N` 카운터 제거 → 결과 맥락만(`검색 결과 N건` + 매칭 품질 `품명 일치 N ·
-    가격 공개 N` + 정렬/필터/재고). 조언 문구 하단 바로 이관
-  · 하단 바 2줄→1줄: 좌=견적함N/비교함N 세그먼트(활성 #2563eb, 비활성 #cbd5e1, 클릭=레일 전환) · 중앙=담김
-    요약(`PBS-3 외 2건`) + 가격 미정 yellow 칩 · 우=조언 + 비교 리포트(보조) + 견적 요청서 만들기(#16a34a 주 CTA)
-  · 레일 탭 배지는 레일 열림 시만 유지
-  · `차단 N` 레드 → `가격 미정 N` yellow
-- **REFACTOR:** 세그먼트 onClick = 기존 레일 탭 핸들러 재사용(신규 store 0) · same-canvas 보존
-- **✋ Gate:** F9 P1 계약 GREEN · dead 세그먼트/no-op 0 · loading/empty 상태 · F10 EXIT 0
+### Phase 2: 헤더 정리 + fly target 이동 (계약 1·6) — 🚧 부분 완료
+- Status: [x] 계약 1·6 GREEN(2026-07-25) · 하단 바 1줄 재구성은 §11.252f 충돌로 상신 대기
+- **GREEN(완료):**
+  · 헤더: 상태바 `비교 후보 N`/`견적 후보 N` 카운터 제거 → 결과 맥락만(검색 결과 N건 + 필터/재고 + 다음 행동 조언 1줄 잔류)
+  · fly target: `data-fly-target`(compare/quote) 상태바 span → 하단 바 세그먼트 `<Badge>` 이동 + 첫 담김 double rAF 안정화
+  · 이전선택맥락 카드·차단 N red·2행 바 구조 무접촉(§11.252f 보존)
+- **🛑 상신 대기(별도 승인):** 하단 바 2줄→1줄 세그먼트 재구성 = **§11.252f("소싱 액션 바 1줄 강제→2행 독립 구조", search-action-bar-2row-252f)**
+  잠긴 결정을 정면으로 뒤집음(2행→1행). "접촉 sentinel delta 0" 게이트와도 충돌 → §11.252f 결정 교체 승인 후 진행.
+  이관 보류분: 조언 문구 하단 바 이관 · 좌 세그먼트(#2563eb/#cbd5e1) · 중앙 담김 요약 · 우 CTA 재배치.
+- **REFACTOR:** 세그먼트 onClick = 기존 focus key(setCompareFocusKey/setQuoteFocusKey) 재사용(신규 store 0) · same-canvas 보존
+- **✋ Gate:** [x] F9 계약 1·6 GREEN · [x] dead/no-op 0 · [x] F10 EXIT 0 · [x] 접촉 sentinel delta 0(258b/268c는 baseline drift)
 - **Rollback:** P2 커밋 revert
 
 ### Phase 3: 담기 타이밍 완화 + 하단 다크 pill 토스트
@@ -206,8 +205,8 @@
   결정 교체 sentinel은 별도 커밋이라 독립 revert 가능.
 
 ## 11. Progress Tracking
-- Overall: 30% · Current: P1 계약/RED(sentinel 진화) · Next: P2 헤더 정리+하단 바 1줄
-- [x] P0 · [x] P1 · [ ] P2 · [ ] P3 · [ ] P4
+- Overall: 45% · Current: P2 계약 1·6 GREEN(헤더 제거·fly target 이동) · 하단 바 1줄 재구성 §11.252f 상신 대기 · Next: P3 타이밍/pill
+- [x] P0 · [x] P1 · [~] P2(1·6 완료·1줄 상신) · [ ] P3 · [ ] P4
 
 ## 12. Notes & Learnings
 - [2026-07-25] 계획 생성(호영님 "생성 교체 승인"). §sourcing-quote-ux 직속 후속. 결정 교체 3건 승인:
@@ -222,4 +221,11 @@
     하단 바 세그먼트 배지=**단일 소스 유지**. self-trip 회피: 상태바 `비교 후보 {compareIds.length}`(직접) vs 카드 `…{…}건`(nested+건) 구분.
   · **fly target**: 상태바 삭제 → `data-fly-target` 하단 바 세그먼트 배지 이동. 첫 담김 조건부 렌더(showSourcingActionDock) 엣지 → P3에서 바 마운트 후 rAF fly 시작으로 해소.
 - [2026-07-25] P1 sentinel 진화: 신규 `sourcing-counter-timing-p1.test.ts` RED + 결정 교체(sourcing-quote-ux-p1 P2-e `/1800/`→`/2600/`·상단→하단 pill·옛 1800 부재-lock, 별도 커밋·승인 주석).
-- **잔여 정리(P2 대상)**: PLAN 내 배지 완화 관련 잔여 스텝(§7 RED "차단 배지 실측"·§8 P2 "레드→yellow"·§9 Risk "배지 레드→yellow 토큰 교체")은 P0 판정으로 무효 → P2 착수 시 정리.
+- ~~잔여 정리(P2 대상)~~ **완료(2026-07-25)**: §8 Phase2 제목 "+배지 완화" 제거·"레드→yellow" 삭제 · §7 Phase1 "가격미정 yellow·차단 부재-lock" 철회 · §9 Risk "배지 레드→yellow" 철회(모두 a판정 반영).
+- [2026-07-25] P2 구현(계약 1·6 GREEN):
+  · 헤더: 상태바 카운터(비교/견적 후보 N) 제거 → 결과 맥락만. 다음 행동 조언 1줄 잔류(하단 바 이관은 1줄 재구성과 함께 상신 대기).
+  · fly target: `data-fly-target` 상태바 span → 하단 바 세그먼트 `<Badge>` 이동. 첫 담김 조건부 렌더 엣지 = **double rAF**(setState 커밋+페인트 후 fly 시작)로 해소.
+  · self-trip 수정: 계약(1) 정규식이 clear-all 다이얼로그 `견적 후보 {quoteItems.length}건`을 오매칭 → 상태바형 `…}<`(span 닫힘) 앵커로 정밀화(별도 test 커밋).
+  · 접촉 delta 0: 252f(2행)·252e·312 통과. 258b(4)·268c(2)는 **clean HEAD에서도 실패=baseline drift**(내 delta 0).
+- **🛑 상신(P2 잔여)**: 하단 바 2줄→1줄 세그먼트 재구성은 **§11.252f("1줄 강제→2행 독립", search-action-bar-2row-252f)** 잠금을 뒤집음.
+  "접촉 sentinel delta 0" 게이트와 충돌 → §11.252f 결정 교체 승인 후 진행. 승인 시 조언 이관·좌 세그먼트·중앙 요약·우 CTA 재배치.
