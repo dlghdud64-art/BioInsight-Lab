@@ -36,7 +36,8 @@ describe("§sourcing-quote-ux P1 계약 — P2 담기 인터랙션 (구현 후 G
   it("(P2-b) 플라잉 칩 = getBoundingClientRect 실측(하드코딩 좌표 0) + testid", () => {
     const src = readSafe(PAGE);
     expect(src).toMatch(/getBoundingClientRect/);
-    expect(src).toMatch(/data-testid="sourcing-flying-chip"/);
+    // 플라잉 칩은 body-append 임시 요소라 DOM setAttribute 로 생성 → JSX/DOM 양형 testid 값 매칭.
+    expect(src).toMatch(/["']sourcing-flying-chip["']/);
   });
 
   it("(P2-c) 견적 #2563eb / 비교 #6d28d9 동일 문법", () => {
