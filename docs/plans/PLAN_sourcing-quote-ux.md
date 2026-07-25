@@ -1,6 +1,6 @@
 # Implementation Plan: 소싱 견적 담기 인터랙션 · AI 비교 분석 리포트 (§sourcing-quote-ux)
 
-- **Status:** 🚧 P0·P1·P2·P3·P4 ✅ Complete (2026-07-25 · P4 0-a 실배선+문구 정직화, 0-b 보류) — P5(스모크·종결) Pending
+- **Status:** ✅ Complete (P0~P5, 2026-07-25 · 런타임 스모크 PASS · 코드 결함 0 · 0-b 자동갱신만 백로그 보류)
 - **Started:** 2026-07-24
 - **Last Updated:** 2026-07-25
 - **Estimated Completion:** TBD
@@ -311,10 +311,26 @@
 - **보류(0-b, 별도 상세 계획·상신 대상):** 회신→후보 가격·납기 자동 갱신 데이터 연결 신설(회신↔Product 매핑 + ProductVendor write/invalidate).
 
 ### Phase 5: 스모크 · 종결
-- Status: [ ] Pending
-- sandbox 프로덕션 런타임: QA 9항 전건(시퀀스 육안+DOM·토글·reduced-motion 에뮬 가능 범위·관문/데이터
-  상태·프리필 딥링크 착지·카운트 3면 일치·새로고침 후 담기 상태 persist)
-- **✋ Gate:** QA 판정표 · baseline-delta 0 · build EXIT 0 · 미검증 항목은 증거 등급 구분 기록
+- Status: [x] ✅ Done — sandbox 프로덕션 런타임 스모크 PASS (2026-07-25, www.labaxis.co.kr). 코드 결함 0.
+- sandbox 프로덕션 런타임: QA 9항 중 7항+persist 런타임 GREEN, ⑥·⑨는 org seed 데이터 부재로 런타임 미도달 = 정적 승계.
+
+#### P5 QA 판정표 (호영님 스모크)
+| # | 항목 | 결과 | 근거 |
+| :--- | :--- | :--- | :--- |
+| ① | 담기 fly 애니 | ✅ 런타임 | #2563eb · 0.55s cubic-bezier(.22,.9,.36,1) · getBoundingClientRect 실좌표 |
+| ② | 토글 해제 | ✅ 런타임 | 재클릭 제거 동작 |
+| ③ | pill 토스트 | ✅ 런타임 | ~2.0s(1800ms 타이머 + 페이드) |
+| ④ | reduced-motion | ✅ 런타임 | 플라잉 억제 확인 |
+| ⑤ | 1a 관문 | ✅ 런타임 | 스펙 즉시 + 🔒가격/납기 · 정직 조건부 문구 · 가짜 자동갱신 0 |
+| ⑥ | 1b 잠금해제 렌더 | 🟡 정적 승계 | org seed: 카테고리당 priced≤1 → 1b 분기 런타임 미도달 → sentinel + compare-review-engine 승계 |
+| ⑦ | CTA 프리필 착지 | ✅ 런타임 | 추천안 → request-assembly 착지 |
+| ⑧ | 카운트 단일소스 | ✅ 런타임 | 견적 1/1/1 · 비교 3/3/3(하단 바=레일=리포트) |
+| ⑨ | populated 이력/최소주문 | 🟡 정적 승계 | PurchaseRecord/vendor 0행(dataSource:none) → honest-empty 실측, populated 분기 정적 승계 |
+| persist | 담기 상태 새로고침 | ✅ 런타임 | localStorage persist 실측 |
+
+- **캐비앗(코드 결함 아님)**: ⑥·⑨는 이 org seed 데이터 부재로 런타임 미도달 → 정적 sentinel + 엔진 순수함수 승계.
+  P4 0-b(회신→후보 연결 부재)·scopeKey 캐비앗과 동종(§reports-honesty QuoteVendor 0행 전례). 배선 코드는 GREEN, 실데이터 채워지면 표시.
+- **✋ Gate:** [x] QA 판정표 · [x] 접촉 sentinel 59 GREEN delta 0(18 계약 + 41 접촉) · [x] 미검증 항목 증거 등급 구분 기록 · docs-only(F10 생략)
 - **Rollback:** phase별 커밋 revert(마이그레이션 0)
 
 ## 8. Optional Addenda
@@ -336,9 +352,19 @@
 - P2/P3/P4 커밋 분리 revert · 마이그레이션 0 · 애니메이션은 reduced-motion 경로가 사실상 기능 폴백.
 
 ## 11. Progress Tracking
-- Overall: 83% · Current: P4 ✅ 완료(`984b80de`, 0-a 실배선+문구 정직화·0-b 보류) · Next: P5 스모크·종결
-- [x] P0 · [x] P1 · [x] P2 · [x] P3 · [x] P4 · [ ] P5
+- Overall: 100% ✅ · 전건 완료(런타임 스모크 PASS) · 잔여: 0-b 자동갱신 백로그(별도 상신)
+- [x] P0 · [x] P1 · [x] P2 · [x] P3 · [x] P4 · [x] P5
 
 ## 12. Notes & Learnings
 - [2026-07-24] 계획 생성(호영님 "생성"). 핸드오프+프로토타입 2종 입력. 추정 5건은 P0 실측 전환 전까지
   단정 금지. front-only 실재 시 P4 정직성 배선을 버그픽스로 승격.
+- [2026-07-25] P5 런타임 스모크 PASS(sandbox, www.labaxis.co.kr). QA 9항 중 7항+persist 런타임 GREEN:
+  ① 담기 fly(#2563eb·0.55s cubic-bezier(.22,.9,.36,1)·getBoundingClientRect 실좌표) · ② 토글 해제 ·
+  ③ pill 토스트 ~2.0s(1800ms 타이머+페이드) · ④ reduced-motion=플라잉 억제 ·
+  ⑤ 관문(스펙 즉시+🔒가격/납기·정직 조건부·가짜 자동갱신 0) · ⑦ CTA 프리필 착지 ·
+  ⑧ 카운트 단일소스(견적 1/1/1·비교 3/3/3) · ⑨ honest-empty(dataSource:none) · persist(localStorage) 실측.
+- [2026-07-25] 캐비앗(코드 결함 아님, org seed 데이터 부재): ⑥ 카테고리당 priced≤1로 1b 잠금해제 런타임 미도달,
+  ⑨ populated 분기는 PurchaseRecord/vendor 0행 → 정적 sentinel + compare-review-engine 순수함수 승계.
+  P4 0-b(회신→후보 연결 부재)·scopeKey 캐비앗과 동종(§reports-honesty QuoteVendor 0행 전례).
+- [2026-07-25] ✅ §sourcing-quote-ux 종결(P0~P5). 잔여 백로그: (1) 0-b 회신→후보 가격·납기 자동 갱신
+  데이터 연결(별도 계획·상신), (2) 비교 syncToSupabase dead sync 정리, (3) §global-filters P5 백로그.
