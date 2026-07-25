@@ -25,6 +25,7 @@ const readSafe = (rel: string) => (existsSync(p(rel)) ? readFileSync(p(rel), "ut
 const PAGE = "src/app/_workbench/search/page.tsx";
 const ROW = "src/app/_workbench/_components/sourcing-result-row.tsx";
 const TOAST = "src/lib/quote/resolve-add-to-quote-toast.ts";
+const SEARCH_API = "src/app/api/products/search/route.ts";
 
 describe("§sourcing-quote-ux P1 계약 — P2 담기 인터랙션 (구현 후 GREEN)", () => {
   it("(P2-a) §sourcing-quote-ux trace + 담기 모프 색 토큰(#eff6ff/#1d4ed8/#93c5fd)", () => {
@@ -84,6 +85,43 @@ describe("§sourcing-quote-ux P1 계약 — P4 배선 (구현 후 GREEN)", () =>
     // 리포트 CTA → 견적 요청서: 기존 store 경유(useTestFlow/compareIds). URL param(?prefill=) 신설 금지.
     expect(src).toMatch(/§sourcing-quote-ux/); // 리포트 배선 마커(구현 시 추가)
     expect(src).not.toMatch(/[?&]prefill=/);
+  });
+});
+
+// ── P4 보강 계약(false-done 방지) — 0-a 실배선 + 0-b 정직성(호영님 승인 2026-07-25: 0-a만 진행+문구 정직화) ──
+describe("§sourcing-quote-ux P1 계약 — P4 보강 (0-a 실데이터 · 0-b 정직성)", () => {
+  it("(P4-b) 최소 주문 실데이터 — 검색 API minOrderQty 반환 + 리포트 표 읽기(부재 정직 —)", () => {
+    const api = readSafe(SEARCH_API);
+    expect(api).toMatch(/minOrderQty/); // 검색 응답 매핑에 MOQ 전달
+    const src = readSafe(PAGE);
+    expect(src).toMatch(/minOrderQty/); // 리포트 표에서 실데이터 렌더
+  });
+
+  it("(P4-c) 구매 이력 실데이터 — 기존 recommend API 재사용 + 이력 없는 상품 정직 empty", () => {
+    const src = readSafe(PAGE);
+    expect(src).toMatch(/\/api\/sourcing\/recommend/); // 기존 조회 API 재사용(신설 0)
+    expect(src).toMatch(/reportPurchaseHistory/); // 후보별 이력 상태
+    expect(src).toMatch(/hasData/); // 정직 empty 분기(hasData=false → —)
+  });
+
+  it("(P4-d) 신선도 헤더 — 반영 건수 + 갱신 시각", () => {
+    const src = readSafe(PAGE);
+    expect(src).toMatch(/data-testid="compare-report-freshness"/);
+    expect(src).toMatch(/구매 이력 .*건 반영/);
+    expect(src).toMatch(/reportGeneratedAt/);
+  });
+
+  it("(P4-e) 자동 갱신 가짜 약속 부재 — 0-b 연결 부재 → 미구현 능동 약속 금지(정직 조건부만)", () => {
+    const src = readSafe(PAGE);
+    // 회신→후보 자동 갱신 연결이 코드에 없으므로 "자동 갱신돼요"류 미래 능동 약속 금지(§reports-honesty).
+    expect(src).not.toMatch(/자동\s*갱신돼요/);
+    expect(src).not.toMatch(/리포트가 자동/);
+  });
+
+  it("(P4-f) 카운트 단일 소스 최종 — 하단 바=레일=리포트 동일 파생(회귀 0)", () => {
+    const src = readSafe(PAGE);
+    expect(src).toMatch(/quoteItems\.length/);
+    expect(src).toMatch(/compareIds\.length/);
   });
 });
 
