@@ -1,8 +1,8 @@
 # Implementation Plan: 소싱 견적 담기 인터랙션 · AI 비교 분석 리포트 (§sourcing-quote-ux)
 
-- **Status:** 🚧 P0·P1 ✅ Complete (2026-07-25 · 판정 3건 반영·계약 9 RED) — P2~P5 Pending
+- **Status:** 🚧 P0·P1·P2 ✅ Complete (2026-07-25 · 계약 P2 5 GREEN 전환·F10 EXIT 0) — P3~P5 Pending
 - **Started:** 2026-07-24
-- **Last Updated:** 2026-07-24
+- **Last Updated:** 2026-07-25
 - **Estimated Completion:** TBD
 
 ⛔ quality gate skip 금지 · 미해소 truth 충돌 진행 금지 · dead button/no-op/placeholder 금지
@@ -213,12 +213,34 @@
 - **Rollback:** 테스트 revert(p1b `6fdbff67` / 진화 p1a `548fa5a0` 별도)
 
 ### Phase 2: 담기/비교 마이크로 인터랙션 (§1)
-- Status: [ ] Pending
+- Status: [x] ✅ Complete (2026-07-25 · 계약 P2 5 GREEN 전환 · F10 EXIT 0)
 - 모프(450ms 팝 베지어)→플라잉 칩(550ms, 실측 좌표, 견적=#2563eb/비교=#6d28d9)→배지 범프+글로우→
   레일 슬라이드 인+CTA 활성 · 토글 해제 · 대형 안내 박스 제거 · 소형 pill 토스트 1.8s ·
   reduced-motion 폴백 · 실패 시 모프 롤백
-- **✋ Gate:** F9 P2 계약 GREEN · 기존 담기/비교 기능 무회귀 · F10 EXIT 0 · 커밋 단독 revert
-- **Rollback:** P2 커밋 revert
+
+#### P2 구현 (커밋 분리)
+- **test `40b662c0`**(계약 정합): P2-b testid 앵커를 JSX-only 정규식 → DOM setAttribute 양형 값 매칭
+  (`/["']sourcing-flying-chip["']/`). body-append 임시 플라잉 칩은 imperative cleanup 필요 → DOM 생성이 정답.
+  getBoundingClientRect 실측 앵커·값 존재 강제 유지(약화 아님).
+- **feat `bda97c39`**(P2 impl):
+  - `page.tsx` — `flySourcingChip` 헬퍼(getBoundingClientRect 실측 좌표, testid=sourcing-flying-chip,
+    견적 #2563eb/비교 #6d28d9, 550ms cubic-bezier, transitionend+setTimeout 정리, prefers-reduced-motion 생략) ·
+    상태바 카운트 span `data-fly-target=compare/quote` 태깅 · 담기/비교 핸들러 (e) 캡처 →
+    requestAnimationFrame(flySourcingChip) · 신규 담기 pill 토스트 duration 1800.
+  - `sourcing-result-row.tsx` — onToggleCompare/onToggleRequest `(e?: React.MouseEvent)` 확장·onClick 스레딩 ·
+    견적 후보(isInRequest) 데스크톱 버튼 모프(framer-motion 팝 0.45s cubic-bezier(.34,1.56,.64,1) + #eff6ff/#1d4ed8/#93c5fd).
+
+#### P2 검증
+| 게이트 | 결과 |
+| :--- | :--- |
+| F9 `sourcing-quote-ux-p1` | **P2 5 GREEN 전환** → `3 failed \| 10 passed (13)`(3 failed = P3-a/b/c 미구현 RED 유지) |
+| 265b2·265c·접촉 sentinel | resolve-add-to-quote-toast·265b2·265c·quote-cart·sourcing-product-surface **41 GREEN**(delta 0) |
+| F10 build | **EXIT 0**(✓ Compiled successfully + 타입체크 통과) |
+
+- **✋ Gate:** [x] F9 P2 계약 5 GREEN · [x] 기존 담기/비교 무회귀(41 GREEN) · [x] F10 EXIT 0 · [x] 커밋 단독 revert
+- **Rollback:** feat `bda97c39` revert(→ P2 5 RED 복귀) / 계약 정합 `40b662c0` 별도
+- **잔여(P5 런타임 게이트):** 배지 범프+글로우·레일 슬라이드·모바일 견적 후보 모프는 P1 계약 마커 밖 폴리시 →
+  P5 sandbox 프로덕션 런타임에서 육안+DOM 최종 검증(정적 sentinel 한계, 증거 등급 구분).
 
 ### Phase 3: AI 비교 분석 리포트 (§2 — 1a+1b)
 - Status: [ ] Pending
@@ -262,8 +284,8 @@
 - P2/P3/P4 커밋 분리 revert · 마이그레이션 0 · 애니메이션은 reduced-motion 경로가 사실상 기능 폴백.
 
 ## 11. Progress Tracking
-- Overall: 0% · Current: P0 대기 · Next: P0 실측 5건
-- [ ] P0 · [ ] P1 · [ ] P2 · [ ] P3 · [ ] P4 · [ ] P5
+- Overall: 50% · Current: P2 ✅ 완료(`bda97c39`) · Next: P3 AI 비교 리포트 착수
+- [x] P0 · [x] P1 · [x] P2 · [ ] P3 · [ ] P4 · [ ] P5
 
 ## 12. Notes & Learnings
 - [2026-07-24] 계획 생성(호영님 "생성"). 핸드오프+프로토타입 2종 입력. 추정 5건은 P0 실측 전환 전까지
