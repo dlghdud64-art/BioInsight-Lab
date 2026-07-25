@@ -156,6 +156,8 @@ export async function GET(request: NextRequest) {
           currency: pv.currency,
           stockStatus: pv.stockStatus,
           leadTime: pv.leadTime,
+          // §sourcing-quote-ux P4 — 최소 주문(MOQ) 실데이터 전달(리포트 비교 표). 기존 include 필드, 매핑만 추가.
+          minOrderQty: pv.minOrderQty ?? null,
           url: pv.url,
         })) || [],
       })),

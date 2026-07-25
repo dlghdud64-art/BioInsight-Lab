@@ -300,6 +300,9 @@ export default function SearchPage() {
   const [requestWizardOpen, setRequestWizardOpen] = useState(false);
   // §sourcing-quote-ux P3 — AI 비교 리포트(sourcing-compare-report) same-canvas 오버레이 개폐.
   const [compareReportOpen, setCompareReportOpen] = useState(false);
+  // §sourcing-quote-ux P4 — 구매 이력 실데이터(기존 /api/sourcing/recommend 재사용) + 신선도 시각.
+  const [reportPurchaseHistory, setReportPurchaseHistory] = useState<Record<string, { count: number; lastPurchasedAt: string | null; hasData: boolean }>>({});
+  const [reportGeneratedAt, setReportGeneratedAt] = useState<string>("");
 
   // §11.312 — sticky bar 바텀시트 (호영님 P1 2026-05-26).
   // bar 의 "비교 N" / "견적 N" / "⚠ 검토 N" 영역 탭 시 sheet 열림.
@@ -516,8 +519,47 @@ export default function SearchPage() {
     const recommendedOption =
       options.find((o: StrategyDecisionOption) => o.frame === header.recommendedFrame) || options[1] || options[0] || null;
     const recommendedIds = recommendedOption ? recommendedOption.recommended.map((r) => r.id) : [];
-    return { candidates, gate, category, difference, classified, verdict, options, header, recommendedOption, recommendedIds };
+    // §sourcing-quote-ux P4 — 최소 주문(MOQ) 실데이터 메타(vendors[0].minOrderQty, 부재 시 null → 정직 "—").
+    const metaById: Record<string, { minOrderQty: number | null }> = {};
+    compareIds.forEach((id: string) => {
+      const p = products.find((pp: any) => pp.id === id);
+      metaById[id] = { minOrderQty: p?.vendors?.[0]?.minOrderQty ?? null };
+    });
+    return { candidates, gate, category, difference, classified, verdict, options, header, recommendedOption, recommendedIds, metaById };
   }, [compareIds, products]);
+
+  // §sourcing-quote-ux P4 — 리포트 오픈 시 구매 이력 실데이터 로드(기존 /api/sourcing/recommend 재사용, 폴링 신설 0).
+  // 자동 갱신(회신→후보 연결)은 0-b 실측상 연결 부재로 보류(별도) — on-demand 조회만.
+  useEffect(() => {
+    if (!compareReportOpen) return;
+    let cancelled = false;
+    // 신선도 기준 시각(오픈 시점 클라 렌더).
+    setReportGeneratedAt(new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }));
+    (async () => {
+      const ids = compareReportData.candidates.map((c) => c.id);
+      const entries = await Promise.all(
+        ids.map(async (id) => {
+          try {
+            const res = await fetch(`/api/sourcing/recommend?productId=${encodeURIComponent(id)}`, { credentials: "include" });
+            if (!res.ok) return [id, { count: 0, lastPurchasedAt: null, hasData: false }] as const;
+            const json = await res.json();
+            const vendors = json?.recommendation?.sameProductOtherVendors ?? [];
+            const count = vendors.reduce((s: number, v: any) => s + (v.purchaseCount || 0), 0);
+            const last = vendors
+              .map((v: any) => v.lastPurchasedAt)
+              .filter(Boolean)
+              .sort()
+              .pop() ?? null;
+            return [id, { count, lastPurchasedAt: last, hasData: !!json?.recommendation?.hasData && count > 0 }] as const;
+          } catch {
+            return [id, { count: 0, lastPurchasedAt: null, hasData: false }] as const;
+          }
+        }),
+      );
+      if (!cancelled) setReportPurchaseHistory(Object.fromEntries(entries));
+    })();
+    return () => { cancelled = true; };
+  }, [compareReportOpen, compareReportData]);
 
   // §sourcing-quote-ux P3 CTA `추천안으로 견적 요청 ›` — 기존 store 핸드오프 재사용(URL param 신설 0, dead button 0).
   const handleCompareReportRequest = useCallback(() => {
@@ -1817,8 +1859,10 @@ export default function SearchPage() {
                 <h2 className="text-base font-bold text-slate-900 flex items-center gap-1.5">
                   <Sparkles className="h-4 w-4 text-blue-600" /> AI 비교 리포트
                 </h2>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  방금 분석 · 후보 {compareReportData.candidates.length}개 기준
+                {/* §sourcing-quote-ux P4 — 신선도 헤더: 구매 이력 반영 건수 + 갱신 시각(회신 자동 갱신 아님, 정직). */}
+                <p className="text-[11px] text-slate-400 mt-0.5" data-testid="compare-report-freshness">
+                  후보 {compareReportData.candidates.length}개 · 구매 이력 {Object.values(reportPurchaseHistory).filter((h) => h.hasData).length}건 반영
+                  {reportGeneratedAt ? ` · ${reportGeneratedAt} 기준` : ""}
                 </p>
               </div>
               <button
@@ -1934,22 +1978,37 @@ export default function SearchPage() {
                             );
                           })}
                         </tr>
-                        {/* 최소 주문 · 구매 이력 — 데이터 배선 전(정직 empty, 날조 금지) */}
+                        {/* §sourcing-quote-ux P4 — 최소 주문 실데이터(ProductVendor.minOrderQty), 부재 상품은 정직 "—". */}
                         <tr className="border-b border-slate-50">
                           <td className="text-slate-500 text-xs py-1.5 pr-2">최소 주문</td>
-                          {compareReportData.candidates.map((c) => (
-                            <td key={c.id} className="text-right py-1.5 px-2 text-slate-300">—</td>
-                          ))}
+                          {compareReportData.candidates.map((c) => {
+                            const moq = compareReportData.metaById[c.id]?.minOrderQty ?? null;
+                            return (
+                              <td key={c.id} className="text-right tabular-nums py-1.5 px-2 whitespace-nowrap">
+                                {moq != null && moq > 0 ? `${moq.toLocaleString("ko-KR")}개` : <span className="text-slate-300">—</span>}
+                              </td>
+                            );
+                          })}
                         </tr>
+                        {/* §sourcing-quote-ux P4 — 구매 이력 실데이터(/api/sourcing/recommend), 이력 없는 상품은 정직 "—". */}
                         <tr>
                           <td className="text-slate-500 text-xs py-1.5 pr-2">구매 이력</td>
-                          {compareReportData.candidates.map((c) => (
-                            <td key={c.id} className="text-right py-1.5 px-2 text-slate-300">—</td>
-                          ))}
+                          {compareReportData.candidates.map((c) => {
+                            const h = reportPurchaseHistory[c.id];
+                            return (
+                              <td key={c.id} className="text-right tabular-nums py-1.5 px-2 whitespace-nowrap">
+                                {h && h.hasData ? (
+                                  <span title={h.lastPurchasedAt ? `최근 ${h.lastPurchasedAt.slice(0, 10)}` : undefined}>{h.count}회</span>
+                                ) : (
+                                  <span className="text-slate-300">—</span>
+                                )}
+                              </td>
+                            );
+                          })}
                         </tr>
                       </tbody>
                     </table>
-                    <p className="text-[10px] text-slate-400 mt-1">최소 주문·구매 이력은 견적/발주 이력 연동 시 표시됩니다.</p>
+                    <p className="text-[10px] text-slate-400 mt-1">최소 주문·구매 이력이 없는 항목은 “—”로 표시됩니다(카탈로그·발주 이력 기준).</p>
                   </section>
 
                   {/* 리스크 노트 */}
@@ -1994,7 +2053,9 @@ export default function SearchPage() {
                       >
                         <FileText className="h-3.5 w-3.5" /> 견적 요청 만들기 ›
                       </button>
-                      <span className="text-[11px] text-slate-400">회신 도착 시 리포트가 자동 갱신돼요</span>
+                      {/* §sourcing-quote-ux P4 — 0-b 실측: 회신→후보 자동 갱신 연결 부재. 미구현 약속(가짜 성공) 제거,
+                          정직 조건부로 교정(사용자 재비교 행동 기준, 자동 갱신 약속 없음). */}
+                      <span className="text-[11px] text-slate-400">회신을 받으면 가격·납기를 채워 다시 비교할 수 있어요</span>
                     </div>
                   </section>
                 </>
