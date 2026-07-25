@@ -335,11 +335,12 @@ export function SourcingResultRow({
           {/* Secondary: 견적 */}
           {isInRequest ? (
             // §sourcing-quote-ux P2 — 담김 모프: ✓ 견적 후보(#eff6ff bg·#1d4ed8 텍스트·#93c5fd 보더) 팝
-            //   450ms cubic-bezier(.34,1.56,.64,1). 토글 해제 시 원상.
+            //   §sourcing-counter-timing P3 — 380ms(0.38s) cubic-bezier(.34,1.56,.64,1). 토글 해제 시 원상.
             <motion.button
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
-              transition={{ duration: 0.45, ease: [0.34, 1.56, 0.64, 1] }}
+              // §sourcing-counter-timing P3 — 모프 380ms(0.38s)
+              transition={{ duration: 0.38, ease: [0.34, 1.56, 0.64, 1] }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.95 }}
               style={{ backgroundColor: "#eff6ff", color: "#1d4ed8", borderColor: "#93c5fd" }}

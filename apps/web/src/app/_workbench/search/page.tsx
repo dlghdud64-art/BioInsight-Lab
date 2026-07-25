@@ -142,8 +142,31 @@ const SOURCING_TRIAGE_STORAGE_KEY = "labaxis-sourcing-triage-state";
 // §sourcing-quote-ux P2 — 담기/비교 플라잉 칩(버튼 → 목적지 배지). 좌표 = getBoundingClientRect 실측
 //   (하드코딩 0). prefers-reduced-motion 시 생략(폴백). 견적 #2563eb / 비교 #6d28d9 동일 문법.
 //   완료 후 DOM 정리. 표시 계층 전용 — 담기 canonical(로컬 draft)은 별도 handler 소유.
+// §sourcing-counter-timing P3 — 담기 시퀀스 타이밍(ms). 하드코딩 좌표 금지(getBoundingClientRect 실측),
+//   값만 상수화. 총 ≈1.3s = 모프 380(버튼) ∥ 플라잉 820 arc → hold 120 → 배지 범프 520.
+const CT_MORPH_MS = 380; // 담기 버튼 모프(sourcing-result-row, framer 0.38s 와 정합)
+const CT_FLY_MS = 820; // 플라잉 칩 arc 지속
+const CT_HOLD_MS = 120; // 도착 후 hold(범프 시작 지연)
+const CT_BUMP_MS = 520; // 목적지 배지 범프(1→1.4→1 + 글로우)
+
+// §sourcing-counter-timing P3 — 도착 배지 범프(scale 1→1.4→1 + 글로우 520ms). reduced-motion 시 생략.
+function bumpFlySourcingTarget(targetEl: Element, kind: "quote" | "compare") {
+  if (typeof window === "undefined") return;
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+  const glow = kind === "quote" ? "0 0 0 5px rgba(37,99,235,.35)" : "0 0 0 5px rgba(109,40,217,.35)";
+  (targetEl as HTMLElement).animate?.(
+    [
+      { transform: "scale(1)", boxShadow: "0 0 0 0 rgba(0,0,0,0)", offset: 0 },
+      { transform: "scale(1.4)", boxShadow: glow, offset: 0.5 },
+      { transform: "scale(1)", boxShadow: "0 0 0 0 rgba(0,0,0,0)", offset: 1 },
+    ],
+    { duration: CT_BUMP_MS, easing: "cubic-bezier(.34,1.56,.64,1)" },
+  );
+}
+
 function flySourcingChip(sourceEl: Element | null, kind: "quote" | "compare") {
   if (typeof window === "undefined" || !sourceEl) return;
+  // reduced-motion 폴백: 이동·범프 생략(모프·카운트 상태 변화만).
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
   const targets = Array.from(document.querySelectorAll(`[data-fly-target="${kind}"]`));
   const targetEl = targets.find((el) => {
@@ -158,24 +181,39 @@ function flySourcingChip(sourceEl: Element | null, kind: "quote" | "compare") {
     kind === "quote"
       ? "0 4px 12px rgba(37,99,235,.35)"
       : "0 4px 12px rgba(109,40,217,.35)";
+  // 두 점(실측) → 상대 이동 + 수직 방향 arc 제어점(하드코딩 좌표 0).
+  const fx = from.left + from.width / 2;
+  const fy = from.top + from.height / 2;
+  const dx = to.left + to.width / 2 - fx;
+  const dy = to.top + to.height / 2 - fy;
+  const dist = Math.hypot(dx, dy) || 1;
+  const lift = Math.min(160, dist * 0.22); // arc 높이 = 거리의 22%(최대 160)
+  const cx = dx / 2 + (-dy / dist) * lift; // 제어점(중점 + 수직 오프셋)
+  const cy = dy / 2 + (dx / dist) * lift;
   const chip = document.createElement("div");
   chip.setAttribute("data-testid", "sourcing-flying-chip");
   chip.setAttribute("aria-hidden", "true");
   chip.style.cssText =
-    `position:fixed;left:${from.left + from.width / 2}px;top:${from.top + from.height / 2}px;` +
+    `position:fixed;left:${fx}px;top:${fy}px;` +
     `width:14px;height:14px;border-radius:9999px;background:${color};box-shadow:${shadow};` +
-    `transform:translate(-50%,-50%) scale(1);opacity:1;z-index:9999;pointer-events:none;` +
-    `transition:transform 550ms cubic-bezier(.22,.9,.36,1),opacity 550ms cubic-bezier(.22,.9,.36,1);`;
+    `transform:translate(-50%,-50%);z-index:9999;pointer-events:none;`;
   document.body.appendChild(chip);
-  const dx = to.left + to.width / 2 - (from.left + from.width / 2);
-  const dy = to.top + to.height / 2 - (from.top + from.height / 2);
-  requestAnimationFrame(() => {
-    chip.style.transform = `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.35)`;
-    chip.style.opacity = "0";
-  });
-  const done = () => chip.remove();
-  chip.addEventListener("transitionend", done, { once: true });
-  setTimeout(done, 700);
+  const anim = (chip as HTMLElement).animate?.(
+    [
+      { transform: "translate(-50%,-50%) translate(0px,0px) scale(1)", opacity: 1, offset: 0 },
+      { transform: `translate(-50%,-50%) translate(${cx}px,${cy}px) scale(.7)`, opacity: 0.95, offset: 0.5 },
+      { transform: `translate(-50%,-50%) translate(${dx}px,${dy}px) scale(.35)`, opacity: 0.4, offset: 1 },
+    ],
+    { duration: CT_FLY_MS, easing: "cubic-bezier(.22,.9,.36,1)", fill: "forwards" },
+  );
+  const finish = () => {
+    try { chip.remove(); } catch { /* 이미 정리됨 */ }
+    // 도착 hold 120ms 후 배지 범프.
+    window.setTimeout(() => bumpFlySourcingTarget(targetEl, kind), CT_HOLD_MS);
+  };
+  if (anim) anim.onfinish = finish;
+  else finish();
+  window.setTimeout(() => { try { chip.remove(); } catch { /* noop */ } }, CT_FLY_MS + 300);
 }
 
 export default function SearchPage() {
@@ -1374,9 +1412,16 @@ export default function SearchPage() {
                           // success toast.
                           const r = addProductToQuote(product);
                           const t = resolveAddToQuoteToast(r);
-                          // §sourcing-quote-ux P2 — 소형 pill 토스트 1.8s(1800ms). 문구는 result-mode 원문 유지
-                          //   (서버 저장 암시 0 — 담기는 로컬 draft).
-                          toast[t.intent](t.message, { duration: 1800 });
+                          // §sourcing-counter-timing P3 — 하단 다크 pill(#0f172a·2600ms·자동 소멸). 성공(추가/무가)은
+                          //   통일 pill 문구, 병합·오류는 resolver 원문 유지(정직 — 서버 저장 암시 0, 로컬 draft).
+                          const pillMsg =
+                            r.ok && r.mode !== "merged"
+                              ? "견적 후보에 담았어요 · 가격은 견적 요청 후 확정"
+                              : t.message;
+                          toast[t.intent](pillMsg, {
+                            duration: 2600,
+                            style: { background: "#0f172a", color: "#f8fafc", border: "1px solid rgba(255,255,255,.12)" },
+                          });
                           const srcEl = e?.currentTarget ?? null;
                           // §sourcing-counter-timing P2 — 하단 바 배지로 fly 도착점 이동 → 첫 담김 시 바 마운트 후 double rAF.
                           requestAnimationFrame(() => requestAnimationFrame(() => flySourcingChip(srcEl, "quote")));
