@@ -170,13 +170,14 @@
 - **Rollback:** P2 커밋 revert
 
 ### Phase 3: 담기 타이밍 완화 + 하단 다크 pill 토스트
-- Status: [ ] Pending
-- **RED:** 타이밍/토스트 계약 GREEN 목표
-- **GREEN:** 모프 380ms · 플라잉 820ms arc(getBoundingClientRect 2점 + 제어점, 하드코딩 금지) · 도착 hold
-  120ms · 배지 범프 520ms(1→1.4→1 + 글로우) · 토스트 하단 다크 pill(#0f172a·2.6s·자동 소멸·문구 `견적 후보에
-  담았어요 · 가격은 견적 요청 후 확정`) · prefers-reduced-motion(이동·범프 생략, 모프·카운트만)
-- **REFACTOR:** DOM cleanup(칩 잔존 0) · 총 ≈1.3s(범프-이동 일부 겹침)
-- **✋ Gate:** F9 타이밍/토스트 계약 GREEN · reduced-motion 마커 · F10 EXIT 0
+- Status: [x] Done (2026-07-25 · 계약 3·4 GREEN 전환 · counter-timing 8/8 · quote-ux 18/18 · F10 EXIT 0)
+- **GREEN(완료):** 모프 380ms(row framer 0.38s) · 플라잉 820ms arc(getBoundingClientRect 2점 + 수직 제어점 lift=dist*22%,
+  하드코딩 좌표 0, Web Animations keyframes) · 도착 hold 120ms · 배지 범프 520ms(scale 1→1.4→1 + 글로우) ·
+  토스트 하단 다크 pill(#0f172a·2600ms·자동 소멸·문구 "견적 후보에 담았어요 · 가격은 견적 요청 후 확정", 병합/오류는 resolver 원문) ·
+  prefers-reduced-motion(flySourcingChip·bump 조기 return = 이동·범프 생략, 모프·카운트만) · CT 타이밍 상수화(380/820/120/520).
+- **REFACTOR:** DOM cleanup(anim.onfinish + setTimeout 백업 remove, 칩 잔존 0) · 총 ≈1.3s
+- **결정 교체(완료):** P2-e `/1800/`→`/2600/` 반영 → quote-ux-p1 18/18 GREEN. 옛 1800 page 전무. resolver 무접촉(guard-3 "확정됩니다" 보존).
+- **✋ Gate:** [x] F9 계약 3·4 GREEN · [x] reduced-motion 마커 · [x] 접촉 88/88 delta 0(252f 2행 무저촉) · [x] F10 EXIT 0
 - **Rollback:** P3 커밋 revert
 
 ### Phase 4: 스모크 · 종결
@@ -205,8 +206,8 @@
   결정 교체 sentinel은 별도 커밋이라 독립 revert 가능.
 
 ## 11. Progress Tracking
-- Overall: 45% · Current: P2 계약 1·6 GREEN(헤더 제거·fly target 이동) · 하단 바 1줄 재구성 §11.252f 상신 대기 · Next: P3 타이밍/pill
-- [x] P0 · [x] P1 · [~] P2(1·6 완료·1줄 상신) · [ ] P3 · [ ] P4
+- Overall: 70% · Current: P3 타이밍/pill 완료(계약 3·4 GREEN) · P2 잔여 1줄 재구성만 §11.252f 상신 대기 · Next: P4 스모크
+- [x] P0 · [x] P1 · [~] P2(1·6 완료·1줄 상신) · [x] P3 · [ ] P4
 
 ## 12. Notes & Learnings
 - [2026-07-25] 계획 생성(호영님 "생성 교체 승인"). §sourcing-quote-ux 직속 후속. 결정 교체 3건 승인:
@@ -229,3 +230,13 @@
   · 접촉 delta 0: 252f(2행)·252e·312 통과. 258b(4)·268c(2)는 **clean HEAD에서도 실패=baseline drift**(내 delta 0).
 - **🛑 상신(P2 잔여)**: 하단 바 2줄→1줄 세그먼트 재구성은 **§11.252f("1줄 강제→2행 독립", search-action-bar-2row-252f)** 잠금을 뒤집음.
   "접촉 sentinel delta 0" 게이트와 충돌 → §11.252f 결정 교체 승인 후 진행. 승인 시 조언 이관·좌 세그먼트·중앙 요약·우 CTA 재배치.
+- [2026-07-25] §11.252f 범위 실측(step 3 교체 판정 선결):
+  · (a) **전 뷰포트 2행** — sentinel/렌더 어디에도 sm/md 뷰포트 한정 없음. 비교행(`compareIds.length>0 &&`)·견적행(`quoteItems.length>0 &&`)이
+    전 뷰포트에서 조건부 스택. 바 컨테이너(#0f172a)도 뷰포트 게이팅 없음.
+  · (b) `min-h-[44px]`=터치 타겟(iOS HIG) · 조건부 숨김=담긴 것만 독립 표시(0건 행 숨김). iPhone SE 375px 잘림 0·CTA 축약(sm:hidden) invariant 보호.
+  · (c) 데스크톱도 2행(1줄 아님). "2행"은 compare+quote 둘 다 담겼을 때만; 하나면 이미 1행.
+  · **판정**: step 3 "무조건 1줄"=전 뷰포트 전면 교체=§11.252f 정면 뒤집기. **절충 권고 = 반응형 분기(md+ 1줄 세그먼트 / 모바일 2행 유지)** —
+    §11.252f 모바일 터치·잘림 보호를 지키며 데스크톱 1줄 목표 달성. 전면 1줄은 375px 회귀 위험 → 비권장. 호영님 방향 상신 대기.
+- [2026-07-25] P3 구현(계약 3·4 GREEN): flySourcingChip arc(820ms Web Animations, 수직 제어점 실측)·hold 120·배지 범프 520(scale+글로우)·
+  모프 380(row 0.38s)·하단 다크 pill(#0f172a·2600·"견적 후보에 담았어요 · 가격은 견적 요청 후 확정", 병합/오류 resolver 원문)·reduced-motion 조기 return.
+  P2-e 2600 교체 GREEN, resolver 무접촉(guard-3 보존). 접촉 88/88 delta 0. F10 EXIT 0.
