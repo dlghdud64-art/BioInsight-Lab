@@ -1,6 +1,6 @@
 # Implementation Plan: 소싱 카운터 표시 단일화 · 담기 타이밍/토스트 완화 (§sourcing-counter-timing)
 
-- **Status:** ⏳ Pending (P0~P4)
+- **Status:** ✅ Complete (P0~P4, 2026-07-25 · 런타임 스모크 PASS · QA-6 결함 수정 GREEN · baseline-delta 0)
 - **Started:** 2026-07-25
 - **Last Updated:** 2026-07-25
 - **Estimated Completion:** TBD
@@ -181,10 +181,23 @@
 - **Rollback:** P3 커밋 revert
 
 ### Phase 4: 스모크 · 종결
-- Status: [ ] Pending
-- sandbox 프로덕션 런타임: QA 7항 전건(헤더 카운터 부재 · 하단 바 1줄 세그먼트 레일 전환 · 카운트 하단바=레일
-  일치 · yellow 배지 · 담기 ≈1.3s arc 도착 · 하단 pill 2.6s 미가림 · reduced-motion) + baseline-delta 0
-- **✋ Gate:** QA 판정표 · baseline-delta 0 · build EXIT 0 · 미검증 항목 증거 등급 구분 기록
+- Status: [x] ✅ Done — sandbox 프로덕션 런타임 스모크 PASS(2026-07-25, 27bd8800). QA-6 결함 수정·재스모크 GREEN.
+
+#### P4 QA 판정표 (호영님 스모크)
+| # | 항목 | 결과 | 근거 |
+| :--- | :--- | :--- | :--- |
+| ① | 헤더 카운터 부재 | ✅ 런타임 | 상태바 결과 맥락만(담김 카운터 제거) |
+| ② | md+ 1줄 세그먼트 | ✅ 런타임 / 🟡 모바일 2행 정적 승계 | md+ 1줄 세그먼트 GREEN · 모바일 2행은 resize 뷰포트 미반영으로 정적 승계 |
+| ③ | 카운트 하단바=레일 일치 | ✅ 런타임 | 단일 소스 파생 |
+| ④ | 차단 N red 유지 | ✅ 런타임 | P0 판정(하드 차단) 보존 |
+| ⑤ | 담기 arc fly | ✅ 런타임 | ≈1.3s arc 육안 |
+| ⑥ | 하단 pill 미가림 | ✅ 런타임(수정 후) | 수정 후 top1130/bottom1168·#0f172a·검색창 미가림 재스모크 GREEN |
+| ⑦ | reduced-motion | ✅ 런타임 | 이동·범프 생략 실측 |
+
+- **QA-6 결함·수정**: 담기 pill 이 sonner top-center(layout.tsx) 공유로 상단 렌더(검색창 가림) → `showSourcingAddPill` 하단 fixed 분리(`1854092b`) +
+  계약4 하단 위치 앵커 보강(`27bd8800`). **정적 위치 미검증이 false-GREEN 원인**(교훈: 토스트/오버레이는 위치도 pin).
+- **캐비앗**: 모바일 2행 = resize 뷰포트 미반영으로 정적 승계(증거 등급 구분). §11.252f invariant sentinel + `md:hidden` 클래스 승계.
+- **✋ Gate:** [x] QA 판정표 · [x] 접촉 sentinel 92 GREEN delta 0 · [x] 미검증 항목 증거 등급 구분 · docs-only(F10 생략)
 - **Rollback:** phase별 커밋 revert(마이그레이션 0)
 
 ## 8. Optional Addenda
@@ -206,8 +219,8 @@
   결정 교체 sentinel은 별도 커밋이라 독립 revert 가능.
 
 ## 11. Progress Tracking
-- Overall: 90% · Current: step3 완료(반응형 1줄, §11.252f 부분 진화 승인 'b') · Next: P4 스모크·종결
-- [x] P0 · [x] P1 · [x] P2(1·6 + step3 반응형 1줄) · [x] P3 · [ ] P4
+- Overall: 100% ✅ · 전건 완료(런타임 스모크 PASS·QA-6 결함 수정 GREEN) · baseline-delta 0
+- [x] P0 · [x] P1 · [x] P2(1·6 + step3 반응형 1줄) · [x] P3 · [x] P4
 
 ## 12. Notes & Learnings
 - [2026-07-25] 계획 생성(호영님 "생성 교체 승인"). §sourcing-quote-ux 직속 후속. 결정 교체 3건 승인:
@@ -246,3 +259,10 @@
   · fly target: md+ 세그먼트 배지 + 모바일 배지 양쪽(flySourcingChip visible 매칭 → 뷰포트별 하나 도착). double rAF 유지.
   · sentinel 진화: 252f 헤더 승인 주석 + md:hidden/hidden md:flex 공존 어서션 · counter-timing step3 계약 5. 접촉 74/74 delta 0(252f 교체분).
   · 검증: counter-timing 13/13 · 252f 진화 GREEN · F10 EXIT 0. 잔여: P4 런타임(md+/모바일 분기 육안).
+- [2026-07-25] P4 런타임 스모크 PASS(sandbox, www.labaxis.co.kr, 27bd8800): QA 7항 중 6 런타임 GREEN
+  (①헤더 카운터 부재 ②md+ 1줄 세그먼트 ③카운트 하단바=레일 일치 ④차단 red 유지 ⑤arc fly 육안 ⑦reduced-motion) +
+  ②모바일 2행·resize 뷰포트 미반영으로 정적 승계(증거 등급 구분).
+- [2026-07-25] **QA-6 결함·수정**: 담기 pill 이 sonner top-center(layout.tsx:113) 공유로 상단 렌더=검색창 가림 →
+  `showSourcingAddPill` 하단 fixed 분리 수정(`1854092b`, 성공만 하단·병합/오류 상단 유지) + 계약4 하단 위치 앵커 보강(`27bd8800`).
+  재스모크 GREEN(top1130/bottom1168·#0f172a·미가림). **교훈: 정적 위치 미검증이 false-GREEN 원인 → 토스트/오버레이는 위치도 pin.**
+- [2026-07-25] ✅ §sourcing-counter-timing 종결(P0~P4). baseline-delta 0. 카운트 **값**·서버 상태·§quote-ux 종결분 무접촉 보존.
