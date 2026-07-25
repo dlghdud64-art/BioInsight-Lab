@@ -156,8 +156,8 @@
 - **✋ Gate:** RED 실재 · 기존 접촉 sentinel delta 0(교체분 제외 명시) · F10 무관(test-only)
 - **Rollback:** sentinel 커밋 revert
 
-### Phase 2: 헤더 정리 + fly target 이동 (계약 1·6) — 🚧 부분 완료
-- Status: [x] 계약 1·6 GREEN(2026-07-25) · 하단 바 1줄 재구성은 §11.252f 충돌로 상신 대기
+### Phase 2: 헤더 정리 + fly target 이동 (계약 1·6) + step3 반응형 1줄 — ✅ 완료
+- Status: [x] 계약 1·6 GREEN(2026-07-25) · step3 반응형 1줄(§11.252f 부분 진화 승인 'b') 완료
 - **GREEN(완료):**
   · 헤더: 상태바 `비교 후보 N`/`견적 후보 N` 카운터 제거 → 결과 맥락만(검색 결과 N건 + 필터/재고 + 다음 행동 조언 1줄 잔류)
   · fly target: `data-fly-target`(compare/quote) 상태바 span → 하단 바 세그먼트 `<Badge>` 이동 + 첫 담김 double rAF 안정화
@@ -206,8 +206,8 @@
   결정 교체 sentinel은 별도 커밋이라 독립 revert 가능.
 
 ## 11. Progress Tracking
-- Overall: 70% · Current: P3 타이밍/pill 완료(계약 3·4 GREEN) · P2 잔여 1줄 재구성만 §11.252f 상신 대기 · Next: P4 스모크
-- [x] P0 · [x] P1 · [~] P2(1·6 완료·1줄 상신) · [x] P3 · [ ] P4
+- Overall: 90% · Current: step3 완료(반응형 1줄, §11.252f 부분 진화 승인 'b') · Next: P4 스모크·종결
+- [x] P0 · [x] P1 · [x] P2(1·6 + step3 반응형 1줄) · [x] P3 · [ ] P4
 
 ## 12. Notes & Learnings
 - [2026-07-25] 계획 생성(호영님 "생성 교체 승인"). §sourcing-quote-ux 직속 후속. 결정 교체 3건 승인:
@@ -240,3 +240,9 @@
 - [2026-07-25] P3 구현(계약 3·4 GREEN): flySourcingChip arc(820ms Web Animations, 수직 제어점 실측)·hold 120·배지 범프 520(scale+글로우)·
   모프 380(row 0.38s)·하단 다크 pill(#0f172a·2600·"견적 후보에 담았어요 · 가격은 견적 요청 후 확정", 병합/오류 resolver 원문)·reduced-motion 조기 return.
   P2-e 2600 교체 GREEN, resolver 무접촉(guard-3 보존). 접촉 88/88 delta 0. F10 EXIT 0.
+- [2026-07-25] step3 구현(호영님 승인 'b', §11.252f 부분 진화): md+ 1줄 세그먼트 바(hidden md:flex) + 모바일 2행(md:hidden) 보존.
+  · 좌 세그먼트(견적함/비교함, 활성 #2563eb/비활성 #cbd5e1·disabled, focus key 레일 전환·신규 store 0) · 중앙 요약(견적 후 확정·가격 미정 muted·차단 red) ·
+    우 조언(헤더서 이관)+비교 리포트+전체 해제(데스크톱 회귀 방지)+견적 요청서 만들기(#16a34a).
+  · fly target: md+ 세그먼트 배지 + 모바일 배지 양쪽(flySourcingChip visible 매칭 → 뷰포트별 하나 도착). double rAF 유지.
+  · sentinel 진화: 252f 헤더 승인 주석 + md:hidden/hidden md:flex 공존 어서션 · counter-timing step3 계약 5. 접촉 74/74 delta 0(252f 교체분).
+  · 검증: counter-timing 13/13 · 252f 진화 GREEN · F10 EXIT 0. 잔여: P4 런타임(md+/모바일 분기 육안).
