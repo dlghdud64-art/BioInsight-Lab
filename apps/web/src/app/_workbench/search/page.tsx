@@ -515,6 +515,15 @@ export default function SearchPage() {
   }, [compareReady, compareIds, products]);
   const showSourcingActionDock = hasSearched && !!session?.user && isSourcingOwner && (compareIds.length > 0 || quoteItems.length > 0);
 
+  // §sourcing-counter-timing step3 — 다음 행동 조언(헤더에서 하단 바로 이관). 바는 항목 ≥1 시만 노출이라 0/0 케이스 생략.
+  const nextActionAdvice = (() => {
+    if (compareIds.length === 1 && quoteItems.length === 0) return "비교 시작 전 후보를 1개 더 선택하세요";
+    if (compareIds.length >= 2 && quoteItems.length === 0) return "동일 규격 비교가 가능합니다";
+    if (compareIds.length === 0 && quoteItems.length > 0) return "요청서 생성으로 이어갈 수 있습니다";
+    if (compareIds.length >= 1 && quoteItems.length >= 1) return "비교 후 요청 전환이 적절합니다";
+    return "";
+  })();
+
   // ── §sourcing-quote-ux P3 — AI 비교 리포트 데이터(순수 파생, 서버 AI 0) ──
   // 소스: compareIds 후보 → Product/ProductVendor 스냅샷. 납기는 leadTimeDays 부재 시 leadTime(string) 파생 보정.
   const compareReportData = useMemo(() => {
@@ -1055,22 +1064,8 @@ export default function SearchPage() {
                 {activeFilterCount > 0 && (
                   <span className="text-slate-400 text-xs">필터 {activeFilterCount}개</span>
                 )}
-                {/* §sourcing-counter-timing P2 — 헤더 담김 카운터 삭제(결과 맥락만). 담김 개수·fly 도착점은
-                    하단 바 세그먼트 배지(data-fly-target)로 단일화. 다음 행동 조언 1줄은 유지(하단 바 이관은 §11.252f
-                    1줄 재구성과 함께 별도 승인 대기). */}
-                {(compareIds.length > 0 || quoteItems.length > 0) && (
-                  <span className="text-slate-300 hidden sm:inline">|</span>
-                )}
-                <span className="text-slate-400 text-xs hidden md:inline">
-                  {(() => {
-                    if (compareIds.length === 0 && quoteItems.length === 0) return "선택된 후보가 없습니다";
-                    if (compareIds.length === 1 && quoteItems.length === 0) return "비교 시작 전 후보를 1개 더 선택하세요";
-                    if (compareIds.length >= 2 && quoteItems.length === 0) return "동일 규격 비교가 가능합니다";
-                    if (compareIds.length === 0 && quoteItems.length > 0) return "요청서 생성으로 이어갈 수 있습니다";
-                    if (compareIds.length >= 1 && quoteItems.length >= 1) return "비교 후 요청 전환이 적절합니다";
-                    return "";
-                  })()}
-                </span>
+                {/* §sourcing-counter-timing P2/step3 — 헤더 담김 카운터·조언 삭제(결과 맥락만).
+                    담김 개수·fly 도착점·다음 행동 조언은 하단 바(md+ 세그먼트 바 / 모바일 2행)로 단일화. */}
               </div>
               {/* 필터 / 재고 — 흰 배경 오른쪽 */}
               <div className="flex items-center gap-1.5 shrink-0">
@@ -1723,6 +1718,104 @@ export default function SearchPage() {
             - 첫 항목명 미리보기 텍스트 (공간 허용 시) */}
       {showSourcingActionDock && (
         <div className="border-t border-white/10 shrink-0" style={{ backgroundColor: '#0f172a' }}>
+          {/* §sourcing-counter-timing step3 (호영님 승인 2026-07-25 'b') — md+ 1줄 세그먼트 바.
+              모바일(md↓)은 아래 §11.252f 2행 유지(md:hidden). 동일 focus key/카운트 파생 재사용(신규 store 0, 값 단일 소스). */}
+          <div className="hidden md:flex px-4 min-h-[44px] items-center gap-3 border-b border-white/10">
+            {/* 좌: 견적함/비교함 세그먼트(레일 전환) — 활성 #2563eb / 비활성 #cbd5e1 */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                data-testid="sourcing-seg-compare"
+                aria-label="비교함 열기"
+                disabled={compareIds.length === 0}
+                onClick={() => setCompareFocusKey((k) => k + 1)}
+                style={{ color: compareIds.length > 0 ? "#2563eb" : "#cbd5e1" }}
+                className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-sm font-semibold hover:bg-white/5 transition-colors disabled:cursor-default disabled:hover:bg-transparent"
+              >
+                <PenLine className="h-4 w-4" />비교함
+                <Badge variant="secondary" data-fly-target="compare" className="h-5 min-w-5 px-1.5 text-xs bg-blue-600 text-white">{compareIds.length}</Badge>
+              </button>
+              <button
+                type="button"
+                data-testid="sourcing-seg-quote"
+                aria-label="견적함 열기"
+                disabled={quoteItems.length === 0}
+                onClick={() => setQuoteFocusKey((k) => k + 1)}
+                style={{ color: quoteItems.length > 0 ? "#2563eb" : "#cbd5e1" }}
+                className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-sm font-semibold hover:bg-white/5 transition-colors disabled:cursor-default disabled:hover:bg-transparent"
+              >
+                <FileText className="h-4 w-4" />견적함
+                <Badge variant="secondary" data-fly-target="quote" className="h-5 min-w-5 px-1.5 text-xs bg-emerald-600 text-white">{quoteItems.length}</Badge>
+              </button>
+            </div>
+            {/* 중앙: 담김 요약 + 가격 미정 muted + 차단 N red(P0 판정 유지) */}
+            <div className="flex items-center gap-2 min-w-0 text-xs">
+              <span className="text-slate-300 tabular-nums min-w-0 truncate" data-testid="quote-bar-total-md">
+                {hasConfirmedPrice ? `₩${totalAmount.toLocaleString("ko-KR")}` : "견적 후 확정"}
+              </span>
+              {priceUnknownCount > 0 && (
+                <span className="text-slate-400">· {priceUnknownCount}건 가격 미정</span>
+              )}
+              {requestReadiness.summary.blocked > 0 && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-red-100 text-red-700 shrink-0">
+                  <AlertCircle className="h-3 w-3 shrink-0" />차단 {requestReadiness.summary.blocked}
+                </span>
+              )}
+            </div>
+            {/* 우: 조언 + 비교 리포트(보조) + 전체 해제 + 견적 요청서 만들기(#16a34a 주 CTA) */}
+            <div className="ml-auto flex items-center gap-2 shrink-0">
+              {nextActionAdvice && <span className="text-slate-400 text-xs">{nextActionAdvice}</span>}
+              {compareReady && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  aria-label="AI 비교 리포트 열기"
+                  className="h-8 px-3 text-xs border-blue-400/50 bg-blue-500/10 text-blue-200 hover:bg-blue-500/20 font-medium"
+                  onClick={() => handleProtectedAction(() => setCompareReportOpen(true))}
+                >
+                  <Sparkles className="h-3.5 w-3.5 mr-1" />비교 리포트
+                </Button>
+              )}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    aria-label="견적 후보 전체 해제"
+                    className="h-8 w-8 p-0 shrink-0 border-slate-200/40 bg-slate-700/40 text-slate-300 hover:bg-slate-600/60 hover:text-slate-100"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>담긴 후보를 모두 해제할까요?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      견적 후보 {quoteItems.length}건{compareIds.length > 0 ? ` · 비교 후보 ${compareIds.length}건` : ""}이 모두 해제됩니다. 개별 삭제는 견적함/비교함 탭에서 가능합니다.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>취소</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => { clearCompare(); quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }} className="bg-red-600 hover:bg-red-700">
+                      모두 해제
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              {requestHandoff ? (
+                <Button size="sm" style={{ backgroundColor: "#16a34a" }} className="h-8 px-3 text-xs hover:opacity-90 text-white font-medium" onClick={() => handleProtectedAction(() => setWorkWindowMode("request-assembly"))}>
+                  <FileText className="h-3.5 w-3.5 mr-1" />견적 요청 조립
+                </Button>
+              ) : (
+                <Button size="sm" style={{ backgroundColor: "#16a34a" }} className="h-8 px-3 text-xs hover:opacity-90 text-white font-medium" onClick={() => handleProtectedAction(() => setRequestWizardOpen(true))}>
+                  <FileText className="h-3.5 w-3.5 mr-1" />견적 요청서 만들기
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* 모바일(md↓) 2행 — §11.252f 보존(md:hidden) */}
+          <div className="md:hidden">
           {/* §11.252f 1행 — 비교 (compareIds.length > 0 일 때만 노출) */}
           {compareIds.length > 0 && (
             <div className="px-4 min-h-[44px] flex items-center gap-2 sm:gap-3 border-b border-white/20">
@@ -1876,8 +1969,8 @@ export default function SearchPage() {
               </div>
             </div>
           )}
-
-          {/* §11.312-b — 옛 "전체 해제 별도 줄" 제거 (line 1565-1575). 견적 bar 본체 안 🗑 으로 통합. */}
+          {/* §11.312-b — 옛 "전체 해제 별도 줄" 제거. 견적 bar 본체 안 🗑 으로 통합. */}
+          </div>
         </div>
       )}
 
