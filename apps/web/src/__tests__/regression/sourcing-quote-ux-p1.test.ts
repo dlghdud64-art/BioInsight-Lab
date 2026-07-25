@@ -51,9 +51,12 @@ describe("§sourcing-quote-ux P1 계약 — P2 담기 인터랙션 (구현 후 G
     expect(src).toMatch(/prefers-reduced-motion/);
   });
 
-  it("(P2-e) pill 토스트 1.8s(1800) — 서버 저장 암시 문구 0(로컬 draft 정직)", () => {
+  it("(P2-e) pill 토스트 2.6s(2600) 하단 pill — 서버 저장 암시 문구 0(로컬 draft 정직)", () => {
+    // 🔄 결정 교체(호영님 승인 2026-07-25): §sourcing-counter-timing 토스트 상단 1800 → 하단 다크 pill 2600 이관.
+    //   신값으로 완전 이관 → 옛 1800 부재-lock. 값·정직성 계약(서버 저장 암시 문구 0) 불변.
     const src = readSafe(PAGE);
-    expect(src).toMatch(/1800/); // duration ms
+    expect(src).toMatch(/2600/); // 하단 pill duration ms
+    expect(src).not.toMatch(/1800/); // 옛 상단 토스트 duration 부재-lock
     // ③b: 서버 저장 암시 문구 금지(로컬 draft). "저장됨/서버에 반영" 류 0.
     expect(src).not.toMatch(/서버에 (저장|반영)(되었|했)/);
   });
