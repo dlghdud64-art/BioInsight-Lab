@@ -3,6 +3,7 @@
 import { csrfFetch } from "@/lib/api-client";
 // §11.348-B-1 B1-2 — SDS 문서 섹션(업로드/열람).
 import { SdsDocumentsSection } from "@/components/safety/sds-documents-section";
+import { CollapsedRow } from "@/components/products/collapsed-row";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
@@ -95,6 +96,9 @@ export default function ProductDetailPage() {
   });
   const [isSavingSafety, setIsSavingSafety] = useState(false);
   const [showMoreComplianceLinks, setShowMoreComplianceLinks] = useState(false);
+  // §product-detail-refinement 계약⑥ — 규제 포털 상시 2개 화이트리스트(mfds·kchem) + 전용 더보기(컴플라이언스 더보기와 별개).
+  const [showMoreRegPortal, setShowMoreRegPortal] = useState(false);
+  const REG_PORTAL_ALWAYS = ["mfds", "kchem"];
   const [msdsLinkStatus, setMsdsLinkStatus] = useState<"checking" | "valid" | "invalid" | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -434,7 +438,20 @@ export default function ProductDetailPage() {
                   })()}
                   {/* §product-detail PD-M(§05) — Cat.No 는 제품명 아래로 이동(위). 여기선 완성도만. */}
                   <div className="mt-4">
-                    <ProductCompleteness product={product} />
+                    {/* §product-detail-refinement 계약②·⑧ — role/classified/편집 핸들러 배선.
+                        classified = 안전 수준이 미분류(unknown) 아님. 편집 핸들러 = 기존 스펙·안전 편집 다이얼로그 재사용. */}
+                    <ProductCompleteness product={product}
+                      role={role as any}
+                      classified={getProductSafetyLevel(product).level !== "unknown"}
+                      onSpecEdit={() => {
+                        setSpecForm(product?.specification || "");
+                        setIsSpecEditing(true);
+                      }}
+                      onSafetyEdit={startSafetyEdit}
+                      onSdsUpload={() =>
+                        document.getElementById("product-sds-docs")?.scrollIntoView({ behavior: "smooth", block: "center" })
+                      }
+                    />
                   </div>
                 </CardHeader>
               </Card>
@@ -501,10 +518,9 @@ export default function ProductDetailPage() {
 
                   {/* §product-detail PD-M(§05) — 완성도는 히어로로 이동(시안 한 카드). 여기선 제거. */}
 
-                  {/* 주요 스펙 요약 카드 - Data Grid 스타일 (Glassmorphism) */}
-                  {/* §product-detail PD-L(§05) — 빈 상세 스펙 카드는 buyer 에게 숨김(시안: 빈 카드가 화면 지배 방지).
-                      canEditSpec(공급사/관리자)일 때만 빈 상태 노출(첫 스펙 등록 affordance 보존). 미등록 안내는 완성도(ProductCompleteness)가 담당. */}
-                  {(product.specification || product.regulatoryCompliance || canEditSpec) && (
+                  {/* §product-detail-refinement 계약③ — PD-L 숨김 게이트 폐기: buyer 에게도 미등록 사실 노출(은폐 0).
+                      데이터 有 = 상세 스펙 카드, 데이터 0건 = 접힘 한 줄(CollapsedRow). */}
+                  {(product.specification || product.regulatoryCompliance) ? (
                   <div className="mb-6 md:mb-8 rounded-[18px] border border-gray-200 bg-white shadow-sm overflow-hidden">
                     <div className="px-6 md:px-8 py-4 border-b border-gray-100 flex items-center gap-3 bg-gray-50/60">
                       <Check className="w-5 h-5 text-blue-600" />
@@ -553,6 +569,11 @@ export default function ProductDetailPage() {
                       </div>
                     </div>
                   </div>
+                  ) : (
+                    /* §product-detail-refinement 계약③ — 상세 스펙 0건 = 접힘 한 줄 · 미등록 · 정보 요청(대형 빈 카드 폐기). */
+                    <div className="mb-6 md:mb-8">
+                      <CollapsedRow label="상세 스펙" status="미등록" action={{ label: "정보 요청", href: "/support" }} />
+                    </div>
                   )}
 
                   {/* §product-detail PD-J(§05 레이아웃) — "제품 사양" 통합 카드(시안): 카탈로그 번호 + 분류 + 추가 스펙(출처 등).
@@ -639,8 +660,8 @@ export default function ProductDetailPage() {
                               variant="outline"
                               className={`${safetyLevel.bgColor} ${safetyLevel.color} ${safetyLevel.borderColor} border-2 font-semibold text-xs`}
                             >
-                              {/* §product-detail PD-C(§07) — 시안: 위험도 + MSDS 유무 병기 배지. */}
-                              위험도: {safetyLevel.label} · MSDS {product.msdsUrl ? "등록" : "없음"}
+                              {/* §product-detail-refinement 계약⑤ — MSDS 병기 제거(중복 경고 → 상단 체크리스트 1곳). 위험도만. */}
+                              위험도: {safetyLevel.label}
                             </Badge>
                           );
                         })()}
@@ -713,9 +734,9 @@ export default function ProductDetailPage() {
                           </div>
                         )}
 
-                        {/* 안전 취급 요약 */}
+                        {/* 안전 취급 요약 — §product-detail-refinement ⑦: 구 완성도 hex → §0-B amber(#fffbeb/#fde68a). */}
                         {product.safetyNote && (
-                          <div className="p-3 bg-[#fbf0db] border border-[#f0dcae] rounded-lg">
+                          <div className="p-3 rounded-lg" style={{ backgroundColor: "#fffbeb", border: "1px solid #fde68a" }}>
                             <div className="flex items-start gap-2">
                               <AlertTriangle className="h-4 w-4 text-[#c47d10] mt-0.5 flex-shrink-0" />
                               <div className="flex-1">
@@ -766,21 +787,24 @@ export default function ProductDetailPage() {
                               <ExternalLink className="h-3 w-3 ml-1.5" />
                             </Button>
                           ) : (
-                            /* §product-detail PD-C(§07) — 시안: MSDS 없음 = 회색텍스트 대신 경고 배너 + SDS 요청(실 이동 /support). */
-                            <div className="flex items-start gap-2 p-2.5 bg-[#fbf0db] border border-[#f0dcae] rounded-lg">
-                              <AlertTriangle className="h-4 w-4 text-[#c47d10] mt-0.5 flex-shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium text-[#7a4f0a]">MSDS/SDS 미등록</p>
-                                <p className="text-[11px] text-[#92610c]/80 mt-0.5">안전 자료가 아직 없습니다. 취급 전 공급사·관리자에 요청하세요.</p>
-                                <Link href="/support" className="inline-flex items-center mt-1.5 text-[11px] font-semibold text-[#7a4f0a] underline underline-offset-2">
-                                  SDS 요청
-                                </Link>
-                              </div>
+                            /* §product-detail-refinement 계약⑤ — MSDS 미등록 하위 경고 배너 삭제(중복 제거).
+                               미등록 사실·SDS 요청은 상단 완성도 체크리스트(SDS/MSDS 행)로 통합. 여기선 중립 1줄. */
+                            <p className="text-[11px] text-slate-400">안전 자료(MSDS/SDS)는 상단 완성도 체크리스트에서 요청·확인할 수 있습니다.</p>
+                          )}
+                          {/* §11.348-B-1 B1-2 — 업로드된 SDS 문서 목록/업로드/열람 (서명URL). SDS 는 제품 단위 canonical.
+                              §product-detail-refinement 계약③ — 접힘 한 줄(등록된 SDS 문서 · 0건 · SDS 업로드), 확장 시 업로드 UI. */}
+                          {product?.id && (
+                            <div id="product-sds-docs">
+                              <CollapsedRow
+                                label="등록된 SDS 문서"
+                                status={product.msdsUrl ? "등록됨" : "0건"}
+                                action={{ label: "SDS 업로드", href: "/support" }}
+                                defaultOpen={!!product.msdsUrl}
+                              >
+                                <SdsDocumentsSection productId={product.id} docType="sds" />
+                              </CollapsedRow>
                             </div>
                           )}
-                          {/* §11.348-B-1 B1-2 — 업로드된 SDS 문서 목록/업로드/열람 (서명URL).
-                              SDS 는 제품(product) 단위 canonical 이므로 catalog 에 유지. */}
-                          {product?.id && <SdsDocumentsSection productId={product.id} docType="sds" />}
                           {/* §detail-page P1-1 — COA(시험성적서)는 lot-scoped(P2 CHECK: coa → inventoryId NOT NULL).
                               catalog(제품)은 lot 단위가 아니므로 COA 업로드 affordance 제거.
                               COA surface 는 inventory item(입고 lot)으로 이전 — P3. 데이터/route/model 불변. */}
@@ -867,37 +891,52 @@ export default function ProductDetailPage() {
                           </div>
                         )}
 
-                        {/* 국내 규제 포털 링크 - 강조 */}
-                        <div className="space-y-2 pt-2 border-t border-bd">
-                          <div className="flex items-center gap-2 mb-3">
-                            <Shield className="h-4 w-4 text-blue-600" />
-                            <div className="text-xs font-semibold text-slate-900">국내 규제기관 포털</div>
-                          </div>
-                          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                            {getRegulationLinksForProduct(
-                              product.name,
-                              product.catalogNumber || undefined,
-                              product.category
-                            ).map((link) => (
-                              <Button
-                                key={link.id}
-                                variant="outline"
-                                size="sm"
-                                className="text-[10px] md:text-xs border-blue-200 hover:bg-blue-50 hover:border-blue-300 text-blue-700 h-8 md:h-9 lg:h-9 px-2 md:px-3"
-                                onClick={() => {
-                                  window.open(link.url, "_blank");
-                                }}
-                                title={link.description}
-                              >
-                                <ExternalLink className="h-3 w-3 mr-1 md:mr-1.5 flex-shrink-0" />
-                                <span className="truncate text-[10px] md:text-xs">{link.name}</span>
-                              </Button>
-                            ))}
-                          </div>
-                          <p className="text-[10px] text-slate-500 mt-2">
-                            제품명 또는 카탈로그 번호로 각 규제기관 포털에서 검색할 수 있습니다.
-                          </p>
-                        </div>
+                        {/* §product-detail-refinement 계약⑥ — 규제 포털: 버튼 grid 폐기 → 접힘 행(CollapsedRow) + 상시 2(mfds·kchem) + 더보기 텍스트 링크. */}
+                        {(() => {
+                          const regLinks = getRegulationLinksForProduct(
+                            product.name,
+                            product.catalogNumber || undefined,
+                            product.category,
+                          );
+                          const always = regLinks.filter((l) => REG_PORTAL_ALWAYS.includes(l.id));
+                          const rest = regLinks.filter((l) => !REG_PORTAL_ALWAYS.includes(l.id));
+                          const shown = showMoreRegPortal ? [...always, ...rest] : always;
+                          return (
+                            <div className="pt-2 border-t border-bd">
+                              <CollapsedRow label="국내 규제기관 포털" status={`${regLinks.length}개 기관`} defaultOpen>
+                                <div className="flex flex-col gap-1">
+                                  {shown.map((link) => (
+                                    <a
+                                      key={link.id}
+                                      href={link.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      title={link.description}
+                                      className="inline-flex items-center gap-1.5 text-xs text-blue-700 hover:text-blue-800 hover:underline underline-offset-2"
+                                    >
+                                      <ExternalLink className="h-3 w-3 shrink-0" />
+                                      <span className="truncate">{link.name}</span>
+                                    </a>
+                                  ))}
+                                  {rest.length > 0 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowMoreRegPortal(!showMoreRegPortal)}
+                                      className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-slate-700 mt-0.5"
+                                    >
+                                      {showMoreRegPortal ? (
+                                        <><ChevronUp className="h-3 w-3" />접기</>
+                                      ) : (
+                                        <><ChevronDown className="h-3 w-3" />더보기 ({rest.length}개)</>
+                                      )}
+                                    </button>
+                                  )}
+                                  <p className="text-[10px] text-slate-500 mt-1">제품명 또는 카탈로그 번호로 각 규제기관 포털에서 검색할 수 있습니다.</p>
+                                </div>
+                              </CollapsedRow>
+                            </div>
+                          );
+                        })()}
 
                         <Disclaimer type="safety" className="mt-4" />
                       </div>

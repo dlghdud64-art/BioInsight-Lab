@@ -81,9 +81,12 @@ export function ProductCompleteness({
           </p>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
             {items.map((item, i) => {
-              const label = actionText(item.actionKind);
               const handler = editHandler(item.actionKind);
-              const useLink = !!item.href && !(canEdit && handler);
+              // ⑧ 최종 방어: 편집 핸들러 부재 시 dead button 대신 /support 링크 폴백(정직 라벨 = 정보 요청).
+              const fellBack = !item.href && !handler;
+              const href = item.href ?? (handler ? undefined : "/support");
+              const useLink = !!href;
+              const label = fellBack ? "정보 요청" : actionText(item.actionKind);
               return (
                 <div key={`${item.label}-${i}`} className="flex items-center gap-1.5 text-[11px] min-w-0">
                   <span aria-hidden style={{ color: "#b45309" }}>•</span>
@@ -91,7 +94,7 @@ export function ProductCompleteness({
                   <span className="ml-auto shrink-0">
                     {useLink ? (
                       <Link
-                        href={item.href as string}
+                        href={href as string}
                         className="font-semibold underline underline-offset-2"
                         style={{ color: "#b45309" }}
                       >
