@@ -63,7 +63,7 @@ import { QuoteTrayBar } from "@/components/products/quote-tray-bar";
 import { getDisplaySpecs } from "@/lib/product-detail/spec-fields";
 import { Disclaimer } from "@/components/legal/disclaimer";
 // #quote-cta-truth — 견적함 저장 계층 단일 출처 (fake success 제거, 호영님 2026-06-11)
-import { addToQuoteCart, readQuoteCart } from "@/lib/quote/quote-cart-storage";
+import { addToQuoteCart, readQuoteCart, removeFromQuoteCart } from "@/lib/quote/quote-cart-storage";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -76,7 +76,11 @@ export default function ProductDetailPage() {
   const [inQuoteCart, setInQuoteCart] = useState(false);
   useEffect(() => {
     if (!id) return;
-    setInQuoteCart(readQuoteCart().some((q: any) => q.productId === id));
+    // §product-detail-refinement 계약⑨-2 — quote-cart-changed 구독으로 재읽기(해제 후 담김 상태 소멸 = front-only 거울상 방지).
+    const sync = () => setInQuoteCart(readQuoteCart().some((q: any) => q.productId === id));
+    sync();
+    window.addEventListener("quote-cart-changed", sync);
+    return () => window.removeEventListener("quote-cart-changed", sync);
   }, [id]);
   const [translatedDescription, setTranslatedDescription] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
@@ -1009,126 +1013,92 @@ export default function ProductDetailPage() {
                           </span>
                           <div className="min-w-0">
                             <p className="text-sm font-bold text-[#2456bd] leading-tight">견적가 안내 품목</p>
-                            <p className="text-[11px] text-slate-600 mt-0.5">가격이 공개되지 않아 견적으로 안내됩니다</p>
+                            {/* §product-detail-refinement 계약④ — 가격 = 견적 후 확정 1줄(3행 반복 테이블 폐기). */}
+                            <p className="text-[11px] text-slate-600 mt-0.5">가격은 견적 후 확정됩니다</p>
                           </div>
                         </div>
-                        {/* qc-meta — Cat.No / 납기 / 최소 주문 */}
-                        <div className="mt-3 text-xs">
-                          {product.catalogNumber && (
-                            <div className="flex items-center justify-between py-1">
-                              <span className="text-slate-400">Cat.No</span>
-                              <span className="font-mono font-medium text-slate-900">{product.catalogNumber}</span>
-                            </div>
-                          )}
-                          <div className="flex items-center justify-between py-1">
-                            <span className="text-slate-400">납기</span>
-                            <span className="font-medium text-slate-900">견적 시 안내</span>
+                        {/* qc-meta — Cat.No 만(납기·최소 주문 '견적 시 안내' 반복 행 폐기, 견적 후 확정으로 일원화). */}
+                        {product.catalogNumber && (
+                          <div className="mt-3 text-xs flex items-center justify-between py-1">
+                            <span className="text-slate-400">Cat.No</span>
+                            <span className="font-mono font-medium text-slate-900">{product.catalogNumber}</span>
                           </div>
-                          <div className="flex items-center justify-between py-1">
-                            <span className="text-slate-400">최소 주문</span>
-                            <span className="font-medium text-slate-900">견적 시 안내</span>
-                          </div>
-                        </div>
+                        )}
                       </div>
                     )}
 
                     {/* CTA 버튼 */}
                     <div className="space-y-3 pt-6 border-t border-bd/50">
-                      {/* §1-2⑤ ③ — 소싱 상태 승계: 비교·견적함 포함 배지 (rail 라벨 동형) */}
+                      {/* §product-detail-refinement 계약④ — 담김 칩 한 줄 + 해제(분리 배지 2개 폐기, 단일 칩으로 통합). */}
                       {(hasProduct(id) || inQuoteCart) && (
-                        <div className="flex items-center gap-1.5">
-                          {hasProduct(id) && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200">
-                              <GitCompare className="h-3 w-3" />비교에 포함됨
-                            </span>
-                          )}
-                          {inQuoteCart && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              <ShoppingCart className="h-3 w-3" />견적함에 포함됨
-                            </span>
-                          )}
+                        <div className="flex items-center gap-2 text-[11px]">
+                          <span className="inline-flex items-center gap-1 font-medium px-2 py-1 rounded bg-slate-100 text-slate-700">
+                            <ShoppingCart className="h-3 w-3" />견적함·비교함에 담김
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              // 계약⑨-1 견적함·비교함 동시 정리(칩 문구 정합). ⑨-2 removeFromQuoteCart 가 quote-cart-changed 발행 → 구독 재읽기.
+                              removeFromQuoteCart(product.id);
+                              if (hasProduct(id)) removeProduct(id); // 비교함(compare) 정리
+                            }}
+                            className="ml-auto font-semibold text-slate-500 hover:text-slate-700 underline underline-offset-2"
+                          >
+                            해제
+                          </button>
                         </div>
                       )}
-                      <Button
-                        className="w-full py-3.5 bg-[#2f6be0] hover:bg-[#2456bd] text-white rounded-xl font-bold text-base shadow-sm transition-colors flex items-center justify-center gap-2 group"
-                        onClick={() => {
-                          // #quote-cta-truth — 구 GET-only fake success 제거: 실 견적함
-                          //   (provider 동일 truth) 에 추가하고 결과로만 toast (조건부).
-                          if (inQuoteCart) {
-                            toast({
-                              title: "이미 견적함에 있습니다",
-                              description: "견적 요청 화면에서 수량·벤더를 조정할 수 있습니다.",
-                            });
-                            return;
-                          }
-                          const result = addToQuoteCart(product);
-                          if (result.ok) {
-                            setInQuoteCart(true);
-                window.dispatchEvent(new Event("quote-cart-changed")); // §PD-D 트레이 갱신
-                            toast({
-                              title: "견적 담기 완료",
-                              description: "제품이 견적함에 추가되었습니다.",
-                            });
-                          } else {
-                            toast({
-                              title: "견적 담기 실패",
-                              description: "제품 정보를 확인할 수 없습니다.",
-                              variant: "destructive",
-                            });
-                          }
-                        }}
-                      >
-                        <ShoppingCart className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                        {inQuoteCart ? "견적함에 담김" : "견적 담기"}
-                      </Button>
+                      {/* §product-detail-refinement 계약④ — 담김 시 주 CTA = 견적 요청서 만들기(→/dashboard/quotes, 하단 트레이 동일). toast-only no-op 폐기. */}
+                      {inQuoteCart ? (
+                        <Button asChild className="w-full py-3.5 bg-[#2f6be0] hover:bg-[#2456bd] text-white rounded-xl font-bold text-base shadow-sm transition-colors flex items-center justify-center gap-2">
+                          <Link href="/dashboard/quotes">
+                            <FileText className="w-5 h-5" />견적 요청서 만들기
+                          </Link>
+                        </Button>
+                      ) : (
+                        <Button
+                          className="w-full py-3.5 bg-[#2f6be0] hover:bg-[#2456bd] text-white rounded-xl font-bold text-base shadow-sm transition-colors flex items-center justify-center gap-2 group"
+                          onClick={() => {
+                            const result = addToQuoteCart(product);
+                            if (result.ok) {
+                              setInQuoteCart(true);
+                              window.dispatchEvent(new Event("quote-cart-changed")); // §PD-D 트레이 갱신 + ⑨-2 구독 재읽기
+                              toast({ title: "견적 담기 완료", description: "제품이 견적함에 추가되었습니다." });
+                            } else {
+                              toast({ title: "견적 담기 실패", description: "제품 정보를 확인할 수 없습니다.", variant: "destructive" });
+                            }
+                          }}
+                        >
+                          <ShoppingCart className="w-5 h-5 group-hover:scale-110 transition-transform" />견적 담기
+                        </Button>
+                      )}
                       {/* §product-detail PD-A(§06) — 견적 신뢰 문구. */}
                       <p className="text-[11px] text-slate-500 text-center">견적 요청은 무료이며 구매 의무가 없습니다.</p>
+                      {/* §product-detail-refinement 계약④ — 보조 2분할: 비교 검토 · 재고 조회(별도 stock-mini 카드 흡수). */}
                       <div className="grid grid-cols-2 gap-3">
                         <Button
                           variant="outline"
                           className="py-3 bg-white border border-gray-200 hover:border-blue-300 text-gray-700 hover:text-blue-600 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2"
-                        onClick={() => {
-                          if (isInCompare) {
-                            removeProduct(id);
-                            toast({
-                              title: "비교에서 제거됨",
-                              description: "비교 대상에서 제거되었습니다.",
-                            });
-                          } else {
-                            addProduct(id);
-                            toast({
-                              title: "비교에 추가됨",
-                              description: "비교 대상에 추가되었습니다.",
-                            });
-                          }
-                        }}
-                      >
-                          <GitCompare className="w-4 h-4" />
-                          비교 추가
+                          onClick={() => {
+                            if (isInCompare) { removeProduct(id); toast({ title: "비교에서 제거됨", description: "비교 대상에서 제거되었습니다." }); }
+                            else { addProduct(id); toast({ title: "비교에 추가됨", description: "비교 대상에 추가되었습니다." }); }
+                          }}
+                        >
+                          <GitCompare className="w-4 h-4" />비교 검토
+                        </Button>
+                        <Button asChild variant="outline" className="py-3 bg-white border border-gray-200 hover:border-blue-300 text-gray-700 hover:text-blue-600 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
+                          <Link href="/dashboard/inventory">
+                            <Package className="w-4 h-4" />재고 조회
+                          </Link>
                         </Button>
                       </div>
+                      {/* §product-detail-refinement 계약④ — 다크 맞춤 견적 카드 폐기 → 푸터 텍스트 링크(/support 보존). */}
+                      <p className="text-[11px] text-slate-500 text-center pt-1">
+                        대량 구매·특수 요구는 <Link href="/support" className="font-semibold text-blue-600 hover:underline">영업 문의</Link>
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
-
-                {/* §PD-flat P4(시안) — stock-mini: 재고 동선 실연결(/dashboard/inventory). dead button 0. */}
-                <Link
-                  href="/dashboard/inventory"
-                  className="flex items-center gap-3 bg-white border border-gray-200 rounded-[13px] px-4 py-3 shadow-sm hover:border-blue-300 transition-colors"
-                >
-                  <Package className="h-4 w-4 text-slate-400 flex-shrink-0" />
-                  <span className="flex-1 text-xs text-slate-600">재고 현황을 <b className="font-semibold text-slate-900">재고 조회</b>로 확인하세요</span>
-                  <span className="text-xs font-bold text-blue-700">조회</span>
-                </Link>
-
-                {/* 맞춤 견적 배너(다크) — 영업 동선 실연결(/support). no-op 제거. */}
-                <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 text-white text-center shadow-lg">
-                  <p className="text-sm text-gray-300 mb-2">대량 구매 또는 특수 요구사항이 있으신가요?</p>
-                  <h4 className="font-bold text-lg mb-4">맞춤 견적 문의</h4>
-                  <Link href="/support" className="inline-flex items-center gap-1.5 text-xs bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors border border-white/10">
-                    영업 담당자 연결 <ChevronRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
               </div>
             </div>
           </div>
@@ -1169,37 +1139,30 @@ export default function ProductDetailPage() {
           <span className="text-xs font-medium text-gray-700 text-right">견적 시 안내</span>
         </div>
         <div className="flex items-center justify-end">
-          <Button
-            className="flex-shrink-0 py-3 px-6 bg-[#2f6be0] hover:bg-[#2456bd] text-white rounded-xl font-bold text-base shadow-sm transition-colors flex items-center justify-center gap-2"
-            onClick={() => {
-              // #quote-cta-truth — 모바일 하단 바도 동일 truth 결선 (fake success 0)
-              if (inQuoteCart) {
-                toast({
-                  title: "이미 견적함에 있습니다",
-                  description: "견적 요청 화면에서 수량·벤더를 조정할 수 있습니다.",
-                });
-                return;
-              }
-              const result = addToQuoteCart(product);
-              if (result.ok) {
-                setInQuoteCart(true);
-                window.dispatchEvent(new Event("quote-cart-changed")); // §PD-D 트레이 갱신
-                toast({
-                  title: "견적 담기 완료",
-                  description: "제품이 견적함에 추가되었습니다.",
-                });
-              } else {
-                toast({
-                  title: "견적 담기 실패",
-                  description: "제품 정보를 확인할 수 없습니다.",
-                  variant: "destructive",
-                });
-              }
-            }}
-          >
-            <ShoppingCart className="w-5 h-5" />
-            {inQuoteCart ? "견적함에 담김" : "견적 담기"}
-          </Button>
+          {/* §product-detail-refinement 계약④ — 모바일도 담김 시 견적 요청서 만들기(→/dashboard/quotes). toast-only no-op 폐기. */}
+          {inQuoteCart ? (
+            <Button asChild className="flex-shrink-0 py-3 px-6 bg-[#2f6be0] hover:bg-[#2456bd] text-white rounded-xl font-bold text-base shadow-sm transition-colors flex items-center justify-center gap-2">
+              <Link href="/dashboard/quotes">
+                <FileText className="w-5 h-5" />견적 요청서 만들기
+              </Link>
+            </Button>
+          ) : (
+            <Button
+              className="flex-shrink-0 py-3 px-6 bg-[#2f6be0] hover:bg-[#2456bd] text-white rounded-xl font-bold text-base shadow-sm transition-colors flex items-center justify-center gap-2"
+              onClick={() => {
+                const result = addToQuoteCart(product);
+                if (result.ok) {
+                  setInQuoteCart(true);
+                  window.dispatchEvent(new Event("quote-cart-changed")); // §PD-D 트레이 갱신 + ⑨-2 구독 재읽기
+                  toast({ title: "견적 담기 완료", description: "제품이 견적함에 추가되었습니다." });
+                } else {
+                  toast({ title: "견적 담기 실패", description: "제품 정보를 확인할 수 없습니다.", variant: "destructive" });
+                }
+              }}
+            >
+              <ShoppingCart className="w-5 h-5" />견적 담기
+            </Button>
+          )}
         </div>
         {/* §product-detail PD-A(§06) — 견적 신뢰 문구(모바일). */}
         <p className="text-[10px] text-slate-500 text-center mt-1">견적 요청은 무료이며 구매 의무가 없습니다.</p>
