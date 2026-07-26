@@ -31,7 +31,7 @@ type FilterKey = "all" | "blocked" | "ready";
 
 const CHIPS: { k: FilterKey; label: string; danger?: boolean }[] = [
   { k: "all", label: "전체" },
-  { k: "blocked", label: "문서 대기", danger: true },
+  { k: "blocked", label: "반영 차단", danger: true },
   { k: "ready", label: "반영 가능" },
 ];
 
@@ -238,7 +238,7 @@ export function MobileReceivingView({
                 summary.blockedCount > 0 ? "bg-[#b91c1c]" : "bg-slate-300"
               }`}
             />
-            문서 대기
+            반영 차단
           </p>
         </div>
         <div

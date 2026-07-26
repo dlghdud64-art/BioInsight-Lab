@@ -109,11 +109,13 @@ describe("§mobile-receiving-rcv-card P2 — 배선(dead button 0) · 회귀 0",
     expect(src).toMatch(/import \{ labToast \}/);
   });
 
-  it("필터 칩(전체/문서 대기/반영 가능) 보존 + KPI 단일 소스", () => {
+  it("필터 칩(전체/반영 차단/반영 가능) 보존 + KPI 단일 소스", () => {
     const src = read(VIEW);
     expect(src).toMatch(/label: "전체"/);
-    expect(src).toMatch(/label: "문서 대기"/);
+    // §Phase4 KPI/칩 라벨 정밀화(a안): "문서 대기" → "반영 차단"(다중 blocker 포함 정확).
+    expect(src).toMatch(/label: "반영 차단"/);
     expect(src).toMatch(/label: "반영 가능"/);
+    expect(src).not.toMatch(/문서 대기/); // 오라벨 제거 확인
     expect(src).toMatch(/summary\.blockedCount/);
     expect(src).toMatch(/summary\.readyCount/);
   });
