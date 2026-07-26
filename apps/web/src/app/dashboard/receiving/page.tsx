@@ -16,6 +16,8 @@ import {
   buildMobileReceivingSummary,
   type MobileReceivingCard,
 } from "@/lib/ops-console/mobile-receiving-view-model";
+// §mobile-receiving-rcv-card P3 — 문서 첨부 바텀 시트(첨부 › 승격 · store 실 mutation).
+import { MobileDocAttachSheet } from "@/components/receiving/mobile-doc-attach-sheet";
 import { ReceivingDesktopList } from "@/components/receiving/receiving-desktop-list";
 import { ReceivingQuickviewDrawer } from "@/components/receiving/receiving-quickview-drawer";
 import { ReceivingPostModal } from "@/components/receiving/receiving-post-modal";
@@ -31,7 +33,8 @@ import { labToast } from "@/lib/toast/lab-toast";
 //   데이터(allItems) 불변, 파생은 receiving-list-view-model(순수함수). 모바일 뷰 유지.
 export default function ReceivingLandingPage() {
   const router = useRouter();
-  const { unifiedInboxItems, receivingBatches, postToInventory } = useOpsStore();
+  const { unifiedInboxItems, receivingBatches, postToInventory, attachReceivingDocument } =
+    useOpsStore();
 
   const headerStats = useMemo(
     () => buildModuleHeaderStats(unifiedInboxItems, "receiving"),
@@ -49,6 +52,13 @@ export default function ReceivingLandingPage() {
     () => buildMobileReceivingSummary(receivingBatches, nowIso),
     [receivingBatches, nowIso],
   );
+
+  // §mobile-receiving-rcv-card P3 — 문서 첨부 시트. id 로만 보관 → receivingBatches 에서 매 렌더
+  //   live 배치 조회(첨부 mutation 후 자동 최신, 로컬 복제 truth 없음).
+  const [attachCardId, setAttachCardId] = useState<string | null>(null);
+  const attachBatch = attachCardId
+    ? receivingBatches.find((b) => b.id === attachCardId) ?? null
+    : null;
 
   const orientation = MODULE_ORIENTATION.receiving;
   const isEmpty = allItems.length === 0;
@@ -83,8 +93,8 @@ export default function ReceivingLandingPage() {
       <div className="md:hidden">
         <MobileReceivingView
           summary={mobileSummary}
-          // P2: 첨부 › 는 상세 라우팅 폴백(실 네비, no-op 아님). P3 에서 바텀 시트로 승격.
-          onAttach={(card: MobileReceivingCard) => router.push(`/dashboard/receiving/${card.id}`)}
+          // P3: 첨부 › = same-canvas 바텀 시트(프리셋 컨텍스트). 검사/보류는 상세 라우팅.
+          onAttach={(card: MobileReceivingCard) => setAttachCardId(card.id)}
           onInspect={(card: MobileReceivingCard) => router.push(`/dashboard/receiving/${card.id}`)}
           onPost={(card: MobileReceivingCard) => {
             // 실 mutation — store.postToInventory(rb.id). front-only 아님.
@@ -94,6 +104,14 @@ export default function ReceivingLandingPage() {
               `<b>${card.receivingNumber}</b> 재고에 반영되었습니다.`,
             );
           }}
+        />
+
+        {/* §mobile-receiving-rcv-card P3 — 문서 첨부 시트(store.attachReceivingDocument 실 배선). */}
+        <MobileDocAttachSheet
+          open={attachBatch != null}
+          rb={attachBatch}
+          onClose={() => setAttachCardId(null)}
+          onAttach={attachReceivingDocument}
         />
       </div>
 

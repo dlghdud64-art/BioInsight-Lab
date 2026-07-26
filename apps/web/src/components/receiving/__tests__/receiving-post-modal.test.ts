@@ -38,9 +38,11 @@ describe("§11.334 P4 — page 재고반영 배선(실 mutation)", () => {
 
   it("확정 = store.postToInventory(rb.id) 실 mutation (front-only 아님)", () => {
     const src = read(PAGE);
-    // §mobile-receiving-rcv-card P2: receivingBatches 가 destructure 중간 삽입 허용(인접 요구 완화).
-    //   배선 본질 = useOpsStore 에서 두 값 모두 수신 + 실 mutation.
-    expect(src).toMatch(/const \{[^}]*\bunifiedInboxItems\b[^}]*\bpostToInventory\b[^}]*\} = useOpsStore\(\)/);
+    // §mobile-receiving-rcv-card P2/P3: destructure 필드 추가·prettier 줄바꿈 내성.
+    //   배선 본질 = useOpsStore 에서 두 값 모두 수신 + 실 mutation (공백/개행 무관).
+    expect(src).toMatch(
+      /const \{[^}]*\bunifiedInboxItems\b[^}]*\bpostToInventory\b[^}]*\}\s*=\s*useOpsStore\(\)/,
+    );
     expect(src).toMatch(/postToInventory\(item\.entityId\)/);
   });
 
