@@ -45,7 +45,7 @@ export function computeCompleteness(product: Record<string, unknown> | null | un
 // §product-detail-refinement 계약② (D6) — 체크리스트 역할별 액션 파생
 //   정본: PLAN_product-detail-sourcing-refinement.md §0-B 매트릭스(라벨 × 역할).
 //   계산 로직·분모·COMPLETENESS_FIELDS 무변경. missingLabels 옆에 액션만 파생.
-//   buyer = 권한 밖 편집(사용 용도·보관 조건·안전 등)은 `정보 요청`/`SDS 요청`(→/support)으로 수렴 → dead button 0.
+//   buyer = 권한 밖(위험도 분류·사용 용도·보관 조건 등 편집)은 `정보 요청`/`SDS 요청`(→/support)으로 수렴 → dead button 0.
 //   ADMIN·SUPPLIER = 편집 액션(스펙 편집·안전 정보 편집·SDS 업로드). disabled 버튼 미사용.
 // ─────────────────────────────────────────────────────────────
 
@@ -135,9 +135,9 @@ export function resolveCompletenessAction(fieldKey: string, role: CompletenessRo
 }
 
 /**
- * missingLabels 옆 파생 — 미등록 필드마다 역할별 액션 + (D7) 미분류 시 별도 표시 전용 행.
+ * missingLabels 옆 파생 — 미등록 필드마다 역할별 액션 + (D7) 미분류 시 위험도 분류 행.
  *   UI 는 이 배열만 소비(하드코딩 금지). 항목 수는 데이터 파생(D8, `6` 하드코딩 금지).
- *   해당 표시 전용 행은 COMPLETENESS_FIELDS·분모 8 밖(classified===false 일 때만).
+ *   위험도 분류 행은 COMPLETENESS_FIELDS·분모 8 밖(표시 전용, classified===false 일 때만).
  */
 export function resolveCompletenessActions(
   product: Record<string, unknown> | null | undefined,
@@ -147,7 +147,7 @@ export function resolveCompletenessActions(
   const rows = COMPLETENESS_FIELDS.filter((f) => isEmpty(product?.[f.key])).map((f) =>
     resolveCompletenessAction(f.key, role),
   );
-  // D7 — 미분류(classified === false)면 별도 소스(HAZARD_ACTION)의 표시 전용 행 추가(완성도 필드 아님, 분모 8 보존).
+  // D7 — 미분류(classified === false)면 위험도 분류 행을 별도 소스(HAZARD_ACTION)로 추가(완성도 필드 아님, 분모 8 보존).
   if (opts?.classified === false) {
     rows.push(role === "buyer" ? HAZARD_ACTION.buyer : HAZARD_ACTION.privileged);
   }
