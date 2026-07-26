@@ -1,23 +1,56 @@
 /**
- * §product-detail PD-B (§04) — 제품 정보 완성도(정직, 분모 고정)
+ * §product-detail PD-B (§04) — 제품 정보 완성도(정직)
  *
- * 호영님 확정(2026-06-20): 완성도 % = 채워진 8필드 / 8 × 100. 분모 8 고정.
- *   ★ 정직성(첫 세션 ④): 쉬운 필드만 골라 % 부풀리기 금지 — 규제규격·SDS 같은
- *     어려운 필드 포함. 산정 필드 집합은 여기서만 정의(분모 조작 차단).
+ * 호영님 확정(2026-06-20): 완성도 % = 채워진 필드 / 산정 필드 × 100.
  *   빈 필드는 "미등록"으로 표기(가짜 채움 0). null/""/"null"/공백 = 미등록.
+ *
+ * §completeness-category-denominator (호영님 2026-07-26) — CEO 결정 교체:
+ *   분모 8 고정 → **카테고리 적용 필드 분모**. 핀셋(TOOL)에 SDS·규제규격을 요구하지 않는다
+ *   (비해당 필드를 미완성으로 경고하던 범주 오류 해소).
+ *   ⛔ 부풀리기 방지는 3중 가드로 계승(구 정직론): ①universal 5 하한 ②category=DB canonical
+ *      (제품별 토글 불가) ③null/미상 → 8 전부. "쉬운 필드 골라 %↑" 는 여전히 불가능.
  */
 
-/** 완성도 산정 8필드(고정). key = Product 필드, label = 미등록 표시용. */
+/** 완성도 산정 8필드. key = Product 필드, label = 미등록 표시용.
+ *  appliesTo 생략 = universal(전 카테고리 분모 포함). 지정 시 그 카테고리에만 산정. */
 export const COMPLETENESS_FIELDS = [
-  { key: "catalogNumber", label: "카탈로그 번호" },
-  { key: "specification", label: "규격/용량" },
-  { key: "regulatoryCompliance", label: "규제 규격" },
-  { key: "grade", label: "등급" },
-  { key: "manufacturer", label: "제조사" },
-  { key: "usageDescription", label: "사용 용도" },
-  { key: "storageCondition", label: "보관 조건" },
-  { key: "msdsUrl", label: "SDS/MSDS" },
+  { key: "catalogNumber", label: "카탈로그 번호" }, // universal
+  { key: "specification", label: "규격/용량" }, // universal
+  { key: "regulatoryCompliance", label: "규제 규격", appliesTo: ["REAGENT", "RAW_MATERIAL"] },
+  { key: "grade", label: "등급" }, // universal
+  { key: "manufacturer", label: "제조사" }, // universal
+  { key: "usageDescription", label: "사용 용도" }, // universal
+  { key: "storageCondition", label: "보관 조건", appliesTo: ["REAGENT", "RAW_MATERIAL", "CONSUMABLE"] },
+  { key: "msdsUrl", label: "SDS/MSDS", appliesTo: ["REAGENT", "RAW_MATERIAL"] },
 ] as const;
+
+/** universal 필드(appliesTo 없음) — 안티-부풀리기 하한(항상 분모 포함). */
+const UNIVERSAL_COUNT = COMPLETENESS_FIELDS.filter((f) => !("appliesTo" in f)).length; // = 5
+
+/** 조건부 필드가 인정하는 canonical 카테고리 집합(safety-settings VALID_CATEGORIES 정합).
+ *  이 집합 밖(garbage·오타·미래 값)은 "미상" 으로 간주 → 전 필드 요구(부풀리기 0). */
+const KNOWN_CATEGORIES = new Set(["REAGENT", "TOOL", "EQUIPMENT", "CONSUMABLE", "RAW_MATERIAL"]);
+
+/**
+ * category 에 적용되는 산정 필드.
+ *   - appliesTo 없음(universal) → 항상 포함.
+ *   - appliesTo 있음 → category 가 목록에 있을 때만 포함.
+ *   - category null/미상/미정의 → **전 필드 포함**(보수적 폴백, 부풀리기 0).
+ * 결과 분모는 항상 universal 하한(5) 이상 — 카테고리로 5 미만 못 만든다.
+ */
+export function applicableFields(category: string | null | undefined): typeof COMPLETENESS_FIELDS[number][] {
+  // 미상 = null/공백 OR canonical 집합 밖(garbage·오타). 미정의 값을 TOOL 처럼 5 로 깎으면
+  //   부풀리기 갭이 열린다 → KNOWN_CATEGORIES 밖은 전부 8(전 필드) 요구.
+  const norm = category == null ? "" : String(category).trim();
+  const unknown = norm === "" || !KNOWN_CATEGORIES.has(norm);
+  const fields = COMPLETENESS_FIELDS.filter((f) => {
+    if (!("appliesTo" in f)) return true; // universal
+    if (unknown) return true; // 미상 = 전 필드 요구(관대 처리 금지)
+    return (f.appliesTo as readonly string[]).includes(norm);
+  });
+  // 하한 가드 — 논리상 universal 만으로 이미 충족(5)이나 명시적 방어.
+  return fields.length >= UNIVERSAL_COUNT ? fields : [...COMPLETENESS_FIELDS];
+}
 
 function isEmpty(v: unknown): boolean {
   if (v == null) return true;
@@ -26,18 +59,19 @@ function isEmpty(v: unknown): boolean {
 }
 
 export interface CompletenessResult {
-  pct: number; // 0~100 (분모 = 8 고정)
+  pct: number; // 0~100
   known: number;
-  total: number; // 항상 8
-  missingLabels: string[]; // 미등록 필드 라벨
+  total: number; // 카테고리 적용 필드 수(≥ 5)
+  missingLabels: string[]; // 미등록 필드 라벨(적용 필드 한정)
 }
 
-/** 8필드 고정 분모 완성도. 분모를 필드 선택으로 조작하지 않음(정직). */
+/** 카테고리 적용 필드 분모 완성도. 분모 = applicableFields(category).length (≥ 5). */
 export function computeCompleteness(product: Record<string, unknown> | null | undefined): CompletenessResult {
-  const total = COMPLETENESS_FIELDS.length; // 8 고정
-  const missing = COMPLETENESS_FIELDS.filter((f) => isEmpty(product?.[f.key]));
+  const fields = applicableFields(product?.category as string | null | undefined);
+  const total = fields.length;
+  const missing = fields.filter((f) => isEmpty(product?.[f.key]));
   const known = total - missing.length;
-  const pct = Math.round((known / total) * 100);
+  const pct = total > 0 ? Math.round((known / total) * 100) : 100;
   return { pct, known, total, missingLabels: missing.map((f) => f.label) };
 }
 
@@ -142,7 +176,9 @@ export function resolveCompletenessActions(
   product: Record<string, unknown> | null | undefined,
   role: CompletenessRole,
 ): CompletenessAction[] {
-  return COMPLETENESS_FIELDS.filter((f) => isEmpty(product?.[f.key])).map((f) =>
-    resolveCompletenessAction(f.key, role),
-  );
+  // §completeness-category-denominator — 체크리스트도 적용 필드만(분모와 동일 집합).
+  //   TOOL 에 SDS·규제규격 행이 뜨던 범주 오류 해소. 분모에서 빠진 필드는 목록에도 없다.
+  return applicableFields(product?.category as string | null | undefined)
+    .filter((f) => isEmpty(product?.[f.key]))
+    .map((f) => resolveCompletenessAction(f.key, role));
 }

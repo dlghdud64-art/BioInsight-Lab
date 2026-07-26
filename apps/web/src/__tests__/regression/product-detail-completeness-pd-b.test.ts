@@ -25,8 +25,10 @@ describe("§product-detail PD-B(§04) — 완성도 엔진(8필드 고정 분모
       expect(LIB).toMatch(new RegExp(`key: "${k}"`));
     }
   });
-  it("분모 = COMPLETENESS_FIELDS.length 고정(조작 금지) + isEmpty 정직", () => {
-    expect(LIB).toMatch(/const total = COMPLETENESS_FIELDS\.length/);
+  it("분모 = 카테고리 적용 필드(§completeness-category-denominator 교체) + isEmpty 정직", () => {
+    // CEO 결정 교체(2026-07-26): 분모 8 고정 → applicableFields(category).length.
+    //   부풀리기 방지는 universal 하한(5)·null→8 폴백으로 계승(§denominator 계약③).
+    expect(LIB).toMatch(/applicableFields\(/);
     expect(LIB).toMatch(/known \/ total/);
     expect(LIB).toMatch(/toLowerCase\(\) === "null"/);
   });
@@ -38,15 +40,19 @@ describe("§product-detail PD-B(§04·§05) — 완성도 바 + 미등록 축약
     expect(COMP).toMatch(/computeCompleteness/);
     expect(COMP).toMatch(/if \(pct >= 100\) return null/);
   });
-  it("미등록 1줄 축약 + 정보 요청(실 라우트 /support, dead button 0)", () => {
-    expect(COMP).toMatch(/missingLabels\.join/);
-    expect(COMP).toMatch(/href="\/support"/);
+  it("미등록 = 역할별 액션 그리드 + 정보 요청(실 라우트 /support, dead button 0)", () => {
+    // §product-detail-refinement Phase 3(3a7f6e01) — 1줄 축약(missingLabels.join) 폐기,
+    //   resolveCompletenessActions 파생 그리드로 재작성. pd-b 를 그 설계로 진화(2026-07-26).
+    expect(COMP).toMatch(/resolveCompletenessActions/);
+    expect(COMP).toMatch(/href/);
     expect(COMP).toMatch(/정보 요청/);
   });
-  it("§PD-flat 시안 amber-hex 완성도(빨강 0, amber/orange 클래스 0 — app-wide 가드 정합)", () => {
-    // CEO 2026-06-21 §11.302 예외 승인: 완성도 = 시안 amber 톤(arbitrary hex #fbf0db/#dd9011).
-    //   단 amber/orange Tailwind 클래스는 0(app-wide-amber-removed 가드 정합), 빨강 금지 보존.
-    expect(COMP).toMatch(/bg-\[#fbf0db\]/);
+  it("§0-B amber-hex 완성도(빨강 0, amber/orange 클래스 0 — app-wide 가드 정합)", () => {
+    // §product-detail-refinement §0-B(3a7f6e01) — arbitrary 클래스 bg-[#fbf0db] 폐기,
+    //   style={{backgroundColor:"#fffbeb"}} 등 §0-B 8토큰으로 전환. refinement 계약⑦(구 hex 잔존 0)과 정합.
+    //   CEO 2026-06-21 §11.302 hex 예외는 승계(클래스 금지·빨강 금지 불변).
+    expect(COMP).toMatch(/#fffbeb|#92400e/);
+    expect(COMP).not.toMatch(/bg-\[#fbf0db\]|#fbf0db/);
     expect(COMP).not.toMatch(/-amber-\d|-orange-\d/);
     expect(COMP).not.toMatch(/bg-red-|text-red-|border-red-/);
   });

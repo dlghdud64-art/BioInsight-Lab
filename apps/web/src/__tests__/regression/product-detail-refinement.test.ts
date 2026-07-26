@@ -238,14 +238,17 @@ describe("§refinement 계약⑦ — 프로토타입 amber hex 정합(§0-C)", (
  * 회귀 0 — 본 트랙이 건드리지 않아야 하는 것
  * ───────────────────────────────────────────────────────────── */
 describe("§refinement — 회귀 0(canonical truth 무접촉)", () => {
-  it("완성도 분모 8필드 고정 보존(PD-B 계산 로직 불변)", () => {
+  it("완성도 8필드 정의 보존 + 분모는 카테고리 파생(§completeness-category-denominator 교체)", () => {
+    // 8필드 *정의* 는 불변(교체된 건 분모 계산이지 필드가 아니다).
     for (const k of [
       "catalogNumber", "specification", "regulatoryCompliance", "grade",
       "manufacturer", "usageDescription", "storageCondition", "msdsUrl",
     ]) {
       expect(LIB).toMatch(new RegExp(`key: "${k}"`));
     }
-    expect(LIB).toMatch(/const total = COMPLETENESS_FIELDS\.length/);
+    // CEO 결정 교체(2026-07-26): 분모 8 고정 → applicableFields(category).length.
+    //   부풀리기 방지는 universal 하한·KNOWN_CATEGORIES 폴백으로 계승.
+    expect(LIB).toMatch(/applicableFields\(/);
     expect(LIB).toMatch(/known \/ total/);
   });
   it("100% 시 배지 숨김 보존", () => {
