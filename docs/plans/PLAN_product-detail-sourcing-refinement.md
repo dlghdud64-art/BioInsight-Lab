@@ -631,21 +631,13 @@ D7·D8 및 결함 2를 Phase 3 착수 전 계약에 반영할 것.
 
 ## 11. Progress Tracking
 
-- Overall completion: **100%** ✅ (Phase 1~4 완료 · **48/48 GREEN** · F10 EXIT 0 · 런타임 스모크 S1·S3 PASS)
-- Current phase: **완료** (계약 위생 stripComments · 주석 4곳 원복 · 헤더 갱신)
+- Overall completion: **90%** (3b 완료 `ab0e4e2d` · **48/48 GREEN** · F10 EXIT 0)
+- Current phase: **Phase 4 — 런타임 스모크 · 계약 위생 · 문서**
 - Current blocker: **없음**
+- Next validation step: 런타임 스모크 6종(정적 게이트가 못 보는 영역)
 
-#### Phase 4 런타임 스모크 (www.labaxis.co.kr, `ab0e4e2d` 배포 · 2026-07-26)
-| # | 시나리오 | 결과 | 근거 |
-| :-- | :--- | :--- | :--- |
-| S1 | 미분류 제품 → 위험도 행 렌더 | ✅ **런타임 PASS** | PBS(완성도 63%): 체크리스트 "등록이 필요한 정보 (4)" 에 **위험도 분류 · 정보 요청** 행 렌더. classified=`level!=='unknown'`→false→행 노출, 방향 정상(비반전). buyer 라 정보 요청 라벨(편집 미노출, D6). |
-| S2 | ADMIN 스펙 편집 클릭 → Dialog | 🟡 정적 승계 | buyer/공개 뷰라 런타임 미도달. onSpecEdit/onSafetyEdit/onSdsUpload 배선 정적 확인(계약⑧). |
-| S3 | 담기 → 해제 상태 전이 | ✅ **런타임 PASS** | 견적 담기 클릭 → 주 CTA "견적 요청서 만들기→/dashboard/quotes" + 해제 칩 출현. 해제 클릭 → 견적 담기 복귀(⑨-2 quote-cart-changed 재읽기, front-only 거울상 없음). |
-| S4 | 규제 포털 더보기 | ✅ 육안 | "국내 규제기관 포털 · 6개 기관 · 식약처 포털 · 화학물질안전원(상시 2=mfds·kchem) · 더보기 (4개)". 필터 분할 정상. |
-| S5 | 100% 제품 카드 숨김 | 🟡 정적 승계 | seed 전 제품 <100% → 100% 미도달. `if (pct>=100) return null` 정적 확인. |
-| S6 | 375px 모바일 | ✅ 육안 | 체크리스트(위험도 행 포함) 렌더, overflow 무. 모바일 하단 CTA 동일 로직. |
-
-- **캐비앗**: seed 314/314 전 제품이 미분류(hazardCodes·pictograms·casNo 전무) → S1 항상 발현. S2·S5 는 admin·100% 데이터 부재로 정적 승계(§reports-honesty 전례 동종). **증거 등급 = 정적 소스 매칭 + S1·S3·S4·S6 런타임.**
+⚠️ **증거 등급 주의:** 48/48 은 **전부 소스 문자열 매칭**이다. "문구가 파일에 있다" 를 증명할 뿐
+**렌더·클릭·상태 전이는 하나도 증명하지 않는다.** Phase 4 스모크 전까지 "동작한다" 고 말하지 말 것.
 
 **🔴 계약 파일 구조 결함 — 4회 반복 후 근본 수정(2026-07-25):**
 
@@ -737,6 +729,21 @@ D7·D8 및 결함 2를 Phase 3 착수 전 계약에 반영할 것.
 ---
 
 ## 12. Notes & Learnings
+
+**트랙 종료 시 잔여 리스크 (2026-07-25 · 코드 결함 아님 — 후속 트랙 입력):**
+
+1. **[High · 제품] 314/314 전 제품이 미분류.** S1 스모크 중 실측. `hazardCodes`·`pictograms`·`casNo`
+   전무 → `level: "unknown"`. **D7 위험도 행이 모든 제품에 뜬다.** 의도는 "미분류를 숨기지 않는다" 였는데,
+   100% 가 미분류면 그 행은 **변별력 0** 이고 체크리스트 항목 수를 전 제품에서 +1 한다.
+   → 본 트랙 코드는 정상. **CAS 위험도 분류 파이프라인이 산출물을 하나도 못 내고 있다**는 뜻이므로
+   `§cas-hazard-classification` 쪽 별도 트랙에서 다룰 것. 분류가 채워지면 이 행은 자동으로 희소해진다.
+
+2. **[Med] S2(ADMIN 편집 Dialog) 미검증.** admin 계정·데이터 부재로 정적 승계. **계약⑧이 구조적으로
+   못 보는 영역** — 핸들러 prop 전달만 검사하므로 `onSpecEdit={() => {}}` 여도 GREEN 이다.
+   → ADMIN 계정 확보 시 1분 스모크로 종결할 것. 그 전까지 "ADMIN 편집 경로 검증됨" 이라고 말하지 말 것.
+
+3. **[Low] S5(100% 제품 카드 숨김) 미검증.** 완성도 100% 제품이 시드에 없음. 조건문은 PD-B 시절부터
+   무변경이므로 회귀 가능성은 낮다.
 
 **Blockers Encountered:**
 - [2026-07-25] **Phase 2 지시 자기모순.** 내가 쓴 계약②가 COMP 소스를 grep 하는데 Phase 2 지시는 "lib 2파일만".

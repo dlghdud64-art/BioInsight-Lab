@@ -45,7 +45,7 @@ export function computeCompleteness(product: Record<string, unknown> | null | un
 // §product-detail-refinement 계약② (D6) — 체크리스트 역할별 액션 파생
 //   정본: PLAN_product-detail-sourcing-refinement.md §0-B 매트릭스(라벨 × 역할).
 //   계산 로직·분모·COMPLETENESS_FIELDS 무변경. missingLabels 옆에 액션만 파생.
-//   buyer = 권한 밖(위험도 분류·사용 용도·보관 조건 등 편집)은 `정보 요청`/`SDS 요청`(→/support)으로 수렴 → dead button 0.
+//   buyer = 권한 밖(사용 용도·보관 조건 등 편집)은 `정보 요청`/`SDS 요청`(→/support)으로 수렴 → dead button 0.
 //   ADMIN·SUPPLIER = 편집 액션(스펙 편집·안전 정보 편집·SDS 업로드). disabled 버튼 미사용.
 // ─────────────────────────────────────────────────────────────
 
@@ -113,43 +113,36 @@ export const ACTION_BY_FIELD: Record<
   },
 };
 
-/** 위험도 분류 행(D7) — 완성도 필드 아님(별도 소스, classified===false). 표시 전용. */
-const HAZARD_ACTION: { buyer: CompletenessAction; privileged: CompletenessAction } = {
-  buyer: { label: "위험도 분류", actionKind: "info_request", href: "/support", actionLabel: "정보 요청" },
-  privileged: { label: "위험도 분류", actionKind: "safety_edit", actionLabel: "안전 정보 편집", requiresRole: PRIVILEGED },
-};
-
 /**
  * 미등록 필드 key + 역할 → 노출 액션(buyer 는 요청 수렴, privileged 는 편집).
- *   D7: 매핑 누락은 조용히 삼키지 않는다 — privileged 폴백에 info_request 반환 금지. 미정의 필드는 loud throw.
+ *   ⚠️ 매핑 누락은 조용히 삼키지 않는다 — privileged 폴백에 info_request 반환 금지. 미정의 필드는 loud throw.
  *   ACTION_BY_FIELD 는 COMPLETENESS_FIELDS 8키 전수 매핑(폴백은 dead branch = 프로그래머 오류 방어).
  */
 export function resolveCompletenessAction(fieldKey: string, role: CompletenessRole): CompletenessAction {
   const entry = ACTION_BY_FIELD[fieldKey];
   if (!entry) {
     throw new Error(
-      `[completeness] ACTION_BY_FIELD 매핑 누락: "${fieldKey}" — 조용한 info_request 폴백 금지(D7). 8필드 전수 매핑 필요.`,
+      `[completeness] ACTION_BY_FIELD 매핑 누락: "${fieldKey}" — 조용한 info_request 폴백 금지. 8필드 전수 매핑 필요.`,
     );
   }
   return role === "buyer" ? entry.buyer : entry.privileged;
 }
 
 /**
- * missingLabels 옆 파생 — 미등록 필드마다 역할별 액션 + (D7) 미분류 시 위험도 분류 행.
- *   UI 는 이 배열만 소비(하드코딩 금지). 항목 수는 데이터 파생(D8, `6` 하드코딩 금지).
- *   위험도 분류 행은 COMPLETENESS_FIELDS·분모 8 밖(표시 전용, classified===false 일 때만).
+ * missingLabels 옆 파생 — 미등록 필드마다 역할별 액션. UI 는 이 배열만 소비(하드코딩 금지).
+ * 항목 수는 데이터 파생(D8, `6` 하드코딩 금지).
+ *
+ * ⛔ D7(위험도 분류 행) 철회 — 2026-07-26.
+ *   체크리스트는 **사용자가 직접 채울 수 있는 결손**만 담는다. 위험도는 `casNo` 에서 파생되는 값이라
+ *   누구도 "등록" 할 수 없고, `정보 요청` 버튼도 실질 대상이 없었다(액션 불가능한 파생값).
+ *   미분류 사실은 히어로 키팩트 `안전 위험도: 미분류`(getProductSafetyLevel)가 이미 고지하므로
+ *   canonical 규칙(미분류를 '일반'으로 오도 금지)은 그대로 지켜진다. 여기 행은 중복이었다.
  */
 export function resolveCompletenessActions(
   product: Record<string, unknown> | null | undefined,
   role: CompletenessRole,
-  opts?: { classified?: boolean },
 ): CompletenessAction[] {
-  const rows = COMPLETENESS_FIELDS.filter((f) => isEmpty(product?.[f.key])).map((f) =>
+  return COMPLETENESS_FIELDS.filter((f) => isEmpty(product?.[f.key])).map((f) =>
     resolveCompletenessAction(f.key, role),
   );
-  // D7 — 미분류(classified === false)면 위험도 분류 행을 별도 소스(HAZARD_ACTION)로 추가(완성도 필드 아님, 분모 8 보존).
-  if (opts?.classified === false) {
-    rows.push(role === "buyer" ? HAZARD_ACTION.buyer : HAZARD_ACTION.privileged);
-  }
-  return rows;
 }

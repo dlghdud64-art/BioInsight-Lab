@@ -442,11 +442,10 @@ export default function ProductDetailPage() {
                   })()}
                   {/* §product-detail PD-M(§05) — Cat.No 는 제품명 아래로 이동(위). 여기선 완성도만. */}
                   <div className="mt-4">
-                    {/* §product-detail-refinement 계약②·⑧ — role/classified/편집 핸들러 배선.
-                        classified = 안전 수준이 미분류(unknown) 아님. 편집 핸들러 = 기존 스펙·안전 편집 다이얼로그 재사용. */}
+                    {/* §product-detail-refinement 계약②·⑧ — role/편집 핸들러 배선(편집 다이얼로그 재사용).
+                        ⛔ classified 전달 철회(2026-07-26) — D7 위험도 행 폐기. 미분류 고지는 히어로 키팩트가 담당. */}
                     <ProductCompleteness product={product}
                       role={role as any}
-                      classified={getProductSafetyLevel(product).level !== "unknown"}
                       onSpecEdit={() => {
                         setSpecForm(product?.specification || "");
                         setIsSpecEditing(true);

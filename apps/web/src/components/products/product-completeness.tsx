@@ -3,7 +3,8 @@
 /**
  * §product-detail PD-B (§04·§05) + §product-detail-refinement 계약②·⑦
  *   - 완성도 %(분모 8 고정, computeCompleteness) + 100% 시 숨김.
- *   - 미등록 = **6항목(가변, D8) 2열 체크리스트 그리드**(1줄 축약 폐기). 항목 = missingLabels 파생 + 위험도 행(D7).
+ *   - 미등록 = **가변 항목(D8) 2열 체크리스트 그리드**(1줄 축약 폐기). 항목 = missingLabels 파생.
+ *     ⛔ D7 위험도 행 철회(2026-07-26) — 액션 불가능한 파생값. 미분류 고지는 히어로 키팩트가 담당.
  *   - 역할 분기(D6): buyer 는 편집 라벨(스펙 편집·안전 정보 편집) 미노출 → `정보 요청`/`SDS 요청`(/support) 수렴.
  *     ADMIN·SUPPLIER(canEdit) 만 편집 액션. dead button 0(정보 요청 = 실 이동, 편집 = handler). disabled 미사용.
  *   - 색 = 프로토타입 amber hex 8토큰(§0-B, D5 — CEO §11.302 예외 승계). Tailwind amber/orange 클래스 0, 빨강 0.
@@ -20,15 +21,12 @@ import {
 export function ProductCompleteness({
   product,
   role = "buyer",
-  classified,
   onSpecEdit,
   onSafetyEdit,
   onSdsUpload,
 }: {
   product: Record<string, unknown> | null | undefined;
   role?: CompletenessRole;
-  /** 위험도 분류 여부 — false 면 위험도 행 추가(D7). undefined 면 위험도 행 없음. */
-  classified?: boolean;
   onSpecEdit?: () => void;
   onSafetyEdit?: () => void;
   onSdsUpload?: () => void;
@@ -37,7 +35,7 @@ export function ProductCompleteness({
   if (pct >= 100) return null; // 완전한 제품 = 완성도 배지 숨김(§04)
 
   const canEdit = role === "ADMIN" || role === "SUPPLIER";
-  const items = resolveCompletenessActions(product, role, { classified });
+  const items = resolveCompletenessActions(product, role);
 
   // actionKind → 라벨. buyer(!canEdit): 편집 라벨(스펙 편집·안전 정보 편집) 미노출 → 정보 요청 수렴(D6, 이중 방어).
   function actionText(kind: CompletenessActionKind): string {

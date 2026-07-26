@@ -1,5 +1,5 @@
 /**
- * §product-detail-refinement — 소싱 제품 상세 정보밀도·CTA 정리 (Phase 1~3 완료 · 48/48 GREEN · 회귀 가드)
+ * §product-detail-refinement — 소싱 제품 상세 정보밀도·CTA 정리 (Phase 1 계약)
  *
  * 계획서: docs/plans/PLAN_product-detail-sourcing-refinement.md
  * 핸드오프: 소싱 제품 상세 핸드오프.md (2026-07-25)
@@ -13,9 +13,7 @@
  *        ScanHubModal.tsx 의 동일 예외도 **무접촉**.
  *   D6 — buyer 권한 밖 3항목을 `정보 요청` 으로 수렴(dead button 0).
  *
- * Phase 3 구현 완료(2026-07-26): 계약 ①~⑨ 전건 48/48 GREEN. 이제 회귀 방지 가드.
- *   런타임 스모크(www.labaxis.co.kr): S1 위험도 행 렌더(미분류 제품, classified 방향 정상)·
- *   S3 담기→해제 CTA 전이(⑨-2 재읽기) 실측 PASS. 증거 등급 = 정적 소스 매칭 + S1·S3 런타임.
+ * 본 파일은 Phase 1 = RED. 전 계약이 현재 코드에서 FAIL 해야 정상이다.
  */
 
 import { describe, it, expect } from "vitest";
@@ -46,12 +44,14 @@ const PAGE = root("app/products/[id]/page.tsx");
 const COMP = root("components/products/product-completeness.tsx");
 const LIB = root("lib/product-detail/completeness.ts");
 const CART = root("lib/quote/quote-cart-storage.ts");
+const SAFETY = root("lib/utils/safety-visualization.ts");
 
 /** 부정 단언 전용 — 주석 제거본. 삭제 대상 문구를 주석에 자유롭게 적을 수 있게 한다. */
 const PAGE_CODE = stripComments(PAGE);
 const COMP_CODE = stripComments(COMP);
 const LIB_CODE = stripComments(LIB);
 const CART_CODE = stripComments(CART);
+const SAFETY_CODE = stripComments(SAFETY);
 
 /* ─────────────────────────────────────────────────────────────
  * 계약 ① — 견적함 단일 품목 해제 (신규 mutation)
@@ -276,7 +276,16 @@ describe("§refinement — 회귀 0(canonical truth 무접촉)", () => {
 });
 
 /* ─────────────────────────────────────────────────────────────
- * 계약 ⑧ — D7·D8 배선 (Phase 3 본작업 3 타깃)
+ * 계약 ⑧ — D8 배선 + 미분류 고지 (D7 철회 후)
+ *
+ *   ⛔ **D7(체크리스트 위험도 행) 철회 — 2026-07-26.**
+ *      전제가 틀렸다. "칩을 지우면 미분류가 사라진다" 고 봤으나, **히어로 키팩트가 이미
+ *      `안전 위험도: 미분류` 를 표시**하고 있었다(`getProductSafetyLevel` → label "미분류").
+ *      canonical 규칙(미분류를 '일반'으로 오도 금지)은 거기서 충족된다. 체크리스트 행은 중복이었고,
+ *      계약⑤가 없애려던 "미등록 경고 다중 분산" 을 오히려 하나 더 늘렸다.
+ *      게다가 위험도는 `casNo` 파생값이라 **사용자가 채울 수 없다** — 액션 불가능한 항목을
+ *      결손 목록에 넣은 것 자체가 범주 오류(실측: 314/314 전 제품 노출 = 변별력 0).
+ *      → 아래는 D7 단언을 **히어로 고지 보존 단언으로 교체**한다. 은폐 0 은 히어로가 책임진다.
  *
  *   저작 독립: 구현자(호영님 세션)가 아닌 계획 측에서 작성. self-grading 회피.
  *
@@ -292,22 +301,17 @@ describe("§refinement — 회귀 0(canonical truth 무접촉)", () => {
  *   D8 = 항목 수는 데이터 파생. 프로토타입의 `6` 은 샘플 제품값 → 리터럴 금지.
  * ───────────────────────────────────────────────────────────── */
 describe("§refinement 계약⑧ — D7 위험도 행 · D8 동적 카운트", () => {
-  it("D7: PAGE 가 classified 를 ProductCompleteness 로 전달(미전달 = 위험도 소멸)", () => {
-    expect(PAGE).toMatch(/<ProductCompleteness[\s\S]{0,400}?classified=\{/);
+  it("미분류 고지가 히어로 키팩트에 보존(은폐 0 의 유일한 책임 지점)", () => {
+    expect(PAGE).toMatch(/getProductSafetyLevel\(/);
+    expect(PAGE).toMatch(/안전 위험도/);
   });
-  it("D7: classified 판정이 미분류(unknown) 소스에서 파생", () => {
-    expect(PAGE).toMatch(/getProductSafetyLevel\([\s\S]{0,200}?"unknown"|"unknown"[\s\S]{0,200}?classified/);
+  it("미분류 라벨이 canonical 헬퍼에서 나온다(인라인 하드코딩 금지)", () => {
+    expect(SAFETY).toMatch(/level: "unknown"[\s\S]{0,200}?label: "미분류"/);
   });
-  it("D7: 위험도 행 라벨이 완성도 필드가 아닌 별도 소스에서 생성", () => {
-    expect(LIB).toMatch(/위험도 분류/);
-    // ⚠️ 구 단언 `not.toMatch(/COMPLETENESS_FIELDS[\s\S]{0,400}?위험도/)` 는 **잘못 쓴 계약**이었다(2026-07-25).
-    //    의도는 "위험도가 완성도 *필드*가 아님" 인데 실제로는 **주석 산문의 '위험도' 단어**에 매칭돼,
-    //    구현자가 설명 주석 4곳을 리워딩해 회피하게 만들었다 = 계약이 문서 품질을 떨어뜨린 사례.
-    //    → 배열 리터럴 **내부만** 스코프해 구조로 검사한다. 주석은 자유롭게 쓸 수 있다.
-    const fields = LIB.match(/COMPLETENESS_FIELDS\s*=\s*\[([\s\S]*?)\]\s*as const/)?.[1] ?? "";
-    expect(fields).not.toBe("");
-    expect(fields).not.toMatch(/위험도|hazard|classified|safety/i);
-    expect(fields.match(/key:/g)?.length).toBe(8); // 분모 8 고정
+  it("체크리스트에 위험도 행 부재(D7 철회 — 액션 불가능 항목 금지)", () => {
+    expect(LIB_CODE).not.toMatch(/HAZARD_ACTION|위험도 분류/);
+    expect(COMP_CODE).not.toMatch(/classified/);
+    expect(PAGE_CODE).not.toMatch(/classified=\{/);
   });
   it("D8: 항목 수 리터럴 하드코딩 금지(프로토타입 6 = 샘플값)", () => {
     expect(COMP_CODE).not.toMatch(/등록이 필요한 정보 \(6\)|등록이 필요한 정보 6개/);
