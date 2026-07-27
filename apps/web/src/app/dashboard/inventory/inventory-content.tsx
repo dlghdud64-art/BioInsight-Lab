@@ -485,9 +485,9 @@ function InventoryPageContent() {
   // §stock-risk-consolidation P3 — 재주문 필요 판정 = canonical isReorderNeeded(공유 lib). 각자 계산 제거(drift 0).
   const lowStockItems = inventories.filter((inv) => isReorderNeeded(inv));
 
-  // §11.317 — 헤더 KPI 4 source (전체 품목 / 안전재고 미달 / 만료 임박 / 격리 Lot).
+  // §11.317 / §inventory-delta-label-kpi P4 — 헤더 KPI 3 source (전체 품목 / 만료 임박 / 안전재고 미달).
   //   canonical truth: inventories (mutation 0, derived projection 만).
-  //   격리 Lot = schema 에 quarantine_status 미존재 → 0 fallback (호영님 spec §4-2 후속 확장 가능).
+  //   격리 Lot KPI 제거(핸드오프 §3 — 격리 범위 제외 확정).
   const headerKpiTotalItems = inventories.length;
   const headerKpiLowStock = lowStockItems.length;
   const headerKpiExpiringSoon = inventories.filter((inv) => {
@@ -495,7 +495,6 @@ function InventoryPageContent() {
     const diffDays = (new Date(inv.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
     return diffDays >= 0 && diffDays <= 30;
   }).length;
-  const headerKpiQuarantineLot = 0; // schema 미정의 — backend 확장 시 source 교체
 
   // Canonical truth only — mock fallback removed per #P02 (ADR-002 canvas).
   // Empty inventory renders empty state CTA → real /api/inventory POST dialog.
@@ -1763,8 +1762,10 @@ function InventoryPageContent() {
                 ③ 0값 dim KPI(만료임박·격리) → 큰 0 대신 "✓ 정상"(emerald).
                 ④ 안전재고미달 클릭 → 표를 '재발주 필요'(low) 필터(N-safe·투명). 0건이면 비활성.
                 testid 4종 보존(§11.317). */}
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
-              {/* 1. 전체 품목 (중립) */}
+            {/* §inventory-delta-label-kpi P4 (핸드오프 §3) — 격리 Lot 카드 제거(범위 제외 확정) → KPI 3.
+                카운트 카드 클릭=필터 토글(재클릭 해제), 선택 시 파란 보더 + 필터 중 ✕. 0건 비클릭. */}
+            <div className="grid grid-cols-3 gap-2 md:gap-3">
+              {/* 1. 전체 품목 (중립·baseline) */}
               <div
                 data-testid="dashboard-inventory-header-kpi-total-items"
                 className={`rounded-lg border px-3 py-2 ${headerKpiTotalItems > 0 ? "border-slate-300 bg-white" : "border-slate-200 bg-gray-50"}`}
@@ -1775,12 +1776,28 @@ function InventoryPageContent() {
                   <span className="ml-0.5 text-[10px] font-bold text-slate-500">종</span>
                 </span>
               </div>
-              {/* 2. 만료 임박 (dispose · §11.302 우선) — de-red, 0=✓정상 */}
-              <div
+              {/* 2. 만료 임박 (dispose · §11.302 우선) — 클릭 시 expiring 필터 토글(0건 비클릭) */}
+              <button
+                type="button"
                 data-testid="dashboard-inventory-header-kpi-expiring-soon"
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2"
+                onClick={() => setStatusFilter((prev) => (prev === "expiring" ? "all" : "expiring"))}
+                disabled={headerKpiExpiringSoon === 0}
+                aria-pressed={statusFilter === "expiring"}
+                aria-label="만료 임박 품목만 보기"
+                className={`rounded-lg border px-3 py-2 text-left transition-colors ${
+                  statusFilter === "expiring"
+                    ? "border-blue-400 bg-blue-50/50 ring-1 ring-blue-200"
+                    : headerKpiExpiringSoon > 0
+                      ? "cursor-pointer border-slate-200 bg-white hover:border-yellow-200 hover:bg-yellow-50/40"
+                      : "cursor-default border-slate-200 bg-white"
+                }`}
               >
-                <span className={`block text-[10px] font-semibold ${headerKpiExpiringSoon > 0 ? "text-yellow-700" : "text-slate-500"}`}>만료 임박</span>
+                <span className="flex items-center justify-between gap-1">
+                  <span className={`block text-[10px] font-semibold ${headerKpiExpiringSoon > 0 ? "text-yellow-700" : "text-slate-500"}`}>만료 임박</span>
+                  {statusFilter === "expiring" && (
+                    <span className="flex items-center gap-0.5 text-[10px] font-bold text-blue-600">필터 중 ✕</span>
+                  )}
+                </span>
                 {headerKpiExpiringSoon > 0 ? (
                   <span className="mt-0.5 block text-lg font-extrabold leading-none md:text-xl text-yellow-700">
                     {headerKpiExpiringSoon}
@@ -1789,36 +1806,30 @@ function InventoryPageContent() {
                 ) : (
                   <span className="mt-0.5 block text-sm font-bold text-emerald-600">✓ 정상</span>
                 )}
-              </div>
-              {/* 3. 격리 Lot (dispose · §11.302 우선) — de-red, 0=✓정상 */}
-              <div
-                data-testid="dashboard-inventory-header-kpi-quarantine-lot"
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2"
-              >
-                <span className={`block text-[10px] font-semibold ${headerKpiQuarantineLot > 0 ? "text-rose-700" : "text-slate-500"}`}>격리 Lot</span>
-                {headerKpiQuarantineLot > 0 ? (
-                  <span className="mt-0.5 block text-lg font-extrabold leading-none md:text-xl text-rose-700">
-                    {headerKpiQuarantineLot}
-                    <span className="ml-0.5 text-[10px] font-bold">건</span>
-                  </span>
-                ) : (
-                  <span className="mt-0.5 block text-sm font-bold text-emerald-600">✓ 정상</span>
-                )}
-              </div>
-              {/* 4. 안전재고 미달 (reorder · §11.302 dispose 뒤) — de-red + 클릭 시 low 필터(N-safe) */}
+              </button>
+              {/* 3. 안전재고 미달 (reorder · §11.302 dispose 뒤) — 클릭 시 low 필터 토글(0건 비클릭) */}
               <button
                 type="button"
                 data-testid="dashboard-inventory-header-kpi-low-stock"
-                onClick={() => setStatusFilter("low")}
+                onClick={() => setStatusFilter((prev) => (prev === "low" ? "all" : "low"))}
                 disabled={headerKpiLowStock === 0}
+                aria-pressed={statusFilter === "low"}
                 aria-label="안전재고 미달 품목만 보기"
-                className={`group rounded-lg border border-slate-200 bg-white px-3 py-2 text-left transition-colors ${headerKpiLowStock > 0 ? "cursor-pointer hover:border-rose-200 hover:bg-rose-50/40" : "cursor-default"}`}
+                className={`group rounded-lg border px-3 py-2 text-left transition-colors ${
+                  statusFilter === "low"
+                    ? "border-blue-400 bg-blue-50/50 ring-1 ring-blue-200"
+                    : headerKpiLowStock > 0
+                      ? "cursor-pointer border-slate-200 bg-white hover:border-rose-200 hover:bg-rose-50/40"
+                      : "cursor-default border-slate-200 bg-white"
+                }`}
               >
                 <span className="flex items-center justify-between gap-1">
                   <span className={`block text-[10px] font-semibold ${headerKpiLowStock > 0 ? "text-rose-700" : "text-slate-500"}`}>안전재고 미달</span>
-                  {headerKpiLowStock > 0 && (
+                  {statusFilter === "low" ? (
+                    <span className="flex items-center gap-0.5 text-[10px] font-bold text-blue-600">필터 중 ✕</span>
+                  ) : headerKpiLowStock > 0 ? (
                     <span className="hidden items-center text-[10px] font-bold text-rose-600 group-hover:flex">자세히 →</span>
-                  )}
+                  ) : null}
                 </span>
                 <span className={`mt-0.5 block text-lg font-extrabold leading-none md:text-xl ${headerKpiLowStock > 0 ? "text-rose-700" : "text-gray-400"}`}>
                   {headerKpiLowStock}
@@ -1826,8 +1837,8 @@ function InventoryPageContent() {
                 </span>
               </button>
             </div>
-            {/* 운영 조치 1줄 배너 — 합산 0건이면 hide */}
-            {(lotIssueDisposalReviewCount + lotIssueApprovalPendingCount + lotIssueExecutableCount) > 0 && (
+            {/* §inventory-delta-label-kpi P4 (핸드오프 §3) — 운영 배너는 조치 2건+ 복합만(단건=KPI 카드가 역할, 중복 신호 금지). */}
+            {(lotIssueDisposalReviewCount + lotIssueApprovalPendingCount + lotIssueExecutableCount) >= 2 && (
               <button
                 type="button"
                 data-testid="dashboard-inventory-header-action-banner"

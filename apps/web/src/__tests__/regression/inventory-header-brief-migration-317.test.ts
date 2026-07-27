@@ -50,12 +50,14 @@ describe("§11.317 — 재고 헤더: 폐기 strip 제거 + KPI 4 + 1줄 배너"
     expect(src).not.toMatch(/labaxis-inventory-lot-issue-visible-audit-summary/);
   });
 
-  it("재고 본 목적 KPI 4개 (전체 품목/안전재고 미달/만료 임박/격리 Lot)", () => {
+  // §inventory-delta-label-kpi P4 (호영님 2026-07-27 핸드오프 §3) — 격리 Lot KPI 제거(범위 제외 확정).
+  //   KPI 4 → 3(전체 품목/만료 임박/안전재고 미달). 격리 testid 부재 확인.
+  it("재고 본 목적 KPI 3개 (전체 품목/만료 임박/안전재고 미달) — 격리 Lot 제거", () => {
     const src = read(INVENTORY_CONTENT);
     expect(src).toMatch(/data-testid="dashboard-inventory-header-kpi-total-items"/);
     expect(src).toMatch(/data-testid="dashboard-inventory-header-kpi-low-stock"/);
     expect(src).toMatch(/data-testid="dashboard-inventory-header-kpi-expiring-soon"/);
-    expect(src).toMatch(/data-testid="dashboard-inventory-header-kpi-quarantine-lot"/);
+    expect(src).not.toMatch(/data-testid="dashboard-inventory-header-kpi-quarantine-lot"/);
   });
 
   it("1줄 배너: 운영 조치 N건 + 운영 브리핑 열기 (real wiring, dead button 0)", () => {

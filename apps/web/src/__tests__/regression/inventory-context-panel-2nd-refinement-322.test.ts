@@ -128,8 +128,10 @@ describe("§11.322 — canonical 보존 (§11.320 결정 + caller props)", () =>
 describe("§11.322 Phase 5 — 모바일 + sourcing-context-rail 회귀 0", () => {
   it("액션 button 모바일 min-h-[44px] 보존 (§11.320 Phase 5)", () => {
     const src = read(PATH);
+    // §inventory-delta-label-kpi P2a-1 — 상단 재주문 버튼 제거(AI CTA 중복)로 액션 button 4→3.
+    //   잔여 3개(우선 소진/입고 등록/정보 수정) 모두 min-h-[44px] 유지 = 터치영역 intent 보존.
     const actionMinHCount = (src.match(/min-h-\[44px\] md:min-h-0 md:h-8/g) || []).length;
-    expect(actionMinHCount).toBeGreaterThanOrEqual(4);
+    expect(actionMinHCount).toBeGreaterThanOrEqual(3);
   });
 
   it("sourcing-context-rail.tsx — 본 패널 변경 영향 0 (의존성 유지 0)", () => {

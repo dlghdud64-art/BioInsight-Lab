@@ -128,9 +128,11 @@ describe("§11.320 — canonical 보존 (caller props + item mutation 0)", () =>
 describe("§11.320 Phase 5 — 모바일 터치 영역 ≥ 44px (CLAUDE.md §8 정합)", () => {
   it("액션 button 모바일 min-h-[44px] 정합 (md+ md:h-8 단순화)", () => {
     const src = read(PATH);
-    // 액션 button 4개(재주문/우선 소진/입고 등록/정보 수정) 모두 min-h-[44px] md:min-h-0 md:h-8
+    // §inventory-delta-label-kpi P2a-1 (호영님 2026-07-27 핸드오프 §1.2) — 상단 danger 재주문 버튼 제거
+    //   (AI 재발주안 검토 CTA와 중복). 액션 button 3개(우선 소진/입고 등록/정보 수정) 모두 min-h-[44px] 유지.
+    //   터치영역 intent 보존(잔여 버튼 전부 44px) — 4→3.
     const actionMinHCount = (src.match(/min-h-\[44px\] md:min-h-0 md:h-8/g) || []).length;
-    expect(actionMinHCount).toBeGreaterThanOrEqual(4);
+    expect(actionMinHCount).toBeGreaterThanOrEqual(3);
     // 옛 h-8 단독(모바일 32px) 잔존 0 — 액션 button 패턴 위반 금지
     expect(src).not.toMatch(/flex-1 h-8 text-xs bg-(?:blue|yellow)-600/);
   });
