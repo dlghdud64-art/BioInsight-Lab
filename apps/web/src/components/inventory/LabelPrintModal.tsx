@@ -59,9 +59,23 @@ interface LabelSpec {
   perSheet: string;
   /** A4 그리드 배치 geometry. 없으면(롤/커스텀) 흐름 배치 폴백. */
   grid?: LabelGrid;
+  /**
+   * §inventory-delta-label-kpi P3c (핸드오프 §2.3) — 규격별 레이아웃 프리셋.
+   *   compact(소형 3100/3101): QR + 품명·LOT·EXP. 긴 원시 ID는 QR에만(1D 텍스트 생략).
+   *   barcode(대형 3102/3104): QR + 1D(고유번호 텍스트) + EXP.
+   *   미지정(롤/커스텀): full(품명·Cat·LOT·QR·1D·EXP).
+   */
+  layout?: "compact" | "barcode";
   /** 커스텀 규격(사용자 입력) 표식 — widthMm/heightMm 는 입력값으로 대체. */
   custom?: boolean;
   recommended?: boolean;
+}
+
+// §P3c — 프리셋 → 필드 가시성. include 토글과 AND(토글 off 시 항상 숨김).
+function resolveLabelLayout(spec?: LabelSpec): { showCatalog: boolean; showLot: boolean; showBarcodeText: boolean } {
+  if (spec?.layout === "compact") return { showCatalog: false, showLot: true, showBarcodeText: false };
+  if (spec?.layout === "barcode") return { showCatalog: false, showLot: false, showBarcodeText: true };
+  return { showCatalog: true, showLot: true, showBarcodeText: true };
 }
 
 // §11.355-B 규격 데이터화 — 폼텍/DYMO 실측 치수(2026-06 formtec/retailer 대조).
@@ -69,13 +83,13 @@ interface LabelSpec {
 //   구 값 정정: 3101 60칸 38.1×19.2 / 3102 40칸 47×26.9 / 3104 27칸 62.7×30.1.
 // §P3a 그리드 geometry: A4(210×297). 여백·피치는 published 근사 — 실인쇄 calibration 대상.
 const LABEL_SPECS: LabelSpec[] = [
-  { id: "formtec-3100", name: "폼텍 3100 (바코드용)", widthMm: 38.1, heightMm: 21.2, perSheet: "1시트 65칸", recommended: true,
+  { id: "formtec-3100", name: "폼텍 3100 (바코드용)", widthMm: 38.1, heightMm: 21.2, perSheet: "1시트 65칸", recommended: true, layout: "compact",
     grid: { cols: 5, rows: 13, marginTopMm: 10.7, marginLeftMm: 4.7, pitchXMm: 40.6, pitchYMm: 21.2 } },
-  { id: "formtec-3101", name: "폼텍 3101 (소형)", widthMm: 38.1, heightMm: 19.2, perSheet: "1시트 60칸",
+  { id: "formtec-3101", name: "폼텍 3101 (소형)", widthMm: 38.1, heightMm: 19.2, perSheet: "1시트 60칸", layout: "compact",
     grid: { cols: 5, rows: 12, marginTopMm: 13.5, marginLeftMm: 4.7, pitchXMm: 40.6, pitchYMm: 22.7 } },
-  { id: "formtec-3102", name: "폼텍 3102 (바코드용)", widthMm: 47, heightMm: 26.9, perSheet: "1시트 40칸",
+  { id: "formtec-3102", name: "폼텍 3102 (바코드용)", widthMm: 47, heightMm: 26.9, perSheet: "1시트 40칸", layout: "barcode",
     grid: { cols: 4, rows: 10, marginTopMm: 12.9, marginLeftMm: 8, pitchXMm: 48.5, pitchYMm: 27.1 } },
-  { id: "formtec-3104", name: "폼텍 3104 (바코드용)", widthMm: 62.7, heightMm: 30.1, perSheet: "1시트 27칸",
+  { id: "formtec-3104", name: "폼텍 3104 (바코드용)", widthMm: 62.7, heightMm: 30.1, perSheet: "1시트 27칸", layout: "barcode",
     grid: { cols: 3, rows: 9, marginTopMm: 13.1, marginLeftMm: 8.4, pitchXMm: 64.6, pitchYMm: 30.9 } },
   { id: "dymo-11354", name: "DYMO 11354 (다목적)", widthMm: 57, heightMm: 32, perSheet: "롤 타입" },
   { id: "custom", name: "커스텀 규격 (직접 입력)", widthMm: 50, heightMm: 30, perSheet: "직접 설정", custom: true },
@@ -202,6 +216,8 @@ export function LabelPrintModal({ open, onOpenChange, selectedItems = [] }: Labe
   // §11.355-B — 인쇄/미리보기의 canonical 치수(mm). 커스텀이면 입력값, 아니면 프리셋 실측.
   const labelWidthMm = isCustomSpec ? (parseFloat(customW) || 50) : (activeSpec?.widthMm ?? 38.1);
   const labelHeightMm = isCustomSpec ? (parseFloat(customH) || 30) : (activeSpec?.heightMm ?? 21.2);
+  // §inventory-delta-label-kpi P3c — 규격별 필드 프리셋(인쇄·미리보기 공용).
+  const layout = resolveLabelLayout(activeSpec);
 
   // §11.355-B — 미리보기 라벨의 실 QR dataURL (inv.id 인코딩 = 스캔 payload 표준).
   //   미리보기=인쇄 일치(dead toggle 해소). selectedItems/QR 토글 변동 시 재생성.
@@ -239,12 +255,13 @@ export function LabelPrintModal({ open, onOpenChange, selectedItems = [] }: Labe
     }
 
     // §inventory-delta-label-kpi P3a — 라벨 1칸 내용(EXP는 YYYY.MM.DD 포맷).
+    // §inventory-delta-label-kpi P3c — 규격 프리셋으로 필드 게이트. 소형(compact)은 긴 원시 ID를 QR에만(1D 텍스트 생략).
     const cellContent = (item: (typeof items)[number]) => `
       <div class="name">${escapeHtml(item.name)}</div>
-      ${item.catalogNumber ? `<div class="cat">Cat. ${escapeHtml(item.catalogNumber)}</div>` : ""}
-      ${item.lotNumber ? `<div class="lot">Lot: ${escapeHtml(item.lotNumber)}</div>` : ""}
+      ${layout.showCatalog && item.catalogNumber ? `<div class="cat">Cat. ${escapeHtml(item.catalogNumber)}</div>` : ""}
+      ${layout.showLot && item.lotNumber ? `<div class="lot">Lot: ${escapeHtml(item.lotNumber)}</div>` : ""}
       ${includeQR && qrMap[item.id] ? `<img class="qr" src="${qrMap[item.id]}" alt="QR ${escapeHtml(item.id)}" />` : ""}
-      ${includeBarcode ? `<div class="code">${escapeHtml(item.id)}</div>` : ""}
+      ${layout.showBarcodeText && includeBarcode ? `<div class="code">${escapeHtml(item.id)}</div>` : ""}
       ${includeExpiry && item.expiryDate ? `<div class="expiry">EXP: ${escapeHtml(formatExp(item.expiryDate))}</div>` : ""}
     `;
 
@@ -542,15 +559,19 @@ export function LabelPrintModal({ open, onOpenChange, selectedItems = [] }: Labe
                   }}
                 >
                   <p className="text-[10px] font-bold text-slate-900 truncate">{item.name}</p>
-                  {item.catalogNumber && (
+                  {/* §P3c — 규격 프리셋: catalog·1D 텍스트 가시성 */}
+                  {layout.showCatalog && item.catalogNumber && (
                     <p className="text-[8px] text-slate-500 mt-0.5">Cat. {item.catalogNumber}</p>
+                  )}
+                  {layout.showLot && item.lotNumber && (
+                    <p className="text-[8px] text-slate-500 mt-0.5">Lot: {item.lotNumber}</p>
                   )}
                   <div className="flex items-center gap-2 mt-1.5">
                     {/* §11.355-B — 실 QR(inv.id 인코딩) 미리보기 = 인쇄 결과와 일치 */}
                     {includeQR && qrPreviewMap[item.id] && (
                       <img src={qrPreviewMap[item.id]} alt="QR" className="w-8 h-8 flex-shrink-0" />
                     )}
-                    {includeBarcode && (
+                    {layout.showBarcodeText && includeBarcode && (
                       <span className="text-[6px] font-mono text-slate-500 break-all leading-tight">{item.id}</span>
                     )}
                   </div>
