@@ -421,6 +421,13 @@ interface InventoryContextPanelProps {
   mode?: "detail" | "reorder";
   /** §inventory-redesign A-①' P2 — 재발주 권장 수량(canonical: /api/inventory/reorder-recommendations). null이면 섹션 미표시(가짜 0). */
   reorderQty?: number | null;
+  /** §inventory-delta-label-kpi P2a-3 (핸드오프 §1.1) — 권장수량 근거 분해(갭·납기소진·MOQ). 동일 API 파생, null이면 미표시. */
+  reorderBreakdown?: {
+    safetyGap: number;
+    leadTimeConsumption: number;
+    rawQuantity: number;
+    minOrderQty: number;
+  } | null;
   className?: string;
 }
 
@@ -435,6 +442,7 @@ export function InventoryContextPanel({
   onAssignLocation,
   mode = "detail",
   reorderQty = null,
+  reorderBreakdown = null,
   className = "",
 }: InventoryContextPanelProps) {
   // §11.320 Phase 2 — 상태 배너 onClick → operationalBriefPopup.open (풀 패널 진입)
@@ -681,6 +689,24 @@ export function InventoryContextPanel({
               <ShoppingCart className="h-3 w-3 mr-1" /> 재발주안 검토
             </Button>
           </div>
+          {/* §inventory-delta-label-kpi P2a-3 (핸드오프 §1.1) — 권장수량 근거 분해(항목별). canonical 파생, 조작 0. */}
+          {reorderBreakdown && (
+            <div className="mt-2 rounded-lg bg-slate-50 border border-bd/60 px-3 py-2 space-y-1">
+              <p className="text-[10px] font-semibold text-slate-500">권장 수량 근거</p>
+              <div className="flex justify-between text-[11px]">
+                <span className="text-slate-500">안전재고 갭</span>
+                <span className="font-medium text-slate-700 tabular-nums">+{reorderBreakdown.safetyGap} {item.unit}</span>
+              </div>
+              <div className="flex justify-between text-[11px]">
+                <span className="text-slate-500">납기 중 소진</span>
+                <span className="font-medium text-slate-700 tabular-nums">+{reorderBreakdown.leadTimeConsumption} {item.unit}</span>
+              </div>
+              <div className="flex justify-between text-[11px] pt-1 border-t border-bd/50">
+                <span className="text-slate-500">최소 주문 단위 반올림</span>
+                <span className="font-medium text-slate-700 tabular-nums">×{reorderBreakdown.minOrderQty}</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

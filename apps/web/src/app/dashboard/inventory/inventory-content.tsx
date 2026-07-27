@@ -574,7 +574,7 @@ function InventoryPageContent() {
   // 재구매 추천 목록 조회 (인벤토리 하이라이트용)
   const { data: reorderRecommendationsData } = useQuery<{
     // §inventory-panel-unify P2 — recommendedQty 보강(/api/inventory/reorder-recommendations 반환). optional → 없으면 패널 섹션 미표시(가짜 0).
-    recommendations: Array<{ inventoryId: string; recommendedQty?: number; blocked?: boolean; blockReasons?: string[] }>;
+    recommendations: Array<{ inventoryId: string; recommendedQty?: number; blocked?: boolean; blockReasons?: string[]; recommendationBreakdown?: { safetyGap: number; leadTimeConsumption: number; rawQuantity: number; minOrderQty: number } }>;
   }>({
     queryKey: ["reorder-recommendations-for-highlight"],
     queryFn: async () => {
@@ -2817,6 +2817,7 @@ function InventoryPageContent() {
               onClose={() => setContextPanelItem(null)}
               onLotDrillDown={() => setActiveInventoryTab("lot-tracking")}
               reorderQty={reorderRecommendationsData?.recommendations?.find((r) => r.inventoryId === contextPanelItem?.id)?.recommendedQty ?? null}
+              reorderBreakdown={reorderRecommendationsData?.recommendations?.find((r) => r.inventoryId === contextPanelItem?.id)?.recommendationBreakdown ?? null}
               onAssignLocation={(location) => {
                 // §inventory-redesign A-③ — 위치 미지정 인라인 지정 → 실 location PATCH(기존 update mutation).
                 const match = displayInventories.find((inv) => inv.id === contextPanelItem?.id);
