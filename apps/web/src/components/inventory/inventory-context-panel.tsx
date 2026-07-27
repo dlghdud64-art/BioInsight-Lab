@@ -25,7 +25,10 @@ import {
   Thermometer,
   History,
   ArrowRight,
+  TrendingDown,
 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { useInventoryUsageTrend } from "@/hooks/use-inventory-usage-trend";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 // §11.320 Phase 2 — 상태 배너 onClick → 운영 브리핑 풀 패널 진입
@@ -456,6 +459,8 @@ export function InventoryContextPanel({
   const [isFlowSectionExpanded, setIsFlowSectionExpanded] = useState(true);
   const [isHistorySectionExpanded, setIsHistorySectionExpanded] = useState(false);
   const [isActionsSectionExpanded, setIsActionsSectionExpanded] = useState(true);
+  // §inventory-delta-label-kpi P2b-1 — 소진 추이 접기(보조 정보, default 접힘).
+  const [isUsageTrendSectionExpanded, setIsUsageTrendSectionExpanded] = useState(false);
   // §inventory-redesign A-③ — 위치 미지정 risk 인라인 지정 picker 토글.
   const [locPickerOpen, setLocPickerOpen] = useState(false);
   const lots = realLots(item);
@@ -512,6 +517,9 @@ export function InventoryContextPanel({
     },
     enabled: !!item.id && isOpen,
   });
+
+  // §inventory-delta-label-kpi P2b-1 — 소진 추이(canonical /api/inventory/usage 파생, 표시 계층).
+  const usageTrend = useInventoryUsageTrend(item.id, { enabled: isOpen });
 
   if (!isOpen) return null;
 
@@ -1077,6 +1085,69 @@ export function InventoryContextPanel({
               );
             })}
           </div>
+          )}
+        </section>
+
+        {/* §inventory-delta-label-kpi P2b-1 — 소진 추이(주버킷/<2주 폴백). canonical /api/inventory/usage 파생, 표시 계층. */}
+        <section data-testid="inventory-context-usage-trend">
+          <div className="flex items-center justify-between">
+            <SectionHeader icon={TrendingDown} label="소진 추이" />
+            <button
+              type="button"
+              onClick={() => setIsUsageTrendSectionExpanded((v) => !v)}
+              className="text-xs font-semibold text-slate-700 hover:text-slate-950 transition-colors min-h-[36px] px-2 -mx-2 inline-flex items-center gap-1"
+              aria-expanded={isUsageTrendSectionExpanded}
+            >
+              {isUsageTrendSectionExpanded ? "접기 ▴" : "펼치기 ▾"}
+            </button>
+          </div>
+          {isUsageTrendSectionExpanded && (
+            <div className="mt-2.5">
+              {usageTrend.isLoading ? (
+                <div
+                  data-testid="inventory-context-usage-trend-loading"
+                  className="h-32 rounded-lg border border-bd bg-pn animate-pulse"
+                />
+              ) : usageTrend.isError ? (
+                <p
+                  data-testid="inventory-context-usage-trend-error"
+                  className="rounded-lg border border-bd bg-pn px-3 py-6 text-center text-xs text-slate-500"
+                >
+                  소진 이력을 일시적으로 불러오지 못했습니다.
+                </p>
+              ) : usageTrend.recordCount === 0 ? (
+                <p
+                  data-testid="inventory-context-usage-trend-empty"
+                  className="rounded-lg border border-bd bg-pn px-3 py-6 text-center text-xs text-slate-500"
+                >
+                  소진 기록이 없습니다.
+                </p>
+              ) : (
+                <div data-testid="inventory-context-usage-trend-chart">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[11px] text-slate-500">
+                      {usageTrend.trend.granularity === "week" ? "주간 소진량" : "일간 소진량"}
+                    </span>
+                    <span className="text-[11px] font-semibold text-slate-600">
+                      총 {usageTrend.trend.totalUsage} {item.unit}
+                    </span>
+                  </div>
+                  <ResponsiveContainer width="100%" height={128}>
+                    <BarChart data={usageTrend.trend.points} margin={{ top: 4, right: 4, bottom: 0, left: -16 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eef2f7" />
+                      <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#94a3b8" }} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} tickLine={false} axisLine={false} allowDecimals={false} width={28} />
+                      <Tooltip
+                        cursor={{ fill: "#f1f5f9" }}
+                        contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #e2e8f0" }}
+                        formatter={(v: any) => [`${v} ${item.unit}`, "소진"]}
+                      />
+                      <Bar dataKey="total" fill="#3b82f6" radius={[3, 3, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
           )}
         </section>
 
