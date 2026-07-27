@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { isReorderNeeded } from "@/lib/inventory/reorder-need";
+import { computeReorderRecommendation } from "@/lib/inventory/reorder-quantity";
 
 // ì¬ì£¼ë¬¸ ì¶ì² ëª©ë¡ ì¡°í
 export async function GET(request: NextRequest) {
@@ -67,41 +68,47 @@ export async function GET(request: NextRequest) {
         // §stock-risk-consolidation P3 — canonical isReorderNeeded(공유, 복합: 리드타임 OR 안전재고 OR 소진). 단순 safety-stock → 통일.
         if (isReorderNeeded({ currentQuantity: currentQty, safetyStock: inventory.safetyStock, averageDailyUsage: inventory.averageDailyUsage, leadTimeDays: inventory.leadTimeDays })) {
           // ì¬ì©ë ì¶ì  (ìµê·¼ 30ì¼ íê·  ì¬ì©ë)
-          let estimatedMonthlyUsage = 0;
-          if (inventory.usageRecords.length > 0) {
-            // 타입 에러 수정: sum과 record 파라미터에 타입 명시
+          // §inventory-delta-label-kpi P1 — 일평균 소진: 저장값(averageDailyUsage) 우선, 없으면 usageRecords 파생.
+          let dailyUsage = inventory.averageDailyUsage ?? 0;
+          if ((!dailyUsage || dailyUsage <= 0) && inventory.usageRecords.length > 0) {
             const totalUsage = inventory.usageRecords.reduce(
               (sum: number, record: any) => sum + record.quantity,
-              0
+              0,
             );
             const days = Math.max(
               1,
               Math.floor(
                 (Date.now() -
-                  inventory.usageRecords[
-                    inventory.usageRecords.length - 1
-                  ].usageDate.getTime()) /
-                  (1000 * 60 * 60 * 24)
-              )
+                  inventory.usageRecords[inventory.usageRecords.length - 1].usageDate.getTime()) /
+                  (1000 * 60 * 60 * 24),
+              ),
             );
-            estimatedMonthlyUsage = (totalUsage / days) * 30;
+            dailyUsage = totalUsage / days;
           }
 
-          // ì¬ì£¼ë¬¸ ìë ê³ì°: ìì  ì¬ê³  + ìì 1ê°ì ì¬ì©ë - íì¬ ì¬ê³ 
-          const recommendedQty = Math.max(
-            inventory.minOrderQty || 1,
-            Math.ceil(safetyStock + estimatedMonthlyUsage - currentQty)
-          );
+          // §inventory-delta-label-kpi P1 — 핸드오프 §1 canonical 산식(안전재고 갭 + 납기중 소진 → MOQ 반올림).
+          //   구 산식(월간소진)에서 교체. 근거 3항(breakdown) 노출 — 레일/모바일/상태카드 동일 소비.
+          const reorder = computeReorderRecommendation({
+            currentQuantity: currentQty,
+            safetyStock: inventory.safetyStock,
+            dailyUsage,
+            leadTimeDays: inventory.leadTimeDays,
+            minOrderQty: inventory.minOrderQty,
+          });
+          const estimatedMonthlyUsage = Math.round(Math.max(0, dailyUsage) * 30);
 
           return {
             inventoryId: inventory.id,
             product: inventory.product,
             currentQuantity: currentQty,
             safetyStock,
-            recommendedQuantity: recommendedQty,
-            recommendedQty, // §stock-risk-consolidation P3 — 소비처(inventory·panel·sheets) 필드명 정렬(alias, 권장수량 null 버그 해소).
+            recommendedQuantity: reorder.recommendedQuantity,
+            recommendedQty: reorder.recommendedQuantity,
+            recommendationBreakdown: reorder.breakdown,
             estimatedMonthlyUsage,
-            unit: inventory.unit || "ê°",
+            leadTimeDays: inventory.leadTimeDays ?? null,
+            averageDailyUsage: dailyUsage,
+            unit: inventory.unit || "개",
             urgency: currentQty <= 0 ? "urgent" : currentQty <= safetyStock * 0.5 ? "high" : "medium",
           };
         }
