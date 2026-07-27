@@ -32,6 +32,24 @@ import { cn } from "@/lib/utils";
 // Label Specs
 // ══════════════════════════════════════════════
 
+/**
+ * §inventory-delta-label-kpi P3a (핸드오프 §2) — A4 시트 그리드 geometry.
+ *   칸 절대 배치(@page margin 0)로 물리 라벨지 1:1 정착. 세로 1열 인쇄 버그 해소.
+ *   ⚠ 여백·피치(mm)는 폼텍 published 근사치 — 물리 실측 1회로 calibration 대상(핸드오프 §5 QA=실물 1:1).
+ */
+interface LabelGrid {
+  cols: number;
+  rows: number;
+  /** 시트 상단 여백(첫 행 top) mm */
+  marginTopMm: number;
+  /** 시트 좌측 여백(첫 열 left) mm */
+  marginLeftMm: number;
+  /** 열 피치(칸 좌→다음 칸 좌) mm = 칸 너비 + 가로 간격 */
+  pitchXMm: number;
+  /** 행 피치(칸 상→다음 칸 상) mm = 칸 높이 + 세로 간격 */
+  pitchYMm: number;
+}
+
 interface LabelSpec {
   id: string;
   name: string;
@@ -39,6 +57,8 @@ interface LabelSpec {
   widthMm: number;
   heightMm: number;
   perSheet: string;
+  /** A4 그리드 배치 geometry. 없으면(롤/커스텀) 흐름 배치 폴백. */
+  grid?: LabelGrid;
   /** 커스텀 규격(사용자 입력) 표식 — widthMm/heightMm 는 입력값으로 대체. */
   custom?: boolean;
   recommended?: boolean;
@@ -47,11 +67,16 @@ interface LabelSpec {
 // §11.355-B 규격 데이터화 — 폼텍/DYMO 실측 치수(2026-06 formtec/retailer 대조).
 //   하드코딩 width(`.includes("3104")`) 제거 → widthMm/heightMm 가 canonical.
 //   구 값 정정: 3101 60칸 38.1×19.2 / 3102 40칸 47×26.9 / 3104 27칸 62.7×30.1.
+// §P3a 그리드 geometry: A4(210×297). 여백·피치는 published 근사 — 실인쇄 calibration 대상.
 const LABEL_SPECS: LabelSpec[] = [
-  { id: "formtec-3100", name: "폼텍 3100 (바코드용)", widthMm: 38.1, heightMm: 21.2, perSheet: "1시트 65칸", recommended: true },
-  { id: "formtec-3101", name: "폼텍 3101 (소형)", widthMm: 38.1, heightMm: 19.2, perSheet: "1시트 60칸" },
-  { id: "formtec-3102", name: "폼텍 3102 (바코드용)", widthMm: 47, heightMm: 26.9, perSheet: "1시트 40칸" },
-  { id: "formtec-3104", name: "폼텍 3104 (바코드용)", widthMm: 62.7, heightMm: 30.1, perSheet: "1시트 27칸" },
+  { id: "formtec-3100", name: "폼텍 3100 (바코드용)", widthMm: 38.1, heightMm: 21.2, perSheet: "1시트 65칸", recommended: true,
+    grid: { cols: 5, rows: 13, marginTopMm: 10.7, marginLeftMm: 4.7, pitchXMm: 40.6, pitchYMm: 21.2 } },
+  { id: "formtec-3101", name: "폼텍 3101 (소형)", widthMm: 38.1, heightMm: 19.2, perSheet: "1시트 60칸",
+    grid: { cols: 5, rows: 12, marginTopMm: 13.5, marginLeftMm: 4.7, pitchXMm: 40.6, pitchYMm: 22.7 } },
+  { id: "formtec-3102", name: "폼텍 3102 (바코드용)", widthMm: 47, heightMm: 26.9, perSheet: "1시트 40칸",
+    grid: { cols: 4, rows: 10, marginTopMm: 12.9, marginLeftMm: 8, pitchXMm: 48.5, pitchYMm: 27.1 } },
+  { id: "formtec-3104", name: "폼텍 3104 (바코드용)", widthMm: 62.7, heightMm: 30.1, perSheet: "1시트 27칸",
+    grid: { cols: 3, rows: 9, marginTopMm: 13.1, marginLeftMm: 8.4, pitchXMm: 64.6, pitchYMm: 30.9 } },
   { id: "dymo-11354", name: "DYMO 11354 (다목적)", widthMm: 57, heightMm: 32, perSheet: "롤 타입" },
   { id: "custom", name: "커스텀 규격 (직접 입력)", widthMm: 50, heightMm: 30, perSheet: "직접 설정", custom: true },
 ];
@@ -59,6 +84,15 @@ const LABEL_SPECS: LabelSpec[] = [
 /** mm 표시 문자열 (size 컬럼 대체 — dims 에서 파생, 단일 출처). */
 function specSizeLabel(s: { widthMm: number; heightMm: number }): string {
   return `${s.widthMm} × ${s.heightMm} mm`;
+}
+
+// §inventory-delta-label-kpi P3a (핸드오프 §2.3) — EXP는 YYYY.MM.DD. 원시 ISO(2030-06-16T00:00:00.000Z) 인쇄 금지.
+//   파싱 실패 시 원문 유지(조작·오표기 방지).
+function formatExp(raw?: string): string {
+  if (!raw) return "";
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return raw;
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
 }
 
 // §11.355-B — 인쇄 HTML 안전 이스케이프 (품명 등에 < > & " 포함 시 깨짐/주입 방지).
@@ -107,6 +141,8 @@ export function LabelPrintModal({ open, onOpenChange, selectedItems = [] }: Labe
   // §11.355-B 커스텀 규격 입력 (selectedSpec === "custom" 일 때만 사용).
   const [customW, setCustomW] = useState("50");
   const [customH, setCustomH] = useState("30");
+  // §inventory-delta-label-kpi P3a — 시작 칸(0-based). 그리드 배치에서 첫 라벨 위치. 3b에서 미니시트 picker 로 선택.
+  const [startCell, setStartCell] = useState(0);
 
   const activeSpec = LABEL_SPECS.find((s) => s.id === selectedSpec);
   const isCustomSpec = activeSpec?.custom === true;
@@ -149,18 +185,70 @@ export function LabelPrintModal({ open, onOpenChange, selectedItems = [] }: Labe
       }
     }
 
-    const labelsHtml = items.flatMap((item) =>
-      Array.from({ length: copies }).map(() => `
-        <div class="label">
-          <div class="name">${escapeHtml(item.name)}</div>
-          ${item.catalogNumber ? `<div class="cat">Cat. ${escapeHtml(item.catalogNumber)}</div>` : ""}
-          ${item.lotNumber ? `<div class="lot">Lot: ${escapeHtml(item.lotNumber)}</div>` : ""}
-          ${includeQR && qrMap[item.id] ? `<img class="qr" src="${qrMap[item.id]}" alt="QR ${escapeHtml(item.id)}" />` : ""}
-          ${includeBarcode ? `<div class="code">${escapeHtml(item.id)}</div>` : ""}
-          ${includeExpiry && item.expiryDate ? `<div class="expiry">EXP: ${escapeHtml(item.expiryDate)}</div>` : ""}
-        </div>
-      `)
-    ).join("");
+    // §inventory-delta-label-kpi P3a — 라벨 1칸 내용(EXP는 YYYY.MM.DD 포맷).
+    const cellContent = (item: (typeof items)[number]) => `
+      <div class="name">${escapeHtml(item.name)}</div>
+      ${item.catalogNumber ? `<div class="cat">Cat. ${escapeHtml(item.catalogNumber)}</div>` : ""}
+      ${item.lotNumber ? `<div class="lot">Lot: ${escapeHtml(item.lotNumber)}</div>` : ""}
+      ${includeQR && qrMap[item.id] ? `<img class="qr" src="${qrMap[item.id]}" alt="QR ${escapeHtml(item.id)}" />` : ""}
+      ${includeBarcode ? `<div class="code">${escapeHtml(item.id)}</div>` : ""}
+      ${includeExpiry && item.expiryDate ? `<div class="expiry">EXP: ${escapeHtml(formatExp(item.expiryDate))}</div>` : ""}
+    `;
+
+    // 라벨 인스턴스 목록(품목 × 매수).
+    const instances = items.flatMap((item) => Array.from({ length: copies }, () => item));
+
+    // §inventory-delta-label-kpi P3a (핸드오프 §2) — 규격별 mm 절대 그리드 배치.
+    //   @page margin 0 + 칸 좌표 절대 배치 → 물리 라벨지 1:1. 시작 칸 offset 반영(앞칸 빈칸).
+    //   그리드 없는 규격(롤/커스텀)은 흐름 배치 폴백.
+    const g = activeSpec?.grid;
+    let body: string;
+    let styleGrid: string;
+    if (g && !isCustomSpec) {
+      const perPage = g.cols * g.rows;
+      const offset = Math.max(0, Math.min(startCell, perPage - 1));
+      const slots: (typeof items[number] | null)[] = [
+        ...Array.from({ length: offset }, () => null),
+        ...instances,
+      ];
+      const pages: (typeof slots)[] = [];
+      for (let i = 0; i < slots.length; i += perPage) pages.push(slots.slice(i, i + perPage));
+      body = pages
+        .map(
+          (page) =>
+            `<div class="sheet">` +
+            page
+              .map((it, idx) => {
+                if (!it) return "";
+                const col = idx % g.cols;
+                const row = Math.floor(idx / g.cols);
+                const left = g.marginLeftMm + col * g.pitchXMm;
+                const top = g.marginTopMm + row * g.pitchYMm;
+                return `<div class="cell" style="left:${left}mm;top:${top}mm;">${cellContent(it)}</div>`;
+              })
+              .join("") +
+            `</div>`,
+        )
+        .join("");
+      styleGrid = `
+        @page { size: A4; margin: 0; }
+        .sheet { position: relative; width: 210mm; height: 297mm; page-break-after: always; }
+        .cell {
+          position: absolute; box-sizing: border-box; overflow: hidden;
+          width: ${labelWidthMm}mm; height: ${labelHeightMm}mm; padding: 1.5mm 2mm;
+        }`;
+    } else {
+      // 폴백: 흐름 배치(롤/커스텀).
+      body = instances
+        .map((it) => `<div class="cell flow">${cellContent(it)}</div>`)
+        .join("");
+      styleGrid = `
+        @page { margin: 5mm; }
+        .cell.flow {
+          border: 1px solid #ccc; border-radius: 4px; margin-bottom: 4px; page-break-inside: avoid;
+          box-sizing: border-box; width: ${labelWidthMm}mm; min-height: ${labelHeightMm}mm; padding: 6px 8px;
+        }`;
+    }
 
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
@@ -168,20 +256,15 @@ export function LabelPrintModal({ open, onOpenChange, selectedItems = [] }: Labe
     printWindow.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
       <title>라벨 인쇄</title>
       <style>
-        @page { margin: 5mm; }
+        ${styleGrid}
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-        .label {
-          border: 1px solid #ccc; border-radius: 4px; padding: 6px 8px;
-          margin-bottom: 4px; page-break-inside: avoid;
-          width: ${labelWidthMm}mm; min-height: ${labelHeightMm}mm;
-        }
         .name { font-size: 9px; font-weight: bold; }
         .cat, .lot { font-size: 7px; color: #666; }
-        .qr { width: 56px; height: 56px; margin: 3px 0; display: block; }
+        .qr { width: 56px; height: 56px; margin: 2px 0; display: block; }
         .code { font-family: monospace; font-size: 6px; color: #444; word-break: break-all; margin: 1px 0; }
         .expiry { font-size: 6px; color: #999; }
       </style>
-    </head><body>${labelsHtml}</body></html>`);
+    </head><body>${body}</body></html>`);
     printWindow.document.close();
     printWindow.focus();
     // QR dataURL 이미지 렌더 시간 확보 후 인쇄 (즉시 print 시 빈 QR 위험).
@@ -358,7 +441,7 @@ export function LabelPrintModal({ open, onOpenChange, selectedItems = [] }: Labe
                     )}
                   </div>
                   {includeExpiry && item.expiryDate && (
-                    <p className="text-[7px] text-slate-400 mt-1">EXP: {item.expiryDate}</p>
+                    <p className="text-[7px] text-slate-400 mt-1">EXP: {formatExp(item.expiryDate)}</p>
                   )}
                 </div>
               ))}
