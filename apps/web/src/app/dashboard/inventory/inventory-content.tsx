@@ -144,6 +144,18 @@ interface ProductInventory {
   };
 }
 
+// §inventory-delta-label-kpi P4b (호영님 2026-07-27 핸드오프 §3) — 리스트 상단 활성 필터 칩 라벨.
+//   상태 Select 옵션 라벨(부족·만료 임박·입고 대기·LOT 불일치·최근 변경·정상)과 정합.
+//   canonical: statusFilter 값 소유 무접촉(표시 계층 전용). "all" 은 칩 미노출 → 맵 제외.
+const STATUS_FILTER_LABELS: Record<string, string> = {
+  low: "부족 / 재주문 필요",
+  expiring: "만료 임박",
+  incoming: "입고 대기",
+  lot_issue: "LOT 불일치",
+  recent: "최근 변경",
+  normal: "정상",
+};
+
 function InventoryPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -2104,6 +2116,30 @@ function InventoryPageContent() {
                       </div>
                     </SheetContent>
                   </Sheet>
+
+                  {/* §inventory-delta-label-kpi P4b (핸드오프 §3) — 리스트 상단 활성 필터 칩.
+                      KPI 카드 토글(4a)로 건 statusFilter 를 리스트 머리에서 가시화 + ✕ 해제
+                      (KPI 재클릭 없이도 해제). statusFilter !== "all" 일 때만 노출, 표시 계층 전용. */}
+                  {statusFilter !== "all" && (
+                    <div
+                      data-testid="inventory-list-active-filter-chip"
+                      className="mb-3 flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50/60 px-3 py-2"
+                    >
+                      <ListFilter className="h-3.5 w-3.5 shrink-0 text-blue-600" />
+                      <span className="text-xs font-medium text-blue-800">
+                        필터 적용 중 · {STATUS_FILTER_LABELS[statusFilter] ?? statusFilter}
+                        <span className="ml-1 tabular-nums text-blue-500">{filteredInventories.length}건</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setStatusFilter("all")}
+                        aria-label="상태 필터 해제"
+                        className="ml-auto inline-flex items-center gap-1 min-h-[32px] px-2 -mr-1 text-xs font-semibold text-blue-700 hover:text-blue-900"
+                      >
+                        <X className="h-3 w-3" /> 해제
+                      </button>
+                    </div>
+                  )}
 
                   {isLoading ? (
                     <div className="space-y-3">
