@@ -609,16 +609,9 @@ export function InventoryContextPanel({
               data-testid="inventory-context-primary-actions"
               className="flex items-center gap-2"
             >
-              {tone === "danger" ? (
-                <Button
-                  size="sm"
-                  className="flex-1 min-h-[44px] md:min-h-0 md:h-8 text-xs bg-blue-600 hover:bg-blue-500 text-white"
-                  onClick={() => onReorder?.(item)}
-                >
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  재주문
-                </Button>
-              ) : tone === "warn" ? (
+              {/* §inventory-delta-label-kpi P2a (핸드오프 §1.2) — 상단 재주문 버튼 제거(AI 섹션 재발주안 검토 CTA와 중복).
+                  danger(재고 소진/안전재고 미달)는 상단 = 정보 수정만. 재발주는 아래 AI 섹션 단일 CTA로. */}
+              {tone === "danger" ? null : tone === "warn" ? (
                 <Button
                   size="sm"
                   className="flex-1 min-h-[44px] md:min-h-0 md:h-8 text-xs bg-yellow-600 hover:bg-yellow-500 text-white"
@@ -756,8 +749,15 @@ export function InventoryContextPanel({
             const expiryDays = item.expiryDate
               ? Math.ceil((new Date(item.expiryDate).getTime() - Date.now()) / 86400000)
               : null;
+            // §inventory-delta-label-kpi P2a (핸드오프 §2.3) — D-day는 ≤90일에만. 그 외 먼 미래는 날짜만(D-1425 오노출 방지).
             const expiryValue =
-              expiryDays === null ? "-" : expiryDays < 0 ? "만료됨" : `D-${expiryDays}`;
+              expiryDays === null
+                ? "-"
+                : expiryDays < 0
+                  ? "만료됨"
+                  : expiryDays <= 90
+                    ? `D-${expiryDays}`
+                    : format(new Date(item.expiryDate!), "yyyy.MM.dd");
             const expiryTone: "ok" | "warn" | "danger" | "neutral" =
               expiryDays === null ? "neutral" : expiryDays < 0 ? "danger" : expiryDays <= 30 ? "warn" : "ok";
             const safetyValue =
