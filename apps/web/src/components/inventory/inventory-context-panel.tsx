@@ -190,6 +190,17 @@ function generateMockRisks(item: ContextPanelItem): ContextRisk[] {
     }
   }
 
+  // §inventory-delta-label-kpi P2a-2 (핸드오프 §2.3) — 공급사 미지정을 리스크 섹션에 승격(재발주 관문 연결).
+  //   canonical item.vendor 기반(가짜 아님). 미지정이면 재발주 CTA 실행 전 공급사 선택이 관문.
+  if (!item.vendor) {
+    risks.push({
+      type: "reorder",
+      severity: "medium",
+      label: "공급사 미지정",
+      detail: "재발주 전 공급사 선택이 필요합니다 (재발주 관문)",
+    });
+  }
+
   if (!item.location) {
     risks.push({
       type: "location_issue",

@@ -42,11 +42,16 @@ export function SdsDocumentsSection({
   const canUpload = role === "ADMIN" || role === "SUPPLIER";
   const [docs, setDocs] = useState<SdsDoc[]>([]);
   const [loading, setLoading] = useState(true);
+  // §inventory-delta-label-kpi P2a-2 (핸드오프 §2.3) — 로드 실패 삼킴 금지: 에러 상태로 재시도 노출.
+  //   구: catch → setDocs([]) 로 실패를 "문서 없음" 빈 상태로 오표시(로드 실패 ≠ 문서 부재 구분 불가).
+  const [loadError, setLoadError] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [opening, setOpening] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError(false);
     try {
       // #inventory-lot-entity P4 — coa는 restockId(lot)로 해당 입고 lot 문서만 조회. 레거시 inventoryId fallback. 미지정 시 docType 전체.
       const qs = `docType=${docType}${restockId ? `&restockId=${restockId}` : inventoryId ? `&inventoryId=${inventoryId}` : ""}`;
@@ -55,6 +60,8 @@ export function SdsDocumentsSection({
       const data = await res.json();
       setDocs(data.sdsDocuments ?? []);
     } catch {
+      // 실패 삼킴 금지 — 빈 상태가 아니라 에러 상태로.
+      setLoadError(true);
       setDocs([]);
     } finally {
       setLoading(false);
@@ -129,6 +136,13 @@ export function SdsDocumentsSection({
 
       {loading ? (
         <div className="flex items-center gap-2 text-xs text-slate-400 p-2"><Loader2 className="h-3 w-3 animate-spin" /> 불러오는 중…</div>
+      ) : loadError ? (
+        <div className="flex items-center justify-between gap-2 p-2 rounded border border-rose-200 bg-rose-50">
+          <span className="text-xs text-rose-700">{docLabel} 목록을 불러오지 못했습니다.</span>
+          <Button variant="outline" size="sm" className="h-7 text-xs gap-1 border-rose-300 text-rose-700" onClick={() => load()}>
+            <Loader2 className="h-3 w-3" /> 재시도
+          </Button>
+        </div>
       ) : docs.length === 0 ? (
         <div className="text-xs text-slate-400 italic p-2 bg-slate-50 rounded border border-slate-200">
           등록된 {docLabel} 파일이 없습니다. 업로드하면 품목별로 보관·열람됩니다.
