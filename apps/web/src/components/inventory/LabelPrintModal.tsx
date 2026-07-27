@@ -141,11 +141,64 @@ export function LabelPrintModal({ open, onOpenChange, selectedItems = [] }: Labe
   // §11.355-B 커스텀 규격 입력 (selectedSpec === "custom" 일 때만 사용).
   const [customW, setCustomW] = useState("50");
   const [customH, setCustomH] = useState("30");
-  // §inventory-delta-label-kpi P3a — 시작 칸(0-based). 그리드 배치에서 첫 라벨 위치. 3b에서 미니시트 picker 로 선택.
+  // §inventory-delta-label-kpi P3a — 시작 칸(0-based). 그리드 배치에서 첫 라벨 위치.
   const [startCell, setStartCell] = useState(0);
+  // §inventory-delta-label-kpi P3b (핸드오프 §2) — 사용된 칸 로컬 기억(빗금). 물리 라벨지 낭비 방지 UX.
+  //   canonical 아님(로컬 전용) — 규격별 localStorage 키. 세션 간 지속(물리 시트 소진 추적).
+  const [usedCells, setUsedCells] = useState<number[]>([]);
 
   const activeSpec = LABEL_SPECS.find((s) => s.id === selectedSpec);
   const isCustomSpec = activeSpec?.custom === true;
+
+  // §inventory-delta-label-kpi P3b — 그리드 파생(시작 칸 picker·잔여 계산). 커스텀/롤은 grid 없음.
+  const gridSpec = !isCustomSpec ? activeSpec?.grid : undefined;
+  const perPage = gridSpec ? gridSpec.cols * gridSpec.rows : 0;
+  const printCount = copies * Math.max(1, selectedItems.length);
+  // 이번 인쇄가 채우는 칸(시작 칸부터, 시트 경계까지).
+  const thisPrintCells = gridSpec
+    ? Array.from({ length: Math.max(0, Math.min(printCount, perPage - startCell)) }, (_, i) => startCell + i)
+    : [];
+  const remainingCells = gridSpec
+    ? Math.max(0, perPage - new Set([...usedCells, ...thisPrintCells]).size)
+    : 0;
+
+  // 규격 변경 시 사용된 칸 로컬 로드 + 시작 칸 리셋.
+  useEffect(() => {
+    if (typeof window === "undefined" || !gridSpec) {
+      setUsedCells([]);
+      setStartCell(0);
+      return;
+    }
+    try {
+      const raw = window.localStorage.getItem(`label-used-cells:${selectedSpec}`);
+      setUsedCells(raw ? (JSON.parse(raw) as number[]) : []);
+    } catch {
+      setUsedCells([]);
+    }
+    setStartCell(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSpec]);
+
+  // 인쇄 후 사용 칸 기억(로컬). 물리 시트 소진 추적.
+  const markUsedCells = (cells: number[]) => {
+    const merged = Array.from(new Set([...usedCells, ...cells])).sort((a, b) => a - b);
+    setUsedCells(merged);
+    try {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(`label-used-cells:${selectedSpec}`, JSON.stringify(merged));
+      }
+    } catch {
+      /* localStorage 불가 환경 — 메모리만 유지(무해) */
+    }
+  };
+  const resetUsedCells = () => {
+    setUsedCells([]);
+    try {
+      if (typeof window !== "undefined") window.localStorage.removeItem(`label-used-cells:${selectedSpec}`);
+    } catch {
+      /* noop */
+    }
+  };
   // §11.355-B — 인쇄/미리보기의 canonical 치수(mm). 커스텀이면 입력값, 아니면 프리셋 실측.
   const labelWidthMm = isCustomSpec ? (parseFloat(customW) || 50) : (activeSpec?.widthMm ?? 38.1);
   const labelHeightMm = isCustomSpec ? (parseFloat(customH) || 30) : (activeSpec?.heightMm ?? 21.2);
@@ -267,6 +320,8 @@ export function LabelPrintModal({ open, onOpenChange, selectedItems = [] }: Labe
     </head><body>${body}</body></html>`);
     printWindow.document.close();
     printWindow.focus();
+    // §inventory-delta-label-kpi P3b — 인쇄한 칸을 사용됨으로 로컬 기억(물리 시트 소진 추적, 그리드 규격만).
+    if (g && !isCustomSpec && thisPrintCells.length > 0) markUsedCells(thisPrintCells);
     // QR dataURL 이미지 렌더 시간 확보 후 인쇄 (즉시 print 시 빈 QR 위험).
     setTimeout(() => { try { printWindow.print(); } catch { /* noop */ } }, 250);
   };
@@ -406,8 +461,66 @@ export function LabelPrintModal({ open, onOpenChange, selectedItems = [] }: Labe
             </div>
           </div>
 
-          {/* ── 우측: 미리보기 ── */}
-          <div className="w-full lg:w-[280px] p-6 bg-slate-50">
+          {/* ── 우측: 시작 칸 + 미리보기 ── */}
+          <div className="w-full lg:w-[280px] p-6 bg-slate-50 space-y-5">
+            {/* §inventory-delta-label-kpi P3b (핸드오프 §2) — 시작 칸 미니시트 picker.
+                칸 탭 = 시작 위치. 사용된 칸 빗금(로컬 기억), 이번 인쇄분 파랑. 그리드 규격만. */}
+            {gridSpec && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-4 w-4 text-slate-500" />
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">시작 칸</h3>
+                  </div>
+                  {usedCells.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={resetUsedCells}
+                      className="text-[10px] text-slate-400 hover:text-slate-600 underline"
+                    >
+                      사용 칸 초기화
+                    </button>
+                  )}
+                </div>
+                <div
+                  className="inline-grid gap-[2px] p-1.5 rounded-lg border border-slate-200 bg-white"
+                  style={{ gridTemplateColumns: `repeat(${gridSpec.cols}, minmax(0, 1fr))` }}
+                >
+                  {Array.from({ length: perPage }, (_, i) => {
+                    const isUsed = usedCells.includes(i);
+                    const isThis = thisPrintCells.includes(i);
+                    const isStart = i === startCell;
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setStartCell(i)}
+                        title={`${i + 1}번 칸에서 시작`}
+                        aria-label={`${i + 1}번 칸에서 시작`}
+                        aria-pressed={isStart}
+                        className={cn(
+                          "h-5 min-w-[26px] rounded-[3px] border text-[8px] font-medium tabular-nums flex items-center justify-center transition-colors",
+                          isThis
+                            ? "bg-blue-600 border-blue-600 text-white"
+                            : isUsed
+                              ? "border-slate-200 text-slate-400 [background:repeating-linear-gradient(45deg,#e2e8f0,#e2e8f0_2px,#f1f5f9_2px,#f1f5f9_4px)]"
+                              : "bg-white border-dashed border-slate-300 text-slate-400 hover:border-blue-300",
+                          isStart && !isThis && "ring-1 ring-blue-400",
+                        )}
+                      >
+                        {i + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-slate-500">
+                  <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-[2px] bg-blue-600" /> 이번 인쇄</span>
+                  <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-[2px] bg-slate-200" /> 사용됨</span>
+                  <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-[2px] border border-dashed border-slate-300" /> 빈 칸</span>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center gap-2 mb-3">
               <Eye className="h-4 w-4 text-slate-500" />
               <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">미리보기 (PREVIEW)</h3>
@@ -421,10 +534,11 @@ export function LabelPrintModal({ open, onOpenChange, selectedItems = [] }: Labe
               ]).map((item) => (
                 <div
                   key={item.id}
-                  className="bg-white rounded-lg border border-slate-200 p-3 shadow-sm"
+                  className="bg-white rounded-lg border border-slate-200 p-3 shadow-sm overflow-hidden"
                   style={{
+                    // §inventory-delta-label-kpi P3b (핸드오프 §2) — 규격 실비율 미리보기(규격 변경 시 갱신).
                     width: "100%",
-                    minHeight: `${Math.max(48, Math.round(labelHeightMm * 1.8))}px`,
+                    aspectRatio: `${labelWidthMm} / ${labelHeightMm}`,
                   }}
                 >
                   <p className="text-[10px] font-bold text-slate-900 truncate">{item.name}</p>
@@ -451,11 +565,16 @@ export function LabelPrintModal({ open, onOpenChange, selectedItems = [] }: Labe
               )}
             </div>
 
-            {/* 인쇄 정보 요약 */}
-            <div className="mt-4 pt-3 border-t border-slate-200">
+            {/* 인쇄 정보 요약 — §P3b: 시작~끝 칸 · 잔여(그리드 규격) */}
+            <div className="mt-4 pt-3 border-t border-slate-200 space-y-0.5">
               <p className="text-[10px] text-slate-500">
-                {activeSpec?.name} · {copies}매 × {Math.max(selectedItems.length, 1)}종 = {copies * Math.max(selectedItems.length, 1)}장 인쇄
+                {activeSpec?.name} · {copies}매 × {Math.max(selectedItems.length, 1)}종 = {printCount}장 인쇄
               </p>
+              {gridSpec && thisPrintCells.length > 0 && (
+                <p className="text-[10px] text-slate-500">
+                  {thisPrintCells[0] + 1}~{thisPrintCells[thisPrintCells.length - 1] + 1}번 칸 · 잔여 {remainingCells}칸
+                </p>
+              )}
             </div>
           </div>
         </div>
