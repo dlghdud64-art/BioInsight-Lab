@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { useInventoryUsageTrend } from "@/hooks/use-inventory-usage-trend";
+import { useReorderRecommendation } from "@/hooks/use-reorder-recommendation";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 // §11.320 Phase 2 — 상태 배너 onClick → 운영 브리핑 풀 패널 진입
@@ -520,6 +521,8 @@ export function InventoryContextPanel({
 
   // §inventory-delta-label-kpi P2b-1 — 소진 추이(canonical /api/inventory/usage 파생, 표시 계층).
   const usageTrend = useInventoryUsageTrend(item.id, { enabled: isOpen });
+  // §inventory-delta-label-kpi P2b-2 — 공급사 후보(canonical PurchaseRecord 집계 hook 재사용, fetch 0 신규).
+  const vendorRec = useReorderRecommendation(item.productName);
 
   if (!isOpen) return null;
 
@@ -715,6 +718,46 @@ export function InventoryContextPanel({
               </div>
             </div>
           )}
+          {/* §inventory-delta-label-kpi P2b-2 (핸드오프 §2b) — 공급사 후보(canonical PurchaseRecord 집계).
+              read-only 표시 계층 · 미지정 시 재발주 관문 표기 · 지정은 기존 '정보 수정' 실 액션(dead button 0). */}
+          <div
+            data-testid="inventory-context-vendor-candidates"
+            className="mt-2 rounded-lg bg-slate-50 border border-bd/60 px-3 py-2"
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-semibold text-slate-500">공급사 후보</p>
+              {!item.vendor && (
+                <span className="text-[10px] font-semibold text-yellow-700">재발주 관문 · 미지정</span>
+              )}
+            </div>
+            {vendorRec.isLoading ? (
+              <div
+                data-testid="inventory-context-vendor-candidates-loading"
+                className="mt-1.5 h-8 rounded bg-slate-100 animate-pulse"
+              />
+            ) : vendorRec.vendors.length === 0 ? (
+              <p
+                data-testid="inventory-context-vendor-candidates-empty"
+                className="mt-1.5 text-[11px] text-slate-400"
+              >
+                최근 구매 이력이 없어 후보가 없습니다.
+              </p>
+            ) : (
+              <ul data-testid="inventory-context-vendor-candidates-list" className="mt-1.5 space-y-1">
+                {vendorRec.vendors.slice(0, 3).map((v) => (
+                  <li key={v.vendorName} className="flex items-center justify-between text-[11px]">
+                    <span className="font-medium text-slate-700 truncate">{v.vendorName}</span>
+                    <span className="ml-2 shrink-0 tabular-nums text-slate-500">
+                      {v.unitPrice.toLocaleString()}원 · {v.count}회
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {!item.vendor && vendorRec.vendors.length > 0 && (
+              <p className="mt-1.5 text-[10px] text-slate-400">공급사 지정은 ‘정보 수정’에서 진행하세요.</p>
+            )}
+          </div>
         </div>
       )}
 
