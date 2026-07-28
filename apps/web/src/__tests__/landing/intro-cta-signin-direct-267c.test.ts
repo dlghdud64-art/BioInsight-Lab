@@ -1,28 +1,18 @@
 /**
- * §11.267c #intro-cta-signin-direct — /intro 서비스 소개 페이지 "제품 시작하기"
- *   CTA → /auth/signin (§11.267 implicit consistency 확장)
+ * §11.267c #intro-cta-signin-direct — [SUPERSEDED by §landing-cta-search / §intro-mobile-revamp]
  *
- * 호영님 §11.267 spec:
- *   "무료로 시작하기" / "시작하기" 탭 → /auth/signin 직진 (가입 의사 표현 시
- *   검색 우회 차단). 랜딩 (/) 의 Hero + Header + mobile drawer 4 spot 이미
- *   적용 (§11.267a).
+ * 원래 §11.267c: /intro "제품 시작하기" CTA → /auth/signin 직진(검색 우회 차단).
  *
- * §11.267c — /intro 페이지에도 동일 의도의 CTA "제품 시작하기" (line 221) 가
- * /search 로 우회. implicit consistency 적용 → /search → /auth/signin swap.
+ * ⚠️ 반전됨 — §landing-cta-search (4d85ac13, 호영님 directed 2026-06-28):
+ *   무료 CTA → /search 로 의도 반전(탐색→가입, 로그인행 2-bounce 제거).
+ *   랜딩(267a)은 당시 reconcile 됐으나 본 267c 는 미정리(stale)로 남아 있었음.
+ *   §intro-mobile-revamp (호영님 승인 2026-07-28)에서 /intro 도 canon 정합:
+ *   라벨 "제품 시작하기" → "무료로 시작하기", 목적지 /auth/signin → /search.
  *
- * Fix (minimum diff, href 1 swap):
- *   line 221 <Link href="/search"> → <Link href="/auth/signin">
- *
- * canonical truth lock:
- *   - "제품 시작하기" 라벨 보존
- *   - "도입 문의" → /support 보존 (line 226)
- *   - "요금 & 플랜 보기" → /pricing 보존 (line 635)
- *   - "도입 상담" → /support 보존 (line 640)
- *   - 모든 CTA button className (px-7 py-3.5 + rounded-xl + motion) 보존
- *
- * Out-of-scope:
- *   - "먼저 검색해보기" 보조 링크는 /intro 에 추가 X — /intro 자체가 정보
- *     페이지로 검색 체험 트리거 불필요 (호영님 spec 명시 없음).
+ * 본 sentinel 정리:
+ *   - /auth/signin 직진 단언 + "제품 시작하기" 라벨 단언 RETIRE.
+ *   - 생존 invariant 만 유지: 히어로 무료 CTA /search 정합 + 도입 문의(/support) +
+ *     요금 & 플랜 보기(/pricing) + 도입 상담(/support) + button className 보존.
  */
 
 import { describe, it, expect } from "vitest";
@@ -32,40 +22,35 @@ import { resolve } from "node:path";
 const INTRO_PATH = resolve(__dirname, "../../app/intro/page.tsx");
 const intro = readFileSync(INTRO_PATH, "utf8");
 
-describe("§11.267c #1 — /intro \"제품 시작하기\" /auth/signin 직진", () => {
-  it("§11.267c trace marker comment 존재", () => {
-    expect(intro).toMatch(/§11\.267c/);
-  });
-
-  it("\"제품 시작하기\" Link href = /auth/signin", () => {
-    // <Link href="/auth/signin"> 직후 button "제품 시작하기"
+describe("§landing-cta-search 정합 (§11.267c 반전) — /intro 무료 CTA = /search", () => {
+  it("히어로 무료 CTA Link href = /search + 라벨 '무료로 시작하기'", () => {
     expect(intro).toMatch(
-      /<Link href="\/auth\/signin">[\s\S]{0,400}제품 시작하기/,
+      /<Link href="\/search">[\s\S]{0,400}무료로 시작하기/,
     );
   });
 
-  it("\"제품 시작하기\" Link href = /search 제거 (검색 우회 차단)", () => {
+  it("히어로 /auth/signin 직진 제거 (로그인행 2-bounce 차단)", () => {
     expect(intro).not.toMatch(
-      /<Link href="\/search">[\s\S]{0,400}제품 시작하기/,
+      /<Link href="\/auth\/signin">[\s\S]{0,400}(제품 시작하기|무료로 시작하기)/,
     );
+  });
+
+  it("구 '제품 시작하기' 라벨 제거 — 전 지점 '무료로 시작하기' 통일", () => {
+    expect(intro).not.toMatch(/제품 시작하기/);
   });
 });
 
-describe("§11.267c #2 — invariant 보존 (canonical truth)", () => {
-  it("\"제품 시작하기\" 라벨 보존", () => {
-    expect(intro).toMatch(/제품 시작하기/);
-  });
-
-  it("\"도입 문의\" → /support 보존 (line ~226)", () => {
+describe("§11.267c 생존 invariant — 보조 진입점 보존 (canonical truth)", () => {
+  it("'도입 문의' → /support 보존 (히어로)", () => {
     expect(intro).toMatch(/<Link href="\/support">[\s\S]{0,400}도입 문의/);
   });
 
-  it("\"요금 & 플랜 보기\" → /pricing 보존 (line ~635)", () => {
+  it("'요금 & 플랜 보기' → /pricing 보존 (클로징 보조)", () => {
     expect(intro).toMatch(/<Link href="\/pricing">[\s\S]{0,400}요금 &amp; 플랜 보기/);
   });
 
-  it("\"도입 상담\" → /support 보존 (line ~640)", () => {
-    expect(intro).toMatch(/<Link href="\/support">[\s\S]{0,400}도입 상담/);
+  it("'도입 상담' → /support 보존 (클로징 텍스트 링크)", () => {
+    expect(intro).toMatch(/<Link href="\/support"[\s\S]{0,200}도입 상담/);
   });
 
   it("button className (px-7 py-3.5 + rounded-xl) 보존", () => {

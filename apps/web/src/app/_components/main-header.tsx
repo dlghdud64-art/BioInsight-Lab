@@ -84,6 +84,17 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               <UserMenu />
             </div>
 
+            {/* §intro-mobile-revamp — 모바일(비로그인) 로그인 아웃라인 버튼 상시
+                노출: 햄버거만으로는 로그인 진입점이 숨어 있었음. /auth/signin 유지. */}
+            {!session?.user && (
+              <Link
+                href="/auth/signin"
+                className="md:hidden inline-flex items-center h-8 px-3 border border-slate-500/45 rounded-lg text-slate-200 text-xs font-bold whitespace-nowrap transition-colors hover:text-white hover:border-slate-400"
+              >
+                로그인
+              </Link>
+            )}
+
             {/* 햄버거 버튼 (모바일 전용) */}
             <button
               type="button"
@@ -228,19 +239,6 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                     ))}
                   </nav>
 
-                  {/* 로그인 */}
-                  <div className="px-2 pb-2" style={{ borderTop: "1px solid #162640", paddingTop: 6 }}>
-                    <Link
-                      href="/auth/signin"
-                      onClick={close}
-                      className="flex items-center gap-3 px-3 rounded-xl transition-colors"
-                      style={{ paddingTop: 11, paddingBottom: 11, color: "#94A3B8" }}
-                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#142840")}
-                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
-                    >
-                      <span className="text-sm font-medium">로그인</span>
-                    </Link>
-                  </div>
                 </>
               )}
             </div>
@@ -264,18 +262,31 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                 </button>
               ) : (
                 /* §11.267a — 호영님 spec 헤더 모바일 drawer CTA 동선 개선.
-                   "무료로 시작하기" → /auth/signin 직진 차단 → /search (탐색→가입, 로그인행 2-bounce 제거). */
-                <Link href="/search" onClick={close}>
-                  <button
-                    type="button"
-                    className="w-full h-11 rounded-xl text-sm font-bold text-white transition-colors"
-                    style={{ backgroundColor: "#2563EB" }}
-                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#1D4ED8")}
-                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#2563EB")}
+                   "무료로 시작하기" → /auth/signin 직진 차단 → /search (탐색→가입, 로그인행 2-bounce 제거).
+                   §intro-mobile-revamp — 로그인을 회색 텍스트 행에서 아웃라인
+                   버튼으로 승격, 파란 CTA 와 나란히(2버튼). */
+                <div className="flex gap-2">
+                  <Link
+                    href="/auth/signin"
+                    onClick={close}
+                    className="flex-1 h-11 inline-flex items-center justify-center border border-slate-500/45 rounded-xl text-sm font-bold text-slate-200 transition-colors hover:text-white hover:border-slate-400"
                   >
-                    무료로 시작하기
-                  </button>
-                </Link>
+                    로그인
+                  </Link>
+                  <div className="flex-1">
+                    <Link href="/search" onClick={close}>
+                      <button
+                        type="button"
+                        className="w-full h-11 rounded-xl text-sm font-bold text-white transition-colors"
+                        style={{ backgroundColor: "#2563EB" }}
+                        onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#1D4ED8")}
+                        onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#2563EB")}
+                      >
+                        무료로 시작하기
+                      </button>
+                    </Link>
+                  </div>
+                </div>
               )}
             </div>
           </div>

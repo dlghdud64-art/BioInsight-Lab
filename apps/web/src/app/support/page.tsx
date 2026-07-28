@@ -215,7 +215,9 @@ export default function SupportContactPage() {
       {/* ── 히어로 + 문의 도우미 ── */}
       <div className="cp-hero relative overflow-hidden">
         <div className="cp-hero-dots" aria-hidden />
-        <div className="relative z-10 max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 text-center">
+        {/* §intro-mobile-revamp — MainHeader fixed h-14(56px) 오프셋 부재로
+            eyebrow 가 헤더에 먹힘 → pt-28/md:pt-32 로 상단 이격(eyebrow 위 ≥40px). */}
+        <div className="relative z-10 max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-14 md:pt-32 md:pb-20 text-center">
           <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#a9c2f5] mb-3">도입 및 문의 · Contact</div>
           <h1 className="text-2xl md:text-[34px] font-bold text-white tracking-tight leading-tight mb-2">
             궁금한 점을 묻고, 그대로 문의를 남기세요

@@ -4,12 +4,12 @@ import { MainLayout } from "../_components/main-layout";
 import { MainHeader } from "../_components/main-header";
 import { MainFooter } from "../_components/main-footer";
 import {
-  Search, GitCompare, FileText, ShoppingCart, ClipboardCheck, Warehouse,
+  Search, GitCompare, FileText, ShoppingCart, Warehouse,
   ArrowRight, Shield, History, Wallet, BarChart3, Zap, CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { type ReactNode, useState, useEffect, useRef, useCallback } from "react";
+import { type ReactNode, type TouchEvent as ReactTouchEvent, useState, useEffect, useRef, useCallback } from "react";
 
 /* ── Palette ─────────────────────────────────────────────────────
   Dark: hero + closing
@@ -81,7 +81,9 @@ function useActiveSection(sectionIds: readonly string[]) {
   return active;
 }
 
-/* ── IntroNavbar — 스크롤 시 나타나는 모션 네비바 ─────────────── */
+/* ── IntroNavbar — 스크롤 시 나타나는 앵커 서브바 ──────────────
+   §intro-mobile-revamp — MainHeader(z-40, h-14) 대체가 아니라 아래 붙는
+   서브바(top-14, z-30). 로고·로그인이 스크롤 중에도 항상 노출된다. */
 function IntroNavbar() {
   const active = useActiveSection(SECTIONS.map((s) => s.id));
   const [show, setShow] = useState(false);
@@ -105,7 +107,7 @@ function IntroNavbar() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -60, opacity: 0 }}
           transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-          className="fixed top-0 left-0 w-full z-50 flex items-center justify-center"
+          className="fixed top-14 left-0 w-full z-30 flex items-center justify-center"
           style={{
             backgroundColor: "rgba(11,17,32,0.92)",
             backdropFilter: "blur(12px)",
@@ -140,6 +142,145 @@ function IntroNavbar() {
         </motion.nav>
       )}
     </AnimatePresence>
+  );
+}
+
+/* ── Role cards data — §intro-persona-broadening role 라벨 보존 ──
+   §intro-mobile-revamp — 모바일 탭+1카드/데스크톱 3분할 양쪽에서 재사용.
+   마케팅 페르소나(표시 레이어) — ontology role 과 무관. */
+const ROLE_CARDS = [
+  {
+    // §intro-persona-broadening — 직무명("연구원") → 포괄 역할("연구·QC 담당").
+    //   학술 연구자 편향 제거: QC·실험실 현장까지 포괄(바이오솔루션 QC 팀 등).
+    role: "연구·QC 담당",
+    tab: "연구·QC",
+    before: "여러 벤더를 따로 열고 품목을 수기로 모아 비교 준비",
+    beforeChips: ["탭 5개", "엑셀 수기 취합"],
+    after: "검색 결과에서 후보를 바로 정리하고 비교 단계로 이동",
+    afterChips: ["수기 취합 제거", "같은 화면 연결"],
+  },
+  {
+    role: "구매 담당",
+    tab: "구매",
+    before: "비교 결과를 다시 정리하고 전화·이메일로 수동 요청",
+    beforeChips: ["전화·이메일 요청", "재정리 반복"],
+    after: "선택안 기준으로 요청안을 만들고 발주 준비까지 연결",
+    afterChips: ["요청안 자동 초안", "발주 준비 연결"],
+  },
+  {
+    role: "운영 관리자",
+    tab: "운영 관리",
+    before: "구매 이력, 입고 상태, 재고를 각각 다른 문서에서 확인",
+    beforeChips: ["문서 3곳 확인", "이력 단절"],
+    after: "선택 기록, 입고, 재고를 같은 흐름에서 추적",
+    afterChips: ["같은 흐름 추적", "기록 일원화"],
+  },
+] as const;
+
+/* ── RoleTabsMobile — 역할 탭 3개 + 카드 1장 + 페이지 도트 ──────
+   §intro-mobile-revamp 1b — 세로 3카드 나열(화면 3장) → 탭+스와이프
+   1카드(화면 1장). 이전/이후 재질 대비: 이전=회색 dashed, 이후=다크 solid. */
+function RoleTabsMobile() {
+  const reduce = useReducedMotion();
+  const [idx, setIdx] = useState(0);
+  const touchX = useRef<number | null>(null);
+  const card = ROLE_CARDS[idx];
+
+  const onTouchStart = (e: ReactTouchEvent) => { touchX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e: ReactTouchEvent) => {
+    if (touchX.current == null) return;
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    touchX.current = null;
+    if (Math.abs(dx) < 48) return;
+    setIdx((v) => Math.min(ROLE_CARDS.length - 1, Math.max(0, v + (dx < 0 ? 1 : -1))));
+  };
+
+  return (
+    <div className="md:hidden">
+      {/* 역할 탭 */}
+      <div className="flex gap-1.5 mb-4" role="tablist" aria-label="역할 선택">
+        {ROLE_CARDS.map((c, i) => (
+          <button
+            key={c.role}
+            type="button"
+            role="tab"
+            aria-selected={i === idx}
+            onClick={() => setIdx(i)}
+            className="flex-1 h-9 rounded-lg text-[13px] font-bold transition-colors"
+            style={i === idx
+              ? { backgroundColor: L.blueText, color: "#FFFFFF" }
+              : { backgroundColor: L.bgSoft, color: L.text3, border: `1px solid ${L.border}` }}
+          >
+            {c.tab}
+          </button>
+        ))}
+      </div>
+
+      {/* 카드 1장 (스와이프 전환) */}
+      <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={card.role}
+            initial={reduce ? false : { opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={reduce ? undefined : { opacity: 0, x: -24 }}
+            transition={{ duration: reduce ? 0 : 0.22, ease: "easeOut" }}
+          >
+            <div className="rounded-2xl p-4" style={{ border: `1px solid ${L.border}`, backgroundColor: L.bg, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+              <p className="text-sm font-bold mb-3" style={{ color: L.blueText }}>{card.role}</p>
+
+              {/* BEFORE — 낡은 재질 */}
+              <div className="rounded-xl p-4" style={{ backgroundColor: "#E9EDF3", border: "1px dashed #CBD5E1" }}>
+                <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide mb-2" style={{ backgroundColor: "#FFFFFF", color: L.text3 }}>BEFORE · 이전</span>
+                <p className="text-sm leading-relaxed" style={{ color: "#64748B" }}>{card.before}</p>
+                <div className="flex flex-wrap gap-1.5 mt-2.5">
+                  {card.beforeChips.map((chip) => (
+                    <span key={chip} className="px-2 py-0.5 rounded-md text-[10.5px] font-medium" style={{ backgroundColor: "rgba(255,255,255,0.7)", color: L.text3, border: "1px solid #D6DEE8" }}>{chip}</span>
+                  ))}
+                </div>
+              </div>
+
+              {/* 커넥터 — 그라디언트 라인 + 파란 ↓ */}
+              <div className="flex flex-col items-center py-1" aria-hidden>
+                <div style={{ width: 2, height: 14, background: "linear-gradient(#CBD5E1, #2563EB)" }} />
+                <div className="w-6 h-6 rounded-full flex items-center justify-center -mt-0.5 text-xs font-bold" style={{ backgroundColor: "#2563EB", color: "#FFFFFF" }}>↓</div>
+              </div>
+
+              {/* AFTER — 다크 solid */}
+              <div className="rounded-xl p-4" style={{ backgroundColor: "#0F172A" }}>
+                <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide mb-2" style={{ backgroundColor: "#2563EB", color: "#FFFFFF" }}>AFTER · LabAxis</span>
+                <p className="text-sm font-bold leading-relaxed" style={{ color: "#F8FAFC" }}>{card.after}</p>
+                <div className="flex flex-wrap gap-1.5 mt-2.5">
+                  {card.afterChips.map((chip, ci) => (
+                    <span key={chip} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-semibold" style={ci === 0
+                      ? { backgroundColor: "rgba(16,185,129,0.16)", color: "#6EE7B7" }
+                      : { backgroundColor: "rgba(59,130,246,0.18)", color: "#93C5FD" }}>
+                      <CheckCircle2 className="h-3 w-3" strokeWidth={2.2} />{chip}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* 페이지 도트 */}
+      <div className="flex items-center justify-center gap-1.5 mt-4">
+        {ROLE_CARDS.map((c, i) => (
+          <button
+            key={c.role}
+            type="button"
+            aria-label={`${c.role} 카드 보기`}
+            onClick={() => setIdx(i)}
+            className="rounded-full transition-all"
+            style={i === idx
+              ? { width: 18, height: 6, backgroundColor: "#2563EB" }
+              : { width: 6, height: 6, backgroundColor: "#CBD5E1" }}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -232,13 +373,13 @@ export default function IntroPage() {
               transition={{ duration: 0.5, delay: 0.4 }}
               className="flex flex-col sm:flex-row items-center justify-center gap-3"
             >
-              {/* §11.267c — /intro "제품 시작하기" CTA 동선 개선 (§11.267
-                  implicit consistency 확장). /search 우회 → /auth/signin 직진.
-                  가입 의사 표현 시 검색 단계 우회 차단. 호영님 §11.267 랜딩 spec
-                  동일 패턴 reuse. 라벨 / button className / 도입 문의 보존. */}
-              <Link href="/auth/signin">
+              {/* §intro-mobile-revamp — §11.267c(signin 직진) supersede.
+                  §landing-cta-search canon(무료 CTA → /search, 탐색→가입) 정합:
+                  전 지점 라벨 "무료로 시작하기" + 목적지 /search 통일.
+                  button className / 도입 문의 보존. */}
+              <Link href="/search">
                 <button className="w-full sm:w-auto px-7 py-3.5 text-base font-bold rounded-xl transition-all hover:brightness-110 active:scale-[0.98]" style={{ backgroundColor: D.primary, color: D.onPrimary }}>
-                  제품 시작하기
+                  무료로 시작하기
                 </button>
               </Link>
               <Link href="/support">
@@ -306,46 +447,45 @@ export default function IntroPage() {
           </div>
         </section>
 
-        {/* ══ B. 운영 연결 포인트 — white + progress bars ══════════════ */}
+        {/* ══ B. 운영 연결 포인트 — white + step list ══════════════════
+            §intro-mobile-revamp — "연결 강도" 막대(하드코딩 장식값)와
+            예시 부제 문구 삭제(§intro-honesty-a11y ② 흡수:
+            근거 없는 수치 자체를 제거해 정직화 완결). 카드 5개 그리드 →
+            스텝 리스트 1카드(모바일 화면 2장 → 반 장). */}
         <section id="connection" className="py-20 md:py-28" style={{ backgroundColor: L.bg, color: L.text1 }}>
           <div className="max-w-5xl mx-auto px-6">
             <Reveal>
-              <div className="text-center mb-14">
+              <div className="text-center mb-10 md:mb-14">
                 <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">LabAxis 운영 연결 포인트</h2>
-                <p className="text-base" style={{ color: L.text3 }}>각 단계가 다음 작업으로 자연스럽게 이어집니다. <span style={{ color: L.text4, fontSize: "13px" }}>(막대는 연결 강도 예시)</span></p>
+                <p className="text-base" style={{ color: L.text3 }}>각 단계가 다음 작업으로 자연스럽게 이어집니다.</p>
               </div>
             </Reveal>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {[
-                { icon: Search, label: "검색 → 후보 정리", pct: 92 },
-                { icon: GitCompare, label: "비교 → 선택안 확정", pct: 85 },
-                { icon: FileText, label: "요청 생성 → 초안 작성", pct: 78 },
-                { icon: ShoppingCart, label: "발주 준비 → 전환 검토", pct: 70 },
-                { icon: ClipboardCheck, label: "입고 반영 → Lot 기록", pct: 65 },
-              ].map((item, i) => (
-                <Reveal key={item.label} delay={i * 0.08}>
-                  <div className="rounded-xl p-5" style={{ backgroundColor: L.bgSoft, border: `1px solid ${L.border}` }}>
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: L.blueSoft }}>
-                        <item.icon className="h-4.5 w-4.5" style={{ color: L.blueText }} strokeWidth={1.8} />
+            <Reveal>
+              <div className="max-w-xl mx-auto rounded-2xl px-5 py-2 md:px-6" style={{ backgroundColor: L.bg, border: `1px solid ${L.border}`, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+                {[
+                  { icon: Search, label: "검색 → 후보 정리", desc: "결과에서 후보를 바로 저장" },
+                  { icon: GitCompare, label: "비교 → 선택안 확정", desc: "조건 나란히 비교 후 확정" },
+                  { icon: FileText, label: "요청 생성 → 초안 작성", desc: "선택안 기준 요청안 자동 초안" },
+                  { icon: Warehouse, label: "발주 준비 → 입고·재고", desc: "입고 반영 → Lot 기록까지 운영으로 연결" },
+                ].map((item, i, arr) => (
+                  <div key={item.label} className="relative py-4" style={i < arr.length - 1 ? { borderBottom: "1px solid #EEF2F7" } : undefined}>
+                    <div className="flex items-center gap-3.5">
+                      <div className="rounded-lg flex items-center justify-center flex-shrink-0" style={{ width: 34, height: 34, backgroundColor: L.blueSoft }}>
+                        <item.icon className="h-4 w-4" style={{ color: L.blueText }} strokeWidth={1.8} />
                       </div>
-                      <span className="text-sm font-semibold" style={{ color: L.text1 }}>{item.label}</span>
-                    </div>
-                    <div className="h-2 w-full rounded-full overflow-hidden" style={{ backgroundColor: L.bgMuted }}>
-                      <motion.div
-                        className="h-full rounded-full"
-                        style={{ backgroundColor: L.blue }}
-                        initial={{ width: 0 }}
-                        whileInView={{ width: `${item.pct}%` }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1, delay: 0.3 + i * 0.1, ease: "easeOut" }}
-                      />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold" style={{ color: L.text1 }}>{item.label}</p>
+                        <p style={{ color: L.text3, fontSize: "11.5px" }}>{item.desc}</p>
+                      </div>
+                      {i < arr.length - 1 && (
+                        <span className="ml-auto flex-shrink-0 text-xs font-bold" style={{ color: L.blue }} aria-hidden>↓</span>
+                      )}
                     </div>
                   </div>
-                </Reveal>
-              ))}
-            </div>
+                ))}
+              </div>
+            </Reveal>
           </div>
         </section>
 
@@ -360,7 +500,8 @@ export default function IntroPage() {
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: L.blueSoft }}>
                     <Search className="h-5 w-5" style={{ color: L.blueText }} strokeWidth={1.8} />
                   </div>
-                  <span className="text-sm font-bold tracking-wide" style={{ color: L.blue }}>Research &amp; Procurement</span>
+                  {/* §intro-mobile-revamp — 영문 섹션 라벨 모바일 숨김 */}
+                <span className="hidden md:inline text-sm font-bold tracking-wide" style={{ color: L.blue }}>Research &amp; Procurement</span>
                 </div>
                 <h3 className="text-2xl md:text-3xl font-bold mb-4 leading-tight">
                   검색부터 요청까지,<br />끊기지 않는 구매 흐름
@@ -414,7 +555,7 @@ export default function IntroPage() {
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: L.blueSoft }}>
                     <Shield className="h-5 w-5" style={{ color: L.blueText }} strokeWidth={1.8} />
                   </div>
-                  <span className="text-sm font-bold tracking-wide" style={{ color: L.blue }}>Organization</span>
+                  <span className="hidden md:inline text-sm font-bold tracking-wide" style={{ color: L.blue }}>Organization</span>
                 </div>
                 <h3 className="text-2xl md:text-3xl font-bold mb-4 leading-tight">
                   조직 기준이<br />뒤에서 자연스럽게 붙습니다
@@ -437,27 +578,14 @@ export default function IntroPage() {
               </div>
             </Reveal>
 
-            <div className="flex flex-col gap-5">
-              {[
-                {
-                  // §intro-persona-broadening — 직무명("연구원") → 포괄 역할("연구·QC 담당").
-                  //   학술 연구자 편향 제거: QC·실험실 현장까지 포괄(바이오솔루션 QC 팀 등).
-                  //   마케팅 페르소나(표시 레이어)일 뿐 — ontology role(요청자/승인권자/조직관리자)과 무관.
-                  role: "연구·QC 담당",
-                  before: "여러 벤더를 따로 열고 품목을 수기로 모아 비교 준비",
-                  after: "검색 결과에서 후보를 바로 정리하고 비교 단계로 이동",
-                },
-                {
-                  role: "구매 담당",
-                  before: "비교 결과를 다시 정리하고 전화·이메일로 수동 요청",
-                  after: "선택안 기준으로 요청안을 만들고 발주 준비까지 연결",
-                },
-                {
-                  role: "운영 관리자",
-                  before: "구매 이력, 입고 상태, 재고를 각각 다른 문서에서 확인",
-                  after: "선택 기록, 입고, 재고를 같은 흐름에서 추적",
-                },
-              ].map((card, i) => (
+            {/* §intro-mobile-revamp 1b — 모바일: 탭 3개 + 카드 1장 + 도트 */}
+            <Reveal>
+              <RoleTabsMobile />
+            </Reveal>
+
+            {/* 데스크톱(md+): 기존 3분할 유지 + 이전 dashed / 이후 파란 좌보더 최소 대비 */}
+            <div className="hidden md:flex flex-col gap-5">
+              {ROLE_CARDS.map((card, i) => (
                 <Reveal key={card.role} delay={i * 0.1}>
                   <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${L.border}`, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
                     <div className="grid grid-cols-1 md:grid-cols-[140px_1fr_1fr]">
@@ -466,12 +594,12 @@ export default function IntroPage() {
                         <span className="text-sm font-bold" style={{ color: L.blueText }}>{card.role}</span>
                       </div>
                       {/* Before */}
-                      <div className="p-5 md:p-6" style={{ backgroundColor: L.bgSoft }}>
+                      <div className="p-5 md:p-6" style={{ backgroundColor: L.bgSoft, borderRight: "1px dashed #CBD5E1" }}>
                         <p className="text-[11px] font-bold tracking-wide uppercase mb-2" style={{ color: L.text4 }}>이전</p>
                         <p className="text-sm" style={{ color: L.text2 }}>{card.before}</p>
                       </div>
                       {/* After */}
-                      <div className="p-5 md:p-6" style={{ backgroundColor: L.bg }}>
+                      <div className="p-5 md:p-6" style={{ backgroundColor: L.bg, borderLeft: `3px solid ${L.blue}` }}>
                         <p className="text-[11px] font-bold tracking-wide uppercase mb-2" style={{ color: L.blue }}>LabAxis 이후</p>
                         <p className="text-sm font-medium" style={{ color: L.text1 }}>{card.after}</p>
                       </div>
@@ -492,7 +620,7 @@ export default function IntroPage() {
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: L.blueSoft }}>
                     <BarChart3 className="h-5 w-5" style={{ color: L.blueText }} strokeWidth={1.8} />
                   </div>
-                  <span className="text-sm font-bold tracking-wide" style={{ color: L.blue }}>Data Visualization</span>
+                  <span className="hidden md:inline text-sm font-bold tracking-wide" style={{ color: L.blue }}>Data Visualization</span>
                 </div>
                 <h3 className="text-2xl md:text-3xl font-bold mb-4 leading-tight">
                   운영 데이터가 쌓이면<br />다음 판단이 빨라집니다
@@ -557,7 +685,9 @@ export default function IntroPage() {
                             <div key={i} className="flex-1 flex flex-col items-center">
                               <motion.div
                                 className="w-full rounded-t-md"
-                                style={{ backgroundColor: i >= 6 ? L.blue : L.blueSoft }}
+                                /* §intro-mobile-revamp — 앞 6개 막대 #DBEAFE(blueSoft)가
+                                   흰 배경에서 소실 → #93C5FD 로 가시성 확보 */
+                                style={{ backgroundColor: i >= 6 ? L.blue : "#93C5FD" }}
                                 initial={{ height: 0 }}
                                 whileInView={{ height: `${d.bar}%` }}
                                 viewport={{ once: true }}
@@ -652,18 +782,24 @@ export default function IntroPage() {
               <p className="text-base md:text-lg mb-10" style={{ color: D.text2 }}>
                 검색부터 재고 운영까지, 조직에 맞는 범위부터 도입하세요.
               </p>
+              {/* §intro-mobile-revamp — 클로징 주 버튼: 무료로 시작하기(/search,
+                  §landing-cta-search canon) + 보조: 요금 & 플랜 보기(/pricing).
+                  도입 상담(/support) 진입점은 하단 텍스트 링크로 보존. */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link href="/search">
+                  <button className="w-full sm:w-auto px-8 py-4 text-base font-bold rounded-xl transition-all hover:brightness-110 active:scale-[0.98] flex items-center justify-center gap-2" style={{ backgroundColor: D.primary, color: D.onPrimary }}>
+                    무료로 시작하기 <ArrowRight className="h-4 w-4" />
+                  </button>
+                </Link>
                 <Link href="/pricing">
-                  <button className="w-full sm:w-auto px-8 py-4 text-base font-bold rounded-xl transition-all hover:brightness-110 active:scale-[0.98]" style={{ backgroundColor: D.primary, color: D.onPrimary }}>
+                  <button className="w-full sm:w-auto px-8 py-4 text-base font-bold rounded-xl transition-all hover:brightness-110 active:scale-[0.98]" style={{ color: D.text1, border: "1.5px solid rgba(241,245,249,0.35)" }}>
                     요금 &amp; 플랜 보기
                   </button>
                 </Link>
-                <Link href="/support">
-                  <button className="w-full sm:w-auto px-8 py-4 text-base font-bold rounded-xl transition-all hover:brightness-110 active:scale-[0.98] flex items-center gap-2" style={{ color: D.text1, border: "1px solid rgba(255,255,255,0.15)" }}>
-                    도입 상담 <ArrowRight className="h-4 w-4" />
-                  </button>
-                </Link>
               </div>
+              <p className="mt-6 text-sm" style={{ color: D.text2 }}>
+                도입 검토가 필요하신가요? <Link href="/support" className="font-semibold underline underline-offset-4" style={{ color: D.text1 }}>도입 상담</Link>
+              </p>
             </div>
           </Reveal>
         </section>

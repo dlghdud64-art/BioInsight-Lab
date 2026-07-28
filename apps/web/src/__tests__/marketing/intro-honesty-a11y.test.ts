@@ -5,7 +5,10 @@
  * 4 항목:
  *   ① 지어낸 수치 → 정직화 — 데이터 섹션 "예시 화면 · 실제 데이터 아님" 배지
  *      + KPI 완전 중립화(−58%/+142%/68% 제거 → 정성 라벨) [호영님 §11.318 결정]
- *   ② 연결 포인트 막대 — "(막대는 연결 강도 예시)" 부제로 근거 없는 수치 오해 차단
+ *   ② 연결 포인트 막대 — [RECONCILED by §intro-mobile-revamp 2026-07-28]
+ *      원래: "(막대는 연결 강도 예시)" 부제로 오해 차단(막대 유지).
+ *      개정: 근거 없는 pct 막대 자체를 삭제(스텝 리스트 1카드) → 부제도 불필요.
+ *      정직화 강화 방향 — 단언을 "막대·부제 부재"로 반전.
  *   ③ lot → Lot (대소문자 통일)
  *   ④ prefers-reduced-motion 존중 — Reveal useReducedMotion 분기(전 섹션 진입 모션)
  *
@@ -35,8 +38,9 @@ describe("§intro-honesty-a11y — 4 항목 적용", () => {
     expect(INTRO).not.toMatch(/8주 전 대비 \+142%/);
   });
 
-  it("② 연결 막대 — '(막대는 연결 강도 예시)' 부제(근거 없는 수치 오해 차단)", () => {
-    expect(INTRO).toMatch(/\(막대는 연결 강도 예시\)/);
+  it("② 연결 막대 삭제 — pct 장식값·예시 부제 부재(§intro-mobile-revamp 정직화 완결)", () => {
+    expect(INTRO).not.toMatch(/\(막대는 연결 강도 예시\)/);
+    expect(INTRO).not.toMatch(/pct: 92/);
   });
 
   it("③ lot → Lot 대소문자 통일", () => {
