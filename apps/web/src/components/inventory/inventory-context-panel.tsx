@@ -30,6 +30,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { useInventoryUsageTrend } from "@/hooks/use-inventory-usage-trend";
 import { useReorderRecommendation } from "@/hooks/use-reorder-recommendation";
+import Link from "next/link";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 // §11.320 Phase 2 — 상태 배너 onClick → 운영 브리핑 풀 패널 진입
@@ -758,6 +759,17 @@ export function InventoryContextPanel({
               <p className="mt-1.5 text-[10px] text-slate-400">공급사 지정은 ‘정보 수정’에서 진행하세요.</p>
             )}
           </div>
+          {/* §inventory-delta-label-kpi P2b-3 (핸드오프 §2b, 경로 a) — 견적 초안 만들기.
+              앱 정규 견적 요청 엔트리(/app/quote/request)로 정직 네비게이션. 견적 생성·승인 게이트는
+              견적 화면 소관 · inventory는 이동만(ops-store dispatch·서버 mutation·가짜 prefill 0, dead-link 0). */}
+          <Link
+            href="/app/quote/request"
+            data-testid="inventory-context-quote-draft-cta"
+            className="mt-2 flex items-center justify-center gap-1 min-h-[44px] md:min-h-0 md:h-9 rounded-md border border-blue-200 bg-blue-50 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
+          >
+            <FileText className="h-3.5 w-3.5" /> 견적 초안 만들기
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Link>
         </div>
       )}
 
