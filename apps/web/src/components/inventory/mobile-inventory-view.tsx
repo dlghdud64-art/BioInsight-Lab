@@ -12,6 +12,7 @@ import {
   MapPin,
   Package,
   Sparkles,
+  Loader2,
   Trash2,
   ShoppingCart,
   FlaskConical,
@@ -65,6 +66,8 @@ interface MobileInventoryViewProps {
   onRestock: (inv: ProductInventory) => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
+  /** §inventory-mobile-reorder-gate P2 — 추천 쿼리 로딩 중 상세 시트 CTA 로딩 상태(침묵 no-op 방지). */
+  reorderRecoLoading?: boolean;
 }
 
 // ── Helpers ──
@@ -291,12 +294,14 @@ function MobileDetailSheet({
   onClose,
   onReorder,
   onEdit,
+  reorderRecoLoading = false,
 }: {
   inv: ProductInventory | null;
   open: boolean;
   onClose: () => void;
   onReorder: (inv: ProductInventory) => void;
   onEdit: (inv: ProductInventory) => void;
+  reorderRecoLoading?: boolean;
 }) {
   if (!inv) return null;
 
@@ -330,6 +335,8 @@ function MobileDetailSheet({
       <SheetContent
         side="bottom"
         className="rounded-t-2xl bg-pg border-t border-bd max-h-[85vh] overflow-y-auto px-5 pb-8"
+        /* §inventory-mobile-reorder-gate P4 — scrim이 fixed 헤더를 덮지 않도록 overlay만 오프셋. */
+        overlayClassName="!top-14"
       >
         {/* Drag handle */}
         <div className="flex justify-center pt-2 pb-3">
@@ -533,16 +540,28 @@ function MobileDetailSheet({
           {/* Action Button */}
           <div className="pt-1">
             {(action.type === "reorder" || action.type === "use_first") && (
-              <Button
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white h-11 text-sm font-semibold"
-                onClick={() => {
-                  onReorder(inv);
-                  onClose();
-                }}
-              >
-                <Sparkles className="h-4 w-4 mr-2" />
-                AI 재발주 검토
-              </Button>
+              reorderRecoLoading ? (
+                /* §inventory-mobile-reorder-gate P2 — 추천 쿼리 로딩 중 침묵 금지:
+                   비활성 로딩 상태 표기, 산출되면 자동 활성(쿼리 완료 시 재렌더). */
+                <Button
+                  disabled
+                  className="w-full bg-blue-300 text-white h-11 text-sm font-semibold cursor-wait"
+                >
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  추천 수량 계산 중…
+                </Button>
+              ) : (
+                <Button
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white h-11 text-sm font-semibold"
+                  onClick={() => {
+                    onReorder(inv);
+                    onClose();
+                  }}
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  AI 재발주 검토
+                </Button>
+              )
             )}
             {action.type === "dispose" && (
               <Button
@@ -597,6 +616,7 @@ export function MobileInventoryView({
   onRestock,
   searchQuery,
   onSearchChange,
+  reorderRecoLoading = false,
 }: MobileInventoryViewProps) {
   const [detailItem, setDetailItem] = useState<ProductInventory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -742,6 +762,7 @@ export function MobileInventoryView({
         onClose={closeDetail}
         onReorder={onReorder}
         onEdit={onEdit}
+        reorderRecoLoading={reorderRecoLoading}
       />
     </div>
   );

@@ -89,9 +89,12 @@ describe("§11.310 — ReorderReviewSheet 컴포넌트", () => {
     expect(src).toMatch(/등록된 공급사가 없습니다.*견적 요청으로 시작/);
   });
 
-  it("예상 금액 = 권장 수량 × 최근 단가 (자동 계산)", () => {
+  it("예상 금액 = 검토 수량 × 최근 단가 (자동 계산)", () => {
+    // §inventory-mobile-reorder-gate P2 (호영님 승인 2026-07-28) — 권장 수량 스테퍼 도입으로
+    // 예상 금액 기준이 data.recommendedQty(고정) → qty(스테퍼, 초기값 recommendedQty)로 supersede.
     const src = read(SHEET_PATH);
-    expect(src).toMatch(/estimatedAmount\s*=\s*primaryVendor[\s\S]{0,80}data\.recommendedQty\s*\*\s*primaryVendor\.unitPrice/);
+    expect(src).toMatch(/estimatedAmount\s*=\s*primaryVendor\s*\?\s*qty\s*\*\s*primaryVendor\.unitPrice/);
+    expect(src).toMatch(/const \[qty, setQty\] = useState<number>\(baseQty\)/);
     expect(src).toMatch(/data-testid="reorder-review-estimated-amount"/);
   });
 

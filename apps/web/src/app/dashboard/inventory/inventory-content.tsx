@@ -74,6 +74,8 @@ const InventoryContextPanel = dynamic(() => import("@/components/inventory/inven
 const MobileOperationalBriefSheet = dynamic(() => import("@/components/operational-brief/mobile-bottom-sheet").then((m) => m.MobileOperationalBriefSheet), { ssr: false });
 // §inventory-reorder-surface-unify P2 — ReorderReviewSheet content-level 승격 래퍼(AiAssistant 비의존 직접 오픈).
 const InventoryReorderReviewSheet = dynamic(() => import("@/components/inventory/inventory-reorder-review-sheet").then((m) => m.InventoryReorderReviewSheet), { ssr: false });
+// §inventory-mobile-reorder-gate P3 — 중복 발주 위험 소프트 게이트 바텀시트(모바일).
+const InventoryReorderBlockedSheet = dynamic(() => import("@/components/inventory/inventory-reorder-blocked-sheet").then((m) => m.InventoryReorderBlockedSheet), { ssr: false });
 const OperationalBriefFloatingEntry = dynamic(() => import("@/components/operational-brief/floating-entry").then((m) => m.OperationalBriefFloatingEntry), { ssr: false });
 // §11.258-sweep-2 — 모바일 한정 좌측 하단 floating 진입 (방안 1 위치 분리).
 //   BarcodeScanFab (right-4) 와 분리 (left-4). dashboard inline link 와 별개.
@@ -343,6 +345,11 @@ function InventoryPageContent() {
   //   AiAssistant 내부 state 비의존 → ContextPanel/모바일이 openReorderReviewSheet(item)로 직접 오픈.
   const [reorderReviewItem, setReorderReviewItem] = useState<ProductInventory | null>(null);
   const openReorderReviewSheet = (item: ProductInventory) => setReorderReviewItem(item);
+  // §inventory-mobile-reorder-gate P2 — 추천 미산출 시 안전재고 기준 fallback 수량(출처 배지용, canonical 아님 표기).
+  const [reorderReviewFallbackQty, setReorderReviewFallbackQty] = useState<number | null>(null);
+  // §inventory-mobile-reorder-gate P3 — 소프트 게이트(중복 발주 위험) 상태 + override 사유(진행 결정 기록).
+  const [reorderBlockedState, setReorderBlockedState] = useState<{ item: ProductInventory; reasons: string[] } | null>(null);
+  const [reorderOverrideReasons, setReorderOverrideReasons] = useState<string[] | null>(null);
   // canonical recommendedQty 조회(데스크탑 패널 reorderQty와 동일 소스 /reorder-recommendations). 가짜 0 금지.
   // §stock-risk-consolidation P2 — 재발주 차단 사유(canonical /reorder-recommendations 파생). stock-risk 흡수.
   const reorderBlockReasonsFor = (inventoryId: string | undefined): string[] =>
@@ -391,8 +398,39 @@ function InventoryPageContent() {
 
   // §inventory-panel-unify P3 — 재발주 진입 = 통합 패널(ContextPanel mode='reorder')로 라우팅.
   //   별도 AiAssistant 패널 미오픈(시안 ① 단일 패널, 상단 강조만 재발주). reorderQty/추천은 패널이 canonical 흡수(P2).
+  // §inventory-mobile-reorder-gate P1 — 모바일(<md) no-op 수정: ContextPanel은 데스크톱 컨테이너에서만
+  //   렌더되어 모바일 재발주 진입이 침묵했다. ContextPanel onReorder와 동일 분기(canonical
+  //   /reorder-recommendations)를 viewport로 직접 라우팅 — 추천有→검토 시트 / 차단→소프트 게이트 /
+  //   미산출→안전재고 fallback(출처 배지). 데스크톱 거동 불변.
   const openReorderReview = (inventory: ProductInventory) => {
-    openContextPanel(inventory, "reorder");
+    const isDesktop = typeof window === "undefined" || window.matchMedia("(min-width: 768px)").matches;
+    if (isDesktop) {
+      openContextPanel(inventory, "reorder");
+      return;
+    }
+    const mQty = reorderRecommendedQtyFor(inventory.id);
+    const mBlocked = reorderBlockReasonsFor(inventory.id);
+    if (mBlocked.length > 0) {
+      // §inventory-mobile-reorder-gate P3 — 하드 차단 금지: 게이트 시트로 사유 노출 후 진행 선택 가능.
+      setReorderBlockedState({ item: inventory, reasons: mBlocked });
+      return;
+    }
+    if (mQty != null && mQty > 0) {
+      setReorderReviewFallbackQty(null);
+      setReorderOverrideReasons(null);
+      openReorderReviewSheet(inventory);
+      return;
+    }
+    // §inventory-mobile-reorder-gate P2 — 침묵 금지: 추천 미산출/로딩 시 안전재고 기준 fallback.
+    const fallback = Math.max(0, (inventory.safetyStock ?? 0) - inventory.currentQuantity);
+    if (fallback > 0) {
+      setReorderOverrideReasons(null);
+      setReorderReviewFallbackQty(fallback);
+      openReorderReviewSheet(inventory);
+    } else {
+      // fallback도 0 — 모바일 브리핑 시트(§11.155)로 '재발주 권장 없음' 사유 가시(침묵 0).
+      openContextPanel(inventory, "reorder");
+    }
   };
 
   const entityIdParam = searchParams.get("entity_id");
@@ -583,7 +621,8 @@ function InventoryPageContent() {
   });
 
   // 재구매 추천 목록 조회 (인벤토리 하이라이트용)
-  const { data: reorderRecommendationsData } = useQuery<{
+  // §inventory-mobile-reorder-gate P2 — isLoading 노출: 모바일 상세 시트 CTA 로딩 상태(침묵 no-op 방지).
+  const { data: reorderRecommendationsData, isLoading: reorderRecoLoading } = useQuery<{
     // §inventory-panel-unify P2 — recommendedQty 보강(/api/inventory/reorder-recommendations 반환). optional → 없으면 패널 섹션 미표시(가짜 0).
     recommendations: Array<{ inventoryId: string; recommendedQty?: number; blocked?: boolean; blockReasons?: string[]; recommendationBreakdown?: { safetyGap: number; leadTimeConsumption: number; rawQuantity: number; minOrderQty: number } }>;
   }>({
@@ -1620,6 +1659,7 @@ function InventoryPageContent() {
         <MobileInventoryView
           inventories={displayInventories}
           searchQuery={searchQuery}
+          reorderRecoLoading={reorderRecoLoading}
           onSearchChange={setSearchQuery}
           onReorder={(inventory) => {
             // §inventory-reorder-surface-unify P3 — 모바일 리스트 재발주 진입 = 통합 패널(reorder mode). AiAssistant 직접 오픈 retire.
@@ -2787,72 +2827,6 @@ function InventoryPageContent() {
           {/* end Tabs */}
         </div>
         {/* end main content */}
-
-        {/* §11.155 모바일 변종 — desktop context panel (w-[420px]) 와 mutually exclusive */}
-        {contextPanelOpen && contextPanelItem && (
-          <MobileOperationalBriefSheet
-            open={contextPanelOpen}
-            mode={contextPanelMode}
-            onClose={() => setContextPanelItem(null)}
-            objectLabel="선택한 재고"
-            chips={[
-              { id: "summary", label: "상태 요약" },
-              { id: "facts", label: "보유량" },
-              { id: "risks", label: "리스크" },
-              { id: "next", label: "재발주" },
-            ]}
-            summary={<p className="text-xs text-slate-700 leading-relaxed">{contextPanelItem.currentQuantity === 0 ? "재고 소진 — 즉시 재발주 필요" : contextPanelItem.safetyStock !== null && contextPanelItem.currentQuantity <= contextPanelItem.safetyStock ? `안전재고 미달 (${contextPanelItem.currentQuantity}/${contextPanelItem.safetyStock} ${contextPanelItem.unit})` : "안정 — 운영 정상"}</p>}
-            facts={
-              <div className="space-y-1 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">보유량</span>
-                  <span className="font-medium">
-                    {contextPanelItem.currentQuantity} {contextPanelItem.unit}
-                  </span>
-                </div>
-                {contextPanelItem.safetyStock !== null && (
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">안전재고</span>
-                    <span>
-                      {contextPanelItem.safetyStock} {contextPanelItem.unit}
-                    </span>
-                  </div>
-                )}
-                {contextPanelItem.location && (
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">위치</span>
-                    <span>{contextPanelItem.location}</span>
-                  </div>
-                )}
-              </div>
-            }
-            risks={(() => {
-              // §stock-risk-consolidation P2 — 재발주 차단 사유(RFQ 진행·예산 초과) 실데이터 노출.
-              const blk = reorderBlockReasonsFor(contextPanelItem.id);
-              if (blk.length > 0) return <div className="space-y-0.5">{blk.map((b, i) => <p key={i} className="text-xs font-semibold text-[#b45821]">차단 · {b}</p>)}</div>;
-              return contextPanelItem.expiryDate && new Date(contextPanelItem.expiryDate).getTime() < Date.now() ? <p className="text-xs text-rose-700">유효기간 만료</p> : <p className="text-xs text-slate-500">차단 없음</p>;
-            })()}
-            next={<p className="text-xs text-slate-700">재발주 또는 정보 수정</p>}
-            primaryCta={(() => {
-              // §inventory-reorder-surface-unify P2 — 모바일 재발주 진입 = ReorderReviewSheet(승격) 직접 오픈.
-              //   recommendedQty = canonical(/reorder-recommendations). 추천 없으면 disabled(dead button 0, 가짜 0 금지).
-              const qty = reorderRecommendedQtyFor(contextPanelItem.id);
-              const blocked = reorderBlockReasonsFor(contextPanelItem.id).length > 0;
-              const hasRec = qty != null && qty > 0;
-              return {
-                // §stock-risk-consolidation P2 — 차단(RFQ 진행·예산 초과) 시 재발주 flow 차단(dead button 방지, 사유는 risks에 노출).
-                label: blocked ? "재발주 차단됨" : hasRec ? `재발주안 검토 (${qty}${contextPanelItem.unit})` : "재발주 권장 없음",
-                disabled: blocked || !hasRec,
-                onClick: () => {
-                  if (blocked) return;
-                  const match = displayInventories.find((inv) => inv.id === contextPanelItem.id);
-                  setContextPanelItem(null);
-                  if (match) openReorderReviewSheet(match);
-                },
-              };
-            })()}
-          />
-        )}
 
         {/* ── Context Panel (right-side operational detail, desktop only) ── */}
         {contextPanelOpen && contextPanelItem && (
@@ -4141,19 +4115,125 @@ function InventoryPageContent() {
       {/* §inventory-reorder-surface-unify P4 — InventoryAiAssistantPanel(분석 래퍼) inventory 트리거 retire.
           재발주 검토는 ReorderReviewSheet 승격(InventoryReorderReviewSheet)으로 대체. 컴포넌트 파일은 보존(rollback). */}
 
+      {/* §inventory-mobile-reorder-gate P1 — §11.155 모바일 브리핑 시트 재배치: 기존 위치가
+          데스크톱 컨테이너(hidden md:flex) 내부라 모바일에서 조상 display:none으로 미렌더(dead).
+          top-level 이동으로 모바일 detail/reorder 브리핑 복원. props 무변경. */}
+        {/* §11.155 모바일 변종 — desktop context panel (w-[420px]) 와 mutually exclusive */}
+        {contextPanelOpen && contextPanelItem && (
+          <MobileOperationalBriefSheet
+            open={contextPanelOpen}
+            mode={contextPanelMode}
+            onClose={() => setContextPanelItem(null)}
+            objectLabel="선택한 재고"
+            chips={[
+              { id: "summary", label: "상태 요약" },
+              { id: "facts", label: "보유량" },
+              { id: "risks", label: "리스크" },
+              { id: "next", label: "재발주" },
+            ]}
+            summary={<p className="text-xs text-slate-700 leading-relaxed">{contextPanelItem.currentQuantity === 0 ? "재고 소진 — 즉시 재발주 필요" : contextPanelItem.safetyStock !== null && contextPanelItem.currentQuantity <= contextPanelItem.safetyStock ? `안전재고 미달 (${contextPanelItem.currentQuantity}/${contextPanelItem.safetyStock} ${contextPanelItem.unit})` : "안정 — 운영 정상"}</p>}
+            facts={
+              <div className="space-y-1 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">보유량</span>
+                  <span className="font-medium">
+                    {contextPanelItem.currentQuantity} {contextPanelItem.unit}
+                  </span>
+                </div>
+                {contextPanelItem.safetyStock !== null && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">안전재고</span>
+                    <span>
+                      {contextPanelItem.safetyStock} {contextPanelItem.unit}
+                    </span>
+                  </div>
+                )}
+                {contextPanelItem.location && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">위치</span>
+                    <span>{contextPanelItem.location}</span>
+                  </div>
+                )}
+              </div>
+            }
+            risks={(() => {
+              // §stock-risk-consolidation P2 — 재발주 차단 사유(RFQ 진행·예산 초과) 실데이터 노출.
+              const blk = reorderBlockReasonsFor(contextPanelItem.id);
+              if (blk.length > 0) return <div className="space-y-0.5">{blk.map((b, i) => <p key={i} className="text-xs font-semibold text-[#b45821]">차단 · {b}</p>)}</div>;
+              return contextPanelItem.expiryDate && new Date(contextPanelItem.expiryDate).getTime() < Date.now() ? <p className="text-xs text-rose-700">유효기간 만료</p> : <p className="text-xs text-slate-500">차단 없음</p>;
+            })()}
+            next={<p className="text-xs text-slate-700">재발주 또는 정보 수정</p>}
+            primaryCta={(() => {
+              // §inventory-reorder-surface-unify P2 — 모바일 재발주 진입 = ReorderReviewSheet(승격) 직접 오픈.
+              //   recommendedQty = canonical(/reorder-recommendations). 추천 없으면 disabled(dead button 0, 가짜 0 금지).
+              const qty = reorderRecommendedQtyFor(contextPanelItem.id);
+              const blocked = reorderBlockReasonsFor(contextPanelItem.id).length > 0;
+              const hasRec = qty != null && qty > 0;
+              return {
+                // §stock-risk-consolidation P2 — 차단(RFQ 진행·예산 초과) 시 재발주 flow 차단(dead button 방지, 사유는 risks에 노출).
+                label: blocked ? "재발주 차단됨" : hasRec ? `재발주안 검토 (${qty}${contextPanelItem.unit})` : "재발주 권장 없음",
+                disabled: blocked || !hasRec,
+                onClick: () => {
+                  if (blocked) return;
+                  const match = displayInventories.find((inv) => inv.id === contextPanelItem.id);
+                  setContextPanelItem(null);
+                  if (match) openReorderReviewSheet(match);
+                },
+              };
+            })()}
+          />
+        )}
+
       {/* §inventory-reorder-surface-unify P2 — content-level 재발주안 검토 시트(ReorderReviewSheet 승격).
           recommendedQty = canonical(/reorder-recommendations) — 데스크탑 패널과 동일 소스. null이면 미표시(가짜 0 금지). */}
       <InventoryReorderReviewSheet
         open={reorderReviewItem !== null}
-        onClose={() => setReorderReviewItem(null)}
+        onClose={() => {
+          setReorderReviewItem(null);
+          // §inventory-mobile-reorder-gate — fallback/override 일회성 상태 정리(다음 오픈 오염 방지).
+          setReorderReviewFallbackQty(null);
+          setReorderOverrideReasons(null);
+        }}
         productId={reorderReviewItem?.productId ?? null}
         productName={reorderReviewItem?.product.name ?? null}
         recommendedQty={reorderRecommendedQtyFor(reorderReviewItem?.id)}
         unit={reorderReviewItem?.unit ?? undefined}
         storageLocation={reorderReviewItem?.location ?? undefined}
+        fallbackQty={reorderReviewFallbackQty}
+        currentQuantity={reorderReviewItem?.currentQuantity ?? null}
+        safetyStock={reorderReviewItem?.safetyStock ?? null}
+        breakdown={reorderRecommendationsData?.recommendations?.find((r) => r.inventoryId === reorderReviewItem?.id)?.recommendationBreakdown ?? null}
+        overrideReasons={reorderOverrideReasons}
         onSearchVendors={() => {
           // §inventory-reorder-surface-unify P4 / §11.381c — 공급사 소싱 검색 진입(AiAssistant onViewVendors 대체).
           if (reorderReviewItem) router.push(`/app/search?q=${encodeURIComponent(reorderReviewItem.product.name)}`);
+        }}
+      />
+
+      {/* §inventory-mobile-reorder-gate P3 — 중복 발주 위험 소프트 게이트(하드 차단 금지).
+          canonical blockReasons(/reorder-recommendations: RFQ 진행·예산 초과) 노출 후
+          '그래도 재발주 검토 진행'으로 경로 유지 + override 사유를 검토 시트·견적 초안 reason에 전파. */}
+      <InventoryReorderBlockedSheet
+        open={reorderBlockedState !== null}
+        onClose={() => setReorderBlockedState(null)}
+        productName={reorderBlockedState?.item.product.name ?? null}
+        reasons={reorderBlockedState?.reasons ?? []}
+        currentQuantity={reorderBlockedState?.item.currentQuantity ?? null}
+        safetyStock={reorderBlockedState?.item.safetyStock ?? null}
+        unit={reorderBlockedState?.item.unit ?? undefined}
+        onViewQuotes={() => {
+          setReorderBlockedState(null);
+          router.push("/dashboard/quotes");
+        }}
+        onProceed={() => {
+          const blockedItem = reorderBlockedState?.item;
+          const reasons = reorderBlockedState?.reasons ?? [];
+          setReorderBlockedState(null);
+          if (!blockedItem) return;
+          setReorderOverrideReasons(reasons);
+          const pQty = reorderRecommendedQtyFor(blockedItem.id);
+          setReorderReviewFallbackQty(pQty != null && pQty > 0 ? null : Math.max(0, (blockedItem.safetyStock ?? 0) - blockedItem.currentQuantity));
+          openReorderReviewSheet(blockedItem);
         }}
       />
 

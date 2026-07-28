@@ -60,8 +60,13 @@ describe("§inventory-panel-unify P3a — 재발주 진입 통합 패널 라우�
     expect(src).toMatch(/openContextPanel = \(inv: ProductInventory, mode:/);
   });
   it("openReorderReview → 통합 패널(reorder) 라우팅 (AiAssistant 직접 오픈 아님)", () => {
+    // §inventory-mobile-reorder-gate P1 (호영님 승인 2026-07-28) — 즉시-호출 단언을
+    // viewport 분기형으로 진화: 모바일(<md)은 ContextPanel 미렌더(no-op)라 직접 시트 라우팅,
+    // 데스크톱은 통합 패널 라우팅 보존(본 sentinel의 보호 의도 = 데스크톱 경로로 유지).
     const src = read(CONTENT);
-    expect(src).toMatch(/openReorderReview = \(inventory: ProductInventory\) => \{\s*openContextPanel\(inventory, "reorder"\)/);
+    expect(src).toMatch(/openReorderReview = \(inventory: ProductInventory\) => \{/);
+    expect(src).toMatch(/if \(isDesktop\) \{\s*\n\s*openContextPanel\(inventory, "reorder"\)/);
+    expect(src).not.toMatch(/openReorderReview[\s\S]{0,600}<InventoryAiAssistantPanel/); // AiAssistant 직접 오픈 금지 보존
   });
   it("ContextPanel 렌더에 mode={contextPanelMode} 전달", () => {
     expect(read(CONTENT)).toMatch(/mode=\{contextPanelMode\}/);
