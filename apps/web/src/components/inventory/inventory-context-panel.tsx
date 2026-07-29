@@ -373,10 +373,19 @@ function generateMockTransactions(item: ContextPanelItem): RecentTransaction[] {
 /* ── Severity badge styling ── */
 // §11.320 Phase 4 — 위험/주의 톤을 §11.302 신호등 정합으로 swap (border 강조 제거, bg-{tone}-50 + text-{tone}-700).
 const SEVERITY_STYLE: Record<string, string> = {
-  critical: "bg-red-50 text-red-700",
-  high: "bg-yellow-50 text-yellow-700",
-  medium: "bg-blue-50 text-blue-700",
+  critical: "bg-red-100 text-red-700",
+  high: "bg-yellow-100 text-yellow-800",
+  // §inventory-brief-sian(2026-07-29) — 시안 '보통' 배지 = 연노랑(#fef3c7 계열). 구 blue 폐기.
+  medium: "bg-yellow-100 text-yellow-700",
   low: "bg-slate-50 text-slate-600",
+};
+
+// §inventory-brief-sian(2026-07-29) — 리스크 카드 배경 시안 정합(옐로/레드 틴트, low만 무채색).
+const RISK_CARD_STYLE: Record<string, string> = {
+  critical: "border-red-200 bg-red-50",
+  high: "border-yellow-200 bg-yellow-50",
+  medium: "border-yellow-200 bg-yellow-50",
+  low: "border-bd bg-pn",
 };
 
 const LOT_STATUS_STYLE: Record<string, string> = {
@@ -461,13 +470,8 @@ export function InventoryContextPanel({
   const [isFlowSectionExpanded, setIsFlowSectionExpanded] = useState(true);
   const [isHistorySectionExpanded, setIsHistorySectionExpanded] = useState(false);
   const [isActionsSectionExpanded, setIsActionsSectionExpanded] = useState(true);
-  // §inventory-delta-label-kpi P2b-1 — 소진 추이 접기(보조 정보, default 접힘).
-  const [isUsageTrendSectionExpanded, setIsUsageTrendSectionExpanded] = useState(false);
   // §inventory-redesign A-③ — 위치 미지정 risk 인라인 지정 picker 토글.
   const [locPickerOpen, setLocPickerOpen] = useState(false);
-  // §inventory-brief-delta(2026-07-29) §1 — 상태 액션 카드 아래 "권장 수량 근거" 접힌 행.
-  //   구 "재발주 우선순위" 섹션 흡수분. reorder 진입 시 기본 펼침(검토 맥락), 그 외 접힘.
-  const [isReorderBasisExpanded, setIsReorderBasisExpanded] = useState(mode === "reorder");
   // §inventory-brief-sian(2026-07-29) — 공급사 후보 시안형: top1 카드 + '다른 공급사' 인라인 토글.
   const [showOtherVendors, setShowOtherVendors] = useState(false);
   const lots = realLots(item);
@@ -594,10 +598,16 @@ export function InventoryContextPanel({
         const tone: "danger" | "warn" | "ok" = isDanger ? "danger" : isWarn ? "warn" : "ok";
         // §inventory-brief-sian(호영님 승인 2026-07-29, "시안대로") — 구 de-red(7/9) supersede:
         //   시안 정합 톤 배경 채움 복귀(레드 red-50 계열). §9 amber 금지 유지 — 주의=yellow 토큰.
+        //   시안 구조: 카드 외곽 톤 border + 헤더 밴드만 톤 배경, 게이지·CTA 영역은 흰색(#fff).
         const toneClass: Record<typeof tone, string> = {
           danger: "border-red-200 bg-red-50 text-red-700",
           warn: "border-yellow-200 bg-yellow-50 text-yellow-700",
           ok: "border-emerald-200 bg-emerald-50 text-emerald-700",
+        };
+        const toneBorder: Record<typeof tone, string> = {
+          danger: "border-red-200",
+          warn: "border-yellow-200",
+          ok: "border-emerald-200",
         };
         // 시안 아이콘 박스: accent 사각 박스 + 흰 !/✓ (이모지 제거).
         const toneAccent =
@@ -630,7 +640,7 @@ export function InventoryContextPanel({
             <Button
               data-testid="inventory-context-status-card-cta"
               size="sm"
-              className="w-full min-h-[44px] md:min-h-0 md:h-8 text-xs bg-red-600 hover:bg-red-500 text-white"
+              className="w-full min-h-[44px] md:min-h-0 md:h-8 text-xs bg-red-500 hover:bg-red-600 text-white"
               onClick={(e) => {
                 e.stopPropagation();
                 onReorder(item);
@@ -667,9 +677,10 @@ export function InventoryContextPanel({
                   operationalBriefPopup?.open?.();
                 }
               }}
-              className={`rounded-lg border px-3 py-2.5 ${toneClass[tone]} cursor-pointer transition-colors hover:brightness-95 space-y-2`}
+              className={`rounded-xl border ${toneBorder[tone]} overflow-hidden shadow-sm cursor-pointer transition-colors hover:brightness-[0.98]`}
             >
-              <div className="flex items-start gap-2.5">
+              {/* 헤더 밴드 — 톤 배경(시안 #fef2f2 계열). */}
+              <div className={`flex items-start gap-2.5 px-3 py-2.5 ${toneClass[tone]}`}>
                 <span
                   className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${toneAccent} text-white text-sm font-extrabold`}
                   aria-hidden="true"
@@ -683,126 +694,32 @@ export function InventoryContextPanel({
                       <Badge className="border-none bg-red-500/15 text-red-600 text-[10px] px-1.5 py-0">긴급</Badge>
                     )}
                   </p>
-                  <p className="text-[11px] mt-0.5 leading-snug font-semibold">{toneSub}</p>
+                  <p className="text-[11px] mt-0.5 leading-snug font-semibold opacity-80">{toneSub}</p>
                 </div>
               </div>
-              {/* 현재/안전 갭 게이지 — 수치 병기(바 단독 금지, §2). */}
-              {item.safetyStock !== null && item.safetyStock > 0 && (
-                <div data-testid="inventory-context-status-card-gauge" className="flex items-center gap-2">
-                  <div
-                    className="h-1.5 flex-1 rounded-full bg-slate-100 overflow-hidden"
-                    role="img"
-                    aria-label={`현재 ${item.currentQuantity} / 안전재고 ${item.safetyStock}`}
-                  >
-                    <div className={`h-full rounded-full ${gaugeColor}`} style={{ width: `${gaugePct}%` }} />
-                  </div>
-                  <span className="text-[10px] tabular-nums font-semibold shrink-0">
-                    {item.currentQuantity} / {item.safetyStock}
-                  </span>
+              {/* 게이지·CTA 영역 — 흰 배경(시안 background:#fff). */}
+              {((item.safetyStock !== null && item.safetyStock > 0) || cardCta) && (
+                <div className="bg-white px-3 pt-2.5 pb-3 space-y-2.5">
+                  {item.safetyStock !== null && item.safetyStock > 0 && (
+                    <div data-testid="inventory-context-status-card-gauge">
+                      {/* 시안 좌/우 라벨 + §2 수치 병기 */}
+                      <div className="flex items-baseline justify-between mb-1.5">
+                        <span className="text-[11px] text-slate-500">현재 {item.currentQuantity}{item.unit}</span>
+                        <span className="text-[11px] tabular-nums text-slate-400">안전 {item.safetyStock}{item.unit} · {item.currentQuantity} / {item.safetyStock}</span>
+                      </div>
+                      <div
+                        className="h-2 rounded-full bg-slate-100 overflow-hidden"
+                        role="img"
+                        aria-label={`현재 ${item.currentQuantity} / 안전재고 ${item.safetyStock}`}
+                      >
+                        <div className={`h-full rounded-full ${gaugeColor}`} style={{ width: `${gaugePct}%` }} />
+                      </div>
+                    </div>
+                  )}
+                  {cardCta}
                 </div>
               )}
-              {cardCta}
             </div>
-            {/* §inventory-brief-delta §1 — 접힌 근거 행: 구 "재발주 우선순위" 섹션 흡수분.
-                reorderQty canonical — null/0이면 미표시(가짜 수량 0). */}
-            {tone === "danger" && reorderQty != null && reorderQty > 0 && (
-              <div data-testid="inventory-context-reorder-basis">
-                <button
-                  type="button"
-                  onClick={() => setIsReorderBasisExpanded((v) => !v)}
-                  className="w-full flex items-center justify-between text-[11px] font-semibold text-slate-500 hover:text-slate-700 transition-colors min-h-[36px]"
-                  aria-expanded={isReorderBasisExpanded}
-                >
-                  <span>권장 수량 근거 · {reorderQty}{item.unit}</span>
-                  <span>{isReorderBasisExpanded ? "접기 ▴" : "펼치기 ▾"}</span>
-                </button>
-                {isReorderBasisExpanded && (
-                  <div className="space-y-2">
-                    {/* §inventory-delta-label-kpi P2a-3 (핸드오프 §1.1) — 권장수량 근거 분해. canonical 파생, 조작 0. */}
-                    {reorderBreakdown && (
-                      <div className="rounded-lg bg-slate-50 border border-bd/60 px-3 py-2 space-y-1">
-                        <div className="flex justify-between text-[11px]">
-                          <span className="text-slate-500">안전재고 갭</span>
-                          <span className="font-medium text-slate-700 tabular-nums">+{reorderBreakdown.safetyGap} {item.unit}</span>
-                        </div>
-                        <div className="flex justify-between text-[11px]">
-                          <span className="text-slate-500">납기 중 소진</span>
-                          <span className="font-medium text-slate-700 tabular-nums">+{reorderBreakdown.leadTimeConsumption} {item.unit}</span>
-                        </div>
-                        <div className="flex justify-between text-[11px] pt-1 border-t border-bd/50">
-                          <span className="text-slate-500">최소 주문 단위 반올림</span>
-                          <span className="font-medium text-slate-700 tabular-nums">×{reorderBreakdown.minOrderQty}</span>
-                        </div>
-                      </div>
-                    )}
-                    {/* §inventory-delta-label-kpi P2b-2 — 공급사 후보(canonical PurchaseRecord 집계).
-                        §inventory-brief-delta §4-5 — 후보 0건이면 블록 자체 미표시("공급사 후보 없음" 회색 텍스트 제거,
-                        공급사 미지정은 리스크 섹션으로 일원화). */}
-                    {(vendorRec.isLoading || vendorRec.vendors.length > 0) && (
-                      <div
-                        data-testid="inventory-context-vendor-candidates"
-                        className="rounded-lg bg-slate-50 border border-bd/60 px-3 py-2"
-                      >
-                        <div className="flex items-center justify-between">
-                          <p className="text-[10px] font-semibold text-slate-500">공급사 후보</p>
-                          {!item.vendor && (
-                            <span className="text-[10px] font-semibold text-yellow-700">재발주 관문 · 미지정</span>
-                          )}
-                        </div>
-                        {vendorRec.isLoading ? (
-                          <div
-                            data-testid="inventory-context-vendor-candidates-loading"
-                            className="mt-1.5 h-8 rounded bg-slate-100 animate-pulse"
-                          />
-                        ) : (
-                          <>
-                            {/* §inventory-brief-sian — 시안형: top1 강조 + '다른 공급사' 인라인 토글(실 동작, dead link 0).
-                                vendorRec.vendors.slice(0, 3) 소스 유지(canonical PurchaseRecord 집계 top3). */}
-                            {vendorRec.vendors.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => setShowOtherVendors((v) => !v)}
-                                className="mt-1 text-[10px] font-semibold text-blue-600 hover:text-blue-700"
-                                aria-expanded={showOtherVendors}
-                              >
-                                다른 공급사 {showOtherVendors ? "▴" : "›"}
-                              </button>
-                            )}
-                            <ul data-testid="inventory-context-vendor-candidates-list" className="mt-1.5 space-y-1">
-                              {vendorRec.vendors.slice(0, 3).map((v, i) => (i === 0 || showOtherVendors) && (
-                                <li key={v.vendorName} className="flex items-center justify-between text-[11px]">
-                                  <span className={`truncate ${i === 0 ? "font-bold text-slate-800" : "font-medium text-slate-700"}`}>
-                                    {v.vendorName}
-                                    {i === 0 && (
-                                      <span className="ml-1.5 font-medium text-slate-400">최근 {v.count}회 구매</span>
-                                    )}
-                                  </span>
-                                  <span className="ml-2 shrink-0 tabular-nums text-slate-500">
-                                    개당 ₩{v.unitPrice.toLocaleString()}{i !== 0 ? ` · ${v.count}회` : ""}
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          </>
-                        )}
-                        {!item.vendor && vendorRec.vendors.length > 0 && (
-                          <p className="mt-1.5 text-[10px] text-slate-400">공급사 지정은 ‘정보 수정’에서 진행하세요.</p>
-                        )}
-                      </div>
-                    )}
-                    {/* §inventory-delta-label-kpi P2b-3 — 견적 초안 만들기. 정직 네비게이션(이동만, dead-link 0). */}
-                    <Link
-                      href="/app/quote/request"
-                      className="flex items-center justify-center gap-1 min-h-[44px] md:min-h-0 md:h-9 rounded-md border border-blue-200 bg-blue-50 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
-                      data-testid="inventory-context-quote-draft-cta"
-                    >
-                      <FileText className="h-3.5 w-3.5" /> 견적 초안 만들기 · {reorderQty}{item.unit}
-                      <ChevronRight className="h-3.5 w-3.5" />
-                    </Link>
-                  </div>
-                )}
-              </div>
-            )}
             {/* §11.320 — 액션 button 상태 카드 바로 아래 (구 sticky footer 제거).
                 §inventory-brief-delta §3 — `입·출고 기록` 버튼은 시약 이력 추적 화면
                 (/dashboard/inventory/history?itemId={id}) 미구현으로 미생성(dead button 금지). 구현 후 배선. */}
@@ -1117,7 +1034,7 @@ export function InventoryContextPanel({
               {visibleRisks.map((risk, idx) => (
                 <div
                   key={idx}
-                  className="flex items-start gap-2.5 rounded-lg border border-bd bg-pn px-3 py-2.5"
+                  className={`flex items-start gap-2.5 rounded-lg border px-3 py-2.5 ${RISK_CARD_STYLE[risk.severity]}`}
                 >
                   <Badge
                     variant="outline"
@@ -1154,7 +1071,7 @@ export function InventoryContextPanel({
                         <button
                           type="button"
                           onClick={() => setLocPickerOpen(true)}
-                          className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-700"
+                          className="mt-1.5 inline-flex items-center gap-1 rounded-md border border-yellow-300 bg-white px-2.5 py-1 text-[11px] font-bold text-yellow-700 hover:bg-yellow-50"
                         >
                           <MapPin className="h-3 w-3" /> 위치 지정
                         </button>
@@ -1211,21 +1128,46 @@ export function InventoryContextPanel({
           )}
         </section>
 
-        {/* §inventory-delta-label-kpi P2b-1 — 소진 추이(주버킷/<2주 폴백). canonical /api/inventory/usage 파생, 표시 계층. */}
-        <section data-testid="inventory-context-usage-trend">
-          <div className="flex items-center justify-between">
-            <SectionHeader icon={TrendingDown} label="소진 추이" />
-            <button
-              type="button"
-              onClick={() => setIsUsageTrendSectionExpanded((v) => !v)}
-              className="text-xs font-semibold text-slate-700 hover:text-slate-950 transition-colors min-h-[36px] px-2 -mx-2 inline-flex items-center gap-1"
-              aria-expanded={isUsageTrendSectionExpanded}
-            >
-              {isUsageTrendSectionExpanded ? "접기 ▴" : "펼치기 ▾"}
-            </button>
+        {/* ── E. Recent Transactions ── */}
+        {/* §inventory-brief-delta(2026-07-29) §3 — 브리핑 = 최근 3~5건 요약(역할 분리: 전수·출력은 이력 추적).
+            하단 `전체 이력 보기 ›` 링크는 /dashboard/inventory/history?itemId={id} 구현 후 배선(dead-link 금지, 현재 미생성). */}
+        <section>
+          <SectionHeader icon={ArrowRight} label="최근 입출고" />
+          <div className="mt-2.5 space-y-1.5">
+            {generateMockTransactions(item).map((tx, idx) => (
+              <div key={idx} className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-bd bg-pn">
+                <div className={`flex h-5 w-5 items-center justify-center rounded ${
+                  tx.type === "in" ? "bg-emerald-500/15" : tx.type === "out" ? "bg-yellow-500/15" : "bg-red-500/15"
+                }`}>
+                  <span className={`text-[9px] font-bold ${
+                    tx.type === "in" ? "text-emerald-400" : tx.type === "out" ? "text-yellow-700" : "text-red-400"
+                  }`}>{tx.type === "in" ? "입" : tx.type === "out" ? "출" : "폐"}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-slate-600 font-medium">{tx.label}</span>
+                    <span className="text-[10px] text-slate-600">{tx.date}</span>
+                  </div>
+                  <span className="text-[10px] text-slate-500">{tx.detail}</span>
+                </div>
+              </div>
+            ))}
           </div>
-          {isUsageTrendSectionExpanded && (
-            <div className="mt-2.5">
+        </section>
+
+        {/* §inventory-brief-sian(호영님 2026-07-29 "하단 시안대로") — 재발주 검토 통합 섹션.
+            시안 하단 위치(최근 입출고 아래)·항상 펼침. 시안의 'AI' 접두 라벨은 no-AI 확정 결정
+            (§inventory-panel-unify) 유지로 제외. 구 상단 접힌 근거 행 → 본 섹션으로 이동.
+            소진 추이 = canonical /api/inventory/usage 파생 · 근거/공급사/견적 = reorderQty>0 시에만(가짜 0). */}
+        <section data-testid="inventory-context-reorder-basis">
+          <div className="flex items-center justify-between">
+            <SectionHeader icon={ShoppingCart} label="재발주 검토" />
+            <span className="text-[10px] text-slate-400">웹·모바일 동일 소스</span>
+          </div>
+          <div className="mt-2.5 space-y-2">
+            {/* 소진 추이 — 구 standalone 섹션 이동(§P2b-1 4상태·granularity 라벨 보존, 항상 렌더) */}
+            <div data-testid="inventory-context-usage-trend" className="rounded-lg border border-bd bg-pn px-3 py-2.5">
+              <p className="mb-1.5 text-[11px] font-bold text-slate-600">소진 추이</p>
               {usageTrend.isLoading ? (
                 <div
                   data-testid="inventory-context-usage-trend-loading"
@@ -1302,33 +1244,96 @@ export function InventoryContextPanel({
                 </div>
               )}
             </div>
-          )}
-        </section>
-
-        {/* ── E. Recent Transactions ── */}
-        {/* §inventory-brief-delta(2026-07-29) §3 — 브리핑 = 최근 3~5건 요약(역할 분리: 전수·출력은 이력 추적).
-            하단 `전체 이력 보기 ›` 링크는 /dashboard/inventory/history?itemId={id} 구현 후 배선(dead-link 금지, 현재 미생성). */}
-        <section>
-          <SectionHeader icon={ArrowRight} label="최근 입출고" />
-          <div className="mt-2.5 space-y-1.5">
-            {generateMockTransactions(item).map((tx, idx) => (
-              <div key={idx} className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-bd bg-pn">
-                <div className={`flex h-5 w-5 items-center justify-center rounded ${
-                  tx.type === "in" ? "bg-emerald-500/15" : tx.type === "out" ? "bg-yellow-500/15" : "bg-red-500/15"
-                }`}>
-                  <span className={`text-[9px] font-bold ${
-                    tx.type === "in" ? "text-emerald-400" : tx.type === "out" ? "text-yellow-700" : "text-red-400"
-                  }`}>{tx.type === "in" ? "입" : tx.type === "out" ? "출" : "폐"}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-slate-600 font-medium">{tx.label}</span>
-                    <span className="text-[10px] text-slate-600">{tx.date}</span>
+            {reorderQty != null && reorderQty > 0 && (
+              <>
+                {/* §inventory-delta-label-kpi P2a-3 — 권장 수량 근거 분해 + 시안 '= 권장 N개' 합계 행 */}
+                {reorderBreakdown && (
+                  <div className="rounded-lg bg-slate-50 border border-bd/60 px-3 py-2 space-y-1">
+                    <p className="text-[10px] font-semibold text-slate-500">권장 수량 근거</p>
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-slate-500">안전재고 갭</span>
+                      <span className="font-medium text-slate-700 tabular-nums">+{reorderBreakdown.safetyGap} {item.unit}</span>
+                    </div>
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-slate-500">납기 중 소진</span>
+                      <span className="font-medium text-slate-700 tabular-nums">+{reorderBreakdown.leadTimeConsumption} {item.unit}</span>
+                    </div>
+                    <div className="flex justify-between text-[11px] pt-1 border-t border-bd/50">
+                      <span className="text-slate-500">최소 주문 단위 반올림</span>
+                      <span className="font-medium text-slate-700 tabular-nums">×{reorderBreakdown.minOrderQty}</span>
+                    </div>
+                    <div className="flex justify-between text-[11px] pt-1 border-t border-bd/50">
+                      <span className="text-slate-500">합계</span>
+                      <span className="font-bold text-blue-700 tabular-nums">= 권장 {reorderQty}{item.unit}</span>
+                    </div>
                   </div>
-                  <span className="text-[10px] text-slate-500">{tx.detail}</span>
-                </div>
-              </div>
-            ))}
+                )}
+                {/* §inventory-delta-label-kpi P2b-2 — 공급사 후보(canonical PurchaseRecord 집계).
+                    §inventory-brief-delta §4-5 — 후보 0건이면 블록 자체 미표시("공급사 후보 없음" 회색 텍스트 제거,
+                    공급사 미지정은 리스크 섹션으로 일원화). */}
+                {(vendorRec.isLoading || vendorRec.vendors.length > 0) && (
+                  <div
+                    data-testid="inventory-context-vendor-candidates"
+                    className="rounded-lg bg-slate-50 border border-bd/60 px-3 py-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-semibold text-slate-500">공급사 후보</p>
+                      {!item.vendor && (
+                        <span className="text-[10px] font-semibold text-yellow-700">재발주 관문 · 미지정</span>
+                      )}
+                    </div>
+                    {vendorRec.isLoading ? (
+                      <div
+                        data-testid="inventory-context-vendor-candidates-loading"
+                        className="mt-1.5 h-8 rounded bg-slate-100 animate-pulse"
+                      />
+                    ) : (
+                      <>
+                        {/* §inventory-brief-sian — 시안형: top1 강조 + '다른 공급사' 인라인 토글(실 동작, dead link 0).
+                            vendorRec.vendors.slice(0, 3) 소스 유지(canonical PurchaseRecord 집계 top3). */}
+                        {vendorRec.vendors.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setShowOtherVendors((v) => !v)}
+                            className="mt-1 text-[10px] font-semibold text-blue-600 hover:text-blue-700"
+                            aria-expanded={showOtherVendors}
+                          >
+                            다른 공급사 {showOtherVendors ? "▴" : "›"}
+                          </button>
+                        )}
+                        <ul data-testid="inventory-context-vendor-candidates-list" className="mt-1.5 space-y-1">
+                          {vendorRec.vendors.slice(0, 3).map((v, i) => (i === 0 || showOtherVendors) && (
+                            <li key={v.vendorName} className="flex items-center justify-between text-[11px]">
+                              <span className={`truncate ${i === 0 ? "font-bold text-slate-800" : "font-medium text-slate-700"}`}>
+                                {v.vendorName}
+                                {i === 0 && (
+                                  <span className="ml-1.5 font-medium text-slate-400">최근 {v.count}회 구매</span>
+                                )}
+                              </span>
+                              <span className="ml-2 shrink-0 tabular-nums text-slate-500">
+                                개당 ₩{v.unitPrice.toLocaleString()}{i !== 0 ? ` · ${v.count}회` : ""}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
+                    {!item.vendor && vendorRec.vendors.length > 0 && (
+                      <p className="mt-1.5 text-[10px] text-slate-400">공급사 지정은 ‘정보 수정’에서 진행하세요.</p>
+                    )}
+                  </div>
+                )}
+                {/* §inventory-delta-label-kpi P2b-3 — 견적 초안 만들기. 정직 네비게이션(이동만, dead-link 0). */}
+                <Link
+                  href="/app/quote/request"
+                  className="flex items-center justify-center gap-1 min-h-[44px] md:min-h-0 md:h-9 rounded-md border border-blue-200 bg-blue-50 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
+                  data-testid="inventory-context-quote-draft-cta"
+                >
+                  <FileText className="h-3.5 w-3.5" /> 견적 초안 만들기 · {reorderQty}{item.unit}
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </Link>
+              </>
+            )}
           </div>
         </section>
 

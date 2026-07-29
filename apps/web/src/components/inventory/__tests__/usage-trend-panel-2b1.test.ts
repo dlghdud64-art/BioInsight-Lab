@@ -14,10 +14,11 @@ const PANEL = read("src/components/inventory/inventory-context-panel.tsx");
 const HOOK = read("src/hooks/use-inventory-usage-trend.ts");
 
 describe("§P2b-1 — 소진 추이 섹션(패널)", () => {
-  it("접기 섹션 testid + isUsageTrendSectionExpanded(default 접힘)", () => {
+  it("소진 추이 = 재발주 검토 통합 섹션 내부 상시 렌더 — §inventory-brief-sian(호영님 승인 2026-07-29) supersede", () => {
+    // 구 접기 섹션(useState(false)+aria-expanded) → 시안 정합: reorder-basis 섹션 안 항상 렌더.
     expect(PANEL).toMatch(/data-testid="inventory-context-usage-trend"/);
-    expect(PANEL).toMatch(/const \[isUsageTrendSectionExpanded, setIsUsageTrendSectionExpanded\] = useState\(false\)/);
-    expect(PANEL).toMatch(/aria-expanded=\{isUsageTrendSectionExpanded\}/);
+    expect(PANEL).toMatch(/data-testid="inventory-context-reorder-basis"[\s\S]*?data-testid="inventory-context-usage-trend"/);
+    expect(PANEL).not.toMatch(/isUsageTrendSectionExpanded/);
   });
 
   it("canonical 파생 — useInventoryUsageTrend(item.id) hook 사용(직접 fetch 아님)", () => {
