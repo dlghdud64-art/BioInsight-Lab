@@ -15,25 +15,28 @@ function read(rel: string): string {
 }
 const PANEL = "src/components/inventory/inventory-context-panel.tsx";
 
-describe("§inventory-delta-label-kpi P2a — D-day ≤90일 게이트", () => {
-  it("재고 현황 만료 임박: expiryDays ≤90 만 D-N, 초과는 날짜(yyyy.MM.dd)", () => {
+describe("§inventory-brief-delta(2026-07-29) §2 — 최단 유효기간 D-day 배지 게이트", () => {
+  it("KPI 라벨 '최단 유효기간' + 값=날짜, D-day는 배지(≤30 레드 / ≤90 앰버 / 그 외 없음)", () => {
     const src = read(PANEL);
-    expect(src).toMatch(/expiryDays <= 90/);
-    // 90 초과 분기에서 raw D-day 대신 포맷 날짜.
-    expect(src).toMatch(/expiryDays <= 90\s*\?\s*`D-\$\{expiryDays\}`\s*:\s*format\(new Date\(item\.expiryDate!\), "yyyy\.MM\.dd"\)/);
+    expect(src).toMatch(/data-testid="inventory-context-kpi-shortest-expiry"/);
+    expect(src).toMatch(/최단 유효기간/);
+    expect(src).toMatch(/kpiExpiryDays <= 30[\s\S]{0,120}bg-red-50 text-red-700/);
+    expect(src).toMatch(/kpiExpiryDays <= 90[\s\S]{0,120}bg-yellow-50 text-yellow-700/);
+    // 값 자체는 항상 날짜(먼 미래에 D-N/'임박' 오노출 방지).
+    expect(src).toMatch(/kpiExpiryDays === null \? "-" : format\(new Date\(item\.expiryDate!\), "yyyy\.MM\.dd"\)/);
   });
 
-  it("구 버그(양수 전부 D-N) 제거 — expiryDays < 0 직후 무조건 D-N 금지", () => {
+  it("구 패턴 제거 — '만료 임박' KPI testid 및 양수 전부 D-N 금지", () => {
     const src = read(PANEL);
+    expect(src).not.toMatch(/data-testid="inventory-context-kpi-expiring-soon"/);
     expect(src).not.toMatch(/expiryDays < 0 \? "만료됨" : `D-\$\{expiryDays\}`/);
   });
 });
 
-describe("§inventory-delta-label-kpi P2a — 상단 재주문 버튼 제거(중복)", () => {
-  it("danger tone 상단 재주문 버튼 제거(null) — AI CTA 단일화", () => {
+describe("§inventory-brief-delta(2026-07-29) §1 — 재발주 CTA = 상태 액션 카드 단일화", () => {
+  it("primary-actions 행에 재주문 라벨 버튼 부재 — CTA는 상태 카드 내부 단일", () => {
     const src = read(PANEL);
-    expect(src).toMatch(/tone === "danger" \? null : tone === "warn" \?/);
-    // 상단 primary-actions 에 재주문 라벨 버튼 부재(구 danger 버튼).
+    expect(src).toMatch(/data-testid="inventory-context-status-card-cta"/);
     const actionsBlock = src.slice(
       src.indexOf('data-testid="inventory-context-primary-actions"'),
       src.indexOf('data-testid="inventory-context-primary-actions"') + 900,
@@ -41,11 +44,11 @@ describe("§inventory-delta-label-kpi P2a — 상단 재주문 버튼 제거(중
     expect(actionsBlock).not.toMatch(/>\s*재주문\s*<\/Button>/);
   });
 
-  it("회귀 0 — AI 섹션 재발주안 검토 CTA + 정보 수정 보존", () => {
+  it("회귀 0 — 재발주안 검토 CTA + 정보 수정 보존, CTA 실 핸들러(dead button 0)", () => {
     const src = read(PANEL);
     expect(src).toMatch(/재발주안 검토/);
     expect(src).toMatch(/정보 수정/);
-    // AI 재발주 CTA 실 핸들러 보존(dead button 0).
-    expect(src).toMatch(/onClick=\{\(\) => onReorder\?\.\(item\)\}[\s\S]{0,120}재발주안 검토/);
+    // 카드 CTA 실 핸들러(onReorder) → 재발주안 검토.
+    expect(src).toMatch(/onReorder\(item\);[\s\S]{0,200}재발주안 검토/);
   });
 });

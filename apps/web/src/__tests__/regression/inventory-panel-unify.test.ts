@@ -41,7 +41,9 @@ describe("§inventory-panel-unify P2 — reorderRecommendation 흡수", () => {
     const src = read(PANEL);
     expect(src).toMatch(/reorderQty\?:\s*number\s*\|\s*null/);
     expect(src).toMatch(/reorderQty != null && reorderQty > 0/); // 가짜 0(>0만 표시)
-    expect(src).toContain("재발주 우선순위");
+    // §inventory-brief-delta(2026-07-29) §1 — 구 "재발주 우선순위" 별도 섹션 → 상태 액션 카드 +
+    //   접힌 근거 행(reorder-basis)으로 흡수. 별도 섹션 부활 금지.
+    expect(src).toMatch(/data-testid="inventory-context-reorder-basis"/);
   });
   it("재발주 CTA = onReorder(실 핸들러, dead button 0)", () => {
     expect(read(PANEL)).toMatch(/재발주안 검토[\s\S]{0,80}|onReorder\?\.\(item\)/);

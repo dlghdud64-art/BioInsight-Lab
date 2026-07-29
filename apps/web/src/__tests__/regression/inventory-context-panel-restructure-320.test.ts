@@ -68,11 +68,12 @@ describe("§11.320 — KPI 4 → 3 + '재고 현황' 라벨 (Phase 3 GREEN targe
     expect(src).toMatch(/SectionHeader[\s\S]{0,60}label="재고 현황"/);
   });
 
-  it("KPI 핵심 3 testid 보존 (현재 / 안전재고 / 만료 임박) — §11.322 Phase 2 에서 최단 LOT row 재도입(인라인)", () => {
+  it("KPI 핵심 3 testid 보존 (현재 / 안전재고 / 최단 유효기간) — §inventory-brief-delta 7/29 §2 rename 반영", () => {
     const src = read(PATH);
     expect(src).toMatch(/data-testid="inventory-context-kpi-current"/);
     expect(src).toMatch(/data-testid="inventory-context-kpi-safety-stock"/);
-    expect(src).toMatch(/data-testid="inventory-context-kpi-expiring-soon"/);
+    // 구 'expiring-soon'(만료 임박) → 'shortest-expiry'(최단 유효기간) — 라벨 오류 수정.
+    expect(src).toMatch(/data-testid="inventory-context-kpi-shortest-expiry"/);
   });
 });
 

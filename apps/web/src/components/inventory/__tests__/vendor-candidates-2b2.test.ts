@@ -18,13 +18,15 @@ describe("§P2b-2 — 공급사 후보 섹션", () => {
     expect(PANEL).toMatch(/useReorderRecommendation\(item\.productName\)/);
   });
 
-  it("후보 컨테이너 testid + 3상태(loading/empty/list)", () => {
+  it("후보 컨테이너 testid + 상태(loading/list) — 후보 0건은 블록 미표시(§inventory-brief-delta 7/29 §4-5)", () => {
     expect(PANEL).toMatch(/data-testid="inventory-context-vendor-candidates"/);
     expect(PANEL).toMatch(/data-testid="inventory-context-vendor-candidates-loading"/);
-    expect(PANEL).toMatch(/data-testid="inventory-context-vendor-candidates-empty"/);
     expect(PANEL).toMatch(/data-testid="inventory-context-vendor-candidates-list"/);
-    // empty gate = vendors.length 0
-    expect(PANEL).toMatch(/vendorRec\.vendors\.length === 0/);
+    // 렌더 게이트 — loading 또는 후보 ≥1일 때만. "공급사 후보 없음" 회색 텍스트 제거,
+    // 공급사 미지정 신호는 리스크 섹션(공급사 미지정 risk)으로 일원화.
+    expect(PANEL).toMatch(/vendorRec\.isLoading \|\| vendorRec\.vendors\.length > 0/);
+    expect(PANEL).not.toMatch(/inventory-context-vendor-candidates-empty/);
+    expect(PANEL).not.toMatch(/최근 구매 이력이 없어 후보가 없습니다/);
   });
 
   it("read-only 표시 — vendors.slice map(vendorName·unitPrice·count), mutation 0", () => {

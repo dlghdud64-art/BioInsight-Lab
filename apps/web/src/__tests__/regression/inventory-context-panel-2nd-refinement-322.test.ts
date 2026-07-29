@@ -36,17 +36,18 @@ describe("§11.322 — A. 재고 현황 잘림 해결 (Phase 2 GREEN target)", (
     const src = read(PATH);
     // 옛 grid-cols-3 + MetricCell 패턴 0
     expect(src).not.toMatch(/grid grid-cols-3 gap-3 mt-3[\s\S]{0,400}MetricCell/);
-    // 인라인 row testid 4 (current/safety-stock/expiring-soon 보존 + 신규 shortest-lot)
+    // 인라인 row testid 4 (current/safety-stock/shortest-lot 보존 + §inventory-brief-delta 7/29 §2
+    //   'expiring-soon' → 'shortest-expiry' rename — 4년 남은 날짜에 '임박' 라벨 오류 수정)
     expect(src).toMatch(/data-testid="inventory-context-kpi-current"/);
     expect(src).toMatch(/data-testid="inventory-context-kpi-safety-stock"/);
-    expect(src).toMatch(/data-testid="inventory-context-kpi-expiring-soon"/);
+    expect(src).toMatch(/data-testid="inventory-context-kpi-shortest-expiry"/);
     expect(src).toMatch(/data-testid="inventory-context-kpi-shortest-lot"/);
   });
 
   it("flex justify-between 패턴 — 라벨 좌 / 값 우 (잘림 0, 단위 풀표기)", () => {
     const src = read(PATH);
     // 4 row 모두 flex justify-between 패턴
-    const flexRowCount = (src.match(/data-testid="inventory-context-kpi-(?:current|safety-stock|expiring-soon|shortest-lot)"[\s\S]{0,200}flex.*justify-between/g) || []).length;
+    const flexRowCount = (src.match(/data-testid="inventory-context-kpi-(?:current|safety-stock|shortest-expiry|shortest-lot)"[\s\S]{0,200}flex.*justify-between/g) || []).length;
     expect(flexRowCount).toBeGreaterThanOrEqual(4);
   });
 });
@@ -61,12 +62,11 @@ describe("§11.322 — B. 카드 테두리 색상 정리 (Phase 2 GREEN target)"
   });
 });
 
-describe("§11.322 — C. 상태 배너 정량 숫자 제거 (Phase 3 GREEN target)", () => {
-  it("toneSub — \"현재 {qty}\" 정량 숫자 패턴 0, 결론+액션만", () => {
+describe("§11.322 — C → §inventory-brief-delta(2026-07-29) §1 supersede: 상태 카드 부족 수량 명시", () => {
+  it("toneSub — 부족 수량 명시(현재 N · 안전재고 S 대비 gap 부족) + 결론 문구 보존", () => {
     const src = read(PATH);
-    // 옛 toneSub 패턴 0
-    expect(src).not.toMatch(/toneSub\s*=[\s\S]{0,300}현재 \$\{item\.currentQuantity\}/);
-    // 신 toneSub = 결론 문구 only ("즉시 재주문 필요" / "우선 소진 권장" / "특이사항 없음")
+    // §11.322 '결론 only' 를 7/29 핸드오프가 정정: 카드가 부족분을 직접 말한다.
+    expect(src).toMatch(/안전재고 \$\{item\.safetyStock\} 대비 \$\{shortage\} 부족/);
     expect(src).toMatch(/즉시 재주문 필요|우선 소진 권장/);
   });
 });
