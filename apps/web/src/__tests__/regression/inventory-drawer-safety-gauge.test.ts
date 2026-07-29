@@ -32,10 +32,11 @@ describe("§inventory-safety-gauge-drawer — 재고 현황 갭 게이지", () =
     expect(SRC).toMatch(/data-testid="inventory-context-kpi-safety-stock"/);
   });
 
-  it("§11.322 준수 — 상태 배너 결론 only 유지(de-red toneClass 무손상)", () => {
-    expect(SRC).toMatch(/danger:\s*"border-rose-200 bg-white text-rose-700"/);
+  it("상태 배너 toneClass — §inventory-brief-sian(2026-07-29 시안 정합) 톤 배경 + 재고 현황 게이지 보존", () => {
+    // 구 de-red(bg-white+rose) → 시안 톤 배경(bg-red-50) supersede(호영님 승인).
+    expect(SRC).toMatch(/danger:\s*"border-red-200 bg-red-50 text-red-700"/);
     expect(SRC).toMatch(/data-testid="inventory-context-status-banner"/);
-    // 게이지는 상태 배너가 아니라 재고 현황 섹션 소속(배너에 정량 게이지 주입 금지)
+    // 재고 현황 섹션의 안전재고 게이지는 별도 보존(카드 게이지와 공존).
     expect(SRC).toMatch(/inventory-context-status-banner[\s\S]*?inventory-context-safety-gauge/);
   });
 });

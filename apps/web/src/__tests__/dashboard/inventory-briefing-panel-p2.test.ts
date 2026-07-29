@@ -23,10 +23,11 @@ describe("§inventory-redesign P2a — 품목 브리핑 rename + de-red 배너",
     expect(SRC).not.toMatch(/: "운영 브리핑"\}/);
   });
 
-  it("de-red 상태 배너 — 위험=흰 카드+rose(bg-red-50 채움 제거)", () => {
-    expect(SRC).toMatch(/danger:\s*"border-rose-200 bg-white text-rose-700"/);
-    expect(SRC).toMatch(/ok:\s*"border-emerald-200 bg-white text-emerald-700"/);
-    expect(SRC).toMatch(/warn:\s*"border-yellow-200 bg-white text-yellow-700"/);
+  it("상태 배너 톤 배경 — §inventory-brief-sian(호영님 승인 2026-07-29, 시안 정합)로 de-red supersede", () => {
+    // 구 de-red(흰 카드) → 시안 톤 배경 채움 복귀. §9 amber 금지 유지(주의=yellow).
+    expect(SRC).toMatch(/danger:\s*"border-red-200 bg-red-50 text-red-700"/);
+    expect(SRC).toMatch(/ok:\s*"border-emerald-200 bg-emerald-50 text-emerald-700"/);
+    expect(SRC).toMatch(/warn:\s*"border-yellow-200 bg-yellow-50 text-yellow-700"/);
   });
 });
 

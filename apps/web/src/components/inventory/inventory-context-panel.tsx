@@ -468,6 +468,8 @@ export function InventoryContextPanel({
   // §inventory-brief-delta(2026-07-29) §1 — 상태 액션 카드 아래 "권장 수량 근거" 접힌 행.
   //   구 "재발주 우선순위" 섹션 흡수분. reorder 진입 시 기본 펼침(검토 맥락), 그 외 접힘.
   const [isReorderBasisExpanded, setIsReorderBasisExpanded] = useState(mode === "reorder");
+  // §inventory-brief-sian(2026-07-29) — 공급사 후보 시안형: top1 카드 + '다른 공급사' 인라인 토글.
+  const [showOtherVendors, setShowOtherVendors] = useState(false);
   const lots = realLots(item);
   const risks = generateMockRisks(item);
   // §11.322 Phase 3 — D. 리스크 섹션 = 상태 배너 흡수(below_safety) 제외, 부가 리스크만.
@@ -590,15 +592,17 @@ export function InventoryContextPanel({
         const isDanger = isOutOfStock || isBelowSafety;
         const isWarn = !isDanger && isExpiringSoon;
         const tone: "danger" | "warn" | "ok" = isDanger ? "danger" : isWarn ? "warn" : "ok";
-        // §inventory-redesign P2a(호영님 2026-07-09) — de-red: 신호등 배경 채움 제거 →
-        //   흰 카드 + 톤 border/텍스트(위험=rose). 핸드오프 §4.1·§9(경고=배경 대신 강조).
+        // §inventory-brief-sian(호영님 승인 2026-07-29, "시안대로") — 구 de-red(7/9) supersede:
+        //   시안 정합 톤 배경 채움 복귀(레드 red-50 계열). §9 amber 금지 유지 — 주의=yellow 토큰.
         const toneClass: Record<typeof tone, string> = {
-          danger: "border-rose-200 bg-white text-rose-700",
-          warn: "border-yellow-200 bg-white text-yellow-700",
-          ok: "border-emerald-200 bg-white text-emerald-700",
+          danger: "border-red-200 bg-red-50 text-red-700",
+          warn: "border-yellow-200 bg-yellow-50 text-yellow-700",
+          ok: "border-emerald-200 bg-emerald-50 text-emerald-700",
         };
-        const toneIcon =
-          tone === "danger" ? "🔴" : tone === "warn" ? "🟡" : "✅";
+        // 시안 아이콘 박스: accent 사각 박스 + 흰 !/✓ (이모지 제거).
+        const toneAccent =
+          tone === "danger" ? "bg-red-500" : tone === "warn" ? "bg-yellow-500" : "bg-emerald-500";
+        const toneMark = tone === "ok" ? "✓" : "!";
         const toneLabel =
           tone === "danger"
             ? isOutOfStock
@@ -612,7 +616,7 @@ export function InventoryContextPanel({
         const shortage = item.safetyStock !== null ? Math.max(0, item.safetyStock - item.currentQuantity) : 0;
         const gaugePct = safety > 0 ? Math.min(100, Math.round((item.currentQuantity / safety) * 100)) : 0;
         const gaugeColor =
-          tone === "danger" ? "bg-rose-500" : tone === "warn" ? "bg-yellow-500" : "bg-emerald-500";
+          tone === "danger" ? "bg-red-500" : tone === "warn" ? "bg-yellow-500" : "bg-emerald-500";
         const toneSub =
           tone === "danger"
             ? item.safetyStock !== null
@@ -626,7 +630,7 @@ export function InventoryContextPanel({
             <Button
               data-testid="inventory-context-status-card-cta"
               size="sm"
-              className="w-full min-h-[44px] md:min-h-0 md:h-8 text-xs bg-blue-600 hover:bg-blue-500 text-white"
+              className="w-full min-h-[44px] md:min-h-0 md:h-8 text-xs bg-red-600 hover:bg-red-500 text-white"
               onClick={(e) => {
                 e.stopPropagation();
                 onReorder(item);
@@ -665,15 +669,22 @@ export function InventoryContextPanel({
               }}
               className={`rounded-lg border px-3 py-2.5 ${toneClass[tone]} cursor-pointer transition-colors hover:brightness-95 space-y-2`}
             >
-              <div>
-                <p className="text-sm font-bold flex items-center gap-1.5">
-                  <span>{toneIcon}</span>
-                  {toneLabel}
-                  {mode === "reorder" && (
-                    <Badge className="border-none bg-red-500/15 text-red-600 text-[10px] px-1.5 py-0">긴급</Badge>
-                  )}
-                </p>
-                <p className="text-[11px] mt-0.5 leading-snug font-semibold">{toneSub}</p>
+              <div className="flex items-start gap-2.5">
+                <span
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${toneAccent} text-white text-sm font-extrabold`}
+                  aria-hidden="true"
+                >
+                  {toneMark}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold flex items-center gap-1.5">
+                    {toneLabel}
+                    {mode === "reorder" && (
+                      <Badge className="border-none bg-red-500/15 text-red-600 text-[10px] px-1.5 py-0">긴급</Badge>
+                    )}
+                  </p>
+                  <p className="text-[11px] mt-0.5 leading-snug font-semibold">{toneSub}</p>
+                </div>
               </div>
               {/* 현재/안전 갭 게이지 — 수치 병기(바 단독 금지, §2). */}
               {item.safetyStock !== null && item.safetyStock > 0 && (
@@ -744,16 +755,35 @@ export function InventoryContextPanel({
                             className="mt-1.5 h-8 rounded bg-slate-100 animate-pulse"
                           />
                         ) : (
-                          <ul data-testid="inventory-context-vendor-candidates-list" className="mt-1.5 space-y-1">
-                            {vendorRec.vendors.slice(0, 3).map((v) => (
-                              <li key={v.vendorName} className="flex items-center justify-between text-[11px]">
-                                <span className="font-medium text-slate-700 truncate">{v.vendorName}</span>
-                                <span className="ml-2 shrink-0 tabular-nums text-slate-500">
-                                  {v.unitPrice.toLocaleString()}원 · {v.count}회
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
+                          <>
+                            {/* §inventory-brief-sian — 시안형: top1 강조 + '다른 공급사' 인라인 토글(실 동작, dead link 0).
+                                vendorRec.vendors.slice(0, 3) 소스 유지(canonical PurchaseRecord 집계 top3). */}
+                            {vendorRec.vendors.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => setShowOtherVendors((v) => !v)}
+                                className="mt-1 text-[10px] font-semibold text-blue-600 hover:text-blue-700"
+                                aria-expanded={showOtherVendors}
+                              >
+                                다른 공급사 {showOtherVendors ? "▴" : "›"}
+                              </button>
+                            )}
+                            <ul data-testid="inventory-context-vendor-candidates-list" className="mt-1.5 space-y-1">
+                              {vendorRec.vendors.slice(0, 3).map((v, i) => (i === 0 || showOtherVendors) && (
+                                <li key={v.vendorName} className="flex items-center justify-between text-[11px]">
+                                  <span className={`truncate ${i === 0 ? "font-bold text-slate-800" : "font-medium text-slate-700"}`}>
+                                    {v.vendorName}
+                                    {i === 0 && (
+                                      <span className="ml-1.5 font-medium text-slate-400">최근 {v.count}회 구매</span>
+                                    )}
+                                  </span>
+                                  <span className="ml-2 shrink-0 tabular-nums text-slate-500">
+                                    개당 ₩{v.unitPrice.toLocaleString()}{i !== 0 ? ` · ${v.count}회` : ""}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          </>
                         )}
                         {!item.vendor && vendorRec.vendors.length > 0 && (
                           <p className="mt-1.5 text-[10px] text-slate-400">공급사 지정은 ‘정보 수정’에서 진행하세요.</p>
@@ -1217,14 +1247,45 @@ export function InventoryContextPanel({
                 </p>
               ) : (
                 <div data-testid="inventory-context-usage-trend-chart">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[11px] text-slate-500">
-                      {usageTrend.trend.granularity === "week" ? "주간 소진량" : "일간 소진량"}
-                    </span>
-                    <span className="text-[11px] font-semibold text-slate-600">
-                      총 {usageTrend.trend.totalUsage} {item.unit}
-                    </span>
-                  </div>
+                  {(() => {
+                    // §inventory-brief-sian(2026-07-29) — 소진 예상 파생(canonical usage 레코드 기반, 조작 0).
+                    //   주당 평균 = 총 소진 / 기간(주). 소진 0이면 캡션·예상 미표시(가짜 예측 금지).
+                    const points = usageTrend.trend.points.length;
+                    const weeksSpan =
+                      usageTrend.trend.granularity === "week" ? points : Math.max(1, points / 7);
+                    const weeklyAvg = weeksSpan > 0 ? usageTrend.trend.totalUsage / weeksSpan : 0;
+                    const daysLeft = weeklyAvg > 0 ? item.currentQuantity / (weeklyAvg / 7) : null;
+                    const depletionDate =
+                      daysLeft !== null
+                        ? format(new Date(Date.now() + daysLeft * 86400000), "M/d")
+                        : null;
+                    const urgent = daysLeft !== null && daysLeft <= (item.leadTimeDays ?? 14);
+                    return (
+                      <>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[11px] text-slate-500">
+                            {usageTrend.trend.granularity === "week" ? "주간 소진량" : "일간 소진량"} · 총 {usageTrend.trend.totalUsage} {item.unit}
+                          </span>
+                          {depletionDate && (
+                            <span
+                              data-testid="inventory-context-usage-depletion-forecast"
+                              className={`text-[11px] font-bold ${urgent ? "text-red-600" : "text-slate-600"}`}
+                            >
+                              {depletionDate} 소진 예상
+                            </span>
+                          )}
+                        </div>
+                        {daysLeft !== null && (
+                          <p className="mb-1.5 text-[10px] text-slate-500">
+                            주당 평균 {Number(weeklyAvg.toFixed(2))}{item.unit} 소진 · 현재 속도면{" "}
+                            <span className={urgent ? "font-semibold text-red-600" : "font-semibold text-slate-600"}>
+                              약 {Math.ceil(daysLeft)}일 뒤 소진
+                            </span>
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
                   <ResponsiveContainer width="100%" height={128}>
                     <BarChart data={usageTrend.trend.points} margin={{ top: 4, right: 4, bottom: 0, left: -16 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eef2f7" />
