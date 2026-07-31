@@ -99,7 +99,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" className={jetbrainsMono.variable} suppressHydrationWarning>
-      <body className="min-h-screen bg-white font-sans text-slate-900 antialiased">
+      {/* §mobile-overscroll-bg(호영님 2026-07-31 지시문) — 구 bg-white가 globals.css base body
+          배경(--surface-shell #F8FAFC)을 override → iOS 오버스크롤 영역 흰색 노출. bg-sh(동일 토큰)로 통일. */}
+      <body className="min-h-screen bg-sh font-sans text-slate-900 antialiased">
         <NProgressBar />
         <LcpObserverClient />
         <ThemeProvider>

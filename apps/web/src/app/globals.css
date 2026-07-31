@@ -211,6 +211,9 @@ div.quote-table td.no-column-cell {
     font-family: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont,
       "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Noto Sans KR",
       "Helvetica Neue", sans-serif !important;
+    /* §mobile-overscroll-bg(2026-07-31) — iOS 오버스크롤로 드러나는 캔버스 영역을 페이지 배경과
+       동일 토큰으로 승격(흰색 노출 방지). overscroll-behavior 미사용 — 당겨서 새로고침 보존. */
+    background-color: var(--surface-shell);
   }
   body {
     font-family: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont,
