@@ -538,11 +538,11 @@ export function InventoryContextPanel({
 
   return (
     <div
-      className={`w-[480px] shrink-0 border-l border-bd bg-el overflow-y-auto h-full ${className}`}
+      className={`w-[480px] shrink-0 border-l border-bd bg-white overflow-y-auto h-full ${className}`}
     >
       {/* §inventory-redesign P2a(호영님 2026-07-09) — 헤더 명칭 "운영 브리핑" → "품목 브리핑"
           (특정 품목 하나의 브리핑이므로, 핸드오프 §4). 재발주 진입 시 "재발주 검토" 유지. */}
-      <div className="sticky top-0 z-10 px-5 py-2 border-b border-bd bg-el flex items-center justify-between">
+      <div className="sticky top-0 z-10 px-5 py-2 border-b border-bd bg-white flex items-center justify-between">
         <span className="text-[11px] font-bold text-blue-700">{mode === "reorder" ? "재발주 검토" : "품목 브리핑"}</span>
         <span className="text-[10px] text-slate-500 uppercase tracking-wide">선택한 재고</span>
       </div>
@@ -550,7 +550,7 @@ export function InventoryContextPanel({
       {/* §11.320 Phase 2 — 4 preset chips 제거 (어차피 다 펼침, 탭 무의미). 상태 배너로 정보 우선순위 명확화. */}
 
       {/* Header */}
-      <div className="bg-el border-b border-bd px-5 py-4">
+      <div className="bg-white border-b border-bd px-5 py-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             {/* §11.320 Phase 2 — risks Badge 제거 (상태 배너 통합). 유해물질만 유지. */}
@@ -1011,7 +1011,7 @@ export function InventoryContextPanel({
               <button
                 type="button"
                 onClick={onLotDrillDown}
-                className="w-full mt-2 flex items-center justify-between px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-el transition-colors group"
+                className="w-full mt-2 flex items-center justify-between px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors group"
               >
                 <span className="text-[11px] font-medium text-slate-400 group-hover:text-slate-600">
                   Lot 전체 추적 보기
@@ -1106,7 +1106,7 @@ export function InventoryContextPanel({
                   key={idx}
                   className="flex items-start gap-2.5 px-3 py-2.5"
                 >
-                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-el shrink-0 mt-0.5">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 shrink-0 mt-0.5">
                     <FlowIcon className="h-3 w-3 text-slate-400" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -1248,7 +1248,7 @@ export function InventoryContextPanel({
               <>
                 {/* §inventory-delta-label-kpi P2a-3 — 권장 수량 근거 분해 + 시안 '= 권장 N개' 합계 행 */}
                 {reorderBreakdown && (
-                  <div className="rounded-lg bg-slate-50 border border-bd/60 px-3 py-2 space-y-1">
+                  <div className="rounded-xl bg-white border border-slate-200 px-3 py-2 space-y-1">
                     <p className="text-[10px] font-semibold text-slate-500">권장 수량 근거</p>
                     <div className="flex justify-between text-[11px]">
                       <span className="text-slate-500">안전재고 갭</span>
@@ -1274,7 +1274,7 @@ export function InventoryContextPanel({
                 {(vendorRec.isLoading || vendorRec.vendors.length > 0) && (
                   <div
                     data-testid="inventory-context-vendor-candidates"
-                    className="rounded-lg bg-slate-50 border border-bd/60 px-3 py-2"
+                    className="rounded-xl bg-white border border-slate-200 px-3 py-2"
                   >
                     <div className="flex items-center justify-between">
                       <p className="text-[10px] font-semibold text-slate-500">공급사 후보</p>
