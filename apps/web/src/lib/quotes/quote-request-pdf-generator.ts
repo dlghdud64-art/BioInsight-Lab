@@ -39,8 +39,24 @@ export interface GenerateQuoteRequestPdfInput {
   };
   /** 요청자 (구매 요청자) 표시용 — 미전달 시 "구매팀" fallback. */
   requesterName?: string;
-  /** 수신 공급사명 (있으면 표시) — 미전달 시 "(공급사 미지정)". */
+  /** 수신 공급사명 (있으면 표시) — 미전달 시 수신처 빈칸 표기. */
   vendorName?: string;
+  /** §rfq-doc-redesign 발신 기관명 (Organization.name). */
+  institutionName?: string;
+  /** §rfq-doc-redesign 담당 실명 (User.name) — 미입력 시 route 에서 다운로드 차단. */
+  contactName?: string;
+  /** §rfq-doc-redesign 담당 전화 (User.phone). */
+  contactPhone?: string;
+  /** §rfq-doc-redesign 회신 기한 N일 (발송 모달 응답 요청 기한, 기본 14). 발행일+N 계산. */
+  replyDeadlineDays?: number;
+  /** §rfq-doc-redesign RFQ 표시번호 (Quote.quoteNumber → RFQ-{YYMM}-{XXXX} 결정적 변환). */
+  rfqDisplayRef?: string;
+  /** §rfq-doc-redesign 회신 주소 — route 가 canonical 인프라(buildRfqReplyAddress: rfq+<token>@inbound.<domain>)
+   *  또는 요청자 이메일(직접수신 폴백)로 전달. generator 는 주소를 합성하지 않는다(UNMATCHED 방지). */
+  replyAddress?: string;
+  /** §rfq-doc-redesign true=자동수신(rfq+token, inbound parse 매칭) → "자동 전달·기록" 문구.
+   *  false/미전달=요청자 직접수신 → 자동 문구 미표기. */
+  replyAutoCapture?: boolean;
 }
 
 /**
@@ -75,7 +91,11 @@ function resolvePretendardPath(): string {
 export async function generateQuoteRequestPdf(
   input: GenerateQuoteRequestPdfInput,
 ): Promise<Buffer> {
-  const { quote, requesterName, vendorName } = input;
+  const {
+    quote, requesterName, vendorName,
+    institutionName, contactName, contactPhone,
+    replyDeadlineDays, rfqDisplayRef, replyAddress, replyAutoCapture,
+  } = input;
   // §11.326 Phase 4 (시나리오 3 root cause B-1):
   //   PDFKit constructor `new PDFDocument({...})` 가 default font 'Helvetica' 즉시 auto-load
   //   → Vercel 번들에 Helvetica.afm 없음 → 500 ENOENT (registerFont 호출 전 발생).
@@ -102,138 +122,213 @@ export async function generateQuoteRequestPdf(
     doc.registerFont("Korean", fontBuffer);
     doc.font("Korean");
 
-    // §11.329 — 레이아웃 상수(하드코딩 제거). A4 595 − margin 48×2 = 499.
+    // ═══ §rfq-doc-redesign — 견적 요청서(RFQ) 공식 문서 (시각 truth: 견적 요청서 리디자인 (단독).html) ═══
+    //   pdfkit 수동 테이블 (신규 dep/HTML→PDF 금지 — CLAUDE.md sandbox install 금지).
     const PAGE_MARGIN = 48;
-    const contentLeft = PAGE_MARGIN;
-    const contentRight = doc.page.width - PAGE_MARGIN; // 547
-    const contentWidth = contentRight - contentLeft;   // 499
-    const BOTTOM_LIMIT = doc.page.height - 80;
-    const COL = {
-      name: { x: contentLeft, w: 230 },
-      spec: { x: contentLeft + 230, w: 110 },
-      qty: { x: contentLeft + 340, w: 50 },
-      price: { x: contentLeft + 390, w: 109 },
-    } as const;
-    const ensureSpace = (rowY: number, need = 24): number => {
-      if (rowY + need > BOTTOM_LIMIT) {
-        doc.addPage();
-        return doc.y;
-      }
-      return rowY;
+    const L = PAGE_MARGIN;
+    const R = doc.page.width - PAGE_MARGIN;
+    const W = R - L;
+    const BOTTOM = doc.page.height - 52;
+    const C = {
+      dark: "#0f172a", border: "#cbd5e1", labelBg: "#f8fafc", panelBg: "#f1f5f9",
+      slate: "#475569", slate2: "#334155", muted: "#94a3b8", sub: "#64748b",
+      red: "#b91c1c", blue: "#2563eb",
     };
+    // §rfq-doc-redesign — keep-all: 각 어절(공백 구분) 내부에 word-joiner 삽입 →
+    //   pdfkit 이 어절 중간(예: "견"/"적")에서 줄바꿈하지 않도록 강제. 공백에서만 개행.
+    const WJ = "\u2060";
+    const ka = (str: string): string =>
+      String(str).split(" ").map((t) => (t.includes("@") || t.length > 24 ? t : t.split("").join(WJ))).join(" ");
+    const pad2 = (n: number) => String(n).padStart(2, "0");
+    const fmt = (d: Date) => `${d.getFullYear()}. ${pad2(d.getMonth() + 1)}. ${pad2(d.getDate())}.`;
+    const issued = new Date(quote.createdAt);
+    const deadlineDays =
+      typeof replyDeadlineDays === "number" && replyDeadlineDays > 0 ? replyDeadlineDays : 14;
+    const deadline = new Date(issued.getTime() + deadlineDays * 86400000);
+    const deriveRfq = (qn: string | null | undefined): string => {
+      if (qn) {
+        const m = qn.match(/(\d{4})(\d{2})\d{2}-?([A-Za-z0-9]+)/);
+        if (m) return `RFQ-${m[1].slice(2)}${m[2]}-${m[3]}`.toUpperCase();
+        return `RFQ-${qn.replace(/^Q-?/i, "")}`.toUpperCase();
+      }
+      return `RFQ-${quote.id.slice(0, 8)}`.toUpperCase();
+    };
+    const rfqRef = (rfqDisplayRef ?? deriveRfq(quote.quoteNumber)).toUpperCase();
+    const replyTo = replyAddress ?? "";
+    const recipient = vendorName && vendorName.trim() ? vendorName.trim() : null;
+    const institution =
+      institutionName && institutionName.trim() ? institutionName.trim() : (quote.title || "요청 기관");
+    const contact =
+      contactName && contactName.trim()
+        ? contactName.trim()
+        : requesterName && requesterName.trim()
+        ? requesterName.trim()
+        : "";
+    const phone = contactPhone && contactPhone.trim() ? contactPhone.trim() : "";
 
-    // ── Header — 견적 요청서 (Quote Request / RFQ) ──
-    doc.fontSize(22).text("견적 요청서 (Quote Request)", { align: "center" });
-    doc.moveDown(0.5);
-    if (quote.quoteNumber) {
-      doc
-        .fontSize(10)
-        .fillColor("#666")
-        .text(`견적번호: ${quote.quoteNumber}`, { align: "right" });
-    }
-    doc
-      .fillColor("#666")
-      .text(
-        `발행일: ${new Date(quote.createdAt).toLocaleDateString("ko-KR")}`,
-        { align: "right" },
-      );
-    if (quote.validUntil) {
-      doc
-        .fillColor("#666")
-        .text(
-          `회신 기한: ${new Date(quote.validUntil).toLocaleDateString("ko-KR")}`,
-          { align: "right" },
-        );
-    }
-    doc.moveDown(1).fillColor("#000");
+    let y = PAGE_MARGIN;
 
-    // ── 수신 / 요청 정보 ──
-    doc.fontSize(13).text("요청 정보", { underline: true });
-    doc.moveDown(0.3).fontSize(11);
-    doc.text(`수신: ${vendorName ?? "(공급사 미지정)"}`);
-    doc.text(`요청자: ${requesterName ?? "구매팀"}`);
-    doc.text(`제목: ${quote.title}`);
-    doc.moveDown(1);
+    // ── 1. 레터헤드 ──
+    doc.fillColor(C.blue).fontSize(11).text("LabAxis", L, y, { characterSpacing: 0.5 });
+    doc.fillColor(C.dark).fontSize(24).text("견 적 요 청 서", L, y + 15, { characterSpacing: 1 });
+    const infoW = 210, infoLabelW = 62, infoX = R - infoW, infoRowH = 17;
+    const infoRows: Array<[string, string, ("mono" | "red")?]> = [
+      ["문서번호", rfqRef, "mono"],
+      ["발행일", fmt(issued)],
+      ["회신 기한", `${fmt(deadline)} (${deadlineDays}일)`, "red"],
+    ];
+    let iy = y;
+    infoRows.forEach(([label, val, kind]) => {
+      doc.rect(infoX, iy, infoLabelW, infoRowH).fill(C.labelBg);
+      doc.fillColor("#000");
+      doc.lineWidth(0.8).rect(infoX, iy, infoLabelW, infoRowH).stroke(C.border);
+      doc.lineWidth(0.8).rect(infoX + infoLabelW, iy, infoW - infoLabelW, infoRowH).stroke(C.border);
+      doc.fillColor(C.slate).fontSize(9).text(label, infoX + 6, iy + 4.5, { width: infoLabelW - 8 });
+      doc.fillColor(kind === "red" ? C.red : "#1e293b").fontSize(9.5)
+        .text(ka(val), infoX + infoLabelW + 7, iy + 4.5, { width: infoW - infoLabelW - 12 });
+      iy += infoRowH;
+    });
+    doc.fillColor("#000");
+    const headBottom = Math.max(y + 46, iy + 5);
+    doc.lineWidth(2.5).moveTo(L, headBottom).lineTo(R, headBottom).stroke(C.dark);
+    y = headBottom + 14;
 
-    // ── 요청 품목 표 (단가/합계 비움 — 공급사 회신 시 작성) ──
-    doc.fontSize(13).text("요청 품목", { underline: true });
-    doc.moveDown(0.5).fontSize(10);
-    const tableTop = doc.y;
-    doc
-      .fillColor("#666")
-      .text("품목", COL.name.x, tableTop, { width: COL.name.w })
-      .text("규격", COL.spec.x, tableTop, { width: COL.spec.w })
-      .text("수량", COL.qty.x, tableTop, { width: COL.qty.w, align: "right" })
-      .text("견적가", COL.price.x, tableTop, { width: COL.price.w, align: "right" });
-    doc
-      .moveTo(contentLeft, tableTop + 14)
-      .lineTo(contentRight, tableTop + 14)
-      .stroke();
+    // ── 2. 수신 / 발신 2단 ──
+    const colW = (W - 14) / 2;
+    const boxH = 52;
+    const drawParty = (x: number, header: string, name: string, sub: string) => {
+      doc.rect(x, y, colW, 20).fill(C.panelBg);
+      doc.fillColor("#000");
+      doc.lineWidth(1).rect(x, y, colW, boxH).stroke(C.border);
+      doc.moveTo(x, y + 20).lineTo(x + colW, y + 20).stroke(C.border);
+      doc.fillColor(C.slate2).fontSize(9.5).text(ka(header), x + 12, y + 6, { width: colW - 20 });
+      doc.fillColor(C.dark).fontSize(11.5).text(ka(name), x + 12, y + 27, { width: colW - 20 });
+      doc.fillColor(C.slate).fontSize(9.5).text(ka(sub), x + 12, y + 42, { width: colW - 20 });
+      doc.fillColor("#000");
+    };
+    drawParty(
+      L, "수신 (공급사)",
+      recipient ? `${recipient} 귀중` : "(수신처 기재)",
+      recipient ? "담당: 영업부 견적 담당자님" : "담당: 견적 담당자님",
+    );
+    const fromSub = [contact ? `담당 ${contact}` : "", phone].filter(Boolean).join(" · ");
+    drawParty(L + colW + 14, "발신 (요청 기관)", institution, fromSub || " ");
+    y += boxH + 13;
+
+    // ── 3. 인사 문단 ──
+    doc.fillColor(C.slate2).fontSize(10.5).text(
+      ka("아래 품목에 대한 견적을 요청드립니다. 귀사 견적서 양식으로 회신 기한 내 회신 부탁드리며, 단가·납기·최소 주문 수량·견적 유효기간을 포함해 주세요."),
+      L, y, { width: W, lineGap: 3 },
+    );
+    y = doc.y + 12;
     doc.fillColor("#000");
 
-    let rowY = tableTop + 20;
-    for (const item of quote.items) {
-      rowY = ensureSpace(rowY);
-      const itemLabel = `${item.productName}${
-        item.brand ? ` (${item.brand})` : ""
-      }${item.catalogNumber ? ` · ${item.catalogNumber}` : ""}`;
-      const specLabel = [item.specification, item.grade]
-        .filter(Boolean)
-        .join(" / ") || "-";
-      doc
-        .text(itemLabel, COL.name.x, rowY, { width: COL.name.w })
-        .text(specLabel, COL.spec.x, rowY, { width: COL.spec.w })
-        .text(item.quantity.toString(), COL.qty.x, rowY, { width: COL.qty.w, align: "right" })
-        // 견적가 = 공급사 작성란 (빈 칸)
-        .fillColor("#bbb")
-        .text("(   )", COL.price.x, rowY, { width: COL.price.w, align: "right" })
-        .fillColor("#000");
-      if (item.notes) {
-        rowY += 14;
-        rowY = ensureSpace(rowY);
-        doc
-          .fontSize(8)
-          .fillColor("#888")
-          .text(`  비고: ${item.notes}`, COL.name.x, rowY, { width: contentWidth })
-          .fontSize(10)
-          .fillColor("#000");
-      }
-      rowY += 22;
-    }
-    rowY = ensureSpace(rowY);
-    doc.moveTo(contentLeft, rowY).lineTo(contentRight, rowY).stroke();
-    rowY += 12;
+    // ── 4. 품목 표 (다크 헤더 · 가격열 없음) ──
+    const cols = [
+      { label: "No", w: 30, align: "center" as const },
+      { label: "품목명 / 제조사·카탈로그 번호", w: W - 30 - 66 - 44 - 150, align: "left" as const },
+      { label: "규격", w: 66, align: "center" as const },
+      { label: "수량", w: 44, align: "center" as const },
+      { label: "요청 사항", w: 150, align: "left" as const },
+    ];
+    const hH = 22;
+    let cx = L;
+    doc.rect(L, y, W, hH).fill(C.dark);
+    doc.fillColor("#fff").fontSize(10);
+    cols.forEach((c) => {
+      doc.text(ka(c.label), cx + 6, y + 6.5, { width: c.w - 12, align: c.align });
+      cx += c.w;
+    });
+    doc.fillColor("#000");
+    y += hH;
+    quote.items.forEach((it, idx) => {
+      const nameMain = it.productName;
+      const nameSub = [it.brand, it.catalogNumber].filter(Boolean).join(" · ");
+      const spec = [it.specification, it.grade].filter(Boolean).join(" / ") || "—";
+      const req = ka("단가·납기·최소 주문 수량");
+      doc.fontSize(10.5);
+      const h1 = doc.heightOfString(nameMain, { width: cols[1].w - 12 });
+      doc.fontSize(9);
+      const h2 = nameSub ? doc.heightOfString(nameSub, { width: cols[1].w - 12 }) + 2 : 0;
+      doc.fontSize(10);
+      const hReq = doc.heightOfString(req, { width: cols[4].w - 12 });
+      const rowH = Math.max(h1 + h2 + 12, hReq + 12, 26);
+      if (y + rowH > BOTTOM) { doc.addPage(); y = PAGE_MARGIN; }
+      let bx = L;
+      cols.forEach((c) => { doc.lineWidth(0.8).rect(bx, y, c.w, rowH).stroke(C.border); bx += c.w; });
+      let px = L;
+      doc.fillColor(C.slate2).fontSize(10)
+        .text(String(idx + 1), px + 4, y + (rowH - 10) / 2, { width: cols[0].w - 8, align: "center" });
+      px += cols[0].w;
+      doc.fillColor(C.dark).fontSize(10.5).text(ka(nameMain), px + 6, y + 6, { width: cols[1].w - 12 });
+      if (nameSub)
+        doc.fillColor(C.sub).fontSize(9).text(ka(nameSub), px + 6, y + 6 + h1 + 1, { width: cols[1].w - 12 });
+      px += cols[1].w;
+      doc.fillColor(C.slate2).fontSize(10)
+        .text(ka(spec), px + 4, y + (rowH - 10) / 2, { width: cols[2].w - 8, align: "center" });
+      px += cols[2].w;
+      doc.text(String(it.quantity), px + 4, y + (rowH - 10) / 2, { width: cols[3].w - 8, align: "center" });
+      px += cols[3].w;
+      doc.fillColor(C.slate).fontSize(10)
+        .text(req, px + 6, y + (rowH - hReq) / 2, { width: cols[4].w - 12 });
+      doc.fillColor("#000");
+      y += rowH;
+    });
+    y += 6;
 
-    // ── 요청 사유 / 비고 (quote.description) ──
-    if (quote.description) {
-      rowY = ensureSpace(rowY, 60);
-      doc.y = rowY + 18;
-      doc
-        .fontSize(13)
-        .text("요청 사유 / 비고", contentLeft, doc.y, { width: contentWidth, underline: true });
-      doc.moveDown(0.3);
-      doc
-        .fontSize(11)
-        .text(quote.description, contentLeft, doc.y, { width: contentWidth, align: "left" });
-    }
+    // ── 5. 각주 ──
+    doc.fillColor(C.muted).fontSize(9)
+      .text("※ 견적 금액은 부가세 포함 여부를 명기해 주세요.", L, y, { width: W });
+    y = doc.y + 12;
+    doc.fillColor("#000");
 
-    // ── 안내 ──
-    doc.moveDown(1.5).fontSize(9).fillColor("#666");
-    doc.text(
-      "※ 견적가 란에 품목별 단가를 기재하여 회신 부탁드립니다.",
-      contentLeft,
-      doc.y,
-      { width: contentWidth, align: "left" },
+    // ── 6. 조건 표 (회신 방법 / 요청 조건 / 비고) ──
+    const termLabelW = 88;
+    const bigo = [
+      "수량 할인 조건이 있으면 함께 기재 부탁드립니다 · 문의는 위 회신 주소로 답장",
+      quote.description && quote.description.trim() ? quote.description.trim() : "",
+    ].filter(Boolean).join(" · ");
+    const terms: Array<[string, string]> = [
+      ["회신 방법", replyTo
+        ? `${replyTo} 로 귀사 견적서 회신${replyAutoCapture ? " (회신 즉시 요청 기관에 자동 전달·기록됩니다)" : " (요청 기관 담당자에게 직접 도착합니다)"}`
+        : "요청 기관 담당자 이메일로 귀사 견적서 회신 부탁드립니다"],
+      ["요청 조건", "견적 유효기간 30일 이상 · 납품 장소: 요청 기관 연구실 · 결제: 세금계산서 발행 후 익월"],
+      ["비고", bigo],
+    ];
+    doc.fontSize(9.5);
+    terms.forEach(([label, val]) => {
+      const vh = doc.heightOfString(val, { width: W - termLabelW - 20 });
+      const rowH = Math.max(vh + 12, 24);
+      if (y + rowH > BOTTOM) { doc.addPage(); y = PAGE_MARGIN; }
+      doc.rect(L, y, termLabelW, rowH).fill(C.labelBg);
+      doc.fillColor("#000");
+      doc.lineWidth(0.8).rect(L, y, termLabelW, rowH).stroke(C.border);
+      doc.lineWidth(0.8).rect(L + termLabelW, y, W - termLabelW, rowH).stroke(C.border);
+      doc.fillColor(C.slate).fontSize(9.5).text(ka(label), L + 10, y + 6, { width: termLabelW - 16 });
+      doc.fillColor(C.slate2).fontSize(9.5)
+        .text(ka(val), L + termLabelW + 10, y + 6, { width: W - termLabelW - 20 });
+      doc.fillColor("#000");
+      y += rowH;
+    });
+    y += 22;
+
+    // ── 7. 결문 (도장/서명란 없음) ──
+    if (y + 84 > BOTTOM) { doc.addPage(); y = PAGE_MARGIN; }
+    doc.fillColor(C.slate2).fontSize(11)
+      .text(ka("위와 같이 견적을 요청합니다."), L, y, { width: W, align: "center" });
+    y = doc.y + 16;
+    const closing = contact ? `${institution}      담당 ${contact}` : institution;
+    doc.fillColor(C.dark).fontSize(12.5).text(ka(closing), L, y, { width: W, align: "center" });
+    y = doc.y + 10;
+
+    // ── 8. 푸터 ──
+    const footerY = Math.max(y + 14, doc.page.height - 70);
+    doc.lineWidth(1).moveTo(L, footerY).lineTo(R, footerY).stroke("#e2e8f0");
+    doc.fillColor(C.muted).fontSize(8.5).text(
+      ka(`본 견적 요청서는 LabAxis에서 자동 생성되었습니다 · labaxis.co.kr · 문서번호 ${rfqRef}`),
+      L, footerY + 5, { width: W, align: "center" },
     );
-
-    // ── Footer ──
-    doc.moveDown(1.5).fontSize(9).fillColor("#999");
-    doc.text(
-      "본 견적 요청서는 LabAxis 운영 시스템에서 자동 생성되었습니다.",
-      contentLeft,
-      doc.y,
-      { width: contentWidth, align: "center" },
-    );
+    doc.fillColor("#000");
 
     doc.end();
   });

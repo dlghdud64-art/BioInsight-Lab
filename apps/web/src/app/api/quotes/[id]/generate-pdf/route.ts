@@ -33,6 +33,17 @@ import { getOrCreateGuestKey } from "@/lib/api/guest-key";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createAuditLog, auditRequestMeta } from "@/lib/audit/audit-logger";
 import { generateQuoteRequestPdf } from "@/lib/quotes/quote-request-pdf-generator";
+import { ensureRfqToken, buildRfqReplyAddress } from "@/lib/email/rfq-reply-address";
+
+/** §rfq-doc-redesign — Quote.quoteNumber(Q-YYYYMMDD-XXXX) → RFQ-{YYMM}-{XXXX} 결정적 변환. */
+function deriveRfqRef(quoteNumber: string | null, quoteId: string): string {
+  if (quoteNumber) {
+    const m = quoteNumber.match(/(\d{4})(\d{2})\d{2}-?([A-Za-z0-9]+)/);
+    if (m) return `RFQ-${m[1].slice(2)}${m[2]}-${m[3]}`.toUpperCase();
+    return `RFQ-${quoteNumber.replace(/^Q-?/i, "")}`.toUpperCase();
+  }
+  return `RFQ-${quoteId.slice(0, 8)}`.toUpperCase();
+}
 
 export async function GET(
   request: NextRequest,
@@ -47,6 +58,12 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
+    // §rfq-doc-redesign — 회신 기한 N일 = 발송 모달 응답 요청 기한(query). 발행일+N 계산은 generator.
+    const deadlineParam = request.nextUrl?.searchParams?.get("deadlineDays");
+    const replyDeadlineDays = (() => {
+      const n = deadlineParam ? parseInt(deadlineParam, 10) : NaN;
+      return Number.isFinite(n) ? Math.max(1, Math.min(90, n)) : 14;
+    })();
     const session = await auth();
     const headerGuestKey = request.headers.get("X-Guest-Key");
 
@@ -103,6 +120,48 @@ export async function POST(
     // 요청자 이름 (best-effort)
     const requesterName = session?.user?.name ?? undefined;
 
+    // §rfq-doc-redesign — 발신 데이터: 담당 실명(User.name)·전화(User.phone)·기관명(Organization.name).
+    let contactName: string | undefined;
+    let contactPhone: string | undefined;
+    let institutionName: string | undefined;
+    if (session?.user?.id) {
+      const user = await db.user.findUnique({
+        where: { id: session.user.id },
+        select: { name: true, phone: true },
+      });
+      contactName = user?.name?.trim() || undefined;
+      contactPhone = user?.phone?.trim() || undefined;
+      // 실명 미입력 시 다운로드 차단 (계정 ID 대체 금지 — fallback 없음). 클라이언트가 설정 입력 유도.
+      if (!contactName) {
+        return NextResponse.json(
+          { error: "담당 실명이 프로필에 없습니다. 설정에서 이름을 입력한 뒤 다운로드해주세요.", code: "CONTACT_NAME_REQUIRED" },
+          { status: 400 },
+        );
+      }
+    }
+    if (quote.organizationId) {
+      const org = await db.organization.findUnique({
+        where: { id: quote.organizationId },
+        select: { name: true },
+      });
+      institutionName = org?.name?.trim() || undefined;
+    }
+    // 문서번호(사람용 표기 — 회신 주소 아님).
+    const rfqDisplayRef = deriveRfqRef(quote.quoteNumber, quote.id);
+    // §rfq-doc-redesign — 회신 주소는 canonical 인바운드 자동수신 인프라 재사용(vendor-requests 정합).
+    //   INBOUND_RFQ_ENABLED + quote opt-in → rfq+<token>@inbound.<domain>(inbound parse 매칭·자동수신),
+    //   아니면 요청자 이메일 직접수신(회신 유실 0). 임의 주소 합성 금지(UNMATCHED 방지).
+    const autocaptureOn = process.env.INBOUND_RFQ_ENABLED === "true";
+    let replyAddress: string | undefined = session?.user?.email ?? undefined;
+    let replyAutoCapture = false;
+    if (autocaptureOn) {
+      const { token: rfqToken, enabled: rfqEnabled } = await ensureRfqToken(quote.id);
+      if (rfqEnabled) {
+        replyAddress = buildRfqReplyAddress(rfqToken);
+        replyAutoCapture = true;
+      }
+    }
+
     // PDF 생성 — synchronous (MVP, async queue 분리 0).
     const pdfBuffer = await generateQuoteRequestPdf({
       quote: {
@@ -115,7 +174,7 @@ export async function POST(
         items: quote.items.map((it: typeof quote.items[number]) => {
           const p = productMap.get(it.productId);
           return {
-            productName: p?.name ?? "(품목 미상)",
+            productName: p?.name ?? "—",
             brand: p?.brand ?? null,
             catalogNumber: p?.catalogNumber ?? null,
             specification: p?.specification ?? null,
@@ -127,6 +186,13 @@ export async function POST(
       },
       requesterName,
       vendorName: quote.vendor ?? undefined,
+      institutionName,
+      contactName,
+      contactPhone,
+      replyDeadlineDays,
+      rfqDisplayRef,
+      replyAddress,
+      replyAutoCapture,
     });
 
     // §11.314-c — PDF 생성(견적 요청서 발행) = 발송 행위 → status

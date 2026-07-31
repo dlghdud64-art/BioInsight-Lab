@@ -484,15 +484,27 @@ export function VendorRequestModal({
     }
     setIsDownloadingPdf(true);
     try {
-      const response = await csrfFetch(`/api/quotes/${quoteId}/generate-pdf`, { method: "GET" });
+      const clampedDeadline = Math.max(1, Math.min(90, expiresInDays));
+      const response = await csrfFetch(`/api/quotes/${quoteId}/generate-pdf?deadlineDays=${clampedDeadline}`, { method: "GET" });
       if (!response.ok) {
         const status = response.status;
         let serverDetail = "";
+        let serverCode = "";
         try {
           const body = await response.json();
           serverDetail = body?.error ?? body?.message ?? "";
+          serverCode = body?.code ?? "";
         } catch {
           // body 가 JSON 아닐 수 있음 — silent.
+        }
+        // §rfq-doc-redesign — 담당 실명 미입력 시 설정 입력 유도 (계정 ID 대체 금지 · dead button 아님).
+        if (serverCode === "CONTACT_NAME_REQUIRED") {
+          toast({
+            title: "담당 실명이 필요합니다",
+            description: serverDetail || "설정 > 프로필에서 담당자 이름을 입력한 뒤 다시 다운로드해주세요.",
+            variant: "destructive",
+          });
+          return;
         }
         console.error("[§11.326] PDF 생성 실패", { status, serverDetail, quoteId });
         const errorTag = status === 403 ? "인증/권한" : status === 404 ? "견적 없음" : status >= 500 ? "서버 오류" : "요청 오류";
