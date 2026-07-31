@@ -856,10 +856,10 @@ export function InventoryContextPanel({
             return (
               // §11.322 Phase 2 — 인라인 라벨-값 row 4 (잘림 0, 단위 풀표기). 옛 grid-cols-3
               //   + MetricCell 카드 제거 (위험은 텍스트 색상 text-red-600 만, 카드 테두리 0).
-              <div className="mt-3 space-y-1.5">
+              <div className="mt-3 rounded-xl border border-slate-200 bg-white overflow-hidden divide-y divide-slate-100">
                 <div
                   data-testid="inventory-context-kpi-current"
-                  className="flex justify-between items-center text-xs"
+                  className="flex justify-between items-center text-xs px-3.5 py-2"
                 >
                   <span className="text-slate-500">현재 수량</span>
                   <span
@@ -876,7 +876,7 @@ export function InventoryContextPanel({
                 </div>
                 <div
                   data-testid="inventory-context-kpi-safety-stock"
-                  className="flex justify-between items-center text-xs"
+                  className="flex justify-between items-center text-xs px-3.5 py-2"
                 >
                   <span className="text-slate-500">안전재고</span>
                   <span className="font-medium text-slate-700">{safetyValue}</span>
@@ -889,7 +889,7 @@ export function InventoryContextPanel({
                   const barColor = item.currentQuantity === 0 ? "bg-rose-500" : item.currentQuantity < safety ? "bg-yellow-500" : "bg-emerald-500";
                   // §inventory-brief-delta(2026-07-29) §2 — 게이지 수치 병기(바 단독 금지).
                   return (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 px-3.5 py-2">
                       <div
                         data-testid="inventory-context-safety-gauge"
                         className="h-1.5 flex-1 rounded-full bg-slate-100 overflow-hidden"
@@ -906,7 +906,7 @@ export function InventoryContextPanel({
                 })()}
                 <div
                   data-testid="inventory-context-kpi-shortest-expiry"
-                  className="flex justify-between items-center text-xs"
+                  className="flex justify-between items-center text-xs px-3.5 py-2"
                 >
                   <span className="text-slate-500">최단 유효기간</span>
                   <span className="flex items-center gap-1.5">
@@ -920,7 +920,7 @@ export function InventoryContextPanel({
                 </div>
                 <div
                   data-testid="inventory-context-kpi-shortest-lot"
-                  className="flex justify-between items-center text-xs"
+                  className="flex justify-between items-center text-xs px-3.5 py-2"
                 >
                   <span className="text-slate-500">최단 LOT</span>
                   <span className="font-mono text-slate-700">{shortestLotLabel}</span>
@@ -966,7 +966,7 @@ export function InventoryContextPanel({
             {lots.map((lot) => (
               <div
                 key={lot.restockId}
-                className="rounded-lg border border-bd bg-pn px-3 py-2.5"
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2.5"
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="font-mono text-xs font-semibold text-slate-600">
@@ -1011,7 +1011,7 @@ export function InventoryContextPanel({
               <button
                 type="button"
                 onClick={onLotDrillDown}
-                className="w-full mt-2 flex items-center justify-between px-3 py-2 rounded-lg border border-bd bg-pn hover:bg-el transition-colors group"
+                className="w-full mt-2 flex items-center justify-between px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-el transition-colors group"
               >
                 <span className="text-[11px] font-medium text-slate-400 group-hover:text-slate-600">
                   Lot 전체 추적 보기
@@ -1098,13 +1098,13 @@ export function InventoryContextPanel({
             </button>
           </div>
           {isFlowSectionExpanded && (
-          <div className="mt-2.5 space-y-2">
+          <div className="mt-2.5 rounded-xl border border-slate-200 bg-white overflow-hidden divide-y divide-slate-100">
             {flows.map((flow, idx) => {
               const FlowIcon = FLOW_ICON[flow.type] || Info;
               return (
                 <div
                   key={idx}
-                  className="flex items-start gap-2.5 rounded-lg border border-bd bg-pn px-3 py-2.5"
+                  className="flex items-start gap-2.5 px-3 py-2.5"
                 >
                   <div className="flex h-6 w-6 items-center justify-center rounded-md bg-el shrink-0 mt-0.5">
                     <FlowIcon className="h-3 w-3 text-slate-400" />
@@ -1135,7 +1135,7 @@ export function InventoryContextPanel({
           <SectionHeader icon={ArrowRight} label="최근 입출고" />
           <div className="mt-2.5 space-y-1.5">
             {generateMockTransactions(item).map((tx, idx) => (
-              <div key={idx} className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-bd bg-pn">
+              <div key={idx} className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-slate-200 bg-white">
                 <div className={`flex h-5 w-5 items-center justify-center rounded ${
                   tx.type === "in" ? "bg-emerald-500/15" : tx.type === "out" ? "bg-yellow-500/15" : "bg-red-500/15"
                 }`}>
@@ -1166,24 +1166,24 @@ export function InventoryContextPanel({
           </div>
           <div className="mt-2.5 space-y-2">
             {/* 소진 추이 — 구 standalone 섹션 이동(§P2b-1 4상태·granularity 라벨 보존, 항상 렌더) */}
-            <div data-testid="inventory-context-usage-trend" className="rounded-lg border border-bd bg-pn px-3 py-2.5">
+            <div data-testid="inventory-context-usage-trend" className="rounded-lg border border-slate-200 bg-white px-3 py-2.5">
               <p className="mb-1.5 text-[11px] font-bold text-slate-600">소진 추이</p>
               {usageTrend.isLoading ? (
                 <div
                   data-testid="inventory-context-usage-trend-loading"
-                  className="h-32 rounded-lg border border-bd bg-pn animate-pulse"
+                  className="h-32 rounded-lg border border-slate-200 bg-white animate-pulse"
                 />
               ) : usageTrend.isError ? (
                 <p
                   data-testid="inventory-context-usage-trend-error"
-                  className="rounded-lg border border-bd bg-pn px-3 py-6 text-center text-xs text-slate-500"
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-6 text-center text-xs text-slate-500"
                 >
                   소진 이력을 일시적으로 불러오지 못했습니다.
                 </p>
               ) : usageTrend.recordCount === 0 ? (
                 <p
                   data-testid="inventory-context-usage-trend-empty"
-                  className="rounded-lg border border-bd bg-pn px-3 py-6 text-center text-xs text-slate-500"
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-6 text-center text-xs text-slate-500"
                 >
                   소진 기록이 없습니다.
                 </p>
@@ -1341,7 +1341,7 @@ export function InventoryContextPanel({
         {item.averageDailyUsage && item.averageDailyUsage > 0 && (
           <section>
             <SectionHeader icon={Info} label="소진 예측 근거" />
-            <div className="mt-2.5 rounded-lg border border-bd bg-pn px-3 py-2.5 space-y-1.5">
+            <div className="mt-2.5 rounded-lg border border-slate-200 bg-white px-3 py-2.5 space-y-1.5">
               <div className="flex items-center justify-between text-[11px]">
                 <span className="text-slate-500">일평균 사용량</span>
                 <span className="text-slate-600 font-medium">{item.averageDailyUsage} {item.unit}/일</span>
@@ -1394,7 +1394,7 @@ export function InventoryContextPanel({
             {visibleActions.map((action, idx) => (
               <div
                 key={idx}
-                className={`rounded-lg border border-bd bg-pn px-3 py-2.5 border-l-2 ${ACTION_PRIORITY_STYLE[action.priority]}`}
+                className={`rounded-lg border border-slate-200 bg-white px-3 py-2.5 border-l-2 ${ACTION_PRIORITY_STYLE[action.priority]}`}
               >
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-xs font-bold text-slate-700">{action.label}</p>
@@ -1461,7 +1461,7 @@ export function InventoryContextPanel({
             </button>
           </div>
           {isHistorySectionExpanded && (
-          <div className="mt-2.5 rounded-lg border border-bd bg-pn px-3 py-2.5 space-y-1">
+          <div className="mt-2.5 rounded-xl border border-slate-200 bg-white overflow-hidden divide-y divide-slate-100 [&>div]:px-3.5 [&>div]:py-2">
             <div className="flex items-center justify-between text-[11px]">
               <span className="text-slate-500">마지막 수정</span>
               <span className="text-slate-400">2026-03-28 14:22</span>
