@@ -30,6 +30,8 @@ import {
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { useInventoryUsageTrend } from "@/hooks/use-inventory-usage-trend";
 import { useReorderRecommendation } from "@/hooks/use-reorder-recommendation";
+import { useInventoryMovements } from "@/hooks/use-inventory-movements";
+import { useInventoryHistory } from "@/hooks/use-inventory-history";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -227,44 +229,6 @@ function generateMockRisks(item: ContextPanelItem): ContextRisk[] {
   return risks;
 }
 
-function generateMockConnectedFlows(item: ContextPanelItem): ContextConnectedFlow[] {
-  const flows: ContextConnectedFlow[] = [];
-
-  flows.push({
-    type: "purchase",
-    label: "최근 구매",
-    detail: `${item.vendor || "공급사 미지정"} · ${item.currentQuantity * 2} ${item.unit}`,
-    date: "2026-02-15",
-  });
-
-  if (item.safetyStock !== null && item.currentQuantity <= item.safetyStock) {
-    flows.push({
-      type: "incoming",
-      label: "입고 예정",
-      detail: `발주 진행 중 · 예상 ${item.deliveryPeriod || "2주"}`,
-      date: "2026-03-25",
-    });
-  }
-
-  if (item.leadTimeDays && item.leadTimeDays >= 21) {
-    flows.push({
-      type: "delay",
-      label: "공급 리드타임",
-      detail: `평균 ${item.leadTimeDays}일 소요 · 긴급 발주 시 추가 비용`,
-    });
-  }
-
-  if (item.hazard) {
-    flows.push({
-      type: "sds",
-      label: "안전 정보",
-      detail: "SDS 문서 확인 필요 · PPE 착용 의무",
-    });
-  }
-
-  return flows;
-}
-
 function generateMockActions(item: ContextPanelItem): RecommendedAction[] {
   const actions: RecommendedAction[] = [];
 
@@ -326,48 +290,6 @@ function generateMockActions(item: ContextPanelItem): RecommendedAction[] {
   }
 
   return actions;
-}
-
-/* ── Mock recent transactions ── */
-interface RecentTransaction {
-  type: "in" | "out" | "dispose";
-  label: string;
-  detail: string;
-  date: string;
-}
-
-function generateMockTransactions(item: ContextPanelItem): RecentTransaction[] {
-  const txs: RecentTransaction[] = [];
-  txs.push({
-    type: "in",
-    label: "입고",
-    detail: `${item.vendor || "공급사"} · ${Math.ceil(item.currentQuantity * 0.4)} ${item.unit}`,
-    date: "3/25",
-  });
-  txs.push({
-    type: "out",
-    label: "출고 (실험 사용)",
-    detail: `${item.testPurpose || "일반 실험"} · 2 ${item.unit}`,
-    date: "3/27",
-  });
-  if (item.expiryDate) {
-    const days = Math.ceil((new Date(item.expiryDate).getTime() - Date.now()) / 86400000);
-    if (days <= 0) {
-      txs.push({
-        type: "dispose",
-        label: "폐기 처리",
-        detail: `만료 lot ${item.lotNumber || "N/A"} · 1 ${item.unit}`,
-        date: "3/28",
-      });
-    }
-  }
-  txs.push({
-    type: "out",
-    label: "출고 (이동)",
-    detail: `${item.location || "선반"} → 실험실 B`,
-    date: "3/29",
-  });
-  return txs.slice(0, 4);
 }
 
 /* ── Severity badge styling ── */
@@ -479,7 +401,6 @@ export function InventoryContextPanel({
   // §11.322 Phase 3 — D. 리스크 섹션 = 상태 배너 흡수(below_safety) 제외, 부가 리스크만.
   //   inventorySummary narrative 입력은 전체 risks 그대로 유지(흡수 여부와 무관).
   const visibleRisks = risks.filter((r) => r.type !== "below_safety");
-  const flows = generateMockConnectedFlows(item);
   const actions = generateMockActions(item);
   const expiryDays = item.expiryDate
     ? Math.ceil((new Date(item.expiryDate).getTime() - Date.now()) / 86400000)
@@ -531,8 +452,59 @@ export function InventoryContextPanel({
 
   // §inventory-delta-label-kpi P2b-1 — 소진 추이(canonical /api/inventory/usage 파생, 표시 계층).
   const usageTrend = useInventoryUsageTrend(item.id, { enabled: isOpen });
+  // §inventory-brief-canonical P3 — 최근 입출고·수정 이력 canonical 조회(read-only).
+  //   movements = InventoryRestock + InventoryUsage 병합(재고 ownership 스코프).
+  //   history   = DataAuditLog entity-scoped. 데이터 0건이면 해당 섹션 미렌더(빈 껍데기 금지).
+  const { movements, isLoading: isMovementsLoading } = useInventoryMovements(item.id, {
+    enabled: isOpen,
+  });
+  const { history, isLoading: isHistoryLoading } = useInventoryHistory(item.id, {
+    enabled: isOpen && isHistorySectionExpanded,
+  });
+
   // §inventory-delta-label-kpi P2b-2 — 공급사 후보(canonical PurchaseRecord 집계 hook 재사용, fetch 0 신규).
   const vendorRec = useReorderRecommendation(item.productName);
+
+  // §inventory-brief-canonical P3 — 연결된 흐름 = canonical 파생.
+  //   입고 예정 = movements(type incoming, InventoryRestock 미완료 상태).
+  //   리드타임·SDS = item 파생(기존 canonical 항목 보존). 구 mock 하드코딩 날짜 제거.
+  //   최근 구매 = vendorRec.recentPurchases(PurchaseRecord 집계, 기존 훅 재사용 — 신규 계약 0).
+  const latestPurchase = vendorRec.recentPurchases?.[0] ?? null;
+  const flows: ContextConnectedFlow[] = [
+    ...(latestPurchase
+      ? [{
+          type: "purchase" as const,
+          label: "최근 구매",
+          detail: [
+            item.vendor || null,
+            `${latestPurchase.quantity}${item.unit ? ` ${item.unit}` : ""}`,
+          ].filter(Boolean).join(" · "),
+          date: format(new Date(latestPurchase.purchasedAt), "yyyy.MM.dd"),
+        }]
+      : []),
+    ...movements
+      .filter((m) => m.type === "incoming")
+      .map((m) => ({
+        type: "incoming" as const,
+        label: m.label,
+        detail: [`${m.quantity}${m.unit ? ` ${m.unit}` : ""}`, m.detail].filter(Boolean).join(" · "),
+        date: format(new Date(m.occurredAt), "yyyy.MM.dd"),
+      })),
+    ...(item.leadTimeDays && item.leadTimeDays >= 21
+      ? [{
+          type: "delay" as const,
+          label: "공급 리드타임",
+          detail: `평균 ${item.leadTimeDays}일 소요 · 긴급 발주 시 추가 비용`,
+        }]
+      : []),
+    ...(item.hazard
+      ? [{
+          type: "sds" as const,
+          label: "안전 정보",
+          detail: "SDS 문서 확인 필요 · PPE 착용 의무",
+        }]
+      : []),
+  ];
 
   if (!isOpen) return null;
 
@@ -1084,7 +1056,8 @@ export function InventoryContextPanel({
           </section>
         )}
 
-        {/* §11.320 Phase 3 — 연결된 흐름 접기(default false). spec §3-3 "최근 흐름 펼치기" 패턴. */}
+        {/* §11.320 Phase 3 — 연결된 흐름 접기. §inventory-brief-canonical — 흐름 0건이면 섹션 미렌더(빈 껍데기 금지). */}
+        {flows.length > 0 && (
         <section>
           <div className="flex items-center justify-between">
             <SectionHeader icon={History} label="연결된 흐름" />
@@ -1127,33 +1100,49 @@ export function InventoryContextPanel({
           </div>
           )}
         </section>
+        )}
 
         {/* ── E. Recent Transactions ── */}
         {/* §inventory-brief-delta(2026-07-29) §3 — 브리핑 = 최근 3~5건 요약(역할 분리: 전수·출력은 이력 추적).
-            하단 `전체 이력 보기 ›` 링크는 /dashboard/inventory/history?itemId={id} 구현 후 배선(dead-link 금지, 현재 미생성). */}
+            하단 `전체 이력 보기 ›` 링크는 /dashboard/inventory/history?itemId={id} 구현 후 배선(dead-link 금지, 현재 미생성).
+            §inventory-brief-canonical — canonical(InventoryRestock+InventoryUsage) 조회.
+            로딩 중 skeleton, 기록 0건이면 섹션 미렌더(빈 껍데기 금지). 폐기는 canonical 소스 부재로 미표시. */}
+        {isMovementsLoading ? (
+        <section>
+          <SectionHeader icon={ArrowRight} label="최근 입출고" />
+          <div className="mt-2.5 space-y-1.5" aria-busy="true">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-9 rounded-lg border border-slate-200 bg-slate-50 animate-pulse" />
+            ))}
+          </div>
+        </section>
+        ) : movements.length > 0 ? (
         <section>
           <SectionHeader icon={ArrowRight} label="최근 입출고" />
           <div className="mt-2.5 space-y-1.5">
-            {generateMockTransactions(item).map((tx, idx) => (
-              <div key={idx} className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-slate-200 bg-white">
+            {movements.map((tx) => (
+              <div key={tx.id} className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-slate-200 bg-white">
                 <div className={`flex h-5 w-5 items-center justify-center rounded ${
-                  tx.type === "in" ? "bg-emerald-500/15" : tx.type === "out" ? "bg-yellow-500/15" : "bg-red-500/15"
+                  tx.type === "in" ? "bg-emerald-500/15" : tx.type === "incoming" ? "bg-blue-500/15" : "bg-yellow-500/15"
                 }`}>
                   <span className={`text-[9px] font-bold ${
-                    tx.type === "in" ? "text-emerald-400" : tx.type === "out" ? "text-yellow-700" : "text-red-400"
-                  }`}>{tx.type === "in" ? "입" : tx.type === "out" ? "출" : "폐"}</span>
+                    tx.type === "in" ? "text-emerald-400" : tx.type === "incoming" ? "text-blue-600" : "text-yellow-700"
+                  }`}>{tx.type === "out" ? "출" : "입"}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] text-slate-600 font-medium">{tx.label}</span>
-                    <span className="text-[10px] text-slate-600">{tx.date}</span>
+                    <span className="text-[10px] text-slate-600">{format(new Date(tx.occurredAt), "yyyy.MM.dd")}</span>
                   </div>
-                  <span className="text-[10px] text-slate-500">{tx.detail}</span>
+                  <span className="text-[10px] text-slate-500">
+                    {tx.quantity}{tx.unit ? ` ${tx.unit}` : ""}{tx.detail ? ` · ${tx.detail}` : ""}
+                  </span>
                 </div>
               </div>
             ))}
           </div>
         </section>
+        ) : null}
 
         {/* §inventory-brief-sian(호영님 2026-07-29 "하단 시안대로") — 재발주 검토 통합 섹션.
             시안 하단 위치(최근 입출고 아래)·항상 펼침. 시안의 'AI' 접두 라벨은 no-AI 확정 결정
@@ -1460,21 +1449,43 @@ export function InventoryContextPanel({
               {isHistorySectionExpanded ? "접기 ▴" : "펼치기 ▾"}
             </button>
           </div>
+          {/* §inventory-brief-canonical — DataAuditLog(entity-scoped) 실데이터.
+              로딩 skeleton / 기록 0건이면 안내 문구(가짜 이력 표시 금지). */}
           {isHistorySectionExpanded && (
-          <div className="mt-2.5 rounded-xl border border-slate-200 bg-white overflow-hidden divide-y divide-slate-100 [&>div]:px-3.5 [&>div]:py-2">
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="text-slate-500">마지막 수정</span>
-              <span className="text-slate-400">2026-03-28 14:22</span>
+            isHistoryLoading ? (
+            <div className="mt-2.5 space-y-1.5" aria-busy="true">
+              {[0, 1].map((i) => (
+                <div key={i} className="h-8 rounded-lg border border-slate-200 bg-slate-50 animate-pulse" />
+              ))}
             </div>
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="text-slate-500">수정자</span>
-              <span className="text-slate-600">김연구원</span>
+            ) : history.length > 0 ? (
+            <div className="mt-2.5 rounded-xl border border-slate-200 bg-white overflow-hidden divide-y divide-slate-100 [&>div]:px-3.5 [&>div]:py-2">
+              {history.map((entry) => (
+                <div key={entry.id} className="space-y-1">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-slate-500">
+                      {entry.action === "CREATE" ? "등록" : entry.action === "DELETE" ? "삭제" : "수정"}
+                      {entry.actor ? ` · ${entry.actor}` : ""}
+                    </span>
+                    <span className="text-slate-400">
+                      {format(new Date(entry.occurredAt), "yyyy.MM.dd HH:mm")}
+                    </span>
+                  </div>
+                  {entry.changes.length > 0 && (
+                    <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                      {entry.changes.map((c) => (
+                        <span key={c.field} className="text-[10px] text-slate-500">
+                          {c.label} {c.before ?? "—"} → {c.after ?? "—"}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="text-slate-500">변경 내용</span>
-              <span className="text-slate-400">수량 조정 5→3</span>
-            </div>
-          </div>
+            ) : (
+            <p className="mt-2.5 text-[11px] text-slate-500">기록된 수정 이력이 없습니다.</p>
+            )
           )}
         </section>
       </div>
