@@ -246,12 +246,9 @@ export default function ReceivingDetailPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <ReceivingDocAttachModal
-        open={docModalOpen}
-        onOpenChange={setDocModalOpen}
-        rb={rb}
-        onAttach={(lineId, docType, lotId) => store.attachReceivingDocument(rb.id, lineId, docType, lotId)}
-      />
+      {/* §receiving-doc-attach-canonical (T1) — 데모 dispatch(onAttach) 제거.
+          모달이 canonical API(/api/receiving/documents/[orderId])로 직접 업로드한다. */}
+      <ReceivingDocAttachModal open={docModalOpen} onOpenChange={setDocModalOpen} rb={rb} />
       {/* §inbound-detail-mobile-redesign — 모바일(lg 미만)은 시안 시트(#07), 데스크탑은 기존 shell 무접촉 */}
       <MobileReceivingDetail
         reference={rb.id}

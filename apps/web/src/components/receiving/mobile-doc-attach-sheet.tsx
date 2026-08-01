@@ -1,52 +1,59 @@
 "use client";
 
 /**
- * §mobile-receiving-rcv-card Phase 3 (호영님 2026-07-26 핸드오프 §2 — 문서 첨부 시트 배선)
+ * §receiving-doc-attach-canonical (T1) — 모바일 문서 첨부 시트 (canonical 배선).
  *
- * 모바일 입고 리스트의 `첨부 ›` → 바텀 시트(그랩바). P2 까지는 상세 라우팅 폴백이었고,
- *   여기서 same-canvas 시트로 승격 = dead-surface(첨부 실행 표면 부재) 해소.
- *
- * 데스크탑 receiving-doc-attach-modal(센터 Dialog, doc-attach-v2 sentinel 잠금)은 무접촉 —
- *   폼팩터가 다른 모바일 전용 컴포넌트로 분리. 단 문서 모델·wiring 경로는 동일 store 액션 공유.
- *
- * 배선(정직):
- *   - 개별 `추가` = handleAttach → onAttach(store.attachReceivingDocument) 실 게이트 전이.
- *     필수세트(CoA+MSDS) 마지막 미첨부(remaining===1) 충족 시 labToast.success 1회(front-only 아님).
- *   - 첨부 성공 = 서버(store) 반영 → 상위 receivingBatches 갱신 → rb prop 재주입 → 완료 줄 전환·
- *     리스트 체크리스트 줄 소멸·KPI 감소(동일 파생). 프론트만의 성공 토스트 없음.
- *   - 실 파일 업로드/촬영은 입고 DB-backed 트랙(PLAN_receiving-doc-attach-dbbacked) 전까지
- *     정직-disabled 드롭존. 없는 기능을 있는 척하지 않음.
+ * 데스크톱 모달(receiving-doc-attach-modal)과 동일 계약 — 두 surface 동등성 유지.
+ *   - "추가" front-only 제거: 파일 선택기 → 진행률(취소) → **서버 2xx 확인 후에만** 첨부됨.
+ *   - 데모 seed 첨부 플래그 참조 0 — 상태는 문서 레코드에서만 파생.
+ *   - MSDS = 품목 단위 문서 자동 연동(재첨부 불필요) 안내.
+ *   - CoA = Lot 단위라 입고 확정(검수 완료) 후 첨부 — 사유 명시(가짜 버튼 금지).
+ *   - 발주(Order) 미해석 시 업로드 비활성 + 사유 표기(dead button 0).
  */
 
-import { useEffect } from "react";
-import { FileText, CheckCircle2, Plus, AlertTriangle, Camera, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FileText, CheckCircle2, AlertTriangle, Upload, X, Loader2, Trash2 } from "lucide-react";
 import type { ReceivingBatchContract } from "@/lib/review-queue/receiving-inbound-contract";
 import { labToast } from "@/lib/toast/lab-toast";
-
-type DocType = "coa" | "msds";
-
-// 필수문서 세트 — deriveLineDocStatus(scenario-transition-runner)와 동일 기준.
-const REQUIRED: { type: DocType; label: string; sub: string }[] = [
-  { type: "coa", label: "성적서(CoA)", sub: "Lot별 시험성적서 — GMP 필수" },
-  { type: "msds", label: "MSDS", sub: "물질안전보건자료" },
-];
+import {
+  useReceivingDocuments,
+  useResolvedOrderId,
+  uploadReceivingDocumentWithProgress,
+  type ReceivingDocumentItem,
+} from "@/hooks/use-receiving-documents";
 
 interface Props {
   open: boolean;
-  /** 열림 상태일 때 live 배치(상위가 receivingBatches 에서 매 렌더 조회 → 첨부 후 자동 최신). */
   rb: ReceivingBatchContract | null;
   onClose: () => void;
-  /** store.attachReceivingDocument — 실 게이트 전이 */
-  onAttach: (
-    receivingBatchId: string,
-    lineId: string,
-    docType: "coa" | "msds" | "validation" | "warranty",
-    lotId?: string,
-  ) => void;
 }
 
-export function MobileDocAttachSheet({ open, rb, onClose, onAttach }: Props) {
-  // Esc 닫기(a11y).
+function formatSize(bytes: number | null): string {
+  if (!bytes) return "";
+  if (bytes < 1024) return `${bytes}B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)}KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+}
+
+function formatAttachedLine(doc: ReceivingDocumentItem): string {
+  const d = new Date(doc.uploadedAt);
+  const date = Number.isNaN(d.getTime())
+    ? ""
+    : `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}.`;
+  return [date, doc.uploadedBy].filter(Boolean).join(" ") + (date ? " 첨부" : "");
+}
+
+export function MobileDocAttachSheet({ open, rb, onClose }: Props) {
+  const { orderId, isResolving } = useResolvedOrderId(open && rb ? rb.poId : null);
+  const { documents, isLoading, isError, removeDocument, invalidate } = useReceivingDocuments(
+    open ? orderId : null,
+  );
+
+  const [uploading, setUploading] = useState<{ name: string; percent: number } | null>(null);
+  const abortRef = useRef<null | (() => void)>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [pendingType, setPendingType] = useState<"invoice" | "etc">("invoice");
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -56,46 +63,79 @@ export function MobileDocAttachSheet({ open, rb, onClose, onAttach }: Props) {
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  // 문서 미충족 라인만(complete/not_required 제외).
-  const pendingLines =
-    rb?.lineReceipts.filter(
-      (l) => l.documentStatus === "missing" || l.documentStatus === "partial",
-    ) ?? [];
+  const invoiceDocs = useMemo(() => documents.filter((d) => d.docType === "invoice"), [documents]);
+  const etcDocs = useMemo(() => documents.filter((d) => d.docType !== "invoice"), [documents]);
+  const canUpload = Boolean(orderId) && !uploading;
 
-  // 필수 미첨부 건수(라인 × 필수문서 중 lot 전수 미첨부).
-  const remaining = pendingLines.reduce((acc, line) => {
-    const lots = line.lotRecords;
-    return (
-      acc +
-      REQUIRED.filter(({ type }) => {
-        const attached =
-          lots.length > 0 &&
-          lots.every((lot) => (type === "coa" ? lot.coaAttached : lot.msdsAttached));
-        return !attached;
-      }).length
-    );
-  }, 0);
-  const allDone = remaining === 0;
+  const openPicker = (docType: "invoice" | "etc") => {
+    setPendingType(docType);
+    fileInputRef.current?.click();
+  };
 
-  // 프리셋 컨텍스트(핸드오프 §2.1) — 누락 첫 라인.
-  const presetLine = pendingLines[0];
-
-  // 실 mutation 먼저 → 마지막 미첨부(remaining===1)면 필수세트 완료 토스트 1회.
-  const handleAttach = (lineId: string, docType: DocType, lotId?: string) => {
-    if (!rb) return;
-    onAttach(rb.id, lineId, docType, lotId); // front-only 아님 — 게이트 전이.
-    if (remaining === 1) {
-      labToast.success(
-        "문서 첨부 완료",
-        `<b>${rb.receivingNumber}</b> 필수 문서(CoA·MSDS)가 모두 첨부되었습니다.`,
+  const handlePick = async (file: File | undefined) => {
+    if (!file || !orderId) return;
+    setUploading({ name: file.name, percent: 0 });
+    const { promise, abort } = uploadReceivingDocumentWithProgress({
+      orderId,
+      file,
+      docType: pendingType,
+      onProgress: (percent) => setUploading((prev) => (prev ? { ...prev, percent } : prev)),
+    });
+    abortRef.current = abort;
+    try {
+      await promise; // 서버 확인 후에만 성공.
+      await invalidate();
+      labToast.success("문서 첨부 완료", `<b>${file.name}</b> 이(가) 첨부되었습니다.`);
+    } catch (err) {
+      labToast.error(
+        "문서 첨부 실패",
+        err instanceof Error ? err.message : "업로드에 실패했습니다.",
       );
+    } finally {
+      abortRef.current = null;
+      setUploading(null);
     }
   };
 
+  const renderDoc = (doc: ReceivingDocumentItem) => (
+    <div
+      key={doc.id}
+      className="flex items-start justify-between gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5"
+    >
+      <div className="min-w-0">
+        <div className="flex items-center gap-1.5">
+          <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+          <span className="truncate text-[13px] font-semibold text-slate-900">{doc.fileName}</span>
+        </div>
+        <p className="mt-0.5 text-[11px] text-slate-500">
+          {formatSize(doc.sizeBytes)} · {formatAttachedLine(doc)}
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={async () => {
+          try {
+            await removeDocument(doc.id);
+            labToast.success("문서 삭제", `<b>${doc.fileName}</b> 을(를) 삭제했습니다.`);
+          } catch {
+            labToast.error("문서 삭제 실패", "잠시 후 다시 시도해주세요.");
+          }
+        }}
+        className="inline-flex min-h-[36px] shrink-0 items-center gap-1 rounded-lg border border-slate-200 px-2 text-[11px] text-slate-600"
+        aria-label={`${doc.fileName} 삭제`}
+      >
+        <Trash2 className="h-3 w-3" />
+        삭제
+      </button>
+    </div>
+  );
+
+  if (!rb) return null;
+
   return (
     <div
-      className={`fixed inset-0 z-[60] flex items-end justify-center transition-opacity duration-200 ${
-        open ? "opacity-100" : "opacity-0 pointer-events-none"
+      className={`fixed inset-0 z-[60] transition-opacity duration-200 md:hidden ${
+        open ? "opacity-100" : "pointer-events-none opacity-0"
       }`}
       aria-hidden={!open}
     >
@@ -105,168 +145,153 @@ export function MobileDocAttachSheet({ open, rb, onClose, onAttach }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label="문서 첨부"
-        className={`relative w-full max-w-[560px] max-h-[calc(100vh-3rem)] bg-white rounded-t-2xl shadow-2xl flex flex-col overflow-hidden transition-transform duration-200 ${
-          open ? "translate-y-0" : "translate-y-full"
-        }`}
+        className="absolute inset-x-0 bottom-0 flex max-h-[88vh] flex-col rounded-t-[18px] border-t border-slate-200 bg-white"
       >
-        {/* 그랩바 */}
-        <div className="flex-none pt-2.5 pb-1 grid place-items-center">
-          <span className="h-1 w-9 rounded-full bg-slate-300" />
-        </div>
-
-        {/* 헤더 — 프리셋 컨텍스트(RCV · 라인명) */}
-        <div className="flex items-start gap-3 px-5 pt-1 pb-3 border-b border-slate-100">
-          <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-blue-50 text-blue-600 flex-none">
-            <FileText className="h-[18px] w-[18px]" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-[16px] font-extrabold text-slate-900">문서 첨부</h2>
-            <p className="text-[12px] text-slate-500 mt-0.5 truncate">
-              <span className="font-mono">{rb?.receivingNumber ?? ""}</span>
-              {presetLine && ` · ${presetLine.itemName}`}
-            </p>
+        <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-3">
+          <div className="min-w-0">
+            <h2 className="text-[15px] font-extrabold text-slate-900">문서 첨부</h2>
+            <p className="mt-0.5 truncate text-[12px] text-slate-500">{rb.receivingNumber}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
+            className="min-h-[36px] rounded-lg px-2 text-slate-400"
             aria-label="닫기"
-            className="h-9 w-9 grid place-items-center rounded-lg text-slate-400 hover:bg-slate-100 flex-none"
           >
-            <X className="h-[18px] w-[18px]" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* 바디 */}
-        <div className="px-5 py-4 overflow-y-auto overscroll-contain">
-          {allDone ? (
-            <div className="py-10 text-center">
-              <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-3" />
-              <p className="text-sm text-slate-600">모든 라인의 필수 문서가 첨부되었습니다.</p>
+        <div className="flex-1 space-y-3.5 overflow-y-auto px-4 py-3.5">
+          {!isResolving && !orderId && (
+            <div className="flex items-start gap-2 rounded-xl border border-yellow-200 bg-yellow-50 px-3 py-2.5">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-yellow-700" />
+              <p className="text-[12px] leading-relaxed text-yellow-800">
+                발주와 연결되지 않은 입고 건이라 문서를 첨부할 수 없습니다.
+              </p>
             </div>
-          ) : (
-            <>
-              {/* 반영 차단 callout — yellow 토큰(§11.302, amber sentinel 준수) */}
-              <div className="flex gap-2.5 p-3 rounded-xl bg-[#fef9c3] text-[#a16207] mb-4">
-                <AlertTriangle className="h-[18px] w-[18px] flex-none mt-0.5" />
-                <div>
-                  <b className="text-[13px]">필수 문서 미첨부 · 재고 반영 차단</b>
-                  <p className="text-[12px] mt-0.5 leading-relaxed">
-                    CoA(시험성적서)가 없어 재고 반영이 막혀 있습니다. 첨부하면 차단 사유에서 자동으로
-                    지워지고 재고 반영이 열립니다.
-                  </p>
-                </div>
+          )}
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept=".pdf,.png,.jpg,.jpeg,.webp,.heic,.xlsx,.csv"
+            onChange={(e) => {
+              void handlePick(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+          />
+
+          <section>
+            <div className="mb-1.5 flex items-center gap-1.5">
+              <FileText className="h-3.5 w-3.5 text-slate-500" />
+              <h3 className="text-[12px] font-bold text-slate-700">거래명세서</h3>
+            </div>
+            {isLoading ? (
+              <div className="h-14 animate-pulse rounded-xl bg-slate-50" aria-busy="true" />
+            ) : invoiceDocs.length > 0 ? (
+              <div className="space-y-1.5">{invoiceDocs.map(renderDoc)}</div>
+            ) : (
+              <p className="rounded-xl border border-dashed border-slate-200 px-3 py-2.5 text-[12px] text-slate-500">
+                첨부된 거래명세서가 없습니다.
+              </p>
+            )}
+            <button
+              type="button"
+              disabled={!canUpload}
+              onClick={() => openPicker("invoice")}
+              className="mt-2 inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white text-[13px] font-semibold text-slate-700 disabled:opacity-50"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              거래명세서 첨부
+            </button>
+          </section>
+
+          <section>
+            <div className="mb-1.5 flex items-center gap-1.5">
+              <FileText className="h-3.5 w-3.5 text-slate-500" />
+              <h3 className="text-[12px] font-bold text-slate-700">MSDS</h3>
+            </div>
+            <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-[12px] leading-relaxed text-slate-600">
+              MSDS는 품목 문서에서 자동 연동됩니다(매 입고 재첨부 불필요).
+            </p>
+          </section>
+
+          <section>
+            <div className="mb-1.5 flex items-center gap-1.5">
+              <FileText className="h-3.5 w-3.5 text-slate-500" />
+              <h3 className="text-[12px] font-bold text-slate-700">성적서 (CoA)</h3>
+            </div>
+            <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-[12px] leading-relaxed text-slate-600">
+              CoA는 Lot 단위 문서라 <b>입고 확정(검수 완료) 후</b> 해당 Lot에 첨부됩니다.
+            </p>
+          </section>
+
+          <section>
+            <div className="mb-1.5 flex items-center gap-1.5">
+              <FileText className="h-3.5 w-3.5 text-slate-500" />
+              <h3 className="text-[12px] font-bold text-slate-700">기타 문서</h3>
+            </div>
+            {isLoading ? (
+              <div className="h-14 animate-pulse rounded-xl bg-slate-50" aria-busy="true" />
+            ) : etcDocs.length > 0 ? (
+              <div className="space-y-1.5">{etcDocs.map(renderDoc)}</div>
+            ) : (
+              <p className="rounded-xl border border-dashed border-slate-200 px-3 py-2.5 text-[12px] text-slate-500">
+                첨부된 기타 문서가 없습니다.
+              </p>
+            )}
+            <button
+              type="button"
+              disabled={!canUpload}
+              onClick={() => openPicker("etc")}
+              className="mt-2 inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white text-[13px] font-semibold text-slate-700 disabled:opacity-50"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              파일 선택
+            </button>
+          </section>
+
+          {uploading && (
+            <div className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="flex min-w-0 items-center gap-1.5 text-[12px] text-blue-800">
+                  <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                  <span className="truncate">업로드 중 {uploading.percent}%</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => abortRef.current?.()}
+                  className="min-h-[36px] shrink-0 rounded-lg border border-blue-200 bg-white px-2.5 text-[11px] font-semibold text-blue-700"
+                >
+                  취소
+                </button>
               </div>
-
-              {/* per-line/per-lot 실 첨부 */}
-              <div className="space-y-4">
-                {pendingLines.map((line) => {
-                  const lots = line.lotRecords;
-                  return (
-                    <div key={line.id} className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span className="h-5 min-w-5 px-1 rounded grid place-items-center bg-slate-100 text-slate-600 text-[11px] font-bold font-mono">
-                          {line.lineNumber}
-                        </span>
-                        <span className="text-[13px] font-semibold text-slate-900 truncate">
-                          {line.itemName}
-                        </span>
-                      </div>
-
-                      <div className="space-y-2">
-                        {REQUIRED.map(({ type, label, sub }) => {
-                          const attached =
-                            lots.length > 0 &&
-                            lots.every((lot) =>
-                              type === "coa" ? lot.coaAttached : lot.msdsAttached,
-                            );
-                          return (
-                            <div
-                              key={type}
-                              className={`rounded-xl border px-3 py-2.5 ${
-                                attached
-                                  ? "bg-emerald-50 border-emerald-200"
-                                  : "border-dashed border-[#93c5fd] bg-[#f5f9ff]"
-                              }`}
-                            >
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className={`h-9 w-9 rounded-lg grid place-items-center shrink-0 ${
-                                    attached ? "bg-emerald-100" : "bg-white border border-blue-200"
-                                  }`}
-                                >
-                                  {attached ? (
-                                    <CheckCircle2 className="h-[18px] w-[18px] text-emerald-600" />
-                                  ) : (
-                                    <FileText className="h-[18px] w-[18px] text-blue-500" />
-                                  )}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-center gap-1.5">
-                                    <p className="text-[13px] font-bold text-slate-900">{label}</p>
-                                    <span className="text-[10px] font-semibold text-rose-600 bg-white border border-rose-200 rounded px-1 py-px">
-                                      필수
-                                    </span>
-                                  </div>
-                                  <p className="text-[11px] text-slate-500 mt-0.5 truncate">
-                                    {attached ? "첨부 완료" : sub}
-                                  </p>
-                                </div>
-                                {attached ? (
-                                  <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-emerald-700 shrink-0">
-                                    <CheckCircle2 className="h-3.5 w-3.5" />
-                                    첨부됨
-                                  </span>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleAttach(line.id, type)}
-                                    className="inline-flex items-center gap-1 text-[12px] font-extrabold text-white bg-[#2563eb] px-3 min-h-[44px] rounded-[10px] active:scale-95 shrink-0"
-                                  >
-                                    <Plus className="h-3.5 w-3.5" />
-                                    추가
-                                  </button>
-                                )}
-                              </div>
-
-                              {/* 정직-disabled 드롭존 — 실 업로드는 입고 DB 연동 후. 촬영/파일 모두 비활성. */}
-                              {!attached && (
-                                <div className="mt-2.5 flex items-center gap-2">
-                                  <button
-                                    type="button"
-                                    disabled
-                                    title="실 파일 업로드는 입고 DB 연동 후 제공됩니다"
-                                    className="flex-1 inline-flex items-center justify-center gap-1 min-h-[44px] rounded-[10px] border border-dashed border-[#93c5fd] bg-white text-[12px] font-bold text-slate-400 cursor-not-allowed"
-                                  >
-                                    <Camera className="h-4 w-4" />
-                                    촬영 · 파일 선택 (DB 연동 후)
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-blue-100">
+                <div
+                  className="h-full rounded-full bg-blue-600 transition-all"
+                  style={{ width: `${uploading.percent}%` }}
+                />
               </div>
-            </>
+            </div>
+          )}
+
+          {isError && (
+            <p className="text-[12px] text-slate-500">문서 목록을 불러오지 못했습니다.</p>
           )}
         </div>
 
-        {/* 푸터 — 완료 CTA 비활성 + 사유 인라인 */}
-        <div className="flex-none flex items-center gap-2.5 px-5 py-3 border-t border-slate-100 bg-slate-50 pb-[calc(env(safe-area-inset-bottom)+12px)]">
-          <span className="text-[11.5px] font-semibold text-slate-500">
-            {allDone ? "필수 문서 확보 완료" : `필수 ${remaining}건 · 첨부 대기`}
+        <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-4 py-3">
+          <span className="text-[11px] text-slate-500">
+            첨부 {documents.length} · 업로드 중 {uploading ? 1 : 0} · 품목 연동 MSDS
           </span>
-          <span className="flex-1" />
           <button
             type="button"
             onClick={onClose}
-            disabled={!allDone}
-            className="min-h-[44px] px-5 rounded-[10px] text-[13px] font-extrabold text-white bg-emerald-600 active:scale-[0.98] disabled:bg-[#eef1f6] disabled:text-[#94a3b8]"
+            className="min-h-[40px] rounded-xl bg-slate-900 px-4 text-[13px] font-semibold text-white"
           >
-            {allDone ? "첨부 완료" : `첨부 완료 · CoA 업로드 후 가능`}
+            완료
           </button>
         </div>
       </div>

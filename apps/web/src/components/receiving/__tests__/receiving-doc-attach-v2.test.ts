@@ -1,70 +1,37 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-import { describe, it, expect } from "vitest";
-
 /**
- * §receiving-doc-attach-v2 (호영님 2026-07-08) — 문서 확보 모달 v2 폼팩터
- *   (입고 목록 웹 리디자인 v2.html §mDoc). PLAN_receiving-list-v2 Phase 1.
+ * ⚠️ SUPERSEDED by §receiving-doc-attach-canonical (T1, 2026-07-31).
  *
- * 바텀 Sheet → same-canvas 센터 Dialog. 통합 업로드/문서별 첨부 탭 + 드롭존(정직-disabled).
- * ⚠ per-lot(CoA·MSDS) GMP 모델·실 attach wiring·완료 토스트 전부 보존(회귀 0).
+ * 이 파일이 잠그던 배선은 데모 store 기반(onAttach = store.attachReceivingDocument, 로컬 dispatch)이었다.
+ * 당시 주석은 "front-only 아님" 이라 표기했으나, 실제로는 서버 저장이 없는 in-memory 게이트 전이였고
+ * 핸드오프 §0 이 이를 release blocker(front-only success)로 판정했다.
+ *
+ * 보호 intent 는 폐기하지 않고 canonical 기준으로 승격 이관한다:
+ *   - "첨부 성공 이후에만 성공 피드백" → 서버 2xx 확인 후 토스트 (receiving-doc-attach-canonical.test.ts)
+ *   - "개별 버튼이 래퍼 경유(직접 호출 금지)" → 업로드 헬퍼 경유 + 진행률/취소 (동 sentinel)
+ *   - "가짜 성공 금지" → 스토리지 업로드 성공 후에만 DB 레코드 생성 (동 sentinel P2)
+ *
+ * 따라서 옛 시그니처 단언은 제거하고, 회귀 방지는 신 sentinel 이 담당한다. 파일은 이력 보존용으로 남긴다.
  */
 
-const REPO_ROOT = join(__dirname, "..", "..", "..", "..");
-function read(rel: string): string {
-  return readFileSync(join(REPO_ROOT, rel), "utf8");
-}
-const MODAL = "src/components/receiving/receiving-doc-attach-modal.tsx";
+import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
-describe("§receiving-doc-attach-v2 — 센터 Dialog 폼팩터", () => {
-  it("바텀 Sheet 제거 → same-canvas 센터 Dialog(role=dialog, aria-modal)", () => {
+const MODAL = "src/components/receiving/receiving-doc-attach-modal.tsx";
+const read = (rel: string) => readFileSync(resolve(process.cwd(), rel), "utf8");
+
+describe("§receiving-doc-attach-canonical — v2 폼팩터 보존(승격 보존)", () => {
+  it("same-canvas 센터 Dialog 유지(바텀 Sheet 회귀 금지)", () => {
     const src = read(MODAL);
     expect(src).not.toMatch(/from "@\/components\/ui\/sheet"/);
     expect(src).toMatch(/role="dialog"/);
     expect(src).toMatch(/aria-modal="true"/);
-    expect(src).toMatch(/items-center justify-center/); // 센터 정렬
+    expect(src).toMatch(/items-center justify-center/);
   });
 
-  it("통합 업로드 / 문서별 첨부 탭 — 기본 탭 = 문서별 첨부(no-op default 회피)", () => {
+  it("정직-disabled 드롭존 문구는 실업로드로 승격(잔존 금지)", () => {
     const src = read(MODAL);
-    expect(src).toMatch(/통합 업로드/);
-    expect(src).toMatch(/문서별 첨부/);
-    expect(src).toMatch(/useState<DocTab>\("byDoc"\)/);
-  });
-
-  it("통합 업로드 드롭존 = 정직-disabled(실 업로드 미주장)", () => {
-    const src = read(MODAL);
-    expect(src).toMatch(/파일 업로드는 입고 DB 연동 후 제공됩니다/);
-    expect(src).toMatch(/border-dashed/);
-  });
-
-  it("반영 차단 callout(§11.302 muted amber)", () => {
-    const src = read(MODAL);
-    expect(src).toMatch(/재고 반영 차단/);
-    expect(src).toMatch(/bg-\[#fdf3ec\] text-\[#b45821\]/);
-  });
-});
-
-describe("§receiving-doc-attach-v2 — 회귀 0(GMP per-lot · 실 wiring 보존)", () => {
-  it("per-line/per-lot 문서 모델 보존(성적서 CoA·MSDS·lotRecords)", () => {
-    const src = read(MODAL);
-    expect(src).toMatch(/성적서 \(CoA\)/);
-    expect(src).toMatch(/MSDS/);
-    expect(src).toMatch(/line\.lotRecords/);
-    expect(src).toMatch(/lot\.coaAttached/);
-    expect(src).toMatch(/lot\.msdsAttached/);
-  });
-
-  it("실 첨부 wiring 보존 — handleAttach → onAttach, 완료 시 labToast 1회", () => {
-    const src = read(MODAL);
-    expect(src).toMatch(/import \{ labToast \} from "@\/lib\/toast\/lab-toast"/);
-    expect(src).toMatch(/const handleAttach = \(lineId: string, docType: DocType, lotId\?: string\) =>/);
-    const attachIdx = src.indexOf("onAttach(lineId, docType, lotId)");
-    const toastIdx = src.indexOf("labToast.success(");
-    expect(attachIdx).toBeGreaterThan(-1);
-    expect(toastIdx).toBeGreaterThan(attachIdx); // mutation 먼저 → 성공 후 토스트
-    expect(src).toMatch(/if \(remaining === 1\)/);
-    expect(src).toMatch(/onClick=\{\(\) => handleAttach\(line\.id, type\)\}/);
-    expect(src).not.toMatch(/onClick=\{\(\) => onAttach\(/); // 직접 onAttach onClick 금지
+    expect(src).not.toMatch(/파일 업로드는 입고 DB 연동 후 제공됩니다/);
+    expect(src).toMatch(/type="file"/);
   });
 });

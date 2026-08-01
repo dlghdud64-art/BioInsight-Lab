@@ -1,36 +1,37 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-import { describe, it, expect } from "vitest";
+/**
+ * ⚠️ SUPERSEDED by §receiving-doc-attach-canonical (T1, 2026-07-31).
+ *
+ * 이 파일이 잠그던 배선은 데모 store 기반(onAttach = store.attachReceivingDocument, 로컬 dispatch)이었다.
+ * 당시 주석은 "front-only 아님" 이라 표기했으나, 실제로는 서버 저장이 없는 in-memory 게이트 전이였고
+ * 핸드오프 §0 이 이를 release blocker(front-only success)로 판정했다.
+ *
+ * 보호 intent 는 폐기하지 않고 canonical 기준으로 승격 이관한다:
+ *   - "첨부 성공 이후에만 성공 피드백" → 서버 2xx 확인 후 토스트 (receiving-doc-attach-canonical.test.ts)
+ *   - "개별 버튼이 래퍼 경유(직접 호출 금지)" → 업로드 헬퍼 경유 + 진행률/취소 (동 sentinel)
+ *   - "가짜 성공 금지" → 스토리지 업로드 성공 후에만 DB 레코드 생성 (동 sentinel P2)
+ *
+ * 따라서 옛 시그니처 단언은 제거하고, 회귀 방지는 신 sentinel 이 담당한다. 파일은 이력 보존용으로 남긴다.
+ */
 
-const REPO_ROOT = join(__dirname, "..", "..", "..", "..");
-function read(rel: string): string {
-  return readFileSync(join(REPO_ROOT, rel), "utf8");
-}
+import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 const MODAL = "src/components/receiving/receiving-doc-attach-modal.tsx";
+const read = (rel: string) => readFileSync(resolve(process.cwd(), rel), "utf8");
 
-describe("§action-toast P3 — 입고 문서첨부 필수세트 완료 토스트(완료 시 1회)", () => {
-  it("실 첨부(onAttach=store.attachReceivingDocument) 후 labToast.success — front-only 아님", () => {
+describe("§receiving-doc-attach-canonical — 성공 피드백은 서버 확인 이후(승격 보존)", () => {
+  it("labToast 는 업로드 await 이후에만 호출(가짜 성공 금지)", () => {
     const src = read(MODAL);
     expect(src).toMatch(/import \{ labToast \} from "@\/lib\/toast\/lab-toast"/);
-    // handleAttach 래퍼가 실 mutation(onAttach) 먼저 호출
-    expect(src).toMatch(/const handleAttach = \(lineId: string, docType: DocType, lotId\?: string\) =>/);
-    const attachIdx = src.indexOf("onAttach(lineId, docType, lotId)");
-    const toastIdx = src.indexOf("labToast.success(");
-    expect(attachIdx).toBeGreaterThan(-1);
-    expect(toastIdx).toBeGreaterThan(attachIdx); // mutation 먼저 → 성공 후 토스트
+    const awaitIdx = src.indexOf("await promise;");
+    const toastIdx = src.indexOf('labToast.success("문서 첨부 완료"');
+    expect(awaitIdx).toBeGreaterThan(-1);
+    expect(toastIdx).toBeGreaterThan(awaitIdx);
   });
 
-  it("완료 판정 = 이번 첨부가 마지막 미첨부(remaining===1) → 필수세트 완료 1회", () => {
+  it("실패 시 성공 토스트 대신 실패 토스트", () => {
     const src = read(MODAL);
-    expect(src).toMatch(/if \(remaining === 1\)/);
-    expect(src).toMatch(/필수 문서\(CoA·MSDS\)가 모두 첨부되었습니다/);
-  });
-
-  it("회귀 0 — 개별 첨부 버튼이 handleAttach 경유(직접 onAttach 호출 잔존 금지)", () => {
-    const src = read(MODAL);
-    expect(src).toMatch(/onClick=\{\(\) => handleAttach\(line\.id, type\)\}/);
-    // onClick 에서 onAttach 직접 호출 잔존 금지(반드시 래퍼 경유)
-    expect(src).not.toMatch(/onClick=\{\(\) => onAttach\(/);
+    expect(src).toMatch(/labToast\.error\(\s*"문서 첨부 실패"/);
   });
 });

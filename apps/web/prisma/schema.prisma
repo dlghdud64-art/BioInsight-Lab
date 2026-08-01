@@ -110,6 +110,7 @@ model Organization {
 
   @@index([name])
   @@index([plan])
+  receivingDocuments ReceivingDocument[] // §receiving-doc-attach-canonical
 }
 
 // 조직 멤버
@@ -213,6 +214,7 @@ model User {
 
   @@index([email])
   @@index([role])
+  receivingDocuments ReceivingDocument[] // §receiving-doc-attach-canonical — 업로드 담당자
 }
 
 // §pricing-enforce-p2 P2b (호영님 2026-06-27) — 라벨 스캔 enforce 카운트 SoT.
@@ -998,6 +1000,7 @@ model InventoryRestock {
   @@index([orderId])
   @@index([receivingStatus])
   @@index([ocrJobId])  // §11.309a — 스캔 입고 조회 O(log n)
+  receivingDocuments ReceivingDocument[] // §receiving-doc-attach-canonical — 회차별 증빙
 }
 
 // 점검 결과
@@ -1920,6 +1923,7 @@ model Order {
   @@index([organizationId])
   @@index([status])
   @@index([createdAt])
+  receivingDocuments ReceivingDocument[] // §receiving-doc-attach-canonical — 입고 증빙
 }
 
 // 주문 품목
@@ -3370,6 +3374,36 @@ model ReceivingDraftItem {
 // api/safety/sds, admin/safety)가 참조하던 db.sDSDocument 모델을 정규화.
 // 추출 결과(extractionResult)는 검증 전 derived — canonical 안전필드(Product)
 // 승격은 사람 승인(api/sds/[id]/apply). source: upload(직접) / ocr / vendor.
+
+/// §receiving-doc-attach-canonical (T1) — 입고 증빙 문서(거래명세서·기타·상태사진).
+/// ⚠️ SDSDocument(GMP 안전·품질 문서: sds/coa)와 경계 분리.
+///   SDSDocument 는 CHECK `SDSDocument_coa_lot_check` 가 docType 을 sds/coa 로 하드 잠금 →
+///   제3 종류 문서 추가 시 기존 SDS/COA INSERT 까지 전면 차단. 그래서 별 테이블로 신설한다.
+/// 귀속: orderId(PO=입고 건) 필수 + restockId(특정 입고 회차) 선택 → 부분 입고 대응.
+model ReceivingDocument {
+  id             String   @id @default(cuid())
+  orderId        String   // 입고 건(PO) 귀속 — 필수
+  restockId      String?  // 특정 입고 회차(InventoryRestock) 귀속 — 부분 입고/회차별 명세서
+  organizationId String?  // 조직 스코프(RLS/열람 게이트)
+  uploadedById   String?  // 업로드 담당자(감사) — 표기 "YYYY. M. D. {실명} 첨부"
+  docType        String   // invoice(거래명세서) / photo(상태 사진) / etc(기타)
+  fileName       String
+  bucket         String   // 오브젝트 스토리지 버킷
+  path           String   // 스토리지 경로
+  contentType    String?
+  sizeBytes      Int?
+  createdAt      DateTime @default(now())
+
+  order        Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  restock      InventoryRestock? @relation(fields: [restockId], references: [id], onDelete: SetNull)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  uploadedBy   User?         @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([restockId])
+  @@index([organizationId])
+  @@index([docType])
+}
 
 model SDSDocument {
   id               String    @id @default(cuid())

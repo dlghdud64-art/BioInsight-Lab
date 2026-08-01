@@ -33,7 +33,7 @@ import { labToast } from "@/lib/toast/lab-toast";
 //   데이터(allItems) 불변, 파생은 receiving-list-view-model(순수함수). 모바일 뷰 유지.
 export default function ReceivingLandingPage() {
   const router = useRouter();
-  const { unifiedInboxItems, receivingBatches, postToInventory, attachReceivingDocument } =
+  const { unifiedInboxItems, receivingBatches, postToInventory } =
     useOpsStore();
 
   const headerStats = useMemo(
@@ -106,12 +106,11 @@ export default function ReceivingLandingPage() {
           }}
         />
 
-        {/* §mobile-receiving-rcv-card P3 — 문서 첨부 시트(store.attachReceivingDocument 실 배선). */}
+        {/* §receiving-doc-attach-canonical (T1) — 데모 dispatch 제거, 시트가 canonical API 로 직접 업로드. */}
         <MobileDocAttachSheet
           open={attachBatch != null}
           rb={attachBatch}
           onClose={() => setAttachCardId(null)}
-          onAttach={attachReceivingDocument}
         />
       </div>
 
