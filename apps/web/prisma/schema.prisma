@@ -3355,6 +3355,20 @@ model ReceivingDraftItem {
   lotNumber        String?   // 회신 LOT
   expiryDate       DateTime? // 회신 유효기간
   vendorNote       String?   @db.Text
+
+  // §receiving-inspection-decision (T2) — 검수 판정 기록.
+  //   receivedQuantity = 공급사 회신값(주장). inspectedQuantity = 검수자 실측값.
+  //   둘을 분리 보존해야 "몇 개 부족했는지"의 근거가 남는다(GMP 추적성·분쟁 대응).
+  //   재고 반영은 inspectedQuantity 기준(미입력 시 미반영 — 판정 없이 반영 금지).
+  inspectedQuantity  Float?    // 검수 실측 수령 수량
+  decision           String?   // "PASS" | "FAIL" (null = 미판정)
+  decidedAt          DateTime?
+  decidedById        String?   // 판정 담당자(감사)
+  // 수량 불일치 처리 경로 — 발주≠실측 시 필수(사유 포함).
+  discrepancyAction  String?   // "RESHIP"(부족분 재배송) | "PARTIAL"(부분 입고 확정) | "RETURN"(반품)
+  discrepancyReason  String?   @db.Text
+  // 라인 단위 재고 반영 가드 — 이미 반영된 라인 재반영 차단(부분 입고 후 잔여 재확정 허용).
+  restockedAt        DateTime?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 

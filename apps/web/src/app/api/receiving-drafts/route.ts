@@ -54,9 +54,20 @@ export async function GET(request: NextRequest) {
           id: it.id,
           name: it.name,
           productId: it.productId,
+          // §receiving-inspection-decision (T2) — 검수 표에 필요한 계약 확장.
+          //   expectedQuantity(발주) ↔ inspectedQuantity(실측) 대조로 불일치를 파생한다.
+          //   receivedQuantity(공급사 회신)는 근거로 함께 노출(덮어쓰지 않음).
+          expectedQuantity: it.expectedQuantity,
           receivedQuantity: it.receivedQuantity,
+          inspectedQuantity: it.inspectedQuantity,
+          unit: it.unit,
           lotNumber: it.lotNumber,
           expiryDate: it.expiryDate,
+          decision: it.decision,
+          decidedAt: it.decidedAt,
+          discrepancyAction: it.discrepancyAction,
+          discrepancyReason: it.discrepancyReason,
+          restockedAt: it.restockedAt,
         })),
       })),
       total: drafts.length,
