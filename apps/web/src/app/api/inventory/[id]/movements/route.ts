@@ -22,9 +22,16 @@ import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-/** 브리핑 요약용 기본 건수(전수·출력은 이력 화면 소관). */
+/** 브리핑 요약용 기본 건수(기본값 보존 — 브리핑 계약 회귀 금지). */
 const DEFAULT_LIMIT = 5;
-const MAX_LIMIT = 20;
+/** §inventory-history-screen — 전수 이력 화면 페이지 크기 상한. 무제한 조회 금지. */
+const MAX_LIMIT = 200;
+/**
+ * 소스별 스캔 상한. 두 테이블을 앱에서 병합·정렬하므로, 전역 순서가 보장되는 구간은
+ * "각 소스에서 가져온 건수"까지다. offset+limit 이 이 상한을 넘으면 정렬이 어긋날 수
+ * 있으므로 조용히 잘린 결과를 주지 않고 truncated=true 로 알린다(기간 필터로 좁히도록 유도).
+ */
+const SCAN_CAP = 1000;
 
 /** 미완료 입고 상태 표시 라벨(내부 enum 원문 노출 금지). */
 const RECEIVING_LABEL: Record<string, string> = {
@@ -109,11 +116,35 @@ export async function GET(
       Math.max(Number(searchParams.get("limit") || DEFAULT_LIMIT), 1),
       MAX_LIMIT,
     );
+    // §inventory-history-screen — 전수 화면용 기간 필터·페이지네이션(브리핑은 미전달 → 기존 동작 유지).
+    const offset = Math.max(Number(searchParams.get("offset") || 0), 0);
+    const fromParam = searchParams.get("from");
+    const toParam = searchParams.get("to");
+    const parseDate = (v: string | null): Date | null => {
+      if (!v) return null;
+      const d = new Date(v);
+      return Number.isNaN(d.getTime()) ? null : d;
+    };
+    const from = parseDate(fromParam);
+    const to = parseDate(toParam);
+    // 종료일은 해당 일자 끝까지 포함(날짜만 전달된 경우 경계 누락 방지).
+    if (to && /^\d{4}-\d{2}-\d{2}$/.test(toParam ?? "")) to.setHours(23, 59, 59, 999);
+    const restockWindow = from || to
+      ? { restockedAt: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } }
+      : {};
+    const usageWindow = from || to
+      ? { usageDate: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } }
+      : {};
+    // 병합 후 절단하므로 각 소스는 (offset + limit)까지만 조회 — overfetch 방지.
+    const requestedDepth = offset + limit;
+    const perSourceTake = Math.min(requestedDepth, SCAN_CAP);
+    // 스캔 상한을 넘는 깊이는 전역 정렬을 보장할 수 없음 → 조용한 오정렬 대신 명시 신호.
+    const truncated = requestedDepth > SCAN_CAP;
 
     // 각 소스에서 limit 건만 조회 후 병합·절단 (overfetch 방지).
-    const [restocks, usages] = await Promise.all([
+    const [restocks, usages, restockTotal, usageTotal] = await Promise.all([
       db.inventoryRestock.findMany({
-        where: { inventoryId: id },
+        where: { inventoryId: id, ...restockWindow },
         select: {
           id: true,
           quantity: true,
@@ -124,10 +155,10 @@ export async function GET(
           user: { select: { name: true } },
         },
         orderBy: { restockedAt: "desc" },
-        take: limit,
+        take: perSourceTake,
       }),
       db.inventoryUsage.findMany({
-        where: { inventoryId: id },
+        where: { inventoryId: id, ...usageWindow },
         select: {
           id: true,
           quantity: true,
@@ -139,9 +170,12 @@ export async function GET(
           user: { select: { name: true } },
         },
         orderBy: { usageDate: "desc" },
-        take: limit,
+        take: perSourceTake,
       }),
+      db.inventoryRestock.count({ where: { inventoryId: id, ...restockWindow } }),
+      db.inventoryUsage.count({ where: { inventoryId: id, ...usageWindow } }),
     ]);
+    const total = restockTotal + usageTotal;
 
     const fallbackUnit = inventory.unit ?? null;
 
@@ -181,9 +215,9 @@ export async function GET(
 
     const movements = [...restockMovements, ...usageMovements]
       .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
-      .slice(0, limit);
+      .slice(offset, offset + limit);
 
-    return NextResponse.json({ movements });
+    return NextResponse.json({ movements, total, offset, limit, truncated, scanCap: SCAN_CAP });
   } catch (error) {
     console.error("[inventory/movements/GET]", error);
     return NextResponse.json({ error: "Failed to fetch movements" }, { status: 500 });

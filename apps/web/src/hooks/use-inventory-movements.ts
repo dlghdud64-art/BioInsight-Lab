@@ -19,22 +19,43 @@ export interface InventoryMovementItem {
 
 export interface UseInventoryMovementsResult {
   movements: InventoryMovementItem[];
+  /** 필터 조건 하의 전체 건수(페이지네이션용). */
+  total: number;
+  /** true = 요청 깊이가 서버 스캔 상한 초과 → 정렬 보장 불가(기간 필터로 좁혀야 함). */
+  truncated: boolean;
   isLoading: boolean;
   isError: boolean;
+}
+
+/** §inventory-history-screen — 전수 화면용 옵션. 미전달 시 브리핑 기존 동작(기본 5·전체 기간) 유지. */
+export interface InventoryMovementsOptions {
+  limit?: number;
+  enabled?: boolean;
+  /** ISO 또는 yyyy-MM-dd. 미전달 = 전체 기간. */
+  from?: string;
+  to?: string;
+  offset?: number;
 }
 
 const EMPTY: InventoryMovementItem[] = [];
 
 export function useInventoryMovements(
   inventoryId: string | undefined,
-  opts: { limit?: number; enabled?: boolean } = {},
+  opts: InventoryMovementsOptions = {},
 ): UseInventoryMovementsResult {
   const limit = opts.limit ?? 5;
+  const offset = opts.offset ?? 0;
+  const from = opts.from ?? "";
+  const to = opts.to ?? "";
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["inventory-movements", inventoryId, limit],
+    queryKey: ["inventory-movements", inventoryId, limit, offset, from, to],
     enabled: Boolean(inventoryId) && opts.enabled !== false,
     queryFn: async () => {
-      const res = await fetch(`/api/inventory/${inventoryId}/movements?limit=${limit}`);
+      const params = new URLSearchParams({ limit: String(limit) });
+      if (offset > 0) params.set("offset", String(offset));
+      if (from) params.set("from", from);
+      if (to) params.set("to", to);
+      const res = await fetch(`/api/inventory/${inventoryId}/movements?${params.toString()}`);
       if (!res.ok) throw new Error("movements fetch failed");
       return res.json();
     },
@@ -44,5 +65,8 @@ export function useInventoryMovements(
     ? data.movements
     : EMPTY;
 
-  return { movements, isLoading, isError };
+  const total = typeof data?.total === "number" ? data.total : movements.length;
+  const truncated = data?.truncated === true;
+
+  return { movements, total, truncated, isLoading, isError };
 }

@@ -693,8 +693,8 @@ export function InventoryContextPanel({
               )}
             </div>
             {/* §11.320 — 액션 button 상태 카드 바로 아래 (구 sticky footer 제거).
-                §inventory-brief-delta §3 — `입·출고 기록` 버튼은 시약 이력 추적 화면
-                (/dashboard/inventory/history?itemId={id}) 미구현으로 미생성(dead button 금지). 구현 후 배선. */}
+                §inventory-history-screen — `입·출고 기록` = 시약 이력 추적 화면 딥링크
+                (/dashboard/inventory/history?itemId={id}, 전수·CSV 담당). 화면 신설 완료로 배선. */}
             <div
               data-testid="inventory-context-primary-actions"
               className="flex items-center gap-2"
@@ -710,6 +710,20 @@ export function InventoryContextPanel({
                   입고 등록
                 </Button>
               )}
+              <Link
+                href={`/dashboard/inventory/history?itemId=${item.id}`}
+                className="flex-1"
+                data-testid="inventory-context-history-button"
+              >
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full min-h-[44px] md:min-h-0 md:h-8 text-xs border-bd bg-pn text-slate-700"
+                >
+                  <History className="h-3 w-3 mr-1" />
+                  입·출고 기록
+                </Button>
+              </Link>
               <Button
                 size="sm"
                 variant="outline"
@@ -1104,7 +1118,7 @@ export function InventoryContextPanel({
 
         {/* ── E. Recent Transactions ── */}
         {/* §inventory-brief-delta(2026-07-29) §3 — 브리핑 = 최근 3~5건 요약(역할 분리: 전수·출력은 이력 추적).
-            하단 `전체 이력 보기 ›` 링크는 /dashboard/inventory/history?itemId={id} 구현 후 배선(dead-link 금지, 현재 미생성).
+            하단 `전체 이력 보기 ›` = /dashboard/inventory/history?itemId={id} 딥링크(§inventory-history-screen, 화면 신설 완료).
             §inventory-brief-canonical — canonical(InventoryRestock+InventoryUsage) 조회.
             로딩 중 skeleton, 기록 0건이면 섹션 미렌더(빈 껍데기 금지). 폐기는 canonical 소스 부재로 미표시. */}
         {isMovementsLoading ? (
@@ -1141,6 +1155,13 @@ export function InventoryContextPanel({
               </div>
             ))}
           </div>
+          <Link
+            href={`/dashboard/inventory/history?itemId=${item.id}`}
+            data-testid="inventory-context-history-link"
+            className="mt-2 inline-flex items-center text-[11px] font-semibold text-slate-600 hover:text-slate-900 transition-colors"
+          >
+            전체 이력 보기 ›
+          </Link>
         </section>
         ) : null}
 
