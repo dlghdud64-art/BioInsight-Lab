@@ -24,6 +24,7 @@ import { ReceivingPostModal } from "@/components/receiving/receiving-post-modal"
 import { ArrowRight } from "lucide-react";
 // §11.348-A-4b — 공급사 입고 회신 검토 패널(same-canvas).
 import { ReceivingReviewPanel } from "@/components/receiving/receiving-review-panel";
+import { PageShell } from "@/components/layout/page-header";
 // §action-toast P3 — 입고 재고반영 결과 토스트 통일(자체 토스트 → labToast).
 import { labToast } from "@/lib/toast/lab-toast";
 
@@ -71,7 +72,9 @@ export default function ReceivingLandingPage() {
   const [postModalItem, setPostModalItem] = useState<ModuleLandingItem | null>(null);
 
   return (
-    <div className="min-h-screen bg-white p-4 md:p-6 space-y-5">
+    <div className="min-h-screen bg-white p-4 md:p-6">
+      {/* §receiving-wide-viewport — 콘텐츠 폭을 max-w-7xl 로 통일(대형 뷰포트 가운데 정렬). 루트 캔버스는 무접촉. */}
+      <PageShell>
       {/* §11.348-A-4b — 공급사 입고 회신(PENDING_REVIEW) 검토. 0건 시 자동 숨김. */}
       <ReceivingReviewPanel />
 
@@ -164,6 +167,7 @@ export default function ReceivingLandingPage() {
           labToast.success("재고 반영 완료", `<b>${item.title}</b> 재고에 반영되었습니다.`);
         }}
       />
+      </PageShell>
     </div>
   );
 }
