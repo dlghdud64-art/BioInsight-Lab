@@ -41,7 +41,11 @@ describe("§11.348-A-4b — 패널 (csrfFetch 승인/반려)", () => {
     expect(src).toContain('from "@/lib/api-client"'); // csrfFetch
     expect(src).toContain("/api/receiving-drafts?status=PENDING_REVIEW");
     expect(src).toContain("/api/receiving-drafts/${id}/${action}");
-    expect(src).toContain("승인·입고");
+    // supersede(cec5f766 · §receiving-inspection-decision): 구 단일 승인 라벨을 검수 판정
+    //   확정 흐름으로 개편. 원 의도(승인 액션 실재·csrfFetch 배선)를 확정 버튼 라벨 +
+    //   approve 토스트 분기 두 앵커로 재고정한다(라벨 하나만 잡으면 문구 개편에 재stale).
+    expect(src).toContain("검수 완료 — 재고 반영");
+    expect(src).toContain('action === "approve" ? "입고 확정"');
     expect(src).toContain("if (drafts.length === 0) return null");
   });
 });

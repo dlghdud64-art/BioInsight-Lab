@@ -98,11 +98,14 @@ export function ReceivingReviewPanel() {
     if (undecided.length > 0) {
       out.push(`${undecided.map((it) => it.name).slice(0, 2).join(" · ")}${undecided.length > 2 ? ` 외 ${undecided.length - 2}건` : ""} 판정`);
     }
-    const needReason = d.items.filter((it) => {
+    const mismatched = d.items.filter((it) => {
       const e = editOf(it);
       const diff = diffOf(it);
-      return e.decision && diff !== null && diff !== 0 && (!e.discrepancyAction || !e.discrepancyReason?.trim());
+      return !!e.decision && diff !== null && diff !== 0;
     });
+    const needAction = mismatched.filter((it) => !editOf(it).discrepancyAction);
+    const needReason = mismatched.filter((it) => !editOf(it).discrepancyReason?.trim());
+    if (needAction.length > 0) out.push("불일치 처리 방식 선택");
     if (needReason.length > 0) out.push("불일치 사유 입력");
     return out;
   };
@@ -123,6 +126,7 @@ export function ReceivingReviewPanel() {
             discrepancyReason: e.discrepancyReason,
           };
         });
+      if (payload.length === 0) return true;
       const res = await csrfFetch(`/api/receiving-drafts/${d.id}/inspect`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -238,6 +242,15 @@ export function ReceivingReviewPanel() {
           const blockers = blockersOf(d);
           const decidedCount = d.items.filter((it) => !!editOf(it).decision || !!it.restockedAt).length;
           const canConfirm = blockers.length === 0;
+          const allRestocked = d.items.length > 0 && d.items.every((it) => it.restockedAt != null);
+          const doneNote = "전 품목 반영 완료 — 추가로 확정할 항목이 없습니다.";
+          const remainNote = `남은 일: ${blockers.join(" · ")}`;
+          const confirmTitle = allRestocked ? doneNote : blockers.length > 0 ? remainNote : undefined;
+          const footerNote = allRestocked
+            ? doneNote
+            : blockers.length > 0
+              ? remainNote
+              : "전 품목 판정 완료 — 확정할 수 있습니다.";
           return (
             <div key={d.id} className="rounded-lg border border-slate-200 bg-white p-3">
               <div className="flex items-center justify-between gap-3">
@@ -265,8 +278,8 @@ export function ReceivingReviewPanel() {
                   </Button>
                   <Button
                     size="sm"
-                    disabled={busy || !canConfirm}
-                    title={canConfirm ? undefined : `남은 일: ${blockers.join(" · ")}`}
+                    disabled={busy || !canConfirm || allRestocked}
+                    title={confirmTitle}
                     onClick={() => act(d.id, "approve")}
                     className="h-9 bg-emerald-600 hover:bg-emerald-700 gap-1"
                   >
@@ -434,13 +447,13 @@ export function ReceivingReviewPanel() {
                   {/* §T2 — 푸터: 임시 저장 + 남은 일(사유 없는 disabled 금지) */}
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2.5">
                     <span className="text-[11px] text-slate-500">
-                      {blockers.length > 0 ? `남은 일: ${blockers.join(" · ")}` : "전 품목 판정 완료 — 확정할 수 있습니다."}
+                      {footerNote}
                     </span>
                     <Button
                       size="sm"
                       variant="outline"
                       className="h-8 text-xs"
-                      disabled={!!saving[d.id]}
+                      disabled={!!saving[d.id] || allRestocked}
                       onClick={() => saveInspection(d)}
                     >
                       {saving[d.id] ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Save className="mr-1 h-3 w-3" />}
