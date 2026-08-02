@@ -8,6 +8,14 @@
  *   근거는 각 물질의 공식 SDS 이며, 안전관리자(호영님) 검토·확장을 전제한다. 미수록
  *   CAS 는 "미분류(unknown)" 로 정직 표기하며 절대 "일반(low)" 으로 오도하지 않는다.
  *
+ * 📌 표 범위 (2026-08-02 호영님 확정) — **항생제는 이 표의 대상이 아니다.**
+ *   항생제는 화학시약 GHS 취급기준이 아니라 의약품·생물안전 관리 체계를 따르므로 별도 관리한다.
+ *   제외 기준은 "생물 유래" 가 아니라 "항생제" 다 — GHS 분류를 갖는 생물 유래 시약(예: 파파인
+ *   H334, DEPC)은 계속 수록한다.
+ *   대상 외 물질은 조회 시 위 원칙대로 "미분류(unknown)" 로 표기된다(= "일반(low)" 오도 없음).
+ *   이 규칙 적용으로 겐타마이신 황산염(1405-41-0, H317/H334)을 제외했다(56 → 55종).
+ *   ⚠️ 항생제 추가 요청이 오면 개별 예외로 넣지 말고 **이 범위 규칙부터 재검토**한다.
+ *
  * 순수 모듈 — DOM/React/네트워크 무의존(단위테스트 용이). canonical = hazardCodes.
  */
 
@@ -89,7 +97,6 @@ export const CAS_GHS_TABLE: Record<string, CasGhsEntry> = {
   "7705-08-0": { name: "염화철(III) 용액 (Ferric chloride)", hazardCodes: ["H290", "H302", "H314"] },
   "67-68-5": { name: "DMSO (Dimethyl sulfoxide)", hazardCodes: [] },
   "298-93-1": { name: "MTT", hazardCodes: ["H301"] },
-  "1405-41-0": { name: "겐타마이신 황산염 (Gentamicin sulfate)", hazardCodes: ["H317", "H334"] },
   "9001-73-4": { name: "파파인 (Papain)", hazardCodes: ["H315", "H319", "H334", "H335"] },
   "1609-47-8": { name: "DEPC (Diethyl pyrocarbonate)", hazardCodes: ["H302", "H315", "H319", "H335"] },
   "493-52-7": { name: "메틸레드 (Methyl red)", hazardCodes: ["H228"] },
