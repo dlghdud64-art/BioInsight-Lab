@@ -20,8 +20,12 @@ describe("§safety-modal-upgrade P2 — no-op 완료버튼 제거", () => {
     expect(PAGE).toMatch(/setSelectedItemId\(q\.id\)/);
     expect(PAGE).toMatch(/\{q\.nextAction\}/);
   });
-  it("회귀 0 — CheckCircle2 import 유지(MSDS 폼 파일명 확인용)", () => {
+  // supersede(§msds-registration 실 업로드 전환): 파일명을 폼 state(msdsForm.fileName)에 복사해
+  //   두던 방식 → File 객체(msdsFile) 단일 소스로 정리. 파일명·용량은 msdsFile 에서 직접 읽는다.
+  //   잠그는 계약은 프로퍼티 접근 표기가 아니라 **첨부 파일이 사용자에게 확인 가능하게 표시될 것**.
+  it("회귀 0 — 첨부 파일 확인 표시 보존(파일명·용량)", () => {
     expect(PAGE).toMatch(/CheckCircle2/);
-    expect(PAGE).toMatch(/msdsForm\.fileName/);
+    expect(PAGE).toMatch(/\{msdsFile\.name\}/);
+    expect(PAGE).toMatch(/msdsFile\.size \/ 1024 \/ 1024/);
   });
 });
