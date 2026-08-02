@@ -138,9 +138,10 @@ describe("§11.311b — 회귀 0 (보존)", () => {
 
   it("Table 헤더 보존", () => {
     const src = read(PATH);
-    expect(src).toContain("일시 / ID");
-    expect(src).toContain("작업자 / IP");
-    expect(src).toContain("액션 및 대상");
+    // supersede(§11.311b 이후 감사 상세 재구성): 표 헤더 → DetailField 라벨. 계약은 5요소 노출.
+    for (const label of ["일시 (KST)", "작업자", "대상 유형"]) {
+      expect(src).toContain(`DetailField label="${label}"`);
+    }
   });
 
   it("Empty state '감사 로그가 없습니다' 보존", () => {

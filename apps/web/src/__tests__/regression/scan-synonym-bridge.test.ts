@@ -52,7 +52,9 @@ describe("§scan-synonym-bridge — UI fallback 후보(LabelScannerModal)", () =
   });
 
   it("신규 품목 배너 게이트에 synonym 양보(토큰 보존)", () => {
-    expect(MODAL).toMatch(/!scanResult\.matchedProduct && \(/);
+    // supersede(§scan-secondary-match 후속): 배너 게이트에 catalogNumber 조건이 추가되며 표기가 바뀌었다.
+    //   의도(미매칭일 때만 calm 신규품목 안내)는 유지.
+    expect(MODAL).toMatch(/!scanResult\.matchedProduct &&/);
     expect(MODAL).toMatch(/synonymCandidates\.length === 0/);
   });
 });

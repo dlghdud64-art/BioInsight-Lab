@@ -121,7 +121,8 @@ describe("§11.326 Phase 2 — PO PDF generator (동일 패턴)", () => {
 describe("§11.326 Phase 1 — vendor-dispatch-workbench 토스트 actionable (호영님 spec §5)", () => {
   it("토스트 title friendly + description actionable", () => {
     const src = read("src/components/quotes/dispatch/vendor-dispatch-workbench.tsx");
-    expect(src).toMatch(/견적서 PDF를 만들 수 없습니다/);
+    // supersede(cf104415 · §rfq-doc-redesign): 문서명이 "견적서" → "견적요청서"(RFQ) 로 정합됐다.
+    expect(src).toMatch(/견적요청서 PDF를 만들 수 없습니다/);
     expect(src).toMatch(/메시지 미리보기 내용을 복사해서 직접 메일/);
   });
 

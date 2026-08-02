@@ -48,9 +48,12 @@ describe("§11.302d-6d-1 — 위험 orange → red 격상 (옵션 A)", () => {
     const src = readFileSync(join(DASH_DIR, "safety/page.tsx"), "utf8");
     expect(src).toMatch(/flammable:\s*\{\s*label:\s*"인화성 물질",\s*bg:\s*"bg-red-50",\s*color:\s*"text-red-500"/);
   });
-  it("stock-risk 만료 위험 red", () => {
+  // supersede(§stock-risk-consolidation P4 · 2026-07-03): stock-risk 페이지 폐기 → redirect 스텁.
+  //   만료 위험 판정은 canonical(isReorderNeeded / reorder-recommendations)로 흡수됐다.
+  //   같은 파일 activity-logs 선례와 동일 처리 — 색상 가드는 통합 host 로 이동, 여기선 스텁만 확인.
+  it("stock-risk — §stock-risk-consolidation 통합(/dashboard/inventory redirect, 색상 가드 이전)", () => {
     const src = readFileSync(join(DASH_DIR, "stock-risk/page.tsx"), "utf8");
-    expect(src).toMatch(/expiry_risk:\s*\{\s*label:\s*"만료 위험"[\s\S]{0,80}bg-red-900\/40/);
+    expect(src).toMatch(/redirect\("\/dashboard\/inventory\?filter=low"\)/);
   });
   it("budget critical(초과) red", () => {
     const src = readFileSync(join(DASH_DIR, "budget/page.tsx"), "utf8");

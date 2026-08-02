@@ -23,8 +23,11 @@ function walkTs(dir: string): string[] {
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry);
     const st = statSync(full);
-    if (st.isDirectory()) out.push(...walkTs(full));
-    else if (entry.endsWith(".ts") && !entry.endsWith(".d.ts")) out.push(full);
+    // §regression-baseline-triage(2026-08-02): 테스트 파일 자기매칭 제외.
+    //   lib/**/__tests__ 는 amber/orange 금지어를 assertion 문자열로 담을 수밖에 없어
+    //   스윕이 자기 자신을 위반으로 집계했다(가드 대상은 프로덕션 코드).
+    if (st.isDirectory()) { if (entry !== "__tests__") out.push(...walkTs(full)); }
+    else if (entry.endsWith(".ts") && !entry.endsWith(".d.ts") && !entry.endsWith(".test.ts")) out.push(full);
   }
   return out;
 }

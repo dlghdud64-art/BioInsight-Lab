@@ -71,11 +71,11 @@ describe("§11.300 — audit page cleanup + 사이드바 영문 병기 제거", 
 
   describe("audit page — 기본 감사 로그 표시 보존 (회귀 0)", () => {
     it("기본 테이블 헤더 보존 (일시/ID, 작업자/IP, 액션/대상, 변경 내역, 사유/인증)", () => {
-      expect(AUDIT_SRC).toMatch(/>일시 \/ ID</);
-      expect(AUDIT_SRC).toMatch(/>작업자 \/ IP</);
-      expect(AUDIT_SRC).toMatch(/>액션 및 대상</);
-      expect(AUDIT_SRC).toMatch(/>변경 내역</);
-      expect(AUDIT_SRC).toMatch(/>사유 \/ 인증</);
+      // supersede(§11.311b 이후 감사 상세 재구성): 표 헤더(일시/ID …) → DetailField 라벨 구조로 전환.
+      //   잠그는 계약은 헤더 문자열이 아니라 **감사 추적 5요소(일시·작업자·대상·사유·인증)가 모두 노출될 것**.
+      for (const label of ["레코드 ID", "일시 (KST)", "작업자", "IP 주소", "대상 유형", "사유", "인증 방식"]) {
+        expect(AUDIT_SRC).toContain(`DetailField label="${label}"`);
+      }
     });
 
     it("필터 보존 (기간 + 액션 + 검색 input)", () => {

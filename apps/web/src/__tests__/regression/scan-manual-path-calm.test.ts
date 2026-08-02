@@ -19,7 +19,9 @@ const MODAL = readFileSync(
 
 describe("§scan-manual-path — 미매칭 정상 경로", () => {
   it("미매칭 시 calm 신규 품목 안내(에러톤 0)", () => {
-    expect(MODAL).toMatch(/!scanResult\.matchedProduct && \(/);
+    // supersede(§scan-secondary-match 후속): 배너 게이트에 catalogNumber 조건이 추가되며 표기가 바뀌었다.
+    //   의도(미매칭일 때만 calm 신규품목 안내)는 유지.
+    expect(MODAL).toMatch(/!scanResult\.matchedProduct &&/);
     expect(MODAL).toMatch(/DB에 없는 신규 품목입니다/);
     // 신규 품목 안내는 slate 중립(빨강 에러톤 아님)
     expect(MODAL).toMatch(/border-slate-200 bg-slate-50[\s\S]{0,260}신규 품목/);

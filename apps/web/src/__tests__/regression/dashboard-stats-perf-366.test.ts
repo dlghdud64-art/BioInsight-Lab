@@ -113,7 +113,10 @@ describe("§11.366 (b) GREEN — 집계 truth 산식 byte-보존", () => {
     expect(ROUTE).toContain("for (let i = 5; i >= 0; i--) {");
   });
   it("reorderNeededCount = dailyUsage×leadTime / safetyStock 기준", () => {
-    expect(ROUTE).toContain("inv.currentQuantity <= dailyUsage * leadTime");
+    // supersede(§stock-risk-consolidation P3): 인라인 복합 정의 → 공유 lib isReorderNeeded 로 단일화
+    //   (inventory·recommendations 와 동일 소스). 잠글 것은 수식이 아니라 canonical 헬퍼 사용.
+    expect(ROUTE).toContain('import { isReorderNeeded } from "@/lib/inventory/reorder-need"');
+    expect(ROUTE).toContain("isReorderNeeded(inv)");
     expect(ROUTE).toContain("inv.currentQuantity <= inv.safetyStock");
   });
 });
