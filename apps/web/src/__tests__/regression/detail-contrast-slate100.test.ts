@@ -69,9 +69,12 @@ describe("detail #1 - hierarchy / contrast preserved (regression zero)", () => {
     expect(src).toMatch(/text-slate-(700|900) font-mono|font-mono break-words/); // slate-900 mono(개선) 허용
   });
 
-  it("dark banner keeps text-white (not polluted to slate-900)", () => {
+  // supersede(§product-detail-refinement 계약④): 다크 맞춤견적 카드 자체가 폐기됐다.
+  //   "다크 배너의 텍스트 대비"라는 원 계약은 대상 소멸로 무효 → 잠글 것은 **다크 카드 미부활**과
+  //   대체 경로(/support 영업 문의 링크) 보존이다.
+  it("다크 맞춤견적 카드 미부활 (대비 오염 원인 제거)", () => {
     const src = read(DETAIL);
-    expect(src).toContain("from-gray-900 to-gray-800");
-    expect(src).toContain("text-gray-300");
+    expect(src).not.toContain("from-gray-900 to-gray-800");
+    expect(src).toMatch(/<Link href="\/support"[^>]*>영업 문의<\/Link>/);
   });
 });

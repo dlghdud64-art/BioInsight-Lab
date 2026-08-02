@@ -90,7 +90,8 @@ describe("§msds-registration Track A — 라벨 정직화 (호영님 2026-07-03
 describe("§msds-registration 회귀 — 단일 실 등록(option b) 무접촉 보존", () => {
   it("단일 MSDS 실 업로드 경로 보존(POST /api/products/[id]/sds, 파일 필수)", () => {
     expect(CODE).toMatch(/const handleMsdsSave = async/);
-    expect(CODE).toMatch(/fetch\(`\/api\/products\/\$\{productId\}\/sds`/);
+    // supersede(§csrf-hardening): fetch → csrfFetch 로 전환됐다. 의도(단일 MSDS 실 업로드 엔드포인트 보존)는 유지.
+    expect(CODE).toMatch(/csrfFetch\(`\/api\/products\/\$\{productId\}\/sds`/);
     expect(CODE).toMatch(/MSDS 문서 업로드/);
     expect(CODE).toMatch(/disabled=\{msdsSaving \|\| !msdsFile\}/);
   });

@@ -25,7 +25,10 @@ describe("§product-detail PD-K(§05) — 히어로 이미지 썸네일", () => 
 
 describe("§product-detail PD-L(§05) — 빈 상세 스펙 카드 buyer 숨김", () => {
   it("상세 스펙 카드 조건부(canEditSpec 게이트) + §125 그리드/empty 문자열 보존", () => {
-    expect(DETAIL).toMatch(/\(product\.specification \|\| product\.regulatoryCompliance \|\| canEditSpec\) &&/);
+    // supersede(§product-detail-refinement): 스펙 카드가 CollapsedRow 로 재구성되며 게이트 표기가 분리됐다. 의도(스펙/규제 값이 있거나 편집 권한이 있을 때만 노출)는 유지.
+    expect(DETAIL).toMatch(/\(product\.specification \|\| product\.regulatoryCompliance\)/);
+    expect(DETAIL).toMatch(/const canEditSpec = role === "ADMIN" \|\| role === "SUPPLIER"/);
+    expect(DETAIL).toMatch(/canEditSpec &&/);
     expect(DETAIL).toMatch(/상세 스펙 \(Specifications\)/);
     expect(DETAIL).toMatch(/등록된 상세 스펙이 없습니다/);
   });

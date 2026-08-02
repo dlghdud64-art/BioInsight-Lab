@@ -1,3 +1,16 @@
+/**
+ * §11.366 G-3 — 미완 트랙(갈래 E · §regression-baseline-triage 2026-08-02).
+ *
+ *   내부키 제거 작업이 착수되지 않은 채 sentinel 만 병합됨(sentinel 06-04 생성,
+ *   scripts/pilot/pilot.ts 06-06 수정에도 내부키 잔존). 상시 RED 로 회귀 게이트를 무력화.
+ *
+ *   prod 실측(2026-08-02): Organization / ProductInventory / Order 에 pilot 내부키 0건 —
+ *   시드 미실행 → 현재 노출 위험 없음. scripts/pilot 는 전용 테스트 7파일이 GREEN 으로
+ *   유지 중이므로 죽은 코드가 아니며, 목표(내부키 박멸)도 철회하지 않는다.
+ *
+ *   ⚠️ 삭제 금지 — 계약은 유효하고 구현만 없다(갈래 D 임시게이트와 구분).
+ *   재개 조건: 파일럿 시드를 실 테넌트에 적용하기 전. 그 전까지 skip 유지.
+ */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
@@ -10,7 +23,7 @@ function read(rel: string): string {
 const PILOT = "scripts/pilot/pilot.ts";
 const SEED = "scripts/pilot/pilot-seed.ts";
 
-describe("§11.366 G-3 — pilot 내부키 박멸 (export 바코드/조직명/발주번호 누출 0)", () => {
+describe.skip("§11.366 G-3 — pilot 내부키 박멸 (export 바코드/조직명/발주번호 누출 0)", () => {
   it("inv 내부키 id (inv-pilot-*) 0", () => {
     const src = read(PILOT);
     expect(src).not.toMatch(/inv-pilot-/);

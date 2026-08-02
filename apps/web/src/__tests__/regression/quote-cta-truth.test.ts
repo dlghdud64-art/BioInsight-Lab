@@ -59,7 +59,8 @@ describe("#quote-cta-truth — 상세 CTA 정직화", () => {
 
   it("견적함 포함 배지 — 동일 truth read (§1-2⑤ ③ deferred 해소)", () => {
     const src = read(DETAIL);
-    expect(src).toMatch(/견적함에 포함됨/);
+    // supersede(§product-detail-refinement 계약⑨-1): 견적함·비교함 배지가 통합 문구로 정합됐다. truth read(readQuoteCart) 는 아래에서 계속 잠근다.
+    expect(src).toMatch(/견적함·비교함에 담김/);
     expect(src).toMatch(/readQuoteCart/);
   });
 });
@@ -77,7 +78,8 @@ describe("#quote-cta-truth — 회귀 0", () => {
 
   it("상세 — 비교 배지(§1-2⑤)·비교 추가 라벨 보존", () => {
     const src = read(DETAIL);
-    expect(src).toMatch(/비교에 포함됨/);
-    expect(src).toMatch(/비교 추가/);
+    // supersede(§product-detail-refinement 계약④·⑨-1): 배지 통합 + '비교 추가' → '비교 검토'. 의도(담긴 상태 표기 · 비교 진입 라벨 존재)는 유지.
+    expect(src).toMatch(/견적함·비교함에 담김/);
+    expect(src).toMatch(/비교 검토/);
   });
 });

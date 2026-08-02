@@ -17,7 +17,9 @@ const DETAIL = readFileSync(
 
 describe("§product-detail PD-C(§07) — MSDS 유무 배지", () => {
   it("위험도 배지에 MSDS 유무 병기", () => {
-    expect(DETAIL).toMatch(/위험도: \{safetyLevel\.label\} · MSDS \{product\.msdsUrl \? "등록" : "없음"\}/);
+    // supersede(§product-detail-refinement 계약⑤): MSDS 병기를 의도적으로 제거했다(중복 경고 → 상단 체크리스트 1곳 집중). 위험도 배지만 남기는 것이 현행 계약.
+    expect(DETAIL).toMatch(/위험도: \{safetyLevel\.label\}/);
+    expect(DETAIL).not.toMatch(/위험도: \{safetyLevel\.label\} · MSDS/);
   });
 });
 
@@ -25,9 +27,13 @@ describe("§product-detail PD-C(§07) — MSDS 없음 경고 배너", () => {
   it("회색 텍스트 폐기 → 시안 amber-hex 경고 + SDS 요청(/support 실 이동)", () => {
     // CEO 2026-06-21 §11.302 예외: 안전 경고 = 시안 amber 톤(hex). amber/orange 클래스 0 유지(app-wide 가드 정합).
     expect(DETAIL).not.toMatch(/MSDS\/SDS 문서 정보가 없습니다/);
-    expect(DETAIL).toMatch(/MSDS\/SDS 미등록/);
-    expect(DETAIL).toMatch(/bg-\[#fbf0db\] border border-\[#f0dcae\]/);
-    expect(DETAIL).toMatch(/href="\/support"[^>]*>\s*SDS 요청/);
+    // supersede(§product-detail-refinement 계약③): 미등록 경고 문단 → 접힘 한 줄(CollapsedRow) + SDS 업로드 액션. 의도(미등록을 숨기지 않고 실 경로를 제시)는 유지.
+    expect(DETAIL).toMatch(/action=\{\{ label: "SDS 업로드", href: "\/support" \}\}/);
+    // supersede(§product-detail-refinement 계약⑤): amber-hex 경고 배너 자체를 삭제했다(중복 경고 제거).
+    //   미등록 사실·SDS 요청은 상단 완성도 체크리스트로 통합 → 잠글 것은 배너가 아니라
+    //   **배너 미부활 + 미등록 사실이 은폐되지 않을 것(중립 고지 + 체크리스트 실 경로)**.
+    expect(DETAIL).not.toMatch(/bg-\[#fbf0db\]/);
+    expect(DETAIL).toMatch(/안전 자료\(MSDS\/SDS\)는 상단 완성도 체크리스트에서 요청·확인할 수 있습니다/);
   });
 });
 

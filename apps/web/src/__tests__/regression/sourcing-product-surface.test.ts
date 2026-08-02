@@ -48,10 +48,12 @@ describe("§1-2⑦ P2 — 라벨 통일(동의어 제거)", () => {
     expect(src).toMatch(/비교 추가/);
     expect(src).toMatch(/견적 담기/);
   });
-  it("상세 = '바로 비교' 동의어 제거 → '비교 추가' 통일", () => {
+  // supersede(§product-detail-refinement 계약④): 상세 라벨이 '비교 추가' → '비교 검토'(보조 2분할).
+  //   잠그는 의도는 특정 라벨이 아니라 **동의어 난립 금지 · 비교 진입이 단일 라벨일 것**.
+  it("상세 = 비교 진입 라벨 단일화(동의어 '바로 비교' 0)", () => {
     const src = read(DETAIL);
     expect(src).not.toMatch(/바로 비교/);
-    expect(src).toMatch(/비교 추가/);
+    expect(src).toMatch(/비교 검토/);
   });
   it("멤버십 상태 라벨 = '후보' 군더더기 제거", () => {
     const peek = read(PEEK);
