@@ -303,7 +303,7 @@ function QuoteRequestPageContent() {
                     <div className="flex items-center gap-2">
                       <Sparkles className="h-3.5 w-3.5 text-blue-400" />
                       <span className="text-xs font-semibold text-slate-300">요청 전략안 3개</span>
-                      <span className="text-[10px] text-slate-500">반영과 수정은 운영자가 직접 결정합니다</span>
+                      <span className="text-[10px] text-slate-500">반영과 수정은 사용자가 직접 결정합니다</span>
                     </div>
                     <Button size="sm" variant="ghost" className="h-6 px-1.5 text-slate-500 hover:text-slate-300" onClick={() => setStrategyDismissedBySupplier(prev => ({ ...prev, [activeGroup.vendorId]: true }))}>
                       <X className="h-3 w-3" />

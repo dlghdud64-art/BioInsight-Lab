@@ -70,7 +70,7 @@ export const CANONICAL_TERMS = {
   // ── Owner Roles ──
   role_requester: "요청자",
   role_approver: "승인자",
-  role_operator: "운영자",
+  role_operator: "사용자",
   role_lead: "리드",
 
   // ── Console Views ──
