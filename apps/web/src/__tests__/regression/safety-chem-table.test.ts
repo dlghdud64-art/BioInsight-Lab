@@ -76,7 +76,9 @@ describe("§safety-redesign ② — 다중선택 bulkbar (no-op 0)", () => {
     // bulkbar 영역의 두 일괄 버튼이 disabled 로 게이트됨.
     expect(CODE).toMatch(/MSDS 일괄 등록/);
     expect(CODE).toMatch(/점검 기록 생성/);
-    expect(CODE).toMatch(/일괄 처리는 점검 준비 마법사에서 진행됩니다/);
+    // supersede(§safety-redesign 후속): '마법사 연결 전까지' 라는 과도기 문구가 교체됐다. 잠그는 계약은 문구가 아니라 **일괄 CTA 가 disabled + 사유(title) 를 동반할 것**(no-op 금지).
+    expect(CODE).toMatch(/선택 항목 점검 준비[\s\S]{0,200}disabled/);
+    expect(CODE).toMatch(/disabled[\s\S]{0,200}title="[^"]{8,}"[\s\S]{0,80}선택 항목 점검 준비/);
   });
   it("dead Filter 버튼 제거(onClick 없는 Filter 아이콘 부재)", () => {
     expect(CODE).not.toMatch(/<Filter className=/);

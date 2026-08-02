@@ -59,7 +59,8 @@ describe("§inventory-reorder-surface-unify P2 — 모바일 reorder 진입(dead
   it("primaryCta = canonical 기반 + 추천 없으면 disabled (가짜 0/dead button 0)", () => {
     expect(src).toMatch(/const qty = reorderRecommendedQtyFor\(contextPanelItem\.id\)/);
     expect(src).toMatch(/const hasRec = qty != null && qty > 0/);
-    expect(src).toMatch(/disabled: !hasRec/);
+    // supersede(§stock-risk-consolidation P2): 차단 사유(blocked)가 게이트에 추가되며 조건이 강화됐다. 의도(추천 없으면 비활성)는 유지 — 표기 대신 파생을 잠근다.
+    expect(src).toMatch(/disabled:\s*[^,\n]*!hasRec/);
     expect(src).toMatch(/if \(match\) openReorderReviewSheet\(match\)/);
   });
 });

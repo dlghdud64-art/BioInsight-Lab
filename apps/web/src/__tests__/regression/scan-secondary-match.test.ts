@@ -22,7 +22,9 @@ describe("§scan-reverse-match-v2 — route (scan-label 역매칭 v2)", () => {
   });
 
   it("미매칭일 때만 역매칭(자동확정 금지 — 역매칭發 matchedProduct 세팅 X)", () => {
-    expect(ROUTE).toMatch(/if \(!matchedProduct && \(merged\.productName \|\| merged\.brand\)\)/);
+    // supersede(§scan-reverse-match-v2): 가드가 if(!matchedProduct) 블록 + 내부 조건으로 분리됐다. 의도(미매칭일 때만 역매칭 · 역매칭發 자동확정 금지)는 아래 negative assertion 과 함께 유지.
+    expect(ROUTE).toMatch(/if \(!matchedProduct\) \{/);
+    expect(ROUTE).toMatch(/merged\.productName \|\| merged\.brand/);
     expect(ROUTE).toMatch(/productCandidates\.length > 0\) matchType = "fuzzy_name"/);
     // catalogNo 매칭의 `matchedProduct = product` 는 허용. 역매칭發 자동확정만 금지.
     expect(ROUTE).not.toMatch(/matchedProduct = (await |productCandidates|rankReverse)/);
@@ -70,7 +72,8 @@ describe("§scan-reverse-match-v2 — UI 승인형 후보 + 신뢰도 배지", (
   });
 
   it("회귀 0 — 신규 품목 calm 배너 토큰 보존(§scan-manual-path)", () => {
-    expect(MODAL).toMatch(/!scanResult\.matchedProduct && \(/);
+    // supersede(§scan-secondary-match 후속): 배너 게이트에 catalogNumber 조건이 추가되며 표기가 바뀌었다. 의도(미매칭일 때만 calm 배너)는 유지.
+    expect(MODAL).toMatch(/!scanResult\.matchedProduct &&/);
     expect(MODAL).toMatch(/DB에 없는 신규 품목입니다/);
     expect(MODAL).toMatch(/scanResult\.matchType !== "fuzzy_name" \|\| !scanResult\.productCandidates\?\.length/);
   });

@@ -20,19 +20,28 @@ const QUOTE = "src/lib/quotes/quote-request-pdf-generator.ts";
 const PO = "src/lib/orders/po-pdf-generator.ts";
 
 describe("§11.329 — 공통 레이아웃 상수 (하드코딩 제거)", () => {
-  for (const [name, path] of [["quote", QUOTE], ["po", PO]] as const) {
-    it(`${name}: contentWidth/contentLeft 레이아웃 상수 도입`, () => {
-      const src = read(path);
-      expect(src).toMatch(/contentWidth/);
-      expect(src).toMatch(/contentLeft|CONTENT_LEFT/);
-    });
-  }
+  it("po: contentWidth/contentLeft 레이아웃 상수 도입", () => {
+    const src = read(PO);
+    expect(src).toMatch(/contentWidth/);
+    expect(src).toMatch(/contentLeft|CONTENT_LEFT/);
+  });
+  // supersede(cf104415 · §rfq-doc-redesign): quote generator 재작성으로 상수명이
+  //   PAGE_MARGIN/L/R/W 로 바뀌었다. 잠그는 의도는 이름이 아니라 **폭·좌표가 페이지에서
+  //   파생될 것(하드코딩 금지)** 이다.
+  it("quote: 폭/좌표가 페이지에서 파생 (하드코딩 제거)", () => {
+    const src = read(QUOTE);
+    expect(src).toMatch(/doc\.page\.width/);
+    expect(src).toMatch(/const W = R - L/);
+    expect(src).not.toMatch(/width:\s*\d{3}\b/); // 3자리 고정폭 하드코딩 0
+  });
 });
 
 describe("§11.329 — 표 컬럼 width + align 명시", () => {
-  it("quote: 수량/견적가 right-align", () => {
+  // supersede(cf104415): 가격열 폐지로 right-align 대상이 사라졌다. 남은 숫자열(수량)은
+  //   고정폭 44px 라 center 가 canonical. 의도(숫자열을 좌측 정렬로 흘리지 않을 것) 유지.
+  it("quote: 수량열 정렬 명시 (좌측 흘림 금지)", () => {
     const src = read(QUOTE);
-    expect(src).toMatch(/align:\s*["']right["']/);
+    expect(src).toMatch(/label:\s*"수량"[\s\S]{0,40}align:\s*["'](center|right)["']/);
   });
   it("po: 수량/단가/합계 right-align", () => {
     const src = read(PO);
@@ -41,10 +50,12 @@ describe("§11.329 — 표 컬럼 width + align 명시", () => {
 });
 
 describe("§11.329 — 요청 사유/비고 full-width + 푸터 center", () => {
-  it("quote: 요청 사유 contentWidth 사용 (497 하드코딩 제거)", () => {
+  // supersede(cf104415): "요청 사유" 자유 문단 → 조건 표(회신 방법/요청 조건/비고)로 교체.
+  //   의도(장문 블록이 파생 폭을 쓸 것 · 497 류 하드코딩 금지) 유지.
+  it("quote: 조건 표 장문 블록이 파생 폭 사용 (하드코딩 제거)", () => {
     const src = read(QUOTE);
-    expect(src).toMatch(/요청 사유/);
-    expect(src).toMatch(/width:\s*contentWidth/);
+    expect(src).toMatch(/["']비고["']/);
+    expect(src).toMatch(/width:\s*W - termLabelW/);
     expect(src).not.toMatch(/width:\s*497/);
   });
   it("quote: 푸터 align center + width", () => {

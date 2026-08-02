@@ -32,7 +32,9 @@ describe("§quote-dispatch-real-send-unify P1 — executeDispatch 실 이메일 
   it("PDF는 발송 아닌 별도 export — generate-pdf GET(status 전이 0)으로만 호출", () => {
     const src = read(PATH);
     // 발송 경로는 vendor-requests(위). generate-pdf 는 다운로드 전용 GET 만 — POST(발송 행위) 호출 0.
-    expect(src).toMatch(/csrfFetch\(`\/api\/quotes\/\$\{quoteId\}\/generate-pdf`,\s*\{\s*method:\s*"GET"/);
+    // supersede(cf104415 · §rfq-doc-redesign): 다운로드 URL 에 ?deadlineDays= 쿼리가 붙었다.
+    //   잠그는 의도는 URL 문자열이 아니라 **generate-pdf 는 GET(다운로드) 전용 · POST(발송) 호출 0**.
+    expect(src).toMatch(/csrfFetch\(`\/api\/quotes\/\$\{quoteId\}\/generate-pdf[^`]*`,\s*\{\s*method:\s*"GET"/);
   });
 
   it("mailto 흐름 제거 (실 발송이므로 수동 메일 0)", () => {

@@ -35,17 +35,23 @@ describe("§11.314-b — quote-request-pdf-generator", () => {
     expect(src).not.toMatch(/doc\.font\("Helvetica"\)/); // §11.326 — Helvetica fallback 제거(한글 깨짐 silent 회피)
   });
 
-  it("견적 요청서 헤더 + 회신기한 + 요청품목 표", () => {
+  // supersede(cf104415 · §rfq-doc-redesign): 문서를 공식 RFQ 양식으로 전면 재작성하며
+  //   영문 병기 제목과 "요청 품목" 헤더가 교체됐다. 원 의도(문서가 스스로를 견적 요청서로
+  //   선언 · 회신 기한 명시 · 품목 표 존재)를 현행 canonical 토큰으로 재고정한다.
+  it("견적 요청서 헤더 + 회신기한 + 품목 표", () => {
     const src = read(GEN_PATH);
-    expect(src).toMatch(/견적 요청서 \(Quote Request\)/);
+    expect(src).toMatch(/견 적 요 청 서/);       // 레터헤드 제목(자간 표기)
     expect(src).toMatch(/회신 기한/);
-    expect(src).toMatch(/요청 품목/);
+    expect(src).toMatch(/품목명 \/ 제조사·카탈로그 번호/); // 품목 표 헤더
   });
 
-  it("견적가 란 비움 (공급사 회신 시 작성 — 단가 미기재)", () => {
+  // supersede(cf104415 · §rfq-doc-redesign): "견적가 란"(빈 칸) 방식 폐기 → 가격열 자체를
+  //   두지 않고 공급사 견적서로 회신받는 방식. 잠그는 계약은 문구가 아니라
+  //   **RFQ 에 가격열이 없을 것 · 단가는 공급사 회신에 요구할 것** 이다.
+  it("RFQ 에 가격열 없음 — 단가는 공급사 회신에 요구", () => {
     const src = read(GEN_PATH);
-    expect(src).toMatch(/견적가/);
-    expect(src).toMatch(/견적가 란에 품목별 단가를 기재하여 회신/);
+    expect(src).not.toMatch(/label:\s*["'](단가|견적가|금액|합계|공급가)["']/);
+    expect(src).toMatch(/단가·납기·최소 주문 수량/);
   });
 
   it("input shape — quote items (productName/brand/catalog/spec/grade/qty/notes)", () => {

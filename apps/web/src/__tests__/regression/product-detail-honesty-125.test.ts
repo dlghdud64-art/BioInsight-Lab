@@ -63,7 +63,8 @@ describe("§1-2⑤ ② — 추천 정직화 (canned 폴백 0 + 카테고리 제�
 describe("§1-2⑤ ③ — 소싱 상태 승계 (비교 배지)", () => {
   it("detail — '비교에 포함됨' 배지 (compare-store hasProduct 기반)", () => {
     const src = read(DETAIL);
-    expect(src).toMatch(/비교에 포함됨/);
+    // supersede(§product-detail-refinement 계약⑨-1): 비교함·견적함 배지가 통합 문구로 정합됐다. 의도(담긴 상태를 truth 기반으로 표기)는 유지.
+    expect(src).toMatch(/견적함·비교함에 담김/);
     expect(src).toMatch(/hasProduct\(/);
   });
 });
@@ -98,7 +99,8 @@ describe("§1-2⑤ ⑤ — SDS/COA 업로드 권한 게이트", () => {
 describe("§1-2⑤ — 회귀 0 (기존 보존)", () => {
   it("detail — 비교 추가·견적 담기 라벨 보존 (§1-2②)", () => {
     const src = read(DETAIL);
-    expect(src).toMatch(/비교 추가/);
+    // supersede(§product-detail-refinement 계약④): '비교 추가' → '비교 검토'(보조 2분할). 의도(비교 진입 라벨 존재)는 유지.
+    expect(src).toMatch(/비교 검토/);
     expect(src).toMatch(/견적 담기/);
   });
 

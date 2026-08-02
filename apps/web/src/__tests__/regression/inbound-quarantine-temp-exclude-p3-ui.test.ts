@@ -47,13 +47,18 @@ describe("§inbound-quarantine-temp-exclude P3 — 문서 해소 첨부 wiring (
     const src = read(PAGE);
     expect(src).toMatch(/ReceivingDocAttachModal/);
     expect(src).toMatch(/onResolveDocs:\s*\(\)\s*=>\s*setDocModalOpen\(true\)/);
-    expect(src).toMatch(/store\.attachReceivingDocument\(/);
+    // supersede(87e6bfae · §receiving-doc-attach-canonical): 데모 store 첨부(store.attachReceivingDocument)
+    //   → canonical DB 업로드로 이관. page 의 책임은 "CTA 를 실 첨부 모달에 연결" 까지이며,
+    //   실 첨부 수행은 모달이 진다(아래 it 에서 잠금).
+    expect(src).toMatch(/<ReceivingDocAttachModal[\s\S]{0,120}open=\{docModalOpen\}/);
   });
   it("모달이 실제 store 첨부 액션(onAttach)에 연결 — placeholder success 없음", () => {
     const src = read(MODAL);
-    // §receiving-doc-attach-v2 — 버튼은 handleAttach 래퍼 경유(§action-toast 정합), 래퍼 내부가 onAttach 실 호출.
-    expect(src).toMatch(/onClick=\{\(\) => handleAttach\(line\.id, type\)\}/);
-    expect(src).toMatch(/onAttach\(lineId, docType, lotId\)/);
+    // supersede(87e6bfae · §receiving-doc-attach-canonical): 데모 store 콜백(onAttach/handleAttach)
+    //   → 실 파일 업로드(Supabase storage + ReceivingDocument row)로 이관. 잠그는 계약은
+    //   콜백 이름이 아니라 **첨부가 실제 영속 경로를 탈 것(placeholder success 0)**.
+    expect(src).toMatch(/uploadReceivingDocumentWithProgress\(/);
+    expect(src).toMatch(/type="file"/);
     expect(src).not.toMatch(/quarantineStatus|quarantineLabel|격리/);
   });
 });

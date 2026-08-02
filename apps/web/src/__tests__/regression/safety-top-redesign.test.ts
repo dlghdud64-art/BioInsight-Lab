@@ -41,7 +41,9 @@ describe("§safety-redesign 상단정합 — 안전 판단 요약 패널", () =>
     expect(CODE).toMatch(/const gmpReadiness = totalCount > 0/);
   });
   it("MSDS 일괄 등록 CTA = 실 동작(패널 open) + 미등록 0이면 disabled", () => {
-    expect(CODE).toMatch(/MSDS 일괄 등록 시작/);
+    // supersede(§msds-bulk-registration B-P4): 일괄 등록이 실 워크벤치로 승격되며 라벨이 바뀌었다. 잠그는 계약은 **CTA 가 실 패널을 연다는 것**.
+    expect(CODE).toMatch(/MSDS 일괄 등록/);
+    expect(CODE).toMatch(/onClick=\{\(\) => setBulkOpen\(true\)\}/);
     expect(CODE).toMatch(/disabled=\{msdsMissingCount === 0\}/);
     // §msds-version-validation ③ — CTA 핸들러가 인라인 setAiPanelOpen → openPrepWizard(step 리셋+패널 open)로 승격.
     //   기능(count>0 게이트 + 패널 open) 보존, 마법사 진입으로 reorg.

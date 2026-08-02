@@ -98,11 +98,14 @@ describe("§PD-flat P4 — 우측 레일 + 대체품 플랫", () => {
 describe("§PD-flat P4 — dead button 0(시안 요소 실동선 배선)", () => {
   it("stock-mini 재고 조회 = /dashboard/inventory 실 이동(no-op 0)", () => {
     expect(DETAIL).toMatch(/href="\/dashboard\/inventory"/);
-    expect(DETAIL).toMatch(/재고 현황을 <b className="font-semibold text-slate-900">재고 조회<\/b>/);
+    // supersede(§product-detail-refinement 계약④): stock-mini 문단이 보조 2분할 버튼으로 흡수됐다. 의도(재고 조회가 실 이동일 것)는 유지.
+    expect(DETAIL).toMatch(/재고 조회/);
+    expect(DETAIL).toMatch(/\/dashboard\/inventory/);
   });
   it("영업 담당자 연결 = /support 실 이동(no-op button 폐기)", () => {
-    expect(DETAIL).toMatch(/<Link href="\/support"[^>]*>\s*영업 담당자 연결/);
-    expect(DETAIL).not.toMatch(/<button[^>]*>\s*영업 담당자 연결/);
+    // supersede(§product-detail-refinement 계약④): 다크 맞춤견적 카드 폐기 → 푸터 텍스트 링크. 라벨 '영업 담당자 연결' → '영업 문의'. 의도(no-op 버튼이 아닌 /support 실 이동)는 유지.
+    expect(DETAIL).toMatch(/<Link href="\/support"[^>]*>영업 문의<\/Link>/);
+    expect(DETAIL).not.toMatch(/<button[^>]*>\s*영업 (담당자 연결|문의)/);
   });
   it("회귀 0 — 견적 신뢰 문구 + 가격 대비(slate-900) 보존", () => {
     expect(DETAIL).toMatch(/견적 요청은 무료이며 구매 의무가 없습니다/);
