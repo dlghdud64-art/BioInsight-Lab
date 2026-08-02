@@ -2049,7 +2049,7 @@ export default function SearchPage() {
                     const isRec = compareReportData.recommendedIds[0] === c.id;
                     return (
                       <div key={c.id} className="flex items-center gap-2 text-sm">
-                        <span className={`shrink-0 w-4 text-center ${isRec ? "text-amber-500" : "text-transparent"}`}>★</span>
+                        <span className={`shrink-0 w-4 text-center ${isRec ? "text-yellow-500" : "text-transparent"}`}>★</span>
                         <span className="font-medium text-slate-800 truncate max-w-[160px]">{c.name}</span>
                         <span className="text-xs text-slate-400 truncate">
                           {[c.brand, c.spec, c.category].filter(Boolean).join(" · ") || "규격 미확인"}
@@ -2101,7 +2101,7 @@ export default function SearchPage() {
                             const isRec = compareReportData.recommendedIds[0] === c.id;
                             return (
                               <th key={c.id} className="text-right font-semibold text-slate-700 text-xs py-1.5 px-2 whitespace-nowrap max-w-[120px] truncate">
-                                {isRec && <span className="text-amber-500 mr-0.5">★</span>}
+                                {isRec && <span className="text-yellow-500 mr-0.5">★</span>}
                                 {c.brand || c.name}
                               </th>
                             );
