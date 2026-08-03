@@ -82,6 +82,9 @@ function buildQuote(overrides: Record<string, unknown> = {}) {
       },
     ],
     order: null,
+    // §money-path-coverage-restore Phase 1 — 라우트가 1:N vendor Order(q.orders)를 읽는다.
+    //   미발주 견적의 canonical shape 는 빈 배열(undefined 아님). ORDER_EXISTS 케이스만 override.
+    orders: [],
     ...overrides,
   };
 }
@@ -131,7 +134,7 @@ describe("POST /api/work-queue/purchase-conversion/bulk-po", () => {
 
   it("[5] quote already has Order → 409 + lock released", async () => {
     mockDb.quote.findMany.mockResolvedValueOnce([
-      buildQuote({ order: { id: "o-existing" } }),
+      buildQuote({ orders: [{ id: "o-existing" }] }),
     ]);
     const res = await POST(makeRequest({ quoteIds: ["q-1"] }) as any);
     expect(res.status).toBe(409);

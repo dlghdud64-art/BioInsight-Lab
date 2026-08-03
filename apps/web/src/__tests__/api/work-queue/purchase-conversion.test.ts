@@ -28,6 +28,8 @@ vi.mock("@/lib/db", () => ({
   db: {
     quote: { findMany: vi.fn() },
     aiActionItem: { findMany: vi.fn() },
+    workspaceMember: { findFirst: vi.fn() },
+    purchaseRequest: { findMany: vi.fn() },
   },
 }));
 
@@ -39,6 +41,8 @@ import { GET } from "@/app/api/work-queue/purchase-conversion/route";
 const mockDb = db as unknown as {
   quote: { findMany: ReturnType<typeof vi.fn> };
   aiActionItem: { findMany: ReturnType<typeof vi.fn> };
+  workspaceMember: { findFirst: ReturnType<typeof vi.fn> };
+  purchaseRequest: { findMany: ReturnType<typeof vi.fn> };
 };
 const mockAuth = auth as unknown as ReturnType<typeof vi.fn>;
 
@@ -69,6 +73,9 @@ function buildQuoteRow(overrides: Record<string, unknown> = {}) {
     vendorRequests: [],
     replies: [],
     order: null,
+    // §money-path-coverage-restore Phase 1 — 라우트 L244 가 q.orders[0] ?? null 로 1:N Order 를 읽는다.
+    //   canonical empty = [] (미발주). 라우트에 ?? null 폴백 존재 → 빈 배열이 정상.
+    orders: [],
     ...overrides,
   };
 }
@@ -78,6 +85,12 @@ beforeEach(() => {
   auth.mockResolvedValue({ user: { id: "user-1" } });
   mockDb.quote.findMany.mockResolvedValue([]);
   mockDb.aiActionItem.findMany.mockResolvedValue([]);
+  // §money-path-coverage-restore Phase 1 — 라우트가 billing tier 조회용 workspaceMember.findFirst 를
+  //   호출한다(§11.209b/c). null 폴백 경로도 검증 대상이라 기본값 null(특정 plan 주입 X).
+  mockDb.workspaceMember.findFirst.mockResolvedValue(null);
+  // §money-path-coverage-restore Phase 1 — 라우트가 quote별 승인 이력 조회(§11.209d, route L177).
+  //   canonical empty = [] (미발주/승인이력 없음). Map 구성이라 빈 배열이 정상 폴백.
+  mockDb.purchaseRequest.findMany.mockResolvedValue([]);
   // Pin time so isExpired / createdDaysAgo are deterministic
   vi.useFakeTimers();
   vi.setSystemTime(NOW_REF);
@@ -270,7 +283,8 @@ describe("GET /api/work-queue/purchase-conversion", () => {
       vendors: expect.any(Object),
       vendorRequests: expect.any(Object),
       replies: expect.any(Object),
-      order: expect.any(Object),
+      // §money-path-coverage-restore Phase 2 — 스키마 Quote.orders Order[](1:N, vendor별). 구 order(단수) → orders.
+      orders: expect.any(Object),
     });
   });
 });
