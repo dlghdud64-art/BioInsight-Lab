@@ -354,5 +354,6 @@ Red-Green-Refactor 강제. 인계 테스트 규율 승계:
 - 임시 계측 0 (제거할 것 없음 — corrupt 는 전부 원복 diff-clean).
 
 *커밋 준비 (path-specific, 승인 후 클로드코드에서 실행):*
-- 대상 8: `apps/web/prisma/schema.prisma` / `apps/web/prisma/migrations/20260804110916_pocandidate_quote_binding/migration.sql` / bulk-po `route.ts` / `convert-pocandidate-to-orders.ts` / `po-candidate-server.ts` / `pocandidate-root-fix-phase1.test.ts` / `pocandidate-reachability-tracks.test.ts` / `docs/plans/PLAN_pocandidate-root-fix.md`
+- 대상 9 (+order-vendor-grouping sentinel 승계): `apps/web/prisma/schema.prisma` / `apps/web/prisma/migrations/20260804110916_pocandidate_quote_binding/migration.sql` / bulk-po `route.ts` / `convert-pocandidate-to-orders.ts` / `po-candidate-server.ts` / `pocandidate-root-fix-phase1.test.ts` / `pocandidate-reachability-tracks.test.ts` / `__tests__/schema/order-vendor-grouping.test.ts` / `docs/plans/PLAN_pocandidate-root-fix.md`
 - 산출물·부산물 스테이징 금지 (`_to_delete/*.tar.gz` 등). 메시지 초안은 인계 지시문 참조. 커밋·푸시 = 호영님 명시 승인 후.
+- **커밋 완료: `3eb80f12` (2026-08-04, 9 files, push `9b80b2db..3eb80f12`).** 푸시 전 게이트가 schema sentinel 회귀(order-vendor-grouping `@@index([poCandidateId])`) 포착 → A/승계로 9번째 파일 추가(sandbox vitest 미실행 공백 보정). Phase 0–4 전 Phase 종료.
