@@ -132,10 +132,16 @@ describe("parseMode", () => {
 });
 
 describe("buildPilotCleanupPlan — scoping structure", () => {
-  it("emits exactly 21 operations (member 2 + quote 1 + workspace 1 + org 1 + product 15 + vendor 1)", () => {
+  it("emits exactly 26 operations (member 2 + quote 1 + workspace 1 + org 1 + product 15 + vendor 6)", () => {
     // §11.20 vendor + §11.178 quote 추가 반영.
+    // 승계 2026-08-04: vendor 1→6 으로 21→26. 근거 커밋 c4d2ae18(#pilot-organization-vendor-seed-missing),
+    //   74231466(#vendor-partnership-tier). 형제 sentinel 이 6 을 canonical 로 잠금 —
+    //   pilot-organization-vendor-seed.test.ts:40 "6 row", pilot-vendor-diversification.test.ts:19 ">=6",
+    //   vendor-partnership-tier.test.ts:13 "6 vendor 모두". 보호 계약 무손상 count-only drift.
+    // ⚠️ 리터럴 유지 — PILOT_VENDOR_IDS.length 로 유도하지 말 것. 이건 "정확히 이만큼만 지운다"는
+    //   과삭제 방어선이라, 소스에서 개수를 읽으면 카탈로그가 부주의하게 늘어도 자동 통과한다.
     const plan = buildPilotCleanupPlan();
-    expect(plan.operations).toHaveLength(21);
+    expect(plan.operations).toHaveLength(26);
   });
 
   it("places workspaceMember → organizationMember → quote → workspace → organization → products → vendors in the documented order", () => {
@@ -147,7 +153,7 @@ describe("buildPilotCleanupPlan — scoping structure", () => {
     expect(models[2]).toBe("quote"); // §11.178
     expect(models[3]).toBe("workspace");
     expect(models[4]).toBe("organization");
-    // 5..19 = 15 products, 20 = vendor
+    // 5..19 = 15 products, 20..25 = 6 vendors (승계 2026-08-04: vendor 1→6)
     expect(models.slice(5, 20)).toEqual(new Array(15).fill("product"));
     expect(models[20]).toBe("vendor");
   });
@@ -201,7 +207,7 @@ describe("buildPilotCleanupPlan — scoping structure", () => {
 });
 
 describe("runCleanup — dry-run mode", () => {
-  it("probes all 21 entities but never calls delete (§11.20 vendor + §11.178 quote 반영)", async () => {
+  it("probes all 26 entities but never calls delete (§11.20 vendor + §11.178 quote 반영)", async () => {
     const prisma = makeMockPrisma({
       wsMember: true,
       orgMember: true,
@@ -216,7 +222,7 @@ describe("runCleanup — dry-run mode", () => {
       prisma as unknown as PilotCleanupPrismaClient,
     );
     expect(result.mode).toBe("dry-run");
-    expect(result.probes).toHaveLength(21);
+    expect(result.probes).toHaveLength(26);
     expect(result.deletedCalls).toEqual([]);
 
     expect(prisma.workspaceMember.delete).not.toHaveBeenCalled();
@@ -240,7 +246,7 @@ describe("runCleanup — dry-run mode", () => {
 });
 
 describe("runCleanup — apply mode", () => {
-  it("deletes all 21 entities in order when every row is present (§11.20 vendor + §11.178 quote)", async () => {
+  it("deletes all 26 entities in order when every row is present (§11.20 vendor + §11.178 quote)", async () => {
     const prisma = makeMockPrisma({
       wsMember: true,
       orgMember: true,
@@ -254,7 +260,7 @@ describe("runCleanup — apply mode", () => {
       "apply",
       prisma as unknown as PilotCleanupPrismaClient,
     );
-    expect(result.deletedCalls).toHaveLength(21);
+    expect(result.deletedCalls).toHaveLength(26);
     const models = result.deletedCalls.map((d) => d.model);
     expect(models[0]).toBe("workspaceMember");
     expect(models[1]).toBe("organizationMember");
@@ -287,7 +293,7 @@ describe("runCleanup — apply mode", () => {
       where: { id: PILOT_ORG_ID },
     });
     expect(prisma.product.delete).toHaveBeenCalledTimes(15);
-    expect(prisma.vendor.delete).toHaveBeenCalledTimes(1);
+    expect(prisma.vendor.delete).toHaveBeenCalledTimes(6); // 승계 2026-08-04: vendor 1→6
     expect(prisma.quote.delete).toHaveBeenCalledTimes(1);
   });
 
@@ -322,7 +328,7 @@ describe("runCleanup — apply mode", () => {
       "apply",
       prisma as unknown as PilotCleanupPrismaClient,
     );
-    expect(result.deletedCalls).toHaveLength(20); // 21 minus the absent workspace
+    expect(result.deletedCalls).toHaveLength(25); // 26 minus the absent workspace
     const models = result.deletedCalls.map((d) => d.model);
     expect(models).not.toContain("workspace");
     expect(prisma.workspace.delete).not.toHaveBeenCalled();
