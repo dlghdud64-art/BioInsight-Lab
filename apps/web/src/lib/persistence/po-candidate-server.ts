@@ -26,6 +26,12 @@ export interface POCandidateItemData {
 export interface POCandidateCreateInput {
   userId: string;
   organizationId?: string | null;
+  /**
+   * §pocandidate-root-fix — 발주 대상 견적 결속 (POCandidate.quoteId FK).
+   * 입력 계약만 준비 (향후 생성 caller 대비 — 실제 생성 흐름 wiring 은
+   * 별건 §pocandidate-creation-flow). NULL candidate 는 변환 풀에서 제외됨.
+   */
+  quoteId?: string | null;
   title: string;
   vendor: string;
   totalAmount: number;
@@ -115,10 +121,18 @@ export async function getPOCandidate(id: string): Promise<POCandidateRow | null>
 
 /** 후보 생성 (items 포함) */
 export async function createPOCandidate(input: POCandidateCreateInput): Promise<POCandidateRow> {
+  // §pocandidate-empty-items-order — 입구 가드. items 0건 candidate 는
+  // 내역 없는 발주서의 근원이므로 생성 자체를 거부한다 (변환부 거부와 이중 방어).
+  if (!input.items || input.items.length === 0) {
+    throw new Error(
+      "POCandidate 생성 거부: items 가 비어 있습니다 (§pocandidate-empty-items-order)",
+    );
+  }
   const row = await prisma.pOCandidate.create({
     data: {
       userId: input.userId,
       organizationId: input.organizationId ?? null,
+      quoteId: input.quoteId ?? null,
       title: input.title,
       vendor: input.vendor,
       totalAmount: input.totalAmount,

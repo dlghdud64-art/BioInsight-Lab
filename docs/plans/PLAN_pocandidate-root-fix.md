@@ -1,9 +1,9 @@
 # Implementation Plan: §pocandidate-root-fix — POCandidate ↔ Quote 결속
 
-- **Status:** ⏳ Pending
+- **Status:** ✅ Phase 0–4 완료 (커밋·푸시 승인 게이트 대기)
 - **Started:** 2026-08-04
 - **Last Updated:** 2026-08-04
-- **Estimated Completion:** TBD (Phase 0 실측 후 산정)
+- **Estimated Completion:** 2026-08-04 (구현·검증 완료)
 
 **CRITICAL INSTRUCTIONS**: After completing each phase:
 1. ✅ Check off completed task checkboxes
@@ -82,12 +82,12 @@ POCandidate에 `quoteId`를 추가해 candidate를 발주 대상 견적에 결�
 따로 고치면 네 번 고친다. quoteId 결속 하나로 네 갈래의 수정 지점이 한 쿼리·한 가드에 모인다.
 
 **Success Criteria:**
-- [ ] POCandidate.quoteId 스키마 반영 (prod는 `migrate deploy` 게이트 통과 후)
-- [ ] bulk-po 변환 풀 = 해당 quote + 결재 통과 + `po_conversion_candidate` stage로 한정
-- [ ] 서로 다른 candidate는 vendor 매핑 실패와 무관하게 각자 Order 획득
-- [ ] `items:[]` candidate 생성 거부 (§pocandidate-empty-items-order, 호영님 2026-08-04 포함 승인)
-- [ ] E 패턴 skip 승격: Track 1·2 active GREEN, Track 3 재기준
-- [ ] 회귀 게이트 0 RED 유지
+- [x] POCandidate.quoteId 스키마 반영 (prod `migrate deploy` 2026-08-04 완료·검증 4/4)
+- [x] bulk-po 변환 풀 = 해당 quote + 결재 통과 + `po_conversion_candidate` stage로 한정
+- [x] 서로 다른 candidate는 vendor 매핑 실패와 무관하게 각자 Order 획득
+- [x] `items:[]` candidate 생성 거부 (§pocandidate-empty-items-order, 호영님 2026-08-04 포함 승인)
+- [x] E 패턴 skip 승격: Track 1·2 active GREEN, Track 3 재기준
+- [x] 회귀 게이트 0 RED 유지 (참조 스위트 13파일 78 passed — full-suite 기존 실패는 범위 밖)
 
 **Out of Scope (⚠️ 절대 구현하지 말 것):**
 - [ ] Vendor free-text → FK 전환 (별건, 이번엔 dup-guard 교체로 우회)
@@ -209,7 +209,7 @@ Red-Green-Refactor 강제. 인계 테스트 규율 승계:
 
 #### Phase 3: Logic — 변환 풀 결속 + dup-guard 교체 + 입구 가드
 **Goal:** Phase 1 RED 4건 전부 GREEN.
-- Status: [ ] Pending
+- Status: [x] Complete (2026-08-04 — quality gate 통과, §12 실행 기록)
 
 **🟢 GREEN (최소 diff):**
 - [ ] bulk-po fetch: `where: { userId, organizationId, quoteId: q.id, approvalStatus: { in: 승인통과집합 }, stage: "po_conversion_candidate" }` (quoteId NULL candidate 자동 제외)
@@ -223,7 +223,7 @@ Red-Green-Refactor 강제. 인계 테스트 규율 승계:
 
 #### Phase 4: Suite / E 승격 마무리 / Rollback 문서화
 **Goal:** 잔여 정리 + 게이트 확인.
-- Status: [ ] Pending
+- Status: [x] Complete (2026-08-04 — E 재기준·회귀 0, §12 실행 기록. 커밋은 승인 게이트 대기)
 
 **🟢 GREEN:**
 - [ ] E 파일 재기준: Track 1·2 active GREEN 상태로 헤더 재작성 (승계 원칙 — 보호 의도 보존, 삭제 금지)
@@ -275,13 +275,13 @@ Red-Green-Refactor 강제. 인계 테스트 규율 승계:
 
 ## 11. Progress Tracking
 
-- Overall completion: 0%
-- Current phase: Phase 0 대기 (실행 세션 착수 승인 필요)
+- Overall completion: 100% (커밋·푸시만 승인 게이트 대기)
+- Current phase: 전 Phase 완료 (2026-08-04)
 - Current blocker: 없음
-- Next validation step: Phase 0 확인 항목 4건
+- Next validation step: 호영님 커밋 승인 → 클로드코드 path-specific 커밋·푸시 (§12 커밋 준비 블록)
 
 **Phase Checklist:**
-- [ ] Phase 0 / [ ] Phase 1 / [ ] Phase 2 / [ ] Phase 3 / [ ] Phase 4
+- [x] Phase 0 / [x] Phase 1 / [x] Phase 2 / [x] Phase 3 / [x] Phase 4
 
 ---
 
@@ -321,7 +321,38 @@ Red-Green-Refactor 강제. 인계 테스트 규율 승계:
 *Track 2(approval-filter) 위험 기술 정확화 (넓힘·좁힘 금지):*
 - Q-A2=[] → 승인대기 candidate는 **현재 도달 불가**(소유 유저 quote 0 → 변환 미발화). 발현 조건 = 그 유저의 **첫 quote 생성 시 candidate 전량이 변환 풀 진입.** '즉시 발현 가능' 아니라 **'구조 장전·트리거 1단계 대기'**.
 
+*Phase 2 migrate status drift 발견 (2026-08-04):*
+- pending 2건 — `20260804110916_pocandidate_quote_binding`(내 신규) + **`20260731120000_receiving_document`(기존 미적용, 커밋 87e6bfae)**. 나중 0801은 applied = 순서 역전.
+- receiving SQL 전문 = CREATE TABLE+INDEX+FK만(파괴 0). prod에 `ReceivingDocument` 테이블 **부재**.
+- **⚠️ prod 잠복 runtime gap 실재**: 라이브 `api/receiving/documents/[id]/route.ts`가 `db.receivingDocument.*` 실사용(참조 8파일)인데 prod 테이블 없음 → 그 라우트 실행 시 runtime 실패. **apply가 위험을 늘리는 게 아니라 줄인다.**
+- 호영님 판정: 옵션 1(전량 deploy, receiving 포함). 순서 역전 경위는 기록만·비차단, 재발 방지 별도 트랙.
+
+*Phase 2 prod deploy 실행 기록 (2026-08-04, migration ts 20260804110916 UTC):*
+- 대상: prod project-ref `xhidynwpkqeaojuudhsw`. 명령: `DATABASE_URL=<DIRECT_URL 5432 override> npx prisma migrate deploy`(pgbouncer 6543 hang 회피, 선검증 :5432 통과).
+- 적용 2건: `20260731120000_receiving_document`(gap 해소) + `20260804110916_pocandidate_quote_binding`. "All migrations successfully applied."
+- 검증 4/4: _prisma_migrations 52행·unfinished 0·rolled_back 0 / POCandidate.quoteId(text,nullable) 존재 / Order_poCandidateId_key unique index 존재 / ReceivingDocument 테이블 존재.
+- 커밋 보류(Phase 3 GREEN 후 일괄). 순서 역전 재발 방지 별도 트랙.
+
+*Phase 3 실행 기록 (2026-08-04, 실행 세션 — 로직 3파일, 최소 diff):*
+- 격리 검증 환경: 사본 /tmp vitest (공유 node_modules 무접촉, DEV_RUNBOOK §9.9 준수). baseline 이 Phase 1 종료 상태 정확 재현(RED 4 · GREEN 28 · todo 1) 확인 후 착수.
+- **bulk-po route**: 변환 풀 3중 필터 — `where: { userId, organizationId, quoteId: q.id, approvalStatus: { in: APPROVAL_PASSED_STATUSES }, stage: "po_conversion_candidate" }`. 승인통과집합 3값 모듈 상수화. 주석-구현 정합 갱신(주석=계약).
+- **convert-pocandidate-to-orders**: dup-guard 2단 교체 — 1차 `poCandidateId` 기반(reason `already_converted`, DB `@@unique([poCandidateId])` 정합) + 2차 composite `(quoteId, vendorId)` 는 **vendorId non-NULL 한정** 유지(reason `duplicate`, DB `@@unique([quoteId, vendorId])` tx-throw 선방어 — 전면 교체 시 동일 vendor 2-candidate 가 DB unique 로 tx 전체 실패 + 축1 C3 회귀라 2단 구성이 게이트 충족 유일해). NULL 제외가 null-vendor collapse 원천 해소. skipped reason 구분값 `"already_converted" | "duplicate" | "empty_items"` 도입. 변환부 empty-items 거부 추가.
+- **po-candidate-server**: `POCandidateCreateInput.quoteId?` 입력 계약 + create data `quoteId` 기입(생성 흐름 wiring 은 별건 §pocandidate-creation-flow 유지). `createPOCandidate` items 0건 throw 입구 가드.
+- Quality gate 통과: Phase 1 RED 4건 전부 GREEN / corrupt→RED 재검증 4갈래 각 1회(각 corruption 이 해당 테스트만 정확히 RED) + 원복 diff 잔존 0 / 회귀 13파일 78 passed · 0 failed (축1·축2 orders-budget-deduction·축3, bulk-po route, bulk-po-vendor-aware, handoff-gate-352, schema sentinel 3종).
+- 커밋 여전히 보류 — Phase 4(E 재기준) 후 일괄, 호영님 승인 게이트.
+
 *호영님 결정 기록 (2026-08-04):*
 - prod SELECT 실행 승인(Q-A2 보완 포함).
 - Phase 1 범위 (a) 현 범위 유지 — 생성 흐름 정의는 별건 `§pocandidate-creation-flow`로 분리, 이 계획은 quoteId 입력 계약까지.
 - 문서 커밋 + Phase 1 진입 승인.
+- Phase 3 진입 "진행" / Phase 4 진입 "진행" (2026-08-04).
+
+*Phase 4 실행 기록 (2026-08-04, 실행 세션):*
+- E 파일 재기준: Track 1·2 헤더/제목 "[P1 승격 — RED 실증]" → "[GREEN 회귀 가드 — Phase 3 해소]". 계약 문장·prod 실측 근거·구 결함 구조는 "이력 (보호 의도 보존)" 블록으로 유지(삭제 0). Track 3 `describe.skip` 유지 + `it.todo` 문구 재기준("구조 소거 후 UBT 첫 표본 시 prod 대조").
+- phase1 테스트 파일도 동일 재기준 (stale "[P1 RED]"·"현재 통과 → RED" 문구 정리 — 주석=계약 원칙).
+- 회귀 게이트: 참조 스위트 13파일 78 passed · 0 failed · 1 todo. 검증 경계: 격리 /tmp 환경에서 변경 3파일을 참조하는 전 스위트 + schema sentinel 3종 — full-suite 전체 run(기존 실패 107파일 포함)은 클로드코드 환경 몫, 이 계획 산출 파일로 인한 실패 0 은 참조 스위트 기준 확인.
+- 임시 계측 0 (제거할 것 없음 — corrupt 는 전부 원복 diff-clean).
+
+*커밋 준비 (path-specific, 승인 후 클로드코드에서 실행):*
+- 대상 8: `apps/web/prisma/schema.prisma` / `apps/web/prisma/migrations/20260804110916_pocandidate_quote_binding/migration.sql` / bulk-po `route.ts` / `convert-pocandidate-to-orders.ts` / `po-candidate-server.ts` / `pocandidate-root-fix-phase1.test.ts` / `pocandidate-reachability-tracks.test.ts` / `docs/plans/PLAN_pocandidate-root-fix.md`
+- 산출물·부산물 스테이징 금지 (`_to_delete/*.tar.gz` 등). 메시지 초안은 인계 지시문 참조. 커밋·푸시 = 호영님 명시 승인 후.

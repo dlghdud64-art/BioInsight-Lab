@@ -33,16 +33,16 @@ enum OrganizationRole {
 // 구독 ?랜 ???
 // 팀 역할
 enum TeamRole {
-  ADMIN   // 팀 관리자
-  MEMBER  // 일반 멤버
-  VIEWER  // 조회만 가능
+  ADMIN // 팀 관리자
+  MEMBER // 일반 멤버
+  VIEWER // 조회만 가능
 }
 
 // 구매 요청 상태
 enum PurchaseRequestStatus {
-  PENDING   // 대기 중
-  APPROVED  // 승인됨
-  REJECTED  // 거절됨
+  PENDING // 대기 중
+  APPROVED // 승인됨
+  REJECTED // 거절됨
   CANCELLED // 취소됨
 }
 
@@ -57,13 +57,13 @@ model Organization {
   id                String           @id @default(cuid())
   name              String
   description       String?          @db.Text
-  organizationType  String?          // R&D 연구소, QC/QA 품질관리, 시험·검사 기관, 대학 연구실, 기타
+  organizationType  String? // R&D 연구소, QC/QA 품질관리, 시험·검사 기관, 대학 연구실, 기타
   plan              SubscriptionPlan @default(FREE) // 구독 ?랜
   planExpiresAt     DateTime? // ?랜 만료??
   maxMembers        Int? // 최? 멤버 ??(?랜??한)
   maxQuotesPerMonth Int? // ?별 최? ?목 리스????
   maxSharedLinks    Int? // 최대 공유 링크 수
-  logoUrl           String?          // 조직 로고 이미지 URL
+  logoUrl           String? // 조직 로고 이미지 URL
   slug              String?          @unique // 조직 고유 주소 (예: my-lab)
   timezone          String           @default("Asia/Seoul") // IANA timezone — 예산 기간 기준
   // §SM-S1 P1 (호영님 2026-07-05) — 안전(MSDS) 관리 대상 ProductCategory. 기본 REAGENT(화학물질 확정).
@@ -73,28 +73,28 @@ model Organization {
   updatedAt         DateTime         @updatedAt
 
   // 관?
-  members      OrganizationMember[]
-  quotes       Quote[]
-  templates    QuoteTemplate[]
-  inventories  ProductInventory[]
-  subscription Subscription? // 구독 ?보
-  activityLogs  ActivityLog[]
-  auditLogs     AuditLog[]
-  dataAuditLogs DataAuditLog[]
-  orders        Order[]
-  userBudgets   UserBudget[]
-  invites       OrganizationInvite[]
-  budgets       Budget[]
-  teams         Team[]
-  billingInfo   BillingInfo?
-  aiActionItems    AiActionItem[]
-  ingestionEntries IngestionEntry[]
-  spendingCategories SpendingCategory[]
-  categoryBudgets    CategoryBudget[]
-  budgetEvents       BudgetEvent[]
+  members                    OrganizationMember[]
+  quotes                     Quote[]
+  templates                  QuoteTemplate[]
+  inventories                ProductInventory[]
+  subscription               Subscription? // 구독 ?보
+  activityLogs               ActivityLog[]
+  auditLogs                  AuditLog[]
+  dataAuditLogs              DataAuditLog[]
+  orders                     Order[]
+  userBudgets                UserBudget[]
+  invites                    OrganizationInvite[]
+  budgets                    Budget[]
+  teams                      Team[]
+  billingInfo                BillingInfo?
+  aiActionItems              AiActionItem[]
+  ingestionEntries           IngestionEntry[]
+  spendingCategories         SpendingCategory[]
+  categoryBudgets            CategoryBudget[]
+  budgetEvents               BudgetEvent[]
   // #user-supplier-registration — 조직 단위 supplier-book (한국 연구실
   // 단위 거래처 명단 정합).
-  organizationVendors OrganizationVendor[]
+  organizationVendors        OrganizationVendor[]
   // #vendor-catalog-product-matching Phase 1 — 조직 단위 vendor-product carry.
   organizationVendorProducts OrganizationVendorProduct[]
   // Organization ↔ Workspace 1:1 bootstrap (옵션 B - organization-workspace-bootstrap.md 참조)
@@ -102,40 +102,40 @@ model Organization {
   // optional 유지. 이유: Organization 테이블에는 Workspace 를 가리키는 FK 가 없으므로 DB 레벨에서
   // "모든 Organization 에 Workspace 존재" 를 강제할 수 없고 (Prisma validator 가 차단), 1:1 은
   // createOrganization 트랜잭션이 애플리케이션 레이어에서 보장한다.
-  workspace          Workspace?
+  workspace                  Workspace?
   // §11.348-A — 조직 스코프 검증 대기 입고안.
-  receivingDrafts    ReceivingDraft[]
+  receivingDrafts            ReceivingDraft[]
   // §11.348-B-1 — 조직 스코프 SDS 문서.
-  sdsDocuments       SDSDocument[]
+  sdsDocuments               SDSDocument[]
+  receivingDocuments         ReceivingDocument[] // §receiving-doc-attach-canonical
 
   @@index([name])
   @@index([plan])
-  receivingDocuments ReceivingDocument[] // §receiving-doc-attach-canonical
 }
 
 // 조직 멤버
 model OrganizationMember {
-  id             String           @id @default(cuid())
-  userId         String
-  organizationId String
-  role           OrganizationRole @default(VIEWER)
+  id                     String           @id @default(cuid())
+  userId                 String
+  organizationId         String
+  role                   OrganizationRole @default(VIEWER)
   // §11.193d Phase 2 — workflow capabilities (운영 tag, RBAC role 과 별도 layer).
   //   호영님 prototype 시안 — "1인 동시 Lab Manager + Approver + Requester 보유".
   //   값은 lib/permissions/workflow-capabilities.ts 의 WORKFLOW_CAPABILITIES
   //   whitelist (LAB_MANAGER / APPROVER / REQUESTER). getWorkflowCapabilities()
   //   가 array/null/object/string 모든 input 안전 처리.
-  workflowCapabilities Json @default("[]")
+  workflowCapabilities   Json             @default("[]")
   /// #approver-routing-per-user-limit-organization-member — 단일 건 결재
   /// 한도 (KRW). null = 무제한 (default). amount > approvalLimit 시
   /// selectApproverByAmount 가 다음 fallback (org_owner → org_admin →
   /// workspace_admin chain). 직전 WorkspaceMember.approvalLimit (Phase 1)
   /// 와 동일 패턴.
-  approvalLimit Int?
+  approvalLimit          Int?
   /// #approver-routing-multi-owner-roundrobin — 마지막 결재 할당 timestamp
   /// (organization member 측). org_owner / org_admin candidate 분산 lock.
   lastApprovalAssignedAt DateTime?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
 
   // 관?
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -147,74 +147,74 @@ model OrganizationMember {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  emailVerified DateTime?
-  name          String?
-  image         String?
-  role          UserRole  @default(RESEARCHER)
-  organization  String? // ?거???드 (조직?직접 ?력)
-  phone         String?   // §11.69 운영자 연락처 (settings page 에서 update)
+  id              String    @id @default(cuid())
+  email           String    @unique
+  emailVerified   DateTime?
+  name            String?
+  image           String?
+  role            UserRole  @default(RESEARCHER)
+  organization    String? // ?거???드 (조직?직접 ?력)
+  phone           String? // §11.69 운영자 연락처 (settings page 에서 update)
   // §11.97 #user-approval-policy-schema-add — 운영 정책 (read-only, admin 변경).
   // settings 페이지의 "운영 정책 미설정" 3 항목 backing source.
-  approvalLimit    BigInt? // 단일 건 승인 한도 (KRW). null = 정책 미설정.
-  costCenter       String? // 기본 Cost Center 코드 (예: "RND-BIO-SITE01")
-  defaultLocation  String? // 기본 입고 위치 (예: "제1R&D센터 중앙창고")
+  approvalLimit   BigInt? // 단일 건 승인 한도 (KRW). null = 정책 미설정.
+  costCenter      String? // 기본 Cost Center 코드 (예: "RND-BIO-SITE01")
+  defaultLocation String? // 기본 입고 위치 (예: "제1R&D센터 중앙창고")
   // §11.230c (a) #user-preferences-server-persist — generic preferences JSON.
   //   shape: { columnPrefs: { quotes: { widths, visibility, order } } }.
   //   후속 cluster 통합 가능 (briefing collapse 등). zod 가드 client/server.
-  preferences      Json?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  preferences     Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
   // §11.133 #admin-user-soft-delete — soft delete marker. null=active,
   // truthy=반려/삭제. getUsers filter + auth.ts OAuth 차단 동시 적용.
-  deletedAt     DateTime?
+  deletedAt       DateTime?
 
   // NextAuth 관?
   accounts Account[]
   sessions Session[]
 
   // 관?
-  quotes              Quote[]
-  comparisons         Comparison[]
-  favorites           Favorite[]
-  searchHistory       SearchHistory[]
-  organizationMembers OrganizationMember[]
-  workspaceMembers    WorkspaceMember[] // Workspace membership
-  reviews             Review[]
-  templates           QuoteTemplate[]
-  inventories         ProductInventory[]
-  inventoryUsage      InventoryUsage[]
-  inventoryRestocks   InventoryRestock[]
-  inspections         Inspection[]
+  quotes                            Quote[]
+  comparisons                       Comparison[]
+  favorites                         Favorite[]
+  searchHistory                     SearchHistory[]
+  organizationMembers               OrganizationMember[]
+  workspaceMembers                  WorkspaceMember[] // Workspace membership
+  reviews                           Review[]
+  templates                         QuoteTemplate[]
+  inventories                       ProductInventory[]
+  inventoryUsage                    InventoryUsage[]
+  inventoryRestocks                 InventoryRestock[]
+  inspections                       Inspection[]
   // #user-supplier-registration — 누가 등록한 organization vendor (audit).
-  createdOrganizationVendors OrganizationVendor[]
+  createdOrganizationVendors        OrganizationVendor[]
   // #vendor-catalog-product-matching Phase 1 — 누가 매핑한 vendor-product (audit).
   createdOrganizationVendorProducts OrganizationVendorProduct[]
-  activityLogs        ActivityLog[]
-  auditLogs           AuditLog[]
-  dataAuditLogs       DataAuditLog[]
-  orders              Order[]
-  userBudgets         UserBudget[]
+  activityLogs                      ActivityLog[]
+  auditLogs                         AuditLog[]
+  dataAuditLogs                     DataAuditLog[]
+  orders                            Order[]
+  userBudgets                       UserBudget[]
   // §11.101 — UserInventory model dropped (#inventory-model-consolidation
   // Phase 4 closeout). Application code 는 §11.58 에서 ProductInventory 로
   // 모두 정렬 완료. relation 제거.
-  cart                Cart?
-  teamMembers         TeamMember[]
-  purchaseRequests    PurchaseRequest[] @relation("RequestedPurchases") // 요청한 구매 요청
-  approvedRequests    PurchaseRequest[] @relation("ApprovedPurchases") // 승인한 구매 요청 (approverId)
-  aiActionItems       AiActionItem[]
-  ingestionUploads    IngestionEntry[] @relation("IngestionUploader")
+  cart                              Cart?
+  teamMembers                       TeamMember[]
+  purchaseRequests                  PurchaseRequest[]           @relation("RequestedPurchases") // 요청한 구매 요청
+  approvedRequests                  PurchaseRequest[]           @relation("ApprovedPurchases") // 승인한 구매 요청 (approverId)
+  aiActionItems                     AiActionItem[]
+  ingestionUploads                  IngestionEntry[]            @relation("IngestionUploader")
   // #mobile-push-notification Phase 1 server — 사용자별 등록된 푸시 토큰
-  devices             Device[]
+  devices                           Device[]
   // §11.348-A — 검증 대기 입고안 소유자(발주 주체/감사).
-  receivingDrafts     ReceivingDraft[]
+  receivingDrafts                   ReceivingDraft[]
   // §pricing-enforce-p2 P2b — 라벨 스캔 월 한도(Free 10) enforce 카운트 SoT.
-  labelScanEvents     LabelScanEvent[]
+  labelScanEvents                   LabelScanEvent[]
+  receivingDocuments                ReceivingDocument[] // §receiving-doc-attach-canonical — 업로드 담당자
 
   @@index([email])
   @@index([role])
-  receivingDocuments ReceivingDocument[] // §receiving-doc-attach-canonical — 업로드 담당자
 }
 
 // §pricing-enforce-p2 P2b (호영님 2026-06-27) — 라벨 스캔 enforce 카운트 SoT.
@@ -332,7 +332,7 @@ model Product {
   // gradeSource           String?
   specification         String? // 규격/?량 (?? 1mg, 500mL, 0.22um ??
   // §11.326 — 통 1개 함량(규격). 입고 수량과 분리. 있으면 specification보다 우선.
-  packSize              Float?  // 통 1개의 함량 수치 (예: 100)
+  packSize              Float? // 통 1개의 함량 수치 (예: 100)
   packUnit              String? // 함량 단위 (예: CAPSULES, mL)
   regulatoryCompliance  String? // 규제/?전 규격 (USP, EP, JP ??
 
@@ -348,32 +348,32 @@ model Product {
   ppe              Json? // 개인보호장비 배열 (예: ["gloves", "goggles"])
 
   // 원료(원부자재) 전용 필드 (P1)
-  coaUrl              String? // COA (Certificate of Analysis) URL
-  specSheetUrl        String? // Spec Sheet URL
-  pharmacopoeia       String? // 규정/표준 (예: "USP", "EP", "JP", "KP")
-  countryOfOrigin     String? // 원산지
-  manufacturer        String? // 제조사
-  expiryDate          DateTime? // 유효기간
+  coaUrl          String? // COA (Certificate of Analysis) URL
+  specSheetUrl    String? // Spec Sheet URL
+  pharmacopoeia   String? // 규정/표준 (예: "USP", "EP", "JP", "KP")
+  countryOfOrigin String? // 원산지
+  manufacturer    String? // 제조사
+  expiryDate      DateTime? // 유효기간
 
-  createdAt       DateTime                @default(now())
-  updatedAt       DateTime                @updatedAt
+  createdAt               DateTime                    @default(now())
+  updatedAt               DateTime                    @updatedAt
   // §safety-modal-upgrade P4b — 물질 대표 점검 최근 시각(안전 어댑터 lastInspection 파생 소스).
-  lastInspectedAt DateTime?
+  lastInspectedAt         DateTime?
   // 관?
-  vendors         ProductVendor[]
-  comparisons     ComparisonProduct[]
-  favorites       Favorite[]
-  recommendations ProductRecommendation[] @relation("ProductRecommendations")
-  recommendedFor  ProductRecommendation[] @relation("RecommendedProducts")
-  searchHistory   SearchHistory[]
+  vendors                 ProductVendor[]
+  comparisons             ComparisonProduct[]
+  favorites               Favorite[]
+  recommendations         ProductRecommendation[]     @relation("ProductRecommendations")
+  recommendedFor          ProductRecommendation[]     @relation("RecommendedProducts")
+  searchHistory           SearchHistory[]
   // §11.348-B-1 — 제품별 SDS/MSDS 문서(파일 스토리지 메타).
-  sdsDocuments    SDSDocument[]
-  reviews         Review[]
-  quoteListItems  QuoteListItem[]
-  inventories     ProductInventory[]
-  cartItems       CartItem[]
+  sdsDocuments            SDSDocument[]
+  reviews                 Review[]
+  quoteListItems          QuoteListItem[]
+  inventories             ProductInventory[]
+  cartItems               CartItem[]
   // §safety-modal-upgrade P4b — 물질 대표 점검 이력 역관계.
-  inspections     Inspection[]
+  inspections             Inspection[]
   // #vendor-catalog-product-matching Phase 1 — 조직 단위 vendor-product carry.
   organizationVendorLinks OrganizationVendorProduct[]
 
@@ -421,38 +421,38 @@ enum VendorPartnershipTier {
 
 // 벤더/공급??
 model Vendor {
-  id                String    @id @default(cuid())
+  id                String                @id @default(cuid())
   name              String
   nameEn            String?
   email             String?
   phone             String?
   website           String?
-  country           String?   @default("KR")
-  currency          String?   @default("KRW")
+  country           String?               @default("KR")
+  currency          String?               @default("KRW")
   // #vendor-partnership-tier — 글로벌 baseline.
   //   OrganizationVendor.partnershipTier 가 null 이면 본 값 사용 (overlay).
   partnershipTier   VendorPartnershipTier @default(GENERAL)
   // ?익 모델 관???드
-  isPremium         Boolean   @default(false) // ?리미엄 ?랜 ??
+  isPremium         Boolean               @default(false) // ?리미엄 ?랜 ??
   premiumExpiresAt  DateTime? // ?리미엄 만료??
-  leadPricePerQuote Float?    @default(0) // 리드??과금 (견적 ?청??
-  totalLeads        Int       @default(0) //?리드 ??
-  totalRevenue      Float     @default(0) //??익
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  leadPricePerQuote Float?                @default(0) // 리드??과금 (견적 ?청??
+  totalLeads        Int                   @default(0) //?리드 ??
+  totalRevenue      Float                 @default(0) //??익
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
 
   // 관?
-  products        ProductVendor[]
-  quoteResponses  QuoteResponse[]
-  billingRecords  VendorBillingRecord[]
+  products                 ProductVendor[]
+  quoteResponses           QuoteResponse[]
+  billingRecords           VendorBillingRecord[]
   // #post-approval-purchase-order-flow Phase 1.2 — vendor 별 발주 (option A)
-  orders          Order[]
+  orders                   Order[]
   // #user-supplier-registration — 조직 단위 supplier-book 의 platform Vendor 연결.
-  organizationLinks OrganizationVendor[]
+  organizationLinks        OrganizationVendor[]
   // #vendor-catalog-product-matching Phase 1 — 조직 단위 vendor-product carry.
   organizationProductLinks OrganizationVendorProduct[]
   // §11.348-A — 발주 후 입고 회신을 보낸 공급사.
-  receivingDrafts   ReceivingDraft[]
+  receivingDrafts          ReceivingDraft[]
 
   @@index([name])
   @@index([isPremium])
@@ -498,22 +498,22 @@ model ProductVendor {
 //   - resolveSuppliers 의 'org_book' source 로 합산 (priority: recent_rfq →
 //     org_book → supplier_book → ai_recommended).
 model OrganizationVendor {
-  id             String       @id @default(cuid())
-  organizationId String
-  vendorId       String?      // 기존 platform Vendor 연결 (optional)
-  vendorName     String       // operator-input
-  vendorEmail    String       // operator-input
-  vendorPhone    String?
-  isPrimary      Boolean      @default(false)  // 우선 거래처 marker
+  id              String                 @id @default(cuid())
+  organizationId  String
+  vendorId        String? // 기존 platform Vendor 연결 (optional)
+  vendorName      String // operator-input
+  vendorEmail     String // operator-input
+  vendorPhone     String?
+  isPrimary       Boolean                @default(false) // 우선 거래처 marker
   // #vendor-partnership-tier — 조직 override (nullable).
   //   null 이면 Vendor.partnershipTier (글로벌 baseline) 사용 (overlay pattern).
   //   Phase 2 에서 settings/suppliers form 으로 입력. Phase 3 에서
   //   resolveSuppliers confidence boost 에 반영.
   partnershipTier VendorPartnershipTier?
-  notes          String?      @db.Text         // 메모 (예: "신규 거래, 단가 협상 중")
-  createdById    String       // audit — 누가 등록했는지
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  notes           String?                @db.Text // 메모 (예: "신규 거래, 단가 협상 중")
+  createdById     String // audit — 누가 등록했는지
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   vendor       Vendor?      @relation(fields: [vendorId], references: [id], onDelete: SetNull)
@@ -536,14 +536,14 @@ model OrganizationVendor {
 //     플랫폼 차원 catalog source, OrganizationVendorProduct 는 lab carry
 //     record (어떤 vendor 가 어떤 product 를 organization 에 공급하는지).
 model OrganizationVendorProduct {
-  id             String       @id @default(cuid())
+  id             String   @id @default(cuid())
   organizationId String
   vendorId       String
   productId      String
-  notes          String?      @db.Text
-  createdById    String       // audit
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  notes          String?  @db.Text
+  createdById    String // audit
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   vendor       Vendor       @relation(fields: [vendorId], references: [id], onDelete: Cascade)
@@ -590,65 +590,66 @@ model ComparisonProduct {
 
 // 그룹?어???목 리스??(기존 Quote 모델 ???되, 개념???목 리스?로 ?장)
 model Quote {
-  id             String    @id @default(cuid())
-  userId         String? // Nullable for guest quotes
-  guestKey       String? // Guest key for anonymous access
-  organizationId String? // 조직 ?위 리스?인 경우
-  workspaceId    String? // Optional workspace association (for gradual migration)
-  comparisonId   String? // 비교 ?트 기반 리스?인 경우
-  quoteNumber    String?  @unique // 견적번호 (Q-YYYYMMDD-XXXX)
-  title          String // 리스???목
-  description    String?   @db.Text // 리스???명/비고
-  status         QuoteStatus @default(PENDING) // 견적 상태 (구매 완료 태그 포함)
-  currency       String    @default("KRW") // Currency for quote totals
-  totalAmount    Int? // Total amount
-  validUntil     DateTime? // 견적 유효기간 (기본 30일) (sum of line totals)
-  vendor         String? // 공급사 이름 (AI 추출)
-  confidence     String? // AI 분석 신뢰도 (high, medium, low)
+  id               String      @id @default(cuid())
+  userId           String? // Nullable for guest quotes
+  guestKey         String? // Guest key for anonymous access
+  organizationId   String? // 조직 ?위 리스?인 경우
+  workspaceId      String? // Optional workspace association (for gradual migration)
+  comparisonId     String? // 비교 ?트 기반 리스?인 경우
+  quoteNumber      String?     @unique // 견적번호 (Q-YYYYMMDD-XXXX)
+  title            String // 리스???목
+  description      String?     @db.Text // 리스???명/비고
+  status           QuoteStatus @default(PENDING) // 견적 상태 (구매 완료 태그 포함)
+  currency         String      @default("KRW") // Currency for quote totals
+  totalAmount      Int? // Total amount
+  validUntil       DateTime? // 견적 유효기간 (기본 30일) (sum of line totals)
+  vendor           String? // 공급사 이름 (AI 추출)
+  confidence       String? // AI 분석 신뢰도 (high, medium, low)
   extractionMethod String? // 추출 방법 (pdf-parse, fallback, ocr-required)
-  pdfFileName    String? // 원본 PDF 파일명
-  rawText        String?   @db.Text // 추출된 원본 텍스트 (디버깅용)
+  pdfFileName      String? // 원본 PDF 파일명
+  rawText          String?     @db.Text // 추출된 원본 텍스트 (디버깅용)
   // 그룹?어 ?동 ?보
-  templateId     String? // ?용???플?ID
-  templateType   String? // ?플????(R&D, QC, ?산 ?? - ?위 ?환??
-  exportedAt     DateTime? // ?보?기 ?점
+  templateId       String? // ?용???플?ID
+  templateType     String? // ?플????(R&D, QC, ?산 ?? - ?위 ?환??
+  exportedAt       DateTime? // ?보?기 ?점
   // 버전 관리 (P1)
-  version        Int       @default(1) // 버전 번호
-  parentQuoteId  String? // 원본 리스트 ID (버전이 있는 경우)
-  isSnapshot     Boolean   @default(false) // 스냅샷 여부
-  snapshotNote   String?   @db.Text // 스냅샷 메모
+  version          Int         @default(1) // 버전 번호
+  parentQuoteId    String? // 원본 리스트 ID (버전이 있는 경우)
+  isSnapshot       Boolean     @default(false) // 스냅샷 여부
+  snapshotNote     String?     @db.Text // 스냅샷 메모
   // α-D (ADR-002 §11.21): operator-selected QuoteReply for PO conversion.
   // Nullable — older rows persist as null (no choice yet). FK references
   // QuoteReply.id but is intentionally NOT a Prisma relation: an
   // unconstrained string keeps the ALTER TABLE simple and lets the
   // resolver fall back to null if the reply is deleted out-of-band.
   // QuoteReply.id format is cuid (same shape as Quote.id).
-  selectedReplyId String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  selectedReplyId  String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
   // §pricing-refresh P3 — 무료 보존 만료 아카이브(soft). null=노출, 세팅=숨김(조회 필터). 복구 시 null. hard delete 0.
-  archivedAt     DateTime?
+  archivedAt       DateTime?
 
   // 관?
-  user            User?                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization    Organization?          @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  workspace       Workspace?             @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
-  template        QuoteTemplate?         @relation(fields: [templateId], references: [id], onDelete: SetNull)
-  parentQuote     Quote?                 @relation("QuoteVersions", fields: [parentQuoteId], references: [id], onDelete: SetNull)
-  versions        Quote[]                @relation("QuoteVersions") // 버전 리스트
-  items           QuoteListItem[] // QuoteItem ???QuoteListItem ?용
-  quoteItems      QuoteItem[] // ?거???환??
-  vendors         QuoteVendor[] // Vendor information for quote
-  vendorRequests  QuoteVendorRequest[] // Vendor quote requests (견적 요청)
+  user             User?                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization     Organization?        @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  workspace        Workspace?           @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  template         QuoteTemplate?       @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  parentQuote      Quote?               @relation("QuoteVersions", fields: [parentQuoteId], references: [id], onDelete: SetNull)
+  versions         Quote[]              @relation("QuoteVersions") // 버전 리스트
+  items            QuoteListItem[] // QuoteItem ???QuoteListItem ?용
+  quoteItems       QuoteItem[] // ?거???환??
+  vendors          QuoteVendor[] // Vendor information for quote
+  vendorRequests   QuoteVendorRequest[] // Vendor quote requests (견적 요청)
   // 기존 ?환?을 ?해 QuoteResponse ?? (?후 ?거 가??
-  responses       QuoteResponse[]
-  sharedLists     SharedList[] // 공유 링크
-  shares          QuoteShare? // Public share configuration
-  purchaseRecords PurchaseRecord[] // ?제 구매?역
-  rfqToken        QuoteRfqToken? // RFQ email token
-  replies         QuoteReply[] // Email-based vendor replies
-  inboundEmails   InboundEmail[] // Matched inbound emails
+  responses        QuoteResponse[]
+  sharedLists      SharedList[] // 공유 링크
+  shares           QuoteShare? // Public share configuration
+  purchaseRecords  PurchaseRecord[] // ?제 구매?역
+  rfqToken         QuoteRfqToken? // RFQ email token
+  replies          QuoteReply[] // Email-based vendor replies
+  inboundEmails    InboundEmail[] // Matched inbound emails
   orders           Order[] // 주문 (결재 후 vendor 별 1개씩 생성 — 1 Quote → N Order)
+  poCandidates     POCandidate[] // §pocandidate-root-fix — quote 결속된 발주 후보
   purchaseRequests PurchaseRequest[] // 구매 요청
 
   @@index([userId])
@@ -880,40 +881,40 @@ model Review {
 
 // ?품 ?고 관?
 model ProductInventory {
-  id                   String    @id @default(cuid())
+  id                   String       @id @default(cuid())
   userId               String? // ?용?별 ?고
   organizationId       String? // 조직??고
   productId            String
-  currentQuantity      Float     @default(0) // ?재 ?고??
-  unit                 String?   @default("ea") // (: mL, g)
+  currentQuantity      Float        @default(0) // ?재 ?고??
+  unit                 String?      @default("ea") // (: mL, g)
   safetyStock          Float? // ?전 ?고 (???량 ?하??어지??주?추천)
   minOrderQty          Float? // 최소 주문 ?량
   location             String? // 보? ?치
   expiryDate           DateTime? // ?통기한
-  autoReorderEnabled   Boolean   @default(false) // ?동 ?주??성????
+  autoReorderEnabled   Boolean      @default(false) // ?동 ?주??성????
   autoReorderThreshold Float? // ?동 ?주??계?(기본? safetyStock)
   averageDailyUsage    Float? // 일일 사용량 (리드타임 기반 재주문 예측용)
-  leadTimeDays        Int? // 배송 소요 기간 (일)
+  leadTimeDays         Int? // 배송 소요 기간 (일)
   lotNumber            String? // 로트(Lot) 번호
   // §inventory-phaseB P2 — 추적 모드(canonical 정책). QUANTITY(기본·기존 행 회귀 0)/LOT/GMP_STRICT.
   //   차감 게이팅 근거: GMP_STRICT 시 lot·operator·destination 필수(InventoryUsage). additive default.
   trackingMode         TrackingMode @default(QUANTITY)
-  notes                String?   @db.Text
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  notes                String?      @db.Text
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
   // §pricing-refresh P3 — 무료 보존 만료 아카이브(soft). null=노출, 세팅=숨김. 복구 시 null. hard delete 0.
   archivedAt           DateTime?
 
   // 관?
-  user         User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization Organization?    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  product      Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  disposalScheduledAt DateTime?         // P7-1: 폐기 예정일
-  lastInspectedAt  DateTime?           // 마지막 점검일
-  usageRecords     InventoryUsage[]
-  restockRecords   InventoryRestock[]
-  inspections      Inspection[]
-  sdsDocuments     SDSDocument[]    // §detail-page P2 — COA lot-scoped 역방향. ON DELETE RESTRICT(QC 기록 보존).
+  user                User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization        Organization?      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  product             Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  disposalScheduledAt DateTime? // P7-1: 폐기 예정일
+  lastInspectedAt     DateTime? // 마지막 점검일
+  usageRecords        InventoryUsage[]
+  restockRecords      InventoryRestock[]
+  inspections         Inspection[]
+  sdsDocuments        SDSDocument[] // §detail-page P2 — COA lot-scoped 역방향. ON DELETE RESTRICT(QC 기록 보존).
 
   @@unique([userId, productId]) // ?용?별 ?품???나???고 기록
   @@unique([organizationId, productId]) // 조직??품???나???고 기록
@@ -950,16 +951,16 @@ model InventoryUsage {
 // 입고 상태
 // §inventory-phaseB P2 — 재고 추적 모드(차감 게이팅 정책). TS 계약: lib/inventory/tracking-mode.ts.
 enum TrackingMode {
-  QUANTITY   // 수량만(기본·기존 동작 회귀 0)
-  LOT        // lot 라벨 추적(lotNumber 필수)
+  QUANTITY // 수량만(기본·기존 동작 회귀 0)
+  LOT // lot 라벨 추적(lotNumber 필수)
   GMP_STRICT // GMP 엄격(lot·operator·destination 필수 — 소비 traceability)
 }
 
 enum ReceivingStatus {
-  PENDING   // 대기
-  PARTIAL   // 일부입고
+  PENDING // 대기
+  PARTIAL // 일부입고
   COMPLETED // 완료
-  ISSUE     // 이슈
+  ISSUE // 이슈
 }
 
 // 재고 입고 이력
@@ -967,13 +968,13 @@ model InventoryRestock {
   id               String          @id @default(cuid())
   inventoryId      String
   userId           String
-  quantity         Float           // 입고 수량
-  expectedQuantity Float?          // 예상 입고 수량
-  unit             String?         // 단위
-  lotNumber        String?         // Lot 번호
-  expiryDate       DateTime?       // 유효기간
+  quantity         Float // 입고 수량
+  expectedQuantity Float? // 예상 입고 수량
+  unit             String? // 단위
+  lotNumber        String? // Lot 번호
+  expiryDate       DateTime? // 유효기간
   receivingStatus  ReceivingStatus @default(COMPLETED) // P7-1: 입고 상태
-  orderId          String?         // P7-1: 연결된 주문
+  orderId          String? // P7-1: 연결된 주문
   issueNote        String?         @db.Text // P7-1: 이슈 사유
   notes            String?         @db.Text
   restockedAt      DateTime        @default(now())
@@ -982,51 +983,51 @@ model InventoryRestock {
   // §11.309a — 스마트 입고 OCR 스캔 연결 (호영님 P0 2026-05-26).
   // ocrJobId null = 수동 입고, ocrJobId 있음 = OCR 스캔으로 등록된 입고.
   // extractedData 는 사용자가 확인/수정한 최종 데이터 (감사 추적용).
-  ocrJobId         String?
-  extractedData    Json?           // 확인된 OCR 추출 데이터 (감사 추적)
+  ocrJobId      String?
+  extractedData Json? // 확인된 OCR 추출 데이터 (감사 추적)
 
   // 관계
-  inventory ProductInventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  order     Order?           @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  inventory          ProductInventory    @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order              Order?              @relation(fields: [orderId], references: [id], onDelete: SetNull)
   // §11.309a — OcrJob FK. SetNull 으로 OcrJob 삭제 시에도 InventoryRestock 보존.
-  ocrJob    OcrJob?          @relation(fields: [ocrJobId], references: [id], onDelete: SetNull)
+  ocrJob             OcrJob?             @relation(fields: [ocrJobId], references: [id], onDelete: SetNull)
   // #inventory-lot-entity P3 — lot-scoped COA 역방향.
-  sdsDocuments SDSDocument[]
+  sdsDocuments       SDSDocument[]
+  receivingDocuments ReceivingDocument[] // §receiving-doc-attach-canonical — 회차별 증빙
 
   @@index([inventoryId])
   @@index([userId])
   @@index([restockedAt])
   @@index([orderId])
   @@index([receivingStatus])
-  @@index([ocrJobId])  // §11.309a — 스캔 입고 조회 O(log n)
-  receivingDocuments ReceivingDocument[] // §receiving-doc-attach-canonical — 회차별 증빙
+  @@index([ocrJobId]) // §11.309a — 스캔 입고 조회 O(log n)
 }
 
 // 점검 결과
 enum InspectionResult {
-  PASS      // 양호
-  CAUTION   // 주의
-  FAIL      // 불량
+  PASS // 양호
+  CAUTION // 주의
+  FAIL // 불량
 }
 
 // 재고 점검 기록
 model Inspection {
-  id              String           @id @default(cuid())
+  id             String           @id @default(cuid())
   // §safety-modal-upgrade P4b — inventoryId(lot 점검)를 nullable 전환, productId(물질 대표 점검) 추가.
   //   둘 중 하나만 채워짐(lot 점검=inventoryId, 물질 점검=productId). 무손실(기존 row 전부 inventoryId 유지).
-  inventoryId     String?
-  productId       String?
-  userId          String
-  organizationId  String?
-  result          InspectionResult
-  checklist       Json             // { storageOk, labelOk, expiryOk, conditionOk }
-  notes           String?          @db.Text
+  inventoryId    String?
+  productId      String?
+  userId         String
+  organizationId String?
+  result         InspectionResult
+  checklist      Json // { storageOk, labelOk, expiryOk, conditionOk }
+  notes          String?          @db.Text
   // §safety-modal-upgrade P4b — 물질 점검 이상 심각도(minor|attention|urgent) + 증빙 사진(후속).
-  severity        String?
-  photoUrl        String?
-  inspectedAt     DateTime         @default(now())
-  createdAt       DateTime         @default(now())
+  severity       String?
+  photoUrl       String?
+  inspectedAt    DateTime         @default(now())
+  createdAt      DateTime         @default(now())
 
   inventory ProductInventory? @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
   product   Product?          @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -1063,26 +1064,26 @@ model SharedList {
 
 // Purchase record (MVP: guestKey-based scope)
 model PurchaseRecord {
-  id              String   @id @default(cuid())
-  scopeKey        String // guestKey for MVP, workspaceId for future
-  workspaceId     String? // Optional workspace association
-  quoteId         String? // Linked quote if source=quote
-  purchasedAt     DateTime // Purchase date
-  vendorName      String // Vendor name
-  category              String?  // 원본 카테고리 문자열 (import/사용자 입력)
-  normalizedCategoryId  String?  // FK → SpendingCategory.id (승인/PO 시점 고정)
-  itemName              String   // Item/product name
-  catalogNumber   String? // Catalog number
-  unit            String? // Unit (ea, mL, g, etc.)
-  qty             Int // Quantity
-  unitPrice       Int? // Unit price (optional for import)
-  amount          Int // Total amount (required)
-  currency        String   @default("KRW")
-  source          String   @default("import") // "import" or "quote"
-  followUpStatus  String?  // null=pending, "inventory_reflected"=입고 반영 완료
-  receivedAt      DateTime? // 입고 반영 완료 시각
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                   String    @id @default(cuid())
+  scopeKey             String // guestKey for MVP, workspaceId for future
+  workspaceId          String? // Optional workspace association
+  quoteId              String? // Linked quote if source=quote
+  purchasedAt          DateTime // Purchase date
+  vendorName           String // Vendor name
+  category             String? // 원본 카테고리 문자열 (import/사용자 입력)
+  normalizedCategoryId String? // FK → SpendingCategory.id (승인/PO 시점 고정)
+  itemName             String // Item/product name
+  catalogNumber        String? // Catalog number
+  unit                 String? // Unit (ea, mL, g, etc.)
+  qty                  Int // Quantity
+  unitPrice            Int? // Unit price (optional for import)
+  amount               Int // Total amount (required)
+  currency             String    @default("KRW")
+  source               String    @default("import") // "import" or "quote"
+  followUpStatus       String? // null=pending, "inventory_reflected"=입고 반영 완료
+  receivedAt           DateTime? // 입고 반영 완료 시각
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   // Relations (optional)
   quote              Quote?            @relation(fields: [quoteId], references: [id], onDelete: SetNull)
@@ -1100,12 +1101,12 @@ model PurchaseRecord {
 // Budget management (Multi-tenant: organizationId-scoped)
 model Budget {
   id             String   @id @default(cuid())
-  organizationId String?  // FK to Organization (null = personal budget)
-  teamId         String?  // FK to Team (null = no team scope) — optional sub-scope
-  scopeKey       String   // Legacy: "user-{userId}" or "{organizationId}" (keep for backward compat)
-  workspaceId    String?  // Optional workspace association
-  yearMonth      String   // Format: "YYYY-MM" (e.g., "2025-01")
-  amount         Int      // Budget amount
+  organizationId String? // FK to Organization (null = personal budget)
+  teamId         String? // FK to Team (null = no team scope) — optional sub-scope
+  scopeKey       String // Legacy: "user-{userId}" or "{organizationId}" (keep for backward compat)
+  workspaceId    String? // Optional workspace association
+  yearMonth      String // Format: "YYYY-MM" (e.g., "2025-01")
+  amount         Int // Budget amount
   currency       String   @default("KRW")
   description    String?  @db.Text
   createdAt      DateTime @default(now())
@@ -1134,21 +1135,21 @@ enum ImportJobStatus {
 }
 
 model ImportJob {
-  id           String          @id @default(cuid())
-  scopeKey     String // guestKey for MVP
-  workspaceId  String? // Optional workspace association
-  type         String // "purchase" (expandable to other types)
-  filename     String // Original filename
-  status       ImportJobStatus @default(PENDING)
-  totalRows    Int             @default(0)
-  successRows  Int             @default(0)
-  errorRows    Int             @default(0)
-  errorSample  Json? // Array of error samples
-  result       Json? // Import result metadata
-  startedAt    DateTime?
-  completedAt  DateTime?
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  id          String          @id @default(cuid())
+  scopeKey    String // guestKey for MVP
+  workspaceId String? // Optional workspace association
+  type        String // "purchase" (expandable to other types)
+  filename    String // Original filename
+  status      ImportJobStatus @default(PENDING)
+  totalRows   Int             @default(0)
+  successRows Int             @default(0)
+  errorRows   Int             @default(0)
+  errorSample Json? // Array of error samples
+  result      Json? // Import result metadata
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 
   // Relations
   workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
@@ -1178,14 +1179,14 @@ enum WorkspaceMemberRole {
 /// upsert (last seen update). lib/notifications/push-sender.ts 가
 /// userId 기반 token list 조회 후 Expo Push API (exp.host) 호출.
 model Device {
-  id          String   @id @default(cuid())
-  userId      String
-  pushToken   String   @unique
-  platform    String   // "ios" / "android" / "web"
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  userId    String
+  pushToken String   @unique
+  platform  String // "ios" / "android" / "web"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -1198,31 +1199,31 @@ enum BillingStatus {
 }
 
 model Workspace {
-  id               String   @id @default(cuid())
-  name             String
-  slug             String   @unique // URL-friendly identifier
-  plan             WorkspacePlan @default(FREE)
-  lastWorkspaceId  String? // For user's last active workspace
+  id              String        @id @default(cuid())
+  name            String
+  slug            String        @unique // URL-friendly identifier
+  plan            WorkspacePlan @default(FREE)
+  lastWorkspaceId String? // For user's last active workspace
 
   // Organization ↔ Workspace 1:1 bootstrap (옵션 B)
   // Phase 1: nullable + @unique 로 컬럼 추가 후 backfill.
   // Phase 2 (2026-04-17): NOT NULL 승격 완료. 모든 Workspace 는 정확히 하나의 Organization 에 속한다.
   // onDelete: Cascade — Organization 삭제 시 Workspace 도 같이 삭제. FK 를 들고 있는 이 쪽에 선언.
-  organizationId   String        @unique
-  organization     Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   // Stripe billing fields
-  stripeCustomerId        String? @unique
-  stripeSubscriptionId    String? @unique
-  stripePriceId           String?
-  stripeCurrentPeriodEnd  DateTime?
-  billingStatus           BillingStatus?
+  stripeCustomerId       String?        @unique
+  stripeSubscriptionId   String?        @unique
+  stripePriceId          String?
+  stripeCurrentPeriodEnd DateTime?
+  billingStatus          BillingStatus?
 
   /// §11.209d-approver-routing — 결재 임계치 (KRW). 이 금액 이상 결재
   /// 요청은 organization OWNER escalation. default 10,000,000 (1,000만원).
   /// admin UI 또는 /api/workspaces/[id] PATCH (ADMIN only) 로 변경.
   /// multi-tier (#approver-routing-multi-tier-threshold) 의 high tier 임계치.
-  approvalThresholdKrw    Int     @default(10000000)
+  approvalThresholdKrw    Int @default(10000000)
   /// #approver-routing-multi-tier-threshold — 중액/저액 구분 임계치 (KRW).
   /// amount < approvalLowThresholdKrw → workspace_admin (low),
   /// amount < approvalThresholdKrw → org_admin (mid), 이상 → org_owner (high).
@@ -1233,45 +1234,45 @@ model Workspace {
   ///   CHECK (approvalLowThresholdKrw <= approvalThresholdKrw)
   /// migration SQL only (Prisma 표준 CHECK syntax 0). 4-layer defense in depth
   /// 의 마지막 lock — 직접 SQL / Prisma raw update 우회 차단.
-  approvalLowThresholdKrw Int     @default(1000000)
+  approvalLowThresholdKrw Int @default(1000000)
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  members          WorkspaceMember[]
-  invites          WorkspaceInvite[]
-  purchases        PurchaseRecord[]
-  budgets          Budget[]
-  quotes           Quote[]
-  importJobs       ImportJob[]
+  members    WorkspaceMember[]
+  invites    WorkspaceInvite[]
+  purchases  PurchaseRecord[]
+  budgets    Budget[]
+  quotes     Quote[]
+  importJobs ImportJob[]
+  // organizationId 는 @unique 가 자동 인덱스를 생성하므로 별도 @@index 불필요
 
   @@index([slug])
-  // organizationId 는 @unique 가 자동 인덱스를 생성하므로 별도 @@index 불필요
 }
 
 model WorkspaceMember {
-  id          String   @id @default(cuid())
-  workspaceId String
-  userId      String
-  role        WorkspaceMemberRole @default(MEMBER)
+  id                     String              @id @default(cuid())
+  workspaceId            String
+  userId                 String
+  role                   WorkspaceMemberRole @default(MEMBER)
   /// #approver-routing-per-user-limit — 단일 건 결재 한도 (KRW). null =
   /// 무제한 (default). amount > approvalLimit 시 selectApproverByAmount
   /// 가 다음 fallback 으로 escalation. organization member 는 한도 무제한
   /// (별도 batch — 본 batch 는 workspace member 만).
-  approvalLimit Int?
+  approvalLimit          Int?
   /// #approver-routing-multi-owner-roundrobin — 마지막 결재 할당 timestamp.
   /// helper 가 orderBy lastApprovalAssignedAt asc nulls first + createdAt
   /// asc tie-breaker — 한 번도 안 받은 member 우선, 그 다음 가장 오래
   /// 안 받은 member. request-approval route 가 PR INSERT 후 candidate 의
   /// 본 field update (try/catch graceful).
   lastApprovalAssignedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
 
   // Relations
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([workspaceId, userId])
   @@index([workspaceId])
@@ -1279,17 +1280,17 @@ model WorkspaceMember {
 }
 
 model WorkspaceInvite {
-  id          String    @id @default(cuid())
+  id          String              @id @default(cuid())
   workspaceId String
-  token       String    @unique // Unique invite token
+  token       String              @unique // Unique invite token
   email       String
   role        WorkspaceMemberRole @default(MEMBER)
   expiresAt   DateTime // Invite expiration
   acceptedAt  DateTime? // When invite was accepted
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime            @default(now())
 
   // Relations
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([token])
   @@index([workspaceId])
@@ -1301,13 +1302,13 @@ model OrganizationInvite {
   id               String           @id @default(cuid())
   organizationId   String
   token            String           @unique // URL-safe random invite token
-  email            String?          // 특정 이메일 초대 (null이면 누구나 사용 가능)
+  email            String? // 특정 이메일 초대 (null이면 누구나 사용 가능)
   role             OrganizationRole @default(VIEWER)
-  expiresAt        DateTime         // 만료 일시 (필수)
-  acceptedAt       DateTime?        // 수락된 일시
-  acceptedByUserId String?          // 수락한 유저 ID
-  revokedAt        DateTime?        // 취소된 일시
-  createdByUserId  String           // 생성한 관리자 ID
+  expiresAt        DateTime // 만료 일시 (필수)
+  acceptedAt       DateTime? // 수락된 일시
+  acceptedByUserId String? // 수락한 유저 ID
+  revokedAt        DateTime? // 취소된 일시
+  createdByUserId  String // 생성한 관리자 ID
   createdAt        DateTime         @default(now())
 
   // 관계
@@ -1324,7 +1325,7 @@ model OrganizationInvite {
 // 참조: https://docs.stripe.com/webhooks (Handle duplicate events)
 model StripeEvent {
   eventId     String   @id // Stripe event.id (예: evt_1Abc...)
-  type        String   // Stripe event.type (예: customer.subscription.updated)
+  type        String // Stripe event.type (예: customer.subscription.updated)
   processedAt DateTime @default(now())
 
   @@index([type])
@@ -1367,20 +1368,20 @@ model Subscription {
 
 // 결제 수단 (카드 정보)
 model PaymentMethod {
-  id             String   @id @default(cuid())
-  subscriptionId String
+  id                    String   @id @default(cuid())
+  subscriptionId        String
   // Stripe 연동 필드
-  stripePaymentMethodId String? @unique // Stripe PaymentMethod ID
+  stripePaymentMethodId String?  @unique // Stripe PaymentMethod ID
   // 카드 정보 (표시용 - 실제 카드번호는 Stripe에 저장)
-  brand          String? // visa, mastercard, amex 등
-  last4          String? // 카드 마지막 4자리
-  expMonth       Int? // 만료 월
-  expYear        Int? // 만료 년
+  brand                 String? // visa, mastercard, amex 등
+  last4                 String? // 카드 마지막 4자리
+  expMonth              Int? // 만료 월
+  expYear               Int? // 만료 년
   // 상태
-  isDefault      Boolean  @default(false) // 기본 결제 수단 여부
-  isValid        Boolean  @default(true) // 유효 여부
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  isDefault             Boolean  @default(false) // 기본 결제 수단 여부
+  isValid               Boolean  @default(true) // 유효 여부
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   // 관계
   subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
@@ -1399,29 +1400,29 @@ enum InvoiceStatus {
 }
 
 model Invoice {
-  id             String        @id @default(cuid())
-  subscriptionId String
+  id               String        @id @default(cuid())
+  subscriptionId   String
   // Stripe 연동 필드
-  stripeInvoiceId String?      @unique // Stripe Invoice ID
+  stripeInvoiceId  String?       @unique // Stripe Invoice ID
   // 청구 정보
-  number         String? // 청구서 번호 (예: INV-2024-001)
-  status         InvoiceStatus @default(DRAFT)
-  amountDue      Int // 청구 금액 (원)
-  amountPaid     Int           @default(0) // 결제된 금액
-  currency       String        @default("KRW")
+  number           String? // 청구서 번호 (예: INV-2024-001)
+  status           InvoiceStatus @default(DRAFT)
+  amountDue        Int // 청구 금액 (원)
+  amountPaid       Int           @default(0) // 결제된 금액
+  currency         String        @default("KRW")
   // 기간 정보
-  periodStart    DateTime // 청구 기간 시작
-  periodEnd      DateTime // 청구 기간 종료
-  dueDate        DateTime? // 결제 기한
-  paidAt         DateTime? // 결제 완료 시점
+  periodStart      DateTime // 청구 기간 시작
+  periodEnd        DateTime // 청구 기간 종료
+  dueDate          DateTime? // 결제 기한
+  paidAt           DateTime? // 결제 완료 시점
   // 상세 내역
-  description    String?       @db.Text // 청구 설명
-  lineItems      Json? // 세부 항목 [{description, quantity, unitPrice, amount}]
+  description      String?       @db.Text // 청구 설명
+  lineItems        Json? // 세부 항목 [{description, quantity, unitPrice, amount}]
   // PDF 영수증
-  invoicePdfUrl  String? // PDF 다운로드 URL
+  invoicePdfUrl    String? // PDF 다운로드 URL
   hostedInvoiceUrl String? // Stripe 호스팅 인보이스 URL
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
   // 관계
   subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
@@ -1447,36 +1448,36 @@ enum ActivityType {
   SEARCH_PERFORMED // 검색 수행
 
   // ── AI 파이프라인 활동 로그 (Closed-Loop) ──
-  AI_TASK_CREATED            // AI 작업 생성 (AiActionItem PENDING)
-  AI_TASK_OPENED             // AI 초안 미리보기 열림
-  QUOTE_DRAFT_GENERATED      // 견적 초안 AI 생성 완료
-  QUOTE_DRAFT_REVIEWED       // 견적 초안 검토 (승인/무시)
-  EMAIL_DRAFT_GENERATED      // 벤더 이메일 초안 AI 생성 완료
-  EMAIL_SENT                 // 이메일 발송 완료
-  VENDOR_REPLY_LOGGED        // 벤더 회신 수신 기록
-  ORDER_FOLLOWUP_GENERATED   // 주문 후속 이메일 초안 생성
-  ORDER_FOLLOWUP_REVIEWED    // 주문 후속 이메일 검토 (승인/무시)
-  ORDER_FOLLOWUP_SENT        // 주문 후속 이메일 발송 완료
-  ORDER_STATUS_CHANGE_PROPOSED  // 주문 상태 변경 제안
-  ORDER_STATUS_CHANGE_APPROVED  // 주문 상태 변경 승인
-  ORDER_STATUS_CHANGED       // 주문 상태 변경 실행 (관리자)
-  INVENTORY_RESTOCK_SUGGESTED   // 재발주 제안 생성
-  INVENTORY_RESTOCK_REVIEWED    // 재발주 제안 검토
-  PURCHASE_REQUEST_CREATED      // 구매 요청 생성
-  PURCHASE_REQUEST_CANCELLED    // 구매 요청 취소
-  PURCHASE_REQUEST_REVERSED     // 구매 요청 되돌림
-  PURCHASE_RECORD_RECLASSIFIED  // 구매 레코드 재분류
-  AI_TASK_COMPLETED          // AI 작업 최종 완료 (승인 후 실행 성공)
-  AI_TASK_FAILED             // AI 작업 실패 (실행 에러)
+  AI_TASK_CREATED // AI 작업 생성 (AiActionItem PENDING)
+  AI_TASK_OPENED // AI 초안 미리보기 열림
+  QUOTE_DRAFT_GENERATED // 견적 초안 AI 생성 완료
+  QUOTE_DRAFT_REVIEWED // 견적 초안 검토 (승인/무시)
+  EMAIL_DRAFT_GENERATED // 벤더 이메일 초안 AI 생성 완료
+  EMAIL_SENT // 이메일 발송 완료
+  VENDOR_REPLY_LOGGED // 벤더 회신 수신 기록
+  ORDER_FOLLOWUP_GENERATED // 주문 후속 이메일 초안 생성
+  ORDER_FOLLOWUP_REVIEWED // 주문 후속 이메일 검토 (승인/무시)
+  ORDER_FOLLOWUP_SENT // 주문 후속 이메일 발송 완료
+  ORDER_STATUS_CHANGE_PROPOSED // 주문 상태 변경 제안
+  ORDER_STATUS_CHANGE_APPROVED // 주문 상태 변경 승인
+  ORDER_STATUS_CHANGED // 주문 상태 변경 실행 (관리자)
+  INVENTORY_RESTOCK_SUGGESTED // 재발주 제안 생성
+  INVENTORY_RESTOCK_REVIEWED // 재발주 제안 검토
+  PURCHASE_REQUEST_CREATED // 구매 요청 생성
+  PURCHASE_REQUEST_CANCELLED // 구매 요청 취소
+  PURCHASE_REQUEST_REVERSED // 구매 요청 되돌림
+  PURCHASE_RECORD_RECLASSIFIED // 구매 레코드 재분류
+  AI_TASK_COMPLETED // AI 작업 최종 완료 (승인 후 실행 성공)
+  AI_TASK_FAILED // AI 작업 실패 (실행 에러)
 
   // ── Compare Workspace 확장 (V1-RC) ──
-  QUOTE_DRAFT_STARTED_FROM_COMPARE  // 비교 세션에서 견적 초안 생성 시작
+  QUOTE_DRAFT_STARTED_FROM_COMPARE // 비교 세션에서 견적 초안 생성 시작
   COMPARE_INQUIRY_DRAFT_STATUS_CHANGED // 문의 초안 상태 변경
-  COMPARE_RESULT_VIEWED              // 비교 결과 조회
-  COMPARE_SESSION_REOPENED           // 비교 세션 재개 (판정 취소)
+  COMPARE_RESULT_VIEWED // 비교 결과 조회
+  COMPARE_SESSION_REOPENED // 비교 세션 재개 (판정 취소)
 
   // ── 안전관리 (§msds-audit-versioning) ──
-  MSDS_REGISTERED                    // MSDS 문서 실 등록(누가·언제 감사)
+  MSDS_REGISTERED // MSDS 문서 실 등록(누가·언제 감사)
 }
 
 model ActivityLog {
@@ -1512,21 +1513,21 @@ model ActivityLog {
 // ── Compare & Decision Workspace ──
 model CompareSession {
   id             String   @id @default(cuid())
-  productIds     Json     // string[] — 비교 대상 제품 ID
-  diffResult     Json?    // DiffResult 구조 (structured diff)
-  aiInsight      Json?    // AI 해석 결과
+  productIds     Json // string[] — 비교 대상 제품 ID
+  diffResult     Json? // DiffResult 구조 (structured diff)
+  aiInsight      Json? // AI 해석 결과
   userId         String?
   organizationId String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   // Decision record (V1-RC)
-  decisionState  String?    // UNDECIDED | APPROVED | HELD | REJECTED
-  decisionNote   String?    @db.Text
-  decidedBy      String?
-  decidedAt      DateTime?
+  decisionState String? // UNDECIDED | APPROVED | HELD | REJECTED
+  decisionNote  String?   @db.Text
+  decidedBy     String?
+  decidedAt     DateTime?
 
-  inquiryDrafts  CompareInquiryDraft[]
+  inquiryDrafts CompareInquiryDraft[]
 
   @@index([userId])
   @@index([organizationId])
@@ -1541,7 +1542,7 @@ model CompareInquiryDraft {
   productName      String
   subject          String
   body             String   @db.Text
-  inquiryFields    Json     // string[]
+  inquiryFields    Json // string[]
   status           String   @default("GENERATED") // GENERATED | COPIED | SENT
   diffIndex        Int      @default(0)
   userId           String?
@@ -1549,7 +1550,7 @@ model CompareInquiryDraft {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  compareSession   CompareSession @relation(fields: [compareSessionId], references: [id], onDelete: Cascade)
+  compareSession CompareSession @relation(fields: [compareSessionId], references: [id], onDelete: Cascade)
 
   @@index([compareSessionId])
   @@index([userId])
@@ -1573,28 +1574,28 @@ enum AuditEventType {
   ORGANIZATION_DELETED // 조직 삭제
 
   // ── Package A: Ingestion Pipeline Events ──
-  INGESTION_RECEIVED              // 외부 입력 수신
-  DOCUMENT_CLASSIFIED             // AI 문서 분류 완료
-  EXTRACTION_COMPLETED            // AI 필드 추출 완료
-  ENTITY_LINKED                   // DB Entity 연결 완료
-  VERIFICATION_COMPLETED          // 검증 완료 (auto_verified/review_needed/mismatch/missing)
-  WORK_QUEUE_TASK_GENERATED       // Ingestion → Work Queue Task 생성
+  INGESTION_RECEIVED // 외부 입력 수신
+  DOCUMENT_CLASSIFIED // AI 문서 분류 완료
+  EXTRACTION_COMPLETED // AI 필드 추출 완료
+  ENTITY_LINKED // DB Entity 연결 완료
+  VERIFICATION_COMPLETED // 검증 완료 (auto_verified/review_needed/mismatch/missing)
+  WORK_QUEUE_TASK_GENERATED // Ingestion → Work Queue Task 생성
 
   // ── #approver-routing-event-type-enum-add (#11.209d-approver-routing) ──
   // 결재 라우팅 dedicated audit events — 직전 audit-log batch 의 generic
   // (SETTINGS_CHANGED / WORK_QUEUE_TASK_GENERATED) 재사용 → 의미 명확화.
-  WORKSPACE_THRESHOLD_CHANGED     // workspace 결재 임계치 변경 (low/high)
-  PURCHASE_REQUEST_CREATED        // PR INSERT + 결재 매핑 (source/appliedThresholds)
+  WORKSPACE_THRESHOLD_CHANGED // workspace 결재 임계치 변경 (low/high)
+  PURCHASE_REQUEST_CREATED // PR INSERT + 결재 매핑 (source/appliedThresholds)
 
   // ── #approver-routing-per-user-limit-audit-log ──
-  MEMBER_APPROVAL_LIMIT_CHANGED   // workspace member 결재 한도 변경 (per-user)
+  MEMBER_APPROVAL_LIMIT_CHANGED // workspace member 결재 한도 변경 (per-user)
 
   // ── #audit-event-type-order (#post-approval-purchase-order-flow cluster cleanup) ──
   // dedicated audit events — 직전 cluster 의 SETTINGS_CHANGED 재사용
   // (Phase 1.3 / 2.2 / 3.2) → 의미 명확화. audit UI filter / grep 정합.
-  ORDER_CREATED_FROM_POCANDIDATE  // POCandidate 결재 통과 시 vendor 별 Order 자동 생성
-  PO_PDF_GENERATED                // vendor 별 PO 발주서 PDF 생성 (stream 다운로드)
-  VENDOR_EMAIL_SENT               // 공급사 발주 email 송부 (한글 본문)
+  ORDER_CREATED_FROM_POCANDIDATE // POCandidate 결재 통과 시 vendor 별 Order 자동 생성
+  PO_PDF_GENERATED // vendor 별 PO 발주서 PDF 생성 (stream 다운로드)
+  VENDOR_EMAIL_SENT // 공급사 발주 email 송부 (한글 본문)
 }
 
 model AuditLog {
@@ -1636,13 +1637,13 @@ model AuditLog {
 //   fallback). FK 강제 0 — anonymous RUM 강제. session correlation 보류.
 model RumMetric {
   id        String   @id @default(cuid())
-  lcp       Float?   // Largest Contentful Paint (ms)
-  cls       Float?   // Cumulative Layout Shift (unitless)
-  fid       Float?   // First Input Delay (ms)
-  inp       Float?   // Interaction to Next Paint (ms)
-  pathname  String?  // page route (max 500 chars zod)
-  userAgent String?  // user agent (max 500 chars zod)
-  sessionId String?  // anonymous session marker (max 64 chars zod, optional)
+  lcp       Float? // Largest Contentful Paint (ms)
+  cls       Float? // Cumulative Layout Shift (unitless)
+  fid       Float? // First Input Delay (ms)
+  inp       Float? // Interaction to Next Paint (ms)
+  pathname  String? // page route (max 500 chars zod)
+  userAgent String? // user agent (max 500 chars zod)
+  sessionId String? // anonymous session marker (max 64 chars zod, optional)
   createdAt DateTime @default(now())
 
   @@index([createdAt])
@@ -1657,15 +1658,15 @@ model RumMetric {
 //   각 cron route handler 를 logCronExecution 으로 wrap → 본 table INSERT.
 //   admin/cron page 가 본 model 을 시각화 (last execution / success rate / p95).
 model CronExecutionLog {
-  id            String    @id @default(cuid())
-  cronPath      String    // e.g. "/api/cron/inventory-check"
-  startedAt     DateTime  // handler 진입 시각
-  completedAt   DateTime? // handler 완료 시각 (try/finally 보장)
-  durationMs    Int       // completedAt - startedAt (ms). 실패 시도 계산.
-  success       Boolean   // true = handler resolved, false = throw
-  errorMessage  String?   @db.Text // catch 된 Error.message (truncated)
-  metadata      Json?     // handler 결과 또는 contextual data (선택적)
-  createdAt     DateTime  @default(now())
+  id           String    @id @default(cuid())
+  cronPath     String // e.g. "/api/cron/inventory-check"
+  startedAt    DateTime // handler 진입 시각
+  completedAt  DateTime? // handler 완료 시각 (try/finally 보장)
+  durationMs   Int // completedAt - startedAt (ms). 실패 시도 계산.
+  success      Boolean // true = handler resolved, false = throw
+  errorMessage String?   @db.Text // catch 된 Error.message (truncated)
+  metadata     Json? // handler 결과 또는 contextual data (선택적)
+  createdAt    DateTime  @default(now())
 
   @@index([cronPath])
   @@index([startedAt])
@@ -1725,19 +1726,19 @@ model InboundEmail {
 
 // Quote reply from vendor (via email)
 model QuoteReply {
-  id          String   @id @default(cuid())
-  quoteId     String
-  vendorName  String? // Nullable, can be extracted from email
-  fromEmail   String // Sender email
-  subject     String
-  receivedAt  DateTime @default(now())
-  bodyText    String?  @db.Text // Plain text body
-  bodyHtml    String?  @db.Text // HTML body
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  quoteId    String
+  vendorName String? // Nullable, can be extracted from email
+  fromEmail  String // Sender email
+  subject    String
+  receivedAt DateTime @default(now())
+  bodyText   String?  @db.Text // Plain text body
+  bodyHtml   String?  @db.Text // HTML body
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Relations
-  quote       Quote                 @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  quote       Quote                  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   attachments QuoteReplyAttachment[]
 
   @@index([quoteId])
@@ -1764,14 +1765,14 @@ model QuoteReplyAttachment {
 
 // Vendor information for quotes (optional, can be added later)
 model QuoteVendor {
-  id          String   @id @default(cuid())
-  quoteId     String
-  vendorName  String
-  email       String?
-  country     String?  @default("KR")
-  memo        String?  @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  quoteId    String
+  vendorName String
+  email      String?
+  country    String?  @default("KR")
+  memo       String?  @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Relations
   quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
@@ -1782,13 +1783,13 @@ model QuoteVendor {
 
 // Public share configuration for quotes (optional for phase B)
 model QuoteShare {
-  id          String    @id @default(cuid())
-  quoteId     String    @unique // One share per quote
-  shareToken  String    @unique // URL-safe random token for public access
-  expiresAt   DateTime? // Optional expiration
-  enabled     Boolean   @default(true) // Can disable without deleting
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id         String    @id @default(cuid())
+  quoteId    String    @unique // One share per quote
+  shareToken String    @unique // URL-safe random token for public access
+  expiresAt  DateTime? // Optional expiration
+  enabled    Boolean   @default(true) // Can disable without deleting
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   // Relations
   quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
@@ -1799,10 +1800,10 @@ model QuoteShare {
 
 // Vendor request status enum
 enum VendorRequestStatus {
-  SENT       // Initial state after sending
-  RESPONDED  // Vendor has submitted response
-  EXPIRED    // Past expiration date
-  CANCELLED  // Cancelled by internal user
+  SENT // Initial state after sending
+  RESPONDED // Vendor has submitted response
+  EXPIRED // Past expiration date
+  CANCELLED // Cancelled by internal user
 }
 
 // Vendor request (견적 요청 발송 단위)
@@ -1824,7 +1825,7 @@ model QuoteVendorRequest {
   updatedAt         DateTime            @updatedAt
 
   // Relations
-  quote         Quote                      @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  quote         Quote                     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   responseItems QuoteVendorResponseItem[]
 
   @@index([quoteId])
@@ -1835,17 +1836,17 @@ model QuoteVendorRequest {
 
 // Vendor response item (품목별 회신)
 model QuoteVendorResponseItem {
-  id               String   @id @default(cuid())
-  vendorRequestId  String // FK to QuoteVendorRequest
-  quoteItemId      String // FK to QuoteListItem
-  unitPrice        Int? // Response unit price (KRW precision)
-  currency         String   @default("KRW")
-  leadTimeDays     Int? // Lead time in days
-  moq              Int? // Minimum order quantity (optional)
-  vendorSku        String? // Vendor's SKU/catalog number (optional)
-  notes            String?  @db.Text // Vendor notes (optional)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id              String   @id @default(cuid())
+  vendorRequestId String // FK to QuoteVendorRequest
+  quoteItemId     String // FK to QuoteListItem
+  unitPrice       Int? // Response unit price (KRW precision)
+  currency        String   @default("KRW")
+  leadTimeDays    Int? // Lead time in days
+  moq             Int? // Minimum order quantity (optional)
+  vendorSku       String? // Vendor's SKU/catalog number (optional)
+  notes           String?  @db.Text // Vendor notes (optional)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   // Relations
   vendorRequest QuoteVendorRequest @relation(fields: [vendorRequestId], references: [id], onDelete: Cascade)
@@ -1862,9 +1863,9 @@ model QuoteVendorResponseItem {
 
 // 주문 상태
 enum OrderStatus {
-  ORDERED   // 주문 완료
+  ORDERED // 주문 완료
   CONFIRMED // 확인됨
-  SHIPPING  // 배송 중
+  SHIPPING // 배송 중
   DELIVERED // 배송 완료
   CANCELLED // 취소됨
 }
@@ -1879,66 +1880,66 @@ enum OrderStatus {
 //
 // vendor / poCandidate relation 은 SetNull on delete — Order 보존.
 model Order {
-  id             String      @id @default(cuid())
-  userId         String
-  quoteId        String      // composite unique 로 변경 (`@@unique([quoteId, vendorId])`)
-  vendorId       String?     // vendor 별 발주서 매핑. legacy = NULL.
-  poCandidateId  String?     // POCandidate 1:1 매핑. SetNull on delete.
-  organizationId String?
-  orderNumber    String      @unique // 주문번호 (ORD-YYYYMMDD-XXXX)
-  totalAmount    Int         // 총 주문 금액 (KRW)
-  status         OrderStatus @default(ORDERED)
-  notes          String?     @db.Text // 주문 메모
-  shippingAddress String?    @db.Text // 배송 주소
-  expectedDelivery DateTime? // 예상 배송일
-  actualDelivery  DateTime?  // 실제 배송일
+  id                    String      @id @default(cuid())
+  userId                String
+  quoteId               String // composite unique 로 변경 (`@@unique([quoteId, vendorId])`)
+  vendorId              String? // vendor 별 발주서 매핑. legacy = NULL.
+  poCandidateId         String? // POCandidate 1:1 매핑. SetNull on delete.
+  organizationId        String?
+  orderNumber           String      @unique // 주문번호 (ORD-YYYYMMDD-XXXX)
+  totalAmount           Int // 총 주문 금액 (KRW)
+  status                OrderStatus @default(ORDERED)
+  notes                 String?     @db.Text // 주문 메모
+  shippingAddress       String?     @db.Text // 배송 주소
+  expectedDelivery      DateTime? // 예상 배송일
+  actualDelivery        DateTime? // 실제 배송일
   // #post-approval-purchase-order-flow Phase 2.3 step 1 — PDF 영속화.
   // step 2 (storage upload) 별도 mini-batch — host config (S3/Cloudinary
   // /Supabase) 후 generate-pdf route 가 upload 결과 URL 저장.
-  poDocumentUrl       String?  @db.Text // 발주서 PDF storage URL (NULL = 미생성)
+  poDocumentUrl         String?     @db.Text // 발주서 PDF storage URL (NULL = 미생성)
   poDocumentGeneratedAt DateTime? // PDF 생성 시각 (재생성 정합)
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
   // §pricing-refresh P3 — 무료 보존 만료 아카이브(soft). null=노출, 세팅=숨김. 복구 시 null. hard delete 0.
-  archivedAt     DateTime?
+  archivedAt            DateTime?
 
   // Relations
-  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  quote           Quote               @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-  vendor          Vendor?             @relation(fields: [vendorId], references: [id], onDelete: SetNull)
-  poCandidate     POCandidate?        @relation(fields: [poCandidateId], references: [id], onDelete: SetNull)
-  organization    Organization?       @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  purchaseRequest PurchaseRequest?    @relation("PurchaseRequestOrder") // 역방향 relation (PurchaseRequest.orderId -> Order.id)
-  items           OrderItem[]
-  restocks        InventoryRestock[]  // P7-1: 입고 기록
-  budgetTransaction UserBudgetTransaction?
+  user               User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quote              Quote                  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  vendor             Vendor?                @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  poCandidate        POCandidate?           @relation(fields: [poCandidateId], references: [id], onDelete: SetNull)
+  organization       Organization?          @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  purchaseRequest    PurchaseRequest?       @relation("PurchaseRequestOrder") // 역방향 relation (PurchaseRequest.orderId -> Order.id)
+  items              OrderItem[]
+  restocks           InventoryRestock[] // P7-1: 입고 기록
+  budgetTransaction  UserBudgetTransaction?
   // §11.348-A — 발주 후 입고 회신(검증 대기 입고안). 1 PO ↔ N draft.
-  receivingDrafts   ReceivingDraft[]
+  receivingDrafts    ReceivingDraft[]
+  receivingDocuments ReceivingDocument[] // §receiving-doc-attach-canonical — 입고 증빙
 
   @@unique([quoteId, vendorId]) // vendor 별 1개 Order — legacy NULL row 도 1개 보장
+  @@unique([poCandidateId]) // §pocandidate-root-fix — candidate 당 Order 1개(재변환 collapse 차단). nullable → legacy NULL Order 다건은 NULL-distinct 허용
   @@index([userId])
   @@index([quoteId])
   @@index([vendorId])
-  @@index([poCandidateId])
   @@index([organizationId])
   @@index([status])
   @@index([createdAt])
-  receivingDocuments ReceivingDocument[] // §receiving-doc-attach-canonical — 입고 증빙
 }
 
 // 주문 품목
 model OrderItem {
-  id          String   @id @default(cuid())
-  orderId     String
-  productId   String?
-  name        String   // 제품명
-  brand       String?  // 브랜드
+  id            String   @id @default(cuid())
+  orderId       String
+  productId     String?
+  name          String // 제품명
+  brand         String? // 브랜드
   catalogNumber String? // 카탈로그 번호
-  quantity    Int      @default(1)
-  unitPrice   Int      // 단가
-  lineTotal   Int      // 품목 합계 (단가 x 수량)
-  notes       String?  @db.Text
-  createdAt   DateTime @default(now())
+  quantity      Int      @default(1)
+  unitPrice     Int // 단가
+  lineTotal     Int // 품목 합계 (단가 x 수량)
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now())
 
   // Relations
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
@@ -1949,25 +1950,25 @@ model OrderItem {
 
 // 사용자 예산 (UserBudget) - 연구비 계좌
 model UserBudget {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   userId          String
   organizationId  String?
-  name            String   @default("연구비") // 예산 이름 (예: "2024년 연구비", "실험실 운영비")
-  totalAmount     Int      // 총 예산 (KRW)
-  usedAmount      Int      @default(0) // 사용된 금액
-  remainingAmount Int      // 잔액 (totalAmount - usedAmount)
-  currency        String   @default("KRW")
-  fiscalYear      Int?     // 회계연도 (예: 2024)
+  name            String    @default("연구비") // 예산 이름 (예: "2024년 연구비", "실험실 운영비")
+  totalAmount     Int // 총 예산 (KRW)
+  usedAmount      Int       @default(0) // 사용된 금액
+  remainingAmount Int // 잔액 (totalAmount - usedAmount)
+  currency        String    @default("KRW")
+  fiscalYear      Int? // 회계연도 (예: 2024)
   startDate       DateTime? // 예산 시작일
   endDate         DateTime? // 예산 종료일
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   // Relations
-  user          User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization  Organization?            @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  transactions  UserBudgetTransaction[]
+  user         User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization?           @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  transactions UserBudgetTransaction[]
 
   @@index([userId])
   @@index([organizationId])
@@ -1977,15 +1978,15 @@ model UserBudget {
 
 // 예산 거래 내역
 model UserBudgetTransaction {
-  id          String   @id @default(cuid())
-  budgetId    String
-  orderId     String?  @unique // 주문과 연결된 경우
-  type        String   // "DEBIT" (차감), "CREDIT" (입금/환불)
-  amount      Int      // 거래 금액
-  description String?  // 거래 설명
-  balanceBefore Int    // 거래 전 잔액
-  balanceAfter  Int    // 거래 후 잔액
-  createdAt   DateTime @default(now())
+  id            String   @id @default(cuid())
+  budgetId      String
+  orderId       String?  @unique // 주문과 연결된 경우
+  type          String // "DEBIT" (차감), "CREDIT" (입금/환불)
+  amount        Int // 거래 금액
+  description   String? // 거래 설명
+  balanceBefore Int // 거래 전 잔액
+  balanceAfter  Int // 거래 후 잔액
+  createdAt     DateTime @default(now())
 
   // Relations
   budget UserBudget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
@@ -2012,14 +2013,14 @@ model UserBudgetTransaction {
 // 팀/랩
 model Team {
   id             String   @id @default(cuid())
-  organizationId String?  // FK to Organization (null = standalone team)
+  organizationId String? // FK to Organization (null = standalone team)
   name           String
   description    String?  @db.Text
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   // Relations
-  organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization     Organization?     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   members          TeamMember[]
   purchaseRequests PurchaseRequest[]
   budgets          Budget[]
@@ -2038,8 +2039,8 @@ model TeamMember {
   updatedAt DateTime @updatedAt
 
   // Relations
-  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  team Team  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@unique([userId, teamId])
   @@index([userId])
@@ -2053,29 +2054,29 @@ model TeamMember {
 
 // 구매 요청
 model PurchaseRequest {
-  id          String                @id @default(cuid())
-  requesterId String                // 요청자 ID
-  approverId  String?               // 승인자 ID (nullable)
-  teamId      String?               // 팀 ID
-  status      PurchaseRequestStatus @default(PENDING)
-  title       String                // 요청 제목
-  message     String?               @db.Text // 요청 메시지/메모
-  items       Json                  // 요청 품목 (JSON)
-  totalAmount Int?                  // 총 금액
-  quoteId     String?               // 연결된 견적 ID (선택적)
-  orderId     String?  @unique       // 승인 후 생성된 주문 ID
-  rejectedAt  DateTime?             // 거절 시각
-  rejectedReason String?            @db.Text // 거절 사유
-  approvedAt DateTime?              // 승인 시각
-  createdAt   DateTime              @default(now())
-  updatedAt   DateTime              @updatedAt
+  id             String                @id @default(cuid())
+  requesterId    String // 요청자 ID
+  approverId     String? // 승인자 ID (nullable)
+  teamId         String? // 팀 ID
+  status         PurchaseRequestStatus @default(PENDING)
+  title          String // 요청 제목
+  message        String?               @db.Text // 요청 메시지/메모
+  items          Json // 요청 품목 (JSON)
+  totalAmount    Int? // 총 금액
+  quoteId        String? // 연결된 견적 ID (선택적)
+  orderId        String?               @unique // 승인 후 생성된 주문 ID
+  rejectedAt     DateTime? // 거절 시각
+  rejectedReason String?               @db.Text // 거절 사유
+  approvedAt     DateTime? // 승인 시각
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
 
   // Relations
-  requester User    @relation("RequestedPurchases", fields: [requesterId], references: [id], onDelete: Cascade)
-  approver  User?   @relation("ApprovedPurchases", fields: [approverId], references: [id], onDelete: SetNull)
-  team      Team?   @relation(fields: [teamId], references: [id], onDelete: SetNull)
-  quote     Quote?  @relation(fields: [quoteId], references: [id], onDelete: SetNull)
-  order     Order?  @relation("PurchaseRequestOrder", fields: [orderId], references: [id], onDelete: SetNull)
+  requester User   @relation("RequestedPurchases", fields: [requesterId], references: [id], onDelete: Cascade)
+  approver  User?  @relation("ApprovedPurchases", fields: [approverId], references: [id], onDelete: SetNull)
+  team      Team?  @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  quote     Quote? @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  order     Order? @relation("PurchaseRequestOrder", fields: [orderId], references: [id], onDelete: SetNull)
 
   @@index([requesterId])
   @@index([approverId])
@@ -2090,10 +2091,10 @@ model PurchaseRequest {
 
 // 장바구니
 model Cart {
-  id        String     @id @default(cuid())
-  userId    String     @unique // 사용자당 하나의 장바구니
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id        String   @id @default(cuid())
+  userId    String   @unique // 사용자당 하나의 장바구니
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
   user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -2106,15 +2107,15 @@ model Cart {
 model CartItem {
   id            String   @id @default(cuid())
   cartId        String
-  productId     String?  // 제품 ID (있으면 연결)
-  productName   String   // 제품명
-  brand         String?  // 브랜드
-  catalogNumber String?  // 카탈로그 번호
+  productId     String? // 제품 ID (있으면 연결)
+  productName   String // 제품명
+  brand         String? // 브랜드
+  catalogNumber String? // 카탈로그 번호
   quantity      Int      @default(1) // 수량
-  unitPrice     Int?     // 단가 (KRW)
+  unitPrice     Int? // 단가 (KRW)
   notes         String?  @db.Text
   sourceType    String   @default("MANUAL") // MANUAL, REORDER, SEARCH
-  sourceId      String?  // 원본 ID (재주문 시 inventoryId 등)
+  sourceId      String? // 원본 ID (재주문 시 inventoryId 등)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -2139,28 +2140,28 @@ enum AuditAction {
 }
 
 enum AuditEntityType {
-  INVENTORY          // 재고 수량·메타 수정
-  INVENTORY_RESTOCK  // 입고 처리
-  INVENTORY_USE      // 출고(사용) 처리
-  BUDGET             // 예산 생성·변경·차감
-  QUOTE              // 견적 생성·수정·삭제
-  QUOTE_STATUS       // 견적 상태 변경(구매 완료 등)
-  USER               // 사용자 생성·수정·삭제
-  ORGANIZATION       // 조직 설정 변경
-  SETTINGS           // 시스템 설정 변경
-  INSPECTION         // 점검 기록 생성
-  AI_ACTION          // AI 작업 승인·무시·실행
+  INVENTORY // 재고 수량·메타 수정
+  INVENTORY_RESTOCK // 입고 처리
+  INVENTORY_USE // 출고(사용) 처리
+  BUDGET // 예산 생성·변경·차감
+  QUOTE // 견적 생성·수정·삭제
+  QUOTE_STATUS // 견적 상태 변경(구매 완료 등)
+  USER // 사용자 생성·수정·삭제
+  ORGANIZATION // 조직 설정 변경
+  SETTINGS // 시스템 설정 변경
+  INSPECTION // 점검 기록 생성
+  AI_ACTION // AI 작업 승인·무시·실행
 }
 
 model DataAuditLog {
   id             String          @id @default(cuid())
-  organizationId String?                          // 조직 격리용 FK (RLS)
-  userId         String?                          // 행위 수행자 (null = 시스템 자동)
-  action         AuditAction                      // CREATE | UPDATE | DELETE
-  entityType     AuditEntityType                  // 대상 도메인
-  entityId       String                           // 변경 대상 레코드 ID
-  previousData   Json?                            // UPDATE·DELETE 시 변경 전 스냅샷
-  newData        Json?                            // CREATE·UPDATE 시 변경 후 스냅샷
+  organizationId String? // 조직 격리용 FK (RLS)
+  userId         String? // 행위 수행자 (null = 시스템 자동)
+  action         AuditAction // CREATE | UPDATE | DELETE
+  entityType     AuditEntityType // 대상 도메인
+  entityId       String // 변경 대상 레코드 ID
+  previousData   Json? // UPDATE·DELETE 시 변경 전 스냅샷
+  newData        Json? // CREATE·UPDATE 시 변경 후 스냅샷
   ipAddress      String?
   userAgent      String?
   createdAt      DateTime        @default(now())
@@ -2182,14 +2183,14 @@ model DataAuditLog {
 model BillingInfo {
   id                 String   @id @default(cuid())
   organizationId     String   @unique
-  companyName        String                  // 회사명 (세금계산서용)
-  businessNumber     String?                 // 사업자등록번호
-  representativeName String?                 // 대표자명
-  contactName        String                  // 담당자명
-  contactEmail       String                  // 청구 이메일
-  contactPhone       String?                 // 연락처
-  address            String?                 // 주소
-  taxInvoiceEmail    String?                 // 세금계산서 수신 이메일 (별도)
+  companyName        String // 회사명 (세금계산서용)
+  businessNumber     String? // 사업자등록번호
+  representativeName String? // 대표자명
+  contactName        String // 담당자명
+  contactEmail       String // 청구 이메일
+  contactPhone       String? // 연락처
+  address            String? // 주소
+  taxInvoiceEmail    String? // 세금계산서 수신 이메일 (별도)
   notes              String?  @db.Text
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
@@ -2206,113 +2207,113 @@ model BillingInfo {
 
 /// A-1. 외부 입력 소스 유형
 enum IngestionSourceType {
-  EMAIL              // 이메일 수신 (SendGrid webhook 등)
-  ATTACHMENT         // 이메일 첨부파일
-  UPLOAD             // 사용자 직접 업로드
-  SYSTEM             // 시스템 연동 (ERP, 외부 API 등)
+  EMAIL // 이메일 수신 (SendGrid webhook 등)
+  ATTACHMENT // 이메일 첨부파일
+  UPLOAD // 사용자 직접 업로드
+  SYSTEM // 시스템 연동 (ERP, 외부 API 등)
 }
 
 /// A-2. 문서 분류 유형 — AI Classification 결과
 enum DocumentType {
-  VENDOR_QUOTE              // 벤더 견적서
-  VENDOR_REPLY              // 벤더 회신 (일반)
-  INVOICE                   // 세금계산서 / 인보이스
-  TRANSACTION_STATEMENT     // 거래명세서
-  PURCHASE_ORDER_DOCUMENT   // 발주서
-  DELIVERY_UPDATE           // 배송/납기 안내
-  RECEIVING_DOCUMENT        // 입고 확인서 / 수령증
-  UNKNOWN                   // 미분류
+  VENDOR_QUOTE // 벤더 견적서
+  VENDOR_REPLY // 벤더 회신 (일반)
+  INVOICE // 세금계산서 / 인보이스
+  TRANSACTION_STATEMENT // 거래명세서
+  PURCHASE_ORDER_DOCUMENT // 발주서
+  DELIVERY_UPDATE // 배송/납기 안내
+  RECEIVING_DOCUMENT // 입고 확인서 / 수령증
+  UNKNOWN // 미분류
 }
 
 /// A-5. 검증 상태 — Entity Linking 후 교차 검증 결과
 enum VerificationStatus {
-  AUTO_VERIFIED      // 링크 명확 + 핵심 필드 일치
-  REVIEW_NEEDED      // 링크 가능하나 일부 필드 불명확
-  MISMATCH           // 연결됨, 핵심 필드 충돌 (금액/수량 등)
-  MISSING            // 필수 문서/필드 누락
+  AUTO_VERIFIED // 링크 명확 + 핵심 필드 일치
+  REVIEW_NEEDED // 링크 가능하나 일부 필드 불명확
+  MISMATCH // 연결됨, 핵심 필드 충돌 (금액/수량 등)
+  MISSING // 필수 문서/필드 누락
 }
 
 /// A-6. Ingestion → Work Queue 매핑용 Task Type
 enum IngestionTaskType {
-  PURCHASE_EVIDENCE_REVIEW  // 구매 증빙 교차 검토
-  INVOICE_MISSING           // 세금계산서 누락
-  DOCUMENT_MISMATCH         // 문서 간 불일치 (금액, 수량)
-  VENDOR_REPLY_REVIEW       // 벤더 회신 검토 필요
-  DELIVERY_UPDATE_REVIEW    // 배송/납기 변경 검토
+  PURCHASE_EVIDENCE_REVIEW // 구매 증빙 교차 검토
+  INVOICE_MISSING // 세금계산서 누락
+  DOCUMENT_MISMATCH // 문서 간 불일치 (금액, 수량)
+  VENDOR_REPLY_REVIEW // 벤더 회신 검토 필요
+  DELIVERY_UPDATE_REVIEW // 배송/납기 변경 검토
 }
 
 /// A-7. 파이프라인 감사 이벤트 유형
 enum IngestionAuditAction {
-  INGESTION_RECEIVED               // 외부 입력 수신
-  DOCUMENT_CLASSIFIED              // AI 문서 분류 완료
-  EXTRACTION_COMPLETED             // AI 필드 추출 완료
-  ENTITY_LINKED                    // DB Entity 연결 완료
-  VERIFICATION_AUTO_VERIFIED       // 자동 검증 통과
-  VERIFICATION_REVIEW_REQUESTED    // 수동 검토 요청
-  VERIFICATION_MISMATCH_DETECTED   // 불일치 감지
-  VERIFICATION_MISSING_DETECTED    // 필수 항목 누락 감지
-  WORK_QUEUE_TASK_CREATED          // Work Queue Task 생성
+  INGESTION_RECEIVED // 외부 입력 수신
+  DOCUMENT_CLASSIFIED // AI 문서 분류 완료
+  EXTRACTION_COMPLETED // AI 필드 추출 완료
+  ENTITY_LINKED // DB Entity 연결 완료
+  VERIFICATION_AUTO_VERIFIED // 자동 검증 통과
+  VERIFICATION_REVIEW_REQUESTED // 수동 검토 요청
+  VERIFICATION_MISMATCH_DETECTED // 불일치 감지
+  VERIFICATION_MISSING_DETECTED // 필수 항목 누락 감지
+  WORK_QUEUE_TASK_CREATED // Work Queue Task 생성
 }
 
 /// A-1. IngestionEntry — 모든 외부 입력의 공통 진입점
 /// 이메일, 첨부파일, 업로드, 시스템 연동 등 모든 소스가 이 모델을 통해 파이프라인에 진입
 model IngestionEntry {
-  id                      String               @id @default(cuid())
-  organizationId          String
-  sourceType              IngestionSourceType
-  sourceRef               String?              // 원본 참조 (InboundEmail.id, Upload URL 등)
-  filename                String?
-  mimeType                String?
-  receivedAt              DateTime             @default(now())
-  uploaderId              String?              // 업로드한 사용자 (SYSTEM 소스일 경우 null)
+  id             String              @id @default(cuid())
+  organizationId String
+  sourceType     IngestionSourceType
+  sourceRef      String? // 원본 참조 (InboundEmail.id, Upload URL 등)
+  filename       String?
+  mimeType       String?
+  receivedAt     DateTime            @default(now())
+  uploaderId     String? // 업로드한 사용자 (SYSTEM 소스일 경우 null)
 
   // ── AI Classification 결과 (A-2) ──
-  documentType            DocumentType         @default(UNKNOWN)
-  classificationConfidence Float?              // 0.0 ~ 1.0
-  classifiedAt            DateTime?
+  documentType             DocumentType @default(UNKNOWN)
+  classificationConfidence Float? // 0.0 ~ 1.0
+  classifiedAt             DateTime?
 
   // ── AI Extraction 결과 (A-3, JSON 저장) ──
-  rawTextRef              String?              @db.Text  // 원본 텍스트 or S3 key
-  extractionResult        Json?                // ExtractionResult JSON (A-3 Interface 준수)
-  extractedAt             DateTime?
+  rawTextRef       String?   @db.Text // 원본 텍스트 or S3 key
+  extractionResult Json? // ExtractionResult JSON (A-3 Interface 준수)
+  extractedAt      DateTime?
 
   // ── Entity Linking 결과 (A-4) ──
-  linkedEntityType        String?              // "QUOTE" | "ORDER" | "PURCHASE" | "INVENTORY"
-  linkedEntityId          String?
-  linkingConfidence       Float?               // 0.0 ~ 1.0
-  linkedAt                DateTime?
+  linkedEntityType  String? // "QUOTE" | "ORDER" | "PURCHASE" | "INVENTORY"
+  linkedEntityId    String?
+  linkingConfidence Float? // 0.0 ~ 1.0
+  linkedAt          DateTime?
 
   // ── Verification 결과 (A-5) ──
-  verificationStatus      VerificationStatus?
-  verificationReason      String?              // 판정 사유 (자동 생성 설명)
-  mismatchedFields        Json?                // ["total_amount", "quantity"] 등
-  missingFields           Json?                // ["invoice_number", "tax_amount"] 등
-  verifiedAt              DateTime?
+  verificationStatus VerificationStatus?
+  verificationReason String? // 판정 사유 (자동 생성 설명)
+  mismatchedFields   Json? // ["total_amount", "quantity"] 등
+  missingFields      Json? // ["invoice_number", "tax_amount"] 등
+  verifiedAt         DateTime?
 
   // ── Work Queue 연동 (A-6) ──
-  workQueueTaskId         String?              // 생성된 AiActionItem.id (1:1 참조)
-  workQueueTaskType       IngestionTaskType?   // 매핑된 Task Type
+  workQueueTaskId   String? // 생성된 AiActionItem.id (1:1 참조)
+  workQueueTaskType IngestionTaskType? // 매핑된 Task Type
 
   // ── Policy Hook (가드레일 신호) ──
-  policyFlags             Json?                // { "budget_exceeded": true, "amount_threshold": 5000000 }
-  approvalRequired        Boolean              @default(false)
+  policyFlags      Json? // { "budget_exceeded": true, "amount_threshold": 5000000 }
+  approvalRequired Boolean @default(false)
 
   // ── Metadata ──
-  metadata                Json?                // 소스별 추가 정보 (이메일 헤더, 업로드 경로 등)
-  errorMessage            String?              @db.Text
+  metadata     Json? // 소스별 추가 정보 (이메일 헤더, 업로드 경로 등)
+  errorMessage String? @db.Text
 
-  createdAt               DateTime             @default(now())
-  updatedAt               DateTime             @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  organization            Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  uploader                User?                @relation("IngestionUploader", fields: [uploaderId], references: [id], onDelete: SetNull)
-  auditTrail              IngestionAuditLog[]
+  organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  uploader     User?               @relation("IngestionUploader", fields: [uploaderId], references: [id], onDelete: SetNull)
+  auditTrail   IngestionAuditLog[]
 
-  @@index([organizationId, documentType])        // 조직별 문서 유형 조회
-  @@index([organizationId, verificationStatus])  // 조직별 검증 상태 필터
-  @@index([linkedEntityType, linkedEntityId])    // Entity 역추적
-  @@index([sourceRef])                           // 원본 소스 역참조
+  @@index([organizationId, documentType]) // 조직별 문서 유형 조회
+  @@index([organizationId, verificationStatus]) // 조직별 검증 상태 필터
+  @@index([linkedEntityType, linkedEntityId]) // Entity 역추적
+  @@index([sourceRef]) // 원본 소스 역참조
   @@index([receivedAt])
   @@index([createdAt])
 }
@@ -2320,23 +2321,23 @@ model IngestionEntry {
 /// A-7. IngestionAuditLog — 파이프라인 단계별 감사 추적
 /// 각 IngestionEntry가 Classification → Extraction → Linking → Verification을 거칠 때마다 기록
 model IngestionAuditLog {
-  id                String                @id @default(cuid())
-  ingestionEntryId  String
-  action            IngestionAuditAction
-  actorType         String                @default("SYSTEM")  // "SYSTEM" | "USER"
-  actorId           String?               // User ID (수동 검토 시)
+  id               String               @id @default(cuid())
+  ingestionEntryId String
+  action           IngestionAuditAction
+  actorType        String               @default("SYSTEM") // "SYSTEM" | "USER"
+  actorId          String? // User ID (수동 검토 시)
 
   // 단계별 스냅샷
-  before            Json?                 // 변경 전 상태 스냅샷
-  after             Json?                 // 변경 후 상태 스냅샷
-  confidence        Float?                // 해당 단계 AI Confidence
-  durationMs        Int?                  // 처리 소요 시간 (ms)
-  errorMessage      String?               @db.Text
+  before       Json? // 변경 전 상태 스냅샷
+  after        Json? // 변경 후 상태 스냅샷
+  confidence   Float? // 해당 단계 AI Confidence
+  durationMs   Int? // 처리 소요 시간 (ms)
+  errorMessage String? @db.Text
 
-  createdAt         DateTime              @default(now())
+  createdAt DateTime @default(now())
 
   // Relations
-  ingestionEntry    IngestionEntry        @relation(fields: [ingestionEntryId], references: [id], onDelete: Cascade)
+  ingestionEntry IngestionEntry @relation(fields: [ingestionEntryId], references: [id], onDelete: Cascade)
 
   @@index([ingestionEntryId, action])
   @@index([createdAt])
@@ -2347,25 +2348,25 @@ model IngestionAuditLog {
 // ══════════════════════════════════════════════════════════
 
 enum AiActionType {
-  QUOTE_DRAFT            // RFQ 이메일 초안
-  VENDOR_EMAIL_DRAFT     // 벤더별 이메일 초안
-  REORDER_SUGGESTION     // 재발주 제안
-  EXPIRY_ALERT           // 만료 임박 알림
-  FOLLOWUP_DRAFT         // 후속 이메일 초안
+  QUOTE_DRAFT // RFQ 이메일 초안
+  VENDOR_EMAIL_DRAFT // 벤더별 이메일 초안
+  REORDER_SUGGESTION // 재발주 제안
+  EXPIRY_ALERT // 만료 임박 알림
+  FOLLOWUP_DRAFT // 후속 이메일 초안
   VENDOR_RESPONSE_PARSED // 벤더 회신 파싱 결과
-  STATUS_CHANGE_SUGGEST  // 상태 변경 제안
-  COMPARE_DECISION       // 비교 세션 판정 대기
-  RATIONALE_SUMMARY      // α-F (ADR §11.25) — AI 선택안 단일 라인 근거
+  STATUS_CHANGE_SUGGEST // 상태 변경 제안
+  COMPARE_DECISION // 비교 세션 판정 대기
+  RATIONALE_SUMMARY // α-F (ADR §11.25) — AI 선택안 단일 라인 근거
 }
 
 // ── Legacy 상태 (하위 호환) ──
 enum AiActionStatus {
-  PENDING     // 승인 대기
-  APPROVED    // 승인 완료
-  DISMISSED   // 무시됨
-  EXPIRED     // 자동 만료
-  EXECUTING   // 승인 후 실행 중
-  FAILED      // 실행 실패
+  PENDING // 승인 대기
+  APPROVED // 승인 완료
+  DISMISSED // 무시됨
+  EXPIRED // 자동 만료
+  EXECUTING // 승인 후 실행 중
+  FAILED // 실행 실패
 }
 
 enum AiActionPriority {
@@ -2380,22 +2381,22 @@ enum AiActionPriority {
 
 /// 글로벌 작업 상태 — 대시보드 필터/배지/정렬의 유일한 기준
 enum TaskStatus {
-  READY              // 초안 생성 완료, 검토 대기
-  REVIEW_NEEDED      // 사용자 검토(승인/수정) 필요
-  IN_PROGRESS        // 실행 중 (API 호출, 이메일 발송 등)
-  WAITING_RESPONSE   // 외부 응답 대기 (벤더 회신 등)
-  ACTION_NEEDED      // 즉시 조치 필요 (임박 알림, 재발주)
-  COMPLETED          // 최종 완료
-  FAILED             // 실행 실패
-  BLOCKED            // 선행 조건 미충족 (예산 부족, 권한 없음)
+  READY // 초안 생성 완료, 검토 대기
+  REVIEW_NEEDED // 사용자 검토(승인/수정) 필요
+  IN_PROGRESS // 실행 중 (API 호출, 이메일 발송 등)
+  WAITING_RESPONSE // 외부 응답 대기 (벤더 회신 등)
+  ACTION_NEEDED // 즉시 조치 필요 (임박 알림, 재발주)
+  COMPLETED // 최종 완료
+  FAILED // 실행 실패
+  BLOCKED // 선행 조건 미충족 (예산 부족, 권한 없음)
 }
 
 /// 결재/승인 상태 — TaskStatus와 독립 조합
 enum ApprovalStatus {
-  NOT_REQUIRED       // 승인 불필요 (알림 확인 등)
-  PENDING            // 승인 대기 중
-  APPROVED           // 승인됨
-  REJECTED           // 거절됨 (= DISMISSED)
+  NOT_REQUIRED // 승인 불필요 (알림 확인 등)
+  PENDING // 승인 대기 중
+  APPROVED // 승인됨
+  REJECTED // 거절됨 (= DISMISSED)
 }
 
 /// §11.209b-pre — 결재 정책 (workspace / PO candidate 단위 default).
@@ -2404,9 +2405,9 @@ enum ApprovalStatus {
 /// (guardrail.ts / quote-case-contract 의 "in_app_light" / "external_manual"
 /// 등) 정합은 별도 cluster 분리.
 enum ApprovalPolicy {
-  none               // 결재 불필요 (Lab Team Tier default)
-  in_app_approval    // LabAxis 내부 결재 (R&D Operations Tier default)
-  external_approval  // 외부 ERP/그룹웨어 결재 (Enterprise Tier 옵션)
+  none // 결재 불필요 (Lab Team Tier default)
+  in_app_approval // LabAxis 내부 결재 (R&D Operations Tier default)
+  external_approval // 외부 ERP/그룹웨어 결재 (Enterprise Tier 옵션)
 }
 
 /// §11.99b — POCandidate 단위 결재 상태. AiActionItem.approvalStatus 의
@@ -2414,59 +2415,59 @@ enum ApprovalPolicy {
 /// 더 세분화된 8 단계 (procurement-stage.ts 의 ApprovalStatus type alias 어휘
 /// 정합). 옵션 A — 별도 enum 이름 (POCandidateApprovalStatus) 으로 충돌 회피.
 enum POCandidateApprovalStatus {
-  not_required                  // 결재 불필요
-  external_approval_required    // 외부 결재 필요
-  external_approval_pending     // 외부 결재 대기 중
-  externally_approved           // 외부 결재 완료
-  externally_rejected           // 외부 결재 반려
-  in_app_approval_pending       // 내부 결재 대기 중
-  in_app_approved               // 내부 결재 완료
-  in_app_rejected               // 내부 결재 반려
+  not_required // 결재 불필요
+  external_approval_required // 외부 결재 필요
+  external_approval_pending // 외부 결재 대기 중
+  externally_approved // 외부 결재 완료
+  externally_rejected // 외부 결재 반려
+  in_app_approval_pending // 내부 결재 대기 중
+  in_app_approved // 내부 결재 완료
+  in_app_rejected // 내부 결재 반려
 }
 
 model AiActionItem {
-  id                String           @id @default(cuid())
-  type              AiActionType
-  status            AiActionStatus   @default(PENDING)   // Legacy — 기존 API 하위 호환
-  priority          AiActionPriority @default(MEDIUM)
+  id       String           @id @default(cuid())
+  type     AiActionType
+  status   AiActionStatus   @default(PENDING) // Legacy — 기존 API 하위 호환
+  priority AiActionPriority @default(MEDIUM)
 
   // ── 3-Layer 상태 분리 ──
-  taskStatus        TaskStatus       @default(READY)            // L1: 글로벌 작업 상태
-  approvalStatus    ApprovalStatus   @default(NOT_REQUIRED)     // L2: 결재 상태
-  substatus         String?          // L3: 도메인 세부 상태 (quote_draft_generated, order_followup_sent 등)
+  taskStatus     TaskStatus     @default(READY) // L1: 글로벌 작업 상태
+  approvalStatus ApprovalStatus @default(NOT_REQUIRED) // L2: 결재 상태
+  substatus      String? // L3: 도메인 세부 상태 (quote_draft_generated, order_followup_sent 등)
 
-  userId            String
-  organizationId    String?
-  assigneeId        String?          // 담당자 (조직 내 할당 가능)
+  userId         String
+  organizationId String?
+  assigneeId     String? // 담당자 (조직 내 할당 가능)
 
-  title             String           // 표시 제목 (예: "Anti-CD3 항체 외 3건 견적 초안")
-  summary           String?          // 1줄 요약 (대시보드 카드 서브텍스트)
-  description       String?          @db.Text
-  payload           Json             // 초안 데이터 (이메일 본문, 품목 리스트 등)
-  result            Json?            // 실행 결과 (생성된 quoteId 등)
+  title       String // 표시 제목 (예: "Anti-CD3 항체 외 3건 견적 초안")
+  summary     String? // 1줄 요약 (대시보드 카드 서브텍스트)
+  description String? @db.Text
+  payload     Json // 초안 데이터 (이메일 본문, 품목 리스트 등)
+  result      Json? // 실행 결과 (생성된 quoteId 등)
 
-  relatedEntityType String?          // "QUOTE", "ORDER", "INVENTORY"
-  relatedEntityId   String?          // 관련 레코드 ID
+  relatedEntityType String? // "QUOTE", "ORDER", "INVENTORY"
+  relatedEntityId   String? // 관련 레코드 ID
 
-  aiModel           String?          // 사용된 AI 모델 (예: "gpt-4o")
-  promptTokens      Int?             // 토큰 사용량 추적
-  completionTokens  Int?
+  aiModel          String? // 사용된 AI 모델 (예: "gpt-4o")
+  promptTokens     Int? // 토큰 사용량 추적
+  completionTokens Int?
 
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-  expiresAt         DateTime?        // 자동 만료 시각
-  resolvedAt        DateTime?        // 승인/무시 처리 시각
-  resolvedBy        String?          // 처리한 사용자 ID
-  completedAt       DateTime?        // 최종 완료 시각
-  failedAt          DateTime?        // 실패 시각
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  expiresAt   DateTime? // 자동 만료 시각
+  resolvedAt  DateTime? // 승인/무시 처리 시각
+  resolvedBy  String? // 처리한 사용자 ID
+  completedAt DateTime? // 최종 완료 시각
+  failedAt    DateTime? // 실패 시각
 
-  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization      Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
 
   @@index([userId, status])
   @@index([organizationId, status])
-  @@index([organizationId, taskStatus])  // 대시보드 Work Queue 조회
-  @@index([taskStatus, priority])         // 상태별 우선순위 정렬
+  @@index([organizationId, taskStatus]) // 대시보드 Work Queue 조회
+  @@index([taskStatus, priority]) // 상태별 우선순위 정렬
   @@index([type])
   @@index([status])
   @@index([createdAt])
@@ -2478,12 +2479,12 @@ model AiActionItem {
 // ══════════════════════════════════════════════════════════
 
 enum CanaryStage {
-  SHADOW      // AI 실행하되 결과 미적용, 비교 로그만
-  ACTIVE_5    // 5% 트래픽에 AI 적용
-  ACTIVE_25   // 25% 트래픽에 AI 적용
-  ACTIVE_50   // 50% 트래픽에 AI 적용
-  STABLE      // 100% AI 적용
-  KILLED      // Kill switch 발동 — 0% AI
+  SHADOW // AI 실행하되 결과 미적용, 비교 로그만
+  ACTIVE_5 // 5% 트래픽에 AI 적용
+  ACTIVE_25 // 25% 트래픽에 AI 적용
+  ACTIVE_50 // 50% 트래픽에 AI 적용
+  STABLE // 100% AI 적용
+  KILLED // Kill switch 발동 — 0% AI
 }
 
 enum ProcessingPath {
@@ -2505,16 +2506,16 @@ enum FallbackReason {
 
 // 문서 타입별 Canary 설정
 model CanaryConfig {
-  id                   String      @id @default(cuid())
-  documentType         String      @unique // QUOTE, INVOICE, ORDER, PURCHASE_ORDER
-  stage                CanaryStage @default(SHADOW)
-  confidenceThreshold  Float       @default(0.8)
-  autoVerifyEnabled    Boolean     @default(false)
-  killSwitchActive     Boolean     @default(false)
-  updatedBy            String      // userId
-  reason               String?     @db.Text
-  createdAt            DateTime    @default(now())
-  updatedAt            DateTime    @updatedAt
+  id                  String      @id @default(cuid())
+  documentType        String      @unique // QUOTE, INVOICE, ORDER, PURCHASE_ORDER
+  stage               CanaryStage @default(SHADOW)
+  confidenceThreshold Float       @default(0.8)
+  autoVerifyEnabled   Boolean     @default(false)
+  killSwitchActive    Boolean     @default(false)
+  updatedBy           String // userId
+  reason              String?     @db.Text
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
 
   @@index([documentType])
   @@index([stage])
@@ -2522,14 +2523,14 @@ model CanaryConfig {
 
 // Canary 조작 이력 (promote/hold/rollback/kill)
 model CanaryApprovalRecord {
-  id             String   @id @default(cuid())
-  documentType   String
-  action         String   // PROMOTE, HOLD, ROLLBACK, KILL_SWITCH_ON, KILL_SWITCH_OFF, AUTO_VERIFY_ON, AUTO_VERIFY_OFF
-  fromStage      String?
-  toStage        String?
-  performedBy    String   // userId
-  reason         String?  @db.Text
-  createdAt      DateTime @default(now())
+  id           String   @id @default(cuid())
+  documentType String
+  action       String // PROMOTE, HOLD, ROLLBACK, KILL_SWITCH_ON, KILL_SWITCH_OFF, AUTO_VERIFY_ON, AUTO_VERIFY_OFF
+  fromStage    String?
+  toStage      String?
+  performedBy  String // userId
+  reason       String?  @db.Text
+  createdAt    DateTime @default(now())
 
   @@index([documentType])
   @@index([performedBy])
@@ -2545,11 +2546,11 @@ model AiProcessingLog {
   processingPath    ProcessingPath
   fallbackReason    FallbackReason @default(NONE)
   confidence        Float?
-  model             String?        // gpt-4o-mini, gpt-4o
+  model             String? // gpt-4o-mini, gpt-4o
   latencyMs         Int?
   tokenUsage        Int?
-  comparisonDiff    Json?          // shadow mode: AI vs rule-based diff
-  mismatchCategory  String?        // FIELD_VALUE_DIFF, MISSING_FIELD, etc.
+  comparisonDiff    Json? // shadow mode: AI vs rule-based diff
+  mismatchCategory  String? // FIELD_VALUE_DIFF, MISSING_FIELD, etc.
   rollbackTriggered Boolean        @default(false)
   incidentTriggered Boolean        @default(false)
   createdAt         DateTime       @default(now())
@@ -2568,37 +2569,37 @@ model AiProcessingLog {
 // ── Stabilization Baseline ──
 
 model StabilizationBaseline {
-  id                          String   @id @default(cuid())
-  baselineSource              String   // e.g. "PACKAGE1_COMPLETE_NEW_AI_INTEGRATED"
-  baselineVersion             String
-  baselineHash                String
-  lifecycleState              String   // SHADOW | ACTIVE_5 | ACTIVE_25 | ACTIVE_50 | ACTIVE_100 | KILLED
-  releaseMode                 String   // CANARY_ROLLOUT | FULL_ACTIVE_STABILIZATION | POST_STABILIZATION
-  baselineStatus              String   // UNFROZEN | FROZEN | INVALIDATED
-  activeSnapshotId            String?
-  rollbackSnapshotId          String?
-  freezeReason                String?  @db.Text
-  activePathManifestId        String?
-  policySetVersion            String?
-  routingRuleVersion          String?
-  authorityRegistryVersion    String?
-  stabilizationOnly           Boolean  @default(true)
-  featureExpansionAllowed     Boolean  @default(false)
-  experimentalPathAllowed     Boolean  @default(false)
-  structuralRefactorAllowed   Boolean  @default(false)
-  devOnlyPathAllowed          Boolean  @default(false)
-  emergencyRollbackAllowed    Boolean  @default(true)
-  containmentPriorityEnabled  Boolean  @default(true)
-  auditStrictMode             Boolean  @default(true)
-  mergeGateStrictMode         Boolean  @default(true)
-  canonicalSlot               String?  @unique // "CANONICAL" when active; null when invalidated — DB-enforced singleton
-  createdAt                   DateTime @default(now())
-  updatedAt                   DateTime @updatedAt
+  id                         String   @id @default(cuid())
+  baselineSource             String // e.g. "PACKAGE1_COMPLETE_NEW_AI_INTEGRATED"
+  baselineVersion            String
+  baselineHash               String
+  lifecycleState             String // SHADOW | ACTIVE_5 | ACTIVE_25 | ACTIVE_50 | ACTIVE_100 | KILLED
+  releaseMode                String // CANARY_ROLLOUT | FULL_ACTIVE_STABILIZATION | POST_STABILIZATION
+  baselineStatus             String // UNFROZEN | FROZEN | INVALIDATED
+  activeSnapshotId           String?
+  rollbackSnapshotId         String?
+  freezeReason               String?  @db.Text
+  activePathManifestId       String?
+  policySetVersion           String?
+  routingRuleVersion         String?
+  authorityRegistryVersion   String?
+  stabilizationOnly          Boolean  @default(true)
+  featureExpansionAllowed    Boolean  @default(false)
+  experimentalPathAllowed    Boolean  @default(false)
+  structuralRefactorAllowed  Boolean  @default(false)
+  devOnlyPathAllowed         Boolean  @default(false)
+  emergencyRollbackAllowed   Boolean  @default(true)
+  containmentPriorityEnabled Boolean  @default(true)
+  auditStrictMode            Boolean  @default(true)
+  mergeGateStrictMode        Boolean  @default(true)
+  canonicalSlot              String?  @unique // "CANONICAL" when active; null when invalidated — DB-enforced singleton
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
 
   // relations
-  snapshots       StabilizationSnapshot[]
-  authorityLines  StabilizationAuthorityLine[]
-  incidents       StabilizationIncident[]
+  snapshots      StabilizationSnapshot[]
+  authorityLines StabilizationAuthorityLine[]
+  incidents      StabilizationIncident[]
 
   @@index([baselineVersion])
   @@index([lifecycleState])
@@ -2611,18 +2612,18 @@ model StabilizationBaseline {
 model StabilizationSnapshot {
   id                        String   @id @default(cuid())
   baselineId                String
-  snapshotType              String   // ACTIVE | ROLLBACK
+  snapshotType              String // ACTIVE | ROLLBACK
   configChecksum            String?
   flagChecksum              String?
   routingChecksum           String?
   authorityChecksum         String?
   policyChecksum            String?
   queueTopologyChecksum     String?
-  includedScopes            Json     // string[] — scope names
-  restoreVerificationStatus String?  // PENDING | VERIFIED | FAILED
-  scopePayload              Json?    // full scopes array: [{scope, data, checksum}]
-  configPayload             Json?    // full config object
-  capturedBy                String?  // operator identifier
+  includedScopes            Json // string[] — scope names
+  restoreVerificationStatus String? // PENDING | VERIFIED | FAILED
+  scopePayload              Json? // full scopes array: [{scope, data, checksum}]
+  configPayload             Json? // full config object
+  capturedBy                String? // operator identifier
   snapshotId                String?  @unique // legacy snapshotId for lookup
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
@@ -2642,8 +2643,8 @@ model StabilizationAuthorityLine {
   id                  String   @id @default(cuid())
   authorityLineId     String   @unique
   currentAuthorityId  String
-  authorityState      String   // ACTIVE | FROZEN | REVOKED | TRANSFERRED
-  transferState       String   // IDLE | LOCK_ACQUIRED | PENDING_VALIDATION | FINALIZED | ROLLED_BACK | ESCALATED
+  authorityState      String // ACTIVE | FROZEN | REVOKED | TRANSFERRED
+  transferState       String // IDLE | LOCK_ACQUIRED | PENDING_VALIDATION | FINALIZED | ROLLED_BACK | ESCALATED
   pendingSuccessorId  String?
   revokedAuthorityIds Json     @default("[]") // string[]
   registryVersion     String
@@ -2666,18 +2667,18 @@ model StabilizationAuthorityLine {
 // ── Stabilization Incident ──
 
 model StabilizationIncident {
-  id              String    @id @default(cuid())
-  incidentId      String    @unique
-  reasonCode      String
-  severity        String    // INFO | WARNING | CRITICAL
-  status          String    // OPEN | ACKNOWLEDGED | ESCALATED | RESOLVED | CLOSED
-  correlationId   String
-  baselineId      String?
-  snapshotId      String?
-  acknowledgedBy  String?
-  acknowledgedAt  DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  incidentId     String    @unique
+  reasonCode     String
+  severity       String // INFO | WARNING | CRITICAL
+  status         String // OPEN | ACKNOWLEDGED | ESCALATED | RESOLVED | CLOSED
+  correlationId  String
+  baselineId     String?
+  snapshotId     String?
+  acknowledgedBy String?
+  acknowledgedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   // relations
   baseline StabilizationBaseline? @relation(fields: [baselineId], references: [id])
@@ -2693,22 +2694,22 @@ model StabilizationIncident {
 // ── Stabilization Audit Event ──
 
 model StabilizationAuditEvent {
-  id              String   @id @default(cuid())
-  eventId         String   @unique
-  eventType       String   // StabilizationAuditEventType values
-  correlationId   String
-  incidentId      String?
-  baselineId      String?
-  snapshotId      String?
-  actor           String?
-  reasonCode      String?
-  severity        String?  // INFO | WARNING | CRITICAL
-  sourceModule    String?
-  entityType      String?
-  entityId        String?
-  resultStatus    String?  // ACCEPTED | DENIED | STARTED | COMPLETED | FAILED | ESCALATED
-  occurredAt      DateTime
-  recordedAt      DateTime @default(now())
+  id            String   @id @default(cuid())
+  eventId       String   @unique
+  eventType     String // StabilizationAuditEventType values
+  correlationId String
+  incidentId    String?
+  baselineId    String?
+  snapshotId    String?
+  actor         String?
+  reasonCode    String?
+  severity      String? // INFO | WARNING | CRITICAL
+  sourceModule  String?
+  entityType    String?
+  entityId      String?
+  resultStatus  String? // ACCEPTED | DENIED | STARTED | COMPLETED | FAILED | ESCALATED
+  occurredAt    DateTime
+  recordedAt    DateTime @default(now())
 
   @@index([correlationId])
   @@index([eventType])
@@ -2721,31 +2722,31 @@ model StabilizationAuditEvent {
 // ── Canonical Audit Event ──
 
 model CanonicalAuditEvent {
-  id                String   @id @default(cuid())
-  eventId           String   @unique
-  eventType         String
-  eventStage        String?
-  correlationId     String
-  incidentId        String?
-  timelineId        String
-  baselineId        String?
-  baselineVersion   String?
-  baselineHash      String?
-  lifecycleState    String?
-  releaseMode       String?
-  actor             String?
-  sourceModule      String
-  entityType        String
-  entityId          String
-  reasonCode        String
-  severity          String   // INFO | NOTICE | WARNING | ERROR | CRITICAL
-  occurredAt        DateTime
-  recordedAt        DateTime @default(now())
-  snapshotBeforeId  String?
-  snapshotAfterId   String?
-  affectedScopes    Json     @default("[]") // string[]
-  resultStatus      String   // ACCEPTED | DENIED | STARTED | COMPLETED | FAILED | ESCALATED | QUARANTINED
-  parentEventId     String?
+  id               String   @id @default(cuid())
+  eventId          String   @unique
+  eventType        String
+  eventStage       String?
+  correlationId    String
+  incidentId       String?
+  timelineId       String
+  baselineId       String?
+  baselineVersion  String?
+  baselineHash     String?
+  lifecycleState   String?
+  releaseMode      String?
+  actor            String?
+  sourceModule     String
+  entityType       String
+  entityId         String
+  reasonCode       String
+  severity         String // INFO | NOTICE | WARNING | ERROR | CRITICAL
+  occurredAt       DateTime
+  recordedAt       DateTime @default(now())
+  snapshotBeforeId String?
+  snapshotAfterId  String?
+  affectedScopes   Json     @default("[]") // string[]
+  resultStatus     String // ACCEPTED | DENIED | STARTED | COMPLETED | FAILED | ESCALATED | QUARANTINED
+  parentEventId    String?
 
   @@index([correlationId])
   @@index([timelineId])
@@ -2767,14 +2768,14 @@ enum StabilizationLockTarget {
 }
 
 model StabilizationLock {
-  id            String                   @id @default(cuid())
-  lockKey       String                   @unique
+  id            String                  @id @default(cuid())
+  lockKey       String                  @unique
   lockOwner     String
   lockToken     String
   targetType    StabilizationLockTarget
   reason        String
   correlationId String
-  acquiredAt    DateTime                 @default(now())
+  acquiredAt    DateTime                @default(now())
   expiresAt     DateTime
 
   @@index([targetType])
@@ -2818,15 +2819,15 @@ model StabilizationRecoveryRecord {
 
 // 알림 이벤트 — 비즈니스 이벤트 발생 기록
 model NotificationEvent {
-  id            String   @id @default(cuid())
-  eventType     String   // e.g. "QUOTE_RECEIVED", "ORDER_SHIPPED"
-  entityType    String   // e.g. "QUOTE", "ORDER", "INVENTORY"
-  entityId      String
-  triggeredBy   String?  // userId who triggered, null for system
-  metadata      Json?    // extra context
-  createdAt     DateTime @default(now())
+  id          String   @id @default(cuid())
+  eventType   String // e.g. "QUOTE_RECEIVED", "ORDER_SHIPPED"
+  entityType  String // e.g. "QUOTE", "ORDER", "INVENTORY"
+  entityId    String
+  triggeredBy String? // userId who triggered, null for system
+  metadata    Json? // extra context
+  createdAt   DateTime @default(now())
 
-  actions       NotificationAction[]
+  actions NotificationAction[]
 
   @@index([entityType, entityId])
   @@index([eventType])
@@ -2835,27 +2836,27 @@ model NotificationEvent {
 
 // 알림 액션 — 이벤트에서 파생된 개별 알림/작업
 model NotificationAction {
-  id             String   @id @default(cuid())
-  eventId        String
-  event          NotificationEvent @relation(fields: [eventId], references: [id])
+  id      String            @id @default(cuid())
+  eventId String
+  event   NotificationEvent @relation(fields: [eventId], references: [id])
 
-  actionType     String   // "IN_APP", "EMAIL_DRAFT", "QUEUE_ITEM", "ESCALATION"
-  recipientId    String?  // userId
+  actionType     String // "IN_APP", "EMAIL_DRAFT", "QUEUE_ITEM", "ESCALATION"
+  recipientId    String? // userId
   recipientEmail String?
 
-  status         String   @default("PENDING") // PENDING, GENERATED, REVIEWED, APPROVED, SENT, READ, FAILED
-  payload        Json?    // notification content
+  status  String @default("PENDING") // PENDING, GENERATED, REVIEWED, APPROVED, SENT, READ, FAILED
+  payload Json? // notification content
 
-  entityType     String   // denormalized for query
-  entityId       String   // denormalized for query
+  entityType String // denormalized for query
+  entityId   String // denormalized for query
 
-  reviewedBy     String?
-  reviewedAt     DateTime?
-  sentAt         DateTime?
-  readAt         DateTime?
+  reviewedBy String?
+  reviewedAt DateTime?
+  sentAt     DateTime?
+  readAt     DateTime?
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([recipientId, status])
   @@index([status])
@@ -2868,25 +2869,25 @@ model NotificationAction {
 
 // Approval 시점 PO baseline snapshot (dispatch changedFields diff 계산용)
 model ApprovalBaseline {
-  id                 String   @id @default(cuid())
-  poNumber           String
-  approvalDecidedAt  String   // ISO datetime — approval 결정 시각
-  capturedAt         String   // ISO datetime — snapshot 저장 시각
+  id                String @id @default(cuid())
+  poNumber          String
+  approvalDecidedAt String // ISO datetime — approval 결정 시각
+  capturedAt        String // ISO datetime — snapshot 저장 시각
 
   // diff 계산용 최소 필드 집합
-  totalAmount        Float
-  vendorId           String
-  paymentTerms       String?
-  incoterms          String?
-  shippingRegion     String
-  billToEntity       String
-  shipToLocation     String
-  notes              String?
-  lineCount          Int
+  totalAmount    Float
+  vendorId       String
+  paymentTerms   String?
+  incoterms      String?
+  shippingRegion String
+  billToEntity   String
+  shipToLocation String
+  notes          String?
+  lineCount      Int
 
-  invalidatedAt      DateTime?  // targeted invalidation 시 soft-delete
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  invalidatedAt DateTime? // targeted invalidation 시 soft-delete
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@unique([poNumber, approvalDecidedAt])
   @@index([poNumber])
@@ -2894,14 +2895,14 @@ model ApprovalBaseline {
 
 // Dispatch outbound execution history (schedule/cancel lineage)
 model OutboundHistory {
-  id         String   @id @default(cuid())
-  poId       String
-  seqIndex   Int      // history 배열 내 순서 (0-based)
+  id       String @id @default(cuid())
+  poId     String
+  seqIndex Int // history 배열 내 순서 (0-based)
 
-  recordType String   // "schedule" | "cancel" | "cancel_prep"
-  payload    Json     // DispatchOutboundRecord 전체 직렬화
+  recordType String // "schedule" | "cancel" | "cancel_prep"
+  payload    Json // DispatchOutboundRecord 전체 직렬화
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([poId, seqIndex])
   @@index([poId])
@@ -2912,60 +2913,63 @@ model OutboundHistory {
 // order_queue (Supabase) 와는 별도 — 여기는 multi-line items + 선정 사유 + blocker 등
 // presentation-enriched 필드를 보관한다.
 model POCandidate {
-  id               String   @id @default(cuid())
-  userId           String
-  organizationId   String?
+  id             String  @id @default(cuid())
+  userId         String
+  organizationId String?
+  quoteId        String? // §pocandidate-root-fix — 발주 대상 견적 결속(SetNull)
 
-  title            String                     // "Thermo Fisher FBS 외 2건"
+  title            String // "Thermo Fisher FBS 외 2건"
   vendor           String
-  totalAmount      Int                        // KRW
+  totalAmount      Int // KRW
   expectedDelivery DateTime?
-  selectionReason  String?  @db.Text          // AI 선정 사유
-  blockers         String[] @default([])      // blocker 문자열 배열
+  selectionReason  String?                   @db.Text // AI 선정 사유
+  blockers         String[]                  @default([]) // blocker 문자열 배열
   // §11.209b-pre — String → ApprovalPolicy enum 통일. application code 의
   // string literal "none" / "in_app_approval" / "external_approval" 그대로
   // 호환 (Prisma 가 enum value 와 string literal 자동 매핑).
-  approvalPolicy   ApprovalPolicy @default(none)
+  approvalPolicy   ApprovalPolicy            @default(none)
   // §11.99b — String → POCandidateApprovalStatus enum 통일 (옵션 A —
   // AiActionItem.approvalStatus 의 ApprovalStatus enum 과 분리, 별도 이름).
   approvalStatus   POCandidateApprovalStatus @default(not_required)
-  stage            String   @default("po_conversion_candidate") // ProcurementStage (string)
+  stage            String                    @default("po_conversion_candidate") // ProcurementStage (string)
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  items            POCandidateItem[]
+  items  POCandidateItem[]
   // #post-approval-purchase-order-flow Phase 1.2 — POCandidate → Order 1:1 매핑
-  orders           Order[]
+  orders Order[]
+  quote  Quote?            @relation(fields: [quoteId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([organizationId])
   @@index([stage])
+  @@index([quoteId])
 }
 
 model POCandidateItem {
-  id             String @id @default(cuid())
-  candidateId    String
-  name           String
-  catalogNumber  String
-  quantity       Int    @default(1)
-  unitPrice      Int
-  lineTotal      Int
-  leadTime       String @default("")
+  id            String @id @default(cuid())
+  candidateId   String
+  name          String
+  catalogNumber String
+  quantity      Int    @default(1)
+  unitPrice     Int
+  lineTotal     Int
+  leadTime      String @default("")
 
-  candidate      POCandidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidate POCandidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
 
   @@index([candidateId])
 }
 
 // Step 1 Review Queue Draft (sessionStorage → DB 영속화)
 model ReviewQueueDraft {
-  id         String   @id @default(cuid())
-  userId     String
-  payload    Json     // ReviewQueueItem[] 전체 직렬화
+  id      String @id @default(cuid())
+  userId  String
+  payload Json // ReviewQueueItem[] 전체 직렬화
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId])
   @@index([userId])
@@ -2973,13 +2977,13 @@ model ReviewQueueDraft {
 
 // Governance event publish dedupe (cross-session 중복 방지)
 model GovernanceEventDedupe {
-  id            String   @id @default(cuid())
-  poNumber      String
-  eventType     String
-  signatureKey  String
+  id           String @id @default(cuid())
+  poNumber     String
+  eventType    String
+  signatureKey String
 
-  publishedAt   DateTime @default(now())
-  expiresAt     DateTime  // TTL 만료 시각
+  publishedAt DateTime @default(now())
+  expiresAt   DateTime // TTL 만료 시각
 
   @@unique([poNumber, eventType, signatureKey])
   @@index([poNumber])
@@ -2991,25 +2995,25 @@ model GovernanceEventDedupe {
 // Security enforcement middleware가 기록하는 irreversible action evidence.
 // UPDATE/DELETE 금지 — INSERT + SELECT only.
 model GovernanceAuditLog {
-  id                    String   @id @default(cuid())
-  eventId               String   @unique               // audit_xxxx_xxx 형식
-  correlationId         String                          // 요청 단위 추적
-  actorUserId           String                          // 행위자 user ID
-  actorRole             String                          // 행위자 시스템 역할
-  actionType            String                          // irreversible action type
-  targetEntityType      String                          // po, quote, dispatch, approval 등
-  targetEntityId        String                          // 대상 entity ID
-  occurredAt            DateTime                        // 이벤트 발생 시각
-  snapshotVersion       String   @default("v0")         // 스냅샷 버전
-  beforeHash            String                          // 변경 전 상태 hash
-  afterHash             String                          // 변경 후 상태 hash
-  rationale             String?  @db.Text               // 결재 사유
-  reasonCode            String                          // action reason code
-  sourceSurface         String                          // UI surface 출처
-  previousEnvelopeHash  String                          // 이전 envelope hash (chain)
-  envelopeHash          String   @unique                // 이 envelope 자체 hash
-  securityClassification String  @default("audit_evidence") // internal_only, governance_restricted, audit_evidence, supplier_facing
-  createdAt             DateTime @default(now())
+  id                     String   @id @default(cuid())
+  eventId                String   @unique // audit_xxxx_xxx 형식
+  correlationId          String // 요청 단위 추적
+  actorUserId            String // 행위자 user ID
+  actorRole              String // 행위자 시스템 역할
+  actionType             String // irreversible action type
+  targetEntityType       String // po, quote, dispatch, approval 등
+  targetEntityId         String // 대상 entity ID
+  occurredAt             DateTime // 이벤트 발생 시각
+  snapshotVersion        String   @default("v0") // 스냅샷 버전
+  beforeHash             String // 변경 전 상태 hash
+  afterHash              String // 변경 후 상태 hash
+  rationale              String?  @db.Text // 결재 사유
+  reasonCode             String // action reason code
+  sourceSurface          String // UI surface 출처
+  previousEnvelopeHash   String // 이전 envelope hash (chain)
+  envelopeHash           String   @unique // 이 envelope 자체 hash
+  securityClassification String   @default("audit_evidence") // internal_only, governance_restricted, audit_evidence, supplier_facing
+  createdAt              DateTime @default(now())
 
   @@index([correlationId])
   @@index([actorUserId])
@@ -3025,23 +3029,23 @@ model GovernanceAuditLog {
 
 /// 지출 카테고리 (관리자가 추가/수정/삭제 가능)
 model SpendingCategory {
-  id              String    @id @default(cuid())
-  organizationId  String
-  name            String    // 내부 키 (org 내 유일)
-  displayName     String    // 표시명 (한국어)
-  description     String?
-  color           String    @default("#6366f1") // tailwind indigo-500
-  icon            String?   // lucide icon name (e.g. "Beaker", "Package")
-  sortOrder       Int       @default(0)
-  isActive        Boolean   @default(true)
-  isDefault       Boolean   @default(false) // 시드 카테고리 여부
-  archivedAt      DateTime? // null=활성, 값 있으면 아카이브된 시각
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  organizationId String
+  name           String // 내부 키 (org 내 유일)
+  displayName    String // 표시명 (한국어)
+  description    String?
+  color          String    @default("#6366f1") // tailwind indigo-500
+  icon           String? // lucide icon name (e.g. "Beaker", "Package")
+  sortOrder      Int       @default(0)
+  isActive       Boolean   @default(true)
+  isDefault      Boolean   @default(false) // 시드 카테고리 여부
+  archivedAt     DateTime? // null=활성, 값 있으면 아카이브된 시각
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  organization     Organization     @relation(fields: [organizationId], references: [id])
-  budgets          CategoryBudget[]
-  purchaseRecords  PurchaseRecord[] // normalizedCategoryId FK
+  organization    Organization     @relation(fields: [organizationId], references: [id])
+  budgets         CategoryBudget[]
+  purchaseRecords PurchaseRecord[] // normalizedCategoryId FK
 
   @@unique([organizationId, name])
   @@index([organizationId, isActive])
@@ -3049,22 +3053,22 @@ model SpendingCategory {
 
 /// 카테고리별 월간 예산 한도
 model CategoryBudget {
-  id               String    @id @default(cuid())
+  id               String   @id @default(cuid())
   organizationId   String
   categoryId       String
-  yearMonth        String    // "YYYY-MM"
-  amount           Int       // 예산 금액 (KRW)
-  currency         String    @default("KRW")
-  warningPercent   Int       @default(70)   // 경고 임계치
-  softLimitPercent Int       @default(90)   // 소프트 리밋
-  hardStopPercent  Int       @default(100)  // 하드 스톱
-  controlRules     Json?     // ["warning","soft_limit","hard_stop"] 등
-  isActive         Boolean   @default(true)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  yearMonth        String // "YYYY-MM"
+  amount           Int // 예산 금액 (KRW)
+  currency         String   @default("KRW")
+  warningPercent   Int      @default(70) // 경고 임계치
+  softLimitPercent Int      @default(90) // 소프트 리밋
+  hardStopPercent  Int      @default(100) // 하드 스톱
+  controlRules     Json? // ["warning","soft_limit","hard_stop"] 등
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  organization     Organization     @relation(fields: [organizationId], references: [id])
-  category         SpendingCategory @relation(fields: [categoryId], references: [id])
+  organization Organization     @relation(fields: [organizationId], references: [id])
+  category     SpendingCategory @relation(fields: [categoryId], references: [id])
 
   @@unique([organizationId, categoryId, yearMonth])
   @@index([organizationId, yearMonth])
@@ -3075,25 +3079,25 @@ model CategoryBudget {
 // reserve(approve) / release(reverse/cancel/void/reclass) 이벤트를 기록.
 // budget_event_key unique 제약으로 동일 이벤트 중복 실행 방지.
 model BudgetEvent {
-  id                String    @id @default(cuid())
-  organizationId    String
+  id               String   @id @default(cuid())
+  organizationId   String
   // idempotency key: orgId + sourceEntityId + eventType + sequence
   // 예: "org-1:req-abc:approval_reserved:1"
-  budgetEventKey    String    @unique
-  eventType         String    // approval_reserved | approval_reversed | request_cancel_released | po_void_released | category_reclass_release_reapply
-  sourceEntityType  String    // purchase_request | order
-  sourceEntityId    String
-  categoryId        String?
-  yearMonth         String    // period key의 YYYY-MM 부분
-  amount            Int       // 양수: reserve/release, 음수: reapply
-  preCommitted      Int       // 이벤트 전 committed
-  postCommitted     Int       // 이벤트 후 committed
+  budgetEventKey   String   @unique
+  eventType        String // approval_reserved | approval_reversed | request_cancel_released | po_void_released | category_reclass_release_reapply
+  sourceEntityType String // purchase_request | order
+  sourceEntityId   String
+  categoryId       String?
+  yearMonth        String // period key의 YYYY-MM 부분
+  amount           Int // 양수: reserve/release, 음수: reapply
+  preCommitted     Int // 이벤트 전 committed
+  postCommitted    Int // 이벤트 후 committed
   // gate decision 전체 (BudgetGateAuditEvent JSON)
-  decisionPayload   Json?
-  executedBy        String
-  executedAt        DateTime  @default(now())
+  decisionPayload  Json?
+  executedBy       String
+  executedAt       DateTime @default(now())
 
-  organization      Organization @relation(fields: [organizationId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
 
   @@index([organizationId, yearMonth])
   @@index([sourceEntityId])
@@ -3106,30 +3110,30 @@ model BudgetEvent {
 // append-only — UPDATE/DELETE 금지, INSERT + SELECT only.
 // replay/duplicate retry가 들어와도 auditEventKey unique 제약으로 중복 증식 방지.
 model MutationAuditEvent {
-  id                    String    @id @default(cuid())
+  id                     String   @id @default(cuid())
   // idempotency key: orgId:route:entityId:action:sequence
-  auditEventKey         String    @unique
-  occurredAt            DateTime  @default(now())
-  orgId                 String
-  actorId               String                            // userId or "system"
-  route                 String                            // /api/request/[id]/approve 등
-  action                String                            // purchase_request_approve, purchase_request_cancel 등
-  entityType            String                            // purchase_request, order, purchase_record, invite
-  entityId              String
-  result                String                            // success, blocked, error
-  correlationId         String                            // enforcement correlationId
+  auditEventKey          String   @unique
+  occurredAt             DateTime @default(now())
+  orgId                  String
+  actorId                String // userId or "system"
+  route                  String // /api/request/[id]/approve 등
+  action                 String // purchase_request_approve, purchase_request_cancel 등
+  entityType             String // purchase_request, order, purchase_record, invite
+  entityId               String
+  result                 String // success, blocked, error
+  correlationId          String // enforcement correlationId
   // domain-specific context fields (nullable — route에 따라 다름)
-  requestId             String?
-  orderId               String?
-  purchaseRecordId      String?
-  periodKey             String?                           // orgId:categoryId:YYYY-MM
-  normalizedCategoryId  String?
-  amount                Int?
-  thresholds            Json?                             // { warningPercent, softLimitPercent, hardStopPercent }
-  decisionBasis         Json?                             // BudgetGateDecisionBasis[] or full decision payload
-  budgetEventKey        String?                           // 연결된 BudgetEvent의 idempotency key
-  compensatingForEventId String?                          // reopen/reverse 시 원본 event 참조
-  recordedAt            DateTime  @default(now())
+  requestId              String?
+  orderId                String?
+  purchaseRecordId       String?
+  periodKey              String? // orgId:categoryId:YYYY-MM
+  normalizedCategoryId   String?
+  amount                 Int?
+  thresholds             Json? // { warningPercent, softLimitPercent, hardStopPercent }
+  decisionBasis          Json? // BudgetGateDecisionBasis[] or full decision payload
+  budgetEventKey         String? // 연결된 BudgetEvent의 idempotency key
+  compensatingForEventId String? // reopen/reverse 시 원본 event 참조
+  recordedAt             DateTime @default(now())
 
   @@index([orgId, occurredAt])
   @@index([entityType, entityId])
@@ -3143,18 +3147,18 @@ model MutationAuditEvent {
 // /support 페이지에서 접수된 문의. 로그인 불필요.
 // 운영 티켓이 아니라 리드/문의 인입 폼. append-only.
 model ContactInquiry {
-  id            String   @id @default(cuid())
-  referenceId   String   @unique  // 사용자에게 노출되는 참조 번호 (INQ-YYYYMMDD-XXXX)
-  inquiryType   String             // service, pricing, sourcing, account
-  name          String             // 이름 또는 기관명
-  email         String             // 연락 이메일
-  message       String   @db.Text  // 문의 내용
-  status        String   @default("received")  // received, reviewed, replied, closed
-  ipAddress     String?            // 스팸 방지용 (선택적)
-  userAgent     String?  @db.Text  // 접속 환경 (선택적)
-  createdAt     DateTime @default(now())
-  reviewedAt    DateTime?          // 담당자 확인 시각
-  repliedAt     DateTime?          // 답변 시각
+  id          String    @id @default(cuid())
+  referenceId String    @unique // 사용자에게 노출되는 참조 번호 (INQ-YYYYMMDD-XXXX)
+  inquiryType String // service, pricing, sourcing, account
+  name        String // 이름 또는 기관명
+  email       String // 연락 이메일
+  message     String    @db.Text // 문의 내용
+  status      String    @default("received") // received, reviewed, replied, closed
+  ipAddress   String? // 스팸 방지용 (선택적)
+  userAgent   String?   @db.Text // 접속 환경 (선택적)
+  createdAt   DateTime  @default(now())
+  reviewedAt  DateTime? // 담당자 확인 시각
+  repliedAt   DateTime? // 답변 시각
 
   @@index([email])
   @@index([inquiryType])
@@ -3175,8 +3179,8 @@ model ContactInquiry {
 // 비교 metric 추가. 데이터 누적 후 자동 활성.
 model DashboardStatsSnapshot {
   id             String   @id @default(cuid())
-  organizationId String?  // 조직별 분리 (multi-tenant)
-  userId         String?  // 개인별 (organization 부재 시)
+  organizationId String? // 조직별 분리 (multi-tenant)
+  userId         String? // 개인별 (organization 부재 시)
   capturedAt     DateTime @default(now())
 
   // 핵심 KPI metrics (향후 trend 산출 source)
@@ -3214,45 +3218,45 @@ model DashboardStatsSnapshot {
 // OcrResult = provider 별 호출 결과 (1:N) — cross-validation 위함.
 // finalResult = 최종 채택된 결과 (canonical winner, 사용자 confirm 전).
 enum OcrJobType {
-  LABEL  // 시약 라벨
-  QUOTE  // 견적서 / 거래명세서
+  LABEL // 시약 라벨
+  QUOTE // 견적서 / 거래명세서
 }
 
 enum OcrJobStatus {
-  PENDING       // 생성 직후
-  RUNNING       // provider 호출 중
-  SUCCESS       // confidence ≥ 0.85, auto prefill 가능
-  FAILED        // 모든 provider 실패
-  NEEDS_REVIEW  // confidence < 0.7, 수동 보정 필요
+  PENDING // 생성 직후
+  RUNNING // provider 호출 중
+  SUCCESS // confidence ≥ 0.85, auto prefill 가능
+  FAILED // 모든 provider 실패
+  NEEDS_REVIEW // confidence < 0.7, 수동 보정 필요
 }
 
 enum OcrProvider {
-  GEMINI                // 1차: Gemini 2.5 Flash multimodal
-  CLOUD_VISION_CLAUDE   // 2차: Cloud Vision OCR + Claude 구조화
-  REGEX                 // 3차: label-parser.ts regex/heuristic fallback
+  GEMINI // 1차: Gemini 2.5 Flash multimodal
+  CLOUD_VISION_CLAUDE // 2차: Cloud Vision OCR + Claude 구조화
+  REGEX // 3차: label-parser.ts regex/heuristic fallback
 }
 
 model OcrJob {
-  id             String       @id @default(cuid())
-  organizationId String       // tenant 분리
-  userId         String       // scan 실행자
+  id             String             @id @default(cuid())
+  organizationId String // tenant 분리
+  userId         String // scan 실행자
   type           OcrJobType
-  imageUrl       String       // Vercel Blob URL (영구 저장)
-  imageHash      String       // SHA-256(imageBase64) — cache lookup key
-  status         OcrJobStatus @default(PENDING)
-  results        OcrResult[]  @relation("OcrJobResults")
-  finalResult    OcrResult?   @relation("OcrJobFinal", fields: [finalResultId], references: [id])
-  finalResultId  String?      @unique
+  imageUrl       String // Vercel Blob URL (영구 저장)
+  imageHash      String // SHA-256(imageBase64) — cache lookup key
+  status         OcrJobStatus       @default(PENDING)
+  results        OcrResult[]        @relation("OcrJobResults")
+  finalResult    OcrResult?         @relation("OcrJobFinal", fields: [finalResultId], references: [id])
+  finalResultId  String?            @unique
   // §11.290 Phase 6.b — cache hit audit back-relation (정확 cacheHitRatio metric)
   cacheHits      OcrCacheHit[]
   // §11.309a — 스마트 입고 back-relation. 한 OCR job 으로 여러 receiving 생성
   // 가능 (예: 거래명세서 다수 품목 일괄 입고).
   restocks       InventoryRestock[]
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 
   @@index([organizationId, type])
-  @@index([imageHash])  // cache lookup O(log n)
+  @@index([imageHash]) // cache lookup O(log n)
 }
 
 // §11.290 Phase 6.b — 정확 cache hit count audit.
@@ -3262,10 +3266,10 @@ model OcrJob {
 model OcrCacheHit {
   id             String   @id @default(cuid())
   cachedJob      OcrJob   @relation(fields: [cachedJobId], references: [id], onDelete: Cascade)
-  cachedJobId    String   // cache hit 의 source OcrJob.id
-  organizationId String   // tenant 분리 (multi-tenant aggregation)
-  userId         String   // cache hit 트리거한 사용자
-  imageHash      String   // SHA-256 (audit / debug)
+  cachedJobId    String // cache hit 의 source OcrJob.id
+  organizationId String // tenant 분리 (multi-tenant aggregation)
+  userId         String // cache hit 트리거한 사용자
+  imageHash      String // SHA-256 (audit / debug)
   hitAt          DateTime @default(now())
 
   @@index([organizationId, hitAt])
@@ -3273,22 +3277,21 @@ model OcrCacheHit {
 }
 
 model OcrResult {
-  id             String      @id @default(cuid())
-  jobId          String
-  job            OcrJob      @relation("OcrJobResults", fields: [jobId], references: [id], onDelete: Cascade)
-  provider       OcrProvider
-  parsedFields   Json        // LabelParseResult | ParsedQuoteDocument shape
-  confidence     Float       // 0.0 ~ 1.0
-  rawText        String?     @db.Text // OCR raw text (regex caller 검증용)
-  costUsd        Float       // per-call cost (e.g. 0.001 Gemini, 0.0015 Vision, 0.03 Claude)
-  latencyMs      Int         // call latency for monitoring
-  errorMessage   String?     @db.Text // fallback chain audit
-  createdAt      DateTime    @default(now())
-  finalForJob    OcrJob?     @relation("OcrJobFinal")  // back-relation for finalResult
+  id           String      @id @default(cuid())
+  jobId        String
+  job          OcrJob      @relation("OcrJobResults", fields: [jobId], references: [id], onDelete: Cascade)
+  provider     OcrProvider
+  parsedFields Json // LabelParseResult | ParsedQuoteDocument shape
+  confidence   Float // 0.0 ~ 1.0
+  rawText      String?     @db.Text // OCR raw text (regex caller 검증용)
+  costUsd      Float // per-call cost (e.g. 0.001 Gemini, 0.0015 Vision, 0.03 Claude)
+  latencyMs    Int // call latency for monitoring
+  errorMessage String?     @db.Text // fallback chain audit
+  createdAt    DateTime    @default(now())
+  finalForJob  OcrJob?     @relation("OcrJobFinal") // back-relation for finalResult
 
   @@index([jobId])
 }
-
 
 // =====================================================
 // §11.348-A — 발주→회신→입고 폐루프 (검증 대기 입고안)
@@ -3303,27 +3306,27 @@ model OcrResult {
 enum ReceivingDraftStatus {
   AWAITING_REPLY // 발주 후 회신 대기 (링크 발송, 미회신)
   PENDING_REVIEW // 공급사 회신 도착 → 사람 검증 대기
-  APPROVED       // 승인 → 입고 확정(InventoryRestock 생성됨)
-  REJECTED       // 반려
-  EXPIRED        // 링크 만료
+  APPROVED // 승인 → 입고 확정(InventoryRestock 생성됨)
+  REJECTED // 반려
+  EXPIRED // 링크 만료
 }
 
 model ReceivingDraft {
   id              String               @id @default(cuid())
-  orderId         String               // FK to Order(PO)
-  userId          String               // 발주 주체/감사 소유자
-  organizationId  String?              // 조직 스코프
-  vendorId        String?              // 회신한 공급사
+  orderId         String // FK to Order(PO)
+  userId          String // 발주 주체/감사 소유자
+  organizationId  String? // 조직 스코프
+  vendorId        String? // 회신한 공급사
   token           String               @unique // 공급사 회신 링크 공개 토큰 (A-1)
   status          ReceivingDraftStatus @default(AWAITING_REPLY)
-  submittedAt     DateTime?            // 공급사 회신 제출 시각
-  reviewedAt      DateTime?            // 사람 검증(승인/반려) 시각
-  approvedById    String?              // 승인자 (audit, scalar)
+  submittedAt     DateTime? // 공급사 회신 제출 시각
+  reviewedAt      DateTime? // 사람 검증(승인/반려) 시각
+  approvedById    String? // 승인자 (audit, scalar)
   rejectedReason  String?              @db.Text
   vendorNote      String?              @db.Text // 공급사 회신 메모
-  snapshot        Json?                // 발송 시점 PO 스냅샷 (회신 폼 freeze)
-  expiresAt       DateTime             // 링크 만료
-  restockSyncedAt DateTime?            // InventoryRestock 생성 완료 시각 (이중 입고 idempotent 가드)
+  snapshot        Json? // 발송 시점 PO 스냅샷 (회신 폼 freeze)
+  expiresAt       DateTime // 링크 만료
+  restockSyncedAt DateTime? // InventoryRestock 생성 완료 시각 (이중 입고 idempotent 가드)
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
 
@@ -3346,13 +3349,13 @@ model ReceivingDraft {
 model ReceivingDraftItem {
   id               String    @id @default(cuid())
   receivingDraftId String
-  orderItemId      String?   // PO 품목 매핑 (scalar — OrderItem.productId 선례)
-  productId        String?   // 제품 매핑 (승인 시 InventoryRestock 대상)
-  name             String    // 품목명 (스냅샷)
-  expectedQuantity Float?    // PO 발주 수량
-  receivedQuantity Float?    // 공급사 회신 실수량
+  orderItemId      String? // PO 품목 매핑 (scalar — OrderItem.productId 선례)
+  productId        String? // 제품 매핑 (승인 시 InventoryRestock 대상)
+  name             String // 품목명 (스냅샷)
+  expectedQuantity Float? // PO 발주 수량
+  receivedQuantity Float? // 공급사 회신 실수량
   unit             String?
-  lotNumber        String?   // 회신 LOT
+  lotNumber        String? // 회신 LOT
   expiryDate       DateTime? // 회신 유효기간
   vendorNote       String?   @db.Text
 
@@ -3360,17 +3363,17 @@ model ReceivingDraftItem {
   //   receivedQuantity = 공급사 회신값(주장). inspectedQuantity = 검수자 실측값.
   //   둘을 분리 보존해야 "몇 개 부족했는지"의 근거가 남는다(GMP 추적성·분쟁 대응).
   //   재고 반영은 inspectedQuantity 기준(미입력 시 미반영 — 판정 없이 반영 금지).
-  inspectedQuantity  Float?    // 검수 실측 수령 수량
-  decision           String?   // "PASS" | "FAIL" (null = 미판정)
-  decidedAt          DateTime?
-  decidedById        String?   // 판정 담당자(감사)
+  inspectedQuantity Float? // 검수 실측 수령 수량
+  decision          String? // "PASS" | "FAIL" (null = 미판정)
+  decidedAt         DateTime?
+  decidedById       String? // 판정 담당자(감사)
   // 수량 불일치 처리 경로 — 발주≠실측 시 필수(사유 포함).
-  discrepancyAction  String?   // "RESHIP"(부족분 재배송) | "PARTIAL"(부분 입고 확정) | "RETURN"(반품)
-  discrepancyReason  String?   @db.Text
+  discrepancyAction String? // "RESHIP"(부족분 재배송) | "PARTIAL"(부분 입고 확정) | "RETURN"(반품)
+  discrepancyReason String?   @db.Text
   // 라인 단위 재고 반영 가드 — 이미 반영된 라인 재반영 차단(부분 입고 후 잔여 재확정 허용).
-  restockedAt        DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  restockedAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   receivingDraft ReceivingDraft @relation(fields: [receivingDraftId], references: [id], onDelete: Cascade)
 
@@ -3378,7 +3381,6 @@ model ReceivingDraftItem {
   @@index([orderItemId])
   @@index([productId])
 }
-
 
 // =====================================================
 // §11.348-B-1 — SDS/MSDS 문서 (파일 스토리지 메타 + 추출 결과)
@@ -3396,22 +3398,22 @@ model ReceivingDraftItem {
 /// 귀속: orderId(PO=입고 건) 필수 + restockId(특정 입고 회차) 선택 → 부분 입고 대응.
 model ReceivingDocument {
   id             String   @id @default(cuid())
-  orderId        String   // 입고 건(PO) 귀속 — 필수
-  restockId      String?  // 특정 입고 회차(InventoryRestock) 귀속 — 부분 입고/회차별 명세서
-  organizationId String?  // 조직 스코프(RLS/열람 게이트)
-  uploadedById   String?  // 업로드 담당자(감사) — 표기 "YYYY. M. D. {실명} 첨부"
-  docType        String   // invoice(거래명세서) / photo(상태 사진) / etc(기타)
+  orderId        String // 입고 건(PO) 귀속 — 필수
+  restockId      String? // 특정 입고 회차(InventoryRestock) 귀속 — 부분 입고/회차별 명세서
+  organizationId String? // 조직 스코프(RLS/열람 게이트)
+  uploadedById   String? // 업로드 담당자(감사) — 표기 "YYYY. M. D. {실명} 첨부"
+  docType        String // invoice(거래명세서) / photo(상태 사진) / etc(기타)
   fileName       String
-  bucket         String   // 오브젝트 스토리지 버킷
-  path           String   // 스토리지 경로
+  bucket         String // 오브젝트 스토리지 버킷
+  path           String // 스토리지 경로
   contentType    String?
   sizeBytes      Int?
   createdAt      DateTime @default(now())
 
-  order        Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order        Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
   restock      InventoryRestock? @relation(fields: [restockId], references: [id], onDelete: SetNull)
-  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  uploadedBy   User?         @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  organization Organization?     @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  uploadedBy   User?             @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
 
   @@index([orderId])
   @@index([restockId])
@@ -3422,32 +3424,32 @@ model ReceivingDocument {
 model SDSDocument {
   id               String    @id @default(cuid())
   productId        String
-  organizationId   String?   // 공용 문서 = null
+  organizationId   String? // 공용 문서 = null
   // §detail-page P2 — COA(lot-scoped) 경계. coa=>NOT NULL, sds=>NULL. CHECK constraint `SDSDocument_coa_lot_check` 강제.
   inventoryId      String?
   // #inventory-lot-entity P3 — COA(lot-scoped) 를 실 입고 lot(InventoryRestock) 에 바인딩. coa=>restockId NOT NULL, sds=>NULL. CHECK `SDSDocument_coa_lot_check` 재정의.
   restockId        String?
   fileName         String
-  bucket           String    // 오브젝트 스토리지 버킷(Supabase/Blob)
-  path             String    // 스토리지 경로
+  bucket           String // 오브젝트 스토리지 버킷(Supabase/Blob)
+  path             String // 스토리지 경로
   source           String    @default("upload") // upload / ocr / vendor
   // §11.348-B-1 B1-4 — 문서 종류 판별자(sds/coa). 기존 행 backward-compat = "sds".
   // ⚠️ docType 값 추가(예: msds/spec) 시 SDSDocument_coa_lot_check CHECK constraint 동반 갱신 필수 — 미갱신 시 신규 docType INSERT 전면 차단.
   docType          String    @default("sds") // sds / coa
   contentType      String?
   sizeBytes        Int?
-  extractionStatus String?   // queued / processing / done / failed (null=미추출)
-  extractionResult Json?     // 추출된 안전 필드(검증 전 derived 제안)
+  extractionStatus String? // queued / processing / done / failed (null=미추출)
+  extractionResult Json? // 추출된 안전 필드(검증 전 derived 제안)
   // §msds-version-validation — 버전 메타(버전상태 휴리스틱 분류 입력). 전부 nullable additive(CHECK `SDSDocument_coa_lot_check` 무영향, data loss 0).
-  docVersion       String?   // 공급사 제공 문서 버전/Rev
+  docVersion       String? // 공급사 제공 문서 버전/Rev
   issuedAt         DateTime? // 개정/발행일(작성·개정일)
   expiresAt        DateTime? // 만료일(있으면)
   supersededAt     DateTime? // 최신본 등록으로 교체되어 이력 보관 중이면 set. null=현행 유효본. soft-delete 금지(GMP 추적성).
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  product      Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
-  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  product      Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  organization Organization?     @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   inventory    ProductInventory? @relation(fields: [inventoryId], references: [id], onDelete: Restrict)
   restock      InventoryRestock? @relation(fields: [restockId], references: [id], onDelete: Restrict)
 

@@ -7,7 +7,17 @@
  * vendor name 매핑 실패 시 Order.vendorId NULL (UI "지정 없음" 표기).
  *
  * Lock:
- *   - duplicate prevention: 이미 (quoteId, vendorId) Order 존재 시 skip
+ *   - duplicate prevention (§pocandidate-root-fix — 2단 dup-guard):
+ *     1차 `poCandidateId` 기반 — candidate 단위가 진짜 중복 식별자
+ *     (DB `@@unique([poCandidateId])` 정합). 이미 변환된 candidate 는
+ *     reason "already_converted" 로 skip.
+ *     2차 composite (quoteId, vendorId) — DB `@@unique([quoteId, vendorId])`
+ *     선방어. **vendorId NULL 은 2차 검사 제외** — NULL 은 Postgres
+ *     NULL-distinct 라 DB 충돌이 없고, 매핑 실패 candidate 2건 이상이
+ *     서로를 duplicate 로 오판해 유실되는 §pocandidate-null-vendor-collapse
+ *     의 원천이었다.
+ *   - empty-items 거부: items 0건 candidate 는 변환 skip
+ *     (reason "empty_items", §pocandidate-empty-items-order 이중 방어)
  *   - atomic per-candidate transaction (Order + OrderItem createMany)
  *   - audit log try/catch graceful (mutation atomic 외)
  *
@@ -58,7 +68,14 @@ export interface ConvertPOCandidatesResult {
   skipped: Array<{
     poCandidateId: string;
     vendorId: string | null;
-    reason: "duplicate";
+    /**
+     * §pocandidate-root-fix — skip 사유 구분값 (placeholder success 금지:
+     * 사유를 "duplicate" 하나로 뭉개지 않는다).
+     * - "already_converted": 이 candidate 로 이미 Order 존재 (poCandidateId 1차 가드)
+     * - "duplicate": 같은 (quoteId, vendorId) Order 존재 (composite 2차 가드, vendorId non-NULL 한정)
+     * - "empty_items": items 0건 — 내역 없는 발주서 생성 차단
+     */
+    reason: "already_converted" | "duplicate" | "empty_items";
   }>;
 }
 
@@ -80,6 +97,18 @@ export async function convertPOCandidatesToOrders(
   const skipped: ConvertPOCandidatesResult["skipped"] = [];
 
   for (const candidate of candidates) {
+    // §pocandidate-empty-items-order — 변환부 거부 (입구 가드와 이중 방어).
+    // items 0건 candidate 는 내역 없는 발주서가 되므로 변환하지 않는다.
+    const items = candidate.items ?? [];
+    if (items.length === 0) {
+      skipped.push({
+        poCandidateId: candidate.id,
+        vendorId: null,
+        reason: "empty_items",
+      });
+      continue;
+    }
+
     // POCandidate.vendor (string) → Vendor master (id) 매핑
     let vendorId: string | null = null;
     const vendorName = candidate.vendor?.trim();
@@ -91,22 +120,43 @@ export async function convertPOCandidatesToOrders(
       vendorId = vendor?.id ?? null;
     }
 
-    // duplicate prevention — composite (quoteId, vendorId)
-    const existing = await client.order.findFirst({
-      where: { quoteId, vendorId },
+    // §pocandidate-root-fix dup-guard 1차 — poCandidateId 기반.
+    // candidate 단위가 진짜 중복 식별자 (DB @@unique([poCandidateId]) 정합).
+    // 재변환 시 이 candidate 로 만든 Order 가 이미 있으면 skip.
+    const alreadyConverted = await client.order.findFirst({
+      where: { poCandidateId: candidate.id },
       select: { id: true },
     });
-    if (existing) {
+    if (alreadyConverted) {
       skipped.push({
         poCandidateId: candidate.id,
         vendorId,
-        reason: "duplicate",
+        reason: "already_converted",
       });
       continue;
     }
 
+    // dup-guard 2차 — composite (quoteId, vendorId). DB @@unique([quoteId,
+    // vendorId]) 위반을 tx throw 전에 skip 으로 선방어. vendorId NULL 은 제외 —
+    // NULL 은 NULL-distinct(DB 충돌 없음)이며, 여기 NULL 을 포함시키면 매핑
+    // 실패 candidate 2건 이상이 서로를 duplicate 로 오판해 둘째가 유실된다
+    // (§pocandidate-null-vendor-collapse 근본 원인).
+    if (vendorId !== null) {
+      const existing = await client.order.findFirst({
+        where: { quoteId, vendorId },
+        select: { id: true },
+      });
+      if (existing) {
+        skipped.push({
+          poCandidateId: candidate.id,
+          vendorId,
+          reason: "duplicate",
+        });
+        continue;
+      }
+    }
+
     // atomic per-candidate — Order + OrderItem 동시 INSERT
-    const items = candidate.items ?? [];
     const totalAmount = candidate.totalAmount;
     const tempNumber = `ORD-PENDING-${candidate.id.slice(-6)}`;
 

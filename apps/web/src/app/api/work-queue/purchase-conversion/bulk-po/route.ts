@@ -49,6 +49,15 @@ const bodySchema = z.object({
   quoteIds: z.array(z.string()).min(1).max(50),
 });
 
+// §pocandidate-root-fix — 승인 통과 집합 (Phase 0 실측: POCandidateApprovalStatus
+// enum 8값 중 통과 3값. 제외 5값 = *_required / *_pending / *_rejected).
+// 변환 풀 진입 조건: approvalStatus IN 이 집합.
+const APPROVAL_PASSED_STATUSES = [
+  "not_required",
+  "externally_approved",
+  "in_app_approved",
+] as const;
+
 interface BulkPoResultEntry {
   readonly quoteId: string;
   readonly orderId: string;
@@ -187,17 +196,29 @@ export async function POST(request: NextRequest) {
     // Atomic transaction — all Orders created or none. Timeout headroom
     // matches pilot-seed's pattern (§11.7 cold-pooler grace).
     //
-    // #post-approval-purchase-order-flow Phase 1.3-wiring:
-    //   - quote 별 결재 통과 POCandidate[] fetch (vendor 별 1개씩).
+    // #post-approval-purchase-order-flow Phase 1.3-wiring
+    // (§pocandidate-root-fix Phase 3 — 주석=계약, 구현 정합 완료):
+    //   - quote 별 결재 통과 POCandidate[] fetch (vendor 별 1개씩) — 아래
+    //     3중 필터(quoteId + approvalStatus 승인통과집합 + stage)가 그 계약의 구현.
     //   - candidates.length > 0 → convertPOCandidatesToOrders (vendor 별 N Order)
     //   - candidates 0개 → legacy fallback (quote.items 기반 1 NULL-vendor Order)
     const results: BulkPoResultEntry[] = await db.$transaction(
       async (tx: any) => {
         const created: BulkPoResultEntry[] = [];
         for (const q of quotes) {
-          // 결재 통과 POCandidate fetch — quote.id 기반. vendor 별 1개씩.
+          // §pocandidate-root-fix — 변환 풀 3중 필터:
+          //   quoteId: q.id            → 해당 quote 결속분만 (quoteId NULL 자동 제외,
+          //                              multi-quote 반복 변환 차단)
+          //   approvalStatus IN 통과집합 → 승인 안 된 candidate 미진입
+          //   stage 고정               → po_conversion_candidate 단계만
           const candidates = await tx.pOCandidate.findMany({
-            where: { userId: q.userId!, organizationId: q.organizationId },
+            where: {
+              userId: q.userId!,
+              organizationId: q.organizationId,
+              quoteId: q.id,
+              approvalStatus: { in: [...APPROVAL_PASSED_STATUSES] },
+              stage: "po_conversion_candidate",
+            },
             include: { items: true },
           });
 

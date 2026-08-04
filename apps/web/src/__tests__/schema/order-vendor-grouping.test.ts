@@ -70,7 +70,9 @@ describe("#post-approval-purchase-order-flow Phase 1.1 — schema field", () => 
     expect(block).not.toBeNull();
     if (block) {
       expect(block[0]).toMatch(/@@index\(\[\s*vendorId\s*\]\)/);
-      expect(block[0]).toMatch(/@@index\(\[\s*poCandidateId\s*\]\)/);
+      // §pocandidate-root-fix Phase 2 승계: @@index → @@unique([poCandidateId])
+      //   (candidate 당 Order 1개 강제, unique 가 lookup index 겸함 — "인덱싱" 계약 유지).
+      expect(block[0]).toMatch(/@@unique\(\[\s*poCandidateId\s*\]\)/);
     }
   });
 
