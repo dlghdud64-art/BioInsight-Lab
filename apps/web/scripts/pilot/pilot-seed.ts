@@ -378,8 +378,10 @@ async function main() {
         return { org, workspace, orgMember, workspaceMember, products, vendors, productVendors, organizationVendors, quotes, inventories, orders };
       },
       {
-        // 15 product upserts + 1 vendor + 15 productVendor + 4 parent
-        // rows + §11.178 1 quote + 3 inventory + §11.178b 1 order = 40 writes. 30s 여전 충분.
+        // writes 구성: 15 product + 6 vendor + 15 productVendor + 6 orgVendor
+        //   + 4 parent + §11.178 1 quote + 3 inventory + §11.178b 1 order.
+        //   (vendor 1→6·orgVendor 추가로 이전 "40 writes" 추정치 폐기 — 지어낸 총계 대신 구성 서술.)
+        //   30s 여전 충분.
         timeout: 30_000,
         maxWait: 10_000,
       },

@@ -205,7 +205,7 @@ export const PILOT_PRODUCT_IDS: readonly string[] =
   PILOT_PRODUCT_CATALOG.map((p) => p.id);
 
 // ──────────────────────────────────────────────────────────
-// Pilot vendor catalog — minimum fixture (1 vendor, 15 links)
+// Pilot vendor catalog — fixture (6 vendors, 15 productVendor links)
 //
 // ADR-002 §11.20 — closes #P02-followup-pilot-vendor-catalog. Without
 // at least one ProductVendor row per pilot product, every "견적 담기"
