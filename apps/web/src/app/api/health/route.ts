@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateDatabaseUrl } from "@/lib/health/validate-database-url";
+// §migration-order-drift-guard — repo 의도(manifest) vs prod 적용(_prisma_migrations)
+// 대조. SELECT만 (빌드타임 migrate 재도입 아님 — ADR-002 §11.13 보완).
+import {
+  probeMigrationDrift,
+  type RawQueryClient,
+} from "@/lib/health/migration-drift";
+import migrationManifest from "@/generated/migration-manifest.json";
 
 export const dynamic = "force-dynamic";
 
@@ -33,12 +40,34 @@ export async function GET() {
     await (db as any).$queryRaw`SELECT 1`;
     const userCount = await (db as any).user.count();
     const orgCount = await (db as any).organization.count();
+
+    // §migration-order-drift-guard — count/boolean만 노출 (migration 이름
+    // 목록은 스키마 정보 leak → operator smoke 전용). probe 실패는
+    // { ok:false, reachable:false } 로 additive 노출, status 의미 불변.
+    const probe = await probeMigrationDrift(
+      db as unknown as RawQueryClient,
+      migrationManifest,
+    );
+    const migrations = probe.ok
+      ? {
+          ok: true,
+          reachable: true,
+          pendingCount: probe.drift.pending.length,
+          unknownCount: probe.drift.unknown.length,
+          unfinishedCount: probe.drift.unfinishedCount,
+          rolledBackCount: probe.drift.rolledBackCount,
+          clean: probe.drift.clean,
+          manifestGeneratedAt: probe.manifestGeneratedAt,
+        }
+      : { ok: false, reachable: false };
+
     return NextResponse.json({
       status: "ok",
       db: "connected",
       urlOk: true,
       userCount,
       orgCount,
+      migrations,
       hasDbUrl: !!dbUrl,
       hasDirectUrl: !!directUrl,
       dbUrlPrefix: dbUrl?.slice(0, 40) + "...",

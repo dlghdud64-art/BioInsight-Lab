@@ -396,3 +396,53 @@ ProductInventory9 / InventoryRestock2 / partnershipTier 복원 / restockId 유�
 
 상세 근거·배경: `docs/decisions/ADR-002-pilot-tenant-seed.md §11.13`
 (요약), `§11.9` `§11.11` `§11.12` (단계별 진단).
+
+### 9.10 마이그레이션 순서 역전·silent gap 가드 (§migration-order-drift-guard, 2026-08-04)
+
+**인시던트 (2026-08-01→08-04)**: `20260731120000_receiving_document` 가 08-01
+13:51 UTC 커밋됐으나, 08-01 16:19 UTC 의 deploy 는 **그 폴더가 없는 트리**에서
+실행되어 `20260801120000_receiving_inspection_decision` 만 적용됐다(prod
+`_prisma_migrations` 실측: 전 행 steps=1, resolve 조작 아님). 결과: 0731 이
+3일 pending 잠복 — 라이브 `db.receivingDocument.*` 라우트가 부재 테이블을
+참조하는 runtime gap 장전 상태. 08-04 §pocandidate-root-fix Phase 2 deploy 가
+발견·해소.
+
+**교훈 — §9.5 게이트의 맹점**: `migrate status` / `migrate diff` 는 **현재
+워크트리 기준**이다. 워크트리가 origin/main HEAD 와 다르면(병렬 워크트리·미pull)
+게이트가 통과해도 main 기준 drift 가 존재할 수 있다. 0801 deploy 가 정확히
+이 경로였다.
+
+**가드 3종 (2026-08-04 도입):**
+
+1. **deploy 전 HEAD 일치 확인 (절차, §9.2 step 3 앞에 삽입):**
+   ```sh
+   git fetch origin && git status   # "up to date with origin/main" 확인
+   git log --oneline -1 origin/main # 적용하려는 migration 커밋이 포함됐는지 확인
+   ```
+   병렬 워크트리에서 migrate deploy 금지 — deploy 는 main HEAD 트리에서만.
+
+2. **operator smoke 1명령 (push 전·deploy 후 언제든):**
+   ```sh
+   node apps/web/scripts/smoke/migration-drift.cjs
+   ```
+   .env 의 DIRECT_URL 로드 → `:5432` 선검증(6543 즉시 STOP) → 마스킹 echo →
+   `prisma migrate status` 90s timeout 실행 → 종료코드 전달(비0 = pending/
+   미도달/failed = STOP). 읽기전용 — migrate 실행·resolve 0.
+
+3. **배포 후 자동 감시 — `/api/health` `migrations` 필드:**
+   prebuild 가 repo migration 폴더 전수를 manifest 로 산출
+   (`scripts/generate-migration-manifest.cjs` → `src/generated/migration-manifest.json`,
+   DB 무접촉·ADR-002 §11.13 무저촉)하고, runtime 이 `_prisma_migrations` 를
+   읽기전용 SELECT 로 대조한다. `pendingCount`/`unknownCount`/`unfinishedCount`/
+   `rolledBackCount`/`clean` (count/boolean 만 — 이름 목록은 스키마 정보 leak 이라
+   smoke 전용). **워크트리 상태와 무관하게 "배포된 코드 기준 의도 vs prod 적용"**
+   을 보므로 §9.5 맹점을 메운다. probe 실패는 `{ok:false, reachable:false}` 로
+   drift 0 과 절대 혼동되지 않는다. §9.2 step 4 smoke probe 에서 이 필드의
+   `clean:true` 를 확인할 것.
+
+**명명 규칙**: migration 폴더 타임스탬프 수기 백데이트 금지 — §9.5 A-트랙
+수동 폴더 생성 시에도 **현재 UTC** `date -u +%Y%m%d%H%M%S` 를 쓴다. 백데이트는
+이름 정렬과 적용 순서를 어긋나게 해 이번 "역전 착시"를 재생산한다.
+
+계획·실측 근거: `docs/plans/PLAN_migration-order-drift-guard.md` (Phase 0
+타임라인·prod SELECT 원문 포함).
