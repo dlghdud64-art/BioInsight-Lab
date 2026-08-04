@@ -423,11 +423,21 @@ ProductInventory9 / InventoryRestock2 / partnershipTier 복원 / restockId 유�
 
 2. **operator smoke 1명령 (push 전·deploy 후 언제든):**
    ```sh
-   node apps/web/scripts/smoke/migration-drift.cjs
+   npm run smoke:migration --prefix apps/web
+   # (= tsx scripts/smoke/migration-drift.ts — 런너 중립 스크립트.
+   #  operator 셸은 npm 설치본이라 `pnpm exec tsx` 는 미해석(P4 실측),
+   #  직접 실행은 apps/web 에서 `npx tsx scripts/smoke/migration-drift.ts`)
    ```
    .env 의 DIRECT_URL 로드 → `:5432` 선검증(6543 즉시 STOP) → 마스킹 echo →
-   `prisma migrate status` 90s timeout 실행 → 종료코드 전달(비0 = pending/
-   미도달/failed = STOP). 읽기전용 — migrate 실행·resolve 0.
+   `_prisma_migrations` **직접 SELECT**(30s timeout) → 런타임 probe 와 동일
+   모듈(computeMigrationDrift)로 대조 → pending/unknown **이름 전체** 출력
+   (operator 전용). exit 0 = clean, 1 = drift, 2 = env 위반, 3 = 미도달.
+   읽기전용 — migrate 실행·resolve 0.
+
+   > ⚠️ v1(.cjs, `prisma migrate status` 래퍼)은 폐기 — P4 prod 실증
+   > (2026-08-04)에서 `migrate status` CLI 가 operator 환경 **5432 에서도
+   > 90s hang**(§9.5 step 2 도 동일 한계 상속). drift 검사는 직접 쿼리가
+   > 표준. `migrate status` hang 시 이 스크립트로 대체할 것.
 
 3. **배포 후 자동 감시 — `/api/health` `migrations` 필드:**
    prebuild 가 repo migration 폴더 전수를 manifest 로 산출

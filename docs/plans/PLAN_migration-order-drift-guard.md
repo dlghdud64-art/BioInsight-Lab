@@ -298,6 +298,14 @@ Red-Green-Refactor 강제. §pocandidate-root-fix 검증 규율 승계:
 - **회귀 게이트**: 참조·인접 스위트 **37파일 315 passed·0 failed·1 todo** (신규 12 포함; health lib·orders·bulk-po·budget·schema sentinel 전수). full-suite 신규 실패 0 + next build(프리빌드 체인 포함)는 push 전 게이트(실행 세션) 몫 — 이 환경에서 build 실행 불가.
 - manifest JSON은 커밋 대상(dev/테스트 import 해석용) + 매 빌드 prebuild가 재생성(generatedAt 갱신). 커밋본 generatedAt은 참고값.
 
+*Phase 4 실행 기록 (2026-08-04, 실행 세션 + 계획 세션):*
+- 커밋 `2a341a3a`(11파일 + tsc 조임, 오염 0), push 완료(pre-push build hook 통과 — 1차 push는 hook build 2분 초과로 미완, 타임아웃 연장 재push 성공). 독립 검증(실행 세션): vitest 26파일 186 passed·0 failed, production tsc 0, 총 tsc 27(baseline 유지).
+- **① health**: build log `[prebuild] migration-manifest: 52 migrations` PASS (manifest 52 = prod 적용 52). `/api/health` fetch는 배포 READY 후 실측.
+- **② smoke FALSE STOP (설계 결함 실측)**: v1(.cjs)의 `prisma migrate status` 래퍼가 operator 환경 **5432에서도 90s hang**(exit null) → smoke가 STOP(3) 오판. DB 실상태는 직접 SELECT로 clean 확정(52·unfinished 0·rolled_back 0) — 실드리프트 아님. **§9.5 step 2(migrate status)도 동일 한계 상속** 확인.
+- **해소 (a-변형, 재구현 아닌 재사용)**: smoke v2 = `scripts/smoke/migration-drift.ts`(tsx) — 런타임 probe와 **동일 모듈**(computeMigrationDrift) + generateManifest(워크트리 실시간) + `@prisma/client` 직접 SELECT(30s timeout). 계산 이원화 0 유지 + hang 제거. pending/unknown 이름 전체 출력(operator 전용 — health는 count만 원칙 불변). v1 .cjs 폐기(git rm). RUNBOOK §9.10-2 문구 갱신.
+- 교훈: "CLI 래퍼 = 단일 소스" 논리는 CLI hang 인프라 실측 앞에서 기각 — 단일 소스는 CLI가 아니라 **공유 모듈 재사용**으로 달성.
+- **smoke v2 실증 (실행 세션)**: `npx tsx` 실행 → :5432 echo·manifest 52·applied 52·unfinished 0·rolledBack 0·**exit 0, hang 0** — v1 FALSE STOP 해소 확인. 추가 발견: 문서 표기 `pnpm exec tsx`가 npm 설치본 operator 셸에서 미해석 → **package.json `smoke:migration` 스크립트(런너 중립) 채택**, 문서 command 통일 (호영님 (2)안 승인 2026-08-04).
+
 *계약 문장 확정 (Phase 1 RED의 대상):*
 1. **관측 계약**: main HEAD 기준 manifest 집합 M, prod 적용 집합 A에 대해 `pending = M − A`, `unknown = A − M`, 그리고 unfinished/rolled_back count가 항상 계산·노출된다. (0801-사건 시그니처 = pending>0 지속 또는 unknown>0.)
 2. **false-ok 차단 계약**: DB 도달 불가/쿼리 실패는 `ok=false`·`reachable=false`로 drift 0과 명확히 구분된다 (placeholder success 금지).
