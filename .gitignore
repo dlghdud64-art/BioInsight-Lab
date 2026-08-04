@@ -61,3 +61,8 @@ tmpclaude-*-cwd
 
 # LabAxis agent review generated reports
 .labaxis/runs/*.md
+
+# vitest full-suite baseline 산출물 (4MB, 재생성 가능 — 커밋 금지)
+#   생성: vitest --reporter=json --outputFile=full-baseline.json
+#   §money-path-coverage-restore 세션에서 실수 커밋 위험이 확인되어 ignore 등록.
+apps/web/full-baseline.json
