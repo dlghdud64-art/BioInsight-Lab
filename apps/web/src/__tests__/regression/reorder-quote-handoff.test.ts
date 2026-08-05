@@ -34,7 +34,15 @@ const PANEL_PATH = "src/components/quotes/prepare/quote-prepare-panel.tsx";
 
 describe("§reorder-quote-handoff P2 — 초안 생성 배선 (no-op 해소)", () => {
   it("시트 CTA가 POST /api/quotes 실호출 (query-string 이동 아님)", () => {
-    expect(SHEET).toMatch(/fetch\(\s*["']\/api\/quotes["']\s*,[\s\S]{0,200}method:\s*["']POST["']/);
+    expect(SHEET).toMatch(/csrfFetch\(\s*["']\/api\/quotes["']\s*,[\s\S]{0,200}method:\s*["']POST["']/);
+  });
+
+  it("[CSRF] csrfFetch 사용 — raw fetch 는 토큰 미부착 403 (§support-csrf-fix 승계)", () => {
+    // 2026-08-05 prod 실측: raw fetch("/api/quotes") → x-labaxis-csrf-token 미부착 →
+    // "보안 검증이 완료되지 않아 작업을 진행할 수 없습니다." 403. csrfFetch 가 계약.
+    expect(SHEET).toMatch(/import\s*\{\s*csrfFetch\s*\}\s*from\s*"@\/lib\/api-client"/);
+    expect(SHEET).toMatch(/csrfFetch\(\s*["']\/api\/quotes["']/);
+    expect(SHEET).not.toMatch(/[^a-zA-Z]fetch\(\s*["']\/api\/quotes["']/);
   });
 
   it("성공 시 ?prepare={id} 직행 (리스트 경유 없음)", () => {

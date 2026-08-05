@@ -42,6 +42,9 @@ import { Badge } from "@/components/ui/badge";
 import { Package, Building2, History, DollarSign, FileText, ShoppingCart, Search, Minus, Plus, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+// §reorder-quote-handoff CSRF 교정 — raw fetch 는 x-labaxis-csrf-token 미부착으로
+// POST /api/quotes 403("보안 검증이 완료되지 않아…"). §support-csrf-fix 패턴 승계.
+import { csrfFetch } from "@/lib/api-client";
 // §inventory-reorder-surface-unify P3b — 바로 발주(PO)는 ENABLE_PURCHASING off 시 정직 disabled+사유(§purchasing-hide 일관).
 import { getFlag } from "@/lib/feature-flags";
 
@@ -154,7 +157,7 @@ export function ReorderReviewSheet({
         ? "안전재고 기준 수량 (AI 추천 미산출)" + overrideNote
         : "안전 재고 미달 — 재고 운영 도우미 권장" + overrideNote;
     try {
-      const res = await fetch("/api/quotes", {
+      const res = await csrfFetch("/api/quotes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
