@@ -108,6 +108,11 @@ export function ReorderReviewSheet({
   useEffect(() => {
     setQty(baseQty);
   }, [baseQty, open]);
+  // §reorder-quote-handoff P2 — 생성 배선 상태. ⚠️ 반드시 early return(!data) 위:
+  // 아래 배치 시 data null→값 전환에서 훅 수 변화 → React #310 크래시
+  // (2026-08-05 prod Chrome 검증에서 실측된 사고 — 원복 금지).
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   if (!data) return null;
 
@@ -138,11 +143,8 @@ export function ReorderReviewSheet({
    * 구 §11.310 Q30 "query-string prefill, DB write 0" 설계 폐기 — Phase 0 실측:
    * quotes 표면에 prefill 소비자 0 → 초안 미생성 no-op 핸드오프였음
    * (PLAN_reorder-quote-handoff §12 측정1). 실패 시 이동 0 + 에러 표기
-   * (placeholder success 금지).
+   * (placeholder success 금지). 상태 훅은 early return 위에 선언(#310 가드).
    */
-  const [creating, setCreating] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
-
   const handleRequestQuote = async () => {
     if (creating) return;
     setCreating(true);

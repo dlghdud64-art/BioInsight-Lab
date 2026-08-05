@@ -52,6 +52,16 @@ describe("§reorder-quote-handoff P2 — 초안 생성 배선 (no-op 해소)", (
     expect(SHEET).toMatch(/초안 생성 중/);
   });
 
+  it("[사고 가드] 생성 상태 훅이 early return(!data) 위에 선언 — React #310 재발 차단", () => {
+    // 2026-08-05 prod 실측: creating/createError useState 가 `if (!data) return null`
+    // 뒤에 있으면 data null→값 전환에서 훅 수 변화 → 시트 오픈 즉시 크래시(#310).
+    const earlyReturnIdx = SHEET.indexOf("if (!data) return null");
+    const creatingIdx = SHEET.indexOf("const [creating, setCreating] = useState");
+    expect(earlyReturnIdx).toBeGreaterThan(-1);
+    expect(creatingIdx).toBeGreaterThan(-1);
+    expect(creatingIdx).toBeLessThan(earlyReturnIdx);
+  });
+
   it("출처 메타 전파 — 재고관리 재발주안에서 생성", () => {
     expect(SHEET).toMatch(/재고관리 재발주안에서 생성/);
   });
