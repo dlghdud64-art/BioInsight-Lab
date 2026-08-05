@@ -83,6 +83,8 @@ import { PermissionNotice } from "@/components/quotes/permission-notice";
 import { quoteDisplayRef } from "@/lib/quote-management/quote-display-ref";
 import { QuoteIntakeDock } from "@/components/quotes/intake/quote-intake-dock";
 import { MobileQuotesView } from "@/components/quotes/mobile-quotes-view";
+// §reorder-quote-handoff 1c — 발송 준비 패널 (?prepare= 딥링크, same-route — 신규 라우트 아님)
+import { QuotePreparePanel } from "@/components/quotes/prepare/quote-prepare-panel";
 // §quotes-mobile-refine P3 — 개별 케이스 리마인더 바텀 시트(모바일 4a). 발송은 기존 vendor-requests 계약.
 import { MobileReminderSheet } from "@/components/quotes/mobile-reminder-sheet";
 
@@ -1159,6 +1161,10 @@ function QuotesPageContent() {
   // §quote-management-redesign P2 — 발송 인텐트(2-step) 게이트 대상 caseId. 리스트 1-tap 직접
   //   발송(§11.279d) → ConfirmSendModal 확인 → "발송 검토 계속" 시에만 VendorRequestModal 진입(오발송 방지).
   const [sendIntentQuoteId, setSendIntentQuoteId] = useState<string | null>(null);
+  // §reorder-quote-handoff 1c — 발송 준비 패널 대상 + 직행 여부(하이라이트 1회) + 복귀 하이라이트.
+  const [prepareQuoteId, setPrepareQuoteId] = useState<string | null>(null);
+  const [prepareJustCreated, setPrepareJustCreated] = useState(false);
+  const [prepareHighlightId, setPrepareHighlightId] = useState<string | null>(null);
   // §quote-management-redesign P3 — 우선순위 클릭 세션 override(prioMap). canonical computePriority
   //   위 UI-state 레이어로만 작동(truth 대체 아님) — DB 저장 0, 새로고침 시 computePriority 파생 복귀.
   const [prioMap, setPrioMap] = useState<Record<string, "high" | "mid" | "low">>({});
@@ -1379,6 +1385,13 @@ function QuotesPageContent() {
     if (dockParam === "intake" && sourceParam === "bom_import") {
       setIntakeDockSource("bom_import");
       setIntakeDockOpen(true);
+    }
+    // §reorder-quote-handoff 1c — 재고관리 초안 생성 직행 딥링크 (?prepare={id}).
+    //   직행 진입 = justCreated(하이라이트 1회·"방금 생성" 표기).
+    const prepareParam = searchParams.get("prepare");
+    if (prepareParam) {
+      setPrepareQuoteId(prepareParam);
+      setPrepareJustCreated(true);
     }
   }, [searchParams]);
   // ── Ontology Context Layer bridge — 현재 견적 관리 상태를 next-step resolver에 전달 ──
@@ -3392,6 +3405,12 @@ function QuotesPageContent() {
       {!isLoading && isMobile && (
         <MobileQuotesView
           quotes={filteredQuotes}
+          onPrepare={(id) => {
+            // §reorder-quote-handoff 1d — "공급사 지정하고 발송" → 발송 준비 패널 복귀 (재진입은 하이라이트 없음)
+            setPrepareJustCreated(false);
+            setPrepareQuoteId(id);
+          }}
+          highlightId={prepareHighlightId}
           onSelect={(id) => handleQuoteCardSelect(id)}
           onAction={(id) => {
             // §quote-mobile-v2 — 단계 액션(발송/비교/승인/입고)은 데스크탑과 동일 라우팅.
@@ -4380,6 +4399,39 @@ function QuotesPageContent() {
           } : undefined}
         />
       )}
+
+      {/* ═══ §reorder-quote-handoff 1c — 발송 준비 패널 (?prepare= same-route 딥링크) ═══
+          초안(Quote DB)은 이미 생성됨 — 패널은 표시·게이트. 발송 CTA는 기존 발송
+          인텐트(2-step, §11.279d 오발송 방지) 재사용. 나중에 하기 = 닫기 + 리스트
+          해당 카드 2초 하이라이트(발송 대기 저장 사실 안내). */}
+      {prepareQuoteId && (() => {
+        const pq = quotes.find((q) => q.id === prepareQuoteId) ?? null;
+        if (!pq) return null; // 로딩 전/미존재 — 리스트 로드 후 재평가
+        return (
+          <QuotePreparePanel
+            open
+            quote={{
+              id: pq.id,
+              ref: quoteDisplayRef(pq),
+              title: pq.title,
+              createdAt: pq.createdAt,
+              items: pq.items.map((it) => ({ name: it.product.name, quantity: it.quantity || 1 })),
+              sourceMeta: null, // specialNotes 미노출 표면 — 가짜 출처 표기 금지 (직행 배지는 justCreated 로)
+            }}
+            justCreated={prepareJustCreated}
+            onClose={() => {
+              setPrepareHighlightId(prepareQuoteId);
+              setPrepareQuoteId(null);
+              setPrepareJustCreated(false);
+            }}
+            onProceedToDispatch={(id) => {
+              setPrepareQuoteId(null);
+              setPrepareJustCreated(false);
+              setSendIntentQuoteId(id); // 기존 2-step 게이트 — VendorRequestModal 직진입 금지
+            }}
+          />
+        );
+      })()}
 
       {/* ═══ §quote-management-redesign P2 — 발송 인텐트(2-step) 확인 모달 ═══
           리스트 1-tap 직접 발송 → 케이스 요약 + "아직 발송 안됨" 확인 → "발송 검토 계속" 시에만

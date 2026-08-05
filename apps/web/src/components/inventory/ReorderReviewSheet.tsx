@@ -131,24 +131,62 @@ export function ReorderReviewSheet({
       ? ` [중복 위험 확인 후 진행: ${overrideReasons.join(" / ")}]`
       : "";
 
-  /** §11.310 Q30 — 견적 요청 = query string pre-fill (DB write 0) */
-  const handleRequestQuote = () => {
-    const params = new URLSearchParams({
-      productName: data.productName,
-      quantity: String(qty),
-      reason: "안전 재고 미달 — 재고 운영 도우미 권장",
-    });
-    if (qtySource === "safety-fallback") {
-      // 출처 정직 표기 — AI 추천 미산출, 안전재고 기준 수량임을 초안에 남김.
-      params.set("reason", "안전재고 기준 수량 (AI 추천 미산출)" + overrideNote);
-    } else if (overrideNote) {
-      params.set("reason", "안전 재고 미달 — 재고 운영 도우미 권장" + overrideNote);
+  /**
+   * §reorder-quote-handoff P2 (호영님 지시문 2026-08-05) — 견적 요청 = 초안 실제
+   * 생성(POST /api/quotes) 후 발송 준비 패널(?prepare={id}) 직행.
+   *
+   * 구 §11.310 Q30 "query-string prefill, DB write 0" 설계 폐기 — Phase 0 실측:
+   * quotes 표면에 prefill 소비자 0 → 초안 미생성 no-op 핸드오프였음
+   * (PLAN_reorder-quote-handoff §12 측정1). 실패 시 이동 0 + 에러 표기
+   * (placeholder success 금지).
+   */
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+
+  const handleRequestQuote = async () => {
+    if (creating) return;
+    setCreating(true);
+    setCreateError(null);
+    const reason =
+      qtySource === "safety-fallback"
+        ? "안전재고 기준 수량 (AI 추천 미산출)" + overrideNote
+        : "안전 재고 미달 — 재고 운영 도우미 권장" + overrideNote;
+    try {
+      const res = await fetch("/api/quotes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: `${data.productName} 재발주 견적`,
+          items: [
+            {
+              productId: data.productId, // nullable 허용 (quote-create-schema 실측)
+              quantity: qty,
+              notes: reason,
+            },
+          ],
+          // 출처 메타 — 도착 화면·카드의 "재고관리 재발주안에서 생성" 근거
+          specialNotes: `재고관리 재발주안에서 생성 · ${reason}`,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setCreateError(body?.message ?? body?.error ?? "초안 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
+        return; // 이동 0 — 실패를 성공처럼 보이게 하지 않는다
+      }
+      const body = await res.json();
+      const quoteId: string | undefined = body?.quote?.id;
+      if (!quoteId) {
+        setCreateError("초안은 생성됐으나 이동 정보를 받지 못했습니다. 견적 관리에서 확인해주세요.");
+        return;
+      }
+      // 발송 준비 패널 직행 (리스트 경유 없음 — 지시문 1c)
+      router.push(`/dashboard/quotes?prepare=${encodeURIComponent(quoteId)}`);
+      onClose();
+    } catch {
+      setCreateError("네트워크 오류로 초안을 생성하지 못했습니다.");
+    } finally {
+      setCreating(false);
     }
-    if (primaryVendor) {
-      params.set("supplier", primaryVendor.vendorName);
-    }
-    router.push(`/dashboard/quotes?${params.toString()}`);
-    onClose();
   };
 
   /** §11.310 Q31 — 바로 발주 = query string + PO 화면 진입 시 draft auto-create */
@@ -305,12 +343,16 @@ export function ReorderReviewSheet({
               <p className="text-xs font-bold text-slate-700">최근 구매 공급사</p>
             </div>
             {data.vendors.length === 0 ? (
+              /* §reorder-quote-handoff 1b — 다음 화면 예고형 안내 (지시문 색: #fffbeb/#fde68a/#92400e) */
               <div
                 data-testid="reorder-review-no-vendor"
-                className="rounded-lg border border-yellow-200 bg-yellow-50 p-3"
+                className="rounded-lg border border-[#fde68a] bg-[#fffbeb] p-3"
               >
-                <p className="text-xs text-yellow-700 leading-relaxed">
-                  등록된 공급사가 없습니다. 견적 요청으로 시작하세요.
+                <p className="text-xs font-semibold text-[#92400e] leading-relaxed">
+                  이 품목에 등록된 공급사가 없습니다
+                </p>
+                <p className="mt-0.5 text-xs text-[#92400e]/80 leading-relaxed">
+                  초안을 만든 뒤 바로 공급사 지정 화면으로 이동합니다.
                 </p>
               </div>
             ) : (
@@ -389,28 +431,47 @@ export function ReorderReviewSheet({
             </div>
           )}
 
-          {/* ── CTA: 견적 요청 초안 / 바로 발주 / 공급사 소싱 ── */}
+          {/* ── CTA: 견적 요청 초안 / 바로 발주 / 공급사 소싱 ──
+              §reorder-quote-handoff 1b — 공급사 0이면 바로 발주 hide(dead button 제거)
+              + 주 CTA 라벨 다음 화면 예고형. 배선 실패 시 에러 표기(placeholder success 금지). */}
+          {createError && (
+            <p data-testid="reorder-review-create-error" className="text-xs font-semibold text-red-600">
+              {createError}
+            </p>
+          )}
           <div className="flex items-center gap-2 pt-2">
             <Button
               type="button"
               data-testid="reorder-review-request-quote-cta"
               onClick={handleRequestQuote}
-              className="flex-1 h-11 min-h-[44px] text-sm bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+              disabled={creating}
+              className="flex-1 h-11 min-h-[44px] text-sm bg-blue-600 hover:bg-blue-700 text-white font-semibold disabled:opacity-60"
             >
               <FileText className="h-4 w-4 mr-1.5" />
-              견적 요청 초안 만들기
+              {creating
+                ? "초안 생성 중…"
+                : hasVendor
+                  ? "견적 요청 초안 만들기"
+                  : "초안 만들고 공급사 지정 →"}
             </Button>
-            <Button
-              type="button"
-              data-testid="reorder-review-direct-purchase-cta"
-              onClick={handleDirectPurchase}
-              disabled={!hasVendor || !purchasingOn}
-              className="flex-1 h-11 min-h-[44px] text-sm bg-green-600 hover:bg-green-700 text-white font-semibold disabled:opacity-50"
-            >
-              <ShoppingCart className="h-4 w-4 mr-1.5" />
-              바로 발주
-            </Button>
+            {hasVendor && (
+              <Button
+                type="button"
+                data-testid="reorder-review-direct-purchase-cta"
+                onClick={handleDirectPurchase}
+                disabled={!purchasingOn}
+                className="flex-1 h-11 min-h-[44px] text-sm bg-green-600 hover:bg-green-700 text-white font-semibold disabled:opacity-50"
+              >
+                <ShoppingCart className="h-4 w-4 mr-1.5" />
+                바로 발주
+              </Button>
+            )}
           </div>
+          {!hasVendor && (
+            <p data-testid="reorder-review-direct-purchase-hidden-note" className="text-[11px] text-slate-500">
+              바로 발주는 공급사·단가 확정 후 가능합니다
+            </p>
+          )}
           {/* §inventory-mobile-reorder-gate P2 — 공급사 소싱 진입(§11.381c 기존 배선 재사용, outline 승격). */}
           {onSearchVendors && (
             <Button

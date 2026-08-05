@@ -84,13 +84,17 @@ describe("§quotes-mobile-refine P1 — 리스트 카드", () => {
     expect(VIEW).toMatch(/vm\.dd != null &&[\s\S]{0,200}<Clock/);
   });
 
-  it("공급사 미정 = yellow 칩 (plain text 폐지)", () => {
-    expect(VIEW).toMatch(/공급사 미정[\s\S]{0,60}/);
-    expect(VIEW).toMatch(/bg-yellow-50 text-yellow-700[\s\S]{0,120}공급사 미정|공급사 미정[\s\S]{0,120}bg-yellow-50 text-yellow-700/);
+  // §reorder-quote-handoff 1d 승계(2026-08-05, 호영님 지시문): "공급사 미정"(막다름)
+  //   → "공급사 지정 필요"(할 일 표현), CTA "공급사 추가" → "공급사 지정하고 발송"
+  //   (onPrepare → 발송 준비 패널 복귀). 보호 의도(yellow 칩·발송 오라벨 0)는 동일 유지.
+  it("공급사 지정 필요 = yellow 칩 (plain text 폐지·막다른 표현 교체)", () => {
+    expect(VIEW).toMatch(/bg-yellow-50 text-yellow-700[\s\S]{0,120}공급사 지정 필요|공급사 지정 필요[\s\S]{0,120}bg-yellow-50 text-yellow-700/);
+    expect(VIEW).not.toMatch(/>공급사 미정</); // 렌더 문자열로서의 구 표현 잔존 0
   });
 
-  it("공급사 미정 건 CTA = '공급사 추가' (발송 오라벨 0)", () => {
-    expect(VIEW).toMatch(/공급사 추가/);
+  it("공급사 지정 필요 건 CTA = '공급사 지정하고 발송' (발송 오라벨 0·prepare 복귀)", () => {
+    expect(VIEW).toMatch(/공급사 지정하고 발송/);
+    expect(VIEW).toMatch(/onPrepare/);
   });
 });
 
@@ -132,7 +136,9 @@ describe("§quotes-mobile-refine P1 — 회귀 0", () => {
 
   it("액션 wiring 보존 (onSelect·onAction — dead button 0)", () => {
     expect(VIEW).toMatch(/onClick=\{\(\) => onSelect\(vm\.id\)\}/);
-    expect(VIEW).toMatch(/onClick=\{\(\) => onAction\(vm\.id\)\}/);
+    // §reorder-quote-handoff 1d 승계 — 카드 CTA는 needsSupplier 분기(onPrepare 폴백 onAction).
+    //   보호 의도(모든 CTA가 실제 라우팅에 연결) 동일.
+    expect(VIEW).toMatch(/needsSupplier && onPrepare \? onPrepare\(vm\.id\) : onAction\(vm\.id\)/);
     expect(VIEW).toMatch(/onClick=\{\(\) => onAction\(top\.id\)\}/);
   });
 

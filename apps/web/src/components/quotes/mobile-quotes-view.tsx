@@ -102,6 +102,14 @@ interface VM {
   level: "high" | "mid" | "low"; dd: number | null;
   suppliers: { name: string; replied: boolean }[];
   repliedCount: number; totalCount: number; amount: number | null;
+  /** §reorder-quote-handoff 1d — 생성일 표기 (연도 포함 통일 `YYYY. M. D.`) */
+  createdLabel: string | null;
+}
+function formatCreatedLabel(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}.`;
 }
 function buildVM(q: QuoteLite): VM | null {
   const c = toQuoteCase(q);
@@ -114,6 +122,7 @@ function buildVM(q: QuoteLite): VM | null {
     id: q.id, ref: quoteDisplayRef(q), title: displayTitle(q), stage: c.stage as UiStage,
     level, dd, suppliers, repliedCount: suppliers.filter((s) => s.replied).length,
     totalCount: suppliers.length, amount,
+    createdLabel: formatCreatedLabel(q.createdAt),
   };
 }
 
@@ -126,19 +135,23 @@ function actIcon(stage: UiStage) {
   return <PackageCheck className={cn} />;
 }
 
-function CaseCard({ vm, onSelect, onAction }: { vm: VM; onSelect: (id: string) => void; onAction: (id: string) => void }) {
+function CaseCard({ vm, onSelect, onAction, onPrepare, highlight }: { vm: VM; onSelect: (id: string) => void; onAction: (id: string) => void; onPrepare?: (id: string) => void; highlight?: boolean }) {
   const m = STAGE_META[vm.stage];
   const p = PRIO[vm.level];
   const shown = vm.suppliers.slice(0, 3);
   const extra = vm.totalCount - shown.length;
   const soon = vm.dd != null && vm.dd <= 1;
   const pct = vm.totalCount > 0 ? Math.round((vm.repliedCount / vm.totalCount) * 100) : 0;
-  // §quotes-mobile-refine P1 — 상황별 CTA: 공급사 미정 건은 발송이 아니라 공급사 추가가 다음 행동.
-  //   라우팅은 동일 onAction(발송 검토 진입이 공급사 추가를 흡수 — 5a 히어로) → dead button 0.
+  // §reorder-quote-handoff 1d (호영님 지시문 2026-08-05, §quotes-mobile-refine P1 승계):
+  //   공급사 미정 건 = 막다른 표현 대신 할 일 표현 — 칩 "공급사 지정 필요" + CTA
+  //   "공급사 지정하고 발송"(onPrepare → 발송 준비 패널 복귀; 미주입 시 기존 onAction 폴백).
+  //   색은 07-20 규약(앰버 계열 = yellow 토큰) 유지. RFQ 서체는 07-21 결정 유지
+  //   (본문 폰트 — 08-01 mono 복원안은 호영님 재확인으로 기각 2026-08-05).
   const needsSupplier = vm.stage === "s1" && vm.totalCount === 0;
   return (
     // 좌측 세로 색 띠 폐지(지시문 3a) — 상태는 상단 pill 만.
-    <div className="rounded-[13px] border border-slate-200 bg-white overflow-hidden shadow-sm">
+    // §reorder-quote-handoff 1d — 리스트 복귀 직후 해당 카드 2초 하이라이트 1회.
+    <div className={`rounded-[13px] border border-slate-200 bg-white overflow-hidden shadow-sm ${highlight ? "quote-card-highlight-once" : ""}`}>
       <div className="min-w-0 p-3.5">
         <div className="flex items-center gap-2 mb-1.5">
           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold ${m.pillCls}`}>
@@ -160,9 +173,10 @@ function CaseCard({ vm, onSelect, onAction }: { vm: VM; onSelect: (id: string) =
               <span key={i} className="h-6 w-6 rounded-full bg-slate-100 border-2 border-white grid place-items-center text-[10px] font-bold text-slate-600">{s.name[0] ?? "?"}</span>
             ))}
             {extra > 0 && <span className="h-6 w-6 rounded-full bg-slate-200 border-2 border-white grid place-items-center text-[10px] font-bold text-slate-500">+{extra}</span>}
-            {/* 공급사 미정 — plain text → yellow 칩(warm warning, 색상 표기 규약 07-20). */}
+            {/* §reorder-quote-handoff 1d — "공급사 미정"(막다름) → "공급사 지정 필요"(할 일).
+                yellow 칩 유지(warm warning, 색상 표기 규약 07-20 — 지시문 앰버 hex의 토큰 번역). */}
             {vm.totalCount === 0 && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-yellow-50 text-yellow-700">공급사 미정</span>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-yellow-50 text-yellow-700">공급사 지정 필요</span>
             )}
           </span>
           <span className="flex-1" />
@@ -181,14 +195,27 @@ function CaseCard({ vm, onSelect, onAction }: { vm: VM; onSelect: (id: string) =
           {m.mid === "selected" && <span className="text-[11.5px] font-bold text-emerald-700">선정 완료</span>}
         </div>
         <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100">
-          <div>
-            <div className="text-[10.5px] text-slate-400 font-semibold">{m.amountLabel}</div>
-            {vm.amount != null ? (
-              <div className="text-[15px] font-extrabold text-slate-900 tabular-nums">{vm.amount.toLocaleString("ko-KR")}<span className="text-[11px] font-bold text-slate-400 ml-0.5">원</span></div>
-            ) : (<div className="text-[13px] font-bold text-slate-400">견적 대기</div>)}
-          </div>
-          <button type="button" onClick={() => onAction(vm.id)} className={`inline-flex items-center gap-1 h-9 px-3.5 rounded-[10px] text-[13px] font-extrabold active:scale-95 ${needsSupplier ? "bg-white text-blue-700 border border-blue-200" : m.actCls}`}>
-            {needsSupplier ? <>공급사 추가<ChevronRight className="h-3.5 w-3.5" /></> : <>{actIcon(vm.stage)}{m.act}</>}
+          {/* §reorder-quote-handoff 1d — 공급사 지정 필요 + 금액 없음 = "예상 금액: 견적 대기"
+              정보 0 행 숨김. 대신 생성일(연도 포함 표기 통일 YYYY. M. D.)로 대체. */}
+          {needsSupplier && vm.amount == null ? (
+            <div>
+              <div className="text-[10.5px] text-slate-400 font-semibold">생성</div>
+              <div className="text-[12px] font-bold text-slate-500 tabular-nums">{vm.createdLabel ?? "—"}</div>
+            </div>
+          ) : (
+            <div>
+              <div className="text-[10.5px] text-slate-400 font-semibold">{m.amountLabel}</div>
+              {vm.amount != null ? (
+                <div className="text-[15px] font-extrabold text-slate-900 tabular-nums">{vm.amount.toLocaleString("ko-KR")}<span className="text-[11px] font-bold text-slate-400 ml-0.5">원</span></div>
+              ) : (!needsSupplier && <div className="text-[13px] font-bold text-slate-400">견적 대기</div>)}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => (needsSupplier && onPrepare ? onPrepare(vm.id) : onAction(vm.id))}
+            className={`inline-flex items-center gap-1 h-9 px-3.5 rounded-[10px] text-[13px] font-extrabold active:scale-95 ${needsSupplier ? "bg-white text-blue-700 border border-blue-200" : m.actCls}`}
+          >
+            {needsSupplier ? <>공급사 지정하고 발송<ChevronRight className="h-3.5 w-3.5" /></> : <>{actIcon(vm.stage)}{m.act}</>}
           </button>
         </div>
       </div>
@@ -210,10 +237,14 @@ function SumCard({ label, value, tone, bar, ddLabel }: { label: string; value: n
 
 // §quotes-mobile-refine P1 — topReason(대시 연결 문장) 폐지 → ACTION_LINE(품목 다음 줄 분리).
 
-export function MobileQuotesView({ quotes, onSelect, onAction }: {
+export function MobileQuotesView({ quotes, onSelect, onAction, onPrepare, highlightId }: {
   quotes: QuoteLite[];
   onSelect: (id: string) => void;
   onAction: (id: string) => void;
+  /** §reorder-quote-handoff 1d — 공급사 지정 필요 건 CTA → 발송 준비 패널(?prepare=) 복귀 */
+  onPrepare?: (id: string) => void;
+  /** 리스트 복귀 직후 2초 하이라이트 대상 (1회) */
+  highlightId?: string | null;
 }) {
   const [filter, setFilter] = useState<(typeof CHIPS)[number]["k"]>("all");
   const vms = useMemo(() => quotes.map(buildVM).filter((v): v is VM => v != null), [quotes]);
@@ -333,10 +364,21 @@ export function MobileQuotesView({ quotes, onSelect, onAction }: {
                 <span className="text-[11px] font-bold text-slate-400">{sec.items.length}</span>
                 <span className="flex-1 h-px bg-slate-200" />
               </div>
-              {sec.items.map((vm) => <CaseCard key={vm.id} vm={vm} onSelect={onSelect} onAction={onAction} />)}
+              {sec.items.map((vm) => <CaseCard key={vm.id} vm={vm} onSelect={onSelect} onAction={onAction} onPrepare={onPrepare} highlight={vm.id === highlightId} />)}
             </div>
           ))}
         </div>
+      )}
+      {/* §reorder-quote-handoff 1d — 복귀 하이라이트 2초 1회 (reduced motion 존중) */}
+      {highlightId && (
+        <style>{`
+          @keyframes quoteCardHighlightFade {
+            0% { background-color: #eff6ff; border-color: #bfdbfe; }
+            100% { background-color: #ffffff; border-color: #e2e8f0; }
+          }
+          .quote-card-highlight-once { animation: quoteCardHighlightFade 2s ease-out 1 forwards; }
+          @media (prefers-reduced-motion: reduce) { .quote-card-highlight-once { animation: none; } }
+        `}</style>
       )}
     </div>
   );
