@@ -1,9 +1,9 @@
 # Implementation Plan: §migration-order-drift-guard — 마이그레이션 순서 역전·silent gap 재발 방지
 
-- **Status:** ⏳ Pending
+- **Status:** ✅ Complete — 전 Phase (0–4) 종료, prod 실증 GREEN (커밋 `2a341a3a` + `4e39277a`, push 완료)
 - **Started:** 2026-08-04
 - **Last Updated:** 2026-08-04
-- **Estimated Completion:** TBD (Phase 0 실측 후 산정)
+- **Estimated Completion:** 2026-08-04 (완료)
 
 **CRITICAL INSTRUCTIONS**: After completing each phase:
 1. ✅ Check off completed task checkboxes
@@ -78,13 +78,13 @@ receiving_document급 잠복 runtime gap 클래스(커밋된 스키마를 라이
 | ③ 수기 타임스탬프 역전 | 0731 폴더명 ≠ 실제 생성·커밋 시각 | RUNBOOK 명명 규칙 + probe가 적용 순서로 실사실 노출 |
 
 **Success Criteria:**
-- [ ] 빌드 산출 manifest = repo migration 폴더명 전수 (생성 시점 메타 포함)
-- [ ] drift 계산 서비스: pending[] / unknown[] / rolled_back·unfinished count 정확 (unit 계약)
-- [ ] `/api/health`에 count/boolean만, 상세는 admin/ops 전용 (스키마 정보 leak 0)
-- [ ] operator smoke 1명령 (`scripts/smoke/migration-drift.cjs`, 5432 override + timeout — pgbouncer hang 클래스 회피)
-- [ ] DEV_RUNBOOK §9 갱신: deploy 전 `migrate status` 선실행 + 워크트리 HEAD 확인 + 폴더명 명명 규칙
-- [ ] prod 대상 probe 1회 실행 — 현 drift 0 확인 (rollout smoke)
-- [ ] 회귀 게이트 0 RED
+- [x] 빌드 산출 manifest = repo migration 폴더명 전수 (52건 = prod 52, 생성 시점 메타 포함)
+- [x] drift 계산 서비스: pending[] / unknown[] / rolled_back·unfinished count 정확 (unit 계약 10건)
+- [x] `/api/health`에 count/boolean만, 상세는 operator smoke 전용 (스키마 정보 leak 0 — W2 assert)
+- [x] operator smoke 1명령 (`npm run smoke:migration` — v2 직접 쿼리, v1 migrate-status hang 해소)
+- [x] DEV_RUNBOOK §9.10 갱신: deploy 전 HEAD 일치 확인 + smoke + 폴더명 백데이트 금지 (§9.5 맹점 명시)
+- [x] prod 대상 probe 1회 실행 — health `clean:true`·pending 0·unknown 0 + smoke exit 0 실측
+- [x] 회귀 게이트 0 RED (실행 세션 독립 검증 26파일 186 passed·prod tsc 0)
 
 **Out of Scope (⚠️ 절대 구현하지 말 것):**
 - [ ] 빌드타임 `migrate deploy` 재도입 (ADR-002 §11.13 영구 금지)
@@ -210,7 +210,7 @@ Red-Green-Refactor 강제. §pocandidate-root-fix 검증 규율 승계:
 
 #### Phase 4: Rollout / Smoke / Rollback 문서화
 **Goal:** prod에서 1회 실증 + 마감.
-- Status: [ ] Pending
+- Status: [x] Complete (2026-08-04 — health clean:true·smoke v2 exit 0, §12 실증 원문)
 
 **🟢 GREEN:**
 - [ ] 배포 후 prod probe 1회 — 현 drift 0 실측 (또는 발견 시 즉시 보고·정지)
@@ -254,13 +254,13 @@ Red-Green-Refactor 강제. §pocandidate-root-fix 검증 규율 승계:
 
 ## 11. Progress Tracking
 
-- Overall completion: 0%
-- Current phase: Phase 0 대기 (prod SELECT 쿼리문 승인 필요)
+- Overall completion: 100% — 트랙 종료 (2026-08-04)
+- Current phase: 없음 (전 Phase 완료)
 - Current blocker: 없음
-- Next validation step: Phase 0 확인 항목 4건
+- Next validation step: 없음 — 상시 감시는 `/api/health` migrations 필드 + `npm run smoke:migration`
 
 **Phase Checklist:**
-- [ ] Phase 0 / [ ] Phase 1 / [ ] Phase 2 / [ ] Phase 3 / [ ] Phase 4
+- [x] Phase 0 / [x] Phase 1 / [x] Phase 2 / [x] Phase 3 / [x] Phase 4
 
 ---
 
@@ -305,6 +305,12 @@ Red-Green-Refactor 강제. §pocandidate-root-fix 검증 규율 승계:
 - **해소 (a-변형, 재구현 아닌 재사용)**: smoke v2 = `scripts/smoke/migration-drift.ts`(tsx) — 런타임 probe와 **동일 모듈**(computeMigrationDrift) + generateManifest(워크트리 실시간) + `@prisma/client` 직접 SELECT(30s timeout). 계산 이원화 0 유지 + hang 제거. pending/unknown 이름 전체 출력(operator 전용 — health는 count만 원칙 불변). v1 .cjs 폐기(git rm). RUNBOOK §9.10-2 문구 갱신.
 - 교훈: "CLI 래퍼 = 단일 소스" 논리는 CLI hang 인프라 실측 앞에서 기각 — 단일 소스는 CLI가 아니라 **공유 모듈 재사용**으로 달성.
 - **smoke v2 실증 (실행 세션)**: `npx tsx` 실행 → :5432 echo·manifest 52·applied 52·unfinished 0·rolledBack 0·**exit 0, hang 0** — v1 FALSE STOP 해소 확인. 추가 발견: 문서 표기 `pnpm exec tsx`가 npm 설치본 operator 셸에서 미해석 → **package.json `smoke:migration` 스크립트(런너 중립) 채택**, 문서 command 통일 (호영님 (2)안 승인 2026-08-04).
+
+*최종 마감 (2026-08-04, P4 GREEN 3건 원문 접수):*
+- 커밋 계보: `2a341a3a`(가드 본체 11파일) → `4e39277a`(smoke v2 전환 5파일, .cjs 폐기). 원격 HEAD `4e39277a`, 두 push 모두 build hook 통과.
+- P4 실증: ① health `migrations` = `{ok:true, reachable:true, pendingCount:0, unknownCount:0, unfinishedCount:0, rolledBackCount:0, clean:true}` / ② smoke v2 `npm run smoke:migration` exit 0 (manifest 52·applied 52·hang 0) / ③ build log prebuild 52.
+- 확증: 직접 `$queryRawUnsafe`는 pooler에서 정상(probe reachable:true), `migrate status` CLI만 hang — 직접-쿼리 패턴이 표준(메모리 고정, 실행 세션).
+- **트랙 종료.** 상시 감시 운영: 배포 후 health `clean:true` 확인(§9.2 step 4) + push 전 `npm run smoke:migration`(§9.10-2) + deploy 전 HEAD 일치(§9.10-1).
 
 *계약 문장 확정 (Phase 1 RED의 대상):*
 1. **관측 계약**: main HEAD 기준 manifest 집합 M, prod 적용 집합 A에 대해 `pending = M − A`, `unknown = A − M`, 그리고 unfinished/rolled_back count가 항상 계산·노출된다. (0801-사건 시그니처 = pending>0 지속 또는 unknown>0.)
