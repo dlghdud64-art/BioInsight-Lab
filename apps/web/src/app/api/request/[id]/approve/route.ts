@@ -31,6 +31,10 @@ import { sendPushNotification } from "@/lib/notifications/push-sender";
 // vendor PO 생성 service. POCandidate[] (vendor 별) 가 있으면 vendor 별
 // Order N개 생성, 0개 시 legacy quote.items 기반 1 Order fallback.
 import { convertPOCandidatesToOrders } from "@/lib/orders/convert-pocandidate-to-orders";
+// §pocandidate-creation-flow — 결재 통과 시 candidate 자동 생성 + 변환 풀
+// 3중 필터 (bulk-po 와 승인통과집합 단일 소스 공유).
+import { APPROVAL_PASSED_STATUSES } from "@/lib/orders/approval-passed-statuses";
+import { createPOCandidateFromQuote } from "@/lib/persistence/po-candidate-server";
 
 /**
  * 구매 요청 승인 (ADMIN/OWNER만 가능)
@@ -226,15 +230,49 @@ export async function POST(
         });
 
         if (quote) {
-          // 결재 통과 POCandidate fetch — quote 의 user / org 기준 (createPoCandidate
-          // wiring 이 quote.id 가 아닌 user/org 단위로 candidate 생성).
+          // §pocandidate-creation-flow — 변환 풀 3중 필터 (root-fix 누락 지점
+          // 보완, bulk-po 와 동일 계약): 해당 quote(quoteId) + 결재 통과
+          // (approvalStatus IN 승인통과집합) + po_conversion_candidate stage.
           const candidates = await tx.pOCandidate.findMany({
             where: {
               userId: purchaseRequest.requesterId,
               organizationId: purchaseRequest.organizationId,
+              quoteId: purchaseRequest.quoteId,
+              approvalStatus: { in: [...APPROVAL_PASSED_STATUSES] },
+              stage: "po_conversion_candidate",
             },
             include: { items: true },
           });
+
+          // §pocandidate-creation-flow — candidate 0건 + items 보유 시 결재
+          // 통과 시점 자동 생성 (A안, 호영님 2026-08-04 확정). 같은 tx 안이라
+          // 생성 실패 = 승인 전체 롤백 (silent 실패 불가). 멱등 = 위 3중
+          // 필터 fetch 가 존재 검사를 겸함. items 0 quote 는 생성 skip →
+          // legacy fallback 유지 (기존 동작 보존).
+          if (candidates.length === 0 && quote.items.length > 0) {
+            const selectedReply = quote.selectedReplyId
+              ? await tx.quoteReply.findUnique({
+                  where: { id: quote.selectedReplyId },
+                  select: { vendorName: true },
+                })
+              : null;
+            const created = await createPOCandidateFromQuote(tx, {
+              quote: {
+                id: quote.id,
+                totalAmount: quote.totalAmount ?? null,
+                items: quote.items,
+              },
+              userId: purchaseRequest.requesterId,
+              organizationId: purchaseRequest.organizationId,
+              vendorName: selectedReply?.vendorName ?? null,
+              totalAmount: purchaseRequest.totalAmount ?? null,
+              approvalStatus: "in_app_approved",
+            });
+            if (created) {
+              // 변환 서비스는 items 포함 candidate 형태 소비 — 생성 row 그대로 전달
+              candidates.push(created);
+            }
+          }
 
           if (candidates.length > 0) {
             // vendor-aware path — service 호출 (outer SERIALIZABLE tx 전달,

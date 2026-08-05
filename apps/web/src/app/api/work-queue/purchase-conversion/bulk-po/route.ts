@@ -40,6 +40,9 @@ import { generateOrderNumber } from "@/lib/api/order-number";
 // 결재 통과 POCandidate[] 가 quote.id 에 있으면 vendor 별 Order N개 생성,
 // 0개 시 legacy quote.items 기반 1 Order (vendor 정보 없는 single PO).
 import { convertPOCandidatesToOrders } from "@/lib/orders/convert-pocandidate-to-orders";
+// §pocandidate-creation-flow — 승인 통과 집합 단일 소스. approve route 와
+// 공유 (상수 이원화 시 한쪽만 갱신되는 drift 차단).
+import { APPROVAL_PASSED_STATUSES } from "@/lib/orders/approval-passed-statuses";
 import {
   enforceAction,
   type InlineEnforcementHandle,
@@ -48,15 +51,6 @@ import {
 const bodySchema = z.object({
   quoteIds: z.array(z.string()).min(1).max(50),
 });
-
-// §pocandidate-root-fix — 승인 통과 집합 (Phase 0 실측: POCandidateApprovalStatus
-// enum 8값 중 통과 3값. 제외 5값 = *_required / *_pending / *_rejected).
-// 변환 풀 진입 조건: approvalStatus IN 이 집합.
-const APPROVAL_PASSED_STATUSES = [
-  "not_required",
-  "externally_approved",
-  "in_app_approved",
-] as const;
 
 interface BulkPoResultEntry {
   readonly quoteId: string;

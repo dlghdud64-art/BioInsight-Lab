@@ -158,6 +158,86 @@ export async function createPOCandidate(input: POCandidateCreateInput): Promise<
   return serializeCandidate(row);
 }
 
+// ── §pocandidate-creation-flow — 결재 통과 시 자동 생성 ──
+
+/** approve tx 재사용을 위한 최소 클라이언트 형태 (PrismaClient 또는 TransactionClient) */
+export interface POCandidateCreateClient {
+  pOCandidate: { create(args: unknown): Promise<unknown> };
+}
+
+export interface QuoteItemForCandidate {
+  name: string | null;
+  catalogNumber: string | null;
+  quantity: number;
+  unitPrice: number | null;
+  lineTotal: number | null;
+  leadTime?: string | null;
+}
+
+export interface CreateFromQuoteInput {
+  quote: { id: string; totalAmount: number | null; items: QuoteItemForCandidate[] };
+  userId: string;
+  organizationId?: string | null;
+  /** selectedReply.vendorName — NULL 이면 vendor "" (변환부에서 vendorId NULL Order, legacy 동등) */
+  vendorName?: string | null;
+  /** PR.totalAmount 우선 (예산 차감 기준과 동일 원천) */
+  totalAmount?: number | null;
+  /** 결재 결과 projection — 기본 in_app_approved. 결재 truth 는 PurchaseRequest (역류 금지) */
+  approvalStatus?: string;
+}
+
+/**
+ * §pocandidate-creation-flow — 결재(PR) 통과 시점에 quote 로부터 candidate 생성.
+ *
+ * - items 0 → null 반환 (생성 skip, caller 는 legacy fallback 유지 —
+ *   §pocandidate-empty-items-order 입구 가드와 동일 취지)
+ * - quoteId 결속 + approvalStatus projection(승인통과집합 값) → 변환 풀 즉시 진입
+ * - 멱등은 caller 책임: 3중 필터 fetch 로 기존 candidate 확인 후 0건일 때만 호출
+ */
+export async function createPOCandidateFromQuote(
+  client: POCandidateCreateClient,
+  input: CreateFromQuoteInput,
+): Promise<POCandidateRow | null> {
+  const items = input.quote.items ?? [];
+  // S3 — items 0 은 생성 skip (내역 없는 발주 후보 금지, caller legacy 유지)
+  if (items.length === 0) return null;
+
+  const vendor = input.vendorName?.trim() ?? "";
+  const sumLineTotal = items.reduce((sum, it) => sum + (it.lineTotal ?? 0), 0);
+  const totalAmount = input.totalAmount ?? input.quote.totalAmount ?? sumLineTotal;
+  const firstName = items[0].name ?? "발주 품목";
+  const title = items.length > 1 ? `${firstName} 외 ${items.length - 1}건` : firstName;
+
+  const row = await client.pOCandidate.create({
+    data: {
+      userId: input.userId,
+      organizationId: input.organizationId ?? null,
+      quoteId: input.quote.id,
+      title,
+      vendor,
+      totalAmount,
+      selectionReason: null,
+      blockers: [],
+      approvalPolicy: "in_app_approval",
+      // S2 — 결재 결과 projection (승인통과집합 값). 결재 truth 는 PurchaseRequest.
+      approvalStatus: input.approvalStatus ?? "in_app_approved",
+      stage: "po_conversion_candidate",
+      items: {
+        create: items.map((item) => ({
+          name: item.name ?? "(이름 없음)",
+          catalogNumber: item.catalogNumber ?? "",
+          quantity: item.quantity,
+          unitPrice: item.unitPrice ?? 0,
+          lineTotal: item.lineTotal ?? 0,
+          leadTime: item.leadTime ?? "",
+        })),
+      },
+    },
+    include: { items: true },
+  });
+  return serializeCandidate(row);
+}
+
 /** stage 업데이트 */
 export async function updatePOCandidateStage(
   id: string,
