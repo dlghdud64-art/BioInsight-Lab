@@ -1,9 +1,9 @@
 # Implementation Plan: §pocandidate-creation-flow — POCandidate 생성 흐름 (결재 통과 시 자동)
 
-- **Status:** ⏳ Pending
+- **Status:** ✅ Complete — 전 Phase (0–4) 종료, prod 배포 GREEN (커밋 `fce9f597`·`3e591b29`, push 완료)
 - **Started:** 2026-08-04
-- **Last Updated:** 2026-08-04
-- **Estimated Completion:** TBD (Phase 0 실측 후 산정)
+- **Last Updated:** 2026-08-05
+- **Estimated Completion:** 2026-08-05 (완료)
 
 **CRITICAL INSTRUCTIONS**: After completing each phase:
 1. ✅ Check off completed task checkboxes
@@ -69,12 +69,12 @@
 결재 게이트 통과 시점(PR APPROVED 전이 + 결재 불요 플랜의 ready_for_po 판정)에 서버가 quote로부터 POCandidate를 자동 생성한다. quoteId 결속·vendor=selectedReply.vendorName·items 충실 매핑·approvalStatus projection. 당분간 quote당 1건 (multi-vendor 분할 = C 트랙 별건).
 
 **Success Criteria:**
-- [ ] PR APPROVED 전이 → candidate 정확히 1건 자동 생성 (quoteId·vendor·items·approvalStatus projection)
-- [ ] 재전이·재요청 멱등 — 같은 quote에 중복 candidate 0
-- [ ] 결재 불요 플랜 경로에서도 동등 생성 (P0 실측 지점)
-- [ ] items 매핑 충실도: 수량·단가·lineTotal 무손실 (empty-items 입구 가드와 정합 — items 0 quote는 생성 skip·명시 로그)
-- [ ] 생성된 candidate로 bulk-po가 vendor-aware 경로 실행 (통합 검증) + candidate 0건 quote의 legacy fallback 무손상
-- [ ] 회귀 게이트 0 RED
+- [x] PR APPROVED 전이 → candidate 정확히 1건 자동 생성 (quoteId·vendor·items·approvalStatus projection)
+- [x] 재전이·재요청 멱등 — 같은 quote에 중복 candidate 0 (W3)
+- [x] ~~결재 불요 플랜~~ → P0 측정2로 스코프 제외 확정 (단일 게이트 지점 부재)
+- [x] items 매핑 충실도: 수량·단가·lineTotal 무손실 + items 0 quote 생성 skip·legacy 보존 (S1·S3·W4)
+- [x] 생성 candidate의 vendor-aware 변환 실행 (W2) + [차단 보완] approve 3중 필터 (W1) + legacy fallback 무손상
+- [x] 회귀 게이트 신규 실패 0 (실행 세션 독립 27파일 188 passed — 권위 실측)
 
 **Out of Scope (⚠️ 절대 구현하지 말 것):**
 - [ ] AI 소싱/비교 기반 vendor-split (C 트랙 별건 — `§pocandidate-vendor-split` 백로그)
@@ -189,7 +189,7 @@ Red-Green-Refactor 강제, 기존 규율 승계 (corrupt→RED·격리 /tmp·구
 
 #### Phase 4: Rollout / Smoke
 **Goal:** 회귀 전체 + 배포 + 마감.
-- Status: [ ] Pending
+- Status: [x] Complete (2026-08-05 — 커밋 3e591b29·배포 READY·health clean 유지. 전달 오염 사고 1건 게이트 포착·복구, §12)
 
 **✋ Quality Gate:** push 전 게이트(실행 세션 독립 검증 — 두 트랙 선례), full-suite 신규 실패 0, 커밋·푸시 승인 게이트. 실발주 smoke는 표본 시점으로 명시 이연.
 **Rollback:** Phase 3 → 2 revert (DB 무접촉 전제 유지 시)
@@ -226,13 +226,13 @@ Red-Green-Refactor 강제, 기존 규율 승계 (corrupt→RED·격리 /tmp·구
 
 ## 11. Progress Tracking
 
-- Overall completion: 0%
-- Current phase: Phase 0 대기
+- Overall completion: 100% — 트랙 종료 (2026-08-05)
+- Current phase: 없음 (전 Phase 완료)
 - Current blocker: 없음
-- Next validation step: Phase 0 확인 항목 4건
+- Next validation step: 없음 — 첫 실발주(PR 승인) 발생 시 Track 3(§budget-quote-candidate-amount-divergence) 재개 조건 도래 주시
 
 **Phase Checklist:**
-- [ ] Phase 0 / [ ] Phase 1 / [ ] Phase 2 / [ ] Phase 3 / [ ] Phase 4
+- [x] Phase 0 / [x] Phase 1 / [x] Phase 2 / [x] Phase 3 / [x] Phase 4
 
 ---
 
@@ -257,6 +257,15 @@ Red-Green-Refactor 강제, 기존 규율 승계 (corrupt→RED·격리 /tmp·구
 - **P2**: `createPOCandidateFromQuote(client, input)` — quoteId 결속·vendor(selectedReply.vendorName, NULL→"")·items 무손실 매핑(catalogNumber/leadTime 폴백 — POCandidateItem 스키마 default 정합)·totalAmount 우선순위(PR>quote>Σ)·approvalStatus projection 기본 `in_app_approved`·items 0 → null skip. client 파라미터로 approve tx 재사용(원자성).
 - **P3**: ① [차단 보완] approve 변환 fetch 3중 필터 — 승인통과집합 상수를 `lib/orders/approval-passed-statuses.ts`로 추출(단일 소스), bulk-po도 교체. ② candidates 0건 + items>0 → tx 내 자동 생성 후 vendor-aware 변환(legacy fallback은 items-0 edge 전용으로 축소). 멱등 = 3중 필터 fetch가 존재 검사 겸임.
 - **Quality gate**: RED 6→GREEN(34/34, 기존 approve 정적 sentinel 2파일 포함) / corrupt→RED 4종(quoteId 필터 제거→W1·생성 블록 무력화→W2·생성 무조건화→W3·서비스 empty 가드 제거→S3) 각 targeted RED + 원복 diff-clean / 회귀 36파일 262 passed·**신규 실패 0** — 유일 실패 1건은 `approval-routes-email-wiring`의 request-approval 라우트 `email: true` 기대 sentinel로, 디바이스 원본에서도 동일 실패(기존 실패군, 이 계획 무접촉 파일). full-suite·build는 push 전 게이트(실행 세션) 몫.
+
+**Phase 4 실행 기록 (2026-08-05, 실행 세션 + 계획 세션):**
+- **🛑 전달 오염 사고 (게이트 포착, 커밋 전 복구)**: 디스크의 `bulk-po/route.ts`가 approve 라우트 내용으로 byte-for-byte 덮여 있었음 — 실행 세션 독립 vitest가 11 failed로 포착(`{ params }` 구조분해 폭발), 커밋했으면 bulk-po 변환 prod 100% 500. **원인 = 계획 세션(sandbox) 전달 단계**: 산출물 준비 cp에서 동명 `route.ts` 2건 충돌 처리 중 bulk-po 사본 유실 → approve 내용이 bulk-po 슬롯으로 커밋됨. 계획 세션의 사후 검증(상수 grep 카운트·head 1줄)이 두 라우트를 구분 못 하는 **비판별 검사**였던 것이 이중 원인. 복구 = `git checkout HEAD` 후 의도 변경(로컬 상수 삭제 + 공유 import)만 최소 재적용, sandbox 판본 폐기.
+- **재발 방지 (실행 세션 메모리 고정 + 계획 세션 규율 추가)**: ① sandbox changeset은 스테이징 전 파일 정체성 확인(diff 증감폭·cmp) ② 계획 세션 전달 규율 — 동명 파일은 준비 단계부터 구분명 사용 + 파일 고유 마커(예: `routePath:` 값)로 판별 검증. 실행 세션 독립 실측이 최종 권위임을 **세 번째로 실증** (schema sentinel → smoke FALSE STOP → 전달 오염).
+- 독립 검증 (복구 후, 권위 수치): **27파일 188 passed·0 failed·1 todo** (신규 8 GREEN 포함). production tsc 0·총 27 baseline. §12 P1–P3의 "36파일 262 passed"는 sandbox 환경 수치 — 권위는 본 실측.
+- 커밋·push: `fce9f597`(drift-guard 마감 docs) → `3e591b29`(본 트랙 7파일, 오염 0 재확인). 원격 HEAD `3e591b29`, build hook 통과.
+- P4 배포 실증: Vercel READY(sha 3e591b29), prebuild manifest 52, `/api/health` `migrations` = clean:true·pending 0·unknown 0, `manifestGeneratedAt` 07:36:26 = 이번 빌드 prebuild 시각(신규 배포 반영 확증). DB 무접촉 기대값 정합.
+- 운영 팁(실행 세션): Vercel API state가 READY 후에도 장시간 BUILDING으로 표시될 수 있음 — 배포 반영은 health `manifestGeneratedAt` 교차 확인이 확실.
+- **트랙 종료.**
 
 **계획 시점 기록 (2026-08-04):**
 - 호영님 A안 확정("결재 통과 시 자동") — B(명시 CTA) 기각, C(AI vendor-split)는 별건 백로그 `§pocandidate-vendor-split`.
