@@ -52,19 +52,29 @@ describe("§11.283a 신호등 색상 intent 보존 (navy 헤더 / 요약 칩 재
 
   // §11.328 #inventory-mobile-header (2026-07-XX) — navy strip → 흰 KPI 카드(숫자만 색·상태 도트).
   //   navy 토큰(bg-rose-500/15, bg-white/[0.06])은 §11.328에서 폐기됨(pre-existing stale, P4 무관).
-  //   intent(안전재고미달 위험 rose 차별화) 보존 계약을 현행 흰 카드 토큰으로 재앵커.
-  it("안전재고 미달 = 위험 rose 톤 보존 (흰 KPI 카드 alert)", () => {
+  //   intent(안전재고미달 위험 차별화) 보존 계약을 현행 흰 카드 토큰으로 재앵커.
+  // §11.283a(05-23) 의도(0건 중립 톤다운·전 카드 동일 톤 회피)는 보존, 잠금 지점만
+  //   보더→숫자·도트로 이동 — 1a(08-05 호영님 지시문) 재앵커, §11.328 navy strip
+  //   재앵커와 동형 선례. 색조 rose-700/rose-500 → #b91c1c (위험=red 의미 불변).
+  it("안전재고 미달 = 위험 red 톤 보존 (흰 KPI 카드 alert)", () => {
     expect(CONTENT).toMatch(/안전재고 미달/);
-    expect(CONTENT).toMatch(/k\.alert && k\.value > 0 \? "text-rose-700"/);
-    expect(CONTENT).toMatch(/k\.alert && k\.value > 0 \? "bg-rose-500"/); // 상태 도트
+    expect(CONTENT).toMatch(/k\.alert && k\.value > 0 \? "text-\[#b91c1c\]"/);
+    expect(CONTENT).toMatch(/k\.alert && k\.value > 0 \? "bg-\[#b91c1c\]"/); // 상태 도트
   });
 });
 
 describe("§11.283a 0건 톤다운 보존 (흰 KPI 카드 alert 게이팅)", () => {
   it("alert KPI 0건 시 중립 톤 (k.alert && k.value > 0 분기)", () => {
     // §11.328 재앵커: border/텍스트/도트가 value>0 에서만 rose, 0건은 중립(slate).
+    // §11.283a(05-23) 의도(0건 중립 톤다운·전 카드 동일 톤 회피)는 보존, 잠금 지점만
+    //   보더→숫자·도트로 이동 — 1a(08-05 호영님 지시문) 재앵커, §11.328 navy strip
+    //   재앵커와 동형 선례. 보더는 3장 무채색 통일(강조는 재발주 배너 일원화)이라
+    //   0건 게이팅의 관측 지점이 숫자·도트로 옮겨졌을 뿐 게이팅 자체는 불변.
     expect(CONTENT).toMatch(
-      /k\.alert && k\.value > 0 \? "border-rose-200" : "border-slate-200"/,
+      /k\.alert && k\.value > 0 \? "text-\[#b91c1c\]" : "text-slate-900"/,
+    );
+    expect(CONTENT).toMatch(
+      /k\.alert && k\.value > 0 \? "bg-\[#b91c1c\]" : "bg-slate-300"/,
     );
   });
 });

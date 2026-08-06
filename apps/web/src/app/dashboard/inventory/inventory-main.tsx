@@ -1,5 +1,9 @@
 "use client";
 
+// ⚠️ DEAD FILE (2026-08-05 실측): importer 0 — 어떤 라우트에서도 렌더되지 않음.
+// 라이브 표면 = ./inventory-content.tsx. 수정 전 반드시 도달성 확인.
+// 정리 예정: §inventory-dead-file-cleanup 백로그.
+
 import { useState, useEffect, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";

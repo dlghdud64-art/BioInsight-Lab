@@ -1646,10 +1646,15 @@ function InventoryPageContent() {
               { label: "안전재고 미달", value: displayInventories.filter((i) => i.currentQuantity === 0 || (i.safetyStock != null && i.currentQuantity <= i.safetyStock)).length, unit: "", alert: true },
               { label: "만료 임박", value: displayInventories.filter((i) => { if (!i.expiryDate) return false; const dd = Math.ceil((new Date(i.expiryDate).getTime() - Date.now()) / 86400000); return dd > 0 && dd <= 30; }).length, unit: "", alert: false },
             ].map((k) => (
-              <div key={k.label} className={`flex-1 rounded-[13px] px-3 py-2.5 border bg-white shadow-sm ${k.alert && k.value > 0 ? "border-rose-200" : "border-slate-200"}`}>
-                <p className={`text-xl font-extrabold ${k.alert && k.value > 0 ? "text-rose-700" : "text-slate-900"}`}>{k.value}<span className="text-slate-400 text-xs font-semibold">{k.unit ? ` ${k.unit}` : ""}</span></p>
+              /* §reorder-quote-handoff 1a — KPI 3장 흰 카드 통일 (레드 보더 이중 강조 제거,
+                 호영님 지시문 2026-08-05). 미달 신호 = 숫자 #b91c1c + 6px 점만.
+                 강조는 아래 재발주 권장 배너 하나로 일원화.
+                 ⚠️ 이 파일이 라이브 표면 (page.tsx → inventory-content). 같은 계약이
+                 inventory-main.tsx 에도 있으나 그 파일은 importer 0 = dead. */
+              <div key={k.label} className="flex-1 rounded-[13px] px-3 py-2.5 border bg-white border-slate-200 shadow-sm">
+                <p className={`text-xl font-extrabold ${k.alert && k.value > 0 ? "text-[#b91c1c]" : "text-slate-900"}`}>{k.value}<span className="text-slate-400 text-xs font-semibold">{k.unit ? ` ${k.unit}` : ""}</span></p>
                 <p className="text-[11px] mt-0.5 text-slate-500 flex items-center gap-1.5">
-                  <span className={`h-[7px] w-[7px] rounded-full ${k.alert && k.value > 0 ? "bg-rose-500" : "bg-slate-300"}`} aria-hidden />
+                  <span className={`h-1.5 w-1.5 rounded-full ${k.alert && k.value > 0 ? "bg-[#b91c1c]" : "bg-slate-300"}`} aria-hidden />
                   {k.label}
                 </p>
               </div>

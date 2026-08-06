@@ -27,7 +27,11 @@ const REPO_ROOT = join(__dirname, "..", "..", "..");
 const read = (rel: string) => readFileSync(join(REPO_ROOT, rel), "utf8");
 
 const SHEET = read("src/components/inventory/ReorderReviewSheet.tsx");
-const MAIN = read("src/app/dashboard/inventory/inventory-main.tsx");
+// ⚠️ 라이브 표면 = inventory-content.tsx (page.tsx → dynamic import).
+// 최초 판본은 inventory-main.tsx 를 읽었으나 그 파일은 importer 0 = dead →
+// 프로덕션 효과 0인 채 GREEN(false-GREEN, 2026-08-05 prod QA ① NG 로 발각).
+// 잠금 대상은 반드시 렌더되는 파일이어야 한다.
+const LIVE_INVENTORY = read("src/app/dashboard/inventory/inventory-content.tsx");
 const CARD = read("src/components/quotes/mobile-quotes-view.tsx");
 const PAGE = read("src/app/dashboard/quotes/page.tsx");
 const PANEL_PATH = "src/components/quotes/prepare/quote-prepare-panel.tsx";
@@ -82,15 +86,22 @@ describe("§reorder-quote-handoff P2 — 초안 생성 배선 (no-op 해소)", (
 describe("§reorder-quote-handoff P3 1a — 모바일 재고 KPI de-red", () => {
   it("미달 카드 rose 배경/보더 채색 0 (흰 카드 통일)", () => {
     // KPI 3장 map 블록에서 alert 분기의 bg-rose-50/border-rose-200 제거
-    const kpiBlock = MAIN.slice(MAIN.indexOf('"전체 품목"'), MAIN.indexOf('"전체 품목"') + 2000);
+    const kpiBlock = LIVE_INVENTORY.slice(LIVE_INVENTORY.indexOf('"전체 품목"'), LIVE_INVENTORY.indexOf('"전체 품목"') + 2000);
     expect(kpiBlock).not.toMatch(/bg-rose-50/);
     expect(kpiBlock).not.toMatch(/border-rose-200/);
   });
 
   it("미달 숫자 #b91c1c + 6px 레드 점만", () => {
-    const kpiBlock = MAIN.slice(MAIN.indexOf('"전체 품목"'), MAIN.indexOf('"전체 품목"') + 2000);
+    const kpiBlock = LIVE_INVENTORY.slice(LIVE_INVENTORY.indexOf('"전체 품목"'), LIVE_INVENTORY.indexOf('"전체 품목"') + 2000);
     expect(kpiBlock).toMatch(/#b91c1c/);
     expect(kpiBlock).toMatch(/h-1\.5 w-1\.5|h-\[6px\] w-\[6px\]/);
+  });
+
+  it("[사고 가드] 잠금 대상이 라이브 표면 — page.tsx 가 inventory-content 를 import", () => {
+    // 2026-08-05 prod QA ①: 위 두 계약이 dead file(inventory-main.tsx, importer 0)
+    // 을 잠가 false-GREEN 이었다. 렌더 경로가 끊기면 이 테스트가 먼저 RED 가 된다.
+    const entry = read("src/app/dashboard/inventory/page.tsx");
+    expect(entry).toMatch(/import\(\s*["']\.\/inventory-content["']\s*\)/);
   });
 });
 

@@ -30,9 +30,14 @@ describe("§11.328 — 재고 관리 모바일 시안(§03) 정합", () => {
   });
 
   it("모바일 KPI 카드가 흰 배경 + 상태 도트다 (rose 채운 카드 제거)", () => {
+    // 승계 (§reorder-quote-handoff 1a, 호영님 지시문 2026-08-05): §11.328 의 계약
+    // "흰 배경 + 상태 도트"는 그대로 유지되고, 미달 분기의 잔여 채색만 더 걷힌다.
+    //   보더 rose-200 → slate-200 고정 (카드 3장 완전 동일)
+    //   도트 7px bg-rose-500 → 6px bg-[#b91c1c] (숫자와 같은 레드로 통일)
+    // 도트 자체·흰 배경·구 채운 카드 금지는 원 계약 그대로 보존.
     const src = read(CONTENT);
-    expect(src).toMatch(/flex-1 rounded-\[13px\][^`]*bg-white shadow-sm/);
-    expect(src).toMatch(/h-\[7px\] w-\[7px\] rounded-full \$\{k\.alert && k\.value > 0 \? "bg-rose-500" : "bg-slate-300"\}/);
+    expect(src).toMatch(/flex-1 rounded-\[13px\][^`]*bg-white border-slate-200 shadow-sm/);
+    expect(src).toMatch(/h-1\.5 w-1\.5 rounded-full \$\{k\.alert && k\.value > 0 \? "bg-\[#b91c1c\]" : "bg-slate-300"\}/);
     expect(src).not.toMatch(/bg-rose-50 border-rose-200" : "bg-white border-slate-200 shadow-sm/); // 구 채운 카드 잔재 0
   });
 
