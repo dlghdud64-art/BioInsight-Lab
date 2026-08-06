@@ -19,7 +19,8 @@ const REPO_ROOT = join(__dirname, "..", "..", "..");
 const read = (rel: string) => readFileSync(join(REPO_ROOT, rel), "utf8");
 
 const CONTENT = "src/app/dashboard/inventory/inventory-content.tsx";
-const MAIN = "src/app/dashboard/inventory/inventory-main.tsx";
+// §inventory-dead-file-cleanup(2026-08-06) 재앵커 — inventory-main(dead) → 라이브.
+const MAIN = "src/app/dashboard/inventory/inventory-content.tsx";
 const TABLE = "src/components/inventory/InventoryTable.tsx";
 
 describe("§inventory-redesign P3 — onMoveLocation fake success 제거 + 편집 모달 배선", () => {

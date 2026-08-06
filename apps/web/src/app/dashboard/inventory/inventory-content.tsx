@@ -2263,9 +2263,31 @@ function InventoryPageContent() {
                             setLabelPrintQty(defaultQty);
                             setLabelPrintOpen(true);
                           }}
-                          emptyMessage={debouncedSearchQuery.trim() ? `'${debouncedSearchQuery.trim()}'에 해당하는 재고를 찾지 못했습니다.` : "등록된 재고가 없습니다.\n첫 재고를 추가해 운영을 시작하세요."}
-                          emptyAction={debouncedSearchQuery.trim() ? () => setSearchQuery("") : () => setIsDialogOpen(true)}
-                          emptyActionLabel={debouncedSearchQuery.trim() ? "전체 재고 보기" : "재고 추가하기"}
+                          /* §11.361-2 라이브 이식(§inventory-dead-file-cleanup P1.5, 2026-08-06) —
+                             원 수정이 dead file(inventory-main, importer 0)에만 적용돼 라이브는
+                             필터 0건을 "등록된 재고 없음"으로 위장하고 있었다(fake empty).
+                             우선순위: 검색 > 필터(status/category/location) > 진짜 0건. */
+                          emptyMessage={
+                            debouncedSearchQuery.trim()
+                              ? `'${debouncedSearchQuery.trim()}'에 해당하는 재고를 찾지 못했습니다.`
+                              : activeFilterCount > 0
+                                ? "이 조건에 맞는 재고가 없습니다. 필터를 초기화해보세요."
+                                : "등록된 재고가 없습니다.\n첫 재고를 추가해 운영을 시작하세요."
+                          }
+                          emptyAction={
+                            debouncedSearchQuery.trim()
+                              ? () => setSearchQuery("")
+                              : activeFilterCount > 0
+                                ? () => { setLocationFilter("all"); setStatusFilter("all"); setCategoryFilter("all"); }
+                                : () => setIsDialogOpen(true)
+                          }
+                          emptyActionLabel={
+                            debouncedSearchQuery.trim()
+                              ? "전체 재고 보기"
+                              : activeFilterCount > 0
+                                ? "필터 초기화"
+                                : "재고 추가하기"
+                          }
                         />
                       </CardContent>
                     </Card>

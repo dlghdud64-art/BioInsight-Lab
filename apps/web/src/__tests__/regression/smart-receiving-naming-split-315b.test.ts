@@ -64,9 +64,9 @@ describe("§11.315-b 재앵커 — 인라인 등록 surface '스마트 입고' �
     expect(read("src/components/dashboard/SmartReceivingStatusCard.tsx")).toMatch(/스마트 입고/);
   });
 
-  it("inventory-main '스마트 입고' trigger", () => {
-    expect(read("src/app/dashboard/inventory/inventory-main.tsx")).toMatch(/스마트 입고/);
-  });
+  // §inventory-dead-file-cleanup(2026-08-06) — inventory-main '스마트 입고' 단언 폐기.
+  //   그 파일은 importer 0 dead file 로 삭제됨. 명명 계약은 위 라이브 4중 잠금
+  //   (inventory-content · ScannerModal · StatusCard · Header)이 무손실 보존.
 });
 
 describe("§11.315-b 재앵커 — Header 글로벌 진입 §371-3 scan_hub", () => {

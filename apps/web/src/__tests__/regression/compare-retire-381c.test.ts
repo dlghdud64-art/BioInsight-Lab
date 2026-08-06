@@ -97,7 +97,8 @@ describe("§11.381c — 내부 재배선: 쿼리·견적 경로", () => {
   it("inventory 2곳 — /compare?search= → /app/search?q=", () => {
     for (const rel of [
       "src/app/dashboard/inventory/inventory-content.tsx",
-      "src/app/dashboard/inventory/inventory-main.tsx",
+      // §inventory-dead-file-cleanup(2026-08-06) 재앵커 — inventory-main(dead) → 라이브.
+      "src/app/dashboard/inventory/inventory-content.tsx",
     ]) {
       const src = read(rel);
       expect(src).not.toMatch(/\/compare\?search=/);

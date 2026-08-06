@@ -38,7 +38,8 @@ const INVENTORY_TABLE = readFileSync(
   "utf8",
 );
 const INVENTORY_MAIN = readFileSync(
-  resolve(__dirname, "../../app/dashboard/inventory/inventory-main.tsx"),
+  // §inventory-dead-file-cleanup(2026-08-06) 재앵커 — inventory-main(dead) → 라이브.
+  resolve(__dirname, "../../app/dashboard/inventory/inventory-content.tsx"),
   "utf8",
 );
 

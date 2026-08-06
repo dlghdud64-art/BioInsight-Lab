@@ -20,7 +20,9 @@ const SCHEMA = "prisma/schema.prisma";
 const ROUTE = "src/app/api/products/[id]/sds/route.ts";
 const PANEL = "src/components/inventory/inventory-context-panel.tsx";
 const PAGE = "src/app/products/[id]/page.tsx";
-const MAIN = "src/app/dashboard/inventory/inventory-main.tsx";
+// §inventory-dead-file-cleanup(2026-08-06) 재앵커 — 잠금 대상 inventory-main(dead,
+//   importer 0) → 라이브 inventory-content. 계약 문자열 라이브 존재 실측 GREEN.
+const MAIN = "src/app/dashboard/inventory/inventory-content.tsx";
 const SDS = "src/components/safety/sds-documents-section.tsx";
 const MIG = "prisma/migrations";
 
