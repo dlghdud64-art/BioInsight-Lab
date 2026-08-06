@@ -235,13 +235,15 @@ Red-Green-Refactor 강제, 기존 규율 승계 (corrupt→RED·격리 /tmp·실
 
 ## 11. Progress Tracking
 
-- Overall completion: 0%
-- Current phase: Phase 0 대기
+- Overall completion: 100% — 트랙 종료 (2026-08-06)
+- Current phase: 완료 (P4 prod QA 7항 전항 PASS)
 - Current blocker: 없음
-- Next validation step: Phase 0 확인 항목 5건
+- Next validation step: 없음 — 후속은 백로그(§12 말미)
 
 **Phase Checklist:**
-- [ ] Phase 0 / [ ] Phase 1 / [ ] Phase 2 / [ ] Phase 3 / [ ] Phase 4
+- [x] Phase 0 / [x] Phase 1 / [x] Phase 2 / [x] Phase 3 / [x] Phase 4
+
+**커밋 계보:** 본구현(P1–P3) → `525c8078`(#310 핫픽스 포함) → `e0518824`(CSRF 교정) → `3507688f`(1a 라이브 이관 + sentinel 3계보 승계)
 
 ---
 
@@ -267,6 +269,34 @@ Red-Green-Refactor 강제, 기존 규율 승계 (corrupt→RED·격리 /tmp·실
 - **sentinel 승계 2파일**: `inventory-mobile-reorder-gate`(prefill lock → POST 계약, Q31 발주 경로 보존 단언 유지) / `quotes-mobile-refine-p1`(미정→지정 필요·추가→지정하고 발송 — 보호 의도 주석 보존). sweep: 구 문구 렌더 잔존 0 단언 추가.
 - **게이트**: 21/21 GREEN + 승계 후 관련 스코프 14파일 **142 passed·0 failed**. corrupt→RED 4종(배선 소실·1b hide 소실·1d 문구 회귀·1c 게이트 소실) 각 targeted RED + 원복 diff-clean. `dashboard/quotes` 디렉토리 잔여 실패(60건)는 라이브 트리 재현 확인된 **기존 실패군**(quote-kpi-scroll-dots 등 — 이 changeset 무접촉). tsc·build는 push 전 게이트(실행 세션) 몫.
 - 미충족 지시문 항목(정직 기록): 1c "품목 근거(현재/안전)" — Quote에 재고 근거 데이터 부재로 미표시(가짜 금지). 1c "이메일로 추가" 버튼 — 발송 검토 단계 소관이라 캡션 안내로 대체(dead button 회피). 1d "재고관리 재발주안에서 생성" 문구 — 리스트 카드 데이터(specialNotes 미포함)로 미표시, 생성일로 대체. 필요 시 후속 트랙.
+
+**Phase 4 — prod 실기기(Chrome) QA 및 사고 기록 (2026-08-05~06):**
+
+*QA 판정표 (전항 prod DOM/네트워크 실측):*
+
+| 항목 | 판정 | 근거 |
+|---|---|---|
+| ① 1a KPI de-red | PASS (3507688f) | 3장 카드 `border bg-white border-slate-200 shadow-sm` 완전 동일 · 미달 숫자 `text-[#b91c1c]` · 도트 `h-1.5 w-1.5 bg-[#b91c1c]` · 0건 도트 slate-300 중립. 잔존 rose는 1a 범위 밖 별도 표면(부족 필터 칩·재발주 배너·알림 위젯·탭바 배지) |
+| ② 시트 공급사 0 분기 | PASS | yellow 안내 2줄 · 바로 발주 미노출 · 대체 안내 · CTA "초안 만들고 공급사 지정 →" |
+| ③ 초안 생성 배선 | PASS (e0518824) | `POST /api/quotes` 201 · pending "초안 생성 중…" · `?prepare={id}` 직행 — no-op 핸드오프 해소 확정 |
+| ④ 패널 도착 | PASS | RFQ ref mono · "방금 재고관리에서 생성됨" 배지 · 3스텝 pill(✓/② 활성/③ 비활성) |
+| ⑤ 공급사 게이트 | PASS | 지정 전 disabled+"공급사 지정 필요" → 지정 후 pill ✓✓·③ 활성·CTA 활성 |
+| ⑥ 발송 2-step | PASS | ConfirmSendModal 경유(직진입 0) · 공급사 후보 "미지정 — 발송 검토에서 추가" 정직 표기 |
+| ⑦ 1d 카드 | PASS | "공급사 지정 필요" pill · "견적 대기" 행 숨김→"생성 YYYY. M. D." · CTA→패널 복귀(재방문 시 justCreated 배지 미표시) |
+
+*P4 사고 3건 (전부 계획/구현 세션 결함, prod Chrome 실측이 포착):*
+1. **React #310 크래시** — `creating`/`createError` useState를 `if (!data) return null` 뒤에 배치 → data null→값 전환에서 훅 수 변화 → 시트 오픈 즉시 크래시. 교정: 훅 이동 + 훅 순서 인덱스 sentinel. `525c8078`.
+2. **CSRF 403** — raw `fetch("/api/quotes")`가 `x-labaxis-csrf-token` 미부착 → "보안 검증이 완료되지 않아…" 거부. §support-csrf-fix(06-17) 전례를 Phase 0에서 누락. 교정: `csrfFetch` 승계 + CSRF sentinel 3건. `e0518824`.
+3. **1a dead-file 오적용** — Phase 0 측정3에서 inventory-content grep을 잘라 읽어 L1649 모바일 KPI 블록을 놓치고 importer 0인 `inventory-main`을 라이브로 단정 → sentinel까지 dead file을 읽어 false-GREEN. 실행 세션의 render-reachability 분석이 진단. 교정: inventory-content L1649 이관 + sentinel LIVE 재지정 + **도달성 가드 신설**(page→inventory-content import 잠금) + §11.328·§11.283a 재앵커(의도 보존·잠금 지점 보더→숫자·도트 이동, 호영님 승인) + dead 마커 주석. `3507688f`. (파일 정리는 §inventory-dead-file-cleanup 백로그.)
+
+*규율 채택 — 라이브 표면 실행 검증 게이트 (호영님 승인, 2026-08-06):*
+> 정적 sentinel은 계약 문자열의 존재만 증명한다. 훅 순서(#310)·요청 헤더 계약(CSRF)·렌더 도달성(dead file)은 실행 표면에서만 드러난다. UI 트랙의 P4 게이트에 **라이브 표면 실행 검증(Chrome 실측 또는 동급)을 필수 포함**한다. 정적 보완재: 도달성 가드(라이브 경로 import 잠금) 패턴을 표면 단위 sentinel에 병설.
+
+*Phase 0 방법 교훈:* 측정 grep을 `head`/`sed`로 잘라 읽지 말 것 — 측정3 오판의 직접 원인. 표면 특정 시 "스타일 문자열 존재"가 아니라 **importer/도달성**으로 라이브 여부를 판정한다.
+
+*QA 관찰(결함 아님):* prepare 패널 품목 카드의 sourceMeta·"재고관리에서 연동" 칩 미표시 — 리스트 GET 응답에 specialNotes 미포함. 가짜 금지 설계상 정직 동작이며 출처는 justCreated 배지가 커버. 미충족 3항(품목 근거·이메일 추가·카드 출처 문구)과 동일 계열 — 후속 트랙 후보로 묶음.
+
+*검증용 prod 초안 정리:* RFQ-2608-CDLH(`cmsg9vqk50001uupvcokccdlh`) — 호영님 UI 직접 삭제로 확정. 삭제 확인 시 본 항목 마감.
 
 **계획 시점 기록 (2026-08-05):**
 - 호영님 결정: 1c = (a) 딥링크형 same-route 패널 `?prepare={id}` ("권고 가자") — 지시문 원안 신규 라우트 기각.
