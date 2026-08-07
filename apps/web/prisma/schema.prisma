@@ -708,13 +708,21 @@ model QuoteListItem {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  // §quote-item-vendor-selection — 품목 단위 vendor 확정 truth (호영님 C안 정공법, 2026-08-07).
+  //   additive nullable — rollback = 컬럼 drop. FK 는 vendorName 문자열이 아닌
+  //   QuoteVendorRequest 결속(응답 실존·이름 변경 안전). 요청 삭제 시 선택 해제(SetNull).
+  //   approve 소비 계층: 선택 > 유일-응답 파생(§pocandidate-vendor-split A안) > 잔여 "".
+  selectedVendorRequestId String?
+
   // 관?
-  quote           Quote                     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-  product         Product?                  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  vendorResponses QuoteVendorResponseItem[] // Vendor responses for this item
+  quote                 Quote               @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  product               Product?            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  vendorResponses       QuoteVendorResponseItem[] // Vendor responses for this item
+  selectedVendorRequest QuoteVendorRequest? @relation("QuoteItemSelectedVendor", fields: [selectedVendorRequestId], references: [id], onDelete: SetNull)
 
   @@index([quoteId])
   @@index([productId])
+  @@index([selectedVendorRequestId])
 }
 
 // 기존 QuoteItem 모델 (?위 ?환????)
@@ -1825,8 +1833,10 @@ model QuoteVendorRequest {
   updatedAt         DateTime            @updatedAt
 
   // Relations
-  quote         Quote                     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-  responseItems QuoteVendorResponseItem[]
+  quote            Quote                     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  responseItems    QuoteVendorResponseItem[]
+  // §quote-item-vendor-selection — 이 요청(vendor)이 품목 확정으로 선택된 QuoteListItem 들
+  selectedForItems QuoteListItem[]           @relation("QuoteItemSelectedVendor")
 
   @@index([quoteId])
   @@index([token])
