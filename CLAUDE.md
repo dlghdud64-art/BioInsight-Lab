@@ -90,6 +90,7 @@ UI 에 적용하는 공통 원칙. 신규 화면 / 모바일 UX 작업 시 자�
 - 정보 (실행 가능 CTA): `bg-emerald-600 text-white` (primary), `bg-blue-600 text-white` (분석/검토)
 - ✅ 주의색 = **yellow 신호등**(§11.283a/302c/302d — 만료임박·검토·낮은재고). ❌ Tailwind `amber-*`/`orange-*` 금지 유지(16 amber-removed sentinel — 밝은 amber 눈피로로 yellow/red 통일 sweep). 위험=red, 정상=emerald.
 - ⚠️ **#b45821 muted amber 이전(2026-06-30 지향)은 미채택/보류** (호영님 2026-07-10 §P6 재결정): 라이브 yellow 신호등 + 15+ inventory sentinel(kpi-283a·priority-banner-302d4·cardbg-302d2·context-320 등)이 yellow=주의를 잠금 → 전환 시 source ~76 spot + sentinel ~15개 재작성·283/302 신호등 반전 필요(대공사, 별도 신중 배치 대상). 재개 시 근거·범위 재승인 후.
+- 📌 **302c·302d-1 은퇴→승계 (2026-08-06, §inventory-dead-file-cleanup 2차 — 호영님 분류표 승인)**: 구 302c(KPI)·302d-1(badge) 원 판본은 dead file(`inventory-main.tsx`, importer 0) 세대의 구현 내부명/라인 종속 잠금이라 은퇴. **정책(yellow=주의·amber 금지·위험=red·정상=emerald)은 불변** — yellow=주의 잠금은 라이브(`inventory-content.tsx`) 표면에서 **283a(KPI 만료임박=yellow·재주문=red·안전재고미달=red·0건 톤다운)·302d-2(getCardBg `expiring`→yellow-100)·302d-1 재앵커("우선 사용" Badge yellow-100)** 로 승계 유지(vitest GREEN 실측). 위 계열 표기 §11.283a/302c/302d 중 **302c 는 이제 색상이 아니라 dead-file 구세대 부활 차단 + isReorderNeeded canonical 로 재정의**됨(line 92 구체 나입 283a/302d4/302d2/320 은 무손상).
 
 ### 10. JSX 구조 안정성 (Vercel build 회귀 방지)
 

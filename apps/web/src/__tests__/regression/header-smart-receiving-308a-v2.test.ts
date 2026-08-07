@@ -21,7 +21,6 @@ import { join } from "node:path";
 const REPO_ROOT = join(__dirname, "..", "..", "..");
 const HEADER_PATH = "src/components/dashboard/Header.tsx";
 const DASHBOARD_PAGE_PATH = "src/app/dashboard/page.tsx";
-const INVENTORY_MAIN_PATH = "src/app/dashboard/inventory/inventory-main.tsx";
 const MODAL_PATH = "src/components/inventory/SmartReceivingPlaceholderModal.tsx";
 
 function read(rel: string): string {
@@ -87,26 +86,16 @@ describe("§11.308a-v2 — dashboard/page.tsx 본문 button 제거", () => {
   });
 });
 
-describe("§11.308a-v2 — 재고 탭 진입점 보존 (호영님 spec — 별도 유지)", () => {
-  it("inventory-main.tsx mobile entry (inventory-smart-receiving-entry-mobile) 보존", () => {
-    const src = read(INVENTORY_MAIN_PATH);
-    expect(src).toMatch(/data-testid="inventory-smart-receiving-entry-mobile"/);
-  });
-
-  it("inventory-main.tsx desktop entry (inventory-smart-receiving-entry-desktop) 보존", () => {
-    const src = read(INVENTORY_MAIN_PATH);
-    expect(src).toMatch(/data-testid="inventory-smart-receiving-entry-desktop"/);
-  });
-
-  it("inventory-main.tsx SmartReceivingScannerModal 렌더 보존 (Placeholder→Scanner swap, 인라인 유지)", () => {
-    // 재고 탭은 registry 이전 대상 아님 — 인라인 모달 유지. 단 컴포넌트 Placeholder→Scanner 진화.
-    const src = read(INVENTORY_MAIN_PATH);
-    expect(src).toMatch(/<SmartReceivingScannerModal[^>]*open=\{isSmartReceivingOpen\}/);
-  });
-
-  it("inventory-main.tsx isSmartReceivingOpen state 보존", () => {
-    const src = read(INVENTORY_MAIN_PATH);
-    expect(src).toMatch(/isSmartReceivingOpen.*useState/);
+describe("§11.308a-v2 — 재고 탭 진입점 [SUPERSEDED — §371-3 scan_hub 글로벌화 + §inventory-dead-file-cleanup]", () => {
+  // §inventory-dead-file-cleanup 2차(2026-08-06): "재고 탭 별도 인라인 진입 보존" spec 은
+  //   inventory-main(dead, importer 0) 세대의 계약. 라이브는 인라인 진입 없이
+  //   Header "스캔" → scan_hub registry → SmartReceivingScannerModal (global-modal
+  //   lazy) 로 통일 — §11.371-3 이 대체(의도된 진화, 미배송 아님). 라이브 배선
+  //   잠금은 scan-hub-371-3.test.ts 5면 담당. 여기서는 인라인 재도입만 차단.
+  it("inventory-content 에 인라인 진입 잔재 0 (scan_hub 단일 경로)", () => {
+    const src = read("src/app/dashboard/inventory/inventory-content.tsx");
+    expect(src).not.toMatch(/data-testid="inventory-smart-receiving-entry-(mobile|desktop)"/);
+    expect(src).not.toMatch(/isSmartReceivingOpen/);
   });
 });
 

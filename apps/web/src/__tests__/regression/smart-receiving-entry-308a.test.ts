@@ -19,7 +19,6 @@ import { join } from "node:path";
 const REPO_ROOT = join(__dirname, "..", "..", "..");
 const MODAL_PATH = "src/components/inventory/SmartReceivingPlaceholderModal.tsx";
 const DASHBOARD_PAGE_PATH = "src/app/dashboard/page.tsx";
-const INVENTORY_MAIN_PATH = "src/app/dashboard/inventory/inventory-main.tsx";
 
 function read(rel: string): string {
   return readFileSync(join(REPO_ROOT, rel), "utf8");
@@ -83,40 +82,17 @@ describe("§11.308a — dashboard/page.tsx 헤더 진입점 [SUPERSEDED §11.308
   });
 });
 
-describe("§11.308a — inventory-main.tsx 헤더 진입점 (mobile + desktop)", () => {
-  it("ScanLine import", () => {
-    const src = read(INVENTORY_MAIN_PATH);
-    expect(src).toMatch(/\bScanLine\b/);
-  });
-
-  it("SmartReceivingScannerModal import (Placeholder→Scanner 진화, 인라인 유지)", () => {
-    const src = read(INVENTORY_MAIN_PATH);
-    expect(src).toMatch(/import\s*\{[^}]*SmartReceivingScannerModal[^}]*\}/);
-  });
-
-  it("isSmartReceivingOpen state (1회)", () => {
-    const src = read(INVENTORY_MAIN_PATH);
-    expect(src).toMatch(/isSmartReceivingOpen/);
-    expect(src).toMatch(/setIsSmartReceivingOpen/);
-  });
-
-  it("스마트 입고 button mobile + desktop — testid 2건", () => {
-    const src = read(INVENTORY_MAIN_PATH);
-    const mobileMatches = src.match(/data-testid="inventory-smart-receiving-entry-mobile"/g);
-    const desktopMatches = src.match(/data-testid="inventory-smart-receiving-entry-desktop"/g);
-    expect(mobileMatches?.length ?? 0).toBeGreaterThanOrEqual(1);
-    expect(desktopMatches?.length ?? 0).toBeGreaterThanOrEqual(1);
-  });
-
-  it("button onClick wiring (mobile + desktop 모두 setIsSmartReceivingOpen(true))", () => {
-    const src = read(INVENTORY_MAIN_PATH);
-    const openCalls = src.match(/setIsSmartReceivingOpen\(true\)/g);
-    expect(openCalls?.length ?? 0).toBeGreaterThanOrEqual(2);
-  });
-
-  it("Modal 렌더 (open + onClose) — 1회 (mobile/desktop 공유, Scanner)", () => {
-    const src = read(INVENTORY_MAIN_PATH);
-    expect(src).toMatch(/<SmartReceivingScannerModal[^>]*open=\{isSmartReceivingOpen\}/);
+describe("§11.308a — 재고 화면 진입점 [SUPERSEDED — §371-3 scan_hub 글로벌화 + §inventory-dead-file-cleanup]", () => {
+  // §inventory-dead-file-cleanup 2차(2026-08-06): 원 describe 는 inventory-main(dead,
+  //   importer 0) 인라인 진입점(isSmartReceivingOpen state·entry testid 2건)을 잠갔으나,
+  //   라이브 아키텍처는 Header "스캔" → scan_hub registry(global-modal) →
+  //   SmartReceivingScannerModal lazy 로드로 대체됨(의도된 대체 — 미배송 아님).
+  //   라이브 배선 잠금은 scan-hub-371-3.test.ts 가 store/global/hub/Header/Scanner
+  //   5면으로 담당. 여기서는 인라인 경로가 라이브에 되살아나지 않음만 잠근다.
+  it("inventory-content 에 구 인라인 진입 state 부재 (scan_hub 경유가 정본)", () => {
+    const src = read("src/app/dashboard/inventory/inventory-content.tsx");
+    expect(src).not.toMatch(/isSmartReceivingOpen/);
+    expect(src).not.toMatch(/data-testid="inventory-smart-receiving-entry-(mobile|desktop)"/);
   });
 });
 
@@ -128,13 +104,11 @@ describe("§11.308a — 회귀 0 (기존 컴포넌트 보존)", () => {
     expect(src).toMatch(/const isOnboardingMode = !hasAnyOperationalData/);
   });
 
-  it("inventory-main.tsx — §11.297c ActionMenu 보존 (재고 utility menu)", () => {
-    const src = read(INVENTORY_MAIN_PATH);
-    expect(src).toMatch(/menuId="inv-utility-mobile"/);
-  });
+  // §inventory-dead-file-cleanup 2차 — inv-utility-mobile 단언 폐기: dead file 전용
+  //   구세대 utility menu id (라이브 ActionMenu 는 297e 재앵커 sentinel 이 잠금).
 
-  it("inventory-main.tsx — '재고 등록' + '입고 반영' button 보존", () => {
-    const src = read(INVENTORY_MAIN_PATH);
+  it("inventory-content — '재고 등록' + '입고 반영' button 보존 (라이브 재앵커)", () => {
+    const src = read("src/app/dashboard/inventory/inventory-content.tsx");
     expect(src).toMatch(/재고 등록/);
     expect(src).toMatch(/입고 반영/);
   });

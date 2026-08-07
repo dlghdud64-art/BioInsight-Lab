@@ -142,24 +142,14 @@ describe("§11.309d — Header.tsx 글로벌 진입점 [SUPERSEDED §11.371-3 �
   });
 });
 
-describe("§11.309d — inventory-main.tsx swap + React Query invalidation", () => {
-  it("SmartReceivingScannerModal import (PlaceholderModal import 0)", () => {
-    const src = read(INVENTORY_MAIN_PATH);
-    expect(src).toMatch(/import\s*\{[^}]*SmartReceivingScannerModal[^}]*\}/);
-    expect(src).not.toMatch(/import\s*\{[^}]*SmartReceivingPlaceholderModal[^}]*\}/);
-  });
-
-  it("<SmartReceivingScannerModal> 렌더 + onReceivingRegistered invalidate", () => {
-    const src = read(INVENTORY_MAIN_PATH);
-    expect(src).toMatch(/<SmartReceivingScannerModal/);
-    expect(src).toMatch(/queryClient\.invalidateQueries\(\{\s*queryKey:\s*\["inventories"\]\s*\}\)/);
-    expect(src).toMatch(/queryClient\.invalidateQueries\(\{\s*queryKey:\s*\["team-inventory"\]\s*\}\)/);
-  });
-
-  it("§11.308a mobile + desktop entry button 보존 (회귀 0)", () => {
-    const src = read(INVENTORY_MAIN_PATH);
-    expect(src).toMatch(/data-testid="inventory-smart-receiving-entry-mobile"/);
-    expect(src).toMatch(/data-testid="inventory-smart-receiving-entry-desktop"/);
+describe("§11.309d — 재고 표면 swap [SUPERSEDED — §371-3 registry + §inventory-dead-file-cleanup]", () => {
+  // §inventory-dead-file-cleanup 2차(2026-08-06): 원 describe 는 inventory-main(dead,
+  //   importer 0) 의 인라인 Scanner swap·invalidation 을 잠갔음. 라이브는 scan_hub
+  //   registry(global-modal lazy) 단일 경로 — 인라인 렌더 자체가 없다.
+  //   Scanner 컴포넌트 계약(위 describe)과 registry 배선(371-3)은 별도 잠금 유지.
+  it("global-modal registry 가 SmartReceivingScannerModal lazy 로드 (라이브 경로)", () => {
+    const src = read("src/components/global-modal.tsx");
+    expect(src).toMatch(/SmartReceivingScannerModal/);
   });
 });
 

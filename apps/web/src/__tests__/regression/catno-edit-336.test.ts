@@ -18,7 +18,6 @@ function read(rel: string): string {
 const ROUTE = "src/app/api/inventory/[id]/route.ts";
 const MODAL = "src/components/inventory/AddInventoryModal.tsx";
 const CONTENT = "src/app/dashboard/inventory/inventory-content.tsx";
-const MAIN = "src/app/dashboard/inventory/inventory-main.tsx";
 
 describe("§11.336 — PATCH route Cat.No 수용 + Product 마스터 update(옵션 A)", () => {
   it("body 에서 catalogNumber 구조분해 + 정규화(빈 값→null)", () => {
@@ -60,10 +59,8 @@ describe("§11.336 — 부모 핸들러 PATCH body catalogNumber 전달(2화면)
     const src = read(CONTENT);
     expect(src).toMatch(/catalogNumber: formPayload\.catalogNumber/);
   });
-  it("inventory-main edit body 에 catalogNumber", () => {
-    const src = read(MAIN);
-    expect(src).toMatch(/catalogNumber: data\.catalogNumber/);
-  });
+  // §inventory-dead-file-cleanup 2차(2026-08-06) — inventory-main 절반 폐기:
+  //   dead file(importer 0). 라이브 절반(inventory-content, 위 단언)이 계약 보존.
 });
 
 describe("§11.336 회귀 0 — 기존 PATCH 동작 보존", () => {

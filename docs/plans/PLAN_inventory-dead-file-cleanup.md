@@ -141,9 +141,9 @@ importer 0 dead file `apps/web/src/app/dashboard/inventory/inventory-main.tsx` �
 
 ## 11. Progress Tracking
 
-- Overall completion: 60% — 1차 changeset(확정분) 완료, 2차 감사 대기
-- Current phase: B→A 1차 완료 / Current blocker: 없음
-- Next validation step: 2차 — RED 44단언 spec별 분류표 산출
+- Overall completion: 85% — 2차 changeset(감사 실행분) 완료. 잔여: §inventory-detail-relive 미니트랙(366 이식) → P2 삭제 마감
+- Current phase: B→A 2차 완료 / Current blocker: 366 이식(삭제 선행 조건)
+- Next validation step: §inventory-detail-relive 계획 → 이식 → 재앵커 → inventory-main 삭제
 
 **Phase Checklist:**
 - [x] Phase 0 (재판정 포함) / [x] Phase 1 (확정분 승계) / [ ] Phase 2 (삭제 — 2차 감사 후로 보류)
@@ -170,3 +170,21 @@ importer 0 dead file `apps/web/src/app/dashboard/inventory/inventory-main.tsx` �
 4. smart-receiving-naming-split-315b.test.ts — dead it() 폐기 (라이브 4중 잠금 무손실)
 5~8. lot-coa · compare-retire-381c · move-location-wire-p3 · 283c-2 — 라이브 repoint + 재앵커 주석 (계약 라이브 존재 실측 GREEN)
 - inventory-main.tsx 삭제 보류 (RED 10파일이 여전히 실독 — 2차 감사 마감 시 삭제).
+
+**2차 changeset — RED 44단언 감사 실행 (2026-08-06, 호영님 분류표 승인):**
+
+*분류표 판정(실측 근거 §12 상단 대조):*
+
+| 계열 | RED | 판정 | 처리 |
+|---|---|---|---|
+| §11.308a·308a-v2·309d·371-3 스마트 입고 인라인 | 14 | 폐기(의도된 대체) | SUPERSEDED describe 로 전환 — 라이브 경로(scan_hub registry) 잠금은 371-3 5면이 담당, 인라인 재도입 차단 단언만 신설. 371-3 거래명세서 경로는 global-modal 로 재앵커 |
+| §11.302c·302d-1·302d-2 신호등 | 20 | 폐기(후속 리디자인 대체) | 3파일 RETIRED 재작성 — 구세대 내부명 부활 차단(302c) + 라이브 실존 계약 승계 잠금(302d-1 우선사용 Badge·302d-2 getCardBg 4케이스, no_location 은 라이브 bg-slate-50 재앵커) |
+| §11.297e | 2 | 재앵커 1 + 폐기 1 | dead describe 은퇴, 라이브 describe 에 issueType 분기·preparePanel 부활 차단(openReorderReview 승계) 확장 |
+| §11.336 | 1 | 폐기(dead 절반) | 333 동형 부분 승계 |
+| §11.366 | 7 | **이식 미니트랙** (호영님 확정) | 무접촉 — §inventory-detail-relive 에서 이식+재앵커 후 처리 |
+
+*게이트:* 전환 9파일 82 passed·0 failed. 삭제 드라이런(파일 임시 제거): 실독 잔존 = **366 단독** (그 외 참조는 전부 주석 — quote-search-debounce·dashboard-mobile-refine-p2 포함 comment-only 실측).
+
+*스윕 방법 교훈(2건 추가):* ① 동일라인 grep 함정 재발(297e 경로가 다음 줄) — 판정은 반드시 실행(ENOENT)으로. ② 스윕 패턴에 디렉토리 프리픽스를 넣으면("inventory/inventory-main") 프리픽스 없는 참조를 놓침 — 파일명 단독 패턴 + 실행 검증 병행이 계약.
+
+*삭제 마감 순서(확정):* 2차 커밋 → §inventory-detail-relive(366 이식·재앵커) → P2(inventory-main 삭제 + 주석 2곳 정정 + 최종 게이트).

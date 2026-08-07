@@ -25,7 +25,6 @@ const SMART = "src/components/inventory/SmartReceivingScannerModal.tsx";
 const LABEL = "src/components/inventory/LabelScannerModal.tsx";
 const HELPER = "src/lib/inventory/submit-label-receive.ts";
 const INV = "src/app/dashboard/inventory/inventory-content.tsx";
-const INVMAIN = "src/app/dashboard/inventory/inventory-main.tsx";
 const SCANLABEL = "src/app/api/inventory/scan-label/route.ts";
 
 describe("§11.371-3 — modal-store / global-modal 등록", () => {
@@ -108,8 +107,10 @@ describe("§11.371-3 — 라벨 직접등록 영속화 단일점", () => {
 });
 
 describe("§11.371-3 — 회귀 0", () => {
-  it("거래명세서 경로 보존: inventory-main 에 SmartReceivingScannerModal 잔존", () => {
-    const src = read(INVMAIN);
+  it("거래명세서 경로 보존: registry 가 SmartReceivingScannerModal 로드 (라이브 재앵커)", () => {
+    // §inventory-dead-file-cleanup 2차(2026-08-06) — 원 단언은 inventory-main(dead,
+    //   importer 0) 잔존을 잠갔음. 라이브 거래명세서 경로 = global-modal registry.
+    const src = read(GLOBAL);
     expect(src).toMatch(/SmartReceivingScannerModal/);
   });
   it("§11.369-1 보존: scan-label 유니크 lock 키 + 이중 해제", () => {
