@@ -165,9 +165,9 @@ quote 로부터 발주 후보 생성 시, per-item vendor 선택 근거가 있�
 
 ## 11. Progress Tracking
 
-- Overall completion: 75% — P0~P3 완료(격리 게이트 GREEN), 커밋·P4 잔여
-- Current blocker: 없음
-- Next validation step: 실행 세션 독립 vitest → 커밋 → 배포 → P4 prod 실행 검증
+- Overall completion: 100% — 트랙 종료 (구현·커밋·배포 완료, P4 = 이연-관측형)
+- Current phase: 완료 (커밋 1e3dc4d3 · 배포 2026-08-07T11:19 전환 확인)
+- Next validation step: 관측 조건 — 첫 vendor 응답 제출 + 결재 통과 발생 시 실행 세션이 candidate 분리 형태·Order 분리·예산 1회 실측 보고 (Track 3 UBT 표본과 동일 감시 패턴)
 
 **Phase Checklist:**
 - [ ] Phase 0 / [ ] Phase 1 / [ ] Phase 2 / [ ] Phase 3 / [ ] Phase 4
@@ -192,3 +192,9 @@ quote 로부터 발주 후보 생성 시, per-item vendor 선택 근거가 있�
 - **P3 (배선)**: approve route — `QuoteVendorResponseItem` 조인으로 품목별 응답 vendor 조립(vendorRequest.vendorName distinct) → 복수형 호출 → `candidates.push(...createdList)`. 통합 테스트: fake tx 에 quoteVendorResponseItem 모델 추가(기본 [] = 분할 근거 없음 → W1~W4 기존 계약 그대로 GREEN = 회귀 동등성 실증) + W5 신설(2 vendor 분할·다중 응답 잔여 "") + mock 유니크 id 교정(고정 id 가 W5 poCandidateId 집합 관측과 충돌).
 - **게이트**: split unit 8 + 단수형 회귀 4 + approve 통합 6(W5×2 포함) + orders-budget M2b(예산 1회 불변) + approve-vendor-po = **5파일 27 passed·0 failed**. tsc 접촉 파일 신규 0.
 - 멱등 유지: 기존 3중 필터(quoteId 단위 0건일 때만 호출)가 N-candidate 와 자연 양립 — 생성은 항상 "0건 → N개" 원자(같은 tx), 부분 생성 후 재호출 경로 없음.
+
+**Phase 4 — 이연-관측형 마감 (2026-08-07, 호영님 A 확정):**
+- 커밋 1e3dc4d3 (실행 세션 독립 검증: vitest 5파일 27 GREEN·M2b 예산 behavior 전문 대조로 "예산 차감은 candidate 수와 분리·차감액 출처는 quote 기준 = candidate totalAmount 와 무관" 확정·tsc baseline 불변·pre-push build 통과). 배포 전환 2026-08-07T11:19:35 실측.
+- prod 표본 조회(read-only): quote 7건 중 vendor 요청 2건(J5Y7) 실존하나 **응답 제출 0건** — QuoteVendorResponseItem 표본 부재로 분할 경로 prod 실측 불가.
+- **P4 판정: 이연-관측형** — 분할 경로는 W5 통합 테스트가 커버, prod 는 결재 조작(예산 실차감) 없이 첫 실사용 이벤트에서 관측: ① 첫 결재 통과 → 잔여-단일(기존 동등) 경로 실측 ② 첫 vendor 응답 제출 + 결재 통과 → 분할 경로 실측(candidate N·vendor 별 Order·예산 1회). 감시 주체 = 실행 세션(Track 3 amount-divergence UBT 표본과 동일 시점·동일 패턴).
+- 라이브 표면 실행 검증 규율과의 정합: 본 트랙은 서버 tx 로직(UI 무접촉) — 규율의 '동급' 조항은 W5 실행 통합 + 이연 관측 페어로 충족. 후속 백로그: §quote-item-vendor-selection (per-item 선택 스키마 — C안 정공법, 필요 시).
