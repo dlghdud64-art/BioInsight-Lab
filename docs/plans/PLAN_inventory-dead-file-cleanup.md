@@ -141,9 +141,9 @@ importer 0 dead file `apps/web/src/app/dashboard/inventory/inventory-main.tsx` �
 
 ## 11. Progress Tracking
 
-- Overall completion: 85% — 2차 changeset(감사 실행분) 완료. 잔여: §inventory-detail-relive 미니트랙(366 이식) → P2 삭제 마감
-- Current phase: B→A 2차 완료 / Current blocker: 366 이식(삭제 선행 조건)
-- Next validation step: §inventory-detail-relive 계획 → 이식 → 재앵커 → inventory-main 삭제
+- Overall completion: 100% — 3차(§inventory-detail-relive 이식 + P2 삭제) 완료, 커밋 대기
+- Current phase: 트랙 마감 (커밋·배포·prod 실측 잔여)
+- Next validation step: 실행 세션 커밋 → 배포 확인 → prod 실측(361 필터 빈상태 + 366 상세 Sheet)
 
 **Phase Checklist:**
 - [x] Phase 0 (재판정 포함) / [x] Phase 1 (확정분 승계) / [ ] Phase 2 (삭제 — 2차 감사 후로 보류)
@@ -188,3 +188,12 @@ importer 0 dead file `apps/web/src/app/dashboard/inventory/inventory-main.tsx` �
 *스윕 방법 교훈(2건 추가):* ① 동일라인 grep 함정 재발(297e 경로가 다음 줄) — 판정은 반드시 실행(ENOENT)으로. ② 스윕 패턴에 디렉토리 프리픽스를 넣으면("inventory/inventory-main") 프리픽스 없는 참조를 놓침 — 파일명 단독 패턴 + 실행 검증 병행이 계약.
 
 *삭제 마감 순서(확정):* 2차 커밋 → §inventory-detail-relive(366 이식·재앵커) → P2(inventory-main 삭제 + 주석 2곳 정정 + 최종 게이트).
+
+**3차 changeset — §inventory-detail-relive 이식 + P2 삭제 마감 (2026-08-06):**
+- **§11.366 D-8 라이브 이식** (미배송 확정 실측: 라이브 상세 Sheet 는 보강 이전 세대 — 고정 `grid-cols-2` 2곳 잔존, 보강 필드 4종 0):
+  - 영문명 nameEn (값 있을 때만 — 가짜 금지), 현재고/안전재고 카드, 보관위치·고유 식별자(§11.355-B QR 정합) 행, 기본/관리 정보 grid 모바일 세로 스택(`grid-cols-1 sm:grid-cols-2`)
+  - ProductInventory 인터페이스 product.nameEn 추가 — API 는 product full include 라 payload 기존재 (스키마·API 무변경)
+- **366 sentinel 라이브 재작성** — 미배송 경위 헤더 + 라이브 어휘, 10 tests
+- **P2 삭제**: inventory-main.tsx 삭제(git rm — 실행 세션 수행), stale 주석 정정(inventory-content L1654 과거형·팀 API route 주석은 2차에 기정정, 훅 주석은 1차 후보정 완료)
+- **게이트**: 삭제 상태 24파일 250 passed·0 failed (dead-file 참조 이력 있는 전 스위트 + 게이트 계보), tsc 신규 0, 비테스트 잔존 참조 = 역사 주석 3곳뿐(정직 표기)
+- prod 실측 항목(배포 후): 361 필터 빈상태 + 366 상세 Sheet(현재고/안전재고 카드·보관위치·고유 식별자·모바일 세로 스택)

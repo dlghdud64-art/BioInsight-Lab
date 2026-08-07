@@ -8,7 +8,7 @@
  *
  * queryKey 를 ["inventories", *] prefix 로 잡아 기존 재고 mutation 들의
  * `invalidateQueries({ queryKey: ["inventories"] })` (inventory-content ·
- * inventory-main · SmartReceivingScannerModal 등)가 추가 배선 0 으로 뱃지까지
+ * SmartReceivingScannerModal 등)가 추가 배선 0 으로 뱃지까지
  * 자동 invalidate — 신규 mutation 이 생겨도 동일 규약이면 자동 편승.
  *
  * 신선도: staleTime 60s. BottomNav 는 상주(remount 없음)라 refetchOnMount 무효 —

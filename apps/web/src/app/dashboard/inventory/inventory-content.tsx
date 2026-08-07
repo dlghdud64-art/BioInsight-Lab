@@ -141,6 +141,8 @@ interface ProductInventory {
   product: {
     id: string;
     name: string;
+    /** §11.366 D-8 — 영문명 (API 는 product full include 라 payload 에 이미 존재) */
+    nameEn?: string | null;
     brand: string | null;
     catalogNumber: string | null;
   };
@@ -1650,7 +1652,8 @@ function InventoryPageContent() {
                  호영님 지시문 2026-08-05). 미달 신호 = 숫자 #b91c1c + 6px 점만.
                  강조는 아래 재발주 권장 배너 하나로 일원화.
                  ⚠️ 이 파일이 라이브 표면 (page.tsx → inventory-content). 같은 계약이
-                 inventory-main.tsx 에도 있으나 그 파일은 importer 0 = dead. */
+                 inventory-main.tsx(dead, importer 0)에도 있었으나 그 파일은
+                 §inventory-dead-file-cleanup(2026-08-06)에서 삭제됨. */
               <div key={k.label} className="flex-1 rounded-[13px] px-3 py-2.5 border bg-white border-slate-200 shadow-sm">
                 <p className={`text-xl font-extrabold ${k.alert && k.value > 0 ? "text-[#b91c1c]" : "text-slate-900"}`}>{k.value}<span className="text-slate-400 text-xs font-semibold">{k.unit ? ` ${k.unit}` : ""}</span></p>
                 <p className="text-[11px] mt-0.5 text-slate-500 flex items-center gap-1.5">
@@ -3200,6 +3203,11 @@ function InventoryPageContent() {
                   )}
                 </div>
                 <SheetTitle className="text-lg font-bold leading-tight">{selectedItem.product.name}</SheetTitle>
+                {/* §11.366 D-8 — 영문명(nameEn) 보강 (§inventory-detail-relive 라이브 이식:
+                    원 수정이 dead file(inventory-main, importer 0)에만 적용돼 미배송이었음) */}
+                {selectedItem.product.nameEn && (
+                  <p className="text-xs text-slate-500 leading-tight">{selectedItem.product.nameEn}</p>
+                )}
                 <SheetDescription className="flex items-center gap-2 text-sm text-slate-400  text-slate-400 mt-0.5">
                   <span>{selectedItem.product.brand ?? "-"}</span>
                   <span className="text-slate-600  text-slate-400">|</span>
@@ -3208,6 +3216,21 @@ function InventoryPageContent() {
               </SheetHeader>
 
               <div className="space-y-3">
+                {/* §11.366 D-8 — 현재고/안전재고 강조 (조회 핵심 — 기존엔 표시 부재). §inventory-detail-relive 이식 */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-md bg-pn/50 px-3 py-2">
+                    <p className="text-[10px] text-slate-500  text-slate-400">현재고</p>
+                    <p className="text-sm font-bold text-slate-900 mt-0.5">
+                      {selectedItem.currentQuantity} {selectedItem.unit || "개"}
+                    </p>
+                  </div>
+                  <div className="rounded-md bg-pn/50 px-3 py-2">
+                    <p className="text-[10px] text-slate-500  text-slate-400">안전재고</p>
+                    <p className="text-sm font-bold text-slate-900 mt-0.5">
+                      {selectedItem.safetyStock != null ? `${selectedItem.safetyStock} ${selectedItem.unit || "개"}` : "-"}
+                    </p>
+                  </div>
+                </div>
                 {/* ── Lot / 유효기한 카드: 패딩 압축 ── */}
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-md bg-pn/50 px-3 py-2">
@@ -3226,7 +3249,8 @@ function InventoryPageContent() {
                     <Info className="mr-1.5 h-3 w-3 text-slate-400" />
                     기본 정보
                   </h4>
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 border-t border-bd pt-2  border-bd">
+                  {/* §11.366 D-8 Phase 2 — 모바일 세로 스택(grid-cols-1)으로 값 잘림·가로 욱여넣기 0. 데스크탑(sm+) 2칸 유지. */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5 border-t border-bd pt-2  border-bd">
                     <div className="flex items-center justify-between gap-1 min-w-0">
                       <span className="text-[11px] text-slate-500  text-slate-400 shrink-0">제조사</span>
                       <span className="text-xs font-medium truncate text-right">{selectedItem.product.brand ?? "-"}</span>
@@ -3243,6 +3267,16 @@ function InventoryPageContent() {
                       <span className="text-[11px] text-slate-500  text-slate-400 shrink-0">배송기간</span>
                       <span className="text-xs font-medium truncate text-right">{selectedItem.deliveryPeriod ?? "-"}</span>
                     </div>
+                    {/* §11.366 D-8 — 보관위치(location) 보강 */}
+                    <div className="flex items-center justify-between gap-1 min-w-0">
+                      <span className="text-[11px] text-slate-500  text-slate-400 shrink-0">보관위치</span>
+                      <span className="text-xs font-medium truncate text-right">{selectedItem.location ?? "-"}</span>
+                    </div>
+                    {/* §11.366 D-8 — 고유 식별자 = inv.id (§11.355-B 라벨 QR 인코딩과 정합). */}
+                    <div className="flex items-center justify-between gap-1 min-w-0">
+                      <span className="text-[11px] text-slate-500  text-slate-400 shrink-0">고유 식별자</span>
+                      <span className="font-mono text-[10px] font-medium truncate text-right">{selectedItem.id}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -3251,7 +3285,8 @@ function InventoryPageContent() {
                     <Info className="mr-1.5 h-3 w-3 text-slate-400" />
                     관리 정보
                   </h4>
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 border-t border-bd pt-2  border-bd">
+                  {/* §11.366 D-8 Phase 2 — 모바일 세로 스택. */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5 border-t border-bd pt-2  border-bd">
                     <div className="flex items-center justify-between gap-1 min-w-0">
                       <span className="text-[11px] text-slate-500  text-slate-400 shrink-0">사용/미개봉</span>
                       <span className="text-xs font-medium truncate text-right">{selectedItem.inUseOrUnopened ?? "-"}</span>
