@@ -238,6 +238,101 @@ export async function createPOCandidateFromQuote(
   return serializeCandidate(row);
 }
 
+// ── §pocandidate-vendor-split — 유일-응답 파생 그룹핑 (호영님 A안, 2026-08-07) ──
+
+export interface QuoteItemForCandidateSplit extends QuoteItemForCandidate {
+  /**
+   * 품목별 응답 vendor 이름 목록 (caller 가 QuoteVendorResponseItem 조인으로 조립).
+   * 유일(1개)할 때만 그룹핑 근거로 사용 — 다중/0 은 잔여 "" 묶음.
+   * 자동 가격 판단 금지: 시스템이 구매 의사결정을 대행하지 않는다 (A안 계약).
+   */
+  respondedVendors?: string[] | null;
+}
+
+export interface CreateManyFromQuoteInput extends Omit<CreateFromQuoteInput, "quote"> {
+  quote: { id: string; totalAmount: number | null; items: QuoteItemForCandidateSplit[] };
+}
+
+/**
+ * §pocandidate-vendor-split — quote 로부터 vendor 별 candidate N개 생성.
+ *
+ * 하류 계약 충족: convertPOCandidatesToOrders 는 "candidate = vendor 별 1개씩"
+ * 전제 (1 candidate → 1 Order). 상류에서 유일-응답 기준으로 분리해 전제를 만든다.
+ *
+ * - V1 유일-응답 vendor → 그 vendor 그룹 / V2 다중·0 응답 → 잔여 "" 그룹
+ * - V3 분할 근거 없음(잔여 단일) → vendorName(selectedReply) 승계 = 단수형 동등
+ * - V4 items 0 → null (S3 승계)
+ * - V5 N>1 분할 시 totalAmount = 후보별 Σ lineTotal (PR/quote 전체액 복제 금지 —
+ *   중복 합산 왜곡 방지. 예산 차감 1회는 Order 변환 M2b 계약이 담당, 무접촉)
+ * - 멱등은 caller 책임 (기존 3중 필터 — quoteId 단위 0건일 때만 호출)
+ */
+export async function createPOCandidatesFromQuote(
+  client: POCandidateCreateClient,
+  input: CreateManyFromQuoteInput,
+): Promise<POCandidateRow[] | null> {
+  const items = input.quote.items ?? [];
+  if (items.length === 0) return null; // V4 — 내역 없는 발주 후보 금지
+
+  // 그룹핑 — 유일-응답만 vendor 확정, 그 외 잔여 "" (V1·V2)
+  const groups = new Map<string, QuoteItemForCandidateSplit[]>();
+  for (const item of items) {
+    const unique =
+      item.respondedVendors && item.respondedVendors.length === 1
+        ? (item.respondedVendors[0] ?? "").trim()
+        : "";
+    const key = unique || "";
+    const arr = groups.get(key) ?? [];
+    arr.push(item);
+    groups.set(key, arr);
+  }
+
+  // V3 — 분할 근거 없음(잔여 단일 그룹)이면 기존 단수형 vendorName 승계
+  const soloRest = groups.size === 1 && groups.has("");
+  const multi = groups.size > 1;
+
+  const results: POCandidateRow[] = [];
+  for (const [groupVendor, groupItems] of groups) {
+    const vendor = soloRest ? (input.vendorName?.trim() ?? "") : groupVendor;
+    const sumLineTotal = groupItems.reduce((sum, it) => sum + (it.lineTotal ?? 0), 0);
+    // V5 — 분할 시 후보별 Σ, 단일이면 기존 우선순위(PR > quote > Σ) 유지
+    const totalAmount = multi
+      ? sumLineTotal
+      : (input.totalAmount ?? input.quote.totalAmount ?? sumLineTotal);
+    const firstName = groupItems[0].name ?? "발주 품목";
+    const title = groupItems.length > 1 ? `${firstName} 외 ${groupItems.length - 1}건` : firstName;
+
+    const row = await client.pOCandidate.create({
+      data: {
+        userId: input.userId,
+        organizationId: input.organizationId ?? null,
+        quoteId: input.quote.id,
+        title,
+        vendor,
+        totalAmount,
+        selectionReason: null,
+        blockers: [],
+        approvalPolicy: "in_app_approval",
+        // V6 — projection 계약 승계 (결재 truth 는 PurchaseRequest, 역류 금지)
+        approvalStatus: input.approvalStatus ?? "in_app_approved",
+        stage: "po_conversion_candidate",
+        items: {
+          create: groupItems.map((item) => ({
+            name: item.name ?? "(이름 없음)",
+            catalogNumber: item.catalogNumber ?? "",
+            quantity: item.quantity,
+            unitPrice: item.unitPrice ?? 0,
+            lineTotal: item.lineTotal ?? 0,
+            leadTime: item.leadTime ?? "",
+          })),
+        },
+      },
+      include: { items: true },
+    });
+    results.push(serializeCandidate(row));
+  }
+  return results;
+}
+
 /** stage 업데이트 */
 export async function updatePOCandidateStage(
   id: string,

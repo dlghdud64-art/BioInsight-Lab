@@ -34,7 +34,9 @@ import { convertPOCandidatesToOrders } from "@/lib/orders/convert-pocandidate-to
 // §pocandidate-creation-flow — 결재 통과 시 candidate 자동 생성 + 변환 풀
 // 3중 필터 (bulk-po 와 승인통과집합 단일 소스 공유).
 import { APPROVAL_PASSED_STATUSES } from "@/lib/orders/approval-passed-statuses";
-import { createPOCandidateFromQuote } from "@/lib/persistence/po-candidate-server";
+// §pocandidate-vendor-split — 단수형 → 복수형(vendor 별 N개, 유일-응답 파생 A안).
+// 분할 근거 없으면 단수형과 동등(잔여 단일 + selectedReply vendorName 승계).
+import { createPOCandidatesFromQuote } from "@/lib/persistence/po-candidate-server";
 
 /**
  * 구매 요청 승인 (ADMIN/OWNER만 가능)
@@ -256,11 +258,32 @@ export async function POST(
                   select: { vendorName: true },
                 })
               : null;
-            const created = await createPOCandidateFromQuote(tx, {
+            // §pocandidate-vendor-split A안 — 품목별 응답 vendor 조립.
+            // QuoteVendorResponseItem 실존 = 해당 vendor 가 그 품목에 응답한 truth.
+            // 유일-응답 품목만 vendor 확정(그룹핑), 다중/0 은 잔여 "" (의사결정 대행 0).
+            const responseItems = await tx.quoteVendorResponseItem.findMany({
+              where: { quoteItemId: { in: quote.items.map((it: { id: string }) => it.id) } },
+              select: {
+                quoteItemId: true,
+                vendorRequest: { select: { vendorName: true } },
+              },
+            });
+            const vendorsByItem = new Map<string, Set<string>>();
+            for (const r of responseItems) {
+              const name = r.vendorRequest?.vendorName?.trim();
+              if (!name) continue;
+              const set = vendorsByItem.get(r.quoteItemId) ?? new Set<string>();
+              set.add(name);
+              vendorsByItem.set(r.quoteItemId, set);
+            }
+            const createdList = await createPOCandidatesFromQuote(tx, {
               quote: {
                 id: quote.id,
                 totalAmount: quote.totalAmount ?? null,
-                items: quote.items,
+                items: quote.items.map((it: any) => ({
+                  ...it,
+                  respondedVendors: Array.from(vendorsByItem.get(it.id) ?? []),
+                })),
               },
               userId: purchaseRequest.requesterId,
               organizationId: purchaseRequest.organizationId,
@@ -268,9 +291,9 @@ export async function POST(
               totalAmount: purchaseRequest.totalAmount ?? null,
               approvalStatus: "in_app_approved",
             });
-            if (created) {
+            if (createdList) {
               // 변환 서비스는 items 포함 candidate 형태 소비 — 생성 row 그대로 전달
-              candidates.push(created);
+              candidates.push(...createdList);
             }
           }
 

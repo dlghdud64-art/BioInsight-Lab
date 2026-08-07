@@ -107,7 +107,7 @@ interface TxObservation {
 }
 
 /** where 를 실제 적용하는 fake tx — 구현 형태 비종속 (root-fix 패턴 승계) */
-function makeTx(pool: any[], quote: any): { tx: any; obs: TxObservation } {
+function makeTx(pool: any[], quote: any, responseItems: any[] = []): { tx: any; obs: TxObservation } {
   const obs: TxObservation = { createdPoc: [], candidateCreates: [] };
   const applyWhere = (where: Record<string, unknown>) =>
     pool.filter((c: any) => {
@@ -124,12 +124,18 @@ function makeTx(pool: any[], quote: any): { tx: any; obs: TxObservation } {
     purchaseRequest: { update: vi.fn(async () => ({ id: "pr-1", status: "APPROVED" })) },
     quote: { findUnique: vi.fn(async () => quote) },
     quoteReply: { findUnique: vi.fn(async () => ({ vendorName: "Thermo Fisher" })) },
+    // §pocandidate-vendor-split — 품목별 응답 vendor 조립 소스 (기본 [] = 분할 근거 없음)
+    quoteVendorResponseItem: {
+      findMany: vi.fn(async ({ where }: any) =>
+        responseItems.filter((r: any) => (where?.quoteItemId?.in ?? []).includes(r.quoteItemId))),
+    },
     pOCandidate: {
       findMany: vi.fn(async ({ where }: any) => applyWhere(where)),
       create: vi.fn(async ({ data }: any) => {
         obs.candidateCreates.push(data);
         return {
-          id: "poc-new", ...data, expectedDelivery: null, selectionReason: null,
+          // §pocandidate-vendor-split — N개 생성 관측 위해 유니크 id (고정 id 는 W5 에서 충돌)
+          id: `poc-new-${obs.candidateCreates.length}`, ...data, expectedDelivery: null, selectionReason: null,
           createdAt: new Date("2026-08-04T00:00:00Z"), updatedAt: new Date("2026-08-04T00:00:00Z"),
           items: (data.items?.create ?? []).map((i: any) => ({ ...i })),
         };
@@ -198,7 +204,7 @@ describe("§pocandidate-creation-flow W2 — candidate 0건 시 자동 생성 + 
     expect(data.approvalStatus).toBe("in_app_approved");
     expect(data.vendor).toBe("Thermo Fisher");
     // 생성 candidate 가 vendor-aware 경로로 변환됨 (legacy NULL poCandidateId 아님)
-    expect(obs.createdPoc).toEqual(["poc-new"]);
+    expect(obs.createdPoc).toEqual(["poc-new-1"]);
   });
 });
 
@@ -226,5 +232,51 @@ describe("§pocandidate-creation-flow W4 — items 0 은 legacy 보존", () => {
     expect(res.status).toBe(200);
     expect(obs.candidateCreates).toHaveLength(0);
     expect(obs.createdPoc).toEqual([undefined]); // legacy order.create — poCandidateId 미기입
+  });
+});
+
+describe("§pocandidate-vendor-split W5 — 유일-응답 분할 (approve 통합)", () => {
+  it("2 vendor 유일-응답 → candidate 2개 생성(각 vendor)·둘 다 변환(poCandidateId 2종)", async () => {
+    const quote = {
+      ...QUOTE,
+      items: [
+        { ...QUOTE.items[0], id: "qi-1" },
+        { ...QUOTE.items[0], id: "qi-2", name: "PBS" },
+      ],
+    };
+    const { tx, obs } = makeTx([], quote, [
+      { quoteItemId: "qi-1", vendorRequest: { vendorName: "VendorA" } },
+      { quoteItemId: "qi-2", vendorRequest: { vendorName: "VendorB" } },
+    ]);
+    wireTx(tx);
+    const res = await callApprove();
+    expect(res.status).toBe(200);
+    expect(obs.candidateCreates.length).toBe(2);
+    expect(obs.candidateCreates.map((d: any) => d.vendor).sort()).toEqual(["VendorA", "VendorB"]);
+    // 각 candidate 는 자기 품목만 (무손실 분할)
+    expect(obs.candidateCreates.every((d: any) => (d.items?.create ?? []).length === 1)).toBe(true);
+    // 둘 다 변환 풀 진입 — Order poCandidateId 2종
+    expect(new Set(obs.createdPoc.filter(Boolean)).size).toBe(2);
+  });
+
+  it("다중 응답 품목은 자동 배정 0 — 잔여 '' candidate (selectedReply 승계는 잔여-단일일 때만)", async () => {
+    const quote = {
+      ...QUOTE,
+      items: [
+        { ...QUOTE.items[0], id: "qi-1" },
+        { ...QUOTE.items[0], id: "qi-2", name: "PBS" },
+      ],
+    };
+    const { tx, obs } = makeTx([], quote, [
+      { quoteItemId: "qi-1", vendorRequest: { vendorName: "VendorA" } },
+      { quoteItemId: "qi-2", vendorRequest: { vendorName: "VendorA" } },
+      { quoteItemId: "qi-2", vendorRequest: { vendorName: "VendorB" } }, // qi-2 다중
+    ]);
+    wireTx(tx);
+    const res = await callApprove();
+    expect(res.status).toBe(200);
+    expect(obs.candidateCreates.length).toBe(2);
+    const vendors = obs.candidateCreates.map((d: any) => d.vendor).sort();
+    expect(vendors).toEqual(["", "VendorA"]); // 다중 → "" (의사결정 대행 0)
   });
 });
