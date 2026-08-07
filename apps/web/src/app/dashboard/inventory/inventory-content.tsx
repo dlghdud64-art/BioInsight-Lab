@@ -2270,11 +2270,20 @@ function InventoryPageContent() {
                              원 수정이 dead file(inventory-main, importer 0)에만 적용돼 라이브는
                              필터 0건을 "등록된 재고 없음"으로 위장하고 있었다(fake empty).
                              우선순위: 검색 > 필터(status/category/location) > 진짜 0건. */
+                          /* §11.361-2 후속 — 볼드 타이틀도 분기 (prod 실측: 하드코드 타이틀이
+                             필터 0건에서 "등록된 재고가 없습니다" 위장 잔존) */
+                          emptyTitle={
+                            debouncedSearchQuery.trim()
+                              ? "검색 결과가 없습니다"
+                              : activeFilterCount > 0
+                                ? "이 조건에 맞는 재고가 없습니다"
+                                : "등록된 재고가 없습니다"
+                          }
                           emptyMessage={
                             debouncedSearchQuery.trim()
                               ? `'${debouncedSearchQuery.trim()}'에 해당하는 재고를 찾지 못했습니다.`
                               : activeFilterCount > 0
-                                ? "이 조건에 맞는 재고가 없습니다. 필터를 초기화해보세요."
+                                ? "필터를 초기화하면 전체 재고를 볼 수 있습니다."
                                 : "등록된 재고가 없습니다.\n첫 재고를 추가해 운영을 시작하세요."
                           }
                           emptyAction={

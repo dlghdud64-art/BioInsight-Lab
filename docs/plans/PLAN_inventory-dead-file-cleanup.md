@@ -197,3 +197,8 @@ importer 0 dead file `apps/web/src/app/dashboard/inventory/inventory-main.tsx` �
 - **P2 삭제**: inventory-main.tsx 삭제(git rm — 실행 세션 수행), stale 주석 정정(inventory-content L1654 과거형·팀 API route 주석은 2차에 기정정, 훅 주석은 1차 후보정 완료)
 - **게이트**: 삭제 상태 24파일 250 passed·0 failed (dead-file 참조 이력 있는 전 스위트 + 게이트 계보), tsc 신규 0, 비테스트 잔존 참조 = 역사 주석 3곳뿐(정직 표기)
 - prod 실측 항목(배포 후): 361 필터 빈상태 + 366 상세 Sheet(현재고/안전재고 카드·보관위치·고유 식별자·모바일 세로 스택)
+
+**P4 prod 실측 (2026-08-07, 4d5bc75e 빌드 — Chrome DOM 실측):**
+- ① 361: 필터 0건 → "이 조건에 맞는 재고가 없습니다…" + CTA "필터 초기화"(클릭 시 3필터 해제·행 복귀) — **PASS**
+- ② 366: `?entity_id=` 딥링크 Sheet — 현재고/안전재고 카드·보관위치 "-"(null 정직)·고유 식별자·신형 grid ×2/구형 0·nameEn null 미표시(가짜 금지) — **PASS** (필드 실존 자체가 4d5bc75e 서빙 실증)
+- **결함 발견→핫픽스(호영님 A 승인)**: InventoryTable 빈상태 볼드 타이틀 "등록된 재고가 없습니다" 하드코드 — 필터/검색 0건에서도 전역 빈 재고 위장(구세대부터의 공유 컴포넌트 결함, 361 의도의 잔재). 교정: `emptyTitle` prop(기본값 현행 — 타 호출부 inventory-table-block 무영향) + content 3분기 타이틀(검색/필터/진짜0건) + 필터 메시지 중복 제거("필터를 초기화하면 전체 재고를 볼 수 있습니다.") + 361 sentinel [후속] 단언(타이틀 3분기·하드코드 잔존 0). 게이트 6파일 73 GREEN·tsc 신규 0.

@@ -23,7 +23,6 @@ import { join } from "node:path";
 const REPO_ROOT = join(__dirname, "..", "..", "..");
 const SCANNER_PATH = "src/components/inventory/SmartReceivingScannerModal.tsx";
 const HEADER_PATH = "src/components/dashboard/Header.tsx";
-const INVENTORY_MAIN_PATH = "src/app/dashboard/inventory/inventory-main.tsx";
 const PLACEHOLDER_PATH = "src/components/inventory/SmartReceivingPlaceholderModal.tsx";
 
 function read(rel: string): string {

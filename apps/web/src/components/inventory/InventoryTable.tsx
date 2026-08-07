@@ -283,6 +283,10 @@ interface InventoryTableProps {
   /** row-level 폐기 처리 (object-scoped disposal dock) */
   onDispose?: (inventory: InventoryItem) => void;
   emptyMessage?: string;
+  /** §11.361-2 후속(§inventory-dead-file-cleanup prod 실측) — 빈상태 볼드 타이틀.
+   *  기존엔 "등록된 재고가 없습니다" 하드코드라 필터/검색 0건에서도 전역 빈 재고를
+   *  주장(fake empty 잔재). 기본값 유지로 타 호출부 무영향. */
+  emptyTitle?: string;
   emptyAction?: () => void;
   emptyActionLabel?: string;
 }
@@ -301,6 +305,7 @@ export function InventoryTable({
   onPrintLabel,
   onDispose,
   emptyMessage = "아직 등록된 재고가 없습니다. 첫 재고를 등록해보세요.",
+  emptyTitle = "등록된 재고가 없습니다",
   emptyAction,
   emptyActionLabel = "첫 재고 등록하기"
 }: InventoryTableProps) {
@@ -332,7 +337,7 @@ export function InventoryTable({
             <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
               <Package className="h-7 w-7 text-slate-400" />
             </div>
-            <p className="text-sm font-medium text-slate-600 mb-1">등록된 재고가 없습니다</p>
+            <p className="text-sm font-medium text-slate-600 mb-1">{emptyTitle}</p>
             <p className="text-xs text-slate-400 mb-5 text-center max-w-xs leading-relaxed">{emptyMessage}</p>
             {emptyAction && (
               <Button onClick={emptyAction} size="sm" className="h-9 px-5 text-sm shadow-sm active:scale-95 transition-transform">{emptyActionLabel}</Button>
@@ -629,7 +634,7 @@ export function InventoryTable({
                     <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-5">
                       <Package className="h-8 w-8 text-slate-400" />
                     </div>
-                    <p className="text-sm font-medium text-slate-600 mb-1.5">등록된 재고가 없습니다</p>
+                    <p className="text-sm font-medium text-slate-600 mb-1.5">{emptyTitle}</p>
                     <p className="text-xs text-slate-400 mb-5 max-w-xs text-center leading-relaxed">{emptyMessage}</p>
                     {emptyAction && (
                       <Button onClick={emptyAction} size="sm" className="h-9 px-5 text-sm shadow-sm active:scale-95 transition-transform">

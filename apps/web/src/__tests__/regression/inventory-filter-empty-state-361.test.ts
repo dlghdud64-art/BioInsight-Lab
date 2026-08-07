@@ -31,6 +31,19 @@ describe("§11.361-2 — DataTable 빈상태 필터 분기 (라이브 표면)", 
     expect(SRC).toContain('setLocationFilter("all"); setStatusFilter("all"); setCategoryFilter("all");');
   });
 
+  it("[후속] 볼드 타이틀도 분기 — 필터 0건에서 '등록된 재고가 없습니다' 위장 0", () => {
+    // prod 실측(2026-08-07): InventoryTable 이 타이틀을 하드코드해 필터 분기에서도
+    // 전역 빈 재고를 주장. emptyTitle prop 3분기 전달로 교정.
+    expect(SRC).toMatch(/emptyTitle=\{[\s\S]{0,300}검색 결과가 없습니다[\s\S]{0,200}이 조건에 맞는 재고가 없습니다[\s\S]{0,200}등록된 재고가 없습니다/);
+    const TABLE = readFileSync(
+      join(APP_WEB_ROOT, "src/components/inventory/InventoryTable.tsx"),
+      "utf8",
+    );
+    expect(TABLE).toMatch(/emptyTitle = "등록된 재고가 없습니다"/); // 기본값 — 타 호출부 무영향
+    expect(TABLE).toMatch(/\{emptyTitle\}/); // 하드코드 제거
+    expect(TABLE).not.toMatch(/>등록된 재고가 없습니다</); // JSX 리터럴 타이틀 잔존 0
+  });
+
   it("우선순위 보존: 검색 분기 + 진짜0건(첫 재고) 분기 유지", () => {
     // 검색 branch — 라이브 어휘
     expect(SRC).toContain("전체 재고 보기");
