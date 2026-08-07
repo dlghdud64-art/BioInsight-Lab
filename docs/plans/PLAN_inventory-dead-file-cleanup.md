@@ -202,3 +202,6 @@ importer 0 dead file `apps/web/src/app/dashboard/inventory/inventory-main.tsx` �
 - ① 361: 필터 0건 → "이 조건에 맞는 재고가 없습니다…" + CTA "필터 초기화"(클릭 시 3필터 해제·행 복귀) — **PASS**
 - ② 366: `?entity_id=` 딥링크 Sheet — 현재고/안전재고 카드·보관위치 "-"(null 정직)·고유 식별자·신형 grid ×2/구형 0·nameEn null 미표시(가짜 금지) — **PASS** (필드 실존 자체가 4d5bc75e 서빙 실증)
 - **결함 발견→핫픽스(호영님 A 승인)**: InventoryTable 빈상태 볼드 타이틀 "등록된 재고가 없습니다" 하드코드 — 필터/검색 0건에서도 전역 빈 재고 위장(구세대부터의 공유 컴포넌트 결함, 361 의도의 잔재). 교정: `emptyTitle` prop(기본값 현행 — 타 호출부 inventory-table-block 무영향) + content 3분기 타이틀(검색/필터/진짜0건) + 필터 메시지 중복 제거("필터를 초기화하면 전체 재고를 볼 수 있습니다.") + 361 sentinel [후속] 단언(타이틀 3분기·하드코드 잔존 0). 게이트 6파일 73 GREEN·tsc 신규 0.
+
+**후속 (2026-08-07): blocks/inventory-table-block.tsx 완전 고아 실측·삭제 (본 커밋).**
+- importer 0(import 문 전수 0)·테스트 read 0·심볼(InventoryTableBlock) 참조 0·주석 0 — inventory-main 과 달리 승계 대상 계약 전무(sentinel 불요). blocks/ 유일 파일이라 디렉토리째 제거. pre-push next build import 게이트 통과.
