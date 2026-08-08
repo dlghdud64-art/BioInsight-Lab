@@ -276,6 +276,26 @@ export async function POST(
               set.add(name);
               vendorsByItem.set(r.quoteItemId, set);
             }
+            // §quote-item-vendor-selection P4 — 사용자 확정(selectedVendorRequestId)
+            //   → vendorName 역참조. 소비 계층 1순위(선택 > 파생 > 잔여).
+            //   선택이 없는 품목은 undefined → split 이 파생/잔여로 폴백(회귀 0).
+            const selectedIds = Array.from(
+              new Set(
+                quote.items
+                  .map((it: { selectedVendorRequestId?: string | null }) => it.selectedVendorRequestId)
+                  .filter((v: string | null | undefined): v is string => !!v),
+              ),
+            );
+            const selectedNameById = new Map<string, string>();
+            if (selectedIds.length > 0) {
+              const picked = await tx.quoteVendorRequest.findMany({
+                where: { id: { in: selectedIds } },
+                select: { id: true, vendorName: true },
+              });
+              for (const p of picked) {
+                if (p.vendorName?.trim()) selectedNameById.set(p.id, p.vendorName.trim());
+              }
+            }
             const createdList = await createPOCandidatesFromQuote(tx, {
               quote: {
                 id: quote.id,
@@ -283,6 +303,9 @@ export async function POST(
                 items: quote.items.map((it: any) => ({
                   ...it,
                   respondedVendors: Array.from(vendorsByItem.get(it.id) ?? []),
+                  selectedVendor: it.selectedVendorRequestId
+                    ? (selectedNameById.get(it.selectedVendorRequestId) ?? null)
+                    : null,
                 })),
               },
               userId: purchaseRequest.requesterId,

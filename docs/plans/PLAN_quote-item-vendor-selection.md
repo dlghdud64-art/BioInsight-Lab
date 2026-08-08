@@ -163,13 +163,13 @@
 
 ## 11. Progress Tracking
 
-- Overall completion: 60% — P3 완료(매트릭스 선택 배선, 격리 GREEN)
-- Current phase: Phase 4 대기 (approve 소비 계층)
+- Overall completion: 80% — P4 완료(소비 계층, 격리 GREEN). 잔여 = P5 rollout
+- Current phase: Phase 5 대기 (dry-run 보고 → 호영님 "진행" → 일괄 push)
 - Current blocker: 없음 — **push 보류 중**(호영님 B 확정: P5 일괄 push. vercel.json buildCommand 에 prisma migrate deploy → push = prod DDL)
-- Next validation step: 실행 세션 P3 커밋(로컬 누적) → P4 approve 소비 계층
+- Next validation step: 실행 세션 P4 커밋 → P5 dry-run 보고
 
 **Phase Checklist:**
-- [x] Phase 0 / [x] Phase 1 / [x] Phase 2 / [x] Phase 3 / [ ] Phase 4 / [ ] Phase 5
+- [x] Phase 0 / [x] Phase 1 / [x] Phase 2 / [x] Phase 3 / [x] Phase 4 / [ ] Phase 5
 
 **P1 실행 기록 (2026-08-07):**
 - RED 실재: sentinel 7/7 fail 캡처(스키마 필드·관계·인덱스·migration·manifest 전부 부재 상태) → 적용 후 GREEN.
@@ -194,6 +194,14 @@
 - 정직 캡션: 헤더 "최저가는 추천일 뿐이며 확정은 직접 선택합니다" — 추천(파생)과 확정(truth) 경계 표기.
 - 신규 import 0(csrfFetch·useState·cn·useToast·queryClient 전부 기존) — imports-smoke 영향 0 예상.
 - 게이트: 매트릭스 8 + P2 API 10 + select-reply 형제 8 + P1 schema 7 + quotes 스위트 = **86 passed·0 failed**, tsc 접촉 파일 신규 0. (sandbox 사본에 `__tests__/helpers/page-imports-smoke.ts` 부재로 imports-smoke 1파일 로드 실패 — 사본 부분 동기화 탓, 실행 세션에서 반드시 실행 요망.)
+
+**P4 실행 기록 (2026-08-07):**
+- RED 3/4 캡처(V7 신규 4건 중 폴백 1건은 기존 A안 동작이라 선통과) → 구현 후 GREEN.
+- 계층 구현 — 그룹핑 키 1줄: `picked || unique || ""` (선택 > 유일-응답 파생 > 잔여). `QuoteItemForCandidateSplit.selectedVendor` 입력 추가, 기존 A안 로직 무변경(폴백 그대로).
+- approve 배선 — `selectedVendorRequestId` distinct → `quoteVendorRequest.findMany` 역참조로 vendorName 확보 → items 에 selectedVendor 주입. **선택 0건이면 역참조 쿼리 자체 skip**(불필요 쿼리 0, W6 이 잠금).
+- corrupt→RED 실증: 계층 키를 `unique || ""`(선택 무시)로 오염 시 **5건 RED**(split V7 3 + approve W6 2) → 원복 byte 동일.
+- 게이트: 8파일 **59 passed·0 failed** — split 16(V1~V7) · approve 통합 9(W1~W6) · **M2b 예산 behavior 불변** · approve-vendor-po · P2 API 10 · P3 매트릭스 8 · P1 schema 7. tsc 접촉 파일 신규 0(총계 31 = sandbox 사본 기준, 실행 세션 baseline 27 대조 요망).
+- 안전망 확인: 선택 컬럼이 전부 NULL 인 동안 동작은 Track B(A안)와 **완전 동일** — P5 배포 시 기능 노출과 무관하게 기존 흐름 무해.
 
 ## 12. Notes & Learnings
 

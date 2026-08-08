@@ -247,6 +247,13 @@ export interface QuoteItemForCandidateSplit extends QuoteItemForCandidate {
    * 자동 가격 판단 금지: 시스템이 구매 의사결정을 대행하지 않는다 (A안 계약).
    */
   respondedVendors?: string[] | null;
+  /**
+   * §quote-item-vendor-selection — 사용자가 비교 매트릭스에서 **확정**한 vendor 이름
+   * (QuoteListItem.selectedVendorRequestId → QuoteVendorRequest.vendorName).
+   * 소비 계층 1순위: 선택 > 유일-응답 파생(respondedVendors) > 잔여 "".
+   * 선택은 사용자 의사 — 시스템 파생을 항상 이긴다.
+   */
+  selectedVendor?: string | null;
 }
 
 export interface CreateManyFromQuoteInput extends Omit<CreateFromQuoteInput, "quote"> {
@@ -273,14 +280,18 @@ export async function createPOCandidatesFromQuote(
   const items = input.quote.items ?? [];
   if (items.length === 0) return null; // V4 — 내역 없는 발주 후보 금지
 
-  // 그룹핑 — 유일-응답만 vendor 확정, 그 외 잔여 "" (V1·V2)
+  // 그룹핑 계층 (§quote-item-vendor-selection P4):
+  //   1) selectedVendor — 사용자가 비교에서 확정한 vendor (최우선, 항상 이김)
+  //   2) 유일-응답 파생 — respondedVendors 가 정확히 1개 (§pocandidate-vendor-split A안)
+  //   3) 잔여 "" — 다중 응답·응답 0·미선택 (자동 의사결정 0)
   const groups = new Map<string, QuoteItemForCandidateSplit[]>();
   for (const item of items) {
+    const picked = (item.selectedVendor ?? "").trim();
     const unique =
       item.respondedVendors && item.respondedVendors.length === 1
         ? (item.respondedVendors[0] ?? "").trim()
         : "";
-    const key = unique || "";
+    const key = picked || unique || "";
     const arr = groups.get(key) ?? [];
     arr.push(item);
     groups.set(key, arr);

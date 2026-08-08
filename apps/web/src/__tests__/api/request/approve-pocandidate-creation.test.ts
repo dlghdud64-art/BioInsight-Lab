@@ -124,6 +124,11 @@ function makeTx(pool: any[], quote: any, responseItems: any[] = []): { tx: any; 
     purchaseRequest: { update: vi.fn(async () => ({ id: "pr-1", status: "APPROVED" })) },
     quote: { findUnique: vi.fn(async () => quote) },
     quoteReply: { findUnique: vi.fn(async () => ({ vendorName: "Thermo Fisher" })) },
+    // §quote-item-vendor-selection P4 — 선택 vendorRequest 역참조 소스
+    quoteVendorRequest: {
+      findMany: vi.fn(async ({ where }: any) =>
+        (where?.id?.in ?? []).map((id: string) => ({ id, vendorName: `Vendor-${id}` }))),
+    },
     // §pocandidate-vendor-split — 품목별 응답 vendor 조립 소스 (기본 [] = 분할 근거 없음)
     quoteVendorResponseItem: {
       findMany: vi.fn(async ({ where }: any) =>
@@ -278,5 +283,47 @@ describe("§pocandidate-vendor-split W5 — 유일-응답 분할 (approve 통합
     expect(obs.candidateCreates.length).toBe(2);
     const vendors = obs.candidateCreates.map((d: any) => d.vendor).sort();
     expect(vendors).toEqual(["", "VendorA"]); // 다중 → "" (의사결정 대행 0)
+  });
+});
+
+describe("§quote-item-vendor-selection W6 — approve 소비 계층 (선택 우선)", () => {
+  it("선택 vendor 가 유일-응답 파생을 이긴다 (사용자 확정 > 시스템 파생)", async () => {
+    const quote = {
+      ...QUOTE,
+      items: [{ ...QUOTE.items[0], id: "qi-1", selectedVendorRequestId: "vr-picked" }],
+    };
+    const { tx, obs } = makeTx([], quote, [
+      { quoteItemId: "qi-1", vendorRequest: { vendorName: "AutoVendor" } }, // 유일-응답
+    ]);
+    wireTx(tx);
+    const res = await callApprove();
+    expect(res.status).toBe(200);
+    expect(obs.candidateCreates.length).toBe(1);
+    expect(obs.candidateCreates[0].vendor).toBe("Vendor-vr-picked"); // 선택 승
+  });
+
+  it("선택 없는 품목은 파생/잔여 폴백 — 혼재 시 각자 그룹 (회귀 0)", async () => {
+    const quote = {
+      ...QUOTE,
+      items: [
+        { ...QUOTE.items[0], id: "qi-1", selectedVendorRequestId: "vr-picked" },
+        { ...QUOTE.items[0], id: "qi-2", name: "PBS", selectedVendorRequestId: null },
+      ],
+    };
+    const { tx, obs } = makeTx([], quote, [
+      { quoteItemId: "qi-2", vendorRequest: { vendorName: "AutoVendor" } },
+    ]);
+    wireTx(tx);
+    const res = await callApprove();
+    expect(res.status).toBe(200);
+    const vendors = obs.candidateCreates.map((d: any) => d.vendor).sort();
+    expect(vendors).toEqual(["AutoVendor", "Vendor-vr-picked"]);
+  });
+
+  it("선택 0건이면 vendorRequest 역참조 쿼리 자체를 하지 않는다 (불필요 쿼리 0)", async () => {
+    const { tx } = makeTx([], QUOTE, []);
+    wireTx(tx);
+    await callApprove();
+    expect(tx.quoteVendorRequest.findMany).not.toHaveBeenCalled();
   });
 });

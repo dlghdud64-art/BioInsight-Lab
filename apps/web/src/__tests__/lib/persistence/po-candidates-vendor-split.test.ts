@@ -192,3 +192,83 @@ describe("§pocandidate-vendor-split V6 — projection 계약 승계", () => {
     }
   });
 });
+
+// ══════════════════════════════════════════════════════════════════════════════
+// §quote-item-vendor-selection P4 — 소비 계층 (선택 > 유일-응답 파생 > 잔여 "")
+// ══════════════════════════════════════════════════════════════════════════════
+
+const ITEM_SEL = (
+  name: string,
+  lineTotal: number,
+  opts: { selectedVendor?: string | null; respondedVendors?: string[] | null } = {},
+) => ({
+  ...ITEM(name, lineTotal, opts.respondedVendors ?? undefined),
+  selectedVendor: opts.selectedVendor ?? null,
+});
+
+describe("§quote-item-vendor-selection V7 — 선택이 파생보다 우선", () => {
+  it("선택 vendor 가 유일-응답과 다르면 선택이 이긴다 (사용자 확정 > 시스템 파생)", async () => {
+    const { client } = makeClient();
+    const result = await createPOCandidatesFromQuote(client as any, {
+      ...BASE,
+      quote: {
+        id: "q-7",
+        totalAmount: null,
+        items: [ITEM_SEL("A", 10000, { selectedVendor: "PickedVendor", respondedVendors: ["AutoVendor"] })],
+      },
+    });
+    expect(result!.length).toBe(1);
+    expect(result![0].vendor).toBe("PickedVendor");
+  });
+
+  it("다중 응답 품목도 선택이 있으면 그 vendor 로 확정 (잔여 '' 탈출)", async () => {
+    const { client } = makeClient();
+    const result = await createPOCandidatesFromQuote(client as any, {
+      ...BASE,
+      quote: {
+        id: "q-7b",
+        totalAmount: null,
+        items: [
+          ITEM_SEL("A", 10000, { selectedVendor: "PickedVendor", respondedVendors: ["V1", "V2"] }),
+          ITEM_SEL("B", 20000, { respondedVendors: ["V1", "V2"] }), // 미선택 → 잔여
+        ],
+      },
+    });
+    const byVendor = Object.fromEntries(result!.map((c) => [c.vendor, c.items.map((i) => i.name)]));
+    expect(byVendor["PickedVendor"]).toEqual(["A"]);
+    expect(byVendor[""]).toEqual(["B"]);
+  });
+
+  it("선택 없으면 유일-응답 파생 폴백 (Track B 계약 보존)", async () => {
+    const { client } = makeClient();
+    const result = await createPOCandidatesFromQuote(client as any, {
+      ...BASE,
+      quote: {
+        id: "q-7c",
+        totalAmount: null,
+        items: [ITEM_SEL("A", 10000, { respondedVendors: ["AutoVendor"] })],
+      },
+    });
+    expect(result![0].vendor).toBe("AutoVendor");
+  });
+
+  it("선택 + 파생 혼재 → 각자 vendor 로 그룹핑 (계층 독립 적용)", async () => {
+    const { client } = makeClient();
+    const result = await createPOCandidatesFromQuote(client as any, {
+      ...BASE,
+      quote: {
+        id: "q-7d",
+        totalAmount: null,
+        items: [
+          ITEM_SEL("A", 10000, { selectedVendor: "Picked" }),
+          ITEM_SEL("B", 20000, { respondedVendors: ["Auto"] }),
+          ITEM_SEL("C", 30000, { respondedVendors: [] }),
+        ],
+      },
+    });
+    const byVendor = Object.fromEntries(result!.map((c) => [c.vendor, c.items.map((i) => i.name)]));
+    expect(byVendor["Picked"]).toEqual(["A"]);
+    expect(byVendor["Auto"]).toEqual(["B"]);
+    expect(byVendor[""]).toEqual(["C"]);
+  });
+});
