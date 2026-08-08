@@ -209,3 +209,14 @@
 - 착수: 호영님 "다음 순 가자" → 계획 승인 "생성". Track B C안 정공법 — A안(유일-응답 파생)은 폴백 계층으로 보존(폐기 0).
 - Phase 0 핵심 실측: per-item 비교 UI 는 기존재(quotes/[id] 매트릭스 — workbench 는 무관 표면으로 교정) — 본 트랙은 "선택 저장 1컬럼 + 배선 + 소비 계층"의 최소 정공법. 자동 선택(B안) 기각 유지 — 확정은 항상 사용자 탭.
 - 선행 사고 교훈 선반영: 신규 mutation = csrfFetch + enforceAction(§support-csrf-fix 계보), migration = drift-guard 게이트, UI 배선 = 라이브 표면 실행 검증 게이트(P5).
+
+**🚨 P5 사고 기록 — "push = 자동 migrate 적용" 전제 오류 (2026-08-08):**
+- **사고**: 90a13de8 배포 직후 prod `GET /api/quotes` 500. health `pendingCount 1 · clean false`. 영향 = 견적 계열 단독(inventory·orders·po-candidates·vendors·budgets·dashboard 전부 200, DB connected).
+- **기전**: 앱 코드는 신 스키마 기준 Prisma client 로 배포됐으나 prod DB 에 `QuoteListItem.selectedVendorRequestId` 컬럼 부재 → 해당 SELECT 실패. 코드-스키마 drift.
+- **근본 원인 (빌드 로그 실측, dpl_9P3KAbcWYUZi8vo78voYLQb2JsKG 02:07:05)**: `prisma migrate deploy` 는 **실행 자체가 안 됨(①)** — 그리고 그것이 **의도된 설계**였다. Vercel prebuild 체인의 `scripts/vercel-migrate.js` 가 명시적 NO-OP: `"[prebuild] vercel-migrate.js is a NO-OP since 2026-04-25 (ADR-002 §11.13). prisma migrate deploy is operator-shell only — see DEV_RUNBOOK §9."` 빌드가 실패를 삼킨 것이 아니다(②아님).
+- **오판 지점 (실행 세션 책임)**: P5 dry-run 보고가 **루트 `vercel.json`** 의 `buildCommand: "npx prisma generate && npx prisma migrate deploy && npm run build"` 를 근거로 "push = prod DDL 자동 적용"이라 단정했다. 실제 빌드는 `apps/web` 루트로 수행되어 **`apps/web/vercel.json`(`buildCommand: "npm run build"`)** 를 사용 — 루트 vercel.json 의 migrate 구절은 이 프로젝트 배포에 **미사용**. 설정 파일의 존재를 실행 증거로 오인했고, 빌드 로그로 검증하지 않았다.
+- **복구 (호영님 A안 전진 복구 승인)**: operator-shell 에서 `prisma migrate deploy` 수행. ⚠️ 접속 경로 주의 — `DATABASE_URL`(6543 Transaction pooler, `pgbouncer=true`)로는 `migrate status` 가 무응답 hang. **`DIRECT_URL`(5432 Session pooler)로 오버라이드해야 성공**([[reference_supabase_prod_migration]] 재확인). 적용 결과: `Applying migration 20260807130000_quote_item_vendor_selection` → "All migrations have been successfully applied" → `migrate status` = "Database schema is up to date!"(pending 0).
+- **교훈 1 — "커밋·push 됨 ≠ 적용됨"이 이 repo 에서는 구조적 사실**: 자동 적용이 ADR-002 로 **의도적으로 차단**돼 있으므로, migration 이 포함된 배포는 **push 와 `migrate deploy` 가 별개의 두 행위**다. 향후 migration 트랙의 rollout 단계는 "push → 배포 대기 → **operator migrate deploy** → health clean 확인" 4스텝으로 명문화할 것. push 만으로 끝내면 반드시 이 사고가 재발한다.
+- **교훈 2 — 배포 순서 위험**: 코드 먼저·DDL 나중이면 그 사이 구간에 장애가 발생한다(이번 케이스). additive 컬럼은 **DDL 선행 → 코드 배포** 순서가 안전. 순서를 못 지킬 땐 장애 구간을 예상하고 사전 고지할 것.
+- **교훈 3 — 가드는 정상 작동**: §migration-order-drift-guard 의 health 가 drift 를 `pendingCount 1 · clean false` 로 정확히 포착해 원인 규명을 즉시 가능하게 했다. 가드 자체는 유효 — 빠진 것은 **배포 후 health 확인을 rollout 절차에 필수 스텝으로 넣는 일**.
+- 후속 백로그: §migration-rollout-gate — (a) rollout 4스텝 RUNBOOK 명문화 (b) 루트 `vercel.json` 의 미사용 migrate 구절 정리(오해 유발원 제거) (c) 배포 후 health pending 자동 확인 스텝.
