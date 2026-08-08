@@ -188,6 +188,10 @@ export default function QuoteDetailPage() {
   const quoteId = params.id as string;
 
   const [activeTab, setActiveTab] = useState("received");
+  // §quote-item-vendor-selection P3 — 품목별 vendor 확정 pending 표시 전용 state.
+  //   ⚠️ 확정 truth 는 DB(item.selectedVendorRequestId) — 로컬 state 가 확정을
+  //   소유하지 않는다(canonical truth 보호). 여기엔 "저장 중인 품목 id" 만 담는다.
+  const [selectingItemId, setSelectingItemId] = useState<string | null>(null);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
   const [copied, setCopied] = useState(false);
@@ -535,6 +539,46 @@ export default function QuoteDetailPage() {
   };
   const handleSaveNote = (itemId: string) => updateNoteMutation.mutate({ itemId, notes: noteText });
   const handleCancelNote = () => { setEditingNoteId(null); setNoteText(""); };
+
+  /**
+   * §quote-item-vendor-selection P3 — 품목별 vendor 확정/해제.
+   *
+   * 저장 성공(res.ok) 후에만 quote 조회를 무효화해 DB truth 를 재수신한다.
+   * 낙관적 확정 표시 금지 — 실패하면 화면 표시는 그대로(placeholder success 방지,
+   * §reorder-quote-handoff 계보). CSRF 는 csrfFetch 로 토큰 부착(raw fetch 는 403).
+   */
+  const handleSelectItemVendor = async (itemId: string, vendorRequestId: string | null) => {
+    if (selectingItemId) return; // 동시 저장 방지
+    setSelectingItemId(itemId);
+    try {
+      const res = await csrfFetch(`/api/quotes/${quoteId}/select-item-vendor`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quoteItemId: itemId, vendorRequestId }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        toast({
+          title: "선택을 저장하지 못했습니다",
+          description: body?.error ?? "잠시 후 다시 시도해주세요.",
+          variant: "destructive",
+        });
+        return; // 확정 표시 변화 0 — 실패를 성공처럼 보이게 하지 않는다
+      }
+      // 성공 시에만 truth 재수신 (서버 값이 확정 표시의 유일 근거)
+      queryClient.invalidateQueries({ queryKey: ["quote", quoteId] });
+      toast({
+        title: vendorRequestId ? "공급사를 확정했습니다" : "확정을 해제했습니다",
+        description: vendorRequestId
+          ? "결재 통과 시 이 선택대로 발주 후보가 분리됩니다."
+          : "이 품목은 다시 미확정 상태입니다.",
+      });
+    } catch {
+      toast({ title: "네트워크 오류로 저장하지 못했습니다", variant: "destructive" });
+    } finally {
+      setSelectingItemId(null);
+    }
+  };
 
   const handleSmartShare = async () => {
     if (!quoteData?.quote) return;
@@ -1032,7 +1076,8 @@ export default function QuoteDetailPage() {
                         <div className="flex items-center gap-2 mb-3">
                           <GitCompare className="h-4 w-4 text-blue-600" />
                           <h3 className="text-sm font-bold text-slate-200">벤더 가격 비교</h3>
-                          <span className="text-xs text-slate-500">{respondedVendors.length}개 벤더 · 최저가 강조</span>
+                          {/* §quote-item-vendor-selection P3 — 추천(최저가)과 확정(선택)의 경계 정직 표기 */}
+                          <span className="text-xs text-slate-500">{respondedVendors.length}개 벤더 · 최저가는 추천일 뿐이며 확정은 직접 선택합니다</span>
                           {isAdmin && <button onClick={() => refetchVendorRequests()} className="ml-auto text-xs text-blue-600 hover:underline">새로고침</button>}
                         </div>
 
@@ -1068,10 +1113,13 @@ export default function QuoteDetailPage() {
                                       const price = ri?.unitPrice ?? null;
                                       const isLowest = price !== null && price > 0 && price === minPrice && validPrices.length > 1;
                                       const savingVsMax = isLowest && maxPrice ? maxPrice - (price as number) : null;
+                                      // §quote-item-vendor-selection P3 — 확정 truth 는 DB 값(로컬 state 아님)
+                                      const isSelected = item.selectedVendorRequestId === vr.id;
+                                      const isPending = selectingItemId === item.id;
                                       return (
                                         <td key={vr.id} className="py-3 px-3 text-center">
                                           {price !== null ? (
-                                            <div className={cn("inline-flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg", isLowest ? "bg-emerald-50 border border-emerald-200" : "")}>
+                                            <div className={cn("inline-flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg", isLowest ? "bg-emerald-50 border border-emerald-200" : "", isSelected ? "ring-2 ring-blue-500" : "")}>
                                               <span className={cn("font-bold text-sm", isLowest ? "text-emerald-700" : "text-slate-700")}>
                                                 {price > 0 ? price.toLocaleString() : "—"}
                                                 <span className="text-[10px] font-normal ml-0.5">{ri?.currency || "KRW"}</span>
@@ -1086,6 +1134,24 @@ export default function QuoteDetailPage() {
                                                 </span>
                                               )}
                                               {ri?.moq && ri.moq > 1 && <span className="text-[9px] text-slate-400">MOQ {ri.moq}</span>}
+                                              {/* §quote-item-vendor-selection P3 — 응답 있는 셀만 확정 CTA
+                                                  (무응답 셀은 아래 "—" 분기라 CTA 자체가 없음 = dead button 0) */}
+                                              {isAdmin && (
+                                                <button
+                                                  type="button"
+                                                  data-testid="item-vendor-select-cta"
+                                                  disabled={isPending}
+                                                  onClick={() => handleSelectItemVendor(item.id, isSelected ? null : vr.id)}
+                                                  className={cn(
+                                                    "mt-1 rounded-md px-2 py-0.5 text-[9px] font-bold transition-colors disabled:opacity-50",
+                                                    isSelected
+                                                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                                                      : "border border-slate-300 text-slate-600 hover:bg-slate-50",
+                                                  )}
+                                                >
+                                                  {isPending ? "저장 중…" : isSelected ? "✓ 확정됨 · 해제" : "이 공급사로 확정"}
+                                                </button>
+                                              )}
                                             </div>
                                           ) : (
                                             <span className="text-slate-300">—</span>

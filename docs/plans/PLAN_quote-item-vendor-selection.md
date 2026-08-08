@@ -163,13 +163,13 @@
 
 ## 11. Progress Tracking
 
-- Overall completion: 45% — P2 완료(선택 저장 API, 격리 GREEN)
-- Current phase: Phase 3 대기 (quotes/[id] 매트릭스 선택 배선)
+- Overall completion: 60% — P3 완료(매트릭스 선택 배선, 격리 GREEN)
+- Current phase: Phase 4 대기 (approve 소비 계층)
 - Current blocker: 없음 — **push 보류 중**(호영님 B 확정: P5 일괄 push. vercel.json buildCommand 에 prisma migrate deploy → push = prod DDL)
-- Next validation step: 실행 세션 P2 커밋(로컬 누적) → P3 UI 배선
+- Next validation step: 실행 세션 P3 커밋(로컬 누적) → P4 approve 소비 계층
 
 **Phase Checklist:**
-- [x] Phase 0 / [x] Phase 1 / [x] Phase 2 / [ ] Phase 3 / [ ] Phase 4 / [ ] Phase 5
+- [x] Phase 0 / [x] Phase 1 / [x] Phase 2 / [x] Phase 3 / [ ] Phase 4 / [ ] Phase 5
 
 **P1 실행 기록 (2026-08-07):**
 - RED 실재: sentinel 7/7 fail 캡처(스키마 필드·관계·인덱스·migration·manifest 전부 부재 상태) → 적용 후 GREEN.
@@ -185,6 +185,15 @@
 - 해제(null)는 응답 검증 skip — 되돌리기는 항상 허용.
 - CSRF: 라우트 내부 처리 0 — middleware csrf-route-registry 기본값 required 적용(select-reply 와 동일, 명시 등재 불요 실측). 클라이언트는 P3 에서 csrfFetch 사용.
 - 테스트 10건(인증·권한 3 / 소속·응답 검증 4 / 해제 1 / 입력 방어 2). 게이트: 신규 10 + select-reply 형제 2파일 = **3파일 25 passed·0 failed**, tsc 신규 에러 0.
+
+**P3 실행 기록 (2026-08-07):**
+- RED 7/8 캡처(회귀 단언 1건만 기존 GREEN) → 구현 후 8/8. **공허 단언 1건 발각·교정**: U3 의 `invalidateQueries(["quote", quoteId])` 전역 매칭이 기존 3개 호출(L433·465·500)로 이미 통과 → 핸들러 본문 슬라이스 + `res.ok` 이후 순서 검사로 강화. (RED 캡처가 없었으면 공허한 채 통과할 뻔 — 캡처 규율의 실효 사례.)
+- corrupt→RED 실증: csrfFetch→fetch 오염 시 U1 단독 RED → 원복 후 8/8·byte 동일.
+- 배선: `handleSelectItemVendor(itemId, vendorRequestId|null)` — csrfFetch POST, **res.ok 이후에만** quote 무효화(실패 시 표시 변화 0·toast 만), pending state 는 표시 전용(확정 truth 는 DB `item.selectedVendorRequestId`), 동시 저장 가드.
+- 셀 CTA: 응답 있는 셀(price !== null) 분기 안에만 렌더 → 무응답 "—" 셀은 CTA 자체가 없음(dead button 0). isAdmin 게이팅(기존 새로고침 CTA 관례 승계). 확정 시 ring-2 + "✓ 확정됨 · 해제" 토글.
+- 정직 캡션: 헤더 "최저가는 추천일 뿐이며 확정은 직접 선택합니다" — 추천(파생)과 확정(truth) 경계 표기.
+- 신규 import 0(csrfFetch·useState·cn·useToast·queryClient 전부 기존) — imports-smoke 영향 0 예상.
+- 게이트: 매트릭스 8 + P2 API 10 + select-reply 형제 8 + P1 schema 7 + quotes 스위트 = **86 passed·0 failed**, tsc 접촉 파일 신규 0. (sandbox 사본에 `__tests__/helpers/page-imports-smoke.ts` 부재로 imports-smoke 1파일 로드 실패 — 사본 부분 동기화 탓, 실행 세션에서 반드시 실행 요망.)
 
 ## 12. Notes & Learnings
 
