@@ -163,13 +163,13 @@
 
 ## 11. Progress Tracking
 
-- Overall completion: 30% — P1 완료(스키마+migration+sentinel, 격리 GREEN)
-- Current phase: Phase 2 대기 (선택 저장 API)
-- Current blocker: 없음
-- Next validation step: 실행 세션 P1 커밋 게이트 → P2 route RED
+- Overall completion: 45% — P2 완료(선택 저장 API, 격리 GREEN)
+- Current phase: Phase 3 대기 (quotes/[id] 매트릭스 선택 배선)
+- Current blocker: 없음 — **push 보류 중**(호영님 B 확정: P5 일괄 push. vercel.json buildCommand 에 prisma migrate deploy → push = prod DDL)
+- Next validation step: 실행 세션 P2 커밋(로컬 누적) → P3 UI 배선
 
 **Phase Checklist:**
-- [x] Phase 0 / [x] Phase 1 / [ ] Phase 2 / [ ] Phase 3 / [ ] Phase 4 / [ ] Phase 5
+- [x] Phase 0 / [x] Phase 1 / [x] Phase 2 / [ ] Phase 3 / [ ] Phase 4 / [ ] Phase 5
 
 **P1 실행 기록 (2026-08-07):**
 - RED 실재: sentinel 7/7 fail 캡처(스키마 필드·관계·인덱스·migration·manifest 전부 부재 상태) → 적용 후 GREEN.
@@ -177,6 +177,14 @@
 - migration: 20260807130000_quote_item_vendor_selection — ADD COLUMN(nullable)+INDEX+FK(SET NULL)만, 파괴 구문 0(sentinel 이 DROP/NOT NULL 부재 잠금). manifest 53건 재생성(등재 확인).
 - 게이트: 스키마 스위트 전체 17파일 129 passed·0 failed (기존 schema sentinel 충돌 0).
 - 스코프 조정 기록: API 계약 RED 는 P2 선두로 이동 — "커밋은 항상 GREEN" 규율과 TDD 양립(각 phase 에서 RED 캡처 후 GREEN 으로 changeset 구성). 명명 확정: POST /api/quotes/[id]/select-item-vendor (기존 select-reply 의 per-item 형제 — 관례 승계).
+
+**P2 실행 기록 (2026-08-07):**
+- RED 실재: route 부재로 스위트 로드 실패(Tests: no tests) → 구현 후 GREEN.
+- 신설: `POST /api/quotes/[id]/select-item-vendor` — select-reply(quote 단위)의 per-item 형제. 관례 승계: auth 401 · 소유권(owner OR org member, 그 외 **404 존재 leak 차단**) · enforceAction(action `quote_status_change`, 가역 선택이라 high-risk 미설정) · 전 early-return `fail()`(ADR §11.21 lock leak→409 사고 관례).
+- **핵심 계약 S4 응답 실존 검증**: vendorRequestId 확정 시 `QuoteVendorResponseItem(vendorRequestId, quoteItemId)` 실존 필수 — 응답 없는 vendor 확정 = 가짜 선택 400 `NO_RESPONSE_FOR_ITEM`. "비교한 것 중 고르기" 원칙의 서버측 강제.
+- 해제(null)는 응답 검증 skip — 되돌리기는 항상 허용.
+- CSRF: 라우트 내부 처리 0 — middleware csrf-route-registry 기본값 required 적용(select-reply 와 동일, 명시 등재 불요 실측). 클라이언트는 P3 에서 csrfFetch 사용.
+- 테스트 10건(인증·권한 3 / 소속·응답 검증 4 / 해제 1 / 입력 방어 2). 게이트: 신규 10 + select-reply 형제 2파일 = **3파일 25 passed·0 failed**, tsc 신규 에러 0.
 
 ## 12. Notes & Learnings
 
