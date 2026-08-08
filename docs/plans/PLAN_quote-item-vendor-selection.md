@@ -163,13 +163,14 @@
 
 ## 11. Progress Tracking
 
-- Overall completion: 80% — P4 완료(소비 계층, 격리 GREEN). 잔여 = P5 rollout
-- Current phase: Phase 5 대기 (dry-run 보고 → 호영님 "진행" → 일괄 push)
-- Current blocker: 없음 — **push 보류 중**(호영님 B 확정: P5 일괄 push. vercel.json buildCommand 에 prisma migrate deploy → push = prod DDL)
-- Next validation step: 실행 세션 P4 커밋 → P5 dry-run 보고
+- Overall completion: 100% — 트랙 종료 (P1~P4 배포 + migration 적용 + 회귀 확인 완료)
+- Current phase: 완료 (커밋 ff9f91b2·c609109f·e770ffef·90a13de8 + 사고기록 abcd9005)
+- Current blocker: 없음
+- ⚠️ **정정 (2026-08-08)**: 이 절에 있던 "vercel.json buildCommand 에 prisma migrate deploy → push = prod DDL" 은 **틀린 전제**였다. 실제 배포는 `apps/web/vercel.json`(`npm run build`)을 사용하고 prebuild 의 `vercel-migrate.js` 는 ADR-002 §11.13 에 따른 NO-OP — **push 로는 prod DDL 이 적용되지 않는다**(§12 사고 기록). 후속 세션이 이 문장을 근거로 삼지 않도록 원문을 남기고 정정한다.
+- Next validation step: 관측 조건 — 첫 vendor 응답 제출 + 품목 선택 발생 시 선택 저장/해제·분리 소비 실측 (Track B 이연-관측 조건에 병합)
 
 **Phase Checklist:**
-- [x] Phase 0 / [x] Phase 1 / [x] Phase 2 / [x] Phase 3 / [x] Phase 4 / [ ] Phase 5
+- [x] Phase 0 / [x] Phase 1 / [x] Phase 2 / [x] Phase 3 / [x] Phase 4 / [x] Phase 5
 
 **P1 실행 기록 (2026-08-07):**
 - RED 실재: sentinel 7/7 fail 캡처(스키마 필드·관계·인덱스·migration·manifest 전부 부재 상태) → 적용 후 GREEN.
@@ -220,3 +221,9 @@
 - **교훈 2 — 배포 순서 위험**: 코드 먼저·DDL 나중이면 그 사이 구간에 장애가 발생한다(이번 케이스). additive 컬럼은 **DDL 선행 → 코드 배포** 순서가 안전. 순서를 못 지킬 땐 장애 구간을 예상하고 사전 고지할 것.
 - **교훈 3 — 가드는 정상 작동**: §migration-order-drift-guard 의 health 가 drift 를 `pendingCount 1 · clean false` 로 정확히 포착해 원인 규명을 즉시 가능하게 했다. 가드 자체는 유효 — 빠진 것은 **배포 후 health 확인을 rollout 절차에 필수 스텝으로 넣는 일**.
 - 후속 백로그: §migration-rollout-gate — (a) rollout 4스텝 RUNBOOK 명문화 (b) 루트 `vercel.json` 의 미사용 migrate 구절 정리(오해 유발원 제거) (c) 배포 후 health pending 자동 확인 스텝.
+
+**P5 마감 (2026-08-08) — 트랙 종료:**
+- **prod 실측 (복구 후)**: health `migrations clean: true · pending 0` / `GET /api/quotes` **200(7건)** / 견적 상세 200 — items 에 `selectedVendorRequestId` 필드 **존재**(값 null = 정상 초기 상태, 컬럼 적용 실증) / 재고·발주후보 200 정상.
+- **마감선**: **P5 = 배포 + migration 적용 + 회귀 확인 완료.** 선택 저장/해제 **기능 실측은 prod vendor 응답 표본 부재로 이연-관측**(비교 매트릭스가 `respondedVendors.length > 0` 게이팅이라 표본 0이면 선택 UI 자체가 렌더되지 않음) — Track B(§pocandidate-vendor-split) 관측 조건에 병합. 즉 "완전 검증 종료"가 아니라 "배포·회귀 확인 종료 + 기능 이연"이다.
+- **사고**: migrate 자동 적용 전제 오판 → 코드-스키마 drift 로 견적 500(장애 구간 02:07 배포 ~ operator 적용 시점). operator `migrate deploy` 로 복구. **rollout 은 4스텝(push → 배포 → operator migrate deploy → health clean)이 계약.**
+- **이연-관측 조건 (Track B 병합)**: ① 첫 결재 통과 → 잔여-단일(기존 A안 동등) 경로 실측 ② 첫 vendor 응답 제출 + 결재 통과 → 분할 경로 실측(candidate N·vendor 별 Order·예산 1회) ③ **첫 품목 선택 발생 → 선택 저장/해제 + 선택 우선 계층 소비 실측**(본 트랙 추가분).
