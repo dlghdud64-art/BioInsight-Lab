@@ -153,8 +153,23 @@ describe("§enforcement-handle-close E2 — ratchet 은 조여지기만 한다",
   });
 });
 
-describe("§enforcement-handle-close E3 — 예외 경로도 닫는다", () => {
-  it("핸들을 닫는 route 는 catch 블록 안에서 fail() 을 호출한다", () => {
+/**
+ * ⚠️ E3 의 **보증 범위 정정 (2026-08-09)** — 제목이 과대했다.
+ *   실제 보증: "catch 블록 **중 최소 하나**가 fail() 을 호출한다".
+ *   **보증하지 않는 것**: 모든 catch 가 닫는다는 것. `some()` 이라 하나만 만족하면 통과하므로,
+ *     **자체 return 하는 내부 catch** 가 fail() 없이 있어도 GREEN 이다.
+ *     실제로 ops-execute(`catch (execError)`)와 scan-label(`catch (geminiErr)`)이 그 상태로
+ *     E3 를 통과하면서 실패 경로에서만 lock 을 TTL 까지 붙들고 있었다.
+ *   → "E3 GREEN 이니 예외 경로는 안전" 이라고 읽지 말 것. 그 구멍은 **E6** 가 막는다.
+ *
+ *   왜 E3 를 "모든 catch 가 fail()" 로 단순 강화하지 않는가 — 실측(2026-08-09):
+ *     lock 획득(enforceAction) **이전** catch 는 풀 lock 이 없어 fail() 이 없는 게 정상이다.
+ *     예: inventory/route.ts 의 플랜 한도 429·trackingMode 403 catch 는 주석부터
+ *     "lock 획득 전" 이라고 적혀 있다. 순진하게 조이면 이런 합법 코드가 대량 RED 가 된다.
+ *     그래서 강화는 **위치 인지**(post-lock 한정)로 해야 하고, 그게 E6 다.
+ */
+describe("§enforcement-handle-close E3 — catch 중 최소 하나는 닫는다 (전부는 아님 — E6 참조)", () => {
+  it("핸들을 닫는 route 는 catch 블록 중 최소 하나에서 fail() 을 호출한다", () => {
     const closed = USES_ENFORCE.filter((r) => closesHandle(r.src));
     const missing = closed
       .filter((r) => {
@@ -163,6 +178,82 @@ describe("§enforcement-handle-close E3 — 예외 경로도 닫는다", () => {
       })
       .map((r) => r.path);
     expect(missing).toEqual([]);
+  });
+});
+
+/**
+ * §enforcement-handle-close E6 — **자체 return 하는 post-lock catch 도 닫는다** (2026-08-09 신설)
+ *
+ *   E3 가 못 잡는 클래스: 내부 `catch` 가 스스로 `return NextResponse.json(...)` 하면
+ *   외부 catch 를 거치지 않으므로, 거기서 fail() 하지 않으면 **그 실패 경로에서만**
+ *   lock 이 TTL(5분)까지 남는다. 정상 흐름은 깨끗해 눈에 띄지 않는다.
+ *   발견 경위: ops-execute(work-queue 배치) → 같은 클래스 전수 조사에서 scan-label 추가 검출.
+ *
+ *   ⚠️ 오탐 회피가 이 단언의 핵심 — **lock 획득(enforceAction) 이후** catch 만 본다.
+ *     이전 catch 는 풀 lock 이 없어 fail() 이 없는 게 정상이다(플랜 한도 429·권한 403 등).
+ *     위치를 무시하고 조이면 합법 코드가 대량 RED 가 된다(E3 주석 참조).
+ *
+ *   범위: 핸들을 **닫는** 핸들러만. LEGACY 미마감분은 §enforcement-handle-close-sweep 대상이라
+ *     여기서 중복 계상하지 않는다(ratchet 과 역할 분리).
+ */
+describe("§enforcement-handle-close E6 — post-lock 자체 return catch 도 닫는다", () => {
+  /** 중괄호 매칭 — 정규식은 중첩 블록에서 끝을 잘못 잡는다(E3 의 {0,600} 한계) */
+  const blockFrom = (src: string, braceIdx: number): string => {
+    let depth = 0;
+    for (let i = braceIdx; i < src.length; i++) {
+      if (src[i] === "{") depth++;
+      else if (src[i] === "}") {
+        depth--;
+        if (depth === 0) return src.slice(braceIdx, i + 1);
+      }
+    }
+    return src.slice(braceIdx);
+  };
+
+  /** export async function 단위 분해 — 같은 파일의 GET 핸들러 catch 를 오탐하지 않기 위해 */
+  const handlerBodies = (src: string): string[] => {
+    const out: string[] = [];
+    const re = /export\s+async\s+function\s+\w+\s*\(/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(src))) {
+      const braceIdx = src.indexOf("{", m.index + m[0].length);
+      if (braceIdx !== -1) out.push(blockFrom(src, braceIdx));
+    }
+    return out;
+  };
+
+  it("lock 획득 이후 자체 응답 return 하는 catch 는 fail() 을 호출한다", () => {
+    const offenders: string[] = [];
+
+    for (const route of USES_ENFORCE) {
+      for (const body of handlerBodies(route.src)) {
+        const lockIdx = body.indexOf("enforceAction(");
+        if (lockIdx === -1) continue;
+        // 마감하는 핸들러만 — 미마감분은 E1 ratchet 소관.
+        if (!body.includes(".complete(") && !body.includes(".fail(")) continue;
+
+        const re = /catch\s*\([^)]*\)\s*\{/g;
+        let m: RegExpExecArray | null;
+        while ((m = re.exec(body))) {
+          const braceIdx = m.index + m[0].length - 1;
+          if (braceIdx < lockIdx) continue; // pre-lock catch = 정상
+          const blk = blockFrom(body, braceIdx);
+          if (blk.includes(".fail(")) continue;
+          if (!/\breturn\s+NextResponse/.test(blk)) continue; // 자체 응답 return 만
+          offenders.push(route.path);
+        }
+      }
+    }
+
+    // 실패 시 경로가 그대로 뜬다 — 어느 route 가 새는지 즉시 보인다.
+    expect(offenders).toEqual([]);
+  });
+
+  it("수집이 실제로 동작한다 (공허 GREEN 방지)", () => {
+    // 핸들러 분해가 깨지면 offenders 가 항상 빈 배열이 되어 위 단언이 공허해진다.
+    const bodies = USES_ENFORCE.flatMap((r) => handlerBodies(r.src));
+    expect(bodies.length).toBeGreaterThan(80);
+    expect(bodies.filter((b) => b.includes("enforceAction(")).length).toBeGreaterThan(50);
   });
 });
 

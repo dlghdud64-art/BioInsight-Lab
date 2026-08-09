@@ -134,6 +134,10 @@ export async function POST(req: NextRequest) {
           // §scan-stability — 정직성: backoff 재시도(gemini-config) 후에도 실패한 게
           //   일시적(429/timeout/5xx)이면 "실패" 단정 금지 → 재시도 안내. 영구 오류만 "실패".
           const transient = isTransientGeminiError(geminiErr);
+          // ⚠️ §enforcement-handle-close — 내부 catch 가 자체 return 하므로 외부 catch 를
+          //   거치지 않는다. 여기서 닫지 않으면 OCR 실패 경로에서만 lock 이 TTL 까지 남는다
+          //   (ops-execute 와 동일 클래스). E6 가 이 클래스를 잠근다.
+          enforcement.fail();
           return NextResponse.json(
             {
               error: transient
