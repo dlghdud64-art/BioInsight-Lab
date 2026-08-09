@@ -19,6 +19,24 @@
  *   R7. 출처(specialNotes) 텍스트 분기 금지 — §text-coupling-debt 를 늘리고,
  *       중복 방지 관점에서 출처는 무관하며 오히려 놓친다.
  *   R8. 트리거는 FK 정확 신호(안전재고 미달)만 — reorder-recommendation 텍스트 매칭 미사용.
+ *   R9. 문구는 **자기 트리거의 사실만** 말한다 — 재발주안 존재를 주장하지 않는다.
+ *
+ * ⚠️ **§4 계약 교체 기록 (2026-08-09, 호영님 승인) — 회귀로 오판 금지**
+ *   원 계약 트리거: "재고관리에 재발주안(검토 중)이 **존재하면** 배너"
+ *   현 구현 트리거: "**안전재고 미달**이면 배너" (+ 작성 중 견적 있으면 열기 분기)
+ *
+ *   왜 바꿨나 — 원 계약대로 '재발주안 존재'를 판정하려면 `reorder-recommendation`
+ *   계열을 써야 하는데, 그 API 는 `PurchaseRecord.itemName contains` **텍스트 매칭**이고
+ *   `PurchaseRecord` 에는 productId 가 없다(실측). 즉 원 트리거는 오매칭된 근거로
+ *   **발주를 유도**할 수 있다. 반면 안전재고 미달은 `ProductInventory.productId` FK
+ *   조회(B1)라 오매칭이 원천적으로 불가능하다.
+ *
+ *   결과 차이(의도됨): 재발주안이 없어도 미달이면 배너가 뜬다. 그래서 문구를 트리거에
+ *   맞춰 "안전재고 미달 · 재발주 권장"으로 쓴다 — "재고관리에서 재발주 검토 중" 류로
+ *   쓰면 검토된 적 없는 품목에 그렇게 표시되는 **거짓 표기**가 된다(R9 가 잠근다).
+ *
+ *   → 다음 세션이 "계약은 재발주안인데 구현은 재고네" 하고 되돌리지 말 것.
+ *     되돌리면 텍스트 오매칭 발주 유도가 부활한다(§text-coupling-debt).
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
@@ -114,6 +132,22 @@ describe("§4 R7·R8 — 텍스트 결속 미도입", () => {
   it("R8 트리거는 안전재고 미달(FK 정확) — reorder-recommendation 텍스트 매칭 미사용", () => {
     expect(PAGE_CODE).toMatch(/const needsReorder = reorderShortfall > 0/);
     expect(PAGE_CODE).not.toMatch(/useReorderRecommendation/);
+  });
+});
+
+describe("§4 R9 — 문구가 자기 트리거의 사실만 말한다 (거짓 표기 0)", () => {
+  it("생성 분기 문구 = 안전재고 미달 사실 (트리거와 일치)", () => {
+    expect(BANNER).toMatch(/안전재고 미달/);
+  });
+
+  it("재발주안이 '검토 중'이라고 주장하지 않는다", () => {
+    // 트리거가 '재발주안 존재'가 아니라 '안전재고 미달'이므로, 검토된 적 없는 품목에도
+    // 배너가 뜬다. 그 상태에서 "재발주 검토 중"이라 쓰면 거짓 표기다(계약 교체 기록 참조).
+    expect(BANNER).not.toMatch(/재발주 검토 중|재발주안에서 검토|검토 중인 재발주/);
+  });
+
+  it("열기 분기 문구 = 견적 실존 사실 (출처·재발주 주장 0)", () => {
+    expect(BANNER).toMatch(/이 제품이 담긴 견적을 작성 중입니다/);
   });
 });
 
