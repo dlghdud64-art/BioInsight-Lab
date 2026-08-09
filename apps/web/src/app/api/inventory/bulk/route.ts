@@ -153,6 +153,9 @@ export async function POST(request: NextRequest) {
     try {
       rawBody = await request.json();
     } catch {
+      // ⚠️ 내부 catch 가 자체 return 한다 — 외부 catch 미경유(E6 클래스).
+      //   optional catch binding(`catch {`) 이라 E6 정규식이 괄호를 요구하던 동안 사각지대였다.
+      enforcement.fail();
       return NextResponse.json(
         { error: "요청 본문이 유효한 JSON 형식이 아닙니다." },
         { status: 400 }

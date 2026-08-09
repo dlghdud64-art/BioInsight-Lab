@@ -123,6 +123,11 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (ai) — 'unknown' **유지(보류)**.
+      //   ⚠️ 이 라우트는 body.orderId 를 받는다(실재하는 대상). 다만 targetEntityType 이
+      //   'ai_action' 이라 id 만 orderId 로 바꾸면 "ai_action 인데 id 는 주문"이 되어 감사
+      //   분류가 어긋난다. 정확히 하려면 targetEntityType 을 'order' 로 함께 바꿔야 하는데,
+      //   그건 감사 taxonomy 변경이라 기계적 sweep 범위를 넘는다 → 별도 결정으로 상신.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/ai/impact-analysis',
@@ -132,6 +137,7 @@ export async function POST(request: NextRequest) {
     const body: ImpactAnalysisInput = await request.json();
 
     if (!body.orderId || !body.itemName || body.orderAmount == null) {
+      enforcement.fail();
       return NextResponse.json(
         { success: false, error: "orderId, itemName, orderAmount 필수" },
         { status: 400 },
@@ -191,6 +197,7 @@ export async function POST(request: NextRequest) {
             },
             source: "gemini",
           };
+          enforcement.fail(); // Gemini 분석 결과 반환 — 쓰기 0
           return NextResponse.json({ success: true, data: result });
         }
       } catch {
@@ -204,8 +211,13 @@ export async function POST(request: NextRequest) {
       report: buildLocalReport(simulation),
       source: "local",
     };
+    // ⚠️ 정상 완료 경로인데 fail() 이다 — **버그 아님. complete() 로 바꾸지 말 것.**
+    //   분석 결과를 반환할 뿐 DB 쓰기가 0이다(simulateOrderImpact 는 mutate 하지 않는다).
+    //   complete() 는 before/after 를 남기므로 거짓 감사가 된다.
+    enforcement.fail();
     return NextResponse.json({ success: true, data: result });
   } catch {
+    enforcement?.fail();
     return NextResponse.json(
       { success: false, error: "Impact analysis 수행 중 오류" },
       { status: 500 },

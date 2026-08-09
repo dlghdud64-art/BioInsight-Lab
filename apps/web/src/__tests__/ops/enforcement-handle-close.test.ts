@@ -57,17 +57,13 @@ const closesHandle = (src: string) => src.includes(".complete(") || src.includes
 const UNCLOSED = USES_ENFORCE.filter((r) => !closesHandle(r.src)).map((r) => r.path);
 
 /**
- * 2026-08-09 실측 누수 74 → 배치1(work-queue 7) → 67 → 배치2(inventory 5) → 62 → 배치3(products 5) → 57 → 배치4(quotes 5) → **52**. **줄어들기만 한다.**
+ * 2026-08-09 실측 누수 74 → 배치1(work-queue 7) → 67 → 배치2(inventory 5) → 62 → 배치3(products 5) → 57 → 배치4(quotes 5) → 52 → 배치5(ai 4) → **48**. **줄어들기만 한다.**
  * 여기에 새 경로를 추가하는 것은 회귀이며, 항목을 고쳤으면 이 목록에서 제거해야 한다.
  */
 const LEGACY_UNCLOSED: readonly string[] = [
   "src/app/api/activity-logs/route.ts",
   "src/app/api/admin/canary-control/route.ts",
   "src/app/api/admin/seed/route.ts",
-  "src/app/api/ai/bom-parse/route.ts",
-  "src/app/api/ai/budget-anomaly/route.ts",
-  "src/app/api/ai/impact-analysis/route.ts",
-  "src/app/api/ai/safety-check/route.ts",
   "src/app/api/ai-actions/generate/order-followup/route.ts",
   "src/app/api/ai-actions/generate/quote-draft/route.ts",
   "src/app/api/ai-actions/generate/reorder-suggestions/route.ts",
@@ -158,7 +154,10 @@ describe("§enforcement-handle-close E3 — catch 중 최소 하나는 닫는다
     const closed = USES_ENFORCE.filter((r) => closesHandle(r.src));
     const missing = closed
       .filter((r) => {
-        const catchBlocks = r.src.match(/catch\s*\([^)]*\)\s*\{[\s\S]{0,600}?\}/g) ?? [];
+        // ⚠️ optional catch binding(`} catch {`, ES2019) 포함 — 괄호를 요구하면 못 본다.
+        //   2026-08-09 실측: enforceAction 라우트 15개가 이 형태를 쓰고 있었고,
+        //   그중 inventory/bulk 에 실제 누수가 숨어 있었다.
+        const catchBlocks = r.src.match(/catch\s*(\([^)]*\))?\s*\{[\s\S]{0,600}?\}/g) ?? [];
         return !catchBlocks.some((b) => b.includes(".fail("));
       })
       .map((r) => r.path);
@@ -217,7 +216,8 @@ describe("§enforcement-handle-close E6 — post-lock 자체 return catch 도 �
         // 마감하는 핸들러만 — 미마감분은 E1 ratchet 소관.
         if (!body.includes(".complete(") && !body.includes(".fail(")) continue;
 
-        const re = /catch\s*\([^)]*\)\s*\{/g;
+        // optional catch binding 포함(E3 주석 참조 — 괄호 요구 시 15개 라우트가 사각지대)
+        const re = /catch\s*(\([^)]*\))?\s*\{/g;
         let m: RegExpExecArray | null;
         while ((m = re.exec(body))) {
           const braceIdx = m.index + m[0].length - 1;

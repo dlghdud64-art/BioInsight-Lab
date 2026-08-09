@@ -84,6 +84,9 @@ export async function POST(req: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'order_create',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (ai) — 'unknown' 유지. BOM 텍스트를 파싱해 반환할 뿐
+      //   대상 엔티티가 없다. 'unknown' 은 전역 공용 키가 아니라 userId 폴백(§11.369-3)이라
+      //   같은 사용자의 연타 보호는 유지된다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/ai/bom-parse',
@@ -94,6 +97,7 @@ export async function POST(req: NextRequest) {
     const { text } = body as { text: string };
 
     if (!text || text.trim().length < 3) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "BOM 텍스트가 필요합니다." },
         { status: 400 }
@@ -101,6 +105,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!GEMINI_API_KEY) {
+      enforcement.fail(); // 로컬 폴백 응답 — 쓰기 0
       return NextResponse.json({
         success: true,
         data: localBomParse(text),
@@ -137,8 +142,13 @@ export async function POST(req: NextRequest) {
     if (fallbackMatch) jsonStr = fallbackMatch[0];
 
     const parsed = JSON.parse(jsonStr);
+    // ⚠️ 정상 완료 경로인데 fail() 이다 — **버그 아님. complete() 로 바꾸지 말 것.**
+    //   분석 결과를 반환할 뿐 DB 쓰기가 0이다. complete() 는 before/after 를 남기므로
+    //   아무것도 바꾸지 않은 호출에 "변경 완료" 감사가 생긴다 = 거짓 감사.
+    enforcement.fail();
     return NextResponse.json({ success: true, data: parsed });
   } catch (error) {
+    enforcement?.fail();
     console.error("[bom-parse] Error:", error);
     return NextResponse.json(
       { error: "BOM 파싱 중 오류가 발생했습니다." },

@@ -224,6 +224,9 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (ai) — 'unknown' 유지. 품목명·카테고리로 안전
+      //   판정을 계산해 반환할 뿐 대상 엔티티가 없다(id 미수신). 'unknown' 은 전역 공용 키가
+      //   아니라 userId 폴백(§11.369-3)이라 연타 보호는 유지된다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/ai/safety-check',
@@ -233,6 +236,7 @@ export async function POST(request: NextRequest) {
     const body: SafetyCheckRequest = await request.json();
 
     if (!body.itemName) {
+      enforcement.fail();
       return NextResponse.json(
         { success: false, error: "itemName 필수" },
         { status: 400 },
@@ -266,6 +270,7 @@ export async function POST(request: NextRequest) {
           const text = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
           const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
           const parsed: SafetyCheckResult = JSON.parse(cleaned);
+          enforcement.fail(); // Gemini 판정 결과 반환 — 쓰기 0
           return NextResponse.json({ success: true, data: parsed, source: "gemini" });
         }
       } catch {
@@ -275,8 +280,12 @@ export async function POST(request: NextRequest) {
 
     // 로컬 fallback
     const result = localSafetyCheck(body);
+    // ⚠️ 정상 완료 경로인데 fail() 이다 — **버그 아님. complete() 로 바꾸지 말 것.**
+    //   안전 판정 결과를 반환할 뿐 DB 쓰기가 0이다.
+    enforcement.fail();
     return NextResponse.json({ success: true, data: result, source: "local" });
   } catch (err) {
+    enforcement?.fail();
     return NextResponse.json(
       { success: false, error: "Safety check 분석 중 오류 발생" },
       { status: 500 },

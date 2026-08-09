@@ -138,6 +138,9 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (ai) — 'unknown' 유지. 예산 이상 징후를 분석해 반환할 뿐
+      //   대상 엔티티가 없다. 'unknown' 은 전역 공용 키가 아니라 userId 폴백(§11.369-3)이라
+      //   같은 사용자의 연타 보호는 유지된다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/ai/budget-anomaly',
@@ -147,6 +150,7 @@ export async function POST(request: NextRequest) {
     const body: BudgetAnomalyRequest = await request.json();
 
     if (!body.itemName || body.orderAmount == null || body.budgetTotal == null) {
+      enforcement.fail();
       return NextResponse.json(
         { success: false, error: "itemName, orderAmount, budgetTotal 필수" },
         { status: 400 },
@@ -184,6 +188,7 @@ export async function POST(request: NextRequest) {
           const text = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
           const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
           const parsed: BudgetAnomalyResult = JSON.parse(cleaned);
+          enforcement.fail(); // Gemini 분석 결과 반환 — 쓰기 0
           return NextResponse.json({ success: true, data: parsed, source: "gemini" });
         }
       } catch {
@@ -193,8 +198,13 @@ export async function POST(request: NextRequest) {
 
     // 로컬 fallback
     const result = localBudgetAnalysis(body);
+    // ⚠️ 정상 완료 경로인데 fail() 이다 — **버그 아님. complete() 로 바꾸지 말 것.**
+    //   분석 결과를 반환할 뿐 DB 쓰기가 0이다. complete() 는 before/after 를 남기므로
+    //   아무것도 바꾸지 않은 호출에 "변경 완료" 감사가 생긴다 = 거짓 감사.
+    enforcement.fail();
     return NextResponse.json({ success: true, data: result, source: "local" });
   } catch (err) {
+    enforcement?.fail();
     return NextResponse.json(
       { success: false, error: "Budget anomaly 분석 중 오류 발생" },
       { status: 500 },
