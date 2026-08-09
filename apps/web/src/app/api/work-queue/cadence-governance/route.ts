@@ -50,21 +50,6 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
-    enforcement = enforceAction({
-      userId: session.user.id,
-      userRole: session.user.role ?? undefined,
-      action: 'sensitive_data_import',
-      targetEntityType: 'ai_action',
-      targetEntityId: 'unknown',
-      sourceSurface: 'web_app',
-      routePath: '/work-queue/cadence-governance',
-    });
-    if (!enforcement.allowed) return enforcement.deny();
-
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const body = await request.json();
     const { stepId, note, organizationId } = body;
 
@@ -77,6 +62,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "유효하지 않은 케이던스 단계" }, { status: 400 });
     }
 
+    // §enforcement-handle-close-sweep — 핸들은 stepId 확정 후 생성(검증 400 은 lock 이전).
+    //   stepId 는 엔티티 인스턴스가 아니라 케이던스 단계 enum 이다. 키에 넣으면 per-step 분리가 되어
+    //   서로 다른 단계를 연달아 기록할 수 있고, 같은 단계 중복 기록은 계속 막힌다(의도된 double-submit 보호).
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_import',
+      targetEntityType: 'ai_action',
+      targetEntityId: stepId,
+      sourceSurface: 'web_app',
+      routePath: '/work-queue/cadence-governance',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
     await logCadenceStepCompletion({
       stepId,
       actorUserId: session.user.id,
@@ -86,8 +85,13 @@ export async function POST(request: NextRequest) {
       userAgent: request.headers.get("user-agent"),
     });
 
+    enforcement.complete({
+      beforeState: { stepId, organizationId },
+      afterState: { stepId, status: 'logged' },
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
+    enforcement?.fail();
     console.error("[cadence-governance] POST error:", error);
     const message = error instanceof Error ? error.message : "케이던스 단계 기록 실패";
     return NextResponse.json({ error: message }, { status: 500 });

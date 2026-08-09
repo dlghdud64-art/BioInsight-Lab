@@ -48,6 +48,9 @@ export async function POST() {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep — 이 route 는 POST() 인자가 없는 **사용자 트리거 전역 sync** 다.
+      //   대상 엔티티가 존재하지 않으므로 'unknown' → deriveConcurrencyKey 의 userId fallback 이
+      //   의도한 의미(같은 사용자의 sync 중복 실행 방지)다. 억지 id 를 넣으면 double-submit 보호가 사라진다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/work-queue/ops-sync',
@@ -56,6 +59,7 @@ export async function POST() {
 
         const userId = session?.user?.id ?? null;
     if (!userId) {
+      enforcement.fail();
       return NextResponse.json({ synced: 0 });
     }
 
@@ -101,6 +105,10 @@ export async function POST() {
 
     if (allEntityIds.length === 0) {
       await cleanupStaleOpsItems(userId);
+      enforcement.complete({
+        beforeState: { userId, activeEntities: 0 },
+        afterState: { synced: 0, staleCleanup: true },
+      });
       return NextResponse.json({ synced: 0 });
     }
 
@@ -229,8 +237,13 @@ export async function POST() {
     // 6. Stale cleanup
     await cleanupStaleOpsItems(userId, new Set(allEntityIds));
 
+    enforcement.complete({
+      beforeState: { userId, activeEntities: allEntityIds.length },
+      afterState: { synced },
+    });
     return NextResponse.json({ synced });
   } catch (error) {
+    enforcement?.fail();
     return handleApiError(error, "POST /api/work-queue/ops-sync");
   }
 }

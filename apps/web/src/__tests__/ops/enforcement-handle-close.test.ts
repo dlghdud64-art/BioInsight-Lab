@@ -20,7 +20,8 @@
  *       실측 시점 75/75 충족 → RED 0 으로 일반 계약화.
  *   E4. 제품 쓰기 2 route 는 targetEntityId 를 실제 id 로 넘기고 before/after 를 남긴다.
  *
- * ⚠️ LEGACY ratchet: 실측 시점 149 route 중 **74 route** 가 핸들을 닫지 않는다.
+ * ⚠️ LEGACY ratchet: 실측 시점 149 route 중 74 route 가 핸들을 닫지 않았다.
+ *    2026-08-09 배치 1(work-queue 7건) 처리 → **67 route** 남음.
  *    전수 교정은 별도 트랙(§enforcement-handle-close-sweep). 이 sentinel 은
  *    **새 누수만 차단**하고 기존분은 목록으로 고정한다 — 전면 단언은 즉시 72 RED 라
  *    baseline 을 오염시켜 판독 자체를 무력화한다.
@@ -56,7 +57,7 @@ const closesHandle = (src: string) => src.includes(".complete(") || src.includes
 const UNCLOSED = USES_ENFORCE.filter((r) => !closesHandle(r.src)).map((r) => r.path);
 
 /**
- * 2026-08-09 실측 기준 기존 누수 74건. **줄어들기만 한다.**
+ * 2026-08-09 실측 기준 기존 누수 74건 → 배치 1(work-queue 7건) 처리 후 **67건**. **줄어들기만 한다.**
  * 여기에 새 경로를 추가하는 것은 회귀이며, 항목을 고쳤으면 이 목록에서 제거해야 한다.
  */
 const LEGACY_UNCLOSED: readonly string[] = [
@@ -127,13 +128,6 @@ const LEGACY_UNCLOSED: readonly string[] = [
   "src/app/api/vendor/billing/route.ts",
   "src/app/api/vendor/premium/route.ts",
   "src/app/api/vendor/requests/[id]/respond/route.ts",
-  "src/app/api/work-queue/assignment/route.ts",
-  "src/app/api/work-queue/bottleneck-remediation/route.ts",
-  "src/app/api/work-queue/cadence-governance/route.ts",
-  "src/app/api/work-queue/compare-sync/route.ts",
-  "src/app/api/work-queue/daily-review/route.ts",
-  "src/app/api/work-queue/ops-execute/route.ts",
-  "src/app/api/work-queue/ops-sync/route.ts",
 ];
 
 describe("§enforcement-handle-close E1 — 신규 lock 누수 0 (열거형)", () => {
@@ -193,5 +187,59 @@ describe("§enforcement-handle-close E4 — 제품 쓰기 route 마감 품질", 
 
   it.each([SAFETY, SPEC])("%s — 권한 거부 경로에서 fail() 호출", (p) => {
     expect(get(p)).toMatch(/enforcement\.fail\(\);[\s\S]{0,300}?status:\s*403/);
+  });
+});
+
+/* ─────────────────────────────────────────────────────────────
+ * E5 — §enforcement-handle-close-sweep 배치 1 (work-queue 7 route)
+ *
+ * ⛔ 실측으로 뒤집힌 전제 (2026-08-09):
+ *   착수 지시는 "핸들 닫기 + targetEntityId 교정은 한 묶음, 분리 금지" 였다.
+ *   그러나 §11.369-3 이후 `deriveConcurrencyKey` 는
+ *       `${action}:${routePath}:${targetEntityId !== 'unknown' ? targetEntityId : userId}`
+ *   이므로 'unknown' 은 **전역 공용 키가 아니라 per-user fallback** 이다.
+ *   → route 간 충돌은 routePath 가 이미 막고 있고, 남는 것은
+ *     "같은 사용자 + 같은 route" 재호출 차단(= 의도된 double-submit 보호)뿐이다.
+ *   따라서 targetEntityId 교정은 **실제 대상 엔티티가 있는 route 에만** 적용한다.
+ *   대상이 없는 route 에 억지 id 를 넣으면 double-submit 보호가 사라진다(회귀).
+ * ───────────────────────────────────────────────────────────── */
+describe("§enforcement-handle-close-sweep 배치1 — work-queue", () => {
+  const WQ = (p: string) => `src/app/api/work-queue/${p}/route.ts`;
+  const get = (p: string) => ROUTES.find((r) => r.path === WQ(p))!.src;
+
+  /** 대상 엔티티가 body 에 실재 → per-resource lock 이 가능한 route */
+  const ENTITY_ROUTES = [
+    "assignment",
+    "daily-review",
+    "ops-execute",
+    "cadence-governance",
+    "bottleneck-remediation",
+  ];
+  /** POST() 인자가 없는 사용자 트리거 전역 sync → 'unknown'(userId fallback)이 정확한 의미 */
+  const SYNC_ROUTES = ["compare-sync", "ops-sync"];
+
+  it.each(ENTITY_ROUTES)("%s — targetEntityId 하드코딩 'unknown' 금지", (p) => {
+    expect(get(p)).not.toMatch(/targetEntityId:\s*['"]unknown['"]/);
+  });
+
+  it.each(ENTITY_ROUTES)("%s — 핸들은 대상 id 확정 후 생성(검증 400 이 lock 보다 앞)", (p) => {
+    const src = get(p);
+    expect(src.indexOf("await request.json()")).toBeLessThan(src.indexOf("enforceAction({"));
+  });
+
+  it.each(SYNC_ROUTES)("%s — 'unknown' 유지 + 사유가 코드에 남아 있다", (p) => {
+    const src = get(p);
+    expect(src).toMatch(/targetEntityId:\s*['"]unknown['"]/);
+    // 억지 id 로 '교정' 하려는 다음 사람을 막는다 — 사유가 사라지면 결정이 유실된다.
+    expect(src).toMatch(/userId fallback|전역 sync/);
+  });
+
+  it("ops-execute — 내부 catch(execError) 도 fail() 로 닫는다", () => {
+    // 내부 catch 는 자체 return 하므로 외부 catch 를 거치지 않는다.
+    expect(get("ops-execute")).toMatch(/catch \(execError\)[\s\S]{0,900}?enforcement\.fail\(\)/);
+  });
+
+  it.each([...ENTITY_ROUTES, ...SYNC_ROUTES])("%s — complete() 로 audit 을 남긴다", (p) => {
+    expect(get(p)).toMatch(/enforcement\.complete\(\{[\s\S]{0,300}?beforeState/);
   });
 });

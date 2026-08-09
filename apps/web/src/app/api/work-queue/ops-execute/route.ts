@@ -32,22 +32,12 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
-    enforcement = enforceAction({
-      userId: session.user.id,
-      userRole: session.user.role ?? undefined,
-      action: 'sensitive_data_import',
-      targetEntityType: 'ai_action',
-      targetEntityId: 'unknown',
-      sourceSurface: 'web_app',
-      routePath: '/work-queue/ops-execute',
-    });
-    if (!enforcement.allowed) return enforcement.deny();
+    const userId = session.user.id;
 
-        const userId = session?.user?.id ?? null;
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    // §enforcement-handle-close-sweep — 핸들은 대상 itemId 확정 후 생성(검증 400 은 lock 이전).
+    //   targetEntityId 가 실제 작업 항목이어야 lock 키가 per-item 이 된다. 'unknown' 이면
+    //   deriveConcurrencyKey 가 userId 로 fallback 해, 한 사용자가 서로 다른 작업 항목을
+    //   연달아 실행할 때 5분 TTL 동안 서로를 막는다(작업 큐 표면에서 특히 잦다).
     const body: ExecuteBody = await request.json();
     const { actionId, itemId, payload } = body;
 
@@ -57,6 +47,17 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    enforcement = enforceAction({
+      userId,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_import',
+      targetEntityType: 'ai_action',
+      targetEntityId: itemId,
+      sourceSurface: 'web_app',
+      routePath: '/work-queue/ops-execute',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // 1. Load item
     const item = await db.aiActionItem.findUnique({
@@ -75,6 +76,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!item) {
+      enforcement.fail();
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
@@ -86,15 +88,18 @@ export async function POST(request: NextRequest) {
           select: { role: true },
         });
         if (!membership) {
+          enforcement.fail();
           return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
       } else {
+        enforcement.fail();
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
     }
 
     // 2. Duplicate-click protection
     if (item.taskStatus === "COMPLETED" || item.taskStatus === "FAILED") {
+      enforcement.fail();
       return NextResponse.json(
         { error: "DUPLICATE_ACTION", message: "이미 처리 완료된 작업입니다." },
         { status: 409 }
@@ -104,6 +109,7 @@ export async function POST(request: NextRequest) {
     // 3. Look up completion def
     const completionDef = findCompletionDef(actionId);
     if (!completionDef) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "UNKNOWN_ACTION", message: `알 수 없는 액션입니다: ${actionId}` },
         { status: 400 }
@@ -116,6 +122,7 @@ export async function POST(request: NextRequest) {
       item.substatus &&
       !completionDef.sourceSubstatuses.includes(item.substatus)
     ) {
+      enforcement.fail();
       return NextResponse.json(
         {
           error: "INVALID_STATE",
@@ -172,6 +179,10 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      enforcement.complete({
+        beforeState: { itemId: item.id, actionId, substatus: item.substatus, taskStatus: item.taskStatus },
+        afterState: { itemId: item.id, actionId, substatus: completionDef.successTransition, nextItemId },
+      });
       return NextResponse.json({
         success: true,
         closedItemId: item.id,
@@ -194,12 +205,15 @@ export async function POST(request: NextRequest) {
         console.error("[ops-execute] failure transition also failed:", execError);
       });
 
+      // ⚠️ 내부 catch 는 자체 return 하므로 외부 catch 를 거치지 않는다 — 여기서 닫지 않으면 누수.
+      enforcement.fail();
       return NextResponse.json(
         { error: "EXECUTION_FAILED", message: String(execError) },
         { status: 500 }
       );
     }
   } catch (error) {
+    enforcement?.fail();
     return handleApiError(error, "POST /api/work-queue/ops-execute");
   }
 }

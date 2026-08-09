@@ -52,21 +52,9 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
-    enforcement = enforceAction({
-      userId: session.user.id,
-      userRole: session.user.role ?? undefined,
-      action: 'sensitive_data_import',
-      targetEntityType: 'ai_action',
-      targetEntityId: 'unknown',
-      sourceSurface: 'web_app',
-      routePath: '/work-queue/daily-review',
-    });
-    if (!enforcement.allowed) return enforcement.deny();
-
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    // §enforcement-handle-close-sweep — 핸들은 **대상 id 확정 후** 생성(검증 400 은 lock 이전).
+    //   targetEntityId 를 실제 itemId 로 넘겨야 lock 키가 per-resource 가 된다
+    //   (deriveConcurrencyKey: 'unknown' 이면 userId fallback → 같은 사용자의 다른 대상이 서로를 막는다).
     const body = await request.json();
     const { itemId, actionType, actionId, targetUserId, note } = body;
 
@@ -80,6 +68,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "actionId 필수" }, { status: 400 });
     }
 
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_import',
+      targetEntityType: 'ai_action',
+      targetEntityId: itemId,
+      sourceSurface: 'web_app',
+      routePath: '/work-queue/daily-review',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
     await executeDailyReviewAction({
       itemId,
       actionType,
@@ -91,8 +90,13 @@ export async function POST(request: NextRequest) {
       userAgent: request.headers.get("user-agent"),
     });
 
+    enforcement.complete({
+      beforeState: { itemId, actionType, actionId },
+      afterState: { itemId, actionType, actionId, status: 'executed' },
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
+    enforcement?.fail();
     console.error("[daily-review] POST error:", error);
     const message = error instanceof Error ? error.message : "일일 검토 액션 실행 실패";
     return NextResponse.json({ error: message }, { status: 500 });

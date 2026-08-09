@@ -25,21 +25,10 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
-    enforcement = enforceAction({
-      userId: session.user.id,
-      userRole: session.user.role ?? undefined,
-      action: 'sensitive_data_import',
-      targetEntityType: 'ai_action',
-      targetEntityId: 'unknown',
-      sourceSurface: 'web_app',
-      routePath: '/work-queue/assignment',
-    });
-    if (!enforcement.allowed) return enforcement.deny();
-
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    // §enforcement-handle-close-sweep — 핸들은 **대상 id 확정 후** 생성한다.
+    //   body 검증(400)이 핸들보다 앞서므로 실패 경로에서 lock 을 아예 잡지 않는다.
+    //   targetEntityId 를 실제 itemId 로 넘겨야 lock 키가 per-item 이 된다
+    //   (deriveConcurrencyKey: 'unknown' 이면 userId fallback → 같은 사용자의 서로 다른 항목이 서로를 막는다).
     const body = await request.json();
     const { itemId, action, targetUserId, note, nextAction } = body;
 
@@ -50,6 +39,17 @@ export async function POST(request: NextRequest) {
     if (!action || !VALID_ACTIONS.has(action as AssignmentAction)) {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_import',
+      targetEntityType: 'ai_action',
+      targetEntityId: itemId,
+      sourceSurface: 'web_app',
+      routePath: '/work-queue/assignment',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     await executeAssignmentAction({
       itemId,
@@ -62,8 +62,13 @@ export async function POST(request: NextRequest) {
       userAgent: request.headers.get("user-agent"),
     });
 
+    enforcement.complete({
+      beforeState: { itemId, action },
+      afterState: { itemId, action, status: 'executed' },
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
+    enforcement?.fail();
     console.error("[Assignment] Action failed:", error);
     const message = error instanceof Error ? error.message : "Assignment action failed";
     return NextResponse.json({ error: message }, { status: 400 });
