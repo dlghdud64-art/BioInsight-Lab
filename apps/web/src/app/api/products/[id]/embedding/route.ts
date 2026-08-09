@@ -16,26 +16,24 @@ export async function POST(
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
-    enforcement = enforceAction({
-      userId: session.user.id,
-      userRole: session.user.role ?? undefined,
-      action: 'sensitive_data_import',
-      targetEntityType: 'product',
-      targetEntityId: 'unknown',
-      sourceSurface: 'web_app',
-      routePath: '/products/id/embedding',
-    });
-    if (!enforcement.allowed) return enforcement.deny();
-
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    // 권한 확인은 lock 획득 **이전**에 — 403 이 lock 을 잡지 않게 한다.
     if (!(await isAdmin(session.user.id))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { id } = await params;
+
+    // §enforcement-handle-close-sweep (products) — 대상 엔티티 실재(params id) → per-resource 키.
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_import',
+      targetEntityType: 'product',
+      targetEntityId: id,
+      sourceSurface: 'web_app',
+      routePath: '/products/id/embedding',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
     const product = await db.product.findUnique({
       where: { id },
       select: {
@@ -47,6 +45,7 @@ export async function POST(
     });
 
     if (!product) {
+      enforcement.fail();
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
@@ -87,10 +86,19 @@ export async function POST(
         id
       );
 
+      // pgvector UPDATE 성공 = 실제 쓰기 → complete() 로 audit + lock 해제.
+      enforcement.complete({
+        beforeState: { productId: id, embedding: "(previous)" },
+        afterState: { productId: id, embedding: `(vector[${embedding.length}])` },
+      });
+
       return NextResponse.json({ success: true, message: "Embedding updated" });
     } catch (error: any) {
       // pgvector 확장이 활성화되지 않은 경우
       if (error.message?.includes("vector") || error.message?.includes("pgvector")) {
+        // ⚠️ 내부 catch 가 자체 return 한다 — 외부 catch 를 거치지 않으므로 여기서 닫지 않으면
+        //   pgvector 미활성 경로에서만 lock 이 TTL 까지 남는다(E6 가 잠그는 클래스).
+        enforcement.fail();
         return NextResponse.json(
           {
             error: "pgvector extension is not enabled",
@@ -102,6 +110,7 @@ export async function POST(
       throw error;
     }
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error updating product embedding:", error);
     return NextResponse.json(
       { error: error.message || "Failed to update embedding" },

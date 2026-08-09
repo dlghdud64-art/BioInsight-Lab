@@ -130,7 +130,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (dryRun) {
-      // dryRun 은 쓰기 0 — 성공 audit 대상이 아니므로 fail() 로 lock 만 해제한다.
+      // ⚠️ 정상 완료 경로인데 fail() 이다 — **버그 아님. complete() 로 바꾸지 말 것.**
+      //   dryRun 은 생성 없이 결과만 반환한다. complete() 를 부르면 실제로 만들지 않은
+      //   재발주 견적을 "생성 완료"로 감사에 남기게 된다 = 거짓 감사.
+      //   fail() = lock 해제(audit 미기록).
       enforcement.fail();
       // ëë¼ì´ë° ëª¨ë: ì¤ì ë¡ ìì±íì§ ìê³  ê²°ê³¼ë§ ë°í
       return NextResponse.json({

@@ -57,7 +57,7 @@ const closesHandle = (src: string) => src.includes(".complete(") || src.includes
 const UNCLOSED = USES_ENFORCE.filter((r) => !closesHandle(r.src)).map((r) => r.path);
 
 /**
- * 2026-08-09 실측 누수 74 → 배치1(work-queue 7) → 67 → 배치2(inventory 5) → **62**. **줄어들기만 한다.**
+ * 2026-08-09 실측 누수 74 → 배치1(work-queue 7) → 67 → 배치2(inventory 5) → 62 → 배치3(products 5) → **57**. **줄어들기만 한다.**
  * 여기에 새 경로를 추가하는 것은 회귀이며, 항목을 고쳤으면 이 목록에서 제거해야 한다.
  */
 const LEGACY_UNCLOSED: readonly string[] = [
@@ -89,11 +89,6 @@ const LEGACY_UNCLOSED: readonly string[] = [
   "src/app/api/ingestion/route.ts",
   "src/app/api/organizations/[id]/subscription/route.ts",
   "src/app/api/po-candidates/route.ts",
-  "src/app/api/products/compare/route.ts",
-  "src/app/api/products/[id]/embedding/route.ts",
-  "src/app/api/products/[id]/safety-extract/route.ts",
-  "src/app/api/products/[id]/usage/route.ts",
-  "src/app/api/products/[id]/view/route.ts",
   "src/app/api/protocol/bom/route.ts",
   "src/app/api/protocol/extract/route.ts",
   "src/app/api/protocol/extract-pdf-text/route.ts",

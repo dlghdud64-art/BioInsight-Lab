@@ -16,6 +16,10 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'product',
+      // §enforcement-handle-close-sweep (products) — 'unknown' 유지. 최대 5개 제품을 한 번에
+      //   비교하는 다중 대상이라 단일 targetEntityId 가 없다. 억지로 첫 id 를 넣으면
+      //   "그 제품에 대한 작업"으로 감사에 남아 부정확하다. 'unknown' 은 전역 공용 키가
+      //   아니라 userId 폴백(§11.369-3)이라 같은 사용자의 연타 보호는 유지된다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/products/compare',
@@ -26,6 +30,7 @@ export async function POST(request: NextRequest) {
     const { productIds } = body;
 
     if (!Array.isArray(productIds) || productIds.length === 0) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "Product IDs array is required" },
         { status: 400 }
@@ -33,6 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (productIds.length > 5) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "Maximum 5 products can be compared" },
         { status: 400 }
@@ -82,8 +88,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // ⚠️ 정상 완료 경로인데 fail() 이다 — **버그 아님. complete() 로 바꾸지 말 것.**
+    //   비교는 조회 전용(DB 쓰기 0). complete() 는 before/after 를 남기므로
+    //   아무것도 바꾸지 않은 호출에 "변경 완료" 감사가 생긴다 = 거짓 감사.
+    enforcement.fail();
     return NextResponse.json({ products });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error comparing products:", error);
     return NextResponse.json(
       { error: "Failed to compare products" },

@@ -99,7 +99,13 @@ export async function POST(request: NextRequest) {
       fileId,
     };
 
-    // 미리보기는 쓰기 0 — 성공 audit 대상이 아니므로 fail() 로 lock 만 해제한다.
+    // ⚠️ 정상 완료 경로인데 fail() 이다 — **버그 아님. complete() 로 바꾸지 말 것.**
+    //   이 라우트는 DB 를 바꾸지 않는다(파싱 결과를 fileCache 에 담고 fileId 만 반환.
+    //   실제 반영은 import/commit 라우트). complete() 는 audit envelope 에 before/after 를
+    //   남기므로, 아무것도 바꾸지 않은 호출에 "변경 완료" 기록이 생긴다 = 거짓 감사.
+    //   fail() 은 이름이 "실패"일 뿐 실제 의미는 **lock 해제(audit 미기록)** 다.
+    //   readOnly:true 도 검토했으나 부적합 — 순수 조회가 아니라 fileCache 항목을 만들고,
+    //   파일 파싱 비용이 커 같은 사용자 연타를 막는 lock 의 값이 있다(2026-08-09 판정).
     enforcement.fail();
     return NextResponse.json(response);
   } catch (error) {

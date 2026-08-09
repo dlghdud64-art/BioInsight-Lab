@@ -232,7 +232,11 @@ export async function POST(request: NextRequest) {
       `Preview generated: ${result.validRows} valid, ${result.invalidRows} invalid rows`
     );
 
-    // 이 라우트는 검증·프리뷰 산출(쓰기 0, commit 은 별도 라우트) — fail() 로 lock 만 해제.
+    // ⚠️ 정상 완료 경로인데 fail() 이다 — **버그 아님. complete() 로 바꾸지 말 것.**
+    //   이 라우트는 업로드 파일을 검증해 결과(valid/invalid 행)를 산출할 뿐 DB 를 바꾸지
+    //   않는다(실제 반영은 import/commit). complete() 는 before/after 를 남기므로
+    //   아무것도 바꾸지 않은 호출에 "변경 완료" 감사가 생긴다 = 거짓 감사.
+    //   fail() = lock 해제(audit 미기록).
     enforcement.fail();
     return NextResponse.json(result);
   } catch (error) {

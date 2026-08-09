@@ -18,22 +18,19 @@ export async function POST(
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
+    const { id } = await params;
+
+    // §enforcement-handle-close-sweep (products) — 대상 엔티티 실재(params id) → per-resource 키.
     enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'product',
-      targetEntityId: 'unknown',
+      targetEntityId: id,
       sourceSurface: 'web_app',
       routePath: '/products/id/safety-extract',
     });
     if (!enforcement.allowed) return enforcement.deny();
-
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { id } = await params;
     const body = await request.json();
     const { msdsUrl, msdsText } = body;
 
@@ -43,6 +40,7 @@ export async function POST(
     });
 
     if (!product) {
+      enforcement.fail();
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
@@ -61,6 +59,8 @@ export async function POST(
           const pdfBuffer = Buffer.from(await pdfResponse.arrayBuffer());
           textToAnalyze = await extractTextFromPDF(pdfBuffer);
         } catch (error) {
+          // ⚠️ 내부 catch 자체 return — 외부 catch 미경유(E6 클래스).
+          enforcement.fail();
           return NextResponse.json(
             { error: "MSDS PDF를 다운로드하거나 파싱할 수 없습니다." },
             { status: 400 }
@@ -71,6 +71,8 @@ export async function POST(
         try {
           textToAnalyze = await fetchMSDSText(msdsUrl);
         } catch (error: any) {
+          // ⚠️ 내부 catch 자체 return — 외부 catch 미경유(E6 클래스).
+          enforcement.fail();
           return NextResponse.json(
             { error: error.message || "MSDS 문서를 가져올 수 없습니다." },
             { status: 400 }
@@ -80,6 +82,7 @@ export async function POST(
     }
 
     if (!textToAnalyze || textToAnalyze.trim().length === 0) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "MSDS 텍스트가 필요합니다." },
         { status: 400 }
@@ -101,12 +104,25 @@ export async function POST(
       },
     });
 
+    // db.product.update 로 안전 필드를 실제로 갱신한다 → complete().
+    enforcement.complete({
+      beforeState: {
+        productId: id, msdsUrl: product.msdsUrl, hazardCodes: product.hazardCodes,
+        storageCondition: product.storageCondition, safetyNote: product.safetyNote,
+      },
+      afterState: {
+        productId: id, msdsUrl: updatedProduct.msdsUrl, hazardCodes: updatedProduct.hazardCodes,
+        storageCondition: updatedProduct.storageCondition, safetyNote: updatedProduct.safetyNote,
+      },
+    });
+
     return NextResponse.json({
       success: true,
       safetyInfo,
       product: updatedProduct,
     });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error extracting safety info:", error);
     return NextResponse.json(
       { error: error.message || "안전 정보 추출에 실패했습니다." },
