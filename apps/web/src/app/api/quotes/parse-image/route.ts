@@ -30,6 +30,9 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'order_create',
       targetEntityType: 'quote',
+      // §enforcement-handle-close-sweep (quotes) — 'unknown' 유지. 이미지에서 견적 항목을 추출해 반환할 뿐
+      //   대상 견적 엔티티가 없다(quoteId 미수신). 'unknown' 은 전역 공용 키가 아니라
+      //   userId 폴백(§11.369-3)이라 같은 사용자의 연타 보호는 유지된다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/quotes/parse-image',
@@ -40,11 +43,13 @@ export async function POST(request: NextRequest) {
     const { imageBase64 } = body;
 
     if (!imageBase64 || typeof imageBase64 !== "string") {
+      enforcement.fail();
       return NextResponse.json({ error: "이미지 데이터가 없습니다." }, { status: 400 });
     }
 
     // 간이 사이즈 체크 (base64는 원본 대비 ~33% 증가)
     if (imageBase64.length > MAX_FILE_SIZE * 1.4) {
+      enforcement.fail();
       return NextResponse.json(
         { error: `파일 크기는 ${MAX_FILE_SIZE / 1024 / 1024}MB 이하여야 합니다.` },
         { status: 400 }
@@ -73,6 +78,10 @@ export async function POST(request: NextRequest) {
       cached: pipelineResult.cached,
     };
 
+    // ⚠️ 정상 완료 경로인데 fail() 이다 — **버그 아님. complete() 로 바꾸지 말 것.**
+    //   OCR 추출 결과를 반환할 뿐 DB 쓰기가 0이다. complete() 는 before/after 를 남기므로
+    //   아무것도 바꾸지 않은 호출에 "변경 완료" 감사가 생긴다 = 거짓 감사.
+    enforcement.fail();
     return NextResponse.json({
       success: true,
       ...result,
@@ -80,6 +89,7 @@ export async function POST(request: NextRequest) {
       ocrMetadata,
     });
   } catch (error: any) {
+    enforcement?.fail();
     // §11.315 — raw Gemini JSON("models/... NOT_FOUND") 사용자 노출 차단.
     //   raw 는 서버 로그(Sentry)로만, 응답은 friendly 메시지만.
     console.error("[parse-image] Error:", error?.message, error);

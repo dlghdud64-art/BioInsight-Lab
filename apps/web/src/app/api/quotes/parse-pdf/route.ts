@@ -28,6 +28,9 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'order_create',
       targetEntityType: 'quote',
+      // §enforcement-handle-close-sweep (quotes) — 'unknown' 유지. 업로드 PDF 에서 견적
+      //   항목을 추출해 반환할 뿐 대상 견적 엔티티가 없다(quoteId 미수신). 'unknown' 은
+      //   전역 공용 키가 아니라 userId 폴백(§11.369-3)이라 연타 보호는 유지된다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/quotes/parse-pdf',
@@ -38,14 +41,17 @@ export async function POST(request: NextRequest) {
     const file = formData.get("file") as File;
 
     if (!file) {
+      enforcement.fail();
       return NextResponse.json({ error: "파일이 없습니다." }, { status: 400 });
     }
 
     if (file.type !== "application/pdf") {
+      enforcement.fail();
       return NextResponse.json({ error: "PDF 파일만 업로드 가능합니다." }, { status: 400 });
     }
 
     if (file.size > MAX_FILE_SIZE) {
+      enforcement.fail();
       return NextResponse.json(
         { error: `파일 크기는 ${MAX_FILE_SIZE / 1024 / 1024}MB 이하여야 합니다.` },
         { status: 400 },
@@ -78,6 +84,10 @@ export async function POST(request: NextRequest) {
     };
 
     // 기존 QuoteExtractionResult 호환 형태로도 반환
+    // ⚠️ 정상 완료 경로인데 fail() 이다 — **버그 아님. complete() 로 바꾸지 말 것.**
+    //   PDF 파싱 결과를 반환할 뿐 DB 쓰기가 0이다. complete() 는 before/after 를 남기므로
+    //   아무것도 바꾸지 않은 호출에 "변경 완료" 감사가 생긴다 = 거짓 감사.
+    enforcement.fail();
     return NextResponse.json({
       // 새 구조 (상세)
       success: true,
@@ -107,6 +117,7 @@ export async function POST(request: NextRequest) {
       notes: result.parsed.specialNotes,
     });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("[parse-pdf] Error:", error?.message);
     return NextResponse.json(
       { error: error?.message || "견적서 처리에 실패했습니다." },

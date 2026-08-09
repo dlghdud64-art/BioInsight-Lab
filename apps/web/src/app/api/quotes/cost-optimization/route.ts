@@ -41,6 +41,9 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'order_create',
       targetEntityType: 'quote',
+      // §enforcement-handle-close-sweep (quotes) — 'unknown' 유지. 이 라우트는 품목 배열을 받아 비용 최적화를 계산할 뿐
+      //   대상 견적 엔티티가 없다(quoteId 미수신). 'unknown' 은 전역 공용 키가 아니라
+      //   userId 폴백(§11.369-3)이라 같은 사용자의 연타 보호는 유지된다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/quotes/cost-optimization',
@@ -51,6 +54,7 @@ export async function POST(request: NextRequest) {
     const { items, budgetLimit } = body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "Items array is required" },
         { status: 400 }
@@ -258,6 +262,10 @@ export async function POST(request: NextRequest) {
     const optimizedTotal = currentTotal - totalPotentialSavings;
     const isWithinBudget = budgetLimit ? optimizedTotal <= budgetLimit : true;
 
+    // ⚠️ 정상 완료 경로인데 fail() 이다 — **버그 아님. complete() 로 바꾸지 말 것.**
+    //   계산 결과를 반환할 뿐 DB 쓰기가 0이다. complete() 는 before/after 를 남기므로
+    //   아무것도 바꾸지 않은 호출에 "변경 완료" 감사가 생긴다 = 거짓 감사.
+    enforcement.fail();
     return NextResponse.json({
       optimizations,
       summary: {
@@ -269,6 +277,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error calculating cost optimization:", error);
     return NextResponse.json(
       { error: "Failed to calculate cost optimization" },
