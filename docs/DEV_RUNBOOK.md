@@ -124,9 +124,9 @@ npm run lint          # 설정되어 있다면
 | `ERR_REQUIRE_ESM` on `vitest` | test 파일이 CJS `require("vitest")` 사용 | `import { ... } from "vitest"` 로 교체 |
 | `@jest/globals` parse error | Jest 잔재 | 이 문서 §2.1 grep 명령 실행 후 발견된 파일 포팅 |
 | `toBeInTheDocument is not a function` | vitest.setup 이 로드되지 않음 | `apps/web/vitest.config.ts` 의 `setupFiles` 확인 |
-| Vercel 배포 실패 (migration) | 로컬 migration 파일이 push 되지 않음 | `git status` 확인 → commit → push 후 재배포 |
+| 배포 후 lambda 가 `P2021`/`P2022` (테이블·컬럼 없음) | **push 는 migration 을 적용하지 않는다** — 빌드는 DB 무접촉(§9.4). schema 만 배포되고 DDL 미적용 | §9.2 순서 복구: operator shell 에서 `prisma migrate deploy`(`:5432`) → `npm run smoke:migration` → `/api/health` `clean:true` 확인 |
 | `prisma generate` 가 schema drift 보고 | 실 DB 와 schema 불일치 | `npx prisma migrate status` 로 확인 → `migrate deploy` 또는 `db pull` 로 동기 |
-| Vercel 빌드에서 `P1000: Authentication failed` (scripts/vercel-migrate.js) | DB password 로테이션 후 Vercel env 의 `DATABASE_URL` 이 stale — **또는** `DATABASE_URL` 의 포트가 session pooler `:5432` (Vercel 빌드 서버는 session pooler 에 접근 불가) | ① Vercel env `DATABASE_URL` 의 password·포트 확인 (포트는 **`:6543`** transaction pooler 필수, 상세 §9 / ADR-002 §11.9 참조). ② 스키마 변경 없는 긴급 배포면 Vercel env 에 `SKIP_PRISMA_MIGRATE=1` 을 임시 설정해 migrate 스텝 우회. 정상화 뒤 반드시 제거. |
+| ~~Vercel 빌드에서 `P1000: Authentication failed` (scripts/vercel-migrate.js)~~ | **OBSOLETE 2026-04-25 (ADR-002 §11.13).** build-time migrate 자체가 폐지되어 빌드는 DB 에 접속하지 않는다 — `vercel-migrate.js` 는 NO-OP 로그 2줄만 출력 | 이 증상은 더 이상 발생하지 않는다. `SKIP_PRISMA_MIGRATE` 우회도 폐지(스크립트가 참조하지 않음). schema 적용은 §9.2 operator-shell 절차 단독이며 **DDL 포트는 session pooler `:5432`**(`:6543` 은 advisory-lock 미지원 → DDL 락/실패) |
 
 ---
 
@@ -290,13 +290,39 @@ write-chain smoke 에서 검증된 동일 패턴.
   보정 마이그레이션 작성. Prisma 는 자동 down migration 을 제공하지
   않으므로 backup-first 를 권장.
 
-### 9.4 Vercel env cleanup (1회)
+### 9.4 env 스코프 — Vercel 과 operator 로컬은 **반대다** (§migration-rollout-gate, 2026-08-08)
 
-§11.13 lands 후 Vercel 의 다음 env vars 는 **제거 가능** (영향 0):
-- `SKIP_PRISMA_MIGRATE` — `vercel-migrate.js` 가 더 이상 참조하지 않음
-- `DIRECT_URL` — `schema.prisma` 의 `directUrl` 가 제거됨
+⚠️ 이 절은 스코프를 혼동하면 정반대 사고를 낸다. 두 표면을 분리해서 읽을 것.
 
-남겨도 무해하지만, env 표면을 새 절차와 맞추기 위해 정리 권장.
+| 스코프 | `DIRECT_URL` | `SKIP_PRISMA_MIGRATE` | 근거 |
+| :--- | :--- | :--- | :--- |
+| **Vercel env (배포)** | **불필요 · 제거 완료. 재추가 금지** | **불필요 · 제거 완료** | 배포 코드에 두 값을 읽는 주체 0. `schema.prisma` 의 `directUrl` 제거(ADR-002 §11.13), `vercel-migrate.js` 는 NO-OP. **실측 2026-08-08: prod `/api/health` → `hasDirectUrl: false`** |
+| **operator 로컬 `.env`** | **유지 필수** | 불필요 | `migrate deploy` 의 DDL 은 session pooler `:5432` 로만 작동(§9.2 step 3)하고, `npm run smoke:migration` 은 `.env` 의 `DIRECT_URL` 을 **우선 로드**해 `:5432` 를 선검증한다(§9.10-2) |
+
+- **Vercel 에 재추가 금지**: 과거 재추가/정리 과정에서 `DATABASE_URL` 값이 함께
+  변형되는 사고 전례가 있다. 배포 표면에는 읽는 주체가 없으므로 얻는 것이 0.
+- **로컬에서 제거 금지**: 제거하면 drift 게이트가 `DATABASE_URL`(`:6543`)로
+  떨어져 **상시 exit 2 (STOP)** 가 된다. §9.5 step 1 의
+  `$env:DATABASE_URL = $env:DIRECT_URL` 우회도 동일 의존.
+
+**빌드는 DB 에 접촉하지 않는다 — `push` ≠ `migration 적용`.**
+실증(2026-08-08 배포 `dpl_213TwWpVJPw8RKnHPBMAmyhuwd3q`, commit `c476c2b`):
+빌드 로그는 `npm install` → `npm run build` → `web@0.1.0 prebuild` →
+`[prebuild] vercel-migrate.js is a NO-OP` 경로만 실행한다. 적용 확인 절차는
+신설하지 않는다 — **§9.10 의 가드 3종(HEAD 일치 · `smoke:migration` ·
+`/api/health` `clean:true`)이 이미 정본**이다.
+
+> 📌 (2026-08-08 정리) repo 루트의 `vercel.json` 은 삭제됐다. Vercel 프로젝트의
+> Root Directory 가 `apps/web` 이라 `apps/web/vercel.json` 이 유효 판본이고,
+> 루트 파일의 `buildCommand`(`npx prisma migrate deploy` 포함)는 빌드 로그에
+> 출현한 적이 없다(미사용 실증). 무효 키 `rootDirectory` 를 담고 있어 애초에
+> 의도대로 동작하지 않았다. 만약 Root Directory 를 repo root 로 되돌린다면
+> 아래를 복구하되 **`migrate deploy` 는 넣지 말 것**:
+> ```json
+> { "buildCommand": "npx prisma generate && npm run build",
+>   "installCommand": "npm install", "framework": "nextjs",
+>   "outputDirectory": "apps/web/.next" }
+> ```
 
 ### 9.5 Drift 검증 절차 (post-deploy 게이트, 2026-06-13)
 
