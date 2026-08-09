@@ -55,15 +55,14 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'inventory',
+      // §enforcement-handle-close-sweep (inventory) — 'unknown' 유지. 파일 대량 유입이라
+      //   대상 재고 엔티티가 단일하지 않다(N행 → N건). 'unknown' 은 전역 공용 키가 아니라
+      //   userId 폴백(§11.369-3)이라 같은 사용자의 중복 업로드를 막는 보호가 유지된다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/inventory/import',
     });
     if (!enforcement.allowed) return enforcement.deny();
-
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const userId = session.user.id;
 
@@ -72,6 +71,7 @@ export async function POST(request: NextRequest) {
     const file = formData.get("file") as File;
 
     if (!file) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "파일이 없습니다." },
         { status: 400 }
@@ -82,6 +82,7 @@ export async function POST(request: NextRequest) {
     const filename = file.name;
     const ext = filename.split(".").pop()?.toLowerCase();
     if (!ext || !["xlsx", "xls", "csv"].includes(ext)) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "지원하지 않는 파일 형식입니다. (xlsx, xls, csv만 가능)" },
         { status: 400 }
@@ -103,6 +104,7 @@ export async function POST(request: NextRequest) {
     const rawData: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false });
 
     if (rawData.length < 2) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "데이터가 없습니다. 최소 2행(헤더 + 데이터) 필요" },
         { status: 400 }
@@ -230,8 +232,11 @@ export async function POST(request: NextRequest) {
       `Preview generated: ${result.validRows} valid, ${result.invalidRows} invalid rows`
     );
 
+    // 이 라우트는 검증·프리뷰 산출(쓰기 0, commit 은 별도 라우트) — fail() 로 lock 만 해제.
+    enforcement.fail();
     return NextResponse.json(result);
   } catch (error) {
+    enforcement?.fail();
     return handleApiError(error, "inventory/import");
   }
 }

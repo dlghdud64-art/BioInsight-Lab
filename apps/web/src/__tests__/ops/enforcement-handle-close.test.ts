@@ -21,7 +21,7 @@
  *   E4. 제품 쓰기 2 route 는 targetEntityId 를 실제 id 로 넘기고 before/after 를 남긴다.
  *
  * ⚠️ LEGACY ratchet: 실측 시점 149 route 중 74 route 가 핸들을 닫지 않았다.
- *    2026-08-09 배치 1(work-queue 7건) 처리 → **67 route** 남음.
+ *    2026-08-09 배치 1(work-queue 7) → 67, 배치 2(inventory 5) → **62 route** 남음.
  *    전수 교정은 별도 트랙(§enforcement-handle-close-sweep). 이 sentinel 은
  *    **새 누수만 차단**하고 기존분은 목록으로 고정한다 — 전면 단언은 즉시 72 RED 라
  *    baseline 을 오염시켜 판독 자체를 무력화한다.
@@ -57,7 +57,7 @@ const closesHandle = (src: string) => src.includes(".complete(") || src.includes
 const UNCLOSED = USES_ENFORCE.filter((r) => !closesHandle(r.src)).map((r) => r.path);
 
 /**
- * 2026-08-09 실측 기준 기존 누수 74건 → 배치 1(work-queue 7건) 처리 후 **67건**. **줄어들기만 한다.**
+ * 2026-08-09 실측 누수 74 → 배치1(work-queue 7) → 67 → 배치2(inventory 5) → **62**. **줄어들기만 한다.**
  * 여기에 새 경로를 추가하는 것은 회귀이며, 항목을 고쳤으면 이 목록에서 제거해야 한다.
  */
 const LEGACY_UNCLOSED: readonly string[] = [
@@ -87,11 +87,6 @@ const LEGACY_UNCLOSED: readonly string[] = [
   "src/app/api/datasheet/extract-url/route.ts",
   "src/app/api/export/presets/route.ts",
   "src/app/api/ingestion/route.ts",
-  "src/app/api/inventory/alerts/send/route.ts",
-  "src/app/api/inventory/auto-reorder/route.ts",
-  "src/app/api/inventory/import/preview/route.ts",
-  "src/app/api/inventory/import/route.ts",
-  "src/app/api/inventory/[id]/restock-request/route.ts",
   "src/app/api/organizations/[id]/subscription/route.ts",
   "src/app/api/po-candidates/route.ts",
   "src/app/api/products/compare/route.ts",

@@ -15,30 +15,29 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
-    enforcement = enforceAction({
-      userId: session.user.id,
-      userRole: session.user.role ?? undefined,
-      action: 'sensitive_data_export',
-      targetEntityType: 'inventory',
-      targetEntityId: 'unknown',
-      sourceSurface: 'web_app',
-      routePath: '/inventory/alerts/send',
-    });
-    if (!enforcement.allowed) return enforcement.deny();
-
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const body = await request.json();
     const { alertSettingId, inventoryId } = body;
 
+    // 입력 검증은 lock 획득 **이전**에 — 400 이 lock 을 잡지 않게 한다.
     if (!alertSettingId || !inventoryId) {
       return NextResponse.json(
         { error: "alertSettingId and inventoryId are required" },
         { status: 400 }
       );
     }
+
+    // §enforcement-handle-close-sweep (inventory 배치) — 대상 엔티티 실재(inventoryId 필수)
+    //   → per-resource 키. 아래 모든 early-return 과 catch 에서 fail(), 성공 시 complete().
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_export',
+      targetEntityType: 'inventory',
+      targetEntityId: inventoryId,
+      sourceSurface: 'web_app',
+      routePath: '/inventory/alerts/send',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // 알림 설정 및 재고 정보 조회
     const alertSetting = await db.inventoryAlertSetting.findUnique({
@@ -54,6 +53,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!alertSetting || !alertSetting.enabled) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "Alert setting not found or disabled" },
         { status: 404 }
@@ -76,6 +76,7 @@ export async function POST(request: NextRequest) {
         isOrgMember = !!membership;
       }
       if (!isOwner && !isOrgMember) {
+        enforcement.fail();
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
     }
@@ -86,6 +87,7 @@ export async function POST(request: NextRequest) {
       inventory.safetyStock === null ||
       inventory.currentQuantity > inventory.safetyStock
     ) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "Inventory is not low stock" },
         { status: 400 }
@@ -95,6 +97,7 @@ export async function POST(request: NextRequest) {
     // 이메일 수신자 결정
     const recipientEmail = alertSetting.user?.email;
     if (!recipientEmail) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "No email address found for recipient" },
         { status: 400 }
@@ -140,8 +143,14 @@ export async function POST(request: NextRequest) {
       data: { lastNotifiedAt: new Date() },
     });
 
+    enforcement.complete({
+      beforeState: { inventoryId, alertSettingId, lastNotifiedAt: alertSetting.lastNotifiedAt },
+      afterState: { inventoryId, alertSettingId, sentTo: recipientEmail, alertType: alertSetting.alertType },
+    });
+
     return NextResponse.json({ success: true });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error sending inventory alert:", error);
     return NextResponse.json(
       { error: "Failed to send alert" },

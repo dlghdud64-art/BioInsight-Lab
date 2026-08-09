@@ -20,22 +20,20 @@ export async function POST(
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
+    const { id: inventoryId } = await params;
+
+    // §enforcement-handle-close-sweep (inventory) — 대상 엔티티 실재(params id)
+    //   → per-resource 키. enforceAction 을 id 확정 **이후**로 옮겼다.
     enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'inventory',
-      targetEntityId: 'unknown',
+      targetEntityId: inventoryId,
       sourceSurface: 'web_app',
       routePath: '/inventory/id/restock-request',
     });
     if (!enforcement.allowed) return enforcement.deny();
-
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { id: inventoryId } = await params;
 
     // 인벤토리 조회
     const inventory = await db.productInventory.findUnique({
@@ -58,6 +56,7 @@ export async function POST(
     });
 
     if (!inventory) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "Inventory not found" },
         { status: 404 }
@@ -79,6 +78,7 @@ export async function POST(
         isOrgMember = !!membership;
       }
       if (!isOwner && !isOrgMember) {
+        enforcement.fail();
         return NextResponse.json(
           { error: "Forbidden: Not your inventory" },
           { status: 403 }
@@ -96,6 +96,7 @@ export async function POST(
     });
 
     if (!teamMember) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "You must be a member of a team to request restock" },
         { status: 400 }
@@ -104,6 +105,7 @@ export async function POST(
 
     // MEMBER만 요청 가능
     if (teamMember.role === TeamRole.ADMIN) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "ADMIN cannot create purchase requests. Please checkout directly." },
         { status: 400 }
@@ -133,6 +135,7 @@ export async function POST(
     });
 
     if (existingRequest) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "Restock request already exists for this item" },
         { status: 400 }
@@ -178,8 +181,14 @@ export async function POST(
       },
     });
 
+    enforcement.complete({
+      beforeState: { inventoryId, purchaseRequestId: null },
+      afterState: { inventoryId, purchaseRequestId: purchaseRequest.id },
+    });
+
     return NextResponse.json({ purchaseRequest }, { status: 201 });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error creating restock request:", error);
     return NextResponse.json(
       { error: "Failed to create restock request" },

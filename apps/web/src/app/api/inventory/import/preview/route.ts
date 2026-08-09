@@ -28,6 +28,9 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'inventory',
+      // §enforcement-handle-close-sweep (inventory) — 'unknown' 유지. 업로드 파일 미리보기라
+      //   대상 재고 엔티티가 없다(아직 아무것도 생성/수정하지 않는다). 'unknown' 은 전역 공용
+      //   키가 아니라 userId 폴백(§11.369-3)이라 같은 사용자의 연타만 막는다 — 의도한 보호다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/inventory/import/preview',
@@ -96,8 +99,11 @@ export async function POST(request: NextRequest) {
       fileId,
     };
 
+    // 미리보기는 쓰기 0 — 성공 audit 대상이 아니므로 fail() 로 lock 만 해제한다.
+    enforcement.fail();
     return NextResponse.json(response);
   } catch (error) {
+    enforcement?.fail();
     return handleApiError(error, "inventory/import/preview");
   }
 }

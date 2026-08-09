@@ -17,15 +17,16 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'order',
+      // §enforcement-handle-close-sweep (inventory) — 'unknown' **유지**. 이 라우트는 조직의
+      //   미달 재고 전체를 훑어 견적을 만드는 배치라 targetEntityType('order') 에 해당하는
+      //   대상 엔티티가 호출 시점에 없다(주문은 이 호출의 결과물). 억지 id 를 넣으면
+      //   per-call unique 가 되어 double-submit 보호가 사라진다 — 'unknown' 은 전역 공용 키가
+      //   아니라 userId 폴백(§11.369-3 deriveConcurrencyKey)이라 per-user 보호가 유지된다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/inventory/auto-reorder',
     });
     if (!enforcement.allowed) return enforcement.deny();
-
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const body = await request.json();
     const { organizationId, dryRun = false } = body;
@@ -121,6 +122,7 @@ export async function POST(request: NextRequest) {
       .filter((item: any): item is NonNullable<typeof item> => item !== null);
 
     if (reorderItems.length === 0) {
+      enforcement.fail();
       return NextResponse.json({
         message: "ì¬ì£¼ë¬¸ì´ íìí í­ëª©ì´ ììµëë¤.",
         items: [],
@@ -128,6 +130,8 @@ export async function POST(request: NextRequest) {
     }
 
     if (dryRun) {
+      // dryRun 은 쓰기 0 — 성공 audit 대상이 아니므로 fail() 로 lock 만 해제한다.
+      enforcement.fail();
       // ëë¼ì´ë° ëª¨ë: ì¤ì ë¡ ìì±íì§ ìê³  ê²°ê³¼ë§ ë°í
       return NextResponse.json({
         message: `${reorderItems.length}ê° í­ëª©ì´ ì¬ì£¼ë¬¸ ëììëë¤.`,
@@ -159,12 +163,18 @@ export async function POST(request: NextRequest) {
       ),
     });
 
+    enforcement.complete({
+      beforeState: { organizationId: organizationId ?? null, quoteId: null },
+      afterState: { organizationId: organizationId ?? null, quoteId: quote.id, itemCount: reorderItems.length },
+    });
+
     return NextResponse.json({
       message: `${reorderItems.length}ê° í­ëª©ì¼ë¡ ì¬ì£¼ë¬¸ ë¦¬ì¤í¸ê° ìì±ëììµëë¤.`,
       quoteId: quote.id,
       items: reorderItems,
     });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error executing auto-reorder:", error);
     return NextResponse.json(
       { error: error.message || "ìë ì¬ì£¼ë¬¸ ì¤íì ì¤í¨íìµëë¤." },
