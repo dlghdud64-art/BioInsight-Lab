@@ -30,9 +30,20 @@ const PAGE_CODE = stripComments(PAGE);
 const PENDING_CODE = stripComments(PENDING);
 
 /* ─────────────────────────────────────────────────────────────
- * §1 — 권한 규칙 (전 표면 공통)
+ * §1 — 권한 규칙
  *   buyer 화면 dead link 6개(스펙 편집 ×3 · 안전 정보 편집 · SDS 업로드 ×2 · 정보 요청) 제거.
  *   canEditSpec = ADMIN·SUPPLIER 만 편집 UI 생성. disabled 아님 = **미생성**.
+ *
+ * ⚠️ 표면 범위 정정 (2026-08-09) — 원 문구는 "전 표면 공통" 이었으나 **작성 시 실제로 본
+ *   것은 제품 상세(`products/[id]`) 하나뿐**이었다. §sds-upload-role-gate 착수 중
+ *   `dashboard/safety` 가 같은 행위(MSDS 업로드)를 **role 게이트 없이** 노출하고 있음이
+ *   드러나, 서버만 막았다면 그 표면에서 front-only 실패를 새로 만들 뻔했다.
+ *   → §1 이 실제로 지배하는 표면은 최소 **둘**이다:
+ *       ① `app/products/[id]/page.tsx`        — canEditSpec 게이트 (이 파일이 잠금)
+ *       ② `app/dashboard/safety/page.tsx`     — canUploadMsds 게이트 (동일 조건, 8b363bb3)
+ *   신규 표면에 편집·업로드 진입을 추가할 때는 §1 적용 대상인지 먼저 판정할 것.
+ *   "전 표면 공통" 같은 범위 주장은 실제로 전수 확인한 뒤에만 쓴다 — 확인 없이 쓰면
+ *   다음 표면에서 같은 충돌이 재발한다.
  * ───────────────────────────────────────────────────────────── */
 describe("§v21 §1 — buyer 권한 밖 UI 미생성", () => {
   it("canEditSpec 단일 파생(role → 권한)", () => {

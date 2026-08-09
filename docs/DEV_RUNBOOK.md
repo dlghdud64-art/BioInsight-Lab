@@ -127,6 +127,7 @@ npm run lint          # 설정되어 있다면
 | 배포 후 lambda 가 `P2021`/`P2022` (테이블·컬럼 없음) | **push 는 migration 을 적용하지 않는다** — 빌드는 DB 무접촉(§9.4). schema 만 배포되고 DDL 미적용 | §9.2 순서 복구: operator shell 에서 `prisma migrate deploy`(`:5432`) → `npm run smoke:migration` → `/api/health` `clean:true` 확인 |
 | `prisma generate` 가 schema drift 보고 | 실 DB 와 schema 불일치 | `npx prisma migrate status` 로 확인 → `migrate deploy` 또는 `db pull` 로 동기 |
 | ~~Vercel 빌드에서 `P1000: Authentication failed` (scripts/vercel-migrate.js)~~ | **OBSOLETE 2026-04-25 (ADR-002 §11.13).** build-time migrate 자체가 폐지되어 빌드는 DB 에 접속하지 않는다 — `vercel-migrate.js` 는 NO-OP 로그 2줄만 출력 | 이 증상은 더 이상 발생하지 않는다. `SKIP_PRISMA_MIGRATE` 우회도 폐지(스크립트가 참조하지 않음). schema 적용은 §9.2 operator-shell 절차 단독이며 **DDL 포트는 session pooler `:5432`**(`:6543` 은 advisory-lock 미지원 → DDL 락/실패) |
+| 안전 대시보드에서 **"MSDS 등록" 버튼이 안 보임** / 업로드 시 `403 SDS_UPLOAD_FORBIDDEN` | **권한 부족이며 정상 동작이다** (§sds-upload-role-gate, 2026-08-09). `docType=sds` 업로드는 **global ADMIN · SUPPLIER · 조직 ADMIN/VIEWER(safety_admin)** 합집합만 허용한다. 조직 미소속 RESEARCHER 는 대상이 아니다 — 버튼도 렌더되지 않는다(disabled 아님, 미생성) | **조직 가입이 선결 조건**: 해당 사용자를 조직에 `ADMIN` 또는 `VIEWER`(=safety_admin) 로 추가하면 즉시 열린다. 또는 권한자가 대신 등록. ⚠️ **COA(시험성적서)는 무관** — `docType=coa` 는 role 게이트가 없고 입고 lot 소유권만 본다(재고 패널에서 RESEARCHER 도 자기 lot COA 업로드 가능). "안전 문서를 못 올린다"는 문의가 오면 먼저 sds/coa 중 무엇인지부터 가릴 것 |
 
 ---
 
