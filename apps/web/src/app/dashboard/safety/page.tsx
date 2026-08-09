@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useMemo, useEffect, useRef } from "react";
+import { useSession } from "next-auth/react";
 import { useUserPreferences } from "@/lib/preferences/user-preferences";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 // §safety-csrf-fix (호영님 2026-07-04) — 안전 모달 POST(sds·inspection)는 CSRF 토큰 필수(레지스트리 기본 required).
@@ -199,6 +200,7 @@ export default function SafetyManagerPage() {
       return (data.organizations ?? []) as SafetyOrg[];
     },
   });
+  const { data: session } = useSession();
   const orgs = useMemo(() => orgsQuery.data ?? [], [orgsQuery.data]);
   const effectiveCategories = useMemo(() => {
     const set = new Set<string>();
@@ -209,6 +211,17 @@ export default function SafetyManagerPage() {
   const categoryParam = effectiveCategories.join(",");
   // ADMIN/OWNER 인 org 만 카테고리 설정 편집 가능(엔드포인트도 게이트).
   const adminOrgs = useMemo(() => orgs.filter((o) => o.role === "ADMIN" || o.role === "OWNER"), [orgs]);
+
+  // §sds-upload-role-gate (2026-08-09) — MSDS 등록 진입 게이트.
+  //   서버(POST /api/products/[id]/sds, docType=sds)가 합집합
+  //   (global ADMIN · SUPPLIER · 조직 ADMIN/VIEWER=safety_admin)으로 막으므로 **동일 조건**을
+  //   UI 에도 세운다. 서버만 막으면 버튼은 열려 있고 저장에서 403 나는 front-only 실패가 된다
+  //   (§product-detail-sourcing-v21 에서 고친 그 클래스). 미권한자에겐 disabled 가 아니라 **미생성**.
+  const canUploadMsds = useMemo(() => {
+    const globalRole = (session?.user as { role?: string } | undefined)?.role;
+    if (globalRole === "ADMIN" || globalRole === "SUPPLIER") return true;
+    return orgs.some((o) => o.role === "ADMIN" || o.role === "VIEWER");
+  }, [session, orgs]);
 
   const safetyQuery = useQuery({
     queryKey: ["safety-products", categoryParam],
@@ -1101,7 +1114,7 @@ export default function SafetyManagerPage() {
                             <span>점검: {classified.lastInspection ? <span className="text-emerald-600 font-semibold">{classified.lastInspection}</span> : <span className="text-yellow-600 font-semibold">없음</span>}</span>
                           </div>
                           <div className="flex flex-col gap-1.5">
-                            {!classified.hasMsds && (
+                            {canUploadMsds && !classified.hasMsds && (
                               <Button variant="outline" size="sm" className="w-full h-9 text-xs font-medium text-yellow-700 border-yellow-200 hover:bg-yellow-50 justify-start gap-2"
                                 onClick={() => openMsdsDialog(classified)}>
                                 <FileWarning className="h-3.5 w-3.5" />MSDS 등록
@@ -1260,7 +1273,7 @@ export default function SafetyManagerPage() {
                               </td>
                               <td className="px-3 py-2.5 text-xs text-slate-500 hidden sm:table-cell">{item.lastInspection || <span className="text-slate-400">미점검</span>}</td>
                               <td className="px-3 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
-                                {!item.hasMsds ? (
+                                {canUploadMsds && !item.hasMsds ? (
                                   <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs text-yellow-700 border-yellow-200 hover:bg-yellow-50" onClick={() => openMsdsDialog(item)}>등록</Button>
                                 ) : !item.lastInspection ? (
                                   <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs text-blue-700 border-blue-200 hover:bg-blue-50" onClick={() => openInspDialog(item)}>점검</Button>
@@ -1369,7 +1382,7 @@ export default function SafetyManagerPage() {
 
                   {/* Action dock */}
                   <div className="pt-3 border-t border-slate-100 space-y-2">
-                    {!selectedClassified.hasMsds && (
+                    {canUploadMsds && !selectedClassified.hasMsds && (
                       <Button variant="outline" size="sm" className="w-full h-9 text-xs font-medium text-yellow-700 border-yellow-200 hover:bg-yellow-50 justify-start gap-2"
                         onClick={() => openMsdsDialog(selectedClassified)}>
                         <FileWarning className="h-3.5 w-3.5" />MSDS 등록

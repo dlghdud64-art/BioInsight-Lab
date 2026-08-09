@@ -50,13 +50,14 @@ describe("§v21 §1 — buyer 권한 밖 UI 미생성", () => {
     expect(PAGE_CODE).not.toMatch(/label: "정보 요청", href: "\/support"/);
     expect(PAGE_CODE).not.toMatch(/action=\{\{ label: "정보 요청"/);
   });
-  /* ⚠️ 정직 표기 (2026-08-09 실측 정정) — 이 단언이 보증하는 것은 **UI 가드뿐**이다.
-   *   최초 문구는 "개인 업로드 경로 차단" 이라 적었으나 서버 실측 결과
-   *   `POST /api/products/[id]/sds` 에는 **role 게이트가 없다**(401 인증 + 조직 스코프만).
-   *   즉 UI 를 우회하면 인증된 아무 사용자나 SDS 를 올릴 수 있어 "차단"은 거짓 보증이었다.
-   *   잠금 자체는 유지하되(버튼이 buyer 에게 노출되는 회귀는 여전히 막아야 함)
-   *   보증 범위를 UI 로 한정한다. 서버 강제는 §sds-upload-role-gate 후속 트랙. */
-  it("SDS 업로드 UI 가드 — canEditSpec 안에서만 마운트 (서버 강제는 별도 트랙 §sds-upload-role-gate)", () => {
+  /* 보증 범위 이력 (2026-08-09):
+   *   ① 최초 문구 "개인 업로드 경로 차단" → 서버에 role 게이트가 없어 **거짓 보증**이었다.
+   *   ② 실측 후 "UI 가드"로 축소(정직 표기).
+   *   ③ §sds-upload-role-gate 완료 → 서버가 docType=sds 를 합집합(global ADMIN·SUPPLIER·
+   *      조직 ADMIN/VIEWER)으로 막는다. 이제 UI 가드 + 서버 강제 **양쪽**이 보증한다.
+   *   서버 분기의 행위 검증은 __tests__/api/products-id-sds/upload-role-gate.test.ts 가 담당
+   *   (coa 는 소유권이 게이트라 role 무관 — 여기서 role 게이트를 걸면 회귀). */
+  it("SDS 업로드 UI 가드 — canEditSpec 안에서만 마운트 (서버 강제 §sds-upload-role-gate 와 짝)", () => {
     expect(PAGE).toMatch(/canEditSpec \?[\s\S]{0,200}?<SdsDocumentsSection/);
   });
 });
