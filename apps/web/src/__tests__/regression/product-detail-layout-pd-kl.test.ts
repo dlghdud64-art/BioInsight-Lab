@@ -32,7 +32,8 @@ describe("§product-detail PD-L(§05) — 빈 상세 스펙 카드 buyer 숨김"
     expect(DETAIL).toMatch(/상세 스펙 \(Specifications\)/);
     expect(DETAIL).toMatch(/등록된 상세 스펙이 없습니다/);
   });
-  it("미등록 안내는 완성도가 담당(보존)", () => {
-    expect(DETAIL).toMatch(/<ProductCompleteness product=\{product\}/);
+  /* 🔁 은퇴→승계 (§product-detail-sourcing-v21 §1) — 완성도 게이지 은퇴, 미등록 안내는 PendingInfoRow 가 담당. */
+  it("미등록 안내는 접힌 1줄(PendingInfoRow)이 담당", () => {
+    expect(DETAIL).toMatch(/<PendingInfoRow[\s\S]{0,200}?product=\{product\}/);
   });
 });

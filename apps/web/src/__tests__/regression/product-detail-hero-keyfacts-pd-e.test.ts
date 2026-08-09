@@ -15,23 +15,26 @@ const DETAIL = readFileSync(
 );
 
 describe("§product-detail PD-E(§05) — 히어로 키 팩트", () => {
-  it("PD-H/M 시안 히어로 키 팩트 행 — 분류·출처·내부 등급·제조사·안전 위험도", () => {
-    // 호영님 재결정(2026-06-20): 시안대로 내부 등급(specifications.INTERNALGRADE) 노출.
-    //   단 product.grade 직접 렌더는 §sourcing-product-surface 가드대로 계속 미사용(specifications 값만).
-    expect(DETAIL).toMatch(/label: "분류"/);
-    expect(DETAIL).toMatch(/label: "출처"/);
-    expect(DETAIL).toMatch(/label: "내부 등급", value: internalGrade/); // 시안대로 노출
-    expect(DETAIL).toMatch(/label: "안전 위험도"/);
-    expect(DETAIL).not.toMatch(/\{product\.grade\}/); // product.grade 직접 렌더 0(§sourcing-product-surface 정합)
+  /* 🔁 은퇴→승계 (§product-detail-sourcing-v21 §2, 호영님 승인 2026-08-09)
+   *    ⛔ 결정 반전: 2026-06-20 "시안대로 내부 등급 노출" 재결정을 **철회**한다.
+   *       출처(대장) · 내부 등급 = 내부 용어 메타로 buyer 구매 판단과 무관 → 히어로 팩트 행 자체를 폐기.
+   *       안전 위험도는 안전·규제 카드로 단일화(히어로 이중 표기 제거).
+   *       분류는 Badge 칩 1개로 충분 — 팩트 행이 사라지며 모바일 4열 flex 붕괴도 동반 해소.
+   *    존치: product.grade 직접 렌더 0 가드(§sourcing-product-surface 정합)는 아래에서 계속 잠근다. */
+  it("히어로 내부 용어 메타 0 — 출처·내부 등급·팩트 행 폐기", () => {
+    expect(DETAIL).not.toMatch(/label: "출처"/);
+    expect(DETAIL).not.toMatch(/label: "내부 등급"/);
+    expect(DETAIL).not.toMatch(/label: "안전 위험도"/);
+    expect(DETAIL).not.toMatch(/\{product\.grade\}/); // §sourcing-product-surface 정합 유지
   });
-  it("PD-M 히어로 통합 — Cat.No 배지 + 완성도 인라인(시안 한 카드)", () => {
+  it("PD-M 히어로 통합 — Cat.No 배지 보존 + 미등록 1줄 승계", () => {
     expect(DETAIL).toMatch(/<span className="text-\[11px\] text-slate-500">Cat\.No<\/span>/);
-    expect(DETAIL).toMatch(/<ProductCompleteness product=\{product\}/);
+    expect(DETAIL).toMatch(/<PendingInfoRow[\s\S]{0,200}?product=\{product\}/);
     expect(DETAIL).not.toMatch(/실험\/제품 정보<\/CardTitle>/); // "실험/제품 정보" 제목 제거(시안 정합)
   });
-  it("회귀 0 — 분류 태그 + Cat.No + 완성도 보존", () => {
+  it("회귀 0 — 분류 태그 보존 · 중복 제품 사양 카드 폐기", () => {
     expect(DETAIL).toMatch(/PRODUCT_CATEGORIES\[product\.category/);
-    expect(DETAIL).toMatch(/Cat\.No \(카탈로그 번호\)/);
-    expect(DETAIL).toMatch(/<ProductCompleteness product=\{product\}/);
+    // §v21 §2 — "제품 사양" 통합 카드(PD-J) 삭제: Cat.No·분류는 히어로가 canonical, 추가 스펙은 내부 용어.
+    expect(DETAIL).not.toMatch(/Cat\.No \(카탈로그 번호\)/);
   });
 });

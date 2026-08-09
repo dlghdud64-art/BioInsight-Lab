@@ -35,15 +35,16 @@ describe("§PD-flat P2 — 히어로 플랫", () => {
   it("히어로 썸네일 96px + accent 그라데이션(시안 정합)", () => {
     expect(DETAIL).toMatch(/w-20 h-20 md:w-24 md:h-24 rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-slate-50/);
   });
-  it("키 팩트 행 — 세로 구분선(border-left, 시안)", () => {
-    expect(DETAIL).toMatch(/border-l border-gray-100/);
-    expect(DETAIL).toMatch(/i === 0 \? "pl-0"/);
+  /* 🔁 은퇴→승계 (§product-detail-sourcing-v21 §2, 호영님 승인 2026-08-09)
+   *    키 팩트 행(세로 구분선 포함)은 내부 용어 메타(출처·내부 등급) 삭제 + 위험도 단일화로 행 자체가 폐기됐다.
+   *    §PD-flat 이 지키려던 것은 "플랫 대비" 이며 그 부분은 아래 회귀 it 이 계속 잠근다. */
+  it("키 팩트 행 폐기 — 내부 용어 메타 0", () => {
+    expect(DETAIL).not.toMatch(/label: "출처"/);
+    expect(DETAIL).not.toMatch(/label: "안전 위험도"/);
   });
-  it("회귀 0 — text-slate-900 대비 + 완성도 + 키팩트 라벨 보존", () => {
+  it("회귀 0 — text-slate-900 대비 + 미등록 1줄 승계", () => {
     expect(DETAIL).toMatch(/font-bold text-slate-900 leading-tight/);
-    expect(DETAIL).toMatch(/<ProductCompleteness product=\{product\}/);
-    expect(DETAIL).toMatch(/label: "출처"/);
-    expect(DETAIL).toMatch(/label: "안전 위험도"/);
+    expect(DETAIL).toMatch(/<PendingInfoRow[\s\S]{0,200}?product=\{product\}/);
   });
 });
 
@@ -64,18 +65,16 @@ describe("§PD-flat P3 — 제품사양/안전 카드 플랫", () => {
     expect(DETAIL).toMatch(/mb-6 md:mb-8 rounded-\[18px\] border border-gray-200 bg-white shadow-sm overflow-hidden/);
     expect(DETAIL).toMatch(/rounded-\[18px\] border border-gray-200 bg-white shadow-sm p-6 md:p-8/);
   });
-  it("'N개 항목 확인' 배지(확인 사양 수, 시안)", () => {
-    expect(DETAIL).toMatch(/개 항목 확인/);
-    expect(DETAIL).toMatch(/const specCount = \(product\.catalogNumber \? 1 : 0\)/);
+  /* 🔁 은퇴 (§v21 §2) — "N개 항목 확인" 배지는 폐기된 제품 사양(PD-J) 카드의 부속. 카드 소멸과 함께 계약 소멸. */
+  it("제품 사양 카드 부속 배지 폐기(중복 카드 부활 차단)", () => {
+    expect(DETAIL).not.toMatch(/개 항목 확인/);
   });
   it("PD-N 래퍼 indigo blur orb 제거", () => {
     expect(DETAIL).not.toContain("w-48 h-48 bg-indigo-50/20 rounded-full blur-3xl");
   });
-  it("회귀 0 — §125 상세스펙 그리드/empty + getDisplaySpecs + 완성도 보존", () => {
+  it("회귀 0 — §125 상세스펙 그리드/empty 보존(제품 사양 카드만 은퇴)", () => {
     expect(DETAIL).toMatch(/상세 스펙 \(Specifications\)/);
     expect(DETAIL).toMatch(/등록된 상세 스펙이 없습니다/);
-    expect(DETAIL).toMatch(/getDisplaySpecs\(product\.specifications\)\.map/);
-    expect(DETAIL).toMatch(/<h3 className="text-lg font-bold text-slate-900">제품 사양<\/h3>/);
   });
 });
 
@@ -96,18 +95,18 @@ describe("§PD-flat P4 — 우측 레일 + 대체품 플랫", () => {
 });
 
 describe("§PD-flat P4 — dead button 0(시안 요소 실동선 배선)", () => {
-  it("stock-mini 재고 조회 = /dashboard/inventory 실 이동(no-op 0)", () => {
-    expect(DETAIL).toMatch(/href="\/dashboard\/inventory"/);
-    // supersede(§product-detail-refinement 계약④): stock-mini 문단이 보조 2분할 버튼으로 흡수됐다. 의도(재고 조회가 실 이동일 것)는 유지.
-    expect(DETAIL).toMatch(/재고 조회/);
-    expect(DETAIL).toMatch(/\/dashboard\/inventory/);
-  });
-  it("영업 담당자 연결 = /support 실 이동(no-op button 폐기)", () => {
-    // supersede(§product-detail-refinement 계약④): 다크 맞춤견적 카드 폐기 → 푸터 텍스트 링크. 라벨 '영업 담당자 연결' → '영업 문의'. 의도(no-op 버튼이 아닌 /support 실 이동)는 유지.
-    expect(DETAIL).toMatch(/<Link href="\/support"[^>]*>영업 문의<\/Link>/);
+  /* 🔁 은퇴→승계 (§product-detail-sourcing-v21 §7, 호영님 승인 2026-08-09 · 시안 우선)
+   *    레일 1행 압축으로 stock-mini 후신(재고 조회)과 영업 문의 푸터 링크가 함께 삭제됐다.
+   *    §PD-flat P4 의 계약은 "시안 요소가 dead button 이 아닐 것" — 요소를 없애면 계약은 자동 충족된다.
+   *    따라서 **부활 차단**(버튼만 있고 이동 없는 형태로 되돌아오지 않을 것)으로 승계한다. */
+  it("레일 보조 요소 0 — dead button 부활 차단", () => {
+    // ⚠️ 본 파일의 DETAIL 은 주석 미제거본이라 `재고 조회` 문자열 부정 단언을 걸 수 없다
+    //    (은퇴 사유를 적은 주석까지 매칭 → 계약이 문서를 깎는다. §refinement 서두 경고 참조).
+    //    렌더 0 잠금은 주석 제거본을 쓰는 §v21 §7 "레일 보조 버튼·링크 0" 이 담당한다.
     expect(DETAIL).not.toMatch(/<button[^>]*>\s*영업 (담당자 연결|문의)/);
+    expect(DETAIL).not.toMatch(/<Link href="\/dashboard\/inventory">[\s\S]{0,120}?재고 조회/);
   });
-  it("회귀 0 — 견적 신뢰 문구 + 가격 대비(slate-900) 보존", () => {
+  it("회귀 0 — 신뢰 문구는 1회 안내로 이전 + 가격 대비(slate-900) 보존", () => {
     expect(DETAIL).toMatch(/견적 요청은 무료이며 구매 의무가 없습니다/);
     expect(DETAIL).toMatch(/text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight/);
   });
@@ -122,7 +121,8 @@ describe("§PD-flat P5 — Cat.No 위치 · 공급가 카드 · 사양 밀도 ·
   it("공급가 카드 = qc-state(아이콘) + qc-meta(Cat.No/납기/최소주문), '가격 정보' 제목 폐기", () => {
     expect(DETAIL).not.toMatch(/<CardTitle className="text-base font-semibold text-slate-900 mb-2">가격 정보/);
     expect(DETAIL).toMatch(/bg-\[#2f6be0\] text-white flex items-center justify-center flex-shrink-0/);
-    expect(DETAIL).toMatch(/최소 주문/);
+    // 🔁 §v21 §7 — qc-meta(Cat.No/납기/최소주문) 행은 레일 1행 압축으로 전량 삭제. 상태 라벨만 남는다.
+    expect(DETAIL).toMatch(/견적가 안내 품목/);
   });
   it("제품 사양/상세스펙 = 시안 hairline 정의그리드(gap-px+bg-line, 셀 흰배경)", () => {
     // §PD-flat: 박스 폐기 → 시안 spec-grid(gap-px + bg-line + 셀 흰배경 + border/rounded/overflow-hidden).

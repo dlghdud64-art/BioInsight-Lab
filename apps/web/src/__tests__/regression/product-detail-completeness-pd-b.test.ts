@@ -59,8 +59,12 @@ describe("§product-detail PD-B(§04·§05) — 완성도 바 + 미등록 축약
 });
 
 describe("§product-detail PD-B — page 삽입", () => {
-  it("ProductCompleteness import + 렌더", () => {
-    expect(PAGE).toMatch(/import \{ ProductCompleteness \}/);
-    expect(PAGE).toMatch(/<ProductCompleteness product=\{product\}/);
+  /* 🔁 은퇴→승계 (§product-detail-sourcing-v21 §1, 호영님 승인 2026-08-09)
+   *    완성도 게이지(%+체크리스트)는 buyer 화면에서 은퇴 — 행동 불가한 내부 데이터 품질 정보가 상단을 점유했다.
+   *    완성도 관리는 공급사/관리자 콘솔 몫. 산정 계층(위 LIB 단언)은 그 콘솔용으로 **전량 존치**.
+   *    buyer 표면 승계자 = PendingInfoRow(미등록 접힌 1줄 + 탭 시 목록, 액션 0). */
+  it("PendingInfoRow import + 렌더(구 ProductCompleteness 승계)", () => {
+    expect(PAGE).toMatch(/import \{ PendingInfoRow \}/);
+    expect(PAGE).toMatch(/<PendingInfoRow[\s\S]{0,200}?product=\{product\}/);
   });
 });

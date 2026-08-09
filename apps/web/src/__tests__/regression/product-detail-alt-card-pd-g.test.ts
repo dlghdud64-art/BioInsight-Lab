@@ -24,11 +24,13 @@ describe("§product-detail PD-G(§08) — 대체품 카드 보강", () => {
     expect(DETAIL).toMatch(/alt\.similarityReasons/);
     expect(DETAIL).toMatch(/filter\(\(r: string\) => !\/grade\/i\.test\(r\)\)/);
   });
-  it("상세(제품 간 이동) + 비교 보존(시안 컴팩트 라벨)", () => {
-    // §PD-flat(2026-06-20): alt 카드 컴팩트 — "상세 보기"→"상세 >", "비교 추가"→"비교". 이동/비교 의도 보존.
+  /* 🔁 은퇴→승계 (§product-detail-sourcing-v21 §6, 호영님 승인 2026-08-09)
+   *    비교 버튼은 비교 화면 배선 전까지 미생성(dead button 금지) → 카드 액션은 상세 링크 단독.
+   *    근거 태그는 "1개 필수" 로 강화 — 근거 산출 불가 품목은 추천 자체를 노출하지 않는다. */
+  it("상세(제품 간 이동)만 — 비교 버튼 0", () => {
     expect(DETAIL).toMatch(/상세 <ChevronRight/);
     expect(DETAIL).toMatch(/href=\{`\/products\/\$\{alt\.id\}`\}/);
-    expect(DETAIL).toMatch(/\{isInCompare \? "비교 제거" : "비교"\}/);
+    expect(DETAIL).not.toMatch(/\{isInCompare \? "비교 제거" : "비교"\}/);
   });
   it("grade 누출 0 — alt.grade 직접 렌더 없음", () => {
     expect(DETAIL).not.toMatch(/\{alt\.grade\}/);

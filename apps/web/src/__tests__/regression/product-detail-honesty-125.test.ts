@@ -104,9 +104,19 @@ describe("§1-2⑤ — 회귀 0 (기존 보존)", () => {
     expect(src).toMatch(/견적 담기/);
   });
 
-  it("detail — 안전 정보 편집 isAdmin 게이트 보존", () => {
+  /* 🔁 진화 (2026-08-09, §product-detail-sourcing-v21 §1 — 호영님 승인).
+   *   원 계약은 `isAdmin`(ADMIN 전용) 게이트를 잠갔다. §1 이 "스펙 편집·안전 정보 편집·
+   *   SDS 업로드는 ADMIN/SUPPLIER 만 렌더"로 확정하면서 `canEditSpec`(ADMIN·SUPPLIER)으로
+   *   확대 — 새 결정이 아니라 §1 의 귀결이며, 같은 파일 아래 "sds-documents-section —
+   *   ADMIN·SUPPLIER 만 업로드" 형제 계약과도 정합한다.
+   *   보호 의도(권한 없는 사용자에게 편집 진입을 만들지 않는다)는 불변 — 잠금 대상만 이동.
+   *   ⚠️ 서버측 동반 교정 완료: `PATCH /api/products/[id]/safety` 가 SUPPLIER 를 거부해
+   *   front-only 실패(버튼은 열리고 저장 403)였던 것을 합집합
+   *   (global ADMIN · SUPPLIER · 조직 ADMIN/VIEWER)으로 확대했다. UI 만 열고 서버를
+   *   방치하면 dead button 보다 나쁘다. */
+  it("detail — 안전 정보 편집 권한 게이트 보존 (canEditSpec = ADMIN·SUPPLIER)", () => {
     const src = read(DETAIL);
-    expect(src).toMatch(/\{isAdmin && \([\s\S]{0,300}안전 정보 편집/);
+    expect(src).toMatch(/\{canEditSpec && \([\s\S]{0,300}안전 정보 편집/);
   });
 
   it("detail — 연관 추천 섹션 렌더 보존 + useCompareStore 보존", () => {

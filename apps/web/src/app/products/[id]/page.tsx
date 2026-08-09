@@ -13,7 +13,6 @@ import Image from "next/image";
 import {
   Package,
   ShoppingCart,
-  GitCompare,
   ExternalLink,
   ClipboardCopy,
   Languages,
@@ -29,7 +28,6 @@ import {
   ChevronLeft,
   Zap,
   Info,
-  Calendar,
   Clock,
   Home,
   Mail,
@@ -55,13 +53,14 @@ import { getProductSafetyLevel, HAZARD_CODE_DESCRIPTIONS } from "@/lib/utils/saf
 import { getRegulationLinksForProduct } from "@/lib/regulation/links";
 import { filterComplianceLinksForProduct, getRuleDescription } from "@/lib/compliance-links";
 import { PersonalizedRecommendations } from "@/components/products/personalized-recommendations";
-// §product-detail PD-B(§04·§05) — 완성도(8필드 고정) + 미등록 1줄 축약.
-import { ProductCompleteness } from "@/components/products/product-completeness";
+// §product-detail-sourcing-v21 §1 — 완성도 게이지 은퇴(공급사 콘솔 이관) → 미등록 접힌 1줄.
+//   구 ProductCompleteness(PD-B) import 폐기. 산정 lib(computeCompleteness)은 컴포넌트 내부에서 계속 사용.
+import { PendingInfoRow } from "@/components/products/pending-info-row";
 // §product-detail PD-D(§09) — 견적함 정직 트레이바(데스크탑).
 import { QuoteTrayBar } from "@/components/products/quote-tray-bar";
-// §product-detail PD-F(§03/§01) — 추가 스펙 raw key 한글화 + null/빈값 숨김.
-import { getDisplaySpecs } from "@/lib/product-detail/spec-fields";
-import { Disclaimer } from "@/components/legal/disclaimer";
+// §product-detail-sourcing-v21 §2 — 추가 스펙(출처·내부 등급) 표면 삭제로 getDisplaySpecs import 폐기.
+//   lib(@/lib/product-detail/spec-fields)은 소싱 비교 등 타 표면에서 계속 사용 — 파일 무손상.
+// §product-detail-sourcing-v21 §5 — 이 표면의 safety Disclaimer(yellow Alert)는 회색 각주로 대체 → import 폐기.
 // #quote-cta-truth — 견적함 저장 계층 단일 출처 (fake success 제거, 호영님 2026-06-11)
 import { addToQuoteCart, readQuoteCart, removeFromQuoteCart } from "@/lib/quote/quote-cart-storage";
 
@@ -71,7 +70,8 @@ export default function ProductDetailPage() {
   const id = params.id as string;
   const { data: session } = useSession();
   const { data: fetchedProduct, isLoading, error } = useProduct(id);
-  const { addProduct, removeProduct, hasProduct } = useCompareStore();
+  // §product-detail-sourcing-v21 §7 — 레일 "비교 검토" 폐기로 addProduct 미사용. 담김 해제 시 비교함 정리 경로만 유지.
+  const { removeProduct, hasProduct } = useCompareStore();
   // #quote-cta-truth — 견적함 truth 합류 (provider 와 동일 키·동일 순수함수, ⓐ 결정)
   const [inQuoteCart, setInQuoteCart] = useState(false);
   useEffect(() => {
@@ -107,7 +107,6 @@ export default function ProductDetailPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const isInCompare = hasProduct(id);
 
   // Fallback 제품 (DB 연결 실패 시 사용)
   const FALLBACK_PRODUCT = {
@@ -414,47 +413,13 @@ export default function ProductDetailPage() {
                       </Badge>
                     )}
                   </div>
-                  {/* §product-detail PD-H(§05 레이아웃) — 시안 히어로 키 팩트 행(분류·출처·제조사·안전 위험도, 아는 값만).
-                      ★ product.grade(자사 A~E) + 내부 등급(specifications.INTERNALGRADE)은 §11.344/§sourcing-product-surface
-                        grade 미노출 정책으로 제외(호영님 결정 대기). 출처(SOURCE)는 §03 매핑값. */}
-                  {(() => {
-                    const heroSpecs = getDisplaySpecs(product.specifications);
-                    const source = heroSpecs.find((s) => s.label === "출처")?.value;
-                    const internalGrade = heroSpecs.find((s) => s.label === "내부 등급")?.value;
-                    const safety = getProductSafetyLevel(product);
-                    const facts: Array<{ label: string; value: string }> = [];
-                    if (product.category) facts.push({ label: "분류", value: PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES] });
-                    if (source) facts.push({ label: "출처", value: source });
-                    if (internalGrade) facts.push({ label: "내부 등급", value: internalGrade }); // 호영님 재결정: 시안대로 노출
-                    if (product.manufacturer) facts.push({ label: "제조사", value: product.manufacturer });
-                    if (safety?.label) facts.push({ label: "안전 위험도", value: safety.label });
-                    if (facts.length === 0) return null;
-                    return (
-                      <div className="flex flex-wrap gap-y-2 mt-4 pt-4 border-t border-gray-100">
-                        {facts.map((f, i) => (
-                          <div key={f.label} className={`flex flex-col gap-0.5 px-5 ${i === 0 ? "pl-0" : "border-l border-gray-100"}`}>
-                            <span className="text-[11px] font-bold text-slate-400">{f.label}</span>
-                            <span className="text-sm md:text-[15px] font-bold text-slate-900">{f.value}</span>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
-                  {/* §product-detail PD-M(§05) — Cat.No 는 제품명 아래로 이동(위). 여기선 완성도만. */}
+                  {/* §product-detail-sourcing-v21 §2 — 히어로 키 팩트 행 폐기.
+                      · 내부 등급 · 출처(대장) = 내부 용어 메타 → buyer 화면에서 삭제(구매 판단 무관, PD-E 노출 결정 반전).
+                      · 안전 위험도 = 안전·규제 카드로 단일화(이중 표기 제거).
+                      · 분류는 위 Badge 칩 1개로 충분 → 별도 팩트 행 불필요(모바일 4열 flex 붕괴 원인 동반 제거). */}
+                  {/* §product-detail-sourcing-v21 §1 — 완성도 게이지 → 미등록 접힌 1줄(탭 시 목록). 편집/요청 링크 0. */}
                   <div className="mt-4">
-                    {/* §product-detail-refinement 계약②·⑧ — role/편집 핸들러 배선(편집 다이얼로그 재사용).
-                        ⛔ classified 전달 철회(2026-07-26) — D7 위험도 행 폐기. 미분류 고지는 히어로 키팩트가 담당. */}
-                    <ProductCompleteness product={product}
-                      role={role as any}
-                      onSpecEdit={() => {
-                        setSpecForm(product?.specification || "");
-                        setIsSpecEditing(true);
-                      }}
-                      onSafetyEdit={startSafetyEdit}
-                      onSdsUpload={() =>
-                        document.getElementById("product-sds-docs")?.scrollIntoView({ behavior: "smooth", block: "center" })
-                      }
-                    />
+                    <PendingInfoRow product={product} />
                   </div>
                 </CardHeader>
               </Card>
@@ -573,68 +538,30 @@ export default function ProductDetailPage() {
                     </div>
                   </div>
                   ) : (
-                    /* §product-detail-refinement 계약③ — 상세 스펙 0건 = 접힘 한 줄 · 미등록 · 정보 요청(대형 빈 카드 폐기). */
+                    /* §product-detail-sourcing-v21 §1 — 상세 스펙 0건 = 접힘 한 줄(계약③ 형태 승계).
+                       액션은 canEditSpec(ADMIN·SUPPLIER) 에게만 생성 — buyer 정보 요청 링크 폐기(dead link 0). */
                     <div className="mb-6 md:mb-8">
-                      <CollapsedRow label="상세 스펙" status="미등록" action={{ label: "정보 요청", href: "/support" }} />
+                      <CollapsedRow
+                        label="상세 스펙"
+                        status="미등록"
+                        action={
+                          canEditSpec
+                            ? {
+                                label: "스펙 편집",
+                                onClick: () => {
+                                  setSpecForm(product?.specification || "");
+                                  setIsSpecEditing(true);
+                                },
+                              }
+                            : undefined
+                        }
+                      />
                     </div>
                   )}
 
-                  {/* §product-detail PD-J(§05 레이아웃) — "제품 사양" 통합 카드(시안): 카탈로그 번호 + 분류 + 추가 스펙(출처 등).
-                      독립 Cat.No 블록·추가스펙 카드 통합. §03 매핑·grade 숨김(getDisplaySpecs) 유지. §125 "상세 스펙(규격/규제)" 그리드는 별도 보존.
-                      PD-N: 독립 카드 스타일(테두리·그림자) — 시안 정합. */}
-                  <div className="mb-6 md:mb-8 rounded-[18px] border border-gray-200 bg-white shadow-sm overflow-hidden">
-                    <div className="px-6 md:px-8 py-4 border-b border-gray-100 flex items-center gap-3 bg-gray-50/60">
-                      <Check className="w-5 h-5 text-blue-600" />
-                      <h3 className="text-lg font-bold text-slate-900">제품 사양</h3>
-                      {/* §PD-flat(시안 §05) — "N개 항목 확인" 배지(확인된 사양 수, 정직). */}
-                      {(() => {
-                        const specCount = (product.catalogNumber ? 1 : 0) + (product.category ? 1 : 0) + getDisplaySpecs(product.specifications).length;
-                        return specCount > 0 ? (
-                          <span className="ml-auto inline-flex items-center rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">{specCount}개 항목 확인</span>
-                        ) : null;
-                      })()}
-                    </div>
-                    <div className="p-4 md:p-5 bg-white">
-                      {/* §PD-flat(시안 spec-grid) — hairline 정의그리드(gap-px+bg-line, 셀 흰배경). */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-gray-100 rounded-lg overflow-hidden border border-gray-100">
-                      {product.catalogNumber && (
-                        <div className="flex flex-col gap-0.5 px-4 py-3 bg-white">
-                          <span className="text-[10px] md:text-xs font-semibold text-gray-500 tracking-wider flex items-center gap-1">
-                            Cat.No (카탈로그 번호)
-                            <button
-                              type="button"
-                              onClick={async () => {
-                                try {
-                                  await navigator.clipboard.writeText(product.catalogNumber);
-                                  toast({ title: "복사 완료", description: "카탈로그 번호가 클립보드에 복사되었습니다." });
-                                } catch {
-                                  toast({ title: "복사 실패", variant: "destructive" });
-                                }
-                              }}
-                              className="text-gray-400 hover:text-blue-600"
-                              aria-label="카탈로그 번호 복사"
-                            >
-                              <ClipboardCopy className="h-3 w-3" />
-                            </button>
-                          </span>
-                          <span className="text-sm font-semibold text-slate-900 font-mono break-words">{product.catalogNumber}</span>
-                        </div>
-                      )}
-                      {product.category && (
-                        <div className="flex flex-col gap-0.5 px-4 py-3 bg-white">
-                          <span className="text-[10px] md:text-xs font-semibold text-gray-500 tracking-wider">분류</span>
-                          <span className="text-sm font-semibold text-slate-900 break-words">{PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES]}</span>
-                        </div>
-                      )}
-                      {getDisplaySpecs(product.specifications).map((spec, i) => (
-                        <div key={`${spec.label}-${i}`} className="flex flex-col gap-0.5 px-4 py-3 bg-white">
-                          <span className="text-[10px] md:text-xs font-semibold text-gray-500 tracking-wider">{spec.label}</span>
-                          <span className="text-sm font-semibold text-slate-900 break-words">{spec.value}</span>
-                        </div>
-                      ))}
-                      </div>
-                    </div>
-                  </div>
+                  {/* §product-detail-sourcing-v21 §2 — "제품 사양" 통합 카드(PD-J) 삭제.
+                      Cat.No · 분류는 히어로가 이미 표시(중복), 추가 스펙(출처 · 내부 등급)은 내부 용어 메타로 §2 삭제 대상.
+                      실 spec(규격/용량 · 규제 규격)은 위 "상세 스펙" 카드가 canonical 로 담당 — 정보 손실 0. */}
 
                   {/* 사용 용도 — §1-2⑤ AI 생성 버튼 제거(관통원칙: 별도 AI UI 금지 + non-persist).
                       product.usageDescription(DB 캐노니컬)만 노출. */}
@@ -650,31 +577,27 @@ export default function ProductDetailPage() {
 
                   {/* 안전 · 규제 정보 - 항상 표시. PD-N: 독립 카드 스타일(시안 정합). */}
                   <div className="rounded-[18px] border border-gray-200 bg-white shadow-sm p-6 md:p-8">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Shield className="h-4 w-4 text-[#c47d10]" />
-                        <h3 className="font-semibold text-sm md:text-base">안전 · 규제 정보</h3>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {(() => {
-                          const safetyLevel = getProductSafetyLevel(product);
-                          return (
-                            <Badge
-                              variant="outline"
-                              className={`${safetyLevel.bgColor} ${safetyLevel.color} ${safetyLevel.borderColor} border-2 font-semibold text-xs`}
-                            >
-                              {/* §product-detail-refinement 계약⑤ — MSDS 병기 제거(중복 경고 → 상단 체크리스트 1곳). 위험도만. */}
-                              위험도: {safetyLevel.label}
-                            </Badge>
-                          );
-                        })()}
-                        {isAdmin && (
-                          <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={startSafetyEdit}>
-                            <Pencil className="h-3 w-3 mr-1" />
-                            안전 정보 편집
-                          </Button>
-                        )}
-                      </div>
+                    {/* §product-detail-sourcing-v21 §5 — 헤더 1행 고정: 아이콘 + 제목(nowrap) + 위험도 pill(nowrap, shrink-0).
+                        구 3단 줄바꿈("안전 · 규제 / 정보") + 위험도 칩 이탈(320~430px) 해소. 아이콘은 §8 라인 15px 슬레이트. */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <Shield className="h-[15px] w-[15px] shrink-0 text-slate-500" />
+                      <h3 className="font-semibold text-sm md:text-base flex-1 min-w-0 whitespace-nowrap">안전·규제 정보</h3>
+                      {(() => {
+                        const safetyLevel = getProductSafetyLevel(product);
+                        return (
+                          <span className="shrink-0 whitespace-nowrap rounded-full border border-slate-200 bg-slate-50 px-2.5 py-[3px] text-[10.5px] font-bold text-slate-400">
+                            {/* §product-detail-refinement 계약⑤ 승계 — MSDS 병기 없음. 위험도 단일 표기(히어로 이중 표기 제거). */}
+                            위험도 {safetyLevel.label}
+                          </span>
+                        );
+                      })()}
+                      {/* §1 권한 — 안전 정보 편집은 ADMIN·SUPPLIER 만 생성(buyer 미생성, disabled 아님). */}
+                      {canEditSpec && (
+                        <Button type="button" variant="outline" size="sm" className="h-7 shrink-0 text-xs" onClick={startSafetyEdit}>
+                          <Pencil className="h-3 w-3 mr-1" />
+                          안전 정보 편집
+                        </Button>
+                      )}
                     </div>
                     <div className="space-y-3 md:space-y-4">
                         {/* 위험 코드 */}
@@ -790,21 +713,40 @@ export default function ProductDetailPage() {
                               <ExternalLink className="h-3 w-3 ml-1.5" />
                             </Button>
                           ) : (
-                            /* §product-detail-refinement 계약⑤ — MSDS 미등록 하위 경고 배너 삭제(중복 제거).
-                               미등록 사실·SDS 요청은 상단 완성도 체크리스트(SDS/MSDS 행)로 통합. 여기선 중립 1줄. */
-                            <p className="text-[11px] text-slate-400">안전 자료(MSDS/SDS)는 상단 완성도 체크리스트에서 요청·확인할 수 있습니다.</p>
+                            /* §product-detail-sourcing-v21 §1·§5 — SDS 는 공급사/관리자만 등록(개인 업로드 = 오매칭 위험,
+                               canonical 소스 단일 관리). buyer 에겐 요청 링크 없이 정직 표기 1줄만. */
+                            <p className="text-[11px] text-slate-400">등록 없음 · 공급사/관리자 등록 시 표시됩니다</p>
                           )}
                           {/* §11.348-B-1 B1-2 — 업로드된 SDS 문서 목록/업로드/열람 (서명URL). SDS 는 제품 단위 canonical.
-                              §product-detail-refinement 계약③ — 접힘 한 줄(등록된 SDS 문서 · 0건 · SDS 업로드), 확장 시 업로드 UI. */}
+                              §product-detail-sourcing-v21 §1·§5 — 접힘 한 줄 형태는 계약③ 승계.
+                              · status: 미등록 시 정직 표기(등록 없음 · 공급사/관리자 등록 시 표시됩니다)
+                              · action: canEditSpec(ADMIN·SUPPLIER) 에게만 "SDS 업로드" 생성 — buyer 미생성(dead link 0)
+                              · 업로드 UI(SdsDocumentsSection)도 canEditSpec 안에서만 마운트 — 개인 업로드 경로 차단 */}
                           {product?.id && (
                             <div id="product-sds-docs">
                               <CollapsedRow
-                                label="등록된 SDS 문서"
-                                status={product.msdsUrl ? "등록됨" : "0건"}
-                                action={{ label: "SDS 업로드", href: "/support" }}
+                                label="SDS/MSDS 문서"
+                                status={product.msdsUrl ? "등록됨" : "등록 없음 · 공급사/관리자 등록 시 표시됩니다"}
+                                action={
+                                  canEditSpec
+                                    ? {
+                                        label: "SDS 업로드",
+                                        onClick: () =>
+                                          document
+                                            .getElementById("product-sds-docs")
+                                            ?.scrollIntoView({ behavior: "smooth", block: "center" }),
+                                      }
+                                    : undefined
+                                }
                                 defaultOpen={!!product.msdsUrl}
                               >
-                                <SdsDocumentsSection productId={product.id} docType="sds" />
+                                {canEditSpec ? (
+                                  <SdsDocumentsSection productId={product.id} docType="sds" />
+                                ) : (
+                                  <p className="text-[11px] text-slate-400">
+                                    제품 안전자료는 공급사/관리자가 등록합니다. 등록되면 이 자리에 표시됩니다.
+                                  </p>
+                                )}
                               </CollapsedRow>
                             </div>
                           )}
@@ -894,7 +836,9 @@ export default function ProductDetailPage() {
                           </div>
                         )}
 
-                        {/* §product-detail-refinement 계약⑥ — 규제 포털: 버튼 grid 폐기 → 접힘 행(CollapsedRow) + 상시 2(mfds·kchem) + 더보기 텍스트 링크. */}
+                        {/* §product-detail-sourcing-v21 §5 — 규제 포털: 접힘 행(CollapsedRow) 폐기 → 주요 2기관 버튼 + 더보기 텍스트.
+                            상시 2개 화이트리스트(REG_PORTAL_ALWAYS = mfds·kchem)와 전용 더보기 상태(showMoreRegPortal)는 계약⑥ 승계 — 세로 6나열 회귀 차단.
+                            시안 정합: 버튼 2개(외부링크 라인 아이콘) + `더보기 N개 기관 ›`, 섹션 제목 없음(카드 헤더가 맥락). */}
                         {(() => {
                           const regLinks = getRegulationLinksForProduct(
                             product.name,
@@ -903,45 +847,43 @@ export default function ProductDetailPage() {
                           );
                           const always = regLinks.filter((l) => REG_PORTAL_ALWAYS.includes(l.id));
                           const rest = regLinks.filter((l) => !REG_PORTAL_ALWAYS.includes(l.id));
+                          if (always.length === 0 && rest.length === 0) return null;
                           const shown = showMoreRegPortal ? [...always, ...rest] : always;
                           return (
                             <div className="pt-2 border-t border-bd">
-                              <CollapsedRow label="국내 규제기관 포털" status={`${regLinks.length}개 기관`} defaultOpen>
-                                <div className="flex flex-col gap-1">
-                                  {shown.map((link) => (
-                                    <a
-                                      key={link.id}
-                                      href={link.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      title={link.description}
-                                      className="inline-flex items-center gap-1.5 text-xs text-blue-700 hover:text-blue-800 hover:underline underline-offset-2"
-                                    >
-                                      <ExternalLink className="h-3 w-3 shrink-0" />
-                                      <span className="truncate">{link.name}</span>
-                                    </a>
-                                  ))}
-                                  {rest.length > 0 && (
-                                    <button
-                                      type="button"
-                                      onClick={() => setShowMoreRegPortal(!showMoreRegPortal)}
-                                      className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-slate-700 mt-0.5"
-                                    >
-                                      {showMoreRegPortal ? (
-                                        <><ChevronUp className="h-3 w-3" />접기</>
-                                      ) : (
-                                        <><ChevronDown className="h-3 w-3" />더보기 ({rest.length}개)</>
-                                      )}
-                                    </button>
-                                  )}
-                                  <p className="text-[10px] text-slate-500 mt-1">제품명 또는 카탈로그 번호로 각 규제기관 포털에서 검색할 수 있습니다.</p>
-                                </div>
-                              </CollapsedRow>
+                              <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:items-center">
+                                {shown.map((link) => (
+                                  <a
+                                    key={link.id}
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title={link.description}
+                                    className="inline-flex min-h-[44px] items-center gap-1.5 rounded-[10px] border border-slate-200 px-3 py-2.5 text-xs font-semibold text-blue-700 hover:border-blue-300 hover:text-blue-800"
+                                  >
+                                    <ExternalLink className="h-3 w-3 shrink-0" />
+                                    <span className="truncate">{link.name}</span>
+                                  </a>
+                                ))}
+                                {rest.length > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowMoreRegPortal(!showMoreRegPortal)}
+                                    className="col-span-2 inline-flex min-h-[44px] items-center gap-1 text-[11.5px] font-semibold text-slate-500 hover:text-slate-700 md:col-span-1 md:min-h-0"
+                                  >
+                                    {showMoreRegPortal ? "접기" : `더보기 ${rest.length}개 기관 ›`}
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           );
                         })()}
 
-                        <Disclaimer type="safety" className="mt-4" />
+                        {/* §product-detail-sourcing-v21 §5 — yellow Alert 박스(과경고) → 회색 각주 1줄.
+                            공용 Disclaimer 컴포넌트는 타 표면(datasheet·price·rfq)에서 계속 사용 — 컴포넌트 무손상, 이 표면만 각주화. */}
+                        <p className="mt-4 border-t border-slate-100 pt-2.5 text-[11px] leading-relaxed text-slate-400">
+                          참고용 정보입니다. 취급/보관/폐기 지침은 SDS/MSDS 원문을 우선 확인하세요.
+                        </p>
                       </div>
                     </div>
                 </CardContent>
@@ -980,15 +922,7 @@ export default function ProductDetailPage() {
                             ) : (
                               <div className="inline-flex items-center rounded-md bg-blue-50 border border-blue-200 px-2 py-1 text-sm font-bold text-blue-700">견적가 안내 품목</div>
                             )}
-                            {/* 재고/납기 정보는 표시하지 않음 (확실하지 않은 정보) */}
-                            <div className="space-y-2 pt-2">
-                              <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                                <span className="flex items-center gap-1.5 text-xs text-gray-600">
-                                  <Calendar className="w-3 h-3" /> 납기
-                                </span>
-                                <span className="text-xs font-medium text-gray-700 text-right">견적 시 안내</span>
-                              </div>
-                            </div>
+                            {/* §product-detail-sourcing-v21 §7 — 벤더가 있어도 "납기 · 견적 시 안내" 상시 행은 삭제(정보량 0). */}
                             {pv.url && (
                               <a
                                 href={pv.url}
@@ -1012,17 +946,10 @@ export default function ProductDetailPage() {
                           </span>
                           <div className="min-w-0">
                             <p className="text-sm font-bold text-[#2456bd] leading-tight">견적가 안내 품목</p>
-                            {/* §product-detail-refinement 계약④ — 가격 = 견적 후 확정 1줄(3행 반복 테이블 폐기). */}
-                            <p className="text-[11px] text-slate-600 mt-0.5">가격은 견적 후 확정됩니다</p>
+                            {/* §product-detail-sourcing-v21 §7 — 레일 1행 압축: 가격 안내 보조문 · Cat.No 요약행 삭제.
+                                가격 사유는 상태 라벨(견적가 안내 품목)이 이미 전달, Cat.No 는 히어로가 canonical(중복 제거). */}
                           </div>
                         </div>
-                        {/* qc-meta — Cat.No 만(납기·최소 주문 '견적 시 안내' 반복 행 폐기, 견적 후 확정으로 일원화). */}
-                        {product.catalogNumber && (
-                          <div className="mt-3 text-xs flex items-center justify-between py-1">
-                            <span className="text-slate-400">Cat.No</span>
-                            <span className="font-mono font-medium text-slate-900">{product.catalogNumber}</span>
-                          </div>
-                        )}
                       </div>
                     )}
 
@@ -1047,11 +974,12 @@ export default function ProductDetailPage() {
                           </button>
                         </div>
                       )}
-                      {/* §product-detail-refinement 계약④ — 담김 시 주 CTA = 견적 요청서 만들기(→/dashboard/quotes, 하단 트레이 동일). toast-only no-op 폐기. */}
+                      {/* §product-detail-sourcing-v21 §7 — 담기 후 버튼 상태 전환 = `담김 ✓ · 견적함 보기`(라벨 반전, 계약④ 목적지 /dashboard/quotes 는 승계).
+                          toast-only no-op 폐기는 계약④ 그대로 유지 — 담김이 버튼 상태로 드러난다. */}
                       {inQuoteCart ? (
-                        <Button asChild className="w-full py-3.5 bg-[#2f6be0] hover:bg-[#2456bd] text-white rounded-xl font-bold text-base shadow-sm transition-colors flex items-center justify-center gap-2">
+                        <Button asChild className="w-full py-3.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl font-bold text-base shadow-none transition-colors flex items-center justify-center gap-2">
                           <Link href="/dashboard/quotes">
-                            <FileText className="w-5 h-5" />견적 요청서 만들기
+                            <Check className="w-5 h-5" />담김 ✓ · 견적함 보기
                           </Link>
                         </Button>
                       ) : (
@@ -1062,7 +990,7 @@ export default function ProductDetailPage() {
                             if (result.ok) {
                               setInQuoteCart(true);
                               window.dispatchEvent(new Event("quote-cart-changed")); // §PD-D 트레이 갱신 + ⑨-2 구독 재읽기
-                              toast({ title: "견적 담기 완료", description: "제품이 견적함에 추가되었습니다." });
+                              toast({ title: "견적함에 담았습니다", description: "견적 요청은 무료이며 구매 의무가 없습니다." });
                             } else {
                               toast({ title: "견적 담기 실패", description: "제품 정보를 확인할 수 없습니다.", variant: "destructive" });
                             }
@@ -1071,27 +999,13 @@ export default function ProductDetailPage() {
                           <ShoppingCart className="w-5 h-5 group-hover:scale-110 transition-transform" />견적 담기
                         </Button>
                       )}
-                      {/* §product-detail PD-A(§06) — 견적 신뢰 문구. */}
-                      <p className="text-[11px] text-slate-500 text-center">견적 요청은 무료이며 구매 의무가 없습니다.</p>
-                      {/* §product-detail-refinement 계약④ — 보조 2분할: 비교 검토 · 재고 조회(별도 stock-mini 카드 흡수). */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <Button
-                          variant="outline"
-                          className="py-3 bg-white border border-gray-200 hover:border-blue-300 text-gray-700 hover:text-blue-600 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2"
-                          onClick={() => {
-                            if (isInCompare) { removeProduct(id); toast({ title: "비교에서 제거됨", description: "비교 대상에서 제거되었습니다." }); }
-                            else { addProduct(id); toast({ title: "비교에 추가됨", description: "비교 대상에 추가되었습니다." }); }
-                          }}
-                        >
-                          <GitCompare className="w-4 h-4" />비교 검토
-                        </Button>
-                        <Button asChild variant="outline" className="py-3 bg-white border border-gray-200 hover:border-blue-300 text-gray-700 hover:text-blue-600 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
-                          <Link href="/dashboard/inventory">
-                            <Package className="w-4 h-4" />재고 조회
-                          </Link>
-                        </Button>
-                      </div>
-                      {/* §product-detail-refinement 계약④ — 다크 맞춤 견적 카드 폐기 → 푸터 텍스트 링크(/support 보존). */}
+                      {/* §product-detail-sourcing-v21 §7 — 레일 1행 압축.
+                          · "견적 요청은 무료이며 구매 의무가 없습니다" 상시 문구 삭제(PD-A 은퇴) → 첫 담기 시 1회 안내 toast 로 이전.
+                          · 보조 2분할(비교 검토 · 재고 조회) 삭제 — 비교는 배선 없음(dead button), 재고 진입은 §3 거래 맥락 블록이 담당.
+                          · "영업 문의" 푸터 링크는 **존치**. 1차 삭제 시도의 근거("전역 내비가 /support 보유")는 실측 반증 —
+                            이 표면은 자체 layout 이 없고 root layout·page 모두 MainHeader 를 렌더하지 않아 이 링크가
+                            유일한 /support 진입이다. §detail-contrast-slate100 이 다크 맞춤견적 카드의 후신(대체 경로)으로
+                            지정한 승계 계약이므로 삭제 금지 — §product-detail-sourcing-v21 §7 이 양성으로 잠근다. */}
                       <p className="text-[11px] text-slate-500 text-center pt-1">
                         대량 구매·특수 요구는 <Link href="/support" className="font-semibold text-blue-600 hover:underline">영업 문의</Link>
                       </p>
@@ -1130,19 +1044,13 @@ export default function ProductDetailPage() {
             )}
           </div>
         </div>
-        {/* 납기 정보 - 아이콘 없이 텍스트만 */}
-        <div className="flex items-center justify-between mb-3">
-          <span className="flex items-center gap-1.5 text-xs text-gray-600">
-            <Calendar className="w-3 h-3" /> 납기
-          </span>
-          <span className="text-xs font-medium text-gray-700 text-right">견적 시 안내</span>
-        </div>
+        {/* §product-detail-sourcing-v21 §7 — 납기 상시 행 삭제(1행 압축). 납기는 견적 회신에서 확정 — 상시 노출 가치 0. */}
         <div className="flex items-center justify-end">
           {/* §product-detail-refinement 계약④ — 모바일도 담김 시 견적 요청서 만들기(→/dashboard/quotes). toast-only no-op 폐기. */}
           {inQuoteCart ? (
-            <Button asChild className="flex-shrink-0 py-3 px-6 bg-[#2f6be0] hover:bg-[#2456bd] text-white rounded-xl font-bold text-base shadow-sm transition-colors flex items-center justify-center gap-2">
+            <Button asChild className="flex-shrink-0 py-3 px-6 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl font-bold text-base shadow-none transition-colors flex items-center justify-center gap-2">
               <Link href="/dashboard/quotes">
-                <FileText className="w-5 h-5" />견적 요청서 만들기
+                <Check className="w-5 h-5" />담김 ✓ · 견적함 보기
               </Link>
             </Button>
           ) : (
@@ -1153,7 +1061,7 @@ export default function ProductDetailPage() {
                 if (result.ok) {
                   setInQuoteCart(true);
                   window.dispatchEvent(new Event("quote-cart-changed")); // §PD-D 트레이 갱신 + ⑨-2 구독 재읽기
-                  toast({ title: "견적 담기 완료", description: "제품이 견적함에 추가되었습니다." });
+                  toast({ title: "견적함에 담았습니다", description: "견적 요청은 무료이며 구매 의무가 없습니다." });
                 } else {
                   toast({ title: "견적 담기 실패", description: "제품 정보를 확인할 수 없습니다.", variant: "destructive" });
                 }
@@ -1163,8 +1071,7 @@ export default function ProductDetailPage() {
             </Button>
           )}
         </div>
-        {/* §product-detail PD-A(§06) — 견적 신뢰 문구(모바일). */}
-        <p className="text-[10px] text-slate-500 text-center mt-1">견적 요청은 무료이며 구매 의무가 없습니다.</p>
+        {/* §product-detail-sourcing-v21 §7 — 모바일도 상시 신뢰 문구 삭제(첫 담기 1회 toast 안내로 이전). */}
       </div>
 
       {/* §product-detail PD-D(§09) — 견적함 정직 트레이바(데스크탑). 비교 destination 없어 견적함만(dead button 0). */}
@@ -1278,6 +1185,13 @@ export default function ProductDetailPage() {
   );
 }
 
+// §product-detail-sourcing-v21 §6 — 매칭 근거 파생(단일 출처).
+//   PD-G 의 grade 누출 필터(§sourcing-product-surface 정합)를 승계하고, 근거 0건 = 추천 미노출 계약의 판정 함수.
+function matchReasons(alt: any): string[] {
+  if (!Array.isArray(alt?.similarityReasons)) return [];
+  return alt.similarityReasons.filter((r: string) => !/grade/i.test(r));
+}
+
 // 대체품 추천 섹션
 function AlternativeProductsSection({ 
   productId, 
@@ -1296,9 +1210,7 @@ function AlternativeProductsSection({
     enabled: !!productId,
   });
 
-  const { addProduct, removeProduct, hasProduct } = useCompareStore();
-  const { toast } = useToast();
-
+  // §product-detail-sourcing-v21 §6 — 비교 store 의존 제거(비교 버튼 폐기). toast 도 이 섹션에선 미사용.
   if (isLoading) {
     return (
       <Card className="bg-white shadow-sm rounded-[18px] p-6 md:p-8 border border-gray-200 mt-6">
@@ -1309,21 +1221,25 @@ function AlternativeProductsSection({
     );
   }
 
-  if (!alternatives?.alternatives || alternatives.alternatives.length === 0) {
-    return null;
-  }
+  // §product-detail-sourcing-v21 §6 — 매칭 근거 칩 1개 필수. 근거 산출 불가 품목은 추천 자체를 노출하지 않는다
+  //   ("왜 이게 대체품인지" 없는 추천 = 판단 불가 noise). grade 누출 필터는 PD-G 승계.
+  const shown = ((alternatives?.alternatives ?? []) as any[]).filter(
+    (alt) => matchReasons(alt).length > 0,
+  );
+  if (shown.length === 0) return null;
 
   return (
     <Card className="bg-white shadow-sm rounded-[18px] p-6 md:p-8 border border-gray-200 mt-6">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">대체품 추천</CardTitle>
-        <CardDescription>유사 스펙의 대체 제품을 찾았습니다.</CardDescription>
+        {/* §product-detail-sourcing-v21 §6 — 제목 옆 건수 인라인(설명문에 묻힌 "총 N건" 패턴 폐기). */}
+        <CardTitle className="text-lg font-semibold">
+          대체품 추천 <span className="ml-1 text-[11.5px] font-medium text-slate-400">유사 스펙 {shown.length}건</span>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {alternatives.alternatives.map((alt: any) => {
+          {shown.map((alt: any) => {
             const minPrice = alt.vendors?.[0]?.priceInKRW;
-            const isInCompare = hasProduct(alt.id);
 
             return (
               <Card key={alt.id} className="border-gray-200 hover:border-blue-300 hover:shadow-sm rounded-xl transition-all">
@@ -1366,48 +1282,22 @@ function AlternativeProductsSection({
                       <span className="text-[10px] text-slate-500 font-mono">Cat.No {alt.catalogNumber}</span>
                     )}
                   </div>
-                  {/* §product-detail PD-G(§08) — "왜 대체 가능한지" 유사 근거 태그. grade 누출 방지: "Grade" 근거 제외(§sourcing-product-surface 정합). */}
-                  {Array.isArray(alt.similarityReasons) &&
-                    alt.similarityReasons.filter((r: string) => !/grade/i.test(r)).length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {alt.similarityReasons
-                          .filter((r: string) => !/grade/i.test(r))
-                          .slice(0, 3)
-                          .map((r: string, i: number) => (
-                            <span key={i} className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">
-                              {r}
-                            </span>
-                          ))}
-                      </div>
-                    )}
+                  {/* §product-detail-sourcing-v21 §6 — 매칭 근거 칩 **1개**(중복 나열 폐기). 근거 0건 품목은 위에서 이미 제외됨. */}
+                  <div className="flex flex-wrap gap-1">
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-50 text-slate-500 border border-slate-100">
+                      {matchReasons(alt)[0]}
+                    </span>
+                  </div>
                   {minPrice !== undefined && (
                     <div className="text-sm font-semibold">
                       ₩{minPrice.toLocaleString("ko-KR")}
                     </div>
                   )}
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 text-xs"
-                      onClick={() => {
-                        if (isInCompare) {
-                          removeProduct(alt.id);
-                        } else {
-                          addProduct(alt.id);
-                        }
-                        toast({
-                          title: isInCompare ? "비교에서 제거됨" : "비교에 추가됨",
-                        });
-                      }}
-                    >
-                      <GitCompare className="h-3 w-3 mr-1" />
-                      {isInCompare ? "비교 제거" : "비교"}
-                    </Button>
-                    {/* §product-detail PD-G(§08) — 상세(제품 간 이동, §09 연결). */}
+                  {/* §product-detail-sourcing-v21 §6 — 비교 버튼 삭제(비교 화면 배선 전까지 dead button 금지). 상세 링크만. */}
+                  <div className="flex">
                     <Link
                       href={`/products/${alt.id}`}
-                      className="flex-1 inline-flex items-center justify-center gap-0.5 text-xs border border-gray-200 rounded-md px-2 py-1.5 hover:bg-slate-50 text-slate-700"
+                      className="ml-auto inline-flex items-center gap-0.5 text-xs font-semibold text-blue-700 hover:text-blue-800"
                     >
                       상세 <ChevronRight className="h-3 w-3" />
                     </Link>

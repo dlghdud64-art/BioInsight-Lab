@@ -46,8 +46,12 @@ describe("§product-detail PD-F — page 배선(raw 렌더 제거)", () => {
     join(__dirname, "..", "..", "app/products/[id]/page.tsx"),
     "utf8",
   );
-  it("getDisplaySpecs 로 렌더(raw Object.entries 직접 렌더 제거)", () => {
-    expect(PAGE).toMatch(/getDisplaySpecs\(product\.specifications\)/);
+  /* 🔁 은퇴→승계 (§product-detail-sourcing-v21 §2)
+   *    추가 스펙(출처·내부 등급) 표면이 삭제되며 PAGE 의 getDisplaySpecs 호출부가 사라졌다.
+   *    PD-F 의 본래 계약(raw Object.entries 직접 렌더 금지 = 내부 key 노출 0)은 **강화된 형태로 승계** —
+   *    이제 raw 렌더 자체가 존재할 수 없다. 매핑 lib 단언(위 describe)은 전량 존치. */
+  it("raw specifications 직접 렌더 0(내부 key 노출 금지 승계)", () => {
     expect(PAGE).not.toMatch(/Object\.entries\(product\.specifications as Record<string, any>\)\.map/);
+    expect(PAGE).not.toMatch(/getDisplaySpecs\(product\.specifications\)\.map/);
   });
 });

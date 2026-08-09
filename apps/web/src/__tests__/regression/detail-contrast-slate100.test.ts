@@ -66,7 +66,10 @@ describe("detail #1 - hierarchy / contrast preserved (regression zero)", () => {
     // §product-detail PD-J — Cat.No 가 "제품 사양" 통합 카드로 이동하며 값 색이 slate-700→slate-900(더 진함=대비↑).
     //   보호 의도(카탈로그번호 가독 대비 + font-mono)는 보존·향상. 정확 클래스만 갱신.
     const src = read(DETAIL);
-    expect(src).toMatch(/text-slate-(700|900) font-mono|font-mono break-words/); // slate-900 mono(개선) 허용
+    // 2026-08-09 완화 — 클래스 토큰 **순서 무관**. 원 정규식은 `text-slate-900 font-mono` 순서에만
+    //   매칭돼, §2 중복 "제품 사양" 카드 삭제로 그 순서의 spot 이 사라지자 RED 가 됐다.
+    //   보호 의도(카탈로그번호 = mono + slate-900 대비)는 현행 구현이 그대로 충족한다.
+    expect(src).toMatch(/font-mono[^"]*text-slate-900|text-slate-900[^"]*font-mono/);
   });
 
   // supersede(§product-detail-refinement 계약④): 다크 맞춤견적 카드 자체가 폐기됐다.

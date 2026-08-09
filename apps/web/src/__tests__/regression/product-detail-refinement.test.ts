@@ -110,11 +110,18 @@ describe("§refinement 계약③ — 접힘 행(공용 컴포넌트 3회 사용)
   it("PD-L 숨김 게이트 폐기(buyer 에게도 미등록 사실 노출)", () => {
     expect(PAGE_CODE).not.toMatch(/\(product\.specification \|\| product\.regulatoryCompliance \|\| canEditSpec\) &&/);
   });
-  it("행1 상세 스펙 · 미등록 · 정보 요청", () => {
-    expect(PAGE).toMatch(/상세 스펙[\s\S]{0,300}?미등록[\s\S]{0,300}?정보 요청/);
+  /* 🔁 은퇴→승계 (§product-detail-sourcing-v21 §1, 호영님 승인 2026-08-09)
+   *    구 단언은 buyer 에게 `정보 요청` / `SDS 업로드` 링크가 **존재할 것**을 강제했다.
+   *    v21 §1 권한 규칙이 이를 반전 — buyer 에겐 편집·업로드·요청 링크를 미생성한다(dead link 6개 제거).
+   *    접힘 행(CollapsedRow) **형태**는 그대로 승계하고, 액션은 canEditSpec 게이트로 이동. */
+  it("행1 상세 스펙 · 미등록 — 액션은 canEditSpec 게이트 안에서만 생성", () => {
+    expect(PAGE).toMatch(/label="상세 스펙"[\s\S]{0,400}?status="미등록"/);
+    expect(PAGE).toMatch(/label="상세 스펙"[\s\S]{0,600}?canEditSpec[\s\S]{0,200}?스펙 편집/);
   });
-  it("행2 등록된 SDS 문서 · 0건 · SDS 업로드", () => {
-    expect(PAGE).toMatch(/등록된 SDS 문서[\s\S]{0,300}?0건[\s\S]{0,300}?SDS 업로드/);
+  it("행2 SDS/MSDS 문서 · 정직 표기 — buyer 업로드 경로 0", () => {
+    expect(PAGE).toMatch(/label="SDS\/MSDS 문서"/);
+    expect(PAGE).toMatch(/등록 없음 · 공급사\/관리자 등록 시 표시됩니다/);
+    expect(PAGE).toMatch(/canEditSpec[\s\S]{0,400}?SDS 업로드/);
   });
 });
 
@@ -146,12 +153,22 @@ describe("§refinement 계약④ — 우측 패널 CTA 위계", () => {
     expect(PAGE).toMatch(/재고 조회/);
     expect(PAGE_CODE).not.toMatch(/재고 현황을 <b[^>]*>재고 조회<\/b>로 확인하세요/);
   });
-  it("다크 맞춤 견적 카드 폐기 → 푸터 텍스트 링크(/support 보존)", () => {
+  /* 🔁 은퇴→승계 (§product-detail-sourcing-v21 §7, 시안 정합)
+   *    다크 카드 폐기(from-gray-900)는 **유지**. "가격은 견적 후 확정됩니다" 보조문은
+   *    §7 레일 1행 압축으로 삭제됐고, 가격 사유는 상태 라벨 `견적가 안내 품목` 이
+   *    단독으로 전달한다(PD-A 승계).
+   *    ⚠️ "영업 문의" 링크는 **삭제 대상이 아니다**(2026-08-09 실측 정정). 1차 개정이
+   *    "전역 내비가 /support 를 보유"한다는 근거로 지웠으나 반증됨 — 이 표면은 자체
+   *    layout 이 없고 root layout·page 모두 MainHeader 를 렌더하지 않아 그 링크가 유일한
+   *    /support 진입이다. §detail-contrast-slate100 이 다크 카드의 후신(대체 경로)으로
+   *    지정한 승계 계약이므로 존치하며, 양성 잠금은 §product-detail-sourcing-v21 §7 이 맡는다. */
+  it("다크 맞춤 견적 카드 폐기 유지", () => {
     expect(PAGE_CODE).not.toMatch(/from-gray-900 to-gray-800/);
-    expect(PAGE).toMatch(/href="\/support"/);
   });
-  it("가격 영역 = 견적 후 확정 1줄(3행 반복 테이블 폐기)", () => {
-    expect(PAGE).toMatch(/견적 후 확정/);
+  it("레일 1행 압축 — 보조 링크/보조문 0", () => {
+    expect(PAGE_CODE).not.toMatch(/비교 검토/);
+    expect(PAGE_CODE).not.toMatch(/재고 조회/);
+    expect(PAGE).toMatch(/견적가 안내 품목/);
   });
 });
 
@@ -184,8 +201,12 @@ describe("§refinement 계약⑥ — 규제 포털 축소", () => {
   it("규제 포털 전용 더보기 상태(컴플라이언스 더보기와 별개 식별자)", () => {
     expect(PAGE).toMatch(/showMoreRegPortal|showAllRegPortal|regPortalExpanded/);
   });
-  it("규제 포털이 CollapsedRow 로 렌더(카드 아님)", () => {
-    expect(PAGE).toMatch(/CollapsedRow[\s\S]{0,400}?국내 규제기관 포털|국내 규제기관 포털[\s\S]{0,400}?CollapsedRow/);
+  /* 🔁 은퇴→승계 (§product-detail-sourcing-v21 §5, 시안 정합)
+   *    계약⑥의 목적(세로 6나열 폐기 · 상시 2 + 더보기)은 **불변**이며 아래 두 it 이 계속 잠근다.
+   *    렌더 형태만 CollapsedRow → 주요 2기관 버튼 + `더보기 N개 기관` 텍스트로 교체(스캔성). */
+  it("포털이 주요 2기관 버튼 + 더보기 텍스트로 렌더(세로 6나열 회귀 0)", () => {
+    expect(PAGE).toMatch(/더보기 \$\{rest\.length\}개 기관/);
+    expect(PAGE_CODE).not.toMatch(/CollapsedRow label="국내 규제기관 포털"/);
   });
 });
 
@@ -259,14 +280,19 @@ describe("§refinement — 회귀 0(canonical truth 무접촉)", () => {
     expect(CART).toMatch(/export function addToQuoteCart\(/);
     expect(CART).toMatch(/export function readQuoteCart\(/);
   });
-  it("규제 링크 소스·면책 보존", () => {
+  /* 🔁 은퇴→승계 (§product-detail-sourcing-v21 §5)
+   *    규제 링크 소스는 무손상. 면책은 yellow Alert(<Disclaimer type="safety">) → 회색 각주 1줄로 교체.
+   *    공용 Disclaimer 컴포넌트는 타 표면에서 계속 사용 — 컴포넌트 파일 무접촉. */
+  it("규제 링크 소스 보존 + 면책은 회색 각주로 승계", () => {
     expect(PAGE).toMatch(/getRegulationLinksForProduct\(/);
-    expect(PAGE).toMatch(/<Disclaimer type="safety"/);
+    expect(PAGE).toMatch(/참고용 정보입니다\. 취급\/보관\/폐기 지침은 SDS\/MSDS 원문을 우선 확인하세요\./);
   });
-  it("완성도 컴포넌트 진입점 보존", () => {
-    // ⚠️ 구 단언 `/<ProductCompleteness product=\{product\}/` 는 태그명과 prop 이 **한 줄 단일 공백**일 때만
-    //    통과해, prop 이 늘어 여러 줄로 포맷되자 회귀로 오탐했다(2026-07-25). 서식 결합 제거.
-    expect(PAGE).toMatch(/<ProductCompleteness[\s\S]{0,300}?product=\{product\}/);
+  /* 🔁 은퇴→승계 (§product-detail-sourcing-v21 §1)
+   *    완성도 게이지는 buyer 화면에서 은퇴(공급사/관리자 콘솔 이관) → 미등록 접힌 1줄(PendingInfoRow)이 승계.
+   *    산정 계층(computeCompleteness / COMPLETENESS_FIELDS)은 무손상 — 아래 lib 단언이 계속 잠근다. */
+  it("미등록 고지 진입점 보존(완성도 게이지 → 접힌 1줄 승계)", () => {
+    expect(PAGE).toMatch(/<PendingInfoRow[\s\S]{0,200}?product=\{product\}/);
+    expect(PAGE_CODE).not.toMatch(/<ProductCompleteness/);
   });
   it("PD-K 히어로 썸네일 보존(본 트랙 무접촉)", () => {
     expect(PAGE).toMatch(/w-20 h-20 md:w-24 md:h-24/);
@@ -326,16 +352,22 @@ describe("§refinement 계약⑧ — D7 위험도 행 · D8 동적 카운트", (
    *    `useLink = !!href && !(canEdit && handler)` 이므로 handler 미전달 시
    *    useLink=false → `<button onClick={undefined}>` = **동작 없는 버튼**.
    *    ADMIN 에게만 발현하고 buyer 경로 테스트로는 안 잡힌다. */
-  it("PAGE 가 편집 핸들러 3종을 배선(미배선 = ADMIN 대상 dead button)", () => {
-    expect(PAGE).toMatch(/onSpecEdit=\{/);
-    expect(PAGE).toMatch(/onSafetyEdit=\{/);
-    expect(PAGE).toMatch(/onSdsUpload=\{/);
+  /* 🔁 은퇴→승계 (§product-detail-sourcing-v21 §1)
+   *    구 계약은 완성도 체크리스트가 편집 핸들러 3종을 **prop 으로** 받는 구조를 잠갔다.
+   *    v21 에서 체크리스트가 사라지고 편집 진입은 각 섹션(스펙 카드 · 안전·규제 카드 · SDS 행)의
+   *    canEditSpec 게이트로 분산 — dead button 0 계약은 아래 형태로 승계한다. */
+  it("편집 진입이 canEditSpec 게이트 안에만 존재(buyer dead button 0)", () => {
+    expect(PAGE).toMatch(/canEditSpec[\s\S]{0,600}?스펙 편집/);
+    expect(PAGE).toMatch(/canEditSpec[\s\S]{0,400}?안전 정보 편집/);
+    expect(PAGE).toMatch(/canEditSpec[\s\S]{0,400}?SDS 업로드/);
+    expect(PAGE_CODE).not.toMatch(/isAdmin && \(\s*<Button[\s\S]{0,200}?안전 정보 편집/);
   });
   it("COMP: 핸들러 부재 시 button 대신 요청 링크로 폴백(dead button 0 최종 방어)", () => {
     expect(COMP).toMatch(/handler\s*\?|!!handler|handler\s*&&|handler\s*!==\s*undefined/);
   });
-  it("PAGE 가 role 을 전달(미전달 시 전원 buyer 고정 = 편집 경로 소멸)", () => {
-    expect(PAGE).toMatch(/<ProductCompleteness[\s\S]{0,400}?role=\{/);
+  /* 🔁 은퇴→승계 — role prop 전달 대신 페이지 스코프 canEditSpec 파생이 단일 출처. */
+  it("canEditSpec 이 role 에서 파생(전원 buyer 고정 회귀 0)", () => {
+    expect(PAGE).toMatch(/const canEditSpec = role === "ADMIN" \|\| role === "SUPPLIER"/);
   });
 });
 
