@@ -107,10 +107,58 @@ describe("§11.250b-fix #3 — 기존 cron entry 보존 (invariant)", () => {
   });
 });
 
-describe("§11.250b-fix #4 — crons 총 5 entry (3 기존 + 2 신규)", () => {
-  it("총 5 cron entry", () => {
+describe("§cron-registry-drift #4 — 개수가 아니라 canonical↔registry 정합을 잠근다", () => {
+  /**
+   * §cron-registry-drift (2026-08-08) — 잠금 이전.
+   *
+   * 구 단언은 `config.crons.length === 5` 하드값이었다. 그러나 이 파일 헤더가
+   * 스스로 선언하듯 canonical 은 vercel.json crons 이다 — canonical 이 늘 때마다
+   * 파생 sentinel 이 깨지는 구조는 "옛 값 잠금"(§inventory-dead-file-cleanup 계보)
+   * 이다. 실제로 catalog-ingest(0 3 * * *) · retention-archive(0 4 * * *) 가
+   * 추가되며 5 → 7 이 되자 이 단언이 RED 로 상주했다.
+   *
+   * 따라서 개수는 잠그지 않는다. 대신 canonical 의 모든 path 가 운영
+   * 레지스트리에 존재하고 schedule 이 일치할 것을 잠근다 — cron 을 새로
+   * 추가하는 행위 자체는 막지 않되, registry 누락은 즉시 RED 가 된다.
+   */
+  it("crons 개수는 운영 레지스트리 개수와 같다 (하드값 아님)", () => {
     const config = JSON.parse(vercelJsonRaw);
-    expect(config.crons.length).toBe(5);
+    expect(config.crons.length).toBe(VERCEL_CRON_REGISTRY.length);
+  });
+
+  it("canonical 의 모든 cron path 가 레지스트리에 존재한다 (누락 0)", () => {
+    const config = JSON.parse(vercelJsonRaw);
+    const registryPaths = new Set(VERCEL_CRON_REGISTRY.map((e) => e.path));
+    const missing = (config.crons as Array<{ path: string }>)
+      .map((c) => c.path)
+      .filter((p) => !registryPaths.has(p));
+    expect(missing).toEqual([]);
+  });
+
+  it("레지스트리에 canonical 에 없는 유령 항목이 없다", () => {
+    const config = JSON.parse(vercelJsonRaw);
+    const configPaths = new Set(
+      (config.crons as Array<{ path: string }>).map((c) => c.path),
+    );
+    const ghosts = VERCEL_CRON_REGISTRY.map((e) => e.path).filter(
+      (p) => !configPaths.has(p),
+    );
+    expect(ghosts).toEqual([]);
+  });
+
+  it("scheduleKst 가 cron 시각(UTC)의 +9 환산과 일치한다", () => {
+    // 날조 방지 — "매일 HH:MM KST" 문자열이 schedule 의 UTC 시각과 정합해야 한다.
+    for (const entry of VERCEL_CRON_REGISTRY) {
+      const m = entry.schedule.match(/^(\d+)\s+(\d+)\s+\*\s+\*\s+\*$/);
+      expect(m).not.toBeNull();
+      const minuteUtc = Number(m![1]);
+      const hourUtc = Number(m![2]);
+      const hourKst = (hourUtc + 9) % 24;
+      const expected = `매일 ${String(hourKst).padStart(2, "0")}:${String(
+        minuteUtc,
+      ).padStart(2, "0")} KST`;
+      expect(entry.scheduleKst).toBe(expected);
+    }
   });
 
   it("schedule 모두 cron syntax (0 N * * *)", () => {

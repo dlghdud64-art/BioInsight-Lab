@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { isAdmin } from "@/lib/api/admin";
 import { db } from "@/lib/db";
+// §cron-registry-drift — 운영 메타(목적·KST·차단 지점)를 서버에서 조인한다.
+// 클라이언트가 직접 import 하면 운영 메타가 번들에 실리므로 응답 계약 1곳으로 수렴.
+import {
+  VERCEL_CRON_REGISTRY,
+  getVercelCronRegistryEntry,
+} from "@/lib/ops-console/vercel-cron-registry";
 
 /**
  * #cron-monitoring-admin-dashboard — GET /api/admin/cron?period=7d|30d
@@ -86,7 +92,62 @@ export async function GET(request: NextRequest) {
           : null,
     }));
 
-    return NextResponse.json({ period, rows: safeRows }, { status: 200 });
+    // ── §cron-registry-drift — registry join ──────────────────────────
+    // 규칙 2가지:
+    //   1) 실행 이력이 0건인 registry 항목도 행으로 남긴다.
+    //      "등록됐는데 안 도는 cron" = §11.250b(dead cron) 재발 신호이므로
+    //      화면에서 사라지면 안 된다.
+    //   2) registry 에 없는 cronPath 는 드롭하지 않고 registry: null 로
+    //      내려보낸다. 무음 누락 금지 — 클라이언트가 경고 행으로 렌더한다.
+    const statsByPath = new Map(safeRows.map((r) => [r.cronPath, r] as const));
+
+    const emptyStats = (cronPath: string) => ({
+      cronPath,
+      totalCount: 0,
+      successCount: 0,
+      failureCount: 0,
+      avgDurationMs: null as number | null,
+      p95DurationMs: null as number | null,
+      lastStartedAt: null as string | null,
+      lastSuccess: null as boolean | null,
+      successRate: null as number | null,
+    });
+
+    const toRegistryMeta = (cronPath: string) => {
+      const entry = getVercelCronRegistryEntry(cronPath);
+      if (!entry) return null;
+      return {
+        scheduleKst: entry.scheduleKst,
+        purposeKo: entry.purposeKo,
+        manualGateKo: entry.manualGateKo,
+        operatorCheckKo: entry.operatorCheckKo,
+        expectedResultKo: entry.expectedResultKo,
+        environment: entry.environment,
+      };
+    };
+
+    // registry 순서를 우선 유지 → 운영자가 보는 순서가 안정적.
+    const registryRows = VERCEL_CRON_REGISTRY.map((entry) => ({
+      ...(statsByPath.get(entry.path) ?? emptyStats(entry.path)),
+      registry: toRegistryMeta(entry.path),
+    }));
+
+    // registry 에 없는데 실행 이력만 있는 path — 경고 대상.
+    const registryPaths = new Set(VERCEL_CRON_REGISTRY.map((e) => e.path));
+    const unregisteredRows = safeRows
+      .filter((r) => !registryPaths.has(r.cronPath))
+      .map((r) => ({ ...r, registry: null }));
+
+    const rowsWithRegistry = [...registryRows, ...unregisteredRows];
+
+    return NextResponse.json(
+      {
+        period,
+        rows: rowsWithRegistry,
+        unregisteredCount: unregisteredRows.length,
+      },
+      { status: 200 },
+    );
   } catch (error) {
     console.error("[admin/cron] route error:", error);
     return NextResponse.json(

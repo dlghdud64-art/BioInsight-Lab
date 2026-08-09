@@ -14,6 +14,26 @@ import { useQuery } from "@tanstack/react-query";
 
 type Period = "7d" | "30d";
 
+/**
+ * §cron-registry-drift (2026-08-08) — 운영 메타 결합.
+ *
+ * 실행 이력만 보여주던 표에 목적 / 실행 시각(KST) / 수동 차단 지점을 붙인다.
+ * 메타는 서버(/api/admin/cron)가 VERCEL_CRON_REGISTRY 에서 조인해 내려준다 —
+ * 클라이언트는 registry 를 import 하지 않는다(번들 표면 확대 방지).
+ *
+ * registry === null 인 행은 드롭하지 않고 경고 행으로 렌더한다.
+ * vercel.json 에는 있는데 레지스트리에 없는 cron 이 조용히 사라지면
+ * §11.250b(dead cron) 같은 사건을 다시 놓친다.
+ */
+interface CronRegistryMeta {
+  scheduleKst: string;
+  purposeKo: string;
+  manualGateKo: string;
+  operatorCheckKo: string;
+  expectedResultKo: string;
+  environment: string;
+}
+
 interface CronRow {
   cronPath: string;
   totalCount: number;
@@ -24,11 +44,13 @@ interface CronRow {
   lastStartedAt: string | null;
   lastSuccess: boolean | null;
   successRate: number | null;
+  registry: CronRegistryMeta | null;
 }
 
 interface CronResponse {
   period: Period;
   rows: CronRow[];
+  unregisteredCount?: number;
 }
 
 function formatMs(ms: number | null): string {
@@ -60,9 +82,23 @@ export function CronExecutionTable() {
   });
 
   const rows = data?.rows ?? [];
+  const unregisteredCount = data?.unregisteredCount ?? 0;
 
   return (
     <div className="space-y-3">
+      {/* 레지스트리 미등록 경고 — 무음 누락 금지 */}
+      {unregisteredCount > 0 && (
+        <div
+          role="status"
+          className="rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-800"
+        >
+          운영 레지스트리에 등록되지 않은 cron {unregisteredCount}건이 실행되고
+          있습니다. 목적과 차단 지점을 확인하려면
+          <span className="font-mono"> src/lib/ops-console/vercel-cron-registry.ts</span>
+          에 항목을 추가하세요.
+        </div>
+      )}
+
       {/* period 토글 */}
       <div className="flex items-center gap-2">
         <button
@@ -100,6 +136,15 @@ export function CronExecutionTable() {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-700 uppercase tracking-wide">
                   cronPath
                 </th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-700 uppercase tracking-wide">
+                  실행 시각
+                </th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-700 uppercase tracking-wide">
+                  목적
+                </th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-700 uppercase tracking-wide">
+                  차단 지점
+                </th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-slate-700 uppercase tracking-wide">
                   실행 수
                 </th>
@@ -127,7 +172,7 @@ export function CronExecutionTable() {
               {isLoading && (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={11}
                     className="text-center py-8 text-sm text-slate-500"
                   >
                     데이터를 불러오는 중입니다...
@@ -137,7 +182,7 @@ export function CronExecutionTable() {
               {isError && (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={11}
                     className="text-center py-8 text-sm text-rose-600"
                   >
                     cron 실행 history 를 불러오지 못했습니다.
@@ -148,7 +193,7 @@ export function CronExecutionTable() {
               {!isLoading && !isError && rows.length === 0 && (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={11}
                     className="text-center py-8 text-sm text-slate-500"
                   >
                     아직 cron 실행 기록이 수집되지 않았습니다. 다음 cron 실행 시점부터 자동 누적됩니다.
@@ -158,12 +203,53 @@ export function CronExecutionTable() {
               {!isLoading &&
                 !isError &&
                 rows.map((row) => (
-                  <tr key={row.cronPath} className="hover:bg-slate-50">
+                  <tr
+                    key={row.cronPath}
+                    className={
+                      row.registry == null
+                        ? "bg-yellow-50/60 hover:bg-yellow-50"
+                        : "hover:bg-slate-50"
+                    }
+                  >
                     <td className="px-4 py-3 text-xs font-mono text-slate-800 truncate max-w-[280px]">
                       {row.cronPath}
                     </td>
+                    <td className="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">
+                      {row.registry?.scheduleKst ?? (
+                        <span className="text-yellow-700 font-medium">미등록</span>
+                      )}
+                    </td>
+                    <td
+                      className="px-4 py-3 text-xs text-slate-600 max-w-[320px] truncate"
+                      title={row.registry?.purposeKo ?? undefined}
+                    >
+                      {row.registry?.purposeKo ?? (
+                        <span className="text-yellow-700">
+                          운영 레지스트리 미등록 — 목적 미정의
+                        </span>
+                      )}
+                    </td>
+                    <td
+                      className="px-4 py-3 text-xs text-slate-600 max-w-[320px] truncate"
+                      title={row.registry?.manualGateKo ?? undefined}
+                    >
+                      {row.registry?.manualGateKo ?? (
+                        <span className="text-yellow-700">
+                          차단 지점 미정의 — Vercel Dashboard에서 cron 중지
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-right tabular-nums text-slate-700">
-                      {row.totalCount}
+                      {row.totalCount > 0 ? (
+                        row.totalCount
+                      ) : (
+                        <span
+                          className="text-yellow-700 text-xs"
+                          title="등록됐지만 조회 기간 내 실행 기록이 없습니다 (dead cron 신호)"
+                        >
+                          실행 없음
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">
                       <span

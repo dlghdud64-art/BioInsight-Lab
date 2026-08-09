@@ -68,6 +68,39 @@ export const VERCEL_CRON_REGISTRY: readonly VercelCronRegistryEntry[] = [
     operatorCheckKo: "notified, skippedDuplicate, errors 값을 확인합니다.",
     expectedResultKo: "만료 견적 알림 1회 감지",
   },
+  // ── §cron-registry-drift (2026-08-08) ────────────────────────────────
+  // canonical(apps/web/vercel.json crons)에는 있었으나 이 레지스트리에만
+  // 누락돼 있던 2건. 값은 각 route 파일 헤더의 실측 계약만 옮겼다(날조 0).
+  {
+    path: "/api/cron/catalog-ingest",
+    schedule: "0 3 * * *",
+    scheduleKst: "매일 12:00 KST",
+    purposeKo:
+      "조달청 공공데이터 식별 계층을 야간에 증분 수집해 procurementCatalogRef를 갱신합니다.",
+    environment: "prod-only",
+    runBoundaryKo:
+      "Vercel production deployment에서만 자동 실행합니다. preview/local은 수동 검증만 허용합니다.",
+    manualGateKo:
+      "env CATALOG_PUBLIC_INGEST 또는 PROCUREMENT_API_KEY를 제거하면 즉시 no-op으로 비활성화되며, 이상 시 Vercel Dashboard에서 cron을 중지하거나 CRON_SECRET을 회전합니다.",
+    operatorCheckKo:
+      "upsert된 catalog ref 건수와 다음 run으로 이월된 remainingCodes cursor를 확인합니다.",
+    expectedResultKo: "조달청 카탈로그 ref 증분 적재 (db.product write 0)",
+  },
+  {
+    path: "/api/cron/retention-archive",
+    schedule: "0 4 * * *",
+    scheduleKst: "매일 13:00 KST",
+    purposeKo:
+      "무료 플랜 보존기간(3개월)이 지난 견적·주문·재고를 soft 아카이브합니다. hard delete는 하지 않습니다.",
+    environment: "prod-only",
+    runBoundaryKo:
+      "Vercel production deployment에서만 자동 실행합니다. preview/local은 수동 검증만 허용합니다.",
+    manualGateKo:
+      "env PRICING_ENFORCE_CUTOFF가 없으면 skip되고 ?dryRun=1로 write 0 예행이 가능하며, 이상 시 Vercel Dashboard에서 cron을 중지하거나 CRON_SECRET을 회전합니다.",
+    operatorCheckKo:
+      "archivedAt이 설정된 건수와 dryRun 카운트가 일치하는지 확인합니다.",
+    expectedResultKo: "보존기간 경과 데이터 soft 아카이브 (원본 보존)",
+  },
 ] as const;
 
 export function getVercelCronRegistryEntry(path: string) {
