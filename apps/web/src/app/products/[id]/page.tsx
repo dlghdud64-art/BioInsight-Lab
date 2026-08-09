@@ -142,6 +142,30 @@ export default function ProductDetailPage() {
     enabled: !!id,
   });
 
+  /**
+   * §3-1 우리 조직 재고 (B1, 2026-08-09) — 제품 단위 재고 조회.
+   *   소스: GET /api/inventory?productId= (B1 에서 필터 신설). 조직/사용자 스코프는
+   *   서버 ownerCondition 이 적용하므로 남의 조직 재고는 애초에 오지 않는다.
+   *   §3 계약: **데이터 없으면 블록 자체 숨김** — 0건일 때 "재고 없음" 을 그리지 않는다
+   *   (가짜 정보량 0). 로그인 전에는 호출 자체를 하지 않는다.
+   */
+  const { data: orgInventoryData } = useQuery({
+    queryKey: ["product-org-inventory", id],
+    queryFn: async () => {
+      const response = await fetch(`/api/inventory?productId=${encodeURIComponent(id)}`);
+      if (!response.ok) return { inventories: [] };
+      return response.json();
+    },
+    enabled: !!id && !!session?.user?.id,
+  });
+  const orgInventories = (orgInventoryData?.inventories ?? []) as Array<{
+    id: string;
+    currentQuantity: number;
+    unit?: string | null;
+    location?: string | null;
+    safetyStock?: number | null;
+  }>;
+
   const allComplianceLinks = (complianceLinksData?.links || []) as any[];
   const filteredComplianceLinks = fetchedProduct
     ? filterComplianceLinksForProduct(allComplianceLinks, fetchedProduct, (session?.user as any)?.organizationId || null)
@@ -1012,6 +1036,55 @@ export default function ProductDetailPage() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* ── §3 거래 맥락 — ①우리 조직 재고 (B1, 2026-08-09) ──
+                    §3 계약: **데이터 없으면 블록 자체 숨김**. 0건이면 "재고 없음" 을 그리지 않는다
+                    (빈 껍데기 = 정보량 0). §3-② 최근 구매 · §3-③ 구매가 이력은 소스 결정
+                    대기로 이번 배치에 없다 — 계약상 미표시가 위반이 아니므로 단계 출고 가능
+                    (SCOPING_product-detail-s3-s4-wiring §4). */}
+                {orgInventories.length > 0 && (
+                  <Card className="mt-3 border-slate-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-1.5 mb-2.5">
+                        <Package className="h-3.5 w-3.5 text-slate-400" />
+                        <h3 className="text-xs font-bold text-slate-900">우리 조직 재고</h3>
+                        <span className="text-[11px] text-slate-400">· {orgInventories.length}건</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {orgInventories.slice(0, 3).map((inv) => {
+                          const below =
+                            inv.safetyStock != null && inv.currentQuantity < inv.safetyStock;
+                          return (
+                            <div key={inv.id} className="flex items-center justify-between gap-2 min-w-0">
+                              <span className="text-[11px] text-slate-500 truncate">
+                                {inv.location?.trim() || "위치 미지정"}
+                              </span>
+                              <span
+                                className={`text-xs font-bold shrink-0 ${below ? "text-[#b91c1c]" : "text-slate-900"}`}
+                              >
+                                {inv.currentQuantity}
+                                <span className="text-[10px] font-medium text-slate-400 ml-0.5">
+                                  {inv.unit || "개"}
+                                </span>
+                              </span>
+                            </div>
+                          );
+                        })}
+                        {orgInventories.length > 3 && (
+                          <p className="text-[10px] text-slate-400 pt-0.5">
+                            외 {orgInventories.length - 3}건
+                          </p>
+                        )}
+                      </div>
+                      <Link
+                        href="/dashboard/inventory"
+                        className="mt-2.5 block text-[11px] font-semibold text-blue-600 hover:underline"
+                      >
+                        재고 관리에서 보기 →
+                      </Link>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </div>
           </div>

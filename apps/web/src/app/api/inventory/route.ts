@@ -29,6 +29,12 @@ export async function GET(request: NextRequest) {
     const status   = searchParams.get("status")           || null; // "low" | "expired" | "expiring"
     const location = searchParams.get("location")?.trim() || null; // 보관 위치 부분 일치
     const category = searchParams.get("category")         || null; // ProductCategory enum 값
+    // §product-detail §3-1 (B1, 2026-08-09) — 제품 단위 재고 조회.
+    //   제품 상세의 "우리 조직 재고" 블록이 productId 로 정확 조회한다.
+    //   ⚠️ `inventory/lookup` 은 catalogNumber/productName 텍스트로 `{ inventoryId }` 하나만
+    //   돌려주는 스마트입고 매칭 헬퍼라 이 용도에 쓸 수 없다(실측 SCOPING §1).
+    //   ownerCondition(조직/사용자 스코프)은 그대로 적용 — 남의 조직 재고가 새지 않는다.
+    const productId = searchParams.get("productId")?.trim() || null;
 
     // 하위 호환: lowStock=true 는 status=low 와 동일하게 처리
     const lowStock =
@@ -122,6 +128,7 @@ export async function GET(request: NextRequest) {
     // -----------------------------------------------------------------------
     const where: any = {
       ...ownerCondition,
+      ...(productId ? { productId } : {}), // §product-detail §3-1 — 제품 단위 스코프
       ...(andFilters.length > 0 ? { AND: andFilters } : {}),
     };
     // §pricing-refresh P4b — 아카이브분(archivedAt 세팅) 조회 숨김. env 미설정 시 전부 null=영향 0.
