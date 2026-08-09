@@ -433,6 +433,12 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const statusFilter = searchParams.get("status") || "all";
     const sortBy = searchParams.get("sortBy") || "newest";
+    // §product-detail §4 (B2, 2026-08-09) — 제품 단위 견적 조회.
+    //   제품 상세 재발주 배너가 "이 제품이 이미 담긴 작성 중 견적" 유무로 CTA 를 가른다
+    //   (있으면 열기=쓰기 0 / 없으면 생성). 중복 견적 생성을 라벨이 아니라 **동작**으로 막는다.
+    //   ⚠️ 스코프 대체 금지: 아래 ownerCondition(userId OR 소속 조직) 과 **AND** 로 결합한다.
+    //   제품 필터가 스코프를 대체하면 남의 조직 견적이 "작성 중"으로 뜬다 = 그 자체가 사고.
+    const productIdFilter = searchParams.get("productId")?.trim() || null;
 
     // 사용자가 속한 조직 ID 목록 조회 (실패해도 userId 조건으로 폴백)
     let userOrgIds: string[] = [];
@@ -456,10 +462,14 @@ export async function GET(request: NextRequest) {
     };
 
     // §pricing-refresh P4b — 아카이브분(archivedAt 세팅) 조회 숨김. env 미설정 시 전부 null=영향 0.
+    // §product-detail §4 (B2) — 제품 필터는 **AND 항으로만** 붙는다(스코프 대체 0).
+    //   items.some(productId) — QuoteListItem.productId 는 @@index 보유(canonical 결속).
+    const andTerms: Record<string, unknown>[] = [ownerCondition];
+    if (statusFilter && statusFilter !== "all") andTerms.push({ status: statusFilter });
+    if (productIdFilter) andTerms.push({ items: { some: { productId: productIdFilter } } });
+
     const baseWhere: Record<string, unknown> =
-      statusFilter && statusFilter !== "all"
-        ? { AND: [ownerCondition, { status: statusFilter }] }
-        : ownerCondition;
+      andTerms.length > 1 ? { AND: andTerms } : ownerCondition;
     const where: Record<string, unknown> = { ...baseWhere, archivedAt: null };
 
     const orderBy: Record<string, string> =

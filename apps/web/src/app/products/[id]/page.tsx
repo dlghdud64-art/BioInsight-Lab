@@ -166,6 +166,98 @@ export default function ProductDetailPage() {
     safetyStock?: number | null;
   }>;
 
+  /**
+   * §4 재발주 배너 (B2, 2026-08-09) — **중복 견적 생성 방지를 동작으로 달성**.
+   *   이 제품이 이미 담긴 "작성 중"(PENDING) 견적이 있으면 생성하지 않고 그 견적을 연다.
+   *
+   *   ⚠️ 라벨 규율:
+   *     · "재발주안에 합류" 라고 쓰지 않는다 — 실제로 합류하는 동작이 없다.
+   *       기존 경로(ReorderReviewSheet)는 누를 때마다 **새 초안을 생성**한다.
+   *     · 열기 CTA 는 "작성 중인 견적 열기" — 그 견적의 출처를 모르므로 "재발주"를 붙이지 않는다.
+   *       생성 CTA 는 "재발주 견적 만들기" — 우리가 목적을 아니까 붙일 수 있다(의도적 비대칭).
+   *     · 출처(specialNotes "재고관리 재발주안에서 생성") 로 분기하지 않는다 — 텍스트 결속을
+   *       늘리고(§text-coupling-debt), 중복 방지 관점에서 출처는 무관하며 오히려 놓친다.
+   *
+   *   상태 어휘: PENDING = 발송 전. prepare 패널은 같은 상태를 "발송 대기"로 부른다
+   *   (§quote-status-vocabulary — QuoteStatus 에 DRAFT 부재가 근본 원인, 상태 모델과 함께 처리).
+   */
+  const { data: draftQuoteData } = useQuery({
+    queryKey: ["product-draft-quote", id],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/quotes?productId=${encodeURIComponent(id)}&status=PENDING`,
+      );
+      if (!response.ok) return { quotes: [] };
+      return response.json();
+    },
+    enabled: !!id && !!session?.user?.id,
+  });
+  const openDraftQuote = ((draftQuoteData?.quotes ?? []) as Array<{ id: string }>)[0] ?? null;
+
+  /**
+   * §4 배너 트리거 — **FK 정확 신호만 사용**.
+   *   B1 의 orgInventories(productId FK 조회)에서 안전재고 미달 여부를 직접 판정한다.
+   *   `useReorderRecommendation(productName)` 텍스트 매칭은 쓰지 않는다 —
+   *   오매칭된 근거로 발주를 유도할 위험이 있고, 여기서는 필요도 없다(§text-coupling-debt).
+   *   부족분 = Σ(safetyStock - currentQuantity), 최소 1.
+   */
+  const reorderShortfall = orgInventories.reduce((sum, inv) => {
+    if (inv.safetyStock == null) return sum;
+    const gap = inv.safetyStock - inv.currentQuantity;
+    return gap > 0 ? sum + gap : sum;
+  }, 0);
+  const needsReorder = reorderShortfall > 0;
+
+  const [creatingReorderQuote, setCreatingReorderQuote] = useState(false);
+
+  /** §4 생성 분기 — 작성 중 견적이 없을 때만 도달한다(있으면 열기 CTA). */
+  const handleCreateReorderQuote = async () => {
+    if (creatingReorderQuote || !product) return;
+    setCreatingReorderQuote(true);
+    try {
+      const res = await csrfFetch("/api/quotes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: `${product.name} 재발주 견적`,
+          items: [
+            {
+              productId: product.id,
+              quantity: Math.max(1, reorderShortfall),
+              notes: "안전재고 미달 — 제품 상세 재발주 배너",
+            },
+          ],
+          specialNotes: "제품 상세 재발주 배너에서 생성 · 안전재고 미달",
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        // 실패 시 이동 0 — 실패를 성공처럼 보이게 하지 않는다(placeholder success 금지).
+        toast({
+          title: "초안을 만들지 못했습니다",
+          description: body?.message ?? body?.error ?? "잠시 후 다시 시도해주세요.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const body = await res.json();
+      const quoteId: string | undefined = body?.quote?.id;
+      if (!quoteId) {
+        toast({
+          title: "초안은 생성됐으나 이동 정보를 받지 못했습니다",
+          description: "견적 관리에서 확인해주세요.",
+          variant: "destructive",
+        });
+        return;
+      }
+      router.push(`/dashboard/quotes?prepare=${encodeURIComponent(quoteId)}`);
+    } catch {
+      toast({ title: "네트워크 오류로 초안을 만들지 못했습니다", variant: "destructive" });
+    } finally {
+      setCreatingReorderQuote(false);
+    }
+  };
+
   const allComplianceLinks = (complianceLinksData?.links || []) as any[];
   const filteredComplianceLinks = fetchedProduct
     ? filterComplianceLinksForProduct(allComplianceLinks, fetchedProduct, (session?.user as any)?.organizationId || null)
@@ -1036,6 +1128,64 @@ export default function ProductDetailPage() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* ── §4 재발주 배너 (B2, 2026-08-09) ──
+                    중복 견적 생성을 **동작으로** 막는다: 이 제품이 담긴 작성 중(PENDING) 견적이
+                    있으면 생성하지 않고 그 견적을 연다(쓰기 0). 없을 때만 생성 CTA.
+                    · "재발주안에 합류" 라벨 금지 — 실제로 합류하는 동작이 없다(항상 새 초안 생성).
+                    · 열기 CTA 에 "재발주" 를 붙이지 않는다 — 그 견적의 출처를 모른다(의도적 비대칭).
+                    · 트리거는 B1 의 FK 정확 재고(안전재고 미달)뿐 — 텍스트 매칭 미사용.
+                    · 생성 진입점은 이 배너에 **하나만**. */}
+                {(openDraftQuote || needsReorder) && (
+                  <Card className="mt-3 border-yellow-200 bg-yellow-50">
+                    <CardContent className="p-4">
+                      {openDraftQuote ? (
+                        <>
+                          <p className="text-xs font-bold text-yellow-800">
+                            이 제품이 담긴 견적을 작성 중입니다
+                          </p>
+                          <p className="text-[11px] text-yellow-700 mt-0.5 leading-relaxed">
+                            새로 만들지 않고 이어서 진행하세요.
+                          </p>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            data-testid="reorder-open-draft-cta"
+                            className="mt-2.5 h-8 w-full text-xs font-semibold border-yellow-300 bg-white hover:bg-yellow-100"
+                            onClick={() =>
+                              router.push(
+                                `/dashboard/quotes?prepare=${encodeURIComponent(openDraftQuote.id)}`,
+                              )
+                            }
+                          >
+                            작성 중인 견적 열기
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-xs font-bold text-yellow-800">
+                            안전재고 미달 · 재발주 권장
+                          </p>
+                          <p className="text-[11px] text-yellow-700 mt-0.5 leading-relaxed">
+                            부족분 {reorderShortfall}
+                            {orgInventories[0]?.unit || "개"} 기준으로 초안을 만듭니다.
+                          </p>
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={creatingReorderQuote}
+                            data-testid="reorder-create-quote-cta"
+                            className="mt-2.5 h-8 w-full text-xs font-semibold bg-yellow-600 hover:bg-yellow-700 text-white disabled:opacity-50"
+                            onClick={handleCreateReorderQuote}
+                          >
+                            {creatingReorderQuote ? "만드는 중…" : "재발주 견적 만들기"}
+                          </Button>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* ── §3 거래 맥락 — ①우리 조직 재고 (B1, 2026-08-09) ──
                     §3 계약: **데이터 없으면 블록 자체 숨김**. 0건이면 "재고 없음" 을 그리지 않는다
