@@ -29,20 +29,23 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'ai_action_create',
       targetEntityType: 'product',
+      // §enforcement-handle-close-sweep (ai-actions) — 'unknown' 유지.
+      //   ⚠️ 불일치: targetEntityType 은 'product' 인데 body 가 받는 식별자는 quoteId 다
+      //   (vendorName·items 로 벤더 이메일 초안을 만든다. product id 는 받지 않는다).
+      //   quoteId 를 'product' 타입에 넣으면 감사 분류가 어긋나고, 타입을 바꾸면
+      //   checkServerAuthorization 권한 판정이 달라진다 → §audit-taxonomy-review 상신.
       targetEntityId: 'unknown',
       sourceSurface: 'vendor_portal',
       routePath: '/ai-actions/generate/vendor-email-draft',
     });
     if (!enforcement.allowed) return enforcement.deny();
 
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const body = await request.json();
     const { vendorName, vendorEmail, items, deliveryDate, customMessage, quoteId } = body;
 
     if (!vendorName) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "vendorName이 필요합니다" },
         { status: 400 }
@@ -154,6 +157,12 @@ export async function POST(request: NextRequest) {
       userAgent,
     });
 
+    // db.aiActionItem.create 로 초안을 실제 생성한다 → complete().
+    enforcement.complete({
+      beforeState: { actionId: null, vendorName, quoteId: quoteId ?? null },
+      afterState: { actionId: actionItem.id, vendorName, quoteId: quoteId ?? null },
+    });
+
     return NextResponse.json(
       {
         actionId: actionItem.id,
@@ -167,6 +176,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
+    enforcement?.fail();
     if (error instanceof AiKeyMissingError) {
       return NextResponse.json(
         { error: error.message },

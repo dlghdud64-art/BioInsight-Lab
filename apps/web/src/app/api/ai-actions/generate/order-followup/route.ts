@@ -32,30 +32,30 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
-    enforcement = enforceAction({
-      userId: session.user.id,
-      userRole: session.user.role ?? undefined,
-      action: 'ai_action_create',
-      targetEntityType: 'order',
-      targetEntityId: 'unknown',
-      sourceSurface: 'web_app',
-      routePath: '/ai-actions/generate/order-followup',
-    });
-    if (!enforcement.allowed) return enforcement.deny();
-
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const body = await request.json();
     const { orderId } = body;
 
+    // 입력 검증은 lock 획득 **이전**에 — 400 이 lock 을 잡지 않게 한다.
     if (!orderId) {
       return NextResponse.json(
         { error: "orderId가 필요합니다" },
         { status: 400 }
       );
     }
+
+    // §enforcement-handle-close-sweep (ai-actions) — 대상 엔티티 실재이고 **타입도 정합**:
+    //   targetEntityType 'order' + body.orderId → per-resource 키. enforceAction 을
+    //   orderId 확정 이후로 옮겼다(검증 400 이 lock 보다 앞에 오도록).
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'ai_action_create',
+      targetEntityType: 'order',
+      targetEntityId: orderId,
+      sourceSurface: 'web_app',
+      routePath: '/ai-actions/generate/order-followup',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // 주문 조회 + 권한 확인
     const order = await db.order.findUnique({
@@ -80,6 +80,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!order) {
+      enforcement.fail();
       return NextResponse.json({ error: "주문을 찾을 수 없습니다" }, { status: 404 });
     }
 
@@ -91,9 +92,11 @@ export async function POST(request: NextRequest) {
           select: { role: true },
         });
         if (!membership) {
+          enforcement.fail();
           return NextResponse.json({ error: "권한이 없습니다" }, { status: 403 });
         }
       } else {
+        enforcement.fail();
         return NextResponse.json({ error: "권한이 없습니다" }, { status: 403 });
       }
     }
@@ -105,6 +108,7 @@ export async function POST(request: NextRequest) {
         select: { role: true },
       });
       if (teamMember?.role === TeamRole.MEMBER) {
+        enforcement.fail();
         return NextResponse.json(
           { error: "일반 멤버는 Follow-up 초안을 생성할 수 없습니다. 관리자에게 요청하세요." },
           { status: 403 }
@@ -119,6 +123,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (!existingOrNew) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "Follow-up 작업 항목 생성에 실패했습니다" },
         { status: 500 }
@@ -236,6 +241,12 @@ export async function POST(request: NextRequest) {
 
     const payload = updatedAction.payload as Record<string, unknown>;
 
+    // db.aiActionItem.update 로 초안을 실제 저장한다 → complete().
+    enforcement.complete({
+      beforeState: { orderId, actionId: existingOrNew.id, hasDraft: false },
+      afterState: { orderId, actionId: updatedAction.id, hasDraft: true, skipped },
+    });
+
     return NextResponse.json(
       {
         actionId: updatedAction.id,
@@ -253,6 +264,7 @@ export async function POST(request: NextRequest) {
       { status: skipped ? 200 : 201 }
     );
   } catch (error) {
+    enforcement?.fail();
     if (error instanceof AiKeyMissingError) {
       return NextResponse.json(
         { error: error.message },

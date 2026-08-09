@@ -27,15 +27,16 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'ai_action_create',
       targetEntityType: 'order',
+      // §enforcement-handle-close-sweep (ai-actions) — 'unknown' 유지.
+      //   targetEntityType 은 'order' 인데 body 에는 organizationId 뿐이다(조직 전체 재고를
+      //   훑어 제안을 만드는 배치라 대상 주문이 없다. 주문은 결과물조차 아니고 AiActionItem 이
+      //   생성된다). ⚠️ taxonomy 후보 — §audit-taxonomy-review 에서 함께 판단.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/ai-actions/generate/reorder-suggestions',
     });
     if (!enforcement.allowed) return enforcement.deny();
 
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const body = await request.json().catch(() => ({}));
     const { organizationId } = body;
@@ -47,6 +48,7 @@ export async function POST(request: NextRequest) {
         select: { role: true },
       });
       if (teamMember?.role === TeamRole.MEMBER) {
+        enforcement.fail();
         return NextResponse.json(
           { error: "일반 멤버는 재발주 제안을 생성할 수 없습니다." },
           { status: 403 }
@@ -76,6 +78,16 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // detectInventoryIssues 가 db.aiActionItem.create 로 실제 생성한다 → complete().
+    enforcement.complete({
+      beforeState: { organizationId: organizationId ?? null, actionsCreated: 0 },
+      afterState: {
+        organizationId: organizationId ?? null,
+        actionsCreated: result.actionsCreated,
+        skippedDuplicate: result.skippedDuplicate,
+      },
+    });
+
     return NextResponse.json({
       success: true,
       restockCandidates: result.restockCandidates.length,
@@ -85,6 +97,7 @@ export async function POST(request: NextRequest) {
       errors: result.errors,
     });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error generating reorder suggestions:", error);
     return NextResponse.json(
       { error: "재발주 제안 생성에 실패했습니다" },

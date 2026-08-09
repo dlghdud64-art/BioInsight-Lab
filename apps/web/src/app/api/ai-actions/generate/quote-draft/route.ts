@@ -29,20 +29,22 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'ai_action_create',
       targetEntityType: 'quote',
+      // §enforcement-handle-close-sweep (ai-actions) — 'unknown' 유지.
+      //   targetEntityType 은 'quote' 인데 body 에 quoteId 가 없다(items·vendorNames 로
+      //   **새 초안을 만드는** 라우트라 호출 시점에 대상 견적이 존재하지 않는다).
+      //   ⚠️ taxonomy 후보 — §audit-taxonomy-review 에서 함께 판단.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/ai-actions/generate/quote-draft',
     });
     if (!enforcement.allowed) return enforcement.deny();
 
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const body = await request.json();
     const { items, vendorNames, deliveryDate, additionalNotes } = body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "items 배열이 필요합니다 (최소 1개)" },
         { status: 400 }
@@ -151,6 +153,12 @@ export async function POST(request: NextRequest) {
       userAgent,
     });
 
+    // db.aiActionItem.create 로 초안을 실제 생성한다 → complete().
+    enforcement.complete({
+      beforeState: { actionId: null, itemCount: items?.length ?? 0 },
+      afterState: { actionId: actionItem.id, title: actionItem.title },
+    });
+
     return NextResponse.json(
       {
         actionId: actionItem.id,
@@ -164,6 +172,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
+    enforcement?.fail();
     if (error instanceof AiKeyMissingError) {
       return NextResponse.json(
         { error: error.message },
