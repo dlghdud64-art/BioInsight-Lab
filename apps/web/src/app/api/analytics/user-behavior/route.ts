@@ -16,6 +16,9 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_export',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (analytics) — 'unknown' 유지.
+      //   ⚠️ 불일치: targetEntityType 은 'ai_action' 인데 body 필수값은 productId 다
+      //   → §audit-taxonomy-review 상신.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/analytics/user-behavior',
@@ -27,6 +30,7 @@ export async function POST(request: NextRequest) {
     const { action, productId, metadata } = body;
 
     if (!action || !productId) {
+      enforcement.fail();
       return NextResponse.json({ error: "Action and productId are required" }, { status: 400 });
     }
 
@@ -34,6 +38,8 @@ export async function POST(request: NextRequest) {
     // íì¬ë ê²ì ê¸°ë¡ì íµí©íì¬ ì ì¥ (í¥í ë³ë UserBehavior ëª¨ë¸ë¡ íì¥ ê°ë¥)
     
     // í´ë¦­ íëì SearchHistoryì clickedProductIdë¡ ì ì¥
+    // Write is CONDITIONAL (click + session + a matching recent search exists).
+    let recorded = false;
     if (action === "click" && session?.user?.id) {
       // ê°ì¥ ìµê·¼ ê²ì ê¸°ë¡ì í´ë¦­ ì ë³´ ìë°ì´í¸
       const recentSearch = await db.searchHistory.findFirst({
@@ -51,11 +57,22 @@ export async function POST(request: NextRequest) {
           where: { id: recentSearch.id },
           data: { clickedProductId: productId },
         });
+        recorded = true;
       }
+    }
+
+    if (recorded) {
+      enforcement.complete({
+        beforeState: { productId, clickedProductId: null },
+        afterState: { productId, clickedProductId: productId, action },
+      });
+    } else {
+      enforcement.fail(); // no write happened - release lock only
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error tracking user behavior:", error);
     return NextResponse.json(
       { error: "Failed to track user behavior" },

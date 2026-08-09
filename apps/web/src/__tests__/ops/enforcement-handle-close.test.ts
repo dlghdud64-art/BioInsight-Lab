@@ -57,17 +57,13 @@ const closesHandle = (src: string) => src.includes(".complete(") || src.includes
 const UNCLOSED = USES_ENFORCE.filter((r) => !closesHandle(r.src)).map((r) => r.path);
 
 /**
- * 2026-08-09 실측 누수 74 → 배치1(work-queue 7) → 67 → 배치2(inventory 5) → 62 → 배치3(products 5) → 57 → 배치4(quotes 5) → 52 → 배치5(ai 4) → 48 → 배치6(ai-actions 4) → **44**. **줄어들기만 한다.**
+ * 2026-08-09 실측 누수 74 → 배치1(work-queue 7) → 67 → 배치2(inventory 5) → 62 → 배치3(products 5) → 57 → 배치4(quotes 5) → 52 → 배치5(ai 4) → 48 → 배치6(ai-actions 4) → 44 → 배치7(analytics 4) → **40**. **줄어들기만 한다.**
  * 여기에 새 경로를 추가하는 것은 회귀이며, 항목을 고쳤으면 이 목록에서 제거해야 한다.
  */
 const LEGACY_UNCLOSED: readonly string[] = [
   "src/app/api/activity-logs/route.ts",
   "src/app/api/admin/canary-control/route.ts",
   "src/app/api/admin/seed/route.ts",
-  "src/app/api/analytics/recommendation-metrics/route.ts",
-  "src/app/api/analytics/search-history/route.ts",
-  "src/app/api/analytics/track/route.ts",
-  "src/app/api/analytics/user-behavior/route.ts",
   "src/app/api/billing/portal/route.ts",
   "src/app/api/billing/route.ts",
   "src/app/api/cart/route.ts",

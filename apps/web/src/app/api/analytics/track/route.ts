@@ -19,6 +19,8 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_export',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (analytics) — 'unknown' 유지.
+      //   범용 이벤트 추적이라 대상 엔티티가 없다(event 이름·properties 만 받는다).
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/analytics/track',
@@ -29,6 +31,7 @@ export async function POST(request: NextRequest) {
     const { event, properties } = body;
 
     if (!event || typeof event !== "string") {
+      enforcement.fail();
       return NextResponse.json(
         { error: "Event name is required" },
         { status: 400 }
@@ -39,6 +42,9 @@ export async function POST(request: NextRequest) {
     const userId = session?.user?.id || properties?.user_id || null;
 
     // 이벤트 데이터 저장
+    // Write is BEST-EFFORT: DB errors are swallowed below (analytics must not break the app).
+    // So the write may not happen -> track it with a flag instead of assuming success.
+    let recorded = false;
     try {
       // ActivityLog 모델 사용
       if (db && db.activityLog) {
@@ -73,6 +79,7 @@ export async function POST(request: NextRequest) {
             userAgent: request.headers.get("user-agent") || null,
           },
         });
+        recorded = true;
       } else {
         // ActivityLog 모델이 없으면 콘솔에만 로그 (development 환경에서만)
         if (process.env.NODE_ENV === "development") {
@@ -89,8 +96,19 @@ export async function POST(request: NextRequest) {
       console.debug("Analytics DB error:", dbError);
     }
 
+    if (recorded) {
+      enforcement.complete({
+        beforeState: { event, recorded: false },
+        afterState: { event, recorded: true },
+      });
+    } else {
+      // DB write skipped or swallowed -> release lock only, no audit claim.
+      enforcement.fail();
+    }
+
     return NextResponse.json({ success: true });
   } catch (error: any) {
+    enforcement?.fail();
     // Analytics 에러는 앱 동작에 영향을 주지 않아야 함
     console.debug("Analytics tracking error:", error);
     return NextResponse.json(

@@ -16,6 +16,8 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_export',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (analytics) — 'unknown' 유지.
+      //   생성 대상(SearchHistory)의 id 는 create 이후에야 생기므로 호출 시점에 알 수 없다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/analytics/search-history',
@@ -27,6 +29,7 @@ export async function POST(request: NextRequest) {
     const { query, intent, category, filters, resultCount, clickedProductId } = body;
 
     if (!query) {
+      enforcement.fail();
       return NextResponse.json({ error: "Query is required" }, { status: 400 });
     }
 
@@ -42,8 +45,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // 무조건 db.searchHistory.create 한다 → complete().
+    enforcement.complete({
+      beforeState: { searchHistoryId: null },
+      afterState: { searchHistoryId: searchHistory.id, query, clickedProductId: clickedProductId || null },
+    });
+
     return NextResponse.json({ success: true, id: searchHistory.id });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error saving search history:", error);
     return NextResponse.json(
       { error: "Failed to save search history" },
