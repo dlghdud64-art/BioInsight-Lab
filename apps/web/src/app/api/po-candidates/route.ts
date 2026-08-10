@@ -111,6 +111,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -120,19 +121,48 @@ export async function PATCH(req: NextRequest) {
     const body = await req.json();
     const { id, stage, approvalStatus } = body;
 
+    // 검증은 lock 획득 이전에 — 400 이 lock 을 잡지 않게 한다.
     if (!id || !stage) {
       return NextResponse.json({ error: "id and stage required" }, { status: 400 });
     }
 
-    const updated = await updatePOCandidateStage(id, stage, { approvalStatus });
+    // §enforcement-coverage-gap 확정 사례 — 이 핸들러에는 enforceAction 이 없었다.
+    //   같은 파일 POST 에는 있는데 PATCH/DELETE 에만 빠져 있던 부분 누락.
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_import',
+      targetEntityType: 'ai_action',
+      targetEntityId: id,
+      sourceSurface: 'web_app',
+      routePath: '/po-candidates',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
+    const updated = await updatePOCandidateStage(id, session.user.id, stage, { approvalStatus });
+
+    // §po-candidate-idor — 남의 후보이거나 없으면 헬퍼가 쓰기 없이 null 을 준다.
+    //   존재 여부를 노출하지 않도록 403 이 아니라 404 로 응답한다.
+    if (!updated) {
+      enforcement.fail();
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    enforcement.complete({
+      beforeState: { candidateId: id },
+      afterState: { candidateId: id, stage, approvalStatus: approvalStatus ?? null },
+    });
+
     return NextResponse.json({ candidate: updated });
   } catch (err) {
+    enforcement?.fail();
     console.error("[po-candidates] PATCH error:", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
 
 export async function DELETE(req: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -144,9 +174,35 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "id required" }, { status: 400 });
     }
 
-    await deletePOCandidate(id);
+    // §enforcement-coverage-gap 확정 사례 — 파괴적 연산인데 enforceAction 이 없었다.
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_delete',
+      targetEntityType: 'ai_action',
+      targetEntityId: id,
+      sourceSurface: 'web_app',
+      routePath: '/po-candidates',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
+    const deleted = await deletePOCandidate(id, session.user.id);
+
+    // §po-candidate-idor — 남의 후보이거나 없으면 삭제가 일어나지 않는다.
+    //   존재 여부를 노출하지 않도록 403 이 아니라 404 로 응답한다.
+    if (!deleted) {
+      enforcement.fail();
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    enforcement.complete({
+      beforeState: { candidateId: id, deleted: false },
+      afterState: { candidateId: id, deleted: true },
+    });
+
     return NextResponse.json({ success: true });
   } catch (err) {
+    enforcement?.fail();
     console.error("[po-candidates] DELETE error:", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }

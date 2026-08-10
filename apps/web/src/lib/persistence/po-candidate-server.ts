@@ -110,10 +110,19 @@ export async function listPOCandidates(
   return rows.map(serializeCandidate);
 }
 
-/** 단건 조회 */
-export async function getPOCandidate(id: string): Promise<POCandidateRow | null> {
-  const row = await prisma.pOCandidate.findUnique({
-    where: { id },
+/**
+ * 단건 조회 — **소유자 검증 포함**.
+ *
+ * §po-candidate-idor (2026-08-10): 소유권 검증은 라우트가 아니라 이 모듈에 둔다.
+ *   라우트에만 넣으면 다른 호출자가 생길 때 같은 구멍이 재발한다.
+ *   actorUserId 를 필수 인자로 두어 **호출자가 빠뜨리면 컴파일이 깨지도록** 한다.
+ */
+export async function getPOCandidate(
+  id: string,
+  actorUserId: string,
+): Promise<POCandidateRow | null> {
+  const row = await prisma.pOCandidate.findFirst({
+    where: { id, userId: actorUserId },
     include: { items: true },
   });
   return row ? serializeCandidate(row) : null;
@@ -344,26 +353,43 @@ export async function createPOCandidatesFromQuote(
   return results;
 }
 
-/** stage 업데이트 */
+/**
+ * stage 업데이트 — **소유자 검증 포함**. 남의 후보면 쓰기 없이 null.
+ *
+ * §po-candidate-idor: `where` 에 id 단독을 쓰지 않는다. `{ id, userId }` 로
+ *   좁힌 updateMany 의 count 로 소유 여부를 판정하므로, 조회-후-쓰기 사이의
+ *   경합 없이 한 번에 걸러진다.
+ */
 export async function updatePOCandidateStage(
   id: string,
+  actorUserId: string,
   stage: string,
   updates?: { approvalStatus?: string },
 ): Promise<POCandidateRow | null> {
-  const row = await prisma.pOCandidate.update({
-    where: { id },
+  const { count } = await prisma.pOCandidate.updateMany({
+    where: { id, userId: actorUserId },
     data: {
       stage,
       ...(updates?.approvalStatus ? { approvalStatus: updates.approvalStatus } : {}),
     },
+  });
+  if (count === 0) return null;
+  const row = await prisma.pOCandidate.findFirst({
+    where: { id, userId: actorUserId },
     include: { items: true },
   });
-  return serializeCandidate(row);
+  return row ? serializeCandidate(row) : null;
 }
 
-/** 후보 삭제 (cascade 로 items 도 삭제) */
-export async function deletePOCandidate(id: string): Promise<void> {
-  await prisma.pOCandidate.delete({ where: { id } });
+/**
+ * 후보 삭제 (cascade 로 items 도 삭제) — **소유자 검증 포함**.
+ * @returns 실제로 삭제했으면 true, 대상이 없거나 남의 것이면 false (쓰기 없음)
+ */
+export async function deletePOCandidate(id: string, actorUserId: string): Promise<boolean> {
+  const { count } = await prisma.pOCandidate.deleteMany({
+    where: { id, userId: actorUserId },
+  });
+  return count > 0;
 }
 
 /** Bulk seed — 개발/테스트용. 기존 MOCK 데이터를 DB 에 삽입 */
