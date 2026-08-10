@@ -19,6 +19,9 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (datasheet) — 'unknown' 유지. 업로드된 PDF 에서
+      //   텍스트를 뽑아 반환할 뿐 대상 엔티티가 없다 (DB 쓰기 0).
+      //   ⚠️ targetEntityType 'ai_action' 은 문서 추출과 어긋난다 → §audit-taxonomy-review 후보.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/datasheet/extract-pdf',
@@ -29,15 +32,18 @@ export async function POST(request: NextRequest) {
     const file = formData.get("file") as File;
 
     if (!file) {
+      enforcement.fail();
       return NextResponse.json({ error: "파일이 없습니다." }, { status: 400 });
     }
 
     if (file.type !== "application/pdf") {
+      enforcement.fail();
       return NextResponse.json({ error: "PDF 파일만 업로드 가능합니다." }, { status: 400 });
     }
 
     // 파일 크기 제한 (10MB)
     if (file.size > 10 * 1024 * 1024) {
+      enforcement.fail();
       return NextResponse.json({ error: "파일 크기는 10MB 이하여야 합니다." }, { status: 400 });
     }
 
@@ -63,6 +69,8 @@ export async function POST(request: NextRequest) {
     // 데이터시트 정보 추출 (파일명 전달 - 데모 cheat key 활성화)
     const extractedInfo = await extractProductInfoFromDatasheet(cleanedText, fileName);
 
+    // Extract-only route: no DB writes -> audit envelope 없이 lock 만 해제한다.
+    enforcement.fail();
     return NextResponse.json({
       data: {
         ...extractedInfo,
@@ -71,6 +79,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error processing datasheet PDF:", error);
     const errorMessage = error?.message || "데이터시트 PDF 처리에 실패했습니다.";
     console.error("Error details:", {

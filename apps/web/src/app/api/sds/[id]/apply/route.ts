@@ -25,15 +25,18 @@ export async function POST(
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (sds) — 'unknown' 유지.
+      //   ⚠️ params 로 SDSDocument id 를 받지만 **enum 에 문서 타입이 없다**
+      //   (허용값: po·quote·dispatch·approval·order·inventory·receiving·ai_action·
+      //    compare_session·email_draft·organization·team·workspace·budget·billing·
+      //    governance·purchase_request·purchase_record·product·cart·invite).
+      //   즉 정확한 분류가 **선택지에 부재**하다 → §audit-taxonomy-review 상신(enum 확장 검토).
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/sds/id/apply',
     });
     if (!enforcement.allowed) return enforcement.deny();
 
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const { id } = await params;
     const body = await request.json();
@@ -49,6 +52,7 @@ export async function POST(
     });
 
     if (!sdsDocument) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "SDS document not found" },
         { status: 404 }
@@ -56,6 +60,7 @@ export async function POST(
     }
 
     if (sdsDocument.extractionStatus !== "done" || !sdsDocument.extractionResult) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "Extraction not completed" },
         { status: 400 }
@@ -75,6 +80,7 @@ export async function POST(
       });
 
       if (!membership && session.user.role !== "ADMIN") {
+        enforcement.fail();
         return NextResponse.json(
           { error: "Forbidden: safety_admin or admin role required" },
           { status: 403 }
@@ -128,11 +134,18 @@ export async function POST(
       data: updateData,
     });
 
+    // db.product.update 로 canonical 안전필드를 실제 갱신한다 -> complete().
+    enforcement.complete({
+      beforeState: { sdsDocumentId: id, productId: sdsDocument.productId },
+      afterState: { sdsDocumentId: id, productId: updatedProduct.id, applied: true },
+    });
+
     return NextResponse.json({
       success: true,
       product: updatedProduct,
     });
   } catch (error: any) {
+    enforcement?.fail();
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation error", details: error.errors },

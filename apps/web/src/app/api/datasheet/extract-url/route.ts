@@ -23,6 +23,9 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (datasheet) — 'unknown' 유지. URL 에서 텍스트를
+      //   뽑아 반환할 뿐 대상 엔티티가 없다.
+      //   ⚠️ targetEntityType 'ai_action' 은 문서 추출과 어긋난다 → §audit-taxonomy-review 후보.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/datasheet/extract-url',
@@ -33,6 +36,7 @@ export async function POST(request: NextRequest) {
     const { url } = body;
 
     if (!url || typeof url !== "string") {
+      enforcement.fail();
       return NextResponse.json(
         { error: "URL is required" },
         { status: 400 }
@@ -44,12 +48,15 @@ export async function POST(request: NextRequest) {
     try {
       parsedUrl = new URL(url);
       if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+        enforcement.fail();
         return NextResponse.json(
           { error: "Invalid URL protocol. Only http and https are allowed." },
           { status: 400 }
         );
       }
     } catch (error) {
+      // E6: inner catch self-returns (outer catch not reached).
+      enforcement.fail();
       return NextResponse.json(
         { error: "Invalid URL format" },
         { status: 400 }
@@ -99,6 +106,7 @@ export async function POST(request: NextRequest) {
           },
         });
       } catch (pdfError: any) {
+        enforcement.fail(); // E6: self-returns below
         if (pdfError.name === "AbortError") {
           return NextResponse.json(
             { error: "Request timeout. The PDF URL took too long to respond." },
@@ -132,6 +140,7 @@ export async function POST(request: NextRequest) {
 
       htmlText = await response.text();
     } catch (error: any) {
+      enforcement.fail(); // E6: self-returns below
       if (error.name === "AbortError") {
         return NextResponse.json(
           { error: "Request timeout. The URL took too long to respond." },
@@ -204,6 +213,8 @@ export async function POST(request: NextRequest) {
     // 추출된 텍스트로 제품 정보 분석
     const extractedInfo = await extractProductInfoFromDatasheet(textContent);
 
+    // Extract-only route: no DB writes.
+    enforcement.fail();
     return NextResponse.json({
       success: true,
       data: {
@@ -213,6 +224,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error extracting datasheet from URL:", error);
     return NextResponse.json(
       { error: error.message || "Failed to extract datasheet from URL" },

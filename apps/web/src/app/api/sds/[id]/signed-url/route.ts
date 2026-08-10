@@ -27,9 +27,6 @@ export async function POST(
     });
     if (!enforcement.allowed) return enforcement.deny();
 
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const { id } = await params;
 
@@ -43,6 +40,7 @@ export async function POST(
     });
 
     if (!sdsDocument) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "SDS document not found" },
         { status: 404 }
@@ -59,6 +57,7 @@ export async function POST(
       });
 
       if (!membership && session.user.role !== "ADMIN") {
+        enforcement.fail();
         return NextResponse.json(
           { error: "Forbidden" },
           { status: 403 }
@@ -79,11 +78,14 @@ export async function POST(
       signedUrl = sdsDocument.product?.msdsUrl ?? null;
     }
 
+    // Read-only route: issues a signed URL, no DB writes.
+    enforcement.fail();
     return NextResponse.json({
       signedUrl,
       expiresIn: 3600, // 1시간
     });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error generating signed URL:", error);
     return NextResponse.json(
       { error: "Failed to generate signed URL" },

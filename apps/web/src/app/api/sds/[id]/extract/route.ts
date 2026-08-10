@@ -22,15 +22,15 @@ export async function POST(
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (sds) — 'unknown' 유지.
+      //   ⚠️ params 로 SDSDocument id 를 받지만 enum 에 문서 타입이 없다(정확한 분류가
+      //   선택지에 부재) → §audit-taxonomy-review 상신(enum 확장 검토).
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/sds/id/extract',
     });
     if (!enforcement.allowed) return enforcement.deny();
 
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const { id } = await params;
 
@@ -44,6 +44,7 @@ export async function POST(
     });
 
     if (!sdsDocument) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "SDS document not found" },
         { status: 404 }
@@ -63,6 +64,7 @@ export async function POST(
       });
 
       if (!membership && session.user.role !== "ADMIN") {
+        enforcement.fail();
         return NextResponse.json(
           { error: "Forbidden: safety_admin or admin role required" },
           { status: 403 }
@@ -72,6 +74,7 @@ export async function POST(
 
     // 이미 처리 중이면 에러
     if (sdsDocument.extractionStatus === "processing" || sdsDocument.extractionStatus === "queued") {
+      enforcement.fail();
       return NextResponse.json(
         { error: "Extraction already in progress" },
         { status: 400 }
@@ -102,11 +105,18 @@ export async function POST(
       }).catch(console.error);
     });
 
+    // db.sDSDocument.update 로 추출 상태를 실제 전이시킨다(queued) -> complete().
+    enforcement.complete({
+      beforeState: { sdsDocumentId: id, extractionStatus: sdsDocument.extractionStatus },
+      afterState: { sdsDocumentId: id, extractionStatus: "queued", jobId },
+    });
+
     return NextResponse.json({
       jobId,
       status: "queued",
     });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error starting extraction:", error);
     return NextResponse.json(
       { error: "Failed to start extraction" },
