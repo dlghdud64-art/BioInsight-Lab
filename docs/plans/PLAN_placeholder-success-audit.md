@@ -56,7 +56,7 @@
 
 | route | 피해 | 자기교정 | 처리 |
 |---|---|---|---|
-| `vendor/requests/[id]/respond` | 구매자는 회신을 못 받고, 벤더는 답했다고 알거나 원인 모를 실패만 본다. 양쪽 다 침묵의 원인을 모른다 | **불가** | sweep 에서 분리, 즉시 처리 (완료) |
+| `vendor/requests/[id]/respond` | **양방향 정보 단절** — 벤더는 재시도 수단이 없고 구매자는 요청 도달 여부조차 모른다 | 불가 | 분리 → 501 → **경로 폐기**(§3-4) |
 | `templates` POST | 가짜 id 로 목록에 그려질 수 있으나 새로고침하면 사라진다 | 가능 | 이 트랙에서 sweep 종료 후 |
 | `templates/[id]` DELETE | 지웠다고 표시되나 새로고침하면 살아 있다 | 가능 | 동일 |
 
@@ -108,9 +108,20 @@
 - `src/__tests__/ops/vendor-respond-not-implemented.test.ts` — V1~V4.
   corrupt→RED 실증: 성공 반환 복원 + QuoteForm 재삽입 시 3 assertion RED.
 
-⚠️ 이 라우트는 이제 `enforceAction` 을 쓰지 않는 POST 라우트다 →
-§enforcement-coverage-gap E7 1단계에서 목록에 잡힐 것이다. **정상이다**
-(501 고정 응답이라 집행할 mutation 이 없다). 분류는 E7 계수 이후.
+### 3-4. ⚠️ 후속 — 501 이 아니라 **삭제**로 종결됐다 (2026-08-10, 같은 날)
+
+위 501 처리 직후 실측에서 **같은 포털 경로의 detail GET 도 하드코딩 mock** 임이
+드러났다(인증 없이 실재하지 않는 조직명을 렌더). 호영님 결정으로 포털 RFQ 경로
+전체를 폐기했다 — 501 로 남기면 다음 사람이 "구현하면 되겠네" 로 읽는다.
+
+- 라우트·화면·컴포넌트 삭제, 진입 경로 제거
+- 이 sentinel(`vendor-respond-not-implemented.test.ts`)은 폐기 sentinel
+  (`vendor-portal-rfq-retired.test.ts`)로 **대체**됐다
+- 상세: `PLAN_route-duplication.md` §1
+
+**분리 근거도 정정한다.** 처음에 "자기교정 불가" 라고 적었으나 실측 후 정확한 근거는
+**양방향 정보 단절**이다 — 벤더는 재시도할 수단이 없고 구매자는 요청이 도달했는지조차
+모른다. 원래 근거는 틀렸고 결론만 우연히 같았다(호영님 2026-08-10).
 
 ## 4. 대기 — templates 2건
 

@@ -65,13 +65,13 @@ E1/E2 와 동일한 ratchet:
 | `cart` | POST | 같은 파일 DELETE 는 있음. cart/cartItem create·update 수행 |
 | `po-candidates` | PATCH | 같은 파일 POST 는 있음. stage 갱신 |
 | `po-candidates` | DELETE | 같은 파일 POST 는 있음. `deletePOCandidate(id)` |
-| `vendor/requests/[id]/respond` | POST | 501 고정 응답이라 집행할 mutation 이 없다. 그래도 1단계에서는 목록에 넣는다 |
+| ~~`vendor/requests/[id]/respond`~~ | ~~POST~~ | **삭제됨**(§route-duplication) — 목록에서 제외 |
 
-**5건 모두 sweep 작업 중 우연히 눈에 띈 것이다 — 계수가 아니다.**
+**위 항목은 sweep 작업 중 우연히 눈에 띈 것이다 — 계수가 아니다.** (respond 는 폐기로 소멸, 실효 4건)
 실제 규모는 E7 1단계 glob 수집으로만 알 수 있다.
 
 패턴이 하나 보인다: **같은 파일 안에서 일부 메서드만 enforceAction 을 쓴다.**
-5건 중 4건이 그렇다. 이는 "route 파일 단위로 훑으며 첫 mutation 핸들러에만
+실효 4건 전부가 그렇다. 이는 "route 파일 단위로 훑으며 첫 mutation 핸들러에만
 붙였다" 는 이력을 시사한다 — 즉 **누락이 체계적**이며, E7 수집도 **파일 단위가
 아니라 메서드 단위**여야 한다.
 

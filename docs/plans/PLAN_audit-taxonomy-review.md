@@ -1,8 +1,38 @@
-# §audit-taxonomy-review — enforceAction 분류 체계 설계
+# §audit-foundation ① — enforceAction 분류 체계 설계 (구 §audit-taxonomy-review)
 
 작성: 2026-08-10
 상태: **설계안 (승인 대기)** — 코드 변경·마이그레이션 없음. 문서 + enum 초안만.
 발원: §enforcement-handle-close-sweep 배치1~12
+
+---
+
+## §audit-foundation — 세 트랙이 아니라 한 트랙의 3단계 (호영님 2026-08-10)
+
+**① 어휘 확정(이 문서) → ② 영속화(§audit-persistence-gap) → ③ 권한 연결(entityCapabilities)**
+
+### ⚠️ ① 만 끝내면 라이브 효과는 **0** 이다
+
+지금 taxonomy 는 어디에도 실제 영향을 주지 못한다.
+
+- `entityCapabilities: []` 하드코딩 → 접근 판정 무영향
+- `appendAuditEnvelope` in-memory only → audit 에도 남지 않음
+
+**①은 그 자체로 가치가 아니라 ②의 선결 조건이다.** ① 완료를 성과로 읽으면 안 된다.
+그럼에도 먼저 하는 이유는 하나뿐이다: **영속화가 시작되는 순간 어휘가 굳는다.**
+
+### 순서를 바꾸면 각각 재작업이 발생한다
+
+| 잘못된 순서 | 발생하는 재작업 |
+|---|---|
+| ② 먼저 (틀린 어휘로 영속화) | 그때부터 진짜 마이그레이션 비용이 생긴다. 지금은 과거 레코드가 사실상 0 이라 공짜인 것이 유료가 된다(§6) |
+| ③ 먼저 (capability 매핑 선행) | 틀린 taxonomy 위에 매핑을 얹게 되고, 뒤집는 비용이 매핑 구현 이후에 훨씬 커진다. 또 오분류 다수가 그대로 **접근 규칙으로 활성화**된다 |
+| ③ 먼저 (영속화 없이) | 판정 근거가 남지 않아 권한 사고를 사후 조사할 수단이 없다 |
+
+### 착수 비용 판단 근거 — 규모
+
+**enforceAction 호출 지점 169개.** `ai_action` 57(34%), `'unknown'` 54(32%),
+미파싱 13(하한). 지금까지 보고해 온 "31건" 은 sweep 중 눈에 띈 후보였고
+**실제는 5배 규모**다. 상세는 §1.
 
 ---
 
@@ -281,47 +311,105 @@ per-user 폴백이 맞고, `'none'` 은 그 자체를 키로 써도 된다(집�
 
 ---
 
-## 6. 과거 audit 레코드 해석 — 3안 비교
+## 6. 과거 audit 레코드 — **실측 결과 문제 자체가 없다** (2026-08-10)
 
-§2 의 발견이 이 절의 비용 계산을 크게 바꾼다.
-**enforceAction 경로에는 옮길 과거 레코드가 없다**(in-memory, 람다와 함께 소멸).
-따라서 아래 비교는 실질적으로 **`AuditLog` 테이블**에만 적용된다.
+호영님 지시로 A안 확정 전에 DB 를 실측했다. **read-only SELECT 만 수행.**
 
-| 안 | 방식 | 비용 | 위험 | 감사 성질 |
-|---|---|---|---|---|
-| **A. 옛 값 보존 + 매핑 테이블** | 과거 레코드는 그대로 두고 `legacy → canonical` 매핑을 유지, 조회 시 적용 | 낮음 — 마이그레이션 0 | 낮음. 매핑 적용 누락이 새 결함 클래스가 될 수 있음 | **원본 불변** |
-| **B. 백필** | 과거 `entityType` 을 새 어휘로 UPDATE | 중간 — 1회 마이그레이션 | **높음** (아래) | **원본 훼손** |
-| **C. 버전 필드 추가** | `taxonomyVersion` 컬럼, 신규 v2 / 과거 v1 | 중간 — 스키마 변경 + 전 소비처 분기 | 중간 | 원본 불변 + 명시적 |
+### 실측
 
-### 실측 근거
+| 테이블 | 행 수 |
+|---|---|
+| `AuditLog` | **2** |
+| `DataAuditLog` | 1 |
+| `GovernanceAuditLog` | 0 |
+| `MutationAuditEvent` | 0 |
+| `IngestionAuditLog` | 0 |
+| `CanonicalAuditEvent` | 0 |
+| (참고) `ActivityLog` | 16 |
 
-- `AuditLog.entityType` 은 `String` 자유 필드다(enum 아님). **B 를 해도 스키마가
-  품질을 강제해 주지 않는다.**
-- 현행 `ai_action` 57건이 새 어휘에서 **12종 이상으로 분기**한다. B 의 백필은
-  "이 레코드가 실제로 무엇이었나" 를 역추론해야 하는데, `AuditLog` 에는 **라우트
-  경로 컬럼이 없다.** 역추론 근거 자체가 부족하다.
-- C 는 A 의 상위집합이다(A + 명시 표시). A → C 승격은 가능하나 역은 어렵다.
+`AuditLog` 2행의 실제 값:
 
-### 권고 — **A안**, 다만 근거를 보강한다
+```
+2026-07-31  entityType=QUOTE   eventType=DATA_EXPORTED       action=quote_pdf_generate
+2026-08-01  entityType=ORDER   eventType=INGESTION_RECEIVED  action=receiving_draft_approved
+```
 
-호영님 선호와 결론은 같으나 이유가 하나 더 있다. A 를 고르는 이유는 "감사는 원본성이
-값어치" 라는 원칙만이 아니라, **B 의 백필이 기술적으로 불가능에 가깝기 때문**이다
-(역추론 근거 부족). 이 건에서는 원칙과 실현가능성이 같은 답을 가리킨다.
+### 판정 — A/B/C 선택 폐기
 
-**반박 지점**: 매핑 테이블은 "당분간" 이 아니라 영구 유지 대상이 된다. 과거 레코드를
-조회하는 소비처가 늘수록 매핑 적용 누락이 새 결함 클래스가 된다. 이를 감수할지,
-C 로 시작해 명시적으로 다룰지는 승인 시 판단.
+1. **enforceAction 경로의 과거 레코드는 0** — in-memory 라 애초에 없다(§2).
+2. **`AuditLog` 의 과거 레코드는 2행** — 그리고 그 2행은 `QUOTE`/`ORDER` 라는
+   **대문자 제3의 어휘**를 쓴다. enforceAction enum(`quote`/`order` 소문자)도 아니고
+   §5-2 초안(snake_case)도 아니다. 즉 **어휘를 공유하지 않는다.**
+3. 따라서 **옮길 레코드도, 매핑할 어휘도 사실상 없다.**
 
----
+**결론: 과거 레코드 문제 자체가 존재하지 않는다. 매핑 테이블 불요.**
+A/B/C 비교는 폐기하고, §audit-persistence-gap 착수 시점부터 **신규 어휘만 쓴다.**
+2행은 마이그레이션 대상이 아니라 관측 사실로 문서에 남긴다(필요해지면 손으로 읽는다).
 
-## 7. 승인 요청 항목
+⚠️ 부수 관측: `AuditLog.entityType` 이 대문자 어휘라는 것은 **`createAuditLog` 경로가
+또 하나의 독립 taxonomy 를 쓰고 있다**는 뜻이다. §audit-persistence-gap 에서
+enforceAction envelope 를 영속화할 때 **두 경로를 같은 어휘로 통일할지**가
+설계 항목으로 추가된다(지금 결정하지 않는다).
 
-1. **데이터시트 문서**: `SDSDocument` 는 모델이 있으나 데이터시트는 없다.
-   (a) `document` 상위 값으로 통합 / (b) 모델 신설 / (c) `concept` 분류.
-2. **`invite`**: `OrganizationInvite` 와 `WorkspaceInvite` 두 모델 대응 — 분리 여부.
-3. **`targetEntityId` 특수값과 lock 폴백**: `'none'`/`'new'`/`'bulk'` 채택 시
-   `deriveConcurrencyKey` 폴백 규칙(§5-3).
-4. **과거 레코드**: A안 확정 여부(§6).
+⚠️ 실측의 한계: 이 숫자는 **현재 연결된 DB 기준**이다. 다른 환경(스테이징 등)에
+더 많은 행이 있을 가능성은 배제하지 못한다. 다만 어휘 불일치(대문자 제3어휘)는
+환경과 무관한 사실이므로 결론은 바뀌지 않는다.
+
+## 7. 승인 항목 — 결정 반영 (호영님 2026-08-10)
+
+### a) 데이터시트 문서 — **판정 기준 = "무엇이 바뀌는가"**
+
+모델이 없다는 사실만으로 concept 으로 보내지 않는다. 배치9 실측을 그대로 적용하면 갈린다.
+
+| route | 배치9 실측 | 판정 |
+|---|---|---|
+| `datasheet/extract` `extract-pdf` `extract-url` | DB 쓰기 **0** (추출 결과를 반환만) → `fail()` | **concept** (`datasheet_extraction`) |
+| `sds/[id]/apply` | `db.product.update` 실재 | **entity = `product`** — 바뀌는 것은 제품이다 |
+| `sds/[id]/extract` | `db.sDSDocument.update`(status→queued) | **entity = `sds_document`** |
+| `sds/[id]/signed-url` | 읽기 전용(서명 URL 발급) | **entity = `sds_document`** (대상 실재, 변경 없음은 action 축이 표현) |
+
+→ `TargetConceptType` 에 `datasheet_extraction` 추가. 모델 신설 불요.
+
+### b) `invite` — **분리 확정**
+
+같은 단어가 두 모델을 가리키면 enum 에서 합치는 순간 taxonomy 가 거짓말을 시작한다.
+원칙 1(모델명 1:1)이 이미 답을 준다.
+
+```
+invite  →  organization_invite | workspace_invite
+```
+
+### c) 특수값과 lock 폴백 — **셋 다 userId 폴백, 단 하나의 상수에서 파생**
+
+`'none'`/`'new'`/`'bulk'` 모두 단일 대상이 없으므로 per-user double-submit 보호가
+의미론적으로 맞다. 지금 `'unknown'` 이 하던 역할 그대로다.
+
+**중요한 건 값이 아니라 구조다.** 특수값 목록과 폴백 대상 목록을 두 곳에 손으로
+적으면 다음에 특수값이 추가될 때 폴백에서 빠지고, 그러면 `'bulk'` 같은 값이
+**전역 공용 lock 키**가 된다 — 배치 초반에 `'unknown'` 을 두고 잘못 짚었던 그 사고가
+이번엔 진짜로 일어난다.
+
+```ts
+/** 단일 진입점 — 여기서만 정의하고 폴백은 여기서 파생시킨다 */
+export const TARGET_ID_SENTINELS = ['none', 'new', 'bulk'] as const;
+export type TargetIdSentinel = (typeof TARGET_ID_SENTINELS)[number];
+
+const isSentinel = (id: string): id is TargetIdSentinel =>
+  (TARGET_ID_SENTINELS as readonly string[]).includes(id);
+
+// deriveConcurrencyKey 안에서
+const scope = isSentinel(targetEntityId) ? userId : targetEntityId;
+```
+
+**sentinel 로 잠근다**: 특수값 집합과 폴백 집합이 같다는 단언 + corrupt→RED 실증.
+(구현 시점에 작성 — 이 문서는 설계까지)
+
+### d) 과거 레코드 — **실측으로 종결**(§6). 결정 불요.
+
+### 승인 후 남는 결정
+
+- `TargetConceptType` 폐쇄 목록 최종안 (현재 7값: search_intent / translation /
+  ui_layout / export_preset / analytics_query / canary_config / datasheet_extraction)
 
 ## 8. Out of Scope
 

@@ -125,16 +125,11 @@ export default function VendorQuotesPage() {
     enabled: status === "authenticated",
   });
 
-  // 벤더 통계 조회
-  const { data: stats } = useQuery({
-    queryKey: ["vendor-stats"],
-    queryFn: async () => {
-      const response = await fetch("/api/vendor/stats");
-      if (!response.ok) return null;
-      return response.json();
-    },
-    enabled: status === "authenticated",
-  });
+  // §route-duplication (2026-08-10) — 벤더 통계 KPI 제거.
+  //   `/api/vendor/stats` 는 DB 조회 없이 고정 숫자를 돌려주는 mock 이었고
+  //   여기 4개 카드(총 견적/총 응답/응답률/총 거래 금액)가 그 숫자를 실적처럼
+  //   렌더하고 있었다. 라우트와 함께 화면도 미생성으로 되돌린다.
+  //   실데이터 기반 KPI 는 §vendor-portal-identity 이후 별도 설계.
 
   const handleSubmitResponse = (quoteId: string) => {
     if (!responseForm.totalPrice) {
@@ -311,62 +306,6 @@ export default function VendorQuotesPage() {
             고객으로부터 받은 견적 요청에 응답할 수 있습니다.
           </p>
         </div>
-
-        {/* 통계 카드 */}
-        {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">총 견적 요청</CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalQuotes || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  최근 30일: {stats.recentQuotes || 0}건
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">총 응답</CardTitle>
-                <MessageSquare className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalResponses || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  최근 30일: {stats.recentResponses || 0}건
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">응답률</CardTitle>
-                <Percent className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.responseRate || 0}%</div>
-                <p className="text-xs text-muted-foreground">
-                  평균 응답 시간: {stats.avgResponseTime || 0}시간
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">총 거래 금액</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  ₩{stats.totalRevenue?.toLocaleString() || 0}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  응답한 견적 기준
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        )}
 
         {isLoading ? (
           <div className="text-center py-12">

@@ -1,185 +1,51 @@
-"use client";
+export const dynamic = "force-dynamic";
 
-export const dynamic = 'force-dynamic';
-
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { ExternalLink, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { format } from "date-fns";
-import { ko } from "date-fns/locale";
+import { Button } from "@/components/ui/button";
 
-type VendorRequestStatus = "PENDING" | "RESPONDED" | "EXPIRED" | "CANCELLED";
-
-interface VendorRequest {
-  id: string;
-  quoteTitle: string;
-  status: VendorRequestStatus;
-  expiresAt: Date;
-  itemCount: number;
-  updatedAt: Date;
-}
-
-const STATUS_CONFIG: Record<VendorRequestStatus, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
-  PENDING: { label: "대기", variant: "secondary" },
-  RESPONDED: { label: "회신", variant: "default" },
-  EXPIRED: { label: "만료", variant: "outline" },
-  CANCELLED: { label: "취소", variant: "destructive" },
-};
-
-export default function VendorDashboardPage() {
-  const [statusFilter, setStatusFilter] = useState<VendorRequestStatus | "ALL">("ALL");
-
-  const { data: requestsData, isLoading } = useQuery({
-    queryKey: ["vendor-requests", statusFilter],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (statusFilter !== "ALL") {
-        params.set("status", statusFilter);
-      }
-      const response = await fetch(`/api/vendor/requests?${params}`);
-      if (!response.ok) throw new Error("Failed to fetch requests");
-      return response.json();
-    },
-  });
-
-  const requests: VendorRequest[] = requestsData?.requests || [];
-
+/**
+ * 벤더 포털 진입 — 견적 회신은 **토큰 경로가 canonical** 이다.
+ *
+ * §route-duplication (2026-08-10, 호영님 결정): 같은 도메인 행위(벤더 견적 회신)에
+ *   토큰 경로와 로그인 포털 경로가 각자 라우트를 갖고 각자 진화했다. 토큰 경로만
+ *   구현돼 있었고, 포털 경로는 **하드코딩 mock** 으로 채워져 있었다
+ *   (실재하지 않는 견적 요청과 조직명을 아무 방문자에게나 렌더).
+ *   → 포털 RFQ 경로를 폐기하고 토큰 경로를 canonical 로 확정했다.
+ *
+ * 이 화면은 조작된 데이터를 보여주지 않기 위해 목록을 **만들지 않는다**.
+ * 로그인 벤더용 포털 회신은 §vendor-portal-identity(벤더 계정 체계) 이후에
+ * 새로 설계한다 — 지금 것을 되살리는 트랙이 아니다.
+ */
+export default function VendorPortalEntryPage() {
   return (
     <div className="min-h-screen bg-pg">
-      {/* Header */}
       <div className="bg-pn border-b border-bd">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-slate-100">벤더 포털</h1>
-              <p className="text-sm text-slate-600 mt-1">견적 요청 관리</p>
-            </div>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/vendor/logout">
-                로그아웃
-              </Link>
-            </Button>
-          </div>
+        <div className="max-w-3xl mx-auto px-4 py-4">
+          <h1 className="text-xl font-bold text-slate-100">벤더 포털</h1>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Status Filters */}
-        <div className="mb-4 flex gap-2">
-          <Button
-            variant={statusFilter === "ALL" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setStatusFilter("ALL")}
-          >
-            전체
-          </Button>
-          <Button
-            variant={statusFilter === "PENDING" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setStatusFilter("PENDING")}
-          >
-            대기
-          </Button>
-          <Button
-            variant={statusFilter === "RESPONDED" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setStatusFilter("RESPONDED")}
-          >
-            회신
-          </Button>
-          <Button
-            variant={statusFilter === "EXPIRED" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setStatusFilter("EXPIRED")}
-          >
-            만료
-          </Button>
-          <Button
-            variant={statusFilter === "CANCELLED" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setStatusFilter("CANCELLED")}
-          >
-            취소
-          </Button>
+      <div className="max-w-3xl mx-auto px-4 py-8">
+        <div className="rounded-lg border border-bd bg-pn p-5">
+          <h2 className="text-base font-semibold text-slate-100">
+            견적 회신은 요청 메일의 링크로 진행합니다
+          </h2>
+          <p className="mt-2 text-sm text-slate-400">
+            받으신 견적 요청 메일에 포함된 회신 링크를 열면 품목별 단가와 납기를
+            입력할 수 있습니다. 이 포털 화면에서는 요청 목록을 제공하지 않습니다.
+          </p>
+          <p className="mt-2 text-sm text-slate-400">
+            링크를 찾을 수 없거나 만료됐다면 요청을 보낸 담당자에게 재발송을
+            요청해 주세요.
+          </p>
         </div>
 
-        {/* Requests Table */}
-        <div className="bg-pn border border-bd shadow-sm">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
-            </div>
-          ) : requests.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-sm text-slate-500">요청이 없습니다.</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="font-medium">요청명</TableHead>
-                  <TableHead className="font-medium">상태</TableHead>
-                  <TableHead className="font-medium">만료일</TableHead>
-                  <TableHead className="font-medium text-right">품목 수</TableHead>
-                  <TableHead className="font-medium">마지막 업데이트</TableHead>
-                  <TableHead className="font-medium text-right">액션</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {requests.map((request) => (
-                  <TableRow key={request.id} className="hover:bg-pg">
-                    <TableCell className="font-medium p-3">
-                      {request.quoteTitle}
-                    </TableCell>
-                    <TableCell className="p-3">
-                      <Badge variant={STATUS_CONFIG[request.status].variant}>
-                        {STATUS_CONFIG[request.status].label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="p-3 text-sm">
-                      {format(new Date(request.expiresAt), "PPP", { locale: ko })}
-                    </TableCell>
-                    <TableCell className="p-3 text-right text-sm">
-                      {request.itemCount}개
-                    </TableCell>
-                    <TableCell className="p-3 text-sm text-slate-600">
-                      {format(new Date(request.updatedAt), "PPp", { locale: ko })}
-                    </TableCell>
-                    <TableCell className="p-3 text-right">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/vendor/requests/${request.id}`}>
-                          <ExternalLink className="h-4 w-4 mr-1" />
-                          보기
-                        </Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+        <div className="mt-4">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/vendor/logout">로그아웃</Link>
+          </Button>
         </div>
-
-        {/* Summary */}
-        {!isLoading && requests.length > 0 && (
-          <div className="mt-4 text-sm text-slate-600">
-            총 {requests.length}건의 요청
-          </div>
-        )}
       </div>
     </div>
   );
 }
-

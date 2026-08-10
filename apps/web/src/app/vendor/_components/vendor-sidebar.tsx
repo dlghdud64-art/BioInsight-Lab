@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   Package,
   Settings,
-  FileText,
   LogOut,
 } from "lucide-react";
 
@@ -21,11 +20,6 @@ const VENDOR_MENU_ITEMS = [
     title: "My Products",
     href: "/vendor/products",
     icon: Package,
-  },
-  {
-    title: "Quote Requests",
-    href: "/vendor/requests",
-    icon: FileText,
   },
   {
     title: "Settings",
