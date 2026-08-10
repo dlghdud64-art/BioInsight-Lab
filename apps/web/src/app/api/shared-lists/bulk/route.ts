@@ -16,20 +16,22 @@ export async function DELETE(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (shared-lists) — 'unknown' 유지.
+      //   ⚠️ enum 에 shared_list 타입이 없다(정확한 선택지 부재).
+      //   → §audit-taxonomy-review 후보. 여기서 바꾸면 checkServerAuthorization 의
+      //     접근 판정 입력이 달라지므로 sweep 범위에서는 손대지 않는다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/shared-lists/bulk',
     });
     if (!enforcement.allowed) return enforcement.deny();
 
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    // (죽은 재검사 제거: 같은 핸들러 상단에서 이미 401 처리했다)
     const body = await request.json();
     const { publicIds } = body;
 
     if (!publicIds || !Array.isArray(publicIds) || publicIds.length === 0) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "publicIds array is required" },
         { status: 400 }
@@ -73,6 +75,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     if (authorizedListIds.length === 0) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "No authorized shared lists found" },
         { status: 403 }
@@ -88,12 +91,18 @@ export async function DELETE(request: NextRequest) {
       },
     });
 
+    enforcement.complete({
+      beforeState: { requestedPublicIds: publicIds.length, authorized: authorizedListIds.length },
+      afterState: { deleted: deleted.count },
+    });
+
     return NextResponse.json({
       deleted: deleted.count,
       requested: publicIds.length,
       authorized: authorizedListIds.length,
     });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error deleting shared lists:", error);
     return NextResponse.json(
       { error: "Failed to delete shared lists" },

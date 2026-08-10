@@ -86,16 +86,17 @@ export async function PATCH(
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (shared-lists) — 'unknown' 유지.
+      //   ⚠️ enum 에 shared_list 타입이 없다(정확한 선택지 부재).
+      //   → §audit-taxonomy-review 후보. 여기서 바꾸면 checkServerAuthorization 의
+      //     접근 판정 입력이 달라지므로 sweep 범위에서는 손대지 않는다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/shared-lists/[publicId]',
     });
     if (!enforcement.allowed) return enforcement.deny();
 
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    // (죽은 재검사 제거: 같은 PATCH 핸들러 상단에서 이미 401 처리했다)
     const { publicId } = await params;
     const body = await request.json();
     const { isActive, expiresAt } = body;
@@ -113,6 +114,7 @@ export async function PATCH(
     });
 
     if (!sharedList) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "Shared list not found" },
         { status: 404 }
@@ -129,6 +131,7 @@ export async function PATCH(
       });
 
       if (!isOrgMember) {
+        enforcement.fail();
         return NextResponse.json(
           { error: "Forbidden" },
           { status: 403 }
@@ -145,6 +148,19 @@ export async function PATCH(
       },
     });
 
+    enforcement.complete({
+      beforeState: {
+        publicId: sharedList.publicId,
+        isActive: sharedList.isActive,
+        expiresAt: sharedList.expiresAt?.toISOString() ?? null,
+      },
+      afterState: {
+        publicId: updated.publicId,
+        isActive: updated.isActive,
+        expiresAt: updated.expiresAt?.toISOString() ?? null,
+      },
+    });
+
     return NextResponse.json({
       id: updated.id,
       publicId: updated.publicId,
@@ -152,6 +168,7 @@ export async function PATCH(
       expiresAt: updated.expiresAt,
     });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error updating shared list:", error);
     return NextResponse.json(
       { error: "Failed to update shared list" },

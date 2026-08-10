@@ -28,6 +28,10 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (purchases) — 'unknown' 유지.
+      //   ⚠️ 핸들 생성 시점에는 대상(ImportJob/PurchaseRecord)이 아직 없다(생성 전).
+      //   또한 enum 에 import/document 타입이 없어 'ai_action' 이 대리로 쓰였다.
+      //   → §audit-taxonomy-review 후보.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/purchases/import/preview',
@@ -100,8 +104,12 @@ export async function POST(request: NextRequest) {
       fileId,
     };
 
+    // 미리보기 전용: DB 쓰기 0 (파싱 결과는 in-memory fileCache 에만 적재)
+    //   → audit envelope 없이 lock 만 해제한다.
+    enforcement.fail();
     return NextResponse.json(response);
   } catch (error) {
+    enforcement?.fail();
     return handleApiError(error, "purchases/import/preview");
   }
 }

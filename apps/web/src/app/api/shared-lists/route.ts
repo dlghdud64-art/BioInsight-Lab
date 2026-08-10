@@ -21,6 +21,10 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'compare_session',
+      // §enforcement-handle-close-sweep (shared-lists) — 'unknown' 유지.
+      //   ⚠️ enum 에 shared_list 타입이 없다(정확한 선택지 부재).
+      //   → §audit-taxonomy-review 후보. 여기서 바꾸면 checkServerAuthorization 의
+      //     접근 판정 입력이 달라지므로 sweep 범위에서는 손대지 않는다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/shared-lists',
@@ -36,6 +40,7 @@ export async function POST(request: NextRequest) {
       : null;
 
     if (!quoteId || !title) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "quoteId and title are required" },
         { status: 400 }
@@ -89,6 +94,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!quote) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "QuoteList not found" },
         { status: 404 }
@@ -105,6 +111,7 @@ export async function POST(request: NextRequest) {
       });
 
       if (!isOrgMember) {
+        enforcement.fail();
         return NextResponse.json(
           { error: "Forbidden" },
           { status: 403 }
@@ -233,6 +240,16 @@ export async function POST(request: NextRequest) {
       console.error("Failed to create activity log:", error);
     });
 
+    enforcement.complete({
+      beforeState: { quoteId: quote.id, existingSharedListId: null },
+      afterState: {
+        quoteId: quote.id,
+        sharedListId: sharedList.id,
+        publicId: sharedList.publicId,
+        expiresAt: sharedList.expiresAt?.toISOString() ?? null,
+      },
+    });
+
     return NextResponse.json({
       id: sharedList.id,
       publicId: sharedList.publicId,
@@ -240,6 +257,8 @@ export async function POST(request: NextRequest) {
       expiresAt: sharedList.expiresAt,
     });
   } catch (error) {
+    // 데모 모드 분기도 이 catch 안에서 return 하므로 최상단에서 한 번만 닫는다.
+    enforcement?.fail();
     console.error("Error creating shared list:", error);
     
     // 데모 모드에서는 더미 응답 반환

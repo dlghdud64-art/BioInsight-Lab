@@ -21,7 +21,7 @@
  *   E4. 제품 쓰기 2 route 는 targetEntityId 를 실제 id 로 넘기고 before/after 를 남긴다.
  *
  * ⚠️ LEGACY ratchet: 실측 시점 149 route 중 74 route 가 핸들을 닫지 않았다.
- *    2026-08-09 배치 1(work-queue 7) → 67, 배치9(datasheet+sds 6) 까지 → **30 route** 남음.
+ *    2026-08-09 배치 1(work-queue 7) → 67, 배치10(purchases+shared-lists 6) 까지 → **24 route** 남음.
  *    전수 교정은 별도 트랙(§enforcement-handle-close-sweep). 이 sentinel 은
  *    **새 누수만 차단**하고 기존분은 목록으로 고정한다 — 전면 단언은 즉시 72 RED 라
  *    baseline 을 오염시켜 판독 자체를 무력화한다.
@@ -79,7 +79,7 @@ const closesHandle = (src: string) => src.includes(".complete(") || src.includes
 const UNCLOSED = USES_ENFORCE.filter((r) => !closesHandle(r.src)).map((r) => r.path);
 
 /**
- * 2026-08-09 실측 누수 74 → 배치1(work-queue 7) → 67 → 배치2(inventory 5) → 62 → 배치3(products 5) → 57 → 배치4(quotes 5) → 52 → 배치5(ai 4) → 48 → 배치6(ai-actions 4) → 44 → 배치7(analytics 4) → 40 → 배치8(protocol 4) → 36 → 배치9(datasheet 3 + sds 3) → **30**. **줄어들기만 한다.**
+ * 2026-08-09 실측 누수 74 → 배치1(work-queue 7) → 67 → 배치2(inventory 5) → 62 → 배치3(products 5) → 57 → 배치4(quotes 5) → 52 → 배치5(ai 4) → 48 → 배치6(ai-actions 4) → 44 → 배치7(analytics 4) → 40 → 배치8(protocol 4) → 36 → 배치9(datasheet 3 + sds 3) → 30 → 배치10(purchases 3 + shared-lists 3) → **24**. **줄어들기만 한다.**
  * 여기에 새 경로를 추가하는 것은 회귀이며, 항목을 고쳤으면 이 목록에서 제거해야 한다.
  */
 const LEGACY_UNCLOSED: readonly string[] = [
@@ -96,17 +96,11 @@ const LEGACY_UNCLOSED: readonly string[] = [
   "src/app/api/ingestion/route.ts",
   "src/app/api/organizations/[id]/subscription/route.ts",
   "src/app/api/po-candidates/route.ts",
-  "src/app/api/purchases/import/preview/route.ts",
-  "src/app/api/purchases/import/route.ts",
-  "src/app/api/purchases/import-file/route.ts",
   "src/app/api/recommendations/feedback/route.ts",
   "src/app/api/recommendations/optimized/route.ts",
   "src/app/api/reviews/[id]/route.ts",
   "src/app/api/safety/spend/map/route.ts",
   "src/app/api/search/intent/route.ts",
-  "src/app/api/shared-lists/bulk/route.ts",
-  "src/app/api/shared-lists/route.ts",
-  "src/app/api/shared-lists/[publicId]/route.ts",
   "src/app/api/templates/route.ts",
   "src/app/api/templates/[id]/route.ts",
   "src/app/api/translate/route.ts",

@@ -67,6 +67,10 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (purchases) — 'unknown' 유지.
+      //   ⚠️ 핸들 생성 시점에는 대상(ImportJob/PurchaseRecord)이 아직 없다(생성 전).
+      //   또한 enum 에 import/document 타입이 없어 'ai_action' 이 대리로 쓰였다.
+      //   → §audit-taxonomy-review 후보.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/purchases/import',
@@ -152,11 +156,27 @@ export async function POST(request: NextRequest) {
 
     logger.info(`Import completed: ${result.successRows} success, ${result.errorRows} errors`);
 
+    // 행 단위로 create 하므로 성공 행이 0 이면 **쓰기가 하나도 없다**.
+    //   그 경우 complete() 는 없던 변경을 기록하는 허위 audit 이 된다 → fail().
+    if (result.successRows > 0) {
+      enforcement.complete({
+        beforeState: { scopeKey, totalRows: result.totalRows },
+        afterState: {
+          scopeKey,
+          createdPurchaseRecords: result.successRows,
+          errorRows: result.errorRows,
+        },
+      });
+    } else {
+      enforcement.fail();
+    }
+
     return NextResponse.json({
       ...result,
       records: successRecords.slice(0, 10),
     });
   } catch (error) {
+    enforcement?.fail();
     return handleApiError(error, "purchases/import");
   }
 }

@@ -71,6 +71,10 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (purchases) — 'unknown' 유지.
+      //   ⚠️ 핸들 생성 시점에는 대상(ImportJob/PurchaseRecord)이 아직 없다(생성 전).
+      //   또한 enum 에 import/document 타입이 없어 'ai_action' 이 대리로 쓰였다.
+      //   → §audit-taxonomy-review 후보.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/purchases/import-file',
@@ -239,11 +243,25 @@ export async function POST(request: NextRequest) {
       `Import job ${importJob.id} completed: ${result.successRows} success, ${result.errorRows} errors`
     );
 
+    // ImportJob create + update 는 행 성공/실패와 무관하게 항상 실행된다
+    //   → 이 지점에 도달하면 쓰기가 확정이므로 무조건 complete().
+    enforcement.complete({
+      beforeState: { scopeKey, filename, totalRows: result.totalRows },
+      afterState: {
+        scopeKey,
+        importJobId: importJob.id,
+        status: finalStatus,
+        successRows: result.successRows,
+        errorRows: result.errorRows,
+      },
+    });
+
     return NextResponse.json({
       ...result,
       records: successRecords.slice(0, 10), // Return first 10 records as sample
     });
   } catch (error) {
+    enforcement?.fail();
     return handleApiError(error, "purchases/import-file");
   }
 }
