@@ -1,73 +1,33 @@
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
-import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-
-const respondSchema = z.object({
-  items: z.record(z.object({
-    unitPrice: z.number().optional(),
-    leadTime: z.string().optional(),
-    moq: z.number().optional(),
-    notes: z.string().optional(),
-  })),
-});
 
 /**
- * POST /api/vendor/requests/[id]/respond
- * Submit vendor response to quote request
+ * POST /api/vendor/requests/[id]/respond — **미구현. 성공을 반환하지 않는다.**
+ *
+ * §placeholder-success-audit (2026-08-10, 호영님 P1 분리 처리)
+ *
+ * 이전 상태: 본문을 파싱만 하고 DB 에 아무것도 쓰지 않은 채
+ *   `{ success: true, message: "Response submitted successfully" }` 를 반환했다.
+ *   (실측 보정: zod 스키마가 `items` 를 요구하는데 UI 는 `responses` 를 보내
+ *    항상 500 으로 떨어지고 있었다 — 저장도 성공 응답도 실제로는 없었다.)
+ *
+ * 왜 라우트까지 막는가: 다른 호출자(모바일·외부 연동)가 있을 수 있어 UI 차단만으로는
+ *   부족하다. 라우트가 스스로 "구현되지 않았다" 를 말해야 한다.
+ *
+ * 실제로 동작하는 벤더 회신 경로는 **토큰 기반** `/api/vendor-requests/[token]/response`
+ *   다 (quoteVendorResponseItem upsert + quoteVendorRequest status 갱신).
+ *   로그인 포털 경로를 그쪽과 통합하는 것이 §vendor-request-respond 트랙이며,
+ *   회신 상태값이 §quote-status-vocabulary 와 얽혀 있어 지금 구현하지 않는다.
  */
 export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  _request: NextRequest,
+  _context: { params: Promise<{ id: string }> }
 ) {
-  let enforcement: InlineEnforcementHandle | undefined;
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
-    }
-    const { id } = await params;
-    enforcement = enforceAction({
-      userId: session.user.id,
-      userRole: session.user.role ?? undefined,
-      action: 'sensitive_data_import',
-      targetEntityType: 'product',
-      // §enforcement-handle-close-sweep (vendor) — params id 확정 이후로 핸들 이동.
-      //   ⚠️ 이 라우트는 아직 DB 쓰기가 없다(아래 TODO). 따라서 complete() 가 아니라
-      //     fail() 로 닫는다 — 저장되지 않은 응답을 감사에 남기면 허위 기록이 된다.
-      targetEntityId: id,
-      sourceSurface: 'vendor_portal',
-      routePath: '/vendor/requests/id/respond',
-    });
-    if (!enforcement.allowed) return enforcement.deny();
-
-    const body = await request.json();
-    const { items } = respondSchema.parse(body);
-
-    console.log("Submitting vendor response for request:", id);
-    console.log("Items:", items);
-
-    // TODO: Implement actual logic
-    // 1. Validate vendor has permission
-    // 2. Check request not expired
-    // 3. Save responses to DB
-    // 4. Update request status to RESPONDED
-    // 5. Notify requester
-
-    // ⚠️ 위 TODO 가 남아 있는 한 이 라우트는 DB 쓰기가 0이다 → fail().
-    //    (성공 응답 자체의 정합성 문제는 sweep 범위 밖 — 별도 트랙으로 상신)
-    enforcement.fail();
-    return NextResponse.json({
-      success: true,
-      message: "Response submitted successfully",
-    });
-  } catch (error) {
-    enforcement?.fail();
-    console.error("Submit response error:", error);
-    return NextResponse.json(
-      { error: "Failed to submit response" },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json(
+    {
+      error:
+        "이 경로의 견적 회신은 아직 열려 있지 않습니다. 요청 메일의 회신 링크를 사용해 주세요.",
+      code: "VENDOR_RESPOND_NOT_IMPLEMENTED",
+    },
+    { status: 501 }
+  );
 }
-

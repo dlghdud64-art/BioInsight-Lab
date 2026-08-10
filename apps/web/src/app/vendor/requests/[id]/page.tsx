@@ -2,17 +2,15 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useParams, useRouter } from "next/navigation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, Upload, Loader2, FileText } from "lucide-react";
+import { ChevronLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { VendorSidebar } from "../../_components/vendor-sidebar";
-import { QuoteForm } from "@/components/vendor/quote-form";
 
 interface QuoteRequestItem {
   id: string;
@@ -41,9 +39,6 @@ interface VendorRequestDetail {
 
 export default function VendorRequestDetailPage() {
   const params = useParams();
-  const router = useRouter();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   const requestId = params.id as string;
 
   // Fetch request detail
@@ -57,28 +52,6 @@ export default function VendorRequestDetailPage() {
   });
 
   const request: VendorRequestDetail | undefined = requestData?.request;
-
-  const handleQuoteSubmit = async (responses: any[]) => {
-    try {
-      const response = await fetch(`/api/vendor/requests/${requestId}/respond`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ responses }),
-      });
-
-      if (!response.ok) throw new Error("Failed to submit response");
-
-      toast({
-        title: "회신 완료",
-        description: "견적 회신이 제출되었습니다.",
-      });
-      
-      queryClient.invalidateQueries({ queryKey: ["vendor-request", requestId] });
-      router.push("/vendor/dashboard");
-    } catch (error) {
-      throw error; // Let QuoteForm handle the error
-    }
-  };
 
   if (isLoading) {
     return (
@@ -101,8 +74,6 @@ export default function VendorRequestDetailPage() {
       </div>
     );
   }
-
-  const isReadOnly = !request.canEdit;
 
   return (
     <div className="flex min-h-screen bg-pg">
@@ -134,13 +105,35 @@ export default function VendorRequestDetailPage() {
         </div>
 
         {/* Main Content */}
-        <div className="p-6">
-          <QuoteForm
-            requestId={requestId}
-            items={request.items}
-            onSubmit={handleQuoteSubmit}
-            readOnly={isReadOnly}
-          />
+        {/*
+          §placeholder-success-audit — 이 포털 경로의 견적 회신은 아직 구현되지 않았다.
+          입력 폼을 disabled 로 두지 않고 **아예 만들지 않는다**: 눌러서 성공(또는 실패)을
+          보는 경로가 존재하면 안 된다. 실제 회신은 요청 메일의 토큰 링크로 처리된다.
+        */}
+        <div className="p-6 space-y-4">
+          <div className="rounded-lg border border-bd bg-pn p-4">
+            <h2 className="text-sm font-semibold text-slate-100">요청 품목 {request.items.length}건</h2>
+            <ul className="mt-3 divide-y divide-bd">
+              {request.items.map((item) => (
+                <li key={item.id} className="py-2 text-sm text-slate-300">
+                  <span className="font-medium text-slate-100">{item.productName}</span>
+                  {item.catalogNumber ? <span className="ml-2 text-slate-500">{item.catalogNumber}</span> : null}
+                  <span className="ml-2 text-slate-400">
+                    {item.quantity} {item.unit}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="rounded-lg border border-bd bg-pn p-4">
+            <p className="text-sm text-slate-200">
+              이 화면에서는 아직 견적을 회신할 수 없습니다.
+            </p>
+            <p className="mt-1 text-sm text-slate-400">
+              받으신 견적 요청 메일의 회신 링크로 단가와 납기를 입력해 주세요.
+            </p>
+          </div>
         </div>
       </div>
     </div>
