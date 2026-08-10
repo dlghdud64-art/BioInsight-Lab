@@ -17,15 +17,16 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (protocol) — 'unknown' 유지. 생성 대상(Quote)의
+      //   id 는 create 이후에야 생기므로 호출 시점에 알 수 없다.
+      //   ⚠️ targetEntityType 이 'ai_action' 인데 실제 생성물은 Quote 다
+      //   → §audit-taxonomy-review 후보.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/protocol/bom',
     });
     if (!enforcement.allowed) return enforcement.deny();
 
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const body = await request.json();
     const {
@@ -48,6 +49,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!title || !reagents || reagents.length === 0) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "제목과 시약 리스트가 필요합니다." },
         { status: 400 }
@@ -171,12 +173,19 @@ export async function POST(request: NextRequest) {
     // 매칭되지 않은 항목들도 반환
     const unmatchedItems = bomItems.filter((item) => !item.productId);
 
+    // db.quote.create 로 BOM 견적을 실제 생성한다 -> complete().
+    enforcement.complete({
+      beforeState: { quoteId: null, reagentCount: reagents.length },
+      afterState: { quoteId: quote.id, matchedItems: bomItems.filter((i) => i.productId).length },
+    });
+
     return NextResponse.json({
       quote,
       unmatchedItems,
       message: `BOM이 생성되었습니다. ${bomItems.filter((i) => i.productId).length}개 항목이 자동 매칭되었고, ${unmatchedItems.length}개 항목은 수동으로 추가해주세요.`,
     });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error creating BOM:", error);
     return NextResponse.json(
       { error: error.message || "BOM 생성에 실패했습니다." },

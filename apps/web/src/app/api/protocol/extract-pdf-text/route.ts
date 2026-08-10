@@ -35,6 +35,10 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (protocol) — 'unknown' 유지. 업로드 PDF 에서
+      //   텍스트를 뽑아 반환할 뿐 대상 엔티티가 없다.
+      //   ⚠️ targetEntityType 'ai_action' 은 프로토콜 처리와 어긋난다
+      //   → §audit-taxonomy-review 후보.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/protocol/extract-pdf-text',
@@ -45,15 +49,18 @@ export async function POST(request: NextRequest) {
     const file = formData.get("file") as File;
 
     if (!file) {
+      enforcement.fail();
       return NextResponse.json({ error: "파일이 없습니다.", requestId }, { status: 400 });
     }
 
     if (file.type !== "application/pdf") {
+      enforcement.fail();
       return NextResponse.json({ error: "PDF 파일만 업로드 가능합니다.", requestId }, { status: 400 });
     }
 
     // 파일 크기 제한 (10MB)
     if (file.size > 10 * 1024 * 1024) {
+      enforcement.fail();
       return NextResponse.json({ error: "파일 크기는 10MB 이하여야 합니다.", requestId }, { status: 400 });
     }
 
@@ -97,6 +104,7 @@ export async function POST(request: NextRequest) {
         fileSize: file.size,
       });
 
+      enforcement.fail();
       return NextResponse.json({
         error: "PDF에서 텍스트를 추출할 수 없습니다. 스캔된 이미지 PDF이거나 텍스트 레이어가 없는 파일일 수 있습니다.",
         code: "PDF_NO_TEXT",
@@ -117,6 +125,8 @@ export async function POST(request: NextRequest) {
       fileSize: file.size,
     });
 
+    // Extract-only route: no DB writes.
+    enforcement.fail();
     return NextResponse.json({
       text,
       length: text.length,
@@ -125,6 +135,9 @@ export async function POST(request: NextRequest) {
       requestId,
     });
   } catch (error: any) {
+    // This catch has MANY self-returns below (error classification branches).
+    // Releasing once here covers all of them.
+    enforcement?.fail();
     const msg = error?.message ?? "";
     const name = error?.name ?? error?.constructor?.name ?? "";
     const durationMs = Date.now() - pipelineStart;

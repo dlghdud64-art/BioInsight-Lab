@@ -21,7 +21,7 @@
  *   E4. 제품 쓰기 2 route 는 targetEntityId 를 실제 id 로 넘기고 before/after 를 남긴다.
  *
  * ⚠️ LEGACY ratchet: 실측 시점 149 route 중 74 route 가 핸들을 닫지 않았다.
- *    2026-08-09 배치 1(work-queue 7) → 67, 배치 2(inventory 5) → **62 route** 남음.
+ *    2026-08-09 배치 1(work-queue 7) → 67, 배치8(protocol 4) 까지 → **36 route** 남음.
  *    전수 교정은 별도 트랙(§enforcement-handle-close-sweep). 이 sentinel 은
  *    **새 누수만 차단**하고 기존분은 목록으로 고정한다 — 전면 단언은 즉시 72 RED 라
  *    baseline 을 오염시켜 판독 자체를 무력화한다.
@@ -52,12 +52,34 @@ const ROUTES = collectRouteFiles(API_ROOT).map((f) => ({
   src: readFileSync(f, "utf8"),
 }));
 
+/** 중괄호 매칭으로 블록 끝을 정확히 찾는다 (길이 상한 없음 — E3·E6 공용) */
+function blockFromBrace(src: string, braceIdx: number): string {
+  let depth = 0;
+  for (let i = braceIdx; i < src.length; i++) {
+    if (src[i] === "{") depth++;
+    else if (src[i] === "}") {
+      depth--;
+      if (depth === 0) return src.slice(braceIdx, i + 1);
+    }
+  }
+  return src.slice(braceIdx);
+}
+
+/** catch 블록 전수 추출 — optional catch binding(`catch {`) 포함 */
+function catchBlocksOf(src: string): string[] {
+  const out: string[] = [];
+  const re = /catch\s*(\([^)]*\))?\s*\{/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(src))) out.push(blockFromBrace(src, m.index + m[0].length - 1));
+  return out;
+}
+
 const USES_ENFORCE = ROUTES.filter((r) => r.src.includes("enforceAction("));
 const closesHandle = (src: string) => src.includes(".complete(") || src.includes(".fail(");
 const UNCLOSED = USES_ENFORCE.filter((r) => !closesHandle(r.src)).map((r) => r.path);
 
 /**
- * 2026-08-09 실측 누수 74 → 배치1(work-queue 7) → 67 → 배치2(inventory 5) → 62 → 배치3(products 5) → 57 → 배치4(quotes 5) → 52 → 배치5(ai 4) → 48 → 배치6(ai-actions 4) → 44 → 배치7(analytics 4) → **40**. **줄어들기만 한다.**
+ * 2026-08-09 실측 누수 74 → 배치1(work-queue 7) → 67 → 배치2(inventory 5) → 62 → 배치3(products 5) → 57 → 배치4(quotes 5) → 52 → 배치5(ai 4) → 48 → 배치6(ai-actions 4) → 44 → 배치7(analytics 4) → 40 → 배치8(protocol 4) → **36**. **줄어들기만 한다.**
  * 여기에 새 경로를 추가하는 것은 회귀이며, 항목을 고쳤으면 이 목록에서 제거해야 한다.
  */
 const LEGACY_UNCLOSED: readonly string[] = [
@@ -77,10 +99,6 @@ const LEGACY_UNCLOSED: readonly string[] = [
   "src/app/api/ingestion/route.ts",
   "src/app/api/organizations/[id]/subscription/route.ts",
   "src/app/api/po-candidates/route.ts",
-  "src/app/api/protocol/bom/route.ts",
-  "src/app/api/protocol/extract/route.ts",
-  "src/app/api/protocol/extract-pdf-text/route.ts",
-  "src/app/api/protocol/extract-text/route.ts",
   "src/app/api/purchases/import/preview/route.ts",
   "src/app/api/purchases/import/route.ts",
   "src/app/api/purchases/import-file/route.ts",
@@ -146,11 +164,15 @@ describe("§enforcement-handle-close E3 — catch 중 최소 하나는 닫는다
     const closed = USES_ENFORCE.filter((r) => closesHandle(r.src));
     const missing = closed
       .filter((r) => {
-        // ⚠️ optional catch binding(`} catch {`, ES2019) 포함 — 괄호를 요구하면 못 본다.
-        //   2026-08-09 실측: enforceAction 라우트 15개가 이 형태를 쓰고 있었고,
-        //   그중 inventory/bulk 에 실제 누수가 숨어 있었다.
-        const catchBlocks = r.src.match(/catch\s*(\([^)]*\))?\s*\{[\s\S]{0,600}?\}/g) ?? [];
-        return !catchBlocks.some((b) => b.includes(".fail("));
+        // ⚠️ 정규식 두 번 고쳤다 — 둘 다 **오탐(false RED)** 을 냈다:
+        //   ① 괄호 필수(`catch\s*\([^)]*\)`) → optional catch binding(`} catch {`)을 못 봄.
+        //      실측 15개 라우트가 그 형태였고 inventory/bulk 에 실제 누수가 숨어 있었다.
+        //   ② `[\s\S]{0,600}?\}` 상한 → 첫 `}` 가 600자 밖이면 **블록을 아예 못 잡아**
+        //      빈 배열이 되고 some() 이 false → 정상 라우트를 미충족으로 오판했다
+        //      (protocol/extract-pdf-text: catch 3행 안에 fail() 이 있는데도 RED).
+        //   → E6 와 동일하게 **중괄호 매칭**으로 블록 끝을 정확히 찾는다. 길이 상한 없음.
+        const blocks = catchBlocksOf(r.src);
+        return !blocks.some((b) => b.includes(".fail("));
       })
       .map((r) => r.path);
     expect(missing).toEqual([]);

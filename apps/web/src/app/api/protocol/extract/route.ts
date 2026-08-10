@@ -42,6 +42,9 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (protocol) — 'unknown' 유지. 프로토콜 텍스트에서 품목을 추출해 반환할 뿐이다.
+      //   ⚠️ targetEntityType 이 'ai_action' 이나 이 라우트는 프로토콜 처리다
+      //   → §audit-taxonomy-review 후보.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/protocol/extract',
@@ -53,6 +56,8 @@ export async function POST(request: NextRequest) {
     try {
       body = await request.json();
     } catch (parseError) {
+      // E6: inner catch self-returns (outer catch not reached) -> must release here.
+      enforcement.fail();
       console.error("JSON parse error:", parseError);
       return NextResponse.json(
         { 
@@ -68,6 +73,8 @@ export async function POST(request: NextRequest) {
     try {
       validatedData = extractSchema.parse(body);
     } catch (validationError) {
+      // E6: both branches below self-return -> release once here.
+      enforcement.fail();
       console.error("Validation error:", validationError);
       if (validationError instanceof z.ZodError) {
         const firstError = validationError.errors[0];
@@ -137,8 +144,12 @@ export async function POST(request: NextRequest) {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       console.log("[Protocol Extract] Success, extracted", mockResult.items.length, "items");
+      // Extract-only route: no DB writes.
+      enforcement.fail();
       return NextResponse.json(mockResult);
     } catch (processingError) {
+      // E6: inner catch self-returns.
+      enforcement.fail();
       console.error("[Protocol Extract] Processing error:", processingError);
       return NextResponse.json(
         { 
@@ -149,6 +160,7 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (error) {
+    enforcement?.fail();
     // Catch-all error handler
     console.error("[Protocol Extract] Unexpected error:", error);
     return NextResponse.json(
