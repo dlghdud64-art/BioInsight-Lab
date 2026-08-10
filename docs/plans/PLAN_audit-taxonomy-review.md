@@ -88,9 +88,11 @@ src/app/api/**/route.ts 의 enforceAction 호출 지점 = 169
 | 지표 | 값 |
 |---|---|
 | enforceAction 호출 지점 | **169** |
-| `targetEntityType: 'ai_action'` | **57 (34%)** |
+| `targetEntityType: 'ai_action'` | **58 (34%)** |
 | `targetEntityId: 'unknown'` | **54 (32%)** |
-| 정규식으로 파싱하지 못한 지점 | 13 (포맷 상이) → 위 숫자는 **하한** |
+| 특수 리터럴 id 전체(`unknown`/`new`/`bulk` 등) | **70 (41%)** |
+| DB 쓰기가 0 인 핸들러 | **61 (36%)** |
+| 파싱하지 못한 지점 | **0** (중괄호 매칭으로 재추출 — 이전 "13건 하한" 해소) |
 
 현재 사용 중인 `targetEntityType` 분포:
 
@@ -167,74 +169,253 @@ Vercel 람다에서는 인스턴스와 함께 사라지고, 인스턴스마다 �
 
 ---
 
-## 4. 3클래스 분류 (169건, 원칙 1 기준)
+## 4. 전수 분류표 — 169 호출 지점 (2026-08-10 실측)
 
-### 클래스 ① 오분류 — enum 에 정확한 값이 **있는데** 다른 값
+중괄호 매칭 파서로 재추출해 **미파싱 0**. 이전 보고의 "13건 미파싱, 숫자는 하한" 은 해소됐다.
 
-| route (대표) | 현재 | 실제 대상 | 비고 |
-|---|---|---|---|
-| `billing`, `billing/portal` | `ai_action` | Organization / Workspace | enum 에 둘 다 있다 |
-| `shared-lists` POST | `compare_session` | SharedList | 값은 있으나 **다른 엔티티** |
-| `protocol/extract-pdf` | `quote` | 문서(프로토콜) | 형제 4건은 `ai_action` — 같은 도메인이 갈렸다 |
-| `products/[id]/inspection` | `product` + action `inventory_update` | Inspection | action 축 불일치 |
-| `quotes/cost-optimization` 외 4 | `quote` + action `order_create` | Quote(조회/계산) | action 축 불일치 |
-| `safety/spend/map` | `ai_action` | PurchaseRecord | enum 에 `purchase_record` **있는데 안 씀** |
-| `inventory/auto-reorder` | `order` | ProductInventory → Order 제안 | 경계 모호 |
-
-**규모: 최소 15건.** 원칙 1 규칙을 확정하면 전수 기계 판정 가능.
-
-### 클래스 ② 대상 미존재 — 생성 전이라 id 가 없다
-
-현재 두 가지 표기가 혼재한다: `'unknown'` 과 `'new'` 계열 리터럴.
-
-| 표기 | route (대표) |
-|---|---|
-| `'new'` | `admin/orders`, `budgets`, `quote-lists`, `quotes`, `purchases`, `request`, `team` |
-| `'unknown'` | `compliance-links` POST, `shared-lists` POST, `activity-logs`, `po-candidates` POST, `ingestion`, `purchases/import-file` |
-| 기타 리터럴 | `'bulk'`, `'checkout'`, `'batch'`, `'import-commit'`, `'approval-baseline'`, `` `import_${Date.now()}` `` |
-
-**이미 7건이 `'new'` 라는 명시 값을 쓰고 있다** — 원칙 3 의 방향은 코드베이스가
-부분적으로 이미 택한 관행이며, 전면화하는 것이다. 새로 만드는 규약이 아니다.
-
-**규모: 최소 25건.**
-
-### 클래스 ③ 선택지 부재 — enum 에 정확한 값이 **아예 없다**
-
-| 실제 대상 (Prisma 모델) | 현재 대리값 | route (대표) |
+| 클래스 | 건수 | 비율 |
 |---|---|---|
-| `SDSDocument` | `ai_action` | `sds/[id]/apply` `extract` `signed-url` |
-| (데이터시트 문서 — **모델 없음**) | `ai_action` | `datasheet/extract*` 3건 |
-| `SharedList` | `ai_action` / `compare_session` | `shared-lists*` 3건 |
-| `Vendor`, `VendorBillingRecord` | `product` | `vendor/billing`, `vendor/premium` |
-| `ComplianceLink` | `ai_action` | `compliance-links*` 2건 |
-| `QuoteTemplate` | `product` | `templates*` 2건 |
-| `ProductRecommendation`, `RecommendationFeedback` | `ai_action` | `recommendations/*` 2건 |
-| `POCandidate` | `ai_action` | `po-candidates` 3건 |
-| `ImportJob` | `ai_action` | `purchases/import-file` |
-| `IngestionEntry` | `ai_action` | `ingestion` |
-| `ActivityLog` | `ai_action` | `activity-logs` |
-| `Review` | `ai_action` | `reviews/[id]` |
+| 유지 | 71 | 42% |
+| ① 오분류 | 12 | 7% |
+| ③ 부재 | 44 | 26% |
+| ④ 모델없음 | 42 | 25% |
+| **계** | **169** | |
 
-**규모: 최소 20건.** ③ 은 예외가 아니라 **주요 클래스**다.
+**id 축(클래스 ②)은 type 축과 병존한다** — 특수 리터럴을 쓰는 지점 **70건(41%)**.
 
-### 클래스 ④ (신설) 모델 대응 없음 — 원칙 2
+kind 분포: `entity` 127 · `concept` 33 · `system` 9.
+제안 `TargetEntityType` 29종, `TargetConceptType` 8종.
 
-억지로 엔티티에 매핑하면 taxonomy 가 거짓말을 하는 것들.
+⚠️ **§4 의 이전 추정치는 전부 낮았다** (① 15+ ② 25+ ③ 20+ ④ 15+ → 실측 ① 12 ② 70 ③ 44 ④ 42).
+특히 **② 가 70건**으로 가장 큰 축이다. `'unknown'` 폐기(원칙 3)가 이 설계의 핵심이라는 판단이 수치로 확인됐다.
 
-| route | 실제 대상 |
+### ① 오분류 — 12건
+
+| route | M | 현행 type | 제안 kind/type | id | 쓰기 | ② |
+|---|---|---|---|---|---|---|
+| `ai-actions/generate/reorder-suggestions` | POST | `order` | entity / `inventory` | `'unknown'` | 1 | C2 |
+| `inventory/auto-reorder` | POST | `order` | entity / `inventory` | `'unknown'` | 0 | C2 |
+| `billing` | POST | `ai_action` | entity / `organization` | `'unknown'` | 6 | C2 |
+| `purchases` | POST | `purchase_request` | entity / `purchase_record` | `'new'` | 1 | C2 |
+| `purchases/import` | POST | `ai_action` | entity / `purchase_record` | `'unknown'` | 1 | C2 |
+| `purchases/import/commit` | POST | `purchase_request` | entity / `purchase_record` | `'import-commit'` | 3 | C2 |
+| `purchases/import/preview` | POST | `ai_action` | entity / `purchase_record` | `'unknown'` | 0 | C2 |
+| `safety/spend/map` | POST | `ai_action` | entity / `purchase_record` | `purchaseId` | 1 |  |
+| `request/[id]/approve` | POST | `approval` | entity / `purchase_request` | `requestId` | 4 |  |
+| `request/[id]/reject` | POST | `approval` | entity / `purchase_request` | `requestId` | 1 |  |
+| `ai-actions/generate/quote-rationale` | POST | `ai_action` | entity / `quote` | `"rationale-summary"` | 1 | C2 |
+| `billing/portal` | POST | `ai_action` | entity / `workspace` | `workspaceId` | 0 |  |
+
+### ③ 부재 — 44건
+
+| route | M | 현행 type | 제안 kind/type | id | 쓰기 | ② |
+|---|---|---|---|---|---|---|
+| `activity-logs` | POST | `ai_action` | entity / `activity_log` | `'unknown'` | 1 | C2 |
+| `ai-actions/[id]` | PATCH | `ai_action` | entity / `ai_action_item` | `params.id` | 1 |  |
+| `ai-actions/[id]/approve` | POST | `ai_action` | entity / `ai_action_item` | `params.id` | 6 |  |
+| `work-queue/assignment` | POST | `ai_action` | entity / `ai_action_item` | `itemId` | 0 |  |
+| `work-queue/bottleneck-remediation` | POST | `ai_action` | entity / `ai_action_item` | `targetRemediationId` | 0 |  |
+| `work-queue/cadence-governance` | POST | `ai_action` | entity / `ai_action_item` | `stepId` | 0 |  |
+| `work-queue/compare-sync` | POST | `ai_action` | entity / `ai_action_item` | `'unknown'` | 0 | C2 |
+| `work-queue/daily-review` | POST | `ai_action` | entity / `ai_action_item` | `itemId` | 0 |  |
+| `work-queue/ops-execute` | POST | `ai_action` | entity / `ai_action_item` | `itemId` | 0 |  |
+| `work-queue/ops-sync` | POST | `ai_action` | entity / `ai_action_item` | `'unknown'` | 0 | C2 |
+| `category-budgets` | POST | `budget` | entity / `category_budget` | ``${parsed.data.categoryI..` | 1 |  |
+| `category-budgets/[id]` | DELETE | `budget` | entity / `category_budget` | `budgetId` | 1 |  |
+| `category-budgets/[id]` | PATCH | `budget` | entity / `category_budget` | `budgetId` | 1 |  |
+| `compliance-links` | POST | `ai_action` | entity / `compliance_link` | `'unknown'` | 1 | C2 |
+| `compliance-links/[id]` | PATCH | `ai_action` | entity / `compliance_link` | `id` | 1 |  |
+| `purchases/import-file` | POST | `ai_action` | entity / `import_job` | `'unknown'` | 3 | C2 |
+| `ingestion` | POST | `ai_action` | entity / `ingestion_entry` | `'unknown'` | 0 | C2 |
+| `billing/payment-methods` | DELETE | `billing` | entity / `payment_method` | `paymentMethodId \|\| 'un..` | 1 |  |
+| `billing/payment-methods` | POST | `billing` | entity / `payment_method` | `body.id \|\| 'unknown'` | 2 |  |
+| `po-candidates` | DELETE | `ai_action` | entity / `po_candidate` | `id` | 0 |  |
+| `po-candidates` | PATCH | `ai_action` | entity / `po_candidate` | `id` | 0 |  |
+| `po-candidates` | POST | `ai_action` | entity / `po_candidate` | `'unknown'` | 0 | C2 |
+| `work-queue/purchase-conversion/[quoteId]/request-approval` | POST | `approval` | entity / `po_candidate` | `quoteId` | 3 |  |
+| `work-queue/purchase-conversion/bulk-po` | POST | `po` | entity / `po_candidate` | ``bulk-po:${session.user...` | 3 |  |
+| `quote-items/[id]` | DELETE | `quote` | entity / `quote_item` | `id` | 1 |  |
+| `quote-items/[id]` | PUT | `quote` | entity / `quote_item` | `id` | 1 |  |
+| `templates` | POST | `product` | entity / `quote_template` | `'unknown'` | 0 | C2 |
+| `templates/[id]` | DELETE | `product` | entity / `quote_template` | `id` | 0 |  |
+| `recommendations/feedback` | POST | `ai_action` | entity / `recommendation_feedback` | `recommendationId` | 2 |  |
+| `reviews/[id]` | DELETE | `ai_action` | entity / `review` | `id` | 0 |  |
+| `sds/[id]/apply` | POST | `ai_action` | entity / `sds_document` | `'unknown'` | 2 | C2 |
+| `sds/[id]/extract` | POST | `ai_action` | entity / `sds_document` | `'unknown'` | 6 | C2 |
+| `sds/[id]/signed-url` | POST | `ai_action` | entity / `sds_document` | `'unknown'` | 0 | C2 |
+| `shared-lists` | POST | `compare_session` | entity / `shared_list` | `'unknown'` | 1 | C2 |
+| `shared-lists/[publicId]` | PATCH | `ai_action` | entity / `shared_list` | `'unknown'` | 1 | C2 |
+| `shared-lists/bulk` | DELETE | `ai_action` | entity / `shared_list` | `'unknown'` | 1 | C2 |
+| `spending-categories` | POST | `budget` | entity / `spending_category` | `"new-spending-category"` | 1 | C2 |
+| `spending-categories/[id]` | DELETE | `budget` | entity / `spending_category` | `categoryId` | 3 |  |
+| `spending-categories/[id]` | PATCH | `budget` | entity / `spending_category` | `categoryId` | 1 |  |
+| `billing/checkout` | POST | `billing` | entity / `subscription` | `'checkout'` | 1 | C2 |
+| `user/profile` | PATCH | `user" as never` | entity / `user` | `session.user.id` | 1 |  |
+| `ai-actions/generate/vendor-email-draft` | POST | `product` | entity / `vendor` | `'unknown'` | 2 | C2 |
+| `vendor/billing` | POST | `product` | entity / `vendor` | `'unknown'` | 2 | C2 |
+| `vendor/premium` | POST | `product` | entity / `vendor` | `vendor.id` | 2 |  |
+
+### ④ 모델없음 — 42건
+
+| route | M | 현행 type | 제안 kind/type | id | 쓰기 | ② |
+|---|---|---|---|---|---|---|
+| `ai/budget-anomaly` | POST | `ai_action` | concept / `analytics_query` | `'unknown'` | 0 | C2 |
+| `ai/impact-analysis` | POST | `ai_action` | concept / `analytics_query` | `'unknown'` | 0 | C2 |
+| `ai/safety-check` | POST | `ai_action` | concept / `analytics_query` | `'unknown'` | 0 | C2 |
+| `analytics/ai-insight` | POST | `ai_action` | concept / `analytics_query` | `?` | 0 |  |
+| `analytics/recommendation-metrics` | POST | `ai_action` | concept / `analytics_query` | `'unknown'` | 1 | C2 |
+| `analytics/search-history` | POST | `ai_action` | concept / `analytics_query` | `'unknown'` | 2 | C2 |
+| `analytics/track` | POST | `ai_action` | concept / `analytics_query` | `'unknown'` | 1 | C2 |
+| `analytics/user-behavior` | POST | `ai_action` | concept / `analytics_query` | `'unknown'` | 1 | C2 |
+| `quotes/cost-optimization` | POST | `quote` | concept / `analytics_query` | `'unknown'` | 0 | C2 |
+| `quotes/optimize-combination` | POST | `quote` | concept / `analytics_query` | `'unknown'` | 0 | C2 |
+| `recommendations/optimized` | POST | `ai_action` | concept / `analytics_query` | `'unknown'` | 0 | C2 |
+| `admin/canary-control` | POST | `ai_action` | concept / `canary_config` | `'unknown'` | 0 | C2 |
+| `ai-ops/auto-verify` | POST | `ai_action` | concept / `canary_config` | `body.documentType \|\| '..` | 0 |  |
+| `ai-ops/hold` | POST | `ai_action` | concept / `canary_config` | `body.documentType \|\| '..` | 0 |  |
+| `ai-ops/kill-switch` | POST | `ai_action` | concept / `canary_config` | `body.documentType \|\| '..` | 0 |  |
+| `ai-ops/promote` | POST | `ai_action` | concept / `canary_config` | `body.documentType \|\| '..` | 0 |  |
+| `ai-ops/rollback` | POST | `ai_action` | concept / `canary_config` | `body.documentType \|\| '..` | 0 |  |
+| `datasheet/extract` | POST | `ai_action` | concept / `datasheet_extraction` | `'unknown'` | 0 | C2 |
+| `datasheet/extract-pdf` | POST | `ai_action` | concept / `datasheet_extraction` | `'unknown'` | 0 | C2 |
+| `datasheet/extract-url` | POST | `ai_action` | concept / `datasheet_extraction` | `'unknown'` | 0 | C2 |
+| `ai/bom-parse` | POST | `ai_action` | concept / `document_extraction` | `'unknown'` | 0 | C2 |
+| `protocol/bom` | POST | `ai_action` | concept / `document_extraction` | `'unknown'` | 2 | C2 |
+| `protocol/extract` | POST | `ai_action` | concept / `document_extraction` | `'unknown'` | 0 | C2 |
+| `protocol/extract-pdf` | POST | `quote` | concept / `document_extraction` | `'unknown'` | 1 | C2 |
+| `protocol/extract-pdf-text` | POST | `ai_action` | concept / `document_extraction` | `'unknown'` | 0 | C2 |
+| `protocol/extract-text` | POST | `ai_action` | concept / `document_extraction` | `'unknown'` | 0 | C2 |
+| `quotes/parse-image` | POST | `quote` | concept / `document_extraction` | `'unknown'` | 0 | C2 |
+| `quotes/parse-pdf` | POST | `quote` | concept / `document_extraction` | `'unknown'` | 0 | C2 |
+| `export/presets` | POST | `ai_action` | concept / `export_preset` | `'unknown'` | 0 | C2 |
+| `search/intent` | POST | `ai_action` | concept / `search_intent` | `'unknown'` | 0 | C2 |
+| `admin/seed` | POST | `ai_action` | system / `system` | `'unknown'` | 15 | C2 |
+| `governance/approval-baseline` | DELETE | `governance` | system / `system` | `'approval-baseline'` | 0 | C2 |
+| `governance/approval-baseline` | POST | `governance` | system / `system` | `'approval-baseline'` | 0 | C2 |
+| `governance/event-dedupe` | DELETE | `governance` | system / `system` | `poNumber \|\| 'unknown'` | 0 |  |
+| `governance/event-dedupe` | POST | `governance` | system / `system` | `key \|\| poNumber \|\| '..` | 0 |  |
+| `governance/outbound-history` | DELETE | `governance` | system / `system` | `poId \|\| 'unknown'` | 0 |  |
+| `governance/outbound-history` | POST | `governance` | system / `system` | `poId \|\| 'unknown'` | 0 |  |
+| `governance/review-queue-draft` | DELETE | `governance` | system / `system` | `session.user.id \|\| 'un..` | 0 |  |
+| `governance/review-queue-draft` | POST | `governance` | system / `system` | `session.user.id \|\| 'un..` | 0 |  |
+| `quotes/generate-english` | POST | `quote` | concept / `translation` | `'unknown'` | 0 | C2 |
+| `translate` | POST | `ai_action` | concept / `translation` | `'unknown'` | 0 | C2 |
+| `dashboard/layout` | POST | `ai_action` | concept / `ui_layout` | `'unknown'` | 0 | C2 |
+
+### 유지 — 71건
+
+| route | M | 현행 type | 제안 kind/type | id | 쓰기 | ② |
+|---|---|---|---|---|---|---|
+| `budgets` | POST | `budget` | entity / `budget` | `'new'` | 2 | C2 |
+| `budgets/[id]` | DELETE | `budget` | entity / `budget` | `id` | 1 |  |
+| `budgets/[id]` | PATCH | `budget` | entity / `budget` | `id` | 1 |  |
+| `cart` | DELETE | `cart` | entity / `cart` | `'unknown'` | 1 | C2 |
+| `inventory` | POST | `inventory` | entity / `inventory` | `productId` | 3 |  |
+| `inventory/[id]` | DELETE | `inventory` | entity / `inventory` | `params.id` | 1 |  |
+| `inventory/[id]` | PATCH | `inventory` | entity / `inventory` | `params.id` | 2 |  |
+| `inventory/[id]/inspection` | POST | `inventory` | entity / `inventory` | `params.id` | 2 |  |
+| `inventory/[id]/restock` | POST | `inventory` | entity / `inventory` | `id` | 3 |  |
+| `inventory/[id]/restock-request` | POST | `inventory` | entity / `inventory` | `inventoryId` | 1 |  |
+| `inventory/[id]/use` | POST | `inventory` | entity / `inventory` | `id` | 2 |  |
+| `inventory/alerts/send` | POST | `inventory` | entity / `inventory` | `inventoryId` | 2 |  |
+| `inventory/bulk` | POST | `inventory` | entity / `inventory` | `'bulk'` | 1 | C2 |
+| `inventory/dispatch-batch` | POST | `inventory` | entity / `inventory` | `"batch"` | 2 | C2 |
+| `inventory/import` | POST | `inventory` | entity / `inventory` | `'unknown'` | 0 | C2 |
+| `inventory/import/commit` | POST | `inventory` | entity / `inventory` | ``import_${Date.now()}`` | 4 |  |
+| `inventory/import/preview` | POST | `inventory` | entity / `inventory` | `'unknown'` | 0 | C2 |
+| `inventory/scan-label` | POST | `inventory` | entity / `inventory` | `crypto.randomUUID()` | 1 |  |
+| `inventory/usage` | POST | `inventory` | entity / `inventory` | `inventoryId \|\| 'unknown'` | 2 |  |
+| `admin/orders` | POST | `order` | entity / `order` | `'new'` | 4 | C2 |
+| `admin/orders/[id]/status` | PATCH | `order` | entity / `order` | `orderId` | 1 |  |
+| `ai-actions/generate/order-followup` | POST | `order` | entity / `order` | `orderId` | 2 |  |
+| `order-queue/bulk` | POST | `order` | entity / `order` | `'bulk'` | 0 | C2 |
+| `orders` | POST | `order` | entity / `order` | `?` | 4 |  |
+| `organizations/[id]` | DELETE | `organization` | entity / `organization` | `id` | 2 |  |
+| `organizations/[id]` | PATCH | `organization` | entity / `organization` | `id` | 0 |  |
+| `organizations/[id]/billing-info` | PUT | `organization` | entity / `organization` | `id` | 1 |  |
+| `organizations/[id]/invites` | DELETE | `organization` | entity / `organization` | `id` | 1 |  |
+| `organizations/[id]/invites` | POST | `organization` | entity / `organization` | `id` | 1 |  |
+| `organizations/[id]/members` | PATCH | `organization` | entity / `organization` | `memberId \|\| id` | 1 |  |
+| `organizations/[id]/safety-settings` | PATCH | `organization` | entity / `organization` | `id` | 1 |  |
+| `organizations/[id]/security` | PATCH | `organization` | entity / `organization` | `id` | 1 |  |
+| `organizations/[id]/sso` | PUT | `organization` | entity / `organization` | `id` | 1 |  |
+| `organizations/[id]/subscription` | POST | `organization` | entity / `organization` | `id` | 3 |  |
+| `products/[id]/embedding` | POST | `product` | entity / `product` | `id` | 0 |  |
+| `products/[id]/inspection` | POST | `product` | entity / `product` | `params.id` | 2 |  |
+| `products/[id]/safety` | PATCH | `product` | entity / `product` | `id` | 1 |  |
+| `products/[id]/safety-extract` | POST | `product` | entity / `product` | `id` | 2 |  |
+| `products/[id]/sds` | POST | `product` | entity / `product` | `productId` | 1 |  |
+| `products/[id]/specification` | PATCH | `product` | entity / `product` | `id` | 1 |  |
+| `products/[id]/usage` | POST | `product` | entity / `product` | `id` | 0 |  |
+| `products/[id]/view` | POST | `product` | entity / `product` | `id` | 0 |  |
+| `products/compare` | POST | `product` | entity / `product` | `'unknown'` | 0 | C2 |
+| `request` | POST | `purchase_request` | entity / `purchase_request` | `'new'` | 1 | C2 |
+| `admin/quotes/[id]/items` | PATCH | `quote` | entity / `quote` | `quoteId` | 2 |  |
+| `ai-actions/generate/quote-draft` | POST | `quote` | entity / `quote` | `'unknown'` | 2 | C2 |
+| `quote-lists` | POST | `quote` | entity / `quote` | `'new'` | 1 | C2 |
+| `quote-lists/[id]` | PUT | `quote` | entity / `quote` | `id` | 1 |  |
+| `quote-lists/[id]/items` | PUT | `quote` | entity / `quote` | `id` | 3 |  |
+| `quotes` | POST | `quote` | entity / `quote` | `'new'` | 1 | C2 |
+| `quotes/[id]` | DELETE | `quote` | entity / `quote` | `id` | 1 |  |
+| `quotes/[id]` | PATCH | `quote` | entity / `quote` | `id` | 3 |  |
+| `quotes/[id]/responses/[responseId]` | PATCH | `quote` | entity / `quote` | `quoteId` | 2 |  |
+| `quotes/[id]/rfq-token` | PATCH | `quote` | entity / `quote` | `quoteId` | 1 |  |
+| `quotes/[id]/rfq-token` | POST | `quote` | entity / `quote` | `quoteId` | 1 |  |
+| `quotes/[id]/select-item-vendor` | POST | `quote` | entity / `quote` | `quoteId` | 1 |  |
+| `quotes/[id]/select-reply` | POST | `quote` | entity / `quote` | `quoteId` | 1 |  |
+| `quotes/[id]/share` | DELETE | `quote` | entity / `quote` | `id` | 1 |  |
+| `quotes/[id]/share` | POST | `quote` | entity / `quote` | `id` | 2 |  |
+| `quotes/[id]/status` | PATCH | `quote` | entity / `quote` | `id` | 1 |  |
+| `quotes/[id]/vendor-replies` | POST | `quote` | entity / `quote` | `quoteId` | 3 |  |
+| `quotes/[id]/vendor-requests` | POST | `quote` | entity / `quote` | `id` | 2 |  |
+| `quotes/[id]/versions` | POST | `quote` | entity / `quote` | `id` | 1 |  |
+| `team` | POST | `team` | entity / `team` | `'new'` | 1 | C2 |
+| `team/[id]/members` | DELETE | `team` | entity / `team` | `teamId` | 1 |  |
+| `team/[id]/members` | PATCH | `team` | entity / `team` | `teamId` | 1 |  |
+| `team/invite` | POST | `team` | entity / `team` | `teamId \|\| 'unknown'` | 1 |  |
+| `workspaces/[id]` | DELETE | `workspace` | entity / `workspace` | `workspaceId` | 1 |  |
+| `workspaces/[id]` | PATCH | `workspace` | entity / `workspace` | `workspaceId` | 1 |  |
+| `workspaces/[id]/members/[memberId]` | DELETE | `workspace` | entity / `workspace` | `workspaceId` | 1 |  |
+| `workspaces/[id]/members/[memberId]` | PATCH | `workspace` | entity / `workspace` | `workspaceId` | 1 |  |
+
+## 4-1. 전수 분류에서 새로 드러난 사실 3건
+
+### (가) `as never` 로 enum 을 우회한 지점이 있다 — 클래스 ③의 다른 얼굴
+
+```ts
+// src/app/api/user/profile/route.ts:94
+action: "user_profile_update" as never,
+targetEntityType: "user" as never,
+```
+
+enum 에 `user` 가 없자 **타입 캐스트로 우회**했다(주석: "enum cast (schema 정합 대기)").
+클래스 ③ 이 "틀린 값을 넣는다" 로만 나타나는 게 아니라 **타입 안전성 자체를 무력화하는
+형태**로도 나타난다는 뜻이다. `as never` 는 컴파일러에게 "이 값을 검사하지 말라" 는
+지시이므로, 이 지점은 enum 을 바꿔도 **자동으로 따라오지 않는다** — 교정 시 개별 대상.
+
+전수 확인: `as never`/`as any` 우회는 **이 1건뿐**이다.
+
+### (나) `routePath` 표기 규약이 88 : 81 로 갈려 있다
+
+`routePath` 는 `deriveConcurrencyKey` 의 구성요소다
+(`${action}:${routePath}:${scope}`). 그런데 표기가 둘로 갈린다.
+
+| 표기 | 건수 |
 |---|---|
-| `search/intent` | 질의 문자열(개념) |
-| `translate` | 텍스트(개념) |
-| `dashboard/layout` | 사용자 UI 상태(모델 없음, 저장도 안 함) |
-| `export/presets` | 프리셋(모델 없음, 저장도 안 함) |
-| `ai-ops/*` 5건 | `documentType` 문자열(카나리 설정 키) |
-| `admin/canary-control` | 카나리 config(환경변수) |
-| `admin/seed` | 시스템 전역 |
-| `analytics/*` 4건 | 집계 조회 |
+| `/api/...` 접두 포함 | **88** |
+| `/...` 접두 없음 | **81** |
 
-**규모: 최소 15건.** 이들 대부분은 **DB 쓰기가 0** 이며 sweep 에서 `fail()` 로 닫혔다.
+같은 라우트 안에서는 일관되므로 **현재 오작동은 없다.** 그러나 lock 키 네임스페이스가
+두 갈래로 존재하는 상태이고, 규약이 없어 새 라우트가 어느 쪽이든 될 수 있다.
+같은 라우트의 서로 다른 핸들러가 다른 표기를 쓰게 되면 그때는 실해가 된다.
+→ **①의 교정 범위에 포함할지 승인 필요**(어휘와 별개 축이지만 같은 파일을 건드린다).
 
----
+### (다) DB 쓰기가 0 인 핸들러가 61건(36%)
+
+lock 만 잡고 audit 은 남기지 않는 지점이 전체의 1/3이다. 클래스 ④(42건)와 상당 부분
+겹치지만 완전히 같지는 않다 — 엔티티 대상이면서 읽기 전용인 지점도 있다.
+"쓰기 없는 라우트가 enforceAction 을 쓰는 것이 맞는가" 는 §8 에 남긴 별도 질문이며,
+이 수치가 그 질문의 규모다.
 
 ## 5. enum 초안
 
