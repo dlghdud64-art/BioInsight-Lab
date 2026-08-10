@@ -36,6 +36,24 @@
 
 ---
 
+## 0-0. 어휘 확정 (호영님 2026-08-10)
+
+1. **어휘는 snake_case 소문자.** Prisma 모델명을 그대로 변환한다.
+   `QuoteVendorRequest` → `quote_vendor_request`, `SDSDocument` → `sds_document`.
+   현행 `AuditLog.entityType` 의 대문자 값(`QUOTE`/`ORDER`)은 승계하지 않는다(§6).
+
+2. **`createAuditLog` 경로도 같은 enum 을 import 해야 ① 완료다.**
+   지금 `AuditLog.entityType` 은 `String` 자유 필드이고 별도 어휘를 쓴다.
+   두 경로가 같은 타입을 공유하지 않으면 어휘가 다시 갈라진다 — 그러면 ① 을
+   한 번 더 하게 된다. **①의 완료 조건에 포함한다.**
+
+   완료 판정:
+   - `TargetEntityType` 이 단일 모듈에서 export 된다
+   - `enforceAction` 과 `createAuditLog` 가 **둘 다** 그 타입을 import 한다
+   - `AuditLog.entityType` 이 자유 문자열이 아니라 그 타입으로 좁혀진다
+     (Prisma 컬럼은 String 유지 가능 — 타입 경계는 애플리케이션에서 강제)
+   - sentinel: 두 호출부가 같은 심볼을 참조한다는 단언 + corrupt→RED
+
 ## 0. 전제 조건 — 순서 의존성 (호영님 2026-08-10 확정)
 
 **`entityCapabilities` DB 조회 구현(`server-enforcement-middleware.ts:146` TODO)은

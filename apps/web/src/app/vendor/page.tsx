@@ -1,8 +1,5 @@
 export const dynamic = "force-dynamic";
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-
 /**
  * 벤더 포털 진입 — 견적 회신은 **토큰 경로가 canonical** 이다.
  *
@@ -38,12 +35,6 @@ export default function VendorPortalEntryPage() {
             링크를 찾을 수 없거나 만료됐다면 요청을 보낸 담당자에게 재발송을
             요청해 주세요.
           </p>
-        </div>
-
-        <div className="mt-4">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/vendor/logout">로그아웃</Link>
-          </Button>
         </div>
       </div>
     </div>

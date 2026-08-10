@@ -81,9 +81,10 @@ describe("§route-duplication R2 — 조작 데이터 리터럴이 소스에 없
 });
 
 describe("§route-duplication R3 — 진입 경로가 남아 있지 않다", () => {
-  it("사이드바에 Quote Requests 항목이 없다", () => {
-    const src = read("src/app/vendor/_components/vendor-sidebar.tsx");
-    expect(src).not.toMatch(/\/vendor\/requests/);
+  it("포털 RFQ 화면으로 향하는 링크가 없다", () => {
+    // 사이드바 자체가 고아가 되어 삭제됐다(R5-b). 남은 링크가 없는지 구조로 확인한다.
+    expect(filesContaining('"/vendor/requests')).toEqual([]);
+    expect(filesContaining("/vendor/requests/${")).toEqual([]);
   });
 
   it("포털 RFQ API 를 호출하는 코드가 없다", () => {
@@ -95,6 +96,50 @@ describe("§route-duplication R3 — 진입 경로가 남아 있지 않다", () 
     const src = read("src/app/vendor/page.tsx");
     expect(src).not.toMatch(/useQuery|<Table/);
     expect(src).toMatch(/요청 메일/);
+  });
+});
+
+/**
+ * §vendor-surface-scope R5 — 벤더 표면의 링크는 실재하는 화면을 가리킨다
+ *
+ * 실측 (2026-08-10): 벤더 사이드바가 `/vendor/products` `/vendor/settings`
+ *   `/vendor/logout` 을 가리켰으나 **셋 다 대응 페이지가 없었다**(클릭 시 404).
+ *   사이드바 자체도 유일한 소비처(포털 상세 화면)가 폐기되며 고아가 됐다.
+ *
+ * 이 단언은 문자열 목록이 아니라 **구조 검사**다: 소스에 등장하는 정적
+ *   `/vendor/...` 링크를 모아 각각 대응 page.tsx 가 있는지 확인한다.
+ *   새 링크를 추가하면서 화면을 안 만들면 자동으로 RED 가 된다.
+ */
+describe("§vendor-surface-scope R5 — 벤더 링크는 실재 화면을 가리킨다", () => {
+  it("정적 /vendor/* 링크에 대응 page.tsx 가 존재한다", () => {
+    const linked = new Set<string>();
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir)) {
+        const full = join(dir, entry);
+        if (statSync(full).isDirectory()) {
+          if (entry === "node_modules" || entry === ".next" || entry === "__tests__" || entry === "api") continue;
+          walk(full);
+        } else if (entry.endsWith(".tsx")) {
+          // ⚠️ src/app/api 는 제외한다 — enforceAction 의 routePath('/vendor/billing' 등)는
+          //    UI 링크가 아니라 lock 키 구성요소다. 처음 작성 시 이걸 잡아 오탐 2건이 났다.
+          const code = stripComments(readFileSync(full, "utf8"));
+          for (const m of code.matchAll(/(?:href=|push\(|redirect\()\s*\{?\s*["'`](\/vendor\/[a-z0-9-]+)["'`]/g)) {
+            linked.add(m[1]);
+          }
+        }
+      }
+    };
+    walk(join(WEB_ROOT, "src"));
+
+    const missing = [...linked].filter((route) => {
+      const seg = route.replace(/^\/vendor\//, "");
+      return !existsSync(join(WEB_ROOT, "src", "app", "vendor", seg, "page.tsx"));
+    });
+    expect(missing).toEqual([]);
+  });
+
+  it("고아가 된 벤더 사이드바가 재생성되지 않는다", () => {
+    expect(existsSync(abs("src/app/vendor/_components/vendor-sidebar.tsx"))).toBe(false);
   });
 });
 
