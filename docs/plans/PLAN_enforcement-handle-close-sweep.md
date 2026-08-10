@@ -16,7 +16,15 @@
 
 1. mutation lock 이 `ACTIVE_MUTATION_TTL_MS`(5분)까지 잡혀 같은 키의 재요청이
    `concurrent_mutation` 으로 거부된다.
-2. 성공 audit 이 남지 않아 "누가 무엇을 바꿨는지" 추적이 불가능하다.
+2. 성공 audit envelope 이 생성되지 않는다.
+
+⚠️ **근거 정정 (2026-08-10, §audit-taxonomy-review 착수 실측).** 위 2번을 sweep 내내
+"누가 무엇을 바꿨는지 추적이 불가능하다" 로 서술했는데, 그건 **지속 저장을 전제한
+표현**이었고 현재는 성립하지 않는다. `appendAuditEnvelope` 는 모듈 수준 in-memory
+배열(`auditStore`, MAX 10000, FIFO)에만 쌓이고 DB 로 가지 않는다 — 람다와 함께 사라진다.
+**1번(lock 누수)은 실재했고 그 교정은 온전히 유효하다.** 2번의 실제 성과는
+"호출 지점이 올바르게 정렬됐다" 까지이며, 기록이 남으려면 §audit-persistence-gap 이
+해결돼야 한다.
 
 2026-08-09 실측: 149 route 중 **74 route** 가 핸들을 닫지 않았다.
 
@@ -211,6 +219,7 @@ E1(신규 누수 0) · E2(ratchet) · E3 · E4 · E6 전건 GREEN.
 | placeholder success | 1건 처리 / **4건 결함 존치** | §placeholder-success-audit |
 | `targetEntityType` 오분류 31+건 | audit 기록만 오염, 현재 접근 판정 무영향 | §audit-taxonomy-review (1순위) |
 | mojibake 한글 주석 3파일 | 미수정 | 별도 |
+| audit envelope 지속 저장 | **부재** (in-memory only) | §audit-persistence-gap |
 | `admin/seed` 프로덕션 가드 | ADMIN 게이트만 존재 | §admin-seed-prod-guard |
 | `billing/portal` 외부 부작용 감사 | 미기록 | §billing-audit-gap |
 

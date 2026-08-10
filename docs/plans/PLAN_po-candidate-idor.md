@@ -51,8 +51,13 @@ export async function updatePOCandidateStage(id: string, stage: string, ...) {
 즉 과거에 삭제가 일어났는지 판정할 근거가 **애초에 생성되지 않았다.**
 "피해 없음" 이 아니라 **"확인 불가"** 로 기록한다.
 
-부수 효과: 이번 수정으로 PATCH/DELETE 에 `enforceAction` 이 붙었으므로
-**앞으로의 삭제는 audit envelope 에 남는다.** 같은 질문이 다음에는 답 가능해진다.
+⚠️ **정정 (2026-08-10, taxonomy 착수 실측 중 발견).** 처음에 "이번 배선으로
+앞으로의 삭제는 audit envelope 에 남는다" 고 적었으나 **사실이 아니다.**
+`appendAuditEnvelope` 는 모듈 수준 in-memory 배열(`auditStore`, MAX 10000, FIFO)에만
+쌓이고 DB 로 넘어가지 않는다(코드 주석: "실제 production에서는 외부 storage로 archive"
+— 미구현). Vercel 람다에서는 인스턴스와 함께 사라진다.
+→ 이번 배선의 실제 효과는 **lock 집행과 권한 판정 경로 편입**이며, 지속 감사 기록은
+§audit-persistence-gap 이 해결되어야 생긴다. 그 전까지 "다음엔 답 가능" 이 아니다.
 
 ## 3. 처리
 
