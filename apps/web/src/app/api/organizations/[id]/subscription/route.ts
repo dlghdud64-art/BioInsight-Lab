@@ -72,22 +72,25 @@ export async function POST(
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
+    ({ id } = await params);
+    body = await request.json();
     enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
       action: 'organization_update',
       targetEntityType: 'organization',
-      targetEntityId: 'unknown',
+      // §enforcement-handle-close-sweep (기타) — params id 확정 이후로 핸들 이동.
+      //   대상 Organization 이 실재하므로 per-entity lock 이 된다.
+      targetEntityId: id,
       sourceSurface: 'web_app',
       routePath: '/organizations/id/subscription',
     });
     if (!enforcement.allowed) return enforcement.deny();
 
-    ({ id } = await params);
-    body = await request.json();
     const { plan, periodMonths = 1 } = body;
 
     if (!plan || !Object.values(SubscriptionPlan).includes(plan)) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "Invalid plan" },
         { status: 400 }
@@ -104,6 +107,7 @@ export async function POST(
     });
 
     if (!organization) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "Organization not found" },
         { status: 404 }
@@ -120,6 +124,7 @@ export async function POST(
     });
 
     if (!membership) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "Forbidden: 관리자만 플랜을 변경할 수 있습니다." },
         { status: 403 }
@@ -172,11 +177,25 @@ export async function POST(
       });
     }
 
+    enforcement.complete({
+      beforeState: {
+        organizationId: id,
+        plan: organization.plan,
+        subscriptionId: organization.subscription?.id ?? null,
+      },
+      afterState: {
+        organizationId: id,
+        plan: updatedOrg.plan,
+        subscriptionId: subscription.id,
+      },
+    });
+
     return NextResponse.json({
       organization: updatedOrg,
       subscription,
     });
   } catch (error: any) {
+    enforcement?.fail();
     const errMsg = error?.message ?? "Unknown error";
     const errCode = error?.code;
     const errStack = error?.stack;

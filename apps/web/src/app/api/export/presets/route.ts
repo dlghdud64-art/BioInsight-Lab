@@ -30,6 +30,9 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_export',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (기타) — 'unknown' 유지.
+      //   ⚠️ TODO: Save to database — 저장하지 않고 `preset-${Date.now()}` 가짜 id 를
+      //   반환한다. templates POST 와 동일 패턴 → §placeholder-success-audit (신규 검출).
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/export/presets',
@@ -50,8 +53,12 @@ export async function POST(request: NextRequest) {
       createdAt: new Date().toISOString(),
     };
 
+    // DB 쓰기 0 → complete() 는 허위 audit. fail().
+    enforcement.fail();
     return NextResponse.json(preset);
   } catch (error) {
+    // ZodError 분기도 이 catch 안에서 return 하므로 최상단에서 한 번만 닫는다.
+    enforcement?.fail();
     console.error("[Export Preset] Error:", error);
     if (error instanceof z.ZodError) {
       return NextResponse.json(

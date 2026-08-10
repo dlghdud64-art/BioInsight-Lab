@@ -148,18 +148,13 @@ export async function DELETE(req: NextRequest) {
     });
     if (!enforcement.allowed) return enforcement.deny();
 
-        if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "인증이 필요합니다.", code: "UNAUTHORIZED" },
-        { status: 401 }
-      );
-    }
-
+    // (죽은 재검사 제거: 같은 DELETE 핸들러 상단에서 이미 401 처리했다)
     const cart = await db.cart.findUnique({
       where: { userId: session.user.id },
     });
 
     if (!cart) {
+      enforcement.fail();
       return NextResponse.json({
         success: true,
         message: "장바구니가 비어있습니다.",
@@ -171,12 +166,18 @@ export async function DELETE(req: NextRequest) {
       where: { cartId: cart.id },
     });
 
+    enforcement.complete({
+      beforeState: { cartId: cart.id },
+      afterState: { cartId: cart.id, itemsCleared: true },
+    });
+
     return NextResponse.json({
       success: true,
       message: "장바구니를 비웠습니다.",
     });
 
   } catch (error) {
+    enforcement?.fail();
     console.error("[Cart DELETE] Error:", error);
     return NextResponse.json(
       { error: "장바구니 비우기 중 오류가 발생했습니다.", code: "INTERNAL_ERROR" },

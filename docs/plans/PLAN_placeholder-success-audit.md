@@ -1,7 +1,7 @@
 # §placeholder-success-audit — 저장하지 않고 성공을 반환하는 표면 전수
 
 작성: 2026-08-10
-상태: 1건 처리 완료 / 2건 대기 / 전수 조사 미착수
+상태: 1건 처리 완료 / **4건 존치** / 전수 조사 미착수
 발원: §enforcement-handle-close-sweep 배치11
 
 ---
@@ -12,9 +12,15 @@
 
 **검출 조건 (AND):**
 
-1. 같은 함수(라우트 핸들러 또는 핸들러) 안에 다음 계열 주석이 있다:
-   `TODO: Implement` · `TODO: Save` · `TODO: Delete` · `TODO: Persist`
-   (대소문자 무시, `// TODO:` / `/* TODO:` 양쪽)
+1. 같은 함수(라우트 핸들러) 안에 **미구현 표지**가 있다:
+   - 영문: `TODO: Implement` · `TODO: Save` · `TODO: Delete` · `TODO: Persist`
+     (대소문자 무시, `// TODO:` / `/* TODO:` 양쪽)
+   - **한국어**: `임시로` · `실제로는 ... 해야` · `Mock response` · `더미`
+
+   ⚠️ **2026-08-10 정의 확장.** 최초 정의는 `TODO:` 영문만 셌다. 배치12 에서
+   `dashboard/layout` POST 가 `// 임시로 성공 응답만 반환` 이라 **최초 정의로는
+   검출되지 않았다**(육안으로 잡혔다). 계수가 흔들리지 않으려면 표지 목록에
+   한국어 관용구가 반드시 들어가야 한다. 이 확장 이전 숫자와는 직접 비교 불가.
 2. **같은 함수 안에** 성공 신호가 있다:
    `success: true` · 2xx `NextResponse.json(...)` 로 생성 객체를 반환 · `{ ok: true }`
 3. 그 함수 안에 `db.*.{create|update|upsert|delete|createMany|updateMany|deleteMany}`
@@ -102,6 +108,22 @@ sweep 종료 후 §2 의 3단계를 동일하게 적용한다.
 
 현재는 §enforcement-handle-close-sweep 배치11 에서 `fail()` 로 닫고 사유 주석만
 남긴 상태다. **결함은 존치 중.**
+
+## 4-1. 배치12 신규 검출 2건 (2026-08-10)
+
+| route | 실태 | 자기교정 |
+|---|---|---|
+| `dashboard/layout` POST | `// 임시로 성공 응답만 반환` — 레이아웃을 저장하지 않고 `success: true` | 가능 (다음 로드에서 레이아웃이 안 돌아옴) |
+| `export/presets` POST | `TODO: Save to database` — `preset-${Date.now()}` 가짜 id 반환 | 가능 (`templates` POST 와 동일 패턴) |
+
+둘 다 sweep 에서는 `fail()` 로 닫고 사유 주석만 남겼다. **결함 존치.**
+
+**누적 5건** — 처리 완료 1(`vendor/requests/[id]/respond`), 존치 4
+(`templates` POST · `templates/[id]` DELETE · `dashboard/layout` POST ·
+`export/presets` POST). 존치 4건은 전부 자기교정 가능 클래스다(§1 기준).
+
+`export/presets` 는 GET 쪽에도 `TODO: Fetch from database` 가 있다 — 읽기라
+이 정의의 검출 대상은 아니지만 같은 미구현 세트다.
 
 ## 5. 전수 조사 (미착수)
 

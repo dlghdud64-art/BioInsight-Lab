@@ -16,21 +16,7 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
-    enforcement = enforceAction({
-      userId: session.user.id,
-      userRole: session.user.role ?? undefined,
-      action: 'sensitive_data_import',
-      targetEntityType: 'ai_action',
-      targetEntityId: 'unknown',
-      sourceSurface: 'web_app',
-      routePath: '/safety/spend/map',
-    });
-    if (!enforcement.allowed) return enforcement.deny();
-
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    // (죽은 재검사 제거: 같은 POST 핸들러 상단에서 이미 401 처리했다)
     const body = await request.json();
     const { purchaseId, productId } = body;
 
@@ -41,6 +27,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_import',
+      targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (기타) — 대상 확정 이후로 핸들 이동.
+      //   400 검증이 lock 보다 앞서므로 잘못된 요청은 lock 을 잡지 않는다.
+      //   쓰기 대상은 PurchaseRecord 이며 purchaseId 가 그 id 다.
+      targetEntityId: purchaseId,
+      sourceSurface: 'web_app',
+      routePath: '/safety/spend/map',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
     // 구매 내역 조회 및 권한 확인
     const purchaseRecord = await db.purchaseRecord.findUnique({
       where: { id: purchaseId },
@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!purchaseRecord) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "Purchase record not found" },
         { status: 404 }
@@ -72,6 +73,7 @@ export async function POST(request: NextRequest) {
         membership?.role === OrganizationRole.VIEWER;
 
       if (!hasAccess) {
+        enforcement.fail();
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
     }
@@ -82,6 +84,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!product) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "Product not found" },
         { status: 404 }
@@ -134,11 +137,17 @@ export async function POST(request: NextRequest) {
       console.error("Failed to create audit log:", auditError);
     }
 
+    enforcement.complete({
+      beforeState: { purchaseId, productId: purchaseRecord.productId, matchType: purchaseRecord.matchType },
+      afterState: { purchaseId, productId, matchType: "MANUAL" },
+    });
+
     return NextResponse.json({
       success: true,
       purchaseRecord: updated,
     });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error matching product:", error);
     return NextResponse.json(
       { error: "Failed to match product" },

@@ -26,6 +26,8 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (기타) — 'unknown' 유지.
+      //   대상 IngestionEntry 는 파이프라인 실행 중에 생성된다(클래스 ②).
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/ingestion',
@@ -48,12 +50,14 @@ export async function POST(request: NextRequest) {
 
     // Validation
     if (!sourceType || !["EMAIL", "ATTACHMENT", "UPLOAD", "SYSTEM"].includes(sourceType)) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "sourceType 필수 (EMAIL | ATTACHMENT | UPLOAD | SYSTEM)" },
         { status: 400 },
       );
     }
     if (!rawText || typeof rawText !== "string" || rawText.trim().length === 0) {
+      enforcement.fail();
       return NextResponse.json({ error: "rawText 필수 (비어있을 수 없음)" }, { status: 400 });
     }
 
@@ -69,6 +73,7 @@ export async function POST(request: NextRequest) {
     });
     const organizationId = user?.organizationMembers?.[0]?.organization?.id;
     if (!organizationId) {
+      enforcement.fail();
       return NextResponse.json({ error: "조직 정보를 찾을 수 없습니다" }, { status: 403 });
     }
 
@@ -79,6 +84,8 @@ export async function POST(request: NextRequest) {
         select: { id: true, documentType: true, verificationStatus: true, workQueueTaskId: true },
       });
       if (existing) {
+        // 멱등 경로: 이미 처리된 건이라 **쓰기가 없다** → complete() 가 아니라 fail().
+        enforcement.fail();
         return NextResponse.json(
           {
             ingestionEntryId: existing.id,
@@ -108,6 +115,16 @@ export async function POST(request: NextRequest) {
 
     // 6. 응답
     const statusCode = result.failedStage ? 207 : 201;
+    enforcement.complete({
+      beforeState: { organizationId, sourceType, sourceRef: sourceRef ?? null },
+      afterState: {
+        organizationId,
+        ingestionEntryId: result.ingestionEntryId,
+        completedStages: result.completedStages,
+        failedStage: result.failedStage ?? null,
+      },
+    });
+
     return NextResponse.json(
       {
         ingestionEntryId: result.ingestionEntryId,
@@ -120,6 +137,7 @@ export async function POST(request: NextRequest) {
       { status: statusCode },
     );
   } catch (error: unknown) {
+    enforcement?.fail();
     console.error("[Ingestion API] Unhandled error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },

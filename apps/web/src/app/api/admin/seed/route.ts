@@ -14,6 +14,11 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (기타) — 'unknown' 유지. 벤더/제품/연결을
+      //   한 번에 upsert 하는 대량 작업이라 단일 대상이 없다.
+      //   ⚠️ 프로덕션 도달 가능 — 라우트 자체에는 role 가드가 없고
+      //     middleware 의 /api/admin/* 중앙 게이트(ADMIN deny-by-default)에만 의존한다.
+      //     NODE_ENV 가드도 없다 → §admin-seed-prod-guard 로 상신.
       targetEntityId: 'unknown',
       sourceSurface: 'admin_dashboard',
       routePath: '/admin/seed',
@@ -299,6 +304,11 @@ export async function POST(request: NextRequest) {
       }),
     ]);
 
+    enforcement.complete({
+      beforeState: { seed: "demo-dataset" },
+      afterState: { vendors: vendors.length, products: products.length },
+    });
+
     return NextResponse.json({
       success: true,
       message: "?ë ?°ì´?°ê? ?±ê³µ?ì¼ë¡??ì±?ì?µë??",
@@ -306,6 +316,7 @@ export async function POST(request: NextRequest) {
       products: products.length,
     });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Seed error:", error);
     return NextResponse.json(
       {

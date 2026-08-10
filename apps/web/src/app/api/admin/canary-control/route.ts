@@ -82,10 +82,7 @@ export async function POST(request: NextRequest) {
     });
     if (!enforcement.allowed) return enforcement.deny();
 
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    // (죽은 재검사 제거: 같은 POST 핸들러 상단에서 이미 401 처리했다)
     const body = await request.json();
     const { action, documentType, targetStage } = body as {
       action: string;
@@ -94,6 +91,7 @@ export async function POST(request: NextRequest) {
     };
 
     if (!action || !documentType) {
+      enforcement.fail();
       return NextResponse.json({ error: "action, documentType 필수" }, { status: 400 });
     }
 
@@ -108,6 +106,7 @@ export async function POST(request: NextRequest) {
         // 현재 단계에서 한 단계 승격
         const currentIdx = CANARY_STAGES.indexOf(currentStage);
         if (currentIdx >= CANARY_STAGES.length - 1) {
+          enforcement.fail();
           return NextResponse.json({ error: `이미 최고 단계 (${currentStage})` }, { status: 400 });
         }
         resolvedTarget = CANARY_STAGES[currentIdx + 1];
@@ -120,6 +119,7 @@ export async function POST(request: NextRequest) {
         resolvedTarget = "OFF";
         break;
       default:
+        enforcement.fail();
         return NextResponse.json({ error: `알 수 없는 action: ${action}` }, { status: 400 });
     }
 
@@ -131,6 +131,7 @@ export async function POST(request: NextRequest) {
     // 승격 유효성 검증
     const validation = validatePromotion(currentStage, resolvedTarget);
     if (!validation.valid) {
+      enforcement.fail();
       return NextResponse.json({ error: validation.reason }, { status: 400 });
     }
 
@@ -143,6 +144,9 @@ export async function POST(request: NextRequest) {
 
     const newConfig = JSON.stringify({ docTypes: newDocTypes }, null, 2);
 
+    // 이 라우트는 DB 도 파일도 쓰지 않는다 — 새 config JSON 을 계산해 돌려주고
+    //   운영자가 AI_CANARY_CONFIG 환경변수를 직접 갱신하는 구조다 → fail().
+    enforcement.fail();
     return NextResponse.json({
       action,
       documentType,
@@ -152,6 +156,7 @@ export async function POST(request: NextRequest) {
       instruction: `AI_CANARY_CONFIG 환경변수를 아래 JSON으로 업데이트하세요:\n${newConfig}`,
     });
   } catch (error) {
+    enforcement?.fail();
     console.error("[CanaryControl] Error:", error);
     return NextResponse.json({ error: "Failed to process canary control" }, { status: 500 });
   }

@@ -135,6 +135,9 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (기타) — 'unknown' 유지.
+      //   생성 대상 ActivityLog 는 핸들 이후에 만들어진다(클래스 ②).
+      //   body 의 entityId 는 로그가 *가리키는* 대상이지 쓰기 대상이 아니다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/activity-logs',
@@ -151,6 +154,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!activityType || !entityType) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "activityType and entityType are required" },
         { status: 400 }
@@ -202,8 +206,20 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    enforcement.complete({
+      beforeState: { activityLogId: null },
+      afterState: {
+        activityLogId: activityLog.id,
+        activityType,
+        entityType,
+        entityId: entityId || null,
+      },
+    });
+
     return NextResponse.json(activityLog, { status: 201 });
   } catch (error) {
+    // 데모 모드 분기도 이 catch 안에서 return 하므로 최상단에서 한 번만 닫는다.
+    enforcement?.fail();
     console.error("Error creating activity log:", error);
     
     // 데모 모드에서는 더미 응답 반환

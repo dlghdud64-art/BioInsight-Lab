@@ -57,12 +57,30 @@ E1/E2 와 동일한 ratchet:
   501 고정 응답 등)가 섞일 것이 확실하지만, **1단계에서는 전부 목록에 넣는다.**
   분류는 숫자를 본 뒤다. 미리 걸러내면 규모가 과소평가된다.
 
-### 이미 알려진 목록 후보
+### 이미 알려진 목록 후보 (sweep 중 **눈에 띈 것만**, 전수 아님)
 
-- `src/app/api/compliance-links/[id]/route.ts` — DELETE (§1)
-- `src/app/api/vendor/requests/[id]/respond/route.ts` — POST.
-  단 501 고정 응답이라 집행할 mutation 이 없다(§placeholder-success-audit §3-3).
-  그래도 1단계에서는 **목록에 넣는다** — 분류는 나중.
+| route | 메서드 | 비고 |
+|---|---|---|
+| `compliance-links/[id]` | DELETE | 같은 파일 PATCH 는 있음 (§1, 첫 확정 사례) |
+| `cart` | POST | 같은 파일 DELETE 는 있음. cart/cartItem create·update 수행 |
+| `po-candidates` | PATCH | 같은 파일 POST 는 있음. stage 갱신 |
+| `po-candidates` | DELETE | 같은 파일 POST 는 있음. `deletePOCandidate(id)` |
+| `vendor/requests/[id]/respond` | POST | 501 고정 응답이라 집행할 mutation 이 없다. 그래도 1단계에서는 목록에 넣는다 |
+
+**5건 모두 sweep 작업 중 우연히 눈에 띈 것이다 — 계수가 아니다.**
+실제 규모는 E7 1단계 glob 수집으로만 알 수 있다.
+
+패턴이 하나 보인다: **같은 파일 안에서 일부 메서드만 enforceAction 을 쓴다.**
+5건 중 4건이 그렇다. 이는 "route 파일 단위로 훑으며 첫 mutation 핸들러에만
+붙였다" 는 이력을 시사한다 — 즉 **누락이 체계적**이며, E7 수집도 **파일 단위가
+아니라 메서드 단위**여야 한다.
+
+### ⚠️ 부수 관측 — `po-candidates` DELETE 소유권 검증
+
+`deletePOCandidate(id)` 는 `prisma.pOCandidate.delete({ where: { id } })` 만 한다.
+라우트에도 소유권/조직 검증이 없다. 즉 **로그인한 아무 사용자나 id 만 알면 남의
+발주 후보를 지울 수 있다.** enforcement 부재와 별개의 문제이며 E7 계수보다
+우선순위가 높을 수 있다 — 숫자 보고 시 함께 판단 필요.
 
 ## 3. 실행 순서
 

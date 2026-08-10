@@ -1,7 +1,7 @@
 # §enforcement-handle-close-sweep — enforceAction 핸들 누수 전수 교정
 
 작성: 2026-08-10 (operator shell 실측 기록)
-상태: 진행 중 (74 → 15)
+상태: **종료 (74 → 0, 2026-08-10)**
 
 ---
 
@@ -102,7 +102,7 @@ compliance-links/[id], templates/[id] 등
 위 사고는 **정상 편집이 아니라 복구 편집에서 났다.** 잘못 들어간 것을 급히 되돌리는
 자리는 절차를 건너뛰기 가장 쉬운 자리다.
 
-**남은 15건에서 복구·재시도·되돌리기 편집도 3-1·3-2 를 예외 없이 거친다.**
+**후속 트랙의 복구·재시도·되돌리기 편집도 3-1·3-2 를 예외 없이 거친다.**
 "방금 넣은 걸 빼는 것뿐" 이라는 이유로 생략하지 않는다.
 
 ## 4. 배치 진행 기록
@@ -121,15 +121,17 @@ compliance-links/[id], templates/[id] 등
 | 9 | datasheet 3 + sds 3 | 30 |
 | 10 | purchases 3 + shared-lists 3 | 24 |
 | 11 | vendor 3 + compliance-links 2 + recommendations 2 + templates 2 | 15 |
+| 12 | 기타 15 | **0** |
 
 ### 누적 지표
 
-- **E6 검출 14건** — ops-execute 1, scan-label 1, products 3, inventory/bulk 1,
+- **E6 검출 14건** (배치12 신규 0) — ops-execute 1, scan-label 1, products 3, inventory/bulk 1,
   protocol 3, datasheet/extract-url 3, compliance-links 2(POST·PATCH 의 URL 검증 catch).
   E3(`some()`) 로는 원리상 잡히지 않는 클래스이며, E6 를 신설한 근거가 실적으로 확인됐다.
-- **앵커 사전 정지 9회**
-- **mojibake 한글 주석 2파일** — sweep 중 수정하지 않는다(diff 부풀림 회피). 별도 트랙.
-- **죽은 재검사 제거 7건** — `sds/[id]/apply`, `shared-lists/bulk`, `shared-lists/[publicId]`,
+- **앵커 사전 정지 12회** (배치12: canary-control catch, subscription 404, reviews id)
+- **mojibake 한글 주석 3파일** (배치12 에서 admin/seed 추가 발견) — sweep 중 수정하지 않는다(diff 부풀림 회피). 별도 트랙.
+- **죽은 재검사 제거 15건** (배치12 +8: canary-control, billing, billing/portal,
+  cart, dashboard/layout, po-candidates, reviews/[id], safety/spend/map) — `sds/[id]/apply`, `shared-lists/bulk`, `shared-lists/[publicId]`,
   `vendor/premium`, `compliance-links` POST, `compliance-links/[id]` PATCH,
   `recommendations/feedback`.
   같은 핸들러 안에서 401 을 두 번 검사하던 코드. ⚠️ work-queue 3파일의 유사 패턴은
@@ -176,7 +178,78 @@ CLAUDE.md 의 **"placeholder success 금지"** 정면 위반이다. 특히 첫 �
 `enforceAction(` 을 쓰는 route 만 수집하므로 **이 클래스는 구조적으로 안 잡힌다** —
 "enforceAction 을 아예 안 쓰는 mutation route" 전수 조사가 별도로 필요하다.
 
-## 6. 후속 트랙
+## 5-4. 배치12 관측 — 별건 상신 2종
+
+### (다) `admin/seed` 프로덕션 도달 가능 (호영님 지시 실측 항목)
+
+- 라우트 **자체에는 role 가드도 NODE_ENV 가드도 없다.**
+- 다만 `src/middleware.ts` 가 `/api/admin/*` 를 **중앙에서 ADMIN deny-by-default**
+  로 막는다(matcher `/api/:path*` 확인). 따라서 **ADMIN 만 도달 가능**하다.
+- 판정: 임의 사용자 도달은 **불가**. 그러나 프로덕션 DB 에 데모 벤더·제품을
+  upsert 하는 동작이 확인 절차 없이 한 번의 POST 로 실행된다.
+  → **§admin-seed-prod-guard** 로 상신(NODE_ENV 가드 또는 명시 확인 게이트).
+
+### (라) `billing/portal` — 외부 부작용형 감사 누락
+
+로컬 DB 쓰기는 0 이지만 `stripe.billingPortal.sessions.create` 로 **외부 결제
+포털 세션을 실제로 만든다.** 판정 기준(쓰기 실재 여부)대로 `fail()` 로 닫았으므로
+그 외부 행위는 audit envelope 에 남지 않는다. 코드 주석에 사유를 명시했다.
+→ **§billing-audit-gap** 으로 상신.
+
+## 6. sweep 마감 — 닫힌 것과 닫히지 않은 것
+
+### 닫힌 것
+
+**`enforceAction` 을 쓰는 route 의 핸들 마감 74/74.** ratchet `LEGACY_UNCLOSED` 0.
+E1(신규 누수 0) · E2(ratchet) · E3 · E4 · E6 전건 GREEN.
+
+### 닫히지 않은 것 (명시)
+
+| 항목 | 상태 | 트랙 |
+|---|---|---|
+| `enforceAction` 을 **아예 안 쓰는** mutation route | **미측정** — ratchet 이 원리상 못 본다 | §enforcement-coverage-gap (E7 1단계) |
+| placeholder success | 1건 처리 / **4건 결함 존치** | §placeholder-success-audit |
+| `targetEntityType` 오분류 31+건 | audit 기록만 오염, 현재 접근 판정 무영향 | §audit-taxonomy-review (1순위) |
+| mojibake 한글 주석 3파일 | 미수정 | 별도 |
+| `admin/seed` 프로덕션 가드 | ADMIN 게이트만 존재 | §admin-seed-prod-guard |
+| `billing/portal` 외부 부작용 감사 | 미기록 | §billing-audit-gap |
+
+**"핸들 마감 완료" 는 "권한 집행 완료" 가 아니다.** 위 표를 빼고 읽으면 과장이 된다.
+
+### 최종 지표
+
+- E6 검출 **14건** — E3(`some()`)로는 원리상 못 잡는 클래스. E6 신설 근거가 실적으로 확인됐다.
+- 앵커 사전 정지 **12회**
+- 죽은 재검사 제거 **15건**
+- ratchet 실증 사례 **1건** (배치9 — §2-1)
+- taxonomy 후보 **31+건**
+- mojibake 미수정 **3파일**
+- **선판정 오차율 10/23 (43%)** — 아래 §5-5
+
+## 5-5. 선판정 오차율과 방향 (다음 트랙의 신뢰도 근거)
+
+호영님 선판정표 대비 실측 불일치를 기록한다. 다음 트랙에서 선판정을 어느 정도
+신뢰할지 정하는 근거다.
+
+| 배치 | 가설 수 | 불일치 | 방향 |
+|---|---|---|---|
+| 11 | 9 | **4** | 전부 "쓰기 있음 → 실제 없음" (한쪽 쏠림) |
+| 12 | 14 (가설 없음 1건 제외) | **6** | "없음→있음" 3 · "있음→없음" 3 (**균형**) |
+| 계 | 23 | **10 (43%)** | — |
+
+**배치12 가 배치11 의 쏠림 가설을 검증했다.** 배치12 는 의도적으로 "쓰기 없음"
+방향으로 7건을 걸었는데, 오차가 3:3 으로 갈렸다. 즉 배치11 의 4/4 쏠림은
+**체계적 편향이 아니라 그 배치 대상(respond·templates)의 네이밍 특성**이었다.
+
+오차의 실제 원인은 방향이 아니라 **"이름이 구현을 증언하지 못한다"** 는 것이다:
+- `safety/spend/map` — "map" 이 조회처럼 읽히지만 `purchaseRecord.update` 를 한다
+- `admin/canary-control` — "control" 이 쓰기처럼 읽히지만 JSON 을 계산해 반환만 한다
+- `dashboard/layout` POST · `export/presets` POST — 저장 이름인데 저장하지 않는다
+
+→ 근거 등급 `[이름]` 은 **뒤집힐 확률 약 절반**으로 취급해야 한다. 배치12 에서
+`[이름]` 등급 9건 중 5건이 틀렸고, `[구조]` 등급 5건은 **전건 적중**했다.
+
+## 7. 후속 트랙
 
 - **§audit-taxonomy-review** — `targetEntityType` 3클래스 정리.
   누적 후보 31건. **sweep 종료 직후 1순위**(호영님 2026-08-10). 자세한 것은 `PLAN_audit-taxonomy-review.md`.
@@ -187,7 +260,7 @@ CLAUDE.md 의 **"placeholder success 금지"** 정면 위반이다. 특히 첫 �
   E3 는 두 번 틀렸고(둘 다 오탐 방향), E6 는 optional catch binding 을 처음에 놓쳤다.
   중괄호 매칭으로 임시 보강했으나 근본 해법은 AST 파싱이다.
 
-## 7. Rollback
+## 8. Rollback
 
 각 배치는 단일 커밋이다. `git revert` 로 route 를 원복하면 `LEGACY_UNCLOSED` 에
 해당 경로를 재등재해야 한다 — E2 가 이를 강제하므로 빠뜨리면 RED 로 드러난다.

@@ -21,7 +21,7 @@
  *   E4. 제품 쓰기 2 route 는 targetEntityId 를 실제 id 로 넘기고 before/after 를 남긴다.
  *
  * ⚠️ LEGACY ratchet: 실측 시점 149 route 중 74 route 가 핸들을 닫지 않았다.
- *    2026-08-09 배치 1(work-queue 7) → 67, 배치11 까지 → **15 route** 남음.
+ *    2026-08-09 배치 1(work-queue 7) → 67, 배치12 까지 → **0 route**. sweep 종료(2026-08-10).
  *    전수 교정은 별도 트랙(§enforcement-handle-close-sweep). 이 sentinel 은
  *    **새 누수만 차단**하고 기존분은 목록으로 고정한다 — 전면 단언은 즉시 72 RED 라
  *    baseline 을 오염시켜 판독 자체를 무력화한다.
@@ -79,25 +79,10 @@ const closesHandle = (src: string) => src.includes(".complete(") || src.includes
 const UNCLOSED = USES_ENFORCE.filter((r) => !closesHandle(r.src)).map((r) => r.path);
 
 /**
- * 2026-08-09 실측 누수 74 → 배치1(work-queue 7) → 67 → 배치2(inventory 5) → 62 → 배치3(products 5) → 57 → 배치4(quotes 5) → 52 → 배치5(ai 4) → 48 → 배치6(ai-actions 4) → 44 → 배치7(analytics 4) → 40 → 배치8(protocol 4) → 36 → 배치9(datasheet 3 + sds 3) → 30 → 배치10(purchases 3 + shared-lists 3) → 24 → 배치11(vendor 3 + compliance-links 2 + recommendations 2 + templates 2) → **15**. **줄어들기만 한다.**
+ * 2026-08-09 실측 누수 74 → 배치1(work-queue 7) → 67 → 배치2(inventory 5) → 62 → 배치3(products 5) → 57 → 배치4(quotes 5) → 52 → 배치5(ai 4) → 48 → 배치6(ai-actions 4) → 44 → 배치7(analytics 4) → 40 → 배치8(protocol 4) → 36 → 배치9(datasheet 3 + sds 3) → 30 → 배치10(purchases 3 + shared-lists 3) → 24 → 배치11 → 15 → 배치12(기타 15) → **0**. **줄어들기만 한다.**
  * 여기에 새 경로를 추가하는 것은 회귀이며, 항목을 고쳤으면 이 목록에서 제거해야 한다.
  */
 const LEGACY_UNCLOSED: readonly string[] = [
-  "src/app/api/activity-logs/route.ts",
-  "src/app/api/admin/canary-control/route.ts",
-  "src/app/api/admin/seed/route.ts",
-  "src/app/api/billing/portal/route.ts",
-  "src/app/api/billing/route.ts",
-  "src/app/api/cart/route.ts",
-  "src/app/api/dashboard/layout/route.ts",
-  "src/app/api/export/presets/route.ts",
-  "src/app/api/ingestion/route.ts",
-  "src/app/api/organizations/[id]/subscription/route.ts",
-  "src/app/api/po-candidates/route.ts",
-  "src/app/api/reviews/[id]/route.ts",
-  "src/app/api/safety/spend/map/route.ts",
-  "src/app/api/search/intent/route.ts",
-  "src/app/api/translate/route.ts",
 ];
 
 describe("§enforcement-handle-close E1 — 신규 lock 누수 0 (열거형)", () => {

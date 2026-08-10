@@ -54,31 +54,31 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
+    // (죽은 재검사 제거: 같은 POST 핸들러 상단에서 이미 401 처리했다)
+    const body = await request.json();
+    const { workspaceId } = portalSchema.parse(body);
     enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
       action: 'organization_update',
       targetEntityType: 'ai_action',
-      targetEntityId: 'unknown',
+      // §enforcement-handle-close-sweep (기타) — workspaceId 확정 이후로 핸들 이동.
+      //   ⚠️ 이 라우트는 로컬 DB 쓰기가 0 이지만 **외부 부작용이 있다**:
+      //     stripe.billingPortal.sessions.create 로 결제 포털 세션을 실제로 만든다.
+      //     fail() 로 닫으므로 그 외부 행위는 audit envelope 에 남지 않는다.
+      //     → §billing-audit-gap 으로 상신(외부 부작용형 감사 누락).
+      targetEntityId: workspaceId,
       sourceSurface: 'web_app',
       routePath: '/billing/portal',
     });
     if (!enforcement.allowed) return enforcement.deny();
 
-        if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
-
-    const body = await request.json();
-    const { workspaceId } = portalSchema.parse(body);
 
     // Verify admin access
     const workspace = await verifyWorkspaceAdmin(workspaceId, session.user.id);
 
     if (!workspace.stripeCustomerId) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "No billing account found for this workspace" },
         { status: 400 }
@@ -102,10 +102,14 @@ export async function POST(request: NextRequest) {
       workspaceId,
     });
 
+    // 로컬 쓰기 0 → complete() 는 하지 않는다. 외부 부작용은 §billing-audit-gap.
+    enforcement.fail();
     return NextResponse.json({
       url: portalSession.url,
     });
   } catch (error) {
+    // 403/400 분기도 이 catch 안에서 return 하므로 최상단에서 한 번만 닫는다.
+    enforcement?.fail();
     if ((error as Error).message.includes("admin access required")) {
       return NextResponse.json(
         { error: "Admin access required" },

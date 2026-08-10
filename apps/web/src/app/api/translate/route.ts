@@ -16,6 +16,8 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (기타) — 'unknown' 유지.
+      //   텍스트를 번역해 반환할 뿐 대상 엔티티도 DB 쓰기도 없다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/translate',
@@ -26,6 +28,7 @@ export async function POST(request: NextRequest) {
     const { text, sourceLang = "en", targetLang = "ko" } = body;
 
     if (!text || typeof text !== "string") {
+      enforcement.fail();
       return NextResponse.json(
         { error: "Text is required" },
         { status: 400 }
@@ -34,6 +37,8 @@ export async function POST(request: NextRequest) {
 
     const translated = await translateText(text, sourceLang, targetLang);
 
+    // 번역 전용: DB 쓰기 0 → audit envelope 없이 lock 만 해제한다.
+    enforcement.fail();
     return NextResponse.json({
       original: text,
       translated,
@@ -41,6 +46,7 @@ export async function POST(request: NextRequest) {
       targetLang,
     });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error translating text:", error);
     return NextResponse.json(
       { error: "Failed to translate text" },

@@ -55,16 +55,17 @@ export async function POST(req: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (기타) — 'unknown' 유지.
+      //   POCandidate 는 이 핸들 이후에 생성된다(클래스 ②).
+      //   ⚠️ 같은 파일의 PATCH/DELETE 는 enforceAction 자체가 없다
+      //     → §enforcement-coverage-gap E7 목록 후보.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/po-candidates',
     });
     if (!enforcement.allowed) return enforcement.deny();
 
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    // (죽은 재검사 제거: 같은 POST 핸들러 상단에서 이미 401 처리했다)
     const body = await req.json();
 
     // §11.209b Phase 2 — body.approvalPolicy 부재 시 user 의 workspace.plan
@@ -96,8 +97,14 @@ export async function POST(req: NextRequest) {
     };
 
     const created = await createPOCandidate(input);
+    enforcement.complete({
+      beforeState: { candidateId: null },
+      afterState: { candidateId: created.id, approvalPolicy: resolvedApprovalPolicy },
+    });
+
     return NextResponse.json({ candidate: created }, { status: 201 });
   } catch (err) {
+    enforcement?.fail();
     console.error("[po-candidates] POST error:", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }

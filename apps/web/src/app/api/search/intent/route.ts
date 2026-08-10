@@ -16,6 +16,8 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (기타) — 'unknown' 유지.
+      //   질의 문자열을 분류해 반환할 뿐 대상 엔티티도 DB 쓰기도 없다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/search/intent',
@@ -26,6 +28,7 @@ export async function POST(request: NextRequest) {
     const { query } = body;
 
     if (!query || typeof query !== "string") {
+      enforcement.fail();
       return NextResponse.json(
         { error: "Query is required" },
         { status: 400 }
@@ -34,8 +37,11 @@ export async function POST(request: NextRequest) {
 
     const intent = await analyzeSearchIntent(query);
 
+    // 분류 전용: DB 쓰기 0 → audit envelope 없이 lock 만 해제한다.
+    enforcement.fail();
     return NextResponse.json({ intent });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error analyzing search intent:", error);
     return NextResponse.json(
       { error: "Failed to analyze search intent" },

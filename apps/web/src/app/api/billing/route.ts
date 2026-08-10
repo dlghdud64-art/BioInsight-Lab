@@ -209,25 +209,25 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'organization_update',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (기타) — 'unknown' **교정 보류**.
+      //   대상 조직은 body 가 아니라 세션 멤버십으로 결정되고, 그 조회 이전에
+      //   검증 분기가 여러 개 있어 핸들을 그 뒤로 옮기면 앞선 400 들이 lock 밖으로
+      //   빠진다(원하는 방향이긴 하나 분기 재배열이 필요해 sweep 범위를 넘는다).
+      //   → §audit-taxonomy-review 에서 lock 입도와 함께 다룬다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/billing',
     });
     if (!enforcement.allowed) return enforcement.deny();
 
-        if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
+    // (죽은 재검사 제거: 같은 POST 핸들러 상단에서 이미 401 처리했다)
     const body = await request.json();
     const { action, plan } = body;
 
     if (action === "upgrade" && plan) {
       // 유효한 플랜인지 확인
       if (!["FREE", "TEAM", "ORGANIZATION"].includes(plan)) {
+        enforcement.fail();
         return NextResponse.json(
           { error: "Invalid plan" },
           { status: 400 }
@@ -245,6 +245,7 @@ export async function POST(request: NextRequest) {
       });
 
       if (!membership?.organization) {
+        enforcement.fail();
         return NextResponse.json(
           { error: "Organization not found" },
           { status: 404 }
@@ -258,6 +259,7 @@ export async function POST(request: NextRequest) {
           where: { organizationId: membership.organization.id },
         });
         if (currentMembers > planInfo.maxSeats) {
+          enforcement.fail();
           return NextResponse.json(
             {
               error: `현재 멤버 수(${currentMembers}명)가 ${planInfo.name} 플랜의 최대 인원(${planInfo.maxSeats}명)을 초과합니다. 먼저 멤버를 정리해주세요.`,
@@ -347,6 +349,18 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      enforcement.complete({
+        beforeState: {
+          organizationId: membership.organization.id,
+          plan: membership.organization.plan,
+        },
+        afterState: {
+          organizationId: membership.organization.id,
+          plan,
+          subscriptionId: subscription.id,
+        },
+      });
+
       return NextResponse.json({
         success: true,
         subscription,
@@ -354,11 +368,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    enforcement.fail();
     return NextResponse.json(
       { error: "Invalid action" },
       { status: 400 }
     );
   } catch (error) {
+    enforcement?.fail();
     console.error("[Billing API] Upgrade error:", error);
     return NextResponse.json(
       { error: "Failed to process upgrade" },
