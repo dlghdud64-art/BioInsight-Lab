@@ -2,6 +2,12 @@ import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-en
 import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 
+/**
+ * §admin-seed-prod-guard — 프로덕션 시드 실행에 요구하는 명시적 override 값.
+ *   우연히/기본값으로 만족될 수 없어야 하므로 고정 문자열을 쓴다.
+ */
+const SEED_PRODUCTION_TOKEN = "SEED_PRODUCTION_CONFIRMED";
+
 export async function POST(request: NextRequest) {
   let enforcement: InlineEnforcementHandle | undefined;
   try {
@@ -18,12 +24,31 @@ export async function POST(request: NextRequest) {
       //   한 번에 upsert 하는 대량 작업이라 단일 대상이 없다.
       //   ⚠️ 프로덕션 도달 가능 — 라우트 자체에는 role 가드가 없고
       //     middleware 의 /api/admin/* 중앙 게이트(ADMIN deny-by-default)에만 의존한다.
-      //     NODE_ENV 가드도 없다 → §admin-seed-prod-guard 로 상신.
+      //     실행 게이트는 아래 §admin-seed-prod-guard 가 추가로 막는다.
       targetEntityId: 'unknown',
       sourceSurface: 'admin_dashboard',
       routePath: '/admin/seed',
     });
     if (!enforcement.allowed) return enforcement.deny();
+
+    // §admin-seed-prod-guard (2026-08-10) — 프로덕션 거부 + 명시적 override 요구.
+    //   middleware 가 ADMIN 만 통과시키지만, 확인 절차 없는 POST 한 번이
+    //   프로덕션 DB 에 데모 벤더/제품을 upsert 하는 구조는 그대로였다.
+    //   실수 실행을 막는 것이 목적이므로 우연히 만족할 수 없는 값을 요구한다.
+    if (process.env.NODE_ENV === "production") {
+      const body = await request.json().catch(() => ({} as Record<string, unknown>));
+      if (body?.confirmProductionSeed !== SEED_PRODUCTION_TOKEN) {
+        enforcement.fail();
+        return NextResponse.json(
+          {
+            error:
+              "프로덕션에서는 시드 실행이 차단됩니다. 의도한 실행이면 confirmProductionSeed 값을 함께 보내주세요.",
+            code: "SEED_PRODUCTION_BLOCKED",
+          },
+          { status: 403 },
+        );
+      }
+    }
 
     // Prisma Clientë¥??ì ?¼ë¡ import (?ì±?ì? ?ì? ê²½ì° ?ë¹?
     const { db } = await import("@/lib/db");
