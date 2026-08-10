@@ -97,6 +97,10 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'product',
+      // §enforcement-handle-close-sweep (templates) — 'unknown' 유지.
+      //   ⚠️ 이 라우트는 아직 DB 에 저장하지 않는다(아래 TODO) — 생성 대상이 없다.
+      //   ⚠️ targetEntityType 'product' 도 실제 대상(Template)과 어긋난다.
+      //     enum 에 template 타입 부재 → §audit-taxonomy-review.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/templates',
@@ -119,8 +123,12 @@ export async function POST(request: NextRequest) {
       createdAt: new Date().toISOString(),
     };
 
+    // ⚠️ 위 TODO 가 남아 있는 한 DB 쓰기가 0이다 → complete() 는 허위 audit. fail().
+    enforcement.fail();
     return NextResponse.json(template);
   } catch (error) {
+    // ZodError 분기도 이 catch 안에서 return 하므로 최상단에서 한 번만 닫는다.
+    enforcement?.fail();
     console.error("[Templates] Error:", error);
     if (error instanceof z.ZodError) {
       return NextResponse.json(

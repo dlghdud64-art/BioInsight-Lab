@@ -61,16 +61,17 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'organization_update',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (compliance-links) — 'unknown' 유지.
+      //   POST 는 ComplianceLink 를 **생성**하므로 핸들 시점에 대상 id 가 없다
+      //   (클래스 ②: 대상 미존재). organizationId 는 범위이지 쓰기 대상이 아니다.
+      //   ⚠️ enum 에 compliance_link 타입 부재 → §audit-taxonomy-review.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/compliance-links',
     });
     if (!enforcement.allowed) return enforcement.deny();
 
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    // (죽은 재검사 제거: 같은 POST 핸들러 상단에서 이미 401 처리했다)
     const body = await request.json();
     const {
       organizationId,
@@ -99,11 +100,13 @@ export async function POST(request: NextRequest) {
         membership?.role === OrganizationRole.VIEWER; // VIEWER = safety_admin
 
       if (!hasAccess) {
+        enforcement.fail();
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
     } else {
       // 공통 링크는 시스템 관리자만 생성 가능
       if (session.user.role !== "ADMIN") {
+        enforcement.fail();
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
     }
@@ -112,6 +115,9 @@ export async function POST(request: NextRequest) {
     try {
       new URL(url);
     } catch {
+      // E6: lock 획득 이후 자체 return 하는 catch — 여기서 안 닫으면 이 실패 경로에서만
+      //     lock 이 TTL(5분)까지 남는다.
+      enforcement.fail();
       return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
     }
 
@@ -129,8 +135,19 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    enforcement.complete({
+      beforeState: { organizationId: organizationId || null, existingLinkId: null },
+      afterState: {
+        organizationId: link.organizationId,
+        linkId: link.id,
+        url: link.url,
+        enabled: link.enabled,
+      },
+    });
+
     return NextResponse.json({ link }, { status: 201 });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error creating compliance link:", error);
     return NextResponse.json(
       { error: error.message || "Failed to create compliance link" },

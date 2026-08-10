@@ -1,7 +1,7 @@
 # §enforcement-handle-close-sweep — enforceAction 핸들 누수 전수 교정
 
 작성: 2026-08-10 (operator shell 실측 기록)
-상태: 진행 중 (74 → 24)
+상태: 진행 중 (74 → 15)
 
 ---
 
@@ -79,7 +79,8 @@
 성립하는 오배치라면 tsc·build·vitest 를 전부 통과하고 런타임에만 틀린다.**
 게이트가 잡아준 게 아니라 운이 좋았다.
 
-발동 실적: 누적 7회 (datasheet/extract, sds/[id]/extract, shared-lists/[publicId] 등
+발동 실적: 누적 9회 (datasheet/extract, sds/[id]/extract, shared-lists/[publicId],
+compliance-links/[id], templates/[id] 등
 — 대부분 한 파일에 GET/POST/PATCH/DELETE 핸들러가 동일 검증문을 공유하는 경우).
 
 ### 3-2. 삽입 내용 검증 — 유일성 검증만으로는 부족하다
@@ -101,7 +102,7 @@
 위 사고는 **정상 편집이 아니라 복구 편집에서 났다.** 잘못 들어간 것을 급히 되돌리는
 자리는 절차를 건너뛰기 가장 쉬운 자리다.
 
-**남은 24건에서 복구·재시도·되돌리기 편집도 3-1·3-2 를 예외 없이 거친다.**
+**남은 15건에서 복구·재시도·되돌리기 편집도 3-1·3-2 를 예외 없이 거친다.**
 "방금 넣은 걸 빼는 것뿐" 이라는 이유로 생략하지 않는다.
 
 ## 4. 배치 진행 기록
@@ -119,15 +120,18 @@
 | 8 | protocol 4 | 36 |
 | 9 | datasheet 3 + sds 3 | 30 |
 | 10 | purchases 3 + shared-lists 3 | 24 |
+| 11 | vendor 3 + compliance-links 2 + recommendations 2 + templates 2 | 15 |
 
 ### 누적 지표
 
-- **E6 검출 12건** — ops-execute 1, scan-label 1, products 3, inventory/bulk 1,
-  protocol 3, datasheet/extract-url 3.
+- **E6 검출 14건** — ops-execute 1, scan-label 1, products 3, inventory/bulk 1,
+  protocol 3, datasheet/extract-url 3, compliance-links 2(POST·PATCH 의 URL 검증 catch).
   E3(`some()`) 로는 원리상 잡히지 않는 클래스이며, E6 를 신설한 근거가 실적으로 확인됐다.
-- **앵커 사전 정지 7회**
+- **앵커 사전 정지 9회**
 - **mojibake 한글 주석 2파일** — sweep 중 수정하지 않는다(diff 부풀림 회피). 별도 트랙.
-- **죽은 재검사 제거 3건** — `sds/[id]/apply`, `shared-lists/bulk`, `shared-lists/[publicId]`.
+- **죽은 재검사 제거 7건** — `sds/[id]/apply`, `shared-lists/bulk`, `shared-lists/[publicId]`,
+  `vendor/premium`, `compliance-links` POST, `compliance-links/[id]` PATCH,
+  `recommendations/feedback`.
   같은 핸들러 안에서 401 을 두 번 검사하던 코드. ⚠️ work-queue 3파일의 유사 패턴은
   **별개 GET/POST 핸들러**라 정상이었고 건드리지 않았다 — 중복처럼 보인다고 지우면 안 된다.
 
@@ -151,10 +155,34 @@ route 간 충돌도 막힌다(§11.369-3).
 `shared-lists/bulk` 는 DELETE 인데 `action: 'sensitive_data_import'` 다.
 `action` 도 `checkServerAuthorization` 입력이므로 임의 변경 금지. §audit-taxonomy-review 로 이관.
 
+### 5-3. 배치11 에서 드러난 별건 결함 (sweep 범위 밖 — 상신)
+
+#### (가) placeholder success 3건 — DB 쓰기가 아예 없는데 성공을 반환한다
+
+| route | 상태 |
+|---|---|
+| `vendor/requests/[id]/respond` | `TODO: Implement actual logic` — 응답을 저장하지 않고 `success: true` |
+| `templates` POST | `TODO: Save to database` — `template-${Date.now()}` 로 **가짜 id 를 만들어** 반환 |
+| `templates/[id]` DELETE | `TODO: Delete from database` — 아무것도 지우지 않고 `success: true` |
+
+CLAUDE.md 의 **"placeholder success 금지"** 정면 위반이다. 특히 첫 번째는 벤더가
+견적 응답을 제출했다고 믿게 만든다(운영 신뢰 손상). sweep 에서는 셋 다 `fail()` 로
+닫고 사유를 코드 주석에 남겼을 뿐, **결함 자체는 그대로다.**
+
+#### (나) `compliance-links/[id]` DELETE 에 enforceAction 부재
+
+같은 파일의 PATCH 는 enforceAction 을 쓰는데 **DELETE 는 안 쓴다.**
+파괴적 연산이 비파괴적 연산보다 통제가 약하다. ratchet sentinel 은
+`enforceAction(` 을 쓰는 route 만 수집하므로 **이 클래스는 구조적으로 안 잡힌다** —
+"enforceAction 을 아예 안 쓰는 mutation route" 전수 조사가 별도로 필요하다.
+
 ## 6. 후속 트랙
 
 - **§audit-taxonomy-review** — `targetEntityType` 3클래스 정리.
-  누적 후보 22건. 자세한 것은 `PLAN_audit-taxonomy-review.md`.
+  누적 후보 31건. **sweep 종료 직후 1순위**(호영님 2026-08-10). 자세한 것은 `PLAN_audit-taxonomy-review.md`.
+- **§placeholder-success-audit** (신규) — §5-3(가). 스텁 3건 + 전수 조사.
+- **§enforcement-coverage-gap** (신규) — §5-3(나). enforceAction 을 **쓰지 않는**
+  mutation route 전수. 현재 ratchet 은 이 클래스를 볼 수 없다.
 - **§sentinel-ast-migration** — 정규식 기반 sentinel 은 문법 변형에 구조적으로 취약하다.
   E3 는 두 번 틀렸고(둘 다 오탐 방향), E6 는 optional catch binding 을 처음에 놓쳤다.
   중괄호 매칭으로 임시 보강했으나 근본 해법은 AST 파싱이다.

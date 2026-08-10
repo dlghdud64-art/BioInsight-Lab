@@ -143,6 +143,12 @@ export function buildActorContextFromSession(
     roles: mapUserRole(user.role),
     organizationId: 'default-org', // TODO: 실제 org 조회 (Batch 2에서 DB 연결)
     departmentId: undefined,
+    // ⚠️ 이 TODO 를 구현하기 전에 §audit-taxonomy-review 를 먼저 끝내야 한다
+    //    (docs/plans/PLAN_audit-taxonomy-review.md §0 전제 조건).
+    //    비어 있는 동안 hasEntityCapability() 는 항상 true 를 반환하므로
+    //    targetEntityType 은 접근 판정에 영향이 없고 audit 기록에만 남는다.
+    //    여기를 먼저 채우면 현재 오분류된 targetEntityType 22건이 그대로
+    //    접근 규칙으로 활성화된다 — 순서를 뒤집지 말 것.
     entityCapabilities: [], // TODO: DB에서 조회
     sessionId,
     sessionIssuedAt: new Date().toISOString(),

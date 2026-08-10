@@ -1,12 +1,30 @@
 # §audit-taxonomy-review — enforceAction 분류 체계 정리 지시문
 
 작성: 2026-08-10
-상태: 등재 (미착수)
-발원: §enforcement-handle-close-sweep 배치1~10 관측 (누적 후보 22건)
+상태: 등재 (미착수) — **sweep 종료 직후 1순위** (호영님 2026-08-10 확정)
+발원: §enforcement-handle-close-sweep 배치1~11 관측 (누적 후보 31건)
 
 ---
 
-## 0. 최상단 고정 규칙
+## 0. 전제 조건 — 순서 의존성 (호영님 2026-08-10 확정)
+
+**`entityCapabilities` DB 조회 구현(`server-enforcement-middleware.ts:146` TODO)은
+이 트랙 완료 이후로 못박는다.** 순서를 뒤집으면 두 번 한다.
+
+근거 (호영님 판단):
+
+1. **오늘 고치면 감사 기록 정정, 나중에 고치면 접근 규칙 변경이다.**
+   현재 `targetEntityType` 은 접근 판정에 무영향이고 audit 에만 남는다(§3 실측).
+   `entityCapabilities` 구현 후에는 같은 수정이 권한 변경이 되어 회귀 위험과
+   리뷰 비용이 한 자릿수 배 차이가 난다.
+2. **오분류가 굳으면 capability 매핑을 틀린 taxonomy 위에 얹게 된다.**
+   뒤집는 비용은 매핑 구현 이후가 훨씬 크다.
+3. **클래스 ③(enum 에 선택지 부재)이 존재하므로 첫 단계가 타입 체계 설계다.**
+   이는 capability 구현과 같은 층위의 작업이라, 순서가 뒤집히면 같은 설계를 두 번 한다.
+
+해당 TODO 라인에도 역참조 주석을 남겼다 — 다른 경로로 먼저 손대는 사고를 막기 위함.
+
+## 0-1. 최상단 고정 규칙
 
 **개별 route 의 `targetEntityType` 을 하나씩 고쳐서 시작하지 않는다.**
 아래 3클래스 중 **클래스 ③ 이 존재하므로**, 이 트랙의 첫 단계는 개별 교정이 아니라
@@ -55,6 +73,13 @@ enum 에 정확한 값이 **있는데** 다른 값이 쓰였다.
 - `sds/[id]/*` — SDSDocument. enum 에 document/SDS 타입 없음.
 - `datasheet/*` — 데이터시트 문서. 동일.
 - `shared-lists/*` — SharedList. enum 에 shared_list 없음.
+- `vendor/*` — Vendor / VendorBillingRecord. enum 에 vendor 없음('product' 가 대리).
+- `compliance-links*` — ComplianceLink. 없음('ai_action' 이 대리).
+- `templates*` — Template. 없음('product' 가 대리).
+- `recommendations/feedback` — Recommendation / RecommendationFeedback. 없음.
+
+배치11 시점에서 **③ 이 다수파**다. 위 7종은 모두 대상이 명확하고 대부분 id 도 있는데
+enum 에만 없다. 즉 "선언을 고치면 되는 문제" 가 아니다.
 
 **대응: 개별 교정 불가.** enum 확장이 선행되지 않으면 어떤 값을 넣어도 틀린다.
 현재 `'ai_action'` 이 쓰인 것은 "안 쓴 것" 이 아니라 **"쓸 게 없어서 대리로 쓴 것"** 이다.
@@ -84,7 +109,7 @@ src/lib/security/server-enforcement-middleware.ts:146
 
 - **완화**: 지금 타입을 고치는 것은 접근 권한을 바꾸지 않는다. 위험이 낮다.
 - **경고**: `TODO: DB에서 조회` 가 구현되는 순간 **현재의 오분류가 그대로 접근 규칙이 된다.**
-  22건의 틀린 선언이 잠재된 권한 규칙으로 활성화된다.
+  31건의 틀린 선언이 잠재된 권한 규칙으로 활성화된다.
   → **entityCapabilities 구현보다 taxonomy 정리가 먼저다.** 순서가 뒤집히면
   권한 사고를 만든 뒤에 고치는 셈이 된다.
 
@@ -108,13 +133,25 @@ src/lib/security/server-enforcement-middleware.ts:146
 이걸 풀려면 `targetEntityId` 를 실제 id 로 올려야 하는데, 그 전제가 `targetEntityType`
 정합이다. 즉 **이 트랙이 lock 입도 문제의 선행 조건**이다.
 
-## 6. 후보 목록 (누적 22건, 배치별)
+## 6. 후보 목록 (누적 31건, 배치별)
 
 | 배치 | 도메인 | 건수 | 주 클래스 |
 |---|---|---|---|
 | 1~8 | work-queue · inventory · products · quotes · ai · ai-actions · analytics · protocol | 10 | ① ② |
 | 9 | datasheet 3 + sds 3 | 6 | ③ (sds·datasheet) |
 | 10 | purchases 3 + shared-lists 3 | 6 | ② (purchases) · ③ (shared-lists) |
+| 11 | vendor 3 + compliance-links 2 + recommendations 2 + templates 2 | 9 | ③ 다수 (vendor·compliance_link·template·recommendation 전부 enum 부재) |
+
+**합계 31건.** 배치11 에서 클래스 ③ 이 예외가 아니라 **다수파**임이 드러났다 —
+vendor · compliance_link · template · recommendation 네 종류가 한 배치에서
+동시에 "enum 에 없음" 으로 나왔다. 개별 교정으로 접근하면 대부분이 막힌다는
+§0-1 의 근거가 실측으로 강화됐다.
+
+### action 축 오분류 (별도 축, §7)
+
+- `recommendations/optimized` — 조회/계산 전용인데 `action: 'order_create'`
+- `shared-lists/bulk` — DELETE 인데 `action: 'sensitive_data_import'`
+- `compliance-links` — `action: 'organization_update'` (대상은 링크)
 
 정확한 route 목록은 각 route 의 `§enforcement-handle-close-sweep` 주석에 인라인으로
 남아 있다 (`§audit-taxonomy-review 후보` 로 grep 가능).

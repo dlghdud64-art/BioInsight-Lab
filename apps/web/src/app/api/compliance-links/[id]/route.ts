@@ -50,23 +50,23 @@ export async function PATCH(
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
+    // (죽은 재검사 제거: 같은 PATCH 핸들러 상단에서 이미 401 처리했다)
+    const { id } = await params;
+    const body = await request.json();
     enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
       action: 'organization_update',
       targetEntityType: 'ai_action',
-      targetEntityId: 'unknown',
+      // §enforcement-handle-close-sweep (compliance-links) — params id 확정 이후로 이동.
+      //   대상 ComplianceLink 가 실재하므로 per-entity lock 이 된다.
+      //   ⚠️ enum 에 compliance_link 타입 부재 → §audit-taxonomy-review.
+      targetEntityId: id,
       sourceSurface: 'web_app',
       routePath: '/compliance-links/id',
     });
     if (!enforcement.allowed) return enforcement.deny();
 
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { id } = await params;
-    const body = await request.json();
 
     // 기존 링크 조회
     const existingLink = await db.complianceLink.findUnique({
@@ -74,6 +74,7 @@ export async function PATCH(
     });
 
     if (!existingLink) {
+      enforcement.fail();
       return NextResponse.json({ error: "Link not found" }, { status: 404 });
     }
 
@@ -92,10 +93,12 @@ export async function PATCH(
         membership?.role === OrganizationRole.VIEWER;
 
       if (!hasAccess) {
+        enforcement.fail();
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
     } else {
       if (session.user.role !== "ADMIN") {
+        enforcement.fail();
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
     }
@@ -105,6 +108,8 @@ export async function PATCH(
       try {
         new URL(body.url);
       } catch {
+        // E6: lock 획득 이후 자체 return 하는 catch
+        enforcement.fail();
         return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
       }
     }
@@ -124,8 +129,24 @@ export async function PATCH(
       data: updateData,
     });
 
+    enforcement.complete({
+      beforeState: {
+        linkId: existingLink.id,
+        url: existingLink.url,
+        enabled: existingLink.enabled,
+        priority: existingLink.priority,
+      },
+      afterState: {
+        linkId: link.id,
+        url: link.url,
+        enabled: link.enabled,
+        priority: link.priority,
+      },
+    });
+
     return NextResponse.json({ link });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error updating compliance link:", error);
     return NextResponse.json(
       { error: error.message || "Failed to update compliance link" },

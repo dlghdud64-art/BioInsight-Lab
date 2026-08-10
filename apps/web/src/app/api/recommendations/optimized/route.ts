@@ -20,6 +20,9 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'order_create',
       targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (recommendations) — 'unknown' 유지.
+      //   productIds 배열을 받아 최적 조합을 **계산해서 반환**할 뿐 쓰기가 없다.
+      //   ⚠️ action 'order_create' 도 실제 동작(조회)과 어긋난다 → §audit-taxonomy-review.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
       routePath: '/recommendations/optimized',
@@ -40,6 +43,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "productIds array is required" },
         { status: 400 }
@@ -62,6 +66,8 @@ export async function POST(request: NextRequest) {
         optimizationParams,
       });
 
+      // 조회/계산 전용: DB 쓰기 0 → audit envelope 없이 lock 만 해제한다.
+      enforcement.fail();
       return NextResponse.json({
         mode: "combination",
         ...combination,
@@ -74,12 +80,16 @@ export async function POST(request: NextRequest) {
         limit,
       });
 
+      // 조회/계산 전용: DB 쓰기 0.
+      enforcement.fail();
       return NextResponse.json({
         mode: "recommendations",
         recommendations,
       });
     }
   } catch (error) {
+    // 데모 모드 분기도 이 catch 안에서 return 하므로 최상단에서 한 번만 닫는다.
+    enforcement?.fail();
     console.error("Error generating optimized recommendations:", error);
     
     // 데모 모드에서는 더미 응답 반환

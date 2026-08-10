@@ -11,21 +11,7 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
-    enforcement = enforceAction({
-      userId: session.user.id,
-      userRole: session.user.role ?? undefined,
-      action: 'sensitive_data_import',
-      targetEntityType: 'ai_action',
-      targetEntityId: 'unknown',
-      sourceSurface: 'web_app',
-      routePath: '/recommendations/feedback',
-    });
-    if (!enforcement.allowed) return enforcement.deny();
-
-        if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    // (죽은 재검사 제거: 같은 POST 핸들러 상단에서 이미 401 처리했다)
     const body = await request.json();
     const { recommendationId, isHelpful, reason } = body;
 
@@ -35,6 +21,21 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_import',
+      targetEntityType: 'ai_action',
+      // §enforcement-handle-close-sweep (recommendations) — 대상 확정 이후로 핸들 이동.
+      //   400 검증이 lock 보다 앞서므로 잘못된 요청은 lock 을 잡지 않는다.
+      //   쓰기 대상은 RecommendationFeedback 이지만 사용자당 1건이라 recommendationId
+      //   가 실질 대상 키다. ⚠️ enum 에 recommendation 타입 부재 → §audit-taxonomy-review.
+      targetEntityId: recommendationId,
+      sourceSurface: 'web_app',
+      routePath: '/recommendations/feedback',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // 기존 피드백 확인
     const existingFeedback = await db.recommendationFeedback.findFirst({
@@ -66,8 +67,17 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // update / create 어느 분기든 쓰기가 실재한다 → 무조건 complete().
+    enforcement.complete({
+      beforeState: existingFeedback
+        ? { feedbackId: existingFeedback.id, isHelpful: existingFeedback.isHelpful }
+        : { feedbackId: null },
+      afterState: { feedbackId: feedback.id, isHelpful: feedback.isHelpful },
+    });
+
     return NextResponse.json({ feedback });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error saving recommendation feedback:", error);
     return NextResponse.json(
       { error: "Failed to save feedback" },

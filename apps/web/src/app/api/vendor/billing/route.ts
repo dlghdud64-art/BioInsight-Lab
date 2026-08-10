@@ -16,6 +16,11 @@ export async function POST(request: NextRequest) {
       userRole: session.user.role ?? undefined,
       action: 'organization_update',
       targetEntityType: 'product',
+      // §enforcement-handle-close-sweep (vendor) — 'unknown' 유지.
+      //   vendorIds 배열을 루프로 과금하므로 **단일 대상 엔티티가 없다**
+      //   (quoteId 는 요청 범위이지 쓰기 대상이 아니다).
+      //   ⚠️ targetEntityType 'product' 도 실제 대상(Vendor/VendorBillingRecord)과
+      //     어긋난다. enum 에 vendor 타입 부재 → §audit-taxonomy-review 후보.
       targetEntityId: 'unknown',
       sourceSurface: 'vendor_portal',
       routePath: '/vendor/billing',
@@ -26,6 +31,7 @@ export async function POST(request: NextRequest) {
     const { quoteId, vendorIds } = body;
 
     if (!quoteId || !vendorIds || !Array.isArray(vendorIds)) {
+      enforcement.fail();
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
@@ -65,8 +71,24 @@ export async function POST(request: NextRequest) {
       billingRecords.push(billingRecord);
     }
 
+    // 과금 설정이 없는 벤더는 continue 로 건너뛴다 → 쓰기가 0건일 수 있다.
+    //   그 경우 complete() 는 없던 변경을 남기는 허위 audit 이 된다.
+    if (billingRecords.length > 0) {
+      enforcement.complete({
+        beforeState: { quoteId, requestedVendors: vendorIds.length },
+        afterState: {
+          quoteId,
+          billedVendors: billingRecords.length,
+          billingRecordIds: billingRecords.map((r: { id: string }) => r.id),
+        },
+      });
+    } else {
+      enforcement.fail();
+    }
+
     return NextResponse.json({ success: true, billingRecords });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error processing billing:", error);
     return NextResponse.json(
       { error: "Failed to process billing" },

@@ -52,25 +52,31 @@ export async function DELETE(
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
+    const { id } = params;
+
+    console.log("[Template] Deleting template:", id);
     enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
       action: 'sensitive_data_import',
       targetEntityType: 'product',
-      targetEntityId: 'unknown',
+      // §enforcement-handle-close-sweep (templates) — params id 확정 이후로 핸들 이동.
+      //   ⚠️ 이 라우트는 아직 DB 삭제를 하지 않는다(아래 TODO) → fail() 로 닫는다.
+      //   ⚠️ enum 에 template 타입 부재 → §audit-taxonomy-review.
+      targetEntityId: id,
       sourceSurface: 'web_app',
       routePath: '/templates/id',
     });
     if (!enforcement.allowed) return enforcement.deny();
 
-    const { id } = params;
-
-    console.log("[Template] Deleting template:", id);
 
     // TODO: Delete from database
 
+    // ⚠️ 위 TODO 가 남아 있는 한 DB 쓰기가 0이다 → fail().
+    enforcement.fail();
     return NextResponse.json({ success: true });
   } catch (error) {
+    enforcement?.fail();
     console.error("[Template] Error:", error);
     return NextResponse.json(
       { error: "Failed to delete template" },
