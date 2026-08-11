@@ -53,7 +53,7 @@ export async function POST() {
       //   의도한 의미(같은 사용자의 sync 중복 실행 방지)다. 억지 id 를 넣으면 double-submit 보호가 사라진다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/work-queue/ops-sync',
+      routePath: '/api/work-queue/ops-sync',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

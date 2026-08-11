@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       //   checkServerAuthorization 권한 판정이 달라진다 → §audit-taxonomy-review 상신.
       targetEntityId: 'unknown',
       sourceSurface: 'vendor_portal',
-      routePath: '/ai-actions/generate/vendor-email-draft',
+      routePath: '/api/ai-actions/generate/vendor-email-draft',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

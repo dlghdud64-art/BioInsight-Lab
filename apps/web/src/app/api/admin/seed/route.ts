@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       //     실행 게이트는 아래 §admin-seed-prod-guard 가 추가로 막는다.
       targetEntityId: 'unknown',
       sourceSurface: 'admin_dashboard',
-      routePath: '/admin/seed',
+      routePath: '/api/admin/seed',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

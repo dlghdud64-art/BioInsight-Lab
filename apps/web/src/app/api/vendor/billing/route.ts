@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       //     어긋난다. enum 에 vendor 타입 부재 → §audit-taxonomy-review 후보.
       targetEntityId: 'unknown',
       sourceSurface: 'vendor_portal',
-      routePath: '/vendor/billing',
+      routePath: '/api/vendor/billing',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

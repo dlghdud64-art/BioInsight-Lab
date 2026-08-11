@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       //   생성된다). ⚠️ taxonomy 후보 — §audit-taxonomy-review 에서 함께 판단.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/ai-actions/generate/reorder-suggestions',
+      routePath: '/api/ai-actions/generate/reorder-suggestions',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

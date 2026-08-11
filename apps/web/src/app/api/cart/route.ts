@@ -144,7 +144,7 @@ export async function DELETE(req: NextRequest) {
       targetEntityType: 'cart',
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/cart',
+      routePath: '/api/cart',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

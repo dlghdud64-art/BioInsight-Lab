@@ -26,7 +26,7 @@ export async function DELETE(
       //   실패 경로는 catch 의 fail() 로 수렴한다.
       targetEntityId: id,
       sourceSurface: 'web_app',
-      routePath: '/reviews/id',
+      routePath: '/api/reviews/id',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

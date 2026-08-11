@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       //   아니라 userId 폴백(§11.369-3 deriveConcurrencyKey)이라 per-user 보호가 유지된다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/inventory/auto-reorder',
+      routePath: '/api/inventory/auto-reorder',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

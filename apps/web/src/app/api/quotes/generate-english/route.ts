@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       //   userId 폴백(§11.369-3)이라 같은 사용자의 연타 보호는 유지된다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/quotes/generate-english',
+      routePath: '/api/quotes/generate-english',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

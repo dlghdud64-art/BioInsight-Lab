@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       //   반환한다. templates POST 와 동일 패턴 → §placeholder-success-audit (신규 검출).
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/export/presets',
+      routePath: '/api/export/presets',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

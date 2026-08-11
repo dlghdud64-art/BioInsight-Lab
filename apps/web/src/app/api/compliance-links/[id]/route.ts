@@ -63,7 +63,7 @@ export async function PATCH(
       //   ⚠️ enum 에 compliance_link 타입 부재 → §audit-taxonomy-review.
       targetEntityId: id,
       sourceSurface: 'web_app',
-      routePath: '/compliance-links/id',
+      routePath: '/api/compliance-links/id',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

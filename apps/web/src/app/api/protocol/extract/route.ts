@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       //   → §audit-taxonomy-review 후보.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/protocol/extract',
+      routePath: '/api/protocol/extract',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

@@ -25,7 +25,7 @@ export async function POST(
       targetEntityType: 'product',
       targetEntityId: id,
       sourceSurface: 'web_app',
-      routePath: '/products/id/usage',
+      routePath: '/api/products/id/usage',
     });
     if (!enforcement.allowed) return enforcement.deny();
     const product = await getProductById(id);

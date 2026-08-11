@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       //   전역 공용 키가 아니라 userId 폴백(§11.369-3)이라 연타 보호는 유지된다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/quotes/parse-pdf',
+      routePath: '/api/quotes/parse-pdf',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

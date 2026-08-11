@@ -216,7 +216,7 @@ export async function POST(request: NextRequest) {
       //   → §audit-taxonomy-review 에서 lock 입도와 함께 다룬다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/billing',
+      routePath: '/api/billing',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

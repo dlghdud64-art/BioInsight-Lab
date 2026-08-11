@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       //   결함 자체는 §placeholder-success-audit 로 상신(신규 검출).
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/dashboard/layout',
+      routePath: '/api/dashboard/layout',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

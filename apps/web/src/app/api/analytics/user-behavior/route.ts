@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       //   → §audit-taxonomy-review 상신.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/analytics/user-behavior',
+      routePath: '/api/analytics/user-behavior',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

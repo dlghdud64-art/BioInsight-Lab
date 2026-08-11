@@ -41,7 +41,7 @@ export async function POST() {
       targetEntityType: 'ai_action',
       targetEntityId: session.user.id, // §11.369-2 — 'unknown' 고정 = 전역 lock 충돌. per-user 격리.
       sourceSurface: 'web_app',
-      routePath: '/analytics/ai-insight',
+      routePath: '/api/analytics/ai-insight',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

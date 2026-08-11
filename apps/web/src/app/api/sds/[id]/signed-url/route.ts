@@ -23,7 +23,7 @@ export async function POST(
       targetEntityType: 'ai_action',
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/sds/id/signed-url',
+      routePath: '/api/sds/id/signed-url',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

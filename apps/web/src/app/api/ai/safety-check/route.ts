@@ -229,7 +229,7 @@ export async function POST(request: NextRequest) {
       //   아니라 userId 폴백(§11.369-3)이라 연타 보호는 유지된다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/ai/safety-check',
+      routePath: '/api/ai/safety-check',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

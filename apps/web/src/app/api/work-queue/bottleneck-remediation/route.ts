@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       targetEntityType: 'ai_action',
       targetEntityId: targetRemediationId,
       sourceSurface: 'web_app',
-      routePath: '/work-queue/bottleneck-remediation',
+      routePath: '/api/work-queue/bottleneck-remediation',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

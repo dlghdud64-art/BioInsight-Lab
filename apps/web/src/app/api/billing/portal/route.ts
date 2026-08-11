@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       //     → §billing-audit-gap 으로 상신(외부 부작용형 감사 누락).
       targetEntityId: workspaceId,
       sourceSurface: 'web_app',
-      routePath: '/billing/portal',
+      routePath: '/api/billing/portal',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

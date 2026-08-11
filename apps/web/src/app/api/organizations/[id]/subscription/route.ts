@@ -83,7 +83,7 @@ export async function POST(
       //   대상 Organization 이 실재하므로 per-entity lock 이 된다.
       targetEntityId: id,
       sourceSurface: 'web_app',
-      routePath: '/organizations/id/subscription',
+      routePath: '/api/organizations/id/subscription',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

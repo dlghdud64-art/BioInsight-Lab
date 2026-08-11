@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
       //   그건 감사 taxonomy 변경이라 기계적 sweep 범위를 넘는다 → 별도 결정으로 상신.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/ai/impact-analysis',
+      routePath: '/api/ai/impact-analysis',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

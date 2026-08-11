@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       //   ⚠️ enum 에 vendor 타입이 없어 'product' 가 대리로 남아 있다 → §audit-taxonomy-review.
       targetEntityId: vendor.id,
       sourceSurface: 'vendor_portal',
-      routePath: '/vendor/premium',
+      routePath: '/api/vendor/premium',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

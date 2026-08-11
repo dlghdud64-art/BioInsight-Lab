@@ -120,7 +120,7 @@ export async function POST(
       targetEntityType: 'product',
       targetEntityId: productId,
       sourceSurface: 'web_app',
-      routePath: '/products/id/sds',
+      routePath: '/api/products/id/sds',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

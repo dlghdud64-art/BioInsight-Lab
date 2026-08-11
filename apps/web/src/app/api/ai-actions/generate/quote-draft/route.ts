@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       //   ⚠️ taxonomy 후보 — §audit-taxonomy-review 에서 함께 판단.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/ai-actions/generate/quote-draft',
+      routePath: '/api/ai-actions/generate/quote-draft',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

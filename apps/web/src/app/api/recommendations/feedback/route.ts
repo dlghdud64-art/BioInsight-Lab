@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       //   가 실질 대상 키다. ⚠️ enum 에 recommendation 타입 부재 → §audit-taxonomy-review.
       targetEntityId: recommendationId,
       sourceSurface: 'web_app',
-      routePath: '/recommendations/feedback',
+      routePath: '/api/recommendations/feedback',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

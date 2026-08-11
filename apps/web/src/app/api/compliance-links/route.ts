@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       //   ⚠️ enum 에 compliance_link 타입 부재 → §audit-taxonomy-review.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/compliance-links',
+      routePath: '/api/compliance-links',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

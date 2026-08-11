@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       //   ⚠️ action 'order_create' 도 실제 동작(조회)과 어긋난다 → §audit-taxonomy-review.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/recommendations/optimized',
+      routePath: '/api/recommendations/optimized',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

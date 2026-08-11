@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       targetEntityType: 'ai_action',
       targetEntityId: itemId,
       sourceSurface: 'web_app',
-      routePath: '/work-queue/assignment',
+      routePath: '/api/work-queue/assignment',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

@@ -40,7 +40,7 @@ export async function PATCH(
       targetEntityType: 'product',
       targetEntityId: id,
       sourceSurface: 'web_app',
-      routePath: '/products/id/specification',
+      routePath: '/api/products/id/specification',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

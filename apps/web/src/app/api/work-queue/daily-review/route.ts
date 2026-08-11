@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
       targetEntityType: 'ai_action',
       targetEntityId: itemId,
       sourceSurface: 'web_app',
-      routePath: '/work-queue/daily-review',
+      routePath: '/api/work-queue/daily-review',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

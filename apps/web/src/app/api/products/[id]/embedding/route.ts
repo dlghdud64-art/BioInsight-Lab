@@ -31,7 +31,7 @@ export async function POST(
       targetEntityType: 'product',
       targetEntityId: id,
       sourceSurface: 'web_app',
-      routePath: '/products/id/embedding',
+      routePath: '/api/products/id/embedding',
     });
     if (!enforcement.allowed) return enforcement.deny();
     const product = await db.product.findUnique({

@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       //   userId 폴백(§11.369-3)이라 같은 사용자의 중복 업로드를 막는 보호가 유지된다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/inventory/import',
+      routePath: '/api/inventory/import',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

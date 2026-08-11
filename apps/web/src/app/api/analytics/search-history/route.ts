@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       //   생성 대상(SearchHistory)의 id 는 create 이후에야 생기므로 호출 시점에 알 수 없다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/analytics/search-history',
+      routePath: '/api/analytics/search-history',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

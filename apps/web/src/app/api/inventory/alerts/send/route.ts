@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       targetEntityType: 'inventory',
       targetEntityId: inventoryId,
       sourceSurface: 'web_app',
-      routePath: '/inventory/alerts/send',
+      routePath: '/api/inventory/alerts/send',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

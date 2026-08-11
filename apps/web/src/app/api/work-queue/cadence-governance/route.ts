@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       targetEntityType: 'ai_action',
       targetEntityId: stepId,
       sourceSurface: 'web_app',
-      routePath: '/work-queue/cadence-governance',
+      routePath: '/api/work-queue/cadence-governance',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

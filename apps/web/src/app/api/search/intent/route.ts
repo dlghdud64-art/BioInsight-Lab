@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       //   질의 문자열을 분류해 반환할 뿐 대상 엔티티도 DB 쓰기도 없다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/search/intent',
+      routePath: '/api/search/intent',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

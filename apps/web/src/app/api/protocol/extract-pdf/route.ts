@@ -64,7 +64,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExtractPD
         targetEntityType: 'quote',
         targetEntityId: 'unknown',
         sourceSurface: 'web_app',
-        routePath: '/protocol/extract-pdf',
+        routePath: '/api/protocol/extract-pdf',
       });
       if (!enforcement.allowed) return enforcement.deny() as NextResponse<ExtractPDFResponse>;
     }

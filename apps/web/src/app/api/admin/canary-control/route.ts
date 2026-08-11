@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
       targetEntityType: 'ai_action',
       targetEntityId: 'unknown',
       sourceSurface: 'admin_dashboard',
-      routePath: '/admin/canary-control',
+      routePath: '/api/admin/canary-control',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

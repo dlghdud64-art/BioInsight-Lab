@@ -31,7 +31,7 @@ export async function POST(
       targetEntityType: 'inventory',
       targetEntityId: inventoryId,
       sourceSurface: 'web_app',
-      routePath: '/inventory/id/restock-request',
+      routePath: '/api/inventory/id/restock-request',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

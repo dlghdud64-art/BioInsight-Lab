@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       //   ⚠️ targetEntityType 'ai_action' 은 문서 추출과 어긋난다 → §audit-taxonomy-review 후보.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/datasheet/extract-url',
+      routePath: '/api/datasheet/extract-url',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

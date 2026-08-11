@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       //   텍스트를 번역해 반환할 뿐 대상 엔티티도 DB 쓰기도 없다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/translate',
+      routePath: '/api/translate',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

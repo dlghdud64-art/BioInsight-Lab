@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       //   범용 이벤트 추적이라 대상 엔티티가 없다(event 이름·properties 만 받는다).
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/analytics/track',
+      routePath: '/api/analytics/track',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

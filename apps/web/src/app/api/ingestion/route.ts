@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       //   대상 IngestionEntry 는 파이프라인 실행 중에 생성된다(클래스 ②).
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/ingestion',
+      routePath: '/api/ingestion',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

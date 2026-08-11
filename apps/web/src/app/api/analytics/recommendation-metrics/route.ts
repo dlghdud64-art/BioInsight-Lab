@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       //   (query 접두사·metadata JSON 에만 쓰인다) → §audit-taxonomy-review 상신.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/analytics/recommendation-metrics',
+      routePath: '/api/analytics/recommendation-metrics',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

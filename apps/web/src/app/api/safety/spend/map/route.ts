@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       //   쓰기 대상은 PurchaseRecord 이며 purchaseId 가 그 id 다.
       targetEntityId: purchaseId,
       sourceSurface: 'web_app',
-      routePath: '/safety/spend/map',
+      routePath: '/api/safety/spend/map',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

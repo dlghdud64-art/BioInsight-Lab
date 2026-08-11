@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
       //     → §enforcement-coverage-gap E7 목록 후보.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/po-candidates',
+      routePath: '/api/po-candidates',
     });
     if (!enforcement.allowed) return enforcement.deny();
 
@@ -135,7 +135,7 @@ export async function PATCH(req: NextRequest) {
       targetEntityType: 'ai_action',
       targetEntityId: id,
       sourceSurface: 'web_app',
-      routePath: '/po-candidates',
+      routePath: '/api/po-candidates',
     });
     if (!enforcement.allowed) return enforcement.deny();
 
@@ -182,7 +182,7 @@ export async function DELETE(req: NextRequest) {
       targetEntityType: 'ai_action',
       targetEntityId: id,
       sourceSurface: 'web_app',
-      routePath: '/po-candidates',
+      routePath: '/api/po-candidates',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

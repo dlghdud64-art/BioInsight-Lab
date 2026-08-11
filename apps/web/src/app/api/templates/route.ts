@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
       //     enum 에 template 타입 부재 → §audit-taxonomy-review.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/templates',
+      routePath: '/api/templates',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

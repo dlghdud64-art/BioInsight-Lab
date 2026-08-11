@@ -33,7 +33,7 @@ export async function POST(
       //   즉 정확한 분류가 **선택지에 부재**하다 → §audit-taxonomy-review 상신(enum 확장 검토).
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/sds/id/apply',
+      routePath: '/api/sds/id/apply',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

@@ -28,7 +28,7 @@ export async function POST(
       targetEntityType: 'product',
       targetEntityId: id,
       sourceSurface: 'web_app',
-      routePath: '/products/id/safety-extract',
+      routePath: '/api/products/id/safety-extract',
     });
     if (!enforcement.allowed) return enforcement.deny();
     const body = await request.json();

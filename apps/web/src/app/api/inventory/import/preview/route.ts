@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       //   키가 아니라 userId 폴백(§11.369-3)이라 같은 사용자의 연타만 막는다 — 의도한 보호다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/inventory/import/preview',
+      routePath: '/api/inventory/import/preview',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

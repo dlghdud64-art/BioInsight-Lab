@@ -22,7 +22,7 @@ export async function DELETE(request: NextRequest) {
       //     접근 판정 입력이 달라지므로 sweep 범위에서는 손대지 않는다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/shared-lists/bulk',
+      routePath: '/api/shared-lists/bulk',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

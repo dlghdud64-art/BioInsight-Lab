@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
       //   body 의 entityId 는 로그가 *가리키는* 대상이지 쓰기 대상이 아니다.
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
-      routePath: '/activity-logs',
+      routePath: '/api/activity-logs',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       targetEntityType: 'inventory',
       targetEntityId: crypto.randomUUID(),
       sourceSurface: 'web_app',
-      routePath: '/inventory/scan-label',
+      routePath: '/api/inventory/scan-label',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       targetEntityType: 'order',
       targetEntityId: orderId,
       sourceSurface: 'web_app',
-      routePath: '/ai-actions/generate/order-followup',
+      routePath: '/api/ai-actions/generate/order-followup',
     });
     if (!enforcement.allowed) return enforcement.deny();
 

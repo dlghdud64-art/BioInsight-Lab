@@ -65,7 +65,7 @@ export async function DELETE(
       //   ⚠️ enum 에 template 타입 부재 → §audit-taxonomy-review.
       targetEntityId: id,
       sourceSurface: 'web_app',
-      routePath: '/templates/id',
+      routePath: '/api/templates/id',
     });
     if (!enforcement.allowed) return enforcement.deny();
 
