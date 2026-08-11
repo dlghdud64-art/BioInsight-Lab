@@ -417,6 +417,86 @@ lock 만 잡고 audit 은 남기지 않는 지점이 전체의 1/3이다. 클래
 "쓰기 없는 라우트가 enforceAction 을 쓰는 것이 맞는가" 는 §8 에 남긴 별도 질문이며,
 이 수치가 그 질문의 규모다.
 
+## 4-2. 검증 3항목 결과 (호영님 2026-08-10 조건부 승인)
+
+### ① 29종 ≤ 실제 참조 Prisma 모델 수 — **충족, 단 1건 예외**
+
+29종 중 **28종이 실재 모델에 1:1 대응**한다(별칭 6건 명시: `inventory`→`ProductInventory`,
+`quote_item`→`QuoteListItem`, `recommendation`→`ProductRecommendation`,
+`sds_document`→`SDSDocument`, `po_candidate`→`POCandidate`, `ai_action_item`→`AiActionItem`).
+초과는 없다 — 규칙 위반 항목은 섞이지 않았다.
+
+**예외 1건: `compliance_link` 은 대응 모델이 없다.** 그리고 이건 taxonomy 문제가 아니라
+**런타임 결함**이었다 → §4-3.
+
+### ② 호출 지점 1건뿐인 타입 — **8개** (목록 제출)
+
+| 타입 | 유일 호출 지점 |
+|---|---|
+| `activity_log` | `activity-logs` POST |
+| `cart` | `cart` DELETE |
+| `import_job` | `purchases/import-file` POST |
+| `ingestion_entry` | `ingestion` POST |
+| `recommendation_feedback` | `recommendations/feedback` POST |
+| `review` | `reviews/[id]` DELETE |
+| `subscription` | `billing/checkout` POST |
+| `user` | `user/profile` PATCH |
+
+지시대로 **1건이라는 이유로 합치지 않았다** — 모델이 다르면 타입도 다르다.
+8개는 전체 29종의 28%이고, 모두 서로 다른 Prisma 모델에 대응하므로 과분할이 아니라
+**해당 도메인의 API 표면이 아직 얇은 것**으로 읽는다(예: 장바구니는 DELETE 하나만 집행 대상).
+
+### ③ `TargetConceptType` 추가 기준 — **아래로 못박는다**
+
+concept 은 모델이라는 닻이 없어 규칙이 약하다. 인플레를 막는 조건을 명문화한다.
+
+> **concept 을 새로 추가하려면 아래 4개를 **모두** 만족해야 한다.**
+>
+> 1. **모델 부재의 증명** — 대응하는 Prisma 모델이 없음을 스키마 grep 으로 확인했다.
+>    비슷한 모델이 있으면 `entity` 다. 이름이 다를 뿐인 경우가 대부분이다.
+> 2. **쓰기 부재** — 그 핸들러가 DB 에 쓰지 않는다(헬퍼 경유 포함, 1단계 이상 해석).
+>    쓰기가 있으면 **무언가는 바뀌는 것**이고, 바뀌는 그것이 대상이다 → `entity`.
+> 3. **2개 이상의 호출 지점** — 1건짜리 concept 은 만들지 않는다.
+>    `entity` 와 달리 concept 은 모델이 정당성을 대신 서 주지 않으므로,
+>    재사용되지 않는 개념은 개념이 아니라 그 라우트의 사정이다.
+>    (실측상 현재 8종은 전부 2건 이상)
+> 4. **한 문장 정의** — "이 concept 의 대상은 X 다" 를 이 문서에 적을 수 있다.
+>    적을 수 없으면 분류가 아니라 미분류다.
+>
+> 위 4개 중 하나라도 못 만족하면 **추가하지 않고 상신**한다.
+> concept 목록 변경은 sentinel 로 잠근다(목록 하드코딩 + 변경 시 명시 승인).
+
+**판정: ①·③ 충족.** ②는 숫자만 보고(8개, 5 초과이므로 목록 첨부).
+
+## 4-3. ⚠️ 검증 ①이 잡아낸 런타임 결함 — `ComplianceLink` 모델 부재
+
+`compliance_link` 의 대응 모델을 찾다가 드러났다.
+
+```
+$ grep -in "compliance" prisma/schema.prisma      → 무관한 1줄(regulatoryCompliance)뿐
+$ node -e "... typeof p.complianceLink"           → undefined
+```
+
+**`ComplianceLink` 모델은 스키마에도 생성된 Prisma Client 에도 없다.**
+그런데 라우트는 `db.complianceLink.findMany/create/update/delete` 를 호출한다.
+`db` 가 `any` 로 선언돼 있어 **컴파일은 통과하고 런타임에만 실패**한다.
+
+영향 표면 (실측):
+
+| 호출자 | 경로 |
+|---|---|
+| 제품 상세 화면 | `src/app/products/[id]/page.tsx:138` |
+| 컴플라이언스 설정 화면 | `src/app/settings/compliance-links/page.tsx` (조회·생성·수정·삭제 전부) |
+| CSRF 라우트 레지스트리 | `csrf-route-registry.ts:79` 에 등재돼 있음 |
+
+즉 **등록된 화면 2곳이 항상 실패**한다. 배치11 에서 이 라우트의 핸들 마감을 했으나
+"핸들을 닫는가" 만 봤고 "동작하는가" 는 보지 않았다 — memory 의 Render-Reachability
+피드백과 같은 클래스다.
+
+→ **§compliance-link-model-missing** 로 상신. 모델 추가는 마이그레이션이라 승인 사항이며
+이 트랙(①)의 범위가 아니다. taxonomy 상으로는 `compliance_link` 를 초안에 **유지**하되
+"모델 추가 후 유효" 로 표시한다.
+
 ## 5. enum 초안
 
 ### 5-1. 구조 — 단일 enum 을 두 필드로 쪼갠다

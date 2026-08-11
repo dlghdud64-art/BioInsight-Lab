@@ -116,7 +116,7 @@ export type IrreversibleActionType =
 export interface AuthorizationRequest {
   readonly action: IrreversibleActionType;
   readonly actor: ServerActorContext;
-  readonly targetEntityType: 'po' | 'quote' | 'dispatch' | 'approval' | 'order' | 'inventory' | 'receiving' | 'ai_action' | 'compare_session' | 'email_draft' | 'organization' | 'team' | 'workspace' | 'budget' | 'billing' | 'governance' | 'purchase_request' | 'purchase_record' | 'product' | 'cart' | 'invite';
+  readonly targetEntityType: 'po' | 'quote' | 'dispatch' | 'approval' | 'order' | 'inventory' | 'receiving' | 'ai_action' | 'compare_session' | 'email_draft' | 'organization' | 'team' | 'workspace' | 'budget' | 'billing' | 'governance' | 'purchase_request' | 'purchase_record' | 'product' | 'cart' | 'invite' | 'user';
   readonly targetEntityId: string;
   readonly targetOrganizationId: string;
   readonly snapshotVersion?: string;

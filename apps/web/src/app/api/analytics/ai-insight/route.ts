@@ -77,7 +77,13 @@ export async function POST() {
     });
 
     if (purchases.length === 0) {
-      enforcement.complete(); // §11.369-2 — lock 해제(early return leak 방지)
+      // §audit-foundation ① (2026-08-10) — complete() → fail().
+      //   이 핸들러는 findMany 2회 + AI 호출만 하고 **DB 쓰기가 0** 이다.
+      //   complete() 는 인자가 없어도 audit envelope 을 append 하므로
+      //   (beforeState/afterState 가 status: pending→completed 기본값으로 채워짐)
+      //   영속화(§audit-persistence-gap) 직후부터 **거짓 감사 기록**이 쌓인다.
+      //   lock 해제만 필요하므로 fail() 이 맞다.
+      enforcement.fail();
       return NextResponse.json({
         summary: "분석할 구매 데이터가 없습니다. 구매 내역이 축적되면 AI 분석이 가능합니다.",
         generated: false,
@@ -165,7 +171,8 @@ export async function POST() {
       }
     }
 
-    enforcement.complete(); // §11.369-2 — lock 해제(정상 성공 시에도 필수)
+    // §audit-foundation ① — 조회 전용(DB 쓰기 0) → fail(). 위 주석 참조.
+    enforcement.fail();
     return NextResponse.json({
       summary,
       generated: true,

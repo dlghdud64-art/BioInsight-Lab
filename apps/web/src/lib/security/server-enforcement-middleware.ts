@@ -69,7 +69,7 @@ interface SessionUser {
 export interface EnforcementConfig {
   readonly action: IrreversibleActionType;
   readonly mutationAction: MutationActionType;
-  readonly targetEntityType: 'po' | 'quote' | 'dispatch' | 'approval' | 'order' | 'inventory' | 'receiving' | 'ai_action' | 'compare_session' | 'email_draft' | 'organization' | 'team' | 'workspace' | 'budget' | 'billing' | 'governance' | 'purchase_request' | 'purchase_record' | 'product' | 'cart' | 'invite';
+  readonly targetEntityType: 'po' | 'quote' | 'dispatch' | 'approval' | 'order' | 'inventory' | 'receiving' | 'ai_action' | 'compare_session' | 'email_draft' | 'organization' | 'team' | 'workspace' | 'budget' | 'billing' | 'governance' | 'purchase_request' | 'purchase_record' | 'product' | 'cart' | 'invite' | 'user';
   /** request body에서 entity ID를 추출하는 함수 */
   readonly extractEntityId: (body: Record<string, unknown>) => string;
   /** request body에서 organization ID를 추출하는 함수 */
@@ -447,7 +447,7 @@ export interface InlineEnforcementConfig {
   readonly userId: string;
   readonly userRole?: string;
   readonly action: IrreversibleActionType;
-  readonly targetEntityType: 'po' | 'quote' | 'dispatch' | 'approval' | 'order' | 'inventory' | 'receiving' | 'ai_action' | 'compare_session' | 'email_draft' | 'organization' | 'team' | 'workspace' | 'budget' | 'billing' | 'governance' | 'purchase_request' | 'purchase_record' | 'product' | 'cart' | 'invite';
+  readonly targetEntityType: 'po' | 'quote' | 'dispatch' | 'approval' | 'order' | 'inventory' | 'receiving' | 'ai_action' | 'compare_session' | 'email_draft' | 'organization' | 'team' | 'workspace' | 'budget' | 'billing' | 'governance' | 'purchase_request' | 'purchase_record' | 'product' | 'cart' | 'invite' | 'user';
   readonly targetEntityId: string;
   readonly organizationId?: string;
   readonly sourceSurface: string;
