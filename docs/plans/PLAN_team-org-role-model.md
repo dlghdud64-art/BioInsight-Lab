@@ -105,6 +105,65 @@ OWNER 는 없다. 문구 drift 가 여기도 있다.)
 대안(더 작음): 마지막 ADMIN 이 아닐 때 **자기 자신을 강등**할 수 있게 허용.
 회수는 못 하지만 퇴사자 본인이 정리할 수는 있다. 데드락의 절반만 푼다.
 
+---
+
+## 1-C. 작은 안 — **착수 완료** (호영님 승인 2026-08-12)
+
+| 계약 | 구현 |
+|---|---|
+| 자기 강등 허용 | PATCH — 대상이 ADMIN 이고 **본인**이며 `adminCount > 1` 일 때 통과 |
+| 자기 나가기 허용 | DELETE — 동일 조건 (나가기가 없으면 강등을 풀어도 갇힌다) |
+| 마지막 ADMIN 보호 | `adminCount <= 1` → 400 `LAST_TEAM_ADMIN` (주인 없는 팀이 더 나쁘다) |
+| 남의 ADMIN 불가 | 강등·제거 모두 거부 — 기존 의도 보존 |
+| 문구가 출구를 알린다 | *"마지막 관리자는 역할을 변경할 수 없습니다. **다른 관리자를 먼저 지정하세요.**"* |
+| 유령 역할 제거 | `Cannot remove OWNER` · `Only ADMIN or OWNER` 폐기 — TeamRole 에 OWNER 는 없다 |
+| 중복 조건 정리 | DELETE `!== ADMIN && !== ADMIN` → 단일 조건. **동작 불변**(둘 다 ADMIN 만 통과) |
+
+sentinel: `src/__tests__/ops/team-admin-deadlock.test.ts` (T0~T6, 9 assertions).
+corrupt→RED 실증 — `adminCount <= 1` 무력화 + 중복 조건 부활 주입 시 2 failed.
+
+### 🛑 한계 — 이것은 완화이지 해결이 아니다
+
+**이미 퇴사한 사람은 로그인하지 않는다.** 본인만 자기 역할을 바꿀 수 있으므로,
+퇴사자가 팀 ADMIN 인 상황은 **여전히 회수 불가**다. 데드락의 절반만 풀렸다.
+큰 안이 필요한 이유가 정확히 그것이다.
+
+---
+
+## 1-D. 큰 안 — 실측 결과. **스키마 변경은 없으나 그게 문제가 아니다**
+
+### 연결은 있다
+
+```prisma
+model Team {
+  organizationId String?   // FK to Organization (null = standalone team)
+  organization   Organization? @relation(...)
+}
+model Organization { teams Team[] }
+```
+
+→ **스키마 변경 불요.** §schema-proposal 4종에 합류시킬 필요 없다.
+
+### 그런데 채워지지 않는다 ⚠️
+
+`api/team/route.ts:100` 팀 생성이 **`organizationId` 를 설정하지 않는다.**
+`src/app/api/team/` 전체에서 `organizationId` 참조 **0**.
+
+**즉 API 로 만든 팀은 전부 standalone(null) 이고, 조직 OWNER 권한을 부여해도
+적용 대상이 0 이다.** 큰 안의 선결 조건은 스키마가 아니라 **팀 생성이 소속 조직을
+기록하게 만드는 것**이다.
+
+### 큰 안 재정의 (승인 대기)
+
+1. **선결** — 팀 생성 시 `organizationId` 기록. 생성자의 조직 멤버십에서 도출.
+   조직이 여럿이면 선택이 필요하고, 없으면 standalone 유지(현행)
+2. 그 위에 조직 `OWNER` 의 팀 역할 변경 권한. 대상이 ADMIN 일 때의 400 을
+   **조직 OWNER 요청에 한해** 통과. 팀 ADMIN 끼리는 여전히 불가
+3. **기존 standalone 팀은 1 로 구제되지 않는다** — 이미 만들어진 팀의
+   `organizationId` 를 채우는 backfill 이 별도로 필요하다(실사용자 0 인 지금이 가장 싸다)
+
+⚠️ 3 이 왕복 이후 데이터 상태에 달려 있다.
+
 ## 2. 재개 시 실측 항목 (설계 전 — 설계는 그 다음)
 
 - 두 enum 이 각각 어느 판정 지점에서 쓰이는가

@@ -157,12 +157,42 @@ export async function PATCH(
       );
     }
 
-    // ADMIN 역할은 변경 불가 (기존 문구는 존재하지 않는 OWNER 를 근거로 들었다)
+    /**
+     * §team-org-role-model 작은 안 (호영님 승인 2026-08-12) — **자기 강등 허용**.
+     *
+     * 이전: 대상이 ADMIN 이면 무조건 400. 강등·제거·자진사퇴·팀 폐기가 전부 0 이라
+     *   **되돌리는 방법이 DB 직접 수정뿐**이었다(실측 확정, PLAN §1-A). 고객사가 할 수
+     *   없는 일이고 우리에게 지원 요청이 온다.
+     *
+     * 지금: **ADMIN 이 2명 이상일 때 자기 자신만** 강등할 수 있다.
+     *   · 남의 ADMIN 강등은 계속 금지 — 기존 의도(ADMIN 끼리 서로 못 바꾼다) 보존
+     *   · 마지막 ADMIN 강등은 계속 금지 — **주인 없는 팀이 더 나쁘다**
+     *
+     * ⚠️ 완화이지 해결이 아니다. **이미 퇴사한 사람은 로그인하지 않으므로 여전히 회수
+     *   불가**다. 큰 안(조직 OWNER 권한)이 필요한 이유가 그것이다.
+     */
     if (targetMember.role === TeamRole.ADMIN) {
-      return NextResponse.json(
-        { error: "ADMIN 역할은 변경할 수 없습니다." },
-        { status: 400 }
-      );
+      const isSelf = targetMember.userId === session.user.id;
+      const adminCount = await db.teamMember.count({
+        where: { teamId, role: TeamRole.ADMIN },
+      });
+
+      if (!isSelf) {
+        return NextResponse.json(
+          { error: "다른 관리자의 역할은 변경할 수 없습니다. 본인 역할만 변경할 수 있습니다." },
+          { status: 400 }
+        );
+      }
+      if (adminCount <= 1) {
+        // 출구를 함께 알린다 — "변경할 수 없습니다" 만으로는 사용자가 다음 행동을 모른다.
+        return NextResponse.json(
+          {
+            error: "마지막 관리자는 역할을 변경할 수 없습니다. 다른 관리자를 먼저 지정하세요.",
+            code: "LAST_TEAM_ADMIN",
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // 역할 업데이트
@@ -249,9 +279,17 @@ export async function DELETE(
       },
     });
 
-    if (!userMember || (userMember.role !== TeamRole.ADMIN && userMember.role !== TeamRole.ADMIN)) {
+    /**
+     * §team-org-role-model 작은 안 — 중복 조건 정리 (2026-08-12).
+     *   이전: `!== ADMIN && !== ADMIN` — **같은 값을 두 번** 봤다. PATCH 는 2026-08-10 에
+     *   정리됐으나 DELETE 는 누락됐다. OWNER 자리가 ADMIN 으로 치환된 흔적이다.
+     *   동작은 우연히 옳았다(ADMIN 만 통과) — **동작 불변으로** 중복만 제거한다.
+     *   문구도 고친다: TeamRole 에 OWNER 는 없다(ADMIN | MEMBER | VIEWER).
+     *   존재하지 않는 역할을 근거로 거부당하면 안 된다.
+     */
+    if (!userMember || userMember.role !== TeamRole.ADMIN) {
       return NextResponse.json(
-        { error: "Forbidden: Only ADMIN or OWNER can remove members" },
+        { error: "Forbidden: 팀 ADMIN 만 멤버를 제거할 수 있습니다." },
         { status: 403 }
       );
     }
@@ -268,20 +306,36 @@ export async function DELETE(
       );
     }
 
-    // OWNER는 제거 불가
-    if (targetMember.role === TeamRole.ADMIN) {
-      return NextResponse.json(
-        { error: "Cannot remove OWNER" },
-        { status: 400 }
-      );
-    }
+    /**
+     * §team-org-role-model 작은 안 — **자기 나가기 허용** (호영님 승인 2026-08-12).
+     *   "나가기" 가 없으면 강등을 허용해도 여전히 갇힌다.
+     *
+     *   허용: 자기 자신 제거. 단 ADMIN 이면 **2명 이상일 때만**(마지막 ADMIN 금지).
+     *   금지: 남의 ADMIN 제거 — PATCH 와 동일 규율.
+     *
+     *   문구 정정: 기존 "Cannot remove OWNER" 는 TeamRole 에 없는 역할을 근거로 들었다.
+     */
+    const isSelfRemoval = targetMember.userId === session.user.id;
 
-    // 자기 자신은 제거 불가
-    if (targetMember.userId === session.user.id) {
-      return NextResponse.json(
-        { error: "Cannot remove yourself" },
-        { status: 400 }
-      );
+    if (targetMember.role === TeamRole.ADMIN) {
+      if (!isSelfRemoval) {
+        return NextResponse.json(
+          { error: "다른 관리자는 제거할 수 없습니다. 본인만 팀에서 나갈 수 있습니다." },
+          { status: 400 }
+        );
+      }
+      const adminCount = await db.teamMember.count({
+        where: { teamId, role: TeamRole.ADMIN },
+      });
+      if (adminCount <= 1) {
+        return NextResponse.json(
+          {
+            error: "마지막 관리자는 팀에서 나갈 수 없습니다. 다른 관리자를 먼저 지정하세요.",
+            code: "LAST_TEAM_ADMIN",
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // 멤버 제거
