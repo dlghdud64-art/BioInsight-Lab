@@ -116,8 +116,9 @@ describe("§PD-flat P4 — dead button 0(시안 요소 실동선 배선)", () =>
     expect(DETAIL).not.toMatch(/<button[^>]*>\s*영업 (담당자 연결|문의)/);
     expect(DETAIL).not.toMatch(/<Link href="\/dashboard\/inventory">[\s\S]{0,120}?재고 조회/);
   });
-  it("회귀 0 — 신뢰 문구는 1회 안내로 이전 + 가격 대비(slate-900) 보존", () => {
-    expect(DETAIL).toMatch(/견적 요청은 무료이며 구매 의무가 없습니다/);
+  /** 🔁 승계 (§sourcing-quote-flow v1.1 ⑥) — 이전처가 toast → 담김 캡션으로 바뀌었다. */
+  it("회귀 0 — 신뢰 문구는 담김 캡션으로 이전 + 가격 대비(slate-900) 보존", () => {
+    expect(DETAIL).toMatch(/견적 요청은 무료입니다/);
     expect(DETAIL).toMatch(/text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight/);
   });
 });

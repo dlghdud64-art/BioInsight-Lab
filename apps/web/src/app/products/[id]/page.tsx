@@ -73,10 +73,19 @@ export default function ProductDetailPage() {
   const { removeProduct, hasProduct } = useCompareStore();
   // #quote-cta-truth — 견적함 truth 합류 (provider 와 동일 키·동일 순수함수, ⓐ 결정)
   const [inQuoteCart, setInQuoteCart] = useState(false);
+  /**
+   * §sourcing-quote-flow v1.1 ⑥ — 담김 캡션의 N건.
+   * 같은 구독으로 갱신한다(별도 소스 금지 — 카운트 단일 출처, §sourcing-quote-ux).
+   */
+  const [quoteCartCount, setQuoteCartCount] = useState(0);
   useEffect(() => {
     if (!id) return;
     // §product-detail-refinement 계약⑨-2 — quote-cart-changed 구독으로 재읽기(해제 후 담김 상태 소멸 = front-only 거울상 방지).
-    const sync = () => setInQuoteCart(readQuoteCart().some((q: any) => q.productId === id));
+    const sync = () => {
+      const cart = readQuoteCart();
+      setInQuoteCart(cart.some((q: any) => q.productId === id));
+      setQuoteCartCount(cart.length);
+    };
     sync();
     window.addEventListener("quote-cart-changed", sync);
     return () => window.removeEventListener("quote-cart-changed", sync);
@@ -1090,11 +1099,23 @@ export default function ProductDetailPage() {
                       {/* §product-detail-sourcing-v21 §7 — 담기 후 버튼 상태 전환 = `담김 ✓ · 견적함 보기`(라벨 반전, 계약④ 목적지 /dashboard/quotes 는 승계).
                           toast-only no-op 폐기는 계약④ 그대로 유지 — 담김이 버튼 상태로 드러난다. */}
                       {inQuoteCart ? (
-                        <Button asChild className="w-full py-3.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl font-bold text-base shadow-none transition-colors flex items-center justify-center gap-2">
-                          <Link href="/dashboard/quotes">
-                            <Check className="w-5 h-5" />담김 ✓ · 견적함 보기
-                          </Link>
-                        </Button>
+                        <>
+                          <Button asChild className="w-full py-3.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl font-bold text-base shadow-none transition-colors flex items-center justify-center gap-2">
+                            <Link href="/dashboard/quotes">
+                              <Check className="w-5 h-5" />담김 ✓ · 견적함 보기
+                            </Link>
+                          </Button>
+                          {/* §sourcing-quote-flow v1.1 ⑥ — 담김 캡션 (호영님 2026-08-12).
+                              toast 라는 **그릇을 지우고 내용을 여기로 옮긴다**:
+                                · 3중 피드백(버튼 상태 + toast + 트레이) 해소 — 문서 §0-1
+                                · B4 계약("문구 자체는 소멸하지 않는다") 충족 — 문구는 여기 있다
+                                · 상시가 아니라 **담김 상태에서만** 노출 → PD-A 상시 문구 폐기 결정도 유지
+                              "구매 의무가 없습니다" 는 길이 때문에 뺀다 — 심리 장벽의 본체는 돈이고,
+                              의무 없음은 견적 요청 화면에서 다시 말할 자리가 있다(호영님). */}
+                          <p className="mt-2 text-[11.5px] leading-relaxed text-slate-500">
+                            담긴 {quoteCartCount}건으로 발송 준비를 시작합니다 · 견적 요청은 무료입니다
+                          </p>
+                        </>
                       ) : (
                         <Button
                           className="w-full py-3.5 bg-[#2f6be0] hover:bg-[#2456bd] text-white rounded-xl font-bold text-base shadow-sm transition-colors flex items-center justify-center gap-2 group"
@@ -1102,8 +1123,10 @@ export default function ProductDetailPage() {
                             const result = addToQuoteCart(product);
                             if (result.ok) {
                               setInQuoteCart(true);
+                              // §sourcing-quote-flow v1.1 ⑥ — 성공 toast 폐기(3중 피드백 해소).
+                              //   담김은 버튼 상태 전환 + 아래 캡션으로 드러난다. 실패 toast 는 유지 —
+                              //   실패는 화면에 드러나지 않으므로 알림이 유일한 통로다.
                               window.dispatchEvent(new Event("quote-cart-changed")); // §PD-D 트레이 갱신 + ⑨-2 구독 재읽기
-                              toast({ title: "견적함에 담았습니다", description: "견적 요청은 무료이며 구매 의무가 없습니다." });
                             } else {
                               toast({ title: "견적 담기 실패", description: "제품 정보를 확인할 수 없습니다.", variant: "destructive" });
                             }
@@ -1283,8 +1306,8 @@ export default function ProductDetailPage() {
                 const result = addToQuoteCart(product);
                 if (result.ok) {
                   setInQuoteCart(true);
+                  // §sourcing-quote-flow v1.1 ⑥ — 성공 toast 폐기(데스크탑과 동일). 실패 toast 는 유지.
                   window.dispatchEvent(new Event("quote-cart-changed")); // §PD-D 트레이 갱신 + ⑨-2 구독 재읽기
-                  toast({ title: "견적함에 담았습니다", description: "견적 요청은 무료이며 구매 의무가 없습니다." });
                 } else {
                   toast({ title: "견적 담기 실패", description: "제품 정보를 확인할 수 없습니다.", variant: "destructive" });
                 }
@@ -1294,7 +1317,15 @@ export default function ProductDetailPage() {
             </Button>
           )}
         </div>
-        {/* §product-detail-sourcing-v21 §7 — 모바일도 상시 신뢰 문구 삭제(첫 담기 1회 toast 안내로 이전). */}
+        {/* §product-detail-sourcing-v21 §7 — 상시 신뢰 문구 삭제.
+            §sourcing-quote-flow v1.1 ⑥ — 이전처 변경: 첫 담기 toast → **담김 캡션**.
+            모바일에도 같은 캡션을 둔다. 데스크탑에만 두면 모바일 사용자에게는 문구가
+            어디에도 없어 B4("문구 자체는 소멸하지 않는다")가 표면 단위로 깨진다. */}
+        {inQuoteCart && (
+          <p className="mt-2 text-[11px] leading-relaxed text-slate-500 text-right">
+            담긴 {quoteCartCount}건으로 발송 준비를 시작합니다 · 견적 요청은 무료입니다
+          </p>
+        )}
       </div>
 
       {/* §product-detail PD-D(§09) — 견적함 정직 트레이바(데스크탑). 비교 destination 없어 견적함만(dead button 0). */}

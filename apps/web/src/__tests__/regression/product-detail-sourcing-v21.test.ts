@@ -9,6 +9,8 @@
  *   B2 — 계약④ 담김 주 CTA `견적 요청서 만들기` → `담김 ✓ · 견적함 보기`. 목적지(/dashboard/quotes)는 승계.
  *   B3 — 계약④ 보조 2분할(비교 검토 · 재고 조회) 폐기. 레일 1행 압축.
  *   B4 — PD-A 상시 신뢰 문구 폐기 → 첫 담기 1회 toast 안내로 이전(문구 자체는 소멸하지 않는다).
+ *        🔁 이전처 변경 (§sourcing-quote-flow v1.1 ⑥, 2026-08-12): toast → **담김 캡션**.
+ *           B4 의 본체는 "문구의 존속" 이지 그릇이 아니다. toast 는 3중 피드백이라 제거.
  *
  * 은퇴→승계 분류표: sentinel-분류표-product-detail-v2.1.md
  *   구 계약 파일(product-detail-refinement / -completeness-pd-b / -hero-keyfacts-pd-e /
@@ -183,8 +185,25 @@ describe("§v21 §7 — 담김 상태 전환 · 1행 압축", () => {
     expect(PAGE_CODE).not.toMatch(/<p[^>]*>견적 요청은 무료이며 구매 의무가 없습니다\./);
     expect(PAGE_CODE).not.toMatch(/<Calendar className="w-3 h-3" \/> 납기/);
   });
-  it("신뢰 문구는 소멸이 아니라 첫 담기 1회 안내로 이전(정보 손실 0)", () => {
-    expect(PAGE).toMatch(/description: "견적 요청은 무료이며 구매 의무가 없습니다\."/);
+  /**
+   * 🔁 승계 (§sourcing-quote-flow v1.1 ⑥, 호영님 2026-08-12) — **이전처만 바뀌었다.**
+   *   B4 가 지키려던 것은 "문구의 존속" 이지 "toast 라는 그릇" 이 아니다.
+   *   toast(그릇) 제거 → 3중 피드백 해소(문서 §0-1) / 문구는 **담김 캡션**으로 이동.
+   *   담김 상태에서만 노출되므로 PD-A 상시 문구 폐기 결정도 함께 유지된다.
+   *   "구매 의무가 없습니다" 는 길이 때문에 뺐다 — 견적 요청 화면에서 다시 말한다.
+   *
+   *   ⚠️ 이 it 의 계약: **문구가 어디에도 없으면 RED.** 그것이 B4 의 본체다.
+   */
+  it("신뢰 문구는 소멸이 아니라 담김 캡션으로 이전(정보 손실 0)", () => {
+    expect(PAGE_CODE).toMatch(/발송 준비를 시작합니다 · 견적 요청은 무료입니다/);
+    // toast 라는 그릇은 사라졌다(3중 피드백 해소)
+    expect(PAGE_CODE).not.toMatch(/title: "견적함에 담았습니다"/);
+  });
+  it("담김 캡션 = 담김 상태에서만(상시 아님) · 데스크탑·모바일 2곳", () => {
+    expect(PAGE_CODE.match(/담긴 \{quoteCartCount\}건으로 발송 준비를 시작합니다/g)?.length ?? 0)
+      .toBeGreaterThanOrEqual(2);
+    // 카운트 단일 출처 — 별도 소스 금지
+    expect(PAGE_CODE).toMatch(/setQuoteCartCount\(cart\.length\)/);
   });
   it("레일 보조 버튼·링크 0(비교 검토·재고 조회)", () => {
     expect(PAGE_CODE).not.toMatch(/비교 검토/);
