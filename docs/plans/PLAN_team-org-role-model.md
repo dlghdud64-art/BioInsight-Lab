@@ -32,6 +32,79 @@ if (role !== TeamRole.ADMIN && role !== TeamRole.ADMIN)   // 같은 값 두 번
 
 0 으로 확인되면 결함 존치이며, 조직 OWNER 에게 팀 역할 변경 권한을 주는 최소 교정을 상신.
 
+---
+
+## 1-A. 실측 결과 (2026-08-12) — **데드락 확정. 예상보다 나쁘다**
+
+호영님 지시로 3건 실측(교정 금지, 관측만). **결론: 데드락이며, 강등뿐 아니라
+제거·팀 폐기까지 전부 막혀 있다.**
+
+### Q1. 조직 OWNER 의 별도 경로 — **없음 (0)**
+
+`teamMember` 쓰기 지점은 repo 전체에 **3곳뿐**이고 전부 팀 ADMIN 게이트다.
+
+| 지점 | 게이트 |
+|---|---|
+| `api/team/invite/route.ts:99` (create) | 팀 ADMIN |
+| `api/team/[id]/members/route.ts:169` (update) | 팀 ADMIN |
+| `api/team/[id]/members/route.ts:288` (delete) | 팀 ADMIN |
+
+`src/app/api/team/` 전체에서 `OrganizationRole` import 0, 조직 멤버십 조회 0.
+**`OWNER` 는 주석과 에러 문구에만 등장한다** — 판정에 쓰이는 곳이 없다.
+
+### Q2. ADMIN 강등 수단 — **0. 그리고 제거도 0**
+
+```
+PATCH  대상이 ADMIN → 400 "ADMIN 역할은 변경할 수 없습니다."   (members:160)
+DELETE 대상이 ADMIN → 400 "Cannot remove OWNER"              (members:271)
+DELETE 대상이 자기 자신 → 400 "Cannot remove yourself"        (members:279)
+```
+
+**강등 불가 + 제거 불가 + 자진 사퇴 불가.** 셋이 겹쳐 회수 경로가 완전히 닫힌다.
+
+`team.delete` 라우트도 **존재하지 않는다** — 팀을 폐기해 우회하는 최후 수단조차 없다.
+
+### Q3. 최초 ADMIN — **팀 생성자가 자동 ADMIN**
+
+`api/team/route.ts:100` — `team.create` 시 `members.create { userId: session.user.id,
+role: TeamRole.ADMIN }`. 조건 없음. **누구나 팀을 만들면 회수 불가능한 ADMIN 이 된다.**
+
+(주석은 *"생성자를 OWNER로 추가"* 라 적혀 있으나 실제 값은 `ADMIN` 이다 — TeamRole 에
+OWNER 는 없다. 문구 drift 가 여기도 있다.)
+
+### 운영 영향
+
+- 퇴사자가 팀 ADMIN 이면 **회수 경로 0**. 계정을 지우지 않는 한 그대로 남는다
+- ADMIN 이 여러 명이어도 **서로 강등할 수 없다** (대상이 ADMIN 이면 무조건 400)
+- 잘못 부여된 ADMIN 을 되돌리는 방법이 **DB 직접 수정뿐**
+
+→ 동작 유지가 아니라 **결함 존치**다.
+
+### 부수 발견 — DELETE 게이트에 중복 조건이 남아 있다
+
+`members/route.ts:252` — `userMember.role !== ADMIN && userMember.role !== ADMIN`
+(**같은 값 두 번**). PATCH 쪽은 2026-08-10 에 정리됐으나 **DELETE 는 누락**됐다.
+현재 동작은 우연히 옳다(ADMIN 만 통과) — 다만 OWNER 를 넣으려 한 자리가 그대로 비어 있다.
+
+---
+
+## 1-B. 상신 — 최소 교정안 (착수 전 승인 대기)
+
+> 지시대로 **지금 고치지 않았다.** 아래는 상신이며 코드 변경 0.
+
+**제안: 조직 `OWNER` 에게 팀 역할 변경 권한을 준다.** 최소 범위로 한정한다.
+
+1. `members` PATCH/DELETE 게이트를 `팀 ADMIN` **또는** `해당 팀이 속한 조직의 OWNER` 로 확장
+2. 대상이 ADMIN 일 때의 400 을, **조직 OWNER 가 요청한 경우에만** 통과시킨다
+   (팀 ADMIN 끼리는 여전히 서로 못 바꾼다 — 기존 의도 보존)
+3. `Team` ↔ `Organization` 연결이 스키마에 있는지 **선행 확인 필요** — 없으면
+   이 교정은 스키마 변경을 동반하며 §schema-proposal 계열로 올라간다
+
+⚠️ 3번이 미확인이라 비용이 두 갈래다. 승인 시 그것부터 실측한다.
+
+대안(더 작음): 마지막 ADMIN 이 아닐 때 **자기 자신을 강등**할 수 있게 허용.
+회수는 못 하지만 퇴사자 본인이 정리할 수는 있다. 데드락의 절반만 푼다.
+
 ## 2. 재개 시 실측 항목 (설계 전 — 설계는 그 다음)
 
 - 두 enum 이 각각 어느 판정 지점에서 쓰이는가
