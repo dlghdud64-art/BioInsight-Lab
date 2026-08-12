@@ -38,10 +38,36 @@ function schemaModels(): Set<string> {
   return out;
 }
 
-function readSource(path: string): string {
+/**
+ * ⚠️ sentinel 공통 규칙 (2026-08-10 승격) — **읽기 실패를 skip 하지 않는다.**
+ *
+ * 소스 스캔 sentinel 은 읽지 못한 파일을 조용히 건너뛰면 안 된다.
+ * 건너뛰면 그 파일의 위반이 0 으로 세어져 **거짓 GREEN** 이 된다.
+ * 파일 수 단언(공허 GREEN 방지)과는 **다른 축**이다 — 파일 수는 맞는데
+ * 내용이 안 읽힌 경우를 파일 수로는 잡을 수 없다.
+ *
+ * 실제로 이 스캐너의 초판이 UTF-16 파일에서 죽었다(`components/ui/data-table.tsx`).
+ * 죽는 대신 살아서 0 으로 셌다면 결과가 거짓이었을 것이다.
+ *
+ * stripComments · 앵커 유일성 · corrupt→RED 와 같은 층의 규칙으로 둔다.
+ */
+type Encoding = "utf8" | "utf8-bom" | "utf16";
+
+function detectEncoding(raw: Buffer): Encoding {
+  if (raw[0] === 0xff && raw[1] === 0xfe) return "utf16";
+  if (raw[0] === 0xfe && raw[1] === 0xff) return "utf16";
+  if (raw[0] === 0xef && raw[1] === 0xbb && raw[2] === 0xbf) return "utf8-bom";
+  return "utf8";
+}
+
+const NON_UTF8: string[] = [];
+
+function readSource(path: string, rel: string): string {
   const raw = readFileSync(path);
-  if (raw[0] === 0xff && raw[1] === 0xfe) return raw.toString("utf16le");
-  if (raw[0] === 0xef && raw[1] === 0xbb && raw[2] === 0xbf) return raw.slice(3).toString("utf8");
+  const enc = detectEncoding(raw);
+  if (enc !== "utf8") NON_UTF8.push(`${rel} (${enc})`);
+  if (enc === "utf16") return raw.toString("utf16le");
+  if (enc === "utf8-bom") return raw.slice(3).toString("utf8");
   return raw.toString("utf8");
 }
 
@@ -67,10 +93,11 @@ const PRISMA_METHOD =
 const MODELS = schemaModels();
 const CALLS: { file: string; model: string }[] = [];
 for (const f of sourceFiles(join(WEB_ROOT, "src"))) {
-  const code = stripComments(readSource(f));
+  const rel = f.slice(WEB_ROOT.length + 1).split("\\").join("/");
+  const code = stripComments(readSource(f, rel));
   const re = new RegExp(`\\b(?:db|dbAny|prisma|tx)\\.([a-z][A-Za-z0-9]*)\\.(?:${PRISMA_METHOD})\\b`, "g");
   for (const m of code.matchAll(re)) {
-    CALLS.push({ file: f.slice(WEB_ROOT.length + 1).split("\\").join("/"), model: m[1] });
+    CALLS.push({ file: rel, model: m[1] });
   }
 }
 
@@ -106,5 +133,29 @@ describe("§phantom-model-call P1 — 유령 모델 호출 0 (ratchet)", () => {
     const called = new Set(CALLS.map((c) => c.model));
     const fixed = LEGACY_PHANTOM.filter((m) => !called.has(m) || MODELS.has(m));
     expect(fixed).toEqual([]);
+  });
+});
+
+/**
+ * §source-encoding-drift — 스캔 대상 소스는 UTF-8 이어야 한다 (ratchet)
+ *
+ * 인코딩이 이탈한 파일은 도구가 못 읽거나 **읽어도 내용이 깨진다**.
+ * 지금 고치지 않고(별도 트랙) 목록으로 고정해 **늘어나지 않게** 한다.
+ */
+const LEGACY_NON_UTF8: readonly string[] = [
+  "src/app/_components/demo-flow-switcher.tsx (utf8-bom)",
+  "src/app/_components/home/demo-flow-switcher.tsx (utf8-bom)",
+  "src/components/ui/data-table.tsx (utf16)",
+];
+
+describe("§source-encoding-drift — 인코딩 이탈은 늘어나지 않는다 (ratchet)", () => {
+  it("LEGACY 목록 밖에서 신규 이탈이 없다", () => {
+    const legacy = new Set(LEGACY_NON_UTF8);
+    expect(NON_UTF8.filter((f) => !legacy.has(f)).sort()).toEqual([]);
+  });
+
+  it("고쳐진 LEGACY 항목은 목록에서 제거돼야 한다 (stale 방지)", () => {
+    const now = new Set(NON_UTF8);
+    expect(LEGACY_NON_UTF8.filter((f) => !now.has(f))).toEqual([]);
   });
 });

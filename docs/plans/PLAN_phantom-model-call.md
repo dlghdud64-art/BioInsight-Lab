@@ -75,13 +75,91 @@ data 형태가 `Quote` 스키마와 맞는가).
 raw SQL 136회는 **모델명 검사 자체가 적용되지 않는 표면**이다. 이 트랙의 sentinel 은
 raw SQL 안의 테이블명을 보지 않는다(§5 한계).
 
-### 부수 관측 — 인코딩 이탈 3파일
+### 부수 관측 — 인코딩 이탈 3파일 (→ sentinel 공통 규칙 승격)
 
 전수 스캔 중 UTF-8 이 아닌 소스가 나왔다.
 `components/ui/data-table.tsx`(**UTF-16**), `_components/demo-flow-switcher.tsx`(UTF-8 BOM),
 `_components/home/demo-flow-switcher.tsx`(UTF-8 BOM).
 도구가 파일을 읽지 못해 **스캔에서 조용히 빠질 수 있다**(이번 스캐너는 대응했다).
-별건 등재 대상.
+**sentinel 공통 규칙으로 승격했다**(호영님 2026-08-10):
+> 소스 스캔 sentinel 은 **읽기 실패한 파일을 skip 하지 않고 실패시킨다.**
+> 파일 수 단언(공허 GREEN 방지)과 **다른 축**이다 — 파일 수는 맞는데 내용이 안 읽힌
+> 경우를 파일 수로는 잡을 수 없다. stripComments · 앵커 유일성 · corrupt→RED 와 같은 층.
+
+이 트랙의 sentinel 에 `§source-encoding-drift` ratchet 을 함께 넣었다(3파일 고정, 신규 0).
+corrupt→RED: `src/lib/utils.ts` 에 BOM 주입 → RED.
+
+**mojibake 3파일과 한 문서로 합친다** — 같은 클래스(소스 인코딩 오염)이고 따로
+관리할 이유가 없다. 지금 고치지 않는다.
+
+## 3-1. 실측 — `quote-lists` 판정: **오기**(설계 잔재 아님)
+
+호영님 판정 기준 2개를 모두 봤다.
+
+### 기준 1 — `quoteList.create` 의 data ↔ `Quote` 스키마
+
+| create data | `Quote` 필드 | 대응 |
+|---|---|---|
+| `guestKey` | `guestKey` | ✓ |
+| `title` | `title` (주석: "리스트 제목") | ✓ |
+| `message` | `description` (주석: "리스트 설명/비고") | **이름 불일치** |
+| `totalAmount` | `totalAmount` | ✓ |
+| `items: { create: [...] }` | `items QuoteListItem[]` | ✓ **관계명까지 동일** |
+
+item 하위: `productId` `name` `brand` `catalogNumber` `unitPrice` `quantity`
+`lineTotal` `notes` → `QuoteListItem` 에 전부 대응.
+**불일치 2건**: `vendor`(QuoteListItem 에 없음 — `Quote.vendor` 는 있다),
+`snapshot`(실제 컬럼명은 `raw`).
+
+### 기준 2 — UI 가 기대하는 응답 형태 (**결정적**)
+
+`_workbench/_components/quote-panel.tsx` 는 이 API 를 **`quoteId`** 라는 변수로 부른다.
+
+```ts
+const response = await fetch(`/api/quote-lists/${quoteId}`, ...)
+// queryKey: ["quote-list", quoteId]
+```
+
+즉 **UI 자신이 이것을 Quote 로 취급**한다. "사용자가 저장한 별개의 견적 묶음" 이 아니라
+Quote 를 부르는 옛 이름이다.
+
+### `/items` 라우트가 따로 있는 이유 — 방향 힌트와 반대 결론
+
+호영님 힌트는 "`Quote` 가 이미 항목을 갖는데 또 항목 라우트가 있으면 같은 것일 수 없다"
+였다. **실측은 반대다**: `QuoteListItem` 이 별도 **모델**이므로 항목 CRUD 라우트가
+따로 있는 것이 자연스럽다. `Quote.items` 관계 주석에 "QuoteItem 대신 QuoteListItem 사용"
+이라고 적혀 있다. 지시대로 실측을 따른다.
+
+### 판정과 처리
+
+**오기 → 차단 불필요. 이름 치환 + 필드 매핑.**
+
+다만 "한 줄"은 아니다. 모델명 외에 **필드 2건 매핑**이 필요하다:
+`message`→`description`, item 의 `vendor` 제거(또는 `Quote.vendor` 로 이동),
+`snapshot`→`raw`. 4라우트 7회를 함께 본다.
+
+⚠️ 이 라우트들은 지금 **워크벤치 견적 저장/조회/항목/내보내기 전 경로가 실패 중**이다.
+(가) 이름 교정 3종 중 **우선순위 1위**다.
+
+## 3-2. 실측 — `inventory/alerts/send` 크론 여부: **크론 없음**
+
+`apps/web/vercel.json` 의 `crons` 7개를 전수 확인했다.
+`/api/inventory/alerts/send` 는 **없다.** 재고 관련 크론은
+`/api/cron/inventory-check`(매일 08:00) 하나이며, 그 핸들러는
+`detectInventoryIssues` 를 부르고 **`alerts/send` 를 호출하지 않는다.**
+
+→ **호출자 0 확정, 우선순위 낮음.** 매일 조용히 실패하고 있던 것은 아니다.
+
+다만 다른 사실이 드러났다:
+
+- `detectInventoryIssues` 는 **in-app 알림 디스패치 + 푸시 + `aiActionItem.create`** 로
+  처리한다. 이메일 경로가 아니다.
+- 이메일 템플릿 `generateLowStockAlertEmail` 의 **유일한 사용처가 `alerts/send`** 다.
+- 즉 **재고 부족 "이메일" 채널만 통째로 죽어 있다** — 라우트·템플릿·모델 전부.
+  in-app/푸시 알림은 살아 있으므로 "있어야 할 신호가 아예 없는" 상태는 아니다.
+
+이 서술 차이가 중요하다: 크론이 있었다면 §fabricated-data-surface 의 반대 클래스
+(있어야 할 신호가 없는데 표시도 없음)였겠지만, 실측은 **채널 하나가 미구현인 상태**다.
 
 ## 4. sentinel
 
@@ -104,6 +182,7 @@ raw SQL 안의 테이블명을 보지 않는다(§5 한계).
 ## 6. 처리 순서 (호영님 2026-08-10)
 
 1. **전수 + sentinel** — 완료(이 문서).
+1-b. **quote-lists 실측 + 크론 확인** — 완료(§3-1, §3-2).
 2. **차단** — `ComplianceLink` 표면 미생성 + 라우트 삭제 + csrf 레지스트리 정리.
 3. **스키마 설계 상신** — 차집합 결과를 **한 번에** 설계한다.
    `ComplianceLink` 뿐 아니라 `InventoryAlertSetting`/`InventoryAlertLog` 도 같은 상신에 포함.
@@ -120,4 +199,9 @@ raw SQL 안의 테이블명을 보지 않는다(§5 한계).
   위 설계 상신에 합류.
 - **§quote-list-model-mismatch** (신규) — `quoteList` 7회. 모델명 오기인지
   설계 잔재인지 판정 필요. 워크벤치 견적 패널이 호출한다.
-- **§source-encoding-drift** (신규) — UTF-16/BOM 3파일.
+- **§source-encoding-drift** (신규) — UTF-16/BOM 3파일 **+ mojibake 3파일 통합**.
+  sentinel ratchet 은 이 트랙에 이미 심었다. 교정은 별도.
+- **§raw-sql-audit** (신규, 등재만) — `$queryRawUnsafe` 90 + `$executeRawUnsafe` 46 = **136회**.
+  이 sentinel 의 사각지대이며, **유령 모델보다 주입 위험이 본체**다.
+  착수는 §audit-foundation 이후 — 지금 열면 끝이 안 난다(호영님).
+- **§db-any-escape-hatch** — `db as any` 4 / `dbAny` 3. 위 136회와 함께 규모 기록.
