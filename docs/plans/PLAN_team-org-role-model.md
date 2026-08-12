@@ -244,6 +244,61 @@ required 로 가면 "팀 생성 = 조직 소속 필요" 가 된다. 현행 UI �
 backfill 이 사라졌으므로 **이 트랙 전체가 운영 DB 쓰기 없이 끝난다** —
 개발 DB 분리를 기다릴 이유가 없다.
 
+---
+
+## 1-H. 실측 ③④ (2026-08-12) — 가입 시 조직 · 조직 전환기
+
+### ③ 가입 시 조직 자동 생성 — **없다**
+
+`src/auth.ts` 에 organization 참조 **0**. 조직 생성 경로는
+`POST /api/organizations` → `lib/api/organizations.ts` **명시 호출뿐**이다.
+
+→ **조직에 속하지 않은 사용자가 존재할 수 있다.** `required` 전환 시
+"팀 생성 = 조직 소속 필요" 가 되므로 **온보딩에 조직 생성 단계가 필요**하다.
+→ §onboarding-blocker 등재.
+
+### 🛑 ③-A 파생 발견 — **아무도 `OWNER` 가 되지 않는다**
+
+큰 안은 "조직 `OWNER` 에게 팀 역할 변경 권한" 인데, **그 OWNER 가 실재하지 않는다.**
+
+| 지점 | 성격 |
+|---|---|
+| `lib/api/organizations.ts` — 조직 생성자 upsert | `role: "ADMIN"` ← **DB 에 실제로 쓰이는 값** |
+| `dashboard/organizations/page.tsx:273` — `role: "OWNER"` | **클라이언트 로컬 상태**(`setOrganizations`)일 뿐. DB 아님 |
+| `approver-routing.ts:118` · 역할 설명표 2곳 | 전부 **읽기**(where 필터 / 안내 문구) |
+
+`role: OWNER` 를 **DB 에 쓰는 코드는 repo 전수 0** 이다.
+
+**파급 2건:**
+1. **거짓 표시** — 조직을 만들면 화면에는 `OWNER` 로 보이는데 DB 는 `ADMIN` 이다
+   (§fabricated-data-surface 계열)
+2. **결재 라우팅 무력** — `approver-routing.ts` 의 OWNER 기반 승인자 선택이
+   **항상 fallback 으로 빠진다**. 조용한 실패다
+
+→ **큰 안을 그대로 구현하면 dead code 가 된다.** 권한을 줘도 가진 사람이 0 이다.
+
+**상신 — 큰 안 대상 재선정 (승인 필요):**
+- (가) 대상을 **조직 `ADMIN`** 으로 — 실재하는 역할이라 즉시 동작. 다만 조직 ADMIN 은
+  여러 명일 수 있어 "최고 관리자" 의미가 약해진다
+- (나) **OWNER 부여 경로를 먼저 만든다** — 조직 생성자를 OWNER 로. 근본적이나
+  기존 판정 지점(`{ in: [OWNER, ADMIN] }` 다수)의 의미가 바뀌므로 범위가 커진다
+
+⚠️ 어느 쪽이든 §team-org-role-model 밖의 결정이다.
+
+### ④ 조직 전환기 — **있다. 다중 소속은 제품 기능이다**
+
+`components/workspace/workspace-switcher.tsx` — 조직 전환기
+(`currentOrganizationId` / `onOrganizationChange` / `OrganizationRole`).
+
+**도달성 확인: 6개 라이브 페이지에 렌더**된다 —
+`admin/safety` · `dashboard/safety-spend` · `settings/audit` · `settings/billing` ·
+`settings/security` · `settings/workspace`.
+`selectedOrgId` 상태를 가진 화면은 **8개**다.
+
+→ **"스키마가 허용한다" 를 넘어 "제품이 지원한다" 가 확인됐다.**
+→ 팀 생성 시 **조직 선택 UI 가 실제 비용**이다. 자동 도출로 둘 수 없다.
+→ §org-scope-ambiguity 는 잠재 결함이 아니라 **이미 발생 중인 결함**이다.
+
 ## 2. 재개 시 실측 항목 (설계 전 — 설계는 그 다음)
 
 - 두 enum 이 각각 어느 판정 지점에서 쓰이는가
