@@ -89,8 +89,18 @@ describe("§PD-flat P4 — 우측 레일 + 대체품 플랫", () => {
     expect(DETAIL).not.toMatch(/from-blue-600 to-indigo-600/);
     expect(DETAIL).toMatch(/w-full py-3\.5 bg-\[#2f6be0\] hover:bg-\[#2456bd\] text-white rounded-xl/);
   });
-  it("대체품 섹션 카드 플랫", () => {
-    expect(DETAIL).toMatch(/bg-white shadow-sm rounded-\[18px\] p-6 md:p-8 border border-gray-200 mt-6/);
+  /**
+   * 승계 (§sourcing-quote-flow v1.1 §4, 호영님 2026-08-12) — 섹션 간 여백이 `mt-6`(24px)
+   * → `mt-5`(20px) 로 바뀌었다. **플랫 계약 자체(bg-white / shadow-sm / rounded-[18px] /
+   * 얇은 border)는 불변**이고, 여백만 v1.1 이 소유한다.
+   */
+  it("대체품 섹션 카드 플랫 + 섹션 간 20px(§v1.1 §4)", () => {
+    expect(DETAIL).toMatch(/bg-white shadow-sm rounded-\[18px\] p-6 md:p-8 border border-gray-200 mt-5/);
+    expect(DETAIL).not.toMatch(/rounded-\[18px\] p-6 md:p-8 border border-gray-200 mt-6/);
+  });
+  /** §v1.1 §4 — 대체품 카드 간 12px. 값 변경 시 여기서 먼저 깨진다. */
+  it("대체품 카드 간 12px(gap-3)", () => {
+    expect(DETAIL).toMatch(/grid grid-cols-1 md:grid-cols-3 gap-3/);
   });
 });
 

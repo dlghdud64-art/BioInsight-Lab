@@ -52,7 +52,6 @@ import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { getProductSafetyLevel, HAZARD_CODE_DESCRIPTIONS } from "@/lib/utils/safety-visualization";
 import { getRegulationLinksForProduct } from "@/lib/regulation/links";
 import { filterComplianceLinksForProduct, getRuleDescription } from "@/lib/compliance-links";
-import { PersonalizedRecommendations } from "@/components/products/personalized-recommendations";
 // §product-detail-sourcing-v21 §1 — 완성도 게이지 은퇴(공급사 콘솔 이관) → 미등록 접힌 1줄.
 //   구 ProductCompleteness(PD-B) import 폐기. 산정 lib(computeCompleteness)은 컴포넌트 내부에서 계속 사용.
 import { PendingInfoRow } from "@/components/products/pending-info-row";
@@ -1242,9 +1241,12 @@ export default function ProductDetailPage() {
             {/* 대체품 추천 */}
             <AlternativeProductsSection productId={id} currentProduct={product} />
             
-            {/* 개인화 추천 제품 */}
-            {/* §1-2⑤ — category 고정: 상세 맥락 cross-category 추천 noise 차단 */}
-            <PersonalizedRecommendations productId={id} currentProduct={product} category={product?.category} />
+            {/* §sourcing-quote-flow v1.1 §4 — 개인화 추천 섹션 **제거**(호영님 2026-08-12).
+                제품 상세는 "이 물건 사도 되나" 를 판단하는 자리이고, 개인화 추천은 검색/홈 맥락이다.
+                · §1-2⑥ "추천 섹션은 유지" 는 이 지시로 대체된다(대체품 추천은 존치 — 판단 재료).
+                · §1-2⑤ category 고정 근거도 함께 소멸(호출 자체가 없어짐).
+                ⚠️ `personalized-recommendations.tsx` 는 **삭제하지 않는다** — 검색/홈 이관 대상이다.
+                   현재 이 표면이 유일 사용처였으므로 이관 전까지 orphan 이다(§cart-model-orphan 과 별개). */}
           </div>
         </div>
       </div>
@@ -1434,7 +1436,7 @@ function AlternativeProductsSection({
   // §product-detail-sourcing-v21 §6 — 비교 store 의존 제거(비교 버튼 폐기). toast 도 이 섹션에선 미사용.
   if (isLoading) {
     return (
-      <Card className="bg-white shadow-sm rounded-[18px] p-6 md:p-8 border border-gray-200 mt-6">
+      <Card className="bg-white shadow-sm rounded-[18px] p-6 md:p-8 border border-gray-200 mt-5">
         <CardContent>
           <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
         </CardContent>
@@ -1450,7 +1452,7 @@ function AlternativeProductsSection({
   if (shown.length === 0) return null;
 
   return (
-    <Card className="bg-white shadow-sm rounded-[18px] p-6 md:p-8 border border-gray-200 mt-6">
+    <Card className="bg-white shadow-sm rounded-[18px] p-6 md:p-8 border border-gray-200 mt-5">
       <CardHeader>
         {/* §product-detail-sourcing-v21 §6 — 제목 옆 건수 인라인(설명문에 묻힌 "총 N건" 패턴 폐기). */}
         <CardTitle className="text-lg font-semibold">
@@ -1458,7 +1460,8 @@ function AlternativeProductsSection({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* §sourcing-quote-flow v1.1 §4 — 대체품 카드 간 12px(gap-3). 섹션 간은 20px(mt-5). */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {shown.map((alt: any) => {
             const minPrice = alt.vendors?.[0]?.priceInKRW;
 

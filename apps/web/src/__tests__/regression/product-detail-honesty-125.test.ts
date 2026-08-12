@@ -54,9 +54,16 @@ describe("§1-2⑤ ② — 추천 정직화 (canned 폴백 0 + 카테고리 제�
     expect(src).toMatch(/\{rec\.reason && \(/);
   });
 
-  it("detail — PersonalizedRecommendations 에 category 전달", () => {
+  /**
+   * 승계 (§sourcing-quote-flow v1.1 §4, 호영님 2026-08-12) — 개인화 추천 섹션이
+   * 제품 상세에서 **제거**되어 category 전달 지점 자체가 없다.
+   *
+   * 원 계약의 목적(cross-category noise 차단)은 컴포넌트 쪽에 남아 있다 —
+   * 위 "component — category prop 수용" it 이 계속 잠근다. 여기서는 제거를 고정한다.
+   */
+  it("detail — 개인화 추천 미렌더 (§v1.1 §4 제거 승계)", () => {
     const src = read(DETAIL);
-    expect(src).toMatch(/<PersonalizedRecommendations[\s\S]{0,200}category=\{/);
+    expect(src).not.toMatch(/<PersonalizedRecommendations/);
   });
 });
 
@@ -119,10 +126,14 @@ describe("§1-2⑤ — 회귀 0 (기존 보존)", () => {
     expect(src).toMatch(/\{canEditSpec && \([\s\S]{0,300}안전 정보 편집/);
   });
 
-  it("detail — 연관 추천 섹션 렌더 보존 + useCompareStore 보존", () => {
+  /**
+   * 승계 (§sourcing-quote-flow v1.1 §4) — 연관(개인화) 추천 렌더 보존은 은퇴.
+   * `useCompareStore` 보존은 **원 계약 그대로 유지**한다(제거 대상이 아니었다).
+   */
+  it("detail — useCompareStore 보존 (연관 추천 렌더 보존은 §v1.1 §4 로 은퇴)", () => {
     const src = read(DETAIL);
-    expect(src).toMatch(/<PersonalizedRecommendations/);
     expect(src).toMatch(/useCompareStore/);
+    expect(src).not.toMatch(/<PersonalizedRecommendations/);
   });
 
   it("route — 진짜 근거 생성 로직 보존 (reasons 조립)", () => {

@@ -77,9 +77,14 @@ describe("§1-2⑤⑥ P3 — 상세 정리", () => {
     const src = read(DETAIL);
     expect(src).not.toMatch(/<ReviewSection/);
   });
-  it("회귀 0 — 연관추천(deterministic) 보존", () => {
+  /**
+   * 승계 (§sourcing-quote-flow v1.1 §4, 호영님 2026-08-12) — 개인화 추천은 검색/홈 맥락이라
+   * 제품 상세에서 제거. **대체품 추천은 존치**(판단 재료) — 그쪽으로 보존 대상을 옮긴다.
+   */
+  it("회귀 0 — 대체품 추천 보존 / 개인화 추천은 §v1.1 §4 로 제거", () => {
     const src = read(DETAIL);
-    expect(src).toMatch(/<PersonalizedRecommendations/);
+    expect(src).toMatch(/<AlternativeProductsSection/);
+    expect(src).not.toMatch(/<PersonalizedRecommendations/);
   });
 });
 
