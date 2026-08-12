@@ -13,6 +13,22 @@
 
 import type { ReceivingIntakeCase, ReceivingExceptionFlag } from "./receiving-readiness-gate-engine";
 
+
+/**
+ * §execution-id-collision (2026-08-12) — execution id 생성.
+ *
+ * 이전: `${prefix}${Date.now().toString(36)}` — **같은 밀리초 안에 생성되면 충돌**한다.
+ *   실측(dispatch-execution-handoff H5): 서로 다른 idempotencyKey 로 만든 두 execution 이
+ *   같은 executionId 를 받았다. 두 실행이 같은 id 를 가지면 발송·입고 이력이 뒤섞인다 —
+ *   구매 운영에서 회수 불가능한 오류다.
+ *   시간 의존이라 **간헐 실패**했고, 그래서 오래 "flaky 테스트" 로 위장돼 있었다.
+ *
+ * 지금: 전역 `crypto.randomUUID()` (Web Crypto).
+ *   `node:crypto` 를 쓰지 않는 이유 — 이 엔진들을 **클라이언트 컴포넌트가 import** 한다
+ *   (예: components/approval/dispatch-execution-workbench.tsx). 전역 API 는 Node 19+ 와
+ *   브라우저 양쪽에서 동작한다.
+ *   런타임 생성값이라 **마이그레이션 불요**. 접두사는 유지한다.
+ */
 // ── Intake Case Status ──
 export type ReceivingIntakeCaseStatus = "queued" | "in_review" | "on_hold" | "ready_for_execution" | "routed_to_correction" | "cancelled";
 export type ReceivingIntakeReadinessStatus = "blocked" | "warning" | "ready";
@@ -277,7 +293,7 @@ export function buildReceivingExecutionCase(state: ReceivingIntakeWorkbenchState
 
   const d = state.decision;
   return {
-    id: `rcvexec_${Date.now().toString(36)}`,
+    id: `rcvexec_${crypto.randomUUID()}`,
     sourcePoRecordId: state.poRecordId,
     sourceSupplierAckRecordId: state.sourceAckRecordId,
     sourceReceivingIntakeCaseId: state.receivingIntakeCaseId,

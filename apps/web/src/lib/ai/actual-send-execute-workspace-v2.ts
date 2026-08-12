@@ -8,6 +8,22 @@
 import type { ActualSendExecuteGateV2, ExecuteGateStatus, ActualSendExecuteCandidateV2 } from "./actual-send-execute-gate-v2-engine";
 import type { DispatchPreparationHandoffPackageV2, InternalOnlyExcludedFlag } from "./dispatch-preparation-handoff-gate-v2-engine";
 
+
+/**
+ * §execution-id-collision (2026-08-12) — execution id 생성.
+ *
+ * 이전: `${prefix}${Date.now().toString(36)}` — **같은 밀리초 안에 생성되면 충돌**한다.
+ *   실측(dispatch-execution-handoff H5): 서로 다른 idempotencyKey 로 만든 두 execution 이
+ *   같은 executionId 를 받았다. 두 실행이 같은 id 를 가지면 발송·입고 이력이 뒤섞인다 —
+ *   구매 운영에서 회수 불가능한 오류다.
+ *   시간 의존이라 **간헐 실패**했고, 그래서 오래 "flaky 테스트" 로 위장돼 있었다.
+ *
+ * 지금: 전역 `crypto.randomUUID()` (Web Crypto).
+ *   `node:crypto` 를 쓰지 않는 이유 — 이 엔진들을 **클라이언트 컴포넌트가 import** 한다
+ *   (예: components/approval/dispatch-execution-workbench.tsx). 전역 API 는 Node 19+ 와
+ *   브라우저 양쪽에서 동작한다.
+ *   런타임 생성값이라 **마이그레이션 불요**. 접두사는 유지한다.
+ */
 export type ExecuteWorkspaceStatus = "locked_preview_only" | "entry_enabled" | "execute_review_required" | "execute_review_in_progress" | "execute_hold" | "execute_review_pending" | "execute_ready_pending_fire";
 export type ExecuteWorkspaceMode = "preview_only" | "execute_review" | "irreversible_execute_check" | "policy_review" | "ready_pending_fire";
 export type ExecuteSectionKey = "recipient_execute_final_block" | "payload_integrity_execute_final_block" | "reference_instruction_execute_final_block" | "exclusion_guard_execute_final_block" | "actor_authorization_audit_execute_final_block" | "execute_completion_gate_review";
@@ -86,7 +102,7 @@ export function buildActualSendExecuteWorkspaceStateV2(gate: ActualSendExecuteGa
   const ak = focus[0] || null; const active = ak ? secs.find(x => x.sectionKey === ak) : null;
   const center: ActualSendExecuteCenterCanvasStateV2 = active ? { activeSectionKey: ak, decisionQuestion: META[ak!].question, executeContext: active.executeIntent, sourceInputSummary: `${active.resolvedInputs.length} resolved / ${active.unresolvedOrAmbiguousInputs.length} unresolved`, unresolvedOrConflictingInputs: [...active.unresolvedOrAmbiguousInputs, ...active.warnings], fieldGroups: active.requiredExecuteInputs.map(i => ({ groupKey: i, groupLabel: i, sourceMapping: "execute", resolved: active.resolvedInputs.includes(i), value: active.resolvedInputs.includes(i) ? "resolved" : "", unresolved: active.unresolvedOrAmbiguousInputs.includes(i), excluded: false })), riskSummary: META[ak!].risk, resolutionOptions: active.canResolveInPlace ? ["현재 workspace에서 확인 가능"] : ["Run review로 복귀 필요"], blockedDownstreamActions: ["execute_actual_send_fire", "mark_sent", "mark_dispatched"], completionRuleForSection: active.unresolvedOrAmbiguousInputs.length > 0 ? "미확인 해소 후 reviewed 가능" : "즉시 reviewed 가능" } : { activeSectionKey: null, decisionQuestion: "", executeContext: "", sourceInputSummary: "", unresolvedOrConflictingInputs: [], fieldGroups: [], riskSummary: "", resolutionOptions: [], blockedDownstreamActions: ["execute_actual_send_fire", "mark_sent", "mark_dispatched"], completionRuleForSection: "" };
 
-  return { workspaceId: `execws_${Date.now().toString(36)}`, caseId: gate.caseId, handoffPackageId: gate.handoffPackageId, actualSendRunSessionId: gate.actualSendRunSessionId, actualSendExecuteGateId: gate.actualSendExecuteGateId, workspaceStatus: status, workspaceMode: mode, workspaceHeader: header, entryLockSummary: isLocked ? `Entry locked: ${gate.candidate.candidateReason}` : "Entry enabled", checkSectionStates: secs, activeSectionKey: ak, centerCanvasState: center, rightRailPreview: rail, stickyDock: dock, operatorFocusOrder: focus, provenance: pkg.provenanceByLine.map(p => ({ candidateId: p.candidateId, lane: p.originalLane })), generatedAt: new Date().toISOString() };
+  return { workspaceId: `execws_${crypto.randomUUID()}`, caseId: gate.caseId, handoffPackageId: gate.handoffPackageId, actualSendRunSessionId: gate.actualSendRunSessionId, actualSendExecuteGateId: gate.actualSendExecuteGateId, workspaceStatus: status, workspaceMode: mode, workspaceHeader: header, entryLockSummary: isLocked ? `Entry locked: ${gate.candidate.candidateReason}` : "Entry enabled", checkSectionStates: secs, activeSectionKey: ak, centerCanvasState: center, rightRailPreview: rail, stickyDock: dock, operatorFocusOrder: focus, provenance: pkg.provenanceByLine.map(p => ({ candidateId: p.candidateId, lane: p.originalLane })), generatedAt: new Date().toISOString() };
 }
 
 export type ExecuteWorkspaceEventType = "actual_send_execute_workspace_state_computed" | "actual_send_execute_workspace_opened_preview_only" | "actual_send_execute_workspace_entry_enabled" | "actual_send_execute_workspace_section_focused" | "actual_send_execute_workspace_section_review_started" | "actual_send_execute_workspace_marked_in_progress" | "actual_send_execute_workspace_marked_ready_pending_fire";

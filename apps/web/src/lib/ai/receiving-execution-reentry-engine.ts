@@ -6,6 +6,22 @@
 
 import type { ReceivingExecutionReentryHandoff } from "./receiving-preparation-reentry-engine";
 
+
+/**
+ * §execution-id-collision (2026-08-12) — execution id 생성.
+ *
+ * 이전: `${prefix}${Date.now().toString(36)}` — **같은 밀리초 안에 생성되면 충돌**한다.
+ *   실측(dispatch-execution-handoff H5): 서로 다른 idempotencyKey 로 만든 두 execution 이
+ *   같은 executionId 를 받았다. 두 실행이 같은 id 를 가지면 발송·입고 이력이 뒤섞인다 —
+ *   구매 운영에서 회수 불가능한 오류다.
+ *   시간 의존이라 **간헐 실패**했고, 그래서 오래 "flaky 테스트" 로 위장돼 있었다.
+ *
+ * 지금: 전역 `crypto.randomUUID()` (Web Crypto).
+ *   `node:crypto` 를 쓰지 않는 이유 — 이 엔진들을 **클라이언트 컴포넌트가 import** 한다
+ *   (예: components/approval/dispatch-execution-workbench.tsx). 전역 API 는 Node 19+ 와
+ *   브라우저 양쪽에서 동작한다.
+ *   런타임 생성값이라 **마이그레이션 불요**. 접두사는 유지한다.
+ */
 // ── Status ──
 export type ReceivingExecReentryStatus = "receiving_execution_reentry_open" | "receiving_execution_reentry_in_progress" | "receiving_execution_reentry_recorded";
 export type ReceivingExecReentrySubstatus = "awaiting_actual_rereceipt_capture" | "awaiting_line_level_rereceipt_review" | "awaiting_lot_expiry_storage_recapture" | "receiving_execution_reentry_blocked" | "ready_for_inventory_intake_reentry";
@@ -73,7 +89,7 @@ export function buildReceivingExecReentryDecisionOptions(state: ReceivingExecuti
 // ── Canonical Object ──
 export interface ReceivingExecutionReentryObject { id: string; receivingPreparationReentryObjectId: string; actualRereceiptSummary: string; lineLevelRereceiptSummary: string; priorExecutionOverlapSummary: string; lotExpiryStorageRecaptureSummary: string; damageDocumentRecaptureSummary: string; recordedAt: string; recordedBy: string; }
 export function buildReceivingExecutionReentryObject(state: ReceivingExecutionReentryState): ReceivingExecutionReentryObject {
-  return { id: `rcvexecre_${Date.now().toString(36)}`, receivingPreparationReentryObjectId: state.receivingPreparationReentryObjectId, actualRereceiptSummary: state.actualRereceiptQtySummary || "미기록", lineLevelRereceiptSummary: `${state.actualReceivedLineCount}/${state.expectedLineCount} 라인`, priorExecutionOverlapSummary: state.priorExecutionOverlapCount > 0 ? "충돌 있음" : "충돌 없음", lotExpiryStorageRecaptureSummary: state.recaptureCompletenessStatus, damageDocumentRecaptureSummary: state.recaptureCompletenessStatus, recordedAt: new Date().toISOString(), recordedBy: "operator" };
+  return { id: `rcvexecre_${crypto.randomUUID()}`, receivingPreparationReentryObjectId: state.receivingPreparationReentryObjectId, actualRereceiptSummary: state.actualRereceiptQtySummary || "미기록", lineLevelRereceiptSummary: `${state.actualReceivedLineCount}/${state.expectedLineCount} 라인`, priorExecutionOverlapSummary: state.priorExecutionOverlapCount > 0 ? "충돌 있음" : "충돌 없음", lotExpiryStorageRecaptureSummary: state.recaptureCompletenessStatus, damageDocumentRecaptureSummary: state.recaptureCompletenessStatus, recordedAt: new Date().toISOString(), recordedBy: "operator" };
 }
 
 // ── Inventory Intake Re-entry Handoff ──

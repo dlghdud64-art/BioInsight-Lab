@@ -4,10 +4,11 @@
   "목적은 245개 stale 을 고치는 것이 아니라 '회귀를 놓치지 않는 능력' 을 되찾는 것이다.",
   "규칙: 이 목록 밖에서 새 실패가 뜨면 RED. 고쳐진 항목은 목록에서 빼야 통과(stale 방지).",
   "생성: npx vitest run --reporter=json --outputFile=_suite.json 후 scripts/suite-gate.ts",
-  "제외 1건: quote-centerworkwindow-demote-363b.test.ts — **git 미추적 파일**이라 기지선에 넣으면 다른 체크아웃에서 stale 오탐이 된다. 커밋되면 --update 로 재반영."
+  "제외 1건: quote-centerworkwindow-demote-363b.test.ts — **git 미추적 파일**이라 기지선에 넣으면 다른 체크아웃에서 stale 오탐이 된다. 커밋되면 --update 로 재반영.",
+  "감액 이력 — 247→246 (2026-08-12, §execution-id-collision): dispatch-execution-handoff.test.ts 제거. 게이트가 stale 을 스스로 지목한 첫 실전 적용이다. 이 파일은 '고쳐서' 빠진 것이지 '넘어가서' 빠진 것이 아니다."
  ],
  "measuredAt": "2026-08-12",
- "failingAssertions": 247,
+ "failingAssertions": 246,
  "failingFiles": [
   "src/__tests__/api/admin/admin-skip-link.test.ts",
   "src/__tests__/api/admin/operational-brief-cache-stats-page.test.ts",
@@ -77,7 +78,6 @@
   "src/__tests__/regression/reorder-review-sheet-310.test.ts",
   "src/__tests__/regression/sds-document-model-348b1.test.ts",
   "src/__tests__/user/preferences-inventory-receiving.test.ts",
-  "src/lib/ai/__tests__/dispatch-execution-handoff.test.ts",
   "src/lib/security/__tests__/csrf-batch10.test.ts"
  ]
 }

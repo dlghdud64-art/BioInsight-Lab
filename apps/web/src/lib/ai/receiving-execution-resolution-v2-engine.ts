@@ -13,6 +13,22 @@
 
 import type { ReceivingLineRecordV2, LineReceiptStatusV2 } from "./receiving-execution-workspace-v2";
 
+
+/**
+ * §execution-id-collision (2026-08-12) — execution id 생성.
+ *
+ * 이전: `${prefix}${Date.now().toString(36)}` — **같은 밀리초 안에 생성되면 충돌**한다.
+ *   실측(dispatch-execution-handoff H5): 서로 다른 idempotencyKey 로 만든 두 execution 이
+ *   같은 executionId 를 받았다. 두 실행이 같은 id 를 가지면 발송·입고 이력이 뒤섞인다 —
+ *   구매 운영에서 회수 불가능한 오류다.
+ *   시간 의존이라 **간헐 실패**했고, 그래서 오래 "flaky 테스트" 로 위장돼 있었다.
+ *
+ * 지금: 전역 `crypto.randomUUID()` (Web Crypto).
+ *   `node:crypto` 를 쓰지 않는 이유 — 이 엔진들을 **클라이언트 컴포넌트가 import** 한다
+ *   (예: components/approval/dispatch-execution-workbench.tsx). 전역 API 는 Node 19+ 와
+ *   브라우저 양쪽에서 동작한다.
+ *   런타임 생성값이라 **마이그레이션 불요**. 접두사는 유지한다.
+ */
 export type ReceivingExecSessionStatus = "exec_open" | "exec_in_progress" | "exec_complete" | "exec_with_discrepancy" | "exec_hold" | "variance_disposition_required";
 
 export interface ReceivingExecSessionV2 { execSessionId: string; caseId: string; sentStateRecordId: string; prepSessionId: string; sessionStatus: ReceivingExecSessionStatus; lineRecords: ReceivingLineRecordV2[]; totalExpected: number; totalReceived: number; discrepancyLines: string[]; damageLines: string[]; substituteLines: string[]; varianceDispositionRequired: boolean; openedAt: string; lastUpdatedAt: string; openedBy: string; auditEventRefs: string[]; }
@@ -26,7 +42,7 @@ export interface ReceivingExecEvent { type: ReceivingExecEventType; caseId: stri
 
 export function createInitialReceivingExecSession(caseId: string, sentStateRecordId: string, prepSessionId: string, lineRecords: ReceivingLineRecordV2[], actor: string): ReceivingExecSessionV2 {
   const now = new Date().toISOString();
-  return { execSessionId: `rcvexsn_${Date.now().toString(36)}`, caseId, sentStateRecordId, prepSessionId, sessionStatus: "exec_open", lineRecords: lineRecords.map(l => ({ ...l })), totalExpected: lineRecords.reduce((s, l) => s + l.expectedQty, 0), totalReceived: 0, discrepancyLines: [], damageLines: [], substituteLines: [], varianceDispositionRequired: false, openedAt: now, lastUpdatedAt: now, openedBy: actor, auditEventRefs: [] };
+  return { execSessionId: `rcvexsn_${crypto.randomUUID()}`, caseId, sentStateRecordId, prepSessionId, sessionStatus: "exec_open", lineRecords: lineRecords.map(l => ({ ...l })), totalExpected: lineRecords.reduce((s, l) => s + l.expectedQty, 0), totalReceived: 0, discrepancyLines: [], damageLines: [], substituteLines: [], varianceDispositionRequired: false, openedAt: now, lastUpdatedAt: now, openedBy: actor, auditEventRefs: [] };
 }
 
 export function applyReceivingExecMutation(session: ReceivingExecSessionV2, payload: ReceivingExecActionPayload): ReceivingExecMutationResultV2 {

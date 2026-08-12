@@ -225,6 +225,36 @@ executionId: `exec_${Date.now().toString(36)}`
 ⚠️ 이것은 stale 계약이 아니라 **제품 결함**이다. 두 실행이 같은 id 를 가지면
 발송·입고 이력이 뒤섞인다. → **§execution-id-collision** 등재(교정은 지시 대기).
 
+### 4-3a. 마감 (2026-08-12)
+
+**규모 정정 — 4~5곳이 아니라 9개 생성기 / 10 지점 / 10 파일.**
+위 목록은 `exec_` 접두사만 본 것이었다. 실제 접두사는 8종이다
+(`exec_` `rcvexec_` `rcvexecre_` `rcvexsn_` `rexecgov_` `execgate_` `execsn_` `execws_`).
+
+교정: 전부 `crypto.randomUUID()`. **전역 Web Crypto 이지 `node:crypto` 가 아니다** —
+이 엔진들을 클라이언트 컴포넌트가 import 한다
+(`components/approval/dispatch-execution-workbench.tsx` 등 3곳 실측).
+런타임 생성값이라 **마이그레이션 불요**, 접두사는 유지.
+
+| 검증 | 결과 |
+|---|---|
+| H5 (`dispatch-execution-handoff`) | 11 passed (직전 1 failed / 10 passed, 3/3 재현) |
+| sentinel `ops/execution-id-collision` | 4 passed, corrupt→RED 실증(X1 이 `dispatch-execution-engine.ts` 지목) |
+| `tsc --noEmit` | 27 errors (기지선 동일) |
+| `npm run build` | ✓ Compiled successfully |
+| 잔여 시간 기반 execution id | 0 |
+| 전체 스위트 게이트 | 69 파일 / 246 assertion — 신규 실패 0, stale 1 (= 이 파일, 제거함) |
+
+**운영 DB 충돌 이력 — 조회 결과 "충돌 이력 없음".**
+근거: `prisma/schema.prisma` 전체에 **`executionId` 컬럼이 없다.** 이 id 들은 엔진
+반환값이고 DB 에 영속되지 않는다(`db.*` 저장 호출 0건). 유일한 잠재 보관처는
+`OutboundHistory.payload`(Json) 인데 운영 DB read-only SELECT 결과 **0행**이다.
+→ `GROUP BY executionId HAVING count(*) > 1` 을 걸 대상 자체가 없다.
+
+⚠️ 한계: **이미 뒤섞인 채 흘러간 실행이 있었다면 그 흔적은 DB 에 남지 않는다.**
+"없음" 은 *충돌 기록이 없다* 이지 *충돌이 없었다* 가 아니다. 영속 지점이 생기면
+(§schema-proposal-4models 의 실행 이력 모델) 그때 다시 확인해야 한다.
+
 ## 4-4. 이 숫자가 말하는 것 — §sentinel-ast-migration 의 근거
 
 > **정적 sentinel 은 UI 가 정상적으로 진화하면 자동으로 깨진다.**

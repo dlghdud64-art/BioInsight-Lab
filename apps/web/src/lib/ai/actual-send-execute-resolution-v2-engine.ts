@@ -8,6 +8,22 @@
 
 import type { ExecuteSectionKey } from "./actual-send-execute-workspace-v2";
 
+
+/**
+ * §execution-id-collision (2026-08-12) — execution id 생성.
+ *
+ * 이전: `${prefix}${Date.now().toString(36)}` — **같은 밀리초 안에 생성되면 충돌**한다.
+ *   실측(dispatch-execution-handoff H5): 서로 다른 idempotencyKey 로 만든 두 execution 이
+ *   같은 executionId 를 받았다. 두 실행이 같은 id 를 가지면 발송·입고 이력이 뒤섞인다 —
+ *   구매 운영에서 회수 불가능한 오류다.
+ *   시간 의존이라 **간헐 실패**했고, 그래서 오래 "flaky 테스트" 로 위장돼 있었다.
+ *
+ * 지금: 전역 `crypto.randomUUID()` (Web Crypto).
+ *   `node:crypto` 를 쓰지 않는 이유 — 이 엔진들을 **클라이언트 컴포넌트가 import** 한다
+ *   (예: components/approval/dispatch-execution-workbench.tsx). 전역 API 는 Node 19+ 와
+ *   브라우저 양쪽에서 동작한다.
+ *   런타임 생성값이라 **마이그레이션 불요**. 접두사는 유지한다.
+ */
 export type ExecuteSessionStatus = "execute_open" | "execute_review_in_progress" | "execute_hold" | "returned_to_actual_send_run" | "returned_to_execution_or_commit" | "execute_ready_pending_fire" | "execute_locked";
 export type ExecutePhase = "final_execute_resolution" | "payload_integrity_clearance" | "authorization_and_audit_confirmation" | "fire_readiness_check" | "pending_actual_send_fire";
 
@@ -76,7 +92,7 @@ const ALL: ExecuteSectionKey[] = ["recipient_execute_final_block", "payload_inte
 export function createInitialExecuteSession(caseId: string, handoffPackageId: string, gateId: string, runSessionId: string, actor: string): ActualSendExecuteSessionV2 {
   const now = new Date().toISOString();
   const secs: ActualSendExecuteSectionResolutionStateV2[] = ALL.map(k => ({ sectionKey: k, resolutionStatus: "unreviewed", resolutionMode: "not_applicable", resolvedAt: null, resolvedBy: null, resolutionReason: "", remainingUnresolvedInputs: [], remainingWarnings: [], requiresReturnToActualSendRun: false, requiresReturnToExecutionOrCommit: false, requiresRevisitAfterReturn: false, eligibleForFireReadiness: false, fieldGroupSnapshotRef: handoffPackageId, evidenceNote: "" }));
-  return { actualSendExecuteSessionId: `execsn_${Date.now().toString(36)}`, caseId, handoffPackageId, actualSendExecuteGateId: gateId, actualSendRunSessionId: runSessionId, sessionStatus: "execute_open", executePhase: "final_execute_resolution", openedAt: now, lastUpdatedAt: now, openedBy: actor, activeSectionKey: null, operatorFocusOrder: [...ALL], sectionResolutionStates: secs, fireReadinessGateState: recomputeFireReadiness(secs), returnHistory: [], reopenLinks: [], auditEventRefs: [], provenance: handoffPackageId };
+  return { actualSendExecuteSessionId: `execsn_${crypto.randomUUID()}`, caseId, handoffPackageId, actualSendExecuteGateId: gateId, actualSendRunSessionId: runSessionId, sessionStatus: "execute_open", executePhase: "final_execute_resolution", openedAt: now, lastUpdatedAt: now, openedBy: actor, activeSectionKey: null, operatorFocusOrder: [...ALL], sectionResolutionStates: secs, fireReadinessGateState: recomputeFireReadiness(secs), returnHistory: [], reopenLinks: [], auditEventRefs: [], provenance: handoffPackageId };
 }
 
 export function applyActualSendExecuteMutation(session: ActualSendExecuteSessionV2, payload: ExecuteActionPayload): ActualSendExecuteMutationResultV2 {
