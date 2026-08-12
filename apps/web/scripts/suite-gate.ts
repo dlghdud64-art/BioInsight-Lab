@@ -11,8 +11,18 @@
  *   · 목록에 있는데 지금은 통과하면 RED — 목록에서 빼야 한다 (E2 동형, stale 방지)
  *
  * 사용:
- *   npm run test:gate            # 스위트 실행 + 대조
- *   npm run test:gate -- --update  # 기지선 갱신(의도적일 때만)
+ *   npm run test:gate              # 스위트 실행 + 대조
+ *   npm run test:gate -- --update  # **감액만** — 고쳐진 파일을 목록에서 뺀다
+ *
+ * 🛑 `--update` 는 감액 전용이다 (§3-5-1, 2026-08-12).
+ *   원래는 현재 상태를 그대로 덮어썼다. 그러면 그 순간 흔들린 테스트가 무엇이든
+ *   **조용히 부채로 편입된다** — 즉 "원인 규명 전 기지선에 넣기" 를 자동화한다.
+ *   그것이 정확히 §3-5(flaky 는 결함 후보다) 가 금지하는 행위다.
+ *
+ *   그래서 신규 실패가 하나라도 있으면 `--update` 는 **거부**한다.
+ *   정말 넣어야 한다면 `--allow-new --reason="…"` 을 명시해야 하고, 사유는
+ *   기지선 파일에 기록으로 남는다. 규칙과 그 규칙을 무력화하는 도구가 같은
+ *   저장소에 있으면 언젠가 쓴다 — 그래서 도구 쪽을 잠근다.
  *
  * ⚠️ 한계 (먼저 적어둔다):
  *   · **파일 단위**다. 같은 파일 안에서 실패 assertion 이 바뀌어도 잡지 못한다.
@@ -87,31 +97,24 @@ function runSuite(): { files: string[]; assertions: number; untracked: string[] 
 }
 
 const update = process.argv.includes("--update");
+const allowNew = process.argv.includes("--allow-new");
+const reason = (process.argv.find((a) => a.startsWith("--reason=")) ?? "").slice("--reason=".length);
+
+const bootstrap = !existsSync(BASELINE);
+if (bootstrap && !update) {
+  console.error("🛑 test-baseline.json 이 없습니다. --update 로 먼저 생성하십시오.");
+  process.exit(2);
+}
+
 const { files, assertions, untracked } = runSuite();
 if (untracked.length) {
   console.log(`\n⚠️ 미추적 테스트 ${untracked.length} 파일은 게이트에서 제외했습니다(커밋되면 --update).`);
   for (const f of untracked) console.log(`     ? ${f}`);
 }
 
-if (update) {
-  const prev: Partial<Baseline> = existsSync(BASELINE)
-    ? JSON.parse(readFileSync(BASELINE, "utf8"))
-    : {};
-  writeFileSync(
-    BASELINE,
-    JSON.stringify({ ...prev, failingAssertions: assertions, failingFiles: files }, null, 1) + "\n",
-    "utf8",
-  );
-  console.log(`\n✅ 기지선 갱신 — ${files.length} 파일 / ${assertions} assertion`);
-  process.exit(0);
-}
-
-if (!existsSync(BASELINE)) {
-  console.error("🛑 test-baseline.json 이 없습니다. --update 로 먼저 생성하십시오.");
-  process.exit(2);
-}
-
-const base: Baseline = JSON.parse(readFileSync(BASELINE, "utf8"));
+const base: Baseline = bootstrap
+  ? { measuredAt: "", failingAssertions: 0, failingFiles: [] }
+  : JSON.parse(readFileSync(BASELINE, "utf8"));
 const known = new Set(base.failingFiles);
 const now = new Set(files);
 
@@ -121,6 +124,49 @@ const fixed = base.failingFiles.filter((f) => !now.has(f));
 console.log(`\n── §test-baseline-debt 게이트 ─────────────────`);
 console.log(`   기지선 : ${base.failingFiles.length} 파일 / ${base.failingAssertions} assertion (${base.measuredAt})`);
 console.log(`   현재   : ${files.length} 파일 / ${assertions} assertion`);
+
+/**
+ * §3-5-1 — `--update` 는 **감액 전용**이다.
+ *
+ * 신규 실패를 담고 있으면 거부한다. 그것을 통과시키는 것이 곧
+ * "원인 규명 전 기지선에 넣기"(§3-5 위반)의 자동화이기 때문이다.
+ * 정말 필요하면 `--allow-new --reason="…"` 으로 **사유를 남겨야** 한다.
+ */
+if (update) {
+  if (fresh.length && !bootstrap) {
+    if (!allowNew) {
+      console.error(`\n🛑 --update 거부 — 신규 실패 ${fresh.length} 파일이 있습니다.`);
+      for (const f of fresh) console.error(`     + ${f}`);
+      console.error(`\n   --update 는 감액(고쳐진 파일 제거) 전용입니다(§3-5-1).`);
+      console.error(`   신규 실패는 기지선이 아니라 그 실패를 다뤄야 합니다.`);
+      console.error(`   그래도 편입해야 한다면: --update --allow-new --reason="사유"`);
+      process.exit(1);
+    }
+    if (!reason.trim()) {
+      console.error(`\n🛑 --allow-new 에는 --reason="사유" 가 필요합니다(기지선에 기록으로 남습니다).`);
+      process.exit(1);
+    }
+  }
+
+  const prev: Partial<Baseline> & { _admissions?: string[] } = bootstrap
+    ? {}
+    : JSON.parse(readFileSync(BASELINE, "utf8"));
+  if (fresh.length && reason.trim()) {
+    prev._admissions = [
+      ...(prev._admissions ?? []),
+      `${fresh.length}건 편입 — ${reason.trim()} (${fresh.join(", ")})`,
+    ];
+  }
+  writeFileSync(
+    BASELINE,
+    JSON.stringify({ ...prev, failingAssertions: assertions, failingFiles: files }, null, 1) + "\n",
+    "utf8",
+  );
+  console.log(`\n✅ 기지선 갱신 — ${files.length} 파일 / ${assertions} assertion`);
+  if (fixed.length) console.log(`   감액 ${fixed.length} 파일`);
+  if (fresh.length) console.log(`   ⚠️ 편입 ${fresh.length} 파일 — 사유 기록: ${reason.trim()}`);
+  process.exit(0);
+}
 
 let bad = false;
 if (fresh.length) {
