@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, dbTyped } from "@/lib/db";
 import { getOrCreateGuestKey } from "@/lib/api/guest-key";
 import { handleApiError } from "@/lib/api/utils";
 import {
@@ -28,7 +28,7 @@ export async function GET(
     const type = searchParams.get("type") || "items_tsv";
 
     // QuoteList 조회 (권한 확인 포함)
-    const quoteList = await db.quoteList.findFirst({
+    const quoteList = await dbTyped.quote.findFirst({
       where: {
         id,
         OR: [

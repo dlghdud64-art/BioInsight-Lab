@@ -1,7 +1,7 @@
 # §phantom-model-call — 존재하지 않는 Prisma 모델을 호출하는 지점
 
 작성: 2026-08-10
-상태: **전수 실측 완료 / sentinel 등재 / 교정 미착수**
+상태: 전수 실측 완료 / sentinel ratchet **6→4** / 이름 교정 2종 완료, 1종 보류
 발원: §audit-foundation ① 검증 ①이 `ComplianceLink` 를 잡은 뒤 호영님 지시로 전수
 
 ---
@@ -28,10 +28,10 @@ tsc·build·vitest 어느 것도 잡지 못한다. 화면은 배포되고, 그 �
 | 유령 모델명 | 호출 | 실제 모델 | 호출 지점 |
 |---|---|---|---|
 | `complianceLink` | 7 | **없음** | `api/compliance-links/route.ts`(create, findMany)<br>`api/compliance-links/[id]/route.ts`(findUnique, update, delete) |
-| `quoteList` | 7 | `Quote` / `QuoteListItem` 추정 | `api/quote-lists/route.ts`(create)<br>`api/quote-lists/[id]/route.ts`(findFirst, update)<br>`api/quote-lists/[id]/items/route.ts`(findFirst, update)<br>`api/quote-lists/[id]/export/route.ts`(findFirst) |
+| ~~`quoteList`~~ **교정완료** | 7 | `Quote` | `api/quote-lists/route.ts`(create)<br>`api/quote-lists/[id]/route.ts`(findFirst, update)<br>`api/quote-lists/[id]/items/route.ts`(findFirst, update)<br>`api/quote-lists/[id]/export/route.ts`(findFirst) |
 | `inventoryAlertSetting` | 2 | **없음** | `api/inventory/alerts/send/route.ts`(findUnique, update) |
-| `purchase` | 2 | `PurchaseRecord` | `lib/ai-pipeline/processors/entity-linking-processor.ts`<br>`lib/ai-pipeline/processors/verification-processor.ts` |
-| `inventory` | 1 | `ProductInventory` | `api/inventory/scan-label/route.ts`(findFirst) |
+| `purchase` | 2 | **미상**(PurchaseRecord 아님 — §3-3) | `lib/ai-pipeline/processors/entity-linking-processor.ts`<br>`lib/ai-pipeline/processors/verification-processor.ts` |
+| ~~`inventory`~~ **교정완료** | 1 | `ProductInventory` | `api/inventory/scan-label/route.ts`(findFirst) |
 | `inventoryAlertLog` | 1 | **없음** | `api/inventory/alerts/send/route.ts`(create) |
 
 ### 두 부류로 갈린다
@@ -160,6 +160,86 @@ Quote 를 부르는 옛 이름이다.
 
 이 서술 차이가 중요하다: 크론이 있었다면 §fabricated-data-surface 의 반대 클래스
 (있어야 할 신호가 없는데 표시도 없음)였겠지만, 실측은 **채널 하나가 미구현인 상태**다.
+
+## 3-3. 이름 교정 실행 — `dbTyped` 도입 + **`purchase` 는 보류**
+
+호영님 지시대로 **`db` any 캐스트를 함께 풀어** 필드 매핑을 컴파일러가 검증하게 했다.
+
+### 도입 — `src/lib/db.ts` 의 `dbTyped`
+
+```ts
+const dbTyped = db as import("@prisma/client").PrismaClient;
+export { db, dbTyped, isPrismaAvailable };
+```
+
+같은 인스턴스를 **PrismaClient 타입으로** 노출한다(런타임 동작 동일, 폴백 stub 도 그대로).
+교정 대상과 새 코드는 이쪽을 쓴다.
+
+### 교정 완료 2종
+
+| 유령 | 교정 | 지점 |
+|---|---|---|
+| `quoteList` → `dbTyped.quote` | 7회 / 4라우트 | 저장·조회·항목·내보내기 |
+| `inventory` → `dbTyped.productInventory` | 1회 | `inventory/scan-label` |
+
+필드 매핑(서버 흡수, **프론트 불변**):
+- `message` → `description` (create + PATCH 양쪽)
+- `snapshot` → `raw`
+- `title` — `Quote.title` 이 **required** 인데 기존 코드는 `title || null` 이었다.
+  any 였기에 통과했을 뿐 런타임에서 실패했을 값이다. → `title || "제목 없음"`.
+
+### ⚠️ `purchase` 2건 — 단순 rename 불가, **되돌리고 상신**
+
+`dbTyped.purchaseRecord` 로 바꾸자 **필드 오류 8건**이 드러났다.
+
+```
+'organizationId' does not exist in type 'PurchaseRecordWhereInput'   (entity-linking)
+'organizationId' does not exist in type 'PurchaseRecordSelect'       (entity-linking)
+'totalAmount'    does not exist in type 'PurchaseRecordSelect'       (verification)
+'items'          does not exist on type PurchaseRecord              (verification)
+... 외 4
+```
+
+즉 이 코드가 가정하는 엔티티는 `PurchaseRecord` 가 **아니다**.
+`organizationId`/`totalAmount`/`items` 는 `Order` 에 있다. 그러나 `invoiceNumber` 는
+`PurchaseRecord` 쪽이라(tsc 가 그 필드는 문제삼지 않았다) 두 모델 어느 쪽으로도
+깔끔하게 떨어지지 않는다.
+
+**문서 §1 표의 "실제 모델은 PurchaseRecord" 는 내 추정이었고, typed client 가 그것을 반증했다.**
+
+억지로 맞추면 **"동작하지만 틀린 대상을 조회하는" 코드**가 된다 — 유령 호출보다 나쁘다
+(유령은 최소한 실패로 드러난다). 변경을 되돌리고 `LEGACY_PHANTOM` 에 남겼다.
+→ **§ai-pipeline-purchase-entity** 상신(도메인 판정 필요).
+
+### §db-any-escape-hatch 첫 실증 — any 를 풀면 무엇이 드러나는가
+
+| 대상 | typed 전환 후 새로 드러난 타입 오류 |
+|---|---|
+| `quote-lists` 4라우트 | **1건** (`title` required) |
+| `inventory/scan-label` | **0건** |
+| `purchase` 2파일 | **8건** (모델 자체가 틀렸음이 드러남) |
+
+⚠️ **그러나 typed client 도 전부 잡지는 못했다.** `message`/`snapshot`/`vendor` 오류는
+컴파일러가 잡지 않았다 — 이유:
+
+- `items.map(...)` 의 반환값은 **fresh object literal 이 아니라** excess property check 가
+  적용되지 않는다.
+- `...(x !== undefined && { x })` 조건부 spread 도 마찬가지로 우회한다.
+
+→ **any 해제는 필요조건이지 충분조건이 아니다.** 두 패턴 안의 필드는 여전히 수동 대조가
+필요하며, 해당 지점에 그 사실을 주석으로 남겼다. 전면 해제를 판단할 때 이 한계를 비용에 넣어야 한다.
+
+### 항목별 `vendor` — 매핑 아님, **스키마 부족** (상신)
+
+워크벤치 패널은 **항목별 vendor 를 표시한다** — `item.vendorName`/`item.vendorId`,
+"공급사 N개" 집계, CSV 내보내기, vendor 그룹화. 즉 항목마다 다른 vendor 다.
+
+그런데 `QuoteListItem` 에는 초안 단계 vendor 문자열 컬럼이 **없다**
+(`selectedVendorRequestId` 는 §quote-item-vendor-selection 의 **확정** truth 로 성격이 다르다).
+
+지시대로 **견적 단위 `Quote.vendor` 로 복제하지 않았다** — 복제하는 순간 화면이 거짓을 말한다.
+유실만 막기 위해 스냅샷 blob(`raw`) 안에 `vendorName` 으로 보존하고, **표시 경로는 배선하지 않았다.**
+→ **§quote-item-vendor-column** 상신.
 
 ## 4. sentinel
 

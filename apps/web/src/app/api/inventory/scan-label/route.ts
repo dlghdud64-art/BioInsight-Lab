@@ -25,7 +25,7 @@
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { db } from "@/lib/db";
+import { db, dbTyped } from "@/lib/db";
 import { enforcePlanLimit, PlanLimitError } from "@/lib/billing/enforce-plan-limit";
 import { parseReagentLabel } from "@/lib/ocr/label-parser";
 import { runOcrPipeline } from "@/lib/ocr/run-ocr-pipeline";
@@ -263,7 +263,7 @@ export async function POST(req: NextRequest) {
     } | null = null;
 
     if (matchedProduct && merged.lotNo) {
-      const inventory = await db.inventory.findFirst({
+      const inventory = await dbTyped.productInventory.findFirst({
         where: {
           productId: matchedProduct.id,
           lotNumber: {

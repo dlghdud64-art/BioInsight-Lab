@@ -98,4 +98,17 @@ try {
   isPrismaAvailable = false;
 }
 
-export { db, isPrismaAvailable };
+/**
+ * §db-any-escape-hatch — **타입이 살아 있는 접근자.**
+ *
+ * `db` 는 Prisma 미생성 시 stub 폴백을 위해 `any` 로 선언돼 있다. 그 결과
+ * `db.존재하지않는모델.findMany()` 가 컴파일을 통과하고 런타임에만 실패한다
+ * (§phantom-model-call — 실측 유령 호출 6종 20회).
+ *
+ * `dbTyped` 는 같은 인스턴스를 **PrismaClient 타입으로** 노출한다. 모델명과 필드명이
+ * 컴파일 시점에 검증되므로, 새 코드와 교정 대상은 이쪽을 쓴다.
+ * 런타임 동작은 `db` 와 동일하다(같은 객체) — 폴백 stub 도 그대로 통과한다.
+ */
+const dbTyped = db as import("@prisma/client").PrismaClient;
+
+export { db, dbTyped, isPrismaAvailable };

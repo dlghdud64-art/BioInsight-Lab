@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, dbTyped } from "@/lib/db";
 import { getOrCreateGuestKey } from "@/lib/api/guest-key";
 import { handleApiError } from "@/lib/api/utils";
 import { auth } from "@/auth";
@@ -18,7 +18,7 @@ export async function GET(
     const guestKey = await getOrCreateGuestKey();
 
     // QuoteList 조회 (guestKey 일치 OR userId 일치)
-    const quoteList = await db.quoteList.findFirst({
+    const quoteList = await dbTyped.quote.findFirst({
       where: {
         id,
         OR: [
@@ -91,7 +91,7 @@ export async function PUT(
     const { title, message, status } = body;
 
     // 권한 확인
-    const existing = await db.quoteList.findFirst({
+    const existing = await dbTyped.quote.findFirst({
       where: {
         id,
         OR: [
@@ -106,11 +106,13 @@ export async function PUT(
     }
 
     // 업데이트
-    const updated = await db.quoteList.update({
+    const updated = await dbTyped.quote.update({
       where: { id },
       data: {
+        // ⚠️ 조건부 spread 도 excess property check 를 우회한다 — 수동 대조 필요.
         ...(title !== undefined && { title }),
-        ...(message !== undefined && { message }),
+        // §text-coupling-debt — 프론트 `message` ↔ 스키마 `description`.
+        ...(message !== undefined && { description: message }),
         ...(status !== undefined && { status }),
       },
     });

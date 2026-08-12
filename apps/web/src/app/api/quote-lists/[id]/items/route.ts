@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "@/lib/db";
+import { db, dbTyped } from "@/lib/db";
 import { getOrCreateGuestKey } from "@/lib/api/guest-key";
 import { handleApiError, validateJsonBody } from "@/lib/api/utils";
 import { logger } from "@/lib/api/logger";
@@ -64,7 +64,7 @@ export async function PUT(
     const { items } = validation.data;
 
     // 권한 확인
-    const existing = await db.quoteList.findFirst({
+    const existing = await dbTyped.quote.findFirst({
       where: {
         id,
         OR: [
@@ -101,7 +101,7 @@ export async function PUT(
 
     // totalAmount 업데이트
     const totalAmount = items.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
-    await db.quoteList.update({
+    await dbTyped.quote.update({
       where: { id },
       data: { totalAmount: totalAmount || null },
     });
