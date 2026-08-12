@@ -1,7 +1,9 @@
 # §audit-foundation ① — enforceAction 분류 체계 설계 (구 §audit-taxonomy-review)
 
 작성: 2026-08-10
-상태: **설계안 (승인 대기)** — 코드 변경·마이그레이션 없음. 문서 + enum 초안만.
+상태: **① 분류표 완료 상태로 동결** (호영님 2026-08-12).
+②영속화·③capabilities 는 실사용자 트래픽 이후 — "감사 기록은 감사할 행위가 있어야
+값어치가 있다." 재개 시 이 문서의 확정분(어휘·구조·분류표)을 그대로 쓴다.
 발원: §enforcement-handle-close-sweep 배치1~12
 
 ---

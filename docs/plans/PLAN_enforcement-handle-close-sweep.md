@@ -228,6 +228,43 @@ CLAUDE.md 의 **"placeholder success 금지"** 정면 위반이다. 특히 첫 �
 그 외부 행위는 audit envelope 에 남지 않는다. 코드 주석에 사유를 명시했다.
 → **§billing-audit-gap** 으로 상신.
 
+## 5-6. sweep 이 검사하지 않았던 것 (2026-08-12 정리 — 마감의 정당성은 미검증이었다)
+
+sweep 은 "닫지 않은 74건" 만 다뤘다. 아래 두 클래스는 **설계 범위 밖**이었고,
+둘 다 sweep 종료 후 실측에서 실제 결함으로 드러났다.
+
+| 클래스 | 규모 | 실증 | 커버 |
+|---|---|---|---|
+| **잘못 닫은** 핸들러 — 이미 complete() 를 부르지만 쓰기가 없어 그 호출이 거짓인 경우 | 95건 미검사 | `analytics/ai-insight` (complete() 를 lock 해제 용도로 오용) | **E8 신설** |
+| **애초에 동작하지 않는** 라우트 — 핸들은 닫지만 유령 모델을 호출해 항상 실패 | 6종 20회 | `compliance-links`(모델 부재), `quote-lists`(모델명 오기) | §phantom-model-call P1 |
+
+교훈: **"닫는가" 와 "동작하는가" 와 "정당한가" 는 세 개의 다른 질문**이다.
+sweep 은 첫 번째만 물었다.
+
+### E8 — complete() 정당성 ratchet (0 에서 시작)
+
+`enforcement-complete-legitimacy.test.ts`. 직접 쓰기 + **import 헬퍼 1~2단계 해석**으로
+쓰기 유무를 판정하고, 쓰기 없는 핸들러의 complete() 를 offender 로 잡는다.
+
+판정기 한계는 테스트 주석에 선언했다: 3단계 이상 경유 · 동적 디스패치(모듈 수준
+인스턴스 — `ingestion` 의 `gateway.execute` 가 실례, 수동 실측 예외 목록 등재) ·
+alias. 한계로 인한 오판은 **오탐(false RED) 방향**이라 안전하다.
+
+작성 중 공허 GREEN 을 **두 번** 만났고 corrupt→RED 가 잡아냈다:
+① `db` import 를 헬퍼로 해석 → `lib/db.ts` 폴백 stub 의 `$transaction` 정의가
+   전 핸들러에 쓰기를 인정 → DB 클라이언트 모듈 제외로 교정.
+② `WRITE_RE` 에 `dbTyped` 누락 → 방금 교정한 typed 호출이 안 보임 → 오탐 2건으로 드러남.
+
+### 3-4. corrupt 스크립트도 앵커 count 검증 필수 (2026-08-12 추가)
+
+E8 실증 중 **corrupt 시도 2회가 무음 no-op** 이었다 — 무단언 `str.replace` 가
+0회 치환하고 조용히 지나갔고, "corrupt 했는데 GREEN" 이 판정기 결함처럼 보였다
+(실제로는 corrupt 자체가 안 됐다). 원인: routePath 통일 커밋이 파일을 재작성하며
+빈 줄 구조가 변해 앵커가 소멸.
+
+**corrupt→RED 절차도 safe_edit 와 같은 규율을 따른다: 치환 전 count(anchor) 검증,
+0 이면 중단.** 무단언 replace 금지.
+
 ## 6. sweep 마감 — 닫힌 것과 닫히지 않은 것
 
 ### 닫힌 것
@@ -239,7 +276,9 @@ E1(신규 누수 0) · E2(ratchet) · E3 · E4 · E6 전건 GREEN.
 
 | 항목 | 상태 | 트랙 |
 |---|---|---|
-| `enforceAction` 을 **아예 안 쓰는** mutation route | **미측정** — ratchet 이 원리상 못 본다 | §enforcement-coverage-gap (E7 1단계) |
+| `enforceAction` 을 **아예 안 쓰는** mutation route | **미측정** — ratchet 이 원리상 못 본다 | §enforcement-coverage-gap (E7 — **동결**) |
+| **잘못 닫은**(쓰기 없는 complete) 핸들러 | 1건 실증·교정, 나머지는 E8 이 이후 감시 | E8 (§5-6) |
+| 마감의 정당성 | §5-6 — "닫는가" 만 물었고 "정당한가" 는 설계 범위 밖이었다 | E8 + §phantom-model-call |
 | placeholder success | 1건 처리 / **4건 결함 존치** | §placeholder-success-audit |
 | `targetEntityType` 오분류 31+건 | audit 기록만 오염, 현재 접근 판정 무영향 | §audit-taxonomy-review (1순위) |
 | mojibake 한글 주석 3파일 | 미수정 | 별도 |
