@@ -1,7 +1,7 @@
 # §test-baseline-debt — 전체 스위트 250 RED 분류
 
 작성: 2026-08-12
-상태: **분류 완료 / 교정 미착수** (동결 아님 — 방향 전환의 장애물)
+상태: **1단계(ratchet) 완료 / 2단계(교정) 미착수** (동결 아님 — 방향 전환의 장애물)
 발원: compliance 은퇴 검증차 전체 스위트를 처음 돌렸더니 250 RED
 
 ---
@@ -141,9 +141,107 @@ UI 가 실제로 바뀌었는데 sentinel 이 안 따라온 것이고, 일부는
 
 ---
 
+## 4-1. 1단계 — **ratchet 고정** (2026-08-12 완료)
+
+245개를 교정하지 않는다. 대신 **잃어버린 능력만 되찾는다: 회귀를 놓치지 않는 것.**
+
+| 산출물 | 내용 |
+|---|---|
+| `apps/web/test-baseline.json` | 실패 파일 목록 **70 파일 / 247 assertion** (커밋) |
+| `apps/web/scripts/suite-gate.ts` | 전체 스위트 실행 + 기지선 대조 |
+| `npm run test:gate` | 게이트. `-- --update` 로 의도적 갱신 |
+
+계약은 E1/E2 동형이다:
+- 목록 **밖** 새 실패 1건이라도 → RED (E1)
+- 목록에 있는데 지금 통과 → RED, 목록에서 빼야 함 (E2, stale 방지)
+
+**GREEN 의 정의가 바뀐다**: `ops 196 passed` 가 아니라
+**`전체 11522 passed / 247 failed (기지선 일치)`**.
+
+corrupt→RED 실증: 기지선에서 1건 제거 → `🛑 신규 실패 1 파일` 로 경로까지 출력.
+
+### 게이트 설계 판단 2건
+
+**(가) git 추적 파일만 본다.** 게이트는 **커밋된 계약**을 측정한다. 로컬 미추적
+테스트가 실패한다고 RED 를 내면 체크아웃마다 결과가 갈린다.
+실측: `quote-centerworkwindow-demote-363b.test.ts` 가 미추적 상태로 3건 실패 중 —
+기지선에서 제외하고 실행 시 경고로 표시한다.
+
+**(나) 파일 단위다.** assertion 단위로 잠그면 stale 목록 관리 비용이 245건 교정 비용에
+근접한다. 대가: 같은 파일 안에서 실패 assertion 이 **교체**되면 못 잡는다.
+
+### ⚠️ flaky 1건 관측
+
+게이트 4회 실행 중 1회가 `69 파일 / 246` 으로 나왔다(나머지 3회 70/247).
+flaky 는 **양방향으로 오판**한다 — 신규 RED 또는 stale 오탐. 발견 시 목록이 아니라
+그 테스트를 고쳐야 한다. 후보는 아래 §4-3.
+
+## 4-2. 부정 단언 필터 — **2건, 1파일뿐**
+
+호영님 지시: *긍정 단언 stale 은 UI 진화의 흔적일 수 있으니 왕복에서 보고,
+**부정 단언 깨짐**("없어야 할 것이 생겼다")만 읽어라.*
+
+전체 250건 중 부정 단언 실패는 **2건 / 1파일**이다.
+
+```
+src/__tests__/dashboard/quotes/quote-centerworkwindow-demote-363b.test.ts
+  · dead primary 라벨 "승인 패키지 준비 완료" 제거 (approval_prep)
+      expected ... not to match /승인 패키지 준비 완료/
+  · dead primary 라벨 ternary "선택안 확정" 제거 (compare_review>=2)
+      expected ... not to match />= 2 \? "선택안 확정" : "추가 회신 확보"/
+```
+
+**이 파일은 git 미추적이다.** 즉 누군가 sentinel 을 먼저 쓰고 코드는 아직 안 고친
+상태(또는 미완 작업)다. 내가 커밋하지 않았다 — 남의 미커밋 작업이다.
+
+판정: **"없어야 할 것이 생겼다" 가 아니라 "지우기로 한 것을 아직 안 지웠다"** 이다.
+회귀가 아니라 미완이다. 견적·소싱 30파일에서 **진짜 회귀 성격의 부정 단언 실패는 0건**.
+
+→ 나머지 28파일(긍정 단언 stale)은 읽지 않는다. **왕복에서 직접 본다.**
+   코드를 더 읽는 것으로 동작을 알 수 없다는 이 세션의 교훈을 여기에도 적용한다.
+
+## 4-3. 분류 중 발견한 실제 결함 1건 — `executionId` 충돌
+
+`src/lib/ai/__tests__/dispatch-execution-handoff.test.ts` H5 가 실패한다.
+
+```
+expected 'exec_mspnzrf8' not to be 'exec_mspnzrf8'
+```
+
+서로 다른 `idempotencyKey` 로 만든 두 execution 이 **같은 executionId** 를 받았다. 원인:
+
+```ts
+executionId: `exec_${Date.now().toString(36)}`
+```
+
+**같은 밀리초 안에 생성되면 충돌한다.** 동일 패턴이 4곳에 있다:
+`approval-execution-queue-engine.ts:84` · `dispatch-execution-engine.ts:133` ·
+`receiving-execution-engine.ts:195` · `receiving-execution-resolution-v2-engine.ts:29`
+(+ `receiving-intake-workbench-engine.ts:280`).
+
+시간 의존이라 **간헐 실패**한다 — §4-1 의 flaky 후보가 이것이다.
+빠른 머신일수록 재현율이 올라간다(이 머신에서 3/3 재현).
+
+⚠️ 이것은 stale 계약이 아니라 **제품 결함**이다. 두 실행이 같은 id 를 가지면
+발송·입고 이력이 뒤섞인다. → **§execution-id-collision** 등재(교정은 지시 대기).
+
+## 4-4. 이 숫자가 말하는 것 — §sentinel-ast-migration 의 근거
+
+> **정적 sentinel 은 UI 가 정상적으로 진화하면 자동으로 깨진다.**
+
+245개가 그 증거다. 그리고 **이번 세션에 만든 20여 개도 같은 운명**이다 —
+`readFileSync` + `toMatch` 는 "그 문자열이 그 자리에 있는가" 만 보므로,
+리팩터링·문구 변경·컴포넌트 분리 어느 것에도 견디지 못한다.
+
+이 세션에서 이미 세 번 겪었다: E3 정규식 두 번 오탐 · E6 optional catch binding 누락 ·
+E8 의 `dbTyped` 누락. **문법 변형에 구조적으로 취약하다.**
+
+→ §sentinel-ast-migration 은 취향 문제가 아니라 **245라는 숫자가 근거**다.
+   동결은 유지하되(실사용자 트래픽 우선) 재개 시 이 절을 근거로 쓴다.
+
 ## 5. 판정과 다음
 
-- **교정하지 않는다** (호영님 지시). 이 문서는 분류까지다.
+- **교정하지 않는다** (호영님 지시). 1단계는 ratchet 고정까지다(§4-1).
 - 예외 1건: `ai-insight-lock-leak` — 내가 만든 회귀이므로 즉시 승계 처리했다.
 - **동결하지 않는다** — 사용자 앞에 세우려면 무엇이 깨져 있는지 알아야 한다.
 

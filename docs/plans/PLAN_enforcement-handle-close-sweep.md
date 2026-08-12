@@ -343,9 +343,13 @@ E1(신규 누수 0) · E2(ratchet) · E3 · E4 · E6 전건 GREEN.
 - **§placeholder-success-audit** (신규) — §5-3(가). 스텁 3건 + 전수 조사.
 - **§enforcement-coverage-gap** (신규) — §5-3(나). enforceAction 을 **쓰지 않는**
   mutation route 전수. 현재 ratchet 은 이 클래스를 볼 수 없다.
-- **§sentinel-ast-migration** — 정규식 기반 sentinel 은 문법 변형에 구조적으로 취약하다.
-  E3 는 두 번 틀렸고(둘 다 오탐 방향), E6 는 optional catch binding 을 처음에 놓쳤다.
-  중괄호 매칭으로 임시 보강했으나 근본 해법은 AST 파싱이다.
+- **§sentinel-ast-migration** (동결 유지 · **근거 갱신 2026-08-12**) —
+  정규식 기반 sentinel 은 문법 변형에 구조적으로 취약하다.
+  E3 는 두 번 틀렸고(둘 다 오탐 방향), E6 는 optional catch binding 을 처음에 놓쳤고,
+  E8 은 `dbTyped` 를 빠뜨려 오탐 2건을 냈다.
+  **결정적 근거는 숫자다: 전체 스위트 실패 250건 중 245건(98%)이 정적 sentinel 의
+  stale 계약이다**(§test-baseline-debt §4-4). UI 가 **정상적으로 진화하면** 자동으로 깨진다 —
+  이번 세션에 만든 20여 개도 같은 운명이다. 취향이 아니라 245라는 실측이 근거다.
 
 ## 8. Rollback
 

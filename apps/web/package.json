@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:gate": "tsx scripts/suite-gate.ts",
     "dev": "next dev",
     "prebuild": "node scripts/generate-migration-manifest.cjs && node scripts/vercel-migrate.js && node scripts/copy-pretendard-font.js",
     "build": "next build",
