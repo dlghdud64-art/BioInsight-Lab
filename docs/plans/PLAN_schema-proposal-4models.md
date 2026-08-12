@@ -1,7 +1,8 @@
-# 스키마 상신 — **3종** (설계만, 마이그레이션 보류)
+# 스키마 상신 — **4종** (설계만, 마이그레이션 보류)
 
-> 초안은 4종이었으나 실측으로 `InventoryAlertLog` 가 탈락했다(§3-1) — 기존
-> `NotificationAction` 이 같은 역할을 이미 한다.
+> 초안 4종 → 실측으로 `InventoryAlertLog` 탈락(§3-1, 기존 `NotificationAction` 재사용)
+> → 호영님 판단으로 `NotificationAction.actionType` 에 **`SYSTEM_ALERT` 신설**이 합류(§2-3).
+> 결과적으로 다시 4종이다.
 
 작성: 2026-08-12
 상태: **설계 상신 (승인 대기)** — 코드·마이그레이션 없음.
@@ -17,7 +18,8 @@
 | 1 | `ComplianceLink` | **모델 신설** | 표면 차단 완료(API 삭제). 제품 상세 규제 링크 블록 미생성 |
 | 2 | `InventoryAlertSetting` | **모델 신설** | 라우트 존재하나 호출자 0. 이메일 채널 전체 미구현 |
 | ~~3~~ | ~~`InventoryAlertLog`~~ | **탈락** — 기존 `NotificationAction` 재사용(§3-1) | — |
-| 3 | `QuoteListItem.vendorName` | **컬럼 추가** | 워크벤치가 항목별 vendor 를 표시하나 저장 컬럼 없음 |
+| 3 | `NotificationAction.actionType` 에 `SYSTEM_ALERT` | **enum 값 추가**(additive) | 재고 알림이 `EMAIL_DRAFT`(승인 후 발송) 범주에 잘못 들어감 |
+| 4 | `QuoteListItem.vendorName` | **컬럼 추가** | 워크벤치가 항목별 vendor 를 표시하나 저장 컬럼 없음 |
 
 ⚠️ `purchase`(ai-pipeline 2건)는 **이 상신에 포함하지 않는다**(호영님 2026-08-10).
 무엇을 저장하려 했는지가 불명이라 지금 만들면 두 번 만든다 → §ai-pipeline-purchase-entity.
@@ -65,6 +67,15 @@ SDS 부재) 기반 **규칙 매칭**이며 `filterComplianceLinksForProduct` 가
 
 ### 1-2. 소유권 축 — **SDS 와 동일 규칙** (호영님 요구)
 
+> **일반 원칙 (호영님 2026-08-12 승격)** — 다른 모델에도 적용한다.
+>
+> **오등록 피해가 조직 경계를 넘는가**가 `role` 판정과 `소유권` 판정을 가른다.
+> - 넘는다 → **role 판정**. 소유 관계가 없거나 있어도 피해가 소유자에 머물지 않는다.
+> - 안 넘는다 → **소유권 판정**. 기존 ownerCondition 을 재사용하고 새 규칙을 만들지 않는다.
+>
+> 이 기준은 "누가 만들었나" 가 아니라 **"틀렸을 때 누가 다치나"** 를 묻는다.
+
+
 `products/[id]/sds` 의 `docType === "sds"` 게이트를 그대로 따른다:
 
 > global `ADMIN` · `SUPPLIER` · 조직 `ADMIN`/`VIEWER`(=safety_admin) 의 **합집합**
@@ -80,6 +91,27 @@ SDS 부재) 기반 **규칙 매칭**이며 `filterComplianceLinksForProduct` 가
 실패가 된다 — §product-detail-sourcing-v21 에서 고친 바로 그 클래스다.
 
 ---
+
+### 1-3. ⚠️ 복원 조건 — 모델만 만들고 화면을 잊지 않기 위해
+
+`ComplianceLink` 모델이 서면 **아래를 함께 되살린다.** 이 연결이 문서에 없으면
+모델만 생기고 화면은 영영 안 돌아온다(호영님 2026-08-12).
+
+| 복원 대상 | 위치 | 폐기 시점 상태 |
+|---|---|---|
+| 설정 화면 | `src/app/settings/compliance-links/page.tsx` | 삭제 (CRUD 전부 실패했으므로 잃은 기능 0) |
+| 제품 상세 규제 링크 블록 | `src/app/products/[id]/page.tsx` | 조회·렌더 미생성. `officialLinks`/`organizationLinks` 를 빈 배열로 고정 |
+| API 2 라우트 | `api/compliance-links/route.ts`, `api/compliance-links/[id]/route.ts` | 삭제 |
+| csrf 등재 | `csrf-route-registry.ts` | `/api/compliance-links/[id]` 제거됨 |
+| **§11.270b** (aria-label) | `settings-compliance-aria-label-270b.test.ts` | **파일 은퇴**(삭제) — 화면 복원 시 함께 되살린다 |
+| **§11.270** compliance 3 spot (터치 44px) | `settings-x-button-touch-target-270.test.ts` | 해당 단언만 은퇴. workspace·security 2파일 잠금은 **유지** |
+| **§11.298** compliance dropdown | `single-dropdown-4-files-plain-298.test.ts` | 해당 단언만 은퇴. 나머지 3파일 잠금은 **유지** |
+
+**은퇴한 것은 대상이지 정책이 아니다.** 터치 영역 44px · aria-label · Radix dropdown 제거는
+다른 화면에서 계속 잠겨 있다. 화면이 돌아오면 그 화면에도 다시 적용한다.
+
+⚠️ 복원 시 **UI 권한 게이트를 서버와 동시에** 넣어야 한다(§1-2 마지막 줄) —
+서버만 막으면 front-only 실패가 된다.
 
 ## 2. `InventoryAlertSetting` (+ 발송 이력은 기존 모델 재사용)
 
@@ -171,8 +203,47 @@ model NotificationEvent {
 자동 발송하려면 그 정책과 충돌한다 → **승인 항목 3** 으로 올린다.
 현행 AI P1 불변 규칙("승인 전 외부 전송 금지")과 같은 축이라 임의로 넘지 않는다.
 
-→ **상신은 4종이 아니라 3종이 된다**: `ComplianceLink` · `InventoryAlertSetting` ·
-`QuoteListItem.vendorName`.
+→ 발송 이력 모델은 만들지 않는다. 대신 **actionType 신설**이 필요하다(§2-3).
+
+### 2-3. `SYSTEM_ALERT` actionType 신설 — **분류 오류의 교정** (호영님 2026-08-12)
+
+앞서 "EMAIL_DRAFT 자동 발송 금지 정책과 충돌" 으로 상신했으나, **정책 충돌이 아니라
+분류 오류**라는 판단을 받았다. 그 판단을 그대로 기록한다.
+
+AI P1 불변("승인 전 외부 전송 금지")이 막는 위험은 둘이다:
+① AI 환각이 나가는 것 ② 외부 상대에게 회수 불가능하게 도달하는 것.
+**재고 부족 알림은 어느 쪽도 아니다.**
+
+| | `EMAIL_DRAFT` | 재고 부족 알림 |
+|---|---|---|
+| 콘텐츠 | AI 생성 | **결정론적** — 임계값 비교 결과를 템플릿에 렌더 |
+| 수신자 | 벤더(외부) | **자기 조직 구성원**(내부) |
+| 의미 | AI 가 초안을 쓰고 사람이 승인해 보낸다 | **시스템이 사실을 통보한다** |
+
+같은 모델에 들어갈 뿐 **다른 범주**다. `EMAIL_DRAFT` 의 자동 발송 금지를 푸는 것이
+아니라 **애초에 다른 actionType 을 쓴다.**
+
+```
+NotificationAction.actionType: "IN_APP" | "EMAIL_DRAFT" | "QUEUE_ITEM" | "ESCALATION"
+                             + "SYSTEM_ALERT"   ← 신설 (additive)
+```
+
+`actionType` 은 `String` 이므로 스키마 마이그레이션이 필요 없을 수 있다 —
+**착수 시 실측**: 값이 DB enum 인지 String 인지. String 이면 코드 상수만 늘리면 된다.
+(현행 스키마: `actionType String` — 마이그레이션 불요로 보이나 확인 후 확정)
+
+#### ⚠️ 자동 발송 허용 조건 3개 — **이 판단의 본체** (전부 만족해야 한다)
+
+> 1. **콘텐츠가 결정론적일 것** (AI 생성이 아닐 것)
+> 2. **수신자가 조직 내부일 것**
+> 3. **사용자가 사전에 옵트인했을 것**
+>
+> **셋 중 하나라도 빠지면 `EMAIL_DRAFT` 경로로 돌아간다** — 승인 후 발송.
+
+조건 3이 `InventoryAlertSetting` 의 존재 이유를 강화한다 — **설정 모델이 곧 사전 승인**이다.
+따라서 **설정이 없으면 발송하지 않는 구조**로 둔다(설정 부재 = 옵트인 없음 = 발송 금지).
+"기본값으로 전체 발송" 같은 폴백을 두지 않는다.
+
 
 ---
 
@@ -196,13 +267,14 @@ model QuoteListItem {
 
 ## 5. 마이그레이션 순서 · 독립성 · 롤백
 
-### 독립성 — **3종 전부 서로 독립이다**
+### 독립성 — **4종 전부 서로 독립이다**
 
 | # | 의존 대상 | 다른 3종과의 의존 |
 |---|---|---|
 | 1 `ComplianceLink` | `Organization` (기존) | 없음 |
 | 2 `InventoryAlertSetting` | `ProductInventory`·`User`·`Organization` (기존) | 없음 |
-| 3 `QuoteListItem.vendorName` | `QuoteListItem` (기존) | 없음 |
+| 3 `SYSTEM_ALERT` actionType | `NotificationAction` (기존) | **2 와 논리적 연결**(설정 없으면 발송 안 함) — 스키마 의존은 없다 |
+| 4 `QuoteListItem.vendorName` | `QuoteListItem` (기존) | 없음 |
 
 → **하나씩 배포할 수 있다.** 그게 안전하다(호영님).
 
@@ -211,15 +283,16 @@ model QuoteListItem {
 1. **`QuoteListItem.vendorName`** — 가장 얇다(nullable 컬럼 1개). 롤백 = 컬럼 drop.
    워크벤치 왕복 검증과 직결되므로 먼저.
 2. **`ComplianceLink`** — 제품 핵심 가치 축(안전·규제). 표면 복구까지 한 세트.
-3. **`InventoryAlertSetting`** — 1개만. 발송 이력은 기존 `NotificationAction` 을 쓴다.
-   운영 편의 축이라 마지막.
+3. **`InventoryAlertSetting` + `SYSTEM_ALERT`** — 한 세트. 발송 이력은 기존
+   `NotificationAction` 을 쓴다. 운영 편의 축이라 마지막.
 
 ### 롤백 경로
 
 | # | 롤백 | 데이터 손실 |
 |---|---|---|
 | 1·2 | `DROP TABLE` (신설 테이블) | 그 테이블에 쌓인 데이터만. 기존 테이블 무영향 |
-| 3 | `DROP COLUMN vendorName` | 그 컬럼 값만. **additive nullable 이라 기존 행 무영향** |
+| 3 | actionType 값 사용 중단 | 스키마 변경이 없으면 롤백도 없다(코드 상수 제거). 기존 행은 그 값을 가진 채 남는다 |
+| 4 | `DROP COLUMN vendorName` | 그 컬럼 값만. **additive nullable 이라 기존 행 무영향** |
 
 전부 **additive** 다 — 기존 컬럼 변경·삭제가 없으므로 롤백이 기존 데이터를 건드리지 않는다.
 

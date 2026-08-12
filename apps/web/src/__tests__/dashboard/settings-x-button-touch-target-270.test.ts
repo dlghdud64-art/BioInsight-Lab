@@ -36,11 +36,21 @@ import { resolve } from "node:path";
 
 const WORKSPACE = readFileSync(resolve(__dirname, "../../app/settings/workspace/page.tsx"), "utf8");
 const SECURITY = readFileSync(resolve(__dirname, "../../app/settings/security/page.tsx"), "utf8");
-const COMPLIANCE = readFileSync(resolve(__dirname, "../../app/settings/compliance-links/page.tsx"), "utf8");
+/**
+ * ⚠️ 2026-08-12 — compliance-links 대상 **은퇴**.
+ *
+ * `ComplianceLink` 모델이 스키마에 존재하지 않아(§phantom-model-call) 그 화면의
+ * CRUD 가 전부 실패했고, 화면을 폐기했다. 잠글 대상이 사라진 것이지
+ * **터치 영역 정책(min-h/min-w 44px)이 폐기된 것이 아니다** — workspace·security
+ * 2파일 잠금은 그대로 유지한다.
+ *
+ * 복원 조건: `ComplianceLink` 모델 신설 → 화면 복원 시 이 파일의 compliance 단언과
+ * §11.270b(aria-label) 를 **함께 되살린다**(docs/plans/PLAN_schema-proposal-4models.md §1-3).
+ */
 
 describe("§11.270 #1 — settings 5 spot X button 44x44 touch target", () => {
-  it("§11.270 trace marker comment 존재 (3 file 중 1 이상)", () => {
-    const allFiles = WORKSPACE + SECURITY + COMPLIANCE;
+  it("§11.270 trace marker comment 존재 (2 file 중 1 이상)", () => {
+    const allFiles = WORKSPACE + SECURITY;
     expect(allFiles).toMatch(/§11\.270/);
   });
 
@@ -56,23 +66,6 @@ describe("§11.270 #1 — settings 5 spot X button 44x44 touch target", () => {
     );
   });
 
-  it("compliance-links hazard code X button 에 min-h-[44px] + min-w-[44px] 적용", () => {
-    expect(COMPLIANCE).toMatch(
-      /removeHazardCode\(code\)[\s\S]{0,400}min-h-\[44px\] min-w-\[44px\]/,
-    );
-  });
-
-  it("compliance-links pictogram X button 에 min-h-[44px] + min-w-[44px] 적용", () => {
-    expect(COMPLIANCE).toMatch(
-      /"pictogramsAny"[\s\S]{0,400}min-h-\[44px\] min-w-\[44px\]/,
-    );
-  });
-
-  it("compliance-links category X button 에 min-h-[44px] + min-w-[44px] 적용", () => {
-    expect(COMPLIANCE).toMatch(
-      /"categoryIn"[\s\S]{0,400}min-h-\[44px\] min-w-\[44px\]/,
-    );
-  });
 });
 
 describe("§11.270 #2 — invariant 보존 (canonical truth)", () => {
@@ -88,30 +81,21 @@ describe("§11.270 #2 — invariant 보존 (canonical truth)", () => {
     expect(SECURITY).toMatch(/aria-label=\{`\$\{domain\} 제거`\}/);
   });
 
-  it("compliance-links removeHazardCode + updateRule onClick 보존", () => {
-    expect(COMPLIANCE).toMatch(/onClick=\{\(\) => removeHazardCode\(code\)\}/);
-    expect(COMPLIANCE).toMatch(/updateRule\(\s*"pictogramsAny"/);
-    expect(COMPLIANCE).toMatch(/updateRule\(\s*"categoryIn"/);
-  });
 
-  it("5 spot 모두 hover:bg-slate-200 + rounded-full 보존", () => {
+  it("2 spot 모두 hover:bg-slate-200 + rounded-full 보존 (compliance 3 spot 은퇴)", () => {
     const matchesWorkspace = (WORKSPACE.match(/hover:bg-slate-200 rounded-full/g) || []).length;
     const matchesSecurity = (SECURITY.match(/hover:bg-slate-200 rounded-full/g) || []).length;
-    const matchesCompliance = (COMPLIANCE.match(/hover:bg-slate-200 rounded-full/g) || []).length;
     expect(matchesWorkspace).toBeGreaterThanOrEqual(1);
     expect(matchesSecurity).toBeGreaterThanOrEqual(1);
-    expect(matchesCompliance).toBeGreaterThanOrEqual(3);
   });
 
   it("X icon h-3 w-3 (visual size 보존)", () => {
     expect(WORKSPACE).toMatch(/<X className="h-3 w-3"/);
     expect(SECURITY).toMatch(/<X className="h-3 w-3"/);
-    expect(COMPLIANCE).toMatch(/<X className="h-3 w-3"/);
   });
 
   it("Badge wrapper (variant=\"secondary\") 보존", () => {
     expect(WORKSPACE).toMatch(/<Badge[\s\S]{0,200}variant="secondary"/);
     expect(SECURITY).toMatch(/<Badge[\s\S]{0,200}variant="secondary"/);
-    expect(COMPLIANCE).toMatch(/<Badge[\s\S]{0,200}variant="secondary"/);
   });
 });
