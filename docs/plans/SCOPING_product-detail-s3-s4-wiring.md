@@ -3,6 +3,18 @@
 - **Status:** 📋 Scoping (착수 전 — 실측 보고)
 - **Date:** 2026-08-09
 - **Upstream:** §product-detail-sourcing-v21 (커밋 `1c332358`) — §1·§2·§5·§6·§7 반영 완료, §3·§4 는 API 신설 필요로 분리
+
+> ⚠️ **2026-08-12 상태 되돌림 (호영님).** upstream §product-detail-sourcing-v21 의
+> "반영 완료" 는 **코드 반영 완료**이지 동작 검증이 아니다. 이 세션에서 같은 형태의
+> 사고가 반복 확인됐다(렌더되지만 저장은 실패, 유령 모델 호출, mock 데이터 렌더).
+>
+> **§product-detail-sourcing-v21 의 상태를 "동작 미검증" 으로 되돌린다.**
+> 진짜 마감 조건은 실데이터 왕복 1회다 — **견적 담기 → 견적함 → 견적 요청 발송**.
+> 여기에 §phantom-model-call 의 미검증분(`quote-lists` 의 `raw` JSON 구조 ·
+> `quantity` 정수성)을 **같은 세션에 묶어** 확인한다.
+>
+> 선결: 개발 DB 분리(§dev-prod-db-separation) — 운영 DB 에 실데이터를 쓸 수 없다.
+> 로그인 수단은 §auth-dev-login 으로 확보했다(개발 DB 전환 시 자동 활성).
 - **목적:** 신설 최소 범위 산정. 구현 착수 판단은 호영님.
 
 ---

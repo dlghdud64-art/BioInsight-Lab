@@ -1,5 +1,7 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
+import Credentials from "next-auth/providers/credentials";
+import { requiresDestructiveConfirmation } from "@/lib/security/production-database";
 import { db } from "@/lib/db";
 import type { UserRole } from "@/types";
 import { convertSSOConfigToProvider, validateSSOConfig } from "@/lib/auth/sso-config";
@@ -9,6 +11,14 @@ import { convertSSOConfigToProvider, validateSSOConfig } from "@/lib/auth/sso-co
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 const hasGoogleOAuth = googleClientId && googleClientSecret && googleClientId !== "" && googleClientSecret !== "";
+
+/**
+ * §auth-dev-login — 개발 전용 로그인 활성 조건.
+ *
+ * `requiresDestructiveConfirmation()` = (운영 DB host) OR (NODE_ENV=production).
+ * 그 부정이 곧 "개발 환경" 이다 — 판정 규칙을 새로 만들지 않는다.
+ */
+const ALLOW_DEV_LOGIN = !requiresDestructiveConfirmation();
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   // §11.370 영구화 — NextAuth v5 host 신뢰를 env(AUTH_TRUST_HOST) 의존에서
@@ -24,6 +34,38 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       Google({
         clientId: googleClientId!,
         clientSecret: googleClientSecret!,
+      }),
+    ] : []),
+    // §auth-dev-login — 개발 전용 로그인 (운영에서는 존재 자체가 없다)
+    //
+    //   왜 필요한가: 인증 수단이 Google OAuth 단독이라 우리 스스로 제품을 끝까지
+    //   밟을 수단이 없었다. "사용자 앞에 세운다" 는 결정을 실행하려면 왕복 검증이
+    //   상시 가능해야 한다.
+    //
+    //   게이트: `requiresDestructiveConfirmation()` 을 **그대로 재사용**한다
+    //   (= 운영 DB host 이거나 NODE_ENV=production 이면 true).
+    //   판정 규칙을 여기에 다시 쓰지 않는다 — 두 곳에 있으면 갈리고, 갈리면 뚫린다.
+    //   `.env` 를 개발 DB 로 바꾸는 순간 자동으로 살아나고, 운영을 가리키면 사라진다.
+    //
+    //   ⚠️ 비밀번호를 검증하지 않는다. 개발 DB 의 기존 사용자로 세션을 여는 도구일 뿐이며
+    //   운영에서는 배열에 **포함되지도 않는다**.
+    ...(ALLOW_DEV_LOGIN ? [
+      Credentials({
+        id: "dev-login",
+        name: "개발 로그인 (dev only)",
+        credentials: { email: { label: "Email", type: "email" } },
+        async authorize(credentials) {
+          if (ALLOW_DEV_LOGIN !== true) return null; // 런타임 재확인 (이중 방어)
+          const email = typeof credentials?.email === "string" ? credentials.email : "";
+          if (!email) return null;
+          const user = await db.user.findUnique({
+            where: { email },
+            select: { id: true, email: true, name: true, image: true, deletedAt: true },
+          });
+          if (!user || user.deletedAt) return null;
+          console.warn("[auth] dev-login 사용 — 개발 DB 전용 경로", { email });
+          return { id: user.id, email: user.email, name: user.name, image: user.image };
+        },
       }),
     ] : []),
   ],
