@@ -381,6 +381,12 @@ ADR-002 §11.10 / §11.11 / §11.12 에 보존.
 
 ### 9.9 🛑 인시던트 — prod DATA WIPE (2026-06-14) + 하드 가드
 
+> ⚠️ **2026-08-10 — 같은 경로로 두 번째.** §9.10 참조.
+> 로컬 `.env`/`.env.local` 이 **둘 다 운영 Supabase** 를 가리키고 있었고,
+> `db:migrate` 스크립트가 `prisma migrate dev` 였다. 즉 이 사고 경로가 그대로
+> 재현 가능한 상태로 남아 있었다. 이번에는 터지기 전에 가드를 넣었다.
+
+
 **무슨 일**: sandbox(cowork)에서 잔여 drift 확인용으로
 `prisma migrate diff --from-migrations <dir> --shadow-database-url=$DIRECT_URL`
 를 실행했다. `--from-migrations` 는 shadow DB 를 **드롭·리셋 후 migration replay**
@@ -423,6 +429,49 @@ ProductInventory9 / InventoryRestock2 / partnershipTier 복원 / restockId 유�
 
 상세 근거·배경: `docs/decisions/ADR-002-pilot-tenant-seed.md §11.13`
 (요약), `§11.9` `§11.11` `§11.12` (단계별 진단).
+
+
+### 9.10 🛑 로컬 → 운영 DB 직결 (§dev-prod-db-separation, 2026-08-10)
+
+**실측**
+
+```
+apps/web/.env        DATABASE_URL / DIRECT_URL host = *.pooler.supabase.com (운영)
+apps/web/.env.local  동일
+package.json         "db:migrate": "prisma migrate dev"
+```
+
+`npm run db:migrate` 한 번이 운영 스키마를 직접 건드린다. `migrate dev` 는 shadow DB 를
+만들고 drift 를 감지하면 **reset 을 제안**한다 — §9.9 와 같은 경로다.
+
+**부수 발견 — `NODE_ENV` 기반 가드는 무력하다**
+
+`admin/seed` 의 프로덕션 가드가 `NODE_ENV === "production"` 기준이었다. 로컬은
+`NODE_ENV=development` 인데 DB 는 운영이므로 가드가 통과시켰다.
+
+> **`NODE_ENV` 는 코드가 어디서 도는지를 말할 뿐, 데이터가 어디로 가는지를 말하지 않는다.**
+
+**적용한 가드**
+
+| 대상 | 내용 |
+|---|---|
+| `src/lib/security/production-database.ts` | 단일 판정기. `DATABASE_URL` **과 `DIRECT_URL` 둘 다** 검사(마이그레이션은 DIRECT_URL 을 쓴다) |
+| `admin/seed` | 판정 기준을 `NODE_ENV` → `requiresDestructiveConfirmation()` 로 교체 |
+| `scripts/db-guard.ts` | `db:migrate` / `db:seed` 앞단. 운영 host 면 exit 1 로 체인 중단. 판정 규칙을 **재구현하지 않고 재사용** |
+| sentinel | `admin-seed-prod-guard`(S1-c/S1-d) · `db-guard-migrate`(G1~G4). 각각 corrupt→RED 실증 |
+
+**운영 스키마 변경 경로 (유일)**
+
+```bash
+npm run prisma:migrate     # = prisma migrate deploy (생성된 마이그레이션 적용만)
+```
+
+DIRECT_URL(5432, Session Pooler) 필수. `migrate dev` / `db push` 는 운영에서 금지.
+
+**선결 조건 — 마이그레이션 적용 보류**
+
+개발 DB 분리 완료 전까지 신규 스키마 적용은 보류한다. 상세는
+`docs/plans/PLAN_dev-prod-db-separation.md`.
 
 ### 9.10 마이그레이션 순서 역전·silent gap 가드 (§migration-order-drift-guard, 2026-08-04)
 

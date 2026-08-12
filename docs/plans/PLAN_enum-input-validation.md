@@ -1,7 +1,7 @@
 # §enum-input-validation — 사용자 입력이 검증 없이 enum 컬럼으로 흘러간다
 
 작성: 2026-08-10
-상태: **계수 1회 완료 / 교정 미착수**(규모를 본 뒤 판단 — 호영님)
+상태: 계수 1회 완료 / **role 3건 처리(2건 교정 · 1건 오탐)** / 나머지 16건 조사 대기
 발원: §phantom-model-call 대조 검증이 `Quote.status` 를 잡은 뒤 일반화
 
 ---
@@ -68,6 +68,40 @@ Prisma enum **43종** / enum 타입 필드명 **27종**.
 `role` 3건(`organizations/[id]/invites`, `team/[id]/members`, `team/invite`)은
 **권한 부여 경로**다. 잘못된 값이 Prisma 에서 거부되므로 권한 상승은 아니지만,
 초대·역할 변경이 원인 불명 500 으로 실패하면 운영이 막힌다. 조사 시 여기부터.
+
+## 3-1. `role` 3건 교정 (2026-08-10) — 1건은 **계수 오탐**이었다
+
+호영님 지시로 조직 도입 첫날 경로인 `role` 3건만 먼저 교정했다.
+
+| route | 실측 | 처리 |
+|---|---|---|
+| `organizations/[id]/invites` | **이미 검증돼 있었다** — `validRoles.includes(role)` + 400 + 허용 값 안내 | 교정 불필요 |
+| `team/[id]/members` PATCH | `role as TeamRole` 캐스트, 검증 없음 | enum 검증 + 400 + 허용 값 안내 |
+| `team/invite` POST | 기본값은 있으나 body 값은 무검증 | 동일 |
+
+⚠️ **오탐 1/3.** 내 계수기는 `Object.values(X).includes` 형태만 봤고
+`validRoles.includes` 처럼 **중간 변수를 거치는 검증**을 못 봤다.
+§2 에 적은 "19건은 조사 대상 수" 가 그대로 확인됐다 — 실제 결함률은 더 낮다.
+
+### ⚠️ 교정 중 발견한 별건 — `TeamRole` 에 `OWNER` 가 없다
+
+두 라우트가 같은 형태로 잘못돼 있었다.
+
+```ts
+if (!teamMember || (teamMember.role !== TeamRole.ADMIN && teamMember.role !== TeamRole.ADMIN))
+//                                        ^^^^^ 같은 값을 두 번 검사
+    return ... "Forbidden: Only ADMIN or OWNER can change roles"
+```
+
+`TeamRole` 은 `ADMIN | MEMBER | VIEWER` 이며 **OWNER 가 없다**
+(`OrganizationRole` 에는 있다 — 두 enum 이 혼동된 흔적).
+원래 `!== OWNER` 였을 자리가 enum 에 값이 없어 `ADMIN` 으로 치환됐고,
+**문구만 OWNER 를 말하고 있었다.** `"Cannot change OWNER role"` 도 같다 —
+실제 조건은 `targetMember.role === ADMIN` 이다.
+
+동작은 그대로 두고(ADMIN 보호 의도로 보인다) **중복 조건과 거짓 문구를 정리**했다.
+사용자가 **존재하지 않는 역할을 근거로 거부당하는 상태**였다.
+→ 문구 축은 §text-coupling-debt, 두 enum 혼동은 §audit-foundation ① 의 어휘 문제와 같은 뿌리다.
 
 ## 4. 교정 방식 (착수 시)
 

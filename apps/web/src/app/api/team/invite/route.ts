@@ -46,7 +46,20 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (!teamMember || (teamMember.role !== TeamRole.ADMIN && teamMember.role !== TeamRole.ADMIN)) {
+    // §enum-input-validation — body 의 `role` 이 TeamRole 이 아니면 Prisma 가 런타임에
+    //   거부해 사용자는 원인 불명의 500 을 본다. 400 + 허용 값 안내로 바꾼다.
+    if (!Object.values(TeamRole).includes(role)) {
+      return NextResponse.json(
+        {
+          error: `유효하지 않은 역할입니다. 가능한 역할: ${Object.values(TeamRole).join(", ")}`,
+          code: "INVALID_TEAM_ROLE",
+        },
+        { status: 400 }
+      );
+    }
+
+    // ⚠️ 기존 조건은 `!== ADMIN && !== ADMIN` 중복이었다(TeamRole 에 OWNER 없음).
+    if (!teamMember || teamMember.role !== TeamRole.ADMIN) {
       return NextResponse.json(
         { error: "Forbidden: Only OWNER or ADMIN can invite members" },
         { status: 403 }

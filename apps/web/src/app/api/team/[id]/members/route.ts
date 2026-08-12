@@ -104,6 +104,19 @@ export async function PATCH(
     });
     if (!enforcement.allowed) return enforcement.deny();
 
+    // §enum-input-validation — `role` 은 TeamRole **enum** 이다. 검증 없이 넘기면
+    //   Prisma 가 런타임에 거부해 사용자가 **원인 불명의 500** 을 본다.
+    //   400 으로 바꾸고 허용 값을 함께 알린다(원인을 아는 것이 절반이다).
+    if (role !== undefined && !Object.values(TeamRole).includes(role)) {
+      return NextResponse.json(
+        {
+          error: `유효하지 않은 역할입니다. 가능한 역할: ${Object.values(TeamRole).join(", ")}`,
+          code: "INVALID_TEAM_ROLE",
+        },
+        { status: 400 }
+      );
+    }
+
     if (!memberId || !role) {
       return NextResponse.json(
         { error: "memberId and role are required" },
@@ -121,9 +134,13 @@ export async function PATCH(
       },
     });
 
-    if (!userMember || (userMember.role !== TeamRole.ADMIN && userMember.role !== TeamRole.ADMIN)) {
+    // ⚠️ 2026-08-10 — 기존 조건은 `!== ADMIN && !== ADMIN` 으로 **같은 값을 두 번** 봤다.
+    //   TeamRole 에는 OWNER 가 없다(ADMIN | MEMBER | VIEWER). OWNER 자리가 ADMIN 으로
+    //   치환된 흔적이며, 문구만 OWNER 를 말하고 있었다. 동작은 그대로 두고 중복과
+    //   거짓 문구를 정리한다 — 사용자가 없는 역할을 근거로 거부당하면 안 된다.
+    if (!userMember || userMember.role !== TeamRole.ADMIN) {
       return NextResponse.json(
-        { error: "Forbidden: Only ADMIN or OWNER can change roles" },
+        { error: "Forbidden: 팀 ADMIN 만 역할을 변경할 수 있습니다." },
         { status: 403 }
       );
     }
@@ -140,10 +157,10 @@ export async function PATCH(
       );
     }
 
-    // OWNER 역할은 변경 불가
+    // ADMIN 역할은 변경 불가 (기존 문구는 존재하지 않는 OWNER 를 근거로 들었다)
     if (targetMember.role === TeamRole.ADMIN) {
       return NextResponse.json(
-        { error: "Cannot change OWNER role" },
+        { error: "ADMIN 역할은 변경할 수 없습니다." },
         { status: 400 }
       );
     }
