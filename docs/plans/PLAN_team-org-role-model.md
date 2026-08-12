@@ -164,6 +164,86 @@ model Organization { teams Team[] }
 
 ⚠️ 3 이 왕복 이후 데이터 상태에 달려 있다.
 
+---
+
+## 1-E. 실측 ①② (2026-08-12, 운영 DB **read-only**. 쓰기 0)
+
+### ① Team 현황 — **0행**
+
+| 항목 | 값 |
+|---|---|
+| Team 전체 | **0** |
+| `organizationId IS NULL` | 0 |
+| TeamMember 전체 | 0 |
+
+→ **backfill 단계가 사라진다.** 그리고 `nullable → required` 마이그레이션 비용도
+**사실상 0** 이다(빈 테이블). 지금이 가장 싼 시점이라는 판단이 데이터로 확인됐다.
+
+### ② 다중 소속 — **스키마상 가능. 데이터로는 판별 불가**
+
+```prisma
+model OrganizationMember { @@unique([userId, organizationId]) }   // userId 단독 unique 없음
+model User { organizationMembers OrganizationMember[] }
+```
+
+| 항목 | 값 |
+|---|---|
+| OrganizationMember 행 | **1** |
+| distinct user | 1 |
+| 2개 이상 조직에 속한 사용자 | 0 |
+| 사용자당 최대 조직 수 | 1 |
+
+⚠️ **표본이 1행이다. "데이터에 다중 소속이 없다" 는 "불가능하다" 가 아니다.**
+스키마는 허용하고, **코드는 양쪽으로 갈려 있다**:
+
+- 복수 전제: `dashboard/stats/route.ts:66` — `orgIds = memberships.map(...)` → `{ in: orgIds }`
+- 단일 가정: `activity-logs`·`ai-actions` 등 다수 — `organizationMember.findFirst` 로
+  **임의의 조직 하나**를 집는다 (다중 소속 시 어느 조직인지 미정 — 별건 결함 후보)
+
+→ **"조직이 여럿이면 선택 필요" 분기는 사라지지 않는다.** ②의 답으로 1단계 비용이
+줄어들기를 기대했으나, 줄지 않았다. 팀 생성 시 조직 선택 UI 가 필요하다.
+
+---
+
+## 1-F. `String?` 판정 — **의도가 아니라 미완이다**
+
+standalone 팀 시나리오를 뒷받침하는 근거가 **스키마 주석 한 줄(`null = standalone team`)
+뿐**이고, 반증이 셋이다.
+
+| # | 근거 | 함의 |
+|---|---|---|
+| 1 | 팀 생성이 `organizationId` 를 **설정하지 않는다** (`api/team/route.ts:100`) | 의도된 standalone 이 아니라 **채우는 코드가 없다** |
+| 2 | `organizationId === null` 을 다루는 분기가 **어디에도 없다** (전수 0) | standalone 을 위해 설계된 동작이 0 |
+| 3 | 🛑 `budgets/route.ts:268` — `where: { id: teamId, organizationId: resolvedOrganizationId }` | **standalone 팀은 예산에 연결될 수 없다.** `resolvedTeamId = null` 로 조용히 떨어진다 |
+
+**3 이 결정적이다.** `Team.budgets Budget[]` 관계가 스키마에 있는데, API 로 만든 팀은
+전부 standalone 이므로 **팀 예산 기능이 구조적으로 죽어 있다.** 조용한 실패다
+(에러 없이 teamId 만 사라진다).
+
+### 권고 — `required` 로 전환
+
+- Team 0행이므로 마이그레이션 비용 ~0
+- **required 면 "채워지지 않는" 상태가 구조적으로 불가능해진다** — 지금 결함의 뿌리가 사라진다
+- 팀 예산 경로도 함께 살아난다
+
+⚠️ 남는 질문 1건: **조직에 속하지 않은 사용자가 팀을 만들 수 있어야 하는가.**
+required 로 가면 "팀 생성 = 조직 소속 필요" 가 된다. 현행 UI 에 조직 선택이 없으므로
+어느 쪽이든 팀 생성 화면 변경이 따른다(②에서 이미 필요해진 것과 같은 작업).
+
+---
+
+## 1-G. 순서 (실측 반영, 승인 대기)
+
+```
+[nullable → required 판정]
+  → 팀 생성에 조직 선택 + organizationId 기록   (①② 로 UI 작업 확정)
+  → 조직 OWNER 의 팀 역할 변경 권한
+  → backfill  ❌ 삭제됨 (Team 0행)
+```
+
+backfill 이 사라졌으므로 **이 트랙 전체가 운영 DB 쓰기 없이 끝난다** —
+개발 DB 분리를 기다릴 이유가 없다.
+
 ## 2. 재개 시 실측 항목 (설계 전 — 설계는 그 다음)
 
 - 두 enum 이 각각 어느 판정 지점에서 쓰이는가
