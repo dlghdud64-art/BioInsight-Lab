@@ -1,3 +1,4 @@
+import { QuoteStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { db, dbTyped } from "@/lib/db";
 import { getOrCreateGuestKey } from "@/lib/api/guest-key";
@@ -113,7 +114,12 @@ export async function PUT(
         ...(title !== undefined && { title }),
         // §text-coupling-debt — 프론트 `message` ↔ 스키마 `description`.
         ...(message !== undefined && { description: message }),
-        ...(status !== undefined && { status }),
+        // ⚠️ `Quote.status` 는 **QuoteStatus enum** 이다. 조건부 spread 는 excess
+        //   property check 를 우회하므로 컴파일러가 잘못된 값을 잡지 못한다
+        //   (§db-any-escape-hatch — typed client 의 한계). 명시 검증으로 대체한다.
+        ...(status !== undefined && Object.values(QuoteStatus).includes(status)
+          ? { status: status as QuoteStatus }
+          : {}),
       },
     });
 

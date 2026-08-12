@@ -6,6 +6,14 @@
 
 ---
 
+## 0-0. 원칙 (호영님 2026-08-10, `purchase` 판단에서 확립)
+
+> **억지로 맞추면 "동작하지만 틀린 대상을 조회하는" 코드가 되어 유령보다 나쁘다 —
+> 유령은 최소한 실패로 드러난다.**
+
+유령 호출을 고칠 때 모델명이 불확실하면 **고치지 말고 남긴다.** 미해결이 ratchet 목록에
+보이는 상태가, 조용히 틀린 대상을 조회하는 상태보다 정직하다.
+
 ## 0. 왜 이 클래스가 숨는가
 
 `src/lib/db.ts` 의 `db` 는 **`any`** 로 선언돼 있다(Prisma 미생성 시 stub 폴백 구조).
@@ -241,6 +249,62 @@ export { db, dbTyped, isPrismaAvailable };
 유실만 막기 위해 스냅샷 blob(`raw`) 안에 `vendorName` 으로 보존하고, **표시 경로는 배선하지 않았다.**
 → **§quote-item-vendor-column** 상신.
 
+## 3-4. 왕복 스모크 — **미수행** (연결 DB 가 프로덕션)
+
+호영님 지시: 개발/로컬 DB 면 create→read→update→delete 왕복 1회로 매핑을 기계 증명하고,
+**프로덕션이면 하지 말고 `prisma validate` + 스키마 대조로 대체 + 미수행을 기록**할 것.
+
+### 판정 — 프로덕션이다
+
+```
+DATABASE_URL host = aws-1-ap-northeast-1.pooler.supabase.com:6543
+DIRECT_URL   host = aws-1-ap-northeast-1.pooler.supabase.com:5432
+```
+
+로컬이 아니라 Supabase 원격이다. **왕복 스모크를 수행하지 않았다.**
+
+### 대체 검증 — 기계적 필드 대조
+
+`prisma validate` → `The schema at prisma\schema.prisma is valid`.
+
+스키마에서 모델 필드 집합을 추출해 코드가 쓰는 필드명과 대조했다(사람 눈이 아니라 기계).
+
+| 대조 대상 | 결과 |
+|---|---|
+| `Quote.create` data (guestKey/title/description/items/totalAmount) | **OK 5/5** |
+| `Quote.update` data (title/description/status/totalAmount) | **OK 4/4** |
+| `Quote.findFirst` where (id/guestKey) | **OK 2/2** |
+| `QuoteListItem.create` data (productId/name/brand/catalogNumber/unitPrice/quantity/lineTotal/notes/raw) | **OK 9/9** |
+| 옛 필드 `message`/`snapshot` 이 스키마에 존재하는가 | **없음**(제거가 맞음) |
+| `vendor` | `Quote` 에만 존재, `QuoteListItem` 에는 **없음** — 항목별 복제 금지 판단이 스키마로 확인됨 |
+
+### ⚠️ 대조가 잡아낸 잔여 위험 1건 — `Quote.status` 는 enum
+
+`status` 는 `QuoteStatus` **enum** 인데 PATCH 는 body 값을 그대로 넘겼다.
+조건부 spread 라 typed client 도 잡지 못하는 자리다(§3-3 한계).
+enum 값 검증을 명시 추가했다 — 잘못된 값은 무시되고 런타임 실패로 가지 않는다.
+
+### 한계
+
+필드 **이름**은 기계로 검증했으나 **값의 형태**(예: `raw` JSON 구조, `quantity` 정수성)는
+왕복 없이는 확인되지 않는다. 이 부분은 미검증으로 남는다.
+
+## 3-5. item vendor 현재 화면 실측 — §fabricated-data-surface 약한 형태 2건
+
+호영님 지시로 "지금 무엇을 렌더하는가" 를 실측했다. **두 곳이 정보 부재를 정보 있음처럼
+보여주고 있었다.**
+
+| 위치 | 이전 | 문제 |
+|---|---|---|
+| 워크벤치 헤더 "공급사 N개" | `new Set(...).size \|\| 1` | vendor 가 하나도 없으면 size 0 → **`\|\| 1` 폴백이 "공급사 1개" 로 위장** |
+| CSV 내보내기 "벤더" 열 | `item.vendorName \|\| ""` | **빈 열은 받는 쪽이 "공급사 없음" 으로 읽는다** |
+
+교정: 집계는 0 이면 **"공급사 미지정"**, CSV 는 빈 문자열 대신 **"미지정"**.
+`§quote-item-vendor-column` 이 들어오기 전까지의 정직한 표시다.
+
+⚠️ `|| 1` 폴백은 특히 나쁘다 — 0 을 1 로 바꾸는 것은 없는 것을 있다고 말하는 것이고,
+숫자라서 사용자가 의심할 여지가 없다.
+
 ## 4. sentinel
 
 `src/__tests__/ops/phantom-model-call.test.ts` — P1(ratchet) / P2(공허 GREEN 방지).
@@ -277,8 +341,17 @@ export { db, dbTyped, isPrismaAvailable };
   따라야 한다 — 개인 등록을 허용하면 오매칭 위험이 재현된다(호영님).
 - **§inventory-alert-model-missing** (신규) — 재고 알림 설정·이력 2 모델 부재.
   위 설계 상신에 합류.
-- **§quote-list-model-mismatch** (신규) — `quoteList` 7회. 모델명 오기인지
-  설계 잔재인지 판정 필요. 워크벤치 견적 패널이 호출한다.
+- ~~**§quote-list-model-mismatch**~~ — **종결**. 오기로 판정·교정 완료(§3-1, §3-3).
+- **§ai-pipeline-purchase-entity** (신규) — `purchase` 2건. **3종 스키마 상신과 분리 유지**
+  (호영님): compliance_link·inventory_alert_* 는 "무엇을 저장할지 명확한데 모델이 없는"
+  경우이나, purchase 는 **무엇을 저장하려 했는지가 불명**이다. 그 상태로 모델을 만들면
+  두 번 만든다. ratchet 에 4건으로 남겨 미해결이 보이는 상태를 유지한다.
+  **선결 실측 2가지(지금 하지 않음)**:
+  ① 이 processor 가 무엇에서 호출되는가 — 크론/업로드 파이프라인/죽은 코드
+  ② 산출물이 무엇인가 — 인보이스 파싱 결과라면 대상은 구매 기록이 아니라 **문서**일 수 있다
+- **§quote-item-vendor-column** (신규) — `QuoteListItem` 항목별 vendor 컬럼 부재.
+  **4종 스키마 상신에 합류**(호영님): 컬럼 추가라 모델 신설보다 가볍고, 워크벤치
+  실사용 경로이며, 마이그레이션을 묶으면 배포 횟수가 준다. 독립성 확인 필요.
 - **§source-encoding-drift** (신규) — UTF-16/BOM 3파일 **+ mojibake 3파일 통합**.
   sentinel ratchet 은 이 트랙에 이미 심었다. 교정은 별도.
 - **§raw-sql-audit** (신규, 등재만) — `$queryRawUnsafe` 90 + `$executeRawUnsafe` 46 = **136회**.

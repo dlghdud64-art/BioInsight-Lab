@@ -404,7 +404,14 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                     </span>
                     <span className="flex items-center gap-1">
                       <Target className="h-3 w-3" />
-                      공급사 {new Set(quoteItems.map(item => item.vendorName).filter(Boolean)).size || 1}개
+                      {/* §fabricated-data-surface — `|| 1` 폴백은 vendor 정보가 하나도
+                          없을 때 "공급사 1개" 로 표시해 **정보 부재를 정보 있음으로 위장**했다.
+                          QuoteListItem 에 항목별 vendor 컬럼이 없어(§quote-item-vendor-column)
+                          저장·재로드 후에는 실제로 0 이 된다. 0 은 0 으로 말한다. */}
+                      {(() => {
+                        const n = new Set(quoteItems.map(item => item.vendorName).filter(Boolean)).size;
+                        return n > 0 ? `공급사 ${n}개` : "공급사 미지정";
+                      })()}
                     </span>
                     <Badge variant="secondary" className="text-[10px] bg-green-50 text-green-700 border-green-200">
                       발송 준비 완료
@@ -1307,7 +1314,9 @@ export function SharePanel() {
     const rows = quoteItems.map((item, index) => [
       (index + 1).toString(),
       `"${(item.productName || "").replace(/"/g, '""')}"`,
-      `"${(item.vendorName || "").replace(/"/g, '""')}"`,
+      // §fabricated-data-surface — 빈 열은 받는 쪽이 "공급사 없음" 으로 읽는다.
+      // 정보 부재는 명시한다(§quote-item-vendor-column 컬럼 추가 전까지의 정직한 표시).
+      `"${(item.vendorName || "미지정").replace(/"/g, '""')}"`,
       (item.quantity || 1).toString(),
       item.unitPrice ? `"${item.unitPrice.toLocaleString("ko-KR")}"` : '""',
       item.lineTotal ? `"${item.lineTotal.toLocaleString("ko-KR")}"` : '""',
