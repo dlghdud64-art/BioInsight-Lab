@@ -108,7 +108,7 @@ for (const f of sourceFiles(join(WEB_ROOT, "src"))) {
 const LEGACY_PHANTOM: readonly string[] = [
   // 2026-08-10 교정 완료로 제거: `inventory`→productInventory, `quoteList`→quote.
   //   `purchase` 는 단순 rename 이 불가함이 드러나 보류(§3-3).
-  "complianceLink",       // 모델 자체 부재 — §compliance-link-model-missing
+  // 2026-08-12 제거: `complianceLink` — 라우트 2개 삭제로 호출 소멸(표면 차단).
   "inventoryAlertLog",    // 모델 부재
   "inventoryAlertSetting",// 모델 부재
   "purchase",             // 실제 모델은 PurchaseRecord

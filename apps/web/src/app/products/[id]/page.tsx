@@ -131,16 +131,18 @@ export default function ProductDetailPage() {
   const product = displayProduct as any;
   const vendors = product.vendors || [];
 
-  // Compliance Links 조회
-  const { data: complianceLinksData } = useQuery({
-    queryKey: ["compliance-links", id],
-    queryFn: async () => {
-      const response = await fetch(`/api/compliance-links?productId=${id}`);
-      if (!response.ok) return { links: [] };
-      return response.json();
-    },
-    enabled: !!id,
-  });
+  /**
+   * §phantom-model-call — 규제 링크 조회 **미생성** (2026-08-12).
+   *
+   * 기존 코드는 `/api/compliance-links` 를 호출하고 `if (!response.ok) return { links: [] }`
+   * 로 **실패를 삼켰다**. 그런데 그 라우트는 존재하지 않는 `db.complianceLink` 를 부르고
+   * 있어 **항상 실패**했다. 결과적으로 화면은 "규제 링크 없음" 으로 보였다 —
+   * 조회가 실패한 것과 링크가 없는 것을 구분할 수 없는 상태였고, 안전·규제 축에서는
+   * 특히 위험하다(§fabricated-data-surface 의 조용한 형태).
+   *
+   * `ComplianceLink` 모델이 스키마에 신설된 뒤 이 블록을 되살린다.
+   * 그 전까지는 **만들지 않는다** — 빈 목록을 그리면 같은 거짓이 반복된다.
+   */
 
   /**
    * §3-1 우리 조직 재고 (B1, 2026-08-09) — 제품 단위 재고 조회.
@@ -258,13 +260,9 @@ export default function ProductDetailPage() {
     }
   };
 
-  const allComplianceLinks = (complianceLinksData?.links || []) as any[];
-  const filteredComplianceLinks = fetchedProduct
-    ? filterComplianceLinksForProduct(allComplianceLinks, fetchedProduct, (session?.user as any)?.organizationId || null)
-    : [];
-
-  const officialLinks = filteredComplianceLinks.filter((link) => link.linkType === "official");
-  const organizationLinks = filteredComplianceLinks.filter((link) => link.linkType === "organization");
+  // §phantom-model-call — 모델 신설 전까지 규제 링크는 조회하지 않는다(위 주석).
+  const officialLinks: any[] = [];
+  const organizationLinks: any[] = [];
   const isAdmin = session?.user?.role === "ADMIN";
 
   // 제품 조회 기록

@@ -76,7 +76,6 @@ const HIGH_RISK_ROUTE_PATTERNS: readonly string[] = [
   // ── 나머지 irreversible routes (alive) ──
   '/api/billing/payment-methods',
   '/api/budgets/[id]',
-  '/api/compliance-links/[id]',
   '/api/inventory/[id]',
   '/api/inventory/import/commit',
   '/api/organizations/[id]',

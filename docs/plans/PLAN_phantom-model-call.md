@@ -305,6 +305,56 @@ enum 값 검증을 명시 추가했다 — 잘못된 값은 무시되고 런타�
 ⚠️ `|| 1` 폴백은 특히 나쁘다 — 0 을 1 로 바꾸는 것은 없는 것을 있다고 말하는 것이고,
 숫자라서 사용자가 의심할 여지가 없다.
 
+## 3-6. `compliance_link` 표면 차단 (2026-08-12) — **페이지 삭제는 보류**
+
+### 처리 완료
+
+| 대상 | 처리 |
+|---|---|
+| `api/compliance-links/route.ts` | **삭제** |
+| `api/compliance-links/[id]/route.ts` | **삭제** |
+| `csrf-route-registry.ts` 등재분 | 제거 |
+| `products/[id]/page.tsx` 규제 링크 조회 | **미생성** (아래) |
+
+ratchet: `LEGACY_PHANTOM` **4 → 3** (`complianceLink` 호출 소멸).
+
+### 제품 상세는 화면 전체를 깨뜨리지 않았다 — **조용히 삼키고 있었다**
+
+호영님이 지시한 실측(화면 전체 파괴인가 부분 실패인가)의 답:
+
+```ts
+const response = await fetch(`/api/compliance-links?productId=${id}`);
+if (!response.ok) return { links: [] };      // ← 실패를 빈 목록으로 바꾼다
+```
+
+렌더 블록도 `length > 0` 일 때만 그리므로, **항상 실패하는 조회가 "규제 링크 없음" 으로
+보였다.** 조회 실패와 링크 부재를 구분할 수 없는 상태이며, 안전·규제 축에서는 특히
+위험하다 — §fabricated-data-surface 의 조용한 형태다.
+
+→ 조회 자체를 **미생성**으로 되돌렸다. 빈 목록을 그리면 같은 거짓이 반복된다.
+모델이 신설되면 블록을 되살린다.
+
+### ⚠️ 보류 — `settings/compliance-links` 페이지 삭제
+
+호영님 지시는 "컴플라이언스 설정 화면 미생성" 이었으나, 실행 중 **committed sentinel
+2개가 이 화면을 잠그고 있음**이 드러났다.
+
+| sentinel | 범위 |
+|---|---|
+| `settings-compliance-aria-label-270b.test.ts` (85줄) | **compliance-links 전용** — X 버튼 aria-label |
+| `settings-x-button-touch-target-270.test.ts` (117줄) | 3파일 중 1개가 compliance-links — 터치 영역 |
+
+메모리 규칙(**결정 교체는 명시 승인 — 충돌 시 구현 전 상신·halt**)에 따라
+**페이지 삭제를 멈추고 상신한다.** 지시 시점에 알 수 없던 사실이다.
+
+판단 요청:
+- (a) 페이지 삭제 + §11.270b 은퇴 + §11.270 에서 compliance 대상만 제거
+  (나머지 2파일 잠금은 유지) — 지시 그대로. 접근성 **정책**은 다른 화면에서 계속 잠긴다.
+- (b) 모델 신설까지 페이지 존치 — 지금은 API 가 없어 404 로 실패한다(이전엔 500).
+  어느 쪽이든 화면은 동작하지 않는다.
+
+현 상태는 (b) 다 — API 만 사라져 페이지는 남아 있다.
+
 ## 4. sentinel
 
 `src/__tests__/ops/phantom-model-call.test.ts` — P1(ratchet) / P2(공허 GREEN 방지).
