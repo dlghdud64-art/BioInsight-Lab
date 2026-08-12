@@ -1,6 +1,7 @@
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
+import { requiresDestructiveConfirmation } from "@/lib/security/production-database";
 
 /**
  * §admin-seed-prod-guard — 프로덕션 시드 실행에 요구하는 명시적 override 값.
@@ -35,7 +36,11 @@ export async function POST(request: NextRequest) {
     //   middleware 가 ADMIN 만 통과시키지만, 확인 절차 없는 POST 한 번이
     //   프로덕션 DB 에 데모 벤더/제품을 upsert 하는 구조는 그대로였다.
     //   실수 실행을 막는 것이 목적이므로 우연히 만족할 수 없는 값을 요구한다.
-    if (process.env.NODE_ENV === "production") {
+    // ⚠️ 2026-08-10 교정: 기준을 NODE_ENV 에서 **DB host** 로 바꿨다.
+    //   로컬(.env)이 운영 Supabase 를 직접 가리키고 있어
+    //   NODE_ENV=development 로 가드가 통과되면 seed 가 운영 데이터에 upsert 된다.
+    //   NODE_ENV 는 코드가 어디서 도는지를 말할 뿐, 데이터가 어디로 가는지를 말하지 않는다.
+    if (requiresDestructiveConfirmation()) {
       const body = await request.json().catch(() => ({} as Record<string, unknown>));
       if (body?.confirmProductionSeed !== SEED_PRODUCTION_TOKEN) {
         enforcement.fail();

@@ -254,7 +254,7 @@ export { db, dbTyped, isPrismaAvailable };
 호영님 지시: 개발/로컬 DB 면 create→read→update→delete 왕복 1회로 매핑을 기계 증명하고,
 **프로덕션이면 하지 말고 `prisma validate` + 스키마 대조로 대체 + 미수행을 기록**할 것.
 
-### 판정 — 프로덕션이다
+### 판정 — 프로덕션이다 (→ §dev-prod-db-separation 발원)
 
 ```
 DATABASE_URL host = aws-1-ap-northeast-1.pooler.supabase.com:6543
@@ -341,7 +341,10 @@ enum 값 검증을 명시 추가했다 — 잘못된 값은 무시되고 런타�
   따라야 한다 — 개인 등록을 허용하면 오매칭 위험이 재현된다(호영님).
 - **§inventory-alert-model-missing** (신규) — 재고 알림 설정·이력 2 모델 부재.
   위 설계 상신에 합류.
-- ~~**§quote-list-model-mismatch**~~ — **종결**. 오기로 판정·교정 완료(§3-1, §3-3).
+- **§quote-list-model-mismatch** — **부분 종결**(호영님 2026-08-10):
+  **필드명 검증 완료 / 값 형태 미검증**. 오기 판정·교정은 끝났으나 왕복 스모크를
+  못 돌려(운영 DB) `raw` JSON 구조·`quantity` 정수성은 확인되지 않았다.
+  개발 DB 분리 후 왕복으로 닫는다 → §dev-prod-db-separation.
 - **§ai-pipeline-purchase-entity** (신규) — `purchase` 2건. **3종 스키마 상신과 분리 유지**
   (호영님): compliance_link·inventory_alert_* 는 "무엇을 저장할지 명확한데 모델이 없는"
   경우이나, purchase 는 **무엇을 저장하려 했는지가 불명**이다. 그 상태로 모델을 만들면

@@ -29,13 +29,34 @@ function stripComments(src: string): string {
 
 const ROUTE = "src/app/api/admin/seed/route.ts";
 const MIDDLEWARE = "src/middleware.ts";
+const GUARD = "src/lib/security/production-database.ts";
 
 describe("§admin-seed-prod-guard S1/S2/S3 — 프로덕션 이중 게이트", () => {
-  it("S1. NODE_ENV === production 분기가 존재한다", () => {
+  /**
+   * ⚠️ 2026-08-10 교정 — **가드 기준이 NODE_ENV 에서 DB host 로 바뀌었다.**
+   *
+   * 로컬 `.env` 가 운영 Supabase 를 직접 가리키고 있어(§dev-prod-db-separation),
+   * `NODE_ENV === "production"` 기준 가드는 로컬에서 통과된다. 즉 무력했다.
+   * `NODE_ENV` 는 코드가 어디서 도는지를 말할 뿐, **데이터가 어디로 가는지**를 말하지 않는다.
+   */
+  it("S1. 가드가 존재하고 차단 코드/상태를 낸다", () => {
     const code = stripComments(read(ROUTE));
-    expect(code).toMatch(/process\.env\.NODE_ENV\s*===\s*"production"/);
+    expect(code).toMatch(/requiresDestructiveConfirmation\s*\(\s*\)/);
     expect(code).toMatch(/SEED_PRODUCTION_BLOCKED/);
     expect(code).toMatch(/status:\s*403/);
+  });
+
+  it("S1-c. 가드가 NODE_ENV 만 보는 형태로 되돌아가지 않는다", () => {
+    const code = stripComments(read(ROUTE));
+    // 라우트가 직접 NODE_ENV 를 판정 기준으로 쓰면 로컬→운영DB 구멍이 재발한다.
+    expect(code).not.toMatch(/if\s*\(\s*process\.env\.NODE_ENV/);
+  });
+
+  it("S1-d. 판정기가 DB host 를 주 기준으로 본다", () => {
+    const code = stripComments(read(GUARD));
+    expect(code).toMatch(/DATABASE_URL/);
+    expect(code).toMatch(/DIRECT_URL/);
+    expect(code).toMatch(/supabase/i);
   });
 
   it("S2. override 는 고정 문자열 일치 검사다 (truthy 검사 금지)", () => {
@@ -54,7 +75,7 @@ describe("§admin-seed-prod-guard S1/S2/S3 — 프로덕션 이중 게이트", (
   it("S1-b. 가드가 핸들 생성 이후에 온다 (거부도 집행 경로 안에서 일어난다)", () => {
     const code = stripComments(read(ROUTE));
     const lock = code.indexOf("enforceAction({");
-    const guard = code.indexOf('process.env.NODE_ENV === "production"');
+    const guard = code.indexOf("requiresDestructiveConfirmation()");
     expect(lock).toBeGreaterThan(-1);
     expect(guard).toBeGreaterThan(lock);
   });
