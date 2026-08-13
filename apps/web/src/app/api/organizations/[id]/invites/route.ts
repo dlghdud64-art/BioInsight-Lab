@@ -1,3 +1,22 @@
+/**
+ * 조직 초대 API — ⚠️ **미완 (§onboarding-blocker #7, 2026-08-12)**
+ *
+ * 이 라우트는 **정상 동작한다** — 토큰을 만들고 `inviteUrl` 을 돌려준다.
+ * 그런데 **수락 화면 `/invite/{token}` 이 존재하지 않는다.** 토큰을 검증해
+ * `OrganizationMember` 를 만드는 코드도 없다(`acceptedAt` 쓰기 0).
+ * 즉 링크를 공유하면 **받는 사람은 404 를 본다.**
+ *
+ * 그래서 **호출하는 UI 를 미생성 상태로 두었다** (`settings/workspace`).
+ * disabled 가 아니라 미생성이다 — 관리자에게 "링크 복사됨" toast 로 성공을 알리면서
+ * 실제로는 끊긴 링크를 주던 상태(dead link + placeholder success)를 끊는 것이다.
+ *
+ * 라우트를 **지우지 않는 이유**: 생성 절반은 멀쩡하다. 지우면 다시 만들어야 한다.
+ * 지금 호출자 0 인 것은 §phantom-model-call 의 dead file 과 다르다 —
+ * **"곧 쓸 것" 이 여기 명시돼 있고 sentinel 이 짝을 강제한다.**
+ *
+ * 되살리는 순서: ① §org-scope-ambiguity(다중 소속 오선택) → ② 수락 화면 →
+ *   ③ sentinel 승계 → ④ UI 복원. **①을 건너뛰면 초대가 그 결함을 활성화한다.**
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";

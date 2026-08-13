@@ -133,6 +133,13 @@ function WorkspaceSettingsPageContent() {
   const invites = invitesData?.invites || [];
   const activeInvite = invites.find((inv: any) => !inv.used && (!inv.expiresAt || new Date(inv.expiresAt) > new Date()));
 
+  /**
+   * ⚠️ 아래 초대 관련 헬퍼들(`copyInviteLink` · `handleCreateInviteLink` ·
+   *   `createInviteLinkMutation` · `activeInvite`)은 **현재 호출자가 없다.**
+   *   §onboarding-blocker #7 로 초대 UI 를 미생성 상태로 두었기 때문이며,
+   *   **수락 화면 `/invite/[token]` 이 생기면 UI 와 함께 되살릴 대상**이다.
+   *   (dead code 가 아니라 **의도된 미완** — sentinel 이 짝을 강제한다.)
+   */
   // 링크 복사
   const copyInviteLink = (token: string) => {
     const inviteUrl = `${window.location.origin}/invite/${token}`;
@@ -572,80 +579,36 @@ function WorkspaceSettingsPageContent() {
                     </CardContent>
                   </Card>
 
-                        {/* 초대 링크 */}
+                        {/* ── 초대 링크 — §onboarding-blocker #7 로 **UI 미생성** (2026-08-12) ──
+                            수락 화면 `/invite/{token}` 이 **없다**. 그래서 링크를 만들어
+                            공유하면 받는 사람은 404 를 본다. 그런데 관리자에게는
+                            "링크 복사됨" toast 가 떠서 **성공으로 보였다** —
+                            dead link + placeholder success 가 겹친 형태였다.
+
+                            · 버튼·폼을 **만들지 않는다**(disabled 아님 — 미생성)
+                            · API 라우트는 **유지**한다. 생성 절반은 정상 동작하므로
+                              지우면 멀쩡한 절반을 버리고 다시 만들게 된다
+                            · 수락 화면이 생기면 sentinel 단언을 승계해야 이 UI 가
+                              돌아온다 — 그것이 짝을 강제한다
+
+                            ⚠️ 초대를 먼저 살리면 §org-scope-ambiguity 가 발현한다
+                            (다중 소속 데이터가 생기는 순간 orgs[0]·findFirst 오선택).
+                            순서상 그쪽이 먼저다. */}
                         <Card>
                           <CardHeader>
                             <CardTitle className="text-sm font-semibold">초대 링크</CardTitle>
                             <CardDescription className="text-xs mt-1">
-                              초대 링크를 생성하여 팀원을 초대할 수 있습니다.
+                              초대 받는 화면이 아직 없어 링크 생성을 열어두지 않았습니다.
+                              현재는 조직 관리자가 직접 계정을 만들어야 합니다.
                             </CardDescription>
                           </CardHeader>
-                          <CardContent className="space-y-4">
-                            {activeInvite ? (
-                              <div className="space-y-3">
-                                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                                  <div className="flex items-start justify-between gap-3">
-                                    <div className="flex-1">
-                                      <div className="flex items-center gap-2 mb-2">
-                                        <Check className="h-4 w-4 text-blue-600" />
-                                        <span className="text-sm font-medium text-blue-900">
-                                          활성 초대 링크
-                                        </span>
-                                      </div>
-                                      <p className="text-xs text-blue-700 mb-3">
-                                        {activeInvite.expiresAt
-                                          ? `만료일: ${new Date(activeInvite.expiresAt).toLocaleDateString("ko-KR")}`
-                                          : "만료 없음"}
-                                      </p>
-                                      <div className="flex items-center gap-2">
-                                        <Input
-                                          value={`${typeof window !== "undefined" ? window.location.origin : ""}/invite/${activeInvite.token}`}
-                                          readOnly
-                                          className="text-xs font-mono"
-                                        />
-                                        <Button
-                                          size="sm"
-                                          onClick={() => copyInviteLink(activeInvite.token)}
-                                        >
-                                          {copiedLink === activeInvite.token ? (
-                                            <Check className="h-4 w-4" />
-                                          ) : (
-                                            <Copy className="h-4 w-4" />
-                                          )}
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                                <Button
-                                  variant="outline"
-                                  onClick={handleCreateInviteLink}
-                                  disabled={createInviteLinkMutation.isPending}
-                                >
-                                  <UserPlus className="h-4 w-4 mr-2" />
-                                  새 초대 링크 생성
-                                </Button>
-                              </div>
-                            ) : (
-                              <div className="text-center py-6">
-                                <p className="text-sm text-muted-foreground mb-4">
-                                  활성 초대 링크가 없습니다.
-                                </p>
-                                <Button
-                                  onClick={handleCreateInviteLink}
-                                  disabled={createInviteLinkMutation.isPending}
-                                >
-                                  <UserPlus className="h-4 w-4 mr-2" />
-                                  초대 링크 생성
-                                </Button>
-                              </div>
-                            )}
-                            <div className="pt-3 border-t border-bd">
-                              <p className="text-xs text-muted-foreground flex items-center gap-2">
-                                <Clock className="h-3 w-3" />
-                                초대 링크는 기본적으로 7일 후 만료됩니다.
-                              </p>
-                            </div>
+                          <CardContent>
+                            {/* "7일 후 만료" 각주도 함께 제거 — 만들 수 없는 링크의
+                                만료 정책을 안내하는 것은 있는 기능처럼 보이게 한다. */}
+                            <p className="text-xs text-muted-foreground flex items-center gap-2">
+                              <Clock className="h-3 w-3" aria-hidden="true" />
+                              초대 기능은 준비 중입니다 (§onboarding-blocker #7).
+                            </p>
                           </CardContent>
                         </Card>
                       </TabsContent>
