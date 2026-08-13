@@ -137,16 +137,30 @@ export async function createOrganization(
       throw new Error("Organization 생성 실패: 모든 시도 경로가 실패했습니다.");
     }
 
-    // 2) 생성자 → Organization ADMIN
+    /**
+     * 2) 생성자 → Organization **OWNER**
+     *
+     * §team-org-role-model Phase 2 (호영님 승인 2026-08-12).
+     *   이전: `ADMIN`. 그 결과 `role: "OWNER"` 를 DB 에 쓰는 코드가 repo 전수 0 이었고,
+     *   **OWNER 는 유령 역할**이었다. 화면은 OWNER 로 표시하는데 DB 는 ADMIN(거짓 표시),
+     *   approver-routing 의 OWNER 기반 승인자 선택은 항상 fallback 으로 빠졌다.
+     *
+     * ⚠️ Phase 1(판정 16곳에 OWNER 추가)이 **반드시 선행**한다. 순서를 뒤집으면
+     *   조직 생성자가 안전지출·SDS·보안설정 표면에서 403 을 받는다 —
+     *   **OWNER 도입이 곧 권한 상실**이 된다.
+     *
+     * update 분기도 OWNER 로 둔다. 방금 만든 조직이라 기존 멤버가 있을 수 없어
+     * 실제로는 create 만 타지만, 두 분기가 다른 역할을 주면 드리프트의 씨앗이 된다.
+     */
     await tx.organizationMember.upsert({
       where: {
         userId_organizationId: { userId, organizationId: organization.id },
       },
-      update: { role: "ADMIN" },
+      update: { role: "OWNER" },
       create: {
         organizationId: organization.id,
         userId,
-        role: "ADMIN",
+        role: "OWNER",
       },
     });
 

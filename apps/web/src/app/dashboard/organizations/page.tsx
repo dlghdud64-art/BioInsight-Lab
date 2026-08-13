@@ -171,7 +171,9 @@ function getOrgWarnings(org: OrgRow): { icon: React.ReactNode; text: string; sev
 /* ------------------------------------------------------------------ */
 
 export default function OrganizationsPage() {
-  const { status } = useSession();
+  // §fabricated-data-surface — 생성 직후 낙관적 행의 role 을 **DB 응답에서 도출**하려면
+  //   내 userId 가 필요하다(하드코딩 금지). §team-org-role-model Phase 2.
+  const { status, data: session } = useSession();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -262,17 +264,37 @@ export default function OrganizationsPage() {
       const createdOrg = (json as any).organization;
       const newOrgId: string | null = createdOrg?.id ?? null;
 
-      const mapped: OrgRow = {
-        id: newOrgId ?? String(Date.now()),
-        name: createdOrg?.name ?? formData.name.trim(),
-        description: createdOrg?.description ?? formData.description.trim() ?? "",
-        memberCount: Array.isArray(createdOrg?.members) ? createdOrg.members.length : 1,
-        adminCount: 1,
-        pendingCount: 0,
-        plan: createdOrg?.plan ?? "FREE",
-        role: "OWNER",
-      };
-      setOrganizations((prev) => [mapped, ...prev]);
+      /**
+       * §fabricated-data-surface — 거짓 표시 제거 (§team-org-role-model Phase 2, 2026-08-12).
+       *
+       * 이전: `role: "OWNER"` **하드코딩**. 그런데 DB 는 `ADMIN` 이었다
+       * (생성 upsert 가 ADMIN 을 썼다) — **화면과 DB 가 어긋난 상태**였고,
+       * 사용자는 자기가 OWNER 라고 믿을 근거를 화면에서만 얻었다.
+       *
+       * 지금: **서버 응답의 내 멤버십에서 도출**한다. 도출할 수 없으면
+       * **낙관적 행을 넣지 않는다** — 모르는 값을 지어내지 않는다(빈 값도 지어내기다).
+       * 목적지 페이지가 어차피 truth 를 조회하므로 손실도 없다.
+       */
+      const myMembership = (Array.isArray(createdOrg?.members) ? createdOrg.members : []).find(
+        (m: any) => m?.userId === session?.user?.id,
+      );
+      const derivedRole: string | null = myMembership?.role ?? null;
+
+      if (derivedRole) {
+        const members: any[] = Array.isArray(createdOrg?.members) ? createdOrg.members : [];
+        const mapped: OrgRow = {
+          id: newOrgId ?? String(Date.now()),
+          name: createdOrg?.name ?? formData.name.trim(),
+          description: createdOrg?.description ?? formData.description.trim() ?? "",
+          memberCount: members.length,
+          // 이전 `adminCount: 1` 도 같은 계열의 지어낸 값이었다 — 응답에서 센다.
+          adminCount: members.filter((m: any) => m?.role === "OWNER" || m?.role === "ADMIN").length,
+          pendingCount: 0,
+          plan: createdOrg?.plan ?? "FREE",
+          role: derivedRole,
+        };
+        setOrganizations((prev) => [mapped, ...prev]);
+      }
 
       toast({ title: "조직 생성 완료", description: "새로운 조직이 성공적으로 생성되었습니다." });
       setIsOpen(false);

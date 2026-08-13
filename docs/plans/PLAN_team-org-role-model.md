@@ -395,6 +395,57 @@ Phase 1 재sweep 에서 1곳이 더 나왔다:
 → sentinel 의 `DEAD_FILE_EXCEPTIONS` 에 사유와 함께 기록했고, 파일이 되살아나면
 예외에서 빼고 고쳐야 한다. **dead file 자체의 정리는 별건.**
 
+---
+
+## Phase 2 — **착수 완료** (2026-08-12)
+
+| 항목 | 결과 |
+|---|---|
+| ① 조직 생성자 → `OWNER` | `lib/api/organizations.ts` upsert. `create`·`update` 두 분기 모두(다른 역할을 주면 드리프트의 씨앗) |
+| ② 거짓 표시 제거 | `dashboard/organizations` 낙관적 행의 `role: "OWNER"` 하드코딩 폐기 → **서버 응답의 내 멤버십에서 도출.** 도출 불가면 **행을 넣지 않는다**(빈 값도 지어내기다). `adminCount: 1` 도 같은 계열이라 응답에서 센다 |
+| ③ approver-routing | §Phase2-③ 참조 |
+| ④ 기존 1행 승격 | **손대지 않음** (운영 DB 쓰기) |
+
+sentinel: `ops/org-role-owner-inclusion.test.ts` 에 §fabricated-data-surface describe 추가
+(11 assertions). corrupt→RED — `role: derivedRole` 를 `role: "OWNER"` 로 되돌리면 RED.
+
+### Phase2-③ approver-routing — **살아난다. 단 조건이 있다**
+
+`lib/billing/approver-routing.ts:115` HIGH tier 는 `role: "OWNER"` 를 직접 조회하므로
+OWNER 가 생기면 **코드 변경 없이 fallback 을 벗어난다.** 별건 아님.
+
+⚠️ 다만 같은 where 에 **`userId: { not: requesterId }`** 가 있다. 즉:
+
+> **요청자 본인이 유일한 OWNER 인 조직에서는 여전히 fallback 을 탄다.**
+
+이는 자기 결재 금지라 **설계대로**다. 그러나 "OWNER 가 생기면 살아난다" 는 서술은
+**조직에 요청자 외의 OWNER 가 있을 때** 성립한다. 1인 조직에서는 변화가 없다.
+
+### 🛑 Phase2-④ 추가 실측 — **4번째 "형태 ≠ 동작"**
+
+호영님 지시: *"형태로는 맞지만 그게 실제 판정 경로 전부인지는 별개."*
+
+Phase 1 의 16곳에 **다른 role 게이트가 겹쳐 있는지** 전수 확인했다. 라우트 내부에는
+없었으나(각 파일당 판정 1개), **`middleware.ts` 에 admin deny-by-default 구간이 있다**:
+
+```
+/admin/* · /dashboard/admin/* · /api/admin/*  →  User.role === 'ADMIN' 필요
+```
+
+**따라서 `app/admin/safety/page.tsx` 는 조직 OWNER 가 도달할 수 없다.**
+그 파일의 OWNER 추가는 **동작 무관**이다 — 시스템 ADMIN 전용 표면이다.
+
+- 되돌리지 않는다: 표면이 admin 구간 밖으로 나가면 이미 옳다
+- sentinel 에 도달성 주석 + `admin 구간 안 교정 지점은 1곳뿐` 단언으로 고정했다
+- 나머지 **15곳은 admin 구간 밖**이라 도달 가능하다
+
+### ⚠️ 이 실측의 한계 — 정적이다
+
+"다른 게이트가 없다" 는 **정적 분석 결과**다. 진짜 통과 확인은 **OWNER 세션으로 DB 를
+가진 채 호출**해야 하며, 그것은 왕복 검증 항목이다. 왕복 시나리오에 넣는다:
+
+> 조직 생성 → 내 역할이 화면·DB 모두 `OWNER` 인가 → 안전지출·SDS·보안설정 15곳 접근
+
 ## 2. 재개 시 실측 항목 (설계 전 — 설계는 그 다음)
 
 - 두 enum 이 각각 어느 판정 지점에서 쓰이는가

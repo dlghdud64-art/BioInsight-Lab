@@ -128,4 +128,63 @@ describe("§org-role-owner O3 — Phase 1 교정 16곳 회귀 0", () => {
   it("목록이 16곳이다 (축소되면 은폐 — 늘리는 것은 허용)", () => {
     expect(FIXED.length).toBe(16);
   });
+
+  /**
+   * ⚠️ 도달성 주석 (Phase 2 실측 2026-08-12) — 16곳 중 **`app/admin/safety/page.tsx` 1곳은
+   *   조직 OWNER 가 도달할 수 없다.** `middleware.ts` 의 admin deny-by-default 구간
+   *   (`/admin/*` → `User.role === 'ADMIN'` 필요)에 걸린다. 즉 그 파일의 OWNER 추가는
+   *   **동작 무관**이며, 되돌리지 않고 두는 이유는 표면이 admin 구간 밖으로 나가면
+   *   이미 옳기 때문이다. **"형태가 맞다" 와 "동작한다" 는 다르다** — 이 세션 4번째 사례.
+   *   나머지 15곳(`/api/safety*` · `/api/products/*` · `/api/sds/*` ·
+   *   `/api/organizations/*` · `/settings/*`)은 admin 구간 밖이라 도달 가능하다.
+   */
+  it("admin 구간 안에 있는 교정 지점은 admin/safety 하나뿐이다", () => {
+    const inAdminZone = FIXED.filter(
+      (p) => p.startsWith("src/app/admin/") || p.startsWith("src/app/api/admin/"),
+    );
+    expect(inAdminZone).toEqual(["src/app/admin/safety/page.tsx"]);
+  });
+});
+
+/**
+ * §fabricated-data-surface — 조직 생성 직후 행의 role 은 **DB 응답에서 도출**한다
+ *
+ * 배경: `dashboard/organizations/page.tsx` 가 생성 직후 낙관적 행에
+ *   `role: "OWNER"` 를 **하드코딩**했다. 그런데 DB 는 `ADMIN` 이었다
+ *   (§team-org-role-model Phase 2 전). **화면과 DB 가 어긋난 상태**였고,
+ *   사용자는 자기가 OWNER 라는 근거를 화면에서만 얻었다.
+ *
+ * 계약: 지어내지 않는다. 도출 불가면 행을 넣지 않는다(빈 값도 지어내기다).
+ */
+describe("§fabricated-data-surface — 조직 role 하드코딩 0", () => {
+  /**
+   * ⚠️ `FILES` 는 `OrganizationRole` 을 포함한 파일만 모은다. 이 페이지는 role 을
+   *   **문자열로** 다루므로 그 목록에 없다 — 직접 읽는다.
+   *   (첫 작성 때 `FILES.find` 로 두어 `undefined` 가 됐고, "대상 파일이 수집된다"
+   *    단언이 잡았다. §3-4 무음 실패 금지가 실제로 작동한 사례.)
+   */
+  const ORG_PAGE = "src/app/dashboard/organizations/page.tsx";
+  const page = {
+    path: ORG_PAGE,
+    code: stripComments(readFileSync(join(WEB_ROOT, ORG_PAGE), "utf8")),
+  };
+
+  it("대상 파일이 수집된다", () => {
+    expect(page.code.length).toBeGreaterThan(1000);
+  });
+
+  it('role 을 리터럴로 지정하지 않는다 (role: "OWNER" / "ADMIN" 하드코딩 0)', () => {
+    expect(page.code).not.toMatch(/role:\s*["'](OWNER|ADMIN)["']/);
+  });
+
+  it("내 멤버십에서 도출한다 + 도출 실패 시 행 미삽입", () => {
+    expect(page.code).toMatch(/m\?\.userId === session\?\.user\?\.id/);
+    expect(page.code).toMatch(/derivedRole/);
+    expect(page.code).toMatch(/if \(derivedRole\)/);
+  });
+
+  it("adminCount 도 응답에서 센다 (이전 하드코딩 1 폐기)", () => {
+    expect(page.code).not.toMatch(/adminCount:\s*1\b/);
+    expect(page.code).toMatch(/adminCount:\s*members\.filter/);
+  });
 });
