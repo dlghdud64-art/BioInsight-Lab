@@ -299,6 +299,74 @@ backfill 이 사라졌으므로 **이 트랙 전체가 운영 DB 쓰기 없이 �
 → 팀 생성 시 **조직 선택 UI 가 실제 비용**이다. 자동 도출로 둘 수 없다.
 → §org-scope-ambiguity 는 잠재 결함이 아니라 **이미 발생 중인 결함**이다.
 
+---
+
+## 1-I. 실측 ⑤ — `=== "ADMIN"` 단독 판정 지점 (2026-08-12)
+
+호영님 분기 기준: *"없다 → OWNER 추가는 동작 불변, 비용은 한 줄.
+있다 → 그 지점들은 OWNER 를 배제하므로 실해. 목록을 뽑아 보고."*
+
+### 답: **있다. 서버 게이트 13곳 + 클라이언트 판정 3곳**
+
+`{ in: ["OWNER", "ADMIN"] }` 형태만 있었다면 비용은 한 줄이었을 것이다. 그러나
+**OWNER 를 빠뜨린 판정이 별도로 존재**하고, 거기서는 OWNER 가 **거부**된다.
+
+#### 서버 게이트 — OWNER 403 (실해)
+
+| # | 지점 | 형태 |
+|---|---|---|
+| 1 | `api/safety-spend/route.ts:33` | `ADMIN \|\| APPROVER \|\| VIEWER` |
+| 2 | `api/safety-spend/unmapped/route.ts:32` | 〃 |
+| 3 | `api/safety/spend/export/route.ts:35` | 〃 |
+| 4 | `api/safety/spend/map/route.ts:71` | 〃 |
+| 5 | `api/safety/spend/summary/route.ts:36` | 〃 |
+| 6 | `api/safety/spend/unmapped/route.ts:36` | 〃 |
+| 7 | `api/products/[id]/safety/route.ts:77` | `in: [ADMIN, VIEWER]` |
+| 8 | `api/products/[id]/sds/route.ts:178` | `ADMIN \|\| VIEWER` |
+| 9 | `api/safety/products/route.ts:48` | 〃 |
+| 10 | `api/safety/sds/route.ts:24` | `in: [ADMIN, VIEWER]` |
+| 11 | `api/sds/[id]/apply/route.ts:77` | 〃 |
+| 12 | `api/sds/[id]/extract/route.ts:61` | 〃 |
+| 13 | `api/organizations/[id]/security/route.ts:90` | `role: ADMIN` **단독 where** |
+
+#### 클라이언트 판정 — OWNER 가 권한 없음으로 표시
+
+| 지점 | 변수 |
+|---|---|
+| `app/admin/safety/page.tsx:83` | `isSafetyAdmin` |
+| `app/settings/audit/page.tsx:77` | `isAdmin` |
+| `app/settings/security/page.tsx:52` | `isAdmin` |
+
+#### 대상 아님 (혼동 주의)
+
+- `api/workspaces/[id]/*` 3곳 · `lib/auth/scope.ts:181` · `lib/billing/plan-select.ts:148`
+  → **`WorkspaceMember`** 다. 별도 모델·별도 enum. OWNER 도입과 무관
+- `api/budgets/[id]/route.ts:17` → `OWNER || ADMIN` 이라 정상 (오탐)
+- `settings/workspace/page.tsx:485` → 이미 `isOwner` 분기 보유
+
+### ⚠️ 부수 발견 — `VIEWER` 가 safety_admin 으로 과적재돼 있다
+
+7~12번 계열의 주석이 명시한다: **`// VIEWER = safety_admin`**.
+안전 표면에서 `OrganizationRole.VIEWER` 를 "조회 전용" 이 아니라 **"안전 관리자"** 로
+쓰고 있다. 그래서 그 게이트가 `[ADMIN, VIEWER]` 인 것이며, OWNER 누락도 이 과적재와
+같은 뿌리로 보인다(역할 축이 두 개인데 enum 이 하나다).
+
+→ §org-scope-ambiguity 로 넘긴다. 이번 (나) 범위에서 건드리지 않는다.
+
+### 범위 재판정 (승인 대기)
+
+(나)의 비용이 `organizations.ts` 한 줄이 아니다. **최소 2단계**다.
+
+1. **선행** — 위 13곳(서버)에 OWNER 를 더한다. **동작 확대만 발생**하고 축소는 없다
+   (지금 통과하는 사람은 그대로 통과, OWNER 만 추가로 통과)
+2. 그다음 조직 생성자 → `OWNER` 한 줄
+
+⚠️ **순서를 뒤집으면 안 된다.** OWNER 를 먼저 만들면, 그 순간부터 조직 생성자가
+안전 지출·SDS·보안 설정 13개 표면에서 **403 을 받는다.** 지금은 ADMIN 이라 통과하고
+있으므로, **OWNER 도입이 곧 권한 상실**이 되는 역전이 일어난다.
+
+클라이언트 3곳은 서버와 같은 배포에 넣는다(서버만 열면 UI 가 여전히 막는다).
+
 ## 2. 재개 시 실측 항목 (설계 전 — 설계는 그 다음)
 
 - 두 enum 이 각각 어느 판정 지점에서 쓰이는가

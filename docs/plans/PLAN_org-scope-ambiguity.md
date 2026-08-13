@@ -53,6 +53,28 @@
 
 ---
 
+## 2-A. 두 번째 갈래 — `VIEWER` 가 safety_admin 으로 과적재돼 있다 (2026-08-12)
+
+§team-org-role-model 실측 ⑤ 중 드러났다. 안전 표면 6곳의 게이트가
+`[OrganizationRole.ADMIN, OrganizationRole.VIEWER]` 이고, 주석이 이유를 밝힌다:
+
+> `// VIEWER = safety_admin`
+
+`api/products/[id]/safety:77` · `api/products/[id]/sds:178` · `api/safety/products:48` ·
+`api/safety/sds:24` · `api/sds/[id]/apply:77` · `api/sds/[id]/extract:61`
+
+**`VIEWER`(조회 전용)가 안전 표면에서는 "안전 관리자" 를 뜻한다.** 즉 조직 역할 축과
+안전 권한 축이 다른데 enum 이 하나뿐이라 값을 겹쳐 쓰고 있다.
+
+파급:
+- 조회 권한만 주려고 `VIEWER` 를 부여하면 **SDS 편집·적용 권한까지 함께 간다**
+- 반대로 안전 관리자를 만들려면 다른 데이터에 대한 조회 전용 의미를 감수해야 한다
+- 같은 계열 게이트가 `OWNER` 를 빠뜨린 것도 이 과적재와 같은 뿌리로 보인다
+  (역할 축이 둘인데 값 조합으로 때우다 최고 권한자를 잊었다)
+
+⚠️ 미실측: `VIEWER` 를 실제로 부여받은 사용자가 있는지, UI 가 이 이중 의미를
+사용자에게 어떻게 설명하는지.
+
 ## 3. 아직 재지 않은 것
 
 - `findFirst` 로 조직을 고르는 지점의 **전수**(위 목록은 상한이 아니라 표본)
