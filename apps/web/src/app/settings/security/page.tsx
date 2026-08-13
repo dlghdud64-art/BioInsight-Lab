@@ -49,7 +49,9 @@ function SecuritySettingsPageContent() {
   const currentMembership = currentOrg?.members?.find(
     (m: any) => m.userId === session?.user?.id
   );
-  const isAdmin = currentMembership?.role === OrganizationRole.ADMIN;
+  const isAdmin =
+    currentMembership?.role === OrganizationRole.OWNER ||
+    currentMembership?.role === OrganizationRole.ADMIN;
 
   // 보안 설정 조회
   const { data: securityData, isLoading: securityLoading } = useQuery({

@@ -83,11 +83,14 @@ export async function PATCH(
     if (!enforcement.allowed) return enforcement.deny();
 
     // 관리자 권한 확인
+    // §team-org-role-model Phase 1 (2026-08-12) — OWNER 추가. 동작 확대만(축소 0).
+    //   이전 `role: ADMIN` 단독 where 는 조직 최고 관리자를 403 으로 막았다.
+    //   OWNER 를 먼저 열지 않고 OWNER 부여를 하면 "도입이 곧 권한 상실" 이 된다.
     const adminMembership = await db.organizationMember.findFirst({
       where: {
         userId: session.user.id,
         organizationId: id,
-        role: OrganizationRole.ADMIN,
+        role: { in: [OrganizationRole.OWNER, OrganizationRole.ADMIN] },
       },
     });
 

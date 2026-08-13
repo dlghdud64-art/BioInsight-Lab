@@ -74,7 +74,9 @@ function AuditLogsPageContent() {
   const currentMembership = currentOrg?.members?.find(
     (m: any) => m.userId === session?.user?.id
   );
-  const isAdmin = currentMembership?.role === OrganizationRole.ADMIN;
+  const isAdmin =
+    currentMembership?.role === OrganizationRole.OWNER ||
+    currentMembership?.role === OrganizationRole.ADMIN;
 
   // 감사 로그 조회
   const { data: auditData, isLoading: auditLoading } = useQuery({

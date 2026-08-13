@@ -367,6 +367,34 @@ backfill 이 사라졌으므로 **이 트랙 전체가 운영 DB 쓰기 없이 �
 
 클라이언트 3곳은 서버와 같은 배포에 넣는다(서버만 열면 UI 가 여전히 막는다).
 
+### Phase 1 — **착수 완료** (2026-08-12)
+
+서버 13 + 클라이언트 3 = **16곳에 `OWNER` 추가.** 동작 확대만, 축소 0.
+VIEWER 과적재는 **건드리지 않았다**(두 축을 한 커밋에 섞으면 판독 불가).
+
+sentinel `src/__tests__/ops/org-role-owner-inclusion.test.ts` (O1~O4, 6 assertions).
+corrupt→RED 3종 실증 — 배열에서 OWNER 제거 / 단독 where 복원 / 교정 지점 회귀
+→ 각각 정확히 RED.
+
+**재발 차단이 이 sentinel 의 본체다.** O1(`in:[]` 배열에 ADMIN 있으면 OWNER 필수)과
+O2(`role: ADMIN` 단독 where 금지)는 목록이 아니라 **형태**를 잠근다 — 다음에 누가
+새 판정을 추가해도 걸린다.
+
+### ⚠️ 실측 ⑤ 정정 — 16곳이 아니라 **17곳이었다** (1곳은 dead file)
+
+Phase 1 재sweep 에서 1곳이 더 나왔다:
+`src/components/upgrade/upgrade-modal.tsx:55` — `userRole === OrganizationRole.ADMIN`.
+
+**첫 sweep 이 변수명 패턴(`member|membership|orgMember|mem`)에 묶여 `userRole` 을
+놓쳤다.** §3-1-1(리터럴 전수 grep)의 식별자판(版) 사각이다 — 값뿐 아니라 **타입명으로도**
+훑어야 했다(`OrganizationRole.ADMIN` 전수).
+
+**고치지 않았다.** 이 파일은 **importer 0 = dead file** 이고, 라이브 판본은
+`components/billing/upgrade-modal.tsx` 로 거기엔 이 판정 자체가 없다. dead file 을
+고치는 것은 §render-reachability 위반(2026-08-06 재발 사고와 동형)이다.
+→ sentinel 의 `DEAD_FILE_EXCEPTIONS` 에 사유와 함께 기록했고, 파일이 되살아나면
+예외에서 빼고 고쳐야 한다. **dead file 자체의 정리는 별건.**
+
 ## 2. 재개 시 실측 항목 (설계 전 — 설계는 그 다음)
 
 - 두 enum 이 각각 어느 판정 지점에서 쓰이는가

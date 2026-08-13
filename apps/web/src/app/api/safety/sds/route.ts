@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
           userId: session.user.id,
           organizationId,
           role: {
-            in: [OrganizationRole.ADMIN, OrganizationRole.VIEWER], // VIEWER = safety_admin
+            in: [OrganizationRole.OWNER, OrganizationRole.ADMIN, OrganizationRole.VIEWER], // VIEWER = safety_admin
           },
         },
       });

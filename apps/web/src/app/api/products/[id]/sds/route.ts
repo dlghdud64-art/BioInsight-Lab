@@ -175,7 +175,7 @@ export async function POST(
     const isPrivilegedGlobalRole = globalRole === "ADMIN" || globalRole === "SUPPLIER";
     const isSafetyAdminOrgMember = memberships.some(
       (m: { role: OrganizationRole }) =>
-        m.role === OrganizationRole.ADMIN || m.role === OrganizationRole.VIEWER,
+        m.role === OrganizationRole.OWNER || m.role === OrganizationRole.ADMIN || m.role === OrganizationRole.VIEWER,
     );
     if (docType === "sds" && !isPrivilegedGlobalRole && !isSafetyAdminOrgMember) {
       enforcement.fail();

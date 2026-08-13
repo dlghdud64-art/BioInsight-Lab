@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       const isMember = memberships.some(
         (m: { organizationId: string; role: OrganizationRole }) =>
           m.organizationId === organizationId &&
-          (m.role === OrganizationRole.ADMIN || m.role === OrganizationRole.VIEWER)
+          (m.role === OrganizationRole.OWNER || m.role === OrganizationRole.ADMIN || m.role === OrganizationRole.VIEWER)
       );
       if (!isMember && session.user.role !== "ADMIN") {
         return NextResponse.json(

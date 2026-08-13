@@ -79,7 +79,10 @@ function SafetyAdminPageContent() {
   const currentMembership = currentOrg?.members?.find(
     (m: any) => m.userId === session?.user?.id
   );
-  const isSafetyAdmin = currentMembership?.role === OrganizationRole.VIEWER || 
+  // §team-org-role-model Phase 1 (2026-08-12) — OWNER 추가. 서버 13곳과 **같은 배포**.
+  //   서버만 열면 권한은 있는데 화면이 없다.
+  const isSafetyAdmin = currentMembership?.role === OrganizationRole.OWNER ||
+                       currentMembership?.role === OrganizationRole.VIEWER ||
                        currentMembership?.role === OrganizationRole.ADMIN ||
                        session?.user?.role === "ADMIN";
 

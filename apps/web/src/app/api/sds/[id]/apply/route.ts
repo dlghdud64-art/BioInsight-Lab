@@ -74,7 +74,7 @@ export async function POST(
           userId: session.user.id,
           organizationId: sdsDocument.organizationId,
           role: {
-            in: [OrganizationRole.ADMIN, OrganizationRole.VIEWER],
+            in: [OrganizationRole.OWNER, OrganizationRole.ADMIN, OrganizationRole.VIEWER],
           },
         },
       });

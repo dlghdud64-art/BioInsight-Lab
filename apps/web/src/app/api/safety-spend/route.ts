@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
 
       const hasAccess =
         session.user.role === "ADMIN" ||
+        membership?.role === OrganizationRole.OWNER ||
         membership?.role === OrganizationRole.ADMIN ||
         membership?.role === OrganizationRole.APPROVER ||
         membership?.role === OrganizationRole.VIEWER;

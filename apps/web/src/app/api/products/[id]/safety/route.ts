@@ -74,7 +74,7 @@ export async function PATCH(
       where: {
         userId: session.user.id,
         role: {
-          in: [OrganizationRole.ADMIN, OrganizationRole.VIEWER], // VIEWER = safety_admin
+          in: [OrganizationRole.OWNER, OrganizationRole.ADMIN, OrganizationRole.VIEWER], // VIEWER = safety_admin
         },
       },
     });
