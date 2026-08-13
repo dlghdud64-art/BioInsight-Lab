@@ -74,11 +74,21 @@ export function OrganizationNamePrompt() {
   // 임시 이름을 가진 조직 — 자동 생성 직후 상태
   const provisional = orgs.find((o) => isProvisionalOrgName(o.name, user)) ?? null;
 
+  /**
+   * 🛑 조직 **0** — 자동 생성이 실패했거나(예외는 로그인만 살리고 삼킨다) 기본명을
+   *   도출하지 못해 건너뛴 경우다. 여기서 `null` 을 반환하면 사용자는 **조용히 빈 상태**로
+   *   남는다 — 3a 이전과 똑같아진다(권한 공집합 · 라우트 37개 차단 · workspace 부재).
+   *   그래서 같은 프롬프트가 **생성 모드**로 받는다.
+   */
+  const needsOrg = data !== undefined && orgs.length === 0;
+
   useEffect(() => {
     if (provisional && !value) setValue(provisional.name);
-  }, [provisional, value]);
+    else if (needsOrg && !value) setValue(deriveDefaultOrgName(user) ?? "");
+  }, [provisional, needsOrg, user, value]);
 
-  if (status !== "authenticated" || !provisional) return null;
+  if (status !== "authenticated") return null;
+  if (!provisional && !needsOrg) return null;
 
   const skip = () => {
     try {
@@ -94,16 +104,23 @@ export function OrganizationNamePrompt() {
     if (!next || saving) return;
     setSaving(true);
     try {
-      const res = await csrfFetch(`/api/organizations/${provisional.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: next }),
-      });
+      // 조직 0 이면 **생성**, 임시 이름이면 **개명**. 같은 프롬프트가 두 상태를 받는다.
+      const res = needsOrg
+        ? await csrfFetch(`/api/organizations`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: next }),
+          })
+        : await csrfFetch(`/api/organizations/${provisional!.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: next }),
+          });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         // 실패를 성공처럼 보이지 않게 한다(placeholder success 금지).
         toast({
-          title: "조직 이름을 저장하지 못했습니다",
+          title: needsOrg ? "조직을 만들지 못했습니다" : "조직 이름을 저장하지 못했습니다",
           description: body?.error ?? "잠시 후 다시 시도해주세요.",
           variant: "destructive",
         });
@@ -125,20 +142,35 @@ export function OrganizationNamePrompt() {
 
   /* ── 건너뛴 뒤: 상단 배너 ── */
   if (skipped) {
+    // 조직 0 은 임시 이름보다 심각하다 — 톤을 red 로(§11.302 위험).
+    const tone = needsOrg
+      ? "border-red-200 bg-red-50 text-red-700"
+      : "border-yellow-200 bg-yellow-50 text-yellow-800";
+    const btnTone = needsOrg
+      ? "border-red-300 hover:bg-red-100"
+      : "border-yellow-300 hover:bg-yellow-100";
     return (
-      <div className="flex items-center gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
+      <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs ${tone}`}>
         <AlertCircle className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
         <span className="flex-1">
-          조직 이름이 <strong>임시</strong>입니다 — 현재 &ldquo;{provisional.name}&rdquo;
+          {needsOrg ? (
+            <>
+              <strong>조직이 없습니다</strong> — 재고·견적·예산 기능이 열리지 않습니다
+            </>
+          ) : (
+            <>
+              조직 이름이 <strong>임시</strong>입니다 — 현재 &ldquo;{provisional!.name}&rdquo;
+            </>
+          )}
         </span>
         <Button
           type="button"
           size="sm"
           variant="outline"
-          className="h-8 border-yellow-300 bg-white text-xs font-semibold hover:bg-yellow-100"
+          className={`h-8 bg-white text-xs font-semibold ${btnTone}`}
           onClick={() => setSkipped(false)}
         >
-          조직 이름 설정
+          {needsOrg ? "조직 만들기" : "조직 이름 설정"}
         </Button>
       </div>
     );
@@ -151,13 +183,23 @@ export function OrganizationNamePrompt() {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             <Building2 className="h-4 w-4" aria-hidden="true" />
-            조직 이름을 알려주세요
+            {needsOrg ? "조직을 만들어 주세요" : "조직 이름을 알려주세요"}
           </DialogTitle>
         </DialogHeader>
 
         <p className="text-xs leading-relaxed text-slate-500">
-          아래 이름은 <strong>임시로 지어둔 값</strong>입니다 — 회사명을 추측하지 않았습니다.
-          실제 사용하시는 이름으로 바꿔주세요. 나중에 설정에서도 바꿀 수 있습니다.
+          {needsOrg ? (
+            <>
+              소속 조직이 없어 재고·견적·예산 기능이 열리지 않습니다. 이름만 정하면
+              바로 시작할 수 있고, 나중에 설정에서 바꿀 수 있습니다.
+            </>
+          ) : (
+            <>
+              아래 이름은 <strong>임시로 지어둔 값</strong>입니다 — 회사명을 추측하지
+              않았습니다. 실제 사용하시는 이름으로 바꿔주세요. 나중에 설정에서도 바꿀 수
+              있습니다.
+            </>
+          )}
         </p>
 
         <Input
@@ -179,7 +221,7 @@ export function OrganizationNamePrompt() {
             disabled={saving || !value.trim()}
             onClick={save}
           >
-            {saving ? "저장 중…" : "이 이름으로 시작"}
+            {saving ? "저장 중…" : needsOrg ? "이 이름으로 만들기" : "이 이름으로 시작"}
           </Button>
         </div>
       </DialogContent>

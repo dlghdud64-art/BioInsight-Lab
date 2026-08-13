@@ -90,12 +90,47 @@ describe("§3a N3 — 임시 이름이 임시라고 표시된다", () => {
     expect(NAME_LIB).toMatch(/export function isProvisionalOrgName/);
   });
 
+  /** 승계 — 가드가 2줄로 분리됐다(N3b 조직 0 모드 추가). 계약은 동일: 미인증·해당없음이면 렌더 0. */
   it("확정 전에는 프롬프트가 렌더되고, 확정되면 null 이다(상시 노출 0)", () => {
-    expect(PROMPT_CODE).toMatch(/if \(status !== "authenticated" \|\| !provisional\) return null/);
+    expect(PROMPT_CODE).toMatch(/if \(status !== "authenticated"\) return null/);
   });
 
   it("저장 실패를 성공처럼 보이지 않는다", () => {
-    expect(PROMPT_CODE).toMatch(/if \(!res\.ok\)[\s\S]{0,300}variant: "destructive"/);
+    expect(PROMPT_CODE).toMatch(/if \(!res\.ok\)[\s\S]{0,400}variant: "destructive"/);
+  });
+});
+
+/**
+ * §3a N3b — **조직 0 을 조용히 두지 않는다** (2026-08-12 지적으로 추가)
+ *
+ * 자동 생성은 두 경우에 건너뛰거나 실패한다:
+ *   ① 기본명 도출 불가(표시 이름·이메일 로컬파트 모두 없음) → 의도적 건너뜀
+ *   ② `createOrganization` 예외 → 로그인만 살리고 삼킨다
+ *
+ * 두 경우 모두 사용자는 조직 0 이다. 프롬프트가 `null` 을 반환하면
+ * **3a 이전과 똑같은 조용히 빈 상태**가 된다 — 권한 공집합 · 라우트 37개 차단 ·
+ * workspace 부재. 그래서 같은 프롬프트가 **생성 모드**로 받아야 한다.
+ */
+describe("§3a N3b — 조직 0 도 같은 프롬프트가 받는다", () => {
+  it("조직 0 을 감지한다 (로딩 중과 구분 — data !== undefined)", () => {
+    expect(PROMPT_CODE).toMatch(/const needsOrg = data !== undefined && orgs\.length === 0/);
+  });
+
+  it("조직 0 이면 생성(POST), 임시 이름이면 개명(PATCH)", () => {
+    expect(PROMPT_CODE).toMatch(/needsOrg\s*\?[\s\S]{0,200}method: "POST"/);
+    expect(PROMPT_CODE).toMatch(/method: "PATCH"/);
+  });
+
+  it("조직 0 배너가 결과(기능이 열리지 않음)를 말한다", () => {
+    expect(PROMPT_CODE).toMatch(/조직이 없습니다<\/strong> — 재고·견적·예산 기능이 열리지 않습니다/);
+  });
+
+  it("조직 0 은 red 톤 (임시 이름보다 심각 — §11.302)", () => {
+    expect(PROMPT_CODE).toMatch(/needsOrg[\s\S]{0,80}border-red-200 bg-red-50/);
+  });
+
+  it("두 상태 중 하나라도 아니면 렌더 0 (상시 노출 금지)", () => {
+    expect(PROMPT_CODE).toMatch(/if \(!provisional && !needsOrg\) return null/);
   });
 });
 

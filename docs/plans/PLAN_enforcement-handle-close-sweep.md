@@ -297,6 +297,26 @@ sweep 은 첫 번째만 물었다.
 4번이 특히 위험한 이유: **라우트 파일만 읽으면 존재 자체가 보이지 않는다.**
 grep 대상이 그 파일에 없으므로 "전수 확인했다" 는 보고가 성립해 버린다.
 
+##### 짝 — **"내가 붙인 것이 어디까지 끌려가는가"** (2026-08-12 추가)
+
+> **import 체인은 아래로만 흐르지 않는다.**
+> `middleware` → `auth` → 새 모듈처럼, **상위가 이미 나를 참조하고 있으면
+> 내가 붙인 의존이 상위 번들로 올라간다.**
+
+"도달하는가" 가 *내가 고친 코드가 실행되는가* 라면, 이것은 *내가 붙인 코드가
+어디까지 실려 가는가* 다. 같은 질문의 반대 방향이다.
+
+실증 (§onboarding-blocker 3a): `auth.ts` 에 `createOrganization` 을 붙였더니
+`middleware.ts → @/auth → lib/api/organizations → lib/workspace/slug → node:crypto`
+가 되어 **Edge 런타임 빌드가 깨졌다**(`UnhandledSchemeError`).
+
+⚠️ 이 클래스가 위험한 이유: **sentinel 도 vitest 도 통과하고 빌드에서만 드러난다.**
+정적 계약은 "형태가 맞다" 만 보므로 번들 경계를 못 본다.
+
+체크리스트 한 줄:
+> **`auth.ts` · `middleware.ts` 체인에 모듈을 추가할 때는 Edge 호환 여부를 먼저 본다**
+> (`node:` 스킴 import 금지 — 전역 Web Crypto 등으로 대체).
+
 적용: 권한·게이트·판정을 고칠 때 아래를 **함께** 확인한다.
 - `src/middleware.ts` 의 경로 매칭 (deny-by-default 구간에 들어가는가)
 - 상위 `layout.tsx` 의 리다이렉트·세션 가드
