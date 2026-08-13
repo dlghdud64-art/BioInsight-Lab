@@ -411,3 +411,46 @@ if (!response.ok) return { links: [] };      // ← 실패를 빈 목록으로 �
   이 sentinel 의 사각지대이며, **유령 모델보다 주입 위험이 본체**다.
   착수는 §audit-foundation 이후 — 지금 열면 끝이 안 난다(호영님).
 - **§db-any-escape-hatch** — `db as any` 4 / `dbAny` 3. 위 136회와 함께 규모 기록.
+
+---
+
+## 4. §sso-phantom-wiring — **필드판** 유령 (2026-08-12 실측)
+
+§onboarding-blocker #2 강등 검토 중 지시받은 실측
+(*"`lib/auth/sso-config.ts` 가 실제 배선인지 미완인지"*)에서 나왔다.
+**모델이 아니라 컬럼이 유령**이고, 그 위에 로그인 배선까지 끊겨 있다.
+
+### 두 층이 동시에 끊겼다
+
+| 층 | 실측 |
+|---|---|
+| **스키마** | `Organization` 에 `ssoEnabled` · `ssoConfig` · `ssoProvider` · `ssoMetadataUrl` · `ssoEntityId` · `ssoCertificate` — **6개 전부 없다**(`schema.prisma` 전역 grep 0) |
+| **저장** | `api/organizations/[id]/sso/route.ts:155` 가 그 6개에 `db.organization.update` 를 건다 → **런타임 거부** |
+| **조회** | 같은 라우트 GET 이 `select: { ssoConfig: true }` → 동일 |
+| **로그인** | `auth.ts` 가 `convertSSOConfigToProvider` 를 **import 만 하고 호출 0**(repo 전수). 설정이 저장돼도 **provider 로 등록되지 않는다** |
+| **UI** | `dashboard/settings/enterprise` 가 이 라우트를 **실제로 호출**(라이브 표면) |
+
+### 왜 안 잡혔나 — 이 문서 §0 과 같은 이유
+
+`db` 가 `any` 라 **없는 컬럼에 쓰는 코드가 컴파일된다.** §phantom-model-call 이
+모델명 오기를 잡았듯, 같은 탈출구가 **컬럼 오기/미생성**도 통과시킨다.
+`dbTyped` 로 바꿨다면 6개 모두 타입 에러로 드러났을 것이다.
+
+⚠️ 그리고 §3(타입 검사 무력화 탈출구)에 **필드 단위 사례**가 처음 기록된 것이다 —
+지금까지는 모델 단위만 봤다.
+
+### 판정 — 교정하지 않는다 (등재만)
+
+- SSO 는 **엔터프라이즈 기능**이고 첫 고객 경로가 아니다(#2 강등과 같은 근거)
+- 고치려면 **스키마 6컬럼 추가**가 필요하다 → Supabase 이후(3c 계열)
+- 지금 할 수 있는 최소는 **거짓 성공 차단**인데, #7(초대)과 달리
+  이 화면은 저장이 **실패로 드러난다**(런타임 거부) — 성공처럼 보이지 않는다.
+  ⚠️ 단 미실측: 그 실패가 사용자에게 **어떤 문구로** 보이는지는 확인하지 않았다.
+  "저장 실패" 로 보이면 정직하고, 삼켜지면 §placeholder-success 대상이 된다.
+
+### 착수 조건
+
+1. Supabase(3c) 이후 — 스키마 6컬럼
+2. `auth.ts` 의 provider 등록 배선 (지금은 import 만 있다)
+3. 그 전까지는 **엔터프라이즈 SSO 설정 UI 를 열어두지 않는 편이 정직**하다
+   — #7 과 같은 판단이 필요할 수 있다(별도 지시 대기)
