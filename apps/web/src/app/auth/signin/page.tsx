@@ -91,11 +91,14 @@ function SignInContent() {
   // pricing 카드에서 ?plan=team 만 들고 들어오는 legacy 경로도 지원.
   const rawCallback = searchParams?.get("callbackUrl");
   const planParam = searchParams?.get("plan");
+  // §onboarding-blocker 3a — 기본 목적지를 퍼블릭 랜딩("/") → **대시보드**로.
+  //   가입 직후 퍼블릭 랜딩에 남기는 것은 지금도 잘못이다(호영님 2026-08-12).
+  //   명시 callbackUrl 과 plan intent 는 그대로 우선한다.
   const callbackUrl = rawCallback
     ? rawCallback
     : planParam
       ? `/pricing/continue?plan=${encodeURIComponent(planParam)}`
-      : "/";
+      : "/dashboard";
 
   // 이미 로그인된 사용자는 로그인 화면을 보지 않고 callbackUrl 로 이동.
   // 특히 /pricing → /auth/signin?plan=... 로 잘못 라우팅된 경우에도

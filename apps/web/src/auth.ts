@@ -5,6 +5,10 @@ import { requiresDestructiveConfirmation } from "@/lib/security/production-datab
 import { db } from "@/lib/db";
 import type { UserRole } from "@/types";
 import { convertSSOConfigToProvider, validateSSOConfig } from "@/lib/auth/sso-config";
+// §onboarding-blocker 3a — 가입 시 조직 자동 생성. 별도 코드가 아니라 이 경로를 탄다
+//   (OWNER 부여 + workspace 생성이 여기 붙어 있다).
+import { createOrganization } from "@/lib/api/organizations";
+import { deriveDefaultOrgName } from "@/lib/organization/default-name";
 
 // 중복 정의 제거
 // Google OAuth 설정 확인
@@ -142,6 +146,45 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             });
             token.id = newUser.id;
             token.role = newUser.role as UserRole;
+
+            /**
+             * §onboarding-blocker 3a — 가입 시 **조직 자동 생성** (호영님 결정 2026-08-12).
+             *
+             * 실측: 조직 생성이 workspace 를 만드는 **유일 경로**다. 조직이 0 이면
+             *   권한 공집합 · 멤버십 요구 라우트 37개 차단 · workspaceId 요구 라우트 17개 빔.
+             *   그 상태로 퍼블릭 랜딩에 남겨 두는 것은 관문 앞에 표지판조차 없는 것이다.
+             *
+             * ⚠️ **`createOrganization` 을 그대로 탄다** — 별도 코드로 만들면
+             *   ① 생성자가 다시 ADMIN 이 되고(Phase 2 무효화)
+             *   ② workspace 생성 단계를 빠뜨려 billing 17 라우트가 여전히 빈다.
+             *
+             * 이름은 **제안**이며 확정이 아니다 — 사용자가 첫 대시보드에서 확인한다
+             * (`OrganizationNamePrompt`). 도출 불가(표시 이름·이메일 로컬파트 모두 없음)면
+             * **자동 생성을 건너뛴다**. 지어내지 않는다.
+             *
+             * try/catch 로 감싸는 이유: 조직 생성 실패가 **로그인 자체를 막아서는 안 된다.**
+             * 실패해도 세션은 유지되고, 프롬프트가 조직 부재를 감지해 생성 경로를 제공한다.
+             * (무음 실패 금지 — 실패는 console.error 로 남기고 UI 가 이어받는다.)
+             */
+            try {
+              const defaultOrgName = deriveDefaultOrgName({
+                name: newUser.name,
+                email: newUser.email,
+              });
+              if (defaultOrgName) {
+                await createOrganization(newUser.id, { name: defaultOrgName });
+              } else {
+                console.warn(
+                  "[auth] 3a — 기본 조직명을 도출할 수 없어 자동 생성을 건너뜁니다",
+                  { userId: newUser.id },
+                );
+              }
+            } catch (orgErr) {
+              console.error(
+                "[auth] 3a — 가입 시 조직 자동 생성 실패 (로그인은 계속)",
+                orgErr,
+              );
+            }
           }
         }
 

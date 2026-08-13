@@ -8,8 +8,26 @@
  *
  * 트랜잭션 안에서 호출될 수 있도록 `Prisma.TransactionClient` 를 받는다.
  */
-import { randomBytes } from "node:crypto";
 import type { Prisma } from "@prisma/client";
+
+/**
+ * §onboarding-blocker 3a — `node:crypto` → **전역 Web Crypto** (2026-08-12).
+ *
+ * 이유: 이 모듈은 `lib/api/organizations.ts` → `auth.ts` → **`middleware.ts`** 로
+ *   전이 import 된다. 미들웨어는 **Edge 런타임**이라 `node:` 스킴을 번들할 수 없고,
+ *   3a 에서 `auth.ts` 가 `createOrganization` 을 부르기 시작하자 곧바로
+ *   `Module build failed: UnhandledSchemeError: Reading from "node:crypto"` 로 빌드가 깨졌다.
+ *
+ *   §execution-id-collision 에서 같은 판단을 이미 했다(클라이언트 번들 보호).
+ *   여기서는 이유가 하나 더 있다 — **Edge 런타임**.
+ *
+ * 산출물 동형: 이전 `randomBytes(4).toString("hex")` 와 같은 **8자리 hex**.
+ */
+function randomHex4(): string {
+  const bytes = new Uint8Array(4);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
 
 /** slug 후보의 최대 길이 — 충돌 suffix 여유 10자 확보 */
 const SLUG_BASE_MAX = 40;
@@ -43,7 +61,7 @@ export async function generateUniqueWorkspaceSlug(
   tx: Prisma.TransactionClient,
   organizationName: string,
 ): Promise<string> {
-  const fallbackBase = () => `org-${randomBytes(4).toString("hex")}`;
+  const fallbackBase = () => `org-${randomHex4()}`;
   const base = normalizeSlugBase(organizationName) || fallbackBase();
 
   // 1차: base 그대로
@@ -61,7 +79,7 @@ export async function generateUniqueWorkspaceSlug(
 
   // 21차 이상: 랜덤 hex (충돌 가능성 사실상 0)
   for (let attempt = 0; attempt < 5; attempt++) {
-    const candidate = `${base}-${randomBytes(4).toString("hex")}`.slice(0, SLUG_FINAL_MAX);
+    const candidate = `${base}-${randomHex4()}`.slice(0, SLUG_FINAL_MAX);
     if (!(await tx.workspace.findUnique({ where: { slug: candidate } }))) {
       return candidate;
     }
