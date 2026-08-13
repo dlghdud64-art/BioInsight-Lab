@@ -43,7 +43,16 @@ export default function EnterpriseSettingsPage() {
     ? organizations.find((org: any) => org.id === selectedOrgId)
     : organizations[0];
 
-  // SSO 설정 조회
+  /**
+   * SSO 설정 조회 — §sso-phantom-wiring 로 **비활성화** (2026-08-12).
+   *
+   * `Organization` 에 sso* 6개 컬럼이 없어 이 GET 은 **항상 500** 이다.
+   * 켜 두면 페이지를 열 때마다 실패 요청이 나가고, 실패가 렌더에 쓰이지 않아
+   * 화면은 조용히 "SSO 꺼짐" 으로 보였다 — 설정이 없다고 믿게 만드는 표시다.
+   *
+   * 조회·저장 배선(`ssoMutation`·`handleSaveSSO`·폼 state)은 **지우지 않는다** —
+   * 컬럼이 서면 UI 와 함께 되살릴 대상이다(의도된 미완, sentinel 이 짝을 강제).
+   */
   const { data: ssoData, isLoading: ssoLoading } = useQuery({
     queryKey: ["sso-config", currentOrg?.id],
     queryFn: async () => {
@@ -52,7 +61,7 @@ export default function EnterpriseSettingsPage() {
       if (!response.ok) throw new Error("Failed to fetch SSO config");
       return response.json();
     },
-    enabled: !!currentOrg?.id && status === "authenticated",
+    enabled: false,
   });
 
   // SSO 설정 업데이트
@@ -189,113 +198,26 @@ export default function EnterpriseSettingsPage() {
                   </TabsList>
 
                   {/* SSO 설정 탭 */}
+                  {/* ── SSO 설정 — §sso-phantom-wiring 로 **표면 미생성** (2026-08-12) ──
+                      실측: `Organization` 에 ssoEnabled/ssoConfig/ssoProvider/
+                      ssoMetadataUrl/ssoEntityId/ssoCertificate **6개 컬럼이 없다**.
+                      그래서 저장(PUT)도 조회(GET)도 Prisma 가 거부해 **500** 이 된다.
+                      · 저장 실패는 정직하게 뜬다(destructive toast) — 거짓 성공은 아니었다
+                      · 그러나 **조회 실패는 조용히 "SSO 꺼짐" 으로 그려졌다**
+                        (`ssoLoading`·에러 상태를 렌더에 쓰지 않음) — 설정이 없다고 믿게 된다
+                      6컬럼이 서기 전까지 이 화면은 **동작할 수 없으므로** 폼을 만들지 않는다.
+                      (disabled 아님 — 미생성. 초대 #7 과 같은 형태.)
+                      sentinel `ops/sso-phantom-surface.test.ts` 가 짝을 강제한다 —
+                      컬럼이 생기면 RED 가 되어 UI 복원을 알린다. */}
                   <TabsContent value="sso" className="space-y-4">
                     <Card>
                       <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <CardTitle className="text-sm font-semibold">SSO (Single Sign-On) 설정</CardTitle>
-                            <CardDescription>
-                              조직의 SSO를 설정하여 통합 인증을 활성화합니다.
-                            </CardDescription>
-                          </div>
-                          <Switch
-                            checked={ssoEnabled}
-                            onCheckedChange={setSsoEnabled}
-                          />
-                        </div>
+                        <CardTitle className="text-sm font-semibold">SSO (Single Sign-On) 설정</CardTitle>
+                        <CardDescription>
+                          SSO 는 준비 중입니다 (§sso-phantom-wiring). 저장할 곳이 아직 없어
+                          설정을 열어두지 않았습니다.
+                        </CardDescription>
                       </CardHeader>
-                      <CardContent className="space-y-4">
-                        {ssoEnabled && (
-                          <>
-                            <div>
-                              <Label htmlFor="sso-provider">SSO 제공자</Label>
-                              <Select value={ssoProvider} onValueChange={setSsoProvider}>
-                                <SelectTrigger id="sso-provider">
-                                  <SelectValue placeholder="SSO 제공자 선택" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="saml">SAML 2.0</SelectItem>
-                                  <SelectItem value="oauth">OAuth 2.0</SelectItem>
-                                  <SelectItem value="okta">Okta</SelectItem>
-                                  <SelectItem value="azure">Azure AD</SelectItem>
-                                  <SelectItem value="google_workspace">Google Workspace</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            {ssoProvider === "saml" && (
-                              <>
-                                <div>
-                                  <Label htmlFor="sso-metadata-url">SAML Metadata URL</Label>
-                                  <Input
-                                    id="sso-metadata-url"
-                                    value={ssoMetadataUrl}
-                                    onChange={(e) => setSsoMetadataUrl(e.target.value)}
-                                    placeholder="https://example.com/saml/metadata"
-                                  />
-                                </div>
-                                <div>
-                                  <Label htmlFor="sso-entity-id">SAML Entity ID</Label>
-                                  <Input
-                                    id="sso-entity-id"
-                                    value={ssoEntityId}
-                                    onChange={(e) => setSsoEntityId(e.target.value)}
-                                    placeholder="urn:example:sp"
-                                  />
-                                </div>
-                                <div>
-                                  <Label htmlFor="sso-certificate">SAML 인증서 (선택사항)</Label>
-                                  <Textarea
-                                    id="sso-certificate"
-                                    value={ssoCertificate}
-                                    onChange={(e) => setSsoCertificate(e.target.value)}
-                                    placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
-                                    rows={5}
-                                  />
-                                </div>
-                              </>
-                            )}
-
-                            {(ssoProvider === "oauth" || ssoProvider === "okta" || ssoProvider === "azure" || ssoProvider === "google_workspace") && (
-                              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                                <div className="flex items-start gap-2">
-                                  <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
-                                  <div className="text-sm text-blue-700">
-                                    <p className="font-medium mb-1">OAuth 설정</p>
-                                    <p>OAuth 설정은 조직 관리자에게 문의하거나 별도 설정이 필요합니다.</p>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-
-                            <div className="flex gap-2">
-                              <Button
-                                onClick={handleSaveSSO}
-                                disabled={ssoMutation.isPending}
-                              >
-                                {ssoMutation.isPending ? (
-                                  <>
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                    저장 중...
-                                  </>
-                                ) : (
-                                  <>
-                                    <Save className="h-4 w-4 mr-2" />
-                                    저장
-                                  </>
-                                )}
-                              </Button>
-                            </div>
-                          </>
-                        )}
-
-                        {!ssoEnabled && (
-                          <div className="p-4 bg-el border border-bd rounded-lg text-sm text-slate-600">
-                            SSO를 활성화하려면 위의 스위치를 켜주세요.
-                          </div>
-                        )}
-                      </CardContent>
                     </Card>
                   </TabsContent>
 
