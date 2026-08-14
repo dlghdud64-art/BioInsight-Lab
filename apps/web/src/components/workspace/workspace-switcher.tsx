@@ -54,7 +54,12 @@ export function WorkspaceSwitcher({
     (m: any) => m.userId === session?.user?.id
   );
   const userRole = currentMembership?.role || null;
-  const isAdmin = userRole === OrganizationRole.ADMIN;
+  // §team-org-role-model Phase 1 **누락분** (2026-08-12) — OWNER 추가. 동작 확대만.
+  //   Phase 1 잔여 확인 grep 이 `WorkspaceMember`(별도 모델)를 걸러내려고 경로에
+  //   "workspace" 가 든 파일을 제외했는데, 이 파일은 **OrganizationRole** 판정인데도
+  //   경로 때문에 함께 걸러졌다. 제외 필터가 대상까지 지운 사례다.
+  const isAdmin =
+    userRole === OrganizationRole.OWNER || userRole === OrganizationRole.ADMIN;
   const isMember = userRole !== null && !isAdmin;
 
   // 조직 변경 핸들러

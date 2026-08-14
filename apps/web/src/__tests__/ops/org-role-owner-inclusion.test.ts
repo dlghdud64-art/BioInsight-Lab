@@ -115,9 +115,11 @@ describe("§org-role-owner O3 — Phase 1 교정 16곳 회귀 0", () => {
     "src/app/admin/safety/page.tsx",
     "src/app/settings/audit/page.tsx",
     "src/app/settings/security/page.tsx",
+    // Phase 1 누락분 (2026-08-12 발견) — 경로에 "workspace" 가 들어 제외 필터에 함께 걸렸다.
+    "src/components/workspace/workspace-switcher.tsx",
   ];
 
-  it("16곳 전부가 OrganizationRole.OWNER 를 판정에 포함한다", () => {
+  it("17곳 전부가 OrganizationRole.OWNER 를 판정에 포함한다", () => {
     const missing = FIXED.filter((p) => {
       const f = FILES.find((x) => x.path === p);
       return !f || !f.code.includes("OrganizationRole.OWNER");
@@ -125,8 +127,8 @@ describe("§org-role-owner O3 — Phase 1 교정 16곳 회귀 0", () => {
     expect(missing).toEqual([]);
   });
 
-  it("목록이 16곳이다 (축소되면 은폐 — 늘리는 것은 허용)", () => {
-    expect(FIXED.length).toBe(16);
+  it("목록이 17곳이다 (축소되면 은폐 — 늘리는 것은 허용)", () => {
+    expect(FIXED.length).toBe(17);
   });
 
   /**
