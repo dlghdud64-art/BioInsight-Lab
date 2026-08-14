@@ -6,9 +6,9 @@
 
 ---
 
-## 0. 🔴 착수 전 보고 — 정적 발견 1건 (수정 금지, 목록만)
+## 0. 🔴 **유출 확정** — 실측 완료 (2026-08-15). 분류 이동: "확실한 수확" → **첫 쓰기 유출**
 
-설계를 위해 소스를 읽다가 나왔다. **런타임 미검증**이며 3차의 최우선 측정 대상이다.
+설계를 위해 소스를 읽다가 나왔고, **착수 전 실측으로 확정**됐다.
 
 ```ts
 // src/app/api/protocol/bom/route.ts
@@ -26,21 +26,31 @@ const quote = await db.quote.create({
 - 성립하면 타 조직 견적 목록에 비멤버가 만든 행이 나타난다
 - §unvalidated-create 와 다르다 — 저쪽은 아무 바디나 행을 만드는 것, 이쪽은 **귀속을 조작**한다
 
-⚠️ 정적 판독일 뿐이다. 이번 세션이 5번 반복한 오독을 피하려면 **교차·대조 쌍 실측**이 필요하다.
-3차 1순위로 배치한다.
+### 실측 결과 (row 판정)
+
+| 프로브 | 결과 |
+|---|---|
+| 교차 (A 세션 · orgB 비멤버 · 바디에 `organizationId: orgB`) | **200 · Quote 생성 · `organizationId = orgB`** → 🔴 **유출 확정** |
+| 대조 (`organizationId` 미전송 = 정상 호출부 형태) | 200 · Quote 생성 · `organizationId: null` → §org-attribution-missing |
+
+호출부 2곳(`app/protocol/bom/page.tsx:322` · `components/protocol/protocol-upload.tsx:148`)은
+**둘 다 `organizationId` 를 보내지 않는다.** 즉 이 바디 필드는 **정상 사용처가 없고
+공격자만 쓰는 경로**다 → 수정 형태는 **파라미터 제거 + 세션 멤버십 도출**(work-queue 와 동일).
+
+복원 완료(Quote 2 + QuoteListItem 삭제), 역할 원복 확인.
+**재판단 트리거 발동 — 수정 배치가 나머지 4건보다 앞선다.**
 
 ---
 
 ## 1. 5건 분해 (호영님 3분류)
 
-### ① 확실한 수확 — 드리프트 무관, 완전 판정 가능 (2건)
+### ① 확실한 수확 — 드리프트 무관, 완전 판정 가능 (1건, `protocol/bom` 은 §0 으로 이동)
 
 | 라우트 | 선결 상태 | 교차 벡터 |
 |---|---|---|
-| `POST /api/protocol/bom` | 없음 — 바디만 (`title`, `reagents[]`) | **바디의 `organizationId` 에 orgB 주입** |
 | `POST /api/ingestion` | 없음 — 바디만 (`sourceType`∈EMAIL\|ATTACHMENT\|UPLOAD\|SYSTEM, `rawText`) | org 는 세션 멤버십 도출(`organizationMembers[0]`) → 교차 벡터는 **바디 주입 시도 + 도출 결과 대조** |
 
-두 건 다 **선결 상태 0**이다. 3차의 실질 수확은 여기서 나온다.
+`ingestion` 은 **선결 상태 0**이다.
 
 ### ② 반쪽 판정 — 스코프는 지금, 착지는 드리프트 해소 후 (2건)
 
@@ -145,6 +155,10 @@ POST /api/work-queue/ops-sync  body:{"__invalid_probe__":true}  → 200 {"synced
 > 테넌트 격리 완료가 아니다. 닫히지 않은 축: scopeKey · 전역 카탈로그 · 귀속.
 > 판정 불가 N건은 드리프트 트랙에 조건부 이관됐으며, 그 트랙이 닫히기 전까지
 > org 축도 완결이 아니다.**
+>
+> **드리프트 조건부 이관 건은 드리프트 수정 시 대조군 착지 확인이 누락되면
+> 격리가 미완인 채로 GREEN 이 된다 — 이관은 위임이지 면제가 아니다.**
+> (§2.5 를 세운 이유가 이 문장이다)
 
 ### 종료 시점 분수 형식 (분모 정의 포함)
 

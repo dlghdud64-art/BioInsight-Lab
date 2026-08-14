@@ -749,6 +749,26 @@ const pendingRequests = await db.purchaseRequest.findMany({
 scopeKey 축   0/미정 (§scopekey-axis-unmeasured)
 ```
 
+## 9.19 🔴 **첫 쓰기 org 축 유출 확정** — `POST /api/protocol/bom` (2026-08-15)
+
+```
+A 세션(RESEARCHER→ADMIN 일시 승격, orgB 비멤버)
+POST /api/protocol/bom  body: { title, reagents, organizationId: <orgB.id> }
+→ 200 · Quote 생성 · organizationId = orgB   🔴 유출 확정 (row 판정)
+```
+
+**이 트랙에서 쓰기 유출은 처음이다.** 지금까지 쓰기 org 축은 전부 "막힘"이었고
+그 전제가 깨졌다.
+
+- 벡터: 바디의 `organizationId` 를 **멤버십 검증 없이** `db.quote.create` 에 기입
+- 성격: 읽기 유출이 *남의 것을 보는* 것이라면 이것은 **남의 조직에 내 행을 심는** 것
+- 호출부 2곳 모두 이 필드를 **안 보낸다** → 정상 사용처 0, **공격자 전용 경로**
+- 대조군(미전송)은 `organizationId: null` → §org-attribution-missing 도 같은 라우트에 있다
+- 수정 형태: **파라미터 제거 + 세션 멤버십 도출**(work-queue 4건과 동일) — 한 번에 둘 다 닫힌다
+
+복원 완료(Quote 2 + QuoteListItem), 역할 원복 확인. **수정 금지 유지 — 목록만.**
+**재판단 트리거 발동: 수정 배치가 3차 잔여 4건보다 앞선다.**
+
 ## 10. 다음 순서
 
 1. ~~운영 조직 수~~ ✅ 완료 → 결함 등급
