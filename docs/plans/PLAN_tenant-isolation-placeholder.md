@@ -357,6 +357,59 @@ scopeKeyScoped 2 · vendorSelfScope 2 · idCompare 1)이 **배치 4 우선순위
 `reorder-recommendation` · `sourcing/recommend` · `vendor/*` 는 **대조 데이터를 만들지
 못해** 유출을 실증도 반증도 못 했다. purchaseRecord·vendor quote 픽스처가 필요하다.
 
+## 9.9 배치 4-3 1단계 (2026-08-14)
+
+### 🛑 1단계 전제가 깨졌다
+
+"잘못된 바디면 DB 를 안 건드린다"는 전제로 설계했으나 **프로브가 실제로 썼다**:
+`quote 6→8`(POST /api/quote-lists 가 201 생성), `orgVendor 2→1`(DELETE 대조군이 실제 삭제).
+스냅샷이 없었으면 모르고 넘어갔다. → **스냅샷·복원을 모든 프로브에 무조건 적용**으로 절차 변경.
+
+⚠️ 그 스냅샷조차 불완전했다 — `products/[id]/inspection` 이 만든 `Inspection` 행은
+스냅샷 테이블 목록에 없어 **diff 0 으로 오판**됐다. 스냅샷 범위는 **대상 라우트가 쓰는
+테이블**을 포함해야 한다.
+
+### 403 4분류 (23 프로브)
+
+| 판정 | 수 |
+|---|---|
+| 역할게이트(enforceAction) 우선 — **org 판별 아님** | 9 |
+| 바디 검증 우선 → 2단계 필요 | 6 |
+| ✅ org 판별 확인 | 2 (`organization-vendors/[id]` PATCH·DELETE) |
+| 드리프트 500 | 2 |
+| 🔴 무검증 통과(생성) | 1 (`POST /api/quote-lists`) |
+| 미측정(픽스처 오류) | 3 |
+
+**정정**: `products/[id]/inspection` 을 처음 "✅ org 판별"로 집계했으나 **오분류**다.
+`fill()` 이 `[id]` 를 `PRODUCT_ID` 리터럴로 남겨 교차·대조가 같은 URL 이었다.
+→ 프로브 스크립트에 **치환 실패 가드**(대문자 플레이스홀더·`[...]` 잔존 시 프로브 중단)를
+넣고 가드 자체를 의도적 실패로 검증했다(✅ 동작 확인).
+
+### 미측정 3건 재실행 결과
+
+| 경로 | 결과 |
+|---|---|
+| `POST /api/products/{pid}/inspection` | **201 생성** — 무검증 create (§quote-lists-unvalidated-create 편입) |
+| `POST /api/products/{pid}/sds` | 403 역할게이트 — org 미판정 |
+| `PUT /api/quote-lists/[id]` | **guestKey 축 판별 확인** — 교차 404·row 불변 / 대조 200·row 변경(복원함) |
+
+### 부수 발견 — lock 누수 (테넌트 축 아님)
+
+`PUT /api/quote-lists/[id]` 의 404 조기 반환이 `enforcement.fail()` 을 부르지 않아
+**동시성 lock 이 누수된다.** 동일 요청 2회차부터 409 가 고정되고 서버 재시작 전까지 풀리지
+않는다(재현 확정 — 재시작 후 1회차 404, 2회차 즉시 409).
+§11.369 백로그의 후보 해법 2("route handler finally 에서 항상 failMutation")에 해당하는
+**결정적 재현 사례**다. cold-kill 이 아니라 **정상 경로**에서 난다.
+
+### 커버리지 (분모 명시)
+
+```
+쓰기  23/131  (제외 7 포함) — 우선순위 집합만 측정, 강한 마커 보유 108건 미측정
+읽기  30/59   (A5 1차, 신뢰 低 티어 고유 라우트 기준)
+```
+
+2단계 실측 대상 **15건** = 바디 검증 우선 6 + 역할게이트 우선 9.
+
 ## 10. 다음 순서
 
 1. ~~운영 조직 수~~ ✅ 완료 → 결함 등급
