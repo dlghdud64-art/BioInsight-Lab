@@ -319,6 +319,83 @@ export function collectHandlers(): Handler[] {
   return out;
 }
 
+// ═══════════════════════════════════════════════════════
+// 2.5 `data:` 축 — 요청 바디의 organizationId 를 그대로 기입하는 형태 (배치 5-B)
+// ═══════════════════════════════════════════════════════
+
+/**
+ * 🛑 이 단언이 늦게 생긴 이유를 남긴다.
+ *
+ * 기존 마커는 전부 **`where` 축**(누구 것을 읽/쓰는가)만 봤다. 그런데 쓰기에는 다른 축이 있다 —
+ * **`data:` 축**(누구 것으로 만드는가). `protocol/bom` 이 바디의 `organizationId` 를
+ * 검증 없이 `db.quote.create({ data: { organizationId } })` 에 기입해 **타 조직에 행을
+ * 심을 수 있었고**(실측 확정), 단언은 그것을 "검사 있음"으로 분류했다.
+ *
+ * 판정: 핸들러가 **요청 바디에서 꺼낸 식별자**를 `data:` 의 `organizationId` 로 쓰면
+ * 위반이다. 단, 그 식별자로 **멤버십 검사**를 수행한 흔적이 있으면 통과.
+ */
+function bodyDerivedIdentifiers(body: string): string[] {
+  const out: string[] = [];
+  // const { a, b } = body;  /  = await request.json();
+  const re = /const\s*\{([^}]+)\}\s*(?::[^=]+)?=\s*(?:body|await\s+req(?:uest)?\.json\(\))/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(body))) {
+    for (const raw of m[1].split(",")) {
+      const name = raw.split(":").pop()!.split("=")[0].trim();
+      if (/^[A-Za-z_$][\w$]*$/.test(name)) out.push(name);
+    }
+  }
+  return [...new Set(out)];
+}
+
+/** `data:` 블록에서 organizationId 에 바인딩된 값 이름을 뽑는다 */
+function dataOrgBindings(body: string): string[] {
+  const out: string[] = [];
+  let i = 0;
+  while ((i = body.indexOf("data:", i)) !== -1) {
+    const open = body.indexOf("{", i);
+    if (open === -1) break;
+    const block = body.slice(open, matchBlock(body, open) + 1);
+    const short = /(^|[{,\s])organizationId\s*[,}]/.exec(block);
+    if (short) out.push("organizationId");
+    const kv = /organizationId\s*:\s*([A-Za-z_$][\w$.]*)/.exec(block);
+    if (kv) out.push(kv[1].split(".")[0]);
+    i = matchBlock(body, open) + 1;
+  }
+  return [...new Set(out)];
+}
+
+export function findBodyOrgWrites(): Array<{ route: string; method: string; binding: string }> {
+  const out: Array<{ route: string; method: string; binding: string }> = [];
+  for (const abs of walk(API_ROOT)) {
+    const src = read(abs);
+    const route =
+      "/api" + relative(API_ROOT, dirname(abs)).split(/[\\/]/).filter(Boolean).map((s) => "/" + s).join("");
+    const re = /export\s+(?:async\s+)?function\s+(GET|POST|PATCH|PUT|DELETE)\s*\(/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(src))) {
+      const pOpen = src.lastIndexOf("(", re.lastIndex);
+      const bodyStart = findBodyBrace(src, matchBlock(src, pOpen, "(", ")"));
+      if (bodyStart === -1) continue;
+      const handler = src.slice(bodyStart, matchBlock(src, bodyStart) + 1);
+
+      const fromBody = bodyDerivedIdentifiers(handler);
+      const bindings = dataOrgBindings(handler);
+      for (const b of bindings) {
+        // 구조분해 없이 `organizationId: body.organizationId` 로 직접 쓰는 형태도 바디 유래다
+        const isDirectBodyRef = /^(body|payload|json|input|parsed)$/.test(b);
+        if (!fromBody.includes(b) && !isDirectBodyRef) continue;
+        // 그 식별자로 멤버십을 검사했으면 통과
+        const verified = new RegExp(
+          `organizationMember\\s*\\.\\s*(findFirst|findUnique)\\s*\\(\\s*\\{[\\s\\S]{0,300}?${b}`,
+        ).test(handler);
+        if (!verified) out.push({ route, method: m[1], binding: b });
+      }
+    }
+  }
+  return out;
+}
+
 /**
  * 설계상 공개 — 토큰이 곧 자격증명인 경로.
  * 세션 사용자에 묶인 소유권 검사가 **있어서는 안 되는** 표면이므로 예외로 둔다.
@@ -379,6 +456,13 @@ describe("§tenant-isolation A4 — 테넌트 접촉 핸들러는 반드시 검�
   it("소유권/조직 검사가 없는 테넌트 접촉 핸들러가 0 이다", () => {
     const report = unguarded.map((h) => `${h.method} ${h.route}  (${h.file})`).sort();
     expect(report).toEqual([]);
+  });
+
+  it("요청 바디의 organizationId 를 검증 없이 data 에 기입하는 핸들러가 0 이다", () => {
+    // §tenant-isolation 배치 5-B — `where` 축이 아니라 **`data:` 축**.
+    //   protocol/bom 이 이 형태로 타 조직에 행을 심을 수 있었다(실측 확정).
+    const violations = findBodyOrgWrites().map((v) => `${v.method} ${v.route} (binding: ${v.binding})`).sort();
+    expect(violations).toEqual([]);
   });
 
   it("설계상 공개 예외는 3건뿐이며 각각 사유를 갖는다", () => {

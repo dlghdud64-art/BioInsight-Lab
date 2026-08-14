@@ -769,6 +769,50 @@ POST /api/protocol/bom  body: { title, reagents, organizationId: <orgB.id> }
 복원 완료(Quote 2 + QuoteListItem), 역할 원복 확인. **수정 금지 유지 — 목록만.**
 **재판단 트리거 발동: 수정 배치가 3차 잔여 4건보다 앞선다.**
 
+## 9.20 배치 5 — 유출 수정 + 단언 `data:` 축 보강 (2026-08-15)
+
+### 5-A `protocol/bom` 수정
+
+바디 `organizationId` **파라미터 제거** + 세션 멤버십 도출(`getCallerOrganizationId`,
+work-queue 4건 패턴 승계). 파라미터를 남기고 검증만 붙이지 않는다.
+
+| 프로브 | 결과 |
+|---|---|
+| 교차 (바디에 orgB 주입) | 200 · 생성 Quote `organizationId = orgA`(세션 도출) → **주입 무시** |
+| 대조 (미전송) | 200 · `organizationId = orgA` → **이전 null 귀속 부재도 닫힘** |
+| row | **orgB 증감 0** · orgA +2 (복원 완료) |
+
+호출 화면 `/protocol/bom` **200 정상 렌더** 확인(§11 이설 때와 같은 절차).
+`components/protocol/protocol-upload.tsx` 는 **어디에도 마운트되지 않은 미사용 컴포넌트**로
+확인돼 렌더 대상에서 제외했다.
+
+### 5-B 단언 `data:` 축 보강
+
+기존 마커는 전부 **`where` 축**(누구 것을 읽/쓰는가)만 봤다. 쓰기에는 다른 축이 있다 —
+**`data:` 축**(누구 것으로 만드는가).
+
+- 신규 검사: 핸들러가 **요청 바디에서 꺼낸 식별자**를 `data:` 의 `organizationId` 로
+  쓰면 위반. 단 그 식별자로 멤버십 검사를 한 흔적이 있으면 통과
+- 구조분해(`const { organizationId } = body`)와 직접 참조(`organizationId: body.organizationId`)
+  두 형태 모두 인식
+- **corrupt→RED 신규 1건 실증**: 5-A 를 되돌리니 `POST /api/protocol/bom (binding: organizationId)`
+  로 RED. 새 인식 경로에 새 실증을 붙였다
+
+### 전수 재스캔 결과 — **신규 목록 0**
+
+`src/app/api` 전 핸들러 재스캔에서 같은 형태 **추가 발견 0**.
+배치 2 처럼 목록이 나오면 일괄 편입 가능 여부를 먼저 판단할 예정이었으나 해당 없음.
+
+⚠️ 0 의 신뢰 근거는 corrupt→RED 다 — 검출기가 실제로 무는 것을 확인한 뒤의 0 이다.
+
+### 커버리지
+
+```
+쓰기 org 축   2/11 판정 (dispatch-batch ✅ · protocol/bom ✅ 수정 후 재확인)
+             유출 발견 1건 → **수정 완료**
+읽기         99/107 (유출 1건 수정 완료)
+```
+
 ## 10. 다음 순서
 
 1. ~~운영 조직 수~~ ✅ 완료 → 결함 등급

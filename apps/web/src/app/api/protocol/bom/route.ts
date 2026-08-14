@@ -1,6 +1,7 @@
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { getCallerOrganizationId } from "@/lib/security/caller-organization";
 import { db } from "@/lib/db";
 import { searchProducts } from "@/lib/api/products";
 
@@ -32,7 +33,6 @@ export async function POST(request: NextRequest) {
     const {
       title,
       reagents,
-      organizationId,
       experimentRounds = 1,
     }: {
       title: string;
@@ -44,9 +44,20 @@ export async function POST(request: NextRequest) {
         category?: "REAGENT" | "TOOL" | "EQUIPMENT";
         description?: string;
       }>;
-      organizationId?: string;
       experimentRounds?: number;
     } = body;
+
+    // ── 조직 귀속 (§tenant-isolation 배치 5-A) ──
+    //   이전에는 `organizationId` 를 **바디에서 받아** 검증 없이 Quote 에 기입했다.
+    //   실측: 조직 A 사용자가 바디에 조직 B id 를 넣어 **B 에 귀속된 견적을 생성**했다
+    //   (교차 200 · Quote.organizationId = orgB). 삭제한 safety/spend 와 같은 형태이되
+    //   쓰기 쪽 — *남의 것을 보는* 게 아니라 **남의 조직에 행을 심는다**.
+    //
+    //   🛑 파라미터를 남기고 검증만 붙이지 않는다(호영님 판정선) — 검증 누락이 곧 같은
+    //      구멍이 된다. **입력을 없애고 세션 멤버십에서 도출한다**(work-queue 4건 패턴 승계).
+    //   부수 효과: 정상 호출부 2곳은 이 필드를 보내지 않아 `organizationId: null` 로
+    //      생성되고 있었다(§org-attribution-missing). 도출로 바꾸면 그 귀속 부재도 닫힌다.
+    const organizationId = await getCallerOrganizationId(session.user.id);
 
     if (!title || !reagents || reagents.length === 0) {
       enforcement.fail();
