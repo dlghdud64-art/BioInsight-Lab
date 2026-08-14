@@ -36,7 +36,7 @@
 
 ### 읽는 법 — 세 묶음으로 갈린다
 
-**A. 지금 막고 있는 것 (독립·즉시)** — **2026-08-12 정리 완료. 비었다.**
+**A. 지금 막고 있는 것 (독립·즉시)** — ~~비었다~~ → **#8 로 다시 채워졌다 (왕복 검증에서 발견)**
 - ~~#2 §auth-provider-scope~~ → **강등**(아래)
 - **#6 1인 조직 결재** → **판정 완료**, 착수는 왕복 뒤(아래)
 
@@ -166,6 +166,32 @@ A 묶음이 비었다. 남은 것은 전부 **왕복 검증** 또는 **스키마
 건너뛰어야** 하는지가 판정 대상이다.
 
 ⚠️ **등재만 한다. 지금 설계하지 않는다.**
+
+### 8. 가입자가 팀을 만들 수 없다 🆕 (2026-08-12, 왕복 검증 5단계) — ✅ 교정 완료
+
+**성질 (게이트 조건 정면 충족):**
+- **코드 상수라 운영에서도 동일**하다 — 역할 정책은 DB 무관이다.
+  지금 가입하는 고객사도 팀을 만들 수 없었다
+- **고객사가 자력으로 풀 수 없다** — `User.role` 변경은 우리만 가능하다
+
+원인: `RESEARCHER → requester` 인데 `team_manage: ['ops_admin']`.
+**자기 조직의 OWNER 인데도 첫 팀을 만들 수 없었다**(POST /api/team → 403).
+
+⚠️ 이것은 새 문제가 아니었다. **세 줄 아래 `workspace_create` 가 같은 역설을 같은
+방법으로 이미 풀어 놓았고 주석까지 달려 있었다.** 옆 칸만 그대로였다 —
+누군가 이미 이 함정을 밟고 나왔는데 옆 칸을 보지 않은 것이다.
+
+**무엇으로 닫혔나:** `team_create` 를 `workspace_create` 와 **동형**으로 분리
+(`['requester','buyer','approver','ops_admin']`). 관리(초대·역할변경·멤버제거)는
+`team_manage`(ops_admin) 유지 — 분리 후에도 실제로 막는 지점 3곳이 남는다(빈껍데기 아님).
+sentinel `ops/team-create-bootstrap.test.ts` 가 되감기와 형태 이탈을 함께 잠근다.
+
+📌 **잔여 판단 재료** — `['ops_admin']` 단독 액션이 **13개** 있다.
+같은 부트스트랩 역설이 또 있는지는 미판정(고치지 않고 목록만 확보):
+order_status_change · ai_ops_control · email_draft_approve · member_role_change ·
+member_capabilities_change · organization_security_change · team_manage ·
+workspace_manage · budget_delete · billing_checkout · billing_payment_method ·
+governance_data_mutation · sensitive_data_delete
 
 ### 7. 초대 링크가 404 로 이어진다 (2026-08-12 실측, §3b) — **거짓 성공만 차단됨**
 
