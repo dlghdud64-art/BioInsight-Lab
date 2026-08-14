@@ -81,7 +81,8 @@ export async function POST(request: NextRequest) {
     enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
-      action: 'team_manage',
+      // §team-create-bootstrap — 생성은 team_create(부트스트랩 예외), 관리는 team_manage.
+      action: 'team_create',
       targetEntityType: 'team',
       targetEntityId: 'new',
       sourceSurface: 'team-api',

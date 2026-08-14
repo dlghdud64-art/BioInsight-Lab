@@ -94,6 +94,7 @@ export type IrreversibleActionType =
   | 'organization_update'
   | 'organization_invite'
   | 'organization_security_change'
+  | 'team_create'
   | 'team_manage'
   | 'workspace_create'
   | 'workspace_manage'
@@ -191,6 +192,12 @@ const ACTION_ROLE_MINIMUM: Record<IrreversibleActionType, SystemRole[]> = {
   organization_update: ['requester', 'buyer', 'approver', 'ops_admin'],
   organization_invite: ['buyer', 'approver', 'ops_admin'],
   organization_security_change: ['ops_admin'],
+  // 신규 Team 생성은 모든 로그인 유저가 가능해야 한다
+  // (bootstrap paradox 방지: 첫 팀을 만드는 사람은 아직 ADMIN일 수 없음).
+  // 세 줄 아래 workspace_create 가 같은 역설을 같은 방법으로 이미 풀었다 —
+  // 이 줄은 새 설계가 아니라 **누락 보정**이다. 두 예외는 같은 모양을 유지한다.
+  // 기존 Team 의 초대·역할변경·멤버제거는 계속 team_manage(ops_admin)로 남는다.
+  team_create: ['requester', 'buyer', 'approver', 'ops_admin'],
   team_manage: ['ops_admin'],
   // 신규 Workspace 생성은 모든 로그인 유저가 가능해야 한다
   // (bootstrap paradox 방지: 첫 워크스페이스를 만드는 사람은 아직 ADMIN일 수 없음).
