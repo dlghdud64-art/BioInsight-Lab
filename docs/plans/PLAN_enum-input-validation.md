@@ -103,6 +103,27 @@ if (!teamMember || (teamMember.role !== TeamRole.ADMIN && teamMember.role !== Te
 사용자가 **존재하지 않는 역할을 근거로 거부당하는 상태**였다.
 → 문구 축은 §text-coupling-debt, 두 enum 혼동은 §audit-foundation ① 의 어휘 문제와 같은 뿌리다.
 
+### §text-coupling-debt 등재 2 — 주석이 없는 동작을 말한다 (2026-08-12)
+
+`components/workspace/workspace-switcher.tsx` — 콜백이 없을 때의 기본 동작:
+
+```ts
+} else {
+  // 기본 동작: URL 파라미터 업데이트 또는 상태 저장
+  router.refresh();
+}
+```
+
+**URL 을 쓰는 코드도, 상태를 저장하는 코드도 없다.** `router.refresh()` 뿐이다.
+즉 콜백 없이 이 컴포넌트를 쓰면 **조직 전환이 조용히 아무 일도 하지 않는다.**
+
+지금은 실사용 6곳이 모두 `onOrganizationChange` 를 넘기므로 발현하지 않는다.
+⚠️ **콜백 없이 쓰는 7번째 화면이 생기면 그때 조용히 깨진다** —
+주석을 읽고 "URL 로 관리되는구나" 라 믿는 사람이 만들 화면이다.
+
+→ 교정은 §org-scope-ambiguity 의 "선택의 거처" 결정과 함께.
+   그 전까지는 **주석이 구현보다 앞서 있는 상태**로 기록만 한다.
+
 ## 4. 교정 방식 (착수 시)
 
 `z.nativeEnum(PrismaEnum)` 을 입력 스키마에 넣는 것이 가장 얇다 —
