@@ -143,7 +143,32 @@ function isOrganizationAuthorized(actor, targetOrganizationId) {
 | 오탐(수동 기각) | 5 | reorder-recommendation·responses/[responseId]·vendor/insights·sourcing/recommend·check-slug |
 | 설계상 공개(토큰=자격) | 2 | `share/[token]` · `receiving/[token]` |
 
-### 8.1 유출면 11건 — 이 목록이 규모 숫자다
+### 🛑 8.0 정정 (2026-08-14, 런타임 재검증) — §8.1 의 11건은 **틀렸다**
+
+§8.1 은 **라우트 레벨만 보고** 만든 목록이라 `middleware.ts` 의 실질 방어층을 누락했다.
+probe-a(RESEARCHER)로 재실측한 결과:
+
+| 원 번호 | 실측 | 재분류 |
+|---|---|---|
+| #3·#4·#5·#6·#7 (`/api/admin/*`) | **403** "관리자 권한이 필요합니다" | 미들웨어 차단 → **유출 아님**(A2: ops_admin 전역 축) |
+| #8 `safety/spend` | 500 (`purchaseDate` 부재) | 호출부 0 → **삭제 완료** |
+| #9 `products/safety` | 500 (`PurchaseRecord.organizationId` 부재) | 호출부 0 → **삭제 완료** |
+| #10 `organizations/[id]/security` | 500 (`allowedEmailDomains` 부재) | **호출부 4** → 삭제 불가, A3 |
+| #1 `GET /api/quotes/[id]/status` | **200 + 타 조직 데이터** | ✅ 살아있는 행 단위 유출 |
+| #2 `PATCH /api/quotes/[id]/status` | 게이트 통과, 500로만 정지 | ✅ 드리프트 해제 즉시 착지 |
+| #11 `GET /api/analytics/kpi` | **200**, 전 조직 집계 | ✅ 집계 단위 유출 (아래 주의) |
+
+**고객 도달 유출 = #1·#2·#11 3건.** 나머지는 스태프 게이트 뒤이거나 드리프트로 죽어 있다.
+
+⚠️ #11 은 성격이 다르다 — 호출 화면이 `src/app/admin/analytics/page.tsx`(내부 콘솔)인데
+**API 경로가 `/api/admin/` 이 아니라 미들웨어 admin 게이트가 안 덮는다.**
+페이지는 잠겼고 API 는 열린 형태다. 따라서 org 필터가 아니라 **라우트에 역할 검사 추가**가
+정답이다(A2 와 같은 결론, 다른 시행 방법).
+
+1차 오독(역할 게이트 조기 반환 → "경로 미도달")과 합쳐 **연속 2회 등급 오류**.
+원인과 재발 방지는 §measurement-layer-blindness 로 승격했다.
+
+### 8.1 유출면 초안 11건 — ⚠️ **§8.0 으로 정정됨. 아래는 라우트 레벨 가설이며 판정 아님**
 
 | # | 핸들러 | 노출 | 상태 |
 |---|---|---|---|
@@ -202,6 +227,20 @@ org** 가 된다.
 
 **전환 게이트:** soft 로그에 **(a)≠(b) 가 실제로 찍히는지**. 안 찍히면 org 주입이
 안 된 것이고, 그 상태의 full 전환은 지금과 동일한 항등 비교를 이름만 바꿔 재생산한다.
+
+## 9.5 A트랙 진행 (2026-08-14, 호영님 조정 지시)
+
+- **A1 삭제 완료** — `api/safety/spend/route.ts`(루트), `api/products/safety/route.ts`.
+  호출부 0 + 상시 500 + 유출 형태 = 살릴 근거 0. 하위 라우트
+  (`spend/summary`·`unmapped`·`map`·`export`)는 **삭제 대상 아님, A5 스윕 대상으로 유지**
+  — 루트가 죽어 있었다는 것이 하위의 안전 근거가 되지 않는다.
+- **#10 판정: 삭제 불가 → A3** — 호출부 4곳(`settings/security`, `settings/workspace`),
+  테스트 2건 참조. 다만 `allowedEmailDomains` 부재로 **상시 500** →
+  **보안 설정 화면이 운영에서 동작하지 않는다**(§drift-masks-isolation §2).
+- **#11 판정: 내부 콘솔 API 이나 미들웨어 미커버** → 라우트 역할 검사 추가(§8.0 주의).
+- **A2 종결** — `/api/admin/*` 는 ops_admin 전역 축. 근거: 미들웨어
+  deny-by-default + 호출부가 `src/app/admin/**` 단독 + `User.role` 승격 경로 부재
+  (운영 ADMIN 2명 전원 내부 스태프). 부트스트랩 역설 미해당.
 
 ## 10. 다음 순서
 
