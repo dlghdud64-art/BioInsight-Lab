@@ -631,6 +631,61 @@ org 판별인지 단순 미발견인지 못 가른다** — 미판정으로 남�
 쓰기 org 축 판정   1/11   (판정 불가 4 · 미측정 6)
 ```
 
+## 9.16 읽기 스윕 2차 (2026-08-14) — **신규 유출 0**
+
+A5 1차 설계 재사용(4분류 + "검사가 요청 리소스의 org 를 봤는지" 판정). 51 프로브.
+
+| 판정 | 수 |
+|---|---|
+| ✅ org 판별 확인 (교차 차단 + 대조 통과) | 12 |
+| ✅ 목록 혼입 없음 | 26 |
+| ✅ 차단 | 8 |
+| ⚠️ 통과하나 B흔적 없음(**미실증**) | 1 |
+| ⚠️ 판정 불가(드리프트/500) | 4 |
+| **🔴 유출** | **0** |
+
+### 미실증 1건 — 안전으로 승격 금지
+
+`GET /api/inventory/[id]/restock-request` 가 **타 조직 재고 id 로 200** 을 냈다.
+응답에 B 흔적이 없어 유출은 실증되지 않았으나 **교차 요청이 통과했다는 사실 자체가 남는다**.
+해당 재고의 재입고 요청 데이터를 심어 재측정해야 한다.
+
+### 판정 불가 4건
+
+| 경로 | 상태 |
+|---|---|
+| `organizations/[id]/sso` | 교차·대조 양쪽 500 |
+| `quotes/[id]/detail` | 교차·대조 양쪽 500 |
+| `safety-spend` · `safety-spend/unmapped` | 500 |
+
+⚠️ 이 4건은 **드리프트 여부 미확인** — 500 이라는 이유만으로 §drift 에 편입하지 않는다
+(§drift "편입하지 않은 건" 규칙). 스키마 부재 필드 참조인지 확인 후 편입 판단.
+
+### 축이 달라 제외 (분모에 남긴다)
+
+`cron/*`(5, 기계 인증) · `receiving/[token]`(토큰=자격) ·
+`products/[id]/sds`(전역 카탈로그) · `quotes/[id]/responses/[responseId]`(벤더 축) = **8**
+
+### 커버리지 (분모 명시)
+
+```
+읽기(누계)   81/107   — 1차 30 + 2차 51 / 테넌트 접촉·미들웨어 미커버 GET 라우트 전체
+             제외 8(축 다름, 분모 유지) · **미측정 18**
+쓰기 org 축   1/11    (판정 불가 4 · 미측정 6)
+scopeKey 축   0       (§scopekey-axis-unmeasured)
+```
+
+### 미측정 18 (다음 회차 대상)
+
+`safety/products` · `safety/sds` · `safety/spend/{export,summary,unmapped}` ·
+`share/[token]` · `spending-categories` · `team/[id]/{inventory,members}` ·
+`team/user-role` · `user-budgets` · `user-budgets/[id]/check` ·
+`work-queue/{bottleneck-remediation,cadence-governance,daily-review,purchase-conversion}` ·
+`workspaces/[id]` · `workspaces/[id]/members`
+
+⚠️ 규모 정정 4회째 — 지시문의 "읽기 29건"은 **취약 티어 잔여**였고,
+테넌트 접촉 GET 잔여 전체는 **77건**이었다.
+
 ## 10. 다음 순서
 
 1. ~~운영 조직 수~~ ✅ 완료 → 결함 등급
