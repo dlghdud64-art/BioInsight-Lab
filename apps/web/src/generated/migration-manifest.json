@@ -52,7 +52,9 @@
     "20260731120000_receiving_document",
     "20260801120000_receiving_inspection_decision",
     "20260804110916_pocandidate_quote_binding",
-    "20260807130000_quote_item_vendor_selection"
+    "20260807130000_quote_item_vendor_selection",
+    "20260812120000_schema_proposal_compliance_alert_vendorname",
+    "20260812130000_team_organizationid_required"
   ],
-  "generatedAt": "2026-08-07T16:44:16.169Z"
+  "generatedAt": "2026-08-14T03:42:37.241Z"
 }

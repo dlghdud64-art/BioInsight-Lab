@@ -86,6 +86,8 @@ model Organization {
   invites                    OrganizationInvite[]
   budgets                    Budget[]
   teams                      Team[]
+  complianceLinks            ComplianceLink[]
+  inventoryAlertSettings     InventoryAlertSetting[]
   billingInfo                BillingInfo?
   aiActionItems              AiActionItem[]
   ingestionEntries           IngestionEntry[]
@@ -212,6 +214,7 @@ model User {
   // §pricing-enforce-p2 P2b — 라벨 스캔 월 한도(Free 10) enforce 카운트 SoT.
   labelScanEvents                   LabelScanEvent[]
   receivingDocuments                ReceivingDocument[] // §receiving-doc-attach-canonical — 업로드 담당자
+  inventoryAlertSettings            InventoryAlertSetting[]
 
   @@index([email])
   @@index([role])
@@ -712,13 +715,17 @@ model QuoteListItem {
   //   additive nullable — rollback = 컬럼 drop. FK 는 vendorName 문자열이 아닌
   //   QuoteVendorRequest 결속(응답 실존·이름 변경 안전). 요청 삭제 시 선택 해제(SetNull).
   //   approve 소비 계층: 선택 > 유일-응답 파생(§pocandidate-vendor-split A안) > 잔여 "".
+  /// §schema-proposal §3 — 초안 단계 항목별 공급사 표시값(자유 입력/선택).
+  /// selectedVendorRequestId(확정 truth, FK)와 **다른 축**이다 — 워크벤치는 요청 발송
+  /// **전에** 항목별 공급사를 다룬다. 현재 raw 스냅샷 blob 의 vendorName 폴백을 정식화한다.
+  vendorName              String?
   selectedVendorRequestId String?
 
   // 관?
-  quote                 Quote               @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-  product               Product?            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quote                 Quote                     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  product               Product?                  @relation(fields: [productId], references: [id], onDelete: Cascade)
   vendorResponses       QuoteVendorResponseItem[] // Vendor responses for this item
-  selectedVendorRequest QuoteVendorRequest? @relation("QuoteItemSelectedVendor", fields: [selectedVendorRequestId], references: [id], onDelete: SetNull)
+  selectedVendorRequest QuoteVendorRequest?       @relation("QuoteItemSelectedVendor", fields: [selectedVendorRequestId], references: [id], onDelete: SetNull)
 
   @@index([quoteId])
   @@index([productId])
@@ -914,15 +921,16 @@ model ProductInventory {
   archivedAt           DateTime?
 
   // 관?
-  user                User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization        Organization?      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  product             Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
-  disposalScheduledAt DateTime? // P7-1: 폐기 예정일
-  lastInspectedAt     DateTime? // 마지막 점검일
-  usageRecords        InventoryUsage[]
-  restockRecords      InventoryRestock[]
-  inspections         Inspection[]
-  sdsDocuments        SDSDocument[] // §detail-page P2 — COA lot-scoped 역방향. ON DELETE RESTRICT(QC 기록 보존).
+  user                   User?                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization           Organization?           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  product                Product                 @relation(fields: [productId], references: [id], onDelete: Cascade)
+  disposalScheduledAt    DateTime? // P7-1: 폐기 예정일
+  lastInspectedAt        DateTime? // 마지막 점검일
+  usageRecords           InventoryUsage[]
+  restockRecords         InventoryRestock[]
+  inspections            Inspection[]
+  sdsDocuments           SDSDocument[] // §detail-page P2 — COA lot-scoped 역방향. ON DELETE RESTRICT(QC 기록 보존).
+  inventoryAlertSettings InventoryAlertSetting[]
 
   @@unique([userId, productId]) // ?용?별 ?품???나???고 기록
   @@unique([organizationId, productId]) // 조직??품???나???고 기록
@@ -2023,14 +2031,20 @@ model UserBudgetTransaction {
 // 팀/랩
 model Team {
   id             String   @id @default(cuid())
-  organizationId String? // FK to Organization (null = standalone team)
+  /// §team-org-role-model 3c — **required** (2026-08-12).
+  /// 이전 `String?` 은 설계가 아니라 미완이었다: 팀 생성이 이 값을 채우지 않았고,
+  /// null 을 다루는 분기도 전수 0 이었으며, 결정적으로 `api/budgets` 가
+  /// organizationId 일치를 요구해 **standalone 팀은 예산에 연결될 수 없었다**(조용한 실패).
+  /// required 로 두면 "채워지지 않는 상태" 가 구조적으로 불가능해진다.
+  /// 적용 시점 실측: 개발·운영 모두 Team 0행 → 데이터 이관 0.
+  organizationId String
   name           String
   description    String?  @db.Text
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   // Relations
-  organization     Organization?     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   members          TeamMember[]
   purchaseRequests PurchaseRequest[]
   budgets          Budget[]
@@ -3469,4 +3483,57 @@ model SDSDocument {
   @@index([restockId])
   @@index([extractionStatus])
   @@index([docType])
+}
+
+/// §schema-proposal §1 — 규제/절차 링크 (2026-08-12 적용)
+///   §phantom-model-call 로 표면 차단됐던 모델의 복원. 기존 lib/compliance-links.ts
+///   인터페이스가 사실상 스펙이며 삭제된 라우트의 create payload 와 일치한다.
+///   Product 와 직접 FK 를 두지 않는다 — 매칭은 rules(위험코드·픽토그램·카테고리·SDS 부재)
+///   기반이고, 제품 FK 를 두면 신규 제품마다 재등록이 필요해진다.
+///   ⚠️ rules 가 Json 이라 스키마가 값을 강제하지 못한다 — 입력 검증은 z.object 로 잠근다.
+model ComplianceLink {
+  id             String   @id @default(cuid())
+  organizationId String? // null = 공용(플랫폼 제공) 링크
+  title          String
+  url            String
+  description    String?  @db.Text
+  priority       Int      @default(0) // 낮을수록 먼저
+  enabled        Boolean  @default(true)
+  linkType       String   @default("official") // official | organization
+  tags           String[] @default([])
+  rules          Json? // hazardCodesAny / pictogramsAny / categoryIn / missingSds
+  createdBy      String? // 등록자(audit)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([enabled])
+  @@index([linkType])
+}
+
+/// §schema-proposal §2 — 재고 알림 설정 (2026-08-12 적용)
+///   삭제 대상이 아니라 **미구현**이었다(라우트는 있고 호출자 0).
+///   발송 이력은 별도 모델을 만들지 않고 기존 NotificationAction 을 재사용한다(§3-1).
+///   소유권 축은 ComplianceLink 와 다르다 — 이쪽은 **조직 단위 운영 설정**이며
+///   안전 정보가 아니다(§2-2).
+model InventoryAlertSetting {
+  id             String    @id @default(cuid())
+  inventoryId    String
+  userId         String? // 수신자(개인)
+  organizationId String?
+  alertType      String // low_stock | expiring | ...
+  enabled        Boolean   @default(true)
+  lastNotifiedAt DateTime? // 중복 발송 억제 기준
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  inventory    ProductInventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  user         User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  organization Organization?    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([inventoryId, userId, alertType])
+  @@index([organizationId])
+  @@index([enabled])
 }

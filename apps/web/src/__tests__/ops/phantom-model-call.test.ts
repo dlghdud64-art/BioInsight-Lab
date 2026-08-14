@@ -109,8 +109,10 @@ const LEGACY_PHANTOM: readonly string[] = [
   // 2026-08-10 교정 완료로 제거: `inventory`→productInventory, `quoteList`→quote.
   //   `purchase` 는 단순 rename 이 불가함이 드러나 보류(§3-3).
   // 2026-08-12 제거: `complianceLink` — 라우트 2개 삭제로 호출 소멸(표면 차단).
-  "inventoryAlertLog",    // 모델 부재
-  "inventoryAlertSetting",// 모델 부재
+  // 2026-08-12 제거: `inventoryAlertSetting` — **모델이 실재하게 됐다**
+  //   (§schema-proposal §2 적용, 마이그레이션 20260812120000). 유령이 아니다.
+  //   ratchet 이 이 제거를 요구했다(stale 방지) — 설계대로 작동한 사례다.
+  "inventoryAlertLog",    // 모델 부재 — 만들지 않기로 확정(NotificationAction 재사용, §3-1)
   "purchase",             // 실제 모델은 PurchaseRecord
 ];
 
