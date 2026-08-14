@@ -61,8 +61,18 @@ function isOrganizationAuthorized(actor, targetOrganizationId) {
 3. 결과가 **차단(403)인지 통과인지** 기록한다 — 통과면 **fail-open 확정**
 4. 동시에 `actor.organizationId` 와 `targetOrganizationId` 의 **실제 런타임 값**을 남긴다
 
-⚠️ **답이 나오기 전에는 §2 를 다음 세션 첫 줄로 확정하지 않는다.**
-호영님 잠정 순위는 §2 가 앞이나, **그것은 fail-closed 를 가정한 것이고 가정이다.**
+### ✅ 순위 확정 (호영님 2026-08-12, 잠정 순위 **철회**)
+
+> **다음 세션 첫 줄은 이 실측이다. §2 는 그 결과를 보고 정한다.**
+
+철회 근거: **플레이스홀더 둘이 같은 경로에 겹쳐 있고, 둘 다 통과 방향으로 고장나
+있다면 fail-open 이 더 유력하다.**
+   ① `actor.organizationId = 'default-org'` (비교의 한쪽이 상수)
+   ② `entityCapabilities: []` → `hasEntityCapability()` **항상 true** (폴백이 무조건 통과)
+
+⚠️ 실측 추가 요구 — **양쪽 피연산자의 런타임 값을 로그로 남길 것.**
+   차단/통과 **결과만 보면 다른 이유로 막혔을 때 격리가 작동한 것으로 오독한다.**
+   왕복 4단계에서 **500 을 403 으로 착각할 뻔한 것과 같은 함정**이다.
 
 ## 5. 지금 하지 않는 것
 
