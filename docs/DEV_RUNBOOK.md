@@ -81,6 +81,18 @@ npm run db:generate
 npx prisma migrate dev --name <change_summary>
 
 # 프로덕션/CI 에서 migration 적용만
+#
+# 🛑 반드시 5432 세션 풀러로 실행한다 (§migrate-pooler-deadlock, 2026-08-12).
+#    schema.prisma 에 directUrl 이 없어(ADR-002 §11.13) migrate 는 DATABASE_URL 을 쓰는데,
+#    그 값이 6543 transaction pooler 면 advisory lock 을 못 잡아 **무한 대기**한다.
+#    ⚠️ 에러도 타임아웃도 없다 — 무출력으로 매달린다. "느린가 보다" 로 읽힌다.
+#
+#    실행 형태 (DATABASE_URL 을 DIRECT_URL 값으로 덮어쓴다):
+#      DATABASE_URL="<DIRECT_URL 값 = ...:5432/postgres>" npx prisma migrate deploy
+#
+# 🛑 새 DB 를 세울 때는 마이그레이션 **전에** 확장을 먼저 만든다
+#    (§migration-extension-gap): CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA extensions;
+#    마이그레이션 파일에 CREATE EXTENSION 이 없어 0_init 이 42704 로 실패한다.
 npm run prisma:migrate
 
 # 실 DB vs schema.prisma 상태 비교
