@@ -107,22 +107,41 @@ export function deriveMiddlewareCoverage(src: string): MiddlewareCoverage {
 const TENANT_MODEL =
   /\b(?:db|dbTyped|tx|prisma)\s*\.\s*(quote|quoteListItem|quoteItem|quoteShare|quoteResponse|productInventory|budget|categoryBudget|order|purchaseRecord|purchaseRequest|organization|organizationMember|organizationInvite|team|teamMember|workspace|workspaceMember|aiActionItem|receivingDraft|receivingDocument|poCandidate|billingInfo|subscription|vendorRequest|quoteReply|ingestionEntry|sdsDocument|complianceLink)\b/;
 
+/**
+ * ⚠️ 마커 의미론 (배치 3-B 교정) — **접촉을 판정으로 읽지 않는다.**
+ *
+ * 이전 `orgMember` 마커는 `organizationMember.(findFirst|findUnique|findMany|count)`
+ * 만 보고 "검사 있음"으로 판정했다. 그러나
+ *
+ *   db.organizationMember.findMany({ where: { organizationId: id } })   // ← 데이터 조회
+ *
+ * 는 **호출자를 판정하지 않는다**. 실제로 `organizations/[id]/members` GET 이 이
+ * 형태로 임의 조직 멤버 명부를 반환하고 있었고, 단언은 그것을 "신뢰 高"로 분류했다
+ * (A5 반증 스윕 발견). 멤버십 **검사**는 예외 없이 호출자 식별자를 where 에 갖는다.
+ *
+ * → 멤버십 계열 마커는 **`userId` 를 동반한 `findFirst`/`findUnique`** 로 한정한다.
+ *   `findMany({ where: { organizationId } })` 는 검사로 인정하지 않는다.
+ */
+// `[\s\S]` 를 쓰므로 dotAll 플래그 불요 (tsconfig target 이 es2018 미만이라 "s" 플래그는 tsc 에러)
+const MEMBERSHIP_CHECK = (model: string) =>
+  new RegExp(`${model}\\s*\\.\\s*(findFirst|findUnique)\\s*\\(\\s*\\{[\\s\\S]{0,300}?userId`);
+
 const OWNER_PATTERNS: Array<[string, RegExp]> = [
-  ["orgMember", /organizationMember\s*\.\s*(findFirst|findUnique|findMany|count)/],
-  ["teamMember", /teamMember\s*\.\s*(findFirst|findUnique|findMany|count)/],
-  ["workspaceMember", /workspaceMember\s*\.\s*(findFirst|findUnique|findMany|count)/],
+  ["orgMember", MEMBERSHIP_CHECK("organizationMember")],
+  ["teamMember", MEMBERSHIP_CHECK("teamMember")],
+  ["workspaceMember", MEMBERSHIP_CHECK("workspaceMember")],
   ["idCompare", /[A-Za-z0-9_.\]]+\s*(===|!==)\s*session[?.]*\.user[?.]*\.id/],
   ["idCompareRev", /session[?.]*\.user[?.]*\.id\s*(===|!==)\s*[A-Za-z0-9_.\]]+/],
-  ["scopedWhere", /where:\s*\{[^}]{0,400}userId:\s*session[?.]*\.user[?.]*\.id/s],
-  ["scopedWhereVar", /where:\s*\{[^}]{0,300}userId\s*[,:}]/s],
-  ["scopeKeyScoped", /where:\s*\{[^}]{0,200}scopeKey/s],
-  ["guestKeyScoped", /where:\s*\{[^}]{0,300}guestKey/s],
+  ["scopedWhere", /where:\s*\{[^}]{0,400}userId:\s*session[?.]*\.user[?.]*\.id/],
+  ["scopedWhereVar", /where:\s*\{[^}]{0,300}userId\s*[,:}]/],
+  ["scopeKeyScoped", /where:\s*\{[^}]{0,200}scopeKey/],
+  ["guestKeyScoped", /where:\s*\{[^}]{0,300}guestKey/],
   ["vendorEmail", /vendor\.email\s*(===|!==)/],
   ["orgIdsIn", /organizationId:\s*\{\s*in:\s*\w*[Oo]rgIds/],
   // 생성 경로 — 소유자를 세션에서 **주입**하는 형태도 스코프다(where 가 아니라 data 에 있다)
-  ["createScoped", /data:\s*\{[^}]{0,600}(userId:\s*session[?.]*\.user[?.]*\.id|scopeKey|guestKey)/s],
+  ["createScoped", /data:\s*\{[^}]{0,600}(userId:\s*session[?.]*\.user[?.]*\.id|scopeKey|guestKey)/],
   // 벤더 자기 스코프 — 세션 사용자의 email 로 vendor 를 찾는다(userId 축이 아니라 email 축)
-  ["vendorSelfScope", /where:\s*\{[^}]{0,120}email:\s*(user|session[?.]*\.user)[?.]*\.?email/s],
+  ["vendorSelfScope", /where:\s*\{[^}]{0,120}email:\s*(user|session[?.]*\.user)[?.]*\.?email/],
   // 조직을 클라 입력이 아니라 **세션 사용자 멤버십에서 도출**하는 형태
   ["orgFromMembership", /organizationMembers\s*[?.]*\.?\[\s*0\s*\]|organizationMember\s*\.\s*findMany[\s\S]{0,200}userId/],
 ];
@@ -371,6 +390,14 @@ describe("§tenant-isolation A4 — 자기검증: 배치 1·2 결과를 실제�
     expect(existsSync(join(API_ROOT, "analytics", "kpi", "route.ts"))).toBe(false);
     expect(existsSync(join(API_ROOT, "admin", "analytics", "kpi", "route.ts"))).toBe(true);
     expect(cov.gatedPrefixes.some((p) => "/api/admin/analytics/kpi".startsWith(p))).toBe(true);
+  });
+
+  it("배치 3 — organizations/[id]/members GET 이 '검사 있음' 으로 분류된다", () => {
+    const h = find("/api/organizations/[id]/members", "GET");
+    expect(h).toBeTruthy();
+    expect(h!.hasOwnCheck).toBe(true);
+    // 접촉이 아니라 판정을 읽어야 한다 — findMany 데이터 조회만으로는 인정되지 않는다
+    expect(h!.markers).toContain("orgMember");
   });
 
   it("오분류 회귀 핀 — 로컬 헬퍼 경유 검사를 인식한다 (budgets/[id] isOrgAdminOrOwner)", () => {

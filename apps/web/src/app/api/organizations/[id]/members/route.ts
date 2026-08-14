@@ -29,6 +29,24 @@ export async function GET(
     }
 
     const { id } = await params;
+
+    // ── 조직 스코프 (§tenant-isolation-placeholder A5 발견분, 배치 3-A) ──
+    //   이 GET 은 요청받은 org 의 멤버를 **그대로 조회**했다. `organizationMember` 를
+    //   건드리므로 검사가 있는 것처럼 보였지만 그것은 **데이터 조회이지 판정이 아니다** —
+    //   호출자가 이 조직 멤버인지 확인하는 코드가 없었고, 임의 조직의 멤버 명부
+    //   (id·name·email)가 아무 로그인 사용자에게 반환됐다(실측 200).
+    //
+    //   존재 오라클 차단 — 같은 `[id]` 축의 `getOrganizationById`(#12)와 동일하게
+    //   **멤버십을 먼저 판정**한다. 비멤버에게는 조직 존재 여부도 알리지 않는다.
+    //   형제끼리 다르게 굴면 그 차이가 다음 구멍이 된다.
+    const callerMembership = await db.organizationMember.findFirst({
+      where: { organizationId: id, userId: session.user.id },
+      select: { id: true },
+    });
+    if (!callerMembership) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const members = await db.organizationMember.findMany({
       where: { organizationId: id },
       include: {
