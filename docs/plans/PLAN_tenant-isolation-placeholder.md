@@ -686,6 +686,38 @@ scopeKey 축   0       (§scopekey-axis-unmeasured)
 ⚠️ 규모 정정 4회째 — 지시문의 "읽기 29건"은 **취약 티어 잔여**였고,
 테넌트 접촉 GET 잔여 전체는 **77건**이었다.
 
+## 9.17 `restock-request` 재측정 — **유출 아님** (2026-08-14)
+
+읽기 2차의 유일한 "교차 200" 건. 가설은 "데이터가 없어서 200"이었다 → **데이터를 심어 검증.**
+
+심은 것: 조직 A·B 각각 Team + TeamMember + **PENDING PurchaseRequest**(자기 조직 재고 참조).
+
+| 프로브 | 결과 |
+|---|---|
+| 교차 (A 세션 → B 재고 id) | `200 {"hasRequest":false}` · **B 요청 노출 0** |
+| 대조 (A 세션 → A 재고 id) | `200 hasRequest:true` + 자기 요청 전문 |
+
+**✅ org 판별 확인.** 교차는 안 보이고 자기 것만 보인다.
+
+### 왜 200 이었나 — 구조
+
+```ts
+const teamMember = await db.teamMember.findFirst({ where: { userId: session.user.id } });
+if (!teamMember) return NextResponse.json({ hasRequest: false });   // ← 1차 200 의 정체
+const pendingRequests = await db.purchaseRequest.findMany({
+  where: { requesterId: session.user.id, teamId: teamMember.teamId, status: PENDING },
+});
+```
+
+`[id]`(재고 id)는 **리소스 참조가 아니라 호출자 자기 요청에 대한 메모리 필터 키**다.
+쿼리가 `requesterId = 호출자` 로 묶여 있어 **타인 데이터가 들어올 경로 자체가 없다**.
+1차의 200 은 A 에게 팀이 없어 조기 반환된 것이었다.
+
+⚠️ 그래도 **데이터를 심기 전에는 판정할 수 없었다** — 코드 독해만으로 "안전"이라 적었다면
+그것이 이번 세션이 5번 반복한 오독 형태와 같아진다. 심어서 확인한 것이 맞다.
+
+복원 완료(PurchaseRequest 2 · TeamMember 2 · Team 2 삭제, 잔여 확인).
+
 ## 10. 다음 순서
 
 1. ~~운영 조직 수~~ ✅ 완료 → 결함 등급
