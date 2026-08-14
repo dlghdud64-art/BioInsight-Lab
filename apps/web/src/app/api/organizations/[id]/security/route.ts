@@ -16,6 +16,24 @@ export async function GET(
     }
 
     const { id } = await params;
+
+    // ── 조직 스코프 (§tenant-isolation-placeholder A3 #10) ──
+    //   이 GET 은 인증만 있고 멤버십 검사가 **없었다** — 임의 조직의 보안 설정을
+    //   조회할 수 있는 형태였다. 판정 기준은 새로 만들지 않고 같은 디렉터리 형제
+    //   `safety-settings/route.ts` GET 의 read-scope 패턴을 그대로 승계한다
+    //   (멤버면 조회 가능 / 변경은 PATCH 의 OWNER·ADMIN 검사가 별도로 담당).
+    //
+    //   ⚠️ 순서 고정 — **스코프 먼저, 드리프트 나중**(§drift-masks-isolation).
+    //      아래 findUnique 는 `allowedEmailDomains` 필드 부재로 상시 500 이다.
+    //      그 500 을 먼저 고치면 복구가 아니라 **유출 개통**이 된다.
+    const membership = await db.organizationMember.findFirst({
+      where: { organizationId: id, userId: session.user.id },
+      select: { id: true },
+    });
+    if (!membership) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const organization = await db.organization.findUnique({
       where: { id },
       select: {

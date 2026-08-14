@@ -19,8 +19,17 @@ export async function GET(
     }
 
     const { id } = await params;
-    const organization = await getOrganizationById(id, session.user.id);
-    return NextResponse.json({ organization });
+
+    // §tenant-isolation-placeholder A3 #12 — getOrganizationById 는 이제 `userId` 로
+    //   실제 멤버십을 판정한다(이전에는 받아놓고 쓰지 않아 임의 조직이 노출됐다).
+    const result = await getOrganizationById(id, session.user.id);
+    if (!result.ok) {
+      return result.reason === "forbidden"
+        ? NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        : NextResponse.json({ error: "Organization not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ organization: result.organization });
   } catch (error: any) {
     console.error("Error fetching organization:", error);
     return NextResponse.json(

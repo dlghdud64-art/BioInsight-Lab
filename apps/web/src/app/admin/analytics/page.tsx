@@ -23,7 +23,11 @@ export default function AdminAnalyticsPage() {
   const { data: kpiData, isLoading } = useQuery({
     queryKey: ["analytics-kpi", period],
     queryFn: async () => {
-      const response = await fetch(`/api/analytics/kpi?period=${period}`);
+      // §tenant-isolation-placeholder A3 #11 — `/api/analytics/kpi` 에서 이설.
+      //   구 경로는 `/api/admin/` 밖이라 middleware admin 게이트가 덮지 않았고,
+      //   조직 사용자가 전 조직 집계를 조회할 수 있었다(실측 200). 게이트를 두
+      //   축으로 흩지 않고 미들웨어 단일 choke point 아래로 옮긴다.
+      const response = await fetch(`/api/admin/analytics/kpi?period=${period}`);
       if (!response.ok) throw new Error("Failed to fetch KPI data");
       return response.json();
     },

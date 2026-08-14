@@ -242,6 +242,33 @@ org** 가 된다.
   deny-by-default + 호출부가 `src/app/admin/**` 단독 + `User.role` 승격 경로 부재
   (운영 ADMIN 2명 전원 내부 스태프). 부트스트랩 역설 미해당.
 
+## 9.6 A트랙 배치 2 완료 (2026-08-14)
+
+| 항목 | 처리 | 교차조직 실측 |
+|---|---|---|
+| #10 `organizations/[id]/security` GET | 형제 `safety-settings` GET 패턴 승계 | 403 · 동일조직 500(드리프트 유지) |
+| #11 `analytics/kpi` | `/api/admin/analytics/kpi` 이설 + 호출부 1곳 | 구 경로 404 · 신 경로 RESEARCHER 403(미들웨어) / ADMIN 200 · **콘솔 화면 렌더 확인** |
+| #12 `getOrganizationById` | 팬텀 파라미터 교정 (호출부 1곳 전수) | 403 · name·plan·멤버명부 노출 0 · 동일조직 200 |
+| work-queue 4건 | 클라 `organizationId` **제거** → 세션 멤버십 도출 | 파라미터 무시 확인 · 3건은 드리프트 500(판정 유예) |
+| A4 단언 | `__tests__/security/tenant-scope-coverage.test.ts` | RED 0 · 자기검증 GREEN |
+
+### A4 가 수동 분류를 이겼다
+
+406건 수동 분류가 놓친 **6건을 단언이 찾았다**(#12 + work-queue 5핸들러).
+그중 #12 는 §placeholder-success §5 "팬텀 파라미터"로 별도 등재 — 검사 부재가 아니라
+**검사가 있는 것처럼 보이는 부재**라 리뷰가 통과시킨다.
+
+corrupt→RED 실증 2건(각각):
+- 라우트 검사 경로 — `quotes/[id]/status` GET 스코프 호출 제거 → RED
+- 미들웨어 커버 경로 — `middleware.ts` 의 `/api/admin/` 리터럴 변경 → RED(미분류 11건으로 증가)
+
+두 번째가 커버집합이 **하드코딩이 아니라 도출값**임을 증명한다.
+
+### 미실증으로 남은 것 (안전으로 승격 금지)
+
+work-queue 는 개발 DB 에 해당 데이터가 0이라 `items: []` 만 나왔다.
+**무검증 통과는 확인됐고 body 유출은 미실증**이다. 3건은 드리프트 500 으로 판정 유예.
+
 ## 10. 다음 순서
 
 1. ~~운영 조직 수~~ ✅ 완료 → 결함 등급

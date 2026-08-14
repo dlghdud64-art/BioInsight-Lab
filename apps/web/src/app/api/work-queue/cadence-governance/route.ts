@@ -1,6 +1,7 @@
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { getCallerOrganizationId } from "@/lib/security/caller-organization";
 import { queryCadenceGovernanceData, logCadenceStepCompletion } from "@/lib/work-queue/work-queue-service";
 import { generateGovernanceReport } from "@/lib/work-queue/console-cadence-governance";
 
@@ -8,7 +9,6 @@ import { generateGovernanceReport } from "@/lib/work-queue/console-cadence-gover
  * GET /api/work-queue/cadence-governance — 거버넌스 보고서 조회
  *
  * Query params:
- *   - organizationId?: string
  *
  * Returns: GovernanceReport
  */
@@ -20,7 +20,11 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const organizationId = searchParams.get("organizationId") || undefined;
+        // §tenant-isolation-placeholder A3 — 조직은 **클라 입력이 아니라 세션 멤버십에서 도출**한다.
+    //   이전에는 organizationId 를 쿼리스트링/바디에서 받아 그대로 조회에 넣었다
+    //   (삭제된 safety/spend 와 동일 형태). 파라미터는 제거한다 — 검증만 붙이면
+    //   검증 누락이 곧 같은 구멍이 된다.
+    const organizationId = await getCallerOrganizationId(session.user.id);
 
     const { items, logs } = await queryCadenceGovernanceData({ organizationId });
     const report = generateGovernanceReport(items, logs, session.user.id);
@@ -41,7 +45,6 @@ export async function GET(request: NextRequest) {
  * Body:
  *   - stepId: string (required)
  *   - note?: string
- *   - organizationId?: string
  */
 export async function POST(request: NextRequest) {
   let enforcement: InlineEnforcementHandle | undefined;
@@ -51,7 +54,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
     const body = await request.json();
-    const { stepId, note, organizationId } = body;
+    const { stepId, note } = body;
+    const organizationId = await getCallerOrganizationId(session.user.id);
 
     if (!stepId || typeof stepId !== "string") {
       return NextResponse.json({ error: "stepId 필수" }, { status: 400 });

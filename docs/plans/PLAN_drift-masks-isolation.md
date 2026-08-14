@@ -25,6 +25,20 @@
 | `PurchaseRecord.organizationId` | 필드 자체 부재(`scopeKey` 사용) | `products/safety` GET | 검사 0 → **삭제됨**(호출부 0) |
 | `Organization.allowedEmailDomains` | 필드 자체 부재 | `organizations/[id]/security` GET | 검사 0 · **호출부 4** → A3 |
 
+## 1.5 추가 3건 (2026-08-14, A4 단언 발견분)
+
+work-queue 계열 3경로가 상시 500 이다. 스코프는 §tenant-isolation A3 에서 먼저 넣었고
+(클라 `organizationId` 제거 → 세션 멤버십 도출), **드리프트는 손대지 않았다**.
+
+| 경로 | 상태 |
+|---|---|
+| `GET /api/work-queue/daily-review` | 500 — 스코프 교정 완료, 드리프트 미수정 |
+| `GET /api/work-queue/cadence-governance` | 500 — 동일 |
+| `GET /api/work-queue/bottleneck-remediation` | 500 — 동일 |
+
+⚠️ 이 3건은 500 때문에 **교차조직 유출이 실증되지 않았다**. "안전"이 아니라
+**판정 유예**다. 드리프트 해소 시 §2.5 와 같은 조건(교차 차단 **AND** 동일조직 착지)으로 잰다.
+
 ## 2. 부수 사실 — 죽은 줄 몰랐던 기능이 있다
 
 `organizations/[id]/security` GET 은 **호출부 4곳**(`settings/security`, `settings/workspace`)

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { getCallerOrganizationId } from "@/lib/security/caller-organization";
 
 export const dynamic = "force-dynamic";
 import { queryWorkQueue } from "@/lib/work-queue";
@@ -30,7 +31,11 @@ export async function GET(request: NextRequest) {
     const taskStatusParam = searchParams.get("taskStatus");
     const limit = parseInt(searchParams.get("limit") || "20", 10);
     const includeCompleted = searchParams.get("includeCompleted") === "true";
-    const organizationId = searchParams.get("organizationId") || undefined;
+        // §tenant-isolation-placeholder A3 — 조직은 **클라 입력이 아니라 세션 멤버십에서 도출**한다.
+    //   이전에는 organizationId 를 쿼리스트링/바디에서 받아 그대로 조회에 넣었다
+    //   (삭제된 safety/spend 와 동일 형태). 파라미터는 제거한다 — 검증만 붙이면
+    //   검증 누락이 곧 같은 구멍이 된다.
+    const organizationId = await getCallerOrganizationId(session.user.id);
     const entityType = searchParams.get("entityType") || undefined;
     const entityId = searchParams.get("entityId") || undefined;
     const grouped = searchParams.get("grouped") === "true";

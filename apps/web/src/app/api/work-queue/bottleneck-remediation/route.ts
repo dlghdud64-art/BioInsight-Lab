@@ -1,6 +1,7 @@
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { getCallerOrganizationId } from "@/lib/security/caller-organization";
 import {
   queryBottleneckRemediationData,
   saveRemediationItems,
@@ -25,7 +26,11 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const organizationId = searchParams.get("organizationId") || undefined;
+        // §tenant-isolation-placeholder A3 — 조직은 **클라 입력이 아니라 세션 멤버십에서 도출**한다.
+    //   이전에는 organizationId 를 쿼리스트링/바디에서 받아 그대로 조회에 넣었다
+    //   (삭제된 safety/spend 와 동일 형태). 파라미터는 제거한다 — 검증만 붙이면
+    //   검증 누락이 곧 같은 구멍이 된다.
+    const organizationId = await getCallerOrganizationId(session.user.id);
 
     const { items, logs, remediations } = await queryBottleneckRemediationData({ organizationId });
     const bottlenecks = detectBottlenecks(items, logs, remediations, session.user.id);
@@ -56,7 +61,6 @@ export async function GET(request: NextRequest) {
  *   - remediationId?: string (for transition)
  *   - newStatus?: string (for transition)
  *   - note?: string
- *   - organizationId?: string
  */
 export async function POST(request: NextRequest) {
   let enforcement: InlineEnforcementHandle | undefined;
@@ -70,7 +74,8 @@ export async function POST(request: NextRequest) {
     //   'unknown' 이면 deriveConcurrencyKey 가 userId 로 fallback 해, 같은 사용자가 서로 다른
     //   개선 항목을 연달아 처리할 때 5분 TTL 동안 서로를 막는다.
     const body = await request.json();
-    const { action, organizationId } = body;
+    const { action } = body;
+    const organizationId = await getCallerOrganizationId(session.user.id);
 
     if (!action || !["create", "transition"].includes(action)) {
       return NextResponse.json({ error: "action 필수 (create | transition)" }, { status: 400 });

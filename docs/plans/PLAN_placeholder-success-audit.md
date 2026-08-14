@@ -175,3 +175,47 @@ TODO 로 넘겼다.
 **재개 시 할 일:** 동결해 둔 전수 목록을 **경로별로 다시 묶는다.**
 건별 등급이 아니라 **"같은 요청 경로에 몇 개가 겹치는지"** 로 재정렬한다.
 ⚠️ 이것은 **새 실측이 아니라 이미 가진 목록의 재정렬**이다.
+
+---
+
+## 5. 새 형태 — **팬텀 파라미터** (2026-08-14, §tenant-isolation A3 #12 실물)
+
+지금까지 이 카드가 다룬 것은 "저장하지 않고 성공을 반환"이었다. 여기 **다른 형태**가 있다.
+
+```ts
+// src/lib/api/organizations.ts (교정 전)
+export async function getOrganizationById(id: string, userId?: string) {
+  return await db.organization.findUnique({ where: { id }, include: { members: ... } });
+  //                                                ↑ userId 를 받아놓고 **한 번도 쓰지 않는다**
+}
+```
+
+호출부는 이렇게 읽힌다:
+
+```ts
+const organization = await getOrganizationById(id, session.user.id);  // ← 스코프된 것처럼 보인다
+```
+
+**실측**: 조직 A 사용자(RESEARCHER, B 비멤버) → `GET /api/organizations/{B}` → **200 +
+B 조직 객체 + 멤버 명부(이름·이메일)**.
+
+### 왜 별도로 기록하는가
+
+검사 **부재**와 성격이 다르다.
+
+| 형태 | 리뷰에서 보이는가 |
+|---|---|
+| 검사 부재 (work-queue 4건 — 쿼리 파라미터 무검증) | 보인다. 검사가 없으니 없다고 읽힌다 |
+| **팬텀 파라미터** (이 건) | **안 보인다.** 호출부가 `session.user.id` 를 넘기므로 스코프된 것으로 읽힌다 |
+
+수동 분류 406건도 이것을 놓쳤다. 잡은 것은 §tenant-isolation A4 단언이다
+(헬퍼 본문을 인라인해 마커를 찾으므로 "파라미터를 받았다"가 아니라 "쓰였다"를 본다).
+
+### 규칙
+
+> **인자를 받아놓고 쓰지 않는 함수는 그 인자가 판정에 쓰인다는 거짓 신호를 호출부에 준다.**
+> 권한·스코프 관련 인자는 **쓰거나, 받지 않거나** 둘 중 하나여야 한다.
+
+교정: `userId` 를 실제 멤버십 판정에 사용하고, 비멤버는 `forbidden` 으로 갈라
+호출부가 403/404 를 구분하게 했다. 호출부는 1곳(`api/organizations/[id]` GET)이며
+전수 확인했다 — 다른 노출 경로 없음.

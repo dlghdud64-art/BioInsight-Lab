@@ -39,7 +39,23 @@ export async function getOrganizationsByUser(userId: string) {
 }
 
 // 조직 상세 조회
-export async function getOrganizationById(id: string, userId?: string) {
+/**
+ * §tenant-isolation-placeholder A3 #12 — **팬텀 파라미터 교정**
+ *
+ * 이전 시그니처는 `userId` 를 받아놓고 **본문에서 한 번도 쓰지 않았다.**
+ * 호출부는 `getOrganizationById(id, session.user.id)` 라 **스코프된 것처럼 읽혔고**,
+ * 실제로는 임의 조직의 객체 + 멤버 명부(이름·이메일)를 아무 로그인 사용자에게 반환했다
+ * (교차조직 GET 200 실측). 검사 부재보다 나쁜 형태다 — 리뷰가 통과시킨다.
+ * §placeholder-success 계열.
+ *
+ * 이제 `userId` 는 **실제 멤버십 판정에 쓰인다.** 비멤버는 `forbidden` 으로 갈라
+ * 호출부가 404(없음)와 403(권한없음)을 구분할 수 있게 한다.
+ */
+export type OrganizationFetchResult =
+  | { ok: true; organization: NonNullable<Awaited<ReturnType<typeof findOrganizationRecord>>> }
+  | { ok: false; reason: "not_found" | "forbidden" };
+
+async function findOrganizationRecord(id: string) {
   return await db.organization.findUnique({
     where: { id },
     include: {
@@ -62,6 +78,26 @@ export async function getOrganizationById(id: string, userId?: string) {
       },
     },
   });
+}
+
+export async function getOrganizationById(
+  id: string,
+  userId: string,
+): Promise<OrganizationFetchResult> {
+  // 멤버십을 **먼저** 판정한다 — 조직 객체를 읽어오기 전에 가른다.
+  const membership = await db.organizationMember.findFirst({
+    where: { organizationId: id, userId },
+    select: { id: true },
+  });
+  if (!membership) {
+    // 조직 존재 여부 자체도 비멤버에게는 알리지 않는다(존재 오라클 차단).
+    return { ok: false, reason: "forbidden" };
+  }
+
+  const organization = await findOrganizationRecord(id);
+  if (!organization) return { ok: false, reason: "not_found" };
+
+  return { ok: true, organization };
 }
 
 // 조직에서 나가기
