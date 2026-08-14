@@ -389,7 +389,7 @@ scopeKeyScoped 2 · vendorSelfScope 2 · idCompare 1)이 **배치 4 우선순위
 
 | 경로 | 결과 |
 |---|---|
-| `POST /api/products/{pid}/inspection` | **201 생성** — 무검증 create (§quote-lists-unvalidated-create 편입) |
+| `POST /api/products/{pid}/inspection` | **201 생성** — 무검증 create (§unvalidated-create 편입) |
 | `POST /api/products/{pid}/sds` | 403 역할게이트 — org 미판정 |
 | `PUT /api/quote-lists/[id]` | **guestKey 축 판별 확인** — 교차 404·row 불변 / 대조 200·row 변경(복원함) |
 
@@ -409,6 +409,60 @@ scopeKeyScoped 2 · vendorSelfScope 2 · idCompare 1)이 **배치 4 우선순위
 ```
 
 2단계 실측 대상 **15건** = 바디 검증 우선 6 + 역할게이트 우선 9.
+
+## 9.10 배치 4-3 2단계 — **④ 정지로 중단** (2026-08-14)
+
+### 정지 사유: **①의 도출 실패**
+
+```
+G2 POST /api/work-queue/ops-sync [ADMIN] → 200 {"synced":1}
+  ① 도출 테이블: (없음)
+  ② 전역 count diff: ActivityLog 3→4, AiActionItem 2→3
+  → 도출 목록 밖 테이블이 변경됨 = ①의 실패
+```
+
+①(라우트 소스 정규식으로 `db.<model>.create|update|delete` 추출)이 **빈 목록**을 냈다.
+이 라우트는 `work-queue-service` 헬퍼를 거쳐 쓰기 때문이다 — 호영님이 착수 전 지적한
+**헬퍼 경유 쓰기**가 정확히 그대로 실현됐다.
+
+**②(전역 count 스냅샷)가 즉시 잡았다.** ①만 있었으면 이 쓰기는 "변경 없음"으로 기록되고
+넘어갔을 것이다 — 1단계에서 `Inspection` 을 놓친 것과 같은 형태(**이번 세션 5번째**).
+전역 안전망은 비용 대비 확실하다는 판단이 실측으로 확인됐다.
+
+복원 완료 — `AiActionItem` 1행, `ActivityLog` 1행 삭제(생성 행은 `organizationId: null`,
+`userId` = 호출자, 즉 **교차 조직 쓰기 아님**).
+
+### 정지 시점까지의 결과 (14 프로브)
+
+| 층 | 수 | 비고 |
+|---|---|---|
+| 바디 검증 | 5 | `orders/draft`, `inventory/dispatch-batch`, `bottleneck-remediation`, `cadence-governance`, `protocol/bom`[ADMIN] |
+| 역할게이트 | 4 | 승격 전 4건 전부 — 승격 후 층이 바뀌는 것을 쌍으로 확인 |
+| 라우트 검사 | 2 | `POST /api/organizations` 403, `quote-lists/[id]/items` 404 |
+| 401(선결 헤더 부재) | 2 | `purchases/import`·`import-file` [ADMIN] — `x-guest-key` 필요 |
+| 통과(!) | 1 | `ops-sync` [ADMIN] — **정지 지점** |
+
+**신규 테넌트 유출 0.** `ops-sync` 의 쓰기는 호출자 자신에게 귀속됐다.
+
+### 승격 전후 쌍이 보여준 것
+
+`protocol/bom` 은 RESEARCHER 에서 **역할게이트**, ADMIN 에서 **바디 검증** —
+층이 바뀐다. 승격 없이 측정했다면 "인가가 앞선다"로 기록되고 **org 축은 영원히 안 재진다**.
+배치 1에서 확인한 함정이 쓰기에서도 같은 모양으로 나타난다.
+
+### 커버리지 (분모 명시)
+
+```
+쓰기  G1 6/6 완료 · G2 4/9 (정지) · 전체 우선순위 23/131 (제외 7 포함)
+읽기  30/59
+```
+
+### 재개 조건
+
+①을 **호출 그래프 기반**으로 바꾸지 않으면 같은 자리에서 또 멈춘다.
+현실적 대안은 ①을 폐기하고 **②(전역 count)를 유일한 판정 근거로 삼는 것** —
+①은 "복원 대상 후보" 힌트로만 쓰고, 정지·판정은 ②로만 한다.
+설계 재상신 후 재개.
 
 ## 10. 다음 순서
 
