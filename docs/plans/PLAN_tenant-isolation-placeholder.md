@@ -518,6 +518,42 @@ org 판별인지 단순 미발견인지 못 가른다** — 미판정으로 남�
 다음 대상 `PATCH /api/products/[id]/safety` 는 **수정형**이다.
 ②(전역 count)는 UPDATE 를 못 잡으므로(§9.10 한계) 여기서 멈추고 설계를 재확인한다.
 
+## 9.12 쓰기 15건 — **org 축 대상 여부 판정** (실측 전 선결, 호영님 지시)
+
+지금까지 15건을 **전부 org 축 대상으로 가정하고** 세었다. 그 가정은 실측되지 않았다.
+쓰기 모델의 스코프 컬럼으로 먼저 가른다 — **"대상 아님"도 판정 결과다.**
+
+### 스코프 컬럼 실측 (schema.prisma)
+
+| 모델 | organizationId | scopeKey | userId |
+|---|---|---|---|
+| `PurchaseRecord` | ❌ | ✅ | ❌ |
+| `ImportJob` | ❌ | ✅ | ❌ |
+| `Product` | ❌ | ❌ | ❌ (전역 카탈로그) |
+| `InventoryUsage` | ❌ | ❌ | ✅ |
+| `Quote` · `ProductInventory` · `Order` · `IngestionEntry` · `AiActionItem` | ✅ | — | ✅ |
+
+### 판정 — 4건은 **org 축 대상 아님**
+
+| 라우트 | 쓰기 모델 | 판정 |
+|---|---|---|
+| `POST /api/orders/draft` | `PurchaseRecord` | **scopeKey 축** — org 축 대상 아님 |
+| `POST /api/purchases/import` | `PurchaseRecord`·`ImportJob` | **scopeKey 축** — 대상 아님 |
+| `POST /api/purchases/import-file` | 동일 | **scopeKey 축** — 대상 아님 |
+| `PATCH /api/products/[id]/safety` | `Product` | **전역 카탈로그** — org 축 대상 아님.<br>단 *"아무 사용자가 전역 카탈로그 안전정보를 고칠 수 있는가"* 는 **별개 문제**로 남긴다 |
+
+→ 쓰기 org 축 분모는 **15 → 11**. 이 4건을 org 축으로 쟀다면 "판별 없음"을
+**유출로 오독**했을 것이다(이번 세션 오독 형태와 동일).
+
+⚠️ `inventory/import/commit` 은 `ImportJob`(scopeKey) **와** `ProductInventory`(org) 를
+둘 다 쓴다 — **혼합 축**. org 축 대상으로 남기되 판정 시 어느 모델이 변했는지 구분한다.
+
+## 9.13 판정 기준 재확인 (상시)
+
+> **대조군 없이 낸 404·403 은 판정으로 세지 않는다.**
+> 교차만 차단된 것은 org 판별의 증거가 아니다 — 단순 미발견·다른 층 차단과 구분 불가.
+> (`bulk-po` [ADMIN] 404 를 미판정으로 남긴 근거)
+
 ## 10. 다음 순서
 
 1. ~~운영 조직 수~~ ✅ 완료 → 결함 등급
