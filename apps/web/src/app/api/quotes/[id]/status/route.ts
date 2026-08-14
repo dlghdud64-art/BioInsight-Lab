@@ -13,6 +13,57 @@ import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-en
 //   PENDING→COMPLETED, 완료→취소 허용)했어 제거. 에러 응답의 allowedTransitions 표시는
 //   canonical ALLOWED_QUOTE_TRANSITIONS 에서 재구성. (호영님 확정: 재활성화 a 허용 / b·c 금지.)
 
+/**
+ * §tenant-isolation-placeholder A3 #1·#2 — 조직 스코프 검사
+ *
+ * 이 라우트는 GET·PATCH 양쪽 모두 소유권/조직 검사가 **없었다**. enforceAction 의
+ * 조직 게이트는 (a)≡(b) 항등이라 거절하지 못하므로(§tenant-isolation-placeholder §7.1)
+ * 격리를 지탱하던 실체가 0이었고, 교차조직 GET 이 200 + 타 조직 데이터를 반환했다(실측).
+ *
+ * ⚠️ 순서 고정 — **스코프 먼저, 드리프트 나중**(§drift-masks-isolation).
+ *   PATCH 아래쪽 findUnique 는 `include: { listItems: true }` 로 상시 500 이다.
+ *   그 500 을 먼저 고치면 교차조직 쓰기가 착지한다. 따라서 이 검사는 **깨진 쿼리보다
+ *   앞에서** 자체 select 로 org 를 읽어 판정한다 — 드리프트는 건드리지 않는다.
+ *
+ * 판정 기준은 `api/quotes/[id]/route.ts` GET 과 동일(본인 소유 OR 같은 조직 멤버).
+ */
+async function assertQuoteScope(
+  quoteId: string,
+  userId: string,
+): Promise<{ ok: true } | { ok: false; response: NextResponse }> {
+  const quote = await db.quote.findUnique({
+    where: { id: quoteId },
+    select: { id: true, userId: true, organizationId: true },
+  });
+
+  if (!quote) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Quote not found" }, { status: 404 }),
+    };
+  }
+
+  const isOwner = quote.userId === userId;
+  let isOrgMember = false;
+
+  if (!isOwner && quote.organizationId) {
+    const membership = await db.organizationMember.findFirst({
+      where: { userId, organizationId: quote.organizationId },
+      select: { id: true },
+    });
+    isOrgMember = !!membership;
+  }
+
+  if (!isOwner && !isOrgMember) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+    };
+  }
+
+  return { ok: true };
+}
+
 // 상태 한글 레이블
 const STATUS_LABELS: Record<QuoteStatus, string> = {
   [QuoteStatus.PENDING]: "대기 중",
@@ -57,6 +108,17 @@ export async function PATCH(
       routePath: '/api/quotes/[id]/status',
     });
     if (!enforcement.allowed) return enforcement.deny();
+
+    // ── 조직 스코프 (§tenant-isolation-placeholder A3 #2) ──
+    //   enforceAction 의 조직 게이트는 판정하지 못한다. 실제 격리는 여기서 한다.
+    //   ⚠️ 아래 findUnique(listItems 드리프트, 상시 500)보다 **앞**에 둔다 —
+    //      순서가 뒤집히면 500 이 유일한 정지선이던 상태로 되돌아간다.
+    //   lock 을 쥔 채 반환하지 않도록 fail() 로 닫는다(DB 쓰기 0 → complete 아님).
+    const scope = await assertQuoteScope(id, session.user.id);
+    if (!scope.ok) {
+      enforcement.fail();
+      return scope.response;
+    }
 
     const body = await request.json();
     const { status, reason } = body;
@@ -239,6 +301,12 @@ export async function GET(
     }
 
     const { id } = await params;
+
+    // ── 조직 스코프 (§tenant-isolation-placeholder A3 #1) ──
+    //   이 GET 은 enforceAction 조차 호출하지 않아 검사가 0 이었고,
+    //   교차조직 요청이 200 + 타 조직 견적 데이터를 반환했다(실측 확인).
+    const scope = await assertQuoteScope(id, session.user.id);
+    if (!scope.ok) return scope.response;
 
     const quote = await db.quote.findUnique({
       where: { id },
