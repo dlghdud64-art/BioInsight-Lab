@@ -58,8 +58,19 @@ describe("§auth-dev-login D1/D2 — 운영에서는 provider 가 존재하지 �
     expect(AUTH).toMatch(/if\s*\(\s*ALLOW_DEV_LOGIN\s*!==\s*true\s*\)\s*return\s+null/);
   });
 
+  /**
+   * 🔁 승계 (§auth-bootstrap-coupling, 2026-08-12) — 표현이 바뀌었고 계약은 같다.
+   *   이전 `!user || user.deletedAt` 은 "없으면 거부" 를 함께 담고 있었다.
+   *   지금 dev-login 은 **없으면 생성**하므로(가입 경로 검증을 위해),
+   *   거부 조건은 **soft-deleted 뿐**이다: `user?.deletedAt`.
+   *   ⚠️ 계약 자체("soft-deleted 는 들어올 수 없다")는 불변이며,
+   *      삭제된 사용자가 **재생성되지 않는지**도 함께 잠근다 —
+   *      findUnique 가 그 행을 찾으므로 생성 분기로 빠지지 않는다.
+   */
   it("D4. soft-deleted 사용자는 dev-login 으로 들어올 수 없다", () => {
     expect(AUTH).toMatch(/deletedAt/);
-    expect(AUTH).toMatch(/!user\s*\|\|\s*user\.deletedAt/);
+    expect(AUTH).toMatch(/if \(user\?\.deletedAt\) return null/);
+    // 생성 분기는 soft-deleted 판정 **뒤에** 온다(순서가 뒤집히면 삭제 계정이 부활한다)
+    expect(AUTH).toMatch(/user\?\.deletedAt\) return null;[\s\S]{0,900}?if \(!user\)/);
   });
 });

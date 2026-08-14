@@ -57,10 +57,30 @@ describe("§3a N1·N2 — 가입 경로에서 createOrganization 이 호출된�
     );
   });
 
-  it("신규 사용자 생성 직후 호출된다 (db.user.create 이후 근접)", () => {
-    expect(AUTH_CODE).toMatch(
-      /db\.user\.create\([\s\S]{0,900}?createOrganization\(\s*newUser\.id/,
-    );
+  /**
+   * 🔁 승계 (§auth-bootstrap-coupling, 2026-08-12) — 조건이 바뀌었다.
+   *   이전 계약은 "신규 사용자 생성 직후 호출된다" 였고, 그것이 **부트스트랩을
+   *   provider 분기에 묶어 두는 형태**였다. dev-login·SSO·초대 등 다른 경로로
+   *   들어오면 타지 않았고, 그 사실이 드러나지 않았다.
+   *   지금 조건은 **"조직이 0 인가"** 이며 provider 와 무관하다.
+   */
+  it("부트스트랩 조건이 '조직 0' 이다 (provider 분기 아님)", () => {
+    expect(AUTH_CODE).toMatch(/organizationMember\.count\(\{\s*where:\s*\{\s*userId:\s*token\.id/);
+    expect(AUTH_CODE).toMatch(/orgCount === 0[\s\S]{0,600}?createOrganization\(\s*token\.id/);
+  });
+
+  it("신규 사용자 분기 안으로 되돌아가지 않는다 (결합 재발 차단)", () => {
+    // `newUser.id` 로 부트스트랩하면 그 분기 안이라는 뜻이다.
+    expect(AUTH_CODE).not.toMatch(/createOrganization\(\s*newUser\.id/);
+  });
+
+  it("매 요청이 아니라 signIn 시점에만 확인한다 (토큰 갱신마다 count 금지)", () => {
+    expect(AUTH_CODE).toMatch(/trigger === "signIn"[\s\S]{0,200}?organizationMember\.count/);
+  });
+
+  it("dev-login 이 사용자를 생성하되 그 사실을 로그로 남긴다", () => {
+    expect(AUTH_CODE).toMatch(/if \(!user\)[\s\S]{0,400}?db\.user\.create/);
+    expect(AUTH_CODE).toMatch(/dev-login — 신규 사용자/);
   });
 
   it("별도 조직 생성 코드를 만들지 않는다 (Phase 2 우회 차단)", () => {

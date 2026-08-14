@@ -66,7 +66,34 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             where: { email },
             select: { id: true, email: true, name: true, image: true, deletedAt: true },
           });
-          if (!user || user.deletedAt) return null;
+          if (user?.deletedAt) return null;
+
+          /**
+           * §auth-bootstrap-coupling — 없으면 **생성**한다 (호영님 결정 2026-08-12).
+           *
+           * 이전에는 기존 사용자만 로그인시켰다. 그래서 **가입 경로 자체를 검증할 수
+           * 없었다** — 신규 가입은 OAuth 로만 도달했고, 조직 부트스트랩이 그 분기에
+           * 묶여 있어 결함이 드러나지 않았다.
+           *
+           * 위험 없음: 운영 차단이 **두 겹** 앞에 있다 —
+           *   `ALLOW_DEV_LOGIN`(모듈 로드 시) + `authorize` 안 런타임 재확인,
+           *   그리고 그 판정은 §dev-prod-db-separation 의 **project ref** 기반이다.
+           *
+           * ⚠️ 생성 사실을 **반드시 로그로 남긴다** — 조용히 사용자가 생기면
+           *   나중에 "이 계정 뭐지" 가 된다.
+           */
+          if (!user) {
+            const created = await db.user.create({
+              data: { email, name: null, image: null, role: "RESEARCHER" },
+              select: { id: true, email: true, name: true, image: true },
+            });
+            console.warn(
+              "[auth] dev-login — 신규 사용자 **생성** (개발 DB 전용)",
+              { email, userId: created.id },
+            );
+            return created;
+          }
+
           console.warn("[auth] dev-login 사용 — 개발 DB 전용 경로", { email });
           return { id: user.id, email: user.email, name: user.name, image: user.image };
         },
@@ -86,7 +113,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         return session;
       }
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger }) {
       try {
         if (user) {
           // Prisma에서 사용자 정보 가져오기
@@ -147,41 +174,59 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.id = newUser.id;
             token.role = newUser.role as UserRole;
 
-            /**
-             * §onboarding-blocker 3a — 가입 시 **조직 자동 생성** (호영님 결정 2026-08-12).
-             *
-             * 실측: 조직 생성이 workspace 를 만드는 **유일 경로**다. 조직이 0 이면
-             *   권한 공집합 · 멤버십 요구 라우트 37개 차단 · workspaceId 요구 라우트 17개 빔.
-             *   그 상태로 퍼블릭 랜딩에 남겨 두는 것은 관문 앞에 표지판조차 없는 것이다.
-             *
-             * ⚠️ **`createOrganization` 을 그대로 탄다** — 별도 코드로 만들면
-             *   ① 생성자가 다시 ADMIN 이 되고(Phase 2 무효화)
-             *   ② workspace 생성 단계를 빠뜨려 billing 17 라우트가 여전히 빈다.
-             *
-             * 이름은 **제안**이며 확정이 아니다 — 사용자가 첫 대시보드에서 확인한다
-             * (`OrganizationNamePrompt`). 도출 불가(표시 이름·이메일 로컬파트 모두 없음)면
-             * **자동 생성을 건너뛴다**. 지어내지 않는다.
-             *
-             * try/catch 로 감싸는 이유: 조직 생성 실패가 **로그인 자체를 막아서는 안 된다.**
-             * 실패해도 세션은 유지되고, 프롬프트가 조직 부재를 감지해 생성 경로를 제공한다.
-             * (무음 실패 금지 — 실패는 console.error 로 남기고 UI 가 이어받는다.)
-             */
+          }
+
+          /**
+           * §auth-bootstrap-coupling — 조직 부트스트랩은 **provider 와 무관**하다
+           *   (호영님 결정 2026-08-12).
+           *
+           * 이전: 이 로직이 **신규 사용자 분기 안**에 있었다(OAuth 로 처음 들어온 경우만).
+           *   그래서 dev-login·SSO·초대 등 **다른 진입 경로로 들어오면 타지 않았고**,
+           *   그 사실이 드러나지 않았다 — 조용히 조직 0 인 사용자가 생길 뿐이다.
+           *   dev-login 이 그것을 드러냈을 뿐, 결함은 **부트스트랩이 provider 에 결합**된 것이다.
+           *
+           * 지금: 조건이 "신규 사용자인가" 가 아니라 **"조직이 0 인가"** 다.
+           *   어느 경로로 로그인하든 조직이 없으면 만든다.
+           *
+           * ⚠️ `trigger === "signIn"` 일 때만 확인한다 — jwt 콜백은 **토큰 갱신마다** 돌고,
+           *   매번 조직 count 를 치면 비싸다. 로그인 시점 1회면 충분하다.
+           *
+           * ⚠️ `createOrganization` 을 그대로 타는 계약은 **유지**한다 — 그것이 생성자를
+           *   OWNER 로 만들고 workspace 를 함께 만드는 **유일한 경로**다. 별도 코드로 만들면
+           *   ① 생성자가 다시 ADMIN 이 되고 ② billing 17 라우트가 여전히 빈다.
+           *
+           * 이름은 **제안**이며 확정이 아니다(`OrganizationNamePrompt` 가 확인시킨다).
+           * 도출 불가면 **건너뛴다** — 지어내지 않는다.
+           *
+           * try/catch: 조직 생성 실패가 **로그인을 막아서는 안 된다.** 실패해도 세션은
+           * 유지되고 프롬프트가 조직 부재를 감지해 생성 경로를 제공한다(무음 실패 금지 —
+           * 실패는 console.error 로 남기고 UI 가 이어받는다).
+           */
+          if (trigger === "signIn" && typeof token.id === "string") {
             try {
-              const defaultOrgName = deriveDefaultOrgName({
-                name: newUser.name,
-                email: newUser.email,
+              const orgCount = await db.organizationMember.count({
+                where: { userId: token.id },
               });
-              if (defaultOrgName) {
-                await createOrganization(newUser.id, { name: defaultOrgName });
-              } else {
-                console.warn(
-                  "[auth] 3a — 기본 조직명을 도출할 수 없어 자동 생성을 건너뜁니다",
-                  { userId: newUser.id },
-                );
+              if (orgCount === 0) {
+                const defaultOrgName = deriveDefaultOrgName({
+                  name: (user.name as string | null | undefined) ?? null,
+                  email: (user.email as string | null | undefined) ?? null,
+                });
+                if (defaultOrgName) {
+                  await createOrganization(token.id, { name: defaultOrgName });
+                  console.warn("[auth] 조직 부트스트랩 — 조직 0 이라 자동 생성", {
+                    userId: token.id,
+                  });
+                } else {
+                  console.warn(
+                    "[auth] 조직 부트스트랩 — 기본 조직명을 도출할 수 없어 건너뜁니다",
+                    { userId: token.id },
+                  );
+                }
               }
             } catch (orgErr) {
               console.error(
-                "[auth] 3a — 가입 시 조직 자동 생성 실패 (로그인은 계속)",
+                "[auth] 조직 부트스트랩 실패 (로그인은 계속)",
                 orgErr,
               );
             }
