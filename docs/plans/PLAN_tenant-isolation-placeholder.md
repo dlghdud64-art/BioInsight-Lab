@@ -321,6 +321,42 @@ corrupt→RED 3건(마커 의미론이 바뀌었으므로 기존 2건 재실행 
 scopeKeyScoped 2 · vendorSelfScope 2 · idCompare 1)이 **배치 4 우선순위**다.
 이 잔여는 런타임 스윕으로만 닫힌다.
 
+## 9.8 배치 4-1 · 4-2 (2026-08-14) — **신규 유출 0**
+
+축을 섞지 않고 각각 판정했다(org / guestKey / vendor-email / userId).
+
+### 4-1 미측정 6건 재측정 — 전건 해소
+
+| 경로 | 축 | 결과 |
+|---|---|---|
+| `receiving/documents/[id]` | org | ✅ 판별 확인 — **`[id]` 는 문서가 아니라 주문 id** 였다(1차 픽스처 오류) |
+| `orders/[id]/generate-pdf` | org | ✅ 판별 확인 |
+| `quotes/[id]/rfq-token` | org | ✅ 판별 확인 — 대조군에 토큰 선발급하니 확정됨 |
+| `quote-lists/[id]` | **guestKey** | ✅ 판별 확인 (교차 404 / 대조 200) |
+| `quote-lists/[id]/export` | **guestKey** | ✅ 판별 확인 |
+| `organization-vendors/[id]` | — | GET 핸들러 부재(405). PATCH·DELETE 뿐 → **4-3 이관** |
+
+⚠️ guestKey 축은 org 축과 **다른 격리 축**이다. 결과를 org 축과 합산하지 않는다.
+
+### 4-2 단독 마커 GET
+
+| 경로 | 단독 마커 | 결과 |
+|---|---|---|
+| `ai-actions/[id]` | idCompare | ✅ 판별 확인(교차 403 / 대조 200) |
+| `quotes/my` | scopedWhereVar | ✅ 판별 확인 — `quoteNumber != null` 필터 때문에 1차가 공백이었다. 양쪽에 번호 부여 후 **A 것만 나오고 B 것은 안 나옴** 실증 |
+| `team` | scopedWhereVar | 구조 스코프 `where: { userId }` 확인 + 혼입 0 (대조 데이터 공백 — 강한 실증 아님) |
+| `inventory/reorder-recommendation` | scopeKeyScoped | 혼입 0, 데이터 공백 → **미실증** |
+| `sourcing/recommend` | scopeKeyScoped | 유효 productId 로 200, 혼입 0, purchaseRecord 공백 → **미실증** |
+| `vendor/insights` · `vendor/quotes` | vendorSelfScope | 자기 vendor 로 고정 확인(응답에 자기 vendorId). 타 벤더 데이터 부재 → **유출 미실증** |
+
+`scopedWhereVar` 단독 6건 중 GET 은 2건(`quotes/my`·`team`)뿐이고 나머지 4건은 POST →
+**4-3 대상**이다. 즉 최다·최약 마커의 위험 대부분이 아직 쓰기 쪽에 남아 있다.
+
+### 남은 미실증 (안전으로 승격 금지)
+
+`reorder-recommendation` · `sourcing/recommend` · `vendor/*` 는 **대조 데이터를 만들지
+못해** 유출을 실증도 반증도 못 했다. purchaseRecord·vendor quote 픽스처가 필요하다.
+
 ## 10. 다음 순서
 
 1. ~~운영 조직 수~~ ✅ 완료 → 결함 등급
