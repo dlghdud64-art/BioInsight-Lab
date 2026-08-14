@@ -718,6 +718,37 @@ const pendingRequests = await db.purchaseRequest.findMany({
 
 복원 완료(PurchaseRequest 2 · TeamMember 2 · Team 2 삭제, 잔여 확인).
 
+## 9.18 읽기 스윕 3차 (잔여 18건) — **신규 유출 0**, 읽기 완결 (2026-08-14)
+
+| 판정 | 수 |
+|---|---|
+| ✅ org 판별 확인 | 4 (`team/[id]/inventory`·`team/[id]/members`·`workspaces/[id]`·`workspaces/[id]/members`) |
+| ✅ 혼입 없음 / 차단 | 6 |
+| ⚠️ 판정 불가(500 = **전건 드리프트**) | 6 |
+| ⚠️ 판정 불가(대조군도 400) | 1 (`user-budgets/[id]/check`) |
+| 설계상 공개 제외 | 1 (`share/[token]`) |
+| **🔴 유출** | **0** |
+
+픽스처: Team·Workspace·WorkspaceMember·UserBudget 을 A/B 대칭 생성 후 **전건 복원**(잔여 0 확인).
+
+### 판정 불가 500 → **전건 드리프트 확정**
+
+응답이 sanitize 되어 본문에 단서가 없었다. **서버 로그로 판정**했고 6건 전부
+스키마 부재 참조였다(§drift §1.8, 누계 17). 하위 형태 2종이 새로 나왔다 —
+**raw SQL 컬럼 부재**(Prisma 타입 검사를 통과한다)와 **enum 값 부재**.
+
+### 커버리지 — 읽기 완결
+
+```
+읽기   99/107   (분모 = 테넌트 접촉 · 미들웨어 미커버 GET 라우트 전체)
+        · 제외 9 (축 다름: cron 5 · receiving/[token] · share/[token] ·
+                  products/[id]/sds · quotes/[id]/responses/[responseId]) — 분모 유지
+        · 판정 불가 11 (드리프트 10 · 대조군 미통과 1)
+        · **읽기 유출 누계 1건** (A5 1차 organizations/[id]/members, 배치 3-A 에서 수정 완료)
+쓰기 org 축   1/11  (분모 = org 축 대상 쓰기 핸들러)
+scopeKey 축   0/미정 (§scopekey-axis-unmeasured)
+```
+
 ## 10. 다음 순서
 
 1. ~~운영 조직 수~~ ✅ 완료 → 결함 등급

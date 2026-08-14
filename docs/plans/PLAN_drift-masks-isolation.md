@@ -69,6 +69,30 @@ work-queue 계열 3경로가 상시 500 이다. 스코프는 §tenant-isolation 
 ⚠️ 이 건은 §2.5 와 같은 형태다 — 교차는 막히는 것을 봤으나 **정상 경로가 착지하는지**를
 드리프트가 가려서 못 봤다. 해소 조건에 **대조군 착지 확인**을 포함한다.
 
+## 1.8 추가 7건 + **하위 형태 2종 신규** (2026-08-14, 읽기 스윕 판정)
+
+읽기 스윕의 판정 불가 500 을 **서버 로그로 전건 판정**했다(응답은 sanitize 되어 단서 0).
+
+| 경로 | 원인 | 형태 |
+|---|---|---|
+| `safety/spend/export` | `PurchaseRecord.purchaseDate` (→ `purchasedAt`) | 필드 부재 |
+| `safety/spend/unmapped` · `safety-spend/unmapped` | `PurchaseRecord.productId` 부재 | 필드 부재 |
+| `organizations/[id]/sso` | `Organization.ssoEnabled` 부재 | 필드 부재 |
+| `quotes/[id]/detail` | `QuoteListItem.productName` 부재 | 필드 부재 |
+| `safety/spend/summary` · `safety-spend` | raw SQL `column "totalAmount" does not exist` (42703) | **raw SQL 컬럼 부재** 🆕 |
+| `work-queue/{daily-review,cadence-governance,bottleneck-remediation}` | `ActivityType` enum 에 `ITEM_CLAIMED` 등 부재 | **enum 값 부재** 🆕 |
+
+### 하위 형태 2종 — 클래스 정의 확장
+
+이 클래스는 "스키마에 없는 **필드** 참조"로 정의했는데, 같은 결과를 내는 형태가 둘 더 있다:
+
+1. **raw SQL 컬럼 부재** — `$queryRawUnsafe` 안의 컬럼명이 스키마와 어긋남.
+   Prisma 타입 검사를 **통과**하므로 정적으로 더 안 보인다. §raw-sql-audit(동결)과 만나는 지점
+2. **enum 값 부재** — 코드가 쓰는 enum 리터럴이 스키마 enum 에 없음.
+   `ActivityType` 에 `ITEM_CLAIMED`·`CADENCE_*` 등이 없다 → work-queue 콘솔 3화면이 죽어 있다
+
+**확인된 드리프트 경로 누계 17.**
+
 ## 2. 부수 사실 — 죽은 줄 몰랐던 기능이 있다
 
 `organizations/[id]/security` GET 은 **호출부 4곳**(`settings/security`, `settings/workspace`)
