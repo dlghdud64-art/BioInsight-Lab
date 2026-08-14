@@ -70,6 +70,48 @@ describe("§dev-prod-db-separation G2/G3 — 가드는 판정기를 재사용한
   });
 });
 
+/**
+ * §dev-prod-db-separation **2단계** — 호스트만으로는 dev/prod 가 갈리지 않는다
+ *
+ * 실측 (2026-08-12, 개발 프로젝트 전환 시점):
+ *   개발용 Supabase 프로젝트로 `.env` 를 바꿨는데 가드가 **여전히 운영으로 판정**했다.
+ *   두 프로젝트가 같은 `pooler.supabase.com` 을 쓰기 때문이다 —
+ *   호스트 패턴은 "Supabase 인가" 만 답하고 "**어느 프로젝트인가**" 는 답하지 못한다.
+ *
+ * 교정: **project ref** 로 갈린다(`postgres.<ref>`).
+ *   `DEV_DATABASE_PROJECT_REF` 가 현재 URL 의 ref 와 **일치할 때만** 개발로 본다.
+ *
+ * 계약:
+ *   G5. ref 판정이 존재한다 (호스트 단독 판정 부활 차단)
+ *   G6. **fail-closed** — 선언이 없거나 다르면 운영으로 판정
+ *   G7. boolean 플래그가 아니라 **ref 이름 비교**다 —
+ *       운영 환경에 이 변수가 실수로 복사돼도 ref 가 달라 무효여야 한다
+ */
+describe("§dev-prod-db-separation G5~G7 — 프로젝트 ref 로 갈린다", () => {
+  const SRC = read("src/lib/security/production-database.ts");
+
+  it("G5. project ref 를 추출해 판정에 쓴다", () => {
+    expect(SRC).toMatch(/postgres\\.\(\[a-z0-9\]\{16,\}\)/);
+    expect(SRC).toMatch(/function projectRefOf/);
+    expect(SRC).toMatch(/isDeclaredDevProject\(u\)/);
+  });
+
+  it("G6. fail-closed — 선언이 없으면 개발로 보지 않는다", () => {
+    expect(SRC).toMatch(/if \(!declared\) return false/);
+  });
+
+  it("G7. boolean 이 아니라 ref 이름을 비교한다 (운영 복사 무효)", () => {
+    expect(SRC).toMatch(/ref !== null && ref === declared/);
+    // `DEV_DATABASE=true` 같은 boolean 우회가 부활하면 RED
+    expect(SRC).not.toMatch(/DEV_DATABASE_PROJECT_REF\s*===\s*["']true["']/);
+  });
+
+  it("G5-b. 호스트 판정은 남아 있다 (ref 판정이 대체가 아니라 추가)", () => {
+    expect(SRC).toMatch(/PRODUCTION_DB_HOST\.test\(u\)/);
+    expect(SRC).toMatch(/!LOCAL_DB_HOST\.test\(u\)/);
+  });
+});
+
 describe("§dev-prod-db-separation G4 — 운영 적용 경로는 남아 있다", () => {
   it("prisma:migrate 는 migrate deploy 이며 가드를 거치지 않는다", () => {
     const cmd = pkg.scripts["prisma:migrate"];
