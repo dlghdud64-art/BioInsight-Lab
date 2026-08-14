@@ -30,7 +30,17 @@
 
 → **가설 확정.** 축은 둘이고, 판정기는 한쪽만 본다.
 
-### 2-A. 🛑 그 옆에서 하나 더 — 조직 **소속**조차 하드코딩이다
+### 2-A. 🛑 그 옆에서 하나 더 — **별건으로 분리했다**
+
+> `organizationId: 'default-org'` 는 **§tenant-isolation-placeholder** 로 옮겼다
+> (`docs/plans/PLAN_tenant-isolation-placeholder.md`, 2026-08-12 호영님 지시).
+>
+> 이유: **성격이 다르다.** 이 문서는 *설계 미비*(축이 둘인데 한쪽만 본다)이고,
+> 저것은 **미완성 코드가 보안 게이트 자리에 앉아 있는 것**이다.
+> 그리고 저쪽은 **방향(fail-open/fail-closed)이 미판정**이라 우선순위가 아직 정해지지
+> 않았다 — fail-open 이면 §2 딥링크보다 앞선다.
+
+<details><summary>발견 당시 기록 (원문 보존)</summary>
 
 `server-enforcement-middleware.ts:144`
 
@@ -44,6 +54,8 @@ organizationId: 'default-org', // TODO: 실제 org 조회 (Batch 2에서 DB 연�
 
 ⚠️ 그 TODO 옆 주석은 §audit-taxonomy-review 를 선결로 지정하고 있다 —
 **이 트랙과 그 트랙이 같은 지점에서 만난다.**
+
+</details>
 
 ## 3. 함의 — 부트스트랩 역설은 **원인이 아니라 증상**이다
 
