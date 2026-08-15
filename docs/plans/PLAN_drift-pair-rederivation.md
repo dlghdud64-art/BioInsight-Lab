@@ -152,6 +152,86 @@
 
 → 55쌍은 **최소치이지 상한이 아니다.**
 
+### 누계 표기 — 숫자만 채우지 않는다
+
+> `55쌍 / 21경로 (분모 = ①스키마대조 도달분 + ③raw + ②GET 스윕 도달분.
+> enum·비-GET·미도달 68 제외)`
+
+누계 공란을 숫자로만 해제하면 정정 7회차다. **분모를 함께 적지 않으면 적지 않는다.**
+(D1c 이후 실측: ① 47 → 29. enum 채택분 12쌍 별도 축.)
+
+## 7. 🔴 ① 의 신뢰도 — **② 와 대조된 범위 안에서만** (2026-08-15 승격)
+
+① 은 이제 **세 번 다 1차 실행에서 놓쳤고, 세 원인이 전부 다르다**:
+
+| 회차 | 놓친 것 | 원인 | 잡은 것 |
+|---|---|---|---|
+| 1 | `vendor`·`snapshot` | `data:` 값이 `.map()` 표현식 | 알려진 건 corrupt→RED |
+| 2 | `totalAmount` (③) | 전역 합집합 삼킴 + 변수 조립 SQL | 알려진 건 corrupt→RED |
+| 3 | `count({ where })` 축약 | 축약/변수 인자를 불투명으로도 안 셈 | **② 의 런타임 증거** |
+
+🛑 **3차가 결정적이다.** 알려진 건 corrupt→RED 를 걸었는데도 **통과했다** —
+그 형태를 내가 몰랐기 때문이다.
+
+> **corrupt 검증은 내가 아는 형태만 덮는다.**
+> 도출기 검증 기준 = **알려진 건 HIT + 독립 도출과 양방향 대조**.
+> corrupt→RED 단독으로 도출기를 채택하지 않는다.
+
+네 번째가 없다는 근거는 없다. **① 의 신뢰도는 "② 와 대조된 범위 안에서만" 이다.**
+
+## 8. 🔴 D1c 8경로 치환분 — **정적 확인만, 런타임 미검증**
+
+```
+8경로 치환분 — 정적 확인만. 런타임 미검증.
+경로 500 유지(잔여 (나) 드리프트) → D3 완료 시 재프로브 필수.
+D3 가 이 8경로를 살릴 때 치환분이 함께 검증되지 않으면 D3 도 미완.
+```
+
+대상 8경로: `safety/spend/{map,export,unmapped}` · `safety-spend/unmapped` ·
+`lib/ai/collaborative-filtering` · `lib/ai/purchase-pattern-analyzer` ·
+`lib/ai-pipeline/entity-linking-processor` · `ai-actions/[id]/approve`
+
+§1.65 경계다 — **정적 판독은 발견이고 판정이 아니다.** UNCLASSIFIED 로 두지 않은 것은
+프로브 대상이 아니었기 때문이지 검증됐기 때문이 아니다.
+
+> **D3 완료 조건에 이 재프로브를 포함한다.** 넣지 않으면 D3 가 GREEN 을 찍는 순간
+> 검증 없는 치환분이 조용히 통과한다.
+
+## 9. enum 전수 스윕 (2026-08-15) — 부분 채택
+
+모집단을 **코드 참조값**에서 출발시켰다(스키마 enum 을 먼저 읽고 grep 하지 않았다).
+
+| 수집기 | 형태 | 알려진 건 |
+|---|---|---|
+| (A) `Enum.MEMBER` 멤버 참조 (333) | — | **0 HIT** |
+| (B) `key: "VALUE"` (1277) | — | **0 HIT** |
+| (C) enum 필드 **값 표현식 전체** + 식별자 회수 (960) | ✅ 맞음 | **12 HIT** |
+
+(A)(B) 가 0 이었던 이유: 실제 형태가
+`activityType: { in: [...ASSIGNMENT_ACTIVITY_TYPES] }` 이고 값들은 **다른 위치의 const 배열**에 있다.
+→ 자기검증 게이트가 (A)(B) 단독 채택을 **막았다**. 게이트가 설계대로 작동했다.
+
+### ✅ 채택 — 양방향 대조 통과분 (12쌍 / 1파일)
+
+```
+lib/work-queue/work-queue-service.ts  (ActivityType)
+  ITEM_CLAIMED ITEM_ASSIGNED ITEM_REASSIGNED ITEM_STARTED ITEM_BLOCKED
+  ITEM_HANDED_OFF ITEM_ESCALATED ITEM_REVIEW_COMPLETED
+  CADENCE_START_OF_DAY CADENCE_MIDDAY_CHECK CADENCE_END_OF_DAY CADENCE_WEEKLY_REVIEW
+```
+
+② 런타임 증거와 **양방향 일치**: 3라우트가 500 이고 스택이 전부 이 서비스로 수렴한다
+(`Invalid value for argument `in`. Expected ActivityType.`).
+
+📌 **카드 정정**: 구 카드는 이 드리프트를 `work-queue/{daily-review,cadence-governance,bottleneck-remediation}`
+**3라우트**에 적었다. 실제 위치는 **공유 서비스 lib 1파일**이고, 3라우트는 그 소비자다.
+
+### ❌ 미채택 — (C) 나머지 322쌍
+
+(C) 는 **모델 문맥 없이 필드명만으로** 매칭한다(`type`·`status`·`result` 등이 여러 모델·여러 enum 에 걸린다).
+정밀도 미검증이라 **건수를 발견으로 보고하지 않는다.**
+재작업 조건: ① 의 검증된 파서로 **Prisma 호출 × 모델 스코프**를 붙인 뒤 재측정.
+
 ## 6. 관계
 
 - §drift-masks-isolation — 형태 분류. 이번에 **복합키 순서 역전** 하위형태 추가
