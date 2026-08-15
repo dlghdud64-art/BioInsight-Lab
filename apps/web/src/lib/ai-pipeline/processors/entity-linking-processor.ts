@@ -197,7 +197,8 @@ export class EntityLinkingProcessor implements IEntityLinkingProcessor {
     const orders = await db.order.findMany({
       where: {
         organizationId: orgId,
-        vendorName: { contains: vendorName, mode: "insensitive" },
+        // §D1c — Order 에는 vendorName 스칼라가 없다. vendor 관계를 경유한다.
+        vendor: { name: { contains: vendorName, mode: "insensitive" } },
         ...(totalAmount
           ? {
               totalAmount: {
@@ -209,7 +210,7 @@ export class EntityLinkingProcessor implements IEntityLinkingProcessor {
       },
       take: 3,
       orderBy: { createdAt: "desc" },
-      select: { id: true, organizationId: true, vendorName: true, totalAmount: true },
+      select: { id: true, organizationId: true, vendor: { select: { name: true } }, totalAmount: true },
     });
 
     for (const order of orders) {

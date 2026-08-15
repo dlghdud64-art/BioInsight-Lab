@@ -57,7 +57,8 @@ export async function recordProductView(userId: string | null, productId: string
       data: {
         userId,
         clickedProductId: productId,
-        searchQuery: query || null,
+        // §D1c — SearchHistory 실필드는 `query`(searchQuery 부재). 필수 String 이라 null 불가
+        query: query || "",
       },
     });
   } catch (error: any) {

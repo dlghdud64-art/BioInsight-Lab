@@ -48,16 +48,10 @@ export async function GET(request: NextRequest) {
     const [records, total] = await Promise.all([
       db.purchaseRecord.findMany({
         where,
-        include: {
-          vendor: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
+        // §D1c — PurchaseRecord 에 vendor 관계는 없다(실필드는 vendorName 스칼라).
+        //   include 제거 시 스칼라는 기본 반환되므로 record.vendorName 으로 소비한다.
         orderBy: {
-          purchaseDate: "desc",
+          purchasedAt: "desc",
         },
         take: limit,
         skip: offset,
@@ -83,8 +77,8 @@ export async function GET(request: NextRequest) {
 
       return {
         id: record.id,
-        purchaseDate: record.purchaseDate,
-        vendor: record.vendor?.name || "알 수 없음",
+        purchasedAt: record.purchasedAt,
+        vendor: record.vendorName || "알 수 없음",
         productName,
         catalogNumber,
         amount: record.totalAmount,

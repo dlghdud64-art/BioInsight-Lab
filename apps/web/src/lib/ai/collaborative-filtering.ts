@@ -36,8 +36,8 @@ export async function generateCollaborativeRecommendations(
       where: { importedBy: userId },
       select: {
         productId: true,
-        quantity: true,
-        totalAmount: true,
+        qty: true,       // §D1c — PurchaseRecord 실필드
+        amount: true,    // §D1c — PurchaseRecord 실필드
         purchasedAt: true,
       },
     });
@@ -56,8 +56,8 @@ export async function generateCollaborativeRecommendations(
       select: {
         importedBy: true,
         productId: true,
-        quantity: true,
-        totalAmount: true,
+        qty: true,       // §D1c — PurchaseRecord 실필드
+        amount: true,    // §D1c — PurchaseRecord 실필드
         purchasedAt: true,
       },
     });

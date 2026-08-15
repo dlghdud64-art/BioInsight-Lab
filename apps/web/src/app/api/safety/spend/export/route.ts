@@ -91,12 +91,6 @@ export async function GET(request: NextRequest) {
             msdsUrl: true,
           },
         },
-        vendor: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
         organization: {
           select: {
             id: true,
@@ -124,7 +118,7 @@ export async function GET(request: NextRequest) {
         구매일: record.purchasedAt.toISOString().split("T")[0],
         조직: record.organization?.name || "-",
         프로젝트: record.projectName || "-",
-        벤더: record.vendor?.name || "-",
+        벤더: record.vendorName || "-",
         제품명: record.product?.name || record.notes || "-",
         카탈로그번호: record.product?.catalogNumber || "-",
         위험물여부: hasHazardCodes ? "예" : "아니오",

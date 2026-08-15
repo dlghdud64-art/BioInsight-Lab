@@ -289,7 +289,7 @@ export async function POST(
       if (candidate.source === "workspace_admin" || candidate.source === "self_admin") {
         await db.workspaceMember.update({
           where: {
-            userId_workspaceId: { userId: approverId, workspaceId },
+            workspaceId_userId: { workspaceId, userId: approverId },
           },
           data: { lastApprovalAssignedAt: now },
         });

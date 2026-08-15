@@ -411,7 +411,7 @@ async function executeQuoteDraft(
             unit: item.unit || "ea",
             unitPrice: 0,
             lineTotal: 0,
-            sortOrder: index,
+            position: index,   // §D1c — QuoteListItem 실필드는 `position`(sortOrder 부재)
           })),
         },
       },

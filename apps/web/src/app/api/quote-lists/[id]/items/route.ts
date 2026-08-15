@@ -97,14 +97,16 @@ export async function PUT(
           quoteId: id,
           productId: item.productId || null,
           name: item.name,
-          vendor: item.vendor || null,
+          // §D1c — 입력 계약(zod)의 `vendor`/`snapshot` 은 유지하고 **Prisma 매핑만** 고친다.
+          //   QuoteListItem 의 실필드는 `vendorName` · `raw` 다.
+          vendorName: item.vendor || null,
           brand: item.brand || null,
           catalogNumber: item.catalogNumber || null,
           unitPrice: item.unitPrice || null,
           quantity: item.quantity,
           lineTotal: item.lineTotal || null,
           notes: item.notes || null,
-          snapshot: item.snapshot || null,
+          raw: item.snapshot || null,
         })),
       });
 

@@ -53,7 +53,7 @@ export async function GET(
           select: {
             id: true,
             productId: true,
-            productName: true,
+            name: true,   // §D1c — QuoteListItem 실필드는 `name`(응답 키 productName 은 유지)
             brand: true,
             catalogNumber: true,
             quantity: true,
@@ -155,7 +155,7 @@ export async function GET(
           seq: index + 1,
           id: item.id,
           productId: item.productId,
-          productName: item.productName,
+          productName: item.name,
           brand: item.brand || "-",
           catalogNumber: item.catalogNumber || "-",
           quantity: item.quantity,

@@ -182,14 +182,15 @@ export class VerificationProcessor implements IVerificationProcessor {
         const q = await db.quote.findFirst({
           where: { id: entityId, organizationId: orgId },
           select: {
-            vendorName: true,
+            // §D1c — Quote 실필드는 `vendor`(vendorName 부재), QuoteListItem 은 `name`
+            vendor: true,
             totalAmount: true,
-            items: { select: { quantity: true, unitPrice: true, productName: true } },
+            items: { select: { quantity: true, unitPrice: true, name: true } },
           },
         });
         if (!q) return null;
         return {
-          vendorName: q.vendorName,
+          vendorName: q.vendor,
           totalAmount: q.totalAmount ? Number(q.totalAmount) : null,
           quantity: q.items[0]?.quantity ?? null,
         };
@@ -198,14 +199,16 @@ export class VerificationProcessor implements IVerificationProcessor {
         const o = await db.order.findFirst({
           where: { id: entityId, organizationId: orgId },
           select: {
-            vendorName: true,
+            // §D1c — Order 에는 vendorName 스칼라가 없다. vendor 는 **관계**(Vendor)이고
+            //   OrderItem 의 실필드는 `name` 이다.
+            vendor: { select: { name: true } },
             totalAmount: true,
-            items: { select: { quantity: true, unitPrice: true, productName: true } },
+            items: { select: { quantity: true, unitPrice: true, name: true } },
           },
         });
         if (!o) return null;
         return {
-          vendorName: o.vendorName,
+          vendorName: o.vendor?.name ?? null,
           totalAmount: o.totalAmount ? Number(o.totalAmount) : null,
           quantity: o.items[0]?.quantity ?? null,
         };
