@@ -93,6 +93,39 @@ work-queue 계열 3경로가 상시 500 이다. 스코프는 §tenant-isolation 
 
 **확인된 드리프트 경로 누계 17.**
 
+## 1.9 🆕 하위 형태 3번째 — **드리프트가 500 이 아니라 200 으로 위장된다**
+
+지금까지 이 클래스는 "상시 500 = 판정 유예"였다. 그런데 **500 조차 안 나는 형태**가 있다.
+
+```
+POST /api/work-queue/cadence-governance  (stepId=start_of_day_review)
+→ 200 {"success":true}   ·  전역 count 변경 **0**
+```
+
+서버 로그:
+```
+[ActivityLog] 기록 실패 (메인 로직 계속 진행): PrismaClientValidationError
+  Argument `entityType` is missing.   (+ ActivityType 에 CADENCE_START_OF_DAY 부재)
+  at logCadenceStepCompletion → POST /api/work-queue/cadence-governance
+```
+
+**두 겹**이다:
+1. **드리프트** — `entityType` 필수 누락 + `ActivityType` enum 에 `CADENCE_*` 4값 **전부 부재**
+2. **§placeholder-success** — `createActivityLog` 의 `catch` 가
+   *"로그 실패가 메인 로직을 막아선 안 됨"* 으로 삼키고,
+   라우트는 `enforcement.complete({ afterState: { status: 'logged' } })` 후 `{success:true}` 반환
+
+→ **감사 기록이 0인데 감사 봉투는 'logged' 라고 적힌다.**
+
+> **규칙 보강: 드리프트를 500 으로만 찾지 않는다.**
+> 삼켜진 예외는 200 뒤에 숨는다. **전역 count 0 + 200** 조합을 드리프트 후보로 본다.
+> (이번에도 잡은 것은 §measurement-layer-blindness 의 독립 안전망이다)
+
+### 정정 — §1.8 의 enum 부재 범위
+
+§1.8 에 "`ITEM_CLAIMED` 등 부재"로 적었는데 실측하니 **`CADENCE_*` 4값도 전부 부재**다.
+읽기 경로(`in: [...]`)와 쓰기 경로(단일 값) 양쪽이 같은 enum 결손을 공유한다.
+
 ## 2. 부수 사실 — 죽은 줄 몰랐던 기능이 있다
 
 `organizations/[id]/security` GET 은 **호출부 4곳**(`settings/security`, `settings/workspace`)
