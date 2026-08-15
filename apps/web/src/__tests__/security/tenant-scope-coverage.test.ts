@@ -333,6 +333,24 @@ export function collectHandlers(): Handler[] {
  *
  * 판정: 핸들러가 **요청 바디에서 꺼낸 식별자**를 `data:` 의 `organizationId` 로 쓰면
  * 위반이다. 단, 그 식별자로 **멤버십 검사**를 수행한 흔적이 있으면 통과.
+ *
+ * ═══════════════════════════════════════════════════════
+ * 🛑 이 검사가 닫은 범위 — **`data:` 축 전체가 아니다**
+ * ═══════════════════════════════════════════════════════
+ *
+ * 이 검사가 보는 것은 `data:` 축의 **한 형태**뿐이다:
+ *   **요청 바디 유래 → `organizationId`**
+ *
+ * 같은 축의 **안 보는 형태**:
+ *   1. **다른 입력 출처** — 쿼리스트링 / 헤더 / 경로 파라미터(`[id]`) 유래 org 주입
+ *   2. **다른 필드** — `userId` · `teamId` · `workspaceId` · `scopeKey` 로의 주입
+ *      (귀속 축이 org 만 있는 게 아니다 — §scopekey-axis-unmeasured 참조)
+ *   3. **간접 경유** — 헬퍼/서비스 계층이 인자로 받아 `data:` 에 넣는 형태
+ *
+ * → **"`data:` 축 커버됨" 으로 읽지 말 것.** 이 단언의 RED 0 은
+ *   *"바디 유래 org 주입이 0"* 이지 *"귀속 조작이 0"* 이 아니다.
+ *   (§drift-masks-isolation · §unvalidated-create 개명 때와 같은 자리 —
+ *    이름·범위가 좁게 읽히면 다음 형태가 안 붙는다)
  */
 function bodyDerivedIdentifiers(body: string): string[] {
   const out: string[] = [];

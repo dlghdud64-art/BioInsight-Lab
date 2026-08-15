@@ -813,6 +813,40 @@ work-queue 4건 패턴 승계). 파라미터를 남기고 검증만 붙이지 �
 읽기         99/107 (유출 1건 수정 완료)
 ```
 
+## 9.21 3차 잔여 4건 — **④ 정지로 1건만 완료** (2026-08-15)
+
+### `ingestion` — **유출 아님** (판정 완료)
+
+```
+A 세션(ADMIN 승격, orgB 비멤버) → POST /api/ingestion
+body: { sourceType:'UPLOAD', rawText:'W3-CROSS', organizationId: <orgB.id> }
+→ 201 · IngestionEntry 생성 · organizationId = **orgA**(세션 도출) → 주입 무시
+   orgB 증감 0 · orgA +1
+```
+
+⚠️ 판정 근거의 형태가 `dispatch-batch` 와 다르다. 저기는 **교차가 차단**돼 대조군이
+필요했지만, 여기는 **교차가 통과하면서 세션 org 로 귀속**됐다 — 한 프로브가
+"경로 착지"와 "주입 무시"를 동시에 증명한다. 대조군 없이 판정 성립.
+
+### 🛑 ④ 정지 — 선언 밖 변경 (`IngestionAuditLog` 4행)
+
+선언에 `IngestionEntry` 만 적었는데 감사 추적 4행이 함께 생성됐다.
+**①의 도출 실패가 아니라 내가 손으로 채운 선언의 누락**이다(파생 감사 로그를 빠뜨렸다).
+
+게이트대로 즉시 정지 → 나머지 3건(`cadence`·`bottleneck`·`ops-sync`) **미실행**.
+복원 완료(IngestionEntry 1 + IngestionAuditLog 4 삭제, 잔여 0 확인).
+
+**재개 시 선언 파일을 새로 작성한다** — 실행 중 수정 금지 원칙상 기존 선언에
+사후 추가하지 않는다(사후 추가는 게이트 무력화, 호영님 지시).
+
+### 커버리지
+
+```
+쓰기 org 축   3/11 판정 (dispatch-batch · protocol/bom · ingestion) · 유출 1건 수정 완료
+읽기         99/107 · 유출 1건 수정 완료
+미실행        3 (cadence · bottleneck · ops-sync)
+```
+
 ## 10. 다음 순서
 
 1. ~~운영 조직 수~~ ✅ 완료 → 결함 등급
