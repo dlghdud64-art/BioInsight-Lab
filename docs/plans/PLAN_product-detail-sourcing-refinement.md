@@ -1,9 +1,17 @@
 # Implementation Plan: 소싱 제품 상세 정보밀도·CTA 정리 (§product-detail-refinement)
 
-- **Status:** ⏳ Pending (P0 실측 완료 · P1 진입 대기)
-- **Started:** 2026-07-25
-- **Last Updated:** 2026-07-25
-- **Estimated Completion:** TBD
+- **Status:** 🔵 Phase 2 완료 · **Phase 3 대기** (게이트 배선 완료)
+- **Started:** 2026-07-25 · **Last Updated:** 2026-08-15
+
+> ▶ **다음 세션 첫 줄: Phase 3 — `<CollapsedRow>` 선작성.**
+> 착수 조건 닫힘(신설 쓰기 0, §7.12) · fixture 112/112 · 대조 대상 109.
+> **EXIT 에서 `compareLabels()` 가 처음 실물을 잰다.**
+>
+> 🛑 **COMP 게이트는 아직 실물을 재지 않는다.** Phase 3~5 미구현이라
+> 지금 도는 것은 **fixture 자기 무결성 + 비교기 실증**뿐이다
+> (`src/__tests__/design/product-detail-comp-conformance.test.ts` 상단 등급 한계).
+> **"게이트 배선됨" 을 "시안 정합 확보됨" 으로 읽지 말 것** —
+> 이 저장소가 반복해서 만난 형태다(200 위장 · 델타 +1 · tsc 27→21 · 동명이인 정의부).
 
 **CRITICAL INSTRUCTIONS** (phase 완료 시): ① 체크박스 갱신 ② quality gate 명령 실행 ③ 전 항목 통과 확인 ④ Last Updated 갱신 ⑤ Notes 기록 ⑥ 그 후 다음 phase.
 
