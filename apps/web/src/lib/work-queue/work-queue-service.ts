@@ -1001,6 +1001,9 @@ export async function saveRemediationItems(params: {
 
     // Log if event specified
     if (params.logEvent) {
+      // §placeholder-success 3번째 사례 교정 — 이 호출은 $transaction 콜백 **안**에 있으면서
+      //   전역 db 로 실행되고 있었다(Prisma 에서 별도 커넥션 = 트랜잭션 밖).
+      //   읽으면 편입으로 보이지만 아니었다. 업무 쓰기가 롤백돼도 이 감사만 살아남는다.
       await createActivityLog({
         activityType: params.logEvent as any,
         userId: params.actorUserId,
@@ -1008,7 +1011,7 @@ export async function saveRemediationItems(params: {
         organizationId: params.organizationId ?? null,
         ipAddress: params.ipAddress ?? null,
         userAgent: params.userAgent ?? null,
-      } as any);
+      } as any, tx);
     }
   });
 }
