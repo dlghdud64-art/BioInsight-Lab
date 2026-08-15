@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { AuditEventType } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
 /**
  * 감사 로그 생성 파라미터
@@ -43,9 +44,29 @@ export function auditRequestMeta(request: {
 /**
  * 감사 로그 생성
  */
-export async function createAuditLog(params: AuditLogParams) {
+/**
+ * §audit-integrity-fix 커밋 1a — 트랜잭션 클라이언트 주입 지점 신설 (optional).
+ *
+ * 🛑 이 커밋은 **호출부를 바꾸지 않는다.** `txClient` 를 안 넘기면 지금과 완전히 동일하게
+ *    전역 `db` 로 실행된다(기본값 보존). 회귀면 0 · tsc 파급 0 이 이 커밋의 조건이다.
+ *
+ * 왜 먼저인가 — 실측(§audit-integrity-fix §4.5): 감사 쓰기의 트랜잭션 편입률이
+ * **5/102** 다. 편입 없이 정의부를 rethrow 로 바꾸면
+ *   업무 쓰기 커밋 → 감사 실패 → 5xx → 클라 재시도 → **중복 생성**
+ * 이 열린다. 지금은 200 이라 안 보일 뿐이다.
+ * 그래서 편입(1a·1b·1c) 이 rethrow(커밋 2) 보다 앞선다.
+ *
+ * `createActivityLog`·`logStateTransition` 은 이미 `txClient` 를 받는다.
+ * `createActivityLogServer` 는 `db` 파라미터로 받는다.
+ * **주입 지점이 없던 것은 이 함수뿐**이었다(46 호출).
+ */
+export async function createAuditLog(
+  params: AuditLogParams,
+  txClient?: Prisma.TransactionClient,
+) {
+  const client = txClient ?? db;
   try {
-    const auditLog = await db.auditLog.create({
+    const auditLog = await client.auditLog.create({
       data: {
         organizationId: params.organizationId || null,
         userId: params.userId || null,
