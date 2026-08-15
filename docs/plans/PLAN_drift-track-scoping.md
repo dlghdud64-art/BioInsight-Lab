@@ -85,6 +85,44 @@
    추가 쪽이면 prod DDL 4스텝
 4. **배치 D4 (cadence 성공 위장)** — 감사 무결성 축 카드화 여부 판단 포함
 
+## 7. D1 재정의 (2026-08-15, 호영님 지시 + 앵커 교차 확인 결과)
+
+사양서 §1 의 독립 안전망이 카드 목록의 **모집단 정의 오류**를 잡았다(§drift §1.10).
+그 결과 D1 범위를 아래로 축소·재정의한다.
+
+```
+포함:  purchaseDate → purchasedAt   (라우트 5 + lib 2)
+       quoteListId  → quoteId       ← 앵커 사전 확인 통과(아래)
+보류:  listItems                    ← 응답 코드 확인 완료, 재판정 아래
+제외:  raw SQL 3컬럼                ← §raw-sql-audit 대기(해동 안 함)
+제외:  safety/spend/unmapped 계열   ← D3 단일 귀속
+```
+
+### `quoteListId` 앵커 사전 확인 — **통과**
+
+전역 13히트 중 **Prisma 참조는 카드 경로 1곳뿐**이다(`quote-lists/[id]/items` 83·88·110).
+나머지는 전부 비-Prisma:
+`quote-lists/route.ts:106`(logger 필드) · `lib/export/quote-export.ts:301`(요약 객체 키,
+그 파일에 Prisma 호출 0) · `components/quote-list/export-button.tsx`(prop) ·
+`lib/store/quote-draft-store.ts`(스토어 상태).
+
+→ **치환 대상은 3라인, 카드 밖 히트 없음. D1 유지.**
+
+### `listItems` 응답 코드 확인 — **이미 죽어 있다**
+
+```
+GET /api/admin/quotes/{id}   → 500  "Failed to fetch quote"   ← 프론트 화면이 쓰는 API
+GET /api/admin/quotes        → 200                            ← 목록(별개, listItems 미사용)
+```
+
+**판정: "화면이 깨진다" 가 아니라 "이미 깨져 있다".**
+`admin/quotes/[id]` 상세 화면은 현재 데이터를 못 받는다. 따라서 `listItems → items` 치환은
+**계약 변경이 아니라 복구**이고, 프론트의 `quote.listItems` 참조를 함께 고치는 것은
+D1 범위 안이다(DDL 불요 → D3 이관 근거 없음).
+
+⚠️ 단 프론트 수정이 붙으므로 **§2.5 해소 조건**을 적용한다 —
+치환 후 `admin/quotes/[id]` 화면이 **실제로 렌더되는지** 확인해야 D1 완료다.
+
 ## 6. 관계
 
 - §drift-masks-isolation — 이 트랙의 규칙. 형태 3종(필드·raw SQL·enum) + 200 위장
