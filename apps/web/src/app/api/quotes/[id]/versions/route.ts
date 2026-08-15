@@ -77,7 +77,16 @@ export async function POST(
     const nextVersion = latestVersion + 1;
 
     // 버전 리스트 생성 (스냅샷)
-    const versionQuote = await db.quote.create({
+    // 요청 메타 — 트랜잭션 밖 순수 계산
+    const ipAddress = request.headers.get("x-forwarded-for") ||
+                     request.headers.get("x-real-ip") ||
+                     undefined;
+    const userAgent = request.headers.get("user-agent") || undefined;
+
+    // §audit-integrity-fix 1c-A-1 — 스냅샷 생성과 감사 기록을 한 트랜잭션에 편입.
+    //   ⚠️ 원자성만 바꾼다. 실패 전파는 커밋 2 소관.
+    const versionQuote = await db.$transaction(async (tx: any) => {
+    const created = await tx.quote.create({
       data: {
         userId: originalQuote.userId,
         organizationId: originalQuote.organizationId,
@@ -129,28 +138,23 @@ export async function POST(
       },
     });
 
-    // 액티비티 로그 기록
-    const ipAddress = request.headers.get("x-forwarded-for") || 
-                     request.headers.get("x-real-ip") || 
-                     undefined;
-    const userAgent = request.headers.get("user-agent") || undefined;
-    
-    createActivityLogServer({
-      db,
-      activityType: ActivityType.QUOTE_UPDATED,
-      entityType: "quote",
-      entityId: originalQuote.id,
-      userId: session.user.id,
-      organizationId: originalQuote.organizationId || undefined,
-      metadata: {
-        title: originalQuote.title,
-        version: nextVersion,
-        action: "version_created",
-      },
-      ipAddress,
-      userAgent,
-    }).catch((error) => {
-      console.error("Failed to create activity log:", error);
+      await createActivityLogServer({
+        db: tx,
+        activityType: ActivityType.QUOTE_UPDATED,
+        entityType: "quote",
+        entityId: originalQuote.id,
+        userId: session.user.id,
+        organizationId: originalQuote.organizationId || undefined,
+        metadata: {
+          title: originalQuote.title,
+          version: nextVersion,
+          action: "version_created",
+        },
+        ipAddress,
+        userAgent,
+      });
+
+      return created;
     });
 
     enforcement.complete({});

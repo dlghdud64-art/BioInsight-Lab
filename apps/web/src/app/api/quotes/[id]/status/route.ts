@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { QuoteStatus, ActivityType } from "@prisma/client";
+import { QuoteStatus, ActivityType, Prisma } from "@prisma/client";
 import { sendQuoteCompletedEmail, sendQuoteRejectedEmail } from "@/lib/email";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
 import { validateTransition, ALLOWED_QUOTE_TRANSITIONS } from "@/lib/operations/state-machine";
@@ -168,61 +168,69 @@ export async function PATCH(
     // 이전 상태 저장 (로그용)
     const previousStatus = quote.status;
 
-    // 상태 업데이트
-    const updatedQuote = await db.quote.update({
-      where: { id },
-      data: {
-        status,
-        updatedAt: new Date(),
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-          },
-        },
-        items: true,
-      },
-    });
-
-    // 액티비티 로그 기록
+    // 요청 메타 — 트랜잭션 밖 순수 계산
     const ipAddress = request.headers.get("x-forwarded-for") ||
                      request.headers.get("x-real-ip") ||
                      undefined;
     const userAgent = request.headers.get("user-agent") || undefined;
 
-    createActivityLogServer({
-      db,
-      activityType: ActivityType.QUOTE_STATUS_CHANGED,
-      entityType: "quote",
-      entityId: id,
-      userId: session.user.id,
-      organizationId: quote.organizationId || undefined,
-      metadata: {
-        previousStatus,
-        newStatus: status,
-        reason,
-        changedBy: session.user.name || session.user.email,
-      },
-      ipAddress,
-      userAgent,
-    }).catch((error) => {
-      console.error("Failed to create activity log:", error);
-    });
+    // §audit-integrity-fix 1c-A-1 — 업무 쓰기와 감사 쓰기를 **한 트랜잭션에 편입**한다.
+    //
+    //   이전에는 `db.quote.update` 뒤에 감사 2건이 미-await `.catch()` 로 떨어져 있었다.
+    //   업무는 커밋됐는데 감사만 실패하면 기록 없이 상태만 바뀐다(§audit-integrity-200-mask
+    //   실패 주입 2/2 확진). 편입하면 감사가 실패할 때 업무도 함께 롤백된다.
+    //
+    //   ⚠️ 이 커밋은 **원자성만** 바꾼다. 실패 전파는 커밋 2(정의부 rethrow) 소관이다 —
+    //      헬퍼가 아직 내부에서 삼키므로 지금은 감사 실패가 트랜잭션을 중단시키지 않는다.
+    //      편입 판정은 코드 독해가 아니라 **런타임 롤백 프로브(감사 델타 0)** 다.
+    const updatedQuote = await db.$transaction(async (tx: Prisma.TransactionClient) => {
+      const updated = await tx.quote.update({
+        where: { id },
+        data: {
+          status,
+          updatedAt: new Date(),
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+            },
+          },
+          items: true,
+        },
+      });
 
-    // P7-1: 중앙화된 상태 전이 로그
-    logStateTransition({
-      domain: "QUOTE",
-      entityId: id,
-      fromStatus: previousStatus,
-      toStatus: status,
-      actorId: session.user.id,
-      organizationId: quote.organizationId,
-      reason,
-    }).catch((error) => {
-      console.error("Failed to log state transition:", error);
+      await createActivityLogServer({
+        db: tx,
+        activityType: ActivityType.QUOTE_STATUS_CHANGED,
+        entityType: "quote",
+        entityId: id,
+        userId: session.user.id,
+        organizationId: quote.organizationId || undefined,
+        metadata: {
+          previousStatus,
+          newStatus: status,
+          reason,
+          changedBy: session.user.name || session.user.email,
+        },
+        ipAddress,
+        userAgent,
+      });
+
+      // P7-1: 중앙화된 상태 전이 로그
+      await logStateTransition({
+        domain: "QUOTE",
+        entityId: id,
+        fromStatus: previousStatus,
+        toStatus: status,
+        actorId: session.user.id,
+        organizationId: quote.organizationId,
+        reason,
+      }, tx);
+
+      return updated;
     });
 
     // 이메일 알림 발송 (비동기)

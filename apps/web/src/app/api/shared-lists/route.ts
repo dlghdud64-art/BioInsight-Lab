@@ -201,43 +201,51 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    // SharedList 생성
-    const sharedList = await db.sharedList.create({
-      data: {
-        quoteId: quote.id,
-        publicId,
-        title: title || quote.title,
-        description: description || quote.description,
-        snapshot: snapshot as any,
-        createdBy: session.user.id,
-        expiresAt,
-        isActive: true,
-      },
-    });
-
-    // 액티비티 로그 기록 (비동기, 실패해도 공유 링크는 생성됨)
-    const ipAddress = request.headers.get("x-forwarded-for") || 
-                     request.headers.get("x-real-ip") || 
+    // 요청 메타 — 트랜잭션 밖 순수 계산
+    const ipAddress = request.headers.get("x-forwarded-for") ||
+                     request.headers.get("x-real-ip") ||
                      undefined;
     const userAgent = request.headers.get("user-agent") || undefined;
-    
-    createActivityLogServer({
-      db,
-      activityType: ActivityType.QUOTE_SHARED,
-      entityType: "quote",
-      entityId: quote.id,
-      userId: session.user.id,
-      organizationId: quote.organizationId || undefined,
-      metadata: {
-        sharedListId: sharedList.id,
-        publicId: sharedList.publicId,
-        title: sharedList.title,
-        expiresAt: sharedList.expiresAt?.toISOString(),
-      },
-      ipAddress,
-      userAgent,
-    }).catch((error) => {
-      console.error("Failed to create activity log:", error);
+
+    // §audit-integrity-fix 1c-A-1 — 업무 쓰기(sharedList.create)와 감사 쓰기를 한 트랜잭션에 편입.
+    //   주석의 "실패해도 공유 링크는 생성됨" 은 이제 의도가 아니다 — 공유 링크가 생겼는데
+    //   기록이 없으면 **외부 발송 축((가))에서 행위를 재구성할 수 없다**.
+    //   ⚠️ 원자성만 바꾼다. 실패 전파는 커밋 2 소관.
+    const sharedList = await db.$transaction(async (tx: any) => {
+      const created = await tx.sharedList.create({
+        data: {
+          quoteId: quote.id,
+          publicId,
+          title: title || quote.title,
+          description: description || quote.description,
+          snapshot: snapshot as any,
+          createdBy: session.user.id,
+          expiresAt,
+          isActive: true,
+        },
+      });
+
+      await createActivityLogServer({
+        db: tx,
+        activityType: ActivityType.QUOTE_SHARED,
+        entityType: "quote",
+        entityId: quote.id,
+        userId: session.user.id,
+        organizationId: quote.organizationId || undefined,
+        metadata: {
+          sharedListId: created.id,
+          publicId: created.publicId,
+          title: created.title,
+          expiresAt: created.expiresAt?.toISOString(),
+        },
+        ipAddress,
+        userAgent,
+      });
+
+      return created;
+    }).catch((error: unknown) => {
+      console.error("Failed to create shared list:", error);
+      throw error;
     });
 
     enforcement.complete({
