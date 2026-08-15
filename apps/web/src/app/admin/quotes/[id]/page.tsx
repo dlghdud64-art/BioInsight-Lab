@@ -72,13 +72,10 @@ interface Quote {
     name: string | null;
     email: string | null;
   } | null;
-  listItems: QuoteItem[];
-  items: Array<{
-    id: string;
-    productId: string;
-    quantity: number;
-    notes: string | null;
-  }>;
+  // §drift D1 — API 가 `listItems`(존재하지 않는 Quote 관계)와 `items` 를 함께 요청해
+  //   상시 500 이었다. 이제 실제 관계인 `items` 만 온다. 얇은 `items` 선언은 미사용이었으므로
+  //   제거하고 리치 타입(QuoteItem)으로 통합한다.
+  items: QuoteItem[];
 }
 
 interface EditedItem {
@@ -119,9 +116,9 @@ export default function AdminQuoteDetailPage() {
 
   // 품목 데이터 초기화
   useEffect(() => {
-    if (quote?.listItems) {
+    if (quote?.items) {
       const initialEdits: Record<string, EditedItem> = {};
-      quote.listItems.forEach((item) => {
+      quote.items.forEach((item) => {
         initialEdits[item.id] = {
           id: item.id,
           costPrice: item.costPrice || null,
@@ -165,9 +162,9 @@ export default function AdminQuoteDetailPage() {
 
   // 총 금액 계산
   const totalAmount = useMemo(() => {
-    if (!quote?.listItems) return 0;
+    if (!quote?.items) return 0;
 
-    return quote.listItems.reduce((sum, item) => {
+    return quote.items.reduce((sum, item) => {
       const edited = editedItems[item.id];
       const price = edited?.unitPrice ?? item.unitPrice ?? 0;
       return sum + price * item.quantity;
@@ -402,7 +399,7 @@ export default function AdminQuoteDetailPage() {
                   </div>
                   <div>
                     <p className="text-sm text-slate-500">품목 수</p>
-                    <p className="font-medium">{quote.listItems.length}개</p>
+                    <p className="font-medium">{quote.items.length}개</p>
                   </div>
                 </div>
               </CardContent>
@@ -492,7 +489,7 @@ export default function AdminQuoteDetailPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {quote.listItems.map((item, index) => {
+                    {quote.items.map((item, index) => {
                       const edited = editedItems[item.id];
                       const profit = calculateProfit(item.id);
                       const lineTotal =

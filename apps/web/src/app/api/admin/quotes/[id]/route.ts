@@ -28,9 +28,8 @@ export async function GET(
             email: true,
           },
         },
-        listItems: {
-          orderBy: { createdAt: "asc" },
-        },
+        // §drift D1 — `listItems` 는 Quote 의 관계가 아니다(QuoteListItem 관계명은 `items`).
+        //   같은 include 에 `items` 가 이미 있었으므로 **중복 키를 제거**한 것이지 rename 이 아니다.
         items: {
           orderBy: { createdAt: "asc" },
         },

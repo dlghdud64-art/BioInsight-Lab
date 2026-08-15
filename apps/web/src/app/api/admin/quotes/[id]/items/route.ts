@@ -54,7 +54,7 @@ export async function PATCH(
     // 견적 존재 확인
     const quote = await db.quote.findUnique({
       where: { id: quoteId },
-      include: { listItems: true },
+      include: { items: true },   // §drift D1 — Quote 의 QuoteListItem 관계명은 items
     });
 
     if (!quote) {
@@ -78,13 +78,13 @@ export async function PATCH(
             unitPrice: item.unitPrice,
             // costPrice와 adminNotes는 스키마에 없으면 raw JSON으로 저장
             raw: {
-              ...(quote.listItems.find((li: { id: string; raw?: any }) => li.id === item.id)?.raw as object || {}),
+              ...(quote.items.find((li: { id: string; raw?: any }) => li.id === item.id)?.raw as object || {}),
               costPrice: item.costPrice,
               adminNotes: item.adminNotes,
             },
             lineTotal: item.unitPrice
               ? item.unitPrice *
-                (quote.listItems.find((li: { id: string; quantity?: number | null }) => li.id === item.id)?.quantity || 1)
+                (quote.items.find((li: { id: string; quantity?: number | null }) => li.id === item.id)?.quantity || 1)
               : null,
           },
         })

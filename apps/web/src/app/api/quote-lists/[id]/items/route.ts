@@ -80,12 +80,12 @@ export async function PUT(
 
     // 기존 items deleteMany 후 새로 createMany
     await db.quoteListItem.deleteMany({
-      where: { quoteListId: id },
+      where: { quoteId: id },
     });
 
     const createdItems = await db.quoteListItem.createMany({
       data: items.map((item: any) => ({
-        quoteListId: id,
+        quoteId: id,
         productId: item.productId || null,
         name: item.name,
         vendor: item.vendor || null,
@@ -107,7 +107,7 @@ export async function PUT(
     });
 
     logger.info("quote_list_items_updated", {
-      quoteListId: id,
+      quoteId: id,
       guestKey,
       itemCount: items.length,
     });

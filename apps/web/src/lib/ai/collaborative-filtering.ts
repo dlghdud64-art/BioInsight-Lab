@@ -38,7 +38,7 @@ export async function generateCollaborativeRecommendations(
         productId: true,
         quantity: true,
         totalAmount: true,
-        purchaseDate: true,
+        purchasedAt: true,
       },
     });
 
@@ -58,7 +58,7 @@ export async function generateCollaborativeRecommendations(
         productId: true,
         quantity: true,
         totalAmount: true,
-        purchaseDate: true,
+        purchasedAt: true,
       },
     });
 
@@ -177,7 +177,7 @@ export async function generateContextBasedRecommendations(
           },
         },
       },
-      orderBy: { purchaseDate: "desc" },
+      orderBy: { purchasedAt: "desc" },
       take: 50, // 최근 50개 구매만 분석
     });
 

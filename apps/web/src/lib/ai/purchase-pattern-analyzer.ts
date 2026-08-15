@@ -31,7 +31,7 @@ export async function analyzePurchasePatterns(params: {
         product: true,
       },
       orderBy: {
-        purchaseDate: "desc",
+        purchasedAt: "desc",
       },
     });
 
@@ -43,7 +43,7 @@ export async function analyzePurchasePatterns(params: {
       
       // 그룹 키 생성 (같은 날짜, 프로젝트, 견적에서 구매된 것들)
       const groupKey = [
-        record.purchaseDate.toISOString().split("T")[0], // 날짜
+        record.purchasedAt.toISOString().split("T")[0], // 날짜
         record.projectName || "",
         record.quoteId || "",
       ].join("|");

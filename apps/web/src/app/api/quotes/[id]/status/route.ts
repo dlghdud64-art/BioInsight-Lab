@@ -143,7 +143,6 @@ export async function PATCH(
           },
         },
         items: true,
-        listItems: true,
       },
     });
 
@@ -185,7 +184,6 @@ export async function PATCH(
           },
         },
         items: true,
-        listItems: true,
       },
     });
 
@@ -231,7 +229,7 @@ export async function PATCH(
     const userEmail = quote.user?.email;
     const userName = quote.user?.name || "고객";
     const quoteNumber = quote.id.slice(-8).toUpperCase();
-    const itemCount = (quote.listItems?.length || 0) + (quote.items?.length || 0);
+    const itemCount = quote.items?.length || 0;   // §drift D1 — listItems 는 관계 아님(중복 항 제거)
     const totalAmount = quote.totalAmount
       ? `₩${quote.totalAmount.toLocaleString("ko-KR")}`
       : undefined;

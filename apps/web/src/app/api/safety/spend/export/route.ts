@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
 
     // 구매 내역 조회
     const where: any = {
-      purchaseDate: {
+      purchasedAt: {
         gte: dateStart,
         lte: dateEnd,
       },
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: {
-        purchaseDate: "desc",
+        purchasedAt: "desc",
       },
     });
 
@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
       const hasMsds = msdsUrl && msdsUrl.trim() !== "";
 
       return {
-        구매일: record.purchaseDate.toISOString().split("T")[0],
+        구매일: record.purchasedAt.toISOString().split("T")[0],
         조직: record.organization?.name || "-",
         프로젝트: record.projectName || "-",
         벤더: record.vendor?.name || "-",
