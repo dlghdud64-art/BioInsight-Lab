@@ -45,3 +45,23 @@ body: {"__invalid_probe__": true}          → 201 Created
 
 - §tenant-isolation-placeholder — 발견 경위. A트랙 종료가 선결
 - §placeholder-success-audit — "저장 없이 성공" 의 **반대 형태**다. 이쪽은 **의미 없이 저장**한다
+
+---
+
+## 편입 — `quote-lists/[id]/items` PUT 비트랜잭션 삭제 (2026-08-15, 호영님 등급 상향)
+
+```ts
+await db.quoteListItem.deleteMany({ where: { quoteId: id } });   // 먼저 실행, 성공
+await db.quoteListItem.createMany({ data: items.map(...) });     // 드리프트로 실패 → 500
+```
+
+트랜잭션이 아니다. 항목이 있는 리스트에 PUT 하면 **기존 항목이 지워진 채 500** 이 난다.
+
+🛑 **드리프트 수정이 이 위험을 활성화한다.**
+D1b 프로브에서 실손실이 0이었던 것은 **픽스처가 0건이었기 때문**이고,
+현재 이 경로가 항상 500 이라 사용자가 도달하지 못하기 때문이다.
+D1c 가 `vendor`·`snapshot` 을 고치면 **이 경로는 살아나고, 그때 손실이 실제로 발생한다.**
+
+→ 드리프트가 아니라 별건이지만 **§unvalidated-create 계열과 같은 등급**으로 다룬다.
+→ D1c 착수 시 이 항목을 **같은 배치 안에서** 처리할지 판단이 필요하다
+  (고치고 나서 트랜잭션화하면, 그 사이 창에서 손실이 가능하다).

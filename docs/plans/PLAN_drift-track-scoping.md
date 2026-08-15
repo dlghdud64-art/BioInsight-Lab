@@ -191,6 +191,19 @@ createMany({ data:[...] })          ← 드리프트로 실패 → 500
 `quote-lists/[id]/items` PUT — `vendor→vendorName` · `snapshot→raw` 치환 + 재프로브.
 deleteMany/createMany 트랜잭션화는 **별건**(드리프트 아님).
 
+## 9. 🔁 모집단 대체 (2026-08-15) — §drift-pair-rederivation 으로 이관
+
+이 카드의 `경로 → 드리프트 1` 목록(17경로)은 **모집단으로서 폐기**한다.
+전수 재도출 결과가 이를 대체한다:
+
+```
+구 카드   17경로 (드리프트 1개씩 가정)
+재도출    55쌍 / 21경로 (라우트 15 + lib 6) — 21경로 중 13경로가 드리프트 2개 이상
+```
+
+D1/D1b 의 **실측 결과**(§7·§8)는 유효하므로 남긴다. 바뀐 것은 **모집단**이다.
+D1c 이후 배치 편성은 §drift-pair-rederivation §4 를 따른다.
+
 ## 6. 관계
 
 - §drift-masks-isolation — 이 트랙의 규칙. 형태 3종(필드·raw SQL·enum) + 200 위장
