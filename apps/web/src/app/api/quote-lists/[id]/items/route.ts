@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { db, dbTyped } from "@/lib/db";
 import { getOrCreateGuestKey } from "@/lib/api/guest-key";
 import { handleApiError, validateJsonBody } from "@/lib/api/utils";
@@ -78,32 +79,41 @@ export async function PUT(
       return NextResponse.json({ error: "Not Found" }, { status: 404 });
     }
 
-    // 기존 items deleteMany 후 새로 createMany
-    await db.quoteListItem.deleteMany({
-      where: { quoteId: id },
-    });
-
-    const createdItems = await db.quoteListItem.createMany({
-      data: items.map((item: any) => ({
-        quoteId: id,
-        productId: item.productId || null,
-        name: item.name,
-        vendor: item.vendor || null,
-        brand: item.brand || null,
-        catalogNumber: item.catalogNumber || null,
-        unitPrice: item.unitPrice || null,
-        quantity: item.quantity,
-        lineTotal: item.lineTotal || null,
-        notes: item.notes || null,
-        snapshot: item.snapshot || null,
-      })),
-    });
-
-    // totalAmount 업데이트
+    // §unvalidated-create 계열 — replace 3단계를 단일 트랜잭션으로 묶는다.
+    //   이전에는 deleteMany 가 **먼저 커밋**되고 createMany 가 실패하면
+    //   기존 항목이 지워진 채 500 이 나갔다(비트랜잭션 손실 경로).
+    //   지금까지 실손실이 0이었던 건 이 경로가 드리프트로 상시 500 이라
+    //   사용자가 도달하지 못했기 때문이고, 드리프트 수정이 이 위험을 **활성화**한다.
+    //   그래서 치환보다 **먼저** 닫는다 — 순서를 지키면 위험한 창이 생기지 않는다.
     const totalAmount = items.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
-    await dbTyped.quote.update({
-      where: { id },
-      data: { totalAmount: totalAmount || null },
+
+    const createdItems = await db.$transaction(async (tx: Prisma.TransactionClient) => {
+      await tx.quoteListItem.deleteMany({
+        where: { quoteId: id },
+      });
+
+      const created = await tx.quoteListItem.createMany({
+        data: items.map((item: any) => ({
+          quoteId: id,
+          productId: item.productId || null,
+          name: item.name,
+          vendor: item.vendor || null,
+          brand: item.brand || null,
+          catalogNumber: item.catalogNumber || null,
+          unitPrice: item.unitPrice || null,
+          quantity: item.quantity,
+          lineTotal: item.lineTotal || null,
+          notes: item.notes || null,
+          snapshot: item.snapshot || null,
+        })),
+      });
+
+      await tx.quote.update({
+        where: { id },
+        data: { totalAmount: totalAmount || null },
+      });
+
+      return created;
     });
 
     logger.info("quote_list_items_updated", {
