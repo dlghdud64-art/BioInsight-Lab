@@ -178,13 +178,23 @@ describe("§11.XXX — feature scope", () => {
 
 fixture 안의 필드는 **지위가 다르다.** 섞으면 게이트가 스스로 무너진다.
 
+🛑 **지위는 필드명이 아니다.** fixture 마다 필드명이 다르다 — 이름으로 조항을 쓰면
+   다음 fixture 에서 매핑이 끊긴다(2026-08-16 실측: reorder fixture 에는 `expect` 도
+   `anchor` 도 없고 정본이 `label` 이었다).
+
 ```
-anchor · 현행 · _주의        구현 **전** 위치 서술. "어디를 고쳐라" 라는 작업 지시다.
-                            고쳤으면 stale 이 **정상 종료 상태**다. 갱신 금지 · 삭제 금지.
-                            구 문자열은 회귀 sentinel 재료다(역계약 승계에 그대로 쓰인다).
-expect · expect_text ·      정본. 불변. **기계 검사는 이것만 쓴다.**
-expect_NOT                  anchor 는 사람용 내비게이션이지 검사 기준이 아니다.
+정본 필드        기계 검사가 **이것만** 쓴다. 불변.
+                 analytics-tabs : expect · expect_text · expect_NOT
+                 reorder-handoff: label · _시드종속.fixed
+작업지시 필드    구현 **전** 위치 서술. "어디를 고쳐라" 라는 지시다.
+                 고쳤으면 stale 이 **정상 종료 상태**다. 갱신 금지 · 삭제 금지 · 검사 금지.
+                 구 문자열은 회귀 sentinel 재료다(역계약 승계에 그대로 쓰인다).
+                 analytics-tabs : anchor · 현행 · _주의
+                 reorder-handoff: (없음 — 오염 위험 0)
 ```
+
+🛑 **fixture 상단에 두 축이 무엇인지 1줄로 선언한다.** 선언이 없으면 축 배선할 때마다
+   다시 묻게 된다 — 2026-08-16 B 트랙 착수가 실제로 그 지점에서 멈췄다.
 
 🛑 위반형: **"검사가 못 찾으니 anchor 를 갱신한다"**
    → fixture 가 구현을 따라가고, 그 순간부터 영구 GREEN 이다.
