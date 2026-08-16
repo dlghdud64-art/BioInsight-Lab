@@ -16,11 +16,21 @@
  *
  * 사용:
  *   node _reorder_comp_probe.mjs --file "<시안.html>" --out out.json [--chrome <path>]
+ *                                [--render-out src/__tests__/fixtures/reorder-handoff-comp.render.json]
+ *
+ * 🔴 --render-out 은 **축 B 게이트(reorder-handoff-comp-conformance.test.ts)의 actual 원천**이다.
+ *    시안이 22.9MB 라 테스트 런타임에 렌더할 수 없다 → 여기서 선도출해 커밋한다.
+ *    시안 sha256 이 바뀌면 이 프로브를 다시 돌려 .render.json 을 갱신해야 한다.
  */
-import { chromium } from 'playwright';
 import fs from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+
+// playwright(개발기) / playwright-core(컨테이너) 어느 쪽이 깔려 있어도 돈다.
+const { chromium } = await (async () => {
+  try { return await import('playwright'); } catch { return await import('playwright-core'); }
+})();
 
 const argv = process.argv.slice(2);
 const arg = (k, d) => {
@@ -29,6 +39,7 @@ const arg = (k, d) => {
 };
 const FILE = arg('--file');
 const OUT = arg('--out', 'reorder-comp-render.json');
+const RENDER_OUT = arg('--render-out');
 const CHROME = arg('--chrome', '/opt/pw-browsers/chromium-1194/chrome-linux/chrome');
 if (!FILE) throw new Error('--file <시안.html> 필요');
 
@@ -92,11 +103,12 @@ for (const w of VIEWPORTS) {
       };
     });
     const w2 = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    let total = 0, n;
-    while ((n = w2.nextNode())) if (norm(n.nodeValue)) total += 1;
+    const bodyTexts = []; let n;
+    while ((n = w2.nextNode())) { const t = norm(n.nodeValue); if (t) bodyTexts.push(t); }
     return {
       per,
-      text_node_total: total,
+      body_text_nodes: bodyTexts,
+      text_node_total: bodyTexts.length,
       element_count_body: document.body.querySelectorAll('*').length,
       element_count_document: document.querySelectorAll('*').length,
     };
@@ -104,9 +116,11 @@ for (const w of VIEWPORTS) {
 
   rep.viewports.push({
     vp: `${w}x2400`,
+    width: w,
     text_node_total: out.text_node_total,
     element_count_body: out.element_count_body,
     element_count_document: out.element_count_document,
+    body_text_nodes: out.body_text_nodes,
   });
   if (w === 1440) rep.detail = out;
   await ctx.close();
@@ -158,8 +172,97 @@ const result = {
   sections,
 };
 fs.writeFileSync(OUT, JSON.stringify(result, null, 2));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// --render-out : 축 B 게이트가 읽는 렌더 산출물(.render.json)
+// 🔴 여기 담기는 text_nodes 가 게이트의 **actual** 이다. fixture 를 복사해 오지 않는다.
+// ─────────────────────────────────────────────────────────────────────────────
+if (RENDER_OUT) {
+  const abs = path.resolve(FILE);
+  const bytes = fs.statSync(abs).size;
+  const sha256 = createHash('sha256').update(fs.readFileSync(abs)).digest('hex');
+
+  // 뷰포트 4종 텍스트노드 다중집합 동일성 — 하나라도 어긋나면 도출 중단.
+  const msKey = (a) => JSON.stringify([...a].sort());
+  const base = rep.viewports.find((v) => v.width === 1440).body_text_nodes;
+  for (const v of rep.viewports) {
+    if (msKey(v.body_text_nodes) !== msKey(base)) {
+      throw new Error(`viewport drift: ${v.vp} (${v.body_text_nodes.length} vs ${base.length})`);
+    }
+  }
+
+  const renderOut = {
+    _축: '축 B actual — 시안 HTML 헤드리스 실렌더 산출물. **제품 화면이 아니다.** fixture ↔ 시안 축만 잠근다.',
+    _왜선도출: '시안 22.9MB — 테스트 런타임 렌더는 게이트를 못 쓰게 만든다. 프로브가 선도출해 커밋한다.',
+    _재도출: `node apps/web/_reorder_comp_probe.mjs --file "<시안.html>" --out /tmp/probe.json --render-out apps/web/src/__tests__/fixtures/reorder-handoff-comp.render.json`,
+    source: path.basename(FILE),
+    source_device_path: 'C:\\Users\\young\\Desktop\\피드백4\\재발주 견적 핸드오프 흐름 (단독).html',
+    source_sha256: sha256,
+    source_bytes: bytes,
+    derived_at: new Date().toISOString().slice(0, 10),
+    derived_by: 'apps/web/_reorder_comp_probe.mjs --render-out',
+    engine: `Chromium 1194 (headless) · executablePath ${CHROME}`,
+    extraction:
+      "file:// 로드 → waitUntil 'load' → body.innerText 에서 \"Unpacking\" 소멸 대기 + 6s → " +
+      'TreeWalker(document.body, SHOW_TEXT) 전량 → /\\s+/ 공백 정규화 → 빈 문자열 제외',
+    viewports_tested: VIEWPORTS,
+    viewport_text_node_counts: Object.fromEntries(rep.viewports.map((v) => [v.width, v.text_node_total])),
+    viewport_element_counts_body: Object.fromEntries(rep.viewports.map((v) => [v.width, v.element_count_body])),
+    viewport_element_counts_document: Object.fromEntries(rep.viewports.map((v) => [v.width, v.element_count_document])),
+    _뷰포트무관: '4뷰포트 텍스트노드 다중집합 동일 확인됨(도출 시 강제). 잘림·조건부 렌더 0.',
+    page_errors: rep.pageErrors,
+    console_errors: rep.consoleErrors,
+    text_node_total: base.length,
+    element_count_body: rep.detail.element_count_body,
+    element_count_document: rep.detail.element_count_document,
+    ui_text_total: result.ui_text_total,
+    doc_label_total: result.doc_label_total,
+    annotation_excluded_total: result.annotation_excluded_total,
+    attr_label_total: result.attr_label_total,
+    _분리계상: `text_node_total ${base.length} = ui_text ${result.ui_text_total} + doc_label ${result.doc_label_total} + annotation_excluded ${result.annotation_excluded_total}. attr_label ${result.attr_label_total} 은 텍스트노드 축에 **포함되지 않는다**.`,
+    // 🛑 border-width 계열은 **authored 문자열**로 싣는다.
+    //    computed(getComputedStyle) 은 브라우저가 정수 device px 로 스냅해서
+    //    authored `0.5px`/`1.5px` 가 `1px` 로 접힌다 → 대조가 조용히 무의미해진다.
+    _border_축: 'authored inline style 선언 문자열. computed 아님(정수 device px 스냅 회피).',
+    authored_border_widths: (() => {
+      const c = {};
+      rep.detail.per.forEach((s) => {
+        for (const m of s.styleStrings.matchAll(
+          /border(?:-(?:top|right|bottom|left))?(?:-width)?\s*:\s*([^;"']+)/g,
+        )) {
+          const tok = m[1].trim().split(/\s+/)[0];
+          if (/^[\d.]+px$/.test(tok)) c[tok] = (c[tok] || 0) + 1;
+        }
+      });
+      return Object.fromEntries(Object.entries(c).sort((a, b) => b[1] - a[1]));
+    })(),
+    sections: Object.fromEntries(
+      Object.entries(sections).map(([k, s], i) => [k, {
+        ui_text: s.labels,
+        doc_labels: s.doc_labels,
+        annotation_excluded: s.annotation_excluded,
+        element_count: s.element_count,
+        authored_border_widths: (() => {
+          const c = {};
+          for (const m of rep.detail.per[i].styleStrings.matchAll(
+            /border(?:-(?:top|right|bottom|left))?(?:-width)?\s*:\s*([^;"']+)/g,
+          )) {
+            const tok = m[1].trim().split(/\s+/)[0];
+            if (/^[\d.]+px$/.test(tok)) c[tok] = (c[tok] || 0) + 1;
+          }
+          return Object.fromEntries(Object.entries(c).sort((a, b) => b[1] - a[1]));
+        })(),
+      }]),
+    ),
+    attr_labels: Object.entries(sections).flatMap(([k, s]) => s.attr_labels.map((a) => ({ section: k, ...a }))),
+    text_nodes: base,
+  };
+  fs.writeFileSync(RENDER_OUT, JSON.stringify(renderOut, null, 2) + '\n');
+  console.log('render-out written:', RENDER_OUT, '·', base.length, 'text nodes');
+}
+
 console.log(JSON.stringify({
-  viewports: rep.viewports,
+  viewports: rep.viewports.map(({ body_text_nodes, ...v }) => v),
   pageErrors: rep.pageErrors,
   ui_text_total: result.ui_text_total,
   doc_label_total: result.doc_label_total,

@@ -1,0 +1,616 @@
+{
+  "_생성": "_analytics_comp_probe.mjs — 선도출 산출물. 테스트 런타임에 렌더하지 않는다.",
+  "_축": "축 B(fixture ↔ 시안 실렌더)의 **actual** 측. 축 C(fixture ↔ 제품 화면)는 미배선.",
+  "source": "지출분석 탭 개선 (단독).html",
+  "source_path": "C:/Users/young/Desktop/지출분석 탭 개선 (단독).html",
+  "source_sha256": "8edc9f9b21eb37933bcd38a061d55422d1a9a3780daeff4ceb93f11d95aa0a4e",
+  "source_bytes": 22741557,
+  "derived_at": "2026-08-16",
+  "engine": {
+    "browser": "Chromium 141 (playwright chromium-1194 번들)",
+    "executable": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+    "playwright_core": "1.49.1",
+    "host": "cloud container (Linux x64)",
+    "device_scale_factor": 1
+  },
+  "extraction": {
+    "load": "file:// · waitUntil 'load' (timeout 180s)",
+    "settle": "document.body.innerText 에서 'Unpacking' 소멸 대기 + 6000ms",
+    "walker": "TreeWalker(NodeFilter.SHOW_TEXT)",
+    "normalize": "nodeValue.replace(/\\s+/g,' ').trim()",
+    "exclude": "정규화 후 빈 문자열 제외",
+    "border_width": "authored(element.style.*) 문자열. 🛑 computed 아님 — Chromium 이 2.5px → 2px 로 스냅한다",
+    "colors": "inline style 선언 토큰. 3자리 shorthand → 6자리 확장. computed 아님(모집단 상이)",
+    "radius_font": "섹션 래퍼 + 전 자손 요소의 **authored** style.borderRadius / style.fontSize. 텍스트노드 부모만 재지 않는다(컨테이너 radius 누락 방지)",
+    "token_population": "토큰 3축 모집단 = 섹션 래퍼 서브트리(배지 + eyebrow + 프레임 + 주석). 프레임만 재면 배지 토큰(radius 7 · font 11 · 배지색)을 놓친다"
+  },
+  "population": {
+    "🛑": "모집단을 섞지 말 것. 아래 두 수는 다른 집합이다.",
+    "text_nodes": "#dc-root 서브트리 전수 — 40",
+    "elements": "#dc-root 서브트리 (자기 자신 포함) — 65   ← 시안 모집단. fixture ._앵커.render_element_count 와 대조하는 값",
+    "_document_주의": "document 전체 — 81. 번들러 로딩 UI 16 요소 혼입. **65 와 대조 금지**",
+    "element_count_document": 81,
+    "element_count_body": 65,
+    "element_count_root": 65
+  },
+  "viewports_tested": [
+    390,
+    1440,
+    1920,
+    3840
+  ],
+  "viewports": {
+    "390": {
+      "viewport": "390x2400",
+      "text_nodes": 40,
+      "elements": 65,
+      "element_count_document": 81,
+      "pageError": 0,
+      "consoleError": 0
+    },
+    "1440": {
+      "viewport": "1440x2400",
+      "text_nodes": 40,
+      "elements": 65,
+      "element_count_document": 81,
+      "pageError": 0,
+      "consoleError": 0
+    },
+    "1920": {
+      "viewport": "1920x2400",
+      "text_nodes": 40,
+      "elements": 65,
+      "element_count_document": 81,
+      "pageError": 0,
+      "consoleError": 0
+    },
+    "3840": {
+      "viewport": "3840x2400",
+      "text_nodes": 40,
+      "elements": 65,
+      "element_count_document": 81,
+      "pageError": 0,
+      "consoleError": 0
+    }
+  },
+  "page_errors": 0,
+  "console_errors": 0,
+  "text_node_total": 40,
+  "text_nodes": [
+    "1",
+    "지출 분석 — 모바일 탭/액션 분리",
+    "탭 행에 CTA 2개가 섞여 화면 밖으로 밀리는 문제 — before → after",
+    "1a",
+    "Before — 현행 (한 행 5개)",
+    "LabAxis",
+    "지출 분석",
+    "종합 현황",
+    "공급사 의존도",
+    "이상 지출 감지",
+    "📄 AI 리포트 예시",
+    "✨ AI 리포트 생성",
+    "문제:",
+    "AI 리포트 버튼 2개가 화면 밖 — 스크롤바 숨김이라 존재를 알 수 없음. `ml-auto`도 overflow 안에서 무효. disabled 사유는 title 툴팁이라 모바일에서 안 보임.",
+    "1b",
+    "After — 탭 행 / 액션 행 분리",
+    "LabAxis",
+    "지출 분석",
+    "종합 현황",
+    "공급사 의존도",
+    "이상 지출 감지",
+    "📄 AI 리포트 예시",
+    "✨ AI 리포트 생성",
+    "AI 리포트 생성 · 완료된 발주 1건 이상 필요",
+    "수정:",
+    "탭 3개는 스크롤 없이 한 화면. AI 리포트 버튼 2개는 별도 행 — 항상 보임. 비활성 사유는 버튼 아래 1줄. 데이터 없는 탭(이상 지출 감지)은 연회색 처리.",
+    "1c",
+    "데스크톱 (sm 이상) — 헤더 우측 정렬",
+    "지출 분석",
+    "예산 소진, 공급사 의존도, 이상 지출 신호를 확인합니다.",
+    "📄 AI 리포트 예시",
+    "✨ AI 리포트 생성",
+    "종합 현황",
+    "공급사 의존도",
+    "이상 지출 감지",
+    "누적 시",
+    "팀별 보기",
+    "액션은 헤더 우측(원래 `ml-auto` 의도), 탭 행은 뷰 전환 전용.",
+    "dead branch였던 `팀별 보기`도 탭에 추가",
+    "— sc-camel-active-tab===\"team\" 렌더는 있는데 진입 경로가 없었음."
+  ],
+  "counts": {
+    "ui_text": 24,
+    "eyebrow_labels0": 3,
+    "annotation_excluded": 10,
+    "doc_header_excluded": 3,
+    "sum": 40,
+    "_주의": "합계만 대조하면 축이 안 잡힌다. 4항 각각 개별 단언할 것."
+  },
+  "doc_header": [
+    "1",
+    "지출 분석 — 모바일 탭/액션 분리",
+    "탭 행에 CTA 2개가 섞여 화면 밖으로 밀리는 문제 — before → after"
+  ],
+  "sections": {
+    "1a": {
+      "section_badge": "1a",
+      "eyebrow": "Before — 현행 (한 행 5개)",
+      "ui": [
+        "LabAxis",
+        "지출 분석",
+        "종합 현황",
+        "공급사 의존도",
+        "이상 지출 감지",
+        "📄 AI 리포트 예시",
+        "✨ AI 리포트 생성"
+      ],
+      "ui_count": 7,
+      "annotation_box": [
+        "문제:",
+        "AI 리포트 버튼 2개가 화면 밖 — 스크롤바 숨김이라 존재를 알 수 없음. `ml-auto`도 overflow 안에서 무효. disabled 사유는 title 툴팁이라 모바일에서 안 보임."
+      ],
+      "annotation_excluded_count": 3,
+      "element_count": 18,
+      "radius": [
+        7,
+        10,
+        12,
+        24
+      ],
+      "font_sizes": [
+        11,
+        11.5,
+        12.5,
+        13,
+        16,
+        20
+      ],
+      "colors": {
+        "#ffffff": 7,
+        "#e2e8f0": 4,
+        "#b91c1c": 2,
+        "#f4f6f9": 2,
+        "#2563eb": 2,
+        "#64748b": 2,
+        "#dc2626": 1,
+        "#101c34": 1,
+        "#0f172a": 1,
+        "#475569": 1,
+        "#fca5a5": 1,
+        "#fef2f2": 1
+      },
+      "colors_items": 12,
+      "colors_sum": 25,
+      "authored_borders": [
+        {
+          "tag": "DIV",
+          "text": "LabAxis 지출 분석 종합 현황 공급사 ",
+          "authored_border_bottom_width": "1px",
+          "authored_border_bottom": "1px solid rgb(226, 232, 240)",
+          "computed_border_bottom_width": "1px",
+          "authored_border_radius": "24px",
+          "authored_padding": "",
+          "authored_background": "rgb(244, 246, 249)"
+        },
+        {
+          "tag": "SPAN",
+          "text": "공급사 의존도",
+          "authored_border_bottom_width": "1px",
+          "authored_border_bottom": "1px solid rgb(226, 232, 240)",
+          "computed_border_bottom_width": "1px",
+          "authored_border_radius": "10px",
+          "authored_padding": "8px 14px",
+          "authored_background": "rgb(255, 255, 255)"
+        },
+        {
+          "tag": "SPAN",
+          "text": "이상 지출 감지",
+          "authored_border_bottom_width": "1px",
+          "authored_border_bottom": "1px solid rgb(226, 232, 240)",
+          "computed_border_bottom_width": "1px",
+          "authored_border_radius": "10px",
+          "authored_padding": "8px 14px",
+          "authored_background": "rgb(255, 255, 255)"
+        },
+        {
+          "tag": "SPAN",
+          "text": "📄 AI 리포트 예시",
+          "authored_border_bottom_width": "1px",
+          "authored_border_bottom": "1px solid rgb(226, 232, 240)",
+          "computed_border_bottom_width": "1px",
+          "authored_border_radius": "10px",
+          "authored_padding": "8px 14px",
+          "authored_background": "rgb(255, 255, 255)"
+        },
+        {
+          "tag": "DIV",
+          "text": "문제: AI 리포트 버튼 2개가 화면 밖 —",
+          "authored_border_bottom_width": "1.5px",
+          "authored_border_bottom": "1.5px dashed rgb(252, 165, 165)",
+          "computed_border_bottom_width": "1px",
+          "authored_border_radius": "12px",
+          "authored_padding": "10px 12px",
+          "authored_background": "rgb(254, 242, 242)"
+        }
+      ],
+      "tab_row": [
+        {
+          "tag": "SPAN",
+          "text": "종합 현황",
+          "authored_style": "flex: 0 0 auto; background: rgb(37, 99, 235); color: rgb(255, 255, 255); font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 10px; white-space: nowrap;",
+          "authored_border_bottom_width": "",
+          "authored_border_radius": "10px",
+          "authored_padding": "8px 14px",
+          "authored_background": "rgb(37, 99, 235)",
+          "computed_border_bottom_width": "0px",
+          "computed_border_radius": "10px"
+        },
+        {
+          "tag": "SPAN",
+          "text": "공급사 의존도",
+          "authored_style": "flex: 0 0 auto; background: rgb(255, 255, 255); border: 1px solid rgb(226, 232, 240); color: rgb(100, 116, 139); font-size: 13px; font-weight: 500; padding: 8px 14px; border-radius: 10px; white-space: nowrap;",
+          "authored_border_bottom_width": "1px",
+          "authored_border_radius": "10px",
+          "authored_padding": "8px 14px",
+          "authored_background": "rgb(255, 255, 255)",
+          "computed_border_bottom_width": "1px",
+          "computed_border_radius": "10px"
+        },
+        {
+          "tag": "SPAN",
+          "text": "이상 지출 감지",
+          "authored_style": "flex: 0 0 auto; background: rgb(255, 255, 255); border: 1px solid rgb(226, 232, 240); color: rgb(100, 116, 139); font-size: 13px; font-weight: 500; padding: 8px 14px; border-radius: 10px; white-space: nowrap;",
+          "authored_border_bottom_width": "1px",
+          "authored_border_radius": "10px",
+          "authored_padding": "8px 14px",
+          "authored_background": "rgb(255, 255, 255)",
+          "computed_border_bottom_width": "1px",
+          "computed_border_radius": "10px"
+        },
+        {
+          "tag": "SPAN",
+          "text": "📄 AI 리포트 예시",
+          "authored_style": "flex: 0 0 auto; background: rgb(255, 255, 255); border: 1px solid rgb(226, 232, 240); color: rgb(71, 85, 105); font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 10px; white-space: nowrap;",
+          "authored_border_bottom_width": "1px",
+          "authored_border_radius": "10px",
+          "authored_padding": "8px 14px",
+          "authored_background": "rgb(255, 255, 255)",
+          "computed_border_bottom_width": "1px",
+          "computed_border_radius": "10px"
+        },
+        {
+          "tag": "SPAN",
+          "text": "✨ AI 리포트 생성",
+          "authored_style": "flex: 0 0 auto; background: rgb(37, 99, 235); color: rgb(255, 255, 255); font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 10px; white-space: nowrap;",
+          "authored_border_bottom_width": "",
+          "authored_border_radius": "10px",
+          "authored_padding": "8px 14px",
+          "authored_background": "rgb(37, 99, 235)",
+          "computed_border_bottom_width": "0px",
+          "computed_border_radius": "10px"
+        }
+      ]
+    },
+    "1b": {
+      "section_badge": "1b",
+      "eyebrow": "After — 탭 행 / 액션 행 분리",
+      "ui": [
+        "LabAxis",
+        "지출 분석",
+        "종합 현황",
+        "공급사 의존도",
+        "이상 지출 감지",
+        "📄 AI 리포트 예시",
+        "✨ AI 리포트 생성",
+        "AI 리포트 생성 · 완료된 발주 1건 이상 필요"
+      ],
+      "ui_count": 8,
+      "annotation_box": [
+        "수정:",
+        "탭 3개는 스크롤 없이 한 화면. AI 리포트 버튼 2개는 별도 행 — 항상 보임. 비활성 사유는 버튼 아래 1줄. 데이터 없는 탭(이상 지출 감지)은 연회색 처리."
+      ],
+      "annotation_excluded_count": 3,
+      "element_count": 18,
+      "radius": [
+        7,
+        10,
+        12,
+        24
+      ],
+      "font_sizes": [
+        11,
+        11.5,
+        12.5,
+        13,
+        13.5,
+        16,
+        20
+      ],
+      "colors": {
+        "#e2e8f0": 4,
+        "#ffffff": 3,
+        "#94a3b8": 3,
+        "#15803d": 2,
+        "#0f172a": 2,
+        "#16a34a": 1,
+        "#f4f6f9": 1,
+        "#101c34": 1,
+        "#2563eb": 1,
+        "#64748b": 1,
+        "#475569": 1,
+        "#86efac": 1,
+        "#f0fdf4": 1
+      },
+      "colors_items": 13,
+      "colors_sum": 22,
+      "authored_borders": [
+        {
+          "tag": "DIV",
+          "text": "LabAxis 지출 분석 종합 현황 공급사 ",
+          "authored_border_bottom_width": "1px",
+          "authored_border_bottom": "1px solid rgb(226, 232, 240)",
+          "computed_border_bottom_width": "1px",
+          "authored_border_radius": "24px",
+          "authored_padding": "",
+          "authored_background": "rgb(244, 246, 249)"
+        },
+        {
+          "tag": "DIV",
+          "text": "종합 현황 공급사 의존도 이상 지출 감지",
+          "authored_border_bottom_width": "1px",
+          "authored_border_bottom": "1px solid rgb(226, 232, 240)",
+          "computed_border_bottom_width": "1px",
+          "authored_border_radius": "",
+          "authored_padding": "0px 2px",
+          "authored_background": ""
+        },
+        {
+          "tag": "SPAN",
+          "text": "종합 현황",
+          "authored_border_bottom_width": "2.5px",
+          "authored_border_bottom": "2.5px solid rgb(37, 99, 235)",
+          "computed_border_bottom_width": "2px",
+          "authored_border_radius": "",
+          "authored_padding": "9px 0px 10px",
+          "authored_background": ""
+        },
+        {
+          "tag": "BUTTON",
+          "text": "📄 AI 리포트 예시",
+          "authored_border_bottom_width": "1px",
+          "authored_border_bottom": "1px solid rgb(226, 232, 240)",
+          "computed_border_bottom_width": "1px",
+          "authored_border_radius": "10px",
+          "authored_padding": "",
+          "authored_background": "rgb(255, 255, 255)"
+        },
+        {
+          "tag": "BUTTON",
+          "text": "✨ AI 리포트 생성",
+          "authored_border_bottom_width": "initial",
+          "authored_border_bottom": "none",
+          "computed_border_bottom_width": "0px",
+          "authored_border_radius": "10px",
+          "authored_padding": "",
+          "authored_background": "rgb(226, 232, 240)"
+        },
+        {
+          "tag": "DIV",
+          "text": "수정: 탭 3개는 스크롤 없이 한 화면. A",
+          "authored_border_bottom_width": "1.5px",
+          "authored_border_bottom": "1.5px dashed rgb(134, 239, 172)",
+          "computed_border_bottom_width": "1px",
+          "authored_border_radius": "12px",
+          "authored_padding": "10px 12px",
+          "authored_background": "rgb(240, 253, 244)"
+        }
+      ],
+      "tab_row": [
+        {
+          "tag": "SPAN",
+          "text": "종합 현황",
+          "authored_style": "font-size: 13.5px; font-weight: 700; color: rgb(15, 23, 42); padding: 9px 0px 10px; border-bottom: 2.5px solid rgb(37, 99, 235); margin-bottom: -1px; white-space: nowrap;",
+          "authored_border_bottom_width": "2.5px",
+          "authored_border_radius": "",
+          "authored_padding": "9px 0px 10px",
+          "authored_background": "",
+          "computed_border_bottom_width": "2px",
+          "computed_border_radius": "0px"
+        },
+        {
+          "tag": "SPAN",
+          "text": "공급사 의존도",
+          "authored_style": "font-size: 13.5px; font-weight: 500; color: rgb(100, 116, 139); padding: 9px 0px 10px; white-space: nowrap;",
+          "authored_border_bottom_width": "",
+          "authored_border_radius": "",
+          "authored_padding": "9px 0px 10px",
+          "authored_background": "",
+          "computed_border_bottom_width": "0px",
+          "computed_border_radius": "0px"
+        },
+        {
+          "tag": "SPAN",
+          "text": "이상 지출 감지",
+          "authored_style": "font-size: 13.5px; font-weight: 500; color: rgb(148, 163, 184); padding: 9px 0px 10px; white-space: nowrap;",
+          "authored_border_bottom_width": "",
+          "authored_border_radius": "",
+          "authored_padding": "9px 0px 10px",
+          "authored_background": "",
+          "computed_border_bottom_width": "0px",
+          "computed_border_radius": "0px"
+        }
+      ]
+    },
+    "1c": {
+      "section_badge": "1c",
+      "eyebrow": "데스크톱 (sm 이상) — 헤더 우측 정렬",
+      "ui": [
+        "지출 분석",
+        "예산 소진, 공급사 의존도, 이상 지출 신호를 확인합니다.",
+        "📄 AI 리포트 예시",
+        "✨ AI 리포트 생성",
+        "종합 현황",
+        "공급사 의존도",
+        "이상 지출 감지",
+        "누적 시",
+        "팀별 보기"
+      ],
+      "ui_count": 9,
+      "annotation_box": [
+        "액션은 헤더 우측(원래 `ml-auto` 의도), 탭 행은 뷰 전환 전용.",
+        "dead branch였던 `팀별 보기`도 탭에 추가",
+        "— sc-camel-active-tab===\"team\" 렌더는 있는데 진입 경로가 없었음."
+      ],
+      "annotation_excluded_count": 4,
+      "element_count": 20,
+      "radius": [
+        7,
+        10,
+        12,
+        18,
+        99
+      ],
+      "font_sizes": [
+        9.5,
+        11,
+        11.5,
+        12.5,
+        13,
+        21
+      ],
+      "colors": {
+        "#ffffff": 8,
+        "#e2e8f0": 5,
+        "#64748b": 4,
+        "#2563eb": 3,
+        "#94a3b8": 2,
+        "#1d4ed8": 1,
+        "#f4f6f9": 1,
+        "#0f172a": 1,
+        "#475569": 1,
+        "#f1f5f9": 1,
+        "#cbd5e1": 1
+      },
+      "colors_items": 11,
+      "colors_sum": 28,
+      "authored_borders": [
+        {
+          "tag": "DIV",
+          "text": "지출 분석 예산 소진, 공급사 의존도, 이상",
+          "authored_border_bottom_width": "1px",
+          "authored_border_bottom": "1px solid rgb(226, 232, 240)",
+          "computed_border_bottom_width": "1px",
+          "authored_border_radius": "18px",
+          "authored_padding": "20px 22px",
+          "authored_background": "rgb(244, 246, 249)"
+        },
+        {
+          "tag": "BUTTON",
+          "text": "📄 AI 리포트 예시",
+          "authored_border_bottom_width": "1px",
+          "authored_border_bottom": "1px solid rgb(226, 232, 240)",
+          "computed_border_bottom_width": "1px",
+          "authored_border_radius": "10px",
+          "authored_padding": "9px 14px",
+          "authored_background": "rgb(255, 255, 255)"
+        },
+        {
+          "tag": "BUTTON",
+          "text": "✨ AI 리포트 생성",
+          "authored_border_bottom_width": "initial",
+          "authored_border_bottom": "none",
+          "computed_border_bottom_width": "0px",
+          "authored_border_radius": "10px",
+          "authored_padding": "9px 14px",
+          "authored_background": "rgb(37, 99, 235)"
+        },
+        {
+          "tag": "SPAN",
+          "text": "공급사 의존도",
+          "authored_border_bottom_width": "1px",
+          "authored_border_bottom": "1px solid rgb(226, 232, 240)",
+          "computed_border_bottom_width": "1px",
+          "authored_border_radius": "10px",
+          "authored_padding": "8px 15px",
+          "authored_background": "rgb(255, 255, 255)"
+        },
+        {
+          "tag": "SPAN",
+          "text": "이상 지출 감지 누적 시",
+          "authored_border_bottom_width": "1px",
+          "authored_border_bottom": "1px solid rgb(226, 232, 240)",
+          "computed_border_bottom_width": "1px",
+          "authored_border_radius": "10px",
+          "authored_padding": "8px 15px",
+          "authored_background": "rgb(255, 255, 255)"
+        },
+        {
+          "tag": "SPAN",
+          "text": "팀별 보기",
+          "authored_border_bottom_width": "1px",
+          "authored_border_bottom": "1px solid rgb(226, 232, 240)",
+          "computed_border_bottom_width": "1px",
+          "authored_border_radius": "10px",
+          "authored_padding": "8px 15px",
+          "authored_background": "rgb(255, 255, 255)"
+        },
+        {
+          "tag": "DIV",
+          "text": "액션은 헤더 우측(원래 `ml-auto` 의",
+          "authored_border_bottom_width": "1.5px",
+          "authored_border_bottom": "1.5px dashed rgb(203, 213, 225)",
+          "computed_border_bottom_width": "1px",
+          "authored_border_radius": "12px",
+          "authored_padding": "10px 14px",
+          "authored_background": "rgb(255, 255, 255)"
+        }
+      ],
+      "tab_row": [
+        {
+          "tag": "SPAN",
+          "text": "종합 현황",
+          "authored_style": "background: rgb(37, 99, 235); color: rgb(255, 255, 255); font-size: 13px; font-weight: 600; padding: 8px 15px; border-radius: 10px;",
+          "authored_border_bottom_width": "",
+          "authored_border_radius": "10px",
+          "authored_padding": "8px 15px",
+          "authored_background": "rgb(37, 99, 235)",
+          "computed_border_bottom_width": "0px",
+          "computed_border_radius": "10px"
+        },
+        {
+          "tag": "SPAN",
+          "text": "공급사 의존도",
+          "authored_style": "background: rgb(255, 255, 255); border: 1px solid rgb(226, 232, 240); color: rgb(100, 116, 139); font-size: 13px; font-weight: 500; padding: 8px 15px; border-radius: 10px;",
+          "authored_border_bottom_width": "1px",
+          "authored_border_radius": "10px",
+          "authored_padding": "8px 15px",
+          "authored_background": "rgb(255, 255, 255)",
+          "computed_border_bottom_width": "1px",
+          "computed_border_radius": "10px"
+        },
+        {
+          "tag": "SPAN",
+          "text": "이상 지출 감지 누적 시",
+          "authored_style": "background: rgb(255, 255, 255); border: 1px solid rgb(226, 232, 240); color: rgb(148, 163, 184); font-size: 13px; font-weight: 500; padding: 8px 15px; border-radius: 10px; display: inline-flex; align-items: center; gap: 5px;",
+          "authored_border_bottom_width": "1px",
+          "authored_border_radius": "10px",
+          "authored_padding": "8px 15px",
+          "authored_background": "rgb(255, 255, 255)",
+          "computed_border_bottom_width": "1px",
+          "computed_border_radius": "10px"
+        },
+        {
+          "tag": "SPAN",
+          "text": "팀별 보기",
+          "authored_style": "background: rgb(255, 255, 255); border: 1px solid rgb(226, 232, 240); color: rgb(100, 116, 139); font-size: 13px; font-weight: 500; padding: 8px 15px; border-radius: 10px;",
+          "authored_border_bottom_width": "1px",
+          "authored_border_radius": "10px",
+          "authored_padding": "8px 15px",
+          "authored_background": "rgb(255, 255, 255)",
+          "computed_border_bottom_width": "1px",
+          "computed_border_radius": "10px"
+        }
+      ]
+    }
+  }
+}
