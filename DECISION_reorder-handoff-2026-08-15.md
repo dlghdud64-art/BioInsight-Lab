@@ -1,5 +1,23 @@
 # 판정 — 재발주 견적 핸드오프 트랙 착수 전 3건
 
+> ## 🔀 다음 세션 첫 줄이 **두 개**다 — 순서 의존은 **없다** (2026-08-15 실측)
+>
+> ```
+> A  HANDOFF_phase3-entry      Phase 3 <CollapsedRow>   → 제품 상세 화면
+> B  DECISION_reorder-handoff  fixture 도출 4화면        → prepare 화면
+> ```
+>
+> **실측 근거:** `<CollapsedRow>` 3회 사용처 = Phase 3 GREEN 3·4·5
+> (상세 스펙 · SDS · 규제 포털) — **전부 제품 상세 본문**이다.
+> Rollback 대상도 `page.tsx` + `product-completeness.tsx` 2파일뿐이고 `prepare` 를 안 건드린다.
+>
+> → 두 작업은 **다른 화면**이다. `/quotes/{rfqId}/prepare` 3층 구조 확정과
+>   `<CollapsedRow>` 배치는 **간섭하지 않는다. 병렬 가능.**
+>
+> ⚠️ 그래도 이 블록이 필요한 이유: **"첫 줄" 라벨이 두 문서에 중복**되어 있다.
+>   한쪽만 보고 출발하면 **다른 트랙이 있다는 걸 모른다** —
+>   의존 충돌이 아니라 **누락** 위험이다.
+
 작성 시각: 2026-08-15
 판정자: 호영님(총괄) · 도출: 헤드리스 렌더 실측 + 축 분해
 선행: `500878cb`(렌더 검증) · `bb781c45`(§measurement-layer-blindness)
