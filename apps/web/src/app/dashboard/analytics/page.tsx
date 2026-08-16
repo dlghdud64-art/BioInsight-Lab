@@ -287,7 +287,7 @@ export default function AnalyticsPage() {
     for (const item of highSpend.slice(0, 2)) {
       result.push({
         item: item.item, vendor: item.vendor, amount: item.totalAmount,
-        reason: `단일 건 ${fmtKRW(item.totalAmount)} — 고액 지출`,
+        reason: `단일 건 ${fmtKRW(item.totalAmount)} · 고액 지출`,
         severity: "high",
       });
     }
@@ -661,7 +661,7 @@ export default function AnalyticsPage() {
                   {[
                     "공급사 A 집중도(42%)가 높아 분산 검토를 권고합니다. (예시)",
                     "반복 소모품의 통합 발주 주기를 월 1회로 조정하면 단가 절감이 기대됩니다. (예시)",
-                    "Q 예산 소진율 71% — 잔여 분기 지출 페이스 유지 시 예산 내 마감 가능합니다. (예시)",
+                    "Q 예산 소진율 71% · 잔여 분기 지출 페이스 유지 시 예산 내 마감 가능합니다. (예시)",
                   ].map((rec, i) => (
                     <li key={i} className="flex items-start gap-2">
                       <Sparkles className="h-3.5 w-3.5 text-blue-500 shrink-0 mt-0.5" />
@@ -801,7 +801,7 @@ export default function AnalyticsPage() {
               </h2>
               <p className="text-sm text-slate-300 mt-2 leading-relaxed max-w-2xl break-keep">
                 예산 소진율, 공급사 의존도, 이상 지출 신호는 모두 실제 발주 데이터에서 계산됩니다.
-                지금은 0건 수집됨 — 첫 발주가 완료되면 아래 미리보기가 실제 차트로 전환됩니다.
+                지금은 0건 수집됨 · 첫 발주가 완료되면 아래 미리보기가 실제 차트로 전환됩니다.
               </p>
               <div className="flex flex-col sm:flex-row gap-2.5 mt-4">
                 <Link
@@ -974,7 +974,7 @@ export default function AnalyticsPage() {
                   />
                 </svg>
                 <p className="text-xs text-slate-400 mt-2 break-keep">
-                  발주 데이터가 쌓이면 이렇게 표시됩니다 (예시 — 실제 수치 아님)
+                  발주 데이터가 쌓이면 이렇게 표시됩니다 (예시 · 실제 수치 아님)
                 </p>
               </div>
 
@@ -1543,7 +1543,7 @@ export default function AnalyticsPage() {
                   <p className="text-xs text-slate-400 mt-1">
                     {recent90dCount >= 10
                       ? "최근 90일 데이터 기준 정상"
-                      : `데이터 ${recent90dCount}건 — 3개월 이상 데이터 축적 시 활성화 (최소 10건 필요)`}
+                      : `데이터 ${recent90dCount}건 · 3개월 이상 데이터 축적 시 활성화 (최소 10건 필요)`}
                   </p>
                 </div>
               )}
