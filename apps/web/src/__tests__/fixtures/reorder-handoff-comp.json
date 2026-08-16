@@ -1,0 +1,1192 @@
+{
+  "source": "재발주 견적 핸드오프 흐름 (단독).html",
+  "source_device_path": "C:\\Users\\young\\Desktop\\피드백4\\재발주 견적 핸드오프 흐름 (단독).html",
+  "source_sha256": "30b5daae59172815729c8d4ffd7783e386269ef7df078802076a23ce3ab8e173",
+  "source_bytes": 22891228,
+  "source_hash_transition": {
+    "a24fb2a0910d89ab323b16b88e44bbad7b24df4f8fbd0ccaa9edff244b601aa8": "2026-08-01 원본",
+    "30b5daae59172815729c8d4ffd7783e386269ef7df078802076a23ce3ab8e173": "2026-08-15 승인 수정본(em dash 2건) ← 현재 정본",
+    "_근거": "DECISION_reorder-handoff-2026-08-15.md §1. 변조 아님"
+  },
+  "spec_canonical": "08-01 재발주 견적 핸드오프 흐름.md (§1a~1d + 타이포 토큰)",
+  "spec_derived_demoted": "08-09 소싱 견적 담기 흐름 핸드오프.md — prepare 화면 명세 변경 권한 없음 (DECISION §2)",
+  "extraction": "헤드리스 Chromium 1194 실렌더 → TreeWalker(SHOW_TEXT) 전량 → 공백 정규화 → 빈 문자열 제외 → DOM 구조로 축 분리",
+  "rule": "레이블 다중집합 전수 일치 + 토큰 값 일치. 불일치 1건 = RED. 항목 분포 대조(건수 감소도 RED).",
+  "_측정모집단": {
+    "_왜": "§measurement-layer-blindness — 직전 트랙 오탐 3건(`바로 발주`·`공급사 미정`·`예상 금액`)은 검사 모집단 축을 안 적어서 났다. 셋 다 주석문에만 있고 UI 에는 없었다.",
+    "ui_text": "phone frame(width:390px; border-radius:24px; box-shadow) 하위 텍스트노드. **대조 대상은 이 축뿐이다.**",
+    "doc_label": "화면 좌상단 배지 행(position:absolute; top:-26px) — 시안 문서가 화면에 붙인 이름표. 대조 제외.",
+    "annotation_excluded": "phone frame 형제인 해설 카드(width:390px; margin-top:10px) — 시안 주석문. **0 처리 아님. 분리 계상.**",
+    "attr_label": "텍스트노드가 아닌 속성 라벨(placeholder/aria-label/title/alt/value). **텍스트노드 축이 볼 수 없는 UI 라벨.**",
+    "_합": "render_text_node_total 83 = ui_text 63 + doc_label 8 + annotation_excluded 12. attr_label 1 은 이 83 에 포함되지 않는다.",
+    "_꺼내는시점": "QA 대조·렌더 대조·fixture 갱신 **전부**에서 이 축을 먼저 선언한다. 규칙이 있어도 꺼내는 시점이 규칙에 없으면 안 꺼낸다(DECISION §5)."
+  },
+  "render_measurement": {
+    "engine": "Chromium 1194 (Playwright 1.56.0) · executablePath /opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+    "load": "file:// · waitUntil 'load' · \"Unpacking\" 소멸 대기 + 6s",
+    "viewports": {
+      "390x2400": {
+        "textNodes": 83,
+        "elements_document": 144
+      },
+      "1440x2400": {
+        "textNodes": 83,
+        "elements_document": 144
+      },
+      "1920x2400": {
+        "textNodes": 83,
+        "elements_document": 144
+      },
+      "3840x2400": {
+        "textNodes": 83,
+        "elements_document": 144
+      }
+    },
+    "text_node_total": 83,
+    "element_count_body": 127,
+    "element_count_document": 144,
+    "pageError": 0,
+    "consoleError": 0,
+    "_뷰포트무관": "390/1440/1920/3840 전 뷰포트에서 텍스트노드 83 · 요소 144 고정. 잘림·조건부 렌더 0.",
+    "_요소축주의": "element_count 127 은 document.body 스코프. document 스코프는 144(html/head/meta/title/script/style 포함). DECISION §5 의 127 은 body 스코프였다."
+  },
+  "total_label_count": 63,
+  "doc_label_count": 8,
+  "annotation_excluded_count": 12,
+  "attr_label_count": 1,
+  "_status": "✅ 전량 수령 (63/63 UI) — 1a 17 · 1b 20 · 1c 18 · 1d 8",
+  "_앵커": {
+    "total_label_count": 63,
+    "render_text_node_total": 83,
+    "element_count_body": 127,
+    "_규칙": "앵커는 63/83/127 고정. 앵커를 낮추면 로딩 실패가 '불일치 0' 으로 위장한다."
+  },
+  "_분류판단": {
+    "labels[0] 승계 안 함": "소싱 fixture(product-detail-comp.json)는 시안 자체 라벨을 labels[0] 으로 대조 배열 **안에** 넣고 slice(1) 로 제외했다. 이번엔 `doc_labels` 배열로 **분리**한다 — 같은 배열에 섞어 두는 것이 §measurement-layer-blindness 오탐의 기계적 원인이다. 형식 승계 중 이 1점만 의도적 이탈.",
+    "1a.elision": "`… 이하 동일 (필터 칩 · 검색 · 품목 카드)` 는 phone frame **안**이지만 프로덕션 라벨이 아니라 시안 축약 표기. ui_text 63 에 **포함**하되 `elision: true` 로 표시. 구현 대조 시 이 슬롯만 제외한다. **분류 판단이며 실측 아님.**",
+    "_주의": "위 2건은 실측이 아니라 분류 판단이다. 게이트에 반영하되 근거를 분리 표기한다."
+  },
+  "sections": {
+    "1a": {
+      "title": "재고관리 KPI — 레드 카드 제거",
+      "label_count": 17,
+      "element_count": 26,
+      "labels": [
+        "재고 관리",
+        "＋ 재고 등록",
+        "Lot 단위 추적 · QR 스캔 입·출고",
+        "1",
+        "종",
+        "전체 품목",
+        "1",
+        "안전재고 미달",
+        "0",
+        "만료 임박",
+        "🛒",
+        "BCP 재발주 검토 권장",
+        "현재",
+        "1개",
+        "· 안전재고 10 대비 9 부족",
+        "재발주",
+        "… 이하 동일 (필터 칩 · 검색 · 품목 카드)"
+      ],
+      "slots": [
+        {
+          "slot": "1a.header.title",
+          "label": "재고 관리"
+        },
+        {
+          "slot": "1a.header.cta_add",
+          "label": "＋ 재고 등록"
+        },
+        {
+          "slot": "1a.header.subtitle",
+          "label": "Lot 단위 추적 · QR 스캔 입·출고"
+        },
+        {
+          "slot": "1a.kpi.total.value",
+          "label": "1"
+        },
+        {
+          "slot": "1a.kpi.total.unit",
+          "label": "종"
+        },
+        {
+          "slot": "1a.kpi.total.label",
+          "label": "전체 품목"
+        },
+        {
+          "slot": "1a.kpi.below_safety.value",
+          "label": "1"
+        },
+        {
+          "slot": "1a.kpi.below_safety.label",
+          "label": "안전재고 미달"
+        },
+        {
+          "slot": "1a.kpi.expiring.value",
+          "label": "0"
+        },
+        {
+          "slot": "1a.kpi.expiring.label",
+          "label": "만료 임박"
+        },
+        {
+          "slot": "1a.banner.icon",
+          "label": "🛒"
+        },
+        {
+          "slot": "1a.banner.title",
+          "label": "BCP 재발주 검토 권장"
+        },
+        {
+          "slot": "1a.banner.evidence_prefix",
+          "label": "현재"
+        },
+        {
+          "slot": "1a.banner.evidence_qty",
+          "label": "1개"
+        },
+        {
+          "slot": "1a.banner.evidence_suffix",
+          "label": "· 안전재고 10 대비 9 부족"
+        },
+        {
+          "slot": "1a.banner.cta",
+          "label": "재발주"
+        },
+        {
+          "slot": "1a.elision",
+          "label": "… 이하 동일 (필터 칩 · 검색 · 품목 카드)",
+          "elision": true
+        }
+      ],
+      "doc_labels": [
+        "1a",
+        "재고관리 — KPI 레드 카드 제거"
+      ],
+      "annotation_excluded": [
+        "KPI 3장 전부",
+        "동일한 흰 카드",
+        "— 미달 카드도 보더·배경 채색 없이 숫자(#b91c1c)+점만 레드. 강조는 아래 재발주 배너(블루) 하나로 일원화."
+      ],
+      "annotation_excluded_count": 3,
+      "colors": {
+        "#e2e8f0": 4,
+        "#0f172a": 4,
+        "#64748b": 4,
+        "#ffffff": 3,
+        "#2563eb": 2,
+        "#94a3b8": 2,
+        "#b91c1c": 2,
+        "#0f172a@0.18": 1,
+        "#ef4444": 1,
+        "#eff6ff": 1,
+        "#bfdbfe": 1,
+        "#dbeafe": 1,
+        "#1d4ed8": 1,
+        "#475569": 1
+      },
+      "colors_items": 14,
+      "colors_sum": 28,
+      "radius": [
+        0,
+        9,
+        10,
+        12,
+        14,
+        24,
+        99
+      ],
+      "font_sizes": [
+        11.0,
+        11.5,
+        12.0,
+        12.5,
+        15.0,
+        16.0,
+        17.0,
+        19.0
+      ]
+    },
+    "1b": {
+      "title": "재발주 시트 — CTA 정직화 (공급사 0 분기)",
+      "label_count": 20,
+      "element_count": 28,
+      "labels": [
+        "✦ AI 권장",
+        "안전재고 미달",
+        "✕",
+        "🛒 재발주안 요약",
+        "BCP",
+        "현재 1개 · 부족",
+        "9개",
+        "· 보관 위치 미지정",
+        "권장 발주 수량",
+        "−",
+        "9",
+        "＋",
+        "부족 9 + 리드타임 소비 0",
+        "이 품목에 등록된 공급사가 없습니다",
+        "견적 요청 초안을 만든 뒤",
+        "바로 공급사 지정 화면으로 이동",
+        "합니다.",
+        "초안 만들고 공급사 지정 →",
+        "🔍 공급사 소싱에서 먼저 찾기",
+        "바로 발주는 공급사·단가 확정 후 가능합니다"
+      ],
+      "slots": [
+        {
+          "slot": "1b.chip.ai",
+          "label": "✦ AI 권장"
+        },
+        {
+          "slot": "1b.chip.below_safety",
+          "label": "안전재고 미달"
+        },
+        {
+          "slot": "1b.close",
+          "label": "✕"
+        },
+        {
+          "slot": "1b.sheet.title",
+          "label": "🛒 재발주안 요약"
+        },
+        {
+          "slot": "1b.item.name",
+          "label": "BCP"
+        },
+        {
+          "slot": "1b.item.evidence_prefix",
+          "label": "현재 1개 · 부족"
+        },
+        {
+          "slot": "1b.item.evidence_qty",
+          "label": "9개"
+        },
+        {
+          "slot": "1b.item.evidence_suffix",
+          "label": "· 보관 위치 미지정"
+        },
+        {
+          "slot": "1b.qty.label",
+          "label": "권장 발주 수량"
+        },
+        {
+          "slot": "1b.qty.minus",
+          "label": "−"
+        },
+        {
+          "slot": "1b.qty.value",
+          "label": "9"
+        },
+        {
+          "slot": "1b.qty.plus",
+          "label": "＋"
+        },
+        {
+          "slot": "1b.qty.basis",
+          "label": "부족 9 + 리드타임 소비 0"
+        },
+        {
+          "slot": "1b.no_vendor.title",
+          "label": "이 품목에 등록된 공급사가 없습니다"
+        },
+        {
+          "slot": "1b.no_vendor.body_1",
+          "label": "견적 요청 초안을 만든 뒤"
+        },
+        {
+          "slot": "1b.no_vendor.body_2",
+          "label": "바로 공급사 지정 화면으로 이동"
+        },
+        {
+          "slot": "1b.no_vendor.body_3",
+          "label": "합니다."
+        },
+        {
+          "slot": "1b.cta.primary",
+          "label": "초안 만들고 공급사 지정 →"
+        },
+        {
+          "slot": "1b.cta.secondary",
+          "label": "🔍 공급사 소싱에서 먼저 찾기"
+        },
+        {
+          "slot": "1b.cta.note",
+          "label": "바로 발주는 공급사·단가 확정 후 가능합니다"
+        }
+      ],
+      "doc_labels": [
+        "1b",
+        "재발주 시트 — CTA 정직화"
+      ],
+      "annotation_excluded": [
+        "공급사 없음이 확인된 상태에선",
+        "CTA 라벨이 다음 화면을 예고",
+        ": `초안 만들고 공급사 지정 →`. 진행 불가한 `바로 발주` 그린 버튼은 숨기고 하단 안내 1줄로 대체(dead button 제거). 공급사 있으면 기존 2버튼 유지."
+      ],
+      "annotation_excluded_count": 3,
+      "colors": {
+        "#ffffff": 4,
+        "#475569": 4,
+        "#f8fafc": 3,
+        "#e2e8f0": 3,
+        "#b91c1c": 2,
+        "#64748b": 2,
+        "#0f172a": 2,
+        "#94a3b8": 2,
+        "#0f172a@0.18": 1,
+        "#eef2f7": 1,
+        "#1d4ed8": 1,
+        "#eff6ff": 1,
+        "#bfdbfe": 1,
+        "#ef4444": 1,
+        "#f1f5f9": 1,
+        "#cbd5e1": 1,
+        "#15803d": 1,
+        "#fffbeb": 1,
+        "#fde68a": 1,
+        "#92400e": 1,
+        "#a16207": 1,
+        "#2563eb": 1
+      },
+      "colors_items": 22,
+      "colors_sum": 36,
+      "radius": [
+        0,
+        8,
+        9,
+        12,
+        14,
+        24,
+        99
+      ],
+      "font_sizes": [
+        10.5,
+        11.0,
+        11.5,
+        12.0,
+        12.5,
+        13.0,
+        13.5,
+        14.0,
+        16.0
+      ]
+    },
+    "1c": {
+      "title": "도착 화면 — 초안 발송 준비 딥링크 /quotes/{rfqId}/prepare",
+      "label_count": 18,
+      "element_count": 33,
+      "labels": [
+        "‹",
+        "견적 요청 발송 준비",
+        "RFQ-2608-B2K4",
+        "· 방금 재고관리에서 생성됨",
+        "✓ 품목 확정",
+        "② 공급사 지정",
+        "③ 발송",
+        "BCP × 9개",
+        "재고관리에서 연동",
+        "현재 1 / 안전 10 · 근거 자동 첨부",
+        "받을 공급사를 지정하세요",
+        "🔍 소싱에서 찾기",
+        "✉ 이메일로 추가",
+        "Sigma-Tech Korea",
+        "이전 거래 2회 · PBS 계열",
+        "지정",
+        "발송 검토로 · 공급사 지정 필요",
+        "나중에 하기 · 발송 대기로 저장"
+      ],
+      "slots": [
+        {
+          "slot": "1c.nav.back",
+          "label": "‹",
+          "layer": "formfactor"
+        },
+        {
+          "slot": "1c.header.title",
+          "label": "견적 요청 발송 준비",
+          "layer": "shell"
+        },
+        {
+          "slot": "1c.header.rfq",
+          "label": "RFQ-2608-B2K4",
+          "layer": "props"
+        },
+        {
+          "slot": "1c.header.origin",
+          "label": "· 방금 재고관리에서 생성됨",
+          "layer": "props"
+        },
+        {
+          "slot": "1c.stepper.done",
+          "label": "✓ 품목 확정",
+          "layer": "shell"
+        },
+        {
+          "slot": "1c.stepper.current",
+          "label": "② 공급사 지정",
+          "layer": "shell"
+        },
+        {
+          "slot": "1c.stepper.next",
+          "label": "③ 발송",
+          "layer": "shell"
+        },
+        {
+          "slot": "1c.item.name",
+          "label": "BCP × 9개",
+          "layer": "props"
+        },
+        {
+          "slot": "1c.item.badge",
+          "label": "재고관리에서 연동",
+          "layer": "props"
+        },
+        {
+          "slot": "1c.item.evidence",
+          "label": "현재 1 / 안전 10 · 근거 자동 첨부",
+          "layer": "props"
+        },
+        {
+          "slot": "1c.vendor.panel_title",
+          "label": "받을 공급사를 지정하세요",
+          "layer": "shell"
+        },
+        {
+          "slot": "1c.vendor.find_sourcing",
+          "label": "🔍 소싱에서 찾기",
+          "layer": "residual_resolved"
+        },
+        {
+          "slot": "1c.vendor.add_email",
+          "label": "✉ 이메일로 추가",
+          "layer": "shell"
+        },
+        {
+          "slot": "1c.vendor.rec_name",
+          "label": "Sigma-Tech Korea",
+          "layer": "shell"
+        },
+        {
+          "slot": "1c.vendor.rec_meta",
+          "label": "이전 거래 2회 · PBS 계열",
+          "layer": "shell"
+        },
+        {
+          "slot": "1c.vendor.assign",
+          "label": "지정",
+          "layer": "shell"
+        },
+        {
+          "slot": "1c.cta.primary_disabled",
+          "label": "발송 검토로 · 공급사 지정 필요",
+          "layer": "shell"
+        },
+        {
+          "slot": "1c.exit_link",
+          "label": "나중에 하기 · 발송 대기로 저장",
+          "layer": "shell"
+        }
+      ],
+      "doc_labels": [
+        "1c",
+        "도착 화면 — 초안 발송 준비 (딥링크)"
+      ],
+      "annotation_excluded": [
+        "초안 만들기 = 리스트가 아니라",
+        "이 화면으로 딥링크",
+        ". 3스텝(품목✓→공급사→발송) 중 ②가 열린 채 도착, 품목 카드는 2초 블루 하이라이트로 \"방금 생성\" 표시. 추천 공급사(이전 거래 이력) 1줄 제안. CTA는 지정 전 disabled+사유, 이탈은 `발송 대기로 저장`으로 안전."
+      ],
+      "annotation_excluded_count": 3,
+      "colors": {
+        "#ffffff": 7,
+        "#e2e8f0": 6,
+        "#0f172a": 4,
+        "#475569": 3,
+        "#64748b": 3,
+        "#1d4ed8": 3,
+        "#2563eb": 3,
+        "#94a3b8": 3,
+        "#f8fafc": 2,
+        "#eef2f7": 2,
+        "#eff6ff": 2,
+        "#0f172a@0.18": 1,
+        "#15803d": 1,
+        "#f0fdf4": 1,
+        "#bbf7d0": 1,
+        "#dbeafe": 1,
+        "#cbd5e1": 1,
+        "#bfdbfe": 1
+      },
+      "colors_items": 18,
+      "colors_sum": 45,
+      "radius": [
+        0,
+        8,
+        9,
+        10,
+        12,
+        13,
+        24,
+        99
+      ],
+      "font_sizes": [
+        10.5,
+        11.0,
+        11.5,
+        12.0,
+        12.5,
+        13.0,
+        14.0,
+        15.0,
+        16.0
+      ]
+    },
+    "1d": {
+      "title": "견적관리 리스트 — 나중에 저장 시 카드",
+      "label_count": 8,
+      "element_count": 13,
+      "labels": [
+        "견적 관리",
+        "처리가 필요한 견적을 우선순위 순으로",
+        "● 발송 대기",
+        "공급사 지정 필요",
+        "RFQ-2608-B2K4",
+        "BCP × 9개",
+        "재고관리 재발주안에서 생성 · 2026. 8. 1.",
+        "공급사 지정하고 발송 →"
+      ],
+      "slots": [
+        {
+          "slot": "1d.header.title",
+          "label": "견적 관리"
+        },
+        {
+          "slot": "1d.header.subtitle",
+          "label": "처리가 필요한 견적을 우선순위 순으로"
+        },
+        {
+          "slot": "1d.card.pill_stage",
+          "label": "● 발송 대기"
+        },
+        {
+          "slot": "1d.card.pill_action",
+          "label": "공급사 지정 필요"
+        },
+        {
+          "slot": "1d.card.rfq",
+          "label": "RFQ-2608-B2K4"
+        },
+        {
+          "slot": "1d.card.item",
+          "label": "BCP × 9개"
+        },
+        {
+          "slot": "1d.card.origin",
+          "label": "재고관리 재발주안에서 생성 · 2026. 8. 1."
+        },
+        {
+          "slot": "1d.card.cta",
+          "label": "공급사 지정하고 발송 →"
+        }
+      ],
+      "doc_labels": [
+        "1d",
+        "견적관리 리스트 — 나중에 저장 시 카드"
+      ],
+      "annotation_excluded": [
+        "`나중에` 저장으로 리스트에 온 경우: 상태 pill을 `공급사 미정`(막다른 표현) 대신",
+        "`공급사 지정 필요`",
+        "(할 일 표현)로, 카드 CTA 1개 `공급사 지정하고 발송 →`가 1c 화면으로 복귀. `예상 금액 견적 대기` 같은 정보 없는 행은 이 상태에선 숨김."
+      ],
+      "annotation_excluded_count": 3,
+      "colors": {
+        "#ffffff": 3,
+        "#e2e8f0": 2,
+        "#0f172a": 2,
+        "#64748b": 2,
+        "#f8fafc": 1,
+        "#0f172a@0.18": 1,
+        "#eef2f7": 1,
+        "#1d4ed8": 1,
+        "#eff6ff": 1,
+        "#b45309": 1,
+        "#fffbeb": 1,
+        "#fde68a": 1,
+        "#94a3b8": 1,
+        "#2563eb": 1
+      },
+      "colors_items": 14,
+      "colors_sum": 19,
+      "radius": [
+        0,
+        10,
+        14,
+        24,
+        99
+      ],
+      "font_sizes": [
+        10.5,
+        11.0,
+        11.5,
+        13.0,
+        14.5,
+        16.0,
+        17.0
+      ]
+    }
+  },
+  "attr_labels": [
+    {
+      "slot": "1c.vendor.search_input@attr",
+      "tag": "INPUT",
+      "attr": "placeholder",
+      "value": "공급사명·담당자 이메일 검색",
+      "_왜분리": "정본 md §1c line 29 가 요구하는 `검색 input` 이다. 텍스트노드 축(83)에는 **잡히지 않는다** — 텍스트노드만 세면 이 슬롯은 존재하지 않는 것으로 읽힌다."
+    }
+  ],
+  "_3층": {
+    "_전제": "1c(재발주 → prepare) 와 소싱 시안 1b(소싱 담김 → prepare) 는 같은 컴포넌트다. 두 축이 겹쳐 있었다.",
+    "_뷰포트": "뷰포트는 레이아웃을 바꾸지 데이터를 안 바꾼다. `현재 1 / 안전 10` 은 진입 컨텍스트이지 폼팩터가 아니다.",
+    "1c_분해": {
+      "shell": 11,
+      "props": 5,
+      "formfactor": 1,
+      "residual_resolved": 1,
+      "_합": 18
+    },
+    "소싱1b_분해_참고": {
+      "shell": 11,
+      "props": 7,
+      "formfactor": 2,
+      "residual": 3,
+      "_합": 23,
+      "_출처": "product-detail-comp.json §1b labels 24 − labels[0] 1 = 23"
+    },
+    "layer_1_shell_슬롯대조": [
+      {
+        "slot": "header.title",
+        "sourcing_1b": "견적 요청 발송 준비",
+        "reorder_1c": "견적 요청 발송 준비",
+        "same": true
+      },
+      {
+        "slot": "stepper.done",
+        "sourcing_1b": "✓ 품목 확정",
+        "reorder_1c": "✓ 품목 확정",
+        "same": true
+      },
+      {
+        "slot": "stepper.current",
+        "sourcing_1b": "② 공급사 지정",
+        "reorder_1c": "② 공급사 지정",
+        "same": true
+      },
+      {
+        "slot": "stepper.next",
+        "sourcing_1b": "③ 발송",
+        "reorder_1c": "③ 발송",
+        "same": true
+      },
+      {
+        "slot": "vendor.panel_title",
+        "sourcing_1b": "공급사 지정",
+        "reorder_1c": "받을 공급사를 지정하세요",
+        "same": false
+      },
+      {
+        "slot": "vendor.add_email",
+        "sourcing_1b": "이메일로 추가",
+        "reorder_1c": "✉ 이메일로 추가",
+        "same": false
+      },
+      {
+        "slot": "vendor.rec_name",
+        "sourcing_1b": "Sigma-Tech Korea · 시약 카테고리 거래 4회",
+        "reorder_1c": "Sigma-Tech Korea",
+        "same": false
+      },
+      {
+        "slot": "vendor.rec_meta",
+        "sourcing_1b": "이전 거래",
+        "reorder_1c": "이전 거래 2회 · PBS 계열",
+        "same": false
+      },
+      {
+        "slot": "vendor.assign",
+        "sourcing_1b": "지정",
+        "reorder_1c": "지정",
+        "same": true
+      },
+      {
+        "slot": "cta.primary_disabled",
+        "sourcing_1b": "발송 검토로 · 공급사 지정 필요",
+        "reorder_1c": "발송 검토로 · 공급사 지정 필요",
+        "same": true
+      },
+      {
+        "slot": "exit_link",
+        "sourcing_1b": "나중에 하기 · 발송 대기로 저장",
+        "reorder_1c": "나중에 하기 · 발송 대기로 저장",
+        "same": true
+      }
+    ],
+    "_shell_라벨불일치": "shell 11 슬롯 중 **4 슬롯의 라벨 문자열이 두 시안에서 다르다**(vendor.panel_title / vendor.add_email / vendor.rec_name / vendor.rec_meta). DECISION §4 의 '양쪽 동일' 은 **슬롯 수** 동일이지 문자열 동일이 아니다 — 다중집합 대조는 문자열 축이므로 구현 시 슬롯 라벨을 하나로 확정해야 한다.",
+    "_정본기준_shell은_12": "정본 md §1c line 29 는 `소싱에서 찾기` 를 shell 로 요구한다(소싱 시안에는 누락 → DECISION ① 판정). 따라서 **정본 기준 shell = 12 텍스트 슬롯 + 검색 input(attr) 1 = 13**. 두 시안의 교집합으로 잰 11 은 정본이 아니라 실측 교집합이다.",
+    "layer_2_props": [
+      "1c.header.rfq",
+      "1c.header.origin",
+      "1c.item.name",
+      "1c.item.badge",
+      "1c.item.evidence"
+    ],
+    "layer_3_formfactor": {
+      "모바일(1c 실측)": [
+        "1c.nav.back = `‹`"
+      ],
+      "웹(소싱 1b 실측)": [
+        "Home › 견적 관리 ›",
+        "발송 준비"
+      ],
+      "_주의": "이 시안 4화면은 **전부 390px 모바일 프레임**이다. 웹 breadcrumb 근거는 이 파일이 아니라 소싱 시안(product-detail-comp.json §1b)에 있다."
+    }
+  },
+  "_커버리지": {
+    "_왜": "§measurement-layer-blindness 5회차 — 세 md 전부 커버리지 미확인 상태였다. 덮이지 않는 명세는 fixture 슬롯으로 **직접 앵커**한다.",
+    "md_명세항목_N": 22,
+    "QA항목_M": 7,
+    "미덮임_K": 10,
+    "미덮임목록": [
+      "S-1a-3",
+      "S-1b-1",
+      "S-1b-4",
+      "S-1b-5",
+      "S-1c-5",
+      "S-1c-7",
+      "S-1d-4",
+      "S-1c-2",
+      "S-1c-4",
+      "S-1d-2"
+    ],
+    "qa_items": [
+      {
+        "id": "Q1",
+        "text": "KPI 미달 카드가 흰 카드 + 숫자·점만 레드"
+      },
+      {
+        "id": "Q2",
+        "text": "공급사 0 품목: 바로 발주 버튼 미노출, CTA 라벨 `초안 만들고 공급사 지정 →`"
+      },
+      {
+        "id": "Q3",
+        "text": "초안 생성 → 발송 준비 화면 직행 (리스트 경유 없음), 스텝 ② 활성"
+      },
+      {
+        "id": "Q4",
+        "text": "공급사 지정 전 CTA disabled + 사유, 지정 후 발송 검토 연속"
+      },
+      {
+        "id": "Q5",
+        "text": "나중에 저장 → 리스트 카드 `공급사 지정 필요` + CTA로 1c 복귀"
+      },
+      {
+        "id": "Q6",
+        "text": "날짜 연도 포함, RFQ mono, tabular-nums"
+      },
+      {
+        "id": "Q7",
+        "text": "하이라이트 애니메이션 1회만 (재방문 시 미발생)"
+      }
+    ],
+    "map": [
+      {
+        "id": "S-1a-1",
+        "section": "§1a",
+        "spec": "KPI 3장 전부 동일한 흰 카드 (border #e2e8f0)",
+        "qa": [
+          "Q1"
+        ],
+        "fixture_anchor": [
+          "1a.kpi.total",
+          "1a.kpi.below_safety",
+          "1a.kpi.expiring"
+        ],
+        "covered": true
+      },
+      {
+        "id": "S-1a-2",
+        "section": "§1a",
+        "spec": "미달 카드 숫자 #b91c1c + 6px 레드 점만 · 보더/배경 채색 금지",
+        "qa": [
+          "Q1"
+        ],
+        "fixture_anchor": [
+          "1a.kpi.below_safety"
+        ],
+        "covered": true
+      },
+      {
+        "id": "S-1a-3",
+        "section": "§1a",
+        "spec": "강조는 재발주 권장 배너(블루 #eff6ff/#bfdbfe) 하나로 일원화",
+        "qa": [],
+        "fixture_anchor": [
+          "1a.banner.icon",
+          "1a.banner.title",
+          "1a.banner.evidence_prefix",
+          "1a.banner.evidence_qty",
+          "1a.banner.evidence_suffix",
+          "1a.banner.cta"
+        ],
+        "covered": false
+      },
+      {
+        "id": "S-1b-1",
+        "section": "§1b",
+        "spec": "yellow 안내 #fffbeb/#fde68a/#92400e + 공급사 없음 문구 + 안내 본문",
+        "qa": [],
+        "fixture_anchor": [
+          "1b.no_vendor.title",
+          "1b.no_vendor.body_1",
+          "1b.no_vendor.body_2",
+          "1b.no_vendor.body_3"
+        ],
+        "covered": false
+      },
+      {
+        "id": "S-1b-2",
+        "section": "§1b",
+        "spec": "주 CTA 라벨 `초안 만들고 공급사 지정 →`",
+        "qa": [
+          "Q2"
+        ],
+        "fixture_anchor": [
+          "1b.cta.primary"
+        ],
+        "covered": true
+      },
+      {
+        "id": "S-1b-3",
+        "section": "§1b",
+        "spec": "`바로 발주` 그린 버튼 숨김 + 하단 안내 1줄",
+        "qa": [
+          "Q2"
+        ],
+        "fixture_anchor": [
+          "1b.cta.note",
+          "FORBIDDEN.바로 발주"
+        ],
+        "covered": true
+      },
+      {
+        "id": "S-1b-4",
+        "section": "§1b",
+        "spec": "보조 `공급사 소싱에서 먼저 찾기`",
+        "qa": [],
+        "fixture_anchor": [
+          "1b.cta.secondary"
+        ],
+        "covered": false
+      },
+      {
+        "id": "S-1b-5",
+        "section": "§1b",
+        "spec": "공급사 등록돼 있으면 기존 2버튼(견적 요청/바로 발주) 유지",
+        "qa": [],
+        "fixture_anchor": [
+          "SPEC_ONLY.vendor_present_branch"
+        ],
+        "covered": false
+      },
+      {
+        "id": "S-1c-1",
+        "section": "§1c",
+        "spec": "초안 생성 완료 시 /quotes/{rfqId}/prepare 딥링크 라우팅",
+        "qa": [
+          "Q3"
+        ],
+        "fixture_anchor": [
+          "1c.header.title"
+        ],
+        "covered": true
+      },
+      {
+        "id": "S-1c-2",
+        "section": "§1c",
+        "spec": "헤더 `견적 요청 발송 준비` + RFQ 번호(mono) + `방금 재고관리에서 생성됨`",
+        "qa": [
+          "Q6"
+        ],
+        "fixture_anchor": [
+          "1c.header.title",
+          "1c.header.rfq",
+          "1c.header.origin"
+        ],
+        "covered": "partial",
+        "partial_reason": "Q6 는 RFQ mono 만 검증. 헤더 라벨·생성 출처 문구는 미검 → 슬롯 직접 앵커"
+      },
+      {
+        "id": "S-1c-3",
+        "section": "§1c",
+        "spec": "3스텝 pill `✓ 품목 확정`(그린) → `② 공급사 지정`(블루) → `③ 발송`(회색)",
+        "qa": [
+          "Q3"
+        ],
+        "fixture_anchor": [
+          "1c.stepper.done",
+          "1c.stepper.current",
+          "1c.stepper.next"
+        ],
+        "covered": true
+      },
+      {
+        "id": "S-1c-4",
+        "section": "§1c",
+        "spec": "품목 카드 품목×수량 + `재고관리에서 연동` 배지 + 근거(현재/안전) + 2초 하이라이트",
+        "qa": [
+          "Q7"
+        ],
+        "fixture_anchor": [
+          "1c.item.name",
+          "1c.item.badge",
+          "1c.item.evidence"
+        ],
+        "covered": "partial",
+        "partial_reason": "Q7 은 하이라이트만 검증. `재고관리에서 연동` 배지·근거 문구는 미검 → 슬롯 직접 앵커"
+      },
+      {
+        "id": "S-1c-5",
+        "section": "§1c",
+        "spec": "공급사 지정 패널: 검색 input + `소싱에서 찾기`/`이메일로 추가` + 이전 거래 추천 1줄 + `지정`",
+        "qa": [],
+        "fixture_anchor": [
+          "1c.vendor.panel_title",
+          "1c.vendor.search_input@attr",
+          "1c.vendor.find_sourcing",
+          "1c.vendor.add_email",
+          "1c.vendor.rec_name",
+          "1c.vendor.rec_meta",
+          "1c.vendor.assign"
+        ],
+        "covered": false
+      },
+      {
+        "id": "S-1c-6",
+        "section": "§1c",
+        "spec": "하단 CTA disabled + 사유 라벨 · 지정 시 활성 → 발송 검토 모달",
+        "qa": [
+          "Q4"
+        ],
+        "fixture_anchor": [
+          "1c.cta.primary_disabled"
+        ],
+        "covered": true
+      },
+      {
+        "id": "S-1c-7",
+        "section": "§1c",
+        "spec": "이탈 안전 텍스트 링크 `나중에 하기 · 발송 대기로 저장`",
+        "qa": [
+          "Q5"
+        ],
+        "fixture_anchor": [
+          "1c.exit_link"
+        ],
+        "covered": "partial",
+        "partial_reason": "Q5 는 '나중에 저장' 의 결과만 검증. 링크 라벨 문자열은 미검 → 슬롯 직접 앵커"
+      },
+      {
+        "id": "S-1d-1",
+        "section": "§1d",
+        "spec": "상태 pill `공급사 지정 필요` (#fffbeb/#fde68a/#b45309)",
+        "qa": [
+          "Q5"
+        ],
+        "fixture_anchor": [
+          "1d.card.pill_action",
+          "FORBIDDEN.공급사 미정"
+        ],
+        "covered": true
+      },
+      {
+        "id": "S-1d-2",
+        "section": "§1d",
+        "spec": "카드 RFQ(mono) + 품목×수량 + `재고관리 재발주안에서 생성 · 2026. 8. 1.`",
+        "qa": [
+          "Q6"
+        ],
+        "fixture_anchor": [
+          "1d.card.rfq",
+          "1d.card.item",
+          "1d.card.origin"
+        ],
+        "covered": "partial",
+        "partial_reason": "Q6 은 날짜·mono 만. 품목×수량 문자열 미검 → 슬롯 직접 앵커"
+      },
+      {
+        "id": "S-1d-3",
+        "section": "§1d",
+        "spec": "CTA 1개 `공급사 지정하고 발송 →` → 1c 복귀",
+        "qa": [
+          "Q5"
+        ],
+        "fixture_anchor": [
+          "1d.card.cta"
+        ],
+        "covered": true
+      },
+      {
+        "id": "S-1d-4",
+        "section": "§1d",
+        "spec": "`예상 금액: 견적 대기` 행 숨김",
+        "qa": [],
+        "fixture_anchor": [
+          "FORBIDDEN.예상 금액",
+          "FORBIDDEN.견적 대기"
+        ],
+        "covered": false
+      },
+      {
+        "id": "S-1d-5",
+        "section": "§1d",
+        "spec": "리스트 진입 직후 해당 카드 2초 블루 하이라이트",
+        "qa": [
+          "Q7"
+        ],
+        "fixture_anchor": [
+          "1d.card.rfq"
+        ],
+        "covered": true
+      },
+      {
+        "id": "S-T-1",
+        "section": "타이포",
+        "spec": "날짜 표기 전역 `YYYY. M. D.` (연도 생략 금지)",
+        "qa": [
+          "Q6"
+        ],
+        "fixture_anchor": [
+          "1d.card.origin"
+        ],
+        "covered": true
+      },
+      {
+        "id": "S-T-2",
+        "section": "타이포",
+        "spec": "RFQ·Lot = IBM Plex Mono 500/600 · 전역 tabular-nums",
+        "qa": [
+          "Q6"
+        ],
+        "fixture_anchor": [
+          "1c.header.rfq",
+          "1d.card.rfq",
+          "TOKEN.font_variant_numeric"
+        ],
+        "covered": true
+      }
+    ]
+  },
+  "_슬롯결정": {
+    "포함": {
+      "소싱에서 찾기": "1c.vendor.find_sourcing — 정본 08-01 md §1c line 29. 렌더 실측 `🔍 소싱에서 찾기` 존재 확인"
+    },
+    "제외": {
+      "수량 변경": "미설계 불변식이 걸린 UI 는 출생시키지 않는다. §reorder-join-invariant 합류, Phase 5 후 판정. **렌더 실측: 이 시안 1c 에 애초에 없다**(소싱 시안 1b 에만 있음)"
+    },
+    "미채택": {
+      "공급사 지정 시 발송 검토 모달로 이어집니다": "08-09 파생 문서 고유 추가분. **렌더 실측: 이 시안에 없다**. disabled 사유 라벨 `발송 검토로 · 공급사 지정 필요` 가 같은 정보를 담는다"
+    },
+    "주석문": "전량 제외 — 단 annotation_excluded 12건으로 **분리 계상**(0 처리 아님)"
+  },
+  "forbidden": {
+    "_규칙": "**정확 일치(exact) 다중집합 대조. 부분 문자열 금지.** `바로 발주는 공급사·단가 확정 후 가능합니다` 는 `바로 발주` 를 부분 문자열로 포함하므로, substring 검사로 하면 정상 라벨이 위반으로 잡힌다.",
+    "_축": "ui_text 축에서만 검사. annotation_excluded·doc_label 축에서는 **나온다** — 직전 오탐 3건이 정확히 이 혼동이었다.",
+    "labels": [
+      "바로 발주",
+      "공급사 미정",
+      "예상 금액",
+      "견적 대기",
+      "수량 변경"
+    ],
+    "_실측": {
+      "바로 발주": "ui_text 0 · annotation 1(1b an[2]) → 준수",
+      "공급사 미정": "ui_text 0 · annotation 1(1d an[0]) → 준수",
+      "예상 금액": "ui_text 0 · annotation 1(1d an[2] `예상 금액 견적 대기`) → 준수",
+      "견적 대기": "ui_text 0 · annotation 1 → 준수",
+      "수량 변경": "ui_text 0 · annotation 0 → 준수"
+    }
+  },
+  "_충돌": {
+    "_규칙": "정적추출 ↔ 렌더 = 렌더가 이긴다 · md ↔ 시안 = md 가 이긴다 (다른 축)",
+    "md_stale_em_dash": {
+      "항목": [
+        "정본 md §1c line 30 `발송 검토로 — 공급사 지정 필요`",
+        "정본 md §1c line 31 `나중에 하기 — 발송 대기로 저장`"
+      ],
+      "시안": [
+        "발송 검토로 · 공급사 지정 필요",
+        "나중에 하기 · 발송 대기로 저장"
+      ],
+      "판정": "🛑 **충돌 규칙(md 승)을 기계적으로 적용하면 DECISION §1 이 승인한 em dash 수정이 되돌아간다.** 정본 md 가 08-15 전이를 반영하지 않은 상태. fixture 는 **시안(·)** 을 채택하고 예외 근거를 DECISION §1 로 명시한다.",
+      "실측": "UI 축 em dash(U+2014) 0건 · U+00B7 14건. em dash 5건은 전량 doc_label 4 + annotation 1."
+    },
+    "md_시안_라벨차_아이콘접두": [
+      {
+        "md": "`소싱에서 찾기`",
+        "시안": "🔍 소싱에서 찾기",
+        "slot": "1c.vendor.find_sourcing"
+      },
+      {
+        "md": "`이메일로 추가`",
+        "시안": "✉ 이메일로 추가",
+        "slot": "1c.vendor.add_email"
+      },
+      {
+        "md": "`공급사 소싱에서 먼저 찾기`",
+        "시안": "🔍 공급사 소싱에서 먼저 찾기",
+        "slot": "1b.cta.secondary"
+      },
+      {
+        "_판정": "md 가 이긴다면 아이콘 접두를 뺀 문자열이 정본. 그러나 md 는 **라벨 텍스트**를 백틱으로 적었지 아이콘 유무를 규정하지 않았다 → 규정 공백. **판정 필요, 구현 전 확정.** fixture 는 렌더 실측 문자열을 `label` 로, md 문자열을 `spec_label` 로 병기한다."
+      }
+    ],
+    "시안_md_위반_RFQ_mono_weight": {
+      "md": "타이포 토큰 — RFQ·Lot 코드 = IBM Plex Mono 500/600",
+      "실측": "1c.header.rfq font-weight 600 ✓ / 1d.card.rfq font-weight 400 ✗",
+      "판정": "md 가 이긴다 → 구현 시 1d 도 500/600. 시안 불일치 항목으로 등재."
+    },
+    "amber_yellow_혼재": {
+      "실측_1b": "#fffbeb(amber-50) bg · #fde68a(amber-200) border · #92400e(amber-800) 제목 · #a16207(yellow-700) 본문 ← 한 박스 안에서 혼재",
+      "실측_1d": "#b45309(amber-700) pill",
+      "판정": "CLAUDE.md §11.283a/302c/302d amber 금지와 충돌. ②-b + §0-C 별도 배치로 이관 — **fixture 를 붙잡지 않는다**(DECISION §6)."
+    }
+  },
+  "_대조규칙": {
+    "레이블": "**다중집합(배열) 대조 고정.** Set 대조 금지 — 중복이 사라져 줄어든 것이 통과로 읽힌다. 실측 중복: `1`×2(1a), `BCP × 9개`×2(1c/1d), `RFQ-2608-B2K4`×2(1c/1d), `지정`(1c) ↔ `② 공급사 지정` 는 별개 문자열.",
+    "colors": "**fixture 자기 무결성 지표 전용.** 렌더 대조에 쓸 수 없다 — 렌더 computed 는 색 미지정 요소가 #000000 기본값으로 잡혀 모집단이 다르다(HANDOFF_comp-render-verification §D). 도출축 = phone frame 이하 전 요소의 **inline style 선언 색 토큰**(rgb()→hex 정규화, alpha<1 은 `@a` 접미).",
+    "radius": "**전 요소(frame + 하위 전량) 측정.** 텍스트노드 부모만 재면 카드 컨테이너를 놓친다(HANDOFF §C 실측).",
+    "특수문자": "ASCII 대체 금지. 정규화되면 대조가 조용히 깨진다.",
+    "특수문자_실측": {
+      "U+FF0B ＋ FULLWIDTH PLUS": 2,
+      "U+2212 − MINUS SIGN": 1,
+      "U+2715 ✕ MULTIPLICATION X": 1,
+      "U+00D7 × MULTIPLICATION SIGN": 2,
+      "U+2192 → RIGHTWARDS ARROW": 2,
+      "U+2713 ✓ CHECK MARK": 1,
+      "U+2461 ② CIRCLED DIGIT TWO": 1,
+      "U+2462 ③ CIRCLED DIGIT THREE": 1,
+      "U+2039 ‹ SINGLE LEFT ANGLE QUOTE": 1,
+      "U+25CF ● BLACK CIRCLE": 1,
+      "U+2726 ✦ BLACK FOUR POINTED STAR": 1,
+      "U+2026 … HORIZONTAL ELLIPSIS": 1,
+      "U+2709 ✉ ENVELOPE": 1,
+      "U+1F50D 🔍": 2,
+      "U+1F6D2 🛒": 2,
+      "U+00B7 · MIDDLE DOT": 14,
+      "U+2014 — EM DASH": 0
+    },
+    "tabular_nums": "phone frame 이하 전 요소 100/100 이 font-variant-numeric: tabular-nums. md 타이포 토큰 준수(전역)."
+  }
+}

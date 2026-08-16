@@ -1,0 +1,427 @@
+{
+  "source": "지출분석_탭_개선__단독_.html",
+  "source_sha256": "8edc9f9b21eb37933bcd38a061d55422d1a9a3780daeff4ceb93f11d95aa0a4e",
+  "source_bytes": 22741557,
+  "source_전이": "원본 ffe6fd147e71cc270871118a28082216c7da679a738089efb67d3231704da3e9 에서 em dash 1건 → 가운뎃점 치환된 승인 전이본 (DECISION_analytics-tabs-2026-08-16 §1). 변조 아님",
+  "md_정본": "C:/Users/young/Desktop/지출분석 탭 개선 핸드오프.md (동일 치환 적용됨)",
+  "구현_대상": "apps/web/src/app/dashboard/analytics/page.tsx",
+  "extraction": "헤드리스 Chromium(1194) file:// 로드 → 'Unpacking' 소멸 +6s → #dc-root 서브트리 TreeWalker(SHOW_TEXT) 전수 → 공백 정규화 → 빈 문자열 제외. 토큰(colors/radius/font_sizes)은 시안 소스 인라인 style 문자열에서 정규식 전수",
+  "rule": "레이블 전수 일치 + 토큰 값 일치. 불일치 1건 = RED. 항목 분포 대조(건수 감소도 RED).",
+
+  "total_label_count": 28,
+  "mockup_render_label_count": 27,
+  "_status": "✅ 도출 완료 — 정본 28 (1a 8 · 1b 10 · 1c 10) / 시안 실측 27 (1a 8 · 1b 9 · 1c 10)",
+
+  "_축": {
+    "축1": "정적추출 ↔ 렌더  →  렌더가 이긴다   (같은 문서의 두 도출 방법 비교)",
+    "축2": "md ↔ 시안        →  md 가 이긴다    (지시문 ↔ 목업)",
+    "_주의": "두 규칙은 다른 축이다. 혼동하면 1c 칩형이 정본으로 들어온다 (DECISION §7).",
+    "_이번_예외": "1b 밑줄 두께는 축1 도 아니고 축2 도 아니었다. §측정층 참조 — 축1 을 기계적으로 적용하면 2px 이 이긴다(오답)."
+  },
+
+  "_측정층": {
+    "발견": "🔴 시안 소스 authored = `border-bottom:2.5px solid #2563eb` · 렌더 computed = `2px` (deviceScaleFactor 1·2 양쪽 동일).",
+    "판정": "Chromium 이 border-width 를 정수 device px 로 스냅한 것. **시안은 md 를 위반하지 않았다.**",
+    "정정": "DECISION §4-C 의 '시안 1b 실측 border-bottom 2px … 시안 오차로 등재' 는 렌더 측정층 아티팩트다. 잠금값 2.5px 는 그대로지만 **근거가 다르다** — '시안이 틀렸다' 가 아니라 '렌더가 authored 값을 못 보여준다'.",
+    "귀결": "border-width 계열은 렌더 computed 로 검사하면 영구 RED 가 난다. 이 축은 **소스 문자열(authored)** 로 검사한다."
+  },
+
+  "_md_override": {
+    "_규칙": "아래 슬롯은 **시안이 정본이 아니다.** md 를 정본으로 잠근다. 시안 파일은 수정하지 않는다(칩 4개 → 밑줄 전환은 바이트 치환 범위 밖).",
+    "1c-tab-style-underline": {
+      "정본": "md §2 line 32 — 탭 스타일은 모바일과 동일 **밑줄형 통일**",
+      "시안": "칩형 (radius 10px · padding 8px 15px · 선택 bg #2563eb/#fff · border-bottom 0)",
+      "🛑 이_슬롯은_시안이_정본_아님": true,
+      "폐기근거": "md §1 line 17 '칩 스타일 폐기 — 필터로 오인됨'. 모바일에서 칩을 버린 이유가 데스크톱에서 사라지지 않는다",
+      "시안_수정": "하지 않음"
+    },
+    "1b-tab-underline-2_5px": {
+      "정본": "md §1 line 19 — 밑줄 2.5px #2563eb (margin-bottom −1px)",
+      "시안_authored": "2.5px  ← md 와 일치",
+      "시안_렌더_computed": "2px",
+      "🛑 이_슬롯은_시안_렌더가_정본_아님": true,
+      "_주의": "DECISION 은 이 슬롯을 '시안 오차' 로 등재했으나 실측 결과 **시안 소스는 정합**이다. 정본이 아닌 것은 시안이 아니라 렌더 computed 값이다. 잠금값은 동일(2.5px)이므로 결과는 안 바뀐다",
+      "시안_수정": "불필요"
+    }
+  },
+
+  "_채택": {
+    "누적-시-배지": {
+      "출처": "시안 1c `이상 지출 감지` 탭 내부. md 미명세",
+      "판정": "md §1 line 21('데이터 없는 탭 … 탭 내부 빈 상태 안내') 의도의 UI 구현 → 상충이 아니라 보강. 채택",
+      "확장": "**모바일(1b)에도 추가.** 여유 128px > 배지 39px 실측 (DECISION §4-B). QA line 41(390px 스크롤 없이) 과 충돌 0",
+      "토큰": "9.5px / 700 · bg #f1f5f9 · color #94a3b8 · padding 1.5px 6px · radius 99px",
+      "_시안_delta": "1b labels 에 '누적 시' 1건 추가 → 정본 28 vs 시안 실측 27"
+    }
+  },
+
+  "_커버리지": {
+    "_근거": "이번 위반(1c 칩형)은 검사가 잡은 게 아니라 **시안이 우연히 어겨서** 드러났다. 시안이 md 를 지켰으면 QA GREEN 이고 명세는 검사 밖에 남는다. §measurement-layer-blindness",
+    "md_명세_항목": 17,
+    "md_QA_항목": 6,
+    "QA로_덮인_명세": 6,
+    "미덮임": 11,
+    "_QA_매핑": {
+      "Q1 390px 스크롤 없이": ["S6"],
+      "Q2 disabled 사유 인라인": ["S9"],
+      "Q3 헤더 우측 · 탭 행 버튼 0": ["S11", "S12"],
+      "Q4 팀별 보기 진입 (dead branch 0)": ["S13"],
+      "Q5 페이드 span 제거 · overflow-x-auto 잔존 0": ["S10"],
+      "Q6 버튼 높이 42px 통일": ["S6"]
+    },
+    "_미덮임_11건": "S1 S2 S3 S4 S5 S7 S8 S14 S15 S16 S17 — 전부 아래 spec_slots 로 직접 앵커됨. md QA 에는 탭 스타일·토큰·접근성 검사 항목이 존재하지 않는다"
+  },
+
+  "_앵커": {
+    "total_label_count": 28,
+    "mockup_render_label_count": 27,
+    "render_text_node_count": 40,
+    "render_element_count": 65,
+    "_규칙": "앵커는 28 고정(정본) / 27 고정(시안 실측). 대조 대상(25)과 분리한다 — 앵커를 낮추면 로딩 실패가 '불일치 0' 으로 위장한다",
+    "_산술": "정본 28 = 시안 27 + 채택 1('누적 시' 모바일 추가). 렌더 40 = 시안 라벨 27 + annotation 10 + 문서 헤더 3",
+    "_토큰_앵커": {
+      "colors_항목수_합계": { "1a": [12, 25], "1b": [13, 22], "1c": [11, 28] },
+      "spec_slots_수": { "1a": 1, "1b": 11, "1c": 5, "공통": 3, "합": 20 },
+      "qa_미덮임_슬롯": 13,
+      "_주의": "미덮임 13 = md 명세 미덮임 11 + 채택 슬롯 2(A1 모바일·데스크톱, md 미명세라 QA 대상 자체가 없음)"
+    },
+    "_라인번호_금지": "md 라인 표기가 근사다 (405/430/692 표기 vs 실제 404/430/689, 오프셋 -1/0/-3 불일정). **앵커는 식별자로만 잡는다**"
+  },
+
+  "_분류판단": {
+    "labels[0]": "각 섹션 첫 항목은 시안 자체 라벨(eyebrow) — 대조 대상 제외. 직전 fixture(product-detail-comp) 형식 승계",
+    "섹션_배지": "'1a' '1b' '1c' 배지 텍스트는 시안 자체 라벨 — annotation_excluded 로 계상",
+    "주석_박스": "점선 보더 주석 박스(#fca5a5 / #86efac / #cbd5e1) 텍스트는 UI 아님 — annotation_excluded 로 계상",
+    "문서_헤더": "배지 '1' + '지출 분석 — 모바일 탭/액션 분리' + 부제 = 시안 문서 제목. 섹션 밖 — doc_header_excluded_count 로 분리",
+    "em_dash": "labels[0] · 문서 헤더 · 주석에 em dash 가 남아 있다. **위반 아님** — em dash 금지 적용 범위는 '화면에 노출되는 라벨·안내·상태 문구' 이고 문서 제목·주석은 제외 (DECISION §2)",
+    "_주의": "위 5건은 실측이 아니라 분류 판단이다. 게이트에 반영하되 근거를 분리 표기한다"
+  },
+  "doc_header_excluded_count": 3,
+
+  "sections": {
+    "1a": {
+      "_role": "🛑 Before — 현행 재현. **구현 대상이 아니다.** 회귀 금지 기준(이 상태로 돌아가면 RED)",
+      "label_count": 8,
+      "labels": [
+        "Before — 현행 (한 행 5개)",
+        "LabAxis",
+        "지출 분석",
+        "종합 현황",
+        "공급사 의존도",
+        "이상 지출 감지",
+        "📄 AI 리포트 예시",
+        "✨ AI 리포트 생성"
+      ],
+      "colors": {
+        "#ffffff": 7,
+        "#e2e8f0": 4,
+        "#2563eb": 2,
+        "#64748b": 2,
+        "#b91c1c": 2,
+        "#f4f6f9": 2,
+        "#0f172a": 1,
+        "#101c34": 1,
+        "#475569": 1,
+        "#dc2626": 1,
+        "#fca5a5": 1,
+        "#fef2f2": 1
+      },
+      "radius": [7, 10, 12, 24],
+      "font_sizes": [11, 11.5, 12.5, 13, 16, 20],
+      "annotation_excluded_count": 3,
+      "_시안_delta": "없음 — 1a 는 정본 = 시안 실측",
+      "spec_slots": [
+        {
+          "id": "R1-현행-한행-5개-회귀금지",
+          "md": "§0 line 9~11 (현행 문제)",
+          "anchor": "page.tsx :: 탭 행 컨테이너 className `overflow-x-auto scrollbar-hide` + tabs.map() 형제로 놓인 AI 버튼 2개",
+          "expect_NOT": "탭 3개 + AI 버튼 2개가 같은 행. `ml-auto` 가 overflow 컨테이너 안에 있는 상태",
+          "qa_covered": true,
+          "qa": "Q5"
+        }
+      ]
+    },
+
+    "1b": {
+      "_role": "After — 모바일(<sm) 구현 대상",
+      "label_count": 10,
+      "labels": [
+        "After — 탭 행 / 액션 행 분리",
+        "LabAxis",
+        "지출 분석",
+        "종합 현황",
+        "공급사 의존도",
+        "이상 지출 감지",
+        "누적 시",
+        "📄 AI 리포트 예시",
+        "✨ AI 리포트 생성",
+        "AI 리포트 생성 · 완료된 발주 1건 이상 필요"
+      ],
+      "colors": {
+        "#e2e8f0": 4,
+        "#94a3b8": 3,
+        "#ffffff": 3,
+        "#0f172a": 2,
+        "#15803d": 2,
+        "#101c34": 1,
+        "#16a34a": 1,
+        "#2563eb": 1,
+        "#475569": 1,
+        "#64748b": 1,
+        "#86efac": 1,
+        "#f0fdf4": 1,
+        "#f4f6f9": 1
+      },
+      "radius": [7, 10, 12, 24],
+      "font_sizes": [11, 11.5, 12.5, 13, 13.5, 16, 20],
+      "annotation_excluded_count": 3,
+      "_시안_delta": {
+        "labels": "+1 '누적 시' (채택 — 모바일 추가). 시안 실측 9 → 정본 10",
+        "colors": "채택 반영 시 +#f1f5f9 ×1, #94a3b8 ×1 (배지). 아래 colors 는 **시안 실측 그대로** — 자기 무결성 지표 전용",
+        "font_sizes": "채택 반영 시 +9.5"
+      },
+      "spec_slots": [
+        {
+          "id": "S1-tab-style-underline-mobile",
+          "md": "§1 line 17 — 탭 = 밑줄(underline) 스타일로 교체 (칩 스타일 폐기 — 필터로 오인됨)",
+          "anchor": "page.tsx :: tabs.map((tab) => <button>) className 삼항",
+          "expect": "밑줄형. 칩 토큰 `rounded-lg` + 선택 `bg-blue-600 text-white shadow-sm` + 비선택 `bg-pn border border-bd` 폐기",
+          "qa_covered": false
+        },
+        {
+          "id": "S2-tab-row-container",
+          "md": "§1 line 18 — 행: flex gap-22px, border-bottom 1px #e2e8f0",
+          "anchor": "page.tsx :: tabs.map() 를 감싼 div className (현행 `flex items-center gap-1.5 overflow-x-auto scrollbar-hide pb-0.5`)",
+          "expect": "gap 22px · border-bottom 1px #e2e8f0 · overflow-x-auto/scrollbar-hide 제거",
+          "qa_covered": false
+        },
+        {
+          "id": "S3-tab-selected-token",
+          "md": "§1 line 19 — 선택: 13.5px/700 #0f172a + 밑줄 2.5px #2563eb (margin-bottom −1px)",
+          "anchor": "page.tsx :: activeTab === tab.id 분기",
+          "expect": { "font_size": 13.5, "font_weight": 700, "color": "#0f172a", "border_bottom": "2.5px solid #2563eb", "margin_bottom": "-1px" },
+          "🛑 md_잠금": "밑줄 두께 2.5px — **렌더 computed 로 검사 금지**(Chromium 이 2px 로 스냅). authored 문자열로 검사할 것 (_측정층 참조)",
+          "qa_covered": false
+        },
+        {
+          "id": "S4-tab-unselected-token",
+          "md": "§1 line 20 — 비선택: 13.5px/500 #64748b",
+          "anchor": "page.tsx :: activeTab === tab.id 삼항의 else 분기",
+          "expect": { "font_size": 13.5, "font_weight": 500, "color": "#64748b" },
+          "qa_covered": false
+        },
+        {
+          "id": "S5-tab-nodata-token",
+          "md": "§1 line 21 — 데이터 없는 탭(이상 지출 감지, 3개월 미만): #94a3b8 연회색. 클릭 허용 + 탭 내부 빈 상태 안내",
+          "anchor": "page.tsx :: tabs[].id === \"anomaly\" · hasMonthlyData / dataInsufficient",
+          "expect": { "color": "#94a3b8", "clickable": true, "empty_state_in_tab": true, "disabled": false },
+          "qa_covered": false
+        },
+        {
+          "id": "S6-action-row-split",
+          "md": "§1 line 22 — AI 리포트 버튼 2개 = 탭 아래 별도 행, 2열 그리드 gap 8px, 높이 42px 통일",
+          "anchor": "page.tsx :: setReportModalOpen(true) 버튼 + runAiAnalysis 버튼 을 감싸는 신설 행",
+          "expect": { "display": "grid", "grid_template_columns": "1fr 1fr", "gap": "8px", "height": "42px" },
+          "qa_covered": true,
+          "qa": "Q1 · Q6"
+        },
+        {
+          "id": "S7-btn-example-token",
+          "md": "§1 line 23 — AI 리포트 예시: 흰 배경 + #e2e8f0 보더, #475569",
+          "anchor": "page.tsx :: onClick={() => setReportModalOpen(true)} 버튼",
+          "expect": { "background": "#ffffff", "border": "1px solid #e2e8f0", "color": "#475569" },
+          "qa_covered": false
+        },
+        {
+          "id": "S8-btn-generate-disabled-token",
+          "md": "§1 line 24 — AI 리포트 생성 (disabled): #e2e8f0 배경 #94a3b8",
+          "anchor": "page.tsx :: onClick={runAiAnalysis} · disabled={aiLoading || dataInsufficient}",
+          "expect": { "background": "#e2e8f0", "color": "#94a3b8" },
+          "_주의": "현행은 `disabled:opacity-60` 으로 흐리게 처리 — 명시 토큰이 아니다. 치환 대상",
+          "qa_covered": false
+        },
+        {
+          "id": "S9-disabled-reason-inline",
+          "md": "§1 line 24 — 비활성 사유는 그리드 아래 인라인 1줄 우측 정렬 11px #94a3b8",
+          "anchor": "page.tsx :: title={dataInsufficient ? \"리포트 생성에 최소 1건의 완료된 발주 데이터가 필요합니다\" : undefined}",
+          "expect_text": "AI 리포트 생성 · 완료된 발주 1건 이상 필요",
+          "expect": { "font_size": 11, "color": "#94a3b8", "text_align": "right", "title_tooltip_의존": 0 },
+          "_em_dash": "이 문구는 화면 노출 문구다. 가운뎃점(·) 고정 — em dash 금지 (DECISION §1 치환 대상이 바로 이 슬롯)",
+          "qa_covered": true,
+          "qa": "Q2"
+        },
+        {
+          "id": "S10-fade-hint-removed",
+          "md": "§1 line 25 — 우측 페이드 힌트 span 제거",
+          "anchor": "page.tsx :: `§mobile-budgets §3` 주석 직후 `<span className=\"md:hidden pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-canvas to-transparent\" aria-hidden />`",
+          "expect": "요소 삭제. overflow-x-auto 잔존 0",
+          "qa_covered": true,
+          "qa": "Q5"
+        },
+        {
+          "id": "A1-누적시-배지-모바일",
+          "md": "미명세 — 시안 1c 채택분의 모바일 확장 (DECISION §4-B)",
+          "anchor": "page.tsx :: tabs[].id === \"anomaly\" 라벨 우측 인라인 span",
+          "expect_text": "누적 시",
+          "expect": { "font_size": 9.5, "font_weight": 700, "background": "#f1f5f9", "color": "#94a3b8", "padding": "1.5px 6px", "border_radius": "99px" },
+          "_여유_실측": "1b 프레임 x461 w390 · 탭 3개 끝단 x723 · 프레임 우측 x851 → 여유 128px > 배지 39px",
+          "qa_covered": false,
+          "_출처": "시안 채택 (md 미명세 · 상충 아님)"
+        }
+      ]
+    },
+
+    "1c": {
+      "_role": "데스크톱(sm+) 구현 대상",
+      "label_count": 10,
+      "labels": [
+        "데스크톱 (sm 이상) — 헤더 우측 정렬",
+        "지출 분석",
+        "예산 소진, 공급사 의존도, 이상 지출 신호를 확인합니다.",
+        "📄 AI 리포트 예시",
+        "✨ AI 리포트 생성",
+        "종합 현황",
+        "공급사 의존도",
+        "이상 지출 감지",
+        "누적 시",
+        "팀별 보기"
+      ],
+      "colors": {
+        "#ffffff": 8,
+        "#e2e8f0": 5,
+        "#64748b": 4,
+        "#2563eb": 3,
+        "#94a3b8": 2,
+        "#0f172a": 1,
+        "#1d4ed8": 1,
+        "#475569": 1,
+        "#cbd5e1": 1,
+        "#f1f5f9": 1,
+        "#f4f6f9": 1
+      },
+      "radius": [7, 10, 12, 18, 99],
+      "font_sizes": [9.5, 11, 11.5, 12.5, 13, 21],
+      "annotation_excluded_count": 4,
+      "_시안_delta": {
+        "labels": "없음 — 라벨 축은 시안 = 정본 (10/10)",
+        "colors_radius_font_sizes": "🛑 **시안 실측이며 정본 아님.** 탭이 칩형으로 그려져 있어 radius 10 · 선택 bg #2563eb 가 포함돼 있다. 밑줄형 전환 시 이 값들이 바뀐다. 아래 토큰 3축은 **fixture 자기 무결성 지표 전용** — 구현 대조에 쓰지 말 것"
+      },
+      "spec_slots": [
+        {
+          "id": "S11-actions-to-header-right",
+          "md": "§2 line 29 — AI 리포트 버튼 2개는 페이지 헤더 우측(제목·설명 옆 justify-between)으로 이동",
+          "anchor": "page.tsx :: `<h2>지출 분석</h2>` 를 감싼 `flex flex-col sm:flex-row sm:items-start sm:justify-between` div 의 우측 슬롯",
+          "expect": "AI 버튼 2개가 헤더 div 안. 원래 `ml-auto` 의도의 정상 구현",
+          "qa_covered": true,
+          "qa": "Q3"
+        },
+        {
+          "id": "S12-tab-row-view-switch-only",
+          "md": "§2 line 30 — 탭 행은 뷰 전환 전용",
+          "anchor": "page.tsx :: tabs.map() 컨테이너",
+          "expect": "탭 행 자식 = tabs.map() 산출물만. 버튼 0",
+          "qa_covered": true,
+          "qa": "Q3"
+        },
+        {
+          "id": "S13-team-tab-added",
+          "md": "§2 line 30~31 — `팀별 보기` 탭을 tabs 배열에 추가 { id: \"team\", label: \"팀별 보기\" }",
+          "anchor": "page.tsx :: const tabs: { id: AnalyticsTab; label: string; isButton?: boolean }[]",
+          "expect": "tabs 에 { id: \"team\", label: \"팀별 보기\" } 4번째 원소 추가",
+          "dead_branch_실측": {
+            "type AnalyticsTab": "\"overview\" | \"vendor\" | \"anomaly\" | \"team\"  ← team 이 타입엔 있음",
+            "useState<AnalyticsTab>": "\"overview\"  (초기값)",
+            "tabs": "[overview, vendor, anomaly]  ← team 없음",
+            "setActiveTab(tab.id)": "유일한 호출",
+            "{activeTab === \"team\" && <TeamAnalyticsView />}": "렌더 존재",
+            "URL·쿼리·라우터 기반 설정": 0,
+            "판정": "activeTab 이 \"team\" 이 될 경로 0 — 진입 경로 0 확정 (재조사 불필요)"
+          },
+          "_식별자_오염": "시안 주석의 `sc-camel-active-tab` 은 생성 파이프라인이 camelCase 를 kebab 클래스명으로 오인 변환한 것. 시안 파일 내 `activeTab` 0건 / `sc-camel-active-tab` 1건. **실제 식별자는 `activeTab`**",
+          "qa_covered": true,
+          "qa": "Q4"
+        },
+        {
+          "id": "S14-tab-style-underline-desktop",
+          "md": "§2 line 32 — 탭 스타일은 모바일과 동일 **밑줄형 통일**",
+          "anchor": "page.tsx :: tabs.map((tab) => <button>) className (데스크톱 sm+ 분기 포함 · 단일 컴포넌트)",
+          "expect": "1b 와 동일 밑줄형 — S1~S5 토큰 그대로 적용",
+          "🛑 이_슬롯은_시안이_정본_아님": true,
+          "시안_실측": { "radius": "10px", "padding": "8px 15px", "선택": "bg #2563eb / color #fff", "border_bottom": "0" },
+          "폐기근거": "md §1 line 17 '칩 스타일 폐기 — 필터로 오인됨'. 모바일에서 칩을 버린 이유가 데스크톱에서 사라지지 않는다",
+          "qa_covered": false,
+          "_발견경로": "QA 검사가 아니라 시안이 우연히 어겨서 드러남. 이 슬롯이 커버리지 구멍의 대표 사례"
+        },
+        {
+          "id": "A1-누적시-배지-데스크톱",
+          "md": "미명세 — 시안 1c 원본 (채택)",
+          "anchor": "page.tsx :: tabs[].id === \"anomaly\" 라벨 우측 인라인 span",
+          "expect_text": "누적 시",
+          "expect": { "font_size": 9.5, "font_weight": 700, "background": "#f1f5f9", "color": "#94a3b8", "padding": "1.5px 6px", "border_radius": "99px" },
+          "qa_covered": false,
+          "_출처": "시안 채택 (md 미명세 · 상충 아님)"
+        }
+      ]
+    }
+  },
+
+  "spec_slots_공통": [
+    {
+      "id": "S15-tab-role-aria",
+      "md": "§3 line 36 — 탭: role=\"tab\" + aria-selected",
+      "anchor": "page.tsx :: tabs.map((tab) => <button key={tab.id} onClick={() => setActiveTab(tab.id)}>)",
+      "expect": { "role": "tab", "aria-selected": "activeTab === tab.id", "부모_role": "tablist" },
+      "현행": "role/aria 속성 0건",
+      "qa_covered": false
+    },
+    {
+      "id": "S16-btn-aria-disabled-describedby",
+      "md": "§3 line 36 — 버튼: disabled 시 aria-disabled + 사유 텍스트를 aria-describedby 로 연결",
+      "anchor": "page.tsx :: onClick={runAiAnalysis} · disabled={aiLoading || dataInsufficient} 버튼 ↔ S9 사유 텍스트 노드",
+      "expect": { "aria-disabled": true, "aria-describedby": "S9 사유 텍스트의 id" },
+      "현행": "title 툴팁만. aria 0건",
+      "qa_covered": false
+    },
+    {
+      "id": "S17-hit-area-44",
+      "md": "§3 line 37 — 히트 영역 44px 유지 (touch-manipulation 기존 유지)",
+      "anchor": "page.tsx :: 탭 button · AI 버튼 2개의 className `touch-manipulation`",
+      "expect": { "min_hit_area": "44px", "touch-manipulation": "유지" },
+      "_충돌_주의": "S6 은 버튼 높이 42px 를 요구한다. 42px < 44px — md 내부 충돌. 히트 영역은 시각 높이와 분리(padding/pseudo)해서 42px 시각 + 44px 터치로 만족시킬 것",
+      "qa_covered": false
+    }
+  ],
+
+  "_대조규칙": {
+    "레이블": "**다중집합(배열) 대조 고정.** Set 대조 금지 — 중복이 사라져 줄어든 것이 통과로 읽힌다",
+    "대조_대상": "labels[0](시안 자체 라벨) 제외 → 25건 (1a 7 · 1b 9 · 1c 9)",
+    "colors": "항목 수 + 합계 둘 다 앵커. **렌더와 fixture 는 모집단이 다르다**(렌더는 색 미지정 요소가 기본값으로 잡힘) → colors 는 fixture 자기 무결성 지표로만 쓴다. 구현 대조에는 spec_slots 를 쓸 것",
+    "colors_정규화": "3자리 shorthand 는 6자리로 확장해 계상 (#fff → #ffffff). 이 시안은 shorthand 를 쓴다 — 직전 fixture(product-detail-comp)에는 없던 규칙",
+    "radius": "**전 요소로 잰다.** 텍스트노드 부모만 재면 컨테이너 radius 를 놓쳐 오독한다",
+    "border_width": "**authored 문자열로 검사한다.** 렌더 computed 는 2.5px 를 2px 로 스냅한다 (_측정층 참조)",
+    "1c_토큰": "1c 의 colors/radius/font_sizes 는 칩형 시안 실측이다. 밑줄형 전환 후 값이 바뀐다 — 구현 대조 금지",
+    "특수문자": "가운뎃점 U+00B7 `·` · 이모지 📄 ✨ 는 ASCII/텍스트 대체 금지. 정규화되면 대조가 조용히 깨진다",
+    "em_dash": "UI 라벨에 em dash(U+2014) 0건이어야 한다. labels[0]·문서 헤더·주석의 em dash 는 적용 범위 밖 (DECISION §2)"
+  },
+
+  "_렌더_실측": {
+    "browser": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome (playwright 1.56.0, playwright install 금지)",
+    "load": "file:// · waitUntil 'load' · 'Unpacking' 소멸 대기 + 6s",
+    "population": "#dc-root 서브트리 (자기 자신 포함)",
+    "viewports": {
+      "390": { "text_nodes": 40, "elements": 65, "pageError": 0 },
+      "1440": { "text_nodes": 40, "elements": 65, "pageError": 0 },
+      "1920": { "text_nodes": 40, "elements": 65, "pageError": 0 },
+      "3840": { "text_nodes": 40, "elements": 65, "pageError": 0 }
+    },
+    "_뷰포트_무관": "4종 전부 동일. 조건부 렌더 0 · 미디어쿼리 분기 0 (시안은 3 프레임을 한 캔버스에 병치)",
+    "_분리계상": {
+      "UI_텍스트": 24,
+      "시안자체라벨_labels[0]": 3,
+      "annotation_excluded": 10,
+      "doc_header_excluded": 3,
+      "합": 40,
+      "_주의": "시안 실측 라벨 27 = UI 24 + labels[0] 3. labels[] 배열은 27(정본 28)이지만 **UI 텍스트는 24** 다 — 직전 트랙 QA 오탐(주석 포함)의 재발 방지축"
+    }
+  }
+}

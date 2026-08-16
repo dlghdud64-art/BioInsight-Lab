@@ -1,22 +1,28 @@
 # 판정 — 재발주 견적 핸드오프 트랙 착수 전 3건
 
-> ## 🔀 다음 세션 첫 줄이 **두 개**다 — 순서 의존은 **없다** (2026-08-15 실측)
+> ## 🔀 다음 세션 첫 줄이 **세 개**다 — 순서 의존은 **없다** (2026-08-16 갱신)
 >
 > ```
-> A  HANDOFF_phase3-entry      Phase 3 <CollapsedRow>   → 제품 상세 화면
-> B  DECISION_reorder-handoff  fixture 도출 4화면        → prepare 화면
+> A  HANDOFF_phase3-entry-2026-08-15.md       Phase 3 <CollapsedRow>  → 제품 상세 화면
+> B  DECISION_reorder-handoff-2026-08-15.md   fixture 4화면 1a~1d     → prepare 화면
+> C  HANDOFF_analytics-tabs-2026-08-16.md     fixture 3화면 1a~1c     → analytics 화면
 > ```
 >
-> **실측 근거:** `<CollapsedRow>` 3회 사용처 = Phase 3 GREEN 3·4·5
-> (상세 스펙 · SDS · 규제 포털) — **전부 제품 상세 본문**이다.
-> Rollback 대상도 `page.tsx` + `product-completeness.tsx` 2파일뿐이고 `prepare` 를 안 건드린다.
+> **파일 겹침 0 — 실측:**
+> ```
+> A  apps/web/src/app/products/[id]/page.tsx · components/products/collapsed-row.tsx
+>    __tests__/fixtures/product-detail-comp.json · .render.json
+> B  __tests__/fixtures/reorder-handoff-comp.json  (구현 대상 = /quotes/{rfqId}/prepare, 미착수)
+> C  __tests__/fixtures/analytics-tabs-comp.json · app/dashboard/analytics/page.tsx
+> ```
+> → **병렬 가능.** 이 블록이 필요한 이유는 의존 충돌이 아니라 **누락**이다 —
+>   "첫 줄" 라벨이 **세 문서에 중복**되어 있어, 한쪽만 보고 출발하면 다른 트랙을 모른다.
 >
-> → 두 작업은 **다른 화면**이다. `/quotes/{rfqId}/prepare` 3층 구조 확정과
->   `<CollapsedRow>` 배치는 **간섭하지 않는다. 병렬 가능.**
+> ### 🛑 시안 경로 정정 (2026-08-16 실측)
 >
-> ⚠️ 그래도 이 블록이 필요한 이유: **"첫 줄" 라벨이 두 문서에 중복**되어 있다.
->   한쪽만 보고 출발하면 **다른 트랙이 있다는 걸 모른다** —
->   의존 충돌이 아니라 **누락** 위험이다.
+> 세 문서의 `C:\Users\young\Desktop\<파일>.html` 표기는 **낡았다.**
+> 실제 위치는 전부 `C:\Users\young\Desktop\피드백4\` 하위다 — 정본 md·`.bak.html` 백업도 같은 폴더.
+> 해시는 전부 그대로 유효하다(A `6d98bd27…` · B `30b5daae…` · C `8edc9f9b…`).
 
 작성 시각: 2026-08-15
 판정자: 호영님(총괄) · 도출: 헤드리스 렌더 실측 + 축 분해
@@ -272,3 +278,142 @@ QA 대조에서 안 꺼냈다. `§measurement-layer-blindness` 등재 **바로 �
 > **재사용한다고 선언한 쪽이 재사용 대상의 명세를 바꿀 권한은 없다** —
 > 두 문서가 같은 화면을 다르게 적었을 때, 최신이 이기는 게 아니라
 > 참조 방향이 정본을 가리켰다.
+
+---
+
+## 8. fixture 도출 결과 (2026-08-16) — 이 문서 §6 "다음 세션 첫 줄" 해소
+
+```
+산출물   apps/web/src/__tests__/fixtures/reorder-handoff-comp.json   (39,075 B)
+프로브   apps/web/_reorder_comp_probe.mjs   (fixture 재도출 경로 — 세션과 함께 사라지지 않게 고정)
+         ⚠️ Linux 컨테이너 기준. Windows 에서는 --chrome <로컬 Chrome 경로> 필요 (파일 헤더 명시)
+슬롯     63 (id 유일 63/63) — 1a 17 · 1b 20 · 1c 18 · 1d 8
+형식     product-detail-comp.json 승계
+         1점 의도적 이탈 — labels[0](시안 자체 라벨)을 대조 배열에 섞는 관행 폐기 → doc_labels 로 분리.
+         그 혼입이 §measurement-layer-blindness 오탐의 기계적 원인이었다
+```
+
+### 렌더 실측 — 2경로 독립 교차확인
+
+```
+sha256      30b5daae59172815729c8d4ffd7783e386269ef7df078802076a23ce3ab8e173  (22,891,228 B)  ✅
+엔진        Chromium 1194 / Playwright 1.56.0 · file:// · load · "Unpacking" 소멸 +6s
+텍스트노드   83 / 83 / 83 / 83   (390·1440·1920·3840 — 뷰포트 무관)
+전 요소     127 (body 스코프) · 144 (document 스코프)
+pageError 0 · consoleError 0
+교차확인    /tmp 사본 + 스테이지 원본 2경로 독립 실행 → 83/127/144 동일
+```
+
+🛑 **축 주의:** 이 문서 §5 의 "전 요소 127" 은 **body 스코프**다. document 스코프는 144.
+모집단을 안 적으면 다음 세션이 144 를 불일치로 읽는다. fixture 에 둘 다 앵커로 박았다.
+
+### 커버리지 계수 (정본 08-01 md) — §measurement-layer-blindness 5회차 해소
+
+```
+md 명세 22 / QA 7 / 미덮임 10 (완전 6 · 부분 4)
+```
+
+완전 미덮임 6 → 직접 앵커한 슬롯:
+
+```
+S-1a-3  배너 일원화          → 1a.banner.{icon,title,evidence_prefix,evidence_qty,evidence_suffix,cta}
+S-1b-1  yellow 안내 박스     → 1b.no_vendor.{title,body_1,body_2,body_3}
+S-1b-4  보조 소싱 버튼        → 1b.cta.secondary
+S-1b-5  공급사 등록 시 2버튼  → 시안에 **없음**. SPEC_ONLY.vendor_present_branch (미도해 분기)
+S-1c-5  공급사 지정 패널 ★    → 1c.vendor.{panel_title,search_input@attr,find_sourcing,add_email,rec_name,rec_meta,assign}
+S-1d-4  예상 금액 행 숨김     → forbidden.{예상 금액, 견적 대기}
+```
+
+부분 덮임 4 → 미검 부분만 앵커: S-1c-2(헤더 라벨·출처) · S-1c-4(배지·근거) · S-1c-7(이탈 링크 라벨) · S-1d-2(품목×수량)
+
+### 분리 계상 — §5 오탐 3건 재발 방지
+
+```
+UI 텍스트 63 / annotation_excluded 12 / 시안 문서 라벨 8  →  63+12+8 = 83  (렌더 총계와 정합)
+attr 라벨 1 = 1c placeholder "공급사명·담당자 이메일 검색"
+```
+
+🛑 **attr 라벨은 텍스트노드 축 83 에 안 잡힌다.** 정본 md §1c line 29 의 `검색 input` 이 여기다.
+**텍스트노드만 세면 이 슬롯은 없는 것으로 읽힌다.** 축을 하나 더 세워야 잡힌다.
+
+§5 오탐 3건 축 분리 재검 — 전부 준수: `바로 발주` UI 0/주석 1 · `공급사 미정` UI 0/주석 1 · `예상 금액` UI 0/주석 1.
+forbidden 은 **exact 다중집합**으로 고정 — substring 이면 `바로 발주는 공급사·단가 확정 후 가능합니다` 가 오검출된다.
+
+### 3층 분해 — §4 표를 렌더 실측이 정확 재현
+
+```
+1c   shell 11 · props 5 · formfactor 1 · residual_resolved 1  = 18  ✔
+     formfactor = `‹` 1건뿐
+     props = RFQ / 방금 재고관리에서 생성됨 / BCP × 9개 / 재고관리에서 연동 / 현재 1 · 안전 10
+            → 뷰포트가 아니라 진입 컨텍스트임이 실측으로 확정
+1b   shell 11 · props 7 · formfactor 2 · residual 3 = 23  (fixture 24 − labels[0])
+```
+
+### 슬롯 결정 반영
+
+```
+포함    소싱에서 찾기   → 1c.vendor.find_sourcing  (렌더 실측 `🔍 소싱에서 찾기` 존재)
+제외    수량 변경       → 렌더 실측 이 시안 1c 에 **애초에 없다**(소싱 1b 에만). forbidden 등재
+미채택  "공급사 지정 시 발송 검토 모달로 이어집니다" → 렌더 실측 이 시안에 없음
+```
+
+---
+
+## 9. 🛑 판정 필요 3건 — 구현 착수 전 확정 (fixture 에 `_충돌` 로 등재)
+
+### ① md_stale_em_dash — 규칙 충돌
+
+```
+정본 08-01 md line 30/31 은 아직  `발송 검토로 — 공급사 지정 필요` / `나중에 하기 — 발송 대기로 저장`
+시안(30b5daae) 은            `발송 검토로 · 공급사 지정 필요` / `나중에 하기 · 발송 대기로 저장`
+```
+
+**충돌 규칙("md 가 이긴다")을 기계적으로 적용하면 §1 이 승인한 em dash 수정이 되돌아간다.**
+fixture 는 시안(·)을 채택하고 예외 근거를 §1 로 명시했다.
+실측: UI 축 U+2014 = 0 · U+00B7 = 14. em dash 5건은 전량 doc_label 4 + annotation 1.
+
+→ **정본 md 를 08-15 전이로 갱신하지 않으면 다음 트랙이 같은 충돌을 다시 만난다.**
+(2026-08-16 CLAUDE.md 전역 조항 승격 완료 — 조항은 섰으나 정본 md 본문은 미갱신)
+
+### ② shell 11 은 "슬롯 수" 동일이지 "문자열" 동일이 아니다
+
+두 시안 shell 11 중 **4 슬롯의 라벨이 다르다**:
+
+```
+vendor.panel_title    공급사 지정        ↔  받을 공급사를 지정하세요
+vendor.add_email      이메일로 추가      ↔  ✉ 이메일로 추가
+vendor.rec_name/meta  "Sigma-Tech Korea · 시약 카테고리 거래 4회" + "이전 거래"
+                   ↔  "Sigma-Tech Korea" + "이전 거래 2회 · PBS 계열"   (2노드 분할 재배치)
+```
+
+다중집합 대조는 **문자열 축**이므로 공통 컴포넌트 구현 시 슬롯 라벨을 1개로 확정해야 한다.
+또한 **정본 기준 shell = 12 텍스트 슬롯 (+ 검색 input attr 1 = 13)**.
+11 은 두 시안의 **교집합값이지 정본값이 아니다** — §4 표의 11 을 그대로 구현 목표로 쓰면 정본이 깎인다.
+
+### ③ 아이콘 접두 규정 공백
+
+md 는 `소싱에서 찾기` / `이메일로 추가` / `공급사 소싱에서 먼저 찾기` 를 백틱 라벨로만 적고
+아이콘(🔍 ✉) 유무를 규정하지 않았다. **"md 가 이긴다" 를 적용할 근거 자체가 없다.**
+fixture 는 렌더 실측을 `label`, md 문자열을 `spec_label` 로 병기했다.
+
+---
+
+## 10. 부수 실측 (fixture 기록 · 이 트랙에서 처리 안 함)
+
+```
+RFQ mono weight   1c.header.rfq 600 ✓ / 1d.card.rfq 400 ✗ → md 타이포 토큰 위반. md 승 → 1d 도 500/600
+tabular-nums      phone frame 이하 100/100 준수 (전역)
+amber/yellow 혼재  §5 실측 재확인 — ②-b + §0-C 별도 배치. §6 대로 fixture 를 붙잡지 않음
+colors 축         fixture 자기 무결성 전용. 도출축 = phone frame 이하 inline style 선언 색 토큰
+                  (rgb()→hex, alpha<1 은 @a). 렌더 computed 와 모집단이 달라 상호 대체 불가
+radius/font_sizes  전 요소(frame + 하위 전량) 측정 — 텍스트노드 부모만 재면 카드 컨테이너를 놓친다
+```
+
+```
+확인 필요  소싱 시안에 검색 input(placeholder)이 있는지 미측정. 소싱 fixture 는 텍스트노드 축만 떠서
+          attr 라벨 기록이 없다. 정본 md 가 검색 input 을 요구하므로 shell 판정 자체는 안 흔들리나,
+          "소싱 시안이 정본을 몇 개 빠뜨렸는가" 의 정확한 수는 미확정 (현재 확인분 = `소싱에서 찾기` 1건)
+확인 필요  reorder-handoff-comp.json 에 대응하는 conformance test 는 만들지 않았다.
+          자기참조 게이트를 하나 더 늘리는 대신 _reorder_comp_probe.mjs 로 재도출 경로를 남겼다.
+          렌더 산출물을 compareLabels() 에 물리는 작업은 이 트랙에서 여전히 미착수
+```

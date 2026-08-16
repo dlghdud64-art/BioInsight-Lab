@@ -1,22 +1,28 @@
 # 인계 — Phase 3 착수 대기
 
-> ## 🔀 다음 세션 첫 줄이 **두 개**다 — 순서 의존은 **없다** (2026-08-15 실측)
+> ## 🔀 다음 세션 첫 줄이 **세 개**다 — 순서 의존은 **없다** (2026-08-16 갱신)
 >
 > ```
-> A  HANDOFF_phase3-entry      Phase 3 <CollapsedRow>   → 제품 상세 화면
-> B  DECISION_reorder-handoff  fixture 도출 4화면        → prepare 화면
+> A  HANDOFF_phase3-entry-2026-08-15.md       Phase 3 <CollapsedRow>  → 제품 상세 화면
+> B  DECISION_reorder-handoff-2026-08-15.md   fixture 4화면 1a~1d     → prepare 화면
+> C  HANDOFF_analytics-tabs-2026-08-16.md     fixture 3화면 1a~1c     → analytics 화면
 > ```
 >
-> **실측 근거:** `<CollapsedRow>` 3회 사용처 = Phase 3 GREEN 3·4·5
-> (상세 스펙 · SDS · 규제 포털) — **전부 제품 상세 본문**이다.
-> Rollback 대상도 `page.tsx` + `product-completeness.tsx` 2파일뿐이고 `prepare` 를 안 건드린다.
+> **파일 겹침 0 — 실측:**
+> ```
+> A  apps/web/src/app/products/[id]/page.tsx · components/products/collapsed-row.tsx
+>    __tests__/fixtures/product-detail-comp.json · .render.json
+> B  __tests__/fixtures/reorder-handoff-comp.json  (구현 대상 = /quotes/{rfqId}/prepare, 미착수)
+> C  __tests__/fixtures/analytics-tabs-comp.json · app/dashboard/analytics/page.tsx
+> ```
+> → **병렬 가능.** 이 블록이 필요한 이유는 의존 충돌이 아니라 **누락**이다 —
+>   "첫 줄" 라벨이 **세 문서에 중복**되어 있어, 한쪽만 보고 출발하면 다른 트랙을 모른다.
 >
-> → 두 작업은 **다른 화면**이다. `/quotes/{rfqId}/prepare` 3층 구조 확정과
->   `<CollapsedRow>` 배치는 **간섭하지 않는다. 병렬 가능.**
+> ### 🛑 시안 경로 정정 (2026-08-16 실측)
 >
-> ⚠️ 그래도 이 블록이 필요한 이유: **"첫 줄" 라벨이 두 문서에 중복**되어 있다.
->   한쪽만 보고 출발하면 **다른 트랙이 있다는 걸 모른다** —
->   의존 충돌이 아니라 **누락** 위험이다.
+> 세 문서의 `C:\Users\young\Desktop\<파일>.html` 표기는 **낡았다.**
+> 실제 위치는 전부 `C:\Users\young\Desktop\피드백4\` 하위다 — 정본 md·`.bak.html` 백업도 같은 폴더.
+> 해시는 전부 그대로 유효하다(A `6d98bd27…` · B `30b5daae…` · C `8edc9f9b…`).
 
 작성 시각: 2026. 8. 15.
 상태: **시안 정합 트랙 선행 조건 해소.** 다음 세션은 이 문서만 읽고 시작할 수 있어야 한다.
@@ -36,6 +42,103 @@
 
 `<CollapsedRow>` 는 **3회 사용 확정 컴포넌트**다. 중간에 끊기면 부분 잔여가 남으므로
 컨텍스트를 확보한 상태에서 착수한다.
+
+### 🛑 위 §1 은 2026-08-16 실측으로 **폐기됨** — 착수 전 반드시 읽을 것
+
+```
+GREEN 3  상세 스펙 0건   ✅ 기구현   page.tsx:663-681 <CollapsedRow label="상세 스펙">
+                                     액션은 v21 §1 로 canEditSpec 게이트 안 `스펙 편집`.
+                                     buyer `정보 요청` 링크는 의도적 폐기(dead link 0)
+GREEN 4  SDS 0건        ✅ 기구현   page.tsx:849-873 <CollapsedRow label="SDS/MSDS 문서">
+GREEN 5  규제 포털       ⛔ 은퇴 확정 — 구현하면 RED
+                                     v21 §5(2026-08-09 승인)로 CollapsedRow 폐기 →
+                                     주요 2기관 버튼 + `더보기 ${rest.length}개 기관 ›`
+                                     계약⑥ = PAGE_CODE.not.toMatch(/CollapsedRow label="국내 규제기관 포털"/)
+                                     **역방향 잠금**이다
+②-a red  ✅ 기적용   page.tsx:1233  below ? "text-[#b91c1c]" : "text-slate-900"
+                                     repo 내 #b45309 잔존 3건은 전부 §0-B 보류 축(안전재고 아님)
+```
+
+**즉 `<CollapsedRow>` 사용은 3회가 아니라 2회로 확정됐고, 세 번째 자리는 v21 §5 가
+다른 형태로 승계했다.** "중간에 끊기면 부분 잔여" 논거는 소멸했다.
+production 코드 변경분 0건 — 2026-08-16 배치는 **Phase 3 EXIT 배선만** 수행했다(§8).
+
+```
+확인 필요  PLAN §11 Phase Checklist 에 `[x] Phase 3 complete (596e7ebf→ab0e4e2d · 48/48 GREEN)` 와
+          `[ ] Phase 3 complete` 가 동시에 있다. 중복 4줄(`[ ] Phase 2/3/4/5`)은 잔존 템플릿으로
+          보이나 판정은 총괄 몫. 이 모순이 이번 배치가 "이미 끝난 일"에 착수한 직접 원인이다.
+확인 필요  product-completeness.tsx 는 production importer 0 (dead file, 승계자 = PendingInfoRow).
+          보류 중인 §0-B amber 8토큰 게이트가 dead file 표면을 잠그고 있다 — CLAUDE.md 302c 가
+          이미 겪은 형태(dead file 세대 잠금 → 은퇴→승계)와 동형. §0-B yellow 확정 배치 착수 전
+          "이 토큰이 살아 있는 표면이 어디냐" 를 먼저 판정할 것.
+```
+
+---
+
+## 8. Phase 3 EXIT 배선 결과 (2026-08-16)
+
+게이트를 **축 3개로 분해**했다. 축 A/B 만 GREEN 이고 축 C 는 미배선이다.
+
+```
+축 A  fixture 자기 무결성 + 비교기 실증        🟢  기존 9 it (무손상)
+      의미하는 것    fixture 내부 정합 · 비교기 탐지력/정밀도
+      의미 못하는 것  시안 정합 · 제품 화면 정합 (둘 다 아님)
+
+축 B  fixture ↔ 시안 실렌더                    🟢  신규 7 it (이번 배선)
+      의미하는 것    fixture 112 가 시안 렌더에 실재 (중복 개수까지 · missing 0 · extra 0)
+      의미 못하는 것  제품 화면 정합 — actual 이 시안이지 제품이 아니다
+
+축 C  fixture ↔ 제품 화면                      ⛔ 미배선
+      §7.6 "적용 지점 = Phase 3/4/5 EXIT · Phase 6" 이 요구하는 축. 아직 없다
+```
+
+총계 9 → **16 GREEN** (refinement 48 포함 **64/64**). +7 은 의도된 증가분 —
+Phase 5 baseline-delta 0 항목에서 승인 주석 대조 대상이다.
+
+### 렌더 실측 (독립 재현)
+
+```
+시안        Desktop\피드백4\소싱 견적 담기 흐름 개선 (단독).html
+sha256      6d98bd270f728714c2055c53beb90f4fd4e72ff65d58fd5e9c897d1e762543f5  ✅ 일치
+엔진        Chromium 1194 (/opt/pw-browsers/chromium-1194/chrome-linux/chrome, playwright install 미사용)
+텍스트노드   126 고정 — 뷰포트 390/1440/1920/3840 전부. 다중집합도 4종 동일(드리프트 0)
+            직전 세션 실측 126(=130 폐기)을 독립 재현
+pageError 0 · consoleError 0
+분리 계상    렌더 126 − fixture 112 = 잔여 14 → `non_ui_nodes` 로 명시 분리
+            (시안 문서 제목·부제·섹션번호·주석). 측정 모집단 축을 fixture 상단에 기재
+산출물      __tests__/fixtures/product-detail-comp.render.json  (신규)
+            source path / sha256 / bytes / engine / extraction / viewports / node counts / 도출일 고정
+```
+
+### 게이트 자기검증 — 5종 변이 전부 RED (§7.6 요구)
+
+```
+렌더 라벨 1건 손상          → RED  (다중집합 대조)
+중복 1건만 제거             → RED  (Set 대조였다면 통과했다)
+노드 1건 삭제               → RED
+뷰포트 카운트 1개 드리프트   → RED
+부분 로딩 (126→60)          → RED  (앵커 위장 방어)
+fixture 측 라벨 1건 손상     → RED  (양방향)
+정상                        → GREEN 64/64 (오탐 0)
+```
+
+축 C 미배선은 **단언으로** 남겼다 —
+`expect(Object.keys(RENDER)).not.toContain("product_render_nodes")`.
+남겨두지 않으면 축 A·B GREEN 이 제품 정합으로 읽힌다.
+
+### 축 C 가 못 된 이유 — 추정 아님
+
+```
+1  §7.6 이 요구하는 "렌더 결과"는 구현된 앱 화면이다. Next 앱 기동 + 시드 제품 필요.
+   sandbox 는 공유 node_modules 설치 금지 · 마운트 FS 45s 타임아웃 · 컨테이너에 repo/DB 없음
+2  fixture 112 중 1b(24)·1c(37)는 /quotes/{rfqId}/prepare · /app/search 표면 = Phase 4/5 산출물.
+   Phase 3 EXIT 에서 축 C 로 잴 수 있는 것은 1a(51) 부분집합뿐
+3  1a 안에도 ₩45,000 · 2026. 5. 12. · Sigma-Tech Korea · 시약 카테고리 거래 4회 같은
+   시드 데이터 종속 라벨이 있어 대조 대상 재분류가 선행돼야 한다
+```
+
+**선결 = "시드 제품 1건 확정 + 데이터 종속 라벨 분리". 별도 배치.**
+지금 축 B 가 GREEN 이라는 사실은 **제품 화면에 대해 아무것도 말하지 않는다.**
 
 ---
 
