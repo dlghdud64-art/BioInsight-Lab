@@ -83,18 +83,39 @@ describe("§refinement 계약② — 체크리스트 6항목 × 역할 분기", 
     expect(LIB).toMatch(/actionKind|ACTION_BY_FIELD|resolveCompletenessAction/);
   });
   it("역할 분기 존재(buyer / ADMIN·SUPPLIER)", () => {
+    // 🛑 은퇴 예정 (c) 중복 보장 — dead file(product-completeness.tsx, importer 0) 대상.
+    //    중복 — 같은 파일 L369 가 PAGE 의 `canEditSpec = role === ADMIN||SUPPLIER` 를 이미 잠금
+    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
     expect(COMP).toMatch(/canEditSpec|canEdit|role/);
   });
   it("buyer 에게 편집 라벨 미노출(권한 밖 3항목 = 정보 요청 수렴)", () => {
+    // 🛑 은퇴 예정 (d) 결정 은퇴 — 3분류 밖(신설) — dead file(product-completeness.tsx, importer 0) 대상.
+    //    결정 은퇴 — v21 §1 로 체크리스트 액션 전면 폐기(buyer 액션 0). 역방향 잠금은 succession b-6
+    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
     expect(COMP).toMatch(/정보 요청/);
+    // 🛑 은퇴 예정 (c) 중복 보장 — dead file(product-completeness.tsx, importer 0) 대상.
+    //    중복 — 같은 파일 L365 가 PAGE `canEditSpec…스펙 편집` 을 이미 잠금
+    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
     expect(COMP).toMatch(/canEdit[\s\S]{0,400}?스펙 편집/);
+    // 🛑 은퇴 예정 (c) 중복 보장 — dead file(product-completeness.tsx, importer 0) 대상.
+    //    중복 — 같은 파일 L365 가 PAGE `canEditSpec…안전 정보 편집` 을 이미 잠금
+    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
     expect(COMP).toMatch(/canEdit[\s\S]{0,400}?안전 정보 편집/);
   });
   it("disabled 버튼 금지(액션 없으면 버튼을 만들지 않는다)", () => {
+    // 🛑 은퇴 예정 (b) 정책 계약 — 재조준 완료 — dead file(product-completeness.tsx, importer 0) 대상.
+    //    재조준 완료 → succession (b-1) 권한 게이트 dead button 0. 구 단언은 다음 배치 삭제
+    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
     expect(COMP_CODE).not.toMatch(/disabled(=\{true\}|\s*[/>])/);
   });
   it("6항목 2열 그리드 + 진행 바", () => {
+    // 🛑 은퇴 예정 (a) 구현 종속 — dead file(product-completeness.tsx, importer 0) 대상.
+    //    구현 종속 — 2열 그리드는 은퇴한 체크리스트의 레이아웃
+    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
     expect(COMP).toMatch(/grid-cols-2/);
+    // 🛑 은퇴 예정 (d) 결정 은퇴 — 3분류 밖(신설) — dead file(product-completeness.tsx, importer 0) 대상.
+    //    결정 은퇴 — 라벨이 `일부 정보 미등록 · 견적·문의 시 안내됩니다` 로 교체. 정책은 succession (b-5) 로 생존
+    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
     expect(COMP).toMatch(/등록이 필요한 정보/);
   });
 });
@@ -232,11 +253,17 @@ const LEGACY_HEX = ["#fbf0db", "#f0dcae", "#92610c", "#dd9011", "#f3e1b5"];
 describe("§refinement 계약⑦ — 프로토타입 amber hex 정합(§0-C)", () => {
   it("§0-B amber 8토큰 전수 사용", () => {
     for (const hex of AMBER_SET) {
+      // 🛑 은퇴 예정 (a) 구현 종속 — dead file(product-completeness.tsx, importer 0) 대상.
+      //    구현 종속 — §0-B 8토큰 루프 본체. 방어는 §amber-token-ratchet(총계 81) 이 승계
+      //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
       expect(COMP).toMatch(new RegExp(hex));
     }
   });
   it("구 완성도 hex 잔존 0(프로토타입 세트로 갱신)", () => {
     for (const hex of LEGACY_HEX) {
+      // 🛑 은퇴 예정 (a) 구현 종속 — dead file(product-completeness.tsx, importer 0) 대상.
+      //    구현 종속 — 구 hex 잔존 0. §amber-token-ratchet 총계 잠금이 승계
+      //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
       expect(COMP_CODE).not.toMatch(new RegExp(hex));
     }
   });
@@ -247,10 +274,16 @@ describe("§refinement 계약⑦ — 프로토타입 amber hex 정합(§0-C)", (
   });
   it("Tailwind amber/orange 클래스 0 유지(app-wide-amber-removed 가드 정합)", () => {
     // ⛔ hex 예외는 승계하되 클래스 금지는 불변. 이 단언을 완화하지 말 것.
+    // 🛑 은퇴 예정 (c) 중복 보장 — dead file(product-completeness.tsx, importer 0) 대상.
+    //    중복 — §11.302d-6d-2 components-amber-removed 가 components/* 전역을 이미 잠금
+    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
     expect(COMP_CODE).not.toMatch(/-amber-\d|-orange-\d/);
     expect(PAGE_CODE).not.toMatch(/-amber-\d|-orange-\d/);
   });
   it("빨강 금지 보존(§11.302)", () => {
+    // 🛑 은퇴 예정 (b) 정책 계약 — 재조준 완료 — dead file(product-completeness.tsx, importer 0) 대상.
+    //    재조준 완료 → succession (b-2) 미등록 표면 red 0
+    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
     expect(COMP_CODE).not.toMatch(/bg-red-|text-red-|border-red-/);
   });
 });
@@ -273,6 +306,9 @@ describe("§refinement — 회귀 0(canonical truth 무접촉)", () => {
     expect(LIB).toMatch(/known \/ total/);
   });
   it("100% 시 배지 숨김 보존", () => {
+    // 🛑 은퇴 예정 (d) 결정 은퇴 — 3분류 밖(신설) — dead file(product-completeness.tsx, importer 0) 대상.
+    //    결정 은퇴 — 완성도 게이지 자체가 buyer 표면에서 은퇴(v21 §1). 승계 조건은 succession (b-5)
+    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
     expect(COMP).toMatch(/if \(pct >= 100\) return null/);
   });
   it("quote-cart 스키마 키 불변", () => {
@@ -339,11 +375,20 @@ describe("§refinement 계약⑧ — D7 위험도 행 · D8 동적 카운트", (
   });
   it("체크리스트에 위험도 행 부재(D7 철회 — 액션 불가능 항목 금지)", () => {
     expect(LIB_CODE).not.toMatch(/HAZARD_ACTION|위험도 분류/);
+    // 🛑 은퇴 예정 (b) 정책 계약 — 재조준 완료 — dead file(product-completeness.tsx, importer 0) 대상.
+    //    재조준 완료 → succession (b-3) 액션 불가 항목(classified) 미노출
+    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
     expect(COMP_CODE).not.toMatch(/classified/);
     expect(PAGE_CODE).not.toMatch(/classified=\{/);
   });
   it("D8: 항목 수 리터럴 하드코딩 금지(프로토타입 6 = 샘플값)", () => {
+    // 🛑 은퇴 예정 (a) 구현 종속 — dead file(product-completeness.tsx, importer 0) 대상.
+    //    구현 종속 — 은퇴한 체크리스트의 항목 수 리터럴
+    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
     expect(COMP_CODE).not.toMatch(/등록이 필요한 정보 \(6\)|등록이 필요한 정보 6개/);
+    // 🛑 은퇴 예정 (d) 결정 은퇴 — 3분류 밖(신설) — dead file(product-completeness.tsx, importer 0) 대상.
+    //    결정 은퇴 — `등록이 필요한 정보 ({length})` 라벨 폐기. 파생 렌더 정책은 succession (b-5)
+    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
     expect(COMP).toMatch(/등록이 필요한 정보 \(\{[\s\S]{0,40}?length\}\)/);
   });
 
@@ -363,6 +408,9 @@ describe("§refinement 계약⑧ — D7 위험도 행 · D8 동적 카운트", (
     expect(PAGE_CODE).not.toMatch(/isAdmin && \(\s*<Button[\s\S]{0,200}?안전 정보 편집/);
   });
   it("COMP: 핸들러 부재 시 button 대신 요청 링크로 폴백(dead button 0 최종 방어)", () => {
+    // 🛑 은퇴 예정 (c) 중복 보장 — dead file(product-completeness.tsx, importer 0) 대상.
+    //    중복 — 바로 위 L365 가 PAGE canEditSpec 게이트로 승계 완료(주석에 이미 명시)
+    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
     expect(COMP).toMatch(/handler\s*\?|!!handler|handler\s*&&|handler\s*!==\s*undefined/);
   });
   /* 🔁 은퇴→승계 — role prop 전달 대신 페이지 스코프 canEditSpec 파생이 단일 출처. */
