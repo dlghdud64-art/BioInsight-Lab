@@ -58,3 +58,4 @@
 *.mp4 binary
 *.webm binary
 *.mov binary
+docs/specs/*.md text eol=lf
