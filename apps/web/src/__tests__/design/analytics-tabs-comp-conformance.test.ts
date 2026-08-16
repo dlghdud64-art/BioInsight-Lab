@@ -17,11 +17,12 @@
  *   │     자기참조 게이트를 만들지 않는다.
  *   │  잠그는 것: fixture 라벨·토큰이 **시안 렌더에 실재**한다(중복 개수까지).
  *   │  잠그지 **못하는** 것: **제품 화면 정합.** actual 은 시안이지 제품이 아니다.
- *   └ 축 C — fixture ↔ 제품 화면 ────────────────────────────── ⛔ **미배선**
- *      §7.6 이 요구하는 것은 **구현된 화면**의 렌더 산출물이다. Next 앱 실행 +
- *      시드 데이터가 필요하며 **본 파일에 없다.** 축 A·B 가 전부 GREEN 이어도
- *      `apps/web/src/app/dashboard/analytics/page.tsx` 는 한 번도 측정되지 않았다.
- *      → 마지막 describe 의 미배선 단언이 그 사실을 잠근다.
+ *   └ 축 C — fixture ↔ 제품 소스 ─── **analytics-tabs-impl-conformance.test.ts** (2026-08-16 배선)
+ *      🔁 2026-08-16 갱신: 축 C 는 배선됐다. `page.tsx` authored 문자열 ↔ fixture
+ *      `expect` 대조 20슬롯 GREEN. **본 파일의 잠금 범위는 그대로다** —
+ *      여기의 actual 은 여전히 시안 렌더뿐이고, 아래 단언은 그 사실을 잠근다.
+ *      ⚠️ 축 C 도 **렌더 박스·정렬은 잠그지 않는다**(입력원이 소스 문자열이다).
+ *         히트 영역 44px · 밑줄 정렬 실측 2건은 세 축 어디에도 없다 — 미완이다.
  *
  * 🛑 **테스트 런타임에 렌더하지 않는다.** `.render.json` 은 `_analytics_comp_probe.mjs`
  *    로 **선도출**한 스냅샷이다. 시안이 바뀌면(source_sha256 변경) 프로브 재실행이
@@ -484,11 +485,11 @@ describe("§analytics-tabs 축 B — md 잠금 2슬롯 명시적 예외", () => 
 });
 
 /* ═══════════════════════════════════════════════════════════════════════
- * ⛔ 축 C — fixture ↔ 제품 화면. **미배선**
+ * ⛔ 이 파일이 잠그지 **못하는** 것 — 축 C 는 별도 파일이 진다
  * ═══════════════════════════════════════════════════════════════════════ */
-describe("§analytics-tabs 축 C — 미배선 단언", () => {
-  it("🛑 축 C 미배선 — 이 파일의 actual 은 시안 렌더뿐이다. 제품 화면 산출물 0건", () => {
-    // 이 단언은 '없음' 을 잠근다. 축 C 배선 시 이 it 을 **실 대조로 교체**할 것.
+describe("§analytics-tabs — 이 파일의 축 경계(제품 산출물 0건)", () => {
+  it("🛑 이 파일의 actual 은 시안 렌더뿐이다 — 제품 산출물 0건(축 C 는 impl 파일이 진다)", () => {
+    // 이 단언은 '없음' 을 잠근다. 축 C 실 대조는 analytics-tabs-impl-conformance.test.ts.
     // 남겨두면 축 A·B GREEN 이 제품 정합으로 오독된다 — §7.6 적용 지점은 **구현 화면**이다.
     expect(Object.keys(RENDER)).not.toContain("product_render_nodes");
     expect(Object.keys(RENDER)).not.toContain("product_source_sha256");
