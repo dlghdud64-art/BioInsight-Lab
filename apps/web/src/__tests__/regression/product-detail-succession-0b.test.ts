@@ -106,33 +106,54 @@ describe("§0-B-succession (b-5) — 미등록 은폐 0 (라벨 은퇴 · 정책
   });
 });
 
-describe("§0-B-succession — 도달성 가드 (해제 대기)", () => {
-  /* 🛑 지금 켜면 RED 2 — `product-detail-refinement` · `product-detail-completeness-pd-b` 가
-   *    아직 dead file 을 읽는다. 그건 **단언이 정확히 작동한다는 증거이지 결함이 아니다.**
+describe("§0-B-succession — 도달성 가드", () => {
+  /* 명제 (2026-08-16 좁힘):
+   *   구  "sentinel 이 read 하는 소스에 importer ≥ 1"
+   *   신  "**활성 it 이 1개 이상인** sentinel 이 read 하는 소스에 importer ≥ 1"
    *
-   *    해제 조건: (a) 7건 + (c) 6건 + (d) 8건 = 21 단언 삭제 배치 완료 후.
-   *              그때 이 it 의 skip 을 떼면 RED 0 이어야 한다.
-   *              (b) 5건은 위 재조준으로 이미 라이브에 승계됨 — 같이 삭제 가능.
+   * 🛑 왜 좁혔나 — 구 명제는 **정책보다 넓었다.**
+   *   정책은 "죽은 표면을 잠그는 **살아 있는** 게이트가 없어야 한다" 인데,
+   *   구 명제는 전량 skip 된 이력 파일까지 RED 로 막았다. skip 은 실행되지 않으므로
+   *   아무것도 잠그지 않는다 — 막을 대상이 아니다.
+   *   → §check-axis-narrower-than-policy 의 **거울상**. 좁아도 새고 넓어도 막힌다.
    *
-   *    2층(`미판정` 문자열)이 아니라 3층(자기무효화)에 가깝게 둔다 —
-   *    해제 조건이 코드로 판별된다: 아래 SENTINELS 의 dead 참조가 0 이 되는 시점이다. */
+   * 🛑 화이트리스트를 쓰지 않는다. 예외 목록은 유지 대상이 되고 낡는다.
+   *   "활성 it 0" 은 파일에서 정적으로 읽히므로, product-detail-retired-v21 에서
+   *   skip 을 하나라도 떼면 그 파일이 **자동으로** 검사 대상이 되고 RED 가 난다. */
   const SENTINELS = [
     "__tests__/regression/product-detail-refinement.test.ts",
     "__tests__/regression/product-detail-completeness-pd-b.test.ts",
+    "__tests__/regression/product-detail-retired-v21.test.ts",
+    "__tests__/regression/product-detail-succession-0b.test.ts",
   ];
 
-  it.skip("sentinel 이 읽는 소스는 importer ≥ 1 이어야 한다(dead 표면 잠금 금지)", async () => {
-    const { buildGraph, rel } = await import("../_helpers/import-graph");
+  /** 활성 it = `it(` / `test(` 중 `.skip` · `.todo` 가 아닌 것 */
+  const activeIts = (src: string) =>
+    (src.match(/(?<![.\w])(?:it|test)\s*(?:\.\w+)?\s*\(/g) ?? []).filter(
+      (m) => !/\.(skip|todo)/.test(m),
+    ).length;
+
+  it("활성 sentinel 이 읽는 소스는 importer ≥ 1 (dead 표면 잠금 금지)", async () => {
+    const { buildGraph, rel, isTestFile } = await import("../_helpers/import-graph");
     const g = buildGraph();
     const dead: string[] = [];
     for (const s of SENTINELS) {
       const src = root(s);
+      if (activeIts(src) === 0) continue; // 이력 파일 — 잠그지 않으므로 검사 대상 아님
       for (const m of src.matchAll(/root\("([^"]+)"\)/g)) {
+        // 🛑 대상 축은 **소스 표면**이다. sentinel 이 다른 sentinel 을 읽는 것은
+        //    잠금이 아니라 메타 검사다(바로 아래 자기무효화 앵커가 그렇게 읽는다).
+        //    빼지 않으면 가드가 자기를 잡는다 — 2026-08-16 실측으로 걸렸다.
+        if (isTestFile(m[1])) continue;
         const target = g.files.find((f) => rel(f) === m[1]);
         if (target && !g.isLive(target)) dead.push(`${s} → ${m[1]}`);
       }
     }
     expect({ dead표면_참조: dead }).toEqual({ dead표면_참조: [] });
+  });
+
+  it("이력 파일은 활성 it 0 이다 — 자기무효화 앵커", () => {
+    expect(activeIts(root("__tests__/regression/product-detail-retired-v21.test.ts"))).toBe(0);
   });
 });
 
