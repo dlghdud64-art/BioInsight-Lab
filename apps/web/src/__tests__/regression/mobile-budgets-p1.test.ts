@@ -107,9 +107,44 @@ describe("§mobile-budgets P1 — 8a 지출 분석 모바일", () => {
     expect(src).toMatch(/소싱에서 시작/); // 데스크톱 CTA 보존
   });
 
-  it("탭 칩 페이드 힌트(모바일)", () => {
+  /* 🔁 은퇴→승계 (§analytics-tabs S10 · 2026-08-16 호영님 승인)
+   *
+   *   구 계약: 탭 행이 가로 스크롤되므로 **페이드 span 으로 잘림을 힌트**한다
+   *            (`bg-gradient-to-l from-canvas` + `overflow-x-auto scrollbar-hide`).
+   *   신 계약: 탭 행이 **애초에 안 잘린다**. 스크롤이 없으니 힌트할 대상도 없다.
+   *
+   *   정책("모바일 탭 행이 잘리지 않는다")은 **불변**이다. 수단만 뒤집혔다 —
+   *   스크롤+힌트 → 비스크롤 레이아웃. 그래서 삭제가 아니라 **역계약 승계**다.
+   *   그냥 지웠으면 회귀 방어가 0 이 된다(302c·302d-1 은퇴→승계 선례).
+   *
+   *   전제 실측(fixture 1b `_여유_실측`, 추정치 아님):
+   *     탭 행 실폭 262px(`누적 시` 배지 포함) · 375px 뷰포트 가용 343px(p-4 좌우 32 제외)
+   *     여유 81px → overflow 0. 기준은 md QA 의 390px 이 아니라
+   *     CLAUDE.md Mobile Patterns §2 "375px 기준" — 더 엄격한 쪽으로 재도 통과.
+   *   같은 산술이 `팀별 보기` 데스크톱 전용을 뒷받침한다:
+   *     4번째 탭 필요폭 ≈ 68 + gap 22 = 90px > 여유 81px → 모바일 4탭은 실제로 넘친다. */
+  it("탭 행 비스크롤 레이아웃 — 페이드 힌트 은퇴(§analytics-tabs S10 승계)", () => {
     const src = read(ANALYTICS);
-    expect(src).toMatch(/bg-gradient-to-l from-canvas/);
+
+    // 탭 행만 잘라낸다 — 1012·1022·1317·1455 의 타 섹션 overflow 는 무손상이어야 한다
+    const from = src.indexOf('role="tablist"');
+    const to = src.indexOf("액션 행", from);
+    expect(from).toBeGreaterThan(-1);
+    expect(to).toBeGreaterThan(from);
+    const tabRow = src.slice(from, to);
+
+    // ① 페이드 span 0 (구 계약 역전)
+    expect(src).not.toMatch(/bg-gradient-to-l from-canvas/);
+    // ② 탭 행에 스크롤 0 — 잘리지 않으므로 스크롤 컨테이너가 필요 없다
+    expect(tabRow).not.toMatch(/overflow-x-auto|scrollbar-hide|snap-x/);
+    // ③ 탭 행 자식은 tabs.map() 산출물만 — 액션 버튼이 도로 들어오면 폭이 넘친다
+    expect((tabRow.match(/<button/g) ?? []).length).toBe(1);
+    expect(tabRow).toMatch(/tabs\.map\(/);
+  });
+
+  it("타 섹션 가로 스크롤은 무손상(S10 범위 밖)", () => {
+    const src = read(ANALYTICS);
+    expect((src.match(/overflow-x-auto/g) ?? []).length).toBe(4);
   });
 
   it("분석 미리보기 접힌 행 3(소진율·의존도·이상 감지)", () => {

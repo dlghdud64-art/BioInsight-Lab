@@ -72,8 +72,43 @@ describe("§11.244 #6 — AI 리포트 button disabled + tooltip", () => {
     expect(page).toMatch(/(dataInsufficient|hasNoData|aiButtonDisabled|noAnalyticsData)/);
   });
 
-  it("AI 리포트 button — tooltip 텍스트 ('최소 1건의 완료된 발주')", () => {
-    expect(page).toMatch(/(리포트 생성에 최소|최소 1건|완료된 발주 데이터가 필요)/);
+  /* 🔁 앵커 이동 (§analytics-tabs S9 · S16 · 2026-08-16 호영님 승인)
+   *
+   *   구 단언은 **문안에 핀**돼 있었다 — `/리포트 생성에 최소|최소 1건|…/`.
+   *   S9 가 표현을 `완료된 발주 1건 이상 필요` 로 바꾸자 정책은 그대로인데 RED 가 났다.
+   *   문안을 새 문자열로 갈아끼우면 **같은 드리프트가 다음에 또 난다** — 원인이
+   *   표현이 아니라 앵커 위치이기 때문이다.
+   *
+   *   S9 는 title 툴팁을 지우고 **가시 텍스트 + aria-describedby** 로 승격시켰다.
+   *   툴팁보다 강한 계약이므로 앵커를 그쪽으로 옮긴다:
+   *     ① disabled 배선  ② 사유 연결 존재  ③ 사유 문안 **부분**매칭  ④ 툴팁 의존 0
+   *   ③으로 문안 진화를 흡수하고 ①②④로 정책·배선을 잠근다. */
+  it("AI 리포트 비활성 사유 — 툴팁이 아니라 가시 텍스트 + aria-describedby", () => {
+    // ① 정책 배선 — 데이터 부족이 disabled 를 만든다.
+    //    🛑 `aria-` 를 제외해야 한다. `aria-disabled=` 가 `disabled=` 를 문자열로 포함해서,
+    //       빼면 실 disabled 가 끊겨도 aria 쪽이 대신 매칭돼 GREEN 이 뜬다(프로브로 실측).
+    expect(page).toMatch(/(?<!aria-)disabled=\{[^}]*dataInsufficient/);
+    expect(page).toMatch(/aria-disabled=\{[^}]*dataInsufficient/); // S16 — 둘 다 요구
+
+    // ② 사유 연결 — 버튼과 사유 노드가 id 로 묶인다(모바일·데스크톱 variant 분기)
+    expect(page).toMatch(/aria-describedby=\{[\s\S]{0,80}?ai-report-reason-\$\{variant\}/);
+    expect(page).toMatch(/id=\{`ai-report-reason-\$\{variant\}`\}/);
+
+    // ③ 사유 문안 — 부분매칭만. 표현이 진화해도 정책이 남아 있으면 통과한다
+    const reason = page.slice(page.indexOf("ai-report-reason-${variant}`}"));
+    expect(reason).toMatch(/완료된 발주/);
+    expect(reason).toMatch(/1건/);
+
+    // ④ S9 역계약 — AI 리포트 버튼은 title 툴팁에 의존하지 않는다
+    //    (1220·1282 의 truncate 보조 title 은 무관 — 버튼 블록만 본다)
+    //    🛑 창을 `aria-describedby` 부터 열면 **여는 태그 앞부분이 창 밖**이라
+    //       title 이 그 앞에 붙으면 못 잡는다(프로브로 실측). `<button` 부터 연다.
+    const anchor = page.indexOf("aria-describedby=");
+    expect(anchor).toBeGreaterThan(-1);
+    const btnFrom = page.lastIndexOf("<button", anchor);
+    const btnTo = page.indexOf("</button>", anchor);
+    expect(btnFrom).toBeGreaterThan(-1);
+    expect(page.slice(btnFrom, btnTo)).not.toMatch(/title=/);
   });
 });
 

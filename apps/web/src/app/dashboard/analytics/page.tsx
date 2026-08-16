@@ -267,6 +267,10 @@ export default function AnalyticsPage() {
     const d = new Date(it.date);
     return Date.now() - d.getTime() < 90 * 86400000;
   }).length;
+  // §analytics-tabs S5/A1 — 이상 지출 감지 활성 조건(canonical). 빈 상태 문구
+  //   (recent90dCount >= 10) 와 동일 derive 재사용 — 탭 톤/배지가 탭 내부 안내와
+  //   어긋나지 않게 단일 근거로 잠근다.
+  const anomalyActive = recent90dCount >= 10;
 
   // 이상 지출
   const anomalies = useMemo(() => {
@@ -401,11 +405,47 @@ export default function AnalyticsPage() {
   const [budgetSheetOpen, setBudgetSheetOpen] = useState(false);
 
   // ── Tab 구성 ──
-  const tabs: { id: AnalyticsTab; label: string; isButton?: boolean }[] = [
+  const tabs: { id: AnalyticsTab; label: string; isButton?: boolean; desktopOnly?: boolean }[] = [
     { id: "overview", label: "종합 현황" },
     { id: "vendor", label: "공급사 의존도" },
     { id: "anomaly", label: "이상 지출 감지" },
+    // §analytics-tabs S13 — dead branch 해소. type/렌더(<TeamAnalyticsView />) 는
+    //   이미 있으나 tabs 에 없어 activeTab="team" 진입 경로 0 이었다.
+    //   모바일은 4탭 시 390px 가로 초과 → 데스크톱(sm+) 전용 노출.
+    { id: "team", label: "팀별 보기", desktopOnly: true },
   ];
+
+  // §analytics-tabs S6~S9 · S11 — AI 액션 2개. 모바일=탭 아래 별도 행 / 데스크톱=헤더 우측.
+  //   두 슬롯이 같은 handler·토큰을 쓰도록 단일 정의에서 렌더 (drift 0).
+  const aiReportActions = (variant: "mobile" | "desktop") => (
+    <>
+      <button
+        onClick={() => setReportModalOpen(true)}
+        className="relative h-[42px] inline-flex items-center justify-center gap-1.5 rounded-lg border border-[#e2e8f0] bg-white text-[#475569] text-sm font-semibold shadow-sm transition-colors hover:bg-el hover:text-slate-800 whitespace-nowrap touch-manipulation active:scale-95 px-3 sm:px-4 after:absolute after:inset-x-0 after:top-1/2 after:h-11 after:-translate-y-1/2 after:content-['']"
+      >
+        <FileText className="h-3.5 w-3.5" />
+        AI 리포트 예시
+      </button>
+      <button
+        onClick={runAiAnalysis}
+        disabled={aiLoading || dataInsufficient}
+        aria-disabled={aiLoading || dataInsufficient}
+        aria-describedby={dataInsufficient ? `ai-report-reason-${variant}` : undefined}
+        className="relative h-[42px] inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 text-white text-sm font-semibold shadow-sm transition-colors hover:bg-blue-700 disabled:bg-[#e2e8f0] disabled:text-[#94a3b8] disabled:shadow-none disabled:cursor-not-allowed whitespace-nowrap touch-manipulation active:scale-95 px-3 sm:px-4 after:absolute after:inset-x-0 after:top-1/2 after:h-11 after:-translate-y-1/2 after:content-['']"
+      >
+        {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+        AI 리포트 생성
+      </button>
+    </>
+  );
+
+  // §analytics-tabs S9 · S16 — 비활성 사유 인라인 1줄(우측 정렬). title 툴팁 대체.
+  const aiReportReason = (variant: "mobile" | "desktop") =>
+    dataInsufficient ? (
+      <p id={`ai-report-reason-${variant}`} className="text-[11px] leading-tight text-right text-[#94a3b8]">
+        AI 리포트 생성 · 완료된 발주 1건 이상 필요
+      </p>
+    ) : null;
 
   return (
     <div className="w-full bg-canvas min-h-screen">
@@ -423,53 +463,64 @@ export default function AnalyticsPage() {
               예산 소진, 공급사 의존도, 이상 지출 신호를 확인합니다.
             </p>
           </div>
+          {/* §11.244 #6 — 호영님 P0: 데이터 부족 시 AI 리포트 disabled.
+              dataInsufficient = !hasMonthlyData (월별 지출 0건 시). aiLoading 과
+              OR 처리 → 데이터 없을 때 mutation 호출 자체 차단.
+              §analytics-ai-report-sian — "AI 리포트 예시" 는 예시 미리보기 모달
+              오픈(dead button 아님). 기존 "AI 리포트 생성"(실 endpoint) 과 별개.
+              §analytics-tabs S11 — 데스크톱(sm+): 액션 2개는 헤더 우측. 탭 행 밖. */}
+          <div className="hidden sm:flex sm:flex-col sm:items-end gap-1 shrink-0">
+            <div className="flex items-center gap-2">
+              {aiReportActions("desktop")}
+            </div>
+            {aiReportReason("desktop")}
+          </div>
         </div>
 
-        {/* ── 탭 네비게이션 ── */}
-        <div className="relative">
-        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap touch-manipulation active:scale-95 ${
-                activeTab === tab.id
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "bg-pn border border-bd text-slate-500 hover:text-slate-700 hover:bg-el"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-          {/* §11.244 #6 — 호영님 P0: 데이터 부족 시 AI 리포트 disabled + tooltip.
-              dataInsufficient = !hasMonthlyData (월별 지출 0건 시). aiLoading 과
-              OR 처리 → 데이터 없을 때 mutation 호출 자체 차단. */}
-          {/* §analytics-ai-report-sian — 호영님 P1 "리포트 예시 명시".
-              실 endpoint 부재 → "예시 미리보기" 모달만 오픈 (dead button 아님:
-              실제 모달 노출 동작). 기존 "AI 리포트 생성"(실 endpoint) 과 별개. */}
-          <button
-            onClick={() => setReportModalOpen(true)}
-            className="px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold bg-pn border border-bd text-slate-600 hover:bg-el hover:text-slate-800 shadow-sm transition-colors flex items-center gap-1.5 ml-auto whitespace-nowrap touch-manipulation active:scale-95"
-          >
-            <FileText className="h-3.5 w-3.5" />
-            AI 리포트 예시
-          </button>
-          <button
-            onClick={runAiAnalysis}
-            disabled={aiLoading || dataInsufficient}
-            title={
-              dataInsufficient
-                ? "리포트 생성에 최소 1건의 완료된 발주 데이터가 필요합니다"
-                : undefined
-            }
-            className="px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1.5 whitespace-nowrap touch-manipulation active:scale-95"
-          >
-            {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-            AI 리포트 생성
-          </button>
+        {/* ── 탭 네비게이션 — §analytics-tabs S1~S5 · S12 · S14 · S15 ──
+            밑줄형(칩 폐기 — 필터로 오인). 뷰 전환 전용(버튼 0). overflow 스크롤 없음. */}
+        <div
+          role="tablist"
+          aria-label="지출 분석 보기 전환"
+          className="flex items-end gap-[22px] border-b border-[#e2e8f0]"
+        >
+          {tabs.map((tab) => {
+            const selected = activeTab === tab.id;
+            const noData = tab.id === "anomaly" && !anomalyActive;
+            return (
+              <button
+                key={tab.id}
+                role="tab"
+                aria-selected={selected}
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative -mb-px inline-flex items-center gap-1.5 whitespace-nowrap pb-2 text-[13.5px] transition-colors touch-manipulation after:absolute after:inset-x-0 after:top-1/2 after:h-11 after:-translate-y-1/2 after:content-[''] ${
+                  tab.desktopOnly ? "hidden sm:inline-flex" : ""
+                } ${
+                  selected
+                    ? "border-b-[2.5px] border-[#2563eb] font-bold text-[#0f172a]"
+                    : noData
+                      ? "font-medium text-[#94a3b8] hover:text-[#64748b]"
+                      : "font-medium text-[#64748b] hover:text-[#0f172a]"
+                }`}
+              >
+                {tab.label}
+                {noData ? (
+                  <span className="rounded-full bg-[#f1f5f9] px-1.5 py-[1.5px] text-[9.5px] font-bold leading-none text-[#94a3b8]">
+                    누적 시
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
         </div>
-        {/* §mobile-budgets §3 — 탭 칩 잘림 우측 페이드 힌트(모바일) */}
-        <span className="md:hidden pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-canvas to-transparent" aria-hidden />
+
+        {/* ── 액션 행 — §analytics-tabs S6~S9 (모바일 전용) ──
+            탭 행에서 분리한 2열 그리드. 비활성 사유는 툴팁이 아니라 인라인 1줄. */}
+        <div className="sm:hidden space-y-1">
+          <div className="grid grid-cols-2 gap-2">
+            {aiReportActions("mobile")}
+          </div>
+          {aiReportReason("mobile")}
         </div>
       </div>
 
