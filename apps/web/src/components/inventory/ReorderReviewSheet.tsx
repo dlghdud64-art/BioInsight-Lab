@@ -20,7 +20,7 @@
  *   - overrideReasons(소프트 게이트 진행): 시트 표기 + 견적 초안 reason 전파(결정 기록)
  *   - 예상 금액·CTA 수량 = 스테퍼 qty (§11.310 estimatedAmount 정의 supersede)
  *   - CTA 재구성: 견적 요청 초안 만들기(primary) / 바로 발주(green, flag 게이팅 유지) /
- *     공급사 소싱에서 찾기(outline, 기존 onSearchVendors 재사용)
+ *     공급사 소싱에서 먼저 찾기(outline, 기존 onSearchVendors 재사용)
  *   - overlay "!top-14" — scrim이 fixed 헤더를 덮지 않음
  *
  * 색상:
@@ -487,7 +487,7 @@ export function ReorderReviewSheet({
               className="w-full h-11 min-h-[44px] text-sm border-slate-300 text-slate-700"
             >
               <Search className="h-4 w-4 mr-1.5" />
-              공급사 소싱에서 찾기
+              공급사 소싱에서 먼저 찾기
             </Button>
           )}
           {/* §inventory-reorder-surface-unify P3b — 발주 OFF 정직 사유(dead button 아님, 견적 요청은 live). */}
