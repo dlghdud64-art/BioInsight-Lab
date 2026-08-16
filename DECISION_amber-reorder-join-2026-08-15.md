@@ -133,6 +133,37 @@
 해제    ②-b 배치 완료 시 — §0-B 를 yellow 로 확정한 뒤 새 토큰 기준으로 재잠금.
 ```
 
+### 🔁 2026-08-16 갱신 — 이 보류의 전제가 틀렸다
+
+**앵커가 dead 였다.** `product-completeness.tsx` 는 importer 0 — 이 게이트는
+보류 여부와 무관하게 **아무것도 잠그고 있지 않았다.** 8토큰 계약을 질 수 있는
+라이브 표면은 **0건**(라이브 최다 4종)이라 302c 식 재앵커도 불가능했다.
+
+```
+① §0-B 파일 계약        은퇴 (앵커 소멸 + 승계 대상 0)
+② 방어 범위 승계        §amber-token-ratchet — 파일 축 → **토큰 축** 전역
+                        baseline 라이브 24파일 / 81건. 증가 RED · 감소도 RED
+③ 정책                  불변 — amber 금지 · yellow=주의 · 위험=red · 정상=emerald
+```
+
+🛑 **부수 발견 — 기존 amber-removed sentinel 4건이 hex 를 안 보고 있었다.**
+   정책은 "amber 금지" 인데 검사는 "amber **클래스** 금지" 였다(302d6d3 주석이
+   `chart palette hex 는 sweep 무관(보존)` 이라 스스로 적고 있다). hex **78건**이
+   4건 전부 GREEN 인 채로 통과했다. → §check-axis-narrower-than-policy 등재.
+
+```
+해제 조건 (구)  §0-B yellow 확정
+해제 조건 (신)  ① 토큰 축 ratchet 배선 완료          ✅ f4dc3c61 (2026-08-16)
+                ② (a)(c) 삭제 + 도달성 가드 해제      ⏸ 진행 중 — 아래 잔여 참조
+                ③ §0-B yellow 확정                    ⏸ 미착수
+```
+
+**②의 잔여**: (a)7·(c)6 삭제 완료(a880e850 계열). 그러나 도달성 가드(importer ≥ 1)는
+아직 RED 2 — `product-detail-refinement` · `product-detail-completeness-pd-b` 의
+**모듈 스코프 `const COMP = root(dead)` 선언**이 남아서다. (b)5·(d)8 단언이 그 선언을
+계속 쓴다. **(d)를 보존하라는 결정과 가드를 켜라는 결정이 구조적으로 충돌한다** —
+보존하면 참조가 남고, 참조가 남으면 가드가 RED 다. 해소안은 §0-B-succession 회신 참조.
+
 ### 🛑 보류에 붙는 조건
 
 **보류는 무기한이 아니다.** 해제 조건(§0-B yellow 확정)을 카드에 같이 적지

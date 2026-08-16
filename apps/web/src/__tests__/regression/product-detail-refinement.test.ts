@@ -82,25 +82,14 @@ describe("§refinement 계약② — 체크리스트 6항목 × 역할 분기", 
   it("액션 매핑이 파생 계층에 존재(컴포넌트 하드코딩 금지)", () => {
     expect(LIB).toMatch(/actionKind|ACTION_BY_FIELD|resolveCompletenessAction/);
   });
-  it("역할 분기 존재(buyer / ADMIN·SUPPLIER)", () => {
-    // 🛑 은퇴 예정 (c) 중복 보장 — dead file(product-completeness.tsx, importer 0) 대상.
-    //    중복 — 같은 파일 L369 가 PAGE 의 `canEditSpec = role === ADMIN||SUPPLIER` 를 이미 잠금
-    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
-    expect(COMP).toMatch(/canEditSpec|canEdit|role/);
-  });
-  it("buyer 에게 편집 라벨 미노출(권한 밖 3항목 = 정보 요청 수렴)", () => {
+  // 🔁 (d) 결정 은퇴 — v21 §1(2026-08-09 호영님 승인)이 이 계약을 뒤집었다.
+  //    삭제하지 않는다: 이력이고, §0-B-succession b-5·b-6 의 근거다.
+  //    skip 인 이유 — dead file 대상이라 통과해도 방어력 0. 정책은 succession 이 라이브로 진다.
+  it.skip("권한 밖 항목이 정보 요청으로 수렴 (편집 라벨 단언 2건은 PAGE 로 승계·삭제됨)", () => {
     // 🛑 은퇴 예정 (d) 결정 은퇴 — 3분류 밖(신설) — dead file(product-completeness.tsx, importer 0) 대상.
     //    결정 은퇴 — v21 §1 로 체크리스트 액션 전면 폐기(buyer 액션 0). 역방향 잠금은 succession b-6
     //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
     expect(COMP).toMatch(/정보 요청/);
-    // 🛑 은퇴 예정 (c) 중복 보장 — dead file(product-completeness.tsx, importer 0) 대상.
-    //    중복 — 같은 파일 L365 가 PAGE `canEditSpec…스펙 편집` 을 이미 잠금
-    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
-    expect(COMP).toMatch(/canEdit[\s\S]{0,400}?스펙 편집/);
-    // 🛑 은퇴 예정 (c) 중복 보장 — dead file(product-completeness.tsx, importer 0) 대상.
-    //    중복 — 같은 파일 L365 가 PAGE `canEditSpec…안전 정보 편집` 을 이미 잠금
-    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
-    expect(COMP).toMatch(/canEdit[\s\S]{0,400}?안전 정보 편집/);
   });
   it("disabled 버튼 금지(액션 없으면 버튼을 만들지 않는다)", () => {
     // 🛑 은퇴 예정 (b) 정책 계약 — 재조준 완료 — dead file(product-completeness.tsx, importer 0) 대상.
@@ -108,11 +97,10 @@ describe("§refinement 계약② — 체크리스트 6항목 × 역할 분기", 
     //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
     expect(COMP_CODE).not.toMatch(/disabled(=\{true\}|\s*[/>])/);
   });
-  it("6항목 2열 그리드 + 진행 바", () => {
-    // 🛑 은퇴 예정 (a) 구현 종속 — dead file(product-completeness.tsx, importer 0) 대상.
-    //    구현 종속 — 2열 그리드는 은퇴한 체크리스트의 레이아웃
-    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
-    expect(COMP).toMatch(/grid-cols-2/);
+  // 🔁 (d) 결정 은퇴 — v21 §1(2026-08-09 호영님 승인)이 이 계약을 뒤집었다.
+  //    삭제하지 않는다: 이력이고, §0-B-succession b-5·b-6 의 근거다.
+  //    skip 인 이유 — dead file 대상이라 통과해도 방어력 0. 정책은 succession 이 라이브로 진다.
+  it.skip("미등록 목록 노출 (2열 그리드 단언은 구현 종속으로 삭제됨)", () => {
     // 🛑 은퇴 예정 (d) 결정 은퇴 — 3분류 밖(신설) — dead file(product-completeness.tsx, importer 0) 대상.
     //    결정 은퇴 — 라벨이 `일부 정보 미등록 · 견적·문의 시 안내됩니다` 로 교체. 정책은 succession (b-5) 로 생존
     //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
@@ -237,36 +225,10 @@ describe("§refinement 계약⑥ — 규제 포털 축소", () => {
  *   금지 대상은 Tailwind amber/orange **클래스** — 이건 계속 0개여야 한다.
  *   대비: 텍스트 4.75~8.75 전부 AA / 바 fill 3.07 비텍스트 통과(§0-C).
  * ───────────────────────────────────────────────────────────── */
-const AMBER_SET = [
-  "#fffbeb", // 카드 bg (amber-50)
-  "#fde68a", // 카드 border (amber-200)
-  "#92400e", // 제목·퍼센트 (amber-800) 6.84
-  "#fef3c7", // 진행 바 track (amber-100)
-  "#d97706", // 진행 바 fill (amber-600) 3.07
-  "#78350f", // 항목 텍스트 (amber-900) 8.75
-  "#b45309", // 불릿·액션 라벨 (amber-700) 4.84
-  "#a16207", // 하단 안내문 (yellow-700) 4.75
-];
 // 구 완성도 토큰 — 프로토타입 세트로 갱신되어 잔존 0 이어야 한다.
 const LEGACY_HEX = ["#fbf0db", "#f0dcae", "#92610c", "#dd9011", "#f3e1b5"];
 
 describe("§refinement 계약⑦ — 프로토타입 amber hex 정합(§0-C)", () => {
-  it("§0-B amber 8토큰 전수 사용", () => {
-    for (const hex of AMBER_SET) {
-      // 🛑 은퇴 예정 (a) 구현 종속 — dead file(product-completeness.tsx, importer 0) 대상.
-      //    구현 종속 — §0-B 8토큰 루프 본체. 방어는 §amber-token-ratchet(총계 81) 이 승계
-      //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
-      expect(COMP).toMatch(new RegExp(hex));
-    }
-  });
-  it("구 완성도 hex 잔존 0(프로토타입 세트로 갱신)", () => {
-    for (const hex of LEGACY_HEX) {
-      // 🛑 은퇴 예정 (a) 구현 종속 — dead file(product-completeness.tsx, importer 0) 대상.
-      //    구현 종속 — 구 hex 잔존 0. §amber-token-ratchet 총계 잠금이 승계
-      //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
-      expect(COMP_CODE).not.toMatch(new RegExp(hex));
-    }
-  });
   it("상세 페이지에서 MSDS 배너 hex 동반 소멸(배너 삭제 결과)", () => {
     for (const hex of ["#fbf0db", "#f0dcae"]) {
       expect(PAGE_CODE).not.toMatch(new RegExp(hex));
@@ -274,10 +236,6 @@ describe("§refinement 계약⑦ — 프로토타입 amber hex 정합(§0-C)", (
   });
   it("Tailwind amber/orange 클래스 0 유지(app-wide-amber-removed 가드 정합)", () => {
     // ⛔ hex 예외는 승계하되 클래스 금지는 불변. 이 단언을 완화하지 말 것.
-    // 🛑 은퇴 예정 (c) 중복 보장 — dead file(product-completeness.tsx, importer 0) 대상.
-    //    중복 — §11.302d-6d-2 components-amber-removed 가 components/* 전역을 이미 잠금
-    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
-    expect(COMP_CODE).not.toMatch(/-amber-\d|-orange-\d/);
     expect(PAGE_CODE).not.toMatch(/-amber-\d|-orange-\d/);
   });
   it("빨강 금지 보존(§11.302)", () => {
@@ -305,7 +263,10 @@ describe("§refinement — 회귀 0(canonical truth 무접촉)", () => {
     expect(LIB).toMatch(/applicableFields\(/);
     expect(LIB).toMatch(/known \/ total/);
   });
-  it("100% 시 배지 숨김 보존", () => {
+  // 🔁 (d) 결정 은퇴 — v21 §1(2026-08-09 호영님 승인)이 이 계약을 뒤집었다.
+  //    삭제하지 않는다: 이력이고, §0-B-succession b-5·b-6 의 근거다.
+  //    skip 인 이유 — dead file 대상이라 통과해도 방어력 0. 정책은 succession 이 라이브로 진다.
+  it.skip("100% 시 배지 숨김 보존", () => {
     // 🛑 은퇴 예정 (d) 결정 은퇴 — 3분류 밖(신설) — dead file(product-completeness.tsx, importer 0) 대상.
     //    결정 은퇴 — 완성도 게이지 자체가 buyer 표면에서 은퇴(v21 §1). 승계 조건은 succession (b-5)
     //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
@@ -381,11 +342,10 @@ describe("§refinement 계약⑧ — D7 위험도 행 · D8 동적 카운트", (
     expect(COMP_CODE).not.toMatch(/classified/);
     expect(PAGE_CODE).not.toMatch(/classified=\{/);
   });
-  it("D8: 항목 수 리터럴 하드코딩 금지(프로토타입 6 = 샘플값)", () => {
-    // 🛑 은퇴 예정 (a) 구현 종속 — dead file(product-completeness.tsx, importer 0) 대상.
-    //    구현 종속 — 은퇴한 체크리스트의 항목 수 리터럴
-    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
-    expect(COMP_CODE).not.toMatch(/등록이 필요한 정보 \(6\)|등록이 필요한 정보 6개/);
+  // 🔁 (d) 결정 은퇴 — v21 §1(2026-08-09 호영님 승인)이 이 계약을 뒤집었다.
+  //    삭제하지 않는다: 이력이고, §0-B-succession b-5·b-6 의 근거다.
+  //    skip 인 이유 — dead file 대상이라 통과해도 방어력 0. 정책은 succession 이 라이브로 진다.
+  it.skip("D8: 항목 수 리터럴 하드코딩 금지(프로토타입 6 = 샘플값)", () => {
     // 🛑 은퇴 예정 (d) 결정 은퇴 — 3분류 밖(신설) — dead file(product-completeness.tsx, importer 0) 대상.
     //    결정 은퇴 — `등록이 필요한 정보 ({length})` 라벨 폐기. 파생 렌더 정책은 succession (b-5)
     //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
@@ -406,12 +366,6 @@ describe("§refinement 계약⑧ — D7 위험도 행 · D8 동적 카운트", (
     expect(PAGE).toMatch(/canEditSpec[\s\S]{0,400}?안전 정보 편집/);
     expect(PAGE).toMatch(/canEditSpec[\s\S]{0,400}?SDS 업로드/);
     expect(PAGE_CODE).not.toMatch(/isAdmin && \(\s*<Button[\s\S]{0,200}?안전 정보 편집/);
-  });
-  it("COMP: 핸들러 부재 시 button 대신 요청 링크로 폴백(dead button 0 최종 방어)", () => {
-    // 🛑 은퇴 예정 (c) 중복 보장 — dead file(product-completeness.tsx, importer 0) 대상.
-    //    중복 — 바로 위 L365 가 PAGE canEditSpec 게이트로 승계 완료(주석에 이미 명시)
-    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
-    expect(COMP).toMatch(/handler\s*\?|!!handler|handler\s*&&|handler\s*!==\s*undefined/);
   });
   /* 🔁 은퇴→승계 — role prop 전달 대신 페이지 스코프 canEditSpec 파생이 단일 출처. */
   it("canEditSpec 이 role 에서 파생(전원 buyer 고정 회귀 0)", () => {
