@@ -33,7 +33,7 @@ const root = (rel: string) => readFileSync(join(__dirname, "..", "..", rel), "ut
  *              `비교에 포함됨`/`견적함에 포함됨`(3b).
  *
  *   → **부정 단언(not.toMatch)은 반드시 `*_CODE`(주석 제거본)에 건다.**
- *      긍정 단언은 원본(`PAGE`/`COMP`/…)을 써도 무방하다.
+ *      긍정 단언은 원본(`PAGE`/`LIB`/…)을 써도 무방하다.
  *      이제 주석은 "무엇을 왜 지웠는지" 를 계약 문구 그대로 적어도 안전하다.
  */
 const stripComments = (src: string) =>
@@ -41,14 +41,12 @@ const stripComments = (src: string) =>
     .replace(/\/\*[\s\S]*?\*\//g, "") // 블록 주석 + JSX {/* ... */}
     .replace(/^[ \t]*\/\/.*$/gm, ""); // 행 선두 라인 주석(URL 의 // 는 보존)
 const PAGE = root("app/products/[id]/page.tsx");
-const COMP = root("components/products/product-completeness.tsx");
 const LIB = root("lib/product-detail/completeness.ts");
 const CART = root("lib/quote/quote-cart-storage.ts");
 const SAFETY = root("lib/utils/safety-visualization.ts");
 
 /** 부정 단언 전용 — 주석 제거본. 삭제 대상 문구를 주석에 자유롭게 적을 수 있게 한다. */
 const PAGE_CODE = stripComments(PAGE);
-const COMP_CODE = stripComments(COMP);
 const LIB_CODE = stripComments(LIB);
 const CART_CODE = stripComments(CART);
 const SAFETY_CODE = stripComments(SAFETY);
@@ -81,30 +79,6 @@ describe("§refinement 계약① — removeFromQuoteCart 실 mutation", () => {
 describe("§refinement 계약② — 체크리스트 6항목 × 역할 분기", () => {
   it("액션 매핑이 파생 계층에 존재(컴포넌트 하드코딩 금지)", () => {
     expect(LIB).toMatch(/actionKind|ACTION_BY_FIELD|resolveCompletenessAction/);
-  });
-  // 🔁 (d) 결정 은퇴 — v21 §1(2026-08-09 호영님 승인)이 이 계약을 뒤집었다.
-  //    삭제하지 않는다: 이력이고, §0-B-succession b-5·b-6 의 근거다.
-  //    skip 인 이유 — dead file 대상이라 통과해도 방어력 0. 정책은 succession 이 라이브로 진다.
-  it.skip("권한 밖 항목이 정보 요청으로 수렴 (편집 라벨 단언 2건은 PAGE 로 승계·삭제됨)", () => {
-    // 🛑 은퇴 예정 (d) 결정 은퇴 — 3분류 밖(신설) — dead file(product-completeness.tsx, importer 0) 대상.
-    //    결정 은퇴 — v21 §1 로 체크리스트 액션 전면 폐기(buyer 액션 0). 역방향 잠금은 succession b-6
-    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
-    expect(COMP).toMatch(/정보 요청/);
-  });
-  it("disabled 버튼 금지(액션 없으면 버튼을 만들지 않는다)", () => {
-    // 🛑 은퇴 예정 (b) 정책 계약 — 재조준 완료 — dead file(product-completeness.tsx, importer 0) 대상.
-    //    재조준 완료 → succession (b-1) 권한 게이트 dead button 0. 구 단언은 다음 배치 삭제
-    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
-    expect(COMP_CODE).not.toMatch(/disabled(=\{true\}|\s*[/>])/);
-  });
-  // 🔁 (d) 결정 은퇴 — v21 §1(2026-08-09 호영님 승인)이 이 계약을 뒤집었다.
-  //    삭제하지 않는다: 이력이고, §0-B-succession b-5·b-6 의 근거다.
-  //    skip 인 이유 — dead file 대상이라 통과해도 방어력 0. 정책은 succession 이 라이브로 진다.
-  it.skip("미등록 목록 노출 (2열 그리드 단언은 구현 종속으로 삭제됨)", () => {
-    // 🛑 은퇴 예정 (d) 결정 은퇴 — 3분류 밖(신설) — dead file(product-completeness.tsx, importer 0) 대상.
-    //    결정 은퇴 — 라벨이 `일부 정보 미등록 · 견적·문의 시 안내됩니다` 로 교체. 정책은 succession (b-5) 로 생존
-    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
-    expect(COMP).toMatch(/등록이 필요한 정보/);
   });
 });
 
@@ -238,12 +212,6 @@ describe("§refinement 계약⑦ — 프로토타입 amber hex 정합(§0-C)", (
     // ⛔ hex 예외는 승계하되 클래스 금지는 불변. 이 단언을 완화하지 말 것.
     expect(PAGE_CODE).not.toMatch(/-amber-\d|-orange-\d/);
   });
-  it("빨강 금지 보존(§11.302)", () => {
-    // 🛑 은퇴 예정 (b) 정책 계약 — 재조준 완료 — dead file(product-completeness.tsx, importer 0) 대상.
-    //    재조준 완료 → succession (b-2) 미등록 표면 red 0
-    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
-    expect(COMP_CODE).not.toMatch(/bg-red-|text-red-|border-red-/);
-  });
 });
 
 /* ─────────────────────────────────────────────────────────────
@@ -262,15 +230,6 @@ describe("§refinement — 회귀 0(canonical truth 무접촉)", () => {
     //   부풀리기 방지는 universal 하한·KNOWN_CATEGORIES 폴백으로 계승.
     expect(LIB).toMatch(/applicableFields\(/);
     expect(LIB).toMatch(/known \/ total/);
-  });
-  // 🔁 (d) 결정 은퇴 — v21 §1(2026-08-09 호영님 승인)이 이 계약을 뒤집었다.
-  //    삭제하지 않는다: 이력이고, §0-B-succession b-5·b-6 의 근거다.
-  //    skip 인 이유 — dead file 대상이라 통과해도 방어력 0. 정책은 succession 이 라이브로 진다.
-  it.skip("100% 시 배지 숨김 보존", () => {
-    // 🛑 은퇴 예정 (d) 결정 은퇴 — 3분류 밖(신설) — dead file(product-completeness.tsx, importer 0) 대상.
-    //    결정 은퇴 — 완성도 게이지 자체가 buyer 표면에서 은퇴(v21 §1). 승계 조건은 succession (b-5)
-    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
-    expect(COMP).toMatch(/if \(pct >= 100\) return null/);
   });
   it("quote-cart 스키마 키 불변", () => {
     expect(CART).toMatch(/QUOTE_CART_STORAGE_KEY = "quote-cart-storage-v2"/);
@@ -320,9 +279,9 @@ describe("§refinement — 회귀 0(canonical truth 무접촉)", () => {
  *        안 뜨면 **미분류 상태가 화면에서 완전 소멸**한다
  *        (`safety-decision-engine`: `false=미분류(unknown): level=LOW 라도 '일반' 오도 금지`).
  *
- *   ⚠️ 무성 실패 경로 A — COMP 의 `classified` 는 **optional prop** 이고
+ *   ⚠️ 무성 실패 경로 A — 구 체크리스트(은퇴)의 `classified` 는 **optional prop** 이었고
  *      `undefined 면 위험도 행 없음`. PAGE 가 전달을 빠뜨리면 위험도가 조용히 사라지고
- *      COMP 단위 테스트는 전부 통과한다. → **PAGE 전달 여부를 여기서 잠근다.**
+ *      컴포넌트 단위 테스트는 전부 통과했다. → **PAGE 전달 여부를 여기서 잠근다.**
  *
  *   D8 = 항목 수는 데이터 파생. 프로토타입의 `6` 은 샘플 제품값 → 리터럴 금지.
  * ───────────────────────────────────────────────────────────── */
@@ -336,24 +295,11 @@ describe("§refinement 계약⑧ — D7 위험도 행 · D8 동적 카운트", (
   });
   it("체크리스트에 위험도 행 부재(D7 철회 — 액션 불가능 항목 금지)", () => {
     expect(LIB_CODE).not.toMatch(/HAZARD_ACTION|위험도 분류/);
-    // 🛑 은퇴 예정 (b) 정책 계약 — 재조준 완료 — dead file(product-completeness.tsx, importer 0) 대상.
-    //    재조준 완료 → succession (b-3) 액션 불가 항목(classified) 미노출
-    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
-    expect(COMP_CODE).not.toMatch(/classified/);
     expect(PAGE_CODE).not.toMatch(/classified=\{/);
-  });
-  // 🔁 (d) 결정 은퇴 — v21 §1(2026-08-09 호영님 승인)이 이 계약을 뒤집었다.
-  //    삭제하지 않는다: 이력이고, §0-B-succession b-5·b-6 의 근거다.
-  //    skip 인 이유 — dead file 대상이라 통과해도 방어력 0. 정책은 succession 이 라이브로 진다.
-  it.skip("D8: 항목 수 리터럴 하드코딩 금지(프로토타입 6 = 샘플값)", () => {
-    // 🛑 은퇴 예정 (d) 결정 은퇴 — 3분류 밖(신설) — dead file(product-completeness.tsx, importer 0) 대상.
-    //    결정 은퇴 — `등록이 필요한 정보 ({length})` 라벨 폐기. 파생 렌더 정책은 succession (b-5)
-    //    삭제는 §0-B-succession 다음 배치. 이 주석이 있는 동안 통과해도 방어력 0.
-    expect(COMP).toMatch(/등록이 필요한 정보 \(\{[\s\S]{0,40}?length\}\)/);
   });
 
   /* ⚠️ 무성 실패 경로 B — dead button.
-   *    COMP: privileged 의 spec_edit/safety_edit 는 href 가 없다.
+   *    구 체크리스트(은퇴): privileged 의 spec_edit/safety_edit 는 href 가 없었다.
    *    `useLink = !!href && !(canEdit && handler)` 이므로 handler 미전달 시
    *    useLink=false → `<button onClick={undefined}>` = **동작 없는 버튼**.
    *    ADMIN 에게만 발현하고 buyer 경로 테스트로는 안 잡힌다. */
