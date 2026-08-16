@@ -137,7 +137,15 @@
         },
         {
           "slot": "1a.banner.title",
-          "label": "BCP 재발주 검토 권장"
+          "label": "BCP 재발주 검토 권장",
+          "_시드종속": {
+            "seed": "BCP",
+            "fixed": "재발주 검토 권장",
+            "패턴": [
+              "제품코드"
+            ],
+            "적용축": "C 한정"
+          }
         },
         {
           "slot": "1a.banner.evidence_prefix",
@@ -199,14 +207,14 @@
         99
       ],
       "font_sizes": [
-        11.0,
+        11,
         11.5,
-        12.0,
+        12,
         12.5,
-        15.0,
-        16.0,
-        17.0,
-        19.0
+        15,
+        16,
+        17,
+        19
       ]
     },
     "1b": {
@@ -254,11 +262,28 @@
         },
         {
           "slot": "1b.item.name",
-          "label": "BCP"
+          "label": "BCP",
+          "_시드종속": {
+            "seed": "전량",
+            "fixed": null,
+            "패턴": [
+              "제품코드"
+            ],
+            "적용축": "C 한정",
+            "_분해불가": "슬롯 전체가 제품코드"
+          }
         },
         {
           "slot": "1b.item.evidence_prefix",
-          "label": "현재 1개 · 부족"
+          "label": "현재 1개 · 부족",
+          "_시드종속": {
+            "seed": "현재 1개",
+            "fixed": "부족",
+            "패턴": [
+              "수량"
+            ],
+            "적용축": "C 한정"
+          }
         },
         {
           "slot": "1b.item.evidence_qty",
@@ -310,7 +335,9 @@
         },
         {
           "slot": "1b.cta.secondary",
-          "label": "🔍 공급사 소싱에서 먼저 찾기"
+          "label": "공급사 소싱에서 먼저 찾기",
+          "_렌더원문": "🔍 공급사 소싱에서 먼저 찾기",
+          "icon": "🔍"
         },
         {
           "slot": "1b.cta.note",
@@ -364,14 +391,14 @@
       ],
       "font_sizes": [
         10.5,
-        11.0,
+        11,
         11.5,
-        12.0,
+        12,
         12.5,
-        13.0,
+        13,
         13.5,
-        14.0,
-        16.0
+        14,
+        16
       ]
     },
     "1c": {
@@ -412,7 +439,16 @@
         {
           "slot": "1c.header.rfq",
           "label": "RFQ-2608-B2K4",
-          "layer": "props"
+          "layer": "props",
+          "_시드종속": {
+            "seed": "전량",
+            "fixed": null,
+            "패턴": [
+              "RFQ번호"
+            ],
+            "적용축": "C 한정",
+            "_분해불가": "슬롯 전체가 RFQ 번호"
+          }
         },
         {
           "slot": "1c.header.origin",
@@ -437,7 +473,17 @@
         {
           "slot": "1c.item.name",
           "label": "BCP × 9개",
-          "layer": "props"
+          "layer": "props",
+          "_시드종속": {
+            "seed": "전량",
+            "fixed": null,
+            "패턴": [
+              "제품코드",
+              "수량"
+            ],
+            "적용축": "C 한정",
+            "_분해불가": "제품코드 + 수량, 정본 문안 없음"
+          }
         },
         {
           "slot": "1c.item.badge",
@@ -447,7 +493,15 @@
         {
           "slot": "1c.item.evidence",
           "label": "현재 1 / 안전 10 · 근거 자동 첨부",
-          "layer": "props"
+          "layer": "props",
+          "_시드종속": {
+            "seed": "현재 1 / 안전 10",
+            "fixed": "근거 자동 첨부",
+            "패턴": [
+              "수량"
+            ],
+            "적용축": "C 한정"
+          }
         },
         {
           "slot": "1c.vendor.panel_title",
@@ -456,23 +510,44 @@
         },
         {
           "slot": "1c.vendor.find_sourcing",
-          "label": "🔍 소싱에서 찾기",
-          "layer": "residual_resolved"
+          "label": "소싱에서 찾기",
+          "layer": "residual_resolved",
+          "_렌더원문": "🔍 소싱에서 찾기",
+          "icon": "🔍"
         },
         {
           "slot": "1c.vendor.add_email",
-          "label": "✉ 이메일로 추가",
-          "layer": "shell"
+          "label": "이메일로 추가",
+          "layer": "shell",
+          "icon": "✉"
         },
         {
           "slot": "1c.vendor.rec_name",
           "label": "Sigma-Tech Korea",
-          "layer": "shell"
+          "layer": "shell",
+          "_시드종속": {
+            "seed": "전량",
+            "fixed": null,
+            "패턴": [
+              "공급사명"
+            ],
+            "적용축": "C 한정",
+            "_분해불가": "슬롯 전체가 공급사명"
+          }
         },
         {
           "slot": "1c.vendor.rec_meta",
           "label": "이전 거래 2회 · PBS 계열",
-          "layer": "shell"
+          "layer": "shell",
+          "_시드종속": {
+            "seed": "전량",
+            "fixed": null,
+            "패턴": [
+              "rec_meta"
+            ],
+            "적용축": "C 한정",
+            "_분해불가": "거래횟수·카테고리 둘 다 시드"
+          }
         },
         {
           "slot": "1c.vendor.assign",
@@ -534,14 +609,14 @@
       ],
       "font_sizes": [
         10.5,
-        11.0,
+        11,
         11.5,
-        12.0,
+        12,
         12.5,
-        13.0,
-        14.0,
-        15.0,
-        16.0
+        13,
+        14,
+        15,
+        16
       ]
     },
     "1d": {
@@ -577,15 +652,42 @@
         },
         {
           "slot": "1d.card.rfq",
-          "label": "RFQ-2608-B2K4"
+          "label": "RFQ-2608-B2K4",
+          "_시드종속": {
+            "seed": "전량",
+            "fixed": null,
+            "패턴": [
+              "RFQ번호"
+            ],
+            "적용축": "C 한정",
+            "_분해불가": "슬롯 전체가 RFQ 번호"
+          }
         },
         {
           "slot": "1d.card.item",
-          "label": "BCP × 9개"
+          "label": "BCP × 9개",
+          "_시드종속": {
+            "seed": "전량",
+            "fixed": null,
+            "패턴": [
+              "제품코드",
+              "수량"
+            ],
+            "적용축": "C 한정",
+            "_분해불가": "제품코드 + 수량, 정본 문안 없음"
+          }
         },
         {
           "slot": "1d.card.origin",
-          "label": "재고관리 재발주안에서 생성 · 2026. 8. 1."
+          "label": "재고관리 재발주안에서 생성 · 2026. 8. 1.",
+          "_시드종속": {
+            "seed": "2026. 8. 1.",
+            "fixed": "재고관리 재발주안에서 생성",
+            "패턴": [
+              "날짜"
+            ],
+            "적용축": "C 한정"
+          }
         },
         {
           "slot": "1d.card.cta",
@@ -629,12 +731,12 @@
       ],
       "font_sizes": [
         10.5,
-        11.0,
+        11,
         11.5,
-        13.0,
+        13,
         14.5,
-        16.0,
-        17.0
+        16,
+        17
       ]
     }
   },
@@ -1187,6 +1289,42 @@
       "U+00B7 · MIDDLE DOT": 14,
       "U+2014 — EM DASH": 0
     },
-    "tabular_nums": "phone frame 이하 전 요소 100/100 이 font-variant-numeric: tabular-nums. md 타이포 토큰 준수(전역)."
+    "tabular_nums": "phone frame 이하 전 요소 100/100 이 font-variant-numeric: tabular-nums. md 타이포 토큰 준수(전역).",
+    "seed_dependent": {
+      "슬롯": [
+        "1a.banner.title",
+        "1b.item.name",
+        "1b.item.evidence_prefix",
+        "1c.header.rfq",
+        "1c.item.name",
+        "1c.item.evidence",
+        "1c.vendor.rec_name",
+        "1c.vendor.rec_meta",
+        "1d.card.rfq",
+        "1d.card.item",
+        "1d.card.origin"
+      ],
+      "_슬롯수": 11,
+      "_분모": 63,
+      "검사": "슬롯 통째 시드화 금지. seed/fixed 로 분해하고 fixed 는 **값 대조 유지**",
+      "_단서A": "슬롯 전체를 시드종속으로 넘기면 정본 문안 위반이 검사 밖으로 나간다 — §measurement-layer 와 같은 실패 형태",
+      "_단서B_패턴규격": {
+        "제품코드": "/^[A-Z]{2,6}(-[A-Z0-9]+)?$/",
+        "수량": "/\\d+(개)?/ 존재 + 단위 일관. '현재 N / 안전 M' 은 두 수 모두 존재",
+        "RFQ번호": "/^RFQ-\\d{4}-[A-Z0-9]{4}$/",
+        "날짜": "/^\\d{4}\\. \\d{1,2}\\. \\d{1,2}\\.$/ — 연도 포함이 QA 항목",
+        "공급사명": "비어있지 않음",
+        "rec_meta": "' · ' 구분자 1개 이상"
+      },
+      "_단서B_주의": "'존재만 검사' 로 뭉개면 11슬롯이 무력화된다. 날짜·RFQ 는 **형태 검사가 값 검사보다 강하다**",
+      "_단서C_적용축": {
+        "A fixture 자기 무결성": "값 대조 유지",
+        "B fixture ↔ 시안": "값 대조 유지 — 시안은 고정 산출물이라 시드가 안 바뀐다",
+        "C fixture ↔ 제품 화면": "형태 앵커로 전환",
+        "_경고": "축을 안 가르면 17% 슬롯이 축 B 에서 죽는다"
+      },
+      "적용시점": "축 C 한정",
+      "근거": "축 C 배선 시 값 고정 진입 차단. 2026-08-16 총괄 확정(단서 3건 포함)"
+    }
   }
 }
