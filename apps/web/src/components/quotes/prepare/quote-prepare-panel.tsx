@@ -206,7 +206,7 @@ export function QuotePreparePanel({
             onClick={() => { if (assignedVendor) onProceedToDispatch(quote.id); }}
             className="w-full h-11 min-h-[44px] text-sm bg-blue-600 hover:bg-blue-700 text-white font-semibold disabled:opacity-50"
           >
-            {assignedVendor ? "발송 검토로 →" : "발송 검토로 — 공급사 지정 필요"}
+            {assignedVendor ? "발송 검토로 →" : "발송 검토로 · 공급사 지정 필요"}
           </Button>
 
           {/* ── 이탈 안전 ── */}
@@ -216,7 +216,7 @@ export function QuotePreparePanel({
             onClick={onClose}
             className="block w-full py-1 text-center text-xs font-semibold text-slate-500 underline underline-offset-2 active:opacity-70"
           >
-            나중에 하기 — 발송 대기로 저장
+            나중에 하기 · 발송 대기로 저장
           </button>
         </div>
 
