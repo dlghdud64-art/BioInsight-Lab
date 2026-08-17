@@ -172,7 +172,7 @@ export function QuotePreparePanel({
                 className="block w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-left text-xs text-slate-600 active:scale-[0.98]"
                 data-testid="prepare-vendor-recommendation"
               >
-                이전 거래: <b className="text-slate-800">{recommendedVendorName}</b> — 탭해서 지정
+                이전 거래: <b className="text-slate-800">{recommendedVendorName}</b> · 탭해서 지정
               </button>
             )}
             {assignedVendor && (
