@@ -64,9 +64,14 @@ GREEN 5  규제 포털       ⛔ 은퇴 확정 — 구현하면 RED
 production 코드 변경분 0건 — 2026-08-16 배치는 **Phase 3 EXIT 배선만** 수행했다(§8).
 
 ```
-확인 필요  PLAN §11 Phase Checklist 에 `[x] Phase 3 complete (596e7ebf→ab0e4e2d · 48/48 GREEN)` 와
-          `[ ] Phase 3 complete` 가 동시에 있다. 중복 4줄(`[ ] Phase 2/3/4/5`)은 잔존 템플릿으로
-          보이나 판정은 총괄 몫. 이 모순이 이번 배치가 "이미 끝난 일"에 착수한 직접 원인이다.
+✅ 해소     PLAN §11 Phase Checklist 모순 — **2026-08-16 실측으로 모순 0건 확인.**
+          `[ ] Phase 2/3` 는 `00294d29` 에서 이미 삭제됐다. `[ ] Phase 4/5` 는 **진짜 미완**이라 존치가 맞다.
+          🛑 **이 줄이 갱신되지 않아 다음 세션(2026-08-16)이 또 Phase 3 에 착수했다.**
+             원인 기록 자체가 낡아서 재발한 형태다 — 해소 표기는 해소 시점에 같이 넣어야 한다.
+          후속: 체크리스트에 **표기 규칙**을 넣었다(`[x]`=sha 필수 · `[ ]`=미착수 사유 필수).
+             삭제만으로는 두 번 다 재발했으므로 근거를 강제하는 쪽으로 바꿨다.
+          Phase 3 재착수 금지 근거: `<CollapsedRow>` 2회 확정 · 규제 포털 은퇴는 계약⑥ 역방향 잠금 ·
+             쓰기 경로 0 (2026-08-16 실측).
 확인 필요  product-completeness.tsx 는 production importer 0 (dead file, 승계자 = PendingInfoRow).
           보류 중인 §0-B amber 8토큰 게이트가 dead file 표면을 잠그고 있다 — CLAUDE.md 302c 가
           이미 겪은 형태(dead file 세대 잠금 → 은퇴→승계)와 동형. §0-B yellow 확정 배치 착수 전

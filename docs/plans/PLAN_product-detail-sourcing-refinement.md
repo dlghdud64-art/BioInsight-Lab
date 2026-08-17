@@ -957,13 +957,35 @@ GREEN 1~8 은 전부 **표시 재배치 + 기존 핸들러 연결**이다:
 **해소된 blocker 전량:** D1 트랙 순서 · D2 PD-B/C/L 교체 승인 · D3→D6 buyer 액션 분기 · D4 프로토타입 · D5 색 토큰
 
 **Phase Checklist:**
-- [x] Phase 0 complete
+
+> 🛑 **표기 규칙 (2026-08-16 신설 — 두 세션 연속 착수 오판 후)**
+>
+> ```
+> [x]  근거 sha 필수      없으면 "완료" 주장의 검증 경로가 없다
+> [ ]  미착수 사유 필수    없으면 다음 세션이 착수 항목으로 읽는다
+> 둘 다 없는 줄            상태 표기가 아니라 **템플릿 잔재**다
+> ```
+>
+> 삭제만으로는 재발한다 — `00294d29` 와 이번, 두 번 다 "모순 발견 → 삭제" 였고
+> 두 번 다 다음 갱신에서 갈라졌다. 근거를 강제해야 `[ ]` 를 볼 때
+> "미착수 사유가 없네 → 템플릿 잔재 의심" 으로 간다.
+
+- [x] Phase 0 complete — ⚠️ **근거 sha 미기재** (총괄 판정 대기: 어느 커밋이 Phase 0 종료인지)
 - [x] Phase 1 complete (2026-07-25 · 26 RED / 회귀 0 6 PASS · false-GREEN 1건 봉합)
+  - ⚠️ **근거 sha 미기재** (수치만 있음. 총괄 판정 대기)
 - [x] Phase 2 complete (2026-07-25 · `8d1e443f` · 계약① 4/4 + ②-lib · D7·D8 신설)
 - [x] Phase 3 complete (2026-07-25 · `596e7ebf`→`ab0e4e2d` · **계약 ①~⑨ 48/48 GREEN** · F10 EXIT 0)
   - 3-1 `CollapsedRow` 신설 · 3-2 `product-completeness.tsx` 재작성 · 3a `page.tsx` 배선·치환 · 3b CTA 위계
-- [ ] Phase 4 complete
-- [ ] Phase 5 complete
+  - 🛑 **재착수 금지.** `<CollapsedRow>` 사용은 **2회 확정**(L666 상세 스펙 · L849 SDS).
+    세 번째 자리(규제 포털)는 v21 §5 로 **은퇴**했고 계약⑥ 이 **역방향으로 잠근다**
+    (`product-detail-refinement:192` · `product-detail-sourcing-v21:141`). 3개 만들면 RED.
+    2026-08-16 실측: 쓰기 경로 0 (fetch/mutation/router 전부 0 · `setState` 2 는 펼침 토글).
+- [ ] Phase 4 complete — **미착수 사유: 런타임 스모크 6종(S1~S6)이 실브라우저를 요구한다.**
+  프로덕션 로그인 차단(Chrome 확장 미연결 · 인앱 브라우저 세션 없음)으로 실행 불가.
+  🛑 정적 게이트로 대체 불가 — 48/48 은 전부 소스 문자열 매칭이고, S2 는
+  `onSpecEdit={() => {}}` 여도 GREEN 이다. 로그인이 풀리면 즉시 착수 가능.
+- [ ] Phase 5 complete — **미착수 사유: Phase 4 종료 선행.** QA 7항 런타임 확인 +
+  회수 경로 확정이 스모크 결과에 의존한다.
 
 ---
 
