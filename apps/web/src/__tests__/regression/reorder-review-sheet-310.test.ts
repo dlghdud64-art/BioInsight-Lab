@@ -53,12 +53,33 @@ describe("§11.310 — ReorderReviewSheet 컴포넌트", () => {
     expect(src).toMatch(/data-testid="reorder-review-sheet"/);
   });
 
-  it("[견적 요청] CTA — query string pre-fill (Q30 = A)", () => {
+  /* 🔁 은퇴→승계 (2026-08-16 · 38c5aed9 후속)
+   *   구 계약: `router.push(\`/dashboard/quotes?${params.toString()}\`)` — **조립 방식에 핀**.
+   *   현행:    `router.push(\`/dashboard/quotes?prepare=${encodeURIComponent(quoteId)}\`)`.
+   *   목적지(`/dashboard/quotes` 딥링크)와 quoteId 전달은 **그대로 살아 있다.**
+   *   query 조립이 `params` → `prepare=<id>` 로 진화했을 뿐이므로 앵커를 계약으로 옮긴다:
+   *     ① 목적지  ② quoteId 가 push 인자에 실재  — 조립 방식은 자유. */
+  it("[견적 요청] CTA — 목적지 딥링크 + quoteId 전달 (Q30 = A · 앵커 이동)", () => {
     const src = read(SHEET_PATH);
     expect(src).toMatch(/data-testid="reorder-review-request-quote-cta"/);
-    expect(src).toMatch(/router\.push\(`\/dashboard\/quotes\?\$\{params\.toString\(\)\}`\)/);
+    expect(src).toMatch(/router\.push\(`\/dashboard\/quotes\?[^`]*\$\{[^}]*quoteId[^}]*\}/);
     expect(src).toMatch(/productName:\s*data\.productName/);
-    expect(src).toMatch(/reason:\s*["']안전 재고 미달/);
+
+    /* 🔁 은퇴→승계 (2026-08-16) — 같은 it 안의 **4번째** 단언. 위 앵커 이동으로 비로소 드러났다.
+     *   🛑 vitest 는 it 당 첫 실패만 보고한다 — 첫 단언을 고치면 형제가 새로 나온다.
+     *      (이 저장소 승격 항목: "sentinel 승계는 it() 블록 전체 대조")
+     *   구 계약: `reason: "안전 재고 미달…"` — **인라인 객체 프로퍼티 형태에 핀**.
+     *   현행:    `const reason = … "안전 재고 미달 — 재고 운영 도우미 권장" + overrideNote;`
+     *            → `notes: reason` · `specialNotes: \`…· ${reason}\`` 로 전파.
+     *   계약(견적 초안에 사유가 전파된다)은 살아 있고 override 사유 합성이 추가됐다.
+     *   앵커를 형태에서 **전파 사실**로 옮긴다. */
+    expect(src).toMatch(/["']안전 재고 미달/); // 사유 문구 존재
+    expect(src).toMatch(/const reason =/); // 단일 출처로 파생
+    /* 🛑 OR 로 쓰면 안 된다 — 2026-08-16 프로브 실측: `notes: reason` 을 끊어도
+     *    `specialNotes` 가 대신 매칭해 GREEN 이 떴다(§정규식 sentinel ④ 대체 매칭).
+     *    전파 경로가 둘이면 **둘 다** 잠근다. 하나가 끊기는 것도 회귀다. */
+    expect(src).toMatch(/notes:\s*reason/); // 경로 ① 견적 초안 notes
+    expect(src).toMatch(/specialNotes:[^\n]*\$\{reason\}/); // 경로 ② specialNotes 합성
   });
 
   it("[바로 발주] CTA — query string + PO draft (Q31 = A)", () => {
@@ -66,8 +87,21 @@ describe("§11.310 — ReorderReviewSheet 컴포넌트", () => {
     expect(src).toMatch(/data-testid="reorder-review-direct-purchase-cta"/);
     expect(src).toMatch(/router\.push\(`\/dashboard\/purchase-orders\/new\?\$\{params\.toString\(\)\}`\)/);
     expect(src).toMatch(/prefill:\s*["']reorder-recommendation["']/);
-    // §inventory-reorder-surface-unify P3b 진화 — vendor-0 disable 의도 보존 + purchasing-off 조건 추가 허용.
-    expect(src).toMatch(/disabled=\{!hasVendor( \|\| !purchasingOn)?\}/);
+
+    /* 🔁 은퇴→승계 (2026-08-16 · 38c5aed9 후속) — **축이 바뀌었다: disabled → 렌더 게이트**
+     *   구 계약: `disabled={!hasVendor || !purchasingOn}` — 공급사 0건이면 비활성.
+     *   현행:    `{hasVendor && ( <Button … disabled={!purchasingOn}> )}`
+     *            공급사 0건이면 **버튼을 아예 만들지 않는다.**
+     *   🛑 의도는 보존됐고 구현이 **더 강하다** — CLAUDE.md "액션 없으면 버튼을 만들지 않는다".
+     *      sentinel 이 disabled 축만 보고 렌더 게이트 축을 안 봐서 못 따라온 것이다.
+     *      라벨(`disabled 배선`)로 판정했으면 멀쩡한 구현을 disabled 로 되돌릴 뻔했다.
+     *
+     *   🛑 역계약이 이 승계의 실질이다. 그냥 현행에 맞추면 다음 사람이
+     *      `disabled={!hasVendor || !purchasingOn}` 로 "복원"하면서 렌더 게이트를 걷어낼 수 있고,
+     *      그러면 dead button 이 다시 생긴다. 아래 not.toMatch 가 그 경로를 막는다. */
+    expect(src).toMatch(/\{hasVendor && \(/); // 렌더 게이트 — 공급사 0건이면 미생성
+    expect(src).not.toMatch(/disabled=\{[^}]*hasVendor/); // 역계약 — disabled 로 되돌리면 RED
+    expect(src).toMatch(/disabled=\{!purchasingOn\}/); // purchasing-off 는 disabled 가 맞다(권한 축)
   });
 
   it("색상 — green-600 (실행 가능 액션 — 호영님 spec)", () => {
@@ -83,10 +117,22 @@ describe("§11.310 — ReorderReviewSheet 컴포넌트", () => {
     expect(src).not.toMatch(/border-amber-/);
   });
 
-  it("추천 벤더 0건 시 fallback — '바로 발주' disabled + '견적 요청' only 안내", () => {
+  /* 🔁 은퇴→승계 + 🛑 중복 제거 (2026-08-16 · 38c5aed9 후속)
+   *   구 계약: `/등록된 공급사가 없습니다.*견적 요청으로 시작/`
+   *   현행:    `이 품목에 등록된 공급사가 없습니다` + `초안을 만든 뒤 바로 공급사 지정 화면으로 이동합니다.`
+   *            v21 흐름으로 안내가 교체됐다(`견적 요청으로 시작` → `공급사 지정 화면으로 이동`).
+   *
+   *   🛑 문안 계약은 여기서 **은퇴**시킨다 — 이미 두 곳이 잠그고 있다:
+   *      제목  reorder-quote-handoff.test.ts:123  /이 품목에 등록된 공급사가 없습니다/
+   *      본문  design/reorder-handoff-impl-conformance.test.ts:211 (축 C · fixture 1b.no_vendor 병합)
+   *      같은 문자열을 세 곳이 핀하면 문안 변경 때 한 곳만 고치고 RED 가 난다.
+   *
+   *   여기 남기는 것은 **축 C 가 안 잡는 것**뿐이다 — testid 는 fixture 라벨이 아니다. */
+  it("추천 벤더 0건 시 fallback — 전용 블록 존재 (문안 계약은 축 C·handoff 로 이관)", () => {
     const src = read(SHEET_PATH);
     expect(src).toMatch(/data-testid="reorder-review-no-vendor"/);
-    expect(src).toMatch(/등록된 공급사가 없습니다.*견적 요청으로 시작/);
+    // 🛑 문안 재핀 금지 — 여기서 다시 잠그면 삼중 핀으로 돌아간다.
+    expect(src).not.toMatch(/견적 요청으로 시작/); // 구판 문안 부활 방어(역계약)
   });
 
   it("예상 금액 = 검토 수량 × 최근 단가 (자동 계산)", () => {
