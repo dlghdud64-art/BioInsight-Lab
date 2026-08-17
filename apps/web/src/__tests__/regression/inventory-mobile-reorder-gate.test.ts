@@ -119,7 +119,7 @@ describe("§inventory-mobile-reorder-gate P3 — 소프트 게이트(하드 차�
     // §reorder-quote-handoff P2 승계(2026-08-05): reason 전파 경로가 query-string
     // prefill → POST /api/quotes body(items.notes + specialNotes)로 교체.
     // 보호 의도(override 사유가 초안에 남는다)는 동일 — 전파 형태만 진화.
-    expect(SHEET).toMatch(/"안전 재고 미달 — 재고 운영 도우미 권장" \+ overrideNote/);
+    expect(SHEET).toMatch(/"안전 재고 미달 · 재고 운영 도우미 권장" \+ overrideNote/);
     expect(SHEET).toMatch(/specialNotes[\s\S]{0,120}reason/);
   });
 });
@@ -152,7 +152,7 @@ describe("§inventory-mobile-reorder-gate — 기존 invariant 보존(회귀 0)"
     //   견적 = query-string prefill(§11.310 Q30, 소비자 0 no-op 실측) → POST /api/quotes
     //   실생성 + ?prepare= 직행으로 교체. 발주(Q31) prefill 경로는 무변경 보존.
     //   바로 발주 게이팅: 공급사 0 = hide(1b dead button 제거), 공급사 有 = flag 게이팅 유지.
-    expect(SHEET).toMatch(/"안전 재고 미달 — 재고 운영 도우미 권장"/);
+    expect(SHEET).toMatch(/"안전 재고 미달 · 재고 운영 도우미 권장"/);
     expect(SHEET).toMatch(/prefill: "reorder-recommendation"/); // Q31 발주 경로 보존
     expect(SHEET).toMatch(/hasVendor\s*&&[\s\S]{0,400}reorder-review-direct-purchase-cta/);
     expect(SHEET).toMatch(/disabled=\{!purchasingOn\}/);

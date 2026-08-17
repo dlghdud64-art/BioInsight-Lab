@@ -75,7 +75,7 @@ function NewPurchaseOrderPageInner() {
       supplier: supplier.trim(),
       unitPrice: Math.max(0, Number(unitPriceRaw) || 0),
       notes: isReorderRecommendation
-        ? "재고 운영 도우미 권장 — 안전 재고 미달"
+        ? "재고 운영 도우미 권장 · 안전 재고 미달"
         : "",
     });
 

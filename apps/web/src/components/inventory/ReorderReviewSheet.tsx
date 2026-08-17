@@ -155,7 +155,7 @@ export function ReorderReviewSheet({
     const reason =
       qtySource === "safety-fallback"
         ? "안전재고 기준 수량 (AI 추천 미산출)" + overrideNote
-        : "안전 재고 미달 — 재고 운영 도우미 권장" + overrideNote;
+        : "안전 재고 미달 · 재고 운영 도우미 권장" + overrideNote;
     try {
       const res = await csrfFetch("/api/quotes", {
         method: "POST",

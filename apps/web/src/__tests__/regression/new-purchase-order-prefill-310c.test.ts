@@ -70,9 +70,9 @@ describe("§11.310c — Query string prefill 수신", () => {
     expect(src).toMatch(/eslint-disable-next-line react-hooks\/exhaustive-deps/);
   });
 
-  it("notes 자동 채움 — '재고 운영 도우미 권장 — 안전 재고 미달'", () => {
+  it("notes 자동 채움 — '재고 운영 도우미 권장 · 안전 재고 미달'", () => {
     const src = read(PATH);
-    expect(src).toMatch(/재고 운영 도우미 권장 — 안전 재고 미달/);
+    expect(src).toMatch(/재고 운영 도우미 권장 · 안전 재고 미달/);
   });
 });
 
