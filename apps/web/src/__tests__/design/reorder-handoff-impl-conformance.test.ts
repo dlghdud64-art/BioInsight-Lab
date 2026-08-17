@@ -27,12 +27,12 @@
  *                   형제 슬롯 전수 훑음: kpi.value 3 + qty.value 1 = 4건 전량.
  *
  * ── 커버리지 회계 (63슬롯) ──
- *   대조         37   구현 표면(1a·1b·1d)에서 실 대조
+ *   대조         45   구현 표면(1a·1b·1c·1d)에서 실 대조
  *   병합 축약    -6   3그룹(1a.banner evidence · 1b.item evidence · 1b.no_vendor body)
  *   제외 가1      5   순수 기호 — lucide 컴포넌트라 문자열 부재가 정상. 축 B 가 잡는다
  *   제외 수치     4   시드 값 — 축 B 가 잡는다
- *   미이행 ④      1   md 명세 있으나 소스 부재. **RED** — 게이팅 아님
- *   게이팅 1c    18   라우트 미존재. 자기무효화 앵커가 항상 활성
+ *   미이행        7   md 명세 있으나 소스 부재. **RED** — ④ 1건 + 1c 6건
+ *   게이팅         0   🔁 2026-08-16 해제. 1c 는 라우트가 아니라 쿼리 패널이었다
  *   생략          1   1a.elision (시안 생략 표기, 제품 UI 아님)
  *
  * 🛑 제외 ≠ 삭제. 목록은 상수 + **길이 잠금**이고, 슬롯마다 **대체 축**을 병기한다.
@@ -53,12 +53,18 @@ const read = (rel: string) => readFileSync(p(rel), "utf8");
 const SURFACES: Record<string, string[]> = {
   "1a": ["app/dashboard/inventory/inventory-content.tsx", "components/inventory/mobile-inventory-view.tsx"],
   "1b": ["components/inventory/ReorderReviewSheet.tsx", "components/inventory/inventory-reorder-blocked-sheet.tsx"],
-  "1c": [], // 미구현 — 아래 게이팅
+  /* 🔁 2026-08-16 정정 — 구 판정 "1c 미구현(라우트 0건)" 이 **틀렸다.**
+   *    `existsSync(route)` 하나로 화면 유무를 판정했는데, 1c 는 라우트가 아니라
+   *    **쿼리 패널**(`/dashboard/quotes?prepare=<id>`)로 구현돼 있다.
+   *    🛑 라우트 존재 ≠ 화면 존재. 게이팅은 통과시키는 쪽이라 조용했다 —
+   *       8건의 실 일치가 검사 밖에 있었고 6건의 미이행이 은폐됐다. */
+  "1c": ["components/quotes/prepare/quote-prepare-panel.tsx"],
   "1d": ["components/quotes/mobile-quotes-view.tsx", "app/dashboard/quotes/page.tsx"],
 };
 const surface = (sec: string) => SURFACES[sec].map(read).join("\n");
 
-/** 1c 대상 라우트. 존재하면 게이팅이 낡은 것이고, 아래 앵커가 RED 로 알린다. */
+/** 1c 진입 경로 — 라우트가 아니라 쿼리 패널이다. 라우트가 생기면 앵커가 RED 로 알린다. */
+const PREPARE_PANEL = "components/quotes/prepare/quote-prepare-panel.tsx";
 const PREPARE_ROUTE = "app/quotes/[rfqId]/prepare/page.tsx";
 
 /* ── fixture 슬롯 ─────────────────────────────────────────────────── */
@@ -67,7 +73,7 @@ const FIX = fixture as unknown as { sections: Record<string, { slots: Slot[] }> 
 const SLOTS: Array<Slot & { sec: string }> = Object.entries(FIX.sections).flatMap(([sec, s]) =>
   s.slots.map((x) => ({ ...x, sec })),
 );
-const bySlot = (id: string) => {
+const bySlot = (id: string): Slot & { sec: string } => {
   const s = SLOTS.find((x) => x.slot === id);
   if (!s) throw new Error(`fixture 슬롯 없음: ${id}`);
   return s;
@@ -97,9 +103,18 @@ const UNIMPLEMENTED = [
   {
     slot: "1d.card.origin",
     md: "재발주 견적 핸드오프 흐름.md:38 — `재고관리 재발주안에서 생성 · 2026. 8. 1.` (연도 포함 표기 통일)",
-    표면: "components/quotes/mobile-quotes-view.tsx (존재)",
-    성격: "카드 origin 행 신설 필요. 소스 수정 대기 — 이 트랙 범위 밖",
+    표면: "components/quotes/mobile-quotes-view.tsx (존재 · 날짜 행만 있고 출처 문구 없음)",
+    성격: "🛑 `sourceMeta: null` 이 의도적 결정(acb71541, 2026-08-06 · '가짜 출처 표기 금지'). md 와 충돌 판정 대기",
   },
+  /* 🔁 2026-08-16 신규 등재 — 게이팅 해제로 **은폐가 풀린** 6건.
+   *    구 게이팅이 1c 18슬롯을 통째로 검사 밖에 뒀다. 해제하니 8건은 실제로 이행돼 있었고
+   *    아래 6건이 미이행이었다. RED 1 → 7 은 악화가 아니라 **은폐 해제**다. */
+  { slot: "1c.header.origin", md: "08-01 md §1c — `· 방금 재고관리에서 생성됨`", 표면: PREPARE_PANEL, 성격: "출처 문구 부재" },
+  { slot: "1c.item.evidence", md: "08-01 md §1c — `근거 자동 첨부`", 표면: PREPARE_PANEL, 성격: "근거 첨부 표기 부재" },
+  { slot: "1c.vendor.panel_title", md: "08-01 md §1c — `받을 공급사를 지정하세요`", 표면: PREPARE_PANEL, 성격: "패널 제목 문안 불일치" },
+  { slot: "1c.vendor.add_email", md: "08-01 md §1c line 29 — `이메일로 추가`", 표면: PREPARE_PANEL, 성격: "진입 버튼 부재" },
+  { slot: "1c.cta.primary_disabled", md: "08-01 md §1c — `발송 검토로 · 공급사 지정 필요`", 표면: PREPARE_PANEL, 성격: "disabled 사유 라벨 문안 불일치" },
+  { slot: "1c.exit_link", md: "08-01 md §1c — `나중에 하기 · 발송 대기로 저장`", 표면: PREPARE_PANEL, 성격: "이탈 링크 문안 불일치" },
 ] as const;
 
 /* ── 정규화 ─────────────────────────────────────────────────────────
@@ -141,9 +156,13 @@ describe("§reorder-handoff 축 C — 목록 규율(제외 남용 방어)", () =
     }
   });
 
-  it("🔴 미이행 목록 1건 — 늘어나면 RED (조용히 2·3건이 되지 않게)", () => {
-    expect(UNIMPLEMENTED.length).toBe(1);
-    for (const u of UNIMPLEMENTED) expect(u.md).toMatch(/\.md:/);
+  it("🔴 미이행 목록 7건 — 늘어나면 RED (조용히 8·9건이 되지 않게)", () => {
+    expect(UNIMPLEMENTED.length).toBe(7); // ④ 1건 + 게이팅 해제로 드러난 1c 6건
+    for (const u of UNIMPLEMENTED) expect(u.md).toMatch(/md/); // 근거 md 병기 필수
+    // 🛑 축 구분: **슬롯 축 7** ≠ **it 축 2**(1d 1건 + 1c 6건 묶음 1건).
+    //    "RED 7" 로 세면 vitest 출력과 안 맞는다. 이 저장소가 반복해서 만난 축 혼동이다.
+    expect(UNIMPLEMENTED.filter((u) => u.slot.startsWith("1c."))).toHaveLength(6);
+    expect(UNIMPLEMENTED.filter((u) => u.slot.startsWith("1d."))).toHaveLength(1);
   });
 });
 
@@ -248,32 +267,48 @@ describe("§reorder-handoff 축 C — 1d 견적 관리", () => {
 /* ═══════════════════════════════════════════════════════════════════
  * 1c — 발송 준비 (미구현 · 라우트 게이팅)
  * ═══════════════════════════════════════════════════════════════════ */
-describe("§reorder-handoff 축 C — 1c 발송 준비 (라우트 게이팅)", () => {
-  const routeExists = existsSync(p(PREPARE_ROUTE));
-
-  /** 🛑 항상 활성 — 게이팅 자체를 잠근다. 라우트가 생기면 이 it 이 RED 로 "게이팅이 낡았다" 고 알린다.
-   *    화이트리스트가 아니라 3층(자기무효화)이다: 해제가 코드 판별형이다. */
-  it("prepare 라우트 미존재 — 1c 게이팅이 유효한 근거", () => {
+describe("§reorder-handoff 축 C — 1c 발송 준비 (게이팅 해제 · 즉시 활성)", () => {
+  /* 🔁 은퇴→승계 (2026-08-16)
+   *   구 앵커: `prepare 라우트 미존재 — 1c 게이팅이 유효한 근거`
+   *            → **전제가 틀렸다.** 라우트 부재를 화면 부재로 읽었다.
+   *   신 앵커: 진입 경로를 잠근다. 목적("경로가 바뀌면 알린다")은 그대로 유효하므로
+   *            폐기가 아니라 **재조준**이다. */
+  it("prepare 화면 = 쿼리 패널 — 진입 경로 잠금", () => {
+    expect(existsSync(p(PREPARE_PANEL))).toBe(true);
+    // `?prepare=<id>` 진입 배선이 실재한다(리스트 → 패널 복귀 경로)
+    expect(read("components/quotes/mobile-quotes-view.tsx")).toMatch(/\?prepare=|prepare=\$\{/);
+    // 🛑 라우트가 나중에 생기면 진입 경로가 둘이 된다 — 그때 이 앵커가 RED 로 알린다
     expect(existsSync(p(PREPARE_ROUTE))).toBe(false);
   });
 
-  it("게이팅 범위는 1c 18슬롯뿐 — 1a·1b·1d 45슬롯은 즉시 활성이다", () => {
+  it("게이팅 0 — 63슬롯 전량이 검사 대상이다", () => {
     expect(SLOTS.filter((s) => s.sec === "1c")).toHaveLength(18);
-    expect(SLOTS.filter((s) => s.sec !== "1c")).toHaveLength(45);
-    expect(SURFACES["1c"]).toHaveLength(0);
-    for (const sec of ["1a", "1b", "1d"]) expect(SURFACES[sec].length).toBeGreaterThan(0);
+    for (const sec of ["1a", "1b", "1c", "1d"]) expect(SURFACES[sec].length).toBeGreaterThan(0);
   });
 
-  it.runIf(routeExists)("라우트 생성 시 — 1c 라벨 전량 대조", () => {
-    const src = read(PREPARE_ROUTE);
+  it("1c 라벨 대조 — 미이행분은 UNIMPLEMENTED 가 따로 잠근다", () => {
+    const src = surface("1c");
+    const known = new Set<string>(UNIMPLEMENTED.map((u) => u.slot));
     const missing: string[] = [];
     for (const s of SLOTS.filter((x) => x.sec === "1c")) {
       if (EXCLUDED_GLYPH_ONLY.some((e) => e.slot === s.slot)) continue;
+      if (known.has(s.slot)) continue; // 미이행 등재분 — 아래 별도 it 이 RED 로 지목
       const probe = s._시드종속 ? s._시드종속.fixed : s.label;
       if (probe === null || probe === undefined) continue; // 전량 시드 — 값 대조 금지
       if (!src.includes(stripGlyphs(probe))) missing.push(`${s.slot} :: ${probe}`);
     }
     expect({ 미일치: missing }).toEqual({ 미일치: [] });
+  });
+
+  it("🔴 1c 미이행 6건 — 게이팅 해제로 드러난 분 (은폐 해제)", () => {
+    const src = surface("1c");
+    const still: string[] = [];
+    for (const u of UNIMPLEMENTED.filter((x) => x.slot.startsWith("1c."))) {
+      const s = bySlot(u.slot);
+      const probe = s._시드종속 ? s._시드종속.fixed : s.label;
+      if (probe && !src.includes(stripGlyphs(probe))) still.push(`${u.slot} :: ${probe}`);
+    }
+    expect({ 미이행_잔존: still }).toEqual({ 미이행_잔존: [] });
   });
 });
 
@@ -295,6 +330,6 @@ describe("§reorder-handoff 축 C — 잠그지 못하는 것 (등급 한계 명
     expect(게이팅).toBe(18);
     expect(생략).toBe(1);
     expect(제외).toBe(8); // 가1 4(1c 제외분 1건 빼고) + 수치 4
-    expect(UNIMPLEMENTED.length).toBe(1);
+    expect(UNIMPLEMENTED.length).toBe(7);
   });
 });
