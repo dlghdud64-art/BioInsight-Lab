@@ -20,7 +20,7 @@
  *                   정규식을 쓰는 3곳(골격 대조)은 전부 리터럴 앵커 + 제한 창.
  *   ② 창 시작점     이 파일: 창은 표면 파일 **전체**다(슬라이스 없음). 부분 창 0.
  *   ③ 검출력 실증   변이 프로브 별도 실행 · 러너 = **프로젝트 vitest**.
- *                   🛑 무변이 baseline 이 GREEN 이 아니라 **RED it 1**(1c 미이행 6슬롯 묶음)이다.
+ *                   🛑 무변이 baseline 이 GREEN 이 아니라 **RED it 1**(1c 미이행 5슬롯 묶음)이다.
  *                      검출 판정은 건수가 아니라 **어느 it 이 지목되는지**로 한다.
  *   ④ 대체 매칭     이 파일: 수치 전용 라벨("1"·"0"·"9"·"종")은 소스 어디서나 매칭되어
  *                   무효 단언이 된다 → NUMERIC_SEED 로 제외하고 축 B 병기.
@@ -31,10 +31,15 @@
  *   병합 축약    -6   3그룹(1a.banner evidence · 1b.item evidence · 1b.no_vendor body)
  *   제외 가1      5   순수 기호 — lucide 컴포넌트라 문자열 부재가 정상. 축 B 가 잡는다
  *   제외 수치     4   시드 값 — 축 B 가 잡는다
- *   미이행        6   md 명세 있으나 소스 부재. **RED** — 1c 6건
- *   대기열 이관    1   1d.card.origin — 스키마 부재(§quote-source-field). 소스 부재 아님
+ *   미이행        5   md 명세 있으나 소스 부재. **RED** — 1c 문안 3 + 신설 2
+ *   대기열 이관    2   1d.card.origin · 1c.header.origin — 스키마 부재(§quote-source-field)
+ *   🆕 도달 불가   1   1c.item.badge — 소스엔 있으나 항상 거짓인 게이트 안
  *   게이팅         0   🔁 2026-08-16 해제. 1c 는 라우트가 아니라 쿼리 패널이었다
  *   생략          1   1a.elision (시안 생략 표기, 제품 UI 아님)
+ *
+ * 🛑 이 축이 잠그지 못하는 것: 렌더 박스 · 정렬 · **도달성**.
+ *    소스에 문자열이 있어도 항상 거짓인 게이트 안이면 렌더되지 않는다.
+ *    실례 1c.item.badge — sourceMeta:null 게이트 안에서 GREEN 이었다(2026-08-16 발견).
  *
  * 🛑 제외 ≠ 삭제. 목록은 상수 + **길이 잠금**이고, 슬롯마다 **대체 축**을 병기한다.
  *    어느 축도 안 잡으면 그건 제외가 아니라 커버리지 구멍이다(2026-08-16 실측: 구멍 0).
@@ -99,6 +104,28 @@ const NUMERIC_SEED = [
   { slot: "1b.qty.value", label: "9", 대체축: "축 B ✅ · 값은 시드" },
 ] as const;
 
+/* ── 🆕 도달 불가 (2026-08-16) ────────────────────────────────────────
+ * 소스에 문자열이 **있지만** 항상 거짓인 게이트 안이라 렌더되지 않는다.
+ * 🛑 축 C 는 존재는 보지만 **도달은 못 본다.** GREEN 으로 세면 회계가 부풀려진다.
+ *    `Render-Reachability`(dead file)의 **분기 단위 버전**이다.
+ *
+ * 전수 스캔 방법(2026-08-16): 4섹션 표면이 게이트로 쓰는 prop 중 호출부에서
+ *   리터럴 `null`/`false` 로 넘어가는 것을 찾고, 그 게이트 블록 안의 fixture 라벨을 판정.
+ * ⚠️ 스캔 한계 — 이걸 "전수" 로 읽지 말 것:
+ *   · 리터럴 null 이 **어느 한 호출부에** 있으면 잡히지만, 다른 호출부가 실값을 넘기면 도달 가능하다.
+ *     `sourceMeta` 는 호출부가 **1곳뿐**임을 별도 확인했다(QuotePreparePanel importer = page.tsx).
+ *   · **계산식이지만 항상 거짓인** 게이트는 못 잡는다(리터럴이 아니므로).
+ *   · 런타임 도달성은 결국 축이 다르다 — 실브라우저 측정만이 최종 판정이다. */
+const UNREACHABLE = [
+  {
+    slot: "1c.item.badge",
+    label: "재고관리에서 연동",
+    gate: "quote.sourceMeta && ( … )  @ quote-prepare-panel.tsx:126",
+    사유: "호출부(app/dashboard/quotes/page.tsx:4419)가 sourceMeta: null 하드코딩 — 분기가 열리지 않는다",
+    해제: "§quote-source-field 가 Quote.sourceType 을 넣고 sourceMeta 를 채우면 도달 가능해진다",
+  },
+] as const;
+
 /** 🔴 md 명세가 있는데 소스에 없다. **미구현이 아니라 미이행**이다 — 표면은 실행 가능하다. */
 const UNIMPLEMENTED = [
   /* 🔁 2026-08-16 이관 — `1d.card.origin` 을 이 목록에서 **내렸다.**
@@ -115,12 +142,13 @@ const UNIMPLEMENTED = [
    *
    *   → 대기열 카드 §quote-source-field (docs/handoff/CARD_quote-source-field.md)
    *   🛑 되살림 경로: 스키마 트랙이 `Quote.sourceType` 을 넣으면
-   *      이 목록에 `1d.card.origin` 을 **재등재**하고 길이 잠금을 6 → 7 로 되돌린다.
-   *      그게 정상 경로다 — 안 되돌리면 md line 38 이 영구히 잠금 밖에 남는다. */
-  /* 🔁 2026-08-16 신규 등재 — 게이팅 해제로 **은폐가 풀린** 6건.
-   *    구 게이팅이 1c 18슬롯을 통째로 검사 밖에 뒀다. 해제하니 8건은 실제로 이행돼 있었고
-   *    아래 6건이 미이행이었다. RED 1 → 7 은 악화가 아니라 **은폐 해제**다. */
-  { slot: "1c.header.origin", md: "08-01 md §1c — `· 방금 재고관리에서 생성됨`", 표면: PREPARE_PANEL, 성격: "출처 문구 부재" },
+   *      `1d.card.origin` + `1c.header.origin` 을 **재등재**하고 길이 잠금 5 → 7,
+   *      그리고 UNREACHABLE 의 `1c.item.badge` 를 실 대조로 승격한다(도달 가능해지므로).
+   *      그게 정상 경로다 — 안 되돌리면 md 명세 3건이 영구히 잠금 밖에 남는다. */
+  /* 🔁 2026-08-16 신규 등재 — 게이팅 해제로 **은폐가 풀린** 분.
+   *    구 게이팅이 1c 18슬롯을 통째로 검사 밖에 뒀다. 해제 후 실측:
+   *      이행 7 · 도달불가 1(item.badge) · 대기열 1(header.origin) · 미이행 5 · 전량시드 4 = 18
+   *    미이행이 늘어난 것은 악화가 아니라 **은폐 해제**다. */
   { slot: "1c.item.evidence", md: "08-01 md §1c — `근거 자동 첨부`", 표면: PREPARE_PANEL, 성격: "근거 첨부 표기 부재" },
   { slot: "1c.vendor.panel_title", md: "08-01 md §1c — `받을 공급사를 지정하세요`", 표면: PREPARE_PANEL, 성격: "패널 제목 문안 불일치" },
   { slot: "1c.vendor.add_email", md: "08-01 md §1c line 29 — `이메일로 추가`", 표면: PREPARE_PANEL, 성격: "진입 버튼 부재" },
@@ -167,12 +195,27 @@ describe("§reorder-handoff 축 C — 목록 규율(제외 남용 방어)", () =
     }
   });
 
-  it("🔴 미이행 목록 6건 — 늘어나면 RED (조용히 7·8건이 되지 않게)", () => {
-    expect(UNIMPLEMENTED.length).toBe(6); // 1c 6건. ④ 1d.card.origin 은 스키마 부재로 대기열 이관
+  it("🆕 도달 불가 목록 1건 — 늘어나면 RED · 게이트가 열리면 RED(자기무효화)", () => {
+    expect(UNREACHABLE.length).toBe(1);
+    for (const u of UNREACHABLE) {
+      // 라벨이 소스에 **실재**해야 한다 — 없으면 도달불가가 아니라 미이행이다
+      expect(surface(u.slot.slice(0, 2))).toContain(u.label);
+      expect(u.해제).toMatch(/quote-source-field/);
+    }
+
+    /* 🛑 자기무효화 — 게이트가 열리면(sourceMeta 가 리터럴 null 이 아니게 되면) RED.
+     *    "도달 가능해졌으니 실 대조로 승격하라" 를 알린다. 화이트리스트가 아니라 3층이다. */
+    const callSite = read("app/dashboard/quotes/page.tsx");
+    expect(callSite.length).toBeGreaterThan(1000); // 무효 단언 방어
+    expect(callSite).toMatch(/sourceMeta:\s*null/);
+  });
+
+  it("🔴 미이행 목록 5건 — 늘어나면 RED (조용히 6·7건이 되지 않게)", () => {
+    expect(UNIMPLEMENTED.length).toBe(5); // 1c 5건. 1d.card.origin·1c.header.origin 은 스키마 부재로 대기열
     for (const u of UNIMPLEMENTED) expect(u.md).toMatch(/md/); // 근거 md 병기 필수
     // 🛑 축 구분: **슬롯 축 7** ≠ **it 축 2**(1d 1건 + 1c 6건 묶음 1건).
     //    "RED 7" 로 세면 vitest 출력과 안 맞는다. 이 저장소가 반복해서 만난 축 혼동이다.
-    expect(UNIMPLEMENTED.filter((u) => u.slot.startsWith("1c."))).toHaveLength(6);
+    expect(UNIMPLEMENTED.filter((u) => u.slot.startsWith("1c."))).toHaveLength(5);
     // 🛑 1d 는 0 이어야 한다 — 스키마 트랙이 되살릴 때 1 로 올린다(길이 잠금 6 → 7)
     expect(UNIMPLEMENTED.filter((u) => u.slot.startsWith("1d."))).toHaveLength(0);
   });
@@ -269,9 +312,13 @@ describe("§reorder-handoff 축 C — 1d 견적 관리", () => {
    *   실측 결과 소스 부재가 아니라 **스키마 부재**다(`Quote` 에 출처 축 0건).
    *   md 는 조건절로 정합화됐다(1bb18679): 출처 미상이면 표기를 생략한다.
    *   → 지금 표기가 없는 것은 **현행 정합**이지 결함이 아니다. RED 를 내리는 근거다. */
-  it("1d.card.origin — 대기열 이관(스키마 부재) · 되살림 앵커", () => {
-    // 출처 축이 없으므로 표기 부재가 현행 정합이다
+  it("origin 2슬롯 — 대기열 이관(스키마 부재) · 되살림 앵커", () => {
+    // 출처 축이 없으므로 표기 부재가 현행 정합이다 (md 조건절 1bb18679)
     expect(hasLabel("1d", "1d.card.origin").ok).toBe(false);
+    /* 🔁 1c.header.origin 합류 — 같은 vm · 같은 Quote 레코드 · 같은 출처 축 부재.
+     *    차이는 렌더 배선 유무뿐이고 패널은 배선돼 있다(sourceMeta 조립)
+     *    → 스키마가 들어오면 자동 이행된다. 미이행이 아니라 대기열이다. */
+    expect(hasLabel("1c", "1c.header.origin").ok).toBe(false);
 
     /* 🛑 자기무효화 앵커 — `Quote.sourceType` 이 생기면 이 단언이 RED 로
      *    "대기열에서 내려올 때다" 를 알린다. 화이트리스트가 아니라 3층이다.
@@ -307,7 +354,11 @@ describe("§reorder-handoff 축 C — 1c 발송 준비 (게이팅 해제 · 즉�
 
   it("1c 라벨 대조 — 미이행분은 UNIMPLEMENTED 가 따로 잠근다", () => {
     const src = surface("1c");
-    const known = new Set<string>(UNIMPLEMENTED.map((u) => u.slot));
+    const known = new Set<string>([
+      ...UNIMPLEMENTED.map((u) => u.slot),
+      ...UNREACHABLE.map((u) => u.slot), // 도달불가 — 소스엔 있으나 렌더 안 됨. 별도 it 이 잠근다
+      "1c.header.origin", // 대기열 이관 — 되살림 앵커가 잠근다
+    ]);
     const missing: string[] = [];
     for (const s of SLOTS.filter((x) => x.sec === "1c")) {
       if (EXCLUDED_GLYPH_ONLY.some((e) => e.slot === s.slot)) continue;
@@ -319,7 +370,7 @@ describe("§reorder-handoff 축 C — 1c 발송 준비 (게이팅 해제 · 즉�
     expect({ 미일치: missing }).toEqual({ 미일치: [] });
   });
 
-  it("🔴 1c 미이행 6건 — 게이팅 해제로 드러난 분 (은폐 해제)", () => {
+  it("🔴 1c 미이행 5건 — 게이팅 해제로 드러난 분 (은폐 해제)", () => {
     const src = surface("1c");
     const still: string[] = [];
     for (const u of UNIMPLEMENTED.filter((x) => x.slot.startsWith("1c."))) {
@@ -340,22 +391,26 @@ describe("§reorder-handoff 축 C — 잠그지 못하는 것 (등급 한계 명
     expect(typeof surface("1a")).toBe("string");
   });
 
-  it("커버리지 회계 — 63 = 대조 + 제외 + 미이행 + 대기열 + 생략 (게이팅 0)", () => {
+  it("커버리지 회계 — 63 = 대조 + 제외 + 미이행 + 대기열 + 도달불가 + 생략 (게이팅 0)", () => {
     const total = SLOTS.length;
     const 생략 = SLOTS.filter((s) => s.elision).length;
     const 제외 = EXCLUDED_GLYPH_ONLY.length + NUMERIC_SEED.length;
-    const 대기열 = 1; // 1d.card.origin — 스키마 부재. §quote-source-field
+    const 대기열 = 2; // 1d.card.origin · 1c.header.origin — 스키마 부재. §quote-source-field
+    const 도달불가 = UNREACHABLE.length; // 1c.item.badge
 
     expect(total).toBe(63);
     expect(생략).toBe(1);
     expect(제외).toBe(9); // 가1 5(1c 포함 — 게이팅 해제로 1c 도 대상이다) + 수치 4
-    expect(UNIMPLEMENTED.length).toBe(6);
+    expect(UNIMPLEMENTED.length).toBe(5);
+    expect(도달불가).toBe(1);
 
     // 🛑 게이팅 0 — 2026-08-16 해제. 어떤 섹션도 검사 밖에 없다
     for (const sec of ["1a", "1b", "1c", "1d"]) expect(SURFACES[sec].length).toBeGreaterThan(0);
 
     // 회계가 닫히는지 — 잔여가 실 대조분이다
-    const 대조 = total - 생략 - 제외 - UNIMPLEMENTED.length - 대기열;
-    expect(대조).toBe(46);
+    const 대조 = total - 생략 - 제외 - UNIMPLEMENTED.length - 대기열 - 도달불가;
+    expect(대조).toBe(45);
+    // 회계 닫힘: 63 = 45 + 9 + 5 + 2 + 1 + 1
+    expect(대조 + 제외 + UNIMPLEMENTED.length + 대기열 + 도달불가 + 생략).toBe(63);
   });
 });

@@ -51,19 +51,50 @@ specialNotes: `재고관리 재발주안에서 생성 · ${reason}`
                md 형식을 조립한다 — 같은 파생을 카드에 재사용
 ```
 
+## 이 카드가 막고 있는 슬롯 — **3건** (2026-08-16 확정)
+
+```
+1d.card.origin     mobile-quotes-view   렌더 배선 없음 · 출처 필드 0   → 대기열
+1c.header.origin   quote-prepare-panel  렌더 배선 **있음** · 값이 null → 대기열
+1c.item.badge      quote-prepare-panel  `재고관리에서 연동` 배지        → 🆕 도달 불가
+```
+
+셋 다 같은 축이다 — 같은 `quotes` 배열 · 같은 `Quote` 레코드 · 같은 출처 필드 부재.
+차이는 렌더 배선 유무뿐이다.
+
+🔴 `1c.item.badge` 는 성격이 하나 더 다르다. **소스에 문자열이 있는데 렌더되지 않는다**:
+
+```tsx
+{quote.sourceMeta && (          // ← page.tsx:4419 가 항상 null 을 넘긴다
+  <span …>재고관리에서 연동</span>
+)}
+```
+
+축 C 는 **존재는 보지만 도달은 못 본다** — 이 배지는 축 C 에서 GREEN 이었다(2026-08-16 발견).
+`Render-Reachability`(dead file)의 **분기 단위 버전**이다. 스키마가 들어오면 배지도 함께 살아난다.
+
 ## 🛑 되살림 경로 (안 적으면 영구히 안 돌아온다)
 
-축 C 에서 `1d.card.origin` 을 미이행 목록에서 내렸다. 스키마가 들어오면:
+축 C 에서 위 3건을 미이행 목록에서 내렸다. 스키마가 들어오면:
 
 ```
-1  reorder-handoff-impl-conformance.test.ts 의 UNIMPLEMENTED 에 1d.card.origin 재등재
-2  길이 잠금 6 → 7 로 되돌린다
-3  "1d.card.origin — 대기열 이관 · 되살림 앵커" it 을 실 대조로 교체
+1  UNIMPLEMENTED 에 1d.card.origin + 1c.header.origin 재등재 → 길이 잠금 5 → 7
+2  UNREACHABLE 의 1c.item.badge 를 **실 대조로 승격**(도달 가능해지므로) → 길이 잠금 1 → 0
+3  "origin 2슬롯 — 대기열 이관 · 되살림 앵커" it 을 실 대조로 교체
+4  커버리지 회계 갱신: 대조 45 → 48 · 미이행 5 → 7 · 대기열 2 → 0 · 도달불가 1 → 0
 ```
 
-**자기무효화 앵커가 이미 배선돼 있다.** 그 it 이 `Quote` 모델에 `sourceType|sourceKind|sourceId`
-가 없음을 단언하므로, 스키마가 들어오는 순간 **RED 로 "되살릴 때다" 를 알린다.**
-화이트리스트가 아니라 3층이다 — 해제 조건이 코드로 판별된다.
+**자기무효화 앵커가 이미 두 개 배선돼 있다** — 화이트리스트가 아니라 3층이다:
+
+```
+스키마 앵커   Quote 모델에 source(Type|Kind|Id) 부재를 단언
+              → 스키마가 들어오면 RED 로 "되살릴 때다" 를 알린다
+게이트 앵커   page.tsx 가 `sourceMeta: null` 임을 단언
+              → 값이 채워지면 RED 로 "도달 가능해졌으니 승격하라" 를 알린다
+```
+
+⚠️ 둘 다 **무효 단언 방어**를 포함한다(모델 슬라이스 길이 · 파일 길이 검사).
+`not.toMatch` 는 대상이 빈 문자열이면 공집합에 통과한다.
 
 ## 관련
 
