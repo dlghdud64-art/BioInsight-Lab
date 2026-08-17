@@ -146,7 +146,7 @@ export function QuotePreparePanel({
 
           {/* ── 공급사 지정 패널 (블루 보더 활성) ── */}
           <div className="rounded-lg border-2 border-blue-200 bg-blue-50/30 p-3 space-y-2" data-testid="prepare-vendor-assign">
-            <p className="text-xs font-bold text-slate-700">공급사 지정</p>
+            <p className="text-xs font-bold text-slate-700">받을 공급사를 지정하세요</p>
             <div className="flex items-center gap-2">
               <Input
                 value={vendorInput}

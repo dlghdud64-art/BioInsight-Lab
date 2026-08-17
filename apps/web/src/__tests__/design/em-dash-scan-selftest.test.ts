@@ -46,10 +46,15 @@ describe("§em-dash-scan — 판별기 자기검증", () => {
 });
 
 describe("§em-dash-scan — 소급 완료분 잠금 (회귀 0)", () => {
+  /* 🛑 소급 완료 파일은 **여기서** 잠근다. 축 C(슬롯 대조)로는 안 잡히는 자리가 있다 —
+   *    2026-08-16 실측: `quote-prepare-panel.tsx` L175 `— 탭해서 지정` 을 되돌려도
+   *    축 C 는 GREEN 이었다(`1c.vendor.rec_meta` 는 전량 시드라 값 대조를 하지 않는다).
+   *    조항 소급의 회귀 가드는 게이트 커버리지와 축이 다르므로 파일 단위로 여기 등재한다. */
   const DONE = [
     "app/dashboard/analytics/page.tsx",
     "components/inventory/ReorderReviewSheet.tsx",
     "app/dashboard/purchase-orders/new/page.tsx",
+    "components/quotes/prepare/quote-prepare-panel.tsx", // 29146a6e(2건) + 369b1a15(L175)
   ];
 
   for (const rel of DONE) {

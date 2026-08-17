@@ -20,19 +20,20 @@
  *                   정규식을 쓰는 3곳(골격 대조)은 전부 리터럴 앵커 + 제한 창.
  *   ② 창 시작점     이 파일: 창은 표면 파일 **전체**다(슬라이스 없음). 부분 창 0.
  *   ③ 검출력 실증   변이 프로브 별도 실행 · 러너 = **프로젝트 vitest**.
- *                   🛑 무변이 baseline 이 GREEN 이 아니라 **RED it 1**(1c 미이행 3슬롯 묶음)이다.
- *                      검출 판정은 건수가 아니라 **어느 it 이 지목되는지**로 한다.
+ *                   🎯 무변이 baseline 은 **GREEN**(2026-08-16 커밋 B 이후). RED 0.
  *   ④ 대체 매칭     이 파일: 수치 전용 라벨("1"·"0"·"9"·"종")은 소스 어디서나 매칭되어
  *                   무효 단언이 된다 → NUMERIC_SEED 로 제외하고 축 B 병기.
  *                   형제 슬롯 전수 훑음: kpi.value 3 + qty.value 1 = 4건 전량.
  *
  * ── 커버리지 회계 (63슬롯) ──
- *   대조         47   구현 표면(1a·1b·1c·1d)에서 실 대조
+ *   대조         48   구현 표면(1a·1b·1c·1d)에서 실 대조
  *   병합 축약    -6   3그룹(1a.banner evidence · 1b.item evidence · 1b.no_vendor body)
  *   제외 가1      5   순수 기호 — lucide 컴포넌트라 문자열 부재가 정상. 축 B 가 잡는다
  *   제외 수치     4   시드 값 — 축 B 가 잡는다
- *   미이행        3   md 명세 있으나 소스 부재. **RED** — 1c 문안 1(panel_title) + 신설 2
- *   대기열 이관    2   1d.card.origin · 1c.header.origin — 스키마 부재(§quote-source-field)
+ *   미이행        0   🎯 **RED 0.** 5건 중 UI 미이행은 1건뿐이었고 4건은 데이터·기능 부재였다
+ *   대기열 이관    4   origin 2(§quote-source-field) · item.evidence(§quote-item-inventory-snapshot)
+ *                     · vendor.add_email(§vendor-add-by-email)
+ *                     🔑 공통 원인: 시안이 데이터 없이 그려졌고 fixture 도출이 안 걸렀다
  *   🆕 도달 불가   1   1c.item.badge — 소스엔 있으나 항상 거짓인 게이트 안
  *   게이팅         0   🔁 2026-08-16 해제. 1c 는 라우트가 아니라 쿼리 패널이었다
  *   생략          1   1a.elision (시안 생략 표기, 제품 UI 아님)
@@ -52,6 +53,9 @@ import fixture from "../fixtures/reorder-handoff-comp.json";
 const SRC_DIR = join(__dirname, "..", "..");
 const p = (rel: string) => join(SRC_DIR, rel);
 const read = (rel: string) => readFileSync(p(rel), "utf8");
+/** 부정 단언 전용 — 주석 제거본. 원본에 걸면 설명 주석이 매칭돼 영구 RED 가 된다. */
+const stripComments = (src: string) =>
+  src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*\/\/.*$/gm, "");
 
 /* ── 대상 표면 ─────────────────────────────────────────────────────────
  * 🛑 63슬롯은 **한 화면이 아니다.** 네 섹션이 각기 다른 표면을 겨냥한다.
@@ -126,8 +130,25 @@ const UNREACHABLE = [
   },
 ] as const;
 
-/** 🔴 md 명세가 있는데 소스에 없다. **미구현이 아니라 미이행**이다 — 표면은 실행 가능하다. */
-const UNIMPLEMENTED = [
+/* ── 📋 대기열 (2026-08-16) ─────────────────────────────────────────
+ * md 명세가 있으나 **데이터·기능이 부재**해서 UI 로 이행할 수 없다.
+ * 🛑 미이행과 다르다 — 미이행은 소스만 고치면 되고, 이건 스키마·기능이 선행이다.
+ *    같은 목록에 두면 다음 세션이 UI 작업으로 읽는다.
+ *
+ * 🔑 공통 원인: **시안이 데이터 없이 그려졌고 fixture 도출이 그걸 안 걸렀다.**
+ *    도출 시점에 "이 슬롯이 요구하는 데이터가 실재하는가" 를 재지 않았다.
+ *    63슬롯 중 4건이 사후 이관됐다. */
+const QUEUED = [
+  "1d.card.origin", // §quote-source-field — Quote 출처 필드 0
+  "1c.header.origin", // §quote-source-field — 동상(패널은 배선 있음)
+  "1c.item.evidence", // §quote-item-inventory-snapshot — QuoteItem 재고 필드 0
+  "1c.vendor.add_email", // §vendor-add-by-email — 핸들러·API·모달 전부 0
+] as const;
+
+/** 🔴 md 명세가 있는데 소스에 없다. **미구현이 아니라 미이행**이다 — 표면은 실행 가능하다.
+ *  🛑 빈 배열이라 명시 타입이 필요하다 — as const 만 두면 never 로 추론돼 .map 이 깨진다. */
+type Unimplemented = { slot: string; md: string; 표면: string; 성격: string };
+const UNIMPLEMENTED: ReadonlyArray<Unimplemented> = [
   /* 🔁 2026-08-16 이관 — `1d.card.origin` 을 이 목록에서 **내렸다.**
    *
    *   이 목록의 정의는 "md 명세 있으나 **소스** 부재" 다.
@@ -149,9 +170,18 @@ const UNIMPLEMENTED = [
    *    구 게이팅이 1c 18슬롯을 통째로 검사 밖에 뒀다. 해제 후 실측:
    *      이행 7 · 도달불가 1(item.badge) · 대기열 1(header.origin) · 미이행 5 · 전량시드 4 = 18
    *    미이행이 늘어난 것은 악화가 아니라 **은폐 해제**다. */
-  { slot: "1c.item.evidence", md: "08-01 md §1c — `근거 자동 첨부`", 표면: PREPARE_PANEL, 성격: "근거 첨부 표기 부재" },
-  { slot: "1c.vendor.panel_title", md: "08-01 md §1c — `받을 공급사를 지정하세요`", 표면: PREPARE_PANEL, 성격: "패널 제목 문안 불일치" },
-  { slot: "1c.vendor.add_email", md: "08-01 md §1c line 29 — `이메일로 추가`", 표면: PREPARE_PANEL, 성격: "진입 버튼 부재" },
+  /* 🔁 2026-08-16 — **목록이 비었다.** 상수는 남긴다(다음 미이행에 다시 쓴다).
+   *
+   *   1c.vendor.panel_title  ✅ 이행 — 시안 채택(`받을 공급사를 지정하세요`). md 미명세라 시안이 다음 순위
+   *   1c.cta.primary_disabled ✅ 이행 — em dash 소급(29146a6e)
+   *   1c.exit_link            ✅ 이행 — em dash 소급(29146a6e)
+   *   1c.item.evidence        📋 대기열 → §quote-item-inventory-snapshot (QuoteItem 재고 필드 0)
+   *   1c.vendor.add_email     📋 대기열 → §vendor-add-by-email (핸들러·API·모달 전부 0)
+   *
+   *   🔑 5건 중 **진짜 UI 미이행은 1건뿐**이었다. 나머지 4건은 데이터·기능 부재다.
+   *      게이트가 잡은 것은 "구현이 게을렀다" 가 아니라
+   *      **"시안이 존재하지 않는 데이터를 그렸다"** 다 — 축이 다르다.
+   *      fixture 도출 시점에 "이 슬롯이 요구하는 데이터가 실재하는가" 를 안 쟀다. */
 ] as const;
 
 /* ── 정규화 ─────────────────────────────────────────────────────────
@@ -208,12 +238,12 @@ describe("§reorder-handoff 축 C — 목록 규율(제외 남용 방어)", () =
     expect(callSite).toMatch(/sourceMeta:\s*null/);
   });
 
-  it("🔴 미이행 목록 3건 — 늘어나면 RED (조용히 4·5건이 되지 않게)", () => {
-    expect(UNIMPLEMENTED.length).toBe(3); // 1c 3건. em dash 2건 이행(커밋 A) · origin 2건 대기열
+  it("🎯 미이행 목록 0건 — 늘어나면 RED (신규 미이행이 조용히 들어오지 않게)", () => {
+    expect(UNIMPLEMENTED.length).toBe(0); // 🎯 비었다. 상수는 남긴다 — 다음 미이행에 다시 쓴다
     for (const u of UNIMPLEMENTED) expect(u.md).toMatch(/md/); // 근거 md 병기 필수
     // 🛑 축 구분: **슬롯 축 7** ≠ **it 축 2**(1d 1건 + 1c 6건 묶음 1건).
     //    "RED 7" 로 세면 vitest 출력과 안 맞는다. 이 저장소가 반복해서 만난 축 혼동이다.
-    expect(UNIMPLEMENTED.filter((u) => u.slot.startsWith("1c."))).toHaveLength(3);
+    expect(UNIMPLEMENTED.filter((u) => u.slot.startsWith("1c."))).toHaveLength(0);
     // 🛑 1d 는 0 이어야 한다 — 스키마 트랙이 되살릴 때 1 로 올린다(길이 잠금 6 → 7)
     expect(UNIMPLEMENTED.filter((u) => u.slot.startsWith("1d."))).toHaveLength(0);
   });
@@ -355,7 +385,7 @@ describe("§reorder-handoff 축 C — 1c 발송 준비 (게이팅 해제 · 즉�
     const known = new Set<string>([
       ...UNIMPLEMENTED.map((u) => u.slot),
       ...UNREACHABLE.map((u) => u.slot), // 도달불가 — 소스엔 있으나 렌더 안 됨. 별도 it 이 잠근다
-      "1c.header.origin", // 대기열 이관 — 되살림 앵커가 잠근다
+      ...QUEUED, // 대기열 — 데이터·기능 부재. 되살림 앵커가 잠근다
     ]);
     const missing: string[] = [];
     for (const s of SLOTS.filter((x) => x.sec === "1c")) {
@@ -368,15 +398,32 @@ describe("§reorder-handoff 축 C — 1c 발송 준비 (게이팅 해제 · 즉�
     expect({ 미일치: missing }).toEqual({ 미일치: [] });
   });
 
-  it("🔴 1c 미이행 3건 — 게이팅 해제로 드러난 분 (은폐 해제)", () => {
+  /* 🔁 2026-08-16 — 구 it 은 미이행 3건을 RED 로 잡았다. 전부 처리돼 대기열 앵커로 전환한다.
+   *   🛑 대기열 2건은 **데이터·기능 부재**다. 지금 문안이 없는 것이 현행 정합이다. */
+  it("1c 대기열 2슬롯 — 데이터·기능 부재. 되살림 앵커", () => {
     const src = surface("1c");
-    const still: string[] = [];
-    for (const u of UNIMPLEMENTED.filter((x) => x.slot.startsWith("1c."))) {
-      const s = bySlot(u.slot);
-      const probe = s._시드종속 ? s._시드종속.fixed : s.label;
-      if (probe && !src.includes(stripGlyphs(probe))) still.push(`${u.slot} :: ${probe}`);
-    }
-    expect({ 미이행_잔존: still }).toEqual({ 미이행_잔존: [] });
+    // item.evidence — QuoteItem 에 재고 필드가 없으므로 수치 렌더 불가
+    expect(src).not.toMatch(/현재\s*\{[^}]*\}\s*\/\s*안전/);
+    // add_email — 핸들러가 없으므로 문안도 없어야 한다(있으면 dead button)
+    expect(src).not.toContain("이메일로 추가");
+
+    /* 🛑 자기무효화 — 문안이 들어오면 RED 로 "핸들러 유무를 함께 재라" 를 알린다.
+     *    §vendor-add-by-email · §quote-item-inventory-snapshot */
+    expect(src).not.toMatch(/onAddByEmail|onAddEmail/);
+    expect(src.length).toBeGreaterThan(1000); // 무효 단언 방어
+  });
+
+  it("✅ 1c 이행분 — panel_title 시안 채택 + em dash 소급 2건", () => {
+    const src = surface("1c");
+    // md 미명세 → 시안이 다음 순위(축 2: md 미명세는 충돌이 아니다)
+    expect(src).toContain("받을 공급사를 지정하세요");
+    // em dash 소급 — md §1c line 32·33 이 가운뎃점으로 명세
+    expect(src).toContain("발송 검토로 · 공급사 지정 필요");
+    expect(src).toContain("나중에 하기 · 발송 대기로 저장");
+    /* 🛑 부정 단언은 **주석 제거본**에 건다 (CLAUDE.md §부정 단언).
+     *    이 파일 L46 주석이 `발송 검토로 —` 를 담고 있어 원본에 걸면 영구 RED 다 —
+     *    2026-08-16 실측으로 걸렸다. 조항이 있었고 내가 안 지켰다. */
+    expect(stripComments(src)).not.toMatch(/발송 검토로 —|나중에 하기 —/);
   });
 });
 
@@ -393,13 +440,14 @@ describe("§reorder-handoff 축 C — 잠그지 못하는 것 (등급 한계 명
     const total = SLOTS.length;
     const 생략 = SLOTS.filter((s) => s.elision).length;
     const 제외 = EXCLUDED_GLYPH_ONLY.length + NUMERIC_SEED.length;
-    const 대기열 = 2; // 1d.card.origin · 1c.header.origin — 스키마 부재. §quote-source-field
+    const 대기열 = QUEUED.length; // 4 — 1d.card.origin · 1c.header.origin(§quote-source-field)
+                     // 1c.item.evidence(§quote-item-inventory-snapshot) · 1c.vendor.add_email(§vendor-add-by-email)
     const 도달불가 = UNREACHABLE.length; // 1c.item.badge
 
     expect(total).toBe(63);
     expect(생략).toBe(1);
     expect(제외).toBe(9); // 가1 5(1c 포함 — 게이팅 해제로 1c 도 대상이다) + 수치 4
-    expect(UNIMPLEMENTED.length).toBe(3);
+    expect(UNIMPLEMENTED.length).toBe(0);
     expect(도달불가).toBe(1);
 
     // 🛑 게이팅 0 — 2026-08-16 해제. 어떤 섹션도 검사 밖에 없다
@@ -407,8 +455,8 @@ describe("§reorder-handoff 축 C — 잠그지 못하는 것 (등급 한계 명
 
     // 회계가 닫히는지 — 잔여가 실 대조분이다
     const 대조 = total - 생략 - 제외 - UNIMPLEMENTED.length - 대기열 - 도달불가;
-    expect(대조).toBe(47);
-    // 회계 닫힘: 63 = 47 + 9 + 3 + 2 + 1 + 1
+    expect(대조).toBe(48);
+    // 회계 닫힘: 63 = 48 + 9 + 0 + 4 + 1 + 1
     expect(대조 + 제외 + UNIMPLEMENTED.length + 대기열 + 도달불가 + 생략).toBe(63);
   });
 });
