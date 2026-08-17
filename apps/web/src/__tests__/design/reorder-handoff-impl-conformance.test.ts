@@ -20,7 +20,7 @@
  *                   정규식을 쓰는 3곳(골격 대조)은 전부 리터럴 앵커 + 제한 창.
  *   ② 창 시작점     이 파일: 창은 표면 파일 **전체**다(슬라이스 없음). 부분 창 0.
  *   ③ 검출력 실증   변이 프로브 별도 실행 · 러너 = **프로젝트 vitest**.
- *                   🛑 무변이 baseline 이 GREEN 이 아니라 **RED 1**(④ 미이행)이다.
+ *                   🛑 무변이 baseline 이 GREEN 이 아니라 **RED it 1**(1c 미이행 6슬롯 묶음)이다.
  *                      검출 판정은 건수가 아니라 **어느 it 이 지목되는지**로 한다.
  *   ④ 대체 매칭     이 파일: 수치 전용 라벨("1"·"0"·"9"·"종")은 소스 어디서나 매칭되어
  *                   무효 단언이 된다 → NUMERIC_SEED 로 제외하고 축 B 병기.
@@ -31,7 +31,8 @@
  *   병합 축약    -6   3그룹(1a.banner evidence · 1b.item evidence · 1b.no_vendor body)
  *   제외 가1      5   순수 기호 — lucide 컴포넌트라 문자열 부재가 정상. 축 B 가 잡는다
  *   제외 수치     4   시드 값 — 축 B 가 잡는다
- *   미이행        7   md 명세 있으나 소스 부재. **RED** — ④ 1건 + 1c 6건
+ *   미이행        6   md 명세 있으나 소스 부재. **RED** — 1c 6건
+ *   대기열 이관    1   1d.card.origin — 스키마 부재(§quote-source-field). 소스 부재 아님
  *   게이팅         0   🔁 2026-08-16 해제. 1c 는 라우트가 아니라 쿼리 패널이었다
  *   생략          1   1a.elision (시안 생략 표기, 제품 UI 아님)
  *
@@ -48,7 +49,7 @@ const p = (rel: string) => join(SRC_DIR, rel);
 const read = (rel: string) => readFileSync(p(rel), "utf8");
 
 /* ── 대상 표면 ─────────────────────────────────────────────────────────
- * 🛑 63슬롯은 **한 화면이 아니다.** 1c 만 미구현이고 나머지는 실행 가능한 표면이다.
+ * 🛑 63슬롯은 **한 화면이 아니다.** 네 섹션이 각기 다른 표면을 겨냥한다.
  *    "63 전량 RED" 로 읽으면 45슬롯이 검사 밖에 남는다. */
 const SURFACES: Record<string, string[]> = {
   "1a": ["app/dashboard/inventory/inventory-content.tsx", "components/inventory/mobile-inventory-view.tsx"],
@@ -87,7 +88,7 @@ const EXCLUDED_GLYPH_ONLY = [
   { slot: "1b.close", glyph: "✕", 대체축: "축 B ✅" },
   { slot: "1b.qty.minus", glyph: "−", 대체축: "축 B ✅ (U+2212, ASCII 하이픈 아님)" },
   { slot: "1b.qty.plus", glyph: "＋", 대체축: "축 B ✅ (U+FF0B)" },
-  { slot: "1c.nav.back", glyph: "‹", 대체축: "축 B ✅ (1c 는 미구현이라 축 C 대상도 아님)" },
+  { slot: "1c.nav.back", glyph: "‹", 대체축: "축 B ✅ (순수 기호 — lucide ChevronLeft)" },
 ] as const;
 
 /** (④ 대체 매칭) 수치 전용 라벨. "1" 은 소스 어디서나 매칭되어 **무효 단언**이 된다. */
@@ -100,12 +101,22 @@ const NUMERIC_SEED = [
 
 /** 🔴 md 명세가 있는데 소스에 없다. **미구현이 아니라 미이행**이다 — 표면은 실행 가능하다. */
 const UNIMPLEMENTED = [
-  {
-    slot: "1d.card.origin",
-    md: "재발주 견적 핸드오프 흐름.md:38 — `재고관리 재발주안에서 생성 · 2026. 8. 1.` (연도 포함 표기 통일)",
-    표면: "components/quotes/mobile-quotes-view.tsx (존재 · 날짜 행만 있고 출처 문구 없음)",
-    성격: "🛑 `sourceMeta: null` 이 의도적 결정(acb71541, 2026-08-06 · '가짜 출처 표기 금지'). md 와 충돌 판정 대기",
-  },
+  /* 🔁 2026-08-16 이관 — `1d.card.origin` 을 이 목록에서 **내렸다.**
+   *
+   *   이 목록의 정의는 "md 명세 있으나 **소스** 부재" 다.
+   *   ④는 소스 부재가 아니라 **스키마 부재**였다 — 성격이 다르므로 같은 목록에 두면
+   *   다음 세션이 카드 렌더만 고치러 간다(③↔④ 를 가른 것과 같은 이유).
+   *
+   *   실측: `Quote` 모델에 출처 축 **0건**. `CartItem` 에는 있다:
+   *         CartItem.sourceType (MANUAL|REORDER|SEARCH) + sourceId
+   *         → 카드 1행 문제가 아니라 **모델 간 축 불일치**다.
+   *   `specialNotes` 문자열 조립은 그 부재를 우회한 흔적이고,
+   *   역파싱 금지가 md 에 박혔으므로(1bb18679) 우회로는 닫혔다.
+   *
+   *   → 대기열 카드 §quote-source-field (docs/handoff/CARD_quote-source-field.md)
+   *   🛑 되살림 경로: 스키마 트랙이 `Quote.sourceType` 을 넣으면
+   *      이 목록에 `1d.card.origin` 을 **재등재**하고 길이 잠금을 6 → 7 로 되돌린다.
+   *      그게 정상 경로다 — 안 되돌리면 md line 38 이 영구히 잠금 밖에 남는다. */
   /* 🔁 2026-08-16 신규 등재 — 게이팅 해제로 **은폐가 풀린** 6건.
    *    구 게이팅이 1c 18슬롯을 통째로 검사 밖에 뒀다. 해제하니 8건은 실제로 이행돼 있었고
    *    아래 6건이 미이행이었다. RED 1 → 7 은 악화가 아니라 **은폐 해제**다. */
@@ -156,13 +167,14 @@ describe("§reorder-handoff 축 C — 목록 규율(제외 남용 방어)", () =
     }
   });
 
-  it("🔴 미이행 목록 7건 — 늘어나면 RED (조용히 8·9건이 되지 않게)", () => {
-    expect(UNIMPLEMENTED.length).toBe(7); // ④ 1건 + 게이팅 해제로 드러난 1c 6건
+  it("🔴 미이행 목록 6건 — 늘어나면 RED (조용히 7·8건이 되지 않게)", () => {
+    expect(UNIMPLEMENTED.length).toBe(6); // 1c 6건. ④ 1d.card.origin 은 스키마 부재로 대기열 이관
     for (const u of UNIMPLEMENTED) expect(u.md).toMatch(/md/); // 근거 md 병기 필수
     // 🛑 축 구분: **슬롯 축 7** ≠ **it 축 2**(1d 1건 + 1c 6건 묶음 1건).
     //    "RED 7" 로 세면 vitest 출력과 안 맞는다. 이 저장소가 반복해서 만난 축 혼동이다.
     expect(UNIMPLEMENTED.filter((u) => u.slot.startsWith("1c."))).toHaveLength(6);
-    expect(UNIMPLEMENTED.filter((u) => u.slot.startsWith("1d."))).toHaveLength(1);
+    // 🛑 1d 는 0 이어야 한다 — 스키마 트랙이 되살릴 때 1 로 올린다(길이 잠금 6 → 7)
+    expect(UNIMPLEMENTED.filter((u) => u.slot.startsWith("1d."))).toHaveLength(0);
   });
 });
 
@@ -253,14 +265,21 @@ describe("§reorder-handoff 축 C — 1d 견적 관리", () => {
     expect(hasLabel("1d", "1d.card.pill_action").ok).toBe(true);
   });
 
-  it("🔴 미이행 — md 명세 있으나 소스 부재 (1d.card.origin · 소스 수정 대기)", () => {
-    // 🛑 이 RED 는 **회귀가 아니다.** md(재발주 견적 핸드오프:38)가 카드 origin 행을
-    //    `재고관리 재발주안에서 생성 · 2026. 8. 1.` 로 명세했는데 소스에 그 행이 없다.
-    //    표면(mobile-quotes-view.tsx)은 실행 가능하므로 **게이팅 대상이 아니다** —
-    //    라우트가 없어 검사를 못 도는 1c 와 성격이 다르다.
-    //    origin 행이 생기면 이 it 이 자동으로 GREEN 이 된다.
-    expect(hasLabel("1d", "1d.card.origin").probe).toBe("재고관리 재발주안에서 생성");
-    expect(hasLabel("1d", "1d.card.origin").ok).toBe(true);
+  /* 🔁 2026-08-16 대기열 이관 — 구 계약은 이 슬롯을 **미이행 RED** 로 두었다.
+   *   실측 결과 소스 부재가 아니라 **스키마 부재**다(`Quote` 에 출처 축 0건).
+   *   md 는 조건절로 정합화됐다(1bb18679): 출처 미상이면 표기를 생략한다.
+   *   → 지금 표기가 없는 것은 **현행 정합**이지 결함이 아니다. RED 를 내리는 근거다. */
+  it("1d.card.origin — 대기열 이관(스키마 부재) · 되살림 앵커", () => {
+    // 출처 축이 없으므로 표기 부재가 현행 정합이다
+    expect(hasLabel("1d", "1d.card.origin").ok).toBe(false);
+
+    /* 🛑 자기무효화 앵커 — `Quote.sourceType` 이 생기면 이 단언이 RED 로
+     *    "대기열에서 내려올 때다" 를 알린다. 화이트리스트가 아니라 3층이다.
+     *    §quote-source-field 가 스키마를 넣으면 UNIMPLEMENTED 길이 6 → 7 로 되돌린다. */
+    const schema = readFileSync(join(SRC_DIR, "..", "prisma", "schema.prisma"), "utf8");
+    const quoteModel = schema.slice(schema.indexOf("model Quote {"), schema.indexOf("model QuoteTemplate"));
+    expect(quoteModel.length).toBeGreaterThan(100); // 슬라이스가 실제로 잡혔는지(무효 단언 방어)
+    expect(quoteModel).not.toMatch(/source(Type|Kind|Id)\s/);
   });
 });
 
@@ -321,15 +340,22 @@ describe("§reorder-handoff 축 C — 잠그지 못하는 것 (등급 한계 명
     expect(typeof surface("1a")).toBe("string");
   });
 
-  it("커버리지 회계 — 63 = 대조 + 제외 + 미이행 + 게이팅 + 생략", () => {
+  it("커버리지 회계 — 63 = 대조 + 제외 + 미이행 + 대기열 + 생략 (게이팅 0)", () => {
     const total = SLOTS.length;
-    const 게이팅 = SLOTS.filter((s) => s.sec === "1c").length;
     const 생략 = SLOTS.filter((s) => s.elision).length;
-    const 제외 = EXCLUDED_GLYPH_ONLY.filter((e) => e.slot.slice(0, 2) !== "1c").length + NUMERIC_SEED.length;
+    const 제외 = EXCLUDED_GLYPH_ONLY.length + NUMERIC_SEED.length;
+    const 대기열 = 1; // 1d.card.origin — 스키마 부재. §quote-source-field
+
     expect(total).toBe(63);
-    expect(게이팅).toBe(18);
     expect(생략).toBe(1);
-    expect(제외).toBe(8); // 가1 4(1c 제외분 1건 빼고) + 수치 4
-    expect(UNIMPLEMENTED.length).toBe(7);
+    expect(제외).toBe(9); // 가1 5(1c 포함 — 게이팅 해제로 1c 도 대상이다) + 수치 4
+    expect(UNIMPLEMENTED.length).toBe(6);
+
+    // 🛑 게이팅 0 — 2026-08-16 해제. 어떤 섹션도 검사 밖에 없다
+    for (const sec of ["1a", "1b", "1c", "1d"]) expect(SURFACES[sec].length).toBeGreaterThan(0);
+
+    // 회계가 닫히는지 — 잔여가 실 대조분이다
+    const 대조 = total - 생략 - 제외 - UNIMPLEMENTED.length - 대기열;
+    expect(대조).toBe(46);
   });
 });
