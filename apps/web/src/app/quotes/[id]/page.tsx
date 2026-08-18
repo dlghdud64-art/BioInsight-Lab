@@ -356,7 +356,8 @@ export default function QuoteDetailPage() {
           notes: ri.notes?.trim() || undefined,
         };
       }) || [];
-      const res = await fetch(`/api/quotes/${quoteId}/vendor-replies`, {
+      // §quote-detail-csrf-raw-fetch — mutation 은 csrfFetch (raw fetch 는 403).
+      const res = await csrfFetch(`/api/quotes/${quoteId}/vendor-replies`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ vendorName: replyVendorName.trim(), items }),
@@ -447,7 +448,13 @@ export default function QuoteDetailPage() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ status, budgetId, vendorRequestId }: { status: QuoteStatus; budgetId?: string; vendorRequestId?: string }) => {
-      const res = await fetch(`/api/quotes/${quoteId}`, {
+      /**
+       * §quote-detail-csrf-raw-fetch (프로덕션 실측 2026-08-18)
+       * 구매 진행 처리(상태 전이)가 raw fetch 라 CSRF 게이트에서 403 —
+       * 견적을 COMPLETED 로 못 넘겨 발주 전환이 통째로 막혀 있었다.
+       * 이 파일의 GET 4곳은 raw fetch 유지(토큰 불필요), mutation 만 csrfFetch.
+       */
+      const res = await csrfFetch(`/api/quotes/${quoteId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status, ...(budgetId ? { budgetId } : {}), ...(vendorRequestId ? { vendorRequestId } : {}) }),
@@ -492,7 +499,8 @@ export default function QuoteDetailPage() {
 
   const updateNoteMutation = useMutation({
     mutationFn: async ({ itemId, notes }: { itemId: string; notes: string }) => {
-      const res = await fetch(`/api/quote-items/${itemId}`, {
+      // §quote-detail-csrf-raw-fetch — 품목 메모 저장도 mutation.
+      const res = await csrfFetch(`/api/quote-items/${itemId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ notes }),
