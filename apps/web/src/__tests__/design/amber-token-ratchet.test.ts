@@ -31,13 +31,26 @@
 import { describe, it, expect } from "vitest";
 import { buildGraph, rel, isTestFile } from "../_helpers/import-graph";
 
-const AMBER_HEX = ["fffbeb","fef3c7","fde68a","fcd34d","fbbf24","f59e0b","d97706","b45309","92400e","78350f","451a03","a16207"];
+/* 🔴 오계수 정정 (2026-08-17) — `a16207` 을 목록에서 뺐다.
+ *    Tailwind 대조: amber-700 = #b45309 · **yellow-700 = #a16207**.
+ *    §0-B "amber 8토큰" 원 목록에 yellow 가 섞여 있었고 `f4dc3c61` 이 이름을 믿고 그대로 옮겼다.
+ *    결과: §9 준수(amber → yellow 치환)를 게이트가 **위반으로 계수**했다 — 정책과 반대로 작동.
+ *
+ *    🛑 감축이 아니라 **모집단 정의 오류 정정**이다. 판별 기준:
+ *       감축 반영   토큰 목록은 맞고 소스가 줄었다   → baseline 만 내린다
+ *       오계수 정정  토큰 목록 자체가 틀렸다        → 목록을 고치고 재계수한다
+ *    증거: 기존 baseline 81 안의 정당한 yellow 3건(mobile-receiving-view 2 · budget-register-sheet 1)이
+ *          부채로 잡혀 있었다. 정정 전엔 **정책 준수 코드가 amber 부채로 계상**됐다.
+ *
+ *    나머지 11건은 Tailwind amber 50~950 과 전수 대조 완료(2026-08-17) — 오염 없음. */
+const AMBER_HEX = ["fffbeb","fef3c7","fde68a","fcd34d","fbbf24","f59e0b","d97706","b45309","92400e","78350f","451a03"];
 const ORANGE_HEX = ["fff7ed","ffedd5","fed7aa","fdba74","fb923c","f97316","ea580c","c2410c","9a3412","7c2d12","431407"];
 const HEX = new RegExp("#(?:" + [...AMBER_HEX, ...ORANGE_HEX].join("|") + ")\\b", "gi");
 const CLS = /\b(?:amber|orange)-(?:50|100|200|300|400|500|600|700|800|900|950)\b/g;
 
 /** 🛑 baseline. 증가 RED · 감소도 RED(갱신 요구). 손으로 고치기 전에 사유를 커밋 메시지에 적을 것 */
-const BASELINE_TOTAL = 81;
+/** 🔴 2026-08-17 재계수: 81 → 78. 감축이 아니라 **오계수 정정**이다(위 AMBER_HEX 주석). */
+const BASELINE_TOTAL = 78;
 const BASELINE_PER_FILE: Record<string, number> = {
   "app/_components/final-cta-section.tsx": 7,
   "app/_components/ops-console-preview-section.tsx": 9,
@@ -50,13 +63,11 @@ const BASELINE_PER_FILE: Record<string, number> = {
   "app/intro/page.tsx": 4,
   "app/products/[id]/page.tsx": 4,
   "components/analytics/rum-trend-line-chart.tsx": 2,
-  "components/budget/budget-register-sheet.tsx": 1,
   "components/dashboard/category-distribution-card.tsx": 1,
   "components/inventory/ReorderReviewSheet.tsx": 10,
   "components/inventory/inventory-context-panel.tsx": 1,
   "components/inventory/inventory-reorder-blocked-sheet.tsx": 9,
   "components/operational-brief/popup.tsx": 1,
-  "components/receiving/mobile-receiving-view.tsx": 2,
   "emails/quote-completed.tsx": 3,
   "lib/budget/spending-category-schema.ts": 1,
   "lib/email/templates.ts": 3,

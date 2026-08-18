@@ -15,7 +15,6 @@ const REPO_ROOT = join(__dirname, "..", "..");
 const read = (rel: string): string => readFileSync(join(REPO_ROOT, rel), "utf8");
 
 const PAGE = "app/dashboard/receiving/[receivingId]/page.tsx";
-const MOBILE = "components/receiving/mobile-receiving-detail.tsx";
 const MODAL = "components/receiving/receiving-doc-attach-modal.tsx";
 
 describe("§inbound-quarantine-temp-exclude P3 — 격리/온도 표시 제거", () => {
@@ -35,23 +34,19 @@ describe("§inbound-quarantine-temp-exclude P3 — 격리/온도 표시 제거",
     expect(src).not.toMatch(/"격리 품목"/);
     expect(src).not.toMatch(/격리 중 — 판정 필요/);
   });
-  it("모바일 LOT 요약에서 격리 검수대기 배지 제거 + 스텝퍼 quarantine_active 미참조", () => {
-    const src = read(MOBILE);
-    expect(src).not.toMatch(/quarantinedLots/);
-    expect(src).not.toMatch(/quarantine_active/);
-  });
+  /* 🛑 은퇴 (2026-08-17 · §receiving-detail-redesign)
+   *    MobileReceivingDetail 은 실데이터 상세의 단일 컴포넌트 반응형으로 대체됐고
+   *    파일 자체가 삭제됐다(importer 0). read() 가 모듈 스코프에서 돌기 때문에
+   *    남겨두면 파일 로드 자체가 실패한다.
+   *    승계: receiving-detail-realdata.test.ts — 격리 표기 0 은 신 페이지에서 잠근다. */
 });
 
 describe("§inbound-quarantine-temp-exclude P3 — 문서 해소 첨부 wiring (dead button 해소)", () => {
-  it("page가 ReceivingDocAttachModal을 렌더하고 onResolveDocs를 command에 주입", () => {
-    const src = read(PAGE);
-    expect(src).toMatch(/ReceivingDocAttachModal/);
-    expect(src).toMatch(/onResolveDocs:\s*\(\)\s*=>\s*setDocModalOpen\(true\)/);
-    // supersede(87e6bfae · §receiving-doc-attach-canonical): 데모 store 첨부(store.attachReceivingDocument)
-    //   → canonical DB 업로드로 이관. page 의 책임은 "CTA 를 실 첨부 모달에 연결" 까지이며,
-    //   실 첨부 수행은 모달이 진다(아래 it 에서 잠금).
-    expect(src).toMatch(/<ReceivingDocAttachModal[\s\S]{0,120}open=\{docModalOpen\}/);
-  });
+  /* 🛑 은퇴 (2026-08-17 · §receiving-detail-redesign P1~P3)
+   *    구 계약: 데모 페이지가 ReceivingDocAttachModal 을 직접 렌더하고 onResolveDocs 로 연결.
+   *    현행:    상세가 실데이터로 전환되며 문서 경로가 **일괄 처리 모달의 문서 스텝**으로 이관.
+   *    🛑 정책("문서 미첨부가 화면에 보이고 첨부 경로가 있다")은 살아 있고 **수단만 바뀌었다.**
+   *       승계: receiving-detail-realdata.test.ts — 문서 카드 실재 + 모달 docType coa/invoice 스텝. */
   it("모달이 실제 store 첨부 액션(onAttach)에 연결 — placeholder success 없음", () => {
     const src = read(MODAL);
     // supersede(87e6bfae · §receiving-doc-attach-canonical): 데모 store 콜백(onAttach/handleAttach)
@@ -63,15 +58,6 @@ describe("§inbound-quarantine-temp-exclude P3 — 문서 해소 첨부 wiring (
   });
 });
 
-describe("§inbound-quarantine-temp-exclude P3 — 회귀 0 (기존 게이트 보존)", () => {
-  it("문서 미첨부·검수 blocker는 유지", () => {
-    const src = read(PAGE);
-    expect(src).toMatch(/필수 문서 미첨부/);
-    expect(src).toMatch(/model\.inspection\.failed/);
-  });
-  it("lot 테이블의 문서·반영 컬럼은 유지", () => {
-    const src = read(PAGE);
-    expect(src).toMatch(/lot\.documentCoverage/);
-    expect(src).toMatch(/lot\.postingState/);
-  });
-});
+/* 🛑 describe 자체를 제거한다 — 위 은퇴로 it 이 0이 됐고,
+ *    빈 describe 는 vitest 가 "No test found in suite" 로 실패시킨다.
+ *    승계는 receiving-detail-realdata.test.ts 가 진다. */

@@ -1,4 +1,10 @@
 /**
+ * 🛑 은퇴 (2026-08-17 · §receiving-detail-redesign P1)
+ * 대상 page.tsx 는 데모 시드(useOpsStore) 화면이었고, 실데이터(ReceivingDraft) 페이지로 교체됐다.
+ * 견적 스캐너 트리거는 시드 store 위 로컬 상태였다. 실데이터 페이지에서 수령 수량 원천은 공급사 회신(receivedQuantity)이다.
+ * 승계: __tests__/dashboard/receiving-detail-realdata.test.ts
+ */
+/**
  * §11.290 Phase 4c-2 #receiving-quote-scanner-trigger — receiving page 에
  *   QuoteScannerModal trigger button 추가 (Phase 4c QuoteScannerModal 의 caller).
  *
@@ -29,33 +35,33 @@ const RECEIVING_PAGE = readFileSync(
   "utf8",
 );
 
-describe("§11.290 Phase 4c-2 — receiving page QuoteScannerModal trigger", () => {
-  it("§11.290 Phase 4c-2 trace marker 존재", () => {
+describe.skip("§11.290 Phase 4c-2 — receiving page QuoteScannerModal trigger", () => {
+  it.skip("§11.290 Phase 4c-2 trace marker 존재", () => {
     expect(RECEIVING_PAGE).toMatch(/§11\.290 Phase 4c-2/);
   });
 
-  it("QuoteScannerModal import 존재", () => {
+  it.skip("QuoteScannerModal import 존재", () => {
     expect(RECEIVING_PAGE).toMatch(
       /QuoteScannerModal.*from.*["']@\/components\/inventory\/QuoteScannerModal["']/,
     );
   });
 
-  it("quoteScannerOpen state 존재 (useState destructuring)", () => {
+  it.skip("quoteScannerOpen state 존재 (useState destructuring)", () => {
     expect(RECEIVING_PAGE).toMatch(/\[quoteScannerOpen,\s*setQuoteScannerOpen\]/);
     expect(RECEIVING_PAGE).toMatch(/setQuoteScannerOpen/);
   });
 
-  it("trigger button data-testid 존재", () => {
+  it.skip("trigger button data-testid 존재", () => {
     expect(RECEIVING_PAGE).toMatch(/data-testid=["']receiving-quote-scanner-button["']/);
   });
 
-  it("QuoteScannerModal 렌더 (open + onOpenChange wiring)", () => {
+  it.skip("QuoteScannerModal 렌더 (open + onOpenChange wiring)", () => {
     expect(RECEIVING_PAGE).toMatch(/<QuoteScannerModal/);
     expect(RECEIVING_PAGE).toMatch(/open=\{quoteScannerOpen\}/);
     expect(RECEIVING_PAGE).toMatch(/onOpenChange=\{setQuoteScannerOpen\}/);
   });
 
-  it("onScanComplete handler 존재 (placeholder)", () => {
+  it.skip("onScanComplete handler 존재 (placeholder)", () => {
     expect(RECEIVING_PAGE).toMatch(/onScanComplete=/);
   });
 });

@@ -1,1062 +1,356 @@
 "use client";
 
-// §11.290 Phase 4c-2 — QuoteScannerModal trigger button 추가 (호영님 spec
-// "라벨 + 거래명세서 동시 trigger" 정합). Phase 4c 의 QuoteScannerModal
-// skeleton 의 caller. 풀스펙 PO 매칭 / 입고 자동 prefill 은 Phase 4c-3 별도.
-import { useMemo, useState } from "react";
+/**
+ * 입고 상세 — §receiving-detail-redesign (핸드오프 2026-08-04 · 구현 2026-08-17)
+ *
+ * P1  데모 시드(useOpsStore) 폐기 → canonical ReceivingDraft 를 GET /api/receiving-drafts/[id] 로 읽는다.
+ * P2  라이트 전면 재구성(§1) + 다음 조치 단일 패널(§2). 다크 카드 0 · 3중 중복 0.
+ * P3  일괄 처리 모달(§4) — 원버튼 `남은 N건 처리하고 반영`. 부분 반영·disabled 재고 반영 버튼 없음.
+ * §5  모바일 = 같은 컴포넌트의 단일 컬럼. 다음 조치 최상단 · sticky 단일 CTA.
+ *
+ * 배선(§6): 판정 /inspect · 문서 /api/receiving/documents/[orderId] · 반영 /approve(이중 반영 가드는 서버).
+ *   상태·KPI·조치는 전부 draft 에서 파생한다 — UI 상태로 canonical 을 대체하지 않는다.
+ *
+ * 구 데모 페이지 §11.290 4c-2/4c-3(견적 스캐너 트리거·PO 매칭 입력)은 시드 store 위 로컬 상태였다.
+ * 실데이터 전환으로 은퇴 — 실제 수령 입력은 공급사 회신(ReceivingDraftItem.receivedQuantity)이 원천이다.
+ */
+
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useOpsStore } from "@/lib/ops-console/ops-store";
-import { Badge } from "@/components/ui/badge";
-import { QuoteScannerModal } from "@/components/inventory/QuoteScannerModal";
-// §11.71: native <select> → shadcn Select 통일
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  ChevronDown,
-  ChevronUp,
-  ChevronRight,
-  AlertCircle,
-  Clock,
-  CheckCircle2,
-  ShieldAlert,
-  FileWarning,
-  FileText,
-  Package,
-  Truck,
-  ArrowRight,
-  Zap,
-} from "lucide-react";
-import { VENDOR_MAP } from "@/lib/ops-console/seed-data";
-import {
-  OperationalDetailShell,
-  DetailStateFallback,
-  type InboxContextStripProps,
-  type OperationalHeaderProps,
-  type BlockerReviewStripProps,
-  type MetaRailProps,
-} from "../../_components/operational-detail-shell";
-import { buildReceivingCommandSurface } from "@/lib/ops-console/command-adapters";
-import type { CommandSurface } from "@/lib/ops-console/action-model";
-import { buildReceivingOwnership } from "@/lib/ops-console/ownership-adapter";
-// §inbound-detail-mobile-redesign (호영님 2026-07-02) — 모바일 입고 상세 시안 시트.
-import { MobileReceivingDetail } from "@/components/receiving/mobile-receiving-detail";
-import { ReceivingDocAttachModal } from "@/components/receiving/receiving-doc-attach-modal";
-import { buildReceivingBlockers } from "@/lib/ops-console/blocker-adapter";
-import { buildReceivingExceptionReentryContext } from "@/lib/ops-console/reentry-context";
-import { injectReentryCommand } from "@/lib/ops-console/command-adapters";
-import {
-  buildReceivingExecutionModel,
-  type ReceivingExecutionModel,
-  type ReceivingExecutionPhase,
-  type LotDetailRow,
-  type ReceivingLineExecution,
-} from "@/lib/ops-console/receiving-detail-adapter";
+import { ArrowLeft, FileText, ExternalLink, Loader2, ChevronRight, RefreshCw } from "lucide-react";
+import { ReceivingBatchModal, type BatchItem, type BatchDoc } from "@/components/receiving/receiving-batch-modal";
 
-// ── Phase step config for execution strip ──────────────────────────
-const PHASE_STEPS: { key: string; label: string; matchPhases: ReceivingExecutionPhase[] }[] = [
-  { key: "arrival", label: "도착 확인", matchPhases: ["expected", "arrived"] },
-  { key: "inspection", label: "검수/문서", matchPhases: ["inspection_pending", "inspection_in_progress", "docs_missing"] },
-  { key: "lot_capture", label: "Lot 등록", matchPhases: [] },
-  { key: "posting", label: "재고 반영", matchPhases: ["ready_to_post", "partial_posting"] },
-  { key: "handoff", label: "재고 위험", matchPhases: ["posted", "closed"] },
-];
-
-// ── Tone → color utilities ─────────────────────────────────────────
-const TONE_TEXT: Record<string, string> = {
-  neutral: "text-slate-400",
-  info: "text-blue-400",
-  warning: "text-yellow-400",
-  danger: "text-red-400",
-  success: "text-emerald-400",
+/* ── 계약 ─────────────────────────────────────────────────────── */
+type Draft = {
+  id: string;
+  status: "AWAITING_REPLY" | "PENDING_REVIEW" | "APPROVED" | "REJECTED" | "EXPIRED";
+  submittedAt: string | null;
+  reviewedAt: string | null;
+  restockSyncedAt: string | null;
+  vendorNote: string | null;
+  rejectedReason: string | null;
+  vendorName: string | null;
+  order: { id: string; orderNumber: string; status: string; createdAt: string } | null;
+  items: BatchItem[];
+  documents: (BatchDoc & { uploadedAt: string; uploadedBy: string | null })[];
 };
 
-const TONE_BG: Record<string, string> = {
-  neutral: "bg-slate-800/50",
-  info: "bg-blue-900/30",
-  warning: "bg-yellow-900/30",
-  danger: "bg-red-900/30",
-  success: "bg-emerald-900/30",
+const STATUS_PILL: Record<Draft["status"], { label: string; cls: string }> = {
+  AWAITING_REPLY: { label: "회신 대기", cls: "bg-[#f1f5f9] border-[#e2e8f0] text-[#64748b]" },
+  PENDING_REVIEW: { label: "검수·문서 진행 중", cls: "bg-[#eff6ff] border-[#bfdbfe] text-[#1d4ed8]" },
+  APPROVED: { label: "재고 반영 완료", cls: "bg-[#f0fdf4] border-[#bbf7d0] text-[#15803d]" },
+  REJECTED: { label: "반려", cls: "bg-[#fef2f2] border-[#fecaca] text-[#b91c1c]" },
+  EXPIRED: { label: "만료", cls: "bg-[#f1f5f9] border-[#e2e8f0] text-[#94a3b8]" },
 };
 
-const TONE_BORDER: Record<string, string> = {
-  neutral: "border-slate-700",
-  info: "border-blue-800",
-  warning: "border-yellow-800",
-  danger: "border-red-800",
-  success: "border-emerald-800",
-};
+const LINE_PILL = {
+  pass: { label: "합격", cls: "bg-[#f0fdf4] border-[#bbf7d0] text-[#15803d]" },
+  wait: { label: "검수 대기", cls: "bg-[#fefce8] border-[#fef08a] text-[#a16207]" },
+  hold: { label: "보류", cls: "bg-[#fef2f2] border-[#fecaca] text-[#b91c1c]" },
+} as const;
 
-const EXPIRY_TONE_COLOR: Record<string, string> = {
-  safe: "text-emerald-400",
-  expiring_soon: "text-yellow-400",
-  expired: "text-red-400",
-  missing: "text-slate-500",
-};
+function fmtDate(v: string | null | undefined) {
+  if (!v) return "-";
+  const d = new Date(v);
+  return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}.`;
+}
 
-
-// ── Component ──────────────────────────────────────────────────────
+/* ── 페이지 ───────────────────────────────────────────────────── */
 export default function ReceivingDetailPage() {
   const params = useParams();
   const receivingId = params.receivingId as string;
-  const store = useOpsStore();
-  const [expandedLots, setExpandedLots] = useState(false);
 
-  const rb = useMemo(
-    () => store.receivingBatches.find((r) => r.id === receivingId),
-    [store.receivingBatches, receivingId],
-  );
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
-  const linkedPO = useMemo(
-    () => (rb?.poId ? store.purchaseOrders.find((p) => p.id === rb.poId) : undefined),
-    [store.purchaseOrders, rb],
-  );
+  const load = useCallback(async () => {
+    setError(null);
+    try {
+      const res = await fetch(`/api/receiving-drafts/${receivingId}`, { cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `불러오기 실패 (${res.status})`);
+      setDraft(data.draft);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  }, [receivingId]);
 
-  const inboxItems = useMemo(
-    () => store.unifiedInboxItems.filter((i) => i.entityId === receivingId),
-    [store.unifiedInboxItems, receivingId],
-  );
+  useEffect(() => {
+    void load();
+  }, [load]);
 
-  if (!rb) {
+  /* ── 파생 — 전부 draft 에서 ── */
+  const derived = useMemo(() => {
+    if (!draft) return null;
+    const items = draft.items;
+    const expected = items.reduce((s, it) => s + (it.expectedQuantity ?? 0), 0);
+    const received = items.reduce((s, it) => s + (it.inspectedQuantity ?? it.receivedQuantity ?? 0), 0);
+    const decided = items.filter((it) => it.decision != null);
+    const passed = items.filter((it) => it.decision === "PASS");
+    const undecided = items.filter((it) => it.decision == null);
+    const hasCoa = draft.documents.some((d) => d.docType === "coa");
+    const hasInvoice = draft.documents.some((d) => d.docType === "invoice");
+    const restocked = items.filter((it) => it.restockedAt != null);
+
+    // 다음 조치 — 번호 리스트(색 = 심각도). 이 화면에서 검수·문서 상태는 여기 1곳에만 나온다.
+    const actions: { tone: "red" | "yellow" | "blue"; title: string; sub: string }[] = [];
+    if (undecided.length > 0)
+      actions.push({ tone: "yellow", title: `검수 판정 ${undecided.length}건`, sub: undecided.map((i) => i.name).slice(0, 3).join(" · ") + (undecided.length > 3 ? " 외" : "") });
+    if (!hasCoa) actions.push({ tone: "yellow", title: "COA 확보", sub: "직접 첨부 또는 공급사 요청 · 대부분 배송 동봉" });
+    if (!hasInvoice) actions.push({ tone: "blue", title: "거래명세서 확보", sub: "첨부 시 반영 이력에 함께 남습니다" });
+
+    const stepIdx =
+      draft.status === "APPROVED" ? 4
+      : draft.status === "REJECTED" || draft.status === "EXPIRED" ? 1
+      : draft.status === "AWAITING_REPLY" ? 0
+      : undecided.length > 0 || !hasCoa ? 1
+      : passed.some((p) => !p.lotNumber) ? 2
+      : 3;
+
+    return { expected, received, decided, passed, undecided, hasCoa, hasInvoice, restocked, actions, stepIdx, remaining: actions.length };
+  }, [draft]);
+
+  if (loading) {
     return (
-      <div className="max-w-7xl mx-auto">
-        <DetailStateFallback
-          type="not_found"
-          entityLabel="입고 배치"
-          nextRoute={{ label: "입고 목록", href: "/dashboard/receiving" }}
-        />
+      <div className="max-w-6xl mx-auto p-6 flex items-center gap-2 text-[13px] text-[#64748b]">
+        <Loader2 className="h-4 w-4 animate-spin" /> 입고안 불러오는 중
+      </div>
+    );
+  }
+  if (error || !draft || !derived) {
+    return (
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="rounded-[13px] border border-[#fecaca] bg-[#fef2f2] p-4">
+          <p className="text-[13px] font-semibold text-[#b91c1c]">{error ?? "입고안을 찾을 수 없습니다."}</p>
+          <div className="mt-3 flex gap-2">
+            <button onClick={() => void load()} className="h-9 px-3 rounded-lg border border-[#e2e8f0] bg-white text-[12.5px] font-semibold text-[#475569] inline-flex items-center gap-1.5"><RefreshCw className="h-3.5 w-3.5" /> 다시 시도</button>
+            <Link href="/dashboard/receiving" className="h-9 px-3 rounded-lg border border-[#e2e8f0] bg-white text-[12.5px] font-semibold text-[#475569] inline-flex items-center gap-1.5"><ArrowLeft className="h-3.5 w-3.5" /> 목록으로</Link>
+          </div>
+        </div>
       </div>
     );
   }
 
-  const vendorName = VENDOR_MAP[rb.vendorId as keyof typeof VENDOR_MAP] ?? rb.vendorId;
+  const pill = STATUS_PILL[draft.status];
+  const canProcess = draft.status === "PENDING_REVIEW";
+  const ctaLabel =
+    !canProcess ? null
+    : derived.remaining > 0 ? `남은 ${derived.remaining}건 처리하고 반영`
+    : "재고 반영";
 
-  // ── Build unified execution model ──────────────────────────────
-  const model: ReceivingExecutionModel = useMemo(
-    () => buildReceivingExecutionModel(rb, linkedPO, vendorName),
-    [rb, linkedPO, vendorName],
-  );
-
-  // ── Shell props ────────────────────────────────────────────────
-  const primaryInbox = inboxItems[0];
-
-  const contextStrip: InboxContextStripProps | undefined = primaryInbox
-    ? {
-        workTypeLabel:
-          primaryInbox.workType === "quarantine_constrained"
-            ? "보류"
-            : primaryInbox.workType === "receiving_issue"
-              ? "입고 이슈"
-              : "반영 차단",
-        whyNow: primaryInbox.summary,
-        dueLabel: primaryInbox.dueState.label,
-        dueTone: primaryInbox.dueState.tone,
-        owner: primaryInbox.owner,
-      }
-    : undefined;
-
-  const header: OperationalHeaderProps = {
-    title: `${rb.receivingNumber} — ${vendorName}`,
-    reference: rb.id,
-    statusLabel: model.receivingExecutionState.phaseLabel,
-    statusTone: model.receivingExecutionState.phaseTone,
-    subStatus: model.receiptProgress.label,
-    keyDates: [
-      { label: "입고일", value: new Date(rb.receivedAt).toLocaleDateString("ko-KR") },
-    ],
-    keyParties: [
-      { label: "공급사", value: vendorName },
-      { label: "수령자", value: rb.receivedBy ?? "-" },
-      ...(rb.carrierName ? [{ label: "운송", value: rb.carrierName }] : []),
-    ],
-    riskBadges: [
-      ...(model.document.tone === "danger" ? ["문서 누락"] : []),
-      ...(model.inspection.blockerLabel ? ["검수 미완료"] : []),
-      ...(model.receiptProgress.missingLines > 0 ? ["미도착 라인"] : []),
-      ...(model.lotCapture.expiredLots > 0 ? ["만료 lot"] : []),
-    ],
-    nextActionSummary: model.nextActionSummary,
-  };
-
-  const blockerStrip: BlockerReviewStripProps | undefined = (() => {
-    const blockers: BlockerReviewStripProps["blockers"] = [];
-    const reviewPoints: BlockerReviewStripProps["reviewPoints"] = [];
-    const warnings: BlockerReviewStripProps["warnings"] = [];
-
-    if (model.document.missingLines > 0)
-      blockers.push({ label: `${model.document.missingLines}건 필수 문서 미첨부 — 검수 진행 불가`, actionable: true });
-    // §inbound-quarantine-temp-exclude: 보류·차단 lot은 입고 반영을 막지 않는다(blocker 제외).
-    if (model.inspection.failed > 0)
-      blockers.push({ label: `${model.inspection.failed}건 불합격 — 재검수 또는 반품`, actionable: true });
-
-    if (model.inspection.pending > 0)
-      reviewPoints.push({ label: `검수 대기 ${model.inspection.pending}건` });
-    if (model.document.needsReviewLines > 0)
-      reviewPoints.push({ label: `문서 검토 대기 ${model.document.needsReviewLines}건` });
-
-    if (model.receiptProgress.missingLines > 0)
-      warnings.push({ label: `${model.receiptProgress.missingLines}건 미도착` });
-    if (model.receiptProgress.overReceivedLines > 0)
-      warnings.push({ label: `${model.receiptProgress.overReceivedLines}건 초과 수령` });
-    if (model.lotCapture.expiredLots > 0)
-      warnings.push({ label: `${model.lotCapture.expiredLots}건 만료 lot` });
-    if (model.lotCapture.missingExpiryLots > 0)
-      warnings.push({ label: `${model.lotCapture.missingExpiryLots}건 유효기한 미입력` });
-
-    if (blockers.length + reviewPoints.length + warnings.length === 0) return undefined;
-    return { blockers, reviewPoints, warnings };
-  })();
-
-  const ownership = useMemo(() => buildReceivingOwnership(rb), [rb]);
-  const blockerView = useMemo(() => buildReceivingBlockers(rb), [rb]);
-
-  const hasException =
-    model.document.tone === "danger" ||
-    model.receiptProgress.missingLines > 0;
-  const reentryCtx = useMemo(
-    () => (hasException ? buildReceivingExceptionReentryContext(rb) : undefined),
-    [rb, hasException],
-  );
-
-  const [docModalOpen, setDocModalOpen] = useState(false);
-  const commandSurface: CommandSurface = useMemo(() => {
-    const base = buildReceivingCommandSurface({
-      rb,
-      onCompleteInspection: (lineId: string) => store.completeInspection(rb.id, lineId, true),
-      onPostToInventory: () => store.postToInventory(rb.id),
-      // §inbound-quarantine-temp-exclude (P3): 문서 해소 = 실 첨부 모달.
-      onResolveDocs: () => setDocModalOpen(true),
-    });
-    return injectReentryCommand(base, reentryCtx);
-  }, [rb, store, reentryCtx]);
-
-  const metaRail: MetaRailProps = {
-    lastUpdated: new Date(rb.receivedAt).toLocaleDateString("ko-KR"),
-    linkedEntities: [
-      ...(linkedPO
-        ? [{ label: "발주", value: linkedPO.poNumber, href: `/dashboard/purchase-orders/${linkedPO.id}` }]
-        : []),
-      ...(rb.trackingNumber ? [{ label: "운송장", value: rb.trackingNumber }] : []),
-    ],
-  };
-
-  // ── Execution Phase ────────────────────────────────────────────
-  const currentPhase = model.receivingExecutionState.phase;
-  const terminalPhases: ReceivingExecutionPhase[] = ["cancelled", "issue_flagged"];
-  const isTerminal = terminalPhases.includes(currentPhase);
-
-  return (
-    <div className="max-w-7xl mx-auto">
-      {/* §receiving-doc-attach-canonical (T1) — 데모 dispatch(onAttach) 제거.
-          모달이 canonical API(/api/receiving/documents/[orderId])로 직접 업로드한다. */}
-      <ReceivingDocAttachModal open={docModalOpen} onOpenChange={setDocModalOpen} rb={rb} />
-      {/* §inbound-detail-mobile-redesign — 모바일(lg 미만)은 시안 시트(#07), 데스크탑은 기존 shell 무접촉 */}
-      <MobileReceivingDetail
-        reference={rb.id}
-        poNumber={linkedPO?.poNumber ?? rb.receivingNumber}
-        vendorName={vendorName}
-        arrivalLabel={model.origin.arrivalLabel}
-        currentPhase={currentPhase}
-        phaseLabel={model.receivingExecutionState.phaseLabel}
-        phaseTone={model.receivingExecutionState.phaseTone}
-        model={model}
-        commandSurface={commandSurface}
-      />
-      <div className="hidden lg:block">
-      <OperationalDetailShell
-        contextStrip={contextStrip}
-        header={header}
-        ownership={ownership}
-        blockerStrip={blockerStrip}
-        blockerView={blockerView}
-        commandSurface={commandSurface}
-        metaRail={metaRail}
-      >
-        {/* ── A. Upstream Context Strip ─────────────────────────── */}
-        <UpstreamContextStrip origin={model.origin} />
-
-        {/* ── B. Execution Phase Strip ─────────────────────────── */}
-        {!isTerminal && <ExecutionPhaseStrip currentPhase={currentPhase} />}
-
-        {/* ── C. Receipt + Inspection Summary ──────────────────── */}
-        <ReceiptInspectionSurface model={model} />
-
-        {/* ── D. Document Summary ──────────────────────────────── */}
-        <DocumentSurface model={model} />
-
-        {/* ── E. Line Execution Table ──────────────────────────── */}
-        <LineExecutionTable lines={model.lineExecutions} />
-
-        {/* ── E-2. Receiving Input Panel (수량 입력 / Lot 생성 / Discrepancy) ── */}
-        <ReceivingInputPanel lines={model.lineExecutions} lots={model.lotDetails} />
-
-        {/* ── F. Lot Detail Grid ───────────────────────────────── */}
-        <LotDetailSurface
-          lots={model.lotDetails}
-          lotCapture={model.lotCapture}
-          expanded={expandedLots}
-          onToggle={() => setExpandedLots((p) => !p)}
-        />
-
-        {/* ── G. Posting Readiness ─────────────────────────────── */}
-        <PostingReadinessStrip model={model} />
-
-        {/* ── H. Inventory Release + Stock Risk Handoff ────────── */}
-        {(model.receivingExecutionState.phase === "posted" ||
-          model.receivingExecutionState.phase === "closed" ||
-          model.postingReadiness.readiness === "ready") && (
-          <InventoryReleaseHandoffPanel model={model} />
-        )}
-      </OperationalDetailShell>
-      </div>
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// A. Upstream Context Strip
-// ══════════════════════════════════════════════════════════════════════
-
-function UpstreamContextStrip({ origin }: { origin: ReceivingExecutionModel["origin"] }) {
-  return (
-    <div className="flex items-center gap-3 text-xs text-slate-500 bg-slate-900/50 border border-slate-800 rounded px-3 py-2">
-      <Truck className="h-3.5 w-3.5 text-slate-600 flex-shrink-0" />
-      <span className="text-slate-400">{origin.sourceLabel}</span>
-      {origin.poRef && origin.poRoute && (
-        <>
-          <span className="text-slate-700">·</span>
-          <Link href={origin.poRoute} className="text-blue-400 hover:text-blue-300 font-mono">
-            {origin.poRef}
-          </Link>
-        </>
-      )}
-      <span className="text-slate-700">·</span>
-      <span>{origin.vendorSummary}</span>
-      <span className="text-slate-700">·</span>
-      <span>도착 {origin.arrivalLabel}</span>
-      {origin.trackingLabel && (
-        <>
-          <span className="text-slate-700">·</span>
-          <span className="font-mono">{origin.trackingLabel}</span>
-        </>
-      )}
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// B. Execution Phase Strip
-// ══════════════════════════════════════════════════════════════════════
-
-function ExecutionPhaseStrip({ currentPhase }: { currentPhase: ReceivingExecutionPhase }) {
-  const currentIdx = PHASE_STEPS.findIndex((s) => s.matchPhases.includes(currentPhase));
-
-  return (
-    <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded px-3 py-2.5">
-      {PHASE_STEPS.map((step, idx) => {
-        const isCurrent = idx === currentIdx;
-        const isDone = idx < currentIdx;
-        const dotCls = isCurrent
-          ? "bg-blue-500"
-          : isDone
-            ? "bg-emerald-500"
-            : "bg-slate-700";
-        const textCls = isCurrent
-          ? "text-blue-300 font-medium"
-          : isDone
-            ? "text-emerald-400"
-            : "text-slate-600";
-
-        return (
-          <div key={step.key} className="flex items-center gap-1">
-            {idx > 0 && (
-              <div className={`w-6 h-px ${isDone ? "bg-emerald-700" : "bg-slate-800"}`} />
-            )}
-            <div className="flex items-center gap-1.5">
-              <span className={`h-2 w-2 rounded-full ${dotCls}`} />
-              <span className={`text-xs ${textCls}`}>{step.label}</span>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// C. Receipt + Inspection Summary
-// ══════════════════════════════════════════════════════════════════════
-
-function ReceiptInspectionSurface({ model }: { model: ReceivingExecutionModel }) {
-  const rp = model.receiptProgress;
-  const ins = model.inspection;
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-      {/* Receipt Progress */}
-      <div className="bg-slate-900 border border-slate-800 rounded p-3">
-        <div className="flex items-center gap-2 mb-2">
-          <Package className="h-3.5 w-3.5 text-slate-500" />
-          <span className="text-xs font-medium uppercase tracking-wider text-slate-500">수령 현황</span>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-          <StatCell label="전체 라인" value={rp.totalLines} />
-          <StatCell label="수령 완료" value={rp.receivedLines} tone="success" />
-          <StatCell label="부분 수령" value={rp.partialLines} tone={rp.partialLines > 0 ? "warning" : undefined} />
-          <StatCell label="미도착" value={rp.missingLines} tone={rp.missingLines > 0 ? "danger" : undefined} />
-          <StatCell label="초과 수령" value={rp.overReceivedLines} tone={rp.overReceivedLines > 0 ? "warning" : undefined} />
-          <StatCell label="거부" value={rp.rejectedLines} tone={rp.rejectedLines > 0 ? "danger" : undefined} />
-        </div>
-        <div className="mt-2 text-xs text-slate-400">{rp.label}</div>
-      </div>
-
-      {/* Inspection Summary */}
-      <div className={`bg-slate-900 border rounded p-3 ${TONE_BORDER[ins.tone]}`}>
-        <div className="flex items-center gap-2 mb-2">
-          <ShieldAlert className="h-3.5 w-3.5 text-slate-500" />
-          <span className="text-xs font-medium uppercase tracking-wider text-slate-500">검수</span>
-          <span className={`text-xs ${TONE_TEXT[ins.tone]}`}>{ins.label}</span>
-        </div>
-        {ins.totalRequired === 0 ? (
-          <div className="text-xs text-slate-500">검수 불요</div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-              <StatCell label="필수" value={ins.totalRequired} />
-              <StatCell label="합격" value={ins.passed} tone="success" />
-              <StatCell label="불합격" value={ins.failed} tone={ins.failed > 0 ? "danger" : undefined} />
-              <StatCell label="대기" value={ins.pending} tone={ins.pending > 0 ? "warning" : undefined} />
-              <StatCell label="조건부" value={ins.conditionalPass} tone={ins.conditionalPass > 0 ? "warning" : undefined} />
-              <StatCell label="재검수" value={ins.reinspectRequired} tone={ins.reinspectRequired > 0 ? "danger" : undefined} />
-            </div>
-            {ins.blockerLabel && (
-              <div className="mt-2 flex items-center gap-1.5 text-xs text-red-400">
-                <AlertCircle className="h-3 w-3" />
-                {ins.blockerLabel}
+  const NextActionPanel = (
+    <section className="rounded-[14px] border border-[#e2e8f0] bg-white p-4" aria-label="다음 조치">
+      <h2 className="text-[13px] font-extrabold text-[#0f172a]">다음 조치</h2>
+      {draft.status === "APPROVED" ? (
+        <p className="mt-2 text-[12.5px] text-[#15803d]">재고 반영이 완료되었습니다. 남은 조치가 없습니다.</p>
+      ) : derived.actions.length === 0 ? (
+        <p className="mt-2 text-[12.5px] text-[#475569]">전 라인 판정 완료 · 문서 확보 완료. 재고 반영만 남았습니다.</p>
+      ) : (
+        <ol className="mt-2 space-y-2">
+          {derived.actions.map((a, i) => (
+            <li key={i} className="flex gap-2.5">
+              <span className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${a.tone === "red" ? "bg-[#b91c1c] text-white" : a.tone === "yellow" ? "bg-[#fef08a] text-[#854d0e]" : "bg-[#2563eb] text-white"}`}>{i + 1}</span>
+              <div className="min-w-0">
+                <p className="text-[13px] font-semibold text-[#0f172a]">{a.title}</p>
+                <p className="text-[11.5px] text-[#64748b] truncate">{a.sub}</p>
               </div>
-            )}
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// D. Document Summary
-// ══════════════════════════════════════════════════════════════════════
-
-function DocumentSurface({ model }: { model: ReceivingExecutionModel }) {
-  const doc = model.document;
-  return (
-    <div className={`bg-slate-900 border rounded p-3 ${TONE_BORDER[doc.tone]}`}>
-      <div className="flex items-center gap-2 mb-2">
-        <FileWarning className="h-3.5 w-3.5 text-slate-500" />
-        <span className="text-xs font-medium uppercase tracking-wider text-slate-500">문서 현황</span>
-        <span className={`text-xs ${TONE_TEXT[doc.tone]}`}>{doc.label}</span>
-      </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-        <StatCell label="완료" value={doc.completeLines} tone="success" />
-        <StatCell label="부분" value={doc.partialLines} tone={doc.partialLines > 0 ? "warning" : undefined} />
-        <StatCell label="누락" value={doc.missingLines} tone={doc.missingLines > 0 ? "danger" : undefined} />
-        <StatCell label="검토" value={doc.needsReviewLines} tone={doc.needsReviewLines > 0 ? "warning" : undefined} />
-      </div>
-      {doc.missingTypes.length > 0 && (
-        <div className="mt-2 text-xs text-yellow-400">
-          미첨부: {doc.missingTypes.join(", ")}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// E. Line Execution Table
-// ══════════════════════════════════════════════════════════════════════
-
-function LineExecutionTable({ lines }: { lines: ReceivingLineExecution[] }) {
-  return (
-    <div className="rounded border border-slate-800 bg-slate-900 overflow-hidden">
-      <div className="px-4 py-3 border-b border-slate-800">
-        <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
-          수령 라인 ({lines.length}건)
-        </span>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="border-b border-slate-800 bg-slate-800/30">
-              <th className="text-left px-3 py-2 font-medium text-slate-500 w-8">#</th>
-              <th className="text-left px-3 py-2 font-medium text-slate-500">품목</th>
-              <th className="text-left px-3 py-2 font-medium text-slate-500">수량</th>
-              <th className="text-left px-3 py-2 font-medium text-slate-500">상태</th>
-              <th className="text-left px-3 py-2 font-medium text-slate-500">문서</th>
-              <th className="text-left px-3 py-2 font-medium text-slate-500">검수</th>
-              <th className="text-left px-3 py-2 font-medium text-slate-500">Lot</th>
-              <th className="text-left px-3 py-2 font-medium text-slate-500">반영</th>
-              <th className="text-left px-3 py-2 font-medium text-slate-500">액션</th>
-            </tr>
-          </thead>
-          <tbody>
-            {lines.map((line) => {
-              const condCls = TONE_TEXT[line.conditionTone] ?? "text-slate-400";
-              const docCls = TONE_TEXT[line.documentTone] ?? "text-slate-400";
-              const insCls = TONE_TEXT[line.inspectionTone] ?? "text-slate-400";
-
-              return (
-                <tr key={line.id} className="border-b border-slate-800 hover:bg-slate-800/20">
-                  <td className="px-3 py-2 text-slate-500 font-mono">{line.lineNumber}</td>
-                  <td className="px-3 py-2 text-slate-700 max-w-[200px] truncate">{line.itemLabel}</td>
-                  <td className="px-3 py-2 text-slate-600 font-mono">{line.orderedVsReceived}</td>
-                  <td className={`px-3 py-2 ${condCls}`}>{line.conditionLabel}</td>
-                  <td className={`px-3 py-2 ${docCls}`}>{line.documentLabel}</td>
-                  <td className={`px-3 py-2 ${insCls}`}>{line.inspectionLabel}</td>
-                  <td className="px-3 py-2 text-slate-400">{line.lotSummary}</td>
-                  <td className="px-3 py-2 text-slate-400">{line.postingRelevance}</td>
-                  <td className="px-3 py-2">
-                    {line.nextAction && (
-                      <span className="text-xs text-yellow-400">{line.nextAction}</span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// F. Lot Detail Surface
-// ══════════════════════════════════════════════════════════════════════
-
-function LotDetailSurface({
-  lots,
-  lotCapture,
-  expanded,
-  onToggle,
-}: {
-  lots: LotDetailRow[];
-  lotCapture: ReceivingExecutionModel["lotCapture"];
-  expanded: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <div className={`rounded border bg-slate-900 ${TONE_BORDER[lotCapture.tone]} overflow-hidden`}>
-      <button
-        onClick={onToggle}
-        className="w-full px-4 py-3 flex items-center justify-between border-b border-slate-800 hover:bg-slate-800/30 transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
-            Lot 상세 ({lots.length}건)
-          </span>
-          <span className={`text-xs ${TONE_TEXT[lotCapture.tone]}`}>{lotCapture.label}</span>
-        </div>
-        {expanded ? (
-          <ChevronUp className="h-3.5 w-3.5 text-slate-500" />
-        ) : (
-          <ChevronDown className="h-3.5 w-3.5 text-slate-500" />
-        )}
-      </button>
-
-      {expanded && (
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b border-slate-800 bg-slate-800/30">
-                <th className="text-left px-3 py-2 font-medium text-slate-500">라인</th>
-                <th className="text-left px-3 py-2 font-medium text-slate-500">품목</th>
-                <th className="text-left px-3 py-2 font-medium text-slate-500">Lot#</th>
-                <th className="text-left px-3 py-2 font-medium text-slate-500">수량</th>
-                <th className="text-left px-3 py-2 font-medium text-slate-500">유효기한</th>
-                <th className="text-left px-3 py-2 font-medium text-slate-500">문서</th>
-                <th className="text-left px-3 py-2 font-medium text-slate-500">반영</th>
-                <th className="text-left px-3 py-2 font-medium text-slate-500">리스크</th>
-                <th className="text-left px-3 py-2 font-medium text-slate-500">액션</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lots.map((lot) => (
-                <tr key={lot.id} className="border-b border-slate-800 hover:bg-slate-800/20">
-                  <td className="px-3 py-2 text-slate-500 font-mono">{lot.lineNumber}</td>
-                  <td className="px-3 py-2 text-slate-600 max-w-[140px] truncate">{lot.itemName}</td>
-                  <td className="px-3 py-2 text-slate-700 font-mono">{lot.lotNumber}</td>
-                  <td className="px-3 py-2 text-slate-600 font-mono">
-                    {lot.quantity} {lot.unit}
-                  </td>
-                  <td className={`px-3 py-2 ${EXPIRY_TONE_COLOR[lot.expiryTone]}`}>{lot.expiryLabel}</td>
-                  <td className="px-3 py-2 text-slate-400">{lot.documentCoverage}</td>
-                  <td className="px-3 py-2 text-slate-400">{lot.postingState}</td>
-                  <td className="px-3 py-2">
-                    {lot.riskBadges.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {lot.riskBadges.map((badge) => (
-                          <Badge
-                            key={badge}
-                            variant="outline"
-                            className="text-[10px] border-yellow-700 text-yellow-300 bg-yellow-900/20"
-                          >
-                            {badge}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-3 py-2">
-                    {lot.nextAction && (
-                      <span className="text-xs text-yellow-400">{lot.nextAction}</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// G. Posting Readiness Strip
-// ══════════════════════════════════════════════════════════════════════
-
-function PostingReadinessStrip({ model }: { model: ReceivingExecutionModel }) {
-  const pr = model.postingReadiness;
-  const toneCls =
-    pr.readiness === "ready"
-      ? "border-emerald-800 bg-emerald-900/20"
-      : pr.readiness === "partial"
-        ? "border-yellow-800 bg-yellow-900/20"
-        : "border-red-800 bg-red-900/20";
-  const textCls =
-    pr.readiness === "ready"
-      ? "text-emerald-400"
-      : pr.readiness === "partial"
-        ? "text-yellow-400"
-        : "text-red-400";
-  const iconCls =
-    pr.readiness === "ready"
-      ? "text-emerald-500"
-      : pr.readiness === "partial"
-        ? "text-yellow-500"
-        : "text-red-500";
-
-  return (
-    <div className={`rounded border p-3 ${toneCls}`}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {pr.readiness === "ready" ? (
-            <Zap className={`h-4 w-4 ${iconCls}`} />
-          ) : (
-            <AlertCircle className={`h-4 w-4 ${iconCls}`} />
-          )}
-          <span className={`text-sm font-medium ${textCls}`}>{pr.label}</span>
-        </div>
-        <span className="text-xs text-slate-400 font-mono">
-          {pr.postableLineCount}/{pr.totalLineCount} 라인
-        </span>
-      </div>
-
-      {pr.blockers.length > 0 && (
-        <div className="mt-2 space-y-1">
-          {pr.blockers.map((b) => (
-            <div key={b} className="flex items-center gap-1.5 text-xs text-red-400">
-              <span className="h-1 w-1 rounded-full bg-red-500 flex-shrink-0" />
-              {b}
-            </div>
+            </li>
           ))}
-        </div>
+        </ol>
       )}
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// H. Inventory Release + Stock Risk Handoff
-// ══════════════════════════════════════════════════════════════════════
-
-function InventoryReleaseHandoffPanel({ model }: { model: ReceivingExecutionModel }) {
-  const rel = model.inventoryRelease;
-  const handoff = model.stockRiskHandoff;
-  const lots = model.lotDetails;
-
-  // Inventory risk signals from lots
-  const expiringLots = lots.filter(l => l.expiryTone === "expiring_soon");
-  const expiredLots = lots.filter(l => l.expiryTone === "expired");
-
-  return (
-    <div className="space-y-3">
-      {/* Inventory Release Summary */}
-      <div className="bg-slate-900 border border-slate-800 rounded p-3">
-        <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
-          재고 반영 결과
-        </div>
-        <div className="grid grid-cols-2 gap-3 text-xs">
-          <StatCell label="반영 lot" value={rel.postedLots} tone="success" />
-          <StatCell label="가용 수량" value={rel.availableAfterPosting} tone="success" />
-        </div>
-        <div className="mt-2 text-xs text-slate-400">{rel.label}</div>
-      </div>
-
-      {/* Inventory Risk Assessment */}
-      {(expiringLots.length > 0 || expiredLots.length > 0) && (
-        <div className="bg-slate-900 border border-yellow-800/40 rounded p-3">
-          <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
-            재고 리스크 평가
-          </div>
-          <div className="space-y-1.5">
-            {expiredLots.length > 0 && (
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-3 w-3 text-red-400" />
-                  <span className="text-red-300">만료 lot {expiredLots.length}건 — 폐기/보류 필요</span>
-                </div>
-                <Link href="/dashboard/inventory?filter=expiring" className="text-[10px] text-red-400 hover:text-red-300">검토 →</Link>
-              </div>
-            )}
-            {expiringLots.length > 0 && (
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-3 w-3 text-yellow-400" />
-                  <span className="text-yellow-300">만료 임박 lot {expiringLots.length}건 — 우선 사용 권장</span>
-                </div>
-                <Link href="/dashboard/inventory" className="text-[10px] text-yellow-400 hover:text-yellow-300">확인 →</Link>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Post-Stock Next Actions */}
-      <div className="bg-slate-900 border border-slate-800 rounded p-3">
-        <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
-          후속 운영 액션
-        </div>
-        <div className="space-y-1.5">
-          <Link href="/dashboard/inventory" className="flex items-center justify-between text-xs py-1 hover:bg-slate-800/30 rounded px-1 -mx-1 transition-colors">
-            <div className="flex items-center gap-2"><Package className="h-3 w-3 text-slate-500" /><span className="text-slate-600">재고 위치 관리</span></div>
-            <ChevronRight className="h-3 w-3 text-slate-600" />
-          </Link>
-          <Link href="/dashboard/inventory?filter=low" className="flex items-center justify-between text-xs py-1 hover:bg-slate-800/30 rounded px-1 -mx-1 transition-colors">
-            <div className="flex items-center gap-2"><AlertCircle className="h-3 w-3 text-slate-500" /><span className="text-slate-600">재주문 후보 확인</span></div>
-            <ChevronRight className="h-3 w-3 text-slate-600" />
-          </Link>
-          {expiringLots.length > 0 && (
-            <Link href="/dashboard/inventory?filter=expiring" className="flex items-center justify-between text-xs py-1 hover:bg-slate-800/30 rounded px-1 -mx-1 transition-colors">
-              <div className="flex items-center gap-2"><Clock className="h-3 w-3 text-yellow-400" /><span className="text-yellow-300">Expiry 주의 항목 {expiringLots.length}건</span></div>
-              <ChevronRight className="h-3 w-3 text-slate-600" />
-            </Link>
-          )}
-        </div>
-      </div>
-
-      {/* Stock Risk Handoff */}
-      {handoff.needed && (
-        <Link
-          href={handoff.targetRoute}
-          className="block bg-slate-900 border border-teal-800/50 rounded p-3 hover:border-teal-700/60 transition-colors group"
+      {ctaLabel && (
+        <button
+          onClick={() => setModalOpen(true)}
+          className="mt-3 w-full h-[42px] rounded-lg bg-[#2563eb] text-white text-[13px] font-semibold hover:bg-[#1d4ed8] inline-flex items-center justify-center gap-1.5"
         >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
-              다운스트림 인계 — 재고 위험
-            </span>
-            <div className="flex items-center gap-1 text-xs text-teal-400 group-hover:text-teal-300">
-              이동 <ArrowRight className="h-3 w-3" />
-            </div>
-          </div>
-          <div className="text-sm text-slate-700 mb-1">{handoff.label}</div>
-          {handoff.nextOwner && (
-            <div className="text-xs text-slate-500">인수: {handoff.nextOwner}</div>
-          )}
-          {handoff.followUpReasons.length > 0 && (
-            <div className="mt-2 space-y-0.5">
-              {handoff.followUpReasons.map((r) => (
-                <div key={r} className="flex items-center gap-1.5 text-xs text-slate-400">
-                  <ChevronRight className="h-3 w-3 text-slate-600" />
-                  {r}
-                </div>
-              ))}
-            </div>
-          )}
-        </Link>
+          {ctaLabel} <ChevronRight className="h-4 w-4" />
+        </button>
       )}
-    </div>
+      {!canProcess && draft.status === "AWAITING_REPLY" && (
+        <p className="mt-3 text-[11.5px] text-[#94a3b8]">공급사 회신이 도착하면 검수를 시작할 수 있습니다.</p>
+      )}
+    </section>
   );
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// Utility: Stat Cell
-// ══════════════════════════════════════════════════════════════════════
-
-function StatCell({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: number | string;
-  tone?: "success" | "warning" | "danger";
-}) {
-  const valueCls = tone
-    ? tone === "success"
-      ? "text-emerald-400"
-      : tone === "warning"
-        ? "text-yellow-400"
-        : "text-red-400"
-    : "text-slate-700";
 
   return (
-    <div>
-      <div className="text-slate-500">{label}</div>
-      <div className={`font-medium tabular-nums ${valueCls}`}>{value}</div>
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// E-2. Receiving Input Panel — 부분 입고 / Lot 생성 / Discrepancy
-// ══════════════════════════════════════════════════════════════════════
-
-function ReceivingInputPanel({
-  lines,
-  lots,
-}: {
-  lines: ReceivingLineExecution[];
-  lots: LotDetailRow[];
-}) {
-  const [activeLineId, setActiveLineId] = useState<string | null>(null);
-  const [receivedQty, setReceivedQty] = useState<Record<string, string>>({});
-  const [newLotNumber, setNewLotNumber] = useState("");
-  const [newLotExpiry, setNewLotExpiry] = useState("");
-  const [newLotLocation, setNewLotLocation] = useState("");
-  const [discrepancies, setDiscrepancies] = useState<Record<string, string>>({});
-  // §11.290 Phase 4c-2 — QuoteScannerModal trigger state. Phase 4c-3 에서
-  // onScanComplete handler 가 PO 매칭 + 입고 자동 prefill 수행 (PR/Order
-  // 매칭). 본 batch 는 trigger + modal 렌더 + placeholder handler.
-  const [quoteScannerOpen, setQuoteScannerOpen] = useState(false);
-
-  const activeLine = lines.find(l => l.id === activeLineId);
-  const pendingLines = lines.filter(l => l.conditionTone !== "success");
-
-  return (
-    <div className="rounded border border-blue-800/50 bg-blue-900/10 overflow-hidden">
-      <div className="px-4 py-3 border-b border-blue-800/30 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Package className="h-3.5 w-3.5 text-blue-400" />
-          <span className="text-xs font-medium text-blue-300">입고 수량 입력 / Lot 등록</span>
+    <div className="max-w-6xl mx-auto p-4 md:p-6 pb-24 lg:pb-6">
+      {/* 헤더 — 플레인 타이틀 문법 */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <nav className="text-[11.5px] text-[#64748b] flex items-center gap-1.5">
+            <Link href="/dashboard/receiving" className="hover:text-[#0f172a]">입고 관리</Link>
+            <span>›</span>
+            <span className="font-mono text-[#475569]">RCV-{draft.id.slice(-6).toUpperCase()}</span>
+          </nav>
+          <div className="mt-1 flex items-center gap-2 flex-wrap">
+            <h1 className="text-[22px] font-extrabold text-[#0f172a] tracking-tight">입고 상세</h1>
+            <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11.5px] font-bold ${pill.cls}`}>{pill.label}</span>
+          </div>
+          <p className="mt-1 text-[12.5px] text-[#64748b] flex items-center gap-1.5 flex-wrap">
+            <span>{draft.vendorName ?? "공급사 미상"}</span>
+            {draft.order && (
+              <>
+                <span>·</span>
+                <Link href={`/dashboard/purchase-orders/${draft.order.id}`} className="inline-flex items-center gap-1 text-[#2563eb] hover:underline">
+                  <span className="font-mono">{draft.order.orderNumber}</span><ExternalLink className="h-3 w-3" />
+                </Link>
+              </>
+            )}
+            <span>·</span>
+            <span>회신 {fmtDate(draft.submittedAt)}</span>
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          {/* §11.290 Phase 4c-2 — 거래명세서 스캔 trigger */}
-          <button
-            type="button"
-            onClick={() => setQuoteScannerOpen(true)}
-            data-testid="receiving-quote-scanner-button"
-            className="inline-flex items-center gap-1 rounded border border-blue-700/40 bg-blue-800/30 px-2 py-1 text-[10px] font-medium text-blue-300 hover:bg-blue-700/40 transition-colors"
-          >
-            <FileText className="h-3 w-3" />
-            거래명세서 스캔
+        <Link href="/dashboard/receiving" className="shrink-0 h-9 px-3 rounded-lg border border-[#e2e8f0] bg-white text-[12.5px] font-semibold text-[#475569] inline-flex items-center gap-1.5 hover:bg-[#f1f5f9]">
+          <ArrowLeft className="h-3.5 w-3.5" /> 목록으로
+        </Link>
+      </div>
+
+      {/* 4단계 스텝퍼 */}
+      <ol className="mt-4 flex items-center gap-2 text-[12px]" aria-label="진행 단계">
+        {["입고", "검수·문서", "Lot 등록", "재고 반영"].map((label, i) => {
+          const done = i < derived.stepIdx;
+          const active = i === derived.stepIdx && draft.status !== "APPROVED";
+          return (
+            <li key={label} className="flex items-center gap-2">
+              <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${done ? "bg-[#16a34a] text-white" : active ? "bg-[#2563eb] text-white ring-4 ring-[rgba(37,99,235,.15)]" : "bg-[#e2e8f0] text-[#64748b]"}`}>{done ? "✓" : i + 1}</span>
+              <span className={`font-semibold ${done || active ? "text-[#0f172a]" : "text-[#94a3b8]"}`}>{label}</span>
+              {active && <span className="rounded-full bg-[#eff6ff] border border-[#bfdbfe] px-2 py-0.5 text-[10.5px] font-bold text-[#1d4ed8]">진행 중</span>}
+              {i < 3 && <span className={`h-px w-6 ${done ? "bg-[#16a34a]" : "bg-[#e2e8f0]"}`} />}
+            </li>
+          );
+        })}
+      </ol>
+
+      <div className="mt-4 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
+        {/* 모바일: 다음 조치 최상단 */}
+        <div className="lg:hidden">{NextActionPanel}</div>
+
+        {/* 좌: KPI + 라인 */}
+        <div className="space-y-4 min-w-0">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            {[
+              { label: "수령", val: `${derived.received}/${derived.expected}`, sub: "실측 기준", pct: derived.expected ? derived.received / derived.expected : 0 },
+              { label: "검수", val: `${derived.passed.length}/${draft.items.length} 합격`, sub: `${derived.undecided.length}건 대기`, pct: draft.items.length ? derived.decided.length / draft.items.length : 0 },
+              { label: "문서", val: `${(derived.hasCoa ? 1 : 0) + (derived.hasInvoice ? 1 : 0)}/2 첨부`, sub: derived.hasCoa ? "COA 확보" : "COA 미첨부", pct: ((derived.hasCoa ? 1 : 0) + (derived.hasInvoice ? 1 : 0)) / 2 },
+            ].map((k) => (
+              <div key={k.label} className="rounded-[13px] border border-[#e2e8f0] bg-white p-3">
+                <p className="text-[11px] font-semibold text-[#64748b]">{k.label}</p>
+                <p className="mt-0.5 text-[15px] sm:text-[17px] font-extrabold text-[#0f172a] tabular-nums">{k.val}</p>
+                <div className="mt-2 h-1.5 rounded-full bg-[#eef2f7] overflow-hidden">
+                  <div className={`h-full ${k.pct >= 1 ? "bg-[#2563eb]" : "bg-[#ca8a04]"}`} style={{ width: `${Math.round(k.pct * 100)}%` }} />
+                </div>
+                <p className="mt-1 text-[11px] text-[#94a3b8]">{k.sub}</p>
+              </div>
+            ))}
+          </div>
+
+          <section className="rounded-[14px] border border-[#e2e8f0] bg-white overflow-hidden" aria-label="수령 라인">
+            <div className="px-4 py-3 border-b border-[#e2e8f0] flex items-center justify-between">
+              <h2 className="text-[13px] font-extrabold text-[#0f172a]">수령 라인 {draft.items.length}</h2>
+              {draft.vendorNote && <span className="text-[11.5px] text-[#64748b] truncate max-w-[60%]">공급사 메모 · {draft.vendorNote}</span>}
+            </div>
+            <ul className="divide-y divide-[#f1f5f9]">
+              {draft.items.map((it) => {
+                const p = it.decision === "PASS" ? LINE_PILL.pass : it.decision === "FAIL" ? LINE_PILL.hold : LINE_PILL.wait;
+                const reason =
+                  it.decision === "FAIL" ? (it.discrepancyReason || "불합격 · 재고 미반영")
+                  : it.decision == null ? "검수 판정 필요"
+                  : it.restockedAt ? `재고 반영됨 · ${fmtDate(it.restockedAt)}`
+                  : "반영 대기";
+                return (
+                  <li key={it.id} className="px-4 py-3 flex items-start gap-3">
+                    <span className={`mt-0.5 shrink-0 inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-bold ${p.cls}`}>{p.label}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-semibold text-[#0f172a] truncate">{it.name}</p>
+                      <p className="text-[11.5px] text-[#64748b]">{reason}</p>
+                      <div className="mt-1 flex items-center gap-1.5 flex-wrap text-[11px] tabular-nums">
+                        <span className="text-[#475569]">발주 {it.expectedQuantity ?? "-"} · 실측 {it.inspectedQuantity ?? it.receivedQuantity ?? "-"} {it.unit ?? ""}</span>
+                        {it.lotNumber && <span className="font-mono font-semibold rounded bg-[#eff6ff] text-[#1d4ed8] px-1.5 py-0.5">Lot {it.lotNumber}</span>}
+                        {it.expiryDate && <span className="text-[#64748b]">유효 {fmtDate(it.expiryDate)}</span>}
+                      </div>
+                    </div>
+                    {canProcess && it.decision == null && (
+                      <button onClick={() => setModalOpen(true)} className="shrink-0 h-8 px-2.5 rounded-lg border border-[#e2e8f0] bg-white text-[11.5px] font-semibold text-[#2563eb] hover:bg-[#eff6ff]">판정</button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        </div>
+
+        {/* 우: 다음 조치(데스크톱) · 문서 · 이력 */}
+        <aside className="space-y-4">
+          <div className="hidden lg:block">{NextActionPanel}</div>
+
+          <section className="rounded-[14px] border border-[#e2e8f0] bg-white p-4" aria-label="문서">
+            <h2 className="text-[13px] font-extrabold text-[#0f172a]">문서</h2>
+            <ul className="mt-2 space-y-1.5">
+              {[{ key: "invoice", label: "거래명세서" }, { key: "coa", label: "COA" }].map((d) => {
+                const doc = draft.documents.find((x) => x.docType === d.key);
+                return (
+                  <li key={d.key} className="flex items-center justify-between gap-2 text-[12.5px]">
+                    <span className="inline-flex items-center gap-1.5 text-[#0f172a]"><FileText className="h-3.5 w-3.5 text-[#64748b]" /> {d.label}</span>
+                    {doc ? (
+                      <span className="text-[#15803d] font-semibold truncate max-w-[55%]">{doc.fileName}</span>
+                    ) : canProcess ? (
+                      <button onClick={() => setModalOpen(true)} className="text-[#2563eb] font-semibold hover:underline">직접 첨부</button>
+                    ) : (
+                      <span className="text-[#94a3b8]">미첨부</span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="mt-2 text-[11px] text-[#94a3b8] leading-relaxed">첨부 후 담당자가 Lot·유효기간을 확인하고 확정합니다. 자동 확정하지 않습니다.</p>
+          </section>
+
+          <section className="rounded-[14px] border border-[#e2e8f0] bg-white p-4" aria-label="반영 이력">
+            <h2 className="text-[13px] font-extrabold text-[#0f172a]">반영 이력</h2>
+            {derived.restocked.length === 0 ? (
+              <p className="mt-2 text-[12.5px] text-[#94a3b8]">아직 반영된 라인이 없습니다.</p>
+            ) : (
+              <ul className="mt-2 space-y-1.5 text-[12.5px]">
+                {derived.restocked.map((it) => (
+                  <li key={it.id} className="flex items-center justify-between gap-2">
+                    <span className="text-[#0f172a] truncate">{it.name}</span>
+                    <Link href="/dashboard/inventory" className="shrink-0 text-[#2563eb] hover:underline tabular-nums">{fmtDate(it.restockedAt)} · 재고 →</Link>
+                  </li>
+                ))}
+                {derived.restocked.length < draft.items.length && (
+                  <li className="text-[11.5px] text-[#64748b]">잔여 {draft.items.length - derived.restocked.length}라인 미반영</li>
+                )}
+              </ul>
+            )}
+          </section>
+        </aside>
+      </div>
+
+      {/* 모바일 sticky 단일 CTA */}
+      {ctaLabel && (
+        <div className="lg:hidden fixed inset-x-0 bottom-0 p-3 bg-white/95 backdrop-blur border-t border-[#e2e8f0]">
+          <button onClick={() => setModalOpen(true)} className="w-full h-[42px] rounded-lg bg-[#2563eb] text-white text-[13px] font-semibold inline-flex items-center justify-center gap-1.5">
+            {ctaLabel} <ChevronRight className="h-4 w-4" />
           </button>
-          <span className="text-[10px] text-slate-500">{pendingLines.length}건 처리 대기</span>
         </div>
-      </div>
+      )}
 
-      {/* §11.290 Phase 4c-3 — QuoteScannerModal 렌더 + 실제 PO 매칭 + 입고
-          자동 prefill. items[].productName 으로 line.itemLabel client-side
-          string match (case-insensitive includes). matched line 의
-          setReceivedQty(line.id, items[].quantity) 자동 채움 → 사용자
-          friction 제거. 매칭 결과 alert ("N건 자동 prefill 완료" 또는
-          "매칭된 품목 없음 — 수동 입력 필요"). */}
-      <QuoteScannerModal
-        open={quoteScannerOpen}
-        onOpenChange={setQuoteScannerOpen}
-        onScanComplete={(result) => {
-          // §11.290 Phase 4c-3 — client-side PO 매칭 + 입고 자동 prefill.
-          // items[].productName 으로 line.itemLabel 매칭 (case-insensitive includes).
-          const items = result.parsed.items || [];
-          const matchedLines: Array<{ line: ReceivingLineExecution; quantity: number }> = [];
-
-          for (const item of items) {
-            if (!item.productName || !item.quantity) continue;
-            const productLower = item.productName.toLowerCase().trim();
-            // line.itemLabel 안에 productName 이 포함되는 라인 첫 매칭 (case-insensitive)
-            const matched = lines.find((line) => {
-              const labelLower = line.itemLabel.toLowerCase();
-              return labelLower.includes(productLower) || productLower.includes(labelLower);
-            });
-            if (matched) {
-              matchedLines.push({ line: matched, quantity: item.quantity });
-            }
-          }
-
-          // matched line 마다 setReceivedQty 호출하여 자동 prefill
-          for (const { line, quantity } of matchedLines) {
-            setReceivedQty((prev) => ({ ...prev, [line.id]: String(quantity) }));
-          }
-
-          // 사용자 피드백 — 매칭 결과 alert
-          if (matchedLines.length > 0) {
-            const lineList = matchedLines
-              .map(({ line, quantity }) => `  · #${line.lineNumber} ${line.itemLabel.substring(0, 30)}: ${quantity}`)
-              .join("\n");
-            alert(
-              `거래명세서 스캔 완료: ${matchedLines.length}건 자동 prefill\n공급사: ${result.parsed.vendor?.name || "—"}\n\n${lineList}\n\n수량 확인 후 입고 처리하세요.`,
-            );
-          } else {
-            alert(
-              `거래명세서 스캔 완료: 매칭된 품목 없음 — 수동 입력 필요\n공급사: ${result.parsed.vendor?.name || "—"}\n품목 수: ${result.itemCount}`,
-            );
-          }
-
-          // 디버그 로깅 (Phase 5 후 audit log 와 연결)
-          console.info("[receiving] §11.290 Phase 4c-3 거래명세서 스캔 매칭 결과:", {
-            vendor: result.parsed.vendor?.name,
-            scannedItemCount: result.itemCount,
-            matchedCount: matchedLines.length,
-            totalAmount: result.parsed.totalAmount,
-            providerUsed: result.ocrMetadata?.providerUsed,
-            cached: result.ocrMetadata?.cached,
-          });
-        }}
-      />
-
-      <div className="p-4 space-y-3">
-        {/* Line selector */}
-        <div className="flex flex-wrap gap-1.5">
-          {lines.map(line => {
-            const isActive = activeLineId === line.id;
-            const isDone = line.conditionTone === "success";
-            return (
-              <button
-                key={line.id}
-                onClick={() => setActiveLineId(isActive ? null : line.id)}
-                className={`px-2.5 py-1.5 rounded text-[11px] font-medium border transition-all ${
-                  isActive ? "bg-blue-600/15 text-blue-300 border-blue-600/30"
-                  : isDone ? "bg-emerald-600/10 text-emerald-400 border-emerald-600/20 opacity-60"
-                  : "bg-slate-800/50 text-slate-400 border-slate-700 hover:border-slate-600"
-                }`}
-              >
-                #{line.lineNumber} {line.itemLabel.substring(0, 15)}{line.itemLabel.length > 15 ? "…" : ""}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Active line input */}
-        {activeLine && (
-          <div className="rounded border border-slate-700 bg-slate-900/60 p-3 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-700">{activeLine.itemLabel}</span>
-              <span className="text-[10px] text-slate-500">발주 {activeLine.orderedVsReceived}</span>
-            </div>
-
-            {/* 수량 입력 */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <div>
-                <label className="text-[10px] text-slate-500 block mb-1">실제 도착 수량</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={receivedQty[activeLine.id] ?? ""}
-                  onChange={e => setReceivedQty(prev => ({ ...prev, [activeLine.id]: e.target.value }))}
-                  placeholder="0"
-                  className="w-full h-7 px-2 text-xs bg-slate-800 border border-slate-700 rounded text-slate-700 focus:border-blue-600 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] text-slate-500 block mb-1">Lot/Batch 번호</label>
-                <input
-                  type="text"
-                  value={newLotNumber}
-                  onChange={e => setNewLotNumber(e.target.value)}
-                  placeholder="LOT-2026-001"
-                  className="w-full h-7 px-2 text-xs bg-slate-800 border border-slate-700 rounded text-slate-700 focus:border-blue-600 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] text-slate-500 block mb-1">유효기한</label>
-                <input
-                  type="date"
-                  value={newLotExpiry}
-                  onChange={e => setNewLotExpiry(e.target.value)}
-                  className="w-full h-7 px-2 text-xs bg-slate-800 border border-slate-700 rounded text-slate-700 focus:border-blue-600 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] text-slate-500 block mb-1">보관 위치</label>
-                <input
-                  type="text"
-                  value={newLotLocation}
-                  onChange={e => setNewLotLocation(e.target.value)}
-                  placeholder="연구동 B1 냉장고"
-                  className="w-full h-7 px-2 text-xs bg-slate-800 border border-slate-700 rounded text-slate-700 focus:border-blue-600 focus:outline-none"
-                />
-              </div>
-            </div>
-
-            {/* Discrepancy */}
-            <div>
-              <label className="text-[10px] text-slate-500 block mb-1">이슈 (수량 차이 / 파손 / 오배송)</label>
-              <Select
-                value={discrepancies[activeLine.id] || "none"}
-                onValueChange={(v) =>
-                  setDiscrepancies((prev) => ({ ...prev, [activeLine.id]: v === "none" ? "" : v }))
-                }
-              >
-                <SelectTrigger className="w-full h-7 px-2 text-xs bg-white border-slate-200 text-slate-900 focus:border-blue-600">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">이슈 없음</SelectItem>
-                  <SelectItem value="shortage">수량 부족</SelectItem>
-                  <SelectItem value="overage">초과 수령</SelectItem>
-                  <SelectItem value="damaged">파손</SelectItem>
-                  <SelectItem value="wrong_item">오배송</SelectItem>
-                  <SelectItem value="doc_missing">문서 누락</SelectItem>
-                  <SelectItem value="expiry_issue">유효기한 문제</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-2 pt-1">
-              <button className="h-7 px-3 text-[10px] font-medium rounded bg-blue-600 hover:bg-blue-500 text-white transition-colors">
-                수량 확인
-              </button>
-              {newLotNumber && (
-                <button className="h-7 px-3 text-[10px] font-medium rounded bg-emerald-600/15 text-emerald-400 border border-emerald-600/30 hover:bg-emerald-600/25 transition-colors">
-                  Lot 등록
-                </button>
-              )}
-              {discrepancies[activeLine.id] && (
-                <button className="h-7 px-3 text-[10px] font-medium rounded bg-yellow-600/15 text-yellow-400 border border-yellow-600/30 hover:bg-yellow-600/25 transition-colors">
-                  이슈 등록
-                </button>
-              )}
-              <button
-                onClick={() => setActiveLineId(null)}
-                className="h-7 px-2 text-[10px] text-slate-500 hover:text-slate-600"
-              >
-                닫기
-              </button>
-            </div>
-          </div>
-        )}
-
-        {!activeLineId && pendingLines.length > 0 && (
-          <div className="text-xs text-slate-500 text-center py-2">
-            위 라인을 선택하면 수량 입력과 Lot 등록을 할 수 있습니다
-          </div>
-        )}
-        {pendingLines.length === 0 && (
-          <div className="flex items-center gap-2 text-xs text-emerald-400 justify-center py-2">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            모든 라인 입고 처리 완료
-          </div>
-        )}
-      </div>
+      {draft.order && (
+        <ReceivingBatchModal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          draftId={draft.id}
+          orderId={draft.order.id}
+          items={draft.items}
+          documents={draft.documents}
+          onCommitted={() => void load()}
+        />
+      )}
     </div>
   );
 }

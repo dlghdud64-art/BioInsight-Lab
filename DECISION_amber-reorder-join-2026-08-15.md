@@ -133,6 +133,22 @@
 해제    ②-b 배치 완료 시 — §0-B 를 yellow 로 확정한 뒤 새 토큰 기준으로 재잠금.
 ```
 
+### 🔴 2026-08-17 정정 — 원 8토큰 목록에 **yellow 가 섞여 있었다**
+
+```
+Tailwind   amber-700 = #b45309   ·   yellow-700 = #a16207
+§0-B 원 목록에 #a16207 이 "(yellow-700)" 주석과 함께 포함돼 있었다
+```
+
+이름이 `amber 8토큰` 이라 `f4dc3c61`(§amber-token-ratchet)이 **이름을 믿고 그대로 옮겼다.**
+결과: §9 준수(amber → yellow 치환)를 게이트가 **위반으로 계수**했다 — 정책과 반대로 작동.
+2026-08-17 §receiving-detail-redesign 배치에서 첫 발동으로 드러났다.
+
+정정: ratchet AMBER_HEX 에서 `a16207` 제거 · baseline 81 → **78** 재계수.
+🛑 감축이 아니라 **모집단 정의 오류 정정**이다. 증거 = 기존 81 안의 정당한 yellow 3건
+(`mobile-receiving-view` 2 · `budget-register-sheet` 1)이 amber 부채로 잡혀 있었다.
+나머지 11건은 Tailwind amber 50~950 전수 대조 완료 — 오염 없음.
+
 ### 🔁 2026-08-16 갱신 — 이 보류의 전제가 틀렸다
 
 **앵커가 dead 였다.** `product-completeness.tsx` 는 importer 0 — 이 게이트는

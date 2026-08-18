@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { PackageCheck, Loader2, CheckCircle2, XCircle, ChevronDown, ChevronRight, Save } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
 // §11.348-A-5 — 확정 입고안 → 현장 QR 라벨(§11.355-B) 접합.
 import { LabelPrintModal } from "@/components/inventory/LabelPrintModal";
 
@@ -272,6 +273,8 @@ export function ReceivingReviewPanel() {
                   </Badge>
                 </button>
                 <div className="flex items-center gap-2 flex-shrink-0">
+                  {/* §receiving-detail-redesign — 상세(실데이터) 진입. 목록이 데모 store 인 동안 유일한 경로 */}
+                  <Link href={`/dashboard/receiving/${d.id}`} className="inline-flex items-center gap-1 h-8 px-2.5 rounded-md border border-[#e2e8f0] bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50">상세 열기</Link>
                   <Button size="sm" variant="outline" disabled={busy} onClick={() => act(d.id, "reject")}
                     className="h-9 text-red-600 border-red-200 hover:bg-red-50 gap-1">
                     <XCircle className="h-3.5 w-3.5" /> 반려
@@ -283,7 +286,7 @@ export function ReceivingReviewPanel() {
                     onClick={() => act(d.id, "approve")}
                     className="h-9 bg-emerald-600 hover:bg-emerald-700 gap-1"
                   >
-                    {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />} 검수 완료 — 재고 반영
+                    {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />} 검수 완료 · 재고 반영
                   </Button>
                 </div>
               </div>

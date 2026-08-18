@@ -33,7 +33,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /** 업로드 허용 종류. photo 는 T2/T3(검수 상태 사진)에서 UI 배선 — 모델·API는 선반영. */
-const ALLOWED_DOC_TYPES = new Set(["invoice", "photo", "etc"]);
+const ALLOWED_DOC_TYPES = new Set(["invoice", "coa", "photo", "etc"]);
 const MAX_SIZE_BYTES = 20 * 1024 * 1024; // 20MB
 
 /**

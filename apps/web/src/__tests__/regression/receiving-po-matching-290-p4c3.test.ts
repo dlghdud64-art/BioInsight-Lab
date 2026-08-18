@@ -1,4 +1,10 @@
 /**
+ * 🛑 은퇴 (2026-08-17 · §receiving-detail-redesign P1)
+ * 대상 page.tsx 는 데모 시드(useOpsStore) 화면이었고, 실데이터(ReceivingDraft) 페이지로 교체됐다.
+ * PO 매칭 입력(setReceivedQty)은 시드 store 로컬 상태였다. 실데이터에서 PO 는 draft.order 로 canonical 연결된다.
+ * 승계: __tests__/dashboard/receiving-detail-realdata.test.ts
+ */
+/**
  * §11.290 Phase 4c-3 #receiving-po-matching — ReceivingInputPanel 의
  *   onScanComplete handler 를 placeholder console.info → 실제 PO 매칭 +
  *   입고 자동 prefill 로 swap.
@@ -32,31 +38,31 @@ const RECEIVING_PAGE = readFileSync(
   "utf8",
 );
 
-describe("§11.290 Phase 4c-3 — receiving onScanComplete PO 매칭 + 입고 prefill", () => {
-  it("§11.290 Phase 4c-3 trace marker 존재", () => {
+describe.skip("§11.290 Phase 4c-3 — receiving onScanComplete PO 매칭 + 입고 prefill", () => {
+  it.skip("§11.290 Phase 4c-3 trace marker 존재", () => {
     expect(RECEIVING_PAGE).toMatch(/§11\.290 Phase 4c-3/);
   });
 
-  it("client-side matching helper — items[].productName → line.itemLabel", () => {
+  it.skip("client-side matching helper — items[].productName → line.itemLabel", () => {
     // helper or inline matching: items.forEach + lines.find by productName
     expect(RECEIVING_PAGE).toMatch(/productName/);
     expect(RECEIVING_PAGE).toMatch(/itemLabel|line\.itemLabel/);
   });
 
-  it("setReceivedQty 호출 (matched line 자동 prefill)", () => {
+  it.skip("setReceivedQty 호출 (matched line 자동 prefill)", () => {
     expect(RECEIVING_PAGE).toMatch(/setReceivedQty\(/);
   });
 
-  it("매칭 결과 alert (matchedCount 사용자 피드백)", () => {
+  it.skip("매칭 결과 alert (matchedCount 사용자 피드백)", () => {
     // alert 또는 console.info 에 매칭 결과 포함
     expect(RECEIVING_PAGE).toMatch(/매칭|matched|prefill/);
   });
 
-  it("기존 Phase 4c-2 trigger button 보존 (회귀 0)", () => {
+  it.skip("기존 Phase 4c-2 trigger button 보존 (회귀 0)", () => {
     expect(RECEIVING_PAGE).toMatch(/data-testid=["']receiving-quote-scanner-button["']/);
   });
 
-  it("기존 QuoteScannerModal 렌더 보존 (회귀 0)", () => {
+  it.skip("기존 QuoteScannerModal 렌더 보존 (회귀 0)", () => {
     expect(RECEIVING_PAGE).toMatch(/<QuoteScannerModal/);
     expect(RECEIVING_PAGE).toMatch(/open=\{quoteScannerOpen\}/);
   });
