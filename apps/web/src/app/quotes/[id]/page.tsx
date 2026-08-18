@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { csrfFetch } from "@/lib/api-client";
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
@@ -691,8 +691,16 @@ export default function QuoteDetailPage() {
   const needsApproval = quoteStatus === "RESPONDED";
   const canConvert = respondedCount >= 1 && quoteStatus !== "CANCELLED" && quoteStatus !== "COMPLETED";
 
-  // 최저가 벤더 (비교/추천 탭용)
-  const cheapestVendor = useMemo(() => {
+  /**
+   * 최저가 벤더 (비교/추천 탭용)
+   *
+   * §quote-detail-hook-order (프로덕션 실측 2026-08-18) — 이 자리는 위쪽 로딩·에러
+   * early return 4개보다 **아래**다. 여기서 useMemo 를 부르면 로딩 렌더(hook n개)와
+   * 데이터 렌더(hook n+1개)의 hook 수가 갈려 React #310 으로 페이지 전체가 죽는다.
+   * 실측: /quotes/[id] 진입 시 100% 크래시("견적 상세를 불러오는 중 오류").
+   * 훅을 위로 올리는 대신 훅을 없앤다 — 입력이 벤더 수 × 품목 수라 메모가 필요 없다.
+   */
+  const cheapestVendor = (() => {
     if (respondedCount === 0) return null;
     if (respondedCount === 1) return { name: (respondedVendors[0] as any)?.vendorName || "벤더", total: computeVendorReplyTotal((respondedVendors[0] as any)?.id) };
     const totals = respondedVendors.map((vr: any) => ({
@@ -703,7 +711,7 @@ export default function QuoteDetailPage() {
       }, 0),
     }));
     return totals.filter((t) => t.total > 0).sort((a, b) => a.total - b.total)[0] || null;
-  }, [respondedVendors, quoteItems]);
+  })();
 
   // 회원사는 기본 탭을 비교/추천으로
   const defaultTab = isAdmin ? "received" : "compare";
