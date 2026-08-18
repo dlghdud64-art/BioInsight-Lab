@@ -587,6 +587,51 @@ export async function GET(request: NextRequest) {
       organization?: MappedOrganization;
     };
 
+    /**
+     * §rfq-token-reply-invisible (프로덕션 실측 2026-08-18)
+     *
+     * 회신은 두 경로로 들어온다:
+     *   ① 공급사 포털(로그인) → QuoteResponse           = q.responses
+     *   ② RFQ 메일 토큰 폼(/vendor/[token]) → QuoteVendorResponseItem = q.vendorRequests[].responseItems
+     *
+     * 제품이 실제로 보내는 것은 ②인데 견적 관리 화면의 단계·회신 카운트·발주 전환은
+     * ①만 읽어, 실회신이 들어와도 "회신 0/1 · 회신 대기"로 멈춰 있었다(파이프라인 전체 정지).
+     *
+     * 저장 0 · 읽을 때 파생 — ②를 ① 형태로 투영해 responses 에 합류시킨다.
+     *   총액 = Σ(단가 × 해당 품목 수량). 단가 회신이 0건이면 totalPrice=undefined
+     *   (기존 "회신 N건 (가격 미기재)" 분기가 그대로 처리한다 — 0원 창작 금지).
+     *   중복 방지: 같은 vendorName 의 QuoteResponse 가 이미 있으면 투영하지 않는다.
+     */
+    const projectTokenReplies = (q: MappedQuote) => {
+      const qtyById = new Map<string, number>(
+        (q.items || []).map((it) => [it.id, it.quantity || 1]),
+      );
+      const portalVendorNames = new Set(
+        (q.responses || [])
+          .map((r) => (r.vendor?.name || "").trim())
+          .filter((n) => n.length > 0),
+      );
+      return (q.vendorRequests || [])
+        .filter((vr) => (vr.responseItems || []).length > 0)
+        .filter((vr) => !portalVendorNames.has((vr.vendorName || "").trim()))
+        .map((vr) => {
+          let total = 0;
+          let priced = 0;
+          for (const it of vr.responseItems || []) {
+            if (typeof it.unitPrice === "number" && it.unitPrice > 0) {
+              total += it.unitPrice * (qtyById.get(it.quoteItemId) ?? 1);
+              priced += 1;
+            }
+          }
+          return {
+            id: `vr:${vr.id}`,
+            vendor: { name: vr.vendorName || "" },
+            totalPrice: priced > 0 ? total : undefined,
+            createdAt: (vr.respondedAt ?? vr.createdAt ?? new Date()).toISOString(),
+          };
+        });
+    };
+
     const mapped = quotes.map((q: MappedQuote) => ({
       id: q.id,
       title: q.title,
@@ -620,12 +665,16 @@ export async function GET(request: NextRequest) {
           : { id: "", name: item.name || "(품목)", vendors: [] },
         quantity: item.quantity,
       })),
-      responses: (q.responses || []).map((r: MappedResponse) => ({
-        id: r.id,
-        vendor: { name: r.vendor?.name || "" },
-        totalPrice: r.totalPrice ?? undefined,
-        createdAt: r.createdAt.toISOString(),
-      })),
+      // §rfq-token-reply-invisible — 포털 회신 + 토큰 폼 회신(파생) 합류.
+      responses: [
+        ...(q.responses || []).map((r: MappedResponse) => ({
+          id: r.id,
+          vendor: { name: r.vendor?.name || "" },
+          totalPrice: r.totalPrice ?? undefined,
+          createdAt: r.createdAt.toISOString(),
+        })),
+        ...projectTokenReplies(q),
+      ],
       // #supplier-resolution-quote-vendor-email — recent_rfq forward.
       vendorRequests: (q.vendorRequests || []).map((vr: MappedVendorRequest) => ({
         id: vr.id,
