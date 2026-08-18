@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { resolveBudgetPurchaseScopeKeys } from "@/lib/budget/purchase-scope-keys";
 import { z } from "zod";
 import { OrganizationRole } from "@prisma/client";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
@@ -120,9 +121,11 @@ export async function GET(
     // 사용액 계산 (조직 예산인 경우)
     let totalSpent = 0;
     if (!budget.scopeKey.startsWith("user-")) {
+      // §budget-scope-key-mismatch — 같은 테넌트의 workspace 구매도 함께 집계.
+      const purchaseScopeKeys = await resolveBudgetPurchaseScopeKeys(budget);
       const purchaseRecords = await db.purchaseRecord.findMany({
         where: {
-          scopeKey: budget.scopeKey,
+          scopeKey: { in: purchaseScopeKeys },
           purchasedAt: { gte: periodStart, lte: periodEnd },
         },
       });

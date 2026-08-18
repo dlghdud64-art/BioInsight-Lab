@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { resolveBudgetPurchaseScopeKeys } from "@/lib/budget/purchase-scope-keys";
 
 /**
  * GET /api/user-budgets
@@ -89,12 +90,12 @@ export async function GET(request: NextRequest) {
         }
 
         // 해당 기간의 구매 기록으로 사용액 계산
-        const purchaseScopeKey = budget.scopeKey.startsWith("user-")
-          ? budget.scopeKey.slice("user-".length)
-          : budget.scopeKey;
+        // §budget-scope-key-mismatch — org 예산과 workspace 구매의 키 공간이 달라
+        //   지출이 0으로 잡히던 자리. 같은 테넌트의 키를 모아 집계한다.
+        const purchaseScopeKeys = await resolveBudgetPurchaseScopeKeys(budget);
         const purchaseRecords = await db.purchaseRecord.findMany({
           where: {
-            OR: [{ scopeKey: purchaseScopeKey }, { scopeKey: budget.scopeKey }],
+            scopeKey: { in: purchaseScopeKeys },
             purchasedAt: { gte: periodStart, lte: periodEnd! },
           },
           select: { amount: true },

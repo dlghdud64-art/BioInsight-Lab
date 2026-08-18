@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { resolveBudgetPurchaseScopeKeys } from "@/lib/budget/purchase-scope-keys";
 import { OrganizationRole } from "@prisma/client";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
@@ -83,17 +84,13 @@ export async function GET(request: NextRequest) {
         }
 
         // 모든 예산 유형(개인/조직)에 대해 PurchaseRecord 사용액 계산
-        // user-{userId} 형식이면 userId 추출, 아니면 scopeKey 그대로 사용
-        const purchaseScopeKey = budget.scopeKey.startsWith("user-")
-          ? budget.scopeKey.slice("user-".length)
-          : budget.scopeKey;
+        // §budget-scope-key-mismatch — org(Budget.scopeKey) 와 workspace
+        //   (PurchaseRecord.scopeKey) 키 공간 불일치로 지출이 0으로 잡히던 자리.
+        const purchaseScopeKeys = await resolveBudgetPurchaseScopeKeys(budget);
 
         const purchaseRecords = await db.purchaseRecord.findMany({
           where: {
-            OR: [
-              { scopeKey: purchaseScopeKey },
-              { scopeKey: budget.scopeKey },
-            ],
+            scopeKey: { in: purchaseScopeKeys },
             purchasedAt: { gte: periodStart, lte: periodEnd },
           },
           select: { amount: true },
