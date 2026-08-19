@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     // §pricing-redesign (호영님 2026-06-27) — PO 월 한도 폐기 → orders enforce 제거.
     const body = await request.json();
-    const { quoteId, shippingAddress, notes, expectedDelivery, budgetId } = body;
+    const { quoteId, shippingAddress, notes, expectedDelivery, budgetId, vendorRequestId } = body;
 
     if (!quoteId) {
       return NextResponse.json(
@@ -128,8 +128,35 @@ export async function POST(request: NextRequest) {
       }
 
       // 주문 금액 계산
-      const totalAmount = quote.totalAmount ||
-        quote.items.reduce((sum: number, item: { lineTotal: number | null }) => sum + (item.lineTotal || 0), 0);
+      //
+      // §order-amount-from-reply (프로덕션 실측 2026-08-18) — 공급사 회신 단가는
+      //   QuoteVendorResponseItem 에만 있고 QuoteListItem.unitPrice/lineTotal 은 0 이라
+      //   여기서 항상 0 이 나와 INVALID_AMOUNT(400) 로 발주가 막혀 있었다.
+      //   회신 선택 축은 이미 존재한다(구매 처리 경로가 vendorRequestId 로 소비 중) —
+      //   정의를 새로 만들지 않고 **같은 축을 주문 경로에 잇는다**.
+      //   scope 검증: 다른 견적의 회신 id 주입을 막는다(타 견적 가격으로 발주 금지).
+      //   0원 창작 금지: 회신에 단가가 없으면 종전과 동일하게 INVALID_AMOUNT.
+      const replyPriceByItemId = new Map<string, number>();
+      if (vendorRequestId) {
+        const replyItems = await tx.quoteVendorResponseItem.findMany({
+          where: { vendorRequestId, vendorRequest: { quoteId: quote.id } },
+          select: { quoteItemId: true, unitPrice: true },
+        });
+        for (const ri of replyItems) {
+          const unit = Math.round(Number(ri.unitPrice ?? 0));
+          if (unit > 0) replyPriceByItemId.set(ri.quoteItemId, unit);
+        }
+      }
+      const replyTotal = quote.items.reduce(
+        (sum: number, item: { id: string; quantity: number }) =>
+          sum + (replyPriceByItemId.get(item.id) ?? 0) * (item.quantity || 1),
+        0,
+      );
+
+      const totalAmount = replyTotal > 0
+        ? replyTotal
+        : (quote.totalAmount ||
+          quote.items.reduce((sum: number, item: { lineTotal: number | null }) => sum + (item.lineTotal || 0), 0));
 
       if (totalAmount <= 0) {
         throw new Error("INVALID_AMOUNT");
@@ -208,14 +235,18 @@ export async function POST(request: NextRequest) {
             notes,
             expectedDelivery: expectedDelivery ? new Date(expectedDelivery) : null,
             items: {
-              create: quote.items.map((item: { productId: string | null; name: string | null; brand: string | null; catalogNumber: string | null; quantity: number; unitPrice: number | null; lineTotal: number | null; notes: string | null }) => ({
+              create: quote.items.map((item: { id: string; productId: string | null; name: string | null; brand: string | null; catalogNumber: string | null; quantity: number; unitPrice: number | null; lineTotal: number | null; notes: string | null }) => ({
                 productId: item.productId,
                 name: item.name || "Unknown Product",
                 brand: item.brand,
                 catalogNumber: item.catalogNumber,
                 quantity: item.quantity,
-                unitPrice: item.unitPrice || 0,
-                lineTotal: item.lineTotal || 0,
+                // §order-amount-from-reply — 회신 단가가 있으면 라인에도 그 값을 쓴다
+                //   (헤더 총액과 라인 합계가 갈리면 발주서가 자기모순이 된다).
+                unitPrice: replyPriceByItemId.get(item.id) ?? item.unitPrice ?? 0,
+                lineTotal: replyPriceByItemId.has(item.id)
+                  ? replyPriceByItemId.get(item.id)! * (item.quantity || 1)
+                  : item.lineTotal || 0,
                 notes: item.notes,
               })),
             },

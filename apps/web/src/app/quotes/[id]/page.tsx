@@ -320,7 +320,6 @@ export default function QuoteDetailPage() {
     return sum + line;
   }, 0);
   const quoteTotal = computedTotal || quoteData?.quote?.totalAmount || 0;
-  const expectedRemaining = selectedBudget ? (selectedBudget.remainingAmount ?? 0) - quoteTotal : null;
 
   const vendorRequests = vendorRequestsData?.vendorRequests || [];
   const respondedVendors = vendorRequests.filter((vr: any) => vr.status === "RESPONDED");
@@ -336,6 +335,9 @@ export default function QuoteDetailPage() {
   };
   const effectiveVrId = purchaseVendorRequestId || (respondedVendors.length === 1 ? (respondedVendors[0] as any)?.id : "");
   const purchaseTotal = effectiveVrId ? computeVendorReplyTotal(effectiveVrId) : quoteTotal;
+  // §order-amount-from-reply — 주문 다이얼로그도 회신 단가 기준으로 표시한다.
+  //   quoteTotal 기준이면 회신이 와 있어도 "주문 금액 -₩0" 이 뜬다(실측 2026-08-18).
+  const expectedRemaining = selectedBudget ? (selectedBudget.remainingAmount ?? 0) - purchaseTotal : null;
 
   // ── Mutations ─────────────────────────────────────────────────────
   const saveVendorReplyMutation = useMutation({
@@ -421,6 +423,9 @@ export default function QuoteDetailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           quoteId,
+          // §order-amount-from-reply — 구매 처리 경로와 같은 선택 축을 넘긴다
+          //   (단일 회신이면 자동, 복수면 명시 선택. 서버가 quoteId 소속을 재검증한다).
+          vendorRequestId: effectiveVrId || undefined,
           expectedDelivery: orderData.expectedDelivery || undefined,
           budgetId: orderData.budgetId || undefined,
           notes: orderData.notes || (orderData.paymentMethod
@@ -1535,7 +1540,7 @@ export default function QuoteDetailPage() {
                           {selectedBudget && (
                             <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-1 text-sm">
                               <div className="flex justify-between"><span className="text-muted-foreground">현재 잔액</span><span className="font-semibold">₩ {safeLocaleAmount(selectedBudget.remainingAmount)}</span></div>
-                              <div className="flex justify-between"><span className="text-muted-foreground">주문 금액</span><span className="font-semibold text-red-600">- ₩ {quoteTotal.toLocaleString()}</span></div>
+                              <div className="flex justify-between"><span className="text-muted-foreground">주문 금액</span><span className="font-semibold text-red-600">- ₩ {purchaseTotal.toLocaleString()}</span></div>
                               <div className="flex justify-between pt-1.5 border-t border-blue-200"><span className="font-medium">예상 잔액</span>
                                 <span className={cn("font-bold", expectedRemaining !== null && expectedRemaining < 0 ? "text-red-600" : "text-green-600")}>₩ {expectedRemaining !== null ? expectedRemaining.toLocaleString() : "0"}</span>
                               </div>
