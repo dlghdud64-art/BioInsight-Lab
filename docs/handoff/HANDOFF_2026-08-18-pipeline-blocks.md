@@ -143,6 +143,29 @@ quotes/[id]/page.tsx    주문 body 에 effectiveVrId 전달 · 다이얼로그 
                                            가장 작지만 예산 화면과 발주가 갈림
 ```
 
+🛑 **해제 대상 sentinel — `order-no-budget-message-p12`.**
+   그 파일의 `it("조회 대상은 그대로 UserBudget 하나다")` 가
+   `tx.budget.` / `tx.categoryBudget.` 유입을 RED 로 막는다(의도된 tripwire).
+   ⑪ 이 어느 갈래로 가든 이 단언은 **명시적으로 해제**해야 한다 —
+   우회하거나 조용히 편집하면 안 된다. 해제 커밋에 갈래와 근거를 적는다.
+
+⚠️ 2026-08-19 실측으로 아래 3택의 전제가 갈렸다 — **경로가 셋이고 모델이 경로마다 하나씩**이다.
+   3택을 그대로 고르기 전에 이 절을 먼저 읽을 것:
+
+```
+경로 A  구매요청 → 승인 → CategoryBudget 예약(BudgetEvent)  → 발주
+경로 B  견적 상세 → POST /api/orders → UserBudget 차감 · 원장 없음
+        진입점 1개 (quotes/[id]/page.tsx:421). 어제 폐루프에서 탄 경로.
+경로 C  발주 생성 화면 → POST /api/orders/draft → PurchaseRecord 만 생성
+        🛑 Order 를 안 만든다. 예산 접점 0. Budget(합계 파생)에만 영향.
+        화면 이름은 "발주 생성" 인데 발주가 안 생긴다.
+```
+
+→ 예산 모델이 셋인 건 우연이 아니라 **경로가 셋**이기 때문이다.
+  A→CategoryBudget · B→UserBudget · C→Budget. 모델 선택이 아니라 경로 정리가 선행이다.
+  🛑 "B 를 없앤다" 는 C 를 다루지 않는다. C 는 예산을 안 보는 게 아니라
+     PurchaseRecord 로 **사후에** Budget 에 잡힌다(예약도 통제도 없음).
+
 🛑 셋 다 **"예산이 두 모델"** 이라는 뿌리를 건드린다.
    다음 세션은 **어느 것이 canonical 예산인가** 를 먼저 정하고 들어간다.
    `UserBudget` = 행 잠금 후 차감 + 원장(`UserBudgetTransaction`).
