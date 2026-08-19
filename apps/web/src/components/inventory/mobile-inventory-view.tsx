@@ -8,17 +8,13 @@ import {
   AlertTriangle,
   Calendar,
   ChevronRight,
-  Clock,
   MapPin,
   Package,
   Sparkles,
   Loader2,
   Trash2,
   ShoppingCart,
-  FlaskConical,
-  Shield,
   Info,
-  ChevronDown,
 } from "lucide-react";
 import { format } from "date-fns";
 import { getStorageConditionLabel } from "@/lib/constants";
@@ -330,6 +326,50 @@ function MobileDetailSheet({
     }
   };
 
+  /**
+   * §inventory-item-sheet-compact (핸드오프 2026-08-04 · 배치만 채택)
+   *
+   * 실측(2026-08-19 프로덕션 414px): 값 없는 필드도 전부 행으로 렌더돼 상태·보관 조건·
+   *   공급사·납기·용도 5개가 대시(-)로 깔렸고, 유일한 CTA 가 최하단이라 스크롤해야 나왔다.
+   *
+   * 채택   배치 — 경고+CTA 를 헤더 바로 아래로 · 값 있는 필드만 행 · 미입력은 1줄 접기
+   * 미채택 색  — 시안의 yellow 경고 카드. reorder 권장 톤은 blue 유지(sentinel 8건 잠금).
+   *            CLAUDE.md §9 가 같은 상태를 L157 yellow / L162 red 로 두 번 규정해
+   *            정책 자체가 미해소다. 색 결정은 별도 카드(시트 배치 배치에 끼울 크기가 아님).
+   * 미구현 핸드오프 §3 액션 2버튼(QR 스캔 · 상세 보기). 상세 보기 목적지인 품목 브리핑이
+   *            데스크톱 전용(InventoryContextPanel)이라 모바일에 없다 — 만들면 dead button.
+   */
+  const recommendedQty = Math.max(0, (inv.safetyStock ?? 0) - inv.currentQuantity);
+
+  // 값이 있는 필드만 행을 만든다. null/빈 문자열은 아래 "미입력" 접기로 묶는다(대시 금지).
+  const rows: Array<{ label: string; value: React.ReactNode }> = [];
+  const missing: string[] = [];
+  const pushRow = (label: string, raw: unknown, node?: React.ReactNode) => {
+    const filled = raw !== null && raw !== undefined && String(raw).trim() !== "";
+    if (filled) rows.push({ label, value: node ?? String(raw) });
+    else missing.push(label);
+  };
+
+  pushRow("상태", inv.inUseOrUnopened);
+  pushRow("보관 조건", inv.storageCondition, inv.storageCondition ? getStorageConditionLabel(inv.storageCondition) : undefined);
+  pushRow("공급사", inv.vendor);
+  pushRow("납기", inv.deliveryPeriod);
+  pushRow("용도", inv.testPurpose);
+  pushRow("최소 주문", inv.minOrderQty, `${inv.minOrderQty} ${inv.unit}`);
+  // 위험물·자동 재주문은 항상 값이 있다(불리언) — 미입력 대상 아님.
+  rows.push({
+    label: "위험물",
+    value: inv.hazard ? (
+      <span className="inline-flex items-center gap-1 text-red-600 font-semibold">
+        <AlertTriangle className="h-3 w-3" /> 해당
+      </span>
+    ) : (
+      <span className="text-slate-500">비해당</span>
+    ),
+  });
+  rows.push({ label: "자동 재주문", value: inv.autoReorderEnabled ? "활성화" : "비활성화" });
+  if (inv.notes && inv.notes.trim()) rows.push({ label: "메모", value: inv.notes });
+
   return (
     <Sheet open={open} onOpenChange={(v: boolean) => !v && onClose()}>
       <SheetContent
@@ -343,7 +383,8 @@ function MobileDetailSheet({
           <div className="w-10 h-1 rounded-full bg-st" />
         </div>
 
-        <SheetHeader className="mb-4 text-left">
+        {/* ── 헤더: 품목명 + 상태 pill + 메타 1줄(제조사 · Cat · Lot) ── */}
+        <SheetHeader className="mb-3 text-left">
           <div className="flex items-center gap-2 mb-1">
             {/* §11.306c — Sheet header Badge 좌측 dot 제거 (line 395-398 와 정합). */}
             <Badge className={`text-[10px] px-1.5 py-0 border ${statusCfg.badgeCls}`}>
@@ -357,139 +398,27 @@ function MobileDetailSheet({
               </Badge>
             )}
           </div>
-          <SheetTitle className="text-lg font-bold text-slate-900 leading-snug">
+          <SheetTitle className="text-[19px] font-extrabold text-slate-900 leading-snug">
             {inv.product.name}
           </SheetTitle>
-          {inv.product.brand && (
-            <p className="text-xs text-slate-500 mt-0.5">
-              {inv.product.brand}
-              {inv.product.catalogNumber && ` | ${inv.product.catalogNumber}`}
-            </p>
-          )}
+          {/* 메타는 1줄로 압축 — Lot 은 별도 카드에서 끌어올렸다(값 있을 때만 표기). */}
+          <p className="text-xs text-slate-500 mt-0.5">
+            {[
+              inv.product.brand,
+              inv.product.catalogNumber,
+              inv.lotNumber ? `Lot ${inv.lotNumber}` : null,
+            ]
+              .filter((v) => v && String(v).trim() !== "")
+              .join(" · ")}
+          </p>
         </SheetHeader>
 
-        <div className="space-y-4">
-          {/* Lot Info */}
-          <section className="rounded-xl border border-bd bg-pn p-3.5">
-            <h5 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-              <FlaskConical className="h-3 w-3" />
-              Lot 정보
-            </h5>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-              <div>
-                <span className="text-slate-600">Lot #</span>
-                <p className="font-mono font-medium text-slate-600 mt-0.5">{inv.lotNumber || "-"}</p>
-              </div>
-              <div>
-                <span className="text-slate-600">수량</span>
-                <p className="font-medium text-slate-600 mt-0.5">
-                  <span className={
-                    status === "danger" ? "text-red-400" :
-                    status === "low" ? "text-red-600" :
-                    "text-slate-700"
-                  }>{inv.currentQuantity}</span> {inv.unit}
-                  {inv.safetyStock != null && <span className="text-slate-600 ml-1">/ 안전 {inv.safetyStock}</span>}
-                </p>
-              </div>
-              <div>
-                <span className="text-slate-600">유효기간</span>
-                <p className="font-medium text-slate-600 mt-0.5">
-                  {inv.expiryDate ? format(new Date(inv.expiryDate), "yyyy.MM.dd") : "-"}
-                </p>
-              </div>
-              <div>
-                <span className="text-slate-600">상태</span>
-                <p className="font-medium text-slate-600 mt-0.5">{inv.inUseOrUnopened || "-"}</p>
-              </div>
-            </div>
-          </section>
-
-          {/* Location */}
-          <section className="rounded-xl border border-bd bg-pn p-3.5">
-            <h5 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-              <MapPin className="h-3 w-3" />
-              위치
-            </h5>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-              <div>
-                <span className="text-slate-600">보관 위치</span>
-                <p className="font-medium text-slate-600 mt-0.5">{inv.location || "미지정"}</p>
-              </div>
-              <div>
-                <span className="text-slate-600">보관 조건</span>
-                <p className="font-medium text-slate-600 mt-0.5">
-                  {inv.storageCondition ? getStorageConditionLabel(inv.storageCondition) : "-"}
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {/* Purchase Link */}
-          <section className="rounded-xl border border-bd bg-pn p-3.5">
-            <h5 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-              <ShoppingCart className="h-3 w-3" />
-              구매 연결
-            </h5>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-              <div>
-                <span className="text-slate-600">공급사</span>
-                <p className="font-medium text-slate-600 mt-0.5">{inv.vendor || "-"}</p>
-              </div>
-              <div>
-                <span className="text-slate-600">납기</span>
-                <p className="font-medium text-slate-600 mt-0.5">{inv.deliveryPeriod || "-"}</p>
-              </div>
-              <div>
-                <span className="text-slate-600">최소 주문</span>
-                <p className="font-medium text-slate-600 mt-0.5">{inv.minOrderQty ?? "-"} {inv.minOrderQty ? inv.unit : ""}</p>
-              </div>
-              <div>
-                <span className="text-slate-600">용도</span>
-                <p className="font-medium text-slate-600 mt-0.5 line-clamp-1">{inv.testPurpose || "-"}</p>
-              </div>
-            </div>
-          </section>
-
-          {/* Safety Info */}
-          <section className="rounded-xl border border-bd bg-pn p-3.5">
-            <h5 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-              <Shield className="h-3 w-3" />
-              안전 정보
-            </h5>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-              <div>
-                <span className="text-slate-600">위험물</span>
-                <p className="font-medium mt-0.5">
-                  {inv.hazard ? (
-                    <span className="text-red-400 flex items-center gap-1">
-                      <AlertTriangle className="h-3 w-3" /> 해당
-                    </span>
-                  ) : (
-                    <span className="text-slate-400">비해당</span>
-                  )}
-                </p>
-              </div>
-              <div>
-                <span className="text-slate-600">자동 재주문</span>
-                <p className="font-medium text-slate-600 mt-0.5">
-                  {inv.autoReorderEnabled ? "활성화" : "비활성화"}
-                </p>
-              </div>
-            </div>
-            {inv.notes && (
-              <div className="mt-2.5 pt-2.5 border-t border-bd text-xs">
-                <span className="text-slate-600">메모</span>
-                <p className="text-slate-400 mt-0.5 leading-relaxed">{inv.notes}</p>
-              </div>
-            )}
-          </section>
-
-          {/* Recommended Action + Reasoning
-              §11.327 — reorder 권장 카드 톤 개선: rose 홍수 제거. AI 제안 = accent(blue) 카드,
-              심각도는 rose 도트+숫자 강조로만. dispose/use_first/assign_location 은 §11.302 신호등 유지. */}
+        <div className="space-y-3">
+          {/* ── 경고 + CTA: 시트 최상단(스크롤 없이 보이는 자리) ──
+              §11.327 톤 유지 — AI 제안 = accent(blue) 카드, 심각도는 rose 도트/숫자로만. */}
           {action.type === "reorder" ? (
             <section className="rounded-[18px] border border-blue-200 bg-blue-50 p-3.5">
-              <div className="flex items-center gap-2 mb-2.5">
+              <div className="flex items-center gap-2 mb-2">
                 <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-white px-2.5 py-1 text-[11.5px] font-extrabold text-blue-700">
                   <Sparkles className="h-[13px] w-[13px]" />
                   AI 권장
@@ -502,7 +431,7 @@ function MobileDetailSheet({
               <h5 className="text-base font-extrabold text-slate-900 leading-tight mb-1">
                 {action.label}
               </h5>
-              <p className="text-[13px] text-slate-600 leading-relaxed">
+              <p className="text-[13px] text-slate-600 leading-relaxed mb-3">
                 {inv.safetyStock != null ? (
                   <>
                     현재 재고 <b className="font-extrabold text-rose-700">{inv.currentQuantity}{inv.unit}</b>가
@@ -512,6 +441,28 @@ function MobileDetailSheet({
                   getReasonText(inv)
                 )}
               </p>
+              {reorderRecoLoading ? (
+                /* §inventory-mobile-reorder-gate P2 — 추천 쿼리 로딩 중 침묵 금지:
+                   비활성 로딩 상태 표기, 산출되면 자동 활성(쿼리 완료 시 재렌더). */
+                <Button
+                  disabled
+                  className="w-full bg-blue-300 text-white h-[42px] text-[13.5px] font-bold cursor-wait"
+                >
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  추천 수량 계산 중…
+                </Button>
+              ) : (
+                <Button
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white h-[42px] text-[13.5px] font-bold"
+                  onClick={() => {
+                    onReorder(inv);
+                    onClose();
+                  }}
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  {recommendedQty > 0 ? `AI 재발주 검토 · 권장 ${recommendedQty}${inv.unit}` : "AI 재발주 검토"}
+                </Button>
+              )}
             </section>
           ) : action.type !== "none" ? (
             <section className={`rounded-xl border p-3.5 ${
@@ -537,32 +488,73 @@ function MobileDetailSheet({
             </section>
           ) : null}
 
-          {/* Action Button */}
+          {/* ── 핵심 3수치: 수량 / 유효기간 / 보관 위치 ── */}
+          <div className="grid grid-cols-3 gap-px bg-bd border border-bd rounded-xl overflow-hidden">
+            <div className="bg-pn px-3 py-2.5">
+              <p className="text-[10.5px] text-slate-500">수량</p>
+              <p className="text-[15px] font-extrabold mt-0.5">
+                <span className={
+                  status === "danger" ? "text-red-600" :
+                  status === "low" ? "text-red-600" :
+                  "text-slate-900"
+                }>{inv.currentQuantity}</span>
+                {inv.safetyStock != null && (
+                  <span className="text-[11px] font-medium text-slate-400">/{inv.safetyStock}</span>
+                )}
+              </p>
+            </div>
+            <div className="bg-pn px-3 py-2.5">
+              <p className="text-[10.5px] text-slate-500">유효기간</p>
+              <p className="text-[13.5px] font-extrabold text-slate-900 mt-0.5">
+                {inv.expiryDate ? format(new Date(inv.expiryDate), "yyyy.MM.dd") : "없음"}
+              </p>
+            </div>
+            <div className="bg-pn px-3 py-2.5">
+              <p className="text-[10.5px] text-slate-500">보관 위치</p>
+              {/* 운영상 의미 있는 공백 — 대시가 아니라 "미지정"으로 정직 표기. */}
+              <p className={`text-[13.5px] font-extrabold mt-0.5 ${inv.location ? "text-slate-900" : "text-slate-500"}`}>
+                {inv.location || "미지정"}
+              </p>
+            </div>
+          </div>
+
+          {/* ── 값 있는 필드만 컴팩트 행 ── */}
+          {rows.length > 0 && (
+            <div className="rounded-xl border border-bd bg-pn overflow-hidden">
+              {rows.map((r, i) => (
+                <div
+                  key={r.label}
+                  className={`flex items-start justify-between gap-3 px-3.5 py-2.5 text-xs ${i > 0 ? "border-t border-bd" : ""}`}
+                >
+                  <span className="text-slate-500 shrink-0">{r.label}</span>
+                  <span className="font-medium text-slate-800 text-right break-words">{r.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ── 미입력 접기 1줄 — 행을 만들지 않고 건수로만 알린다 ── */}
+          {missing.length > 0 && (
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-bd bg-el px-3.5 py-2.5">
+              <p className="text-[11.5px] text-slate-500 min-w-0 truncate">
+                미입력 {missing.length}건 · {missing.join(", ")}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  onEdit(inv);
+                  onClose();
+                }}
+                className="shrink-0 rounded-lg border border-bd bg-pn px-2.5 py-1 text-[11.5px] font-semibold text-slate-700 active:bg-el"
+              >
+                채우기
+              </button>
+            </div>
+          )}
+
+          {/* ── 액션 행 ──
+              핸드오프 §3(QR 스캔 · 상세 보기)은 이번 배치 미구현 — 위 주석 참조. */}
           <div className="pt-1">
-            {(action.type === "reorder" || action.type === "use_first") && (
-              reorderRecoLoading ? (
-                /* §inventory-mobile-reorder-gate P2 — 추천 쿼리 로딩 중 침묵 금지:
-                   비활성 로딩 상태 표기, 산출되면 자동 활성(쿼리 완료 시 재렌더). */
-                <Button
-                  disabled
-                  className="w-full bg-blue-300 text-white h-11 text-sm font-semibold cursor-wait"
-                >
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  추천 수량 계산 중…
-                </Button>
-              ) : (
-                <Button
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white h-11 text-sm font-semibold"
-                  onClick={() => {
-                    onReorder(inv);
-                    onClose();
-                  }}
-                >
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  AI 재발주 검토
-                </Button>
-              )
-            )}
             {action.type === "dispose" && (
               <Button
                 variant="outline"
@@ -586,10 +578,10 @@ function MobileDetailSheet({
                 위치 지정하기
               </Button>
             )}
-            {action.type === "none" && (
+            {(action.type === "none" || action.type === "use_first") && (
               <Button
                 variant="outline"
-                className="w-full border-bd text-slate-400 hover:bg-el h-11 text-sm"
+                className="w-full border-bd text-slate-600 hover:bg-el h-11 text-sm"
                 onClick={() => {
                   onEdit(inv);
                   onClose();
