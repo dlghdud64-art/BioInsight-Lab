@@ -317,8 +317,12 @@ export function ReorderReviewSheet({
                 <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                   보관 위치
                 </p>
-                <p className="text-sm font-medium text-slate-900 truncate">
-                  {data.storageLocation ?? "—"}
+                {/* 운영상 의미 있는 공백은 대시가 아니라 "미지정" 으로 정직 표기한다.
+                    🛑 `??` 가 아니라 `||` 다. 호출부(inventory-content L4272)가
+                       `location ?? undefined` 로 넘겨 **빈 문자열이 그대로 통과**하므로
+                       `??` 로는 라벨만 있고 값이 빈 줄이 된다(null 은 대시, "" 는 빈칸). */}
+                <p className={`text-sm font-medium truncate ${data.storageLocation ? "text-slate-900" : "text-slate-500"}`}>
+                  {data.storageLocation || "미지정"}
                 </p>
               </div>
             </div>
