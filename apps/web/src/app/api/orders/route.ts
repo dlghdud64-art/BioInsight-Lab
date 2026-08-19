@@ -429,8 +429,12 @@ export async function POST(request: NextRequest) {
         message: "유효하지 않은 주문 금액입니다.",
         status: 400,
       },
+      // §order-no-budget-message — 예산은 세 모델이고 이 경로는 그중 하나만 조회한다(L166 tx.userBudget).
+      // "등록된 예산이 없습니다" 는 다른 모델에 예산이 있을 때 사실과 반대다.
+      // 어느 예산이 없는지 · 어디서 만드는지를 화면 이름으로 지목한다.
       NO_BUDGET: {
-        message: "등록된 예산이 없습니다. 먼저 예산을 설정해주세요.",
+        message:
+          "발주에 사용할 연구비 예산이 없습니다 · 예산 관리 화면에서 만든 예산은 아직 발주에 연결되지 않습니다. 연구비 관리에서 예산을 만들어 주세요.",
         status: 400,
       },
       INSUFFICIENT_BUDGET: {
