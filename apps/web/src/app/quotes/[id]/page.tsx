@@ -1528,7 +1528,7 @@ export default function QuoteDetailPage() {
                           <Input type="date" value={orderForm.expectedDelivery} onChange={(e) => setOrderForm({ ...orderForm, expectedDelivery: e.target.value })} min={new Date().toISOString().split("T")[0]} />
                         </div>
                         <div className="space-y-2">
-                          <Label>���제할 과제 <span className="text-red-500">*</span></Label>
+                          <Label>결제할 과제 <span className="text-red-500">*</span></Label>
                           <Select value={orderForm.budgetId} onValueChange={(value) => setOrderForm({ ...orderForm, budgetId: value })}>
                             <SelectTrigger><SelectValue placeholder="과제를 선택하세요" /></SelectTrigger>
                             <SelectContent>
