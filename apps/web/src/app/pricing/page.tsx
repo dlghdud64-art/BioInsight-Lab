@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
+import { csrfFetch } from "@/lib/api-client";
 import { PLAN_INTENT_VALUES, type PlanIntent } from "@/lib/billing/plan-select";
 import {
   PLAN_DESCRIPTOR,
@@ -211,7 +212,9 @@ export default function PricingPage() {
       setSelectError(null);
       setLoadingPlan(plan);
       try {
-        const res = await fetch("/api/billing/plan-select", {
+        // §csrf-raw-fetch 처분 1/9 — full_enforce 에서 raw fetch POST 는 403
+        // (프로덕션 실측 2026-08-20: 403 → "일시적 오류" · Free CTA dead)
+        const res = await csrfFetch("/api/billing/plan-select", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ selectedPlan: plan }),
@@ -258,7 +261,8 @@ export default function PricingPage() {
     setLeadStatus("loading");
     setLeadMsg("");
     try {
-      const res = await fetch("/api/leads", {
+      // §csrf-raw-fetch 처분 2/9 — plan-select 와 같은 형태 (도입 신청 리드 유실 방지)
+      const res = await csrfFetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
