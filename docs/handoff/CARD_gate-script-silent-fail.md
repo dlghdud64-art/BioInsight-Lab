@@ -149,6 +149,40 @@ CI                labaxis-surface-guard.yml 가 inline-hex-bg + userinventory �
 ⑥ 위반 0 → GREEN      → exit 0  "✅ No native <select>"    ✅ **오탐 0** — 정당한 0건이 막히지 않는다
 ```
 
+## 🛑 정정 (2026-08-19) — CI 배선 보고가 틀렸다
+
+`2007d9a6` 커밋 body 에 이렇게 적었다:
+
+> 이 스크립트는 훅·CI 어디에도 배선돼 있지 않다 … 따라서 exit 1 이 다른 흐름을 막지 않는다.
+
+**거짓이다.** `labaxis-surface-guard.yml` 이 **check 스크립트 7개를 전부 실행**하고
+`check-no-native-select.sh` 는 3번째 **block 스텝**이다(continue-on-error 없음).
+
+🛑 **원인 — 내 측정을 내가 잘랐다.** workflows 디렉터리 grep 결과를 `head -5` 로 잘라
+   앞 5줄만 보고 "그것 + userinventory" 로 결론지었다. 6번째 줄부터가 native-select 였다.
+   후보 ④(요약이 원문을 이김)의 **자기 버전**이다 — 남이 쓴 요약도 아니고
+   **내가 방금 만든 절단본**을 근거로 삼았다.
+
+### 결과 — CI 가 지금 RED 일 수 있다
+
+```
+구 코드   rg 부재 → exit 127 삼킴 → exit 0 (공허 통과)
+신 코드   rg 부재 → exit 2   ·   rg 존재 → exit 1 (위반 13건)
+→ 어느 쪽이든 이 스텝은 이제 실패한다
+```
+
+⚠️ Vercel 배포는 Actions 와 독립이라 **배포는 안 막힌다.** 막히는 것은 GitHub Actions 체크다.
+
+### CI 도 원래 공허했다는 정황
+
+```
+native-select 가드 CI 등록   2026-04-28  (block 전환 04-29)
+위반 도입 시점               06-17 legal · 06-27 pricing · 07-08 receiving-desktop-list
+```
+가드가 먼저 있었고 위반이 나중에 들어왔다. CI 에 rg 가 있었다면 **6/17 부터 두 달간 RED** 였어야 한다.
+활발히 push 되는 레포에서 성립하기 어렵다 → CI 스텝도 공허 통과 중이었을 가능성이 높다.
+🛑 **정황이지 측정이 아니다.** gh 미설치로 실행 로그를 못 봤다.
+
 ## 📐 순서 판정 (2026-08-19) — **ripgrep 판단이 먼저다**
 
 질문: rg 부재/버전이 나머지 6개의 exit code 분기 **형태**에 영향을 주는가 → **준다. 두 층에서.**
