@@ -1,0 +1,85 @@
+# csrf raw-fetch 기준선 — 2026-08-20 (백틱 포함 전수)
+#
+# 러너/도구 축 (8/19 와 다르다 — 대조 시 주의):
+#   측정기  python3 re 보조 스캔 (스크립트 러너 아님 — 데스크톱 VM rg 13 은 PCRE2 미탑재)
+#   패턴    (?<!csrf)(?<!\w)fetch\s*\(\s*[`'\"]/api/  + 400자 창 내 method: POST|PUT|PATCH|DELETE
+#   포함    백틱 템플릿 리터럴 (8/19 기준선의 사각지대)
+#   제외    app/api · __tests__ · lib/ai · lib/ai-pipeline
+#   상태    pricing 유입 2건(plan-select·leads) 처분 후 측정
+#   검증    표본 4건 소스 대조 4/4 진성 (quotes-client:87 · budget-store:363 · Header:94 · quote-panel:1173)
+#   대기    수정된 스크립트(rg 15.2.0+PCRE2 러너) 재실행으로 이 목록과 대조
+#
+# 72 건
+
+apps/web/src/app/admin/quotes/page.tsx:142
+apps/web/src/app/admin/quotes/[id]/page.tsx:184
+apps/web/src/app/admin/quotes/[id]/page.tsx:220
+apps/web/src/app/admin/quotes/[id]/page.tsx:229
+apps/web/src/app/admin/requests/page.tsx:109
+apps/web/src/app/admin/requests/page.tsx:147
+apps/web/src/app/admin/safety/page.tsx:115
+apps/web/src/app/admin/safety/page.tsx:143
+apps/web/src/app/admin/safety/page.tsx:171
+apps/web/src/app/admin/users/page.tsx:260
+apps/web/src/app/admin/users/page.tsx:280
+apps/web/src/app/admin/users/page.tsx:308
+apps/web/src/app/admin/users/page.tsx:342
+apps/web/src/app/admin/users/page.tsx:378
+apps/web/src/app/admin/users/page.tsx:1341
+apps/web/src/app/admin/users/page.tsx:1674
+apps/web/src/app/dashboard/admin/page.tsx:165
+apps/web/src/app/dashboard/inventory/inventory-content.tsx:657
+apps/web/src/app/dashboard/inventory/inventory-content.tsx:1007
+apps/web/src/app/dashboard/inventory/inventory-content.tsx:1032
+apps/web/src/app/dashboard/organizations/[id]/page.tsx:279
+apps/web/src/app/dashboard/organizations/[id]/page.tsx:350
+apps/web/src/app/dashboard/organizations/[id]/page.tsx:368
+apps/web/src/app/dashboard/organizations/[id]/page.tsx:392
+apps/web/src/app/dashboard/organizations/[id]/page.tsx:420
+apps/web/src/app/dashboard/organizations/[id]/page.tsx:442
+apps/web/src/app/dashboard/organizations/[id]/page.tsx:458
+apps/web/src/app/dashboard/pricing/page.tsx:101
+apps/web/src/app/dashboard/purchase-orders/new/page.tsx:105
+apps/web/src/app/dashboard/safety-spend/page.tsx:146
+apps/web/src/app/dashboard/settings/enterprise/page.tsx:60
+apps/web/src/app/dashboard/settings/enterprise/page.tsx:70
+apps/web/src/app/dashboard/settings/enterprise/page.tsx:461
+apps/web/src/app/dashboard/settings/plans/page.tsx:414
+apps/web/src/app/dashboard/shared-links/page.tsx:43
+apps/web/src/app/dashboard/supplier/page.tsx:169
+apps/web/src/app/dashboard/vendor/quotes/page.tsx:53
+apps/web/src/app/dashboard/vendor/quotes/page.tsx:85
+apps/web/src/app/pricing/_components/pricing-assistant.tsx:31
+apps/web/src/app/products/[id]/page.tsx:279
+apps/web/src/app/products/[id]/page.tsx:328
+apps/web/src/app/products/[id]/page.tsx:366
+apps/web/src/app/protocol/bom/page.tsx:175
+apps/web/src/app/receiving/[token]/page.tsx:97
+apps/web/src/app/settings/security/page.tsx:73
+apps/web/src/app/settings/workspace/page.tsx:92
+apps/web/src/app/settings/workspace/page.tsx:164
+apps/web/src/app/settings/workspace/page.tsx:195
+apps/web/src/app/settings/workspace/page.tsx:283
+apps/web/src/app/team/settings/page.tsx:164
+apps/web/src/app/team/settings/page.tsx:195
+apps/web/src/app/templates/page.tsx:96
+apps/web/src/app/vendor/[token]/page.tsx:139
+apps/web/src/app/_workbench/_components/quote-panel.tsx:1173
+apps/web/src/app/_workbench/_components/quote-panel.tsx:1852
+apps/web/src/app/_workbench/_components/quote-panel.tsx:2035
+apps/web/src/app/_workbench/_components/quote-version-compare.tsx:73
+apps/web/src/app/_workbench/_components/vendor-request-modal.tsx:236
+apps/web/src/components/dashboard/Header.tsx:94
+apps/web/src/components/dashboard/Header.tsx:223
+apps/web/src/components/safety/MsdsBulkRegisterModal.tsx:60
+apps/web/src/components/safety/MsdsBulkRegisterModal.tsx:86
+apps/web/src/lib/api/quotes-client.ts:87
+apps/web/src/lib/api/quotes-client.ts:107
+apps/web/src/lib/api/quotes-client.ts:160
+apps/web/src/lib/api/quotes-client.ts:196
+apps/web/src/lib/store/budget-store.ts:363
+apps/web/src/lib/store/budget-store.ts:402
+apps/web/src/lib/store/spending-category-store.ts:191
+apps/web/src/lib/store/spending-category-store.ts:207
+apps/web/src/lib/store/spending-category-store.ts:263
+apps/web/src/lib/store/spending-category-store.ts:281

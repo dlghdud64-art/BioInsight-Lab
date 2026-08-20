@@ -58,6 +58,14 @@ echo ""
 #   (2) Pass 2 의 (?<!csrf) lookbehind 는 rg 기본 엔진(Rust regex) 미지원 → exit 2
 #   두 오류를 2>/dev/null + || true 가 삼켜 RAW_FETCH_FILES 가 비었고,
 #   루프가 0회 돌아 항상 'No raw fetch mutation regressions detected · exit 0' 이었다.
+#
+# 실측 2026-08-20 — 세 번째 결함: 문자 클래스가 "·' 만 잡고 백틱(\x60)을 놓쳤다.
+#   fetch(`/api/.../${id}`) 템플릿 리터럴 mutation 이 전부 사각지대 —
+#   8/19 기준선 9건은 문자열 리터럴 부분집합이었고, 백틱 포함 전수는 72건이다
+#   (python re 보조 스캔 · baselines/csrf-raw-fetch-2026-08-20.txt).
+#   \" 표기도 \x22 로 바꿨다 — rg 13(rust-regex 구버전)이 클래스 내 \" 를 거부한다.
+#   🛑 러너 축: 데스크톱 VM 의 rg 13 은 PCRE2 미탑재 → Pass 2 exit 2 (닿았음 단언이 잡음).
+#   재실행 검증은 rg 15.2.0+PCRE2 러너에서 한다.
 
 # (1) 닿았음 단언 — 제외 glob 적용 후 스캔 대상 (실측 2026-08-19: 2,184 파일)
 #     임계는 '0 초과' 가 아니라 실측값 근처다.
@@ -72,7 +80,7 @@ fi
 
 # (2) Pass 1 — raw fetch("/api/…") 를 가진 파일 목록. exit 2 만 실패시킨다.
 RG1_STATUS=0
-RAW_ALL=$(rg -l 'fetch\s*\(\s*[\"\x27]/api/' \
+RAW_ALL=$(rg -l 'fetch\s*\(\s*[\x22\x27\x60]/api/' \
   --type ts $EXCLUDE_ARGS "$SRC_DIR") || RG1_STATUS=$?
 if [ "$RG1_STATUS" -gt 1 ]; then
   echo "  [X] Pass 1 스캔 실패 (rg exit ${RG1_STATUS})"
@@ -90,7 +98,7 @@ for file in $RAW_FETCH_FILES; do
   # Find line numbers with raw fetch("/api/...")
   # 🛑 -P (PCRE2) 필수 — (?<!csrf) lookbehind 는 rg 기본 엔진에서 parse error 다.
   RG2_STATUS=0
-  FETCH_LINES=$(rg -P -n '(?<!csrf)fetch\s*\(\s*[\"\x27]/api/' "$file") || RG2_STATUS=$?
+  FETCH_LINES=$(rg -P -n '(?<!csrf)fetch\s*\(\s*[\x22\x27\x60]/api/' "$file") || RG2_STATUS=$?
   if [ "$RG2_STATUS" -gt 1 ]; then
     echo "  [X] Pass 2 스캔 실패 (rg exit ${RG2_STATUS}) — ${file}"
     exit 2
