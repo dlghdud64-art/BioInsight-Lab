@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { csrfFetch } from "@/lib/api-client";
 import {
   Plus, X, Loader2, Mail, Check, AlertTriangle, Building2,
   Sparkles, Pencil, ChevronRight, Shield, Info, ExternalLink,
@@ -233,7 +234,7 @@ export function VendorRequestModal({
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`/api/quotes/${quoteId}/vendor-requests`, {
+      const response = await csrfFetch(`/api/quotes/${quoteId}/vendor-requests`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

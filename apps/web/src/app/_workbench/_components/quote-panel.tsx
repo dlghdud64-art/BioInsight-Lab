@@ -1170,7 +1170,7 @@ export function SharePanel() {
     if (!shareLinkInfo?.publicId) return;
     
     try {
-      const response = await fetch(`/api/shared-lists/${shareLinkInfo.publicId}`, {
+      const response = await csrfFetch(`/api/shared-lists/${shareLinkInfo.publicId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: false }),
@@ -1849,7 +1849,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
 
       // items 업데이트 (quoteId가 있을 때)
       if (quoteId && items.length > 0) {
-        const itemsResponse = await fetch(`/api/quote-lists/${quoteId}/items`, {
+        const itemsResponse = await csrfFetch(`/api/quote-lists/${quoteId}/items`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -2032,7 +2032,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
       // 공유 비활성화
       if (shareLinkInfo?.publicId) {
         try {
-          const response = await fetch(`/api/shared-lists/${shareLinkInfo.publicId}`, {
+          const response = await csrfFetch(`/api/shared-lists/${shareLinkInfo.publicId}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ isActive: false }),

@@ -14,6 +14,7 @@ import { GitCompare, Save, Plus, Minus, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import { csrfFetch } from "@/lib/api-client";
 
 interface QuoteVersion {
   id: string;
@@ -70,7 +71,7 @@ export function QuoteVersionCompare({ quoteId, onVersionCreated }: QuoteVersionC
   // 버전 생성 (스냅샷)
   const createVersionMutation = useMutation({
     mutationFn: async (note: string) => {
-      const response = await fetch(`/api/quotes/${quoteId}/versions`, {
+      const response = await csrfFetch(`/api/quotes/${quoteId}/versions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ snapshotNote: note }),
