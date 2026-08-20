@@ -22,6 +22,7 @@
  */
 
 import { useEffect, useState, Suspense } from "react";
+import { csrfFetch } from "@/lib/api-client";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -102,7 +103,9 @@ function NewPurchaseOrderPageInner() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api/orders/draft", {
+      // §csrf-raw-fetch 처분 — full_enforce 에서 raw fetch POST 는 403 (프로덕션 프로브 2026-08-20).
+      // 경로 C 는 이 줄 때문에 프로덕션에서 한 번도 실행된 적이 없다 (⑪ 전제 정정 · CARD_path-c-order-draft).
+      const response = await csrfFetch("/api/orders/draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
