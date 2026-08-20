@@ -360,7 +360,7 @@ export const useBudgetStore = create<BudgetStoreState>((set, get) => ({
 
       if (error) {
         logSupabaseSilently(error, "[budget-store] updateBudget", `/api/budgets/${id} PATCH`);
-        await fetch(`/api/budgets/${id}`, {
+        await csrfFetch(`/api/budgets/${id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
@@ -399,7 +399,7 @@ export const useBudgetStore = create<BudgetStoreState>((set, get) => ({
       const { error } = await supabase.from("budgets").delete().eq("id", id);
       if (error) {
         logSupabaseSilently(error, "[budget-store] deleteBudget", `/api/budgets/${id} DELETE`);
-        const res = await fetch(`/api/budgets/${id}`, { method: "DELETE" });
+        const res = await csrfFetch(`/api/budgets/${id}`, { method: "DELETE" });
         if (!res.ok) {
           // 롤백
           set({ budgets: prev, error: "예산 삭제 실패" });

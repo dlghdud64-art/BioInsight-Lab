@@ -188,7 +188,7 @@ export const useSpendingCategoryStore = create<SpendingCategoryStore>(
     },
 
     updateCategory: async (id, data) => {
-      const res = await fetch(`/api/spending-categories/${id}`, {
+      const res = await csrfFetch(`/api/spending-categories/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -204,7 +204,7 @@ export const useSpendingCategoryStore = create<SpendingCategoryStore>(
     },
 
     deleteCategory: async (id) => {
-      const res = await fetch(`/api/spending-categories/${id}`, {
+      const res = await csrfFetch(`/api/spending-categories/${id}`, {
         method: "DELETE",
       });
       if (!res.ok) {
@@ -260,7 +260,7 @@ export const useSpendingCategoryStore = create<SpendingCategoryStore>(
     },
 
     updateCategoryBudget: async (id, data) => {
-      const res = await fetch(`/api/category-budgets/${id}`, {
+      const res = await csrfFetch(`/api/category-budgets/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -278,7 +278,7 @@ export const useSpendingCategoryStore = create<SpendingCategoryStore>(
     },
 
     deleteCategoryBudget: async (id) => {
-      const res = await fetch(`/api/category-budgets/${id}`, {
+      const res = await csrfFetch(`/api/category-budgets/${id}`, {
         method: "DELETE",
       });
       if (!res.ok) {

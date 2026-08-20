@@ -84,7 +84,7 @@ export async function getQuote(id: string): Promise<{ quote: Quote }> {
  * Update a quote
  */
 export async function updateQuote(id: string, input: UpdateQuoteInput): Promise<{ quote: Quote }> {
-  const response = await fetch(`/api/quotes/${id}`, {
+  const response = await csrfFetch(`/api/quotes/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -104,7 +104,7 @@ export async function updateQuote(id: string, input: UpdateQuoteInput): Promise<
  * Delete a quote
  */
 export async function deleteQuote(id: string): Promise<{ success: boolean }> {
-  const response = await fetch(`/api/quotes/${id}`, {
+  const response = await csrfFetch(`/api/quotes/${id}`, {
     method: "DELETE",
   });
 
@@ -157,7 +157,7 @@ export async function createQuoteShare(
   quoteId: string,
   input: CreateShareInput = { enabled: true }
 ): Promise<ShareInfo> {
-  const response = await fetch(`/api/quotes/${quoteId}/share`, {
+  const response = await csrfFetch(`/api/quotes/${quoteId}/share`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -193,7 +193,7 @@ export async function getQuoteShare(quoteId: string): Promise<{ share: ShareInfo
  * Disable share link for a quote
  */
 export async function deleteQuoteShare(quoteId: string): Promise<{ success: boolean }> {
-  const response = await fetch(`/api/quotes/${quoteId}/share`, {
+  const response = await csrfFetch(`/api/quotes/${quoteId}/share`, {
     method: "DELETE",
   });
 
