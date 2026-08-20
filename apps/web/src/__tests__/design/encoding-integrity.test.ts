@@ -66,9 +66,15 @@ function scan(): Scan {
 
 const result = scan();
 
-/* 🛑 ⑧-2 처분 시 여기서 해당 경로를 **뺀다**. 목록이 비면 축 2 는 "UTF-16 파일 0" 이 된다.
- *    늘리는 방향으로 고치지 말 것 — 늘리면 부채를 봉인하는 것이고 이 파일의 전제가 깨진다. */
-const UTF16_BASELINE = ["src/components/ui/data-table.tsx"] as const;
+/* ✅ ⑧-2 처분 완료 (2026-08-19) — data-table.tsx 삭제로 목록이 비었다. 기준선 = 0.
+ *    🛑 늘리는 방향으로 고치지 말 것 — 늘리면 부채를 봉인하는 것이고 이 파일의 전제가 깨진다.
+ *
+ * ⚠️ **중복 표기** — 이 축은 `§source-encoding-drift`(ops/phantom-model-call.test.ts)와 겹친다.
+ *    그쪽이 먼저 있었고 인코딩 종류가 더 넓다(utf8-bom 포함 · 현재 LEGACY 2건).
+ *    이쪽은 확장자가 더 넓다(json·md 포함). 어느 쪽도 상대를 포함하지 않는다.
+ *    🛑 내가 이 축을 만들 때 기존 ratchet 을 대조하지 않았다 — 후보 ⑨(도입 시 기존 자산 대조)
+ *       를 등재한 바로 그 세션에서 같은 형태를 냈다. 병합/은퇴는 판정 사안이라 표기만 남긴다. */
+const UTF16_BASELINE: readonly string[] = [];
 
 describe("§encoding-integrity 축 1 — UTF-8 파일에 손상 문자 0", () => {
   it("🛑 스캔이 실제로 돌았다 (무의미 통과 방지)", () => {
@@ -87,12 +93,6 @@ describe("§encoding-integrity 축 2 — UTF-16 파일 목록 고정", () => {
     expect(result.utf16).toEqual([...UTF16_BASELINE]);
   });
 
-  it("🛑 기준 목록은 부채다 — 처분 대상임을 명시한다", () => {
-    /* 이 단언은 목록이 비는 순간 스스로 무의미해진다(0 <= 1).
-     * 남겨두는 이유는 다음 사람이 "왜 1건이 허용돼 있나" 를 코드에서 읽게 하기 위해서다.
-     * ⑧-2 처분 후 UTF16_BASELINE 을 [] 로 바꾸고 이 it 을 지운다. */
-    expect(UTF16_BASELINE.length).toBeLessThanOrEqual(1);
-  });
 });
 
 describe("§encoding-integrity — 복원분 회귀 0 (⑧-1)", () => {

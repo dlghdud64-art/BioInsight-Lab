@@ -147,7 +147,8 @@ describe("§phantom-model-call P1 — 유령 모델 호출 0 (ratchet)", () => {
 const LEGACY_NON_UTF8: readonly string[] = [
   "src/app/_components/demo-flow-switcher.tsx (utf8-bom)",
   "src/app/_components/home/demo-flow-switcher.tsx (utf8-bom)",
-  "src/components/ui/data-table.tsx (utf16)",
+  /* data-table.tsx (utf16) 제거 (2026-08-19) — 파일 자체를 삭제했다.
+   * 이 목록의 stale 가드가 정확히 이 상황을 잡아 RED 를 냈다. 설계대로 작동했다. */
 ];
 
 describe("§source-encoding-drift — 인코딩 이탈은 늘어나지 않는다 (ratchet)", () => {

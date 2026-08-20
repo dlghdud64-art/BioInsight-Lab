@@ -39,11 +39,13 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { resolve, join } from "node:path";
 
 const REPO_ROOT = resolve(__dirname, "../../../../..");
-const DATA_TABLE_PATH = resolve(
-  REPO_ROOT,
-  "apps/web/src/components/ui/data-table.tsx",
-);
-const DATA_TABLE_SRC = readFileSync(DATA_TABLE_PATH, "utf8");
+/* ⛔ 파일 종속 상수 은퇴 (2026-08-19) — data-table.tsx 를 삭제했다.
+ *    삭제 사유: importer 0 · 대체물 없음 · UTF-16LE 로 저장돼 도구가 못 읽던 파일.
+ *    🛑 삭제 전 실사를 했다 — UTF-8 로 변환한 뒤 아래 단언들을 돌려
+ *       "숨어 있던 위반" 이 있는지 먼저 확인했고 **6/6 GREEN, 위반 0** 이었다.
+ *       a857683d 의 수정은 제대로 land 했고 인코딩 때문에 검증만 못 되고 있었다.
+ *       (변환 전 6 passed 는 공허 통과였다 — utf8 로 읽으면 /export/ 조차 매칭되지 않았다.)
+ *    → 이 파일의 항구적 가치는 아래 **app-wide walk** 이고 그건 그대로 남는다. */
 
 describe("§11.303-hotfix-f — data-table.tsx Radix DropdownMenu 제거", () => {
   it("§11.303-hotfix-f trace marker (self-referential sentinel)", () => {
@@ -56,25 +58,10 @@ describe("§11.303-hotfix-f — data-table.tsx Radix DropdownMenu 제거", () =>
   //   column visibility toggle UI 모두 삭제). 본 sentinel 의 항구적 가치 =
   //   Radix DropdownMenu 의존 0(data-table + app-wide). 제거된 feature positive 는 은퇴.
 
-  describe("Radix DropdownMenu 의존 0", () => {
-    it("@/components/ui/dropdown-menu import 0", () => {
-      expect(DATA_TABLE_SRC).not.toMatch(
-        /from\s+["']@\/components\/ui\/dropdown-menu["']/,
-      );
-    });
-
-    it("DropdownMenu / DropdownMenuTrigger / DropdownMenuContent / DropdownMenuCheckboxItem JSX 0", () => {
-      // import 가 사라졌으니 JSX 사용도 0 이어야 함
-      expect(DATA_TABLE_SRC).not.toMatch(/<DropdownMenu[^>]*>/);
-      expect(DATA_TABLE_SRC).not.toMatch(/<DropdownMenuTrigger/);
-      expect(DATA_TABLE_SRC).not.toMatch(/<DropdownMenuContent/);
-      expect(DATA_TABLE_SRC).not.toMatch(/<DropdownMenuCheckboxItem/);
-    });
-
-    it("ChevronDown dead import 제거 (사용처 0)", () => {
-      expect(DATA_TABLE_SRC).not.toMatch(/\bChevronDown\b/);
-    });
-  });
+  /* ⛔ 은퇴 (2026-08-19) — data-table.tsx 파일 종속 단언 3건
+   *    (import 0 · JSX 0 · ChevronDown 0). 대상 파일이 없어졌으므로 지킬 것이 없다.
+   *    정책(Radix DropdownMenu 의존 0)은 아래 app-wide walk 이 계속 잠근다 —
+   *    그쪽이 더 넓고, 애초에 이 sentinel 이 §11.298f 의 누락을 고치려고 만든 축이다. */
 
   // §11.298e plain-button 메뉴 + column visibility toggle UI describe 는 view-options
   //   feature 제거로 은퇴(위 재앵커 주석 참조). anti-Radix guard 만 유지.
