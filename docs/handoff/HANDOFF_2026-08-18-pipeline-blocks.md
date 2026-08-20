@@ -213,6 +213,19 @@ budget-scope-key-mismatch.test.ts        집계 3곳 해석기 사용 · 단일 
    "CI 확인"·"측정 B" 가 각각 어느 측정을 가리키는지는 **여기서 확정하지 않았다.**
    확인이 오는 시점에 이 자리에 적는다 — 추정으로 채우지 않는다.
 
+### 2026-08-20 저녁 — 유입 경로 스모크로 두 항목이 닫혔다
+
+```
+알림 벨 404   ✅ 실측 도착 — 404 가 "새 알림이 없습니다" 로 위장 (CARD_orphan-caller-404 §실측)
+선행 판정     ✅ 트랙 확정 — LABAXIS_CSRF_MODE = full_enforce 실측·대조 확정
+              → csrf 트랙 먼저. page.tsx:105 는 csrf 트랙 소속으로 판정
+              → ⑪ 전제 정정: 경로 C 는 지금 403 이라 PurchaseRecord 도 못 만든다
+🛑 기준선 갱신  9건은 백틱 사각지대의 부분집합 — 전수 72건
+              (CARD_csrf-raw-fetch-9 §2026-08-20 갱신 · baselines/csrf-raw-fetch-2026-08-20.txt)
+처분          유입 2건(plan-select·leads) csrfFetch 전환 — 처분 1·2/9 (전수 기준 2/72)
+남은 대기     CI 확인 · 화면 확인(workspaces 축) · 측정 B — 여전히 지시 대상 미확정
+```
+
 ### 8/18 기준 (원문)
 
 1. **⑪ 주문 예산 모델 판정** — 이것부터. (가)/(나)/(다) 중 canonical 예산을 먼저 정한다.

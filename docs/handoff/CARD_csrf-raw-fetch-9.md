@@ -4,6 +4,36 @@
 
 🛑 **기준선만 기록한다. 고치지 않았다.** 알림 404 와 같은 절차다.
 
+## 🛑 2026-08-20 갱신 — 세 번이 겹쳤다: 백틱 사각지대 · 모드 확정 · 유입 2건 처분
+
+**(1) 세 번째 결함 — 기준선 9건은 부분집합이었다.**
+문자 클래스 `[\"\x27]` 가 백틱을 안 잡는다. `fetch(\`/api/.../${id}\`)` 템플릿 리터럴
+mutation(동적 ID — mutation 의 다수형)이 전부 사각지대였다.
+백틱 포함 전수는 **72건** — `baselines/csrf-raw-fetch-2026-08-20.txt` (러너 축 다름 · 파일 헤더 참조).
+표본 4건 소스 대조 4/4 진성. 스크립트는 백틱 포함으로 수정했고, 8/19 러너(rg 15.2.0+PCRE2)
+재실행 대조가 대기다 — 이 VM 의 rg 13 은 PCRE2 미탑재라 Pass 2 를 못 돌린다.
+
+**(2) LABAXIS_CSRF_MODE = full_enforce 확정 (소스 대조 + 프로덕션 실측 결합).**
+```
+실측 2026-08-20  요금 페이지 Free CTA 클릭 → POST /api/billing/plan-select 403
+                 → "일시적 오류" 배너 · 신규 고객 전환 1번 버튼 dead
+대조             plan-select 는 registry 상 required · highRisk 아님
+                 라우트 소스에 403 반환 코드 0 → 403 은 미들웨어 발
+                 soft_enforce 는 highRisk 만 차단 → 비-highRisk 차단 = full_enforce
+방증             /api/analytics/rum POST 403 (전 페이지 · 역시 비-highRisk)
+전제             배포본 미들웨어 = 레포. Vercel env 확인은 확인 사살 (지시문)
+```
+→ **따름정리: 72건 중 exempt 라우트 대상(vendor/receiving token · pricing-assistant) 제외
+   전부가 지금 프로덕션 dead button 이다.** 조직 관리·재고·설정·팀·workbench 견적 패널·
+   예산 스토어까지 — "9건의 잠복 부채" 가 아니라 광역 현재 장애다.
+⚠️ 미해소 모순 축: 8/18 폐루프는 성공했다. 폐루프가 밟은 mutation 이 전부 csrfFetch 경유였는지,
+   아니면 full_enforce 전환이 8/18 이후인지 — env 변경 이력으로 갈린다. 판정 전 단정 금지.
+
+**(3) 처분 1·2/9 — 유입 2건.**
+`app/pricing/page.tsx` `/api/billing/plan-select`(:214→217) · `/api/leads`(:261→265) csrfFetch 전환.
+plan-select 는 403 실측 후 수정, leads 는 같은 파일 같은 형태(제출 실측 안 함 — 표기 아닌 형태 근거).
+🛑 남은 70건은 처분 안 함. 한 배치로 묶지 않는다 — 화면 계열별 분할 + 계열마다 실측 1건.
+
 ## 🔑 이 스크립트는 **한 번도 스캔한 적이 없다**
 
 두 결함이 겹쳐 있었고, 둘 다 `2>/dev/null` + `|| true` 가 삼켰다:
