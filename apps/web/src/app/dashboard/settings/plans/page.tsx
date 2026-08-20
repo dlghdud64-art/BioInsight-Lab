@@ -19,6 +19,7 @@ import {
 import * as React from"react";
 import { useSession } from"next-auth/react";
 import { useSearchParams } from "next/navigation";
+import { csrfFetch } from "@/lib/api-client";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from"@tanstack/react-query";
 import {
  Card,
@@ -411,7 +412,7 @@ function PlansPageContent() {
  organizationId: string;
  plan: SubscriptionPlan;
  }) => {
- const response = await fetch(
+ const response = await csrfFetch(
  `/api/organizations/${organizationId}/subscription`,
  {
  method:"POST",

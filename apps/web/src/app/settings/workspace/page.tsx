@@ -28,6 +28,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 // §11.298 Radix DropdownMenu* import 제거 — ActionMenu shared 사용.
 import { ActionMenu } from "@/components/inventory/action-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { csrfFetch } from "@/lib/api-client";
 
 function WorkspaceSettingsPageContent() {
   const { data: session, status } = useSession();
@@ -89,7 +90,7 @@ function WorkspaceSettingsPageContent() {
   // 초대 링크 생성 API 호출
   const createInviteLinkMutation = useMutation({
     mutationFn: async ({ organizationId }: { organizationId: string }) => {
-      const response = await fetch(`/api/organizations/${organizationId}/invites`, {
+      const response = await csrfFetch(`/api/organizations/${organizationId}/invites`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -161,7 +162,7 @@ function WorkspaceSettingsPageContent() {
   // 멤버 역할 변경
   const updateRoleMutation = useMutation({
     mutationFn: async ({ memberId, role }: { memberId: string; role: OrganizationRole }) => {
-      const response = await fetch(`/api/organizations/${currentOrg.id}/members`, {
+      const response = await csrfFetch(`/api/organizations/${currentOrg.id}/members`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId, role }),
@@ -192,7 +193,7 @@ function WorkspaceSettingsPageContent() {
   // 멤버 삭제
   const deleteMemberMutation = useMutation({
     mutationFn: async (memberId: string) => {
-      const response = await fetch(
+      const response = await csrfFetch(
         `/api/organizations/${currentOrg.id}/members?memberId=${memberId}`,
         {
           method: "DELETE",
@@ -280,7 +281,7 @@ function WorkspaceSettingsPageContent() {
   // 보안 설정 저장
   const saveSecurityMutation = useMutation({
     mutationFn: async ({ organizationId, allowedEmailDomains }: { organizationId: string; allowedEmailDomains: string[] }) => {
-      const response = await fetch(`/api/organizations/${organizationId}/security`, {
+      const response = await csrfFetch(`/api/organizations/${organizationId}/security`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ allowedEmailDomains }),

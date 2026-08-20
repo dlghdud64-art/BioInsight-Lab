@@ -161,7 +161,7 @@ export default function TeamSettingsPage() {
   const updateRoleMutation = useMutation({
     mutationFn: async ({ memberId, role }: { memberId: string; role: TeamRole }) => {
       // TODO: API 엔드포인트 구현 필요
-      const response = await fetch(`/api/team/${currentTeam.id}/members`, {
+      const response = await csrfFetch(`/api/team/${currentTeam.id}/members`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId, role }),
@@ -192,7 +192,7 @@ export default function TeamSettingsPage() {
   const removeMemberMutation = useMutation({
     mutationFn: async (memberId: string) => {
       // TODO: API 엔드포인트 구현 필요
-      const response = await fetch(`/api/team/${currentTeam.id}/members`, {
+      const response = await csrfFetch(`/api/team/${currentTeam.id}/members`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId }),

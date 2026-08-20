@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import { csrfFetch } from "@/lib/api-client";
 
 export default function EnterpriseSettingsPage() {
   const { data: session, status } = useSession();
@@ -57,7 +58,7 @@ export default function EnterpriseSettingsPage() {
     queryKey: ["sso-config", currentOrg?.id],
     queryFn: async () => {
       if (!currentOrg?.id) return null;
-      const response = await fetch(`/api/organizations/${currentOrg.id}/sso`);
+      const response = await csrfFetch(`/api/organizations/${currentOrg.id}/sso`);
       if (!response.ok) throw new Error("Failed to fetch SSO config");
       return response.json();
     },
@@ -67,7 +68,7 @@ export default function EnterpriseSettingsPage() {
   // SSO 설정 업데이트
   const ssoMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch(`/api/organizations/${currentOrg.id}/sso`, {
+      const response = await csrfFetch(`/api/organizations/${currentOrg.id}/sso`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -458,7 +459,7 @@ function OrganizationMembersPermissions({ organizationId }: { organizationId: st
   // 역할 업데이트
   const updateRoleMutation = useMutation({
     mutationFn: async ({ memberId, role }: { memberId: string; role: string }) => {
-      const response = await fetch(`/api/organizations/${organizationId}/members`, {
+      const response = await csrfFetch(`/api/organizations/${organizationId}/members`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId, role }),

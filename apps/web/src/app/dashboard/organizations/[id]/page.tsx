@@ -59,6 +59,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { csrfFetch } from "@/lib/api-client";
 
 // 활동 피드 카테고리별 스타일
 type ActivityCategory = "inventory" | "purchase" | "budget" | "team" | "approval" | "member" | "permission" | "quote" | "settings";
@@ -276,7 +277,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   // §org-management-redesign P4 — 조직 삭제 mutation(canonical DELETE /api/organizations/[id]). 성공 시 목록 복귀.
   const deleteOrgMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/organizations/${params.id}`, { method: "DELETE" });
+      const res = await csrfFetch(`/api/organizations/${params.id}`, { method: "DELETE" });
       if (!res.ok) {
         const e = await res.json().catch(() => ({}));
         throw new Error(e.error || "조직 삭제에 실패했습니다.");
@@ -347,7 +348,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   // 초대 재발송
   const resendInviteMutation = useMutation({
     mutationFn: async (memberId: string) => {
-      const response = await fetch(`/api/organizations/${params.id}/members/resend-invite`, {
+      const response = await csrfFetch(`/api/organizations/${params.id}/members/resend-invite`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId }),
@@ -365,7 +366,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   // 멤버 초대
   const inviteMemberMutation = useMutation({
     mutationFn: async (data: { userEmail: string; role: string }) => {
-      const response = await fetch(`/api/organizations/${params.id}/members`, {
+      const response = await csrfFetch(`/api/organizations/${params.id}/members`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -389,7 +390,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   // 역할 변경
   const updateRoleMutation = useMutation({
     mutationFn: async ({ memberId, role }: { memberId: string; role: string }) => {
-      const response = await fetch(`/api/organizations/${params.id}/members`, {
+      const response = await csrfFetch(`/api/organizations/${params.id}/members`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId, role }),
@@ -417,7 +418,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       memberId: string;
       capabilities: WorkflowCapability[];
     }) => {
-      const response = await fetch(
+      const response = await csrfFetch(
         `/api/organizations/${params.id}/members/${memberId}/capabilities`,
         {
           method: "PATCH",
@@ -439,7 +440,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   // 멤버 제거
   const removeMemberMutation = useMutation({
     mutationFn: async (memberId: string) => {
-      const response = await fetch(`/api/organizations/${params.id}/members?memberId=${memberId}`, { method: "DELETE" });
+      const response = await csrfFetch(`/api/organizations/${params.id}/members?memberId=${memberId}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Failed to remove member");
       return response.json();
     },
@@ -455,7 +456,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
     if (!editName.trim()) return;
     setIsSavingName(true);
     try {
-      const res = await fetch(`/api/organizations/${params.id}`, {
+      const res = await csrfFetch(`/api/organizations/${params.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

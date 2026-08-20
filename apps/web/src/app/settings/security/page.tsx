@@ -17,6 +17,7 @@ import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
 import { useToast } from "@/hooks/use-toast";
 import { OrganizationRole } from "@prisma/client";
+import { csrfFetch } from "@/lib/api-client";
 
 function SecuritySettingsPageContent() {
   const { data: session, status } = useSession();
@@ -70,7 +71,7 @@ function SecuritySettingsPageContent() {
   // 보안 설정 저장
   const saveSecurityMutation = useMutation({
     mutationFn: async ({ organizationId, allowedEmailDomains }: { organizationId: string; allowedEmailDomains: string[] }) => {
-      const response = await fetch(`/api/organizations/${organizationId}/security`, {
+      const response = await csrfFetch(`/api/organizations/${organizationId}/security`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ allowedEmailDomains }),
