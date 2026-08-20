@@ -51,7 +51,12 @@ fi
 
 # (2) 본 스캔 — exit 2(도구 오류)만 실패시킨다. 1(매치 0)은 정상이다.
 RG_STATUS=0
-RG_OUT=$(rg -n '<select\b' "$SRC_DIR" -t ts) || RG_STATUS=$?
+#     🛑 sentinel 파일은 대상이 아니다 — `not.toMatch(/<select/)` 같은 **금지 단언**을
+#        '사용' 으로 세면 게이트가 자기 감시자를 위반으로 신고한다(실측 3건).
+RG_OUT=$(rg -n '<select\b' "$SRC_DIR" -t ts \
+  --glob '!**/__tests__/**' \
+  --glob '!**/*.test.ts' \
+  --glob '!**/*.test.tsx') || RG_STATUS=$?
 if [ "$RG_STATUS" -gt 1 ]; then
   echo "  [X] 스캔 도구 실패 (rg exit ${RG_STATUS}) — 검증 결과가 없다"
   exit 2
@@ -59,7 +64,14 @@ fi
 
 # (3) 주석 라인 제외 — grep 도 1(매치 0)은 정상, 2 이상은 오류다.
 GREP_STATUS=0
-HITS=$(printf '%s' "$RG_OUT" | grep -vE ':[[:space:]]*(//|\*)') || GREP_STATUS=$?
+#     기존: 줄머리 `//` · `*` 만 제외 → **여러 줄 JSX 주석의 중간/끝 줄**을 못 걸렀다.
+#     실측: `… native <select> 로 swap (전역 영향 0). */}` 이 위반으로 잡혔다.
+#     보강: 주석 종료(`*/`)나 JSX 주석 시작(`{/*`)이 있는 줄도 제외한다.
+#     🛑 실 `<select` 줄에 `*/` 가 함께 오는 경우는 없다 — 있으면 이 필터가 놓친다(수용).
+HITS=$(printf '%s' "$RG_OUT" \
+  | grep -vE ':[[:space:]]*(//|\*)' \
+  | grep -vF '*/' \
+  | grep -vF '{/*') || GREP_STATUS=$?
 if [ "$GREP_STATUS" -gt 1 ]; then
   echo "  [X] 주석 필터 실패 (grep exit ${GREP_STATUS})"
   exit 2

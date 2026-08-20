@@ -1,0 +1,9 @@
+apps/web/src\app\_workbench\search\page.tsx:1109
+apps/web/src\app\dashboard\settings\suppliers\page.tsx:752
+apps/web/src\app\legal\page.tsx:263
+apps/web/src\app\pricing\page.tsx:455
+apps/web/src\app\protocol\bom\page.tsx:890
+apps/web/src\components\quotes\dispatch\batch-dispatch-sheet.tsx:368
+apps/web/src\components\quotes\dispatch\batch-reminder-sheet.tsx:375
+apps/web/src\components\receiving\receiving-desktop-list.tsx:216
+apps/web/src\components\safety\MsdsBulkRegisterModal.tsx:157
