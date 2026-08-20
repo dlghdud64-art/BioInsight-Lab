@@ -1,0 +1,9 @@
+apps/web/src\app\admin\users\page.tsx:1674
+apps/web/src\app\dashboard\pricing\page.tsx:101
+apps/web/src\app\dashboard\purchase-orders\new\page.tsx:105
+apps/web/src\app\pricing\_components\pricing-assistant.tsx:31
+apps/web/src\app\pricing\page.tsx:214
+apps/web/src\app\pricing\page.tsx:261
+apps/web/src\app\protocol\bom\page.tsx:175
+apps/web/src\components\safety\MsdsBulkRegisterModal.tsx:60
+apps/web/src\components\safety\MsdsBulkRegisterModal.tsx:86
