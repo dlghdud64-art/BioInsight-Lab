@@ -347,7 +347,7 @@ export default function BudgetPage() {
         {/* §mobile-budgets §1 — 0건 = 초록 한 줄 요약 · 1건+ = 해당 항목만 카드 승격(배경 채색 금지, 숫자·라벨만 레드) */}
         <div className="md:hidden space-y-2">
           {actionKpi.immediateReview === 0 && actionKpi.blockRisk === 0 && actionKpi.pendingApproval === 0 ? (
-            <div className="flex items-center gap-2 rounded-xl border border-[#e6eaf0] px-3.5" style={{ background: "#f0fdf4" }}>
+            <div className="flex items-center gap-2 rounded-xl border border-[#e6eaf0] bg-green-50 px-3.5">
               <CheckCircle2 className="h-4 w-4 flex-none" style={{ color: "#15803d" }} />
               <p className="flex-1 text-[13px] font-semibold py-3" style={{ color: "#15803d" }}>예산 상태 정상 · 0/0/0</p>
               <button type="button" onClick={() => setKpiDetailOpen((v) => !v)} className="min-h-[44px] text-[12px] font-semibold text-slate-500">상세 ›</button>
