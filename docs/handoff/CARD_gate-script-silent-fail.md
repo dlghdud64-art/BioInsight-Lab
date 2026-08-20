@@ -123,7 +123,13 @@ CI                labaxis-surface-guard.yml 가 inline-hex-bg + userinventory �
 실 위반 8건  §11.75 native <select> 금지 위반         **별건 트랙** — 제품 결함
 ```
 
-### 프로브 4축 (러너 = bash · rg 함수 export 후)
+### 프로브 6축 (러너 = bash · rg 함수 export 후)
+
+🛑 **⑥은 1차 프로브에서 빠져 있었다.** 레포에 실 위반 13건이 있어 정상 실행으로는
+   "위반 0 → GREEN" 을 잴 수 없었고, 그래서 **안 쟀다.**
+   → 패턴만 절대 없는 토큰으로 바꿔 0건 상황을 만들어 실증했다(경로·파일수는 그대로).
+   검출 축만 재고 오탐 축을 못 재면, 임계를 잘못 잡아 **정상 상태를 영구 RED** 로 만들 수 있다.
+   후보 ⑩(재조준을 검출만으로 검증하지 않는다)과 같은 자리다.
 
 ```
 ① 정상 실행            → exit 1  실 위반 13건 검출          ✅ 검출
@@ -131,6 +137,7 @@ CI                labaxis-surface-guard.yml 가 inline-hex-bg + userinventory �
 ③ 위반 1건 주입        → exit 1  14건                       ✅ 증분 검출
 ④ 주입 원복            → exit 1  13건                       ✅ 바이트 복원
 ⑤ rg 부재(원래 상태)   → exit 2  "rg exit 127"              ✅ 구 코드는 여기서 exit 0 이었다
+⑥ 위반 0 → GREEN      → exit 0  "✅ No native <select>"    ✅ **오탐 0** — 정당한 0건이 막히지 않는다
 ```
 
 ## 착수 시 처방 (구현 전 판정 필요)
