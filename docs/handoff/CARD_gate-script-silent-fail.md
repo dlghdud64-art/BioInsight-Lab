@@ -77,6 +77,62 @@ exit code   검증이 도구 실패를 0건으로 읽었다          (|| true �
 ⚠️ 임계값은 "0 초과" 가 아니라 **실측값 근처**로 잡는다. 0 초과만 보면
    1,997개 중 3개만 읽어도 통과한다.
 
+## 🔴 1개 수정 후 실측 — 예상보다 크다
+
+`check-no-native-select.sh` 하나를 고치자 **두 가지가 즉시 드러났다.**
+
+### ① 이 머신에 ripgrep 바이너리가 없다
+
+```
+Get-Command rg        →  실 바이너리 없음
+bash -c "command -v rg" →  없음
+내 대화형 셸의 rg      →  **셸 함수 shim**(에이전트 환경 주입) — 자식 셸이 못 본다
+```
+
+→ `scripts/check-*.sh` 중 **rg 사용 7개**는 이 머신에서 **한 번도 실제로 스캔한 적이 없다.**
+  구 코드가 `2>/dev/null || true` 로 exit 127(command not found)을 삼키고
+  `✅ 통과 · exit 0` 을 냈다.
+
+```
+로컬 pre-commit   check-no-inline-hex-bg.sh (rg 기반) → **매 커밋 공허 통과**
+CI                labaxis-surface-guard.yml 가 inline-hex-bg + userinventory 실행
+                  ubuntu-latest · ripgrep 명시 설치 없음
+                  ⚠️ 러너 이미지에 포함되는 것으로 알지만 **실행해 확인한 것은 아니다**
+```
+
+🛑 카드 최초 등재 시 표현은 `GREEN 을 낼 수 있다` 였다. 실측 결과는 `그렇게 해 왔다` 다.
+
+### ② 고치자 숨어 있던 위반 13건이 나왔다 — 다만 오탐 포함
+
+```
+13건 내역
+  실 위반(.tsx 의 native <select>)   ~8건   MsdsBulkRegisterModal · receiving-desktop-list
+                                            · batch-dispatch-sheet · batch-reminder-sheet
+                                            · _workbench/search · protocol/bom · pricing · legal
+                                            · settings/suppliers
+  오탐 — 테스트 파일                  4건   not.toMatch(/<select/) 를 "사용" 으로 셌다
+  오탐 — JSX 주석                     1건   {/* … native <select> 로 swap … */}
+                                            필터가 줄머리 // · * 만 걸러 중간 주석을 못 본다
+```
+
+🛑 **이건 실패가 아니라 정상 작동이다.** 게이트가 처음으로 대상을 봤고,
+   본 김에 자기 필터의 정밀도 부족까지 드러냈다. 두 항목은 갈라서 처리한다:
+
+```
+필터 정제   __tests__ 제외 + JSX 주석 처리          이 트랙(게이트 신뢰도)
+실 위반 8건  §11.75 native <select> 금지 위반         **별건 트랙** — 제품 결함
+```
+
+### 프로브 4축 (러너 = bash · rg 함수 export 후)
+
+```
+① 정상 실행            → exit 1  실 위반 13건 검출          ✅ 검출
+② 없는 경로            → exit 2  "스캔 대상 부족"           ✅ 도구 실패가 통과 안 됨
+③ 위반 1건 주입        → exit 1  14건                       ✅ 증분 검출
+④ 주입 원복            → exit 1  13건                       ✅ 바이트 복원
+⑤ rg 부재(원래 상태)   → exit 2  "rg exit 127"              ✅ 구 코드는 여기서 exit 0 이었다
+```
+
 ## 착수 시 처방 (구현 전 판정 필요)
 
 ```
