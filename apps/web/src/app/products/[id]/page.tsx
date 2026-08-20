@@ -276,7 +276,7 @@ export default function ProductDetailPage() {
   // 제품 조회 기록
   useEffect(() => {
     if (id && session) {
-      fetch(`/api/products/${id}/view`, { method: "POST" }).catch(() => {});
+      csrfFetch(`/api/products/${id}/view`, { method: "POST" }).catch(() => {});
     }
   }, [id, session]);
 
@@ -325,7 +325,7 @@ export default function ProductDetailPage() {
     if (!fetchedProduct) return;
     setIsSavingSpec(true);
     try {
-      const response = await fetch(`/api/products/${id}/specification`, {
+      const response = await csrfFetch(`/api/products/${id}/specification`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ specification: specForm.trim() || null }),
@@ -363,7 +363,7 @@ export default function ProductDetailPage() {
         safetyNote: safetyForm.safetyNote,
       };
 
-      const response = await fetch(`/api/products/${id}/safety`, {
+      const response = await csrfFetch(`/api/products/${id}/safety`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

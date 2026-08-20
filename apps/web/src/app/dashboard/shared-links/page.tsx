@@ -40,7 +40,7 @@ export default function SharedLinksPage() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ publicId, data }: { publicId: string; data: any }) => {
-      const response = await fetch(`/api/shared-lists/${publicId}`, {
+      const response = await csrfFetch(`/api/shared-lists/${publicId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

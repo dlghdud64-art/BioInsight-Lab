@@ -54,6 +54,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ToastAction } from "@/components/ui/toast";
 import { useSearchParams } from "next/navigation";
+import { csrfFetch } from "@/lib/api-client";
 
 function SafetySpendPageContent() {
   const { data: session, status } = useSession();
@@ -143,7 +144,7 @@ function SafetySpendPageContent() {
   // 제품 매칭
   const matchMutation = useMutation({
     mutationFn: async ({ recordId, productId }: { recordId: string; productId: string }) => {
-      const response = await fetch(`/api/safety/spend/map`, {
+      const response = await csrfFetch(`/api/safety/spend/map`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ purchaseId: recordId, productId }),

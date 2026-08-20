@@ -17,6 +17,7 @@ import {
   Download,
   Trash2,
 } from "lucide-react";
+import { csrfFetch } from "@/lib/api-client";
 
 interface Template {
   id: string;
@@ -93,7 +94,7 @@ export default function TemplatesPage() {
     if (!confirm("정말 이 템플릿을 삭제하시겠습니까?")) return;
 
     try {
-      const response = await fetch(`/api/templates/${templateId}`, {
+      const response = await csrfFetch(`/api/templates/${templateId}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Delete failed");

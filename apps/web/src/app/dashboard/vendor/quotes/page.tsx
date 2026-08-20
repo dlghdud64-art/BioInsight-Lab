@@ -50,7 +50,7 @@ export default function VendorQuotesPage() {
   const responseMutation = useMutation({
     mutationFn: async ({ quoteId, data }: { quoteId: string; data: any }) => {
       // 벤더 전용 응답 API 사용 (SUPPLIER 역할 + 벤더 이메일 매핑)
-      const response = await fetch(`/api/vendor/quotes/${quoteId}/response`, {
+      const response = await csrfFetch(`/api/vendor/quotes/${quoteId}/response`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -82,7 +82,7 @@ export default function VendorQuotesPage() {
   // 협상 (응답 업데이트)
   const negotiationMutation = useMutation({
     mutationFn: async ({ quoteId, responseId, data }: { quoteId: string; responseId: string; data: any }) => {
-      const response = await fetch(`/api/quotes/${quoteId}/responses/${responseId}`, {
+      const response = await csrfFetch(`/api/quotes/${quoteId}/responses/${responseId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

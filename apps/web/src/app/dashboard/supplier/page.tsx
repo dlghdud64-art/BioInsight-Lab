@@ -166,7 +166,7 @@ function QuoteCard({ quote }: { quote: any }) {
 
   const responseMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch(`/api/vendor/quotes/${quote.id}/response`, {
+      const response = await csrfFetch(`/api/vendor/quotes/${quote.id}/response`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

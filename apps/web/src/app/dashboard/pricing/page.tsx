@@ -23,6 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { csrfFetch } from "@/lib/api-client";
 
 // §11.201 + §11.209b Phase 2 — inline workspacePlanToIntent 제거. 정의는
 // `lib/billing/plan-descriptor.ts` (single source). 본 page 는 import 사용.
@@ -98,7 +99,7 @@ export default function PricingPage() {
       setSelectError(null);
       setLoadingPlan(plan);
       try {
-        const res = await fetch("/api/billing/plan-select", {
+        const res = await csrfFetch("/api/billing/plan-select", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ selectedPlan: plan }),
