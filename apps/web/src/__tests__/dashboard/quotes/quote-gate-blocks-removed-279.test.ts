@@ -108,6 +108,45 @@ describe("§11.279d — QuoteCard request_not_sent 분기 직접 [발송] button
   });
 });
 
+/**
+ * §11.279-holes — 은퇴한 sentinel 이 잠그던 자리를 승계한다 (2026-08-19)
+ *
+ * (나) 갈래. §11.279 계열 sentinel 을 은퇴시키면서 **아무도 안 잠그던 9토큰**이 드러났다.
+ * 은퇴만 하면 그 자리가 무잠금이 되므로 같은 커밋에서 메운다(#1·#3 과 같은 처리).
+ *
+ * 🛑 잠그기 전에 **토큰별로** 소스 부재를 재확인했다. 묶어서 잠그지 않는다 —
+ *    같은 4단계 라벨이라도 `1.`·`2.` 는 제거됐고 `3.`·`4.` 는 **살아 있다**(L3609 등).
+ *    묶었으면 살아 있는 라벨의 제거를 고정해 결함을 계약으로 만들 뻔했다.
+ *
+ * ⚠️ `isCompareReviewZero` 는 여기 없다 — 제거 커밋이 170222b3(§quote-flat KPI-dedup)로
+ *    **원인이 다르다.** 이 배치는 fd86d1c4 계열만 다룬다.
+ */
+describe("§11.279-holes — 제거된 dispatch 표면 재유입 차단", () => {
+  const GONE: ReadonlyArray<[string, string]> = [
+    ["three-cell summary", "data-testid=\"quote-dispatch-three-cell-summary\""],
+    ["visible block reason", "data-testid=\"quote-dispatch-visible-block-reason\""],
+    ["independent state chips", "data-testid=\"quote-dispatch-independent-state-chips\""],
+    ["tracking row", "data-testid=\"quote-dispatch-tracking-row\""],
+    ["send cta", "data-testid=\"quote-dispatch-send-cta\""],
+    ["readiness badges", "data-testid=\"quote-dispatch-readiness-badges\""],
+    ["primaryDispatchBadges helper", "primaryDispatchBadges"],
+    ["4단계 라벨 1", "1. 공급사 선택"],
+    ["4단계 라벨 2", "2. 연락처 확인"],
+  ];
+
+  for (const [label, token] of GONE) {
+    it(`${label} 재유입 0`, () => {
+      expect(PAGE).not.toContain(token);
+    });
+  }
+
+  it("🛑 앵커 유일성 — PAGE 를 실제로 읽었다 (공허 통과 방지)", () => {
+    /* 위 단언은 전부 부정형이라 PAGE 가 빈 문자열이어도 통과한다. */
+    expect(PAGE.length).toBeGreaterThan(100000);
+    expect(PAGE).toContain("use client");
+  });
+});
+
 describe("§11.279e — helper data dead code cleanup", () => {
   it("영문 \"supplier valid\" 잔존 0 (helper data line 1740-1741 cleanup)", () => {
     expect(PAGE).not.toMatch(/supplier valid:/);

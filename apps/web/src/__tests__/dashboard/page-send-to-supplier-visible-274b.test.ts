@@ -1,3 +1,18 @@
+/* ⛔ §11.279 계열 일괄 은퇴 (2026-08-19) — 아래 개별 it 은 (가)/(나) 갈래로 처분됐다.
+ *
+ *    원인 1개: fd86d1c4 "§11.279 공급사 발송 게이트 + 발송 전 확인 블록 전면 제거 (호영님 P0)"
+ *              (+ 후속 정리 b771c163 §11.279e-cont-2 primaryDispatch* helper cleanup)
+ *    처분 3개: (가) 은퇴 — 279 가 승계  (나) 구멍 메움 후 은퇴  (다) 재조준 — 판정 대기라 **존치**
+ *
+ *    🛑 (다) 로 분류된 it 은 남아 있고 RED 다. 지우지 말 것 —
+ *       "4. 발송 확인" · "공급사에 전송" 이 소스에 **살아 있고**(L3609·L3733·L4277),
+ *       primaryDispatchEvidence → selectedDispatchEvidence 로 **이동**했을 가능성이 있다.
+ *       fd86d1c4 body 는 "전면 제거" 라 적었지만 화면에는 남아 있다 — body 는 근거가 아니다.
+ *       이동이면 재조준이 맞고, 미완 제거면 소스에서 빼야 한다. 호영님 판정 대기.
+ *
+ *    승계처: quote-gate-blocks-removed-279.test.ts
+ *            L46~72 (기존 8토큰) + §11.279-holes describe (이번에 메운 9토큰)
+ */
 /**
  * §11.274b #page-send-to-supplier-visible-korean
  *   quotes/page.tsx visible 영문 2 spot 한글 swap
@@ -38,13 +53,9 @@ const PAGE_PATH = resolve(
 const page = readFileSync(PAGE_PATH, "utf8");
 
 describe("§11.274b #1 — visible 영문 2 spot 한글 swap 검증", () => {
-  it("§11.274b trace marker comment 존재", () => {
-    expect(page).toMatch(/§11\.274b/);
-  });
+  /* ⛔ 은퇴(가) — §11.274b trace marker comment 존재 */
 
-  it("eyebrow '공급사 발송 게이트' 한글 적용", () => {
-    expect(page).toContain("공급사 발송 게이트");
-  });
+  /* ⛔ 은퇴(가) — eyebrow '공급사 발송 게이트' 한글 적용 */
 
   it("button label '공급사에 전송' 한글 적용 (verification summary 섹션)", () => {
     expect(page).toMatch(
@@ -77,35 +88,12 @@ describe("§11.274b #2 — section 구조 invariant 보존", () => {
     );
   });
 
-  it("primaryDispatchEvidence.canSend + blockReason 분기 보존", () => {
-    expect(page).toContain("primaryDispatchEvidence.canSend");
-    expect(page).toContain("primaryDispatchEvidence.blockReason");
-  });
+  /* ⛔ 은퇴(가) — primaryDispatchEvidence.canSend + blockReason 분기 보존 */
 
-  it("quote-dispatch-visible-block-reason data-testid 보존", () => {
-    expect(page).toContain('data-testid="quote-dispatch-visible-block-reason"');
-  });
+  /* ⛔ 은퇴(나) — quote-dispatch-visible-block-reason data-testid 보존 */
 
-  it("quote-dispatch-three-cell-summary + sm:grid-cols-3 보존", () => {
-    expect(page).toContain('data-testid="quote-dispatch-three-cell-summary"');
-    expect(page).toMatch(/quote-dispatch-three-cell-summary[\s\S]{0,200}sm:grid-cols-3/);
-  });
+  /* ⛔ 은퇴(나) — quote-dispatch-three-cell-summary + sm:grid-cols-3 보존 */
 });
 
-describe("§11.274b #3 — §11.142 한국어 정합 + §11.248a / §11.274 연계 lock", () => {
-  it("eyebrow className 보존 (text-[11px] font-semibold uppercase tracking-wider text-blue-700)", () => {
-    expect(page).toContain("text-[11px] font-semibold uppercase tracking-wider text-blue-700");
-  });
-
-  it("수신자 선택 → 연락처 확인 → 메시지 미리보기 → 발송 h2 보존", () => {
-    expect(page).toContain("수신자 선택 → 연락처 확인 → 메시지 미리보기 → 발송");
-  });
-
-  it("Send icon (mr-1.5 h-4 w-4) 보존", () => {
-    expect(page).toMatch(/<Send className="mr-1\.5 h-4 w-4"/);
-  });
-
-  it("disabled 분기 (isLoading || quotes.length === 0 || !primaryDispatchEvidence.canSend) 보존", () => {
-    expect(page).toContain("isLoading || quotes.length === 0 || !primaryDispatchEvidence.canSend");
-  });
-});
+/* ⛔ describe 전체 은퇴 — "§11.274b #3" 의 it 이 모두 (가)/(나) 로 처분됐다.
+ *    빈 describe 는 vitest 가 "No test found in suite" 로 실패시킨다 — 껍데기를 남기지 않는다. */
