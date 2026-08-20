@@ -654,7 +654,7 @@ function InventoryPageContent() {
   // 재입고 요청 mutation
   const restockRequestMutation = useMutation({
     mutationFn: async (inventoryId: string) => {
-      const response = await fetch(`/api/inventory/${inventoryId}/restock-request`, {
+      const response = await csrfFetch(`/api/inventory/${inventoryId}/restock-request`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
@@ -1004,7 +1004,7 @@ function InventoryPageContent() {
   // 삭제 mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/inventory/${id}`, {
+      const response = await csrfFetch(`/api/inventory/${id}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete inventory");
@@ -1029,7 +1029,7 @@ function InventoryPageContent() {
   // 입고 mutation (POST /api/inventory/[id]/restock — 트랜잭션 기반 이력 기록)
   const restockMutation = useMutation({
     mutationFn: async ({ id, addQty, lotNumber, expiryDate }: { id: string; addQty: number; lotNumber?: string; expiryDate?: string }) => {
-      const response = await fetch(`/api/inventory/${id}/restock`, {
+      const response = await csrfFetch(`/api/inventory/${id}/restock`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

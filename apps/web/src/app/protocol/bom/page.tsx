@@ -172,7 +172,7 @@ export default function ProtocolBOMPage() {
   /* ──── 제품 매칭 (§catalog-A P3c — batch, N+1 0) ──── */
   const matchProductsForReagents = async (reagentsToMatch: ReagentWithMatch[]) => {
     try {
-      const response = await fetch("/api/products/batch-match", {
+      const response = await csrfFetch("/api/products/batch-match", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, CheckCircle2, AlertTriangle, FileWarning } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { csrfFetch } from "@/lib/api-client";
 
 interface PoolOption { id: string; name: string; catalogNumber: string | null }
 interface MatchCandidate { id: string; name: string; catalogNumber: string | null; basis: string; confidence: number }
@@ -57,7 +58,7 @@ export function MsdsBulkRegisterModal({
     try {
       const fd = new FormData();
       files.forEach((f) => fd.append("files", f));
-      const res = await fetch("/api/safety/sds/bulk", { method: "POST", body: fd });
+      const res = await csrfFetch("/api/safety/sds/bulk", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "분석 실패");
       const its: PreviewItem[] = data.items ?? [];
@@ -83,7 +84,7 @@ export function MsdsBulkRegisterModal({
       files.forEach((f) => fd.append("files", f));
       const map = files.map((_, i) => ({ productId: mapping[i] || null }));
       fd.append("mapping", JSON.stringify(map));
-      const res = await fetch("/api/safety/sds/bulk/commit", { method: "POST", body: fd });
+      const res = await csrfFetch("/api/safety/sds/bulk/commit", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "등록 실패");
       setResults(data.results ?? []);
