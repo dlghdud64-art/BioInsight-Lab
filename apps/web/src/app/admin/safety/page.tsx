@@ -43,6 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import { OrganizationRole } from "@prisma/client";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { csrfFetch } from "@/lib/api-client";
 
 function SafetyAdminPageContent() {
   const { data: session, status } = useSession();
@@ -112,7 +113,7 @@ function SafetyAdminPageContent() {
   // AI 추출 시작
   const startExtractionMutation = useMutation({
     mutationFn: async (sdsId: string) => {
-      const response = await fetch(`/api/sds/${sdsId}/extract`, {
+      const response = await csrfFetch(`/api/sds/${sdsId}/extract`, {
         method: "POST",
       });
       if (!response.ok) {
@@ -140,7 +141,7 @@ function SafetyAdminPageContent() {
   // 추출 취소
   const cancelExtractionMutation = useMutation({
     mutationFn: async (sdsId: string) => {
-      const response = await fetch(`/api/sds/${sdsId}/extract`, {
+      const response = await csrfFetch(`/api/sds/${sdsId}/extract`, {
         method: "DELETE",
       });
       if (!response.ok) {
@@ -168,7 +169,7 @@ function SafetyAdminPageContent() {
   // 추출 결과 적용
   const applyExtractionMutation = useMutation({
     mutationFn: async ({ sdsId, mode }: { sdsId: string; mode: "merge" | "overwrite" }) => {
-      const response = await fetch(`/api/sds/${sdsId}/apply`, {
+      const response = await csrfFetch(`/api/sds/${sdsId}/apply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mode }),

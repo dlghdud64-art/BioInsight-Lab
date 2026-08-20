@@ -33,6 +33,7 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 // confetti는 선택적 - 없으면 제거
 // import confetti from "canvas-confetti";
+import { csrfFetch } from "@/lib/api-client";
 
 interface PurchaseRequest {
   id: string;
@@ -106,7 +107,7 @@ export default function AdminRequestsPage() {
   // 승인 mutation
   const approveMutation = useMutation({
     mutationFn: async (requestId: string) => {
-      const response = await fetch(`/api/request/${requestId}/approve`, {
+      const response = await csrfFetch(`/api/request/${requestId}/approve`, {
         method: "POST",
       });
       if (!response.ok) {
@@ -144,7 +145,7 @@ export default function AdminRequestsPage() {
   // 거절 mutation
   const rejectMutation = useMutation({
     mutationFn: async ({ requestId, reason }: { requestId: string; reason: string }) => {
-      const response = await fetch(`/api/request/${requestId}/reject`, {
+      const response = await csrfFetch(`/api/request/${requestId}/reject`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reason }),

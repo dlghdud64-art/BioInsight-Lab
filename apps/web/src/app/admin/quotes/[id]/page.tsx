@@ -44,6 +44,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { csrfFetch } from "@/lib/api-client";
 
 interface QuoteItem {
   id: string;
@@ -181,7 +182,7 @@ export default function AdminQuoteDetailPage() {
         adminNotes: item.adminNotes,
       }));
 
-      const response = await fetch(`/api/admin/quotes/${quoteId}/items`, {
+      const response = await csrfFetch(`/api/admin/quotes/${quoteId}/items`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items }),
@@ -217,7 +218,7 @@ export default function AdminQuoteDetailPage() {
         adminNotes: item.adminNotes,
       }));
 
-      const saveResponse = await fetch(`/api/admin/quotes/${quoteId}/items`, {
+      const saveResponse = await csrfFetch(`/api/admin/quotes/${quoteId}/items`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items }),
@@ -226,7 +227,7 @@ export default function AdminQuoteDetailPage() {
       if (!saveResponse.ok) throw new Error("Failed to save items");
 
       // 2. 상태를 COMPLETED로 변경
-      const statusResponse = await fetch(`/api/quotes/${quoteId}/status`, {
+      const statusResponse = await csrfFetch(`/api/quotes/${quoteId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "COMPLETED" }),

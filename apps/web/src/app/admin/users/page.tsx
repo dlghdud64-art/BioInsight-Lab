@@ -51,6 +51,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { csrfFetch } from "@/lib/api-client";
 
 /**
  * §11.114 #admin-users-fetcher-wiring
@@ -257,7 +258,7 @@ export default function AdminUsersPage() {
   // §11.117 — manual approve / reject
   const approveMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const res = await fetch(`/api/admin/users/${userId}/approval`, {
+      const res = await csrfFetch(`/api/admin/users/${userId}/approval`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
@@ -277,7 +278,7 @@ export default function AdminUsersPage() {
 
   const rejectMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const res = await fetch(`/api/admin/users/${userId}`, {
+      const res = await csrfFetch(`/api/admin/users/${userId}`, {
         method: "DELETE",
         credentials: "same-origin",
       });
@@ -305,7 +306,7 @@ export default function AdminUsersPage() {
   const bulkApproveMutation = useMutation({
     mutationFn: async () => {
       const ids = Array.from(selectedUserIds);
-      const res = await fetch(`/api/admin/users/bulk-approve`, {
+      const res = await csrfFetch(`/api/admin/users/bulk-approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
@@ -339,7 +340,7 @@ export default function AdminUsersPage() {
   const bulkRejectMutation = useMutation({
     mutationFn: async () => {
       const ids = Array.from(selectedUserIds);
-      const res = await fetch(`/api/admin/users/bulk-reject`, {
+      const res = await csrfFetch(`/api/admin/users/bulk-reject`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
@@ -375,7 +376,7 @@ export default function AdminUsersPage() {
   const policyMutation = useMutation({
     mutationFn: async () => {
       if (!selectedUserId) throw new Error("선택된 사용자가 없습니다.");
-      const res = await fetch(
+      const res = await csrfFetch(
         `/api/admin/users/${selectedUserId}/approval-policy`,
         {
           method: "PATCH",
@@ -1338,7 +1339,7 @@ function DeletedUsersDialog({
 
   const restoreMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const res = await fetch(`/api/admin/users/${userId}/restore`, {
+      const res = await csrfFetch(`/api/admin/users/${userId}/restore`, {
         method: "POST",
         credentials: "same-origin",
       });
@@ -1671,7 +1672,7 @@ function InviteUserDialog({
 
   const inviteMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch("/api/admin/users/invite", {
+      const res = await csrfFetch("/api/admin/users/invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",

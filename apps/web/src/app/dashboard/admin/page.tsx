@@ -162,7 +162,7 @@ function UsersManagementTab() {
       if (search) params.set("search", search);
       if (roleFilter) params.set("role", roleFilter);
 
-      const response = await fetch(`/api/admin/users?${params.toString()}`);
+      const response = await csrfFetch(`/api/admin/users?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch users");
       return response.json();
     },
