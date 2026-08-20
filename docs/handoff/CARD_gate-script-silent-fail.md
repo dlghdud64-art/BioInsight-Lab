@@ -229,6 +229,22 @@ C mktemp 다단계          api-orphan-caller · api-surface-coverage
    빠진 건마다 "오탐이었다" 의 근거를 남긴다(테스트 파일 / JSX 중간 주석 / …).
 ```
 
+## 📌 부수 관찰 — pre-commit 훅이 **처음으로 실제 작동**했다 (2026-08-19)
+
+ripgrep 설치 후 첫 커밋에서 훅 출력이 찍혔다:
+
+```
+═══ LabAxis Inline Hex Background + Self-Chrome Guard (§11.45 + §11.47) ═══
+── Pattern A: inline hex background ──
+✅ No inline hex backgrounds detected in apps/web/src/app/dashboard/**
+```
+
+훅은 §11.49 부터 있었지만 rg 부재로 **없는 것과 같았다.** 매 대시보드 커밋이 공허 통과했다.
+
+🛑 **"도구가 설치돼 있다" 는 게이트 전제의 일부다.** 스크립트·훅·CI 어디에도
+   그 전제를 확인하는 곳이 없었다 — 그래서 4개월간 아무도 몰랐다.
+   §닿았음 단언이 이 전제까지 덮는다(대상 파일 수를 세면 도구 부재가 드러난다).
+
 ## 착수 시 처방 (구현 전 판정 필요)
 
 ```

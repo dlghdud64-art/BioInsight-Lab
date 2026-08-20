@@ -19,6 +19,38 @@
 | ④ | `/api/support/...) 는 금지(앞에 csrf 접두 없는 경우).` | `__tests__/regression/support-csrf-fix.test.ts:31` | ⚪ **오탐** — 테스트 파일의 **주석**에서 URL 을 추출했다 |
 | ⑤ | `/api/workspaces` | `dashboard/pricing/page.tsx:85` · `dashboard/settings/page.tsx:347` | 🔴 **결함** — `workspaces/` 는 있으나 **루트 `route.ts` 가 없다**(`[id]/…` 만 존재) |
 
+## 🔑 이력 측정 — 인과가 뒤집힌다
+
+```
+2026-04-29  f87aa9a2  §11.90 dead-capability-cleanup Tier 2 sweep
+            삭제  notifications/route.ts · notifications/[id]/read/route.ts
+                  notifications/drafts/[id]/approve · workspaces/route.ts (외 30건)
+            근거  body: "각 cluster spot-check + GET caller 검증 → **0 callers 확인**"
+            검증  삭제 시점 Header.tsx 에 api/notifications 호출 **0건** — 삭제는 옳았다
+
+2026-04-30  fe828ba5  settings/page.tsx    → /api/workspaces  호출 추가   (+1일)
+2026-05-03  583dd8be  pricing/page.tsx     → /api/workspaces  호출 추가   (+4일)
+2026-05-05  bb2e2e45  §11.209d 알림 벨 UI  → Header.tsx 가 /api/notifications 호출 추가 (+6일)
+```
+
+🛑 **"게이트가 기능을 죽였다" 가 아니다.** 삭제는 정당했고, 그 뒤 1~6일 안에
+   **없는 엔드포인트를 부르는 호출부가 세 곳 새로 들어왔다.**
+
+→ 알림 벨과 워크스페이스 조회는 **처음부터 404** 다. 한 번도 작동한 적이 없다.
+
+→ §11.103 orphan-caller 가드가 정확히 이걸 잡으라고 2026-04-29 에 block 으로 전환됐는데
+  (`§11.112 #ci-guards-advisory-to-block-mode`), rg 부재로 **약 4개월** 눈이 멀었다.
+  가드가 켜진 날과 기능이 깨진 날이 **거의 같다.**
+
+### 처분 갈래가 이걸로 좁아진다
+
+```
+"원래 있었는데 지워졌다"    ✗ — 지워질 땐 caller 0 이었다
+"애초에 없었다"             ✓ — UI 가 엔드포인트 없이 land 했다
+→ 처분은 "복구" 가 아니라 **"신설 or 호출부 제거"** 다. 제품 결정.
+   §11.209d 계열(알림 인프라)이 어디까지 구현됐는지가 선행 판정 재료.
+```
+
 ## 사용자에게 보이는 영향 (추정 — 프로덕션 실측 아님)
 
 ```
