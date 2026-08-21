@@ -103,7 +103,12 @@ export async function PATCH(
 
     const updated = await updateOrganization(id, {
       name: name.trim(),
-      description: description?.trim() || undefined,
+      // §global-toast QA 실측(2026-08-21) — 빈 문자열은 "비우기"다. || undefined 로 삼키면
+      // 한 번 쓴 설명을 지울 방법이 없다 (schema 는 String? nullable).
+      description:
+        typeof description === "string" && description.trim() === ""
+          ? null
+          : description?.trim() || undefined,
       slug: slug === "" ? null : slug?.trim() || undefined,
       logoUrl: logoUrl !== undefined ? logoUrl : undefined,
     });
