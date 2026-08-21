@@ -140,7 +140,7 @@ export async function createOrganization(
   userId: string,
   data: {
     name: string;
-    description?: string;
+    description?: string | null;
     organizationType?: string;
   }
 ) {
