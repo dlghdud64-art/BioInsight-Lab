@@ -54,7 +54,8 @@
     "20260804110916_pocandidate_quote_binding",
     "20260807130000_quote_item_vendor_selection",
     "20260812120000_schema_proposal_compliance_alert_vendorname",
-    "20260812130000_team_organizationid_required"
+    "20260812130000_team_organizationid_required",
+    "20260821150000_organization_invite_policy"
   ],
-  "generatedAt": "2026-08-14T03:42:37.241Z"
+  "generatedAt": "2026-08-21T14:54:16.432Z"
 }

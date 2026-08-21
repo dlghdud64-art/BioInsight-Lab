@@ -50,31 +50,45 @@ const CLS = /\b(?:amber|orange)-(?:50|100|200|300|400|500|600|700|800|900|950)\b
 
 /** 🛑 baseline. 증가 RED · 감소도 RED(갱신 요구). 손으로 고치기 전에 사유를 커밋 메시지에 적을 것 */
 /** 🔴 2026-08-17 재계수: 81 → 78. 감축이 아니라 **오계수 정정**이다(위 AMBER_HEX 주석). */
-const BASELINE_TOTAL = 78;
+/** 🔴 2026-08-22 재계수: 78 → 66. 주석을 모집단에서 뺐다(census 의 stripComments).
+ *      12건이 주석에만 있던 것이고, 그중 inventory-context-panel.tsx 는 전량이 주석이라 목록에서 빠진다.
+ *      이것도 감축이 아니라 **모집단 정의 정정**이다 — 소스의 amber 는 한 개도 안 줄었다. */
+const BASELINE_TOTAL = 66;
 const BASELINE_PER_FILE: Record<string, number> = {
+  "app/api/analytics/dashboard/route.ts": 1,
+  "app/dashboard/analytics/category/page.tsx": 2,
+  "app/dashboard/analytics/page.tsx": 3,
+  "app/dashboard/analytics/_components/team-analytics-view.tsx": 1,
+  "app/dashboard/safety/page.tsx": 1,
+  "app/intro/page.tsx": 4,
+  "app/products/[id]/page.tsx": 2,
   "app/_components/final-cta-section.tsx": 7,
   "app/_components/ops-console-preview-section.tsx": 9,
   "app/_workbench/search/page.tsx": 1,
-  "app/api/analytics/dashboard/route.ts": 1,
-  "app/dashboard/analytics/_components/team-analytics-view.tsx": 1,
-  "app/dashboard/analytics/category/page.tsx": 4,
-  "app/dashboard/analytics/page.tsx": 3,
-  "app/dashboard/safety/page.tsx": 1,
-  "app/intro/page.tsx": 4,
-  "app/products/[id]/page.tsx": 4,
-  "components/analytics/rum-trend-line-chart.tsx": 2,
+  "components/analytics/rum-trend-line-chart.tsx": 1,
   "components/dashboard/category-distribution-card.tsx": 1,
-  "components/inventory/ReorderReviewSheet.tsx": 10,
-  "components/inventory/inventory-context-panel.tsx": 1,
-  "components/inventory/inventory-reorder-blocked-sheet.tsx": 9,
+  "components/inventory/inventory-reorder-blocked-sheet.tsx": 6,
+  "components/inventory/ReorderReviewSheet.tsx": 7,
   "components/operational-brief/popup.tsx": 1,
   "emails/quote-completed.tsx": 3,
   "lib/budget/spending-category-schema.ts": 1,
   "lib/email/templates.ts": 3,
   "lib/email/vendor-request-templates.ts": 7,
   "lib/inventory/flow-insight-engine.ts": 4,
-  "lib/inventory/lot-tracking-engine.ts": 1
+  "lib/inventory/lot-tracking-engine.ts": 1,
 };
+
+/* 🛑 주석은 UI 토큰이 아니다 — 모집단 밖이다.
+ *    2026-08-22 실측: 조항 준수를 기록한 주석(`핸드오프 #b45309 대체`)이 **위반으로 잡혔다.**
+ *    그러면 구현자가 **주석을 지워 통과**시킨다 — 금지 기록이 사라지는 방향이다.
+ *    같은 형태를 오늘 세 번 만났다: native-select 가 sentinel 을 셈 · lab-toast 가 금지 주석을 셈 · 여기.
+ *    CLAUDE.md §부정 단언은 주석 제거본에 — 그 조항을 계수 축에도 적용한다.
+ *    🔑 감축이 아니라 **모집단 정의 정정**이다(81→78 재계수와 같은 축). */
+function stripComments(src: string): string {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/(^|[^:])\/\/[^\n]*/g, "$1");
+}
 
 function census() {
   const g = buildGraph();
@@ -82,7 +96,7 @@ function census() {
   let total = 0;
   for (const f of g.files) {
     if (isTestFile(f) || !g.isLive(f)) continue;
-    const s = g.read(f);
+    const s = stripComments(g.read(f));
     const n = (s.match(HEX) || []).length + (s.match(CLS) || []).length;
     if (n) { per[rel(f)] = n; total += n; }
   }
@@ -138,6 +152,12 @@ describe("§amber-token-ratchet — 모집단 경계", () => {
     const { per } = census();
     // basename 역참조는 이 둘을 dead 로 오판했다. 둘 다 inventory-content.tsx 가 import 한다
     expect(per["components/inventory/inventory-reorder-blocked-sheet.tsx"]).toBeGreaterThan(0);
-    expect(per["components/inventory/inventory-context-panel.tsx"]).toBeGreaterThan(0);
+    /* 🔄 재조준 (2026-08-22) — inventory-context-panel.tsx 는 amber 가 **전량 주석**이라
+     *    모집단 정정 후 목록에서 빠졌다. 이 it 의 취지는 "basename 오판을 import 그래프가 바로잡는다"
+     *    이고, 그 취지는 남은 한 파일로 성립한다. 목록 밖이 된 쪽은 **라이브 판정**으로만 확인한다. */
+    const g = buildGraph();
+    const ctx = g.files.find((f) => rel(f) === "components/inventory/inventory-context-panel.tsx");
+    expect(ctx).toBeDefined();
+    expect(g.isLive(ctx!)).toBe(true);
   });
 });
