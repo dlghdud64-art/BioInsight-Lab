@@ -94,3 +94,27 @@ describe("§action-toast — labToast 헬퍼 규칙", () => {
     expect(src).toMatch(/close: t\.dismiss/);
   });
 });
+
+describe("§global-toast — 크기·정렬 pin (호영님 QA 확정 2026-08-21)", () => {
+  /* 배포 QA 실측로 확정된 값을 잠근다 — 4c0bfba7 이전에는 무잠금이었다.
+   *    카드 문법(보더·상태 바)은 위 절이 잡고, 여기는 크기·정렬만. */
+  it("데스크톱 최소 폭 340", () => {
+    expect(read(TOAST)).toContain("sm:min-w-[340px]");
+  });
+  it("패딩 p-4 · 우측 pr-11 (✕ 공간)", () => {
+    expect(read(TOAST)).toMatch(/rounded-\[13px\] border[^"]*bg-white p-4 pr-11/);
+  });
+  it("✕ 수직 중앙 (top-1\/2 + -translate-y-1\/2)", () => {
+    const src = read(TOAST);
+    expect(src).toContain("right-1.5 top-1/2");
+    expect(src).toContain("-translate-y-1/2");
+  });
+  it("행 수직 중앙 · 칩 30px 원형", () => {
+    const src = read(TOASTER);
+    expect(src).toContain('className="flex w-full items-center gap-3"');
+    expect(src).toMatch(/h-\[30px\] w-\[30px\] flex-none items-center justify-center rounded-full/);
+  });
+  it("상태 바 재확인 — 좌측 3px (카드 문법 핵심)", () => {
+    expect(read(TOAST)).toMatch(/before:w-\[3px\]/);
+  });
+});
