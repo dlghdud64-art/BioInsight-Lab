@@ -17,9 +17,15 @@ const PATH = resolve(
 describe("admin/users sonner toast — regression guard (§11.137)", () => {
   const source = readFileSync(PATH, "utf8");
 
-  it("sonner toast import", () => {
-    expect(source).toMatch(/from "sonner"/);
+  it("toast 어댑터 import (§global-toast — sonner 흡수)", () => {
+    /* 🔄 재조준 (2026-08-21) — 옛 축은 `from "sonner"` 였다.
+     *    8/21 핸드오프가 sonner 를 흡수해 @/lib/toast 어댑터로 1본화했다.
+     *    잠글 것은 "토스트를 쓰는가" 이지 "어느 라이브러리를 쓰는가" 가 아니다 —
+     *    라이브러리는 결정으로 바뀌었고 토스트 사용은 보존됐다. */
+    expect(source).toMatch(/from ["']@\/lib\/toast["']/);
     expect(source).toMatch(/\btoast\b/);
+    // 🛑 역방향 — sonner 직접 import 재유입 0
+    expect(source).not.toMatch(/from ["']sonner["']/);
   });
 
   it("bulkApprove onSuccess: toast.success / toast.warning / toast.error 분기", () => {

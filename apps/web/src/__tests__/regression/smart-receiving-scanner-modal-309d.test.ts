@@ -104,11 +104,14 @@ describe("§11.309d — SmartReceivingScannerModal 컴포넌트", () => {
     expect(src).toMatch(/<ScanLine\s+className="h-5 w-5 text-emerald-600"/);
   });
 
-  it("toast (sonner) 성공/실패 알림", () => {
+  it("toast 성공/실패 알림 (§global-toast — 어댑터 경유)", () => {
+    /* 🔄 재조준 (2026-08-21) — users-toast 와 동일 사유. sonner → @/lib/toast 어댑터.
+     *    success/error 분기는 그대로 보존됐다 — 바뀐 것은 import 출처뿐이다. */
     const src = read(SCANNER_PATH);
-    expect(src).toMatch(/import\s*\{\s*toast\s*\}\s*from\s*["']sonner["']/);
+    expect(src).toMatch(/import\s*\{\s*toast\s*\}\s*from\s*["']@\/lib\/toast["']/);
     expect(src).toMatch(/toast\.success/);
     expect(src).toMatch(/toast\.error/);
+    expect(src).not.toMatch(/froms*["']sonner["']/);
   });
 
   it("input validation (productName + quantity > 0)", () => {

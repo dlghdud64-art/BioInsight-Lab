@@ -38,7 +38,7 @@ const toastVariants = cva(
         default: "before:bg-slate-300",
         destructive: "before:bg-[#dc2626]",
         success: "before:bg-[#16a34a]",
-        warning: "before:bg-yellow-500",
+        warning: "before:bg-[#b45821]",
         error: "before:bg-[#dc2626]",
         info: "before:bg-[#2563eb]",
         undo: "before:bg-slate-900",

@@ -92,11 +92,20 @@ describe("§11.246d-2 #4 — invariant 보존", () => {
     expect(layout).toMatch(/<QRScannerProviderWrapper>\s*\{children\}/);
   });
 
-  it("Toaster + SonnerToaster + CompareFlowGuard + Analytics 보존", () => {
+  it("Toaster + CompareFlowGuard + Analytics 보존", () => {
+    /* ⛔ SonnerToaster 단언 은퇴 (2026-08-21) — (d) 결정 은퇴.
+     *    §global-toast 8/21 핸드오프가 sonner 를 흡수해 토스트 시스템을 1본화했다.
+     *    layout 에서 SonnerToaster 를 제거한 것이 결정이고, 이 단언은 옛 상태를 잠갔다.
+     *    나머지 3개(Toaster·CompareFlowGuard·Analytics)는 그대로 산다. */
     expect(layout).toMatch(/<Toaster\s*\/>/);
-    expect(layout).toMatch(/SonnerToaster/);
     expect(layout).toMatch(/<CompareFlowGuard\s*\/>/);
     expect(layout).toMatch(/<Analytics\s*\/>/);
+  });
+
+  it("🛑 SonnerToaster 재유입 0 — 토스트 시스템 1본화 역방향 잠금", () => {
+    /* 은퇴만 하면 sonner 가 다시 들어와도 아무도 안 잡는다. 결정을 반대 방향으로 고정한다. */
+    expect(layout).not.toMatch(/SonnerToaster/);
+    expect(layout).not.toMatch(/from ["']sonner["']/);
   });
 
   it("§11.246d-2 trace marker comment", () => {
