@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils"
 /**
  * §global-toast(호영님 2026-08-21 핸드오프) — 상태 아이콘 칩 30px 원형.
  *   success #f0fdf4/#16a34a · error #fef2f2/#dc2626 · info(안내) #eff6ff/#2563eb
- *   warning amber(§11.302 신호등 유지) · undo 먹색 · progress 는 info 칩 + 스피너.
+ *   warning 은 yellow 신호등(CLAUDE.md — amber 금지, #b45821 은 보류 결정) · undo 먹색 · progress 는 info 칩 + 스피너.
  *   ⚠ §action-toast(2026-07-08)의 "아이콘 색만" 문법을 대체한다.
  */
 const VARIANT_CHIP: Record<
@@ -24,7 +24,7 @@ const VARIANT_CHIP: Record<
   { Icon: typeof Check; chip: string; spin?: boolean }
 > = {
   success: { Icon: Check, chip: "bg-[#f0fdf4] text-[#16a34a]" },
-  warning: { Icon: AlertTriangle, chip: "bg-amber-50 text-[#b45821]" },
+  warning: { Icon: AlertTriangle, chip: "bg-yellow-100 text-yellow-700" },
   error: { Icon: X, chip: "bg-[#fef2f2] text-[#dc2626]" },
   destructive: { Icon: X, chip: "bg-[#fef2f2] text-[#dc2626]" },
   info: { Icon: Info, chip: "bg-[#eff6ff] text-[#2563eb]" },
