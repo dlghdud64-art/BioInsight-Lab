@@ -111,7 +111,16 @@ npx prisma db pull
 
 ### 3.3 배포 경로
 
-Vercel `prebuild` 가 `apps/web/vercel-migrate.js` → `prisma migrate deploy` 를 자동 실행합니다. 배포 전 로컬에서 `npx prisma migrate status` 로 pending migration 을 확인하는 습관이 안전.
+🛑 **push·배포는 마이그레이션을 적용하지 않는다.** `vercel-migrate.js` 는 2026-04-25(ADR-002 §11.13)
+부터 **NO-OP** 이고 빌드는 DB 에 접속하지 않는다. DDL 은 §9 의 operator-shell 절차 단독이다.
+
+⚠️ 이 절은 2026-08-22 까지 *"Vercel prebuild 가 자동 실행합니다"* 로 남아 있었고,
+   그 문장을 근거로 **DDL 없이 코드만 배포해 프로덕션 P2022 를 냈다.**
+   §9.1 이 경계하는 *"Vercel 이 자동 migrate 한다"는 false promise* 가 **바로 이 줄이었다** —
+   §9 는 고쳐졌는데 §3.3 이 옛 약속을 들고 있었다.
+   🔑 문서가 자기모순일 때 **읽는 사람은 먼저 만난 절을 믿는다.**
+
+배포 순서: **code → migrate(§9) → verify → push → promote**
 
 ---
 
@@ -237,6 +246,37 @@ build-time migrate 는 `[prebuild] TIMED OUT after 90s — continuing build` 만
 **code → migrate → verify → push** 라는 명시적 절차로 바꿔 canonical truth
 를 회복한다. 이미 `pilot-seed.ts` / `pilot-cleanup.ts` / `#26 S01-S03`
 write-chain smoke 에서 검증된 동일 패턴.
+
+### 9.1a 🛑 0단계 — 대상 DB 정체 확인 (2026-08-22 사고)
+
+```
+DDL 을 넣기 전에 **어느 DB 에 넣는지** 확정한다. 로컬 .env 는 프로덕션이 아닐 수 있다.
+```
+
+2026-08-22 실측: 로컬 `.env` 의 DIRECT_URL 은 **개발 DB**(ref `tvkl…pzqr` @ aws-0)였고
+프로덕션은 **다른 프로젝트**(ref `xhid…dhsw` @ aws-1)였다. ref 도 리전 클러스터도 달랐다.
+
+🛑 **적용도 검증도 같은 잘못된 대상을 봤다.**
+```
+migrate deploy        로컬 .env → 개발 DB   "성공"
+information_schema    로컬 .env → 개발 DB   "컬럼 있음"
+런타임                프로덕션 env → 다른 DB  P2022 컬럼 없음
+```
+두 번 확인했으나 **축이 하나**라 교차검증이 성립하지 않았다.
+
+**처방 — 검증 출력은 접속 대상을 스스로 단언한다:**
+```sh
+# 컬럼 확인과 **동시에** 어느 DB 를 본 것인지 같이 찍는다
+select current_database() as db,
+       split_part(current_setting('log_line_prefix', true), '', 1) as _,
+       (select count(*) from information_schema.columns
+        where table_name='Organization' and column_name='invitePolicy') as col;
+```
++ 접속 URL 의 **ref 앞4·뒤4** 를 출력에 병기한다(값 전체 금지).
+  기대 ref 와 다르면 **그 자리에서 중단**한다.
+
+🔑 이건 §gate-script-silent-fail 의 *"검증은 대상에 닿았음을 스스로 단언한다"* 의 DB 판이다.
+   게이트는 "무엇을 봤는가", DB 검증은 "어디를 봤는가" 를 자기 안에 담아야 한다.
 
 ### 9.2 표준 절차 (schema 변경 시)
 
