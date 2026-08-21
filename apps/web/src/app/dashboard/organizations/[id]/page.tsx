@@ -1459,7 +1459,8 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                           { v: "VIEWER", name: "조회자", dot: "#64748b", desc: "견적·재고 열람만 가능" },
                           { v: "REQUESTER", name: "요청자", dot: "#2563eb", desc: "구매 요청 생성 가능" },
                           { v: "APPROVER", name: "승인자", dot: "#7c3aed", desc: "요청 검토·승인 가능" },
-                          { v: "ADMIN", name: "관리자", dot: "#b45309", desc: "조직·멤버·정책 관리" },
+                          // 관리자 점 = 먹색 slate-900 — amber 금지 조항 준수 (호영님 판정 8/21 · 핸드오프 #b45309 대체)
+                          { v: "ADMIN", name: "관리자", dot: "#0f172a", desc: "조직·멤버·정책 관리" },
                         ].map((r) => (
                           <SelectItem key={r.v} value={r.v} className="rounded-lg data-[state=checked]:bg-[#eff6ff] focus:bg-[#f8fafc]">
                             <span className="flex items-center gap-2">
