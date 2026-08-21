@@ -90,7 +90,7 @@ describe("§11.310d — new page handleCreate fetch wiring", () => {
   it("handleCreate — async + fetch /api/orders/draft POST", () => {
     const src = read(PAGE_PATH);
     expect(src).toMatch(/handleCreate\s*=\s*async\s*\(\)\s*=>/);
-    expect(src).toMatch(/fetch\(["']\/api\/orders\/draft["']/);
+    expect(src).toMatch(/csrfFetch\(["']\/api\/orders\/draft["']/);
     expect(src).toMatch(/method:\s*["']POST["']/);
   });
 

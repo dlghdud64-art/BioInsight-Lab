@@ -38,7 +38,7 @@ describe("§pricing-launch-manual P3 — CTA 도입 신청", () => {
 describe("§pricing-launch-manual P3 — 인라인 도입 신청 폼", () => {
   it("id=notify + /api/leads POST + 이메일 + 플랜 select + 도입 신청 버튼", () => {
     expect(PRICING).toMatch(/id="notify"/);
-    expect(PRICING).toMatch(/fetch\("\/api\/leads"/);
+    expect(PRICING).toMatch(/csrfFetch\("\/api\/leads"/);
     expect(PRICING).toMatch(/type="email"/);
     expect(PRICING).toMatch(/도입 신청/);
     expect(PRICING).toMatch(/billingCycle: annual \? "yearly" : "monthly"/);

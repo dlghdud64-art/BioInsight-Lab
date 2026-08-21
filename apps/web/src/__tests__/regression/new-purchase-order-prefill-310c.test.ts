@@ -118,7 +118,7 @@ describe("§11.310c — CTA wiring (dead button 0)", () => {
   it("handleCreate — 실제 POST /api/orders/draft + redirect (§11.310d 구현 완료)", () => {
     // MVP toast.info stub → §11.310d 에서 실 POST(PurchaseRecord create)로 대체.
     const src = read(PATH);
-    expect(src).toMatch(/fetch\(["']\/api\/orders\/draft["'][\s\S]{0,80}method:\s*["']POST["']/);
+    expect(src).toMatch(/csrfFetch\(["']\/api\/orders\/draft["'][\s\S]{0,80}method:\s*["']POST["']/);
     expect(src).toMatch(/toast\.success\(["']발주 draft가 등록되었습니다/);
     expect(src).toMatch(/router\.push\(["']\/dashboard\/purchase-orders["']\)/);
   });
