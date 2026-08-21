@@ -28,6 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Switch } from "@/components/ui/switch";
 // §11.193d Phase 3 — capability edit dialog. WORKFLOW_CAPABILITIES whitelist
 // + WORKFLOW_CAPABILITY_LABEL (한국어) + resolveWorkflowCapabilities (DB 우선
 // + role 기반 fallback) 를 canonical source 로 사용 — raw enum 노출 0.
@@ -166,6 +167,8 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   const [isSavingName, setIsSavingName] = useState(false);
   // §global-toast 1b — 같은 화면 단순 저장은 toast 금지, 버튼 "✓ 저장됨" 1.5초 전환.
   const [saveFlash, setSaveFlash] = useState(false);
+  // §org-settings-redesign — 초대 정책 (즉시 적용). null = 기본값.
+  const [policyFlash, setPolicyFlash] = useState(false);
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -454,6 +457,43 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   });
 
   // 조직명 수정
+  // §org-settings-redesign — 초대 정책 파생값 (서버 null → 현행 기본과 동일).
+  const effectivePolicy = {
+    defaultRole: "VIEWER",
+    expiresInDays: 7,
+    adminOnlyInvite: true,
+    ...((organization as any)?.invitePolicy && typeof (organization as any).invitePolicy === "object"
+      ? (organization as any).invitePolicy
+      : {}),
+  } as { defaultRole: string; expiresInDays: number; adminOnlyInvite: boolean };
+
+  // 정책 변경 즉시 적용 — PATCH invitePolicy (서버가 기존 정책 위에 병합).
+  const handlePolicyChange = async (patch: Partial<typeof effectivePolicy>) => {
+    try {
+      const res = await csrfFetch(`/api/organizations/${params.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: organization?.name ?? editName, invitePolicy: patch }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.error || "정책 저장에 실패했습니다.");
+      }
+      queryClient.invalidateQueries({ queryKey: ["organizations"] });
+      setPolicyFlash(true);
+      setTimeout(() => setPolicyFlash(false), 1500);
+    } catch (e: any) {
+      toast({ title: "정책 저장 실패", description: e.message, variant: "destructive" });
+    }
+  };
+
+  // §org-settings-redesign — dirty 시에만 저장 버튼 활성 (변경 없으면 disabled).
+  const isBasicDirty = !!organization && (
+    editName.trim() !== (organization.name || "") ||
+    editDescription.trim() !== (organization.description || "") ||
+    editSlug.trim() !== (organization.slug || "")
+  );
+
   const handleSaveName = async () => {
     if (!editName.trim()) return;
     setIsSavingName(true);
@@ -1284,8 +1324,9 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* 연구실 로고 업로드 */}
-                  <div className="flex items-center gap-4">
-                    <div className="w-24 h-24 shrink-0 rounded-full border border-slate-200 border-slate-200 bg-slate-100 overflow-hidden flex items-center justify-center">
+                  {/* §org-settings-redesign — 아바타 52px + 버튼 1행 */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-[52px] h-[52px] shrink-0 rounded-full border border-slate-200 bg-slate-100 overflow-hidden flex items-center justify-center">
                       {logoPreviewUrl ? (
                         <img
                           src={logoPreviewUrl}
@@ -1293,12 +1334,12 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <span className="text-2xl font-bold text-slate-400">
+                        <span className="text-lg font-bold text-slate-400">
                           {(editName || organization?.name || "조")[0]}
                         </span>
                       )}
                     </div>
-                    <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
                       <input
                         ref={fileInputRef}
                         type="file"
@@ -1332,7 +1373,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       placeholder="조직명을 입력하세요"
-                      className="bg-slate-100 border-slate-200 text-slate-900"
+                      className="bg-white border-slate-200 text-slate-900"
                     />
                   </div>
                   <div className="space-y-2">
@@ -1346,7 +1387,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                         value={editSlug}
                         onChange={handleSlugChange}
                         placeholder="my-lab"
-                        className="rounded-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-slate-100 text-slate-900"
+                        className="rounded-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-white text-slate-900"
                       />
                     </div>
                     {slugStatus === "checking" && (
@@ -1366,13 +1407,13 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                       value={editDescription}
                       onChange={(e) => setEditDescription(e.target.value)}
                       placeholder="조직에 대한 간단한 설명"
-                      rows={3}
-                      className="resize-none bg-slate-100 border-slate-200 text-slate-900"
+                      rows={2}
+                      className="resize-y bg-white border-slate-200 text-slate-900"
                     />
                   </div>
                   <Button
                     onClick={handleSaveName}
-                    disabled={isSavingName || saveFlash || !editName.trim()}
+                    disabled={isSavingName || saveFlash || !editName.trim() || !isBasicDirty}
                     className={saveFlash
                       ? "border border-[#bbf7d0] bg-[#f0fdf4] text-[#15803d] hover:bg-[#f0fdf4]"
                       : "bg-blue-600 hover:bg-blue-700 text-slate-900"}
@@ -1387,32 +1428,83 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
               </Card>
 
               {/* 초대 정책 */}
+              {/* §org-settings-redesign — 정책 행: 즉시 적용 · 드롭다운/스위치 실컨트롤 (정적 pill 대체) */}
               <Card className="shadow-sm border-slate-200 bg-white">
-                <CardHeader>
-                  <CardTitle className="text-base text-slate-900">초대 정책</CardTitle>
-                  <CardDescription className="text-slate-400">새 멤버 초대 시 적용되는 기본 정책입니다.</CardDescription>
+                <CardHeader className="flex flex-row items-start justify-between space-y-0">
+                  <div>
+                    <CardTitle className="text-base text-slate-900">초대 정책</CardTitle>
+                    <CardDescription className="text-slate-400">새 멤버 초대 시 적용되는 기본 정책입니다. 변경 즉시 적용됩니다.</CardDescription>
+                  </div>
+                  {policyFlash && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-[#bbf7d0] bg-[#f0fdf4] px-2.5 py-1 text-xs font-medium text-[#15803d]">
+                      <Check className="h-3 w-3" />저장됨
+                    </span>
+                  )}
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
+                <CardContent className="divide-y divide-[#f1f5f9]">
+                  <div className="flex items-center justify-between gap-4 py-3">
                     <div>
-                      <p className="text-sm font-medium text-slate-600">기본 역할</p>
-                      <p className="text-xs text-slate-500">새 초대 멤버에게 부여되는 기본 역할</p>
+                      <p className="text-[13px] font-bold text-slate-900">기본 역할</p>
+                      <p className="text-[11.5px] text-slate-500">새 초대 멤버에게 부여되는 기본 역할</p>
                     </div>
-                    <Badge variant="secondary" className="bg-slate-100 text-slate-600">조회자</Badge>
+                    <Select
+                      value={effectivePolicy.defaultRole}
+                      onValueChange={(v) => handlePolicyChange({ defaultRole: v })}
+                    >
+                      <SelectTrigger className="w-[168px] bg-white border-slate-200 focus:ring-[rgba(37,99,235,.25)]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-[13px] border-slate-200 p-1.5 shadow-[0_14px_40px_rgba(15,23,42,0.14)]">
+                        {[
+                          { v: "VIEWER", name: "조회자", dot: "#64748b", desc: "견적·재고 열람만 가능" },
+                          { v: "REQUESTER", name: "요청자", dot: "#2563eb", desc: "구매 요청 생성 가능" },
+                          { v: "APPROVER", name: "승인자", dot: "#7c3aed", desc: "요청 검토·승인 가능" },
+                          { v: "ADMIN", name: "관리자", dot: "#b45309", desc: "조직·멤버·정책 관리" },
+                        ].map((r) => (
+                          <SelectItem key={r.v} value={r.v} className="rounded-lg data-[state=checked]:bg-[#eff6ff] focus:bg-[#f8fafc]">
+                            <span className="flex items-center gap-2">
+                              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: r.dot }} />
+                              <span className="flex flex-col text-left">
+                                <span className="text-[12.5px] font-bold leading-tight">{r.name}</span>
+                                <span className="text-[11px] text-slate-500 leading-tight">{r.desc}</span>
+                              </span>
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
+                  <div className="flex items-center justify-between gap-4 py-3">
                     <div>
-                      <p className="text-sm font-medium text-slate-600">초대 만료 기간</p>
-                      <p className="text-xs text-slate-500">응답 없는 초대가 자동 만료되는 기간</p>
+                      <p className="text-[13px] font-bold text-slate-900">초대 만료 기간</p>
+                      <p className="text-[11.5px] text-slate-500">응답 없는 초대가 자동 만료되는 기간</p>
                     </div>
-                    <Badge variant="secondary" className="bg-slate-100 text-slate-600">7일</Badge>
+                    <Select
+                      value={String(effectivePolicy.expiresInDays)}
+                      onValueChange={(v) => handlePolicyChange({ expiresInDays: Number(v) })}
+                    >
+                      <SelectTrigger className="w-[112px] bg-white border-slate-200 focus:ring-[rgba(37,99,235,.25)]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-[13px] border-slate-200 p-1.5 shadow-[0_14px_40px_rgba(15,23,42,0.14)]">
+                        {[1, 3, 7, 14, 30].map((d) => (
+                          <SelectItem key={d} value={String(d)} className="rounded-lg data-[state=checked]:bg-[#eff6ff] focus:bg-[#f8fafc]">
+                            <span className="text-[12.5px] font-bold">{d}일</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
+                  <div className="flex items-center justify-between gap-4 py-3">
                     <div>
-                      <p className="text-sm font-medium text-slate-600">관리자만 초대 가능</p>
-                      <p className="text-xs text-slate-500">관리자/소유자만 새 멤버를 초대할 수 있음</p>
+                      <p className="text-[13px] font-bold text-slate-900">관리자만 초대 가능</p>
+                      <p className="text-[11.5px] text-slate-500">끄면 일반 멤버도 새 멤버를 초대할 수 있습니다</p>
                     </div>
-                    <Badge variant="outline" className="border-emerald-200 text-emerald-700 text-xs">활성</Badge>
+                    <Switch
+                      checked={effectivePolicy.adminOnlyInvite}
+                      onCheckedChange={(v) => handlePolicyChange({ adminOnlyInvite: v })}
+                      className="data-[state=checked]:bg-[#2563eb] data-[state=unchecked]:bg-[#e2e8f0]"
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -1463,7 +1555,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
               </Card>
 
               {/* 위험 작업 */}
-              <Card className="shadow-sm border border-red-900/30 bg-white">
+              <Card className="shadow-sm border border-[#fecaca] bg-white">
                 <CardHeader>
                   <CardTitle className="text-base text-red-400 flex items-center gap-2">
                     <AlertTriangle className="h-5 w-5" />
@@ -1472,7 +1564,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                   <CardDescription className="text-slate-500">되돌릴 수 없는 작업입니다. 신중하게 진행하세요.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="flex items-center justify-between rounded-lg border border-red-900/30 p-4">
+                  <div className="flex items-center justify-between rounded-lg border border-[#fecaca] p-4">
                     <div>
                       <p className="text-sm font-medium text-slate-600">조직 삭제</p>
                       <p className="text-xs text-slate-500">조직과 모든 데이터가 영구적으로 삭제됩니다.</p>
@@ -1482,7 +1574,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                     <Button
                       variant="outline"
                       size="sm"
-                      className="border-red-800 text-red-400 hover:bg-red-950/30 hover:text-red-300"
+                      className="border-[#fecaca] text-red-600 hover:bg-red-50 hover:text-red-700"
                       onClick={() => { setDeleteConfirm(""); setDeleteModalOpen(true); }}
                       disabled={!isOwner}
                       title={isOwner ? undefined : "조직 소유자만 삭제할 수 있습니다"}
@@ -1515,7 +1607,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
               value={deleteConfirm}
               onChange={(e) => setDeleteConfirm(e.target.value)}
               placeholder={organization?.name ?? "조직명"}
-              className="bg-slate-100 border-slate-200 text-slate-900"
+              className="bg-white border-slate-200 text-slate-900"
             />
           </div>
           <div className="flex justify-end gap-2 pt-2">
