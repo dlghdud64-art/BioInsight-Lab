@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 
 const ToastProvider = ToastPrimitives.Provider
 
+// §global-toast(호영님 2026-08-21 핸드오프) — 위치: 우하단 24px(콘텐츠 기준), 모바일 하단 중앙 풀폭-32px.
 const ToastViewport = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Viewport>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Viewport>
@@ -16,7 +17,7 @@ const ToastViewport = React.forwardRef<
   <ToastPrimitives.Viewport
     ref={ref}
     className={cn(
-      "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]",
+      "fixed bottom-0 left-0 right-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:bottom-6 sm:left-auto sm:right-6 sm:top-auto sm:w-auto sm:max-w-[400px] sm:flex-col sm:p-0",
       className
     )}
     {...props}
@@ -24,20 +25,23 @@ const ToastViewport = React.forwardRef<
 ))
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName
 
+/**
+ * §global-toast(호영님 2026-08-21) — 토스트 카드 문법.
+ *   흰 배경 + slate-200 보더 + radius 13 + shadow + **좌측 3px 상태 바**(before).
+ *   ⚠ §action-toast(2026-07-08)의 "컬러줄 없음"을 대체한다 — 최신 지시문 우선.
+ */
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
+  "group pointer-events-auto relative flex w-full items-center justify-between space-x-3 overflow-hidden rounded-[13px] border border-slate-200 bg-white p-3.5 pr-10 text-slate-900 shadow-[0_8px_24px_rgba(15,23,42,0.1)] transition-all before:absolute before:bottom-0 before:left-0 before:top-0 before:w-[3px] before:content-[''] data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-bottom-full",
   {
     variants: {
       variant: {
-        default: "border bg-background text-foreground",
-        destructive:
-          "destructive group border-destructive bg-destructive text-destructive-foreground",
-        // §action-toast(호영님 2026-07-08) — 5타입은 흰 배경 공통, 상태 구분은 아이콘 색만(컬러줄·뱃지 없음).
-        success: "border-slate-200 bg-white text-slate-900",
-        warning: "border-slate-200 bg-white text-slate-900",
-        error: "border-slate-200 bg-white text-slate-900",
-        info: "border-slate-200 bg-white text-slate-900",
-        undo: "border-slate-200 bg-white text-slate-900",
+        default: "before:bg-slate-300",
+        destructive: "before:bg-[#dc2626]",
+        success: "before:bg-[#16a34a]",
+        warning: "before:bg-[#b45821]",
+        error: "before:bg-[#dc2626]",
+        info: "before:bg-[#2563eb]",
+        undo: "before:bg-slate-900",
       },
     },
     defaultVariants: {
@@ -68,7 +72,7 @@ const ToastAction = React.forwardRef<
   <ToastPrimitives.Action
     ref={ref}
     className={cn(
-      "inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 group-[.destructive]:border-muted/40 group-[.destructive]:hover:border-destructive/30 group-[.destructive]:hover:bg-destructive group-[.destructive]:hover:text-destructive-foreground group-[.destructive]:focus:ring-destructive",
+      "inline-flex h-8 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-transparent px-3 text-xs font-medium text-slate-700 ring-offset-background transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
       className
     )}
     {...props}
@@ -76,6 +80,7 @@ const ToastAction = React.forwardRef<
 ))
 ToastAction.displayName = ToastPrimitives.Action.displayName
 
+// §global-toast — ✕ 는 항상 노출, 히트 영역 32px.
 const ToastClose = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Close>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Close>
@@ -83,7 +88,7 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      "absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100 group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600",
+      "absolute right-1.5 top-1.5 flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-ring",
       className
     )}
     toast-close=""
@@ -100,7 +105,7 @@ const ToastTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Title
     ref={ref}
-    className={cn("text-sm font-semibold", className)}
+    className={cn("text-[13px] font-bold leading-snug text-slate-900", className)}
     {...props}
   />
 ))
@@ -112,7 +117,7 @@ const ToastDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Description
     ref={ref}
-    className={cn("text-sm opacity-90", className)}
+    className={cn("line-clamp-1 text-[11.5px] leading-snug text-slate-500", className)}
     {...props}
   />
 ))

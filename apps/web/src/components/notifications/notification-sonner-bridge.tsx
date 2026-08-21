@@ -16,7 +16,7 @@
  */
 
 import { useEffect, useRef } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 import { useNotificationStore, type LocalNotification } from "@/lib/store/notification-store";
 import { startGovernanceNotificationBridge } from "@/lib/notifications/governance-bridge";

@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 // (도움말/프로필/알림) 모두 plain button + useState pattern 으로 swap 완료.
 import { useQRScanner } from "@/contexts/QRScannerContext";
 import { Search, Bell, HelpCircle, ChevronRight, AlertTriangle, FileText, BookOpen, Headphones, Settings, CreditCard, LogOut, ShieldAlert, Clock, CheckCircle2, ClipboardCheck, Menu, Package, ScanLine } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { CommandPalette } from "@/components/dashboard/command-palette";
 // §11.271 — DashboardShell 의 fixed FAB 에서 헤더 inline 으로 이동 (운영 브리핑 FAB

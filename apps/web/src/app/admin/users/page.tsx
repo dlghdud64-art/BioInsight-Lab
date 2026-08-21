@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { useDialogA11y } from "@/lib/hooks/use-dialog-a11y";
 import { AdminSidebar } from "../_components/admin-sidebar";
 import {

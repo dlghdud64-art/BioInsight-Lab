@@ -26,7 +26,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import {
   Upload, FileText, Package, Loader2, CheckCircle2, AlertCircle,
   ArrowRight, X, FileUp, Table2, Users, FolderOpen, Sparkles,

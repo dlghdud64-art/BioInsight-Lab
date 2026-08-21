@@ -44,7 +44,7 @@ import {
   Settings, PauseCircle, X, Send, Building2,
   FileText, Package, ShoppingCart, MoreVertical, Trash2,
   Lock, Clock, Activity, CreditCard, ClipboardCheck,
-  AlertTriangle, ChevronRight, CheckCircle2, XCircle,
+  AlertTriangle, ChevronRight, CheckCircle2, XCircle, Check,
 } from "lucide-react";
 // §11.298c Radix DropdownMenu* import 제거 — ActionMenu shared 사용.
 import { ActionMenu } from "@/components/inventory/action-menu";
@@ -164,6 +164,8 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   const [editDescription, setEditDescription] = useState("");
   const [editSlug, setEditSlug] = useState("");
   const [isSavingName, setIsSavingName] = useState(false);
+  // §global-toast 1b — 같은 화면 단순 저장은 toast 금지, 버튼 "✓ 저장됨" 1.5초 전환.
+  const [saveFlash, setSaveFlash] = useState(false);
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -470,7 +472,9 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
         throw new Error(json.error || "수정 실패");
       }
       queryClient.invalidateQueries({ queryKey: ["organizations"] });
-      toast({ title: "조직 정보가 수정되었습니다." });
+      // §global-toast 1b — 성공 toast 제거: 같은 화면 완료 저장은 버튼 전환으로 알린다.
+      setSaveFlash(true);
+      setTimeout(() => setSaveFlash(false), 1500);
     } catch (e: any) {
       toast({ title: "수정 실패", description: e.message, variant: "destructive" });
     } finally {
@@ -1368,11 +1372,15 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                   </div>
                   <Button
                     onClick={handleSaveName}
-                    disabled={isSavingName || !editName.trim()}
-                    className="bg-blue-600 hover:bg-blue-700 text-slate-900"
+                    disabled={isSavingName || saveFlash || !editName.trim()}
+                    className={saveFlash
+                      ? "border border-[#bbf7d0] bg-[#f0fdf4] text-[#15803d] hover:bg-[#f0fdf4]"
+                      : "bg-blue-600 hover:bg-blue-700 text-slate-900"}
                   >
                     {isSavingName ? (
                       <><Loader2 className="mr-2 h-4 w-4 animate-spin" />저장 중...</>
+                    ) : saveFlash ? (
+                      <><Check className="mr-2 h-4 w-4" />저장됨</>
                     ) : "변경 사항 저장"}
                   </Button>
                 </CardContent>

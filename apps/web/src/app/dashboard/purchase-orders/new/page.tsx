@@ -35,7 +35,7 @@ import {
   Sparkles,
   AlertCircle,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 interface PrefillForm {
   productName: string;

@@ -2,7 +2,7 @@
 
 import { SearchPanel } from "../_components/search-panel";
 import { useTestFlow } from "../_components/test-flow-provider";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { resolveAddToQuoteToast } from "@/lib/quote/resolve-add-to-quote-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

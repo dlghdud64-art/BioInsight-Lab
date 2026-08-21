@@ -17,7 +17,7 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import { LocaleProvider } from "@/components/layout/locale-provider";
 import { QRScannerProviderWrapper } from "@/providers/qr-scanner-provider";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as SonnerToaster } from "sonner";
+
 import { Analytics } from "@vercel/analytics/react";
 
 // §11.246d-2 #nprogress-page-transition — 호영님 P0 성능 #10 페이지 전환 NProgress 바.
@@ -112,7 +112,7 @@ export default function RootLayout({
                   {children}
                 </QRScannerProviderWrapper>
                 <Toaster />
-                <SonnerToaster position="top-center" richColors closeButton />
+
                 <CompareFlowGuard />
                 {/* §auth §2 — 재포커스 세션 유효성 선제 게이트(보수적 additive, 기존 401 redirect 재사용). */}
                 <AuthFocusGuard />

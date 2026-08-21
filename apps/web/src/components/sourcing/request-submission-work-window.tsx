@@ -2,7 +2,7 @@
 
 import { csrfFetch } from "@/lib/api-client";
 import { useMemo, useState, useCallback, useRef, useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { X, Check, AlertTriangle, Send, ArrowRight, Building2, Package, FileText, ClipboardCheck, Shield, Loader2, AlertCircle, ChevronRight } from "lucide-react";

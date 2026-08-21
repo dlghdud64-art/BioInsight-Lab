@@ -41,7 +41,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PACK_UNIT_OPTIONS, normalizePackUnit } from "@/lib/inventory/pack-unit-options";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import {
   ScanLine,
   Upload,

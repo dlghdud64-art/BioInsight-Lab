@@ -7,7 +7,7 @@ import { getRearCameraStream } from "@/lib/utils/get-rear-camera-stream";
 import { mapLabelToReceiving } from "@/lib/inventory/map-label-to-receiving";
 // §11.371-3 — 글로벌 스캔 허브 진입 시 onDirectReceive 미주입이어도 라벨 직접등록 보장.
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { submitLabelReceive } from "@/lib/inventory/submit-label-receive";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
