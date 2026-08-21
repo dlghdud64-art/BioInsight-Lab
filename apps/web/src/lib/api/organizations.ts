@@ -141,6 +141,7 @@ export async function createOrganization(
   data: {
     name: string;
     description?: string | null;
+    invitePolicy?: Record<string, unknown>;
     organizationType?: string;
   }
 ) {

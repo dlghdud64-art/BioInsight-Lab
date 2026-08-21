@@ -69,6 +69,9 @@ model Organization {
   // §SM-S1 P1 (호영님 2026-07-05) — 안전(MSDS) 관리 대상 ProductCategory. 기본 REAGENT(화학물질 확정).
   //   org 이 RAW_MATERIAL 등 추가 시 안전 페이지가 콤마조인으로 GET(P2 다중값 파싱). additive·무회귀.
   safetyCategories  String[]         @default(["REAGENT"])
+  // §org-settings-redesign(호영님 2026-08-21 핸드오프) — 초대 정책. null = 현행 기본
+  //   { defaultRole: "VIEWER", expiresInDays: 7, adminOnlyInvite: true }. additive·무회귀.
+  invitePolicy      Json?
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 

@@ -38,7 +38,9 @@ export async function POST(
 
     const { id } = await params;
     const body = await request.json();
-    const { expiresInDays = 7, role = OrganizationRole.VIEWER, email } = body;
+    // §org-settings-redesign — 조직 초대 정책이 기본값을 정한다 (body 명시값이 우선).
+    const { email } = body;
+    let { expiresInDays, role } = body;
 
     enforcement = enforceAction({
       userId: session.user.id,
@@ -57,16 +59,30 @@ export async function POST(
       return NextResponse.json({ error: "Organization not found" }, { status: 404 });
     }
 
-    // 권한 확인 (OWNER 또는 ADMIN)
+    // §org-settings-redesign — 정책 로드 (null = 현행 기본: VIEWER · 7일 · 관리자만)
+    const rawPolicy = (organization as { invitePolicy?: unknown }).invitePolicy;
+    const policy = (rawPolicy && typeof rawPolicy === "object" && !Array.isArray(rawPolicy))
+      ? (rawPolicy as { defaultRole?: string; expiresInDays?: number; adminOnlyInvite?: boolean })
+      : {};
+    if (expiresInDays === undefined) expiresInDays = policy.expiresInDays ?? 7;
+    if (role === undefined) role = policy.defaultRole ?? OrganizationRole.VIEWER;
+    const adminOnlyInvite = policy.adminOnlyInvite ?? true;
+
+    // 권한 확인 — adminOnlyInvite=false 면 일반 멤버도 초대 가능 (멤버십은 필수)
     const membership = await db.organizationMember.findFirst({
       where: {
         userId: session.user.id,
         organizationId: id,
-        role: { in: [OrganizationRole.OWNER, OrganizationRole.ADMIN] },
+        ...(adminOnlyInvite
+          ? { role: { in: [OrganizationRole.OWNER, OrganizationRole.ADMIN] } }
+          : {}),
       },
     });
     if (!membership) {
-      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
+      return NextResponse.json(
+        { error: adminOnlyInvite ? "Forbidden: Admin access required" : "Forbidden: 조직 멤버가 아닙니다." },
+        { status: 403 }
+      );
     }
 
     // role 유효성 검증 (OWNER는 초대 불가)

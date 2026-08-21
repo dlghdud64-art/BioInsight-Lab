@@ -74,7 +74,32 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { name, description, slug, logoUrl } = body;
+    const { name, description, slug, logoUrl, invitePolicy } = body;
+
+    // §org-settings-redesign — 초대 정책 검증 (전달된 경우만 · 부분 갱신 허용)
+    const POLICY_ROLES = ["VIEWER", "REQUESTER", "APPROVER", "ADMIN"];
+    const POLICY_EXPIRY = [1, 3, 7, 14, 30];
+    let policyUpdate: Record<string, unknown> | undefined;
+    if (invitePolicy !== undefined) {
+      if (invitePolicy === null || typeof invitePolicy !== "object" || Array.isArray(invitePolicy)) {
+        return NextResponse.json({ error: "invitePolicy 형식이 올바르지 않습니다." }, { status: 400 });
+      }
+      const { defaultRole, expiresInDays, adminOnlyInvite } = invitePolicy as Record<string, unknown>;
+      if (defaultRole !== undefined && !POLICY_ROLES.includes(defaultRole as string)) {
+        return NextResponse.json({ error: "defaultRole 값이 올바르지 않습니다." }, { status: 400 });
+      }
+      if (expiresInDays !== undefined && !POLICY_EXPIRY.includes(expiresInDays as number)) {
+        return NextResponse.json({ error: "expiresInDays 값이 올바르지 않습니다." }, { status: 400 });
+      }
+      if (adminOnlyInvite !== undefined && typeof adminOnlyInvite !== "boolean") {
+        return NextResponse.json({ error: "adminOnlyInvite 값이 올바르지 않습니다." }, { status: 400 });
+      }
+      policyUpdate = {
+        ...(defaultRole !== undefined ? { defaultRole } : {}),
+        ...(expiresInDays !== undefined ? { expiresInDays } : {}),
+        ...(adminOnlyInvite !== undefined ? { adminOnlyInvite } : {}),
+      };
+    }
 
     if (!name || !name.trim()) {
       return NextResponse.json({ error: "조직명을 입력해주세요." }, { status: 400 });
@@ -101,7 +126,17 @@ export async function PATCH(
       }
     }
 
+    // 부분 갱신: 기존 정책 위에 병합 (Json 컬럼 전체 치환이므로 서버가 병합 책임)
+    let mergedPolicy: Record<string, unknown> | undefined;
+    if (policyUpdate) {
+      const current = await db.organization.findUnique({ where: { id }, select: { invitePolicy: true } });
+      const base = (current?.invitePolicy && typeof current.invitePolicy === "object" && !Array.isArray(current.invitePolicy))
+        ? (current.invitePolicy as Record<string, unknown>) : {};
+      mergedPolicy = { ...base, ...policyUpdate };
+    }
+
     const updated = await updateOrganization(id, {
+      ...(mergedPolicy !== undefined ? { invitePolicy: mergedPolicy } : {}),
       name: name.trim(),
       // §global-toast QA 실측(2026-08-21) — 빈 문자열은 "비우기"다. || undefined 로 삼키면
       // 한 번 쓴 설명을 지울 방법이 없다 (schema 는 String? nullable).
