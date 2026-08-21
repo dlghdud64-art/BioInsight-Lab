@@ -31,14 +31,14 @@ ToastViewport.displayName = ToastPrimitives.Viewport.displayName
  *   ⚠ §action-toast(2026-07-08)의 "컬러줄 없음"을 대체한다 — 최신 지시문 우선.
  */
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-center justify-between space-x-3 overflow-hidden rounded-[13px] border border-slate-200 bg-white p-3.5 pr-10 text-slate-900 shadow-[0_8px_24px_rgba(15,23,42,0.1)] transition-all before:absolute before:bottom-0 before:left-0 before:top-0 before:w-[3px] before:content-[''] data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-bottom-full",
+  "group pointer-events-auto relative flex w-full items-center justify-between space-x-3 overflow-hidden rounded-[13px] border border-slate-200 bg-white p-4 pr-11 text-slate-900 sm:min-w-[340px] shadow-[0_8px_24px_rgba(15,23,42,0.1)] transition-all before:absolute before:bottom-0 before:left-0 before:top-0 before:w-[3px] before:content-[''] data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-bottom-full",
   {
     variants: {
       variant: {
         default: "before:bg-slate-300",
         destructive: "before:bg-[#dc2626]",
         success: "before:bg-[#16a34a]",
-        warning: "before:bg-[#b45821]",
+        warning: "before:bg-yellow-500",
         error: "before:bg-[#dc2626]",
         info: "before:bg-[#2563eb]",
         undo: "before:bg-slate-900",
@@ -88,7 +88,7 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      "absolute right-1.5 top-1.5 flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-ring",
+      "absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-slate-400 transition-colors hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-ring",
       className
     )}
     toast-close=""
