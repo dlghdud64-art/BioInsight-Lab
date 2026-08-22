@@ -99,6 +99,9 @@ Last Updated 갱신 → Notes 기록 → 그 후에만 다음 phase. 게이트 �
 - Status: [ ] Pending
 - 🔴 실패 모드(이식 다이얼로그 금액 0·취소 중복) → 🟢 배포 후 폐루프 3상
   (행→접수→예약 확인→구매 확정→confirm 원장→취소 별건 주문으로 release) → 🔵 계측 정리
+- 🛑 필수 케이스 (로컬 세션 정정 채택): **같은 예산에 활성 주문 2건 상태에서 1건만 확정**
+  → confirm 행의 pre/postCommitted 가 예산 전역 축(1,700,000→850,000 형태)인지 검증.
+  단일 주문 왕복은 주문 축·전역 축이 우연히 일치해 이 결함을 통과시킨다
 - ✋ Gate: 3상 수치 일치 · 원장 reserved/confirmed/released 정합 · 오진 0
 - Rollback: Vercel instant rollback
 

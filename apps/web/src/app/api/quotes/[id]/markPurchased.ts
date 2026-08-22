@@ -146,12 +146,35 @@ export async function markQuoteAsPurchased({ quoteId, scopeKey, workspaceId, ven
             eventType: { in: [ORDER_RESERVED, ORDER_RELEASED, ORDER_CONFIRMED] },
           },
         });
+        // pre/postCommitted 는 **예산 전역** 활성 예약 축이다 (release 경로와 동형).
+        // 주문 단위로 적으면 같은 예산에 활성 주문 2건 이상일 때 감사 열이 거짓이 된다
+        // (로컬 세션 게이트 정정 2026-08-22 — ⑪ P4 의 2축 검증이 이 열에 기댄다).
+        // 예산 전역 원장을 한 번 읽고, 루프에서 만든 confirm 을 메모리 원장에 이어
+        // 붙여 다음 주문의 pre 가 앞선 confirm 을 본다.
+        const budgetIds = [...new Set(
+          orderEvents
+            .filter((e: any) => e.eventType === ORDER_RESERVED && e.budgetId)
+            .map((e: any) => e.budgetId as string),
+        )];
+        const ledger = budgetIds.length > 0
+          ? await tx.budgetEvent.findMany({
+              where: {
+                budgetId: { in: budgetIds },
+                eventType: { in: [ORDER_RESERVED, ORDER_RELEASED, ORDER_CONFIRMED] },
+              },
+              select: { eventType: true, amount: true, sourceEntityId: true, budgetId: true },
+            })
+          : [];
         for (const orderId of orderIds) {
-          const mine = orderEvents.filter((e: any) => e.sourceEntityId === orderId);
+          const mine = ledger.filter((e: any) => e.sourceEntityId === orderId);
           const active = activeReservedAmount(mine);
           if (active <= 0) continue;
-          const reserve = mine.find((e: any) => e.eventType === ORDER_RESERVED);
+          const reserve = orderEvents.find(
+            (e: any) => e.sourceEntityId === orderId && e.eventType === ORDER_RESERVED,
+          );
           if (!reserve?.budgetId) continue;
+          const budgetLedger = ledger.filter((e: any) => e.budgetId === reserve.budgetId);
+          const preActive = activeReservedAmount(budgetLedger);
           const confirmEvent = buildConfirmEvent({
             budget: { id: reserve.budgetId, organizationId: reserve.organizationId, amount: 0 },
             orderId,
@@ -169,11 +192,17 @@ export async function markQuoteAsPurchased({ quoteId, scopeKey, workspaceId, ven
                 budgetId: reserve.budgetId,
                 yearMonth: reserve.yearMonth,
                 amount: active,
-                preCommitted: active,
-                postCommitted: 0,
+                preCommitted: preActive,
+                postCommitted: Math.max(0, preActive - active),
                 executedBy: "system:markPurchased",
               },
             });
+            ledger.push({
+              eventType: ORDER_CONFIRMED,
+              amount: active,
+              sourceEntityId: orderId,
+              budgetId: reserve.budgetId,
+            } as any);
             logger.info(`Order reservation confirmed for ${orderId} (${active})`);
           } catch (err: unknown) {
             if ((err as { code?: string })?.code !== "P2002") throw err;
