@@ -62,7 +62,7 @@ Last Updated 갱신 → Notes 기록 → 그 후에만 다음 phase. 게이트 �
 ## 7. Phases
 
 ### Phase 0: Truth Lock — 인벤토리
-- Status: [ ] Pending
+- Status: [x] Complete (2026-08-22)
 - 🔴 dock/상세링크/경로 C 호출부/PurchaseRecord 생성 지점 전수 → 🟢 처분 목록 확정 → 🔵 범위 재확인
 - ✋ Gate: 인벤토리에 추정 0 (전부 파일:줄 실측) · 이식 계약(다이얼로그 의존 축) 문서화
 - Rollback: 계획만
@@ -111,4 +111,16 @@ Last Updated 갱신 → Notes 기록 → 그 후에만 다음 phase. 게이트 �
 - Overall: 0% · Current: P0 · Blocker: 없음
 
 ## 11. Notes & Learnings
-- (기록 시작)
+- [2026-08-22] P0 인벤토리 (전부 파일:줄 실측 · 추정 0):
+  (a) 운영 브리핑 = dashboard/quotes/page.tsx **내장** (5,018줄 파일 내 수술):
+      단계 config L203~266 ("전체 상세 열기" secondaryCta 7곳 · "발주 실행 준비/검토" L266)
+      · 진입 버튼 L3577 · narrative hook L1943 · sheet 상호배제 L1499·L1656
+  (b) /quotes/[id] 진입 링크 6곳: dashboard/quotes/page.tsx L3737·L3818·L4283 ·
+      my/orders/page.tsx L176 · vendor/quotes/page.tsx L727 · protocol-upload.tsx L167
+      (protocol 업로드 후 랜딩이 은퇴 페이지 — 대체 랜딩 결정 필요, P3)
+  (c) 경로 C 호출부 1곳: purchase-orders/new/page.tsx (csrf 카드 :105 과 동일 지점)
+  (d) PurchaseRecord 생성 5지점: orders/draft(은퇴로 소멸) · **markPurchased.ts L115
+      (confirm 봉합 대상 — quoteId 축 idempotent, quote→orders→reserve 연계로 confirm)** ·
+      purchases/route.ts(orderId 축 없음 — 주문 무관 수기 입력, confirm 비대상) ·
+      purchases/import×3(대량 입력 — 주문 무관, 비대상)
+- P2 confirm 배선의 단일 지점 = markQuoteAsPurchased (경로 C 은퇴 후 유일한 주문 연계 생성점)
