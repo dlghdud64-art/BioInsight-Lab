@@ -1,6 +1,6 @@
 # Implementation Plan: 발주 예약 — canonical Budget (§⑪ 판정 반영)
 
-- **Status:** 🔄 In Progress
+- **Status:** ✅ Complete (2026-08-22 · 폐루프 실측 + 원장 검증 마감 — 이월 3건은 Notes)
 - **Started:** 2026-08-22
 - **Last Updated:** 2026-08-22
 - **판정:** 호영님 2026-08-22 — canonical 예산 = Budget · (나) 예약(reserved) 도입
@@ -33,11 +33,11 @@ Last Updated 갱신 → Notes 기록 → 그 후에만 다음 phase. 게이트 �
 
 ## 3. Overview
 **Success Criteria:**
-- [ ] 주문 접수 시 Budget 에 예약이 잡히고 잔액이 즉시 반영된다 (실측: 850,000 예약 → 예상 잔액 3,300,000)
-- [ ] 주문 void/취소 시 예약 release
-- [ ] 구매 완료 전이 시 예약 confirm — PurchaseRecord 와 이중 계상 0
-- [ ] NO_BUDGET 오진(⑫) 소멸 — Budget 선택 시 발주 정상
-- [ ] ⑤ 해소 — 9월 구매도 기간 창 안에 집계
+- [x] 주문 접수 시 Budget 에 예약이 잡히고 잔액이 즉시 반영된다 — 실측 ✅ ORD-20260822-C3PN · 4,150,000→3,300,000
+- [x] 주문 void/취소 시 예약 release — 실측 ✅ CANCELLED→원복 4,150,000 · 원장 released 850,000
+- [ ] 구매 완료 전이 시 예약 confirm — ⚠️ **미배선 이월**: 코어(buildConfirmEvent)와 계약 테스트는 있으나 PurchaseRecord 생성 지점에 ORDER_CONFIRMED 연결이 없다. 연결 전에 주문 유래 구매기록이 생기면 예약+지출 이중 계상 — 재배선 슬라이스에서 처리
+- [x] NO_BUDGET 오진(⑫) 소멸 — 실측 ✅ 폐루프 전 과정 오진 문구 출현 0
+- [x] ⑤ 해소 — resolveBudgetPeriod 단일화 배선 + 단위 5건 GREEN (9월 자연 재측정으로 최종 확인)
 
 **Out of Scope (⚠️ 구현 금지):**
 - [ ] 경로 C(/api/orders/draft) 존폐 — 호영님 보류 유지
@@ -68,33 +68,33 @@ Last Updated 갱신 → Notes 기록 → 그 후에만 다음 phase. 게이트 �
 ## 7. Phases
 
 ### Phase 0: Truth Lock & Tripwire 해제
-- Status: [ ] Pending
+- Status: [x] Complete (2026-08-22)
 - 🔴 tripwire 단언 현행 RED 조건 확인 → 🟢 명시 해제 커밋(갈래·근거) → 🔵 ⑤ 실측 고정
 - ✋ Gate: 해제 커밋에 판정 근거 링크 · 다른 sentinel 무손상 (전체 게이트 GREEN)
 - Rollback: revert (문서·테스트만)
 
 ### Phase 1: 계약 · Failing Tests
-- Status: [ ] Pending
+- Status: [x] Complete (2026-08-22)
 - 🔴 수명주기·이중계상·NO_BUDGET 재현 실패 테스트 → 🟢 계약 스캐폴드 → 🔵 명명 정리
 - ✋ Gate: RED 가 진짜 RED (프로브) · 기존 178 GREEN 불변
 - Rollback: 테스트 스캐폴드 revert
 
 ### Phase 2: 코어 — 마이그레이션 + 예약 서비스 + 잔액 파생
-- Status: [ ] Pending
+- Status: [x] Complete (2026-08-22)
 - 🔴 unit RED → 🟢 BudgetEvent.budgetId additive migration (§9.1a: 대상 ref 단언 xhid…dhsw ·
   dry-run 보고 → 호영님 "진행" 후 적용) · reserve/release/confirm 서비스 · 잔액식 + period 파싱(⑤)
 - ✋ Gate: unit GREEN · 개발 DB(tvkl)·프로덕션 순서 = 코드보다 컬럼 먼저 · tsc 불변
 - Rollback: 컬럼 nullable additive — 코드 revert 만으로 안전
 
 ### Phase 3: 배선 — /api/orders · ⑫ · UI
-- Status: [ ] Pending
+- Status: [x] Complete (2026-08-22)
 - 🔴 integration RED → 🟢 budgetId→Budget 예약 경로 · UserBudget 쓰기 소거 · void→release ·
   ⑫ 문구 사실화 · 주문/예산 화면 잔액에 예약 반영 → 🔵 same-canvas 유지
 - ✋ Gate: dead button 0 · front-only success 0 · loading/error 상태 · 게이트 GREEN
 - Rollback: 라우트 revert → Phase 2 상태
 
 ### Phase 4: Rollout · Smoke
-- Status: [ ] Pending
+- Status: [x] Complete (2026-08-22)
 - 🔴 실패 모드 정의(예약 잔존 고아·중복 이벤트) → 🟢 배포 → 폐루프 재실측
   (RFQ-2608-6QRG 주문 접수 → 예약 850,000 → 잔액 3,300,000 → void → 원복) → 🔵 계측 정리
 - ✋ Gate: 실측 수치 일치 · 오진 문구 0 · rollback 문서화
@@ -114,7 +114,18 @@ Last Updated 갱신 → Notes 기록 → 그 후에만 다음 phase. 게이트 �
 - P4 실패: Vercel instant rollback + 잔존 예약 release 수동 SQL 절차 (문서화 후 실행)
 
 ## 11. Progress
-- Overall: 0% · Current phase: P0 · Blocker: 없음
+- Overall: 100% (P0~P4) · 이월 3건: confirm 배선 · 취소 CTA · 발주 진입 재배선
 
 ## 12. Notes & Learnings
-- (기록 시작)
+- [2026-08-22] P2 커밋이 additive-first 를 main 진입 순서로 안 지켜 컬럼 없는 prod 에
+  budgetId 클라이언트가 promote — 실해 0, §9.1b 신설 (CARD_additive-first-inverted)
+- [2026-08-22] P4 첫 실측 500: 트랜잭션 6.35초 > 기본 5초 (함수 iad1 ↔ DB 도쿄).
+  구 경로는 프로덕션 완주 0 회라 한도가 측정된 적 없었다 — dead 경로는 성능 특성을 숨긴다.
+  timeout 20s 확장(38a5e97e) 후 성공 → 가설 확정. 리전 정합은 별건 인프라 카드
+- [2026-08-22] 원장 검증(로컬 세션·ref 단언): reserved/released 2행 · budgetId 非null ·
+  키 문법 승계 · pre/post 대칭 (0→850,000→0). 화면 잔액 축과 원장 축이 독립적으로 일치
+- 이월 ①: confirm 배선 (Success Criteria 3 참조 — 이중 계상 창 열려 있음, 우선순위 높음)
+- 이월 ②: 취소 CTA 부재 — release 의 UI 진입점 0 (/my/orders 조회만 · admin 전진 전환만)
+- 이월 ③: 발주 진입 재배선 (호영님 판정: 운영 브리핑 dock 삭제 · 전체 상세 페이지 은퇴 ·
+  행 "발주 준비" → 주문 접수 다이얼로그 직접) — ①②를 이 슬라이스에 포함
+- 미사용 상세 페이지가 COMPLETED 를 "구매 완료"로 표기 (라벨 결함 — 페이지 은퇴로 소멸 예정)
