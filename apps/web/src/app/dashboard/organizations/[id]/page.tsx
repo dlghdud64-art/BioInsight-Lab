@@ -169,6 +169,11 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   const [saveFlash, setSaveFlash] = useState(false);
   // §org-settings-redesign — 초대 정책 (즉시 적용). null = 기본값.
   const [policyFlash, setPolicyFlash] = useState(false);
+  // §org-settings QA 실측 결함 수정 — 연속 변경이 서버 중복 가드("처리 중인 동일 요청")에
+  // 막혀 UI/DB 조용한 불일치가 남았다. in-flight 동안 컨트롤 disabled(직렬화) +
+  // 낙관적 로컬 반영(느린 목록 refetch 를 기다리지 않음) + 실패 시 서버 진실로 스냅백.
+  const [policySaving, setPolicySaving] = useState(false);
+  const [localPolicy, setLocalPolicy] = useState<Record<string, unknown> | null>(null);
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -465,10 +470,14 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
     ...((organization as any)?.invitePolicy && typeof (organization as any).invitePolicy === "object"
       ? (organization as any).invitePolicy
       : {}),
+    ...(localPolicy ?? {}),
   } as { defaultRole: string; expiresInDays: number; adminOnlyInvite: boolean };
 
   // 정책 변경 즉시 적용 — PATCH invitePolicy (서버가 기존 정책 위에 병합).
   const handlePolicyChange = async (patch: Partial<typeof effectivePolicy>) => {
+    if (policySaving) return; // 직렬화 — 서버 중복 가드와의 충돌 원천 차단
+    setPolicySaving(true);
+    setLocalPolicy((prev) => ({ ...(prev ?? {}), ...patch })); // 낙관적 반영 (즉시 표시)
     try {
       const res = await csrfFetch(`/api/organizations/${params.id}`, {
         method: "PATCH",
@@ -483,7 +492,12 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       setPolicyFlash(true);
       setTimeout(() => setPolicyFlash(false), 1500);
     } catch (e: any) {
+      // 실패 시 낙관값 제거 → 서버 진실로 스냅백 (조용한 UI/DB 불일치 금지)
+      setLocalPolicy(null);
+      queryClient.invalidateQueries({ queryKey: ["organizations"] });
       toast({ title: "정책 저장 실패", description: e.message, variant: "destructive" });
+    } finally {
+      setPolicySaving(false);
     }
   };
 
@@ -1450,6 +1464,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                     <Select
                       value={effectivePolicy.defaultRole}
                       onValueChange={(v) => handlePolicyChange({ defaultRole: v })}
+                      disabled={policySaving}
                     >
                       <SelectTrigger className="w-[168px] bg-white border-slate-200 focus:ring-[rgba(37,99,235,.25)]">
                         <SelectValue />
@@ -1483,6 +1498,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                     <Select
                       value={String(effectivePolicy.expiresInDays)}
                       onValueChange={(v) => handlePolicyChange({ expiresInDays: Number(v) })}
+                      disabled={policySaving}
                     >
                       <SelectTrigger className="w-[112px] bg-white border-slate-200 focus:ring-[rgba(37,99,235,.25)]">
                         <SelectValue />
@@ -1504,6 +1520,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                     <Switch
                       checked={effectivePolicy.adminOnlyInvite}
                       onCheckedChange={(v) => handlePolicyChange({ adminOnlyInvite: v })}
+                      disabled={policySaving}
                       className="data-[state=checked]:bg-[#2563eb] data-[state=unchecked]:bg-[#e2e8f0]"
                     />
                   </div>
