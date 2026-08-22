@@ -84,7 +84,8 @@ Last Updated 갱신 → Notes 기록 → 그 후에만 다음 phase. 게이트 �
 - Status: [ ] Pending
 - 🔴 integration sentinel RED → 🟢 dock 삭제 · 행 CTA→다이얼로그 이식(vendorRequestId 축 포함) ·
   /my/orders 취소 CTA · 상세 링크 제거 · draft 호출부 처분 → 🔵 same-canvas 정리
-- ✋ Gate: dead button 0 · 진입 dead-end 0 · loading/error/disabled 상태 · 게이트 GREEN
+- ✋ Gate: dead button 0 · 진입 dead-end 0 · loading/error/disabled 상태 · 게이트 GREEN ·
+  /quotes/[id] 도달성 가드 sentinel (dead 단언 · 진입 링크 재유입 0)
 - Rollback: 표면 커밋 revert → 종전 dock 경로
 
 ### Phase 4: Rollout · Smoke
@@ -124,3 +125,12 @@ Last Updated 갱신 → Notes 기록 → 그 후에만 다음 phase. 게이트 �
       purchases/route.ts(orderId 축 없음 — 주문 무관 수기 입력, confirm 비대상) ·
       purchases/import×3(대량 입력 — 주문 무관, 비대상)
 - P2 confirm 배선의 단일 지점 = markQuoteAsPurchased (경로 C 은퇴 후 유일한 주문 연계 생성점)
+- [2026-08-22] (b) 보강 — 로컬 세션 독립 계수가 잡은 누락: /dashboard/quotes/{id} 링크 3곳
+  (audit:246 · purchase-orders/[poId]:277 · purchases:1524). 판정: app/dashboard/quotes/
+  [quoteId]/page.tsx 는 31줄 서버 리다이렉트(legacy → ?selected=) — **살아 있고 은퇴
+  대상 아님, 무손상 존치**. 은퇴 대상은 /quotes/[id] 하나뿐이라는 경계가 명확해졌다.
+  🔑 사무국 grep 패턴이 href=`/quotes/ 만 걸어 /dashboard/quotes/ 를 놓쳤다 —
+  계수 주체 분리(독립 검증)가 잡았다
+- P3 게이트 추가 (로컬 세션 제안 채택): /quotes/[id] 파일 존치 상태에 **도달성 가드
+  sentinel** — "이 파일은 dead (진입 링크 0)" 를 단언해 다음 세션의 라이브 착각 방지
+  (data-table.tsx false-GREEN 재발 방지 축)
