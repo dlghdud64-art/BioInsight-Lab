@@ -3115,6 +3115,11 @@ model BudgetEvent {
   sourceEntityType String // purchase_request | order
   sourceEntityId   String
   categoryId       String?
+  // ⑪ 판정(2026-08-22): canonical 예산 = Budget. 발주 예약(order_reserved/
+  // released/confirmed)은 Budget 을 직접 가리킨다. additive nullable —
+  // 기존 행(categoryId 축)은 null 유지. FK 미설정: append-only 원장이라
+  // 참조 무결성보다 기록 보존이 우선 (Budget 삭제가 원장을 막으면 안 된다).
+  budgetId         String?
   yearMonth        String // period key의 YYYY-MM 부분
   amount           Int // 양수: reserve/release, 음수: reapply
   preCommitted     Int // 이벤트 전 committed
@@ -3129,6 +3134,7 @@ model BudgetEvent {
   @@index([organizationId, yearMonth])
   @@index([sourceEntityId])
   @@index([categoryId, yearMonth])
+  @@index([budgetId])
 }
 
 // ─── Mutation Audit Event (Batch 6: Durable Audit Sink) ─────────────

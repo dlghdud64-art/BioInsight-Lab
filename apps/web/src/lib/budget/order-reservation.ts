@@ -1,12 +1,13 @@
 /**
- * §order-budget-reservation P1 — 발주 예약 계약 스캐폴드 (PLAN_order-budget-reservation)
+ * §order-budget-reservation P2 — 발주 예약 코어 (PLAN_order-budget-reservation)
  *
  * 판정(호영님 2026-08-22): canonical 예산 = Budget · (나) 예약 도입.
  * 원장 = BudgetEvent. budgetEventKey 문법은 구매요청 경로의 기존 idempotency
  * 문법("org:source:type:seq")을 그대로 승계한다 — 새 문법을 만들지 않는다.
  *
- * ⚠️ P1 상태: 계약(시그니처·상수)만 확정. 구현은 P2 소관이며, 그 전까지
- * 모든 함수는 NOT_IMPLEMENTED 를 던져 RED 를 유지한다. placeholder success 금지.
+ * 순수 코어 — DB 접근 없음. 트랜잭션 배선은 P3 (/api/orders) 소관.
+ * confirm 은 예약 소멸이지 지출 기록이 아니다 — 지출은 PurchaseRecord 가 든다
+ * (이중 계상 금지 계약, __tests__/budget/order-reservation.test.ts).
  */
 
 /** BudgetEvent.eventType — 발주 예약 수명주기 3종 */
@@ -68,35 +69,89 @@ export interface OrderEventLike {
   sourceEntityId: string;
 }
 
-const NOT_IMPLEMENTED =
-  "NOT_IMPLEMENTED — P2 구현 예정 (docs/plans/PLAN_order-budget-reservation.md)";
-
 /** 잔액 판정: amount − confirmedSpent − activeReserved ≥ requested */
 export function validateReservation(
-  _input: ValidateReservationInput
+  input: ValidateReservationInput
 ): ValidateReservationResult {
-  throw new Error(NOT_IMPLEMENTED);
+  const { budget, confirmedSpent, activeReserved, requested } = input;
+  if (!Number.isFinite(requested) || requested <= 0) {
+    return { ok: false, reason: "INVALID_AMOUNT" };
+  }
+  const remaining = budget.amount - confirmedSpent - activeReserved;
+  if (requested > remaining) {
+    return { ok: false, reason: "INSUFFICIENT_BUDGET" };
+  }
+  return { ok: true, remainingAfter: remaining - requested };
+}
+
+/** 기존 idempotency 문법 승계: "org:source:type:seq" */
+function orderBudgetEventKey(
+  organizationId: string,
+  orderId: string,
+  eventType: string,
+  sequence: number
+): string {
+  return `${organizationId}:${orderId}:${eventType}:${sequence}`;
+}
+
+function buildOrderEvent(
+  eventType: string,
+  { budget, orderId, amount, sequence }: BuildOrderEventInput
+): OrderBudgetEventPayload {
+  return {
+    eventType,
+    budgetId: budget.id,
+    sourceEntityType: "order",
+    sourceEntityId: orderId,
+    budgetEventKey: orderBudgetEventKey(
+      budget.organizationId,
+      orderId,
+      eventType,
+      sequence
+    ),
+    amount,
+  };
 }
 
 export function buildReservationEvent(
-  _input: BuildOrderEventInput
+  input: BuildOrderEventInput
 ): OrderBudgetEventPayload {
-  throw new Error(NOT_IMPLEMENTED);
+  return buildOrderEvent(ORDER_RESERVED, input);
 }
 
 export function buildReleaseEvent(
-  _input: BuildOrderEventInput
+  input: BuildOrderEventInput
 ): OrderBudgetEventPayload {
-  throw new Error(NOT_IMPLEMENTED);
+  return buildOrderEvent(ORDER_RELEASED, input);
 }
 
 export function buildConfirmEvent(
-  _input: BuildOrderEventInput
+  input: BuildOrderEventInput
 ): OrderBudgetEventPayload {
-  throw new Error(NOT_IMPLEMENTED);
+  return buildOrderEvent(ORDER_CONFIRMED, input);
 }
 
-/** 활성 예약 합: reserve − release − confirm, 주문별 독립, 하한 0 */
-export function activeReservedAmount(_events: OrderEventLike[]): number {
-  throw new Error(NOT_IMPLEMENTED);
+/**
+ * 활성 예약 합: 주문별로 reserve − (release + confirm), 주문별 하한 0, 총합.
+ * release/confirm 중복(재시도 등)이 다른 주문의 예약을 갉지 않도록
+ * 반드시 주문 단위로 상쇄한 뒤 합산한다.
+ */
+export function activeReservedAmount(events: OrderEventLike[]): number {
+  const perOrder = new Map<string, number>();
+  for (const ev of events) {
+    const cur = perOrder.get(ev.sourceEntityId) ?? 0;
+    if (ev.eventType === ORDER_RESERVED) {
+      perOrder.set(ev.sourceEntityId, cur + ev.amount);
+    } else if (
+      ev.eventType === ORDER_RELEASED ||
+      ev.eventType === ORDER_CONFIRMED
+    ) {
+      perOrder.set(ev.sourceEntityId, cur - ev.amount);
+    }
+  }
+  let total = 0;
+  for (const v of perOrder.values()) {
+    total += Math.max(0, v);
+  }
+  return total;
 }
