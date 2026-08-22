@@ -278,6 +278,29 @@ select current_database() as db,
 🔑 이건 §gate-script-silent-fail 의 *"검증은 대상에 닿았음을 스스로 단언한다"* 의 DB 판이다.
    게이트는 "무엇을 봤는가", DB 검증은 "어디를 봤는가" 를 자기 안에 담아야 한다.
 
+### 9.1b 🛑 마이그레이션 포함 커밋의 main 진입 게이트 (2026-08-22 2차 사고)
+
+```
+schema.prisma 를 바꾸는 커밋은 **대상 DB 에 컬럼이 적용·검증된 뒤에만** main 에 들어간다.
+main 은 auto-deploy 대상이다 — main 에 있는 것은 이미 배포 예약된 것이다.
+```
+
+같은 날 두 번째 사고 실측: 사무국이 P2 커밋(61e2fe00: 코어 + schema + migration 파일)을
+컬럼 적용 전에 main 에 얹었다. "push 게이트가 막아준다"에 기댔으나 —
+
+🛑 **push 는 그 시점의 tip 만 보증한다.** 로컬 세션은 fb015a62 를 검증하고 push 했지만
+   그 순간 main tip 은 61e2fe00 이었고, push 는 tip 까지 전부 실어 날랐다.
+   게이트를 통과한 커밋과 배포된 커밋이 달랐다.
+→ Vercel 이 61e2fe00 을 빌드·promote → 새 Prisma 클라이언트는 budgetId 를 아는데
+  프로덕션 DB 엔 컬럼 부재 → BudgetEvent 접점(경로 A idempotency 조회·create RETURNING)
+  P2022 노출. P0(§9.1a)과 같은 형태 — 이번엔 대상 DB 는 맞았고 **순서**가 틀렸다.
+
+**처방 2줄:**
+- additive-first 는 커밋 순서가 아니라 **main 진입 순서**다: 컬럼 적용·검증 → 그 다음
+  schema 커밋이 main 에 들어간다. (파일 준비 커밋도 main 밖에 두거나, 적용을 먼저 한다)
+- push 하는 쪽은 push 직전 `git log --oneline origin/main..HEAD` 로 **실어 나르는 전량**을
+  확인한다 — 자기 커밋만이 아니라. 목록에 미게이트 마이그레이션 커밋이 있으면 중단.
+
 ### 9.2 표준 절차 (schema 변경 시)
 
 1. **로컬에서 schema 변경 + 마이그레이션 생성:**
