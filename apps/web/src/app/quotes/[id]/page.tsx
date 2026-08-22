@@ -1534,10 +1534,13 @@ export default function QuoteDetailPage() {
                           <Select value={orderForm.budgetId} onValueChange={(value) => setOrderForm({ ...orderForm, budgetId: value })}>
                             <SelectTrigger><SelectValue placeholder="과제를 선택하세요" /></SelectTrigger>
                             <SelectContent>
+                              {/* §order-budget-reservation P3 — 발주는 canonical Budget 만.
+                                  연구비(UserBudget) 행을 고르면 실패가 예정되므로 선택 불가로 표기한다
+                                  (dead-end 금지 · 숨기지 않고 사유를 보인다).
+                                 🛑 이 주석은 map 콜백 **밖**에 둔다 — `=> (` 뒤는 단일 표현식
+                                    반환 자리라 JSX 주석을 단독으로 두면 객체 리터럴로 파싱돼 깨진다
+                                    (CLAUDE.md §10 삼항 사례와 같은 뿌리 · tsc TS17008/TS1005). */}
                               {budgets.map((budget: any) => (
-                                {/* §order-budget-reservation P3 — 발주는 canonical Budget 만.
-                                    연구비(UserBudget) 행을 고르면 실패가 예정되므로 선택 불가로 표기한다
-                                    (dead-end 금지 · 숨기지 않고 사유를 보인다). */}
                                 <SelectItem key={budget.id} value={budget.id} disabled={budget._source === "user-budget"}>{budget.name} (잔액: ₩ {safeLocaleAmount(budget.remainingAmount)}){budget._source === "user-budget" ? " · 발주 미지원(연구비)" : ""}</SelectItem>
                               ))}
                             </SelectContent>
