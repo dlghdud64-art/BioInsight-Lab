@@ -55,6 +55,8 @@ Last Updated 갱신 → Notes 기록 → 그 후에만 다음 phase. 게이트 �
   effectiveVrId 축 = vendor-requests 쿼리 필수 동반 이식)
 - confirm: PurchaseRecord 생성 지점 전수 (P0 에서 인벤토리 — 최소 orders/draft·구매 처리 전이)
 - 취소: /my/orders → PATCH /api/orders/[id] CANCELLED (기배선 · 멱등)
+- 취소 2진입점: admin/orders/[id]/status CANCELLED 분기에 order_released 추가 배선
+  (현행: releasePOVoided 만 — 경로 A 전용. ⑪ 예약 고아 간극 · 승계 대조가 발견) — P3
 - C 은퇴: purchase-orders/new/page.tsx:105 등 호출부 인벤토리 후 처분
 
 ## 6. Test Strategy

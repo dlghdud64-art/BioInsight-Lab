@@ -57,6 +57,16 @@ describe("④ 경로 C 은퇴 — draft 재유입 0", () => {
   });
 });
 
+describe("⑤-b admin 취소 경로도 발주 예약을 해제한다 — 두 번째 CANCELLED 진입점", () => {
+  /* 승계 대조(budget-lifecycle-wiring W4)가 드러낸 간극: admin status route 는
+   * 경로 A(releasePOVoided)만 알고 order_released(⑪)를 모른다 — 관리자 취소 시
+   * 발주 예약이 고아로 남는다. 두 CANCELLED 진입점(owner PATCH·admin status)이
+   * 같은 해제 계약을 이행해야 한다. */
+  it("admin/orders/[id]/status CANCELLED 분기에 ORDER_RELEASED 배선", () => {
+    expect(read("src/app/api/admin/orders/[id]/status/route.ts")).toMatch(/ORDER_RELEASED/);
+  });
+});
+
 describe("⑤ 취소 CTA — release 의 UI 진입점", () => {
   it("/my/orders 에 주문 취소 진입이 있다 (ORDERED 한정 · CANCELLED PATCH)", () => {
     const src = read(MY_ORDERS);
