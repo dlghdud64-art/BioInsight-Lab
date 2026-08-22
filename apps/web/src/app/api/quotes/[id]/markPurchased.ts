@@ -1,5 +1,13 @@
 import { db } from "@/lib/db";
 import { createLogger } from "@/lib/logger";
+// §order-entry-rewire P2 — confirm 봉합: 발주 예약과 PurchaseRecord 의 이중 계상 차단
+import {
+  buildConfirmEvent,
+  activeReservedAmount,
+  ORDER_RESERVED,
+  ORDER_RELEASED,
+  ORDER_CONFIRMED,
+} from "@/lib/budget/order-reservation";
 import { Prisma, PrismaClient } from "@prisma/client";
 
 // Transaction client type for Prisma interactive transactions
@@ -119,13 +127,69 @@ export async function markQuoteAsPurchased({ quoteId, scopeKey, workspaceId, ven
 
       logger.info(`Created ${result.count} purchase records for quote ${quoteId}`);
 
+      // §order-entry-rewire P2 — confirm 봉합. 이 quote 의 주문에 활성 발주 예약이
+      // 있으면 ORDER_CONFIRMED 로 소멸시킨다: 지출은 방금 만든 PurchaseRecord 가
+      // 들므로 예약을 남겨두면 같은 금액이 두 번 빠진다 (이중 계상 창 — 계약:
+      // __tests__/budget/order-confirm-wiring.test.ts). 예약 없는 quote(주문 무관
+      // 구매 처리)는 no-op — confirm 창작 금지. budgetEventKey unique 가 중복
+      // confirm 을 막는다 (P2002 → 이미 확정됨 · 멱등 무시).
+      const quoteOrders = await tx.order.findMany({
+        where: { quoteId },
+        select: { id: true },
+      });
+      if (quoteOrders.length > 0) {
+        const orderIds = quoteOrders.map((o: { id: string }) => o.id);
+        const orderEvents = await tx.budgetEvent.findMany({
+          where: {
+            sourceEntityId: { in: orderIds },
+            budgetId: { not: null },
+            eventType: { in: [ORDER_RESERVED, ORDER_RELEASED, ORDER_CONFIRMED] },
+          },
+        });
+        for (const orderId of orderIds) {
+          const mine = orderEvents.filter((e: any) => e.sourceEntityId === orderId);
+          const active = activeReservedAmount(mine);
+          if (active <= 0) continue;
+          const reserve = mine.find((e: any) => e.eventType === ORDER_RESERVED);
+          if (!reserve?.budgetId) continue;
+          const confirmEvent = buildConfirmEvent({
+            budget: { id: reserve.budgetId, organizationId: reserve.organizationId, amount: 0 },
+            orderId,
+            amount: active,
+            sequence: 1,
+          });
+          try {
+            await tx.budgetEvent.create({
+              data: {
+                organizationId: reserve.organizationId,
+                budgetEventKey: confirmEvent.budgetEventKey,
+                eventType: confirmEvent.eventType,
+                sourceEntityType: confirmEvent.sourceEntityType,
+                sourceEntityId: orderId,
+                budgetId: reserve.budgetId,
+                yearMonth: reserve.yearMonth,
+                amount: active,
+                preCommitted: active,
+                postCommitted: 0,
+                executedBy: "system:markPurchased",
+              },
+            });
+            logger.info(`Order reservation confirmed for ${orderId} (${active})`);
+          } catch (err: unknown) {
+            if ((err as { code?: string })?.code !== "P2002") throw err;
+          }
+        }
+      }
+
       return { alreadyPurchased: false, count: result.count, purchaseData };
     },
     {
       // Serializable isolation level로 Race Condition 완전 방지
       isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-      // 트랜잭션 타임아웃 설정 (5초)
-      timeout: 5000,
+      // §order-entry-rewire P2 — 5s→20s: 함수 리전(iad1)↔DB(도쿄) 왕복 지연 ×
+      // 트랜잭션 내 쿼리 수. /api/orders 가 같은 이유로 P2028 500 (2026-08-22 실측).
+      // confirm 조회 2건이 추가돼 같은 형태의 재발을 선제 차단한다.
+      timeout: 20000,
     }
   );
 }
