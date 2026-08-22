@@ -66,7 +66,7 @@ describe("이벤트 산출 — BudgetEvent 문법 정합", () => {
     const ev = buildConfirmEvent({ budget: BUDGET, orderId: "ord_1", amount: 850_000, sequence: 1 });
     expect(ev.eventType).toBe(ORDER_CONFIRMED);
     /* 🛑 confirm 이벤트가 지출을 이중으로 들면 안 된다 — 계약: recordsSpending 없음/false */
-    expect((ev as Record<string, unknown>).recordsSpending ?? false).toBe(false);
+    expect((ev as unknown as Record<string, unknown>).recordsSpending ?? false).toBe(false);
   });
 });
 
