@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { resolveBudgetPurchaseScopeKeys } from "@/lib/budget/purchase-scope-keys";
+import { resolveBudgetPeriod } from "@/lib/budget/budget-period";
+import {
+  activeReservedAmount,
+  ORDER_RESERVED,
+  ORDER_RELEASED,
+  ORDER_CONFIRMED,
+} from "@/lib/budget/order-reservation";
 
 /**
  * GET /api/user-budgets
@@ -70,24 +77,12 @@ export async function GET(request: NextRequest) {
       budgets.map(async (budget: any) => {
         // description에서 name, projectName, 기간 추출
         let name = `${budget.yearMonth} 예산`;
-        let periodStart: Date | null = null;
-        let periodEnd: Date | null = null;
         if (budget.description) {
           const nameMatch = budget.description.match(/^\[([^\]]+)\]/);
           if (nameMatch) name = nameMatch[1];
-          const periodMatch = budget.description.match(
-            /period:(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})/
-          );
-          if (periodMatch) {
-            periodStart = new Date(periodMatch[1]);
-            periodEnd = new Date(periodMatch[2] + "T23:59:59");
-          }
         }
-        if (!periodStart) {
-          const [year, month] = budget.yearMonth.split("-").map(Number);
-          periodStart = new Date(year, month - 1, 1);
-          periodEnd = new Date(year, month, 0, 23, 59, 59);
-        }
+        // ⑤ 단일 truth — 기간 창은 resolveBudgetPeriod (인라인 파싱 은퇴 · P3)
+        const { periodStart, periodEnd } = resolveBudgetPeriod(budget);
 
         // 해당 기간의 구매 기록으로 사용액 계산
         // §budget-scope-key-mismatch — org 예산과 workspace 구매의 키 공간이 달라
@@ -96,7 +91,7 @@ export async function GET(request: NextRequest) {
         const purchaseRecords = await db.purchaseRecord.findMany({
           where: {
             scopeKey: { in: purchaseScopeKeys },
-            purchasedAt: { gte: periodStart, lte: periodEnd! },
+            purchasedAt: { gte: periodStart, lte: periodEnd },
           },
           select: { amount: true },
         });
@@ -104,17 +99,27 @@ export async function GET(request: NextRequest) {
           (sum: number, r: any) => sum + (r.amount || 0),
           0
         );
-        const remainingAmount = budget.amount - usedAmount;
+        // §order-budget-reservation P3 — 활성 발주 예약이 잔액을 갉는다 (예약 무시 금지)
+        const orderEvents = await db.budgetEvent.findMany({
+          where: {
+            budgetId: budget.id,
+            eventType: { in: [ORDER_RESERVED, ORDER_RELEASED, ORDER_CONFIRMED] },
+          },
+          select: { eventType: true, amount: true, sourceEntityId: true },
+        });
+        const reservedAmount = activeReservedAmount(orderEvents);
+        const remainingAmount = budget.amount - usedAmount - reservedAmount;
 
         return {
           id: budget.id,
           name,
           totalAmount: budget.amount,
           usedAmount,
+          reservedAmount,
           remainingAmount,
           currency: budget.currency,
-          startDate: periodStart?.toISOString() ?? null,
-          endDate: periodEnd?.toISOString() ?? null,
+          startDate: periodStart.toISOString(),
+          endDate: periodEnd.toISOString(),
           isActive: true,
           createdAt: budget.createdAt,
           updatedAt: budget.updatedAt,

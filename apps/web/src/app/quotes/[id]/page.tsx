@@ -442,6 +442,8 @@ export default function QuoteDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["quote", quoteId] });
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
+      // §order-budget-reservation P3 — 예약이 잔액을 갉으므로 예산 목록도 갱신
+      queryClient.invalidateQueries({ queryKey: ["user-budgets"] });
       setShowOrderDialog(false);
       setOrderForm({ expectedDelivery: "", paymentMethod: "", budgetId: "", notes: "" });
       toast({ title: "주문이 접수되었습니다", description: "마이페이지 > 주문 내역에서 확인하세요" });
@@ -1533,7 +1535,10 @@ export default function QuoteDetailPage() {
                             <SelectTrigger><SelectValue placeholder="과제를 선택하세요" /></SelectTrigger>
                             <SelectContent>
                               {budgets.map((budget: any) => (
-                                <SelectItem key={budget.id} value={budget.id}>{budget.name} (잔액: ₩ {safeLocaleAmount(budget.remainingAmount)})</SelectItem>
+                                {/* §order-budget-reservation P3 — 발주는 canonical Budget 만.
+                                    연구비(UserBudget) 행을 고르면 실패가 예정되므로 선택 불가로 표기한다
+                                    (dead-end 금지 · 숨기지 않고 사유를 보인다). */}
+                                <SelectItem key={budget.id} value={budget.id} disabled={budget._source === "user-budget"}>{budget.name} (잔액: ₩ {safeLocaleAmount(budget.remainingAmount)}){budget._source === "user-budget" ? " · 발주 미지원(연구비)" : ""}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>

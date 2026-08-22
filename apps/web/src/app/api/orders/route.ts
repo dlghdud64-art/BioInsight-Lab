@@ -15,6 +15,16 @@ import { buildOrderDispatchReadiness } from "@/lib/orders/dispatch-readiness";
 // 알림 고도화 #notif-order-placed — 발주 생성 성공 후 ORDER_PLACED 알림(best-effort).
 // caller 0 갭(ORDER_CREATED_FROM_POCANDIDATE 는 audit eventType, 알림 아님).
 import { dispatchNotificationEvent, resolveOrgRecipients } from "@/lib/notifications";
+import {
+  validateReservation,
+  buildReservationEvent,
+  activeReservedAmount,
+  ORDER_RESERVED,
+  ORDER_RELEASED,
+  ORDER_CONFIRMED,
+} from "@/lib/budget/order-reservation";
+import { resolveBudgetPeriod } from "@/lib/budget/budget-period";
+import { resolveBudgetPurchaseScopeKeys } from "@/lib/budget/purchase-scope-keys";
 
 // 주문번호 생성 함수
 function generateOrderNumber(): string {
@@ -32,9 +42,9 @@ function generateOrderNumber(): string {
  *
  * 트랜잭션 흐름:
  * 1. 견적 검증 (본인 소유, COMPLETED 상태)
- * 2. 예산 체크 (잔액 >= 주문금액)
+ * 2. 예산 확인 (canonical Budget · 잔액 = amount − 확정지출 − 활성예약)
  * 3. 주문 생성
- * 4. 예산 차감
+ * 4. 예산 예약 (BudgetEvent ORDER_RESERVED — 차감 아님, ⑪ P3)
  * 5. 견적 상태 변경 (PURCHASED)
  */
 /**
@@ -162,25 +172,61 @@ export async function POST(request: NextRequest) {
         throw new Error("INVALID_AMOUNT");
       }
 
-      // 2. 예산 체크
+      // 2. 예산 확인 — canonical Budget (⑪ 판정 2026-08-22 · PLAN_order-budget-reservation P3)
+      //    UserBudget 조회/차감 경로 소거: 발주 예산의 canonical truth 는 Budget 이고,
+      //    차감이 아니라 BudgetEvent 예약(ORDER_RESERVED)으로 기록한다.
+      //    지출 확정은 PurchaseRecord 소관 — 예약과 확정을 겹쳐 세지 않는다.
       const budget = budgetId
-        ? await tx.userBudget.findUnique({
-            where: { id: budgetId },
-          })
-        : await tx.userBudget.findFirst({
-            where: {
-              userId: session.user.id,
-              isActive: true,
-            },
-            orderBy: { createdAt: "desc" },
+        ? await tx.budget.findUnique({ where: { id: budgetId } })
+        : await tx.budget.findFirst({
+            where: { organizationId: quote.organizationId },
+            orderBy: { yearMonth: "desc" },
           });
 
       if (!budget) {
         throw new Error("NO_BUDGET");
       }
 
-      if (budget.remainingAmount < totalAmount) {
-        throw new Error("INSUFFICIENT_BUDGET");
+      // 동시 예약 직렬화 — 잔액 계산~예약 기록 구간 (구 UserBudget FOR UPDATE 패턴 승계)
+      await tx.$executeRaw`SELECT id FROM "Budget" WHERE id = ${budget.id} FOR UPDATE`;
+
+      // 잔액식: amount − 확정지출(PurchaseRecord · ⑤ resolveBudgetPeriod 창) − 활성예약(BudgetEvent)
+      const { periodStart, periodEnd } = resolveBudgetPeriod(budget);
+      const purchaseScopeKeys = await resolveBudgetPurchaseScopeKeys(budget);
+      const spentAgg = await tx.purchaseRecord.aggregate({
+        _sum: { amount: true },
+        where: {
+          scopeKey: { in: purchaseScopeKeys },
+          purchasedAt: { gte: periodStart, lte: periodEnd },
+        },
+      });
+      const confirmedSpent = spentAgg._sum.amount ?? 0;
+      const orderEvents = await tx.budgetEvent.findMany({
+        where: {
+          budgetId: budget.id,
+          eventType: { in: [ORDER_RESERVED, ORDER_RELEASED, ORDER_CONFIRMED] },
+        },
+        select: { eventType: true, amount: true, sourceEntityId: true },
+      });
+      const activeReserved = activeReservedAmount(orderEvents);
+      // BudgetEvent.organizationId 는 required — 개인 예산(organizationId null)은
+      // scopeKey("user-…")를 조직 세그먼트로 쓴다 (budgetEventKey 문법 유지).
+      const eventOrgId = budget.organizationId ?? quote.organizationId ?? budget.scopeKey;
+      const reservationBudget = {
+        id: budget.id,
+        organizationId: eventOrgId,
+        amount: budget.amount,
+      };
+      const verdict = validateReservation({
+        budget: reservationBudget,
+        confirmedSpent,
+        activeReserved,
+        requested: totalAmount,
+      });
+      if (!verdict.ok) {
+        throw new Error(
+          verdict.reason === "INVALID_AMOUNT" ? "INVALID_AMOUNT" : "INSUFFICIENT_BUDGET",
+        );
       }
 
       // 3. 주문 생성
@@ -258,36 +304,28 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // 4. 예산 차감 (SELECT FOR UPDATE + 원자적 연산)
-      await tx.$executeRaw`SELECT id FROM "UserBudget" WHERE id = ${budget.id} FOR UPDATE`;
-
-      const updatedBudget = await tx.userBudget.update({
-        where: { id: budget.id },
-        data: {
-          usedAmount:      { increment: totalAmount },
-          remainingAmount: { decrement: totalAmount },
-        },
+      // 4. 예약 기록 (P3) — 차감이 아니다. BudgetEvent 원장에 ORDER_RESERVED 를 남기고
+      //    잔액은 amount − PurchaseRecord − 활성예약으로 파생한다 (canonical truth 보호).
+      //    budgetEventKey unique 가 같은 주문의 중복 예약을 막는다 (idempotency 문법 승계).
+      const reserveEvent = buildReservationEvent({
+        budget: reservationBudget,
+        orderId: order.id,
+        amount: totalAmount,
+        sequence: 1,
       });
-
-      // 동시 요청으로 음수가 됐을 경우 즉시 롤백
-      if (updatedBudget.remainingAmount < 0) {
-        throw new Error("INSUFFICIENT_BUDGET");
-      }
-
-      const balanceBefore = budget.remainingAmount;
-      const balanceAfter  = updatedBudget.remainingAmount;
-
-      // 예산 거래 내역 기록
-      await tx.userBudgetTransaction.create({
+      await tx.budgetEvent.create({
         data: {
+          organizationId: eventOrgId,
+          budgetEventKey: reserveEvent.budgetEventKey,
+          eventType: reserveEvent.eventType,
+          sourceEntityType: reserveEvent.sourceEntityType,
+          sourceEntityId: reserveEvent.sourceEntityId,
           budgetId: budget.id,
-          orderId: order.id,
-          type: "DEBIT",
+          yearMonth: budget.yearMonth,
           amount: totalAmount,
-          // §11.234 — orderNumber null 시 order.orderNumber 사용.
-          description: `주문 ${orderNumber ?? order.orderNumber ?? "—"} - ${quote.title}`,
-          balanceBefore,
-          balanceAfter,
+          preCommitted: activeReserved,
+          postCommitted: activeReserved + totalAmount,
+          executedBy: session.user.id,
         },
       });
 
@@ -299,14 +337,16 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      const budgetNameMatch = budget.description?.match(/^\[([^\]]+)\]/);
       return {
         order,
         budget: {
-          id: updatedBudget.id,
-          name: updatedBudget.name,
-          totalAmount: updatedBudget.totalAmount,
-          usedAmount: updatedBudget.usedAmount,
-          remainingAmount: updatedBudget.remainingAmount,
+          id: budget.id,
+          name: budgetNameMatch?.[1] ?? `${budget.yearMonth} 예산`,
+          totalAmount: budget.amount,
+          usedAmount: confirmedSpent,
+          reservedAmount: activeReserved + totalAmount,
+          remainingAmount: verdict.remainingAfter ?? 0,
         },
       };
     });
@@ -429,12 +469,11 @@ export async function POST(request: NextRequest) {
         message: "유효하지 않은 주문 금액입니다.",
         status: 400,
       },
-      // §order-no-budget-message — 예산은 세 모델이고 이 경로는 그중 하나만 조회한다(L166 tx.userBudget).
-      // "등록된 예산이 없습니다" 는 다른 모델에 예산이 있을 때 사실과 반대다.
-      // 어느 예산이 없는지 · 어디서 만드는지를 화면 이름으로 지목한다.
+      // §order-no-budget-message — P3 재배선 후: 발주 예산의 canonical truth 는
+      // 예산 관리 화면의 Budget 이다. 문구는 그 사실을 가리킨다 (⑫ 사실화 2차).
       NO_BUDGET: {
         message:
-          "발주에 사용할 연구비 예산이 없습니다 · 예산 관리 화면에서 만든 예산은 아직 발주에 연결되지 않습니다. 연구비 관리에서 예산을 만들어 주세요.",
+          "발주에 사용할 예산이 없습니다 · 발주는 예산 관리 화면의 예산을 사용합니다. 예산 관리에서 예산을 만들어 주세요.",
         status: 400,
       },
       INSUFFICIENT_BUDGET: {

@@ -22,6 +22,14 @@ import { OrderStatus } from "@prisma/client";
 // status DELIVERED 진입 시 InventoryRestock 자동 생성 (idempotent —
 // before.status !== "DELIVERED" 분기). admin status route 와 동일 helper.
 import { runDeliveryInventorySync } from "@/lib/inventory/delivery-sync";
+// §order-budget-reservation P3 — void→release: CANCELLED 전이 시 발주 예약 해제.
+import {
+  buildReleaseEvent,
+  activeReservedAmount,
+  ORDER_RESERVED,
+  ORDER_RELEASED,
+  ORDER_CONFIRMED,
+} from "@/lib/budget/order-reservation";
 import { z } from "zod";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createAuditLog, auditRequestMeta } from "@/lib/audit/audit-logger";
@@ -168,6 +176,62 @@ export async function PATCH(
         data: updateData,
         include: { items: true },
       });
+      if (
+        data.status === OrderStatus.CANCELLED &&
+        before.status !== OrderStatus.CANCELLED
+      ) {
+        // §order-budget-reservation P3 — void→release.
+        // 예약 원장(ORDER_RESERVED · budgetId 有)이 있으면 같은 금액의
+        // ORDER_RELEASED 를 기록해 활성 예약을 소멸시킨다. 잔액은 파생이라
+        // 이 이벤트 하나로 원복된다. budgetEventKey unique 가 중복 해제를
+        // 막는다 — P2002 는 "이미 해제됨" 이므로 멱등 무시.
+        const reserve = await tx.budgetEvent.findFirst({
+          where: {
+            sourceEntityId: id,
+            eventType: ORDER_RESERVED,
+            budgetId: { not: null },
+          },
+        });
+        if (reserve?.budgetId) {
+          const siblings = await tx.budgetEvent.findMany({
+            where: {
+              budgetId: reserve.budgetId,
+              eventType: { in: [ORDER_RESERVED, ORDER_RELEASED, ORDER_CONFIRMED] },
+            },
+            select: { eventType: true, amount: true, sourceEntityId: true },
+          });
+          const preActive = activeReservedAmount(siblings);
+          const releaseEvent = buildReleaseEvent({
+            budget: {
+              id: reserve.budgetId,
+              organizationId: reserve.organizationId,
+              amount: 0,
+            },
+            orderId: id,
+            amount: reserve.amount,
+            sequence: 1,
+          });
+          try {
+            await tx.budgetEvent.create({
+              data: {
+                organizationId: reserve.organizationId,
+                budgetEventKey: releaseEvent.budgetEventKey,
+                eventType: releaseEvent.eventType,
+                sourceEntityType: releaseEvent.sourceEntityType,
+                sourceEntityId: id,
+                budgetId: reserve.budgetId,
+                yearMonth: reserve.yearMonth,
+                amount: reserve.amount,
+                preCommitted: preActive,
+                postCommitted: Math.max(0, preActive - reserve.amount),
+                executedBy: session.user.id,
+              },
+            });
+          } catch (err: unknown) {
+            if ((err as { code?: string })?.code !== "P2002") throw err;
+          }
+        }
+      }
       if (
         data.status === OrderStatus.DELIVERED &&
         before.status !== OrderStatus.DELIVERED

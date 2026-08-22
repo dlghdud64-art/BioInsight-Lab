@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { resolveBudgetPurchaseScopeKeys } from "@/lib/budget/purchase-scope-keys";
+import { resolveBudgetPeriod } from "@/lib/budget/budget-period";
 import { z } from "zod";
 import { OrganizationRole } from "@prisma/client";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
@@ -114,9 +115,9 @@ export async function GET(
       }
     }
 
-    const [year, month] = budget.yearMonth.split("-").map(Number);
-    const periodStart = new Date(year, month - 1, 1);
-    const periodEnd = new Date(year, month, 0, 23, 59, 59);
+    // ⑤ 배선 (P3) — usage 합산 창을 표시 기간과 같은 truth 로: description 명시
+    // period 우선, 없으면 yearMonth 월 창 (resolveBudgetPeriod 단일화).
+    const { periodStart, periodEnd } = resolveBudgetPeriod(budget);
 
     // 사용액 계산 (조직 예산인 경우)
     let totalSpent = 0;
