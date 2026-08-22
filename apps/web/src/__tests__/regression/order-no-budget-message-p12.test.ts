@@ -56,13 +56,18 @@ describe("§order-no-budget-message — 문구가 사실과 반대이면 안 된
 });
 
 describe("§order-no-budget-message — 회귀 0", () => {
-  it("조회 대상은 그대로 UserBudget 하나다 — 문구만 고쳤고 동작은 안 바꿨다", () => {
-    const code = read(ROUTE);
-    expect(code).toMatch(/tx\.userBudget\.findUnique/);
-    expect(code).toMatch(/tx\.userBudget\.findFirst/);
-    /* 🛑 이 경로가 Budget/CategoryBudget 을 읽기 시작하면 그건 ⑪ 판정 사안이다.
-     *    문구 수정 배치가 조용히 모델을 통합해 버리는 것을 막는다. */
-    expect(code).not.toMatch(/tx\.budget\.|tx\.categoryBudget\./);
+  it("⛔ tripwire 명시 해제 (2026-08-22) — ⑪ 판정으로 임무 종료 · 판정 문서를 잠근다", () => {
+    /* 옛 축: tx.budget./tx.categoryBudget. 유입 금지 — ⑪ 판정 전 조용한 모델 통합을 막는
+     * tripwire 였다 (HANDOFF §4: "우회하거나 조용히 편집하면 안 된다 · 해제 커밋에 갈래와 근거").
+     * 판정(호영님 2026-08-22): canonical 예산 = Budget · (나) 예약(reserved) 도입.
+     * 근거 실측: UserBudget 프로덕션 실행 0 · 읽기 축 기통합 · 쓰기 축만 낙오(NO_BUDGET 오진).
+     * → 이 커밋으로 명시 해제. 대체 잠금: 판정 문서가 그 갈래를 담은 채 존재해야 한다.
+     * P3(배선)에서 역방향 재조준 예정 — Budget 합류는 예약 서비스(BudgetEvent) 경유만. */
+    const plan = read("../../docs/plans/PLAN_order-budget-reservation.md");
+    expect(plan).toMatch(/canonical 예산 = Budget/);
+    expect(plan).toMatch(/\(나\) 예약/);
+    /* 해제 시점의 현행 사실은 유지 — 아직 UserBudget 경로다 (P3 전까지 유효) */
+    expect(read(ROUTE)).toMatch(/tx\.userBudget\.findUnique/);
   });
 
   it("INSUFFICIENT_BUDGET 는 불변 — 잔액 부족은 다른 사유다", () => {
