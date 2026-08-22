@@ -349,6 +349,13 @@ export async function POST(request: NextRequest) {
           remainingAmount: verdict.remainingAfter ?? 0,
         },
       };
+    }, {
+      // §order-budget-reservation P4 실측 (2026-08-22): 함수 리전(iad1) ↔ DB(도쿄)
+      // 왕복 지연 × 트랜잭션 내 쿼리 수로 기본 5초를 초과 — 6.3초 실측 후 P2028 500.
+      // 원자성(FOR UPDATE ~ 예약 기록)은 계약이므로 트랜잭션을 쪼개지 않고
+      // 타임아웃을 명시 확장한다. 리전 정합은 별건 카드(인프라 결정).
+      maxWait: 5000,
+      timeout: 20000,
     });
 
     // 액티비티 로그 기록 (비동기)
