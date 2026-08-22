@@ -33,13 +33,15 @@ Last Updated 갱신 → Notes 기록 → 그 후에만 다음 phase. 게이트 �
 **Success Criteria:**
 - [ ] 견적 관리 행 "발주 준비" → 주문 접수 다이얼로그(예산 선택·예상 잔액) 직접 — dock 경유 0
 - [ ] 운영 브리핑 dock 소스 제거 · 재유입 sentinel
-- [ ] /quotes/[id] 은퇴 — 내부 링크/진입 0 (라우트 처분은 본 슬라이스 범위: 링크 제거까지)
+- [ ] /quotes/[id] 은퇴 — §11.39 선례 2차 적용: 페이지를 서버 리다이렉트로 갈아끼움
+  (→ /dashboard/quotes?selected=). 공유된 외부 URL 이 same-canvas 로 착지. ⚠️ 순서 구속:
+  다이얼로그 이식 완료 후에만 전환 (먼저 걸면 발주 진입점 0)
 - [ ] 취소 CTA: /my/orders 행에서 취소 가능 (ORDERED 상태 한정 · 확인 다이얼로그)
 - [ ] confirm 봉합: 주문 유래 PurchaseRecord 생성 시 ORDER_CONFIRMED 기록 — 이중 계상 0
 - [ ] 경로 C 은퇴: /api/orders/draft 호출부 처분 후 라우트 410/제거 — "발주" 는 /api/orders 하나
 **Out of Scope (⚠️ 구현 금지):**
 - [ ] UserBudget 모델 은퇴 (별도 배치)
-- [ ] /quotes/[id] 파일 삭제 (링크 제거·진입 차단까지만 — 삭제는 후속 정리 배치)
+- [ ] /quotes/[id] 파일 삭제 — 리다이렉트 스텁으로 대체되므로 삭제 불필요 (§11.39 동형)
 - [ ] 리전 정합(iad1↔도쿄) — 인프라 별건
 
 ## 4. Product Constraints
@@ -69,6 +71,9 @@ Last Updated 갱신 → Notes 기록 → 그 후에만 다음 phase. 게이트 �
 
 ### Phase 1: 계약 · RED
 - Status: [ ] Pending
+- confirm "겹쳐 세지 않는다" 는 2축 단언 (로컬 세션 제안 채택): P1 = 원장 축 순수 계약
+  (reserved+confirmed → activeReserved 0 · 잔액식 단일 차감), P4 = 잔액 화면 축 실측.
+  단일 축 교차검증 무효(§9.1a 형태) 방지
 - 🔴 confirm 계약(생성 지점→ORDER_CONFIRMED·이중 계상 금지) + 진입점 sentinel
   (브리핑 재유입 0 · 행 CTA→다이얼로그 · draft 호출 재유입 0) RED
 - ✋ Gate: RED 진짜 RED · 기존 GREEN 불변
@@ -85,7 +90,7 @@ Last Updated 갱신 → Notes 기록 → 그 후에만 다음 phase. 게이트 �
 - 🔴 integration sentinel RED → 🟢 dock 삭제 · 행 CTA→다이얼로그 이식(vendorRequestId 축 포함) ·
   /my/orders 취소 CTA · 상세 링크 제거 · draft 호출부 처분 → 🔵 same-canvas 정리
 - ✋ Gate: dead button 0 · 진입 dead-end 0 · loading/error/disabled 상태 · 게이트 GREEN ·
-  /quotes/[id] 도달성 가드 sentinel (dead 단언 · 진입 링크 재유입 0)
+  /quotes/[id] 리다이렉트 단언 sentinel (§11.39 동형 · 구 페이지 코드 재유입 0)
 - Rollback: 표면 커밋 revert → 종전 dock 경로
 
 ### Phase 4: Rollout · Smoke
