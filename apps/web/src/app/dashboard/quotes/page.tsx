@@ -30,6 +30,9 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+// §order-entry-rewire P3-1 — 주문 접수 폼 (예산 선택) 이식분
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Search, Filter, Package, CheckCircle2, Clock, AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon, Loader2, ScanLine, ChevronDown, ChevronUp, Settings2, GripVertical, MoreHorizontal, Check } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -1158,6 +1161,78 @@ function QuotesPageContent() {
   useEffect(() => {
     if (activeWorkWindow === "request_send") closeOverlay();
   }, [activeWorkWindow, closeOverlay]);
+
+  // ═══ §order-entry-rewire P3-1 — 발주 진입 직결 (호영님 판정 2026-08-22) ═══
+  //   운영 브리핑·전체 상세 페이지 은퇴에 따라 주문 접수(예산 선택·예상 잔액)를
+  //   po_conversion 워크윈도우로 이식. same-canvas — 새 페이지 없음.
+  //   금액 축: vendorRequestId 필수 (없으면 서버 totalAmount 0 → INVALID_AMOUNT — 금일 실측).
+  const [orderForm, setOrderForm] = useState<{ budgetId: string; expectedDelivery: string; notes: string }>({ budgetId: "", expectedDelivery: "", notes: "" });
+  const [orderSubmitting, setOrderSubmitting] = useState(false);
+  const poConversionOpen = activeWorkWindow === "po_conversion" && !!selectedQuoteId;
+  const { data: orderBudgetsData } = useQuery({
+    queryKey: ["user-budgets"],
+    queryFn: async ({ signal }: { signal?: AbortSignal }) => {
+      const res = await fetch("/api/user-budgets", { signal });
+      if (!res.ok) throw new Error("예산 목록을 불러오지 못했습니다");
+      return res.json();
+    },
+    enabled: poConversionOpen,
+  });
+  const { data: orderVrData } = useQuery({
+    queryKey: ["vendor-requests", selectedQuoteId],
+    queryFn: async ({ signal }: { signal?: AbortSignal }) => {
+      const res = await fetch(`/api/quotes/${selectedQuoteId}/vendor-requests`, { signal });
+      if (!res.ok) throw new Error("회신 정보를 불러오지 못했습니다");
+      return res.json();
+    },
+    enabled: poConversionOpen,
+  });
+  const orderBudgets: any[] = orderBudgetsData?.budgets ?? [];
+  const orderRespondedVrs: any[] = (orderVrData?.vendorRequests ?? []).filter((vr: any) => vr.status === "RESPONDED");
+  //   단일 회신이면 자동 — 구매 처리 경로(effectiveVrId)와 같은 선택 축
+  const orderVrId: string | undefined = orderRespondedVrs.length === 1 ? orderRespondedVrs[0]?.id : undefined;
+  const orderAmount = (() => {
+    if (!selectedQuote || !orderVrId) return 0;
+    const vr = orderRespondedVrs[0];
+    return (selectedQuote.items ?? []).reduce((sum: number, item: any) => {
+      const ri = vr?.responseItems?.find((r: any) => r.quoteItemId === item.id);
+      return sum + Math.round(Number(ri?.unitPrice ?? 0)) * (item.quantity || 1);
+    }, 0);
+  })();
+  const selectedOrderBudget = orderBudgets.find((b: any) => b.id === orderForm.budgetId);
+  const orderExpectedRemaining = selectedOrderBudget ? (selectedOrderBudget.remainingAmount ?? 0) - orderAmount : null;
+  const submitOrder = async () => {
+    if (orderSubmitting) return; // 연타 직렬화 (§org-policy 동형)
+    if (!selectedQuote) return;
+    if (!orderForm.budgetId) { toast({ title: "결제할 예산을 선택해주세요", variant: "destructive" }); return; }
+    setOrderSubmitting(true);
+    try {
+      const res = await csrfFetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quoteId: selectedQuote.id,
+          vendorRequestId: orderVrId || undefined,
+          budgetId: orderForm.budgetId,
+          expectedDelivery: orderForm.expectedDelivery || undefined,
+          notes: orderForm.notes || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        throw new Error(err?.error || err?.message || "주문 생성에 실패했습니다");
+      }
+      toast({ title: "주문이 접수되었습니다", description: "주문 내역에서 확인하세요" });
+      queryClient.invalidateQueries({ queryKey: ["user-budgets"] });
+      refetch();
+      setOrderForm({ budgetId: "", expectedDelivery: "", notes: "" });
+      setActiveWorkWindow(null);
+    } catch (e) {
+      toast({ title: "주문 생성 실패", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+    } finally {
+      setOrderSubmitting(false);
+    }
+  };
   // §quote-management-redesign P2 — 발송 인텐트(2-step) 게이트 대상 caseId. 리스트 1-tap 직접
   //   발송(§11.279d) → ConfirmSendModal 확인 → "발송 검토 계속" 시에만 VendorRequestModal 진입(오발송 방지).
   const [sendIntentQuoteId, setSendIntentQuoteId] = useState<string | null>(null);
@@ -4566,6 +4641,8 @@ function QuotesPageContent() {
               ? ((selectedQuote.responses?.length ?? 0) >= 2 ? "선택안 확정" : "추가 회신 확보")
               : activeWorkWindow === "approval_prep"
               ? "승인 패키지 준비 완료"
+              : activeWorkWindow === "po_conversion"
+              ? (orderSubmitting ? "접수 중..." : "주문 접수")
               : selectedSignals.ctaLabel,
             onClick: () => {
               // §11.363 — "추가 회신 확보"/재요청 = 추가 발송 intent.
@@ -4577,6 +4654,11 @@ function QuotesPageContent() {
                 (activeWorkWindow === "compare_review" && (selectedQuote.responses?.length ?? 0) < 2)
               ) {
                 setActiveWorkWindow("request_send");
+                return;
+              }
+              // §order-entry-rewire P3-1 — po_conversion 은 닫기(no-op)가 아니라 실 접수.
+              if (activeWorkWindow === "po_conversion") {
+                void submitOrder();
                 return;
               }
               setActiveWorkWindow(null);
@@ -4767,10 +4849,54 @@ function QuotesPageContent() {
               );
             })()}
             {activeWorkWindow === "po_conversion" && (
-              <div className="rounded-lg border border-bd bg-pn p-4 space-y-3">
-                <p className="text-xs font-medium text-slate-700">발주 전환 준비</p>
-                <p className="text-xs text-slate-400">line item을 확정하고 발주 조건을 검토한 뒤 PO를 생성합니다.</p>
-                <div className="text-xs text-slate-500">품목: {selectedQuote.items.length}건</div>
+              <div className="rounded-lg border border-bd bg-pn p-4 space-y-4">
+                {/* §order-entry-rewire P3-1 — 주문 접수 (예산 선택·예상 잔액) 이식.
+                    은퇴한 /quotes/[id] 다이얼로그의 계약 승계: vendorRequestId 축 포함. */}
+                <div>
+                  <p className="text-xs font-medium text-slate-700">주문 접수</p>
+                  <p className="text-xs text-slate-400 mt-0.5">품목 {selectedQuote.items.length}건 · 결제할 예산을 선택하고 접수하세요</p>
+                </div>
+                {orderRespondedVrs.length !== 1 && (
+                  <p className="text-xs text-slate-500 rounded border border-slate-200 bg-white p-2">
+                    회신 {orderRespondedVrs.length}건 — 주문 금액은 단일 회신 확정 후 계산됩니다
+                  </p>
+                )}
+                <div className="space-y-2">
+                  <Label className="text-xs">결제할 과제 <span className="text-red-500">*</span></Label>
+                  <Select value={orderForm.budgetId} onValueChange={(v) => setOrderForm((f) => ({ ...f, budgetId: v }))} disabled={orderSubmitting}>
+                    <SelectTrigger className="bg-white"><SelectValue placeholder="과제를 선택하세요" /></SelectTrigger>
+                    <SelectContent>
+                      {orderBudgets.length === 0 && (
+                        <div className="px-2 py-1.5 text-xs text-slate-500">발주에 사용할 예산이 없습니다 · 예산 관리에서 만들어 주세요</div>
+                      )}
+                      {orderBudgets.map((budget: any) => (
+                        <SelectItem key={budget.id} value={budget.id} disabled={budget._source === "user-budget"}>
+                          {budget.name} (잔액: ₩ {(budget.remainingAmount ?? 0).toLocaleString("ko-KR")}){budget._source === "user-budget" ? " · 발주 미지원(연구비)" : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedOrderBudget && (
+                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-1 text-xs">
+                      <div className="flex justify-between"><span className="text-slate-500">현재 잔액</span><span className="font-semibold">₩ {(selectedOrderBudget.remainingAmount ?? 0).toLocaleString("ko-KR")}</span></div>
+                      <div className="flex justify-between"><span className="text-slate-500">주문 금액</span><span className="font-semibold text-red-600">- ₩ {orderAmount.toLocaleString("ko-KR")}</span></div>
+                      <div className="flex justify-between pt-1.5 border-t border-blue-200"><span className="font-medium">예상 잔액</span>
+                        <span className={orderExpectedRemaining !== null && orderExpectedRemaining < 0 ? "font-bold text-red-600" : "font-bold text-green-600"}>₩ {(orderExpectedRemaining ?? 0).toLocaleString("ko-KR")}</span>
+                      </div>
+                      {orderExpectedRemaining !== null && orderExpectedRemaining < 0 && (
+                        <p className="text-[11px] text-red-600">예산이 부족합니다</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">희망 배송일 <span className="text-slate-400">(선택)</span></Label>
+                  <Input type="date" className="bg-white" value={orderForm.expectedDelivery} min={new Date().toISOString().split("T")[0]} onChange={(e) => setOrderForm((f) => ({ ...f, expectedDelivery: e.target.value }))} disabled={orderSubmitting} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">전달 사항 <span className="text-slate-400">(선택)</span></Label>
+                  <Input className="bg-white" placeholder="추가로 전달할 사항" value={orderForm.notes} onChange={(e) => setOrderForm((f) => ({ ...f, notes: e.target.value }))} disabled={orderSubmitting} />
+                </div>
               </div>
             )}
 
