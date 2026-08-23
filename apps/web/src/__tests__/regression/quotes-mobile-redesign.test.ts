@@ -128,6 +128,12 @@ describe("§quotes-quick-filter-4a — 5칩 빠른 필터(구 popover 대체)", 
     expect(src).toContain("초기화");
   });
   it("상태 Select 제거(빠른 필터로 대체) — <Select 미사용", () => {
-    expect(read(PAGE)).not.toMatch(/<Select\b/);
+    /* §order-entry-rewire P3-1 재조준 (호영님 승인 2026-08-22 · §11.259c 와 동형).
+     * 결정("상태 필터 Select 드롭다운 → 5칩 빠른 필터")은 무변경. 창만 파일 전역 →
+     * 필터 영역 슬라이스로 정정한다. 전역 창은 주문 접수 다이얼로그의 예산 선택 Select
+     * (다른 표면 · 폼 입력 축)까지 잡았고, native <select> 는 check-no-native-select.sh
+     * 가 CI block 이라 실질 대안이 없어 두 게이트가 배타 충돌했다.
+     * 창 시작점은 여는 앵커(`검색 + 필터` 주석)부터 — §4원칙 ②. */
+    expect(read(PAGE)).not.toMatch(/검색 \+ 필터[\s\S]{0,6000}<Select\b/);
   });
 });

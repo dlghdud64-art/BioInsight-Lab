@@ -94,8 +94,14 @@ describe("⑤-b admin 취소 경로도 발주 예약을 해제한다 — 두 번
     /* 이 간극이 정확히 결함이었다: releasePOVoided(경로 A)는 purchaseRequest 필수라
      * 같은 if 에 넣으면 ⑪ 예약이 고아로 남는다. */
     const admin = stripComments(read("src/app/api/admin/orders/[id]/status/route.ts"));
-    const m = admin.match(/if \(newStatus === "CANCELLED"\) \{[\s\S]{0,200}?releaseOrderReservation/);
+    const m = admin.match(/if \(newStatus === "CANCELLED"\) \{([\s\S]{0,200}?)releaseOrderReservation/);
     expect(m).not.toBeNull();
+    /* 🛑 검출력 보강 (로컬 세션 프로브 2026-08-22): 위 단언만으로는 앵커와 호출 사이에
+     * purchaseRequest 가드를 **중첩**하는 형태를 못 잡는다 — 앵커는 그대로 남고 호출도
+     * 200자 안에 있어서 GREEN 이 뜬다. 그런데 그 중첩이 정확히 원 결함의 형태다.
+     * 앵커↔호출 사이 구간에 조건이 끼어들지 않았음을 직접 단언한다. */
+    expect(m![1]).not.toMatch(/purchaseRequest/);
+    expect(m![1]).not.toMatch(/\bif\s*\(/);
   });
 });
 
