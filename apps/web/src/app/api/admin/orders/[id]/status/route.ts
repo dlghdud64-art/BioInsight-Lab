@@ -16,6 +16,8 @@ import {
 //   (구매요청 유래 CategoryBudget 예약) 전용이라 견적→주문 예약을 모른다.
 //   두 진입점(owner PATCH · 이 route)이 같은 해제 계약을 이행하도록 서비스 공유.
 import { releaseOrderReservation } from "@/lib/budget/order-reservation-service";
+// §cancel-restores-quote — 취소는 예약만이 아니라 견적도 되돌린다 (겹 1 · 서비스 단일점).
+import { restoreQuoteOnOrderCancel } from "@/lib/orders/cancel-restore-quote";
 import {
   recordMutationAudit,
   buildAuditEventKey,
@@ -233,6 +235,8 @@ export async function PATCH(
       //   같은 if 에 넣으면 예약이 고아로 남는다 (승계 대조 발견 2026-08-22).
       if (newStatus === "CANCELLED") {
         await releaseOrderReservation(tx, { orderId, executedBy: session.user.id });
+        // §cancel-restores-quote — 예약 해제와 같은 트랜잭션 · 같은 조건 (owner 경로와 동일 계약).
+        await restoreQuoteOnOrderCancel(tx, { orderId });
       }
 
       // 3-b. CANCELLED 전환 시 예산 release — 원본 reserve 참조 (경로 A)

@@ -173,8 +173,13 @@ export async function POST(request: NextRequest) {
         throw new Error("QUOTE_NOT_COMPLETED");
       }
 
-      // §11.234 — 이미 주문된 견적인지 확인 (1:N relation, orders[].length > 0).
-      if (quote.orders && quote.orders.length > 0) {
+      // §11.234 — 이미 주문된 견적인지 확인 (1:N relation).
+      // §cancel-restores-quote 겹 2 (프로덕션 실측 2026-08-23) — 취소분은 세지 않는다.
+      //   §11.211 로 1:1 → 1:N 이 되고 취소가 생기면서 "주문이 있다 = 발주됨" 등식이
+      //   깨졌는데 판정식만 남아 있었다. 취소된 주문 하나가 그 견적의 재발주를
+      //   영구 차단하던 자리 (ORD-20260822-C3PN CANCELLED → ALREADY_ORDERED 400).
+      const activeOrders = (quote.orders ?? []).filter((o: { status: string }) => o.status !== OrderStatus.CANCELLED);
+      if (activeOrders.length > 0) {
         throw new Error("ALREADY_ORDERED");
       }
 

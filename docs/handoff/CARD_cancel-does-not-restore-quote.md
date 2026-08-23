@@ -112,3 +112,61 @@ admin   PATCH /api/admin/orders/[id]/status       quote 상태 미복귀
 - `PLAN_order-entry-rewire.md` — P4 가 이 결함으로 막혔다
 - `PLAN_order-budget-reservation.md` — 예약/해제 원장 (정상 동작 확인됨)
 - `CARD_path-c-order-draft.md` — "발주" 라는 말이 두 객체를 가리키는 문제 (별건)
+
+---
+
+## 구현 (2026-08-23 · 호영님 판정 "지금 고치고 재실측")
+
+두 겹을 한 슬라이스로 봉합했다. 착수 전 카드의 측정 항목 4개를 먼저 실측했다.
+
+### 측정 결과 (파일:줄 · 추정 0)
+
+```
+1  quote.status = PURCHASED 쓰기 지점 — 3곳
+     api/orders/route.ts:336            주문 접수 (tx 내)
+     api/admin/orders/route.ts:303      admin 주문 생성
+     api/quotes/[id]/route.ts:302       범용 PATCH (클라이언트가 status 를 보냄)
+   🔑 markQuoteAsPurchased 는 PurchaseRecord 만 만든다 — 견적 상태는 안 건드린다.
+
+2  COMPLETED 의 의미
+     deriveRailState   COMPLETED → ready_for_po_conversion (발주 가능)
+     state-machine     ALLOWED_QUOTE_TRANSITIONS.COMPLETED = ["PURCHASED"]
+                       PURCHASED = [] (terminal) → PURCHASED→COMPLETED 는 맵상 금지
+     소비자는 /api/quotes/[id]/status 와 operational-brief/popup.tsx 둘뿐.
+
+3  한 견적에 주문 다건 — 가능하다
+     @@unique([quoteId, vendorId]) · legacy 주문은 vendorId NULL (NULL-distinct)
+     → 취소 후 재발주가 unique 로 막히지는 않는다 (겹 3 없음).
+
+4  취소 외 되돌림 경로 — 없다
+     ALLOWED_ORDER_TRANSITIONS 상 DELIVERED·CANCELLED 는 terminal. 반품 경로 0.
+```
+
+### 판정 지점 — 전이맵은 넓히지 않았다
+
+취소 복귀는 forward 전이가 아니라 **보상 전이(compensating)** 로 본다. canonical
+`ALLOWED_QUOTE_TRANSITIONS.PURCHASED` 는 `[]` 로 남겼다 — 맵에 `["COMPLETED"]` 를
+넣으면 `/api/quotes/[id]/status` 의 **수동** 경로까지 함께 열려, 주문은 살아 있는데
+견적만 되돌리는 조작이 가능해진다. 서비스 주석에 이 결정을 명기했다.
+🛑 호영님이 "맵으로 옮긴다" 로 재판정하면 한 줄 변경 + sentinel 이동으로 끝난다.
+
+### 배선 (4 슬롯)
+
+```
+겹 1  lib/orders/cancel-restore-quote.ts   restoreQuoteOnOrderCancel — 신규 단일점
+      api/orders/[id]/route.ts             release 직후 · 같은 if · 같은 tx
+      api/admin/orders/[id]/status:3-a     release 직후 · 같은 if · 같은 tx
+겹 2  api/orders/route.ts                  activeOrders = orders.filter(비CANCELLED)
+      api/admin/orders/route.ts            동일 (형제 슬롯 복붙 방지)
+```
+
+복귀 조건 3축 — ① quote.status === PURCHASED ② 이 주문 외 활성 주문 0건
+③ PurchaseRecord 0건. ②가 "다른 주문이 세운 PURCHASED 를 무르지 않는다" 를,
+③이 "구매까지 확정된 견적은 발주 되감기 대상이 아니다" 를 이행한다.
+
+### sentinel
+
+`src/__tests__/orders/cancel-restore-quote.test.ts` — 코어 8 + 배선 8.
+목은 `where` 를 **실제로 적용**한다 (quoteId·id.not·status.not 3축) — 목이 필터
+회귀를 흡수하던 2026-08-22 학습 반영. 역방향 잠금 포함: 라우트가 견적 복귀를
+재인라인하면 RED.

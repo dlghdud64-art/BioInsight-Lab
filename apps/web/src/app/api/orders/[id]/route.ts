@@ -25,6 +25,8 @@ import { runDeliveryInventorySync } from "@/lib/inventory/delivery-sync";
 // §order-budget-reservation P3 — void→release: CANCELLED 전이 시 발주 예약 해제.
 //   §order-entry-rewire P3-3 — 로직은 서비스 단일점으로 이관(admin 경로와 공유).
 import { releaseOrderReservation } from "@/lib/budget/order-reservation-service";
+// §cancel-restores-quote — 취소는 예약만이 아니라 견적도 되돌린다 (겹 1 · 서비스 단일점).
+import { restoreQuoteOnOrderCancel } from "@/lib/orders/cancel-restore-quote";
 import { z } from "zod";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createAuditLog, auditRequestMeta } from "@/lib/audit/audit-logger";
@@ -178,6 +180,9 @@ export async function PATCH(
         // §order-budget-reservation P3 — void→release (서비스 단일점).
         //   예약 없으면 no-op · budgetEventKey unique 로 멱등. admin 취소 경로와 동일 계약.
         await releaseOrderReservation(tx, { orderId: id, executedBy: session.user.id });
+        // §cancel-restores-quote — 예약 해제와 **같은 트랜잭션 · 같은 조건**.
+        //   따로 두면 예약만 풀리고 견적은 PURCHASED 로 굳어 재발주가 0 이 된다.
+        await restoreQuoteOnOrderCancel(tx, { orderId: id });
       }
       if (
         data.status === OrderStatus.DELIVERED &&
