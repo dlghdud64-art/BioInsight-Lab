@@ -80,8 +80,22 @@ describe("⑤-b admin 취소 경로도 발주 예약을 해제한다 — 두 번
    * 경로 A(releasePOVoided)만 알고 order_released(⑪)를 모른다 — 관리자 취소 시
    * 발주 예약이 고아로 남는다. 두 CANCELLED 진입점(owner PATCH·admin status)이
    * 같은 해제 계약을 이행해야 한다. */
-  it("admin/orders/[id]/status CANCELLED 분기에 ORDER_RELEASED 배선", () => {
-    expect(read("src/app/api/admin/orders/[id]/status/route.ts")).toMatch(/ORDER_RELEASED/);
+  it("두 CANCELLED 진입점이 같은 해제 서비스를 부른다 (복붙 금지 · 한쪽만 고쳐지는 형태 차단)", () => {
+    /* 재조준(P3-3): 옛 축은 admin route 안의 ORDER_RELEASED 문자열을 요구했다.
+     * 구현은 서비스 단일점(releaseOrderReservation)으로 갔고, 그게 더 강한 계약이다 —
+     * 문자열 대조는 복붙된 두 벌도 통과시키지만 이 단언은 그러지 못한다. */
+    const admin = stripComments(read("src/app/api/admin/orders/[id]/status/route.ts"));
+    const owner = stripComments(read("src/app/api/orders/[id]/route.ts"));
+    expect(admin).toMatch(/releaseOrderReservation\(tx, \{ orderId/);
+    expect(owner).toMatch(/releaseOrderReservation\(tx, \{ orderId/);
+  });
+
+  it("🛑 admin 해제는 purchaseRequest 조건 밖이다 — 견적→주문 예약엔 구매요청이 없다", () => {
+    /* 이 간극이 정확히 결함이었다: releasePOVoided(경로 A)는 purchaseRequest 필수라
+     * 같은 if 에 넣으면 ⑪ 예약이 고아로 남는다. */
+    const admin = stripComments(read("src/app/api/admin/orders/[id]/status/route.ts"));
+    const m = admin.match(/if \(newStatus === "CANCELLED"\) \{[\s\S]{0,200}?releaseOrderReservation/);
+    expect(m).not.toBeNull();
   });
 });
 
@@ -89,6 +103,11 @@ describe("⑤ 취소 CTA — release 의 UI 진입점", () => {
   it("/my/orders 에 주문 취소 진입이 있다 (ORDERED 한정 · CANCELLED PATCH)", () => {
     const src = read(MY_ORDERS);
     expect(src).toMatch(/주문 취소/);
-    expect(src).toMatch(/CANCELLED/);
+    expect(src).toMatch(/status: "CANCELLED"/);
+    /* 누르면 실패할 것을 눌리게 두지 않는다 — ORDERED 한정 (dead button 금지) */
+    expect(src).toMatch(/order\.status === "ORDERED"/);
+    /* 되돌릴 수 없는 전이라 확인을 거친다 · csrfFetch 경유 */
+    expect(src).toMatch(/ConfirmDialog/);
+    expect(src).toMatch(/csrfFetch\(/);
   });
 });

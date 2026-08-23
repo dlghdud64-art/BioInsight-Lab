@@ -97,6 +97,12 @@ Last Updated 갱신 → Notes 기록 → 그 후에만 다음 phase. 게이트 �
   /my/orders 취소 CTA · 상세 링크 제거 · draft 호출부 처분 → 🔵 same-canvas 정리
 - ✋ Gate: dead button 0 · 진입 dead-end 0 · loading/error/disabled 상태 · 게이트 GREEN ·
   /quotes/[id] 리다이렉트 단언 sentinel (§11.39 동형 · 구 페이지 코드 재유입 0)
+- 🛑 P3-4 착수 전 필수 (로컬 세션 제안 채택 · P3-2 범위 정정과 같은 축):
+  **기능 대조** — /quotes/[id] 에서만 되는 일 ↔ ?selected= 레일에서 되는 일을 P0 과
+  같은 형식(파일:줄 · 추정 0)으로 재측정. P0 은 "들어오는 링크"(위치)를 셌고 "그 페이지
+  에서만 되는 일"(피의존 기능)은 안 셌다. 후보: 공유 URL 복사 · vendor-replies 선택 ·
+  select-item-vendor. §11.39 선례는 구 페이지가 렌더 불능이라 대조가 불필요했지만
+  이 페이지는 실제 동작 중이라 조건이 다르다
 - Rollback: 표면 커밋 revert → 종전 dock 경로
 
 ### Phase 4: Rollout · Smoke

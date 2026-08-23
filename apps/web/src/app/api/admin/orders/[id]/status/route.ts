@@ -12,6 +12,10 @@ import {
   NegativeCommittedSpendError,
   type BudgetReleaseEvent,
 } from "@/lib/budget/category-budget-release";
+// §order-entry-rewire P3-3 — 발주 예약(⑪) 해제. 위 releasePOVoided 는 경로 A
+//   (구매요청 유래 CategoryBudget 예약) 전용이라 견적→주문 예약을 모른다.
+//   두 진입점(owner PATCH · 이 route)이 같은 해제 계약을 이행하도록 서비스 공유.
+import { releaseOrderReservation } from "@/lib/budget/order-reservation-service";
 import {
   recordMutationAudit,
   buildAuditEventKey,
@@ -223,7 +227,15 @@ export async function PATCH(
         }));
       }
 
-      // 3. CANCELLED 전환 시 예산 release — 원본 reserve 참조
+      // 3-a. CANCELLED 전환 시 발주 예약(⑪) 해제 — 예약 없으면 no-op · 멱등.
+      //   🛑 아래 3-b(releasePOVoided)와 조건이 다르다: 그쪽은 구매요청 유래 발주
+      //   전용(purchaseRequest 필수)이고, 견적→주문 예약은 purchaseRequest 가 없다.
+      //   같은 if 에 넣으면 예약이 고아로 남는다 (승계 대조 발견 2026-08-22).
+      if (newStatus === "CANCELLED") {
+        await releaseOrderReservation(tx, { orderId, executedBy: session.user.id });
+      }
+
+      // 3-b. CANCELLED 전환 시 예산 release — 원본 reserve 참조 (경로 A)
       if (newStatus === "CANCELLED" && order.organizationId && order.purchaseRequest?.id) {
         budgetReleaseEvent = await releasePOVoided(tx, {
           organizationId: order.organizationId,
@@ -262,6 +274,10 @@ export async function PATCH(
     };
 
     // CANCELLED → SERIALIZABLE tx (예산 정합성), 그 외 → 일반 tx
+    //   §order-entry-rewire P3-3 — 발주 예약(3-a) 해제는 이 조건 밖에서도 돈다.
+    //   일반 tx 로 충분하다: budgetEventKey unique 가 중복 해제를 막고 잔액은 파생이라
+    //   lost update 가 성립하지 않는다. 예약 유무를 tx 전에 알려면 조회가 하나 더 늘고
+    //   그건 금일 P2028(트랜잭션 시간 초과)과 같은 방향이라 택하지 않는다.
     const result = newStatus === "CANCELLED" && order.organizationId && order.purchaseRequest?.id
       ? await withSerializableBudgetTx(db, runTransaction, { label: "order_cancel_release" })
       : await db.$transaction(runTransaction);

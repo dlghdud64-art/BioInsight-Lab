@@ -4,7 +4,10 @@ export const dynamic = 'force-dynamic';
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+// §order-entry-rewire P3-3 — 주문 취소 CTA (release 의 UI 진입점).
+import { csrfFetch } from "@/lib/api-client";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +64,36 @@ export default function MyOrdersPage() {
   const { toast } = useToast();
   const [page, setPage] = useState(1);
   const limit = 20;
+  const queryClient = useQueryClient();
+  // §order-entry-rewire P3-3 (호영님 판정 2026-08-22) — 취소 CTA.
+  //   서버는 CANCELLED 전이에서 발주 예약을 ORDER_RELEASED 로 해제하는데(⑪ P3),
+  //   그 경로를 밟을 UI 진입점이 없었다. 여기가 그 입구다.
+  const [cancelTarget, setCancelTarget] = useState<{ id: string; orderNumber: string } | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const confirmCancel = async () => {
+    if (!cancelTarget || cancelling) return; // 연타 직렬화
+    setCancelling(true);
+    try {
+      const res = await csrfFetch(`/api/orders/${cancelTarget.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "CANCELLED" }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        throw new Error(err?.error || "주문 취소에 실패했습니다");
+      }
+      toast({ title: "주문이 취소되었습니다", description: "예약된 예산이 해제됩니다" });
+      queryClient.invalidateQueries({ queryKey: ["my-orders"] });
+      // 예약 해제가 잔액에 반영된다 — 예산 목록도 갱신
+      queryClient.invalidateQueries({ queryKey: ["user-budgets"] });
+      setCancelTarget(null);
+    } catch (e) {
+      toast({ title: "주문 취소 실패", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   const { data: ordersData, isLoading } = useQuery({
     queryKey: ["my-orders", page],
@@ -163,6 +196,7 @@ export default function MyOrdersPage() {
                           <TableHead>상태</TableHead>
                           <TableHead>희망 배송일</TableHead>
                           <TableHead>주문일</TableHead>
+                          <TableHead className="text-right">액션</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -217,6 +251,24 @@ export default function MyOrdersPage() {
                                 }
                               )}
                             </TableCell>
+                            <TableCell className="text-right">
+                              {/* §order-entry-rewire P3-3 — 접수대기(ORDERED)만 취소 가능.
+                                  그 밖의 상태는 버튼을 두지 않는다 (누르면 실패할 것을
+                                  눌리게 두지 않는다 · dead button 금지). */}
+                              {order.status === "ORDERED" ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 text-xs"
+                                  disabled={cancelling}
+                                  onClick={() => setCancelTarget({ id: order.id, orderNumber: order.orderNumber })}
+                                >
+                                  주문 취소
+                                </Button>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -257,6 +309,18 @@ export default function MyOrdersPage() {
           </Card>
         </div>
       </div>
+
+      {/* §order-entry-rewire P3-3 — 취소 확인. CANCELLED 는 최종 상태(되돌릴 수 없다). */}
+      <ConfirmDialog
+        open={cancelTarget !== null}
+        onOpenChange={(o) => { if (!o && !cancelling) setCancelTarget(null); }}
+        title="주문을 취소할까요?"
+        description={`${cancelTarget?.orderNumber ?? ""} · 취소하면 되돌릴 수 없습니다. 예약된 예산은 해제되어 잔액으로 돌아갑니다.`}
+        confirmText={cancelling ? "취소 중..." : "주문 취소"}
+        cancelText="닫기"
+        variant="destructive"
+        onConfirm={() => { void confirmCancel(); }}
+      />
     </div>
   );
 }
