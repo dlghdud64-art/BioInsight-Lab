@@ -31,6 +31,42 @@
 ⚠️ 사무국 API 실측은 같은 조직을 **8건**으로 셌는데 DB 는 5건이다. 목록 API 의 스코프가
 organizationId 축이 아닐 수 있다 — 별건이지만 계수 대조 시 주의.
 
+## 겹 2 — 서버 가드도 취소분을 센다 (2026-08-23 P4 2상 실측 추가)
+
+카드 등재 시점의 범위가 실제로는 **두 겹**이었다. 견적 상태 복귀만으로는 재발주가
+성립하지 않는다.
+
+```
+겹 1  quote.status 가 PURCHASED 로 굳음      → UI 진입 차단   (최초 등재분)
+겹 2  ALREADY_ORDERED 가 CANCELLED 도 셈     → 서버 차단      (2상 실측)
+```
+
+증상: 견적을 COMPLETED 로 되돌린 뒤 접수해도 `"이미 주문된 견적입니다."` 로 400.
+
+### 형제 슬롯 전수 (파일:줄 · 추정 0)
+
+```
+src/app/api/orders/route.ts:117        include { orders: true }      ← 상태 필터 없음
+src/app/api/orders/route.ts:136-138    if (quote.orders.length > 0) throw ALREADY_ORDERED
+src/app/api/admin/orders/route.ts:153  include { orders: true }      ← 상태 필터 없음
+src/app/api/admin/orders/route.ts:177  if (quote.orders.length > 0) throw ALREADY_ORDERED
+```
+
+🛑 **두 곳이다.** 사무국 실측은 owner 경로(`/api/orders`)에서 막혔지만 admin 경로
+(`/api/admin/orders`)에 같은 판정이 복붙돼 있다. 한쪽만 고치면 admin 이 남는다 —
+§order-entry-rewire P3-3 이 봉합한 것과 정확히 같은 형태(두 진입점 · 복붙 · 한쪽만 수정).
+
+UI 파생은 없다: `quote.orders` 를 include 해 판정에 쓰는 지점은 이 2곳뿐이고,
+견적 관리 화면은 `deriveRailState`(status 축)로만 판단한다 — 즉 **겹 1 과 겹 2 는
+서로 다른 축이라 둘 다 고쳐야 한다.**
+
+### 주석이 남긴 단서
+
+`admin/orders/route.ts:147` 이 유래를 적고 있다 — `§11.211 Order.id Sub-B 채택 후
+relation cardinality 변경(1:1 → 1:N). ALREADY_ORDERED 는 orders.length > 0 으로 derive.`
+1:1 시절에는 "주문이 있다 = 발주됨" 이 참이었다. 1:N 으로 바뀌고 취소가 생기면서
+**그 등식이 깨졌는데 판정식은 그대로 남았다.**
+
 ## 위치
 
 ```
