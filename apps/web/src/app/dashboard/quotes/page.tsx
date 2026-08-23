@@ -246,7 +246,7 @@ const RAIL_STATE_MAP: Record<RailState, {
     badge: "조건 확인 필요", headerSummary: "문서 또는 조건 이슈가 남아 있어 확정이 불가합니다", urgency: "확인 완료 전에는 다음 단계 진행이 제한됩니다",
     status: "확정 전 조건 확인", blocker: "SDS/CoA/MOQ/납기 조건 확인 필요", nextAction: "조건 확인", compareReady: "가능", poReady: "불가 · 조건 해소 전",
     snapshotNote: "비교 결과는 있으나 문서 또는 조건 확인 전에는 확정할 수 없습니다",
-    handoffTarget: "조건 확인 / 문서 정리", handoffStatus: "해소 후 발주 실행 검토 가능",
+    handoffTarget: "조건 확인 / 문서 정리", handoffStatus: "해소 후 주문 접수 가능",
     aiRecommendation: "우선 추천: 문서나 조건 이슈를 해소하면 바로 다음 단계로 넘길 수 있습니다",
     ctaLabel: "조건 확인", railCtaLabel: "조건 검토 시작", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "보류",
     actionKey: "compare_review",
@@ -266,7 +266,9 @@ const RAIL_STATE_MAP: Record<RailState, {
     snapshotNote: "현재 케이스는 비교와 확인 단계를 통과해 발주 실행 준비가 가능합니다",
     handoffTarget: "발주 실행 워크벤치", handoffStatus: "즉시 실행 가능",
     aiRecommendation: "우선 추천: 현재 케이스는 추가 검토보다 발주 실행 준비를 우선해도 됩니다",
-    ctaLabel: "발주 실행 준비", railCtaLabel: "발주 실행 검토", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "닫기",
+    // §order-entry-rewire P3-2 — railCtaLabel 은 이제 주문 접수 창의 제목이다
+    //   (발주 경로는 브리핑 rail 을 경유하지 않는다 · 호영님 판정 2026-08-22).
+    ctaLabel: "발주 실행 준비", railCtaLabel: "주문 접수", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "닫기",
     actionKey: "po_conversion",
   },
 };
@@ -1529,6 +1531,15 @@ function QuotesPageContent() {
   //   VendorRequestModal 직접 진입 (1 tap, 호영님 spec). rail panel skip
   //   전 setSelectedQuoteId + setActiveWorkWindow("request_send") 직접 호출.
   const handleQuoteCardSelect = useCallback((quoteId: string, ctaLabel?: string) => {
+    // §order-entry-rewire P3-2 (호영님 판정 2026-08-22) — 발주 진입 직결.
+    //   종전: 행 "발주 준비" → openQuoteContextRail → 운영 브리핑이 뜨고 그 안에서
+    //   한 번 더 눌러야 주문 접수. 브리핑이 발주 흐름에 끼어드는 자리였다.
+    //   이제: 행 → 주문 접수 창 직행 (rail 미경유). 다른 상태의 rail 경유는 불변.
+    if (ctaLabel === "발주 실행 준비") {
+      setSelectedQuoteId(quoteId);
+      setActiveWorkWindow("po_conversion");
+      return;
+    }
     if (ctaLabel === "견적 요청 발송") {
       // §quote-management-redesign P2 — 직접 VendorRequestModal 진입 대신 발송 인텐트(2-step)
       //   게이트. 오발송 방지: ConfirmSendModal "발송 검토 계속" 시에만 request_send 진입.
@@ -3627,7 +3638,9 @@ function QuotesPageContent() {
             bottom-sheet 적용, 테이블 가용 너비 회복). word-break 어절 단위 wrap +
             "전체 상세 열기" / "닫기" Button 44px 터치 영역 확보. ═══ */}
       {/* §ops-briefing-scope 케이스3 — 발송 검토 모달(request_send) 중엔 견적 케이스 rail 미노출(중복). */}
-      {activeWorkWindow !== "request_send" && selectedQuote && selectedSignals && selectedOpStatus && (
+      {/* §order-entry-rewire P3-2 — po_conversion(주문 접수) 중에도 브리핑 미노출:
+          발주 흐름에 브리핑이 끼어들지 않는다 (request_send 와 동형 처리). */}
+      {activeWorkWindow !== "request_send" && activeWorkWindow !== "po_conversion" && selectedQuote && selectedSignals && selectedOpStatus && (
         <div className="min-[1200px]:hidden fixed inset-0 z-40" onClick={() => closeQuoteContextRail("overlay_click")}>
           <div className="absolute inset-0 bg-black/30" />
           <div
@@ -3826,7 +3839,9 @@ function QuotesPageContent() {
       {/* ═══ Quote Context Rail (lg+) ═══ */}
       {/* §quote-briefing-rail-overlay — 우측 세로 "BRIEFING" edge tab 제거(접기 폐기).
           레일 진입 = 행 선택, 닫기 = X(헤더) · Esc(기존). 진입점은 우하단 운영 브리핑 FAB(별개 popup)과 분리. */}
-      {activeWorkWindow !== "request_send" && selectedQuote && selectedSignals && selectedOpStatus && (() => {
+      {/* §order-entry-rewire P3-2 — po_conversion(주문 접수) 중에도 브리핑 미노출:
+          발주 흐름에 브리핑이 끼어들지 않는다 (request_send 와 동형 처리). */}
+      {activeWorkWindow !== "request_send" && activeWorkWindow !== "po_conversion" && selectedQuote && selectedSignals && selectedOpStatus && (() => {
         const sqResponseCount = selectedQuote.responses?.length ?? 0;
         // §11.212 — sqDaysSince 인라인 계산 제거 (SSR-CSR Date.now() drift 차단).
         // <RelativeTimeText iso={selectedQuote.createdAt} /> 가 useEffect mount 후 set.

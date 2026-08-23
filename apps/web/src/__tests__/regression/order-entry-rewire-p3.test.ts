@@ -21,11 +21,29 @@ function stripComments(src: string): string {
   return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
 }
 
-describe("① 운영 브리핑 은퇴 — 재유입 0", () => {
-  it("브리핑 진입 버튼·발주 실행 검토 CTA 가 없다", () => {
+describe("① 발주 경로는 운영 브리핑을 경유하지 않는다 (호영님 판정 2026-08-22 · 범위 정정)", () => {
+  /* 🛑 P1 단언 재조준. 옛 축: 브리핑 전면 은퇴("운영 브리핑 열기" 문자열 0)를 요구했다.
+   * P3-2 착수 실측이 전제를 뒤집었다 — 브리핑 rail(542줄)+모바일 sheet(195줄)은
+   * 발주 전용이 아니라 다른 5개 상태(발송·회신·재요청·비교·조건확인·승인)의 CTA 가
+   * 워크윈도우로 가는 유일한 경유지였다. 전면 삭제는 그 5개를 dead 로 만든다.
+   * 호영님 판정: 발주 경로만 직결 · rail 은 다른 상태에서 무손상 유지.
+   * → "운영 브리핑 열기"(모바일 브리핑 진입 · 다른 상태용) 단언 은퇴.
+   * 대체 잠금(아래 3건): 발주 경로가 rail 을 경유하지 않는다는 사실을 직접 잠근다. */
+  it("행 CTA '발주 실행 준비' 는 rail 을 거치지 않고 주문 접수 창으로 직행한다", () => {
     const code = stripComments(read(QUOTES_WB));
-    expect(code).not.toMatch(/운영 브리핑 열기/);
+    expect(code).toMatch(/ctaLabel === "발주 실행 준비"[\s\S]{0,200}?setActiveWorkWindow\("po_conversion"\)/);
+  });
+
+  it("po_conversion 중에는 브리핑 rail·모바일 sheet 가 뜨지 않는다 (2곳 모두)", () => {
+    const code = stripComments(read(QUOTES_WB));
+    const guarded = code.match(/activeWorkWindow !== "request_send" && activeWorkWindow !== "po_conversion"/g) ?? [];
+    expect(guarded.length).toBe(2);
+  });
+
+  it("⛔ '발주 실행 검토' 재유입 0 — 그 창의 이름은 이제 주문 접수다", () => {
+    const code = stripComments(read(QUOTES_WB));
     expect(code).not.toMatch(/발주 실행 검토/);
+    expect(code).toMatch(/railCtaLabel: "주문 접수"/);
   });
 });
 
