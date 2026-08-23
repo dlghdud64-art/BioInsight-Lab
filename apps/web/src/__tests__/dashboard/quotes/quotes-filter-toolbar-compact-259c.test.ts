@@ -42,7 +42,11 @@ describe("§11.259c #1 — 검색 / 필터 row 모바일 1줄 압축", () => {
 
   it("상태 필터 Select UI 제거(빠른 필터/퍼널 파생으로 대체) — SelectTrigger 부재", () => {
     // §quotes-quick-filter-4a P2 — 상태 Select 드롭다운 제거. statusFilter 는 퍼널 파생.
-    expect(page).not.toMatch(/SelectTrigger/);
+    // §order-entry-rewire P3-1 재조준 (호영님 승인 2026-08-22): 결정("상태 필터 Select
+    // 제거")은 무변경, 창만 파일 전역 → 필터 툴바 슬라이스로 정정. 전역 창은 import 행과
+    // 무관한 표면(주문 접수 다이얼로그 예산 Select)까지 잡았다 — 그 Select 는 이 결정의
+    // 대상이 아니고, native <select> 는 CI block 이라 실질 대안이 없다.
+    expect(page).not.toMatch(/검색 \+ 필터[\s\S]{0,6000}SelectTrigger/);
     expect(page).toMatch(/setStatusFilter/);
   });
 });
@@ -72,8 +76,10 @@ describe("§11.259c #3 — invariant 보존 (canonical truth)", () => {
 
   it("상태 Select 제거 회귀(빠른 필터로 대체) — <Select / SelectItem 부재", () => {
     // §quotes-quick-filter-4a P2 — 상태 Select 7-item 드롭다운 제거(의도). 신 UI = 빠른 필터.
-    expect(page).not.toMatch(/<Select\b/);
-    expect(page).not.toMatch(/SelectItem/);
+    // §order-entry-rewire P3-1 재조준 (호영님 승인 2026-08-22) — 위 #1 과 같은 사유.
+    // 창 시작점은 여는 앵커(`검색 + 필터` 주석)부터 (§4원칙 ②), 주입도 앵커 뒤에 (방향 정합).
+    expect(page).not.toMatch(/검색 \+ 필터[\s\S]{0,6000}<Select\b/);
+    expect(page).not.toMatch(/검색 \+ 필터[\s\S]{0,6000}SelectItem/);
   });
 
   it("빠른 필터 상태칩 QUICK_CHIP_META.map + toggleQuickStatus 보존 (구 MODE_CHIPS 대체)", () => {
