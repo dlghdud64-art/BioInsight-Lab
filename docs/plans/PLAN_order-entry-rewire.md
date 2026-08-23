@@ -1,6 +1,6 @@
 # Implementation Plan: 발주 진입 재배선 — 운영 브리핑 은퇴 · confirm 봉합 · 경로 C 은퇴
 
-- **Status:** ⏳ Pending
+- **Status:** ✅ Complete (P0~P3-3 · 2026-08-22) — P3-4 는 이월 (기능 대조가 전제를 뒤집음)
 - **Started:** 2026-08-22
 - **Last Updated:** 2026-08-22
 - **판정(호영님 2026-08-22):** ① 운영 브리핑 dock 삭제 ② 전체 상세 페이지(/quotes/[id]) 은퇴
@@ -37,9 +37,10 @@ Last Updated 갱신 → Notes 기록 → 그 후에만 다음 phase. 게이트 �
   모바일 sheet(195줄)은 발주 전용이 아니라 다른 5개 상태 CTA 의 유일한 워크윈도우
   경유지 — 전면 삭제 시 그 5개가 dead. 행 "발주 준비" 직행 + po_conversion 중
   브리핑 미노출로 발주 흐름에서만 걷어낸다 (다른 상태 무손상)
-- [ ] /quotes/[id] 은퇴 — §11.39 선례 2차 적용: 페이지를 서버 리다이렉트로 갈아끼움
-  (→ /dashboard/quotes?selected=). 공유된 외부 URL 이 same-canvas 로 착지. ⚠️ 순서 구속:
-  다이얼로그 이식 완료 후에만 전환 (먼저 걸면 발주 진입점 0)
+- [ ] /quotes/[id] 은퇴 — **이월 (호영님 판정 2026-08-22)**. 착수 전 기능 대조가
+  전제를 뒤집었다: 그 페이지에만 있는 기능 6건(§10-a) — 리다이렉트를 지금 걸면
+  회신 입력·구매 요청·메모·상태 전이가 갈 데를 잃는다. 6건 이식이 선행 조건이므로
+  별도 슬라이스. 발주 흐름 개선(본 슬라이스 목적)은 P3-1~3 으로 달성됨
 - [ ] 취소 CTA: /my/orders 행에서 취소 가능 (ORDERED 상태 한정 · 확인 다이얼로그)
 - [ ] confirm 봉합: 주문 유래 PurchaseRecord 생성 시 ORDER_CONFIRMED 기록 — 이중 계상 0
 - [ ] 경로 C 은퇴: /api/orders/draft 호출부 처분 후 라우트 410/제거 — "발주" 는 /api/orders 하나
@@ -106,7 +107,7 @@ Last Updated 갱신 → Notes 기록 → 그 후에만 다음 phase. 게이트 �
 - Rollback: 표면 커밋 revert → 종전 dock 경로
 
 ### Phase 4: Rollout · Smoke
-- Status: [ ] Pending
+- Status: [ ] Pending (P3-1~3 배포 후 수행)
 - 🔴 실패 모드(이식 다이얼로그 금액 0·취소 중복) → 🟢 배포 후 폐루프 3상
   (행→접수→예약 확인→구매 확정→confirm 원장→취소 별건 주문으로 release) → 🔵 계측 정리
 - 🛑 필수 케이스 (로컬 세션 정정 채택): **같은 예산에 활성 주문 2건 상태에서 1건만 확정**
@@ -128,10 +129,38 @@ Last Updated 갱신 → Notes 기록 → 그 후에만 다음 phase. 게이트 �
 - P3 실패: 표면 revert → dock 경로 복원 (기능 동등)
 - P4 실패: instant rollback + 잔존 예약 release 수동 절차 (⑪ 계획서 절차 재사용)
 
+## 10-a. P3-4 기능 대조 실측 (2026-08-22 · 파일:줄 · 추정 0)
+
+/quotes/[id] 에만 있고 /dashboard/quotes?selected= 레일에 없는 기능:
+
+| # | 기능 | 소스 | rail |
+| --- | --- | --- | --- |
+| 1 | 공유 링크 복사 | handleSmartShare L598 · clipboard.writeText L620 | 0 |
+| 2 | 벤더 회신 직접 입력 | saveVendorReplyMutation L343 → vendor-replies L362 | 0 |
+| 3 | 품목별 벤더 확정 | handleSelectItemVendor L565 → select-item-vendor L569 | 0 |
+| 4 | 품목 메모 편집 | updateNoteMutation L507 → /api/quote-items/[id] L510 | 0 |
+| 5 | 구매 요청 생성 | purchaseRequestMutation L388 → /api/request L397 | 0 |
+| 6 | 견적 상태 전이·취소 | updateStatusMutation L456 → PATCH /api/quotes/[id] L464 | 0 |
+| — | 주문 접수 | createOrderMutation L419 | ✅ P3-1 이식 완료 |
+
+⚠️ rail 의 "공유" 2건은 주석 안의 단어이고 기능이 아니다 (계수 오인 방지 확인).
+🔑 #2 는 금일 ⑪ P4 폐루프 실측에서 실제로 사용한 화면이다 — 지금 리다이렉트를 걸면
+회신 등록 경로가 AI 스캔·이메일 회신만 남는다.
+
 ## 10. Progress
-- Overall: 0% · Current: P0 · Blocker: 없음
+- Overall: P0·P1·P2·P3-1~3 완료 · P3-4 이월 · P4 는 배포 후
+- Blocker: 없음
 
 ## 11. Notes & Learnings
+- [2026-08-22] 같은 형태가 이 슬라이스에서 두 번 나왔다 — **위치는 셌는데 피의존은
+  안 셌다**: (P3-2) 브리핑을 누가 경유하나 · (P3-4) 그 페이지에서만 되는 일이 무엇인가.
+  둘 다 착수 후에야 드러났고 둘 다 범위 정정으로 이어졌다. 인벤토리는 축이 둘이다 —
+  "어디 있나"와 "누가 그것에 기대나". 다음 은퇴/삭제 계획은 후자를 P0 에 포함한다
+- [2026-08-22] 재조준한 sentinel 은 형제 슬롯을 디렉터리 무관하게 전수 훑는다:
+  §11.259c 를 고치고 형제(quotes-mobile-redesign)를 안 훑어 두 슬라이스 뒤에 드러났다.
+  실측 결과 형제는 2건으로 닫힘 — grep 과 실행이 같은 답
+- [2026-08-22] 구조 이동(인라인→서비스)도 §sentinel-old-value-sweep 대상이다.
+  "행동 동일"을 이유로 건너뛰어 ⑪ P1 sentinel 2건이 깨졌다 (사무국 귀책)
 - [2026-08-22] P0 인벤토리 (전부 파일:줄 실측 · 추정 0):
   (a) 운영 브리핑 = dashboard/quotes/page.tsx **내장** (5,018줄 파일 내 수술):
       단계 config L203~266 ("전체 상세 열기" secondaryCta 7곳 · "발주 실행 준비/검토" L266)

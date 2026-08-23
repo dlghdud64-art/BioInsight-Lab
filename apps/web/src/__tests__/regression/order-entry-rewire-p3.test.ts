@@ -57,7 +57,12 @@ describe("② 행 CTA → 주문 접수 다이얼로그 직접", () => {
   });
 });
 
-describe("③ /quotes/[id] — §11.39 리다이렉트 흡수", () => {
+/* ⚠️ ③④ 는 P3-4(이월) 대상 — 현재 RED 가 정상이다.
+ * 기능 대조(계획서 §10-a) 실측: /quotes/[id] 에만 있는 기능 6건(회신 입력·벤더 확정·
+ * 메모·구매 요청·상태 전이·공유 링크)이 레일에 없다. 6건 이식이 선행 조건이라
+ * 호영님 판정(2026-08-22)으로 별도 슬라이스 이월. 이 단언들은 그때 GREEN 이 된다 —
+ * 지우지 말 것: 지우면 "리다이렉트로 갈아끼운다"는 결정 자체가 무잠금이 된다. */
+describe.skip("③ /quotes/[id] — §11.39 리다이렉트 흡수 (P3-4 이월 · 착수 시 skip 해제)", () => {
   it("페이지가 서버 리다이렉트 스텁이다 — 구 페이지 코드 재유입 0", () => {
     const src = read(LEGACY_DETAIL);
     expect(src).toMatch(/redirect\(/);
@@ -69,7 +74,7 @@ describe("③ /quotes/[id] — §11.39 리다이렉트 흡수", () => {
   });
 });
 
-describe("④ 경로 C 은퇴 — draft 재유입 0", () => {
+describe.skip("④ 경로 C 은퇴 — draft 재유입 0 (P3-4 이월 · 착수 시 skip 해제)", () => {
   it("purchase-orders/new 가 /api/orders/draft 를 부르지 않는다", () => {
     expect(stripComments(read(PO_NEW))).not.toMatch(/orders\/draft/);
   });
