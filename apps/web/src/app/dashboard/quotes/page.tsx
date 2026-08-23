@@ -1191,16 +1191,6 @@ function QuotesPageContent() {
   const orderRespondedVrs: any[] = (orderVrData?.vendorRequests ?? []).filter((vr: any) => vr.status === "RESPONDED");
   //   단일 회신이면 자동 — 구매 처리 경로(effectiveVrId)와 같은 선택 축
   const orderVrId: string | undefined = orderRespondedVrs.length === 1 ? orderRespondedVrs[0]?.id : undefined;
-  const orderAmount = (() => {
-    if (!selectedQuote || !orderVrId) return 0;
-    const vr = orderRespondedVrs[0];
-    return (selectedQuote.items ?? []).reduce((sum: number, item: any) => {
-      const ri = vr?.responseItems?.find((r: any) => r.quoteItemId === item.id);
-      return sum + Math.round(Number(ri?.unitPrice ?? 0)) * (item.quantity || 1);
-    }, 0);
-  })();
-  const selectedOrderBudget = orderBudgets.find((b: any) => b.id === orderForm.budgetId);
-  const orderExpectedRemaining = selectedOrderBudget ? (selectedOrderBudget.remainingAmount ?? 0) - orderAmount : null;
   const submitOrder = async () => {
     if (orderSubmitting) return; // 연타 직렬화 (§org-policy 동형)
     if (!selectedQuote) return;
@@ -1973,6 +1963,20 @@ function QuotesPageContent() {
 
   const today = new Date().toDateString();
   const selectedQuote = selectedQuoteId ? quotes.find(q => q.id === selectedQuoteId) : null;
+
+  // §order-entry-rewire P3-1 정정 (게이트 TDZ 검출) — 아래 파생 3건은 selectedQuote 를
+  // 즉시 실행 자리에서 읽으므로 선언 뒤에 있어야 한다 (위에 두면 렌더 자체가 ReferenceError).
+  const orderAmount = (() => {
+    if (!selectedQuote || !orderVrId) return 0;
+    const vr = orderRespondedVrs[0];
+    return (selectedQuote.items ?? []).reduce((sum: number, item: any) => {
+      const ri = vr?.responseItems?.find((r: any) => r.quoteItemId === item.id);
+      return sum + Math.round(Number(ri?.unitPrice ?? 0)) * (item.quantity || 1);
+    }, 0);
+  })();
+  const selectedOrderBudget = orderBudgets.find((b: any) => b.id === orderForm.budgetId);
+  const orderExpectedRemaining = selectedOrderBudget ? (selectedOrderBudget.remainingAmount ?? 0) - orderAmount : null;
+
   const selectedSignals = selectedQuote ? getOpSignals(selectedQuote) : null;
   const selectedDispatchPreflight = useMemo(
     () => selectedQuote && selectedSignals?.actionKey === "request_send"
