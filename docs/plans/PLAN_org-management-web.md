@@ -1,0 +1,213 @@
+# Implementation Plan: 조직 관리 (웹) 개선
+
+- **Status:** ⏳ Pending
+- **Started:** 2026-08-24
+- **Last Updated:** 2026-08-24
+- **핸드오프:** `조직 관리 (웹) — 구현 지시문` (호영님 업로드 2026-08-24)
+- **시각 truth:** `조직관리 웹 개선 (단독).html` (22MB · 사무국 파싱 불가 — 시각 대조는 호영님/로컬 세션)
+
+**CRITICAL**: 각 phase 완료 후 ① 체크박스 ② quality gate 전항 ③ Last Updated ④ Notes ⑤ 다음 phase.
+⛔ gate 실패 상태 진행 금지 · 미해결 truth 충돌 상태 진행 금지 · dead button/no-op/placeholder success 금지
+
+---
+
+## 0. Truth Reconciliation
+
+### 현행 실측 (2026-08-24 · 파일:줄 · 추정 0)
+
+핸드오프 §0 의 다섯 문제는 전부 소스에서 확인됐다.
+
+```
+① DOM 해킹 탭 전환   [id]/page.tsx:596 · :691   document.querySelector(...).click() 2곳
+② dead filter        [id]/page.tsx:343          if (memberStatusFilter === "inactive") return false
+                                  :947~:967      칩은 렌더되고 카운트는 하드코딩 0
+③ 가짜 실시간 신호    [id]/page.tsx:330          lastActive = m.status === "Pending" ? "초대 대기" : "오늘"
+                                  :1019 · :1074  "마지막 활동" 열 · "활동 중" Badge 무조건 렌더
+④ CTA 4개            [id]/page.tsx:589 · 601 · 610 · 617
+⑤ 칩형 탭            [id]/page.tsx:718          TabsList bg-slate-100 + data-[state=active]:bg-white
+                                  :717          defaultValue="overview" — uncontrolled (①의 원인)
+리스트 레이아웃       page.tsx:502               lg:grid-cols-[1fr_280px] · 카드 2열 (:504)
+```
+
+파일 크기: `page.tsx` 760줄 · `[id]/page.tsx` 1,885줄.
+
+### 🛑 Conflicts Found — 핸드오프와 저장소가 어긋나는 3건
+
+**C1. 좌석 한도(§5)가 가리키는 데이터가 dead column 이다**
+
+```
+Organization.maxMembers (schema:63)    소비자 0 · 생산자 0   ← 코드 어디서도 안 읽고 안 쓴다
+canonical 실물                          lib/plans.ts:172 PLAN_LIMITS[plan].maxMembers
+                                        /api/billing 만 소비 중 (route.ts:55·64·73·187·257)
+조직 상세가 부르는 API                   /api/organizations · .../members   ← billing 안 부른다
+현행 추정 공식                          [id]/page.tsx:549 Math.max(totalMembers + 2, 10)
+```
+🔑 §reachability-needs-a-different-tool 의 세 번째 줄 그대로다 — 컬럼을 봤고 생산자를 안 셌다.
+`organization.maxMembers` 를 읽으면 항상 null 이고 게이지가 **조용히** 거짓이 된다.
+→ P0 결정: PLAN_LIMITS 를 어디로 실어올 것인가 (org API 응답 확장 vs 클라이언트 상수 참조).
+
+**C2. "전역 밑줄 탭 규칙"(§2)의 선례가 둘인데 값이 다르다**
+
+```
+app/dashboard/analytics/page.tsx:500   border-b-[2.5px] border-[#2563eb]   ← 핸드오프와 일치
+app/dashboard/quotes/page.tsx:3893     border-b-2 border-blue-600
+```
+전역 규칙이라기보다 선례 2건이고 불일치다. → P0 에서 정본 판정. 안 정하면 세 번째가 또 갈린다.
+
+**C3. `조직 설정 핸드오프 §3`(§4 역할 드롭다운 토큰의 근거)이 이 저장소에 없다**
+
+`docs/handoff/` 에 org·setting 문서 0건. → P0 에서 호영님께 문서 확인 또는 토큰 정본 재지정.
+
+### Chosen Source of Truth
+
+```
+기능·문구·레이아웃   핸드오프 md (2026-08-24) — 가장 최신 판정
+현행 코드 사실       실측 grep (위) — md 의 §0 서술과 전량 일치, 충돌 0
+좌석 한도            lib/plans.ts PLAN_LIMITS  🛑 md §5 의 "플랜별 실제 한도" 는 이것이지
+                     Organization.maxMembers 가 아니다 (C1)
+탭 토큰              미정 (C2) — P0 판정 전까지 착수 금지
+```
+
+### Environment Reality Check
+- [ ] repo/branch: `dlghdud64-art/BioInsight-Lab@main` · 사무국 = 워킹트리 구현, 로컬 세션 = 게이트·push
+- [ ] 22MB HTML 은 사무국이 열 수 없다 — 시각 대조 주체는 호영님/로컬 세션
+- [ ] vitest·tsc·push 는 로컬 세션 (VM 금지 규율 유지)
+
+---
+
+## 1. Priority Fit
+
+- [x] **Post-release / UX 정합** — 릴리스 블로커 아님
+- 우선순위 충돌: 인계 1순위였던 §purchased-falls-through-to-not-sent 의 **실행 축은 착수 전 봉합 완료**
+  (호영님 판정 "isSelectable 차단만 먼저" · commit `0ac39adb`). 표시 축은 이월 상태로 남아 있다.
+- 이 트랙이 우선하는 근거: ②③이 **사용자에게 없는 사실을 말하는 화면**이다. 위험도는 발주 재전송보다
+  낮지만(외부 부작용 0) 성격이 같다 — 화면이 근거가 되어 판단이 일어난다.
+
+## 2. Work Type
+- [x] Bugfix (dead filter · 가짜 신호 · DOM 해킹) · [x] Design Consistency · [x] Web
+
+## 3. Overview
+
+**Success Criteria**
+- [ ] 화면이 없는 사실을 말하지 않는다 (활동 중 · 마지막 활동 · 장기 미접속 0건)
+- [ ] 탭 전환이 controlled state (DOM 해킹 0)
+- [ ] 상세 CTA 2개 · 좌석 게이지가 실한도 기반
+- [ ] 리스트 3열 그리드 · 빈 처리 항목 박스 미노출
+- [ ] 역할 인라인 드롭다운 + 본인 행 disabled
+
+**Out of Scope (⚠️ 절대 구현하지 말 것)**
+- [ ] 모바일 (`조직관리 모바일 개선.dc.html` — md 미작성 트랙)
+- [ ] lastActive 실추적 배선 (없는 것을 만드는 일 · 별도 트랙)
+- [ ] `Organization.maxMembers` 컬럼에 값을 채우는 일 (DDL/백필 · 별도 승인)
+- [ ] 조직 설정 탭 전면 개편
+
+**Canonical Truth Boundary**
+```
+Source of Truth   Organization · OrganizationMember (DB) · PLAN_LIMITS(lib/plans.ts)
+Derived           멤버 상태(활성/초대 대기) = 계정 파생 · 좌석 사용률 = members / PLAN_LIMITS
+Snapshot/Preview  없음 — 이 화면은 preview 를 만들지 않는다
+🛑 금지            UI state 가 좌석 한도·멤버 상태의 canonical 을 대신 들지 않는다
+```
+
+**UI Surface Plan** — [x] 기존 route 내 재배치만. 새 페이지 0.
+
+## 4. Product Constraints
+
+**Must Preserve** — same-canvas · 기존 route 구조 · invalidation 규율
+**Must Not Introduce** — page-per-feature · dead button/no-op · **없는 사실의 표기** · em dash
+
+## 5. Global Test Strategy
+
+- 삭제 4건(가짜 신호 2 · dead filter · DOM 해킹) → **부정 단언 sentinel** (stripComments 본에)
+- 배선 3건(controlled tabs · 좌석 실한도 · 딥링크) → 소스 계약 sentinel
+- 역할 드롭다운 저장 → 기존 members PATCH 계약 재사용 여부 P0 에서 확인
+- 🛑 삭제 sentinel 은 **검출력 실증** 필수 — 경계 안 주입 RED + 경계 밖 대조군 GREEN
+
+---
+
+## 7. Implementation Phases
+
+### Phase 0: Truth & 인벤토리 lock
+- Status: [ ] Pending
+- **🔴 RED** — C1·C2·C3 미해결 상태로는 P2 이후가 서지 않는다
+- **🟢 GREEN** — 아래 5건 실측·판정 완료
+```
+1  좌석 한도 배선축 결정 — org API 응답 확장 vs 클라이언트 PLAN_LIMITS 참조
+   (org API 응답에 plan 필드가 이미 있는지부터 실측)
+2  탭 토큰 정본 판정 (C2) — analytics 2.5px vs quotes 2px
+3  조직 설정 핸드오프 §3 확인 (C3) — 없으면 역할 드롭다운 토큰 재지정
+4  삭제 4건의 **피의존** 전수 — 인벤토리 2축 중 "누가 그것에 기대나"
+   (lastActive · 활동 중 Badge · inactive 필터 · querySelector 2곳을 누가 읽는가)
+5  members PATCH 계약 — 역할 변경 엔드포인트가 이미 있는가
+```
+- **✋ Gate** — 미해결 충돌 0 · 추정 0 · 피의존 계수 주체 분리(로컬 세션 독립 계수) 권장
+- **Rollback** — 계획 전용, 코드 변경 0
+
+### Phase 1: Contract & Failing Tests
+- Status: [ ] Pending
+- **🔴 RED** — 삭제 4 + 배선 3 sentinel 을 먼저 RED 로
+- **✋ Gate** — 검출력 실증 5/5(주입 4 + 대조군 1) · tsc 불변
+- **Rollback** — 테스트 파일 revert
+
+### Phase 2: 거짓 제거 (멤버 탭)
+- Status: [ ] Pending
+- **가짜 활동 신호 삭제** — `lastActive`(:330) · "마지막 활동" 열(:1019) · "활동 중" Badge(:1074)
+- **dead filter 삭제** — inactive 분기(:343) + 칩(:947~) · 필터 3개로
+- **DOM 해킹 제거** — :596 · :691 → controlled Tabs `value`/`onValueChange`
+- `관리자 N명` 요약 칩 제거
+- **✋ Gate** — 부정 단언 GREEN · 화면에 없는 사실 표기 0 · 필터 각 칩이 실제 모집단을 센다
+- **Rollback** — 이 phase 만 revert 가능 (삭제 중심 · 배선 의존 0)
+
+### Phase 3: 상세 헤더 · KPI · 탭
+- Status: [ ] Pending
+- CTA 2개(`＋ 멤버 초대` 주 · `권한 검토` 보조) · 초대 관리 → 탭 직행 링크 · 플랜/좌석 → KPI 흡수
+- 헤더 메타(주소 + 생성일) · KPI 4카드(승인 권한 0 = 앰버 + `지정 필요`)
+- 탭 밑줄형(P0 정본 토큰) · **좌석 게이지 = PLAN_LIMITS 실한도** (:549 추정 공식 교체)
+- **✋ Gate** — 좌석 분모가 상수 추정이 아님을 sentinel 이 잠근다 · dead button 0
+- **Rollback** — 헤더/KPI 블록 revert
+
+### Phase 4: 개요 2열 + 멤버 탭 나머지
+- Status: [ ] Pending
+- 개요 2열(1fr + 380px) · 좌 처리 항목(결과 설명 + 액션) · 우 구성 요약 + 플랜 카드
+- 정적 3카드 삭제 · 최근 활동 **빈 상태 정직 표기** + 활동 로그 딥링크
+- 역할 인라인 드롭다운(본인 행 disabled + 캡션 · 저장 후 `✓ 저장됨` 1.5초)
+- 초대 대기 행 재발송/취소 인라인 · 승인자 지정 → 멤버 탭 딥링크(드롭다운 오픈)
+- **✋ Gate** — 저장 실패 시 롤백 표기 존재(placeholder success 0) · 본인 행 변경 불가 실증
+- **Rollback** — 개요/멤버 탭 블록 revert
+
+### Phase 5: 리스트 3열
+- Status: [ ] Pending
+- 3열 그리드 + `새 조직 만들기` dashed placeholder · 검색 행 우측 요약 1줄
+- "바로 처리할 항목" **0건 미노출** · 우측 280px 컬럼 제거
+- **✋ Gate** — 빈 상태·로딩·에러 3상태 존재 · 0건에서 배너 0
+- **Rollback** — page.tsx revert (상세와 파일 분리 · 독립)
+
+### Phase 6: 게이트 · 배포 · 프로덕션 실측
+- Status: [ ] Pending
+- 로컬 세션 게이트(스코프에 `__tests__/organizations` 포함) → push → 배포 확인
+- 배포 확인 = `/api/health` manifestGeneratedAt > 커밋 시각
+- 프로덕션 실측: 탭 전환 · 역할 변경 저장 · 초대 재발송 · 좌석 게이지 값
+- **✋ Gate** — QA 6항목(핸드오프) 전량 실측 · 미완은 미완으로 보고
+- **Rollback** — 커밋 단위 revert (phase 별 독립)
+
+## 9. Risk Assessment
+
+| Risk | P | I | Mitigation |
+| :--- | :--- | :--- | :--- |
+| 좌석 한도를 dead column 에서 읽어 게이지가 조용히 거짓 | High | High | P0 C1 판정 + 분모 축 sentinel |
+| 삭제 4건 중 피의존이 있어 다른 화면이 깨짐 | Med | Med | P0-4 피의존 전수(2축 인벤토리) |
+| 탭 토큰이 세 번째로 갈림 | Med | Low | P0 C2 정본 판정 후 착수 |
+| 1,885줄 파일 수술 중 TDZ/JSX 구조 사고 | Med | High | 소스 대조 프로브 + tsc 병행(구조는 컴파일러만 본다) |
+| 역할 변경 API 부재 | Low | High | P0-5 에서 선확인 · 없으면 P4 분리 |
+
+## 10. Rollback Strategy
+phase 별 커밋 분리 · 마이그레이션 0 · feature flag 불필요(순수 UI/배선).
+P2 는 삭제 중심이라 되돌리면 정확히 현행으로 복귀한다.
+
+## 11. Progress Tracking
+- 완료율 0% · 현재 phase: P0 대기 · 블로커: C1·C2·C3 미판정
+
+## 12. Notes & Learnings
+- [2026-08-24] 착수 전 대조에서 C1 이 나왔다. 핸드오프 §5 가 "플랜별 실제 한도" 라고만 적어
+  구현자가 `Organization.maxMembers` 로 갈 수 있었다 — 그 컬럼은 소비자 0 · 생산자 0 이다.
+  오늘 세운 §reachability-needs-a-different-tool 이 착수 전에 한 번 값을 했다.
