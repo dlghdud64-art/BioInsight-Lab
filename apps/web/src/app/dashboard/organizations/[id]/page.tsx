@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// §org-management-web P3 — 좌석 한도 canonical (P0 C1)
+import { PLAN_LIMITS, SubscriptionPlan } from "@/lib/plans";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -550,7 +552,15 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
 
   // §11.304 — 플랜 정보 (FREE → "Free" 정합, "Starter" → "Free" swap).
   const planLabel = (organization as any).plan === "ORGANIZATION" ? "Pro" : (organization as any).plan === "TEAM" ? "Basic" : "Free";
-  const seatUsagePercent = totalMembers > 0 ? Math.min(100, Math.round((totalMembers / Math.max(totalMembers + 2, 10)) * 100)) : 0;
+  // §org-management-web P3 — 좌석 한도는 PLAN_LIMITS 가 canonical 이다.
+  //   🛑 옛 축은 Math.max(totalMembers + 2, 10) 이라는 **추정 공식**이었다 — 멤버가 늘면
+  //      분모도 같이 늘어 사용률이 영원히 100% 에 안 닿는 가짜 게이지였다.
+  //   🛑 Organization.maxMembers 컬럼은 쓰지 않는다 — 생산자 0 · 소비자 0 인 dead column 이고,
+  //      살리면 PLAN_LIMITS 와 진실이 둘이 된다 (P0 C1 판정 2026-08-24).
+  const seatLimit = PLAN_LIMITS[(organization as any).plan as SubscriptionPlan]?.maxMembers ?? null;
+  const seatUsagePercent = seatLimit && seatLimit > 0
+    ? Math.min(100, Math.round((totalMembers / seatLimit) * 100))
+    : 0;
 
   // 바로 처리 항목
   // §11.303-hotfix-d — SWC parser nested generic bug 회피: Array<...
@@ -578,15 +588,27 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
             {organization.description && (
               <p className="text-sm text-slate-400 mt-0.5">{organization.description}</p>
             )}
+            {/* §org-management-web P3 — 헤더 메타.
+                🛑 핸드오프 §2 는 "조직 주소 + 생성일" 이었으나 Organization 스키마에
+                   물리 주소 필드가 없다(slug 는 URL 식별자다). 없는 사실을 표기하지 않는다
+                   — 생성일만 넣는다 (호영님 판정 2026-08-24). */}
+            {(organization as any).createdAt && (
+              <p className="text-xs text-slate-400 mt-1 tabular-nums">
+                생성일 {new Date((organization as any).createdAt).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}
+              </p>
+            )}
           </div>
         </div>
         {/* 상단 CTA */}
         <div className="flex items-center gap-2 flex-wrap">
           {isAdmin && (
             <>
+              {/* §org-management-web P3 — CTA 는 주 1 + 보조 1 두 개다.
+                  삭제 2건과 그 대체:
+                    초대 관리    → KPI "초대 대기" 카드가 승인·초대 탭 직행 (화면 내 정보 중복 제거)
+                    플랜/좌석 보기 → KPI 4번째 카드에 흡수(게이지 + 변경 링크) */}
               <Button
-                variant="outline"
-                className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 font-medium"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
                 onClick={() => setInviteModalOpen(true)}
               >
                 <UserPlus className="h-4 w-4 mr-2" />
@@ -594,30 +616,14 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
               </Button>
               <Button
                 variant="outline"
-                size="sm"
-                className="border-slate-200 text-slate-600 hover:bg-slate-100"
-                onClick={() => setActiveTab("invites")}
-              >
-                <Mail className="h-4 w-4 mr-1.5" />
-                초대 관리
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
                 className="border-slate-200 text-slate-600 hover:bg-slate-100"
                 onClick={() => setRoleReviewOpen(true)}
               >
-                <ShieldCheck className="h-4 w-4 mr-1.5" />
+                <ShieldCheck className="h-4 w-4 mr-2" />
                 권한 검토
               </Button>
             </>
           )}
-          <Link href="/dashboard/settings/plans">
-            <Button variant="ghost" size="sm" className="text-slate-400 hover:text-slate-700 hover:bg-slate-100">
-              <CreditCard className="h-4 w-4 mr-1.5" />
-              플랜/좌석 보기
-            </Button>
-          </Link>
         </div>
       </div>
 
@@ -714,23 +720,96 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
         </span>
       </div>
 
+      {/* §org-management-web P3 — KPI 4카드.
+          헤더에서 뺀 두 CTA 가 여기로 들어온다: 초대 대기 카드가 탭 직행,
+          플랜·좌석 카드가 게이지 + 변경 링크. 상단 1행 좌측 쏠림도 여기서 해소된다. */}
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        <Card className="shadow-sm border-slate-200 bg-white">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Users className="h-4 w-4 text-blue-500" />
+              <p className="text-xs font-semibold text-slate-600">멤버</p>
+            </div>
+            <p className="text-2xl font-bold text-slate-900 tabular-nums">{totalMembers}</p>
+          </CardContent>
+        </Card>
+
+        <Card
+          className="shadow-sm border-slate-200 bg-white cursor-pointer hover:border-slate-300 transition-colors"
+          onClick={() => setActiveTab("invites")}
+        >
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Mail className="h-4 w-4 text-yellow-500" />
+              <p className="text-xs font-semibold text-slate-600">초대 대기</p>
+            </div>
+            <p className="text-2xl font-bold text-slate-900 tabular-nums">{pendingCount}</p>
+            <p className="text-xs text-slate-400 mt-1">승인 및 초대 열기 ›</p>
+          </CardContent>
+        </Card>
+
+        <Card className={`shadow-sm bg-white ${approverCount === 0 ? "border-yellow-300" : "border-slate-200"}`}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <ShieldCheck className={`h-4 w-4 ${approverCount === 0 ? "text-yellow-500" : "text-emerald-500"}`} />
+              <p className="text-xs font-semibold text-slate-600">승인 권한</p>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <p className="text-2xl font-bold text-slate-900 tabular-nums">{approverCount}</p>
+              {approverCount === 0 && (
+                <span className="text-[11px] font-semibold text-yellow-600 bg-yellow-50 border border-yellow-200 rounded px-1.5 py-0.5">
+                  지정 필요
+                </span>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm border-slate-200 bg-white">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-slate-500" />
+                <p className="text-xs font-semibold text-slate-600">{planLabel} 플랜</p>
+              </div>
+              <Link href="/dashboard/settings/plans" className="text-xs text-blue-600 hover:underline">
+                변경 ›
+              </Link>
+            </div>
+            <p className="text-sm font-bold text-slate-900 tabular-nums">
+              {totalMembers} / {seatLimit ?? "무제한"} 좌석
+            </p>
+            {seatLimit !== null && (
+              <div className="mt-2 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${seatUsagePercent >= 100 ? "bg-yellow-500" : "bg-blue-500"}`}
+                  style={{ width: `${seatUsagePercent}%` }}
+                />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       {/* 탭 구조 — 5탭 */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="bg-slate-100 p-1 rounded-lg">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500">
+        {/* §org-management-web P3 — 밑줄형 탭. C2 정본 = analytics(9042c438) 2.5px #2563eb
+            (호영님 판정 2026-08-24 · 최신 · 목적 일치 · 핸드오프 일치). */}
+        <TabsList className="h-auto w-full justify-start gap-1 rounded-none border-b border-slate-200 bg-transparent p-0">
+          <TabsTrigger value="overview" className="rounded-none border-b-[2.5px] border-transparent px-3 pb-2 text-slate-500 data-[state=active]:border-[#2563eb] data-[state=active]:text-slate-900 data-[state=active]:font-bold data-[state=active]:bg-transparent data-[state=active]:shadow-none">
             개요
           </TabsTrigger>
-          <TabsTrigger value="members" className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500">
+          <TabsTrigger value="members" className="rounded-none border-b-[2.5px] border-transparent px-3 pb-2 text-slate-500 data-[state=active]:border-[#2563eb] data-[state=active]:text-slate-900 data-[state=active]:font-bold data-[state=active]:bg-transparent data-[state=active]:shadow-none">
             멤버 및 접근
           </TabsTrigger>
-          <TabsTrigger value="invites" className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500">
+          <TabsTrigger value="invites" className="rounded-none border-b-[2.5px] border-transparent px-3 pb-2 text-slate-500 data-[state=active]:border-[#2563eb] data-[state=active]:text-slate-900 data-[state=active]:font-bold data-[state=active]:bg-transparent data-[state=active]:shadow-none">
             승인 및 초대
           </TabsTrigger>
-          <TabsTrigger value="activity" className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500">
+          <TabsTrigger value="activity" className="rounded-none border-b-[2.5px] border-transparent px-3 pb-2 text-slate-500 data-[state=active]:border-[#2563eb] data-[state=active]:text-slate-900 data-[state=active]:font-bold data-[state=active]:bg-transparent data-[state=active]:shadow-none">
             활동 및 감사
           </TabsTrigger>
           {isAdmin && (
-            <TabsTrigger value="settings" className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500">
+            <TabsTrigger value="settings" className="rounded-none border-b-[2.5px] border-transparent px-3 pb-2 text-slate-500 data-[state=active]:border-[#2563eb] data-[state=active]:text-slate-900 data-[state=active]:font-bold data-[state=active]:bg-transparent data-[state=active]:shadow-none">
               정책 및 설정
             </TabsTrigger>
           )}

@@ -159,7 +159,7 @@ Snapshot/Preview  없음 — 이 화면은 preview 를 만들지 않는다
 - **Rollback** — 이 phase 만 revert 가능 (삭제 중심 · 배선 의존 0)
 
 ### Phase 3: 상세 헤더 · KPI · 탭
-- Status: [ ] Pending
+- Status: [x] **Complete** (2026-08-24)
 - CTA 2개(`＋ 멤버 초대` 주 · `권한 검토` 보조) · 초대 관리 → 탭 직행 링크 · 플랜/좌석 → KPI 흡수
 - 헤더 메타(주소 + 생성일) · KPI 4카드(승인 권한 0 = 앰버 + `지정 필요`)
 - 탭 밑줄형(P0 정본 토큰) · **좌석 게이지 = PLAN_LIMITS 실한도** (:549 추정 공식 교체)
@@ -205,7 +205,7 @@ phase 별 커밋 분리 · 마이그레이션 0 · feature flag 불필요(순수
 P2 는 삭제 중심이라 되돌리면 정확히 현행으로 복귀한다.
 
 ## 11. Progress Tracking
-- 완료율 43% (P0·P1·P2 완료) · 현재 phase: P3 대기 · 블로커: 없음
+- 완료율 57% (P0~P3 완료) · 현재 phase: P4 대기 · 블로커: 없음
 
 ## 12. Notes & Learnings
 - [2026-08-24] 착수 전 대조에서 C1 이 나왔다. 핸드오프 §5 가 "플랜별 실제 한도" 라고만 적어
@@ -334,3 +334,50 @@ E  dead filter 소거      분기 · 칩 배열 · 라벨 · counts · 아이콘
 이 항목은 **P4 소관**이다. §4 에 적혀 있다고 P2 에서 지우면 개요 카드가 깨진다.
 
 sentinel: `src/__tests__/dashboard/organizations-honest-member-tab.test.ts` (11건)
+
+
+---
+
+## P3 결과 (2026-08-24)
+
+### 🛑 C1 자기 정정 — 응답 확장이 필요 없었다
+
+```
+P0 판정   "/api/organizations 응답에 plan 없음 → 응답 1필드 확장이 선행 조건"
+실측 정정  organization 에 **select 가 없다** → Prisma 는 모든 스칼라를 반환한다. plan 포함.
+증거      [id]/page.tsx:552 가 이미 (organization as any).plan 으로 planLabel 을 만든다
+```
+🔑 오류의 원인: `grep "select:|plan"` 로 select 절만 보고 "명시 select 없음 = 필드 없음" 으로
+읽었다. Prisma 는 정반대다. **쿼리를 봤고 그 쿼리가 무엇을 반환하는지 안 셌다** —
+§reachability-needs-a-different-tool 에 여섯 번째 줄로 붙는다:
+
+```
+쿼리   include 를 봤다   → 그 쿼리가 무엇을 반환하는지 안 셌다 (select 부재 = 전부 반환)
+```
+→ P3 범위가 줄었다. API 변경 0.
+
+### 착수 슬롯
+
+```
+A  CTA 2개        초대 관리 삭제(→KPI 초대 대기 카드 탭 직행) · 플랜/좌석 보기 삭제(→KPI 4카드)
+                  멤버 초대 = 주(bg-blue-600 채움) · 권한 검토 = 보조(outline)
+B  헤더 메타       생성일만. 🛑 주소는 스키마에 필드 0 (slug 는 URL 식별자) — 호영님 판정
+C  KPI 4카드      멤버 / 초대 대기(탭 직행) / 승인 권한(0=앰버+지정 필요) / 플랜·좌석(게이지+변경)
+D  밑줄 탭        C2 정본 2.5px #2563eb · TabsList 를 border-b 컨테이너로
+E  좌석 실한도     PLAN_LIMITS[plan].maxMembers (FREE 1 · TEAM 3 · ORGANIZATION 10)
+                  🛑 옛 축 Math.max(totalMembers+2, 10) 은 멤버가 늘면 분모도 늘어
+                     사용률이 영원히 100% 에 안 닿던 가짜 게이지였다
+```
+
+### ⚠️ 넓은 단언 3건 — 전부 착수 중에 잡았다
+
+```
+1  /<Tabs defaultValue=/        → :1647 초대 방식 탭이 걸림     (P2)
+2  /초대 관리/                   → :1198 "승인 및 초대 관리" 제목이 걸림
+3  variant="outline" 근접 200자  → 앵커 부족으로 매칭 실패 (거짓 RED)
+```
+1·2 는 **지운 것과 이름이 겹치는 살아 있는 표면**을 잡는 형태다. 셋 다 경계를 좁히고,
+1·2 는 그 표면이 살아 있음을 **경계 밖 대조군**으로 함께 단언했다.
+🔑 창을 좁혔다는 것만으로는 "무관 표면을 안 잡는다" 가 증명되지 않는다.
+
+sentinel: `src/__tests__/dashboard/organizations-header-kpi-tabs-p3.test.ts` (16건)
