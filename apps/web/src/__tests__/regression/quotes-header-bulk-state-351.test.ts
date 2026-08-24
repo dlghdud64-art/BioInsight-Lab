@@ -39,12 +39,24 @@ describe("§11.351 #1 회귀 0 — 유지 액션", () => {
 });
 
 describe("§11.351 #3 — 일괄 집계 canonical 상태 정합", () => {
-  it("Ctrl+A 전체 선택이 request_not_sent 만 선택", () => {
+  it("Ctrl+A 전체 선택이 발송 대상만 선택 (isDispatchable)", () => {
+    /* 승계 (§purchased-falls-through-to-not-sent 실행 축 분리 2026-08-24):
+     * 옛 축은 `deriveRailState(q) === "request_not_sent"` 구현 문자열을 핀했다.
+     * 결정은 그대로다 — 발송 대상은 여전히 "요청 발송 전"만이고, isDispatchable 이
+     * 거기에 PURCHASED·CANCELLED 제외를 더해 **더 좁게** 이행한다. 판정식만 교체됐다.
+     * 🛑 역방향 잠금: 이 슬롯이 deriveRailState 직접 비교로 되돌아가면 RED. */
     const src = read(PAGE);
-    expect(src).toContain('filter((q) => deriveRailState(q) === "request_not_sent").map((q) => q.id)');
+    expect(src).toContain("filter((q) => isDispatchable(q)).map((q) => q.id)");
+    expect(src).not.toContain('filter((q) => deriveRailState(q) === "request_not_sent").map((q) => q.id)');
   });
-  it("dispatchableCount 가 request_not_sent 아닌 건 제외(회신 대기 발송 가능 카운트 차단)", () => {
+  it("dispatchableCount 가 발송 비대상을 제외(회신 대기·발주 완료 카운트 차단)", () => {
+    /* 승계 (§purchased-falls-through-to-not-sent 실행 축 분리 2026-08-24):
+     * 옛 축은 `deriveRailState(q) === "request_not_sent"` 구현 문자열을 핀했다.
+     * 결정은 그대로다 — 발송 대상은 여전히 "요청 발송 전"만이고, isDispatchable 이
+     * 거기에 PURCHASED·CANCELLED 제외를 더해 **더 좁게** 이행한다. 판정식만 교체됐다.
+     * 🛑 역방향 잠금: 이 슬롯이 deriveRailState 직접 비교로 되돌아가면 RED. */
     const src = read(PAGE);
-    expect(src).toContain('if (deriveRailState(q) !== "request_not_sent") continue;');
+    expect(src).toContain("if (!isDispatchable(q)) continue;");
+    expect(src).not.toContain('if (deriveRailState(q) !== "request_not_sent") continue;');
   });
 });

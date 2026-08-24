@@ -46,11 +46,19 @@ describe("§11.217 Phase 3 — QuoteCard checkbox conditional render", () => {
     expect(source).toMatch(/onToggleSelect|onToggleSelection/);
   });
 
-  it("checkbox 가 railState === request_not_sent 일 때만 render", () => {
-    // canonical: deriveRailState(quote) === "request_not_sent" 분기
-    expect(source).toMatch(/request_not_sent/);
-    // checkbox 자체가 conditional render — isSelectable prop 또는 직접 분기
-    expect(source).toMatch(/isSelectable\s*&&|railState\s*===\s*"request_not_sent".*checkbox|checkbox.*isSelectable/i);
+  it("checkbox 가 isDispatchable 일 때만 render", () => {
+    /* 승계 (§purchased-falls-through-to-not-sent 실행 축 분리 2026-08-24).
+     * 🛑 이 단언은 RED 가 아니라 **침묵**이었다 — 옛 제목·주석은 canonical 을
+     *   `deriveRailState(quote) === "request_not_sent"` 라고 말하는데, 실행 축이
+     *   isDispatchable 로 옮겨간 뒤에도 통과했다. `/request_not_sent/` 는 그 문자열이
+     *   isDispatchable 안에 남아 있어 매칭되고, 두 번째 정규식은 첫 대안(`isSelectable &&`)이
+     *   살아 매칭됐다. 결정은 그대로인데 **문서가 옛 canonical 을 가리키는** 형태라
+     *   다음 세션이 이 파일을 읽고 실행 축을 표시 축에 다시 위임할 수 있었다.
+     *   → 제목·주석을 실물로 맞추고, 단언을 슬롯 단위로 좁힌다(침묵 제거). */
+    expect(source).toMatch(/isSelectable=\{isDispatchable\(quote\)\}/);
+    expect(source).toMatch(/isSelectable\s*&&/);
+    /* 역방향 잠금 — 선택 축이 표시 축 직접 비교로 되돌아가면 RED */
+    expect(source).not.toMatch(/isSelectable=\{deriveRailState/);
   });
 
   it("checkbox click event propagation 분리 (row click 과 별개)", () => {

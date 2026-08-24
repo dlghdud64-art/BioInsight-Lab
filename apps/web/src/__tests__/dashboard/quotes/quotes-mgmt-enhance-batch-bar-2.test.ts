@@ -48,9 +48,15 @@ describe("§quotes-mgmt-enhance §2 #1 — 서브카운트 파티션 (합 === �
       /awaitingReplyCount, respondedSelectedCount \} = useMemo[\s\S]{0,400}deriveRailState\(q\)/,
     );
     // 발송 전 버킷 = dispatchable + hardBlock (이중 집계 차단 continue)
+    /* 승계 (§purchased-falls-through-to-not-sent 실행 축 분리 2026-08-24):
+     * 옛 축은 `deriveRailState(q) === "request_not_sent"` 구현 문자열을 핀했다.
+     * 결정은 그대로다 — 발송 대상은 여전히 "요청 발송 전"만이고, isDispatchable 이
+     * 거기에 PURCHASED·CANCELLED 제외를 더해 **더 좁게** 이행한다. 판정식만 교체됐다.
+     * 🛑 역방향 잠금: 이 슬롯이 deriveRailState 직접 비교로 되돌아가면 RED. */
     expect(page).toMatch(
-      /rs === "request_not_sent"\) continue/,
+      /if \(isDispatchable\(q\)\) continue;/,
     );
+    expect(page).not.toMatch(/rs === "request_not_sent"\) continue/);
     // 회신 대기 = awaiting_responses | response_delayed (발송 후 회신 0건)
     expect(page).toMatch(
       /rs === "awaiting_responses" \|\| rs === "response_delayed"/,
@@ -139,10 +145,16 @@ describe("§quotes-mgmt-enhance §2 — invariant 보존", () => {
     );
   });
 
-  it("§11.351 발송 집계 게이트 무접촉 (request_not_sent 만 dispatch 집계)", () => {
+  it("§11.351 발송 집계 게이트 무접촉 (isDispatchable 만 dispatch 집계)", () => {
+    /* 승계 (§purchased-falls-through-to-not-sent 실행 축 분리 2026-08-24):
+     * 옛 축은 `deriveRailState(q) === "request_not_sent"` 구현 문자열을 핀했다.
+     * 결정은 그대로다 — 발송 대상은 여전히 "요청 발송 전"만이고, isDispatchable 이
+     * 거기에 PURCHASED·CANCELLED 제외를 더해 **더 좁게** 이행한다. 판정식만 교체됐다.
+     * 🛑 역방향 잠금: 이 슬롯이 deriveRailState 직접 비교로 되돌아가면 RED. */
     expect(page).toMatch(
-      /deriveRailState\(q\) !== "request_not_sent"\) continue/,
+      /if \(!isDispatchable\(q\)\) continue;/,
     );
+    expect(page).not.toMatch(/deriveRailState\(q\) !== "request_not_sent"\) continue/);
   });
 
   it("3 mutation CTA + dropdown + 전체 해제 배선 보존", () => {

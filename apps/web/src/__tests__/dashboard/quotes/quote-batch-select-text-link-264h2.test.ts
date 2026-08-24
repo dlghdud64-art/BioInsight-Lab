@@ -73,8 +73,16 @@ describe("§11.264h-2 #1 — 전체 선택 CTA 텍스트 링크 변환", () => {
 
 describe("§11.264h-2 #2 — invariant 보존 (canonical truth)", () => {
   it("§11.220 전체 선택 CTA section 보존 (selectablePending guard)", () => {
+    /* 승계 (§purchased-falls-through-to-not-sent 실행 축 분리 2026-08-24):
+     * 옛 축은 `deriveRailState(q) === "request_not_sent"` 구현 문자열을 핀했다.
+     * 결정은 그대로다 — 발송 대상은 여전히 "요청 발송 전"만이고, isDispatchable 이
+     * 거기에 PURCHASED·CANCELLED 제외를 더해 **더 좁게** 이행한다. 판정식만 교체됐다.
+     * 🛑 역방향 잠금: 이 슬롯이 deriveRailState 직접 비교로 되돌아가면 RED. */
     expect(page).toMatch(
-      /const\s+selectablePending\s*=\s*filteredQuotes\.filter\(q => deriveRailState\(q\) === "request_not_sent"\)/,
+      /const\s+selectablePending\s*=\s*filteredQuotes\.filter\(q => isDispatchable\(q\)\)/,
+    );
+    expect(page).not.toMatch(
+      /const\s+selectablePending\s*=\s*filteredQuotes\.filter\(q => deriveRailState/,
     );
     expect(page).toMatch(/if \(selectablePending\.length === 0\) return null;/);
   });
