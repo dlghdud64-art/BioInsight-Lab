@@ -144,13 +144,13 @@ Snapshot/Preview  없음 — 이 화면은 preview 를 만들지 않는다
 - **Rollback** — 계획 전용, 코드 변경 0
 
 ### Phase 1: Contract & Failing Tests
-- Status: [ ] Pending
+- Status: [x] **Complete** (2026-08-24 · P2 와 한 슬라이스 · 검출력은 주입 실증으로)
 - **🔴 RED** — 삭제 4 + 배선 3 sentinel 을 먼저 RED 로
 - **✋ Gate** — 검출력 실증 5/5(주입 4 + 대조군 1) · tsc 불변
 - **Rollback** — 테스트 파일 revert
 
 ### Phase 2: 거짓 제거 (멤버 탭)
-- Status: [ ] Pending
+- Status: [x] **Complete** (2026-08-24)
 - **가짜 활동 신호 삭제** — `lastActive`(:330) · "마지막 활동" 열(:1019) · "활동 중" Badge(:1074)
 - **dead filter 삭제** — inactive 분기(:343) + 칩(:947~) · 필터 3개로
 - **DOM 해킹 제거** — :596 · :691 → controlled Tabs `value`/`onValueChange`
@@ -205,7 +205,7 @@ phase 별 커밋 분리 · 마이그레이션 0 · feature flag 불필요(순수
 P2 는 삭제 중심이라 되돌리면 정확히 현행으로 복귀한다.
 
 ## 11. Progress Tracking
-- 완료율 14% (P0 완료) · 현재 phase: P1 대기 · 블로커: 없음
+- 완료율 43% (P0·P1·P2 완료) · 현재 phase: P3 대기 · 블로커: 없음
 
 ## 12. Notes & Learnings
 - [2026-08-24] 착수 전 대조에서 C1 이 나왔다. 핸드오프 §5 가 "플랜별 실제 한도" 라고만 적어
@@ -278,3 +278,59 @@ PATCH /api/organizations/[id]/members:77
 
 `docs/handoff/CARD_org-create-limit-always-free.md` — 조직 생성 한도가 모두에게 FREE.
 좌석 한도를 재려던 grep 이 물어 올렸다. 단독 슬라이스 · 착수 순서만 조율.
+
+
+---
+
+## P1 sweep 결과 (§sweep-widen-then-filter · 2026-08-24)
+
+교체/삭제 토큰을 먼저 정하고 `__tests__` 전역에 **토막으로 넓게** 걸었다.
+
+```
+lastActive        0건
+활동 중            0건
+장기 미접속        0건
+memberStatusFilter 0건
+"inactive"         0건
+querySelector     10건 → 전부 무관 (quotes 키보드 내비 · admin 모달 · safety · button)
+                        organizations 관련 0건
+```
+
+### ⚠️ 오탐 2건을 걸렀다 — 다시 조사하지 않는다
+
+```
+1  lib/review-queue/ops-hub-adapters.ts:78·85  `lastActiveAt`
+   이름만 비슷한 별개 어댑터(members 인자 · 7일 기준 active 계산). 조직 상세와 무관.
+2  P0 에서 "organizations" 파일명으로 잡은 3파일
+   org-member-patch-approval-limit · organizations-detail-capability-edit ·
+   settings-org-members-approval-limit-section
+   🛑 **파일명으로 잡힌 것이지 토큰 핀이 아니었다.** 셋 다 위 토큰을 하나도 안 쓴다.
+   P0 의 그 목록 자체가 오탐이었고 P1 실측이 정정했다.
+```
+🔑 오탐을 걸렀다는 **사실 자체**를 남긴다. 다음 세션이 같은 grep 을 돌리면 또 나오고,
+걸렀다는 기록이 없으면 또 조사한다.
+
+## P2 결과 (거짓 제거 · 13 슬롯)
+
+```
+A  controlled Tabs      activeTab state 신설 · <Tabs value/onValueChange>
+B  DOM 해킹 제거         :596 · :691 → setActiveTab("invites") / ("members")
+C  lastActive 소거       interface · 대입 · "마지막 활동" 헤더 · 셀  (4곳)
+D  상태 배지             "활동 중" → "활성" (계정 파생만)
+E  dead filter 소거      분기 · 칩 배열 · 라벨 · counts · 아이콘 · PauseCircle orphan import
+```
+
+### 🛑 경계 한정 — 세 번째 반복을 착수 중에 잡았다
+
+`<Tabs defaultValue=` 를 **파일 전역** 부정 단언으로 걸었더니 무관한 탭 그룹
+(:1647 초대 방식 email/link)이 잡혔다. 259c·4a 에 이은 세 번째가 될 뻔했다.
+→ 옛 값 그 자체(`defaultValue="overview"`)만 금지하도록 좁혔고, 무관 탭 그룹이
+그대로 남아 있음을 **경계 밖 대조군**으로 함께 단언한다.
+
+### 실측이 문서를 정정한 것
+
+핸드오프 §4(멤버 탭)가 "`관리자 N명` 요약 칩 제거" 를 적었는데, 실물은 :796
+**개요 탭**의 "승인 체계" 카드 안에 있다. 그 카드는 P4 에서 구성 요약으로 흡수되므로
+이 항목은 **P4 소관**이다. §4 에 적혀 있다고 P2 에서 지우면 개요 카드가 깨진다.
+
+sentinel: `src/__tests__/dashboard/organizations-honest-member-tab.test.ts` (11건)

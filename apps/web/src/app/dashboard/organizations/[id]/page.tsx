@@ -42,7 +42,7 @@ import {
 //   UserCheck UserX Wallet actual 사용 0). 나머지 보존.
 import {
   ArrowLeft, UserPlus, Mail, Loader2, Search, Users, ShieldCheck,
-  Settings, PauseCircle, X, Send, Building2,
+  Settings, X, Send, Building2,
   FileText, Package, ShoppingCart, MoreVertical, Trash2,
   Lock, Clock, Activity, CreditCard, ClipboardCheck,
   AlertTriangle, ChevronRight, CheckCircle2, XCircle, Check,
@@ -122,7 +122,6 @@ interface TeamMemberRow {
   status?: string;
   spent?: number;
   reagentCount?: number;
-  lastActive?: string;
 }
 
 interface Member {
@@ -153,7 +152,14 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   const [permissionDialogMember, setPermissionDialogMember] = useState<TeamMemberRow | null>(null);
   // §org-role-review (호영님 2026-06-27) — 헤더 "권한 검토" → 역할 매트릭스 + 멤버 권한 모달.
   const [roleReviewOpen, setRoleReviewOpen] = useState(false);
-  const [memberStatusFilter, setMemberStatusFilter] = useState<"all" | "active" | "pending" | "inactive">("all");
+  // §org-management-web P2 — 상태 필터에서 "장기 미접속" 제거.
+  //   추적 배선이 없어 항상 0건이던 dead filter 였다(옛 :343 `return false`).
+  //   lastActive 배선이 생기면 그때 복원한다 — 없는 사실을 칩으로 세지 않는다.
+  const [memberStatusFilter, setMemberStatusFilter] = useState<"all" | "active" | "pending">("all");
+  // §org-management-web P2 — 탭은 controlled state.
+  //   🛑 옛 축은 document.querySelector('[data-state][value="..."]').click() 였다.
+  //      DOM 을 때려 탭을 바꾸면 React 가 모르는 전이가 생기고, 딥링크·뒤로가기가 안 선다.
+  const [activeTab, setActiveTab] = useState("overview");
   // §org-activity-actor-filter — 카테고리 칩(멤버·권한·설정 등 항상 빈 필터) 제거 → 실제 행위자 필터.
   const [activityActorFilter, setActivityActorFilter] = useState<string>("전체");
 
@@ -327,7 +333,6 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       status: m.status,
       spent: 0,
       reagentCount: 0,
-      lastActive: m.status === "Pending" ? "초대 대기" : "오늘",
     };
   });
 
@@ -340,7 +345,6 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
     // 상태 필터
     if (memberStatusFilter === "active") return m.status !== "Pending";
     if (memberStatusFilter === "pending") return m.status === "Pending";
-    if (memberStatusFilter === "inactive") return false; // 장기 미접속 로직 확장 가능
     return true;
   });
 
@@ -592,10 +596,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                 variant="outline"
                 size="sm"
                 className="border-slate-200 text-slate-600 hover:bg-slate-100"
-                onClick={() => {
-                  const tabEl = document.querySelector('[data-state][value="invites"]') as HTMLElement;
-                  tabEl?.click();
-                }}
+                onClick={() => setActiveTab("invites")}
               >
                 <Mail className="h-4 w-4 mr-1.5" />
                 초대 관리
@@ -688,7 +689,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
           <div className="flex justify-end gap-2 pt-1">
             <Button variant="outline" size="sm" onClick={() => setRoleReviewOpen(false)}>닫기</Button>
             {isAdmin && (
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => { setRoleReviewOpen(false); const tabEl = document.querySelector('[data-state][value="members"]') as HTMLElement; tabEl?.click(); }}>
+              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => { setRoleReviewOpen(false); setActiveTab("members"); }}>
                 멤버 역할 편집
               </Button>
             )}
@@ -714,7 +715,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       </div>
 
       {/* 탭 구조 — 5탭 */}
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="bg-slate-100 p-1 rounded-lg">
           <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm text-slate-500">
             개요
@@ -944,13 +945,12 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
 
             {/* 상태 필터 + 역할별 세그먼트 */}
             <div className="flex flex-wrap gap-2">
-              {(["all", "active", "pending", "inactive"] as const).map((f) => {
-                const labels: Record<string, string> = { all: "전체", active: "활성", pending: "초대 대기", inactive: "장기 미접속" };
+              {(["all", "active", "pending"] as const).map((f) => {
+                const labels: Record<string, string> = { all: "전체", active: "활성", pending: "초대 대기" };
                 const counts: Record<string, number> = {
                   all: totalMembers,
                   active: activeCount,
                   pending: pendingCount,
-                  inactive: 0,
                 };
                 return (
                   <button
@@ -964,7 +964,6 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                   >
                     {f === "active" && <span className="w-2 h-2 rounded-full bg-emerald-500" />}
                     {f === "pending" && <Clock className="h-3 w-3 text-yellow-500" />}
-                    {f === "inactive" && <PauseCircle className="h-3 w-3 text-slate-500" />}
                     {labels[f]} <span className="font-bold">{counts[f]}</span>
                   </button>
                 );
@@ -1016,7 +1015,6 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                         <TableHead className="font-semibold text-slate-600">역할</TableHead>
                         <TableHead className="font-semibold text-slate-600">상태</TableHead>
                         <TableHead className="font-semibold text-slate-600 hidden md:table-cell">참여일</TableHead>
-                        <TableHead className="font-semibold text-slate-600 hidden lg:table-cell">마지막 활동</TableHead>
                         {isAdmin && <TableHead className="font-semibold text-slate-600 text-right w-[60px]">관리</TableHead>}
                       </TableRow>
                     </TableHeader>
@@ -1071,7 +1069,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                               {isPending ? (
                                 <Badge variant="secondary" className="text-xs bg-yellow-50 text-yellow-700">초대 대기</Badge>
                               ) : (
-                                <Badge variant="outline" className="text-xs border-emerald-200 text-emerald-700">활동 중</Badge>
+                                <Badge variant="outline" className="text-xs border-emerald-200 text-emerald-700">활성</Badge>
                               )}
                             </TableCell>
                             <TableCell className="py-4 hidden md:table-cell">
@@ -1079,11 +1077,6 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                                 {rawMember?.createdAt
                                   ? new Date(rawMember.createdAt).toLocaleDateString("ko-KR", { year: "numeric", month: "short", day: "numeric" })
                                   : "-"}
-                              </span>
-                            </TableCell>
-                            <TableCell className="py-4 hidden lg:table-cell">
-                              <span className="text-xs text-slate-400">
-                                {isPending ? "-" : member.lastActive || "-"}
                               </span>
                             </TableCell>
                             {isAdmin && (
