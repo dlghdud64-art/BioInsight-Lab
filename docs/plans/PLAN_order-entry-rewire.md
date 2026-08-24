@@ -183,3 +183,40 @@ Last Updated 갱신 → Notes 기록 → 그 후에만 다음 phase. 게이트 �
 - P3 게이트 추가 (로컬 세션 제안 채택): /quotes/[id] 파일 존치 상태에 **도달성 가드
   sentinel** — "이 파일은 dead (진입 링크 0)" 를 단언해 다음 세션의 라이브 착각 방지
   (data-table.tsx false-GREEN 재발 방지 축)
+
+---
+
+## ✅ P4 마감 — 폐루프 프로덕션 실측 완주 (2026-08-24)
+
+P4 를 막고 있던 §cancel-does-not-restore-quote 두 겹을 봉합한 뒤 재실측했다.
+배포 `6aaaa757` (manifestGeneratedAt 08:43:57Z > 커밋 08:28:41Z).
+
+```
+1상 진입   견적 관리 행 [발주 준비] → 브리핑 rail 없이 "주문 접수" 창 직행   ✅ (P3-2 실증)
+2상 접수   ORD-20260824-SKSQ · 850,000 · CANCELLED C3PN 과 공존              ✅ (겹 2 실증)
+           5,000,000 − used 850,000 − reserved 850,000 = 3,300,000
+3상 확정   🛑 미완 — 이 견적은 8/18 PurchaseRecord 로 alreadyPurchased no-op
+4상 취소   reserved 0 · remaining 4,150,000 원복 · 견적 COMPLETED 복귀
+           행에 [발주 준비] 재출현                                            ✅ (겹 1 실증)
+```
+
+### 이번 실측이 새로 알려준 것
+
+```
+1  ③ 축 교정이 프로덕션에서 실증됐다 — 옛 축(PurchaseRecord 0건)이었다면 8/18 레코드가
+   4상 복귀를 막았다. ORDER_CONFIRMED 주체 축이라 통과했다.
+2  §purchased-falls-through-to-not-sent (신규 카드) — PURCHASED 견적이 "발송 대기" 로
+   fallthrough 하고 [발송] CTA 가 붙는다. 위험 button.
+   ⚠️ 4상 후 COMPLETED 로 돌아가면 이 증상은 사라진다 — 고쳐져서가 아니라 조건이
+   없어져서다. 다음 세션이 "해결됨" 으로 오독하지 않도록 못 박는다.
+3  /api/quotes 는 userId 축 (8건 = DB 전량 · org 필터 시 5건). 이월 항목 종결.
+```
+
+### 이월
+
+```
+3상 실측       PurchaseRecord 0 인 견적을 정상 흐름으로 COMPLETED 까지 올려서 별도 실측
+               후보 7건 — DB 로 상태를 밀지 않는다(검증 대상 경로를 건너뛴다)
+P3-4           /quotes/[id] 리다이렉트 흡수 — 6건 기능 이식 선행 (sentinel ③④ skip 대기)
+레거시 구멍     PurchaseRecord.orderId additive DDL — 별도 슬라이스·별도 승인
+```

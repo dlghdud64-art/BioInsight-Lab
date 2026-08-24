@@ -262,3 +262,36 @@ organizationId 필터 시 5건
 🔑 이 API 는 userId 축이다. 2026-08-23 의 "8 대 5" 불일치는 여기서 왔다.
 ```
 카드 상단의 ⚠️ 계수 주의 항목은 이로써 닫힌다.
+
+---
+
+## ✅ 마감 — 4상 폐루프 실측 완주 (2026-08-24 · prod · 배포 6aaaa757)
+
+배포 확인: `/api/health · manifestGeneratedAt 08:43:57Z` > 커밋 `08:28:41Z` (15.3분 뒤).
+
+```
+2상 접수   ORD-20260824-SKSQ 생성 · CANCELLED C3PN 과 공존
+           예산 5,000,000 − used 850,000 − reserved 850,000 = 3,300,000
+           견적 6QRG → PURCHASED
+4상 취소   PATCH /api/orders/[id] 200
+           예산 reserved 0 · remaining 4,150,000 원복
+           🔑 견적 6QRG → COMPLETED 복귀
+           🔑 행에 [발주 준비] 재출현 · 단계 "전환 가능"
+```
+
+🔑 **8/18 PurchaseRecord 가 더 이상 막지 않는다.** ③ 을 `ORDER_CONFIRMED` 주체 축으로
+바꾼 것이 프로덕션에서 실증됐다 — 옛 축이었다면 이 복귀가 일어나지 않는다.
+
+두 겹 모두 닫혔다:
+
+```
+겹 1  취소 → 견적 COMPLETED 복귀 → UI 진입 재개    ✅ 실측
+겹 2  취소분을 세지 않는 ALREADY_ORDERED           ✅ 실측 (재발주 성공)
+```
+
+## ⚠️ 미완 — 3상(구매 확정)은 이 견적으로 성립하지 않는다
+
+`markQuoteAsPurchased` 가 `alreadyPurchased` 로 no-op 한다(8/18 레코드). ③ 축과 무관하다.
+`order_confirmed` 원장 기록과 단일 차감(이중 계상 0)은 **계약 테스트로만 증명돼 있고
+프로덕션 실측이 없다.** 후보 7건 중 하나를 정상 흐름으로 COMPLETED 까지 올려서
+별도 실측해야 한다 — DB 로 상태를 밀면 3상이 검증하려는 그 경로를 건너뛴다.
