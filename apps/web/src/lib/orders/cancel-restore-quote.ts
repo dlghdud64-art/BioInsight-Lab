@@ -9,15 +9,36 @@
  *
  * 🛑 이것은 forward 전이가 아니라 **보상 전이(compensating)** 다.
  *   canonical ALLOWED_QUOTE_TRANSITIONS(lib/operations/state-machine.ts)의 PURCHASED 는
- *   terminal([]) 로 남는다 — 그 맵은 사용자 주도 forward 전이를 규율하고,
- *   여기는 발주를 무르는 되감기다. 맵을 넓히면 /api/quotes/[id]/status 의 수동 경로도
- *   함께 열리므로 넓히지 않았다. (판정 지점 — 호영님 재판정 시 맵으로 옮긴다.)
+ *   terminal([]) 로 남는다 — 그 맵은 사용자 주도 forward 전이를 규율하고, 여기는 발주를
+ *   무르는 되감기다. 맵을 넓히면 /api/quotes/[id]/status 의 수동 경로도 함께 열려
+ *   "주문은 살아 있는데 견적만 복귀" 가 가능해진다. (호영님 유지 판정 2026-08-24)
  *
- * 복귀 조건 3축 (인벤토리 실측 2026-08-23 근거):
- *   ① quote.status === "PURCHASED"          — 아니면 되돌릴 것이 없다 (멱등)
- *   ② 이 주문 외 활성(비CANCELLED) 주문 0건  — 다른 주문이 세운 PURCHASED 를 무르면 안 된다
- *   ③ PurchaseRecord 0건                     — 구매가 확정된 견적은 되돌리지 않는다
+ * 복귀 조건 3축:
+ *   ① quote.status === "PURCHASED"           — 아니면 되돌릴 것이 없다 (멱등)
+ *   ② 이 주문 외 활성(비CANCELLED) 주문 0건   — 다른 주문이 세운 PURCHASED 를 무르면 안 된다
+ *   ③ 이 주문의 ORDER_CONFIRMED 이벤트 0건    — 이 주문의 구매가 확정됐으면 되감기 대상이 아니다
+ *
+ * ③ 의 축 판정 (호영님 2026-08-24 · 프로덕션 실측 근거):
+ *   🛑 옛 초안은 `PurchaseRecord 0건` 이었다. 그것은 **틀렸다** —
+ *      PurchaseRecord 에는 orderId 컬럼이 없다(quoteId 만 있다). 원리상 주체를 식별할 수
+ *      없어, ② 가 피한 함정("다른 주문이 세운 것을 무르지 마라")의 거울상이 된다.
+ *      실측: quote 6QRG 의 PurchaseRecord 는 2026-08-18 생성인데 주문 C3PN 은 08-22,
+ *      SKSQ 는 08-24 다. 두 주문 어느 쪽도 그 레코드를 만들 수 없는데 둘 다 막혔다.
+ *   🛑 대안 `release > 0` 도 틀렸다 — 파생량이라 (a) confirm 이 예약을 소멸시킴 과
+ *      (b) 애초에 예약이 없었음(레거시) 이 구분되지 않고, restore 가 release 의 반환값에
+ *      묶여 호출 순서에 의존하게 된다.
+ *   ✅ ORDER_CONFIRMED 는 sourceEntityId = orderId 로 **주체가 박힌 사건**이다.
+ *      순서 무관 · 결합 0 · (a)/(b) 구분 가능.
+ *
+ * ⚠️ 알고 남긴 구멍 — 레거시 주문(2026-08-22 이전)
+ *   예약이 없던 주문은 원장에 흔적이 없어 확정 여부를 원장으로 판정할 수 없다.
+ *   그런 주문은 취소 시 "확정 안 됨" 으로 보고 견적을 복귀시킨다. 신규 주문에는 해당
+ *   없다 — owner·admin 두 접수 경로 모두 예산 없으면 NO_BUDGET 으로 막으므로 예약 없는
+ *   주문이 새로 생기지 않는다. 완전히 닫으려면 PurchaseRecord.orderId 추가(additive DDL)가
+ *   필요하고 그건 별도 슬라이스 · 별도 승인이다. 계약 테스트가 이 케이스를 명시로 잠근다
+ *   — 우연이 아니라 알고 남긴 것이다.
  */
+import { ORDER_CONFIRMED } from "@/lib/budget/order-reservation";
 
 /** 이 서비스가 쓰는 tx 표면만 구조적으로 요구한다 (Prisma 타입 결합 회피). */
 type RestoreTx = {
@@ -29,7 +50,7 @@ type RestoreTx = {
     findUnique: (args: unknown) => Promise<{ id: string; status: string } | null>;
     update: (args: unknown) => Promise<unknown>;
   };
-  purchaseRecord: {
+  budgetEvent: {
     findFirst: (args: unknown) => Promise<unknown | null>;
   };
 };
@@ -70,12 +91,12 @@ export async function restoreQuoteOnOrderCancel(
   });
   if (otherActive > 0) return false;
 
-  // ③ 구매 확정(PurchaseRecord)까지 간 견적은 발주 되감기의 대상이 아니다
-  const purchased = await tx.purchaseRecord.findFirst({
-    where: { quoteId: order.quoteId },
+  // ③ **이 주문**의 구매 확정 사건 — 주체가 sourceEntityId 에 박혀 있다
+  const confirmed = await tx.budgetEvent.findFirst({
+    where: { sourceEntityId: orderId, eventType: ORDER_CONFIRMED },
     select: { id: true },
   });
-  if (purchased) return false;
+  if (confirmed) return false;
 
   await tx.quote.update({
     where: { id: order.quoteId },

@@ -170,3 +170,95 @@ admin   PATCH /api/admin/orders/[id]/status       quote 상태 미복귀
 목은 `where` 를 **실제로 적용**한다 (quoteId·id.not·status.not 3축) — 목이 필터
 회귀를 흡수하던 2026-08-22 학습 반영. 역방향 잠금 포함: 라우트가 견적 복귀를
 재인라인하면 RED.
+
+---
+
+## 교정 (2026-08-24 · P4 재실측 중 발견 · 호영님 판정 "order_confirmed 부재로 교체")
+
+### 2상 PASS — 겹 2 봉합이 프로덕션에서 실증됐다
+
+```
+주문   ORD-20260824-SKSQ  ₩850,000  ORDERED  신규 생성
+공존   ORD-20260822-C3PN  CANCELLED — 취소분과 나란히 존재
+       🔑 취소된 주문이 남아 있어도 재발주가 된다. 겹 2 가 닫혔다.
+       @@unique([quoteId, vendorId]) 가 vendorId NULL 로 NULL-distinct 라는 스키마 판독도 실증.
+예산   total 5,000,000 · used 850,000 · reserved 850,000 · remaining 3,300,000
+견적   6QRG status PURCHASED
+```
+
+### 🛑 조건 ③ 이 틀렸다 — 사무국 설계 오류
+
+초안의 ③ 은 `PurchaseRecord 0건` 이었다. **원리상 주체를 식별할 수 없다.**
+
+```
+model PurchaseRecord
+  quoteId  String?     ← 유일한 연결
+  🛑 orderId 컬럼이 없다
+```
+
+②가 피한 함정("다른 주문이 세운 것을 무르지 마라")의 거울상을 ③에서 그대로 만들었다.
+프로덕션 데이터가 그것을 그대로 보여준다:
+
+```
+PurchaseRecord  2026-08-18 13:21:30 · 850,000 · source "quote"
+주문 C3PN       2026-08-22 11:20:30   ← 4일 뒤
+주문 SKSQ       2026-08-24 04:21:40   ← 6일 뒤
+🛑 두 주문 어느 쪽도 그 레코드를 만들 수 없다. 그런데 ③ 은 둘 다 막았다.
+```
+
+### 대안 `release > 0` 도 틀렸다 (로컬 세션 반박 · 채택 안 함)
+
+`releaseOrderReservation` 이 0 을 반환하는 경우가 둘이라 파생량으로는 구분이 안 된다.
+
+```
+(a) confirm 이 예약을 이미 소멸시켰다   → 확정됨 · 되돌리면 안 됨
+(b) 애초에 예약이 없었다 (레거시)        → 미확정 · 되돌려야 함
+```
+추가로 restore 가 release 의 반환값을 받아야 해 두 서비스가 묶이고 호출 순서에 의존한다.
+
+### ✅ 채택 — `이 주문의 ORDER_CONFIRMED 부재`
+
+P2 가 만든 그 이벤트는 `sourceEntityId = orderId` 로 **주체가 박힌 사건**이고,
+"이 주문의 구매가 확정됐다" 는 명제 그 자체다. ③ 이 손을 뻗던 사실을 원장이 이미
+주체 식별자와 함께 기록하고 있었다.
+
+```
+주체 식별    sourceEntityId — 주문 단위 · quoteId 축 오염 0
+순서 무관    release 전후 어느 쪽이든 confirm 유무는 안 바뀐다 (반환값 결합 0)
+(a)/(b) 구분  confirm 있음 → 복귀 안 함 · confirm 없음 → 복귀함
+```
+
+### ⚠️ 알고 남긴 구멍 — 레거시 주문
+
+```
+예약 없는 주문(2026-08-22 이전)  원장에 흔적이 없어 확정 여부를 원장으로 판정 불가
+                                 → 취소 시 "확정 안 됨" 으로 보고 견적을 복귀시킨다
+신규 주문                        해당 없음 — owner·admin 두 접수 경로 모두 NO_BUDGET 으로
+                                 막으므로 예약 없는 주문이 새로 생기지 않는다
+완전 봉합                        PurchaseRecord.orderId (additive DDL) — 별도 슬라이스·별도 승인
+```
+계약 테스트가 이 케이스를 **명시로** 잠근다 — 우연이 아니라 알고 남긴 것임을 못 박기 위해서다.
+그 단언을 지우려면 DDL 슬라이스와 함께 지운다.
+
+## 별건 — 3상은 6QRG 로 성립하지 않는다
+
+`markQuoteAsPurchased` 가 `alreadyPurchased` 로 no-op 한다. ③ 을 고쳐도 마찬가지다.
+3상(구매 확정) 실측은 PurchaseRecord 0 인 다른 견적을 **정상 흐름으로** COMPLETED 까지
+올려서 해야 한다 — DB 로 상태를 밀면 3상이 검증하려는 그 경로를 건너뛴다.
+
+```
+후보 (PurchaseRecord 0 + 품목 있음 · 7건)
+  PENDING  cmsg9zzut0009uupv7hu7ds3y · cmsg9vqk50001uupvcokccdlh
+           cmqrnil470003nptxnhqj8ebg · cmqj9raak000559au0ziv21cu
+  SENT     cmqtqoebr000bht96nnefj5y7 · cmqnj71gb000dheu49grk70dk
+           cmqjfi5ef00035bidiqcaa698
+```
+
+## 종결 — /api/quotes 스코프 축 (이월 항목이었다)
+
+```
+/api/quotes 응답 8건 = DB 전체 견적 8건 (양측 실측 일치)
+organizationId 필터 시 5건
+🔑 이 API 는 userId 축이다. 2026-08-23 의 "8 대 5" 불일치는 여기서 왔다.
+```
+카드 상단의 ⚠️ 계수 주의 항목은 이로써 닫힌다.
