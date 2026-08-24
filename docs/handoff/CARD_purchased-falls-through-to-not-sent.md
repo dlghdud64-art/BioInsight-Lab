@@ -86,3 +86,52 @@ lib/quote-case-contract.ts:117       deriveUiState     ← 같은 로직 복붙 
 
 - `CARD_cancel-does-not-restore-quote.md` — 이 결함이 드러나게 만든 슬라이스
 - `PLAN_order-entry-rewire.md` — P4 실측 중 발견
+
+---
+
+## ✅ 실행 축 봉합 (2026-08-24 · 호영님 판정 "isSelectable 차단만 먼저")
+
+표시 축은 손대지 않았다. **선택·일괄만 자기 판정을 갖게 분리했다.**
+
+```ts
+const NON_DISPATCHABLE_STATUSES = new Set(["PURCHASED", "CANCELLED"]);
+
+function isDispatchable(q: Quote): boolean {
+  if (NON_DISPATCHABLE_STATUSES.has(q.status)) return false;
+  return deriveRailState(q) === "request_not_sent";
+}
+```
+
+### 교체 슬롯 (8곳 · 전수)
+
+```
+선택   isSelectable ×3      긴급 · 진행 · 완료 섹션 (:3546 · :3558 · :3573)
+일괄   ⌘A 전체 선택          sortedQuotes.filter (:2208)
+       전체 선택 CTA         filteredQuotes.filter (:2697)
+집계   발송 가능 집계         if (!isDispatchable(q)) continue (:2253)
+       발송 전 버킷 보수      (:2283) — :2253 의 여집합이라 같은 축으로 맞췄다
+진입   초안 워크벤치 대상      quotes.find (:2008)
+```
+
+🔑 **:2008 은 카드 등재 시 안 세었던 자리다.** 발주 완료 견적이 초안 워크벤치의 기본
+대상으로 잡히면 "요청 발송" 화면이 그 견적으로 열린다 — 선택 축과 같은 실행 축이다.
+착수 시 다시 센 것이 잡았다.
+
+### 남긴 것 (표시 축 · 문법 판정 대기)
+
+```
+railState === "request_not_sent"  ×2   행 색상 · 뱃지 (:3323 · :3331)
+deriveRailState 의 fallthrough          PURCHASED·CANCELLED 분기 부재 그대로
+lib/quote-case-contract.ts:117          deriveUiState 형제 (외부 소비자 0)
+```
+표시는 여전히 "발송 대기" 로 뜬다. **오정보는 남았고 실행만 막혔다.**
+
+### sentinel
+
+`src/__tests__/quotes/dispatch-selection-axis.test.ts` — 5건.
+잠그는 것은 "두 축이 다시 같은 함수를 쓰지 않는다" 다. 표시 축이 나중에 고쳐지더라도
+실행 축은 자기 판정을 유지해야 한다 — 표시가 옳아졌다고 실행 판정을 표시에 위임하면
+결함의 원인이 그대로 돌아온다.
+
+⚠️ 마지막 단언(`railState 비교 2건`)은 **"아직 안 고쳤다" 를 기록하는 단언**이다.
+표시 축 슬라이스가 이 숫자를 바꾸게 되며, 그때 실행 축 단언 4건이 함께 GREEN 이어야 한다.

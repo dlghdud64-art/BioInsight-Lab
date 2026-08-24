@@ -186,6 +186,21 @@ function deriveRailState(q: Quote): RailState {
   return "request_not_sent";
 }
 
+// §purchased-falls-through-to-not-sent — **실행 축 분리** (호영님 판정 2026-08-24)
+//   deriveRailState 는 PURCHASED·CANCELLED 분기가 없어 둘 다 request_not_sent 로 fallthrough 한다.
+//   표시 축(badge·CTA·색)의 문법 판정은 카드의 측정 5항목 뒤로 미루지만 **실행 축은 지금 막는다** —
+//   표시가 틀린 건 오정보지만 선택·일괄은 실행이고, 누르면 공급사 재전송이라는 되돌릴 수 없는
+//   외부 부작용이 난다. 두 축이 같은 함수를 쓴다는 것이 결함의 원인이므로 분리가 수정의 일부다.
+//   🛑 발송 대상 판정은 이 함수만 쓴다. deriveRailState(q) === "request_not_sent" 로 선택·일괄·
+//      집계를 판정하면 발주 완료 견적이 공급사 재전송 대상에 섞인다.
+//   카드: docs/handoff/CARD_purchased-falls-through-to-not-sent.md
+const NON_DISPATCHABLE_STATUSES = new Set(["PURCHASED", "CANCELLED"]);
+
+function isDispatchable(q: Quote): boolean {
+  if (NON_DISPATCHABLE_STATUSES.has(q.status)) return false;
+  return deriveRailState(q) === "request_not_sent";
+}
+
 // ── 상태별 exact 매핑 테이블 ──
 type WorkWindowKey = "request_send" | "followup_send" | "compare_review" | "approval_prep" | "po_conversion" | null;
 
@@ -2005,7 +2020,7 @@ function QuotesPageContent() {
 
   const openQuoteDraftWorkbench = useCallback(() => {
     const targetQuote = selectedQuote
-      ?? quotes.find((quote) => deriveRailState(quote) === "request_not_sent")
+      ?? quotes.find((quote) => isDispatchable(quote))
       ?? quotes.find((quote) => quote.status !== "COMPLETED" && quote.status !== "CANCELLED")
       ?? quotes[0];
 
@@ -2205,7 +2220,7 @@ function QuotesPageContent() {
       // §11.351 — 전체 선택도 발송 대상(요청 발송 전)만 선택. 회신 대기(이미 발송) 등 비대상 제외
       //   → 개별/thead 체크박스(isSelectable=request_not_sent)와 정합, 일괄 집계·중복 발송 버그 차단.
       const allIds = new Set(
-        sortedQuotes.filter((q) => deriveRailState(q) === "request_not_sent").map((q) => q.id),
+        sortedQuotes.filter((q) => isDispatchable(q)).map((q) => q.id),
       );
       setSelectedQuoteIds(allIds);
     };
@@ -2250,7 +2265,7 @@ function QuotesPageContent() {
     for (const q of selectedQuotes) {
       // §11.351 — 발송 대상 = canonical 상태 "요청 발송 전"만. 회신 대기(이미 발송)는 발송 가능
       //   집계에서 제외(중복 발송 방지). 비대상은 행 액션 "회신 확인"/리마인더로 분기.
-      if (deriveRailState(q) !== "request_not_sent") continue;
+      if (!isDispatchable(q)) continue;
       const preflight = getQuoteDispatchPreflight(q, organizationVendors, organizationVendorProducts);
       if (preflight.hardBlocked) hardBlock += 1;
       else dispatchable += 1;
@@ -2280,7 +2295,7 @@ function QuotesPageContent() {
     let responded = 0;
     for (const q of selectedQuotes) {
       const rs = deriveRailState(q);
-      if (rs === "request_not_sent") continue; // 발송 전 버킷 = dispatchableCount + hardBlockCount
+      if (isDispatchable(q)) continue; // 발송 전 버킷 = dispatchableCount + hardBlockCount
       if (rs === "awaiting_responses" || rs === "response_delayed") awaiting += 1;
       else responded += 1;
     }
@@ -2694,7 +2709,7 @@ function QuotesPageContent() {
           {/* §11.220 — 전체 선택 CTA (PENDING quote 일괄 선택). 호영님 피드백
               "체크박스 박스 외에 일괄 선택 가능하게도". PENDING 0건이면 noop. */}
           {(() => {
-            const selectablePending = filteredQuotes.filter(q => deriveRailState(q) === "request_not_sent");
+            const selectablePending = filteredQuotes.filter(q => isDispatchable(q));
             if (selectablePending.length === 0) return null;
             const allSelected = selectablePending.every(q => selectedQuoteIds.has(q.id));
             return (
@@ -3543,7 +3558,7 @@ function QuotesPageContent() {
             <h2 className="text-sm font-semibold text-slate-700">즉시 처리 필요</h2>
             <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600/15 text-red-600 text-[11px] font-bold">{urgentQuotes.length}</span>
           </div>
-          {urgentQuotes.map((quote, i) => <QuoteCard key={quote.id} quote={quote} cardIndex={i} isSelected={selectedQuoteId === quote.id} onSelect={(ctaLabel) => handleQuoteCardSelect(quote.id, ctaLabel)} isSelectable={deriveRailState(quote) === "request_not_sent"} isSelectedForBatch={selectedQuoteIds.has(quote.id)} onToggleSelect={() => toggleQuoteSelection(quote.id)} />)}
+          {urgentQuotes.map((quote, i) => <QuoteCard key={quote.id} quote={quote} cardIndex={i} isSelected={selectedQuoteId === quote.id} onSelect={(ctaLabel) => handleQuoteCardSelect(quote.id, ctaLabel)} isSelectable={isDispatchable(quote)} isSelectedForBatch={selectedQuoteIds.has(quote.id)} onToggleSelect={() => toggleQuoteSelection(quote.id)} />)}
         </div>
       )}
 
@@ -3555,7 +3570,7 @@ function QuotesPageContent() {
             <h2 className="text-sm font-semibold text-slate-700">진행 중</h2>
             <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-yellow-600/15 text-yellow-600 text-[11px] font-bold">{inProgressQuotes.length}</span>
           </div>
-          {inProgressQuotes.map((quote, i) => <QuoteCard key={quote.id} quote={quote} cardIndex={urgentQuotes.length + i} isSelected={selectedQuoteId === quote.id} onSelect={(ctaLabel) => handleQuoteCardSelect(quote.id, ctaLabel)} isSelectable={deriveRailState(quote) === "request_not_sent"} isSelectedForBatch={selectedQuoteIds.has(quote.id)} onToggleSelect={() => toggleQuoteSelection(quote.id)} />)}
+          {inProgressQuotes.map((quote, i) => <QuoteCard key={quote.id} quote={quote} cardIndex={urgentQuotes.length + i} isSelected={selectedQuoteId === quote.id} onSelect={(ctaLabel) => handleQuoteCardSelect(quote.id, ctaLabel)} isSelectable={isDispatchable(quote)} isSelectedForBatch={selectedQuoteIds.has(quote.id)} onToggleSelect={() => toggleQuoteSelection(quote.id)} />)}
         </div>
       )}
 
@@ -3570,7 +3585,7 @@ function QuotesPageContent() {
             <span className="ml-1 text-xs text-slate-500 hidden group-open:inline">▼</span>
           </summary>
           <div className="mt-2 space-y-2">
-            {completedQuotes.map((quote, i) => <QuoteCard key={quote.id} quote={quote} cardIndex={urgentQuotes.length + inProgressQuotes.length + i} isSelected={selectedQuoteId === quote.id} onSelect={(ctaLabel) => handleQuoteCardSelect(quote.id, ctaLabel)} isSelectable={deriveRailState(quote) === "request_not_sent"} isSelectedForBatch={selectedQuoteIds.has(quote.id)} onToggleSelect={() => toggleQuoteSelection(quote.id)} />)}
+            {completedQuotes.map((quote, i) => <QuoteCard key={quote.id} quote={quote} cardIndex={urgentQuotes.length + inProgressQuotes.length + i} isSelected={selectedQuoteId === quote.id} onSelect={(ctaLabel) => handleQuoteCardSelect(quote.id, ctaLabel)} isSelectable={isDispatchable(quote)} isSelectedForBatch={selectedQuoteIds.has(quote.id)} onToggleSelect={() => toggleQuoteSelection(quote.id)} />)}
           </div>
         </details>
       )}
