@@ -128,7 +128,7 @@ Snapshot/Preview  없음 — 이 화면은 preview 를 만들지 않는다
 ## 7. Implementation Phases
 
 ### Phase 0: Truth & 인벤토리 lock
-- Status: [ ] Pending
+- Status: [x] **Complete** (2026-08-24)
 - **🔴 RED** — C1·C2·C3 미해결 상태로는 P2 이후가 서지 않는다
 - **🟢 GREEN** — 아래 5건 실측·판정 완료
 ```
@@ -205,9 +205,76 @@ phase 별 커밋 분리 · 마이그레이션 0 · feature flag 불필요(순수
 P2 는 삭제 중심이라 되돌리면 정확히 현행으로 복귀한다.
 
 ## 11. Progress Tracking
-- 완료율 0% · 현재 phase: P0 대기 · 블로커: C1·C2·C3 미판정
+- 완료율 14% (P0 완료) · 현재 phase: P1 대기 · 블로커: 없음
 
 ## 12. Notes & Learnings
 - [2026-08-24] 착수 전 대조에서 C1 이 나왔다. 핸드오프 §5 가 "플랜별 실제 한도" 라고만 적어
   구현자가 `Organization.maxMembers` 로 갈 수 있었다 — 그 컬럼은 소비자 0 · 생산자 0 이다.
   오늘 세운 §reachability-needs-a-different-tool 이 착수 전에 한 번 값을 했다.
+
+
+---
+
+## P0 결과 (2026-08-24 · 전 항목 판정 완료 · 블로커 0)
+
+### C1 — 좌석 한도 배선축 ✅ 확정
+
+```
+Organization.plan        생산자 ✅ billing/webhook:80·165·201   소비자 ✅ subscription:183 · billing:355
+Organization.maxMembers  생산자 0 · 소비자 0 — dead. 건드리지 않는다(살리면 PLAN_LIMITS 와 두 진실)
+결정                     /api/organizations 응답에 plan 1필드 확장
+                         → 클라이언트가 PLAN_LIMITS[plan].maxMembers 를 분모로
+교체 대상                [id]/page.tsx:549 Math.max(totalMembers + 2, 10)
+```
+
+### C2 — 탭 토큰 정본 ✅ analytics (호영님 판정)
+
+```
+정본   border-b-[2.5px] border-[#2563eb]   9042c438 · 2026-08-16 · 탭 밑줄형 전환이 명시 목적
+별도   quotes rail 내부 소형 탭 2px          3cd0baa7 · 2026-06-23 · 성격이 달라 통일하지 않는다
+```
+🛑 정본 확정과 함께 **토큰 sentinel 을 세운다** — 지금은 선례 2건일 뿐 잠금이 없어 세 번째가 또 갈린다.
+
+### C3 — 역할 드롭다운 토큰 ✅ 저장소 선례 (호영님 판정)
+
+```
+dashboard 범위   @/components/ui/select      14파일
+                 @/components/ui/dropdown-menu  0파일
+정본             shadcn <Select>  — §11.259c(native select CI block)의 대체 지정과도 일치
+확인             organizations 파일에 Select 금지 sentinel 0 · [id]/page.tsx:22 가 이미 import 중
+```
+문서가 나오면 대조해 정정한다(이월 아님 · 진행 가능).
+
+### P0-4 — 삭제 4건 피의존 ✅ **0건**
+
+```
+lastActive          이 파일 전용. 파일 밖 0 · 테스트 핀 0
+"활동 중" Badge      파일 밖 0
+memberStatusFilter  파일 밖 0
+querySelector 2곳    핸들러 내부 전용
+```
+⚠️ 별개 축 1건 — `lib/review-queue/ops-hub-adapters.ts:78·85` 가 `lastActiveAt` 을 받는다.
+이름이 비슷하나 **다른 어댑터**이고 조직 상세와 무관하다. 삭제해도 안 깨진다.
+(그쪽 생산자 유무는 이 트랙 범위 밖 — 노트만 남긴다.)
+
+⚠️ P2 착수 시 sweep 대상 (§sweep-widen-then-filter — 토막으로 넓게)
+```
+__tests__/api/organizations/org-member-patch-approval-limit.test.ts
+__tests__/dashboard/organizations-detail-capability-edit.test.ts
+__tests__/dashboard/settings-org-members-approval-limit-section.test.ts
+```
+
+### P0-5 — 역할 변경 API ✅ 있다. P4 분리 불필요
+
+```
+PATCH /api/organizations/[id]/members:77
+  { memberId, role?, approvalLimit? }  partial update
+  enforceAction 'member_role_change' (:96) · OWNER 직접 할당 불가 검증(:134)
+  변경 0건이면 400 (:111)
+```
+인라인 드롭다운은 이 계약을 그대로 쓴다 — 새 엔드포인트 0.
+
+### P0 에서 파생된 별건 (UI 트랙과 분리)
+
+`docs/handoff/CARD_org-create-limit-always-free.md` — 조직 생성 한도가 모두에게 FREE.
+좌석 한도를 재려던 grep 이 물어 올렸다. 단독 슬라이스 · 착수 순서만 조율.
