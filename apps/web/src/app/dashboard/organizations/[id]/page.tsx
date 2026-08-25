@@ -567,9 +567,22 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   //   React.ComponentType<{ className?: string }>> 의 nested <> 가 다음
   //   JSX `<div` 를 generic 으로 잘못 parse. React.ElementType 단일
   //   token + postfix `[]` 으로 nested generic 제거.
-  const actionableItems: { label: string; count: number; icon: React.ElementType; color: string }[] = [];
-  if (pendingCount > 0) actionableItems.push({ label: "초대 응답 대기", count: pendingCount, icon: Mail, color: "text-yellow-500" });
-  if (approverCount === 0 && totalMembers > 1) actionableItems.push({ label: "승인자 미지정", count: 1, icon: AlertTriangle, color: "text-red-500" });
+  // §org-management-web P4a — 처리 항목은 **결과**와 **행동**을 함께 말한다.
+  //   숫자만 보여주면 "그래서 무엇이 문제인가" 를 사용자가 추론해야 한다.
+  const actionableItems: {
+    label: string; consequence: string; count: number;
+    icon: React.ElementType; color: string; actionLabel: string; onAction: () => void;
+  }[] = [];
+  if (pendingCount > 0) actionableItems.push({
+    label: "초대 응답 대기", consequence: "초대받은 멤버가 아직 참여하지 않았습니다",
+    count: pendingCount, icon: Mail, color: "text-yellow-500",
+    actionLabel: "초대 확인", onAction: () => setActiveTab("invites"),
+  });
+  if (approverCount === 0 && totalMembers > 1) actionableItems.push({
+    label: "승인자 미지정", consequence: "구매 요청이 승인 단계 없이 통과됩니다",
+    count: 1, icon: AlertTriangle, color: "text-yellow-600",
+    actionLabel: "승인자 지정", onAction: () => setActiveTab("members"),
+  });
 
   return (
     <div className="space-y-6">
@@ -817,130 +830,16 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
 
         {/* ===== 개요 탭 ===== */}
         <TabsContent value="overview">
-          <div className="space-y-4">
-            {/* 운영 요약 */}
-            <div className="grid gap-4 md:grid-cols-3">
-              <Card className="shadow-sm border-slate-200 bg-white">
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="bg-blue-50 p-2 rounded-lg">
-                      <Users className="h-5 w-5 text-blue-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">멤버 현황</p>
-                      <p className="text-xs text-slate-400">활성 {activeCount}명 / 전체 {totalMembers}명</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    {Object.entries(
-                      members.reduce((acc: Record<string, number>, m) => {
-                        acc[m.role] = (acc[m.role] || 0) + 1;
-                        return acc;
-                      }, {})
-                    ).map(([role, count]) => (
-                      <Badge key={role} variant="secondary" className="text-[11px] bg-slate-100 text-slate-600">
-                        {ROLE_LABELS[role] || role} {count}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="shadow-sm border-slate-200 bg-white">
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="bg-yellow-50 p-2 rounded-lg">
-                      <Mail className="h-5 w-5 text-yellow-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">초대 상태</p>
-                      <p className="text-xs text-slate-400">{pendingCount > 0 ? `${pendingCount}건 응답 대기` : "대기 없음"}</p>
-                    </div>
-                  </div>
-                  {pendingCount > 0 && (
-                    <div className="space-y-1">
-                      {teamMembers.filter((m) => m.status === "Pending").slice(0, 3).map((m) => (
-                        <p key={m.id} className="text-xs text-slate-400 truncate">{m.email}</p>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-              <Card className="shadow-sm border-slate-200 bg-white">
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="bg-emerald-50 p-2 rounded-lg">
-                      <ClipboardCheck className="h-5 w-5 text-emerald-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">승인 체계</p>
-                      <p className="text-xs text-slate-400">승인자 {approverCount}명 / 관리자 {adminCount}명</p>
-                    </div>
-                  </div>
-                  {approverCount === 0 && totalMembers > 1 && (
-                    <p className="text-xs text-yellow-500">승인자를 지정해 주세요</p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* 최근 활동 5건 */}
-            <Card className="shadow-sm border-slate-200 bg-white">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold text-slate-900">최근 활동</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                {/* §org-management-redesign P3 — 활동 데이터 없음 정직 표기(가짜 0). */}
-                {organizationLogs.length === 0 ? (
-                  <div className="py-8 text-center text-sm text-slate-400">활동 내역이 아직 없습니다.</div>
-                ) : organizationLogs.slice(0, 5).map((log, idx) => {
-                  const category = getActivityCategory(log.action);
-                  const style = ACTIVITY_CATEGORY_STYLES[category] || ACTIVITY_CATEGORY_STYLES.inventory;
-                  const Icon = style.icon;
-                  const importance = getActivityImportance(log.action);
-                  const actionParts = log.target && log.action.includes(log.target)
-                    ? (() => {
-                        const i = log.action.indexOf(log.target);
-                        return {
-                          before: log.action.slice(0, i),
-                          target: log.target,
-                          after: log.action.slice(i + log.target.length),
-                        };
-                      })()
-                    : null;
-                  return (
-                    <div
-                      key={log.id}
-                      className={`flex items-center gap-3 px-4 py-3 hover:bg-slate-100/30 ${idx < 4 ? "border-b border-slate-200" : ""}`}
-                    >
-                      <div className={`w-2 h-2 rounded-full shrink-0 ${IMPORTANCE_DOT[importance]}`} />
-                      <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center ${style.bg} ${style.text}`}>
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm truncate">
-                          <span className="font-medium text-slate-900/90">{log.actor}</span>
-                          <span className="text-slate-400">님이 </span>
-                          {actionParts ? (
-                            <>
-                              <span className="text-slate-400">{actionParts.before}</span>
-                              <span className="text-blue-500 font-medium">{actionParts.target}</span>
-                              <span className="text-slate-400">{actionParts.after}</span>
-                            </>
-                          ) : (
-                            <span className="text-slate-400">{log.action}</span>
-                          )}
-                        </p>
-                      </div>
-                      <span className="text-[11px] text-slate-500 shrink-0">{log.time}</span>
-                    </div>
-                  );
-                })}
-              </CardContent>
-            </Card>
-
-            {/* 바로 처리할 항목 + 플랜/좌석 사용률 */}
-            <div className="grid gap-4 md:grid-cols-2">
-              {/* 바로 처리할 항목 */}
+          {/* §org-management-web P4a — 2열 그리드(1fr + 380px).
+              🛑 기존 정적 3카드(멤버 현황 / 초대 상태 / 승인 체계)는 삭제하고 우측 구성 요약이 흡수한다.
+                 "관리자 N명" 요약 칩도 그 카드 안에 있었다 — 핸드오프 §4 는 멤버 탭 소관으로 적었지만
+                 실물은 개요 탭이었다 (실측이 문서를 정정 · P2 노트).
+              🛑 플랜 카드는 여기 두지 않는다 — P3 에서 KPI 4번째 카드가 이미 흡수했다.
+                 다시 두면 핸드오프 §2 가 "플랜/좌석 보기" 를 지운 이유(화면 내 정보 중복)를
+                 그대로 재생산한다 (실측이 문서를 정정 2건째). */}
+          <div className="grid gap-4 lg:grid-cols-[1fr_380px] items-start">
+            {/* 좌 — 바로 처리할 항목 */}
+            <div className="space-y-4">
               <Card className="shadow-sm border-slate-200 bg-white">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-semibold text-slate-900">바로 처리할 항목</CardTitle>
@@ -956,12 +855,21 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                       {actionableItems.map((item, idx) => {
                         const ItemIcon = item.icon;
                         return (
-                          <div key={idx} className="flex items-center justify-between rounded-lg border border-slate-200 p-3 hover:bg-slate-100/30">
-                            <div className="flex items-center gap-2.5">
-                              <ItemIcon className={`h-4 w-4 ${item.color}`} />
-                              <span className="text-sm text-slate-600">{item.label}</span>
+                          <div key={idx} className="flex items-start justify-between gap-3 rounded-lg border border-yellow-200 bg-yellow-50/40 p-3">
+                            <div className="flex items-start gap-2.5">
+                              <span className="mt-0.5 rounded bg-white border border-yellow-200 p-1">
+                                <ItemIcon className={`h-4 w-4 ${item.color}`} />
+                              </span>
+                              <div>
+                                <p className="text-sm font-semibold text-slate-900">
+                                  {item.label} <span className="tabular-nums text-slate-500">{item.count}건</span>
+                                </p>
+                                <p className="text-xs text-slate-500 mt-0.5">{item.consequence}</p>
+                              </div>
                             </div>
-                            <Badge variant="secondary" className="bg-slate-100 text-slate-600 text-xs">{item.count}건</Badge>
+                            <Button size="sm" variant="outline" className="shrink-0 border-slate-200 text-slate-700 hover:bg-white" onClick={item.onAction}>
+                              {item.actionLabel}
+                            </Button>
                           </div>
                         );
                       })}
@@ -970,39 +878,63 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                 </CardContent>
               </Card>
 
-              {/* 플랜/좌석 사용률 */}
+              {/* 최근 활동 요약 — 빈 상태를 정직하게 말한다 */}
               <Card className="shadow-sm border-slate-200 bg-white">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-semibold text-slate-900">플랜 및 좌석 사용률</CardTitle>
+                <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
+                  <CardTitle className="text-sm font-semibold text-slate-900">최근 활동</CardTitle>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("activity")}
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    전체 활동 로그 ›
+                  </button>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-lg font-bold text-slate-900">{planLabel} 플랜</p>
-                      <p className="text-xs text-slate-400">{totalMembers}명 사용 중</p>
+                <CardContent>
+                  {organizationLogs.length === 0 ? (
+                    /* §11.318 honesty 승계 — org-scoped 활동 엔드포인트가 아직 없다.
+                       가짜 피드를 만들지 않고 없다는 사실을 그대로 적는다. */
+                    <p className="text-sm text-slate-400 py-2">아직 기록된 활동이 없습니다</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {organizationLogs.slice(0, 5).map((log) => (
+                        <div key={log.id} className="flex items-center justify-between text-xs">
+                          <span className="text-slate-600">{log.actor} · {log.action}</span>
+                          <span className="text-slate-400 tabular-nums">{log.time}</span>
+                        </div>
+                      ))}
                     </div>
-                    <Link href="/dashboard/settings/plans">
-                      <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 text-xs">
-                        변경
-                        <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
-                      </Button>
-                    </Link>
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs text-slate-400">좌석 사용률</span>
-                      <span className="text-xs font-medium text-slate-600">{seatUsagePercent}%</span>
-                    </div>
-                    <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${seatUsagePercent > 80 ? "bg-yellow-500" : "bg-blue-500"}`}
-                        style={{ width: `${seatUsagePercent}%` }}
-                      />
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
+
+            {/* 우 — 구성 요약 (기존 정적 3카드 흡수) */}
+            <Card className="shadow-sm border-slate-200 bg-white">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold text-slate-900">구성 요약</CardTitle>
+              </CardHeader>
+              <CardContent className="divide-y divide-slate-200">
+                <div className="flex items-center justify-between py-2.5">
+                  <span className="flex items-center gap-2 text-sm text-slate-600">
+                    <Users className="h-4 w-4 text-blue-500" />멤버
+                  </span>
+                  <span className="text-sm font-bold text-slate-900 tabular-nums">{totalMembers}명</span>
+                </div>
+                <div className="flex items-center justify-between py-2.5">
+                  <span className="flex items-center gap-2 text-sm text-slate-600">
+                    <Mail className="h-4 w-4 text-yellow-500" />초대 대기
+                  </span>
+                  <span className="text-sm font-bold text-slate-900 tabular-nums">{pendingCount}명</span>
+                </div>
+                <div className="flex items-center justify-between py-2.5">
+                  <span className="flex items-center gap-2 text-sm text-slate-600">
+                    <ClipboardCheck className={`h-4 w-4 ${approverCount === 0 ? "text-yellow-500" : "text-emerald-500"}`} />승인자
+                  </span>
+                  <span className="text-sm font-bold text-slate-900 tabular-nums">{approverCount}명</span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 

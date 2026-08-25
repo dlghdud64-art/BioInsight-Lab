@@ -73,7 +73,10 @@ describe("③ 탭 전환은 controlled state — DOM 해킹 0", () => {
   it("메인 탭 그룹이 value / onValueChange 를 받는다", () => {
     /* ⚠️ 경계 한정 — 부정 단언을 `<Tabs defaultValue=` 전역으로 걸면 이 파일의 무관한
      * 탭 그룹(:1647 초대 방식 email/link)을 같이 잡는다. 259c·4a 에서 두 번 겪은
-     * 형태라 여기서는 **옛 값 그 자체**(defaultValue="overview")만 금지한다. */
+     * 형태라 여기서는 **옛 값 그 자체**(defaultValue="overview")만 금지한다.
+     * ⚠️ :1647 탭 그룹은 이 파일에서 아무 단언도 닿지 않는 지점이라 **프로브의 경계 밖
+     *    대조군으로 쓸 수 있다.** 반대로 P3 의 '이름 겹침 표면 생존' 단언이 걸린 표면은
+     *    경계 안이라 대조군이 될 수 없다 (로컬 세션 지적 2026-08-24). */
     const code = stripComments(read(ORG_DETAIL));
     expect(code).toMatch(/<Tabs value=\{activeTab\} onValueChange=\{setActiveTab\}/);
     expect(code).not.toMatch(/<Tabs defaultValue="overview"/);
