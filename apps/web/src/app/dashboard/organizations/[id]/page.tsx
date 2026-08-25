@@ -606,7 +606,12 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   });
 
   return (
-    <div className="space-y-6">
+    /* §org-management-web P6 — 좌우 여백 부재 봉합.
+     * §dashboard-padding-unify(2026-07-04) 가 셸 <main> 의 uniform 패딩을 걷어내며
+     * "각 페이지가 자기 패딩을 갖는다" 로 바꿨는데, 이 페이지는 그때 패딩을 못 받았다.
+     * 실측(2026-08-25 프로덕션): 콘텐츠 left=256 (사이드바 우측 끝과 동일) · pL/pR=0.
+     * 리스트 페이지(organizations/page.tsx:343)와 동일 래퍼로 맞춘다. */
+    <div className="mx-auto w-full max-w-7xl p-4 md:p-8 space-y-6">
       {/* 헤더 */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">

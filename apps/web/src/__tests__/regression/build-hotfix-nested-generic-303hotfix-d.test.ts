@@ -74,8 +74,14 @@ describe("§11.303-hotfix-d — nested generic SWC parser bug 회피", () => {
     );
   });
 
-  it("JSX return 구조 보존 (line ~477) — return ( <div className=\"space-y-6\">", () => {
-    expect(SRC).toMatch(/return \(\s*\n\s*<div className="space-y-6">/);
+  it("JSX return 구조 보존 (line ~477) — return ( 다음이 space-y-6 루트 div", () => {
+    /* 승계 (§org-management-web P6 2026-08-25 · 표현만 완화):
+     * 이 단언이 잠그는 결정은 "SWC nested-generic 회피 후 JSX return 구조가 살아있다" 이지
+     * className 문자열이 아니다. P6 가 §dashboard-padding-unify 누락분(좌우 여백 0)을
+     * 봉합하며 같은 div 에 패딩 래퍼를 얹고 근거 주석을 넣었을 뿐, 구조는 무손상이다.
+     * → return ( 과 <div 사이 주석 1개를 허용하고, className 은 space-y-6 포함으로 핀한다.
+     *   주석 본문은 부정 선읽기로 첫 닫힘에서 끊어 창을 넘지 못하게 한다. */
+    expect(SRC).toMatch(/return \(\n(?:\s*\/\*(?:(?!\*\/)[\s\S])*?\*\/\n)?\s*<div className="[^"\n]*\bspace-y-6\b[^"\n]*">\n/);
     expect(SRC).toMatch(/\{\/\* 헤더 \*\/\}/);
   });
 
