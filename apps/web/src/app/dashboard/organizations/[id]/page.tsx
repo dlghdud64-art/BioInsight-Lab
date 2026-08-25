@@ -103,6 +103,16 @@ const IMPORTANCE_DOT: Record<string, string> = {
 };
 
 // 역할 라벨 매핑
+// §org-management-web P4b — 역할 색 점. 드롭다운 트리거와 읽기 전용 표기가 같은 색을 쓴다.
+const ROLE_DOT: Record<string, string> = {
+  VIEWER: "bg-slate-400",
+  REQUESTER: "bg-blue-500",
+  APPROVER: "bg-emerald-500",
+  ADMIN: "bg-slate-900",
+  OWNER: "bg-slate-900",
+  MEMBER: "bg-slate-400",
+};
+
 const ROLE_LABELS: Record<string, string> = {
   VIEWER: "조회자",
   REQUESTER: "요청자",
@@ -162,6 +172,14 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   //   🛑 옛 축은 document.querySelector('[data-state][value="..."]').click() 였다.
   //      DOM 을 때려 탭을 바꾸면 React 가 모르는 전이가 생기고, 딥링크·뒤로가기가 안 선다.
   const [activeTab, setActiveTab] = useState("overview");
+  // §org-management-web P4b — 변경 즉시 저장 후 행에 "✓ 저장됨" 1.5초.
+  //   toast 만으로는 **어느 행이** 저장됐는지 안 보인다.
+  const [savedMemberId, setSavedMemberId] = useState<string | null>(null);
+  // §org-management-web P4b — 승인자 지정 딥링크가 켜는 역할 열 강조.
+  //   🛑 핸드오프 §5 는 "역할 드롭다운 오픈 상태로 딥링크" 였으나 열 수 없다 —
+  //      승인자 0명 상황에서 **누구를 승인자로 만들지는 사용자가 정한다**. 열 드롭다운이
+  //      하나로 정해지지 않는다. 대신 역할 열 전체를 강조해 어디를 볼지 말한다.
+  const [roleColumnHint, setRoleColumnHint] = useState(false);
   // §org-activity-actor-filter — 카테고리 칩(멤버·권한·설정 등 항상 빈 필터) 제거 → 실제 행위자 필터.
   const [activityActorFilter, setActivityActorFilter] = useState<string>("전체");
 
@@ -414,9 +432,11 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       if (!response.ok) throw new Error("Failed to update role");
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["organization-members", params.id] });
       toast({ title: "역할 변경 완료" });
+      setSavedMemberId(variables.memberId);
+      setTimeout(() => setSavedMemberId((cur) => (cur === variables.memberId ? null : cur)), 1500);
     },
     onError: () => toast({ title: "역할 변경 실패", variant: "destructive" }),
   });
@@ -581,7 +601,8 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   if (approverCount === 0 && totalMembers > 1) actionableItems.push({
     label: "승인자 미지정", consequence: "구매 요청이 승인 단계 없이 통과됩니다",
     count: 1, icon: AlertTriangle, color: "text-yellow-600",
-    actionLabel: "승인자 지정", onAction: () => setActiveTab("members"),
+    actionLabel: "승인자 지정",
+    onAction: () => { setActiveTab("members"); setRoleColumnHint(true); },
   });
 
   return (
@@ -1053,27 +1074,43 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                                 </div>
                               </div>
                             </TableCell>
-                            <TableCell className="py-4">
+                            <TableCell className={`py-4 ${roleColumnHint ? "bg-yellow-50/60" : ""}`}>
                               {canEditRole && rawMember ? (
-                                <Select
-                                  value={rawMember.role}
-                                  onValueChange={(v) => updateRoleMutation.mutate({ memberId: rawMember.id, role: v })}
-                                  disabled={updateRoleMutation.isPending}
-                                >
-                                  <SelectTrigger className="w-[140px] h-9 text-sm border-slate-200 border-slate-200">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="VIEWER">조회자</SelectItem>
-                                    <SelectItem value="REQUESTER">요청자</SelectItem>
-                                    <SelectItem value="APPROVER">승인자</SelectItem>
-                                    <SelectItem value="ADMIN">관리자</SelectItem>
-                                  </SelectContent>
-                                </Select>
+                                <div className="flex items-center gap-2">
+                                  <Select
+                                    value={rawMember.role}
+                                    onValueChange={(v) => updateRoleMutation.mutate({ memberId: rawMember.id, role: v })}
+                                    disabled={updateRoleMutation.isPending}
+                                  >
+                                    <SelectTrigger className="w-[150px] h-9 text-sm border-slate-200">
+                                      <span className={`h-2 w-2 rounded-full shrink-0 ${ROLE_DOT[rawMember.role] || "bg-slate-400"}`} />
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {(["VIEWER", "REQUESTER", "APPROVER", "ADMIN"] as const).map((r) => (
+                                        <SelectItem key={r} value={r}>
+                                          <span className="flex items-center gap-2">
+                                            <span className={`h-2 w-2 rounded-full ${ROLE_DOT[r]}`} />
+                                            {ROLE_LABELS[r]}
+                                          </span>
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  {savedMemberId === rawMember.id && (
+                                    <span className="text-xs font-medium text-emerald-600 whitespace-nowrap">✓ 저장됨</span>
+                                  )}
+                                </div>
                               ) : (
-                                <span className="text-sm text-slate-600">
-                                  {ROLE_LABELS[rawMember?.role || member.rawRole || ""] || "멤버"}
-                                </span>
+                                <div>
+                                  <span className="flex items-center gap-2 text-sm text-slate-600">
+                                    <span className={`h-2 w-2 rounded-full ${ROLE_DOT[rawMember?.role || member.rawRole || ""] || "bg-slate-400"}`} />
+                                    {ROLE_LABELS[rawMember?.role || member.rawRole || ""] || "멤버"}
+                                  </span>
+                                  {isSelfAdmin && (
+                                    <span className="mt-0.5 block text-[11px] text-slate-400">본인 역할 변경 불가</span>
+                                  )}
+                                </div>
                               )}
                             </TableCell>
                             <TableCell className="py-4">
@@ -1094,16 +1131,32 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                               <TableCell className="py-4 text-right">
                                 {member.rawRole === "OWNER" ? (
                                   <Lock className="h-4 w-4 text-slate-600 mx-auto" />
+                                ) : rawMember && !isSelfAdmin && isPending ? (
+                                  /* §org-management-web P4b — 초대 대기 행은 ⋮ 안에 숨기지 않는다.
+                                     재발송·취소는 이 행에서 할 일의 전부라 한 단계를 더 거칠 이유가 없다. */
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    <Button
+                                      size="sm" variant="outline"
+                                      className="h-8 border-slate-200 text-slate-600 hover:bg-slate-100"
+                                      onClick={() => resendInviteMutation.mutate(rawMember.id)}
+                                    >
+                                      <Send className="h-3.5 w-3.5 mr-1" />초대 재발송
+                                    </Button>
+                                    <Button
+                                      size="sm" variant="outline"
+                                      className="h-8 border-red-200 text-red-600 hover:bg-red-50"
+                                      onClick={() => { if (confirm("초대를 취소하시겠습니까?")) removeMemberMutation.mutate(rawMember.id); }}
+                                    >
+                                      <X className="h-3.5 w-3.5 mr-1" />초대 취소
+                                    </Button>
+                                  </div>
                                 ) : rawMember && !isSelfAdmin ? (
                                   // §11.303-hotfix-e — JSX 주석 sibling 제거 (fragment 없이 인접하면 SWC parser fail, 진짜 root cause).
                                   <ActionMenu
                                     menuId={`org-member-${rawMember.id}`}
                                     currentOpenId={openMemberActionId}
                                     onOpenChange={setOpenMemberActionId}
-                                    items={isPending ? [
-                                      { label: "초대 재발송", icon: <Send className="h-4 w-4 mr-2" />, onClick: () => resendInviteMutation.mutate(rawMember.id) },
-                                      { label: "초대 취소", icon: <X className="h-4 w-4 mr-2" />, danger: true, separator: true, onClick: () => { if (confirm("초대를 취소하시겠습니까?")) removeMemberMutation.mutate(rawMember.id); } },
-                                    ] : [
+                                    items={[
                                       { label: "멤버 제거", icon: <Trash2 className="h-4 w-4 mr-2" />, danger: true, onClick: () => { if (confirm(`${member.name}님을 제거하시겠습니까?`)) removeMemberMutation.mutate(rawMember.id); } },
                                     ]}
                                   />
