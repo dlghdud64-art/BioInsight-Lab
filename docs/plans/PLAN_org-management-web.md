@@ -176,7 +176,7 @@ Snapshot/Preview  없음 — 이 화면은 preview 를 만들지 않는다
 - **Rollback** — 개요/멤버 탭 블록 revert
 
 ### Phase 5: 리스트 3열
-- Status: [ ] Pending
+- Status: [x] **Complete** (2026-08-24)
 - 3열 그리드 + `새 조직 만들기` dashed placeholder · 검색 행 우측 요약 1줄
 - "바로 처리할 항목" **0건 미노출** · 우측 280px 컬럼 제거
 - **✋ Gate** — 빈 상태·로딩·에러 3상태 존재 · 0건에서 배너 0
@@ -205,7 +205,7 @@ phase 별 커밋 분리 · 마이그레이션 0 · feature flag 불필요(순수
 P2 는 삭제 중심이라 되돌리면 정확히 현행으로 복귀한다.
 
 ## 11. Progress Tracking
-- 완료율 79% (P0~P4 완료) · 현재 phase: P5(리스트) 대기 · 블로커: 없음
+- 완료율 90% (P0~P5 완료) · 현재 phase: P6(게이트·배포·실측) 대기 · 블로커: 없음
 
 ## 12. Notes & Learnings
 - [2026-08-24] 착수 전 대조에서 C1 이 나왔다. 핸드오프 §5 가 "플랜별 실제 한도" 라고만 적어
@@ -474,3 +474,39 @@ sentinel: `src/__tests__/dashboard/organizations-member-role-inline-p4b.test.ts`
 P4a 는 consequence 를 더했을 뿐인데 줄바꿈이 생겨 같은 줄을 요구하던 정규식이 깨졌다.
 🔑 sentinel 은 값·구조뿐 아니라 **레이아웃**도 핀한다.
 ```
+
+
+---
+
+## P5 결과 (2026-08-24)
+
+```
+3열 그리드      md:2 → xl:3 · items-stretch
+사이드바 제거    lg:grid-cols-[1fr_280px] 소멸 — 카드 1장 + 우측 고아 박스 + 빈 화면이 좌측 쏠림의 원인
+배너 조건부      orgsWithWarnings.length > 0 일 때만 그리드 위. 0건 상시 패널 소멸
+placeholder     "새 조직 만들기" dashed 카드 → 생성 다이얼로그
+요약 흡수        별도 요약 바 제거 → 검색 행 우측 1줄
+카드 통계        멤버 · 초대 대기 2축 + "관리 페이지 열기" 풀폭 버튼
+```
+
+### 🛑 실측이 문서를 정정 — 4건째. 이번엔 데이터가 없다
+
+```
+핸드오프 §1  "통계 1줄(멤버 · 초대 대기 · **승인자** — 승인자 0은 앰버 `지정 필요`)"
+실측        OrgRow = { memberCount, adminCount, pendingCount, plan, role }
+            🛑 approverCount 가 없다. adminCount 는 ADMIN||OWNER 축이라 APPROVER 와 다르다.
+→ 2축만 싣고 승인자는 **이월**. 없는 사실을 만들지 않는다.
+   sentinel 이 `not.toMatch(/approverCount/)` 로 "아직 못 넣었다" 를 기록한다.
+```
+**이월 — 승인자 축 API 확장.** `/api/organizations` 의 map 단계에서 members(role 포함)로
+`approverCount` 를 세면 된다(응답 1필드). 🔑 같은 파일·같은 map 단계를 건드리는
+`CARD_org-create-limit-always-free` 슬라이스와 **묶는 것이 자연스럽다.**
+
+### ⚠️ 내가 placeholder success 를 만들었다
+
+편집 스크립트가 `Mail` import 추가 조건을 잘못 잡아 **replace 가 무효였는데 "ok" 를 출력**했다.
+파일을 다시 읽어 검증하고서야 드러났다.
+🔑 **print 는 실행의 증거가 아니다. 파일이 증거다.** 이후 검증은 파일 재독으로 한다 —
+이 트랙이 금지하는 placeholder success 를 내 도구가 만들고 있었다.
+
+sentinel: `src/__tests__/dashboard/organizations-list-three-column-p5.test.ts` (9건)

@@ -6,7 +6,7 @@ import { csrfFetch } from "@/lib/api-client";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Plus, Users, Loader2, ExternalLink, AlertTriangle, Building2, Shield, ChevronRight, Zap, UserCheck, MailWarning, Search, LayoutGrid, List, MoreVertical, AlertCircle } from "lucide-react";
+import { Plus, Users, Mail, Loader2, ExternalLink, AlertTriangle, Building2, Shield, ChevronRight, Zap, UserCheck, MailWarning, Search, LayoutGrid, List, MoreVertical, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -387,19 +387,16 @@ export default function OrganizationsPage() {
               <List className="h-4 w-4" />
             </button>
           </div>
-        </div>
-
-        {/* ═══ §org-management-redesign P2 — 시안 요약 바(포트폴리오 요약 데이터 컴팩트화, 우측 군더더기 패널 대체) ═══ */}
-        {!isFetching && organizations.length > 0 && (
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-600">
-            <Building2 className="h-4 w-4 flex-none text-slate-400" />
-            <span>총 <b className="text-slate-900">{organizations.length}</b>개 조직 · 멤버 <b className="text-slate-900">{totalMembers}</b>명</span>
-            <span className="flex-1" />
-            <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${totalPending > 0 ? "bg-yellow-100 text-yellow-700" : "bg-slate-100 text-slate-500"}`}>
-              초대 대기 {totalPending}
+          {/* §org-management-web P5 — 요약은 검색 행 우측 1줄로 흡수한다.
+              별도 요약 바는 제거했다 — 한 줄짜리 사실에 카드 한 장을 쓰지 않는다. */}
+          {!isFetching && organizations.length > 0 && (
+            <span className="hidden md:flex items-center gap-1.5 text-sm text-slate-500 tabular-nums whitespace-nowrap">
+              총 <b className="text-slate-900">{organizations.length}</b>개 조직 ·
+              멤버 <b className="text-slate-900">{totalMembers}</b>명 ·
+              초대 대기 <b className={totalPending > 0 ? "text-yellow-600" : "text-slate-900"}>{totalPending}</b>
             </span>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* ═══ 조직 생성 다이얼로그 (리디자인) ═══
             §11.201 — 조직 유형 dropdown 안정화 path 결정. Radix Dialog ×
@@ -499,74 +496,73 @@ export default function OrganizationsPage() {
         ) : filteredOrgs.length === 0 && organizations.length === 0 ? (
           <EmptyState onOpen={() => setIsOpen(true)} />
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-5 items-start">
-            {/* ── 왼쪽: 조직 카드 그리드 ── */}
-            <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 gap-3" : "space-y-3"}>
+          <div className="space-y-4">
+            {/* §org-management-web P5 — 처리할 항목은 **있을 때만** 그리드 위 배너로.
+                🛑 0건에서도 자리를 차지하던 우측 280px 고정 패널을 없앴다 —
+                   "처리할 것이 없다" 는 사실에 화면 1/4 을 상시 배정할 이유가 없다. */}
+            {orgsWithWarnings.length > 0 && (
+              <div className="rounded-xl border border-yellow-200 bg-yellow-50/50 p-4">
+                <p className="text-sm font-bold text-slate-900 mb-2.5">바로 처리할 항목</p>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {orgsWithWarnings.map((org) => {
+                    const warnings = getOrgWarnings(org);
+                    return (
+                      <button
+                        key={org.id}
+                        onClick={() => router.push(`/dashboard/organizations/${org.id}`)}
+                        className="w-full text-left rounded-lg border border-yellow-200 bg-white hover:border-yellow-300 p-3 transition-colors group"
+                      >
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs font-semibold text-slate-800 truncate max-w-[180px]">{org.name}</span>
+                          <ChevronRight className="h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                        </div>
+                        <div className="space-y-1">
+                          {warnings.map((w, i) => (
+                            <div key={i} className="flex items-center gap-1.5 text-[11px] text-yellow-700">
+                              {w.icon}
+                              <span>{w.text}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── 조직 카드 3열 그리드 ── */}
+            <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 items-stretch" : "space-y-3"}>
               {filteredOrgs.length === 0 ? (
-                <div className="col-span-2 flex flex-col items-center py-12 text-center">
+                <div className="col-span-full flex flex-col items-center py-12 text-center">
                   <Search className="h-8 w-8 text-slate-300 mb-3" />
                   <p className="text-sm text-slate-500">검색 결과가 없습니다</p>
                 </div>
               ) : (
-                filteredOrgs.map((org) => (
-                  <OrgCard
-                    key={org.id}
-                    org={org}
-                    viewMode={viewMode}
-                    onNavigate={() => router.push(`/dashboard/organizations/${org.id}`)}
-                  />
-                ))
-              )}
-            </div>
-
-            {/* ── 오른쪽: 사이드바 (§org-management-redesign P2 — 포트폴리오 요약은 상단 요약 바로 이동, 중복 생성 CTA 제거) ── */}
-            <div className="space-y-3 sticky top-20">
-              {/* 바로 처리할 항목 */}
-              <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-                <div className="px-5 py-3.5 border-b border-slate-100">
-                  <span className="text-sm font-bold text-slate-900">바로 처리할 항목</span>
-                </div>
-                <div className="p-4">
-                  {orgsWithWarnings.length === 0 ? (
-                    <div className="flex items-center gap-2.5 py-2">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-                        <UserCheck className="h-4 w-4 text-emerald-500" />
-                      </div>
-                      <p className="text-xs text-slate-500">처리가 필요한 항목이 없습니다.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {orgsWithWarnings.map((org) => {
-                        const warnings = getOrgWarnings(org);
-                        return (
-                          <button
-                            key={org.id}
-                            onClick={() => router.push(`/dashboard/organizations/${org.id}`)}
-                            className="w-full text-left rounded-lg border border-slate-100 bg-slate-50/50 hover:bg-slate-100/70 p-3 transition-colors group"
-                          >
-                            <div className="flex items-center justify-between mb-1.5">
-                              <span className="text-xs font-semibold text-slate-800 truncate max-w-[180px]">
-                                {org.name}
-                              </span>
-                              <ChevronRight className="h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600 transition-colors" />
-                            </div>
-                            <div className="space-y-1">
-                              {warnings.map((w, i) => (
-                                <div key={i} className="flex items-center gap-1.5 text-[11px] text-red-500">
-                                  {w.icon}
-                                  <span>{w.text}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
+                <>
+                  {filteredOrgs.map((org) => (
+                    <OrgCard
+                      key={org.id}
+                      org={org}
+                      viewMode={viewMode}
+                      onNavigate={() => router.push(`/dashboard/organizations/${org.id}`)}
+                    />
+                  ))}
+                  {/* §org-management-web P5 — 새 조직 만들기 placeholder.
+                      상단 CTA 와 중복이 아니라 **그리드의 빈 자리를 말이 되게** 만든다
+                      (카드가 1장일 때 남는 2칸이 그냥 여백이 되지 않는다). */}
+                  {viewMode === "grid" && (
+                    <button
+                      type="button"
+                      onClick={() => setIsOpen(true)}
+                      className="flex min-h-[168px] flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-white/50 text-slate-400 transition-colors hover:border-blue-300 hover:text-blue-600"
+                    >
+                      <Plus className="h-6 w-6" />
+                      <span className="text-sm font-medium">새 조직 만들기</span>
+                    </button>
                   )}
-                </div>
-              </div>
-
-              {/* §org-management-redesign P2 — 중복 조직 생성 CTA 제거(단일 CTA = 상단 primary). */}
+                </>
+              )}
             </div>
           </div>
         )}
@@ -626,11 +622,19 @@ function OrgCard({
           </div>
         </div>
 
-        {/* 멤버 수 (§org-management-redesign P6 — 가짜 "최종 활동" 시간 제거, §11.318) */}
+        {/* 통계 1줄 (§org-management-redesign P6 — 가짜 "최종 활동" 시간 제거, §11.318)
+            🛑 §org-management-web P5 — 핸드오프 §1 은 "멤버 · 초대 대기 · **승인자**" 3축을
+               요구하지만 OrgRow 에 approverCount 가 없다(memberCount · adminCount ·
+               pendingCount 뿐이고 adminCount 는 ADMIN||OWNER 로 APPROVER 와 다른 축이다).
+               없는 사실을 만들지 않는다 — 2축만 싣고 승인자는 API 확장 뒤로 이월한다. */}
         <div className={`flex items-center gap-4 text-xs text-slate-500 ${viewMode === "list" ? "" : "mb-3"}`}>
           <span className="flex items-center gap-1.5">
             <Users className="h-3.5 w-3.5 text-slate-400" />
-            멤버 {org.memberCount}명
+            멤버 <b className="text-slate-700 tabular-nums">{org.memberCount}</b>명
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Mail className={`h-3.5 w-3.5 ${org.pendingCount > 0 ? "text-yellow-500" : "text-slate-400"}`} />
+            초대 대기 <b className={`tabular-nums ${org.pendingCount > 0 ? "text-yellow-600" : "text-slate-700"}`}>{org.pendingCount}</b>
           </span>
         </div>
 
@@ -654,16 +658,18 @@ function OrgCard({
       </div>
 
       {/* 푸터: 관리 페이지 이동 */}
-      <div className={`px-4 py-2.5 border-t border-slate-100 flex items-center justify-between ${viewMode === "list" ? "border-t-0 border-l pl-4" : ""}`}>
+      {/* §org-management-web P5 — 카드의 주 동작은 하나다. 풀폭 버튼으로 명시한다. */}
+      <div className={`px-4 py-2.5 border-t border-slate-100 flex items-center gap-2 ${viewMode === "list" ? "border-t-0 border-l pl-4" : ""}`}>
         <button
           onClick={onNavigate}
-          className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 py-2 text-xs font-semibold text-slate-700 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
         >
-          관리 페이지 <ChevronRight className="h-3.5 w-3.5" />
+          관리 페이지 열기 <ChevronRight className="h-3.5 w-3.5" />
         </button>
         <button
           onClick={() => window.open(`/dashboard/organizations/${org.id}`, "_blank")}
-          className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+          className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors flex-shrink-0"
+          aria-label="새 탭에서 열기"
         >
           <ExternalLink className="h-3.5 w-3.5" />
         </button>
