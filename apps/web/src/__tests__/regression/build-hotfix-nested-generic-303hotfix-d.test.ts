@@ -61,11 +61,16 @@ describe("§11.303-hotfix-d — nested generic SWC parser bug 회피", () => {
   });
 
   it("actionableItems 사용처 보존 — push label/count/icon/color", () => {
+    /* 승계 (§org-management-web P4a 2026-08-24 · 공백만 완화):
+     * 옛 정규식은 `push({ label:` 를 **같은 줄**로 요구했다. P4a 가 항목에
+     * consequence 를 더하며 여는 중괄호 뒤에서 줄바꿈했을 뿐, 이 sentinel 이
+     * 잠그는 결정(SWC nested-generic 회피 · 두 항목 존재)은 무손상이다.
+     * → 중괄호와 label 사이 공백/개행만 허용한다. 항목 라벨 2개는 그대로 핀. */
     expect(SRC).toMatch(
-      /actionableItems\.push\(\{ label:\s*"초대 응답 대기"/,
+      /actionableItems\.push\(\{\s*label:\s*"초대 응답 대기"/,
     );
     expect(SRC).toMatch(
-      /actionableItems\.push\(\{ label:\s*"승인자 미지정"/,
+      /actionableItems\.push\(\{\s*label:\s*"승인자 미지정"/,
     );
   });
 
