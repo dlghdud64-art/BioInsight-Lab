@@ -25,7 +25,13 @@ describe("§org-role-review — 권한 검토 모달", () => {
   it("멤버 권한 = 실 멤버 데이터(teamMembers.map, 가짜 이름 0)", () => {
     expect(CODE).toMatch(/멤버 권한/);
     expect(CODE).toMatch(/teamMembers\.map\(\(m\) =>/);
-    expect(CODE).toMatch(/ROLE_LABELS\[m\.rawRole\]/);
+    /* 승계 (2026-08-24 · 표현 완화 · 결정 무손상):
+     * 실물이 `ROLE_LABELS[m.rawRole || ""] ?? m.rawRole ?? "—"` 로 바뀌었다 —
+     * undefined 키 방어 fallback 이 **더해진** 것이고 축(m.rawRole)도 결정도 그대로다.
+     * fallback 유무를 허용하되 축은 그대로 핀한다. */
+    expect(CODE).toMatch(/ROLE_LABELS\[m\.rawRole(\s*\|\|[^\]]*)?\]/);
+    /* 역방향 잠금 — 실 멤버 축을 버리고 상수/가짜로 갈아타면 RED */
+    expect(CODE).not.toMatch(/ROLE_LABELS\[\s*"(VIEWER|REQUESTER|APPROVER|ADMIN|OWNER)"\s*\]\s*\}\s*<\/(p|span)>/);
   });
   it("역할별 권한 범위 매트릭스 5역할 누적 caps", () => {
     expect(CODE).toMatch(/role: "VIEWER", desc:[\s\S]{0,60}caps: \[1, 0, 0, 0, 0\]/);

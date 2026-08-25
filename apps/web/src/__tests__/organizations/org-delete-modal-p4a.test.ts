@@ -15,9 +15,17 @@ const PAGE = readFileSync(
 );
 
 describe("§org-management-redesign P4a — 삭제 dead button 봉합 + canonical wire", () => {
-  it("deleteOrgMutation = canonical DELETE /api/organizations/[id]", () => {
+  it("deleteOrgMutation = canonical DELETE /api/organizations/[id] (csrfFetch 경유)", () => {
+    /* 승계 (2026-08-24 · 표현 완화 · 결정 무손상):
+     * 옛 단언은 맨 `fetch(...)` 를 요구했다. 실물은 csrfFetch 로 **승격**됐다 —
+     * 결정("canonical DELETE 를 부른다")은 그대로이고 CSRF 보호가 더해졌을 뿐이다.
+     * 🛑 옛 단언을 그대로 두면 보호 없는 fetch 를 요구하는 셈이 된다.
+     *    sentinel 이 깨지는 원인은 회귀만이 아니다 — 개선도 깨뜨린다. */
     expect(PAGE).toMatch(/deleteOrgMutation = useMutation/);
-    expect(PAGE).toMatch(/fetch\(`\/api\/organizations\/\$\{params\.id\}`, \{ method: "DELETE" \}\)/);
+    expect(PAGE).toMatch(/csrfFetch\(`\/api\/organizations\/\$\{params\.id\}`, \{ method: "DELETE" \}\)/);
+    /* 역방향 잠금 — 맨 fetch 로 되돌아가면 RED. 안 걸면 CSRF 승격이 무잠금이다.
+     * (?<!csrf) 로 csrfFetch 자신은 제외한다 — §4원칙 ① 접두사 포함) */
+    expect(PAGE).not.toMatch(/(?<!csrf)[Ff]etch\(`\/api\/organizations\/\$\{params\.id\}`, \{ method: "DELETE" \}\)/);
   });
   it("성공 시 목록 복귀(router.push)", () => {
     expect(PAGE).toMatch(/router\.push\("\/dashboard\/organizations"\)/);
