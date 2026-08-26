@@ -685,36 +685,34 @@ function OrgCard({
 /* -- Loading skeleton --------------------------------------------- */
 
 function LoadingSkeleton() {
+  /* §org-management-web P6 (호영님 실측 QA 2026-08-25) — 스켈레톤을 본 레이아웃에 전수.
+   * P5 는 로드 후 레이아웃을 3열로 바꾸고 280px 사이드바를 없앴는데, 스켈레톤은
+   * lg:grid-cols-[1fr_300px] 인 채였다. 로딩 중 우측에 300px 패널 자리가 그려졌다가
+   * 사라져, 스켈레톤이 오지 않을 레이아웃을 약속했다.
+   * 🔑 결정을 바꾸면서 그 결정의 형제 슬롯(스켈레톤)을 전수하지 않은 형태다.
+   * 그리드는 :535 의 본 레이아웃과 같은 문자열을 쓴다 — 갈라지면 또 어긋난다. */
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-xl border border-slate-200 bg-white p-5 animate-pulse">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-11 w-11 rounded-xl bg-slate-100" />
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 items-stretch">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="rounded-xl border border-slate-200 bg-white animate-pulse">
+          <div className="p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="h-10 w-10 rounded-xl bg-slate-100" />
               <div className="flex-1">
-                <div className="h-4 w-32 rounded bg-slate-100 mb-2" />
+                <div className="h-4 w-28 rounded bg-slate-100 mb-2" />
                 <div className="flex gap-2">
                   <div className="h-3 w-12 rounded bg-slate-100" />
-                  <div className="h-3 w-16 rounded bg-slate-100" />
+                  <div className="h-3 w-10 rounded bg-slate-100" />
                 </div>
               </div>
             </div>
-            <div className="h-3 w-40 rounded bg-slate-100 mb-3" />
-            <div className="h-10 rounded-lg bg-slate-50" />
+            <div className="h-3 w-36 rounded bg-slate-100" />
           </div>
-        ))}
-      </div>
-      <div className="space-y-4">
-        <div className="rounded-xl border border-slate-200 bg-white p-5 animate-pulse">
-          <div className="h-4 w-28 rounded bg-slate-100 mb-4" />
-          <div className="space-y-3">
-            <div className="h-9 rounded bg-slate-50" />
-            <div className="h-9 rounded bg-slate-50" />
-            <div className="h-9 rounded bg-slate-50" />
+          <div className="px-4 py-2.5 border-t border-slate-100">
+            <div className="h-8 rounded-lg bg-slate-50" />
           </div>
         </div>
-      </div>
+      ))}
     </div>
   );
 }

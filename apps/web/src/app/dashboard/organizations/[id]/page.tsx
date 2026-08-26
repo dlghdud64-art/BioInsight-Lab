@@ -742,22 +742,24 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
         </DialogContent>
       </Dialog>
 
-      {/* §org-management-redesign P3 — KPI 6박스 → 요약 한 줄 바(시안). 실 5지표 유지, 가짜 "최근 7일 활동"(mock count) 제거. */}
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
-        <span className="flex items-center gap-1.5 text-slate-600">
-          <Users className="h-4 w-4 text-blue-500" />멤버 <b className="text-slate-900">{totalMembers}</b>명
-        </span>
-        <span className="text-slate-300">·</span>
-        <span className="text-slate-600">활성 <b className="text-slate-900">{activeCount}</b></span>
-        <span className="text-slate-300">·</span>
-        <span className="text-slate-600">초대 대기 <b className={pendingCount > 0 ? "text-yellow-600" : "text-slate-900"}>{pendingCount}</b></span>
-        <span className="text-slate-300">·</span>
-        <span className="text-slate-600">승인 권한 <b className="text-slate-900">{approverCount}</b></span>
-        <span className="flex-1" />
-        <span className="flex items-center gap-1.5 text-slate-600">
-          <CreditCard className="h-4 w-4 text-indigo-500" /><b className="text-slate-900">{planLabel}</b> · 좌석 {seatUsagePercent}%
-        </span>
-      </div>
+      {/* §org-management-web P6 은퇴 (호영님 판정 2026-08-25 · 실측 QA):
+       *   §org-management-redesign P3 의 "요약 한 줄 바" 를 제거한다.
+       *
+       * 왜: 바로 아래 KPI 4카드가 **같은 4축을 다 말하면서** 행동까지 갖는다
+       *   (초대 대기 → 탭 직행 · 승인 권한 → "지정 필요" 배지 · 플랜 → 게이지 + 변경 링크).
+       *   요약 바는 그 부분집합을 행동 없이 12px 위에서 반복했다. 프로덕션 화면에서
+       *   같은 숫자 네 개가 위아래로 두 번 찍혔다.
+       *
+       * 축 손실 0 확인 (이게 은퇴를 안전하게 만드는 근거다):
+       *   멤버·초대 대기·승인 권한·플랜 → KPI 4카드가 그대로 든다.
+       *   "활성" 만 KPI 에 없는데, activeCount = members.filter(status !== "Pending")
+       *   이고 pendingCount = members.filter(status === "Pending") 라
+       *   activeCount === totalMembers - pendingCount 로 **완전 파생**이다(:332-335).
+       *   멤버 탭 필터 칩에도 활성 축이 그대로 있다. 새 사실을 잃지 않는다.
+       *
+       * 잠금: 이 은퇴만 하면 새 결정이 무잠금이 된다(§verification-loss-three-paths 2번).
+       *   org-detail-redesign-p3 · org-redesign-smoke-p5 의 요약 바 단언을 은퇴시키고
+       *   같은 자리에 역방향 잠금(요약 바 복귀 시 RED)을 넣었다. */}
 
       {/* §org-management-web P3 — KPI 4카드.
           헤더에서 뺀 두 CTA 가 여기로 들어온다: 초대 대기 카드가 탭 직행,
@@ -1023,8 +1025,13 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
               ))}
             </div>
 
+            {/* §org-management-web P6 (호영님 판정 2026-08-25) — 캡션이 없는 것을 가리키지 않는다.
+              * 관리 컬럼은 본인 행에서 "-" 다(:1167). 멤버가 본인뿐이면 그 열에 메뉴가 하나도
+              * 없는데 캡션은 "관리 컬럼의 메뉴에서 …처리하세요" 라고 안내했다 — 거짓 안내다.
+              * 자기 외 행이 하나라도 있을 때만(초대 대기 행 포함 — members 에 함께 담긴다) 뒷문장을 켠다. */}
             <p className="text-xs text-slate-500">
-              멤버별 역할을 선택하면 즉시 저장됩니다. 관리 컬럼의 메뉴에서 초대 재발송, 멤버 제거 등 운영 액션을 처리하세요.
+              멤버별 역할을 선택하면 즉시 저장됩니다.
+              {totalMembers > 1 && " 관리 컬럼의 메뉴에서 초대 재발송, 멤버 제거 등 운영 액션을 처리하세요."}
             </p>
 
             {filteredTeamMembers.length === 0 ? (

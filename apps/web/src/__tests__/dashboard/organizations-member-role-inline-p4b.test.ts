@@ -68,3 +68,23 @@ describe("승인자 지정 딥링크", () => {
     expect(code).toMatch(/roleColumnHint \? "bg-yellow-50\/60" : ""/);
   });
 });
+
+describe("§org-management-web P6 — 캡션이 없는 것을 가리키지 않는다", () => {
+  /* 호영님 실측 QA 2026-08-25. 멤버가 본인뿐인 조직에서 관리 컬럼은 "-" 인데
+   * 캡션은 "관리 컬럼의 메뉴에서 초대 재발송, 멤버 제거 등 운영 액션을 처리하세요"
+   * 라고 안내했다. 없는 메뉴를 가리키는 문장은 dead button 과 같은 종류의 거짓이다.
+   * 화면을 보지 않으면 안 나온다 — 소스만 읽으면 문장은 멀쩡해 보인다. */
+  it("관리 컬럼 안내는 자기 외 행이 있을 때만 렌더된다", () => {
+    const code = stripComments(read(ORG_DETAIL));
+    expect(code).toMatch(/\{totalMembers > 1 && " 관리 컬럼의 메뉴에서/);
+  });
+
+  it("🛑 무조건 렌더로 되돌아가지 않는다", () => {
+    /* 역방향 잠금 — 조건을 떼면 RED.
+     * 앞 문장(역할 즉시 저장)은 항상 참이라 조건 밖에 남는다. 그 문장까지 조건에
+     * 넣으면 캡션 전체가 사라지므로, 두 문장이 갈라져 있다는 것 자체를 핀한다. */
+    const code = stripComments(read(ORG_DETAIL));
+    expect(code).toMatch(/멤버별 역할을 선택하면 즉시 저장됩니다\.\s*\n\s*\{totalMembers > 1 &&/);
+    expect(code).not.toMatch(/즉시 저장됩니다\. 관리 컬럼의 메뉴에서/);
+  });
+});

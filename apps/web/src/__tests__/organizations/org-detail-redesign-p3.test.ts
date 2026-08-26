@@ -29,13 +29,26 @@ describe("§org-management-redesign P3 — 활동 mock honesty(§11.318)", () =>
   });
 });
 
-describe("§org-management-redesign P3 — KPI 6박스 → 요약 한 줄 바", () => {
-  it("요약 바(실 5지표: 멤버·활성·초대 대기·승인·플랜)", () => {
-    expect(PAGE).toMatch(/멤버 <b className="text-slate-900">\{totalMembers\}<\/b>/);
-    expect(PAGE).toMatch(/활성 <b/);
-    expect(PAGE).toMatch(/초대 대기 <b/);
-    expect(PAGE).toMatch(/승인 권한 <b/);
-    expect(PAGE).toMatch(/\{planLabel\}/);
+describe("§org-management-redesign P3 — KPI 6박스 → 요약 한 줄 바 (P6 에서 은퇴)", () => {
+  it("🛑 요약 바는 은퇴했다 — 되돌아오면 RED", () => {
+    /* 은퇴 (§org-management-web P6 · 호영님 판정 2026-08-25 · 실측 QA):
+     * 이 describe 가 잠그던 "요약 한 줄 바(실 5지표)" 를 제거했다.
+     * 바로 아래 KPI 4카드가 같은 4축을 다 말하면서 행동까지 갖는데, 요약 바는
+     * 그 부분집합을 행동 없이 12px 위에서 반복했다. 프로덕션 화면에서 같은 숫자
+     * 네 개가 위아래로 두 번 찍혔다.
+     *
+     * 축 손실 0: "활성" 만 KPI 에 없는데 activeCount === totalMembers - pendingCount
+     * 로 완전 파생이고(page.tsx:332-335) 멤버 탭 필터 칩에도 그대로 있다.
+     *
+     * 🔑 은퇴만 하면 새 결정이 무잠금이 된다(§verification-loss-three-paths 2번).
+     *   후계 표면(KPI 4카드)의 4축 단언은 organizations-header-kpi-tabs-p3.test.ts
+     *   :83-86 이 소유한다 — 여기서 다시 핀하면 같은 사실을 두 곳이 말하게 된다.
+     *   이 자리에는 **역방향 잠금만** 둔다. */
+    expect(PAGE).not.toMatch(/활성 <b/);
+    expect(PAGE).not.toMatch(/좌석 \{seatUsagePercent\}%/);
+    expect(PAGE).not.toMatch(/승인 권한 <b/);
+    // 후계 표면이 실재하는지만 한 번 — 컨테이너 1개(앵커 계수 1).
+    expect(PAGE).toMatch(/grid gap-4 grid-cols-2 lg:grid-cols-4/);
   });
   it("가짜 '최근 7일 활동' KPI(organizationLogs.length 카운트 박스) 제거 — 렌더 형태(주석 제외)", () => {
     expect(PAGE).not.toMatch(/최근 7일 활동<\/span>/);

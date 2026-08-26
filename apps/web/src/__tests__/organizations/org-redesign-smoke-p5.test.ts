@@ -27,8 +27,12 @@ describe("§org-management-redesign P5 — end-to-end smoke(P1~P4a)", () => {
     expect(LIST).toMatch(/개 조직 ·[\s\S]{0,40}?멤버/);
     expect(LIST).not.toMatch(/새로운 조직이 필요한가요/);
   });
-  it("P3 — 상세 요약 바 + 활동 honesty(가짜 0)", () => {
-    expect(DETAIL).toMatch(/멤버 <b className="text-slate-900">\{totalMembers\}<\/b>/);
+  it("P3 — 활동 honesty(가짜 0)", () => {
+    /* 은퇴 1줄 (§org-management-web P6 · 호영님 판정 2026-08-25):
+     * `멤버 <b …{totalMembers}` 는 상세 요약 바의 토큰이었다. 요약 바가 은퇴하며
+     * 이 줄도 함께 은퇴한다 — 역방향 잠금은 org-detail-redesign-p3.test.ts 가 소유한다.
+     * 이 it 의 나머지 두 줄(활동 honesty)은 다른 결정이라 그대로 둔다.
+     * 🔑 it 이름도 같이 고쳤다 — 이름이 없는 단언을 가리키면 다음 세션이 오독한다. */
     expect(DETAIL).toMatch(/활동 내역이 아직 없습니다/);
     expect(DETAIL).not.toMatch(/actor: "이매니저"/);
   });
@@ -59,8 +63,11 @@ describe("§org-management-redesign P5 — 신규 표면 반응형(375px 잘림 
      * 은퇴만 하면 새 결정이 무잠금이 된다. */
     expect(LIST).not.toMatch(/flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl/);
   });
-  it("상세 요약 바 = flex-wrap", () => {
-    expect(DETAIL).toMatch(/flex flex-wrap items-center gap-x-5 gap-y-2/);
+  it("🛑 상세 요약 바는 은퇴했다 (옛 이름: 상세 요약 바 = flex-wrap)", () => {
+    /* 은퇴 (§org-management-web P6 · 호영님 판정 2026-08-25):
+     * 이 단언은 375px 에서 요약 바가 접히는지를 잠갔다. 요약 바 자체가 사라져
+     * 잠글 대상이 없다. 목적(375px 잘림 0)은 KPI 4카드의 grid-cols-2 가 잇는다. */
+    expect(DETAIL).not.toMatch(/flex flex-wrap items-center gap-x-5 gap-y-2/);
   });
   it("삭제 모달 = sm:max-w(모바일 w-full 축소)", () => {
     expect(DETAIL).toMatch(/sm:max-w-\[440px\]/);

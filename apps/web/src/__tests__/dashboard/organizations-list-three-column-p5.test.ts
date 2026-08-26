@@ -18,9 +18,28 @@ describe("리스트 레이아웃 — 3열 · 고아 사이드바 제거", () => 
     expect(stripComments(read(ORG_LIST))).toMatch(/xl:grid-cols-3/);
   });
 
-  it("🛑 우측 280px 고정 컬럼이 없다", () => {
-    /* 카드 1장 + 우측 고아 박스 + 나머지 빈 화면이 좌측 쏠림의 원인이었다. */
-    expect(stripComments(read(ORG_LIST))).not.toMatch(/lg:grid-cols-\[1fr_280px\]/);
+  it("🛑 우측 고정 컬럼이 없다 — 폭을 가리지 않는다", () => {
+    /* 카드 1장 + 우측 고아 박스 + 나머지 빈 화면이 좌측 쏠림의 원인이었다.
+     *
+     * 승계 (§org-management-web P6 2026-08-25 · 호영님 실측 QA · 경계 확대):
+     * 옛 단언은 `1fr_280px` 만 부정했다. 그런데 LoadingSkeleton 은 `1fr_300px` 였고,
+     * 20px 차이로 이 단언을 통과했다. 로딩 중 우측에 300px 패널이 그려졌다가
+     * 사라지는 것을 sentinel 이 침묵으로 넘겼다.
+     * 🔑 부정 단언에 폭을 박은 것이 원인이다 — 결정은 "우측 고정 컬럼 없음" 이지
+     *   "280px 아님" 이 아니다. 폭을 \d+ 로 열어 형제 슬롯까지 덮는다. */
+    expect(stripComments(read(ORG_LIST))).not.toMatch(/lg:grid-cols-\[1fr_\d+px\]/);
+  });
+
+  it("로딩 스켈레톤이 본 레이아웃과 같은 그리드다", () => {
+    /* §org-management-web P6 — 스켈레톤은 오지 않을 레이아웃을 약속하면 안 된다.
+     * 두 곳이 **같은 문자열**을 쓴다는 것 자체가 결정이라, 출현 수로 잠근다.
+     * 하나만 바뀌면 2 가 깨져 RED. */
+    const src = stripComments(read(ORG_LIST));
+    const GRID = /grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 items-stretch/g;
+    expect(src.match(GRID)?.length).toBe(2);   // 로드 후(:535) + 스켈레톤
+    // 스켈레톤 본문 안에 실제로 있는지 — 창을 함수로 한정한다.
+    const body = src.slice(src.indexOf("function LoadingSkeleton"));
+    expect(body).toMatch(/md:grid-cols-2 xl:grid-cols-3 gap-3 items-stretch/);
   });
 
   it("🛑 '바로 처리할 항목' 은 0건이면 렌더되지 않는다", () => {
