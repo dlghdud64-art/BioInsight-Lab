@@ -7,6 +7,9 @@ import {
   probeMigrationDrift,
   type RawQueryClient,
 } from "@/lib/health/migration-drift";
+// §org-create-limit — 조직 소유권 불변식(OWNER 0인 조직 = 0). 위반 시 생성 한도가
+// 조이는 게 아니라 푸는 방향으로 뒤집힌다. SELECT만.
+import { probeOwnerlessOrganizations } from "@/lib/health/owner-invariant";
 import migrationManifest from "@/generated/migration-manifest.json";
 
 export const dynamic = "force-dynamic";
@@ -48,6 +51,18 @@ export async function GET() {
       db as unknown as RawQueryClient,
       migrationManifest,
     );
+    const ownerProbe = await probeOwnerlessOrganizations(
+      db as unknown as RawQueryClient,
+    );
+    const orgOwnership = ownerProbe.ok
+      ? {
+          ok: true,
+          reachable: true,
+          ownerlessCount: ownerProbe.ownerlessCount,
+          clean: ownerProbe.clean,
+        }
+      : { ok: false, reachable: false };
+
     const migrations = probe.ok
       ? {
           ok: true,
@@ -68,6 +83,7 @@ export async function GET() {
       userCount,
       orgCount,
       migrations,
+      orgOwnership,
       hasDbUrl: !!dbUrl,
       hasDirectUrl: !!directUrl,
       dbUrlPrefix: dbUrl?.slice(0, 40) + "...",

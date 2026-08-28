@@ -120,7 +120,7 @@ code 를 빼면 나중에 분기할 때 서버를 다시 건드려야 한다.
 아래를 안 돌리면 "여전히 항상 1" 과 구분되지 않는다.
 
 ```
-A  TEAM plan 조직 1개 보유 계정 → 2번째 생성  기대 201 (현행 403)
+A  TEAM plan 조직 1개 보유 계정 → 2번째 생성  기대 201 (현행 403)   [mock 으로 닫힘]
 B  FREE plan 조직 1개 보유 계정 → 2번째 생성  기대 403 PLAN_LIMIT_EXCEEDED (회귀 핀)
 C  plan 미설정(subscription 행 없음)          기대 FREE 취급 · 403 — 방어 경로 보존
 D  OWNER 아닌 멤버십만 보유한 FREE 사용자      기대 첫 조직 생성 201   ← 분모 오염 핀
@@ -129,8 +129,10 @@ E  남의 TEAM 조직에 초대된 FREE 사용자         기대 2번째 생성 
 A 만 보면 한도가 통째로 풀린 것과 구분 불가라 **B · C 가 같이 있어야 판정이다.**
 D · E 는 축 판정(아래)의 핀이다 — 없으면 OWNER 필터가 걸렸는지 우연인지 안 갈린다.
 
-🛑 **A 는 prod 에서 못 잰다 — 시드로 이동 확정.** ⑤ 실측상 유료 조직이 0이라
-   대상 계정이 존재하지 않는다.
+🛑 **A 는 prod 에서 못 잰다.** ⑤ 실측상 유료 조직이 0이라 대상 계정이 없다.
+   → **시드 이관 철회 (2026-08-29) — mock 으로 닫힘.**
+   `org-create-limit-b1b.test.ts` 의 fake DB 가 `where` 절을 실제 해석하므로
+   시드 요건(TEAM plan 소유자)을 흡수했다. **A 는 미측정이 아니라 GREEN 이다.**
 
 ## 실측 2026-08-29 (2) — ③ · ⑤ prod read-only
 
@@ -230,7 +232,9 @@ B1 을 B2 에 묶으면 **판정 대기 동안 차단이 계속 산다.** 분리
 
 ### B1b (지금)
 ```
-1  findMany 에 organization include            (겹 1 — 지금은 plan 이 실려오지도 않는다)
+1  findMany 에 organization 실기                (겹 1 — 지금은 plan 이 실려오지도 않는다)
+   📌 정정 2026-08-29: 착수 문구는 include 였으나 실제는 select 로 갔다.
+      겹 1 해소 조건(plan 을 실어온다)은 동일하고 과다조회가 0이다 (호영님 승인)
 2  OWNER 역할 필터 — 계수 · plan 파생 양쪽      (축 판정)
 3  plan 파생을 ternary 사슬 → enum 기반 매핑     (겹 2 두 오타 동시 해소)
 4  인라인 1/3/∞ 는 이 슬라이스에서 정정         (PLAN_LIMITS 이관은 B2)
@@ -286,7 +290,7 @@ maxOrganizations 정본 신설 + route.ts 인라인 제거 (세 번째 진실 �
 ### 재측정 5종 + 사다리 핀 — 10/10 GREEN
 
 ```
-A  TEAM 1개 소유 → 2번째        201   (현행 결함은 403)      ← prod 유료 0이라 시드로 이동
+A  TEAM 1개 소유 → 2번째        201   (현행 결함은 403)      ← 시드 이관 철회 · mock 으로 닫힘
 B  FREE 1개 소유 → 2번째        403 PLAN_LIMIT_EXCEEDED · "Free" · "1개"
 C  plan 미설정                   403   FREE 취급 — 방어 경로 보존
 D  OWNER 아닌 멤버십만 보유       201   첫 조직 생성 — 분모 오염 핀
@@ -311,8 +315,51 @@ E  남의 TEAM 에 초대된 FREE 소유자 403  2번째 차단 — 분자 오�
 
 ```
 api/organizations + organizations-list-three-column-p5   3 files · 27 tests GREEN
-tsc  변경 파일(route.ts · plans.ts) 에러 0 (그 외는 기존 __tests__ 건)
 plans.ts  무변경 — B2 영역
+```
+
+### tsc 전수 대조 (호영님 지시 2026-08-29 — "변경 파일 0" 은 대조가 아니다)
+
+```
+baseline(HEAD~1 · route.ts 되돌리고 신규 test 격리)   27건
+현재(HEAD)                                           27건
+라인 단위 diff                                        0 (동일)
+파일 11종 · 전부 __tests__ · src/app · src/lib 0건
+  purchase-conversion 11 · phase3-sheet 3 · compare-matrix-best-highlight 2 ·
+  phase3-action-bar 2 · convert-quantity-fidelity 2 · orders-budget-deduction 2 ·
+  quote-drawer-qty-339 · catalog-public-ingest-phase2 · quotes-page-imports-smoke ·
+  convert-pocandidate-to-orders · comparison-card-product-name-269c 각 1
+```
+증가 0 · **감소 0** · 파일 소실 0. diff 가 비었으므로 셋 다 같은 근거로 닫힌다.
+
+---
+
+## 🛑 데이터 불변식 — `OWNER 0인 조직 = 0` (호영님 지시 2026-08-29)
+
+**주석은 발화하지 않는다.** 그리고 OWNER 필터의 안전은 코드가 아니라 **prod 데이터 상태**가
+보증하고 있었다 — 2026-08-29 실측이 OWNER 4 · ADMIN 0 인 것은 백필
+(`scripts/add-owner-role.mjs`)이 이미 돌았기 때문이고,
+**백업 복원 · 다른 환경 · 수동 삽입 어느 쪽도 되살린다.**
+
+```
+lib     src/lib/health/owner-invariant.ts
+        evaluateOwnerInvariant(n) → n === 0
+        probeOwnerlessOrganizations(client) → { ok, ownerlessCount, clean } · SELECT 만
+발화    GET /api/health 응답에 orgOwnership: { ok, reachable, ownerlessCount, clean }
+        §migration-order-drift-guard 의 probe 관용 그대로 (count/boolean 만 노출)
+복구    scripts/add-owner-role.mjs — 조직별 최초 ADMIN → OWNER 승격
+```
+
+위반 시 무슨 일이 일어나는가: OWNER 없는 조직의 소유자는 계수 0 이 되어
+**한도가 조이는 게 아니라 풀리는 방향으로 뒤집힌다.**
+
+```
+단언    7 tests GREEN
+프로브  불변식을 항상 성립으로      → 3 failed / 4 passed   RED
+        SQL 에서 OWNER 조건 제거    → 1 failed / 6 passed   RED
+        도달 실패를 clean 으로 참칭  → 1 failed / 6 passed   RED
+런타임  배포될 SQL 원문을 소스에서 뽑아 prod 직접 실행 →
+        ownerlessCount = 0 · clean = true   (정적 GREEN 과 별개로 실측)
 ```
 
 ## 관련
