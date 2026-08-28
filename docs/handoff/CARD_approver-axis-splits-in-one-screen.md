@@ -2,7 +2,8 @@
 
 - 상태: 🔴 미판정 (호영님 판정 2026-08-25 — "먼저 API 실측 후 판정")
 - 발단: §org-management-web P6 실측 QA · 호영님 화면 확인
-- 묶음: 이월 항목 "승인자 축 API 확장" · §org-create-limit-always-free 와 같은 map 단계
+- 묶음: 이월 항목 "승인자 축 API 확장" + §org-management-web C1(plan 응답 실기) — 둘 다 GET `route.ts:65` map
+  - 🛑 정정 2026-08-29: §org-create-limit-always-free 는 **묶지 않는다.** 저쪽은 POST `:151` map 이라 같은 자리가 아니다 (근거: `PLAN_org-management-web.md` 승인자 축 이월 절)
 
 ## 증상 (프로덕션 실측 2026-08-25 · 조직 "Test" · 멤버 1명 ADMIN)
 

@@ -498,9 +498,31 @@ placeholder     "새 조직 만들기" dashed 카드 → 생성 다이얼로그
 → 2축만 싣고 승인자는 **이월**. 없는 사실을 만들지 않는다.
    sentinel 이 `not.toMatch(/approverCount/)` 로 "아직 못 넣었다" 를 기록한다.
 ```
-**이월 — 승인자 축 API 확장.** `/api/organizations` 의 map 단계에서 members(role 포함)로
-`approverCount` 를 세면 된다(응답 1필드). 🔑 같은 파일·같은 map 단계를 건드리는
-`CARD_org-create-limit-always-free` 슬라이스와 **묶는 것이 자연스럽다.**
+**이월 — 승인자 축 API 확장.** `/api/organizations` 의 **GET map**(`route.ts:65`)에서
+members(role 포함)로 `approverCount` 를 세면 된다(응답 1필드).
+
+#### 🛑 정정 2026-08-29 — `CARD_org-create-limit-always-free` 와 **묶지 않는다**
+
+이 절은 원래 "같은 파일·같은 map 단계를 건드리므로 묶는 것이 자연스럽다" 고 적었다.
+**실측에서 뒤쪽이 틀렸다.** 파일만 같고 map 은 다르다.
+
+```
+GET  :23  → :65 map    ...org spread · adminCount · pendingCount · role
+                        ← approverCount 도 · C1(plan 응답 실기) 도 여기
+POST :103 → :151 map   existingMemberships.map(() => "FREE")
+                        ← §org-create-limit 은 여기
+```
+
+`.map(` 이 한 파일에 두 번 나오는 것을 같은 자리로 읽은 오독이다. `:65` 는 조직 목록을
+응답으로 빚는 map 이고 `:151` 은 내 멤버십 수만큼 문자열을 까는 map 이라 목적이 무관하다.
+
+성격도 갈린다 — 이쪽은 **응답 필드 추가**(조직 관리 UI 가 소비),
+저쪽은 **POST entitlement 판정**(UI 가 소비하지 않음).
+묶으면 UI 트랙 rollback 이 유료 고객 차단을 되살린다 —
+`CARD_org-create-limit-always-free` 의 분리 판정이 정본이다.
+
+→ 자연스러운 묶음은 **C1(plan 응답 실기) + 승인자 축(approverCount)** 이다.
+   둘 다 같은 GET `:65` map · 둘 다 응답 1필드 · 둘 다 같은 화면이 소비한다.
 
 ### ⚠️ 내가 placeholder success 를 만들었다
 
