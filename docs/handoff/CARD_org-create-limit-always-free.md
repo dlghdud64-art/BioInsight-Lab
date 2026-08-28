@@ -62,7 +62,7 @@ subscription(:183)·billing(:355)이 읽는다. 이 자리만 안 읽는다.
 5  유료 고객 실제 영향 범위 — TEAM·ORGANIZATION plan 조직 수
 ```
 
-## 실측 2026-08-29 — 1 · 2 · 4 종결 (3 · 5 는 prod 대기)
+## 실측 2026-08-29 — 착수 5항 **전항 종결**
 
 ### ① 한도 정본 — `maxOrganizations` 부재 확인 · 세 번째 진실 성립
 
@@ -101,13 +101,18 @@ let enforcement(:104)  대입 0 · 사용 0 — dead local
 ↳ 이 결과가 항목 3 의 의미를 바꾼다: prod 에 조직 2개+ 보유자가 **있다면**
    이 라우트를 거치지 않은 생성(시드 · 직접 DB · 다른 경로)이 있다는 뜻이다.
 
-### 덤 — `PLAN_LIMIT_EXCEEDED` 는 아무도 안 읽는다
+### 덤 — `PLAN_LIMIT_EXCEEDED` 는 **미배선**이다 (dead 아님)
 
 ```
-소스 전역 grep  → 1건 (route.ts:163 발신처뿐)
+소스 전역 grep  → 1건 (route.ts:163 발신처뿐) · 클라이언트 소비 0
 ```
-클라이언트 소비 0. UI 는 `error` 문구만 그대로 띄우고 `code` 는 dead payload 다.
-수정 시 code 분기 UI 를 새로 짤지, code 를 뺄지 함께 정한다(카드 원 5항 밖 · 신규).
+
+🛑 **정정 — 앞서 "dead payload" 라고 적었으나 틀렸다.** 제거 대상이 아니다.
+`PLAN_LIMIT_EXCEEDED` 는 **결제 전환 지점**이다. 문구만 띄우면 왜 막혔는지 모르고 이탈하고,
+code 를 빼면 나중에 분기할 때 서버를 다시 건드려야 한다.
+
+**판정 B (호영님 2026-08-29) — code 유지. UI 분기는 별 슬라이스.**
+→ `§org-create-limit-ui` : `PLAN_LIMIT_EXCEEDED` 업그레이드 유도 분기 (named pin · vague "다음에" 금지)
 
 ### 🛑 수정 후 재측정 방법 (무엇을 바꿔서 다시 재는가)
 
@@ -118,10 +123,125 @@ let enforcement(:104)  대입 0 · 사용 0 — dead local
 A  TEAM plan 조직 1개 보유 계정 → 2번째 생성  기대 201 (현행 403)
 B  FREE plan 조직 1개 보유 계정 → 2번째 생성  기대 403 PLAN_LIMIT_EXCEEDED (회귀 핀)
 C  plan 미설정(subscription 행 없음)          기대 FREE 취급 · 403 — 방어 경로 보존
+D  OWNER 아닌 멤버십만 보유한 FREE 사용자      기대 첫 조직 생성 201   ← 분모 오염 핀
+E  남의 TEAM 조직에 초대된 FREE 사용자         기대 2번째 생성 403     ← 분자 오염 핀
 ```
 A 만 보면 한도가 통째로 풀린 것과 구분 불가라 **B · C 가 같이 있어야 판정이다.**
+D · E 는 축 판정(아래)의 핀이다 — 없으면 OWNER 필터가 걸렸는지 우연인지 안 갈린다.
+
+🛑 **A 는 prod 에서 못 잰다 — 시드로 이동 확정.** ⑤ 실측상 유료 조직이 0이라
+   대상 계정이 존재하지 않는다.
+
+## 실측 2026-08-29 (2) — ③ · ⑤ prod read-only
+
+```
+⑤ plan 분포   FREE 4 · TEAM 0 · ORGANIZATION 0   (총 조직 4 · 소속 보유 사용자 4)
+③ 다중 소속   0행                                 (4명이 1개씩)
+```
+
+### 🛑 근거 정정 — "지금 장애" 가 아니라 "첫 결제 시 확정 차단"
+
+유료 조직이 **아직 하나도 없다.** "유료 고객이 돈 내고 막히는 라이브 장애" 는
+현시점에서 성립하지 않는다 — 결함은 실재하나 **아직 아무도 밟지 않았다.**
+
+**그러나 우선순위는 내려가지 않는다.** ③ 0행이 우회 경로 없음을 확정했으므로
+**첫 유료 전환자가 반드시 밟는다.** 돈이 들어오는 바로 그 순간 깨지는 자리다.
+
+---
+
+## 축 판정 (호영님 2026-08-29) — **조직 축 · OWNER 만**
+
+`hasPro` 가 내 멤버십 **전체**를 보는 것은 **entitlement 유출**이다.
+남의 유료 조직에 초대만 받아도 내 상한이 풀린다 —
+**남의 조직 상태가 내 판정을 바꾸는** 형태이며, 격리 감사에서 닫은 것과 같은 형태다.
+
+🔑 같은 표현식에 **두 번째 오답**이 붙어 있다 — 분자·분모가 같은 오염을 공유한다.
+
+```
+분자  plans (plan 파생)          남의 조직 plan 이 내 상한을 올린다
+분모  existingMemberships.length 초대받은 조직이 내 생성 한도를 깎는다
+                                 → FREE 사용자가 초대 한 번 받으면 자기 조직을 못 만든다
+```
+
+→ **OWNER(생성자) 역할 멤버십만 계수하고, plan 도 거기서만 파생.**
+   초대 멤버십은 분자에도 분모에도 들어가지 않는다.
+
+---
+
+## enum 정본 실측 2026-08-29 — `3` 은 **TEAM** 에 붙는다 (선택 아님)
+
+```
+축 1  PLAN_DISPLAY (plans.ts:82~113 · §11.304)
+      FREE→"Free" · TEAM→"Basic" · ORGANIZATION→"Pro"
+      주석이 "PLAN_DESCRIPTOR 의 canonical label 과 동기화" 라고 선언
+축 2  PLAN_LIMITS 주석 (§pricing-redesign 호영님 2026-06-27)
+      TEAM 에 "Basic 팀원 5→3" · ORGANIZATION 에 "Pro 팀원 10명"
+축 3  route.ts:157~158 — 고장난 코드가 의도를 들고 있다
+      planName = hasPro ? "Pro" : hasBasic ? "Basic" : "Free/Starter"
+      limitLabel = 무제한 / 3개 / 1개
+```
+
+세 축이 같은 사다리를 가리킨다 — **FREE 1 · TEAM(Basic) 3 · ORGANIZATION(Pro) ∞.**
+
+🛑 **겹 2 는 오타 하나가 아니라 둘이다.**
+
+```
+"BASIC"   enum 에 없는 값 (있어야 할 건 "TEAM")
+hasPro    TEAM 을 삼킨다 — Pro 는 ORGANIZATION 하나뿐이다
+```
+둘이 맞물려 `3` rung 을 양쪽에서 봉쇄한다. **하나만 고치면 안 열린다.**
+
+⚠️ 별건 — `schema.prisma` 의 한국어 주석이 인코딩 깨짐(`TEAM // ? ?랜`).
+   enum 값 자체는 무손상이라 이 판정에 영향 없다. 이 슬라이스 밖.
+
+---
+
+## 판정 A (호영님 2026-08-29) — ORGANIZATION 은 **∞ 유지**
+
+조직 개수와 멤버 수는 다른 축이다. `maxMembers` 계단(1/3/10)을 따라갈 이유가 없고,
+FREE·하위 계단에서 숫자가 겹치는 것은 **베낀 자국이라는 증거지 정합의 증거가 아니다.**
+ORGANIZATION 은 다법인·다사업장이 대상이라 상한을 두면 영업 협상마다 코드 변경이 붙는다.
+
+조건 둘:
+```
+1  ∞ 를 Infinity / null 어느 쪽이든 명시적 sentinel 로. 매직값 금지
+2  maxOrganizations 와 maxMembers 를 같은 리터럴에서 파생시키지 말 것
+   — 지금 겹침이 다음 maxMembers 개정 때 조직 상한을 조용히 끌고 간다.
+     그게 이번 오독의 재발 경로다
+```
+🔑 `Record<SubscriptionPlan, …>`(PLAN_LIMITS · PLAN_DISPLAY · PLAN_ORDER 관용)으로 가면
+   조건 1이 자동 충족되고, enum 확장 시 타입이 빠진 키를 잡는다.
+
+---
+
+## 슬라이스 분리 — B1b / B2
+
+B1 을 B2 에 묶으면 **판정 대기 동안 차단이 계속 산다.** 분리한다.
+
+### B1b (지금)
+```
+1  findMany 에 organization include            (겹 1 — 지금은 plan 이 실려오지도 않는다)
+2  OWNER 역할 필터 — 계수 · plan 파생 양쪽      (축 판정)
+3  plan 파생을 ternary 사슬 → enum 기반 매핑     (겹 2 두 오타 동시 해소)
+4  인라인 1/3/∞ 는 이 슬라이스에서 정정         (PLAN_LIMITS 이관은 B2)
+```
+🛑 **B1a(겹 1 만)는 폐기됐다.** "인라인 값 안 건드림" 이 값 중립이 아니었다 —
+   ternary 사슬이라 손 안 대는 것 자체가 **TEAM 에 ∞ 를 주는 선택**이었다.
+
+### B2 (판정 A 반영 · 후속)
+```
+maxOrganizations 정본 신설 + route.ts 인라인 제거 (세 번째 진실 소멸)
+```
+
+### 🔑 §2b 실증 사례
+
+이 카드가 §2b 의 실물이다. **배선 확인이 답을 냈고("구조 맞음"), 그 답을 근거로
+슬라이스를 잘랐는데, 계수 축이 하나(유래 여부)뿐이라 두 번째 축
+(값이 어느 rung 에 착지하는가)이 안 보였다.** 축 하나로 센 확인은 확인이 아니다.
 
 ## 관련
 
 - `PLAN_org-management-web.md` — C1(좌석 한도)이 이 카드를 물어 올렸다
 - §reachability-needs-a-different-tool — 겹 2 가 "분기를 읽었다 → 참이 되는 경우를 안 셌다" 사례
+- §2b — 축 하나로 센 배선 확인이 두 번째 축을 가린 실증 사례 (위 §2b 실증 사례 절)
+- §org-create-limit-ui — PLAN_LIMIT_EXCEEDED 업그레이드 유도 분기 (판정 B · named pin · 미착수)
