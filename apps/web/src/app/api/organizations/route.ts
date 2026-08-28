@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { createOrganization, ORGANIZATION_TYPE_OPTIONS } from "@/lib/api/organizations";
 import { z } from "zod";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
-import { SubscriptionPlan, PLAN_ORDER, getPlanDisplayName } from "@/lib/plans";
+import { SubscriptionPlan, PLAN_ORDER, getPlanDisplayName, getPlanLimits } from "@/lib/plans";
 
 const createOrganizationSchema = z.object({
   name: z.string().min(1, "조직 이름을 입력해주세요.").max(200),
@@ -19,27 +19,6 @@ const createOrganizationSchema = z.object({
       "유효하지 않은 조직 유형입니다."
     ),
 });
-
-/**
- * 조직 생성 한도 — §org-create-limit B1b (호영님 판정 2026-08-29).
- *
- * 값 근거는 3축 일치라 선택이 아니다:
- *   축1 PLAN_DISPLAY (§11.304)  FREE→Free · TEAM→Basic · ORGANIZATION→Pro
- *   축2 PLAN_LIMITS 주석 (§pricing-redesign)  TEAM "Basic …" · ORGANIZATION "Pro …"
- *   축3 이 파일의 옛 planName/limitLabel  Pro/Basic/Free · 무제한/3개/1개
- *
- * null = 무제한(∞). 판정 A 조건 1(매직값 금지)에 따라 sentinel 을 null 로 명시한다.
- *
- * 🛑 maxMembers(1/3/10) 와 같은 리터럴에서 파생시키지 말 것. 조직 개수와 멤버 수는
- *   다른 축이고, FREE·TEAM 에서 숫자가 겹치는 것은 베낀 자국이지 정합의 증거가 아니다.
- *   파생시키면 다음 maxMembers 개정이 조직 상한을 조용히 끌고 간다.
- * 📌 PLAN_LIMITS 로의 이관(maxOrganizations 정본 신설)은 B2 — 세 번째 진실은 아직 남아 있다.
- */
-const MAX_ORGANIZATIONS: Record<SubscriptionPlan, number | null> = {
-  [SubscriptionPlan.FREE]: 1,
-  [SubscriptionPlan.TEAM]: 3,
-  [SubscriptionPlan.ORGANIZATION]: null,
-};
 
 // 사용자가 소속된 조직 목록 조회
 export async function GET(request: NextRequest) {
@@ -198,7 +177,9 @@ export async function POST(request: NextRequest) {
       SubscriptionPlan.FREE
     );
 
-    const orgLimit = MAX_ORGANIZATIONS[effectivePlan]; // null = 무제한
+    // §org-create-limit B2 — 한도 정본은 PLAN_LIMITS 다. 이 파일에 인라인 상수를 두지
+    //   않는다(세 번째 진실 소멸). null = 무제한.
+    const orgLimit = getPlanLimits(effectivePlan).maxOrganizations;
 
     if (orgLimit !== null && currentOrgCount >= orgLimit) {
       // 라벨은 같은 Record 계열에서 파생한다 — 응답 error 문구가 그대로 토스트에 뜬다

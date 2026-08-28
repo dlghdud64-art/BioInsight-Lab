@@ -146,6 +146,19 @@ export const ENTERPRISE_INFO = {
 //   추적 모드 게이팅 field 신규.
 export interface PlanLimits {
   maxMembers: number | null;
+  /**
+   * 조직 생성 한도 — null = 무제한. §org-create-limit B2 (호영님 판정 2026-08-29).
+   *
+   * 값 근거 3축: PLAN_DISPLAY(§11.304 FREE→Free · TEAM→Basic · ORGANIZATION→Pro) ·
+   *   PLAN_LIMITS 주석(§pricing-redesign) · 구 route.ts 의 planName/limitLabel 라벨.
+   *
+   * 🛑 maxMembers 에서 파생시키지 말 것. 조직 개수와 멤버 수는 다른 축이고,
+   *   FREE·TEAM 에서 숫자가 겹치는 것은 베낀 자국이지 정합의 증거가 아니다.
+   *   파생시키면 다음 maxMembers 개정이 조직 상한을 조용히 끌고 간다 —
+   *   그게 이 트랙에서 실제로 일어난 오독의 재발 경로다.
+   *   `__tests__/lib/plans-max-organizations-b2.test.ts` 가 파생을 기계로 막는다.
+   */
+  maxOrganizations: number | null;
   maxQuotesPerMonth: number | null;
   maxSharedLinks: number | null;
   maxItems: number | null;
@@ -172,6 +185,7 @@ export interface PlanLimits {
 export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
   [SubscriptionPlan.FREE]: {
     maxMembers: 1,        // 개인 전용(사용자 1명, 현행 유지)
+    maxOrganizations: 1,  // §org-create-limit B2 — Free 조직 1개 (maxMembers 와 무관한 축)
     // §pricing-refresh(호영님 2026-06-18) — Free RFQ 5 → 3 (조이기). 실제 enforce 는 P2.
     maxQuotesPerMonth: 3,
     maxSharedLinks: 5,
@@ -197,6 +211,7 @@ export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
   [SubscriptionPlan.TEAM]: {
     // §pricing-redesign (호영님 2026-06-27) — Basic 팀원 5→3 (grandfather 없음, 파일럿).
     maxMembers: 3,
+    maxOrganizations: 3,  // §org-create-limit B2 — Basic 조직 3개 (maxMembers 와 무관한 축)
     // §11.303b — TEAM(Basic) maxQuotesPerMonth 100 → null (무제한)
     maxQuotesPerMonth: null,
     maxSharedLinks: 50,
@@ -222,6 +237,7 @@ export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
   [SubscriptionPlan.ORGANIZATION]: {
     // §pricing-redesign (호영님 2026-06-27) — Pro 팀원 10명, 재고 200 품목 (정직 정합).
     maxMembers: 10,
+    maxOrganizations: null, // §org-create-limit B2 — Pro 조직 무제한 (판정 A · 다법인/다사업장)
     maxQuotesPerMonth: null,  // 무제한
     maxSharedLinks: null,     // 무제한
     maxItems: 200,            // 품목 등록 200개 (광고 표기와 일치)

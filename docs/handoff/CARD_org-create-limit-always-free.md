@@ -242,9 +242,9 @@ B1 을 B2 에 묶으면 **판정 대기 동안 차단이 계속 산다.** 분리
 🛑 **B1a(겹 1 만)는 폐기됐다.** "인라인 값 안 건드림" 이 값 중립이 아니었다 —
    ternary 사슬이라 손 안 대는 것 자체가 **TEAM 에 ∞ 를 주는 선택**이었다.
 
-### B2 (판정 A 반영 · 후속)
+### B2 (판정 A 반영) — ✅ land 2026-08-29
 ```
-maxOrganizations 정본 신설 + route.ts 인라인 제거 (세 번째 진실 소멸)
+maxOrganizations 정본 신설 + route.ts 인라인 제거 (세 번째 진실 소멸) — 완료
 ```
 
 ### 🔑 §2b 실증 사례
@@ -279,7 +279,7 @@ maxOrganizations 정본 신설 + route.ts 인라인 제거 (세 번째 진실 �
 3  ternary 사슬 → Record 매핑          MAX_ORGANIZATIONS: Record<SubscriptionPlan, number|null>
    최고 등급 선택은 PLAN_ORDER 로. 오타 둘(hasPro·"BASIC") 동시 소멸
 4  인라인 값 정정                      FREE 1 · TEAM 3 · ORGANIZATION null(∞)
-   📌 PLAN_LIMITS 이관은 B2 — 세 번째 진실은 아직 남아 있다
+   📌 PLAN_LIMITS 이관은 B2 에서 완료됐다 (아래 B2 land 절) — 세 번째 진실 소멸
 ```
 
 라벨은 `getPlanDisplayName()` 파생으로 교체. `"Free/Starter"` → `"Free"` 는
@@ -360,6 +360,65 @@ lib     src/lib/health/owner-invariant.ts
         도달 실패를 clean 으로 참칭  → 1 failed / 6 passed   RED
 런타임  배포될 SQL 원문을 소스에서 뽑아 prod 직접 실행 →
         ownerlessCount = 0 · clean = true   (정적 GREEN 과 별개로 실측)
+```
+
+## B2 land 2026-08-29 — `maxOrganizations` 정본 신설 · 세 번째 진실 소멸
+
+### 착수 전 sweep
+
+```
+PlanLimits 를 직접 구성하는 객체 리터럴   0건 (getPlanLimits 반환 시그니처뿐)
+                                          → 필드 추가가 깨뜨릴 자리 없음
+PLAN_LIMITS 필드를 열거하는 sentinel      0건 (4개 파일이 참조하나 전부 개별 필드 핀)
+MAX_ORGANIZATIONS 옛 값 외부 참조         0건
+```
+
+### 구현
+
+```
+plans.ts    PlanLimits 에 maxOrganizations: number | null 신설
+            FREE 1 · TEAM 3 · ORGANIZATION null(무제한)
+            각 항목에 "maxMembers 와 무관한 축" 명시
+route.ts    인라인 MAX_ORGANIZATIONS 상수 **삭제**
+            getPlanLimits(effectivePlan).maxOrganizations 로 교체
+```
+
+**세 번째 진실이 사라졌다.** 조직 생성 한도의 정본은 이제 `PLAN_LIMITS` 하나다.
+
+### 판정 A 2조건 — 기계로 잠금
+
+`__tests__/lib/plans-max-organizations-b2.test.ts` (9 tests)
+
+```
+조건 1  ∞ = null sentinel        값 핀 + "undefined 아님" + Number.isFinite false
+조건 2  maxMembers 파생 금지      값만 보는 단언으로는 파생과 우연한 일치를 못 가른다
+                                 (FREE 1/1 · TEAM 3/3 이 실제로 겹친다) → 소스를 본다
+                                 · 두 축 우변이 전부 리터럴(\d+|null) — 식별자 경유 0
+                                 · 한 축 우변이 다른 축 이름을 참조하지 않음
+route 축  인라인 부활 차단 + B1b 배선(OWNER 필터 · plan 실기 · PLAN_ORDER) 회귀 0
+```
+
+🛑 부정 단언은 `stripComments` 본에 건다 — `plans.ts` 의 문서 주석이 "maxMembers 에서
+파생시키지 말 것" 이라고 적고 있어, 소스 전체에 걸면 **그 설명 주석이 매칭되고
+구현자가 주석 삭제로 통과**할 수 있다.
+
+🛑 창은 `export const PLAN_LIMITS` 부터 연다. 인터페이스의 `maxMembers: number | null` 은
+타입 선언이지 값이라 창을 넓게 열면 그게 대신 매칭된다(§4원칙 ②).
+**실제로 1차 작성에서 이 형태로 RED 가 났고**, 창을 좁혀 고쳤다.
+
+### 검증
+
+```
+단언      B2 9 tests + B1b 10 tests = 19 GREEN
+          B1b 가 B2 리팩터 후에도 그대로 통과 — 동작 불변 증거
+프로브    ORGANIZATION null→10 (maxMembers 베낀 형태)  → 2 failed / 7 passed  RED
+          값을 Number(3) 식으로 (파생 형태)            → 1 failed / 8 passed  RED
+          라우트에 인라인 사다리 부활                   → 1 failed / 8 passed  RED
+          복원 cmp 2파일 모두 원본 동일
+tsc       baseline 27 = 현재 27 · 라인 diff 0
+인접      api/organizations · lib/health · organizations-header-kpi-tabs-p3 ·
+          pricing-refresh-p1 · label-scan-quota-p2b · pricing-label-scan-tracking-p3
+          10 files · 102 tests GREEN
 ```
 
 ## 관련
