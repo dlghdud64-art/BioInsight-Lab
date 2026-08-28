@@ -189,7 +189,17 @@ D · E 는 축 판정(아래)의 핀이다 — 없으면 OWNER 필터가 걸렸�
 "BASIC"   enum 에 없는 값 (있어야 할 건 "TEAM")
 hasPro    TEAM 을 삼킨다 — Pro 는 ORGANIZATION 하나뿐이다
 ```
-둘이 맞물려 `3` rung 을 양쪽에서 봉쇄한다. **하나만 고치면 안 열린다.**
+둘이 맞물려 `3` rung 을 양쪽에서 봉쇄한다. 하나만 고치면 안 열린다.
+
+🛑 **둘의 무게가 다르다 (호영님 2026-08-29).** "하나만 고치면 안 열린다" 보다 이쪽이 실질 위험이다.
+
+```
+"BASIC"   enum 에 없어서 죽은 코드다 — 눈에 띈다. 읽으면 보인다
+hasPro    살아 있는 코드가 조용히 틀린 답을 낸다
+          → "BASIC" 만 고쳐도 hasPro 는 여전히 TEAM 을 ∞ 로 보낸다
+```
+즉 겹 2 의 절반만 수정하면 **막힘은 풀리는데 Basic 고객이 무제한을 받는다.**
+증상이 사라져서 종결로 보이는 형태라 더 위험하다.
 
 ⚠️ 별건 — `schema.prisma` 의 한국어 주석이 인코딩 깨짐(`TEAM // ? ?랜`).
    enum 값 자체는 무손상이라 이 판정에 영향 없다. 이 슬라이스 밖.
@@ -239,9 +249,76 @@ maxOrganizations 정본 신설 + route.ts 인라인 제거 (세 번째 진실 �
 슬라이스를 잘랐는데, 계수 축이 하나(유래 여부)뿐이라 두 번째 축
 (값이 어느 rung 에 착지하는가)이 안 보였다.** 축 하나로 센 확인은 확인이 아니다.
 
+## B1b land 2026-08-29 — 구현 · 검증
+
+### 게이트 통과 기록 (착수 전)
+
+```
+게이트 1  planName/limitLabel 소비처   실려 있다. error 문구에 보간되고
+          dashboard/organizations/page.tsx:255~260 이 그대로 실패 토스트에 띄운다
+          → 지우지 않고 같은 Record 계열에서 파생시켜 살렸다
+게이트 2  sentinel 옛 값 sweep          "Free/Starter" · "요금제에서는" ·
+          PLAN_LIMIT_EXCEEDED · hasBasic · orgLimit 전부 0건.
+          hasPro 히트 1건은 hasProduct( 부분일치 — 무관
+게이트 3  OWNER 필터 레거시 안전성      🛑 착수 중 발견. OWNER 배선은
+          §team-org-role-model Phase 2(2026-08-12) 이후다. 그 이전 생성분은 ADMIN 이라
+          필터에 안 잡히고 계수 0 → 한도가 오히려 풀린다.
+          prod 실측: OWNER 4 · ADMIN 0 · OWNER 0인 조직 0행 → 인스턴스 없음. 통과
+```
+
+### 구현 (`route.ts` · +69 / −17)
+
+```
+1  findMany 에 organization 실기      select: { organization: { select: { plan: true } } }
+   (include 가 아니라 select — 과다조회 0. 겹 1 해소 조건은 동일)
+2  OWNER 필터                          where: { userId, role: "OWNER" } — 계수·plan 파생 양쪽
+3  ternary 사슬 → Record 매핑          MAX_ORGANIZATIONS: Record<SubscriptionPlan, number|null>
+   최고 등급 선택은 PLAN_ORDER 로. 오타 둘(hasPro·"BASIC") 동시 소멸
+4  인라인 값 정정                      FREE 1 · TEAM 3 · ORGANIZATION null(∞)
+   📌 PLAN_LIMITS 이관은 B2 — 세 번째 진실은 아직 남아 있다
+```
+
+라벨은 `getPlanDisplayName()` 파생으로 교체. `"Free/Starter"` → `"Free"` 는
+§11.304 의 `fallback "Starter" → "Free" 정합` 과 같은 방향이다.
+`"무제한"` 분기는 제거했다 — `orgLimit === null` 이면 한도 초과 문구에 도달할 수 없다.
+**원래도 도달 불가였다**(hasPro → Infinity → 비교가 항상 false).
+
+### 재측정 5종 + 사다리 핀 — 10/10 GREEN
+
+```
+A  TEAM 1개 소유 → 2번째        201   (현행 결함은 403)      ← prod 유료 0이라 시드로 이동
+B  FREE 1개 소유 → 2번째        403 PLAN_LIMIT_EXCEEDED · "Free" · "1개"
+C  plan 미설정                   403   FREE 취급 — 방어 경로 보존
+D  OWNER 아닌 멤버십만 보유       201   첫 조직 생성 — 분모 오염 핀
+E  남의 TEAM 에 초대된 FREE 소유자 403  2번째 차단 — 분자 오염 핀
++  TEAM 3개 소유 → 4번째         403 · "Basic" · "3개"       ← hasPro 삼킴 회귀 핀
++  TEAM 2개 → 3번째 201 · ORGANIZATION 5개 → 6번째 201 · 최고등급 선택 · 쿼리 배선
+```
+
+🔑 mock 이 `where` 절을 **실제로 해석한다.** 라우트가 OWNER 필터나 organization select 를
+떨어뜨리면 fixture 가 통과시키는 게 아니라 시나리오가 깨진다 — D·E 가 우연한 통과와 갈린다.
+
+### 주입 프로브 — 검출력 실증 (③ · 러너 기준: 프로젝트 러너)
+
+```
+프로브 1  where 에서 role:"OWNER" 제거      → 2 failed / 8 passed   RED
+프로브 2  organization select 제거           → 6 failed / 4 passed   RED
+프로브 3  TEAM rung 을 3 → null(무제한)      → 1 failed / 9 passed   RED
+복원      cmp 로 원본 동일 확인
+```
+
+### 인접 회귀
+
+```
+api/organizations + organizations-list-three-column-p5   3 files · 27 tests GREEN
+tsc  변경 파일(route.ts · plans.ts) 에러 0 (그 외는 기존 __tests__ 건)
+plans.ts  무변경 — B2 영역
+```
+
 ## 관련
 
 - `PLAN_org-management-web.md` — C1(좌석 한도)이 이 카드를 물어 올렸다
 - §reachability-needs-a-different-tool — 겹 2 가 "분기를 읽었다 → 참이 되는 경우를 안 셌다" 사례
 - §2b — 축 하나로 센 배선 확인이 두 번째 축을 가린 실증 사례 (위 §2b 실증 사례 절)
 - §org-create-limit-ui — PLAN_LIMIT_EXCEEDED 업그레이드 유도 분기 (판정 B · named pin · 미착수)
+- §prisma-comment-encoding — schema.prisma 한국어 주석 인코딩 깨짐(`TEAM // ? ?랜`). enum 값 무손상 · 슬라이스 밖 · 큐만 (호영님 2026-08-29)

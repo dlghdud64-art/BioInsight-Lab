@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { createOrganization, ORGANIZATION_TYPE_OPTIONS } from "@/lib/api/organizations";
 import { z } from "zod";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { SubscriptionPlan, PLAN_ORDER, getPlanDisplayName } from "@/lib/plans";
 
 const createOrganizationSchema = z.object({
   name: z.string().min(1, "조직 이름을 입력해주세요.").max(200),
@@ -18,6 +19,27 @@ const createOrganizationSchema = z.object({
       "유효하지 않은 조직 유형입니다."
     ),
 });
+
+/**
+ * 조직 생성 한도 — §org-create-limit B1b (호영님 판정 2026-08-29).
+ *
+ * 값 근거는 3축 일치라 선택이 아니다:
+ *   축1 PLAN_DISPLAY (§11.304)  FREE→Free · TEAM→Basic · ORGANIZATION→Pro
+ *   축2 PLAN_LIMITS 주석 (§pricing-redesign)  TEAM "Basic …" · ORGANIZATION "Pro …"
+ *   축3 이 파일의 옛 planName/limitLabel  Pro/Basic/Free · 무제한/3개/1개
+ *
+ * null = 무제한(∞). 판정 A 조건 1(매직값 금지)에 따라 sentinel 을 null 로 명시한다.
+ *
+ * 🛑 maxMembers(1/3/10) 와 같은 리터럴에서 파생시키지 말 것. 조직 개수와 멤버 수는
+ *   다른 축이고, FREE·TEAM 에서 숫자가 겹치는 것은 베낀 자국이지 정합의 증거가 아니다.
+ *   파생시키면 다음 maxMembers 개정이 조직 상한을 조용히 끌고 간다.
+ * 📌 PLAN_LIMITS 로의 이관(maxOrganizations 정본 신설)은 B2 — 세 번째 진실은 아직 남아 있다.
+ */
+const MAX_ORGANIZATIONS: Record<SubscriptionPlan, number | null> = {
+  [SubscriptionPlan.FREE]: 1,
+  [SubscriptionPlan.TEAM]: 3,
+  [SubscriptionPlan.ORGANIZATION]: null,
+};
 
 // 사용자가 소속된 조직 목록 조회
 export async function GET(request: NextRequest) {
@@ -135,31 +157,61 @@ export async function POST(request: NextRequest) {
     const trimmedDescription = description?.trim() || undefined;
     const trimmedOrgType = organizationType?.trim() || undefined;
 
-    // 2. 요금제별 조직 생성 한도 체크
-    // subscription relation 이 DB 에 없을 수 있으므로 방어적 처리
-    let existingMemberships: any[] = [];
+    // 2. 요금제별 조직 생성 한도 체크 — §org-create-limit B1b (호영님 판정 2026-08-29)
+    //
+    // 이전 결함 (2026-08-24 등재 · 겹 1·2 + 축 오염):
+    //   · findMany 가 organization 을 include 하지 않아 plan 을 볼 수단 자체가 없었고
+    //     map(() => "FREE") 가 전원 FREE 로 취급했다 → 유료 고객도 상한 1.
+    //   · hasPro 가 TEAM 을 삼켰다. Pro 는 ORGANIZATION 하나뿐인데 TEAM(Basic)까지
+    //     무제한으로 보냈다 — plan 을 읽는 순간 조용히 틀린 답을 내는 쪽이 이것이다.
+    //   · hasBasic 이 보던 "BASIC" 은 enum 에 없어(FREE·TEAM·ORGANIZATION) 영원히 false.
+    //     둘이 맞물려 3 rung 을 양쪽에서 봉쇄했다.
+    //   · 판정 축이 사용자 전체 멤버십이라 남의 조직 상태가 내 한도를 바꿨다:
+    //     분자(plan 파생)는 남의 유료 조직이 내 상한을 올리고(entitlement 유출),
+    //     분모(계수)는 초대받은 조직이 내 생성 한도를 깎았다.
+    //
+    // 지금: OWNER(생성자) 멤버십만 계수하고 plan 도 거기서만 파생한다 — 조직 축.
+    //   초대 멤버십은 분자에도 분모에도 들어가지 않는다.
+    //   ⚠️ OWNER 배선은 §team-org-role-model Phase 2(2026-08-12) 이후다. 그 이전 생성분은
+    //     ADMIN 이라 이 필터에 안 잡힌다(= 한도가 느슨해진다). prod 실측 2026-08-29:
+    //     OWNER 4 · ADMIN 0 · OWNER 0인 조직 0행 — 해당 인스턴스 없음.
+    let ownedMemberships: { organization: { plan: SubscriptionPlan } | null }[] = [];
     try {
-      existingMemberships = await db.organizationMember.findMany({
-        where: { userId: session.user.id },
+      ownedMemberships = await db.organizationMember.findMany({
+        where: { userId: session.user.id, role: "OWNER" },
+        select: { organization: { select: { plan: true } } },
       });
     } catch {
       // 테이블 없는 경우 무시 — 신규 DB
     }
 
-    const currentOrgCount = existingMemberships.length;
-    // subscription 없으면 전부 FREE 가정
-    const plans: string[] = existingMemberships.map(() => "FREE");
-    const hasPro = plans.some((p: string) => p === "TEAM" || p === "ORGANIZATION");
-    const hasBasic = !hasPro && plans.some((p: string) => p === "BASIC");
-    const orgLimit = hasPro ? Infinity : hasBasic ? 3 : 1; // Free/Starter: 1개, Basic: 3개
+    const currentOrgCount = ownedMemberships.length;
 
-    if (currentOrgCount >= orgLimit) {
-      const planName = hasPro ? "Pro" : hasBasic ? "Basic" : "Free/Starter";
-      const limitLabel = hasPro ? "무제한" : hasBasic ? "3개" : "1개";
-      console.warn("[Organizations API] Plan limit exceeded:", { currentOrgCount, orgLimit, planName });
+    // 내가 소유한 조직 중 최고 등급이 내 한도를 정한다 (원 의도 유지 · 축만 교정).
+    // plan 이 없거나 enum 밖 값이면 FREE 로 떨어뜨린다 — 모르는 값을 올려주지 않는다.
+    const effectivePlan = ownedMemberships.reduce<SubscriptionPlan>(
+      (best: SubscriptionPlan, m: { organization: { plan: SubscriptionPlan } | null }) => {
+        const p = m.organization?.plan;
+        if (!p || !(p in PLAN_ORDER)) return best;
+        return PLAN_ORDER[p] > PLAN_ORDER[best] ? p : best;
+      },
+      SubscriptionPlan.FREE
+    );
+
+    const orgLimit = MAX_ORGANIZATIONS[effectivePlan]; // null = 무제한
+
+    if (orgLimit !== null && currentOrgCount >= orgLimit) {
+      // 라벨은 같은 Record 계열에서 파생한다 — 응답 error 문구가 그대로 토스트에 뜬다
+      // (dashboard/organizations/page.tsx 의 실패 토스트). 끊으면 표시 회귀다.
+      const planName = getPlanDisplayName(effectivePlan);
+      console.warn("[Organizations API] Plan limit exceeded:", {
+        currentOrgCount,
+        orgLimit,
+        planName,
+      });
       return NextResponse.json(
         {
-          error: `${planName} 요금제에서는 최대 ${limitLabel}의 조직만 생성할 수 있습니다. 더 많은 조직이 필요하다면 요금제를 업그레이드하세요.`,
+          error: `${planName} 요금제에서는 최대 ${orgLimit}개의 조직만 생성할 수 있습니다. 더 많은 조직이 필요하다면 요금제를 업그레이드하세요.`,
           code: "PLAN_LIMIT_EXCEEDED",
         },
         { status: 403 }
