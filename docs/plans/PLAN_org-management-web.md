@@ -508,7 +508,7 @@ members(role 포함)로 `approverCount` 를 세면 된다(응답 1필드).
 
 ```
 GET  :23  → :65 map    ...org spread · adminCount · pendingCount · role
-                        ← approverCount 도 · C1(plan 응답 실기) 도 여기
+                        ← approverCount 가 붙을 자리 (plan 은 이미 실려 나간다 · C1 종결)
 POST :103 → :151 map   existingMemberships.map(() => "FREE")
                         ← §org-create-limit 은 여기
 ```
@@ -521,8 +521,13 @@ POST :103 → :151 map   existingMemberships.map(() => "FREE")
 묶으면 UI 트랙 rollback 이 유료 고객 차단을 되살린다 —
 `CARD_org-create-limit-always-free` 의 분리 판정이 정본이다.
 
-→ 자연스러운 묶음은 **C1(plan 응답 실기) + 승인자 축(approverCount)** 이다.
-   둘 다 같은 GET `:65` map · 둘 다 응답 1필드 · 둘 다 같은 화면이 소비한다.
+🛑 **정정 2026-08-29 — C1 을 열린 항목으로 적은 것은 오류였다.**
+이 절이 "자연스러운 묶음은 C1(plan 응답 실기) + 승인자 축" 이라고 적었으나,
+**같은 문서 §C1 자기 정정(위)이 이미 "응답 확장이 필요 없었다 · API 변경 0" 으로 닫아 두었다.**
+`organization` 에 `select` 가 없어 Prisma 가 스칼라를 전부 반환하고, `plan` 은 이미 나간다.
+→ 앞 묶음 문구의 표현을 그대로 물려쓰면서 **C1 이 아직 열려 있는지를 안 셌다.**
+
+→ 묶음 대상은 **승인자 축(approverCount) 단독**이다. C1 은 종결 항목이라 묶을 것이 없다.
 
 ### ⚠️ 내가 placeholder success 를 만들었다
 
