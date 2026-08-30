@@ -223,6 +223,23 @@ quoteId 를 채우는 유일한 생성 지점   work-queue/purchase-conversion r
 승인 라우트 :184                     if (orgId && quoteId) { …예산 검증… }  → 통째로 스킵
 ```
 
+🛑 **근거 소급 추가 (2026-08-30 #실재화에서 판명) — 죽어 있던 통제는 둘이었다.**
+
+```
+예산 통제        orgId(team 경유) undefined → if (orgId && quoteId) 스킵
+개인 결재 한도    organizationId ?? "" → findFirst null
+                → approvalLimit null(=무제한) → checkApprovalLimit 전부 통과
+```
+
+`:137` 의 `?? ""` 는 방어처럼 생겼지만 §S2 #approval-limit-server-enforce(audit S2 HIGH)
+게이트를 통째로 무력화하는 봉합이었다. 그 게이트의 주석은
+`"권한 보유 actor 가 자기 한도 초과 건을 직접 승인하던 우회를 닫는다"` 인데,
+**소속 축 부재로 그 우회가 열려 있었다.**
+
+🔑 다음 세션이 "왜 이 마이그레이션이 급했는가" 를 물으면 답은 이것이다 —
+   성격이 다른 통제축 **둘**(조직 예산 · 개인 결재 한도)이 **같은 뿌리 하나**로
+   동시에 죽어 있었다. 컬럼 하나가 없어서 통제 둘이 없었다.
+
 소속 축 부재가 곧 **예산 통제 부재**였다. nullable 로 넣으면 코드 7곳의 방어
 (`?? ""` · `if(...)`)가 그대로 살아 "없는 필드" 가 "null 일 수 있는 필드" 로 바뀔 뿐이다.
 

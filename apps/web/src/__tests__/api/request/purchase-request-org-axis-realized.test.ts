@@ -6,9 +6,10 @@
  *
  * 🛑 계수 정정 — 세 번 움직였다. **축과 시점을 함께 적는다**(§2b 사례 1·2·3).
  *
- *     7곳   직접 6 + team 경유 1(`:156`)  ... 단위가 섞였다
- *     6곳   직접 읽기만 · **봉합 제거 전**  ... 88da2db7^ 과 이 슬라이스 착수 시점
- *     5곳   직접 읽기만 · **봉합 제거 후**  ... 지금. 6번째는 항상-거짓 분기 자신이었다
+ *     7곳   직접 6 + team 경유 1(`:156`)   ... 단위가 섞였다
+ *     6곳   직접만 · **봉합 제거 전**       ... 88da2db7^ 과 #실재화 착수 시점
+ *     5곳   직접만 · **봉합 제거 후**       ... #실재화 종료. 6번째는 항상-거짓 분기 자신
+ *     6곳   직접만 · **(나)-1a 직결 후**    ... 지금. team 경유 1이 직접으로 넘어왔다
  *
  *   🔑 6 → 5 는 결함이 아니라 **이 슬라이스의 산물**이다.
  *     사라진 하나가 `if (purchaseRequest.organizationId)` — 읽기이면서 동시에
@@ -33,23 +34,48 @@ const stripComments = (s: string) =>
 
 const APPROVE = "src/app/api/request/[id]/approve/route.ts";
 
-describe("계수 — 직접 읽기 5곳 (축과 시점을 고정한다)", () => {
-  it("purchaseRequest.organizationId 직접 읽기가 정확히 5곳 (봉합 제거 후)", () => {
-    /* 착수 시점 6 → 지금 5. 줄어든 하나가 항상-거짓 분기 자신이다.
-     * 6 으로 되돌아가면 봉합이 부활했다는 뜻이므로 그때 RED 가 맞다. */
+describe("계수 — 직접 읽기 6곳 (축과 시점을 고정한다)", () => {
+  it("purchaseRequest.organizationId 직접 읽기가 정확히 6곳 ((나)-1a 직결 후)", () => {
+    /* 5 → 6. 늘어난 하나는 team 경유가 직접으로 넘어온 것이다(orgId).
+     * 계수가 움직일 때마다 무엇이 움직였는지를 함께 적는다 — 숫자만 고치면
+     * 다음 세션이 "왜 6인가" 를 못 판정한다. */
     const code = stripComments(read(APPROVE));
     const hits = code.match(/purchaseRequest\.organizationId/g) ?? [];
-    expect(hits.length).toBe(5);
+    expect(hits.length).toBe(6);
   });
 
-  it("team 경유 읽기는 1곳 — 아직 미해결 축이다 ((나)-1 대상)", () => {
-    /* 🛑 긍정 단언이다. (나)-1 이 이 줄을 직결로 바꾸면 **여기가 RED 로 떨어진다** —
-     * 그때 이 it 을 "직결로 전환됨" 단언으로 교체하는 것이 정상 종료다.
-     * 축이 미해결인 동안 그 사실을 기록으로만 두지 않기 위해 발화시킨다. */
+  it("🔑 (나)-1a 종료 — team 경유 읽기가 0곳이다", () => {
+    /* 직전 판본은 `team 경유 1곳` 을 **긍정으로** 잠그고 있었다. (나)-1a 가 그것을
+     * 직결로 바꿔 예고대로 RED 를 냈고, 여기서 승계 교체한다 — 그게 정상 종료다.
+     * 🛑 역방향 잠금: team 경유가 되살아나면 RED. teamId 가 null 인 생성 경로에서
+     *   orgId 가 다시 undefined 가 되고 예산 게이트가 다시 스킵된다. */
     const code = stripComments(read(APPROVE));
-    const viaTeam = code.match(/purchaseRequest\.team\?\.organizationId/g) ?? [];
-    expect(viaTeam.length).toBe(1);
-    expect(code).toMatch(/const orgId = purchaseRequest\.team\?\.organizationId;/);
+    expect(code.match(/purchaseRequest\.team\?\./g) ?? []).toHaveLength(0);
+    expect(code).toMatch(/const orgId = purchaseRequest\.organizationId;/);
+  });
+
+  it("소속 축은 include 도 직결이다 — team 통로 제거", () => {
+    /* team include 는 organization 에 닿기 위한 **통로일 뿐**이었다.
+     * 통로가 남아 있으면 다음 세션이 "team 축이 아직 산다" 로 읽는다. */
+    const code = stripComments(read(APPROVE));
+    const win = code.match(
+      /db\.purchaseRequest\.findUnique\(\{[\s\S]{0,600}?\n    \}\)/
+    )?.[0] ?? "";
+    expect(win.length).toBeGreaterThan(0);
+    expect(win).toMatch(/organization: \{ select: \{ id: true, timezone: true \} \},/);
+    expect(win).not.toMatch(/team: \{/);
+  });
+
+  it("예산 기간 타임존도 직결이다 — 조용히 틀린 값이 들어가던 자리", () => {
+    /* orgTimezone 은 periodYearMonth(예산 기간 키)를 정한다. team 이 끊긴 요청에서
+     * "Asia/Seoul" 로 떨어지면 **값이 없는 게 아니라 틀린 값**이 들어간다.
+     * 비서울 조직의 예산이 다른 달에 계상된다 — 부재보다 나쁜 형태다. */
+    const code = stripComments(read(APPROVE));
+    expect(code).toMatch(
+      /const orgTimezone = purchaseRequest\.organization\?\.timezone \?\? "Asia\/Seoul";/
+    );
+    expect(code).not.toMatch(/purchaseRequest\.team\?\.organization\?\.timezone/);
+    expect(code).toMatch(/resolvePeriodYearMonth\(orgTimezone, approvalTimestamp\)/);
   });
 });
 
@@ -141,6 +167,10 @@ describe("🛑 아직 닫히지 않은 것 — 기록이 아니라 발화로 둔
     const code = stripComments(read(APPROVE));
     expect(code).toMatch(/teamId: purchaseRequest\.teamId \|\| "",/);
     expect(code).toMatch(/teamMember\.role !== TeamRole\.ADMIN/);
+    /* 🔑 (나)-1a 이후: orgId 는 이제 항상 값이 있다. 그래도 게이트가 403 을 내므로
+     * ③ 는 여전히 도달 불가다 — **원인 후보가 하나로 줄었다**는 것이 1a 의 성과다.
+     * 발화가 안 되면 원인은 게이트 축뿐이다(호영님 판정: 실패의 귀속). */
     expect(code).toMatch(/if \(orgId && purchaseRequest\.quoteId\)/);
+    expect(code).toMatch(/const orgId = purchaseRequest\.organizationId;/);
   });
 });

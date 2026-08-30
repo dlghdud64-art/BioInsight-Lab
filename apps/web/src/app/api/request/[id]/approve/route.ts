@@ -82,11 +82,13 @@ export async function POST(
     const purchaseRequest = await db.purchaseRequest.findUnique({
       where: { id: requestId },
       include: {
-        team: {
-          include: {
-            organization: { select: { id: true, timezone: true } },
-          },
-        },
+        // §purchase-request-org-axis (나)-1a — 소속 축 직결(2026-08-30).
+        //   team 을 경유해 organization 에 닿던 구조를 걷는다. team include 는
+        //   organization 에 도달하기 위한 **통로일 뿐**이었고, teamId 가 null 인
+        //   생성 경로(work-queue request-approval)에서는 그 통로가 끊겨
+        //   orgId·orgTimezone 이 모두 undefined 였다.
+        //   🔑 teamId 는 스칼라라 include 없이도 그대로 반환된다(:116 게이트가 계속 쓴다).
+        organization: { select: { id: true, timezone: true } },
         requester: true,
         quote: true,
       },
@@ -156,8 +158,12 @@ export async function POST(
     }
 
     // ── Org timezone → period_key 결정 ──
-    const orgTimezone = purchaseRequest.team?.organization?.timezone ?? "Asia/Seoul";
-    const orgId = purchaseRequest.team?.organizationId;
+    // §purchase-request-org-axis (나)-1a — team 경유 → 직결.
+    //   orgTimezone 은 예산 기간 키(periodYearMonth)를 정한다. team 이 끊긴 요청에서
+    //   "Asia/Seoul" 로 떨어지면 비서울 조직의 예산 기간이 어긋난다 — 값이 없는 게
+    //   아니라 **틀린 값이 조용히 들어가는** 자리라 함께 직결한다.
+    const orgTimezone = purchaseRequest.organization?.timezone ?? "Asia/Seoul";
+    const orgId = purchaseRequest.organizationId;
     const approvalTimestamp = new Date();
     const periodYearMonth = resolvePeriodYearMonth(orgTimezone, approvalTimestamp);
 
