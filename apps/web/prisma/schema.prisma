@@ -89,6 +89,8 @@ model Organization {
   invites                    OrganizationInvite[]
   budgets                    Budget[]
   teams                      Team[]
+  /// §purchase-request-org-axis (2026-08-30) — PurchaseRequest.organizationId 백릴레이션.
+  purchaseRequests           PurchaseRequest[]
   complianceLinks            ComplianceLink[]
   inventoryAlertSettings     InventoryAlertSetting[]
   billingInfo                BillingInfo?
@@ -2084,7 +2086,17 @@ model PurchaseRequest {
   id             String                @id @default(cuid())
   requesterId    String // 요청자 ID
   approverId     String? // 승인자 ID (nullable)
-  teamId         String? // 팀 ID
+  /// §purchase-request-org-axis (2026-08-30) — **required**.
+  /// 이전에는 이 컬럼이 없었고 코드 7곳이 `purchaseRequest.organizationId` 를 읽었다
+  /// (전부 undefined · `?? ""` 와 `if(...)` 로 조용히 흘렀다). 소속 축은 team 경유
+  /// (`team?.organizationId`) 뿐이었는데 teamId 가 nullable 이라 커버가 안 됐다.
+  /// 🛑 결정적 실증: 예산 검증이 필요한 **유일한 경로**(quoteId 를 채우는 유일한 생성
+  ///    지점 = work-queue/purchase-conversion request-approval)가 teamId 를 안 채워
+  ///    orgId 가 undefined 였고, 그래서 **예산 게이트를 통째로 건너뛰었다.**
+  ///    소속 축 부재가 곧 예산 통제 부재였다 — 이것이 nullable 이 아니라 NOT NULL 인 이유다.
+  /// 적용 시점 실측: prod PurchaseRequest 0행 → 백필 0. required 로 갈 수 있는 유일한 시점.
+  organizationId String
+  teamId         String? // 팀 ID (Team ⊂ Organization · 하위 범위 표시)
   status         PurchaseRequestStatus @default(PENDING)
   title          String // 요청 제목
   message        String?               @db.Text // 요청 메시지/메모
@@ -2101,12 +2113,14 @@ model PurchaseRequest {
   // Relations
   requester User   @relation("RequestedPurchases", fields: [requesterId], references: [id], onDelete: Cascade)
   approver  User?  @relation("ApprovedPurchases", fields: [approverId], references: [id], onDelete: SetNull)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   team      Team?  @relation(fields: [teamId], references: [id], onDelete: SetNull)
   quote     Quote? @relation(fields: [quoteId], references: [id], onDelete: SetNull)
   order     Order? @relation("PurchaseRequestOrder", fields: [orderId], references: [id], onDelete: SetNull)
 
   @@index([requesterId])
   @@index([approverId])
+  @@index([organizationId])
   @@index([teamId])
   @@index([status])
   @@index([createdAt])

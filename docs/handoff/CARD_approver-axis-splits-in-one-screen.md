@@ -205,3 +205,72 @@ P4a 2열 유지 근거도 성립해 **결과는 수용**됐다. 다만 승인 �
 
 부수 — 그 목록을 근거로 "커밋 권한 분담" 해석을 뒤집으려 했던 것도 약한 자리였다.
 분담의 근거는 **CLAUDE.md L323 하나**이고, 커밋 이력은 근거가 아니라 정황이다.
+
+---
+
+## §purchase-request-org-axis — 소속 축 신설 (2026-08-30 · (가) DDL 슬라이스)
+
+### 🛑 이 슬라이스의 존재 근거 — 한 문장
+
+> **예산 검증이 필요한 유일한 경로가 소속 축 부재로 그 검증을 건너뛰고 있었다.**
+
+다음 세션이 "왜 nullable 이 아니라 NOT NULL 인가" 를 물으면 이 문장이 답이다.
+
+```
+quoteId 를 채우는 유일한 생성 지점   work-queue/purchase-conversion request-approval
+그 지점이 채우는 teamId              없음
+승인 라우트 :156                     orgId = purchaseRequest.team?.organizationId → undefined
+승인 라우트 :184                     if (orgId && quoteId) { …예산 검증… }  → 통째로 스킵
+```
+
+소속 축 부재가 곧 **예산 통제 부재**였다. nullable 로 넣으면 코드 7곳의 방어
+(`?? ""` · `if(...)`)가 그대로 살아 "없는 필드" 가 "null 일 수 있는 필드" 로 바뀔 뿐이다.
+
+### 소생 검증 대상 — 두 건, 방향이 반대다
+
+```
+:546   죽어 있던 경로가 살아난다
+       if (purchaseRequest.organizationId) — 항상 거짓이라 예산 경고 브로드캐스트가
+       아무에게도 안 갔다. 필드가 서면 처음으로 돈다.
+③ 경로  건너뛰던 게이트가 처음으로 걸린다
+       teamId 없음 → orgId undefined → 예산 검증 스킵이던 경로가, organizationId
+       NOT NULL 이 서는 순간 예산 게이트를 **실제로 통과해야** 한다.
+```
+
+🔑 둘 다 **검증된 적 없는 코드가 처음 발화하는 자리**다. "고쳤다" 가 아니라
+"이제 돌기 시작한다" 이므로 재측정이 필요하다.
+
+재측정 시나리오 (필수)
+
+```
+③ 경로 생성 → 승인 → 예산 게이트 발화        ← 가장 중요한 경로에서 첫 발화
+:546 예산 경고 브로드캐스트 수신 확인          ← OWNER+ADMIN 에게 실제로 가는가
+```
+
+### 파생/판정 축 (조문 — sentinel 로 잠금)
+
+```
+파생  teamId 있음  organizationId = team.organizationId   조건 3 이 정의상 성립
+      teamId 없음  서버 파생 (workspace 축)
+판정  전 경로 공통  요청자의 organizationMember 존재
+🔑 파생은 team/workspace 축, 판정은 organizationMember 축.
+   귀속 정확 != 행위 허용 — team 멤버십만 보면 A 조직 멤버가 B 조직 산하 팀의
+   teamId 로 남의 조직에 예산 요청을 만들 수 있다 (protocol/bom 격리 감사와 같은 축).
+```
+
+### 부수 기록
+
+```
+§4-a-2 두 번째 방어   조건 3 부정 단언을 파일 전역으로 걸었더니 :75 의 살아 있어야 할
+                     인벤토리 접근 검증이 걸렸다. 창을 create 블록으로 좁혔다 —
+                     결정은 "요청 행의 org 가 team 에서 온다" 이지 "파일에
+                     inventory.organizationId 가 없다" 가 아니다. (조항 land 이틀 안 2회)
+heredoc 함정 재발     `<<'PYEOF'` 안의 `\n` 이 실제 줄바꿈으로 들어가 정규식이 깨졌다.
+                     오늘 여러 번 반복 — 형태다. 편집은 heredoc 대신 Edit 도구를 쓴다.
+B 폐기 도달 경로      A/B 판정 근거 1(ADMIN → LAB_MANAGER 는 실험실 운영 역할이지 예산
+                     권한이 아니다)이 이미 "경쟁 축이 아니다" 를 가리켰는데, 그것을 B 기각
+                     근거로만 쓰고 후보 제외까지 안 갔다. 답은 맞았는데 도달 경로가 한 칸
+                     짧았다 — **목록에 있으니 후보로 취급한 것**이다.
+ADMIN 1 실측          prod OrganizationMember = ADMIN 1명. B 였으면 이 조직은 승인 0으로
+                     남는다. 근거 2(OWNER 1명 실패 모드)가 이미 실현된 형태다.
+```

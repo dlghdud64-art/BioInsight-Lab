@@ -129,6 +129,20 @@ LoadingSkeleton 은 1fr_300px 였다                   ← 20px 차이로 통과
 조문의 마지막 줄(`수치 감소·증가 어느 쪽도 그 자체로는 근거가 아니다 · cf. tsc 27→21`)이
 없었으면 감소를 성과로 보고했을 자리다. **사후에 적은 규칙이 아니라, 적자마자 막았다.**
 
+### ✅ §4-a-2 도 방어로 기능했다 (2026-08-30 · land 이틀 안 2회)
+
+`§purchase-request-org-axis` 조건 3 부정 단언을 파일 전역으로 걸었더니, 살아 있어야 할
+인벤토리 접근 검증(`organizationId: inventory.organizationId`)이 걸려 RED 가 났다.
+
+```
+잠글 결정   "요청 행의 organizationId 가 team 에서 온다"
+전역 부정   "파일에 inventory.organizationId 가 없다"   ← 결정보다 넓다
+정정        창을 db.purchaseRequest.create 블록으로 한정
+```
+
+§4-a-2 가 말하는 것과 같은 축이다 — **그 단언에 무엇이 닿는가**를 안 세면 결정보다 넓은
+표면을 잠근다. 조문이 land 한 지 이틀 안에 두 번째로 막았다.
+
 ### 사례 1 — 세는 대상 (로컬 세션 채움)
 
 ```

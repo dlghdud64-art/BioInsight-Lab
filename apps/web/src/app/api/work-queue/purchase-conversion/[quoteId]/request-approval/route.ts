@@ -176,6 +176,23 @@ export async function POST(
         { status: 400 },
       );
     }
+    /* §purchase-request-org-axis (2026-08-30) — 판정 축 (호영님 지시).
+     * 파생은 workspace 축(orgId)이지만 **판정은 organizationMember 축**이다.
+     * workspace.organizationId 와 요청자의 조직 멤버십이 일치하는지 세운다 —
+     * 파생이 정확해도 그 조직에 예산 요청을 만들 권한이 있는지는 별개다.
+     * 🛑 귀속 정확 != 행위 허용. */
+    const reqOrgMembership = await db.organizationMember.findUnique({
+      where: { userId_organizationId: { userId: session.user.id, organizationId: orgId } },
+      select: { id: true },
+    });
+    if (!reqOrgMembership) {
+      enforcement.fail();
+      return NextResponse.json(
+        { error: "Forbidden: Not a member of this organization" },
+        { status: 403 },
+      );
+    }
+
     const candidate = await selectApproverByAmount({
       workspaceId,
       organizationId: orgId,
@@ -207,6 +224,11 @@ export async function POST(
     const purchaseRequest = await db.purchaseRequest.create({
       data: {
         requesterId: session.user.id,
+        /* §purchase-request-org-axis (2026-08-30) — 이 경로는 teamId 를 안 채운다.
+         * 파생 규칙 2갈래 중 두 번째: teamId 없으면 서버 파생(workspace 축) + 멤버십 게이트.
+         * 🛑 이 경로가 quoteId 를 채우는 유일한 생성 지점이고, teamId 부재로 orgId 가
+         *    undefined 여서 승인 시 예산 게이트를 통째로 건너뛰고 있었다. */
+        organizationId: orgId,
         approverId,
         title: quote.title,
         message: `견적 ${quote.title} 결재 요청 (자동 생성)`,

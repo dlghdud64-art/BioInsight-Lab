@@ -142,10 +142,29 @@ export async function POST(
       );
     }
 
+    /* §purchase-request-org-axis (2026-08-30) — 소속 축.
+     * 파생은 team 축(teamMember.team.organizationId), 판정은 organizationMember 축.
+     * 🛑 위 :73 검증은 inventory.organizationId 기준이라 축이 다르다 —
+     *    요청이 매달릴 조직(팀의 조직)에 요청자가 속했는지는 별도로 봐야 한다.
+     *    귀속 정확 != 행위 허용. */
+    const reqOrgId = teamMember.team.organizationId;
+    const reqOrgMembership = await db.organizationMember.findUnique({
+      where: { userId_organizationId: { userId: session.user.id, organizationId: reqOrgId } },
+      select: { id: true },
+    });
+    if (!reqOrgMembership) {
+      enforcement.fail();
+      return NextResponse.json(
+        { error: "Forbidden: Not a member of this organization" },
+        { status: 403 },
+      );
+    }
+
     // 구매 요청 생성
     const purchaseRequest = await db.purchaseRequest.create({
       data: {
         requesterId: session.user.id,
+        organizationId: reqOrgId,
         teamId: teamMember.teamId,
         title: `재입고 요청: ${inventory.product.name}`,
         message: `인벤토리에서 재입고 요청이 생성되었습니다.\n제품: ${inventory.product.name}\n현재 재고: ${inventory.currentQuantity} ${inventory.unit || "ea"}`,
