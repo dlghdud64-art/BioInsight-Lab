@@ -47,6 +47,88 @@ describe("§dev-prod-db-separation G1 — 개발 명령은 가드를 먼저 통�
       .map(([name]) => name);
     expect(offenders).toEqual([]);
   });
+
+  /* ═══════════════════════════════════════════════════════════════════════
+   * G1-c. **전수 축** (호영님 판정 2026-08-31 · §prisma-target-helper)
+   *
+   * 🛑 왜 확장하나: `prisma:seed` 가 가드를 우회하고 있었다. 위 단언이
+   *   `migrate dev|db push` 만 훑었기 때문이다 — **grep 이 아는 명령만** 잡혔다.
+   *   한 건을 붙이는 게 처방이 아니다. 다음에 누가 `db:reset` 을 추가하면 같은 자리가
+   *   또 열린다. 그래서 **DB 에 닿는 스크립트 전수**를 열거하고 게이트를 단언한다.
+   *
+   * 게이트는 두 층이다 — 둘 중 **하나면** 충족:
+   *   ① package.json 앞단   `tsx scripts/db-guard.ts ... &&`  (prod 무조건 차단)
+   *   ② 스크립트 내부        assertScriptDbTarget / checkScriptDbTarget /
+   *                          assertSmokeDatabaseTarget / assertPilotDatabaseTarget
+   *
+   * 면제는 **사유를 갖는다.** 늘리려면 판정이 필요하고, 목록이 커지면 RED 로 알린다.
+   * ═══════════════════════════════════════════════════════════════════════ */
+  describe("G1-c. DB 에 닿는 스크립트 전수가 게이트를 갖는다", () => {
+    /** 명령이 DB 에 닿는가 — prisma CLI 의 DB 명령 또는 DB 스크립트 실행 */
+    function touchesDb(cmd: string): boolean {
+      if (/prisma\s+(migrate|db|studio|seed)\b/.test(cmd)) return true;
+      const m = cmd.match(/tsx\s+(scripts\/[\w./-]+|prisma\/[\w./-]+)/g) ?? [];
+      return m.some((frag) => {
+        const rel = frag.replace(/^tsx\s+/, "");
+        try {
+          return /new PrismaClient\(/.test(stripComments(read(rel)));
+        } catch {
+          return false;
+        }
+      });
+    }
+
+    /** 게이트 면제 — 사유 필수 */
+    const EXEMPT: Record<string, string> = {
+      "prisma:migrate":
+        "migrate deploy 는 **운영 적용 경로**다. 가드가 배포를 막으면 안 된다(G4 가 이것을 반대로 잠근다).",
+      "db:generate":
+        "prisma generate 는 코드 생성만 한다 — DB 에 접속하지 않는다.",
+      "db:studio":
+        "prisma studio 는 대화형 도구다. 사람이 눈으로 대상을 보고 여는 경로라 게이트 축이 다르다 — 별 판정 대상.",
+    };
+
+    it("게이트 없는 DB 스크립트가 없다 (면제 목록 제외)", () => {
+      const offenders = Object.entries(pkg.scripts)
+        .filter(([name, cmd]) => touchesDb(cmd) && !(name in EXEMPT))
+        .filter(([, cmd]) => {
+          if (/scripts\/db-guard\.ts/.test(cmd)) return false; // ① 앞단
+          const files = (cmd.match(/tsx\s+(scripts\/[\w./-]+|prisma\/[\w./-]+)/g) ?? []).map(
+            (f) => f.replace(/^tsx\s+/, ""),
+          );
+          return !files.some((rel) => {
+            try {
+              return /assertScriptDbTarget|checkScriptDbTarget|assertSmokeDatabaseTarget|assertPilotDatabaseTarget/.test(
+                stripComments(read(rel)),
+              );
+            } catch {
+              return false;
+            }
+          }); // ② 내부
+        })
+        .map(([name]) => name);
+      expect(offenders).toEqual([]);
+    });
+
+    it("🛑 앞단 가드는 실제 명령보다 **앞**에 온다 (&& 로 차단되어야 한다)", () => {
+      for (const [name, cmd] of Object.entries(pkg.scripts)) {
+        if (!cmd.includes("db-guard.ts")) continue;
+        expect(cmd.indexOf("db-guard.ts"), name).toBeLessThan(cmd.indexOf("&&"));
+      }
+    });
+
+    it("🛑 면제 목록은 사유를 갖고, 커지면 RED", () => {
+      for (const why of Object.values(EXEMPT)) expect(why.length).toBeGreaterThan(20);
+      /* 3개가 현재 판정된 전부다. 늘리려면 판정을 거쳐 이 수를 함께 올린다 —
+       * 조용히 면제가 늘면 "전수" 라는 말이 거짓이 된다. */
+      expect(Object.keys(EXEMPT)).toHaveLength(3);
+    });
+
+    it("prisma:seed 도 가드를 갖는다 (이 확장이 잡은 실제 우회)", () => {
+      /* 🔑 회귀 핀 — 이 한 건이 위 전수 단언의 발생 사유다. */
+      expect(pkg.scripts["prisma:seed"]).toMatch(/scripts\/db-guard\.ts/);
+    });
+  });
 });
 
 describe("§dev-prod-db-separation G2/G3 — 가드는 판정기를 재사용한다", () => {

@@ -1048,3 +1048,49 @@ tsc 27 불변 · 실물 실행 2건 확인:
   test-db-connection → [db-target] ref=tvkl… mode=test
   migration-drift    → [db-target] ref=tvkl… mode=test · drift 검사 정상 완주
 ```
+
+### 🔑 병인 — guard 가 다섯 벌이 된 **원인 구조** (증상이 아니라)
+
+> **정본이 `process.env` 를 직접 읽으면, 쓰려는 쪽마다 env 저장·주입·복원 춤을 춰야
+> 하고, 그러면 재사용 대신 자기 규칙을 새로 쓰게 된다.**
+
+다섯 벌은 **증상**이고 이 문장이 **병인**이다. 실물로 두 번 확인됐다:
+
+```
+db-guard.ts     isProductionDatabase() 를 쓰려고 process.env 를 save → localEnv 주입
+                → 재판정 → finally 복원. **춤을 췄다.**
+db-target.ts    같은 춤을 추기 싫어 자기 규칙을 새로 썼다 —
+                allow-list 멤버십만 보고 host 검사가 없었다(localhost 조차 prod 후보).
+                🛑 재사용이 불편하면 사람은 재사용을 안 한다. 그것이 갈라짐의 시작이다.
+```
+
+처방: 정본을 **순수 형태**(`isProductionUrl(url, declaredDevRef)`)로 뽑는다.
+env 를 읽는 형태(`isProductionDatabase()`)는 그 위 얇은 래퍼로 남겨 호출부를 안 깬다.
+
+🔑 (나)-2 의 `org-approver-roles` 분리와 **같은 형태**다 — 거기서는 Prisma 가 번들에
+   실려서, 여기서는 env 를 물어서, 각각 "정본을 못 쓰게 만드는 결합" 이 있었다.
+   **정본은 쓰기 쉬워야 정본이다.**
+
+### G1 전수 확장 (2026-08-31) — 한 건 부착이 아니라 축을 잠근다
+
+`prisma:seed` 우회가 존재한 이유는 옛 단언이 `migrate dev|db push` 만 훑은 것이다 —
+**grep 이 아는 명령만** 잡혔다. 한 건을 붙이는 건 처방이 아니다.
+
+```
+G1-c  DB 에 닿는 package.json 스크립트를 **열거**하고 게이트를 단언한다.
+      게이트 두 층 중 하나면 충족:
+        ① 앞단   tsx scripts/db-guard.ts ... &&   (prod 무조건 차단)
+        ② 내부   assert/checkScriptDbTarget · assertSmoke/PilotDatabaseTarget
+      면제 3 — 전부 사유 필수, **개수까지 핀**(조용히 늘면 "전수" 가 거짓이 된다):
+        prisma:migrate  운영 적용 경로(G4 가 반대로 잠근다)
+        db:generate     코드 생성만 — DB 미접속
+        db:studio       대화형 도구 · 사람이 눈으로 대상을 본다 — **별 판정 대상**
+```
+
+검출력 실증 5/5 — **호영님이 든 예시 그대로** 잡힌다:
+
+```
+✅ db:reset 추가          ✅ 가드 없는 tsx 스크립트 추가
+✅ prisma:seed 가드 제거   ✅ 가드를 && 뒤로 이동
+🛑 대조군(DB 무관 문구) GREEN — grep 0 을 프로브가 자체 검증 후 진행
+```

@@ -188,10 +188,31 @@ OWNER 불변식  "데이터가 보증한다" 던 안전이 처음부터 없었�
       스코프를 넓힐 때마다 수가 늘면 그 수는 근거가 아니다(§2b) — bisect 로 시점을
       고정해야 "기존" 이라는 분류가 검증된다.
 
-큐 E  PrismaClient ref-출력 헬퍼
-      선행 조건: 없음(독립). 근거: 이 세션 트랜스크립트에서 인자 없는
-      `new PrismaClient()` 가 **127회**. 인자가 없으면 `.env`(테스트 DB)로 간다 —
-      §2c 사고의 구조 원인이다. ref 를 먼저 출력하고 시작하는 헬퍼로 유도한다.
+큐 E  PrismaClient ref-출력 헬퍼   ✅ **종결 (2026-08-31 · §prisma-target-helper)**
+      결과 구조: 파서 1(src/lib/db/target-core) · 판정 1(isProductionUrl) ·
+        정책 wrapper 4(smoke=prod금지 / pilot=opt-in / script=test기본+토큰 /
+        db-guard=prod무조건차단).
+      DB 스크립트 17지점 중 16 게이트 · 면제 1(prisma/seed.ts — db:seed 앞단 db-guard).
+      package.json 축도 전수 잠금(G1-c) — 면제 3, 개수까지 핀.
+      🔑 병인: **정본이 process.env 를 직접 읽으면 쓰려는 쪽마다 env 춤을 춰야 하고,
+        그러면 재사용 대신 자기 규칙을 새로 쓴다.** 다섯 벌은 증상이었다.
+      착지: b55cadf0 · 61950102 · ae3fa96d · (이 커밋)
+```
+
+### §prisma-target-helper 잔여 5건 (2026-08-31 · 트랙은 닫혔고 이것들이 남았다)
+
+```
+1. db:studio 면제        대화형 도구라 게이트 축이 다르다 — 사람이 눈으로 대상을 본다.
+                         별 판정 대상. 지금은 면제 목록에 사유와 함께 있다.
+2. smoke/pilot 7지점 소생  **잴 수단 없음**(선행: ADR-001 Option B 인프라 + prod 자격증명)
+                         — 키가 서면 소생 검증. smoke 프로젝트 신설은 호영님 몫 판정.
+3. migration-drift 편입   지금은 일반 게이트로 정합. smoke 인프라가 서면 smoke guard
+                         편입 **재판정**(잴 수단 없는 것에 결박하지 않기 위해 미뤘다).
+4. tracked 프로브 3건      _analytics_comp_probe · _reorder_comp_probe · _enroll_tx —
+                         삭제 조건 미충족으로 **유지 판정**(fixture 출처 기록 · 보존 의도).
+                         §2e "프로브는 guard 경유" 전환은 큐.
+5. prisma/seed.ts        유일 면제. db:seed·prisma:seed 둘 다 앞단 가드를 갖는다.
+                         seed 자체에 게이트를 넣으면 한 명령에 게이트 둘이 된다(기각).
 ```
 
 ### 오늘 열린 것 2건 (조항으로 닫았고, 도구화가 남았다)

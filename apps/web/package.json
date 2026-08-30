@@ -17,7 +17,7 @@
     "db:test": "npx tsx scripts/test-db-connection.ts",
     "db:make-admin": "tsx scripts/make-admin.ts",
     "prisma:migrate": "prisma migrate deploy",
-    "prisma:seed": "tsx prisma/seed.ts",
+    "prisma:seed": "tsx scripts/db-guard.ts \"prisma seed\" && tsx prisma/seed.ts",
     "smoke:migration": "tsx scripts/smoke/migration-drift.ts",
     "test": "vitest run",
     "test:watch": "vitest",
