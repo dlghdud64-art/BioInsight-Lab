@@ -29,26 +29,16 @@ describe("§11.334 P4 — 재고 반영 same-canvas 모달", () => {
   });
 });
 
-describe("§11.334 P4 — page 재고반영 배선(실 mutation)", () => {
-  it("post 액션만 모달 승격, coa/inspect 는 상세 라우트", () => {
+// §receiving-list-redesign(2026-08-30) supersede — 데스크탑 반영이 데모 postToInventory 에서
+//   canonical 일괄 처리 모달(POST /api/receiving-drafts/[id]/approve · 서버 이중 반영 가드)로
+//   이관되며 구 page 배선 앵커(setPostModalItem · postToInventory(item.entityId)) 은퇴.
+//   원 의도(front-only 반영 금지·실 mutation 우선)는
+//   src/app/dashboard/receiving/__tests__/receiving-list-redesign.test.ts +
+//   post-inventory-toast-wiring.test.ts(모바일 승계 앵커)가 재앵커한다.
+describe("§11.334 P4 승계 — 데모 반영 모달 page 배선 금지(§receiving-list-redesign)", () => {
+  it("page 에 데모 반영 모달·데모 데스크탑 반영 경로 재배선 0", () => {
     const src = read(PAGE);
-    expect(src).toMatch(/if \(action === "post"\)/);
-    expect(src).toMatch(/setPostModalItem\(item\)/);
-  });
-
-  it("확정 = store.postToInventory(rb.id) 실 mutation (front-only 아님)", () => {
-    const src = read(PAGE);
-    // §mobile-receiving-rcv-card P2/P3: destructure 필드 추가·prettier 줄바꿈 내성.
-    //   배선 본질 = useOpsStore 에서 두 값 모두 수신 + 실 mutation (공백/개행 무관).
-    expect(src).toMatch(
-      /const \{[^}]*\bunifiedInboxItems\b[^}]*\bpostToInventory\b[^}]*\}\s*=\s*useOpsStore\(\)/,
-    );
-    expect(src).toMatch(/postToInventory\(item\.entityId\)/);
-  });
-
-  it("성공 후 토스트 + 모달 닫기", () => {
-    const src = read(PAGE);
-    expect(src).toMatch(/재고에 반영되었습니다/);
-    expect(src).toMatch(/setPostModalItem\(null\)/);
+    expect(src).not.toMatch(/setPostModalItem/);
+    expect(src).not.toMatch(/postToInventory\(item\./);
   });
 });

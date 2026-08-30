@@ -9,26 +9,30 @@ function read(rel: string): string {
 
 const PAGE = "src/app/dashboard/receiving/page.tsx";
 
-describe("§action-toast P3 — 입고 재고반영 결과 토스트 labToast 통일", () => {
-  it("실 mutation(postToInventory) 성공 후 labToast.success (front-only 아님)", () => {
+/**
+ * §action-toast P3 — 입고 반영 토스트 labToast 통일 (원 판본 2026-08 · §receiving-list-redesign 승계)
+ *
+ * 원 판본은 데스크탑 데모 경로 `postToInventory(item.entityId)` 를 앵커로 잠갔다.
+ * §receiving-list-redesign 에서 데스크탑 반영이 canonical /approve(일괄 처리 모달)로
+ * 이관되며 그 앵커는 표면 은퇴 — 정책(실 mutation 먼저 → 토스트 · 자체 토스트 금지)은
+ * 모바일 잔존 경로 + COA 첨부 경로로 승계해 재앵커한다.
+ */
+describe("§action-toast P3 승계 — 입고 토스트 labToast 통일", () => {
+  it("모바일: 실 mutation(postToInventory) 먼저 → labToast.success (front-only 아님)", () => {
     const src = read(PAGE);
-    // 실 mutation 경로 보존
-    expect(src).toMatch(/postToInventory\(item\.entityId\)/);
-    // labToast.success 로 통일 + import
+    expect(src).toMatch(/postToInventory\(card\.id\)/);
     expect(src).toMatch(/import \{ labToast \} from "@\/lib\/toast\/lab-toast"/);
-    expect(src).toMatch(/labToast\.success\("재고 반영 완료"/);
-    // mutation → toast 순서(front-only 아님: mutation 먼저)
-    const mutIdx = src.indexOf("postToInventory(item.entityId)");
-    const toastIdx = src.indexOf('labToast.success("재고 반영 완료"');
+    expect(src).toMatch(/labToast\.success\(\s*"재고 반영 완료"/);
+    const mutIdx = src.indexOf("postToInventory(card.id)");
+    const toastIdx = src.indexOf('"재고 반영 완료"');
     expect(mutIdx).toBeGreaterThan(-1);
     expect(toastIdx).toBeGreaterThan(mutIdx);
   });
 
-  it("회귀 0 — 구 자체 토스트(setToast state/useEffect/커스텀 div) 완전 제거", () => {
+  it("회귀 0 — 구 자체 토스트(setToast state/커스텀 div) 부활 금지", () => {
     const src = read(PAGE);
     expect(src).not.toMatch(/setToast/);
-    expect(src).not.toMatch(/재고에 반영되었습니다 · /); // 구 문구(자체 토스트) 제거
+    expect(src).not.toMatch(/재고에 반영되었습니다 · /); // 구 문구(자체 토스트) 제거 유지
     expect(src).not.toMatch(/text-emerald-300/); // 구 커스텀 토스트 아이콘 톤
-    expect(src).not.toMatch(/useEffect/); // 토스트 전용 effect 제거(다른 effect 없음)
   });
 });

@@ -2,16 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "Next.js Dev Server",
+      "name": "labaxis-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "apps/web"],
+      "runtimeArgs": ["run", "dev", "--workspace", "web"],
       "port": 3000
-    },
-    {
-      "name": "Prisma Studio",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "db:studio", "--prefix", "apps/web"],
-      "port": 5555
     }
   ]
 }

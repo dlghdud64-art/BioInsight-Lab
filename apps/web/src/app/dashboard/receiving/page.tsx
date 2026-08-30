@@ -1,172 +1,226 @@
 "use client";
 
-import { useMemo, useState } from "react";
+/**
+ * 입고 관리 리스트 — §receiving-list-redesign (핸드오프 2026-08-30 · 시각 truth 1a)
+ *
+ * P4  데스크탑 리스트를 데모 그래프(unifiedInboxItems 이슈 단위)에서 canonical
+ *     ReceivingDraft(GET /api/receiving-drafts)로 전환 — 상세 페이지(§receiving-detail-redesign
+ *     P1)와 동일 truth. 표면 간 상태 모순·반영 front-only(§0.1) 원천 제거.
+ * P2  플레인 헤더(AppPageHeader) + 파이프라인 4카드 + 필터 칩 + 케이스 1건 = 1행.
+ * P3  행 클릭 = 인라인 펼침. 우측 슬라이드 패널(quickview-drawer)·재고 반영 모달
+ *     (receiving-post-modal, 데모 경로) 폐기. COA 인라인 드롭존 = 문서 API 실배선.
+ * CTA = 일괄 처리 모달(ReceivingBatchModal) 직행 — 반영은 모달의 POST /approve
+ *     (서버 이중 반영 가드)로만 일어난다. front-only 반영 경로 0.
+ *
+ * 모바일(md 미만)은 §mobile-receiving-rcv-card 유지(무접촉) — 데모 store 파생.
+ *   canonical 전환은 별도 배치(모바일 핸드오프)에서.
+ */
+
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ArrowRight, Loader2, Plus, RefreshCw } from "lucide-react";
 import { useOpsStore } from "@/lib/ops-console/ops-store";
-import {
-  buildModuleHeaderStats,
-  buildModuleLandingItems,
-  MODULE_ORIENTATION,
-  type ModuleLandingItem,
-} from "@/lib/ops-console/module-landing-adapter";
+import { MODULE_ORIENTATION } from "@/lib/ops-console/module-landing-adapter";
 import { MobileReceivingView } from "@/components/receiving/mobile-receiving-view";
-// §mobile-receiving-rcv-card P2 — RCV 단위 카드 뷰모델(canonical receivingBatches 파생).
 import {
   buildMobileReceivingSummary,
   type MobileReceivingCard,
 } from "@/lib/ops-console/mobile-receiving-view-model";
-// §mobile-receiving-rcv-card P3 — 문서 첨부 바텀 시트(첨부 › 승격 · store 실 mutation).
 import { MobileDocAttachSheet } from "@/components/receiving/mobile-doc-attach-sheet";
-import { ReceivingDesktopList } from "@/components/receiving/receiving-desktop-list";
-import { ReceivingQuickviewDrawer } from "@/components/receiving/receiving-quickview-drawer";
-import { ReceivingPostModal } from "@/components/receiving/receiving-post-modal";
-import { ArrowRight } from "lucide-react";
-// §11.348-A-4b — 공급사 입고 회신 검토 패널(same-canvas).
+import { ReceivingCaseListView } from "@/components/receiving/receiving-case-list";
+import { ReceivingBatchModal } from "@/components/receiving/receiving-batch-modal";
 import { ReceivingReviewPanel } from "@/components/receiving/receiving-review-panel";
-import { PageShell } from "@/components/layout/page-header";
-// §action-toast P3 — 입고 재고반영 결과 토스트 통일(자체 토스트 → labToast).
+import { PageShell, AppPageHeader } from "@/components/layout/page-header";
+import { useOpenModal } from "@/lib/store/modal-store";
 import { labToast } from "@/lib/toast/lab-toast";
+import { csrfFetch } from "@/lib/api-client";
+import {
+  buildReceivingCaseList,
+  type ReceivingCaseRow,
+  type ReceivingDraftDto,
+} from "@/lib/ops-console/receiving-desktop-view-model";
 
-// ── Component ─────────────────────────────────────────────────────
-// §11.334 P2 — 입고 목록 데스크탑 리디자인(시안: 입고 목록 웹 리디자인.html).
-//   기존 우선처리 카드/bucket 상태탭/다운스트림 → 파이프라인 퍼널 + 탭툴바 + 카드리스트.
-//   데이터(allItems) 불변, 파생은 receiving-list-view-model(순수함수). 모바일 뷰 유지.
 export default function ReceivingLandingPage() {
   const router = useRouter();
-  const { unifiedInboxItems, receivingBatches, postToInventory } =
-    useOpsStore();
+  const openModal = useOpenModal();
+  const orientation = MODULE_ORIENTATION.receiving;
 
-  const headerStats = useMemo(
-    () => buildModuleHeaderStats(unifiedInboxItems, "receiving"),
-    [unifiedInboxItems],
-  );
-  const allItems = useMemo(
-    () => buildModuleLandingItems(unifiedInboxItems, "receiving"),
-    [unifiedInboxItems],
-  );
+  // ── 데스크탑 canonical — ReceivingDraft 목록 ──────────────────────
+  const [drafts, setDrafts] = useState<ReceivingDraftDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  // §mobile-receiving-rcv-card P2 — 모바일 리스트는 RCV 단위 canonical 파생(이슈-단위 분열 대체).
-  //   nowIso 는 mount 시 1회 고정(SSR/hydration 정합·정렬 결정성).
+  const load = useCallback(async () => {
+    setLoadError(null);
+    try {
+      const res = await fetch(
+        "/api/receiving-drafts?status=AWAITING_REPLY,PENDING_REVIEW,APPROVED",
+        { cache: "no-store" },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `불러오기 실패 (${res.status})`);
+      setDrafts(data.drafts ?? []);
+    } catch (e: unknown) {
+      setLoadError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const caseList = useMemo(() => buildReceivingCaseList(drafts), [drafts]);
+
+  // ── CTA = 일괄 처리 모달 직행 (시안 수정 ④ · 반영은 모달 /approve 단일 경로) ──
+  //   id 로만 보관 → 매 렌더 live 행 조회(refetch 후 자동 최신, 로컬 복제 truth 없음).
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  const processingRow = processingId
+    ? caseList.rows.find((r) => r.id === processingId) ?? null
+    : null;
+
+  const handleCta = (row: ReceivingCaseRow) => {
+    if (!row.orderId) {
+      // 발주 연결 없는 입고안은 일괄 처리 모달 계약(orderId 필수)을 못 태움 — 상세로.
+      router.push(`/dashboard/receiving/${row.id}`);
+      return;
+    }
+    setProcessingId(row.id);
+  };
+
+  // ── COA 인라인 드롭존 — 문서 API 실배선 (첨부 즉시 canonical 커밋) ──
+  const handleAttachDocument = async (
+    row: ReceivingCaseRow,
+    docType: "coa" | "invoice",
+    file: File,
+  ) => {
+    if (!row.orderId) {
+      labToast.error("문서 첨부 불가", "연결된 발주가 없어 문서를 첨부할 수 없습니다.");
+      return;
+    }
+    const form = new FormData();
+    form.append("file", file);
+    form.append("docType", docType);
+    const res = await csrfFetch(`/api/receiving/documents/${row.orderId}`, {
+      method: "POST",
+      body: form,
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      labToast.error("문서 첨부 실패", data.error ?? "잠시 후 다시 시도해 주세요.");
+      return;
+    }
+    labToast.success("COA 첨부 완료", `<b>${row.displayNumber}</b> 입고 건 문서로 저장되었습니다.`);
+    await load();
+  };
+
+  // ── 모바일 (§mobile-receiving-rcv-card 무접촉) ────────────────────
+  const { receivingBatches, postToInventory } = useOpsStore();
   const [nowIso] = useState(() => new Date().toISOString());
   const mobileSummary = useMemo(
     () => buildMobileReceivingSummary(receivingBatches, nowIso),
     [receivingBatches, nowIso],
   );
-
-  // §mobile-receiving-rcv-card P3 — 문서 첨부 시트. id 로만 보관 → receivingBatches 에서 매 렌더
-  //   live 배치 조회(첨부 mutation 후 자동 최신, 로컬 복제 truth 없음).
   const [attachCardId, setAttachCardId] = useState<string | null>(null);
   const attachBatch = attachCardId
     ? receivingBatches.find((b) => b.id === attachCardId) ?? null
     : null;
 
-  const orientation = MODULE_ORIENTATION.receiving;
-  const isEmpty = allItems.length === 0;
-
-  // §11.334 P3 — 퀵뷰 드로어(same-canvas). 행클릭 = 드로어 오픈(라우트 이동 대체).
-  const [quickviewItem, setQuickviewItem] = useState<ModuleLandingItem | null>(null);
-  const goDetail = (item: ModuleLandingItem) => router.push(`/dashboard/receiving/${item.entityId}`);
-
-  // §11.334 P4 — 재고 반영 same-canvas 모달 + 토스트.
-  const [postModalItem, setPostModalItem] = useState<ModuleLandingItem | null>(null);
-
   return (
     <div className="min-h-screen bg-white p-4 md:p-6">
-      {/* §receiving-wide-viewport — 콘텐츠 폭을 max-w-7xl 로 통일(대형 뷰포트 가운데 정렬). 루트 캔버스는 무접촉. */}
       <PageShell>
-      {/* §11.348-A-4b — 공급사 입고 회신(PENDING_REVIEW) 검토. 0건 시 자동 숨김. */}
-      <ReceivingReviewPanel />
+        {/* §11.348-A-4b — 공급사 입고 회신(PENDING_REVIEW) 검토. 0건 시 자동 숨김. */}
+        <ReceivingReviewPanel />
 
-      {/* ── Header ─────────────────────────────────────────────────── */}
-      <div className="mb-2 md:mb-0 md:rounded-lg md:bg-white md:border md:border-slate-200 md:p-4">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-[22px] md:text-lg font-extrabold md:font-bold text-slate-900">입고 관리</h1>
-            <p className="text-[12.5px] md:text-xs text-slate-500 md:text-slate-600 mt-0.5">{orientation.role}</p>
-          </div>
-          <p className="text-xs text-slate-500 max-w-xs text-right">
-            {headerStats.nextActionSummary}
-          </p>
+        {/* ── 플레인 헤더 통일 (핸드오프 §0.3 — 박스형 헤더 제거) ── */}
+        <AppPageHeader
+          title="입고 관리"
+          description={orientation.role}
+          actions={[
+            {
+              label: "입고 등록",
+              icon: <Plus className="h-3.5 w-3.5" />,
+              tone: "primary",
+              // 글로벌 스캔 허브(§11.371-3) 입고 스캔 경로 — 실 wiring(dead button 0).
+              onClick: () => openModal("scan_hub"),
+            },
+          ]}
+          className="mb-4"
+        />
+
+        {/* ── Mobile (below md) — 무접촉 ── */}
+        <div className="md:hidden">
+          <MobileReceivingView
+            summary={mobileSummary}
+            onAttach={(card: MobileReceivingCard) => setAttachCardId(card.id)}
+            onInspect={(card: MobileReceivingCard) => router.push(`/dashboard/receiving/${card.id}`)}
+            onPost={(card: MobileReceivingCard) => {
+              postToInventory(card.id);
+              labToast.success(
+                "재고 반영 완료",
+                `<b>${card.receivingNumber}</b> 재고에 반영되었습니다.`,
+              );
+            }}
+          />
+          <MobileDocAttachSheet
+            open={attachBatch != null}
+            rb={attachBatch}
+            onClose={() => setAttachCardId(null)}
+          />
         </div>
-      </div>
 
-      {/* ── Mobile (below md) — §mobile-receiving-rcv-card P2: RCV 단위 카드. ──
-          자체 empty 처리(ready RCV 포함 canonical 파생이라 이슈 0건이어도 노출). */}
-      <div className="md:hidden">
-        <MobileReceivingView
-          summary={mobileSummary}
-          // P3: 첨부 › = same-canvas 바텀 시트(프리셋 컨텍스트). 검사/보류는 상세 라우팅.
-          onAttach={(card: MobileReceivingCard) => setAttachCardId(card.id)}
-          onInspect={(card: MobileReceivingCard) => router.push(`/dashboard/receiving/${card.id}`)}
-          onPost={(card: MobileReceivingCard) => {
-            // 실 mutation — store.postToInventory(rb.id). front-only 아님.
-            postToInventory(card.id);
-            labToast.success(
-              "재고 반영 완료",
-              `<b>${card.receivingNumber}</b> 재고에 반영되었습니다.`,
-            );
-          }}
-        />
+        {/* ── Desktop (md+) — canonical 케이스 리스트 ── */}
+        <div className="hidden md:block">
+          {loading ? (
+            <div className="flex items-center gap-2 text-[13px] text-slate-500 py-6">
+              <Loader2 className="h-4 w-4 animate-spin" /> 입고 목록 불러오는 중
+            </div>
+          ) : loadError ? (
+            <div className="rounded-[13px] border border-red-200 bg-red-50 p-4">
+              <p className="text-[13px] font-semibold text-red-700">{loadError}</p>
+              <button
+                onClick={() => { setLoading(true); void load(); }}
+                className="mt-3 h-9 px-3 rounded-lg border border-slate-200 bg-white text-[12.5px] font-semibold text-
+slate-600 inline-flex items-center gap-1.5"
+              >
+                <RefreshCw className="h-3.5 w-3.5" /> 다시 시도
+              </button>
+            </div>
+          ) : caseList.rows.length === 0 ? (
+            <div className="bg-white border border-slate-200 rounded-lg p-8 text-center">
+              <p className="text-sm text-slate-600">
+                현재 처리 중인 입고가 없습니다. 발주에서 입고 예정을 확인하세요
+              </p>
+              <Link
+                href="/dashboard/purchase-orders"
+                className="inline-flex items-center gap-1 mt-3 text-xs text-blue-600 hover:text-blue-700"
+              >
+                발주 관리로 이동 <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+          ) : (
+            <ReceivingCaseListView
+              list={caseList}
+              onCta={handleCta}
+              onAttachDocument={handleAttachDocument}
+            />
+          )}
+        </div>
 
-        {/* §receiving-doc-attach-canonical (T1) — 데모 dispatch 제거, 시트가 canonical API 로 직접 업로드. */}
-        <MobileDocAttachSheet
-          open={attachBatch != null}
-          rb={attachBatch}
-          onClose={() => setAttachCardId(null)}
-        />
-      </div>
-
-      {/* ── Desktop (md+) — §11.334 P2 시안 리디자인(무접촉). ────────── */}
-      <div className="hidden md:block">
-        {isEmpty ? (
-          <div className="bg-white border border-slate-200 rounded-lg p-8 text-center">
-            <p className="text-sm text-slate-600">
-              현재 처리 중인 입고가 없습니다 — 발주에서 입고 예정을 확인하세요
-            </p>
-            <Link
-              href="/dashboard/purchase-orders"
-              className="inline-flex items-center gap-1 mt-3 text-xs text-blue-600 hover:text-blue-700"
-            >
-              발주 관리로 이동 <ArrowRight className="h-3 w-3" />
-            </Link>
-          </div>
-        ) : (
-          <ReceivingDesktopList
-            items={allItems}
-            onRowClick={(item) => setQuickviewItem(item)}
+        {/* ── 일괄 처리 모달 (same-canvas) — 판정·문서·반영 전부 canonical 커밋 ── */}
+        {processingRow && processingRow.orderId && (
+          <ReceivingBatchModal
+            open
+            onClose={() => setProcessingId(null)}
+            draftId={processingRow.id}
+            orderId={processingRow.orderId}
+            items={processingRow.rawItems}
+            documents={processingRow.documents}
+            onCommitted={() => void load()}
           />
         )}
-      </div>
-
-      {/* ── P3 퀵뷰 드로어 (same-canvas) ────────────────────────────── */}
-      <ReceivingQuickviewDrawer
-        item={quickviewItem}
-        onClose={() => setQuickviewItem(null)}
-        onDetail={(item) => goDetail(item)}
-        onAction={(action, item) => {
-          setQuickviewItem(null);
-          // §11.334 P4 — post 는 same-canvas 재고반영 모달로 승격. coa/inspect 는 상세 라우트.
-          if (action === "post") {
-            setPostModalItem(item);
-          } else {
-            goDetail(item);
-          }
-        }}
-      />
-
-      {/* ── P4 재고 반영 모달 (same-canvas) ──────────────────────────── */}
-      <ReceivingPostModal
-        item={postModalItem}
-        onClose={() => setPostModalItem(null)}
-        onConfirm={(item) => {
-          // 실 mutation — store.postToInventory(rb.id) (상세 페이지와 동일 경로, front-only 아님).
-          postToInventory(item.entityId);
-          setPostModalItem(null);
-          // §action-toast P3 — 실 mutation 성공 후 success 토스트(자동 3초). 자체 토스트 제거·labToast 통일.
-          labToast.success("재고 반영 완료", `<b>${item.title}</b> 재고에 반영되었습니다.`);
-        }}
-      />
       </PageShell>
     </div>
   );

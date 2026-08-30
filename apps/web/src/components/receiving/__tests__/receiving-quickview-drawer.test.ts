@@ -45,15 +45,15 @@ describe("§11.334 P3 — 퀵뷰 드로어(same-canvas)", () => {
   });
 });
 
-describe("§11.334 P3 — page 드로어 배선", () => {
-  it("행클릭 → 드로어 오픈(라우트 이동 아님)", () => {
+// §receiving-list-redesign(2026-08-30) supersede — 우측 슬라이드 패널 표면 은퇴(핸드오프 §2:
+//   행 클릭 = 인라인 펼침, 패널·리스트 상태 모순 원천 제거). 구 page 배선 앵커
+//   (onRowClick→setQuickviewItem · <ReceivingQuickviewDrawer)는 역계약으로 승계:
+//   드로어의 page 재마운트 = 회귀. 인라인 펼침 정본 계약은
+//   src/app/dashboard/receiving/__tests__/receiving-list-redesign.test.ts 가 잠근다.
+describe("§11.334 P3 승계 — 드로어 page 마운트 금지(§receiving-list-redesign)", () => {
+  it("page 에 드로어 재마운트 0 (인라인 펼침으로 대체)", () => {
     const src = read(PAGE);
-    expect(src).toMatch(/onRowClick=\{\(item\) => setQuickviewItem\(item\)\}/);
-    expect(src).toMatch(/<ReceivingQuickviewDrawer/);
-  });
-  it("드로어 액션은 실 라우팅(no-op 0)", () => {
-    const src = read(PAGE);
-    expect(src).toMatch(/onDetail=\{\(item\) => goDetail\(item\)\}/);
-    expect(src).toMatch(/goDetail\(item\);/);
+    expect(src).not.toMatch(/<ReceivingQuickviewDrawer/);
+    expect(src).not.toMatch(/setQuickviewItem/);
   });
 });
