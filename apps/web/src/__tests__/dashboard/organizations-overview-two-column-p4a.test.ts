@@ -86,25 +86,44 @@ describe("개요 탭 — 2열 · 정적 3카드 흡수", () => {
 
 describe("바로 처리할 항목 — 결과와 행동을 함께 말한다", () => {
   it("항목마다 결과 설명(consequence)과 액션이 있다 — 초대 항목 축", () => {
-    /* 🛑 은퇴 — **결정 교체** (§approver-axis (다) · 호영님 판정 2026-08-26).
-     * 승인자 미지정 항목은 다섯 지시형 중 **유일하게 배선된 CTA** 였다 — 끝까지 따라가
-     * APPROVER 를 줘도 승인은 안 열린다(승인 라우트는 TeamRole.ADMIN · prod Team 0).
-     * 문구가 아니라 dead button 이었다. 초대 항목은 무손상. */
+    /* 🔑 **재교체** (호영님 명시 승인 2026-08-30) —
+     *   "(다) 근거 소멸 — (나)-1b 가 승인 경로를 열었고 3단 실측(3569ede8)으로 도달 확인"
+     *
+     * 2026-08-26 (다): 승인자 미지정 항목은 다섯 지시형 중 유일하게 배선된 CTA 였으나
+     *   끝까지 따라가 APPROVER 를 줘도 승인이 안 열려(TeamRole.ADMIN · prod Team 0)
+     *   dead button 이었다 → 은퇴.
+     * 2026-08-30 ①c: (나)-1b 가 게이트를 조직 축으로 교체했고 tvkl 3단 실측이
+     *   ① 역할 변경 → ② 승인 게이트 통과 → ③ 예산 게이트 도달을 확인했다 → 되살림.
+     *   🛑 **actionLabel 금지만 해제한다.** 옛 consequence(`구매 요청이 승인 단계 없이
+     *     통과됩니다`)는 사실이 반대여서 금지를 **유지**한다 — 승인권자 0 + in_app_approval
+     *     이면 요청은 멈추지 초과 통과하지 않는다.
+     * 초대 항목은 두 번 다 무손상. */
     const code = stripComments(read(ORG_DETAIL));
     /* consequence/actionLabel 계약은 살아 있다 — 남은 초대 항목으로 승계 */
     expect(code).toMatch(/consequence: "초대받은 멤버가 아직 참여하지 않았습니다"/);
     expect(code).toMatch(/actionLabel: "초대 확인"/);
-    /* 역방향 잠금 — 승인자 지시형이 되살아나면 RED */
-    expect(code).not.toMatch(/actionLabel: "승인자 지정"/);
+    /* 🔑 actionLabel 금지 해제 — ①c 가 조건부로 되살아났다(발화 조건은
+     *   organizations-approver-alarm-retired 가 소유한다. 여기서 다시 핀하지 않는다 —
+     *   같은 사실을 두 곳이 말하면 그것이 다음 갈라짐의 씨앗이다). */
+    expect(code).toMatch(/actionLabel: "승인자 지정"/);
+    /* 🛑 옛 문안 금지는 **유지** — 사실이 반대인 문장이다. 새 문구와 별개. */
     expect(code).not.toMatch(/구매 요청이 승인 단계 없이 통과됩니다/);
     expect(overviewBlock(code)).toMatch(/onClick=\{item\.onAction\}/);
   });
 
   it("처리 항목의 액션은 탭 딥링크로 간다 — 초대 항목 축", () => {
-    /* 🛑 은퇴 — **결정 교체** (§approver-axis (다) · 호영님 판정 2026-08-26).
-     * 승인자 미지정 항목은 다섯 지시형 중 **유일하게 배선된 CTA** 였다 — 끝까지 따라가
-     * APPROVER 를 줘도 승인은 안 열린다(승인 라우트는 TeamRole.ADMIN · prod Team 0).
-     * 문구가 아니라 dead button 이었다. 초대 항목은 무손상. */
+    /* 🔑 **재교체** (호영님 명시 승인 2026-08-30) —
+     *   "(다) 근거 소멸 — (나)-1b 가 승인 경로를 열었고 3단 실측(3569ede8)으로 도달 확인"
+     *
+     * 2026-08-26 (다): 승인자 미지정 항목은 다섯 지시형 중 유일하게 배선된 CTA 였으나
+     *   끝까지 따라가 APPROVER 를 줘도 승인이 안 열려(TeamRole.ADMIN · prod Team 0)
+     *   dead button 이었다 → 은퇴.
+     * 2026-08-30 ①c: (나)-1b 가 게이트를 조직 축으로 교체했고 tvkl 3단 실측이
+     *   ① 역할 변경 → ② 승인 게이트 통과 → ③ 예산 게이트 도달을 확인했다 → 되살림.
+     *   🛑 **actionLabel 금지만 해제한다.** 옛 consequence(`구매 요청이 승인 단계 없이
+     *     통과됩니다`)는 사실이 반대여서 금지를 **유지**한다 — 승인권자 0 + in_app_approval
+     *     이면 요청은 멈추지 초과 통과하지 않는다.
+     * 초대 항목은 두 번 다 무손상. */
     const code = stripComments(read(ORG_DETAIL));
     expect(code).toMatch(/actionLabel: "초대 확인"[\s\S]{0,120}?setActiveTab\("invites"\)/);
     /* 역방향 잠금 — 멤버 탭 딥링크(역할 열 강조 포함)가 되살아나면 RED */

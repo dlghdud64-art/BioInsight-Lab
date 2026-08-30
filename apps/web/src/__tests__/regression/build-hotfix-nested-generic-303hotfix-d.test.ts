@@ -69,10 +69,18 @@ describe("§11.303-hotfix-d — nested generic SWC parser bug 회피", () => {
     expect(SRC).toMatch(
       /actionableItems\.push\(\{\s*label:\s*"초대 응답 대기"/,
     );
-    /* 🛑 승계 (§approver-axis (다) 2026-08-26): "승인자 미지정" 항목이 은퇴했다.
-     * 이 sentinel 이 잠그는 결정은 SWC nested-generic 회피와 push 사용처 보존이지
-     * 항목 개수가 아니다 — 남은 초대 항목으로 그 계약을 든다. */
-    expect(SRC).not.toMatch(/actionableItems\.push\(\{\s*label:\s*"승인자 미지정"/);
+    /* 🔑 **승계 되돌림** (호영님 명시 승인 2026-08-30) —
+     *   "(다) 근거 소멸 — (나)-1b 가 승인 경로를 열었고 3단 실측(3569ede8)으로 도달 확인"
+     *
+     * 2026-08-26 (다)가 "승인자 미지정" 항목을 은퇴시키며 이 파일에 **부재 단언 한 줄**을
+     * 승계 조항으로 붙였다. ①c 가 조건부로 되살아났으므로 그 한 줄만 되돌린다.
+     * 🛑 이 sentinel 의 **원 결정(SWC nested-generic 회피 · push 사용처 보존)은 무손상**
+     *   이다 — 성격이 다른 조항이 얹혀 있었을 뿐이고, 항목 개수는 원래 잠금 대상이 아니다.
+     *   발화 조건과 문구는 organizations-approver-alarm-retired 가 소유한다.
+     *   여기서 다시 핀하지 않는다(같은 사실을 두 곳이 말하면 다음 갈라짐의 씨앗). */
+    expect(SRC).toMatch(
+      /actionableItems\.push\(\{\s*\n?\s*label:\s*"승인자 미지정"/,
+    );
   });
 
   it("JSX return 구조 보존 (line ~477) — return ( 다음이 space-y-6 루트 div", () => {

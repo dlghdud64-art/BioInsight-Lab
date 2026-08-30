@@ -47,8 +47,11 @@ import {
   Settings, X, Send, Building2,
   FileText, Package, ShoppingCart, MoreVertical, Trash2,
   Lock, Clock, Activity, CreditCard, ClipboardCheck,
-  AlertTriangle, ChevronRight, CheckCircle2, XCircle, Check,
+  AlertTriangle, ChevronRight, CheckCircle2, XCircle, Check, ShieldAlert,
 } from "lucide-react";
+// §approver-axis ①c 되살림 — 발화 조건이 플랜의 approvalPolicy 에 걸린다.
+//   approvalPolicy = "none" 인 조직에서는 승인 단계 자체가 없어 지시가 거짓이 된다.
+import { resolveApprovalPolicyForPlan } from "@/lib/billing/plan-descriptor";
 // §11.298c Radix DropdownMenu* import 제거 — ActionMenu shared 사용.
 import { ActionMenu } from "@/components/inventory/action-menu";
 import { useToast } from "@/hooks/use-toast";
@@ -607,14 +610,33 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
     count: pendingCount, icon: Mail, color: "text-yellow-500",
     actionLabel: "초대 확인", onAction: () => setActiveTab("invites"),
   });
-  /* §approver-axis (다) — 승인자 미지정 처리 항목 제거 (호영님 판정 2026-08-26 · 좁게).
-   * 🛑 다섯 지시형 중 **이것만 배선된 CTA 였다** — "승인자 지정" 버튼이 멤버 탭 딥링크 +
-   *   역할 열 강조까지 켰다. 그런데 끝까지 따라가 APPROVER 를 줘도 승인은 안 열린다:
-   *   승인 라우트(api/request/[id]/approve:121)가 보는 것은 TeamRole.ADMIN 이고,
-   *   prod 실측 Team 0 · TeamMember 0 이라 그 게이트를 통과할 주체가 존재하지 않는다.
-   *   문구가 아니라 **dead button** 이었다.
-   * 🔑 "미구현" 이 아니라 도달 가능한 상태 부재다 — 코드는 있다.
-   * 숫자 표면(KPI "승인 권한 N")은 남긴다. 실행 불가능한 것은 지시이지 수가 아니다. */
+  /* §approver-axis ①c 되살림 (호영님 판정 2026-08-30) — **(다) 근거 소멸**.
+   *
+   * (다)가 이 항목을 내린 이유는 "끝까지 따라가 APPROVER 를 줘도 승인이 안 열린다"
+   * 였다(승인 라우트가 TeamRole.ADMIN 을 봤고 prod Team 0). (나)-1b 가 그 게이트를
+   * 조직 축으로 교체했고, tvkl 3단 실측(3569ede8)으로 도달을 확인했다:
+   *   ① 역할 변경이 APPROVER 를 실제로 쓴다 ② 부여받은 계정이 승인 게이트를 통과한다
+   *   ③ 예산 게이트까지 도달한다(auditEvent 생성)
+   * → 되살림의 조건은 "게이트가 열렸다" 가 아니라 **"지시를 따라가면 끝까지 도달한다"**
+   *   이고, 그것이 성립했다.
+   *
+   * 🛑 그러나 조건 없이 되살리면 (다)를 만든 원인을 재생산한다. 실측이 문구보다 큰
+   *   사실을 하나 더 줬다 — **승인권자 0이 항상 문제인 게 아니다.**
+   *     approvalPolicy = "none"  (FREE · Basic)      승인 단계 자체가 없다.
+   *                                                  요청이 멈추지 않는다 → 지시가 거짓.
+   *     approvalPolicy = in_app_approval             승인권자 0이면 요청이 PENDING 에서
+   *       (ORGANIZATION · Enterprise)                **멈춘다** → 지시가 참.
+   *   prod T1 이 정확히 전자다(FREE · 승인권자 1). 거기에 이 경보를 띄우면 틀린 경보다.
+   *
+   * 🛑 옛 consequence `구매 요청이 승인 단계 없이 통과됩니다` 는 **사실이 반대**였다.
+   *   멈추는 것이지 통과하는 것이 아니다. 그 문안은 되살리지 않는다(sentinel 금지 유지). */
+  const approvalPolicy = resolveApprovalPolicyForPlan((organization as any).plan);
+  if (approvalPolicy !== "none" && approverCount === 0) actionableItems.push({
+    label: "승인자 미지정",
+    consequence: "승인할 사람이 없어 요청이 멈춥니다",
+    count: 1, icon: ShieldAlert, color: "text-yellow-600",
+    actionLabel: "승인자 지정", onAction: () => setActiveTab("members"),
+  });
 
   return (
     /* §org-management-web P6 — 좌우 여백 부재 봉합.

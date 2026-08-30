@@ -29,7 +29,28 @@ function stripComments(src: string): string {
 const LIST = "src/app/dashboard/organizations/page.tsx";
 const DETAIL = "src/app/dashboard/organizations/[id]/page.tsx";
 
-describe("지시형 5곳 — 실행 불가능한 지시 부재", () => {
+/* ═══════════════════════════════════════════════════════════════════════
+ * 🔑 결정 교체 (호영님 명시 승인 2026-08-30) — **(다) 근거 소멸**
+ *   "(다) 근거 소멸 — (나)-1b 가 승인 경로를 열었고 3단 실측(3569ede8)으로 도달 확인"
+ *
+ *   (다)가 지시형 5곳을 내린 근거는 "APPROVER 를 줘도 승인이 안 열린다" 였다
+ *   (승인 라우트가 TeamRole.ADMIN · prod Team 0). (나)-1b 가 조직 축으로 교체했고
+ *   tvkl 3단 실측이 ① 역할 변경 → ② 승인 게이트 통과 → ③ 예산 게이트 도달을 확인했다.
+ *
+ *   🛑 되살림은 **선별**이다 — 다섯 중 ①c 하나만. 기준은 "사실이 안 보이는가" 가
+ *     아니라 **"행동이 없는가"** 다. (나)-2 가 목록·상세에 사실 표시를 채웠으므로
+ *     남은 결핍은 그 자리에서 고치러 가는 **경로** 하나뿐이었다.
+ *     기각 4: ①d 배지(KPI 수+톤과 중복) · ①a/①b 목록 문구((나)-2 3축이 사실을 말함) ·
+ *     ①e 문구(현재 사실 표기가 있고 지정 수단은 ①c 가 든다).
+ *
+ *   🛑 그리고 되살린 지시는 **조건을 갖는다.** (다)를 만든 원인이 "조건 없이 뜨는
+ *     지시" 였다. 실측이 문구보다 큰 사실을 줬다 — 승인권자 0이 항상 문제가 아니다:
+ *       approvalPolicy = "none"(FREE·Basic)  승인 단계 자체가 없어 요청이 안 멈춘다
+ *       approvalPolicy = in_app_approval     승인권자 0이면 요청이 PENDING 에서 멈춘다
+ *     prod T1 이 전자다. 거기 띄우면 그것도 틀린 경보다.
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+describe("지시형 — 기각 4곳 부재 + ①c 조건부 존재 (되살림 1 · 기각 4)", () => {
   it("목록 — 상태 라인·경고에서 '승인권자 미지정' 이 없다 (2곳)", () => {
     const code = stripComments(read(LIST));
     expect(code).not.toMatch(/승인권자 미지정/);
@@ -37,14 +58,40 @@ describe("지시형 5곳 — 실행 불가능한 지시 부재", () => {
     expect(code).not.toMatch(/org\.adminCount === 0/);
   });
 
-  it("🛑 상세 — '승인자 미지정' 처리 항목이 없다 (유일하게 배선된 CTA 였다)", () => {
-    /* 다섯 중 이것만 성격이 달랐다: 문구가 아니라 dead button 이었다.
-     * "승인자 지정" 버튼 → 멤버 탭 딥링크 + 역할 열 강조까지 켰는데,
-     * 끝까지 따라가 APPROVER 를 줘도 승인은 안 열린다. */
+  it("✅ ①c 되살림 — '승인자 미지정' 처리 항목이 **조건부로** 존재한다", () => {
+    /* 다섯 중 이것만 성격이 달랐다: 문구가 아니라 배선된 CTA 였고, 그 끝이
+     * 비어 있어서 dead button 이었다. 이제 끝이 실재한다(3단 실측). */
     const code = stripComments(read(DETAIL));
-    expect(code).not.toMatch(/label: "승인자 미지정"/);
-    expect(code).not.toMatch(/actionLabel: "승인자 지정"/);
+    expect(code).toMatch(/label: "승인자 미지정"/);
+    expect(code).toMatch(/actionLabel: "승인자 지정"/);
+    /* CTA 의 끝 — 멤버 탭으로 간다. 거기서 역할을 APPROVER 로 바꿀 수 있다. */
+    expect(code).toMatch(/actionLabel: "승인자 지정"[\s\S]{0,80}?setActiveTab\("members"\)/);
+  });
+
+  it("🛑 발화 조건 — approvalPolicy ≠ none && approverCount === 0 (조건을 잃으면 RED)", () => {
+    /* 🔑 (다)를 만든 원인이 **조건 없이 뜨는 지시**였다. 되살린 지시가 조건을 잃으면
+     * 같은 결함이 돌아온다 — 그 분기 자체를 잠근다(호영님 지시 2026-08-30).
+     *   approvalPolicy = "none" 인 조직(FREE·Basic)에서는 승인 단계 자체가 없어
+     *   "요청이 멈춥니다" 가 거짓이 된다. prod T1 이 정확히 그 상태다. */
+    const code = stripComments(read(DETAIL));
+    expect(code).toMatch(
+      /const approvalPolicy = resolveApprovalPolicyForPlan\(\(organization as any\)\.plan\);/
+    );
+    expect(code).toMatch(
+      /if \(approvalPolicy !== "none" && approverCount === 0\) actionableItems\.push\(\{/
+    );
+    expect(code).toMatch(
+      /import \{ resolveApprovalPolicyForPlan \} from "@\/lib\/billing\/plan-descriptor"/
+    );
+  });
+
+  it("🛑 옛 consequence 는 되살리지 않는다 — 사실이 반대였다", () => {
+    /* `구매 요청이 승인 단계 없이 통과됩니다` 는 틀린 문안이다. 승인권자가 0이고
+     * approvalPolicy 가 in_app_approval 이면 요청은 **멈춘다** — 통과하지 않는다.
+     * 새 문구로 되살리고 옛 문구 금지는 유지한다(호영님 판정). */
+    const code = stripComments(read(DETAIL));
     expect(code).not.toMatch(/구매 요청이 승인 단계 없이 통과됩니다/);
+    expect(code).toMatch(/consequence: "승인할 사람이 없어 요청이 멈춥니다"/);
   });
 
   it("상세 — KPI '지정 필요' 배지가 없다", () => {
