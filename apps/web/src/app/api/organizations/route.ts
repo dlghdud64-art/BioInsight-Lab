@@ -152,8 +152,18 @@ export async function POST(request: NextRequest) {
     // 지금: OWNER(생성자) 멤버십만 계수하고 plan 도 거기서만 파생한다 — 조직 축.
     //   초대 멤버십은 분자에도 분모에도 들어가지 않는다.
     //   ⚠️ OWNER 배선은 §team-org-role-model Phase 2(2026-08-12) 이후다. 그 이전 생성분은
-    //     ADMIN 이라 이 필터에 안 잡힌다(= 한도가 느슨해진다). prod 실측 2026-08-29:
-    //     OWNER 4 · ADMIN 0 · OWNER 0인 조직 0행 — 해당 인스턴스 없음.
+    //     ADMIN 이라 이 필터에 안 잡힌다(= 한도가 느슨해진다).
+    //   🛑 prod 인스턴스 1 (T1) — 2026-08-30 소급 대조로 판명.
+    //     원 실측(2026-08-29 "OWNER 4 · ADMIN 0 · OWNER 0인 조직 0행 — 해당 인스턴스
+    //     없음")은 **tvkl 테스트 DB 오측**이었다. 실 prod(xhid)는 ADMIN 1 · OWNER 0인
+    //     조직 2 였고, T1 의 유일 멤버가 06-22 생성분 ADMIN 이라 이 필터에 안 잡혔다.
+    //     → FREE 한도 1인데 currentOrgCount 가 0으로 세어져 2번째 조직 생성이 열려 있었다.
+    //     오측 이력을 지우지 않는다 — §2b 사례 5 의 현장이다(축은 대상 DB. 두 DB 의
+    //     마이그레이션 이력이 같아 이력으로는 안 갈렸다).
+    //   🔑 계수는 OWNER-only 를 유지한다. ADMIN 을 포함하도록 넓히면 B1b 가 닫은 초대
+    //     오염(남의 조직 ADMIN 초대가 내 한도에 계수)이 되돌아온다 — 축은 맞고 데이터가
+    //     틀렸다. 데이터 정정(T1 ADMIN → OWNER 승격)으로 닫고, 재발은 /api/health 의
+    //     ownerlessCount 불변식이 런타임에서 감시한다.
     let ownedMemberships: { organization: { plan: SubscriptionPlan } | null }[] = [];
     try {
       ownedMemberships = await db.organizationMember.findMany({

@@ -274,3 +274,70 @@ B 폐기 도달 경로      A/B 판정 근거 1(ADMIN → LAB_MANAGER 는 실험
 ADMIN 1 실측          prod OrganizationMember = ADMIN 1명. B 였으면 이 조직은 승인 0으로
                      남는다. 근거 2(OWNER 1명 실패 모드)가 이미 실현된 형태다.
 ```
+
+---
+
+## §2b 사례 5 — 대상 DB 오측 (2026-08-30 · (나)-1 판정 재료 정정)
+
+`§purchase-request-org-axis` DDL 을 적용하려다 **살아 있는 DB 가 둘**임을 발견했다.
+`.env` 는 테스트 DB(tvkl) 를 가리키고 프로덕션은 xhid 다. `_prisma_migrations` 최신 3건이
+같아 **이력으로는 안 갈렸고**, `/api/health` 의 `userCount 3 · orgCount 2` 대조로 확정했다.
+
+### 소급 대조 — 무엇이 어느 DB 였나
+
+```
+✅ ADMIN 1                        xhid  (prod 실측 맞음)
+✅ Team 0 · TeamMember 0          xhid  (tvkl 은 1/1)
+🛑 OWNER 4 · ADMIN 0 · ownerless 0  tvkl  → "레거시 위험 인스턴스 0" 결론 무효
+🛑 prod 유료 조직 0                 tvkl  → 실 prod 는 유료 1 (BioInsight · ORGANIZATION)
+⚪ PurchaseRequest 0 · CategoryBudget 0   양쪽 0 — 값으로는 구분 불가(결론 무손상)
+```
+
+구조 원인: 인자 없는 `new PrismaClient()` 가 이 세션에서 **127회**. 인자가 없으면 `.env`
+= 테스트 DB 다. **대상 선택이 매번 암묵이었다.**
+
+### (나)-1 판정 재료 — xhid 재실측
+
+```
+Organization 2 · User 3 · Team 0 · TeamMember 0 · CategoryBudget 0 · PurchaseRequest 0
+T1 (FREE · 06-22)   멤버 1  dlg***@gmail.com  ADMIN → **OWNER 승격 완료**
+BioInsight (ORGANIZATION · 06-13)  멤버 0
+승인권자 총계        1명 (A축 APPROVER|ADMIN|OWNER · B축 ADMIN|OWNER 어느 쪽이든 동일)
+🔑 앞선 A/B 판정은 이 실측 위에서도 뒤집히지 않는다.
+```
+
+### B1b 레거시 위험 — 원리가 아니라 prod 에서 살아 있었다
+
+```
+T1 은 OWNER 배선(2026-08-12) 이전 생성분이라 유일 소유자가 ADMIN 이었다
+→ where { userId, role: "OWNER" } 가 0건 → currentOrgCount 0 · plan FREE(한도 1)
+→ 0 >= 1 이 거짓 → **FREE 한도 1인데 2번째 조직 생성이 열려 있었다**
+```
+
+처방 (호영님 판정): **계수는 안 건드린다.** ADMIN 을 포함으로 넓히면 B1b 가 닫은
+초대 오염(남의 조직 ADMIN 초대가 내 한도에 계수)이 되돌아온다 — **축은 맞고 데이터가 틀렸다.**
+데이터 정정으로 닫고 재발은 `/api/health` `ownerlessCount` 불변식이 감시한다.
+실행: 1행 UPDATE + `AuditLog(PERMISSION_CHANGED)` 1행 · `ownerlessCount 2 → 1` 발화 확인.
+
+🔑 이 불변식이 옳았다는 것이 오히려 실증됐다 — "데이터가 보증하던 안전" 은 실제로는
+   없었고, 런타임 프로브가 그것을 발화해 잡아냈다.
+
+### BioInsight Research Lab — 생성 경로 결함이 아니다
+
+가설(멤버 0인 조직 = 생성 경로가 OWNER 멤버십 없이 조직을 만들 수 있었다)은 **기각**된다.
+이 행은 **생성 라우트를 거친 적이 없다.**
+
+```
+id = "org-bioinsight-lab"        cuid 가 아니다 (T1 은 cmqp6tp92…)
+User 2명도 수기 id                user-bioinsight-admin · user-bioinsight-researcher
+                                 Account 0 · Session 0 · emailVerified 없음 → 로그인 이력 0
+같은 계열                         Product 200/200 · ProductInventory 9/10 이 수기 id
+정의처                            prisma/seed.ts:443-449 (plan: "ORGANIZATION" 도 시드 값)
+🛑 seed.ts 는 organizationMember 를 **아예 만들지 않는다** (grep 0건)
+   → 멤버 0 은 생성 경로 결함이 아니라 **시드 누락**이다.
+updatedAt 2026-07-05 09:59       migration 20260705120000_org_safety_categories 와 일치
+                                 (사람이 만진 흔적이 아니라 DDL 이 건드린 자국)
+```
+
+⚠️ 수동 플랜 부여 가설도 기각된다 — `plan=ORGANIZATION` 이 시드 파일에 박혀 있다.
+   다만 **이 조직을 어떻게 할지(정리/보존)는 여전히 제품 판단**이다. 실행 안 함.
