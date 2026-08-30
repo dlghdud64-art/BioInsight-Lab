@@ -1,0 +1,62 @@
+{
+  "_형식": "격리 감사 선언 파일 (PLAN_tenant-isolation-placeholder §9.15). 프로브보다 먼저 작성하고 실행 중 수정하지 않는다. 오류가 드러나면 고치지 않고 다음 번호로 새로 쓴다.",
+  "슬라이스": "§approver-axis — (다) 지시형 되살림 판정용 실측: 역할 변경 → APPROVER 부여 → 그 계정으로 승인 경로 통과",
+  "작성시각_UTC": "2026-08-30",
+
+  "🔑 무엇을 재는가 — 되살림의 조건": {
+    "호영님 판정": "되살림의 조건은 '게이트가 열렸다' 가 아니라 **'지시를 따라가면 끝까지 도달한다'** 이다.",
+    "왜": ":601 이 정확히 그 실패였다 — CTA 가 배선돼 있는데 끝에서 아무 일도 안 일어났다. 게이트가 열린 것만 보고 지시형을 되살리면 같은 형태를 다시 만든다.",
+    "따라서 재는 것": [
+      "① 역할 변경 경로가 실재하는가 — PATCH /api/organizations/[id]/members 가 APPROVER 를 실제로 쓴다",
+      "② 그 권한 변경이 승인 게이트를 **실제로 통과시키는가** — 부여받은 계정으로 isOrgApprover 통과",
+      "③ 통과 후 예산 게이트까지 **끝까지 도달**하는가 — auditEvent 생성 (스킵과 구분)"
+    ],
+    "🛑 재지 않는 것": [
+      "HTTP · getServerSession · CSRF (자격증명 미보유 — 라우트의 데이터 경로와 가드 조건을 함수 단위로 재현)",
+      "UI 클릭 · Select 컴포넌트 렌더",
+      "🔑 그러므로 결론은 '데이터 경로가 끝까지 도달' 까지다. '사람이 화면에서 눌러 성공' 이 아니다."
+    ]
+  },
+
+  "대상": {
+    "ref": "tvkl",
+    "출처": ".env DIRECT_URL (port 5432)",
+    "🛑 금지": "xhid (prod). ref 가 tvkl 로 시작하지 않으면 쓰기 전에 process.exit.",
+    "확인방법": "§2c — DB 밖 정합. 대조: Organization 4 · User 5 (xhid 는 2 · 3)."
+  },
+
+  "허용된_쓰기": [
+    { "table": "User", "count": 1, "id": "probe-grant-user", "이유": "APPROVER 를 부여받을 대상. 기존 계정의 역할을 건드리지 않기 위해 신규 생성한다" },
+    { "table": "OrganizationMember", "count": 1, "id": "probe-grant-member", "이유": "VIEWER 로 시작 → 역할 변경 경로로 APPROVER 로 올린다" },
+    { "table": "Product", "count": 1, "id": "probe-grant-prod" },
+    { "table": "Quote", "count": 1, "id": "probe-grant-quote", "비고": "title NOT NULL" },
+    { "table": "QuoteListItem", "count": 1, "id": "probe-grant-qli", "비고": "Quote.items 의 실제 대상 (2차 선언에서 정정된 사실 승계)" },
+    { "table": "PurchaseRequest", "count": 1, "id": "probe-grant-pr", "비고": "organizationId 채움 · teamId null · PENDING · requester 는 기존 OWNER" }
+  ],
+  "허용된_수정": [
+    { "table": "OrganizationMember", "id": "probe-grant-member", "field": "role", "VIEWER→APPROVER": "역할 변경 경로 재현. **기존 멤버는 건드리지 않는다** — 신규 생성분만 대상." }
+  ],
+  "허용된_삭제": [{ "설명": "위 6행의 복원 삭제만. id 접두사 `probe-grant-` 로 좁힌다." }],
+
+  "게이트": {
+    "선복원": "실행 앞에 id 목록 기준 삭제를 한 번 돌린다 (§2e).",
+    "복원 규칙": "🛑 생성 플래그가 아니라 **id 목록 기준으로 무조건**. finally 에서 실행하고 부분 생성·예외 어느 경우에도 돈다.",
+    "사전/사후": "쓰기 6테이블 + 인접(SpendingCategory · CategoryBudget · QuoteItem · Organization · Order · POCandidate) 전역 count 스냅샷. 복원 후 정확히 일치.",
+    "🛑 기존 멤버 불변식": "실행 전후로 **기존 OrganizationMember 4행의 role 이 변하지 않았음**을 따로 확인한다. 역할을 만지는 프로브라 count 일치만으로는 부족하다 — 이번엔 count 가 아니라 **값**을 스냅샷한다.",
+    "baseline": "PurchaseRequest 0행이 아니면 중단(§4-a-2 3-d)."
+  },
+
+  "기대_결과": {
+    "GREEN": [
+      "① 역할 변경 가드 4종 통과(요청자 OWNER/ADMIN · role 유효 · 대상 조직 소속 · OWNER 보호) 후 role=APPROVER",
+      "② isOrgApprover(APPROVER) === true · checkApprovalLimit 통과(한도 null)",
+      "③ 예산 게이트 도달 · auditEvent.eventType = budget_gate_decision"
+    ],
+    "RED_후보": [
+      "역할 변경이 APPROVER 를 거부 — 지시형의 '지정' 이 여전히 불가",
+      "APPROVER 로 올렸는데 승인 게이트가 막음 — 축이 아직 안 맞음",
+      "게이트는 통과했으나 예산 게이트 미도달 — 뒤쪽 배선 끊김"
+    ],
+    "🔑 판정 연결": "셋 다 GREEN 이어야 '지시를 따라가면 끝까지 도달한다' 가 성립한다. 하나라도 아니면 되살림 후보에서 뺀다."
+  }
+}
