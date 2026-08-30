@@ -68,8 +68,16 @@ function projectRefOf(url: string): string | null {
 }
 
 /** 이 URL 이 "개발 프로젝트로 명시 지정된" 것인가. */
-function isDeclaredDevProject(url: string): boolean {
-  const declared = process.env.DEV_DATABASE_PROJECT_REF?.trim().toLowerCase();
+function isDeclaredDevProject(
+  url: string,
+  declaredDevRef?: string | null,
+): boolean {
+  // §prisma-target-helper ②(b) — 선언값을 **주입 가능**하게 바꿨다.
+  //   기본값은 기존과 같은 process.env 라 호출부 동작은 불변이고,
+  //   스크립트 wrapper 가 자기 env 로 같은 판정을 돌릴 수 있게 된다.
+  const declared = (declaredDevRef ?? process.env.DEV_DATABASE_PROJECT_REF)
+    ?.trim()
+    .toLowerCase();
   if (!declared) return false;
   const ref = projectRefOf(url);
   return ref !== null && ref === declared;
@@ -82,15 +90,36 @@ function isDeclaredDevProject(url: string): boolean {
  * (마이그레이션은 DIRECT_URL 을 쓰므로 둘 다 봐야 한다 — 한쪽만 개발로 바꾼
  *  어긋난 상태도 운영으로 잡힌다. 의도된 보수성이다.)
  */
+/**
+ * URL 하나가 운영인가 — **순수 형태** (§prisma-target-helper ②(b) · 2026-08-31).
+ *
+ * 🔑 왜 순수 형태를 뽑았나: 이 판정이 **정본**인데 `process.env` 를 직접 읽어서,
+ *   쓰려는 쪽마다 env 를 저장·주입·복원하는 춤을 춰야 했다(`db-guard.ts` 가 실제로
+ *   그렇게 한다). 그러면 판정을 재사용하는 대신 **자기 규칙을 새로 쓰게 된다** —
+ *   `scripts/lib/db-target.ts` 가 실제로 그랬다(allow-list 멤버십으로 test/prod 를
+ *   갈랐고 host 검사가 없었다. 예: localhost 를 prod 후보로 취급).
+ *   → 규칙은 여기 하나. wrapper 는 정책만 얹는다(smoke/pilot/script/db-guard).
+ *
+ * @param declaredDevRef 개발로 **명시 선언된** project ref (`DEV_DATABASE_PROJECT_REF`).
+ *                       비어 있으면 fail-closed — 운영으로 본다.
+ */
+export function isProductionUrl(
+  url: string,
+  declaredDevRef: string | null | undefined,
+): boolean {
+  if (!url) return false;
+  return (
+    PRODUCTION_DB_HOST.test(url) &&
+    !LOCAL_DB_HOST.test(url) &&
+    !isDeclaredDevProject(url, declaredDevRef)
+  );
+}
+
 export function isProductionDatabase(): boolean {
   const urls = [process.env.DATABASE_URL, process.env.DIRECT_URL].filter(Boolean) as string[];
   if (urls.length === 0) return false;
-  return urls.some(
-    (u) =>
-      PRODUCTION_DB_HOST.test(u) &&
-      !LOCAL_DB_HOST.test(u) &&
-      !isDeclaredDevProject(u),
-  );
+  // 하나라도 운영이면 운영 — 한쪽만 개발로 바꾼 상태를 통과시키지 않는다.
+  return urls.some((u) => isProductionUrl(u, process.env.DEV_DATABASE_PROJECT_REF));
 }
 
 /**

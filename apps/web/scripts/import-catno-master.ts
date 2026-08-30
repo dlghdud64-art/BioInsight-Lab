@@ -27,9 +27,16 @@ import { PrismaClient, ProductCategory } from "@prisma/client";
 import * as dotenv from "dotenv";
 import * as path from "path";
 import * as fs from "fs";
+import { assertScriptDbTarget } from "./lib/db-target";
 
 dotenv.config({ path: path.resolve(__dirname, "../.env.local") });
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
+
+
+// §prisma-target-helper — 접속 전 대상 확정. Prisma 클라이언트를 만들기 **전에** 부른다.
+//   대상을 말하지 않은 채 접속이 열리면 이 게이트가 없는 것과 같다.
+//   출력: [db-target] ref=<ref> mode=<test|prod>
+assertScriptDbTarget();
 
 const APPLY = process.argv.includes("--apply");
 

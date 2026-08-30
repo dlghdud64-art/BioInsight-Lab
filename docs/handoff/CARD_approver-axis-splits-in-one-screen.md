@@ -943,3 +943,108 @@ DATABASE_URL_PILOT · ALLOWED_PILOT_DB_SENTINELS · PILOT_REQUIRES_EXPLICIT_OPT_
               (§4-a-2 3-c 개정 실물 · 이월 ① 도구화의 첫 조각)
 tsc         27 불변
 ```
+
+### B 치환 + ②(b)·③(a) (2026-08-31) — 게이트 하나 · 규칙 하나
+
+```
+파서    src/lib/db/target-core.ts                    1벌
+판정    src/lib/security/production-database.ts       1벌  isProductionUrl(순수 형태 신설)
+정책    smoke(prod 금지) · pilot(opt-in) ·
+        script(test 기본+토큰) · db-guard(prod 무조건 차단·토큰 무시)   wrapper 4
+```
+
+🔑 **②(b) 가 드러낸 두 번째 규칙**: `db-target` 이 allow-list 멤버십만으로 test/prod 를
+갈랐고 **host 검사가 없었다** — localhost 조차 "목록 밖 = prod 후보" 였다. 정본
+`isProductionUrl` 경유로 바꿔 규칙을 하나로 모았다.
+
+🔑 판정을 **순수 형태**로 뽑은 이유: 정본이 `process.env` 를 직접 읽어서, 쓰려는 쪽마다
+env 저장·주입·복원 춤을 춰야 했다(`db-guard.ts` 가 실제로 그렇게 한다). 그러면 재사용
+대신 **자기 규칙을 새로 쓰게 된다** — db-target 이 정확히 그랬다.
+
+`db-guard` 는 **넷째 wrapper** 로 자리를 잡았다. 정책은 `prod 무조건 차단 · 토큰 무시`.
+🛑 db-target 의 토큰을 여기 들이면 "prod 에 seed 를 실수로 못 돌린다" 는 의미가
+**완화**된다. prod seed 가 필요한 날이 오면 그때 **결정 교체로** 연다.
+
+### 치환 결과 — 17지점 중 16 게이트, 면제 1
+
+```
+✅ 16  scripts/* (make-admin · create-test-quote · backfill · import-catno ·
+       test-db-connection · add-org-invite · add-inventory-restock) ·
+       smoke 6 · pilot 2 · prisma/import-master-catalog
+🛑 1   prisma/seed.ts — **면제**(db:seed 가 앞단 db-guard 를 통과시킨다)
+       sentinel 이 면제 목록을 사유와 함께 잠갔고, **2개가 되면 RED** —
+       "예외" 가 "규칙" 이 되는 순간을 게이트가 알린다.
+```
+
+`.mjs` 2건은 `.ts` 로 전환했다. 실측 근거:
+
+```
+실행 경로   package.json 참조 0 · 문서 0 — 기록된 실행 방법이 없다
+.mjs → .ts import   node ✅ (v24 네이티브 TS) / **tsx 🔴** ("does not provide an export")
+            🔑 레포 표준 러너(tsx)에서 안 된다. node 의 TS 스트리핑에 기대는 건
+              버전 종속이라, 참조 0인 파일을 표준 형태로 맞추는 쪽이 싸다.
+```
+
+### 🛑 ③(a) — smoke 인프라 인질 회피
+
+`migration-drift.ts` 는 smoke 축인데 smoke guard 를 안 썼다. 편입은
+`DATABASE_URL_SMOKE`(ADR-001 Option B 인프라)가 선행 — **잴 수단 없는 것에 결박하면
+이 스크립트가 그 인프라의 인질이 된다.** 일반 게이트로 지금 정합하게 만들었다.
+📌 **smoke 인프라가 서면 smoke guard 편입 재판정.**
+
+`:5432` 검사는 **유지**했다 — core 판정과 겹치지 않는다. core 는 "어느 프로젝트인가",
+이 검사는 "session pooler 인가"(§9.2)를 답한다. 근거를 주석으로 붙였다.
+
+순수 `checkScriptDbTarget` 을 쓴 이유: 이 스크립트는 `.env` **파일을 직접** 읽고
+실패를 exit 이 아니라 **반환 코드**로 알린다. assert 형태는 그 계약을 깬다.
+
+### 🛑 발견 — `prisma:seed` 는 db-guard 를 안 거친다
+
+```
+db:seed      tsx scripts/db-guard.ts "prisma seed" && tsx prisma/seed.ts   ✅ 가드
+prisma:seed  tsx prisma/seed.ts                                            🛑 우회
+```
+
+기존 sentinel(G1)은 `prisma migrate dev|db push` 만 훑어서 이 경로가 안 잡힌다.
+면제 근거("db:seed 가 앞단에서 통과시킨다")가 **`prisma:seed` 에는 성립하지 않는다.**
+📌 판정 대기 — `prisma:seed` 에 가드를 붙일지, 스크립트를 지울지, seed 자체에 게이트를
+   둘지. 임의로 정하지 않았다.
+
+### 자기 진단 — 갈래 설계 결함 (§2b 인접)
+
+```
+C 판정을 물을 때 갈래 셋(C-1/C-2/C-3)이 전부 "한쪽을 통째로" 였다.
+호영님은 **축별로** 갈랐다 — 키 / 파서 / 정책이 각각 다른 답을 가질 수 있는데
+묶어서 물었다.
+🔑 §2b 와 같은 축이다: 축을 안 가르면 답이 하나로 강요된다.
+  이번 트랙의 반복 형태 — "정의 5개" 도 축을 안 가른 결과였다.
+```
+
+### 부산물 — 키 중복이 실물로 확인됐다 (철회 기록)
+
+```
+어제 신설    SCRIPT_DB_ALLOWED_REFS
+실측        .env · .env.local **양쪽에 DEV_DATABASE_PROJECT_REF 가 이미 있었고
+            같은 ref 였다**(따옴표만 다름)
+→ 제 키 판정이 만든 두 번째 진실이 **실물로** 확인됐다. 블록째 제거.
+```
+
+### 파서 교체는 승계가 아니라 **결함 교정**이었다 (판정 근거)
+
+```
+옛 정규식  /postgres\.([a-z0-9]{16,})/i  — pooler 형태만
+결함      direct 형태(db.<ref>.supabase.co)에서 ref=null → isDeclaredDevProject 항상
+          false → **개발 프로젝트를 운영으로 오판**
+방향      fail-closed 쪽이라 사고는 아니었다. 그래도 오판은 오판이다.
+```
+
+### 게이트
+
+```
+src/__tests__/scripts 155/155 · ops 포함 스코프 5263 passed / 46 failed (15파일)
+  🔑 §4d 대로 stash 없이 귀속 — 실패 4종 전부 내가 만진 것 참조 **0건**
+     (compare-sessions · compare-sync · approval-email · admin-skip-link)
+tsc 27 불변 · 실물 실행 2건 확인:
+  test-db-connection → [db-target] ref=tvkl… mode=test
+  migration-drift    → [db-target] ref=tvkl… mode=test · drift 검사 정상 완주
+```

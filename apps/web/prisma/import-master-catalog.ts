@@ -24,6 +24,17 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PrismaClient, type ProductCategory } from "@prisma/client";
 
+import * as dotenv from "dotenv";
+import * as nodePath from "node:path";
+// §prisma-target-helper — 접속 전 대상 확정 (프로브·스크립트 공통 게이트).
+//   🔑 prisma/seed.ts 는 `db:seed` 가 앞단에서 db-guard 를 통과시키므로 제외했지만
+//     (게이트 둘 겹침 금지 · 호영님 ②(b)), 이 임포터는 그 경로가 아니다.
+import { assertScriptDbTarget } from "../scripts/lib/db-target";
+
+dotenv.config({ path: nodePath.resolve(__dirname, "../.env.local") });
+dotenv.config({ path: nodePath.resolve(__dirname, "../.env") });
+assertScriptDbTarget();
+
 const prisma = new PrismaClient();
 
 type CleanedVendor = { id: string; name: string };

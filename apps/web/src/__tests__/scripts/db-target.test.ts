@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import {
   checkScriptDbTarget,
@@ -185,5 +185,50 @@ describe("🔑 시작 로그 형식 고정 — 대상 확정 증빙", () => {
     /* 실패는 governance 한 줄 + exit — soft mode 없다 */
     expect(src).toMatch(/console\.error\(`\[db-target\] ABORT \(\$\{result\.reason\}\)/);
     expect(src).toMatch(/process\.exit\(1\)/);
+  });
+});
+
+describe("🔑 B — 스크립트 축 전수가 guard 를 경유한다 (신규 강제)", () => {
+  /* 🛑 tracked 축만 잠근다 — untracked 프로브는 sentinel 이 원리상 못 잡고,
+   *   그 자리는 §2e 조항("프로브는 guard 경유")이 든다. */
+  function walk(dir: string, acc: string[] = []): string[] {
+    for (const e of readdirSync(join(REPO_ROOT, dir), { withFileTypes: true })) {
+      const rel = `${dir}/${e.name}`;
+      if (e.isDirectory()) walk(rel, acc);
+      else if (/\.(ts|mjs|cjs)$/.test(e.name)) acc.push(rel);
+    }
+    return acc;
+  }
+
+  /** 게이트 면제 — 사유가 있는 것만. 늘리려면 판정이 필요하다. */
+  const EXEMPT: Record<string, string> = {
+    "prisma/seed.ts":
+      "db:seed 가 앞단에서 db-guard 를 통과시킨다. 게이트 둘을 겹치면 규칙이 갈린다(호영님 ②(b)).",
+  };
+
+  it("new PrismaClient( 를 쓰는 tracked 스크립트는 전부 guard 를 경유한다", () => {
+    const files = [...walk("scripts"), ...walk("prisma")];
+    const unguarded: string[] = [];
+    for (const rel of files) {
+      const code = stripComments(read(rel));
+      if (!/new PrismaClient\(/.test(code)) continue;
+      if (rel in EXEMPT) continue;
+      const guarded =
+        /assertScriptDbTarget|checkScriptDbTarget|assertSmokeDatabaseTarget|assertPilotDatabaseTarget/.test(
+          code,
+        );
+      if (!guarded) unguarded.push(rel);
+    }
+    expect(unguarded).toEqual([]);
+  });
+
+  it("🛑 면제 목록은 사유를 갖는다 — 늘리려면 판정이 필요하다", () => {
+    for (const [rel, why] of Object.entries(EXEMPT)) {
+      expect(why.length).toBeGreaterThan(20);
+      const code = stripComments(read(rel));
+      expect(code).toMatch(/new PrismaClient\(/);
+    }
+    /* 면제가 2개 이상이 되면 "예외" 가 아니라 "규칙" 이다 — 그때 RED 로 알린다. */
+    expect(Object.keys(EXEMPT)).toHaveLength(1);
   });
 });

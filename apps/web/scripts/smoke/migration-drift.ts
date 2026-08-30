@@ -39,6 +39,9 @@ import {
 
 // tsx CJS 모드(package.json "type" 없음) — import.meta 대신 __filename.
 const require_ = createRequire(__filename);
+// §prisma-target-helper ③(a) — 순수 판정만 쓴다(반환 코드 계약 보존).
+import { checkScriptDbTarget } from "../lib/db-target";
+
 const { generateManifest } = require_("../generate-migration-manifest.cjs") as {
   generateManifest: (dir: string) => { migrations: string[]; generatedAt: string };
 };
@@ -61,6 +64,24 @@ function loadUrl(): { key: string; file: string; url: string } | null {
   return null;
 }
 
+/**
+ * §prisma-target-helper ③(a) — loadUrl 과 **같은 파일 축**에서 키 하나를 읽는다.
+ *   이 스크립트는 process.env 가 아니라 .env 파일을 직접 보므로, 게이트에 넘길
+ *   선언값도 같은 자리에서 읽어야 한다. 다른 축에서 읽으면 판정과 대상이 어긋난다.
+ */
+function readEnvKey(key: string): string | undefined {
+  for (const file of [".env", ".env.local"]) {
+    const p = path.join(webRoot, file);
+    if (!fs.existsSync(p)) continue;
+    const m = fs.readFileSync(p, "utf8").match(new RegExp(`^${key}=(.*)$`, "m"));
+    if (m) {
+      const v = m[1].trim().replace(/^"|"$/g, "");
+      if (v) return v;
+    }
+  }
+  return undefined;
+}
+
 async function main(): Promise<number> {
   const found = loadUrl();
   if (!found) {
@@ -68,12 +89,33 @@ async function main(): Promise<number> {
     return 2;
   }
   const hostPort = (found.url.match(/@([^/@]+)\//) || [])[1] || "(파싱 실패)";
+  // 🔑 `:5432` 검사는 **유지**한다 — core 판정이 안 보는 축이다.
+  //   core/isProductionUrl 은 "어느 프로젝트인가" 를 답하고, 이 검사는
+  //   "session pooler 인가"(§9.2 · transaction pooler 6543 이면 DDL 조회가 어긋난다)를
+  //   답한다. 겹치지 않으므로 제거하지 않는다.
   if (!/:5432$/.test(hostPort)) {
     console.error(
       `[migration-drift] STOP: ${found.key}(${found.file}) 가 :5432 session pooler 아님 → ${hostPort} (§9.2)`,
     );
     return 2;
   }
+
+  // §prisma-target-helper ③(a) (호영님 판정 2026-08-31) — 일반 축 게이트로 정합.
+  //   🛑 smoke guard 편입은 `DATABASE_URL_SMOKE` 가 선행인데 그 키는 ADR-001 Option B
+  //     인프라 대기 중이다 — **잴 수단 없는 것에 결박하면 이 스크립트가 그 인프라의
+  //     인질이 된다.** 지금 정합하게 만들고, 인프라가 서면 편입을 재판정한다(카드 등재).
+  //   순수 형태를 쓴다: 이 스크립트는 `.env` 파일을 **직접** 읽고(process.env 아님)
+  //   실패를 exit 이 아니라 **반환 코드**로 알린다. assert 형태는 그 계약을 깬다.
+  const target = checkScriptDbTarget({
+    DIRECT_URL: found.url,
+    DEV_DATABASE_PROJECT_REF: readEnvKey("DEV_DATABASE_PROJECT_REF"),
+    ALLOW_PROD_DATABASE_PROJECT_REF: readEnvKey("ALLOW_PROD_DATABASE_PROJECT_REF"),
+  });
+  if (!target.ok) {
+    console.error(`[db-target] ABORT (${target.reason}): ${target.detail}`);
+    return 2;
+  }
+  console.log(`[db-target] ref=${target.projectRef} mode=${target.mode}`);
   console.log(`[migration-drift] target: ***@${hostPort} (${found.key}, ${found.file})`);
 
   const manifest = generateManifest(path.join(webRoot, "prisma", "migrations"));

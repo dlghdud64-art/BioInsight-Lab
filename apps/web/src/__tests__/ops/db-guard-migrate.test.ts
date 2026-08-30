@@ -101,7 +101,10 @@ describe("§dev-prod-db-separation G5~G7 — 프로젝트 ref 로 갈린다", ()
     expect(SRC).toMatch(/import \{ extractSupabaseProjectRef \} from "\.\.\/db\/target-core"/);
     expect(SRC).not.toMatch(/SUPABASE_PROJECT_REF = \//);
     expect(SRC).toMatch(/function projectRefOf/);
-    expect(SRC).toMatch(/isDeclaredDevProject\(u\)/);
+    /* 🔑 승계 (②(b) 2026-08-31): 판정을 순수 형태 isProductionUrl 로 뽑으며
+     * 인자명이 u → url 로 바뀌었다. 잠그는 결정은 "ref 판정을 쓴다" 이지 인자명이 아니다. */
+    expect(SRC).toMatch(/!isDeclaredDevProject\(url, declaredDevRef\)/);
+    expect(SRC).toMatch(/export function isProductionUrl/);
   });
 
   it("G6. fail-closed — 선언이 없으면 개발로 보지 않는다", () => {
@@ -115,8 +118,9 @@ describe("§dev-prod-db-separation G5~G7 — 프로젝트 ref 로 갈린다", ()
   });
 
   it("G5-b. 호스트 판정은 남아 있다 (ref 판정이 대체가 아니라 추가)", () => {
-    expect(SRC).toMatch(/PRODUCTION_DB_HOST\.test\(u\)/);
-    expect(SRC).toMatch(/!LOCAL_DB_HOST\.test\(u\)/);
+    /* 승계 — 인자명만 u → url. host 판정 두 축은 그대로 산다. */
+    expect(SRC).toMatch(/PRODUCTION_DB_HOST\.test\(url\)/);
+    expect(SRC).toMatch(/!LOCAL_DB_HOST\.test\(url\)/);
   });
 
   describe("G5-c. **동작 보존** — 두 URL 형태 (호영님 지시 2026-08-31)", () => {

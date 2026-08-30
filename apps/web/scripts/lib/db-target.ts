@@ -43,6 +43,10 @@
  */
 
 import { parseAllowList, resolveProjectRef } from "../../src/lib/db/target-core";
+// §prisma-target-helper ②(b) — **판정은 정본 하나.** 여기서 규칙을 새로 쓰지 않는다.
+//   이전 판본은 allow-list 멤버십만으로 test/prod 를 갈랐다 — host 검사가 없어
+//   localhost 조차 "목록 밖 = prod 후보" 로 취급했다. 그것이 두 번째 규칙이었다.
+import { isProductionUrl } from "../../src/lib/security/production-database";
 
 export interface ScriptDbTargetEnv {
   readonly DIRECT_URL?: string;
@@ -128,12 +132,13 @@ export function checkScriptDbTarget(env: ScriptDbTargetEnv): ScriptDbTargetResul
   }
   const projectRef = resolved.projectRef;
 
-  // 기본 경로 — allow-list 에 있으면 test 다.
-  if (allowList.includes(projectRef)) {
+  // 기본 경로 — **정본 판정**이 "운영이 아니다" 라고 하면 test 다.
+  //   host 검사(Supabase 인가 · localhost 인가)까지 정본이 든다.
+  if (!isProductionUrl(rawUrl, env.DEV_DATABASE_PROJECT_REF)) {
     return { ok: true, projectRef, mode: "test", allowList };
   }
 
-  // 목록 밖 = prod 후보. 토큰이 없으면 여기서 끝난다.
+  // 운영 판정 = prod. 토큰이 없으면 여기서 끝난다.
   const token = env.ALLOW_PROD_DATABASE_PROJECT_REF?.trim();
   if (!token) {
     return {

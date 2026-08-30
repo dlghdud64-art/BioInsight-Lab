@@ -17,6 +17,14 @@
  *   `"db:migrate": "tsx scripts/db-guard.ts && prisma migrate dev"`
  *   운영 host 면 비영 종료코드로 끝나 뒤따르는 prisma 명령이 실행되지 않는다.
  *
+ * §prisma-target-helper ②(b) (2026-08-31) — **넷째 wrapper** 로 자리를 잡는다.
+ *   구조: 파서 = `src/lib/db/target-core` · 판정 = `isProductionUrl`(이 파일이 쓰는
+ *   `isProductionDatabase` 가 그것을 경유) · **정책은 wrapper 소유**.
+ *   이 wrapper 의 정책: **prod 무조건 차단 · 토큰 무시.**
+ *   🛑 `scripts/lib/db-target.ts` 는 토큰으로 prod 를 연다. 그것을 여기 들이면
+ *     "prod 에 seed 를 실수로 못 돌린다" 는 이 게이트의 의미가 **완화**된다.
+ *     prod seed 가 필요한 날이 오면 그때 **결정 교체로** 연다 — 지금 조용히 열지 않는다.
+ *
  * 우회가 필요할 때(운영 적용):
  *   `prisma migrate deploy` 는 **생성된 마이그레이션 적용만** 하므로 이 가드를 거치지
  *   않는 별도 스크립트(`prisma:migrate`)로 둔다. 운영 변경은 그 경로로만 한다.
