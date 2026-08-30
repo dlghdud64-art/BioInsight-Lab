@@ -358,9 +358,12 @@ baseline(HEAD~1 · route.ts 되돌리고 신규 test 격리)   27건
 ## 🛑 데이터 불변식 — `OWNER 0인 조직 = 0` (호영님 지시 2026-08-29)
 
 **주석은 발화하지 않는다.** 그리고 OWNER 필터의 안전은 코드가 아니라 **prod 데이터 상태**가
-보증하고 있었다 — 2026-08-29 실측이 OWNER 4 · ADMIN 0 인 것은 백필
-(`scripts/add-owner-role.mjs`)이 이미 돌았기 때문이고,
-**백업 복원 · 다른 환경 · 수동 삽입 어느 쪽도 되살린다.**
+보증하고 있었다 — **그 데이터 상태를 잘못 쟀으므로 보증이 없었다.**
+
+✅ **이 불변식이 실제로 잡았다 (2026-08-30).** 원 근거였던 "2026-08-29 실측 OWNER 4 ·
+ADMIN 0 = 백필이 이미 돌았다" 는 **tvkl 테스트 DB** 값이었다(§2b 사례 5). 실 prod 는
+ADMIN 1 · ownerless 2 였고, 이 프로브가 prod 에서 발화해 그것을 드러냈다.
+🔑 코드가 아니라 데이터를 재기로 한 판단이 여기서 실증된다 — 코드만 봤으면 못 봤다.
 
 ```
 lib     src/lib/health/owner-invariant.ts
@@ -368,7 +371,11 @@ lib     src/lib/health/owner-invariant.ts
         probeOwnerlessOrganizations(client) → { ok, ownerlessCount, clean } · SELECT 만
 발화    GET /api/health 응답에 orgOwnership: { ok, reachable, ownerlessCount, clean }
         §migration-order-drift-guard 의 probe 관용 그대로 (count/boolean 만 노출)
-복구    scripts/add-owner-role.mjs — 조직별 최초 ADMIN → OWNER 승격
+복구    🛑 자동 도구 없음 — operator-shell 수기 처리.
+        구 scripts/add-owner-role.mjs 는 2026-08-30 폐기·삭제(§2c 위반 4건:
+          무인자 PrismaClient(테스트 DB로 감) · ALTER TYPE DDL 동반 ·
+          전 조직 일괄 루프 · 감사 기록 0).
+        형태: 대상 1건 지정 UPDATE + AuditLog(PERMISSION_CHANGED) 1행 + ref 출력 선행.
 ```
 
 위반 시 무슨 일이 일어나는가: OWNER 없는 조직의 소유자는 계수 0 이 되어
