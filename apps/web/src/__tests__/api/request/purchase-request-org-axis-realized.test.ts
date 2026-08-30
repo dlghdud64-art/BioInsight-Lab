@@ -220,7 +220,50 @@ describe("🔑 (나)-1b 종료 — 게이트 축이 조직 역할로 옮겼다",
 });
 
 describe("🛑 아직 닫히지 않은 것 — 기록이 아니라 발화로 둔다", () => {
-  it("예산 게이트가 Product 에 없는 필드를 select 한다 — 발화 이전에 던진다", () => {
+  it("🔑 후보 3 — 카테고리 단위 예산 게이트 미강제를 **정직하게 표기**한다", () => {
+    /* 호영님 판정 2026-08-30 — 후보 3 (조건부).
+     *   후보 1(Product FK 신설)은 아무도 안 쓰는 기능을 위해 314행 백필 정책을 지금
+     *   정하는 것이고, 후보 2(ProductCategory 매핑)는 이미 조항으로 잠긴 경로다.
+     *   prod 실측 SpendingCategory 0 · CategoryBudget 0 — **없는 축을 없다고 표기한다.**
+     *   (다)에서 실행 불가능한 경보를 내린 것과 같은 원칙이다.
+     * 🛑 이 단언이 잠그는 것은 "카테고리 판정을 안 한다" 가 아니라
+     *   **"안 한다는 사실이 코드에 적혀 있다"** 이다. 조용히 null 이 흐르면 다음 세션이
+     *   그것을 배선 실수로 읽는다. */
+    const code = stripComments(read(APPROVE));
+    expect(code).toMatch(/normalizedCategoryId: null,/);
+    /* 역방향 — Product 에 그 필드가 생기면 RED. 후보 1 트랙이 열렸다는 신호이고,
+     * 그때 이 단언을 "카테고리 판정 실재" 로 교체하는 것이 정상 종료다. */
+    const productModel = read("prisma/schema.prisma").match(/model Product \{[\s\S]*?\n\}/)?.[0] ?? "";
+    expect(productModel.length).toBeGreaterThan(0);
+    expect(productModel).not.toMatch(/normalizedCategoryId/);
+    /* 던지던 select 가 걷혔다 — Product 에서 없는 필드를 안 읽는다 */
+    expect(code).not.toMatch(/product: \{ select: \{ category: true, normalizedCategoryId: true \} \}/);
+  });
+
+  it("🔑 전면 무력화가 아니다 — 조직 단위 예산 게이트는 살아 있다", () => {
+    /* 🛑 이 단언이 없으면 위 단언과 "예산 게이트를 통째로 껐다" 가 구분되지 않는다.
+     * 갈리는 지점을 발화로 둔다: 진입 · 기간 키 · SERIALIZABLE · 감사 이벤트 · 차단. */
+    const code = stripComments(read(APPROVE));
+    expect(code).toMatch(/if \(orgId && purchaseRequest\.quoteId\)/);
+    expect(code).toMatch(/await validateCategoryBudgetInTransaction\(\s*tx,\s*orgId,/);
+    expect(code).toMatch(/resolvePeriodYearMonth\(orgTimezone, approvalTimestamp\)/);
+    expect(code).toMatch(/withSerializableBudgetTx\(db, async \(tx\) =>/);
+    expect(code).toMatch(/budgetAuditEvent = \{/);
+    /* hard_stop 차단 경로 보존 — 카테고리 축이 서면 즉시 발화해야 한다 */
+    expect(code).toMatch(/BudgetBlockedError/);
+  });
+
+  it("🔑 tx 가 더 이상 any 가 아니다 — 가린 쪽도 결함이었다", () => {
+    /* §4b↔§4c 후속. `tx: any` 가 "Product 에 없는 필드 select" 를 가렸다.
+     * Prisma.TransactionClient 로 조이면 콜백 안 모든 tx.* 가 타입 검사된다 —
+     * 수동 감사가 기계 감사로 바뀐다. */
+    const code = stripComments(read(APPROVE));
+    expect(code).not.toMatch(/withSerializableBudgetTx\(db, async \(tx: any\)/);
+    const lib = stripComments(read("src/lib/budget/budget-concurrency.ts"));
+    expect(lib).toMatch(/fn: \(tx: Prisma\.TransactionClient\) => Promise<T>/);
+  });
+
+  it("남은 블로커 기록 — 예산 게이트가 Product 에 없는 필드를 select 한다 (해소됨)", () => {
     /* 🛑 (나)-1b tvkl 통합 실측에서 나온 **블로커** (2026-08-30).
      *
      *   approve/route.ts 는 `product: { select: { normalizedCategoryId: true } }` 를
@@ -238,20 +281,13 @@ describe("🛑 아직 닫히지 않은 것 — 기록이 아니라 발화로 둔
      *   "발화한다" 는 mock 단언을 쓰면 그것이 false GREEN 이다(§4b: 도구가 도는 것과
      *   검증이 실물에 닿는 것은 다르다). 그래서 쓰지 않았다.
      *
-     * 처방은 판정 사안이다: 카테고리를 Product 에 FK 로 다는가, ProductCategory →
-     * SpendingCategory 매핑을 쓰는가(suggestCategoryMapping 은 backfill 전용 · 호출 금지),
-     * 아니면 미분류 null 로 두는가. 임의로 고르지 않는다.
-     *
-     * 이 단언은 현행(결함) 상태를 잠근다 — 고치면 RED 로 떨어지고, 그때가 ③ 발화를
-     * 실측할 시점이다. */
+     * ✅ 해소 (호영님 판정 2026-08-30 · 후보 3): 던지던 select 를 걷고 카테고리
+     *   미강제를 정직 표기로 바꿨다. 위 세 단언이 그 상태를 잠근다.
+     *   이 it 은 **왜 그렇게 됐는지**를 코드 옆에 남기기 위한 기록이고, 단언은
+     *   "던지던 형태가 돌아오지 않는다" 역방향 하나만 든다. */
     const code = stripComments(read(APPROVE));
-    expect(code).toMatch(
-      /include: \{ product: \{ select: \{ category: true, normalizedCategoryId: true \} \} \},/
-    );
-    const schema = read("prisma/schema.prisma");
-    const productModel = schema.match(/model Product \{[\s\S]*?\n\}/)?.[0] ?? "";
-    expect(productModel.length).toBeGreaterThan(0);
-    expect(productModel).not.toMatch(/normalizedCategoryId/);
+    expect(code).not.toMatch(/normalizedCategoryId: true/);
+    expect(code).not.toMatch(/item\.product\?\.normalizedCategoryId/);
   });
 
   it("표면은 아직 TeamRole 축이다 — quotes/[id] canApprove ((나)-2 대상)", () => {

@@ -176,7 +176,7 @@ export async function POST(
     // ── SERIALIZABLE 트랜잭션: 예산 검증 + 승인 + Order 생성 ──
     let budgetAuditEvent: BudgetGateAuditEvent | undefined;
 
-    const result = await withSerializableBudgetTx(db, async (tx: any) => {
+    const result = await withSerializableBudgetTx(db, async (tx) => {
       // 0. 카테고리 예산 검증 (SERIALIZABLE tx 안에서 — race condition 방지)
       let budgetWarnings: any[] = [];
 
@@ -184,17 +184,33 @@ export async function POST(
         const quoteForBudget = await tx.quote.findUnique({
           where: { id: purchaseRequest.quoteId },
           include: {
-            items: {
-              include: { product: { select: { category: true, normalizedCategoryId: true } } },
-            },
+            // §purchase-request-org-axis #카테고리축-부재 (호영님 판정 2026-08-30 · 후보 3).
+            //   이전: `product: { select: { category: true, normalizedCategoryId: true } }`
+            //   🛑 Product 에 normalizedCategoryId 가 **없다** — schema 에도 두 DB 에도.
+            //     (PurchaseRecord · MutationAuditEvent 에만 있다.) 이 select 는 실행되면
+            //     Prisma validation 에서 던졌다. tx 가 any 라 tsc 가 못 잡았고, 이 분기가
+            //     orgId undefined 로 도달 불가였던 동안 아무도 몰랐다 — 두 결함이
+            //     서로를 가린 형태다(§4b ↔ §4c).
+            //   판정: 후보 1(Product FK 신설)도 후보 2(ProductCategory 매핑)도 아니다.
+            //     prod 실측 SpendingCategory 0 · CategoryBudget 0 — **카테고리 축 자체가
+            //     아직 없다.** 없는 축을 없다고 표기하는 것이 정직하다((다) 원칙 승계).
+            items: { include: { product: { select: { category: true } } } },
           },
         });
 
         if (quoteForBudget?.items?.length) {
-          // normalizedCategoryId가 있으면 사용. 없으면 null(미분류).
-          // ⚠️ suggestCategoryMapping() 호출 금지 — fuzzy는 backfill only.
+          // 🛑 카테고리 단위 예산 게이트는 **미강제**다 — 카테고리 축 부재(알려진 상태).
+          //   normalizedCategoryId 를 항상 null 로 넘긴다. 게이트는 amountByCategory 가
+          //   비어 조기 통과(allowed: true · warnings 0)한다.
+          //   ⚠️ 이것은 예산 게이트 전면 무력화가 **아니다.** 조직 단위 축(orgId 로 진입 ·
+          //     periodYearMonth · SERIALIZABLE tx · audit event)은 그대로 살아 있고,
+          //     CategoryBudget 행이 서는 순간 카테고리 판정만 붙으면 된다.
+          //   ⚠️ suggestCategoryMapping() 호출 금지 — fuzzy는 backfill only (기존 조항).
+          //   📌 후보 1(Product.normalizedCategoryId FK 신설)은 독립 큐가 아니라
+          //     **CategoryBudget 실사용 트랙의 선행 DDL** 로 결박한다. 그 트랙이 열릴 때
+          //     축부터 세운다(prod Product 314행 백필 정책이 그때 필요하다).
           const gateItems = quoteForBudget.items.map((item: any) => ({
-            normalizedCategoryId: item.product?.normalizedCategoryId ?? null,
+            normalizedCategoryId: null,
             amount: item.lineTotal ?? (item.unitPrice ?? 0) * (item.quantity ?? 1),
           }));
 
@@ -331,8 +347,21 @@ export async function POST(
               approvalStatus: "in_app_approved",
             });
             if (createdList) {
-              // 변환 서비스는 items 포함 candidate 형태 소비 — 생성 row 그대로 전달
-              candidates.push(...createdList);
+              // 변환 서비스는 items 포함 candidate 형태 소비 — 생성 row 그대로 전달.
+              // 🛑 `tx: any` 를 걷자 드러난 형태 불일치 (2026-08-30 · §4b 후속).
+              //   candidates 는 Prisma POCandidate(+items) 이고 createdList 는
+              //   손으로 쓴 POCandidateRow 다. 실제 갈리는 필드는 하나 —
+              //     POCandidateRow.expectedDelivery : string | null
+              //     Prisma  .expectedDelivery       : Date   | null
+              //   소비자(convertPOCandidatesToOrders)가 쓰는 필드는 items · id ·
+              //   vendor · totalAmount · expectedDelivery 뿐이고, Prisma 는 DateTime 에
+              //   ISO 문자열을 받으므로 **런타임은 통과한다.** 타입만 갈린다.
+              //   📌 큐: 두 형태를 한쪽으로 통일한다(POCandidateRow 를 Prisma 파생 타입으로
+              //     바꾸는 쪽이 유력). 여기서 고치면 po-candidate-server 소비자 전수가
+              //     걸려 이 슬라이스 범위를 넘는다.
+              //   🔑 이 캐스트는 `tx: any` 와 다르다 — 그것은 콜백 **전체**를 껐고
+              //     이것은 알려진 불일치 **한 지점**만 연다. 범위가 곧 정직성이다.
+              candidates.push(...(createdList as unknown as typeof candidates));
             }
           }
 

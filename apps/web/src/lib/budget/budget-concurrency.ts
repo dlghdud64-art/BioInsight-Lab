@@ -21,6 +21,7 @@
  *   const result = await withSerializableBudgetTx(db, async (tx) => { ... });
  *   console.log(getBudgetTxTelemetry()); // 운영 계측
  */
+import type { Prisma } from "@prisma/client";
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 50;
@@ -105,7 +106,12 @@ export interface SerializableTxOptions {
  */
 export async function withSerializableBudgetTx<T>(
   db: any,
-  fn: (tx: any) => Promise<T>,
+  // §4b/§4c 후속 (호영님 판정 2026-08-30 조건 3) — `tx: any` 가 결함을 **가렸다.**
+  //   approve 라우트가 Product 에 없는 필드를 select 했는데 tsc 가 못 잡았고,
+  //   그 분기가 도달 불가였던 동안 아무도 몰랐다. 가린 쪽도 결함이다.
+  //   Prisma.TransactionClient 로 조이면 콜백 안 모든 tx.* 가 타입 검사된다.
+  //   🛑 db 는 여전히 any 다 — lib/db.ts 자체가 any 라 여기서는 못 좁힌다(별 트랙).
+  fn: (tx: Prisma.TransactionClient) => Promise<T>,
   options?: SerializableTxOptions,
 ): Promise<T> {
   const maxRetries = options?.maxRetries ?? MAX_RETRIES;

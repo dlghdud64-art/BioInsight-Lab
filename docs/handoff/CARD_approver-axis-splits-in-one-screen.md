@@ -537,3 +537,91 @@ Product 314 — **카테고리 축 자체가 prod 에 아직 없다.**
   🔑 내 변경 전후 실패 파일 집합을 diff 했다 — **신규 0 · 해소 0 · 기존 15**
 tsc 27 불변 · 신규/승계 sentinel 전부 GREEN
 ```
+
+---
+
+## 판정 1 (후보 3) 반영 + ③ 도달 실측 종결 (2026-08-30)
+
+### 후보 3 — 없는 축을 없다고 표기한다
+
+```
+이전  product: { select: { category: true, normalizedCategoryId: true } }   ← 던졌다
+지금  product: { select: { category: true } }  +  normalizedCategoryId: null 고정
+근거  prod 실측 SpendingCategory 0 · CategoryBudget 0 — 카테고리 축 자체가 없다.
+      후보 1은 아무도 안 쓰는 기능을 위해 Product 314행 백필 정책을 지금 정하는 것이고,
+      후보 2(ProductCategory 매핑)는 이미 조항으로 잠긴 경로다((다) 원칙 승계).
+```
+
+🔑 **전면 무력화가 아니다.** 조직 단위 축(orgId 진입 · periodYearMonth · SERIALIZABLE ·
+감사 이벤트 · `BudgetBlockedError` 차단 경로)은 그대로 살아 있고, sentinel 이 그 둘을
+갈라서 단언한다 — 그러지 않으면 "카테고리 미강제" 와 "예산 게이트를 껐다" 가 구분되지 않는다.
+
+📌 **후보 1은 독립 큐가 아니라 `CategoryBudget` 실사용 트랙의 선행 DDL 로 결박한다.**
+   그 트랙이 열릴 때 축부터 세운다(prod Product 314행 백필 정책이 그때 필요하다).
+
+### 조건 3 — 가린 쪽(`tx: any`) 처리
+
+```
+적용  withSerializableBudgetTx 의 fn: (tx: any) → (tx: Prisma.TransactionClient)
+      approve 라우트 호출부의 `async (tx: any)` → `async (tx)`
+효과  콜백 안 tx.* 전 select 가 타입 검사된다 — **수동 감사가 기계 감사로 바뀐다.**
+      tsc 27 불변으로 통과 = 이 콜백에 남은 무효 select 0 (기계로 증명)
+잔여  admin/orders/[id]/status 의 runTransaction 은 `tx: any` 유지 · 큐 등재
+```
+
+🛑 **"any 가 가린 게 이번 한 건뿐인가" 에 답이 나왔다 — 아니다.**
+   두 번째 콜백을 타이핑하자 즉시 2건이 더 나왔다:
+   `RestoreTx` 와 budgetEvent 구조 타입이 `Prisma.TransactionClient` 를 안 받는다.
+   손으로 쓴 tx 인터페이스들이 Prisma 타입과 갈려 있다 — 최소 diff 가 아니라 큐다.
+
+큐 등재 3건:
+
+```
+큐 A  admin/orders/[id]/status runTransaction 타이핑 (RestoreTx · budgetEvent 구조타입 정합)
+큐 B  POCandidateRow ↔ Prisma POCandidate 형태 통일
+      실제 갈리는 필드는 하나 — expectedDelivery: string|null vs Date|null.
+      소비자가 쓰는 필드(items·id·vendor·totalAmount·expectedDelivery)는 런타임 통과
+      (Prisma 가 DateTime 에 ISO 문자열을 받는다). 타입만 갈린다.
+      현재는 push 지점 1곳에 캐스트 — 🔑 `tx: any` 와 다르다. 그것은 콜백 전체를 껐고
+      이것은 알려진 불일치 한 지점만 연다. **범위가 곧 정직성이다.**
+큐 C  후보 1 (Product.normalizedCategoryId FK) — CategoryBudget 실사용 트랙에 결박
+```
+
+### ③ 경로 도달 실측 — tvkl 2차, 종결
+
+선언: `DECLARATION_org-axis-1b-tvkl-2.json` (1차는 오류 포함한 채 이력 보존)
+
+```
+PR.teamId       null  ← ③ 경로
+게이트 판정      role OWNER → 통과
+gateItems       [{ normalizedCategoryId: null, amount: 950000 }]
+결과            allowed true · warnings 0 · blockers 0
+auditEvent      { eventType: "budget_gate_decision", decisions: [], warningCount: 0 }
+복원            13테이블 count 사전과 일치 · probe1b- 잔여 0
+```
+
+🔑 **기대값은 "발화" 가 아니라 "도달" 이다.** 후보 3 하에서 카테고리 축이 없으므로
+warnings 0 이 정상이다. 갈라야 할 두 상태는 이것이다:
+
+```
+도달 + 카테고리 0    validateCategoryBudgetInTransaction 이 돌고 auditEvent 를 낸다  ← 지금
+도달 못 함(스킵)     함수가 아예 안 돌고 auditEvent 자체가 없다                      ← 이전
+🛑 둘 다 겉보기로는 "경고 0" 이다. **감사 이벤트 유무가 유일한 판별자다.**
+```
+
+이전 상태에서는 `orgId` 가 undefined 라 `if (orgId && quoteId)` 가 통째로 스킵됐다.
+지금은 함수가 실행되고 판정 객체가 나온다 — 그것이 이 트랙의 종결 증거다.
+
+⚠️ **재지 않은 것**: HTTP · 세션 인증 · SERIALIZABLE 경합 · 알림 전송.
+   "라우트 데이터 경로가 실 DB 위에서 도달" 까지다. "HTTP 승인이 동작" 이 아니다.
+
+### 프로브 자기 결함 2건 (기록)
+
+```
+1차  픽스처를 QuoteItem 에 넣었다 — 실물은 Quote.items → QuoteListItem 이다.
+     QuoteItem 은 `quoteItems` 로 따로 있는 레거시 관계이고 unitPrice·lineTotal·product
+     관계가 없다. 🔑 라우트 코드는 정상이었다 — **프로브가 틀렸지 코드가 아니다.**
+     "드리프트를 찾았다" 로 보고했으면 멀쩡한 코드를 고칠 뻔했다.
+2차  복원이 생성 플래그에 걸려 있어 부분 생성 시 안 돌았다 → id 목록 기준으로 교체.
+     선언 게이트(사전 스냅샷 baseline 0)가 그 잔여를 잡아 중단시켰다 — 방어 사례.
+```
