@@ -28,19 +28,16 @@
 import { db } from "@/lib/db";
 
 // ── 승인 권한 역할 집합 (A축) ──
-// §approver-axis (호영님 판정 2026-08-30) — 승인권자는 APPROVER · ADMIN · OWNER 다.
-//   근거 3: ① APPROVER 가 승인 전용 역할로 이미 존재하고 ② OWNER 1명뿐인 조직에서
-//   ADMIN 이 승인 못 하면 실패 모드가 생기며 ③ ADMIN → LAB_MANAGER 는 실험실 운영
-//   역할이지 예산 권한이 아니다.
-// 🛑 정본이다. 이 집합의 사본을 새로 만들지 않는다 — 측정된 5정의 중 하나를 정본으로
-//   올린 것이고, 나머지 표면 통일은 (나)-2 가 여기로 끌어온다.
-//   현재 미승계: src/lib/operations/cta-helpers.ts:59 (인라인 3역할 비교) — (나)-2 대상.
-export const ORG_APPROVER_ROLES = ["APPROVER", "ADMIN", "OWNER"] as const;
-
-/** 조직 역할이 승인 권한을 갖는가. null/undefined(비멤버)는 false. */
-export function isOrgApprover(role: string | null | undefined): boolean {
-  return !!role && (ORG_APPROVER_ROLES as readonly string[]).includes(role);
-}
+// §approver-axis (나)-2 — 정본은 `lib/permissions/org-approver-roles.ts` 로 내려갔다.
+//   이 파일은 최상단에서 `@/lib/db`(Prisma)를 import 하므로 `"use client"` 화면이
+//   여기서 끌어오면 Prisma 가 브라우저 번들에 실린다. 상수·순수 판정은 클라이언트에서도
+//   써야 하므로 분리하고, 서버 소비자를 위해 여기서 **재수출**한다.
+//   🛑 정의는 한 곳뿐이다 — 여기에 사본을 두지 않는다.
+export {
+  ORG_APPROVER_ROLES,
+  isOrgApprover,
+  countOrgApprovers,
+} from "@/lib/permissions/org-approver-roles";
 
 // ── 임계치 상수 ──
 // high tier — 1,000만원 이상 → org_owner escalation (직전 batch)

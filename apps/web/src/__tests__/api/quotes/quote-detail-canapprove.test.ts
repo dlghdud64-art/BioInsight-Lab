@@ -23,6 +23,13 @@ import { join } from "node:path";
 const REPO_ROOT = join(__dirname, "..", "..", "..", "..");
 const ROUTE = "src/app/api/quotes/[id]/route.ts";
 
+/* 🛑 주석 제거본으로 본다. 이 파일의 단언은 소스 전체 grep 이라, 승계 근거를 적은
+ * 주석에 옛 토큰(TeamRole 등)이 들어가면 **주석이 단언을 통과시킨다.**
+ * 실제로 (나)-2 에서 그렇게 false GREEN 이 났다. */
+function stripComments(src: string): string {
+  return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
+}
+
 function read(rel: string): string {
   return readFileSync(join(REPO_ROOT, rel), "utf8");
 }
@@ -33,15 +40,29 @@ describe("§11.209d-mobile-mutation Phase 1 — quote detail canApprove", () => 
     expect(src).toMatch(/canApprove/);
   });
 
-  it("teamMember 조회 (current user.id + quote.organizationId 또는 teamId 기반)", () => {
-    const src = read(ROUTE);
-    // teamMember 또는 organizationMember 조회 + role 체크
-    expect(src).toMatch(/teamMember|TeamRole\.ADMIN|teamMember\.role/);
+  it("승인권자 조회 — organizationMember(userId_organizationId) + role 체크", () => {
+    /* 🔑 승계 (§approver-axis (나)-2 · 2026-08-30 · **결정 교체**).
+     * 옛 결정: latestPending PR.teamId 의 TeamRole.ADMIN.
+     * 교체 이유: (나)-1b 가 서버 승인 게이트를 조직 축(APPROVER·ADMIN·OWNER)으로
+     *   옮겼다. 표면만 팀 축에 남으면 승인 권한자에게 CTA 가 숨는다 —
+     *   dead button 의 반대 방향(살아 있는데 감춰진 버튼)이다.
+     * 🛑 이 sentinel 이 잠그는 결정은 "canApprove 가 서버 권한 축과 같다" 이지
+     *   어느 enum 이냐가 아니다. 축이 바뀌었으므로 축을 승계한다. */
+    const src = stripComments(read(ROUTE));
+    expect(src).toMatch(/db\.organizationMember\.findUnique/);
+    expect(src).toMatch(/userId_organizationId/);
+    /* 🛑 select 부재 잠금 — organizationId 를 안 실으면 canApprove 가 항상 false 다.
+     * db 가 any 라 tsc 가 못 잡는 자리라 여기서 잡는다. */
+    expect(src).toMatch(/organizationId: true,/);
   });
 
-  it("ADMIN role 일 때만 canApprove === true 가능 (TeamRole.ADMIN 명시)", () => {
-    const src = read(ROUTE);
-    expect(src).toMatch(/TeamRole\.ADMIN/);
+  it("A축 정본으로 판정한다 — 사본 금지 (APPROVER · ADMIN · OWNER)", () => {
+    const src = stripComments(read(ROUTE));
+    expect(src).toMatch(/import \{ isOrgApprover \} from "@\/lib\/permissions\/org-approver-roles"/);
+    expect(src).toMatch(/canApprove = isOrgApprover\(memberForApproval\?\.role\)/);
+    /* 역방향 잠금 — 팀 축이 되살아나면 RED. prod TeamMember 0 이라 항상 false 가 된다. */
+    expect(src).not.toMatch(/TeamRole/);
+    expect(src).not.toMatch(/db\.teamMember/);
   });
 
   it("internalApprovalStatus PENDING 가 canApprove === true 의 전제 (PENDING 검사 명시)", () => {

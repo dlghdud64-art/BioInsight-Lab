@@ -70,11 +70,18 @@ describe("조직 카드", () => {
     expect(stripComments(read(ORG_LIST))).toMatch(/멤버 <b[\s\S]{0,300}?초대 대기 <b/);
   });
 
-  it("🛑 승인자 수를 표기하지 않는다 — OrgRow 에 approverCount 가 없다", () => {
-    /* 핸드오프 §1 은 3축(멤버·초대 대기·승인자)을 요구하지만 목록 응답에 승인자가 없다.
-     * adminCount 는 ADMIN||OWNER 축이라 APPROVER 와 다르다. 없는 사실을 만들지 않는다.
-     * 🔑 이 단언은 "아직 못 넣었다" 를 기록한다 — API 확장 슬라이스가 이걸 바꾼다. */
-    expect(stripComments(read(ORG_LIST))).not.toMatch(/approverCount/);
+  it("✅ 승인자 수를 표기한다 — 3축 복원 (핸드오프 §1)", () => {
+    /* 🔑 **결정 교체** (§approver-axis (나)-2 · 호영님 판정 2026-08-30).
+     * 옛 결정: "승인자 수를 표기하지 않는다 — 없는 사실을 만들지 않는다."
+     *   그 근거는 `adminCount 는 ADMIN||OWNER 축이라 APPROVER 와 다르다` 였다.
+     * 교체 이유: **그 전제가 사라졌다.** 목록·상세·CTA·승인 라우트가 모두 A축 정본을
+     *   쓰므로 이제 같은 것을 센다. 되살린 게 아니라 축이 서서 표기가 정직해진 것이다.
+     * 🛑 옛 결정의 취지(다른 축의 수를 승인자로 위장하지 않는다)는 아래 역방향으로 승계. */
+    const src = stripComments(read(ORG_LIST));
+    expect(src).toMatch(/승인자 <b/);
+    expect(src).toMatch(/\{org\.approverCount\}/);
+    /* 역방향 — 다른 축(adminCount)을 승인자 자리에 다시 쓰면 RED */
+    expect(src).not.toMatch(/adminCount/);
   });
 
   it("'관리 페이지 열기' 가 풀폭 버튼이다", () => {

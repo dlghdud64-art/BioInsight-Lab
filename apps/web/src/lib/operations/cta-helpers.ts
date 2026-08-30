@@ -8,6 +8,8 @@
 import type { QuoteStatus, OrderStatus, PurchaseRequestStatus } from "@prisma/client";
 import type { QuotePhase, PurchasePhase, ReceivingStatus, InventoryCondition } from "./state-definitions";
 import { quoteStatusToPhase, computePurchasePhase } from "./state-definitions";
+// §approver-axis (나)-2 — 승인 권한 역할 집합 정본 (client-safe · Prisma 미포함).
+import { isOrgApprover } from "@/lib/permissions/org-approver-roles";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Quote CTAs
@@ -56,7 +58,10 @@ export function canShowApprovePurchase(
   const phase = computePurchasePhase(prStatus, null, hasApprover);
   if (phase !== "PENDING_APPROVAL") return false;
   if (isRequester) return false;
-  return userRole === "APPROVER" || userRole === "ADMIN" || userRole === "OWNER";
+  // §approver-axis (나)-2 (2026-08-30) — 인라인 3역할 사본 제거. 정본 import.
+  //   같은 집합이 코드에 여러 벌 있으면 한쪽만 바뀌어 화면끼리 승인권자 수가 갈린다
+  //   (통일 전 실측: 정의 5개). 계산은 그대로, 출처만 정본으로 옮긴다.
+  return isOrgApprover(userRole);
 }
 
 export function canShowRejectPurchase(

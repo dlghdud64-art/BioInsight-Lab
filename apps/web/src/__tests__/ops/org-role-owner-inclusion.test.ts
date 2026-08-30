@@ -185,8 +185,13 @@ describe("§fabricated-data-surface — 조직 role 하드코딩 0", () => {
     expect(page.code).toMatch(/if \(derivedRole\)/);
   });
 
-  it("adminCount 도 응답에서 센다 (이전 하드코딩 1 폐기)", () => {
+  it("승인자 수도 응답에서 센다 (이전 하드코딩 1 폐기)", () => {
+    /* 🔑 승계 (§approver-axis (나)-2 · 2026-08-30 · 계수 축 통일).
+     * 잠그는 결정은 **"지어낸 값을 쓰지 않고 응답에서 센다"** 이지 필드명이 아니다.
+     * adminCount(ADMIN||OWNER) → approverCount(A축 정본)로 축이 옮겼고,
+     * 인라인 filter 대신 정본 함수를 쓴다 — 사본이 생기면 다시 갈라진다. */
     expect(page.code).not.toMatch(/adminCount:\s*1\b/);
-    expect(page.code).toMatch(/adminCount:\s*members\.filter/);
+    expect(page.code).not.toMatch(/approverCount:\s*1\b/);
+    expect(page.code).toMatch(/approverCount:\s*countOrgApprovers\(members\)/);
   });
 });

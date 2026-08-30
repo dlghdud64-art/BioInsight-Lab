@@ -5,7 +5,7 @@ import { getQuoteById } from "@/lib/api/quotes";
 import { db } from "@/lib/db";
 import { getScope, getScopeKey } from "@/lib/auth/scope";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
-import { ActivityType, Prisma, TeamRole } from "@prisma/client";
+import { ActivityType, Prisma } from "@prisma/client";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 import { sendEmail } from "@/lib/email/sender";
 import { generatePurchaseCompleteEmail } from "@/lib/email/templates";
@@ -26,6 +26,8 @@ import {
 // 매핑 (request-approval route 와 동일 source). canRequestApproval computed
 // 정합 위해.
 import { resolveApprovalPolicyForPlan } from "@/lib/billing/plan-descriptor";
+// §approver-axis (나)-2 — 승인 권한 판정 정본.
+import { isOrgApprover } from "@/lib/permissions/org-approver-roles";
 
 const logger = createLogger("quotes/[id]");
 
@@ -91,13 +93,19 @@ export async function GET(
     // PurchaseRequest 별도 batched query (Quote ↔ PR schema 역관계 0 정합).
     // resolver 의 derive helpers 재사용 = canonical 단일화.
     // §11.209d-contact — approver { email, phone } 추가 select
-    // §11.209d-mobile-mutation — teamId 추가 select (canApprove computed
-    //   정합: PENDING PR.teamId 기반 current user teamMember.role 체크)
+    // §11.209d-mobile-mutation — canApprove computed 를 위한 소속 select.
+    // §approver-axis (나)-2 (2026-08-30) — **organizationId 를 select 에 추가한다.**
+    //   🛑 이걸 빠뜨리면 `latestPendingPr?.organizationId` 가 undefined 라
+    //     canApprove 가 **언제나 false** 가 된다. db 가 any 라 tsc 도 못 잡는다 —
+    //     §reachability 의 "쿼리(select 부재)" 행 그대로다.
+    //   teamId 는 표면이 조직 축으로 옮겨 더 이상 canApprove 에 쓰이지 않지만,
+    //   PurchaseRequest 의 하위 범위 표시로 응답에 남긴다(소비자 회귀 0).
     const purchaseRequests = await db.purchaseRequest.findMany({
       where: { quoteId: id },
       select: {
         id: true,
         status: true,
+        organizationId: true,
         teamId: true,
         approverId: true,
         approver: { select: { name: true, email: true, phone: true } },
@@ -150,26 +158,35 @@ export async function GET(
     const approvalHistoryEntries = deriveApprovalHistoryEntries(prInputs);
 
     // §11.209d-mobile-mutation — current user 의 결재 권한 visibility 분기.
-    // PENDING + (current user.id 가 latestPending PR.teamId 의 TeamRole.ADMIN)
-    // 일 때만 true. canonical 권한은 server enforceAction + ADMIN role check
-    // (mutation route) — 본 field 는 dead button 0 visibility 만 보장.
+    //   본 field 는 dead button 0 visibility 만 보장한다. canonical 권한은
+    //   승인 mutation route(api/request/[id]/approve)의 서버 게이트다.
+    //
+    // §approver-axis (나)-2 (2026-08-30) — **표면을 서버 축에 맞춘다.**
+    //   이전: latestPending PR.teamId 의 TeamRole.ADMIN.
+    //   🛑 (나)-1b 가 서버 게이트를 조직 축(APPROVER·ADMIN·OWNER)으로 옮기면서
+    //     이 표면만 팀 축에 남아 **갈라졌다.** 방향은 dead button 의 반대다 —
+    //     승인 권한이 있는 사람에게 CTA 가 숨는 **살아 있는데 감춰진 버튼**이다.
+    //     게다가 teamId 가 null 인 생성 경로(work-queue request-approval)에서는
+    //     `if (latestPendingPr?.teamId)` 가 항상 거짓이라 언제나 false 였다.
+    //     prod 실측 TeamMember 0 — 이 표면은 **이전에도 항상 false** 였다.
+    //   🔑 visibility 가 서버보다 좁으면 보안 구멍은 아니지만, 사용자에게는
+    //     "권한이 없다" 는 거짓말이다. 축을 맞추는 것이 정합이다.
     let canApprove = false;
     if (internalApprovalStatus === "PENDING" && latestPendingRequestId) {
       const latestPendingPr = purchaseRequests.find(
         (pr: typeof purchaseRequests[number]) => pr.id === latestPendingRequestId,
       );
-      if (latestPendingPr?.teamId) {
-        const memberForApproval = await db.teamMember.findUnique({
+      if (latestPendingPr?.organizationId) {
+        const memberForApproval = await db.organizationMember.findUnique({
           where: {
-            userId_teamId: {
+            userId_organizationId: {
               userId: session.user.id,
-              teamId: latestPendingPr.teamId,
+              organizationId: latestPendingPr.organizationId,
             },
           },
+          select: { role: true },
         });
-        if (memberForApproval?.role === TeamRole.ADMIN) {
-          canApprove = true;
-        }
+        canApprove = isOrgApprover(memberForApproval?.role);
       }
     }
 

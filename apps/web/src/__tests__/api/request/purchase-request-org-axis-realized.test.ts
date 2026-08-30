@@ -187,7 +187,10 @@ describe("🔑 (나)-1b 종료 — 게이트 축이 조직 역할로 옮겼다",
   });
 
   it("정본 자체 — ORG_APPROVER_ROLES 는 APPROVER · ADMIN · OWNER 다", () => {
-    const lib = stripComments(read("src/lib/billing/approver-routing.ts"));
+    /* 🔑 (나)-2 승계 — 정본이 client-safe 모듈로 내려갔다. approver-routing 은
+     * Prisma 를 import 하므로 "use client" 화면이 못 쓴다. 정의는 여전히 한 곳뿐이고
+     * approver-routing 은 서버 소비자를 위해 재수출만 한다. */
+    const lib = stripComments(read("src/lib/permissions/org-approver-roles.ts"));
     expect(lib).toMatch(
       /export const ORG_APPROVER_ROLES = \["APPROVER", "ADMIN", "OWNER"\] as const;/
     );
@@ -253,6 +256,37 @@ describe("🛑 아직 닫히지 않은 것 — 기록이 아니라 발화로 둔
     expect(code).toMatch(/BudgetBlockedError/);
   });
 
+  it("🛑 판별자 — 도달과 스킵을 가르는 것은 auditEvent 하나뿐이다", () => {
+    /* 🔑 호영님 지적 2026-08-30. 후보 3 하에서 **도달 + 카테고리 0** 과
+     *   **도달 못 함(스킵)** 은 겉보기로 둘 다 "경고 0" 이다.
+     *   다음 세션이 warnings 0 을 보고 어느 상태인지 판별할 수단은 auditEvent 하나다.
+     *
+     * 🛑 이 단언이 없으면: 다음 리팩터가 orgId 해석을 건드려 게이트가 다시 조용히
+     *   스킵으로 돌아가도 **경고 0 이라 아무도 모른다.** 그게 이 트랙의 원래 결함이었다
+     *   (예산 검증이 필요한 유일한 경로가 소속 축 부재로 검증을 건너뛰었다).
+     *
+     * 그래서 판별 규칙 **자체**를 긍정으로 잠근다 — 두 자리 모두:
+     *   ① 게이트가 카테고리 0 일 때도 auditEvent 를 낸다 (판별자의 원천)
+     *   ② 라우트가 그것을 받아 budgetAuditEvent 에 싣는다 (판별자의 도달)
+     * 한쪽만 잠그면 다른 쪽이 끊겨도 GREEN 이다(§4원칙 — 전파 경로는 각각 단언한다). */
+    const gate = stripComments(read("src/lib/budget/category-budget-gate.ts"));
+    /* ① 카테고리 0 조기 반환도 budget_gate_decision 을 낸다 */
+    const earlyReturn = gate.match(
+      /if \(amountByCategory\.size === 0\) \{[\s\S]{0,600}?\n  \}/
+    )?.[0] ?? "";
+    expect(earlyReturn.length).toBeGreaterThan(0);
+    expect(earlyReturn).toMatch(/eventType: "budget_gate_decision"/);
+    expect(earlyReturn).toMatch(/decisions: \[\]/);
+    expect(earlyReturn).toMatch(/warningCount: 0/);
+
+    /* ② 라우트가 그 auditEvent 를 받아 싣는다 — orgId && quoteId 분기 안에서 */
+    const code = stripComments(read(APPROVE));
+    expect(code).toMatch(
+      /if \(orgId && purchaseRequest\.quoteId\)[\s\S]{0,3000}?budgetAuditEvent = \{\s*\.\.\.budgetValidation\.auditEvent,/
+    );
+    expect(code).toMatch(/targetEntityType: "purchase_request",/);
+  });
+
   it("🔑 tx 가 더 이상 any 가 아니다 — 가린 쪽도 결함이었다", () => {
     /* §4b↔§4c 후속. `tx: any` 가 "Product 에 없는 필드 select" 를 가렸다.
      * Prisma.TransactionClient 로 조이면 콜백 안 모든 tx.* 가 타입 검사된다 —
@@ -290,7 +324,20 @@ describe("🛑 아직 닫히지 않은 것 — 기록이 아니라 발화로 둔
     expect(code).not.toMatch(/item\.product\?\.normalizedCategoryId/);
   });
 
-  it("표면은 아직 TeamRole 축이다 — quotes/[id] canApprove ((나)-2 대상)", () => {
+  it("✅ 표면도 A축으로 모였다 — quotes/[id] canApprove ((나)-2 종료)", () => {
+    /* 🔑 직전 판본은 "표면은 아직 TeamRole 축이다" 를 **긍정으로** 잠그며
+     *   서버↔표면 갈림을 발화시키고 있었다. (나)-2 가 그것을 닫아 RED 가 떴고
+     *   여기서 승계 교체한다 — 설계된 자기소멸 경로 그대로다.
+     * 🛑 역방향: 표면이 팀 축으로 되돌아가면 RED. prod TeamMember 0 이라
+     *   그 순간 canApprove 는 승인권자에게도 영구 false 가 된다. */
+    const quoteRoute = stripComments(read("src/app/api/quotes/[id]/route.ts"));
+    expect(quoteRoute).toMatch(/canApprove = isOrgApprover\(memberForApproval\?\.role\)/);
+    expect(quoteRoute).toMatch(/organizationId: true,/);
+    expect(quoteRoute).not.toMatch(/TeamRole/);
+    expect(quoteRoute).not.toMatch(/db\.teamMember/);
+  });
+
+  it("옛 판본 기록 — 표면이 TeamRole 축이던 시절 ((나)-2 이전)", () => {
     /* 🛑 (나)-1b 가 서버를 A축으로 옮기면서 **표면과 갈라졌다.**
      *   서버: APPROVER · ADMIN · OWNER (조직 축)
      *   표면: quotes/[id]/route.ts 의 canApprove 는 여전히 TeamRole.ADMIN (팀 축)
@@ -298,9 +345,13 @@ describe("🛑 아직 닫히지 않은 것 — 기록이 아니라 발화로 둔
      *   (살아 있는데 감춰진 버튼)이고, quote-detail-canapprove sentinel 이
      *   "canApprove === false 시 CTA hide" 를 계약으로 잠그고 있어 결정 교체가 필요하다.
      * 🔑 prod 실측상 TeamMember 0 이라 그 표면은 **이전에도 항상 false** 였다 —
-     *   실사용 회귀는 0 이고 정합 부채만 남는다. 그래도 기록이 아니라 발화로 둔다.
-     *   (나)-2 가 표면을 A축으로 옮기면 여기가 RED 로 떨어진다. */
+     *   실사용 회귀는 0 이고 정합 부채만 남았다.
+     *
+     * ✅ 종료 ((나)-2 · 2026-08-30). 기록이 아니라 발화로 뒀기 때문에 닫히는 순간
+     *   RED 가 났고, 위 it 이 그것을 승계했다. 이 it 은 **왜 갈렸었는지**를 남긴다 —
+     *   단언은 "그 형태가 돌아오지 않는다" 역방향 하나만 든다. */
     const quoteRoute = stripComments(read("src/app/api/quotes/[id]/route.ts"));
-    expect(quoteRoute).toMatch(/memberForApproval\?\.role === TeamRole\.ADMIN/);
+    expect(quoteRoute).not.toMatch(/memberForApproval\?\.role === TeamRole\.ADMIN/);
+    expect(quoteRoute).not.toMatch(/userId_teamId/);
   });
 });

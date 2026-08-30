@@ -578,6 +578,10 @@ tsc 27 불변 · 신규/승계 sentinel 전부 GREEN
 
 ```
 큐 A  admin/orders/[id]/status runTransaction 타이핑 (RestoreTx · budgetEvent 구조타입 정합)
+      🛑 독립 큐가 아니다 — **다음에 그 라우트를 건드리는 슬라이스의 선행 조건**으로 결박한다.
+        손으로 쓴 tx 인터페이스가 Prisma 타입과 갈린 상태는 §4b↔§4c 의 "가리는 결함" 이
+        그 콜백 안에 계속 사는 것이다. 독립 큐로 두면 안 늙는다는 보장이 없다
+        (호영님 판정 2026-08-30).
 큐 B  POCandidateRow ↔ Prisma POCandidate 형태 통일
       실제 갈리는 필드는 하나 — expectedDelivery: string|null vs Date|null.
       소비자가 쓰는 필드(items·id·vendor·totalAmount·expectedDelivery)는 런타임 통과
@@ -624,4 +628,80 @@ warnings 0 이 정상이다. 갈라야 할 두 상태는 이것이다:
      "드리프트를 찾았다" 로 보고했으면 멀쩡한 코드를 고칠 뻔했다.
 2차  복원이 생성 플래그에 걸려 있어 부분 생성 시 안 돌았다 → id 목록 기준으로 교체.
      선언 게이트(사전 스냅샷 baseline 0)가 그 잔여를 잡아 중단시켰다 — 방어 사례.
+```
+
+---
+
+## (나)-2 표면 통일 (2026-08-30) — 정의 5개 → 정본 1개
+
+### 정본을 client-safe 모듈로 내렸다
+
+```
+신설  src/lib/permissions/org-approver-roles.ts
+      ORG_APPROVER_ROLES · isOrgApprover(role) · countOrgApprovers(members)
+왜    처음 세운 자리(lib/billing/approver-routing.ts)는 최상단에서 @/lib/db 를 import 한다.
+      조직 화면은 "use client" 라 거기서 끌어오면 **Prisma 가 브라우저 번들에 실린다.**
+      → 상수·순수 판정만 내리고 approver-routing 은 **재수출**만 한다. 정의는 한 곳뿐.
+```
+
+### 통일된 표면
+
+```
+목록 API      adminCount(ADMIN||OWNER) → approverCount = countOrgApprovers()
+목록 화면     OrgRow.adminCount → approverCount · 생성 직후 인라인 filter → 정본 함수
+              **3축 복원**: 멤버 · 초대 대기 · 승인자 (P5 가 뺐던 축)
+상세 화면     approverCount = APPROVER 단독 → countOrgApprovers() (A축)
+              adminCount 변수 은퇴 — 유일 소비처가 `approverCount + adminCount` 합산이었고
+              A축으로 넓어지면 그 합은 **중복 계수**다
+              "승인 권한 보유자" 목록 필터 → isOrgApprover()
+cta-helpers   인라인 3역할 비교 → isOrgApprover()
+quotes/[id]   canApprove: TeamRole.ADMIN(팀 축) → isOrgApprover(조직 축)
+승인 라우트    (나)-1b 에서 이미 A축 — 표면만 통일하면 절반이므로 함께 잠근다
+```
+
+🔑 **P5 의 "승인자 수를 표기하지 않는다" 는 결정 교체다.** 그 근거는
+`adminCount 는 ADMIN||OWNER 축이라 APPROVER 와 다르다 · 없는 사실을 만들지 않는다` 였는데,
+**그 전제가 사라졌다.** 되살린 게 아니라 축이 서서 표기가 정직해진 것이다.
+
+### 🛑 select 부재를 하나 잡았다
+
+`quotes/[id]` 의 `purchaseRequests` select 에 `teamId` 는 있고 `organizationId` 는 없었다.
+표면을 조직 축으로 옮기면서 그대로 뒀으면 `latestPendingPr?.organizationId` 가 undefined 라
+**canApprove 가 언제나 false** 였다. `db` 가 any 라 tsc 도 못 잡는다 —
+§reachability 의 "쿼리(select 부재)" 행이다. sentinel 에 `organizationId: true` 를 핀했다.
+
+### 자기소멸 경로가 설계대로 돌았다 — 4건 전부 예고대로 RED
+
+```
+organizations-approver-alarm-retired  "축은 미해결" 불변식 → **통일 단언으로 교체**
+organizations-list-three-column-p5    "approverCount 가 없다" → 3축 표기 단언
+ops/org-role-owner-inclusion          adminCount 핀 → approverCount + 정본 함수
+purchase-request-org-axis-realized    "표면은 아직 TeamRole 축" → A축 통일 단언
+```
+
+🔑 **미해결을 침묵이 아니라 단언으로 들었기 때문에 닫히는 순간 소리가 났다.**
+넷 다 역방향 잠금을 같은 자리에 남겼다 — 은퇴만 하면 새 결정이 무잠금이다.
+
+### 🛑 이번 슬라이스에서 또 당한 것 3건
+
+```
+① false GREEN — 승계 근거 주석에 옛 토큰(TeamRole)을 적었더니 소스 전체 grep 단언이
+   **주석에 매칭돼 통과**했다. quote-detail-canapprove 가 RED 로 떨어졌어야 했는데
+   안 떨어졌다. → 그 파일에 stripComments 를 도입해 주석 제거본으로 본다.
+   (feedback: 부정 단언은 주석 제거본에 — 이번엔 **긍정 단언**에서 같은 형태가 났다)
+② §4c heredoc 4회차 — stripComments 의 정규식이 또 깨져 수집 실패("no tests").
+   조항대로 Edit 도구로 고쳤다. **조항이 있는데도 또 썼다** — 이건 조항 문제가 아니라
+   실행 문제다.
+③ §4-a-2 3회차 — 사본 부활 잠금을 `=== "ADMIN" || role === "OWNER"` 로 걸었더니
+   상세 화면의 `isAdminRole`(멤버 목록 admin/member 표시 축)이 걸렸다.
+   그것은 승인권 판정이 아니다. 창을 `role === "APPROVER"` 비교식으로 좁혔다.
+   🔑 `role: "APPROVER"` 객체 리터럴은 허용 — 역할 선택기·권한표가 정당하게 쓴다.
+```
+
+### 게이트
+
+```
+스코프 6368 passed / 116 failed (41파일)
+  🔑 슬라이스 전후 실패 파일 집합 diff — **신규 0** (41 전부 기존)
+tsc 27 불변
 ```

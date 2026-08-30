@@ -63,6 +63,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { csrfFetch } from "@/lib/api-client";
+// §approver-axis (나)-2 — 승인 권한 계수 정본 (client-safe).
+import { countOrgApprovers, isOrgApprover } from "@/lib/permissions/org-approver-roles";
 
 // 활동 피드 카테고리별 스타일
 type ActivityCategory = "inventory" | "purchase" | "budget" | "team" | "approval" | "member" | "permission" | "quote" | "settings";
@@ -332,9 +334,15 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   // 통계
   const totalMembers = members.length;
   const activeCount = members.filter((m) => m.status !== "Pending").length;
-  const adminCount = members.filter((m) => m.role === "ADMIN" || m.role === "OWNER").length;
+  // §approver-axis (나)-2 (2026-08-30) — adminCount 은퇴.
+  //   유일 소비처가 아래 "승인 권한 보유자 (approverCount + adminCount)" 합산이었는데,
+  //   approverCount 가 A축(APPROVER·ADMIN·OWNER)으로 넓어지면 그 합은 **중복 계수**다.
+  //   축이 하나로 서면 더할 것이 없다 — 변수째 걷는다.
   const pendingCount = members.filter((m) => m.status === "Pending").length;
-  const approverCount = members.filter((m) => m.role === "APPROVER").length;
+  // §approver-axis (나)-2 — APPROVER 단독 계수를 A축(정본)으로 통일.
+  //   이전에는 이 화면의 KPI 가 APPROVER 만 세고, 같은 화면 아래 "승인 권한 보유자" 는
+  //   APPROVER+ADMIN+OWNER 를 세어 **한 화면 안에서 두 수가 달랐다.**
+  const approverCount = countOrgApprovers(members);
 
   // 팀원 리스트 변환
   const teamMembers: TeamMemberRow[] = members.map((m) => {
@@ -1249,11 +1257,11 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
                   <ClipboardCheck className="h-4 w-4 text-blue-500" />
-                  승인 권한 보유자 ({approverCount + adminCount})
+                  승인 권한 보유자 ({approverCount})
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {members.filter((m) => m.role === "APPROVER" || m.role === "ADMIN" || m.role === "OWNER").length === 0 ? (
+                {countOrgApprovers(members) === 0 ? (
                   <div className="flex items-center gap-2 py-4 justify-center">
                     {/* §approver-axis (다) — "지정해 주세요" 는 실행 불가능한 지시였다.
                         조직 범위에 지정 수단이 없으므로 사실만 적는다. */}
@@ -1261,7 +1269,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {members.filter((m) => m.role === "APPROVER" || m.role === "ADMIN" || m.role === "OWNER").map((m) => {
+                    {members.filter((m) => isOrgApprover(m.role)).map((m) => {
                       const name = m.user?.name || "이름 없음";
                       const initial = name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?";
                       return (

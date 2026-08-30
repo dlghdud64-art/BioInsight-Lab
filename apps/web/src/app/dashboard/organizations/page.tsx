@@ -6,7 +6,7 @@ import { csrfFetch } from "@/lib/api-client";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Plus, Users, Mail, Loader2, ExternalLink, AlertTriangle, Building2, Shield, ChevronRight, Zap, UserCheck, MailWarning, Search, LayoutGrid, List, MoreVertical, AlertCircle } from "lucide-react";
+import { Plus, Users, Mail, Loader2, ExternalLink, AlertTriangle, Building2, Shield, ChevronRight, Zap, UserCheck, MailWarning, Search, LayoutGrid, List, MoreVertical, AlertCircle, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,6 +23,8 @@ import { ORG_TYPES } from "@/lib/organizations/org-constants";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+// §approver-axis (나)-2 — 승인 권한 계수 정본 (client-safe).
+import { countOrgApprovers } from "@/lib/permissions/org-approver-roles";
 // framer-motion 은 DialogContent 와 호환 이슈로 제거 (추후 재검토)
 
 /* ------------------------------------------------------------------ */
@@ -34,7 +36,7 @@ interface OrgRow {
   name: string;
   description: string;
   memberCount: number;
-  adminCount: number;
+  approverCount: number;
   pendingCount: number;
   plan: string;
   role: string;
@@ -119,8 +121,11 @@ function getAvatarColor(name: string) {
 //   prod 실측: Team 0 · TeamMember 0 → 그 게이트를 통과할 수 있는 주체가 존재하지 않는다.
 //   🔑 "미구현" 이 아니라 **도달 가능한 상태 부재** 다. 코드는 있다.
 //   → 지시를 내리고 사실만 적는다. 숫자 표면은 (나) 라벨 범위 정정에서 다룬다.
-//   🛑 축은 미해결: 여기 adminCount 는 ADMIN||OWNER 이고 상세의 approverCount 는 APPROVER 다.
-//      문구를 내려도 그 갈림은 닫히지 않았다 — (나) 대상. sentinel 이 이 사실을 잠근다.
+//   ✅ 축 해결 (나)-2 (2026-08-30): 목록·상세·CTA·승인 라우트가 모두 A축
+//      (APPROVER · ADMIN · OWNER) 정본 `lib/permissions/org-approver-roles` 를 쓴다.
+//      (다) 시점에 "지정해도 승인이 안 열린다" 던 이유는 승인 라우트가 TeamRole.ADMIN 을
+//      봤기 때문인데, (나)-1b 가 그것을 조직 축으로 교체했다 —
+//      **이제 APPROVER 를 주면 실제로 승인이 열린다.** 지시형을 되살릴지는 별 판정이다.
 function getOrgStatusLine(org: OrgRow): string | null {
   if (org.pendingCount > 0) return `초대 대기 ${org.pendingCount}명`;
   return null;
@@ -136,7 +141,7 @@ function mapOrg(org: any): OrgRow {
     name: org.name ?? "",
     description: org.description ?? "",
     memberCount: org.memberCount ?? (Array.isArray(org.members) ? org.members.length : 0),
-    adminCount: org.adminCount ?? 0,
+    approverCount: org.approverCount ?? 0,
     pendingCount: org.pendingCount ?? 0,
     plan: org.plan ?? "FREE",
     role: org.role ?? "VIEWER",
@@ -290,7 +295,8 @@ export default function OrganizationsPage() {
           description: createdOrg?.description ?? formData.description.trim() ?? "",
           memberCount: members.length,
           // 이전 `adminCount: 1` 도 같은 계열의 지어낸 값이었다 — 응답에서 센다.
-          adminCount: members.filter((m: any) => m?.role === "OWNER" || m?.role === "ADMIN").length,
+          // §approver-axis (나)-2 — 계수 정본으로 통일 (인라인 사본 제거).
+          approverCount: countOrgApprovers(members),
           pendingCount: 0,
           plan: createdOrg?.plan ?? "FREE",
           role: derivedRole,
@@ -625,10 +631,11 @@ function OrgCard({
         </div>
 
         {/* 통계 1줄 (§org-management-redesign P6 — 가짜 "최종 활동" 시간 제거, §11.318)
-            🛑 §org-management-web P5 — 핸드오프 §1 은 "멤버 · 초대 대기 · **승인자**" 3축을
-               요구하지만 OrgRow 에 approverCount 가 없다(memberCount · adminCount ·
-               pendingCount 뿐이고 adminCount 는 ADMIN||OWNER 로 APPROVER 와 다른 축이다).
-               없는 사실을 만들지 않는다 — 2축만 싣고 승인자는 API 확장 뒤로 이월한다. */}
+            ✅ §approver-axis (나)-2 (2026-08-30) — 3축 복원.
+               P5 가 승인자 축을 뺀 이유는 "adminCount 는 ADMIN||OWNER 라 APPROVER 와 다른
+               축" 이라 없는 사실을 만들지 않기 위해서였다. 그 전제가 사라졌다 —
+               목록·상세·승인 라우트가 모두 A축 정본을 쓰므로 이제 **같은 것을 센다.**
+               🔑 되살린 게 아니라 축이 서서 표기가 정직해진 것이다. */}
         <div className={`flex items-center gap-4 text-xs text-slate-500 ${viewMode === "list" ? "" : "mb-3"}`}>
           <span className="flex items-center gap-1.5">
             <Users className="h-3.5 w-3.5 text-slate-400" />
@@ -637,6 +644,10 @@ function OrgCard({
           <span className="flex items-center gap-1.5">
             <Mail className={`h-3.5 w-3.5 ${org.pendingCount > 0 ? "text-yellow-500" : "text-slate-400"}`} />
             초대 대기 <b className={`tabular-nums ${org.pendingCount > 0 ? "text-yellow-600" : "text-slate-700"}`}>{org.pendingCount}</b>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <ShieldCheck className={`h-3.5 w-3.5 ${org.approverCount === 0 ? "text-yellow-500" : "text-slate-400"}`} />
+            승인자 <b className={`tabular-nums ${org.approverCount === 0 ? "text-yellow-600" : "text-slate-700"}`}>{org.approverCount}</b>명
           </span>
         </div>
 

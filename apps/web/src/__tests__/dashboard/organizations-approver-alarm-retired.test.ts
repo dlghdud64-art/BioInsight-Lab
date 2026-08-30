@@ -66,7 +66,11 @@ describe("표시형 3곳 — 살아 있음 (부재 단언만으로는 '실수로
   });
 
   it("상세 — '승인 권한 보유자 (N)' 카운트가 남아 있다", () => {
-    expect(stripComments(read(DETAIL))).toMatch(/승인 권한 보유자 \(\{approverCount \+ adminCount\}\)/);
+    /* 🔑 승계 (§approver-axis (나)-2 · 2026-08-30). 잠그는 결정은 "카운트가 남아 있다"
+     * 이지 합산식이 아니다. approverCount 가 A축으로 넓어져 adminCount 를 흡수했으므로
+     * 더할 것이 없다 — `approverCount + adminCount` 는 이제 **중복 계수**다. */
+    expect(stripComments(read(DETAIL))).toMatch(/승인 권한 보유자 \(\{approverCount\}\)/);
+    expect(stripComments(read(DETAIL))).not.toMatch(/approverCount \+ adminCount/);
   });
 
   it("목록 — 초대 대기 상태 라인이 남아 있다 (승인권자 분기만 걷어냈다)", () => {
@@ -75,19 +79,66 @@ describe("표시형 3곳 — 살아 있음 (부재 단언만으로는 '실수로
   });
 });
 
-describe("🛑 축은 미해결 — 안 보이는 것과 닫힌 것을 가른다", () => {
-  it("목록은 adminCount(ADMIN||OWNER) · 상세는 approverCount(APPROVER) 로 여전히 갈린다", () => {
-    /* (다)가 문구를 내리면 그 갈림이 **화면에서 안 보이게** 된다.
-     * 안 보이는 것과 닫힌 것이 갈리지 않으면 다음 세션이 (나)를 스킵한다.
-     * 이 단언은 "아직 두 축이다" 를 발화한다 — (나)에서 하나로 좁혀지면 이 단언이
-     * RED 가 되고, 그때 이 describe 를 은퇴시키면서 통일 단언으로 교체한다.
-     * (오늘 OWNER 불변식에서 쓴 형태 — 미해결을 침묵이 아니라 단언으로 든다.) */
+describe("✅ 축 해결 — 통일 단언 (직전 판본의 '미해결' 을 승계 교체)", () => {
+  /* 🔑 직전 판본은 "목록은 adminCount(ADMIN||OWNER) · 상세는 approverCount(APPROVER) 로
+   *   여전히 갈린다" 를 **긍정으로** 잠그고 있었다. 설계된 자기소멸 경로 그대로
+   *   (나)-2 가 축을 모으자 RED 가 떴고, 여기서 통일 단언으로 교체한다.
+   *   미해결을 침묵이 아니라 단언으로 들었기 때문에 **닫히는 순간 소리가 났다.**
+   *
+   * 🛑 은퇴만 하면 새 결정이 무잠금이다 — 역방향(사본 부활)을 같은 자리에 남긴다. */
+
+  it("정본이 하나다 — 목록·상세·CTA 가 같은 모듈을 쓴다", () => {
     const list = stripComments(read(LIST));
     const detail = stripComments(read(DETAIL));
-    expect(list).toMatch(/adminCount = allMembers|adminCount: number|org\.adminCount/);
-    expect(detail).toMatch(/const approverCount = members\.filter\(\(m\) => m\.role === "APPROVER"\)/);
-    expect(detail).toMatch(/const adminCount = members\.filter\(\(m\) => m\.role === "ADMIN" \|\| m\.role === "OWNER"\)/);
-    /* 두 축이 아직 하나로 안 모였다는 사실 자체 — 목록에 approverCount 가 없다 */
-    expect(list).not.toMatch(/approverCount/);
+    const cta = stripComments(read("src/lib/operations/cta-helpers.ts"));
+    for (const src of [list, detail, cta]) {
+      expect(src).toMatch(/from "@\/lib\/permissions\/org-approver-roles"/);
+    }
+    expect(list).toMatch(/approverCount: countOrgApprovers\(members\)/);
+    expect(detail).toMatch(/const approverCount = countOrgApprovers\(members\)/);
+    expect(cta).toMatch(/return isOrgApprover\(userRole\)/);
+  });
+
+  it("정본 내용 — APPROVER · ADMIN · OWNER (client-safe 모듈)", () => {
+    const canon = stripComments(read("src/lib/permissions/org-approver-roles.ts"));
+    expect(canon).toMatch(
+      /export const ORG_APPROVER_ROLES = \["APPROVER", "ADMIN", "OWNER"\] as const;/
+    );
+    expect(canon).toMatch(/export function isOrgApprover/);
+    expect(canon).toMatch(/export function countOrgApprovers/);
+    /* 🛑 Prisma 를 끌어오면 "use client" 화면이 번들에 DB 클라이언트를 싣는다 */
+    expect(canon).not.toMatch(/@\/lib\/db/);
+    expect(canon).not.toMatch(/PrismaClient/);
+  });
+
+  it("🛑 사본 부활 잠금 — 승인권 비교를 인라인으로 되살리면 RED", () => {
+    /* 통일 전 실측 정의 5개의 재발을 막는다. 판정/계수는 정본 함수로만 한다.
+     *
+     * 🛑 창을 **비교식**으로 좁힌다. 처음엔 `=== "ADMIN" || role === "OWNER"` 도 금지로
+     *   걸었는데, 상세 화면의 `isAdminRole`(멤버 목록을 admin/member 표시로 접는 UI 축)이
+     *   걸렸다 — 그것은 승인권 판정이 아니다. 결정은 "승인권 비교를 인라인으로 두지
+     *   않는다" 이지 "파일에 ADMIN·OWNER 문자열이 없다" 가 아니다.
+     *   (§4-a-2 — 부정 단언이 결정보다 넓으면 멀쩡한 코드를 잠근다. 오늘 3회차.)
+     *
+     * 🔑 `role: "APPROVER"` 같은 **객체 리터럴은 허용**한다 — 역할 선택기·권한표가
+     *   그 문자열을 정당하게 쓴다. 금지하는 것은 `role === "APPROVER"` 비교뿐이다. */
+    for (const rel of [
+      "src/app/dashboard/organizations/page.tsx",
+      "src/app/dashboard/organizations/[id]/page.tsx",
+      "src/lib/operations/cta-helpers.ts",
+      "src/app/api/organizations/route.ts",
+    ]) {
+      const src = stripComments(read(rel));
+      expect(src).not.toMatch(/role === "APPROVER"/);
+    }
+  });
+
+  it("승인 라우트도 같은 축이다 — 표면만 통일하면 절반이다", () => {
+    /* (다) 시점의 결함은 "APPROVER 를 줘도 승인이 안 열린다" 였다.
+     * 표면 5정의를 모아도 서버가 TeamRole 을 보면 그대로다 — 1b 가 그것을 옮겼고
+     * 여기서 함께 잠근다. 둘이 갈라지면 다시 실행 불가능한 표시가 된다. */
+    const approve = stripComments(read("src/app/api/request/[id]/approve/route.ts"));
+    expect(approve).toMatch(/isOrgApprover\(actorOrgMembership\?\.role\)/);
+    expect(approve).not.toMatch(/TeamRole/);
   });
 });

@@ -5,6 +5,8 @@ import { createOrganization, ORGANIZATION_TYPE_OPTIONS } from "@/lib/api/organiz
 import { z } from "zod";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { SubscriptionPlan, PLAN_ORDER, getPlanDisplayName, getPlanLimits } from "@/lib/plans";
+// §approver-axis (나)-2 — 승인 권한 계수 정본.
+import { countOrgApprovers } from "@/lib/permissions/org-approver-roles";
 
 const createOrganizationSchema = z.object({
   name: z.string().min(1, "조직 이름을 입력해주세요.").max(200),
@@ -66,14 +68,16 @@ export async function GET(request: NextRequest) {
       .map((m: any) => {
         const org = m.organization;
         const allMembers = org.members || [];
-        const adminCount = allMembers.filter(
-          (mem: any) => mem.role === "ADMIN" || mem.role === "OWNER"
-        ).length;
+        // §approver-axis (나)-2 (2026-08-30) — 목록 계수를 A축 정본으로 통일.
+        //   이전: ADMIN||OWNER (APPROVER 배제). 상세 화면은 APPROVER 만 셌다 —
+        //   같은 조직의 "승인권자 수" 가 목록과 상세에서 달랐다.
+        //   승인 라우트가 A축으로 옮겼으므로(1b) 표면도 같은 축을 센다.
+        const approverCount = countOrgApprovers(allMembers);
         return {
           ...org,
           members: allMembers,
           memberCount: allMembers.length,
-          adminCount,
+          approverCount,
           pendingCount: 0,
           role: m.role ?? "VIEWER",
           // §11.193d Phase 2.3 — Json column raw value forward.

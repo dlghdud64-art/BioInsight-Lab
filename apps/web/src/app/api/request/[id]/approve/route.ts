@@ -356,7 +356,8 @@ export async function POST(
               //   소비자(convertPOCandidatesToOrders)가 쓰는 필드는 items · id ·
               //   vendor · totalAmount · expectedDelivery 뿐이고, Prisma 는 DateTime 에
               //   ISO 문자열을 받으므로 **런타임은 통과한다.** 타입만 갈린다.
-              //   📌 큐: 두 형태를 한쪽으로 통일한다(POCandidateRow 를 Prisma 파생 타입으로
+              //   📌 **큐 B** (카드: CARD_approver-axis-splits-in-one-screen.md) —
+              //     두 형태를 한쪽으로 통일한다(POCandidateRow 를 Prisma 파생 타입으로
               //     바꾸는 쪽이 유력). 여기서 고치면 po-candidate-server 소비자 전수가
               //     걸려 이 슬라이스 범위를 넘는다.
               //   🔑 이 캐스트는 `tx: any` 와 다르다 — 그것은 콜백 **전체**를 껐고
