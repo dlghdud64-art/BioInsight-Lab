@@ -834,3 +834,103 @@ p4a             actionLabel 금지 해제 · 옛 문구 금지 유지 (틀린 �
 스코프        4199 passed / 2 failed (pretendard · sds — 오래된 기존 결함)
 tsc          27 불변
 ```
+
+---
+
+## §prisma-target-helper — 정책 셋 · 파서 하나 (2026-08-30)
+
+이월 큐 E 착수. `.env` 사고(§2b 사례 5)의 **구조 원인**을 경로로 막는다.
+
+### 🛑 P0 자기 보고 — 바이트를 재고 **근거를 안 읽었다** (§2b 계열)
+
+```
+P0 실측    smoke·pilot 의 extractSupabaseProjectRef 가 408 vs 406 바이트,
+           차이는 빈 줄뿐 → "사본이다" 로 보고
+안 읽은 것 pilot/guard.ts:172-176 에 **"by design" 이라고 적힌 근거 주석**이 있었다
+           "Kept local (not shared with smoke guard) so the two tracks stay
+            independent and diverge without coupling."
+결과       판정 A(승계·통합)를 받고 실행하다 그 주석을 만나 **중간에 멈췄다**
+```
+
+🔑 §2b 와 같은 축이다 — 값은 맞았는데 **그 값이 무엇을 뜻하는지**를 안 셌다.
+   "같은 코드다" 와 "같아도 되는 코드다" 는 다른 질문이고, 후자의 답은 주석에 있었다.
+   → 코드 중복을 셀 때 **바이트 비교 다음 줄이 근거 읽기**다.
+
+### 결정 교체 (호영님 명시 승인 · A-1a)
+
+```
+교체 근거  그 주석이 잠근 것은 **정책 독립**이고, 내려간 core 는 **정책 없는 파서**다.
+          prod 금지(smoke) / opt-in 허용(pilot) 은 각 wrapper 에 그대로 남는다.
+          🔑 Supabase URL 형식이 두 트랙에서 갈라지는 날이 오면 그건 분기가 아니라
+            **둘 중 하나가 깨진 것**이다(호영님).
+기록      pilot 주석 자리에 옛 근거 원문 + 교체 사유 병기. 이력을 지우지 않는다.
+증거      정책·문안·실패 사유 union 무변경 → smoke 11 it · pilot 13 it 그대로 GREEN
+```
+
+### 구조 — 정책 셋 · 파서 하나
+
+```
+scripts/lib/db-target-core.ts   파서 (정책 0 · env 키를 모른다 · process/console 없음)
+  ├ scripts/smoke/guard.ts      정책: prod **금지** (allow-list 오염 검출)
+  ├ scripts/pilot/guard.ts      정책: prod **허용**, opt-in 토큰
+  └ scripts/lib/db-target.ts    정책: **test 기본 · prod 는 토큰** ← 신설 (10지점용)
+```
+
+### 키 판정 3건 (호영님)
+
+```
+URL         DIRECT_URL **재사용**. 새 URL 키는 URL 의 두 번째 진실이다 —
+            이 트랙이 죽인 것과 같은 형태를 env 에 만드는 셈이다.
+            guard 의 일은 URL 을 갖는 게 아니라 **그 URL 의 ref 를 검증**하는 것.
+allow-list  SCRIPT_DB_ALLOWED_REFS — **tvkl 만.**
+            🛑 xhid 는 어느 목록에도 안 들어간다. 목록에 넣는 순간 "허용된 대상" 이
+              되고 토큰의 존재 이유가 사라진다.
+prod 토큰    SCRIPT_DB_ALLOW_PROD=YES-PROD-<ref> — 값에 **대상 ref 를 결박**해
+            토큰 복사가 다른 prod 를 자동 승인하지 못하게.
+            🔑 pilot 선례에서 승계하는 건 문자열이 아니라 **설계**다:
+              명시적 · 자기서술적 · 우연히 설정 불가.
+```
+
+시작 로그 형식 고정: `[db-target] ref=<ref> mode=<test|prod>` — 이후 모든 프로브
+보고에서 이 줄이 **대상 확정 증빙**이다(§2c).
+
+### env 추가 — 기존 키 수정 0
+
+```
+.env        키 6 → 7   .env.local  키 18 → 19   (추가 1씩 · 기존 본문 바이트 보존 확인)
+SCRIPT_DB_ALLOWED_REFS = tvkl…   (DIRECT_URL 에서 파생해 기록 — 채팅에 값 미노출)
+SCRIPT_DB_ALLOW_PROD   미설정 — prod 를 겨냥할 때만 그 자리에서 준다
+```
+
+### 🛑 소생 대기 — smoke/pilot 7지점은 여전히 fail-closed
+
+```
+DATABASE_URL_SMOKE · ALLOWED_SMOKE_DB_SENTINELS · PRODUCTION_DB_PROJECT_REF   미설정
+DATABASE_URL_PILOT · ALLOWED_PILOT_DB_SENTINELS · PILOT_REQUIRES_EXPLICIT_OPT_IN 미설정
+```
+
+⚠️ 이 키들은 **제가 만들 수 없습니다** — smoke 는 별도 Supabase 프로젝트(ADR-001
+Option B)를 요구하고 pilot 은 prod 자격증명을 요구합니다. :546 때와 같은 분류
+(소생 경로가 서면 도는지 확인 대상)이지만, **선행이 인프라라 이 슬라이스 밖**입니다.
+
+### 삭제 — 15건 (승인 범위 내)
+
+```
+승인      untracked 프로브 7 + 잔여 11 = 18
+실측      18 중 **3건이 tracked** (_analytics_comp_probe.mjs · _reorder_comp_probe.mjs ·
+          _enroll_tx.cjs) — 승인 근거가 "이전 세션 untracked 잔여물" 이었으므로
+          🛑 그 3건은 **삭제하지 않았다.** git rm 은 사전 승인 사안이다.
+실행      untracked 15건만 삭제
+```
+
+### 게이트
+
+```
+단위 테스트  src/__tests__/scripts 153/153 GREEN (12파일)
+            신규 db-target.test.ts 16 it — 정책 3종 분리 · 토큰 ref 결박 ·
+            사본 부활 잠금 · core 정책 무소유 · 로그 형식
+주입 프로브  9/9 검출 · 대조군 GREEN · 4파일 바이트 무손상 · baseline 0 확인
+            🔑 **대조군 grep 0 을 프로브가 자체 실행**하고 0이 아니면 시작 거부
+              (§4-a-2 3-c 개정 실물 · 이월 ① 도구화의 첫 조각)
+tsc         27 불변
+```

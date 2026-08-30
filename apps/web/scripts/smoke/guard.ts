@@ -20,6 +20,14 @@
  * operating constraints that this guard enforces.
  */
 
+// §prisma-target-helper (호영님 판정 A · 2026-08-30) — 공통 핵심 승계.
+//   URL 파싱 · ref 추출 · allow-list 파싱은 pilot guard 와 **글자까지 같은 사본**이었다.
+//   정책(prod 금지 vs opt-in 허용)은 방향이 반대라 여기 남기고, 기계만 내렸다.
+import {
+  parseAllowList,
+  resolveProjectRef,
+} from "../lib/db-target-core";
+
 export interface SmokeDatabaseGuardEnv {
   readonly DATABASE_URL_SMOKE?: string;
   readonly ALLOWED_SMOKE_DB_SENTINELS?: string;
@@ -67,11 +75,7 @@ export function checkSmokeDatabaseTarget(
     };
   }
 
-  const rawAllowList = env.ALLOWED_SMOKE_DB_SENTINELS ?? "";
-  const allowList = rawAllowList
-    .split(",")
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
+  const allowList = parseAllowList(env.ALLOWED_SMOKE_DB_SENTINELS);
 
   if (allowList.length === 0) {
     return {
@@ -93,21 +97,18 @@ export function checkSmokeDatabaseTarget(
     };
   }
 
-  let parsed: URL;
-  try {
-    parsed = new URL(rawUrl);
-  } catch (err) {
-    return {
-      ok: false,
-      reason: "unparseable_url",
-      detail: `DATABASE_URL_SMOKE is not a parseable URL: ${
-        err instanceof Error ? err.message : String(err)
-      }`,
-    };
-  }
-
-  const projectRef = extractSupabaseProjectRef(parsed);
-  if (!projectRef) {
+  // §prisma-target-helper — URL 파싱 + ref 추출은 공통 핵심이 든다.
+  //   실패 사유는 중립 이름으로 오고, 문안은 여기서 자기 env 키를 넣어 만든다
+  //   (기존 메시지 한 글자도 안 바뀐다 — 그것이 이 통합의 회귀 증거다).
+  const resolved = resolveProjectRef(rawUrl);
+  if (!resolved.ok) {
+    if (resolved.reason === "unparseable_url") {
+      return {
+        ok: false,
+        reason: "unparseable_url",
+        detail: `DATABASE_URL_SMOKE is not a parseable URL: ${resolved.parseError}`,
+      };
+    }
     return {
       ok: false,
       reason: "project_ref_not_extractable",
@@ -115,6 +116,7 @@ export function checkSmokeDatabaseTarget(
         "Could not extract a Supabase project-ref from DATABASE_URL_SMOKE. Expected `postgres.<ref>` user or `db.<ref>.supabase.co` host.",
     };
   }
+  const projectRef = resolved.projectRef;
 
   if (!allowList.includes(projectRef)) {
     return {
@@ -133,29 +135,6 @@ export function checkSmokeDatabaseTarget(
   };
 }
 
-/**
- * Extract the Supabase project-ref from a connection URL.
- *
- * Supported shapes (ADR-001 Option B uses Supabase):
- *   - Pooler:  postgresql://postgres.<REF>:password@aws-0-REGION.pooler.supabase.com:6543/postgres
- *   - Direct:  postgresql://postgres:password@db.<REF>.supabase.co:5432/postgres
- *
- * Returns null for non-Supabase URLs (localhost, other providers). The
- * guard will then reject them — the ADR commits us to Supabase only.
- */
-function extractSupabaseProjectRef(u: URL): string | null {
-  const username = decodeURIComponent(u.username || "");
-  if (username.startsWith("postgres.")) {
-    const ref = username.slice("postgres.".length);
-    if (ref.length > 0) return ref;
-  }
-
-  const host = u.hostname;
-  const directMatch = host.match(/^db\.([a-z0-9]+)\.supabase\.co$/i);
-  if (directMatch) return directMatch[1];
-
-  return null;
-}
 
 /**
  * Runner-facing form. Call this at the very top of any smoke entry point.

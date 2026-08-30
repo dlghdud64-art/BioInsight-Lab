@@ -32,6 +32,14 @@
  * DATABASE_URL, no soft mode.
  */
 
+// §prisma-target-helper (호영님 명시 승인 2026-08-30 · A-1a) — 공통 핵심 승계.
+//   URL 파싱 · ref 추출 · allow-list 파싱은 smoke guard 와 글자까지 같은 사본이었다.
+//   정책(prod 금지 vs opt-in 허용)은 방향이 반대라 여기 남기고, 기계만 내렸다.
+import {
+  parseAllowList,
+  resolveProjectRef,
+} from "../lib/db-target-core";
+
 /**
  * Exact opt-in token (Q4 approved 2026-04-23).
  *
@@ -111,11 +119,7 @@ export function checkPilotDatabaseTarget(
   }
 
   // 3. Allow list must contain something we can match against.
-  const rawAllowList = env.ALLOWED_PILOT_DB_SENTINELS ?? "";
-  const allowList = rawAllowList
-    .split(",")
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
+  const allowList = parseAllowList(env.ALLOWED_PILOT_DB_SENTINELS);
 
   if (allowList.length === 0) {
     return {
@@ -127,21 +131,16 @@ export function checkPilotDatabaseTarget(
   }
 
   // 4. Parse URL and extract the Supabase project-ref.
-  let parsed: URL;
-  try {
-    parsed = new URL(rawUrl);
-  } catch (err) {
-    return {
-      ok: false,
-      reason: "unparseable_url",
-      detail: `DATABASE_URL_PILOT is not a parseable URL: ${
-        err instanceof Error ? err.message : String(err)
-      }`,
-    };
-  }
-
-  const projectRef = extractSupabaseProjectRef(parsed);
-  if (!projectRef) {
+  //    §prisma-target-helper — 공통 핵심이 든다. 문안은 여기서 자기 env 키로 만든다.
+  const resolved = resolveProjectRef(rawUrl);
+  if (!resolved.ok) {
+    if (resolved.reason === "unparseable_url") {
+      return {
+        ok: false,
+        reason: "unparseable_url",
+        detail: `DATABASE_URL_PILOT is not a parseable URL: ${resolved.parseError}`,
+      };
+    }
     return {
       ok: false,
       reason: "project_ref_not_extractable",
@@ -149,6 +148,7 @@ export function checkPilotDatabaseTarget(
         "Could not extract a Supabase project-ref from DATABASE_URL_PILOT. Expected `postgres.<ref>` user or `db.<ref>.supabase.co` host.",
     };
   }
+  const projectRef = resolved.projectRef;
 
   // 5. project-ref must appear in the allow list. The production ref
   //    being allow-listed is the normal path here (opposite of smoke).
@@ -169,23 +169,28 @@ export function checkPilotDatabaseTarget(
   };
 }
 
-/**
- * Extract the Supabase project-ref from a connection URL.
- * Kept local (not shared with smoke guard) so the two tracks stay
- * independent and diverge without coupling. The shape is identical
- * to smoke guard's extractor by design.
+/*
+ * §prisma-target-helper (호영님 명시 승인 2026-08-30) — **결정 교체**.
+ *
+ * 이 자리에 있던 `extractSupabaseProjectRef` 사본과 그 근거 주석을 걷었다.
+ * 옛 근거(by design 이력, 원문):
+ *   "Kept local (not shared with smoke guard) so the two tracks stay independent
+ *    and diverge without coupling. The shape is identical to smoke guard's
+ *    extractor by design."
+ *
+ * 교체 사유:
+ *   그 주석이 잠근 것은 **정책 독립**인데, 내려간 core(`scripts/lib/db-target-core`)는
+ *   **정책을 하나도 갖지 않는 파서**다. prod 금지(smoke) / opt-in 허용(pilot) 은
+ *   각 wrapper 에 그대로 남는다 — 두 트랙은 여전히 독립적으로 갈라질 수 있고,
+ *   공유되는 것은 "Supabase URL 에서 ref 를 뽑는 법" 뿐이다.
+ *   🔑 그 형식이 두 트랙에서 갈라지는 날이 오면 그건 분기가 아니라
+ *     **둘 중 하나가 깨진 것**이다(호영님).
+ *   승인 커밋: 이 파일을 바꾼 커밋 메시지 참조 (§prisma-target-helper A-1a).
+ *
+ * 🛑 이 파일의 정책(opt-in 토큰 · allow-list · 실패 사유 union · 메시지 문안)은
+ *   한 글자도 바뀌지 않았다. pilot-guard 13 it 이 그 증거다.
  */
-function extractSupabaseProjectRef(u: URL): string | null {
-  const username = decodeURIComponent(u.username || "");
-  if (username.startsWith("postgres.")) {
-    const ref = username.slice("postgres.".length);
-    if (ref.length > 0) return ref;
-  }
-  const host = u.hostname;
-  const directMatch = host.match(/^db\.([a-z0-9]+)\.supabase\.co$/i);
-  if (directMatch) return directMatch[1];
-  return null;
-}
+
 
 /**
  * Runner wrapper — call at the very top of any pilot-seed or
