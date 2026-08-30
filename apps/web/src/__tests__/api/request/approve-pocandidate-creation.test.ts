@@ -28,8 +28,12 @@ vi.mock("@/auth", () => ({ auth: vi.fn() }));
 vi.mock("@/lib/db", () => ({
   db: {
     purchaseRequest: { findUnique: vi.fn() },
-    teamMember: { findUnique: vi.fn() },
-    organizationMember: { findFirst: vi.fn() },
+    // §purchase-request-org-axis (나)-1b — 승인 게이트가 TeamMember 에서
+    //   OrganizationMember 로 옮겼다. teamMember 는 이 라우트에서 더 이상 조회되지
+    //   않으므로 mock 에서도 제거한다(남겨 두면 "쓰이는 줄" 착시가 생긴다).
+    //   findFirst → findUnique 로 바뀐 것도 함께 반영 — 역할과 한도를 **같은 행**에서
+    //   읽어야 두 판정이 다른 행을 보지 않는다.
+    organizationMember: { findUnique: vi.fn() },
   },
 }));
 vi.mock("@/lib/security/server-enforcement-middleware", () => ({
@@ -169,8 +173,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockAuth.mockResolvedValue({ user: { id: "approver-1", role: "ADMIN", email: "a@x.com", name: "A" } });
   mockDb.purchaseRequest.findUnique.mockResolvedValue(PR);
-  mockDb.teamMember.findUnique.mockResolvedValue({ role: "ADMIN" });
-  mockDb.organizationMember.findFirst.mockResolvedValue(null);
+  // 승인권자 = 조직 ADMIN · 한도 무제한(null). A축(APPROVER·ADMIN·OWNER) 통과 조건.
+  mockDb.organizationMember.findUnique.mockResolvedValue({ role: "ADMIN", approvalLimit: null });
 });
 
 async function callApprove() {

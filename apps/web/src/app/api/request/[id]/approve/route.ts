@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { PurchaseRequestStatus, TeamRole, OrderStatus } from "@prisma/client";
+import { PurchaseRequestStatus, OrderStatus } from "@prisma/client";
+// §purchase-request-org-axis (나)-1b — 승인 권한 역할 집합 정본. 사본 금지.
+import { isOrgApprover } from "@/lib/billing/approver-routing";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { checkApprovalLimit } from "@/lib/security/approval-limit-guard";
 import {
@@ -110,41 +112,45 @@ export async function POST(
       );
     }
 
-    // 권한 확인: ADMIN 또는 OWNER만 승인 가능
-    const teamMember = await db.teamMember.findUnique({
-      where: {
-        userId_teamId: {
-          userId: session.user.id,
-          teamId: purchaseRequest.teamId || "",
-        },
-      },
-    });
-
-    if (!teamMember || teamMember.role !== TeamRole.ADMIN) {
-      enforcement?.fail();
-      return NextResponse.json(
-        { error: "Forbidden: Only ADMIN can approve requests" },
-        { status: 403 }
-      );
-    }
-
+    // §purchase-request-org-axis (나)-1b — 승인 게이트 축 교체 (2026-08-30).
+    //
+    // 🛑 이전: TeamMember(userId_teamId) 조회 + `teamMember.role !== TeamRole.ADMIN`.
+    //   teamId 가 nullable 인데 `teamId || ""` 로 조회해 **팀 없는 요청은 전부 403** 이었다.
+    //   quoteId 를 채우는 유일한 생성 지점(work-queue/purchase-conversion
+    //   request-approval)이 teamId 를 안 채우므로, 예산 검증이 필요한 경로가
+    //   승인 자체에 도달하지 못했다. prod 실측: Team 0 · TeamMember 0 —
+    //   TeamRole 게이트로는 **아무도 승인할 수 없었다.**
+    //
+    // 지금: 소속 축(organizationId, NOT NULL) 위에서 조직 역할로 판정한다.
+    //   A축 = APPROVER · ADMIN · OWNER (호영님 판정 2026-08-30 · 정본은
+    //   `ORG_APPROVER_ROLES` — 이 파일에 사본을 두지 않는다).
+    //   🔑 한도 조회와 **같은 행**이다. 두 번 조회하면 두 판정이 다른 행을 볼 수 있다
+    //     (역할은 있는데 한도는 못 읽는 상태). findUnique 하나로 합친다.
+    //
     // §S2 #approval-limit-server-enforce — per-user 단일건 승인 한도 서버 강제
     //   (audit S2 HIGH). actor 의 OrganizationMember.approvalLimit(null=무제한)이
     //   PR 금액보다 작으면 직접 승인 차단(403) + 상위 승인자 안내. selectApproverByAmount
     //   의 escalation 설계를 실행시점에 강제 — 라우팅 추천만으론 권한 보유 actor 가
     //   자기 한도 초과 건을 직접 승인하던 우회를 닫는다. 카테고리 예산 게이트(tx 내)와
     //   별 통제축(개인 결재 권한). read-only 비교라 tx 전 pre-validation.
-    const actorOrgMembership = await db.organizationMember.findFirst({
+    const actorOrgMembership = await db.organizationMember.findUnique({
       where: {
-        // §purchase-request-org-axis — `?? ""` 제거(2026-08-30). 유령 시절 이 표현은
-        //   organizationId 가 undefined 라 항상 "" 로 떨어졌고, findFirst 가 null 을
-        //   반환해 approvalLimit 이 null(=무제한)로 읽혔다 — **개인 결재 한도 게이트가
-        //   통째로 우회됐다.** 컬럼이 NOT NULL 이 된 지금 봉합을 걷어야 실제로 발화한다.
-        organizationId: purchaseRequest.organizationId,
-        userId: session.user.id,
+        userId_organizationId: {
+          userId: session.user.id,
+          organizationId: purchaseRequest.organizationId,
+        },
       },
-      select: { approvalLimit: true },
+      select: { role: true, approvalLimit: true },
     });
+
+    if (!isOrgApprover(actorOrgMembership?.role)) {
+      enforcement?.fail();
+      return NextResponse.json(
+        { error: "Forbidden: 조직 승인 권한이 없습니다 (APPROVER · ADMIN · OWNER)" },
+        { status: 403 }
+      );
+    }
+
     const approvalLimitCheck = checkApprovalLimit(
       actorOrgMembership?.approvalLimit ?? null,
       purchaseRequest.totalAmount ?? 0,

@@ -86,11 +86,11 @@ describe("🛑 봉합 제거 — 유령 시절 방어가 남으면 필드가 생
     const code = stripComments(read(APPROVE));
     expect(code).not.toMatch(/purchaseRequest\.organizationId \?\? ""/);
     const win = code.match(
-      /db\.organizationMember\.findFirst\(\{[\s\S]{0,400}?\}\)/
+      /db\.organizationMember\.findUnique\(\{[\s\S]{0,400}?\}\)/
     )?.[0] ?? "";
     expect(win.length).toBeGreaterThan(0);
     expect(win).toMatch(/organizationId: purchaseRequest\.organizationId,/);
-    expect(win).toMatch(/select: \{ approvalLimit: true \}/);
+    expect(win).toMatch(/select: \{ role: true, approvalLimit: true \}/);
   });
 
   it("예산 경고 org 브로드캐스트에서 항상-거짓 분기가 걷혔다", () => {
@@ -105,7 +105,7 @@ describe("소생 4지점 — 이제 무엇이 돌기 시작하는가", () => {
   it("① 개인 결재 한도 — actor 의 organizationMember 를 그 조직에서 찾는다", () => {
     const code = stripComments(read(APPROVE));
     expect(code).toMatch(
-      /db\.organizationMember\.findFirst\(\{[\s\S]{0,300}?organizationId: purchaseRequest\.organizationId,[\s\S]{0,200}?userId: session\.user\.id,/
+      /db\.organizationMember\.findUnique\(\{[\s\S]{0,300}?userId: session\.user\.id,[\s\S]{0,200}?organizationId: purchaseRequest\.organizationId,/
     );
     expect(code).toMatch(/checkApprovalLimit\(/);
     expect(code).toMatch(/requiresHigherApprover: true/);
@@ -155,22 +155,116 @@ describe("소생 4지점 — 이제 무엇이 돌기 시작하는가", () => {
   });
 });
 
-describe("🛑 아직 닫히지 않은 것 — 기록이 아니라 발화로 둔다", () => {
-  it("③ 경로(teamId 없는 요청)는 승인 자체가 403 이라 예산 게이트에 도달하지 못한다", () => {
-    /* work-queue/purchase-conversion request-approval 은 teamId 를 안 채운다.
-     * 승인 라우트는 `teamId: purchaseRequest.teamId || ""` 로 teamMember 를 찾고
-     * 없으면 403 이다 → **예산 게이트 앞에서 끊긴다.**
-     * 따라서 "③ 경로 예산 게이트 첫 발화" 는 이 슬라이스에서 검증 불가이고,
-     * (나)-1(TeamRole → APPROVER|ADMIN|OWNER · teamId||"" 제거)이 선행이다.
-     * 🔑 이 단언은 그 사실을 **코드에 붙여 둔다** — (나)-1 이 배선을 바꾸면 RED 로
-     *   떨어지고, 그때가 ③ 발화를 실측할 시점이라는 신호다. */
+describe("🔑 (나)-1b 종료 — 게이트 축이 조직 역할로 옮겼다", () => {
+  it("TeamRole 게이트가 사라졌다 — 직전 판본이 긍정으로 잠그던 자리", () => {
+    /* 직전 판본은 `teamId || ""` 와 `TeamRole.ADMIN` 을 **긍정으로** 잠그고
+     * "③ 는 여기서 403 이라 도달 불가" 를 발화시키고 있었다. (나)-1b 가 그것을
+     * 교체해 예고대로 RED 를 냈고, 여기서 승계한다 — 정상 종료다.
+     * 🛑 역방향 잠금: TeamRole 게이트가 되살아나면 RED. prod Team 0 · TeamMember 0
+     *   이므로 그 게이트에서는 **아무도 승인할 수 없다.** */
     const code = stripComments(read(APPROVE));
-    expect(code).toMatch(/teamId: purchaseRequest\.teamId \|\| "",/);
-    expect(code).toMatch(/teamMember\.role !== TeamRole\.ADMIN/);
-    /* 🔑 (나)-1a 이후: orgId 는 이제 항상 값이 있다. 그래도 게이트가 403 을 내므로
-     * ③ 는 여전히 도달 불가다 — **원인 후보가 하나로 줄었다**는 것이 1a 의 성과다.
-     * 발화가 안 되면 원인은 게이트 축뿐이다(호영님 판정: 실패의 귀속). */
-    expect(code).toMatch(/if \(orgId && purchaseRequest\.quoteId\)/);
+    expect(code).not.toMatch(/TeamRole/);
+    expect(code).not.toMatch(/teamMember/);
+    expect(code).not.toMatch(/purchaseRequest\.teamId/);
+  });
+
+  it("A축 정본을 import 한다 — 사본을 두지 않는다", () => {
+    /* 🛑 역할 집합을 이 파일에 인라인으로 쓰면 측정된 5정의에 여섯 번째가 붙는다.
+     * 정본은 lib/billing/approver-routing.ts 의 ORG_APPROVER_ROLES 다. */
+    const code = stripComments(read(APPROVE));
+    expect(code).toMatch(/import \{ isOrgApprover \} from "@\/lib\/billing\/approver-routing"/);
+    expect(code).toMatch(/if \(!isOrgApprover\(actorOrgMembership\?\.role\)\)/);
+    /* 🛑 창을 게이트 블록으로 좁힌다. 파일 전역으로 걸면 예산 경고 브로드캐스트의
+     * `role: { in: ["OWNER", "ADMIN"] }` 가 걸린다 — 그것은 **다른 집합**이다
+     * (승인권자가 아니라 경고 수신자). 결정은 "게이트가 A축 사본을 두지 않는다" 이지
+     * "파일에 역할 문자열이 없다" 가 아니다. §4-a-2 · 같은 형태 3회차. */
+    const gate = code.match(
+      /const actorOrgMembership[\s\S]{0,700}?checkApprovalLimit\(/
+    )?.[0] ?? "";
+    expect(gate.length).toBeGreaterThan(0);
+    expect(gate).not.toMatch(/"APPROVER"/);
+    expect(gate).not.toMatch(/"OWNER"/);
+  });
+
+  it("정본 자체 — ORG_APPROVER_ROLES 는 APPROVER · ADMIN · OWNER 다", () => {
+    const lib = stripComments(read("src/lib/billing/approver-routing.ts"));
+    expect(lib).toMatch(
+      /export const ORG_APPROVER_ROLES = \["APPROVER", "ADMIN", "OWNER"\] as const;/
+    );
+    expect(lib).toMatch(/export function isOrgApprover\(role: string \| null \| undefined\): boolean/);
+    /* 비멤버(null)는 승인권 없음 — 역방향 잠금 */
+    expect(lib).toMatch(/return !!role &&/);
+  });
+
+  it("역할과 한도를 같은 행에서 읽는다 — 두 판정이 다른 행을 보면 안 된다", () => {
+    const code = stripComments(read(APPROVE));
+    const win = code.match(
+      /db\.organizationMember\.findUnique\(\{[\s\S]{0,400}?\}\)/
+    )?.[0] ?? "";
+    expect(win).toMatch(/select: \{ role: true, approvalLimit: true \}/);
+    /* 판정용 조회는 하나여야 한다 — findUnique 가 2회면 역할과 한도가 다른 행에서
+     * 읽힐 수 있다. findMany 는 세지 않는다: 예산 경고 브로드캐스트가 쓰는 **다른
+     * 목적**의 조회이고, 이것까지 묶으면 그쪽을 못 바꾸게 된다. */
+    expect(code.match(/db\.organizationMember\.findUnique/g) ?? []).toHaveLength(1);
+    expect(code).toMatch(/db\.organizationMember\.findMany/);
+  });
+
+  it("③ 경로가 이제 예산 게이트에 도달한다 — 배선 3단이 모두 서 있다", () => {
+    /* 🔑 도달 조건: ① 소속 축이 직결이고 ② 게이트가 조직 역할이고 ③ 예산 분기가
+     * orgId 를 본다. 셋 중 하나라도 끊기면 ③ 는 다시 도달 불가가 된다. */
+    const code = stripComments(read(APPROVE));
     expect(code).toMatch(/const orgId = purchaseRequest\.organizationId;/);
+    expect(code).toMatch(/if \(!isOrgApprover\(actorOrgMembership\?\.role\)\)/);
+    expect(code).toMatch(/if \(orgId && purchaseRequest\.quoteId\)/);
+  });
+});
+
+describe("🛑 아직 닫히지 않은 것 — 기록이 아니라 발화로 둔다", () => {
+  it("예산 게이트가 Product 에 없는 필드를 select 한다 — 발화 이전에 던진다", () => {
+    /* 🛑 (나)-1b tvkl 통합 실측에서 나온 **블로커** (2026-08-30).
+     *
+     *   approve/route.ts 는 `product: { select: { normalizedCategoryId: true } }` 를
+     *   쓰는데 **Product 모델에 그 필드가 없다.** schema.prisma 에도 없고 두 DB 에도 없다
+     *   (PurchaseRecord · MutationAuditEvent 에만 있다).
+     *   tvkl 실측: 같은 쿼리가 Prisma validation 에서 던졌다.
+     *
+     * 왜 지금까지 안 보였나 — **두 결함이 서로를 가렸다**(§4b 상호 참조):
+     *   ① 이 select 를 타는 분기가 orgId undefined 로 **도달 불가**였다
+     *   ② withSerializableBudgetTx 의 tx 가 `any` 라 **tsc 가 못 잡는다**
+     *   1a·1b 가 ①을 열자 ②가 남긴 결함이 드러났다.
+     *
+     * 🔑 그래서 ③ 예산 게이트 첫 발화는 **아직 실측 불가**다 — 게이트에 도달은 하지만
+     *   그 안에서 던진다. mock 계약 테스트는 이 select 를 mock 하므로 **통과시킨다** —
+     *   "발화한다" 는 mock 단언을 쓰면 그것이 false GREEN 이다(§4b: 도구가 도는 것과
+     *   검증이 실물에 닿는 것은 다르다). 그래서 쓰지 않았다.
+     *
+     * 처방은 판정 사안이다: 카테고리를 Product 에 FK 로 다는가, ProductCategory →
+     * SpendingCategory 매핑을 쓰는가(suggestCategoryMapping 은 backfill 전용 · 호출 금지),
+     * 아니면 미분류 null 로 두는가. 임의로 고르지 않는다.
+     *
+     * 이 단언은 현행(결함) 상태를 잠근다 — 고치면 RED 로 떨어지고, 그때가 ③ 발화를
+     * 실측할 시점이다. */
+    const code = stripComments(read(APPROVE));
+    expect(code).toMatch(
+      /include: \{ product: \{ select: \{ category: true, normalizedCategoryId: true \} \} \},/
+    );
+    const schema = read("prisma/schema.prisma");
+    const productModel = schema.match(/model Product \{[\s\S]*?\n\}/)?.[0] ?? "";
+    expect(productModel.length).toBeGreaterThan(0);
+    expect(productModel).not.toMatch(/normalizedCategoryId/);
+  });
+
+  it("표면은 아직 TeamRole 축이다 — quotes/[id] canApprove ((나)-2 대상)", () => {
+    /* 🛑 (나)-1b 가 서버를 A축으로 옮기면서 **표면과 갈라졌다.**
+     *   서버: APPROVER · ADMIN · OWNER (조직 축)
+     *   표면: quotes/[id]/route.ts 의 canApprove 는 여전히 TeamRole.ADMIN (팀 축)
+     * → 승인 권한이 있는 사람에게 CTA 가 숨는다. dead button 의 반대 방향
+     *   (살아 있는데 감춰진 버튼)이고, quote-detail-canapprove sentinel 이
+     *   "canApprove === false 시 CTA hide" 를 계약으로 잠그고 있어 결정 교체가 필요하다.
+     * 🔑 prod 실측상 TeamMember 0 이라 그 표면은 **이전에도 항상 false** 였다 —
+     *   실사용 회귀는 0 이고 정합 부채만 남는다. 그래도 기록이 아니라 발화로 둔다.
+     *   (나)-2 가 표면을 A축으로 옮기면 여기가 RED 로 떨어진다. */
+    const quoteRoute = stripComments(read("src/app/api/quotes/[id]/route.ts"));
+    expect(quoteRoute).toMatch(/memberForApproval\?\.role === TeamRole\.ADMIN/);
   });
 });

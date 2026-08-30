@@ -457,3 +457,83 @@ sentinel  purchase-request-org-axis-realized.test.ts  10/10 GREEN
           셋 다 내 변경 이전부터 — 88da2db7^ 대조 및 무관 import 확인
 tsc       27 불변
 ```
+
+---
+
+## (나)-1b 게이트 축 교체 (2026-08-30) — 서버는 옮겼고, ③ 발화는 **블로커에 막혔다**
+
+### 바뀐 것
+
+```
+이전  TeamMember(userId_teamId) 조회 + teamMember.role !== TeamRole.ADMIN
+      teamId 가 nullable 인데 `teamId || ""` 로 조회 → **팀 없는 요청은 전부 403**
+      prod 실측 Team 0 · TeamMember 0 → 그 게이트로는 **아무도 승인할 수 없었다**
+지금  organizationMember.findUnique(userId_organizationId) → isOrgApprover(role)
+      A축 정본 = ORG_APPROVER_ROLES (lib/billing/approver-routing.ts)
+```
+
+🔑 **역할과 한도를 같은 행에서 읽는다.** 두 번 조회하면 두 판정이 다른 행을 볼 수 있다
+(역할은 있는데 한도는 못 읽는 상태). `findFirst` → `findUnique` 로 합쳤고, §S2 sentinel 을
+같은 근거로 승계했다(통제는 무손상 · 배선만 변경).
+
+### 🛑 블로커 — ③ 예산 게이트 첫 발화는 **아직 실측 불가**
+
+tvkl 통합 실측에서 나왔다. 게이트에 **도달은 하지만 그 안에서 던진다.**
+
+```
+approve/route.ts:188   product: { select: { category: true, normalizedCategoryId: true } }
+실측                   Product 모델에 normalizedCategoryId 가 **없다**
+                       schema.prisma 에도 없고 xhid·tvkl 두 DB 에도 없다
+                       (PurchaseRecord · MutationAuditEvent 에만 있다)
+tvkl 실행              같은 쿼리가 Prisma validation 에서 던졌다 (재현 확인)
+```
+
+왜 지금까지 안 보였나 — **두 결함이 서로를 가렸다**(§4b 상호 참조):
+
+```
+① 이 select 를 타는 분기가 orgId undefined 로 **도달 불가**였다
+② withSerializableBudgetTx 의 tx 가 `any` 라 **tsc 가 못 잡는다**
+1a·1b 가 ①을 열자 ②가 남긴 결함이 드러났다.
+```
+
+⚠️ **mock 계약 테스트로는 이걸 못 잡는다.** mock 이 그 select 를 통과시키므로
+"발화한다" 단언을 쓰면 false GREEN 이다(§4b — 도구가 도는 것과 검증이 실물에 닿는 것은
+다르다). 그래서 발화 단언을 **쓰지 않았고**, 대신 현행(결함) 상태를 sentinel 로 잠갔다.
+고치면 RED 로 떨어지고 그때가 ③ 실측 시점이다.
+
+### 판정 대기 — 카테고리 축을 어디서 가져오는가
+
+```
+후보 1  Product 에 normalizedCategoryId FK 를 신설 (DDL · 백필 정책 필요)
+후보 2  ProductCategory(enum) → SpendingCategory 매핑
+        🛑 suggestCategoryMapping 은 "fuzzy는 backfill only · 호출 금지" 로 이미 잠겨 있다
+후보 3  미분류(null) 고정 — 예산 게이트가 카테고리 단위로는 안 걸리는 상태를 인정
+```
+
+임의로 고르지 않는다. prod 실측: SpendingCategory 0 · CategoryBudget 0 ·
+Product 314 — **카테고리 축 자체가 prod 에 아직 없다.**
+
+### tvkl 통합 실측 — 선언 게이트 통과
+
+선언: `docs/plans/DECLARATION_org-axis-1b-tvkl.json` (프로브 스크립트보다 먼저 고정)
+
+```
+대상 확인   ref=tvkl 확인 후 진행 · xhid 면 쓰기 전 중단하도록 박음
+검증된 것   PR.teamId null(③ 경로) · organizationId 값 있음 · 게이트 판정 OWNER → 통과
+            orgTimezone 이 조직에서 직결로 옴 (team 경유였다면 Asia/Seoul fallback)
+막힌 것     예산 게이트 진입 후 select 에서 예외
+복원        probe1b- 잔여 0 · 12테이블 count 사전과 일치 (tvkl · xhid 양쪽 확인)
+```
+
+🛑 **자기 결함 하나 기록**: 픽스처 생성 중 예외가 나자 `created` 플래그가 아직 false 라
+복원이 돌지 않았고 `SpendingCategory` 1행이 남았다. 다음 실행의 사전 스냅샷이 그것을
+잡아 중단시켰다(선언 게이트가 제 몫을 했다). 수기로 지웠고 잔여 0 을 재확인했다.
+→ 복원은 **부분 생성에도 무조건 돌아야 한다**(생성 플래그가 아니라 id 목록 기준).
+
+### 게이트
+
+```
+스코프 4913 passed / 46 failed (15파일)
+  🔑 내 변경 전후 실패 파일 집합을 diff 했다 — **신규 0 · 해소 0 · 기존 15**
+tsc 27 불변 · 신규/승계 sentinel 전부 GREEN
+```

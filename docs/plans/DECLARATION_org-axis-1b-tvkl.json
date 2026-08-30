@@ -1,0 +1,55 @@
+{
+  "_형식": "격리 감사 선언 파일 형태 승계 (PLAN_tenant-isolation-placeholder §9.15). 프로브 스크립트보다 먼저 작성하고 실행 중 수정하지 않는다.",
+  "슬라이스": "§purchase-request-org-axis (나)-1b — 게이트 축 교체 후 ③ 경로 예산 게이트 첫 발화",
+  "작성시각_UTC": "2026-08-30",
+  "판정근거": "호영님 2026-08-30 — prod 조작 기각(실 고객 DB 픽스처 금지 · 감사 로그 노이즈). 계약 테스트(mock)가 기본, tvkl 통합 실측 1회를 덧붙인다.",
+
+  "대상": {
+    "ref": "tvkl",
+    "출처": ".env DIRECT_URL (port 5432)",
+    "🛑 금지": "xhid (prod). 스크립트는 ref 를 먼저 출력하고, tvkl 이 아니면 쓰기 전에 중단한다.",
+    "확인방법": "DB 안의 값으로 DB 를 지목하지 않는다(§2c). ref 는 접속 문자열 username 에서 파생하고, 대조는 Organization 4 · User 5 (xhid 는 2 · 3)."
+  },
+
+  "무엇을_재는가": {
+    "주장": "③ 경로(teamId 없이 생성된 PurchaseRequest)가 게이트 축 교체 후 예산 게이트에 **도달하고 발화한다**.",
+    "축": "실제 Prisma · 실제 DB. mock 계약 테스트는 게이트 로직을 실증하지만 '실물 위에서 발화' 는 못 센다(§4b — 도구가 도는 것과 검증이 실물에 닿는 것은 다르다).",
+    "🛑 이 프로브가 재지 않는 것": [
+      "HTTP 계층 · getServerSession · 쿠키 인증 (자격증명 미보유 — 라우트의 데이터 경로를 함수 단위로 재현한다)",
+      "SERIALIZABLE 경합 (단일 실행)",
+      "알림 전송 (dispatchNotificationEvent 호출 안 함)"
+    ],
+    "정직한 표기": "통과해도 '라우트 데이터 경로가 실 DB 위에서 발화' 까지다. 'HTTP 승인이 동작' 이라고 적지 않는다."
+  },
+
+  "허용된_쓰기": [
+    { "table": "SpendingCategory", "count": 1, "이유": "tvkl 에 0행 — 예산 카테고리 축이 없으면 게이트가 amountByCategory 0 으로 조기 반환한다" },
+    { "table": "Product", "count": 1, "이유": "normalizedCategoryId 를 가진 상품이 필요. 기존 1행을 수정하지 않고 신규 생성한다" },
+    { "table": "Quote", "count": 1, "이유": "PurchaseRequest.quoteId 가 있어야 예산 게이트 분기에 들어간다" },
+    { "table": "QuoteItem", "count": 1, "이유": "게이트가 quote.items 에서 gateItems 를 만든다 (tvkl QuoteItem 0행)" },
+    { "table": "CategoryBudget", "count": 1, "이유": "발화 대상. amount 대비 요청액을 soft_limit(90%) 초과 · hard_stop(100%) 미만으로 둔다" },
+    { "table": "PurchaseRequest", "count": 1, "이유": "③ 경로 재현 — organizationId 채움 · **teamId null** · status PENDING" }
+  ],
+  "허용된_수정": [],
+  "허용된_삭제": [
+    { "설명": "위 6행의 복원 삭제만. 기존 행은 건드리지 않는다.", "식별": "고정 id 접두사 `probe1b-` 로 생성해 삭제 대상을 명시적으로 좁힌다" }
+  ],
+
+  "게이트": {
+    "사전": "쓰기 대상 6개 테이블 + 인접 6개(OrganizationMember · Organization · User · Order · POCandidate · PurchaseRecord) 전역 count 스냅샷",
+    "사후": "복원 후 전 12개 테이블 count 가 사전과 **정확히 일치**해야 한다",
+    "위반시": "🛑 즉시 보고하고 중단. 자동 정정하지 않는다 — 정정이 증거를 덮는다",
+    "실패시_복원": "예외가 나도 finally 에서 복원한다. 복원 자체가 실패하면 남은 행 id 를 전부 출력한다",
+    "🛑 baseline": "쓰기 전 CategoryBudget · PurchaseRequest 가 0행임을 확인한다. 0이 아니면 이 선언이 실측과 어긋난 것이므로 중단한다(§4-a-2 3-d)"
+  },
+
+  "기대_결과": {
+    "GREEN": "budgetValidation.allowed === true 이고 warnings.length > 0 (level = soft_limit). 즉 게이트가 **도달했고 발화했다**",
+    "RED_후보": [
+      "warnings 0 — 도달은 했으나 발화 조건 미달 (임계치·기간키 계산 확인)",
+      "amountByCategory 0 — normalizedCategoryId 배선이 끊김",
+      "budgets 0 — periodYearMonth 와 CategoryBudget.yearMonth 불일치 (타임존 축)"
+    ],
+    "🔑 귀속": "(나)-1a 가 소속 축을 이미 세웠으므로, 발화 실패의 원인 후보는 게이트 축 하나다."
+  }
+}

@@ -56,10 +56,19 @@ describe("§S2 — guard helper 계약 보존", () => {
 
 describe("§S2 — request/approve 승인 실행 한도 게이트 wiring", () => {
   it("checkApprovalLimit import + actor OrganizationMember.approvalLimit 조회", () => {
+    /* 🔑 승계 (§purchase-request-org-axis (나)-1b · 2026-08-30 · 배선만 변경).
+     * 이 sentinel 이 잠그는 결정은 "actor 의 OrganizationMember.approvalLimit 을
+     * 승인 실행 시점에 읽는다" 이지 조회 메서드 이름이 아니다.
+     * findFirst → findUnique 로 바뀐 이유: 승인 게이트가 조직 역할로 옮기면서
+     * **역할과 한도를 같은 행에서** 읽어야 한다(두 번 조회하면 두 판정이 다른 행을
+     * 볼 수 있다). 복합 unique(userId_organizationId)가 있으므로 findUnique 가 맞다.
+     * 🛑 역방향: 조회가 2회로 갈라지면 RED. §S2 의 통제는 무손상이다. */
     const src = read(APPROVE_PATH);
     expect(src).toMatch(/checkApprovalLimit/);
-    expect(src).toMatch(/organizationMember\.findFirst/);
+    expect(src).toMatch(/organizationMember\.findUnique/);
+    expect(src).toMatch(/userId_organizationId/);
     expect(src).toMatch(/approvalLimit: true/);
+    expect(src.match(/organizationMember\.findUnique/g) ?? []).toHaveLength(1);
   });
   it("한도 초과 시 403 + 상위 승인자 안내(차단, front-only 아님)", () => {
     const src = read(APPROVE_PATH);
