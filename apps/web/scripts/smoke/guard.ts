@@ -26,7 +26,7 @@
 import {
   parseAllowList,
   resolveProjectRef,
-} from "../lib/db-target-core";
+} from "../../src/lib/db/target-core";
 
 export interface SmokeDatabaseGuardEnv {
   readonly DATABASE_URL_SMOKE?: string;

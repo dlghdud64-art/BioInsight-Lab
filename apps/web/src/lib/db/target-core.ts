@@ -18,6 +18,13 @@
  *     그 24개 단위 테스트가 이 통합의 회귀 증거다.
  *
  * 순수 함수만 둔다 — process.exit 도 console 도 없다.
+ *
+ * 🛑 위치가 `scripts/lib` 이 아니라 `src/lib/db` 인 이유 (2026-08-31 정정):
+ *   `src/lib/security/production-database.ts` 가 이 파서를 쓰는데, 그 파일은
+ *   `auth.ts` 가 import 하는 **런타임 경로**다. `tsconfig.include` 는 `src` 뿐이고
+ *   `src → scripts` import 는 이 저장소에 **선례가 0** 이다(반대 방향만 있다:
+ *   `scripts/db-guard.ts → ../src/lib/security/...`).
+ *   런타임 코드가 스크립트 디렉터리를 물면 번들 축이 뒤집힌다 — 그래서 src 로 내린다.
  */
 
 /** 쉼표 구분 allow-list 를 정규화한다. 빈 항목·공백은 버린다. */

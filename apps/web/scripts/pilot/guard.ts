@@ -38,7 +38,7 @@
 import {
   parseAllowList,
   resolveProjectRef,
-} from "../lib/db-target-core";
+} from "../../src/lib/db/target-core";
 
 /**
  * Exact opt-in token (Q4 approved 2026-04-23).
@@ -179,7 +179,7 @@ export function checkPilotDatabaseTarget(
  *    extractor by design."
  *
  * 교체 사유:
- *   그 주석이 잠근 것은 **정책 독립**인데, 내려간 core(`scripts/lib/db-target-core`)는
+ *   그 주석이 잠근 것은 **정책 독립**인데, 내려간 core(`src/lib/db/target-core`)는
  *   **정책을 하나도 갖지 않는 파서**다. prod 금지(smoke) / opt-in 허용(pilot) 은
  *   각 wrapper 에 그대로 남는다 — 두 트랙은 여전히 독립적으로 갈라질 수 있고,
  *   공유되는 것은 "Supabase URL 에서 ref 를 뽑는 법" 뿐이다.

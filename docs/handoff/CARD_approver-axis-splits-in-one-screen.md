@@ -902,16 +902,25 @@ SCRIPT_DB_ALLOWED_REFS = tvkl…   (DIRECT_URL 에서 파생해 기록 — 채�
 SCRIPT_DB_ALLOW_PROD   미설정 — prod 를 겨냥할 때만 그 자리에서 준다
 ```
 
-### 🛑 소생 대기 — smoke/pilot 7지점은 여전히 fail-closed
+### 🛑 잴 수단 없음 — smoke/pilot 7지점 (창 6분과 같은 표기)
 
 ```
 DATABASE_URL_SMOKE · ALLOWED_SMOKE_DB_SENTINELS · PRODUCTION_DB_PROJECT_REF   미설정
 DATABASE_URL_PILOT · ALLOWED_PILOT_DB_SENTINELS · PILOT_REQUIRES_EXPLICIT_OPT_IN 미설정
 ```
 
-⚠️ 이 키들은 **제가 만들 수 없습니다** — smoke 는 별도 Supabase 프로젝트(ADR-001
-Option B)를 요구하고 pilot 은 prod 자격증명을 요구합니다. :546 때와 같은 분류
-(소생 경로가 서면 도는지 확인 대상)이지만, **선행이 인프라라 이 슬라이스 밖**입니다.
+```
+상태   **잴 수단 없음** (선행: ADR-001 Option B 인프라 + prod 자격증명)
+       — 키가 서면 소생 검증
+```
+
+🛑 "열림" 으로만 두지 않는다 — 다음 세션이 **코드 결함으로 읽는다.** 창 6분과 같은
+표기다: 실패가 0인 게 아니라 **재는 수단이 없다.** 7지점은 fail-closed 설계대로
+즉시 중단하고 있고 그것이 의도 동작이다(`:546` 과 같은 분류 — 소생 경로가 서면
+도는지 확인 대상).
+
+📌 smoke 프로젝트(ADR-001 Option B)를 실제로 세울지는 **호영님 몫 판정** — 인프라
+비용이 걸린 사안이라 이월 목록에 둔다.
 
 ### 삭제 — 15건 (승인 범위 내)
 

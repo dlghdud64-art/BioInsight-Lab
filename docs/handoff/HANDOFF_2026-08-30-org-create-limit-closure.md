@@ -11,8 +11,13 @@
 HEAD        9ae1c17f  feat(organizations): §approver-axis ①c 되살림
 동기        main ↔ origin/main 일치 (ahead/behind 0)
 tsc         27  (세션 내내 불변 — 기준선)
-기존 실패   2  pretendard-font-prebuild-314d · sds-document-model-348b1
-            🔑 둘 다 이 세션 이전부터. 88da2db7^ 스키마 대조 + import 무관 확인 완료.
+기존 실패   **4** (2026-08-31 갱신 — 스코프를 넓히며 2건이 더 드러났다)
+            pretendard-font-prebuild-314d · sds-document-model-348b1
+            + inventory-expiring-notification · push-preference-filter
+            🔑 앞 둘은 88da2db7^ 스키마 대조 + import 무관 확인 완료.
+            뒤 둘은 §4d 대로 **stash 없이** 귀속 — 내 변경을 읽는 참조 0건.
+            🛑 2 → 4 는 **결함이 는 게 아니라 스코프가 넓어진 것**이다.
+              "언제부터 실패였는가" 는 안 셌다 — 큐 F 로 이월.
             매 슬라이스마다 **변경 전후 실패 파일 집합 diff** 로 신규 0 을 확인했다.
 DB          prod = xhid…dhsw · test = tvkl…pzqr
             🛑 `.env` 는 **test** 를 가리킨다. prod 는 명시 override 로만.
@@ -177,6 +182,11 @@ OWNER 불변식  "데이터가 보증한다" 던 안전이 처음부터 없었�
 큐 D  prisma/seed.ts 가 Organization 을 만들며 organizationMember 를 **아예 만들지
       않는다**(grep 0) → 시드 조직이 태생적으로 ownerless.
       선행 조건: 없음(독립). BioInsight 처분과는 별개 — 그건 데이터, 이건 시드 코드.
+
+큐 F  기존 실패 4건의 **최초 실패 시점** 실측
+      선행 조건: 없음(독립). 근거: 상태 줄의 2 → 4 가 "언제부터" 를 안 담고 있다.
+      스코프를 넓힐 때마다 수가 늘면 그 수는 근거가 아니다(§2b) — bisect 로 시점을
+      고정해야 "기존" 이라는 분류가 검증된다.
 
 큐 E  PrismaClient ref-출력 헬퍼
       선행 조건: 없음(독립). 근거: 이 세션 트랜스크립트에서 인자 없는

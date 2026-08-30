@@ -7,7 +7,7 @@
  *   pilot  = prod **허용**, 단 opt-in 토큰 (production seeding 이 목적)
  *   일반   = **test 기본 · prod 는 토큰으로만** ← 이 파일
  *   10지점(스크립트·프로브)은 smoke 도 pilot 도 아니다. 사본이 아니라
- *   **정책 셋 · 파서 하나** 구조다 — 파서는 `db-target-core` 가 든다.
+ *   **정책 셋 · 파서 하나** 구조다 — 파서는 `src/lib/db/target-core` 가 든다.
  *
  * 배경 (HANDOFF_2026-08-30 §2c):
  *   tvkl/xhid 사고의 구조 원인은 무인자 `new PrismaClient()` 가 `.env`(테스트 DB)를
@@ -20,13 +20,20 @@
  *                             두 번째 진실이 된다 — 이 트랙이 죽인 것과 같은 형태를
  *                             env 에 만드는 셈이다. guard 의 일은 URL 을 따로 갖는 게
  *                             아니라 그 URL 의 ref 를 검증하는 것.
- *   SCRIPT_DB_ALLOWED_REFS  — 쉼표 목록. **test 대상만** 넣는다.
- *                             🛑 prod ref 는 어느 목록에도 넣지 않는다 — 목록에 넣는
- *                               순간 "허용된 대상" 이 되고 토큰의 존재 이유가 사라진다.
- *   SCRIPT_DB_ALLOW_PROD    — `YES-PROD-<ref>` 형식. 값에 **대상 ref 를 결박**해서
- *                             토큰을 복사해도 다른 prod 를 자동 승인하지 못하게 한다.
- *                             🔑 pilot 선례에서 승계하는 것은 문자열이 아니라 **설계**다:
- *                               명시적 · 자기서술적 · 우연히 설정 불가.
+ *   DEV_DATABASE_PROJECT_REF — **기존 정본 키를 승계한다**(호영님 판정 2026-08-31).
+ *                             `src/lib/security/production-database.ts` 가 이미 쓰던
+ *                             키다. 어제 신설했던 `SCRIPT_DB_ALLOWED_REFS` 는 이 키의
+ *                             **두 번째 진실**이었다 — 실측 결과 두 파일 모두에 이미
+ *                             같은 ref 가 들어 있었다. 철회하고 이 키로 이관했다.
+ *                             🛑 prod ref 는 여기 넣지 않는다 — 넣는 순간 "허용된 대상" 이
+ *                               되고 아래 토큰의 존재 이유가 사라진다.
+ *   ALLOW_PROD_DATABASE_PROJECT_REF
+ *                           — prod 를 겨냥할 때만 준다. 값은 **그 prod 의 ref 자체**다.
+ *                             🔑 `YES-PROD-<ref>` 문자열이 아니라 **ref 이름**으로 바꿨다:
+ *                               기존 정본의 설계 원칙이 그것이다 —
+ *                               "boolean 플래그가 아니라 ref 이름이라, 이 변수를 운영
+ *                                환경에 실수로 복사해도 ref 가 달라 아무 효과가 없다."
+ *                               승계하는 것은 문자열이 아니라 그 설계다.
  *
  * 시작 로그 (형식 고정)
  *   [db-target] ref=<ref> mode=<test|prod>
@@ -35,12 +42,12 @@
  * fail-closed: 모든 실패는 governance 한 줄 + process.exit(1). soft mode 없다.
  */
 
-import { parseAllowList, resolveProjectRef } from "./db-target-core";
+import { parseAllowList, resolveProjectRef } from "../../src/lib/db/target-core";
 
 export interface ScriptDbTargetEnv {
   readonly DIRECT_URL?: string;
-  readonly SCRIPT_DB_ALLOWED_REFS?: string;
-  readonly SCRIPT_DB_ALLOW_PROD?: string;
+  readonly DEV_DATABASE_PROJECT_REF?: string;
+  readonly ALLOW_PROD_DATABASE_PROJECT_REF?: string;
 }
 
 export type ScriptDbTargetMode = "test" | "prod";
@@ -70,9 +77,13 @@ export interface ScriptDbTargetFailure {
 
 export type ScriptDbTargetResult = ScriptDbTargetSuccess | ScriptDbTargetFailure;
 
-/** prod 를 여는 토큰의 정본 형식. 값이 ref 를 물고 있다. */
+/**
+ * prod 를 여는 값의 정본 형식 — **ref 이름 그 자체**.
+ * 🔑 값이 곧 대상이라, 다른 환경에 복사해도 ref 가 달라 아무 효과가 없다
+ *   (`production-database.ts` 의 `DEV_DATABASE_PROJECT_REF` 와 같은 설계).
+ */
 export function expectedProdToken(projectRef: string): string {
-  return `YES-PROD-${projectRef}`;
+  return projectRef;
 }
 
 /**
@@ -89,13 +100,13 @@ export function checkScriptDbTarget(env: ScriptDbTargetEnv): ScriptDbTargetResul
     };
   }
 
-  const allowList = parseAllowList(env.SCRIPT_DB_ALLOWED_REFS);
+  const allowList = parseAllowList(env.DEV_DATABASE_PROJECT_REF);
   if (allowList.length === 0) {
     return {
       ok: false,
       reason: "empty_allow_list",
       detail:
-        "SCRIPT_DB_ALLOWED_REFS is empty. Script DB access refuses to run without an explicit test allow list.",
+        "DEV_DATABASE_PROJECT_REF is not set. Script DB access refuses to run without an explicitly named dev project.",
     };
   }
 
@@ -123,12 +134,12 @@ export function checkScriptDbTarget(env: ScriptDbTargetEnv): ScriptDbTargetResul
   }
 
   // 목록 밖 = prod 후보. 토큰이 없으면 여기서 끝난다.
-  const token = env.SCRIPT_DB_ALLOW_PROD?.trim();
+  const token = env.ALLOW_PROD_DATABASE_PROJECT_REF?.trim();
   if (!token) {
     return {
       ok: false,
       reason: "not_allowed_and_no_prod_token",
-      detail: `project-ref "${projectRef}" is not in SCRIPT_DB_ALLOWED_REFS and SCRIPT_DB_ALLOW_PROD is not set. Set SCRIPT_DB_ALLOW_PROD=${expectedProdToken(
+      detail: `project-ref "${projectRef}" is not the declared dev project (DEV_DATABASE_PROJECT_REF) and ALLOW_PROD_DATABASE_PROJECT_REF is not set. Set ALLOW_PROD_DATABASE_PROJECT_REF=${expectedProdToken(
         projectRef,
       )} to target it on purpose.`,
       projectRef,
@@ -141,7 +152,7 @@ export function checkScriptDbTarget(env: ScriptDbTargetEnv): ScriptDbTargetResul
     return {
       ok: false,
       reason: "prod_token_ref_mismatch",
-      detail: `SCRIPT_DB_ALLOW_PROD does not match this target. Expected "${expectedProdToken(
+      detail: `ALLOW_PROD_DATABASE_PROJECT_REF does not match this target. Expected "${expectedProdToken(
         projectRef,
       )}" for project-ref "${projectRef}".`,
       projectRef,

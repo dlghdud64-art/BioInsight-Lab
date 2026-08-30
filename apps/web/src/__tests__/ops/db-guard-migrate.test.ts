@@ -14,7 +14,7 @@
  *       `DATABASE_URL` 만 보면 이 가드가 통째로 우회된다.
  *   G4. 운영 적용 경로(`migrate deploy`)는 별도로 남아 있다 — 가드가 배포를 막으면 안 된다.
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -91,7 +91,15 @@ describe("§dev-prod-db-separation G5~G7 — 프로젝트 ref 로 갈린다", ()
   const SRC = read("src/lib/security/production-database.ts");
 
   it("G5. project ref 를 추출해 판정에 쓴다", () => {
-    expect(SRC).toMatch(/postgres\\.\(\[a-z0-9\]\{16,\}\)/);
+    /* 🔑 승계 (§prisma-target-helper · 호영님 판정 2026-08-31 · 파서 정본 일원화).
+     * 옛 단언은 이 파일 안의 **정규식 리터럴**(`postgres\.([a-z0-9]{16,})`)을 핀했다.
+     * 잠그는 결정은 "ref 를 추출해 판정에 쓴다" 이지 그 정규식이 여기 **있다**가 아니다.
+     * 🛑 옛 정규식은 pooler 형태만 뽑아 direct 형태(`db.<ref>.supabase.co`)에서 ref 가
+     *   null 이 되고, 그러면 isDeclaredDevProject 가 항상 false → **개발 프로젝트를
+     *   운영으로 오판**했다. 승계할 설계가 아니라 결함이라 core 파서로 교체했다.
+     * → 정규식 자리를 정본 import 로 승계한다. 형태별 동작은 아래 G5-c 가 실증한다. */
+    expect(SRC).toMatch(/import \{ extractSupabaseProjectRef \} from "\.\.\/db\/target-core"/);
+    expect(SRC).not.toMatch(/SUPABASE_PROJECT_REF = \//);
     expect(SRC).toMatch(/function projectRefOf/);
     expect(SRC).toMatch(/isDeclaredDevProject\(u\)/);
   });
@@ -109,6 +117,49 @@ describe("§dev-prod-db-separation G5~G7 — 프로젝트 ref 로 갈린다", ()
   it("G5-b. 호스트 판정은 남아 있다 (ref 판정이 대체가 아니라 추가)", () => {
     expect(SRC).toMatch(/PRODUCTION_DB_HOST\.test\(u\)/);
     expect(SRC).toMatch(/!LOCAL_DB_HOST\.test\(u\)/);
+  });
+
+  describe("G5-c. **동작 보존** — 두 URL 형태 (호영님 지시 2026-08-31)", () => {
+    /* 🔑 소스 grep 만으로는 파서 교체의 동작 보존을 못 말한다. 실제로 판정을 돌린다.
+     *   런타임 소비자가 auth.ts · admin/seed 라 이 판정이 바뀌면 그 둘이 바뀐다.
+     * 실측(2026-08-31): 로컬 env 8/8 · prod 런타임 모두 pooler 형태 —
+     *   direct 형태는 0건이라 이 교체로 판정이 바뀌는 실 URL 은 측정 범위에 없다.
+     *   그래도 **형태별로 잠근다**: 없다는 것과 안 통한다는 것은 다르다. */
+    const REF = "abcd1234efgh5678";
+    const pooler = `postgresql://postgres.${REF}:pw@aws-0-ap-northeast-2.pooler.supabase.com:6543/postgres`;
+    const direct = `postgresql://postgres:pw@db.${REF}.supabase.co:5432/postgres`;
+
+    async function judge(url: string, declared?: string): Promise<boolean> {
+      vi.resetModules();
+      vi.stubEnv("DATABASE_URL", url);
+      vi.stubEnv("DIRECT_URL", url);
+      vi.stubEnv("DEV_DATABASE_PROJECT_REF", declared ?? "");
+      const mod = await import("@/lib/security/production-database");
+      const out = mod.isProductionDatabase();
+      vi.unstubAllEnvs();
+      return out;
+    }
+
+    it("pooler 형태 — 선언된 개발 ref 면 운영이 아니다 (기존 동작 보존)", async () => {
+      expect(await judge(pooler, REF)).toBe(false);
+    });
+
+    it("pooler 형태 — 선언이 없으면 운영으로 본다 (fail-closed 보존)", async () => {
+      expect(await judge(pooler)).toBe(true);
+    });
+
+    it("🔑 direct 형태 — 선언된 개발 ref 면 운영이 아니다 (옛 정규식은 여기서 오판했다)", async () => {
+      expect(await judge(direct, REF)).toBe(false);
+    });
+
+    it("direct 형태 — 선언이 없으면 운영으로 본다 (fail-closed 는 형태와 무관)", async () => {
+      expect(await judge(direct)).toBe(true);
+    });
+
+    it("선언이 다른 ref 면 형태와 무관하게 운영이다 (복사 무효)", async () => {
+      expect(await judge(pooler, "zzzz9999yyyy8888")).toBe(true);
+      expect(await judge(direct, "zzzz9999yyyy8888")).toBe(true);
+    });
   });
 });
 

@@ -34,7 +34,7 @@ describe("checkScriptDbTarget — test 기본", () => {
   it("allow-list 에 있는 ref 는 mode=test 로 통과 (pooler)", () => {
     const env: ScriptDbTargetEnv = {
       DIRECT_URL: poolerUrl(TEST_REF),
-      SCRIPT_DB_ALLOWED_REFS: TEST_REF,
+      DEV_DATABASE_PROJECT_REF: TEST_REF,
     };
     const r = checkScriptDbTarget(env);
     expect(r).toMatchObject({ ok: true, projectRef: TEST_REF, mode: "test" });
@@ -43,17 +43,17 @@ describe("checkScriptDbTarget — test 기본", () => {
   it("direct URL 형태도 같은 ref 를 뽑는다", () => {
     const r = checkScriptDbTarget({
       DIRECT_URL: directUrl(TEST_REF),
-      SCRIPT_DB_ALLOWED_REFS: `other, ${TEST_REF} ,`,
+      DEV_DATABASE_PROJECT_REF: ` ${TEST_REF} `,
     });
     expect(r).toMatchObject({ ok: true, projectRef: TEST_REF, mode: "test" });
   });
 
   it("DIRECT_URL 부재 → 추측하지 않고 중단", () => {
-    const r = checkScriptDbTarget({ SCRIPT_DB_ALLOWED_REFS: TEST_REF });
+    const r = checkScriptDbTarget({ DEV_DATABASE_PROJECT_REF: TEST_REF });
     expect(r).toMatchObject({ ok: false, reason: "missing_direct_url" });
   });
 
-  it("allow-list 비면 중단 — 목록 없이 돌지 않는다", () => {
+  it("개발 프로젝트 미지정이면 중단 — 이름 없이 돌지 않는다", () => {
     const r = checkScriptDbTarget({ DIRECT_URL: poolerUrl(TEST_REF) });
     expect(r).toMatchObject({ ok: false, reason: "empty_allow_list" });
   });
@@ -61,7 +61,7 @@ describe("checkScriptDbTarget — test 기본", () => {
   it("파싱 불가 URL → unparseable_url", () => {
     const r = checkScriptDbTarget({
       DIRECT_URL: "not a url",
-      SCRIPT_DB_ALLOWED_REFS: TEST_REF,
+      DEV_DATABASE_PROJECT_REF: TEST_REF,
     });
     expect(r).toMatchObject({ ok: false, reason: "unparseable_url" });
   });
@@ -69,7 +69,7 @@ describe("checkScriptDbTarget — test 기본", () => {
   it("Supabase 형태가 아니면 ref 를 못 뽑고 중단", () => {
     const r = checkScriptDbTarget({
       DIRECT_URL: "postgresql://postgres:pw@localhost:5432/postgres",
-      SCRIPT_DB_ALLOWED_REFS: TEST_REF,
+      DEV_DATABASE_PROJECT_REF: TEST_REF,
     });
     expect(r).toMatchObject({ ok: false, reason: "project_ref_not_extractable" });
   });
@@ -79,7 +79,7 @@ describe("🛑 prod 는 목록이 아니라 토큰으로만 열린다", () => {
   it("목록 밖 ref + 토큰 없음 → 중단 (그리고 필요한 토큰을 알려준다)", () => {
     const r = checkScriptDbTarget({
       DIRECT_URL: poolerUrl(PROD_REF),
-      SCRIPT_DB_ALLOWED_REFS: TEST_REF,
+      DEV_DATABASE_PROJECT_REF: TEST_REF,
     });
     expect(r).toMatchObject({
       ok: false,
@@ -89,11 +89,11 @@ describe("🛑 prod 는 목록이 아니라 토큰으로만 열린다", () => {
     expect((r as { detail: string }).detail).toContain(expectedProdToken(PROD_REF));
   });
 
-  it("🔑 토큰이 **그 ref** 를 물고 있어야 한다 — 복사한 토큰은 다른 prod 를 못 연다", () => {
+  it("🔑 값이 **그 ref** 여야 한다 — 다른 환경에서 복사해 와도 못 연다", () => {
     const r = checkScriptDbTarget({
       DIRECT_URL: poolerUrl(PROD_REF),
-      SCRIPT_DB_ALLOWED_REFS: TEST_REF,
-      SCRIPT_DB_ALLOW_PROD: expectedProdToken("some-other-prod-ref"),
+      DEV_DATABASE_PROJECT_REF: TEST_REF,
+      ALLOW_PROD_DATABASE_PROJECT_REF: expectedProdToken("some-other-prod-ref"),
     });
     expect(r).toMatchObject({ ok: false, reason: "prod_token_ref_mismatch" });
   });
@@ -101,23 +101,27 @@ describe("🛑 prod 는 목록이 아니라 토큰으로만 열린다", () => {
   it("ref 가 맞는 토큰이면 mode=prod 로 통과", () => {
     const r = checkScriptDbTarget({
       DIRECT_URL: poolerUrl(PROD_REF),
-      SCRIPT_DB_ALLOWED_REFS: TEST_REF,
-      SCRIPT_DB_ALLOW_PROD: expectedProdToken(PROD_REF),
+      DEV_DATABASE_PROJECT_REF: TEST_REF,
+      ALLOW_PROD_DATABASE_PROJECT_REF: expectedProdToken(PROD_REF),
     });
     expect(r).toMatchObject({ ok: true, projectRef: PROD_REF, mode: "prod" });
   });
 
-  it("토큰이 있어도 allow-list 에 있으면 test 다 — 토큰이 test 를 prod 로 만들지 않는다", () => {
+  it("prod 승인 값이 있어도 개발 프로젝트면 test 다 — 값이 test 를 prod 로 만들지 않는다", () => {
     const r = checkScriptDbTarget({
       DIRECT_URL: poolerUrl(TEST_REF),
-      SCRIPT_DB_ALLOWED_REFS: TEST_REF,
-      SCRIPT_DB_ALLOW_PROD: expectedProdToken(TEST_REF),
+      DEV_DATABASE_PROJECT_REF: TEST_REF,
+      ALLOW_PROD_DATABASE_PROJECT_REF: expectedProdToken(TEST_REF),
     });
     expect(r).toMatchObject({ ok: true, mode: "test" });
   });
 
-  it("토큰 형식 정본 — YES-PROD-<ref>", () => {
-    expect(expectedProdToken("abc")).toBe("YES-PROD-abc");
+  it("prod 승인 값의 정본 형식 — **ref 이름 그 자체**", () => {
+    /* 🔑 `YES-PROD-<ref>` 문자열에서 ref 이름으로 바꿨다(호영님 판정 2026-08-31).
+     * 기존 정본(production-database.ts)의 설계 원칙을 승계한다 —
+     * "boolean 플래그가 아니라 ref 이름이라, 운영 환경에 실수로 복사해도
+     *  ref 가 달라 아무 효과가 없다." 승계하는 것은 문자열이 아니라 그 설계다. */
+    expect(expectedProdToken("abc")).toBe("abc");
   });
 });
 
@@ -129,7 +133,7 @@ describe("🔑 정본 1개 — 파서는 core 가 든다 (사본 부활 잠금)"
       "scripts/lib/db-target.ts",
     ]) {
       const src = stripComments(read(rel));
-      expect(src).toMatch(/from "\.\.?\/(\.\.\/)?lib\/db-target-core"|from "\.\/db-target-core"/);
+      expect(src).toMatch(/from "\.\.\/\.\.\/src\/lib\/db\/target-core"/);
       expect(src).toMatch(/resolveProjectRef\(/);
       expect(src).toMatch(/parseAllowList\(/);
     }
@@ -143,14 +147,18 @@ describe("🔑 정본 1개 — 파서는 core 가 든다 (사본 부활 잠금)"
       const src = stripComments(read(rel));
       expect(src).not.toMatch(/function extractSupabaseProjectRef/);
     }
-    const core = stripComments(read("scripts/lib/db-target-core.ts"));
+    const core = stripComments(read("src/lib/db/target-core.ts"));
     expect(core).toMatch(/export function extractSupabaseProjectRef/);
+    /* 🔑 런타임 정본도 이 파서를 쓴다 — 규칙이 두 곳에 있으면 갈리고, 갈리면 뚫린다 */
+    const prod = stripComments(read("src/lib/security/production-database.ts"));
+    expect(prod).toMatch(/import \{ extractSupabaseProjectRef \} from "\.\.\/db\/target-core"/);
+    expect(prod).not.toMatch(/SUPABASE_PROJECT_REF = \//);
   });
 
   it("🛑 core 는 정책을 갖지 않는다 — env 키를 모른다", () => {
     /* 정책이 core 로 새면 "정책 셋 · 파서 하나" 구조가 깨지고, pilot 사본 제거의
      * 승인 근거(정책 독립 보존)가 사후에 거짓이 된다. */
-    const core = stripComments(read("scripts/lib/db-target-core.ts"));
+    const core = stripComments(read("src/lib/db/target-core.ts"));
     expect(core).not.toMatch(/DATABASE_URL|DIRECT_URL|ALLOWED_|ALLOW_PROD|OPT_IN/);
     expect(core).not.toMatch(/process\.(env|exit)/);
     expect(core).not.toMatch(/console\./);

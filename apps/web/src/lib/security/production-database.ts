@@ -17,6 +17,10 @@
  *   파괴적 동작의 주 기준은 **DB host** 다. `NODE_ENV` 는 보조로만 함께 본다.
  */
 
+// §prisma-target-helper — 정본 파서. `@/` 별칭 대신 상대 경로를 쓴다:
+//   scripts/db-guard.ts 가 tsx 로 이 파일을 직접 물어서, 별칭 해석에 기대면 그 경로가 깨진다.
+import { extractSupabaseProjectRef } from "../db/target-core";
+
 /** 운영 DB 로 판정하는 host 패턴 */
 const PRODUCTION_DB_HOST = /(pooler\.supabase\.com|\.supabase\.co)/i;
 
@@ -39,12 +43,28 @@ const LOCAL_DB_HOST = /(localhost|127\.0\.0\.1|host\.docker\.internal)/i;
  *   · boolean 플래그가 아니라 **ref 이름**이라, 이 변수를 운영 환경에 실수로 복사해도
  *     ref 가 달라 아무 효과가 없다. 그것이 boolean 대신 이름을 쓴 이유다
  *   · 값은 **비밀이 아니다**(프로젝트 식별자). 비밀번호는 여기서 다루지 않는다
+ *
+ * 🔑 정본 파서 승계 (§prisma-target-helper · 호영님 판정 2026-08-31):
+ *   ref 추출을 여기 다시 쓰지 않고 `src/lib/db/target-core` 를 경유한다.
+ *   이 파일의 설계 주석이 이미 말하고 있다 — "규칙이 두 곳에 있으면 갈리고,
+ *   갈리면 한쪽이 뚫린다"(db-guard.ts). 같은 이유가 파서에도 걸린다.
+ *
+ *   🛑 옛 정규식 `/postgres\.([a-z0-9]{16,})/i` 는 **pooler 형태만** 뽑았다.
+ *     Supabase direct 형태(`db.<ref>.supabase.co`)는 못 뽑아 ref 가 null 이 되고,
+ *     그러면 `isDeclaredDevProject` 가 항상 false → **개발 프로젝트를 운영으로 오판**한다.
+ *     승계할 설계가 아니라 결함이라 core 파서(두 형태 모두 커버)로 교체했다.
+ *   실측(2026-08-31): 로컬 env 8/8 · prod 런타임 모두 pooler 형태 —
+ *     `db.<ref>` 는 **0건**이라 이 교체로 판정이 바뀌는 URL 이 측정 범위에 없다.
+ *     넓어지는 방향(못 뽑던 걸 뽑음)이고 fail-closed 쪽이 완화되는 게 아니라
+ *     **오판이 줄어드는** 방향이다.
  */
-const SUPABASE_PROJECT_REF = /postgres\.([a-z0-9]{16,})/i;
 
 function projectRefOf(url: string): string | null {
-  const m = url.match(SUPABASE_PROJECT_REF);
-  return m ? m[1].toLowerCase() : null;
+  try {
+    return extractSupabaseProjectRef(new URL(url))?.toLowerCase() ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /** 이 URL 이 "개발 프로젝트로 명시 지정된" 것인가. */
