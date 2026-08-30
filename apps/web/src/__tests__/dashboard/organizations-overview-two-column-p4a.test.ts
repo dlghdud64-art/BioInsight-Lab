@@ -30,12 +30,37 @@ describe("개요 탭 — 2열 · 정적 3카드 흡수", () => {
     expect(ov).toMatch(/lg:grid-cols-\[1fr_380px\]/);
   });
 
-  it("우측 구성 요약이 멤버 · 초대 대기 · 승인자 3행을 든다", () => {
+  it("🛑 구성 요약 카드가 없다 — 3축을 KPI 4카드가 이미 든다 (겹 2 은퇴)", () => {
+    /* 🛑 재조준 — **결정 교체** (호영님 판정 2026-08-26 · "겹 2 직접 자르세요").
+     *
+     * 옛 결정 (P4a): 정적 3카드를 우측 "구성 요약" 이 흡수한다.
+     * 실측 (P6 QA): 그 3축(멤버 · 초대 대기 · 승인자)을 **P3 KPI 4카드가 이미 든다.**
+     *   개요 탭에서 같은 값이 세로로 인접해 두 번 그려졌다 — P4a 가 요약 바를 걷어내며
+     *   한 겹을 줄였지만 자기가 만든 카드와 KPI 사이에 겹이 남아 있었다.
+     * 카드 항목 6 대로 "3축을 빼면 무엇이 남는지" 를 먼저 셌다 — **0 이다.**
+     *   그 카드는 세 행이 전부였다. 그래서 행 제거가 아니라 카드째 은퇴다.
+     *
+     * 🔑 2열(1fr_380px)은 P4a 결정이라 **유지**하고 우측을 최근 활동이 승계한다.
+     *   빈 우측 컬럼을 남기면 P5 가 목록에서 지운 "0건에도 자리를 차지하는 패널" 이 된다. */
     const ov = overviewBlock(stripComments(read(ORG_DETAIL)));
-    expect(ov).toMatch(/>구성 요약</);
-    expect(ov).toMatch(/\{totalMembers\}명/);
-    expect(ov).toMatch(/\{pendingCount\}명/);
-    expect(ov).toMatch(/\{approverCount\}명/);
+    expect(ov).not.toMatch(/>구성 요약</);
+    /* 역방향 잠금 — 3축이 개요 탭에 다시 그려지면 RED (KPI 는 이 블록 밖이다) */
+    expect(ov).not.toMatch(/\{totalMembers\}명/);
+    expect(ov).not.toMatch(/\{pendingCount\}명/);
+    expect(ov).not.toMatch(/\{approverCount\}명/);
+  });
+
+  it("3축은 KPI 4카드가 든다 — 옮긴 게 아니라 이미 거기 있었다", () => {
+    /* 은퇴가 안전한 근거. 이 단언이 없으면 "지웠는데 아무 데도 없다" 와 구분이 안 된다. */
+    const code = stripComments(read(ORG_DETAIL));
+    expect(code).toMatch(/\{totalMembers\}<\/p>|\{totalMembers\}</);
+    expect(code).toMatch(/\{pendingCount\}</);
+    expect(code).toMatch(/\{approverCount\}</);
+  });
+
+  it("우측 컬럼은 최근 활동이 승계한다 (빈 컬럼 0)", () => {
+    const ov = overviewBlock(stripComments(read(ORG_DETAIL)));
+    expect(ov).toMatch(/lg:grid-cols-\[1fr_380px\][\s\S]*?최근 활동/);
   });
 
   it("🛑 정적 3카드가 없다 — 구성 요약이 흡수했다", () => {

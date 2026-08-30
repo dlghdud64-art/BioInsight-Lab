@@ -93,6 +93,27 @@ LoadingSkeleton 은 1fr_300px 였다                   ← 20px 차이로 통과
     수치 감소·증가 어느 쪽도 그 자체로는 근거가 아니다 (cf. tsc 27→21).
 ```
 
+### 확장 — ①은 값이 아니라 **정의**에도 걸린다 (축 이름 호영님 · 문장 로컬 세션 채움)
+
+축을 세러 갔더니 정의가 다섯 개였다 — 세는 **대상**이 아니라 세는 **규칙**이 갈려 있었다.
+
+```
+승인 권한 하나에 대해 (2026-08-26 실측)
+  ① APPROVER                   상세 KPI · 구성 요약 · 처리 항목
+  ② APPROVER + ADMIN + OWNER   상세 탭 · lib/operations/cta-helpers.ts:59
+  ③ ADMIN + OWNER              목록 (APPROVER 배제) · api/organizations/route.ts:69
+  ④ APPROVER + OWNER           lib/permissions/workflow-capabilities.ts:97 (ADMIN 배제)
+  ⑤ TeamRole.ADMIN             api/request/[id]/approve:121 — **다른 enum · 다른 범위**
+```
+
+🔑 ①은 "같은 것을 두 축으로 세라" 만이 아니다. **"무엇을 세는가" 가 여러 개면 그 수는
+전부 근거가 아니다.** 정의가 하나로 좁혀지기 전에는 어느 화면의 숫자도 참·거짓을 말할
+수 없고, 통일 슬라이스도 자를 수 없다 — 절단선이 정의 경계이기 때문이다.
+
+⚠️ 그리고 정의가 여럿일 때 "코드에 있으니 승계" 가 성립하지 않는다. 둘 이상이 서로
+반대로 말하면 그것은 정본이 아니라 **미판정**이다 (cf. §2b 사례 4 — 그때는 정의가
+하나 있었고 위치만 안 봤다).
+
 ### 사례 1 — 세는 대상 (로컬 세션 채움)
 
 ```

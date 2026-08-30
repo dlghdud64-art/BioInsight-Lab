@@ -106,3 +106,66 @@ KPI        "승인 권한"    approverCount            = 0
 ⚠️ 이 중복은 **두 카드가 세로로 인접해야만 보인다.** 소스에서는 서로 다른 블록이라
 읽어서는 안 나오고, sentinel 도 각자 자기 카드만 본다. 화면에서만 나오는 부류라
 여기 적어두지 않으면 다음 세션이 또 화면에서 처음 발견한다.
+
+---
+
+## 판정 절차 2번 세 갈래 중 **세 번째**가 실측으로 성립했다 (2026-08-26)
+
+이 카드가 처음부터 열어둔 갈래다 — "승인 경로가 아직 없다 → 두 표면 다 사실을 못
+말한다. 그때는 숫자를 고르는 게 아니라 정직하게 표기하는 문제가 된다."
+
+### 범위 실측 — Team ⊂ Organization (경쟁 축이 아니다)
+
+```
+model Team          organizationId String   🔑 required (§team-org-role-model 3c · 2026-08-12)
+                    onDelete: Cascade
+model TeamMember    별 테이블 · role TeamRole
+model OrganizationMember  별 테이블 · role OrganizationRole
+model PurchaseRequest  teamId String?  ← nullable · team-scoped
+```
+
+두 enum 은 **충돌이 아니라 다른 범위를 센다.** `TeamRole.ADMIN` 은 "이 팀의 관리자"
+이고 조직 화면이 말하는 "승인 권한" 은 조직 범위다.
+
+🛑 **그래서 "실 게이트를 조직 화면의 정본으로" 라는 갈래는 오답이다.**
+   처방이 enum 통합이 아니라 **범위 정정**으로 바뀐다.
+
+### prod 실측 (read-only · ref xhid…dhsw 일치 확인)
+
+```
+Team                0
+TeamMember          0
+OrganizationMember  1
+PurchaseRequest 총  0   (teamId 있음 0 · null 0)
+```
+
+`Team 0 · TeamMember 0` 이면 `TeamRole.ADMIN` 을 가진 사람이 **존재할 수 없고**,
+`api/request/[id]/approve` 는 누구에게도 200 을 낼 수 없다.
+
+🔑 **"미구현" 이 아니라 "도달 가능한 상태 부재" 다.** 코드는 있다 — 라우트도 게이트도
+정상이고, 그 게이트를 통과할 수 있는 주체가 아직 데이터에 없을 뿐이다.
+(cf. §reachability — 존재를 본 도구와 도달을 본 도구가 다르다. 여기서는 코드가 존재이고
+데이터가 도달이다.)
+
+### 부수 결함 — 조직 범위 요청은 승인 불가
+
+```
+api/request/[id]/approve/route.ts:113
+  teamId: purchaseRequest.teamId || ""     ← null 이면 빈 문자열
+  → userId_teamId 매칭 0 → 항상 403
+```
+
+`PurchaseRequest.teamId` 가 nullable 이므로 팀에 안 매달린 요청은 승인 경로가 없다.
+현재 prod PurchaseRequest 0 건이라 **도달 불가**다 — 지금 고칠 자리가 아니라 위 범위
+판정과 함께 결정할 자리다.
+
+## 판정 (호영님 2026-08-26) — (다) → (나) 순서
+
+```
+(다) 먼저   승인 체계가 아직 없다는 사실을 표기하고 숫자 표면을 내린다
+            🛑 지금 앰버 경보는 "승인자를 지정하라" 고 말하는데 조직 범위에 지정 수단이
+               없다. APPROVER 를 줘도 승인 라우트는 TeamRole 을 본다.
+               **지시가 실행 불가능한 경보는 숫자가 틀린 것보다 무겁다.**
+(나) 다음   조직 화면의 "승인 권한" 라벨을 범위에 맞게 정정 (enum 무접촉)
+(가) 보류   조직 범위 승인 게이트 신설 — 팀 기능이 실제로 서는 시점의 결정
+```

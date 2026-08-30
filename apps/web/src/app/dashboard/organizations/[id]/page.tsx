@@ -905,64 +905,41 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                   )}
                 </CardContent>
               </Card>
-
-              {/* 최근 활동 요약 — 빈 상태를 정직하게 말한다 */}
-              <Card className="shadow-sm border-slate-200 bg-white">
-                <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
-                  <CardTitle className="text-sm font-semibold text-slate-900">최근 활동</CardTitle>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("activity")}
-                    className="text-xs text-blue-600 hover:underline"
-                  >
-                    전체 활동 로그 ›
-                  </button>
-                </CardHeader>
-                <CardContent>
-                  {organizationLogs.length === 0 ? (
-                    /* §11.318 honesty 승계 — org-scoped 활동 엔드포인트가 아직 없다.
-                       가짜 피드를 만들지 않고 없다는 사실을 그대로 적는다. */
-                    <p className="text-sm text-slate-400 py-2">아직 기록된 활동이 없습니다</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {organizationLogs.slice(0, 5).map((log) => (
-                        <div key={log.id} className="flex items-center justify-between text-xs">
-                          <span className="text-slate-600">{log.actor} · {log.action}</span>
-                          <span className="text-slate-400 tabular-nums">{log.time}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
             </div>
 
-            {/* 우 — 구성 요약 (기존 정적 3카드 흡수) */}
-            <Card className="shadow-sm border-slate-200 bg-white">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold text-slate-900">구성 요약</CardTitle>
-              </CardHeader>
-              <CardContent className="divide-y divide-slate-200">
-                <div className="flex items-center justify-between py-2.5">
-                  <span className="flex items-center gap-2 text-sm text-slate-600">
-                    <Users className="h-4 w-4 text-blue-500" />멤버
-                  </span>
-                  <span className="text-sm font-bold text-slate-900 tabular-nums">{totalMembers}명</span>
-                </div>
-                <div className="flex items-center justify-between py-2.5">
-                  <span className="flex items-center gap-2 text-sm text-slate-600">
-                    <Mail className="h-4 w-4 text-yellow-500" />초대 대기
-                  </span>
-                  <span className="text-sm font-bold text-slate-900 tabular-nums">{pendingCount}명</span>
-                </div>
-                <div className="flex items-center justify-between py-2.5">
-                  <span className="flex items-center gap-2 text-sm text-slate-600">
-                    <ClipboardCheck className={`h-4 w-4 ${approverCount === 0 ? "text-yellow-500" : "text-emerald-500"}`} />승인자
-                  </span>
-                  <span className="text-sm font-bold text-slate-900 tabular-nums">{approverCount}명</span>
-                </div>
-              </CardContent>
-            </Card>
+            {/* 우 — 최근 활동 (구성 요약 은퇴로 이 자리를 승계).
+                🛑 구성 요약 카드는 은퇴했다 — 멤버·초대 대기·승인자 세 축을 KPI 4카드가
+                   이미 들고 있어 같은 값을 한 화면에 두 번 그리고 있었다 (P6 실측).
+                   3축을 빼면 그 카드에 남는 것이 0 이라 카드째 은퇴다.
+                   2열(1fr_380px)은 P4a 결정이라 유지하고, 우측을 최근 활동이 승계한다. */}
+                <Card className="shadow-sm border-slate-200 bg-white">
+                  <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
+                    <CardTitle className="text-sm font-semibold text-slate-900">최근 활동</CardTitle>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("activity")}
+                      className="text-xs text-blue-600 hover:underline"
+                    >
+                      전체 활동 로그 ›
+                    </button>
+                  </CardHeader>
+                  <CardContent>
+                    {organizationLogs.length === 0 ? (
+                      /* §11.318 honesty 승계 — org-scoped 활동 엔드포인트가 아직 없다.
+                         가짜 피드를 만들지 않고 없다는 사실을 그대로 적는다. */
+                      <p className="text-sm text-slate-400 py-2">아직 기록된 활동이 없습니다</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {organizationLogs.slice(0, 5).map((log) => (
+                          <div key={log.id} className="flex items-center justify-between text-xs">
+                            <span className="text-slate-600">{log.actor} · {log.action}</span>
+                            <span className="text-slate-400 tabular-nums">{log.time}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
           </div>
         </TabsContent>
 
