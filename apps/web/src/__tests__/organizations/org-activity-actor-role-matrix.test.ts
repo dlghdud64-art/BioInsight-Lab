@@ -17,24 +17,31 @@ const PAGE = readFileSync(
   "utf8",
 );
 
-describe("§org-activity-actor-filter — 카테고리 칩 제거 → 행위자 필터", () => {
-  it("항상-빈 카테고리 칩 줄 제거(유형별 필터 + 멤버/권한/설정 칩)", () => {
-    expect(PAGE).not.toMatch(/\{\s*key: "team", label: "멤버"\s*\}/);
-    expect(PAGE).not.toMatch(/\{\s*key: "permission", label: "권한"\s*\}/);
-    expect(PAGE).not.toMatch(/setActivityTypeFilter/);
+describe("§org-activity-actor-filter — 은퇴 (활동 탭 자체가 v2-3 에서 내려갔다)", () => {
+  /* 🛑 재조준 — 결정 교체 (§org-management-web v2-3 · 호영님 리뷰 2026-08-30).
+   * 이 describe 가 잠그던 행위자 필터는 "활동 및 감사" 탭 안에 살았다. 그 탭은
+   * 사이드바 전역 통합 로그(/dashboard/audit)와 중복인 빈 껍데기(organizationLogs
+   * 항상 [])로 판정되어 탭째 은퇴했다 — 필터도 잠글 대상이 사라졌다.
+   * 대체 경로: 개요 최근 활동 요약 + 전체 활동 로그 딥링크(?org= 조직 필터). */
+  it("🛑 활동 탭·행위자 필터 잔재 0 — 되살아나면 RED", () => {
+    expect(PAGE).not.toMatch(/TabsTrigger value="activity"/);
+    expect(PAGE).not.toMatch(/<TabsContent value="activity">/);
+    expect(PAGE).not.toMatch(/setActivityActorFilter/);
+    expect(PAGE).not.toMatch(/ACTIVITY_CATEGORY_STYLES/);
+    expect(PAGE).not.toMatch(/getActivityImportance/);
   });
-  it("실제 행위자 자동 도출(가짜 이름 0) + 행위자 있을 때만 드롭다운", () => {
-    expect(PAGE).toMatch(/const activityActors = \["전체", \.\.\.Array\.from\(new Set\(organizationLogs\.map\(\(l\) => l\.actor\)\)\)\]/);
-    expect(PAGE).toMatch(/activityActors\.length > 1 &&/);
-    expect(PAGE).toMatch(/value=\{activityActorFilter\} onValueChange=\{setActivityActorFilter\}/);
-  });
-  it("행위자 기준 필터링 + empty 메시지", () => {
-    expect(PAGE).toMatch(/activityActorFilter === "전체"\s*\n?\s*\? organizationLogs\s*\n?\s*: organizationLogs\.filter\(\(log\) => log\.actor === activityActorFilter\)/);
-    expect(PAGE).toMatch(/\$\{activityActorFilter\} 님의 활동 기록이 없습니다/);
-  });
-  it("로그 행 카테고리 태그(라벨)는 유지(getActivityCategory + style.label)", () => {
-    expect(PAGE).toMatch(/const category = getActivityCategory\(log\.action\)/);
-    expect(PAGE).toMatch(/\{style\.label\}/);
+  it("대체 경로 실재 — 개요 → 전역 통합 로그 딥링크(조직 필터)", () => {
+    expect(PAGE).toMatch(/\/dashboard\/audit\?org=\$\{params\.id\}/);
+    /* 수신측: 통합 로그가 ?org= 를 실제로 읽어 두 fetch 를 좁힌다 (숨은 딥링크 금지) */
+    const AUDIT = readFileSync(
+      resolve(__dirname, "../../app/dashboard/audit/page.tsx"),
+      "utf8",
+    );
+    expect(AUDIT).toMatch(/const orgParam = searchParams\.get\("org"\)/);
+    expect(AUDIT).toMatch(/if \(orgParam\) params\.set\("organizationId", orgParam\)/);
+    expect(AUDIT).toMatch(/if \(orgParam\) params\.append\("organizationId", orgParam\)/);
+    /* 화면에 보이는 필터 칩 — 숨은 필터는 헤더 계수 불일치를 만든다 */
+    expect(AUDIT).toMatch(/조직 필터 적용됨/);
   });
 });
 
@@ -54,8 +61,8 @@ describe("§org-role-matrix — 역할 정책 → capability 매트릭스", () =
 });
 
 describe("§org — 회귀 0(honesty 보존)", () => {
-  it("활동 honest empty 보존(§org-management-redesign P3)", () => {
-    expect(PAGE).toMatch(/활동 내역이 아직 없습니다/);
+  it("활동 honest empty 보존(§org-management-redesign P3 → v2-3 개요 승계)", () => {
+    expect(PAGE).toMatch(/아직 기록된 활동이 없습니다/);
     expect(PAGE).toMatch(/const organizationLogs: Array<\{ id: string; actor: string; action: string; time: string; target\?: string \}> = \[\]/);
   });
   it("역할 정책 카드 컨텍스트 보존(역할별 권한 범위)", () => {

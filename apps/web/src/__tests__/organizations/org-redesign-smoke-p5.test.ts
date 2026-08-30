@@ -33,7 +33,8 @@ describe("§org-management-redesign P5 — end-to-end smoke(P1~P4a)", () => {
      * 이 줄도 함께 은퇴한다 — 역방향 잠금은 org-detail-redesign-p3.test.ts 가 소유한다.
      * 이 it 의 나머지 두 줄(활동 honesty)은 다른 결정이라 그대로 둔다.
      * 🔑 it 이름도 같이 고쳤다 — 이름이 없는 단언을 가리키면 다음 세션이 오독한다. */
-    expect(DETAIL).toMatch(/활동 내역이 아직 없습니다/);
+    /* 승계 (v2-3 · 2026-08-30): 활동 탭 은퇴 — honesty 표기는 개요 최근 활동이 잇는다. */
+    expect(DETAIL).toMatch(/아직 기록된 활동이 없습니다/);
     expect(DETAIL).not.toMatch(/actor: "이매니저"/);
   });
   it("P4a — 삭제 type-to-confirm(dead button 봉합)", () => {

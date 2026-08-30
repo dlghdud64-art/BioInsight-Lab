@@ -77,9 +77,13 @@ describe("지시형 — 기각 4곳 부재 + ①c 조건부 존재 (되살림 1 
     expect(code).toMatch(
       /const approvalPolicy = resolveApprovalPolicyForPlan\(\(organization as any\)\.plan\);/
     );
+    /* v2-1 (호영님 리뷰 2026-08-30) — 발화 조건은 approverGap **단일 소스**로 승격.
+     * 배포본에서 KPI 앰버(approverCount===0 무조건)와 큐(policy 조건부)가 다른 조건을
+     * 보다가 "KPI 는 앰버 · 큐는 없습니다" 모순이 났다. 같은 상태에서 파생을 잠근다. */
     expect(code).toMatch(
-      /if \(approvalPolicy !== "none" && approverCount === 0\) actionableItems\.push\(\{/
+      /const approverGap = approvalPolicy !== "none" && approverCount === 0;/
     );
+    expect(code).toMatch(/if \(approverGap\) actionableItems\.push\(\{/);
     expect(code).toMatch(
       /import \{ resolveApprovalPolicyForPlan \} from "@\/lib\/billing\/plan-descriptor"/
     );

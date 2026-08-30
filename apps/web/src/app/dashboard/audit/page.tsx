@@ -442,6 +442,10 @@ export default function AuditTrailPage() {
   //   (page 는 force-dynamic — useSearchParams CSR bailout 무관.)
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
+  // §org-management-web v2-3 (호영님 2026-08-30 리뷰) — 조직 상세 "전체 활동 로그 ›"
+  //   딥링크의 조직 필터. ?org=<orgId> 가 있으면 활동·감사 fetch 를 organizationId 로
+  //   좁힌다 — /api/audit-logs·/api/activity-logs 모두 기지원 파라미터(신규 API 0).
+  const orgParam = searchParams.get("org");
   useEffect(() => {
     if (status !== "authenticated") return;
     if (tabParam === "activity" || tabParam === "audit") {
@@ -490,13 +494,14 @@ export default function AuditTrailPage() {
     isFetching,
     refetch,
   } = useQuery<AuditLogResponse>({
-    queryKey: ["audit-logs", eventTypeFilter, periodFilter, search],
+    queryKey: ["audit-logs", eventTypeFilter, periodFilter, search, orgParam],
     queryFn: async () => {
       const params = new URLSearchParams();
       params.set("limit", "200");
       if (eventTypeFilter !== "all") params.set("eventType", eventTypeFilter);
       if (startDate) params.set("startDate", startDate);
       if (search.trim()) params.set("search", search.trim());
+      if (orgParam) params.set("organizationId", orgParam);
       const res = await fetch(`/api/audit-logs?${params.toString()}`);
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -515,11 +520,12 @@ export default function AuditTrailPage() {
   // §log-consolidation P2 — 활동 모드 fetcher (/api/activity-logs / ActivityLog).
   //   감사와 별 모델 — 데이터 병합 없음. org 멤버 열람(admin-gate 아님).
   const activityQuery = useQuery<{ logs: any[]; total: number }>({
-    queryKey: ["activity-logs", activityTypeFilter, entityTypeFilter],
+    queryKey: ["activity-logs", activityTypeFilter, entityTypeFilter, orgParam],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (activityTypeFilter !== "all") params.append("activityType", activityTypeFilter);
       if (entityTypeFilter !== "all") params.append("entityType", entityTypeFilter);
+      if (orgParam) params.append("organizationId", orgParam);
       params.append("limit", "100");
       const res = await fetch(`/api/activity-logs?${params.toString()}`);
       if (!res.ok) throw new Error("활동 로그 조회 실패");
@@ -672,6 +678,7 @@ export default function AuditTrailPage() {
     if (eventTypeFilter !== "all") params.set("eventType", eventTypeFilter);
     if (startDate) params.set("startDate", startDate);
     if (search.trim()) params.set("search", search.trim());
+    if (orgParam) params.set("organizationId", orgParam);
     params.set("limit", "200");
     params.set("autoPrint", "1");
     window.open(`/api/audit-logs/pdf-view?${params.toString()}`, "_blank");
@@ -762,6 +769,23 @@ export default function AuditTrailPage() {
           )}
         </div>
       </div>
+
+      {/* v2-3 — 조직 딥링크 필터는 화면에 보이게 (숨은 필터 = 헤더 계수 불일치 금지). */}
+      {orgParam && (
+        <div className="print:hidden">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+            조직 필터 적용됨
+            <button
+              type="button"
+              aria-label="조직 필터 해제"
+              className="hover:text-blue-900"
+              onClick={() => router.replace("/dashboard/audit")}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </span>
+        </div>
+      )}
 
       {/* §log-consolidation P2 — 활동 모드: ActivityLog(/api/activity-logs) 자기 모델 읽기. */}
       {mode === "activity" && (

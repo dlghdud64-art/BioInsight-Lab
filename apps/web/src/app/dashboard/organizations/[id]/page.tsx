@@ -44,10 +44,9 @@ import {
 //   UserCheck UserX Wallet actual 사용 0). 나머지 보존.
 import {
   ArrowLeft, UserPlus, Mail, Loader2, Search, Users, ShieldCheck,
-  Settings, X, Send, Building2,
-  FileText, Package, ShoppingCart, MoreVertical, Trash2,
-  Lock, Clock, Activity, CreditCard, ClipboardCheck,
-  AlertTriangle, ChevronRight, CheckCircle2, XCircle, Check, ShieldAlert,
+  X, Send, Building2, Trash2,
+  Lock, Clock, CreditCard, ClipboardCheck,
+  XCircle, Check, ShieldAlert,
 } from "lucide-react";
 // §approver-axis ①c 되살림 — 발화 조건이 플랜의 approvalPolicy 에 걸린다.
 //   approvalPolicy = "none" 인 조직에서는 승인 단계 자체가 없어 지시가 거짓이 된다.
@@ -68,44 +67,6 @@ import {
 import { csrfFetch } from "@/lib/api-client";
 // §approver-axis (나)-2 — 승인 권한 계수 정본 (client-safe).
 import { countOrgApprovers, isOrgApprover } from "@/lib/permissions/org-approver-roles";
-
-// 활동 피드 카테고리별 스타일
-type ActivityCategory = "inventory" | "purchase" | "budget" | "team" | "approval" | "member" | "permission" | "quote" | "settings";
-const ACTIVITY_CATEGORY_STYLES: Record<string, { icon: React.ComponentType<{ className?: string }>; bg: string; text: string; label: string }> = {
-  inventory: { icon: Package, bg: "bg-teal-50", text: "text-teal-600", label: "재고" },
-  purchase: { icon: ShoppingCart, bg: "bg-blue-50", text: "text-blue-600", label: "구매" },
-  budget: { icon: FileText, bg: "bg-yellow-50", text: "text-yellow-600", label: "예산" },
-  approval: { icon: ShieldCheck, bg: "bg-emerald-50", text: "text-emerald-600", label: "승인" },
-  team: { icon: UserPlus, bg: "bg-purple-50", text: "text-purple-600", label: "멤버" },
-  member: { icon: Users, bg: "bg-indigo-50", text: "text-indigo-600", label: "멤버" },
-  permission: { icon: ShieldCheck, bg: "bg-violet-50", text: "text-violet-600", label: "권한" },
-  quote: { icon: FileText, bg: "bg-cyan-50", text: "text-cyan-600", label: "견적" },
-  settings: { icon: Settings, bg: "bg-slate-100", text: "text-slate-500", label: "설정" },
-};
-function getActivityCategory(action: string): string {
-  const lower = action.toLowerCase();
-  if (/입고|등록|재고|파일|upload|file|lot/.test(lower)) return "inventory";
-  if (/승인|approval|approve/.test(lower)) return "approval";
-  if (/견적|주문|order|구매/.test(lower)) return "purchase";
-  if (/예산|budget/.test(lower)) return "budget";
-  if (/초대|멤버|team|member/.test(lower)) return "team";
-  if (/권한|role|permission/.test(lower)) return "permission";
-  if (/설정|setting/.test(lower)) return "settings";
-  return "inventory";
-}
-
-// 활동 중요도 판정
-function getActivityImportance(action: string): "high" | "medium" | "low" {
-  const lower = action.toLowerCase();
-  if (/승인|권한|제거|삭제|변경/.test(lower)) return "high";
-  if (/초대|견적|주문/.test(lower)) return "medium";
-  return "low";
-}
-const IMPORTANCE_DOT: Record<string, string> = {
-  high: "bg-red-500/70",
-  medium: "bg-yellow-500/60",
-  low: "bg-slate-500/50",
-};
 
 // 역할 라벨 매핑
 // §org-management-web P4b — 역할 색 점. 드롭다운 트리거와 읽기 전용 표기가 같은 색을 쓴다.
@@ -186,8 +147,6 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   //   🔑 원래 있던 dead 분기를 청소하는 게 아니라 **이 슬라이스가 만든 잔해**다.
   //      자기가 만든 잔해를 다음 슬라이스로 넘기면 범위 보존이 아니라 부채 이전이다.
   //   (나)에서 승인자 축이 서면 배선은 그때 새로 한다.
-  // §org-activity-actor-filter — 카테고리 칩(멤버·권한·설정 등 항상 빈 필터) 제거 → 실제 행위자 필터.
-  const [activityActorFilter, setActivityActorFilter] = useState<string>("전체");
 
   // 관리 탭 상태
   const [editName, setEditName] = useState("");
@@ -384,12 +343,6 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   // §org-management-redesign P3 — 가짜 활동 데이터 제거(§11.318 honesty). org-scoped 활동/audit
   //   엔드포인트 부재 → 정직 빈 상태. 실 audit 연동은 후속(엔드포인트 신설 별 트랙).
   const organizationLogs: Array<{ id: string; actor: string; action: string; time: string; target?: string }> = [];
-
-  // §org-activity-actor-filter — 실제 로그 행위자에서 자동 도출(가짜 이름 0). 로그 0건이면 행위자 0 → 드롭다운 미노출.
-  const activityActors = ["전체", ...Array.from(new Set(organizationLogs.map((l) => l.actor)))];
-  const filteredLogs = activityActorFilter === "전체"
-    ? organizationLogs
-    : organizationLogs.filter((log) => log.actor === activityActorFilter);
 
   // 초대 재발송
   const resendInviteMutation = useMutation({
@@ -631,7 +584,13 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
    * 🛑 옛 consequence `구매 요청이 승인 단계 없이 통과됩니다` 는 **사실이 반대**였다.
    *   멈추는 것이지 통과하는 것이 아니다. 그 문안은 되살리지 않는다(sentinel 금지 유지). */
   const approvalPolicy = resolveApprovalPolicyForPlan((organization as any).plan);
-  if (approvalPolicy !== "none" && approverCount === 0) actionableItems.push({
+  /* §org-management-web v2-1 (호영님 2026-08-30 리뷰) — KPI 앰버와 처리 항목 큐는
+   *   **같은 상태(approverGap)에서 파생**된다. 배포본에서 KPI 는 앰버인데 큐는
+   *   "없습니다" 인 모순이 확인됐다 — 두 표면이 다른 조건을 보고 있었기 때문이다.
+   *   approvalPolicy = "none"(FREE·Basic)이면 승인 단계 자체가 없어 gap 이 아니다
+   *   — 큐만이 아니라 KPI 앰버 톤도 함께 꺼진다. */
+  const approverGap = approvalPolicy !== "none" && approverCount === 0;
+  if (approverGap) actionableItems.push({
     label: "승인자 미지정",
     consequence: "승인할 사람이 없어 요청이 멈춥니다",
     count: 1, icon: ShieldAlert, color: "text-yellow-600",
@@ -822,10 +781,10 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
           </CardContent>
         </Card>
 
-        <Card className={`shadow-sm bg-white ${approverCount === 0 ? "border-yellow-300" : "border-slate-200"}`}>
+        <Card className={`shadow-sm bg-white ${approverGap ? "border-yellow-300" : "border-slate-200"}`}>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              <ShieldCheck className={`h-4 w-4 ${approverCount === 0 ? "text-yellow-500" : "text-emerald-500"}`} />
+              <ShieldCheck className={`h-4 w-4 ${approverGap ? "text-yellow-500" : "text-emerald-500"}`} />
               <p className="text-xs font-semibold text-slate-600">승인 권한</p>
             </div>
             <div className="flex items-baseline gap-2">
@@ -876,9 +835,10 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
           <TabsTrigger value="invites" className="rounded-none border-b-[2.5px] border-transparent px-3 pb-2 text-slate-500 data-[state=active]:border-[#2563eb] data-[state=active]:text-slate-900 data-[state=active]:font-bold data-[state=active]:bg-transparent data-[state=active]:shadow-none">
             승인 및 초대
           </TabsTrigger>
-          <TabsTrigger value="activity" className="rounded-none border-b-[2.5px] border-transparent px-3 pb-2 text-slate-500 data-[state=active]:border-[#2563eb] data-[state=active]:text-slate-900 data-[state=active]:font-bold data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-            활동 및 감사
-          </TabsTrigger>
+          {/* §org-management-web v2-3 (호영님 2026-08-30 리뷰) — "활동 및 감사" 탭 은퇴.
+              사이드바 전역 통합 로그(/dashboard/audit)와 중복인 빈 껍데기였다(org-scoped
+              엔드포인트 부재 → 항상 빈 상태). 조직 활동은 개요의 최근 활동 요약 +
+              전체 활동 로그 딥링크(조직 필터)가 대체한다. 5탭 → 4탭. */}
           {isAdmin && (
             <TabsTrigger value="settings" className="rounded-none border-b-[2.5px] border-transparent px-3 pb-2 text-slate-500 data-[state=active]:border-[#2563eb] data-[state=active]:text-slate-900 data-[state=active]:font-bold data-[state=active]:bg-transparent data-[state=active]:shadow-none">
               정책 및 설정
@@ -895,47 +855,45 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
               🛑 플랜 카드는 여기 두지 않는다 — P3 에서 KPI 4번째 카드가 이미 흡수했다.
                  다시 두면 핸드오프 §2 가 "플랜/좌석 보기" 를 지운 이유(화면 내 정보 중복)를
                  그대로 재생산한다 (실측이 문서를 정정 2건째). */}
-          <div className="grid gap-4 lg:grid-cols-[1fr_380px] items-start">
-            {/* 좌 — 바로 처리할 항목 */}
-            <div className="space-y-4">
+          {/* §org-management-web v2-1·v2-2 (호영님 2026-08-30 리뷰) —
+              ① 처리 항목 0건이면 **카드째 미노출** (빈 박스 금지 — §1 규칙의 상세 탭 적용).
+                 카드가 빠지면 2열을 유지할 좌측이 없으므로 그리드도 1열로 접는다.
+              ② 두 카드는 같은 그리드 행에 직접 놓는다(중간 래퍼 제거) — grid 기본
+                 stretch 로 같은 시작선·같은 높이. items-start 가 높이 불일치의 원인이었다. */}
+          <div className={`grid gap-4 ${actionableItems.length > 0 ? "lg:grid-cols-[1fr_380px]" : ""}`}>
+            {/* 좌 — 바로 처리할 항목 (0건 미노출) */}
+            {actionableItems.length > 0 && (
               <Card className="shadow-sm border-slate-200 bg-white">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-semibold text-slate-900">바로 처리할 항목</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {actionableItems.length === 0 ? (
-                    <div className="flex items-center gap-2 py-3">
-                      <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                      <p className="text-sm text-slate-400">처리할 항목이 없습니다</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {actionableItems.map((item, idx) => {
-                        const ItemIcon = item.icon;
-                        return (
-                          <div key={idx} className="flex items-start justify-between gap-3 rounded-lg border border-yellow-200 bg-yellow-50/40 p-3">
-                            <div className="flex items-start gap-2.5">
-                              <span className="mt-0.5 rounded bg-white border border-yellow-200 p-1">
-                                <ItemIcon className={`h-4 w-4 ${item.color}`} />
-                              </span>
-                              <div>
-                                <p className="text-sm font-semibold text-slate-900">
-                                  {item.label} <span className="tabular-nums text-slate-500">{item.count}건</span>
-                                </p>
-                                <p className="text-xs text-slate-500 mt-0.5">{item.consequence}</p>
-                              </div>
+                  <div className="space-y-2">
+                    {actionableItems.map((item, idx) => {
+                      const ItemIcon = item.icon;
+                      return (
+                        <div key={idx} className="flex items-start justify-between gap-3 rounded-lg border border-yellow-200 bg-yellow-50/40 p-3">
+                          <div className="flex items-start gap-2.5">
+                            <span className="mt-0.5 rounded bg-white border border-yellow-200 p-1">
+                              <ItemIcon className={`h-4 w-4 ${item.color}`} />
+                            </span>
+                            <div>
+                              <p className="text-sm font-semibold text-slate-900">
+                                {item.label} <span className="tabular-nums text-slate-500">{item.count}건</span>
+                              </p>
+                              <p className="text-xs text-slate-500 mt-0.5">{item.consequence}</p>
                             </div>
-                            <Button size="sm" variant="outline" className="shrink-0 border-slate-200 text-slate-700 hover:bg-white" onClick={item.onAction}>
-                              {item.actionLabel}
-                            </Button>
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                          <Button size="sm" variant="outline" className="shrink-0 border-slate-200 text-slate-700 hover:bg-white" onClick={item.onAction}>
+                            {item.actionLabel}
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </CardContent>
               </Card>
-            </div>
+            )}
 
             {/* 우 — 최근 활동 (구성 요약 은퇴로 이 자리를 승계).
                 🛑 구성 요약 카드는 은퇴했다 — 멤버·초대 대기·승인자 세 축을 KPI 4카드가
@@ -945,13 +903,15 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                 <Card className="shadow-sm border-slate-200 bg-white">
                   <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
                     <CardTitle className="text-sm font-semibold text-slate-900">최근 활동</CardTitle>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("activity")}
+                    {/* §org-management-web v2-3 — 활동 및 감사 탭 은퇴. 전체 로그는
+                        사이드바 전역 통합 로그(/dashboard/audit)가 정본이다 — 조직 필터
+                        쿼리(org)를 실어 딥링크한다. */}
+                    <Link
+                      href={`/dashboard/audit?org=${params.id}`}
                       className="text-xs text-blue-600 hover:underline"
                     >
                       전체 활동 로그 ›
-                    </button>
+                    </Link>
                   </CardHeader>
                   <CardContent>
                     {organizationLogs.length === 0 ? (
@@ -1016,21 +976,9 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
               })}
             </div>
 
-            {/* 역할별 세그먼트 표시 */}
-            <div className="flex flex-wrap gap-3">
-              {Object.entries(
-                members.reduce((acc: Record<string, number>, m) => {
-                  acc[m.role] = (acc[m.role] || 0) + 1;
-                  return acc;
-                }, {})
-              ).map(([role, count]) => (
-                <div key={role} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100/50 border border-slate-200">
-                  <ShieldCheck className="h-3.5 w-3.5 text-violet-500" />
-                  <span className="text-xs text-slate-400">{ROLE_LABELS[role] || role}</span>
-                  <span className="text-xs font-bold text-slate-600">{count}명</span>
-                </div>
-              ))}
-            </div>
+            {/* §org-management-web v2-4 (호영님 2026-08-30 리뷰) — 역할별 세그먼트 칩
+                ("관리자 1명" 등) 제거: 역할 분포는 테이블 역할 열이 이미 행 단위로
+                말한다. 테이블 위 회색 칩 부유가 §4 "관리자 N명 요약 칩 제거" 의 실물. */}
 
             {/* §org-management-web P6 (호영님 판정 2026-08-25) — 캡션이 없는 것을 가리키지 않는다.
               * 관리 컬럼은 본인 행에서 "-" 다(:1167). 멤버가 본인뿐이면 그 열에 메뉴가 하나도
@@ -1057,7 +1005,8 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                 </CardContent>
               </Card>
             ) : (
-              <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              /* v2-4 — 흰 카드 래핑(보더 #e2e8f0=slate-200 + radius 14) — 핸드오프 §6.4 */
+              <Card className="bg-white rounded-[14px] shadow-sm border border-slate-200 overflow-hidden">
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -1198,20 +1147,32 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
         {/* ===== 승인 및 초대 탭 ===== */}
         <TabsContent value="invites">
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-lg text-slate-900">승인 및 초대 관리</h3>
-              {isAdmin && (
-                <Button
-                  className="bg-blue-600 hover:bg-blue-700 text-slate-900"
-                  onClick={() => setInviteModalOpen(true)}
-                >
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  새 초대
-                </Button>
-              )}
-            </div>
+            {/* §org-management-web v2-5 (호영님 2026-08-30 리뷰) — 탭 헤더의 "새 초대"
+                버튼 제거: 페이지 헤더 "멤버 초대" 와 중복이었다. 탭 내 초대 진입은
+                0건 접힌 행 안의 1개만 남긴다. */}
+            <h3 className="font-bold text-lg text-slate-900">승인 및 초대 관리</h3>
 
-            {/* 초대 대기 목록 */}
+            {/* 초대 대기 목록 — 0건이면 접힌 1줄 (빈 안내문 카드로 큰 공간 점유 금지) */}
+            {pendingCount === 0 ? (
+              <Card className="shadow-sm border-slate-200 bg-white">
+                <CardContent className="flex items-center justify-between gap-3 px-4 py-3">
+                  <p className="flex items-center gap-2 text-sm text-slate-500">
+                    <Mail className="h-4 w-4 text-slate-400" />
+                    초대 대기 없음
+                  </p>
+                  {isAdmin && (
+                    <Button
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => setInviteModalOpen(true)}
+                    >
+                      <UserPlus className="h-4 w-4 mr-1.5" />
+                      새 초대
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
             <Card className="shadow-sm border-slate-200 bg-white">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
@@ -1220,12 +1181,6 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {pendingCount === 0 ? (
-                  <div className="flex items-center gap-2 py-4 justify-center">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                    <p className="text-sm text-slate-400">대기 중인 초대가 없습니다</p>
-                  </div>
-                ) : (
                   <div className="space-y-2">
                     {teamMembers.filter((m) => m.status === "Pending").map((member) => {
                       const rawMember = member.memberId ? members.find((m) => m.id === member.memberId) : null;
@@ -1270,9 +1225,9 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                       );
                     })}
                   </div>
-                )}
               </CardContent>
             </Card>
+            )}
 
             {/* 승인자 현황 */}
             <Card className="shadow-sm border-slate-200 bg-white">
@@ -1311,93 +1266,6 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                     })}
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* ===== 활동 및 감사 탭 ===== */}
-        <TabsContent value="activity">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <h3 className="font-bold text-lg text-slate-900">활동 및 감사 로그</h3>
-              {/* §org-activity-actor-filter — 카테고리 칩(전체·재고·구매·예산·승인·멤버·권한·설정) 제거.
-                  멤버·권한·설정은 로그가 생성되지 않아 항상 빈 결과였음(가짜 필터). 카테고리 분류는 각 로그 행
-                  태그로 유지, 필터는 "누가" 중심 행위자 드롭다운으로. 실제 행위자 있을 때만 노출(가짜 컨트롤 0). */}
-              {activityActors.length > 1 && (
-                <Select value={activityActorFilter} onValueChange={setActivityActorFilter}>
-                  <SelectTrigger className="w-[180px] h-9 text-sm border-slate-200">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {activityActors.map((a) => (
-                      <SelectItem key={a} value={a}>{a === "전체" ? "전체 행위자" : a}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-
-            <Card className="shadow-sm border-slate-200 bg-white">
-              <CardContent className="p-0">
-                <div className="max-h-[560px] overflow-y-auto">
-                  {filteredLogs.length === 0 ? (
-                    <div className="py-12 text-center">
-                      <Activity className="h-10 w-10 text-slate-600 mx-auto mb-3" />
-                      {/* §org-management-redesign P3 — 활동 데이터 없음 정직 표기(가짜 0). */}
-                      <p className="text-sm text-slate-400">
-                        {activityActorFilter === "전체" ? "활동 내역이 아직 없습니다" : `${activityActorFilter} 님의 활동 기록이 없습니다`}
-                      </p>
-                    </div>
-                  ) : (
-                    filteredLogs.map((log, idx) => {
-                      const category = getActivityCategory(log.action);
-                      const style = ACTIVITY_CATEGORY_STYLES[category] || ACTIVITY_CATEGORY_STYLES.inventory;
-                      const Icon = style.icon;
-                      const importance = getActivityImportance(log.action);
-                      const actionParts = log.target && log.action.includes(log.target)
-                        ? (() => {
-                            const i = log.action.indexOf(log.target);
-                            return {
-                              before: log.action.slice(0, i),
-                              target: log.target,
-                              after: log.action.slice(i + log.target.length),
-                            };
-                          })()
-                        : null;
-                      return (
-                        <div
-                          key={log.id}
-                          className={`flex items-start gap-4 p-4 transition-colors hover:bg-slate-100/30 ${idx < filteredLogs.length - 1 ? "border-b border-slate-200" : ""}`}
-                        >
-                          <div className={`w-2 h-2 rounded-full shrink-0 mt-2.5 ${IMPORTANCE_DOT[importance]}`} />
-                          <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${style.bg} ${style.text}`}>
-                            <Icon className="h-5 w-5" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <Badge variant="secondary" className="text-[10px] bg-slate-100 text-slate-400 px-1.5 py-0">{style.label}</Badge>
-                            </div>
-                            <p className="text-sm">
-                              <span className="font-medium text-slate-900/90">{log.actor}</span>
-                              <span className="text-slate-400">님이 </span>
-                              {actionParts ? (
-                                <>
-                                  <span className="text-slate-400">{actionParts.before}</span>
-                                  <span className="text-blue-600 font-medium">{actionParts.target}</span>
-                                  <span className="text-slate-400">{actionParts.after}</span>
-                                </>
-                              ) : (
-                                <span className="text-slate-400">{log.action}</span>
-                              )}
-                            </p>
-                            <p className="text-xs text-slate-500 mt-1">{log.time}</p>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
               </CardContent>
             </Card>
           </div>
@@ -1649,35 +1517,29 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                 </CardContent>
               </Card>
 
-              {/* 위험 작업 */}
-              <Card className="shadow-sm border border-[#fecaca] bg-white">
-                <CardHeader>
-                  <CardTitle className="text-base text-red-400 flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5" />
-                    위험 작업
-                  </CardTitle>
-                  <CardDescription className="text-slate-500">되돌릴 수 없는 작업입니다. 신중하게 진행하세요.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center justify-between rounded-lg border border-[#fecaca] p-4">
-                    <div>
-                      <p className="text-sm font-medium text-slate-600">조직 삭제</p>
-                      <p className="text-xs text-slate-500">조직과 모든 데이터가 영구적으로 삭제됩니다.</p>
-                    </div>
-                    {/* §org-management-redesign P4 — dead button 봉합: 삭제 모달(type-to-confirm) 연결.
-                        소유자만 활성(권한 게이팅 — 비소유자는 사유 표기 disabled). */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-[#fecaca] text-red-600 hover:bg-red-50 hover:text-red-700"
-                      onClick={() => { setDeleteConfirm(""); setDeleteModalOpen(true); }}
-                      disabled={!isOwner}
-                      title={isOwner ? undefined : "조직 소유자만 삭제할 수 있습니다"}
-                    >
-                      <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                      조직 삭제
-                    </Button>
+              {/* §org-management-web v2-6 (호영님 2026-08-30 리뷰) — 과채색 제거.
+                  레드 보더 박스 중첩 + 레드 타이틀·아이콘은 위험을 두 번 세 번 외치는
+                  장식이었다. 일반 흰 카드 + 제목 일반 톤 + 설명 1줄, 레드는 우측
+                  아웃라인 버튼 1개만. 위험의 실질 방어는 type-to-confirm 모달이 담당. */}
+              <Card className="shadow-sm border-slate-200 bg-white">
+                <CardContent className="flex items-center justify-between gap-4 p-5">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">조직 삭제</p>
+                    <p className="text-xs text-slate-500 mt-0.5">조직과 모든 데이터가 영구적으로 삭제됩니다.</p>
                   </div>
+                  {/* §org-management-redesign P4 — dead button 봉합: 삭제 모달(type-to-confirm) 연결.
+                      소유자만 활성(권한 게이팅 — 비소유자는 사유 표기 disabled). */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                    onClick={() => { setDeleteConfirm(""); setDeleteModalOpen(true); }}
+                    disabled={!isOwner}
+                    title={isOwner ? undefined : "조직 소유자만 삭제할 수 있습니다"}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                    조직 삭제
+                  </Button>
                 </CardContent>
               </Card>
             </div>

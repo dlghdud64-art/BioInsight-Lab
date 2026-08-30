@@ -24,10 +24,19 @@ function overviewBlock(code: string): string {
 }
 
 describe("개요 탭 — 2열 · 정적 3카드 흡수", () => {
-  it("2열 그리드(1fr + 380px)", () => {
+  it("2열 그리드(1fr + 380px) — 처리 항목 있을 때만, 같은 행 stretch", () => {
     const ov = overviewBlock(stripComments(read(ORG_DETAIL)));
     expect(ov.length).toBeGreaterThan(0);
     expect(ov).toMatch(/lg:grid-cols-\[1fr_380px\]/);
+    /* v2-2 (호영님 리뷰 2026-08-30) — 두 카드는 같은 그리드 행의 직접 자식이다.
+     * items-start 가 폭·높이 불일치의 원인이었다 — grid 기본 stretch 로 같은
+     * 시작선·같은 높이. 좌측 카드가 빠지면(0건) 그리드도 1열로 접는다.
+     * 단언 창 = 그리드 컨테이너 여는 태그(②) — 블록 전체에 걸면 처리 항목 행 내부의
+     * 정당한 flex items-start(아이콘 상단 정렬)까지 걸린다(④ 분기 단위). */
+    const gridOpen = ov.match(/<div className=\{`grid gap-4[\s\S]*?`\}>/)?.[0] ?? "";
+    expect(gridOpen.length).toBeGreaterThan(0);
+    expect(gridOpen).not.toMatch(/items-start/);
+    expect(ov).toMatch(/actionableItems\.length > 0 \? "lg:grid-cols-\[1fr_380px\]" : ""/);
   });
 
   it("🛑 구성 요약 카드가 없다 — 3축을 KPI 4카드가 이미 든다 (겹 2 은퇴)", () => {
@@ -130,9 +139,15 @@ describe("바로 처리할 항목 — 결과와 행동을 함께 말한다", () 
     expect(code).not.toMatch(/setRoleColumnHint/);
   });
 
-  it("처리 항목 0건이면 그렇다고 말한다 (빈 상태)", () => {
+  it("🛑 처리 항목 0건이면 카드째 미노출 — 빈 박스 금지", () => {
+    /* 🛑 재조준 — 결정 교체 (§org-management-web v2-1 · 호영님 리뷰 2026-08-30).
+     * 옛 결정: 0건이면 "처리할 항목이 없습니다" 빈 상태를 그린다.
+     * 새 결정: 0건이면 **카드 자체 미노출** — §1(목록)의 "빈 처리 항목 박스 금지"
+     * 규칙을 상세 탭에도 적용한다. 빈 박스는 폭만 차지하는 죽은 표면이었다. */
     const ov = overviewBlock(stripComments(read(ORG_DETAIL)));
-    expect(ov).toMatch(/actionableItems\.length === 0[\s\S]{0,300}?처리할 항목이 없습니다/);
+    expect(ov).toMatch(/actionableItems\.length > 0 && \(/);
+    /* 역방향 잠금 — 빈 상태 문구가 되살아나면 RED */
+    expect(ov).not.toMatch(/처리할 항목이 없습니다/);
   });
 });
 
@@ -143,8 +158,12 @@ describe("최근 활동 — 빈 상태를 정직하게", () => {
     expect(ov).toMatch(/아직 기록된 활동이 없습니다/);
   });
 
-  it("전체 활동 로그 딥링크가 활동 탭으로 간다", () => {
+  it("전체 활동 로그 딥링크가 전역 통합 로그(조직 필터)로 간다", () => {
+    /* 승계 (v2-3 · 2026-08-30): 활동 탭 은퇴 → 딥링크의 끝이 탭에서 전역 통합
+     * 로그(/dashboard/audit?org=)로 바뀌었다. 수신측 배선은
+     * org-activity-actor-role-matrix.test.ts 가 소유한다. */
     const ov = overviewBlock(stripComments(read(ORG_DETAIL)));
-    expect(ov).toMatch(/setActiveTab\("activity"\)[\s\S]{0,200}?전체 활동 로그/);
+    expect(ov).toMatch(/\/dashboard\/audit\?org=\$\{params\.id\}[\s\S]{0,200}?전체 활동 로그/);
+    expect(ov).not.toMatch(/setActiveTab\("activity"\)/);
   });
 });

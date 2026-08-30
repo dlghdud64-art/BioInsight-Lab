@@ -92,8 +92,13 @@ describe("KPI 4카드", () => {
      * prod 실측 Team 0 · TeamMember 0 이라 그 게이트를 통과할 주체가 없다.
      * "지정하라" 는 실행 불가능한 지시였다. 범위는 좁게 — 지시형만 내리고 표시형은 남긴다. */
     const code = stripComments(read(ORG_DETAIL));
-    /* 표시형 — 주의 톤은 사실 표기라 남긴다 */
-    expect(code).toMatch(/approverCount === 0 \? "border-yellow-300" : "border-slate-200"/);
+    /* 표시형 — 주의 톤은 사실 표기라 남긴다.
+     * v2-1 (호영님 리뷰 2026-08-30): 조건은 approverCount===0 단독이 아니라
+     * approverGap(= approvalPolicy !== "none" && approverCount === 0) — 처리 항목
+     * 큐와 **같은 상태에서 파생**된다. approvalPolicy="none"(FREE·Basic)이면 승인
+     * 단계 자체가 없어 앰버도 끈다. 단일 소스 정의는 approver-alarm 테스트가 소유. */
+    expect(code).toMatch(/approverGap \? "border-yellow-300" : "border-slate-200"/);
+    expect(code).not.toMatch(/approverCount === 0 \? "border-yellow-300"/);
     /* 역방향 잠금 — 지시형 pill 이 되살아나면 RED */
     expect(code).not.toMatch(/지정 필요/);
   });

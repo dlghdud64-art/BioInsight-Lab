@@ -24,8 +24,10 @@ describe("§org-management-redesign P3 — 활동 mock honesty(§11.318)", () =>
   it("organizationLogs = 빈 배열(정직)", () => {
     expect(PAGE).toMatch(/const organizationLogs:[\s\S]{0,120}=\s*\[\]/);
   });
-  it("활동 없음 정직 표기(empty state)", () => {
-    expect(PAGE).toMatch(/활동 내역이 아직 없습니다/);
+  it("활동 없음 정직 표기(empty state) — 개요 최근 활동이 승계", () => {
+    /* 승계 (v2-3 · 2026-08-30): 활동 탭 은퇴로 탭의 empty 문구("활동 내역이 아직
+     * 없습니다")는 잠글 대상이 사라졌다. honesty 표기는 개요 최근 활동이 잇는다. */
+    expect(PAGE).toMatch(/아직 기록된 활동이 없습니다/);
   });
 });
 
@@ -56,11 +58,14 @@ describe("§org-management-redesign P3 — KPI 6박스 → 요약 한 줄 바 (P
   });
 });
 
-describe("§org-management-redesign P3 — 회귀 0(5탭·멤버 wiring)", () => {
-  it("5탭 라벨 시안 정합 보존", () => {
-    for (const label of ["멤버 및 접근", "승인 및 초대", "활동 및 감사", "정책 및 설정"]) {
+describe("§org-management-redesign P3 — 회귀 0(4탭·멤버 wiring)", () => {
+  it("4탭 라벨 정합 보존 — 활동 및 감사 은퇴(v2-3 · 2026-08-30)", () => {
+    for (const label of ["멤버 및 접근", "승인 및 초대", "정책 및 설정"]) {
       expect(PAGE).toMatch(new RegExp(label));
     }
+    /* 역방향 잠금 — 활동 탭이 되살아나면 RED. 대체 경로(감사 딥링크)는
+     * org-activity-actor-role-matrix.test.ts 가 소유한다. */
+    expect(PAGE).not.toMatch(/TabsTrigger value="activity"/);
   });
   it("멤버 목록 canonical fetch 보존", () => {
     expect(PAGE).toMatch(/\/api\/organizations\/\$\{params\.id\}\/members/);

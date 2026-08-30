@@ -55,7 +55,9 @@
     "20260807130000_quote_item_vendor_selection",
     "20260812120000_schema_proposal_compliance_alert_vendorname",
     "20260812130000_team_organizationid_required",
-    "20260821150000_organization_invite_policy"
+    "20260821150000_organization_invite_policy",
+    "20260822090000_budget_event_budget_id",
+    "20260830120000_purchase_request_organization_id"
   ],
-  "generatedAt": "2026-08-21T14:54:16.432Z"
+  "generatedAt": "2026-08-30T16:03:31.670Z"
 }
