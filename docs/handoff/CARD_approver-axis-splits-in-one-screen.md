@@ -361,3 +361,82 @@ ownerlessCount 1   org-bioinsight-lab (prisma/seed.ts:443 데모 시드)
 폐기  scripts/add-owner-role.mjs — 삭제(2026-08-30). §2c 위반 4건.
       수리 큐가 아니라 삭제다 — 존재하는 한 다음 세션이 "도구가 있다" 는 이유로 집는다.
 ```
+
+---
+
+## §purchase-request-org-axis #실재화 (2026-08-30 · 유령 6곳 → 봉합 걷기)
+
+### 🛑 새 발견 — 죽어 있던 통제가 **둘**이었다
+
+nullable 이 아니라 NOT NULL 이어야 했던 근거가 하나 더 나왔다.
+
+```
+예산 통제        orgId(team 경유) undefined → if (orgId && quoteId) 스킵      [기지]
+개인 결재 한도    purchaseRequest.organizationId ?? "" → findFirst null
+                → approvalLimit null(=무제한) → checkApprovalLimit 전부 통과   [신규]
+```
+
+`:137` 의 `?? ""` 는 방어처럼 보이지만 **한도 게이트를 통째로 무력화하는 봉합**이었다.
+`§S2 #approval-limit-server-enforce` 는 audit S2 HIGH 로 세운 통제인데,
+"권한 보유 actor 가 자기 한도 초과 건을 직접 승인하던 우회를 닫는다" 던 그 게이트가
+**소속 축 부재로 열려 있었다.** 서로 다른 통제축 2개가 같은 뿌리로 죽어 있었다.
+
+### 계수가 세 번 움직였다 — 축과 시점을 함께 적는다
+
+```
+7곳   직접 6 + team 경유 1(:156)     단위가 섞였다 (§2b 사례 2)
+6곳   직접 읽기만 · 봉합 제거 **전**   88da2db7^ 과 이 슬라이스 착수 시점
+5곳   직접 읽기만 · 봉합 제거 **후**   지금. 6번째는 항상-거짓 분기 자신이었다
+```
+
+🔑 6 → 5 는 결함이 아니라 **이 슬라이스의 산물**이다. 사라진 하나가
+`if (purchaseRequest.organizationId)` — 읽기이면서 동시에 도달을 막던 분기다.
+🛑 "줄었으니 회귀" 로 읽으면 봉합을 되돌린다. RED 를 볼 때 "무엇이 나빠졌나" 전에
+**"무엇이 좋아졌나"** 를 먼저 묻는다(§sweep).
+
+### 봉합 2건 제거 = 소생 5지점
+
+```
+:137  ?? "" 제거                 → 개인 결재 한도 게이트가 실제로 발화
+:546  항상-거짓 if 제거           → OWNER+ADMIN 예산 경고 브로드캐스트가 처음 도달 가능
+:241  POCandidate 조회 필터        🛑 undefined 는 Prisma where 에서 **조건이 통째로 생략**된다.
+                                 값이 안 들어간 게 아니라 필터가 없었다 — 다른 조직 후보까지 잡혔다.
+:312  POCandidate 생성에 org 기록   이전에는 NULL 로 들어갔다
+:330  convertPOCandidatesToOrders 인자에 org 전달
+```
+
+### 🛑 순서 정정 — ③ 예산 게이트 첫 발화는 이 슬라이스에서 **검증 불가**
+
+```
+③ 경로는 teamId 를 안 채운다
+승인 라우트 :113  teamId: purchaseRequest.teamId || ""  → teamMember 없음
+           :121  role !== TeamRole.ADMIN               → **403**
+→ 예산 게이트(:184) 앞에서 끊긴다. 소생 여부를 잴 수 없다.
+```
+
+⚠️ "7곳 실재화(③ 예산 게이트 첫 발화 포함)" 은 **(나)-1 선행이 필수**다.
+`:156`(team 경유 → 직결)만 바꿔도 안 된다 — 승인 자체가 403 이라 게이트에 도달을 못 한다.
+→ ③ 발화 실측은 **(나)-1 완료 직후**로 이월. 기록으로 두지 않고 sentinel 긍정 단언으로
+  코드에 붙여 뒀다((나)-1 이 배선을 바꾸면 그 단언이 RED 로 떨어져 실측 시점을 알린다).
+
+### 잔여 데이터 — 조치 불필요로 닫는다
+
+```
+prod POCandidate 3행 · organizationId 전부 NULL
+  → 2026-06-13 시드(BioInsight 계열)이고 **quoteId 도 NULL** 이다.
+    :241 은 quoteId 로도 거르므로 필터 실재화가 이 3행을 새로 고아로 만들지 않는다.
+    (필터가 살아나며 기존 행이 안 잡히게 되는 위험을 먼저 셌고, 해당 없음)
+prod Order 2행 · PurchaseRequest 0행
+```
+
+### 게이트
+
+```
+sentinel  purchase-request-org-axis-realized.test.ts  10/10 GREEN
+프로브    12/12 검출 · 대조군 GREEN · 바이트 무손상
+          🔑 러너 기준 = **프로젝트 러너**(cwd=apps/web · vitest.config.ts 적용)
+스코프    3923 passed / 2 failed + 수집실패 1
+          (pretendard · sds · compare-sync `Cannot find module '@/lib/db'`)
+          셋 다 내 변경 이전부터 — 88da2db7^ 대조 및 무관 import 확인
+tsc       27 불변
+```

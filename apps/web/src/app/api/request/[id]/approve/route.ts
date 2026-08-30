@@ -134,7 +134,11 @@ export async function POST(
     //   별 통제축(개인 결재 권한). read-only 비교라 tx 전 pre-validation.
     const actorOrgMembership = await db.organizationMember.findFirst({
       where: {
-        organizationId: purchaseRequest.organizationId ?? "",
+        // §purchase-request-org-axis — `?? ""` 제거(2026-08-30). 유령 시절 이 표현은
+        //   organizationId 가 undefined 라 항상 "" 로 떨어졌고, findFirst 가 null 을
+        //   반환해 approvalLimit 이 null(=무제한)로 읽혔다 — **개인 결재 한도 게이트가
+        //   통째로 우회됐다.** 컬럼이 NOT NULL 이 된 지금 봉합을 걷어야 실제로 발화한다.
+        organizationId: purchaseRequest.organizationId,
         userId: session.user.id,
       },
       select: { approvalLimit: true },
@@ -543,22 +547,25 @@ export async function POST(
       // §11.250f-org — recipients dedup (requester + org broadcast).
       const recipientUserIds = new Set<string>();
       if (purchaseRequest.requesterId) recipientUserIds.add(purchaseRequest.requesterId);
-      if (purchaseRequest.organizationId) {
-        try {
-          const orgMembers = await db.organizationMember.findMany({
-            where: {
-              organizationId: purchaseRequest.organizationId,
-              role: { in: ["OWNER", "ADMIN"] },
-            },
-            select: { userId: true },
-          });
-          for (const m of orgMembers as Array<{ userId: string }>) {
-            if (m.userId) recipientUserIds.add(m.userId);
-          }
-        } catch (orgErr) {
-          // graceful — requester single fallback
-          console.error("[request/approve] BUDGET_WARNING org broadcast member 조회 실패 (single fallback):", orgErr);
+      // §purchase-request-org-axis — `if (purchaseRequest.organizationId)` 제거
+      //   (2026-08-30). 이 분기는 컬럼이 없어 **항상 거짓**이었다 — OWNER+ADMIN
+      //   브로드캐스트가 단 한 번도 돌지 않았고 수신자는 요청자 1명뿐이었다.
+      //   컬럼이 NOT NULL 이 된 지금 조건은 항상 참이므로 분기를 걷는다.
+      //   🔑 "고쳤다" 가 아니라 **이제 돌기 시작한다** — 재측정 대상이다.
+      try {
+        const orgMembers = await db.organizationMember.findMany({
+          where: {
+            organizationId: purchaseRequest.organizationId,
+            role: { in: ["OWNER", "ADMIN"] },
+          },
+          select: { userId: true },
+        });
+        for (const m of orgMembers as Array<{ userId: string }>) {
+          if (m.userId) recipientUserIds.add(m.userId);
         }
+      } catch (orgErr) {
+        // graceful — requester single fallback
+        console.error("[request/approve] BUDGET_WARNING org broadcast member 조회 실패 (single fallback):", orgErr);
       }
 
       if (recipientUserIds.size === 0) return NextResponse.json({
