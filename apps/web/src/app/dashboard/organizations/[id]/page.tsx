@@ -175,11 +175,12 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   // §org-management-web P4b — 변경 즉시 저장 후 행에 "✓ 저장됨" 1.5초.
   //   toast 만으로는 **어느 행이** 저장됐는지 안 보인다.
   const [savedMemberId, setSavedMemberId] = useState<string | null>(null);
-  // §org-management-web P4b — 승인자 지정 딥링크가 켜는 역할 열 강조.
-  //   🛑 핸드오프 §5 는 "역할 드롭다운 오픈 상태로 딥링크" 였으나 열 수 없다 —
-  //      승인자 0명 상황에서 **누구를 승인자로 만들지는 사용자가 정한다**. 열 드롭다운이
-  //      하나로 정해지지 않는다. 대신 역할 열 전체를 강조해 어디를 볼지 말한다.
-  const [roleColumnHint, setRoleColumnHint] = useState(false);
+  // §approver-axis (다) — P4b "역할 열 강조" 은퇴 (호영님 판정 2026-08-26).
+  //   roleColumnHint 의 유일한 setter 는 "승인자 지정" CTA 였고, (다)가 그 CTA 를
+  //   실행 불가능한 지시로 판정해 제거했다. 남겨두면 항상 false 인 분기가 된다.
+  //   🔑 원래 있던 dead 분기를 청소하는 게 아니라 **이 슬라이스가 만든 잔해**다.
+  //      자기가 만든 잔해를 다음 슬라이스로 넘기면 범위 보존이 아니라 부채 이전이다.
+  //   (나)에서 승인자 축이 서면 배선은 그때 새로 한다.
   // §org-activity-actor-filter — 카테고리 칩(멤버·권한·설정 등 항상 빈 필터) 제거 → 실제 행위자 필터.
   const [activityActorFilter, setActivityActorFilter] = useState<string>("전체");
 
@@ -598,12 +599,14 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
     count: pendingCount, icon: Mail, color: "text-yellow-500",
     actionLabel: "초대 확인", onAction: () => setActiveTab("invites"),
   });
-  if (approverCount === 0 && totalMembers > 1) actionableItems.push({
-    label: "승인자 미지정", consequence: "구매 요청이 승인 단계 없이 통과됩니다",
-    count: 1, icon: AlertTriangle, color: "text-yellow-600",
-    actionLabel: "승인자 지정",
-    onAction: () => { setActiveTab("members"); setRoleColumnHint(true); },
-  });
+  /* §approver-axis (다) — 승인자 미지정 처리 항목 제거 (호영님 판정 2026-08-26 · 좁게).
+   * 🛑 다섯 지시형 중 **이것만 배선된 CTA 였다** — "승인자 지정" 버튼이 멤버 탭 딥링크 +
+   *   역할 열 강조까지 켰다. 그런데 끝까지 따라가 APPROVER 를 줘도 승인은 안 열린다:
+   *   승인 라우트(api/request/[id]/approve:121)가 보는 것은 TeamRole.ADMIN 이고,
+   *   prod 실측 Team 0 · TeamMember 0 이라 그 게이트를 통과할 주체가 존재하지 않는다.
+   *   문구가 아니라 **dead button** 이었다.
+   * 🔑 "미구현" 이 아니라 도달 가능한 상태 부재다 — 코드는 있다.
+   * 숫자 표면(KPI "승인 권한 N")은 남긴다. 실행 불가능한 것은 지시이지 수가 아니다. */
 
   return (
     /* §org-management-web P6 — 좌우 여백 부재 봉합.
@@ -797,11 +800,8 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
             </div>
             <div className="flex items-baseline gap-2">
               <p className="text-2xl font-bold text-slate-900 tabular-nums">{approverCount}</p>
-              {approverCount === 0 && (
-                <span className="text-[11px] font-semibold text-yellow-600 bg-yellow-50 border border-yellow-200 rounded px-1.5 py-0.5">
-                  지정 필요
-                </span>
-              )}
+              {/* §approver-axis (다) — "지정 필요" 배지 제거. 지정 수단이 없다.
+                  수(approverCount)와 주의 톤은 표시형이라 그대로 둔다. */}
             </div>
           </CardContent>
         </Card>
@@ -1063,7 +1063,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                                 </div>
                               </div>
                             </TableCell>
-                            <TableCell className={`py-4 ${roleColumnHint ? "bg-yellow-50/60" : ""}`}>
+                            <TableCell className="py-4">
                               {canEditRole && rawMember ? (
                                 <div className="flex items-center gap-2">
                                   <Select
@@ -1255,8 +1255,9 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
               <CardContent>
                 {members.filter((m) => m.role === "APPROVER" || m.role === "ADMIN" || m.role === "OWNER").length === 0 ? (
                   <div className="flex items-center gap-2 py-4 justify-center">
-                    <AlertTriangle className="h-5 w-5 text-yellow-500" />
-                    <p className="text-sm text-yellow-600">승인자를 지정해 주세요</p>
+                    {/* §approver-axis (다) — "지정해 주세요" 는 실행 불가능한 지시였다.
+                        조직 범위에 지정 수단이 없으므로 사실만 적는다. */}
+                    <p className="text-sm text-slate-400">승인 권한을 가진 멤버가 없습니다</p>
                   </div>
                 ) : (
                   <div className="space-y-2">

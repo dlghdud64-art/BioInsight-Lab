@@ -64,8 +64,17 @@ describe("승인자 지정 딥링크", () => {
      * 승인자 0명 상황에서 누구를 승인자로 만들지는 사용자가 정하므로 열 드롭다운이
      * 하나로 정해지지 않는다. 강조로 어디를 볼지만 말한다 (실측이 문서를 정정 3건째). */
     const code = stripComments(read(ORG_DETAIL));
-    expect(code).toMatch(/setActiveTab\("members"\); setRoleColumnHint\(true\);/);
-    expect(code).toMatch(/roleColumnHint \? "bg-yellow-50\/60" : ""/);
+    /* 🛑 은퇴 — **결정 교체** (§approver-axis (다) · 호영님 판정 2026-08-26).
+     * 조직 범위에 승인자 지정 수단이 없다 — 승인 라우트는 TeamRole.ADMIN 을 보고
+     * prod 실측 Team 0 · TeamMember 0 이라 그 게이트를 통과할 주체가 없다.
+     * "지정하라" 는 실행 불가능한 지시였다. 범위는 좁게 — 지시형만 내리고 표시형은 남긴다. */
+    /* roleColumnHint 의 유일한 setter 가 그 CTA 였다 — (다)가 CTA 를 지우자 항상 false 인
+     * 분기가 됐다. **이 슬라이스가 만든 잔해**라 같은 슬라이스에서 정리했다. */
+    expect(code).not.toMatch(/roleColumnHint/);
+    expect(code).not.toMatch(/setRoleColumnHint/);
+    /* 🔑 강조만 사라지고 **역할 열 자체는 남아 있다** — 열까지 사라진 것과 갈린다 */
+    expect(code).toMatch(/onValueChange=\{\(v\) => updateRoleMutation\.mutate/);
+    expect(code).toMatch(/ROLE_DOT\[rawMember\.role\]/);
   });
 });
 

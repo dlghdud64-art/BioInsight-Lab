@@ -113,8 +113,15 @@ function getAvatarColor(name: string) {
 // §org-management-redesign P6 — list 카드 가짜 활동(getRecentActivity) 제거(§11.318 honesty).
 //   org 활동/audit 엔드포인트 부재 → 날조(가짜 텍스트·"30분 전 활동" 시간) 금지.
 //   실 org 필드(adminCount/pendingCount)로 파생한 실행 가능 상태만 표기(없으면 null → 미표기).
+// §approver-axis (다) — 실행 불가능한 지시를 내린다 (호영님 판정 2026-08-26 · 좁게).
+//   "승인권자를 지정하라" 고 말했으나 **조직 범위에 지정 수단이 없다** — OrganizationRole
+//   APPROVER 를 줘도 승인 라우트(api/request/[id]/approve:121)는 TeamRole.ADMIN 을 본다.
+//   prod 실측: Team 0 · TeamMember 0 → 그 게이트를 통과할 수 있는 주체가 존재하지 않는다.
+//   🔑 "미구현" 이 아니라 **도달 가능한 상태 부재** 다. 코드는 있다.
+//   → 지시를 내리고 사실만 적는다. 숫자 표면은 (나) 라벨 범위 정정에서 다룬다.
+//   🛑 축은 미해결: 여기 adminCount 는 ADMIN||OWNER 이고 상세의 approverCount 는 APPROVER 다.
+//      문구를 내려도 그 갈림은 닫히지 않았다 — (나) 대상. sentinel 이 이 사실을 잠근다.
 function getOrgStatusLine(org: OrgRow): string | null {
-  if (org.adminCount === 0) return "승인권자 미지정";
   if (org.pendingCount > 0) return `초대 대기 ${org.pendingCount}명`;
   return null;
 }
@@ -142,14 +149,9 @@ function mapOrg(org: any): OrgRow {
 
 function getOrgWarnings(org: OrgRow): { icon: React.ReactNode; text: string; severity: "warn" | "info" }[] {
   const warnings: { icon: React.ReactNode; text: string; severity: "warn" | "info" }[] = [];
-  if (org.adminCount === 0) {
-    warnings.push({
-      icon: <AlertCircle className="h-3.5 w-3.5" />,
-      text: `승인권자 미지정 (${org.pendingCount > 0 ? org.pendingCount + "건 대기" : "설정 필요"})`,
-      severity: "warn",
-    });
-  }
-  if (org.pendingCount > 0 && org.adminCount > 0) {
+  /* §approver-axis (다) — "승인권자 미지정 (설정 필요)" 경보 제거. 위 주석 참조.
+   * 지정 수단이 없는 상태에서 설정을 요구하는 문구는 dead 지시다. */
+  if (org.pendingCount > 0) {
     warnings.push({
       icon: <MailWarning className="h-3.5 w-3.5" />,
       text: `초대 ${org.pendingCount}건 대기 중`,

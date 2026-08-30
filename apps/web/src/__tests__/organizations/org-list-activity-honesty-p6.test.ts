@@ -33,7 +33,13 @@ describe("§org-management-redesign P6 — 가짜 활동 헬퍼 제거(§11.318)
 describe("§org-management-redesign P6 — 실 필드 파생 상태(정직)", () => {
   it("getOrgStatusLine = 실 org 필드(adminCount/pendingCount) 파생", () => {
     expect(PAGE).toMatch(/function getOrgStatusLine/);
-    expect(PAGE).toMatch(/org\.adminCount === 0/);
+    /* 🛑 은퇴 — **결정 교체** (§approver-axis (다) · 호영님 판정 2026-08-26).
+     * 조직 범위에 승인자 지정 수단이 없다 — 승인 라우트는 TeamRole.ADMIN 을 보고
+     * prod 실측 Team 0 · TeamMember 0 이라 그 게이트를 통과할 주체가 없다.
+     * "지정하라" 는 실행 불가능한 지시였다. 범위는 좁게 — 지시형만 내리고 표시형은 남긴다. */
+    /* 역방향 잠금 — adminCount 축 지시형이 되살아나면 RED */
+    expect(PAGE).not.toMatch(/org\.adminCount === 0/);
+    /* 표시형 — pendingCount 파생은 그대로 살아 있다 (honesty 원 결정 무손상) */
     expect(PAGE).toMatch(/org\.pendingCount > 0/);
   });
   it("상태 라인 = null 가드(없으면 미표기, 가짜 0)", () => {

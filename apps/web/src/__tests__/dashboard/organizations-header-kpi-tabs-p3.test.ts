@@ -86,10 +86,16 @@ describe("KPI 4카드", () => {
     expect(code).toMatch(/\{planLabel\} 플랜/);
   });
 
-  it("승인자 0 이면 앰버 보더 + '지정 필요' pill", () => {
+  it("승인자 0 앰버 보더는 유지 · '지정 필요' pill 은 은퇴", () => {
+    /* 🛑 은퇴 — **결정 교체** (§approver-axis (다) · 호영님 판정 2026-08-26).
+     * 조직 범위에 승인자 지정 수단이 없다 — 승인 라우트는 TeamRole.ADMIN 을 보고
+     * prod 실측 Team 0 · TeamMember 0 이라 그 게이트를 통과할 주체가 없다.
+     * "지정하라" 는 실행 불가능한 지시였다. 범위는 좁게 — 지시형만 내리고 표시형은 남긴다. */
     const code = stripComments(read(ORG_DETAIL));
+    /* 표시형 — 주의 톤은 사실 표기라 남긴다 */
     expect(code).toMatch(/approverCount === 0 \? "border-yellow-300" : "border-slate-200"/);
-    expect(code).toMatch(/approverCount === 0 &&[\s\S]{0,200}?지정 필요/);
+    /* 역방향 잠금 — 지시형 pill 이 되살아나면 RED */
+    expect(code).not.toMatch(/지정 필요/);
   });
 
   it("초대 대기 카드가 승인·초대 탭으로 간다 (삭제한 CTA 의 대체 경로)", () => {

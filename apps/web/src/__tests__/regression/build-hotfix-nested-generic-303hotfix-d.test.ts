@@ -69,9 +69,10 @@ describe("§11.303-hotfix-d — nested generic SWC parser bug 회피", () => {
     expect(SRC).toMatch(
       /actionableItems\.push\(\{\s*label:\s*"초대 응답 대기"/,
     );
-    expect(SRC).toMatch(
-      /actionableItems\.push\(\{\s*label:\s*"승인자 미지정"/,
-    );
+    /* 🛑 승계 (§approver-axis (다) 2026-08-26): "승인자 미지정" 항목이 은퇴했다.
+     * 이 sentinel 이 잠그는 결정은 SWC nested-generic 회피와 push 사용처 보존이지
+     * 항목 개수가 아니다 — 남은 초대 항목으로 그 계약을 든다. */
+    expect(SRC).not.toMatch(/actionableItems\.push\(\{\s*label:\s*"승인자 미지정"/);
   });
 
   it("JSX return 구조 보존 (line ~477) — return ( 다음이 space-y-6 루트 div", () => {

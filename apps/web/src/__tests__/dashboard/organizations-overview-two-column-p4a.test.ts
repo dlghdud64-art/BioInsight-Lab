@@ -85,16 +85,30 @@ describe("개요 탭 — 2열 · 정적 3카드 흡수", () => {
 });
 
 describe("바로 처리할 항목 — 결과와 행동을 함께 말한다", () => {
-  it("항목마다 결과 설명(consequence)과 액션이 있다", () => {
+  it("항목마다 결과 설명(consequence)과 액션이 있다 — 초대 항목 축", () => {
+    /* 🛑 은퇴 — **결정 교체** (§approver-axis (다) · 호영님 판정 2026-08-26).
+     * 승인자 미지정 항목은 다섯 지시형 중 **유일하게 배선된 CTA** 였다 — 끝까지 따라가
+     * APPROVER 를 줘도 승인은 안 열린다(승인 라우트는 TeamRole.ADMIN · prod Team 0).
+     * 문구가 아니라 dead button 이었다. 초대 항목은 무손상. */
     const code = stripComments(read(ORG_DETAIL));
-    expect(code).toMatch(/consequence: "구매 요청이 승인 단계 없이 통과됩니다"/);
-    expect(code).toMatch(/actionLabel: "승인자 지정"/);
+    /* consequence/actionLabel 계약은 살아 있다 — 남은 초대 항목으로 승계 */
+    expect(code).toMatch(/consequence: "초대받은 멤버가 아직 참여하지 않았습니다"/);
+    expect(code).toMatch(/actionLabel: "초대 확인"/);
+    /* 역방향 잠금 — 승인자 지시형이 되살아나면 RED */
+    expect(code).not.toMatch(/actionLabel: "승인자 지정"/);
+    expect(code).not.toMatch(/구매 요청이 승인 단계 없이 통과됩니다/);
     expect(overviewBlock(code)).toMatch(/onClick=\{item\.onAction\}/);
   });
 
-  it("승인자 지정은 멤버 탭으로 간다 (딥링크)", () => {
+  it("처리 항목의 액션은 탭 딥링크로 간다 — 초대 항목 축", () => {
+    /* 🛑 은퇴 — **결정 교체** (§approver-axis (다) · 호영님 판정 2026-08-26).
+     * 승인자 미지정 항목은 다섯 지시형 중 **유일하게 배선된 CTA** 였다 — 끝까지 따라가
+     * APPROVER 를 줘도 승인은 안 열린다(승인 라우트는 TeamRole.ADMIN · prod Team 0).
+     * 문구가 아니라 dead button 이었다. 초대 항목은 무손상. */
     const code = stripComments(read(ORG_DETAIL));
-    expect(code).toMatch(/actionLabel: "승인자 지정"[\s\S]{0,120}?setActiveTab\("members"\)/);
+    expect(code).toMatch(/actionLabel: "초대 확인"[\s\S]{0,120}?setActiveTab\("invites"\)/);
+    /* 역방향 잠금 — 멤버 탭 딥링크(역할 열 강조 포함)가 되살아나면 RED */
+    expect(code).not.toMatch(/setRoleColumnHint/);
   });
 
   it("처리 항목 0건이면 그렇다고 말한다 (빈 상태)", () => {
