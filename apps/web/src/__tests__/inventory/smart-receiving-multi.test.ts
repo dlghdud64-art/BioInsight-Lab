@@ -67,7 +67,9 @@ describe("§scan-recognition-upgrade P2 (2) — 모달 다품목 review", () => 
   it("라인별 포함 체크 + 수량 input", () => {
     const src = read(MODAL);
     expect(src).toMatch(/data-testid="srm-multi-include"/);
-    expect(src).toMatch(/data-testid="srm-multi-qty"/);
+    // P3 승계: 수량 셀 = 공용 RecognizedFieldInput(testId prop → data-testid 렌더).
+    expect(src).toMatch(/testId="srm-multi-qty"/);
+    expect(read("src/components/ocr/recognized-fields-review.tsx")).toMatch(/data-testid=\{testId\}/);
   });
 
   it("등록 버튼 disabled 에 후보 선택 요구 0 — 선택 없이도 등록 가능(연결 강제 금지)", () => {

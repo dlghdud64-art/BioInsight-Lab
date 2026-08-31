@@ -109,12 +109,12 @@
 - ✋ Gate: 등록 라인 수 = results 배열 계약 ✅ · 부분 실패 롤백(단일 트랜잭션) ✅ · 후보 자동 선택 0 ✅ · amber 0 · em dash 0(신규 문구 2건 자체 교정) · **잔여: 수동 smoke(다품목 명세서 1장, 호영님)**
 - Rollback: smart-receiving 분기 revert(단품 경로 무접촉) — DDL 없음, 배포 순서 제약 없음
 
-### Phase 3: 필드별 신뢰도 확인 화면 공통화 (G3)
-- [ ] 🔴 unit: 필드 마크 파생(confidence + present + critical) — label-commit-gate fieldMarks 확장(catalogNo·quantity)
-- [ ] 🔴 sentinel: 확신 blue / 불확실 yellow "확인 필요" · amber 0 · 원본 병기(bbox 있으면 하이라이트, 없으면 전체) · 확정 버튼 = canCommit 게이트
-- [ ] 🟢 `recognized-fields-review.tsx` 공통 컴포넌트 → P1(COA)·P2(명세서)·SmartReceivingScannerModal 3 surface 교체
-- [ ] 🔵 중복 리뷰 UI 제거
-- ✋ Gate: 3 surface 동일 컴포넌트 · 자동 확정 0 프로브 · em dash 0
+### Phase 3: 필드별 신뢰도 확인 화면 공통화 (G3) — ✅ 코드 완료 (2026-08-31)
+- [x] 🔴 unit 6(`lib/ocr/recognized-field-marks.ts`): deriveFieldMarks — label-commit-gate **내부 호출**(중복 구현 0), 마크 verified|needs-confirm|ok|empty, critical 확장(quantity·catalogNo), 빈값 = 차단 아님, datamatrix verified 우회 승계
+- [x] 🔴 sentinel 8(`recognized-fields-review.test.ts`): 마크 단일 소스 · blue/yellow·amber 0 · `bbox == null` = 원본 전체(하이라이트 지어내기 0, data-surface 2종) · 마운트 자동 확정 0 · canCommit 게이트 · 3 surface import · LabelScannerModal 무접촉 — 프로브 4종(①yellow→amber ②bbox 분기 제거 ③disabled 게이트 제거 ④마운트 confirm 주입) → 4/4 검출(대응 단언 5 RED)
+- [x] 🟢 RecognizedFieldInput 공용 셀 신설 → 3 surface: COA 확인(REVIEW 내부)·배치 모달 COA 스텝(기존 P1 배선 유지)·SmartReceiving 단품 Lot·유효기한 + 다품목 수량 셀. coa-recognize 응답에 imageUrl 추가(원본 병기, bbox 는 null 유지 — 정직)
+- [x] 🔵 구 UI 은퇴 표: SMART 인라인 lot/expiry Input·raw qty input 대체(별도 파일 아님 → importer 0 확인 대상 없음). sentinel 처분 — 309d `id="srm-*"`·exp-qc fieldMarks 리터럴 = **prop 리터럴로 보존(승계 불요, GREEN 실측)** · wiring `확인 필요` = 공용 셀 이관 승계 · P1(e) = deriveFieldMarks 재앵커 · P2 qty testid = testId prop 승계
+- ✋ Gate: 3 surface 동일 컴포넌트 ✅ · 자동 확정 0 프로브 ✅ · em dash 0 ✅ · SmartReceiving 게이트 호출은 표면 잔존(wiring SMART 앵커 재앵커 최소화)
 - Rollback: surface 별 revert
 
 ### Phase 4: 공급사별 템플릿 학습 (G4) — ⚠️ prod DDL
@@ -148,8 +148,8 @@
   해당 모델을 읽는 모든 표면이 즉시 500. P4 템플릿 테이블도 동일 순서.
 
 ## 10. Progress
-- Overall ~55% · P0 ✅ · P1 ✅(`997443cc` · DDL 적용 19:34 · 이력 정합) · P2 코드 ✅ · Current: P2 land → 수동 smoke 대기 · Next: P3(필드 신뢰도 공통화)
-- P2 는 DDL 없음 — 배포 순서 제약 없음(§9 규칙 비적용 확인).
+- Overall ~75% · P0 ✅ · P1 ✅(`997443cc`+DDL) · P2 ✅(`e3a84965`+호이스트 `ce0ee4e4`) · P3 코드 ✅ · Next: P4(템플릿 학습 · **prod DDL 승인 게이트 — §9 순서 규칙: migrate deploy 선행 후 push**)
+- P3 는 DDL 없음. 수동 smoke(호영님): COA 확인 화면 원본 병기·확인 필요 마크 + 다품목 수량 셀 톤.
 
 ## 11. Notes
 - 2026-08-31: 계획 승인(G5 별건 제외). sandbox 정찰 기반 — operator 세션 P0에서 실측 재확인 후 착수.

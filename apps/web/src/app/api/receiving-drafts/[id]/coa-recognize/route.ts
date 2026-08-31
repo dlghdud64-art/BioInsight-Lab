@@ -98,11 +98,22 @@ export async function POST(
       draft.items.map((it: { id: string; name: string }) => ({ id: it.id, name: it.name })),
     );
 
+    // P3 — 원본 병기용 이미지(조회만). bbox 는 Gemini 가 안 주므로 안 지어낸다(null 유지).
+    let imageUrl: string | null = null;
+    if (pipeline.jobId) {
+      const job = await db.ocrJob.findUnique({
+        where: { id: pipeline.jobId },
+        select: { imageUrl: true },
+      });
+      imageUrl = job?.imageUrl ?? null;
+    }
+
     return NextResponse.json({
       jobId: pipeline.jobId,
       fields,
       confidence: pipeline.result.confidence,
       perLine,
+      imageUrl,
     });
   } catch (error) {
     return handleApiError(error, "receiving-drafts/coa-recognize/POST");

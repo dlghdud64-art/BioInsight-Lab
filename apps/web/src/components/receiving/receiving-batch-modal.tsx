@@ -379,6 +379,7 @@ export function ReceivingBatchModal({
                       <RecognizedFieldsReview
                         fields={coaRecog.fields}
                         confidence={coaRecog.confidence}
+                        imageUrl={coaRecog.imageUrl}
                         lines={coaRecog.perLine.map((p) => ({
                           itemId: p.itemId,
                           name: items.find((it) => it.id === p.itemId)?.name ?? p.itemId,

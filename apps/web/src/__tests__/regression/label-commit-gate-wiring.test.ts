@@ -58,7 +58,10 @@ describe("Phase 3 — SmartReceivingScannerModal critical-field 게이트", () =
     const src = readWeb(SMART);
     expect(src).toMatch(/fieldMarks\.lot === "needs-confirm"/);
     expect(src).toMatch(/fieldMarks\.expiry === "needs-confirm"/);
-    expect(src).toMatch(/확인 필요/);
+    // §scan-recognition-upgrade P3 승계(호영님 지시 2026-08-31): `확인 필요` 텍스트는
+    //   공용 RecognizedFieldInput 으로 이관 — 표면은 needsConfirm 바인딩, 텍스트는 공용 셀.
+    expect(src).toMatch(/needsConfirm=\{commitGate\.fieldMarks\.lot === "needs-confirm"\}/);
+    expect(readWeb("src/components/ocr/recognized-fields-review.tsx")).toMatch(/확인 필요/);
   });
 
   it("발주매핑(selectedOrderId)은 게이트 제외 — 우회 아님", () => {

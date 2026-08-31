@@ -301,6 +301,7 @@ function CaseRowView({
                 <RecognizedFieldsReview
                   fields={recog.fields}
                   confidence={recog.confidence}
+                  imageUrl={recog.imageUrl}
                   lines={recog.perLine.map((p) => ({
                     itemId: p.itemId,
                     name: row.lines.find((l) => l.itemId === p.itemId)?.itemName ?? p.itemId,

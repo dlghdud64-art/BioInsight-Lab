@@ -116,17 +116,20 @@ describe("§scan-recognition-upgrade P1 (d) — 배지 truth = canonical lotSour
 });
 
 describe("§scan-recognition-upgrade P1 (e) — 확정 게이트 = label-commit-gate", () => {
-  it("리뷰 컴포넌트가 evaluateLabelCommitGate 로 확정 버튼을 잠근다", () => {
+  // P3 승계(2026-08-31): 게이트 직접 호출 → deriveFieldMarks 단일 소스로 이관.
+  //   label-commit-gate 는 recognized-field-marks 내부에서 호출(중복 구현 0) —
+  //   그 앵커는 recognized-fields-review.test.ts (1)이 잠근다.
+  it("리뷰 컴포넌트 확정 버튼 = 마크 파생 canCommit 게이트", () => {
     const src = stripComments(read(REVIEW));
-    expect(src).toMatch(/evaluateLabelCommitGate\(/);
+    expect(src).toMatch(/deriveFieldMarks\(/);
     expect(src).toMatch(/const canConfirm =[^\n]*canCommit/);
     // ①접두사: aria-disabled 가 대신 매칭하지 않게 lookbehind
     expect(src).toMatch(/(?<!aria-)disabled=\{[^}]*canConfirm/);
   });
 
-  it("Lot·유효기간 = 신뢰도 무관 명시 확인 (criticalConfirmed 배선)", () => {
+  it("Lot·유효기간 = 신뢰도 무관 명시 확인 (confirmed 배선 → 파생 입력)", () => {
     const src = stripComments(read(REVIEW));
-    expect(src).toMatch(/criticalConfirmed: \{ lot: /);
+    expect(src).toMatch(/confirmed: \{ lot: lotChecked, expiry: expiryChecked \}/);
   });
 });
 

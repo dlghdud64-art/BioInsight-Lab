@@ -60,6 +60,9 @@ import type { QuoteParseResult, ParsedQuoteDocument } from "@/lib/ocr/gemini-quo
 import { evaluateLabelCommitGate } from "@/lib/ocr/label-commit-gate";
 // §scan-recognition-upgrade P2 — 명세서↔발주 근사 매칭(순수함수 · 자동 선택 0).
 import { matchReceiptToOrders } from "@/lib/receiving/receipt-match";
+// §scan-recognition-upgrade P3 — 공용 인식 필드 셀(마크 표시 일원화). 게이트 호출은
+//   이 표면(commitGate)에 그대로 남는다 — label-commit-gate-wiring 앵커 보존.
+import { RecognizedFieldInput } from "@/components/ocr/recognized-fields-review";
 
 /* ── /api/quotes/parse-image response (QuoteScannerModal §11.290 패턴 정합) ── */
 interface QuoteScanApiResponse extends QuoteParseResult {
@@ -673,17 +676,19 @@ export function SmartReceivingScannerModal({
                         {l.catalogNumber ? `Cat ${l.catalogNumber}` : "Cat.No 없음"}
                       </p>
                     </div>
-                    <input
+                    {/* §scan-recognition-upgrade P3 — 공용 셀. 저신뢰 스캔은 수량도 확인 필요 톤. */}
+                    <RecognizedFieldInput
+                      compact
                       type="number"
                       min={1}
-                      data-testid="srm-multi-qty"
-                      value={l.quantity}
-                      onChange={(e) =>
+                      testId="srm-multi-qty"
+                      value={String(l.quantity)}
+                      needsConfirm={scanResult.confidence === "low"}
+                      onChange={(v) =>
                         setMultiLines((p) =>
-                          p.map((x, j) => (j === i ? { ...x, quantity: Number(e.target.value) || 0 } : x)),
+                          p.map((x, j) => (j === i ? { ...x, quantity: Number(v) || 0 } : x)),
                         )
                       }
-                      className="w-16 h-8 rounded-md border border-slate-200 px-2 text-xs text-right tabular-nums"
                     />
                     <span className="text-[10px] text-slate-400 w-8 truncate">{l.unit}</span>
                   </div>
@@ -732,44 +737,32 @@ export function SmartReceivingScannerModal({
                 </div>
               </div>
 
+              {/* §scan-recognition-upgrade P3 — 공용 인식 필드 셀. 마크 조건은 이 표면의
+                  commitGate(evaluateLabelCommitGate) 파생 그대로 바인딩(게이트 이관 0). */}
               <div className="grid grid-cols-2 gap-2.5">
-                <div>
-                  <Label htmlFor="srm-lotNumber" className="text-xs font-semibold">
-                    LOT 번호
-                    {commitGate.fieldMarks.lot === "needs-confirm" && (
-                      <span className="ml-1 text-[10px] font-medium text-red-600">· 확인 필요</span>
-                    )}
-                  </Label>
-                  <Input
-                    id="srm-lotNumber"
-                    value={form.lotNumber}
-                    onChange={(e) => {
-                      setForm({ ...form, lotNumber: e.target.value });
-                      setLotConfirmed(true); // §1-2/PLAN rule 2 — 터치/수정 = 명시 확인
-                    }}
-                    placeholder="2587934"
-                    className="mt-1 h-9 text-sm"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="srm-expirationDate" className="text-xs font-semibold">
-                    유효기한
-                    {commitGate.fieldMarks.expiry === "needs-confirm" && (
-                      <span className="ml-1 text-[10px] font-medium text-red-600">· 확인 필요</span>
-                    )}
-                  </Label>
-                  <Input
-                    id="srm-expirationDate"
-                    type="text"
-                    value={form.expirationDate}
-                    onChange={(e) => {
-                      setForm({ ...form, expirationDate: e.target.value });
-                      setExpiryConfirmed(true); // §1-2/PLAN rule 2 — 터치/수정 = 명시 확인
-                    }}
-                    placeholder="2026-12-31"
-                    className="mt-1 h-9 text-sm"
-                  />
-                </div>
+                <RecognizedFieldInput
+                  id="srm-lotNumber"
+                  label="LOT 번호"
+                  value={form.lotNumber}
+                  needsConfirm={commitGate.fieldMarks.lot === "needs-confirm"}
+                  placeholder="2587934"
+                  mono
+                  onChange={(v) => {
+                    setForm({ ...form, lotNumber: v });
+                    setLotConfirmed(true); // §1-2/PLAN rule 2 — 터치/수정 = 명시 확인
+                  }}
+                />
+                <RecognizedFieldInput
+                  id="srm-expirationDate"
+                  label="유효기한"
+                  value={form.expirationDate}
+                  needsConfirm={commitGate.fieldMarks.expiry === "needs-confirm"}
+                  placeholder="2026-12-31"
+                  onChange={(v) => {
+                    setForm({ ...form, expirationDate: v });
+                    setExpiryConfirmed(true); // §1-2/PLAN rule 2 — 터치/수정 = 명시 확인
+                  }}
+                />
               </div>
 
               {/* §11.326 — 규격(통 1개 함량). 입고 수량 아님. */}

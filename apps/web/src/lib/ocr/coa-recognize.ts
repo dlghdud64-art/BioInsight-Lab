@@ -31,6 +31,8 @@ export interface CoaRecognitionResponse {
   fields: CoaFields;
   confidence: "high" | "medium" | "low";
   perLine: CoaLineResult[];
+  /** P3 원본 병기 — OcrJob.imageUrl (스토리지 미설정 시 null) */
+  imageUrl?: string | null;
 }
 
 /** COA 문서 전용 품명 앵커 — 라벨 휴리스틱보다 우선(성적서 표제행 오인 방지). */
