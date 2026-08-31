@@ -114,6 +114,23 @@ interface Member {
   createdAt: string;
 }
 
+/* §invite-dead-end a (호영님 승인 2026-08-31) — 초대 진입점 정직화.
+ *
+ * 실측 (2026-08-31 · 코드 + prod):
+ *   ① 이 화면의 초대 모달은 POST /api/organizations/[id]/members 를 부르는데
+ *      그 라우트에 POST 핸들러가 없다 (GET·PATCH·DELETE 만). 발송 버튼 = dead button.
+ *   ② 초대 재발송이 부르는 /members/resend-invite 라우트는 존재하지 않는다.
+ *   ③ 실제 초대 API(/api/organizations/[id]/invites)는 토큰을 만들지만 수락 화면
+ *      /invite/[token] 이 없다 (prod 404) — §onboarding-blocker #7 의도된 미완.
+ *      invite-accept-pairing 센티널이 "수락 화면 없는 동안 초대 UI 렌더 금지" 를 강제한다.
+ *
+ * 처방: 진입점 3곳(헤더 멤버 초대 · 승인·초대 탭 새 초대 · 멤버 탭 첫 멤버 초대하기)을
+ *   **disabled + 사유** 로 둔다. 모달·mutation 코드는 지우지 않는다 — b 트랙(수락 화면 +
+ *   OrganizationMember 생성 + 좌석 게이트)이 서면 이 플래그 하나로 복원한다.
+ *   🛑 b 없이 이 플래그를 true 로 올리면 dead button 이 그대로 되살아난다. */
+const INVITE_AVAILABLE = false;
+const INVITE_UNAVAILABLE_REASON = "초대 수락 화면 준비 중입니다. 초대 기능은 곧 열립니다.";
+
 export default function OrganizationDetailPage({ params }: { params: { id: string } }) {
   const { data: session } = useSession();
   const router = useRouter();
@@ -644,6 +661,8 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                     초대 관리    → KPI "초대 대기" 카드가 승인·초대 탭 직행 (화면 내 정보 중복 제거)
                     플랜/좌석 보기 → KPI 4번째 카드에 흡수(게이지 + 변경 링크) */}
               <Button
+                disabled={!INVITE_AVAILABLE}
+                title={INVITE_AVAILABLE ? undefined : INVITE_UNAVAILABLE_REASON}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
                 onClick={() => setInviteModalOpen(true)}
               >
@@ -658,6 +677,9 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                 <ShieldCheck className="h-4 w-4 mr-2" />
                 권한 검토
               </Button>
+              {!INVITE_AVAILABLE && (
+                <p className="basis-full text-right text-[11px] text-slate-400">{INVITE_UNAVAILABLE_REASON}</p>
+              )}
             </>
           )}
         </div>
@@ -1002,10 +1024,20 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                     {teamMembers.length === 0 ? "멤버가 없습니다." : "검색 조건에 맞는 멤버가 없습니다."}
                   </p>
                   {isAdmin && teamMembers.length === 0 && (
-                    <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setInviteModalOpen(true)}>
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      첫 멤버 초대하기
-                    </Button>
+                    <>
+                      <Button
+                        disabled={!INVITE_AVAILABLE}
+                        title={INVITE_AVAILABLE ? undefined : INVITE_UNAVAILABLE_REASON}
+                        className="bg-blue-600 hover:bg-blue-700"
+                        onClick={() => setInviteModalOpen(true)}
+                      >
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        첫 멤버 초대하기
+                      </Button>
+                      {!INVITE_AVAILABLE && (
+                        <p className="mt-2 text-[11px] text-slate-400">{INVITE_UNAVAILABLE_REASON}</p>
+                      )}
+                    </>
                   )}
                 </CardContent>
               </Card>
@@ -1164,10 +1196,15 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                   <p className="flex items-center gap-2 text-sm text-slate-500">
                     <Mail className="h-4 w-4 text-slate-400" />
                     초대 대기 없음
+                    {!INVITE_AVAILABLE && (
+                      <span className="text-[11px] text-slate-400">· {INVITE_UNAVAILABLE_REASON}</span>
+                    )}
                   </p>
                   {isAdmin && (
                     <Button
                       size="sm"
+                      disabled={!INVITE_AVAILABLE}
+                      title={INVITE_AVAILABLE ? undefined : INVITE_UNAVAILABLE_REASON}
                       className="bg-blue-600 hover:bg-blue-700 text-white"
                       onClick={() => setInviteModalOpen(true)}
                     >
