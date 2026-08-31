@@ -113,6 +113,17 @@ describe("KPI 4카드", () => {
     expect(code).toMatch(/\/dashboard\/settings\/plans[\s\S]{0,120}?변경/);
     expect(code).toMatch(/width: `\$\{seatUsagePercent\}%`/);
   });
+
+  it("게이지 앰버는 한도 초과에만 — 100% 는 사실이지 경보가 아니다", () => {
+    /* v2 후속 (호영님 배포본 QA 2026-08-31): Free maxMembers 1 이라 정상 상태가 곧 100%.
+     * 100% 앰버는 Free 단일 사용자에게 상시 경고색이었다. 앰버 = 상태 전용 토큰,
+     * 실제 이상(totalMembers > seatLimit)에만. */
+    const code = stripComments(read(ORG_DETAIL));
+    expect(code).toMatch(/const seatOver = seatLimit !== null && seatLimit > 0 && totalMembers > seatLimit;/);
+    expect(code).toMatch(/seatOver \? "bg-yellow-500" : "bg-blue-500"/);
+    /* 역방향 잠금 — 100% 앰버가 되살아나면 RED */
+    expect(code).not.toMatch(/seatUsagePercent >= 100 \? "bg-yellow-500"/);
+  });
 });
 
 describe("탭 — 밑줄형 (C2 정본 2.5px #2563eb)", () => {

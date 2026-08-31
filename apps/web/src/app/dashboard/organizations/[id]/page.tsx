@@ -546,6 +546,11 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   const seatUsagePercent = seatLimit && seatLimit > 0
     ? Math.min(100, Math.round((totalMembers / seatLimit) * 100))
     : 0;
+  // §org-management-web v2 후속 (호영님 배포본 QA 2026-08-31) — 게이지 앰버는 **초과**에만.
+  //   Free 는 maxMembers 1 이라 정상 상태가 곧 100% 다. 100% 를 앰버로 칠하면 Free 단일
+  //   사용자에게 상시 경고색이 뜬다 — 사실(꽉 찼다)을 경보(문제다)로 승격시키는 셈.
+  //   앰버 = 상태 전용 토큰이므로 실제 이상(한도 초과)에만 쓴다. 꽉 찬 것은 블루로 사실만 말한다.
+  const seatOver = seatLimit !== null && seatLimit > 0 && totalMembers > seatLimit;
 
   // 바로 처리 항목
   // §11.303-hotfix-d — SWC parser nested generic bug 회피: Array<...
@@ -812,7 +817,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
             {seatLimit !== null && (
               <div className="mt-2 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
                 <div
-                  className={`h-full rounded-full ${seatUsagePercent >= 100 ? "bg-yellow-500" : "bg-blue-500"}`}
+                  className={`h-full rounded-full ${seatOver ? "bg-yellow-500" : "bg-blue-500"}`}
                   style={{ width: `${seatUsagePercent}%` }}
                 />
               </div>
