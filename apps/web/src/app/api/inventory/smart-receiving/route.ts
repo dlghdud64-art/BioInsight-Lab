@@ -63,7 +63,7 @@ interface SmartReceivingBody {
   ocrJobId: string;
   inventoryId?: string | null;
   organizationId?: string | null;
-  confirmedData: {
+  confirmedData?: {
     productName?: string | null;
     brand?: string | null;
     catalogNumber?: string | null;
@@ -81,6 +81,23 @@ interface SmartReceivingBody {
   };
   // §scan-cat-guard — Cat.No. 없이 신규 등록 override(기본 false = 서버 방어).
   allowMissingCatalog?: boolean;
+  // §scan-recognition-upgrade P2 — 명세서 다품목 일괄 등록(additive).
+  //   있으면 $transaction 1회 안에서 라인별 처리(부분 실패 = 전체 롤백), 없으면 기존 단품 경로.
+  items?: SmartReceivingLine[];
+}
+
+interface SmartReceivingLine {
+  productName?: string | null;
+  inventoryId?: string | null; // 기존 재고 라인(증가), 없으면 신규 Product 생성
+  brand?: string | null;
+  catalogNumber?: string | null;
+  lotNumber?: string | null;
+  expirationDate?: string | null;
+  quantity: number;
+  unit?: string | null;
+  packSize?: number | null;
+  packUnit?: string | null;
+  notes?: string | null;
 }
 
 // §11.309c — Prisma ProductCategory enum 의 default fallback.
@@ -104,10 +121,14 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+    // §scan-recognition-upgrade P2 — items[] 다품목 경로는 라인별 수량을 검증하므로
+    //   confirmedData 단품 필수 검증을 건너뛴다(additive · 단품 경로 무회귀).
+    const isMultiRequest = Array.isArray(body.items) && body.items.length > 0;
     if (
-      !confirmedData ||
-      typeof confirmedData.quantity !== "number" ||
-      confirmedData.quantity <= 0
+      !isMultiRequest &&
+      (!confirmedData ||
+        typeof confirmedData.quantity !== "number" ||
+        confirmedData.quantity <= 0)
     ) {
       return NextResponse.json(
         { error: "confirmedData.quantity는 0보다 큰 숫자여야 합니다." },
@@ -148,6 +169,185 @@ export async function POST(request: NextRequest) {
     }
 
     const { ipAddress, userAgent } = extractRequestMeta(request);
+
+    // ────────────────────────────────────────────────────────────
+    // §scan-recognition-upgrade P2 — 다품목 일괄 등록 (items[] 있으면)
+    //   전건 사전 검증 → $transaction 1회 안 라인별 처리(부분 실패 = 전체 롤백).
+    //   등록 라인 수 = InventoryRestock 생성 수 계약(results 배열).
+    // ────────────────────────────────────────────────────────────
+    if (Array.isArray(body.items) && body.items.length > 0) {
+      const lines = body.items;
+      const targetOrgIdMulti = organizationId ?? ocrJob.organizationId ?? null;
+
+      for (const line of lines) {
+        if (typeof line.quantity !== "number" || line.quantity <= 0) {
+          return NextResponse.json(
+            { error: "각 라인의 수량은 0보다 큰 숫자여야 합니다.", code: "INVALID_LINE_QUANTITY" },
+            { status: 400 },
+          );
+        }
+        if (!line.inventoryId && (!line.productName || line.productName.trim() === "")) {
+          return NextResponse.json(
+            { error: "신규 라인은 품목명이 필수입니다.", code: "LINE_NAME_REQUIRED" },
+            { status: 400 },
+          );
+        }
+        // §scan-cat-guard — 라인 단위 동일 적용(override 1회로 전 라인 허용).
+        if (
+          !line.inventoryId &&
+          (!line.catalogNumber || line.catalogNumber.trim() === "") &&
+          !allowMissingCatalog
+        ) {
+          return NextResponse.json(
+            {
+              error: "식별 정보(Cat.No.) 없는 신규 라인이 있습니다 · Cat.No.를 입력하거나 확인 후 진행하세요.",
+              code: "catalog_required",
+            },
+            { status: 422 },
+          );
+        }
+      }
+
+      const results = await db.$transaction(
+        async (tx: Prisma.TransactionClient) => {
+          const out: { inventoryId: string; inventoryRestockId: string; productId: string | null; isNew: boolean }[] = [];
+          for (const line of lines) {
+            const expiry = line.expirationDate ? new Date(line.expirationDate) : null;
+            if (line.inventoryId) {
+              // 기존 재고 증가 — 소유/조직 스코프 검증 후.
+              const inv = await tx.productInventory.findUnique({
+                where: { id: line.inventoryId },
+                select: { id: true, userId: true, organizationId: true, unit: true, productId: true },
+              });
+              if (!inv) throw new Error("라인의 재고를 찾을 수 없습니다.");
+              const owned = inv.userId === session.user.id;
+              const orgOk = inv.organizationId != null && inv.organizationId === targetOrgIdMulti;
+              if (!owned && !orgOk) throw new Error("라인 재고에 대한 권한이 없습니다.");
+              const updated = await tx.productInventory.update({
+                where: { id: inv.id },
+                data: { currentQuantity: { increment: line.quantity } },
+                select: { id: true, productId: true, currentQuantity: true },
+              });
+              const restock = await tx.inventoryRestock.create({
+                data: {
+                  inventoryId: inv.id,
+                  userId: session.user.id,
+                  quantity: line.quantity,
+                  unit: line.unit ?? inv.unit,
+                  lotNumber: line.lotNumber ?? null,
+                  expiryDate: expiry,
+                  notes: line.notes ?? null,
+                },
+                select: { id: true },
+              });
+              await createAuditLog(
+                {
+                  userId: session.user.id,
+                  organizationId: targetOrgIdMulti,
+                  action: AuditAction.CREATE,
+                  entityType: AuditEntityType.INVENTORY_RESTOCK,
+                  entityId: restock.id,
+                  previousData: null,
+                  newData: {
+                    restockId: restock.id, inventoryId: inv.id, productId: inv.productId,
+                    quantity: line.quantity, lotNumber: line.lotNumber ?? null, ocrJobId,
+                    currentQuantityAfter: updated.currentQuantity,
+                    source: "smart_receiving_multi",
+                  },
+                  ipAddress, userAgent,
+                },
+                tx,
+              );
+              out.push({ inventoryId: inv.id, inventoryRestockId: restock.id, productId: inv.productId, isNew: false });
+            } else {
+              const product = await tx.product.create({
+                data: {
+                  name: line.productName!.trim(),
+                  brand: line.brand ?? null,
+                  catalogNumber: line.catalogNumber ?? null,
+                  lotNumber: line.lotNumber ?? null,
+                  category: DEFAULT_CATEGORY,
+                  packSize: typeof line.packSize === "number" ? line.packSize : null,
+                  packUnit: line.packUnit ?? null,
+                },
+                select: { id: true },
+              });
+              const newInventory = await tx.productInventory.create({
+                data: {
+                  productId: product.id,
+                  userId: session.user.id,
+                  organizationId: targetOrgIdMulti,
+                  currentQuantity: line.quantity,
+                  unit: line.unit ?? null,
+                  lotNumber: line.lotNumber ?? null,
+                  expiryDate: expiry,
+                },
+                select: { id: true, currentQuantity: true },
+              });
+              const restock = await tx.inventoryRestock.create({
+                data: {
+                  inventoryId: newInventory.id,
+                  userId: session.user.id,
+                  quantity: line.quantity,
+                  unit: line.unit ?? null,
+                  lotNumber: line.lotNumber ?? null,
+                  expiryDate: expiry,
+                  notes: line.notes ?? null,
+                },
+                select: { id: true },
+              });
+              await createAuditLog(
+                {
+                  userId: session.user.id,
+                  organizationId: targetOrgIdMulti,
+                  action: AuditAction.CREATE,
+                  entityType: AuditEntityType.INVENTORY_RESTOCK,
+                  entityId: restock.id,
+                  previousData: null,
+                  newData: {
+                    restockId: restock.id, inventoryId: newInventory.id, productId: product.id,
+                    quantity: line.quantity, lotNumber: line.lotNumber ?? null, ocrJobId,
+                    currentQuantityAfter: newInventory.currentQuantity,
+                    source: "smart_receiving_multi", isNewProduct: true,
+                  },
+                  ipAddress, userAgent,
+                },
+                tx,
+              );
+              out.push({ inventoryId: newInventory.id, inventoryRestockId: restock.id, productId: product.id, isNew: true });
+            }
+          }
+          return out;
+        },
+      );
+
+      // 알림 — 일괄 1건(best-effort, mutation 비차단).
+      try {
+        const recipients = await resolveOrgRecipients(session.user.id, targetOrgIdMulti);
+        if (recipients.length > 0) {
+          await dispatchNotificationEvent({
+            eventType: "INVENTORY_RECEIVED",
+            entityType: "INVENTORY",
+            entityId: results[0]?.inventoryId ?? "",
+            triggeredBy: session.user.id,
+            recipients,
+            metadata: { multi: true, lineCount: results.length },
+          });
+        }
+      } catch (notifyErr) {
+        console.error("[SmartReceiving] multi INVENTORY_RECEIVED dispatch 실패 (무시):", notifyErr);
+      }
+
+      return NextResponse.json({ results, count: results.length, multi: true });
+    }
+
+    // 단품 경로 타입 방어 — multi 는 위에서 종료, 여기부터 confirmedData 필수(위 검증 통과분).
+    if (!confirmedData) {
+      return NextResponse.json(
+        { error: "confirmedData가 필요합니다." },
+        { status: 400 },
+      );
+    }
 
     // ────────────────────────────────────────────────────────────
     // 분기 A: 기존 ProductInventory 매칭 시 (inventoryId 있음)

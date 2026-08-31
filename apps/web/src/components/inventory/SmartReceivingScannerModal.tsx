@@ -14,7 +14,9 @@
  * MVP scope:
  *   - 신규 등록 분기만 (inventoryId 안 보냄) — server side product 신규 create
  *   - 기존 매칭 분기 (catalog 검색 + fuzzy 후보 표시) 는 §11.309d-2 후속
- *   - 거래명세서 다수 품목 일괄 입고 는 §11.309e 후속
+ *   - 다수 품목 일괄 입고 = §scan-recognition-upgrade P2 로 구현(구 §11.309e 후속 마감) —
+ *     items 2건 이상이면 라인 테이블(수량 확인·포함 선택) → items[] 일괄 등록(서버 트랜잭션 1회).
+ *     발주 후보는 matchReceiptToOrders 근사 매칭 재랭킹, 선택은 옵션(연결 강제 0).
  *
  * 패턴 정합 (QuoteScannerModal §11.290 Phase 4c 복제):
  *   - Dialog + step state (upload / scanning / review / submitting / success / error)
@@ -56,6 +58,8 @@ import {
 import type { QuoteParseResult, ParsedQuoteDocument } from "@/lib/ocr/gemini-quote-parser";
 // §1-2/PLAN — 라벨 저신뢰 commit 게이트(rule 2: Lot·유효기간 신뢰도 무관 명시 확인).
 import { evaluateLabelCommitGate } from "@/lib/ocr/label-commit-gate";
+// §scan-recognition-upgrade P2 — 명세서↔발주 근사 매칭(순수함수 · 자동 선택 0).
+import { matchReceiptToOrders } from "@/lib/receiving/receipt-match";
 
 /* ── /api/quotes/parse-image response (QuoteScannerModal §11.290 패턴 정합) ── */
 interface QuoteScanApiResponse extends QuoteParseResult {
@@ -216,6 +220,12 @@ export function SmartReceivingScannerModal({
   const [step, setStep] = useState<ScanStep>("upload");
   const [scanResult, setScanResult] = useState<QuoteScanApiResponse | null>(null);
   const [form, setForm] = useState<ConfirmedFormState>(EMPTY_FORM);
+  // §scan-recognition-upgrade P2 — 다품목 라인 초안(명세서 items[] 2건 이상일 때).
+  //   라인별 수량 확인 후 일괄 등록. include 해제 = 그 라인 미등록(부분 확정은 사람 선택).
+  const [multiLines, setMultiLines] = useState<
+    { include: boolean; productName: string; catalogNumber: string; quantity: number; unit: string }[]
+  >([]);
+  const isMulti = multiLines.length > 1;
   // §11.326 v3 — 라벨↔미입고 발주 매칭 후보 + 선택.
   const [poCandidates, setPoCandidates] = useState<PoCandidate[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -237,6 +247,7 @@ export function SmartReceivingScannerModal({
     setStep("upload");
     setScanResult(null);
     setForm(EMPTY_FORM);
+    setMultiLines([]);
     setErrorMessage(null);
     setPoCandidates([]);
     setSelectedOrderId(null);
@@ -244,6 +255,31 @@ export function SmartReceivingScannerModal({
     setLotConfirmed(false);
     setExpiryConfirmed(false);
   };
+
+  // §scan-recognition-upgrade P2 — 다품목 모드 후보 재랭킹(근사 매칭 순수함수).
+  //   결과는 정렬·필터만 — selectedOrderId 를 여기서 만지지 않는다(자동 선택 0).
+  //   단일 품목 모드는 기존 라벨 기반 후보 그대로(무회귀).
+  const rankedCandidates = (() => {
+    if (!isMulti || poCandidates.length === 0) return poCandidates;
+    const match = matchReceiptToOrders(
+      {
+        vendorName: scanResult?.parsed.vendor?.name ?? null,
+        orderNumber: scanResult?.parsed.quoteNumber ?? null,
+        items: multiLines.map((l) => ({ name: l.productName, quantity: l.quantity })),
+      },
+      poCandidates.map((c) => ({
+        orderId: c.orderId,
+        orderNumber: c.orderNumber,
+        vendorName: c.vendorName,
+        items: [{ name: c.matchedItem.name, quantity: c.matchedItem.quantity }],
+      })),
+    );
+    if (match.mode === "new") return [];
+    const rank = new Map(match.candidates.map((c, i) => [c.orderId, i]));
+    return poCandidates
+      .filter((c) => rank.has(c.orderId))
+      .sort((a, b) => (rank.get(a.orderId) ?? 0) - (rank.get(b.orderId) ?? 0));
+  })();
 
   const handleClose = () => {
     reset();
@@ -299,6 +335,18 @@ export function SmartReceivingScannerModal({
           const _initForm = extractInitialForm(data.parsed);
           setScanResult(data);
           setForm(_initForm);
+          // §scan-recognition-upgrade P2 — 명세서 2품목 이상 = 라인별 수량 확인 초안.
+          setMultiLines(
+            data.parsed.items.length > 1
+              ? data.parsed.items.map((it) => ({
+                  include: true,
+                  productName: it.productName ?? "",
+                  catalogNumber: it.catalogNumber ?? "",
+                  quantity: it.quantity > 0 ? it.quantity : 1,
+                  unit: it.unit ?? "",
+                }))
+              : [],
+          );
           setStep("review");
           void fetchPoCandidates(_initForm.catalogNumber, _initForm.productName);
         } catch (err) {
@@ -346,6 +394,57 @@ export function SmartReceivingScannerModal({
     if (!scanResult?.ocrMetadata?.jobId) {
       setErrorMessage("이미지 분석 결과를 찾을 수 없습니다. 다시 스캔해 주세요.");
       setStep("error");
+      return;
+    }
+    // §scan-recognition-upgrade P2 — 다품목 일괄 등록(라인별 수량 확인 후 · 트랜잭션은 서버).
+    //   후보(selectedOrderId) 선택은 옵션 — 위 발주 분기에 안 탔으면 그냥 신규/일괄 등록.
+    if (isMulti) {
+      const includedLines = multiLines.filter((l) => l.include);
+      if (includedLines.length === 0) {
+        toast.error("등록할 라인을 1개 이상 선택해 주세요.");
+        return;
+      }
+      if (includedLines.some((l) => !l.productName.trim())) {
+        toast.error("포함된 라인의 품목명을 확인해 주세요.");
+        return;
+      }
+      if (includedLines.some((l) => l.quantity <= 0)) {
+        toast.error("포함된 라인의 수량은 0보다 커야 합니다.");
+        return;
+      }
+      if (includedLines.some((l) => l.catalogNumber.trim() === "") && !ackNewWithoutCat) {
+        toast.error("Cat.No. 없는 라인이 있습니다 · 입력하거나 확인 후 진행하세요.");
+        return;
+      }
+      setStep("submitting");
+      try {
+        const response = await csrfFetch("/api/inventory/smart-receiving", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ocrJobId: scanResult.ocrMetadata.jobId,
+            organizationId: organizationId ?? null,
+            allowMissingCatalog: ackNewWithoutCat,
+            items: includedLines.map((l) => ({
+              productName: l.productName.trim(),
+              catalogNumber: l.catalogNumber.trim() || null,
+              quantity: l.quantity,
+              unit: l.unit.trim() || null,
+            })),
+          }),
+        });
+        const data = await response.json();
+        if (!response.ok || data.error) {
+          throw new Error(data.error || "다품목 입고 등록 실패");
+        }
+        onReceivingRegistered?.({ isNew: true });
+        toast.success(`${data.count ?? includedLines.length}개 라인 입고 등록 완료`);
+        setStep("success");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "다품목 입고 등록 중 오류 발생";
+        setErrorMessage(msg);
+        setStep("error");
+      }
       return;
     }
     // §11.375 OCR 후단 게이트 — 저신뢰도(키보드·잡동사니 등 추출 실패) + 미보정 시 입고 차단.
@@ -491,16 +590,16 @@ export function SmartReceivingScannerModal({
         {/* ── Step: review (사용자 확인 form) ── */}
         {step === "review" && scanResult && (
           <div className="space-y-4 py-2">
-            {/* §11.326 v3 — 미입고 발주 매칭 후보 */}
-            {(candidatesLoading || poCandidates.length > 0) && (
+            {/* §11.326 v3 — 미입고 발주 매칭 후보 (P2: 다품목 모드는 근사 매칭 재랭킹) */}
+            {(candidatesLoading || rankedCandidates.length > 0) && (
               <div className="space-y-2" data-testid="srm-po-candidates">
                 <h4 className="text-xs font-bold text-slate-700">
-                  매칭된 발주{poCandidates.length > 0 ? ` · ${poCandidates.length}건` : ""}
+                  매칭된 발주{rankedCandidates.length > 0 ? ` · ${rankedCandidates.length}건` : ""}
                 </h4>
                 {candidatesLoading && (
                   <p className="text-[11px] text-slate-400">발주 내역을 확인하는 중…</p>
                 )}
-                {!candidatesLoading && poCandidates.map((c) => {
+                {!candidatesLoading && rankedCandidates.map((c) => {
                   const selected = selectedOrderId === c.orderId;
                   return (
                     <button
@@ -522,7 +621,7 @@ export function SmartReceivingScannerModal({
                     </button>
                   );
                 })}
-                {!candidatesLoading && poCandidates.length > 0 && (
+                {!candidatesLoading && rankedCandidates.length > 0 && (
                   <button
                     type="button"
                     data-testid="srm-po-candidate-none"
@@ -545,6 +644,54 @@ export function SmartReceivingScannerModal({
               </span>
             </div>
 
+            {/* §scan-recognition-upgrade P2 — 다품목 라인 테이블 (라인별 수량 확인 후 일괄 등록) */}
+            {isMulti && (
+              <div className="space-y-2 bg-slate-50/60 rounded-lg p-3 border border-slate-200" data-testid="srm-multi-table">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-slate-700">
+                    인식된 라인 {multiLines.length} · 포함 {multiLines.filter((l) => l.include).length}
+                  </h4>
+                  <span className="text-[10px] text-slate-400">라인별 수량 확인 후 일괄 등록</span>
+                </div>
+                {multiLines.map((l, i) => (
+                  <div
+                    key={i}
+                    className={`flex items-center gap-2 rounded-lg border p-2 ${l.include ? "border-slate-200 bg-white" : "border-slate-200 bg-slate-50 opacity-60"}`}
+                  >
+                    <input
+                      type="checkbox"
+                      data-testid="srm-multi-include"
+                      checked={l.include}
+                      onChange={(e) =>
+                        setMultiLines((p) => p.map((x, j) => (j === i ? { ...x, include: e.target.checked } : x)))
+                      }
+                      className="h-3.5 w-3.5"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-slate-900 truncate">{l.productName || "(품목명 없음)"}</p>
+                      <p className="text-[10px] text-slate-400 truncate">
+                        {l.catalogNumber ? `Cat ${l.catalogNumber}` : "Cat.No 없음"}
+                      </p>
+                    </div>
+                    <input
+                      type="number"
+                      min={1}
+                      data-testid="srm-multi-qty"
+                      value={l.quantity}
+                      onChange={(e) =>
+                        setMultiLines((p) =>
+                          p.map((x, j) => (j === i ? { ...x, quantity: Number(e.target.value) || 0 } : x)),
+                        )
+                      }
+                      className="w-16 h-8 rounded-md border border-slate-200 px-2 text-xs text-right tabular-nums"
+                    />
+                    <span className="text-[10px] text-slate-400 w-8 truncate">{l.unit}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!isMulti && (
             <div className="space-y-3 bg-slate-50/60 rounded-lg p-3 border border-slate-200">
               <div>
                 <Label htmlFor="srm-productName" className="text-xs font-semibold">
@@ -690,9 +837,11 @@ export function SmartReceivingScannerModal({
                 />
               </div>
             </div>
+            )}
 
             {/* §11.375 OCR 후단 게이트 — 저신뢰도 + 미보정 시 입고 차단 사유 노출(no-op 금지). */}
-            {!selectedOrderId &&
+            {!isMulti &&
+              !selectedOrderId &&
               scanResult?.confidence === "low" &&
               !productNameDirty && (
                 <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">
@@ -701,13 +850,16 @@ export function SmartReceivingScannerModal({
                 </div>
               )}
             {/* §1-2/PLAN rule 2 — Lot·유효기간 미확인 시 저장 차단 사유(no-op 금지). */}
-            {criticalUnconfirmed && (
+            {!isMulti && criticalUnconfirmed && (
               <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">
                 Lot 번호·유효기한을 확인(터치/수정)해 주세요. 자동 인식값은 확인 후 입고됩니다. (재고 오염 방지)
               </div>
             )}
             {/* §scan-cat-guard — Cat.No. 미추출 시 신규 확정 보류(중복 등록·GMP Lot 추적 붕괴 방지). */}
-            {!selectedOrderId && form.catalogNumber.trim() === "" && (
+            {!selectedOrderId &&
+              (isMulti
+                ? multiLines.some((l) => l.include && l.catalogNumber.trim() === "")
+                : form.catalogNumber.trim() === "") && (
               <div className="rounded-lg border border-[#f3d4bf] bg-[#fdf3ec] px-3 py-2.5 space-y-2">
                 <p className="text-[11px] font-semibold text-[#b45821]">식별 정보(Cat.No.) 부족 — 신규 여부를 확정할 수 없습니다. Cat.No.를 입력하면 중복 등록을 막을 수 있어요.</p>
                 <label className="flex items-center gap-2 text-[11px] font-medium text-[#b45821] cursor-pointer">
@@ -722,16 +874,26 @@ export function SmartReceivingScannerModal({
                 data-testid="smart-receiving-submit-cta"
                 onClick={handleSubmit}
                 disabled={
-                  (!selectedOrderId &&
-                    scanResult?.confidence === "low" &&
-                    !productNameDirty) ||
-                  criticalUnconfirmed ||
-                  // §scan-cat-guard — Cat.No. 없이 신규 등록 확정 차단(override 전).
-                  (!selectedOrderId && form.catalogNumber.trim() === "" && !ackNewWithoutCat)
+                  // §scan-recognition-upgrade P2 — 후보 선택은 옵션(선택 0으로도 등록 가능).
+                  isMulti
+                    ? multiLines.every((l) => !l.include) ||
+                      (!selectedOrderId &&
+                        multiLines.some((l) => l.include && l.catalogNumber.trim() === "") &&
+                        !ackNewWithoutCat)
+                    : (!selectedOrderId &&
+                        scanResult?.confidence === "low" &&
+                        !productNameDirty) ||
+                      criticalUnconfirmed ||
+                      // §scan-cat-guard — Cat.No. 없이 신규 등록 확정 차단(override 전).
+                      (!selectedOrderId && form.catalogNumber.trim() === "" && !ackNewWithoutCat)
                 }
                 className="w-full h-11 min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {selectedOrderId ? "발주 입고 처리" : "입고 등록"}
+                {selectedOrderId
+                  ? "발주 입고 처리"
+                  : isMulti
+                    ? `${multiLines.filter((l) => l.include).length}개 라인 입고 등록`
+                    : "입고 등록"}
                 <ArrowRight className="ml-1.5 h-4 w-4" />
               </Button>
               <Button

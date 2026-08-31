@@ -101,13 +101,13 @@
 - ✋ Gate: 프로브 4/4 검출 ✅ · 수량 불변 ✅(확정 경로는 lot/expiry 만) · 실패 필드 빈값 폴백 ✅ · **잔여: prod migrate deploy(승인 게이트) + 수동 smoke(호영님)**
 - Rollback: 라우트 삭제 + inspect 확장 revert(additive 라 구 호출부 무영향)
 
-### Phase 2: 명세서 다품목 초안 + 근사 매칭 (G2)
-- [ ] 🔴 unit: 근사 매칭 순수함수(공급사명 정규화 · 품목 토큰 Jaccard · 수량 ±20%) → 후보 순위 · PO 번호 있을 때만 대조 · 후보 0 = 신규 입고 경로
-- [ ] 🔴 sentinel: smart-receiving `items[]` 트랜잭션 · 단품 호출부 무회귀 · 모달 라인별 수량 확인 UI · 연결 강제 0(후보 선택 없이 등록 가능)
-- [ ] 🟢 smart-receiving 다품목 additive · 모달 review 스텝 라인 테이블(수량 편집) · 후보 패널(선택 = 옵션)
-- [ ] 🔵 §11.309e 후속 주석 정리
-- ✋ Gate: 다품목 등록 시 InventoryRestock 라인 수 = 확인 라인 수 · 부분 실패 시 롤백(트랜잭션) · 후보 자동 선택 0
-- Rollback: smart-receiving 분기 revert(단품 경로 무접촉)
+### Phase 2: 명세서 다품목 초안 + 근사 매칭 (G2) — ✅ 코드 완료 (2026-08-31)
+- [x] 🔴 unit 6(`lib/receiving/receipt-match.ts`): 점수축(PO 정규화 일치 +3 · 존재+불일치 -3 · **부재 감점 0** · 공급사 법인접미 정규화 +2 · 토큰 Jaccard ≥0.5 비율 ×2 · 수량 ±20% 비율 ×1 · 임계 3) · 후보 0/전원 미달 = mode "new" · 자동 선택 축 없음(shape 고정)
+- [x] 🔴 sentinel 10(`smart-receiving-multi.test.ts`): items[] $transaction 1회가 라인 루프 포함 · 루프 안 direct db.* 0 · 단품 분기 A/B 앵커 보존 · results/count 계약 · 라인 include/qty testid · 등록 disabled 에 후보 선택 요구 0(두 형태 `||` 모두 차단) · matchReceiptToOrders wiring 창에 setSelectedOrderId 0 · 카피 참 — 주입 프로브 3종(① disabled 선택 강제 ② tx 밖 create ③ 번호 부재 감점) → 3/3 RED 실측(①은 1차 창 이탈 → 형제 형태 보강 후 검출)
+- [x] 🟢 smart-receiving items[] additive(전건 사전 검증 → 트랜잭션 1회 · confirmedData 는 단품 전용으로 optional 화, 단품 검증 무회귀) · 모달 라인 테이블(포함 체크·수량 편집) · 후보 패널 = 다품목 모드만 근사 매칭 재랭킹(단일 모드 무회귀) · 발주 선택 = 옵션
+- [x] 🔵 §11.309e 후속 주석 마감 · "다품목도 자동 인식됩니다" 카피 참이 됨(§8 리스크 해소)
+- ✋ Gate: 등록 라인 수 = results 배열 계약 ✅ · 부분 실패 롤백(단일 트랜잭션) ✅ · 후보 자동 선택 0 ✅ · amber 0 · em dash 0(신규 문구 2건 자체 교정) · **잔여: 수동 smoke(다품목 명세서 1장, 호영님)**
+- Rollback: smart-receiving 분기 revert(단품 경로 무접촉) — DDL 없음, 배포 순서 제약 없음
 
 ### Phase 3: 필드별 신뢰도 확인 화면 공통화 (G3)
 - [ ] 🔴 unit: 필드 마크 파생(confidence + present + critical) — label-commit-gate fieldMarks 확장(catalogNo·quantity)
@@ -148,9 +148,8 @@
   해당 모델을 읽는 모든 표면이 즉시 500. P4 템플릿 테이블도 동일 순서.
 
 ## 10. Progress
-- Overall ~30% · P0 ✅ · P1 코드 ✅(`997443cc`) · Current: P1 rollout 대기(prod migrate deploy + smoke) · Next: P2(다품목 초안)
-- P1 rollout 4스텝: push ✅ → Vercel 배포 → operator `prisma migrate deploy`(DIRECT_URL 5432 · 호영님 "진행" 게이트) → smoke.
-  ⚠️ DDL 적용 전 prod 에서 inspect PATCH 가 lotSource 컬럼을 쓰면 P2022 — 단, 신 컬럼은 COA 확정 경로에서만 전송되므로 구 흐름 무영향.
+- Overall ~55% · P0 ✅ · P1 ✅(`997443cc` · DDL 적용 19:34 · 이력 정합) · P2 코드 ✅ · Current: P2 land → 수동 smoke 대기 · Next: P3(필드 신뢰도 공통화)
+- P2 는 DDL 없음 — 배포 순서 제약 없음(§9 규칙 비적용 확인).
 
 ## 11. Notes
 - 2026-08-31: 계획 승인(G5 별건 제외). sandbox 정찰 기반 — operator 세션 P0에서 실측 재확인 후 착수.
