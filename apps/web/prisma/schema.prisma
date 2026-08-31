@@ -6,11 +6,14 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  // directUrl = env("DIRECT_URL") — removed 2026-04-25 (ADR-002 §11.13).
-  // Build-time prisma migrate deploy is permanently retired; migrations
-  // are now operator-shell only. See DEV_RUNBOOK §9.
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // directUrl 재부착 2026-08-31 (§scan-recognition-upgrade P1 장애 후속, 호영님 승인).
+  //   2026-04-25 ADR-002 §11.13 제거 사유(빌드타임 migrate deploy 영구 은퇴)는 불변 —
+  //   vercel-migrate.js NO-OP 이 자동 적용을 계속 차단하고, migrations 는 operator-shell 단독.
+  //   재부착 목적: CLI(migrate deploy/status)가 6543 transaction pooler 로 붙어 행(hang)하던
+  //   기지 결함을 설정으로 종결 — CLI 는 directUrl(Session Pooler 5432), 런타임은 url 만 사용.
+  directUrl = env("DIRECT_URL")
 }
 
 // ?용???권한
