@@ -143,6 +143,9 @@
 ## 9. Rollback
 - P1~P3: 라우트/컴포넌트 revert(additive 계약) · P4: 플래그 off → DROP TABLE
 - push 는 operator 세션 게이트 GREEN 후
+- 🛑 **rollout 순서 규칙(2026-08-31 사고 신설)**: DDL 의존 코드는 **prod migrate deploy 완료 후 push**
+  (또는 컬럼 미존재 내성 select). Prisma `include`는 전 컬럼 SELECT라 신 컬럼 코드가 먼저 배포되면
+  해당 모델을 읽는 모든 표면이 즉시 500. P4 템플릿 테이블도 동일 순서.
 
 ## 10. Progress
 - Overall ~30% · P0 ✅ · P1 코드 ✅(`997443cc`) · Current: P1 rollout 대기(prod migrate deploy + smoke) · Next: P2(다품목 초안)
@@ -151,3 +154,6 @@
 
 ## 11. Notes
 - 2026-08-31: 계획 승인(G5 별건 제외). sandbox 정찰 기반 — operator 세션 P0에서 실측 재확인 후 착수.
+- 2026-08-31 **P1 장애 창 기록**: `997443cc` push 17:50:35 KST → Vercel 자동 배포로 prod 입고
+  표면(리스트·상세·검토 패널)이 `lotSource` 컬럼 부재 SELECT 실패 위험 창 개시. DDL 선행 순서
+  결함(operator·검토 양쪽 놓침, §9 규칙 신설). 종료 시각 = migrate deploy 성공 후 기입: ___
