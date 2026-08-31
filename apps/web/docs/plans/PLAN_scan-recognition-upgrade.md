@@ -1,8 +1,8 @@
 # Implementation Plan: 스캔·문서 인식 고도화 (§scan-recognition-upgrade)
 
-- **Status:** ⏳ Pending (승인 2026-08-31 · operator 세션 착수 대기)
+- **Status:** 🚧 In Progress (P0·P1 코드 완료 `997443cc` · P1 prod DDL 적용 대기)
 - **Started:** 2026-08-31
-- **Last Updated:** 2026-08-31
+- **Last Updated:** 2026-08-31 (P1 land)
 - **핸드오프:** 입고 관리 리스트 핸드오프.md §3 (스캔·문서 인식 파이프라인) · 시각 truth 1a 하단 "스캔·문서 인식 구현 스펙"
 - **선행:** §receiving-list-redesign (5d9fcbb7) — 리스트 canonical 전환 완료, COA 드롭존은 업로드만 배선됨
 - **분담:** operator 세션 = 구현·게이트·push / sandbox 세션 = 계획서·프로브 검토
@@ -84,19 +84,21 @@
 
 ## 7. Phases
 
-### Phase 0: Truth Lock
-- [ ] 파서 출력 계약 고정(ParsedQuoteDocument·LabelParseResult) · 확정 게이트 = label-commit-gate 채택 명문화
-- [ ] 배치 모달 §6 "COA 자동 인식 안 함" 주석·sentinel 목록 grep → supersede 대상 표
+### Phase 0: Truth Lock — ✅ 완료 (2026-08-31)
+- [x] 파서 출력 계약 고정(ParsedQuoteDocument·LabelParseResult) · 확정 게이트 = label-commit-gate 채택 명문화
+- [x] 배치 모달 §6 "COA 자동 인식 안 함" 주석·sentinel 목록 grep → supersede 대상 표(호영님 승인 · #1 은 canonical lotSource 재앵커로 수정)
 - ✋ Gate: 갭표·계약·supersede 대상 확정 · Rollback: 문서만
 
-### Phase 1: COA 인식 → 확인 → 확정 (G1)
-- [ ] 🔴 unit: COA 텍스트 픽스처 3종(영문 Lot/Exp · 국문 유효기한 · 실패 필드) → lot/expiry/catalogNo 추출 + 라인 대조(일치/불일치/미확인)
-- [ ] 🔴 sentinel: coa-recognize 라우트에 db write 0 · inspect PATCH lotNumber/expiryDate additive · 드롭존 → 인식 → 확인 → 확정 wiring · `COA 인식` 배지는 확정 후에만
-- [ ] 🟢 `POST /api/receiving-drafts/[id]/coa-recognize` {imageBase64|documentId} → runOcrPipeline → {jobId, fields:{lot,expiry,catalogNo}, confidence, perLine:[{itemId, match:'ok'|'mismatch'|'unknown'}]} (저장 0 · 원본은 OcrJob.imageUrl + ReceivingDocument 첨부)
-- [ ] 🟢 inspect PATCH 확장: `lotNumber?`·`expiryDate?` (restockedAt 라인 409 유지)
-- [ ] 🟢 리스트 드롭존·배치 모달 문서 스텝: 업로드 → 인식 호출 → RecognizedFieldsReview(P3 컴포넌트 1차본) → 확정 → PATCH → refetch
-- [ ] 🔵 배치 모달 §6 주석 supersede + 구 sentinel 승계
-- ✋ Gate: 자동 확정 경로 0(프로브: 확정 클릭 없이 PATCH 호출되게 corrupt → RED) · 수량 불변 · 실패 필드 빈값 폴백
+### Phase 1: COA 인식 → 확인 → 확정 (G1) — ✅ 코드 완료 `997443cc` (prod DDL 적용·smoke 대기)
+- [x] Migration(additive, 호영님 승인): `ReceivingDraftItem.lotSource`·`coaOcrJobId` + index — 배지 truth canonical 화. ⚠️ prod 적용은 rollout 4스텝(operator migrate deploy) 별도.
+- [x] 🔴 unit 8: COA 픽스처 3종(영문 Lot/Exp · 국문 유효기한 · 실패 필드) → 추출 + 라인 대조(ok/mismatch/unknown) — `lib/ocr/coa-recognize.ts`
+- [x] 🔴 sentinel 14(`receiving-coa-recognize.test.ts`): (a) 인식 API 저장 0 (b) inspect additive + coa_ocr→jobId 필수 400 (c) PATCH 는 확정 핸들러에만 (d) 배지 = lotSource 리터럴 (e) label-commit-gate canCommit (f) 모달 itemId 회귀 핀 — 주입 프로브 4종 → 대응 단언 6+승계 1 RED 실측
+- [x] 🟢 `POST /api/receiving-drafts/[id]/coa-recognize` {imageBase64} → runOcrPipeline → {jobId, fields, confidence, perLine} (저장 0 · jobId 없으면 클라이언트가 확정 경로 차단 = lineage 강제)
+- [x] 🟢 inspect PATCH 확장: lotNumber·expiryDate·lotSource·coaOcrJobId (restockedAt 409 유지)
+- [x] 🟢 리스트 드롭존·배치 모달 문서 스텝: 업로드 → 인식 → RecognizedFieldsReview(1차본) → 확정 → PATCH → refetch
+- [x] 🔵 배치 모달 §6 주석 supersede + 구 sentinel 승계(detail-realdata·list-redesign)
+- [x] (발견 결함 수정) 배치 모달 inspect payload `id:` → `itemId` — 계약 불일치로 판정 스텝 전량 422(상세·리스트 양 표면)
+- ✋ Gate: 프로브 4/4 검출 ✅ · 수량 불변 ✅(확정 경로는 lot/expiry 만) · 실패 필드 빈값 폴백 ✅ · **잔여: prod migrate deploy(승인 게이트) + 수동 smoke(호영님)**
 - Rollback: 라우트 삭제 + inspect 확장 revert(additive 라 구 호출부 무영향)
 
 ### Phase 2: 명세서 다품목 초안 + 근사 매칭 (G2)
@@ -143,7 +145,9 @@
 - push 는 operator 세션 게이트 GREEN 후
 
 ## 10. Progress
-- Overall 0% · Current: Phase 0 · Next: operator 세션 착수 → P0 supersede 표 회신
+- Overall ~30% · P0 ✅ · P1 코드 ✅(`997443cc`) · Current: P1 rollout 대기(prod migrate deploy + smoke) · Next: P2(다품목 초안)
+- P1 rollout 4스텝: push ✅ → Vercel 배포 → operator `prisma migrate deploy`(DIRECT_URL 5432 · 호영님 "진행" 게이트) → smoke.
+  ⚠️ DDL 적용 전 prod 에서 inspect PATCH 가 lotSource 컬럼을 쓰면 P2022 — 단, 신 컬럼은 COA 확정 경로에서만 전송되므로 구 흐름 무영향.
 
 ## 11. Notes
 - 2026-08-31: 계획 승인(G5 별건 제외). sandbox 정찰 기반 — operator 세션 P0에서 실측 재확인 후 착수.
