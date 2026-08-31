@@ -208,21 +208,40 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // 소유/조직 스코프 사전 검증 — 트랜잭션 밖(단품 경로 403 계약 정합 · 실패 시 트랜잭션 진입 0).
+      //   (호영님 검토 2026-08-31: 트랜잭션 안 throw 는 500 으로 위장되던 결함 교정)
+      const invById = new Map<string, { id: string; userId: string; organizationId: string | null; unit: string | null; productId: string }>();
+      for (const line of lines) {
+        if (!line.inventoryId) continue;
+        const inv = await db.productInventory.findUnique({
+          where: { id: line.inventoryId },
+          select: { id: true, userId: true, organizationId: true, unit: true, productId: true },
+        });
+        if (!inv) {
+          return NextResponse.json(
+            { error: "라인의 재고를 찾을 수 없습니다.", code: "LINE_INVENTORY_NOT_FOUND", inventoryId: line.inventoryId },
+            { status: 404 },
+          );
+        }
+        const owned = inv.userId === session.user.id;
+        const orgOk = inv.organizationId != null && inv.organizationId === targetOrgIdMulti;
+        if (!owned && !orgOk) {
+          return NextResponse.json(
+            { error: "라인 재고에 대한 권한이 없습니다.", code: "LINE_FORBIDDEN", inventoryId: line.inventoryId },
+            { status: 403 },
+          );
+        }
+        invById.set(line.inventoryId, inv);
+      }
+
       const results = await db.$transaction(
         async (tx: Prisma.TransactionClient) => {
           const out: { inventoryId: string; inventoryRestockId: string; productId: string | null; isNew: boolean }[] = [];
           for (const line of lines) {
             const expiry = line.expirationDate ? new Date(line.expirationDate) : null;
             if (line.inventoryId) {
-              // 기존 재고 증가 — 소유/조직 스코프 검증 후.
-              const inv = await tx.productInventory.findUnique({
-                where: { id: line.inventoryId },
-                select: { id: true, userId: true, organizationId: true, unit: true, productId: true },
-              });
-              if (!inv) throw new Error("라인의 재고를 찾을 수 없습니다.");
-              const owned = inv.userId === session.user.id;
-              const orgOk = inv.organizationId != null && inv.organizationId === targetOrgIdMulti;
-              if (!owned && !orgOk) throw new Error("라인 재고에 대한 권한이 없습니다.");
+              // 스코프는 위에서 사전 검증 완료 — 여기서는 증가·이력만.
+              const inv = invById.get(line.inventoryId)!;
               const updated = await tx.productInventory.update({
                 where: { id: inv.id },
                 data: { currentQuantity: { increment: line.quantity } },

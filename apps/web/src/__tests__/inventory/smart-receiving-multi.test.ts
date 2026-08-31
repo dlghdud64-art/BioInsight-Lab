@@ -32,11 +32,22 @@ describe("§scan-recognition-upgrade P2 (1) — smart-receiving 다품목 additi
 
   it("라인 루프 안 direct db.* 쓰기 0 — 전부 tx.* (부분 실패 롤백 보장)", () => {
     const src = stripComments(read(ROUTE));
+    // 쓰기 메서드 한정 — 사전 검증의 read(findUnique)는 트랜잭션 밖이 정상.
     expect(src).not.toMatch(
-      /for \(const line of[\s\S]{0,4000}?await db\.(product|productInventory|inventoryRestock)\./,
+      /for \(const line of[\s\S]{0,5000}?await db\.(product|productInventory|inventoryRestock)\.(create|createMany|update|updateMany|upsert|delete)/,
     );
     // 루프 안 라인 생성은 tx 경유 — 존재 단언(무효 부정 단언 방지)
-    expect(src).toMatch(/for \(const line of[\s\S]{0,4000}?await tx\.inventoryRestock\.create/);
+    expect(src).toMatch(/for \(const line of[\s\S]{0,5000}?await tx\.inventoryRestock\.create/);
+  });
+
+  it("소유/조직 스코프 검증은 트랜잭션 앞 — 403/404 계약 (500 위장 결함 교정)", () => {
+    const src = stripComments(read(ROUTE));
+    // 사전 검증(403)이 $transaction 보다 먼저 — 실패 시 트랜잭션 진입 0.
+    expect(src).toMatch(
+      /if \(!owned && !orgOk\)[\s\S]{0,300}?status: 403[\s\S]{0,2500}?db\.\$transaction\(/,
+    );
+    // 트랜잭션 안 throw 스코프 검증 부활 차단.
+    expect(src).not.toMatch(/throw new Error\("라인 재고에 대한 권한이 없습니다/);
   });
 
   it("단품 경로 무회귀 — 기존 분기 A/B 앵커 보존", () => {
