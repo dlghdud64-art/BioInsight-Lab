@@ -45,8 +45,13 @@ describe("§org-role-review — 권한 검토 모달", () => {
 });
 
 describe("§org-role-review — 회귀 가드(기존 보존)", () => {
-  it("활동로그 행위자 필터(§5 기왕 완료) 보존", () => {
-    expect(CODE).toMatch(/activityActorFilter/);
+  it("🛑 활동로그 행위자 필터는 은퇴했다 (v2-3 · 활동 탭 자체가 내려갔다)", () => {
+    /* 승계 교체 (§org-management-web v2-3 · 호영님 리뷰 2026-08-30): 이 가드가
+     * 보존하던 행위자 필터는 "활동 및 감사" 탭 안에 살았고, 그 탭이 전역 통합
+     * 로그(/dashboard/audit)와 중복인 빈 껍데기로 판정되어 탭째 은퇴했다.
+     * 대체 경로(딥링크 ?org=)와 잔재 0 잠금은 org-activity-actor-role-matrix.test.ts
+     * 가 소유한다 — 여기는 역방향 1줄만 둔다. */
+    expect(CODE).not.toMatch(/activityActorFilter/);
   });
   it("역할 정책 카드(설정 탭) 보존", () => {
     expect(PAGE).toMatch(/역할별 권한 범위를 정의합니다/);
