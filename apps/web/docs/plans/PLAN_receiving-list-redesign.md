@@ -2,7 +2,7 @@
 
 - **Status:** 🔄 In Progress (P1~P4 구현 완료 · P5 호영님 환경 검증 대기)
 - **Started:** 2026-08-30
-- **Last Updated:** 2026-08-30
+- **Last Updated:** 2026-08-31
 - **핸드오프:** 입고 관리 리스트 핸드오프.md · 시각 truth: 입고 관리 리스트 리디자인 (단독).html (1a)
 
 **CRITICAL:** phase 완료마다 체크박스 갱신 → quality gate 전부 통과 → Last Updated 갱신 → 다음 phase.
@@ -110,3 +110,7 @@
 - 2026-08-30: 초기 승인(데모+별도 DB 반영) → 정찰 보강(상세 페이지 이미 canonical)으로 재승인 받아 P4 재정의.
 - COA 드롭존 캡션은 "첨부 즉시 문서로 저장"만 약속 — OCR 자동 인식은 스캔 배치 전까지 지어내지 않음(배치 모달 §6 원칙).
 - 승인(/approve)은 서버가 미판정 시 422 거부 — CTA 게이트와 이중 방어.
+- 2026-08-31 (사후 검증): d8156765 land 본 대조 — ① page.tsx 로그 복원본에 className 개행 삽입 1건
+  (`text-\nslate-600`, 빌드는 통과하나 클래스 손상) → sandbox 보관 원본(sha256 3485afa9…)으로 교체.
+  ② sentinel ②·④ 프로브 보강(handleAttachDocument 창 시작점 · JSX CTA 리터럴 차단 · {cta} 2표면 카운트)이
+  sandbox→디바이스 동기 누락으로 land 본에 빠져 있었음 → 보강본으로 교체. 두 건 모두 후속 커밋 필요.

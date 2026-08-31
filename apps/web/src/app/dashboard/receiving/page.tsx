@@ -182,8 +182,7 @@ export default function ReceivingLandingPage() {
               <p className="text-[13px] font-semibold text-red-700">{loadError}</p>
               <button
                 onClick={() => { setLoading(true); void load(); }}
-                className="mt-3 h-9 px-3 rounded-lg border border-slate-200 bg-white text-[12.5px] font-semibold text-
-slate-600 inline-flex items-center gap-1.5"
+                className="mt-3 h-9 px-3 rounded-lg border border-slate-200 bg-white text-[12.5px] font-semibold text-slate-600 inline-flex items-center gap-1.5"
               >
                 <RefreshCw className="h-3.5 w-3.5" /> 다시 시도
               </button>
