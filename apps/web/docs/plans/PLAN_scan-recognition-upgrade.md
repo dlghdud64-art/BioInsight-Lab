@@ -117,13 +117,15 @@
 - ✋ Gate: 3 surface 동일 컴포넌트 ✅ · 자동 확정 0 프로브 ✅ · em dash 0 ✅ · SmartReceiving 게이트 호출은 표면 잔존(wiring SMART 앵커 재앵커 최소화)
 - Rollback: surface 별 revert
 
-### Phase 4: 공급사별 템플릿 학습 (G4) — ⚠️ prod DDL
-- [ ] 🔴 unit: 보정 diff → 템플릿 후보(fieldKey·앵커 문맥 추출) · 힌트 주입 시 우선 매칭 · hits 증가
-- [ ] 🔴 sentinel: migration additive(CREATE TABLE만 · 기존 테이블/CHECK 무접촉) · 학습 저장은 확정 시점에만
-- [ ] 🟢 `VendorParseTemplate` 모델 + migration · `/api/ocr/correct` 및 P1 확정 경로에서 학습 저장 · 파서 힌트 주입(runOcrPipeline 옵션)
-- [ ] 🔵 캐시 키에 템플릿 버전 반영
-- ✋ Gate: **migration 승인(호영님) 전 코드 착수 금지** · 회차 정확도 상승 실측(픽스처 2회차 비교)
-- Rollback: 힌트 주입 플래그 off + 테이블 DROP(additive 라 데이터 손실 0)
+### Phase 4: 공급사별 템플릿 학습 (G4) — ✅ 완료 (2026-08-31 · DDL 선행 순서 준수)
+- [x] §9 순서: SQL 상신 → 호영님 "진행" → **CLI `migrate deploy` 수 초 성공(directUrl 복구 실증) → status up to date(60)** → 그 뒤 GREEN 구현. push 는 적용 후.
+- [x] 🔴 unit 5(`vendor-template.ts`): 보정 필드만 학습(ocr≠확정) · 앵커 ≤40자 · 원문에 없는 값 = 후보 0(지어내기 0) · 회차 정확도(1회차 학습→2회차 hit) · 힌트 shape 고정(source:"template" 후보일 뿐)
+- [x] 🔴 sentinel 7(`vendor-template-learning.test.ts`): migration CREATE 3문·DROP/ALTER 0 · 학습은 확정 경로(inspect coa_ocr)에만 + 인식 라우트 쓰기 0 · templateHints 기본 on/off 무회귀 · 캐시 템플릿 버전 — 프로브 3종(①인식 라우트 학습 주입 ②플래그 가드 제거 ③source 위장) → 3/3 검출(대응 단언 4 RED)
+- [x] 🟢 `VendorParseTemplate` + store(전부 best-effort 비차단) · inspect 확정 경로 학습 · runOcrPipeline 힌트 주입(놓친 필드만 채움 — 게이트가 확인 강제) · hits/lastUsedAt 통계
+- [x] 🔵 캐시: templateVersion(max updatedAt) > 캐시 생성시각 → miss 취급(구캐시 오염 방지)
+- [x] **실측 정정**: `/api/ocr/correct` 는 저장 placeholder(503) — §0 의 "보정 저장" 기술은 과대(정찰 오류). 학습 배선은 라이브 확정 경로만, correct 는 활성화 배치 예약 핀(sentinel)으로 잠금.
+- ✋ Gate: 회차 정확도 실측 = unit 픽스처 2회차 hit ✅ · 잔여: 수동 smoke(호영님 — COA 보정 1회 후 같은 서식 재인식)
+- Rollback: 힌트 주입 플래그 off + 테이블 DROP(additive 라 기존 데이터 손실 0)
 
 ### Phase 5: Smoke / Rollback
 - [ ] 프로젝트 러너 전체 GREEN + build
@@ -148,8 +150,8 @@
   해당 모델을 읽는 모든 표면이 즉시 500. P4 템플릿 테이블도 동일 순서.
 
 ## 10. Progress
-- Overall ~75% · P0 ✅ · P1 ✅(`997443cc`+DDL) · P2 ✅(`e3a84965`+호이스트 `ce0ee4e4`) · P3 코드 ✅ · Next: P4(템플릿 학습 · **prod DDL 승인 게이트 — §9 순서 규칙: migrate deploy 선행 후 push**)
-- P3 는 DDL 없음. 수동 smoke(호영님): COA 확인 화면 원본 병기·확인 필요 마크 + 다품목 수량 셀 톤.
+- Overall ~90% · P0~P4 코드 ✅ (P1 `997443cc` · P2 `e3a84965`+`ce0ee4e4` · P3 `14ac1a9d` · P4 이번 커밋) · DDL 2건 전부 prod 적용·이력 정합 완료
+- Next: **P5 = 수동 smoke(호영님)** — ① COA 첨부→인식→확인(원본 병기)→확정→배지 ② 다품목 명세서→라인 확인→일괄 등록→재고 라인 수 ③ COA 보정 1회 후 같은 서식 재인식(템플릿 hit) · 결과 회신로 배치 종결
 
 ## 11. Notes
 - 2026-08-31: 계획 승인(G5 별건 제외). sandbox 정찰 기반 — operator 세션 P0에서 실측 재확인 후 착수.

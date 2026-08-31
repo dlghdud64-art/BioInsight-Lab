@@ -49,6 +49,8 @@ import {
   uploadOcrImage,
   findCachedOcrJob,
 } from "./image-storage";
+// §scan-recognition-upgrade P4 — 공급사 템플릿 힌트(후보 주입 · 자동 확정 아님).
+import { applyTemplateHints, type TemplateCandidate } from "./vendor-template";
 
 export interface RunOcrPipelineInput {
   /** Image base64 data URI 또는 raw base64. */
@@ -59,6 +61,37 @@ export interface RunOcrPipelineInput {
   organizationId: string;
   /** Scan 실행자 userId. */
   userId: string;
+  /** §P4 — 템플릿 힌트 주입(기본 on). false 면 기존 경로 그대로(무회귀). */
+  templateHints?: boolean;
+}
+
+// §P4 — 힌트 fieldKey → LabelParseResult 필드 매핑.
+const HINT_FIELD_MAP: Record<string, "lotNo" | "expirationDate" | "catalogNo"> = {
+  lot: "lotNo",
+  expiry: "expirationDate",
+  catalogNo: "catalogNo",
+};
+
+/**
+ * §P4 — 파이프라인이 놓친 필드만 템플릿 힌트로 채운다(값 덮어쓰기 0).
+ * 채워진 값도 후보일 뿐 — critical 필드는 label-commit-gate 가 명시 확인을 강제한다.
+ * 반환 = 적중 fieldKey 목록(hits 통계용).
+ */
+function fillWithTemplateHints(
+  result: LabelParseResult,
+  templates: TemplateCandidate[],
+): string[] {
+  if (templates.length === 0 || !result.rawText) return [];
+  const hit: string[] = [];
+  for (const hint of applyTemplateHints(result.rawText, templates)) {
+    const field = HINT_FIELD_MAP[hint.fieldKey];
+    if (!field) continue;
+    if (result[field] == null || result[field] === "") {
+      result[field] = hint.value;
+      hit.push(hint.fieldKey);
+    }
+  }
+  return hit;
 }
 
 export interface RunOcrPipelineResult {
@@ -96,10 +129,26 @@ export async function runOcrPipeline(
   // §11.290 Phase 5.5 — image hash 계산 (cache key + audit log)
   const imageHash = getOcrImageHash(input.base64);
 
+  // §P4 — 템플릿 로드 + 버전(max updatedAt). 기본 on(templateHints !== false) · 전부 graceful.
+  let templates: TemplateCandidate[] = [];
+  let templateVersion: Date | null = null;
+  if (input.templateHints !== false) {
+    try {
+      const store = await import("./vendor-template-store");
+      templates = await store.loadVendorTemplates(input.organizationId);
+      templateVersion = await store.getTemplateVersion(input.organizationId);
+    } catch (tmplErr) {
+      console.warn("[OCR] template load skipped:", (tmplErr as Error).message);
+    }
+  }
+
   // (0) Cache lookup — same image + 48h TTL → 즉시 반환
+  //     §P4 — 캐시 키에 템플릿 버전 반영: 학습이 캐시 생성보다 새로우면 miss 취급(구캐시 오염 방지).
   try {
     const cached = await findCachedOcrJob(imageHash, input.type);
-    if (cached && cached.finalResultId) {
+    const cacheStale =
+      templateVersion != null && cached != null && cached.createdAt < templateVersion;
+    if (cached && cached.finalResultId && !cacheStale) {
       const { db } = await import("@/lib/db");
       const finalResult = await db.ocrResult.findUnique({
         where: { id: cached.finalResultId },
@@ -180,6 +229,13 @@ export async function runOcrPipeline(
   const tier1Start = Date.now();
   const geminiResult = await parseWithGemini(input.base64);
   const tier1LatencyMs = Date.now() - tier1Start;
+  // §P4 — 놓친 필드만 템플릿 힌트로 보충(후보) + 적중 통계(fire-and-forget).
+  const tier1Hits = fillWithTemplateHints(geminiResult, templates);
+  if (tier1Hits.length > 0) {
+    void import("./vendor-template-store")
+      .then((s) => s.markTemplateHits(input.organizationId, tier1Hits))
+      .catch(() => {});
+  }
   const geminiConfidence = enumConfidenceToNumber(geminiResult);
 
   // OcrResult.create — Gemini 결과 (jobId 있을 때만)
@@ -250,6 +306,8 @@ export async function runOcrPipeline(
     const claudeResult = await structureWithClaude({
       rawText: visionResult.rawText,
     });
+    // §P4 — Tier 2 결과도 놓친 필드만 힌트 보충(후보).
+    fillWithTemplateHints(claudeResult.parsed, templates);
 
     // Tier 2 cost = visionResult.costUsd + claudeResult.costUsd
     const tier2CostUsd = visionResult.costUsd + claudeResult.costUsd;

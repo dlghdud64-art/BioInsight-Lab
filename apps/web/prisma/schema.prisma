@@ -3343,6 +3343,27 @@ model OcrResult {
   @@index([jobId])
 }
 
+/// §scan-recognition-upgrade P4 — 공급사별 파싱 템플릿 학습 저장소.
+///   truth: 사람이 **확정 시 보정한 필드**에서만 앵커(값 앞 문맥 ≤40자)를 학습 —
+///   확정 경로(P1 confirmCoa · /api/ocr/correct) 밖에서 쓰기 금지(추적 불가 결과 금지).
+///   주입은 힌트(후보)일 뿐 자동 확정 축 없음. FK 없음(organizationId scalar — 신규 테이블 선례).
+model VendorParseTemplate {
+  id             String    @id @default(cuid())
+  organizationId String // tenant 격리 (scalar)
+  vendorKey      String // 정규화 공급사명 — receipt-match normalizeVendorName 재사용
+  docType        String // "coa" | "invoice" | "label" (값 검증은 API 층)
+  fieldKey       String // "lot" | "expiry" | "catalogNo" | "quantity" | "vendorName"
+  anchorPattern  String // 값 앞 문맥(정규화, ≤40자)
+  valuePattern   String? // 값 형태 힌트(선택)
+  hits           Int       @default(0)
+  lastUsedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([organizationId, vendorKey, docType, fieldKey, anchorPattern], map: "VendorParseTemplate_org_vendor_doc_field_anchor_key")
+  @@index([organizationId, vendorKey, docType], map: "VendorParseTemplate_org_vendor_doc_idx")
+}
+
 // =====================================================
 // §11.348-A — 발주→회신→입고 폐루프 (검증 대기 입고안)
 // =====================================================

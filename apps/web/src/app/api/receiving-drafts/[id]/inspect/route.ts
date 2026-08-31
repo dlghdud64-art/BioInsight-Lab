@@ -54,7 +54,8 @@ export async function PATCH(
 
     const draft = await db.receivingDraft.findUnique({
       where: { id },
-      include: { items: true },
+      // vendor 는 §P4 템플릿 학습(vendorKey) 용 — 조회만.
+      include: { items: true, vendor: { select: { name: true } } },
     });
     if (!draft) {
       return NextResponse.json({ error: "입고안을 찾을 수 없습니다." }, { status: 404 });
@@ -189,6 +190,34 @@ export async function PATCH(
         }),
       ),
     );
+
+    // §scan-recognition-upgrade P4 — 확정 경로 학습(best-effort · 응답 비차단).
+    //   COA 인식 확정(lotSource=coa_ocr)에서 사람이 보정한 필드만 템플릿으로 저장.
+    //   인식 응답 경로에는 학습 0 — 확정 없는 자동 학습 금지.
+    try {
+      for (const input of inputs) {
+        if (input.lotSource !== "coa_ocr" || !input.coaOcrJobId) continue;
+        const jobRow = await db.ocrJob.findUnique({
+          where: { id: input.coaOcrJobId },
+          select: { finalResult: { select: { rawText: true, parsedFields: true } } },
+        });
+        const parsed = jobRow?.finalResult?.parsedFields as
+          | { lotNo?: string | null; expirationDate?: string | null }
+          | null
+          | undefined;
+        const { recordVendorTemplates } = await import("@/lib/ocr/vendor-template-store");
+        await recordVendorTemplates({
+          organizationId: draft.organizationId ?? null,
+          vendorName: draft.vendor?.name ?? null,
+          docType: "coa",
+          rawText: jobRow?.finalResult?.rawText ?? null,
+          confirmedFields: { lot: input.lotNumber ?? null, expiry: input.expiryDate ?? null },
+          ocrFields: { lot: parsed?.lotNo ?? null, expiry: parsed?.expirationDate ?? null },
+        });
+      }
+    } catch (learnErr) {
+      console.warn("[inspect] template learn skipped:", (learnErr as Error).message);
+    }
 
     const items = await db.receivingDraftItem.findMany({
       where: { receivingDraftId: id },

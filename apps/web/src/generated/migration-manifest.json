@@ -58,7 +58,8 @@
     "20260821150000_organization_invite_policy",
     "20260822090000_budget_event_budget_id",
     "20260830120000_purchase_request_organization_id",
-    "20260831130000_receiving_item_lot_source"
+    "20260831130000_receiving_item_lot_source",
+    "20260831210000_vendor_parse_template"
   ],
-  "generatedAt": "2026-08-31T08:48:17.420Z"
+  "generatedAt": "2026-08-31T11:37:55.325Z"
 }
