@@ -156,4 +156,10 @@
 - 2026-08-31: 계획 승인(G5 별건 제외). sandbox 정찰 기반 — operator 세션 P0에서 실측 재확인 후 착수.
 - 2026-08-31 **P1 장애 창 기록**: `997443cc` push 17:50:35 KST → Vercel 자동 배포로 prod 입고
   표면(리스트·상세·검토 패널)이 `lotSource` 컬럼 부재 SELECT 실패 위험 창 개시. DDL 선행 순서
-  결함(operator·검토 양쪽 놓침, §9 규칙 신설). 종료 시각 = migrate deploy 성공 후 기입: ___
+  결함(operator·검토 양쪽 놓침, §9 규칙 신설). **종료 19:34 KST** (창 ~1h44m · 호영님 "진행" 후
+  DDL 3문 직접 적용). 완화 요인: 창 동안 대상 status 의 draft 행 0 (health 실측) — 실사용 노출 제한적.
+  - 행 원인: `migrate deploy`·`migrate resolve` 등 **Prisma CLI 만 연결 행**(무출력 300s+,
+    pg_stat_activity 에 세션 자체가 없음 = lock 아님). node PrismaClient(Session Pooler 5432)는
+    즉시 연결 → DDL·이력 INSERT·health 전부 클라이언트 우회로 수행. CLI 연결 경로 결함은 별건 조사.
+  - 이력 정합: `_prisma_migrations` 수동 INSERT(checksum `0ac9e7a6…`, applied_steps_count 1) —
+    다음 deploy 가 재적용하지 않음. health: 동일 형태 findMany(include items) OK · API 401(정상 인증벽) · 랜딩 200.
