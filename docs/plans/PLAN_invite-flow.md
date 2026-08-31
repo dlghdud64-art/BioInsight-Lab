@@ -1,8 +1,8 @@
 # Implementation Plan: 조직 초대 흐름 완성 (§invite-flow b)
 
-- **Status:** ⏳ Pending
+- **Status:** 🚧 In Progress (Phase 0 완료 · Phase 1 착수)
 - **Started:** 2026-08-31
-- **Last Updated:** 2026-08-31
+- **Last Updated:** 2026-08-31 (Phase 0 종결 — 클로드코드)
 - **선행:** §invite-dead-end a (`c1f2d867`) — 초대 진입점 3곳 `INVITE_AVAILABLE=false` disabled + 사유. 이 계획이 서면 그 플래그 하나로 복원한다.
 - **승인:** 호영님 2026-08-31 "생성 고" (Cowork 세션). 결정 표 ②(3a 자동 조직 유지 · 별건 후속)는 이의 없음으로 채택.
 
@@ -70,9 +70,9 @@ UI    orgs[0] · organizations[0] · memberships[0]            17곳 / 13파일
 - 코드(origin/main) + 두 센티널의 계약. 문서(§onboarding-blocker #7 주석)는 순서 근거로만 쓴다.
 
 ### Environment Reality Check
-- [ ] repo/branch: `dlghdud64-art/BioInsight-Lab` main · 로컬 작업본 `C:\Users\young\ai-biocompare`
-- [ ] runnable: `cd apps/web && npx vitest run <paths>` · `npx tsc --noEmit` · `npx prisma migrate dev`(로컬 DB) · pre-push build hook
-- [ ] blockers: 로컬 VM 에서 vitest 불가(Windows node_modules) → 클로드코드 세션이 게이트 실행 · Cowork 세션이 배포본 실측
+- [x] repo/branch: `dlghdud64-art/BioInsight-Lab` main · 로컬 작업본 `C:\Users\young\ai-biocompare`
+- [x] runnable: `cd apps/web && npx vitest run <paths>` · `npx tsc --noEmit` · `npx prisma migrate dev`(로컬 DB) · pre-push build hook (vitest·build 클로드코드 실행 확인 2026-08-31)
+- [x] blockers: 로컬 VM 에서 vitest 불가(Windows node_modules) → 클로드코드 세션이 게이트 실행 · Cowork 세션이 배포본 실측
 
 ## 1. Priority Fit
 
@@ -166,7 +166,10 @@ Red-Green-Refactor 엄수. 러너: 클로드코드 세션(`apps/web` vitest·tsc
 ## 7. Implementation Phases
 
 ### Phase 0: Context & Truth Lock (0.5h)
-- Status: [ ] Pending
+- Status: [x] Complete (2026-08-31 클로드코드)
+  - 인벤토리 `docs/plans/inventory/org-scope-callers.md` — API 22 · UI 17(코드 15 + 주석 2, grep 원계수는 계획 §0 과 일치)
+  - 판별기 주의: where 절 **brace 매칭** 필수 — 라인 창 휴리스틱은 `select:{organizationId}` 오인·where 밖 사용 오인으로 2회 오판(문서에 기록)
+  - 충돌 0 · 범위 재확인(3a 제외 · Team 초대 제외)
 - 🔴 위 §0 실측을 파일:줄 인벤토리로 고정 — API 22 · UI 17 목록 파일(`docs/plans/inventory/org-scope-callers.md`)
 - 🟢 러너·마이그레이션 명령 확인 · 우선순위 판정 기록
 - 🔵 범위 재확인: 3a 제외 · Team 초대 제외
@@ -246,12 +249,12 @@ Red-Green-Refactor 엄수. 러너: 클로드코드 세션(`apps/web` vitest·tsc
 
 ## 11. Progress Tracking
 
-- Overall: 0%
-- Current phase: Phase 0
+- Overall: ~10%
+- Current phase: Phase 1 (RED 테스트 2파일 작성됨 · 🟢 구현 대기)
 - Current blocker: 없음
-- Next validation step: 인벤토리 파일 작성 → Phase 1 RED 테스트
+- Next validation step: Phase 1 🟢 (migration + resolver + PATCH + 훅) → resolver 테스트 GREEN
 
-- [ ] Phase 0 · [ ] Phase 1 · [ ] Phase 2 · [ ] Phase 3 · [ ] Phase 4 · [ ] Phase 5
+- [x] Phase 0 · [ ] Phase 1 · [ ] Phase 2 · [ ] Phase 3 · [ ] Phase 4 · [ ] Phase 5
 
 ## 12. Notes & Learnings
 
