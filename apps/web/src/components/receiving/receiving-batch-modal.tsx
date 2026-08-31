@@ -12,14 +12,21 @@
  * 배선 규칙(§6):
  *   · 각 스텝은 즉시 canonical 에 커밋한다 — "나중에" 로 이탈해도 처리분은 이미 저장(front-only 0).
  *   · `다음` disabled 사유는 버튼 라벨에 인라인(툴팁 금지).
- *   · COA 자동 인식(OCR→Lot)은 이 모달이 하지 않는다 — 문서 업로드 API 가 lot 을 돌려주지 않으므로
- *     "COA 인식" 배지를 지어내지 않는다. 확인 후 확정 원칙 그대로.
+ *   · COA 인식(§scan-recognition-upgrade P1) — 업로드 후 인식 API(저장 0) 호출 →
+ *     RecognizedFieldsReview 확인 → 사람 확정 시에만 inspect PATCH 로 저장.
+ *     "COA 인식" 배지 truth = canonical lotSource("coa_ocr") — 인식 응답만으로 달지 않는다.
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { csrfFetch } from "@/lib/api-client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CheckCircle2, XCircle, Upload, Send, X } from "lucide-react";
+import type { CoaRecognitionResponse } from "@/lib/ocr/coa-recognize";
+import {
+  RecognizedFieldsReview,
+  type RecognizedConfirmInput,
+} from "@/components/ocr/recognized-fields-review";
+import { fileToDataUrl } from "@/lib/utils/file-to-base64";
 
 export type BatchItem = {
   id: string;
@@ -32,6 +39,8 @@ export type BatchItem = {
   lotNumber: string | null;
   /** API(`/api/receiving-drafts/[id]`)가 반환하고 상세 페이지가 렌더한다 — 타입에만 누락돼 있었다 */
   expiryDate: string | null;
+  /** §scan-recognition-upgrade P1 — lot 출처 canonical ("COA 인식" 배지 truth) */
+  lotSource: string | null;
   decision: string | null;
   discrepancyAction: string | null;
   discrepancyReason: string | null;
@@ -86,6 +95,8 @@ export function ReceivingBatchModal({
   const [dAction, setDAction] = useState<string | null>(null);
   const [dReason, setDReason] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  // §scan-recognition-upgrade P1 — COA 인식 결과(표시용 파생 · 저장 0). 확정 전 canonical 무접촉.
+  const [coaRecog, setCoaRecog] = useState<CoaRecognitionResponse | null>(null);
 
   const steps = useMemo<Step[]>(() => {
     const s: Step[] = [];
@@ -149,7 +160,8 @@ export function ReceivingBatchModal({
       body: JSON.stringify({
         items: [
           {
-            id: cur.item.id,
+            // inspect 계약은 itemId — `id:` 로 보내면 422 ITEM_MISMATCH (계약 불일치 결함 수정)
+            itemId: cur.item.id,
             inspectedQuantity: Number(qty),
             decision,
             discrepancyAction: mismatched ? dAction : null,
@@ -172,6 +184,56 @@ export function ReceivingBatchModal({
     if (!res.ok) throw new Error(data.error || "문서 업로드 실패");
   }, [cur, file, orderId]);
 
+  // COA 인식 — 추출·대조 응답만(저장 0). jobId 없으면 null(lineage 없는 확정 금지).
+  const runCoaRecognition = useCallback(async (coaFile: File): Promise<CoaRecognitionResponse | null> => {
+    try {
+      const imageBase64 = await fileToDataUrl(coaFile);
+      const res = await csrfFetch(`/api/receiving-drafts/${draftId}/coa-recognize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64 }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.jobId) return null;
+      return data as CoaRecognitionResponse;
+    } catch {
+      return null; // 인식 실패 = 업로드만 완료된 기존 흐름(수동 폴백) — 가짜 성공 0
+    }
+  }, [draftId]);
+
+  // COA 확정 — 사람 클릭 후에만 canonical 저장(inspect PATCH 단일 경로).
+  const confirmCoa = useCallback(async (input: RecognizedConfirmInput) => {
+    if (!coaRecog?.jobId) return;
+    setBusy(true);
+    try {
+      const res = await csrfFetch(`/api/receiving-drafts/${draftId}/inspect`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: [
+            {
+              itemId: input.itemId,
+              lotNumber: input.lot,
+              expiryDate: input.expiry,
+              lotSource: "coa_ocr",
+              coaOcrJobId: coaRecog.jobId,
+            },
+          ],
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "COA 확정 실패");
+      onCommitted();
+      toast({ title: "COA 인식 확정", description: "선택 라인의 Lot·유효기간이 저장되었습니다." });
+      setCoaRecog(null);
+      setIdx((i) => i + 1);
+    } catch (e: unknown) {
+      toast({ title: "COA 확정 실패", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
+  }, [coaRecog, draftId, onCommitted, toast]);
+
   const commitApprove = useCallback(async () => {
     const res = await csrfFetch(`/api/receiving-drafts/${draftId}/approve`, {
       method: "POST",
@@ -185,6 +247,8 @@ export function ReceivingBatchModal({
 
   const next = useCallback(async () => {
     if (!cur || blockReason) return;
+    if (coaRecog) return; // 인식 확인 화면이 열려 있으면 확정/나중에 버튼만 유효
+
     setBusy(true);
     try {
       if (cur.kind === "decide") {
@@ -194,6 +258,14 @@ export function ReceivingBatchModal({
       } else if (cur.kind === "document") {
         await commitDocument();
         onCommitted();
+        // COA 스텝은 업로드 후 인식 시도 — 결과가 있으면 확인 화면을 띄우고 대기(자동 진행 0).
+        if (cur.missing === "coa" && file) {
+          const recognition = await runCoaRecognition(file);
+          if (recognition) {
+            setCoaRecog(recognition);
+            return;
+          }
+        }
         setIdx((i) => i + 1);
       } else {
         if (externalPending) {
@@ -217,7 +289,7 @@ export function ReceivingBatchModal({
     } finally {
       setBusy(false);
     }
-  }, [cur, blockReason, commitDecide, commitDocument, commitApprove, externalPending, onCommitted, onClose, toast]);
+  }, [cur, blockReason, coaRecog, commitDecide, commitDocument, commitApprove, externalPending, onCommitted, onClose, toast, file, runCoaRecognition]);
 
   const requestFromVendor = useCallback(() => {
     if (cur?.kind !== "document") return;
@@ -268,6 +340,12 @@ export function ReceivingBatchModal({
                     <div className="text-[12px] text-[#64748b] tabular-nums">
                       발주 {s.item.expectedQuantity ?? "-"} · 공급사 회신 {s.item.receivedQuantity ?? "-"} {s.item.unit ?? ""}
                       {s.item.lotNumber ? <> · Lot <span className="font-mono">{s.item.lotNumber}</span></> : null}
+                      {/* 배지 truth = canonical lotSource — 확정된 라인만 */}
+                      {s.item.lotSource === "coa_ocr" && (
+                        <span className="ml-1.5 inline-flex items-center text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full">
+                          COA 인식
+                        </span>
+                      )}
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <button onClick={() => setDecision("PASS")} className={`h-[42px] rounded-lg border text-[13px] font-semibold inline-flex items-center justify-center gap-1.5 ${decision === "PASS" ? "bg-[#f0fdf4] border-[#bbf7d0] text-[#15803d]" : "bg-white border-[#e2e8f0] text-[#475569]"}`}>
@@ -297,15 +375,32 @@ export function ReceivingBatchModal({
 
                 {active && s.kind === "document" && (
                   <div className="px-4 pb-4 space-y-3">
-                    <label className="flex flex-col items-center justify-center gap-1.5 rounded-[13px] border-2 border-dashed border-[#cbd5e1] bg-[#f8fafc] px-4 py-6 cursor-pointer hover:border-[#2563eb]">
-                      <Upload className="h-5 w-5 text-[#64748b]" />
-                      <span className="text-[13px] font-semibold text-[#0f172a]">{file ? file.name : "파일을 끌어다 놓거나 클릭해 선택"}</span>
-                      <span className="text-[11px] text-[#94a3b8]">PDF · 이미지 · 첨부 후 담당자가 Lot·유효기간을 확인하고 확정합니다</span>
-                      <input type="file" className="hidden" accept="application/pdf,image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-                    </label>
-                    <button onClick={requestFromVendor} className="w-full h-10 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-semibold text-[#475569] inline-flex items-center justify-center gap-1.5 hover:bg-[#f1f5f9]">
-                      <Send className="h-4 w-4" /> 파일이 없습니다, 공급사에 요청
-                    </button>
+                    {coaRecog ? (
+                      <RecognizedFieldsReview
+                        fields={coaRecog.fields}
+                        confidence={coaRecog.confidence}
+                        lines={coaRecog.perLine.map((p) => ({
+                          itemId: p.itemId,
+                          name: items.find((it) => it.id === p.itemId)?.name ?? p.itemId,
+                          match: p.match,
+                        }))}
+                        busy={busy}
+                        onConfirm={(input) => { void confirmCoa(input); }}
+                        onDismiss={() => { setCoaRecog(null); setIdx((i) => i + 1); }}
+                      />
+                    ) : (
+                      <>
+                        <label className="flex flex-col items-center justify-center gap-1.5 rounded-[13px] border-2 border-dashed border-[#cbd5e1] bg-[#f8fafc] px-4 py-6 cursor-pointer hover:border-[#2563eb]">
+                          <Upload className="h-5 w-5 text-[#64748b]" />
+                          <span className="text-[13px] font-semibold text-[#0f172a]">{file ? file.name : "파일을 끌어다 놓거나 클릭해 선택"}</span>
+                          <span className="text-[11px] text-[#94a3b8]">PDF · 이미지 · 첨부 후 담당자가 Lot·유효기간을 확인하고 확정합니다</span>
+                          <input type="file" className="hidden" accept="application/pdf,image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+                        </label>
+                        <button onClick={requestFromVendor} className="w-full h-10 rounded-lg border border-[#e2e8f0] bg-white text-[13px] font-semibold text-[#475569] inline-flex items-center justify-center gap-1.5 hover:bg-[#f1f5f9]">
+                          <Send className="h-4 w-4" /> 파일이 없습니다, 공급사에 요청
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
 

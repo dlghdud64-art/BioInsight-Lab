@@ -107,8 +107,11 @@ describe("§receiving-list-redesign — COA 인라인 드롭존 (P3)", () => {
     expect(src).toMatch(/onDrop=\{\(e\) => \{ e\.preventDefault\(\); void handleFile/);
     expect(src).toMatch(/<input ref=\{fileRef\} type="file" hidden/);
     expect(src).toMatch(/setDropOpen\(\(v\) => !v\)/);
-    // 확정(첨부 성공) 시 드롭존 접힘.
-    expect(src).toMatch(/await onAttachDocument\(row, "coa", file\);\s*\n\s*setDropOpen\(false\)/);
+    // §scan-recognition-upgrade P1 승계: 업로드 후 인식 시도 → 결과 없으면 즉시 접힘(기존 흐름).
+    expect(src).toMatch(
+      /await onAttachDocument\(row, "coa", file\);[\s\S]{0,300}?await onRecognizeCoa\(row, file\)/,
+    );
+    expect(src).toMatch(/setDropOpen\(false\)/);
   });
 });
 

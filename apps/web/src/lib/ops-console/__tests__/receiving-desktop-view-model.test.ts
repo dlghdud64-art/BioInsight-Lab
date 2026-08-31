@@ -25,6 +25,7 @@ function item(over: Partial<ReceivingDraftItemDto> = {}): ReceivingDraftItemDto 
     unit: "EA",
     lotNumber: "LOT-K2406A",
     expiryDate: null,
+    lotSource: null,
     decision: "PASS",
     discrepancyAction: null,
     discrepancyReason: null,

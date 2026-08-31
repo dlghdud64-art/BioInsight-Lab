@@ -24,6 +24,8 @@ export const dynamic = "force-dynamic";
 
 const DECISIONS = new Set(["PASS", "FAIL"]);
 const DISCREPANCY_ACTIONS = new Set(["RESHIP", "PARTIAL", "RETURN"]);
+// §scan-recognition-upgrade P1 — lot 출처 canonical. coa_ocr 은 OcrJob lineage 필수.
+const LOT_SOURCES = new Set(["vendor_reply", "coa_ocr", "manual"]);
 
 interface InspectItemInput {
   itemId: string;
@@ -31,6 +33,11 @@ interface InspectItemInput {
   decision?: string | null;
   discrepancyAction?: string | null;
   discrepancyReason?: string | null;
+  // §scan-recognition-upgrade P1 — COA 확정 경로(additive · 미전달 시 무접촉).
+  lotNumber?: string | null;
+  expiryDate?: string | null;
+  lotSource?: string | null;
+  coaOcrJobId?: string | null;
 }
 
 export async function PATCH(
@@ -117,6 +124,27 @@ export async function PATCH(
         );
       }
 
+      // §scan-recognition-upgrade P1 — lot 출처 검증.
+      if (input.lotSource != null && !LOT_SOURCES.has(input.lotSource)) {
+        return NextResponse.json(
+          { error: "lot 출처 값이 올바르지 않습니다.", code: "INVALID_LOT_SOURCE" },
+          { status: 422 },
+        );
+      }
+      // coa_ocr 확정은 OcrJob 역추적 없이 저장 불가 — lineage 강제(추적 불가 결과 금지).
+      if (input.lotSource === "coa_ocr" && !input.coaOcrJobId) {
+        return NextResponse.json(
+          { error: "COA 인식 확정은 인식 작업 id(coaOcrJobId)가 필요합니다.", code: "COA_JOB_REQUIRED" },
+          { status: 400 },
+        );
+      }
+      if (input.expiryDate != null && Number.isNaN(new Date(input.expiryDate).getTime())) {
+        return NextResponse.json(
+          { error: "유효기간 형식이 올바르지 않습니다.", code: "INVALID_EXPIRY" },
+          { status: 422 },
+        );
+      }
+
       // 불일치 판정 시 처리 경로·사유 필수 — 판정(decision) 확정 시에만 강제(임시 저장은 통과).
       const expected = item.expectedQuantity ?? null;
       const inspected = input.inspectedQuantity ?? null;
@@ -150,6 +178,13 @@ export async function PATCH(
             decidedById: input.decision ? userId : null,
             discrepancyAction: input.discrepancyAction ?? null,
             discrepancyReason: input.discrepancyReason?.trim() || null,
+            // §scan-recognition-upgrade P1 — additive: 미전달 필드는 무접촉(구 호출부 무회귀).
+            ...(input.lotNumber !== undefined ? { lotNumber: input.lotNumber } : {}),
+            ...(input.expiryDate !== undefined
+              ? { expiryDate: input.expiryDate == null ? null : new Date(input.expiryDate) }
+              : {}),
+            ...(input.lotSource !== undefined ? { lotSource: input.lotSource } : {}),
+            ...(input.coaOcrJobId !== undefined ? { coaOcrJobId: input.coaOcrJobId } : {}),
           },
         }),
       ),
@@ -167,6 +202,8 @@ export async function PATCH(
         unit: true,
         lotNumber: true,
         expiryDate: true,
+        lotSource: true,
+        coaOcrJobId: true,
         decision: true,
         decidedAt: true,
         discrepancyAction: true,

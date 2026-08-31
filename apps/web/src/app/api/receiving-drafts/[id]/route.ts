@@ -26,6 +26,7 @@ type DraftItemRow = {
   unit: string | null;
   lotNumber: string | null;
   expiryDate: Date | string | null;
+  lotSource: string | null;
   decision: string | null;
   decidedAt: Date | string | null;
   discrepancyAction: string | null;
@@ -120,6 +121,8 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
           unit: it.unit,
           lotNumber: it.lotNumber,
           expiryDate: it.expiryDate,
+          // §scan-recognition-upgrade P1 — "COA 인식" 배지 truth(canonical lot 출처).
+          lotSource: it.lotSource,
           decision: it.decision,
           decidedAt: it.decidedAt,
           discrepancyAction: it.discrepancyAction,

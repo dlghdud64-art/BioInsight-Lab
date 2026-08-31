@@ -10,8 +10,10 @@
  * 색: §11.302 신호등 — 주의 = yellow(시안의 amber hex 는 amber 금지 조항에 따라 yellow 토큰으로
  *   치환, 구조·의미 무변경) · 보류/위험 = red · 정상 = emerald · CTA = blue(시안 #2563eb).
  * CTA 문구 = caseCtaLabel() 단일 계약 (접힌 행·펼침·일괄 처리 모달 동일).
- * COA 첨부 = 행 펼침 안 인라인 드롭존(버튼 재클릭 시 접힘) — 첨부 즉시 canonical 커밋,
- *   자동 인식(OCR)은 스캔 고도화 배치에서 — 지어내지 않는다(배치 모달 §6 원칙 동일).
+ * COA 첨부 = 행 펼침 안 인라인 드롭존(버튼 재클릭 시 접힘) — 첨부 즉시 canonical 커밋.
+ * COA 인식(§scan-recognition-upgrade P1) = 첨부 후 인식 → RecognizedFieldsReview 확인 →
+ *   사람 확정 시에만 부모 콜백(inspect PATCH)으로 저장. 인식 응답 자체는 저장 0.
+ *   `COA 인식` 배지 truth = canonical lotSource("coa_ocr") — UI state 로 들지 않는다.
  */
 
 import { useMemo, useRef, useState } from "react";
@@ -30,6 +32,11 @@ import {
   type ReceivingCaseRow,
   type ReceivingCaseTone,
 } from "@/lib/ops-console/receiving-desktop-view-model";
+import type { CoaRecognitionResponse } from "@/lib/ocr/coa-recognize";
+import {
+  RecognizedFieldsReview,
+  type RecognizedConfirmInput,
+} from "@/components/ocr/recognized-fields-review";
 
 export type CaseFilterKey = "action" | "all" | "done";
 
@@ -118,16 +125,27 @@ function CaseRowView({
   onToggle,
   onCta,
   onAttachDocument,
+  onRecognizeCoa,
+  onConfirmCoa,
 }: {
   row: ReceivingCaseRow;
   expanded: boolean;
   onToggle: () => void;
   onCta: (row: ReceivingCaseRow) => void;
   onAttachDocument: (row: ReceivingCaseRow, docType: "coa" | "invoice", file: File) => Promise<void>;
+  /** 인식만(저장 0) — jobId 없으면(감사 로그 불가) null 반환 = 기존 업로드 흐름 유지 */
+  onRecognizeCoa: (row: ReceivingCaseRow, file: File) => Promise<CoaRecognitionResponse | null>;
+  /** 사람 확정 시에만 — inspect PATCH 배선(부모) */
+  onConfirmCoa: (
+    row: ReceivingCaseRow,
+    input: RecognizedConfirmInput & { jobId: string },
+  ) => Promise<boolean>;
 }) {
   const cta = caseCtaLabel(row);
   const [dropOpen, setDropOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [recog, setRecog] = useState<CoaRecognitionResponse | null>(null);
+  const [confirming, setConfirming] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const needsCoa = row.actions.some((a) => a.kind === "doc" && a.label === "COA 확보");
 
@@ -136,9 +154,29 @@ function CaseRowView({
     setUploading(true);
     try {
       await onAttachDocument(row, "coa", file);
-      setDropOpen(false); // 확정 시 드롭존 접힘 (핸드오프 §2)
+      // 인식 호출 — 응답은 표시용(저장 0). 실패/감사 불가 시 기존 흐름(접힘)으로.
+      const recognition = await onRecognizeCoa(row, file);
+      if (recognition) {
+        setRecog(recognition);
+      } else {
+        setDropOpen(false); // 확정 시 드롭존 접힘 (핸드오프 §2)
+      }
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleConfirmCoa = async (input: RecognizedConfirmInput) => {
+    if (!recog?.jobId || confirming) return;
+    setConfirming(true);
+    try {
+      const ok = await onConfirmCoa(row, { ...input, jobId: recog.jobId });
+      if (ok) {
+        setRecog(null);
+        setDropOpen(false);
+      }
+    } finally {
+      setConfirming(false);
     }
   };
 
@@ -221,6 +259,12 @@ function CaseRowView({
                     </>
                   )}
                 </span>
+                {/* 배지 truth = canonical lotSource — 확정(inspect PATCH) 후 refetch 로만 나타난다 */}
+                {l.lotSource === "coa_ocr" && (
+                  <span className="ml-1.5 align-[1px] inline-flex items-center text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full">
+                    COA 인식
+                  </span>
+                )}
               </p>
             </div>
           ))}
@@ -253,6 +297,20 @@ function CaseRowView({
                   <input ref={fileRef} type="file" hidden accept=".pdf,.png,.jpg,.jpeg" onChange={(e) => { void handleFile(e.target.files?.[0]); e.target.value = ""; }} />
                 </div>
               )}
+              {recog && (
+                <RecognizedFieldsReview
+                  fields={recog.fields}
+                  confidence={recog.confidence}
+                  lines={recog.perLine.map((p) => ({
+                    itemId: p.itemId,
+                    name: row.lines.find((l) => l.itemId === p.itemId)?.itemName ?? p.itemId,
+                    match: p.match,
+                  }))}
+                  busy={confirming}
+                  onConfirm={(input) => { void handleConfirmCoa(input); }}
+                  onDismiss={() => { setRecog(null); setDropOpen(false); }}
+                />
+              )}
             </div>
           )}
 
@@ -278,10 +336,17 @@ export function ReceivingCaseListView({
   list,
   onCta,
   onAttachDocument,
+  onRecognizeCoa,
+  onConfirmCoa,
 }: {
   list: CaseListData;
   onCta: (row: ReceivingCaseRow) => void;
   onAttachDocument: (row: ReceivingCaseRow, docType: "coa" | "invoice", file: File) => Promise<void>;
+  onRecognizeCoa: (row: ReceivingCaseRow, file: File) => Promise<CoaRecognitionResponse | null>;
+  onConfirmCoa: (
+    row: ReceivingCaseRow,
+    input: RecognizedConfirmInput & { jobId: string },
+  ) => Promise<boolean>;
 }) {
   const [filter, setFilter] = useState<CaseFilterKey>("action");
   const [query, setQuery] = useState("");
@@ -357,6 +422,8 @@ export function ReceivingCaseListView({
             onToggle={() => setExpandedId((v) => (v === row.id ? null : row.id))}
             onCta={onCta}
             onAttachDocument={onAttachDocument}
+            onRecognizeCoa={onRecognizeCoa}
+            onConfirmCoa={onConfirmCoa}
           />
         ))
       )}

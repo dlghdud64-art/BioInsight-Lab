@@ -3419,6 +3419,11 @@ model ReceivingDraftItem {
   discrepancyReason String?   @db.Text
   // 라인 단위 재고 반영 가드 — 이미 반영된 라인 재반영 차단(부분 입고 후 잔여 재확정 허용).
   restockedAt       DateTime?
+  // §scan-recognition-upgrade P1 — lot 출처 canonical("COA 인식" 배지의 truth).
+  //   "vendor_reply"(공급사 회신값) | "coa_ocr"(COA 인식 확정) | "manual"(수기). null = 구 데이터.
+  //   배지·표시는 이 필드 파생만 — UI state 가 truth 를 대신 들지 못한다.
+  lotSource         String?
+  coaOcrJobId       String? // 확정에 쓴 OcrJob 역추적(lineage) — lotSource=coa_ocr 이면 필수(API 가드)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -3427,6 +3432,7 @@ model ReceivingDraftItem {
   @@index([receivingDraftId])
   @@index([orderItemId])
   @@index([productId])
+  @@index([coaOcrJobId])
 }
 
 // =====================================================

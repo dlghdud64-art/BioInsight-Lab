@@ -136,6 +136,7 @@
 | P4 migration(prod DDL) | Med | High | 승인 게이트 · additive only · 실패 시 플래그 off |
 | 라인 대조 오탐(품목명 표기 차이) | Med | Med | 경고만(차단 0) · 사람 확정 |
 | 구 sentinel(배치 모달 §6 "인식 안 함") 충돌 | High | Low | P0 supersede 표 → 승계 재앵커 |
+| P2 지연 시 `SmartReceivingScannerModal:457` "다품목도 자동 인식됩니다" 카피가 거짓으로 잔존 | Med | Low | P2 미착수 확정 시 카피 정정 별건 배치(호영님 검토 코멘트 2026-08-31) |
 
 ## 9. Rollback
 - P1~P3: 라우트/컴포넌트 revert(additive 계약) · P4: 플래그 off → DROP TABLE

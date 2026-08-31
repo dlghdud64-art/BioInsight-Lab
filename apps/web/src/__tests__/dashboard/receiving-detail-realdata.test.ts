@@ -102,10 +102,12 @@ describe("§receiving-detail P3 — 일괄 처리 모달 배선(§6)", () => {
     const s = r(MODAL);
     expect(s).toMatch(/if \(externalPending\) \{[\s\S]*?onClose\(\);\s*return;/);
   });
-  it("COA 자동 확정 0 — 인식 배지를 지어내지 않는다", () => {
+  it("COA 자동 확정 0 — 배지 truth = canonical lotSource (§scan-recognition-upgrade P1 승계)", () => {
     const s = r(MODAL);
-    // 🛑 주석 제거본 — 모달 L16 주석이 '"COA 인식" 배지를 지어내지 않는다' 를 담고 있다
-    expect(rc(MODAL)).not.toMatch(/COA 인식/);
+    // 승계(2026-08-31 호영님 승인): 구 계약 `COA 인식 출현 0` → 인식 도입 후에는
+    // "배지 = canonical lotSource 조건에서만" 으로 진화. UI state 로 배지를 들면 RED.
+    // (인식 응답 핸들러의 PATCH 0 프로브는 receiving-coa-recognize.test.ts (c)가 잠근다.)
+    expect(rc(MODAL)).toMatch(/lotSource === "coa_ocr"[\s\S]{0,400}?COA 인식/);
     expect(s).toMatch(/확인하고 확정/);
   });
   it("문서 API 가 docType coa 를 받는다", () => {

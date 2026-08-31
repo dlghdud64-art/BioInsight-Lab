@@ -92,6 +92,8 @@ export async function GET(request: NextRequest) {
           unit: it.unit,
           lotNumber: it.lotNumber,
           expiryDate: it.expiryDate,
+          // §scan-recognition-upgrade P1 — "COA 인식" 배지 truth(canonical lot 출처).
+          lotSource: it.lotSource,
           decision: it.decision,
           decidedAt: it.decidedAt,
           discrepancyAction: it.discrepancyAction,

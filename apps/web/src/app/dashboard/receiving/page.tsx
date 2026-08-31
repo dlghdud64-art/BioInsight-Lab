@@ -40,6 +40,9 @@ import {
   type ReceivingCaseRow,
   type ReceivingDraftDto,
 } from "@/lib/ops-console/receiving-desktop-view-model";
+import type { CoaRecognitionResponse } from "@/lib/ocr/coa-recognize";
+import type { RecognizedConfirmInput } from "@/components/ocr/recognized-fields-review";
+import { fileToDataUrl } from "@/lib/utils/file-to-base64";
 
 export default function ReceivingLandingPage() {
   const router = useRouter();
@@ -114,6 +117,62 @@ export default function ReceivingLandingPage() {
     }
     labToast.success("COA 첨부 완료", `<b>${row.displayNumber}</b> 입고 건 문서로 저장되었습니다.`);
     await load();
+  };
+
+  // ── COA 인식 (§scan-recognition-upgrade P1) — 추출·대조만, 저장 0 ──
+  //   jobId(감사 로그) 없으면 null 반환 → 리스트는 기존 업로드 흐름 유지(lineage 없는 확정 금지).
+  const recognizeCoa = async (
+    row: ReceivingCaseRow,
+    file: File,
+  ): Promise<CoaRecognitionResponse | null> => {
+    try {
+      const imageBase64 = await fileToDataUrl(file);
+      const res = await csrfFetch(`/api/receiving-drafts/${row.id}/coa-recognize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64 }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.jobId) return null;
+      return data as CoaRecognitionResponse;
+    } catch {
+      return null; // 인식 실패 = 기존 업로드 흐름(빈값 수동 폴백) — 가짜 성공 0
+    }
+  };
+
+  // ── COA 확정 — 사람 클릭 후에만 canonical 저장 (inspect PATCH 단일 경로) ──
+  const confirmCoa = async (
+    row: ReceivingCaseRow,
+    input: RecognizedConfirmInput & { jobId: string },
+  ): Promise<boolean> => {
+    try {
+      const res = await csrfFetch(`/api/receiving-drafts/${row.id}/inspect`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: [
+            {
+              itemId: input.itemId,
+              lotNumber: input.lot,
+              expiryDate: input.expiry,
+              lotSource: "coa_ocr",
+              coaOcrJobId: input.jobId,
+            },
+          ],
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        labToast.error("COA 확정 실패", data.error ?? "잠시 후 다시 시도해 주세요.");
+        return false;
+      }
+      labToast.success("COA 인식 확정", "선택 라인의 Lot·유효기간이 저장되었습니다.");
+      await load();
+      return true;
+    } catch (e: unknown) {
+      labToast.error("COA 확정 실패", e instanceof Error ? e.message : String(e));
+      return false;
+    }
   };
 
   // ── 모바일 (§mobile-receiving-rcv-card 무접촉) ────────────────────
@@ -204,6 +263,8 @@ export default function ReceivingLandingPage() {
               list={caseList}
               onCta={handleCta}
               onAttachDocument={handleAttachDocument}
+              onRecognizeCoa={recognizeCoa}
+              onConfirmCoa={confirmCoa}
             />
           )}
         </div>

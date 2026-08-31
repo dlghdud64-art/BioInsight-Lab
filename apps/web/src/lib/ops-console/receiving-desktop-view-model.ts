@@ -35,6 +35,8 @@ export interface ReceivingDraftItemDto {
   unit: string | null;
   lotNumber: string | null;
   expiryDate: string | null;
+  /** §scan-recognition-upgrade P1 — lot 출처 canonical ("vendor_reply"|"coa_ocr"|"manual"|null) */
+  lotSource: string | null;
   decision: string | null;
   discrepancyAction: string | null;
   discrepancyReason: string | null;
@@ -99,6 +101,8 @@ export interface ReceivingCaseLineRow {
   /** `10/10 수령` (expected 없으면 `10 수령`, 수량 미확정 시 '') */
   quantityLabel: string;
   lotNumber: string | null;
+  /** lot 출처 passthrough — "COA 인식" 배지는 lotSource === "coa_ocr" 파생만(UI state truth 금지) */
+  lotSource: string | null;
   /** 반영 완료 라인 (restockedAt) */
   restocked: boolean;
 }
@@ -188,6 +192,7 @@ function buildLineRow(it: ReceivingDraftItemDto): ReceivingCaseLineRow {
     reason,
     quantityLabel,
     lotNumber: it.lotNumber,
+    lotSource: it.lotSource,
     restocked: it.restockedAt != null,
   };
 }
