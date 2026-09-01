@@ -117,6 +117,9 @@ model Organization {
   receivingDrafts            ReceivingDraft[]
   // §11.348-B-1 — 조직 스코프 SDS 문서.
   sdsDocuments               SDSDocument[]
+  /// §invite-flow Phase 1 — User.activeOrganizationId 백릴레이션. 조직 삭제 시 SetNull
+  /// (거처가 없어진 조직을 가리키는 dangling 상태를 DB 가 막는다).
+  activeForUsers             User[]                      @relation("UserActiveOrganization")
   receivingDocuments         ReceivingDocument[] // §receiving-doc-attach-canonical
 
   @@index([name])
@@ -180,6 +183,15 @@ model User {
   // truthy=반려/삭제. getUsers filter + auth.ts OAuth 차단 동시 적용.
   deletedAt       DateTime?
 
+  /// §invite-flow Phase 1 — **선택의 거처**(활성 조직). canonical source of truth.
+  /// 없으면(null) resolver 가 createdAt asc 첫 멤버십으로 fallback 한다
+  /// (api/team/route.ts:118 현행 규칙 승계 — 무변경 사용자 행동 변화 0).
+  /// 🛑 이 값 하나로 권한·예산·조회 스코프가 갈린다. UI state 가 대신 들지 않는다 —
+  ///    switcher 는 PATCH /api/me/active-organization 로 여기에 쓴다.
+  /// 멤버십이 사라진 조직을 가리킬 수 있다(탈퇴). resolver 가 멤버십을 재검증한다.
+  activeOrganizationId String?
+  activeOrganization   Organization? @relation("UserActiveOrganization", fields: [activeOrganizationId], references: [id], onDelete: SetNull)
+
   // NextAuth 관?
   accounts Account[]
   sessions Session[]
@@ -226,6 +238,10 @@ model User {
 
   @@index([email])
   @@index([role])
+  /// §invite-flow Phase 1 — 마이그레이션이 만드는 User_activeOrganizationId_idx 의 선언.
+  /// 조직 삭제 시 SET NULL 이 참조 행을 훑으므로 인덱스가 필요하다. 선언이 없으면
+  /// schema 와 DDL 이 어긋나 다음 migrate 가 이 인덱스를 지우려 든다.
+  @@index([activeOrganizationId])
 }
 
 // §pricing-enforce-p2 P2b (호영님 2026-06-27) — 라벨 스캔 enforce 카운트 SoT.
