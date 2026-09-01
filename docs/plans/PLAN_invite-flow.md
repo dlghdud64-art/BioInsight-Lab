@@ -199,7 +199,17 @@ Red-Green-Refactor 엄수. 러너: 클로드코드 세션(`apps/web` vitest·tsc
 - Rollback: migration down 1 · 신규 파일 4 삭제
 
 ### Phase 2: 호출자 이관 (4h · 파일별 커밋)
-- Status: [ ] Pending
+- Status: 🚧 진행 중 (7/37 · 래칫 API 16 · UI 14)
+  - 선행 해소: prod 마이그레이션 적용 확인 (2026-09-01 · prod `xhid…` 61/61 · `/api/health` pending 0)
+  - **2-1 `dff7b538`** — `hooks/use-permission.ts` → `useActiveOrganization()`.
+    곁들여 `organization-name-prompt.tsx` 무효화 2키 추가(안 하면 조직 생성 후 권한 stale).
+  - **불변식 잠금 `cdf5e054`** — `orgs[0]` 정렬 == resolver fallback 정렬(둘 다 `createdAt asc`) 실측·고정.
+    이게 "무변경 사용자 행동 변화 0" 의 유일한 근거다. ⏳ Phase 4 에서 승계 교체 대상(주석에 은퇴 조건).
+  - **2-2 `36b1c8a5`·`c317953e`·`b02288d2`·`bbab2c89`** — billing 6곳(invoices 1 · payment-methods 3 · billing 2).
+    래칫 API 22 → 16.
+  - 게이트(누적): 조직 축 20파일 164/164 · billing 축 22파일 220/220 GREEN · tsc 27 불변(전부 무관 기존 파일)
+    · 주입 프로브 전건 RED 후 원복.
+  - ⚠️ 배포본 런타임 실측 미실시(콘솔·isLoading·persisted·switcher) — Cowork 세션 로그인 대기.
 - 🔴 Phase 1 인벤토리 센티널 RED 22 → 0 을 목표. UI `orgs[0]` 역방향 센티널 추가(13파일에서 `orgs[0]|organizations[0]|memberships[0]` 0)
 - 🟢 API 22곳 → `resolveActiveOrganizationId` · UI 13파일 → `useActiveOrganization()`(use-permission 최우선) · workspace-switcher → PATCH + `["user-organizations"]`·`["user-org-membership"]` 무효화
 - 🔵 중복 fetch 제거(훅 1개가 `["user-organizations"]` 공유)
@@ -263,10 +273,10 @@ Red-Green-Refactor 엄수. 러너: 클로드코드 세션(`apps/web` vitest·tsc
 
 ## 11. Progress Tracking
 
-- Overall: ~25%
-- Current phase: Phase 2 (호출자 이관 · 제안 순서: `use-permission.ts` → billing 6 → organization-vendors 4 → 나머지 API → UI 잔여 → switcher PATCH 배선)
-- Current blocker: **prod migrate 미적용** — operator-shell `prisma migrate deploy` 선행 필요(호영님 승인 대상, 위 ⛔)
-- Next validation step: 마이그레이션 적용 확인 → `use-permission.ts` 치환 → 래칫 상한에서 해당 항목 삭제 → GREEN
+- Overall: ~40%
+- Current phase: Phase 2 (7/37 이관 · 다음: organization-vendors 4 → 나머지 API 12 → UI 잔여 13 → switcher PATCH 배선)
+- Current blocker: 없음 (prod migrate 적용 확인 완료 2026-09-01)
+- Next validation step: organization-vendors 4곳 치환 → 래칫 API 16 → 12 → 전량 축 재실측
 
 - [x] Phase 0 · [x] Phase 1 · [ ] Phase 2 · [ ] Phase 3 · [ ] Phase 4 · [ ] Phase 5
 
