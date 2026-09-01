@@ -1,8 +1,13 @@
 # Implementation Plan: 조직 초대 흐름 완성 (§invite-flow b)
 
-- **Status:** 🚧 In Progress (Phase 0 완료 · Phase 1 착수)
+- **Status:** 🚧 In Progress (Phase 0·1 완료 · Phase 2 대기)
 - **Started:** 2026-08-31
-- **Last Updated:** 2026-08-31 (Phase 0 종결 — 클로드코드)
+- **Last Updated:** 2026-08-31 (Phase 1 종결 `ecf618e4` — 클로드코드)
+- ⛔ **Phase 2 착수 전 선행 조건:** operator-shell `prisma migrate deploy` 로
+  `20260831230000_user_active_organization` **prod 적용**. 배포 체인은 적용하지 않는다 —
+  `vercel-migrate.js` 는 ADR-002 §11.13 로 영구 NO-OP(실측 2026-08-31).
+  Phase 1 코드는 휴면(훅·resolver import 0)이라 미적용 상태로도 무해하지만,
+  Phase 2 가 호출자를 이관하는 순간 컬럼 부재는 즉시 런타임 실패다.
 - **선행:** §invite-dead-end a (`c1f2d867`) — 초대 진입점 3곳 `INVITE_AVAILABLE=false` disabled + 사유. 이 계획이 서면 그 플래그 하나로 복원한다.
 - **승인:** 호영님 2026-08-31 "생성 고" (Cowork 세션). 결정 표 ②(3a 자동 조직 유지 · 별건 후속)는 이의 없음으로 채택.
 
@@ -177,7 +182,16 @@ Red-Green-Refactor 엄수. 러너: 클로드코드 세션(`apps/web` vitest·tsc
 - Rollback: 계획 문서만
 
 ### Phase 1: 활성 조직 계약 (3h)
-- Status: [ ] Pending
+- Status: [x] Complete (2026-08-31 · `ecf618e4`)
+  - 산출 8: schema(+컬럼·백릴레이션·`@@index`) · migration · resolver · GET/PATCH 라우트 · 훅 · 테스트 3
+  - 게이트 실측: 조직·resolver·라우트·pairing **20파일 162/162 GREEN** · Phase 1 파일 tsc 0
+    (전체 tsc 27건은 전부 무관한 기존 `__tests__` 파일 — 선행 상태)
+  - 🔧 정합 교정: `@@index([activeOrganizationId])` 를 schema 에 선언 — 마이그레이션은 인덱스를
+    만드는데 schema 선언이 없어 **schema↔DDL 드리프트**였다(다음 migrate 가 지우려 든다).
+    `migration-drift.test.ts` 는 manifest↔applied 축만 봐서 이 축을 잡지 않는다(무방비 확인).
+  - 🔁 게이트 교체 수용: 인벤토리 센티널 `toEqual([])` → **파일별 상한 래칫**.
+    원안은 Phase 2 내내 상시 RED 라 신규 위반을 가린다(§11.163/§11.172 부채와 같은 형태).
+    래칫은 baseline GREEN · 신규 우회로 즉시 RED · 총계 감소만 허용 · 상한 0 에서 원안으로 수렴.
 - 🔴 `__tests__/lib/active-org-resolver.test.ts`: 활성 있음 → 그대로 / 활성 없음 → createdAt asc 첫 조직 / 활성이 탈퇴 조직 → fallback / 조직 0 → null. `__tests__/regression/org-scope-callers-inventory.test.ts`: API 에 organizationId 없는 `organizationMember.findFirst({ where: { userId` 직접 호출 0 (Phase 1 시점엔 RED 22)
 - 🟢 migration `User.activeOrganizationId String?` · `lib/organizations/active-org.ts` · `PATCH /api/me/active-organization`(멤버십 검증 후 저장) · `hooks/use-active-organization.ts`(GET /api/organizations + 세션 activeOrganizationId 로 선택, 없으면 첫 조직)
 - 🔵 resolver 시그니처 1개로 고정(`{ userId, hint? }`)
@@ -249,12 +263,12 @@ Red-Green-Refactor 엄수. 러너: 클로드코드 세션(`apps/web` vitest·tsc
 
 ## 11. Progress Tracking
 
-- Overall: ~10%
-- Current phase: Phase 1 (RED 테스트 2파일 작성됨 · 🟢 구현 대기)
-- Current blocker: 없음
-- Next validation step: Phase 1 🟢 (migration + resolver + PATCH + 훅) → resolver 테스트 GREEN
+- Overall: ~25%
+- Current phase: Phase 2 (호출자 이관 · 제안 순서: `use-permission.ts` → billing 6 → organization-vendors 4 → 나머지 API → UI 잔여 → switcher PATCH 배선)
+- Current blocker: **prod migrate 미적용** — operator-shell `prisma migrate deploy` 선행 필요(호영님 승인 대상, 위 ⛔)
+- Next validation step: 마이그레이션 적용 확인 → `use-permission.ts` 치환 → 래칫 상한에서 해당 항목 삭제 → GREEN
 
-- [x] Phase 0 · [ ] Phase 1 · [ ] Phase 2 · [ ] Phase 3 · [ ] Phase 4 · [ ] Phase 5
+- [x] Phase 0 · [x] Phase 1 · [ ] Phase 2 · [ ] Phase 3 · [ ] Phase 4 · [ ] Phase 5
 
 ## 12. Notes & Learnings
 
@@ -263,3 +277,11 @@ Red-Green-Refactor 엄수. 러너: 클로드코드 세션(`apps/web` vitest·tsc
 
 **Implementation Notes:**
 - 2026-08-31 계획 수립. a(`c1f2d867`) 로 진입점 봉인 후 착수. 3a 자동 조직 생략은 별건 후속 트랙.
+- 2026-08-31 Phase 1: 인벤토리 센티널을 `toEqual([])` → **파일별 상한 래칫**으로 교체(수용).
+  근거 — 원안은 Phase 2 전 구간 상시 RED 라 그사이 섞여 든 신규 위반을 가린다. 래칫은
+  baseline GREEN 을 유지하면서 신규 우회로만 즉시 RED 로 잡고, 상한이 0 이 되는 순간
+  원안과 같은 게이트가 된다. 키는 파일 단위(줄 번호는 Phase 2 편집으로 오탐).
+- 2026-08-31 Phase 1: `vercel-migrate.js` 가 ADR-002 §11.13 로 **영구 NO-OP** 임을 실측.
+  "배포 체인이 마이그레이션을 적용한다" 는 전제는 틀렸다 — rollout 은 push → 배포 →
+  **operator `migrate deploy`** → health 4스텝이다. 로컬 DB 는 없다(DATABASE_URL = Supabase)
+  이므로 "로컬 적용" 이라는 선택지 자체가 성립하지 않고, 이 DDL 은 prod 변경 = 사전 승인 대상.
