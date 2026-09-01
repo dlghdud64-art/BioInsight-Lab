@@ -37,11 +37,15 @@ describe("알림 — resolveOrgRecipients 공통 헬퍼", () => {
 });
 
 describe("알림 — smart-receiving INVENTORY_RECEIVED trigger", () => {
-  it("dispatch import + 두 분기(기존/신규) 모두 INVENTORY_RECEIVED", () => {
+  it("dispatch import + 입고 완료 전 분기가 INVENTORY_RECEIVED", () => {
     const src = read(ROUTE);
     expect(src).toMatch(/import \{ dispatchNotificationEvent, resolveOrgRecipients \}/);
     const received = src.match(/eventType:\s*"INVENTORY_RECEIVED"/g) ?? [];
-    expect(received.length).toBe(2); // 기존 매칭재고 + 신규 품목
+    // 승계(2026-09-02): 2 → 3. §scan-recognition-upgrade P2 가 다품목 일괄 등록 분기를
+    //   추가했고 그 분기도 입고 완료이므로 알림을 보낸다(분기 성장 = count drift 승계).
+    //   숫자만 두면 다음 성장 때 또 깨지므로 분기 식별자를 함께 잠근다.
+    expect(received.length).toBe(3); // 기존 매칭재고 + 신규 품목 + 다품목 일괄
+    expect(src).toMatch(/multi: true, lineCount: results\.length/); // 다품목 분기 실재
     expect(src).toMatch(/entityType:\s*"INVENTORY"/);
   });
 

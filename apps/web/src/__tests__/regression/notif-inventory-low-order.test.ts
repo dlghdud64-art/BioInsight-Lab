@@ -108,10 +108,15 @@ describe("알림 — 회귀 0 (기존 병렬 caller 보존)", () => {
     expect(src).toMatch(/eventType:\s*"ORDER_DELIVERED"/);
   });
 
-  it("smart-receiving INVENTORY_RECEIVED 2분기 보존", () => {
+  it("smart-receiving INVENTORY_RECEIVED 분기 보존 (단품 2 + 다품목 1)", () => {
     const src = read(SMART_RECEIVING);
     const received = src.match(/eventType:\s*"INVENTORY_RECEIVED"/g) ?? [];
-    expect(received.length).toBe(2);
+    // 승계(2026-09-02): 2 → 3. §scan-recognition-upgrade P2 다품목 분기 추가분.
+    //   이 파일의 의도는 "기존 병렬 caller 회귀 0" 이므로 단품 2분기 보존이 핵심 —
+    //   그 둘을 값으로 직접 짚어 성장과 회귀를 구분한다.
+    expect(received.length).toBe(3);
+    expect(src).toMatch(/isNewProduct: false/); // 단품 기존재고 분기 보존
+    expect(src).toMatch(/isNewProduct: true/); // 단품 신규 분기 보존
   });
 
   it("use route 기존 transaction/audit/응답 보존", () => {

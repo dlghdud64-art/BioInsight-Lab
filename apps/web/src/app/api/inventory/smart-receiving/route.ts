@@ -256,6 +256,9 @@ export async function POST(request: NextRequest) {
                   lotNumber: line.lotNumber ?? null,
                   expiryDate: expiry,
                   notes: line.notes ?? null,
+                  // §11.309a lineage — 다품목은 행별 근거(line)를 남긴다. 전체 payload 복제 금지.
+                  ocrJobId,
+                  extractedData: line as unknown as Prisma.InputJsonValue,
                 },
                 select: { id: true },
               });
@@ -312,6 +315,9 @@ export async function POST(request: NextRequest) {
                   lotNumber: line.lotNumber ?? null,
                   expiryDate: expiry,
                   notes: line.notes ?? null,
+                  // §11.309a lineage — 다품목 신규 라인도 동일 계약.
+                  ocrJobId,
+                  extractedData: line as unknown as Prisma.InputJsonValue,
                 },
                 select: { id: true },
               });
@@ -432,9 +438,11 @@ export async function POST(request: NextRequest) {
                 ? new Date(confirmedData.expirationDate)
                 : null,
               notes: confirmedData.notes ?? null,
-              // §11.309a 신규 필드 — OCR 출처 + 추출 데이터 감사 추적 (migration pending: prisma migrate deploy 후 활성화)
-              // ocrJobId,
-              // extractedData: confirmedData as unknown as Prisma.InputJsonValue,
+              // §11.309a — OCR 출처 + 확인된 추출 데이터(감사 추적). 컬럼은 진작 적용됐는데
+              //   구 대기 주석이 남아 세 경로 모두 미기입이었다(2026-09-02 실측).
+              //   lineage 가 없으면 스캔 입고를 스캔으로 식별할 수 없다(§receiving-scan-source-merge C3).
+              ocrJobId,
+              extractedData: confirmedData as unknown as Prisma.InputJsonValue,
             },
             include: {
               user: { select: { id: true, name: true, email: true } },
@@ -586,9 +594,9 @@ export async function POST(request: NextRequest) {
               ? new Date(confirmedData.expirationDate)
               : null,
             notes: confirmedData.notes ?? null,
-            // §11.309a 신규 필드 (migration pending: prisma migrate deploy 후 활성화)
-            // ocrJobId,
-            // extractedData: confirmedData as unknown as Prisma.InputJsonValue,
+            // §11.309a — OCR 출처 + 확인된 추출 데이터(감사 추적). 위 분기 A 와 동일 계약.
+            ocrJobId,
+            extractedData: confirmedData as unknown as Prisma.InputJsonValue,
           },
           select: { id: true },
         });
