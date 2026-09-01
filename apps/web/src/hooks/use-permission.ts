@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useSession } from "next-auth/react";
-import { useQuery } from "@tanstack/react-query";
+import { useActiveOrganization } from "@/hooks/use-active-organization";
 import type { Permission } from "@/lib/permissions/permission-checker";
 
 /**
@@ -74,32 +74,24 @@ export interface UsePermissionReturn {
 /**
  * 조직 역할 기반 권한 체크 훅
  *
- * GET /api/organizations 응답에서 첫 번째 조직의 role을 가져와 캐싱.
- * ADMIN/OWNER는 모든 권한 true.
- * 기존 fetchActiveOrg + canEditBudget 패턴을 대체.
+ * 활성 조직(useActiveOrganization)의 role 로 판정한다. ADMIN/OWNER 는 모든 권한 true.
+ *
+ * §invite-flow Phase 2 (2026-09-01) — 이전에는 이 훅이 `/api/organizations` 를 직접 받아
+ *   `orgs[0]` 을 골랐다. 화면마다 각자 첫 조직을 고르던 15곳 중 **가장 무거운 자리**였다 —
+ *   2중 소속이 생기면 권한 화면과 예산 화면이 서로 다른 조직을 기준으로 판정할 수 있었다.
+ *   선택은 이제 한 곳(서버 resolver)에서만 일어나고, 이 훅은 그 결과를 읽는다.
+ *   🔑 단일 조직 사용자에게는 결과가 같다 — resolver 의 fallback 이 createdAt asc 첫 멤버십이라
+ *      `orgs[0]`(= /api/organizations 의 첫 항목)과 같은 조직으로 떨어진다.
  */
 export function usePermission(): UsePermissionReturn {
   const { status: sessionStatus } = useSession();
 
-  const { data, isLoading: queryLoading } = useQuery({
-    queryKey: ["user-org-membership"],
-    queryFn: async (): Promise<OrgData | null> => {
-      const res = await fetch("/api/organizations");
-      if (!res.ok) return null;
-      const json = await res.json();
-      const orgs = json.organizations as OrgData[] | undefined;
-      if (!orgs || orgs.length === 0) return null;
-      // 첫 번째 조직 (대부분의 사용자는 1개 조직 소속)
-      return orgs[0]!;
-    },
-    enabled: sessionStatus === "authenticated",
-    staleTime: 5 * 60 * 1000, // 5분
-    retry: 1,
-  });
+  const { organization, isLoading: activeLoading } = useActiveOrganization();
+  const data = (organization as OrgData | null) ?? null;
 
   const role = data?.role ?? null;
   const organizationId = data?.id ?? null;
-  const isLoading = sessionStatus === "loading" || queryLoading;
+  const isLoading = sessionStatus === "loading" || activeLoading;
 
   const isOwner = role === "OWNER";
   const isAdmin = role === "ADMIN";

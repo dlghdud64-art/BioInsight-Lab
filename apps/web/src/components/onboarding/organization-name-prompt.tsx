@@ -132,7 +132,12 @@ export function OrganizationNamePrompt() {
         /* no-op */
       }
       await queryClient.invalidateQueries({ queryKey: ["onboarding-org-name"] });
+      // §invite-flow Phase 2 — usePermission 이 useActiveOrganization 을 읽도록 바뀌었다.
+      //   조직을 만든 직후 권한이 stale 로 남지 않도록 그 훅의 키까지 함께 무효화한다.
+      //   ("user-org-membership" 은 다른 소비자를 위해 유지 — 끊는 게 아니라 더한다.)
       await queryClient.invalidateQueries({ queryKey: ["user-org-membership"] });
+      await queryClient.invalidateQueries({ queryKey: ["user-organizations"] });
+      await queryClient.invalidateQueries({ queryKey: ["active-organization"] });
     } catch {
       toast({ title: "네트워크 오류로 저장하지 못했습니다", variant: "destructive" });
     } finally {
