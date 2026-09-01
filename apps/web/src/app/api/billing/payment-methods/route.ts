@@ -21,8 +21,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ paymentMethods: [] });
     }
 
-    // §invite-flow Phase 2 — 활성 조직의 결제 수단.
-    const activeOrganizationId = await resolveActiveOrganizationId({ userId: session.user.id });
+    // §invite-flow Phase 2 — 활성 조직의 결제 수단 (hint 우선: 화면이 보는 조직).
+    const activeOrganizationId = await resolveActiveOrganizationId({
+      userId: session.user.id,
+      hint: new URL(request.url).searchParams.get("organizationId"),
+    });
     const membership = activeOrganizationId ? await db.organizationMember.findFirst({
       where: { userId: session.user.id, organizationId: activeOrganizationId },
       include: {
@@ -93,8 +96,12 @@ export async function POST(request: NextRequest) {
       return "unknown";
     };
 
-    // §invite-flow Phase 2 — 활성 조직의 구독에 결제 수단을 붙인다.
-    const activeOrgId = await resolveActiveOrganizationId({ userId: session.user.id });
+    /* §invite-flow Phase 2 후속 — 카드를 붙일 조직은 **화면이 보여준 조직**이다.
+     * hint 없으면 활성 조직으로 떨어진다(기존 동작). resolver 가 멤버십을 검증한다. */
+    const activeOrgId = await resolveActiveOrganizationId({
+      userId: session.user.id,
+      hint: typeof body?.organizationId === "string" ? body.organizationId : null,
+    });
     const membership = activeOrgId ? await db.organizationMember.findFirst({
       where: { userId: session.user.id, organizationId: activeOrgId },
       include: {
@@ -185,8 +192,13 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // 삭제 권한 확인 — §invite-flow Phase 2: 활성 조직의 구독에 속한 수단만 지운다.
-    const activeOrgId = await resolveActiveOrganizationId({ userId: session.user.id });
+    /* 삭제 권한 확인 — §invite-flow Phase 2: **화면이 보여준 조직**의 구독에 속한 수단만 지운다.
+     * (아래 paymentMethod.findFirst 가 subscriptionId 로 소속을 한 번 더 확인하므로,
+     *  조직이 어긋나도 남의 수단은 지워지지 않고 404 로 떨어진다 — 두 층이 각자 막는다.) */
+    const activeOrgId = await resolveActiveOrganizationId({
+      userId: session.user.id,
+      hint: searchParams.get("organizationId"),
+    });
     const membership = activeOrgId ? await db.organizationMember.findFirst({
       where: { userId: session.user.id, organizationId: activeOrgId },
       include: {

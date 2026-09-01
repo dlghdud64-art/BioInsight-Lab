@@ -121,13 +121,20 @@ function BillingPageContent() {
     },
   });
 
+  /* §invite-flow Phase 2-2 후속 (리뷰 지적 2026-09-01) — **보여준 조직에 적용**.
+   * GET 이 돌려준 organizationId 를 mutation 에 그대로 싣는다. 이게 없으면 서버가 그때의
+   * 활성 조직으로 다시 고르는데, 읽기와 쓰기 사이에 활성 조직이 바뀌면(다른 탭 switcher)
+   * 화면이 보여준 것과 다른 조직의 구독·결제 수단이 바뀐다 — 에러도 빈 화면도 없이 조용히.
+   * 🛑 라우트의 hint 수용과 **짝**이다. 한쪽만 있으면 계약이 성립하지 않는다. */
+  const billingOrganizationId: string | null = billingData?.organizationId ?? null;
+
   // 플랜 업그레이드 뮤테이션
   const upgradeMutation = useMutation({
     mutationFn: async (plan: PlanType) => {
       const res = await csrfFetch("/api/billing", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "upgrade", plan }),
+        body: JSON.stringify({ action: "upgrade", plan, organizationId: billingOrganizationId }),
       });
       if (!res.ok) throw new Error("Upgrade failed");
       return res.json();
@@ -163,7 +170,7 @@ function BillingPageContent() {
       const res = await csrfFetch("/api/billing/payment-methods", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...cardData, isDefault: true }),
+        body: JSON.stringify({ ...cardData, isDefault: true, organizationId: billingOrganizationId }),
       });
       if (!res.ok) throw new Error("Failed to add card");
       return res.json();
@@ -189,9 +196,11 @@ function BillingPageContent() {
   // 카드 삭제 뮤테이션
   const deleteCardMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await csrfFetch(`/api/billing/payment-methods?id=${id}`, {
-        method: "DELETE",
-      });
+      const res = await csrfFetch(
+        `/api/billing/payment-methods?id=${encodeURIComponent(id)}` +
+          (billingOrganizationId ? `&organizationId=${encodeURIComponent(billingOrganizationId)}` : ""),
+        { method: "DELETE" },
+      );
       if (!res.ok) throw new Error("Failed to delete card");
       return res.json();
     },

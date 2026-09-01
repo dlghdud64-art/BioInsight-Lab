@@ -65,8 +65,11 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // §invite-flow Phase 2 — 첫 조직이 아니라 **활성 조직**의 청구 이력을 본다.
-    const activeOrganizationId = await resolveActiveOrganizationId({ userId: session.user.id });
+    // §invite-flow Phase 2 — 첫 조직이 아니라 **활성 조직**의 청구 이력 (hint 우선).
+    const activeOrganizationId = await resolveActiveOrganizationId({
+      userId: session.user.id,
+      hint: new URL(request.url).searchParams.get("organizationId"),
+    });
     const membership = activeOrganizationId ? await db.organizationMember.findFirst({
       where: { userId: session.user.id, organizationId: activeOrganizationId },
       include: {

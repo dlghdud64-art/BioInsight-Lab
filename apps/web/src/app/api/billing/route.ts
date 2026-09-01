@@ -107,8 +107,13 @@ export async function GET(request: NextRequest) {
 
     const userId = session.user.id;
 
-    // 사용자의 조직 찾기 — §invite-flow Phase 2: 첫 조직이 아니라 **활성 조직**.
-    const activeOrganizationId = await resolveActiveOrganizationId({ userId });
+    /* 사용자의 조직 — §invite-flow Phase 2: 첫 조직이 아니라 **활성 조직**.
+     * hint 수용: 같은 화면의 읽기/쓰기 대상이 갈리지 않도록 GET 도 명시 조직을 받는다. */
+    const { searchParams } = new URL(request.url);
+    const activeOrganizationId = await resolveActiveOrganizationId({
+      userId,
+      hint: searchParams.get("organizationId"),
+    });
     const membership = activeOrganizationId ? await db.organizationMember.findFirst({
       where: { userId, organizationId: activeOrganizationId },
       include: {
@@ -171,6 +176,10 @@ export async function GET(request: NextRequest) {
       : "FREE") as keyof typeof PLAN_INFO;
 
     return NextResponse.json({
+      /* 이 응답이 **어느 조직의** 청구인지 화면에 알린다 — 화면은 이 값을 mutation 에
+       * 그대로 실어 "보여준 조직에 적용" 을 보장한다(짝 계약). */
+      organizationId: membership?.organization?.id ?? null,
+      organizationName: membership?.organization?.name ?? null,
       subscription: subscription || {
         plan: "FREE",
         status: "active",
@@ -240,8 +249,16 @@ export async function POST(request: NextRequest) {
       // 현재 구조에서는 ORGANIZATION = Business, Enterprise는 별도 문의
       // Enterprise 문의는 프론트에서 /support로 리다이렉트
 
-      // 사용자의 조직 찾기 — §invite-flow Phase 2: 활성 조직 기준(플랜 변경 대상 조직).
-      const activeOrgId = await resolveActiveOrganizationId({ userId: session.user.id });
+      /* 대상 조직 — §invite-flow Phase 2-2 후속 (리뷰 지적 2026-09-01).
+       * 돈이 움직이는 액션은 **암묵적 활성 조직이 아니라 요청이 명시한 조직**을 따른다.
+       * 화면은 GET 이 돌려준 organizationId 를 그대로 실어 보낸다 — "보여준 조직에 적용" 이
+       * 보장되어야, 읽기와 쓰기 사이에 활성 조직이 바뀌어도(다른 탭 switcher) 엉뚱한 조직의
+       * 구독이 바뀌지 않는다. hint 는 resolver 가 멤버십 검증 후 채택하므로 남의 조직 id 를
+       * 넣어도 자기 활성 조직으로 떨어질 뿐이다(신규 검증 코드 0). */
+      const activeOrgId = await resolveActiveOrganizationId({
+        userId: session.user.id,
+        hint: typeof body?.organizationId === "string" ? body.organizationId : null,
+      });
       const membership = activeOrgId ? await db.organizationMember.findFirst({
         where: { userId: session.user.id, organizationId: activeOrgId },
         include: { organization: { include: { subscription: true } } },
