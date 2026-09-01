@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { resolveActiveOrganizationId } from "@/lib/organizations/active-org";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // GET: 결제 수단 목록
@@ -20,8 +21,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ paymentMethods: [] });
     }
 
-    const membership = await db.organizationMember.findFirst({
-      where: { userId: session.user.id },
+    // §invite-flow Phase 2 — 활성 조직의 결제 수단.
+    const activeOrganizationId = await resolveActiveOrganizationId({ userId: session.user.id });
+    const membership = activeOrganizationId ? await db.organizationMember.findFirst({
+      where: { userId: session.user.id, organizationId: activeOrganizationId },
       include: {
         organization: {
           include: {
@@ -31,7 +34,7 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-    });
+    }) : null;
 
     return NextResponse.json({
       paymentMethods: membership?.organization?.subscription?.paymentMethods || [],
@@ -90,14 +93,16 @@ export async function POST(request: NextRequest) {
       return "unknown";
     };
 
-    const membership = await db.organizationMember.findFirst({
-      where: { userId: session.user.id },
+    // §invite-flow Phase 2 — 활성 조직의 구독에 결제 수단을 붙인다.
+    const activeOrgId = await resolveActiveOrganizationId({ userId: session.user.id });
+    const membership = activeOrgId ? await db.organizationMember.findFirst({
+      where: { userId: session.user.id, organizationId: activeOrgId },
       include: {
         organization: {
           include: { subscription: true },
         },
       },
-    });
+    }) : null;
 
     if (!membership?.organization?.subscription) {
       return NextResponse.json(
@@ -180,9 +185,10 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // 삭제 권한 확인
-    const membership = await db.organizationMember.findFirst({
-      where: { userId: session.user.id },
+    // 삭제 권한 확인 — §invite-flow Phase 2: 활성 조직의 구독에 속한 수단만 지운다.
+    const activeOrgId = await resolveActiveOrganizationId({ userId: session.user.id });
+    const membership = activeOrgId ? await db.organizationMember.findFirst({
+      where: { userId: session.user.id, organizationId: activeOrgId },
       include: {
         organization: {
           include: {
@@ -192,7 +198,7 @@ export async function DELETE(request: NextRequest) {
           },
         },
       },
-    });
+    }) : null;
 
     const subscriptionId = membership?.organization?.subscription?.id;
     if (!subscriptionId) {
