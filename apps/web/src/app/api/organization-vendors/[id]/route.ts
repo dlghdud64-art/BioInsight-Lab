@@ -13,6 +13,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { resolveOrganizationIdForMutation } from "@/lib/organizations/active-org";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
@@ -34,16 +35,18 @@ const UpdateOrganizationVendorSchema = z.object({
   vendorId: z.string().nullish(),
 });
 
-/**
- * Helper — current user 의 organization id 확인.
- */
-async function getCurrentOrganizationId(userId: string): Promise<string | null> {
-  const member = await db.organizationMember.findFirst({
-    where: { userId },
-    select: { organizationId: true },
-    orderBy: { createdAt: "asc" },
-  });
-  return member?.organizationId ?? null;
+/* §invite-flow Phase 2-3 — 로컬 getCurrentOrganizationId 복사본 은퇴 (공유 resolver 로).
+ * PATCH·DELETE 는 쓰기라 명시값을 무시하지 않는다 — hint 검증 실패는 403 이다.
+ * 🔑 아래 findVendorWithOwnership 이 소유 조직을 한 번 더 대조하므로 조직이 어긋나도
+ *    남의 거래처가 바뀌지 않는다(404). 그래도 403 을 먼저 내는 이유: 명시한 조직이 틀렸다는
+ *    사실을 "없는 거래처" 로 뭉개면 사용자가 자기 화면을 의심하게 된다. */
+async function resolveMutationOrgOrForbidden(
+  userId: string,
+  hint: string | null,
+): Promise<{ organizationId: string | null; forbidden: boolean }> {
+  const r = await resolveOrganizationIdForMutation({ userId, hint });
+  if (!r.ok && r.reason === "hint_forbidden") return { organizationId: null, forbidden: true };
+  return { organizationId: r.ok ? r.organizationId : null, forbidden: false };
 }
 
 /**
@@ -91,7 +94,17 @@ export async function PATCH(
       return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
     }
 
-    const organizationId = await getCurrentOrganizationId(session.user.id);
+    const orgResolution = await resolveMutationOrgOrForbidden(
+      session.user.id,
+      new URL(request.url).searchParams.get("organizationId"),
+    );
+    if (orgResolution.forbidden) {
+      return NextResponse.json(
+        { error: "요청한 조직에 대한 권한이 없습니다." },
+        { status: 403 },
+      );
+    }
+    const organizationId = orgResolution.organizationId;
     if (!organizationId) {
       return NextResponse.json({ error: "공급사를 찾을 수 없습니다" }, { status: 404 });
     }
@@ -212,7 +225,17 @@ export async function DELETE(
       return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
     }
 
-    const organizationId = await getCurrentOrganizationId(session.user.id);
+    const orgResolution = await resolveMutationOrgOrForbidden(
+      session.user.id,
+      new URL(request.url).searchParams.get("organizationId"),
+    );
+    if (orgResolution.forbidden) {
+      return NextResponse.json(
+        { error: "요청한 조직에 대한 권한이 없습니다." },
+        { status: 403 },
+      );
+    }
+    const organizationId = orgResolution.organizationId;
     if (!organizationId) {
       return NextResponse.json({ error: "공급사를 찾을 수 없습니다" }, { status: 404 });
     }

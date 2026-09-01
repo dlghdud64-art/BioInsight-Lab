@@ -16,6 +16,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import {
+  resolveActiveOrganizationId,
+  resolveOrganizationIdForMutation,
+} from "@/lib/organizations/active-org";
 import { z } from "zod";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { extractRequestMeta } from "@/lib/audit";
@@ -37,18 +41,10 @@ const CreateOrganizationVendorSchema = z.object({
   vendorId: z.string().nullish(),
 });
 
-/**
- * Helper — current user 의 organization id 확인 (active OrganizationMember).
- * 없으면 null. 본 helper 가 ownership 의 single source.
- */
-async function getCurrentOrganizationId(userId: string): Promise<string | null> {
-  const member = await db.organizationMember.findFirst({
-    where: { userId },
-    select: { organizationId: true },
-    orderBy: { createdAt: "asc" },
-  });
-  return member?.organizationId ?? null;
-}
+/* §invite-flow Phase 2-3 — 로컬 getCurrentOrganizationId 복사본 은퇴.
+ *   "첫 멤버십" 을 파일마다 따로 고르던 자리다(같은 복사본이 vendor 계열 4파일에 있었다).
+ *   ownership 의 single source 는 이제 공유 resolver 다 — 읽기는 관대하게(활성 조직),
+ *   쓰기는 명시값을 무시하지 않는다(hint_forbidden → 403). */
 
 /**
  * GET /api/organization-vendors
@@ -61,10 +57,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
     }
 
-    const organizationId = await getCurrentOrganizationId(session.user.id);
+    const organizationId = await resolveActiveOrganizationId({
+      userId: session.user.id,
+      hint: new URL(request.url).searchParams.get("organizationId"),
+    });
     if (!organizationId) {
       // organization 미가입 user — empty list (graceful).
-      return NextResponse.json({ vendors: [] });
+      return NextResponse.json({ organizationId: null, vendors: [] });
     }
 
     const vendors = await db.organizationVendor.findMany({
@@ -91,6 +90,9 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
+      /* §invite-flow Phase 2-3 — 이 목록이 **어느 조직의** 것인지 화면에 알린다.
+       * 화면은 이 값을 mutation 에 그대로 실어 "보여준 조직에 적용" 을 보장한다(짝 계약). */
+      organizationId,
       // §11.235 — Prisma findMany return type implicit any narrow.
       vendors: vendors.map((v: typeof vendors[number]) => ({
         ...v,
@@ -118,7 +120,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
     }
 
-    const organizationId = await getCurrentOrganizationId(session.user.id);
+    /* body 를 먼저 읽는다 — 생성 대상 조직(hint)이 body 에 있기 때문이다.
+     * 파싱 실패는 아래 스키마 검증이 받아내므로 여기서 던지지 않는다(요청 스트림은 1회 소비). */
+    const body = await request.json().catch(() => ({}));
+
+    /* 생성은 mutation — 명시한 조직이 검증에 실패하면 조용히 활성 조직에 만들지 않는다.
+     * (거래처가 사용자가 보던 조직이 아닌 곳에 생기는 것이 이 표면의 조용한 오적용이다.) */
+    const orgResolution = await resolveOrganizationIdForMutation({
+      userId: session.user.id,
+      hint: typeof (body as any)?.organizationId === "string" ? (body as any).organizationId : null,
+    });
+    if (!orgResolution.ok && orgResolution.reason === "hint_forbidden") {
+      return NextResponse.json(
+        { error: "요청한 조직에 대한 권한이 없습니다." },
+        { status: 403 },
+      );
+    }
+    const organizationId = orgResolution.ok ? orgResolution.organizationId : null;
     if (!organizationId) {
       return NextResponse.json(
         { error: "조직에 가입된 사용자만 공급사를 등록할 수 있습니다" },
@@ -126,7 +144,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
     const parsed = CreateOrganizationVendorSchema.safeParse(body);
     if (!parsed.success) {
       const firstIssue = parsed.error.issues[0];

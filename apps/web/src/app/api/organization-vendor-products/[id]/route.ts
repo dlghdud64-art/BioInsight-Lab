@@ -16,6 +16,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { resolveOrganizationIdForMutation } from "@/lib/organizations/active-org";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { extractRequestMeta } from "@/lib/audit";
 import { createLogger } from "@/lib/logger";
@@ -25,14 +26,7 @@ const logger = createLogger("api/organization-vendor-products/[id]");
 /**
  * Helper — current user 의 organization id 확인.
  */
-async function getCurrentOrganizationId(userId: string): Promise<string | null> {
-  const member = await db.organizationMember.findFirst({
-    where: { userId },
-    select: { organizationId: true },
-    orderBy: { createdAt: "asc" },
-  });
-  return member?.organizationId ?? null;
-}
+/* §invite-flow Phase 2-3 — 로컬 복사본 은퇴. 삭제는 쓰기라 명시값을 무시하지 않는다. */
 
 export async function DELETE(
   request: NextRequest,
@@ -44,7 +38,17 @@ export async function DELETE(
       return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
     }
 
-    const organizationId = await getCurrentOrganizationId(session.user.id);
+    const orgResolution = await resolveOrganizationIdForMutation({
+      userId: session.user.id,
+      hint: new URL(request.url).searchParams.get("organizationId"),
+    });
+    if (!orgResolution.ok && orgResolution.reason === "hint_forbidden") {
+      return NextResponse.json(
+        { error: "요청한 조직에 대한 권한이 없습니다." },
+        { status: 403 },
+      );
+    }
+    const organizationId = orgResolution.ok ? orgResolution.organizationId : null;
     if (!organizationId) {
       return NextResponse.json(
         { error: "조직에 가입된 사용자만 매핑을 삭제할 수 있습니다" },

@@ -18,6 +18,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import {
+  resolveActiveOrganizationId,
+  resolveOrganizationIdForMutation,
+} from "@/lib/organizations/active-org";
 import { z } from "zod";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { extractRequestMeta } from "@/lib/audit";
@@ -32,17 +36,8 @@ const CreateOrganizationVendorProductSchema = z.object({
   notes: z.string().max(2000).nullish(),
 });
 
-/**
- * Helper — current user 의 organization id 확인 (active OrganizationMember).
- */
-async function getCurrentOrganizationId(userId: string): Promise<string | null> {
-  const member = await db.organizationMember.findFirst({
-    where: { userId },
-    select: { organizationId: true },
-    orderBy: { createdAt: "asc" },
-  });
-  return member?.organizationId ?? null;
-}
+/* §invite-flow Phase 2-3 — 로컬 getCurrentOrganizationId 복사본 은퇴 (공유 resolver 로).
+ * 읽기는 관대하게(활성 조직), 쓰기는 명시값을 무시하지 않는다(hint_forbidden → 403). */
 
 /**
  * GET /api/organization-vendor-products
@@ -56,7 +51,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
     }
 
-    const organizationId = await getCurrentOrganizationId(session.user.id);
+    const organizationId = await resolveActiveOrganizationId({
+      userId: session.user.id,
+      hint: new URL(request.url).searchParams.get("organizationId"),
+    });
     if (!organizationId) {
       return NextResponse.json({ entries: [] });
     }
@@ -120,7 +118,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
     }
 
-    const organizationId = await getCurrentOrganizationId(session.user.id);
+    /* body 를 먼저 읽는다 — 등록 대상 조직(hint)이 body 에 있다. 파싱 실패는 아래 스키마
+     * 검증이 받아낸다(요청 스트림은 1회 소비라 여기서 던지면 검증 경로가 사라진다). */
+    const body = await request.json().catch(() => ({}));
+
+    const orgResolution = await resolveOrganizationIdForMutation({
+      userId: session.user.id,
+      hint: typeof (body as any)?.organizationId === "string" ? (body as any).organizationId : null,
+    });
+    if (!orgResolution.ok && orgResolution.reason === "hint_forbidden") {
+      return NextResponse.json(
+        { error: "요청한 조직에 대한 권한이 없습니다." },
+        { status: 403 },
+      );
+    }
+    const organizationId = orgResolution.ok ? orgResolution.organizationId : null;
     if (!organizationId) {
       return NextResponse.json(
         { error: "조직에 가입된 사용자만 거래처-제품 매핑을 등록할 수 있습니다" },
@@ -128,7 +140,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
     const parsed = CreateOrganizationVendorProductSchema.safeParse(body);
     if (!parsed.success) {
       const firstIssue = parsed.error.issues[0];

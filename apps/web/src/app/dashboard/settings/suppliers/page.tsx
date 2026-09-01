@@ -202,10 +202,25 @@ export default function SuppliersSettingsPage() {
     queryFn: async () => {
       const res = await fetch("/api/organization-vendors", { credentials: "include" });
       if (!res.ok) throw new Error("거래처 목록을 불러오지 못했습니다");
-      return (await res.json()) as { vendors: OrganizationVendor[] };
+      return (await res.json()) as {
+        organizationId: string | null;
+        vendors: OrganizationVendor[];
+      };
     },
   });
   const vendors = useMemo(() => data?.vendors ?? [], [data]);
+
+  /* §invite-flow Phase 2-3 (짝 계약) — **보여준 조직에 적용**.
+   * 목록 GET 이 알려준 조직을 mutation 에 그대로 싣는다. 안 실으면 서버가 그때의 활성 조직으로
+   * 다시 고르는데, 읽기와 쓰기 사이에 활성 조직이 바뀌면(다른 탭 switcher · Phase 4 PATCH)
+   * 사용자가 보던 조직이 아닌 곳에 거래처가 생긴다 — 생성은 404 로도 걸리지 않는 조용한 오적용이다.
+   * 🛑 라우트의 hint 수용과 짝이다. 한쪽만 있으면 계약이 성립하지 않는다. */
+  const vendorOrganizationId: string | null = data?.organizationId ?? null;
+  /** mutation URL 에 조직을 붙인다(쿼리 축). 값이 없으면 붙이지 않는다 — 서버가 활성 조직으로 처리. */
+  const withOrg = (url: string) =>
+    vendorOrganizationId
+      ? `${url}${url.includes("?") ? "&" : "?"}organizationId=${encodeURIComponent(vendorOrganizationId)}`
+      : url;
 
   // #vendor-catalog-product-matching Phase 2b — carry product list (모든 vendor).
   //   1 query 로 organization 전체 entries, vendorId 별 client-side group.
@@ -253,6 +268,7 @@ export default function SuppliersSettingsPage() {
           vendorId: input.vendorId,
           productId: input.productId,
           notes: input.notes || null,
+          organizationId: vendorOrganizationId,
         }),
       });
       if (!res.ok) {
@@ -273,7 +289,7 @@ export default function SuppliersSettingsPage() {
 
   const deleteVendorProductMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await csrfFetch(`/api/organization-vendor-products/${id}`, {
+      const res = await csrfFetch(withOrg(`/api/organization-vendor-products/${id}`), {
         method: "DELETE",
       });
       if (!res.ok) {
@@ -320,6 +336,7 @@ export default function SuppliersSettingsPage() {
           notes: input.notes || null,
           isPrimary: input.isPrimary,
           partnershipTier: input.partnershipTier,
+          organizationId: vendorOrganizationId,
         }),
       });
       if (!res.ok) {
@@ -340,7 +357,7 @@ export default function SuppliersSettingsPage() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, input }: { id: string; input: VendorFormData }) => {
-      const res = await csrfFetch(`/api/organization-vendors/${id}`, {
+      const res = await csrfFetch(withOrg(`/api/organization-vendors/${id}`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -370,7 +387,7 @@ export default function SuppliersSettingsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await csrfFetch(`/api/organization-vendors/${id}`, {
+      const res = await csrfFetch(withOrg(`/api/organization-vendors/${id}`), {
         method: "DELETE",
       });
       if (!res.ok) {
