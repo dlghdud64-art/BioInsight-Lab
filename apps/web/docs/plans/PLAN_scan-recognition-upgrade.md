@@ -154,6 +154,12 @@
 - 🛑 **rollout 순서 규칙(2026-08-31 사고 신설)**: DDL 의존 코드는 **prod migrate deploy 완료 후 push**
   (또는 컬럼 미존재 내성 select). Prisma `include`는 전 컬럼 SELECT라 신 컬럼 코드가 먼저 배포되면
   해당 모델을 읽는 모든 표면이 즉시 500. P4 템플릿 테이블도 동일 순서.
+- 🛑 **대상 DB 대조 스텝(2026-09-01 사고 신설 · 순서 규칙보다 앞)**: 적용 **전에**
+  연결 문자열의 project-ref 를 `/api/health` 의 `dbUrlPrefix` 실측값과 **대조**한다.
+  로컬 `.env` 는 dev 를 가리킬 수 있다(실제로 그랬다 — prod `xhid…` vs 로컬 `tvkl…`).
+  대조 없이 적용하면 **다른 DB 에 적용하고 "prod 완료" 를 거짓 보고**하게 된다.
+  적용 후 판정도 실측만 인정: `pendingCount: 0` + information_schema 실재.
+  **401 은 근거가 아니다**(인증벽은 DB 도달 전에 응답한다).
 
 ## 10. Progress
 - Overall ~90% · P0~P4 코드 ✅ (P1 `997443cc` · P2 `e3a84965`+`ce0ee4e4` · P3 `14ac1a9d` · P4 이번 커밋) · DDL 2건 전부 prod 적용·이력 정합 완료
@@ -161,10 +167,22 @@
 
 ## 11. Notes
 - 2026-08-31: 계획 승인(G5 별건 제외). sandbox 정찰 기반 — operator 세션 P0에서 실측 재확인 후 착수.
-- 2026-08-31 **P1 장애 창 기록**: `997443cc` push 17:50:35 KST → Vercel 자동 배포로 prod 입고
-  표면(리스트·상세·검토 패널)이 `lotSource` 컬럼 부재 SELECT 실패 위험 창 개시. DDL 선행 순서
-  결함(operator·검토 양쪽 놓침, §9 규칙 신설). **종료 19:34 KST** (창 ~1h44m · 호영님 "진행" 후
-  DDL 3문 직접 적용). 완화 요인: 창 동안 대상 status 의 draft 행 0 (health 실측) — 실사용 노출 제한적.
+- 2026-08-31 **P1 장애 창 기록** ⚠️ **아래 8/31 19:34 종료 기술은 거짓 — 2026-09-01 정정본이 정본**:
+  `997443cc` push 17:50:35 KST → Vercel 자동 배포로 prod 입고 표면(리스트·상세·검토 패널)이
+  `lotSource` 컬럼 부재 SELECT 실패 창 개시. DDL 선행 순서 결함(operator·검토 양쪽 놓침, §9 규칙 신설).
+  ~~종료 19:34 KST(창 ~1h44m)~~ — 그 시각에 **종료된 것은 없다.** 적용 대상이 prod 가 아니라
+  **dev(`tvklnhvtitxnzygupzqr`)** 였고, health 검증도 같은 dev DB 에 붙어 수행돼 무효였다
+  (prod 엔드포인트 401 은 인증벽이라 DB 도달 전 — 근거가 될 수 없다).
+- 2026-09-01 **장애 창 실제 종료 20:11 KST** (실 창 = 8/31 17:50 → 9/1 20:11, 약 26시간 20분).
+  - 원인: 로컬 `.env` 가 dev(`tvkl…`)로 교체돼 있었는데 그 값을 prod 로 단정했고,
+    `/api/health` 의 `dbUrlPrefix`(prod 실체 `xhidynwpkqeaojuudhsw`)와 대조하지 않았다.
+    reference 메모리에 prod ref 가 이미 적혀 있었으나 읽지 않았다.
+  - 조치: 호영님 "진행 (b)" 승인 → prod(xhid) `migrate deploy` 3건 일괄
+    (`receiving_item_lot_source` · `vendor_parse_template` · `user_active_organization`).
+  - 검증(실측만 인정): `migrate status` up to date(61) · prod information_schema 에
+    `lotSource`·`coaOcrJobId` 존재 · `VendorParseTemplate` 존재 · `/api/health`
+    `dbUrlPrefix=xhid…` + `pendingCount: 0`.
+  - dev(`tvkl…`) 에 적용된 3문 + 수동 이력은 dev 정합이라 그대로 둔다(되돌리지 않음).
   - 행 원인: `migrate deploy`·`migrate resolve` 등 **Prisma CLI 만 연결 행**(무출력 300s+,
     pg_stat_activity 에 세션 자체가 없음 = lock 아님). node PrismaClient(Session Pooler 5432)는
     즉시 연결 → DDL·이력 INSERT·health 전부 클라이언트 우회로 수행. CLI 연결 경로 결함은 별건 조사.
