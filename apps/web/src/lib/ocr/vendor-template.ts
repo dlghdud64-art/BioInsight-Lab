@@ -27,6 +27,26 @@ function normalizeContext(s: string): string {
   return s.replace(/\s+/g, " ").trim();
 }
 
+/**
+ * §P4-fix (호영님 실측 2026-08-31) — 학습 입력이 **문서 원문**인지 판별.
+ *
+ * Tier 1(Gemini) 의 `LabelParseResult.rawText` 는 모델이 뱉은 JSON 이다
+ * (gemini-label-parser `rawText: jsonStr`). 그걸 학습하면 앵커가 문서 서식이 아니라
+ * `"lotNumber": "` 같은 **출력 스키마**가 되어, 전 공급사에 같은 앵커가 쌓이고
+ * 2회차 힌트는 이미 파서가 뽑은 값을 되돌려주는 무효값이 된다.
+ * 실문서 원문은 Tier 2(Cloud Vision `fullTextAnnotation.text`) 뿐 —
+ * 호출부도 provider 로 거르지만, 여기서도 형태로 한 번 더 막는다(defense-in-depth).
+ */
+function looksLikeJson(raw: string): boolean {
+  const t = raw.trim();
+  return (t.startsWith("{") && t.endsWith("}")) || (t.startsWith("[") && t.endsWith("]"));
+}
+
+/** 앵커에 JSON 토큰이 섞였으면 서식 앵커가 아니다 — 폐기. */
+function hasJsonToken(anchor: string): boolean {
+  return anchor.includes('":') || anchor.includes('{"') || anchor.includes('","');
+}
+
 /** 사람 보정 필드에서 앵커 후보 추출 — 보정 0건이면 []. */
 export function extractTemplateCandidates(
   rawText: string,
@@ -34,6 +54,7 @@ export function extractTemplateCandidates(
   ocrFields: Record<string, string | null | undefined>,
 ): TemplateCandidate[] {
   const out: TemplateCandidate[] = [];
+  if (!rawText || looksLikeJson(rawText)) return out; // 모델 출력 JSON 학습 차단
   for (const [fieldKey, confirmedRaw] of Object.entries(confirmedFields)) {
     const confirmedValue = confirmedRaw?.trim();
     if (!confirmedValue) continue;
@@ -48,7 +69,9 @@ export function extractTemplateCandidates(
     const lastLine = before.split("\n").pop() ?? "";
     const anchor = normalizeContext(lastLine) || normalizeContext(before);
     if (!anchor) continue;
-    out.push({ fieldKey, anchorPattern: anchor.slice(-ANCHOR_MAX) });
+    const anchorPattern = anchor.slice(-ANCHOR_MAX);
+    if (hasJsonToken(anchorPattern)) continue; // 부분 JSON 혼입 방어
+    out.push({ fieldKey, anchorPattern });
   }
   return out;
 }
@@ -58,6 +81,7 @@ export function applyTemplateHints(
   rawText: string,
   templates: TemplateCandidate[],
 ): TemplateHint[] {
+  if (!rawText || looksLikeJson(rawText)) return []; // 모델 출력 JSON 에는 서식 앵커가 없다
   const lines = rawText.split("\n").map((l) => normalizeContext(l));
   const out: TemplateHint[] = [];
   const seen = new Set<string>();

@@ -39,6 +39,21 @@ describe("§scan-recognition-upgrade P4 — extractTemplateCandidates (학습)",
     const out = extractTemplateCandidates(DOC_ROUND1, { lot: "NOT-IN-DOC" }, { lot: null });
     expect(out).toEqual([]);
   });
+
+  // §P4-fix (호영님 실측 2026-08-31) — Tier 1(Gemini) 의 OcrResult.rawText 는 문서 원문이
+  //   아니라 **모델이 뱉은 JSON**(gemini-label-parser `rawText: jsonStr`)이다.
+  //   그대로 학습하면 앵커가 `"lotNumber": "` 같은 출력 스키마가 되어
+  //   전 공급사에 같은 앵커가 쌓이고, 2회차 힌트는 이미 파서가 뽑은 값을 되돌려주는 무효값이 된다.
+  it("JSON 형태 rawText → 후보 0 (모델 출력 스키마 오학습 차단)", () => {
+    const jsonRaw = '{"catalogNo":null,"lotNo":"L-1","expirationDate":"2027-01-01"}';
+    expect(extractTemplateCandidates(jsonRaw, { lot: "L-1" }, { lot: null })).toEqual([]);
+  });
+
+  it("앵커에 JSON 토큰(`\":` · `{\"`)이 섞이면 폐기 — 부분 JSON 혼입 방어", () => {
+    const mixed = '문서 머리글\n{"lotNo": "ABC-9"}';
+    const out = extractTemplateCandidates(mixed, { lot: "ABC-9" }, { lot: null });
+    expect(out).toEqual([]);
+  });
 });
 
 describe("§scan-recognition-upgrade P4 — applyTemplateHints (주입) + 회차 정확도", () => {

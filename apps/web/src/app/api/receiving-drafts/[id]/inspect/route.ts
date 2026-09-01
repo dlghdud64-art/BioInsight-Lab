@@ -194,14 +194,23 @@ export async function PATCH(
     // §scan-recognition-upgrade P4 — 확정 경로 학습(best-effort · 응답 비차단).
     //   COA 인식 확정(lotSource=coa_ocr)에서 사람이 보정한 필드만 템플릿으로 저장.
     //   인식 응답 경로에는 학습 0 — 확정 없는 자동 학습 금지.
+    //
+    // §P4-fix (호영님 실측 2026-08-31): 학습 입력은 **문서 원문**이어야 한다.
+    //   Tier 1(Gemini) 의 OcrResult.rawText 는 모델이 뱉은 JSON(gemini-label-parser
+    //   `rawText: jsonStr`) 이라 앵커가 출력 스키마(`"lotNumber": "`)로 굳는다 —
+    //   전 공급사 동일 앵커 오학습 + 2회차엔 파서가 이미 뽑은 값을 되돌려주는 무효 힌트.
+    //   실원문은 Tier 2(Cloud Vision fullTextAnnotation.text) 뿐이므로 provider 로 거른다.
+    //   Gemini 단독 경로는 학습 skip — 원문이 없으니 배우지 않는다(지어내지 않는다).
     try {
       for (const input of inputs) {
         if (input.lotSource !== "coa_ocr" || !input.coaOcrJobId) continue;
         const jobRow = await db.ocrJob.findUnique({
           where: { id: input.coaOcrJobId },
-          select: { finalResult: { select: { rawText: true, parsedFields: true } } },
+          select: { finalResult: { select: { rawText: true, parsedFields: true, provider: true } } },
         });
-        const parsed = jobRow?.finalResult?.parsedFields as
+        const finalResult = jobRow?.finalResult;
+        if (finalResult?.provider !== "CLOUD_VISION_CLAUDE") continue; // 원문 없음 → 학습 skip
+        const parsed = finalResult.parsedFields as
           | { lotNo?: string | null; expirationDate?: string | null }
           | null
           | undefined;
@@ -210,7 +219,7 @@ export async function PATCH(
           organizationId: draft.organizationId ?? null,
           vendorName: draft.vendor?.name ?? null,
           docType: "coa",
-          rawText: jobRow?.finalResult?.rawText ?? null,
+          rawText: finalResult.rawText ?? null,
           confirmedFields: { lot: input.lotNumber ?? null, expiry: input.expiryDate ?? null },
           ocrFields: { lot: parsed?.lotNo ?? null, expiry: parsed?.expirationDate ?? null },
         });

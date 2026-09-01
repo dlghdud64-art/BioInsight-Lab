@@ -124,7 +124,12 @@
 - [x] 🟢 `VendorParseTemplate` + store(전부 best-effort 비차단) · inspect 확정 경로 학습 · runOcrPipeline 힌트 주입(놓친 필드만 채움 — 게이트가 확인 강제) · hits/lastUsedAt 통계
 - [x] 🔵 캐시: templateVersion(max updatedAt) > 캐시 생성시각 → miss 취급(구캐시 오염 방지)
 - [x] **실측 정정**: `/api/ocr/correct` 는 저장 placeholder(503) — §0 의 "보정 저장" 기술은 과대(정찰 오류). 학습 배선은 라이브 확정 경로만, correct 는 활성화 배치 예약 핀(sentinel)으로 잠금.
-- ✋ Gate: 회차 정확도 실측 = unit 픽스처 2회차 hit ✅ · 잔여: 수동 smoke(호영님 — COA 보정 1회 후 같은 서식 재인식)
+- ✋ Gate: 회차 정확도 실측 = unit 픽스처 2회차 hit ✅
+- **P4-fix (2026-08-31 · 호영님 실측 지적)** — 유효 범위 정정:
+  - 결함: 학습 입력을 `OcrResult.rawText` 로만 받았는데 Tier 1(Gemini)은 그 값이 **모델 JSON**이다(§8 리스크 신설). 앵커가 출력 스키마로 굳는 오학습 + 무효 힌트 경로였음.
+  - 봉쇄(a): `inspect` 학습 게이트를 `finalResult.provider === "CLOUD_VISION_CLAUDE"` 로 한정 + 순수함수에서 JSON 형태·JSON 토큰 앵커 폐기. unit 2 · sentinel 1 추가, 프로브 3/3 검출.
+  - **유효 범위 명시**: P4 는 **Tier 2(저신뢰 → Cloud Vision 폴백) 경로 한정**. Tier 1 high-confidence 주경로는 원문이 없어 학습·힌트 모두 skip — 정직하게 배우지 않는다.
+  - 잔여: smoke 3(템플릿) 은 **Tier 2 를 태우는 저신뢰 스캔**에서만 의미 → (b) 채택 전까지 판정 보류.
 - Rollback: 힌트 주입 플래그 off + 테이블 DROP(additive 라 기존 데이터 손실 0)
 
 ### Phase 5: Smoke / Rollback
@@ -140,7 +145,8 @@
 | P4 migration(prod DDL) | Med | High | 승인 게이트 · additive only · 실패 시 플래그 off |
 | 라인 대조 오탐(품목명 표기 차이) | Med | Med | 경고만(차단 0) · 사람 확정 |
 | 구 sentinel(배치 모달 §6 "인식 안 함") 충돌 | High | Low | P0 supersede 표 → 승계 재앵커 |
-| P2 지연 시 `SmartReceivingScannerModal:457` "다품목도 자동 인식됩니다" 카피가 거짓으로 잔존 | Med | Low | P2 미착수 확정 시 카피 정정 별건 배치(호영님 검토 코멘트 2026-08-31) |
+| P2 지연 시 `SmartReceivingScannerModal:457` "다품목도 자동 인식됩니다" 카피가 거짓으로 잔존 | Med | Low | P2 착수로 해소(카피 참) |
+| **Tier 1(Gemini) `rawText` = 모델 JSON(문서 원문 아님)** — `gemini-label-parser.ts:183`·`gemini-quote-parser.ts:196` `rawText: jsonStr`. 그대로 학습하면 앵커가 `"lotNumber": "` 출력 스키마로 굳어 전 공급사 오학습 + 2회차 힌트는 파서가 이미 뽑은 값 반환(정확도 상승 0) | High | Med | **P4-fix(2026-08-31 호영님 실측)**: (a) 원문 축 분리로 봉쇄 — 학습은 `provider=CLOUD_VISION_CLAUDE`(실원문 `fullTextAnnotation.text`)에서만, JSON 형태·JSON 토큰 앵커는 순수함수에서도 폐기(defense-in-depth). prod 오염 0행 실측(smoke 전). **(b) Gemini 응답에 `documentText` 확보는 별건**(프롬프트·비용 변경) — 채택 시 P4 가치가 Tier 1 주경로까지 확장 |
 
 ## 9. Rollback
 - P1~P3: 라우트/컴포넌트 revert(additive 계약) · P4: 플래그 off → DROP TABLE

@@ -50,6 +50,15 @@ describe("§scan-recognition-upgrade P4 (2) — 학습 저장은 확정 경로�
     expect(src).toMatch(/recordVendorTemplates\(/);
   });
 
+  // §P4-fix — Tier 1(Gemini) rawText = 모델 JSON. 실문서 원문은 Tier 2(Cloud Vision)
+  //   `fullTextAnnotation.text` 뿐이라, 학습 입력은 provider 로 가려야 한다.
+  it("학습 rawText 는 CLOUD_VISION 계열 결과에서만 — Gemini JSON 경로 차단", () => {
+    const src = stripComments(read(INSPECT));
+    expect(src).toMatch(/provider: true/); // finalResult.provider 조회
+    // 가드 형태: CLOUD_VISION 이 아니면 학습 skip(continue) — Gemini JSON 은 학습 입력 아님.
+    expect(src).toMatch(/provider !== "CLOUD_VISION_CLAUDE"[\s\S]{0,60}?continue/);
+  });
+
   it("/ocr/correct 는 저장 placeholder(503) — 활성화 배치에서 학습 동반 배선 (예약 핀)", () => {
     // 실측 정정(2026-08-31): PLAN §0 의 'correct 가 보정을 저장한다'는 기술은 과대 —
     //   실제로는 lookup 후 503 placeholder. 이 핀이 풀리면(활성화) 학습 배선을 함께 한다.
