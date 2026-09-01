@@ -206,6 +206,11 @@ Red-Green-Refactor 엄수. 러너: 클로드코드 세션(`apps/web` vitest·tsc
    (한쪽만 잠그면 다른 쪽이 끊겨도 GREEN). 남은 대상은 이 기준으로 재판정한다 —
    생성·수정이 있는 표면(organization-vendors 등)은 짝 이관, 조회 전용은 분리 가능.
 
+🛑 **심볼·값을 은퇴시키기 전 `grep -rn <symbol> src/__tests__` 를 먼저 돌린다.**
+   그 값을 핀한 센티널이 있으면 은퇴와 **같은 커밋에서** 승계 교체한다. 2026-09-02 Phase 2-3 에서
+   `getCurrentOrganizationId` 복사본 4개를 지우고 나서야 그 값을 핀한 센티널을 발견했다
+   (전량 축 실행이 아니었으면 RED 인 채로 land 됐다). 실행 후 발견은 운이지 절차가 아니다.
+
 - Status: 🚧 진행 중 (11/37 · 래칫 API 12 · UI 14)
   - 선행 해소: prod 마이그레이션 적용 확인 (2026-09-01 · prod `xhid…` 61/61 · `/api/health` pending 0)
   - **2-1 `dff7b538`** — `hooks/use-permission.ts` → `useActiveOrganization()`.
@@ -228,9 +233,10 @@ Red-Green-Refactor 엄수. 러너: 클로드코드 세션(`apps/web` vitest·tsc
     organizationId 를 mutation 5경로에 pin. 래칫 API 16 → 12.
     · 자기 교정 1건: **옛 값 sweep 누락** — `getCurrentOrganizationId` 를 핀한 기존 센티널을
       먼저 grep 했어야 했는데 실행 후에 발견해 승계 교체([[sentinel-old-value-sweep]] 재발).
-    · 별건 선행 부채 발견: vendor 축 전수 56파일 중 9건 실패(`sourcing-vendor-facets-258d2` 4 ·
-      `page-send-to-supplier-visible-274b` 5). stash 대조로 **선행 확정** — 대상이
-      `app/_workbench/…`(이미 없는 표면)이라 승계 교체 vs 은퇴 판단 필요.
+    · 별건 선행 부채 발견 — stash 대조로 **선행 확정**(내 변경과 무관).
+      ⚠️ 내 1차 진단 "이미 없는 표면" 은 **틀렸다**(Cowork 정정 2026-09-02): 파일·표면 모두 존재하고,
+      사라진 것은 **잠긴 요소**다. 재실측 결론 = **(나) 정당한 재설계 · 승계 교체 누락**이며
+      후계 잠금이 전부 실재·GREEN 이다 → 상세는 아래 §12 Notes.
   - ⚠️ 배포본 런타임 실측 미실시(콘솔·isLoading·persisted·switcher + billing 3개 + suppliers 화면) — Cowork 세션 로그인 대기.
 - 🔴 Phase 1 인벤토리 센티널 RED 22 → 0 을 목표. UI `orgs[0]` 역방향 센티널 추가(13파일에서 `orgs[0]|organizations[0]|memberships[0]` 0)
 - 🟢 API 22곳 → `resolveActiveOrganizationId` · UI 13파일 → `useActiveOrganization()`(use-permission 최우선) · workspace-switcher → PATCH + `["user-organizations"]`·`["user-org-membership"]` 무효화
@@ -313,6 +319,22 @@ Red-Green-Refactor 엄수. 러너: 클로드코드 세션(`apps/web` vitest·tsc
   근거 — 원안은 Phase 2 전 구간 상시 RED 라 그사이 섞여 든 신규 위반을 가린다. 래칫은
   baseline GREEN 을 유지하면서 신규 우회로만 즉시 RED 로 잡고, 상한이 0 이 되는 순간
   원안과 같은 게이트가 된다. 키는 파일 단위(줄 번호는 Phase 2 편집으로 오탐).
+- 2026-09-02 **별건 등재 — 옛 긍정 잠금 27건 (§quotes-dispatch · §sourcing-filter 계열)**.
+  Phase 2-3 전량 축 실행 중 발견. 이 트랙 소관이 아니며 **처리 승인 대기**.
+  판별 결과 **(나) 정당한 재설계 · 승계 교체 누락** — 근거는 후계 잠금이 전부 실재·GREEN:
+
+  | 실패 센티널 | 사라진 것 | 후계(실재·GREEN) |
+  | :--- | :--- | :--- |
+  | `page-send-to-supplier-visible-274b`(5) · `verification-summary-mobile-hidden-275`(1) | `quote-dispatch-summary-send-cta` · `quote-dispatch-verification-summary` | **§11.291** `quote-dispatch-review-entry-cta`(page.tsx:2496) → `openQuoteDraftWorkbench` |
+  | `quote-dispatch-mobile-banner-272b`(2) | `quote-dispatch-fixed-flow` 4단계 라벨 | **§11.374** 모바일 상태요약 단일 컴포넌트(가로 5탭 → 2x2) |
+  | `sourcing-vendor-facets-258d2`(4) · `sourcing-filter-mobile-unified-263b`(15) | `sourcing-vendor-chip-` · `전체 제조사` chip · 리터럴 `setSearchCategory("REAGENT")`·`setMinPrice(50000)` | **§11.294** `sourcing-vendor-dropdown`(search/page.tsx:1296) — chip row → dropdown, `setSearchBrand("")` reset 보존 |
+
+  🔑 **(가) 회귀 아님**: 발주 workbench 진입 `openQuoteDraftWorkbench` 는 살아 있고(page.tsx:2021)
+     §11.291 CTA(2496)·§11.272b 모바일 배너(2590) 양쪽에 배선돼 있다(해당 단언 GREEN). dead-end 복귀 0.
+     검색 facet 도 능력이 사라진 게 아니라 **chip → dropdown 표현 변경**이다([[route-exists-not-filter-screen]] 형태).
+  ⚠️ 최초 브리핑의 "9건" 은 vendor 축에서만 본 수치다. 같은 계열 전수는 **27건 / 5파일**이고
+     superseding 결정이 3개(§11.291·§11.294·§11.374)라 표면별로 갈라 처리해야 한다.
+
 - 2026-08-31 Phase 1: `vercel-migrate.js` 가 ADR-002 §11.13 로 **영구 NO-OP** 임을 실측.
   "배포 체인이 마이그레이션을 적용한다" 는 전제는 틀렸다 — rollout 은 push → 배포 →
   **operator `migrate deploy`** → health 4스텝이다. 로컬 DB 는 없다(DATABASE_URL = Supabase)
