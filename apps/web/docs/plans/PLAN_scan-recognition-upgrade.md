@@ -160,6 +160,12 @@
   대조 없이 적용하면 **다른 DB 에 적용하고 "prod 완료" 를 거짓 보고**하게 된다.
   적용 후 판정도 실측만 인정: `pendingCount: 0` + information_schema 실재.
   **401 은 근거가 아니다**(인증벽은 DB 도달 전에 응답한다).
+  - ⚠️ **`/api/health` 의 `dbUrlPrefix` 는 이 규칙의 근거 필드다 — 삭제 금지.**
+    현재 이 엔드포인트는 인증이 없어(route.ts GET 에 `auth()` 0) project-ref 일부와
+    `userCount`/`orgCount` 가 공개된다(비밀번호는 `slice(0,40)` 이 ref 중간에서 끊어 미노출).
+    마스킹 별건 배치는 **필드를 없애지 말고** 비밀번호·호스트만 제거하고 **project-ref 는 남긴 뒤
+    인증 게이트**를 건다 — 없애면 대상 DB 대조 스텝이 근거를 잃어 이번 사고가 재발한다
+    (호영님 설계 주의 2026-09-01).
 
 ## 10. Progress
 - Overall ~90% · P0~P4 코드 ✅ (P1 `997443cc` · P2 `e3a84965`+`ce0ee4e4` · P3 `14ac1a9d` · P4 이번 커밋) · DDL 2건 전부 prod 적용·이력 정합 완료
