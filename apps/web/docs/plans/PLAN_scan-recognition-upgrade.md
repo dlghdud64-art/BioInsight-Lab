@@ -146,7 +146,7 @@
 | 라인 대조 오탐(품목명 표기 차이) | Med | Med | 경고만(차단 0) · 사람 확정 |
 | 구 sentinel(배치 모달 §6 "인식 안 함") 충돌 | High | Low | P0 supersede 표 → 승계 재앵커 |
 | P2 지연 시 `SmartReceivingScannerModal:457` "다품목도 자동 인식됩니다" 카피가 거짓으로 잔존 | Med | Low | P2 착수로 해소(카피 참) |
-| **Tier 1(Gemini) `rawText` = 모델 JSON(문서 원문 아님)** — `gemini-label-parser.ts:183`·`gemini-quote-parser.ts:196` `rawText: jsonStr`. 그대로 학습하면 앵커가 `"lotNumber": "` 출력 스키마로 굳어 전 공급사 오학습 + 2회차 힌트는 파서가 이미 뽑은 값 반환(정확도 상승 0) | High | Med | **P4-fix(2026-08-31 호영님 실측)**: (a) 원문 축 분리로 봉쇄 — 학습은 `provider=CLOUD_VISION_CLAUDE`(실원문 `fullTextAnnotation.text`)에서만, JSON 형태·JSON 토큰 앵커는 순수함수에서도 폐기(defense-in-depth). prod 오염 0행 실측(smoke 전). **(b) Gemini 응답에 `documentText` 확보는 별건**(프롬프트·비용 변경) — 채택 시 P4 가치가 Tier 1 주경로까지 확장 |
+| **Tier 1(Gemini) `rawText` = 모델 JSON(문서 원문 아님)** — `gemini-label-parser.ts:183`·`gemini-quote-parser.ts:196` `rawText: jsonStr`. 그대로 학습하면 앵커가 `"lotNumber": "` 출력 스키마로 굳어 전 공급사 오학습 + 2회차 힌트는 파서가 이미 뽑은 값 반환(정확도 상승 0) | High | Med | **P4-fix(2026-08-31 호영님 실측)**: (a) 원문 축 분리로 봉쇄 — 학습은 `provider=CLOUD_VISION_CLAUDE`(실원문 `fullTextAnnotation.text`)에서만, JSON 형태·JSON 토큰 앵커는 순수함수에서도 폐기(defense-in-depth). prod 오염 0행 실측(smoke 전). **(b) Gemini 응답에 `documentText` 확보는 별건**(프롬프트·비용 변경) — 채택 시 P4 가치가 Tier 1 주경로까지 확장.<br>🛑 **(b) 재검토 조건 (호영님 2026-08-31)**: 별도 계측 코드 불요 — `OcrResult.provider` 분포가 이미 쌓인다. ① Tier 2 진입률 = `count(provider='CLOUD_VISION_CLAUDE') / count(*)`(기간별) ② 그 안의 템플릿 hit율 = `sum(VendorParseTemplate.hits) / Tier2 건수`. **(b)는 hit율이 아니라 진입률이 낮을 때만 정당화된다** — 진입률이 유의미하고 hit율이 붙으면 (a)로 이미 작동(=(b) 불요), 진입률이 희소할 때만 Tier 1 확장 검토. 근거: Tier 1 은 이미 필드를 다 뽑은 상태라 힌트 한계이득이 작은데 (b)는 매 스캔 상시 비용을 올린다(이득에 비례하지 않음). |
 
 ## 9. Rollback
 - P1~P3: 라우트/컴포넌트 revert(additive 계약) · P4: 플래그 off → DROP TABLE
