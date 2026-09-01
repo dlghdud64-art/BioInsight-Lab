@@ -8,6 +8,7 @@
  */
 
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { resolveActiveOrganizationId } from "@/lib/organizations/active-org";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -106,9 +107,10 @@ export async function GET(request: NextRequest) {
 
     const userId = session.user.id;
 
-    // 사용자의 조직 찾기
-    const membership = await db.organizationMember.findFirst({
-      where: { userId },
+    // 사용자의 조직 찾기 — §invite-flow Phase 2: 첫 조직이 아니라 **활성 조직**.
+    const activeOrganizationId = await resolveActiveOrganizationId({ userId });
+    const membership = activeOrganizationId ? await db.organizationMember.findFirst({
+      where: { userId, organizationId: activeOrganizationId },
       include: {
         organization: {
           include: {
@@ -124,7 +126,7 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-    });
+    }) : null;
 
     let subscription = membership?.organization?.subscription;
 
@@ -238,11 +240,12 @@ export async function POST(request: NextRequest) {
       // 현재 구조에서는 ORGANIZATION = Business, Enterprise는 별도 문의
       // Enterprise 문의는 프론트에서 /support로 리다이렉트
 
-      // 사용자의 조직 찾기
-      const membership = await db.organizationMember.findFirst({
-        where: { userId: session.user.id },
+      // 사용자의 조직 찾기 — §invite-flow Phase 2: 활성 조직 기준(플랜 변경 대상 조직).
+      const activeOrgId = await resolveActiveOrganizationId({ userId: session.user.id });
+      const membership = activeOrgId ? await db.organizationMember.findFirst({
+        where: { userId: session.user.id, organizationId: activeOrgId },
         include: { organization: { include: { subscription: true } } },
-      });
+      }) : null;
 
       if (!membership?.organization) {
         enforcement.fail();
