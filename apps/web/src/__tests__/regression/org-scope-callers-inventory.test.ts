@@ -206,4 +206,31 @@ describe("§invite-flow — org-scope 직접 호출 인벤토리 (래칫 · Phas
     expect(prompt).toMatch(/queryKey:\s*\["user-organizations"\]/);
     expect(prompt).toMatch(/queryKey:\s*\["active-organization"\]/);
   });
+
+  it("§invite-flow P2 — 무변경 불변식: orgs[0] 정렬 == resolver fallback 정렬", () => {
+    /* Phase 2 전체가 "단일 조직 사용자 행동 변화 0" 에 기대고 있고, 그 근거는 **정렬 등식** 하나다:
+     *   · GET /api/organizations  → organizationMember.findMany(orderBy createdAt asc) 순서로 매핑
+     *   · resolver fallback ③     → organizationMember.findFirst(orderBy createdAt asc)
+     * 둘이 같으므로 activeOrganizationId 가 없는 사용자에게 `orgs[0]` 과 resolver 결과가 같다.
+     * 🛑 어느 한쪽 정렬이 바뀌면 등식이 **조용히** 깨진다 — 화면은 그냥 다른 조직을 보여줄 뿐
+     *    아무것도 실패하지 않는다. 그래서 런타임이 아니라 여기서 잡는다. */
+    const api = stripComments(
+      readFileSync(join(SRC_ROOT, "app", "api", "organizations", "route.ts"), "utf8"),
+    );
+    const resolver = stripComments(
+      readFileSync(join(SRC_ROOT, "lib", "organizations", "active-org.ts"), "utf8"),
+    );
+    /* 목록 API: findMany 창 안에 createdAt asc */
+    const findManyWindow = api.match(
+      /organizationMember\s*\.\s*findMany\s*\(\s*\{[\s\S]{0,1200}?\n\s*\}\s*\)/,
+    )?.[0];
+    expect(findManyWindow).toBeTruthy();
+    expect(findManyWindow!).toMatch(/orderBy:\s*\{\s*createdAt:\s*"asc"\s*\}/);
+    /* resolver fallback: findFirst 창 안에 같은 정렬 */
+    const fallbackWindow = resolver.match(
+      /organizationMember\s*\.\s*findFirst\s*\(\s*\{[\s\S]{0,600}?\n\s*\}\s*\)/g,
+    )?.find((w) => !/organizationId/.test(w.split("select")[0] ?? w));
+    expect(fallbackWindow).toBeTruthy();
+    expect(fallbackWindow!).toMatch(/orderBy:\s*\{\s*createdAt:\s*"asc"\s*\}/);
+  });
 });
