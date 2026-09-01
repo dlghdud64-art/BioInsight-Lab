@@ -206,7 +206,7 @@ Red-Green-Refactor 엄수. 러너: 클로드코드 세션(`apps/web` vitest·tsc
    (한쪽만 잠그면 다른 쪽이 끊겨도 GREEN). 남은 대상은 이 기준으로 재판정한다 —
    생성·수정이 있는 표면(organization-vendors 등)은 짝 이관, 조회 전용은 분리 가능.
 
-- Status: 🚧 진행 중 (7/37 · 래칫 API 16 · UI 14)
+- Status: 🚧 진행 중 (11/37 · 래칫 API 12 · UI 14)
   - 선행 해소: prod 마이그레이션 적용 확인 (2026-09-01 · prod `xhid…` 61/61 · `/api/health` pending 0)
   - **2-1 `dff7b538`** — `hooks/use-permission.ts` → `useActiveOrganization()`.
     곁들여 `organization-name-prompt.tsx` 무효화 2키 추가(안 하면 조직 생성 후 권한 stale).
@@ -220,7 +220,18 @@ Red-Green-Refactor 엄수. 러너: 클로드코드 세션(`apps/web` vitest·tsc
     모두 활성 조직으로 암묵 해석됐다 → GET 이 `organizationId` 를 알려주고 화면이 그 값을 mutation 3경로에
     실어 "보여준 조직에 적용" 을 보장. 리뷰가 든 plans 시나리오는 **재현되지 않음**(그 경로는
     `/api/organizations/{id}/subscription` 로 이미 조직 명시) — 실측 정정 기록.
-  - ⚠️ 배포본 런타임 실측 미실시(콘솔·isLoading·persisted·switcher + billing 화면 3개) — Cowork 세션 로그인 대기.
+  - **2-2 후속 2 `cb7d37cd`** — 돈 액션은 hint 실패를 삼키지 않는다. `resolveOrganizationIdForMutation`
+    신설(판별 유니온: `hint_forbidden` / `no_organization` — 불리언 `strictHint` 는 두 실패를
+    한 `null` 로 뭉갠다). mutation 3곳 403, GET 3곳은 관대한 resolver 유지 + 그 차이도 센티널로 잠금.
+  - **2-3 `0034d548`** — organization-vendors 4곳 **짝 이관**(규칙 첫 적용). 파일마다 있던
+    `getCurrentOrganizationId` 복사본 은퇴 → 공유 resolver. UI(suppliers)가 목록 GET 의
+    organizationId 를 mutation 5경로에 pin. 래칫 API 16 → 12.
+    · 자기 교정 1건: **옛 값 sweep 누락** — `getCurrentOrganizationId` 를 핀한 기존 센티널을
+      먼저 grep 했어야 했는데 실행 후에 발견해 승계 교체([[sentinel-old-value-sweep]] 재발).
+    · 별건 선행 부채 발견: vendor 축 전수 56파일 중 9건 실패(`sourcing-vendor-facets-258d2` 4 ·
+      `page-send-to-supplier-visible-274b` 5). stash 대조로 **선행 확정** — 대상이
+      `app/_workbench/…`(이미 없는 표면)이라 승계 교체 vs 은퇴 판단 필요.
+  - ⚠️ 배포본 런타임 실측 미실시(콘솔·isLoading·persisted·switcher + billing 3개 + suppliers 화면) — Cowork 세션 로그인 대기.
 - 🔴 Phase 1 인벤토리 센티널 RED 22 → 0 을 목표. UI `orgs[0]` 역방향 센티널 추가(13파일에서 `orgs[0]|organizations[0]|memberships[0]` 0)
 - 🟢 API 22곳 → `resolveActiveOrganizationId` · UI 13파일 → `useActiveOrganization()`(use-permission 최우선) · workspace-switcher → PATCH + `["user-organizations"]`·`["user-org-membership"]` 무효화
 - 🔵 중복 fetch 제거(훅 1개가 `["user-organizations"]` 공유)
