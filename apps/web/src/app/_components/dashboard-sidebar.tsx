@@ -209,10 +209,16 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
 
   // §quote-management-redesign(호영님) — ENABLE_PURCHASING off 시 "발주 관리" 메뉴 숨김(발주 라이브 표면 hide 정합,
   //   §purchasing-hide). NavItem 정의(소스 문자열)는 보존(rollback / on 복귀) — 렌더 목록만 필터(dead 링크 0).
+  //
+  // 2026-09-02(호영님) — "구매 운영"(/dashboard/purchases)도 같은 게이트로 통일.
+  //   실사용 범위가 견적·입고뿐이라 구매 운영은 진입해도 할 일이 없는 표면이고,
+  //   견적→발주 결정 단계라 발주 관리와 같은 purchasing 축이다. 항목을 지우지 않고
+  //   필터에 얹는 이유: 라우트·페이지·정의를 남겨 플래그 on 만으로 되돌리기 위함.
   const purchasingOn = getFlag("ENABLE_PURCHASING");
+  const PURCHASING_HIDDEN_HREFS = ["/dashboard/purchase-orders", "/dashboard/purchases"];
   const visibleGroups = sidebarGroups.map((g) => ({
     ...g,
-    items: g.items.filter((it) => purchasingOn || it.href !== "/dashboard/purchase-orders"),
+    items: g.items.filter((it) => purchasingOn || !PURCHASING_HIDDEN_HREFS.includes(it.href)),
   }));
   
   // 외부에서 제어하는 경우와 내부에서 제어하는 경우를 모두 지원

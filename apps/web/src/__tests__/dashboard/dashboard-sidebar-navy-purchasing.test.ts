@@ -34,8 +34,11 @@ describe("§sidebar-navy — 네이비 테마(§sidebar-navy-top: --sidebar-navy
 
 describe("§sidebar-purchasing-gate — 발주 관리 게이팅", () => {
   it("ENABLE_PURCHASING off 시 발주 관리 렌더 필터(getFlag + purchase-orders 제외)", () => {
+    // 승계(2026-09-02): 필터가 단일 href 비교 → 목록 포함 검사로 형태 변경(구매 운영 동반 게이팅).
+    //   의도(플래그 off 면 발주 관리가 렌더 목록에서 빠진다)는 불변이므로 그 의도를 다시 잠근다.
     expect(SRC).toMatch(/getFlag\("ENABLE_PURCHASING"\)/);
-    expect(SRC).toMatch(/it\.href !== "\/dashboard\/purchase-orders"/);
+    expect(SRC).toMatch(/PURCHASING_HIDDEN_HREFS = \[[^\]]*"\/dashboard\/purchase-orders"/);
+    expect(SRC).toMatch(/purchasingOn \|\| !PURCHASING_HIDDEN_HREFS\.includes\(it\.href\)/);
     expect(SRC).toMatch(/visibleGroups/);
   });
   it("회귀 0 — 발주 관리 NavItem 정의(소스 문자열) 보존(rollback)", () => {

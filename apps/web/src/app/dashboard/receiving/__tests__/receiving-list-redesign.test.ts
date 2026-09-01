@@ -115,6 +115,35 @@ describe("§receiving-list-redesign — COA 인라인 드롭존 (P3)", () => {
   });
 });
 
+describe("§receiving-list-redesign — 빈 상태 CTA (2026-09-02 호영님)", () => {
+  const SIDEBAR = "src/app/_components/dashboard-sidebar.tsx";
+
+  it("빈 상태가 발주로 유도하지 않는다 — purchase-orders 링크 0", () => {
+    // 실사용 범위는 견적·입고. 발주 관리는 §purchasing-hide 로 메뉴에서도 숨긴 표면이라
+    // 거기로 보내는 것은 dead path 안내였다.
+    const src = stripComments(read(PAGE));
+    expect(src).not.toMatch(/dashboard\/purchase-orders/);
+    expect(src).not.toMatch(/발주 관리로 이동/);
+  });
+
+  it("빈 상태 CTA = 헤더와 동일한 scan_hub 진입 (실제 입고 경로)", () => {
+    const src = stripComments(read(PAGE));
+    expect(src).toMatch(/거래명세서를 스캔해 입고를 등록하세요/);
+    // 빈 상태 블록 안에서 scan_hub 를 연다 — 창은 빈 상태 문구부터(② 창 시작점).
+    expect(src).toMatch(/처리 중인 입고가 없습니다[\s\S]{0,500}?openModal\("scan_hub"\)/);
+  });
+
+  it("사이드바 — 구매 운영·발주 관리는 purchasing 게이트 아래 (정의는 보존)", () => {
+    const src = stripComments(read(SIDEBAR));
+    // 정의 보존(플래그 on 시 복귀 가능) + 렌더 필터가 두 href 를 함께 배제.
+    expect(src).toMatch(/href: "\/dashboard\/purchases"/);
+    expect(src).toMatch(
+      /PURCHASING_HIDDEN_HREFS = \["\/dashboard\/purchase-orders", "\/dashboard\/purchases"\]/,
+    );
+    expect(src).toMatch(/purchasingOn \|\| !PURCHASING_HIDDEN_HREFS\.includes\(it\.href\)/);
+  });
+});
+
 describe("§receiving-list-redesign — §11.302 색·타이포 (전 표면)", () => {
   it("amber/orange Tailwind 금지 — 주의 = yellow 신호등", () => {
     for (const rel of [PAGE, LIST]) {

@@ -18,8 +18,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { ArrowRight, Loader2, Plus, RefreshCw } from "lucide-react";
+import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { useOpsStore } from "@/lib/ops-console/ops-store";
 import { MODULE_ORIENTATION } from "@/lib/ops-console/module-landing-adapter";
 import { MobileReceivingView } from "@/components/receiving/mobile-receiving-view";
@@ -248,15 +247,18 @@ export default function ReceivingLandingPage() {
             </div>
           ) : caseList.rows.length === 0 ? (
             <div className="bg-white border border-slate-200 rounded-lg p-8 text-center">
+              {/* 2026-09-02(호영님) — 발주 유도 제거. 실사용 범위가 견적·입고뿐이라
+                  발주 관리는 §purchasing-hide 로 메뉴에서도 숨긴 표면이고, 거기로 보내는 것은
+                  dead path 안내였다. 실제 진입 경로(스캔)로 교체 — 헤더 `입고 등록`과 동일 CTA. */}
               <p className="text-sm text-slate-600">
-                현재 처리 중인 입고가 없습니다. 발주에서 입고 예정을 확인하세요
+                처리 중인 입고가 없습니다. 거래명세서를 스캔해 입고를 등록하세요
               </p>
-              <Link
-                href="/dashboard/purchase-orders"
-                className="inline-flex items-center gap-1 mt-3 text-xs text-blue-600 hover:text-blue-700"
+              <button
+                onClick={() => openModal("scan_hub")}
+                className="inline-flex items-center gap-1.5 mt-3 h-9 px-3.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold"
               >
-                발주 관리로 이동 <ArrowRight className="h-3 w-3" />
-              </Link>
+                <Plus className="h-3.5 w-3.5" /> 입고 등록
+              </button>
             </div>
           ) : (
             <ReceivingCaseListView
