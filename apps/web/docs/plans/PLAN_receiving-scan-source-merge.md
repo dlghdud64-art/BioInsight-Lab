@@ -26,6 +26,11 @@
   prod 에 `PO-2026-0087/0088`·`user-proc-001`(seed-data.ts) 가짜 운영 지표를 표시 중.
   호영님 미사용 표면이라 이번 배치 밖 — **별건 후보**로만 기록(조치안: 데모 배지 / prod 시드 차단 / canonical 전환).
 
+⚠️ **2026-09-02 P0 실측으로 아래 "재사용 가능 축" 중 2개가 정정됨** — `ocrJobId`·`extractedData` 는
+**컬럼은 존재하나 쓰는 코드가 없어 전 행 null**이다(Phase 0 참조). 스키마 실재를 값 실재로 읽은
+정찰 오류 — [[필드 존재 ≠ 값 존재]]. 나머지 축(`lotNumber`·`expiryDate`·`quantity`·`orderId`·
+`receivingDocuments`)은 유효.
+
 **재사용 가능 축 (InventoryRestock 실측 — DDL 0):**
 `lotNumber` · `expiryDate` · `quantity` · `unit` · `expectedQuantity` · `restockedAt` ·
 `orderId`(nullable) · `ocrJobId`(스캔 lineage) · `extractedData`(확인된 OCR 결과 = 공급사명 파생원) ·
@@ -83,10 +88,31 @@
 
 ## 7. Phases
 
-### Phase 0: Truth Lock
-- [ ] C1~C4 확정 + 공급사명 파생 규칙(`extractedData` 키 실측)
-- [ ] 구 sentinel supersede 표: `buildReceivingCaseList` 시그니처 변경으로 RED 되는 앵커 grep
-- ✋ Gate: 계약·supersede 목록 확정 · Rollback: 문서만
+### Phase 0: Truth Lock — ⚠️ 실측 완료 (2026-09-02) · **전제 3건 미성립 → P1 진입 보류**
+- [x] supersede 표: **0건**. `buildReceivingCaseList` 호출부 = `page.tsx:78` + unit 4곳(L74·142·157·163),
+  `buildReceivingCaseRow` 8곳(draft 전용 유지 시 무접촉), `receiving-list-redesign.test.ts:32` 는 이름
+  문자열 매칭이라 시그니처 무관. **2번째 인자를 optional 로 두면 승계 0** (DTO 확장 시 fixture 필드
+  추가는 발생 가능 — `lotSource` 선례).
+- [x] **C3 파생원이 실재하지 않는다**: `smart-receiving/route.ts` 가 `ocrJobId`·`extractedData` 를
+  **한 번도 쓰지 않는다** — 분기 A(L436-437)·분기 B(L590-591) 모두 `// ocrJobId,` `// extractedData:`
+  주석 처리(2026-05 "migration pending" 주석이 컬럼 적용 후에도 그대로 남음). P2 다품목 경로도 미기입.
+  L272/L328/L459/L612 의 `ocrJobId` 는 `createAuditLog` 의 `newData`(감사 로그 JSON)이지 restock 행이 아니다.
+  **prod 실측: InventoryRestock 2행 중 `ocrJobId` 0 · `extractedData` 0.**
+  ⇒ C3 는 현 상태에서 **100% `공급사 미지정`**. 살리려면 주석 해제(쓰기 활성)가 선행돼야 하고,
+  기존 행은 소급 불가(null 영구).
+- [x] **스캔 실사용 0회**: prod `OcrJob` **0행**(LABEL 0 · QUOTE 0). 계획 §0 의 "실사용 주경로(스캔)"
+  전제가 prod 에서 성립하지 않는다 — 스캔 입고가 리스트에 안 뜨는 것은 사실이나, 스캔 자체가 아직 0회다.
+- [x] **대상 데이터가 데모 시드**: prod `InventoryRestock` 2행 = `prisma/seed.ts:869` 의
+  `restock-hero-pbs-lot1/2`(product `Sigma-Tech PBS 1X (Sterile)` · notes "…per-lot COA 등록 대상").
+  `ReceivingDocument` 0 · `ReceivingDraft` 0 · `ProductInventory` 10.
+  ⇒ 이 배치를 그대로 구현하면 **시드 2행이 `스캔 입고` 로 승격 노출**된다 — §0 부수 실측(발주 관리
+  데모 시드)과 **동형 문제를 입고 리스트에 새로 만드는 것**이다.
+- ✋ Gate: **미통과.** 아래 선행 3택 중 하나를 호영님이 정한 뒤 P1 진입.
+  - (가) **lineage 쓰기 활성 먼저**(주석 해제 1~2줄 + sentinel) — 이후 스캔 1건이 실데이터를 만들고,
+    그 위에서 merge 가 의미를 가진다. C3 도 그때부터 성립. **최소 diff · 권장**
+  - (나) **prod 시드 정리 먼저** — 리스트는 0건이 되지만 정직. 발주 관리 시드와 함께 별건으로 묶는 편이 쌈
+  - (다) **merge 를 그대로 진행** — 단 시드 2행이 스캔 행으로 뜬다. 정직성 위반이라 **비권장**
+- Rollback: 문서만
 
 ### Phase 1: 뷰모델 union (RED → GREEN)
 - [ ] 🔴 unit: ① `orderId != null` restock 은 행 생성 0(C1) ② `orderId == null` restock = 완료 행
