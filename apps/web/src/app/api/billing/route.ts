@@ -8,7 +8,10 @@
  */
 
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
-import { resolveActiveOrganizationId } from "@/lib/organizations/active-org";
+import {
+  resolveActiveOrganizationId,
+  resolveOrganizationIdForMutation,
+} from "@/lib/organizations/active-org";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -249,16 +252,23 @@ export async function POST(request: NextRequest) {
       // 현재 구조에서는 ORGANIZATION = Business, Enterprise는 별도 문의
       // Enterprise 문의는 프론트에서 /support로 리다이렉트
 
-      /* 대상 조직 — §invite-flow Phase 2-2 후속 (리뷰 지적 2026-09-01).
+      /* 대상 조직 — §invite-flow Phase 2-2 후속 (리뷰 지적 2026-09-01·02).
        * 돈이 움직이는 액션은 **암묵적 활성 조직이 아니라 요청이 명시한 조직**을 따른다.
-       * 화면은 GET 이 돌려준 organizationId 를 그대로 실어 보낸다 — "보여준 조직에 적용" 이
-       * 보장되어야, 읽기와 쓰기 사이에 활성 조직이 바뀌어도(다른 탭 switcher) 엉뚱한 조직의
-       * 구독이 바뀌지 않는다. hint 는 resolver 가 멤버십 검증 후 채택하므로 남의 조직 id 를
-       * 넣어도 자기 활성 조직으로 떨어질 뿐이다(신규 검증 코드 0). */
-      const activeOrgId = await resolveActiveOrganizationId({
+       * 화면은 GET 이 돌려준 organizationId 를 그대로 실어 보내고, 여기서 그 값이 검증에
+       * 실패하면 **조용히 활성 조직으로 갈아치우지 않고 403** 이다 — 갈아치우면 "보여준 조직 ≠
+       * 적용된 조직" 이 에러 없이 되살아난다(플랜이 엉뚱한 조직에서 바뀐다). */
+      const orgResolution = await resolveOrganizationIdForMutation({
         userId: session.user.id,
         hint: typeof body?.organizationId === "string" ? body.organizationId : null,
       });
+      if (!orgResolution.ok && orgResolution.reason === "hint_forbidden") {
+        enforcement.fail();
+        return NextResponse.json(
+          { error: "요청한 조직에 대한 권한이 없습니다." },
+          { status: 403 }
+        );
+      }
+      const activeOrgId = orgResolution.ok ? orgResolution.organizationId : null;
       const membership = activeOrgId ? await db.organizationMember.findFirst({
         where: { userId: session.user.id, organizationId: activeOrgId },
         include: { organization: { include: { subscription: true } } },

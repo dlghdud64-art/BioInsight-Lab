@@ -9,7 +9,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { resolveActiveOrganizationId } from "@/lib/organizations/active-org";
+import {
+  resolveActiveOrganizationId,
+  resolveOrganizationIdForMutation,
+} from "@/lib/organizations/active-org";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // GET: 결제 수단 목록
@@ -97,11 +100,20 @@ export async function POST(request: NextRequest) {
     };
 
     /* §invite-flow Phase 2 후속 — 카드를 붙일 조직은 **화면이 보여준 조직**이다.
-     * hint 없으면 활성 조직으로 떨어진다(기존 동작). resolver 가 멤버십을 검증한다. */
-    const activeOrgId = await resolveActiveOrganizationId({
+     * hint 없으면 활성 조직으로 떨어지고(하위 호환), 명시했는데 검증 실패면 403 이다 —
+     * 조용히 다른 조직에 카드를 등록하지 않는다. */
+    const orgResolution = await resolveOrganizationIdForMutation({
       userId: session.user.id,
       hint: typeof body?.organizationId === "string" ? body.organizationId : null,
     });
+    if (!orgResolution.ok && orgResolution.reason === "hint_forbidden") {
+      enforcement.fail();
+      return NextResponse.json(
+        { error: "요청한 조직에 대한 권한이 없습니다." },
+        { status: 403 }
+      );
+    }
+    const activeOrgId = orgResolution.ok ? orgResolution.organizationId : null;
     const membership = activeOrgId ? await db.organizationMember.findFirst({
       where: { userId: session.user.id, organizationId: activeOrgId },
       include: {
@@ -193,12 +205,21 @@ export async function DELETE(request: NextRequest) {
     }
 
     /* 삭제 권한 확인 — §invite-flow Phase 2: **화면이 보여준 조직**의 구독에 속한 수단만 지운다.
+     * 명시했는데 검증 실패면 403 (조용한 조직 교체 금지).
      * (아래 paymentMethod.findFirst 가 subscriptionId 로 소속을 한 번 더 확인하므로,
      *  조직이 어긋나도 남의 수단은 지워지지 않고 404 로 떨어진다 — 두 층이 각자 막는다.) */
-    const activeOrgId = await resolveActiveOrganizationId({
+    const orgResolution = await resolveOrganizationIdForMutation({
       userId: session.user.id,
       hint: searchParams.get("organizationId"),
     });
+    if (!orgResolution.ok && orgResolution.reason === "hint_forbidden") {
+      enforcement.fail();
+      return NextResponse.json(
+        { error: "요청한 조직에 대한 권한이 없습니다." },
+        { status: 403 }
+      );
+    }
+    const activeOrgId = orgResolution.ok ? orgResolution.organizationId : null;
     const membership = activeOrgId ? await db.organizationMember.findFirst({
       where: { userId: session.user.id, organizationId: activeOrgId },
       include: {

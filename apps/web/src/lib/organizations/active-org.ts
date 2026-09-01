@@ -71,3 +71,43 @@ export async function resolveActiveOrganizationId(
   // ④ 조직 0 → null.
   return first?.organizationId ?? null;
 }
+
+/**
+ * mutation 용 해석 결과. **두 실패를 구분한다** — 이게 이 타입의 존재 이유다.
+ *   hint_forbidden : 요청이 조직을 명시했는데 그 멤버십이 없다 → 403
+ *   no_organization: 소속 조직이 0 → 호출자의 기존 "조직 없음" 경로(404 등)
+ * 🛑 하나의 null 로 합치면 "권한 없음" 과 "조직 없음" 이 같은 응답으로 뭉개진다.
+ */
+export type MutationOrganizationResolution =
+  | { ok: true; organizationId: string }
+  | { ok: false; reason: "hint_forbidden" }
+  | { ok: false; reason: "no_organization" };
+
+/**
+ * 쓰기(mutation) 용 조직 해석 — **명시값을 무시하지 않는다.**
+ *   (§invite-flow Phase 2-2 후속 · 리뷰 지적 2026-09-01 · Cowork)
+ *
+ * resolveActiveOrganizationId 의 관대한 fallback(hint 실패 → 활성 조직)은 **읽기 계약**이다.
+ * 돈이 움직이는 액션에 그대로 쓰면 이렇게 된다:
+ *   화면이 org-A 를 보냄 → 검증 실패(탈퇴·stale·오염) → 조용히 org-B(활성)에 카드 등록·플랜 변경
+ * 에러도 빈 화면도 없이 다른 조직에 적용된다 — 이 트랙이 계속 없애온 바로 그 형태다.
+ * 그래서 쓰기에서는 **명시했는데 검증 실패면 진행하지 않는다**(403).
+ *
+ * hint 를 아예 안 보내면(null) 활성 조직으로 떨어진다 — 하위 호환.
+ * "명시하지 않음" 과 "명시했는데 틀림" 은 다른 사건이고, 후자만 막는다.
+ */
+export async function resolveOrganizationIdForMutation(
+  args: ResolveActiveOrganizationArgs,
+): Promise<MutationOrganizationResolution> {
+  const { userId, hint } = args;
+
+  if (hint) {
+    // 명시값은 채택하거나 거절한다 — 조용히 갈아치우지 않는다.
+    if (await isMember(userId, hint)) return { ok: true, organizationId: hint };
+    return { ok: false, reason: "hint_forbidden" };
+  }
+
+  const organizationId = await resolveActiveOrganizationId({ userId });
+  if (!organizationId) return { ok: false, reason: "no_organization" };
+  return { ok: true, organizationId };
+}

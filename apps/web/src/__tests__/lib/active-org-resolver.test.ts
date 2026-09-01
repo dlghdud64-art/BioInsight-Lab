@@ -20,7 +20,10 @@ vi.mock("@/lib/db", () => ({
 }));
 
 import { db } from "@/lib/db";
-import { resolveActiveOrganizationId } from "@/lib/organizations/active-org";
+import {
+  resolveActiveOrganizationId,
+  resolveOrganizationIdForMutation,
+} from "@/lib/organizations/active-org";
 
 /** fixture 축 선언 — memberships 배열 순서 = createdAt asc (정본). active = User.activeOrganizationId. */
 function armDb(opts: { memberships: string[]; active?: string | null }) {
@@ -79,5 +82,41 @@ describe("§invite-flow P1 — resolveActiveOrganizationId", () => {
     await expect(
       resolveActiveOrganizationId({ userId: "u1", hint: "org-intruder" }),
     ).resolves.toBe("org-a");
+  });
+});
+
+/**
+ * §invite-flow Phase 2-2 후속 (리뷰 지적 2026-09-01 · Cowork) — **쓰기 계약은 다르다.**
+ * 위 관대한 fallback(hint 실패 → 활성 조직)은 읽기용이다. 돈 액션에 그대로 쓰면
+ * "화면이 org-A 를 보냈는데 조용히 org-B 에 적용" 이 에러 없이 일어난다.
+ */
+describe("§invite-flow P2-2 — resolveOrganizationIdForMutation (명시값을 무시하지 않는다)", () => {
+  it("hint 유효 → 그 조직 채택 (활성값보다 우선)", async () => {
+    armDb({ memberships: ["org-a", "org-b"], active: "org-a" });
+    await expect(
+      resolveOrganizationIdForMutation({ userId: "u1", hint: "org-b" }),
+    ).resolves.toEqual({ ok: true, organizationId: "org-b" });
+  });
+
+  it("🛑 hint 무효 → hint_forbidden (활성 조직으로 조용히 갈아치우지 않는다)", async () => {
+    armDb({ memberships: ["org-a"], active: "org-a" });
+    const r = await resolveOrganizationIdForMutation({ userId: "u1", hint: "org-intruder" });
+    expect(r).toEqual({ ok: false, reason: "hint_forbidden" });
+    /* 역방향 잠금 — 읽기처럼 활성 조직을 돌려주면 RED */
+    expect(r).not.toEqual({ ok: true, organizationId: "org-a" });
+  });
+
+  it("hint 미전송 → 활성 조직 (하위 호환 — '명시 안 함' 과 '명시했는데 틀림' 은 다른 사건)", async () => {
+    armDb({ memberships: ["org-first", "org-later"], active: null });
+    await expect(
+      resolveOrganizationIdForMutation({ userId: "u1" }),
+    ).resolves.toEqual({ ok: true, organizationId: "org-first" });
+  });
+
+  it("조직 0 → no_organization (hint_forbidden 과 구분된다)", async () => {
+    armDb({ memberships: [], active: null });
+    await expect(
+      resolveOrganizationIdForMutation({ userId: "u1" }),
+    ).resolves.toEqual({ ok: false, reason: "no_organization" });
   });
 });

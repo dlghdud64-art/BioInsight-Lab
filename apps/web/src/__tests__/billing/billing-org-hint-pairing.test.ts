@@ -31,10 +31,10 @@ function stripComments(src: string): string {
     .replace(/(^|[^:])\/\/[^\n]*/g, "$1");
 }
 
-/** resolveActiveOrganizationId 호출 창을 brace 매칭으로 잘라낸다 (창은 호출부터 연다 — 원칙 ②). */
-function resolverCalls(code: string): string[] {
+/** resolver 호출 창을 brace 매칭으로 잘라낸다 (창은 호출부터 연다 — 원칙 ②). */
+function resolverCalls(code: string, fn = "resolveActiveOrganizationId"): string[] {
   const out: string[] = [];
-  const re = /resolveActiveOrganizationId\s*\(/g;
+  const re = new RegExp(`${fn}\\s*\\(`, "g");
   let m: RegExpExecArray | null;
   while ((m = re.exec(code)) !== null) {
     const from = m.index;
@@ -54,9 +54,10 @@ function resolverCalls(code: string): string[] {
 }
 
 describe("§invite-flow P2-2 — billing 대상 조직 짝 계약 (서버 축)", () => {
+  /* 읽기(GET) 축만 센다 — 쓰기는 mutation 전용 resolver 로 옮겨갔고 아래 별도 describe 가 잠근다. */
   const ROUTES: [string, string[], number][] = [
-    ["billing GET·POST", ["app", "api", "billing", "route.ts"], 2],
-    ["payment-methods GET·POST·DELETE", ["app", "api", "billing", "payment-methods", "route.ts"], 3],
+    ["billing GET", ["app", "api", "billing", "route.ts"], 1],
+    ["payment-methods GET", ["app", "api", "billing", "payment-methods", "route.ts"], 1],
     ["invoices GET", ["app", "api", "billing", "invoices", "route.ts"], 1],
   ];
 
@@ -77,6 +78,46 @@ describe("§invite-flow P2-2 — billing 대상 조직 짝 계약 (서버 축)",
   it("billing GET 응답이 organizationId 를 알려준다 (화면이 실어 보낼 값의 출처)", () => {
     const code = stripComments(read("app", "api", "billing", "route.ts"));
     expect(code).toMatch(/organizationId:\s*membership\?\.organization\?\.id/);
+  });
+});
+
+/**
+ * §invite-flow Phase 2-2 후속 2 (리뷰 지적 2026-09-01·02) — **쓰기는 명시값을 무시하지 않는다.**
+ * hint 검증 실패 시 관대한 fallback(활성 조직으로 진행)을 쓰면 "화면이 보여준 조직 ≠ 적용된 조직"
+ * 이 403 없이 되살아난다. mutation 3경로는 mutation 전용 resolver 를 쓰고 hint_forbidden → 403 이다.
+ */
+describe("§invite-flow P2-2 — 돈 액션은 hint 실패를 삼키지 않는다 (403)", () => {
+  const MUTATION_ROUTES: [string, string[], number][] = [
+    ["billing POST(플랜 변경)", ["app", "api", "billing", "route.ts"], 1],
+    ["payment-methods POST·DELETE", ["app", "api", "billing", "payment-methods", "route.ts"], 2],
+  ];
+
+  for (const [label, path, expectedMutations] of MUTATION_ROUTES) {
+    it(`${label} — mutation 전용 resolver 사용 + hint_forbidden 403`, () => {
+      const code = stripComments(read(...path));
+      const calls = resolverCalls(code, "resolveOrganizationIdForMutation");
+      /* 수를 고정한다 — 하나가 관대한 resolver 로 되돌아가면 여기서 잡힌다. */
+      expect(calls.length).toBe(expectedMutations);
+      /* 명시값을 실제로 넘기는지 — hint 없는 mutation resolver 호출은 계약이 아니다. */
+      for (const call of calls) expect(call).toMatch(/hint\s*:/);
+      const guards = code.match(/reason\s*===\s*"hint_forbidden"/g) ?? [];
+      expect(guards.length).toBe(expectedMutations);
+      /* 403 이어야 한다 — 404·400 으로 뭉개면 "권한 없음" 이 "없는 조직" 으로 읽힌다. */
+      expect(code).toMatch(/hint_forbidden"[\s\S]{0,400}?status:\s*403/);
+    });
+  }
+
+  it("🛑 GET(읽기) 3곳은 관대한 resolver 를 유지한다 — 쓰기 규칙을 읽기에 옮기지 않는다", () => {
+    /* 읽기까지 403 으로 만들면 stale hint 하나로 화면이 통째로 막힌다.
+     * 두 계약이 **서로 다르다는 것** 자체를 잠근다. */
+    for (const path of [
+      ["app", "api", "billing", "route.ts"],
+      ["app", "api", "billing", "payment-methods", "route.ts"],
+      ["app", "api", "billing", "invoices", "route.ts"],
+    ]) {
+      const code = stripComments(read(...path));
+      expect(code).toMatch(/resolveActiveOrganizationId\s*\(/);
+    }
   });
 });
 
