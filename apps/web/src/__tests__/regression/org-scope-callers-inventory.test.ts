@@ -109,9 +109,8 @@ const FILES = walk(SRC_ROOT).filter(
 const KNOWN_API_MAX: Record<string, number> = {
   "app/api/activity-logs/route.ts": 1,
   "app/api/analytics/dashboard/route.ts": 1,
-  "app/api/billing/invoices/route.ts": 1,
-  "app/api/billing/payment-methods/route.ts": 3,
-  "app/api/billing/route.ts": 2,
+  /* billing 6곳 — Phase 2-2 치환 완료 (2026-09-01). 상한에서 제거됨:
+   *   billing/invoices(1) · billing/payment-methods(3) · billing(2) */
   "app/api/budget/predict/route.ts": 1,
   "app/api/budget/report/route.ts": 1,
   "app/api/budgets/route.ts": 1,
@@ -181,13 +180,13 @@ describe("§invite-flow — org-scope 직접 호출 인벤토리 (래칫 · Phas
     expect(overBudget(found, KNOWN_UI_MAX)).toEqual([]);
   });
 
-  it("래칫: 상한 총계는 Phase 2 진행에 따라 줄기만 한다 (현재 API 22 · UI 14)", () => {
+  it("래칫: 상한 총계는 Phase 2 진행에 따라 줄기만 한다 (현재 API 16 · UI 14)", () => {
     /* 이 수치가 Phase 2 의 진척도다. 치환한 파일을 상한 맵에서 지우면 여기가 내려간다.
      * 0/0 이 되는 순간 위 두 단언은 그대로 "직접 호출 0" 게이트가 된다.
      * 🛑 이 상한은 **내리기만** 한다 — 올리는 편집은 새 우회로를 정당화하는 것이다. */
     const apiTotal = Object.values(KNOWN_API_MAX).reduce((a, b) => a + b, 0);
     const uiTotal = Object.values(KNOWN_UI_MAX).reduce((a, b) => a + b, 0);
-    expect(apiTotal).toBeLessThanOrEqual(22);
+    expect(apiTotal).toBeLessThanOrEqual(16);
     expect(uiTotal).toBeLessThanOrEqual(14);
   });
 
@@ -213,7 +212,16 @@ describe("§invite-flow — org-scope 직접 호출 인벤토리 (래칫 · Phas
      *   · resolver fallback ③     → organizationMember.findFirst(orderBy createdAt asc)
      * 둘이 같으므로 activeOrganizationId 가 없는 사용자에게 `orgs[0]` 과 resolver 결과가 같다.
      * 🛑 어느 한쪽 정렬이 바뀌면 등식이 **조용히** 깨진다 — 화면은 그냥 다른 조직을 보여줄 뿐
-     *    아무것도 실패하지 않는다. 그래서 런타임이 아니라 여기서 잡는다. */
+     *    아무것도 실패하지 않는다. 그래서 런타임이 아니라 여기서 잡는다.
+     *
+     * ⏳ 은퇴 조건 (리뷰 지적 2026-09-01 · Cowork):
+     *    이 단언이 잠그는 것은 "두 쿼리 정렬이 createdAt asc 로 **같다**" 이지만, 실제 계약은
+     *    **"fallback 경로에서 orgs[0] == resolver 결과"** 다. 지금은 둘이 일치하지만
+     *    activeOrganizationId 가 채워지기 시작하면(Phase 3 수락 → Phase 4 switcher) 목록 API 정렬을
+     *    "활성 조직 우선" 으로 바꾸는 것이 **정당한 변경**인데 이 단언이 그것을 막는다.
+     *    → 목록 API 정렬을 바꾸려면 이 단언을 **승계 교체**할 것. 정렬 일치를 갱신해 맞추지 말고,
+     *      계약(fallback 경로 동치)을 직접 단언하는 형태로 옮긴다. Phase 4 에서 activeOrganizationId
+     *      소비가 시작되면 재판정한다. 그때까지 단언 자체는 옳다. */
     const api = stripComments(
       readFileSync(join(SRC_ROOT, "app", "api", "organizations", "route.ts"), "utf8"),
     );
