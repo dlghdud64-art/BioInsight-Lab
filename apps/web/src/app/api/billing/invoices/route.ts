@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { resolveActiveOrganizationId } from "@/lib/organizations/active-org";
 
 // 데모용 Mock 인보이스 데이터
 const MOCK_INVOICES = [
@@ -64,8 +65,10 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const membership = await db.organizationMember.findFirst({
-      where: { userId: session.user.id },
+    // §invite-flow Phase 2 — 첫 조직이 아니라 **활성 조직**의 청구 이력을 본다.
+    const activeOrganizationId = await resolveActiveOrganizationId({ userId: session.user.id });
+    const membership = activeOrganizationId ? await db.organizationMember.findFirst({
+      where: { userId: session.user.id, organizationId: activeOrganizationId },
       include: {
         organization: {
           include: {
@@ -80,7 +83,7 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-    });
+    }) : null;
 
     const invoices = membership?.organization?.subscription?.invoices || [];
 
