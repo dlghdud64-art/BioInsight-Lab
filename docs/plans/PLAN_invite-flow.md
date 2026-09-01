@@ -199,6 +199,13 @@ Red-Green-Refactor 엄수. 러너: 클로드코드 세션(`apps/web` vitest·tsc
 - Rollback: migration down 1 · 신규 파일 4 삭제
 
 ### Phase 2: 호출자 이관 (4h · 파일별 커밋)
+
+🛑 **이관 규칙 (리뷰 지적 2026-09-01 · Cowork)**: **mutation surface 는 API·UI 를 같은 phase 에서 짝으로 이관한다.**
+   따로 가면 그 사이가 "화면이 보여준 조직 ≠ 적용된 조직" 불일치 창이다 — 에러도 빈 화면도 없이 조용히 틀린다.
+   읽기 전용 surface 만 분리 허용. 짝 이관 시 서버(hint 수용)와 화면(명시 전달)을 **한 센티널에 함께** 단언한다
+   (한쪽만 잠그면 다른 쪽이 끊겨도 GREEN). 남은 대상은 이 기준으로 재판정한다 —
+   생성·수정이 있는 표면(organization-vendors 등)은 짝 이관, 조회 전용은 분리 가능.
+
 - Status: 🚧 진행 중 (7/37 · 래칫 API 16 · UI 14)
   - 선행 해소: prod 마이그레이션 적용 확인 (2026-09-01 · prod `xhid…` 61/61 · `/api/health` pending 0)
   - **2-1 `dff7b538`** — `hooks/use-permission.ts` → `useActiveOrganization()`.
@@ -209,7 +216,11 @@ Red-Green-Refactor 엄수. 러너: 클로드코드 세션(`apps/web` vitest·tsc
     래칫 API 22 → 16.
   - 게이트(누적): 조직 축 20파일 164/164 · billing 축 22파일 220/220 GREEN · tsc 27 불변(전부 무관 기존 파일)
     · 주입 프로브 전건 RED 후 원복.
-  - ⚠️ 배포본 런타임 실측 미실시(콘솔·isLoading·persisted·switcher) — Cowork 세션 로그인 대기.
+  - **2-2 후속 `b519d614`** — 돈 액션 hint 짝 계약. `/billing` 화면은 조직 선택기가 없어 읽기·쓰기가
+    모두 활성 조직으로 암묵 해석됐다 → GET 이 `organizationId` 를 알려주고 화면이 그 값을 mutation 3경로에
+    실어 "보여준 조직에 적용" 을 보장. 리뷰가 든 plans 시나리오는 **재현되지 않음**(그 경로는
+    `/api/organizations/{id}/subscription` 로 이미 조직 명시) — 실측 정정 기록.
+  - ⚠️ 배포본 런타임 실측 미실시(콘솔·isLoading·persisted·switcher + billing 화면 3개) — Cowork 세션 로그인 대기.
 - 🔴 Phase 1 인벤토리 센티널 RED 22 → 0 을 목표. UI `orgs[0]` 역방향 센티널 추가(13파일에서 `orgs[0]|organizations[0]|memberships[0]` 0)
 - 🟢 API 22곳 → `resolveActiveOrganizationId` · UI 13파일 → `useActiveOrganization()`(use-permission 최우선) · workspace-switcher → PATCH + `["user-organizations"]`·`["user-org-membership"]` 무효화
 - 🔵 중복 fetch 제거(훅 1개가 `["user-organizations"]` 공유)
