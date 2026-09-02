@@ -63,6 +63,9 @@ export async function POST(request: NextRequest) {
       jobId: string | null;
       providerUsed: "GEMINI" | "CLOUD_VISION_CLAUDE" | "REGEX";
       cached: boolean;
+      // §scan-storage-deadend — jobId null 의 실제 사유(업로드 실패 vs OcrJob.create 실패).
+      //   UI 가 사유를 단정하지 않고 그대로 보여주기 위한 축.
+      skipReason?: string | null;
     } | null = null;
 
     const pipelineResult = await runQuoteOcrPipeline({
@@ -76,6 +79,7 @@ export async function POST(request: NextRequest) {
       jobId: pipelineResult.jobId,
       providerUsed: pipelineResult.providerUsed,
       cached: pipelineResult.cached,
+      skipReason: pipelineResult.skipReason ?? null,
     };
 
     // ⚠️ 정상 완료 경로인데 fail() 이다 — **버그 아님. complete() 로 바꾸지 말 것.**

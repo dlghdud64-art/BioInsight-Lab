@@ -46,12 +46,15 @@ describe("§scan-storage-deadend (2) — 사유를 미리 드러낸다", () => {
     const src = stripComments(read(MODAL));
     expect(src).toMatch(/storageBlocked && \(/);
     expect(src).toMatch(/data-testid="srm-storage-blocked"/);
-    expect(src).toMatch(/이미지 저장소가 설정되지 않아 입고 등록을 완료할 수 없습니다/);
+    // 사유를 단정하지 않는다 — jobId null 원인은 저장소 외에도 있다(OcrJob.create 실패 등).
+    expect(src).toMatch(/인식 작업 기록이 남지 않아 입고 등록을 완료할 수 없습니다/);
+    expect(src).not.toMatch(/저장소가 설정되지 않아/);
+    expect(src).toMatch(/ocrMetadata\?\.skipReason/);
   });
 
   it("버튼 라벨에 차단 사유 인라인 (툴팁 금지 선례)", () => {
     const src = stripComments(read(MODAL));
-    expect(src).toMatch(/storageBlocked\s*\?\s*"입고 등록 · 이미지 저장소 미설정"/);
+    expect(src).toMatch(/storageBlocked\s*\?\s*"입고 등록 · 인식 기록 없음"/);
   });
 });
 
@@ -60,8 +63,28 @@ describe("§scan-storage-deadend (3) — health 진단 축", () => {
     const src = stripComments(read(HEALTH));
     expect(src).toMatch(/provider: process\.env\.STORAGE_PROVIDER \|\| null/);
     expect(src).toMatch(/hasBlobToken: !!process\.env\.BLOB_READ_WRITE_TOKEN/);
-    expect(src).toMatch(/ready:/);
+    // 이름이 측정 내용과 일치해야 한다 — env 존재만 보면서 "ready"(업로드 가능)를
+    // 함의하면 거짓 신호가 된다(2026-09-02 호영님 지적, 내 설계 결함 정정).
+    expect(src).toMatch(/envConfigured:/);
+    expect(src).not.toMatch(/^\s*ready:/m);
     // 토큰 값 자체는 절대 내보내지 않는다.
     expect(src).not.toMatch(/BLOB_READ_WRITE_TOKEN\?\.slice|token: process\.env\.BLOB_READ_WRITE_TOKEN[^!]/);
+  });
+});
+
+describe("§scan-storage-deadend (4) — 실패 사유 전달 경로 (지어내지 않는다)", () => {
+  const PIPELINE = "src/lib/ocr/run-quote-ocr-pipeline.ts";
+  const ROUTE = "src/app/api/quotes/parse-image/route.ts";
+
+  it("파이프라인이 각 catch 의 사유를 skipReason 으로 캡처", () => {
+    const src = stripComments(read(PIPELINE));
+    expect(src).toMatch(/skipReason = `image-upload: \$\{\(uploadErr as Error\)\.message\}`/);
+    expect(src).toMatch(/skipReason = `ocrjob-create: \$\{\(dbErr as Error\)\.message\}`/);
+    expect(src).toMatch(/return \{[\s\S]{0,200}?skipReason,/);
+  });
+
+  it("라우트가 ocrMetadata 로 사유를 실어 보낸다", () => {
+    const src = stripComments(read(ROUTE));
+    expect(src).toMatch(/skipReason: pipelineResult\.skipReason \?\? null/);
   });
 });

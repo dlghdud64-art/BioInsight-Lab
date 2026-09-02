@@ -72,6 +72,13 @@ export interface RunQuoteOcrPipelineResult {
   providerUsed: "GEMINI" | "CLOUD_VISION_CLAUDE" | "REGEX";
   /** Cache hit 여부. */
   cached: boolean;
+  /**
+   * §scan-storage-deadend (2026-09-02) — jobId 가 null 인 **실제 사유**.
+   *   jobId null 을 곧 "저장소 미설정" 으로 단정하면 오표기가 된다(업로드는 됐는데
+   *   OcrJob.create 가 실패한 경우도 null 이다). 각 catch 가 삼킨 메시지를 여기 싣는다 —
+   *   Vercel 로그 접근 없이 화면·API 로 원인이 드러나게 하는 축.
+   */
+  skipReason?: string | null;
 }
 
 // Gemini cost 추정 (별도 백로그 — token 기반 정확화 필요)
@@ -275,6 +282,8 @@ export async function runQuoteOcrPipeline(
   // (1) Image upload — graceful (STORAGE_PROVIDER 미설정 시 audit log skip)
   let uploadedUrl: string | null = null;
   let jobId: string | null = null;
+  // §scan-storage-deadend — jobId null 의 실제 사유를 응답까지 전달한다.
+  let skipReason: string | null = null;
   try {
     const uploadResult = await uploadOcrImage({
       base64: input.base64,
@@ -283,6 +292,7 @@ export async function runQuoteOcrPipeline(
     });
     uploadedUrl = uploadResult.url;
   } catch (uploadErr) {
+    skipReason = `image-upload: ${(uploadErr as Error).message}`;
     console.warn(
       "[OCR-quote] image upload skipped:",
       (uploadErr as Error).message,
@@ -305,6 +315,7 @@ export async function runQuoteOcrPipeline(
       });
       jobId = job.id;
     } catch (dbErr) {
+      skipReason = `ocrjob-create: ${(dbErr as Error).message}`;
       console.warn(
         "[OCR-quote] OcrJob.create skipped:",
         (dbErr as Error).message,
@@ -361,5 +372,6 @@ export async function runQuoteOcrPipeline(
     status,
     providerUsed: "GEMINI",
     cached: false,
+    skipReason,
   };
 }

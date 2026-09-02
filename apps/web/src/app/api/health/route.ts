@@ -94,7 +94,11 @@ export async function GET() {
       storage: {
         provider: process.env.STORAGE_PROVIDER || null,
         hasBlobToken: !!process.env.BLOB_READ_WRITE_TOKEN,
-        ready:
+        // 🛑 이름을 측정 내용과 일치시킨다(2026-09-02 정정) — 이전 `ready` 는
+        //    env 존재만 보면서 "업로드 가능" 을 함의해 거짓 신호였다.
+        //    실제 업로드 가능 여부는 스캔 응답의 ocrMetadata.skipReason 이 답한다
+        //    (health 에서 시험 업로드를 하면 호출마다 blob 을 쓰게 되므로 하지 않는다).
+        envConfigured:
           process.env.STORAGE_PROVIDER === "vercel-blob" &&
           !!process.env.BLOB_READ_WRITE_TOKEN,
       },

@@ -71,6 +71,8 @@ interface QuoteScanApiResponse extends QuoteParseResult {
     jobId: string | null;
     providerUsed: "GEMINI" | "CLOUD_VISION_CLAUDE" | "REGEX";
     cached: boolean;
+    /** §scan-storage-deadend — jobId null 의 실제 사유(서버가 실어 보낸다). */
+    skipReason?: string | null;
   } | null;
 }
 
@@ -549,6 +551,9 @@ export function SmartReceivingScannerModal({
   //   smart-receiving 는 ocrJobId 필수(400)라 **등록이 구조적으로 불가능**하다.
   //   인식 화면을 정상처럼 띄우고 마지막에 실패시키는 건 placeholder success 의 변형이라
   //   사유를 미리 드러내고 등록을 잠근다. 발주 매핑 경로는 ocrJobId 를 안 쓰므로 제외.
+  //   🛑 jobId null 을 "저장소 미설정" 으로 단정하지 않는다(2026-09-02 정정) —
+  //      업로드는 됐는데 OcrJob.create 가 실패해도 null 이다. 사유는 서버가 실어 보낸
+  //      skipReason 을 그대로 보여준다(지어내지 않는다).
   const scanJobId = scanResult?.ocrMetadata?.jobId ?? null;
   const storageBlocked = !selectedOrderId && !scanJobId;
 
@@ -847,8 +852,13 @@ export function SmartReceivingScannerModal({
                 data-testid="srm-storage-blocked"
                 className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700"
               >
-                이미지 저장소가 설정되지 않아 입고 등록을 완료할 수 없습니다 · 인식 결과 확인만 가능합니다.
-                (스캔 원본 보관·감사 추적이 필요해 등록에는 저장소가 필요합니다)
+                인식 작업 기록이 남지 않아 입고 등록을 완료할 수 없습니다 · 인식 결과 확인만 가능합니다.
+                (등록에는 스캔 원본·감사 추적 기록이 필요합니다)
+                {scanResult?.ocrMetadata?.skipReason && (
+                  <span className="mt-1 block font-mono text-[10px] text-red-600">
+                    사유 · {scanResult.ocrMetadata.skipReason}
+                  </span>
+                )}
               </div>
             )}
             {/* §11.375 OCR 후단 게이트 — 저신뢰도 + 미보정 시 입고 차단 사유 노출(no-op 금지). */}
@@ -904,7 +914,7 @@ export function SmartReceivingScannerModal({
                 className="w-full h-11 min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {storageBlocked
-                  ? "입고 등록 · 이미지 저장소 미설정"
+                  ? "입고 등록 · 인식 기록 없음"
                   : selectedOrderId
                     ? "발주 입고 처리"
                     : isMulti
