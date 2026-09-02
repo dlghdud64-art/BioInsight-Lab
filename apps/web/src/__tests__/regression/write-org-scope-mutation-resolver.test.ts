@@ -36,7 +36,22 @@ const ROUTES: [string, string[]][] = [
   ["activity-logs POST", ["app", "api", "activity-logs", "route.ts"]],
   ["budgets POST", ["app", "api", "budgets", "route.ts"]],
   ["team POST", ["app", "api", "team", "route.ts"]],
+  ["quotes POST", ["app", "api", "quotes", "route.ts"]],
 ];
+
+/**
+ * 핸들러 본문만 잘라낸다 — `export async function <NAME>` 부터 다음 `export ` 직전까지.
+ * 파일 단위 부재 단언이 **틀리는** 경우가 있어서다: 같은 파일의 GET 이 읽기 축으로
+ * 관대한 resolver 를 쓰는 것은 정당하다. 쓰기 계약은 POST 본문 안에서만 성립한다.
+ * (handler 경계 분리는 Phase 2-4 분류에서 쓴 기법 — Cowork QA 제안 2026-09-02.)
+ */
+function handlerBody(code: string, name: string): string {
+  const start = code.search(new RegExp(`export\\s+async\\s+function\\s+${name}\\b`));
+  if (start < 0) return "";
+  const rest = code.slice(start + 1);
+  const next = rest.search(/\nexport\s+(async\s+)?function\s/);
+  return next < 0 ? rest : rest.slice(0, next);
+}
 
 describe("§invite-flow P2-5 — 쓰기 3경로가 mutation resolver 를 쓴다", () => {
   for (const [label, path] of ROUTES) {
@@ -83,6 +98,29 @@ describe("§invite-flow P2-5 — 쓰기 3경로가 mutation resolver 를 쓴다"
       /finalOrganizationId[\s\S]{0,60}?orgResolution\.ok[\s\S]{0,80}?:\s*null/,
     );
     expect(activity).toMatch(/organizationId:\s*finalOrganizationId/);
+  });
+
+  it("quotes POST — hint 검증 실패가 조용한 승격이 아니라 403 이다 (돈 경로)", () => {
+    /* 🛑 이관 **전** 형태: clientOrgId 멤버십 검증 실패 → serverOrgId = null → 바로 아래
+     *    fallback 이 첫 멤버십으로 승격 → 화면이 org-A 를 보냈는데 **org-B 에 견적 생성**.
+     *    에러도 빈 화면도 없다. 이 단언이 그 형태의 부활을 막는다. */
+    const post = handlerBody(read("app", "api", "quotes", "route.ts"), "POST");
+    const code = stripComments(post);
+    expect(code.length).toBeGreaterThan(0);
+    expect(code).toMatch(/hint:\s*clientOrgId/);
+    expect(code).toMatch(/hint_forbidden[\s\S]{0,300}?status:\s*403/);
+    /* 역방향 — 옛 승격 경로(정렬만 있는 fallback findFirst)가 되살아나면 RED */
+    expect(code).not.toMatch(/firstMembership/);
+    expect(code).not.toMatch(/orderBy:\s*\{\s*createdAt:\s*"asc"\s*\}/);
+  });
+
+  it("quotes POST 본문에 관대한 resolver 가 없다 (GET 은 무관 — 핸들러 한정)", () => {
+    /* 파일 단위로 금지하면 틀린다: 같은 파일의 GET 이 나중에 읽기 축으로 이관되면
+     * 관대한 resolver 를 쓰는 것이 정당하다. 쓰기 계약은 POST 본문 안에서만 성립한다. */
+    const raw = read("app", "api", "quotes", "route.ts");
+    const post = stripComments(handlerBody(raw, "POST"));
+    expect(post).toMatch(/resolveOrganizationIdForMutation/);
+    expect(post).not.toMatch(/resolveActiveOrganizationId\s*\(/);
   });
 
   it("budgets·team 은 hint 를 열지 않는다 (기존 결정 보존)", () => {

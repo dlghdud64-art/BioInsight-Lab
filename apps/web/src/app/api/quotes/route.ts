@@ -16,6 +16,7 @@ import {
   quoteCreatePayloadSchema,
   formatQuoteValidationError,
 } from "@/lib/validation/quote-create-schema";
+import { resolveOrganizationIdForMutation } from "@/lib/organizations/active-org";
 
 // 견적 요청 생성
 export async function POST(request: NextRequest) {
@@ -84,36 +85,38 @@ export async function POST(request: NextRequest) {
       organizationId: clientOrganizationId,
     } = validated;
 
-    // 서버 세션 기반 organizationId 결정 (P2003 방지: 실제 Organization 존재 여부까지 검증)
+    /* 견적이 붙을 조직 — §invite-flow Phase 2-6. ⚠️ **동작 변경이다.**
+     *
+     * 이전: clientOrgId 의 멤버십 검증이 실패하면 `serverOrgId = null` 이 되고, 바로 아래
+     *   fallback 이 **첫 멤버십으로 조용히 승격**했다. 즉 화면이 org-A 를 보내고 검증이
+     *   실패하면 에러 없이 **org-B 에 견적이 생성**됐다 — 돈이 걸린 액션에서 이 트랙이
+     *   계속 없애온 형태 그대로다(Cowork QA 지적 2026-09-02).
+     * 이후: 명시했는데 비멤버면 **403**. 명시가 없으면 활성 조직(없으면 null → 개인 견적).
+     *   단일 조직 사용자에게는 결과가 같다(활성값 없으면 createdAt asc 첫 멤버십).
+     *
+     * 🔑 P2003 방지용 `organization.findUnique` 존재 확인은 **제거했다**. resolver 가
+     *   `organizationMember` 로 멤버십을 검증하고, `OrganizationMember.organizationId` 는
+     *   `Organization.id` 에 FK(schema.prisma:155, onDelete Cascade)라 **멤버십이 있으면
+     *   조직 행이 반드시 있다.** 중복 조회였다 — 지운 이유를 여기 남긴다(P2003 이 재발하면
+     *   FK 자체를 의심할 것이지, 이 조회를 되살릴 일이 아니다).
+     *
+     * try/catch 는 유지한다 — DB 조회 실패 시 조직 없이 진행하는 기존 degradation 계약이다.
+     *   403 은 throw 가 아니라 return 이라 catch 에 삼켜지지 않는다. */
     let serverOrgId: string | null = null;
     try {
       const clientOrgId = (typeof clientOrganizationId === "string" ? clientOrganizationId.trim() : null) || null;
-      if (clientOrgId) {
-        const membership = await db.organizationMember.findFirst({
-          where: { userId: session.user.id, organizationId: clientOrgId },
-          select: { organizationId: true },
-        });
-        serverOrgId = membership?.organizationId ?? null;
+      const orgResolution = await resolveOrganizationIdForMutation({
+        userId: session.user.id,
+        hint: clientOrgId,
+      });
+      if (!orgResolution.ok && orgResolution.reason === "hint_forbidden") {
+        enforcement.fail();
+        return NextResponse.json(
+          { error: "요청한 조직에 대한 권한이 없습니다." },
+          { status: 403 },
+        );
       }
-      if (!serverOrgId) {
-        const firstMembership = await db.organizationMember.findFirst({
-          where: { userId: session.user.id },
-          orderBy: { createdAt: "asc" },
-          select: { organizationId: true },
-        });
-        serverOrgId = firstMembership?.organizationId ?? null;
-      }
-      // organizationId가 있으면 실제 Organization 테이블에 존재하는지 확인 (P2003 방지)
-      if (serverOrgId) {
-        const orgExists = await db.organization.findUnique({
-          where: { id: serverOrgId },
-          select: { id: true },
-        });
-        if (!orgExists) {
-          console.warn(`[quotes/POST] Organization ${serverOrgId} not found in DB. Setting to null.`);
-          serverOrgId = null;
-        }
-      }
+      serverOrgId = orgResolution.ok ? orgResolution.organizationId : null;
     } catch (orgErr: any) {
       console.warn("[quotes/POST] organizationId lookup failed, proceeding without org:", orgErr?.message);
       serverOrgId = null;
