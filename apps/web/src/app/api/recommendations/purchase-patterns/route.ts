@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { analyzePurchasePatterns, analyzeQuotePatterns, getFrequentlyBoughtTogether } from "@/lib/ai/purchase-pattern-analyzer";
 import { db, isPrismaAvailable } from "@/lib/db";
 import { isDemoMode } from "@/lib/env";
+import { resolveActiveOrganizationId } from "@/lib/organizations/active-org";
 
 // 구매 패턴 분석 API
 export async function GET(request: NextRequest) {
@@ -18,11 +19,9 @@ export async function GET(request: NextRequest) {
     // 조직 ID 결정 (파라미터 또는 사용자의 첫 번째 조직)
     let finalOrganizationId = organizationId || undefined;
     if (!finalOrganizationId && session?.user?.id) {
-      const userOrg = await db.organizationMember.findFirst({
-        where: { userId: session.user.id },
-        select: { organizationId: true },
-      });
-      finalOrganizationId = userOrg?.organizationId || undefined;
+      // §invite-flow Phase 2-4 — 명시 조직이 없을 때의 fallback = 활성 조직.
+      const activeOrganizationId = await resolveActiveOrganizationId({ userId: session.user.id });
+      finalOrganizationId = activeOrganizationId ?? undefined;
     }
 
     // 특정 제품과 함께 구매되는 제품 조회

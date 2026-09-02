@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { getFrequentlyBoughtTogether } from "@/lib/ai/purchase-pattern-analyzer";
 import { generateCollaborativeRecommendations, generateContextBasedRecommendations } from "@/lib/ai/collaborative-filtering";
+import { resolveActiveOrganizationId } from "@/lib/organizations/active-org";
 
 // 개인화 추천 API
 export async function GET(request: NextRequest) {
@@ -101,11 +102,9 @@ export async function GET(request: NextRequest) {
         // 사용자의 첫 번째 조직 가져오기
         let userOrganizationId: string | undefined = undefined;
         if (session.user.id) {
-          const userOrg = await db.organizationMember.findFirst({
-            where: { userId: session.user.id },
-            select: { organizationId: true },
-          });
-          userOrganizationId = userOrg?.organizationId || undefined;
+          // §invite-flow Phase 2-4 — 각자 첫 조직을 고르지 않는다. 활성 조직(읽기).
+          const activeOrganizationId = await resolveActiveOrganizationId({ userId: session.user.id });
+          userOrganizationId = activeOrganizationId ?? undefined;
         }
 
         const purchasePatternRecs = await getFrequentlyBoughtTogether(productId, {

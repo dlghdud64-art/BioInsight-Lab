@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { resolveActiveOrganizationId } from "@/lib/organizations/active-org";
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,10 +24,9 @@ export async function GET(request: NextRequest) {
       }
       scopeKey = organizationId;
     } else {
-      const userOrg = await db.organizationMember.findFirst({
-        where: { userId: session.user.id },
-      });
-      scopeKey = userOrg ? userOrg.organizationId : `user-${session.user.id}`;
+      // §invite-flow Phase 2-4 — 명시 조직이 없을 때의 fallback = 활성 조직.
+      const activeOrganizationId = await resolveActiveOrganizationId({ userId: session.user.id });
+      scopeKey = activeOrganizationId ?? `user-${session.user.id}`;
     }
 
     // 현재 활성 예산 조회 (가장 최근 yearMonth)

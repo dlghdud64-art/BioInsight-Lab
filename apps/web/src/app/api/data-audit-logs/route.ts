@@ -21,6 +21,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { AuditAction, AuditEntityType } from "@prisma/client";
+import { resolveActiveOrganizationId } from "@/lib/organizations/active-org";
 
 export const dynamic = "force-dynamic";
 
@@ -56,13 +57,10 @@ export async function GET(request: NextRequest) {
         );
       }
     } else {
-      // 미지정 시 세션 유저의 첫 번째 조직으로 자동 해석
-      const firstMembership = await db.organizationMember.findFirst({
-        where: { userId: session.user.id },
-        select: { organizationId: true },
-        orderBy: { createdAt: "asc" },
-      });
-      resolvedOrgId = firstMembership?.organizationId ?? undefined;
+      // §invite-flow Phase 2-4 — 미지정 시 "첫 번째 조직" 이 아니라 **활성 조직**으로 해석.
+      //   (활성값이 없으면 resolver 가 createdAt asc 첫 멤버십으로 떨어져 기존과 같은 값이다.)
+      const activeOrganizationId = await resolveActiveOrganizationId({ userId: session.user.id });
+      resolvedOrgId = activeOrganizationId ?? undefined;
     }
 
     // ─── WHERE 조건 ──────────────────────────────────────────────────────────

@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { handleApiError } from "@/lib/api-error-handler";
 import { subMonths, startOfMonth, endOfMonth, format } from "date-fns";
 import { ko } from "date-fns/locale";
+import { resolveActiveOrganizationId } from "@/lib/organizations/active-org";
 
 const CATEGORY_COLORS: Record<string, string> = {
   시약: "#3b82f6",
@@ -43,12 +44,10 @@ export async function GET() {
 
     // Budget scopeKey (조직 우선, 없으면 user-{id})
     let budgetScopeKey: string;
-    const userOrg = await db.organizationMember.findFirst({
-      where: { userId },
-      select: { organizationId: true },
-    });
-    if (userOrg) {
-      budgetScopeKey = userOrg.organizationId;
+    // §invite-flow Phase 2-4 — 각자 첫 조직을 고르지 않는다. 활성 조직(읽기 경로라 관대한 resolver).
+    const activeOrganizationId = await resolveActiveOrganizationId({ userId });
+    if (activeOrganizationId) {
+      budgetScopeKey = activeOrganizationId;
     } else {
       budgetScopeKey = `user-${userId}`;
     }

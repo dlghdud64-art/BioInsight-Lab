@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import * as XLSX from "xlsx";
+import { resolveActiveOrganizationId } from "@/lib/organizations/active-org";
 
 function formatKRW(n: number) {
   return `₩${n.toLocaleString("ko-KR")}`;
@@ -37,13 +38,16 @@ export async function GET(request: NextRequest) {
       scopeKey = organizationId;
       orgName = (membership as any).organization?.name ?? orgName;
     } else {
-      const userOrg = await db.organizationMember.findFirst({
-        where: { userId: session.user.id },
-        include: { organization: true },
-      });
-      if (userOrg) {
-        scopeKey = userOrg.organizationId;
-        orgName = (userOrg as any).organization?.name ?? orgName;
+      // §invite-flow Phase 2-4 — 명시 조직이 없을 때의 fallback = 활성 조직.
+      //   이름은 별 조회로 얻는다(resolver 는 id 만 돌려준다 — 그게 canonical 경계다).
+      const activeOrganizationId = await resolveActiveOrganizationId({ userId: session.user.id });
+      if (activeOrganizationId) {
+        scopeKey = activeOrganizationId;
+        const activeOrg = await db.organization.findUnique({
+          where: { id: activeOrganizationId },
+          select: { name: true },
+        });
+        orgName = activeOrg?.name ?? orgName;
       } else {
         scopeKey = `user-${session.user.id}`;
         orgName = session.user.name ?? "개인";
