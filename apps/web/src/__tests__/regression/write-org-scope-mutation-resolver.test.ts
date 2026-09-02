@@ -66,16 +66,23 @@ describe("§invite-flow P2-5 — 쓰기 3경로가 mutation resolver 를 쓴다"
   });
 
   it("🛑 no_organization 을 403 으로 뭉개지 않는다 — 기존 경로 보존", () => {
-    /* 팀: 조직 0 은 400 NO_ORGANIZATION(권한 문제가 아니라 선행 조건 부재) */
+    /* 팀: 조직 0 은 400 NO_ORGANIZATION(권한 문제가 아니라 선행 조건 부재)
+     * 🛑 두 토큰을 **한 분기 안에서** 본다. 독립 toMatch 2개로 쓰면 4원칙 ④(대체 매칭)에 걸린다 —
+     *    team/route.ts 에는 `status: 400` 이 2곳이고(name 누락 400 · NO_ORGANIZATION 400),
+     *    NO_ORGANIZATION 쪽을 403 으로 바꿔도 **다른 400 이 대신 매칭해 GREEN** 이 유지된다.
+     *    즉 이 단언이 막겠다고 선언한 바로 그 변경을 놓친다(Cowork QA 지적 2026-09-02). */
     const team = stripComments(read("app", "api", "team", "route.ts"));
-    expect(team).toMatch(/NO_ORGANIZATION/);
-    expect(team).toMatch(/status:\s*400/);
+    expect(team).toMatch(/NO_ORGANIZATION[\s\S]{0,80}?status:\s*400/);
     /* 예산: 조직 0 은 개인 예산으로 계속 간다(거부가 아니다) */
     const budgets = stripComments(read("app", "api", "budgets", "route.ts"));
     expect(budgets).toMatch(/isPersonalBudget\s*=\s*!membership/);
-    /* 활동 로그: 조직 0 은 organizationId null 로 기록(개인 활동 로그가 정당하다) */
+    /* 활동 로그: 조직 0 은 organizationId null 로 기록(개인 활동 로그가 정당하다).
+     * 창을 orgResolution.ok 분기부터 열어 create 에 그 값이 실리는 것까지 한 흐름으로 본다. */
     const activity = stripComments(read("app", "api", "activity-logs", "route.ts"));
-    expect(activity).toMatch(/finalOrganizationId\s*=\s*orgResolution\.ok\s*\?[\s\S]{0,80}?:\s*null/);
+    expect(activity).toMatch(
+      /finalOrganizationId[\s\S]{0,60}?orgResolution\.ok[\s\S]{0,80}?:\s*null/,
+    );
+    expect(activity).toMatch(/organizationId:\s*finalOrganizationId/);
   });
 
   it("budgets·team 은 hint 를 열지 않는다 (기존 결정 보존)", () => {
@@ -86,9 +93,13 @@ describe("§invite-flow P2-5 — 쓰기 3경로가 mutation resolver 를 쓴다"
       ["app", "api", "team", "route.ts"],
     ]) {
       const code = stripComments(read(...path));
-      const call = code.match(/resolveOrganizationIdForMutation\s*\(\{[\s\S]{0,200}?\}\)/)?.[0] ?? "";
-      expect(call.length).toBeGreaterThan(0);
-      expect(call).not.toMatch(/hint/);
+      /* 🛑 첫 호출만 보지 않는다 — 나중에 hint 있는 **두 번째** 호출이 추가되면
+       *    `.match()` 는 첫 건만 돌려주므로 통과한다(Cowork QA 하드닝 2026-09-02). */
+      const calls = [
+        ...code.matchAll(/resolveOrganizationIdForMutation\s*\(\{[\s\S]{0,200}?\}\)/g),
+      ].map((m) => m[0]);
+      expect(calls.length).toBeGreaterThan(0);
+      for (const call of calls) expect(call).not.toMatch(/hint/);
     }
   });
 });
