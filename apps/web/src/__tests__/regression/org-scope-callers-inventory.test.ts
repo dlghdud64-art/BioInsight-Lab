@@ -119,8 +119,6 @@ const KNOWN_API_MAX: Record<string, number> = {
    *   billing/invoices(1) · billing/payment-methods(3) · billing(2) */
   /* organization-vendors 계열 4곳 — Phase 2-3 치환 완료 (2026-09-02). 상한에서 제거됨:
    *   vendors(1) · vendors/[id](1) · vendor-products(1) · vendor-products/[id](1) */
-  "app/api/protocol/extract-pdf/route.ts": 1,
-  "lib/billing/enforce-plan-limit.ts": 1,
 };
 
 const KNOWN_UI_MAX: Record<string, number> = {
@@ -176,13 +174,13 @@ describe("§invite-flow — org-scope 직접 호출 인벤토리 (래칫 · Phas
     expect(overBudget(found, KNOWN_UI_MAX)).toEqual([]);
   });
 
-  it("래칫: 상한 총계는 Phase 2 진행에 따라 줄기만 한다 (현재 API 2 · UI 14)", () => {
+  it("래칫: 상한 총계는 Phase 2 진행에 따라 줄기만 한다 (현재 API 0 · UI 14)", () => {
     /* 이 수치가 Phase 2 의 진척도다. 치환한 파일을 상한 맵에서 지우면 여기가 내려간다.
      * 0/0 이 되는 순간 위 두 단언은 그대로 "직접 호출 0" 게이트가 된다.
      * 🛑 이 상한은 **내리기만** 한다 — 올리는 편집은 새 우회로를 정당화하는 것이다. */
     const apiTotal = Object.values(KNOWN_API_MAX).reduce((a, b) => a + b, 0);
     const uiTotal = Object.values(KNOWN_UI_MAX).reduce((a, b) => a + b, 0);
-    expect(apiTotal).toBeLessThanOrEqual(2);
+    expect(apiTotal).toBeLessThanOrEqual(0);
     /* UI 축은 이번 phase 에서 변화 없다 — suppliers 화면은 `orgs[0]` 을 쓰지 않아
      * 애초에 UI 인벤토리에 없었다(짝 이관 대상이었던 것은 mutation 이지 조직 선택이 아니다). */
     expect(uiTotal).toBeLessThanOrEqual(14);

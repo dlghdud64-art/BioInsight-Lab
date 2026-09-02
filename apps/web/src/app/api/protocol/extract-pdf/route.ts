@@ -24,6 +24,7 @@ import {
   createRequestId,
   type PipelineErrorCode,
 } from '@/lib/ai/pipeline-logger';
+import { resolveOrganizationIdForMutation } from "@/lib/organizations/active-org";
 
 export const runtime = 'nodejs';
 export const maxDuration = 60; // Vercel Pro: 60초
@@ -201,14 +202,23 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExtractPD
 
     const dbStart = Date.now();
 
-    // 사용자의 조직 찾기
+    /* 생성될 견적이 붙을 조직 — §invite-flow Phase 2-7. 첫 멤버십이 아니라 **활성 조직**.
+     *
+     * 🔑 **서버 단독 이관이다 — UI 짝이 없는 것이 결함이 아니라 설계다.**
+     *   이 라우트는 ADR-002 §11.60 의 `EXEMPT_PREFIXES` **Category A(Internal admin/CLI tools)**
+     *   에 `/api/protocol/extract-pdf` 로 등재돼 있다. 즉 frontend caller 0 은
+     *   §11.55/§11.59 의 dead-end 패턴이 아니라 확정된 예외다(Cowork QA 실측 2026-09-02:
+     *   web 의 유사 호출부 2곳은 `extract-pdf-**text**` 로 다른 라우트, mobile 0건).
+     *   → 보낼 hint 가 없으므로 hint 를 열지 않는다. 열어도 부를 화면이 없다.
+     *
+     * 쓰기라 mutation resolver 를 쓴다(관대한 resolver 로 흡수 금지). 조직 0 이면 null 유지 —
+     * 기존 동작 그대로다(Quote.organizationId 는 nullable, 개인 견적이 정당하다). */
     let organizationId: string | null = null;
     if (session?.user?.id) {
-      const membership = await db.organizationMember.findFirst({
-        where: { userId: session.user.id },
-        select: { organizationId: true },
+      const orgResolution = await resolveOrganizationIdForMutation({
+        userId: session.user.id,
       });
-      organizationId = membership?.organizationId || null;
+      organizationId = orgResolution.ok ? orgResolution.organizationId : null;
     }
 
     const quote = await db.quote.create({

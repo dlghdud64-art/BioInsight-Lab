@@ -10,6 +10,7 @@
  */
 
 import { db } from "@/lib/db";
+import { resolveActiveOrganizationId } from "@/lib/organizations/active-org";
 import { SubscriptionPlan, getPlanLimits } from "@/lib/plans";
 import type { TrackingMode } from "@/lib/inventory/tracking-mode";
 
@@ -40,10 +41,24 @@ export class PlanLimitError extends Error {
   }
 }
 
-/** org Subscription 으로 plan 판정. 없으면 FREE(billing route 패턴 정합). */
-async function resolvePlan(userId: string): Promise<SubscriptionPlan> {
+/**
+ * org Subscription 으로 plan 판정. 없으면 FREE(billing route 패턴 정합).
+ *
+ * §invite-flow Phase 2-7 — **조직을 여기서 다시 고르지 않는다.**
+ *   이전에는 `findFirst({ where: { userId } })` 로 첫 멤버십을 골랐다. 그러면 호출자가
+ *   이미 활성 조직을 정해 쓰고 있어도 **한도 판정만 다른 조직의 플랜**으로 날 수 있다 —
+ *   호출자는 org-B 에 견적을 만드는데 한도는 org-A 플랜으로 재는 상태다.
+ *   그래서 조직은 **호출자가 결정해 넘긴다**(지시문: "헬퍼 안에서 다시 해석하면 호출자와
+ *   다른 조직을 고를 수 있다"). 넘어오지 않으면(하위 호환) 활성 조직으로 해석한다.
+ */
+async function resolvePlan(
+  userId: string,
+  organizationId?: string | null,
+): Promise<SubscriptionPlan> {
+  const orgId = organizationId ?? (await resolveActiveOrganizationId({ userId }));
+  if (!orgId) return SubscriptionPlan.FREE;
   const membership = await db.organizationMember.findFirst({
-    where: { userId },
+    where: { userId, organizationId: orgId },
     select: {
       organization: { select: { subscription: { select: { plan: true } } } },
     },
@@ -61,6 +76,8 @@ async function resolvePlan(userId: string): Promise<SubscriptionPlan> {
 export async function enforcePlanLimit(
   userId: string,
   kind: PlanLimitKind,
+  /** 호출자가 결정한 조직. 미전달이면 활성 조직으로 해석(하위 호환). §invite-flow Phase 2-7 */
+  organizationId?: string | null,
 ): Promise<void> {
   // grandfather cutoff — env 미설정/무효 = 전원 grandfather(enforce 0).
   const cutoffRaw = process.env.PRICING_ENFORCE_CUTOFF;
@@ -75,7 +92,7 @@ export async function enforcePlanLimit(
   if (!user) return; // 방어 — 사용자 미확인 시 차단하지 않음
   if (user.createdAt < cutoff) return; // 시행일 이전 가입자 = grandfather 보존
 
-  const plan = await resolvePlan(userId);
+  const plan = await resolvePlan(userId, organizationId);
   const limits = getPlanLimits(plan);
 
   const monthStart = new Date();
