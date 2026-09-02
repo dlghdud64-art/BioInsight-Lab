@@ -186,3 +186,22 @@ describe("§scan-storage-deadend (8) — 값 형태 판별 축 (blobStoreId null
     expect(src).not.toMatch(/substring\(0/);
   });
 });
+
+describe("§scan-storage-deadend (9) — 포장 오염 vs 다른 토큰 판별", () => {
+  const PROBE4 = "src/lib/health/blob-token-probe.ts";
+
+  it("trimmed 재판정 축 실재 — 앞뒤 공백·따옴표만 벗긴다", () => {
+    const src = stripComments(read(PROBE4));
+    expect(src).toMatch(/function unwrapTokenValue/);
+    expect(src).toMatch(/blobTokenPrefixTrimmed: unwrapped\.startsWith\(BLOB_TOKEN_MARKER\)/);
+  });
+
+  it("증상만 덮는 방어적 trim 은 아직 없다 — 오염은 계속 보고돼야 한다", () => {
+    // 🛑 별건(호영님 지시): 토큰 읽는 지점의 방어적 trim 은 원인 확정 후에.
+    //    그때도 blobTokenClean:false 는 계속 보고한다 — trim 으로 진단축까지
+    //    초록불로 만들면 envConfigured 때와 같은 실수 4회차다.
+    const src = stripComments(read(PROBE4));
+    expect(src).toMatch(/const clean = token\.trim\(\) === token/);
+    expect(src).not.toMatch(/BLOB_READ_WRITE_TOKEN\s*\)?\s*\.trim\(\)/);
+  });
+});

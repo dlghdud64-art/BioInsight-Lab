@@ -41,18 +41,39 @@ export interface BlobTokenShape {
   blobTokenLength: number;
   /** 앞뒤 공백·따옴표 오염 없음. false = 붙여넣기 오염(따옴표·개행 포함). */
   blobTokenClean: boolean | null;
+  /**
+   * 앞뒤 공백·따옴표·개행을 벗겨낸 뒤 **다시** 분류한 값.
+   *   "vercel_blob_rw_" = 토큰 자체는 멀쩡하고 포장만 오염 → **값 재입력만** 하면 된다(재발급 불필요)
+   *   "other"           = 진짜 다른 토큰 → 재발급·재설정
+   * 이 한 축이 "재입력이면 끝" 과 "재발급까지" 를 가른다(호영님 2026-09-02).
+   */
+  blobTokenPrefixTrimmed: string | null;
+}
+
+/** 앞뒤 공백·따옴표·개행만 벗긴다. blob 토큰 본문은 영숫자·언더스코어라 손상 위험 0. */
+function unwrapTokenValue(token: string): string {
+  return token.replace(/^[\s"']+/, "").replace(/[\s"']+$/, "");
 }
 
 /** 토큰 값의 **형태**만 기술한다 — 시크릿 문자는 한 글자도 반환하지 않는다. */
 export function describeBlobToken(token: string | undefined): BlobTokenShape {
   if (!token) {
-    return { blobTokenPrefix: null, blobTokenLength: 0, blobTokenClean: null };
+    return {
+      blobTokenPrefix: null,
+      blobTokenLength: 0,
+      blobTokenClean: null,
+      blobTokenPrefixTrimmed: null,
+    };
   }
   const clean = token.trim() === token && !/^["']|["']$/.test(token);
+  const unwrapped = unwrapTokenValue(token);
   return {
     blobTokenPrefix: token.startsWith(BLOB_TOKEN_MARKER) ? BLOB_TOKEN_MARKER : "other",
     blobTokenLength: token.length,
     blobTokenClean: clean,
+    blobTokenPrefixTrimmed: unwrapped.startsWith(BLOB_TOKEN_MARKER)
+      ? BLOB_TOKEN_MARKER
+      : "other",
   };
 }
 
