@@ -11,10 +11,28 @@ import {
 // 조이는 게 아니라 푸는 방향으로 뒤집힌다. SELECT만.
 import { probeOwnerlessOrganizations } from "@/lib/health/owner-invariant";
 import migrationManifest from "@/generated/migration-manifest.json";
+// §scan-storage-deadend — Blob 토큰 **유효성**(존재 아님) 측정. `?storage=probe` 일 때만 실행.
+import {
+  probeBlobToken,
+  extractBlobStoreId,
+} from "@/lib/health/blob-token-probe";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
+  // 깊은 프로브는 명시 요청일 때만(공개 엔드포인트 남용·비용 방어).
+  //   🛑 시그니처는 required 여야 한다 — Next 가 route handler 타입을 검사하므로
+  //      `request?: Request` 는 빌드가 거부한다(2026-09-02 실측).
+  //      대신 런타임에서 방어한다: 기존 sentinel 이 `GET()` 을 인자 없이 직접 호출한다
+  //      (§migration-order-drift-guard W1·W2·W3). 그 호출부를 깨지 않으면서 계약도 지킨다.
+  const wantsStorageProbe = (() => {
+    try {
+      const url = (request as Request | undefined)?.url;
+      return url ? new URL(url).searchParams.get("storage") === "probe" : false;
+    } catch {
+      return false;
+    }
+  })();
   const dbUrl = process.env.DATABASE_URL;
   const directUrl = process.env.DIRECT_URL;
 
@@ -96,11 +114,16 @@ export async function GET() {
       node: process.version,
       storage: {
         provider: process.env.STORAGE_PROVIDER || null,
+        // 🛑 존재 ≠ 유효. 이 두 필드는 **문자열이 있는지**만 말한다(초록불 아님).
+        //    실제 유효성은 아래 tokenValid 가 실호출로만 답한다(2026-09-02 3회차 오진 정정).
         hasBlobToken: !!process.env.BLOB_READ_WRITE_TOKEN,
+        // Vercel Storage 탭의 store 와 대조용 식별자(비밀 부분 제외).
+        blobStoreId: extractBlobStoreId(process.env.BLOB_READ_WRITE_TOKEN),
+        ...(await probeBlobToken(wantsStorageProbe)),
         // 🛑 이름을 측정 내용과 일치시킨다(2026-09-02 정정) — 이전 `ready` 는
         //    env 존재만 보면서 "업로드 가능" 을 함의해 거짓 신호였다.
-        //    실제 업로드 가능 여부는 스캔 응답의 ocrMetadata.skipReason 이 답한다
-        //    (health 에서 시험 업로드를 하면 호출마다 blob 을 쓰게 되므로 하지 않는다).
+        //    이 필드는 **env 두 개가 있는지**만 말한다. 유효성은 tokenValid 소관.
+        //    (쓰기 프로브는 하지 않는다 — 진단이 데이터를 만들면 안 되므로 읽기 1건만 쓴다.)
         envConfigured:
           process.env.STORAGE_PROVIDER === "vercel-blob" &&
           !!process.env.BLOB_READ_WRITE_TOKEN,

@@ -114,3 +114,38 @@ describe("§scan-storage-deadend (5) — @vercel/blob 번들 파싱 회피 (원�
     );
   });
 });
+
+describe("§scan-storage-deadend (6) — 존재 ≠ 유효 (3회차 오진 정정)", () => {
+  const HEALTH2 = "src/app/api/health/route.ts";
+  const PROBE = "src/lib/health/blob-token-probe.ts";
+
+  it("tokenValid 는 실호출로만 판정 — 미요청 시 null(미측정)", () => {
+    const src = stripComments(read(PROBE));
+    expect(src).toMatch(/tokenValid: null, probeError: null, cached: false/);
+    expect(src).toMatch(/await list\(\{ limit: 1 \}\)/);
+    expect(src).toMatch(/tokenValid: true/);
+    expect(src).toMatch(/tokenValid: false/);
+  });
+
+  it("공개 엔드포인트 방어 — 명시 요청 + 캐시", () => {
+    const health = stripComments(read(HEALTH2));
+    // 인자 없는 GET() 직접 호출(기존 sentinel)도 살아야 하므로 optional + 안전 파싱.
+    // 시그니처는 required(Next 타입 검사) + 런타임 방어(인자 없는 GET() 직접 호출 보존).
+    expect(health).toMatch(/export async function GET\(request: Request\)/);
+    expect(health).toMatch(/\(request as Request \| undefined\)\?\.url/);
+    expect(health).toMatch(/searchParams\.get\("storage"\) === "probe"/);
+    const probe = stripComments(read(PROBE));
+    expect(probe).toMatch(/TTL_MS = 60_000/);
+    expect(probe).toMatch(/Date\.now\(\) - cache\.at < TTL_MS/);
+  });
+
+  it("진단이 데이터를 만들지 않는다 — 쓰기(put) 호출 0", () => {
+    expect(stripComments(read(PROBE))).not.toMatch(/\bput\(/);
+  });
+
+  it("health 가 tokenValid·blobStoreId 를 노출 (대조 축)", () => {
+    const health = stripComments(read(HEALTH2));
+    expect(health).toMatch(/blobStoreId: extractBlobStoreId\(process\.env\.BLOB_READ_WRITE_TOKEN\)/);
+    expect(health).toMatch(/\.\.\.\(await probeBlobToken\(wantsStorageProbe\)\)/);
+  });
+});
