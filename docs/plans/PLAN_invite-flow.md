@@ -282,6 +282,18 @@ Red-Green-Refactor 엄수. 러너: 클로드코드 세션(`apps/web` vitest·tsc
 - Rollback: 파일별 커밋 revert(치환은 서로 독립)
 
 ### Phase 3: 수락 흐름 + 좌석 게이트 (4h)
+
+⛔ **선행 조건 2건 (Phase 2 에서 미룬 것 — 수락이 열리면 둘 다 실재화된다)**
+1. **`quotes` POST 의 조직 해석을 `enforcePlanLimit` 앞으로 옮긴다.**
+   지금은 hint 가 `validated.organizationId`(body 파싱 뒤)에서 나오고 한도 체크는 그 앞(:35)이라
+   조직을 넘기지 못한다. 무해한 이유는 **hint 를 보내는 first-party 클라이언트가 0곳**이라
+   활성 조직 = 견적이 붙는 조직이기 때문이다(web POST 8 · mobile 0 실측, 2026-09-02).
+   Phase 3 에서 hint 가 실재화되면 그 등식이 깨진다 — 한도는 org-A 플랜으로 재고 견적은 org-B 에
+   생기는 상태가 된다. 옮길 때 순서 변화(한도 초과 사용자가 429 대신 400 을 먼저 받음)를
+   감수할지 함께 판정한다.
+2. **Phase 2-6 의 403 이 여기서 처음 발화한다.** 그 커밋은 예방적 조치였다(위 §2-6 참조) —
+   hint 경로가 도달 가능해지는 시점이 Phase 3 이므로, 수락 흐름 배선 시 403 응답을
+   UI 가 어떻게 보여줄지(조용한 실패 금지) 함께 설계한다.
 - Status: [ ] Pending
 - 🔴 `__tests__/api/invites/accept.test.ts`: 토큰 없음 404 · revokedAt 410 · expiresAt 경과 410 · acceptedAt 있음 409 · email 지정 ≠ 세션 email 403 · 이미 멤버 200(멱등, acceptedAt 만 채움) · **좌석 초과 403 `{ code: "SEAT_LIMIT", limit, plan }`** · 정상 200 → member 생성 · acceptedAt/By · activeOrganizationId · auditEvent. `invites POST` 좌석 초과 403 동일 계약
 - 🟢 `api/invites/[token]/route.ts` GET(미리보기: 조직명·역할·만료·상태, 토큰만으로 조회 · PII 최소) · `api/invites/[token]/accept/route.ts` POST(트랜잭션) · `app/invite/[token]/page.tsx`(비로그인 → `/auth/signin?callbackUrl=/invite/{token}` · 상태별 5화면: 유효/만료·취소/이미 수락/이미 멤버/좌석 초과 → 플랜 변경 링크는 **관리자에게** 안내 문구) · `invites POST` 에 `countMembers >= maxMembers → 403`
