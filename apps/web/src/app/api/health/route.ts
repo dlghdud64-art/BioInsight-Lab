@@ -91,6 +91,9 @@ export async function GET() {
       //   업로드가 실패하면 OcrJob 이 안 생기고 스캔 입고 등록이 구조적으로 막힌다.
       //   Vercel 대시보드/런타임 로그 접근 없이 원인(키 미설정 vs 토큰 부재)을 가르는 축.
       //   기존 hasDbUrl/hasDirectUrl 과 동일 형태 — 값이 아니라 존재 여부만 노출한다.
+      // §scan-storage-deadend — 배포 런타임 Node 버전. @vercel/blob 2.x 가
+      //   engines.node ">=20.0.0" 을 요구하므로 실제 버전이 관측돼야 판정이 가능하다.
+      node: process.version,
       storage: {
         provider: process.env.STORAGE_PROVIDER || null,
         hasBlobToken: !!process.env.BLOB_READ_WRITE_TOKEN,

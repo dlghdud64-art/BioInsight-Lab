@@ -88,3 +88,29 @@ describe("§scan-storage-deadend (4) — 실패 사유 전달 경로 (지어내�
     expect(src).toMatch(/skipReason: pipelineResult\.skipReason \?\? null/);
   });
 });
+
+describe("§scan-storage-deadend (5) — @vercel/blob 번들 파싱 회피 (원인 조치)", () => {
+  const NEXT_CONFIG = "next.config.js";
+  const PKG = "package.json";
+
+  it("서버 외부 패키지로 선언 — 번들러가 ESM/private field 를 파싱하지 않는다", () => {
+    // 증상: `image-upload: Unexpected identifier '#H'` (skipReason 계측이 포착).
+    //   @vercel/blob 2.x = ESM + private class field. Next 14 서버 번들 경로에서 파싱 실패.
+    const src = read(NEXT_CONFIG);
+    expect(src).toMatch(/serverComponentsExternalPackages:\s*\[[^\]]*'@vercel\/blob'/);
+    // 기존 외부화 대상 회귀 0.
+    expect(src).toMatch(/'pdf-parse'/);
+    expect(src).toMatch(/'pdfjs-dist'/);
+  });
+
+  it("engines.node 가 라이브러리 요구(>=20)를 선언한다", () => {
+    const pkg = JSON.parse(read(PKG));
+    expect(pkg.engines?.node).toBe(">=20.0.0");
+  });
+
+  it("health 가 런타임 Node 버전을 노출 — 버전 가설을 관측으로 가른다", () => {
+    expect(stripComments(read("src/app/api/health/route.ts"))).toMatch(
+      /node: process\.version/,
+    );
+  });
+});

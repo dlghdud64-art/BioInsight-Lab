@@ -8,8 +8,16 @@ const nextConfig = {
 
   // pdf-parse / pdfjs-dist는 Node.js 네이티브 모듈이므로 서버 컴포넌트에서 외부 패키지로 처리
   // pdfjs-dist: pdf-parse v2의 종속 라이브러리 (번들링 시 DOM API 참조 오류 방지)
+  //
+  // §scan-storage-deadend (2026-09-02 호영님 실측) — @vercel/blob 추가.
+  //   증상: prod 스캔에서 `image-upload: Unexpected identifier '#H'` (skipReason 계측이 포착).
+  //   원인: @vercel/blob 2.x 는 ESM("type": "module") + private class field(#x) 사용인데
+  //   Next 14 서버 번들러가 이를 함께 번들하며 파싱에 실패했다. 외부 패키지로 빼면
+  //   런타임이 직접 로드하므로 번들 파싱 경로를 타지 않는다.
+  //   영향 범위: `await import("@vercel/blob")` 호출부 4곳 전부
+  //   (OCR image-storage ×2 · PO PDF storage · 견적 회신 첨부 storage).
   experimental: {
-    serverComponentsExternalPackages: ['pdf-parse', 'pdfjs-dist'],
+    serverComponentsExternalPackages: ['pdf-parse', 'pdfjs-dist', '@vercel/blob'],
     // §11.326 (호영님 P0, 2026-05-30) — PDFKit 한글 폰트 Vercel 함수 번들 강제 포함.
     //   Root cause: public/fonts/PretendardVariable.ttf 가 serverless 함수 번들에 자동 포함 안 됨
     //   → fontPath 미존재 → silent Helvetica fallback → Vercel 에 Helvetica.afm 없음 → 500 ENOENT.
