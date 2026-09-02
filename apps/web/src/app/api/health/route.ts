@@ -15,6 +15,7 @@ import migrationManifest from "@/generated/migration-manifest.json";
 import {
   probeBlobToken,
   extractBlobStoreId,
+  describeBlobToken,
 } from "@/lib/health/blob-token-probe";
 
 export const dynamic = "force-dynamic";
@@ -119,6 +120,9 @@ export async function GET(request: Request) {
         hasBlobToken: !!process.env.BLOB_READ_WRITE_TOKEN,
         // Vercel Storage 탭의 store 와 대조용 식별자(비밀 부분 제외).
         blobStoreId: extractBlobStoreId(process.env.BLOB_READ_WRITE_TOKEN),
+        // blobStoreId 가 null 일 때 "파서 버그 vs 값 오류" 를 가르는 축(2026-09-02).
+        //   시크릿 문자는 반환하지 않는다 — 마커 일치 여부·길이·오염 여부만.
+        ...describeBlobToken(process.env.BLOB_READ_WRITE_TOKEN),
         ...(await probeBlobToken(wantsStorageProbe)),
         // 🛑 이름을 측정 내용과 일치시킨다(2026-09-02 정정) — 이전 `ready` 는
         //    env 존재만 보면서 "업로드 가능" 을 함의해 거짓 신호였다.

@@ -167,3 +167,22 @@ describe("§scan-storage-deadend (7) — health storage 응답 계약 (대조 �
     expect(probe).not.toMatch(/probeError/);
   });
 });
+
+describe("§scan-storage-deadend (8) — 값 형태 판별 축 (blobStoreId null 원인 분리)", () => {
+  const PROBE3 = "src/lib/health/blob-token-probe.ts";
+  const HEALTH4 = "src/app/api/health/route.ts";
+
+  it("health 가 형태 축을 노출 — prefix · length · clean", () => {
+    expect(stripComments(read(HEALTH4))).toMatch(
+      /\.\.\.describeBlobToken\(process\.env\.BLOB_READ_WRITE_TOKEN\)/,
+    );
+  });
+
+  it("prefix 는 마커 분류값만 — 토큰 원문 슬라이스 금지(공개 엔드포인트)", () => {
+    const src = stripComments(read(PROBE3));
+    expect(src).toMatch(/blobTokenPrefix: token\.startsWith\(BLOB_TOKEN_MARKER\) \? BLOB_TOKEN_MARKER : "other"/);
+    // 원문을 잘라 내보내는 형태 부활 차단.
+    expect(src).not.toMatch(/token\.slice\(0,\s*\d+\)/);
+    expect(src).not.toMatch(/substring\(0/);
+  });
+});
