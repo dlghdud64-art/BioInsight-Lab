@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { resolveBudgetPurchaseScopeKeys } from "@/lib/budget/purchase-scope-keys";
 import { OrganizationRole } from "@prisma/client";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { resolveOrganizationIdForMutation } from "@/lib/organizations/active-org";
 
 export async function GET(request: NextRequest) {
   try {
@@ -171,11 +172,20 @@ export async function POST(request: NextRequest) {
     // ── [RBAC] organizationId는 body에서 받지 않고 서버 세션에서 추출 ──────────
     // 예산안 생성은 VIEWER를 제외한 모든 역할이 가능 (create ≠ approve)
     // 활성화/승인/종료는 OWNER/ADMIN만 가능 (별도 API)
-    const membership = await db.organizationMember.findFirst({
-      where: { userId: session.user.id },
-      select: { organizationId: true, role: true },
-      orderBy: { createdAt: "asc" }, // 가장 먼저 가입한 조직 우선
+    /* §invite-flow Phase 2-5 — "가장 먼저 가입한 조직" 이 아니라 **활성 조직**의 멤버십.
+     * 🛑 hint 를 열지 않는다. 위 [RBAC] 결정이 "organizationId 는 body 에서 받지 않는다" 이고,
+     *    body hint 를 새로 여는 것은 그 결정을 뒤집는 것이다 — 쓰기 resolver 는 쓰되
+     *    입력은 서버 세션에서만 온다(hint 없음 → hint_forbidden 경로 자체가 없다).
+     * 역할(role)은 resolver 가 돌려주지 않으므로(id 만이 canonical 경계) 별도 조회한다. */
+    const orgResolution = await resolveOrganizationIdForMutation({
+      userId: session.user.id,
     });
+    const membership = orgResolution.ok
+      ? await db.organizationMember.findFirst({
+          where: { userId: session.user.id, organizationId: orgResolution.organizationId },
+          select: { organizationId: true, role: true },
+        })
+      : null;
 
     const isPersonalBudget = !membership; // 조직 소속 없음 → 개인 예산
 

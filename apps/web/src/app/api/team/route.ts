@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { TeamRole } from "@prisma/client";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { resolveOrganizationIdForMutation } from "@/lib/organizations/active-org";
 
 /**
  * 팀 목록 조회 및 팀 생성
@@ -106,20 +107,23 @@ export async function POST(request: NextRequest) {
      *   standalone 팀은 예산에 연결될 수 없다(조용한 실패: teamId 만 사라진다).
      *
      * 도출은 **자동**이다 — 조직 선택 UI 를 만들지 않는다(3b 실측 판정).
-     *   초대 경로가 끊겨 있어(§onboarding-blocker #7) **다중 소속이 도달 불가**이고,
-     *   3a 로 모든 사용자가 조직을 최소 1개 갖는다. 즉 후보가 실질적으로 1개다.
-     *   ⚠️ 초대가 살아나면 이 도출은 §org-scope-ambiguity 의 "선택의 거처" 를 읽도록
-     *      바꿔야 한다. 그때까지는 `orgs[0]` 이 아니라 **가장 먼저 가입한 조직**으로
-     *      결정론적으로 고른다(정렬 없는 findFirst 를 새로 만들지 않는다).
+     *   ✅ 위 ⚠️ 예고가 실행됐다(§invite-flow Phase 2-5, 2026-09-02): "초대가 살아나면
+     *      §org-scope-ambiguity 의 **선택의 거처**를 읽도록 바꿔야 한다" — 이제 그 거처
+     *      (User.activeOrganizationId)를 읽는다. 활성값이 없으면 resolver 가 createdAt asc
+     *      첫 멤버십으로 떨어져 옛 규칙과 같은 값이라 무변경 사용자 행동 변화는 0 이다.
      *
      * 조직이 0 이면 **거부한다.** 팀은 조직의 하위 단위이고, 예산·권한 회수가 모두
      * 조직을 전제한다. 조용히 standalone 을 만들면 3c(required)에서 다시 깨진다.
      */
-    const membership = await db.organizationMember.findFirst({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: "asc" },
-      select: { organizationId: true },
+    /* §invite-flow Phase 2-5 — 팀이 붙을 조직은 "가장 먼저 가입한 조직" 이 아니라 **활성 조직**.
+     * 쓰기라 mutation resolver 를 쓴다. 이 라우트는 body 로 조직을 받지 않으므로 hint 는 없다
+     * (팀 생성 요청은 이름·설명만 싣는다) — 조직 0 이면 아래 기존 거부 경로 그대로다. */
+    const orgResolution = await resolveOrganizationIdForMutation({
+      userId: session.user.id,
     });
+    const membership = orgResolution.ok
+      ? { organizationId: orgResolution.organizationId }
+      : null;
 
     if (!membership) {
       enforcement.fail();

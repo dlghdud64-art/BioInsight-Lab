@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db, isPrismaAvailable } from "@/lib/db";
 import { isDemoMode } from "@/lib/env";
+import { resolveOrganizationIdForMutation } from "@/lib/organizations/active-org";
 
 // 액티비티 로그 조회
 export async function GET(request: NextRequest) {
@@ -169,13 +170,26 @@ export async function POST(request: NextRequest) {
 
     // 액티비티 로그 생성
     // organizationId가 제공되지 않은 경우, 사용자의 첫 번째 조직을 찾기
-    let finalOrganizationId = organizationId || null;
-    if (!finalOrganizationId && session?.user?.id) {
-      const userOrg = await db.organizationMember.findFirst({
-        where: { userId: session.user.id },
-        select: { organizationId: true },
+    /* §invite-flow Phase 2-5 — 로그가 붙을 조직은 **요청이 명시한 조직**을 우선한다.
+     * 쓰기라 관대한 resolver 를 쓰지 않는다: 명시했는데 멤버십이 없으면 조용히 활성 조직에
+     * 기록하지 않고 403 이다(다른 조직의 감사 기록이 되는 것을 막는다).
+     * 명시가 없으면 활성 조직, 조직이 0 이면 **null 유지** — 기존 동작 그대로다
+     * (ActivityLog.organizationId 는 nullable 이고 개인 활동 로그가 정당하다). */
+    let finalOrganizationId: string | null = null;
+    if (session?.user?.id) {
+      const orgResolution = await resolveOrganizationIdForMutation({
+        userId: session.user.id,
+        hint: typeof organizationId === "string" ? organizationId : null,
       });
-      finalOrganizationId = userOrg?.organizationId || null;
+      if (!orgResolution.ok && orgResolution.reason === "hint_forbidden") {
+        return NextResponse.json(
+          { error: "요청한 조직에 대한 권한이 없습니다." },
+          { status: 403 },
+        );
+      }
+      finalOrganizationId = orgResolution.ok ? orgResolution.organizationId : null;
+    } else {
+      finalOrganizationId = organizationId || null;
     }
 
     const activityLog = await db.activityLog.create({
