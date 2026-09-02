@@ -55,6 +55,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ToastAction } from "@/components/ui/toast";
 import { useSearchParams } from "next/navigation";
 import { csrfFetch } from "@/lib/api-client";
+import { useActiveOrganization } from "@/hooks/use-active-organization";
 
 function SafetySpendPageContent() {
   const { data: session, status } = useSession();
@@ -88,10 +89,18 @@ function SafetySpendPageContent() {
     enabled: status === "authenticated",
   });
 
+  const { organizationId: activeOrganizationId, isLoading: activeOrgLoading } =
+    useActiveOrganization();
   const organizations = organizationsData?.organizations || [];
-  const currentOrg = organizations.find(
-    (org: any) => org.id === selectedOrgId || (!selectedOrgId && org.id)
-  ) || organizations[0];
+  /* §invite-flow Phase 2-9 — 사용자가 고르지 않았을 때의 기본값은 "첫 조직" 이 아니라
+   * **활성 조직**이다. 이 화면은 WorkspaceSwitcher 로 조직을 **표시**하므로, 보여주는 값이
+   * 서버 판정과 어긋나면 그게 곧 "화면이 보여준 조직 != 적용된 조직" 이다.
+   * 🔑 `organizations[0]` 을 fallback 으로도 남기지 않는다 — 남기면 활성 조직 로딩 중에
+   *    첫 조직이 잠깐 보였다가 바뀌는 flash 가 생기고, 그 순간 사용자는 틀린 조직을 본다.
+   *    대신 아래 로딩 가드에 `activeOrgLoading` 을 넣어 결정될 때까지 기다린다. */
+  const effectiveOrgId = selectedOrgId || activeOrganizationId || "";
+  const currentOrg =
+    organizations.find((org: any) => org.id === effectiveOrgId) ?? null;
 
   // Safety Spend 데이터 조회
   const { data: spendData, isLoading } = useQuery({
@@ -295,7 +304,7 @@ function SafetySpendPageContent() {
     }
   };
 
-  if (status === "loading") {
+  if (status === "loading" || activeOrgLoading) {
     return (
       <div className="w-full max-w-full px-3 md:px-4 py-4 md:py-8">
         <Skeleton className="h-8 w-64 mb-4" />
