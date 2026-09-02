@@ -121,7 +121,7 @@ describe("§scan-storage-deadend (6) — 존재 ≠ 유효 (3회차 오진 정�
 
   it("tokenValid 는 실호출로만 판정 — 미요청 시 null(미측정)", () => {
     const src = stripComments(read(PROBE));
-    expect(src).toMatch(/tokenValid: null, probeError: null, cached: false/);
+    expect(src).toMatch(/tokenValid: null, tokenError: null, cached: false/);
     expect(src).toMatch(/await list\(\{ limit: 1 \}\)/);
     expect(src).toMatch(/tokenValid: true/);
     expect(src).toMatch(/tokenValid: false/);
@@ -147,5 +147,23 @@ describe("§scan-storage-deadend (6) — 존재 ≠ 유효 (3회차 오진 정�
     const health = stripComments(read(HEALTH2));
     expect(health).toMatch(/blobStoreId: extractBlobStoreId\(process\.env\.BLOB_READ_WRITE_TOKEN\)/);
     expect(health).toMatch(/\.\.\.\(await probeBlobToken\(wantsStorageProbe\)\)/);
+  });
+});
+
+describe("§scan-storage-deadend (7) — health storage 응답 계약 (대조 축 이름 고정)", () => {
+  const PROBE2 = "src/lib/health/blob-token-probe.ts";
+  const HEALTH3 = "src/app/api/health/route.ts";
+
+  it("합의된 5축 이름 그대로 — provider · hasBlobToken · blobStoreId · tokenValid · tokenError", () => {
+    // 이름이 어긋나면 호영님이 대시보드와 눈으로 대조할 때 축이 안 맞는다.
+    const health = stripComments(read(HEALTH3));
+    for (const field of ["provider:", "hasBlobToken:", "blobStoreId:"]) {
+      expect(health, field).toContain(field);
+    }
+    const probe = stripComments(read(PROBE2));
+    expect(probe).toMatch(/tokenValid: boolean \| null;/);
+    expect(probe).toMatch(/tokenError: string \| null;/);
+    // 구 이름 부활 차단(계약 드리프트).
+    expect(probe).not.toMatch(/probeError/);
   });
 });

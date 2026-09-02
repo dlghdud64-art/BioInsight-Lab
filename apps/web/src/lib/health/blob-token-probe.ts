@@ -19,7 +19,7 @@ export interface BlobTokenProbeResult {
   /** true=유효 · false=거부 · null=미측정(요청 안 했거나 토큰 자체가 없음) */
   tokenValid: boolean | null;
   /** 실패 시 실제 메시지(진단축 — 지어내지 않는다) */
-  probeError: string | null;
+  tokenError: string | null;
   /** 캐시된 결과를 돌려줬는지 */
   cached: boolean;
 }
@@ -42,10 +42,10 @@ export async function probeBlobToken(
   requested: boolean,
 ): Promise<BlobTokenProbeResult> {
   if (!requested) {
-    return { tokenValid: null, probeError: null, cached: false };
+    return { tokenValid: null, tokenError: null, cached: false };
   }
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return { tokenValid: null, probeError: "token absent", cached: false };
+    return { tokenValid: null, tokenError: "token absent", cached: false };
   }
   if (cache && Date.now() - cache.at < TTL_MS) {
     return { ...cache.result, cached: true };
@@ -55,11 +55,11 @@ export async function probeBlobToken(
     // 읽기 1건만 — 쓰기 없음(진단이 데이터를 만들지 않는다).
     const { list } = await import("@vercel/blob");
     await list({ limit: 1 });
-    result = { tokenValid: true, probeError: null, cached: false };
+    result = { tokenValid: true, tokenError: null, cached: false };
   } catch (err) {
     result = {
       tokenValid: false,
-      probeError: (err as Error).message,
+      tokenError: (err as Error).message,
       cached: false,
     };
   }
