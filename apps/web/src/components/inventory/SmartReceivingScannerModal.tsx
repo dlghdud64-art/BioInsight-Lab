@@ -544,6 +544,14 @@ export function SmartReceivingScannerModal({
     verified: { lot: false, expiry: false },
     reviewed: productNameDirty,
   });
+  // §scan-storage-deadend (2026-09-02 호영님 실측) — 이미지 저장소 미설정이면
+  //   runOcrPipeline 이 업로드를 skip 해 OcrJob 이 안 생기고(jobId null),
+  //   smart-receiving 는 ocrJobId 필수(400)라 **등록이 구조적으로 불가능**하다.
+  //   인식 화면을 정상처럼 띄우고 마지막에 실패시키는 건 placeholder success 의 변형이라
+  //   사유를 미리 드러내고 등록을 잠근다. 발주 매핑 경로는 ocrJobId 를 안 쓰므로 제외.
+  const scanJobId = scanResult?.ocrMetadata?.jobId ?? null;
+  const storageBlocked = !selectedOrderId && !scanJobId;
+
   // 발주매핑(selectedOrderId)은 OCR 무관 → 게이트 제외(우회 아님).
   const criticalUnconfirmed =
     !selectedOrderId &&
@@ -832,6 +840,17 @@ export function SmartReceivingScannerModal({
             </div>
             )}
 
+            {/* §scan-storage-deadend — 저장소 미설정 시 등록 불가 사유를 **미리** 노출.
+                인식만 되고 마지막에 실패하는 구조(placeholder success 변형) 차단. */}
+            {storageBlocked && (
+              <div
+                data-testid="srm-storage-blocked"
+                className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700"
+              >
+                이미지 저장소가 설정되지 않아 입고 등록을 완료할 수 없습니다 · 인식 결과 확인만 가능합니다.
+                (스캔 원본 보관·감사 추적이 필요해 등록에는 저장소가 필요합니다)
+              </div>
+            )}
             {/* §11.375 OCR 후단 게이트 — 저신뢰도 + 미보정 시 입고 차단 사유 노출(no-op 금지). */}
             {!isMulti &&
               !selectedOrderId &&
@@ -867,8 +886,10 @@ export function SmartReceivingScannerModal({
                 data-testid="smart-receiving-submit-cta"
                 onClick={handleSubmit}
                 disabled={
+                  // §scan-storage-deadend — 저장소 미설정이면 단품·다품목 공통 차단.
+                  storageBlocked ||
                   // §scan-recognition-upgrade P2 — 후보 선택은 옵션(선택 0으로도 등록 가능).
-                  isMulti
+                  (isMulti
                     ? multiLines.every((l) => !l.include) ||
                       (!selectedOrderId &&
                         multiLines.some((l) => l.include && l.catalogNumber.trim() === "") &&
@@ -878,15 +899,17 @@ export function SmartReceivingScannerModal({
                         !productNameDirty) ||
                       criticalUnconfirmed ||
                       // §scan-cat-guard — Cat.No. 없이 신규 등록 확정 차단(override 전).
-                      (!selectedOrderId && form.catalogNumber.trim() === "" && !ackNewWithoutCat)
+                      (!selectedOrderId && form.catalogNumber.trim() === "" && !ackNewWithoutCat))
                 }
                 className="w-full h-11 min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {selectedOrderId
-                  ? "발주 입고 처리"
-                  : isMulti
-                    ? `${multiLines.filter((l) => l.include).length}개 라인 입고 등록`
-                    : "입고 등록"}
+                {storageBlocked
+                  ? "입고 등록 · 이미지 저장소 미설정"
+                  : selectedOrderId
+                    ? "발주 입고 처리"
+                    : isMulti
+                      ? `${multiLines.filter((l) => l.include).length}개 라인 입고 등록`
+                      : "입고 등록"}
                 <ArrowRight className="ml-1.5 h-4 w-4" />
               </Button>
               <Button

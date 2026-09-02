@@ -87,6 +87,17 @@ export async function GET() {
       hasDbUrl: !!dbUrl,
       hasDirectUrl: !!directUrl,
       dbUrlPrefix: dbUrl?.slice(0, 40) + "...",
+      // §scan-storage-deadend (2026-09-02) — OCR 이미지 저장소 진단.
+      //   업로드가 실패하면 OcrJob 이 안 생기고 스캔 입고 등록이 구조적으로 막힌다.
+      //   Vercel 대시보드/런타임 로그 접근 없이 원인(키 미설정 vs 토큰 부재)을 가르는 축.
+      //   기존 hasDbUrl/hasDirectUrl 과 동일 형태 — 값이 아니라 존재 여부만 노출한다.
+      storage: {
+        provider: process.env.STORAGE_PROVIDER || null,
+        hasBlobToken: !!process.env.BLOB_READ_WRITE_TOKEN,
+        ready:
+          process.env.STORAGE_PROVIDER === "vercel-blob" &&
+          !!process.env.BLOB_READ_WRITE_TOKEN,
+      },
     });
   } catch (err: any) {
     return NextResponse.json(
