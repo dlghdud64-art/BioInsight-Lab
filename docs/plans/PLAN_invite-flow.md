@@ -1,8 +1,8 @@
 # Implementation Plan: 조직 초대 흐름 완성 (§invite-flow b)
 
-- **Status:** 🚧 In Progress (Phase 0·1 완료 · Phase 2 대기)
+- **Status:** 🚧 In Progress (Phase 0·1 완료 · Phase 2 **API 축 완료** · UI 축 14곳 남음)
 - **Started:** 2026-08-31
-- **Last Updated:** 2026-08-31 (Phase 1 종결 `ecf618e4` — 클로드코드)
+- **Last Updated:** 2026-09-02 (Phase 2 API 축 0 도달 `bb4f5510` — 클로드코드)
 - ⛔ **Phase 2 착수 전 선행 조건:** operator-shell `prisma migrate deploy` 로
   `20260831230000_user_active_organization` **prod 적용**. 배포 체인은 적용하지 않는다 —
   `vercel-migrate.js` 는 ADR-002 §11.13 로 영구 NO-OP(실측 2026-08-31).
@@ -211,7 +211,19 @@ Red-Green-Refactor 엄수. 러너: 클로드코드 세션(`apps/web` vitest·tsc
    `getCurrentOrganizationId` 복사본 4개를 지우고 나서야 그 값을 핀한 센티널을 발견했다
    (전량 축 실행이 아니었으면 RED 인 채로 land 됐다). 실행 후 발견은 운이지 절차가 아니다.
 
-- Status: 🚧 진행 중 (11/37 · 래칫 API 12 · UI 14)
+🛑 **호출부 인벤토리는 경로를 좁히지 말고 전량 grep 으로 시작한다.**
+   `grep -rn '"/api/<route>"' src | grep -v __tests__` 로 열고, 거기서 줄인다.
+   2026-09-02 Phase 2-6 에서 `_workbench`·`components` 만 훑어 **8곳을 6곳으로 셌다**
+   (`lib/api/quotes-client.ts` · `components/sourcing/request-submission-work-window.tsx` 누락).
+   이번엔 결론이 같았지만, 누락된 쪽이 문제의 그 한 곳일 수 있다(Cowork QA 지적).
+
+🛑 **파일·표면 부재를 단정하기 전에 존재를 확인한다(`Test-Path`/`ls`).**
+   테스트가 전부 실패한다는 사실은 부재의 증거가 아니다 — `safeRead()` 처럼 없으면 빈 문자열을
+   돌려주는 헬퍼는 **살아 있는 파일이 바뀐 경우에도** 같은 모양으로 실패한다.
+   2026-09-02 별건 27건 1차 진단에서 이 혼동으로 "이미 없는 표면" 이라 단정했고, 실제로는
+   4파일 모두 존재했다(Cowork 정정). 부재·이동·변경은 서로 다른 사건이고 처방도 다르다.
+
+- Status: 🚧 진행 중 (**API 축 완료** · 래칫 API 0 · UI 14)
   - 선행 해소: prod 마이그레이션 적용 확인 (2026-09-01 · prod `xhid…` 61/61 · `/api/health` pending 0)
   - **2-1 `dff7b538`** — `hooks/use-permission.ts` → `useActiveOrganization()`.
     곁들여 `organization-name-prompt.tsx` 무효화 2키 추가(안 하면 조직 생성 후 권한 stale).
@@ -237,6 +249,31 @@ Red-Green-Refactor 엄수. 러너: 클로드코드 세션(`apps/web` vitest·tsc
       ⚠️ 내 1차 진단 "이미 없는 표면" 은 **틀렸다**(Cowork 정정 2026-09-02): 파일·표면 모두 존재하고,
       사라진 것은 **잠긴 요소**다. 재실측 결론 = **(나) 정당한 재설계 · 승계 교체 누락**이며
       후계 잠금이 전부 실재·GREEN 이다 → 상세는 아래 §12 Notes.
+  - **2-4 `0810c6dd`** — 읽기 6곳(analytics/dashboard · budget/predict · budget/report ·
+    data-audit-logs · recommendations ×2). hint 미개방(4곳은 명시 조직이 없을 때만 닿는 fallback,
+    2곳은 조직 파라미터 자체가 없다). 래칫 API 12 → 6.
+    · 남은 12곳을 handler 경계로 분류하니 **절반이 POST** 였다 — 규칙대로 읽기만 분리.
+  - **2-5 `af884e95` + QA 후속 `7b92d3db`** — 쓰기 3곳(activity-logs · budgets · team).
+    실패 2종 분리 유지: `hint_forbidden` → 403 · `no_organization` → **각 호출자의 기존 경로**
+    (team 400 NO_ORGANIZATION · budgets 개인 예산 · activity-logs null). 403 으로 통일하지 않았다.
+    budgets·team 은 hint 미개방(각각 [RBAC] 결정 · 입력 계약 보존) → 그 사실 자체를 센티널로 잠금.
+    · 자기 교정 2건: ① 역방향 정규식이 정당한 스코프 조회까지 삼켜 제거(래칫이 이미 소유한 사실).
+      ② **센티널이 자기 이름의 사건을 검출 못 했다**(Cowork QA) — 독립 `toMatch` 2개라
+      `status: 400` 이 2곳인 파일에서 대체 매칭됐다. 근접 결합으로 교정 + 프로브 실증.
+      4원칙 ④ 를 인용해 남을 고쳐놓고 내가 같은 형태를 냈다.
+  - **2-6 `f5085600`** — quotes POST. 조용한 승격 제거(hint 검증 실패 → 첫 조직 → **403**).
+    P2003 조회 제거(FK schema.prisma:155 로 멤버십 ⊃ 조직 행). `handlerBody()` 로 POST 한정 단언
+    — GET:480 에 `createdAt: "asc"` 가 살아 있어 파일 단위였으면 즉시 false-RED 였다.
+    ⚠️ **예방적 조치였다**(Cowork QA 정정 2026-09-02): 착수 시점 기준 hint 를 보내는 first-party
+    클라이언트 **0곳**(web POST 8 · mobile 0, `CreateQuoteInput` 에 필드 자체 없음)이라
+    그 승격은 **운영에서 발화한 적이 없다**. 코드 경로는 실재했으나 도달 불가였다.
+    **Phase 3(초대 수락)에서 실재화된다** — 없던 버그를 있었다고 읽지 말 것.
+  - **2-7 `bb4f5510`** — protocol/extract-pdf(서버 단독 · ADR-002 §11.60 Category A 로 caller 0 이
+    확정된 설계) + `enforce-plan-limit`(`resolvePlan` 조직 스코프화 + `organizationId?` 파라미터).
+    **래칫 API 축 0 도달**(정답지 22 → 0).
+    · 미해결 잔여: 호출자가 결정한 조직을 실제로 넘기려면 `enforcePlanLimit` 이 조직 해석 뒤로
+      가야 하는데 세 호출자 전부 그 반대가 **핀된 계약**이다(`pricing-refresh-p2` "401 직후" ·
+      `label-scan-quota-p2b` "OCR 비용 前"). 순서 교체는 결정 교체라 승인 대기.
   - ⚠️ 배포본 런타임 실측 미실시(콘솔·isLoading·persisted·switcher + billing 3개 + suppliers 화면) — Cowork 세션 로그인 대기.
 - 🔴 Phase 1 인벤토리 센티널 RED 22 → 0 을 목표. UI `orgs[0]` 역방향 센티널 추가(13파일에서 `orgs[0]|organizations[0]|memberships[0]` 0)
 - 🟢 API 22곳 → `resolveActiveOrganizationId` · UI 13파일 → `useActiveOrganization()`(use-permission 최우선) · workspace-switcher → PATCH + `["user-organizations"]`·`["user-org-membership"]` 무효화
@@ -301,10 +338,10 @@ Red-Green-Refactor 엄수. 러너: 클로드코드 세션(`apps/web` vitest·tsc
 
 ## 11. Progress Tracking
 
-- Overall: ~40%
-- Current phase: Phase 2 (7/37 이관 · 다음: organization-vendors 4 → 나머지 API 12 → UI 잔여 13 → switcher PATCH 배선)
+- Overall: ~55%
+- Current phase: Phase 2 (API 축 22/22 완료 · 남은 것: UI 축 14곳 → switcher PATCH 배선 → 래칫 0/0)
 - Current blocker: 없음 (prod migrate 적용 확인 완료 2026-09-01)
-- Next validation step: organization-vendors 4곳 치환 → 래칫 API 16 → 12 → 전량 축 재실측
+- Next validation step: UI 축 14곳 이관(use-permission 은 2-1 에서 완료) → 래칫 UI 14 → 0
 
 - [x] Phase 0 · [x] Phase 1 · [ ] Phase 2 · [ ] Phase 3 · [ ] Phase 4 · [ ] Phase 5
 
