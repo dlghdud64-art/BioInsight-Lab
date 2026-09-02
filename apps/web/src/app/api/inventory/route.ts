@@ -10,6 +10,7 @@ import {
 } from "@/lib/inventory/disposal-readiness";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { enforcePlanLimit, PlanLimitError, assertTrackingModeAllowed, TrackingModePlanError } from "@/lib/billing/enforce-plan-limit";
+import { resolveActiveOrganizationId } from "@/lib/organizations/active-org";
 
 // 재고 목록 조회
 export async function GET(request: NextRequest) {
@@ -204,9 +205,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    /* §invite-flow Phase 2-8 — 한도를 **호출자가 정한 조직**의 플랜으로 잰다.
+     *   auth 직후·`enforceAction`(:238) 앞이라 기존 선제 차단 배치는 그대로다. */
+    const activeOrganizationId = await resolveActiveOrganizationId({
+      userId: session.user.id,
+    });
+
     // §pricing-refresh P2 — Free 재고 품목 한도 enforce(grandfather/유료/env미설정은 통과). 초과 시 429+안내.
     try {
-      await enforcePlanLimit(session.user.id, "inventory");
+      await enforcePlanLimit(session.user.id, "inventory", activeOrganizationId);
     } catch (e) {
       if (e instanceof PlanLimitError) {
         return NextResponse.json(

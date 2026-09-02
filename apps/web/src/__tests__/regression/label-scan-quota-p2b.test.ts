@@ -56,7 +56,9 @@ describe("§pricing-enforce-p2 P2b — enforce labelScan kind", () => {
 describe("§pricing-enforce-p2 P2b — scan-label 라우트 배선", () => {
   it("enforcePlanLimit/PlanLimitError import + labelScan 선제 차단 429", () => {
     expect(SCAN).toMatch(/import \{ enforcePlanLimit, PlanLimitError \} from "@\/lib\/billing\/enforce-plan-limit"/);
-    expect(SCAN).toMatch(/enforcePlanLimit\(session\.user\.id, "labelScan"\)/);
+    /* §invite-flow Phase 2-8 승계 — 3번째 인자(조직) 허용. 보호의도는 "labelScan 한도를 잰다" 이지
+     * 인자 개수가 아니다. 아래 위치 단언(enforce < enforceAction)이 "OCR 비용 前" 을 계속 잠근다. */
+    expect(SCAN).toMatch(/enforcePlanLimit\(session\.user\.id, "labelScan"(, [A-Za-z0-9_]+)?\)/);
     expect(SCAN).toMatch(/instanceof PlanLimitError/);
     expect(SCAN).toMatch(/status:\s*429/);
   });
@@ -64,8 +66,15 @@ describe("§pricing-enforce-p2 P2b — scan-label 라우트 배선", () => {
     expect(SCAN).toMatch(/db\.labelScanEvent\.create\(\{ data: \{ userId: session\.user\.id \} \}\)/);
   });
   it("enforce 가 OCR 비용 前(enforceAction 前) 배치", () => {
-    expect(SCAN.indexOf('enforcePlanLimit(session.user.id, "labelScan")'))
-      .toBeLessThan(SCAN.indexOf("enforcement = enforceAction"));
+    /* 🛑 `indexOf(<정확한 2인자 문자열>)` 로 세면 안 된다 — 인자가 하나 늘면 **-1** 이 되고
+     *   `-1 < anything` 이라 **공허하게 통과**한다. 위치 잠금이 죽은 채 GREEN 이 뜬다.
+     *   실제로 §invite-flow Phase 2-8 에서 3번째 인자(조직)를 추가하자 그 상태가 됐다(실측).
+     *   → 정규식으로 찾고, **찾았다는 사실 자체를 먼저 단언**한다. */
+    const enforceIdx = SCAN.search(/enforcePlanLimit\(session\.user\.id, "labelScan"/);
+    const actionIdx = SCAN.indexOf("enforcement = enforceAction");
+    expect(enforceIdx).toBeGreaterThan(-1);
+    expect(actionIdx).toBeGreaterThan(-1);
+    expect(enforceIdx).toBeLessThan(actionIdx);
   });
 });
 

@@ -54,7 +54,13 @@ describe("§pricing-refresh P2 — 2곳 POST 배선(초과 429 + 안내)", () =>
       // §pricing-enforce-p2 — inventory POST가 enforce-plan-limit 에서 trackingMode 게이트(assertTrackingModeAllowed 등)도
       //   같은 import 라인에 추가 → 정확히 2개 핀이 깨짐. 보호의도(enforcePlanLimit + PlanLimitError import) 불변, 추가 import 허용.
       expect(src).toMatch(/import \{[^}]*\benforcePlanLimit\b[^}]*\bPlanLimitError\b[^}]*\} from "@\/lib\/billing\/enforce-plan-limit"/);
-      expect(src).toMatch(new RegExp(`enforcePlanLimit\\(session\\.user\\.id, "${kind}"\\)`));
+      /* §invite-flow Phase 2-8 승계 — 3번째 인자(조직) 허용.
+       *   위 import 핀이 "보호의도 불변, 추가 import 허용" 으로 이미 느슨해진 것과 같은 논리다.
+       *   보호의도는 "이 라우트가 그 kind 로 한도를 잰다" 이지 **인자 개수**가 아니다.
+       *   한도를 호출자가 정한 조직 플랜으로 재게 하려고 인자를 추가했다(헬퍼 내부 재해석 금지). */
+      expect(src).toMatch(
+        new RegExp(`enforcePlanLimit\\(session\\.user\\.id, "${kind}"(, [A-Za-z0-9_]+)?\\)`),
+      );
       expect(src).toMatch(/instanceof PlanLimitError/);
       expect(src).toMatch(/status: 429/);
     });

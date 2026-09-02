@@ -37,6 +37,7 @@ import { normalizeCas } from "@/lib/safety/cas-ghs-table";
 // §scan-reverse-match-v2 (호영님 2026-06-30) — catalogNo 미매칭 시 양방향·토큰·신뢰도 역매칭(승인형).
 //   §scan-secondary-match(matchProduct 단방향) 보정: 양방향 정규화 contains + 토큰(≥2 가드) + per-candidate 신뢰도·정렬·cap3.
 import { rankReverseCandidates, type ScoredCandidate, type ReverseMatcherDb } from "@/lib/inventory/reverse-match";
+import { resolveActiveOrganizationId } from "@/lib/organizations/active-org";
 
 export async function POST(req: NextRequest) {
   let enforcement: InlineEnforcementHandle | undefined;
@@ -46,10 +47,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
 
+    /* §invite-flow Phase 2-8 — 한도를 **호출자가 정한 조직**의 플랜으로 잰다.
+     *   헬퍼가 스스로 조직을 고르면 호출자와 다른 조직의 플랜으로 잴 수 있다(지시문).
+     *   여기 넣는 이유: auth 직후이고 `enforceAction`(:69, OCR 비용 지점)보다 **앞**이라
+     *   "OCR 비용 前 차단" 의도가 그대로 보존된다 — DB 읽기 1~3회만 는다. */
+    const activeOrganizationId = await resolveActiveOrganizationId({
+      userId: session.user.id,
+    });
+
     // §pricing-enforce-p2 — Free 라벨 스캔 월 한도(10회) enforce. OCR 비용 발생 前 차단.
     //   grandfather/유료(null)/env미설정은 통과. 초과 시 429 + 한도·사용량·업그레이드 안내.
     try {
-      await enforcePlanLimit(session.user.id, "labelScan");
+      await enforcePlanLimit(session.user.id, "labelScan", activeOrganizationId);
     } catch (e) {
       if (e instanceof PlanLimitError) {
         return NextResponse.json(

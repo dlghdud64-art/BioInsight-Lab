@@ -30,7 +30,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // §pricing-refresh P2 — Free RFQ 한도 enforce(grandfather/유료/env미설정은 통과). 초과 시 429+안내.
+    /* §pricing-refresh P2 — Free RFQ 한도 enforce(grandfather/유료/env미설정은 통과). 초과 시 429+안내.
+     *
+     * §invite-flow Phase 2-8 — **여기만 조직을 넘기지 않는다.** 다른 두 호출자(inventory ·
+     *   scan-label)는 auth 직후에 조직을 해석해 넘기지만, 이 라우트의 hint 는
+     *   `validated.organizationId`(:85, body 파싱 뒤)에서 나온다. 조직을 넘기려면 body 파싱을
+     *   여기 앞으로 당겨야 하고, 그러면 **한도 초과 사용자가 429 대신 400(스키마 오류)을 먼저**
+     *   받는 순서 변화가 생긴다 — 지금 고칠 문제가 아니다.
+     *   지금은 무해하다: hint 를 보내는 first-party 클라이언트가 0곳이라(web POST 8 · mobile 0)
+     *   **활성 조직 = 견적이 붙는 조직**이고, 헬퍼의 fallback 이 정확히 그 값을 쓴다.
+     *   🛑 Phase 3(초대 수락)에서 hint 가 실재화되면 이 등식이 깨진다 —
+     *      그때 조직 해석을 이 호출 앞으로 옮긴다(계획서 Phase 3 선행 조건에 등재). */
     try {
       await enforcePlanLimit(session.user.id, "quotes");
     } catch (e) {
