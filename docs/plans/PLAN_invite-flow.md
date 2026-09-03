@@ -350,10 +350,20 @@ Red-Green-Refactor 엄수. 러너: 클로드코드 세션(`apps/web` vitest·tsc
 
 ## 11. Progress Tracking
 
-- Overall: ~55%
-- Current phase: Phase 2 (API 축 22/22 완료 · 남은 것: UI 축 14곳 → switcher PATCH 배선 → 래칫 0/0)
+- Overall: ~60%
+- Current phase: Phase 2 (API 축 22/22 완료 · UI 축 A 6곳 완료 · 남은 것: UI 축 B 5파일 → switcher PATCH 배선 → 래칫 0/0)
 - Current blocker: 없음 (prod migrate 적용 확인 완료 2026-09-01)
-- Next validation step: UI 축 14곳 이관(use-permission 은 2-1 에서 완료) → 래칫 UI 14 → 0
+- Next validation step: UI 축 B 5파일 개별 판정 → 래칫 UI 8 → 0
+
+⛔ **switcher PATCH 배선 선행 조건 (2026-09-03 Cowork QA · 2-9 후속에서 닫음)**
+표시 화면 6곳에서 **본문은 활성 조직인데 스위처 prop 은 `selectedOrgId`** 였다(5곳).
+`selectedOrgId` 는 미선택 시 `""` 이고, 스위처는 빈 값을 받으면 자기가 `organizations[0]`
+을 세운다(`workspace-switcher.tsx` 기본값 효과) — **라벨은 첫 조직 · 데이터는 활성 조직**.
+지금은 `User.activeOrganizationId` 를 쓰는 경로가 PATCH 하나뿐이고 그 배선이 없어
+활성 = 첫 조직이라 미발화지만, **switcher PATCH 배선이 정확히 그 조건을 켠다** —
+먼저 했다면 그 커밋이 결함을 켜는 커밋이 됐다. → `active-org-switcher-display-pairing.test.ts`
+로 짝을 잠갔다(2026-09-03). 스위처 자신의 `organizations[0]` 승격 2건은 래칫에 남아 있고
+**PATCH 배선 시 제거 대상**이다.
 
 - [x] Phase 0 · [x] Phase 1 · [ ] Phase 2 · [ ] Phase 3 · [ ] Phase 4 · [ ] Phase 5
 

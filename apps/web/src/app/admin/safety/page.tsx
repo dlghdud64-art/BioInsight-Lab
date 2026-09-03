@@ -302,7 +302,7 @@ function SafetyAdminPageContent() {
                 </CardHeader>
                 <CardContent>
                   <WorkspaceSwitcher
-                    currentOrganizationId={selectedOrgId}
+                    currentOrganizationId={effectiveOrgId}
                     onOrganizationChange={setSelectedOrgId}
                     showActions={false}
                   />
