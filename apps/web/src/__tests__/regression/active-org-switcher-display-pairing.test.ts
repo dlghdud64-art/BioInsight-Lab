@@ -15,8 +15,8 @@
  * `effectiveOrgId` · `currentOrg.id` 둘 다 정당하다(둘 다 활성 조직에서 파생).
  * 금지되는 것은 **`selectedOrgId` 단독** 이다(미선택 시 "" → 스위처 자체 승격 발화).
  */
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, readdirSync } from "node:fs";
+import { join, relative } from "node:path";
 
 const REPO_ROOT = join(__dirname, "..", "..", "..");
 function read(rel: string): string {
@@ -39,9 +39,7 @@ const GROUP_A = [
  * `>` 단순 스캔은 안 된다 — `onOrganizationChange={(id: string) => {...}}` 의 화살표가
  * 걸린다. 중괄호 깊이를 세어 depth 0 에서만 태그를 닫는다.
  */
-function switcherElement(src: string): string {
-  const open = src.indexOf("<WorkspaceSwitcher");
-  if (open === -1) return "";
+function elementAt(src: string, open: number): string {
   let depth = 0;
   for (let i = open; i < src.length; i++) {
     const c = src[i];
@@ -52,8 +50,23 @@ function switcherElement(src: string): string {
   return "";
 }
 
-function switcherOrgProp(src: string): string | null {
-  const el = switcherElement(src);
+/**
+ * 🛑 하드닝 (Cowork QA 2026-09-03) — `indexOf` 는 **첫 스위처만** 본다.
+ *    한 화면이 모바일·데스크톱 변형으로 두 번 렌더하면 두 번째가 미검증으로 남는다
+ *    (`.match()` → `.matchAll()` 과 같은 형태의 결함). 전 occurrence 를 돌려준다.
+ */
+function switcherElements(src: string): string[] {
+  const out: string[] = [];
+  const re = /<WorkspaceSwitcher/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(src)) !== null) {
+    const el = elementAt(src, m.index);
+    if (el) out.push(el);
+  }
+  return out;
+}
+
+function orgPropOf(el: string): string | null {
   const m = el.match(/currentOrganizationId=\{([^}]*)\}/);
   return m ? m[1].trim() : null;
 }
@@ -69,18 +82,23 @@ describe("§invite-flow Phase 2-9 후속 — 표시 값과 데이터 값의 짝"
     );
 
     // 창이 실제로 열렸는지 먼저 단언한다 — 못 찾은 것을 통과로 읽으면 공허하다
-    const el = switcherElement(src);
-    expect(el).toMatch(/^<WorkspaceSwitcher/);
+    const els = switcherElements(src);
+    expect(els.length).toBeGreaterThan(0);
+    // 파일 안의 `<WorkspaceSwitcher` 출현 수와 파싱 성공 수가 같아야 한다
+    expect(els.length).toBe((src.match(/<WorkspaceSwitcher/g) ?? []).length);
 
-    const prop = switcherOrgProp(src);
-    expect(prop).not.toBeNull();
+    for (const el of els) {
+      expect(el).toMatch(/^<WorkspaceSwitcher/);
+      const prop = orgPropOf(el);
+      expect(prop).not.toBeNull();
 
-    // 🛑 `selectedOrgId` 단독 금지 — 미선택 시 "" 이고, 스위처가 그 빈 값을 받으면
-    //    `organizations[0]` 을 자기가 세운다(라벨 != 데이터).
-    expect(prop).not.toBe("selectedOrgId");
+      // 🛑 `selectedOrgId` 단독 금지 — 미선택 시 "" 이고, 스위처가 그 빈 값을 받으면
+      //    `organizations[0]` 을 자기가 세운다(라벨 != 데이터).
+      expect(prop).not.toBe("selectedOrgId");
 
-    // 허용: 활성 조직에서 파생된 두 형태만
-    expect(["effectiveOrgId", "currentOrg.id"]).toContain(prop);
+      // 허용: 활성 조직에서 파생된 두 형태만
+      expect(["effectiveOrgId", "currentOrg.id"]).toContain(prop);
+    }
   });
 
   it("currentOrg 는 effectiveOrgId 로 해석된다 (currentOrg.id 를 넘기는 쪽의 파생 근거)", () => {
@@ -96,5 +114,82 @@ describe("§invite-flow Phase 2-9 후속 — 표시 값과 데이터 값의 짝"
     for (const rel of GROUP_A) {
       expect(read(rel)).toMatch(/activeOrgLoading/);
     }
+  });
+
+  /**
+   * 🛑 하드닝 (Cowork QA 2026-09-03) — `GROUP_A` 는 하드코딩 목록이다.
+   *    7번째 화면이 스위처를 렌더하면 이 센티널이 **조용히 비켜간다.**
+   *    목록을 믿지 말고 소스에서 도출해 포함관계를 단언한다.
+   */
+  it("목록 표류 0 — 스위처를 렌더하는 화면은 전부 GROUP_A 안에 있다", () => {
+    const APP = join(REPO_ROOT, "src", "app");
+    const found: string[] = [];
+    (function walk(dir: string) {
+      for (const e of readdirSync(dir, { withFileTypes: true })) {
+        const full = join(dir, e.name);
+        if (e.isDirectory()) walk(full);
+        else if (/\.(tsx|ts)$/.test(e.name)) {
+          if (readFileSync(full, "utf8").includes("<WorkspaceSwitcher")) {
+            found.push(
+              relative(join(REPO_ROOT, "src"), full).replace(/\\/g, "/"),
+            );
+          }
+        }
+      }
+    })(APP);
+
+    // 도출이 실제로 돌았는지 먼저 — 0 을 "위반 없음" 으로 읽으면 공허하다
+    expect(found.length).toBeGreaterThan(0);
+    const declared = new Set(GROUP_A.map((r) => r.replace(/^src\//, "")));
+    expect(found.filter((f) => !declared.has(f))).toEqual([]);
+  });
+});
+
+/**
+ * §invite-flow Phase 2-10 — B 분류(스위처를 렌더하지 않는 화면) 이관분.
+ *
+ * B 의 판정 기준은 "표시 여부" 가 아니라 **그 값이 어디로 흘러가는가** 다
+ * (Cowork QA 2026-09-03). 표시하지 않아도 화면 데이터의 기준이거나
+ * mutation body 로 나가면 이관 대상이다.
+ */
+describe("§invite-flow Phase 2-10 — B 분류 이관분", () => {
+  it("settings/enterprise — 기준값이 활성 조직 (표시하지 않아도 데이터 기준)", () => {
+    const src = read("src/app/dashboard/settings/enterprise/page.tsx");
+    expect(src).toMatch(/useActiveOrganization\(\)/);
+    expect(src).toMatch(
+      /const effectiveOrgId = selectedOrgId \|\| activeOrganizationId \|\| ""/,
+    );
+    expect(src).toMatch(
+      /organizations\.find\(\(org: any\) => org\.id === effectiveOrgId\)/,
+    );
+    // 🛑 §sso-phantom-wiring 비활성 배선을 되살리지 않았다 (범위 밖)
+    expect(src).toMatch(/§sso-phantom-wiring/);
+  });
+
+  it("BulkImportModal — mutation body 의 조직이 활성 조직에서 파생된다", () => {
+    const src = read("src/components/inventory/BulkImportModal.tsx");
+    expect(src).toMatch(/useActiveOrganization\(\)/);
+
+    // 우선순위: 활성(권한 있으면) → 권한 있는 조직 → 활성 그대로(서버가 사유를 말함)
+    expect(src).toMatch(
+      /canImport\(activeOrg\?\.role\) \? activeOrg\?\.id : undefined[\s\S]{0,120}?importableOrg\?\.id[\s\S]{0,80}?activeOrganizationId/,
+    );
+    // OWNER 누락 회귀 0 — 구 `adminOrg` 는 role === "ADMIN" 만 봤다
+    expect(src).toMatch(/role === "ADMIN" \|\| role === "OWNER"/);
+
+    // 그 값이 실제로 body 로 나가는 경로 (표시가 아니라 쓰기라는 근거)
+    expect(src).toMatch(/"\/api\/inventory\/bulk"/);
+    expect(src).toMatch(/JSON\.stringify\(\{ organizationId, items \}\)/);
+  });
+
+  it("공유 캐시 회귀 0 — 훅의 조직 목록이 페이지들과 같은 모양이다", () => {
+    /* `["user-organizations"]` 는 10곳이 같이 쓰는 키다. 훅만 배열을 반환하면
+     * 먼저 fetch 한 쪽에 따라 한쪽이 깨진다 — 페이지 쪽은 조직 0 으로,
+     * 훅 쪽은 `organizations.find is not a function` 으로. 모양을 맞춰 잠근다. */
+    const hook = read("src/hooks/use-active-organization.ts");
+    expect(hook).toMatch(
+      /queryFn: async \(\): Promise<\{ organizations: ActiveOrganization\[\] \}>/,
+    );
+    expect(hook).toMatch(/Array\.isArray\(rawOrgs\)/);
   });
 });

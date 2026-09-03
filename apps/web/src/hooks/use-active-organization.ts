@@ -43,13 +43,24 @@ export function useActiveOrganization(): UseActiveOrganizationReturn {
   const queryClient = useQueryClient();
   const enabled = status === "authenticated";
 
+  /**
+   * 🛑 `["user-organizations"]` 는 **이 훅 전용 키가 아니다.** 같은 키로 `res.json()`
+   *    (= `{ organizations: [...] }`) 를 반환하는 useQuery 가 10곳 더 있다
+   *    (settings/* · admin/safety · safety-spend · plans · workspace-switcher ·
+   *     BulkImportModal). TanStack 은 같은 키를 **하나의 캐시 항목**으로 공유하므로
+   *    먼저 fetch 를 트리거한 observer 의 queryFn 결과가 그 항목에 들어간다.
+   *    → 훅이 배열을 반환하면 페이지 쪽 `data?.organizations` 가 `undefined` 가 되고,
+   *      페이지가 이기면 훅 쪽 `organizations.find(...)` 가 **TypeError** 로 터진다.
+   *      (후자는 실제 도달 가능하다 — `dashboard-shell` 이 모든 대시보드 화면에
+   *       `OperationalBriefPopup` → `usePermission` → 이 훅을 매단다.)
+   *    그래서 **모양을 남들과 맞춘다** — 누가 이기든 캐시 값이 같아진다.
+   */
   const orgsQuery = useQuery({
     queryKey: ["user-organizations"],
-    queryFn: async (): Promise<ActiveOrganization[]> => {
+    queryFn: async (): Promise<{ organizations: ActiveOrganization[] }> => {
       const res = await fetch("/api/organizations");
       if (!res.ok) throw new Error("Failed to fetch organizations");
-      const json = await res.json();
-      return (json.organizations ?? []) as ActiveOrganization[];
+      return (await res.json()) as { organizations: ActiveOrganization[] };
     },
     enabled,
     staleTime: 5 * 60 * 1000,
@@ -88,7 +99,13 @@ export function useActiveOrganization(): UseActiveOrganizationReturn {
     },
   });
 
-  const organizations = orgsQuery.data ?? [];
+  /* 위 주석의 공유 캐시 때문에, 읽는 쪽도 두 모양을 모두 견딘다 —
+   * 모양을 맞춰도 배포 전 캐시·다른 세션 잔여분이 배열로 남아 있을 수 있다. */
+  const rawOrgs: unknown = orgsQuery.data;
+  const organizations: ActiveOrganization[] = Array.isArray(rawOrgs)
+    ? (rawOrgs as ActiveOrganization[])
+    : ((rawOrgs as { organizations?: ActiveOrganization[] } | undefined)
+        ?.organizations ?? []);
   const organizationId = activeQuery.data?.organizationId ?? null;
 
   const organization = useMemo(() => {

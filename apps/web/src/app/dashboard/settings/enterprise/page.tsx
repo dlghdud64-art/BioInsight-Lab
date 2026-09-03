@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { csrfFetch } from "@/lib/api-client";
+import { useActiveOrganization } from "@/hooks/use-active-organization";
 
 export default function EnterpriseSettingsPage() {
   const { data: session, status } = useSession();
@@ -39,10 +40,15 @@ export default function EnterpriseSettingsPage() {
     enabled: status === "authenticated",
   });
 
+  /* §invite-flow Phase 2-10 — 이 화면은 조직을 **표시하지 않지만**(WorkspaceSwitcher 미렌더)
+   * `currentOrg` 가 화면 데이터의 기준이다. 표시 여부와 무관하게 기준값이 "첫 조직" 이면
+   * 같은 사용자가 다른 화면과 다른 조직을 보게 된다 — 2-9 에서 고친 6곳과 같은 형태다.
+   * 🛑 SSO 배선은 §sso-phantom-wiring 으로 비활성(항상 500)이다. 여기서 되살리지 않는다. */
+  const { organizationId: activeOrganizationId } = useActiveOrganization();
   const organizations = organizationsData?.organizations || [];
-  const currentOrg = selectedOrgId
-    ? organizations.find((org: any) => org.id === selectedOrgId)
-    : organizations[0];
+  const effectiveOrgId = selectedOrgId || activeOrganizationId || "";
+  const currentOrg =
+    organizations.find((org: any) => org.id === effectiveOrgId) ?? null;
 
   /**
    * SSO 설정 조회 — §sso-phantom-wiring 로 **비활성화** (2026-08-12).

@@ -122,13 +122,44 @@ const KNOWN_API_MAX: Record<string, number> = {
 };
 
 const KNOWN_UI_MAX: Record<string, number> = {
-  "app/dashboard/organizations/page.tsx": 2,
-  "app/dashboard/settings/enterprise/page.tsx": 1,
   "app/dashboard/settings/plans/page.tsx": 2,
-  "components/inventory/BulkImportModal.tsx": 1,
   "components/workspace/workspace-switcher.tsx": 2,
   /* hooks/use-permission.ts — Phase 2 치환 완료 (2026-09-01, 첫 파일). 상한에서 제거됨. */
+  /* settings/enterprise(1) · BulkImportModal(1) — Phase 2-10 이관 완료 (2026-09-03).
+   *   잠금: regression/active-org-switcher-display-pairing.test.ts */
+  /* dashboard/organizations/page.tsx(2) — **거짓 양성**. 아래 SINGLE_ORG_GUARDED 참조. */
 };
+
+/**
+ * 거짓 양성 면제 — `organizations.length === 1` 가드 **안**의 `organizations[0]`.
+ *
+ * 래칫이 잡으려는 것은 "여러 조직 중 화면이 제 나름대로 첫 번째를 고르는 자리" 다.
+ * 가드 안에서는 고를 것이 하나뿐이라 오선택 여지가 0 이고, 활성 조직으로 바꿔도
+ * **같은 값**이다. 이관 대상이 아니라 정의상 대상이 아니었다.
+ *
+ * 🛑 면제는 주장이 아니라 **검증**이다. 아래 it 이 (a) 가드가 실재하는지 (b) 파일의
+ *    `organizations[0]` 이 전부 그 가드 블록 안에 있는지 직접 센다. 가드 밖에
+ *    한 건이라도 새로 생기면 즉시 RED — 면제가 구멍이 되지 않는다.
+ */
+const SINGLE_ORG_GUARDED: Record<string, number> = {
+  "app/dashboard/organizations/page.tsx": 2,
+};
+
+/** `if (organizations.length === 1) { ... }` 블록을 중괄호 깊이로 잘라낸다. */
+function singleOrgGuardBlock(code: string): string {
+  const m = /if\s*\(\s*organizations\.length === 1\s*\)\s*\{/.exec(code);
+  if (!m) return "";
+  const start = m.index + m[0].length - 1; // 여는 `{`
+  let depth = 0;
+  for (let i = start; i < code.length; i++) {
+    if (code[i] === "{") depth++;
+    else if (code[i] === "}") {
+      depth--;
+      if (depth === 0) return code.slice(start, i + 1);
+    }
+  }
+  return "";
+}
 
 /** 파일별로 세어 상한과 비교한다. 초과·미등록 파일이 위반이다. */
 function overBudget(
@@ -165,7 +196,24 @@ describe("§invite-flow — org-scope 직접 호출 인벤토리 (래칫 · Phas
       const re = /(?:\borgs\[0\]|\borganizations\[0\]|\bmemberships\[0\])/g;
       while (re.exec(code) !== null) found.push(rel);
     }
-    expect(overBudget(found, KNOWN_UI_MAX)).toEqual([]);
+    /* 검증된 거짓 양성은 상한이 아니라 면제에서 뺀다 — 면제 자체는 아래 it 이 실측한다. */
+    expect(overBudget(found, { ...KNOWN_UI_MAX, ...SINGLE_ORG_GUARDED })).toEqual([]);
+  });
+
+  it("거짓 양성 면제는 검증된다 — 면제 파일의 orgs[0] 은 전부 length===1 가드 안", () => {
+    for (const [rel, allowed] of Object.entries(SINGLE_ORG_GUARDED)) {
+      const code = stripComments(readFileSync(join(SRC_ROOT, rel), "utf8"));
+      const total = (code.match(/\borganizations\[0\]/g) ?? []).length;
+      const block = singleOrgGuardBlock(code);
+
+      // 가드를 못 찾은 것을 통과로 읽지 않는다
+      expect(block.startsWith("{")).toBe(true);
+
+      const inside = (block.match(/\borganizations\[0\]/g) ?? []).length;
+      expect(total).toBe(allowed);
+      // 🔑 전부 가드 안 — 밖에 하나라도 생기면 여기서 즉시 RED
+      expect(inside).toBe(total);
+    }
   });
 
   it("래칫: 상한 총계는 Phase 2 진행에 따라 줄기만 한다 (현재 API 0 · UI 8)", () => {
@@ -177,7 +225,7 @@ describe("§invite-flow — org-scope 직접 호출 인벤토리 (래칫 · Phas
     expect(apiTotal).toBeLessThanOrEqual(0);
     /* UI 축은 이번 phase 에서 변화 없다 — suppliers 화면은 `orgs[0]` 을 쓰지 않아
      * 애초에 UI 인벤토리에 없었다(짝 이관 대상이었던 것은 mutation 이지 조직 선택이 아니다). */
-    expect(uiTotal).toBeLessThanOrEqual(8);
+    expect(uiTotal).toBeLessThanOrEqual(4);
   });
 
   it("§invite-flow P2 — usePermission 은 활성 조직을 읽는다 (orgs[0] 부활 시 RED)", () => {

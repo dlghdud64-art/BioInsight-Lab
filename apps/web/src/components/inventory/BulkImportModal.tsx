@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useActiveOrganization } from "@/hooks/use-active-organization";
 import { csrfFetch } from "@/lib/api-client";
 import * as XLSX from "xlsx";
 import { CloudUpload, Download, Loader2 } from "lucide-react";
@@ -84,21 +84,39 @@ export function BulkImportModal({
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  const { data: orgsData } = useQuery({
-    queryKey: ["user-organizations"],
-    queryFn: async () => {
-      const res = await fetch("/api/organizations");
-      if (!res.ok) throw new Error("Failed to fetch organizations");
-      return res.json();
-    },
-    enabled: open,
-  });
+  /**
+   * §invite-flow Phase 2-10 — B 분류 중 **유일한 mutation 표면**.
+   *
+   * 이 값은 화면에 표시되지 않는다. 대신 `/api/inventory/bulk` 의 **body 로 나간다**
+   * (`{ organizationId, items }`). 즉 "표시 안 하니 서버 판정에 맡긴다" 는 선택지가
+   * 여기엔 없다 — UI 가 조직을 명시해 보내므로 그 명시가 곧 판정이다.
+   *
+   * 기존 `organizations[0]?.id` 는 다중 소속에서 **화면 어디에도 없는 조직**으로
+   * 재고를 밀어넣을 수 있었다. 이 화면(재고)은 소속 조직 전체를 합쳐 보여주므로
+   * (`/api/inventory` GET 이 멤버십 union) 대조할 "화면의 조직" 자체가 없다.
+   * → 사용자의 canonical 현재 조직인 **활성 조직**이 기본값이 되어야 한다.
+   *
+   * 다만 라우트가 ADMIN/OWNER 만 허용한다. 그래서 순서는
+   *   ① 활성 조직에서 등록 권한이 있으면 활성 조직
+   *   ② 없으면 권한이 있는 조직(무의미한 403 회피 — Cowork QA 의 `adminOrg` 의도 승계)
+   *   ③ 그래도 없으면 활성 조직 그대로 보내 서버가 **이유를 말하게** 한다
+   *      (403 "대량 재고 등록은 조직 관리자만…" 이 422 필드 오류보다 정직하다)
+   * 🛑 ②는 기존 `adminOrg` 와 달리 **OWNER 도 센다** — 기존 판별은 `role === "ADMIN"`
+   *    만 봐서 OWNER 전용 사용자는 그대로 `organizations[0]` 으로 떨어졌다.
+   */
+  const {
+    organizationId: activeOrganizationId,
+    organizations,
+  } = useActiveOrganization();
 
-  const organizations = orgsData?.organizations || [];
-  const adminOrg = organizations.find(
-    (org: { role?: string; id?: string }) => org.role === "ADMIN"
-  );
-  const organizationId = adminOrg?.id ?? organizations[0]?.id;
+  const canImport = (role?: unknown) => role === "ADMIN" || role === "OWNER";
+  const activeOrg = organizations.find((org) => org.id === activeOrganizationId);
+  const importableOrg = organizations.find((org) => canImport(org.role));
+  const organizationId =
+    (canImport(activeOrg?.role) ? activeOrg?.id : undefined) ??
+    importableOrg?.id ??
+    activeOrganizationId ??
+    undefined;
 
   const downloadTemplate = () => {
     const ws = XLSX.utils.aoa_to_sheet([[...TEMPLATE_HEADERS]]);
