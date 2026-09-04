@@ -345,6 +345,13 @@ NEXT_DIST_DIR=.next-<트랙>  git push origin main      # 예: .next-invite · .
 `next.config.js` 의 `distDir` 이 이 env 를 읽는다. **미설정 시 `.next`** 라
 Vercel·로컬 dev 는 무변경이다. 산출물은 `.gitignore` 의 `/.next-*/` 가 받는다.
 
+⚠️ **tsc 는 빌드와 달리 자동으로 갈라지지 않는다.** `tsconfig.json` 의 `include` 가
+`.next/types/**` 만 보면, 세션별 디렉터리로 빌드한 라우트 타입을 **못 읽는다**(2026-09-04 실측).
+→ `include` 에 `.next-*/types/**/*.ts` 를 함께 넣어 뒀다.
+🛑 그래도 **tsc 수치는 다른 세션이 빌드 중일 때 불안정하다** — glob 이 잡은 파일을 상대 빌드가
+지우면 `TS6053 File not found` 가 뜨고 총계가 튄다(같은 시점 실측 424 → 29). **두 번 돌려
+같은 수가 나오는지 확인**하고, 다르면 상대 빌드가 끝난 뒤 다시 잰다.
+
 ### 2. 🛑 `git stash` 는 **자기 변경만** — 경로를 지정한다
 
 ```
