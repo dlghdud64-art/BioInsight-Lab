@@ -23,6 +23,7 @@ import { db } from "@/lib/db";
 import { randomBytes } from "crypto";
 import { OrganizationRole } from "@prisma/client";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { assertSeatAvailable, seatLimitPayload } from "@/lib/organizations/seats";
 
 // 초대 링크 생성
 export async function POST(
@@ -94,6 +95,22 @@ export async function POST(
         { error: `유효하지 않은 역할입니다. 가능한 역할: ${validRoles.join(", ")}` },
         { status: 400 }
       );
+    }
+
+    /* 🔑 좌석 게이트 — **초대 생성부터 차단한다** (호영님 판정 2026-09-04).
+     *
+     * Free 는 `maxMembers: 1` 이고 가입 시 조직이 자동 생성되므로(3a), Free 조직이 누군가를
+     * 초대하는 순간 이미 좌석이 없다 — **엣지 케이스가 아니라 기본 경로다.**
+     * 수신자가 링크를 열었다가 거절당하면 초대한 사람이 대외적으로 멋적어진다.
+     * 그 마찰을 **초대자 쪽으로 당긴다.**
+     *
+     * 실패를 "권한 없음" 으로 말하지 않는다 — 무엇을 하면 되는지까지 말한다
+     * (`seatLimitPayload` 가 문구·업그레이드 경로를 갖는다. 생성·수락이 같은 코드를 쓴다).
+     * 좌석 계산은 `assertSeatAvailable` 하나뿐이다 — 여기서 따로 세면 수락 쪽과 갈린다. */
+    const seat = await assertSeatAvailable(id);
+    if (!seat.ok) {
+      enforcement.fail();
+      return NextResponse.json(seatLimitPayload(seat), { status: 403 });
     }
 
     // 만료 일시 계산
