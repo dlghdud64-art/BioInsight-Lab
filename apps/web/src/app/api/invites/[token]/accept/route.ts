@@ -18,7 +18,7 @@
  *    여기서 초대를 만료시키면 수신자는 아무 잘못 없이 링크를 잃는다.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { Prisma, OrganizationRole } from "@prisma/client";
+import { Prisma, OrganizationRole, SubscriptionPlan } from "@prisma/client";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import {
@@ -40,10 +40,24 @@ interface InviteRow {
   revokedAt: Date | null;
 }
 
+/**
+ * 좌석 초과를 **트랜잭션 밖으로 던지는** 신호. throw 여야 Prisma 가 롤백한다.
+ * 값(payload)을 들고 나가므로 바깥에서 같은 문구로 403 을 만든다.
+ */
+class SeatLimitAbort extends Error {
+  constructor(readonly seat: { used: number; limit: number; plan: SubscriptionPlan }) {
+    super("SEAT_LIMIT");
+    this.name = "SeatLimitAbort";
+  }
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> },
 ) {
+  /* catch 에서도 필요하다 — P2002 실재 확인이 try 밖에서 이뤄진다. */
+  let racedUserId = "";
+  let racedOrganizationId = "";
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -53,6 +67,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const userId = session.user.id;
+    racedUserId = userId;
     const sessionEmail = (session.user.email ?? "").trim().toLowerCase();
     const { token } = await params;
 
@@ -75,6 +90,8 @@ export async function POST(
         { status: 404 },
       );
     }
+
+    racedOrganizationId = invite.organizationId;
 
     const status = inviteStatusOf(invite);
     if (status === "revoked" || status === "expired") {
@@ -143,18 +160,20 @@ export async function POST(
       return NextResponse.json(seatLimitPayload(preSeat), { status: 403 });
     }
 
-    let seatBlocked: { used: number; limit: number; plan: typeof preSeat.plan } | null =
-      null;
-
     const result = await db.$transaction(async (tx: Prisma.TransactionClient) => {
       /* 🔑 여기서 **다시** 센다. 사전 검사와 이 지점 사이에 다른 수락이 끼어들 수 있다.
        * `tx` 를 넘겨야 같은 트랜잭션의 시점으로 센다 — 전역 db 로 세면 재검증이 아니다. */
       const seat = await assertSeatAvailable(invite.organizationId, tx);
       if (!seat.ok) {
         /* 🛑 초대를 **소각하지 않는다** — `acceptedAt` 미기록으로 두고 트랜잭션을 되돌린다.
-         * 좌석이 생기면 같은 링크로 다시 수락할 수 있어야 한다(요건 2). */
-        seatBlocked = { used: seat.used, limit: seat.limit, plan: seat.plan };
-        return null;
+         * 좌석이 생기면 같은 링크로 다시 수락할 수 있어야 한다(요건 2).
+         *
+         * 🔑 **`return null` 이 아니라 throw 다.** Prisma interactive transaction 은
+         *    콜백이 **정상 반환하면 커밋한다** — 롤백은 throw 여야 일어난다.
+         *    지금은 이 분기 위에 쓰기가 없어 `return null` 로도 피해가 없지만, 그러면
+         *    "되돌린다" 는 주석이 **거짓**이 되고 다음 사람이 그 주석을 믿고 이 위로 쓰기를
+         *    옮긴다. 규칙을 어길 수 없게 만드는 쪽을 택한다(Cowork QA 권장 (a)). */
+        throw new SeatLimitAbort(seat);
       }
 
       const member = await tx.organizationMember.create({
@@ -206,22 +225,43 @@ export async function POST(
       return { memberId: member.id };
     });
 
-    if (seatBlocked) {
-      return NextResponse.json(seatLimitPayload(seatBlocked), { status: 403 });
-    }
-    if (!result) {
-      return NextResponse.json(
-        { error: "초대 수락에 실패했습니다." },
-        { status: 500 },
-      );
-    }
-
     return NextResponse.json({
       ok: true,
       alreadyMember: false,
       organizationId: invite.organizationId,
     });
   } catch (error) {
+    /* 좌석 초과 — 트랜잭션은 **롤백됐다**(초대는 그대로 살아 있다). */
+    if (error instanceof SeatLimitAbort) {
+      return NextResponse.json(seatLimitPayload(error.seat), { status: 403 });
+    }
+
+    /* 🛑 P2002 — **성공한 액션을 실패로 말하지 않는다** (Cowork QA 결함 1).
+     *
+     * `OrganizationMember` 에 `@@unique([userId, organizationId])` 가 있고,
+     * 위 `existingMembership` 검사와 트랜잭션 사이에 **창**이 있다. 수신자가 "수락" 을 빠르게
+     * 두 번 누르면 두 요청이 모두 `null` 을 보고, 하나가 커밋한 뒤 다른 하나가 P2002 로 죽는다.
+     * 그대로 두면 **멤버가 됐는데 실패 화면**을 본다 — placeholder success 의 거울상이다.
+     *
+     * 🔑 그렇다고 P2002 를 곧바로 성공으로 바꾸지 않는다. **실재를 다시 확인**하고 나서
+     *    멱등 응답으로 보낸다 — 확인 없이 ok 를 주면 그건 근거 없는 성공 주장이다. */
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      const raced = await db.organizationMember.findFirst({
+        where: { userId: racedUserId, organizationId: racedOrganizationId },
+        select: { id: true },
+      });
+      if (raced) {
+        return NextResponse.json({
+          ok: true,
+          alreadyMember: true,
+          organizationId: racedOrganizationId,
+        });
+      }
+    }
+
     console.error("[invites/accept/POST]", error);
     return NextResponse.json(
       { error: "초대 수락에 실패했습니다." },

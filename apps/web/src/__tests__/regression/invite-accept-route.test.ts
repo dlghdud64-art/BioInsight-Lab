@@ -13,6 +13,22 @@ const read = (...seg: string[]) =>
   readFileSync(join(WEB_ROOT, "src", ...seg), "utf8");
 
 const NL = String.fromCharCode(10);
+
+/** `{` 부터 짝이 맞는 `}` 까지 — 글자 수로 자르면 다음 블록을 먹거나 못 미친다.
+ *  (stripComments 가 주석을 공백으로 남겨 길이가 늘어나므로 고정 폭은 특히 위험하다.) */
+function blockFrom(src: string, fromIdx: number): string {
+  const open = src.indexOf("{", fromIdx);
+  if (open === -1) return "";
+  let depth = 0;
+  for (let i = open; i < src.length; i++) {
+    if (src[i] === "{") depth++;
+    else if (src[i] === "}") {
+      depth--;
+      if (depth === 0) return src.slice(open, i + 1);
+    }
+  }
+  return "";
+}
 const PREVIEW = read("app", "api", "invites", "[token]", "route.ts");
 const ACCEPT = read("app", "api", "invites", "[token]", "accept", "route.ts");
 const STATUS = read("lib", "organizations", "invite-status.ts");
@@ -110,12 +126,53 @@ describe("§invite-flow Phase 3-2 — POST 수락", () => {
     const txStart = CODE.indexOf("$transaction");
     const blockStart = CODE.indexOf("if (!seat.ok)", txStart);
     expect(blockStart).toBeGreaterThan(-1);
-    const blocked = CODE.slice(blockStart, blockStart + 400);
+    const blocked = blockFrom(CODE, blockStart);
+    expect(blocked.startsWith("{")).toBe(true);
     expect(blocked).not.toMatch(/acceptedAt/);
     expect(blocked).not.toMatch(/organizationInvite\.(update|delete)/);
-    expect(blocked).toMatch(/return null/);
+    /* 승계 (2026-09-04): `return null` → `throw`. Prisma 는 정상 반환을 **커밋**하므로
+     * 롤백을 실제로 하려면 throw 여야 한다. 보호의도(초대를 소각하지 않는다)는 불변이다. */
+    expect(blocked).toMatch(/throw new SeatLimitAbort\(seat\)/);
     // 그리고 그 사실이 403 으로 나간다
-    expect(CODE).toMatch(/seatBlocked[\s\S]{0,200}?seatLimitPayload\(seatBlocked\)[\s\S]{0,60}?status: 403/);
+    expect(CODE).toMatch(/error instanceof SeatLimitAbort[\s\S]{0,200}?status: 403/);
+  });
+
+  it("🛑 좌석 차단은 **throw** 다 — return 은 Prisma 가 커밋한다", () => {
+    /* Prisma interactive transaction 은 콜백이 정상 반환하면 **커밋**한다.
+     * 롤백은 throw 여야 일어난다. 지금은 이 분기 위에 쓰기가 없어 피해가 없지만,
+     * `return null` 로 두면 "되돌린다" 는 주석이 거짓이 되고 다음 사람이 그 주석을 믿고
+     * 이 위로 쓰기를 옮긴다. 규칙을 어길 수 없게 만든다(Cowork QA 권장 (a)). */
+    const txStart = CODE.indexOf("$transaction");
+    const blockStart = CODE.indexOf("if (!seat.ok)", txStart);
+    expect(blockStart).toBeGreaterThan(-1);
+    const blocked = blockFrom(CODE, blockStart);
+    expect(blocked.startsWith("{")).toBe(true);
+    expect(blocked).toMatch(/throw new SeatLimitAbort\(seat\)/);
+    expect(blocked).not.toMatch(/return null/);
+    // 밖에서 그 신호를 받아 403 으로 바꾼다
+    expect(CODE).toMatch(
+      /error instanceof SeatLimitAbort[\s\S]{0,200}?seatLimitPayload\(error\.seat\)[\s\S]{0,60}?status: 403/,
+    );
+  });
+
+  it("🛑 P2002 경합 — 성공한 액션을 실패로 말하지 않는다", () => {
+    /* `@@unique([userId, organizationId])` + 검사↔트랜잭션 사이의 창 때문에, "수락" 을
+     * 두 번 빠르게 누르면 두 번째가 P2002 로 죽어 **멤버가 됐는데 실패 화면**을 본다.
+     * 🔑 그렇다고 곧바로 ok 로 바꾸지 않는다 — **실재를 다시 확인**하고 멱등 응답으로 보낸다.
+     *   확인 없이 ok 를 주면 근거 없는 성공 주장이다. */
+    expect(CODE).toMatch(
+      /Prisma\.PrismaClientKnownRequestError[\s\S]{0,120}?error\.code === "P2002"/,
+    );
+    const p2002 = CODE.slice(CODE.indexOf('error.code === "P2002"'));
+    expect(p2002).toMatch(/organizationMember\.findFirst/);
+    // 확인이 **성공 응답보다 앞**이다
+    const verify = p2002.search(/organizationMember\.findFirst/);
+    const okResp = p2002.search(/alreadyMember: true/);
+    expect(verify).toBeGreaterThan(-1);
+    expect(okResp).toBeGreaterThan(-1);
+    expect(verify).toBeLessThan(okResp);
+    // 확인에 실패하면 500 으로 남는다 (성공으로 삼키지 않는다)
+    expect(p2002).toMatch(/if \(raced\)[\s\S]{0,300}?\}[\s\S]{0,200}?status: 500/);
   });
 
   it("트랜잭션이 4가지를 한 덩어리로 한다 (반쪽 성공 0)", () => {
