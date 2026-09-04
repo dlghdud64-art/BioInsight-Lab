@@ -474,6 +474,10 @@ export function SmartReceivingScannerModal({
               catalogNumber: l.catalogNumber.trim() || null,
               quantity: l.quantity,
               unit: l.unit.trim() || null,
+              // §receiving-extracted-shape (호영님 2026-09-05) — 공급사명. 명세서의 vendor 는
+              //   문서 단위라 라인마다 같다. 이걸 안 보내서 extractedData 에 brand 축이
+              //   아예 없었고, §receiving-scan-source-merge C3(공급사명 파생)가 성립하지 못했다.
+              brand: scanResult.parsed.vendor?.name?.trim() || null,
               // §scan-registration-category — 라인별 분류 전송.
               category: l.category,
               // §scan-category-touched — 그 행을 실제로 건드렸는지.

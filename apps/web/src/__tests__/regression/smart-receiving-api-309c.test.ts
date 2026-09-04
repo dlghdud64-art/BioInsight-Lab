@@ -109,7 +109,9 @@ describe("§11.309c — 분기 A (기존 inventoryId)", () => {
     const src = read(ROUTE_PATH);
     expect(src).toMatch(/inventoryRestock\.create/);
     expect(src).toMatch(/ocrJobId,/);
-    expect(src).toMatch(/extractedData:\s*confirmedData/);
+    // 승계(§receiving-extracted-shape 2026-09-05): 원본 직접 저장 → 정규화 경유.
+    //   의도(단품 근거가 confirmedData 에서 온다)는 불변.
+    expect(src).toMatch(/buildExtractedData\(\s*EXTRACTED_SHAPE\.SINGLE,\s*confirmedData/);
   });
 
   it("createAuditLog INVENTORY_RESTOCK CREATE (기존 분기)", () => {

@@ -1,8 +1,8 @@
 # Implementation Plan: 입고 리스트 스캔 입고 합류 (§receiving-scan-source-merge)
 
-- **Status:** ⏳ Pending (승인 2026-09-01 · operator 세션 착수 대기)
+- **Status:** 🟡 In Progress (Phase 0 재실측으로 게이트 통과 2026-09-05 · P1 진입)
 - **Started:** 2026-09-01
-- **Last Updated:** 2026-09-01
+- **Last Updated:** 2026-09-05
 - **선행:** §receiving-list-redesign(5d9fcbb7) · §scan-recognition-upgrade(1a3f73aa)
 - **분담:** operator = 구현·게이트·push / sandbox = 계획서·프로브·계약 대조
 
@@ -55,8 +55,18 @@
 **C2 스캔 행의 상태** — 스캔 입고는 이미 재고 반영 완료 → 항상 `완료` 행. 검수 판정 개념 없음(판정 축 부재).
   **단 COA 미첨부는 조치로 표시**(문서 보강). 이 조치는 수량·재고를 바꾸지 않는다.
 
-**C3 공급사명** — `InventoryRestock` 에 vendor 축 없음 → `extractedData` 의 파싱 결과에서 파생.
+**C3 공급사명** — `InventoryRestock` 에 vendor 축 없음 → `extractedData` 의 `brand` 에서 파생.
   없으면 `공급사 미지정`(정직 표기 · 지어내지 않는다).
+
+  🛑 **정정 (2026-09-05 실측)** — 원 문안은 "`extractedData` 의 파싱 결과에서 파생" 이었고,
+  그 안에 brand 가 있다고 **가정**했다. 실제로는 같은 컬럼에 생산자마다 다른 스키마가 들어간다:
+  단품은 `confirmedData`(brand 있음) · 다품목은 `line`(brand **없음**).
+  prod 스캔 3건의 키 = `["unit","category","quantity","productName","catalogNumber"]`.
+  ⇒ C3 는 그 상태에서 100% `공급사 미지정` 이었다. [필드명 ≠ 내용] 의 재발.
+  **조치(§receiving-extracted-shape, 2026-09-05):** brand 를 `items[]` 에 실었고,
+  네 쓰기 지점 전부 `buildExtractedData(shape, raw)` 로 정규화해
+  `shape`(SINGLE|MULTI) + 공통 보장 필드 집합을 함께 남긴다. 읽는 쪽이 스키마를 추측하지 않는다.
+  🛑 기존 3행은 소급 불가(brand null 영구) — 이 시점 이전 행은 `공급사 미지정` 이 정답이다.
 
 **C4 재고 mutation 0** — 스캔 행에서 반영 CTA 를 만들지 않는다(이미 반영됨). 이중 반영 경로 신설 금지.
 
@@ -88,7 +98,30 @@
 
 ## 7. Phases
 
-### Phase 0: Truth Lock — ⚠️ 실측 완료 (2026-09-02) · **전제 3건 미성립 → P1 진입 보류**
+### Phase 0: Truth Lock — ✅ **게이트 통과 (2026-09-05 재실측)**
+
+> 🛑 아래 2026-09-02 실측 기록은 **지우지 않는다.** 결론이 왜 바뀌었는지 추적이 끊기기 때문이다
+> (호영님 2026-09-05 · §11-b 원칙). 각 항목에 재실측 결과를 병기한다.
+
+**재실측 (2026-09-05, prod `xhidynwpkqeaojuudhsw`, read-only):**
+
+| 09-02 근거 | 09-05 재실측 | 판정 |
+| :--- | :--- | :--- |
+| lineage 전 행 null | `InventoryRestock` 5행 중 **3행에 `ocrJobId`+`extractedData`** | ✅ 해소 (선행 (가) 완료) |
+| `OcrJob` 0행 = 스캔 실사용 0회 | `OcrJob` 1행(QUOTE) · 스캔 등록 3건 실증 | ✅ 해소 |
+| 대상이 데모 시드 2행 | 시드 2행 잔존하나 **스코프로 완전 분리** | ✅ 해소 (아래) |
+
+**③ 시드 분리 — org 단일 스코프로 확정 (호영님 2026-09-05):**
+```
+시드 2행    user-bioinsight-researcher · ProductInventory.organizationId = null · ocrJobId 없음
+실데이터 3행 dlghdud64@gmail.com        · organizationId = T1(cmqp6tp920001p58egl43nd8j)
+```
+- restock 조회는 **org 단일 스코프**로 고정하고 `organizationId IS NULL` 행은 제외한다.
+- 🛑 `userId` 를 OR 로 넣으면 시드가 다시 샌다(시드의 `userId` 도 유효한 User 다).
+  스코프 조건이 하나 빠지면 경계가 사라진다 — 같은 날 `findCachedOcrJob` 에서 본 형태.
+- sentinel 로 잠근다(Phase 2).
+
+**아래는 2026-09-02 당시 기록 — 보존용:**
 - [x] supersede 표: **0건**. `buildReceivingCaseList` 호출부 = `page.tsx:78` + unit 4곳(L74·142·157·163),
   `buildReceivingCaseRow` 8곳(draft 전용 유지 시 무접촉), `receiving-list-redesign.test.ts:32` 는 이름
   문자열 매칭이라 시그니처 무관. **2번째 인자를 optional 로 두면 승계 0** (DTO 확장 시 fixture 필드
@@ -107,11 +140,12 @@
   `ReceivingDocument` 0 · `ReceivingDraft` 0 · `ProductInventory` 10.
   ⇒ 이 배치를 그대로 구현하면 **시드 2행이 `스캔 입고` 로 승격 노출**된다 — §0 부수 실측(발주 관리
   데모 시드)과 **동형 문제를 입고 리스트에 새로 만드는 것**이다.
-- ✋ Gate: **미통과.** 아래 선행 3택 중 하나를 호영님이 정한 뒤 P1 진입.
-  - (가) **lineage 쓰기 활성 먼저**(주석 해제 1~2줄 + sentinel) — 이후 스캔 1건이 실데이터를 만들고,
-    그 위에서 merge 가 의미를 가진다. C3 도 그때부터 성립. **최소 diff · 권장**
-  - (나) **prod 시드 정리 먼저** — 리스트는 0건이 되지만 정직. 발주 관리 시드와 함께 별건으로 묶는 편이 쌈
-  - (다) **merge 를 그대로 진행** — 단 시드 2행이 스캔 행으로 뜬다. 정직성 위반이라 **비권장**
+- ✋ Gate(09-02): **미통과.** 선행 3택 중 (가) 를 호영님이 채택 → 2026-09-04 완료.
+  - (가) **lineage 쓰기 활성 먼저** ✅ **완료** — `ocrJobId`·`extractedData` 를 네 생성 지점 전부에 배선
+    (`§scan-recognition-upgrade` 승계 · prod 3/3 실측).
+  - (나) prod 시드 정리 — 불요로 판명(org 스코프로 분리됨). 별건 유지.
+  - (다) 비권장 — 미채택.
+- ✋ Gate(09-05 재실측): **통과.** P1 진입.
 - Rollback: 문서만
 
 ### Phase 1: 뷰모델 union (RED → GREEN)

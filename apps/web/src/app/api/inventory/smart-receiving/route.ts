@@ -62,6 +62,8 @@ import { describeFailure } from "@/lib/api-failure-reason";
 import { resolveProductCategory } from "@/lib/inventory/product-category-options";
 // §scan-org-identity — 조직의 권위 있는 출처는 세션이다. OcrJob 의 조직 필드는 신뢰하지 않는다.
 import { resolveOrganizationIdForMutation } from "@/lib/organizations/active-org";
+// §receiving-extracted-shape — extractedData 는 생산자마다 스키마가 다르다. shape + 공통 집합으로 정규화.
+import { buildExtractedData, EXTRACTED_SHAPE } from "@/lib/inventory/receiving-extracted-data";
 // 알림 고도화 #notif-inventory-received — 입고 완료 시 INVENTORY_RECEIVED 알림(best-effort).
 import { dispatchNotificationEvent, resolveOrgRecipients } from "@/lib/notifications";
 // §11.309c-hotfix-2 — security middleware import 제거 (단순화).
@@ -295,8 +297,12 @@ export async function POST(request: NextRequest) {
                   expiryDate: expiry,
                   notes: line.notes ?? null,
                   // §11.309a lineage — 다품목은 행별 근거(line)를 남긴다. 전체 payload 복제 금지.
+                  //   §receiving-extracted-shape — 읽는 쪽이 스키마를 추측하지 않게 shape 를 함께 남긴다.
                   ocrJobId,
-                  extractedData: line as unknown as Prisma.InputJsonValue,
+                  extractedData: buildExtractedData(
+                    EXTRACTED_SHAPE.MULTI,
+                    line as unknown as Record<string, unknown>,
+                  ) as unknown as Prisma.InputJsonValue,
                 },
                 select: { id: true },
               });
@@ -359,7 +365,10 @@ export async function POST(request: NextRequest) {
                   notes: line.notes ?? null,
                   // §11.309a lineage — 다품목 신규 라인도 동일 계약.
                   ocrJobId,
-                  extractedData: line as unknown as Prisma.InputJsonValue,
+                  extractedData: buildExtractedData(
+                    EXTRACTED_SHAPE.MULTI,
+                    line as unknown as Record<string, unknown>,
+                  ) as unknown as Prisma.InputJsonValue,
                 },
                 select: { id: true },
               });
@@ -484,7 +493,10 @@ export async function POST(request: NextRequest) {
               //   구 대기 주석이 남아 세 경로 모두 미기입이었다(2026-09-02 실측).
               //   lineage 가 없으면 스캔 입고를 스캔으로 식별할 수 없다(§receiving-scan-source-merge C3).
               ocrJobId,
-              extractedData: confirmedData as unknown as Prisma.InputJsonValue,
+              extractedData: buildExtractedData(
+                EXTRACTED_SHAPE.SINGLE,
+                confirmedData as unknown as Record<string, unknown>,
+              ) as unknown as Prisma.InputJsonValue,
             },
             include: {
               user: { select: { id: true, name: true, email: true } },
@@ -645,7 +657,10 @@ export async function POST(request: NextRequest) {
             notes: confirmedData.notes ?? null,
             // §11.309a — OCR 출처 + 확인된 추출 데이터(감사 추적). 위 분기 A 와 동일 계약.
             ocrJobId,
-            extractedData: confirmedData as unknown as Prisma.InputJsonValue,
+            extractedData: buildExtractedData(
+              EXTRACTED_SHAPE.SINGLE,
+              confirmedData as unknown as Record<string, unknown>,
+            ) as unknown as Prisma.InputJsonValue,
           },
           select: { id: true },
         });

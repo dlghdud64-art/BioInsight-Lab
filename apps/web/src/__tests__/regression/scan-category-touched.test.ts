@@ -28,6 +28,21 @@ const ROUTE = "src/app/api/inventory/smart-receiving/route.ts";
 const MODAL = "src/components/inventory/SmartReceivingScannerModal.tsx";
 const OPTIONS = "src/lib/inventory/product-category-options.ts";
 
+/**
+ * `items: includedLines.map((l) => ({ … }))` 블록 전체를 잡는다.
+ * 🛑 고정 폭 슬라이스를 쓰지 않는다 — payload 에 필드가 하나 늘면 뒷 필드가 창 밖으로
+ *    밀려 **구현은 계약을 지키는데 단언만 RED** 가 된다(2026-09-05 실측: brand 추가로 2건).
+ *    그때 앵커를 갱신하면 fixture 가 구현을 따라가는 형태가 되므로, 창을 블록 단위로 연다.
+ */
+function multiItemsBlock(src: string): string {
+  const start = src.indexOf("items: includedLines.map((l) => ({");
+  if (start < 0) throw new Error("items payload 앵커를 찾지 못했다");
+  const end = src.indexOf("})),", start);
+  if (end < 0) throw new Error("items payload 닫는 자리를 찾지 못했다");
+  return src.slice(start, end);
+}
+
+
 describe("§scan-category-touched — 서버가 touched 를 판정에 쓴다", () => {
   it("resolver 가 touched 인자를 받는다 (값 단독 판정 폐기)", () => {
     const src = read(OPTIONS);
@@ -108,9 +123,7 @@ describe("§scan-category-touched — 화면이 조작을 기록한다", () => {
     const single = src.indexOf("category: form.category,");
     expect(single).toBeGreaterThan(-1);
     expect(src.slice(single, single + 260)).toMatch(/categoryTouched,/);
-    const multi = src.indexOf("items: includedLines.map((l) => ({");
-    expect(multi).toBeGreaterThan(-1);
-    expect(src.slice(multi, multi + 500)).toMatch(/categoryTouched:\s*l\.categoryTouched/);
+    expect(multiItemsBlock(src)).toMatch(/categoryTouched:\s*l\.categoryTouched/);
   });
 
   it("선채움 안내는 안 건드린 동안만 노출한다", () => {

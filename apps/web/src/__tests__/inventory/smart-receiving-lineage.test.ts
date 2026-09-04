@@ -47,10 +47,16 @@ describe("§scan-lineage (1) — restock 생성 전 경로가 ocrJobId 를 남�
 });
 
 describe("§scan-lineage (2) — 근거 값 축", () => {
-  it("단품 = confirmedData · 다품목 = line (행별 근거)", () => {
+  // 승계(§receiving-extracted-shape 2026-09-05): 구 판본은 **원본 payload 를 그대로 저장**하는
+  //   형태를 계약했다. 그게 곧 결함이었다 — 같은 컬럼에 생산자마다 다른 스키마가 들어가
+  //   읽는 쪽이 brand 유무를 추측해야 했다(C3 오판정). 이제 두 경로 모두 정규화를 거친다.
+  //   의도("근거의 출처가 경로별로 갈린다 · 전체 payload 복제 금지")는 불변이므로 그대로 잠근다.
+  it("단품 = confirmedData · 다품목 = line (행별 근거 · shape 로 구분)", () => {
     const src = stripComments(read(ROUTE));
-    expect(src).toMatch(/extractedData: confirmedData as unknown as Prisma\.InputJsonValue/);
-    expect(src).toMatch(/extractedData: line as unknown as Prisma\.InputJsonValue/);
+    expect(src).toMatch(/buildExtractedData\(\s*EXTRACTED_SHAPE\.SINGLE,\s*confirmedData as unknown as Record<string, unknown>,\s*\)/);
+    expect(src).toMatch(/buildExtractedData\(\s*EXTRACTED_SHAPE\.MULTI,\s*line as unknown as Record<string, unknown>,\s*\)/);
+    // 다품목이 confirmedData 를 복제하지 않는다(행별 근거 계약 보존).
+    expect(src).not.toMatch(/EXTRACTED_SHAPE\.MULTI,\s*confirmedData/);
   });
 });
 
