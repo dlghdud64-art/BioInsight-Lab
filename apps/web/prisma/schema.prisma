@@ -121,6 +121,9 @@ model Organization {
   /// (거처가 없어진 조직을 가리키는 dangling 상태를 DB 가 막는다).
   activeForUsers             User[]                      @relation("UserActiveOrganization")
   receivingDocuments         ReceivingDocument[] // §receiving-doc-attach-canonical
+  /// §scan-org-identity B-3 — OcrJob 백릴레이션. onDelete: Restrict (OcrJob 쪽에 선언) —
+  /// 스캔 기록이 남아 있는 조직은 지울 수 없다. 지우려면 그 기록을 먼저 처리해야 한다.
+  ocrJobs                    OcrJob[]                    @relation("OrganizationOcrJobs")
 
   @@index([name])
   @@index([plan])
@@ -3308,7 +3311,12 @@ enum OcrProvider {
 
 model OcrJob {
   id             String             @id @default(cuid())
+  // §scan-org-identity B-3 (호영님 2026-09-04) — FK 신설. 이 컬럼에 FK 가 없어서
+  //   OCR 라우트 5곳이 조직 자리에 session.user.id 를 써도 DB 가 막지 않았다.
+  //   RESTRICT: 조직을 지우려면 그 조직의 OCR 기록을 어떻게 할지 명시적으로 결정하게 한다
+  //   (CASCADE 면 InventoryRestock 의 스캔 출처가 말없이 사라진다).
   organizationId String // tenant 분리
+  organization   Organization @relation("OrganizationOcrJobs", fields: [organizationId], references: [id], onDelete: Restrict)
   userId         String // scan 실행자
   type           OcrJobType
   imageUrl       String // Vercel Blob URL (영구 저장)

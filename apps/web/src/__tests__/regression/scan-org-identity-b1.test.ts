@@ -178,3 +178,43 @@ describe("§scan-org-identity B-1 — Phase 4a 주석은 앵커임을 스스로 
     }
   });
 });
+
+describe("§scan-org-identity B-3 — OcrJob.organizationId FK (DB 층 방어)", () => {
+  it("schema 에 relation + onDelete: Restrict 가 선언돼 있다", () => {
+    const schema = read("prisma/schema.prisma");
+    const model = /^model OcrJob \{([\s\S]*?)^\}/m.exec(schema);
+    expect(model).not.toBeNull();
+    expect(model![1]).toMatch(
+      /organization\s+Organization\s+@relation\("OrganizationOcrJobs",[^)]*onDelete:\s*Restrict\)/,
+    );
+  });
+
+  it("Organization 에 백릴레이션이 있다 (양쪽 선언 필수)", () => {
+    const schema = read("prisma/schema.prisma");
+    const model = /^model Organization \{([\s\S]*?)^\}/m.exec(schema);
+    expect(model![1]).toMatch(/ocrJobs\s+OcrJob\[\]\s+@relation\("OrganizationOcrJobs"\)/);
+  });
+
+  it("마이그레이션이 FK 한 문장 · RESTRICT · additive only", () => {
+    const sql = read("prisma/migrations/20260904170000_ocrjob_organization_fk/migration.sql");
+    expect(sql).toMatch(/ADD CONSTRAINT "OcrJob_organizationId_fkey"/);
+    expect(sql).toMatch(/REFERENCES "Organization"\("id"\)/);
+    expect(sql).toMatch(/ON DELETE RESTRICT/);
+    // 🛑 CASCADE 로 바뀌면 조직 삭제 시 InventoryRestock 의 스캔 출처가 말없이 사라진다.
+    expect(sql).not.toMatch(/ON DELETE CASCADE/);
+    // 파괴적 **문장**만 막는다. 부정 단언은 SQL 주석(--)을 지운 뒤, 문장 시작 경계로 건다.
+    //   🛑 구 판본 `/DROP|ALTER COLUMN|UPDATE |DELETE FROM/` 는 `ON UPDATE CASCADE` 의
+    //      `UPDATE ` 를 잡아 자기 자신을 RED 로 만들었다(①·② 계열 — 경계 없는 부분 문자열).
+    const stmts = sql.replace(/--[^\n]*/g, "");
+    expect(stmts).not.toMatch(/^\s*(DROP|UPDATE|DELETE|TRUNCATE)/im);
+    expect(stmts).not.toMatch(/ALTER COLUMN/i);
+    // 중복 인덱스 금지 — @@index([organizationId, type]) 의 선행 컬럼으로 충분하다.
+    expect(stmts).not.toMatch(/CREATE INDEX/i);
+  });
+
+  it("회귀 0 — 기존 복합 인덱스 보존", () => {
+    const schema = read("prisma/schema.prisma");
+    const model = /^model OcrJob \{([\s\S]*?)^\}/m.exec(schema);
+    expect(model![1]).toMatch(/@@index\(\[organizationId, type\]\)/);
+  });
+});
