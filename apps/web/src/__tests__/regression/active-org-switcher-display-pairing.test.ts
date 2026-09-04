@@ -16,6 +16,7 @@
  * 금지되는 것은 **`selectedOrgId` 단독** 이다(미선택 시 "" → 스위처 자체 승격 발화).
  */
 import { readFileSync, readdirSync } from "node:fs";
+import { stripComments } from "../_helpers/em-dash-scan";
 import { join, relative } from "node:path";
 
 const REPO_ROOT = join(__dirname, "..", "..", "..");
@@ -238,6 +239,62 @@ describe("§invite-flow Phase 2-10 — B 분류 이관분", () => {
     expect(src).toMatch(
       /const selectedOrg =\s*\n?\s*organizations\.find\(\(org: any\) => org\.id === effectiveOrgId\)/,
     );
+  });
+
+  /**
+   * §invite-flow Phase 4 — 스위처 PATCH 배선.
+   * Cowork QA 가 착수 전에 짚은 3지점을 그대로 축으로 삼는다.
+   */
+  describe("Phase 4 — 스위처가 활성 조직을 서버에 영속시킨다", () => {
+    const SW = read("src/components/workspace/workspace-switcher.tsx");
+
+    it("① 자기 승격 2건이 **동시에** 사라졌다 (반쪽 생존 0)", () => {
+      const code = stripComments(SW);
+      // 승격 effect(:81) · value fallback(:109) 둘 다. 하나만 남으면 경로가 반쪽으로 산다.
+      expect(code).not.toMatch(/organizations\[0\]/);
+      expect(code).not.toMatch(/setSelectedOrgId/);
+      // 표시값은 부모가 준 값 아니면 서버의 활성 조직, 둘 뿐이다
+      expect(SW).toMatch(
+        /const displayedOrgId = currentOrganizationId \|\| activeOrganizationId \|\| ""/,
+      );
+      expect(SW).toMatch(/value=\{displayedOrgId\}/);
+    });
+
+    it("② 전환 실패는 화면을 바꾸지 않는다 (placeholder success 0)", () => {
+      /* 🛑 서버가 먼저, 화면은 그 뒤. `await` 뒤에서만 부모 state 가 움직인다 —
+       * 순서가 뒤집히면 403/500 일 때 화면은 org-B · 서버는 org-A 가 된다. */
+      expect(SW).toMatch(
+        /await setActiveOrganization\(orgId\)[\s\S]{0,400}?onOrganizationChange\(orgId\)/,
+      );
+      // 실패 경로가 사유를 말한다 (조용한 실패 0)
+      expect(SW).toMatch(
+        /catch \(error\)[\s\S]{0,300}?워크스페이스 전환 실패[\s\S]{0,300}?variant: "destructive"/,
+      );
+      // 전환 중 재입력 잠금
+      expect(SW).toMatch(/disabled=\{isSwitching\}/);
+      /* 낙관적 갱신 0 — `await` **앞** 창에서 부모 state·라우터를 건드리지 않는다.
+       * 🛑 이 단언은 처음에 `not.toMatch(/onOrganizationChange\(/)` 였고,
+       *    프로브(`onOrganizationChange?.(orgId)` 주입)를 **통과시켰다** —
+       *    optional-call `?.(` 이 그 패턴에 안 걸린다(4원칙 ① 접두사·변형 계열).
+       *    호출 형태를 세지 말고 **창 안 등장 자체**를 금지한다. 창이 좁아서 안전하다. */
+      const beforeAwait = SW.slice(
+        SW.indexOf("const handleOrganizationChange"),
+        SW.indexOf("await setActiveOrganization"),
+      );
+      expect(beforeAwait.length).toBeGreaterThan(0);
+      expect(beforeAwait).not.toMatch(/onOrganizationChange/);
+      expect(beforeAwait).not.toMatch(/router\.refresh/);
+    });
+
+    it("③ 로컬 선택 state 0 — 2-9 의 짝이 전환 후에도 성립한다", () => {
+      /* 소비 화면은 `effectiveOrgId = selectedOrgId || 활성조직` 이다.
+       * 스위처가 로컬 선택 state 를 들고 있으면 옛 값이 이겨 PATCH 가 무력화되고
+       * 표시 = 데이터 짝이 깨진다. 그래서 스위처에는 선택 state 자체를 두지 않는다. */
+      expect(stripComments(SW)).not.toMatch(/useState/);
+      expect(SW).toMatch(/useActiveOrganization\(\)/);
+      // 자체 조직 쿼리도 제거 — 공유 키 선언이 8 → 7 로 줄었다
+      expect(stripComments(SW)).not.toMatch(/queryKey: \["user-organizations"\]/);
+    });
   });
 
   it("공유 캐시 회귀 0 — 훅의 조직 목록이 페이지들과 같은 모양이다", () => {

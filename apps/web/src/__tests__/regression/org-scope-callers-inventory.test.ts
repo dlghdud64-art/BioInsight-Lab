@@ -122,7 +122,10 @@ const KNOWN_API_MAX: Record<string, number> = {
 };
 
 const KNOWN_UI_MAX: Record<string, number> = {
-  "components/workspace/workspace-switcher.tsx": 2,
+  /* workspace-switcher(2) — Phase 4 이관 완료 (2026-09-04). 상한에서 제거됨.
+   *   :81 자기 승격 effect · :109 value fallback 이 **동시에** 사라졌다.
+   *   하나만 남으면 승격 경로가 반쪽으로 살아 있다(Cowork QA 착수 전 확인 1).
+   *   잠금: regression/active-org-switcher-display-pairing.test.ts */
   /* settings/plans(2) — Phase 2-11 이관 완료 (2026-09-03). 상한에서 제거됨.
    *   결제 표면이라 표시(Select value)와 결제 경로가 같은 심볼임을 함께 잠갔다:
    *   regression/active-org-switcher-display-pairing.test.ts */
@@ -227,7 +230,9 @@ describe("§invite-flow — org-scope 직접 호출 인벤토리 (래칫 · Phas
     expect(apiTotal).toBeLessThanOrEqual(0);
     /* UI 축은 이번 phase 에서 변화 없다 — suppliers 화면은 `orgs[0]` 을 쓰지 않아
      * 애초에 UI 인벤토리에 없었다(짝 이관 대상이었던 것은 mutation 이지 조직 선택이 아니다). */
-    expect(uiTotal).toBeLessThanOrEqual(2);
+    /* 🎯 UI 축 0 도달 (2026-09-04, Phase 4). 이제 위 두 단언은 면제(가드 안 거짓 양성)를
+     * 뺀 **"직접 호출 0"** 게이트 그대로다 — 새 `orgs[0]` 은 파일 불문 즉시 RED. */
+    expect(uiTotal).toBeLessThanOrEqual(0);
   });
 
   it("§invite-flow P2 — usePermission 은 활성 조직을 읽는다 (orgs[0] 부활 시 RED)", () => {

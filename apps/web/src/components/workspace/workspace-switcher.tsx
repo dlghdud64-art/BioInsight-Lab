@@ -1,7 +1,6 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import {
   Select,
@@ -12,10 +11,10 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Building2, Users, CreditCard, Info } from "lucide-react";
-import { useState, useEffect } from "react";
 import { OrganizationRole } from "@prisma/client";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { useActiveOrganization } from "@/hooks/use-active-organization";
 
 interface WorkspaceSwitcherProps {
   currentOrganizationId?: string;
@@ -31,27 +30,41 @@ export function WorkspaceSwitcher({
   const { data: session, status } = useSession();
   const router = useRouter();
   const { toast } = useToast();
-  const [selectedOrgId, setSelectedOrgId] = useState<string>(currentOrganizationId || "");
 
-  // 사용자의 조직 목록 조회
-  const { data: organizationsData, isLoading } = useQuery({
-    queryKey: ["user-organizations"],
-    queryFn: async () => {
-      const response = await fetch("/api/organizations");
-      if (!response.ok) throw new Error("Failed to fetch organizations");
-      return response.json();
-    },
-    enabled: status === "authenticated",
-  });
+  /**
+   * §invite-flow Phase 4 — 스위처가 활성 조직을 **서버에 영속**시킨다.
+   *
+   * 이전에는 이 컴포넌트가 (a) 자체 조직 쿼리 (b) 로컬 `selectedOrgId` (c) 값이 비면
+   * `organizations[0]` 자기 승격 — 셋을 갖고 있었다. 그래서 표시가 서버 판정과
+   * 무관하게 움직일 수 있었고, 전환은 어디에도 저장되지 않았다(새로고침하면 원복).
+   *
+   * 🛑 **로컬 선택 state 를 두지 않는다.** 그게 이 트랙의 위험 지점이다 —
+   *    로컬 값이 남아 있으면 소비 화면의 `effectiveOrgId = selectedOrgId || 활성조직`
+   *    에서 옛 값이 이겨 PATCH 가 무력화되고, 2-9 에서 잠근 짝(표시 = 데이터)이 깨진다.
+   *    표시값은 **부모가 준 값 아니면 서버의 활성 조직** 둘 뿐이다.
+   */
+  const {
+    organizations,
+    organizationId: activeOrganizationId,
+    isLoading,
+    setActiveOrganization,
+    isSwitching,
+  } = useActiveOrganization();
 
-  const organizations = organizationsData?.organizations || [];
+  const displayedOrgId = currentOrganizationId || activeOrganizationId || "";
 
   // 현재 선택된 조직 정보
-  const currentOrg = organizations.find((org: any) => org.id === selectedOrgId || org.id === currentOrganizationId);
+  const currentOrg = organizations.find((org: any) => org.id === displayedOrgId);
   
   // 현재 사용자의 역할 확인
-  const currentMembership = currentOrg?.members?.find(
-    (m: any) => m.userId === session?.user?.id
+  //   훅의 `ActiveOrganization` 은 인덱스 시그니처가 `unknown` 이라 `members` 가 `{}` 로
+  //   좁혀진다. `/api/organizations` 응답에는 실재하므로 이 지점에서만 형태를 명시한다.
+  const orgMembers = (currentOrg?.members ?? []) as Array<{
+    userId?: string;
+    role?: OrganizationRole;
+  }>;
+  const currentMembership = orgMembers.find(
+    (m) => m.userId === session?.user?.id
   );
   const userRole = currentMembership?.role || null;
   // §team-org-role-model Phase 1 **누락분** (2026-08-12) — OWNER 추가. 동작 확대만.
@@ -62,25 +75,35 @@ export function WorkspaceSwitcher({
     userRole === OrganizationRole.OWNER || userRole === OrganizationRole.ADMIN;
   const isMember = userRole !== null && !isAdmin;
 
-  // 조직 변경 핸들러
-  const handleOrganizationChange = (orgId: string) => {
-    setSelectedOrgId(orgId);
-    if (onOrganizationChange) {
-      onOrganizationChange(orgId);
-    } else {
-      // 기본 동작: URL 파라미터 업데이트 또는 상태 저장
-      router.refresh();
+  /**
+   * 조직 변경 — **서버가 먼저**, 화면은 그 뒤.
+   *
+   * 🛑 낙관적 갱신을 하지 않는다. 먼저 화면을 바꾸고 PATCH 가 403/500 으로 실패하면
+   *    화면은 org-B 를 보여주는데 서버는 org-A 인 상태가 된다 — placeholder success 다.
+   *    실패 시에는 표시값을 **건드리지 않고** 사유만 말한다(활성 조직은 서버 값 그대로).
+   */
+  const handleOrganizationChange = async (orgId: string) => {
+    if (orgId === displayedOrgId) return;
+    try {
+      await setActiveOrganization(orgId);
+      // 여기부터는 서버가 저장을 확인해 준 뒤다. 훅이 활성 조직·목록 캐시를 무효화하므로
+      // 부모의 로컬 state 도 같은 값으로 맞춰 준다(짝 유지).
+      if (onOrganizationChange) {
+        onOrganizationChange(orgId);
+      } else {
+        router.refresh();
+      }
+    } catch (error) {
+      toast({
+        title: "워크스페이스 전환 실패",
+        description:
+          error instanceof Error
+            ? error.message
+            : "활성 조직을 저장하지 못했습니다.",
+        variant: "destructive",
+      });
     }
   };
-
-  useEffect(() => {
-    if (currentOrganizationId && currentOrganizationId !== selectedOrgId) {
-      setSelectedOrgId(currentOrganizationId);
-    } else if (!selectedOrgId && organizations.length > 0) {
-      // 기본값 설정
-      setSelectedOrgId(organizations[0].id);
-    }
-  }, [currentOrganizationId, organizations]);
 
   if (status === "loading" || isLoading) {
     return (
@@ -106,8 +129,9 @@ export function WorkspaceSwitcher({
   return (
     <div className="flex items-center gap-2">
       <Select
-        value={selectedOrgId || currentOrganizationId || organizations[0]?.id || ""}
+        value={displayedOrgId}
         onValueChange={handleOrganizationChange}
+        disabled={isSwitching}
       >
         <SelectTrigger className="w-[180px] md:w-[220px]">
           <Building2 className="h-4 w-4 mr-2 text-slate-500" />

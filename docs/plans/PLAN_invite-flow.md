@@ -350,11 +350,20 @@ Red-Green-Refactor 엄수. 러너: 클로드코드 세션(`apps/web` vitest·tsc
 
 ## 11. Progress Tracking
 
-- Overall: ~68%
-- Current phase: Phase 2 (API 축 22/22 · UI 축 A 6곳 · UI 축 B 5건 판정 완료 —
-  남은 것: switcher PATCH 배선 하나 → 래칫 0/0)
+- Overall: ~75%
+- Current phase: **Phase 2 종료 — 래칫 API 0 · UI 0 도달** (2026-09-04).
+  스위처 PATCH 배선까지 완료. 다음은 Phase 3(수락 흐름 + 좌석 게이트).
 - Current blocker: 없음 (prod migrate 적용 확인 완료 2026-09-01)
-- Next validation step: switcher PATCH 배선 → 래칫 UI 2 → 0
+- Next validation step: Phase 3 선행 조건 2건(위 §Phase 3) 처리 후 수락 흐름 착수
+
+**스위처 PATCH 배선 (2026-09-04)** — Cowork QA 가 착수 전 짚은 3지점을 축으로 삼았다.
+1. `:81` 자기 승격 effect · `:109` value fallback 이 **동시에** 제거됐다(반쪽 생존 0).
+2. 전환 실패(403/500)는 화면을 바꾸지 않는다 — **서버가 먼저, 화면은 그 뒤**.
+   `await setActiveOrganization()` 뒤에서만 부모 state 가 움직이고, 실패는 사유를 말한다.
+3. 스위처에 **로컬 선택 state 를 두지 않는다.** 소비 화면이
+   `effectiveOrgId = selectedOrgId || 활성조직` 이므로 로컬 값이 남으면 옛 값이 이겨
+   PATCH 가 무력화되고 2-9 의 짝이 깨진다 — 이게 Phase 4 의 진짜 위험 지점이었다.
+자체 조직 쿼리도 훅으로 흡수돼 공유 키 선언이 **8 → 7** 로 줄었다(공용 훅 후속의 첫 감소).
 
 **UI 축 B 판정 결과 (2026-09-03)** — 기준은 "표시 여부" 가 아니라 **그 값이 어디로
 흘러가는가** 다(Cowork QA 정정). 표시하지 않아도 화면 데이터의 기준이거나 mutation
