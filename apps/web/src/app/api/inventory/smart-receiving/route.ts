@@ -53,6 +53,8 @@ import { db } from "@/lib/db";
 import { buildProductHazardFields } from "@/lib/safety/product-hazard-fields";
 import { Prisma, ProductCategory } from "@prisma/client";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
+// §scan-registration-reason — 500 응답에 사유를 실어 보낸다(침묵 금지).
+import { describeFailure } from "@/lib/api-failure-reason";
 // 알림 고도화 #notif-inventory-received — 입고 완료 시 INVENTORY_RECEIVED 알림(best-effort).
 import { dispatchNotificationEvent, resolveOrgRecipients } from "@/lib/notifications";
 // §11.309c-hotfix-2 — security middleware import 제거 (단순화).
@@ -663,8 +665,11 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("[SmartReceiving/POST]", error);
+    // §scan-registration-reason (호영님 2026-09-04) — 사유 없는 500 은 같은 자리로 돌아온다.
+    //   고정 문구만 반환하던 탓에 존재하지 않는 enum 값이 prod 에서 완전히 침묵했다
+    //   (신규 품목 등록 100% 실패 · 브라우저에서 판별 불가). 스캔 차단 skipReason 과 동일 계약.
     return NextResponse.json(
-      { error: "스마트 입고 처리에 실패했습니다." },
+      { error: "스마트 입고 처리에 실패했습니다.", failReason: describeFailure(error) },
       { status: 500 },
     );
   }

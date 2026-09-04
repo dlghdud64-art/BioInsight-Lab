@@ -84,6 +84,15 @@ interface SmartReceivingApiResponse {
   quantity?: number;
   isNew?: boolean;
   error?: string;
+  // §scan-registration-reason (호영님 2026-09-04) — 500 의 실제 사유. 고정 문구만 띄우던 탓에
+  //   존재하지 않는 enum 값이 prod 에서 침묵했다. 스캔 차단 skipReason 과 동일 계약.
+  failReason?: string | null;
+}
+
+/** 실패 문구에 서버가 실어 보낸 사유를 붙인다. 사유가 없으면 문구만(지어내지 않는다). */
+function withFailReason(message: string, failReason?: string | null): string {
+  const reason = typeof failReason === "string" ? failReason.trim() : "";
+  return reason ? `${message} · ${reason}` : message;
 }
 
 /* ── 사용자 확인 form state (Product + Restock 합쳐서 single form) ── */
@@ -440,7 +449,7 @@ export function SmartReceivingScannerModal({
         });
         const data = await response.json();
         if (!response.ok || data.error) {
-          throw new Error(data.error || "다품목 입고 등록 실패");
+          throw new Error(withFailReason(data.error || "다품목 입고 등록 실패", data.failReason));
         }
         onReceivingRegistered?.({ isNew: true });
         toast.success(`${data.count ?? includedLines.length}개 라인 입고 등록 완료`);
@@ -520,7 +529,7 @@ export function SmartReceivingScannerModal({
       });
       const data: SmartReceivingApiResponse = await response.json();
       if (!response.ok || data.error) {
-        throw new Error(data.error || "입고 등록 실패");
+        throw new Error(withFailReason(data.error || "입고 등록 실패", data.failReason));
       }
       onReceivingRegistered?.(data);
       toast.success(
@@ -964,7 +973,11 @@ export function SmartReceivingScannerModal({
           <div className="flex flex-col items-center justify-center py-10 space-y-3 px-4">
             <AlertTriangle className="h-10 w-10 text-rose-600" />
             <p className="text-sm font-semibold text-slate-900">오류 발생</p>
-            <p className="text-xs text-slate-600 text-center leading-relaxed">
+            {/* §scan-registration-reason — 서버가 실어 보낸 사유를 그대로 노출(침묵 금지). */}
+            <p
+              data-testid="smart-receiving-error-reason"
+              className="text-xs text-slate-600 text-center leading-relaxed break-words max-w-full"
+            >
               {errorMessage ?? "알 수 없는 오류"}
             </p>
             <div className="flex gap-2 pt-2">
