@@ -417,7 +417,19 @@ Phase 2-10 에서 모양을 정렬하고 읽는 쪽 방어를 넣었지만 그�
 로 짝을 잠갔다(2026-09-03). 스위처 자신의 `organizations[0]` 승격 2건은 래칫에 남아 있고
 **PATCH 배선 시 제거 대상**이다.
 
-- [x] Phase 0 · [x] Phase 1 · [ ] Phase 2 · [ ] Phase 3 · [ ] Phase 4 · [ ] Phase 5
+- [x] Phase 0 · [x] Phase 1 · [x] Phase 2 · [x] Phase 3 · [x] Phase 4(진입점 해제) · [ ] Phase 5
+
+⏳ **Phase 4 잔여 (별도 묶음)**
+- `settings/workspace` 초대 카드 복원 — pairing I1·I2 가 지킨다. **메일 발송이 선행**이다
+  (카드는 링크 복사 흐름인데, 조직 상세와 달리 그 화면은 링크를 남길 자리가 없다).
+- 메일 템플릿 `lib/email/org-invite-template.ts` · 재발송 라우트 `.../invites/[inviteId]/resend`.
+  🔑 재발송 버튼은 지금 **도달 불가**다 — `status === "Pending"` 뒤에 있고 그 값의 생산자가
+  0곳이다(2026-09-05 실측). 초대 대기 축을 `OrganizationInvite` 로 옮기는 순간 도달 가능해지므로
+  **라우트를 그 묶음에서 함께** 만든다(dead-end-a 승계 단언이 알린다).
+- 초대 대기 KPI·필터 칩·탭을 `OrganizationInvite` 파생으로 (멤버 `Pending` 축 제거).
+- ⏳ 조직 정책 화면 안내 한 줄 — `adminOnlyInvite: false` 일 때
+  "일반 멤버도 초대할 수 있습니다 · 수락되면 좌석을 사용합니다"(Cowork QA 제안, 이번 범위 밖).
+  좌석 게이트 자체는 역할과 무관하다(`seats.ts` 에 role 참조 0 — 실측 확인).
 
 ## 11-a. 선행 부채 — 플랜 출처가 둘 (Phase 3-1 이 새 의존을 걸었다)
 
