@@ -15,6 +15,7 @@
 
 # next.js
 /.next/
+/.next-*/  # 세션별 빌드 산출물 (NEXT_DIST_DIR)
 /out/
 
 # production

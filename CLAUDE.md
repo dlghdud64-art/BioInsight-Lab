@@ -328,6 +328,55 @@ fixture 안의 필드는 **지위가 다르다.** 섞으면 게이트가 스스�
 
 ---
 
+## 병렬 세션 — 같은 워킹 카피를 두 트랙이 나눠 쓸 때
+
+두 Claude 세션이 `C:\Users\young\ai-biocompare` 를 동시에 쓴다. 실측 사고 2건이
+있었고, 원인이 서로 다르므로 처방도 따로다.
+
+### 1. 빌드 산출물 경합 — 세션별 `NEXT_DIST_DIR`
+
+pre-push hook 이 `npm run build` 를 돌리는데, 두 세션이 같은 `.next` 를 쓰면
+서로의 manifest 를 지워 ENOENT 로 죽는다(2026-09 실측 **5회+**).
+
+```
+NEXT_DIST_DIR=.next-<트랙>  git push origin main      # 예: .next-invite · .next-scan
+```
+
+`next.config.js` 의 `distDir` 이 이 env 를 읽는다. **미설정 시 `.next`** 라
+Vercel·로컬 dev 는 무변경이다. 산출물은 `.gitignore` 의 `/.next-*/` 가 받는다.
+
+### 2. 🛑 `git stash` 는 **자기 변경만** — 경로를 지정한다
+
+```
+✅ git stash push -u -- <내가 건드린 경로만>
+❌ git stash            # 남의 세션 미커밋 변경까지 통째로 밀린다
+```
+
+2026-09-04 실측: 한 세션이 커밋 전 무인자 `stash` 를 돌려 다른 세션의 미커밋
+작업분(소스 5 + 계획서)이 워킹트리에서 사라졌다. **유실은 아니다** —
+`git stash list` → `git stash show --stat` 로 찾고, 남의 파일이 섞인 stash 는
+`git checkout "stash@{N}" -- <내 경로만>` 으로 경로 지정 복원한다.
+복원 후 HEAD 가 옮겨졌으면 **게이트를 새 HEAD 기준으로 다시 실측**한다(옛 수치 무효).
+
+### 3. worktree — 허용되나 이 레포에서는 채택하지 않는다
+
+2026-09-04 호영님이 기존 "worktree 사용 금지" 를 **해제**했다(근거: 위 사고 2건).
+그러나 실측 결과 이 레포에서는 worktree 가 두 사고를 푸는 수단이 아니다:
+
+- git 은 **같은 브랜치를 두 worktree 에 체크아웃하지 못한다** → 트랙 브랜치가 강제되고,
+  🛑 **트랙 브랜치는 Vercel main 자동 배포에 반영되지 않는다** —
+  그게 애초에 금지 규칙이 섰던 원래 이유다(혼선 발생 이력).
+- 공용 파일(`package-lock.json` · migration manifest · `CLAUDE.md` · `docs/plans/`)의
+  겹침은 그대로다. stash 사고가 **머지 충돌로 자리만 옮긴다.**
+- 새 worktree 에는 `node_modules` · `.env` 가 없다(둘 다 gitignore) → 트랙마다 재설치가
+  붙는데, **sandbox 공유 node_modules 설치 금지** 조항과 정면으로 걸린다.
+
+→ 위 1·2 로 두 사고를 닫는다. 레포 구조·브랜치 전략 변경 0.
+   **main 직접 커밋·푸시 흐름은 그대로 유지한다.**
+   금지 해제는 기록으로 남긴다 — 나중에 배포 파이프라인이 바뀌면 재검토 대상이다.
+
+---
+
 ## Sync Pattern — sandbox ↔ 호영님 환경
 
 - 호영님 환경: `C:\Users\young\ai-biocompare`

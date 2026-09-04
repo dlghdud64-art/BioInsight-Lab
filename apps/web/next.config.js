@@ -2,6 +2,12 @@ const path = require('path');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // §parallel-session-isolation (2026-09-04) — 빌드 산출물 디렉터리를 세션별로 가른다.
+  //   같은 워킹 카피에서 두 세션이 동시에 `npm run build`(pre-push hook)를 돌리면
+  //   서로의 `.next` manifest 를 지워 ENOENT 로 죽는다(2026-09 실측 5회+).
+  //   각 세션이 `NEXT_DIST_DIR=.next-<트랙>` 을 붙여 push 하면 경합이 사라진다.
+  //   기본값은 `.next` 라 Vercel·로컬 dev 는 무변경이다(env 미설정 시 동작 동일).
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   reactStrictMode: true,
   swcMinify: false, // SWC minifier가 radix-ui + 대규모 client component에서 TDZ 발생 → terser 사용
   generateBuildId: () => `v${Date.now()}`,
