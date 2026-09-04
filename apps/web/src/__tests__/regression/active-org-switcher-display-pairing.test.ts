@@ -224,6 +224,20 @@ describe("§invite-flow Phase 2-10 — B 분류 이관분", () => {
 
     // 활성 조직 확정까지 기다린다 (빈 기준값이 한 프레임 뜨지 않게)
     expect(src).toMatch(/if \(orgsLoading \|\| activeOrgLoading\)/);
+
+    /* 🛑 실제 **과금 지점** (Cowork QA 2026-09-04 — 조건 2 범위 확대).
+     * 구독 GET 은 조회일 뿐이고 돈이 나가는 곳은 `CheckoutDialog` 다.
+     * 위 부정 단언은 `value={...}` 패턴만 봐서 여기를 `selectedOrgId` 로
+     * 되돌려도 GREEN 이었다 — 잠금이 표시·조회에서 멈춰 있었다. */
+    expect(src).toMatch(
+      /<CheckoutDialog[\s\S]{0,400}?organizationId=\{selectedOrg\.id\}/,
+    );
+    /* 🔑 그리고 `selectedOrg.id` 가 `effectiveOrgId` 파생이라는 **연결**을 함께 잠근다.
+     * 위 한 줄만 두면 `selectedOrg` 정의가 바뀌는 순간 공허해진다 —
+     * 과금 대상이 다른 값으로 옮겨가도 통과한다. */
+    expect(src).toMatch(
+      /const selectedOrg =\s*\n?\s*organizations\.find\(\(org: any\) => org\.id === effectiveOrgId\)/,
+    );
   });
 
   it("공유 캐시 회귀 0 — 훅의 조직 목록이 페이지들과 같은 모양이다", () => {
