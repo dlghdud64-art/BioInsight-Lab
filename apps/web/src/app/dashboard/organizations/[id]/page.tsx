@@ -127,9 +127,22 @@ interface Member {
  * 처방: 진입점 3곳(헤더 멤버 초대 · 승인·초대 탭 새 초대 · 멤버 탭 첫 멤버 초대하기)을
  *   **disabled + 사유** 로 둔다. 모달·mutation 코드는 지우지 않는다 — b 트랙(수락 화면 +
  *   OrganizationMember 생성 + 좌석 게이트)이 서면 이 플래그 하나로 복원한다.
- *   🛑 b 없이 이 플래그를 true 로 올리면 dead button 이 그대로 되살아난다. */
-const INVITE_AVAILABLE = false;
-const INVITE_UNAVAILABLE_REASON = "초대 수락 화면 준비 중입니다. 초대 기능은 곧 열립니다.";
+ *   🛑 b 없이 이 플래그를 true 로 올리면 dead button 이 그대로 되살아난다.
+ *
+ * ✅ **해제 (2026-09-05, §invite-flow Phase 4).** b 트랙 3전제가 모두 섰다:
+ *   · 수락 화면 `app/invite/[token]/page.tsx` (Phase 3-3)
+ *   · `OrganizationMember` 생성 = `api/invites/[token]/accept` 트랜잭션 (Phase 3-2)
+ *   · 좌석 게이트 `lib/organizations/seats.ts` — 생성·수락 공용 (Phase 3-1)
+ *   그리고 모달이 부르던 **dead 라우트(`POST /members`, 핸들러 0)를 `/invites` 로 옮겼다**
+ *   — 플래그만 올리고 배선을 안 옮겼으면 dead button 이 그대로 살아났을 자리다.
+ *
+ *   🔑 재발송 버튼은 **켜지지 않는다.** `/members/resend-invite` 는 라우트 파일 자체가 없지만,
+ *   그 버튼은 `rawMember.status === "Pending"` 뒤에 있고 **그 값의 생산자가 0곳**이다
+ *   (전량 grep 2026-09-05). 즉 이 플래그와 무관하게 도달 불가다 — 근거 ②는 유효하고,
+ *   초대 대기 축을 `OrganizationInvite` 로 옮기는 묶음에서 함께 배선한다.
+ *
+ *   ⚠️ 메일 발송은 아직 없다. 생성 응답의 `inviteUrl` 을 **화면에 남겨** 관리자가 복사·전달한다
+ *   — 수락 화면이 실재하므로 그 링크는 끝까지 이어진다(dead link 아님). */
 
 export default function OrganizationDetailPage({ params }: { params: { id: string } }) {
   const { data: session } = useSession();
@@ -704,8 +717,6 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                     초대 관리    → KPI "초대 대기" 카드가 승인·초대 탭 직행 (화면 내 정보 중복 제거)
                     플랜/좌석 보기 → KPI 4번째 카드에 흡수(게이지 + 변경 링크) */}
               <Button
-                disabled={!INVITE_AVAILABLE}
-                title={INVITE_AVAILABLE ? undefined : INVITE_UNAVAILABLE_REASON}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
                 onClick={() => setInviteModalOpen(true)}
               >
@@ -720,9 +731,6 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                 <ShieldCheck className="h-4 w-4 mr-2" />
                 권한 검토
               </Button>
-              {!INVITE_AVAILABLE && (
-                <p className="basis-full text-right text-[11px] text-slate-400">{INVITE_UNAVAILABLE_REASON}</p>
-              )}
             </>
           )}
         </div>
@@ -1069,17 +1077,12 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                   {isAdmin && teamMembers.length === 0 && (
                     <>
                       <Button
-                        disabled={!INVITE_AVAILABLE}
-                        title={INVITE_AVAILABLE ? undefined : INVITE_UNAVAILABLE_REASON}
                         className="bg-blue-600 hover:bg-blue-700"
                         onClick={() => setInviteModalOpen(true)}
                       >
                         <UserPlus className="h-4 w-4 mr-2" />
                         첫 멤버 초대하기
                       </Button>
-                      {!INVITE_AVAILABLE && (
-                        <p className="mt-2 text-[11px] text-slate-400">{INVITE_UNAVAILABLE_REASON}</p>
-                      )}
                     </>
                   )}
                 </CardContent>
@@ -1239,15 +1242,10 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                   <p className="flex items-center gap-2 text-sm text-slate-500">
                     <Mail className="h-4 w-4 text-slate-400" />
                     초대 대기 없음
-                    {!INVITE_AVAILABLE && (
-                      <span className="text-[11px] text-slate-400">· {INVITE_UNAVAILABLE_REASON}</span>
-                    )}
                   </p>
                   {isAdmin && (
                     <Button
                       size="sm"
-                      disabled={!INVITE_AVAILABLE}
-                      title={INVITE_AVAILABLE ? undefined : INVITE_UNAVAILABLE_REASON}
                       className="bg-blue-600 hover:bg-blue-700 text-white"
                       onClick={() => setInviteModalOpen(true)}
                     >

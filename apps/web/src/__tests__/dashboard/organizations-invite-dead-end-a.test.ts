@@ -31,49 +31,83 @@ const MEMBERS_ROUTE = "src/app/api/organizations/[id]/members/route.ts";
 const ACCEPT_PAGES = ["src/app/invite/[token]/page.tsx", "src/app/invite/[token]/page.ts"];
 const acceptScreenExists = ACCEPT_PAGES.some((p) => existsSync(join(REPO_ROOT, p)));
 
-describe("I0 — 승계 신호: 수락 화면이 생기면 이 파일을 승계해야 한다", () => {
-  it("수락 화면이 없는 동안 INVITE_AVAILABLE 은 false 다 (생기면 이 단언이 RED 로 알린다)", () => {
-    const code = stripComments(read(ORG_DETAIL));
-    if (acceptScreenExists) {
-      /* 수락 화면이 생겼다 — b 트랙이 섰으니 플래그를 올리고 이 파일을 승계할 때다. */
-      expect(code).toMatch(/const INVITE_AVAILABLE = true;/);
-    } else {
-      expect(code).toMatch(/const INVITE_AVAILABLE = false;/);
-    }
-  });
-});
+/* ══════════════════════════════════════════════════════════════════════════════
+ * 승계 (2026-09-05, §invite-flow Phase 4) — a 는 **해제**됐다.
+ *
+ * a 의 처방("진입점 3곳 disabled + 사유")은 끝이 끊긴 버튼을 막는 임시 조치였고,
+ * 계약은 "b 트랙이 서면 플래그를 올리고 이 파일을 승계한다" 였다. b 3전제가 모두 섰다:
+ *   수락 화면(3-3) · OrganizationMember 생성 트랜잭션(3-2) · 좌석 게이트(3-1)
+ * 그리고 모달이 부르던 dead 라우트를 `/invites` 로 옮겼다.
+ *
+ * 🛑 플래그만 `true` 로 두면 `disabled={!INVITE_AVAILABLE}` 구문이 남아 **단언이 공허해진다**
+ *   (게이팅이 있다고 말하는데 값이 무력화된 상태). 그래서 게이팅·사유 상수를 **걷어냈고**,
+ *   이 파일의 단언도 "무엇을 막는가" 에서 **"무엇이 이어졌는가"** 로 축을 옮긴다.
+ *   옛 단언을 그대로 두고 통과시키는 것이 이 저장소가 금지하는 형태다.
+ * ══════════════════════════════════════════════════════════════════════════════ */
 
-describe("진입점 3곳 — disabled + 사유", () => {
-  it("헤더 멤버 초대 · 멤버 탭 첫 멤버 초대하기 · 승인·초대 탭 새 초대 — 셋 다 플래그를 본다", () => {
-    const code = stripComments(read(ORG_DETAIL));
-    const gated = code.match(/disabled=\{!INVITE_AVAILABLE\}/g) ?? [];
-    expect(gated.length).toBe(3);
-    /* 각 진입점 라벨이 플래그 뒤 300자 안에 있다 — 무관한 버튼에 걸린 게 아니다 */
-    expect(code).toMatch(/disabled=\{!INVITE_AVAILABLE\}[\s\S]{0,450}?멤버 초대/);
-    expect(code).toMatch(/disabled=\{!INVITE_AVAILABLE\}[\s\S]{0,450}?첫 멤버 초대하기/);
-    expect(code).toMatch(/disabled=\{!INVITE_AVAILABLE\}[\s\S]{0,450}?새 초대/);
+describe("§invite-dead-end a 승계 — 초대가 끝까지 이어진다", () => {
+  it("역방향 — 잠금 잔재 0 (게이팅·사유 상수가 남아 있으면 공허한 단언이 산다)", () => {
+    const code = read(ORG_DETAIL);
+    expect(code).not.toMatch(/const INVITE_AVAILABLE\s*=/);
+    expect(code).not.toMatch(/INVITE_UNAVAILABLE_REASON/);
   });
 
-  it("사유가 화면에 보인다 — 툴팁만이 아니라 텍스트로 (터치 환경)", () => {
+  it("🔑 초대 모달이 **실재하는 라우트**를 부른다 (dead 라우트 복귀 0)", () => {
     const code = stripComments(read(ORG_DETAIL));
-    expect(code).toMatch(/const INVITE_UNAVAILABLE_REASON = "초대 수락 화면 준비 중/);
-    const shown = code.match(/\{INVITE_UNAVAILABLE_REASON\}<\//g) ?? [];
-    expect(shown.length).toBeGreaterThanOrEqual(3);
+    const fn = code.slice(code.indexOf("const inviteMemberMutation"));
+    expect(fn.length).toBeGreaterThan(0);
+    expect(fn).toMatch(/\/api\/organizations\/\$\{params\.id\}\/invites`/);
+    /* 🛑 근거 ① — `POST /members` 는 핸들러가 없다. 되돌리면 dead button 이 부활한다. */
+    const body = fn.slice(0, fn.indexOf("onSuccess"));
+    expect(body).not.toMatch(/\/members`/);
+    // 라우트가 받는 입력 계약 그대로
+    expect(fn).toMatch(/email: data\.userEmail/);
   });
 
-  it("모달·mutation 은 보존된다 — 지운 게 아니라 잠근 것이다 (b 복원용)", () => {
+  it("좌석 초과를 '초대 실패' 로 뭉개지 않는다 (원인·다음 행동이 다르다)", () => {
+    const code = stripComments(read(ORG_DETAIL));
+    expect(code).toMatch(/SEAT_LIMIT[\s\S]{0,160}?남은 좌석이 없습니다/);
+  });
+
+  it("🛑 '초대 완료' 라고 말하지 않는다 — 메일을 보내지 않았다", () => {
+    /* 실제로 일어난 일은 "링크가 만들어졌다" 이고 관리자가 전달해야 끝난다.
+     * 그래서 링크를 **화면에 남긴다** — 토스트로만 알리면 닫는 순간 전달이 불가능해진다. */
+    const code = stripComments(read(ORG_DETAIL));
+    expect(code).not.toMatch(/title: "초대 완료"/);
+    expect(code).toMatch(/setCreatedInviteUrl\(url \?\? null\)/);
+    expect(code).toMatch(/open=\{!!createdInviteUrl\}/);
+    expect(code).toMatch(/아직 메일을 보내지 않았습니다/);
+  });
+
+  it("모달·mutation 보존 (지운 게 아니라 옮긴 것이다)", () => {
     const code = stripComments(read(ORG_DETAIL));
     expect(code).toMatch(/const inviteMemberMutation = useMutation/);
     expect(code).toMatch(/<DialogTitle className="text-slate-900">멤버 초대<\/DialogTitle>/);
   });
 });
 
-describe("근거 실재 — 처방의 전제가 무너지면 여기서 소리가 난다", () => {
-  it("members 라우트에 POST 핸들러가 없다 (생기면 a 의 근거 ①이 사라진다 → 재판정)", () => {
+describe("근거 실재 — 해제 후에도 남아 있는 축", () => {
+  it("members 라우트에 POST 핸들러가 없다 (근거 ① — 되살리면 재판정)", () => {
     const route = stripComments(read(MEMBERS_ROUTE));
     expect(route).not.toMatch(/export async function POST/);
   });
-  it("resend-invite 라우트가 없다", () => {
-    expect(existsSync(join(REPO_ROOT, "src/app/api/organizations/[id]/members/resend-invite"))).toBe(false);
+
+  it("resend-invite 라우트가 없다 (근거 ② 유효)", () => {
+    expect(
+      existsSync(join(REPO_ROOT, "src/app/api/organizations/[id]/members/resend-invite")),
+    ).toBe(false);
+  });
+
+  it("🔑 그래서 재발송 버튼은 **도달 불가**다 — status Pending 생산자 0", () => {
+    /* 플래그를 걷어내도 재발송이 되살아나지 않는 이유. 이 값의 생산자가 생기는 순간
+     * 재발송이 도달 가능해지므로 그때 라우트를 함께 만들어야 한다 — 여기서 알린다. */
+    const producers = [
+      "src/app/api/organizations/[id]/members/route.ts",
+    ].filter((rel) => /status:\s*"Pending"/.test(read(rel)));
+    expect(producers).toEqual([]);
+  });
+
+  it("수락 화면이 실재한다 (b 전제 — 지우면 링크가 다시 죽는다)", () => {
+    expect(acceptScreenExists).toBe(true);
   });
 });
