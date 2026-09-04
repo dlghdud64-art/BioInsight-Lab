@@ -17,7 +17,9 @@
  *   - suggestions: { isNewProduct, isNewLot, isExistingLot, action }
  */
 
-// §11.290 Phase 4a — parseWithGemini 직접 호출 → runOcrPipeline wrapper swap
+// §11.290 Phase 4a — parseWithGemini 직접 호출 → runOcrPipeline wrapper swap (완료 이력)
+//   sentinel anchor: __tests__/regression/ocr-route-swap-290-p4a.test.ts (`§11\.290` 매칭)
+//   🛑 미완료 표시가 아니다. 지우면 그 sentinel 이 RED 가 된다.
 // (호영님 Phase 0 결정 minimum-diff). STORAGE_PROVIDER 미설정 시 graceful
 // fallback (audit/cache 미사용, 기존 동작 보존). Phase 5 SDK install 후
 // Cloud Vision + Claude Tier 2 자동 활성. parseReagentLabel (regex fallback)
@@ -115,16 +117,31 @@ export async function POST(req: NextRequest) {
       fallbackReason?: "high_confidence" | "tier2_unconfigured" | "tier2_error" | null;
     } | null = null;
 
+    // §scan-org-identity B-1 (호영님 2026-09-04) — 라벨 스캔 기록의 조직도 세션에서 해석한다.
+    //   구: `organizationId: session.user.id // Phase 5 에서 실제 organizationId 정합`.
+    //   그 Phase 5 가 이 배치다. 조직이 없으면 조용히 넘기지 않고 거절한다.
+    //   🛑 여기서 다시 resolve 하지 않는다 — 위(:56)에서 이미 해석한 activeOrganizationId 를 쓴다.
+    //      두 번 부르면 한도는 A 조직으로 재고 기록은 B 조직에 남는 분기가 생긴다.
+    if (!activeOrganizationId) {
+      return NextResponse.json(
+        {
+          error: "소속 조직이 없어 스캔 기록을 남길 수 없습니다 · 조직에 참여한 뒤 다시 시도하세요.",
+          code: "NO_ORGANIZATION",
+        },
+        { status: 422 },
+      );
+    }
+
     if (imageBase64) {
       try {
-        // §11.290 Phase 4a — parseWithGemini 직접 호출 → runOcrPipeline wrapper
+        // §11.290 Phase 4a — parseWithGemini 직접 호출 → runOcrPipeline wrapper (완료 이력)
         // (호영님 Phase 0 결정 minimum-diff). result shape 호환 유지 (LabelParseResult).
         // Phase 5 SDK install 후 STORAGE_PROVIDER 설정되면 OcrJob/OcrResult audit
         // + cache + multi-provider fallback 자동 활성.
         const pipelineResult = await runOcrPipeline({
           base64: imageBase64,
           type: "LABEL",
-          organizationId: session.user.id, // §11.290 Phase 4a tenant 격리 (Phase 5 에서 실제 organizationId 정합)
+          organizationId: activeOrganizationId,
           userId: session.user.id,
         });
         parsed = pipelineResult.result;

@@ -1,5 +1,6 @@
 /**
  * §11.290 Phase 4a #ocr-run-pipeline — High-level orchestration entry
+ *   (모듈 식별자 · 완료 이력. 미완료 표시가 아니다.)
  *   point. 기존 3 route (scan-label / parse-image / parse-pdf) 의 parseWithGemini
  *   직접 호출을 본 wrapper 로 swap (호영님 Phase 0 결정 minimum-diff).
  *
@@ -145,7 +146,7 @@ export async function runOcrPipeline(
   // (0) Cache lookup — same image + 48h TTL → 즉시 반환
   //     §P4 — 캐시 키에 템플릿 버전 반영: 학습이 캐시 생성보다 새로우면 miss 취급(구캐시 오염 방지).
   try {
-    const cached = await findCachedOcrJob(imageHash, input.type);
+    const cached = await findCachedOcrJob(imageHash, input.type, input.organizationId);
     const cacheStale =
       templateVersion != null && cached != null && cached.createdAt < templateVersion;
     if (cached && cached.finalResultId && !cacheStale) {

@@ -1,5 +1,6 @@
 /**
  * §11.290 Phase 4a #ocr-run-quote-pipeline — Quote (거래명세서) OCR pipeline
+ *   (모듈 식별자 · 완료 이력. 미완료 표시가 아니다.)
  *   entry point. 기존 /api/quotes/parse-image + /api/quotes/parse-pdf 의
  *   parseQuoteWithGemini / parseQuotePDFWithGemini 직접 호출을 본 wrapper 로 swap.
  *
@@ -100,7 +101,7 @@ export async function runQuoteOcrPipeline(
 
     // (0) Cache lookup — same PDF hash + 48h TTL → 즉시 반환
     try {
-      const cached = await findCachedOcrJob(pdfHash, "QUOTE");
+      const cached = await findCachedOcrJob(pdfHash, "QUOTE", input.organizationId);
       if (cached && cached.finalResultId) {
         const { db } = await import("@/lib/db");
         const finalResult = await db.ocrResult.findUnique({
@@ -237,7 +238,7 @@ export async function runQuoteOcrPipeline(
 
   // (0) Cache lookup — same image + 48h TTL → 즉시 반환
   try {
-    const cached = await findCachedOcrJob(imageHash, "QUOTE");
+    const cached = await findCachedOcrJob(imageHash, "QUOTE", input.organizationId);
     if (cached && cached.finalResultId) {
       const { db } = await import("@/lib/db");
       const finalResult = await db.ocrResult.findUnique({

@@ -24,6 +24,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+// §scan-org-identity B-1 — 조회 스코프의 조직은 세션에서 해석한다(user 식별자 비교 금지).
+import { resolveActiveOrganizationId } from "@/lib/organizations/active-org";
 import { db } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -70,12 +72,29 @@ export async function POST(
     );
   }
 
+  // §scan-org-identity B-1 — 조회 스코프의 조직. 없으면 조회할 대상 자체가 없다.
+  const lookupOrganizationId = await resolveActiveOrganizationId({ userId: session.user.id });
+  if (!lookupOrganizationId) {
+    return NextResponse.json(
+      {
+        error: "소속 조직이 없어 OCR 기록을 조회할 수 없습니다.",
+        code: "NO_ORGANIZATION",
+        state: "blocked",
+        statusLabel: "대상 없음",
+        nextAction: "조직에 참여한 뒤 다시 시도하세요.",
+      },
+      { status: 422 },
+    );
+  }
+
   const job = await db.ocrJob.findFirst({
     where: {
       id: jobId,
-      // organizationId 격리 (multi-tenant). Phase 4a 와 동일 placeholder —
-      // Phase 5 에서 OrganizationMember 기반 실제 organizationId 정합.
-      organizationId: session.user.id,
+      // §scan-org-identity B-1 (호영님 2026-09-04) — 조회 필터의 조직도 세션에서 해석한다.
+      //   구: `organizationId: session.user.id` — 조직 자리에 user 식별자를 넣고 비교했다.
+      //   생성 지점(parse-image·parse-pdf·scan-label)이 실제 org 를 쓰도록 바뀌었으므로
+      //   이 필터를 같이 안 고치면 **매칭이 사라져 404 로 회귀한다**(같은 배치 필수 동반).
+      organizationId: lookupOrganizationId,
     },
     include: {
       results: true,

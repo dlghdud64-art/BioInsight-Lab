@@ -1,8 +1,12 @@
-// §11.290 Phase 4a — parseQuotePDFWithGemini 직접 호출 → runQuoteOcrPipeline
+// §11.290 Phase 4a — parseQuotePDFWithGemini 직접 호출 → runQuoteOcrPipeline (완료 이력)
+//   sentinel anchor: __tests__/regression/ocr-route-swap-290-p4a.test.ts (`§11\.290` 매칭)
+//   🛑 미완료 표시가 아니다. 지우면 그 sentinel 이 RED 가 된다.
 // wrapper swap (호영님 Phase 0 결정 minimum-diff). STORAGE_PROVIDER 미설정
 // 시 graceful fallback. Phase 5 SDK install 후 multi-provider fallback 자동 활성.
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { auth } from "@/auth";
+// §scan-org-identity B-1 — 스캔 기록의 조직은 세션에서 해석한다(user 식별자 대입 금지).
+import { resolveActiveOrganizationId } from "@/lib/organizations/active-org";
 import { NextRequest, NextResponse } from "next/server";
 import { runQuoteOcrPipeline } from "@/lib/ocr/run-quote-ocr-pipeline";
 
@@ -70,10 +74,25 @@ export async function POST(request: NextRequest) {
       cached: boolean;
     } | null = null;
 
+    // §scan-org-identity B-1 (호영님 2026-09-04) — OcrJob 의 조직은 **세션에서 해석한 실제 조직**이다.
+    //   구: `organizationId: session.user.id` — 조직 자리에 user 식별자를 넣고 있었다.
+    //   OcrJob 쪽에 FK 가 없어 DB 가 안 막았고, 그 값이 ProductInventory 로 승계되며
+    //   P2003 으로 터졌다(2026-09-04 prod). 조용히 넘기지 않고 조직이 없으면 거절한다.
+    const scanOrganizationId = await resolveActiveOrganizationId({ userId: session.user.id });
+    if (!scanOrganizationId) {
+      return NextResponse.json(
+        {
+          error: "소속 조직이 없어 스캔 기록을 남길 수 없습니다 · 조직에 참여한 뒤 다시 시도하세요.",
+          code: "NO_ORGANIZATION",
+        },
+        { status: 422 },
+      );
+    }
+
     const pipelineResult = await runQuoteOcrPipeline({
       kind: "pdf",
       buffer,
-      organizationId: session.user.id,
+      organizationId: scanOrganizationId,
       userId: session.user.id,
     });
     const result = pipelineResult.result;

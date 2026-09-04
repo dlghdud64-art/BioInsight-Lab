@@ -206,6 +206,7 @@ export async function uploadOcrPdf(
 export async function findCachedOcrJob(
   imageHash: string,
   type: OcrJobType,
+  organizationId: string,
 ): Promise<OcrJob | null> {
   // Lazy import — sandbox vitest path alias 해석 회피 (top-level import 시
   // unit test 가 module resolution 단계에서 실패). Production runtime 정상.
@@ -213,6 +214,15 @@ export async function findCachedOcrJob(
   const cutoff = new Date(Date.now() - CACHE_TTL_HOURS * 60 * 60 * 1000);
   return db.ocrJob.findFirst({
     where: {
+      // §scan-ocr-cache-tenant-leak (호영님 2026-09-04 · 이 배치 1순위) —
+      //   organizationId 가 **없었다.** 48h 안에 같은 이미지를 스캔하면 조직과 무관하게
+      //   남의 OcrJob 이 캐시로 돌아왔고, 그 job 의 imageUrl(Blob 원본)과
+      //   finalResult(거래처·품목·단가 전문)가 그대로 넘어갔다.
+      //   ocrOrgMatches 는 등록을 막는 **게이트**였지만 이건 **전달 경로**다 —
+      //   생성 지점을 고쳐도 이 조건이 없으면 경로가 살아 있다.
+      //   🛑 인자를 선택(optional)으로 두지 않는다. 안 넘기면 build 가 깨져야 한다 —
+      //      기본값을 주면 다음 호출부가 조용히 구멍을 다시 연다.
+      organizationId,
       imageHash,
       type,
       status: { in: ["SUCCESS", "NEEDS_REVIEW"] },
