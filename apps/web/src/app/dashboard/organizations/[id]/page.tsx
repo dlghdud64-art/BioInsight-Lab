@@ -140,6 +140,9 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   // §11.298c member row action plain state.
   const [openMemberActionId, setOpenMemberActionId] = useState<string | null>(null);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  /* §invite-flow Phase 4 — 생성된 초대 링크. 메일 발송이 없으므로 **화면에 남겨** 관리자가
+   * 복사해 전달한다. 토스트로만 알리면 닫는 순간 링크가 사라진다(전달 못 함 = 조용한 실패). */
+  const [createdInviteUrl, setCreatedInviteUrl] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("VIEWER");
   const [searchQuery, setSearchQuery] = useState("");
@@ -380,27 +383,63 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   });
 
   // 멤버 초대
+  /* §invite-flow Phase 4 — 초대 모달을 **실재하는 라우트**로 옮긴다.
+   *
+   * 이전: `POST /api/organizations/[id]/members` — 그 라우트에 **POST 핸들러가 없다**
+   *   (GET·PATCH·DELETE 만). 즉 dead button 이었고, 그래서 §invite-dead-end a 가
+   *   진입점 3곳을 disabled 로 묶어 두고 있었다.
+   * 이후: `POST .../invites` — 토큰을 만들고 `inviteUrl` 을 돌려주는 라우트다.
+   *   Phase 3-1 좌석 게이트와 Phase 3-2 수락 화면이 그 뒤에 서 있으므로 끝이 이어진다.
+   *
+   * 🛑 실패를 "초대 실패" 한 줄로 뭉개지 않는다. 좌석 초과(403 SEAT_LIMIT)는 **원인이 다르고
+   *   다음 행동도 다르다** — 서버가 만든 문구(한도·사용량)를 그대로 보여주고 플랜 화면으로
+   *   갈 길을 남긴다(생성·수락이 같은 `seatLimitPayload` 를 쓴다).
+   *
+   * ⚠️ 메일 발송은 아직 없다. 응답의 `inviteUrl` 을 관리자가 복사해 전달하는 흐름이다 —
+   *   수락 화면이 실재하므로 그 링크는 **끝까지 이어진다**(dead link 아님). */
   const inviteMemberMutation = useMutation({
     mutationFn: async (data: { userEmail: string; role: string }) => {
-      const response = await csrfFetch(`/api/organizations/${params.id}/members`, {
+      const response = await csrfFetch(`/api/organizations/${params.id}/invites`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ email: data.userEmail, role: data.role }),
       });
+      const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to invite member");
+        const err = payload as { error?: string; code?: string; upgradeHref?: string };
+        const e = new Error(err.error || "초대 링크를 만들지 못했습니다.");
+        (e as Error & { code?: string; upgradeHref?: string }).code = err.code;
+        (e as Error & { code?: string; upgradeHref?: string }).upgradeHref =
+          err.upgradeHref;
+        throw e;
       }
-      return response.json();
+      return payload as { invite?: { inviteUrl?: string } };
     },
-    onSuccess: () => {
+    onSuccess: (payload) => {
       queryClient.invalidateQueries({ queryKey: ["organization-members", params.id] });
+      queryClient.invalidateQueries({ queryKey: ["organization-invites", params.id] });
       setInviteEmail("");
       setInviteRole("VIEWER");
       setInviteModalOpen(false);
-      toast({ title: "초대 완료", description: "멤버 초대가 완료되었습니다." });
+      const url = payload?.invite?.inviteUrl;
+      /* 🛑 "초대 완료" 라고 말하지 않는다 — 메일을 보내지 않았다.
+       *   실제로 일어난 일은 "링크가 만들어졌다" 이고, 관리자가 전달해야 끝난다. */
+      setCreatedInviteUrl(url ?? null);
+      toast({
+        title: "초대 링크 생성됨",
+        description: url
+          ? "링크를 복사해 전달하면 상대가 수락할 수 있습니다."
+          : "초대가 생성되었습니다.",
+      });
     },
-    onError: (error: Error) => toast({ title: "초대 실패", description: error.message, variant: "destructive" }),
+    onError: (error: Error) => {
+      const e = error as Error & { code?: string };
+      toast({
+        title: e.code === "SEAT_LIMIT" ? "남은 좌석이 없습니다" : "초대 실패",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   // 역할 변경
@@ -1628,6 +1667,40 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       </Dialog>
 
       {/* 멤버 초대 모달 */}
+      {/* §invite-flow Phase 4 — 생성된 링크 전달 창 (메일 발송 전까지의 정직한 흐름) */}
+      <Dialog
+        open={!!createdInviteUrl}
+        onOpenChange={(o) => {
+          if (!o) setCreatedInviteUrl(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>초대 링크가 만들어졌습니다</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-slate-600">
+            아직 메일을 보내지 않았습니다 · 아래 링크를 복사해 전달해 주세요.
+          </p>
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-2 text-xs break-all text-slate-700">
+            {createdInviteUrl}
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (createdInviteUrl) {
+                  navigator.clipboard?.writeText(createdInviteUrl);
+                  toast({ title: "링크를 복사했습니다" });
+                }
+              }}
+            >
+              링크 복사
+            </Button>
+            <Button onClick={() => setCreatedInviteUrl(null)}>닫기</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={inviteModalOpen} onOpenChange={setInviteModalOpen}>
         <DialogContent className="sm:max-w-[480px] bg-white border-slate-200">
           <DialogHeader>
