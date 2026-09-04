@@ -15,6 +15,16 @@
  *    pending 정의 = `acceptedAt IS NULL AND revokedAt IS NULL AND expiresAt > now()`
  *    (만료·취소된 초대는 좌석을 잡지 않는다 — 잡으면 상한이 영구히 줄어든다).
  *
+ * 🛑 **플랜 출처는 `Organization.plan` 이다 — `subscription.plan` 이 아니다.**
+ *    이 저장소에는 플랜 출처가 **둘** 있다(2026-09-04 실측):
+ *      seats(여기) · 좌석 게이지(organizations/[id]/page.tsx) → `Organization.plan`
+ *      enforce-plan-limit(견적·재고 한도)                      → `subscription.plan`
+ *    여기서 `Organization.plan` 을 쓰는 이유는 **화면 게이지와 같은 출처**여야 하기 때문이다 —
+ *    게이지가 "3명 중 1명" 이라 말하는데 서버가 다른 수로 막으면 그게 이 트랙이 없애온 형태다.
+ *    ⚠️ 나중에 `subscription.plan` 으로 "고치지" 말 것. 고치면 게이지와 조용히 갈린다.
+ *    두 출처의 단일화는 **후속 트랙**이다(계획서 §선행 부채 — 그 라우트가 두 값을
+ *    트랜잭션 없이 순차로 써서 이미 갈릴 수 있다).
+ *
  * 🛑 **레이스**: 동시 수락 2건이 마지막 1좌석을 함께 통과할 수 있다. 그래서 수락은
  *    반드시 **트랜잭션 안에서** `tx` 를 넘겨 재검증한다(요건 5). 읽기 전용 사전 검사만으로는
  *    막지 못한다.

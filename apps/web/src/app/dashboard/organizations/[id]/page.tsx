@@ -557,8 +557,12 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   // §org-management-web P3 — 좌석 한도는 PLAN_LIMITS 가 canonical 이다.
   //   🛑 옛 축은 Math.max(totalMembers + 2, 10) 이라는 **추정 공식**이었다 — 멤버가 늘면
   //      분모도 같이 늘어 사용률이 영원히 100% 에 안 닿는 가짜 게이지였다.
-  //   🛑 Organization.maxMembers 컬럼은 쓰지 않는다 — 생산자 0 · 소비자 0 인 dead column 이고,
-  //      살리면 PLAN_LIMITS 와 진실이 둘이 된다 (P0 C1 판정 2026-08-24).
+  //   🛑 Organization.maxMembers 컬럼은 쓰지 않는다 — 살리면 PLAN_LIMITS 와 진실이 둘이
+  //      된다 (P0 C1 판정 2026-08-24).
+  //      ⚠️ 정정(2026-09-04 실측): 이 주석은 "생산자 0 · 소비자 0" 이라고 적고 있었으나
+  //      **생산자는 2곳**이다 — billing/route.ts:377 · organizations/[id]/subscription:148 이
+  //      플랜 변경 시 이 컬럼을 쓴다. **소비자만 0** 이라 무해하고, 계약은 그대로다
+  //      (읽지 않는다). 숫자가 틀린 주석은 다음 사람이 "생산자가 없으니 지워도 된다" 로 읽는다.
   const seatLimit = PLAN_LIMITS[(organization as any).plan as SubscriptionPlan]?.maxMembers ?? null;
   const seatUsagePercent = seatLimit && seatLimit > 0
     ? Math.min(100, Math.round((totalMembers / seatLimit) * 100))

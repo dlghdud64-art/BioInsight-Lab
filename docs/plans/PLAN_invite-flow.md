@@ -45,7 +45,10 @@
                                                         + 게이트 3곳 계수 · 근거(members POST 0 · resend 0) 실재
 
 좌석 한도
-  lib/plans.ts PLAN_LIMITS[plan].maxMembers   FREE 1 · TEAM(Basic) 3 · ORGANIZATION(Pro) null(무제한)
+  lib/plans.ts PLAN_LIMITS[plan].maxMembers   FREE 1 · TEAM(Basic) 3 · ORGANIZATION(Pro) 10
+                                              ⚠️ 정정 2026-09-04 (호영님 판정): 위는 원래 "Pro null(무제한)" 으로
+                                              적혀 있었으나 **오기**다. 코드값 10 이 정본이고 Phase 3-1 게이트가
+                                              실제로 10 에서 막는다. 10명 초과 고객은 **별도 협의** 성격.
   집행 지점                                   0 (초대 생성·수락 어디에도 없음) — 게이지만 말하고 아무도 막지 않는다
 
 이메일
@@ -415,6 +418,37 @@ Phase 2-10 에서 모양을 정렬하고 읽는 쪽 방어를 넣었지만 그�
 **PATCH 배선 시 제거 대상**이다.
 
 - [x] Phase 0 · [x] Phase 1 · [ ] Phase 2 · [ ] Phase 3 · [ ] Phase 4 · [ ] Phase 5
+
+## 11-a. 선행 부채 — 플랜 출처가 둘 (Phase 3-1 이 새 의존을 걸었다)
+
+이번 트랙이 만든 결함이 **아니다.** 다만 Phase 3-1 좌석 게이트가 그 값에 새 의존을 걸었으므로
+여기 남긴다(Cowork QA 실측 2026-09-04).
+
+```
+seats.ts (좌석 게이트)          → Organization.plan            ← 게이지와 같은 출처(의도적)
+organizations/[id]/page.tsx     → Organization.plan
+enforce-plan-limit (견적·재고)  → Organization.subscription.plan   ← 다른 출처
+```
+
+그리고 `api/organizations/[id]/subscription/route.ts:143·155` 가 두 값을 **트랜잭션 없이
+순차로** 쓴다(`organization.update` → `subscription.update|create`).
+
+**실패 시나리오:** 두 번째 쓰기가 실패하면 `Organization.plan = TEAM` ·
+`Subscription.plan = FREE` 가 된다 → 좌석은 TEAM(3명)으로 열리고 견적 한도는 FREE 로 잠긴다.
+**결제한 고객이 초대는 되는데 견적 한도가 안 풀린다.** 다운그레이드 방향도 대칭으로 성립한다
+(좌석은 잠기고 한도는 열린 채).
+
+Phase 3-1 이후로 `Organization.plan` 이 **결제 고객의 초대 가능 여부를 직접 정한다** —
+의존이 하나 늘었다. `seats.ts` 주석에 어느 출처를 왜 쓰는지 명시했다(누가 `subscription.plan`
+으로 "고쳐서" 게이지와 조용히 갈리는 것을 막기 위해).
+
+⏳ **후속 트랙(이번 범위 밖):** 플랜 출처 단일화 + 그 라우트 트랜잭션화.
+   `useOrganizations()` 통합과 같은 성격이다.
+
+⚠️ 함께 정정: `Organization.maxMembers` 컬럼을 "생산자 0 · 소비자 0 dead column" 으로 적은
+   주석이 있었으나 **생산자는 2곳**이다(billing:377 · subscription:148). **소비자만 0** 이라
+   무해하고 계약(읽지 않는다)은 불변이다 — 숫자가 틀린 주석은 다음 사람이 "생산자가 없으니
+   지워도 된다" 로 읽는다. 소스 주석·센티널 제목 양쪽 정정(2026-09-04).
 
 ## 11-b. 게이트 작성 교훈 (이 트랙에서 실측된 것)
 

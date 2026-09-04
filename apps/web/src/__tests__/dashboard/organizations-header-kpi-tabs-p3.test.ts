@@ -35,8 +35,11 @@ describe("좌석 게이지 — PLAN_LIMITS 가 canonical", () => {
     expect(code).toMatch(/from "@\/lib\/plans"/);
   });
 
-  it("🛑 dead column 을 읽지 않는다 — Organization.maxMembers 는 생산자 0 · 소비자 0", () => {
-    /* 살리면 PLAN_LIMITS 와 진실이 둘이 된다 (P0 C1 판정). */
+  it("🛑 dead column 을 읽지 않는다 — Organization.maxMembers 소비자 0 유지", () => {
+    /* 살리면 PLAN_LIMITS 와 진실이 둘이 된다 (P0 C1 판정).
+     * ⚠️ 제목 정정(2026-09-04 실측): 이전 제목은 "생산자 0 · 소비자 0" 이었으나
+     *   **생산자는 2곳**이다(billing:377 · subscription:148). 단언의 보호의도는 불변 —
+     *   이 화면이 그 컬럼을 **읽지 않는다** 이지, 아무도 쓰지 않는다가 아니다. */
     expect(stripComments(read(ORG_DETAIL))).not.toMatch(/organization[^\n]{0,30}\.maxMembers/);
   });
 
