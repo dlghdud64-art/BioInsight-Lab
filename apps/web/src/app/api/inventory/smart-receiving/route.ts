@@ -30,7 +30,8 @@
  *       category?: string | null;          // 신규 시 Product.category (미전달·무효 시 fallback REAGENT)
  *       notes?: string | null;
  *     };
- *     organizationId?: string | null;       // 신규 ProductInventory.organizationId
+ *     organizationId?: string | null;       // 조직 hint(선택). 멤버십 검증 통과 시만 채택,
+ *                                           //   틀리면 403. 미전달 시 세션의 활성 조직.
  *   }
  *
  * 응답:
@@ -39,7 +40,8 @@
  * 보안:
  *   - 미인증 → 401
  *   - quantity ≤ 0 → 400
- *   - ocrJobId 미존재 또는 다른 org → 404
+ *   - ocrJobId 미존재 → 404 / 본인 소유 아님 → 403 (§scan-org-identity)
+ *   - 조직 hint 권한 없음 → 403 · 소속 조직 0 → 422 (§scan-org-identity)
  *   - inventoryId 미존재 또는 권한 없음 → 403/404
  *   - 신규 시 productName 누락 → 400
  *
@@ -57,6 +59,8 @@ import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from
 import { describeFailure } from "@/lib/api-failure-reason";
 // §scan-registration-category — 분류·출처 단일 소스(캐스트 0 · Record 로 전수 강제).
 import { resolveProductCategory } from "@/lib/inventory/product-category-options";
+// §scan-org-identity — 조직의 권위 있는 출처는 세션이다. OcrJob 의 조직 필드는 신뢰하지 않는다.
+import { resolveOrganizationIdForMutation } from "@/lib/organizations/active-org";
 // 알림 고도화 #notif-inventory-received — 입고 완료 시 INVENTORY_RECEIVED 알림(best-effort).
 import { dispatchNotificationEvent, resolveOrgRecipients } from "@/lib/notifications";
 // §11.309c-hotfix-2 — security middleware import 제거 (단순화).
@@ -146,7 +150,9 @@ export async function POST(request: NextRequest) {
     // ── OcrJob 검증 (multi-tenant + 존재) ──
     const ocrJob = await db.ocrJob.findUnique({
       where: { id: ocrJobId },
-      select: { id: true, organizationId: true, userId: true, type: true, finalResult: { select: { parsedFields: true } } },
+      // §scan-org-identity — organizationId 는 **읽지 않는다**. 신뢰하지 않기로 한 필드를
+      //   select 에 남겨두면 다음 사람이 다시 쓴다(이번 결함이 그렇게 살아남았다).
+      select: { id: true, userId: true, type: true, finalResult: { select: { parsedFields: true } } },
     });
 
     if (!ocrJob) {
@@ -156,24 +162,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 같은 organization 또는 본인의 OcrJob 만 허용
-    const ocrOrgMatches =
-      organizationId && ocrJob.organizationId === organizationId;
-    const ocrOwnerMatches = ocrJob.userId === session.user.id;
-    if (!ocrOrgMatches && !ocrOwnerMatches) {
-      // 다른 org 의 OcrJob 사용 차단 (multi-tenant 격리)
-      const membership = ocrJob.organizationId
-        ? await db.organizationMember.findFirst({
-            where: {
-              userId: session.user.id,
-              organizationId: ocrJob.organizationId,
-            },
-          })
-        : null;
-      if (!membership) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
+    // §scan-org-identity (호영님 2026-09-04) — 구 판본은 `ocrJob.organizationId === organizationId`
+    //   로 조직 격리를 주장했다. 그런데 OCR 라우트 5곳이 그 필드에 **session.user.id 를**
+    //   써 왔다(prod 실측: OcrJob.organizationId == userId · 그 조직 실재 안 함).
+    //   즉 조직끼리가 아니라 **조직 자리의 userId 끼리** 비교하고 있었다 — 격리 계약이
+    //   성립한 적이 없다. 신뢰할 수 없는 필드 간 비교는 보정이 아니라 폐기가 맞다.
+    //   OcrJob 의 조직 필드가 정합될 때까지(§scan-org-identity B 배치) **소유자 본인만** 허용한다.
+    //   같은 조직 동료의 스캔을 대신 등록하는 경로는 그때 복원한다(현재 조직당 1명 = 영향 0).
+    if (ocrJob.userId !== session.user.id) {
+      return NextResponse.json(
+        { error: "본인이 스캔한 기록만 입고 등록할 수 있습니다.", code: "OCRJOB_NOT_OWNED" },
+        { status: 403 },
+      );
     }
+
+    // §scan-org-identity — 조직의 권위 있는 출처는 **세션**이다.
+    //   구 판본 `organizationId ?? ocrJob.organizationId ?? null` 는 오염된 값을 그대로
+    //   ProductInventory.organizationId 에 넣어 P2003(FK 위반)으로 터졌다.
+    //   오염값을 null 로 삼키지 않는다 — 그러면 개인 재고로 조용히 흘러 조직 격리가 사라진다.
+    const orgResolution = await resolveOrganizationIdForMutation({
+      userId: session.user.id,
+      hint: organizationId ?? null,
+    });
+    if (!orgResolution.ok) {
+      return orgResolution.reason === "hint_forbidden"
+        ? NextResponse.json(
+            { error: "지정한 조직에 대한 권한이 없습니다.", code: "ORG_FORBIDDEN" },
+            { status: 403 },
+          )
+        : NextResponse.json(
+            {
+              error: "소속 조직이 없어 입고를 등록할 수 없습니다 · 조직에 참여한 뒤 다시 시도하세요.",
+              code: "NO_ORGANIZATION",
+            },
+            { status: 422 },
+          );
+    }
+    const targetOrganizationId = orgResolution.organizationId;
 
     const { ipAddress, userAgent } = extractRequestMeta(request);
 
@@ -184,7 +209,7 @@ export async function POST(request: NextRequest) {
     // ────────────────────────────────────────────────────────────
     if (Array.isArray(body.items) && body.items.length > 0) {
       const lines = body.items;
-      const targetOrgIdMulti = organizationId ?? ocrJob.organizationId ?? null;
+      const targetOrgIdMulti = targetOrganizationId;
 
       for (const line of lines) {
         if (typeof line.quantity !== "number" || line.quantity <= 0) {
@@ -553,7 +578,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const targetOrgId = organizationId ?? ocrJob.organizationId ?? null;
+    const targetOrgId = targetOrganizationId;
 
     const created = await db.$transaction(
       async (tx: Prisma.TransactionClient) => {

@@ -77,11 +77,19 @@ describe("§11.309c — OcrJob multi-tenant 격리", () => {
     expect(src).toMatch(/ocrJob을 찾을 수 없습니다/);
   });
 
-  it("OcrJob org/owner 매칭 또는 membership 검증", () => {
+  // 🛑 은퇴+승계(§scan-org-identity 2026-09-04). 구 판본은 `ocrOrgMatches` ·
+  //   `ocrOwnerMatches` · `organizationMember.findFirst` 라는 **구현 이름 3개**를 잠갔다.
+  //   그 구현이 실제로 한 일은 `ocrJob.organizationId === organizationId` 비교였는데,
+  //   OCR 라우트 5곳이 그 필드에 session.user.id 를 써 와서 **조직끼리가 아니라
+  //   조직 자리의 userId 끼리** 비교하고 있었다(prod 실측: 그 id 의 Organization 실재 안 함).
+  //   즉 이 단언은 성립한 적 없는 격리를 GREEN 으로 지켜줬다.
+  //   승계: 의도("남의 OcrJob 으로 입고를 등록할 수 없다")는 불변이며, 지금은 더 엄격한
+  //   소유자 단독 게이트로 잠근다. 조직 축 복원은 §scan-org-identity B 배치.
+  it("남의 OcrJob 으로 등록할 수 없다 — 소유자 단독 게이트", () => {
     const src = read(ROUTE_PATH);
-    expect(src).toMatch(/ocrOrgMatches/);
-    expect(src).toMatch(/ocrOwnerMatches/);
-    expect(src).toMatch(/organizationMember\.findFirst/);
+    const idx = src.indexOf("if (ocrJob.userId !== session.user.id) {");
+    expect(idx).toBeGreaterThan(-1);
+    expect(src.slice(idx, idx + 400)).toMatch(/status:\s*403/);
   });
 });
 
