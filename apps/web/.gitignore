@@ -15,7 +15,8 @@
 
 # next.js
 /.next/
-/.next-*/  # 세션별 빌드 산출물 (NEXT_DIST_DIR)
+# 세션별 빌드 산출물 (NEXT_DIST_DIR · CLAUDE.md ## 병렬 세션)
+/.next-*/
 /out/
 
 # production
