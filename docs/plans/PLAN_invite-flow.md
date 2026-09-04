@@ -350,10 +350,33 @@ Red-Green-Refactor 엄수. 러너: 클로드코드 세션(`apps/web` vitest·tsc
 
 ## 11. Progress Tracking
 
-- Overall: ~60%
-- Current phase: Phase 2 (API 축 22/22 완료 · UI 축 A 6곳 완료 · 남은 것: UI 축 B 5파일 → switcher PATCH 배선 → 래칫 0/0)
+- Overall: ~68%
+- Current phase: Phase 2 (API 축 22/22 · UI 축 A 6곳 · UI 축 B 5건 판정 완료 —
+  남은 것: switcher PATCH 배선 하나 → 래칫 0/0)
 - Current blocker: 없음 (prod migrate 적용 확인 완료 2026-09-01)
-- Next validation step: UI 축 B 5파일 개별 판정 → 래칫 UI 8 → 0
+- Next validation step: switcher PATCH 배선 → 래칫 UI 2 → 0
+
+**UI 축 B 판정 결과 (2026-09-03)** — 기준은 "표시 여부" 가 아니라 **그 값이 어디로
+흘러가는가** 다(Cowork QA 정정). 표시하지 않아도 화면 데이터의 기준이거나 mutation
+body 로 나가면 이관 대상이다.
+| 대상 | 행선지 | 판정 |
+| --- | --- | --- |
+| dashboard/organizations(2) | 내비 목적지(`length === 1` 가드 안) | 거짓 양성 · 검증된 면제로 은퇴 |
+| BulkImportModal(1) | `/api/inventory/bulk` **body** | 이관 + 대상 조직 화면 표시 |
+| settings/enterprise(1) | 화면 데이터 기준 | 이관 |
+| settings/plans(2) | Select 표시 + **구독/결제 경로** | 이관(같은 심볼 잠금) |
+| workspace-switcher(2) | 스위처 자신 | PATCH 배선과 묶음 |
+
+⏳ **후속 등재 — `["user-organizations"]` 를 공용 훅 하나로 (이번 트랙 밖)**
+같은 키를 **선언 8곳**이 각자 `useQuery` 로 잡고 있다(전량 grep 2026-09-03:
+admin/safety:66 · safety-spend:83 · plans:334 · settings/{audit:60,billing:36,
+security:36,workspace:57} · workspace-switcher:38). 훅만 배열을 반환해 모양이 갈렸고,
+같은 키는 캐시 항목이 하나라 먼저 fetch 한 쪽 모양이 남는다 →
+페이지 쪽은 조직 0 으로 보이거나, 훅 쪽은 `organizations.find is not a function`.
+후자는 `dashboard-shell` → `OperationalBriefPopup` → `usePermission` → 훅 경로로 **도달 가능**했다.
+Phase 2-10 에서 모양을 정렬하고 읽는 쪽 방어를 넣었지만 그건 **증상**이다 —
+9번째 선언이 생기면 같은 일이 반복된다. 공용 `useOrganizations()` 하나로 모으는 것이
+근본 처방이고, 별도 트랙으로 배치한다.
 
 ⛔ **switcher PATCH 배선 선행 조건 (2026-09-03 Cowork QA · 2-9 후속에서 닫음)**
 표시 화면 6곳에서 **본문은 활성 조직인데 스위처 prop 은 `selectedOrgId`** 였다(5곳).

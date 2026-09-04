@@ -20,6 +20,7 @@ import * as React from"react";
 import { useSession } from"next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { csrfFetch } from "@/lib/api-client";
+import { useActiveOrganization } from "@/hooks/use-active-organization";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from"@tanstack/react-query";
 import {
  Card,
@@ -188,8 +189,8 @@ const FEATURE_COMPARISON = [
  { key:"auditTrail", label:"Audit Trail", desc:"변경 이력 및 감사 추적"},
  { key:"inboundEmail", label:"이메일 연동", desc:"견적 이메일 자동 처리"},
  { key:"vendorPortal", label:"벤더 포털", desc:"공급사 직접 견적 응답"},
- { key:"sso", label:"SSO (통합 인증)", desc:"SAML/OAuth 기반 로그인 — Enterprise 전용"},
- { key:"prioritySupport", label:"전담 매니저 및 SLA", desc:"우선 기술 지원 — Enterprise 전용"},
+ { key:"sso", label:"SSO (통합 인증)", desc:"SAML/OAuth 기반 로그인 · Enterprise 전용"},
+ { key:"prioritySupport", label:"전담 매니저 및 SLA", desc:"우선 기술 지원 · Enterprise 전용"},
 ] as const;
 
 // §11.201d — features array 정량 swap (PLAN_DESCRIPTOR 매트릭스 정합).
@@ -349,27 +350,32 @@ function PlansPageContent() {
  });
 
  const organizations = organizationsData?.organizations ?? [];
+ const { organizationId: activeOrganizationId, isLoading: activeOrgLoading } =
+ useActiveOrganization();
 
- // ── selectedOrgId 초기화 — hook 위반 없이 최상단에서 ──
- //    intentWorkspaceId 가 유효한 소속 조직이면 우선 선택한다.
- useEffect(() => {
- if (organizations.length === 0 || selectedOrgId) return;
- if (intentWorkspaceId) {
- const match = organizations.find(
- (org: any) => org.id === intentWorkspaceId
- );
- if (match) {
- setSelectedOrgId(match.id);
- return;
- }
- }
- setSelectedOrgId(organizations[0].id);
- }, [organizations, selectedOrgId, intentWorkspaceId]);
+ /* ── §invite-flow Phase 2-11 — 기준 조직 단일 심볼 (`effectiveOrgId`) ──
+  *
+  * 여기는 **결제 표면**이다. 이전에는 초기 선택이 `organizations[0]` 이었고
+  * 구독 조회·체크아웃이 그 값을 경로에 실었다 — 다중 소속이면 화면에 뜬 조직이
+  * 아니라 목록 첫 조직의 플랜을 결제할 수 있었다("경로에 조직 명시" 는 안전장치가
+  * 아니라 경로가 첫 조직을 가리킨다는 뜻이었다).
+  *
+  * 🔑 표시(Select `value`)와 결제 대상(`/api/organizations/{id}/subscription`)은
+  *    **같은 심볼**이어야 한다. 그래서 `selectedOrgId` 를 직접 쓰던 자리를 전부
+  *    이 파생값으로 바꾼다(Cowork QA 2026-09-03 조건 1·2).
+  *
+  * 우선순위: ① 사용자가 고른 값 ② 딥링크 `?workspaceId=`(명시 의도, 소속 검증)
+  *           ③ 활성 조직 ④ 없음. `organizations[0]` 은 남기지 않는다. */
+ const intentOrgId =
+ intentWorkspaceId &&
+ organizations.some((org: any) => org.id === intentWorkspaceId)
+ ? intentWorkspaceId
+ : null;
+ const effectiveOrgId =
+ selectedOrgId || intentOrgId || activeOrganizationId || "";
 
- // ── selectedOrg 파생 ──
- const selectedOrg = selectedOrgId
- ? organizations.find((org: any) => org.id === selectedOrgId) ?? null
- : organizations[0] ?? null;
+ const selectedOrg =
+ organizations.find((org: any) => org.id === effectiveOrgId) ?? null;
 
  // ── 구독 정보 (org 준비 후에만 fetch) ──
  const {
@@ -380,11 +386,11 @@ function PlansPageContent() {
  isFetching: subFetching,
  refetch: refetchSub,
  } = useQuery({
- queryKey: ["subscription", selectedOrgId],
+ queryKey: ["subscription", effectiveOrgId],
  queryFn: async () => {
- if (!selectedOrgId) return null;
+ if (!effectiveOrgId) return null;
  const response = await fetch(
- `/api/organizations/${selectedOrgId}/subscription`
+ `/api/organizations/${effectiveOrgId}/subscription`
  );
  if (!response.ok) {
  const err = await response.json().catch(() => ({}));
@@ -395,7 +401,7 @@ function PlansPageContent() {
  return response.json();
  },
  // ★ org가 확정된 후에만 fetch — 핵심 방어
- enabled: !!selectedOrgId && sessionStatus ==="authenticated",
+ enabled: !!effectiveOrgId && sessionStatus ==="authenticated",
  retry: 2,
  retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
  staleTime: 30_000,
@@ -431,7 +437,7 @@ function PlansPageContent() {
  onSuccess: () => {
  queryClient.invalidateQueries({ queryKey: ["user-organizations"] });
  queryClient.invalidateQueries({
- queryKey: ["subscription", selectedOrgId],
+ queryKey: ["subscription", effectiveOrgId],
  });
  toast({
  title:"플랜 변경 완료",
@@ -456,7 +462,7 @@ function PlansPageContent() {
  orgsLoading,
  orgsError,
  organizationCount: organizations.length,
- selectedOrgId: selectedOrgId ||"(empty)",
+ effectiveOrgId: effectiveOrgId ||"(empty)",
  selectedOrgName: selectedOrg?.name ??"(null)",
  subLoading,
  subFetching,
@@ -479,7 +485,7 @@ function PlansPageContent() {
  if (intentAction !== "checkout") return;
  if (!intentPlanEnum) return;
  if (intentPlanEnum === SubscriptionPlan.FREE) return;
- if (!selectedOrgId) return;
+ if (!effectiveOrgId) return;
  if (subLoading || subFetching) return;
 
  // selectedOrg 에 role 이 실릴 때까지 대기 (undefined 상태 가드)
@@ -502,7 +508,7 @@ function PlansPageContent() {
  }, [
  intentAction,
  intentPlanEnum,
- selectedOrgId,
+ effectiveOrgId,
  subLoading,
  subFetching,
  subscriptionData,
@@ -514,9 +520,9 @@ function PlansPageContent() {
  (newOrgId: string) => {
  setSelectedOrgId(newOrgId);
  // 이전 subscription 캐시를 즉시 무효화하여 stale 데이터 방지
- queryClient.removeQueries({ queryKey: ["subscription", selectedOrgId] });
+ queryClient.removeQueries({ queryKey: ["subscription", effectiveOrgId] });
  },
- [queryClient, selectedOrgId]
+ [queryClient, effectiveOrgId]
  );
 
  // ┌─────────────────────────────────────────────┐
@@ -542,7 +548,9 @@ function PlansPageContent() {
  }
 
  // ── 상태 3: 조직 데이터 로딩 ──
- if (orgsLoading) {
+ //    활성 조직 확정까지 함께 기다린다 — 먼저 그리면 기준 조직이 빈 값으로
+ //    한 프레임 뜨고, 결제 화면에서 그건 "조직 없음" 으로 보인다.
+ if (orgsLoading || activeOrgLoading) {
  return <PlansSkeleton />;
  }
 
@@ -793,7 +801,7 @@ function PlansPageContent() {
  조직 선택
  </Label>
  <Select
- value={selectedOrgId}
+ value={effectiveOrgId}
  onValueChange={handleOrgChange}
  >
  <SelectTrigger
@@ -1448,7 +1456,7 @@ function PlansPageContent() {
  onComplete={() => {
  setCheckoutTarget(null);
  queryClient.invalidateQueries({ queryKey: ["user-organizations"] });
- queryClient.invalidateQueries({ queryKey: ["subscription", selectedOrgId] });
+ queryClient.invalidateQueries({ queryKey: ["subscription", effectiveOrgId] });
  }}
  />
  )}

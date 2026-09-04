@@ -45,9 +45,12 @@ export function useActiveOrganization(): UseActiveOrganizationReturn {
 
   /**
    * 🛑 `["user-organizations"]` 는 **이 훅 전용 키가 아니다.** 같은 키로 `res.json()`
-   *    (= `{ organizations: [...] }`) 를 반환하는 useQuery 가 10곳 더 있다
-   *    (settings/* · admin/safety · safety-spend · plans · workspace-switcher ·
-   *     BulkImportModal). TanStack 은 같은 키를 **하나의 캐시 항목**으로 공유하므로
+   *    (= `{ organizations: [...] }`) 를 반환하는 useQuery 선언이 **8곳** 더 있다
+   *    (전량 grep 실측 2026-09-03 — admin/safety:66 · safety-spend:83 · plans:334 ·
+   *     settings/{audit:60,billing:36,security:36,workspace:57} · workspace-switcher:38.
+   *     같은 키의 `invalidateQueries` 4곳은 선언이 아니므로 이 수에 넣지 않는다.
+   *     BulkImportModal 은 Phase 2-10 에서 이 훅의 **소비자**가 되어 목록에서 빠졌다).
+   *    TanStack 은 같은 키를 **하나의 캐시 항목**으로 공유하므로
    *    먼저 fetch 를 트리거한 observer 의 queryFn 결과가 그 항목에 들어간다.
    *    → 훅이 배열을 반환하면 페이지 쪽 `data?.organizations` 가 `undefined` 가 되고,
    *      페이지가 이기면 훅 쪽 `organizations.find(...)` 가 **TypeError** 로 터진다.

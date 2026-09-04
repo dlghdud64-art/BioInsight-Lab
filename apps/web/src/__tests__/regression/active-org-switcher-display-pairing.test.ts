@@ -182,8 +182,52 @@ describe("§invite-flow Phase 2-10 — B 분류 이관분", () => {
     expect(src).toMatch(/JSON\.stringify\(\{ organizationId, items \}\)/);
   });
 
+  it("BulkImportModal — 쓰기 대상 조직이 화면에 표시된다", () => {
+    const src = read("src/components/inventory/BulkImportModal.tsx");
+    /* 표시 대상은 **body 로 나가는 그 값**이어야 한다 — 다른 심볼을 표시하면
+     * 표시와 쓰기가 갈린다(이 트랙이 스위처에서 잡은 것과 같은 형태). */
+    expect(src).toMatch(
+      /const targetOrg =[\s\S]{0,120}?organizations\.find\(\(org\) => org\.id === organizationId\)/,
+    );
+    expect(src).toMatch(/\{targetOrg\.name\}/);
+    expect(src).toMatch(/조직으로 등록됩니다/);
+    /* 대상이 활성 조직과 다를 때 그 사실을 말한다 — ②(권한 있는 조직으로 옮김)가
+     * ③(서버가 이유를 말함)과 원칙이 충돌하지 않도록. */
+    expect(src).toMatch(
+      /targetOrg\.id !== activeOrganizationId/,
+    );
+    expect(src).toMatch(/targetIsNotActive &&[\s\S]{0,200}?등록 권한이 없어/);
+  });
+
+  it("settings/plans — 표시(Select value)와 결제 대상(구독 경로)이 같은 심볼", () => {
+    const src = read("src/app/dashboard/settings/plans/page.tsx");
+    expect(src).toMatch(/useActiveOrganization\(\)/);
+
+    // 우선순위: 사용자 선택 → 딥링크(소속 검증) → 활성 조직. orgs[0] 없음.
+    expect(src).toMatch(
+      /const effectiveOrgId =\s*\n?\s*selectedOrgId \|\| intentOrgId \|\| activeOrganizationId \|\| ""/,
+    );
+    expect(src).toMatch(
+      /organizations\.some\(\(org: any\) => org\.id === intentWorkspaceId\)/,
+    );
+
+    // 🔑 조건 2 — 같은 심볼이어야 한다. 갈리면 보이는 조직과 결제되는 조직이 다르다.
+    expect(src).toMatch(/value=\{effectiveOrgId\}/);
+    expect(src).toMatch(
+      /`\/api\/organizations\/\$\{effectiveOrgId\}\/subscription`/,
+    );
+    // 🛑 결제 경로가 다른 심볼로 되돌아가는 것을 직접 막는다
+    expect(src).not.toMatch(
+      /`\/api\/organizations\/\$\{selectedOrgId\}\/subscription`/,
+    );
+    expect(src).not.toMatch(/value=\{selectedOrgId\}/);
+
+    // 활성 조직 확정까지 기다린다 (빈 기준값이 한 프레임 뜨지 않게)
+    expect(src).toMatch(/if \(orgsLoading \|\| activeOrgLoading\)/);
+  });
+
   it("공유 캐시 회귀 0 — 훅의 조직 목록이 페이지들과 같은 모양이다", () => {
-    /* `["user-organizations"]` 는 10곳이 같이 쓰는 키다. 훅만 배열을 반환하면
+    /* `["user-organizations"]` 는 선언 8곳 + 이 훅이 같이 쓰는 키다. 훅만 배열을 반환하면
      * 먼저 fetch 한 쪽에 따라 한쪽이 깨진다 — 페이지 쪽은 조직 0 으로,
      * 훅 쪽은 `organizations.find is not a function` 으로. 모양을 맞춰 잠근다. */
     const hook = read("src/hooks/use-active-organization.ts");

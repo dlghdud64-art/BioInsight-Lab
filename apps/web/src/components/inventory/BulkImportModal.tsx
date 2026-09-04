@@ -362,8 +362,34 @@ export function BulkImportModal({
     }
   };
 
+  const targetOrg =
+    organizations.find((org) => org.id === organizationId) ?? null;
+  const targetIsNotActive =
+    !!targetOrg && !!activeOrganizationId && targetOrg.id !== activeOrganizationId;
+
   const content = (
     <div className="space-y-4 overflow-y-auto pr-1 flex-1">
+          {/* 🔑 쓰기 대상 조직을 화면에 세운다 (Cowork QA 2026-09-03 지시 정정).
+              표시하지 않으면 목록 순서가 재고가 들어갈 조직을 정하고, 사용자는 어디로
+              들어갔는지 알 수 없다 — 쓰기인데 대상이 화면에 없는 것 자체가 이 트랙의
+              금지 형태다. 대상이 활성 조직과 다를 때는 그 사실도 함께 말한다 —
+              "가능하면 조용히 돌리고 안 되면 그때만 정직하게" 가 되지 않도록. */}
+          <div className="rounded-lg border border-bs bg-pg px-3 py-2">
+            {targetOrg ? (
+              <p className="text-sm text-slate-700">
+                <span className="font-medium text-slate-900">{targetOrg.name}</span>
+                {" 조직으로 등록됩니다"}
+              </p>
+            ) : (
+              <p className="text-sm text-slate-500">등록할 조직을 확인하는 중입니다</p>
+            )}
+            {targetIsNotActive && (
+              <p className="mt-1 text-xs text-yellow-700">
+                현재 조직에는 등록 권한이 없어 · 관리자 권한이 있는 조직으로 지정했습니다
+              </p>
+            )}
+          </div>
+
           <Button
             type="button"
             variant="outline"

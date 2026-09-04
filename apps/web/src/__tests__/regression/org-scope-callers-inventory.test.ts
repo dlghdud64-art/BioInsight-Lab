@@ -122,8 +122,10 @@ const KNOWN_API_MAX: Record<string, number> = {
 };
 
 const KNOWN_UI_MAX: Record<string, number> = {
-  "app/dashboard/settings/plans/page.tsx": 2,
   "components/workspace/workspace-switcher.tsx": 2,
+  /* settings/plans(2) — Phase 2-11 이관 완료 (2026-09-03). 상한에서 제거됨.
+   *   결제 표면이라 표시(Select value)와 결제 경로가 같은 심볼임을 함께 잠갔다:
+   *   regression/active-org-switcher-display-pairing.test.ts */
   /* hooks/use-permission.ts — Phase 2 치환 완료 (2026-09-01, 첫 파일). 상한에서 제거됨. */
   /* settings/enterprise(1) · BulkImportModal(1) — Phase 2-10 이관 완료 (2026-09-03).
    *   잠금: regression/active-org-switcher-display-pairing.test.ts */
@@ -225,7 +227,7 @@ describe("§invite-flow — org-scope 직접 호출 인벤토리 (래칫 · Phas
     expect(apiTotal).toBeLessThanOrEqual(0);
     /* UI 축은 이번 phase 에서 변화 없다 — suppliers 화면은 `orgs[0]` 을 쓰지 않아
      * 애초에 UI 인벤토리에 없었다(짝 이관 대상이었던 것은 mutation 이지 조직 선택이 아니다). */
-    expect(uiTotal).toBeLessThanOrEqual(4);
+    expect(uiTotal).toBeLessThanOrEqual(2);
   });
 
   it("§invite-flow P2 — usePermission 은 활성 조직을 읽는다 (orgs[0] 부활 시 RED)", () => {
