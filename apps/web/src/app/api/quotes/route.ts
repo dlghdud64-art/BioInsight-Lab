@@ -30,29 +30,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    /* §pricing-refresh P2 — Free RFQ 한도 enforce(grandfather/유료/env미설정은 통과). 초과 시 429+안내.
-     *
-     * §invite-flow Phase 2-8 — **여기만 조직을 넘기지 않는다.** 다른 두 호출자(inventory ·
-     *   scan-label)는 auth 직후에 조직을 해석해 넘기지만, 이 라우트의 hint 는
-     *   `validated.organizationId`(:85, body 파싱 뒤)에서 나온다. 조직을 넘기려면 body 파싱을
-     *   여기 앞으로 당겨야 하고, 그러면 **한도 초과 사용자가 429 대신 400(스키마 오류)을 먼저**
-     *   받는 순서 변화가 생긴다 — 지금 고칠 문제가 아니다.
-     *   지금은 무해하다: hint 를 보내는 first-party 클라이언트가 0곳이라(web POST 8 · mobile 0)
-     *   **활성 조직 = 견적이 붙는 조직**이고, 헬퍼의 fallback 이 정확히 그 값을 쓴다.
-     *   🛑 Phase 3(초대 수락)에서 hint 가 실재화되면 이 등식이 깨진다 —
-     *      그때 조직 해석을 이 호출 앞으로 옮긴다(계획서 Phase 3 선행 조건에 등재). */
-    try {
-      await enforcePlanLimit(session.user.id, "quotes");
-    } catch (e) {
-      if (e instanceof PlanLimitError) {
-        return NextResponse.json(
-          { error: e.message, code: e.code, limit: e.limit, used: e.used },
-          { status: 429 },
-        );
-      }
-      throw e;
-    }
-
     // ── Security enforcement ──
     enforcement = enforceAction({
       userId: session.user.id,
@@ -130,6 +107,42 @@ export async function POST(request: NextRequest) {
     } catch (orgErr: any) {
       console.warn("[quotes/POST] organizationId lookup failed, proceeding without org:", orgErr?.message);
       serverOrgId = null;
+    }
+
+    /* §pricing-refresh P2 — Free RFQ 한도 enforce(grandfather/유료/env미설정은 통과). 초과 시 429+안내.
+     *
+     * §invite-flow Phase 3 선행 조건 (2026-09-04 실행) — **한도를 견적이 붙을 그 조직으로 잰다.**
+     *
+     * 이전에는 이 호출이 auth 직후에 있어 조직을 넘기지 못했다(hint 가 body 파싱 뒤에 나온다).
+     * 무해했던 이유는 hint 를 보내는 first-party 클라이언트가 0곳이라 **활성 조직 = 견적이 붙는
+     * 조직**이었기 때문이고, Phase 3(초대 수락)에서 hint 가 실재화되면 그 등식이 깨진다 —
+     * 한도는 org-A 플랜으로 재고 견적은 org-B 에 생기는 상태가 된다.
+     *
+     * 🔑 계획서에는 "body 파싱을 앞으로 당긴다" 로 등재했었으나 **방향을 뒤집었다**(Cowork QA):
+     *   - auth ~ 조직 해석 구간에 DB·외부 호출이 **없다**(`request.json()` + zod 뿐).
+     *     따라서 enforce 를 뒤로 내려도 낭비되는 비용이 0 이다.
+     *   - `label-scan-quota-p2b` 의 순서 핀은 scan-label 전용이고 **quotes 에는 위치 핀이 없다**
+     *     → 승계 교체 불필요.
+     *   - body 파싱을 위로 당기면 검증이 auth 블록 사이로 끼어들어 라우트 구조가 흐트러진다.
+     *     enforce 를 내리는 것은 **한 블록 이동**이다.
+     *
+     * ⚠️ 순서 변화(감수 판정): "한도 초과 + 스키마 오류" 가 동시에 성립할 때만 429 대신 400 이
+     *   먼저 나간다. 정상 클라이언트는 그 조합을 만들지 않고, 그 경우엔 **400 이 더 정확하다** —
+     *   한도와 무관하게 요청 자체가 잘못됐다. 429 업셀 노출 손실도 malformed body 에만 해당한다.
+     *
+     * 🛑 이제 이 catch 는 **lock 획득 이후**다 → 자체 return 전에 `enforcement.fail()` 로
+     *   핸들을 닫는다(§enforcement-handle-close E6). 옮기면서 이걸 빠뜨리면 lock 이 샌다. */
+    try {
+      await enforcePlanLimit(session.user.id, "quotes", serverOrgId);
+    } catch (e) {
+      if (e instanceof PlanLimitError) {
+        enforcement.fail();
+        return NextResponse.json(
+          { error: e.message, code: e.code, limit: e.limit, used: e.used },
+          { status: 429 },
+        );
+      }
+      throw e;
     }
 
     // items가 있으면 새로운 형식, 없으면 기존 형식

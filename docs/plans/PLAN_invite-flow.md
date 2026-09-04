@@ -1,8 +1,8 @@
 # Implementation Plan: 조직 초대 흐름 완성 (§invite-flow b)
 
-- **Status:** 🚧 In Progress (Phase 0·1 완료 · Phase 2 **API 축 완료** · UI 축 14곳 남음)
+- **Status:** 🚧 In Progress (Phase 0·1·2·4 완료 — **래칫 API 0 · UI 0** · Phase 3 선행 조건 1/2 완료 · 다음: 수락 흐름)
 - **Started:** 2026-08-31
-- **Last Updated:** 2026-09-02 (Phase 2 API 축 0 도달 `bb4f5510` — 클로드코드)
+- **Last Updated:** 2026-09-04 (Phase 4 스위처 PATCH 배선 `c29cf9f5` · Phase 3 선행 조건 1 실행 — 클로드코드)
 - ⛔ **Phase 2 착수 전 선행 조건:** operator-shell `prisma migrate deploy` 로
   `20260831230000_user_active_organization` **prod 적용**. 배포 체인은 적용하지 않는다 —
   `vercel-migrate.js` 는 ADR-002 §11.13 로 영구 NO-OP(실측 2026-08-31).
@@ -284,16 +284,33 @@ Red-Green-Refactor 엄수. 러너: 클로드코드 세션(`apps/web` vitest·tsc
 ### Phase 3: 수락 흐름 + 좌석 게이트 (4h)
 
 ⛔ **선행 조건 2건 (Phase 2 에서 미룬 것 — 수락이 열리면 둘 다 실재화된다)**
-1. **`quotes` POST 의 조직 해석을 `enforcePlanLimit` 앞으로 옮긴다.**
-   지금은 hint 가 `validated.organizationId`(body 파싱 뒤)에서 나오고 한도 체크는 그 앞(:35)이라
-   조직을 넘기지 못한다. 무해한 이유는 **hint 를 보내는 first-party 클라이언트가 0곳**이라
-   활성 조직 = 견적이 붙는 조직이기 때문이다(web POST 8 · mobile 0 실측, 2026-09-02).
-   Phase 3 에서 hint 가 실재화되면 그 등식이 깨진다 — 한도는 org-A 플랜으로 재고 견적은 org-B 에
-   생기는 상태가 된다. 옮길 때 순서 변화(한도 초과 사용자가 429 대신 400 을 먼저 받음)를
-   감수할지 함께 판정한다.
+1. ✅ **완료 (2026-09-04) — 단, 등재 문구와 방향이 반대다.**
+   원 등재: "조직 해석을 `enforcePlanLimit` 앞으로 옮긴다"(= body 파싱을 위로 당긴다).
+   **실행: `enforcePlanLimit` 을 조직 해석 뒤로 내렸다**(Cowork QA 판정).
+   근거 3건 —
+   · auth ~ 조직 해석 구간에 **DB·외부 호출이 없다**(`request.json()` + zod 뿐) →
+     enforce 를 내려도 낭비되는 비용 0.
+   · `label-scan-quota-p2b` 의 순서 핀은 scan-label 전용이고 **quotes 에는 위치 핀이 없다**
+     → 승계 교체 불필요.
+   · body 파싱을 위로 당기면 검증이 auth 블록 사이로 끼어들어 라우트 구조가 흐트러진다.
+     enforce 를 내리는 것은 **한 블록 이동**이다.
+   순서 변화 판정(429 → 400): **감수.** "한도 초과 + 스키마 오류" 동시 성립 때만 갈리고,
+   그 경우 400 이 더 정확하다(한도와 무관하게 요청 자체가 잘못됨). 업셀 노출 손실은
+   malformed body 에만 해당해 실질 영향 0.
+   🛑 옮기면서 이 catch 가 **lock 획득 이후**가 됐다 → 자체 return 전 `enforcement.fail()`
+   필수(§enforcement-handle-close E6). 빠뜨리면 lock 이 샌다(프로브로 검출 확인).
 2. **Phase 2-6 의 403 이 여기서 처음 발화한다.** 그 커밋은 예방적 조치였다(위 §2-6 참조) —
    hint 경로가 도달 가능해지는 시점이 Phase 3 이므로, 수락 흐름 배선 시 403 응답을
-   UI 가 어떻게 보여줄지(조용한 실패 금지) 함께 설계한다.
+   UI 가 어떻게 보여줄지 함께 설계한다.
+   **설계 기준 (Cowork QA 2026-09-04 · 조용한 실패 금지):**
+   · 🛑 **토스트로 끝내지 않는다.** 견적 생성은 사용자가 입력을 쌓아 올린 뒤의 액션이라,
+     토스트가 사라지면 왜 안 됐는지가 화면에서 없어진다 → **폼 상단에 남는 영역**.
+   · 문구는 **무엇을 하면 되는지까지**. "권한이 없습니다" 로 끝나면 다음 행동을 모른다 →
+     `이 견적이 향하는 조직(OO)의 멤버가 아닙니다 · 워크스페이스를 전환하거나 관리자에게
+     초대를 요청하세요`.
+   · 🛑 **입력을 날리지 않는다.** 403 후 폼 상태 초기화는 실질적 데이터 손실이다.
+   · 최선은 **403 에 도달하지 않는 것** — 조직 전환 UI 가 견적 화면에서 닿는 거리에 있으면
+     대부분 예방된다. Phase 4 로 스위처가 살아났으니 이제 가능하다.
 - Status: [ ] Pending
 - 🔴 `__tests__/api/invites/accept.test.ts`: 토큰 없음 404 · revokedAt 410 · expiresAt 경과 410 · acceptedAt 있음 409 · email 지정 ≠ 세션 email 403 · 이미 멤버 200(멱등, acceptedAt 만 채움) · **좌석 초과 403 `{ code: "SEAT_LIMIT", limit, plan }`** · 정상 200 → member 생성 · acceptedAt/By · activeOrganizationId · auditEvent. `invites POST` 좌석 초과 403 동일 계약
 - 🟢 `api/invites/[token]/route.ts` GET(미리보기: 조직명·역할·만료·상태, 토큰만으로 조회 · PII 최소) · `api/invites/[token]/accept/route.ts` POST(트랜잭션) · `app/invite/[token]/page.tsx`(비로그인 → `/auth/signin?callbackUrl=/invite/{token}` · 상태별 5화면: 유효/만료·취소/이미 수락/이미 멤버/좌석 초과 → 플랜 변경 링크는 **관리자에게** 안내 문구) · `invites POST` 에 `countMembers >= maxMembers → 403`
@@ -398,6 +415,17 @@ Phase 2-10 에서 모양을 정렬하고 읽는 쪽 방어를 넣었지만 그�
 **PATCH 배선 시 제거 대상**이다.
 
 - [x] Phase 0 · [x] Phase 1 · [ ] Phase 2 · [ ] Phase 3 · [ ] Phase 4 · [ ] Phase 5
+
+## 11-b. 게이트 작성 교훈 (이 트랙에서 실측된 것)
+
+🛑 **부정 단언은 호출 형태를 세지 말 것.** `?.()`·`call`·`apply` 로 우회된다.
+   **심볼 등장 자체를 창 안에서 금지한다.**
+   실측(2026-09-04, Phase 4): 낙관적 갱신 금지를 `not.toMatch(/onOrganizationChange\(/)` 로
+   썼는데 `onOrganizationChange?.(orgId)` 주입에 **GREEN** 이었다 —
+   하필 QA 가 "진짜 위험 지점" 으로 짚은 그 단언이다. 프로브를 안 돌렸으면 **검출력 0 인
+   잠금이 land** 됐을 자리이고, 그건 잠금이 없는 것보다 나쁘다(다음 사람이 잠겼다고 믿는다).
+   창이 좁으면(핸들러 앞부분처럼) 등장 금지가 안전하고 우회 불가다.
+   같은 계열: 4원칙 ① 접두사 포함(`disabled=` ⊂ `aria-disabled=`).
 
 ## 12. Notes & Learnings
 

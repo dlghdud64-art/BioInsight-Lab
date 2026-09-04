@@ -123,6 +123,33 @@ describe("§invite-flow P2-5 — 쓰기 3경로가 mutation resolver 를 쓴다"
     expect(post).not.toMatch(/resolveActiveOrganizationId\s*\(/);
   });
 
+  it("quotes POST — 한도를 **견적이 붙을 조직**으로 잰다 (해석 → enforce 순서)", () => {
+    /* §invite-flow Phase 3 선행 조건 (2026-09-04). Phase 3 에서 hint 가 실재화되면
+     * "활성 조직 = 견적이 붙는 조직" 등식이 깨진다 — 한도는 org-A 플랜으로 재고
+     * 견적은 org-B 에 생기는 상태. 그래서 enforce 를 조직 해석 **뒤로** 내렸다. */
+    const post = stripComments(
+      handlerBody(read("app", "api", "quotes", "route.ts"), "POST"),
+    );
+    const resolveIdx = post.search(/resolveOrganizationIdForMutation\s*\(/);
+    const enforceIdx = post.search(/enforcePlanLimit\s*\(/);
+    /* 🛑 찾았다는 사실을 **먼저** 단언한다 — `-1 < n` 이 공허하게 통과하던 형태를
+     *    §2-8 에서 이미 한 번 겪었다(label-scan-quota-p2b false-GREEN). */
+    expect(resolveIdx).toBeGreaterThan(-1);
+    expect(enforceIdx).toBeGreaterThan(-1);
+    expect(resolveIdx).toBeLessThan(enforceIdx);
+
+    // 해석 결과가 실제로 넘어간다 (순서만 맞고 인자가 없으면 이관이 아니다)
+    expect(post).toMatch(
+      /enforcePlanLimit\(session\.user\.id, "quotes", serverOrgId\)/,
+    );
+
+    /* lock 획득 이후 자체 return catch → 핸들 마감 (§enforcement-handle-close E6).
+     * 옮기면서 빠뜨리기 쉬운 자리라 여기서도 짝으로 핀한다. */
+    expect(post).toMatch(
+      /instanceof PlanLimitError[\s\S]{0,120}?enforcement\.fail\(\)[\s\S]{0,200}?status:\s*429/,
+    );
+  });
+
   it("budgets·team 은 hint 를 열지 않는다 (기존 결정 보존)", () => {
     /* budgets 의 [RBAC] 결정("organizationId 는 body 에서 받지 않는다")과 team 의 입력 계약을
      * 이관이 뒤집지 않았는지 — 여기서 hint 가 생기면 그건 결정 교체라 승인이 필요하다. */
