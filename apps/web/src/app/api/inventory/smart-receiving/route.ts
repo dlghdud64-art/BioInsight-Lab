@@ -28,6 +28,7 @@
  *       unit?: string | null;
  *       storageCondition?: string | null;  // 신규 시 Product.storageCondition
  *       category?: string | null;          // 신규 시 Product.category (미전달·무효 시 fallback REAGENT)
+ *       categoryTouched?: boolean;         // 사용자가 분류를 건드렸는가 (미전달 시 categorySource=UNKNOWN)
  *       notes?: string | null;
  *     };
  *     organizationId?: string | null;       // 조직 hint(선택). 멤버십 검증 통과 시만 채택,
@@ -83,6 +84,9 @@ interface SmartReceivingBody {
     packUnit?: string | null;
     storageCondition?: string | null;
     category?: string | null;
+    // §scan-category-touched — 사용자가 분류를 **실제로 건드렸는가**. 값만으로는
+    //   선채움 통과와 사람의 선택이 구별되지 않는다(2026-09-04 스모크 실측).
+    categoryTouched?: boolean;
     notes?: string | null;
     // §cas-hazard-classification P3b — CAS(선택 override). 미전달 시 OcrJob.finalResult 에서 파생.
     casNumber?: string | null;
@@ -108,6 +112,8 @@ interface SmartReceivingLine {
   notes?: string | null;
   // §scan-registration-category — 라인별 분류(미전달·무효 시 fallback REAGENT + categorySource FALLBACK).
   category?: string | null;
+  // §scan-category-touched — 라인별로 건드렸는지. 라인마다 다르다.
+  categoryTouched?: boolean;
 }
 
 // §scan-registration-category (호영님 2026-09-04) — 분류 단일 소스로 이관.
@@ -316,7 +322,7 @@ export async function POST(request: NextRequest) {
             } else {
               // §scan-registration-category — 라인별 분류. 사람이 고른 값이면 USER_SELECTED,
               //   아니면 fallback(REAGENT) + FALLBACK 을 근거로 남긴다.
-              const lineCategory = resolveProductCategory(line.category);
+              const lineCategory = resolveProductCategory(line.category, line.categoryTouched);
               const product = await tx.product.create({
                 data: {
                   name: line.productName!.trim(),
@@ -589,7 +595,10 @@ export async function POST(request: NextRequest) {
         const hazardFields = buildProductHazardFields(confirmedData.casNumber ?? ocrParsed?.casNumber ?? null);
         // §scan-registration-category — 구: `(confirmedData.category as ProductCategory) ?? DEFAULT_CATEGORY`.
         //   `as` 는 검사를 우회할 뿐 아니라 빈 문자열·오타도 그대로 통과시켰다(?? 는 null/undefined 만 막는다).
-        const resolvedCategory = resolveProductCategory(confirmedData.category);
+        const resolvedCategory = resolveProductCategory(
+          confirmedData.category,
+          confirmedData.categoryTouched,
+        );
         const product = await tx.product.create({
           data: {
             name: confirmedData.productName!.trim(),

@@ -257,6 +257,8 @@ export function SmartReceivingScannerModal({
       unit: string;
       // §scan-registration-category — 라인별 분류(fallback 선채움 · 라인마다 다를 수 있다).
       category: string;
+      // §scan-category-touched — 라인별 조작 여부. 한 행만 고치는 경우가 흔하다.
+      categoryTouched: boolean;
     }[]
   >([]);
   const isMulti = multiLines.length > 1;
@@ -265,6 +267,11 @@ export function SmartReceivingScannerModal({
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [candidatesLoading, setCandidatesLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // §scan-category-touched (호영님 2026-09-04) — 분류를 **실제로 건드렸는가**.
+  //   화면이 fallback 을 선채움해 전송하므로 값만으로는 사람의 선택과 구별되지 않는다
+  //   (스모크 실측: 안 건드린 등록 3건이 전부 USER_SELECTED 로 기록됐다).
+  //   productNameDirty 선례를 그대로 따른다.
+  const [categoryTouched, setCategoryTouched] = useState(false);
   // §11.375 (재설계) / §11.378 — 라이브 입고 경로 OCR 후단 게이트. 저신뢰도 OCR
   //   (키보드·잡동사니 사진 등) + 사용자 미보정이면 입고 등록 차단(재고 오염 방지).
   //   제품명 직접 수정 시 차단 해제(수동 보정 허용). LabelScannerModal §11.378 패턴 이식.
@@ -282,6 +289,7 @@ export function SmartReceivingScannerModal({
     setScanResult(null);
     setForm(EMPTY_FORM);
     setMultiLines([]);
+    setCategoryTouched(false);
     setErrorMessage(null);
     setPoCandidates([]);
     setSelectedOrderId(null);
@@ -379,6 +387,7 @@ export function SmartReceivingScannerModal({
                   quantity: it.quantity > 0 ? it.quantity : 1,
                   unit: it.unit ?? "",
                   category: FALLBACK_PRODUCT_CATEGORY,
+                  categoryTouched: false,
                 }))
               : [],
           );
@@ -465,8 +474,10 @@ export function SmartReceivingScannerModal({
               catalogNumber: l.catalogNumber.trim() || null,
               quantity: l.quantity,
               unit: l.unit.trim() || null,
-              // §scan-registration-category — 라인별 분류 전송(서버가 USER_SELECTED 로 기록).
+              // §scan-registration-category — 라인별 분류 전송.
               category: l.category,
+              // §scan-category-touched — 그 행을 실제로 건드렸는지.
+              categoryTouched: l.categoryTouched,
             })),
           }),
         });
@@ -547,6 +558,8 @@ export function SmartReceivingScannerModal({
             notes: form.notes.trim() || null,
             // §scan-registration-category — 화면에서 확인·수정한 분류 전송.
             category: form.category,
+            // §scan-category-touched — 선채움 통과인지 사람의 선택인지 서버가 구분하려면 필요하다.
+            categoryTouched,
           },
           // §scan-cat-guard — Cat.No. 없이 신규 등록 override 전달(서버 방어).
           allowMissingCatalog: ackNewWithoutCat,
@@ -728,7 +741,12 @@ export function SmartReceivingScannerModal({
                         <Select
                           value={l.category}
                           onValueChange={(v) =>
-                            setMultiLines((p) => p.map((x, j) => (j === i ? { ...x, category: v } : x)))
+                            setMultiLines((p) =>
+                              // §scan-category-touched — 그 행만 조작 기록.
+                              p.map((x, j) =>
+                                j === i ? { ...x, category: v, categoryTouched: true } : x,
+                              ),
+                            )
                           }
                         >
                           <SelectTrigger
@@ -794,7 +812,10 @@ export function SmartReceivingScannerModal({
                 </Label>
                 <Select
                   value={form.category}
-                  onValueChange={(v) => setForm({ ...form, category: v })}
+                  onValueChange={(v) => {
+                    setForm({ ...form, category: v });
+                    setCategoryTouched(true); // §scan-category-touched — 조작 사실을 기록
+                  }}
                 >
                   <SelectTrigger
                     id="srm-category"
@@ -811,7 +832,7 @@ export function SmartReceivingScannerModal({
                     ))}
                   </SelectContent>
                 </Select>
-                {form.category === FALLBACK_PRODUCT_CATEGORY && (
+                {!categoryTouched && form.category === FALLBACK_PRODUCT_CATEGORY && (
                   <p className="mt-1 text-[10px] text-slate-500" data-testid="srm-category-fallback-note">
                     기본값입니다 · 다르면 바꿔 주세요
                   </p>

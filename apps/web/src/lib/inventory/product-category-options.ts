@@ -52,8 +52,18 @@ export const FALLBACK_PRODUCT_CATEGORY: ProductCategory = "REAGENT";
  * 오염이 보이지 않는 채로 쌓인다(호영님 조건 2 · `lotSource` 선례).
  */
 export const CATEGORY_SOURCE = {
+  /** 사용자가 화면에서 분류를 **실제로 건드렸다.** */
   USER_SELECTED: "USER_SELECTED",
+  /** 사용자가 손대지 않아 선채움값이 그대로 통과했다. */
   FALLBACK: "FALLBACK",
+  /**
+   * 어느 쪽인지 **판단할 근거가 없다.**
+   *   - 요청이 categoryTouched 를 안 보냈다(구 클라이언트·직접 호출)
+   *   - 또는 판단 축이 없던 시기에 쌓인 행(2026-09-04 보정 대상)
+   * 🛑 null 과 다르다. null = 컬럼 도입 전(구 314행). UNKNOWN = 도입 후인데 모른다.
+   *    둘을 합치면 "언제부터 못 믿는가" 를 나중에 되물을 수 없다.
+   */
+  UNKNOWN: "UNKNOWN",
 } as const;
 
 export type CategorySource = (typeof CATEGORY_SOURCE)[keyof typeof CATEGORY_SOURCE];
@@ -64,14 +74,40 @@ export function isProductCategory(value: unknown): value is ProductCategory {
 }
 
 /**
- * 요청이 실은 분류를 무엇으로 확정했는지 한 번에 판정한다.
- * 유효하면 그대로 + USER_SELECTED, 아니면 fallback + FALLBACK.
+ * 요청이 실은 분류를 무엇으로 확정했는지 판정한다.
+ *
+ * 🛑 값만으로는 판정할 수 없다 (2026-09-04 스모크 실측):
+ *   화면이 fallback 을 **선채움해서 그대로 전송**하므로, 서버가 보기에는
+ *   사람이 REAGENT 를 고른 요청과 아무것도 안 고른 요청이 **완전히 같다.**
+ *   실제로 분류를 건드리지 않은 등록 3건이 전부 USER_SELECTED 로 기록됐고,
+ *   그러면 이 컬럼의 존재 이유(fallback 이 얼마나 무비판적으로 통과되는가)가 사라진다.
+ *   그래서 "건드렸는가" 를 클라이언트가 별도 축으로 보낸다(productNameDirty 선례).
+ *
+ * 🛑 "값이 fallback 과 같으면 FALLBACK" 은 기각된 안이다 — 실제로 시약을 고른 사람도
+ *   FALLBACK 으로 찍혀 반대 방향 오염이 생긴다(호영님 판단 2026-09-04).
+ *
+ * @param touched 사용자가 분류 컨트롤을 실제로 조작했는가.
+ *   undefined = 요청이 그 축을 아예 안 보냈다 → 판단 근거 없음 → UNKNOWN.
  */
-export function resolveProductCategory(value: unknown): {
+export function resolveProductCategory(
+  value: unknown,
+  touched?: boolean,
+): {
   category: ProductCategory;
   categorySource: CategorySource;
 } {
-  return isProductCategory(value)
-    ? { category: value, categorySource: CATEGORY_SOURCE.USER_SELECTED }
-    : { category: FALLBACK_PRODUCT_CATEGORY, categorySource: CATEGORY_SOURCE.FALLBACK };
+  if (!isProductCategory(value)) {
+    // 값 자체가 무효면 건드렸는지와 무관하게 fallback 이 들어간 것이다.
+    return {
+      category: FALLBACK_PRODUCT_CATEGORY,
+      categorySource: CATEGORY_SOURCE.FALLBACK,
+    };
+  }
+  if (touched === undefined) {
+    return { category: value, categorySource: CATEGORY_SOURCE.UNKNOWN };
+  }
+  return {
+    category: value,
+    categorySource: touched ? CATEGORY_SOURCE.USER_SELECTED : CATEGORY_SOURCE.FALLBACK,
+  };
 }

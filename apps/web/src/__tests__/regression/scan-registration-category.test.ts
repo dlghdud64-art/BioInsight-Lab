@@ -91,25 +91,59 @@ describe("§scan-registration-category — 규칙 승격: 상수는 schema 실�
 });
 
 describe("§scan-registration-category — 출처 기록 (호영님 조건 2)", () => {
-  it("사람이 고른 값 → USER_SELECTED, 아니면 fallback + FALLBACK", () => {
-    expect(resolveProductCategory("TOOL")).toEqual({
+  // 승계(§scan-category-touched 2026-09-04) — 구 판본은 값만 보고 USER_SELECTED 를 찍었다.
+  //   화면이 fallback 을 선채움해 전송하므로 **선채움 통과가 전부 USER_SELECTED 로 기록됐다**
+  //   (prod 스모크 실측 3/3). 판정 축은 값이 아니라 "건드렸는가" 다.
+  it("건드렸으면 USER_SELECTED, 안 건드렸으면 FALLBACK — 값이 같아도 갈린다", () => {
+    // 🔑 이 두 줄이 이 컬럼의 존재 이유다. 같은 REAGENT 인데 출처가 다르다.
+    expect(resolveProductCategory("REAGENT", true).categorySource).toBe(
+      CATEGORY_SOURCE.USER_SELECTED,
+    );
+    expect(resolveProductCategory("REAGENT", false).categorySource).toBe(
+      CATEGORY_SOURCE.FALLBACK,
+    );
+    expect(resolveProductCategory("TOOL", true)).toEqual({
       category: "TOOL",
       categorySource: CATEGORY_SOURCE.USER_SELECTED,
     });
-    expect(resolveProductCategory("OTHER")).toEqual({
-      category: FALLBACK_PRODUCT_CATEGORY,
-      categorySource: CATEGORY_SOURCE.FALLBACK,
-    });
-    expect(resolveProductCategory(undefined)).toEqual({
-      category: FALLBACK_PRODUCT_CATEGORY,
-      categorySource: CATEGORY_SOURCE.FALLBACK,
-    });
   });
 
-  it("fallback 을 고른 것과 fallback 이 그냥 통과한 것을 구분한다", () => {
-    // 값은 같아도 출처가 다르다 — 이게 없으면 오염이 안 보이는 채로 쌓인다.
-    expect(resolveProductCategory("REAGENT").categorySource).toBe(CATEGORY_SOURCE.USER_SELECTED);
-    expect(resolveProductCategory(null).categorySource).toBe(CATEGORY_SOURCE.FALLBACK);
+  it("판단 근거가 없으면 UNKNOWN — 모른다고 쓰는 건 지어내는 게 아니다", () => {
+    // touched 축을 안 보낸 요청(구 클라이언트·직접 호출)은 둘 중 무엇인지 알 수 없다.
+    expect(resolveProductCategory("REAGENT")).toEqual({
+      category: "REAGENT",
+      categorySource: CATEGORY_SOURCE.UNKNOWN,
+    });
+    expect(resolveProductCategory("TOOL", undefined).categorySource).toBe(
+      CATEGORY_SOURCE.UNKNOWN,
+    );
+  });
+
+  it("무효값은 건드렸는지와 무관하게 fallback + FALLBACK", () => {
+    for (const touched of [true, false, undefined]) {
+      expect(resolveProductCategory("OTHER", touched)).toEqual({
+        category: FALLBACK_PRODUCT_CATEGORY,
+        categorySource: CATEGORY_SOURCE.FALLBACK,
+      });
+      expect(resolveProductCategory(null, touched).categorySource).toBe(
+        CATEGORY_SOURCE.FALLBACK,
+      );
+    }
+  });
+
+  it("🛑 기각된 안 — '값이 fallback 과 같으면 FALLBACK' 이 아니다", () => {
+    // 그렇게 하면 실제로 시약을 고른 사람도 FALLBACK 으로 찍혀 반대 방향 오염이 생긴다.
+    expect(resolveProductCategory(FALLBACK_PRODUCT_CATEGORY, true).categorySource).toBe(
+      CATEGORY_SOURCE.USER_SELECTED,
+    );
+  });
+
+  it("UNKNOWN 은 null 과 다르다 — 세 상태가 각각 존재한다", () => {
+    // null       = 컬럼 도입 전(구 314행)
+    // UNKNOWN    = 도입 후인데 판단 근거 없음
+    // FALLBACK   = 안 건드림이 확인됨
+    expect(new Set(Object.values(CATEGORY_SOURCE)).size).toBe(3);
+    expect(CATEGORY_SOURCE.UNKNOWN).toBe("UNKNOWN");
   });
 
   it("Product.categorySource 컬럼이 schema 에 실재한다 (TEXT nullable · enum 아님)", () => {
@@ -129,7 +163,7 @@ describe("§scan-registration-category — 출처 기록 (호영님 조건 2)", 
 describe("§scan-registration-category — 서버가 두 생성 지점 모두에 기록한다", () => {
   it("단품 신규 경로", () => {
     const src = read(ROUTE);
-    const idx = src.indexOf("const resolvedCategory = resolveProductCategory(confirmedData.category)");
+    const idx = src.indexOf("const resolvedCategory = resolveProductCategory(");
     expect(idx).toBeGreaterThan(-1);
     const win = src.slice(idx, idx + 900);
     expect(win).toMatch(/category:\s*resolvedCategory\.category/);
@@ -139,7 +173,7 @@ describe("§scan-registration-category — 서버가 두 생성 지점 모두에
   it("다품목 신규 라인 경로", () => {
     // ④ 경로는 각각 단언한다 — 하나가 끊기는 것도 회귀다.
     const src = read(ROUTE);
-    const idx = src.indexOf("const lineCategory = resolveProductCategory(line.category)");
+    const idx = src.indexOf("const lineCategory = resolveProductCategory(line.category, line.categoryTouched)");
     expect(idx).toBeGreaterThan(-1);
     const win = src.slice(idx, idx + 900);
     expect(win).toMatch(/category:\s*lineCategory\.category/);
@@ -157,7 +191,8 @@ describe("§scan-registration-category — 화면에 값이 보인다 (호영님
     const idx = src.indexOf('data-testid="srm-category"');
     expect(idx).toBeGreaterThan(-1);
     expect(src).toMatch(/value=\{form\.category\}/);
-    expect(src).toMatch(/onValueChange=\{\(v\) => setForm\(\{ \.\.\.form, category: v \}\)\}/);
+    // 승계(§scan-category-touched): 핸들러가 값 설정 **과** 조작 기록을 같이 한다.
+    expect(src).toMatch(/setForm\(\{ \.\.\.form, category: v \}\);[\s\S]{0,160}?setCategoryTouched\(true\)/);
     expect(src).toMatch(/PRODUCT_CATEGORY_VALUES\.map/);
     expect(src).toMatch(/PRODUCT_CATEGORY_LABELS\[c\]/);
   });
@@ -173,7 +208,8 @@ describe("§scan-registration-category — 화면에 값이 보인다 (호영님
     const src = read(MODAL);
     expect(src).toMatch(/data-testid="srm-multi-category"/);
     expect(src).toMatch(/value=\{l\.category\}/);
-    expect(src).toMatch(/j === i \? \{ \.\.\.x, category: v \} : x/);
+    // 승계: 그 행만 값 + 조작 기록.
+    expect(src).toMatch(/j === i \? \{ \.\.\.x, category: v, categoryTouched: true \} : x/);
   });
 
   it("두 전송 경로가 각각 category 를 싣는다", () => {
