@@ -59,7 +59,9 @@
     "20260822090000_budget_event_budget_id",
     "20260830120000_purchase_request_organization_id",
     "20260831130000_receiving_item_lot_source",
-    "20260831210000_vendor_parse_template"
+    "20260831210000_vendor_parse_template",
+    "20260831230000_user_active_organization",
+    "20260904040000_product_category_source"
   ],
-  "generatedAt": "2026-08-31T11:37:55.325Z"
+  "generatedAt": "2026-09-04T03:56:14.332Z"
 }

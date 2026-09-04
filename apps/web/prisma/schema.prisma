@@ -342,6 +342,10 @@ model Product {
   descriptionEn         String?                      @db.Text
   descriptionTranslated String?                      @db.Text // 번역???명 (GPT 번역)
   category              ProductCategory
+  // §scan-registration-category (호영님 2026-09-04) — 분류가 사람이 고른 값인지 fallback 인지.
+  //   "USER_SELECTED" | "FALLBACK". lotSource 선례대로 TEXT + API 층 검증(Postgres enum 아님 —
+  //   이번 사고가 정확히 enum 불일치였다). null = 구 데이터(미기록) · backfill 하지 않는다.
+  categorySource        String?
   brand                 String?
   modelNumber           String?
   catalogNumber         String? // 카탈로그 번호 (Cat.No)

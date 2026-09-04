@@ -43,6 +43,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PACK_UNIT_OPTIONS, normalizePackUnit } from "@/lib/inventory/pack-unit-options";
+// §scan-registration-category — 분류 목록·fallback 단일 소스(캐스트 0). 화면·API 가 같은 목록을 본다.
+import {
+  PRODUCT_CATEGORY_LABELS,
+  PRODUCT_CATEGORY_VALUES,
+  FALLBACK_PRODUCT_CATEGORY,
+} from "@/lib/inventory/product-category-options";
 import { toast } from "@/lib/toast";
 import {
   ScanLine,
@@ -108,6 +114,9 @@ interface ConfirmedFormState {
   receivedUnit: string;
   storageCondition: string;
   notes: string;
+  // §scan-registration-category — 품목 분류. fallback 으로 미리 채우되 화면에 보인다
+  //   (숨은 기본값은 그냥 기본값 박아넣기와 다를 게 없다 — 호영님 조건 1).
+  category: string;
 }
 
 const EMPTY_FORM: ConfirmedFormState = {
@@ -122,6 +131,7 @@ const EMPTY_FORM: ConfirmedFormState = {
   receivedUnit: "",
   storageCondition: "",
   notes: "",
+  category: FALLBACK_PRODUCT_CATEGORY,
 };
 
 function ConfidenceBadge({ level }: { level: "high" | "medium" | "low" }) {
@@ -197,6 +207,8 @@ function extractInitialForm(doc: ParsedQuoteDocument): ConfirmedFormState {
     receivedUnit: firstItem.unit ?? "",
     storageCondition: "",
     notes: firstItem.notes ?? "",
+    // OCR 은 분류를 주지 않는다 — fallback 을 채우고 사용자가 화면에서 확인·수정한다.
+    category: FALLBACK_PRODUCT_CATEGORY,
   };
 }
 
@@ -237,7 +249,15 @@ export function SmartReceivingScannerModal({
   // §scan-recognition-upgrade P2 — 다품목 라인 초안(명세서 items[] 2건 이상일 때).
   //   라인별 수량 확인 후 일괄 등록. include 해제 = 그 라인 미등록(부분 확정은 사람 선택).
   const [multiLines, setMultiLines] = useState<
-    { include: boolean; productName: string; catalogNumber: string; quantity: number; unit: string }[]
+    {
+      include: boolean;
+      productName: string;
+      catalogNumber: string;
+      quantity: number;
+      unit: string;
+      // §scan-registration-category — 라인별 분류(fallback 선채움 · 라인마다 다를 수 있다).
+      category: string;
+    }[]
   >([]);
   const isMulti = multiLines.length > 1;
   // §11.326 v3 — 라벨↔미입고 발주 매칭 후보 + 선택.
@@ -358,6 +378,7 @@ export function SmartReceivingScannerModal({
                   catalogNumber: it.catalogNumber ?? "",
                   quantity: it.quantity > 0 ? it.quantity : 1,
                   unit: it.unit ?? "",
+                  category: FALLBACK_PRODUCT_CATEGORY,
                 }))
               : [],
           );
@@ -444,6 +465,8 @@ export function SmartReceivingScannerModal({
               catalogNumber: l.catalogNumber.trim() || null,
               quantity: l.quantity,
               unit: l.unit.trim() || null,
+              // §scan-registration-category — 라인별 분류 전송(서버가 USER_SELECTED 로 기록).
+              category: l.category,
             })),
           }),
         });
@@ -522,6 +545,8 @@ export function SmartReceivingScannerModal({
             packUnit: form.packUnit.trim() || null,
             storageCondition: form.storageCondition.trim() || null,
             notes: form.notes.trim() || null,
+            // §scan-registration-category — 화면에서 확인·수정한 분류 전송.
+            category: form.category,
           },
           // §scan-cat-guard — Cat.No. 없이 신규 등록 override 전달(서버 방어).
           allowMissingCatalog: ackNewWithoutCat,
@@ -694,9 +719,33 @@ export function SmartReceivingScannerModal({
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-slate-900 truncate">{l.productName || "(품목명 없음)"}</p>
-                      <p className="text-[10px] text-slate-400 truncate">
-                        {l.catalogNumber ? `Cat ${l.catalogNumber}` : "Cat.No 없음"}
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-[10px] text-slate-400 truncate">
+                          {l.catalogNumber ? `Cat ${l.catalogNumber}` : "Cat.No 없음"}
+                        </p>
+                        {/* §scan-registration-category — 라인마다 분류가 다를 수 있다(시약 + 소모품 혼재).
+                            fallback 선채움 + 라인별 노출·수정. */}
+                        <Select
+                          value={l.category}
+                          onValueChange={(v) =>
+                            setMultiLines((p) => p.map((x, j) => (j === i ? { ...x, category: v } : x)))
+                          }
+                        >
+                          <SelectTrigger
+                            data-testid="srm-multi-category"
+                            className="h-6 w-[74px] text-[10px] px-1.5 shrink-0"
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PRODUCT_CATEGORY_VALUES.map((c) => (
+                              <SelectItem key={c} value={c} className="text-xs">
+                                {PRODUCT_CATEGORY_LABELS[c]}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                     {/* §scan-recognition-upgrade P3 — 공용 셀. 저신뢰 스캔은 수량도 확인 필요 톤. */}
                     <RecognizedFieldInput
@@ -734,6 +783,39 @@ export function SmartReceivingScannerModal({
                   placeholder="예: Trypsin-EDTA 0.25% 100ml"
                   className="mt-1 h-9 text-sm"
                 />
+              </div>
+
+              {/* §scan-registration-category (호영님 2026-09-04) — 분류는 fallback 으로 미리 채우되
+                  값이 보여야 한다. 숨은 기본값은 그냥 기본값 박아넣기와 다를 게 없다.
+                  OCR 은 분류를 주지 않으므로 확인 책임은 사람에게 남긴다. */}
+              <div>
+                <Label htmlFor="srm-category" className="text-xs font-semibold">
+                  분류 <span className="text-rose-600">*</span>
+                </Label>
+                <Select
+                  value={form.category}
+                  onValueChange={(v) => setForm({ ...form, category: v })}
+                >
+                  <SelectTrigger
+                    id="srm-category"
+                    data-testid="srm-category"
+                    className="mt-1 h-9 text-sm"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRODUCT_CATEGORY_VALUES.map((c) => (
+                      <SelectItem key={c} value={c} className="text-sm">
+                        {PRODUCT_CATEGORY_LABELS[c]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.category === FALLBACK_PRODUCT_CATEGORY && (
+                  <p className="mt-1 text-[10px] text-slate-500" data-testid="srm-category-fallback-note">
+                    기본값입니다 · 다르면 바꿔 주세요
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-2.5">

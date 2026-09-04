@@ -27,7 +27,7 @@
  *       quantity: number;                  // 입고 수량 (필수, > 0)
  *       unit?: string | null;
  *       storageCondition?: string | null;  // 신규 시 Product.storageCondition
- *       category?: string | null;          // 신규 시 Product.category (default OTHER)
+ *       category?: string | null;          // 신규 시 Product.category (미전달·무효 시 fallback REAGENT)
  *       notes?: string | null;
  *     };
  *     organizationId?: string | null;       // 신규 ProductInventory.organizationId
@@ -51,10 +51,12 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 // §cas-hazard-classification P3b — 입고 시 OCR casNumber → casNo 저장 + 정적 위험분류.
 import { buildProductHazardFields } from "@/lib/safety/product-hazard-fields";
-import { Prisma, ProductCategory } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 // §scan-registration-reason — 500 응답에 사유를 실어 보낸다(침묵 금지).
 import { describeFailure } from "@/lib/api-failure-reason";
+// §scan-registration-category — 분류·출처 단일 소스(캐스트 0 · Record 로 전수 강제).
+import { resolveProductCategory } from "@/lib/inventory/product-category-options";
 // 알림 고도화 #notif-inventory-received — 입고 완료 시 INVENTORY_RECEIVED 알림(best-effort).
 import { dispatchNotificationEvent, resolveOrgRecipients } from "@/lib/notifications";
 // §11.309c-hotfix-2 — security middleware import 제거 (단순화).
@@ -100,11 +102,14 @@ interface SmartReceivingLine {
   packSize?: number | null;
   packUnit?: string | null;
   notes?: string | null;
+  // §scan-registration-category — 라인별 분류(미전달·무효 시 fallback REAGENT + categorySource FALLBACK).
+  category?: string | null;
 }
 
-// §11.309c — Prisma ProductCategory enum 의 default fallback.
-// 사용자가 신규 시 category 미지정 → OTHER (후속 inventory 편집에서 보완).
-const DEFAULT_CATEGORY: ProductCategory = "OTHER" as ProductCategory;
+// §scan-registration-category (호영님 2026-09-04) — 분류 단일 소스로 이관.
+//   구: `"OTHER" as ProductCategory` — prod enum 에 OTHER 가 없어 신규 품목 등록이 100% 실패했다.
+//   `as` 캐스트가 타입 검사를 우회했고, 정적 sentinel 은 문자열만 봐서 GREEN 으로 지켜줬다.
+//   이제 상수는 lib/inventory/product-category-options 한 곳에만 있고 캐스트가 없다.
 
 export async function POST(request: NextRequest) {
   try {
@@ -284,13 +289,17 @@ export async function POST(request: NextRequest) {
               );
               out.push({ inventoryId: inv.id, inventoryRestockId: restock.id, productId: inv.productId, isNew: false });
             } else {
+              // §scan-registration-category — 라인별 분류. 사람이 고른 값이면 USER_SELECTED,
+              //   아니면 fallback(REAGENT) + FALLBACK 을 근거로 남긴다.
+              const lineCategory = resolveProductCategory(line.category);
               const product = await tx.product.create({
                 data: {
                   name: line.productName!.trim(),
                   brand: line.brand ?? null,
                   catalogNumber: line.catalogNumber ?? null,
                   lotNumber: line.lotNumber ?? null,
-                  category: DEFAULT_CATEGORY,
+                  category: lineCategory.category,
+                  categorySource: lineCategory.categorySource,
                   packSize: typeof line.packSize === "number" ? line.packSize : null,
                   packUnit: line.packUnit ?? null,
                 },
@@ -553,13 +562,17 @@ export async function POST(request: NextRequest) {
         //   casNo 저장 + 정적 CAS→GHS 분류로 hazardCodes/pictograms 채움(위험물질만).
         const ocrParsed = ocrJob.finalResult?.parsedFields as { casNumber?: string | null } | null;
         const hazardFields = buildProductHazardFields(confirmedData.casNumber ?? ocrParsed?.casNumber ?? null);
+        // §scan-registration-category — 구: `(confirmedData.category as ProductCategory) ?? DEFAULT_CATEGORY`.
+        //   `as` 는 검사를 우회할 뿐 아니라 빈 문자열·오타도 그대로 통과시켰다(?? 는 null/undefined 만 막는다).
+        const resolvedCategory = resolveProductCategory(confirmedData.category);
         const product = await tx.product.create({
           data: {
             name: confirmedData.productName!.trim(),
             brand: confirmedData.brand ?? null,
             catalogNumber: confirmedData.catalogNumber ?? null,
             lotNumber: confirmedData.lotNumber ?? null,
-            category: (confirmedData.category as ProductCategory) ?? DEFAULT_CATEGORY,
+            category: resolvedCategory.category,
+            categorySource: resolvedCategory.categorySource,
             packSize: typeof confirmedData.packSize === "number" ? confirmedData.packSize : null,
             packUnit: confirmedData.packUnit ?? null,
             storageCondition: confirmedData.storageCondition ?? null,
