@@ -27,6 +27,7 @@
  *       quantity: number;                  // 입고 수량 (필수, > 0)
  *       unit?: string | null;
  *       storageCondition?: string | null;  // 신규 시 Product.storageCondition
+ *       specification?: string | null;     // 규격("4 L") — Product.specification
  *       category?: string | null;          // 신규 시 Product.category (미전달·무효 시 fallback REAGENT)
  *       categoryTouched?: boolean;         // 사용자가 분류를 건드렸는가 (미전달 시 categorySource=UNKNOWN)
  *       notes?: string | null;
@@ -85,6 +86,8 @@ interface SmartReceivingBody {
     packSize?: number | null;
     packUnit?: string | null;
     storageCondition?: string | null;
+    // §scan-spec-carry — 규격. Product.specification 으로 간다(컬럼은 진작 있었다).
+    specification?: string | null;
     category?: string | null;
     // §scan-category-touched — 사용자가 분류를 **실제로 건드렸는가**. 값만으로는
     //   선채움 통과와 사람의 선택이 구별되지 않는다(2026-09-04 스모크 실측).
@@ -116,6 +119,10 @@ interface SmartReceivingLine {
   category?: string | null;
   // §scan-category-touched — 라인별로 건드렸는지. 라인마다 다르다.
   categoryTouched?: boolean;
+  // §scan-spec-carry (호영님 2026-09-05) — 규격("4 L" · "500 mL" · "50 EA").
+  //   🛑 모델은 이미 정확히 읽고 있었다. 전달 경로가 없어 **등록 시 영구 소실**됐다.
+  //      quantity(6) 와 unit("EA") 만 남으면 "메탄올 6개" 가 4L 인지 100mL 인지 알 수 없다.
+  specification?: string | null;
 }
 
 // §scan-registration-category (호영님 2026-09-04) — 분류 단일 소스로 이관.
@@ -337,6 +344,8 @@ export async function POST(request: NextRequest) {
                   lotNumber: line.lotNumber ?? null,
                   category: lineCategory.category,
                   categorySource: lineCategory.categorySource,
+                  // §scan-spec-carry — 규격을 canonical 에 남긴다(구: 전달 자체가 없었다).
+                  specification: line.specification ?? null,
                   packSize: typeof line.packSize === "number" ? line.packSize : null,
                   packUnit: line.packUnit ?? null,
                 },
@@ -619,6 +628,8 @@ export async function POST(request: NextRequest) {
             lotNumber: confirmedData.lotNumber ?? null,
             category: resolvedCategory.category,
             categorySource: resolvedCategory.categorySource,
+            // §scan-spec-carry — 단품도 같은 계약.
+            specification: confirmedData.specification ?? null,
             packSize: typeof confirmedData.packSize === "number" ? confirmedData.packSize : null,
             packUnit: confirmedData.packUnit ?? null,
             storageCondition: confirmedData.storageCondition ?? null,

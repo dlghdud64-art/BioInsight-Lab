@@ -97,6 +97,25 @@ interface SmartReceivingApiResponse {
   failReason?: string | null;
 }
 
+/**
+ * §scan-spec-carry (호영님 2026-09-05) — 규격과 수량의 **관계**를 한 줄로 보여준다.
+ *
+ * 실측: 모델이 `specification:"4 L"` · `quantity:6` · `unit:"EA"` 를 정확히 읽었는데
+ *   화면이 `6 EA` 만 보여줬다. 그래서 4L 짜리 6개인지 100mL 6개인지 알 수 없었고,
+ *   보는 사람이 **정답을 오인식으로 읽었다**(2026-09-05, 호영님·operator 둘 다).
+ *   `6 EA` 만도 `4 L` 만도 안 된다 — `4 L × 6개` 여야 총량이 보인다.
+ */
+function formatQuantityWithSpec(
+  specification: string | null | undefined,
+  quantity: number,
+  unit: string | null | undefined,
+): string {
+  const spec = (specification ?? "").trim();
+  const u = (unit ?? "").trim();
+  const count = `${quantity}${u ? ` ${u}` : "개"}`;
+  return spec ? `${spec} × ${count}` : count;
+}
+
 /** 실패 문구에 서버가 실어 보낸 사유를 붙인다. 사유가 없으면 문구만(지어내지 않는다). */
 function withFailReason(message: string, failReason?: string | null): string {
   const reason = typeof failReason === "string" ? failReason.trim() : "";
@@ -116,6 +135,8 @@ interface ConfirmedFormState {
   receivedUnit: string;
   storageCondition: string;
   notes: string;
+  // §scan-spec-carry — 규격("4 L"). quantity·unit 만으로는 총량을 알 수 없다.
+  specification: string;
   // §scan-registration-category — 품목 분류. fallback 으로 미리 채우되 화면에 보인다
   //   (숨은 기본값은 그냥 기본값 박아넣기와 다를 게 없다 — 호영님 조건 1).
   category: string;
@@ -133,6 +154,7 @@ const EMPTY_FORM: ConfirmedFormState = {
   receivedUnit: "",
   storageCondition: "",
   notes: "",
+  specification: "",
   category: FALLBACK_PRODUCT_CATEGORY,
 };
 
@@ -209,6 +231,7 @@ function extractInitialForm(doc: ParsedQuoteDocument): ConfirmedFormState {
     receivedUnit: firstItem.unit ?? "",
     storageCondition: "",
     notes: firstItem.notes ?? "",
+    specification: firstItem.specification ?? "",
     // OCR 은 분류를 주지 않는다 — fallback 을 채우고 사용자가 화면에서 확인·수정한다.
     category: FALLBACK_PRODUCT_CATEGORY,
   };
@@ -261,6 +284,11 @@ export function SmartReceivingScannerModal({
       category: string;
       // §scan-category-touched — 라인별 조작 여부. 한 행만 고치는 경우가 흔하다.
       categoryTouched: boolean;
+      // §scan-spec-carry — 규격("4 L"). 모델이 이미 읽고 있었는데 전달 경로가 없었다.
+      specification: string;
+      // §scan-lot-slot — Lot·유효기간. 자리를 만들자 모델이 notes 대신 여기로 넣는다.
+      lotNumber: string;
+      expiryDate: string;
     }[]
   >([]);
   const isMulti = multiLines.length > 1;
@@ -390,6 +418,9 @@ export function SmartReceivingScannerModal({
                   unit: it.unit ?? "",
                   category: FALLBACK_PRODUCT_CATEGORY,
                   categoryTouched: false,
+                  specification: it.specification ?? "",
+                  lotNumber: it.lotNumber ?? "",
+                  expiryDate: it.expiryDate ?? "",
                 }))
               : [],
           );
@@ -484,6 +515,11 @@ export function SmartReceivingScannerModal({
               category: l.category,
               // §scan-category-touched — 그 행을 실제로 건드렸는지.
               categoryTouched: l.categoryTouched,
+              // §scan-spec-carry — 규격을 canonical 로 보낸다(구: 등록 시 영구 소실).
+              specification: l.specification.trim() || null,
+              // §scan-lot-slot — Lot·유효기간을 InventoryRestock 으로(컬럼은 진작 있었다).
+              lotNumber: l.lotNumber.trim() || null,
+              expirationDate: l.expiryDate.trim() || null,
             })),
           }),
         });
@@ -561,6 +597,8 @@ export function SmartReceivingScannerModal({
             packSize: form.packSize.trim() ? Number(form.packSize) : null,
             packUnit: form.packUnit.trim() || null,
             storageCondition: form.storageCondition.trim() || null,
+            // §scan-spec-carry — 단품도 같은 계약.
+            specification: form.specification.trim() || null,
             notes: form.notes.trim() || null,
             // §scan-registration-category — 화면에서 확인·수정한 분류 전송.
             category: form.category,
@@ -759,8 +797,12 @@ export function SmartReceivingScannerModal({
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-slate-900 truncate">{l.productName || "(품목명 없음)"}</p>
                       <div className="flex items-center gap-1.5">
-                        <p className="text-[10px] text-slate-400 truncate">
+                        <p className="text-[10px] text-slate-400 truncate" data-testid="srm-multi-spec">
                           {l.catalogNumber ? `Cat ${l.catalogNumber}` : "Cat.No 없음"}
+                          {" · "}
+                          {formatQuantityWithSpec(l.specification, l.quantity, l.unit)}
+                          {l.lotNumber ? ` · Lot ${l.lotNumber}` : ""}
+                          {l.expiryDate ? ` · ~${l.expiryDate}` : ""}
                         </p>
                         {/* §scan-registration-category — 라인마다 분류가 다를 수 있다(시약 + 소모품 혼재).
                             fallback 선채움 + 라인별 노출·수정. */}

@@ -68,6 +68,20 @@ function multiItemsBlock(src: string): string {
   return src.slice(start, end);
 }
 
+/**
+ * 단품 `confirmedData: { … }` 블록 전체를 잡는다.
+ * 🛑 고정 폭 슬라이스 금지 — payload 에 필드가 하나 늘면 뒷 필드가 창 밖으로 밀려
+ *    **구현은 계약을 지키는데 단언만 RED** 가 된다(2026-09-05 실측: brand 1회 · specification 1회).
+ *    그때 앵커를 갱신하면 fixture 가 구현을 따라간다 — 창을 블록 단위로 연다.
+ */
+function singleConfirmedBlock(src: string): string {
+  const start = src.indexOf("confirmedData: {");
+  if (start < 0) throw new Error("confirmedData 앵커를 찾지 못했다");
+  const end = src.indexOf("\n          },", start);
+  if (end < 0) throw new Error("confirmedData 닫는 자리를 찾지 못했다");
+  return src.slice(start, end);
+}
+
 
 describe("§scan-registration-category — 규칙 승격: 상수는 schema 실재와 대조한다", () => {
   it("fallback 은 schema 에 실재하는 멤버다 (문자열 계약 아님)", () => {
@@ -229,10 +243,8 @@ describe("§scan-registration-category — 화면에 값이 보인다 (호영님
 
   it("두 전송 경로가 각각 category 를 싣는다", () => {
     const src = read(MODAL);
-    // 단품
-    const single = src.indexOf("storageCondition: form.storageCondition.trim() || null,");
-    expect(single).toBeGreaterThan(-1);
-    expect(src.slice(single, single + 300)).toMatch(/category:\s*form\.category/);
+    // 단품 — 블록 단위 창(고정 폭 금지 · helper 주석 참조)
+    expect(singleConfirmedBlock(src)).toMatch(/category:\s*form\.category/);
     // 다품목 — 블록 단위 창(고정 폭 금지 · 위 helper 주석 참조)
     expect(multiItemsBlock(src)).toMatch(/category:\s*l\.category/);
   });

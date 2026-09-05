@@ -225,6 +225,8 @@ Required JSON format:
       "specification": "spec/size or null",
       "quantity": numeric quantity,
       "unit": "EA | bottle | box | g | mL etc",
+      "lotNumber": "lot/batch number on the line, or null",
+      "expiryDate": "expiry date YYYY-MM-DD, or null",
       "unitPrice": numeric unit price (0 if unknown),
       "totalPrice": numeric line total (0 if unknown),
       "leadTimeDays": numeric lead time days or null,

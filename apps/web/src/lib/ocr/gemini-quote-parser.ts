@@ -36,6 +36,8 @@ Required JSON format:
       "specification": "grade/purity/size or null",
       "quantity": 1,
       "unit": "EA or BOX or mL or g etc.",
+      "lotNumber": "lot/batch number printed on the line, or null",
+      "expiryDate": "expiry/use-by date in YYYY-MM-DD, or null",
       "unitPrice": 50000,
       "totalPrice": 50000,
       "leadTimeDays": 7,
@@ -59,7 +61,11 @@ Rules:
 - The document may be in English, Korean, Japanese, or mixed languages.
 - Extract ALL line items, not just the first one.
 - If leadTime is "2~3 weeks", convert to approximate days (e.g. 17).
-- unit should be standardized: EA, BOX, mL, L, g, kg, etc.`;
+- unit should be standardized: EA, BOX, mL, L, g, kg, etc.
+- Delivery notes (거래명세서) often carry a Lot/Batch column and an expiry column per line.
+  Put them in lotNumber / expiryDate. Do NOT fold them into notes.
+- "specification" is the package size of ONE unit (e.g. "4 L", "500 mL", "50 EA").
+  "quantity" is how many of those units. Keep them separate.`;
 
 import {
   describeParseFailure,
@@ -80,9 +86,24 @@ export interface ParsedQuoteLineItem {
   lineNumber: number;
   productName: string | null;
   catalogNumber: string | null;
+  /** 1개의 포장 규격 — "4 L" · "500 mL" · "50 EA". quantity 와 다른 축이다. */
   specification: string | null;
   quantity: number;
   unit: string;
+  /**
+   * §scan-lot-slot (호영님 2026-09-05) — Lot/배치 번호.
+   *
+   * 🛑 자리를 만드는 것이 정답이다. 실측(2026-09-05): 자리가 없자 모델이
+   *    `notes: "Lot No: MB2409A17, Expiry Date: 2029-03-31"` 로 밀어넣었다.
+   *    그 문자열을 정규식으로 캐면 **임시 형식이 계약이 된다** — 다음에 모델이
+   *    "LOT: … / EXP: …" 로 쓰면 조용히 null 이 되고 "Lot 인식 안 됨" 으로 오독한다.
+   *    자리가 있는 필드(specification·catalogNumber)는 전부 정확히 들어왔다.
+   *
+   * optional 이 아니라 nullable 이다 — 견적서에는 대개 없고, 그때 null 이 정답이다.
+   */
+  lotNumber: string | null;
+  /** §scan-lot-slot — 유효기간(YYYY-MM-DD). 위와 같은 이유로 자리를 만든다. */
+  expiryDate: string | null;
   unitPrice: number;
   totalPrice: number;
   leadTimeDays: number | null;
