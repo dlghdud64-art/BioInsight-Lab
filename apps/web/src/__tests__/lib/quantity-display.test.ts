@@ -88,13 +88,40 @@ describe("§scan-unit-guard — 경계", () => {
     );
   });
 
-  it("규격 단위가 없으면(숫자뿐) 모델 unit 을 신뢰한다", () => {
+  it("규격 단위가 없으면(숫자뿐) 모델 unit 을 쓰되 **미검증**으로 기록한다", () => {
+    /* 승계 (2026-09-05, Cowork QA 계측 공백): 원 단언은 `MODEL` 이었다.
+     * 🛑 표시는 그대로다 — 바뀐 것은 **기록**뿐이다. `su === null` 이면 충돌 여부를
+     *   판정할 수 없었던 것이지 모델이 맞았다는 뜻이 아니다.
+     *   그 둘을 같은 값으로 적으면 `unitSource` 분포에서 프롬프트 수정 효과가 안 보인다. */
     const r = formatQuantityWithSpec({ specification: "100", quantity: 3, unit: "BOX" });
     expect(r.text).toBe("100 × 3 BOX");
-    expect(r.unitSource).toBe(UNIT_SOURCE.MODEL);
+    expect(r.unitSource).toBe(UNIT_SOURCE.UNVERIFIED);
   });
 
-  it("두 출처가 각각 존재한다", () => {
-    expect(new Set(Object.values(UNIT_SOURCE)).size).toBe(2);
+  it("규격이 아예 없어도 미검증이다 (대조 대상이 없다)", () => {
+    const r = formatQuantityWithSpec({ specification: null, quantity: 6, unit: "EA" });
+    expect(r.text).toBe("6 EA");
+    expect(r.unitSource).toBe(UNIT_SOURCE.UNVERIFIED);
+  });
+
+  it("🔑 검증된 MODEL 과 미검증이 **다른 값**이다 (분포에서 갈린다)", () => {
+    const verified = formatQuantityWithSpec({ specification: "4 L", quantity: 6, unit: "EA" });
+    const unverified = formatQuantityWithSpec({ specification: "100", quantity: 3, unit: "BOX" });
+    // 리터럴로도 본다 — enum 멤버가 사라져도 공허하게 통과하지 않게(위 주석 참조)
+    expect(verified.unitSource).toBe("MODEL");
+    expect(unverified.unitSource).toBe("UNVERIFIED");
+    expect(verified.unitSource).not.toBe(unverified.unitSource);
+  });
+
+  it("세 출처가 각각 존재한다 — **이름까지** 고정", () => {
+    /* 🛑 개수만 세면 부족하고, `toBe(UNIT_SOURCE.X)` 만 쓰면 **공허해진다**:
+     *   enum 멤버를 지우면 `r.unitSource` 도 `UNIT_SOURCE.X` 도 둘 다 `undefined` 라
+     *   비교가 통과한다(프로브 V2 실측 — 13건 중 1건만 RED 였다).
+     *   → 값 집합을 **문자열로** 고정한다. 이건 지우면 반드시 RED 다. */
+    expect(Object.values(UNIT_SOURCE).slice().sort()).toEqual([
+      "FALLBACK",
+      "MODEL",
+      "UNVERIFIED",
+    ]);
   });
 });

@@ -24,6 +24,17 @@ export const UNIT_SOURCE = {
   MODEL: "MODEL",
   /** 모델의 unit 이 규격 단위와 같아 신뢰할 수 없어 `개` 로 떨어뜨렸다. */
   FALLBACK: "FALLBACK",
+  /**
+   * 🔑 **대조를 못 했다** — 규격에서 단위를 못 뽑아(`specUnit` null: 숫자뿐이거나 형식이 다름)
+   * 충돌 여부를 판정할 수 없었다. 모델 unit 을 **그대로 쓰되**(표시 동작은 MODEL 과 같다)
+   * "검증됨" 으로 기록하지 않는다.
+   *
+   * 🛑 이 값이 없으면 `unitSource` 분포에서 **"모델이 맞게 답했다"** 와
+   *    **"비교할 규격이 없어 그냥 통과시켰다"** 가 한 덩어리가 된다
+   *    → 프롬프트 수정 효과 판정에 잡음이 섞인다(Cowork QA 2026-09-05).
+   *    `lotSource`·`categorySource` 선례를 만든 이유가 정확히 이 구분이다.
+   */
+  UNVERIFIED: "UNVERIFIED",
 } as const;
 
 export type UnitSource = (typeof UNIT_SOURCE)[keyof typeof UNIT_SOURCE];
@@ -70,12 +81,21 @@ export function formatQuantityWithSpec(args: {
   // 모델의 unit 이 규격 단위와 같으면 신뢰하지 않는다 — 이번 결함의 형태.
   //   "50 EA × 4 EA" 도 여기 걸려 "50 EA × 4개" 가 된다. 그게 더 정확하다 —
   //   왼쪽은 포장 단위, 오른쪽은 낱개 수량이라 같은 라벨을 쓰면 안 된다(호영님 판단).
+  /* 🔑 대조 **가능 여부**를 판정과 분리한다. 규격 단위를 못 뽑으면(su === null)
+   * 충돌 여부를 알 수 없는 것이지, 모델이 맞았다는 뜻이 아니다. */
+  const canCompare = su !== null;
   const collides =
-    rawUnit !== "" && su !== null && rawUnit.toLowerCase() === su.toLowerCase();
+    rawUnit !== "" && canCompare && rawUnit.toLowerCase() === su.toLowerCase();
   const useModel = rawUnit !== "" && !collides;
 
   const resolvedUnit = useModel ? rawUnit : "개";
-  const unitSource = useModel ? UNIT_SOURCE.MODEL : UNIT_SOURCE.FALLBACK;
+  /* 🛑 표시 동작은 **바뀌지 않는다** — 대조 불가일 때도 모델 unit 을 그대로 쓴다.
+   * 바뀌는 것은 **기록**뿐이다: 검증된 MODEL 과 미검증 UNVERIFIED 를 가른다. */
+  const unitSource = !useModel
+    ? UNIT_SOURCE.FALLBACK
+    : canCompare
+      ? UNIT_SOURCE.MODEL
+      : UNIT_SOURCE.UNVERIFIED;
   const count = useModel ? `${args.quantity} ${resolvedUnit}` : `${args.quantity}개`;
 
   return {
