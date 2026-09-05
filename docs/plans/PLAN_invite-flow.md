@@ -419,6 +419,41 @@ Phase 2-10 에서 모양을 정렬하고 읽는 쪽 방어를 넣었지만 그�
 
 - [x] Phase 0 · [x] Phase 1 · [x] Phase 2 · [x] Phase 3 · [x] Phase 4(진입점 해제) · [ ] Phase 5
 
+## 별도 트랙 — §checkout-two-paths (결제 미배선 · 2026-09-05)
+
+Phase 5 좌석 확보를 위해 플랜 상향을 시도하다 드러난 별건. **이 트랙 밖이지만 여기 기록한다** —
+지금 코드 어디에도 이 사실이 없어서, `CheckoutDialog` 와 `import Stripe` 를 본 사람은
+결제가 된다고 믿는다(Cowork QA 가 실제로 그렇게 믿었다).
+
+```
+settings/plans   → CheckoutDialog → POST /api/organizations/[id]/subscription
+                   PG 연동 0곳 · 플랜은 적용됨 · 청구 없음
+settings/billing → POST /api/billing/checkout → Stripe 실호출
+                   🛑 prod 실측 stripeConfigured=false → 키 없음 → 호출 시점 실패
+```
+
+🔑 **결론: 현재 작동하는 유료 전환 수단이 0개다.** 전원 무료 상태다.
+canonical 이 될 쪽은 `billing/checkout`(Stripe) 이고, `settings/plans` 의 다이얼로그는
+결제가 배선되면 그쪽으로 합류하거나 문구를 되돌려야 한다.
+그 순서는 `regression/checkout-two-paths.test.ts` 가 지킨다 — CheckoutDialog 에 PG 연동이
+생기는 순간 RED 로 알린다.
+
+**처리(2026-09-05):** 봉인이 아니라 **거짓말만 제거**했다. 결제를 약속하던 문구 3종과
+"다음 결제일 · 정기 결제 금액 · 자동 갱신" 표시를 사실로 교체(`청구 없음 · 연동 준비 중`).
+`settings/billing` 의 실패 토스트도 사유를 말하게 했다(원인을 안 말하면 사용자가 카드·네트워크
+문제로 읽는다). 🛑 문구를 health 실측값에 **배선하지 않았다** — 매 렌더 health 호출은 새 결합이다.
+
+⚠️ **자기 교정 기록 (Cowork QA 요청)**
+> (B) 봉인 판정은 "작동하는 유료 경로가 이미 있다" 는 전제 위에 있었고, 그 전제가
+> `stripeConfigured: false` 로 무너져 철회됐다. **코드 존재는 경로 작동의 증거가 아니다** —
+> `import Stripe` 와 `stripe.customers.create` 호출이 있어도 키가 없으면 죽은 경로다.
+> 키·환경변수까지 봐야 한다.
+>
+> 🔑 이걸 막은 것은 **봉인 전에 전제를 측정하도록 순서를 잡은 것**이다(QA 착수 요건).
+> 그 요건이 없었으면 계측(`api/health` billing 축)을 만들지 않았고, 죽은 경로를 유일한
+> 대안으로 삼아 나머지 하나까지 봉인했을 것이다. 판정보다 **판정의 전제를 재는 단계**가
+> 결과를 갈랐다.
+
 ⛔ **Phase 5 smoke — 성공 경로가 프로덕션에서 실행 불가다 (호영님 판단 필요)**
 Cowork QA 1차 smoke(2026-09-05 · prod · 조직 T1 Free 1/1) 실측:
 - Free 는 `maxMembers: 1` **+ 가입 시 조직 자동 생성(3a)** 이라 **모든 Free 조직이 처음부터 1/1**.
@@ -428,6 +463,9 @@ Cowork QA 1차 smoke(2026-09-05 · prod · 조직 T1 Free 1/1) 실측:
   **링크 표시 · 복사 · 목록 노출 · 취소(`DELETE /invites`)** — 는 아직 **아무도 실행한 적이 없다.**
   센티널은 GREEN 이나 **런타임 미검증**이다(정적 게이트가 런타임을 대신하지 못한다).
 검증 수단 둘 중 하나가 필요: **TEAM 이상 플랜 조직** 또는 **시드/스테이징 조직**.
+✅ **재판정(2026-09-05):** 결제가 어차피 발생하지 않으므로(위 §checkout-two-paths)
+   **T1 → Basic 상향이 다시 가장 가벼운 선택**이다. 문구 정직화 배포 후 진행하면
+   거짓 문구를 통과하지 않고 좌석 3개를 확보한다. 스테이징은 **환경 자체가 없다**(실측).
 ⚠️ 부수 판단거리: 이 구조라면 Free 사용자는 초대 UI 를 **열 수는 있는데 항상 막힌다.**
    막는 방식은 정직하지만(사유 + 플랜 경로), "Free 는 1인 전용" 을 진입 **전에** 말할지는
    제품 결정이다.

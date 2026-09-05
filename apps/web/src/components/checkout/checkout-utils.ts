@@ -106,26 +106,38 @@ function getScenarioCopy(
   nextBillingDate: string,
 ): ScenarioCopy {
   switch (scenario) {
+    /* §checkout-two-paths (호영님 재판정 2026-09-05) — **결제를 약속하지 않는다.**
+     *
+     * 이 다이얼로그가 부르는 것은 `POST /api/organizations/[id]/subscription` 하나이고
+     * 거기에 PG 연동이 **0곳**이다. 즉 플랜은 적용되지만 **청구도 갱신도 일어나지 않는다.**
+     * 그런데 문구는 "지금 결제하고 바로 사용 · 다음 결제는 …에 자동 갱신됩니다" 라고 말했다 —
+     * dead button 보다 무겁다. dead button 은 아무 일도 안 일어나는데, 이건
+     * **일어나지 않은 일을 일어났다고** 말한다(돈에 대해서).
+     *
+     * 🛑 `nextBillingDate` 를 쓰지 않는다. 갱신 주체가 없어 **결제일이라는 것이 존재하지 않는다.**
+     *    날짜를 보여주면 그 자체가 새 약속이다.
+     * ⏳ 결제가 배선되면 이 문구를 되돌린다 — 그 순서는 `regression/checkout-two-paths.test.ts`
+     *    가 지킨다(PG 연동이 생기면 RED 로 알린다). */
     case "free_to_paid":
       return {
-        headline: "지금 결제하고 바로 사용",
-        detail: `오늘부터 ${targetDisplayName} 플랜이 즉시 활성화됩니다. 다음 결제는 ${nextBillingDate} 에 자동 갱신됩니다.`,
-        effectiveDescription: "지금 결제 후 즉시 적용됩니다",
+        headline: "결제 없이 바로 적용",
+        detail: `${targetDisplayName} 플랜이 즉시 활성화됩니다 · 결제 연동 준비 중이라 지금은 청구되지 않습니다.`,
+        effectiveDescription: "즉시 적용 (청구 없음)",
         effectiveDate: "immediate",
       };
     case "upgrade_prorated":
       return {
-        headline: "즉시 적용, 남은 기간은 일할 정산",
-        detail: `오늘부터 ${targetDisplayName} 플랜이 바로 활성화되고, 현재 결제 주기의 남은 일수만큼 차액이 계산되어 청구됩니다. 다음 정기 결제는 ${nextBillingDate}.`,
-        effectiveDescription: "즉시 적용 + 일할 정산 차액 결제",
+        headline: "결제 없이 즉시 적용",
+        detail: `${targetDisplayName} 플랜이 바로 활성화됩니다 · 결제 연동 준비 중이라 차액 정산이나 청구는 발생하지 않습니다.`,
+        effectiveDescription: "즉시 적용 (청구 없음)",
         effectiveDate: "immediate",
       };
     case "downgrade_at_period_end":
       return {
-        headline: "다음 결제일부터 적용",
-        detail: `현재 플랜은 ${nextBillingDate} 까지 그대로 유지되고, 해당 날짜부터 ${targetDisplayName} 플랜으로 전환됩니다. 즉시 환불은 발생하지 않습니다.`,
-        effectiveDescription: "현 결제 주기 종료 후 적용됩니다",
-        effectiveDate: "next_billing",
+        headline: "즉시 적용",
+        detail: `${targetDisplayName} 플랜으로 바로 전환됩니다 · 결제 연동 준비 중이라 환불이나 정산은 발생하지 않습니다.`,
+        effectiveDescription: "즉시 적용 (정산 없음)",
+        effectiveDate: "immediate",
       };
   }
 }

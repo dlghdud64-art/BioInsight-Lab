@@ -93,9 +93,20 @@ function BillingPageContent() {
         window.location.href = url;
       }
     } catch (error) {
+      /* §checkout-two-paths (2026-09-05) — **사유를 말한다.**
+       * prod 실측: `/api/health` → `billing.stripeConfigured: false`
+       * (`hasTeamPriceId` · `hasWebhookSecret` 도 false). 즉 이 경로는 키가 없어
+       * **호출 시점에 반드시 실패**한다 — `billing/checkout` 이 키 부재 시
+       * `sk_test_placeholder_will_fail` 로 기동하기 때문에 실패가 여기서만 드러난다.
+       * "프로세스를 시작할 수 없습니다" 는 사실이지만 **원인을 말하지 않아**
+       * 사용자가 자기 문제(카드·네트워크)로 읽는다.
+       * 🛑 문구를 health 실측값에 배선하지 않는다 — 화면이 매 렌더마다 health 를 부르면
+       *   그게 새 결합이다(호영님 지시). 결제가 배선되면 이 문구도 함께 바뀌고,
+       *   그 순서는 `regression/checkout-two-paths.test.ts` 가 지킨다. */
       toast({
-        title: "오류",
-        description: "업그레이드 프로세스를 시작할 수 없습니다.",
+        title: "결제 연동 준비 중입니다",
+        description:
+          "아직 카드 결제를 받을 수 없습니다 · 플랜 변경이 필요하시면 문의해 주세요.",
         variant: "destructive",
       });
     } finally {

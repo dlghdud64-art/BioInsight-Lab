@@ -162,15 +162,15 @@ function OrderSummary({
         </p>
       </div>
 
-      {/* 다음 결제일 */}
+      {/* §checkout-two-paths (2026-09-05) — 🛑 "다음 결제일" 을 보여주지 않는다.
+          결제 연동이 없어 **갱신 주체가 없다** → 결제일이라는 것이 존재하지 않는다.
+          없는 날짜를 적으면 문구를 정직화한 의미가 없다(그 자체가 새 약속이다). */}
       <div className="space-y-2">
         <div className="flex items-center gap-1.5 text-xs">
           <CreditCard className="h-3 w-3 text-slate-400" />
-          <span className="text-slate-500">다음 결제일</span>
+          <span className="text-slate-500">결제</span>
         </div>
-        <p className="text-xs font-medium text-slate-700">
-          {preview.pricing.nextBillingDate}
-        </p>
+        <p className="text-xs font-medium text-slate-700">연동 준비 중 · 청구 없음</p>
       </div>
 
       {/* 좌석 */}
@@ -473,15 +473,13 @@ function ReviewStep({
           <span className="text-slate-500">적용 시점</span>
           <span className="font-medium text-right">
             {preview.scenario === "free_to_paid"
-              ? "지금 결제 · 즉시 사용"
+              ? "즉시 적용 · 청구 없음"
               : preview.scenario === "upgrade_prorated"
-                ? "즉시 적용 · 차액 정산"
-                : "다음 결제일부터"}
+                ? "즉시 적용 · 청구 없음"
+                : "즉시 적용 · 정산 없음"}
           </span>
-          <span className="text-slate-500">다음 결제일</span>
-          <span className="font-medium text-right">
-            {preview.pricing.nextBillingDate}
-          </span>
+          <span className="text-slate-500">결제</span>
+          <span className="font-medium text-right">연동 준비 중</span>
         </div>
       </div>
 
@@ -556,13 +554,11 @@ function CompleteStep({
             {completion.billingCycle === "yearly" ? "연간" : "월간"}
           </span>
         </div>
+        {/* 🛑 완료 화면이 제일 위험하다 — 여기서 "다음 결제일 · 정기 결제 금액" 을 적으면
+            사용자는 방금 결제가 성립했다고 확정한다. 둘 다 존재하지 않는다. */}
         <div className="flex justify-between text-sm">
-          <span className="text-slate-500">다음 결제일</span>
-          <span className="font-medium">{completion.nextBillingDate}</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-slate-500">정기 결제 금액</span>
-          <span className="font-semibold">{formatPrice(completion.recurringAmount)}</span>
+          <span className="text-slate-500">결제</span>
+          <span className="font-medium">연동 준비 중 · 청구 없음</span>
         </div>
       </div>
     </div>

@@ -55,16 +55,42 @@ describe("§checkout-two-paths — 두 경로의 실재", () => {
     for (const m of refs) expect(`${m[0]}`).toMatch(/^!!process\.env\.STRIPE_/);
   });
 
-  it("⏳ 거짓 문구 3종은 아직 소스에 남아 있다 (봉인이 풀리면 먼저 정직화)", () => {
-    /* 지우지 않는다 — 결제 연동 시 다시 써야 한다. 대신 **여기서 알린다**:
-     * 봉인이 풀려 이 문구가 도달 가능해지면, 정직화가 선행돼야 한다. */
+  it("🛑 결제를 약속하는 문구가 **없다** (돈에 대해 사실이 아닌 말 0)", () => {
+    /* 승계 (2026-09-05, 호영님 재판정): 옛 단언은 "거짓 문구 3종이 아직 남아 있다" 였다 —
+     * 봉인 전제 하에 "봉인이 풀리면 먼저 정직화하라" 는 **알림**이었다.
+     * 봉인이 철회되고(대안 경로도 죽어 있었다) 정직화를 실제로 했으므로,
+     * 알림을 **부활 금지**로 뒤집는다. 보호의도는 같다 — 화면이 없는 결제를 말하지 않는다. */
     const utils = read("src/components/checkout/checkout-utils.ts");
-    expect(utils).toMatch(/지금 결제하고 바로 사용/);
-    expect(utils).toMatch(/자동 갱신됩니다/);
-    expect(utils).toMatch(/청구됩니다/);
-    expect(
-      existsSync(join(WEB_ROOT, "src/components/checkout/checkout-utils.ts")),
-      "checkout-utils 가 사라졌다. 거짓 문구 3종의 처리 결과를 이 단언에 반영할 것.",
-    ).toBe(true);
+    const dialog = read(DIALOG);
+    const copy = stripComments(utils) + stripComments(dialog);
+
+    expect(copy).not.toMatch(/지금 결제하고 바로 사용/);
+    expect(copy).not.toMatch(/자동 갱신/);
+    expect(copy).not.toMatch(/청구됩니다/);
+    expect(copy).not.toMatch(/차액이 계산되어/);
+    // 🛑 없는 날짜를 적지 않는다 — 갱신 주체가 없어 결제일이 존재하지 않는다
+    expect(copy).not.toMatch(/다음 결제일/);
+    expect(copy).not.toMatch(/정기 결제 금액/);
   });
+
+  it("🔑 대신 사실을 말한다 (청구 없음 · 연동 준비 중)", () => {
+    /* 부정 단언만 두면 문구를 **지워도** 통과한다 — 침묵은 정직이 아니다. */
+    const utils = read("src/components/checkout/checkout-utils.ts");
+    expect(utils).toMatch(/결제 없이 바로 적용/);
+    expect(utils).toMatch(/결제 연동 준비 중이라 지금은 청구되지 않습니다/);
+    expect(utils).toMatch(/즉시 적용 \(청구 없음\)/);
+    expect(stripComments(read(DIALOG))).toMatch(/연동 준비 중 · 청구 없음/);
+  });
+
+  it("settings/billing 실패가 **사유**를 말한다 (자기 문제로 읽히지 않게)", () => {
+    /* prod 실측 `billing.stripeConfigured: false` — 이 경로는 반드시 실패한다.
+     * "프로세스를 시작할 수 없습니다" 는 사실이지만 원인을 말하지 않아
+     * 사용자가 카드·네트워크 문제로 읽는다. */
+    const billing = stripComments(read("src/app/settings/billing/page.tsx"));
+    expect(billing).toMatch(/title: "결제 연동 준비 중입니다"/);
+    expect(billing).not.toMatch(/업그레이드 프로세스를 시작할 수 없습니다/);
+    // 🛑 문구를 health 실측값에 배선하지 않는다 (매 렌더 health 호출 = 새 결합)
+    expect(billing).not.toMatch(/stripeConfigured/);
+  });
+
 });
