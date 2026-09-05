@@ -319,6 +319,32 @@ function multiItemsBlock(src: string): string {
    넣어야 한다. 앞에 넣고 GREEN 이 뜨면 그건 단언이 아니라 프로브 결함이다 —
    둘을 구분하지 않으면 멀쩡한 단언을 약화시킨다.
 
+### 상수를 참조하는 단언 — 심볼이 사라지면 비교가 무의미해진다 (2026-09-05 신설)
+
+정규식 4원칙과 **다른 축**이다. 그건 부정 단언의 매칭 문제이고, 이건 **양성 단언이
+심볼을 참조**해서 생긴다.
+
+```
+❌ expect(r.source).toBe(SOURCE.UNVERIFIED)   // 멤버 삭제 시 undefined === undefined → 통과
+❌ expect(new Set(Object.values(E)).size).toBe(3)   // 개수만 센다
+✅ expect(Object.values(E).slice().sort()).toEqual(["A", "B", "C"])   // 이름까지 고정
+✅ expect(r.source).toBe("UNVERIFIED")   // 개별 비교도 리터럴로 병기
+```
+
+실측 2026-09-05(§scan-unit-guard): `UNVERIFIED` 를 enum 에서 지우는 프로브에
+**13건 중 1건만 RED** 였다. 잡은 것은 개수 단언 하나뿐이고, 개별 `toBe(E.X)` 는
+양쪽이 `undefined` 라 전부 통과했다.
+
+🛑 **개수 단언으로는 부족하다.** 멤버를 **지우는** 것은 개수가 잡지만,
+   **값을 바꾸는** 것(`MODEL: "MODEL"` → `MODEL: "model"`)은 개수가 3 그대로이고
+   `toBe(E.MODEL)` 도 `"model" === "model"` 로 통과한다 —
+   그런데 **DB·API 에는 다른 문자열이 저장된다.** 값 집합을 리터럴로 고정해야 그게 잡힌다.
+
+⚠️ 이 형태는 enum·상수를 참조하는 **모든** 단언에 해당한다(`lotSource`·`categorySource`·
+   `unitSource` 계열만이 아니다). 실측 `grep -c "toBe([A-Z][A-Za-z_]*\.[A-Z_]\+)"` = **11곳**.
+   선례: `scan-registration-category.test.ts:175` 이 `CATEGORY_SOURCE.UNKNOWN` 을
+   리터럴로 핀해 두었다 — 그 형태를 나머지에도 적용한다.
+
 ### 패턴 — 회귀 보호 강제
 
 - 새 기능 sentinel 작성 시 **회귀 0** describe 블록 필수
