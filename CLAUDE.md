@@ -243,6 +243,39 @@ fixture 안의 필드는 **지위가 다르다.** 섞으면 게이트가 스스�
                     `.replace()` 는 첫 건만 바꾼다 — 전량이면 `split-join` 또는 `/g`
 ④ 대체 매칭      같은 창 안의 다른 요소가 같은 값을 써서 대신 매칭한다
                  → 토큰 단위로 세지 말고 **분기 단위로 묶는다**
+⑤ 창은 블록으로  payload·속성 목록을 검사하는 창은 **고정 폭 슬라이스로 열지 않는다**
+                 → 블록 경계(여는 중괄호 ↔ 대응 닫는 중괄호 · 함수 시작 ↔ 다음 선언)로 연다
+```
+
+⑤ — **같은 형태 3회** (2026-09-05 승격):
+
+payload 에 필드가 하나 늘면 뒤 필드가 창 밖으로 밀려 **계약을 지키는 구현이 RED** 가 된다.
+그 자리에서 앵커를 갱신하면 게이트가 스스로 무너진다.
+
+```
+1·2회  §receiving-extracted-shape  brand 1줄 추가 → slice(idx, idx+400) 밖으로 밀림
+                                   scan-category-touched · scan-registration-category 2건 RED
+3회    §scan-spec-carry            specification 1줄 추가 → 같은 자리 또 RED
+```
+
+🛑 **판별법이 이 조항의 핵심이다.** RED 가 났을 때 먼저 가른다:
+
+```
+구현이 계약을 어겼는가?   → 고칠 대상은 구현. 앵커 갱신은 이때만 쓴다.
+검사가 구현을 못 따라갔나? → 고칠 대상은 **검사**다.
+```
+
+세 번 다 **후자**였다 — 구현은 계약을 지키고 있었다. 이 판별을 건너뛰면 다음 사람은
+앵커를 갱신하고, 그때부터 sentinel 은 구현을 따라다니는 그림자가 된다
+(§fixture 필드 지위 분리의 "검사가 못 찾으니 anchor 를 갱신한다" 위반형과 같은 뿌리).
+
+구현 예:
+```ts
+function multiItemsBlock(src: string): string {
+  const start = src.indexOf("items: includedLines.map((l) => ({");
+  const end = src.indexOf("})),", start);   // 대응 닫는 자리
+  return src.slice(start, end);             // 길이에 좌우되지 않는다
+}
 ```
 
 ③의 주입 범위 — **같은 형태 3회** (2026-08-16 승격):

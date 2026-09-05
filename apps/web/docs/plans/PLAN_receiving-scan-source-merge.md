@@ -199,6 +199,38 @@
 ## 10. Progress
 - Overall 0% · Current: Phase 0 · Next: operator 착수 → P0 supersede 표 회신
 
+## 10-b. 실측으로 얻은 것 (2026-09-05)
+
+**① 스키마에 자리가 있다고 데이터가 흐르는 게 아니다** — 오늘만 세 번 같은 자리였다.
+
+| 컬럼 | 상태 | 발견 |
+| :--- | :--- | :--- |
+| `InventoryRestock.ocrJobId`·`extractedData` | 컬럼 실재, 쓰는 코드 0 | 09-02 Phase 0 |
+| `Product.specification` | 컬럼 실재, 전달 경로 0 → 등록 시 영구 소실 | 09-05 §scan-spec-carry |
+| `InventoryRestock.lotNumber`·`expiryDate` | 컬럼·라우트 실재, **인식값이 안 옴**(자리가 없어 notes 로) | 09-05 §scan-lot-slot |
+
+  ⇒ 정찰에서 "컬럼이 있다" 를 "값이 있다" 로 읽지 않는다. **쓰기 지점과 전달 경로를
+  같이 확인**한다. `lotSource`·`categorySource` 를 새로 만들 때와 정확히 같은 자리다.
+
+**② 잘림은 경계선상의 확률 현상이다** (①의 처방이 "상향" 이 아니라 "감지" 여야 하는 근거)
+
+```
+2026-09-05 05:42  7열 4품목 → 1094자에서 잘림(닫는 } 없음) → 파싱 실패 → "0 품목"
+2026-09-05 07:50  같은 구조 7열 4품목 → 잘리지 않음 → 4/4 인식 성공
+```
+
+  **같은 문서가 한 번은 잘리고 한 번은 안 잘렸다.** `maxOutputTokens` 상향은 확률을
+  낮출 뿐 경계를 없애지 못한다 — 20품목 명세서가 오면 또 잘린다.
+  진짜 결함은 API 가 `finishReason` 으로 말해주는데 코드가 안 읽는 것이다
+  (호영님 정정 2026-09-05 · §ocr-parse-failure 에서 감지 우선으로 구현).
+
+**③ 화면은 파생물이고 원문이 실측이다**
+
+  `6 EA` 를 보고 호영님·operator 둘 다 "단위 오인식" 으로 읽었고, operator 는 원인 가설을
+  셋(스키마 부재·표 폭·렌더링) 세워 **전부 틀렸다.** rawText 를 열자 모델은
+  `specification:"4 L" · quantity:6 · unit:"EA"` 로 정확했다. `6 EA` 는 정답이었다.
+  ⇒ OCR 결함 판정은 **OcrResult.rawText 부터** 읽는다. 화면에서 추론하지 않는다.
+
 ## 11. Notes
 - 2026-09-01: prod smoke 시도 중 발견 → 계획 승인(P4 포함). DDL 0.
 - 선행 배치(§receiving-list-redesign)의 canonical 전환 자체는 유효 — 소스가 하나 부족했을 뿐이다.
