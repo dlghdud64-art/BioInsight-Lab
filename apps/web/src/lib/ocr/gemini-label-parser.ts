@@ -7,6 +7,8 @@
 
 import type { LabelParseResult } from "./label-parser";
 import { callGeminiWithFallback } from "./gemini-config";
+// §ocr-output-budget — 출력 예산 정책 단일 소스.
+import { ocrGenerationConfig, OCR_LABEL_MAX_OUTPUT_TOKENS } from "./output-budget";
 
 const GEMINI_API_KEY = process.env.GOOGLE_GEMINI_API_KEY ?? "";
 
@@ -107,10 +109,8 @@ export async function parseWithGemini(imageBase64: string): Promise<LabelParseRe
           ],
         },
       ],
-      config: {
-        temperature: 0.1,
-        maxOutputTokens: 512,
-      },
+      // §ocr-output-budget — 라벨도 같은 정책(상한만 다르다).
+      config: ocrGenerationConfig(OCR_LABEL_MAX_OUTPUT_TOKENS),
     }),
   );
 

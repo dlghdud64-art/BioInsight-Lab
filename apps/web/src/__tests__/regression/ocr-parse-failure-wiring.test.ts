@@ -104,6 +104,28 @@ describe("§ocr-parse-failure — 화면이 사유를 노출한다", () => {
   });
 });
 
+describe("§ocr-output-budget — 두 파서가 같은 정책을 본다 (①)", () => {
+  it("두 Gemini 호출부 모두 ocrGenerationConfig 를 쓴다 (경로 각각)", () => {
+    // ④ 한쪽만 고치면 그쪽으로 떨어질 때 재발한다.
+    expect(read(GEMINI)).toMatch(/config: ocrGenerationConfig\(OCR_QUOTE_MAX_OUTPUT_TOKENS\)/);
+    expect(read("src/lib/ocr/gemini-label-parser.ts")).toMatch(
+      /config: ocrGenerationConfig\(OCR_LABEL_MAX_OUTPUT_TOKENS\)/,
+    );
+  });
+
+  it("🛑 인라인 config 로 회귀하지 않는다 (thinking 분리가 빠진다)", () => {
+    for (const rel of [GEMINI, "src/lib/ocr/gemini-label-parser.ts"]) {
+      const code = stripComments(read(rel));
+      expect(code, rel).not.toMatch(/config:\s*\{[\s\S]{0,120}?maxOutputTokens:\s*\d+/);
+    }
+  });
+
+  it("예산 정책이 한 모듈에만 있다", () => {
+    const lib = read("src/lib/ocr/output-budget.ts");
+    expect(lib).toMatch(/thinkingConfig: \{ thinkingBudget: OCR_THINKING_BUDGET \}/);
+  });
+});
+
 describe("§ocr-parse-failure — 사유 문구 계약", () => {
   it("잘림 안내가 사용자가 할 수 있는 일을 담는다", () => {
     const src = read(LIB);

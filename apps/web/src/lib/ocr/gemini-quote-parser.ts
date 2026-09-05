@@ -75,6 +75,8 @@ import {
   stripCodeFence,
   type ParseFailure,
 } from "./parse-failure";
+// §ocr-output-budget — 출력 예산 정책 단일 소스(두 파서가 같은 값을 본다).
+import { ocrGenerationConfig, OCR_QUOTE_MAX_OUTPUT_TOKENS } from "./output-budget";
 
 // ── Response Types ──
 
@@ -169,10 +171,8 @@ async function callGeminiAndParse(
           ],
         },
       ],
-      config: {
-        temperature: 0.1,
-        maxOutputTokens: 4096,
-      },
+      // §ocr-output-budget — thinking 이 출력 예산을 함께 먹는다. 분리가 상향보다 먼저다.
+      config: ocrGenerationConfig(OCR_QUOTE_MAX_OUTPUT_TOKENS),
     }),
   );
 
