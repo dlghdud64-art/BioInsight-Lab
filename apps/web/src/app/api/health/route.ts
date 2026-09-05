@@ -113,6 +113,21 @@ export async function GET(request: Request) {
       // §scan-storage-deadend — 배포 런타임 Node 버전. @vercel/blob 2.x 가
       //   engines.node ">=20.0.0" 을 요구하므로 실제 버전이 관측돼야 판정이 가능하다.
       node: process.version,
+      /* §checkout-two-paths (2026-09-05) — **유료 전환 경로가 둘인데 하나만 청구한다.**
+       *   settings/billing  → POST /api/billing/checkout → Stripe   (실제 청구)
+       *   settings/plans    → CheckoutDialog → POST .../subscription (PG 0곳 · 청구 없음)
+       * 후자를 봉인하려면 **전자가 살아 있는지**가 전제다 — 키가 없으면 봉인이
+       * "유료 전환 자체를 닫는" 결정이 된다. 그런데 prod env 는 코드에서 볼 수 없고
+       * `api/billing/checkout` 은 키 부재 시 `sk_test_placeholder_will_fail` 로 fallback 해
+       * **호출 시점에야** 인증 실패한다(경고 로그 1줄 뒤 정상 기동). 그래서 여기서 잰다.
+       * 🛑 존재 ≠ 유효. 이 필드는 **env 가 있는지**만 말한다(storage.envConfigured 와 같은 계약) —
+       *    키가 유효한지는 실호출만 답한다. 값은 노출하지 않는다. */
+      billing: {
+        stripeConfigured: !!process.env.STRIPE_SECRET_KEY,
+        // 어느 플랜이 결제 가능한지 — 가격 id 가 없으면 그 플랜은 체크아웃을 못 만든다.
+        hasTeamPriceId: !!process.env.STRIPE_PRICE_ID_TEAM_MONTHLY,
+        hasWebhookSecret: !!process.env.STRIPE_WEBHOOK_SECRET,
+      },
       storage: {
         provider: process.env.STORAGE_PROVIDER || null,
         // 🛑 존재 ≠ 유효. 이 두 필드는 **문자열이 있는지**만 말한다(초록불 아님).
