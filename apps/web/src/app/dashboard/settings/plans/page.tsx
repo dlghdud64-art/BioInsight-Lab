@@ -953,16 +953,19 @@ function PlansPageContent() {
  </p>
  </div>
  <div className="rounded-lg bg-slate-50 bg-slate-100/50 p-3">
+ {/* §checkout-two-paths (2026-09-05) — 🛑 "다음 결제일" 로 부르지 않는다.
+     `nextPaymentDate` 는 `subscription.currentPeriodEnd`(플랜 변경이 now+30일로
+     만들어 넣는 값) 파생이고, 결제 연동이 없어 그날 아무 일도 없다.
+     FREE 는 `-` 라 지금은 안 보이지만 **업그레이드하면 즉시 뜬다.**
+     ⏳ 파생(:631)은 지우지 않는다 — 결제가 배선되면 진짜 결제일이 된다. */}
  <div className="flex items-center gap-2 mb-1.5">
  <Calendar className="h-3.5 w-3.5 text-slate-400"/>
  <span className="text-xs text-slate-400">
- 다음 결제일
+ 결제
  </span>
  </div>
  <p className="text-sm font-semibold text-slate-900">
- {currentPlan === SubscriptionPlan.FREE
- ?"-"
- : nextPaymentDate ??"-"}
+ 연동 준비 중
  </p>
  </div>
  <div className="rounded-lg bg-slate-50 bg-slate-100/50 p-3">

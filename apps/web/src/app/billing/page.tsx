@@ -304,8 +304,15 @@ function BillingPageContent() {
                             </Badge>
                           </CardTitle>
                           <CardDescription>
+                            {/* §checkout-two-paths (2026-09-05) — 🛑 이 날짜를 "다음 결제일" 이라
+                                부르지 않는다. `Subscription.currentPeriodEnd` 는 플랜 변경 POST 가
+                                `now + 30일` 로 **만들어 넣는 값**이고(subscription/route.ts:163),
+                                결제 연동이 없어 그날 아무 일도 일어나지 않는다.
+                                즉 업그레이드하는 순간 **없는 결제일**이 화면에 뜬다.
+                                ⏳ 파생원(`currentPeriodEnd`)은 **지우지 않는다** — 결제가 배선되면
+                                진짜 결제일이 된다. 표시만 바꾼다(checkout-utils 때와 같은 판단). */}
                             {subscription?.currentPeriodEnd && (
-                              <>다음 결제일: {new Date(subscription.currentPeriodEnd).toLocaleDateString("ko-KR")}</>
+                              <>결제 연동 준비 중 · 청구 없음</>
                             )}
                           </CardDescription>
                         </div>

@@ -82,6 +82,36 @@ describe("§checkout-two-paths — 두 경로의 실재", () => {
     expect(stripComments(read(DIALOG))).toMatch(/연동 준비 중 · 청구 없음/);
   });
 
+  it("🛑 결제일 표시가 **결제 화면 전량**에서 없다 (범위를 밝힌 0)", () => {
+    /* 🔑 앞선 보고의 "잔재 0" 은 `checkout-utils`·`CheckoutDialog` **범위에서만** 참이었다 —
+     * `billing/page.tsx` 와 `settings/plans/page.tsx` 가 같은 날짜를 따로 그리고 있었다.
+     * **범위를 밝히지 않은 0 은 틀린 0이다.** 그래서 여기서는 대상 파일을 열거해 고정한다.
+     *
+     * 발화 조건이 중요하다: `Subscription.currentPeriodEnd` 는 플랜 변경 POST 가
+     * `now + 30일` 로 **만들어 넣는 값**이라, 업그레이드하는 순간 세 화면이 동시에
+     * 없는 결제일을 말하기 시작했다. */
+    const SURFACES = [
+      "src/components/checkout/checkout-utils.ts",
+      "src/components/checkout/CheckoutDialog.tsx",
+      "src/app/billing/page.tsx",
+      "src/app/dashboard/settings/plans/page.tsx",
+    ];
+    for (const rel of SURFACES) {
+      const code = stripComments(read(rel));
+      expect(`${rel}: ${/다음 결제일/.test(code)}`).toBe(`${rel}: false`);
+      expect(`${rel}: ${/정기 결제 금액/.test(code)}`).toBe(`${rel}: false`);
+    }
+  });
+
+  it("⏳ 파생원은 **지우지 않았다** (결제가 배선되면 진짜 결제일이 된다)", () => {
+    /* 표시만 바꾸고 컬럼·파생은 남긴다 — 지금 버리면 나중에 복원해야 한다
+     * (`checkout-utils` 때 문자열을 남긴 것과 같은 판단 · 호영님 지시). */
+    expect(read("src/app/billing/page.tsx")).toMatch(/subscription\?\.currentPeriodEnd/);
+    expect(read("src/app/dashboard/settings/plans/page.tsx")).toMatch(
+      /const nextPaymentDate = \(\(\) =>/,
+    );
+  });
+
   it("settings/billing 실패가 **사유**를 말한다 (자기 문제로 읽히지 않게)", () => {
     /* prod 실측 `billing.stripeConfigured: false` — 이 경로는 반드시 실패한다.
      * "프로세스를 시작할 수 없습니다" 는 사실이지만 원인을 말하지 않아
