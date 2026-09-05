@@ -43,6 +43,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PACK_UNIT_OPTIONS, normalizePackUnit } from "@/lib/inventory/pack-unit-options";
+// §scan-unit-guard — 규격 단위와 수량 단위를 섞지 않는다. 판정은 코드에 두고 출처를 기록한다.
+import { formatQuantityWithSpec } from "@/lib/inventory/quantity-display";
 // §scan-registration-category — 분류 목록·fallback 단일 소스(캐스트 0). 화면·API 가 같은 목록을 본다.
 import {
   PRODUCT_CATEGORY_LABELS,
@@ -95,25 +97,6 @@ interface SmartReceivingApiResponse {
   // §scan-registration-reason (호영님 2026-09-04) — 500 의 실제 사유. 고정 문구만 띄우던 탓에
   //   존재하지 않는 enum 값이 prod 에서 침묵했다. 스캔 차단 skipReason 과 동일 계약.
   failReason?: string | null;
-}
-
-/**
- * §scan-spec-carry (호영님 2026-09-05) — 규격과 수량의 **관계**를 한 줄로 보여준다.
- *
- * 실측: 모델이 `specification:"4 L"` · `quantity:6` · `unit:"EA"` 를 정확히 읽었는데
- *   화면이 `6 EA` 만 보여줬다. 그래서 4L 짜리 6개인지 100mL 6개인지 알 수 없었고,
- *   보는 사람이 **정답을 오인식으로 읽었다**(2026-09-05, 호영님·operator 둘 다).
- *   `6 EA` 만도 `4 L` 만도 안 된다 — `4 L × 6개` 여야 총량이 보인다.
- */
-function formatQuantityWithSpec(
-  specification: string | null | undefined,
-  quantity: number,
-  unit: string | null | undefined,
-): string {
-  const spec = (specification ?? "").trim();
-  const u = (unit ?? "").trim();
-  const count = `${quantity}${u ? ` ${u}` : "개"}`;
-  return spec ? `${spec} × ${count}` : count;
 }
 
 /** 실패 문구에 서버가 실어 보낸 사유를 붙인다. 사유가 없으면 문구만(지어내지 않는다). */
@@ -520,6 +503,13 @@ export function SmartReceivingScannerModal({
               // §scan-lot-slot — Lot·유효기간을 InventoryRestock 으로(컬럼은 진작 있었다).
               lotNumber: l.lotNumber.trim() || null,
               expirationDate: l.expiryDate.trim() || null,
+              // §scan-unit-guard — 수량 단위를 모델에서 받았는지 폴백했는지 남긴다.
+              //   폴백 빈도를 모르면 프롬프트 수정이 먹었는지도 모른다(호영님).
+              unitSource: formatQuantityWithSpec({
+                specification: l.specification,
+                quantity: l.quantity,
+                unit: l.unit,
+              }).unitSource,
             })),
           }),
         });
@@ -800,7 +790,7 @@ export function SmartReceivingScannerModal({
                         <p className="text-[10px] text-slate-400 truncate" data-testid="srm-multi-spec">
                           {l.catalogNumber ? `Cat ${l.catalogNumber}` : "Cat.No 없음"}
                           {" · "}
-                          {formatQuantityWithSpec(l.specification, l.quantity, l.unit)}
+                          {formatQuantityWithSpec({ specification: l.specification, quantity: l.quantity, unit: l.unit }).text}
                           {l.lotNumber ? ` · Lot ${l.lotNumber}` : ""}
                           {l.expiryDate ? ` · ~${l.expiryDate}` : ""}
                         </p>

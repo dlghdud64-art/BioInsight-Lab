@@ -96,23 +96,46 @@ describe("§scan-spec-carry — 규격이 canonical 까지 간다", () => {
 });
 
 describe("§scan-spec-carry — 화면이 규격×수량 관계를 보여준다", () => {
-  it("formatQuantityWithSpec 이 `규격 × 수량` 으로 합친다", () => {
+  // 승계(§scan-unit-guard 2026-09-05): 헬퍼가 모달 로컬 → 공용 모듈로 이관됐다.
+  //   구 판본은 **출처만** 잠갔는데(l.unit 을 쓰는가), 그러면서도 `4 L × 6 L` 이 나왔다 —
+  //   모델이 unit 에 규격 단위를 복사했기 때문이다. 값 축은 unit 테스트가 본다
+  //   (__tests__/lib/quantity-display.test.ts).
+  it("공용 모듈에서 온다 (모달 로컬 재구현 금지)", () => {
     const src = read(MODAL);
-    const idx = src.indexOf("function formatQuantityWithSpec(");
-    expect(idx).toBeGreaterThan(-1);
-    const win = src.slice(idx, idx + 700);
-    // 🔑 `6 EA` 만도 `4 L` 만도 안 된다 — 둘의 관계라야 총량이 보인다.
-    expect(win).toMatch(/\$\{spec\} × \$\{count\}/);
-    // 규격이 없으면 수량만 — 지어내지 않는다.
-    expect(win).toMatch(/spec \? .+ : count/);
+    expect(src).toMatch(
+      /import \{ formatQuantityWithSpec \} from "@\/lib\/inventory\/quantity-display"/,
+    );
+    // 같은 이름의 로컬 함수를 다시 만들면 두 계약이 갈린다.
+    expect(stripComments(src)).not.toMatch(/function formatQuantityWithSpec\(/);
   });
 
-  it("다품목 행이 그 함수를 실제로 쓴다 (계산만 하고 안 쓰는 형태 차단)", () => {
+  it("다품목 행이 그 함수의 text 를 실제로 쓴다 (계산만 하고 안 쓰는 형태 차단)", () => {
     const src = read(MODAL);
     const idx = src.indexOf('data-testid="srm-multi-spec"');
     expect(idx).toBeGreaterThan(-1);
     const win = src.slice(idx, idx + 600);
-    expect(win).toMatch(/formatQuantityWithSpec\(l\.specification, l\.quantity, l\.unit\)/);
+    expect(win).toMatch(/formatQuantityWithSpec\(\{ specification: l\.specification/);
+    expect(win).toMatch(/\}\)\.text\}/);
+  });
+
+  it("🛑 곱셈 좌우가 같은 출처면 안 된다 — 좌 specification · 우 unit", () => {
+    const lib = stripComments(read("src/lib/inventory/quantity-display.ts"));
+    // 우변이 규격에서 파생되지 않는다.
+    expect(lib).toMatch(/const rawUnit = \(args\.unit \?\? ""\)\.trim\(\)/);
+    // 충돌 판정이 실재한다(출처만 맞으면 통과하는 형태 차단 — 실제로 그랬다).
+    expect(lib).toMatch(/rawUnit\.toLowerCase\(\) === su\.toLowerCase\(\)/);
+  });
+
+  it("수량 단위 출처를 canonical 로 보낸다 (폴백 빈도 실측 가능)", () => {
+    const block = multiItemsBlock(read(MODAL));
+    expect(block).toMatch(/unitSource: formatQuantityWithSpec\(\{/);
+    expect(read(ROUTE)).toMatch(/unitSource\?: string \| null;/);
+  });
+
+  it("두 프롬프트가 unit 의 정의를 명시한다 (이번 회귀의 원인)", () => {
+    // ④ 경로 각각 — Tier 2 로 떨어질 때 정의가 없으면 같은 회귀가 난다.
+    expect(read(GEMINI)).toMatch(/NEVER copy the specification's unit into "unit"/);
+    expect(read(CLAUDE)).toMatch(/COUNTS quantity[\s\S]{0,80}?NOT the unit inside specification/);
   });
 
   it("Lot·유효기간도 행에 보인다 (있을 때만)", () => {

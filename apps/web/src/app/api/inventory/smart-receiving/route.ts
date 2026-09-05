@@ -123,6 +123,10 @@ interface SmartReceivingLine {
   //   🛑 모델은 이미 정확히 읽고 있었다. 전달 경로가 없어 **등록 시 영구 소실**됐다.
   //      quantity(6) 와 unit("EA") 만 남으면 "메탄올 6개" 가 4L 인지 100mL 인지 알 수 없다.
   specification?: string | null;
+  // §scan-unit-guard — 수량 단위를 모델에서 받았는지("MODEL") 폴백했는지("FALLBACK").
+  //   lotSource·categorySource 선례 — 값만 두지 말고 그 값이 어디서 왔는지를 함께 둔다.
+  //   폴백 빈도를 모르면 프롬프트 수정이 먹었는지 알 수 없다.
+  unitSource?: string | null;
 }
 
 // §scan-registration-category (호영님 2026-09-04) — 분류 단일 소스로 이관.

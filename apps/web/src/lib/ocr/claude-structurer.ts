@@ -224,7 +224,7 @@ Required JSON format:
       "catalogNumber": "catalog/Cat# (e.g. 25200-056) or null",
       "specification": "spec/size or null",
       "quantity": numeric quantity,
-      "unit": "EA | bottle | box | g | mL etc",
+      "unit": "unit that COUNTS quantity (EA/BOX/…), NOT the unit inside specification",
       "lotNumber": "lot/batch number on the line, or null",
       "expiryDate": "expiry date YYYY-MM-DD, or null",
       "unitPrice": numeric unit price (0 if unknown),

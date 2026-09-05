@@ -65,7 +65,10 @@ Rules:
 - Delivery notes (거래명세서) often carry a Lot/Batch column and an expiry column per line.
   Put them in lotNumber / expiryDate. Do NOT fold them into notes.
 - "specification" is the package size of ONE unit (e.g. "4 L", "500 mL", "50 EA").
-  "quantity" is how many of those units. Keep them separate.`;
+  "quantity" is how many of those units. Keep them separate.
+- "unit" is the unit that COUNTS quantity, not the unit inside specification.
+  For "4 L 짜리 6개" → specification "4 L", quantity 6, unit "EA".
+  NEVER copy the specification's unit into "unit" — "4 L" x "6 L" would read as 24 L.`;
 
 import {
   describeParseFailure,
