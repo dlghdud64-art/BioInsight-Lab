@@ -24,6 +24,7 @@ import { randomBytes } from "crypto";
 import { OrganizationRole } from "@prisma/client";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { assertSeatAvailable, seatLimitPayload } from "@/lib/organizations/seats";
+import { pendingInviteWhere } from "@/lib/organizations/invite-status";
 
 // 초대 링크 생성
 export async function POST(
@@ -168,15 +169,10 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
 
-    // 활성(미수락 + 미취소 + 미만료) 초대 목록
-    const now = new Date();
+    /* 활성(pending) 초대 목록 — 술어는 **좌석 계산과 같은 정본**이다(`pendingInviteWhere`).
+     * 여기서 조건을 따로 적으면 "좌석은 찼다는데 목록엔 없다" 로 갈린다. */
     const invites = await db.organizationInvite.findMany({
-      where: {
-        organizationId: id,
-        acceptedAt: null,
-        revokedAt: null,
-        expiresAt: { gt: now },
-      },
+      where: pendingInviteWhere(id),
       orderBy: { createdAt: "desc" },
     });
 

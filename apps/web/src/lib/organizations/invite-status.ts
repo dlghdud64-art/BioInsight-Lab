@@ -25,3 +25,21 @@ export function inviteStatusOf(invite: {
   if (invite.expiresAt.getTime() <= Date.now()) return "expired";
   return "valid";
 }
+
+/**
+ * **pending 초대의 정본 술어.** 좌석 계산(`seats.ts`)과 화면 목록(`GET /invites`)이
+ * **같은 조건**을 써야 한다 — 갈리면 "좌석은 찼다는데 목록엔 없다" 가 된다.
+ *
+ * 🛑 두 곳에 같은 `where` 를 복제해 두면 한쪽만 고쳐진다(2026-09-05 실측: 실제로 복제돼
+ *    있었다 — 값은 같았지만 정본이 둘이었다). 여기서 한 번만 만든다.
+ *
+ * pending = 미수락 · 미취소 · **미만료**. 만료·취소는 좌석을 잡지 않으므로 목록에도 없다.
+ */
+export function pendingInviteWhere(organizationId: string, now: Date = new Date()) {
+  return {
+    organizationId,
+    acceptedAt: null,
+    revokedAt: null,
+    expiresAt: { gt: now },
+  } as const;
+}

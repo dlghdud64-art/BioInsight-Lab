@@ -31,8 +31,14 @@ describe("§invite-flow Phase 3 — 좌석 정본 (assertSeatAvailable)", () => 
     const code = stripComments(SEATS);
     expect(code).toMatch(/organizationMember\.count/);
     expect(code).toMatch(/organizationInvite\.count/);
-    expect(code).toMatch(
-      /acceptedAt: null[\s\S]{0,160}?revokedAt: null[\s\S]{0,160}?expiresAt: \{ gt: new Date\(\) \}/,
+    /* 승계 (2026-09-05): 술어를 `pendingInviteWhere` 정본으로 뽑았다 — 화면 목록
+     * (`GET /invites`)이 같은 조건을 **복제**하고 있어 한쪽만 고쳐질 수 있었기 때문이다.
+     * 보호의도(pending = 미수락·미취소·미만료를 좌석에 센다)는 불변이라, 단언을
+     * **정본 정의 쪽**으로 옮긴다. 여기서는 좌석이 그 정본을 쓰는지만 본다. */
+    expect(code).toMatch(/pendingInviteWhere\(organizationId\)/);
+    const STATUS = read("lib", "organizations", "invite-status.ts");
+    expect(STATUS).toMatch(
+      /acceptedAt: null[\s\S]{0,160}?revokedAt: null[\s\S]{0,160}?expiresAt: \{ gt: now \}/,
     );
     // 🔑 합산이 실제로 일어난다 — 세기만 하고 안 더하면 단언이 공허하다
     expect(code).toMatch(/const used = members \+ pendingInvites/);

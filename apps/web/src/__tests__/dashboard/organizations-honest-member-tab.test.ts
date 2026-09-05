@@ -57,9 +57,19 @@ describe("② dead filter 0 — 항상 0건인 칩을 세지 않는다", () => {
     expect(stripComments(read(ORG_DETAIL))).not.toMatch(/"inactive"/);
   });
 
-  it("필터 칩은 전체 · 활성 · 초대 대기 3개다", () => {
+  it("필터 칩은 전체 · 활성 2개다 (초대 대기는 이 탭의 축이 아니다)", () => {
+    /* 승계 (2026-09-05, §invite-flow Phase 4 후속) — 원 단언은 "3개(전체·활성·초대 대기)" 였다.
+     * 🔑 **보호의도가 바뀐 게 아니라, 이 describe 의 원칙이 그 칩에도 적용된 것**이다:
+     *   "항상 0건인 칩을 세지 않는다". `members` GET 응답에 `status` 필드가 **없어서**
+     *   `m.status === "Pending"` 은 영구 false 였다 — "초대 대기" 칩은 '장기 미접속' 과
+     *   **같은 부류의 dead filter** 였고, 초대를 만들 수 없던 동안에는 그 사실이 드러나지
+     *   않았을 뿐이다.
+     * 🛑 대기 축을 이 탭으로 끌어오는 것(칩 수만 초대에서 읽기)은 더 나쁘다 —
+     *   수는 초대를, 목록은 멤버를 보게 되어 "대기 3인데 목록 0" 이 된다.
+     *   대기 목록의 자리는 승인·초대 탭이고, 정본은 `OrganizationInvite` 다. */
     const code = stripComments(read(ORG_DETAIL));
-    expect(code).toMatch(/\["all", "active", "pending"\] as const/);
+    expect(code).toMatch(/\["all", "active"\] as const/);
+    expect(code).not.toMatch(/\["all", "active", "pending"\] as const/);
   });
 });
 

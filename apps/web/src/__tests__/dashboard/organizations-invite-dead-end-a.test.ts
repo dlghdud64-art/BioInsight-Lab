@@ -86,6 +86,53 @@ describe("§invite-dead-end a 승계 — 초대가 끝까지 이어진다", () =
   });
 });
 
+describe("§invite-flow Phase 4 후속 — 대기 축의 출처가 OrganizationInvite 다", () => {
+  it("🔑 pendingCount 가 초대 목록에서 나온다 (멤버 필터 금지)", () => {
+    /* `members` GET 응답에 `status` 필드가 **없다** → `m.status === "Pending"` 은 영구 false.
+     * 초대를 만들 수 없던 동안에는 그 0 이 사실이라 정합했지만, 진입점을 연 뒤에는
+     * "만든 초대가 화면 어디에도 없다" 가 된다. */
+    const code = stripComments(read(ORG_DETAIL));
+    expect(code).toMatch(/const pendingCount = pendingInvites\.length;/);
+    expect(code).not.toMatch(/const pendingCount = members\.filter/);
+  });
+
+  it("목록을 GET /invites 에서 읽는다", () => {
+    const code = stripComments(read(ORG_DETAIL));
+    expect(code).toMatch(/queryKey: \["organization-invites", params\.id\]/);
+    expect(code).toMatch(/\/api\/organizations\/\$\{params\.id\}\/invites`\)/);
+  });
+
+  it("🔑 링크 재복사 + 취소가 배선돼 있다 (전달 창을 닫아도 되찾을 수 있다)", () => {
+    /* 이 배선 전에는 생성 직후 전달 창을 닫으면 링크를 다시 볼 방법이 없었고,
+     * 잘못 만든 초대를 취소할 방법도 없었다(`DELETE /invites` 는 실재하는데 호출부 0). */
+    const code = stripComments(read(ORG_DETAIL));
+    expect(code).toMatch(/writeText\(invite\.inviteUrl\)/);
+    expect(code).toMatch(/method: "DELETE"[\s\S]{0,80}?\}/);
+    expect(code).toMatch(/invites\?inviteId=\$\{encodeURIComponent\(inviteId\)\}/);
+    expect(code).toMatch(/revokeInviteMutation\.mutate\(invite\.id\)/);
+  });
+
+  it("🛑 멤버 탭에 '초대 대기' 칩이 없다 (수와 목록이 다른 테이블을 보면 안 된다)", () => {
+    /* 칩 수만 초대에서 끌어오고 필터는 멤버를 보면 **"대기 3인데 목록 0"** 이 된다.
+     * 대기 목록의 자리는 승인·초대 탭이다. */
+    const code = stripComments(read(ORG_DETAIL));
+    expect(code).toMatch(/\(\["all", "active"\] as const\)/);
+    expect(code).not.toMatch(/pending: pendingCount/);
+    expect(code).not.toMatch(/memberStatusFilter === "pending"/);
+  });
+
+  it("🔑 pending 술어가 정본 하나다 (좌석 계산과 목록이 갈리지 않는다)", () => {
+    /* 갈리면 "좌석은 찼다는데 목록엔 없다" 가 된다 — 사용자가 게이트를 확인할 수 없다. */
+    const SEATS = read("src/lib/organizations/seats.ts");
+    const ROUTE = read("src/app/api/organizations/[id]/invites/route.ts");
+    expect(SEATS).toMatch(/pendingInviteWhere\(organizationId\)/);
+    expect(ROUTE).toMatch(/where: pendingInviteWhere\(id\)/);
+    // 술어를 다시 적은 곳이 없다 (복제 부활 시 RED)
+    expect(stripComments(SEATS)).not.toMatch(/acceptedAt: null/);
+    expect(stripComments(ROUTE)).not.toMatch(/acceptedAt: null/);
+  });
+});
+
 describe("근거 실재 — 해제 후에도 남아 있는 축", () => {
   it("members 라우트에 POST 핸들러가 없다 (근거 ① — 되살리면 재판정)", () => {
     const route = stripComments(read(MEMBERS_ROUTE));

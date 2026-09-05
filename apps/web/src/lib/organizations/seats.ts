@@ -32,6 +32,7 @@
 import { Prisma, SubscriptionPlan } from "@prisma/client";
 import { db } from "@/lib/db";
 import { PLAN_LIMITS } from "@/lib/plans";
+import { pendingInviteWhere } from "@/lib/organizations/invite-status";
 
 /** 좌석 판정 — 실패는 예외가 아니라 값이다(호출자마다 다르게 말해야 한다). */
 export type SeatAvailability =
@@ -65,14 +66,9 @@ export async function assertSeatAvailable(
 
   const [members, pendingInvites] = await Promise.all([
     client.organizationMember.count({ where: { organizationId } }),
-    client.organizationInvite.count({
-      where: {
-        organizationId,
-        acceptedAt: null,
-        revokedAt: null,
-        expiresAt: { gt: new Date() },
-      },
-    }),
+    /* 🔑 술어를 여기서 다시 적지 않는다 — 화면 목록(`GET /invites`)과 **같은 정본**을 쓴다.
+     * 복제하면 한쪽만 고쳐져 "좌석은 찼다는데 목록엔 없다" 가 된다. */
+    client.organizationInvite.count({ where: pendingInviteWhere(organizationId) }),
   ]);
 
   const used = members + pendingInvites;

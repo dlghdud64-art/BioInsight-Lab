@@ -144,6 +144,16 @@ interface Member {
  *   ⚠️ 메일 발송은 아직 없다. 생성 응답의 `inviteUrl` 을 **화면에 남겨** 관리자가 복사·전달한다
  *   — 수락 화면이 실재하므로 그 링크는 끝까지 이어진다(dead link 아님). */
 
+/** `GET /api/organizations/[id]/invites` 응답 행 — pending 초대(정본: OrganizationInvite). */
+interface PendingInvite {
+  id: string;
+  email: string | null;
+  role: string;
+  expiresAt: string;
+  createdAt: string;
+  inviteUrl: string;
+}
+
 export default function OrganizationDetailPage({ params }: { params: { id: string } }) {
   const { data: session } = useSession();
   const router = useRouter();
@@ -166,7 +176,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   // §org-management-web P2 — 상태 필터에서 "장기 미접속" 제거.
   //   추적 배선이 없어 항상 0건이던 dead filter 였다(옛 :343 `return false`).
   //   lastActive 배선이 생기면 그때 복원한다 — 없는 사실을 칩으로 세지 않는다.
-  const [memberStatusFilter, setMemberStatusFilter] = useState<"all" | "active" | "pending">("all");
+  const [memberStatusFilter, setMemberStatusFilter] = useState<"all" | "active">("all");
   // §org-management-web P2 — 탭은 controlled state.
   //   🛑 옛 축은 document.querySelector('[data-state][value="..."]').click() 였다.
   //      DOM 을 때려 탭을 바꾸면 React 가 모르는 전이가 생기고, 딥링크·뒤로가기가 안 선다.
@@ -326,6 +336,48 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       toast({ title: "조직 삭제 실패", description: e.message, variant: "destructive" }),
   });
 
+  /* §invite-flow Phase 4 후속 — **대기 중 축의 출처를 `OrganizationInvite` 로.**
+   *
+   * 🛑 이전에는 `members.filter(m => m.status === "Pending")` 이었는데, `members` GET 응답에
+   *    `status` 필드가 **아예 없다** → 항상 `undefined` → 대기 중이 **영구 0** 이었다.
+   *    초대를 만들 수 없던 동안에는 그 0 이 사실이라 정합했지만, 진입점을 연 순간
+   *    "만든 초대가 화면 어디에도 없다" 가 된다 — 링크를 잃으면 다시 볼 수 없고,
+   *    취소도 못 하고, **좌석 계산에는 들어가는데 확인할 방법이 없다**(게이트가 이유 없이
+   *    막는 것처럼 보인다). Cowork QA 2026-09-05 지적.
+   *
+   * 🔑 pending 술어는 `pendingInviteWhere` 하나다 — 좌석 계산과 **같은 정본**이라
+   *    "좌석은 찼다는데 목록엔 없다" 가 생기지 않는다. */
+  const { data: invitesData } = useQuery({
+    queryKey: ["organization-invites", params.id],
+    queryFn: async () => {
+      const res = await fetch(`/api/organizations/${params.id}/invites`);
+      if (!res.ok) return { invites: [] };
+      return res.json();
+    },
+    enabled: !!params.id && isAdmin,
+  });
+  const pendingInvites: PendingInvite[] = invitesData?.invites ?? [];
+
+  const revokeInviteMutation = useMutation({
+    mutationFn: async (inviteId: string) => {
+      const res = await csrfFetch(
+        `/api/organizations/${params.id}/invites?inviteId=${encodeURIComponent(inviteId)}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error((e as { error?: string }).error || "초대를 취소하지 못했습니다.");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["organization-invites", params.id] });
+      toast({ title: "초대를 취소했습니다" });
+    },
+    onError: (e: Error) =>
+      toast({ title: "초대 취소 실패", description: e.message, variant: "destructive" }),
+  });
+
   // 통계
   const totalMembers = members.length;
   const activeCount = members.filter((m) => m.status !== "Pending").length;
@@ -333,7 +385,8 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   //   유일 소비처가 아래 "승인 권한 보유자 (approverCount + adminCount)" 합산이었는데,
   //   approverCount 가 A축(APPROVER·ADMIN·OWNER)으로 넓어지면 그 합은 **중복 계수**다.
   //   축이 하나로 서면 더할 것이 없다 — 변수째 걷는다.
-  const pendingCount = members.filter((m) => m.status === "Pending").length;
+  /* 대기 중 = pending 초대 수(정본: OrganizationInvite). 멤버 목록에는 이 축이 없다. */
+  const pendingCount = pendingInvites.length;
   // §approver-axis (나)-2 — APPROVER 단독 계수를 A축(정본)으로 통일.
   //   이전에는 이 화면의 KPI 가 APPROVER 만 세고, 같은 화면 아래 "승인 권한 보유자" 는
   //   APPROVER+ADMIN+OWNER 를 세어 **한 화면 안에서 두 수가 달랐다.**
@@ -367,8 +420,9 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       if (!m.name.toLowerCase().includes(q) && !m.email.toLowerCase().includes(q)) return false;
     }
     // 상태 필터
+    /* `status` 는 members 응답에 없다 → 모든 멤버가 "활성" 이다.
+     * 대기 축은 이 테이블에 존재하지 않는다(정본: OrganizationInvite · 승인·초대 탭). */
     if (memberStatusFilter === "active") return m.status !== "Pending";
-    if (memberStatusFilter === "pending") return m.status === "Pending";
     return true;
   });
 
@@ -822,9 +876,12 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
        *
        * 축 손실 0 확인 (이게 은퇴를 안전하게 만드는 근거다):
        *   멤버·초대 대기·승인 권한·플랜 → KPI 4카드가 그대로 든다.
-       *   "활성" 만 KPI 에 없는데, activeCount = members.filter(status !== "Pending")
-       *   이고 pendingCount = members.filter(status === "Pending") 라
-       *   activeCount === totalMembers - pendingCount 로 **완전 파생**이다(:332-335).
+       *   "활성" 만 KPI 에 없는데, `activeCount === totalMembers` 다 — 멤버 목록에는
+       *   대기 축이 없기 때문이다(그 축의 정본은 `OrganizationInvite` 다).
+       *   ⚠️ 정정(2026-09-05): 이 주석은 원래 `activeCount === totalMembers - pendingCount`
+       *   라고 적고 있었는데, 그건 `members` 에 `status: "Pending"` 이 실린다는 전제였고
+       *   **그 필드는 응답에 없다.** 두 수는 애초에 같은 축이 아니다 —
+       *   멤버(가입 완료)와 초대(미수락)는 서로 다른 테이블이다.
        *   멤버 탭 필터 칩에도 활성 축이 그대로 있다. 새 사실을 잃지 않는다.
        *
        * 잠금: 이 은퇴만 하면 새 결정이 무잠금이 된다(§verification-loss-three-paths 2번).
@@ -1029,12 +1086,15 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
 
             {/* 상태 필터 + 역할별 세그먼트 */}
             <div className="flex flex-wrap gap-2">
-              {(["all", "active", "pending"] as const).map((f) => {
-                const labels: Record<string, string> = { all: "전체", active: "활성", pending: "초대 대기" };
+              {/* §invite-flow Phase 4 후속 — **"초대 대기" 칩을 멤버 탭에서 뺀다.**
+                  🛑 대기 축의 정본은 `OrganizationInvite` 인데 이 테이블은 `OrganizationMember`
+                  만 본다. 칩 수만 초대에서 끌어오면 **"대기 3인데 목록 0"** 이 된다
+                  (수와 목록이 서로 다른 테이블을 보는 형태). 대기 목록은 승인·초대 탭에 있다. */}
+              {(["all", "active"] as const).map((f) => {
+                const labels: Record<string, string> = { all: "전체", active: "활성" };
                 const counts: Record<string, number> = {
                   all: totalMembers,
                   active: activeCount,
-                  pending: pendingCount,
                 };
                 return (
                   <button
@@ -1047,7 +1107,6 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                     }`}
                   >
                     {f === "active" && <span className="w-2 h-2 rounded-full bg-emerald-500" />}
-                    {f === "pending" && <Clock className="h-3 w-3 text-yellow-500" />}
                     {labels[f]} <span className="font-bold">{counts[f]}</span>
                   </button>
                 );
@@ -1265,48 +1324,53 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
               </CardHeader>
               <CardContent>
                   <div className="space-y-2">
-                    {teamMembers.filter((m) => m.status === "Pending").map((member) => {
-                      const rawMember = member.memberId ? members.find((m) => m.id === member.memberId) : null;
-                      return (
-                        <div key={member.id} className="flex items-center justify-between rounded-lg border border-slate-200 p-3 hover:bg-slate-100/30">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-8 w-8 border border-slate-200">
-                              <AvatarFallback className="bg-slate-100 text-slate-400 text-xs">{member.initial}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="text-sm font-medium text-slate-900">{member.email}</p>
-                              <p className="text-xs text-slate-500">
-                                역할: {ROLE_LABELS[member.rawRole || ""] || "멤버"}
-                                {rawMember?.createdAt && (
-                                  <> / 초대일: {new Date(rawMember.createdAt).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}</>
-                                )}
-                              </p>
-                            </div>
-                          </div>
-                          {isAdmin && rawMember && (
-                            <div className="flex items-center gap-1.5">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-xs border-slate-200 text-slate-600"
-                                onClick={() => resendInviteMutation.mutate(rawMember.id)}
-                                disabled={resendInviteMutation.isPending}
-                              >
-                                <Send className="h-3.5 w-3.5 mr-1" />재발송
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-xs text-red-400 hover:text-red-300"
-                                onClick={() => { if (confirm("초대를 취소하시겠습니까?")) removeMemberMutation.mutate(rawMember.id); }}
-                              >
-                                <XCircle className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                          )}
+                    {/* §invite-flow Phase 4 후속 — 행의 출처가 **초대**다(멤버 아님).
+                        🔑 링크를 여기서 다시 복사할 수 있어야 한다. 생성 직후 전달 창을 닫으면
+                        다시 볼 방법이 없던 것이 이 배선 전의 상태였다.
+                        🛑 재발송 버튼은 두지 않는다 — `/members/resend-invite` 라우트가 없다.
+                        대신 **취소 후 새 초대**가 같은 결과를 내고, 그 두 라우트는 실재한다. */}
+                    {pendingInvites.map((invite) => (
+                      <div key={invite.id} className="flex items-center justify-between rounded-lg border border-slate-200 p-3 hover:bg-slate-100/30">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-slate-900 truncate">
+                            {invite.email || "링크를 아는 누구나"}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            역할: {ROLE_LABELS[invite.role] || invite.role}
+                            {" / 만료: "}
+                            {new Date(invite.expiresAt).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
+                          </p>
                         </div>
-                      );
-                    })}
+                        {isAdmin && (
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs border-slate-200 text-slate-600"
+                              onClick={() => {
+                                navigator.clipboard?.writeText(invite.inviteUrl);
+                                toast({ title: "링크를 복사했습니다" });
+                              }}
+                            >
+                              <Send className="h-3.5 w-3.5 mr-1" />링크 복사
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-xs text-red-400 hover:text-red-300"
+                              onClick={() => {
+                                if (confirm("이 초대를 취소하시겠습니까? 링크가 즉시 무효가 됩니다.")) {
+                                  revokeInviteMutation.mutate(invite.id);
+                                }
+                              }}
+                              disabled={revokeInviteMutation.isPending}
+                            >
+                              <XCircle className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
               </CardContent>
             </Card>
