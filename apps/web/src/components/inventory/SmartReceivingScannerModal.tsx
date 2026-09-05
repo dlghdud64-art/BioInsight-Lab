@@ -71,6 +71,8 @@ import { matchReceiptToOrders } from "@/lib/receiving/receipt-match";
 import { RecognizedFieldInput } from "@/components/ocr/recognized-fields-review";
 
 /* ── /api/quotes/parse-image response (QuoteScannerModal §11.290 패턴 정합) ── */
+//   §ocr-parse-failure — QuoteParseResult 가 parseFailure 를 들고 온다(구조화 실패 사유).
+//   "0 품목 인식" 과 "응답이 잘려 파싱 실패" 를 화면에서 구분하기 위한 축이다.
 interface QuoteScanApiResponse extends QuoteParseResult {
   success: boolean;
   ocrMetadata?: {
@@ -710,6 +712,26 @@ export function SmartReceivingScannerModal({
                 {scanResult.itemCount} 품목 인식
               </span>
             </div>
+
+            {/* §ocr-parse-failure (호영님 2026-09-05) — 구조화 실패를 "0 품목 인식" 으로 위장하지 않는다.
+                실측: Lot 열이 있는 7열 명세서에서 응답이 잘렸는데 화면은 0 품목이라고 했다.
+                원문에는 공급사·담당자까지 정확히 들어 있었다. 사유를 서버가 실어 보낸 그대로 보여준다. */}
+            {scanResult.parseFailure && (
+              <div
+                data-testid="srm-parse-failure"
+                className="rounded-lg border border-yellow-200 bg-yellow-50 p-3 space-y-1"
+              >
+                <p className="text-xs font-semibold text-yellow-800">
+                  인식 결과를 읽지 못했습니다
+                </p>
+                <p className="text-[11px] text-yellow-800 leading-relaxed break-words">
+                  {scanResult.parseFailure.message}
+                </p>
+                <p className="text-[10px] text-yellow-700/80 break-words">
+                  {scanResult.parseFailure.detail}
+                </p>
+              </div>
+            )}
 
             {/* §scan-recognition-upgrade P2 — 다품목 라인 테이블 (라인별 수량 확인 후 일괄 등록) */}
             {isMulti && (

@@ -61,6 +61,12 @@ Rules:
 - If leadTime is "2~3 weeks", convert to approximate days (e.g. 17).
 - unit should be standardized: EA, BOX, mL, L, g, kg, etc.`;
 
+import {
+  describeParseFailure,
+  stripCodeFence,
+  type ParseFailure,
+} from "./parse-failure";
+
 // ── Response Types ──
 
 export interface ParsedQuoteVendor {
@@ -104,6 +110,12 @@ export interface QuoteParseResult {
   matchedFields: number;
   itemCount: number;
   rawText: string;
+  /**
+   * §ocr-parse-failure — 구조화에 **실패**했을 때의 사유. 성공이면 null.
+   * 🛑 이게 없어서 "응답 잘림" 이 화면에 "0 품목 인식" 으로 나갔다(2026-09-05).
+   *    빈 결과와 실패는 같은 모양이면 안 된다.
+   */
+  parseFailure: ParseFailure | null;
 }
 
 // ── Internal: Gemini API call + JSON extraction ──
@@ -141,18 +153,20 @@ async function callGeminiAndParse(
   );
 
   const rawText = response.text ?? "";
+  // §ocr-parse-failure — API 가 "왜 끝났는지" 를 말해준다. 안 읽으면 잘림이 인식 실패로 위장된다.
+  const finishReason =
+    (response as { candidates?: { finishReason?: string }[] }).candidates?.[0]?.finishReason ?? null;
 
-  // JSON 추출 (마크다운 코드블록 대응)
-  let jsonStr = rawText;
-  const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (jsonMatch) {
-    jsonStr = jsonMatch[1].trim();
-  }
+  // JSON 추출 — 닫는 펜스를 **요구하지 않는다**(잘린 응답에서 매칭이 통째로 실패했다).
+  const jsonStr = stripCodeFence(rawText);
 
   let parsed: ParsedQuoteDocument;
+  let parseFailure: ParseFailure | null = null;
   try {
     parsed = JSON.parse(jsonStr);
-  } catch {
+  } catch (err) {
+    // 🛑 값을 지어내지 않는다 — 빈 문서는 자리를 채우기 위한 것이고, **사유가 진짜 결과**다.
+    parseFailure = describeParseFailure({ finishReason, rawText, error: err });
     parsed = {
       vendor: { name: null, contactPerson: null, email: null, phone: null },
       quoteNumber: null,
@@ -194,6 +208,7 @@ async function callGeminiAndParse(
     matchedFields,
     itemCount: parsed.items?.length ?? 0,
     rawText: jsonStr,
+    parseFailure,
   };
 }
 

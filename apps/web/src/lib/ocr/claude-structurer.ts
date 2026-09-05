@@ -19,6 +19,8 @@
  */
 
 import type { LabelParseResult } from "./label-parser";
+// §ocr-parse-failure — 파싱 실패는 빈 결과가 아니다. 사유를 실어 보낸다.
+import { describeParseFailure, stripCodeFence, type ParseFailure } from "./parse-failure";
 
 export class ClaudeStructurerNotConfiguredError extends Error {
   constructor(reason: string) {
@@ -39,6 +41,8 @@ export interface ClaudeStructureResult {
   costUsd: number;
   /** Call latency in ms (audit log). */
   latencyMs: number;
+  /** §ocr-parse-failure — 구조화 실패 사유. 성공이면 null. invoice 경로와 동일 계약. */
+  parseFailure: ParseFailure | null;
 }
 
 const STRUCTURE_PROMPT = `You are a reagent label parser for a laboratory inventory system.
@@ -103,10 +107,11 @@ export async function structureWithClaude(
   const rawContent = message.content[0];
   const rawText = rawContent.type === "text" ? rawContent.text : "";
 
-  // JSON 추출 (마크다운 코드블록 대응)
-  let jsonStr = rawText;
-  const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (jsonMatch) jsonStr = jsonMatch[1].trim();
+  // §ocr-parse-failure — 닫는 펜스를 요구하지 않는다(잘린 응답에서 매칭이 통째로 실패한다).
+  //   🛑 이 라벨 경로는 invoice 경로를 고칠 때 **놓쳤다가 sentinel 이 잡았다** —
+  //      형태를 하나 고치면 같은 창의 형제 슬롯을 전수 훑는다(CLAUDE.md 4원칙 후속).
+  const jsonStr = stripCodeFence(rawText);
+  let labelParseFailure: ParseFailure | null = null;
 
   let parsed: {
     brand: string | null;
@@ -120,7 +125,9 @@ export async function structureWithClaude(
 
   try {
     parsed = JSON.parse(jsonStr);
-  } catch {
+  } catch (err) {
+    // 값을 지어내지 않는다 — 빈 라벨은 자리를 채우기 위한 것이고, 사유가 진짜 결과다.
+    labelParseFailure = describeParseFailure({ finishReason: null, rawText, error: err });
     parsed = {
       brand: null, productName: null, catalogNo: null,
       lotNo: null, expirationDate: null, casNumber: null, quantity: null,
@@ -154,6 +161,7 @@ export async function structureWithClaude(
     },
     costUsd,
     latencyMs,
+    parseFailure: labelParseFailure,
   };
 }
 
@@ -183,6 +191,12 @@ export interface ClaudeStructureInvoiceResult {
   costUsd: number;
   /** Call latency in ms (audit log). */
   latencyMs: number;
+  /**
+   * §ocr-parse-failure — 구조화 실패 사유. 성공이면 null.
+   * Tier 1(gemini-quote-parser)과 **동형 결함**이었다 — 값을 지어내면 Tier 2 로 떨어져도
+   * 화면은 "0 품목 인식" 이라고 말한다.
+   */
+  parseFailure: ParseFailure | null;
 }
 
 const INVOICE_STRUCTURE_PROMPT = `You are an invoice/delivery-note parser for a laboratory inventory system.
@@ -275,9 +289,9 @@ export async function structureInvoiceWithClaude(
   const rawContent = message.content[0];
   const rawText = rawContent.type === "text" ? rawContent.text : "";
 
-  let jsonStr = rawText;
-  const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (jsonMatch) jsonStr = jsonMatch[1].trim();
+  // 닫는 펜스를 요구하지 않는다 — 잘린 응답에서 매칭이 통째로 실패한다(Tier 1 과 동일 교정).
+  const jsonStr = stripCodeFence(rawText);
+  let quoteParseFailure: ParseFailure | null = null;
 
   // §11.309a-hotfix — ParsedQuoteVendor 실제 shape 정합:
   //   name (string | null) / contactPerson / email / phone
@@ -291,7 +305,10 @@ export async function structureInvoiceWithClaude(
     }
     if (!Array.isArray(parsed.items)) parsed.items = [];
     if (!parsed.currency) parsed.currency = "KRW";
-  } catch {
+  } catch (err) {
+    // §ocr-parse-failure (호영님 2026-09-05) — Tier 1(gemini-quote-parser)과 **동형 결함**이었다.
+    //   Tier 1 만 고치면 Tier 2 로 떨어질 때 또 침묵한다. 값을 지어내지 않고 사유를 남긴다.
+    quoteParseFailure = describeParseFailure({ finishReason: null, rawText, error: err });
     parsed = {
       vendor: { name: null, contactPerson: null, email: null, phone: null },
       quoteNumber: null,
@@ -329,6 +346,7 @@ export async function structureInvoiceWithClaude(
     rawText: jsonStr,
     costUsd,
     latencyMs,
+    parseFailure: quoteParseFailure,
   };
 }
 
