@@ -166,6 +166,13 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   /* §invite-flow Phase 4 — 생성된 초대 링크. 메일 발송이 없으므로 **화면에 남겨** 관리자가
    * 복사해 전달한다. 토스트로만 알리면 닫는 순간 링크가 사라진다(전달 못 함 = 조용한 실패). */
   const [createdInviteUrl, setCreatedInviteUrl] = useState<string | null>(null);
+  /* §invite-flow smoke 1차 — 실패를 **모달 안에 남긴다**(판정 2 기준 ①).
+   * 토스트만 쓰면 모달은 열린 채인데 사유는 몇 초 뒤 사라지고, 긴 문구는 잘린다.
+   * 🛑 서버가 준 `upgradeHref` 를 **클릭 가능한 경로로** 붙인다 — 받아 놓고 안 쓰면
+   *    `upgradeHref: undefined` 프로브(N4)로 잡았던 형태가 UI 에서 되풀이된다. */
+  const [inviteError, setInviteError] = useState<
+    { title: string; message: string; upgradeHref?: string } | null
+  >(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("VIEWER");
   const [searchQuery, setSearchQuery] = useState("");
@@ -487,6 +494,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       queryClient.invalidateQueries({ queryKey: ["organization-invites", params.id] });
       setInviteEmail("");
       setInviteRole("VIEWER");
+      setInviteError(null);
       setInviteModalOpen(false);
       const url = payload?.invite?.inviteUrl;
       /* 🛑 "초대 완료" 라고 말하지 않는다 — 메일을 보내지 않았다.
@@ -500,12 +508,11 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       });
     },
     onError: (error: Error) => {
-      const e = error as Error & { code?: string };
-      toast({
-        title: e.code === "SEAT_LIMIT" ? "남은 좌석이 없습니다" : "초대 실패",
-        description: error.message,
-        variant: "destructive",
-      });
+      const e = error as Error & { code?: string; upgradeHref?: string };
+      const title = e.code === "SEAT_LIMIT" ? "남은 좌석이 없습니다" : "초대 실패";
+      /* 화면에 **남는** 영역이 정본이다. 토스트는 보조(즉시 알림) 역할만 한다. */
+      setInviteError({ title, message: error.message, upgradeHref: e.upgradeHref });
+      toast({ title, description: error.message, variant: "destructive" });
     },
   });
 
@@ -1768,7 +1775,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
           <DialogHeader>
             <DialogTitle className="text-slate-900">멤버 초대</DialogTitle>
             <DialogDescription className="text-slate-500">
-              이메일로 초대하거나 협력 조직을 연결하세요.
+              초대 링크를 만들어 전달하세요 · 메일은 아직 자동 발송되지 않습니다.
             </DialogDescription>
           </DialogHeader>
           <Tabs defaultValue="email" className="mt-2">
@@ -1810,14 +1817,35 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                   </SelectContent>
                 </Select>
               </div>
+              {/* 🛑 실패 사유는 여기 **남는다**. 문구 전문 + 다음 행동 경로.
+                  토스트만 쓰면 모달은 열린 채인데 사유가 사라지고 문장도 잘린다. */}
+              {inviteError && (
+                <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-3">
+                  <p className="text-sm font-semibold text-yellow-800">{inviteError.title}</p>
+                  <p className="mt-1 text-sm text-yellow-800">{inviteError.message}</p>
+                  {inviteError.upgradeHref && (
+                    <Link href={inviteError.upgradeHref}>
+                      <Button size="sm" variant="outline" className="mt-3 border-yellow-300 text-yellow-800">
+                        플랜 변경하기
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              )}
+              {/* 🛑 라벨이 **메일 발송**이라고 말하면 안 된다 — 메일을 보내지 않는다.
+                  누르기 전에 읽는 문구가 약속을 어기면, 관리자는 성공 창을 닫은 뒤
+                  아무에게도 가지 않은 초대를 갔다고 믿는다(smoke 1차 실측). */}
               <Button
                 className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                 disabled={!inviteEmail.trim() || inviteMemberMutation.isPending}
-                onClick={() => inviteMemberMutation.mutate({ userEmail: inviteEmail.trim(), role: inviteRole })}
+                onClick={() => {
+                  setInviteError(null);
+                  inviteMemberMutation.mutate({ userEmail: inviteEmail.trim(), role: inviteRole });
+                }}
               >
                 {inviteMemberMutation.isPending ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />발송 중...</>
-                ) : "초대 메일 발송"}
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />만드는 중...</>
+                ) : "초대 링크 만들기"}
               </Button>
             </TabsContent>
 

@@ -86,6 +86,38 @@ describe("§invite-dead-end a 승계 — 초대가 끝까지 이어진다", () =
   });
 });
 
+describe("§invite-flow smoke 1차 후속 — 누르기 전 문구도 약속을 지킨다", () => {
+  it("🛑 버튼이 '초대 메일 발송' 이라고 말하지 않는다 (메일을 보내지 않는다)", () => {
+    /* 성공 화면은 정직했는데(전달 창) **누르기 전에 읽는 문구**가 약속을 어기고 있었다 —
+     * 관리자는 누르는 순간 메일이 갔다고 믿고, 성공 창을 닫으면 아무에게도 안 간 초대가 남는다.
+     * 배선을 옮기며 라벨을 안 옮긴 자리다(smoke 1차 실측 2026-09-05). */
+    const code = stripComments(read(ORG_DETAIL));
+    expect(code).not.toMatch(/초대 메일 발송/);
+    expect(code).not.toMatch(/발송 중\.\.\./);
+    expect(code).toMatch(/초대 링크 만들기/);
+    expect(code).toMatch(/만드는 중\.\.\./);
+  });
+
+  it("🔑 실패 사유가 모달 안에 **남는다** (토스트만이 아니다)", () => {
+    /* 판정 2 기준 ①. 모달은 열린 채인데 사유만 몇 초 뒤 사라지면 사용자는
+     * 무엇이 막았는지 잃는다. 긴 문구가 토스트에서 잘리는 문제도 같은 뿌리다. */
+    const code = stripComments(read(ORG_DETAIL));
+    expect(code).toMatch(/setInviteError\(\{ title, message: error\.message, upgradeHref: e\.upgradeHref \}\)/);
+    expect(code).toMatch(/inviteError && \(/);
+    expect(code).toMatch(/\{inviteError\.message\}/);
+  });
+
+  it("🔑 서버가 준 upgradeHref 가 **클릭 가능한 경로**로 붙는다", () => {
+    /* 값을 받아만 놓고 안 쓰면 `upgradeHref: undefined` 프로브(N4)로 잡았던 형태가
+     * UI 에서 되풀이된다 — 서버는 길을 주는데 사용자는 클릭할 수 없다. */
+    const code = stripComments(read(ORG_DETAIL));
+    expect(code).toMatch(
+      /inviteError\.upgradeHref &&[\s\S]{0,200}?href=\{inviteError\.upgradeHref\}/,
+    );
+    expect(code).toMatch(/플랜 변경하기/);
+  });
+});
+
 describe("§invite-flow Phase 4 후속 — 대기 축의 출처가 OrganizationInvite 다", () => {
   it("🔑 pendingCount 가 초대 목록에서 나온다 (멤버 필터 금지)", () => {
     /* `members` GET 응답에 `status` 필드가 **없다** → `m.status === "Pending"` 은 영구 false.
