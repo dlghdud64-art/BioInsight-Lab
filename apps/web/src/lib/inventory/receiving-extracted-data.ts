@@ -58,6 +58,23 @@ export const EXTRACTED_COMMON_KEYS = [
   "expirationDate",
 ] as const satisfies readonly (keyof ReceivingExtractedCommon)[];
 
+/**
+ * 🛑 **양방향 잠금** (호영님 2026-09-05 지적).
+ *
+ * 위 `satisfies` 는 한쪽만 막는다 — 목록에 **없는 키가 들어가는 것**만 잡는다.
+ * 실제로 무는 건 반대다: 누가 `ReceivingExtractedCommon` 에 필드를 추가하고
+ * `EXTRACTED_COMMON_KEYS` 에 안 넣으면, **공통 계약이 조용히 그 필드를 뺀 채로 남는다.**
+ * 컴파일러는 통과시키고, 읽는 쪽은 "공통 집합" 이라는 이름을 믿는다.
+ *
+ * 이게 이 배치가 잡은 것들과 정확히 같은 형태다 — 계약이 있는데 계약이 실재를 덜 담는다.
+ * 아래 타입은 인터페이스에만 있고 목록에 없는 키가 생기면 **build 를 깨뜨린다.**
+ */
+type AssertNever<T extends never> = T;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type _AllCommonKeysListed = AssertNever<
+  Exclude<keyof ReceivingExtractedCommon, (typeof EXTRACTED_COMMON_KEYS)[number]>
+>;
+
 function str(v: unknown): string | null {
   if (typeof v !== "string") return null;
   const t = v.trim();
