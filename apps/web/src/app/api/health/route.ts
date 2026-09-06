@@ -19,6 +19,8 @@ import {
 } from "@/lib/health/blob-token-probe";
 // §runtime-facts — 리전·커넥션 설정·인스턴스 수명(P2028 판별 축).
 import { readRuntimeFacts } from "@/lib/runtime-facts";
+// §db-roundtrip — 왕복을 **함수가 도는 자리에서** 잰다(iad1↔도쿄). 한국 실측은 못 쓴다.
+import { measureDbRoundTrip } from "@/lib/health/db-roundtrip";
 
 export const dynamic = "force-dynamic";
 
@@ -119,6 +121,11 @@ export async function GET(request: Request) {
        *   실패했을 때만이 아니라 **평시에도** 보여야 정상값을 안다.
        *   값이 아니라 형태만 싣는다(접속 문자열·자격증명 0). */
       runtime: readRuntimeFacts(),
+      /* §db-roundtrip (호영님 2026-09-06) — region=iad1 · DB=ap-northeast-1 이면
+       *   모든 요청이 태평양을 왕복한다. 그 비용을 **여기서** 재야 판정이 된다.
+       *   판정: medianMs >= 150 이면 P2028 원인 확정이고, 처방은 코드가 아니라 배포 리전이다.
+       *   🛑 1회로 판정하지 않는다 — 원값(rawMs)도 함께 실어 순간 지연을 가린다. */
+      dbRoundTrip: await measureDbRoundTrip(db as unknown as { $queryRawUnsafe(q: string): Promise<unknown> }),
       /* §checkout-two-paths (2026-09-05) — **유료 전환 경로가 둘인데 하나만 청구한다.**
        *   settings/billing  → POST /api/billing/checkout → Stripe   (실제 청구)
        *   settings/plans    → CheckoutDialog → POST .../subscription (PG 0곳 · 청구 없음)

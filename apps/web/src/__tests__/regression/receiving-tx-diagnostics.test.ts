@@ -117,6 +117,21 @@ describe("§runtime-facts — health 가 평시에도 축을 보여준다", () =
     expect(src).toMatch(/runtime: readRuntimeFacts\(\)/);
   });
 
+  it("dbRoundTrip 축이 실린다 — iad1↔도쿄 왕복은 거기서만 잴 수 있다", () => {
+    const src = read(HEALTH);
+    expect(src).toMatch(/import \{ measureDbRoundTrip \} from "@\/lib\/health\/db-roundtrip"/);
+    expect(src).toMatch(/dbRoundTrip: await measureDbRoundTrip\(/);
+  });
+
+  it("🛑 측정 실패를 0 으로 적지 않는다 (왕복 0ms 는 거짓이다)", () => {
+    const lib = stripComments(read("src/lib/health/db-roundtrip.ts"));
+    const idx = lib.indexOf("} catch (err) {");
+    expect(idx).toBeGreaterThan(-1);
+    const win = lib.slice(idx, idx + 400);
+    expect(win).toMatch(/medianMs: -1/);
+    expect(win).toMatch(/error:/);
+  });
+
   it("회귀 0 — 기존 진단 축 보존", () => {
     const src = read(HEALTH);
     for (const k of ["dbUrlPrefix", "node: process.version", "storage:", "migrations,"]) {
