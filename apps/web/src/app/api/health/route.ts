@@ -17,6 +17,8 @@ import {
   extractBlobStoreId,
   describeBlobToken,
 } from "@/lib/health/blob-token-probe";
+// §runtime-facts — 리전·커넥션 설정·인스턴스 수명(P2028 판별 축).
+import { readRuntimeFacts } from "@/lib/runtime-facts";
 
 export const dynamic = "force-dynamic";
 
@@ -113,6 +115,10 @@ export async function GET(request: Request) {
       // §scan-storage-deadend — 배포 런타임 Node 버전. @vercel/blob 2.x 가
       //   engines.node ">=20.0.0" 을 요구하므로 실제 버전이 관측돼야 판정이 가능하다.
       node: process.version,
+      /* §runtime-facts (호영님 2026-09-05) — P2028 원인 판별 축.
+       *   실패했을 때만이 아니라 **평시에도** 보여야 정상값을 안다.
+       *   값이 아니라 형태만 싣는다(접속 문자열·자격증명 0). */
+      runtime: readRuntimeFacts(),
       /* §checkout-two-paths (2026-09-05) — **유료 전환 경로가 둘인데 하나만 청구한다.**
        *   settings/billing  → POST /api/billing/checkout → Stripe   (실제 청구)
        *   settings/plans    → CheckoutDialog → POST .../subscription (PG 0곳 · 청구 없음)

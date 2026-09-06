@@ -137,6 +137,9 @@ describe("§scan-org-identity — 회귀 0", () => {
     const src = read(ROUTE);
     expect(src).toMatch(/categorySource:\s*resolvedCategory\.categorySource/);
     expect(src).toMatch(/categorySource:\s*lineCategory\.categorySource/);
-    expect(src).toMatch(/failReason:\s*describeFailure\(error\)/);
+    // 승계(§receiving-tx-metrics 2026-09-05): describeFailure 가 diag 로 감싸졌다.
+    //   계약(사유가 붙는다)은 불변 — 뿌리와 부착 지점을 각각 본다.
+    expect(src).toMatch(/describeFailure\(error\),/);
+    expect(src).toMatch(/failReason: diag/);
   });
 });

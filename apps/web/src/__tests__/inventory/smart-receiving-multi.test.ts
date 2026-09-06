@@ -27,7 +27,14 @@ describe("§scan-recognition-upgrade P2 (1) — smart-receiving 다품목 additi
   it("items[] 분기 존재 + $transaction 1회가 라인 루프를 감싼다", () => {
     const src = stripComments(read(ROUTE));
     expect(src).toMatch(/Array\.isArray\(body\.items\)/);
-    expect(src).toMatch(/db\.\$transaction\([\s\S]{0,300}?for \(const line of/);
+    /* ⑤ 창은 블록으로(2026-09-05): 구 판본은 `{0,300}` 고정 폭이었고,
+     *   트랜잭션 시작과 루프 사이에 감사 배치 선언이 들어오자 밖으로 밀려 RED 가 됐다.
+     *   구현은 계약(트랜잭션 1회가 라인 루프를 감싼다)을 지키고 있었으므로 **검사를 고친다**.
+     *   폭 대신 순서를 본다 — 트랜잭션이 먼저 열리고 그 안에서 루프가 돈다. */
+    const txIdx = src.indexOf("db.$transaction(");
+    const loopIdx = src.indexOf("for (const line of lines)", txIdx);
+    expect(txIdx).toBeGreaterThan(-1);
+    expect(loopIdx).toBeGreaterThan(txIdx);
   });
 
   it("라인 루프 안 direct db.* 쓰기 0 — 전부 tx.* (부분 실패 롤백 보장)", () => {

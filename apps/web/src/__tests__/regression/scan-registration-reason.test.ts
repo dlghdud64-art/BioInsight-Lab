@@ -31,9 +31,19 @@ describe("§scan-registration-reason — 서버가 사유를 싣는다", () => {
     // 창은 catch 블록 시작부터(② 창 시작점 — status 500 부터 열면 앞의 error 문구가 창 밖).
     const catchIdx = src.indexOf('catch (error) {\n    console.error("[SmartReceiving/POST]"');
     expect(catchIdx).toBeGreaterThan(-1);
-    const win = src.slice(catchIdx, catchIdx + 700);
-    expect(win).toMatch(/failReason:\s*describeFailure\(error\)/);
+    /* ⑤ 창은 블록으로 — 구 판본은 `catchIdx + 700` 고정 폭이었고, 진단 축이 늘자
+     *   `failReason` 이 창 밖으로 밀렸다(같은 형태 4회차). catch 는 파일의 마지막 블록이므로
+     *   끝까지 연다 — 길이에 좌우되지 않는다. */
+    const win = src.slice(catchIdx);
+    /* 승계(§receiving-tx-metrics 2026-09-05): 사유가 **확장**됐다.
+     *   구: failReason: describeFailure(error)
+     *   신: failReason: diag  (= describeFailure + 트랜잭션 계측 + 실행 환경)
+     *   계약("실패에는 사유가 따라붙는다")은 불변이고 축이 늘었다.
+     *   🛑 사유가 사라지는 회귀는 아래 두 단언이 계속 잡는다. */
+    expect(win).toMatch(/failReason: diag/);
     expect(win).toMatch(/status:\s*500/);
+    // 사유의 뿌리(describeFailure)가 diag 에 실제로 들어간다.
+    expect(read(ROUTE)).toMatch(/const diag = \[[\s\S]{0,40}?describeFailure\(error\),/);
   });
 
   it("describeFailure 를 실제로 import 한다 (미배선 차단)", () => {

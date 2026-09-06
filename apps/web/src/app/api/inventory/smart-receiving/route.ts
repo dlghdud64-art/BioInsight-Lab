@@ -65,6 +65,10 @@ import { resolveProductCategory } from "@/lib/inventory/product-category-options
 import { resolveOrganizationIdForMutation } from "@/lib/organizations/active-org";
 // §receiving-extracted-shape — extractedData 는 생산자마다 스키마가 다르다. shape + 공통 집합으로 정규화.
 import { buildExtractedData, EXTRACTED_SHAPE } from "@/lib/inventory/receiving-extracted-data";
+// §receiving-tx-metrics · §runtime-facts — 실패에 "얼마나 걸렸는지" 와 실행 환경을 싣는다.
+//   계측이 timeout 조정보다 먼저다 — 계측 없이 올리면 올린 게 먹었는지도 모른다(호영님).
+import { TxMetricsCollector, describeTxMetrics } from "@/lib/inventory/receiving-tx-metrics";
+import { readRuntimeFacts, describeRuntimeFacts } from "@/lib/runtime-facts";
 // 알림 고도화 #notif-inventory-received — 입고 완료 시 INVENTORY_RECEIVED 알림(best-effort).
 import { dispatchNotificationEvent, resolveOrgRecipients } from "@/lib/notifications";
 // §11.309c-hotfix-2 — security middleware import 제거 (단순화).
@@ -135,6 +139,8 @@ interface SmartReceivingLine {
 //   이제 상수는 lib/inventory/product-category-options 한 곳에만 있고 캐스트가 없다.
 
 export async function POST(request: NextRequest) {
+  // §receiving-tx-metrics — 실패 사유에 싣기 위해 catch 에서도 보이는 자리에 둔다.
+  let txMetrics: TxMetricsCollector | null = null;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -285,19 +291,33 @@ export async function POST(request: NextRequest) {
         invById.set(line.inventoryId, inv);
       }
 
+      // §receiving-tx-metrics — 왕복 수를 추정하지 않고 **실제로 센다**(추정은 이번에 틀렸다).
+      txMetrics = new TxMetricsCollector(lines.length);
+      const collector = txMetrics;
       const results = await db.$transaction(
         async (tx: Prisma.TransactionClient) => {
           const out: { inventoryId: string; inventoryRestockId: string; productId: string | null; isNew: boolean }[] = [];
+          // §receiving-tx-audit-batch — 감사 기록을 라인마다 쓰지 않고 **끝에 한 번** 쓴다.
+          //   판단(호영님 지시): 트랜잭션 **안**에 둔다.
+          //     · createAuditLog 는 자체 catch 로 실패를 삼킨다 → 감사→재고 원자성은 이미 없다.
+          //     · 반대 방향(재고 롤백 시 감사도 사라짐)은 안에 있어야 성립한다.
+          //       밖으로 빼면 **일어나지 않은 입고가 감사에 남는다** — 그게 더 나쁘다.
+          //   부수 이득: 지금은 audit create 가 실패하면 catch 가 삼켜도 Postgres 트랜잭션이
+          //     abort 되어 **뒤 쿼리가 전부 실패**한다. 마지막에 한 번만 쓰면 뒤가 없다.
+          const auditRows: Prisma.DataAuditLogCreateManyInput[] = [];
           for (const line of lines) {
             const expiry = line.expirationDate ? new Date(line.expirationDate) : null;
             if (line.inventoryId) {
               // 스코프는 위에서 사전 검증 완료 — 여기서는 증가·이력만.
+              collector.markExisting();
               const inv = invById.get(line.inventoryId)!;
+              collector.trip();
               const updated = await tx.productInventory.update({
                 where: { id: inv.id },
                 data: { currentQuantity: { increment: line.quantity } },
                 select: { id: true, productId: true, currentQuantity: true },
               });
+              collector.trip();
               const restock = await tx.inventoryRestock.create({
                 data: {
                   inventoryId: inv.id,
@@ -317,29 +337,28 @@ export async function POST(request: NextRequest) {
                 },
                 select: { id: true },
               });
-              await createAuditLog(
-                {
-                  userId: session.user.id,
-                  organizationId: targetOrgIdMulti,
-                  action: AuditAction.CREATE,
-                  entityType: AuditEntityType.INVENTORY_RESTOCK,
-                  entityId: restock.id,
-                  previousData: null,
-                  newData: {
-                    restockId: restock.id, inventoryId: inv.id, productId: inv.productId,
-                    quantity: line.quantity, lotNumber: line.lotNumber ?? null, ocrJobId,
-                    currentQuantityAfter: updated.currentQuantity,
-                    source: "smart_receiving_multi",
-                  },
-                  ipAddress, userAgent,
-                },
-                tx,
-              );
+              auditRows.push({
+                userId: session.user.id,
+                organizationId: targetOrgIdMulti,
+                action: AuditAction.CREATE,
+                entityType: AuditEntityType.INVENTORY_RESTOCK,
+                entityId: restock.id,
+                previousData: Prisma.DbNull,
+                newData: {
+                  restockId: restock.id, inventoryId: inv.id, productId: inv.productId,
+                  quantity: line.quantity, lotNumber: line.lotNumber ?? null, ocrJobId,
+                  currentQuantityAfter: updated.currentQuantity,
+                  source: "smart_receiving_multi",
+                } as Prisma.InputJsonValue,
+                ipAddress, userAgent,
+              });
               out.push({ inventoryId: inv.id, inventoryRestockId: restock.id, productId: inv.productId, isNew: false });
             } else {
+              collector.markNew();
               // §scan-registration-category — 라인별 분류. 사람이 고른 값이면 USER_SELECTED,
               //   아니면 fallback(REAGENT) + FALLBACK 을 근거로 남긴다.
               const lineCategory = resolveProductCategory(line.category, line.categoryTouched);
+              collector.trip();
               const product = await tx.product.create({
                 data: {
                   name: line.productName!.trim(),
@@ -355,6 +374,7 @@ export async function POST(request: NextRequest) {
                 },
                 select: { id: true },
               });
+              collector.trip();
               const newInventory = await tx.productInventory.create({
                 data: {
                   productId: product.id,
@@ -367,6 +387,7 @@ export async function POST(request: NextRequest) {
                 },
                 select: { id: true, currentQuantity: true },
               });
+              collector.trip();
               const restock = await tx.inventoryRestock.create({
                 data: {
                   inventoryId: newInventory.id,
@@ -385,28 +406,38 @@ export async function POST(request: NextRequest) {
                 },
                 select: { id: true },
               });
-              await createAuditLog(
-                {
-                  userId: session.user.id,
-                  organizationId: targetOrgIdMulti,
-                  action: AuditAction.CREATE,
-                  entityType: AuditEntityType.INVENTORY_RESTOCK,
-                  entityId: restock.id,
-                  previousData: null,
-                  newData: {
-                    restockId: restock.id, inventoryId: newInventory.id, productId: product.id,
-                    quantity: line.quantity, lotNumber: line.lotNumber ?? null, ocrJobId,
-                    currentQuantityAfter: newInventory.currentQuantity,
-                    source: "smart_receiving_multi", isNewProduct: true,
-                  },
-                  ipAddress, userAgent,
-                },
-                tx,
-              );
+              auditRows.push({
+                userId: session.user.id,
+                organizationId: targetOrgIdMulti,
+                action: AuditAction.CREATE,
+                entityType: AuditEntityType.INVENTORY_RESTOCK,
+                entityId: restock.id,
+                previousData: Prisma.DbNull,
+                newData: {
+                  restockId: restock.id, inventoryId: newInventory.id, productId: product.id,
+                  quantity: line.quantity, lotNumber: line.lotNumber ?? null, ocrJobId,
+                  currentQuantityAfter: newInventory.currentQuantity,
+                  source: "smart_receiving_multi", isNewProduct: true,
+                } as Prisma.InputJsonValue,
+                ipAddress, userAgent,
+              });
               out.push({ inventoryId: newInventory.id, inventoryRestockId: restock.id, productId: product.id, isNew: true });
             }
           }
+          // 감사 1회 배치 — 라인 수와 무관하게 왕복 1.
+          if (auditRows.length > 0) {
+            collector.trip();
+            await tx.dataAuditLog.createMany({ data: auditRows });
+          }
           return out;
+        },
+        {
+          // §receiving-tx-budget — 기본 5000/2000ms 가 **명시돼 있지 않았다**(실측 2026-09-05).
+          //   🛑 상향은 연기지 수정이 아니다 — 20품목이 오면 또 터진다(호영님).
+          //   그래서 값을 크게 올리지 않고 **명시만** 한다. 실제 처방은 계측 수치를 본 뒤다.
+          //   현재 실측: 왕복 38ms · 감사 배치화로 라인당 왕복 3~4 → 기존 3·신규 4 + 감사 1.
+          timeout: 15_000,
+          maxWait: 5_000,
         },
       );
 
@@ -745,8 +776,17 @@ export async function POST(request: NextRequest) {
     // §scan-registration-reason (호영님 2026-09-04) — 사유 없는 500 은 같은 자리로 돌아온다.
     //   고정 문구만 반환하던 탓에 존재하지 않는 enum 값이 prod 에서 완전히 침묵했다
     //   (신규 품목 등록 100% 실패 · 브라우저에서 판별 불가). 스캔 차단 skipReason 과 동일 계약.
+    // §receiving-tx-metrics · §runtime-facts (호영님 2026-09-05, (A)) —
+    //   P2028 이 났을 때 코드만 보여주고 **얼마나 걸렸는지는 말하지 않았다.**
+    //   그래서 가설 둘(타임아웃·pgbouncer)을 세워 둘 다 실측으로 반증됐다.
+    //   다음 실패 1회로 "왕복 지연" 과 "커넥션 유실" 이 갈리게 축을 함께 싣는다.
+    const diag = [
+      describeFailure(error),
+      txMetrics ? describeTxMetrics(txMetrics.snapshot()) : "tx=(진입 전)",
+      describeRuntimeFacts(readRuntimeFacts()),
+    ].join(" · ");
     return NextResponse.json(
-      { error: "스마트 입고 처리에 실패했습니다.", failReason: describeFailure(error) },
+      { error: "스마트 입고 처리에 실패했습니다.", failReason: diag },
       { status: 500 },
     );
   }
