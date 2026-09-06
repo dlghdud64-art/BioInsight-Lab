@@ -6,6 +6,7 @@ import {
   updateOrganization,
 } from "@/lib/api/organizations";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { assertSeatAvailable } from "@/lib/organizations/seats";
 
 // 조직 상세 조회
 export async function GET(
@@ -29,7 +30,24 @@ export async function GET(
         : NextResponse.json({ error: "Organization not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ organization: result.organization });
+    /* §invite-flow smoke 후속 (Cowork QA 2026-09-05 실측) — **좌석 수를 서버가 준다.**
+     *
+     * 🔴 실측된 결함: 좌석 게이지가 `members` 만 세고, 게이트(`assertSeatAvailable`)는
+     *    `members + pending 초대` 를 센다. 그래서 화면이 `1 / 3 좌석`(여유 2)을 보여주는
+     *    바로 옆에서 `남은 좌석이 없습니다` 가 떴다 — **같은 화면 안에서 두 숫자가 서로를 부정**한다.
+     *
+     * 🛑 화면에서 새 계산식을 만들지 않는다(그러면 좌석 출처가 넷이 된다).
+     *    게이트와 **같은 함수**의 결과를 그대로 내려보낸다.
+     * 🔑 여기(조직 상세)에 싣는 이유: 게이지는 **전 멤버**가 본다. 초대 목록
+     *    (`GET .../invites`)은 ADMIN/OWNER 전용이라 거기서 끌면 비관리자에게 분열이 남는다.
+     *    이 라우트는 멤버십으로만 게이트되므로 축이 맞는다.
+     *    노출은 수치 2개뿐이다 — 초대 대상·토큰 같은 식별 정보는 나가지 않는다. */
+    const seat = await assertSeatAvailable(id);
+
+    return NextResponse.json({
+      organization: result.organization,
+      seat: { used: seat.used, limit: seat.limit, plan: seat.plan },
+    });
   } catch (error: any) {
     console.error("Error fetching organization:", error);
     return NextResponse.json(

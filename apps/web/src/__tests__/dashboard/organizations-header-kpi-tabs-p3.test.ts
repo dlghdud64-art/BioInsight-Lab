@@ -120,9 +120,15 @@ describe("KPI 4카드", () => {
   it("게이지 앰버는 한도 초과에만 — 100% 는 사실이지 경보가 아니다", () => {
     /* v2 후속 (호영님 배포본 QA 2026-08-31): Free maxMembers 1 이라 정상 상태가 곧 100%.
      * 100% 앰버는 Free 단일 사용자에게 상시 경고색이었다. 앰버 = 상태 전용 토큰,
-     * 실제 이상(totalMembers > seatLimit)에만. */
+     * 실제 이상(좌석 초과)에만.
+     *
+     * 승계 (2026-09-05, §invite-flow smoke 후속): 원 단언은 `totalMembers > seatLimit` 였다.
+     * 🔑 **보호의도는 불변** — "100% 가 아니라 초과에만" 이다. 바뀐 것은 **분자**뿐이다:
+     *   좌석 정본이 `assertSeatAvailable`(멤버 + pending 초대)이라 화면도 그 값을 쓴다.
+     * 🛑 여기만 `totalMembers` 로 두면 게이지 숫자와 게이지 **색**이 서로 다른 수를 보게 된다 —
+     *   prod 에서 실측된 결함(`1 / 3 좌석` 옆 `남은 좌석이 없습니다`)의 같은 형태다. */
     const code = stripComments(read(ORG_DETAIL));
-    expect(code).toMatch(/const seatOver = seatLimit !== null && seatLimit > 0 && totalMembers > seatLimit;/);
+    expect(code).toMatch(/const seatOver = seatLimit !== null && seatLimit > 0 && seatUsed > seatLimit;/);
     expect(code).toMatch(/seatOver \? "bg-yellow-500" : "bg-blue-500"/);
     /* 역방향 잠금 — 100% 앰버가 되살아나면 RED */
     expect(code).not.toMatch(/seatUsagePercent >= 100 \? "bg-yellow-500"/);

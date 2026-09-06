@@ -385,6 +385,25 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       toast({ title: "초대 취소 실패", description: e.message, variant: "destructive" }),
   });
 
+  /* §invite-flow smoke 후속 — 좌석 수의 **정본은 서버**다(`assertSeatAvailable`).
+   * 🔴 실측 결함: 게이지는 members 만 세고 게이트는 members + pending 을 세어,
+   *    `1 / 3 좌석` 옆에서 `남은 좌석이 없습니다` 가 떴다.
+   * 🛑 여기서 `totalMembers + pendingInvites.length` 로 다시 계산하지 않는다 —
+   *    그러면 좌석 출처가 넷이 되고, 다음에 정의가 바뀔 때 또 갈린다.
+   * 🔑 초대 목록이 아니라 **조직 상세**에서 받는다: 게이지는 전 멤버가 보는데
+   *    초대 목록은 ADMIN/OWNER 전용이라 비관리자에게 분열이 남는다. */
+  const { data: orgDetail } = useQuery({
+    queryKey: ["organization-seat", params.id],
+    queryFn: async () => {
+      const res = await fetch(`/api/organizations/${params.id}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!params.id,
+  });
+  const seat: { used: number; limit: number | null } | null =
+    orgDetail?.seat ?? null;
+
   // 통계
   const totalMembers = members.length;
   const activeCount = members.filter((m) => m.status !== "Pending").length;
@@ -676,15 +695,18 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   //      **생산자는 2곳**이다 — billing/route.ts:377 · organizations/[id]/subscription:148 이
   //      플랜 변경 시 이 컬럼을 쓴다. **소비자만 0** 이라 무해하고, 계약은 그대로다
   //      (읽지 않는다). 숫자가 틀린 주석은 다음 사람이 "생산자가 없으니 지워도 된다" 로 읽는다.
-  const seatLimit = PLAN_LIMITS[(organization as any).plan as SubscriptionPlan]?.maxMembers ?? null;
+  const seatLimit = seat?.limit ?? PLAN_LIMITS[(organization as any).plan as SubscriptionPlan]?.maxMembers ?? null;
+  /* 🔑 분자는 **서버가 준 used** 다(멤버 + pending 초대). 서버 값이 아직 없을 때만
+   * 멤버 수로 그린다 — 그 창에서는 게이트보다 작게 보이지만, 값을 지어내지는 않는다. */
+  const seatUsed = seat?.used ?? totalMembers;
   const seatUsagePercent = seatLimit && seatLimit > 0
-    ? Math.min(100, Math.round((totalMembers / seatLimit) * 100))
+    ? Math.min(100, Math.round((seatUsed / seatLimit) * 100))
     : 0;
   // §org-management-web v2 후속 (호영님 배포본 QA 2026-08-31) — 게이지 앰버는 **초과**에만.
   //   Free 는 maxMembers 1 이라 정상 상태가 곧 100% 다. 100% 를 앰버로 칠하면 Free 단일
   //   사용자에게 상시 경고색이 뜬다 — 사실(꽉 찼다)을 경보(문제다)로 승격시키는 셈.
   //   앰버 = 상태 전용 토큰이므로 실제 이상(한도 초과)에만 쓴다. 꽉 찬 것은 블루로 사실만 말한다.
-  const seatOver = seatLimit !== null && seatLimit > 0 && totalMembers > seatLimit;
+  const seatOver = seatLimit !== null && seatLimit > 0 && seatUsed > seatLimit;
 
   // 바로 처리 항목
   // §11.303-hotfix-d — SWC parser nested generic bug 회피: Array<...
@@ -949,7 +971,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
               </Link>
             </div>
             <p className="text-sm font-bold text-slate-900 tabular-nums">
-              {totalMembers} / {seatLimit ?? "무제한"} 좌석
+              {seatUsed} / {seatLimit ?? "무제한"} 좌석
             </p>
             {seatLimit !== null && (
               <div className="mt-2 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">

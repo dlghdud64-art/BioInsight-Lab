@@ -15,6 +15,8 @@ const read = (...seg: string[]) =>
 
 const SEATS = read("lib", "organizations", "seats.ts");
 const CREATE = read("app", "api", "organizations", "[id]", "invites", "route.ts");
+const ORG_ROUTE = read("app", "api", "organizations", "[id]", "route.ts");
+const ORG_PAGE = read("app", "dashboard", "organizations", "[id]", "page.tsx");
 
 describe("§invite-flow Phase 3 — 좌석 정본 (assertSeatAvailable)", () => {
   it("요건 3 — 좌석 계산 함수가 하나뿐이고 export 된다", () => {
@@ -94,5 +96,44 @@ describe("§invite-flow Phase 3 — 초대 생성 게이트", () => {
     const code = stripComments(CREATE);
     expect(code).not.toMatch(/maxMembers/);
     expect(code).not.toMatch(/organizationMember\.count/);
+  });
+});
+
+describe("§invite-flow smoke 후속 — 게이지와 게이트가 같은 수를 쓴다", () => {
+  /* 🔴 prod 실측(Cowork QA 2026-09-05): 게이지는 `members` 만 세고 게이트는
+   * `members + pending 초대` 를 세어, `1 / 3 좌석`(여유 2) 바로 옆에서
+   * `남은 좌석이 없습니다` 가 떴다 — **같은 화면 안에서 두 숫자가 서로를 부정**했다.
+   * 좌석 정본을 `seats.ts` 하나로 모은 판단이 게이트에는 적용됐고 게이지에는 안 걸렸다. */
+
+  it("🔑 서버가 좌석 수를 준다 (게이트와 **같은 함수**)", () => {
+    expect(ORG_ROUTE).toMatch(/assertSeatAvailable\(id\)/);
+    expect(ORG_ROUTE).toMatch(
+      /seat: \{ used: seat\.used, limit: seat\.limit, plan: seat\.plan \}/,
+    );
+  });
+
+  it("🔑 게이지 분자가 **서버 값**이다 (멤버 수 아님)", () => {
+    const code = stripComments(ORG_PAGE);
+    expect(code).toMatch(/const seatUsed = seat\?\.used \?\? totalMembers;/);
+    expect(code).toMatch(/\{seatUsed\} \/ \{seatLimit \?\? "무제한"\} 좌석/);
+    // 초과 판정도 같은 값 (하나만 바꾸면 게이지와 색이 갈린다)
+    expect(code).toMatch(/seatOver = seatLimit !== null && seatLimit > 0 && seatUsed > seatLimit/);
+  });
+
+  it("🛑 화면이 좌석을 **다시 계산하지 않는다** (출처가 넷이 되지 않게)", () => {
+    /* `totalMembers + pendingInvites.length` 를 화면에서 더하면 그 순간 네 번째 정본이
+     * 생기고, 다음에 pending 정의가 바뀔 때 또 갈린다(Cowork QA 조건). */
+    const code = stripComments(ORG_PAGE);
+    expect(code).not.toMatch(/totalMembers \+ pendingInvites/);
+    expect(code).not.toMatch(/pendingInvites\.length \+ totalMembers/);
+  });
+
+  it("🔑 좌석 수는 **전 멤버**가 받는다 (초대 목록 경로 아님)", () => {
+    /* 초대 목록은 ADMIN/OWNER 전용이라 거기서 끌면 비관리자 게이지가 그대로 갈린다.
+     * 조직 상세는 멤버십으로만 게이트되므로 축이 맞는다. */
+    const code = stripComments(ORG_PAGE);
+    expect(code).toMatch(/queryKey: \["organization-seat", params\.id\]/);
+    const q = code.slice(code.indexOf('queryKey: ["organization-seat"'));
+    expect(q.slice(0, 400)).not.toMatch(/enabled:.*isAdmin/);
   });
 });
