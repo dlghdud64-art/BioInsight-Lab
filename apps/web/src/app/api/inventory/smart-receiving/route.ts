@@ -435,7 +435,10 @@ export async function POST(request: NextRequest) {
           // §receiving-tx-budget — 기본 5000/2000ms 가 **명시돼 있지 않았다**(실측 2026-09-05).
           //   🛑 상향은 연기지 수정이 아니다 — 20품목이 오면 또 터진다(호영님).
           //   그래서 값을 크게 올리지 않고 **명시만** 한다. 실제 처방은 계측 수치를 본 뒤다.
-          //   현재 실측: 왕복 38ms · 감사 배치화로 라인당 왕복 3~4 → 기존 3·신규 4 + 감사 1.
+          //   실측 왕복 38ms **(서울 → 도쿄 · 로컬 operator-shell, 2026-09-05)** — 🛑 이 값으로
+//   판정하지 않는다. 함수는 iad1(미 동부)에서 돈다(runtime.region 실측 2026-09-06).
+//   판정에 쓸 값은 §db-roundtrip 이 iad1 에서 잰 dbRoundTrip.medianMs 다.
+//   감사 배치화로 라인당 왕복: 기존 2·신규 3 + 감사 전체 1.
           timeout: 15_000,
           maxWait: 5_000,
         },
