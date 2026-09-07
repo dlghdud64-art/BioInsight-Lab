@@ -29,6 +29,8 @@ import {
   type MutationActionType,
 } from './mutation-replay-guard';
 import { deriveConcurrencyKey } from './concurrency-key';
+// §audit-durability (2026-09-07) — 감사를 응답 경로 밖에서 DB 에 남긴다.
+import { recordDurableAudit, waitUntilCompat } from '@/lib/audit/durable-audit';
 import {
   appendAuditEnvelope,
   computeStateHash,
@@ -612,6 +614,33 @@ export function enforceAction(config: InlineEnforcementConfig): InlineEnforcemen
         sourceSurface: config.sourceSurface,
         securityClassification: classifyEventSecurity(config.action) as any,
       });
+
+      /* §audit-durability (호영님 2026-09-07 승인) — **내구 기록.**
+       * 위 `appendAuditEnvelope` 의 종착지는 모듈 최상위 `let auditStore`(인스턴스 메모리)라
+       * 서버리스에서 요청이 끝나면 사라진다. prod 실측 `MutationAuditEvent` 0행이 그 결과다.
+       *
+       * 🔑 `waitUntil` 이라 이 함수는 **동기로 남는다** — 호출부 146곳을 건드리지 않는다.
+       *   `await` 로 갔다면 감사 대상 요청 전량이 왕복 1회(prod iad1 실측 737~770ms)만큼
+       *   느려졌을 것이다. 응답은 즉시 나가고, 인스턴스만 쓰기가 끝날 때까지 살아 있는다.
+       *
+       * 🛑 `recordDurableAudit` 은 절대 throw 하지 않는다(내부에서 잡고 로그).
+       *   감사 실패가 업무 요청을 500 으로 만들면 안 된다. */
+      waitUntilCompat(
+        recordDurableAudit({
+          organizationId: config.organizationId ?? null,
+          actorId: config.userId,
+          route: config.routePath,
+          action: config.action,
+          entityType: config.targetEntityType,
+          entityId: config.targetEntityId,
+          correlationId,
+          result: 'success',
+          beforeState: detail?.beforeState,
+          afterState: detail?.afterState,
+          rationale: config.rationale,
+          sourceSurface: config.sourceSurface,
+        }),
+      );
 
       // Lock 해제 — §11.369-3 begin 과 동일 concurrencyKey(begin≠complete leak 방지)
       failMutation(concurrencyKey);
