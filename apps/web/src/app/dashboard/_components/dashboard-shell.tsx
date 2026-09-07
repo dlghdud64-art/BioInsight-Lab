@@ -59,7 +59,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           onMobileOpenChange={setIsMobileMenuOpen}
         />
 
-        <div className="flex flex-col flex-1 overflow-hidden lg:pl-64">
+        {/* §sidebar-spacer — `lg:pl-64` 제거. DashboardSidebar 가 spacer 로 자리를
+            확보하므로 여기서 다시 밀면 512px 로 두 번 밀린다. */}
+        <div className="flex flex-col flex-1 overflow-hidden">
           {/* §11.331 — 모바일 상단 우측 햄버거 제거(호영님 2026-07-07). 하단 BottomNav
               '더보기'(동일 lg:hidden 브레이크포인트)로 네비게이션 일원화 = 진입 중복 제거.
               onMenuClick 미주입 → Header 햄버거 미렌더. 모바일 사이드 drawer 진입점 제거. */}

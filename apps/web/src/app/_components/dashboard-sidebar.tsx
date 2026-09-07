@@ -446,6 +446,12 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
       <aside className="hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-64 bg-[var(--sidebar-navy)] z-30">
         <SidebarContent />
       </aside>
+      {/* §sidebar-spacer — 위 aside 는 `fixed` 라 흐름에서 자리를 차지하지 않는다.
+          이 spacer 가 lg 이상에서 256px 를 대신 점유해 본문이 사이드바 밑으로
+          깔리지 않게 한다. 🛑 소비 화면에 `lg:pl-64` 를 개별로 붙이지 말 것 —
+          자체 셸 화면 8곳이 전부 그걸 빠뜨려 데스크톱에서 본문 왼쪽이 잘렸다.
+          자리 확보는 사이드바 자신의 책임이다(호영님 2026-09-07 판정). */}
+      <div className="hidden lg:block w-64 shrink-0" aria-hidden="true" />
 
       {/* ── 모바일/태블릿 오버레이 + 슬라이드 사이드바 (lg 미만) ── */}
       {isMobileOpen && (
