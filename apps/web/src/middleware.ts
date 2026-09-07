@@ -126,10 +126,21 @@ export default auth(async (req) => {
   // §auth-logout-guard — bare route(`/dashboard` 등)는 `startsWith('/dashboard/')`
   //   (슬래시 포함)가 놓쳐 비로그인 redirect 누락 → 홈만 false-empty 렌더.
   //   exact match 를 추가해 홈 라우트까지 가드 (하위는 기존 startsWith 유지).
+  // §auth-page-gate (2026-09-07) — 앱 화면인데 게이트 밖이던 6곳을 넣는다.
+  //   🔴 쿠키 없이 요청한 실측(Cowork QA): `/admin/*`·`/dashboard` 는 opaqueredirect(차단)인데
+  //      `/settings/{workspace,billing,security,audit}` · `/billing` · `/team/settings` 는 **200**.
+  //      사이드바·조직 데이터가 붙은 앱 화면이 비로그인에게 그대로 렌더됐다.
+  //   🛑 matcher 만 고치면 안 열린다 — matcher 는 "미들웨어가 도는가" 만 정하고,
+  //      **막는 것은 이 조건**이다. 둘 중 하나만 바꾸면 "고쳤다는 착각" 이 된다.
+  //   `/billing` 은 **정확 일치**로 둔다: `/billing/success`·`/billing/cancel` 은 결제 복귀
+  //      랜딩이라 공개 헤더를 유지하기로 이미 판정된 자리다(§dashboard-header-swap).
   if (
     pathname === '/app' || pathname.startsWith('/app/') ||
     pathname === '/dashboard' || pathname.startsWith('/dashboard/') ||
-    pathname === '/admin' || pathname.startsWith('/admin/')
+    pathname === '/admin' || pathname.startsWith('/admin/') ||
+    pathname === '/settings' || pathname.startsWith('/settings/') ||
+    pathname === '/billing' ||
+    pathname === '/team' || pathname.startsWith('/team/')
   ) {
     const isLoggedIn = !!req.auth;
     if (!isLoggedIn) {
@@ -265,6 +276,10 @@ export const config = {
     "/app/:path*",
     "/dashboard/:path*",
     "/admin/:path*",
+    // §auth-page-gate — 위 인증 조건과 **짝**이다. 한쪽만 바꾸면 아무것도 안 막힌다.
+    "/settings/:path*",
+    "/billing",
+    "/team/:path*",
     "/api/:path*",
   ],
 };
