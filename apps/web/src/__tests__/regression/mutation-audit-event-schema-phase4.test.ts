@@ -68,7 +68,13 @@ describe("§11.305-phase4 — MutationAuditEvent schema-codebase 정합 lock", (
         "id",
         "auditEventKey",
         "occurredAt",
-        "orgId",
+        /* 🛑 `orgId` 는 2026-09-07 required → nullable 로 **의도적으로** 옮겼다
+         *   (호영님 명시 승인 · 마이그레이션 20260907090000_mutationauditevent_orgid_nullable).
+         *   §audit-durability: `enforceAction().complete()` 의 감사 봉투를 이 테이블로
+         *   내구화하는데, `config.organizationId` 를 넘기는 라우트가 147곳 중 2곳뿐이라
+         *   `orgId NOT NULL` 이 유일한 차단 요인이었다.
+         *   활성 조직으로 유도하면 "보여준 조직 != 적용된 조직" 이 되므로(§invite-flow)
+         *   틀릴 수 있는 값보다 null 이 정직하다. → 아래 nullableFields 로 이동. */
         "actorId",
         "route",
         "action",
@@ -79,6 +85,7 @@ describe("§11.305-phase4 — MutationAuditEvent schema-codebase 정합 lock", (
         "recordedAt",
       ];
       const nullableFields = [
+        "orgId", // ← 위 주석 참조 (2026-09-07 승인된 계약 변경)
         "requestId",
         "orderId",
         "purchaseRecordId",

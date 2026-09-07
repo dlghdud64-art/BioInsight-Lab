@@ -58,7 +58,11 @@ describe("§migration-order-drift-guard W1·W2 — health migrations 필드 (cou
       manifestGeneratedAt: "2026-08-04T00:00:00.000Z",
     });
 
-    const res = await GET();
+    // §db-roundtrip(aa15b694) 이후 `GET(request: Request)` 로 시그니처가 바뀌었다.
+    //   Next 빌드가 `request?: Request` 를 거부하므로(route.ts:32 실측) 타입을 되돌릴 수 없고,
+    //   런타임은 `(request as Request | undefined)?.url` 로 이미 방어돼 있다.
+    //   → 고칠 곳은 호출부다. 실제 Request 를 넘긴다.
+    const res = await GET(new Request("http://localhost/api/health"));
     const body = await res.json();
 
     expect(body.status).toBe("ok"); // 기존 의미 불변
@@ -85,7 +89,11 @@ describe("§migration-order-drift-guard W3 — probe 실패는 additive (기존 
       error: "connect ETIMEDOUT",
     });
 
-    const res = await GET();
+    // §db-roundtrip(aa15b694) 이후 `GET(request: Request)` 로 시그니처가 바뀌었다.
+    //   Next 빌드가 `request?: Request` 를 거부하므로(route.ts:32 실측) 타입을 되돌릴 수 없고,
+    //   런타임은 `(request as Request | undefined)?.url` 로 이미 방어돼 있다.
+    //   → 고칠 곳은 호출부다. 실제 Request 를 넘긴다.
+    const res = await GET(new Request("http://localhost/api/health"));
     const body = await res.json();
 
     expect(body.status).toBe("ok"); // DB 자체 체크 성공 → 기존 소비자 회귀 0

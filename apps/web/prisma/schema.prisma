@@ -3187,7 +3187,10 @@ model MutationAuditEvent {
   // idempotency key: orgId:route:entityId:action:sequence
   auditEventKey          String   @unique
   occurredAt             DateTime @default(now())
-  orgId                  String
+  // §audit-durability (2026-09-07) — nullable. config.organizationId 를 안 넘기는
+  //   경로가 147곳 중 145곳이고, 활성 조직으로 유도하면 틀린 조직이 적힐 수 있다
+  //   (§invite-flow '보여준 조직 != 적용된 조직'). null = 이 경로가 조직을 안 넘겼다.
+  orgId                  String?
   actorId                String // userId or "system"
   route                  String // /api/request/[id]/approve 등
   action                 String // purchase_request_approve, purchase_request_cancel 등

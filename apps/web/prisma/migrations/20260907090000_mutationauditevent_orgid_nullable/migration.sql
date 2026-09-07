@@ -1,0 +1,27 @@
+-- §audit-durability (호영님 2026-09-07 승인) — MutationAuditEvent.orgId 를 nullable 로.
+--
+-- 왜:
+--   `enforceAction().complete()` 의 감사 봉투가 `appendAuditEnvelope` → 모듈 최상위
+--   `let auditStore`(인스턴스 메모리)로만 갔다. 서버리스에서 요청이 끝나면 사라지므로
+--   `enforceAction` 을 쓰는 **147개 라우트 중 감사 의도가 있는 116개**의 기록이
+--   존재한 적이 없다(prod 실측: MutationAuditEvent 0행 → 오늘 수기 보정 1행).
+--
+--   그 봉투를 이 테이블로 내구화하는데, 유일하게 막는 것이 `orgId NOT NULL` 이다.
+--   `enforceAction` config 의 `organizationId` 는 optional 이고 **147곳 중 2곳만** 넘긴다.
+--
+-- 🛑 왜 유도하지 않는가:
+--   `resolveActiveOrganizationId(userId)` 로 채울 수는 있으나, 감사 시점의 "활성 조직" 이
+--   대상 조직과 다를 수 있다 — §invite-flow 에서 잡은 "보여준 조직 ≠ 적용된 조직" 과 같은 자리다.
+--   틀릴 수 있는 값보다 **null(= 이 경로가 조직을 안 넘겼다)** 이 정직하다.
+--   2단계에서 라우트가 organizationId 를 실제로 넘기게 하며 null 을 줄인다.
+--
+-- 🛑 되돌릴 수 없는 변경이다 (호영님 이 성질을 알고 승인).
+--   되돌림은 `ALTER COLUMN "orgId" SET NOT NULL` 인데, **null 행이 0일 때만** 성공한다.
+--   내구화가 켜진 뒤 organizationId 를 안 넘기는 경로가 한 번이라도 기록되면
+--   그 시점부터 되돌릴 수 없다. 2단계 완료(null 0) 전까지 복구 경로 없음.
+--
+-- 적용 시점 실측 (operator-shell · DIRECT_URL 5432 · project xhidynwpkqeaojuudhsw):
+--   is_nullable = NO · 전체 1행 · orgId null 0행.
+-- 데이터 손실 0 — 제약 완화이므로 기존 행은 무손상.
+
+ALTER TABLE "MutationAuditEvent" ALTER COLUMN "orgId" DROP NOT NULL;

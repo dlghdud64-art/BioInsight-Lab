@@ -19,6 +19,8 @@ import {
 } from "@/lib/health/blob-token-probe";
 // §runtime-facts — 리전·커넥션 설정·인스턴스 수명(P2028 판별 축).
 import { readRuntimeFacts } from "@/lib/runtime-facts";
+// §audit-durability — waitUntil 이 배포본 route handler 에서 실제로 붙는지 (부작용 0).
+import { probeWaitUntil } from "@/lib/audit/wait-until-probe";
 // §db-roundtrip — 왕복을 **함수가 도는 자리에서** 잰다(iad1↔도쿄). 한국 실측은 못 쓴다.
 import { measureDbRoundTrip } from "@/lib/health/db-roundtrip";
 
@@ -121,6 +123,10 @@ export async function GET(request: Request) {
        *   실패했을 때만이 아니라 **평시에도** 보여야 정상값을 안다.
        *   값이 아니라 형태만 싣는다(접속 문자열·자격증명 0). */
       runtime: readRuntimeFacts(),
+      // §audit-durability — 146곳 codemod **전에** 답을 얻기 위한 프로브.
+      //   waitUntilCallable: false 면 waitUntil 은 조용한 no-op 이고, 그 위에 감사를
+      //   얹으면 지금 고치려는 유실이 그대로 재현된다.
+      waitUntilProbe: probeWaitUntil(),
       /* §db-roundtrip (호영님 2026-09-06) — region=iad1 · DB=ap-northeast-1 이면
        *   모든 요청이 태평양을 왕복한다. 그 비용을 **여기서** 재야 판정이 된다.
        *   판정: medianMs >= 150 이면 P2028 원인 확정이고, 처방은 코드가 아니라 배포 리전이다.
