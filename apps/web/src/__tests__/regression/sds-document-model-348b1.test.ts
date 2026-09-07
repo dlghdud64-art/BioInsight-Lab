@@ -27,11 +27,39 @@ describe("§11.348-B-1 B1-0 — SDSDocument 모델", () => {
     expect(src).toContain("extractionResult Json?");
   });
   it("Product/Organization 백릴레이션 + FK", () => {
-    const src = read(SCHEMA);
-    expect(src).toContain("sdsDocuments    SDSDocument[]"); // Product
-    expect(src).toContain("sdsDocuments       SDSDocument[]"); // Organization
-    expect(src).toContain("product      Product       @relation(fields: [productId]");
-    expect(src).toContain("organization Organization? @relation(fields: [organizationId]");
+    /* 🛑 2026-09-07 재작성 — 이전 판본은 **공백 정렬**을 핀했다:
+     *     toContain("sdsDocuments    SDSDocument[]")      ← 4칸 기대, 실제 12칸
+     *     toContain("sdsDocuments       SDSDocument[]")   ← 7칸 기대, 실제 27칸
+     *   Prisma 는 모델 안 최장 필드명에 맞춰 열을 정렬한다. 더 긴 이름의 필드가
+     *   추가되면 **관계없는 줄의 공백이 통째로 밀린다** — 계약은 그대로인데 RED 가 된다.
+     *   실측: 4단언 중 2건 FAIL 이었으나 공백을 무시하면 4/4 충족이었다.
+     *   그리고 `it()` 은 첫 실패만 보고해 두 번째 FAIL 이 숨어 있었다
+     *   (CLAUDE.md "sentinel 승계는 it() 블록 전체 대조").
+     *
+     *   잠글 명제는 "백릴레이션과 FK 가 실재한다" 이지 "몇 칸 띄어져 있다" 가 아니다.
+     *   공백을 접어서 본다. */
+    const src = read(SCHEMA).replace(/[ \t]+/g, " ");
+
+    /* 🛑 전역 `toContain` 으로는 **어느 모델의 것인지 가릴 수 없다.**
+     *   실측(2026-09-07 주입 프로브): `sdsDocuments SDSDocument[]` 는 스키마 전체에 4곳
+     *   (Organization·Product·ProductLot·다른 1곳) 있어, Product 것을 지워도
+     *   `count >= 2` 가 통과했다 — 검출력 0인 단언이 land 될 뻔했다(4원칙 ④ 대체 매칭).
+     *   → 모델 블록을 잘라 **그 안에서** 본다. 창은 `model X {` ↔ 대응 닫는 `}`. */
+    function modelBlock(name: string): string {
+      const start = src.indexOf(`model ${name} {`);
+      expect(start).toBeGreaterThan(-1);
+      const end = src.indexOf("\n}", start);
+      return src.slice(start, end === -1 ? src.length : end);
+    }
+
+    // 백릴레이션 — 모델별로 각각 단언한다(경로는 OR 로 묶지 않는다)
+    expect(modelBlock("Product")).toContain("sdsDocuments SDSDocument[]");
+    expect(modelBlock("Organization")).toContain("sdsDocuments SDSDocument[]");
+
+    // FK — SDSDocument 쪽 소유 관계
+    const sds = modelBlock("SDSDocument");
+    expect(sds).toContain("product Product @relation(fields: [productId]");
+    expect(sds).toContain("organization Organization? @relation(fields: [organizationId]");
   });
 });
 
