@@ -88,27 +88,14 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
 
-    // 데모 모드: 세션이 없어도 기본 데이터 반환
+    /* 🛑 데모 모드 제거 (호영님 2026-09-07). 이전 판본은 세션이 없으면
+     *   `usage: { quotesUsed: 3, quotesLimit: 10, ... }` 를 **지어내서** 돌려줬다.
+     *   같은 응답의 `planInfo.FREE.maxQuotesPerMonth` 는 3이라, 한 화면이 한도를
+     *   10 이라고도 3 이라고도 말했다.
+     *   호출자는 `/billing`·`/dashboard/settings` 둘뿐이고 둘 다 인증 게이트 안이라
+     *   (§auth-page-gate) 이 분기는 제품에서 도달 불가이면서 직접 호출에만 거짓을 냈다. */
     if (!session?.user?.id) {
-      return NextResponse.json({
-        subscription: {
-          plan: "FREE",
-          status: "active",
-          currentSeats: 1,
-          maxSeats: 1,
-          currentPeriodStart: new Date().toISOString(),
-          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-        planInfo: PLAN_INFO,
-        paymentMethods: [],
-        invoices: [],
-        usage: {
-          quotesUsed: 3,
-          quotesLimit: 10,
-          seatsUsed: 1,
-          seatsLimit: 1,
-        },
-      });
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
 
     const userId = session.user.id;

@@ -20,8 +20,13 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
 
+    /* §billing-surface-unify (호영님 2026-09-07) — 401 이다.
+     * 이전 판본은 `{ paymentMethods: [] }` 를 돌려줬다. 지어낸 값은 아니지만
+     * **비인증자에게 "등록된 결제 수단이 없다" 고 답해 주는 것**이고,
+     * 같은 파일의 POST·DELETE 는 이미 401 이라 한 파일 안에서 형제 슬롯이 갈려 있었다.
+     * 호출자(`/billing`)는 인증 게이트 안이라 제품 영향 0. */
     if (!session?.user?.id) {
-      return NextResponse.json({ paymentMethods: [] });
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
 
     // §invite-flow Phase 2 — 활성 조직의 결제 수단 (hint 우선: 화면이 보는 조직).
