@@ -44,6 +44,7 @@ import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { PageHeader } from "@/app/_components/page-header";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { resolveInvoiceStatusLabel } from "@/lib/billing/plan-change-claim";
 
 // 플랜 타입
 type PlanType = "FREE" | "TEAM" | "ORGANIZATION";
@@ -627,7 +628,10 @@ function BillingPageContent() {
                             {invoices.map((invoice: any) => (
                               <TableRow key={invoice.id}>
                                 <TableCell className="font-medium">
-                                  {invoice.number || invoice.id.slice(0, 12)}
+                                  {/* 🛑 번호가 없으면 내부 id 조각을 대신 그리지 않는다 —
+                                      `inv_backfill_…` 같은 내부 키가 화면에 뜬다.
+                                      번호는 발행의 표지라, 미발행이면 빈 값 표기가 사실이다. */}
+                                  {invoice.number || "—"}
                                 </TableCell>
                                 <TableCell>
                                   {new Date(invoice.periodStart).toLocaleDateString("ko-KR")} ~{" "}
@@ -637,13 +641,19 @@ function BillingPageContent() {
                                   {invoice.amountDue?.toLocaleString("ko-KR")}원
                                 </TableCell>
                                 <TableCell>
+                                  {/* 🛑 이전 판본은 `PAID` 가 아니면 **enum 값을 그대로** 그렸다.
+                                      지금까지 위조 PAID 만 만들어져 안 드러났을 뿐이고,
+                                      미수 `DRAFT` 가 생기면 화면에 `DRAFT` 가 뜬다.
+                                      §11.302 신호등: 미수·미발행은 **주의 = yellow**. */}
                                   <Badge
                                     variant={invoice.status === "PAID" ? "default" : "secondary"}
                                     className={cn(
-                                      invoice.status === "PAID" && "bg-green-100 text-green-700"
+                                      invoice.status === "PAID" && "bg-green-100 text-green-700",
+                                      (invoice.status === "DRAFT" || invoice.status === "OPEN") &&
+                                        "bg-yellow-100 text-yellow-700 border-yellow-200"
                                     )}
                                   >
-                                    {invoice.status === "PAID" ? "결제완료" : invoice.status}
+                                    {resolveInvoiceStatusLabel(invoice.status)}
                                   </Badge>
                                 </TableCell>
                                 <TableCell className="text-right">

@@ -27,6 +27,8 @@ import {
   CLAIM_INVOICE_STATUS,
   SUBSCRIPTION_STATUS,
   ISSUANCE_REQUIRED_FIELDS,
+  INVOICE_STATUS_LABELS,
+  resolveInvoiceStatusLabel,
 } from "@/lib/billing/plan-change-claim";
 import { SubscriptionPlan } from "@/lib/plans";
 
@@ -244,6 +246,30 @@ describe("§plan-change-claim — 플랜 쓰기 경로 **전량** (형제 슬롯
       expect(`${rel}: ${/status:\s*claim\.subscriptionStatus/.test(post)}`).toBe(`${rel}: true`);
       expect(`${rel}: ${/db\.billingInfo\.findUnique/.test(post)}`).toBe(`${rel}: true`);
     }
+  });
+
+  it("🛑 청구 내역이 enum 값을 화면에 그대로 그리지 않는다 (raw internal key 0)", () => {
+    /* 지금까지 위조 PAID 만 만들어져 안 드러났다. 미수 DRAFT 가 생기는 순간
+     * `{... : invoice.status}` 가 화면에 `DRAFT` 를 띄운다. */
+    const page = stripComments(read("src/app/billing/page.tsx"));
+    expect(page).not.toMatch(/\?\s*"결제완료"\s*:\s*invoice\.status/);
+    expect(page).toMatch(/resolveInvoiceStatusLabel\(invoice\.status\)/);
+    // 번호가 없을 때 내부 id 조각을 대신 그리지 않는다
+    expect(page).not.toMatch(/invoice\.number \|\| invoice\.id\.slice/);
+  });
+
+  it("청구서 상태 라벨이 InvoiceStatus 전 값을 덮는다", () => {
+    expect(Object.keys(INVOICE_STATUS_LABELS).slice().sort()).toEqual([
+      "DRAFT",
+      "OPEN",
+      "PAID",
+      "UNCOLLECTIBLE",
+      "VOID",
+    ]);
+    expect(resolveInvoiceStatusLabel("DRAFT")).toBe("미발행 · 미수");
+    // 모르는 값이면 원문 — 빈 칸이 되면 상태가 없는 것처럼 보인다
+    expect(resolveInvoiceStatusLabel("WHATEVER")).toBe("WHATEVER");
+    expect(resolveInvoiceStatusLabel(null)).toBe("—");
   });
 
   it("🛑 청구서 번호를 지어내지 않는다 (번호는 발행의 표지)", () => {

@@ -63,6 +63,32 @@ export const CLAIM_INVOICE_STATUS = {
   DRAFT: "DRAFT",
 } as const;
 
+/**
+ * 청구서 상태의 **화면 문구** — `InvoiceStatus` 전 값을 덮는다.
+ *
+ * 🛑 왜 필요한가: `billing/page.tsx` 가 `status === "PAID" ? "결제완료" : status` 였다.
+ *   지금까지는 위조 PAID 만 만들어져서 안 드러났는데, 미수 `DRAFT` 가 생기는 순간
+ *   화면에 **`DRAFT` 라는 내부 키가 그대로** 뜬다(CLAUDE.md `raw label / internal key 금지`).
+ *   내 변경이 잠재 결함을 표면으로 끌어올리므로 같은 배치에서 닫는다.
+ *
+ * 🔑 `Record<InvoiceStatus, string>` 이 아니라 리터럴 키로 적는다 —
+ *   Prisma 런타임을 클라이언트 번들에 끌고 오지 않기 위해서다.
+ *   값이 늘면 `resolveInvoiceStatusLabel` 의 fallback 이 받는다(빈 화면 대신 원문).
+ */
+export const INVOICE_STATUS_LABELS: Record<string, string> = {
+  DRAFT: "미발행 · 미수",
+  OPEN: "발행됨 · 미결제",
+  PAID: "결제완료",
+  VOID: "취소됨",
+  UNCOLLECTIBLE: "수금 불가",
+};
+
+/** 모르는 값이면 원문을 돌려준다 — 빈 칸이 되면 상태가 없는 것처럼 보인다. */
+export function resolveInvoiceStatusLabel(status: string | null | undefined): string {
+  if (!status) return "—";
+  return INVOICE_STATUS_LABELS[status] ?? status;
+}
+
 /** 세금계산서 발행에 반드시 필요한 항목. 없으면 발행했다고 말할 수 없다. */
 export const ISSUANCE_REQUIRED_FIELDS = [
   "businessNumber",
