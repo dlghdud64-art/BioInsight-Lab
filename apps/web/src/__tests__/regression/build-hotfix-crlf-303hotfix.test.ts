@@ -92,7 +92,25 @@ describe("§11.303-hotfix — Vercel 빌드 fail 2 file CRLF → LF 변환", () 
         "utf8",
       );
       expect(src).toMatch(/return \(\s*\n\s*<div className="min-h-screen bg-pg">/);
-      expect(src).toMatch(/<MainHeader \/>/);
+
+      /* 🛑 은퇴 (호영님 2026-09-07 승인, (가)) — 여기 있던 단언:
+       *      expect(src).toMatch(/<MainHeader \/>/);
+       *
+       *   왜 지웠나: 이 블록의 목적은 `tr -d '\r'` 이 JSX 를 훼손하지 않았다는
+       *   **1회성 검증**이었다. 당시 존재하던 마커를 증거로 핀한 것이지,
+       *   "이 페이지는 MainHeader 를 쓴다" 가 계약이었던 적은 없다.
+       *   2026-09-07 §dashboard-header-swap 이 정당하게 DashboardHeader 로 교체하자
+       *   RED 가 됐고, 하루 동안 게이트가 단서를 달고 돌았다.
+       *
+       *   🛑 이름을 핀했기 때문에 생긴 일이다. §11.303-hotfix 의 durable 명제는
+       *   **"이 파일들에 CRLF 가 0이다"** 이고, 그건 위 `CRLF 0 회귀 차단` 블록이
+       *   지키며 GREEN 이다(원 사고: 79780f1d — CRLF 가 SWC 파서를 깨 Vercel 배포
+       *   20회 연속 ERROR). 레이아웃과는 무관하다.
+       *
+       *   🔑 대신 지킬 가치가 있는 명제("한 페이지가 마케팅 레이아웃과 대시보드 레이아웃을
+       *   동시에 렌더하면 안 된다")는 이 파일에 이식하지 않고 자기 이름으로 분리했다 —
+       *   `regression/page-shell-single-source.test.ts`. 이름 아래 다른 것을 지키게 하면
+       *   다음 사람이 오독한다(오늘 우리가 그 오독의 피해자였다). */
     });
 
     it("§11.298c ActionMenu shared swap 보존 (organizations)", () => {
