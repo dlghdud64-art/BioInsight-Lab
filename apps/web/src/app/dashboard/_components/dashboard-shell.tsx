@@ -14,7 +14,6 @@ import { GovernanceDevPanel } from "@/components/dashboard/console/governance-de
 import { WorkbenchProgressOverlay } from "@/components/dashboard/overlay/workbench-progress-overlay";
 import { WorkbenchFullOverlay } from "@/components/dashboard/overlay/workbench-full-overlay";
 import { GovernedActionComposerBridge } from "@/components/governed-action/governed-action-composer-bridge";
-import { GlobalModal } from "@/components/global-modal";
 import { OperationalBriefPopupProvider } from "@/components/operational-brief/popup-context";
 import { OperationalBriefPopup } from "@/components/operational-brief/popup";
 import { useOverlayDeepLink } from "@/hooks/use-overlay-deep-link";
@@ -95,7 +94,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <WorkbenchFullOverlay />
         <GovernanceDevPanel />
         <GovernedActionComposerBridge />
-        <GlobalModal />
+        {/* §global-modal-root — `GlobalModal` 은 루트 레이아웃으로 올렸다.
+            여기 남기면 `/dashboard/*` 에서 렌더러가 둘이 된다(store 하나 · 모달 2개). */}
       </div>
       </OperationalBriefPopupProvider>
     </OpsStoreProvider>

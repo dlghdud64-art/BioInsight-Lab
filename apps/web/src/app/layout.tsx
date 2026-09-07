@@ -17,6 +17,7 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import { LocaleProvider } from "@/components/layout/locale-provider";
 import { QRScannerProviderWrapper } from "@/providers/qr-scanner-provider";
 import { Toaster } from "@/components/ui/toaster";
+import { GlobalModal } from "@/components/global-modal";
 
 import { Analytics } from "@vercel/analytics/react";
 
@@ -110,6 +111,19 @@ export default function RootLayout({
               <QueryProvider>
                 <QRScannerProviderWrapper>
                   {children}
+                  {/* §global-modal-root (2026-09-07) — 모달 렌더러를 **루트로 올린다.**
+                      🔴 헤더 교체(§dashboard-header-swap)로 `DashboardHeader` 가 자체 셸 8곳에
+                      붙었는데, 그 화면들은 `DashboardShell` 을 쓰지 않아 `GlobalModal` 이
+                      없었다 → 스캔 버튼이 store 만 바꾸고 **아무것도 안 뜨는 dead button** 이 됐다.
+                      🔑 마운트를 소비처가 기억해야 하는 규칙은 아홉 번째에서 또 빠진다 —
+                      사이드바 spacer(§sidebar-spacer)와 같은 판단으로 컴포넌트를 위로 올린다.
+                      🛑 `QRScannerProviderWrapper` **안**에 둔다. 원래 위치(dashboard-shell)가
+                      children 안이라 이 프로바이더 아래였다 — `Toaster` 층(바깥)에 두면
+                      컨텍스트 집합이 달라진다.
+                      🛑 위로 올렸으면 아래는 비운다 — `dashboard-shell.tsx` 의 마운트를 제거했다.
+                      안 지우면 `/dashboard/*` 에서 렌더러가 둘이 되어 store 하나에 모달 2개가
+                      붙는다(포커스 트랩·애니메이션이 서로를 밟는다). */}
+                  <GlobalModal />
                 </QRScannerProviderWrapper>
                 <Toaster />
 

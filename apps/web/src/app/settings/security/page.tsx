@@ -11,7 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Shield, X, Mail, Info } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { MainHeader } from "@/app/_components/main-header";
+// §self-shell-header — 대시보드 화면에 공개 마케팅 헤더를 쓰면
+// (a) 로그인 상태에서도 "로그인 / 무료로 시작하기" 가 뜨고
+// (b) 그 헤더가 `fixed h-14` 라 페이지 제목을 덮는다.
+// DashboardHeader 는 `sticky` 라 자기 자리를 차지한다 (호영님 2026-09-07).
+import { DashboardHeader } from "@/components/dashboard/Header";
 import { PageHeader } from "@/app/_components/page-header";
 import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
@@ -160,7 +164,7 @@ function SecuritySettingsPageContent() {
   if (status === "loading" || orgsLoading || activeOrgLoading) {
     return (
       <div className="min-h-screen bg-pg">
-        <MainHeader />
+        <DashboardHeader />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
             <p className="text-muted-foreground">로딩 중...</p>
@@ -173,10 +177,10 @@ function SecuritySettingsPageContent() {
   if (organizations.length === 0) {
     return (
       <div className="min-h-screen bg-pg">
-        <MainHeader />
+        <DashboardHeader />
         <div className="flex">
           <DashboardSidebar />
-          <div className="flex-1 overflow-auto min-w-0 pt-12 md:pt-0">
+          <div className="flex-1 overflow-auto min-w-0">
             <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
               <Card>
                 <CardContent className="py-12 text-center">
@@ -195,10 +199,10 @@ function SecuritySettingsPageContent() {
 
   return (
     <div className="min-h-screen bg-pg">
-      <MainHeader />
+      <DashboardHeader />
       <div className="flex">
         <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0 pt-12 md:pt-0">
+        <div className="flex-1 overflow-auto min-w-0">
           <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
             <div className="max-w-4xl mx-auto space-y-6">
               <PageHeader

@@ -11,7 +11,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Check, X, CreditCard, Zap, Loader2, ExternalLink } from "lucide-react";
-import { MainHeader } from "@/app/_components/main-header";
+// §self-shell-header — 대시보드 화면에 공개 마케팅 헤더를 쓰면
+// (a) 로그인 상태에서도 "로그인 / 무료로 시작하기" 가 뜨고
+// (b) 그 헤더가 `fixed h-14` 라 페이지 제목을 덮는다.
+// DashboardHeader 는 `sticky` 라 자기 자리를 차지한다 (호영님 2026-09-07).
+import { DashboardHeader } from "@/components/dashboard/Header";
 import { PageHeader } from "@/app/_components/page-header";
 import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
@@ -187,7 +191,7 @@ function BillingPageContent() {
 
   return (
     <div className="min-h-screen bg-pg">
-      <MainHeader />
+      <DashboardHeader />
       <div className="flex">
         <DashboardSidebar />
         <div className="flex-1">
