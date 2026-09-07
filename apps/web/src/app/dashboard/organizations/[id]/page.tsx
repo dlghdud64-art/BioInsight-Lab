@@ -65,6 +65,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { csrfFetch } from "@/lib/api-client";
+import {
+  orgQueryKeys,
+  invalidateInviteScoped,
+} from "@/lib/organizations/org-query-keys";
 // §approver-axis (나)-2 — 승인 권한 계수 정본 (client-safe).
 import { countOrgApprovers, isOrgApprover } from "@/lib/permissions/org-approver-roles";
 
@@ -309,7 +313,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
 
   // 멤버 목록 조회
   const { data: membersData, isLoading: membersLoading } = useQuery({
-    queryKey: ["organization-members", params.id],
+    queryKey: orgQueryKeys.members(params.id),
     queryFn: async () => {
       const response = await fetch(`/api/organizations/${params.id}/members`);
       if (!response.ok) throw new Error("Failed to fetch members");
@@ -355,7 +359,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
    * 🔑 pending 술어는 `pendingInviteWhere` 하나다 — 좌석 계산과 **같은 정본**이라
    *    "좌석은 찼다는데 목록엔 없다" 가 생기지 않는다. */
   const { data: invitesData } = useQuery({
-    queryKey: ["organization-invites", params.id],
+    queryKey: orgQueryKeys.invites(params.id),
     queryFn: async () => {
       const res = await fetch(`/api/organizations/${params.id}/invites`);
       if (!res.ok) return { invites: [] };
@@ -378,7 +382,10 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["organization-invites", params.id] });
+      /* 🔑 무효화 대상을 여기 나열하지 않는다 — 정본 하나를 부른다(§invite-invalidation).
+       * 취소는 초대 목록과 **좌석**을 함께 무너뜨린다. 좌석을 빠뜨리면 게이지가
+       * 3/3 에 멈춘 채 "취소했습니다" 만 뜬다(prod 실측). */
+      invalidateInviteScoped(queryClient, params.id);
       toast({ title: "초대를 취소했습니다" });
     },
     onError: (e: Error) =>
@@ -393,7 +400,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
    * 🔑 초대 목록이 아니라 **조직 상세**에서 받는다: 게이지는 전 멤버가 보는데
    *    초대 목록은 ADMIN/OWNER 전용이라 비관리자에게 분열이 남는다. */
   const { data: orgDetail } = useQuery({
-    queryKey: ["organization-seat", params.id],
+    queryKey: orgQueryKeys.seat(params.id),
     queryFn: async () => {
       const res = await fetch(`/api/organizations/${params.id}`);
       if (!res.ok) return null;
@@ -469,7 +476,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["organization-members", params.id] });
+      queryClient.invalidateQueries({ queryKey: orgQueryKeys.members(params.id) });
       toast({ title: "초대 재발송 완료", description: "초대 이메일이 재발송되었습니다." });
     },
     onError: () => toast({ title: "재발송 실패", variant: "destructive" }),
@@ -509,8 +516,10 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       return payload as { invite?: { inviteUrl?: string } };
     },
     onSuccess: (payload) => {
-      queryClient.invalidateQueries({ queryKey: ["organization-members", params.id] });
-      queryClient.invalidateQueries({ queryKey: ["organization-invites", params.id] });
+      queryClient.invalidateQueries({ queryKey: orgQueryKeys.members(params.id) });
+      /* 🔑 초대 축(목록 + 좌석)은 정본 하나로 — 생성도 좌석을 움직인다(pending 이 좌석을 먹는다).
+       * 이전에는 목록만 무효화해 카운트는 1→2 로 오르는데 게이지는 2/3 에 멈췄다(prod 실측). */
+      invalidateInviteScoped(queryClient, params.id);
       setInviteEmail("");
       setInviteRole("VIEWER");
       setInviteError(null);
@@ -547,7 +556,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       return response.json();
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["organization-members", params.id] });
+      queryClient.invalidateQueries({ queryKey: orgQueryKeys.members(params.id) });
       toast({ title: "역할 변경 완료" });
       setSavedMemberId(variables.memberId);
       setTimeout(() => setSavedMemberId((cur) => (cur === variables.memberId ? null : cur)), 1500);
@@ -580,7 +589,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["organization-members", params.id] });
+      queryClient.invalidateQueries({ queryKey: orgQueryKeys.members(params.id) });
       queryClient.invalidateQueries({ queryKey: ["settings-organizations"] });
       toast({ title: "업무 권한 변경 완료" });
     },
@@ -595,7 +604,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["organization-members", params.id] });
+      queryClient.invalidateQueries({ queryKey: orgQueryKeys.members(params.id) });
       toast({ title: "멤버 제거 완료" });
     },
     onError: () => toast({ title: "멤버 제거 실패", variant: "destructive" }),

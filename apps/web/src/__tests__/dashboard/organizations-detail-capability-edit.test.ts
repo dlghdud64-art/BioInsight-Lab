@@ -57,7 +57,7 @@ describe("§11.193d Phase 3 — capability edit dialog wiring", () => {
   it("invalidate organization-members + settings-organizations", () => {
     // capabilities mutation 의 onSuccess 가 두 query key 모두 invalidate.
     expect(SOURCE).toMatch(
-      /invalidateQueries[\s\S]{0,200}organization-members/,
+      /invalidateQueries[\s\S]{0,200}orgQueryKeys\.members/,
     );
     expect(SOURCE).toMatch(
       /invalidateQueries[\s\S]{0,200}settings-organizations/,

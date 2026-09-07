@@ -130,7 +130,11 @@ describe("§invite-flow Phase 4 후속 — 대기 축의 출처가 OrganizationI
 
   it("목록을 GET /invites 에서 읽는다", () => {
     const code = stripComments(read(ORG_DETAIL));
-    expect(code).toMatch(/queryKey: \["organization-invites", params\.id\]/);
+    /* 승계 (2026-09-07, §invite-invalidation): 쿼리키를 `lib/organizations/org-query-keys.ts`
+     * 정본으로 모았다(화면에 원시 리터럴 0). 🔑 **보호의도 불변** — 이 단언이 지키는 것은
+     * 키 **문자열의 위치**가 아니라 "그 쿼리가 이 화면에 실재한다" 는 사실이다.
+     * 4원칙 ⑤ 판별: 구현이 계약을 어긴 게 아니라 **검사가 구현을 못 따라간** 쪽이다. */
+    expect(code).toMatch(/queryKey: orgQueryKeys\.invites\(params\.id\)/);
     expect(code).toMatch(/\/api\/organizations\/\$\{params\.id\}\/invites`\)/);
   });
 

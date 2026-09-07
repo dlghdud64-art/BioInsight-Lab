@@ -132,8 +132,12 @@ describe("§invite-flow smoke 후속 — 게이지와 게이트가 같은 수를
     /* 초대 목록은 ADMIN/OWNER 전용이라 거기서 끌면 비관리자 게이지가 그대로 갈린다.
      * 조직 상세는 멤버십으로만 게이트되므로 축이 맞는다. */
     const code = stripComments(ORG_PAGE);
-    expect(code).toMatch(/queryKey: \["organization-seat", params\.id\]/);
-    const q = code.slice(code.indexOf('queryKey: ["organization-seat"'));
+    /* 승계 (2026-09-07, §invite-invalidation): 쿼리키를 `lib/organizations/org-query-keys.ts`
+     * 정본으로 모았다(화면에 원시 리터럴 0). 🔑 **보호의도 불변** — 이 단언이 지키는 것은
+     * 키 **문자열의 위치**가 아니라 "그 쿼리가 이 화면에 실재한다" 는 사실이다.
+     * 4원칙 ⑤ 판별: 구현이 계약을 어긴 게 아니라 **검사가 구현을 못 따라간** 쪽이다. */
+    expect(code).toMatch(/queryKey: orgQueryKeys\.seat\(params\.id\)/);
+    const q = code.slice(code.indexOf("queryKey: orgQueryKeys.seat(params.id)"));
     expect(q.slice(0, 400)).not.toMatch(/enabled:.*isAdmin/);
   });
 });
