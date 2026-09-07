@@ -91,7 +91,13 @@ describe("§11.303-hotfix — Vercel 빌드 fail 2 file CRLF → LF 변환", () 
         resolve(REPO_ROOT, "apps/web/src/app/settings/workspace/page.tsx"),
         "utf8",
       );
-      expect(src).toMatch(/return \(\s*\n\s*<div className="min-h-screen bg-pg">/);
+      /* 승계 (2026-09-07, §self-shell-zero) — 셸 루트가 자체 셸
+       * (`<div className="min-h-screen bg-pg">`)에서 `<DashboardShell>` 로 갔다.
+       * 이 블록의 명제는 **`tr -d` 로 CR 을 지운 뒤에도 JSX return 구조가 살아 있다** 이지
+       * 그 div 가 계약이었던 적은 없다 — 아래 `<MainHeader />` 은퇴와 **같은 형태**다.
+       * 4원칙 ⑤ 판별: 구현이 계약을 어긴 게 아니라 **검사가 구현을 못 따라간** 쪽이다.
+       * → 마커를 현재의 셸 루트로 옮긴다(구조를 보는 성질은 그대로). */
+      expect(src).toMatch(/return \(\s*\n\s*<DashboardShell>/);
 
       /* 🛑 은퇴 (호영님 2026-09-07 승인, (가)) — 여기 있던 단언:
        *      expect(src).toMatch(/<MainHeader \/>/);

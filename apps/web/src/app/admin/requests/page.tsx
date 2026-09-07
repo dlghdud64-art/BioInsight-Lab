@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,13 +25,12 @@ import {
   Package,
   DollarSign,
   MessageSquare,
+  Loader2,
 } from "lucide-react";
 // §self-shell-header — 대시보드 화면에 공개 마케팅 헤더를 쓰면
 // (a) 로그인 상태에서도 "로그인 / 무료로 시작하기" 가 뜨고
 // (b) 그 헤더가 `fixed h-14` 라 페이지 제목을 덮는다.
-// DashboardHeader 는 `sticky` 라 자기 자리를 차지한다 (호영님 2026-09-07).
-import { DashboardHeader } from "@/components/dashboard/Header";
-import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
+import { DashboardShell } from "@/app/dashboard/_components/dashboard-shell";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -68,7 +67,7 @@ interface PurchaseRequest {
   rejectedReason: string | null;
 }
 
-export default function AdminRequestsPage() {
+function AdminRequestsPageContent() {
   const { data: session, status } = useSession();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -191,161 +190,149 @@ export default function AdminRequestsPage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="min-h-screen bg-pg">
-        <DashboardHeader />
-        <div className="flex">
-          <DashboardSidebar />
-          <div className="flex-1 overflow-auto min-w-0">
-            <div className="container mx-auto px-4 py-8">
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">로딩 중...</p>
-              </div>
-            </div>
+      <DashboardShell>
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">로딩 중...</p>
           </div>
         </div>
-      </div>
+      </DashboardShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-pg">
-      <DashboardHeader />
-      <div className="flex">
-        <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0">
-          <div className="container mx-auto px-4 py-6 md:py-8">
-            <div className="max-w-6xl mx-auto space-y-6">
-              {/* 페이지 헤더 */}
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-100">구매 요청 승인</h1>
-                <p className="text-sm text-muted-foreground mt-1">
-                  팀원들의 구매 요청을 검토하고 승인하세요
-                </p>
-              </div>
-
-              {/* 통계 카드 */}
-              <div className="grid gap-4 md:grid-cols-3">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">대기 중</CardTitle>
-                    <Clock className="h-4 w-4 text-yellow-600" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-yellow-600">{pendingRequests.length}</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">승인됨</CardTitle>
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-green-600">{approvedRequests.length}</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">거절됨</CardTitle>
-                    <XCircle className="h-4 w-4 text-red-600" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-red-600">{rejectedRequests.length}</div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* 대기 중인 요청 (Inbox 스타일) */}
-              {pendingRequests.length > 0 ? (
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center gap-2">
-                      <Inbox className="h-5 w-5 text-yellow-600" />
-                      <CardTitle>대기 중인 요청</CardTitle>
-                      <Badge variant="outline" className="ml-auto">
-                        {pendingRequests.length}건
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {pendingRequests.map((request) => (
-                        <RequestCard
-                          key={request.id}
-                          request={request}
-                          onApprove={() => approveMutation.mutate(request.id)}
-                          onReject={() => {
-                            setSelectedRequest(request);
-                            setRejectDialogOpen(true);
-                          }}
-                          isProcessing={approveMutation.isPending || rejectMutation.isPending}
-                        />
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card>
-                  <CardContent className="py-12 text-center">
-                    <Inbox className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">대기 중인 구매 요청이 없습니다.</p>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* 거절 다이얼로그 */}
-              <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>구매 요청 거절</DialogTitle>
-                    <DialogDescription>
-                      거절 사유를 입력해주세요. 요청자에게 전달됩니다.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="reason">거절 사유</Label>
-                      <Textarea
-                        id="reason"
-                        placeholder="예: 예산 부족, 품목 재고 없음 등"
-                        value={rejectReason}
-                        onChange={(e) => setRejectReason(e.target.value)}
-                        rows={4}
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setRejectDialogOpen(false);
-                          setRejectReason("");
-                        }}
-                        className="flex-1"
-                      >
-                        취소
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          if (!selectedRequest) return;
-                          rejectMutation.mutate({
-                            requestId: selectedRequest.id,
-                            reason: rejectReason,
-                          });
-                        }}
-                        disabled={rejectMutation.isPending}
-                        variant="destructive"
-                        className="flex-1"
-                      >
-                        {rejectMutation.isPending ? "처리 중..." : "거절하기"}
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
+    <DashboardShell>
+      <div className="container mx-auto px-4 py-6 md:py-8">
+        <div className="max-w-6xl mx-auto space-y-6">
+          {/* 페이지 헤더 */}
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-100">구매 요청 승인</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              팀원들의 구매 요청을 검토하고 승인하세요
+            </p>
           </div>
+
+          {/* 통계 카드 */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">대기 중</CardTitle>
+                <Clock className="h-4 w-4 text-yellow-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-yellow-600">{pendingRequests.length}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">승인됨</CardTitle>
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">{approvedRequests.length}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">거절됨</CardTitle>
+                <XCircle className="h-4 w-4 text-red-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">{rejectedRequests.length}</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* 대기 중인 요청 (Inbox 스타일) */}
+          {pendingRequests.length > 0 ? (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Inbox className="h-5 w-5 text-yellow-600" />
+                  <CardTitle>대기 중인 요청</CardTitle>
+                  <Badge variant="outline" className="ml-auto">
+                    {pendingRequests.length}건
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {pendingRequests.map((request) => (
+                    <RequestCard
+                      key={request.id}
+                      request={request}
+                      onApprove={() => approveMutation.mutate(request.id)}
+                      onReject={() => {
+                        setSelectedRequest(request);
+                        setRejectDialogOpen(true);
+                      }}
+                      isProcessing={approveMutation.isPending || rejectMutation.isPending}
+                    />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <Inbox className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">대기 중인 구매 요청이 없습니다.</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 거절 다이얼로그 */}
+          <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>구매 요청 거절</DialogTitle>
+                <DialogDescription>
+                  거절 사유를 입력해주세요. 요청자에게 전달됩니다.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reason">거절 사유</Label>
+                  <Textarea
+                    id="reason"
+                    placeholder="예: 예산 부족, 품목 재고 없음 등"
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    rows={4}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setRejectDialogOpen(false);
+                      setRejectReason("");
+                    }}
+                    className="flex-1"
+                  >
+                    취소
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      if (!selectedRequest) return;
+                      rejectMutation.mutate({
+                        requestId: selectedRequest.id,
+                        reason: rejectReason,
+                      });
+                    }}
+                    disabled={rejectMutation.isPending}
+                    variant="destructive"
+                    className="flex-1"
+                  >
+                    {rejectMutation.isPending ? "처리 중..." : "거절하기"}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
-    </div>
+    </DashboardShell>
   );
 }
 
@@ -464,3 +451,22 @@ function RequestCard({
   );
 }
 
+/* §self-shell-zero — `DashboardShell` 은 `useOverlayDeepLink()` 를 통해
+ * `useSearchParams()` 를 부른다. Next 14 는 그 훅이 Suspense 경계 **밖**에 있으면
+ * 정적 생성 단계에서 CSR bailout 으로 빌드를 실패시킨다(2026-09-07 실측:
+ * `/admin/requests` · `/billing` · `/team/settings` 3곳 prerender 실패).
+ * 형제 화면(settings/*)이 이미 쓰던 형태를 그대로 쓴다.
+ * 🛑 fallback 안에는 셸을 넣지 않는다 — fallback 자체가 경계 밖이라 같은 이유로 터진다. */
+export default function AdminRequestsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <AdminRequestsPageContent />
+    </Suspense>
+  );
+}

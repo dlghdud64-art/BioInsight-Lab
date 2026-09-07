@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { csrfFetch } from "@/lib/api-client";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,13 +41,12 @@ import {
   Shield,
   User,
   ArrowLeft,
+  Loader2,
 } from "lucide-react";
 // §self-shell-header — 대시보드 화면에 공개 마케팅 헤더를 쓰면
 // (a) 로그인 상태에서도 "로그인 / 무료로 시작하기" 가 뜨고
 // (b) 그 헤더가 `fixed h-14` 라 페이지 제목을 덮는다.
-// DashboardHeader 는 `sticky` 라 자기 자리를 차지한다 (호영님 2026-09-07).
-import { DashboardHeader } from "@/components/dashboard/Header";
-import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
+import { DashboardShell } from "@/app/dashboard/_components/dashboard-shell";
 import { useToast } from "@/hooks/use-toast";
 import { TeamRole } from "@prisma/client";
 import Link from "next/link";
@@ -59,7 +58,7 @@ const ROLE_LABELS: Record<TeamRole, string> = {
   VIEWER: "조회자",
 };
 
-export default function TeamSettingsPage() {
+function TeamSettingsPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { toast } = useToast();
@@ -227,22 +226,20 @@ export default function TeamSettingsPage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="min-h-screen bg-pg">
-        <DashboardHeader />
+      <DashboardShell>
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
             <p className="text-muted-foreground">로딩 중...</p>
           </div>
         </div>
-      </div>
+      </DashboardShell>
     );
   }
 
   // Empty State: 팀이 없을 때
   if (!currentTeam) {
     return (
-      <div className="min-h-screen bg-pg">
-        <DashboardHeader />
+      <DashboardShell>
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto">
             <Card className="border-2 border-dashed">
@@ -294,240 +291,234 @@ export default function TeamSettingsPage() {
             </Card>
           </div>
         </div>
-      </div>
+      </DashboardShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-pg">
-      <DashboardHeader />
-      <div className="flex">
-        <DashboardSidebar />
-        <div className="flex-1 pt-14">
-          <div className="container mx-auto px-4 py-8">
-            <div className="max-w-4xl mx-auto space-y-6">
-              {/* 헤더 */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <Link href="/dashboard/inventory">
-                    <Button variant="ghost" size="sm" className="mb-2">
-                      <ArrowLeft className="h-4 w-4 mr-2" />
-                      돌아가기
-                    </Button>
-                  </Link>
-                  <h1 className="text-3xl font-bold">팀 설정</h1>
-                  <p className="text-muted-foreground mt-1">
-                    {currentTeam.name}
-                  </p>
-                </div>
-              </div>
-
-              {/* 초대하기 */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>초대하기</CardTitle>
-                  <CardDescription>
-                    이 코드를 동료에게 공유하세요
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={inviteCode || ""}
-                      readOnly
-                      className="font-mono text-lg"
-                    />
-                    <Button
-                      onClick={copyInviteCode}
-                      variant={copiedCode === inviteCode ? "default" : "outline"}
-                      className="flex-shrink-0"
-                    >
-                      {copiedCode === inviteCode ? (
-                        <>
-                          <Check className="h-4 w-4 mr-2" />
-                          복사됨
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-4 w-4 mr-2" />
-                          복사
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                  <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
-                    <DialogTrigger asChild>
-                      <Button className="w-full sm:w-auto">
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        이메일로 초대하기
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>멤버 초대</DialogTitle>
-                        <DialogDescription>
-                          이메일 주소로 팀 멤버를 초대하세요
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="email">이메일</Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            placeholder="colleague@example.com"
-                            value={inviteEmail}
-                            onChange={(e) => setInviteEmail(e.target.value)}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="role">역할</Label>
-                          <Select
-                            value={inviteRole}
-                            onValueChange={(value) => setInviteRole(value as TeamRole)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value={TeamRole.MEMBER}>멤버</SelectItem>
-                              <SelectItem value={TeamRole.ADMIN}>관리자</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            onClick={() => setShowInviteDialog(false)}
-                            className="flex-1"
-                          >
-                            취소
-                          </Button>
-                          <Button
-                            onClick={() => {
-                              if (!inviteEmail) {
-                                toast({
-                                  title: "이메일을 입력하세요",
-                                  variant: "destructive",
-                                });
-                                return;
-                              }
-                              inviteMemberMutation.mutate({
-                                email: inviteEmail,
-                                role: inviteRole,
-                              });
-                            }}
-                            disabled={inviteMemberMutation.isPending}
-                            className="flex-1"
-                          >
-                            {inviteMemberMutation.isPending ? "초대 중..." : "초대하기"}
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </CardContent>
-              </Card>
-
-              {/* 멤버 리스트 */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>멤버 리스트</CardTitle>
-                  <CardDescription>
-                    {members.length}명의 멤버
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {membersLoading ? (
-                    <div className="text-center py-8">
-                      <p className="text-muted-foreground">로딩 중...</p>
-                    </div>
-                  ) : members.length === 0 ? (
-                    <div className="text-center py-8">
-                      <p className="text-muted-foreground">멤버가 없습니다</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {members.map((member: any) => {
-                        const isCurrentUser = member.userId === session?.user?.id;
-                        const canEdit = isAdmin && !isCurrentUser;
-                        const canRemove = isAdmin && !isCurrentUser;
-
-                        return (
-                          <div
-                            key={member.id}
-                            className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50"
-                          >
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                              <Avatar>
-                                <AvatarImage src={member.image || undefined} />
-                                <AvatarFallback>
-                                  {member.name?.[0] || member.email[0].toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <p className="font-medium truncate">
-                                    {member.name || member.email}
-                                  </p>
-                                  {isCurrentUser && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      나
-                                    </Badge>
-                                  )}
-                                </div>
-                                <p className="text-sm text-muted-foreground truncate">
-                                  {member.email}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {canEdit ? (
-                                <Select
-                                  value={member.role}
-                                  onValueChange={(value) => {
-                                    updateRoleMutation.mutate({
-                                      memberId: member.id,
-                                      role: value as TeamRole,
-                                    });
-                                  }}
-                                >
-                                  <SelectTrigger className="w-32">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value={TeamRole.MEMBER}>멤버</SelectItem>
-                                    <SelectItem value={TeamRole.ADMIN}>관리자</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              ) : (
-                                <Badge variant="outline">
-                                  {ROLE_LABELS[member.role as TeamRole]}
-                                </Badge>
-                              )}
-                              {canRemove && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedMember(member);
-                                    setShowRemoveDialog(true);
-                                  }}
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+    <DashboardShell>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto space-y-6">
+          {/* 헤더 */}
+          <div className="flex items-center justify-between">
+            <div>
+              <Link href="/dashboard/inventory">
+                <Button variant="ghost" size="sm" className="mb-2">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  돌아가기
+                </Button>
+              </Link>
+              <h1 className="text-3xl font-bold">팀 설정</h1>
+              <p className="text-muted-foreground mt-1">
+                {currentTeam.name}
+              </p>
             </div>
           </div>
+
+          {/* 초대하기 */}
+          <Card>
+            <CardHeader>
+              <CardTitle>초대하기</CardTitle>
+              <CardDescription>
+                이 코드를 동료에게 공유하세요
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Input
+                  value={inviteCode || ""}
+                  readOnly
+                  className="font-mono text-lg"
+                />
+                <Button
+                  onClick={copyInviteCode}
+                  variant={copiedCode === inviteCode ? "default" : "outline"}
+                  className="flex-shrink-0"
+                >
+                  {copiedCode === inviteCode ? (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      복사됨
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4 mr-2" />
+                      복사
+                    </>
+                  )}
+                </Button>
+              </div>
+              <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
+                <DialogTrigger asChild>
+                  <Button className="w-full sm:w-auto">
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    이메일로 초대하기
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>멤버 초대</DialogTitle>
+                    <DialogDescription>
+                      이메일 주소로 팀 멤버를 초대하세요
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">이메일</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="colleague@example.com"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="role">역할</Label>
+                      <Select
+                        value={inviteRole}
+                        onValueChange={(value) => setInviteRole(value as TeamRole)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={TeamRole.MEMBER}>멤버</SelectItem>
+                          <SelectItem value={TeamRole.ADMIN}>관리자</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowInviteDialog(false)}
+                        className="flex-1"
+                      >
+                        취소
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          if (!inviteEmail) {
+                            toast({
+                              title: "이메일을 입력하세요",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+                          inviteMemberMutation.mutate({
+                            email: inviteEmail,
+                            role: inviteRole,
+                          });
+                        }}
+                        disabled={inviteMemberMutation.isPending}
+                        className="flex-1"
+                      >
+                        {inviteMemberMutation.isPending ? "초대 중..." : "초대하기"}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </CardContent>
+          </Card>
+
+          {/* 멤버 리스트 */}
+          <Card>
+            <CardHeader>
+              <CardTitle>멤버 리스트</CardTitle>
+              <CardDescription>
+                {members.length}명의 멤버
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {membersLoading ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">로딩 중...</p>
+                </div>
+              ) : members.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">멤버가 없습니다</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {members.map((member: any) => {
+                    const isCurrentUser = member.userId === session?.user?.id;
+                    const canEdit = isAdmin && !isCurrentUser;
+                    const canRemove = isAdmin && !isCurrentUser;
+
+                    return (
+                      <div
+                        key={member.id}
+                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <Avatar>
+                            <AvatarImage src={member.image || undefined} />
+                            <AvatarFallback>
+                              {member.name?.[0] || member.email[0].toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium truncate">
+                                {member.name || member.email}
+                              </p>
+                              {isCurrentUser && (
+                                <Badge variant="secondary" className="text-xs">
+                                  나
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground truncate">
+                              {member.email}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {canEdit ? (
+                            <Select
+                              value={member.role}
+                              onValueChange={(value) => {
+                                updateRoleMutation.mutate({
+                                  memberId: member.id,
+                                  role: value as TeamRole,
+                                });
+                              }}
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value={TeamRole.MEMBER}>멤버</SelectItem>
+                                <SelectItem value={TeamRole.ADMIN}>관리자</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Badge variant="outline">
+                              {ROLE_LABELS[member.role as TeamRole]}
+                            </Badge>
+                          )}
+                          {canRemove && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedMember(member);
+                                setShowRemoveDialog(true);
+                              }}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
 
@@ -566,7 +557,26 @@ export default function TeamSettingsPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </DashboardShell>
   );
 }
 
+/* §self-shell-zero — `DashboardShell` 은 `useOverlayDeepLink()` 를 통해
+ * `useSearchParams()` 를 부른다. Next 14 는 그 훅이 Suspense 경계 **밖**에 있으면
+ * 정적 생성 단계에서 CSR bailout 으로 빌드를 실패시킨다(2026-09-07 실측:
+ * `/admin/requests` · `/billing` · `/team/settings` 3곳 prerender 실패).
+ * 형제 화면(settings/*)이 이미 쓰던 형태를 그대로 쓴다.
+ * 🛑 fallback 안에는 셸을 넣지 않는다 — fallback 자체가 경계 밖이라 같은 이유로 터진다. */
+export default function TeamSettingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <TeamSettingsPageContent />
+    </Suspense>
+  );
+}

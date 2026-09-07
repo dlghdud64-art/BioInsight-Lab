@@ -14,10 +14,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 // §self-shell-header — 대시보드 화면에 공개 마케팅 헤더를 쓰면
 // (a) 로그인 상태에서도 "로그인 / 무료로 시작하기" 가 뜨고
 // (b) 그 헤더가 `fixed h-14` 라 페이지 제목을 덮는다.
-// DashboardHeader 는 `sticky` 라 자기 자리를 차지한다 (호영님 2026-09-07).
-import { DashboardHeader } from "@/components/dashboard/Header";
 import { PageHeader } from "@/app/_components/page-header";
-import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
+import { DashboardShell } from "@/app/dashboard/_components/dashboard-shell";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
 import { useToast } from "@/hooks/use-toast";
 import { OrganizationRole } from "@prisma/client";
@@ -163,179 +161,166 @@ function SecuritySettingsPageContent() {
 
   if (status === "loading" || orgsLoading || activeOrgLoading) {
     return (
-      <div className="min-h-screen bg-pg">
-        <DashboardHeader />
+      <DashboardShell>
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
             <p className="text-muted-foreground">로딩 중...</p>
           </div>
         </div>
-      </div>
+      </DashboardShell>
     );
   }
 
   if (organizations.length === 0) {
     return (
-      <div className="min-h-screen bg-pg">
-        <DashboardHeader />
-        <div className="flex">
-          <DashboardSidebar />
-          <div className="flex-1 overflow-auto min-w-0">
-            <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <p className="text-muted-foreground mb-4">워크스페이스가 없습니다.</p>
-                  <Button onClick={() => router.push("/dashboard/organizations")}>
-                    워크스페이스 생성하기
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+      <DashboardShell>
+        <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+          <Card>
+            <CardContent className="py-12 text-center">
+              <p className="text-muted-foreground mb-4">워크스페이스가 없습니다.</p>
+              <Button onClick={() => router.push("/dashboard/organizations")}>
+                워크스페이스 생성하기
+              </Button>
+            </CardContent>
+          </Card>
         </div>
-      </div>
+      </DashboardShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-pg">
-      <DashboardHeader />
-      <div className="flex">
-        <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0">
-          <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-            <div className="max-w-4xl mx-auto space-y-6">
-              <PageHeader
-                title="보안 설정"
-                description="이메일 도메인 제한 및 보안 정책을 관리합니다."
-                icon={Shield}
-                iconColor="text-purple-600"
+    <DashboardShell>
+      <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <PageHeader
+            title="보안 설정"
+            description="이메일 도메인 제한 및 보안 정책을 관리합니다."
+            icon={Shield}
+            iconColor="text-purple-600"
+          />
+
+          {/* 워크스페이스 선택 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold">워크스페이스 선택</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <WorkspaceSwitcher
+                currentOrganizationId={effectiveOrgId}
+                onOrganizationChange={setSelectedOrgId}
+                showActions={false}
               />
+            </CardContent>
+          </Card>
 
-              {/* 워크스페이스 선택 */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-semibold">워크스페이스 선택</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <WorkspaceSwitcher
-                    currentOrganizationId={effectiveOrgId}
-                    onOrganizationChange={setSelectedOrgId}
-                    showActions={false}
-                  />
-                </CardContent>
-              </Card>
-
-              {currentOrg && (
-                <>
-                  {/* 권한 안내 */}
-                  {!isAdmin && (
-                    <Card className="border-yellow-200 bg-yellow-50">
-                      <CardContent className="pt-6">
-                        <div className="flex items-start gap-3">
-                          <div className="rounded-full bg-yellow-100 p-2">
-                            <Shield className="h-4 w-4 text-yellow-600" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm text-yellow-900 font-medium">
-                              관리자 권한이 필요합니다
-                            </p>
-                            <p className="text-xs text-yellow-700 mt-1">
-                              보안 설정은 관리자만 변경할 수 있습니다.
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* 이메일 도메인 제한 */}
-                  {isAdmin && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-sm font-semibold">허용된 이메일 도메인</CardTitle>
-                        <CardDescription className="text-xs mt-1">
-                          회사 이메일 도메인만 허용하도록 설정할 수 있습니다.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                          <div className="flex items-start gap-3">
-                            <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                            <div className="flex-1">
-                              <p className="text-sm text-blue-900 font-medium mb-1">
-                                이메일 도메인 제한
-                              </p>
-                              <p className="text-xs text-blue-700">
-                                지정된 도메인의 이메일 주소만 워크스페이스에 초대할 수 있습니다.
-                                예: example.com을 추가하면 user@example.com만 허용됩니다.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* 도메인 입력 */}
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="example.com"
-                            value={domainInput}
-                            onChange={(e) => setDomainInput(e.target.value)}
-                            onKeyPress={handleKeyPress}
-                            className="flex-1"
-                          />
-                          <Button
-                            onClick={addDomain}
-                            disabled={saveSecurityMutation.isPending || !domainInput.trim()}
-                          >
-                            <Mail className="h-4 w-4 mr-2" />
-                            추가
-                          </Button>
-                        </div>
-
-                        {/* 도메인 목록 */}
-                        {securityLoading ? (
-                          <div className="text-center py-4 text-sm text-muted-foreground">
-                            로딩 중...
-                          </div>
-                        ) : allowedDomains.length === 0 ? (
-                          <div className="text-center py-8 text-sm text-muted-foreground border border-dashed border-bd rounded-lg">
-                            <Mail className="h-8 w-8 mx-auto mb-2 text-slate-400" />
-                            <p>허용된 도메인이 없습니다.</p>
-                            <p className="text-xs mt-1">모든 이메일 도메인이 허용됩니다.</p>
-                          </div>
-                        ) : (
-                          <div className="flex flex-wrap gap-2">
-                            {allowedDomains.map((domain: string) => (
-                              <Badge
-                                key={domain}
-                                variant="secondary"
-                                className="px-3 py-1 text-sm flex items-center gap-2"
-                              >
-                                <span>{domain}</span>
-                                {/* §11.270 — settings X button 44x44 touch target (§11.266 family 확장). min-h-[44px]
-                                    + min-w-[44px] + inline-flex items-center justify-center 추가. X icon h-3 w-3 보존
-                                    (visual size). hover/rounded-full/p-0.5 보존. */}
-                                <button
-                                  onClick={() => removeDomain(domain)}
-                                  className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] hover:bg-slate-200 rounded-full p-0.5 transition-colors"
-                                  aria-label={`${domain} 제거`}
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  )}
-                </>
+          {currentOrg && (
+            <>
+              {/* 권한 안내 */}
+              {!isAdmin && (
+                <Card className="border-yellow-200 bg-yellow-50">
+                  <CardContent className="pt-6">
+                    <div className="flex items-start gap-3">
+                      <div className="rounded-full bg-yellow-100 p-2">
+                        <Shield className="h-4 w-4 text-yellow-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-yellow-900 font-medium">
+                          관리자 권한이 필요합니다
+                        </p>
+                        <p className="text-xs text-yellow-700 mt-1">
+                          보안 설정은 관리자만 변경할 수 있습니다.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
-            </div>
-          </div>
+
+              {/* 이메일 도메인 제한 */}
+              {isAdmin && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-semibold">허용된 이메일 도메인</CardTitle>
+                    <CardDescription className="text-xs mt-1">
+                      회사 이메일 도메인만 허용하도록 설정할 수 있습니다.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <p className="text-sm text-blue-900 font-medium mb-1">
+                            이메일 도메인 제한
+                          </p>
+                          <p className="text-xs text-blue-700">
+                            지정된 도메인의 이메일 주소만 워크스페이스에 초대할 수 있습니다.
+                            예: example.com을 추가하면 user@example.com만 허용됩니다.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 도메인 입력 */}
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="example.com"
+                        value={domainInput}
+                        onChange={(e) => setDomainInput(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        className="flex-1"
+                      />
+                      <Button
+                        onClick={addDomain}
+                        disabled={saveSecurityMutation.isPending || !domainInput.trim()}
+                      >
+                        <Mail className="h-4 w-4 mr-2" />
+                        추가
+                      </Button>
+                    </div>
+
+                    {/* 도메인 목록 */}
+                    {securityLoading ? (
+                      <div className="text-center py-4 text-sm text-muted-foreground">
+                        로딩 중...
+                      </div>
+                    ) : allowedDomains.length === 0 ? (
+                      <div className="text-center py-8 text-sm text-muted-foreground border border-dashed border-bd rounded-lg">
+                        <Mail className="h-8 w-8 mx-auto mb-2 text-slate-400" />
+                        <p>허용된 도메인이 없습니다.</p>
+                        <p className="text-xs mt-1">모든 이메일 도메인이 허용됩니다.</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {allowedDomains.map((domain: string) => (
+                          <Badge
+                            key={domain}
+                            variant="secondary"
+                            className="px-3 py-1 text-sm flex items-center gap-2"
+                          >
+                            <span>{domain}</span>
+                            {/* §11.270 — settings X button 44x44 touch target (§11.266 family 확장). min-h-[44px]
+                                + min-w-[44px] + inline-flex items-center justify-center 추가. X icon h-3 w-3 보존
+                                (visual size). hover/rounded-full/p-0.5 보존. */}
+                            <button
+                              onClick={() => removeDomain(domain)}
+                              className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] hover:bg-slate-200 rounded-full p-0.5 transition-colors"
+                              aria-label={`${domain} 제거`}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
         </div>
       </div>
-    </div>
+    </DashboardShell>
   );
 }
 

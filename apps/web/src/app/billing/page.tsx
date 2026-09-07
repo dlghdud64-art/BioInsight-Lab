@@ -38,9 +38,7 @@ import {
 // §self-shell-header — 대시보드 화면에 공개 마케팅 헤더를 쓰면
 // (a) 로그인 상태에서도 "로그인 / 무료로 시작하기" 가 뜨고
 // (b) 그 헤더가 `fixed h-14` 라 페이지 제목을 덮는다.
-// DashboardHeader 는 `sticky` 라 자기 자리를 차지한다 (호영님 2026-09-07).
-import { DashboardHeader } from "@/components/dashboard/Header";
-import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
+import { DashboardShell } from "@/app/dashboard/_components/dashboard-shell";
 import { PageHeader } from "@/app/_components/page-header";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -241,463 +239,456 @@ function BillingPageContent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-pg">
-        <DashboardHeader />
-        <div className="flex">
-          <DashboardSidebar />
-          <div className="flex-1 flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-          </div>
+      <DashboardShell>
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
         </div>
-      </div>
+      </DashboardShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-pg">
-      <DashboardHeader />
-      <div className="flex">
-        <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0">
-          <div className="container mx-auto py-4 md:py-8 px-3 md:px-4">
-            <div className="max-w-5xl mx-auto">
-              <PageHeader
-                title="청구 및 구독"
-                description="구독 플랜, 결제 수단, 청구 내역을 관리합니다."
-                icon={CreditCard}
-                iconColor="text-green-600"
-              />
+    <DashboardShell>
+      <div className="container mx-auto py-4 md:py-8 px-3 md:px-4">
+        <div className="max-w-5xl mx-auto">
+          <PageHeader
+            title="청구 및 구독"
+            description="구독 플랜, 결제 수단, 청구 내역을 관리합니다."
+            icon={CreditCard}
+            iconColor="text-green-600"
+          />
 
-              {contextBanner && (
-                <div
-                  className={cn(
-                    "mb-6 rounded-lg border px-4 py-3 flex items-start gap-3",
-                    contextBanner.variant === "warning"
-                      ? "border-yellow-300 bg-yellow-50 text-yellow-900"
-                      : "border-blue-300 bg-blue-50 text-blue-900"
-                  )}
-                  role="status"
-                >
-                  <AlertCircle className="h-5 w-5 mt-0.5 shrink-0" />
-                  <div className="min-w-0">
-                    <p className="font-semibold text-sm">{contextBanner.title}</p>
-                    <p className="text-sm mt-0.5 leading-relaxed">
-                      {contextBanner.message}
-                    </p>
-                  </div>
-                </div>
+          {contextBanner && (
+            <div
+              className={cn(
+                "mb-6 rounded-lg border px-4 py-3 flex items-start gap-3",
+                contextBanner.variant === "warning"
+                  ? "border-yellow-300 bg-yellow-50 text-yellow-900"
+                  : "border-blue-300 bg-blue-50 text-blue-900"
               )}
+              role="status"
+            >
+              <AlertCircle className="h-5 w-5 mt-0.5 shrink-0" />
+              <div className="min-w-0">
+                <p className="font-semibold text-sm">{contextBanner.title}</p>
+                <p className="text-sm mt-0.5 leading-relaxed">
+                  {contextBanner.message}
+                </p>
+              </div>
+            </div>
+          )}
 
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList className="grid w-full grid-cols-3 h-10">
-                  <TabsTrigger value="overview" className="text-sm">개요</TabsTrigger>
-                  <TabsTrigger value="methods" className="text-sm">결제 수단</TabsTrigger>
-                  <TabsTrigger value="invoices" className="text-sm">청구 내역</TabsTrigger>
-                </TabsList>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3 h-10">
+              <TabsTrigger value="overview" className="text-sm">개요</TabsTrigger>
+              <TabsTrigger value="methods" className="text-sm">결제 수단</TabsTrigger>
+              <TabsTrigger value="invoices" className="text-sm">청구 내역</TabsTrigger>
+            </TabsList>
 
-                {/* 개요 탭 */}
-                <TabsContent value="overview" className="space-y-6">
-                  {/* 현재 플랜 카드 */}
-                  <Card>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle className="flex items-center gap-2">
-                            현재 플랜
-                            <Badge variant={currentPlan === "FREE" ? "secondary" : "default"}>
-                              {currentPlanInfo?.nameKo || "무료"}
+            {/* 개요 탭 */}
+            <TabsContent value="overview" className="space-y-6">
+              {/* 현재 플랜 카드 */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        현재 플랜
+                        <Badge variant={currentPlan === "FREE" ? "secondary" : "default"}>
+                          {currentPlanInfo?.nameKo || "무료"}
+                        </Badge>
+                      </CardTitle>
+                      <CardDescription>
+                        {/* §checkout-two-paths (2026-09-05) — 🛑 이 날짜를 "다음 결제일" 이라
+                            부르지 않는다. `Subscription.currentPeriodEnd` 는 플랜 변경 POST 가
+                            `now + 30일` 로 **만들어 넣는 값**이고(subscription/route.ts:163),
+                            결제 연동이 없어 그날 아무 일도 일어나지 않는다.
+                            즉 업그레이드하는 순간 **없는 결제일**이 화면에 뜬다.
+                            ⏳ 파생원(`currentPeriodEnd`)은 **지우지 않는다** — 결제가 배선되면
+                            진짜 결제일이 된다. 표시만 바꾼다(checkout-utils 때와 같은 판단). */}
+                        {subscription?.currentPeriodEnd && (
+                          <>결제 연동 준비 중 · 청구 없음</>
+                        )}
+                      </CardDescription>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold">
+                        {currentPlanInfo?.priceDisplay || "무료"}
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {/* 사용량 */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-slate-500" />
+                          견적 리스트
+                        </span>
+                        <span>
+                          {usage?.quotesUsed || 0} / {usage?.quotesLimit || "무제한"}
+                        </span>
+                      </div>
+                      {usage?.quotesLimit && (
+                        <Progress value={(usage.quotesUsed / usage.quotesLimit) * 100} />
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-slate-500" />
+                          시트 (사용자)
+                        </span>
+                        <span>
+                          {usage?.seatsUsed || 1} / {usage?.seatsLimit || "무제한"}
+                        </span>
+                      </div>
+                      {usage?.seatsLimit && (
+                        <Progress value={(usage.seatsUsed / usage.seatsLimit) * 100} />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 포함 기능 */}
+                  <div className="border-t pt-4">
+                    <h4 className="text-sm font-medium mb-3">포함된 기능</h4>
+                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {currentPlanInfo?.features.map((feature, i) => (
+                        <li key={i} className="flex items-center gap-2 text-sm text-slate-600">
+                          <Check className="h-4 w-4 text-green-500" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 플랜 비교 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>플랜 업그레이드</CardTitle>
+                  <CardDescription>더 많은 기능이 필요하신가요?</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {planInfo && Object.entries(planInfo).map(([key, plan]) => {
+                      const planKey = key as PlanType;
+                      const isCurrent = currentPlan === planKey;
+                      const isEnterprise = planKey === "ORGANIZATION";
+
+                      return (
+                        <Card
+                          key={key}
+                          className={cn(
+                            "relative",
+                            isCurrent && "border-blue-500 border-2"
+                          )}
+                        >
+                          {isCurrent && (
+                            <Badge className="absolute -top-2 left-4 bg-blue-600">
+                              현재 플랜
                             </Badge>
-                          </CardTitle>
-                          <CardDescription>
-                            {/* §checkout-two-paths (2026-09-05) — 🛑 이 날짜를 "다음 결제일" 이라
-                                부르지 않는다. `Subscription.currentPeriodEnd` 는 플랜 변경 POST 가
-                                `now + 30일` 로 **만들어 넣는 값**이고(subscription/route.ts:163),
-                                결제 연동이 없어 그날 아무 일도 일어나지 않는다.
-                                즉 업그레이드하는 순간 **없는 결제일**이 화면에 뜬다.
-                                ⏳ 파생원(`currentPeriodEnd`)은 **지우지 않는다** — 결제가 배선되면
-                                진짜 결제일이 된다. 표시만 바꾼다(checkout-utils 때와 같은 판단). */}
-                            {subscription?.currentPeriodEnd && (
-                              <>결제 연동 준비 중 · 청구 없음</>
-                            )}
-                          </CardDescription>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-2xl font-bold">
-                            {currentPlanInfo?.priceDisplay || "무료"}
-                          </div>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      {/* 사용량 */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-slate-500" />
-                              견적 리스트
-                            </span>
-                            <span>
-                              {usage?.quotesUsed || 0} / {usage?.quotesLimit || "무제한"}
-                            </span>
-                          </div>
-                          {usage?.quotesLimit && (
-                            <Progress value={(usage.quotesUsed / usage.quotesLimit) * 100} />
                           )}
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="flex items-center gap-2">
-                              <Users className="h-4 w-4 text-slate-500" />
-                              시트 (사용자)
-                            </span>
-                            <span>
-                              {usage?.seatsUsed || 1} / {usage?.seatsLimit || "무제한"}
-                            </span>
-                          </div>
-                          {usage?.seatsLimit && (
-                            <Progress value={(usage.seatsUsed / usage.seatsLimit) * 100} />
-                          )}
-                        </div>
-                      </div>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-lg">{plan.nameKo}</CardTitle>
+                            <div className="text-2xl font-bold">
+                              {plan.priceDisplay}
+                            </div>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <ul className="space-y-2">
+                              {plan.features.slice(0, 4).map((feature, i) => (
+                                <li key={i} className="flex items-start gap-2 text-sm">
+                                  <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                                  <span>{feature}</span>
+                                </li>
+                              ))}
+                            </ul>
 
-                      {/* 포함 기능 */}
-                      <div className="border-t pt-4">
-                        <h4 className="text-sm font-medium mb-3">포함된 기능</h4>
-                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          {currentPlanInfo?.features.map((feature, i) => (
-                            <li key={i} className="flex items-center gap-2 text-sm text-slate-600">
-                              <Check className="h-4 w-4 text-green-500" />
-                              {feature}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* 플랜 비교 */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>플랜 업그레이드</CardTitle>
-                      <CardDescription>더 많은 기능이 필요하신가요?</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {planInfo && Object.entries(planInfo).map(([key, plan]) => {
-                          const planKey = key as PlanType;
-                          const isCurrent = currentPlan === planKey;
-                          const isEnterprise = planKey === "ORGANIZATION";
-
-                          return (
-                            <Card
-                              key={key}
-                              className={cn(
-                                "relative",
-                                isCurrent && "border-blue-500 border-2"
-                              )}
-                            >
-                              {isCurrent && (
-                                <Badge className="absolute -top-2 left-4 bg-blue-600">
-                                  현재 플랜
-                                </Badge>
-                              )}
-                              <CardHeader className="pb-2">
-                                <CardTitle className="text-lg">{plan.nameKo}</CardTitle>
-                                <div className="text-2xl font-bold">
-                                  {plan.priceDisplay}
-                                </div>
-                              </CardHeader>
-                              <CardContent className="space-y-4">
-                                <ul className="space-y-2">
-                                  {plan.features.slice(0, 4).map((feature, i) => (
-                                    <li key={i} className="flex items-start gap-2 text-sm">
-                                      <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                                      <span>{feature}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-
-                                {!isCurrent && (
-                                  <Button
-                                    className="w-full"
-                                    variant={isEnterprise ? "outline" : "default"}
-                                    onClick={() => upgradeMutation.mutate(planKey)}
-                                    disabled={upgradeMutation.isPending}
-                                  >
-                                    {upgradeMutation.isPending ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : isEnterprise ? (
-                                      <>
-                                        <Mail className="h-4 w-4 mr-2" />
-                                        영업팀 문의
-                                      </>
-                                    ) : (
-                                      <>
-                                        <ArrowUpRight className="h-4 w-4 mr-2" />
-                                        업그레이드
-                                      </>
-                                    )}
-                                  </Button>
+                            {!isCurrent && (
+                              <Button
+                                className="w-full"
+                                variant={isEnterprise ? "outline" : "default"}
+                                onClick={() => upgradeMutation.mutate(planKey)}
+                                disabled={upgradeMutation.isPending}
+                              >
+                                {upgradeMutation.isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : isEnterprise ? (
+                                  <>
+                                    <Mail className="h-4 w-4 mr-2" />
+                                    영업팀 문의
+                                  </>
+                                ) : (
+                                  <>
+                                    <ArrowUpRight className="h-4 w-4 mr-2" />
+                                    업그레이드
+                                  </>
                                 )}
-                              </CardContent>
-                            </Card>
-                          );
-                        })}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+                              </Button>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-                {/* 결제 수단 탭 */}
-                <TabsContent value="methods" className="space-y-6">
-                  <Card>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle>등록된 결제 수단</CardTitle>
-                          <CardDescription>구독 결제에 사용될 카드입니다.</CardDescription>
+            {/* 결제 수단 탭 */}
+            <TabsContent value="methods" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>등록된 결제 수단</CardTitle>
+                      <CardDescription>구독 결제에 사용될 카드입니다.</CardDescription>
+                    </div>
+                    <Dialog open={isAddCardOpen} onOpenChange={setIsAddCardOpen}>
+                      <DialogTrigger asChild>
+                        <Button>
+                          <Plus className="h-4 w-4 mr-2" />
+                          카드 추가
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>결제 카드 등록</DialogTitle>
+                          <DialogDescription>
+                            구독 결제에 사용할 카드 정보를 입력해주세요.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="cardNumber">카드 번호</Label>
+                            <Input
+                              id="cardNumber"
+                              placeholder="1234 5678 9012 3456"
+                              value={cardForm.cardNumber}
+                              onChange={(e) =>
+                                setCardForm({
+                                  ...cardForm,
+                                  cardNumber: formatCardNumber(e.target.value),
+                                })
+                              }
+                              maxLength={19}
+                            />
+                          </div>
+                          <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="expMonth">월</Label>
+                              <Input
+                                id="expMonth"
+                                placeholder="MM"
+                                value={cardForm.expMonth}
+                                onChange={(e) =>
+                                  setCardForm({ ...cardForm, expMonth: e.target.value })
+                                }
+                                maxLength={2}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="expYear">년</Label>
+                              <Input
+                                id="expYear"
+                                placeholder="YY"
+                                value={cardForm.expYear}
+                                onChange={(e) =>
+                                  setCardForm({ ...cardForm, expYear: e.target.value })
+                                }
+                                maxLength={2}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="cvc">CVC</Label>
+                              <Input
+                                id="cvc"
+                                placeholder="123"
+                                type="password"
+                                value={cardForm.cvc}
+                                onChange={(e) =>
+                                  setCardForm({ ...cardForm, cvc: e.target.value })
+                                }
+                                maxLength={4}
+                              />
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-lg text-sm text-yellow-700">
+                            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                            <span>데모 모드: 실제 결제가 발생하지 않습니다.</span>
+                          </div>
                         </div>
-                        <Dialog open={isAddCardOpen} onOpenChange={setIsAddCardOpen}>
-                          <DialogTrigger asChild>
-                            <Button>
-                              <Plus className="h-4 w-4 mr-2" />
-                              카드 추가
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>결제 카드 등록</DialogTitle>
-                              <DialogDescription>
-                                구독 결제에 사용할 카드 정보를 입력해주세요.
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                              <div className="space-y-2">
-                                <Label htmlFor="cardNumber">카드 번호</Label>
-                                <Input
-                                  id="cardNumber"
-                                  placeholder="1234 5678 9012 3456"
-                                  value={cardForm.cardNumber}
-                                  onChange={(e) =>
-                                    setCardForm({
-                                      ...cardForm,
-                                      cardNumber: formatCardNumber(e.target.value),
-                                    })
-                                  }
-                                  maxLength={19}
-                                />
+                        <DialogFooter>
+                          <Button
+                            variant="outline"
+                            onClick={() => setIsAddCardOpen(false)}
+                          >
+                            취소
+                          </Button>
+                          <Button
+                            onClick={() => addCardMutation.mutate(cardForm)}
+                            disabled={addCardMutation.isPending}
+                          >
+                            {addCardMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              "등록하기"
+                            )}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {paymentMethods.length === 0 ? (
+                    <div className="text-center py-8 text-slate-500">
+                      <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                      <p>등록된 결제 수단이 없습니다.</p>
+                      <p className="text-sm mt-1">카드를 등록하면 자동 결제가 가능합니다.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {paymentMethods.map((method: any) => (
+                        <div
+                          key={method.id}
+                          className="flex items-center justify-between p-4 border rounded-lg"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="h-10 w-16 bg-gradient-to-r from-slate-700 to-slate-900 rounded flex items-center justify-center text-white text-xs font-bold">
+                              {method.brand?.toUpperCase() || "CARD"}
+                            </div>
+                            <div>
+                              <div className="font-medium">
+                                **** **** **** {method.last4}
                               </div>
-                              <div className="grid grid-cols-3 gap-4">
-                                <div className="space-y-2">
-                                  <Label htmlFor="expMonth">월</Label>
-                                  <Input
-                                    id="expMonth"
-                                    placeholder="MM"
-                                    value={cardForm.expMonth}
-                                    onChange={(e) =>
-                                      setCardForm({ ...cardForm, expMonth: e.target.value })
-                                    }
-                                    maxLength={2}
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label htmlFor="expYear">년</Label>
-                                  <Input
-                                    id="expYear"
-                                    placeholder="YY"
-                                    value={cardForm.expYear}
-                                    onChange={(e) =>
-                                      setCardForm({ ...cardForm, expYear: e.target.value })
-                                    }
-                                    maxLength={2}
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label htmlFor="cvc">CVC</Label>
-                                  <Input
-                                    id="cvc"
-                                    placeholder="123"
-                                    type="password"
-                                    value={cardForm.cvc}
-                                    onChange={(e) =>
-                                      setCardForm({ ...cardForm, cvc: e.target.value })
-                                    }
-                                    maxLength={4}
-                                  />
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-lg text-sm text-yellow-700">
-                                <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                                <span>데모 모드: 실제 결제가 발생하지 않습니다.</span>
+                              <div className="text-sm text-slate-500">
+                                만료: {method.expMonth}/{method.expYear}
                               </div>
                             </div>
-                            <DialogFooter>
-                              <Button
-                                variant="outline"
-                                onClick={() => setIsAddCardOpen(false)}
-                              >
-                                취소
-                              </Button>
-                              <Button
-                                onClick={() => addCardMutation.mutate(cardForm)}
-                                disabled={addCardMutation.isPending}
-                              >
-                                {addCardMutation.isPending ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  "등록하기"
-                                )}
-                              </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      {paymentMethods.length === 0 ? (
-                        <div className="text-center py-8 text-slate-500">
-                          <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                          <p>등록된 결제 수단이 없습니다.</p>
-                          <p className="text-sm mt-1">카드를 등록하면 자동 결제가 가능합니다.</p>
+                            {method.isDefault && (
+                              <Badge variant="secondary">기본</Badge>
+                            )}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => deleteCardMutation.mutate(method.id)}
+                            disabled={deleteCardMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
                         </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {paymentMethods.map((method: any) => (
-                            <div
-                              key={method.id}
-                              className="flex items-center justify-between p-4 border rounded-lg"
-                            >
-                              <div className="flex items-center gap-4">
-                                <div className="h-10 w-16 bg-gradient-to-r from-slate-700 to-slate-900 rounded flex items-center justify-center text-white text-xs font-bold">
-                                  {method.brand?.toUpperCase() || "CARD"}
-                                </div>
-                                <div>
-                                  <div className="font-medium">
-                                    **** **** **** {method.last4}
-                                  </div>
-                                  <div className="text-sm text-slate-500">
-                                    만료: {method.expMonth}/{method.expYear}
-                                  </div>
-                                </div>
-                                {method.isDefault && (
-                                  <Badge variant="secondary">기본</Badge>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* 청구 내역 탭 */}
+            <TabsContent value="invoices" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>청구 내역</CardTitle>
+                  <CardDescription>과거 결제 내역과 영수증을 확인하세요.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {invoices.length === 0 ? (
+                    <div className="text-center py-8 text-slate-500">
+                      <FileText className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                      <p>청구 내역이 없습니다.</p>
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>청구서 번호</TableHead>
+                          <TableHead>기간</TableHead>
+                          <TableHead>금액</TableHead>
+                          <TableHead>상태</TableHead>
+                          <TableHead className="text-right">영수증</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {invoices.map((invoice: any) => (
+                          <TableRow key={invoice.id}>
+                            <TableCell className="font-medium">
+                              {/* 🛑 번호가 없으면 내부 id 조각을 대신 그리지 않는다 —
+                                  `inv_backfill_…` 같은 내부 키가 화면에 뜬다.
+                                  번호는 발행의 표지라, 미발행이면 빈 값 표기가 사실이다. */}
+                              {invoice.number || "—"}
+                            </TableCell>
+                            <TableCell>
+                              {new Date(invoice.periodStart).toLocaleDateString("ko-KR")} ~{" "}
+                              {new Date(invoice.periodEnd).toLocaleDateString("ko-KR")}
+                            </TableCell>
+                            <TableCell>
+                              {invoice.amountDue?.toLocaleString("ko-KR")}원
+                            </TableCell>
+                            <TableCell>
+                              {/* 🛑 이전 판본은 `PAID` 가 아니면 **enum 값을 그대로** 그렸다.
+                                  지금까지 위조 PAID 만 만들어져 안 드러났을 뿐이고,
+                                  미수 `DRAFT` 가 생기면 화면에 `DRAFT` 가 뜬다.
+                                  §11.302 신호등: 미수·미발행은 **주의 = yellow**. */}
+                              <Badge
+                                variant={invoice.status === "PAID" ? "default" : "secondary"}
+                                className={cn(
+                                  invoice.status === "PAID" && "bg-green-100 text-green-700",
+                                  (invoice.status === "DRAFT" || invoice.status === "OPEN") &&
+                                    "bg-yellow-100 text-yellow-700 border-yellow-200"
                                 )}
-                              </div>
+                              >
+                                {resolveInvoiceStatusLabel(invoice.status)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
                               <Button
                                 variant="ghost"
-                                size="icon"
-                                onClick={() => deleteCardMutation.mutate(method.id)}
-                                disabled={deleteCardMutation.isPending}
+                                size="sm"
+                                disabled={!invoice.invoicePdfUrl}
+                                onClick={() => {
+                                  if (invoice.invoicePdfUrl) {
+                                    window.open(invoice.invoicePdfUrl, "_blank");
+                                  } else {
+                                    toast({
+                                      title: "영수증 다운로드",
+                                      description: "PDF 영수증은 Stripe 연동 후 이용 가능합니다.",
+                                    });
+                                  }
+                                }}
                               >
-                                <Trash2 className="h-4 w-4 text-red-500" />
+                                <Download className="h-4 w-4 mr-1" />
+                                다운로드
                               </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                {/* 청구 내역 탭 */}
-                <TabsContent value="invoices" className="space-y-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>청구 내역</CardTitle>
-                      <CardDescription>과거 결제 내역과 영수증을 확인하세요.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {invoices.length === 0 ? (
-                        <div className="text-center py-8 text-slate-500">
-                          <FileText className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                          <p>청구 내역이 없습니다.</p>
-                        </div>
-                      ) : (
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>청구서 번호</TableHead>
-                              <TableHead>기간</TableHead>
-                              <TableHead>금액</TableHead>
-                              <TableHead>상태</TableHead>
-                              <TableHead className="text-right">영수증</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {invoices.map((invoice: any) => (
-                              <TableRow key={invoice.id}>
-                                <TableCell className="font-medium">
-                                  {/* 🛑 번호가 없으면 내부 id 조각을 대신 그리지 않는다 —
-                                      `inv_backfill_…` 같은 내부 키가 화면에 뜬다.
-                                      번호는 발행의 표지라, 미발행이면 빈 값 표기가 사실이다. */}
-                                  {invoice.number || "—"}
-                                </TableCell>
-                                <TableCell>
-                                  {new Date(invoice.periodStart).toLocaleDateString("ko-KR")} ~{" "}
-                                  {new Date(invoice.periodEnd).toLocaleDateString("ko-KR")}
-                                </TableCell>
-                                <TableCell>
-                                  {invoice.amountDue?.toLocaleString("ko-KR")}원
-                                </TableCell>
-                                <TableCell>
-                                  {/* 🛑 이전 판본은 `PAID` 가 아니면 **enum 값을 그대로** 그렸다.
-                                      지금까지 위조 PAID 만 만들어져 안 드러났을 뿐이고,
-                                      미수 `DRAFT` 가 생기면 화면에 `DRAFT` 가 뜬다.
-                                      §11.302 신호등: 미수·미발행은 **주의 = yellow**. */}
-                                  <Badge
-                                    variant={invoice.status === "PAID" ? "default" : "secondary"}
-                                    className={cn(
-                                      invoice.status === "PAID" && "bg-green-100 text-green-700",
-                                      (invoice.status === "DRAFT" || invoice.status === "OPEN") &&
-                                        "bg-yellow-100 text-yellow-700 border-yellow-200"
-                                    )}
-                                  >
-                                    {resolveInvoiceStatusLabel(invoice.status)}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    disabled={!invoice.invoicePdfUrl}
-                                    onClick={() => {
-                                      if (invoice.invoicePdfUrl) {
-                                        window.open(invoice.invoicePdfUrl, "_blank");
-                                      } else {
-                                        toast({
-                                          title: "영수증 다운로드",
-                                          description: "PDF 영수증은 Stripe 연동 후 이용 가능합니다.",
-                                        });
-                                      }
-                                    }}
-                                  >
-                                    <Download className="h-4 w-4 mr-1" />
-                                    다운로드
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      )}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              </Tabs>
-            </div>
-          </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
-    </div>
+    </DashboardShell>
   );
 }
 
 export default function BillingPage() {
   return (
     <Suspense
+      /* 🛑 fallback 은 Suspense 경계 **밖**이라 여기에 `DashboardShell` 을 넣으면
+         셸의 `useSearchParams()` 가 CSR bailout 으로 빌드를 깬다(2026-09-07 실측).
+         화면 안의 로딩·빈 분기는 셸 안에 있다 — 여기는 그 경계가 열리기 전이다. */
       fallback={
-        <div className="min-h-screen bg-pg flex items-center justify-center">
+        <div className="flex items-center justify-center py-24">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       }

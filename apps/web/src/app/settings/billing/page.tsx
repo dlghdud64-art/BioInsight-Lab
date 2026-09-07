@@ -14,10 +14,8 @@ import { Check, X, CreditCard, Zap, Loader2, ExternalLink } from "lucide-react";
 // §self-shell-header — 대시보드 화면에 공개 마케팅 헤더를 쓰면
 // (a) 로그인 상태에서도 "로그인 / 무료로 시작하기" 가 뜨고
 // (b) 그 헤더가 `fixed h-14` 라 페이지 제목을 덮는다.
-// DashboardHeader 는 `sticky` 라 자기 자리를 차지한다 (호영님 2026-09-07).
-import { DashboardHeader } from "@/components/dashboard/Header";
 import { PageHeader } from "@/app/_components/page-header";
-import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
+import { DashboardShell } from "@/app/dashboard/_components/dashboard-shell";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
 import { useToast } from "@/hooks/use-toast";
 import { SubscriptionPlan, PLAN_LIMITS, PLAN_DISPLAY } from "@/lib/plans";
@@ -175,366 +173,364 @@ function BillingPageContent() {
 
   if (status === "loading" || orgsLoading || activeOrgLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
+      <DashboardShell>
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </DashboardShell>
     );
   }
 
   if (!session || !currentOrg) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>조직을 찾을 수 없습니다.</p>
-      </div>
+      <DashboardShell>
+        <div className="flex items-center justify-center py-24">
+          <p>조직을 찾을 수 없습니다.</p>
+        </div>
+      </DashboardShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-pg">
-      <DashboardHeader />
-      <div className="flex">
-        <DashboardSidebar />
-        <div className="flex-1">
-          <PageHeader
-            title="플랜 및 결제"
-            description="현재 플랜을 확인하고 업그레이드하세요."
-          />
-          <div className="p-6 space-y-6 max-w-6xl">
-            {/* 조직 선택 */}
-            {organizations.length > 1 && (
-              <div className="mb-4">
-                <WorkspaceSwitcher
-                  currentOrganizationId={currentOrg.id}
-                  onOrganizationChange={(id: string) => {
-                    setSelectedOrgId(id);
-                    router.push(`/settings/billing?org=${id}`);
-                  }}
-                />
-              </div>
-            )}
+    <DashboardShell>
+      <PageHeader
+        title="플랜 및 결제"
+        description="현재 플랜을 확인하고 업그레이드하세요."
+      />
+      <div className="p-6 space-y-6 max-w-6xl">
+        {/* 조직 선택 */}
+        {organizations.length > 1 && (
+          <div className="mb-4">
+            <WorkspaceSwitcher
+              currentOrganizationId={currentOrg.id}
+              onOrganizationChange={(id: string) => {
+                setSelectedOrgId(id);
+                router.push(`/settings/billing?org=${id}`);
+              }}
+            />
+          </div>
+        )}
 
-            {/* 현재 플랜 - 리스트 스타일 */}
-            <div className="bg-pn border border-bd shadow-sm">
-              <div className="border-b border-bd px-4 py-3">
-                <h2 className="font-semibold text-slate-100">현재 플랜</h2>
-                <p className="text-sm text-slate-600 mt-1">{currentOrg.name}</p>
+        {/* 현재 플랜 - 리스트 스타일 */}
+        <div className="bg-pn border border-bd shadow-sm">
+          <div className="border-b border-bd px-4 py-3">
+            <h2 className="font-semibold text-slate-100">현재 플랜</h2>
+            <p className="text-sm text-slate-600 mt-1">{currentOrg.name}</p>
+          </div>
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                {getPlanBadge(plan)}
+                {billingStatus && getStatusBadge(billingStatus)}
               </div>
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    {getPlanBadge(plan)}
-                    {billingStatus && getStatusBadge(billingStatus)}
-                  </div>
-                  <div className="flex gap-2">
-                    {plan === SubscriptionPlan.FREE && (
-                      <Button
-                        onClick={() => handleUpgrade(SubscriptionPlan.TEAM)}
-                        disabled={isUpgrading}
-                        size="sm"
-                      >
-                        {isUpgrading ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <>
-                            <Zap className="h-4 w-4 mr-2" />
-                            Team으로 업그레이드
-                          </>
-                        )}
-                      </Button>
-                    )}
-                    {plan !== SubscriptionPlan.FREE && (
-                      <Button
-                        variant="outline"
-                        onClick={handleManageBilling}
-                        disabled={isManaging}
-                        size="sm"
-                      >
-                        {isManaging ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <>
-                            <CreditCard className="h-4 w-4 mr-2" />
-                            결제 관리
-                            <ExternalLink className="h-3 w-3 ml-1" />
-                          </>
-                        )}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-
-                {/* 플랜 제한 - 테이블 스타일 */}
-                <div className="border-t border-bd pt-4">
-                  <Table>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell className="font-medium p-3">멤버 수</TableCell>
-                        <TableCell className="p-3 text-right">{limits.maxMembers || "무제한"}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="font-medium p-3">월 견적 요청</TableCell>
-                        <TableCell className="p-3 text-right">{limits.maxQuotesPerMonth || "무제한"}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="font-medium p-3">공유 링크</TableCell>
-                        <TableCell className="p-3 text-right">{limits.maxSharedLinks || "무제한"}</TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            </div>
-
-            {/* 기능 비교 */}
-            <div className="bg-pn border border-bd shadow-sm">
-              <div className="border-b border-bd px-4 py-3">
-                <h2 className="font-semibold text-slate-100">플랜별 기능</h2>
-                <p className="text-sm text-slate-600 mt-1">각 플랜에서 사용할 수 있는 기능을 확인하세요.</p>
-              </div>
-              <div className="p-4">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-1/2 p-3">기능</TableHead>
-                      <TableHead className="text-center p-3">Starter</TableHead>
-                      <TableHead className="text-center p-3">Team</TableHead>
-                      <TableHead className="text-center p-3">Business</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell className="font-medium p-3">Export Pack (구매팀 제출용)</TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.FREE.features.exportPack ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.TEAM.features.exportPack ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.ORGANIZATION.features.exportPack ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium p-3">인바운드 이메일</TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.FREE.features.inboundEmail ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.TEAM.features.inboundEmail ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.ORGANIZATION.features.inboundEmail ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium p-3">고급 리포트</TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.FREE.features.advancedReports ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.TEAM.features.advancedReports ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.ORGANIZATION.features.advancedReports ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium p-3">예산 관리</TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.FREE.features.budgetManagement ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.TEAM.features.budgetManagement ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.ORGANIZATION.features.budgetManagement ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium p-3">자동 재주문</TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.FREE.features.autoReorder ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.TEAM.features.autoReorder ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.ORGANIZATION.features.autoReorder ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium p-3">벤더 포털</TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.FREE.features.vendorPortal ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.TEAM.features.vendorPortal ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.ORGANIZATION.features.vendorPortal ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium p-3">SSO 인증</TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.FREE.features.sso ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.TEAM.features.sso ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.ORGANIZATION.features.sso ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium p-3">우선 지원</TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.FREE.features.prioritySupport ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.TEAM.features.prioritySupport ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center p-3">
-                        {PLAN_LIMITS.ORGANIZATION.features.prioritySupport ? (
-                          <Check className="h-5 w-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mx-auto" />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-
-            {/* 업그레이드 안내 */}
-            {plan !== SubscriptionPlan.ORGANIZATION && (
-              <div className="bg-blue-50 border border-blue-200 shadow-sm p-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-semibold text-base mb-1">
-                      {plan === SubscriptionPlan.FREE ? "Team 플랜으로 업그레이드" : "Business 플랜으로 업그레이드"}
-                    </h3>
-                    <p className="text-sm text-slate-600">
-                      {plan === SubscriptionPlan.FREE
-                        ? "팀원 공유 재고, 구매 요청 워크플로우 등 협업 기능을 사용하세요."
-                        : "무제한 멤버, 전자결재 승인 라인, 예산 통합 관리 등 조직 운영 기능을 사용하세요."}
-                    </p>
-                  </div>
+              <div className="flex gap-2">
+                {plan === SubscriptionPlan.FREE && (
                   <Button
-                    onClick={() => handleUpgrade(
-                      plan === SubscriptionPlan.FREE 
-                        ? SubscriptionPlan.TEAM 
-                        : SubscriptionPlan.ORGANIZATION
-                    )}
+                    onClick={() => handleUpgrade(SubscriptionPlan.TEAM)}
                     disabled={isUpgrading}
                     size="sm"
                   >
                     {isUpgrading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      "업그레이드"
+                      <>
+                        <Zap className="h-4 w-4 mr-2" />
+                        Team으로 업그레이드
+                      </>
                     )}
                   </Button>
-                </div>
+                )}
+                {plan !== SubscriptionPlan.FREE && (
+                  <Button
+                    variant="outline"
+                    onClick={handleManageBilling}
+                    disabled={isManaging}
+                    size="sm"
+                  >
+                    {isManaging ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        결제 관리
+                        <ExternalLink className="h-3 w-3 ml-1" />
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
-            )}
+            </div>
+
+            {/* 플랜 제한 - 테이블 스타일 */}
+            <div className="border-t border-bd pt-4">
+              <Table>
+                <TableBody>
+                  <TableRow>
+                    <TableCell className="font-medium p-3">멤버 수</TableCell>
+                    <TableCell className="p-3 text-right">{limits.maxMembers || "무제한"}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium p-3">월 견적 요청</TableCell>
+                    <TableCell className="p-3 text-right">{limits.maxQuotesPerMonth || "무제한"}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium p-3">공유 링크</TableCell>
+                    <TableCell className="p-3 text-right">{limits.maxSharedLinks || "무제한"}</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </div>
+
+        {/* 기능 비교 */}
+        <div className="bg-pn border border-bd shadow-sm">
+          <div className="border-b border-bd px-4 py-3">
+            <h2 className="font-semibold text-slate-100">플랜별 기능</h2>
+            <p className="text-sm text-slate-600 mt-1">각 플랜에서 사용할 수 있는 기능을 확인하세요.</p>
+          </div>
+          <div className="p-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-1/2 p-3">기능</TableHead>
+                  <TableHead className="text-center p-3">Starter</TableHead>
+                  <TableHead className="text-center p-3">Team</TableHead>
+                  <TableHead className="text-center p-3">Business</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-medium p-3">Export Pack (구매팀 제출용)</TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.FREE.features.exportPack ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.TEAM.features.exportPack ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.ORGANIZATION.features.exportPack ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium p-3">인바운드 이메일</TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.FREE.features.inboundEmail ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.TEAM.features.inboundEmail ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.ORGANIZATION.features.inboundEmail ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium p-3">고급 리포트</TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.FREE.features.advancedReports ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.TEAM.features.advancedReports ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.ORGANIZATION.features.advancedReports ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium p-3">예산 관리</TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.FREE.features.budgetManagement ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.TEAM.features.budgetManagement ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.ORGANIZATION.features.budgetManagement ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium p-3">자동 재주문</TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.FREE.features.autoReorder ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.TEAM.features.autoReorder ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.ORGANIZATION.features.autoReorder ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium p-3">벤더 포털</TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.FREE.features.vendorPortal ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.TEAM.features.vendorPortal ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.ORGANIZATION.features.vendorPortal ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium p-3">SSO 인증</TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.FREE.features.sso ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.TEAM.features.sso ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.ORGANIZATION.features.sso ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium p-3">우선 지원</TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.FREE.features.prioritySupport ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.TEAM.features.prioritySupport ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center p-3">
+                    {PLAN_LIMITS.ORGANIZATION.features.prioritySupport ? (
+                      <Check className="h-5 w-5 text-green-600 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-gray-300 mx-auto" />
+                    )}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+
+        {/* 업그레이드 안내 */}
+        {plan !== SubscriptionPlan.ORGANIZATION && (
+          <div className="bg-blue-50 border border-blue-200 shadow-sm p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="font-semibold text-base mb-1">
+                  {plan === SubscriptionPlan.FREE ? "Team 플랜으로 업그레이드" : "Business 플랜으로 업그레이드"}
+                </h3>
+                <p className="text-sm text-slate-600">
+                  {plan === SubscriptionPlan.FREE
+                    ? "팀원 공유 재고, 구매 요청 워크플로우 등 협업 기능을 사용하세요."
+                    : "무제한 멤버, 전자결재 승인 라인, 예산 통합 관리 등 조직 운영 기능을 사용하세요."}
+                </p>
+              </div>
+              <Button
+                onClick={() => handleUpgrade(
+                  plan === SubscriptionPlan.FREE 
+                    ? SubscriptionPlan.TEAM 
+                    : SubscriptionPlan.ORGANIZATION
+                )}
+                disabled={isUpgrading}
+                size="sm"
+              >
+                {isUpgrading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "업그레이드"
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
-    </div>
+    </DashboardShell>
   );
 }
 

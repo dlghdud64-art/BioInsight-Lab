@@ -21,10 +21,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 // §self-shell-header — 대시보드 화면에 공개 마케팅 헤더를 쓰면
 // (a) 로그인 상태에서도 "로그인 / 무료로 시작하기" 가 뜨고
 // (b) 그 헤더가 `fixed h-14` 라 페이지 제목을 덮는다.
-// DashboardHeader 는 `sticky` 라 자기 자리를 차지한다 (호영님 2026-09-07).
-import { DashboardHeader } from "@/components/dashboard/Header";
 import { PageHeader } from "@/app/_components/page-header";
-import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
+import { DashboardShell } from "@/app/dashboard/_components/dashboard-shell";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
 import { useToast } from "@/hooks/use-toast";
 import { OrganizationRole } from "@prisma/client";
@@ -373,348 +371,335 @@ function WorkspaceSettingsPageContent() {
 
   if (status === "loading" || orgsLoading || activeOrgLoading) {
     return (
-      <div className="min-h-screen bg-pg">
-        <DashboardHeader />
+      <DashboardShell>
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
             <p className="text-muted-foreground">로딩 중...</p>
           </div>
         </div>
-      </div>
+      </DashboardShell>
     );
   }
 
   if (organizations.length === 0) {
     return (
-      <div className="min-h-screen bg-pg">
-        <DashboardHeader />
-        <div className="flex">
-          <DashboardSidebar />
-          <div className="flex-1 overflow-auto min-w-0">
-            <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground mb-4">워크스페이스가 없습니다.</p>
-                  <Button onClick={() => router.push("/dashboard/organizations")}>
-                    워크스페이스 생성하기
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+      <DashboardShell>
+        <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground mb-4">워크스페이스가 없습니다.</p>
+              <Button onClick={() => router.push("/dashboard/organizations")}>
+                워크스페이스 생성하기
+              </Button>
+            </CardContent>
+          </Card>
         </div>
-      </div>
+      </DashboardShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-pg">
-      <DashboardHeader />
-      <div className="flex">
-        <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0">
-          <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-            <div className="max-w-4xl mx-auto space-y-6">
-              <div className="flex items-center justify-between">
-                <PageHeader
-                  title="워크스페이스 설정"
-                  description="멤버를 관리하고 초대 링크를 생성합니다."
-                  icon={Building2}
-                  iconColor="text-blue-600"
-                />
-              </div>
+    <DashboardShell>
+      <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <div className="flex items-center justify-between">
+            <PageHeader
+              title="워크스페이스 설정"
+              description="멤버를 관리하고 초대 링크를 생성합니다."
+              icon={Building2}
+              iconColor="text-blue-600"
+            />
+          </div>
 
-              {/* 워크스페이스 선택 */}
+          {/* 워크스페이스 선택 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold">워크스페이스 선택</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <WorkspaceSwitcher
+                currentOrganizationId={effectiveOrgId}
+                onOrganizationChange={setSelectedOrgId}
+                showActions={false}
+              />
+            </CardContent>
+          </Card>
+
+          {currentOrg && (
+            <>
+              {/* 권한 안내 */}
+              {!isAdmin && (
+                <Card className="border-yellow-200 bg-yellow-50">
+                  <CardContent className="pt-6">
+                    <div className="flex items-start gap-3">
+                      <div className="rounded-full bg-yellow-100 p-2">
+                        <Users className="h-4 w-4 text-yellow-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-yellow-900 font-medium">
+                          관리자 권한이 필요합니다
+                        </p>
+                        <p className="text-xs text-yellow-700 mt-1">
+                          멤버 초대 및 워크스페이스 설정은 관리자만 가능합니다.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* 탭 구조 */}
+              {isAdmin && (
+                <Tabs defaultValue="members" className="space-y-4">
+                  <TabsList>
+                    <TabsTrigger value="members">
+                      <Users className="h-4 w-4 mr-2" />
+                      멤버
+                    </TabsTrigger>
+                    <TabsTrigger value="security">
+                      <Shield className="h-4 w-4 mr-2" />
+                      보안
+                    </TabsTrigger>
+                  </TabsList>
+
+                  {/* 멤버 탭 */}
+                  <TabsContent value="members" className="space-y-6">
+                    {/* 멤버 리스트 */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm font-semibold">워크스페이스 선택</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-sm font-semibold">멤버 목록</CardTitle>
+                      <CardDescription className="text-xs mt-1">
+                        현재 {members.length}명의 멤버가 있습니다.
+                      </CardDescription>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <WorkspaceSwitcher
-                    currentOrganizationId={effectiveOrgId}
-                    onOrganizationChange={setSelectedOrgId}
-                    showActions={false}
-                  />
+                  {membersLoading ? (
+                    <div className="text-center py-8 text-sm text-muted-foreground">
+                      로딩 중...
+                    </div>
+                  ) : members.length === 0 ? (
+                    <div className="text-center py-8 text-sm text-muted-foreground">
+                      멤버가 없습니다.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {members.map((member: any) => {
+                        const isCurrentUser = member.userId === session?.user?.id;
+                        const isOwner = member.role === OrganizationRole.OWNER;
+                        const canEdit = isAdmin && !isCurrentUser && !isOwner;
+
+                        return (
+                          <div
+                            key={member.id}
+                            className="flex items-center justify-between p-3 border border-bd rounded-lg hover:bg-pg transition-colors"
+                          >
+                            <div className="flex items-center gap-3 flex-1">
+                              <div className="h-8 w-8 rounded-full bg-el flex items-center justify-center">
+                                <Users className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium">
+                                  {member.user?.name || member.user?.email || "알 수 없음"}
+                                  {isCurrentUser && (
+                                    <span className="text-xs text-muted-foreground ml-2">(나)</span>
+                                  )}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {member.user?.email}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {canEdit ? (
+                                <Select
+                                  value={member.role}
+                                  onValueChange={(value) =>
+                                    handleRoleChange(
+                                      member.id,
+                                      member.user?.name || member.user?.email || "멤버",
+                                      value as OrganizationRole
+                                    )
+                                  }
+                                >
+                                  <SelectTrigger className="w-[140px]">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value={OrganizationRole.ADMIN}>
+                                      admin
+                                    </SelectItem>
+                                    <SelectItem value={OrganizationRole.APPROVER}>
+                                      purchaser
+                                    </SelectItem>
+                                    <SelectItem value={OrganizationRole.REQUESTER}>
+                                      member
+                                    </SelectItem>
+                                    <SelectItem value={OrganizationRole.VIEWER}>
+                                      safety_admin
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              ) : (
+                                <Badge
+                                  variant={
+                                    isOwner
+                                      ? "default"
+                                      : member.role === OrganizationRole.ADMIN
+                                      ? "default"
+                                      : "secondary"
+                                  }
+                                  className={isOwner ? "bg-violet-600 hover:bg-violet-600 text-white border-violet-600" : undefined}
+                                >
+                                  {getRoleLabel(member.role)}
+                                </Badge>
+                              )}
+                              {canEdit ? (
+                                // §11.303-hotfix-e — JSX 주석 sibling 제거 (fragment 없이 인접하면 SWC parser fail, 진짜 root cause).
+                                <ActionMenu
+                                  menuId={`member-${member.id}`}
+                                  currentOpenId={openMemberMenuId}
+                                  onOpenChange={setOpenMemberMenuId}
+                                  items={[
+                                    { label: "멤버 제거", icon: <Trash2 className="h-4 w-4 mr-2" />, onClick: () => handleDeleteMember(member.id, member.user?.name || member.user?.email || "멤버"), danger: true },
+                                  ]}
+                                />
+                              ) : isOwner ? (
+                                <span className="text-[10px] text-slate-400">-</span>
+                              ) : null}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
-              {currentOrg && (
-                <>
-                  {/* 권한 안내 */}
-                  {!isAdmin && (
-                    <Card className="border-yellow-200 bg-yellow-50">
-                      <CardContent className="pt-6">
-                        <div className="flex items-start gap-3">
-                          <div className="rounded-full bg-yellow-100 p-2">
-                            <Users className="h-4 w-4 text-yellow-600" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm text-yellow-900 font-medium">
-                              관리자 권한이 필요합니다
-                            </p>
-                            <p className="text-xs text-yellow-700 mt-1">
-                              멤버 초대 및 워크스페이스 설정은 관리자만 가능합니다.
-                            </p>
-                          </div>
-                        </div>
+                    {/* ── 초대 링크 — §onboarding-blocker #7 로 **UI 미생성** (2026-08-12) ──
+                        수락 화면 `/invite/{token}` 이 **없다**. 그래서 링크를 만들어
+                        공유하면 받는 사람은 404 를 본다. 그런데 관리자에게는
+                        "링크 복사됨" toast 가 떠서 **성공으로 보였다** —
+                        dead link + placeholder success 가 겹친 형태였다.
+
+                        · 버튼·폼을 **만들지 않는다**(disabled 아님 — 미생성)
+                        · API 라우트는 **유지**한다. 생성 절반은 정상 동작하므로
+                          지우면 멀쩡한 절반을 버리고 다시 만들게 된다
+                        · 수락 화면이 생기면 sentinel 단언을 승계해야 이 UI 가
+                          돌아온다 — 그것이 짝을 강제한다
+
+                        ⚠️ 초대를 먼저 살리면 §org-scope-ambiguity 가 발현한다
+                        (다중 소속 데이터가 생기는 순간 orgs[0]·findFirst 오선택).
+                        순서상 그쪽이 먼저다. */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm font-semibold">초대 링크</CardTitle>
+                        <CardDescription className="text-xs mt-1">
+                          초대 받는 화면이 아직 없어 링크 생성을 열어두지 않았습니다.
+                          현재는 조직 관리자가 직접 계정을 만들어야 합니다.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {/* "7일 후 만료" 각주도 함께 제거 — 만들 수 없는 링크의
+                            만료 정책을 안내하는 것은 있는 기능처럼 보이게 한다. */}
+                        <p className="text-xs text-muted-foreground flex items-center gap-2">
+                          <Clock className="h-3 w-3" aria-hidden="true" />
+                          초대 기능은 준비 중입니다 (§onboarding-blocker #7).
+                        </p>
                       </CardContent>
                     </Card>
-                  )}
+                  </TabsContent>
 
-                  {/* 탭 구조 */}
-                  {isAdmin && (
-                    <Tabs defaultValue="members" className="space-y-4">
-                      <TabsList>
-                        <TabsTrigger value="members">
-                          <Users className="h-4 w-4 mr-2" />
-                          멤버
-                        </TabsTrigger>
-                        <TabsTrigger value="security">
-                          <Shield className="h-4 w-4 mr-2" />
-                          보안
-                        </TabsTrigger>
-                      </TabsList>
-
-                      {/* 멤버 탭 */}
-                      <TabsContent value="members" className="space-y-6">
-                        {/* 멤버 리스트 */}
-                  <Card>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle className="text-sm font-semibold">멤버 목록</CardTitle>
-                          <CardDescription className="text-xs mt-1">
-                            현재 {members.length}명의 멤버가 있습니다.
-                          </CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      {membersLoading ? (
-                        <div className="text-center py-8 text-sm text-muted-foreground">
-                          로딩 중...
-                        </div>
-                      ) : members.length === 0 ? (
-                        <div className="text-center py-8 text-sm text-muted-foreground">
-                          멤버가 없습니다.
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {members.map((member: any) => {
-                            const isCurrentUser = member.userId === session?.user?.id;
-                            const isOwner = member.role === OrganizationRole.OWNER;
-                            const canEdit = isAdmin && !isCurrentUser && !isOwner;
-
-                            return (
-                              <div
-                                key={member.id}
-                                className="flex items-center justify-between p-3 border border-bd rounded-lg hover:bg-pg transition-colors"
-                              >
-                                <div className="flex items-center gap-3 flex-1">
-                                  <div className="h-8 w-8 rounded-full bg-el flex items-center justify-center">
-                                    <Users className="h-4 w-4 text-slate-500" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className="text-sm font-medium">
-                                      {member.user?.name || member.user?.email || "알 수 없음"}
-                                      {isCurrentUser && (
-                                        <span className="text-xs text-muted-foreground ml-2">(나)</span>
-                                      )}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                      {member.user?.email}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  {canEdit ? (
-                                    <Select
-                                      value={member.role}
-                                      onValueChange={(value) =>
-                                        handleRoleChange(
-                                          member.id,
-                                          member.user?.name || member.user?.email || "멤버",
-                                          value as OrganizationRole
-                                        )
-                                      }
-                                    >
-                                      <SelectTrigger className="w-[140px]">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value={OrganizationRole.ADMIN}>
-                                          admin
-                                        </SelectItem>
-                                        <SelectItem value={OrganizationRole.APPROVER}>
-                                          purchaser
-                                        </SelectItem>
-                                        <SelectItem value={OrganizationRole.REQUESTER}>
-                                          member
-                                        </SelectItem>
-                                        <SelectItem value={OrganizationRole.VIEWER}>
-                                          safety_admin
-                                        </SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  ) : (
-                                    <Badge
-                                      variant={
-                                        isOwner
-                                          ? "default"
-                                          : member.role === OrganizationRole.ADMIN
-                                          ? "default"
-                                          : "secondary"
-                                      }
-                                      className={isOwner ? "bg-violet-600 hover:bg-violet-600 text-white border-violet-600" : undefined}
-                                    >
-                                      {getRoleLabel(member.role)}
-                                    </Badge>
-                                  )}
-                                  {canEdit ? (
-                                    // §11.303-hotfix-e — JSX 주석 sibling 제거 (fragment 없이 인접하면 SWC parser fail, 진짜 root cause).
-                                    <ActionMenu
-                                      menuId={`member-${member.id}`}
-                                      currentOpenId={openMemberMenuId}
-                                      onOpenChange={setOpenMemberMenuId}
-                                      items={[
-                                        { label: "멤버 제거", icon: <Trash2 className="h-4 w-4 mr-2" />, onClick: () => handleDeleteMember(member.id, member.user?.name || member.user?.email || "멤버"), danger: true },
-                                      ]}
-                                    />
-                                  ) : isOwner ? (
-                                    <span className="text-[10px] text-slate-400">-</span>
-                                  ) : null}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                        {/* ── 초대 링크 — §onboarding-blocker #7 로 **UI 미생성** (2026-08-12) ──
-                            수락 화면 `/invite/{token}` 이 **없다**. 그래서 링크를 만들어
-                            공유하면 받는 사람은 404 를 본다. 그런데 관리자에게는
-                            "링크 복사됨" toast 가 떠서 **성공으로 보였다** —
-                            dead link + placeholder success 가 겹친 형태였다.
-
-                            · 버튼·폼을 **만들지 않는다**(disabled 아님 — 미생성)
-                            · API 라우트는 **유지**한다. 생성 절반은 정상 동작하므로
-                              지우면 멀쩡한 절반을 버리고 다시 만들게 된다
-                            · 수락 화면이 생기면 sentinel 단언을 승계해야 이 UI 가
-                              돌아온다 — 그것이 짝을 강제한다
-
-                            ⚠️ 초대를 먼저 살리면 §org-scope-ambiguity 가 발현한다
-                            (다중 소속 데이터가 생기는 순간 orgs[0]·findFirst 오선택).
-                            순서상 그쪽이 먼저다. */}
-                        <Card>
-                          <CardHeader>
-                            <CardTitle className="text-sm font-semibold">초대 링크</CardTitle>
-                            <CardDescription className="text-xs mt-1">
-                              초대 받는 화면이 아직 없어 링크 생성을 열어두지 않았습니다.
-                              현재는 조직 관리자가 직접 계정을 만들어야 합니다.
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                            {/* "7일 후 만료" 각주도 함께 제거 — 만들 수 없는 링크의
-                                만료 정책을 안내하는 것은 있는 기능처럼 보이게 한다. */}
-                            <p className="text-xs text-muted-foreground flex items-center gap-2">
-                              <Clock className="h-3 w-3" aria-hidden="true" />
-                              초대 기능은 준비 중입니다 (§onboarding-blocker #7).
-                            </p>
-                          </CardContent>
-                        </Card>
-                      </TabsContent>
-
-                      {/* 보안 탭 */}
-                      <TabsContent value="security" className="space-y-6">
-                        <Card>
-                          <CardHeader>
-                            <CardTitle className="text-sm font-semibold">허용된 이메일 도메인</CardTitle>
-                            <CardDescription className="text-xs mt-1">
-                              회사 이메일 도메인만 허용하도록 설정할 수 있습니다.
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                              <div className="flex items-start gap-3">
-                                <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                                <div className="flex-1">
-                                  <p className="text-sm text-blue-900 font-medium mb-1">
-                                    이메일 도메인 제한
-                                  </p>
-                                  <p className="text-xs text-blue-700">
-                                    지정된 도메인의 이메일 주소만 워크스페이스에 초대할 수 있습니다.
-                                    예: example.com을 추가하면 user@example.com만 허용됩니다.
-                                  </p>
-                                </div>
-                              </div>
+                  {/* 보안 탭 */}
+                  <TabsContent value="security" className="space-y-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm font-semibold">허용된 이메일 도메인</CardTitle>
+                        <CardDescription className="text-xs mt-1">
+                          회사 이메일 도메인만 허용하도록 설정할 수 있습니다.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <div className="flex items-start gap-3">
+                            <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1">
+                              <p className="text-sm text-blue-900 font-medium mb-1">
+                                이메일 도메인 제한
+                              </p>
+                              <p className="text-xs text-blue-700">
+                                지정된 도메인의 이메일 주소만 워크스페이스에 초대할 수 있습니다.
+                                예: example.com을 추가하면 user@example.com만 허용됩니다.
+                              </p>
                             </div>
+                          </div>
+                        </div>
 
-                            {/* 도메인 입력 */}
-                            <div className="flex gap-2">
-                              <Input
-                                placeholder="example.com"
-                                value={domainInput}
-                                onChange={(e) => setDomainInput(e.target.value)}
-                                onKeyPress={handleKeyPress}
-                                className="flex-1"
-                              />
-                              <Button
-                                onClick={addDomain}
-                                disabled={saveSecurityMutation.isPending || !domainInput.trim()}
+                        {/* 도메인 입력 */}
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="example.com"
+                            value={domainInput}
+                            onChange={(e) => setDomainInput(e.target.value)}
+                            onKeyPress={handleKeyPress}
+                            className="flex-1"
+                          />
+                          <Button
+                            onClick={addDomain}
+                            disabled={saveSecurityMutation.isPending || !domainInput.trim()}
+                          >
+                            <Mail className="h-4 w-4 mr-2" />
+                            추가
+                          </Button>
+                        </div>
+
+                        {/* 도메인 목록 */}
+                        {securityLoading ? (
+                          <div className="text-center py-4 text-sm text-muted-foreground">
+                            로딩 중...
+                          </div>
+                        ) : allowedDomains.length === 0 ? (
+                          <div className="text-center py-8 text-sm text-muted-foreground border border-dashed border-bd rounded-lg">
+                            <Mail className="h-8 w-8 mx-auto mb-2 text-slate-400" />
+                            <p>허용된 도메인이 없습니다.</p>
+                            <p className="text-xs mt-1">모든 이메일 도메인이 허용됩니다.</p>
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {allowedDomains.map((domain: string) => (
+                              <Badge
+                                key={domain}
+                                variant="secondary"
+                                className="px-3 py-1 text-sm flex items-center gap-2"
                               >
-                                <Mail className="h-4 w-4 mr-2" />
-                                추가
-                              </Button>
-                            </div>
-
-                            {/* 도메인 목록 */}
-                            {securityLoading ? (
-                              <div className="text-center py-4 text-sm text-muted-foreground">
-                                로딩 중...
-                              </div>
-                            ) : allowedDomains.length === 0 ? (
-                              <div className="text-center py-8 text-sm text-muted-foreground border border-dashed border-bd rounded-lg">
-                                <Mail className="h-8 w-8 mx-auto mb-2 text-slate-400" />
-                                <p>허용된 도메인이 없습니다.</p>
-                                <p className="text-xs mt-1">모든 이메일 도메인이 허용됩니다.</p>
-                              </div>
-                            ) : (
-                              <div className="flex flex-wrap gap-2">
-                                {allowedDomains.map((domain: string) => (
-                                  <Badge
-                                    key={domain}
-                                    variant="secondary"
-                                    className="px-3 py-1 text-sm flex items-center gap-2"
-                                  >
-                                    <span>{domain}</span>
-                                    {/* §11.270 — settings X button 44x44 touch
-                                        target (§11.266 family 확장). min-h-[44px]
-                                        + min-w-[44px] + inline-flex items-center
-                                        justify-center 추가. X icon h-3 w-3 보존
-                                        (visual size). hover/rounded-full/p-0.5 보존. */}
-                                    <button
-                                      onClick={() => removeDomain(domain)}
-                                      className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] hover:bg-slate-200 rounded-full p-0.5 transition-colors"
-                                      aria-label={`${domain} 제거`}
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </button>
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      </TabsContent>
-                    </Tabs>
-                  )}
-                </>
+                                <span>{domain}</span>
+                                {/* §11.270 — settings X button 44x44 touch
+                                    target (§11.266 family 확장). min-h-[44px]
+                                    + min-w-[44px] + inline-flex items-center
+                                    justify-center 추가. X icon h-3 w-3 보존
+                                    (visual size). hover/rounded-full/p-0.5 보존. */}
+                                <button
+                                  onClick={() => removeDomain(domain)}
+                                  className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] hover:bg-slate-200 rounded-full p-0.5 transition-colors"
+                                  aria-label={`${domain} 제거`}
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </Tabs>
               )}
-            </div>
-          </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -742,7 +727,7 @@ function WorkspaceSettingsPageContent() {
         variant={confirmDialog.type === "delete" ? "destructive" : "default"}
         onConfirm={confirmAction}
       />
-    </div>
+    </DashboardShell>
   );
 }
 

@@ -29,7 +29,11 @@ const WEB_ROOT = join(__dirname, "..", "..", "..");
 /** 공개 마케팅 셸 — 비로그인 방문자용 헤더/푸터. */
 const MARKETING_SHELL = ["MainHeader", "MainFooter"] as const;
 /** 로그인 후 앱 셸 — 사이드바·대시보드 헤더. */
-const DASHBOARD_SHELL = ["DashboardSidebar", "DashboardHeader"] as const;
+/* 승계 (2026-09-07, §self-shell-zero): 부품 2개에 **셸 컴포넌트 자체**를 더한다.
+ * 8곳이 자체 셸을 버리고 `<DashboardShell>` 을 쓰게 되면서, 부품 이름만 보면
+ * "대시보드 셸을 렌더한다" 를 못 본다 — 이 파일이 처음부터 적어 둔 확장 방식이다
+ * ("새 셸이 생기면 아래 두 배열에 역할만 추가"). 페이지 쪽 단언은 손대지 않았다. */
+const DASHBOARD_SHELL = ["DashboardShell", "DashboardSidebar", "DashboardHeader"] as const;
 
 function pageFiles(): string[] {
   const out: string[] = [];

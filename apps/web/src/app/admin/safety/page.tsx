@@ -38,10 +38,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 // §self-shell-header — 대시보드 화면에 공개 마케팅 헤더를 쓰면
 // (a) 로그인 상태에서도 "로그인 / 무료로 시작하기" 가 뜨고
 // (b) 그 헤더가 `fixed h-14` 라 페이지 제목을 덮는다.
-// DashboardHeader 는 `sticky` 라 자기 자리를 차지한다 (호영님 2026-09-07).
-import { DashboardHeader } from "@/components/dashboard/Header";
 import { PageHeader } from "@/app/_components/page-header";
-import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
+import { DashboardShell } from "@/app/dashboard/_components/dashboard-shell";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
 import { useToast } from "@/hooks/use-toast";
 import { OrganizationRole } from "@prisma/client";
@@ -250,198 +248,185 @@ function SafetyAdminPageContent() {
 
   if (status === "loading" || orgsLoading || activeOrgLoading) {
     return (
-      <div className="min-h-screen bg-pg">
-        <DashboardHeader />
+      <DashboardShell>
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
             <p className="text-muted-foreground">로딩 중...</p>
           </div>
         </div>
-      </div>
+      </DashboardShell>
     );
   }
 
   if (organizations.length === 0) {
     return (
-      <div className="min-h-screen bg-pg">
-        <DashboardHeader />
-        <div className="flex">
-          <DashboardSidebar />
-          <div className="flex-1 overflow-auto min-w-0">
-            <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <p className="text-muted-foreground mb-4">워크스페이스가 없습니다.</p>
-                  <Button onClick={() => router.push("/dashboard/organizations")}>
-                    워크스페이스 생성하기
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+      <DashboardShell>
+        <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+          <Card>
+            <CardContent className="py-12 text-center">
+              <p className="text-muted-foreground mb-4">워크스페이스가 없습니다.</p>
+              <Button onClick={() => router.push("/dashboard/organizations")}>
+                워크스페이스 생성하기
+              </Button>
+            </CardContent>
+          </Card>
         </div>
-      </div>
+      </DashboardShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-pg">
-      <DashboardHeader />
-      <div className="flex">
-        <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0">
-          <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-            <div className="max-w-7xl mx-auto space-y-6">
-              <PageHeader
-                title="안전 관리"
-                description="SDS 문서의 AI 추출 결과를 검토하고 제품에 적용합니다."
-                icon={FileText}
-                iconColor="text-red-600"
+    <DashboardShell>
+      <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <PageHeader
+            title="안전 관리"
+            description="SDS 문서의 AI 추출 결과를 검토하고 제품에 적용합니다."
+            icon={FileText}
+            iconColor="text-red-600"
+          />
+
+          {/* 워크스페이스 선택 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold">워크스페이스 선택</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <WorkspaceSwitcher
+                currentOrganizationId={effectiveOrgId}
+                onOrganizationChange={setSelectedOrgId}
+                showActions={false}
               />
+            </CardContent>
+          </Card>
 
-              {/* 워크스페이스 선택 */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-semibold">워크스페이스 선택</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <WorkspaceSwitcher
-                    currentOrganizationId={effectiveOrgId}
-                    onOrganizationChange={setSelectedOrgId}
-                    showActions={false}
-                  />
-                </CardContent>
-              </Card>
-
-              {currentOrg && (
-                <>
-                  {!isSafetyAdmin ? (
-                    <Card className="border-yellow-200 bg-yellow-50">
-                      <CardContent className="pt-6">
-                        <div className="flex items-start gap-3">
-                          <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
-                          <div className="flex-1">
-                            <p className="text-sm text-yellow-900 font-medium">
-                              안전관리자 권한이 필요합니다
-                            </p>
-                            <p className="text-xs text-yellow-700 mt-1">
-                              이 페이지는 안전관리자(safety_admin) 또는 관리자만 접근할 수 있습니다.
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-sm font-semibold">SDS 문서 목록</CardTitle>
-                        <CardDescription className="text-xs mt-1">
-                          총 {sdsDocuments.length}개의 SDS 문서
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        {sdsLoading ? (
-                          <div className="space-y-2">
-                            {[...Array(5)].map((_, i) => (
-                              <Skeleton key={i} className="h-12 w-full" />
+          {currentOrg && (
+            <>
+              {!isSafetyAdmin ? (
+                <Card className="border-yellow-200 bg-yellow-50">
+                  <CardContent className="pt-6">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm text-yellow-900 font-medium">
+                          안전관리자 권한이 필요합니다
+                        </p>
+                        <p className="text-xs text-yellow-700 mt-1">
+                          이 페이지는 안전관리자(safety_admin) 또는 관리자만 접근할 수 있습니다.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-semibold">SDS 문서 목록</CardTitle>
+                    <CardDescription className="text-xs mt-1">
+                      총 {sdsDocuments.length}개의 SDS 문서
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {sdsLoading ? (
+                      <div className="space-y-2">
+                        {[...Array(5)].map((_, i) => (
+                          <Skeleton key={i} className="h-12 w-full" />
+                        ))}
+                      </div>
+                    ) : sdsDocuments.length === 0 ? (
+                      <div className="text-center py-12">
+                        <FileText className="h-12 w-12 mx-auto text-slate-300 mb-4" />
+                        <p className="text-sm text-muted-foreground">
+                          SDS 문서가 없습니다.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>제품명</TableHead>
+                              <TableHead>파일명</TableHead>
+                              <TableHead>소스</TableHead>
+                              <TableHead>상태</TableHead>
+                              <TableHead>작업</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {sdsDocuments.map((doc: any) => (
+                              <TableRow key={doc.id}>
+                                <TableCell className="font-medium">
+                                  {doc.product?.name || "알 수 없음"}
+                                </TableCell>
+                                <TableCell className="text-sm text-muted-foreground">
+                                  {doc.fileName}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant="secondary">
+                                    {doc.source === "vendor" ? "벤더" : "업로드"}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    {getStatusBadge(doc.extractionStatus)}
+                                    {(doc.extractionStatus === "processing" || doc.extractionStatus === "queued") && (
+                                      <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    {!doc.extractionStatus || doc.extractionStatus === "failed" ? (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => handleStartExtraction(doc.id)}
+                                        disabled={startExtractionMutation.isPending}
+                                      >
+                                        <Sparkles className="h-3 w-3 mr-1" />
+                                        AI 추출
+                                      </Button>
+                                    ) : doc.extractionStatus === "queued" || doc.extractionStatus === "processing" ? (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => handleCancelExtraction(doc.id)}
+                                        disabled={cancelExtractionMutation.isPending}
+                                      >
+                                        <X className="h-3 w-3 mr-1" />
+                                        취소
+                                      </Button>
+                                    ) : doc.extractionStatus === "done" ? (
+                                      <Sheet>
+                                        <SheetTrigger asChild>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => setSelectedSdsId(doc.id)}
+                                          >
+                                            <FileText className="h-3 w-3 mr-1" />
+                                            결과 보기
+                                          </Button>
+                                        </SheetTrigger>
+                                        <ExtractionResultSheet
+                                          sdsDocument={doc}
+                                          onApply={handleApplyExtraction}
+                                        />
+                                      </Sheet>
+                                    ) : null}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
                             ))}
-                          </div>
-                        ) : sdsDocuments.length === 0 ? (
-                          <div className="text-center py-12">
-                            <FileText className="h-12 w-12 mx-auto text-slate-300 mb-4" />
-                            <p className="text-sm text-muted-foreground">
-                              SDS 문서가 없습니다.
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="overflow-x-auto">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>제품명</TableHead>
-                                  <TableHead>파일명</TableHead>
-                                  <TableHead>소스</TableHead>
-                                  <TableHead>상태</TableHead>
-                                  <TableHead>작업</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {sdsDocuments.map((doc: any) => (
-                                  <TableRow key={doc.id}>
-                                    <TableCell className="font-medium">
-                                      {doc.product?.name || "알 수 없음"}
-                                    </TableCell>
-                                    <TableCell className="text-sm text-muted-foreground">
-                                      {doc.fileName}
-                                    </TableCell>
-                                    <TableCell>
-                                      <Badge variant="secondary">
-                                        {doc.source === "vendor" ? "벤더" : "업로드"}
-                                      </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                      <div className="flex items-center gap-2">
-                                        {getStatusBadge(doc.extractionStatus)}
-                                        {(doc.extractionStatus === "processing" || doc.extractionStatus === "queued") && (
-                                          <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
-                                        )}
-                                      </div>
-                                    </TableCell>
-                                    <TableCell>
-                                      <div className="flex items-center gap-2">
-                                        {!doc.extractionStatus || doc.extractionStatus === "failed" ? (
-                                          <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => handleStartExtraction(doc.id)}
-                                            disabled={startExtractionMutation.isPending}
-                                          >
-                                            <Sparkles className="h-3 w-3 mr-1" />
-                                            AI 추출
-                                          </Button>
-                                        ) : doc.extractionStatus === "queued" || doc.extractionStatus === "processing" ? (
-                                          <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => handleCancelExtraction(doc.id)}
-                                            disabled={cancelExtractionMutation.isPending}
-                                          >
-                                            <X className="h-3 w-3 mr-1" />
-                                            취소
-                                          </Button>
-                                        ) : doc.extractionStatus === "done" ? (
-                                          <Sheet>
-                                            <SheetTrigger asChild>
-                                              <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => setSelectedSdsId(doc.id)}
-                                              >
-                                                <FileText className="h-3 w-3 mr-1" />
-                                                결과 보기
-                                              </Button>
-                                            </SheetTrigger>
-                                            <ExtractionResultSheet
-                                              sdsDocument={doc}
-                                              onApply={handleApplyExtraction}
-                                            />
-                                          </Sheet>
-                                        ) : null}
-                                      </div>
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  )}
-                </>
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               )}
-            </div>
-          </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -467,7 +452,7 @@ function SafetyAdminPageContent() {
         variant="default"
         onConfirm={confirmApply}
       />
-    </div>
+    </DashboardShell>
   );
 }
 
