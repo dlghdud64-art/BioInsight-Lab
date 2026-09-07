@@ -8,6 +8,9 @@
  */
 
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+// §plan-change-claim (호영님 2026-09-06, (가)) — 상태·청구를 한 벌로 만드는 단일 정본.
+//   🛑 형제 슬롯 전수 훑기(CLAUDE.md): 같은 결함이 이 경로에도 있었다.
+import { buildPlanChangeClaim } from "@/lib/billing/plan-change-claim";
 import {
   resolveActiveOrganizationId,
   resolveOrganizationIdForMutation,
@@ -303,12 +306,31 @@ export async function POST(request: NextRequest) {
       const now = new Date();
       const periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
+      /* §plan-change-claim (호영님 2026-09-06, (가)) — 이 경로도 결제를 받지 않는다.
+       * PG 호출이 없고 `PaymentMethod` 도 0행이다. 그런데 이전 판본은
+       * `status: "active"` + `Invoice{status:"PAID", amountPaid: 가격, paidAt: now}` 를 썼다 —
+       * **"결제 완료" 를 canonical 에 지어내고 있었다.** 미수보다 무거운 거짓이다.
+       * 🛑 `/api/organizations/[id]/subscription` 만 고치고 이 형제 슬롯을 놓쳤다(2026-09-07 적발).
+       *   두 경로가 같은 정본을 쓰게 해서 다시 갈라지지 않게 한다. */
+      const billingInfo = await db.billingInfo.findUnique({
+        where: { organizationId: membership.organization.id },
+        select: { businessNumber: true, taxInvoiceEmail: true },
+      });
+      const claim = buildPlanChangeClaim({
+        plan: plan as SubscriptionPlan,
+        periodMonths: 1,
+        planLabel: planInfo.name,
+        billingInfo,
+        periodStart: now,
+        periodEnd,
+      });
+
       // 구독 업데이트 또는 생성
       const subscription = await db.subscription.upsert({
         where: { organizationId: membership.organization.id },
         update: {
           plan: plan as any,
-          status: "active",
+          status: claim.subscriptionStatus,
           currentPeriodStart: now,
           currentPeriodEnd: periodEnd,
           maxSeats: planInfo.maxSeats,
@@ -316,7 +338,7 @@ export async function POST(request: NextRequest) {
         create: {
           organizationId: membership.organization.id,
           plan: plan as any,
-          status: "active",
+          status: claim.subscriptionStatus,
           currentPeriodStart: now,
           currentPeriodEnd: periodEnd,
           currentSeats: 1,
@@ -343,28 +365,23 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // 인보이스 생성 (유료 플랜인 경우)
-      if (planInfo.price && planInfo.price > 0) {
+      /* 미수 청구서. 🛑 `PAID` 를 쓰지 않는다 — 수금이 일어난 적이 없다.
+       * 발행 배선(`taxInvoiceEmail` 소비처)도 0이라 번호도 붙이지 않는다. */
+      if (claim.invoice) {
         await db.invoice.create({
           data: {
             subscriptionId: subscription.id,
-            number: `INV-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${Date.now().toString().slice(-4)}`,
-            status: "PAID",
-            amountDue: planInfo.price,
-            amountPaid: planInfo.price,
-            currency: "KRW",
-            periodStart: now,
-            periodEnd: periodEnd,
-            paidAt: now,
-            description: `${planInfo.name} 플랜 구독`,
-            lineItems: [
-              {
-                description: `${planInfo.name} 플랜 (월간)`,
-                quantity: 1,
-                unitPrice: planInfo.price,
-                amount: planInfo.price,
-              },
-            ],
+            number: claim.invoice.number,
+            status: claim.invoice.status,
+            amountDue: claim.invoice.amountDue,
+            amountPaid: claim.invoice.amountPaid,
+            currency: claim.invoice.currency,
+            periodStart: claim.invoice.periodStart,
+            periodEnd: claim.invoice.periodEnd,
+            dueDate: claim.invoice.dueDate,
+            paidAt: claim.invoice.paidAt,
+            description: claim.invoice.description,
+            lineItems: claim.invoice.lineItems,
           },
         });
       }

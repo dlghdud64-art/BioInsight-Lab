@@ -38,9 +38,16 @@ const ROUTE = "src/app/api/organizations/[id]/subscription/route.ts";
 function postBlock(src: string): string {
   const start = src.indexOf("export async function POST(");
   expect(start).toBeGreaterThan(-1);
-  const end = src.indexOf("\n}", src.indexOf("} catch (error: any) {", start));
-  return src.slice(start, end === -1 ? src.length : end);
+  return src.slice(start);
 }
+
+/* 🛑 축은 **플랜을 쓰는 경로 전량**이다. 한 곳만 잠그면 형제 슬롯이 갈라진다.
+ *   2026-09-07 실측: `/api/organizations/[id]/subscription` 만 고쳤더니
+ *   `/api/billing` POST 가 `status:"PAID"` · `amountPaid: 가격` · `paidAt: now` 로
+ *   **결제 완료를 지어내고** 있었다 — 미수보다 무거운 거짓이다.
+ *   CLAUDE.md "형태를 하나 고쳤으면 같은 창의 형제 슬롯을 전수 훑는다" 위반이었고,
+ *   그 누락을 다음에도 잡으려면 **검사 축부터** 전량이어야 한다. */
+const BILLING_ROUTE = "src/app/api/billing/route.ts";
 
 const PERIOD_START = new Date("2026-09-06T00:00:00.000Z");
 const PERIOD_END = new Date("2026-10-06T00:00:00.000Z");
@@ -207,5 +214,42 @@ describe("§plan-change-claim — 어제 판정과 충돌하지 않는다 (회�
   it("이 경로는 여전히 PG 를 부르지 않는다 (형태 유지)", () => {
     const post = stripComments(postBlock(read(ROUTE)));
     expect(post).not.toMatch(/stripe|Stripe|tosspayments|PortOne|iamport/);
+  });
+});
+
+describe("§plan-change-claim — 플랜 쓰기 경로 **전량** (형제 슬롯)", () => {
+  /* 두 경로 다 결제를 받지 않는다. 한쪽만 정직하면 다른 쪽으로 거짓이 되살아난다. */
+  const ROUTES = [ROUTE, BILLING_ROUTE];
+
+  it("🛑 어느 경로도 결제 완료를 지어내지 않는다 (PAID · paidAt · amountPaid 위조 0)", () => {
+    for (const rel of ROUTES) {
+      const post = stripComments(postBlock(read(rel)));
+      expect(`${rel}: ${/status:\s*"PAID"/.test(post)}`).toBe(`${rel}: false`);
+      expect(`${rel}: ${/paidAt:\s*now/.test(post)}`).toBe(`${rel}: false`);
+      expect(`${rel}: ${/amountPaid:\s*planInfo\.price/.test(post)}`).toBe(`${rel}: false`);
+    }
+  });
+
+  it('🛑 어느 경로도 status 를 "active" 로 고정하지 않는다', () => {
+    for (const rel of ROUTES) {
+      const post = stripComments(postBlock(read(rel)));
+      expect(`${rel}: ${/status:\s*"active"/.test(post)}`).toBe(`${rel}: false`);
+    }
+  });
+
+  it("두 경로가 **같은 정본**을 쓴다 (다시 갈라지지 않게)", () => {
+    for (const rel of ROUTES) {
+      const post = stripComments(postBlock(read(rel)));
+      expect(`${rel}: ${/buildPlanChangeClaim\(/.test(post)}`).toBe(`${rel}: true`);
+      expect(`${rel}: ${/status:\s*claim\.subscriptionStatus/.test(post)}`).toBe(`${rel}: true`);
+      expect(`${rel}: ${/db\.billingInfo\.findUnique/.test(post)}`).toBe(`${rel}: true`);
+    }
+  });
+
+  it("🛑 청구서 번호를 지어내지 않는다 (번호는 발행의 표지)", () => {
+    for (const rel of ROUTES) {
+      const post = stripComments(postBlock(read(rel)));
+      expect(`${rel}: ${/number:\s*`INV-/.test(post)}`).toBe(`${rel}: false`);
+    }
   });
 });
