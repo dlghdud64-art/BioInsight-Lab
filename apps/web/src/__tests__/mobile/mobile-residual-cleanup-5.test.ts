@@ -157,11 +157,28 @@ describe("1e — 멤버 초대 역할 = 인라인 listbox (포털 0)", () => {
     expect(src).toMatch(/"Enter"/);
     expect(src).toMatch(/"Escape"/);
     expect(src).toMatch(/bg-\[#eff6ff\]/); // 선택 행
-    expect(src).not.toMatch(/@radix-ui|Portal|position: "fixed"/);
+    // 금지 대상은 Radix **사용**(import)과 포털 렌더 — 설명 주석의 Radix 언급은 허용.
+    expect(src).not.toMatch(/from "@radix-ui|createPortal|position: "fixed"/);
+    // Radix 는 Esc 를 document 캡처로 듣는다 → 버블에서 stopPropagation 하면 늦다(모달 전체가 닫힘).
+    // 취소는 호출부 onEscapeKeyDown 담당이므로 여기엔 stopPropagation 이 없어야 한다.
+    expect(src).not.toMatch(/\.stopPropagation\(\)/); // 호출 부재(설명 주석은 허용 — 재유입 방지용)
+    expect(src).toMatch(/onOpenChange\?\.\(next\)/); // 패널 상태를 호출부에 통지
+  });
+
+  it("Esc = 패널만 닫힘 — 초대 모달이 dismiss 를 취소한다", () => {
+    const src = read(ORG);
+    expect(src).toMatch(/const \[inviteRoleOpen, setInviteRoleOpen\] = useState\(false\)/);
+    expect(src).toMatch(/onOpenChange=\{setInviteRoleOpen\}/);
+    expect(src).toMatch(/onEscapeKeyDown=\{\(e\) => \{[\s\S]{0,200}if \(inviteRoleOpen\) e\.preventDefault\(\);/);
+    expect(src).toMatch(/if \(!o\) setInviteRoleOpen\(false\)/); // 모달 닫힘 시 잔상 0
   });
   it("초대 모달 — Select 포털 제거 → InlineSelect 4역할(색 점 + 설명)", () => {
     const src = read(ORG);
-    const start = src.indexOf("<Dialog open={inviteModalOpen}");
+    // 창은 블록으로 — 여는 태그가 한 줄/여러 줄 어느 쪽이든 열리게 `<Dialog` 로 되짚는다
+    // (CLAUDE.md 정규식 4원칙 ②·⑤: 창 시작점은 여는 태그, 고정 문구 슬라이스 금지)
+    const openAt = src.indexOf("open={inviteModalOpen}");
+    expect(openAt).toBeGreaterThan(-1);
+    const start = src.lastIndexOf("<Dialog", openAt);
     const block = src.slice(start, src.indexOf("초대 링크 만들기", start));
     expect(block).toMatch(/InlineSelect/);
     expect(block).not.toMatch(/<SelectContent/);

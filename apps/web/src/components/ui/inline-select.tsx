@@ -10,6 +10,12 @@
  * 옵션 = 색 점(dotClass) + 이름 + 설명 1줄 + 선택 행 #eff6ff + ✓ (전역 드롭다운 토큰).
  * a11y: 트리거 aria-haspopup="listbox"/aria-expanded, 패널 role="listbox", 항목 role="option"
  *   /aria-selected, 키보드 ↑↓ 이동 · Enter 선택 · Esc 닫기. 외부 클릭 닫기.
+ *
+ * ⚠️ Esc 는 여기서 끝나지 않는다. Radix DismissableLayer 는 Esc 를 document **캡처 단계**로
+ *   듣기 때문에(@radix-ui/react-use-escape-keydown: capture:true) React 버블 핸들러의
+ *   stopPropagation 은 항상 늦다 — 패널만 닫으려면 Dialog/Sheet 쪽에서
+ *   `onEscapeKeyDown={(e) => { if (열림) e.preventDefault(); }}` 로 dismiss 를 취소해야 한다.
+ *   그래서 패널 open 상태를 onOpenChange 로 바깥에 알린다(호출부가 취소 조건을 안다).
  */
 
 import { useEffect, useId, useRef, useState } from "react";
@@ -29,6 +35,8 @@ export interface InlineSelectProps<V extends string = string> {
   onChange: (value: V) => void;
   options: ReadonlyArray<InlineSelectOption<V>>;
   disabled?: boolean;
+  /** 패널 열림/닫힘 알림 — 호출부가 Dialog onEscapeKeyDown 취소 조건으로 사용 */
+  onOpenChange?: (open: boolean) => void;
   id?: string;
   /** 트리거 aria-label(라벨 요소가 없을 때) */
   ariaLabel?: string;
@@ -40,6 +48,7 @@ export function InlineSelect<V extends string = string>({
   onChange,
   options,
   disabled,
+  onOpenChange,
   id,
   ariaLabel,
   className,
@@ -51,6 +60,12 @@ export function InlineSelect<V extends string = string>({
   const listId = useId();
   const selected = options[selectedIdx];
 
+  // 열림 상태는 컴포넌트 소유 + 호출부 통지(단일 경로 — 직접 setOpen 호출 금지).
+  const setPanel = (next: boolean) => {
+    setOpen(next);
+    onOpenChange?.(next);
+  };
+
   // 열릴 때 하이라이트 = 현재 선택
   useEffect(() => {
     if (open) setHighlight(selectedIdx);
@@ -60,7 +75,7 @@ export function InlineSelect<V extends string = string>({
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent | TouchEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setPanel(false);
     };
     document.addEventListener("mousedown", onDown);
     document.addEventListener("touchstart", onDown);
@@ -74,7 +89,7 @@ export function InlineSelect<V extends string = string>({
     const opt = options[idx];
     if (!opt) return;
     onChange(opt.value);
-    setOpen(false);
+    setPanel(false);
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -82,25 +97,26 @@ export function InlineSelect<V extends string = string>({
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault();
-        if (!open) setOpen(true);
+        if (!open) setPanel(true);
         else setHighlight((h) => Math.min(options.length - 1, h + 1));
         break;
       case "ArrowUp":
         e.preventDefault();
-        if (!open) setOpen(true);
+        if (!open) setPanel(true);
         else setHighlight((h) => Math.max(0, h - 1));
         break;
       case "Enter":
       case " ":
         e.preventDefault();
-        if (!open) setOpen(true);
+        if (!open) setPanel(true);
         else commit(highlight);
         break;
       case "Escape":
+        // 패널만 닫는다. Dialog/Sheet 자체의 dismiss 취소는 호출부의 onEscapeKeyDown 담당
+        // (Radix 는 캡처 단계라 여기서 stopPropagation 해도 이미 늦다).
         if (open) {
           e.preventDefault();
-          e.stopPropagation(); // 시트/Dialog Esc 닫힘보다 패널 닫힘 우선
-          setOpen(false);
+          setPanel(false);
         }
         break;
       default:
@@ -118,7 +134,7 @@ export function InlineSelect<V extends string = string>({
         aria-expanded={open}
         aria-controls={open ? listId : undefined}
         aria-label={ariaLabel}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => setPanel(!open)}
         className={cn(
           "flex h-11 w-full items-center gap-2.5 rounded-xl border bg-white px-3 text-left text-sm text-slate-900 transition-colors touch-manipulation disabled:opacity-50",
           open ? "border-blue-600 shadow-[0_0_0_3px_rgba(37,99,235,.1)]" : "border-slate-200",

@@ -191,6 +191,10 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   >(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("VIEWER");
+  // §mobile-residual-5 1e — 역할 인라인 패널 열림 상태. Radix 는 Esc 를 document 캡처로 듣기
+  //   때문에, 패널이 열린 동안에는 DialogContent onEscapeKeyDown 에서 dismiss 를 취소해야
+  //   Esc 가 "패널만 닫힘" 이 된다(취소 안 하면 초대 모달 전체가 닫힘).
+  const [inviteRoleOpen, setInviteRoleOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [permissionDialogOpen, setPermissionDialogOpen] = useState(false);
   const [permissionDialogMember, setPermissionDialogMember] = useState<TeamMemberRow | null>(null);
@@ -1813,8 +1817,20 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
         </DialogContent>
       </Dialog>
 
-      <Dialog open={inviteModalOpen} onOpenChange={setInviteModalOpen}>
-        <DialogContent className="sm:max-w-[480px] bg-white border-slate-200">
+      <Dialog
+        open={inviteModalOpen}
+        onOpenChange={(o) => {
+          setInviteModalOpen(o);
+          if (!o) setInviteRoleOpen(false); // 모달이 닫히면 패널 상태도 초기화(다음 Esc 가 먹히지 않는 잔상 방지)
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-[480px] bg-white border-slate-200"
+          onEscapeKeyDown={(e) => {
+            // 역할 패널이 열려 있으면 Esc = 패널만 닫힘(모달 유지). InlineSelect 가 버블에서 자기 상태를 닫는다.
+            if (inviteRoleOpen) e.preventDefault();
+          }}
+        >
           <DialogHeader>
             <DialogTitle className="text-slate-900">멤버 초대</DialogTitle>
             <DialogDescription className="text-slate-500">
@@ -1855,6 +1871,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                   id="invite-role"
                   value={inviteRole}
                   onChange={setInviteRole}
+                  onOpenChange={setInviteRoleOpen}
                   options={INVITE_ROLE_OPTIONS}
                 />
               </div>
