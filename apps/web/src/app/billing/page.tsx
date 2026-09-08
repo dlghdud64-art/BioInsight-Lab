@@ -42,7 +42,10 @@ import { DashboardShell } from "@/app/dashboard/_components/dashboard-shell";
 import { PageHeader } from "@/app/_components/page-header";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { resolveInvoiceStatusLabel } from "@/lib/billing/plan-change-claim";
+import {
+  resolveInvoiceStatusLabel,
+  summarizeOutstanding,
+} from "@/lib/billing/plan-change-claim";
 
 // 플랜 타입
 type PlanType = "FREE" | "TEAM" | "ORGANIZATION";
@@ -306,8 +309,15 @@ function BillingPageContent() {
                             즉 업그레이드하는 순간 **없는 결제일**이 화면에 뜬다.
                             ⏳ 파생원(`currentPeriodEnd`)은 **지우지 않는다** — 결제가 배선되면
                             진짜 결제일이 된다. 표시만 바꾼다(checkout-utils 때와 같은 판단). */}
+                        {/* 🛑 2026-09-07 — 문구를 **데이터에서 파생**시킨다.
+                            이전 판본은 `결제 연동 준비 중 · 청구 없음` 을 하드코딩했다.
+                            `Invoice` 가 전역 0행이던 동안은 우연히 참이었지만,
+                            §plan-change-claim 보정으로 미수 89,000원(DRAFT)이 생기자
+                            바로 아래 청구 내역 탭은 `미발행 · 미수 89,000원`, 여기는
+                            `청구 없음` — **한 화면이 한 사실을 두 값으로** 말했다.
+                            `/dashboard/billing` 목업에서 걷어낸 것과 같은 형태다. */}
                         {subscription?.currentPeriodEnd && (
-                          <>결제 연동 준비 중 · 청구 없음</>
+                          <>{summarizeOutstanding(invoices).text}</>
                         )}
                       </CardDescription>
                     </div>

@@ -89,6 +89,61 @@ export function resolveInvoiceStatusLabel(status: string | null | undefined): st
   return INVOICE_STATUS_LABELS[status] ?? status;
 }
 
+/** 화면이 미수 상태를 말할 때 쓰는 최소 형태. 숫자만이 아니라 **발행 여부**도 함께 온다. */
+export interface OutstandingSummary {
+  /** 아직 수금되지 않은 합계(원). 0이면 청구할 것이 없다. */
+  amount: number;
+  /** 미수 건이 **전부 미발행(DRAFT)** 인가. 하나라도 발행됐으면 false. */
+  allUnissued: boolean;
+  /** 사람이 읽는 한 줄. 값과 근거를 함께 싣는다. */
+  text: string;
+}
+
+export interface OutstandingInvoiceLike {
+  status?: string | null;
+  amountDue?: number | null;
+  amountPaid?: number | null;
+}
+
+/**
+ * 청구 내역에서 **미수 상태를 파생**한다.
+ *
+ * 🛑 왜 파생인가: `billing/page.tsx` 개요 카드가 `결제 연동 준비 중 · 청구 없음` 을
+ *   **하드코딩**하고 있었다. `Invoice` 가 전역 0행이던 동안은 우연히 참이었지만,
+ *   2026-09-07 §plan-change-claim 보정으로 T1 에 미수 89,000원(DRAFT)이 생기자
+ *   **같은 화면**의 청구 내역 탭은 `미발행 · 미수 89,000원`, 개요 카드는 `청구 없음` 이
+ *   됐다. 한 화면이 한 사실을 두 값으로 말한 것이다 —
+ *   오늘 `/dashboard/billing` 목업에서 걷어낸 것과 같은 형태다.
+ *
+ * 🔑 그래서 문구를 고치는 게 아니라 **데이터에서 파생**시킨다. 값이 바뀌면 문구도 따라간다.
+ *
+ * ⚠️ `CheckoutDialog` 의 `연동 준비 중 · 청구 없음` 은 **여전히 참이라 건드리지 않는다.**
+ *   그건 "이 변경으로 과금되지 않는다" 는 뜻이고, 실제로 결제도 발행도 일어나지 않는다
+ *   (§checkout-two-paths 가 그 문구를 잠그고 있다). 여기는 **현재 청구 상태**를 말하는
+ *   자리라 축이 다르다.
+ */
+export function summarizeOutstanding(
+  invoices: readonly OutstandingInvoiceLike[] | null | undefined,
+): OutstandingSummary {
+  const open = (invoices ?? []).filter(
+    (i) => i.status === CLAIM_INVOICE_STATUS.DRAFT || i.status === "OPEN",
+  );
+  const amount = open.reduce(
+    (sum, i) => sum + Math.max(0, (i.amountDue ?? 0) - (i.amountPaid ?? 0)),
+    0,
+  );
+  const allUnissued = open.length > 0 && open.every((i) => i.status === CLAIM_INVOICE_STATUS.DRAFT);
+  if (amount <= 0) {
+    /* 청구할 것이 없을 때만 "청구 없음" 이라고 말한다. */
+    return { amount: 0, allUnissued: true, text: "결제 연동 준비 중 · 청구 없음" };
+  }
+  return {
+    amount,
+    allUnissued,
+    text: `미수 ${amount.toLocaleString("ko-KR")}원${allUnissued ? " · 미발행" : ""}`,
+  };
+}
+
 /** 세금계산서 발행에 반드시 필요한 항목. 없으면 발행했다고 말할 수 없다. */
 export const ISSUANCE_REQUIRED_FIELDS = [
   "businessNumber",

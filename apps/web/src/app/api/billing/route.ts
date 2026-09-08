@@ -11,6 +11,8 @@ import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-en
 // §plan-change-claim (호영님 2026-09-06, (가)) — 상태·청구를 한 벌로 만드는 단일 정본.
 //   🛑 형제 슬롯 전수 훑기(CLAUDE.md): 같은 결함이 이 경로에도 있었다.
 import { buildPlanChangeClaim } from "@/lib/billing/plan-change-claim";
+// §invite-flow 좌석 정본 — 화면 게이지와 초대 게이트가 같은 수를 쓴다.
+import { assertSeatAvailable } from "@/lib/organizations/seats";
 import {
   resolveActiveOrganizationId,
   resolveOrganizationIdForMutation,
@@ -157,11 +159,16 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const membersCount = membership?.organization
-      ? await db.organizationMember.count({
-          where: { organizationId: membership.organization.id },
-        })
-      : 1;
+    /* §invite-flow 좌석 정본 (2026-09-07) — **게이트와 같은 수를 쓴다.**
+     * 🛑 이전 판본은 `organizationMember.count` 만 셌다. 그런데 초대를 막는 정본
+     *   `assertSeatAvailable` 은 **멤버 + pending 초대**를 센다(lib/organizations/seats.ts).
+     *   pending 이 하나라도 있으면 이 화면은 "1/3, 여유 있음" 이라고 말하는데
+     *   실제 초대는 좌석 초과로 막힌다 — 같은 화면의 자기모순이다.
+     *   `87d7941b` 이 조직 상세 페이지에서 닫은 형태가 여기 남아 있었다.
+     * 🔑 한도(limit)도 같은 소스에서 받는다. 둘을 따로 계산하면 다시 갈라진다. */
+    const seat = membership?.organization
+      ? await assertSeatAvailable(membership.organization.id)
+      : null;
 
     // 플랜 타입 확인 및 기본값 설정
     const currentPlan = (subscription?.plan && ["FREE", "TEAM", "ORGANIZATION"].includes(subscription.plan)
@@ -187,8 +194,8 @@ export async function GET(request: NextRequest) {
       usage: {
         quotesUsed: quotesCount,
         quotesLimit: PLAN_INFO[currentPlan].maxQuotesPerMonth,
-        seatsUsed: membersCount,
-        seatsLimit: PLAN_INFO[currentPlan].maxSeats,
+        seatsUsed: seat?.used ?? 1,
+        seatsLimit: seat ? seat.limit : PLAN_INFO[currentPlan].maxSeats,
       },
     });
   } catch (error) {

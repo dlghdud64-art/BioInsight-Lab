@@ -25,6 +25,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
+import { summarizeOutstanding } from "@/lib/billing/plan-change-claim";
 
 const WEB_ROOT = join(__dirname, "..", "..", "..");
 const read = (rel: string) => readFileSync(join(WEB_ROOT, rel), "utf8");
@@ -106,6 +107,48 @@ describe("§billing-surface-unify — 목업 결제 화면 0", () => {
     /* 🛑 지어낸 값이 남아 있지 않다 — 통합 청구·미납 0·결제 완료 문구. */
     expect(code).not.toMatch(/12,450,000/);
     expect(code).not.toMatch(/모두 결제 완료/);
+  });
+
+  it("🛑 개요 카드가 '청구 없음' 을 하드코딩하지 않는다 (데이터에서 파생)", () => {
+    /* 실측 2026-09-07: `Invoice` 가 전역 0행이던 동안은 그 문구가 우연히 참이었다.
+     * §plan-change-claim 보정으로 미수 89,000원(DRAFT)이 생기자 **같은 화면**의
+     * 청구 내역 탭은 `미발행 · 미수 89,000원`, 개요 카드는 `청구 없음` 이 됐다.
+     * 한 화면이 한 사실을 두 값으로 말한 것 — `/dashboard/billing` 목업과 같은 형태다. */
+    const page = stripComments(read("src/app/billing/page.tsx"));
+    expect(page).toMatch(/summarizeOutstanding\(invoices\)\.text/);
+    // 문구를 JSX 에 직접 적어 두지 않는다(주석은 stripComments 가 걷어낸다)
+    expect(page).not.toMatch(/<>결제 연동 준비 중 · 청구 없음<\/>/);
+  });
+
+  it("미수 요약이 0일 때만 '청구 없음' 이라고 말한다", () => {
+    expect(summarizeOutstanding([]).text).toBe("결제 연동 준비 중 · 청구 없음");
+    expect(summarizeOutstanding([{ status: "PAID", amountDue: 89000, amountPaid: 89000 }]).text)
+      .toBe("결제 연동 준비 중 · 청구 없음");
+    // 미수가 있으면 금액과 발행 여부를 함께 말한다
+    const draft = summarizeOutstanding([{ status: "DRAFT", amountDue: 89000, amountPaid: 0 }]);
+    expect(draft.amount).toBe(89000);
+    expect(draft.allUnissued).toBe(true);
+    expect(draft.text).toBe("미수 89,000원 · 미발행");
+    // 발행된 건이 섞이면 '미발행' 을 붙이지 않는다
+    const mixed = summarizeOutstanding([
+      { status: "DRAFT", amountDue: 89000, amountPaid: 0 },
+      { status: "OPEN", amountDue: 10000, amountPaid: 0 },
+    ]);
+    expect(mixed.amount).toBe(99000);
+    expect(mixed.allUnissued).toBe(false);
+    expect(mixed.text).toBe("미수 99,000원");
+  });
+
+  it("🛑 좌석 게이지가 **초대 게이트와 같은 수**를 쓴다", () => {
+    /* 게이트(`assertSeatAvailable`)는 **멤버 + pending 초대**를 센다.
+     * `/api/billing` 이 `organizationMember.count` 만 세면, pending 이 있을 때
+     * 화면은 "여유 있음" 인데 초대는 좌석 초과로 막힌다 — 같은 화면의 자기모순.
+     * `87d7941b` 이 조직 상세에서 닫은 형태가 `/billing` 에 남아 있었다(2026-09-07). */
+    const route = stripComments(read("src/app/api/billing/route.ts"));
+    expect(route).toMatch(/assertSeatAvailable\(/);
+    expect(route).toMatch(/seatsUsed:\s*seat\?\.used/);
+    // 한도도 같은 소스에서 — 따로 계산하면 다시 갈라진다
+    expect(route).toMatch(/seatsLimit:\s*seat\s*\?\s*seat\.limit/);
   });
 
   it("🔑 실데이터 표면은 살아 있다 (회귀 0)", () => {
