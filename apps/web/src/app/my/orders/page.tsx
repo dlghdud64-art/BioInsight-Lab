@@ -11,9 +11,14 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MainHeader } from "@/app/_components/main-header";
+// §page-shell-single-source (호영님 2026-09-08 실측) — **인증이 필요한 화면은 대시보드 셸을 쓴다.**
+//   `/my/orders` 는 로그인 사용자의 개인 주문 내역(주문번호·금액·상태)인데 마케팅 셸을 썼다.
+//   그래서 로그인 상태인데도 "로그인 / 무료로 시작하기" CTA 가 뜨고, `fixed h-14` 헤더가
+//   본문을 덮었다 — `/billing` 이 §dashboard-header-swap 으로 닫은 것과 **같은 형태**다.
+//   🔑 `DashboardSidebar` import 가 남아 있던 것은 죽은 코드가 아니라 **하다 만 흔적**이었다
+//      (2026-09-07 내가 "미사용 import 정리 대상" 으로 잘못 분류했다 — 지울 게 아니라 쓰는 게 답).
+import { DashboardShell } from "@/app/dashboard/_components/dashboard-shell";
 import { PageHeader } from "@/app/_components/page-header";
-import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { useToast } from "@/hooks/use-toast";
 import {
   Table,
@@ -111,21 +116,19 @@ export default function MyOrdersPage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="min-h-screen bg-pg">
-        <MainHeader />
+      <DashboardShell>
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
             <p className="text-muted-foreground">로딩 중...</p>
           </div>
         </div>
-      </div>
+      </DashboardShell>
     );
   }
 
   if (status === "unauthenticated") {
     return (
-      <div className="min-h-screen bg-pg">
-        <MainHeader />
+      <DashboardShell>
         <div className="container mx-auto px-4 py-8">
           <Card>
             <CardContent className="pt-6">
@@ -140,13 +143,12 @@ export default function MyOrdersPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </DashboardShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-pg">
-      <MainHeader />
+    <DashboardShell>
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto space-y-6">
           {/* 헤더 */}
@@ -321,7 +323,7 @@ export default function MyOrdersPage() {
         variant="destructive"
         onConfirm={() => { void confirmCancel(); }}
       />
-    </div>
+    </DashboardShell>
   );
 }
 

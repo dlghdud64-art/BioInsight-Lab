@@ -89,6 +89,86 @@ describe("§page-shell-single-source — 한 페이지에 셸은 하나", () => 
     expect(hits, `마케팅 셸 × 대시보드 셸 동시 렌더: ${hits.join(" · ")}`).toHaveLength(0);
   });
 
+  /* ── 명제 확장 (호영님 2026-09-08 실측) ─────────────────────────────
+   * 🛑 위 단언은 "**둘 다** 렌더" 만 본다. "**잘못된 하나만** 렌더" 는 안 잡는다.
+   *   그 한계를 파일 작성 시 적어 뒀는데(2026-09-07), 실제 위반이 나왔다:
+   *     `/my/orders` — 로그인 사용자의 개인 주문 내역(주문번호·금액·상태)인데
+   *     마케팅 셸만 렌더. 사이드바 0 · 로그인 상태로 "young a" 표시.
+   *   → 명제를 넓힌다: **인증이 필요한 화면은 대시보드 셸을 쓴다.**
+   */
+
+  /** 이 페이지가 인증을 요구하는 신호. 미들웨어 축과 페이지 가드 축을 함께 본다. */
+  function requiresAuth(code: string): boolean {
+    return code.includes("useSession(") || code.includes("await auth()");
+  }
+
+  /**
+   * 공개 셸이 **계약인** 경로. 예외 목록이 아니라 **판정된 결정**이라 여기 적는다.
+   * (CLAUDE.md "예외 목록에는 만료일과 소유자" — 아래 둘은 소유자·사유가 있고,
+   *  두 번째는 **기계로 검사되는 만료 조건**을 함께 건다.)
+   */
+  const PUBLIC_SHELL_BY_CONTRACT = [
+    {
+      route: "src/app/billing/success",
+      // §dashboard-header-swap 판정 · 미들웨어가 `/billing` 을 **정확 일치**로 둔 이유와 같다:
+      // 결제 복귀 랜딩은 외부 리디렉트로 도착하므로 공개 헤더를 유지한다.
+      reason: "결제 복귀 랜딩 (호영님 판정 · §dashboard-header-swap)",
+      expiry: null as string | null,
+    },
+    {
+      route: "src/app/protocol/bom",
+      // 실측 2026-09-08: 인바운드 링크 0. `_workbench/search/page.tsx` 가
+      // "BOM 미완 라이브 숨김" 사유로 링크를 제거해 뒀다.
+      reason: "미완 · 인바운드 0 (라이브에서 숨김)",
+      // 🔑 만료 조건이 **기계로 검사된다** — 링크가 생기면 아래 단언이 RED 가 된다.
+      expiry: "인바운드 링크가 생기면 즉시 대시보드 셸로 교체",
+    },
+  ];
+
+  it("🛑 인증이 필요한 화면은 대시보드 셸을 쓴다 (마케팅 셸 단독 렌더 0)", () => {
+    const hits: string[] = [];
+    for (const f of pageFiles()) {
+      const code = stripComments(readFileSync(f, "utf8"));
+      const { marketing, dashboard } = shellsRendered(code);
+      if (marketing.length === 0 || dashboard.length > 0) continue;
+      if (!requiresAuth(code)) continue;
+      const rel = f.slice(f.indexOf("src")).replace(/\\/g, "/");
+      if (PUBLIC_SHELL_BY_CONTRACT.some((c) => rel.startsWith(c.route))) continue;
+      hits.push(`${rel} → ${marketing.join("+")} 만 · 인증 필요`);
+    }
+    expect(
+      hits,
+      `인증 화면인데 마케팅 셸만 렌더: ${hits.join(" · ")}`,
+    ).toHaveLength(0);
+  });
+
+  it("🔑 공개 셸 계약 경로가 실재하고, 만료 조건이 지켜진다", () => {
+    /* 목록이 stale 해지면 계약이 헐거워진다 — 고쳐졌으면 목록에서도 지워야 한다. */
+    for (const c of PUBLIC_SHELL_BY_CONTRACT) {
+      const p = join(WEB_ROOT, c.route, "page.tsx");
+      const code = stripComments(readFileSync(p, "utf8"));
+      const { marketing } = shellsRendered(code);
+      expect(
+        `${c.route}: ${marketing.length > 0}`,
+        `${c.route} 는 이미 대시보드 셸이다. PUBLIC_SHELL_BY_CONTRACT 에서 지워라.`,
+      ).toBe(`${c.route}: true`);
+    }
+
+    /* 🔑 `/protocol/bom` 의 만료 조건 — 인바운드 링크가 생기면 계약이 끝난다.
+     *   "나중에" 로 증발하지 않게 **기계가** 감시한다. */
+    const inbound: string[] = [];
+    for (const f of pageFiles()) {
+      const rel = f.slice(f.indexOf("src")).replace(/\\/g, "/");
+      if (rel.startsWith("src/app/protocol/bom")) continue;
+      const code = stripComments(readFileSync(f, "utf8"));
+      if (/href=["'`]\/protocol\/bom/.test(code)) inbound.push(rel);
+    }
+    expect(
+      inbound,
+      `/protocol/bom 에 인바운드 링크가 생겼다 — 대시보드 셸로 교체할 때다: ${inbound.join(" · ")}`,
+    ).toHaveLength(0);
+  });
+
   it("🔑 `/billing` 은 고쳐진 상태다 (오늘 사고의 회귀 0)", () => {
     const code = stripComments(
       readFileSync(join(WEB_ROOT, "src/app/billing/page.tsx"), "utf8"),
