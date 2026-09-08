@@ -13,6 +13,9 @@ import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-en
 import { buildPlanChangeClaim } from "@/lib/billing/plan-change-claim";
 // §invite-flow 좌석 정본 — 화면 게이지와 초대 게이트가 같은 수를 쓴다.
 import { assertSeatAvailable } from "@/lib/organizations/seats";
+/* §billing-redesign P1: 사용량은 **한도를 집행하는 쪽과 같은 계산**을 쓴다.
+ *   화면이 "3/3 한도 도달" 이라 말하는데 생성은 통과하는(또는 반대) 어긋남을 구조로 막는다. */
+import { countUsageFor } from "@/lib/billing/enforce-plan-limit";
 import {
   resolveActiveOrganizationId,
   resolveOrganizationIdForMutation,
@@ -150,14 +153,15 @@ export async function GET(request: NextRequest) {
     }
 
     // 사용량 계산
-    const quotesCount = await db.quote.count({
-      where: {
-        userId,
-        createdAt: {
-          gte: new Date(new Date().setDate(1)), // 이번 달 1일부터
-        },
-      },
-    });
+    /* §billing-redesign P1: enforce 와 같은 계산식(countUsageFor).
+     *   🛑 이전 판본은 `new Date(new Date().setDate(1))` 로 **시각을 0으로 맞추지 않아**
+     *     1일 오전 생성분이 화면 집계에서 빠졌다(enforce 는 setHours(0,0,0,0) 까지 한다).
+     *     같은 달 같은 견적을 두 곳이 다르게 셌다. 계산을 한 곳으로 모으며 함께 닫는다. */
+    const [quotesCount, itemsCount, labelScanCount] = await Promise.all([
+      countUsageFor("quotes", userId),
+      countUsageFor("inventory", userId),
+      countUsageFor("labelScan", userId),
+    ]);
 
     /* §invite-flow 좌석 정본 (2026-09-07) — **게이트와 같은 수를 쓴다.**
      * 🛑 이전 판본은 `organizationMember.count` 만 셌다. 그런데 초대를 막는 정본
@@ -191,11 +195,17 @@ export async function GET(request: NextRequest) {
       planInfo: PLAN_INFO,
       paymentMethods: subscription?.paymentMethods || [],
       invoices: subscription?.invoices || [],
+      /* §billing-redesign P1: 화면이 쓰는 4지표. 한도는 PLAN_LIMITS 정본에서 받는다
+       *   (PLAN_INFO 는 표시용 사본이라 재고·스캔 한도를 들고 있지 않다). */
       usage: {
         quotesUsed: quotesCount,
         quotesLimit: PLAN_INFO[currentPlan].maxQuotesPerMonth,
         seatsUsed: seat?.used ?? 1,
         seatsLimit: seat ? seat.limit : PLAN_INFO[currentPlan].maxSeats,
+        itemsUsed: itemsCount,
+        itemsLimit: PLAN_LIMITS[currentPlan as SubscriptionPlan].maxItems,
+        labelScansUsed: labelScanCount,
+        labelScansLimit: PLAN_LIMITS[currentPlan as SubscriptionPlan].maxLabelScansPerMonth,
       },
     });
   } catch (error) {

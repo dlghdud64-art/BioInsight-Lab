@@ -70,6 +70,51 @@ async function resolvePlan(
 }
 
 /**
+ * §billing-redesign P1: 한도·사용량 **계산 단일점**.
+ *
+ * 왜 여기(같은 파일)인가: 이 계산식은 enforce(생성 차단)와 /billing 화면(사용량 표시)이
+ *   함께 쓴다. 두 곳이 각자 세면 화면이 "3/3 한도 도달" 이라 말하는데 생성은 통과하는
+ *   (또는 그 반대) 어긋남이 조용히 생긴다. 실제로 §billing-surface-unify 이전 판본이
+ *   `quotesLimit: 10` 을 지어내 한 화면이 한도를 3 이라고도 10 이라고도 말했다.
+ *   별도 모듈로 빼지 않는 이유는 sentinel 이 이 파일의 계산식 문자열을 핀하고 있어서다
+ *   (label-scan-quota-p2b:49 등). 계약을 옮기지 않고 호출자만 늘린다.
+ *
+ * enforce 는 kind 1개만 세고(생성 경로 1쿼리 유지), 화면은 4지표를 각각 부른다.
+ */
+export function planLimitFor(
+  kind: PlanLimitKind,
+  limits: ReturnType<typeof getPlanLimits>,
+): number | null {
+  if (kind === "quotes") return limits.maxQuotesPerMonth;
+  if (kind === "labelScan") return limits.maxLabelScansPerMonth;
+  return limits.maxItems;
+}
+
+/** 이번 달 1일 00:00(로컬). 월 한도의 기준점. */
+export function planUsageMonthStart(): Date {
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  return monthStart;
+}
+
+/** kind 별 현재 사용량. 한도 비교와 화면 표시가 **같은 쿼리**를 쓴다. */
+export async function countUsageFor(
+  kind: PlanLimitKind,
+  userId: string,
+): Promise<number> {
+  const monthStart = planUsageMonthStart();
+  if (kind === "quotes") {
+    return db.quote.count({ where: { userId, createdAt: { gte: monthStart } } });
+  }
+  if (kind === "labelScan") {
+    // §pricing-enforce-p2 — 라벨 스캔 월 한도(Free 10/이상 null). 이번달 LabelScanEvent count.
+    return db.labelScanEvent.count({ where: { userId, createdAt: { gte: monthStart } } });
+  }
+  return db.productInventory.count({ where: { userId } }); // 누적 총 품목
+}
+
+/**
  * 생성 직전 호출. 한도 초과면 PlanLimitError throw.
  * grandfather/유료/무제한/env미설정은 조용히 통과(무해).
  */
@@ -95,26 +140,10 @@ export async function enforcePlanLimit(
   const plan = await resolvePlan(userId, organizationId);
   const limits = getPlanLimits(plan);
 
-  const monthStart = new Date();
-  monthStart.setDate(1);
-  monthStart.setHours(0, 0, 0, 0);
+  const limit = planLimitFor(kind, limits);
+  if (limit === null) return; // 무제한
 
-  let limit: number | null;
-  let used: number;
-  if (kind === "quotes") {
-    limit = limits.maxQuotesPerMonth;
-    if (limit === null) return; // 무제한
-    used = await db.quote.count({ where: { userId, createdAt: { gte: monthStart } } });
-  } else if (kind === "labelScan") {
-    // §pricing-enforce-p2 — 라벨 스캔 월 한도(Free 10/이상 null). 이번달 LabelScanEvent count.
-    limit = limits.maxLabelScansPerMonth;
-    if (limit === null) return; // 무제한(Basic 이상)
-    used = await db.labelScanEvent.count({ where: { userId, createdAt: { gte: monthStart } } });
-  } else {
-    limit = limits.maxItems;
-    if (limit === null) return;
-    used = await db.productInventory.count({ where: { userId } }); // 누적 총 품목
-  }
+  const used = await countUsageFor(kind, userId);
 
   // 생성 전 체크: 이미 limit 도달이면 새 1건 추가가 한도 초과 → 차단.
   if (used >= limit) {
