@@ -34,13 +34,7 @@ import {
 
 // ── Batch B imports ──
 import {
-  appendAuditEnvelope,
-  verifyAuditChain,
-  queryAuditEnvelopes,
-  getAuditStoreStats,
   computeStateHash,
-  __resetAuditStore,
-  GENESIS_HASH,
 } from '../audit-integrity-engine';
 
 import {
@@ -328,117 +322,21 @@ describe('Security Batch A: Irreversible Action Protection', () => {
 
 describe('Security Batch B: Audit & Event Provenance', () => {
   beforeEach(() => {
-    __resetAuditStore();
     __resetProvenanceState();
   });
 
   // ── SH15: audit envelope append-only ──
-  it('SH15: audit envelope가 append-only로 기록됨', () => {
-    const env1 = appendAuditEnvelope({
-      correlationId: 'corr-001',
-      actorUserId: 'user-001',
-      actorRole: 'buyer',
-      actionType: 'dispatch_send_now',
-      targetEntityType: 'po',
-      targetEntityId: 'po-001',
-      snapshotVersion: 'v1',
-      beforeState: { status: 'ready_to_send' },
-      afterState: { status: 'sent' },
-      rationale: '발송 승인 완료',
-      reasonCode: 'approved_for_send',
-      sourceSurface: 'dispatch-prep-workbench',
-    });
-
-    expect(env1.eventId).toBeTruthy();
-    expect(env1.envelopeHash).toBeTruthy();
-    expect(env1.previousEnvelopeHash).toBe(GENESIS_HASH);
-
-    const stats = getAuditStoreStats();
-    expect(stats.chainLength).toBe(1);
-    expect(stats.currentStoreSize).toBe(1);
-  });
-
-  // ── SH16: hash chain 무결성 ──
-  it('SH16: 여러 envelope의 hash chain이 연결됨', () => {
-    const env1 = appendAuditEnvelope({
-      correlationId: 'corr-001',
-      actorUserId: 'user-001',
-      actorRole: 'buyer',
-      actionType: 'dispatch_send_now',
-      targetEntityType: 'po',
-      targetEntityId: 'po-001',
-      snapshotVersion: 'v1',
-      beforeState: { status: 'ready' },
-      afterState: { status: 'sent' },
-      rationale: '발송',
-      reasonCode: 'send',
-      sourceSurface: 'workbench',
-    });
-
-    const env2 = appendAuditEnvelope({
-      correlationId: 'corr-002',
-      actorUserId: 'user-002',
-      actorRole: 'approver',
-      actionType: 'approval_decision',
-      targetEntityType: 'po',
-      targetEntityId: 'po-002',
-      snapshotVersion: 'v2',
-      beforeState: { status: 'pending' },
-      afterState: { status: 'approved' },
-      rationale: '승인',
-      reasonCode: 'approve',
-      sourceSurface: 'approval-workbench',
-    });
-
-    expect(env2.previousEnvelopeHash).toBe(env1.envelopeHash);
-
-    const verification = verifyAuditChain();
-    expect(verification.valid).toBe(true);
-    expect(verification.chainLength).toBe(2);
-  });
-
-  // ── SH17: beforeHash / afterHash 비어 있지 않음 ──
-  it('SH17: beforeHash / afterHash / correlationId가 비어 있지 않음', () => {
-    const env = appendAuditEnvelope({
-      correlationId: 'corr-001',
-      actorUserId: 'user-001',
-      actorRole: 'buyer',
-      actionType: 'send_now',
-      targetEntityType: 'po',
-      targetEntityId: 'po-001',
-      snapshotVersion: 'v1',
-      beforeState: { status: 'ready' },
-      afterState: { status: 'sent' },
-      rationale: '테스트',
-      reasonCode: 'test',
-      sourceSurface: 'test',
-    });
-
-    expect(env.beforeHash).toBeTruthy();
-    expect(env.afterHash).toBeTruthy();
-    expect(env.correlationId).toBeTruthy();
-    expect(env.beforeHash).not.toBe(env.afterHash);
-  });
-
-  // ── SH18: audit query 필터링 ──
-  it('SH18: audit query가 actionType으로 필터링됨', () => {
-    appendAuditEnvelope({
-      correlationId: 'c1', actorUserId: 'u1', actorRole: 'buyer',
-      actionType: 'send_now', targetEntityType: 'po', targetEntityId: 'po-001',
-      snapshotVersion: 'v1', beforeState: {}, afterState: {},
-      rationale: '', reasonCode: '', sourceSurface: '',
-    });
-    appendAuditEnvelope({
-      correlationId: 'c2', actorUserId: 'u2', actorRole: 'approver',
-      actionType: 'approval_decision', targetEntityType: 'po', targetEntityId: 'po-002',
-      snapshotVersion: 'v1', beforeState: {}, afterState: {},
-      rationale: '', reasonCode: '', sourceSurface: '',
-    });
-
-    const sendOnly = queryAuditEnvelopes({ actionType: 'send_now' });
-    expect(sendOnly.length).toBe(1);
-    expect(sendOnly[0].actorUserId).toBe('u1');
-  });
+  /* 🛑 SH15~SH18 제거 (호영님 2026-09-07 승인, (가)) — 메모리 감사 facade 폐기.
+   *   그 넷은 `appendAuditEnvelope` 의 in-memory hash chain 을 잠갔는데, 그 체인이 지키던
+   *   대상이 인스턴스 메모리라 요청이 끝나면 사라졌다. **사라지는 것을 위조 방지하는 것은
+   *   의미가 없다** — `verifyAuditChain` 호출 0은 결과지 원인이 아니었다.
+   *   prod 실측(2026-09-07): 감사 테이블 5개 전부 0행.
+   *
+   *   🔑 지우기 전에 각 단언의 명제를 확인했다(§11.303-hotfix 교훈).
+   *     SH15 append-only         → 살아 있다 → `regression/audit-durability.test.ts` 로 이관
+   *     SH17 전후 상태 실캡처     → 살아 있다 → 같은 파일로 이관
+   *     SH16 hash chain 연결      → 체인과 함께 소멸
+   *     SH18 메모리 query 필터링  → 조회 API 와 함께 소멸(DB 가 대신한다) */
 
   // ── SH19: state hash 결정론적 ──
   it('SH19: 같은 상태에 대해 같은 hash 생성', () => {

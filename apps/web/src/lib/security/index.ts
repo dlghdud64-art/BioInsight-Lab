@@ -6,7 +6,7 @@
  * - mutation-replay-guard — CSRF, idempotency, replay 방어
  *
  * Batch 0-B: Audit & Event Provenance
- * - audit-integrity-engine — append-only, tamper-evident hash chain audit
+ * - audit-integrity-engine — 상태 해시(computeStateHash). 메모리 체인은 2026-09-07 제거
  * - event-provenance-engine — impossible transition detection, security event classification
  *
  * Batch 0-C: Outbound / Attachment / Storage Hygiene
@@ -18,8 +18,6 @@
  * Batch 1: Server Enforcement Wiring
  * - server-enforcement-middleware — Next.js API route에 authorization + replay guard 자동 적용
  *
- * Batch 2: Audit Persistence (adapter boundary)
- * - audit-persistence-adapter — in-memory → Supabase 교체 가능한 adapter
  *
  * Batch 3: Crypto Hash Upgrade
  * - crypto-hash-engine — Web Crypto SHA-256 + HMAC + secure random
@@ -56,14 +54,7 @@ export {
 } from './mutation-replay-guard';
 
 export {
-  appendAuditEnvelope,
-  verifyAuditChain,
-  queryAuditEnvelopes,
-  getAuditStoreStats,
   computeStateHash,
-  type AuditEnvelope,
-  type AppendAuditInput,
-  type ChainVerificationResult,
   type SecurityClassification,
 } from './audit-integrity-engine';
 
@@ -133,18 +124,9 @@ export {
   type InlineEnforcementHandle,
 } from './server-enforcement-middleware';
 
-// ── Batch 2 + 6: Audit Persistence Adapter (durable) ──
-export {
-  getAuditPersistenceAdapter,
-  setAuditPersistenceAdapter,
-  getAuditAdapterType,
-  InMemoryAuditAdapter,
-  PrismaAuditAdapter,
-  SupabaseAuditAdapterStub,
-  type AuditPersistenceAdapter,
-  type AuditQueryFilter,
-  type AuditStoreStats,
-} from './audit-persistence-adapter';
+/* §audit-durability (가) 2026-09-07 — audit-persistence-adapter 제거.
+   PrismaAuditAdapter 가 완성돼 있었으나 외부 호출자 0 · prod GovernanceAuditLog 0행.
+   감사는 lib/audit/durable-audit.ts 가 MutationAuditEvent 에 직접 남긴다. */
 
 // ── Batch 3: Crypto Hash Engine ──
 export {

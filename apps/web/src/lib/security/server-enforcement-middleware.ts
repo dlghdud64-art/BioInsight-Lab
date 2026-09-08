@@ -31,10 +31,8 @@ import {
 import { deriveConcurrencyKey } from './concurrency-key';
 // §audit-durability (2026-09-07) — 감사를 응답 경로 밖에서 DB 에 남긴다.
 import { recordDurableAudit, waitUntilCompat } from '@/lib/audit/durable-audit';
-import {
-  appendAuditEnvelope,
-  computeStateHash,
-} from './audit-integrity-engine';
+/* §audit-durability (가) 2026-09-07 — appendAuditEnvelope 제거(메모리 체인 폐기).
+   computeStateHash 는 이 파일에서 쓰이지 않아 함께 뺐다. */
 import {
   generateCorrelationId,
   createEventProvenance,
@@ -316,21 +314,6 @@ export function withEnforcement(
 
       // 10. 성공 시 audit envelope 기록
       if (response.status >= 200 && response.status < 300) {
-        appendAuditEnvelope({
-          correlationId,
-          actorUserId: actorContext.actorId,
-          actorRole: actorContext.roles[0],
-          actionType: config.action,
-          targetEntityType: config.targetEntityType,
-          targetEntityId: entityId,
-          snapshotVersion,
-          beforeState: { action: config.action, status: 'pending' },
-          afterState: { action: config.action, status: 'completed' },
-          rationale: (body.rationale as string) || '',
-          reasonCode: (body.reasonCode as string) || config.action,
-          sourceSurface: config.sourceSurface,
-          securityClassification: classifyEventSecurity(config.action) as any,
-        });
 
         // Mutation fingerprint 기록
         if (csrfToken) {
@@ -599,24 +582,9 @@ export function enforceAction(config: InlineEnforcementConfig): InlineEnforcemen
 
     complete(detail) {
       // Audit envelope 기록
-      appendAuditEnvelope({
-        correlationId,
-        actorUserId: config.userId,
-        actorRole: actorContext.roles[0],
-        actionType: config.action,
-        targetEntityType: config.targetEntityType,
-        targetEntityId: config.targetEntityId,
-        snapshotVersion: 'v0',
-        beforeState: detail?.beforeState || { action: config.action, status: 'pending' },
-        afterState: detail?.afterState || { action: config.action, status: 'completed' },
-        rationale: config.rationale || '',
-        reasonCode: config.action,
-        sourceSurface: config.sourceSurface,
-        securityClassification: classifyEventSecurity(config.action) as any,
-      });
 
       /* §audit-durability (호영님 2026-09-07 승인) — **내구 기록.**
-       * 위 `appendAuditEnvelope` 의 종착지는 모듈 최상위 `let auditStore`(인스턴스 메모리)라
+       * 여기 있던 `appendAuditEnvelope` 의 종착지는 모듈 최상위 `let auditStore`(인스턴스 메모리)라
        * 서버리스에서 요청이 끝나면 사라진다. prod 실측 `MutationAuditEvent` 0행이 그 결과다.
        *
        * 🔑 `waitUntil` 이라 이 함수는 **동기로 남는다** — 호출부 146곳을 건드리지 않는다.

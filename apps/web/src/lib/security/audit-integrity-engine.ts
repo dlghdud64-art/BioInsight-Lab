@@ -1,70 +1,46 @@
 /**
- * Audit Integrity Engine
+ * Audit Integrity Engine — **상태 해시만 남았다.**
  *
- * Security Readiness Hardening Batch 0 — Security Batch B
+ * ── 2026-09-07 (가) 승인 · 메모리 감사 facade 제거 ──────────────────
  *
- * append-only, tamper-evident 감사 로그.
- * 기존 governance-audit-engine.ts의 DecisionLog 위에
- * hash chain + correlation + provenance를 강화합니다.
+ * 원래 이 파일에는 append-only hash chain 이 있었다: `appendAuditEnvelope` 가 봉투를 만들어
+ * 모듈 최상위 `let auditStore` 에 쌓고, `verifyAuditChain` 이 그 사슬의 무결성을 검증하는 구조.
  *
- * 설계 원칙:
- * - audit는 "표시용 history"가 아니라 append-only evidence
- * - tamper-evident를 위해 hash chain 유지
- * - 삭제/수정 API 없음
- * - 기존 governance event bus 재사용
+ * 🛑 그런데 그 체인이 지키던 대상이 **인스턴스 메모리**였다. 서버리스에서 요청이 끝나면
+ *   사라진다. **사라지는 것을 위조 방지하는 것은 의미가 없다.**
+ *   `verifyAuditChain` 호출 0은 그 결과지 원인이 아니다 — 검증할 가치가 없어서
+ *   아무도 안 불렀다(호영님 2026-09-07).
+ *
+ * 실측 근거 (prod, 2026-09-07):
+ *   `MutationAuditEvent` 1행(수기 보정) · `GovernanceAuditLog` 0 · `CanonicalAuditEvent` 0 ·
+ *   `StabilizationAuditEvent` 0 · `IngestionAuditLog` 0 — 감사 테이블 5개가 전부 비어 있었다.
+ *   `enforceAction` 을 쓰는 147개 라우트 중 `complete()` 를 부르는 116개의 기록이
+ *   **존재한 적이 없다.**
+ *
+ * 같은 배치에서 `audit-persistence-adapter.ts` 도 제거했다 — `PrismaAuditAdapter` 가
+ * 완성돼 있었으나 **외부 호출자가 0**이었다(`GovernanceAuditLog` 0행이 그 증거).
+ * 인프라를 만들고 마지막 한 줄을 안 이은 세 번째 사례였다.
+ *
+ * 🔑 감사는 이제 `src/lib/audit/durable-audit.ts` 가 `MutationAuditEvent` 에 직접 남긴다
+ *   (응답 경로 밖 · `waitUntil`). 계약은 `__tests__/regression/audit-durability.test.ts` 가 잠근다.
+ *   구 SH15(append-only) · SH17(전후 상태 실캡처) 명제는 그리로 이관했다.
+ *
+ * 남긴 것은 `computeStateHash` 뿐이다 — 체인과 무관하게 상태 비교에 쓰인다.
  */
 
 // ═══════════════════════════════════════════════════════
 // Types
 // ═══════════════════════════════════════════════════════
 
-/** Audit envelope — 모든 irreversible action의 증거 */
-export interface AuditEnvelope {
-  readonly eventId: string;
-  readonly correlationId: string;
-  readonly actorUserId: string;
-  readonly actorRole: string;
-  readonly actionType: string;
-  readonly targetEntityType: string;
-  readonly targetEntityId: string;
-  readonly occurredAt: string; // ISO
-  readonly snapshotVersion: string;
-  readonly beforeHash: string;
-  readonly afterHash: string;
-  readonly rationale: string;
-  readonly reasonCode: string;
-  readonly sourceSurface: string;
-  /** 이전 envelope의 hash — chain 무결성 */
-  readonly previousEnvelopeHash: string;
-  /** 이 envelope 자체의 hash */
-  readonly envelopeHash: string;
-  /** 보안 분류 */
-  readonly securityClassification: SecurityClassification;
-}
-
+/**
+ * 이벤트의 보안 등급. `event-provenance-engine` 이 분류에 쓴다.
+ * (체인과 무관하므로 facade 제거 후에도 남는다.)
+ */
 export type SecurityClassification =
   | 'internal_only'
   | 'governance_restricted'
   | 'audit_evidence'
   | 'supplier_facing';
-
-/** Audit store — append-only, 삭제/수정 불가 */
-interface AuditStore {
-  readonly envelopes: readonly AuditEnvelope[];
-  readonly lastHash: string;
-  readonly chainLength: number;
-  readonly createdAt: string;
-}
-
-/** Hash chain 검증 결과 */
-export interface ChainVerificationResult {
-  readonly valid: boolean;
-  readonly chainLength: number;
-  readonly brokenAt?: number;
-  readonly expectedHash?: string;
-  readonly actualHash?: string;
-  readonly verifiedAt: string;
-}
 
 // ═══════════════════════════════════════════════════════
 // Hash 함수 (브라우저/Node 양쪽 호환)
@@ -95,224 +71,7 @@ function deterministicStringify(obj: Record<string, unknown>): string {
   return JSON.stringify(sorted);
 }
 
-/** 상태 객체에서 해시 생성 */
+/** 상태 객체에서 해시 생성 — 같은 상태면 key 순서가 달라도 같은 값. */
 export function computeStateHash(state: Record<string, unknown>): string {
   return computeHash(deterministicStringify(state));
 }
-
-// ═══════════════════════════════════════════════════════
-// Audit Store (Singleton, append-only)
-// ═══════════════════════════════════════════════════════
-
-const GENESIS_HASH = '0000000000000000';
-const MAX_STORE_SIZE = 10000;
-
-let auditStore: AuditStore = {
-  envelopes: [],
-  lastHash: GENESIS_HASH,
-  chainLength: 0,
-  createdAt: new Date().toISOString(),
-};
-
-let envelopeCounter = 0;
-
-function generateEventId(): string {
-  envelopeCounter += 1;
-  return `audit_${Date.now()}_${envelopeCounter}`;
-}
-
-/** Envelope 자체의 해시 계산 (previousEnvelopeHash + payload) */
-function computeEnvelopeHash(
-  envelope: Omit<AuditEnvelope, 'envelopeHash'>,
-): string {
-  const payload = deterministicStringify({
-    eventId: envelope.eventId,
-    correlationId: envelope.correlationId,
-    actorUserId: envelope.actorUserId,
-    actionType: envelope.actionType,
-    targetEntityId: envelope.targetEntityId,
-    occurredAt: envelope.occurredAt,
-    beforeHash: envelope.beforeHash,
-    afterHash: envelope.afterHash,
-    previousEnvelopeHash: envelope.previousEnvelopeHash,
-  });
-  return computeHash(payload);
-}
-
-// ═══════════════════════════════════════════════════════
-// Core Functions
-// ═══════════════════════════════════════════════════════
-
-export interface AppendAuditInput {
-  readonly correlationId: string;
-  readonly actorUserId: string;
-  readonly actorRole: string;
-  readonly actionType: string;
-  readonly targetEntityType: string;
-  readonly targetEntityId: string;
-  readonly snapshotVersion: string;
-  readonly beforeState: Record<string, unknown>;
-  readonly afterState: Record<string, unknown>;
-  readonly rationale: string;
-  readonly reasonCode: string;
-  readonly sourceSurface: string;
-  readonly securityClassification?: SecurityClassification;
-}
-
-/**
- * Audit envelope 추가 — append-only, 삭제/수정 불가
- *
- * hash chain을 유지하여 tamper-evident 보장.
- * 이전 envelope의 hash가 다음 envelope에 포함됩니다.
- */
-export function appendAuditEnvelope(input: AppendAuditInput): AuditEnvelope {
-  const eventId = generateEventId();
-  const occurredAt = new Date().toISOString();
-
-  const beforeHash = computeStateHash(input.beforeState);
-  const afterHash = computeStateHash(input.afterState);
-
-  const partialEnvelope = {
-    eventId,
-    correlationId: input.correlationId,
-    actorUserId: input.actorUserId,
-    actorRole: input.actorRole,
-    actionType: input.actionType,
-    targetEntityType: input.targetEntityType,
-    targetEntityId: input.targetEntityId,
-    occurredAt,
-    snapshotVersion: input.snapshotVersion,
-    beforeHash,
-    afterHash,
-    rationale: input.rationale,
-    reasonCode: input.reasonCode,
-    sourceSurface: input.sourceSurface,
-    previousEnvelopeHash: auditStore.lastHash,
-    securityClassification: input.securityClassification ?? 'audit_evidence',
-  };
-
-  const envelopeHash = computeEnvelopeHash(partialEnvelope);
-
-  const envelope: AuditEnvelope = {
-    ...partialEnvelope,
-    envelopeHash,
-  };
-
-  // Append-only: 새 배열 생성 (불변)
-  const newEnvelopes = [...auditStore.envelopes, envelope];
-
-  // 최대 크기 초과 시 oldest 제거 (FIFO) — 실제 production에서는 외부 storage로 archive
-  const trimmed = newEnvelopes.length > MAX_STORE_SIZE
-    ? newEnvelopes.slice(newEnvelopes.length - MAX_STORE_SIZE)
-    : newEnvelopes;
-
-  auditStore = {
-    envelopes: trimmed,
-    lastHash: envelopeHash,
-    chainLength: auditStore.chainLength + 1,
-    createdAt: auditStore.createdAt,
-  };
-
-  return envelope;
-}
-
-/**
- * Hash chain 무결성 검증
- *
- * 모든 envelope의 previousEnvelopeHash가 이전 envelope의 envelopeHash와 일치하는지 확인.
- * 중간에 삽입/삭제/수정이 있었으면 chain이 깨집니다.
- */
-export function verifyAuditChain(): ChainVerificationResult {
-  const { envelopes } = auditStore;
-  const verifiedAt = new Date().toISOString();
-
-  if (envelopes.length === 0) {
-    return { valid: true, chainLength: 0, verifiedAt };
-  }
-
-  // 첫 번째 envelope의 previousEnvelopeHash는 GENESIS_HASH여야 함
-  // (store가 trim된 경우는 제외)
-
-  for (let i = 1; i < envelopes.length; i++) {
-    const current = envelopes[i];
-    const previous = envelopes[i - 1];
-
-    if (current.previousEnvelopeHash !== previous.envelopeHash) {
-      return {
-        valid: false,
-        chainLength: envelopes.length,
-        brokenAt: i,
-        expectedHash: previous.envelopeHash,
-        actualHash: current.previousEnvelopeHash,
-        verifiedAt,
-      };
-    }
-  }
-
-  return {
-    valid: true,
-    chainLength: envelopes.length,
-    verifiedAt,
-  };
-}
-
-/**
- * Audit envelopes 조회 — 필터링
- * 읽기 전용, 수정 불가
- */
-export function queryAuditEnvelopes(filter: {
-  correlationId?: string;
-  actorUserId?: string;
-  actionType?: string;
-  targetEntityId?: string;
-  targetEntityType?: string;
-  since?: string;
-  until?: string;
-  securityClassification?: SecurityClassification;
-}): readonly AuditEnvelope[] {
-  return auditStore.envelopes.filter(env => {
-    if (filter.correlationId && env.correlationId !== filter.correlationId) return false;
-    if (filter.actorUserId && env.actorUserId !== filter.actorUserId) return false;
-    if (filter.actionType && env.actionType !== filter.actionType) return false;
-    if (filter.targetEntityId && env.targetEntityId !== filter.targetEntityId) return false;
-    if (filter.targetEntityType && env.targetEntityType !== filter.targetEntityType) return false;
-    if (filter.securityClassification && env.securityClassification !== filter.securityClassification) return false;
-    if (filter.since && env.occurredAt < filter.since) return false;
-    if (filter.until && env.occurredAt > filter.until) return false;
-    return true;
-  });
-}
-
-/** Audit store 통계 */
-export function getAuditStoreStats(): {
-  chainLength: number;
-  currentStoreSize: number;
-  lastHash: string;
-  createdAt: string;
-  chainValid: boolean;
-} {
-  const verification = verifyAuditChain();
-  return {
-    chainLength: auditStore.chainLength,
-    currentStoreSize: auditStore.envelopes.length,
-    lastHash: auditStore.lastHash,
-    createdAt: auditStore.createdAt,
-    chainValid: verification.valid,
-  };
-}
-
-// ═══════════════════════════════════════════════════════
-// Test Helpers
-// ═══════════════════════════════════════════════════════
-
-export function __resetAuditStore(): void {
-  auditStore = {
-    envelopes: [],
-    lastHash: GENESIS_HASH,
-    chainLength: 0,
-    createdAt: new Date().toISOString(),
-  };
-  envelopeCounter = 0;
-}
-
-export { GENESIS_HASH, computeHash, deterministicStringify };
