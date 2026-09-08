@@ -163,6 +163,10 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
       support: "1:1 문의",
       orders: "견적 및 구매 내역",
       audit: "감사 추적", // §11.337 — 브레드크럼 영문 "Audit" 한글 통일
+      // §billing-redesign P2: /billing 은 /dashboard 밖이라 맵이 없으면 fallback 이
+      //   영문 "Billing" 을 만든다(§11.337 audit 과 같은 형태). 경로는 그대로 두고
+      //   라벨만 닫는다. 경로에 없는 "대시보드" 단계를 브레드크럼이 지어내면 dead link 다.
+      billing: "청구 및 구독",
       admin: "관리자",
       my: "내 정보",
       test: "테스트",

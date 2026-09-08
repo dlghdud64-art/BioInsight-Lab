@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { csrfFetch } from "@/lib/api-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,7 +39,10 @@ import {
 // (a) 로그인 상태에서도 "로그인 / 무료로 시작하기" 가 뜨고
 // (b) 그 헤더가 `fixed h-14` 라 페이지 제목을 덮는다.
 import { DashboardShell } from "@/app/dashboard/_components/dashboard-shell";
-import { PageHeader } from "@/app/_components/page-header";
+/* §billing-redesign P2: 이 페이지만 구형 헤더(app/_components, 타이틀 아이콘 포함)를 써서
+ *   견적 관리 등과 쉘이 달랐다. 기준 페이지가 쓰는 AppPageHeader 로 맞춘다
+ *   (브레드크럼 + 플레인 타이틀 + 우측 액션, 아이콘 없음). */
+import { AppPageHeader } from "@/components/layout/page-header";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import {
@@ -68,9 +71,23 @@ const PLAN_LABELS: Record<string, string> = {
   enterprise: "Enterprise",
 };
 
+/* §billing-redesign P2: 탭 정의 단일점. `paidOnly` 는 Free 에서 내용이 **구조적으로 비는** 탭
+ *   (결제 수단 0건 · 청구서 0건)을 표시한다. 사유 배지는 그 이유를 화면에 남긴다. */
+const BILLING_TABS: ReadonlyArray<{
+  value: string;
+  label: string;
+  paidOnly?: boolean;
+  lockedReason?: string;
+}> = [
+  { value: "overview", label: "플랜" },
+  { value: "methods", label: "결제 수단", paidOnly: true, lockedReason: "유료 플랜부터" },
+  { value: "invoices", label: "청구 내역", paidOnly: true, lockedReason: "청구 없음" },
+];
+
 function BillingPageContent() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("overview");
   const [isAddCardOpen, setIsAddCardOpen] = useState(false);
@@ -226,6 +243,9 @@ function BillingPageContent() {
   const invoices = billingData?.invoices || [];
 
   const currentPlan = subscription?.plan as PlanType || "FREE";
+  /* §billing-redesign P2: 탭 잠금은 플랜 entitlement 파생. Free 만 잠기는 게 아니라
+   *   "유료 플랜인가" 하나로 가른다. 플랜이 늘어도 판정식이 갈라지지 않는다. */
+  const paidPlan = currentPlan !== "FREE";
   const currentPlanInfo = planInfo?.[currentPlan];
 
   // 카드 번호 포맷팅
@@ -252,13 +272,20 @@ function BillingPageContent() {
 
   return (
     <DashboardShell>
-      <div className="container mx-auto py-4 md:py-8 px-3 md:px-4">
-        <div className="max-w-5xl mx-auto">
-          <PageHeader
+      {/* §billing-redesign P2: 1000px 중앙 고정폭 제거. 다른 페이지와 같은 max-w-7xl 캔버스. */}
+      <div className="flex-1 p-3 sm:p-4 md:p-6 max-w-7xl mx-auto w-full">
+        <div>
+          <AppPageHeader
             title="청구 및 구독"
             description="구독 플랜, 결제 수단, 청구 내역을 관리합니다."
-            icon={CreditCard}
-            iconColor="text-green-600"
+            actions={[
+              {
+                label: "영업팀 문의",
+                tone: "secondary",
+                onClick: () => router.push("/support"),
+              },
+            ]}
+            className="mb-5"
           />
 
           {contextBanner && (
@@ -281,11 +308,31 @@ function BillingPageContent() {
             </div>
           )}
 
+          {/* §billing-redesign P2: 칩형(grid) → 전역 밑줄 탭 규칙.
+              Free 는 결제 수단·청구 내역이 **비어 있는 탭**이라 진입 자체를 막는다.
+              들어가서 빈 화면을 보는 것보다 왜 못 들어가는지가 화면에 있어야 한다.
+              비활성 여부는 플랜 entitlement 에서 파생(paidPlan)한다. */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 h-10">
-              <TabsTrigger value="overview" className="text-sm">개요</TabsTrigger>
-              <TabsTrigger value="methods" className="text-sm">결제 수단</TabsTrigger>
-              <TabsTrigger value="invoices" className="text-sm">청구 내역</TabsTrigger>
+            <TabsList className="w-full justify-start gap-1 rounded-none border-b border-slate-200 bg-transparent p-0 h-auto">
+              {BILLING_TABS.map((tab) => {
+                const locked = !paidPlan && tab.paidOnly;
+                return (
+                  <TabsTrigger
+                    key={tab.value}
+                    value={tab.value}
+                    disabled={locked}
+                    title={locked ? tab.lockedReason : undefined}
+                    className="rounded-none bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 text-sm font-medium text-slate-500 disabled:text-[#cbd5e1] disabled:cursor-not-allowed disabled:opacity-100"
+                  >
+                    {tab.label}
+                    {locked && (
+                      <span className="ml-1.5 rounded-full border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400">
+                        {tab.lockedReason}
+                      </span>
+                    )}
+                  </TabsTrigger>
+                );
+              })}
             </TabsList>
 
             {/* 개요 탭 */}
