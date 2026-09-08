@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 // §order-entry-rewire P3-3 — 주문 취소 CTA (release 의 UI 진입점).
@@ -64,7 +64,7 @@ const ORDER_STATUS_ICONS: Record<OrderStatus, React.ReactNode> = {
   CANCELLED: <XCircle className="h-3 w-3" />,
 };
 
-export default function MyOrdersPage() {
+function MyOrdersPageContent() {
   const { data: session, status } = useSession();
   const { toast } = useToast();
   const [page, setPage] = useState(1);
@@ -327,3 +327,25 @@ export default function MyOrdersPage() {
   );
 }
 
+/**
+ * 🛑 `DashboardShell` 은 내부에서 `useSearchParams()` 를 쓴다 — Suspense 경계가 없으면
+ *   정적 export 단계에서 CSR bailout 이 나고 **빌드가 깨진다**
+ *   (2026-09-08 실측: `Export encountered errors on following paths: /my/orders`).
+ *   `/billing` 이 같은 이유로 이미 이 형태를 쓰고 있어 그대로 따른다.
+ *
+ * 🛑 fallback 에 `DashboardShell` 을 넣지 않는다 — fallback 은 경계 **밖**이라
+ *   거기 넣으면 같은 bailout 이 그대로 재현된다(`/billing` 주석의 2026-09-07 실측).
+ */
+export default function MyOrdersPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-24">
+          <p className="text-muted-foreground">로딩 중...</p>
+        </div>
+      }
+    >
+      <MyOrdersPageContent />
+    </Suspense>
+  );
+}
