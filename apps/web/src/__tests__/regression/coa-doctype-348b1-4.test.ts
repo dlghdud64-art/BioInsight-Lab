@@ -12,6 +12,19 @@ const APP_WEB_ROOT = join(__dirname, "..", "..", "..");
 function read(rel: string): string {
   return readFileSync(join(APP_WEB_ROOT, rel), "utf8");
 }
+
+/**
+ * 🛑 공백 접기 (호영님 2026-09-08 승인) — Prisma **열 정렬을 핀하지 않는다.**
+ *
+ *   Prisma 는 모델 안 최장 필드명에 맞춰 열을 정렬한다. 더 긴 이름의 필드가 하나
+ *   추가되면 **관계없는 줄의 공백이 통째로 밀린다** — 계약은 그대로인데 RED 가 된다.
+ *   2026-09-07 §11.348-B-1 이 정확히 그렇게 깨졌다(4칸 기대 · 실제 12칸).
+ *
+ *   잠글 명제는 "이 필드가 이 타입으로 실재한다" 이지 "몇 칸 띄어져 있다" 가 아니다.
+ *   → 건초더미와 바늘을 **같은 규칙으로** 접어서 본다(공백 런 → 1칸).
+ *   스윕 실측: 이 형태가 저장소 전체에 14건 / 3파일 있었다.
+ */
+const foldWs = (s: string): string => s.replace(/[ \t]+/g, " ");
 const SCHEMA = "prisma/schema.prisma";
 const MIGRATION = "prisma/migrations/20260603140000_add_sds_doctype/migration.sql";
 const ROUTE = "src/app/api/products/[id]/sds/route.ts";
@@ -20,8 +33,8 @@ const PAGE = "src/app/products/[id]/page.tsx";
 
 describe("§11.348-B-1 B1-4 — schema docType + migration(backward-compat)", () => {
   it("docType @default(sds) + index", () => {
-    const src = read(SCHEMA);
-    expect(src).toContain('docType          String    @default("sds")');
+    const src = foldWs(read(SCHEMA));
+    expect(src).toContain('docType String @default("sds")');
     expect(src).toContain("@@index([docType])");
   });
   it("migration = ADD COLUMN default sds (DROP 0)", () => {

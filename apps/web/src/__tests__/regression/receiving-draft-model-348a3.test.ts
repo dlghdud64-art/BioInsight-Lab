@@ -19,33 +19,46 @@ const APP_WEB_ROOT = join(__dirname, "..", "..", "..");
 function read(rel: string): string {
   return readFileSync(join(APP_WEB_ROOT, rel), "utf8");
 }
+
+/**
+ * 🛑 공백 접기 (호영님 2026-09-08 승인) — Prisma **열 정렬을 핀하지 않는다.**
+ *
+ *   Prisma 는 모델 안 최장 필드명에 맞춰 열을 정렬한다. 더 긴 이름의 필드가 하나
+ *   추가되면 **관계없는 줄의 공백이 통째로 밀린다** — 계약은 그대로인데 RED 가 된다.
+ *   2026-09-07 §11.348-B-1 이 정확히 그렇게 깨졌다(4칸 기대 · 실제 12칸).
+ *
+ *   잠글 명제는 "이 필드가 이 타입으로 실재한다" 이지 "몇 칸 띄어져 있다" 가 아니다.
+ *   → 건초더미와 바늘을 **같은 규칙으로** 접어서 본다(공백 런 → 1칸).
+ *   스윕 실측: 이 형태가 저장소 전체에 14건 / 3파일 있었다.
+ */
+const foldWs = (s: string): string => s.replace(/[ \t]+/g, " ");
 const SCHEMA = "prisma/schema.prisma";
 const MIGRATION = "prisma/migrations/20260603120000_add_receiving_draft/migration.sql";
 
 describe("§11.348-A-3 — ReceivingDraft 모델 존재 + 핵심 필드", () => {
   it("ReceivingDraft 모델 + 회신 토큰/상태/만료", () => {
-    const src = read(SCHEMA);
+    const src = foldWs(read(SCHEMA));
     expect(src).toContain("model ReceivingDraft {");
-    expect(src).toContain("token           String               @unique");
-    expect(src).toContain("status          ReceivingDraftStatus @default(AWAITING_REPLY)");
-    expect(src).toContain("expiresAt       DateTime");
+    expect(src).toContain("token String @unique");
+    expect(src).toContain("status ReceivingDraftStatus @default(AWAITING_REPLY)");
+    expect(src).toContain("expiresAt DateTime");
     // 이중 입고 idempotent 가드 (A-4 승인 시 사용)
     expect(src).toContain("restockSyncedAt DateTime?");
   });
 
   it("ReceivingDraftItem 모델 + 회신 실수량/LOT/유효기간", () => {
-    const src = read(SCHEMA);
+    const src = foldWs(read(SCHEMA));
     expect(src).toContain("model ReceivingDraftItem {");
     expect(src).toContain("receivedQuantity Float?");
-    expect(src).toContain("lotNumber        String?");
-    expect(src).toContain("expiryDate       DateTime?");
+    expect(src).toContain("lotNumber String?");
+    expect(src).toContain("expiryDate DateTime?");
     // PO 매핑은 scalar (OrderItem.productId 선례)
-    expect(src).toContain("orderItemId      String?");
-    expect(src).toContain("productId        String?");
+    expect(src).toContain("orderItemId String?");
+    expect(src).toContain("productId String?");
   });
 
   it("ReceivingDraftStatus enum 5 상태", () => {
-    const src = read(SCHEMA);
+    const src = foldWs(read(SCHEMA));
     expect(src).toContain("enum ReceivingDraftStatus {");
     expect(src).toContain("AWAITING_REPLY");
     expect(src).toContain("PENDING_REVIEW");
@@ -57,18 +70,18 @@ describe("§11.348-A-3 — ReceivingDraft 모델 존재 + 핵심 필드", () => 
 
 describe("§11.348-A-3 — 백릴레이션 (Order/User/Org/Vendor)", () => {
   it("4개 모델에 receivingDrafts 역방향", () => {
-    const src = read(SCHEMA);
+    const src = foldWs(read(SCHEMA));
     // ReceivingDraft 의 FK relation 선언
-    expect(src).toContain("order        Order                @relation(fields: [orderId]");
-    expect(src).toContain("user         User                 @relation(fields: [userId]");
-    expect(src).toContain("vendor       Vendor?              @relation(fields: [vendorId]");
-    expect(src).toContain("organization Organization?        @relation(fields: [organizationId]");
+    expect(src).toContain("order Order @relation(fields: [orderId]");
+    expect(src).toContain("user User @relation(fields: [userId]");
+    expect(src).toContain("vendor Vendor? @relation(fields: [vendorId]");
+    expect(src).toContain("organization Organization? @relation(fields: [organizationId]");
   });
 });
 
 describe("§11.348-A-3 불변 — 입고안은 재고를 변경하지 않는다 (§11.336)", () => {
   it("ReceivingDraft/Item 이 ProductInventory/InventoryRestock relation 미보유", () => {
-    const src = read(SCHEMA);
+    const src = foldWs(read(SCHEMA));
     // ReceivingDraft 모델 블록만 추출 후 주석(//) 제거 — relation 부재만 검증
     const stripComments = (block: string) =>
       block

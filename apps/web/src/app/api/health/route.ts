@@ -127,6 +127,18 @@ export async function GET(request: Request) {
       //   waitUntilCallable: false 면 waitUntil 은 조용한 no-op 이고, 그 위에 감사를
       //   얹으면 지금 고치려는 유실이 그대로 재현된다.
       waitUntilProbe: probeWaitUntil(),
+      /* §deployed-commit (호영님 2026-09-08 승인) — **"어느 커밋이 배포됐는가" 에 직접 답한다.**
+       *
+       * 🛑 이 축이 없어서 2026-09-08 하루에 배포 판정을 세 번 틀렸다:
+       *     1회  빌드 실패로 추정        → 실제는 큐 지연(14분)
+       *     2회  manifestGeneratedAt 역산 → 간접 신호를 직접 답으로 착각
+       *     3회  존재하지 않는 필드 부재로 판정 → 3시간을 허구 추적에 썼다
+       *   세 번 다 **간접 신호**로 답했다. 커밋 식별자는 그 질문의 직접 답이다.
+       *
+       * 🔑 노출 위험 0 — 커밋 SHA 는 공개 저장소 식별자이고 자격증명이 아니다
+       *   (§runtime-facts 의 "값이 아니라 형태" 원칙과 같은 자리).
+       *   로컬·미설정이면 null 이다. 지어내지 않는다. */
+      deployedCommit: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
       /* §db-roundtrip (호영님 2026-09-06) — region=iad1 · DB=ap-northeast-1 이면
        *   모든 요청이 태평양을 왕복한다. 그 비용을 **여기서** 재야 판정이 된다.
        *   판정: medianMs >= 150 이면 P2028 원인 확정이고, 처방은 코드가 아니라 배포 리전이다.
