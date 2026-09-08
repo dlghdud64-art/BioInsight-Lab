@@ -32,6 +32,8 @@ import { Switch } from "@/components/ui/switch";
 // §11.297f Radix DropdownMenu* import 제거 — 5 dropdown 모두 ActionMenu
 // (utility/card/issue alert) 또는 plain dropdown (filter) 으로 swap 완료.
 import { ActionMenu } from "@/components/inventory/action-menu";
+// §mobile-residual-5 1a — 모바일 ⋮ 더보기 = scrim + 바텀 시트(메뉴 시트 통일 규칙). 드롭다운 0.
+import { MobileActionSheet } from "@/components/ui/mobile-sheet";
 // §11.196f — dead lucide imports 9 symbol 제거 (ArrowLeftRight Clock
 //   FlaskConical GitBranch LayoutDashboard List RotateCcw ShoppingCart X
 //   actual JSX/prop 사용 0). 나머지 보존.
@@ -172,6 +174,8 @@ function InventoryPageContent() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   // §11.297d utility dropdown plain state (mutually exclusive).
   const [openInvContentMenuId, setOpenInvContentMenuId] = useState<string | null>(null);
+  // §mobile-residual-5 1a — 모바일 재고 작업 시트 open 상태(⋮ 트리거 활성 스타일과 동기).
+  const [invMobileSheetOpen, setInvMobileSheetOpen] = useState(false);
   // §11.297f filter dropdown plain state.
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isImportStagingOpen, setIsImportStagingOpen] = useState(false);
@@ -1628,16 +1632,31 @@ function InventoryPageContent() {
                 <Plus className="h-3.5 w-3.5 mr-1.5" />
                 재고 등록
               </Button>
-              <ActionMenu
-                menuId="inv-content-utility-mobile"
-                currentOpenId={openInvContentMenuId}
-                onOpenChange={setOpenInvContentMenuId}
-                width="w-48"
+              {/* §mobile-residual-5 1a — ⋮ 드롭다운(KPI 카드·배너와 경계 섞임) → scrim + 바텀 시트.
+                  열림 중 ⋮ = 블루 보더 + #eff6ff. 항목 4개 = 기존 액션 wiring 그대로(라우팅·모달·인쇄). */}
+              <button
+                type="button"
+                aria-label="재고 작업 메뉴"
+                aria-haspopup="dialog"
+                aria-expanded={invMobileSheetOpen}
+                onClick={() => setInvMobileSheetOpen(true)}
+                className={`inline-flex items-center justify-center h-9 w-9 rounded-lg border transition-colors touch-manipulation ${
+                  invMobileSheetOpen
+                    ? "border-blue-600 bg-[#eff6ff] text-blue-700"
+                    : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+                }`}
+              >
+                <MoreVertical className="h-4 w-4" />
+              </button>
+              <MobileActionSheet
+                open={invMobileSheetOpen}
+                onClose={() => setInvMobileSheetOpen(false)}
+                title="재고 작업"
                 items={[
-                  { label: "구매 반영", icon: <PackagePlus className="h-3.5 w-3.5" />, onClick: () => router.push("/dashboard/purchases") },
-                  { label: "재고 파일 가져오기", icon: <Upload className="h-3.5 w-3.5" />, onClick: () => setIsImportStagingOpen(true) },
-                  { label: "QR 스캔", icon: <QrCode className="h-3.5 w-3.5" />, onClick: () => router.push("/dashboard/inventory/scan") },
-                  { label: "라벨 인쇄", icon: <Printer className="h-3.5 w-3.5" />, onClick: () => handleBulkLabelPrint() },
+                  { label: "구매 반영", description: "발주 완료 건을 재고로 가져오기", accent: true, icon: <PackagePlus />, onClick: () => router.push("/dashboard/purchases") },
+                  { label: "재고 파일 가져오기", description: "엑셀·CSV 일괄 등록", icon: <Upload />, onClick: () => setIsImportStagingOpen(true) },
+                  { label: "QR 스캔", description: "Lot 조회 · 입출고 처리", icon: <QrCode />, onClick: () => router.push("/dashboard/inventory/scan") },
+                  { label: "라벨 인쇄", description: "Lot QR 라벨 출력", icon: <Printer />, onClick: () => handleBulkLabelPrint() },
                 ]}
               />
             </div>

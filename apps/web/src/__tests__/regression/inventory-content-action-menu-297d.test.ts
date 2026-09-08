@@ -24,8 +24,11 @@ describe("§11.297d — inventory-content D1+D2+D5 ActionMenu", () => {
     expect(SRC).toMatch(/const \[openContentCardMenuId, setOpenContentCardMenuId\] = useState<string \| null>\(null\)/);
   });
 
-  it("3 ActionMenu instance (utility-mobile / utility-desktop / card-actions)", () => {
-    expect(SRC).toMatch(/menuId="inv-content-utility-mobile"/);
+  it("ActionMenu instance (utility-desktop / card-actions) + 모바일 utility = 바텀 시트", () => {
+    // §mobile-residual-5 1a (2026-09-07) — utility-mobile ActionMenu(드롭다운) → MobileActionSheet
+    //   (scrim + 바텀 시트) 로 supersede. 데스크톱·카드 ActionMenu 는 보존.
+    expect(SRC).not.toMatch(/menuId="inv-content-utility-mobile"/);
+    expect(SRC).toMatch(/<MobileActionSheet/);
     expect(SRC).toMatch(/menuId="inv-content-utility-desktop"/);
     expect(SRC).toMatch(/menuId="inv-content-card-actions"/);
   });

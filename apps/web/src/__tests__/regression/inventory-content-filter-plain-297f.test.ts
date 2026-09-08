@@ -55,8 +55,8 @@ describe("§11.297f — inventory-content D3 filter (§global-filters 인라인 
     expect(SRC).not.toMatch(/<DropdownMenu(?:Trigger|Content|Item|Label|Separator)?\s/);
   });
 
-  it("기존 ActionMenu 4 instance 보존 (utility/card/issue alert §11.297d/e)", () => {
-    expect(SRC).toMatch(/menuId="inv-content-utility-mobile"/);
+  it("기존 ActionMenu instance 보존 (utility-desktop/card/issue alert §11.297d/e) — utility-mobile 은 §mobile-residual-5 1a 바텀 시트로 이관", () => {
+    expect(SRC).toMatch(/<MobileActionSheet/);
     expect(SRC).toMatch(/menuId="inv-content-utility-desktop"/);
     expect(SRC).toMatch(/menuId="inv-content-card-actions"/);
     expect(SRC).toMatch(/menuId=\{`inv-content-issue-\$\{inv\.id\}`\}/);

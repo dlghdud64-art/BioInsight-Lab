@@ -46,9 +46,11 @@ describe("§mobile-reports P1 — 모바일 뷰 계약", () => {
 
   it("헤더·기간·필터 — 날짜 한국어 본문 폰트 + 단일 카드 + 필터 배지", () => {
     const src = read(MOBILE);
-    expect(src).toMatch(/formatKoreanDateRange/); // 한국어 날짜(올해 연도 생략)
+    // §mobile-residual-5 1b/1c (2026-09-07) supersede: 한국어 월/일 → `MM-DD ~ MM-DD · N일`
+    //   (lib/reports/period-label) · 세그먼트 4 → 5(직접 탭 추가, 기간 바텀 시트).
+    expect(src).toMatch(/formatPeriodRow/);
     expect(src).not.toMatch(/font-mono/); // §5 Pretendard 단일 — mono 전면 금지
-    expect(src).toMatch(/grid-cols-4/); // 프리셋 세그먼트 풀폭(4종, page REPORT_PRESETS 주입)
+    expect(src).toMatch(/grid-cols-5/); // 프리셋 세그먼트 풀폭(4종 + 직접, page REPORT_PRESETS 주입)
     expect(src).toMatch(/presets\.map/); // 프리셋 정의 중복 0 — page 단일 소스
   });
 

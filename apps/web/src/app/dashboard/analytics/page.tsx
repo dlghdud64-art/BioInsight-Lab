@@ -530,18 +530,24 @@ export default function AnalyticsPage() {
       {/* honesty: 헤더 "예시 미리보기" + 상단 배너 + 풋터 고지 = 3곳 명시.       */}
       {/* dead button 0: PDF 저장 버튼 없음 (실 다운로드 부재). 닫기만.          */}
       {/* ══════════════════════════════════════════════════════════ */}
+      {/* §mobile-residual-5 1d (2026-09-07) — 스크롤 구조 버그 fix.
+          현행: 시트 전체(max-h 92vh + overflow-y-auto)가 스크롤 컨테이너 → 모바일 vh(주소창 포함)가
+          실제 뷰포트보다 커서 sticky 푸터가 화면 밖 + 하단 탭바(z-50, 같은 z)에 가려 닫기 도달 불가.
+          수정: z-[60](탭바 위) + 시트 = flex column 3단 — 헤더 고정 / 본문만 overflow-y-auto /
+          푸터 고정(safe-area). 모바일 시트 높이 = 100dvh − 44px 고정(뷰포트 기준) → 푸터 항상 화면 안.
+          데스크톱(sm+)은 max-h 88vh 로 동일 3단(본문 스크롤). */}
       {reportModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/50 backdrop-blur-sm p-0 sm:p-4"
+          className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-slate-900/50 backdrop-blur-sm p-0 sm:p-4"
           onClick={() => setReportModalOpen(false)}
           data-testid="ai-report-modal"
         >
           <div
-            className="bg-pn w-full sm:max-w-2xl max-h-[92vh] sm:max-h-[88vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-bd shadow-xl"
+            className="bg-pn w-full sm:max-w-2xl h-[calc(100dvh-44px)] sm:h-auto sm:max-h-[88vh] flex flex-col rounded-t-2xl sm:rounded-2xl border border-bd shadow-xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* ── 모달 헤더 ── */}
-            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-5 py-4 border-b border-bd bg-pn">
+            {/* ── 모달 헤더 (고정) ── */}
+            <div className="shrink-0 flex items-center justify-between gap-3 px-5 py-4 border-b border-bd bg-pn">
               <div className="flex items-center gap-2.5 min-w-0">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                   <FileText className="h-4 w-4" />
@@ -564,6 +570,8 @@ export default function AnalyticsPage() {
               </button>
             </div>
 
+            {/* ── 본문 (유일한 스크롤 영역) ── */}
+            <div className="flex-1 min-h-0 overflow-y-auto">
             {/* ── 상단 예시 고지 배너 (prominent) ── */}
             <div className="mx-5 mt-4 rounded-xl border border-blue-200 bg-blue-50/70 px-4 py-3">
               <div className="flex items-start gap-2.5">
@@ -672,8 +680,10 @@ export default function AnalyticsPage() {
               </section>
             </div>
 
-            {/* ── 풋터: 예시 고지 + 닫기 (PDF 저장 버튼 없음 — dead button 금지) ── */}
-            <div className="sticky bottom-0 flex items-center justify-between gap-3 px-5 py-4 border-t border-bd bg-pn">
+            </div>
+
+            {/* ── 풋터(고정): 예시 고지 + 닫기 (PDF 저장 버튼 없음 — dead button 금지) · safe-area ── */}
+            <div className="shrink-0 flex items-center justify-between gap-3 px-5 py-4 border-t border-bd bg-pn safe-area-bottom">
               <p className="text-[11px] text-slate-500 break-keep min-w-0">
                 예시 데이터 기준 · 실제 리포트는 발주 누적 시 생성
               </p>

@@ -20,6 +20,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
+import { toIsoDate } from "@/lib/reports/period-label";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 // §mobile-reports — <768px 전용 뷰(핸드오프 6a/6c). 데이터/파생은 본 파일 canonical 재사용.
 import { MobileReportView } from "./mobile-report-view";
@@ -381,8 +382,8 @@ export default function ReportsPage() {
     if (p.days) start.setDate(now.getDate() - p.days);
     else if (p.kind === "quarter") start.setMonth(now.getMonth() - 3);
     else if (p.kind === "year") start = new Date(now.getFullYear(), 0, 1);
-    const iso = (d: Date) => d.toISOString().slice(0, 10);
-    setStartDate(iso(start)); setEndDate(iso(now)); setActivePreset(p.id);
+    // §mobile-residual-5 1b — 로컬 날짜 기준(toISOString UTC 시프트로 KST 저녁에 하루 밀리던 표기 방지).
+    setStartDate(toIsoDate(start)); setEndDate(toIsoDate(now)); setActivePreset(p.id);
   };
 
   // §mobile-reports — CSV 내보내기 단일 핸들러(데스크톱 버튼·모바일 다운로드 아이콘 공용).
@@ -543,6 +544,8 @@ export default function ReportsPage() {
           presets={REPORT_PRESETS}
           activePreset={activePreset}
           onPreset={(id) => { const preset = REPORT_PRESETS.find((x) => x.id === id); if (preset) applyPreset(preset); }}
+          // §mobile-residual-5 1c — 직접 설정 적용: 날짜 canonical 갱신 + 세그먼트 `직접` 활성.
+          onCustomRange={(start, end) => { setStartDate(start); setEndDate(end); setActivePreset("custom"); }}
           startDate={startDate}
           endDate={endDate}
           activeFilterCount={activeFilterCount}

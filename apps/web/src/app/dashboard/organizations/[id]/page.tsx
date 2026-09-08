@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // §org-management-web P3 — 좌석 한도 canonical (P0 C1)
 import { PLAN_LIMITS, SubscriptionPlan } from "@/lib/plans";
 import { Checkbox } from "@/components/ui/checkbox";
+import { InlineSelect } from "@/components/ui/inline-select";
 import {
   Select,
   SelectContent,
@@ -74,13 +75,15 @@ import { countOrgApprovers, isOrgApprover } from "@/lib/permissions/org-approver
 
 // 역할 라벨 매핑
 // §org-management-web P4b — 역할 색 점. 드롭다운 트리거와 읽기 전용 표기가 같은 색을 쓴다.
+// §mobile-residual-5 1e — 역할 색 점 = 전역 드롭다운 토큰(조회자 slate · 요청자 블루 · 승인자 퍼플 ·
+//   관리자 앰버). 멤버 목록 점과 초대 역할 패널이 같은 토큰을 쓴다(한 화면 두 팔레트 0).
 const ROLE_DOT: Record<string, string> = {
-  VIEWER: "bg-slate-400",
-  REQUESTER: "bg-blue-500",
-  APPROVER: "bg-emerald-500",
-  ADMIN: "bg-slate-900",
+  VIEWER: "bg-[#94a3b8]",
+  REQUESTER: "bg-[#2563eb]",
+  APPROVER: "bg-[#7c3aed]",
+  ADMIN: "bg-[#b45309]",
   OWNER: "bg-slate-900",
-  MEMBER: "bg-slate-400",
+  MEMBER: "bg-[#94a3b8]",
 };
 
 const ROLE_LABELS: Record<string, string> = {
@@ -91,6 +94,15 @@ const ROLE_LABELS: Record<string, string> = {
   OWNER: "소유자",
   MEMBER: "멤버",
 };
+
+// §mobile-residual-5 1e — 초대 역할 옵션(인라인 listbox). OWNER 는 초대 불가(invites route 검증과 동일).
+//   ADMIN 포함 = route validRoles(OWNER 제외 전부)와 정합 — dead option 0.
+const INVITE_ROLE_OPTIONS: ReadonlyArray<{ value: string; label: string; description: string; dotClass: string }> = [
+  { value: "VIEWER", label: "조회자", description: "보기만 가능", dotClass: ROLE_DOT.VIEWER },
+  { value: "REQUESTER", label: "요청자", description: "구매 요청 생성", dotClass: ROLE_DOT.REQUESTER },
+  { value: "APPROVER", label: "승인자", description: "요청 승인·반려", dotClass: ROLE_DOT.APPROVER },
+  { value: "ADMIN", label: "관리자", description: "조직 설정·멤버 관리", dotClass: ROLE_DOT.ADMIN },
+];
 
 interface TeamMemberRow {
   id: string;
@@ -1836,17 +1848,15 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-sm font-semibold text-slate-700">역할</Label>
-                <Select value={inviteRole} onValueChange={setInviteRole}>
-                  <SelectTrigger className="bg-white border-slate-200 text-slate-900 h-11 rounded-xl">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    <SelectItem value="VIEWER">연구원 (조회자)</SelectItem>
-                    <SelectItem value="REQUESTER">요청자</SelectItem>
-                    <SelectItem value="APPROVER">승인자</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="invite-role" className="text-sm font-semibold text-slate-700">역할</Label>
+                {/* §mobile-residual-5 1e — Radix Select(body 포털 z-50)가 Dialog(z-[80]) 뒤에 렌더되던 버그.
+                    시트/모달 내부 = 포털 금지 · 인라인 확장(InlineSelect). 옵션 = 색 점 + 이름 + 설명 + ✓. */}
+                <InlineSelect
+                  id="invite-role"
+                  value={inviteRole}
+                  onChange={setInviteRole}
+                  options={INVITE_ROLE_OPTIONS}
+                />
               </div>
               {/* 🛑 실패 사유는 여기 **남는다**. 문구 전문 + 다음 행동 경로.
                   토스트만 쓰면 모달은 열린 채인데 사유가 사라지고 문장도 잘린다. */}

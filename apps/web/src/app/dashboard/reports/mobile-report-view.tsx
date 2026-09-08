@@ -7,34 +7,24 @@
  * 파생: 전부 page.tsx `deriveInsights()` 산출(insights) 소비 — 임계/규칙 재구현 0 (canonical 단일점).
  * 차트: 라이브러리 0 — CSS/inline 막대만 (§4). 데스크톱(≥md)은 page.tsx 기존 뷰 무접촉.
  * 날짜/숫자: Pretendard 단일 — 모노 폰트 사용 0 (§5).
- * 기간 커스텀 날짜 편집은 모바일 v1 범위 외(프리셋 4종 + 한국어 표시) — PLAN P0 판정.
+ * 기간: §mobile-residual-5 1b/1c (2026-09-07) — 행 표기 `MM-DD ~ MM-DD · N일`(lib/reports/period-label) +
+ *   프리셋 끝 `직접` 탭 → 기간 바텀 시트(MobileDateRangeSheet). 날짜 canonical 은 page.tsx 소유.
+ *   필터 팝오버 = 카테고리·공급사 조건 전용(날짜 필드 0).
  */
 
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { FileDown, SlidersHorizontal, AlertTriangle, BarChart2, Layers, Activity, TrendingUp } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { FileDown, SlidersHorizontal, AlertTriangle, BarChart2, Layers, Activity, TrendingUp, CalendarDays } from "lucide-react";
+import { MobileDateRangeSheet } from "@/components/ui/mobile-date-range-sheet";
+import { formatPeriodRow } from "@/lib/reports/period-label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/utils/format";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 
 // ---------------------------------------------------------------------------
-// 표기 헬퍼 — §1 날짜 한국어(올해 연도 생략) · 당월 값 만원 축약
+// 표기 헬퍼 — 당월 값 만원 축약 (기간 표기는 lib/reports/period-label 단일점)
 // ---------------------------------------------------------------------------
-
-function formatKoreanDate(iso: string, omitYear: boolean): string {
-  const [y, m, d] = iso.split("-").map(Number);
-  if (!y || !m || !d) return "";
-  return omitYear ? `${m}월 ${d}일` : `${y}년 ${m}월 ${d}일`;
-}
-
-export function formatKoreanDateRange(startDate: string, endDate: string): string {
-  if (!startDate || !endDate) return "최근 1개월"; // API 기본 기간
-  const thisYear = new Date().getFullYear();
-  const omitStart = Number(startDate.slice(0, 4)) === thisYear;
-  const omitEnd = Number(endDate.slice(0, 4)) === thisYear;
-  return `${formatKoreanDate(startDate, omitStart)} – ${formatKoreanDate(endDate, omitEnd)}`;
-}
 
 function formatManwon(amount: number): string {
   if (amount >= 10_000) return `${Math.round(amount / 10_000).toLocaleString()}만원`;
@@ -78,8 +68,11 @@ export interface MobileReportViewProps {
   categoryData: NamedAmount[];
   vendorData: NamedAmount[];
   presets: ReadonlyArray<{ id: string; label: string }>;
+  /** 프리셋 id 또는 "custom"(직접 설정) */
   activePreset: string | null;
   onPreset: (id: string) => void;
+  /** §mobile-residual-5 1c — 기간 시트 적용(page 가 날짜 상태 + activePreset="custom" 반영) */
+  onCustomRange: (startIso: string, endIso: string) => void;
   startDate: string;
   endDate: string;
   activeFilterCount: number;
@@ -149,9 +142,12 @@ export function MobileReportView(props: MobileReportViewProps) {
   const {
     isLoading, isError, hasData, totalAmount, detailCount, pendingQuoteCount = 0, insights,
     monthlyData, categoryData, vendorData,
-    presets, activePreset, onPreset, startDate, endDate,
+    presets, activePreset, onPreset, onCustomRange, startDate, endDate,
     activeFilterCount, filterContent, onDownload, onRetry,
   } = props;
+
+  // §mobile-residual-5 1c — 기간 직접 설정 시트 open(표시 상태만 — 날짜 canonical 은 page)
+  const [rangeSheetOpen, setRangeSheetOpen] = useState(false);
 
   const emptyPeriod = hasData && totalAmount === 0 && detailCount === 0;
 
@@ -195,7 +191,8 @@ export function MobileReportView(props: MobileReportViewProps) {
 
       {/* ── §1 기간·필터 단일 카드 ── */}
       <div className="bg-white border border-[#e6eaf0] rounded-2xl p-3 space-y-2.5">
-        <div className="grid grid-cols-4 rounded-xl bg-[#f1f5f9] p-0.5">
+        {/* §mobile-residual-5 1c — 프리셋 4 + `직접`(캘린더 아이콘) = 5칸 세그먼트 */}
+        <div className="grid grid-cols-5 rounded-xl bg-[#f1f5f9] p-0.5">
           {presets.map((p) => (
             <button
               key={p.id}
@@ -209,10 +206,23 @@ export function MobileReportView(props: MobileReportViewProps) {
               {p.label.replace("최근 ", "")}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => setRangeSheetOpen(true)}
+            aria-haspopup="dialog"
+            aria-expanded={rangeSheetOpen}
+            className={cn(
+              "h-11 min-h-[44px] rounded-[10px] text-[12px] font-semibold transition-colors inline-flex items-center justify-center gap-1",
+              activePreset === "custom" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
+            )}
+          >
+            <CalendarDays className="h-3 w-3" aria-hidden />
+            직접
+          </button>
         </div>
         <div className="flex items-center justify-between gap-2">
-          {/* §1 날짜 — 본문 폰트 한국어 표기(mono 금지) */}
-          <p className="text-[13px] font-medium text-slate-700">{formatKoreanDateRange(startDate, endDate)}</p>
+          {/* §mobile-residual-5 1b — 기간 행 = 프리셋/직접 설정에서 파생된 읽기 전용 `MM-DD ~ MM-DD · N일` */}
+          <p className="text-[12.5px] text-slate-500 tabular-nums">{formatPeriodRow(startDate, endDate)}</p>
           <Popover>
             <PopoverTrigger asChild>
               <button
@@ -232,6 +242,13 @@ export function MobileReportView(props: MobileReportViewProps) {
           </Popover>
         </div>
       </div>
+      <MobileDateRangeSheet
+        open={rangeSheetOpen}
+        onClose={() => setRangeSheetOpen(false)}
+        startDate={startDate}
+        endDate={endDate}
+        onApply={onCustomRange}
+      />
 
       {/* ── 로딩 — 뱃지/숫자 placeholder 없이 스켈레톤만 ── */}
       {isLoading && (
