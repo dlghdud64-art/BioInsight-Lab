@@ -69,8 +69,15 @@ export async function deriveCurrentSnapshotMetrics(opts: {
         totalAmount: { gt: 5_000_000 },
       },
     });
-  } catch {
-    // schema 부재 또는 DB 오류 시 0 fallback (graceful)
+  } catch (error) {
+    /* 🛑 삼키되 **기록한다** (2026-09-10). 이전 판본은 `catch {}` 로 조용히 삼켰고,
+     *   그래서 `product: { organizationId }` 가 던지는 것을 아무도 몰랐다 —
+     *   지표가 **항상 0** 인데 화면은 정상처럼 보였다.
+     *   스냅샷 1건이 실패해도 나머지는 계속 잡아야 하므로 fallback 은 유지한다. */
+    console.error("[dashboard-snapshot] 승인 대기·이상 주문 집계 실패:", {
+      organizationId: organizationId ?? null,
+      reason: error instanceof Error ? error.message : String(error),
+    });
   }
 
   // 2) processingRequired = lowStock + expiring (60일 이내) + undecided compare
@@ -78,7 +85,12 @@ export async function deriveCurrentSnapshotMetrics(opts: {
   try {
     const lowStock = await db.productInventory.count({
       where: {
-        ...(organizationId ? { product: { organizationId } } : {}),
+        /* §snapshot-lowstock-throw (호영님 2026-09-10) — `is:` 가 필요하다.
+         * `ProductInventory.product` 가 nullable 이라 Prisma 는 to-one 관계 필터에
+         * `is:`/`isNot:` 을 요구한다. 없이 쓰면 `Unknown argument organizationId` 로 **던진다**.
+         * 아래 catch 가 그걸 삼켜 processingRequiredCount 가 **항상 0** 이었다 —
+         * 빌드는 통과하고 대시보드 지표만 죽어 있었다(빌드 로그에 8회+ 출력). */
+        ...(organizationId ? { product: { is: { organizationId } } } : {}),
         currentQuantity: { lt: 10 }, // simple heuristic; safetyStock 비교는 별도 트랙
       },
     });
@@ -86,13 +98,20 @@ export async function deriveCurrentSnapshotMetrics(opts: {
     sixtyDaysAhead.setDate(sixtyDaysAhead.getDate() + 60);
     const expiring = await db.productInventory.count({
       where: {
-        ...(organizationId ? { product: { organizationId } } : {}),
+        ...(organizationId ? { product: { is: { organizationId } } } : {}),
         expiryDate: { lte: sixtyDaysAhead, gte: new Date() },
       },
     });
     processingRequiredCount = lowStock + expiring;
-  } catch {
-    // schema 부재 graceful
+  } catch (error) {
+    /* 🛑 삼키되 **기록한다** (2026-09-10). 이전 판본은 `catch {}` 로 조용히 삼켰고,
+     *   그래서 `product: { organizationId }` 가 던지는 것을 아무도 몰랐다 —
+     *   지표가 **항상 0** 인데 화면은 정상처럼 보였다.
+     *   스냅샷 1건이 실패해도 나머지는 계속 잡아야 하므로 fallback 은 유지한다. */
+    console.error("[dashboard-snapshot] 저재고·만료 임박 집계 실패:", {
+      organizationId: organizationId ?? null,
+      reason: error instanceof Error ? error.message : String(error),
+    });
   }
 
   // 3) totalSpent = PurchaseRecord 누적 amount
@@ -104,8 +123,15 @@ export async function deriveCurrentSnapshotMetrics(opts: {
       _sum: { amount: true },
     });
     totalSpent = BigInt(result._sum.amount ?? 0);
-  } catch {
-    // graceful
+  } catch (error) {
+    /* 🛑 삼키되 **기록한다** (2026-09-10). 이전 판본은 `catch {}` 로 조용히 삼켰고,
+     *   그래서 `product: { organizationId }` 가 던지는 것을 아무도 몰랐다 —
+     *   지표가 **항상 0** 인데 화면은 정상처럼 보였다.
+     *   스냅샷 1건이 실패해도 나머지는 계속 잡아야 하므로 fallback 은 유지한다. */
+    console.error("[dashboard-snapshot] 누적 지출 집계 실패:", {
+      organizationId: organizationId ?? null,
+      reason: error instanceof Error ? error.message : String(error),
+    });
   }
 
   // 4) totalBudget = UserBudget 활성 totalAmount sum
@@ -117,8 +143,15 @@ export async function deriveCurrentSnapshotMetrics(opts: {
       _sum: { totalAmount: true },
     });
     totalBudget = BigInt(result._sum.totalAmount ?? 0);
-  } catch {
-    // graceful
+  } catch (error) {
+    /* 🛑 삼키되 **기록한다** (2026-09-10). 이전 판본은 `catch {}` 로 조용히 삼켰고,
+     *   그래서 `product: { organizationId }` 가 던지는 것을 아무도 몰랐다 —
+     *   지표가 **항상 0** 인데 화면은 정상처럼 보였다.
+     *   스냅샷 1건이 실패해도 나머지는 계속 잡아야 하므로 fallback 은 유지한다. */
+    console.error("[dashboard-snapshot] 예산 합계 집계 실패:", {
+      organizationId: organizationId ?? null,
+      reason: error instanceof Error ? error.message : String(error),
+    });
   }
 
   return {
