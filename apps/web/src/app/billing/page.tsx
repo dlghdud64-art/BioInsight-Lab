@@ -4,6 +4,16 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { csrfFetch } from "@/lib/api-client";
+/* §billing-redesign P3: 게이지 규칙·기간 표기는 lib 순수모듈이 정본이다.
+ *   페이지에 두면 sentinel 이 페이지 트리(셸 -> next-auth)를 끌고 들어와 게이트가
+ *   환경에 인질로 잡힌다(2026-09-09 실측). 계산식 복제 금지 - 여기서 부르기만 한다. */
+import {
+  usageTone,
+  usageNote,
+  billingPeriodLabel,
+  USAGE_BAR,
+  USAGE_TEXT,
+} from "@/lib/billing/usage-tone";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -246,6 +256,52 @@ function BillingPageContent() {
   /* §billing-redesign P2: 탭 잠금은 플랜 entitlement 파생. Free 만 잠기는 게 아니라
    *   "유료 플랜인가" 하나로 가른다. 플랜이 늘어도 판정식이 갈라지지 않는다. */
   const paidPlan = currentPlan !== "FREE";
+
+  /* §billing-redesign P3: 사용량 4지표 파생. 값·한도는 전부 /api/billing usage 에서 온다
+   *   (그 라우트가 enforce 와 같은 계산을 쓴다 — P1). 화면은 색과 문장만 정한다. */
+  const period = billingPeriodLabel();
+
+  const usageMetrics = (() => {
+    const rows: Array<{
+      key: string;
+      label: string;
+      used: number;
+      limit: number | null;
+      kind: string;
+      seatFull?: boolean;
+    }> = [
+      { key: "quotes", label: "견적 요청", used: usage?.quotesUsed ?? 0, limit: usage?.quotesLimit ?? null, kind: "요청" },
+      {
+        key: "seats",
+        label: "운영자 시트",
+        used: usage?.seatsUsed ?? 1,
+        limit: usage?.seatsLimit ?? null,
+        kind: "초대",
+        seatFull: usage?.seatsLimit != null && (usage?.seatsUsed ?? 1) >= usage.seatsLimit,
+      },
+      { key: "items", label: "재고 품목", used: usage?.itemsUsed ?? 0, limit: usage?.itemsLimit ?? null, kind: "등록" },
+      { key: "labelScans", label: "라벨 스캔", used: usage?.labelScansUsed ?? 0, limit: usage?.labelScansLimit ?? null, kind: "스캔" },
+    ];
+    return rows.map((r) => {
+      const tone = usageTone(r.used, r.limit, r.seatFull);
+      const note = usageNote(tone, {
+        kind: r.kind,
+        resetDateLabel: period.resetDateLabel,
+        isSeat: r.key === "seats",
+      });
+      return {
+        ...r,
+        tone,
+        note,
+        limitLabel: r.limit === null ? "무제한" : String(r.limit),
+      };
+    });
+  })();
+
+  /* 한도 1줄 요약. 카드가 기능을 나열하지 않는 대신 숫자만 짚는다(비교표가 단일 소스). */
+  const planSummaryLine = usageMetrics
+    .map((m) => `${m.label} ${m.limit === null ? "무제한" : m.limit + (m.key === "quotes" || m.key === "labelScans" ? "회" : m.key === "seats" ? "명" : "품목")}`)
+    .join(" · ");
   const currentPlanInfo = planInfo?.[currentPlan];
 
   // 카드 번호 포맷팅
@@ -335,93 +391,77 @@ function BillingPageContent() {
               })}
             </TabsList>
 
-            {/* 개요 탭 */}
+            {/* 플랜 탭 */}
             <TabsContent value="overview" className="space-y-6">
-              {/* 현재 플랜 카드 */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        현재 플랜
-                        <Badge variant={currentPlan === "FREE" ? "secondary" : "default"}>
-                          {currentPlanInfo?.nameKo || "무료"}
-                        </Badge>
-                      </CardTitle>
-                      <CardDescription>
-                        {/* §checkout-two-paths (2026-09-05) — 🛑 이 날짜를 "다음 결제일" 이라
-                            부르지 않는다. `Subscription.currentPeriodEnd` 는 플랜 변경 POST 가
-                            `now + 30일` 로 **만들어 넣는 값**이고(subscription/route.ts:163),
-                            결제 연동이 없어 그날 아무 일도 일어나지 않는다.
-                            즉 업그레이드하는 순간 **없는 결제일**이 화면에 뜬다.
-                            ⏳ 파생원(`currentPeriodEnd`)은 **지우지 않는다** — 결제가 배선되면
-                            진짜 결제일이 된다. 표시만 바꾼다(checkout-utils 때와 같은 판단). */}
-                        {/* 🛑 2026-09-07 — 문구를 **데이터에서 파생**시킨다.
-                            이전 판본은 `결제 연동 준비 중 · 청구 없음` 을 하드코딩했다.
-                            `Invoice` 가 전역 0행이던 동안은 우연히 참이었지만,
-                            §plan-change-claim 보정으로 미수 89,000원(DRAFT)이 생기자
-                            바로 아래 청구 내역 탭은 `미발행 · 미수 89,000원`, 여기는
-                            `청구 없음` — **한 화면이 한 사실을 두 값으로** 말했다.
-                            `/dashboard/billing` 목업에서 걷어낸 것과 같은 형태다. */}
-                        {subscription?.currentPeriodEnd && (
-                          <>{summarizeOutstanding(invoices).text}</>
-                        )}
-                      </CardDescription>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold">
-                        {currentPlanInfo?.priceDisplay || "무료"}
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {/* 사용량 */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-slate-500" />
-                          견적 리스트
-                        </span>
-                        <span>
-                          {usage?.quotesUsed || 0} / {usage?.quotesLimit || "무제한"}
-                        </span>
-                      </div>
-                      {usage?.quotesLimit && (
-                        <Progress value={(usage.quotesUsed / usage.quotesLimit) * 100} />
+              {/* §billing-redesign P3: 현재 플랜(요약 1줄) + 사용량(4지표) 2열.
+                  기능 나열은 여기서 뺀다 — 같은 내용이 아래 비교표에도 있어 한 화면이
+                  두 번 말하고 있었다. 비교표가 단일 소스다. */}
+              <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-4">
+                {/* 현재 플랜 */}
+                <Card>
+                  <CardContent className="p-5">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">현재 플랜</p>
+                    <p className="mt-1 text-[26px] font-extrabold leading-tight text-slate-900">
+                      {currentPlanInfo?.nameKo || "Free"}
+                    </p>
+                    <p className="mt-0.5 text-[13px] text-slate-500">
+                      {currentPlanInfo?.priceDisplay || "무료"}
+                      {/* 청구 상태는 Invoice 실데이터에서 파생한다(하드코딩 금지 — §plan-change-claim). */}
+                      {subscription?.currentPeriodEnd && (
+                        <> · {summarizeOutstanding(invoices).text}</>
                       )}
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-slate-500" />
-                          시트 (사용자)
-                        </span>
-                        <span>
-                          {usage?.seatsUsed || 1} / {usage?.seatsLimit || "무제한"}
-                        </span>
-                      </div>
-                      {usage?.seatsLimit && (
-                        <Progress value={(usage.seatsUsed / usage.seatsLimit) * 100} />
-                      )}
-                    </div>
-                  </div>
+                    </p>
+                    <p className="mt-3 text-[12.5px] leading-relaxed text-slate-600">
+                      {planSummaryLine}
+                    </p>
+                    {/* 결제 미연동 상태라 이 버튼의 실제 역할은 영업팀 연락이다.
+                        P5 에서 업그레이드 요청 모달로 승격하되, 지금도 무반응이면 안 된다. */}
+                    <Button
+                      className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => router.push("/support")}
+                    >
+                      Basic으로 업그레이드
+                    </Button>
+                  </CardContent>
+                </Card>
 
-                  {/* 포함 기능 */}
-                  <div className="border-t pt-4">
-                    <h4 className="text-sm font-medium mb-3">포함된 기능</h4>
-                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      {currentPlanInfo?.features.map((feature, i) => (
-                        <li key={i} className="flex items-center gap-2 text-sm text-slate-600">
-                          <Check className="h-4 w-4 text-green-500" />
-                          {feature}
-                        </li>
+                {/* 이번 달 사용량 */}
+                <Card>
+                  <CardContent className="p-5">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <p className="text-sm font-bold text-slate-900">이번 달 사용량</p>
+                      <p className="text-[11.5px] text-slate-500 tabular-nums">
+                        {period.range} · 초기화 {period.resetInDays}일 후
+                      </p>
+                    </div>
+                    <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                      {usageMetrics.map((m) => (
+                        <div key={m.key}>
+                          <div className="flex items-baseline justify-between gap-2">
+                            <span className="text-[12.5px] text-slate-600">{m.label}</span>
+                            <span className={cn("text-[13px] font-bold tabular-nums", USAGE_TEXT[m.tone])}>
+                              {m.used} <span className="text-slate-400 font-semibold">/ {m.limitLabel}</span>
+                            </span>
+                          </div>
+                          <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                            {m.limit !== null && (
+                              <div
+                                className={cn("h-full rounded-full transition-all", USAGE_BAR[m.tone])}
+                                style={{ width: `${Math.min(100, (m.used / Math.max(1, m.limit)) * 100)}%` }}
+                              />
+                            )}
+                          </div>
+                          {m.note && (
+                            <p className={cn("mt-1 text-[11px]", m.tone === "danger" ? "text-red-700" : "text-yellow-700")}>
+                              {m.note}
+                            </p>
+                          )}
+                        </div>
                       ))}
-                    </ul>
-                  </div>
-                </CardContent>
-              </Card>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
 
               {/* 플랜 비교 */}
               <Card>
