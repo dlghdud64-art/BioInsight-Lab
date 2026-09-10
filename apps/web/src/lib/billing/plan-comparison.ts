@@ -51,6 +51,19 @@ export interface ComparisonRow {
 const countOrUnlimited = (n: number | null, unit: string) =>
   n === null ? "무제한" : `${n}${unit}`;
 
+/**
+ * §billing-redesign P4b: 현재 플랜의 **다음 상위** 플랜. null = 더 올라갈 곳 없음(Pro).
+ *
+ * 2026-09-10 prod smoke 에서 잡혔다: 플랜 카드 CTA 가 `Basic으로 업그레이드` 로 고정이라
+ *   이미 Basic 인 계정에 Basic 을 권했다. 시안이 Free 상태를 그린 것을 그대로 박은 탓이다.
+ *   화면이 현재 상태를 안 보고 말하면, 맞는 계정에서만 우연히 맞는 문장이 된다.
+ */
+export function nextUpgradePlan(current: string): ComparisonPlan | null {
+  if (current === SubscriptionPlan.FREE) return SubscriptionPlan.TEAM;
+  if (current === SubscriptionPlan.TEAM) return SubscriptionPlan.ORGANIZATION;
+  return null;
+}
+
 export const COMPARISON_ROWS: ReadonlyArray<ComparisonRow> = [
   {
     key: "quotes",

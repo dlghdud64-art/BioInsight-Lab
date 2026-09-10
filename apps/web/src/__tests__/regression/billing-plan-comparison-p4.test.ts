@@ -21,6 +21,7 @@ import {
   COMPARISON_ROWS,
   planLabel,
   planPriceLabel,
+  nextUpgradePlan,
 } from "@/lib/billing/plan-comparison";
 import { violations } from "../_helpers/em-dash-scan";
 
@@ -86,6 +87,27 @@ describe("§billing-redesign P4: 비교표 값은 정본 파생", () => {
     expect(cell("approval", SubscriptionPlan.FREE)).toBeNull();
     expect(cell("approval", SubscriptionPlan.TEAM)).toBeNull();
     expect(cell("approval", SubscriptionPlan.ORGANIZATION)).toBe("1단계");
+  });
+});
+
+describe("§billing-redesign P4b: CTA 는 현재 플랜의 다음 단계", () => {
+  /* 2026-09-10 prod smoke: 계정이 Basic 인데 카드 CTA 가 `Basic으로 업그레이드` 였다.
+     시안(Free 상태)을 그대로 박아 현재 상태를 안 보고 말한 결과다. */
+  it("Free -> Basic, Basic -> Pro, Pro -> 없음", () => {
+    expect(nextUpgradePlan(SubscriptionPlan.FREE)).toBe(SubscriptionPlan.TEAM);
+    expect(nextUpgradePlan(SubscriptionPlan.TEAM)).toBe(SubscriptionPlan.ORGANIZATION);
+    expect(nextUpgradePlan(SubscriptionPlan.ORGANIZATION)).toBeNull();
+  });
+
+  it("화면은 라벨을 파생한다 (고정 문구 0)", () => {
+    expect(PAGE).toMatch(/const upgradeNext = nextUpgradePlan\(currentPlan\)/);
+    expect(PAGE).toMatch(/\{planLabel\(upgradeNext\)\}으로 업그레이드/);
+    expect(PAGE).not.toMatch(/>\s*Basic으로 업그레이드/);
+    expect(PAGE).not.toMatch(/setUpgradeTarget\("Basic"\)/);
+  });
+
+  it("최상위 플랜은 업그레이드 대신 문의 경로", () => {
+    expect(PAGE).toMatch(/좌석·계약 문의/);
   });
 });
 

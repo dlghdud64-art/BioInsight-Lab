@@ -20,6 +20,7 @@ import {
   COMPARISON_ROWS,
   planLabel,
   planPriceLabel,
+  nextUpgradePlan,
 } from "@/lib/billing/plan-comparison";
 /* §billing-redesign P5: 업그레이드·문의 CTA 3곳(헤더·플랜 카드·비교표)의 종착지.
  *   P2~P4 에서 임시로 /support 페이지로 보냈던 것을 같은 모달로 통일한다.
@@ -240,6 +241,9 @@ function BillingPageContent() {
   /* §billing-redesign P2: 탭 잠금은 플랜 entitlement 파생. Free 만 잠기는 게 아니라
    *   "유료 플랜인가" 하나로 가른다. 플랜이 늘어도 판정식이 갈라지지 않는다. */
   const paidPlan = currentPlan !== "FREE";
+  /* §billing-redesign P4b: 카드 CTA 는 **현재 플랜의 다음 단계**를 말한다.
+   *   고정 문구("Basic으로 업그레이드")는 이미 Basic 인 계정에서 자기모순이 된다(prod 실측). */
+  const upgradeNext = nextUpgradePlan(currentPlan);
 
   /* §billing-redesign P3: 사용량 4지표 파생. 값·한도는 전부 /api/billing usage 에서 온다
    *   (그 라우트가 enforce 와 같은 계산을 쓴다 — P1). 화면은 색과 문장만 정한다. */
@@ -398,12 +402,23 @@ function BillingPageContent() {
                     <p className="mt-3 text-[12.5px] leading-relaxed text-slate-600">
                       {planSummaryLine}
                     </p>
-                    <Button
-                      className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white"
-                      onClick={() => setUpgradeTarget("Basic")}
-                    >
-                      Basic으로 업그레이드
-                    </Button>
+                    {upgradeNext ? (
+                      <Button
+                        className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white"
+                        onClick={() => setUpgradeTarget(planLabel(upgradeNext))}
+                      >
+                        {planLabel(upgradeNext)}으로 업그레이드
+                      </Button>
+                    ) : (
+                      /* 최상위 플랜이면 더 권할 단계가 없다. 좌석·계약 확장은 문의 경로다. */
+                      <Button
+                        variant="outline"
+                        className="mt-4 w-full"
+                        onClick={() => setUpgradeTarget("Enterprise")}
+                      >
+                        좌석·계약 문의
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
 

@@ -121,12 +121,16 @@ describe("§billing-redesign P3: 화면 계약", () => {
   });
 
   it("업그레이드 CTA 는 실동작 (dead button 0)", () => {
-    expect(PAGE).toMatch(/Basic으로 업그레이드/);
-    const idx = PAGE.indexOf("Basic으로 업그레이드");
-    // 창은 여는 태그부터(4원칙 ②) — 고정 폭 400 은 P5 배선 교체에 밀린다.
+    // P4b 승격: 라벨은 고정 문자열이 아니라 현재 플랜에서 파생된다.
+    //   고정 "Basic" 을 핀하면 Basic 계정에서 자기모순인 구현이 GREEN 으로 남는다(prod 실측).
+    expect(PAGE).toMatch(/\{planLabel\(upgradeNext\)\}으로 업그레이드/);
+    // 앵커는 JSX 표현식 그대로 — 맨 문자열 "으로 업그레이드" 는 위쪽 주석에도 있다.
+    const idx = PAGE.indexOf("{planLabel(upgradeNext)}으로 업그레이드");
+    expect(idx).toBeGreaterThan(-1);
+    // 창은 여는 태그부터(4원칙 ②) — 고정 폭으로 열지 않는다.
     const btn = PAGE.slice(PAGE.lastIndexOf("<Button", idx), idx);
     // P5 승격: 임시 /support 라우팅 → 업그레이드 요청 모달. 명제(실동작)는 그대로.
-    expect(btn).toMatch(/onClick=\{\(\) => setUpgradeTarget\("Basic"\)\}/);
+    expect(btn).toMatch(/onClick=\{\(\) => setUpgradeTarget\(planLabel\(upgradeNext\)\)\}/);
     expect(btn).not.toMatch(/disabled\s*$/m);
   });
 
