@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
-import { createAuditLog, AuditAction, AuditEntityType } from "@/lib/audit";
+import { createDataAuditLog, AuditAction, AuditEntityType } from "@/lib/audit";
 import { validateUsageForTrackingMode } from "@/lib/inventory/tracking-mode";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 // 알림 고도화 #notif-inventory-low-dispatch — 출고/사용으로 currentQuantity 가
@@ -143,7 +143,7 @@ export async function POST(
           },
         });
 
-        await createAuditLog(
+        await createDataAuditLog(
           {
             userId: session.user.id,
             organizationId: inventory.organizationId,

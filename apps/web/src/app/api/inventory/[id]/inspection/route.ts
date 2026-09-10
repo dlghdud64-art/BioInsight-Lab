@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
-import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
+import { createDataAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 점검 이력 조회
@@ -144,7 +144,7 @@ export async function POST(
         data: { lastInspectedAt: new Date() },
       });
 
-      await createAuditLog(
+      await createDataAuditLog(
         {
           userId: session.user.id,
           organizationId: inventory.organizationId,

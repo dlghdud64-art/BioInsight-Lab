@@ -180,7 +180,10 @@ describe("§invite-flow Phase 3-2 — POST 수락", () => {
     expect(tx).toMatch(/tx\.organizationMember\.create/);
     expect(tx).toMatch(/tx\.organizationInvite\.update[\s\S]{0,200}?acceptedAt/);
     expect(tx).toMatch(/tx\.user\.update[\s\S]{0,200}?activeOrganizationId/);
-    expect(tx).toMatch(/createAuditLog\([\s\S]{0,600}?tx,/);
+    /* 승계 (§entity-type-canonical 4 · 2026-09-10): `createAuditLog` → `createDataAuditLog` 개명.
+     *   같은 이름의 헬퍼가 둘이었고(→AuditLog / →DataAuditLog) import 경로로만 갈렸다.
+     *   명제는 "감사 기록이 남는다" 이지 심볼 철자가 아니다. */
+    expect(tx).toMatch(/createDataAuditLog\([\s\S]{0,600}?tx,/);
   });
 
   it("실패 상태가 서로 다른 코드로 갈린다 (뭉개기 0)", () => {

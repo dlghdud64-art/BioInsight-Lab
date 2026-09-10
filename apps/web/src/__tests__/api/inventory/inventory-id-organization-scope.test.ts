@@ -68,8 +68,13 @@ describe("#api-inventory-id-info-leak — handler export 보존", () => {
     expect(enforceMatches.length).toBeGreaterThanOrEqual(2);
   });
 
-  it("audit log createAuditLog 호출 보존 (PATCH + DELETE)", () => {
-    const auditMatches = route.match(/createAuditLog\(/g) || [];
+  it("audit log 기록 호출 보존 (PATCH + DELETE)", () => {
+    /* 🔑 승계 (§entity-type-canonical 4 · 2026-09-10): 심볼이 `createAuditLog` →
+     *   `createDataAuditLog` 로 **개명**됐다. 같은 이름의 헬퍼가 둘이었고(→AuditLog /
+     *   →DataAuditLog) import 경로로만 갈려, 2026-09-07 "초대 수락 감사 0" 오보의 뿌리였다.
+     *   명제는 "**감사 기록이 두 핸들러에서 남는다**" 이지 심볼 철자가 아니다.
+     *   이 라우트는 `@/lib/audit`(→DataAuditLog) 쪽을 쓴다. */
+    const auditMatches = route.match(/createDataAuditLog\(/g) || [];
     expect(auditMatches.length).toBeGreaterThanOrEqual(2);
   });
 });

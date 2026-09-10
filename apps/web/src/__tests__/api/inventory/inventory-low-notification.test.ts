@@ -133,8 +133,10 @@ describe("§11.250a #5 — invariant 보존 (cross-stack)", () => {
     expect(route).toMatch(/productInventory\.update/);
   });
 
-  it("기존 createAuditLog 보존", () => {
-    expect(route).toMatch(/createAuditLog/);
+  it("기존 감사 기록 호출 보존", () => {
+    /* 승계 (§entity-type-canonical 4): `createAuditLog` → `createDataAuditLog` 개명.
+     *   명제는 "감사 기록이 남는다" 이고 심볼 철자가 아니다(동명이인 해소가 개명 사유). */
+    expect(route).toMatch(/createDataAuditLog/);
   });
 
   it("INVENTORY_LOW event-type 정의 보존 (entityType INVENTORY, IN_APP)", () => {

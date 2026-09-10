@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { Prisma, TeamRole, AiActionStatus, TaskStatus, ApprovalStatus } from "@prisma/client";
-import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
+import { createDataAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { transitionWorkItem } from "@/lib/work-queue";
 import { enforceAction } from "@/lib/security/server-enforcement-middleware";
@@ -292,7 +292,7 @@ export async function POST(
       });
 
       // 감사 로그
-      await createAuditLog({
+      await createDataAuditLog({
         userId: session.user.id,
         organizationId: item.organizationId,
         action: AuditAction.UPDATE,

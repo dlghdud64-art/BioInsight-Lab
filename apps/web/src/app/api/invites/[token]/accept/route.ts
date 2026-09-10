@@ -22,7 +22,7 @@ import { Prisma, OrganizationRole, SubscriptionPlan } from "@prisma/client";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import {
-  createAuditLog,
+  createDataAuditLog,
   extractRequestMeta,
   AuditAction,
   AuditEntityType,
@@ -204,7 +204,7 @@ export async function POST(
        *    ORGANIZATION/CREATE 로 적고, 초대 맥락은 `newData.kind` 로 남긴다.
        *    entityId 는 **조직**이다 — entityType 과 축을 맞춘다(초대 id 를 넣으면 조회가 어긋난다).
        *    ⏳ 초대 전용 enum 값은 다음 DDL 묶음 후보로 계획서에 등재. */
-      await createAuditLog(
+      await createDataAuditLog(
         {
           userId,
           organizationId: invite.organizationId,

@@ -14,11 +14,15 @@
  * 실측 근거 (prod, 2026-09-07):
  *   `MutationAuditEvent` 1행(수기 보정) · `GovernanceAuditLog` 0 · `CanonicalAuditEvent` 0 ·
  *   `StabilizationAuditEvent` 0 · `IngestionAuditLog` 0 — 감사 테이블 5개가 전부 비어 있었다.
+  *   🛑 `GovernanceAuditLog` 은 그 뒤 **테이블째 제거**됐다
+  *      (§activity-source-of-truth 5 · migration 20260910120000_drop_governance_audit_log).
+  *      위 0행 기록은 **그때의 실측**으로 보존한다 — 지금 찾아도 그 테이블은 없다.
  *   `enforceAction` 을 쓰는 147개 라우트 중 `complete()` 를 부르는 116개의 기록이
  *   **존재한 적이 없다.**
  *
  * 같은 배치에서 `audit-persistence-adapter.ts` 도 제거했다 — `PrismaAuditAdapter` 가
- * 완성돼 있었으나 **외부 호출자가 0**이었다(`GovernanceAuditLog` 0행이 그 증거).
+ * 완성돼 있었으나 **외부 호출자가 0**이었다(`GovernanceAuditLog` 0행이 그 증거 — 그 테이블은
+ * 2026-09-10 에 제거됐다).
  * 인프라를 만들고 마지막 한 줄을 안 이은 세 번째 사례였다.
  *
  * 🔑 감사는 이제 `src/lib/audit/durable-audit.ts` 가 `MutationAuditEvent` 에 직접 남긴다

@@ -14,7 +14,7 @@
  *
  * 구현 앵커(Phase 2/3):
  *  - 라우트: src/app/api/inventory/dispatch-batch/route.ts — POST, zod items[], 단일 db.$transaction,
- *    items 순회, validateUsageForTrackingMode, InventoryUsage type DISPATCH, createAuditLog, enforceAction.
+ *    items 순회, validateUsageForTrackingMode, InventoryUsage type DISPATCH, createDataAuditLog, enforceAction.
  *  - UI: src/components/inventory/lot-batch-dispatch-sheet.tsx
  *  - overlay(inventory-content): data-lot-bulk-dispatch-disabled 제거 + 배치 sheet 오픈 wiring.
  */
@@ -52,7 +52,10 @@ describe("#inventory-batch-dispatch — 원자적 배치 라우트 (RED)", () =>
     const s = read(ROUTE);
     expect(s).toMatch(/inventoryUsage\.create/);
     expect(s).toMatch(/DISPATCH/);
-    expect(s).toContain("createAuditLog");
+    /* 승계 (§entity-type-canonical 4 · 2026-09-10): `createAuditLog` → `createDataAuditLog` 개명.
+     *   같은 이름의 헬퍼가 둘이었고(→AuditLog / →DataAuditLog) import 경로로만 갈렸다.
+     *   명제는 "감사 기록이 남는다" 이지 심볼 철자가 아니다. */
+    expect(s).toContain("createDataAuditLog");
     expect(s).toContain("enforceAction");
   });
   it("비원자 N회 반복(단건 route fetch) 금지", () => {

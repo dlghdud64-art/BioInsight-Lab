@@ -9,7 +9,7 @@ import {
   type QuoteDraftItem,
 } from "@/lib/ai/quote-draft-generator";
 import { createFollowupForOrder } from "@/lib/ai/order-followup-detector";
-import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
+import { createDataAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 
 /**
@@ -221,7 +221,7 @@ export async function POST(request: NextRequest) {
     const actorRole = await getActorRole(session.user.id, order.organizationId);
 
     if (!skipped) {
-      await createAuditLog({
+      await createDataAuditLog({
         userId: session.user.id,
         organizationId: order.organizationId,
         action: AuditAction.CREATE,

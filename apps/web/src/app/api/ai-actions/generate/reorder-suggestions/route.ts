@@ -6,7 +6,7 @@ import { resolveOrganizationIdForMutation } from "@/lib/organizations/active-org
 import { db } from "@/lib/db";
 import { TeamRole } from "@prisma/client";
 import { detectInventoryIssues } from "@/lib/ai/inventory-restock-detector";
-import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
+import { createDataAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 
 /**
  * POST /api/ai-actions/generate/reorder-suggestions
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     // 감사 로그
     if (result.actionsCreated > 0) {
       const { ipAddress, userAgent } = extractRequestMeta(request);
-      await createAuditLog({
+      await createDataAuditLog({
         userId: session.user.id,
         organizationId: organizationId || null,
         action: AuditAction.CREATE,

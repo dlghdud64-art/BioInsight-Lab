@@ -12,7 +12,7 @@
  *   - auth() 보안 + DataAuditLog 감사 추적 (§11.309c-hotfix-2)
  *   - db.$transaction 원자성 (Product + ProductInventory + InventoryRestock +
  *     AuditLog 모두 같은 트랜잭션)
- *   - createAuditLog (INVENTORY_RESTOCK CREATE)
+ *   - createDataAuditLog(INVENTORY_RESTOCK CREATE)
  *
  * 입력 payload:
  *   {
@@ -56,7 +56,7 @@ import { db } from "@/lib/db";
 // §cas-hazard-classification P3b — 입고 시 OCR casNumber → casNo 저장 + 정적 위험분류.
 import { buildProductHazardFields } from "@/lib/safety/product-hazard-fields";
 import { Prisma } from "@prisma/client";
-import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
+import { createDataAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 // §scan-registration-reason — 500 응답에 사유를 실어 보낸다(침묵 금지).
 import { describeFailure } from "@/lib/api-failure-reason";
 // §scan-registration-category — 분류·출처 단일 소스(캐스트 0 · Record 로 전수 강제).
@@ -550,7 +550,7 @@ export async function POST(request: NextRequest) {
             },
           });
 
-          await createAuditLog(
+          await createDataAuditLog(
             {
               userId: session.user.id,
               organizationId: inventory.organizationId,
@@ -715,7 +715,7 @@ export async function POST(request: NextRequest) {
         });
 
         // 4) AuditLog (INVENTORY_RESTOCK CREATE)
-        await createAuditLog(
+        await createDataAuditLog(
           {
             userId: session.user.id,
             organizationId: targetOrgId,

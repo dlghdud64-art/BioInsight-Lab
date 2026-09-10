@@ -5,6 +5,7 @@
  * 사고: `enforceAction().complete()` → `appendAuditEnvelope` → 모듈 최상위 `let auditStore`
  *   (**인스턴스 메모리**). 서버리스에서 요청이 끝나면 사라진다.
  *   prod 실측 2026-09-07: `MutationAuditEvent` 0행 · `GovernanceAuditLog` 0행 —
+ *   (후자는 2026-09-10 에 테이블째 제거됐다. 이 줄은 **그때의 실측**으로 보존한다.) —
  *   `enforceAction` 을 쓰는 라우트 147곳 중 `complete()` 를 부르는 116곳의 감사가
  *   **존재한 적이 없다.** 감사의 외형만 있고 실체가 없었다.
  *

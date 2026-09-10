@@ -25,7 +25,10 @@ describe("§safety-modal-upgrade P4b — 물질 점검 엔드포인트", () => {
     expect(ROUTE).toMatch(/productInventory\.findFirst/);
     expect(ROUTE).toMatch(/ownedInv/);
     expect(ROUTE).toMatch(/enforceAction/);
-    expect(ROUTE).toMatch(/createAuditLog/);
+    /* 승계 (§entity-type-canonical 4 · 2026-09-10): `createAuditLog` → `createDataAuditLog` 개명.
+     *   같은 이름의 헬퍼가 둘이었고(→AuditLog / →DataAuditLog) import 경로로만 갈렸다.
+     *   명제는 "감사 기록이 남는다" 이지 심볼 철자가 아니다. */
+    expect(ROUTE).toMatch(/createDataAuditLog/);
     expect(ROUTE).toMatch(/AuditEntityType\.INSPECTION/);
   });
   it("이상 발견 시 심각도·조치 검증(400)", () => {

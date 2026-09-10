@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
-import { createAuditLog, AuditAction, AuditEntityType } from "@/lib/audit";
+import { createDataAuditLog, AuditAction, AuditEntityType } from "@/lib/audit";
 import { validateUsageForTrackingMode } from "@/lib/inventory/tracking-mode";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        await createAuditLog(
+        await createDataAuditLog(
           {
             userId,
             organizationId: inv.organizationId,

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
-import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
+import { createDataAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { assertTrackingModeAllowed, TrackingModePlanError } from "@/lib/billing/enforce-plan-limit";
 import { dispatchNotificationEvent } from "@/lib/notifications/event-dispatcher";
@@ -258,7 +258,7 @@ export async function PATCH(
         }
       }
 
-      await createAuditLog(
+      await createDataAuditLog(
         {
           userId:         session.user.id,
           organizationId: existingInventory.organizationId,
@@ -439,7 +439,7 @@ export async function DELETE(
     // 트랜잭션: 감사 로그 먼저 기록(FK 참조 전) → 삭제 순서 보장
     await db.$transaction(async (tx: Prisma.TransactionClient) => {
       // DataAuditLog는 onDelete: SetNull이므로 삭제 전에 기록해도 FK 문제 없음
-      await createAuditLog(
+      await createDataAuditLog(
         {
           userId:         session.user.id,
           organizationId: existingInventory.organizationId,

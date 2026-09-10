@@ -8,7 +8,7 @@ import {
   AiKeyMissingError,
   type QuoteDraftItem,
 } from "@/lib/ai/quote-draft-generator";
-import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
+import { createDataAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 
 /**
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
     const { ipAddress, userAgent } = extractRequestMeta(request);
     const actorRole = await getActorRole(session.user.id, org?.id);
 
-    await createAuditLog({
+    await createDataAuditLog({
       userId: session.user.id,
       organizationId: org?.id || null,
       action: AuditAction.CREATE,

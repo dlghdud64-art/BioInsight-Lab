@@ -2,8 +2,8 @@
  * DataAuditLog 공통 유틸리티
  *
  * 사용 방법:
- * - 트랜잭션 내부: `createAuditLog(params, tx)`  → 원자성 보장
- * - 트랜잭션 외부: `createAuditLog(params)`       → 독립 best-effort 기록
+ * - 트랜잭션 내부: `createDataAuditLog(params, tx)`  → 원자성 보장
+ * - 트랜잭션 외부: `createDataAuditLog(params)`       → 독립 best-effort 기록
  *
  * 로그 실패는 절대 메인 비즈니스 로직을 막지 않음 (에러 catch + warn).
  */
@@ -13,7 +13,7 @@ import { db } from "@/lib/db";
 
 export { AuditAction, AuditEntityType };
 
-export interface AuditLogParams {
+export interface DataAuditLogParams {
   /** 행위 수행자 (null = 시스템 자동) */
   userId?: string | null;
   /** 조직 격리 키 (RLS) */
@@ -44,8 +44,8 @@ type TxClient = Prisma.TransactionClient;
  *                   제공 시 해당 트랜잭션 안에서 원자적으로 기록.
  *                   미제공 시 전역 db 인스턴스로 독립 기록(best-effort).
  */
-export async function createAuditLog(
-  params: AuditLogParams,
+export async function createDataAuditLog(
+  params: DataAuditLogParams,
   txClient?: TxClient
 ): Promise<void> {
   const client: any = txClient ?? db;

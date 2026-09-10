@@ -126,6 +126,7 @@ export {
 
 /* §audit-durability (가) 2026-09-07 — audit-persistence-adapter 제거.
    PrismaAuditAdapter 가 완성돼 있었으나 외부 호출자 0 · prod GovernanceAuditLog 0행.
+   (그 테이블은 2026-09-10 제거 — §activity-source-of-truth 5. 위 0행은 그때의 실측이다.)
    감사는 lib/audit/durable-audit.ts 가 MutationAuditEvent 에 직접 남긴다. */
 
 // ── Batch 3: Crypto Hash Engine ──

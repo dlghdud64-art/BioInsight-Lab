@@ -2137,12 +2137,12 @@ model PurchaseRequest {
   updatedAt      DateTime              @updatedAt
 
   // Relations
-  requester User   @relation("RequestedPurchases", fields: [requesterId], references: [id], onDelete: Cascade)
-  approver  User?  @relation("ApprovedPurchases", fields: [approverId], references: [id], onDelete: SetNull)
+  requester    User         @relation("RequestedPurchases", fields: [requesterId], references: [id], onDelete: Cascade)
+  approver     User?        @relation("ApprovedPurchases", fields: [approverId], references: [id], onDelete: SetNull)
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  team      Team?  @relation(fields: [teamId], references: [id], onDelete: SetNull)
-  quote     Quote? @relation(fields: [quoteId], references: [id], onDelete: SetNull)
-  order     Order? @relation("PurchaseRequestOrder", fields: [orderId], references: [id], onDelete: SetNull)
+  team         Team?        @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  quote        Quote?       @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  order        Order?       @relation("PurchaseRequestOrder", fields: [orderId], references: [id], onDelete: SetNull)
 
   @@index([requesterId])
   @@index([approverId])
@@ -3057,38 +3057,11 @@ model GovernanceEventDedupe {
   @@index([expiresAt])
 }
 
-// ─── Governance Audit Log (Security Batch 6) ─────────────
-// append-only, tamper-evident hash chain audit.
-// Security enforcement middleware가 기록하는 irreversible action evidence.
-// UPDATE/DELETE 금지 — INSERT + SELECT only.
-model GovernanceAuditLog {
-  id                     String   @id @default(cuid())
-  eventId                String   @unique // audit_xxxx_xxx 형식
-  correlationId          String // 요청 단위 추적
-  actorUserId            String // 행위자 user ID
-  actorRole              String // 행위자 시스템 역할
-  actionType             String // irreversible action type
-  targetEntityType       String // po, quote, dispatch, approval 등
-  targetEntityId         String // 대상 entity ID
-  occurredAt             DateTime // 이벤트 발생 시각
-  snapshotVersion        String   @default("v0") // 스냅샷 버전
-  beforeHash             String // 변경 전 상태 hash
-  afterHash              String // 변경 후 상태 hash
-  rationale              String?  @db.Text // 결재 사유
-  reasonCode             String // action reason code
-  sourceSurface          String // UI surface 출처
-  previousEnvelopeHash   String // 이전 envelope hash (chain)
-  envelopeHash           String   @unique // 이 envelope 자체 hash
-  securityClassification String   @default("audit_evidence") // internal_only, governance_restricted, audit_evidence, supplier_facing
-  createdAt              DateTime @default(now())
-
-  @@index([correlationId])
-  @@index([actorUserId])
-  @@index([actionType])
-  @@index([targetEntityType, targetEntityId])
-  @@index([envelopeHash])
-  @@index([occurredAt])
-}
+// ─── Governance Audit Log — **제거됨** (§activity-source-of-truth 5 · 2026-09-10) ───
+//   쓰는 심볼 0 · FK 0 · prod 0행. PrismaAuditAdapter 가 완성돼 있었으나 호출자가 0이었고,
+//   그 어댑터는 §facade 제거(2026-09-07)로 이미 걷어냈다. 테이블만 남아 있었다.
+//   되살릴 근거가 생기면 0_init 의 CREATE TABLE 을 참고한다.
+//   migration: 20260910120000_drop_governance_audit_log
 
 // ────────────────────────────────────────────────────────────
 // 카테고리별 지출 통제 (Category-Based Spending Control)
@@ -3319,7 +3292,7 @@ model OcrJob {
   //   RESTRICT: 조직을 지우려면 그 조직의 OCR 기록을 어떻게 할지 명시적으로 결정하게 한다
   //   (CASCADE 면 InventoryRestock 의 스캔 출처가 말없이 사라진다).
   organizationId String // tenant 분리
-  organization   Organization @relation("OrganizationOcrJobs", fields: [organizationId], references: [id], onDelete: Restrict)
+  organization   Organization       @relation("OrganizationOcrJobs", fields: [organizationId], references: [id], onDelete: Restrict)
   userId         String // scan 실행자
   type           OcrJobType
   imageUrl       String // Vercel Blob URL (영구 저장)

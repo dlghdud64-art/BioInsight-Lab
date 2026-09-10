@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { getScope, getScopeKey } from "@/lib/auth/scope";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
 import { ActivityType, Prisma } from "@prisma/client";
-import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
+import { createDataAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 import { sendEmail } from "@/lib/email/sender";
 import { generatePurchaseCompleteEmail } from "@/lib/email/templates";
 import { handleApiError } from "@/lib/api-error-handler";
@@ -547,7 +547,7 @@ export async function PATCH(
     });
 
     // DataAuditLog: QUOTE UPDATE (상태 변경 포함 — best-effort, 메인 로직과 무관)
-    createAuditLog({
+    createDataAuditLog({
       userId:         session.user.id,
       organizationId: quote.organizationId,
       action:         isCompletingPurchase ? AuditAction.UPDATE : AuditAction.UPDATE,
@@ -661,7 +661,7 @@ export async function DELETE(
     });
 
     // DataAuditLog: QUOTE DELETE (삭제 전 기록 — onDelete: SetNull이므로 순서 무관)
-    createAuditLog({
+    createDataAuditLog({
       userId:         session.user.id,
       organizationId: quote.organizationId,
       action:         AuditAction.DELETE,

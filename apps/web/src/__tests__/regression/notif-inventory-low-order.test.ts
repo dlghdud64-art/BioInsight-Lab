@@ -122,7 +122,10 @@ describe("알림 — 회귀 0 (기존 병렬 caller 보존)", () => {
   it("use route 기존 transaction/audit/응답 보존", () => {
     const src = read(USE_ROUTE);
     expect(src).toMatch(/db\.\$transaction/);
-    expect(src).toMatch(/createAuditLog/);
+    /* 승계 (§entity-type-canonical 4 · 2026-09-10): `createAuditLog` → `createDataAuditLog` 개명.
+     *   같은 이름의 헬퍼가 둘이었고(→AuditLog / →DataAuditLog) import 경로로만 갈렸다.
+     *   명제는 "감사 기록이 남는다" 이지 심볼 철자가 아니다. */
+    expect(src).toMatch(/createDataAuditLog/);
     expect(src).toMatch(/usageRecordId:\s*usageRecord\.id/);
   });
 
