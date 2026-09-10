@@ -168,7 +168,7 @@ export async function PATCH(
           organizationId,
           // §11.235 — ActivityType cast (schema migration 대기).
           activityType: "organization_vendor_updated" as unknown as import("@prisma/client").ActivityType,
-          entityType: "OrganizationVendor",
+          entityType: "ORGANIZATION_VENDOR",
           entityId: id,
           actorRole: await getActorRole(session.user.id, organizationId),
           metadata: { changes: Object.keys(updateData) },
@@ -256,7 +256,7 @@ export async function DELETE(
         organizationId,
         // §11.235 — ActivityType cast (schema migration 대기).
         activityType: "organization_vendor_deleted" as unknown as import("@prisma/client").ActivityType,
-        entityType: "OrganizationVendor",
+        entityType: "ORGANIZATION_VENDOR",
         entityId: id,
         actorRole: await getActorRole(session.user.id, organizationId),
         metadata: {

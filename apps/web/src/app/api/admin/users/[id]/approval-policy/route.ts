@@ -188,7 +188,7 @@ export async function PATCH(
     await createAuditLog({
       userId: actorId,
       eventType: AuditEventType.USER_UPDATED,
-      entityType: "User",
+      entityType: "USER",
       entityId: targetUserId,
       action: "approval_policy_update",
       ...auditRequestMeta(request), // §11.345-B — IP/UA 캡처

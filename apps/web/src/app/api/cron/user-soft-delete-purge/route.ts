@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
         // 1) audit log 먼저 (hard delete 후에는 user.id 만 보존)
         await createAuditLog({
           eventType: AuditEventType.USER_DELETED,
-          entityType: "User",
+          entityType: "USER",
           entityId: user.id,
           action: "auto_purge_30d",
           metadata: {
@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
       try {
         await createAuditLog({
           eventType: AuditEventType.USER_DELETED,
-          entityType: "User",
+          entityType: "USER",
           action: "auto_purge_failed",
           metadata: {
             cutoff: cutoff.toISOString(),

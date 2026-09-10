@@ -200,7 +200,7 @@ export async function POST(request: NextRequest) {
           // §11.235 — ActivityType enum 에 ORGANIZATION_VENDOR_* 미정의.
           //   spec 정합 미완성 → as cast 로 type 검사 silence + 향후 schema migration 시점에 정합.
           activityType: "organization_vendor_created" as unknown as import("@prisma/client").ActivityType,
-          entityType: "OrganizationVendor",
+          entityType: "ORGANIZATION_VENDOR",
           entityId: vendor.id,
           actorRole: await getActorRole(session.user.id, organizationId),
           metadata: {

@@ -174,7 +174,7 @@ export async function PUT(
       organizationId: id,
       userId: session.user.id,
       eventType: "SSO_CONFIGURED",
-      entityType: "organization",
+      entityType: "ORGANIZATION",
       entityId: id,
       action: ssoEnabled ? "enable" : "disable",
       metadata: {

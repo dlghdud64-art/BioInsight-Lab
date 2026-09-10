@@ -92,7 +92,7 @@ export async function POST(
     await createAuditLog({
       userId: actorId,
       eventType: AuditEventType.USER_UPDATED,
-      entityType: "User",
+      entityType: "USER",
       entityId: targetUserId,
       action: "manual_approval",
       ...auditRequestMeta(request), // §11.345-B3 — IP/UA 캡처

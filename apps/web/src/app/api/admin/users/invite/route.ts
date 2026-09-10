@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
     await createAuditLog({
       userId: actorId,
       eventType: AuditEventType.USER_CREATED,
-      entityType: "User",
+      entityType: "USER",
       entityId: created.id,
       action: "user_invite",
       ...auditRequestMeta(request), // §11.345-B3 — IP/UA 캡처

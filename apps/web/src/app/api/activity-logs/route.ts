@@ -4,6 +4,11 @@ import { auth } from "@/auth";
 import { db, isPrismaAvailable } from "@/lib/db";
 import { isDemoMode } from "@/lib/env";
 import { resolveOrganizationIdForMutation } from "@/lib/organizations/active-org";
+// §entity-type-canonical — 요청 body 의 entityType 은 정본 집합에 속해야 저장된다.
+import {
+  ACTIVITY_ENTITY_TYPES,
+  isActivityEntityType,
+} from "@/lib/activity/entity-type";
 
 // 액티비티 로그 조회
 export async function GET(request: NextRequest) {
@@ -159,6 +164,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "activityType and entityType are required" },
         { status: 400 }
+      );
+    }
+
+    /* 🛑 §entity-type-canonical (호영님 2026-09-10) — **정본 집합에 없으면 저장하지 않는다.**
+     *   이전 판본은 `body.entityType` 을 자유 문자열로 그대로 넣었다. 그 결과 prod 에
+     *   `quote`(30) 와 `QUOTE`(5) 가 같이 쌓였는데, 아래 GET 은 `where.entityType = q` 로
+     *   **정확 일치** 필터를 건다 → 조회가 35건 중 5건만 잡았다(조용히 6/7 유실).
+     *   🔑 정규화(대문자 변환)로 받지 **않는다.** 그러면 아무 문자열이나 통과해 집합 강제가
+     *     사라진다 — 정규화가 검증을 대신하는 형태다. 거절한다.
+     *   유효 값을 함께 돌려준다: 호출자가 무엇이 정본인지 응답만 보고 알 수 있게. */
+    if (!isActivityEntityType(entityType)) {
+      enforcement.fail();
+      return NextResponse.json(
+        {
+          error: "entityType 이 정본 집합에 없습니다.",
+          code: "ENTITY_TYPE_UNKNOWN",
+          received: String(entityType),
+          allowed: ACTIVITY_ENTITY_TYPES,
+        },
+        { status: 400 },
       );
     }
 

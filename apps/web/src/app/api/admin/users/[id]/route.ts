@@ -93,7 +93,7 @@ export async function DELETE(
     await createAuditLog({
       userId: actorId,
       eventType: AuditEventType.USER_DELETED,
-      entityType: "User",
+      entityType: "USER",
       entityId: targetUserId,
       action: "user_reject",
       ...auditRequestMeta(request), // §11.345-B3 — IP/UA 캡처

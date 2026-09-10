@@ -84,7 +84,7 @@ export async function DELETE(
         organizationId,
         // §11.235 — ActivityType cast (schema migration 대기).
         activityType: "organization_vendor_product_deleted" as unknown as import("@prisma/client").ActivityType,
-        entityType: "OrganizationVendorProduct",
+        entityType: "ORGANIZATION_VENDOR_PRODUCT",
         entityId: id,
         actorRole: await getActorRole(session.user.id, organizationId),
         metadata: {

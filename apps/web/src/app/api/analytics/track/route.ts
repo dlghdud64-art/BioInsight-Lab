@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
           data: {
             userId: userId || undefined,
             activityType: activityType as any,
-            entityType: "analytics_event",
+            entityType: "ANALYTICS_EVENT",
             entityId: event,
             metadata: properties || {},
             ipAddress: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null,

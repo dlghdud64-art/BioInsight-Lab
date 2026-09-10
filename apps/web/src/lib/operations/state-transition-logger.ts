@@ -10,6 +10,7 @@
 import type { Prisma, ActivityType } from "@prisma/client";
 import type { OperationDomain } from "./state-definitions";
 import { createActivityLog } from "@/lib/activity-log";
+import type { ActivityEntityType } from "@/lib/activity/entity-type";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Domain → ActivityType mapping
@@ -78,7 +79,10 @@ export interface CTAExecutionParams {
   actor: string;
   sourceScreen: string;
   targetScreen: string;
-  entityType: string;
+  /* §entity-type-canonical — 자유 문자열이었다. 정본 집합으로 좁힌다.
+   *   ⚠️ 이 함수(`logCTAExecution`)는 현재 **호출처 0** 이다(문서 언급 1건뿐). 죽은 경로라
+   *      좁혀도 파급이 없다. 제거 판단은 별건. */
+  entityType: ActivityEntityType;
   entityId: string;
   outcome: "success" | "failure";
   organizationId?: string | null;

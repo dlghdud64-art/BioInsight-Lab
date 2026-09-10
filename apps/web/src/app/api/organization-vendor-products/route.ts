@@ -219,7 +219,7 @@ export async function POST(request: NextRequest) {
           organizationId,
           // §11.235 — ActivityType cast (schema migration 대기).
           activityType: "organization_vendor_product_created" as unknown as import("@prisma/client").ActivityType,
-          entityType: "OrganizationVendorProduct",
+          entityType: "ORGANIZATION_VENDOR_PRODUCT",
           entityId: entry.id,
           actorRole: await getActorRole(session.user.id, organizationId),
           metadata: {

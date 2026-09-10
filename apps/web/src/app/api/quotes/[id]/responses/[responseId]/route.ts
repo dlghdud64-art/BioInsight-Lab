@@ -58,7 +58,7 @@ export async function PATCH(
       data: {
         userId: session.user.id,
         activityType: "QUOTE_UPDATED", // 기존 ActivityType 사용
-        entityType: "quote_response",
+        entityType: "QUOTE_RESPONSE",
         entityId: responseId,
         metadata: {
           quoteId,
@@ -144,7 +144,7 @@ export async function GET(
     // 협상 이력 조회 (ActivityLog에서)
     const negotiationHistory = await db.activityLog.findMany({
       where: {
-        entityType: "quote_response",
+        entityType: "QUOTE_RESPONSE",
         entityId: responseId,
         activityType: "QUOTE_UPDATED",
       },

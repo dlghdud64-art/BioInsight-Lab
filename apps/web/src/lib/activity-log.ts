@@ -20,6 +20,8 @@
 
 import { ActivityType, Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+// §entity-type-canonical — entityType 정본 집합(대문자 SCREAMING_SNAKE).
+import type { ActivityEntityType } from "@/lib/activity/entity-type";
 
 export { ActivityType };
 
@@ -28,8 +30,11 @@ export { ActivityType };
 export interface ActivityLogParams {
   /** action_type: 이벤트 종류 */
   activityType: ActivityType;
-  /** entity_type: 대상 도메인 (AI_ACTION, QUOTE, INVENTORY 등) */
-  entityType: string;
+  /* entity_type: 대상 도메인.
+   * 🛑 §entity-type-canonical (2026-09-10) — `string` 이었다. 그래서 같은 개념이
+   *   `quote`/`QUOTE` 두 표기로 쌓였고, 읽는 쪽이 정확 일치로 걸러 35건 중 5건만 잡았다.
+   *   타입으로 강제한다 — tsc 가 저장 **전에** 잡는다. */
+  entityType: ActivityEntityType;
   /** entity_id: 대상 레코드 ID */
   entityId?: string | null;
   /** task_type: AI 작업 타입 (QUOTE_DRAFT, VENDOR_EMAIL_DRAFT 등) */
@@ -116,7 +121,8 @@ export async function createActivityLog(
  * 특정 엔티티의 최근 활동 로그 조회
  */
 export async function getRecentActivityLogs(params: {
-  entityType: string;
+  /* 조회 축도 같은 집합을 쓴다 — 쓰기만 강제하면 읽기가 옛 표기로 물어볼 수 있다. */
+  entityType: ActivityEntityType;
   entityId: string;
   limit?: number;
   organizationId?: string;
