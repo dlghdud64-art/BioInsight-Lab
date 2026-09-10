@@ -1,6 +1,8 @@
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+// §inventory-org-session-authority — 쓰기의 조직은 세션에서만 온다(§invite-flow P2-5).
+import { resolveOrganizationIdForMutation } from "@/lib/organizations/active-org";
 import { db } from "@/lib/db";
 import { TeamRole } from "@prisma/client";
 import { detectInventoryIssues } from "@/lib/ai/inventory-restock-detector";
@@ -11,7 +13,7 @@ import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from
  *
  * 재고 부족 및 유효기한 위험 품목을 감지하여 AiActionItem을 생성합니다.
  *
- * Body: { organizationId? }
+ * Body: 없음 (조직은 세션에서 온다 — §inventory-org-session-authority)
  *
  * RBAC: MEMBER 역할 불가 (APPROVER 이상)
  */
@@ -38,8 +40,18 @@ export async function POST(request: NextRequest) {
     if (!enforcement.allowed) return enforcement.deny();
 
 
-    const body = await request.json().catch(() => ({}));
-    const { organizationId } = body;
+    await request.json().catch(() => ({}));
+    /* 🛑 §inventory-org-session-authority (호영님 2026-09-10 P0) — `organizationId` 를
+     *   body 에서 **받지 않는다.** 이전 판본은 그 값을 `detectInventoryIssues` 로 그대로
+     *   넘겼고, 그 함수는 `aiActionItem.create({ organizationId })` 까지 간다 →
+     *   남의 조직에 처리 항목을 만들 수 있었다. 멤버십 검증은 없었다.
+     *   🛑 있던 RBAC 도 이 질문에 답하지 못한다 — `teamMember.findFirst({ where: { userId } })`
+     *     는 **역할만** 보고 그 조직 소속인지는 보지 않는다(조건에 organizationId 가 없다).
+     *   조직의 권위 있는 출처는 세션 하나다. */
+    const orgResolution = await resolveOrganizationIdForMutation({
+      userId: session.user.id,
+    });
+    const organizationId = orgResolution.ok ? orgResolution.organizationId : null;
 
     // RBAC: MEMBER 역할 제한
     if (organizationId) {

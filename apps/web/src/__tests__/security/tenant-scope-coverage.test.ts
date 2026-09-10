@@ -346,6 +346,20 @@ export function collectHandlers(): Handler[] {
  *   2. **다른 필드** — `userId` · `teamId` · `workspaceId` · `scopeKey` 로의 주입
  *      (귀속 축이 org 만 있는 게 아니다 — §scopekey-axis-unmeasured 참조)
  *   3. **간접 경유** — 헬퍼/서비스 계층이 인자로 받아 `data:` 에 넣는 형태
+ *   4. **중간 객체 경유 스프레드** — `const d = { organizationId }` 를 만들어
+ *      `create({ data: { productId, ...d } })` 로 넣는 형태. `data:` 블록 안에
+ *      `organizationId` 라는 글자가 **없다.**
+ *
+ * 🛑 2026-09-10 — 위 3·4 가 **가정이 아니라 실측**으로 확인됐다. cross-tenant write
+ *   4건이 이 단언을 GREEN 인 채로 통과하고 있었다(호영님 P0):
+ *     `/api/inventory` POST                   ← 형태 4 (`...inventoryData`)
+ *     `/api/po-candidates` POST               ← 형태 3 (`createPOCandidate(input)`)
+ *     `/api/inventory/auto-reorder` POST      ← 형태 3 (`createQuote({ organizationId })`)
+ *     `/api/ai-actions/.../reorder-suggestions` POST ← 형태 3 (`detectInventoryIssues(...)`)
+ *   → **`regression/org-session-authority.test.ts`** 가 그 자리를 닫는다.
+ *     그쪽은 `data:` 를 보지 않는다 — **핸들러가 body 에서 조직을 읽는가**만 본다.
+ *     헬퍼 너머를 정적으로 따라갈 방법이 없으므로 **입구에서** 자르는 것이 유일한 형태다.
+ *     이 파일의 단언은 유지한다(축이 다르다: 여기는 `data:` 축, 저기는 입력 축).
  *
  * → **"`data:` 축 커버됨" 으로 읽지 말 것.** 이 단언의 RED 0 은
  *   *"바디 유래 org 주입이 0"* 이지 *"귀속 조작이 0"* 이 아니다.

@@ -10,7 +10,7 @@ import {
 } from "@/lib/inventory/disposal-readiness";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { enforcePlanLimit, PlanLimitError, assertTrackingModeAllowed, TrackingModePlanError } from "@/lib/billing/enforce-plan-limit";
-import { resolveActiveOrganizationId } from "@/lib/organizations/active-org";
+import { resolveOrganizationIdForMutation } from "@/lib/organizations/active-org";
 
 // 재고 목록 조회
 export async function GET(request: NextRequest) {
@@ -206,10 +206,23 @@ export async function POST(request: NextRequest) {
     }
 
     /* §invite-flow Phase 2-8 — 한도를 **호출자가 정한 조직**의 플랜으로 잰다.
-     *   auth 직후·`enforceAction`(:238) 앞이라 기존 선제 차단 배치는 그대로다. */
-    const activeOrganizationId = await resolveActiveOrganizationId({
+     *   auth 직후·`enforceAction`(:238) 앞이라 기존 선제 차단 배치는 그대로다.
+     *
+     * 🛑 §inventory-org-session-authority (호영님 2026-09-10 P0) — **조직 출처는 여기 하나다.**
+     *   이전 판본은 같은 핸들러 안에서 조직을 **두 곳**에서 읽었다:
+     *     한도 판정 → 세션(이 줄)
+     *     저장      → `body.organizationId` (멤버십 검증 0)
+     *   후자가 cross-tenant **write** 다 — 남의 조직 id 를 실으면 그 조직 재고로 들어갔다.
+     *   오늘 아침 OCR 5라우트에 내린 (C′) 판정과 같다: **세션이 유일한 권위**다.
+     *   "지금 클라이언트가 안 보낸다" 는 방어가 아니다 — API 가 열려 있으면 열려 있는 것이다.
+     *
+     * 🔑 관대한 `resolveActiveOrganizationId` 가 아니라 mutation resolver 를 쓴다
+     *   (§invite-flow P2-5). hint 를 **안 받으므로** 실패 사유는 `no_organization` 뿐이고,
+     *   그건 차단이 아니라 **개인 재고**로 떨어진다 — budgets 의 "개인 예산" 분기와 같은 계약. */
+    const orgResolution = await resolveOrganizationIdForMutation({
       userId: session.user.id,
     });
+    const activeOrganizationId = orgResolution.ok ? orgResolution.organizationId : null;
 
     // §pricing-refresh P2 — Free 재고 품목 한도 enforce(grandfather/유료/env미설정은 통과). 초과 시 429+안내.
     try {
@@ -269,7 +282,9 @@ export async function POST(request: NextRequest) {
       notes,
       autoReorderEnabled,
       autoReorderThreshold,
-      organizationId,
+      /* 🛑 §inventory-org-session-authority — `organizationId` 를 **여기서 받지 않는다.**
+       *   무시하는 것으로는 부족하다: 받아 두면 다음 사람이 배선한다.
+       *   조직은 위 `activeOrganizationId`(세션) 하나뿐이다. */
       // §11.326 — 라벨 추출 규격(통 1개 함량). 입고 수량과 분리, Product 마스터에 저장.
       packSize,
       packUnit,
@@ -306,8 +321,14 @@ export async function POST(request: NextRequest) {
 
     // 공통 재고 데이터 (productId 제외)
     const inventoryData = {
-      userId: organizationId ? null : session.user.id,
-      organizationId: organizationId || null,
+      /* §inventory-org-session-authority — 소유 2축(호영님 2026-09-10 판정):
+       *   `userId` = 행위자 · `organizationId` = 스코프. 세션에서만 온다.
+       *   🔑 `userId: activeOrganizationId ? null : ...` 형태(XOR)는 **유지한다** —
+       *     바꾸면 `countUsageFor("items")` 가 `where { userId }` 로 세므로 조직 재고가
+       *     갑자기 개인 품목 한도에 잡힌다. 한도의 주체는 호영님 판단 대기 중이라
+       *     이 커밋에서 건드리지 않는다(§plan-limit-subject). */
+      userId: activeOrganizationId ? null : session.user.id,
+      organizationId: activeOrganizationId,
       currentQuantity: parseFloat(String(currentQuantity)) || 0,
       unit: unit || "ea",
       safetyStock:
@@ -405,9 +426,9 @@ export async function POST(request: NextRequest) {
             });
 
         // 3. 중복 재고 확인 (동일 user/org + product)
-        const duplicateCheck = organizationId
+        const duplicateCheck = activeOrganizationId
           ? await tx.productInventory.findFirst({
-              where: { organizationId, productId: product.id },
+              where: { organizationId: activeOrganizationId, productId: product.id },
             })
           : await tx.productInventory.findFirst({
               where: { userId: session.user.id, productId: product.id },
@@ -444,9 +465,9 @@ export async function POST(request: NextRequest) {
     }
 
     // 중복 재고 확인 (동일 user/org + product)
-    const existing = organizationId
+    const existing = activeOrganizationId
       ? await db.productInventory.findFirst({
-          where: { organizationId, productId: resolvedProductId },
+          where: { organizationId: activeOrganizationId, productId: resolvedProductId },
         })
       : await db.productInventory.findFirst({
           where: { userId: session.user.id, productId: resolvedProductId },

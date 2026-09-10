@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { createQuote } from "@/lib/api/quotes";
+// §inventory-org-session-authority — 쓰기의 조직은 세션에서만 온다(§invite-flow P2-5).
+import { resolveOrganizationIdForMutation } from "@/lib/organizations/active-org";
 
 // ìë ì¬ì£¼ë¬¸ ì¤í API
 export async function POST(request: NextRequest) {
@@ -29,7 +31,18 @@ export async function POST(request: NextRequest) {
     if (!enforcement.allowed) return enforcement.deny();
 
     const body = await request.json();
-    const { organizationId, dryRun = false } = body;
+    /* 🛑 §inventory-org-session-authority (호영님 2026-09-10 P0) — `organizationId` 를
+     *   body 에서 **받지 않는다.** 이전 판본은 그 값을 두 곳에 그대로 넣었다:
+     *     읽기 `productInventory.findMany({ OR: [..., { organizationId }] })` → 남의 조직 재고 노출
+     *     쓰기 `createQuote({ organizationId })`                              → 남의 조직에 견적 생성
+     *   멤버십 검증은 어디에도 없었다. 조직의 권위 있는 출처는 세션 하나다.
+     *   🔑 이 라우트는 검출기가 처음에 "쓰기X" 로 분류했다 — 쓰기가 `createQuote` **헬퍼를
+     *     통과**하기 때문이다(절차 A: 테이블 이름이 아니라 쓰는 심볼로 찾는다). */
+    const { dryRun = false } = body;
+    const orgResolution = await resolveOrganizationIdForMutation({
+      userId: session.user.id,
+    });
+    const activeOrganizationId = orgResolution.ok ? orgResolution.organizationId : null;
 
     // ìë ì¬ì£¼ë¬¸ì´ íì±íë ì¬ê³  ì¡°í
     // #api-inventory-read-org-scope-auto — auto organization scope (M2 mirror).
@@ -46,11 +59,11 @@ export async function POST(request: NextRequest) {
     const inventories = await db.productInventory.findMany({
       where: {
         autoReorderEnabled: true,
+        /* 🔑 읽기 축은 **내가 속한 조직 전량**이다 — 그건 구조상 안전하다(전부 내 것).
+         *   body override 를 없앴으므로 남의 조직이 이 OR 에 들어올 방법이 없다. */
         OR: [
           { userId: session.user.id },
-          ...(organizationId
-            ? [{ organizationId }]
-            : orgIds.map((id: string) => ({ organizationId: id }))),
+          ...orgIds.map((id: string) => ({ organizationId: id })),
         ],
       },
       include: {
@@ -150,7 +163,8 @@ export async function POST(request: NextRequest) {
     // ì¤ì  ì¬ì£¼ë¬¸: íëª© ë¦¬ì¤í¸ ìì±
     const quote = await createQuote({
       userId: session.user.id,
-      organizationId,
+      // createQuote 의 계약은 `string | undefined` 다 — null 을 받지 않는다(tsc 실측).
+      organizationId: activeOrganizationId ?? undefined,
       title: `ìë ì¬ì£¼ë¬¸ - ${new Date().toLocaleDateString("ko-KR")}`,
       message: `ì¬ê³ ê° ìì  ì¬ê³  ì´íë¡ ë¨ì´ì ¸ ìëì¼ë¡ ìì±ë ì¬ì£¼ë¬¸ ë¦¬ì¤í¸ìëë¤.`,
       // 타입 에러 수정: item 파라미터에 타입 명시
@@ -167,8 +181,8 @@ export async function POST(request: NextRequest) {
     });
 
     enforcement.complete({
-      beforeState: { organizationId: organizationId ?? null, quoteId: null },
-      afterState: { organizationId: organizationId ?? null, quoteId: quote.id, itemCount: reorderItems.length },
+      beforeState: { organizationId: activeOrganizationId, quoteId: null },
+      afterState: { organizationId: activeOrganizationId, quoteId: quote.id, itemCount: reorderItems.length },
     });
 
     return NextResponse.json({

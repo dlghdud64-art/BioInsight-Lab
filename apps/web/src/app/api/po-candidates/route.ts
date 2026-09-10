@@ -24,6 +24,8 @@ import {
 // §11.209b Phase 2 — workspace.plan → ApprovalPolicy fallback (옵션 1
 // 보수적 wiring). PLAN_DESCRIPTOR single source 통과.
 import { resolveApprovalPolicyForPlan } from "@/lib/billing/plan-descriptor";
+// §inventory-org-session-authority — 쓰기의 조직은 세션에서만 온다(§invite-flow P2-5).
+import { resolveOrganizationIdForMutation } from "@/lib/organizations/active-org";
 
 export async function GET(req: NextRequest) {
   try {
@@ -90,9 +92,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    /* 🛑 §inventory-org-session-authority (호영님 2026-09-10 P0) — /api/inventory 와 **같은 형태**였다.
+     *   `{ ...body }` 가 `body.organizationId` 를 그대로 실어 `pOCandidate.create` 까지 갔고,
+     *   멤버십 검증이 어디에도 없었다 → cross-tenant **write**.
+     *   조직의 권위 있는 출처는 세션 하나다(오늘 아침 OCR 5라우트 (C′) 판정과 동일).
+     *   🔑 스프레드 **뒤**에 둔다 — 앞에 두면 body 가 덮는다. */
+    const orgResolution = await resolveOrganizationIdForMutation({
+      userId: session.user.id,
+    });
+
     const input: POCandidateCreateInput = {
       ...body,
       userId: session.user.id,
+      // no_organization 은 차단이 아니라 개인 후보다(기존 동작 보존 · §invite-flow P2-5 계약).
+      organizationId: orgResolution.ok ? orgResolution.organizationId : null,
       approvalPolicy: resolvedApprovalPolicy,
     };
 
