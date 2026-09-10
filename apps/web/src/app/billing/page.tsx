@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { csrfFetch } from "@/lib/api-client";
@@ -48,9 +48,7 @@ import {
   Download,
   Plus,
   Trash2,
-  Building2,
   FileText,
-  ArrowUpRight,
   Loader2,
   AlertCircle,
 } from "lucide-react";
@@ -110,7 +108,6 @@ function BillingPageContent() {
      "어느 플랜으로" 가 모달·문구·분류에 일관되게 흐른다. */
   const [upgradeTarget, setUpgradeTarget] = useState<string | null>(null);
   const queryClient = useQueryClient();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("overview");
   const [isAddCardOpen, setIsAddCardOpen] = useState(false);

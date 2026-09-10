@@ -11,7 +11,7 @@
     "prebuild": "node scripts/generate-migration-manifest.cjs && node scripts/vercel-migrate.js && node scripts/copy-pretendard-font.js",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint src",
     "postinstall": "node scripts/dedupe-react.js && prisma generate",
     "db:generate": "prisma generate",
     "db:migrate": "tsx scripts/db-guard.ts \"prisma migrate dev\" && prisma migrate dev",
