@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { extractProductInfoFromDatasheet } from "@/lib/ai/datasheet-extractor";
 
-// ë°ì´í°ìí¸ íì¤í¸ìì ì í ì ë³´ ì¶ì¶ API
+// 데이터시트 텍스트에서 제품 정보 추출 API
 export async function POST(request: NextRequest) {
   let enforcement: InlineEnforcementHandle | undefined;
   try {

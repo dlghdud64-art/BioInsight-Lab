@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { isReorderNeeded } from "@/lib/inventory/reorder-need";
 import { computeReorderRecommendation } from "@/lib/inventory/reorder-quantity";
 
-// ì¬ì£¼ë¬¸ ì¶ì² ëª©ë¡ ì¡°í
+// 재주문 추천 목록 조회
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const organizationId = searchParams.get("organizationId");
 
-    // ì¬ì©ì ëë ì¡°ì§ì ì¬ê³  ì¡°í
+    // 사용자 또는 조직의 재고 조회
     // #api-inventory-read-org-scope-auto — auto organization scope (M2 mirror).
     //   organizationId queryString 없을 때도 user 가 속한 모든 organization 의
     //   재주문 추천 inventory 자동 노출. explicit queryString single-org override 보존.
@@ -53,21 +53,21 @@ export async function GET(request: NextRequest) {
           orderBy: {
             usageDate: "desc",
           },
-          take: 30, // ìµê·¼ 30ê° ì¬ì© ê¸°ë¡
+          take: 30, // 최근 30개 사용 기록
         },
       },
     });
 
-    // ì¬ì£¼ë¬¸ ì¶ì² ê³ì°
+    // 재주문 추천 계산
     const recommendations = inventories
       .map((inventory: any) => {
         const currentQty = inventory.currentQuantity;
         const safetyStock = inventory.safetyStock || 0;
 
-        // ìì  ì¬ê³  ì´íì¸ ê²½ì°
+        // 안전 재고 이하인 경우
         // §stock-risk-consolidation P3 — canonical isReorderNeeded(공유, 복합: 리드타임 OR 안전재고 OR 소진). 단순 safety-stock → 통일.
         if (isReorderNeeded({ currentQuantity: currentQty, safetyStock: inventory.safetyStock, averageDailyUsage: inventory.averageDailyUsage, leadTimeDays: inventory.leadTimeDays })) {
-          // ì¬ì©ë ì¶ì  (ìµê·¼ 30ì¼ íê·  ì¬ì©ë)
+          // 사용량 추정 (최근 30일 평균 사용량)
           // §inventory-delta-label-kpi P1 — 일평균 소진: 저장값(averageDailyUsage) 우선, 없으면 usageRecords 파생.
           let dailyUsage = inventory.averageDailyUsage ?? 0;
           if ((!dailyUsage || dailyUsage <= 0) && inventory.usageRecords.length > 0) {
@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
       // 타입 에러 수정: filter와 sort 함수의 파라미터에 타입 명시
       .filter((r: any): r is NonNullable<typeof r> => r !== null)
       .sort((a: any, b: any) => {
-        // ê¸´ê¸ë ìì¼ë¡ ì ë ¬
+        // 긴급도 순으로 정렬
         // 타입 에러 수정: urgencyOrder 인덱싱 타입 에러 해결
         const urgencyOrder: { [key: string]: number } = { urgent: 0, high: 1, medium: 2 };
         return (urgencyOrder[a.urgency as string] || 0) - (urgencyOrder[b.urgency as string] || 0);

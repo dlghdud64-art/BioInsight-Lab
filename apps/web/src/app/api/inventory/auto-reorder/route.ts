@@ -6,7 +6,7 @@ import { createQuote } from "@/lib/api/quotes";
 // §inventory-org-session-authority — 쓰기의 조직은 세션에서만 온다(§invite-flow P2-5).
 import { resolveOrganizationIdForMutation } from "@/lib/organizations/active-org";
 
-// ìë ì¬ì£¼ë¬¸ ì¤í API
+// 자동 재주문 실행 API
 export async function POST(request: NextRequest) {
   let enforcement: InlineEnforcementHandle | undefined;
   try {
@@ -44,11 +44,13 @@ export async function POST(request: NextRequest) {
     });
     const activeOrganizationId = orgResolution.ok ? orgResolution.organizationId : null;
 
-    // ìë ì¬ì£¼ë¬¸ì´ íì±íë ì¬ê³  ì¡°í
+    // 자동 재주문이 활성화된 재고 조회
     // #api-inventory-read-org-scope-auto — auto organization scope (M2 mirror).
-    //   organizationId body 없을 때도 user 가 속한 모든 organization 의 자동
-    //   재주문 inventory 가 자동 노출 — 조직 멤버 collaboration 정합 + pilot
-    //   row 가시성. explicit organizationId body 는 single-org override 보존.
+    //   user 가 속한 모든 organization 의 자동 재주문 inventory 가 자동 노출 —
+    //   조직 멤버 collaboration 정합 + pilot row 가시성.
+    // 🛑 "explicit organizationId body 는 single-org override 보존" 이라는 옛 문장은
+    //   §inventory-org-session-authority(2026-09-10)로 **더 이상 참이 아니다** — 그 override 가
+    //   곧 cross-tenant read 였다. 주석을 지우지 않고 무효를 적는다(다음 사람이 되살리지 않게).
     const memberships = await db.organizationMember.findMany({
       where: { userId: session.user.id },
       select: { organizationId: true },
@@ -89,15 +91,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // ì¬ì£¼ë¬¸ì´ íìí í­ëª© íí°ë§
+    // 재주문이 필요한 항목 필터링
     const reorderItems = inventories
       .map((inventory: any) => {
         const currentQty = inventory.currentQuantity;
         const threshold = inventory.autoReorderThreshold || inventory.safetyStock || 0;
 
-        // ìê³ê° ì´íì¸ ê²½ì° ì¬ì£¼ë¬¸ íì
+        // 임계값 이하인 경우 재주문 필요
         if (currentQty <= threshold) {
-          // ì¬ì©ë ì¶ì 
+          // 사용량 추정
           let estimatedMonthlyUsage = 0;
           if (inventory.usageRecords.length > 0) {
             // 타입 에러 수정: sum과 record 파라미터에 타입 명시
@@ -116,7 +118,7 @@ export async function POST(request: NextRequest) {
             estimatedMonthlyUsage = (totalUsage / days) * 30;
           }
 
-          // ì¬ì£¼ë¬¸ ìë ê³ì°
+          // 재주문 수량 계산
           const recommendedQty = Math.max(
             inventory.minOrderQty || 1,
             Math.ceil(threshold + estimatedMonthlyUsage - currentQty)
@@ -137,7 +139,7 @@ export async function POST(request: NextRequest) {
     if (reorderItems.length === 0) {
       enforcement.fail();
       return NextResponse.json({
-        message: "ì¬ì£¼ë¬¸ì´ íìí í­ëª©ì´ ììµëë¤.",
+        message: "재주문이 필요한 항목이 없습니다.",
         items: [],
       });
     }
@@ -148,25 +150,25 @@ export async function POST(request: NextRequest) {
       //   재발주 견적을 "생성 완료"로 감사에 남기게 된다 = 거짓 감사.
       //   fail() = lock 해제(audit 미기록).
       enforcement.fail();
-      // ëë¼ì´ë° ëª¨ë: ì¤ì ë¡ ìì±íì§ ìê³  ê²°ê³¼ë§ ë°í
+      // 드라이런 모드: 실제로 생성하지 않고 결과만 반환
       return NextResponse.json({
-        message: `${reorderItems.length}ê° í­ëª©ì´ ì¬ì£¼ë¬¸ ëììëë¤.`,
+        message: `${reorderItems.length}개 항목이 재주문 대상입니다.`,
         // 타입 에러 수정: map 함수의 item 파라미터에 타입 명시
         items: reorderItems.map((item: any) => ({
           productName: item.product.name,
           quantity: item.quantity,
-          unit: item.inventoryId, // ì¤ì ë¡ë unitì ê°ì ¸ìì¼ í¨
+          unit: item.inventoryId, // 실제로는 unit을 가져와야 함
         })),
       });
     }
 
-    // ì¤ì  ì¬ì£¼ë¬¸: íëª© ë¦¬ì¤í¸ ìì±
+    // 실제 재주문: 품목 리스트 생성
     const quote = await createQuote({
       userId: session.user.id,
       // createQuote 의 계약은 `string | undefined` 다 — null 을 받지 않는다(tsc 실측).
       organizationId: activeOrganizationId ?? undefined,
-      title: `ìë ì¬ì£¼ë¬¸ - ${new Date().toLocaleDateString("ko-KR")}`,
-      message: `ì¬ê³ ê° ìì  ì¬ê³  ì´íë¡ ë¨ì´ì ¸ ìëì¼ë¡ ìì±ë ì¬ì£¼ë¬¸ ë¦¬ì¤í¸ìëë¤.`,
+      title: `자동 재주문 - ${new Date().toLocaleDateString("ko-KR")}`,
+      message: `재고가 안전 재고 이하로 떨어져 자동으로 생성된 재주문 리스트입니다.`,
       // 타입 에러 수정: item 파라미터에 타입 명시
       productIds: reorderItems.map((item: any) => item.productId),
       quantities: Object.fromEntries(
@@ -175,7 +177,7 @@ export async function POST(request: NextRequest) {
       notes: Object.fromEntries(
         reorderItems.map((item: any) => [
           item.productId,
-          `ìë ì¬ì£¼ë¬¸ (ì¬ê³ : ${item.inventoryId})`,
+          `자동 재주문 (재고: ${item.inventoryId})`,
         ])
       ),
     });
@@ -186,7 +188,7 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({
-      message: `${reorderItems.length}ê° í­ëª©ì¼ë¡ ì¬ì£¼ë¬¸ ë¦¬ì¤í¸ê° ìì±ëììµëë¤.`,
+      message: `${reorderItems.length}개 항목으로 재주문 리스트가 생성되었습니다.`,
       quoteId: quote.id,
       items: reorderItems,
     });
@@ -194,7 +196,7 @@ export async function POST(request: NextRequest) {
     enforcement?.fail();
     console.error("Error executing auto-reorder:", error);
     return NextResponse.json(
-      { error: error.message || "ìë ì¬ì£¼ë¬¸ ì¤íì ì¤í¨íìµëë¤." },
+      { error: error.message || "자동 재주문 실행에 실패했습니다." },
       { status: 500 }
     );
   }

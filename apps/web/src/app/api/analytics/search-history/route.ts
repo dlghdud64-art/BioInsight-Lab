@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
-// ê²ì ê¸°ë¡ ì ì¥
+// 검색 기록 저장
 export async function POST(request: NextRequest) {
   let enforcement: InlineEnforcementHandle | undefined;
   try {
@@ -62,4 +62,4 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// ì¬ì©ìë³ ê²ì ê¸°ë¡ ì¡°í
+// 사용자별 검색 기록 조회

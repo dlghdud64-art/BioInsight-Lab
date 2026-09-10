@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
-// ì¬ì©ì íë ì¶ì  (í´ë¦­, ë¹êµ ì¶ê°, ê²¬ì  ìì²­ ë±)
+// 사용자 행동 추적 (클릭, 비교 추가, 견적 요청 등)
 export async function POST(request: NextRequest) {
   let enforcement: InlineEnforcementHandle | undefined;
   try {
@@ -34,14 +34,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Action and productId are required" }, { status: 400 });
     }
 
-    // íë íì: 'view', 'click', 'compare_add', 'compare_remove', 'quote_add', 'favorite_add'
-    // íì¬ë ê²ì ê¸°ë¡ì íµí©íì¬ ì ì¥ (í¥í ë³ë UserBehavior ëª¨ë¸ë¡ íì¥ ê°ë¥)
+    // 행동 타입: 'view', 'click', 'compare_add', 'compare_remove', 'quote_add', 'favorite_add'
+    // 현재는 검색 기록에 통합하여 저장 (향후 별도 UserBehavior 모델로 확장 가능)
     
-    // í´ë¦­ íëì SearchHistoryì clickedProductIdë¡ ì ì¥
+    // 클릭 행동은 SearchHistory의 clickedProductId로 저장
     // Write is CONDITIONAL (click + session + a matching recent search exists).
     let recorded = false;
     if (action === "click" && session?.user?.id) {
-      // ê°ì¥ ìµê·¼ ê²ì ê¸°ë¡ì í´ë¦­ ì ë³´ ìë°ì´í¸
+      // 가장 최근 검색 기록에 클릭 정보 업데이트
       const recentSearch = await db.searchHistory.findFirst({
         where: {
           userId: session.user.id,

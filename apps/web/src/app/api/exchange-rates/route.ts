@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getExchangeRates, convertToKRW } from "@/lib/api/exchange-rate";
 
-// íì¨ ì¡°í API
+// 환율 조회 API
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const toCurrency = searchParams.get("to") || "KRW";
     const amount = searchParams.get("amount");
 
-    // í¹ì  íµí ë³í ìì²­
+    // 특정 통화 변환 요청
     if (fromCurrency && amount) {
       const converted = await convertToKRW(
         parseFloat(amount),
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // ì ì²´ íì¨ ì ë³´ ë°í
+    // 전체 환율 정보 반환
     const rates = await getExchangeRates();
     return NextResponse.json({ rates });
   } catch (error) {

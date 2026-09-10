@@ -197,7 +197,7 @@ export async function POST(request: NextRequest) {
         update: {},
         create: {
           id: "product-hplc-1",
-          name: "HPLC C18 ì»¬ë¼",
+          name: "HPLC C18 컬럼",
           nameEn: "HPLC C18 Column",
           description: "?? HPLC ë¶ì??C18 ì»¬ë¼",
           descriptionEn: "C18 column for reverse-phase HPLC analysis",
