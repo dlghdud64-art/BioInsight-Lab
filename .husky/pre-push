@@ -7,7 +7,9 @@
 #   파일 목록은 1회만 계산해 두 검사가 공유한다.
 if git rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1; then
   added=$(git diff --name-only --diff-filter=A '@{u}..HEAD' -- apps/web/src \
-            | grep -E '\.(ts|tsx)$')
+            | grep -E '\.(ts|tsx)$' || true)
+  # ↑ husky 9 는 훅을 sh -e 로 돌린다. 신규 .ts 가 0개면 grep 이 exit 1 을 내고
+  #   훅이 출력 없이 죽는다(2026-09-11 실측 · 파이프 끝이 grep 이면 그 exit 가 대입의 exit).
   if [ -n "$added" ]; then
     echo "── 신규 파일 $(echo "$added" | grep -c .)개 검사"
     ( cd apps/web && echo "$added" | sed 's|^apps/web/||' | xargs npx eslint ) || exit 1
