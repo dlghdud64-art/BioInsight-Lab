@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { csrfFetch } from "@/lib/api-client";
 /* §billing-redesign P3: 게이지 규칙·기간 표기는 lib 순수모듈이 정본이다.
@@ -20,6 +21,10 @@ import {
   planLabel,
   planPriceLabel,
 } from "@/lib/billing/plan-comparison";
+/* §billing-redesign P5: 업그레이드·문의 CTA 3곳(헤더·플랜 카드·비교표)의 종착지.
+ *   P2~P4 에서 임시로 /support 페이지로 보냈던 것을 같은 모달로 통일한다.
+ *   🛑 /support 페이지 자체의 진입 경로(헤더·가이드)는 건드리지 않는다. */
+import { UpgradeRequestDialog } from "@/components/billing/upgrade-request-dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -98,7 +103,11 @@ const BILLING_TABS: ReadonlyArray<{
 ];
 
 function BillingPageContent() {
+  const { data: session } = useSession();
   const { toast } = useToast();
+  /* 요청 대상 플랜을 담아 연다. null = 닫힘. 플랜을 상태로 들고 있어야
+     "어느 플랜으로" 가 모달·문구·분류에 일관되게 흐른다. */
+  const [upgradeTarget, setUpgradeTarget] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -313,7 +322,7 @@ function BillingPageContent() {
               {
                 label: "영업팀 문의",
                 tone: "secondary",
-                onClick: () => router.push("/support"),
+                onClick: () => setUpgradeTarget("Pro"),
               },
             ]}
             className="mb-5"
@@ -389,11 +398,9 @@ function BillingPageContent() {
                     <p className="mt-3 text-[12.5px] leading-relaxed text-slate-600">
                       {planSummaryLine}
                     </p>
-                    {/* 결제 미연동 상태라 이 버튼의 실제 역할은 영업팀 연락이다.
-                        P5 에서 업그레이드 요청 모달로 승격하되, 지금도 무반응이면 안 된다. */}
                     <Button
                       className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white"
-                      onClick={() => router.push("/support")}
+                      onClick={() => setUpgradeTarget("Basic")}
                     >
                       Basic으로 업그레이드
                     </Button>
@@ -524,14 +531,14 @@ function BillingPageContent() {
                                 <Button
                                   variant="outline"
                                   className="w-full text-[12px]"
-                                  onClick={() => router.push("/support")}
+                                  onClick={() => setUpgradeTarget(planLabel(plan))}
                                 >
                                   영업팀 문의
                                 </Button>
                               ) : (
                                 <Button
                                   className="w-full bg-blue-600 hover:bg-blue-700 text-white text-[12px]"
-                                  onClick={() => router.push("/support")}
+                                  onClick={() => setUpgradeTarget(planLabel(plan))}
                                 >
                                   업그레이드
                                 </Button>
@@ -783,6 +790,15 @@ function BillingPageContent() {
               </Card>
             </TabsContent>
           </Tabs>
+
+          <UpgradeRequestDialog
+            open={upgradeTarget !== null}
+            onOpenChange={(o) => { if (!o) setUpgradeTarget(null); }}
+            planLabel={upgradeTarget ?? ""}
+            defaultName={session?.user?.name}
+            defaultEmail={session?.user?.email}
+            organizationName={billingData?.organizationName}
+          />
         </div>
       </div>
     </DashboardShell>

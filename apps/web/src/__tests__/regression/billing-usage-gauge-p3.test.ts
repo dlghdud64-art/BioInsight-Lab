@@ -123,8 +123,11 @@ describe("§billing-redesign P3: 화면 계약", () => {
   it("업그레이드 CTA 는 실동작 (dead button 0)", () => {
     expect(PAGE).toMatch(/Basic으로 업그레이드/);
     const idx = PAGE.indexOf("Basic으로 업그레이드");
-    expect(PAGE.slice(idx - 400, idx)).toMatch(/router\.push\("\/support"\)/);
-    expect(PAGE.slice(idx - 400, idx)).not.toMatch(/disabled\s*$/m);
+    // 창은 여는 태그부터(4원칙 ②) — 고정 폭 400 은 P5 배선 교체에 밀린다.
+    const btn = PAGE.slice(PAGE.lastIndexOf("<Button", idx), idx);
+    // P5 승격: 임시 /support 라우팅 → 업그레이드 요청 모달. 명제(실동작)는 그대로.
+    expect(btn).toMatch(/onClick=\{\(\) => setUpgradeTarget\("Basic"\)\}/);
+    expect(btn).not.toMatch(/disabled\s*$/m);
   });
 
   it("em dash 조항: 화면 노출 문구에 구분자 0 (주석 제외 - 판별기 규약)", () => {

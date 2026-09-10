@@ -33,9 +33,15 @@ describe("§billing-redesign P2: 헤더 쉘", () => {
     expect(PAGE).not.toMatch(/iconColor=/);
   });
 
-  it("우측 보조 CTA = 영업팀 문의, 실경로로 이동(dead button 0)", () => {
+  it("우측 보조 CTA = 영업팀 문의, 실동작(dead button 0)", () => {
+    // 명제는 이 CTA 가 실제로 무언가를 연다는 것이고, 대상은 P5 에서 바뀌었다.
+    // 임시 /support 라우팅 → 업그레이드 요청 모달(§billing-redesign P5).
+    // 창은 label 을 담은 객체 리터럴 끝까지 — 고정 폭으로 열지 않는다(4원칙 ⑤).
     expect(PAGE).toMatch(/label: "영업팀 문의"/);
-    expect(PAGE).toMatch(/router\.push\("\/support"\)/);
+    const idx = PAGE.indexOf('label: "영업팀 문의"');
+    const block = PAGE.slice(idx, PAGE.indexOf("}", idx));
+    expect(block).toMatch(/onClick: \(\) => setUpgradeTarget\("Pro"\)/);
+    expect(PAGE).not.toMatch(/router\.push\("\/support"\)/);
   });
 
   it("브레드크럼 라벨 = pathLabelMap 1줄 (경로 이동 0)", () => {
