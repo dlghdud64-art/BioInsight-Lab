@@ -2,6 +2,16 @@
  * P1-1 Slice-1C — PrismaCanonicalAuditRepository
  *
  * Append-only. Supports reconstruction chain via parentEventId.
+ *
+ * 🛑 §audit-sibling-triage (2026-09-11) — **도달 0 · 미배선.**
+ *   API 라우트/페이지 진입점 428개 어디에서도 이 파일에 import 그래프가 닿지 않는다
+ *   (검출력 대조: 같은 검출기로 lib/db.ts 는 319 진입점 도달). 그래서 prod
+ *   `CanonicalAuditEvent` 0행은 사건 부재가 아니라 **호출 경로 부재**다.
+ *   이력: 저장층 진입(`bootstrapPersistence` · `getPersistenceAdapters`)은 2026-03-15~16
+ *   P1~P6 에서 만들어졌고 `src/app` 에서 추가·제거된 적 0 → **회귀가 아니라 미완성 설계**다.
+ *   처분: 호영님 판정 "제거 아님 · 보류 + 표기". 테이블만 지우면 없는 테이블에 쓰는
+ *   이 클래스가 남고, 클래스까지 지우면 설계를 지우는 것이라 되돌림 비용이 다르다.
+ *   배선하려는 사람은 여기서 시작한다 — 진입은 `../bootstrap.ts` 의 getPersistenceAdapters().
  */
 
 import type { CanonicalAuditRepository } from "../repositories";
