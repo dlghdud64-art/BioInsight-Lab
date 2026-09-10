@@ -11,8 +11,12 @@
  *   ?     isNot?: ProductWhereInput
  * Unknown argument `organizationId`.
  * ```
- * `ProductInventory.product` 가 **nullable** 이라 Prisma 는 to-one 관계 필터에
- * `is:`/`isNot:` 을 요구한다. 없이 쓰면 **던진다.**
+ * 🛑 원인은 관계 필터 문법이 아니라 **없는 필드**였다.
+ *   `Product` 에는 `organizationId` 가 **아예 없다**(prod information_schema 실측).
+ *   그래서 `product: { organizationId }` 도, `product: { is: { organizationId } }` 도 던진다 —
+ *   `is:` 는 관계 필터 문법을 고칠 뿐 없는 필드를 만들지 않는다.
+ *   `ProductInventory` 는 **자기** `organizationId` 를 갖는다. 그걸 써야 한다.
+ *   (prod 직접 질의로 세 형태를 모두 시험해 갈랐다 — 빌드 로그로는 못 갈랐다.)
  *
  * 🛑 그런데 그 자리를 `catch {}` 가 조용히 삼키고 있었다. 그래서:
  *   - 빌드는 통과한다(에러가 로그로만 나간다)
@@ -36,8 +40,8 @@ const WEB_ROOT = join(__dirname, "..", "..", "..");
 const read = (rel: string) => readFileSync(join(WEB_ROOT, rel), "utf8");
 const HELPER = "src/lib/dashboard/snapshot-helper.ts";
 
-describe("§snapshot-lowstock-throw — nullable 관계 필터는 is: 를 쓴다", () => {
-  it("🛑 `product: { organizationId }` 형태가 **저장소 전량**에 0이다", () => {
+describe("§snapshot-lowstock-throw — 없는 필드로 거르지 않는다", () => {
+  it("🛑 `Product` 를 통해 organizationId 로 거르는 자리가 **저장소 전량**에 0이다", () => {
     /* 이 파일만 고치면 형제 슬롯이 남는다(4원칙 ⑤). 축을 소스 전체로 연다.
      * 🔑 `ProductInventory.product` 처럼 nullable 인 to-one 관계는 전부 같은 형태다 —
      *   지금은 이 한 곳뿐이지만, 새로 생기면 여기서 잡힌다. */
@@ -58,15 +62,18 @@ describe("§snapshot-lowstock-throw — nullable 관계 필터는 is: 를 쓴다
     })(join(WEB_ROOT, "src"));
     expect(
       hits,
-      `nullable 관계에 is: 없이 쓴 자리: ${hits.join(" · ")}`,
+      `Product 에 없는 organizationId 로 거른 자리: ${hits.join(" · ")}`,
     ).toHaveLength(0);
   });
 
-  it("스냅샷 헬퍼가 `is:` 로 쓴다 (두 자리 모두)", () => {
+  it("스냅샷 헬퍼가 **자기 열** organizationId 를 쓴다 (두 자리 모두)", () => {
     /* 경로는 OR 로 묶지 않는다 — 저재고와 만료 임박이 각각 별개 집계다. */
     const code = stripComments(read(HELPER));
-    const uses = code.match(/product:\s*\{\s*is:\s*\{\s*organizationId\s*\}\s*\}/g) ?? [];
-    expect(uses).toHaveLength(2);
+    /* 🔑 정규식 대신 문자열 계수 — 이 형태는 이스케이프가 많아 정규식이 오히려 약해진다
+     *   (2026-09-10 실측: heredoc 이 `\.` 를 접어 매칭 0이 됐고, 그 0이 "구현이 없다" 로 읽혔다). */
+    const NEEDLE = "...(organizationId ? { organizationId } : {})";
+    const uses = code.split(NEEDLE).length - 1;
+    expect(uses).toBe(2);
   });
 
   it("🛑 실패를 조용히 삼키지 않는다 (catch 전량이 사유를 남긴다)", () => {

@@ -85,12 +85,15 @@ export async function deriveCurrentSnapshotMetrics(opts: {
   try {
     const lowStock = await db.productInventory.count({
       where: {
-        /* §snapshot-lowstock-throw (호영님 2026-09-10) — `is:` 가 필요하다.
-         * `ProductInventory.product` 가 nullable 이라 Prisma 는 to-one 관계 필터에
-         * `is:`/`isNot:` 을 요구한다. 없이 쓰면 `Unknown argument organizationId` 로 **던진다**.
-         * 아래 catch 가 그걸 삼켜 processingRequiredCount 가 **항상 0** 이었다 —
-         * 빌드는 통과하고 대시보드 지표만 죽어 있었다(빌드 로그에 8회+ 출력). */
-        ...(organizationId ? { product: { is: { organizationId } } } : {}),
+        /* §snapshot-lowstock-throw (호영님 2026-09-10) — `ProductInventory` 의 **자기 열**을 쓴다.
+         * 🛑 이전 판본은 `product: { organizationId }` 였는데 **`Product` 에는 그 필드가 아예 없다**
+         *   (prod information_schema 실측: Product.organizationId 부재).
+         *   그래서 Prisma 가 `Unknown argument organizationId` 로 **던졌고**, 아래 catch 가 삼켜
+         *   processingRequiredCount 가 **항상 0** 이었다 — 빌드는 통과하고 지표만 죽어 있었다.
+         * 🛑 `product: { is: { organizationId } }` 도 **틀린다** — `is:` 는 관계 필터 문법을
+         *   고칠 뿐 없는 필드를 만들지 않는다(prod 직접 질의로 두 형태 모두 실패 확인).
+         *   `ProductInventory` 는 자기 `organizationId` 를 갖는다. 그걸 쓴다. */
+        ...(organizationId ? { organizationId } : {}),
         currentQuantity: { lt: 10 }, // simple heuristic; safetyStock 비교는 별도 트랙
       },
     });
@@ -98,7 +101,7 @@ export async function deriveCurrentSnapshotMetrics(opts: {
     sixtyDaysAhead.setDate(sixtyDaysAhead.getDate() + 60);
     const expiring = await db.productInventory.count({
       where: {
-        ...(organizationId ? { product: { is: { organizationId } } } : {}),
+        ...(organizationId ? { organizationId } : {}),
         expiryDate: { lte: sixtyDaysAhead, gte: new Date() },
       },
     });
