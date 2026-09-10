@@ -14,10 +14,15 @@ import {
   USAGE_BAR,
   USAGE_TEXT,
 } from "@/lib/billing/usage-tone";
+import {
+  COMPARISON_PLANS,
+  COMPARISON_ROWS,
+  planLabel,
+  planPriceLabel,
+} from "@/lib/billing/plan-comparison";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,10 +43,8 @@ import {
   Plus,
   Trash2,
   Building2,
-  Users,
   FileText,
   ArrowUpRight,
-  Mail,
   Loader2,
   AlertCircle,
 } from "lucide-react";
@@ -161,41 +164,13 @@ function BillingPageContent() {
    * 🛑 라우트의 hint 수용과 **짝**이다. 한쪽만 있으면 계약이 성립하지 않는다. */
   const billingOrganizationId: string | null = billingData?.organizationId ?? null;
 
-  // 플랜 업그레이드 뮤테이션
-  const upgradeMutation = useMutation({
-    mutationFn: async (plan: PlanType) => {
-      const res = await csrfFetch("/api/billing", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "upgrade", plan, organizationId: billingOrganizationId }),
-      });
-      if (!res.ok) throw new Error("Upgrade failed");
-      return res.json();
-    },
-    onSuccess: (data) => {
-      if (data.action === "contact_sales") {
-        toast({
-          title: "Enterprise 플랜",
-          description: data.message,
-        });
-        // 이메일 링크 열기
-        window.location.href = `mailto:${data.contactEmail}?subject=Enterprise 플랜 문의`;
-      } else {
-        toast({
-          title: "업그레이드 완료",
-          description: data.message,
-        });
-        queryClient.invalidateQueries({ queryKey: ["billing"] });
-      }
-    },
-    onError: () => {
-      toast({
-        title: "업그레이드 실패",
-        description: "잠시 후 다시 시도해주세요.",
-        variant: "destructive",
-      });
-    },
-  });
+  /* §billing-redesign P4: `upgradeMutation` 삭제(호출자 0).
+   *   비교표의 업그레이드·문의 버튼은 결제 미연동 상태라 영업팀 경로로 배선했고,
+   *   그러면서 이 mutation 을 부르는 곳이 사라졌다. 부르는 곳 없는 mutation 은 dead code 다.
+   *   ⏳ 라우트는 살아 있다(`POST /api/billing` action:"upgrade"). 결제가 붙으면
+   *     P5 의 요청 모달을 결제 플로우로 바꾸면서 여기서 다시 부르면 된다.
+   *   🛑 그때도 완료 토스트를 결제 확인 없이 띄우지 않는다:
+   *     이전 판본이 그렇게 해서 청구 없이 "완료" 라고 말했다(§checkout-two-paths). */
 
   // 카드 등록 뮤테이션
   const addCardMutation = useMutation({
@@ -463,77 +438,113 @@ function BillingPageContent() {
                 </Card>
               </div>
 
-              {/* 플랜 비교 */}
+              {/* §billing-redesign P4: 플랜 3카드 -> 비교표. 행=기능, 열=플랜이라 차이가 한눈에 보인다.
+                  값은 lib/billing/plan-comparison 이 PLAN_LIMITS / PLAN_DESCRIPTOR 에서 파생한다.
+                  플랜별 기능 리스트 카드는 삭제한다: 같은 내용을 두 번 말하던 원인이었다. */}
               <Card>
-                <CardHeader>
-                  <CardTitle>플랜 업그레이드</CardTitle>
-                  <CardDescription>더 많은 기능이 필요하신가요?</CardDescription>
+                <CardHeader className="pb-3">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <CardTitle className="text-base">플랜 비교</CardTitle>
+                    <span className="text-[11.5px] text-slate-500">월 결제 · VAT 별도</span>
+                  </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {planInfo && Object.entries(planInfo).map(([key, plan]) => {
-                      const planKey = key as PlanType;
-                      const isCurrent = currentPlan === planKey;
-                      const isEnterprise = planKey === "ORGANIZATION";
-
-                      return (
-                        <Card
-                          key={key}
-                          className={cn(
-                            "relative",
-                            isCurrent && "border-blue-500 border-2"
-                          )}
-                        >
-                          {isCurrent && (
-                            <Badge className="absolute -top-2 left-4 bg-blue-600">
-                              현재 플랜
-                            </Badge>
-                          )}
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-lg">{plan.nameKo}</CardTitle>
-                            <div className="text-2xl font-bold">
-                              {plan.priceDisplay}
-                            </div>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            <ul className="space-y-2">
-                              {plan.features.slice(0, 4).map((feature, i) => (
-                                <li key={i} className="flex items-start gap-2 text-sm">
-                                  <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                                  <span>{feature}</span>
-                                </li>
-                              ))}
-                            </ul>
-
-                            {!isCurrent && (
-                              <Button
-                                className="w-full"
-                                variant={isEnterprise ? "outline" : "default"}
-                                onClick={() => upgradeMutation.mutate(planKey)}
-                                disabled={upgradeMutation.isPending}
-                              >
-                                {upgradeMutation.isPending ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : isEnterprise ? (
-                                  <>
-                                    <Mail className="h-4 w-4 mr-2" />
-                                    영업팀 문의
-                                  </>
-                                ) : (
-                                  <>
-                                    <ArrowUpRight className="h-4 w-4 mr-2" />
-                                    업그레이드
-                                  </>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <div className="min-w-[560px]">
+                      {/* 헤더 행 */}
+                      <div className="grid grid-cols-[1.3fr_1fr_1fr_1fr] border-b border-slate-200">
+                        <div className="px-4 py-3" />
+                        {COMPARISON_PLANS.map((plan) => {
+                          const isCurrent = plan === currentPlan;
+                          return (
+                            <div
+                              key={plan}
+                              className={cn("px-4 py-3 text-center", isCurrent && "bg-[#f8fafc]")}
+                            >
+                              <div className="flex items-center justify-center gap-1.5">
+                                <span className="text-[13px] font-bold text-slate-900">{planLabel(plan)}</span>
+                                {isCurrent && (
+                                  <span className="rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                                    현재
+                                  </span>
                                 )}
-                              </Button>
-                            )}
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
+                              </div>
+                              <p className="mt-0.5 text-[12px] text-slate-500 tabular-nums">
+                                {planPriceLabel(plan)}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* 기능 행 */}
+                      {COMPARISON_ROWS.map((row) => (
+                        <div
+                          key={row.key}
+                          className="grid grid-cols-[1.3fr_1fr_1fr_1fr] border-b border-slate-100"
+                        >
+                          <div className="px-4 py-3 text-[12.5px] text-slate-600">{row.label}</div>
+                          {COMPARISON_PLANS.map((plan) => {
+                            const v = row.cell(plan);
+                            const isCurrent = plan === currentPlan;
+                            return (
+                              <div
+                                key={plan}
+                                className={cn(
+                                  "px-4 py-3 text-center text-[12.5px] tabular-nums",
+                                  isCurrent && "bg-[#f8fafc]",
+                                )}
+                              >
+                                {v === null ? (
+                                  <span className="text-[#cbd5e1]">{"—"}</span>
+                                ) : v === true ? (
+                                  <Check className="mx-auto h-4 w-4 text-[#15803d]" />
+                                ) : (
+                                  <span className="text-slate-700">{v}</span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ))}
+
+                      {/* 액션 행 */}
+                      <div className="grid grid-cols-[1.3fr_1fr_1fr_1fr]">
+                        <div className="px-4 py-4" />
+                        {COMPARISON_PLANS.map((plan) => {
+                          const isCurrent = plan === currentPlan;
+                          return (
+                            <div
+                              key={plan}
+                              className={cn("px-3 py-4 text-center", isCurrent && "bg-[#f8fafc]")}
+                            >
+                              {isCurrent ? (
+                                <span className="text-[12px] font-semibold text-slate-400">사용 중</span>
+                              ) : plan === "ORGANIZATION" ? (
+                                <Button
+                                  variant="outline"
+                                  className="w-full text-[12px]"
+                                  onClick={() => router.push("/support")}
+                                >
+                                  영업팀 문의
+                                </Button>
+                              ) : (
+                                <Button
+                                  className="w-full bg-blue-600 hover:bg-blue-700 text-white text-[12px]"
+                                  onClick={() => router.push("/support")}
+                                >
+                                  업그레이드
+                                </Button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
+
             </TabsContent>
 
             {/* 결제 수단 탭 */}

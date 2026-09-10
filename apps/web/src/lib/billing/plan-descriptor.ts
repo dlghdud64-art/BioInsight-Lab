@@ -45,6 +45,12 @@ export interface PlanDescriptor {
   priceAnnualMonthlyKrw: number | null;
   /** 권장 좌석 수 — Enterprise 는 null (무제한 / 계약) */
   seatsRecommended: number | null;
+  /* §billing-redesign P4: 포함 좌석 초과분 1명당 월 단가(KRW).
+   *   지금까지 이 수는 `features` 문자열 안에만 있었다("추가 1명당 ₩35,000/월").
+   *   비교표가 그 문자열을 정규식으로 파내면 문구를 고칠 때마다 표가 조용히 깨진다.
+   *   구조화해 두고, 문자열과 같은 수를 말하는지는 sentinel 이 잠근다.
+   *   null = 좌석 추가 개념 없음(Free) 또는 계약 협의(Enterprise). */
+  additionalSeatPriceKrw: number | null;
   /** 운영량 권장치 (RFQ / PO / 재고) */
   operatingVolume: OperatingVolume;
   // §11.303b-2 — labOpsCreditMonthly field 제거 (production caller 0 확인 후).
@@ -106,6 +112,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     priceMonthlyKrw: PLAN_PRICES[SubscriptionPlan.FREE],
     priceAnnualMonthlyKrw: PLAN_PRICES_ANNUAL_MONTHLY[SubscriptionPlan.FREE],
     seatsRecommended: 1,
+    additionalSeatPriceKrw: null, // Free 는 좌석 추가 판매 없음
     operatingVolume: {
       // §pricing-redesign P3 (호영님 2026-06-27) — 표기=enforce 정직 정합.
       //   RFQ 5→3(plans.ts FREE maxQuotesPerMonth=3), PO 5→null(PO 한도 폐기=무제한).
@@ -144,6 +151,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     // §11.304 — 기본 운영자 5→3 (1→5 점프 완화, 2~3명 소규모 랩 진입 문턱
     //   낮춤). backend includedSeats 필드 변경 = §11.303b 별도 batch.
     seatsRecommended: 3,
+    additionalSeatPriceKrw: 35_000, // §11.304 features 문구와 같은 수
     operatingVolume: {
       // §11.303b — Basic 견적/PO 무제한 (UI literal + backend null 동시).
       monthlyRfq: null,
@@ -192,6 +200,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     // §11.304 — 기본 운영자 15→10 (점프 완화 + Quartzy Pro 동등 인당 단가).
     //   backend includedSeats 변경 = §11.303b 별도.
     seatsRecommended: 10,
+    additionalSeatPriceKrw: 28_000, // §11.304 features 문구와 같은 수
     operatingVolume: {
       // §11.303b — Pro 견적/PO 무제한 (UI literal + backend null 동시).
       monthlyRfq: null,
@@ -235,6 +244,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     priceMonthlyKrw: null,
     priceAnnualMonthlyKrw: null,
     seatsRecommended: null,
+    additionalSeatPriceKrw: null, // 계약 협의
     operatingVolume: {
       monthlyRfq: null,
       monthlyPo: null,
