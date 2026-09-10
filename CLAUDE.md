@@ -495,6 +495,26 @@ grep 은 "X 라는 글자가 있는가" 에만 답한다. "X 를 쓰는가" 에�
 실측 2026-09-07: `db.dataAuditLog.create` 로만 찾아 "초대 수락 감사 0" 이라고 보고했는데,
 그 라우트는 `createAuditLog(...)` 를 `tx` 와 함께 부르고 있었다(멤버 생성과 원자적).
 
+🛑 **심볼은 `이름@모듈` 로 적는다. 이름만 적으면 동명이인에서 다시 틀린다.** (2026-09-10 신설)
+
+```
+❌ createAuditLog                          ← 33곳이 뭉개진다
+✅ createAuditLog@lib/audit/audit-logger   → AuditLog       18곳
+✅ createAuditLog@lib/audit                → DataAuditLog   15곳
+```
+
+실측 2026-09-10(Q1 §activity-source-of-truth): **같은 이름의 헬퍼가 둘이고 쓰는 테이블이
+다르다.** import 경로로만 갈린다. 위 2026-09-07 오보의 뿌리가 정확히 여기였다 —
+절차 A 를 따랐어도 "쓰는 심볼" 칸에 이름만 적었으면 같은 자리에서 또 틀린다.
+
+→ 호출처를 셀 때도 **import 경로를 함께 본다**:
+```js
+/import\s*\{[^}]*\bcreateAuditLog\b[^}]*\}\s*from\s*["']@\/lib\/audit\/audit-logger["']/
+```
+
+⚠️ 즉시 처방은 **개명**이다. 이름이 같은 한 다음 사람도 같은 곳에서 틀린다 —
+   조항으로 막는 것보다 이름을 가르는 쪽이 싸다(호영님 2026-09-10).
+
 #### 절차 B — **행이 0일 때 두 원인을 먼저 가른다**
 
 ```
