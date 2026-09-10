@@ -73,6 +73,7 @@ export async function DELETE(
     // TODO: Delete from database
 
     // ⚠️ 위 TODO 가 남아 있는 한 DB 쓰기가 0이다 → fail().
+    // → §placeholder-success-audit (저장 0인데 2xx 를 반환한다 · 2026-09-11 전수 5건 중 하나)
     enforcement.fail();
     return NextResponse.json({ success: true });
   } catch (error) {
