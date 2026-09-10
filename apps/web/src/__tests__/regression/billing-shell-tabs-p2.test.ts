@@ -40,7 +40,10 @@ describe("§billing-redesign P2: 헤더 쉘", () => {
     expect(PAGE).toMatch(/label: "영업팀 문의"/);
     const idx = PAGE.indexOf('label: "영업팀 문의"');
     const block = PAGE.slice(idx, PAGE.indexOf("}", idx));
-    expect(block).toMatch(/onClick: \(\) => setUpgradeTarget\("Pro"\)/);
+    /* §billing-cta-plan-aware(2026-09-10): 대상이 "Pro" -> "Enterprise" 로 갈렸다.
+       헤더는 플랜 무관 상위 상담이라 다음 상위 플랜을 넣으면 Free 계정에서
+       라벨("영업팀 문의")과 어긋난다. 플랜 카드 CTA(P4b, nextUpgradePlan 파생)와 역할이 다르다. */
+    expect(block).toMatch(/onClick: \(\) => setUpgradeTarget\("Enterprise"\)/);
     expect(PAGE).not.toMatch(/router\.push\("\/support"\)/);
   });
 

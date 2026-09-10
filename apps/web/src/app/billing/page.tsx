@@ -326,7 +326,11 @@ function BillingPageContent() {
               {
                 label: "영업팀 문의",
                 tone: "secondary",
-                onClick: () => setUpgradeTarget("Pro"),
+                /* §billing-cta-plan-aware: 헤더 CTA 라벨은 "영업팀 문의" 이지 업그레이드가 아니다.
+                   다음 상위 플랜을 넣으면 Free 계정에서 "Basic 업그레이드 요청" 이 떠 라벨과 어긋난다.
+                   여기는 플랜 무관 상위 상담이므로 Enterprise 고정이 어느 플랜에서도 모순이 없다.
+                   (플랜 카드 CTA 는 P4b 에서 nextUpgradePlan 파생으로 갈렸다 - 역할이 다르다.) */
+                onClick: () => setUpgradeTarget("Enterprise"),
               },
             ]}
             className="mb-5"

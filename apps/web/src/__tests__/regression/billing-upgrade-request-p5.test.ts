@@ -114,7 +114,7 @@ describe("§billing-redesign P5: prefill 과 배선", () => {
 
   it("CTA 3곳이 같은 모달로 간다 (임시 /support 라우팅 0)", () => {
     expect(PAGE).not.toMatch(/router\.push\("\/support"\)/);
-    expect(PAGE).toMatch(/setUpgradeTarget\("Pro"\)/);
+    expect(PAGE).toMatch(/setUpgradeTarget\("Enterprise"\)/); // 헤더(§billing-cta-plan-aware)
     // P4b 승격: 플랜 카드 CTA 의 대상은 현재 플랜에서 파생된다(고정 "Basic" 아님).
     expect(PAGE).toMatch(/setUpgradeTarget\(planLabel\(upgradeNext\)\)/);
     expect(PAGE).toMatch(/setUpgradeTarget\(planLabel\(plan\)\)/);
