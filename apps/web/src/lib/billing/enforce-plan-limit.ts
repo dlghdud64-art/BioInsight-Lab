@@ -98,20 +98,63 @@ export function planUsageMonthStart(): Date {
   return monthStart;
 }
 
-/** kind 별 현재 사용량. 한도 비교와 화면 표시가 **같은 쿼리**를 쓴다. */
+/**
+ * 사용량을 **누구 기준으로** 세는가. 한도를 파는 단위와 같아야 한다.
+ *
+ * 🛑 §plan-limit-subject (호영님 2026-09-10 판정: **조직 단위**) —
+ *   이전 판본은 한도는 조직 플랜에서 받고 사용량은 `where { userId }` 로 셌다:
+ *     가격     조직 단위 (₩89,000/월 · 운영자 3명 포함)
+ *     한도     플랜이 정함 = 조직이 정함
+ *     사용량   개인이 소비        ← 여기가 어긋났다
+ *   결과 (a) Team 3인이면 월 한도를 사실상 3배 쓰고,
+ *        (b) 조직 재고는 `userId` 가 null 이라 품목 한도에 **아예 안 잡혔다**(무한).
+ *   좌석 계약(§seat-count-single-source)의 형제 슬롯인데, 그쪽은 표시가 틀린 것이었고
+ *   이건 **수익이 새는** 자리다.
+ *
+ * 🔑 규칙은 오늘 정한 2축 그대로다 — 조직이 있으면 조직, 없으면 개인.
+ *   (`userId` = 행위자 · `organizationId` = 스코프. §inventory-org-session-authority)
+ */
+export type UsageScope = { userId: string; organizationId: string | null };
+
+/**
+ * 한도 판정과 사용량 계수가 **같은 조직**을 보게 하는 단일 해석점.
+ *
+ * 🛑 이 함수가 있는 이유: 조직을 두 번 해석하면 두 값이 갈라진다.
+ *   호출자가 org-B 를 정해 보냈는데 사용량만 활성 조직(org-A)으로 세는 상태가
+ *   가능했다 — 그게 정확히 이 파일이 §invite-flow P2-7 에서 한 번 닫은 형태이고,
+ *   `countUsageFor` 쪽에만 남아 있었다.
+ */
+export async function resolveUsageScope(
+  userId: string,
+  organizationId?: string | null,
+): Promise<UsageScope> {
+  const orgId = organizationId ?? (await resolveActiveOrganizationId({ userId }));
+  return { userId, organizationId: orgId ?? null };
+}
+
+/**
+ * kind 별 현재 사용량. 한도 비교와 화면 표시가 **같은 쿼리**를 쓴다.
+ *
+ * 🔑 `scope` 는 **필수**다. 선택 인자로 두면 안 넘긴 호출자가 조용히 개인 계수로
+ *   떨어지는데, 그게 바로 이 커밋이 고치는 결함이다. 호출자가 스코프를 정하게 강제한다.
+ */
 export async function countUsageFor(
   kind: PlanLimitKind,
-  userId: string,
+  scope: UsageScope,
 ): Promise<number> {
   const monthStart = planUsageMonthStart();
+  // 조직이 있으면 조직 것을 센다. 없으면(조직 미소속) 개인 것을 센다.
+  const owner = scope.organizationId
+    ? { organizationId: scope.organizationId }
+    : { userId: scope.userId };
   if (kind === "quotes") {
-    return db.quote.count({ where: { userId, createdAt: { gte: monthStart } } });
+    return db.quote.count({ where: { ...owner, createdAt: { gte: monthStart } } });
   }
   if (kind === "labelScan") {
     // §pricing-enforce-p2 — 라벨 스캔 월 한도(Free 10/이상 null). 이번달 LabelScanEvent count.
-    return db.labelScanEvent.count({ where: { userId, createdAt: { gte: monthStart } } });
+    return db.labelScanEvent.count({ where: { ...owner, createdAt: { gte: monthStart } } });
   }
-  return db.productInventory.count({ where: { userId } }); // 누적 총 품목
+  return db.productInventory.count({ where: { ...owner } }); // 누적 총 품목
 }
 
 /**
@@ -137,13 +180,16 @@ export async function enforcePlanLimit(
   if (!user) return; // 방어 — 사용자 미확인 시 차단하지 않음
   if (user.createdAt < cutoff) return; // 시행일 이전 가입자 = grandfather 보존
 
-  const plan = await resolvePlan(userId, organizationId);
+  /* §plan-limit-subject — 조직을 **한 번만** 해석하고 그 값을 한도·사용량 둘 다에 쓴다.
+   *   따로 해석하면 "한도는 org-A 플랜, 사용량은 org-B 실적" 이 조용히 성립한다. */
+  const scope = await resolveUsageScope(userId, organizationId);
+  const plan = await resolvePlan(userId, scope.organizationId);
   const limits = getPlanLimits(plan);
 
   const limit = planLimitFor(kind, limits);
   if (limit === null) return; // 무제한
 
-  const used = await countUsageFor(kind, userId);
+  const used = await countUsageFor(kind, scope);
 
   // 생성 전 체크: 이미 limit 도달이면 새 1건 추가가 한도 초과 → 차단.
   if (used >= limit) {

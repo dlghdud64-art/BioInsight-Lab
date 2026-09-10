@@ -318,7 +318,16 @@ export async function POST(req: NextRequest) {
     }
 
     // §pricing-enforce-p2 — 성공 스캔 1건 카운트(실패/일시오류 경로는 미카운트 — 정직). enforce SoT.
-    await db.labelScanEvent.create({ data: { userId: session.user.id } });
+    /* 🛑 §plan-limit-subject (호영님 2026-09-10) — **조직도 함께 남긴다.**
+     *   사용량 계수가 조직 기준으로 바뀌었으므로(한도를 파는 단위와 맞춤), 이 줄이
+     *   `organizationId` 를 안 쓰면 조직 스코프 count 가 **항상 0** 이 되어 한도가 무한이 된다.
+     *   즉 이건 "귀속 미화" 가 아니라 배선이 빠지면 **집행이 죽는** 자리다
+     *   (CLAUDE.md §인프라를 만들면 같은 커밋에서 배선한다).
+     *   🔑 조직은 새로 해석하지 않는다 — 위 :56 에서 이미 해석해 `enforcePlanLimit` 에 넘긴
+     *     그 값을 그대로 쓴다. 두 번 해석하면 한도와 사용량이 다른 조직을 볼 수 있다. */
+    await db.labelScanEvent.create({
+      data: { userId: session.user.id, organizationId: activeOrganizationId },
+    });
     // §11.369-1 — 성공 응답 직전 lock 해제(이전 complete() 부재로 5분 잔존 → 후속 스캔 409).
     enforcement.complete();
     return NextResponse.json({

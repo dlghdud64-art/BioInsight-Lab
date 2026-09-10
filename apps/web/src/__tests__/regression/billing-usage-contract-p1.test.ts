@@ -39,18 +39,71 @@ describe("§billing-redesign P1: 계산 단일점", () => {
   it("enforcePlanLimit 은 공용 계산을 호출한다 (자체 count 재구현 0)", () => {
     const body = ENFORCE.slice(ENFORCE.indexOf("export async function enforcePlanLimit"));
     expect(body).toMatch(/planLimitFor\(kind, limits\)/);
-    expect(body).toMatch(/countUsageFor\(kind, userId\)/);
+    /* 승계 (§plan-limit-subject · 2026-09-10): 인자 이름이 `userId` → `scope` 로 바뀌었다.
+     *   명제는 "**공용 계산을 부른다**" 이지 인자 이름이 아니다. */
+    expect(body).toMatch(/countUsageFor\(kind, [A-Za-z0-9_]+\)/);
     expect(body).not.toMatch(/db\.(quote|labelScanEvent|productInventory)\.count/);
   });
 
   it("/api/billing 은 4지표를 공용 계산으로 만든다", () => {
-    expect(ROUTE).toMatch(/countUsageFor\("quotes", userId\)/);
-    expect(ROUTE).toMatch(/countUsageFor\("inventory", userId\)/);
-    expect(ROUTE).toMatch(/countUsageFor\("labelScan", userId\)/);
+    /* 승계 (§plan-limit-subject): 두 번째 인자는 이제 스코프 객체다.
+     *   3지표가 **같은 스코프 값**을 쓰는지는 아래 별도 단언이 본다. */
+    expect(ROUTE).toMatch(/countUsageFor\("quotes", [A-Za-z0-9_]+\)/);
+    expect(ROUTE).toMatch(/countUsageFor\("inventory", [A-Za-z0-9_]+\)/);
+    expect(ROUTE).toMatch(/countUsageFor\("labelScan", [A-Za-z0-9_]+\)/);
     expect(ROUTE).toMatch(/itemsUsed:/);
     expect(ROUTE).toMatch(/itemsLimit:/);
     expect(ROUTE).toMatch(/labelScansUsed:/);
     expect(ROUTE).toMatch(/labelScansLimit:/);
+  });
+
+  /* ── §plan-limit-subject (호영님 2026-09-10 판정: 한도의 주체는 **조직**) ──
+   *
+   * 🛑 이 파일의 원 명제는 "enforce 와 화면이 같은 **계산식**을 쓴다" 였다.
+   *   그런데 계산식이 같아도 **누구 것을 세는가**가 다르면 여전히 갈라진다 —
+   *   실제로 그 상태였다:
+   *     가격·한도  조직 (₩89,000/월 · 운영자 3명 포함 · 플랜은 Subscription 에 붙는다)
+   *     사용량      개인 (`where { userId }`)
+   *   결과 (a) Team 3인이면 월 한도를 사실상 3배 쓰고
+   *        (b) 조직 재고는 `userId` 가 null 이라 품목 한도에 **아예 안 잡혔다**(무한).
+   *   파는 단위와 쓰는 단위가 다르면 요금제가 성립하지 않는다.
+   *   → 명제를 넓힌다: **한도와 사용량은 같은 조직을 본다.**
+   */
+  it("🛑 사용량 스코프는 조직 우선 · 조직 없을 때만 개인이다", () => {
+    const code = stripComments(ENFORCE);
+    // 스코프 해석이 **한 곳**에 있다(호출자가 각자 조립하지 않는다).
+    expect(code).toMatch(/export async function resolveUsageScope/);
+    // 조직이 있으면 조직, 없으면 개인 — 2축(행위자/스코프) 규칙.
+    expect(code).toMatch(
+      /scope\.organizationId[\s\S]{0,120}?\{\s*organizationId:\s*scope\.organizationId\s*\}[\s\S]{0,80}?\{\s*userId:\s*scope\.userId\s*\}/,
+    );
+    // 세 지표 전부 그 소유자 조건을 쓴다 — 하나라도 빠지면 그 축만 개인 계수로 남는다.
+    const spread = code.match(/\.\.\.owner/g) ?? [];
+    expect(spread.length).toBe(3);
+  });
+
+  it("🔑 한도와 사용량이 **같은 조직**에서 나온다 (해석 2회 금지)", () => {
+    /* 조직을 두 번 해석하면 "한도는 org-A 플랜 · 사용량은 org-B 실적" 이 조용히 성립한다.
+     *   창은 함수 블록으로 연다(4원칙 ⑤ — 고정 폭 슬라이스 금지). */
+    const start = ENFORCE.indexOf("export async function enforcePlanLimit");
+    expect(start).toBeGreaterThan(-1);
+    const body = stripComments(ENFORCE.slice(start));
+    const scopeIdx = body.search(/const scope = await resolveUsageScope\(/);
+    const planIdx = body.search(/resolvePlan\(userId, scope\.organizationId\)/);
+    const usedIdx = body.search(/countUsageFor\(kind, scope\)/);
+    expect(scopeIdx, "스코프를 한 번 해석하는 자리가 없다").toBeGreaterThan(-1);
+    expect(planIdx, "플랜이 그 스코프의 조직을 쓰지 않는다").toBeGreaterThan(scopeIdx);
+    expect(usedIdx, "사용량이 그 스코프를 쓰지 않는다").toBeGreaterThan(scopeIdx);
+  });
+
+  it("🔑 화면도 같은 해석기를 쓴다 — 스코프를 직접 조립하지 않는다", () => {
+    const code = stripComments(ROUTE);
+    expect(code).toMatch(/resolveUsageScope\(/);
+    /* 3지표가 **같은 변수**를 받아야 한다. 각각 다른 값을 넣으면 한 카드 안에서 갈라진다. */
+    const args = [...code.matchAll(/countUsageFor\("(?:quotes|inventory|labelScan)", ([A-Za-z0-9_]+)\)/g)]
+      .map((m) => m[1]);
+    expect(args).toHaveLength(3);
+    expect(new Set(args).size, `3지표가 서로 다른 스코프를 쓴다: ${args.join(" · ")}`).toBe(1);
   });
 
   it("재고·스캔 한도는 PLAN_LIMITS 정본에서 온다 (PLAN_INFO 사본 아님)", () => {

@@ -15,7 +15,7 @@ import { buildPlanChangeClaim } from "@/lib/billing/plan-change-claim";
 import { assertSeatAvailable } from "@/lib/organizations/seats";
 /* §billing-redesign P1: 사용량은 **한도를 집행하는 쪽과 같은 계산**을 쓴다.
  *   화면이 "3/3 한도 도달" 이라 말하는데 생성은 통과하는(또는 반대) 어긋남을 구조로 막는다. */
-import { countUsageFor } from "@/lib/billing/enforce-plan-limit";
+import { countUsageFor, resolveUsageScope } from "@/lib/billing/enforce-plan-limit";
 import {
   resolveActiveOrganizationId,
   resolveOrganizationIdForMutation,
@@ -157,10 +157,19 @@ export async function GET(request: NextRequest) {
      *   🛑 이전 판본은 `new Date(new Date().setDate(1))` 로 **시각을 0으로 맞추지 않아**
      *     1일 오전 생성분이 화면 집계에서 빠졌다(enforce 는 setHours(0,0,0,0) 까지 한다).
      *     같은 달 같은 견적을 두 곳이 다르게 셌다. 계산을 한 곳으로 모으며 함께 닫는다. */
+    /* §plan-limit-subject (호영님 2026-09-10) — 사용량도 **조직 기준**이다.
+     *   이 화면은 바로 아래에서 `membership.organization.id` 의 플랜으로 한도를 그린다.
+     *   사용량만 개인으로 세면 같은 카드가 "조직 한도 / 개인 사용량" 을 나란히 보여준다 —
+     *   §billing-redesign P1 이 닫은 "두 곳이 다르게 센다" 의 세 번째 형태다.
+     *   스코프는 enforce 와 **같은 해석기**에서 받는다(직접 조립하지 않는다). */
+    const usageScope = await resolveUsageScope(
+      userId,
+      membership?.organization?.id ?? null,
+    );
     const [quotesCount, itemsCount, labelScanCount] = await Promise.all([
-      countUsageFor("quotes", userId),
-      countUsageFor("inventory", userId),
-      countUsageFor("labelScan", userId),
+      countUsageFor("quotes", usageScope),
+      countUsageFor("inventory", usageScope),
+      countUsageFor("labelScan", usageScope),
     ]);
 
     /* §invite-flow 좌석 정본 (2026-09-07) — **게이트와 같은 수를 쓴다.**

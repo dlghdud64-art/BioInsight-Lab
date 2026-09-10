@@ -46,7 +46,18 @@ describe("§pricing-enforce-p2 P2b — enforce labelScan kind", () => {
   it("labelScan 분기 — maxLabelScansPerMonth + LabelScanEvent count + null 통과", () => {
     expect(ENFORCE).toMatch(/kind === "labelScan"/);
     expect(ENFORCE).toMatch(/limits\.maxLabelScansPerMonth/);
-    expect(ENFORCE).toMatch(/db\.labelScanEvent\.count\(\{ where: \{ userId, createdAt: \{ gte: monthStart \} \} \}\)/);
+    /* 🛑 승계 (§plan-limit-subject · 호영님 2026-09-10) — 이전 판본은 **통짜 문자열**을 핀했다:
+     *     db.labelScanEvent.count({ where: { userId, createdAt: { gte: monthStart } } })
+     *   그건 명제가 아니라 스냅샷이다(CLAUDE.md §sentinel 은 명제를 단언한다 · 바이트 층위).
+     *   한도 주체가 개인 → **조직**으로 바뀌면서 `userId` 자리가 스코프 스프레드가 됐고,
+     *   계약을 지키는 구현이 RED 가 됐다. 앵커를 새 문자열로 갈면 다음 변경에 또 깨진다.
+     *
+     *   원 명제를 이력에서 복원해 그것만 잠근다:
+     *     **"라벨 스캔 사용량 = 이번 달(monthStart 이후) LabelScanEvent 건수"**
+     *   누구 것을 세는가(개인/조직)는 이 파일의 명제가 아니다 —
+     *   그 축은 `regression/plan-limit-subject.test.ts` 가 소유한다. */
+    const call = /db\.labelScanEvent\.count\(\{\s*where:\s*\{[\s\S]{0,160}?createdAt:\s*\{\s*gte:\s*monthStart\s*\}/;
+    expect(ENFORCE).toMatch(call);
   });
   it("KIND_LABEL labelScan 라벨", () => {
     expect(ENFORCE).toMatch(/labelScan: "라벨 스캔"/);
@@ -63,7 +74,28 @@ describe("§pricing-enforce-p2 P2b — scan-label 라우트 배선", () => {
     expect(SCAN).toMatch(/status:\s*429/);
   });
   it("성공 시 LabelScanEvent 1건 insert (카운트 SoT)", () => {
-    expect(SCAN).toMatch(/db\.labelScanEvent\.create\(\{ data: \{ userId: session\.user\.id \} \}\)/);
+    /* 승계 (§plan-limit-subject · 2026-09-10): `userId` 만 쓰던 판본에서 **조직도 함께** 쓴다.
+     *   명제는 "성공 스캔 1건이 카운트 SoT 에 남는다" 이고, 이제 그 카운트가 조직 기준이므로
+     *   조직 열이 **명제의 일부**가 됐다 — 안 쓰면 조직 스코프 count 가 항상 0 이라
+     *   한도가 무한이 된다. 두 필드를 각각 단언한다(OR 로 묶지 않는다). */
+    const start = SCAN.indexOf("db.labelScanEvent.create(");
+    expect(start).toBeGreaterThan(-1);
+    const block = SCAN.slice(start, SCAN.indexOf("});", start));
+    expect(block).toMatch(/userId:\s*session\.user\.id/);
+    expect(block).toMatch(/organizationId:\s*activeOrganizationId/);
+  });
+
+  it("🔑 스캔 라우트가 조직을 **한 번만** 해석한다 (한도와 기록이 같은 조직)", () => {
+    /* 두 번 해석하면 "한도는 org-A · 기록은 org-B" 가 조용히 성립한다.
+     *   §plan-limit-subject 의 enforce 쪽 단언과 같은 명제의 라우트 축이다. */
+    const resolves = SCAN.match(/resolveActiveOrganizationId\(|resolveOrganizationIdForMutation\(/g) ?? [];
+    expect(resolves.length, `조직 해석 호출이 ${resolves.length}회`).toBe(1);
+    const resolveIdx = SCAN.search(/const activeOrganizationId = await resolve/);
+    const enforceIdx = SCAN.search(/enforcePlanLimit\(session\.user\.id, "labelScan"/);
+    const createIdx = SCAN.indexOf("db.labelScanEvent.create(");
+    expect(resolveIdx).toBeGreaterThan(-1);
+    expect(enforceIdx).toBeGreaterThan(resolveIdx);
+    expect(createIdx).toBeGreaterThan(resolveIdx);
   });
   it("enforce 가 OCR 비용 前(enforceAction 前) 배치", () => {
     /* 🛑 `indexOf(<정확한 2인자 문자열>)` 로 세면 안 된다 — 인자가 하나 늘면 **-1** 이 되고
