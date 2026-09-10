@@ -1,15 +1,52 @@
 -- §activity-source-of-truth 5 (호영님 2026-09-10) — GovernanceAuditLog 제거
 --
--- 근거 (실측 2026-09-10):
---   쓰는 심볼   0   (소스 참조는 주석 4건뿐 — 코드 사용 0)
---   FK 관계     0   (독립 테이블 · 참조하는 모델 없음)
+-- ── 근거 (실측 2026-09-10) ──────────────────────────────────────────────────
+--   FK 관계     0   (참조하는 모델 없음 · 독립 테이블)
+--   쓰는 심볼   0   (소스 참조는 주석 4건뿐 — 코드 사용 0. 그 주석들은 같은 커밋에서
+--                    "제거됨" 을 병기해 존재하지 않는 것을 가리키지 않게 했다)
 --   prod 행수   0
 --   PrismaAuditAdapter 가 "Batch 6 실제 구현" 으로 완성돼 있었으나 호출자가 0이었고,
 --   그 어댑터는 §facade 제거(2026-09-07)로 이미 걷어냈다. 테이블만 남아 있었다.
 --
--- 되돌림: 이 파일의 역방향은 0_init 의 CREATE TABLE "GovernanceAuditLog" + 인덱스 6종이다.
---   데이터 손실 0 (0행). 되살릴 일이 생기면 그 DDL 을 그대로 다시 적용하면 된다.
+-- ── 되돌림 경로 ─────────────────────────────────────────────────────────────
+-- 🔑 정의를 **여기에 보존한다.** `0_init` 을 가리키기만 하면 그 파일이 바뀌거나
+--    못 찾는 순간 정의를 잃는다(호영님 지시: "스키마 정의를 마이그레이션 주석에 보존").
+--    0행이므로 아래를 그대로 재적용하면 완전 복구다 — 데이터 손실 0.
 --
+--   CREATE TABLE "GovernanceAuditLog" (
+--       "id" TEXT NOT NULL,
+--       "eventId" TEXT NOT NULL,
+--       "correlationId" TEXT NOT NULL,
+--       "actorUserId" TEXT NOT NULL,
+--       "actorRole" TEXT NOT NULL,
+--       "actionType" TEXT NOT NULL,
+--       "targetEntityType" TEXT NOT NULL,
+--       "targetEntityId" TEXT NOT NULL,
+--       "occurredAt" TIMESTAMP(3) NOT NULL,
+--       "snapshotVersion" TEXT NOT NULL DEFAULT 'v0',
+--       "beforeHash" TEXT NOT NULL,
+--       "afterHash" TEXT NOT NULL,
+--       "rationale" TEXT,
+--       "reasonCode" TEXT NOT NULL,
+--       "sourceSurface" TEXT NOT NULL,
+--       "previousEnvelopeHash" TEXT NOT NULL,
+--       "envelopeHash" TEXT NOT NULL,
+--       "securityClassification" TEXT NOT NULL DEFAULT 'audit_evidence',
+--       "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--       CONSTRAINT "GovernanceAuditLog_pkey" PRIMARY KEY ("id")
+--   );
+--   CREATE UNIQUE INDEX "GovernanceAuditLog_eventId_key" ON "GovernanceAuditLog"("eventId");
+--   CREATE UNIQUE INDEX "GovernanceAuditLog_envelopeHash_key" ON "GovernanceAuditLog"("envelopeHash");
+--   CREATE INDEX "GovernanceAuditLog_correlationId_idx" ON "GovernanceAuditLog"("correlationId");
+--   CREATE INDEX "GovernanceAuditLog_actorUserId_idx" ON "GovernanceAuditLog"("actorUserId");
+--   CREATE INDEX "GovernanceAuditLog_actionType_idx" ON "GovernanceAuditLog"("actionType");
+--   CREATE INDEX "GovernanceAuditLog_targetEntityType_targetEntityId_idx" ON "GovernanceAuditLog"("targetEntityType", "targetEntityId");
+--   CREATE INDEX "GovernanceAuditLog_envelopeHash_idx" ON "GovernanceAuditLog"("envelopeHash");
+--   CREATE INDEX "GovernanceAuditLog_occurredAt_idx" ON "GovernanceAuditLog"("occurredAt");
+--
+--   (위 정의는 0_init 에서 그대로 옮겨 적었다. 원본과 대조 가능하다.)
+--
+-- ── 적용 ────────────────────────────────────────────────────────────────────
 -- 🛑 이 마이그레이션은 **prod 자동 적용되지 않는다** — 이 저장소는 ADR-002 로
 --    빌드타임 migrate 를 차단했다(scripts/vercel-migrate.js NO-OP).
 --    prod 반영은 operator 가 `migrate deploy` 로 별도 수행하며, 그건 DDL 이므로
