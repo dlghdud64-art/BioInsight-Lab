@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 const BillingInfoSchema = z.object({
   companyName: z.string().min(1, "회사명은 필수입니다"),
@@ -129,7 +129,7 @@ export async function PUT(
       update: data,
     });
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG });
+    enforcement.complete({ organizationId: id });
 
     return NextResponse.json({ billingInfo });
   } catch (error: unknown) {

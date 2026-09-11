@@ -5,7 +5,7 @@ import { isDemoMode } from "@/lib/env";
 import { validateSSOConfig, convertSSOConfigToProvider } from "@/lib/auth/sso-config";
 import { createAuditLog } from "@/lib/audit/audit-logger";
 import { hasPermission } from "@/lib/permissions/permission-checker";
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 /**
  * SSO 설정 조회
@@ -186,7 +186,7 @@ export async function PUT(
       console.error("Failed to create audit log:", error);
     });
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG });
+    enforcement.complete({ organizationId: id });
 
     return NextResponse.json({
       success: true,

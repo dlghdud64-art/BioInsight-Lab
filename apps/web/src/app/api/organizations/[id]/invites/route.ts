@@ -22,7 +22,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { randomBytes } from "crypto";
 import { OrganizationRole } from "@prisma/client";
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { assertSeatAvailable, seatLimitPayload } from "@/lib/organizations/seats";
 import { pendingInviteWhere } from "@/lib/organizations/invite-status";
 
@@ -134,7 +134,7 @@ export async function POST(
 
     const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/invite/${token}`;
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG });
+    enforcement.complete({ organizationId: id });
 
     return NextResponse.json({ invite: { ...invite, inviteUrl } });
   } catch (error) {
@@ -244,7 +244,7 @@ export async function DELETE(
       data: { revokedAt: new Date() },
     });
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG });
+    enforcement.complete({ organizationId: id });
 
     return NextResponse.json({ success: true });
   } catch (error) {

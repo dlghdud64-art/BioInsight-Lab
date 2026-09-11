@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { OrganizationRole } from "@prisma/client";
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 보안 설정 조회
 export async function GET(
@@ -170,7 +170,7 @@ export async function PATCH(
       console.error("Failed to create audit log:", auditError);
     }
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG });
+    enforcement.complete({ organizationId: id });
 
     return NextResponse.json({
       success: true,
