@@ -2,6 +2,7 @@
 
 // §11.283c #inventory-content-traffic-light — amber/orange 토큰 → yellow/red 신호등 sweep (호영님 P0 spec, §11.283 cluster C, 30+ spot byte-level swap).
 import { isSuspectReceivedQuantity, countSuspectInventories } from "@/lib/inventory/suspect-received-quantity";
+import { ToastAction } from "@/components/ui/toast";
 import { buildInventoryPatchBody } from "@/lib/inventory/inventory-form-payload";
 // §11.374 P3.4 — 헤더 단일 문법(AppPageHeader). 인라인 h1 교체, 모달 액션 클러스터는 보존.
 import { AppPageHeader } from "@/components/layout/page-header";
@@ -944,7 +945,9 @@ function InventoryPageContent() {
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
-        throw new Error((errData as { error?: string }).error || "저장에 실패했습니다.");
+        const e = errData as { error?: string; code?: string; action?: { label: string; href: string } };
+        // §inventory-org-required — 422 NO_ORGANIZATION 은 갈 길(action)을 함께 싣는다. 잃지 않고 넘긴다.
+        throw Object.assign(new Error(e.error || "저장에 실패했습니다."), { code: e.code, action: e.action });
       }
       return response.json();
     },
@@ -960,10 +963,15 @@ function InventoryPageContent() {
       });
     },
     onError: (error: Error) => {
+      // §inventory-org-required — 조직이 없어 막힌 경우 막다른 길로 끝내지 않는다: 조직 화면으로 가는 버튼.
+      const next = (error as Error & { action?: { label: string; href: string } }).action;
       toast({
         title: "저장 실패",
         description: error.message || "알 수 없는 오류가 발생했습니다.",
         variant: "destructive",
+        ...(next
+          ? { action: <ToastAction altText={next.label} onClick={() => router.push(next.href)}>{next.label}</ToastAction> }
+          : {}),
       });
     },
   });

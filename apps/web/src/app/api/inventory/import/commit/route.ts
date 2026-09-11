@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { noOrganizationResponse } from "@/lib/organizations/no-organization";
+import { resolveOrganizationIdForMutation } from "@/lib/organizations/active-org";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
@@ -148,6 +150,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    /* 🛑 §inventory-org-required (호영님 2026-09-11) — 재고는 조직의 것이다.
+     *   이전 판본은 조직을 아예 해석하지 않고 새 재고를 `userId` 만으로 만들었다(파일에 organizationId 0회).
+     *   조직은 세션에서만 온다(§inventory-org-session-authority). 없으면 422 + 갈 길 · enforceAction 앞에서 거절. */
+    const orgResolution = await resolveOrganizationIdForMutation({ userId: session.user.id });
+    if (!orgResolution.ok) {
+      return noOrganizationResponse("재고를 가져올 수 없습니다");
+    }
+    const organizationId = orgResolution.organizationId;
+
     // ── Security enforcement ──
     enforcement = enforceAction({
       userId: session.user.id,
@@ -260,10 +271,11 @@ export async function POST(request: NextRequest) {
           validated.catalogNumber
         );
 
-        // Check if inventory already exists for this product and user
+        // §inventory-org-required — 같은 조직의 같은 제품 재고가 있으면 갱신한다(사용자 축이 아니라 조직 축 ·
+        //   POST /api/inventory 의 중복 판정과 같은 기준).
         const existingInventory = await db.productInventory.findFirst({
           where: {
-            userId: session.user.id,
+            organizationId,
             productId,
           },
         });
@@ -290,6 +302,7 @@ export async function POST(request: NextRequest) {
           record = await db.productInventory.create({
             data: {
               userId: session.user.id,
+              organizationId, // §inventory-org-required — 조직 없는 재고를 만들지 않는다
               productId,
               currentQuantity: validated.currentQuantity,
               unit: validated.unit || "ea",

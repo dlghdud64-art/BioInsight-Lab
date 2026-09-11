@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { ToastAction } from "@/components/ui/toast";
 import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, Download, X, Edit2, Check, XCircle } from "lucide-react";
 import { csrfFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
@@ -343,7 +344,8 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "등록 실패");
+        // §inventory-org-required — 422 NO_ORGANIZATION 은 갈 길(action)을 함께 싣는다. 잃지 않고 넘긴다.
+        throw Object.assign(new Error(error.error || "등록 실패"), { action: error.action });
       }
 
       const result: ImportResult = await response.json();
@@ -367,10 +369,15 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
             : `${result.successRows}개 성공, ${result.errorRows}개 실패`,
       });
     } catch (error: any) {
+      // §inventory-org-required — 조직이 없어 막힌 경우 막다른 길로 끝내지 않는다: 조직 화면으로 가는 버튼.
+      const next = error?.action as { label: string; href: string } | undefined;
       toast({
         title: "등록 실패",
         description: error.message,
         variant: "destructive",
+        ...(next
+          ? { action: <ToastAction altText={next.label} onClick={() => router.push(next.href)}>{next.label}</ToastAction> }
+          : {}),
       });
     } finally {
       setLoading(false);

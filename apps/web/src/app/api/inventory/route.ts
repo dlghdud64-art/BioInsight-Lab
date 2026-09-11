@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { noOrganizationResponse } from "@/lib/organizations/no-organization";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 // §cas-hazard-classification P3b — 수기/API 입고 시 CAS→casNo 저장 + 정적 위험분류.
@@ -217,12 +218,20 @@ export async function POST(request: NextRequest) {
      *   "지금 클라이언트가 안 보낸다" 는 방어가 아니다 — API 가 열려 있으면 열려 있는 것이다.
      *
      * 🔑 관대한 `resolveActiveOrganizationId` 가 아니라 mutation resolver 를 쓴다
-     *   (§invite-flow P2-5). hint 를 **안 받으므로** 실패 사유는 `no_organization` 뿐이고,
-     *   그건 차단이 아니라 **개인 재고**로 떨어진다 — budgets 의 "개인 예산" 분기와 같은 계약. */
+     *   (§invite-flow P2-5). hint 를 **안 받으므로** 실패 사유는 `no_organization` 뿐이다.
+     *
+     * 🛑 §inventory-org-required (호영님 2026-09-11) — **재고는 조직의 것이다. 개인 재고는 제품 개념이 아니다.**
+     *   이전 판본은 no_organization 을 "개인 재고" 로 흘렸다(729c73cc 에서 내가 넣은 fallback).
+     *   그 결과 조직에 속하지 않은 행이 생기고(prod BCP 1행 · ownerlessCount 1) 조직 지표에서 빠졌다.
+     *   이제 422 로 거절하되 막다른 길로 끝내지 않는다 — 조직 만들기·참여 경로를 응답에 싣는다
+     *   (smart-receiving 의 NO_ORGANIZATION 과 같은 코드). 거절은 한도 판정·enforceAction **앞**이다. */
     const orgResolution = await resolveOrganizationIdForMutation({
       userId: session.user.id,
     });
-    const activeOrganizationId = orgResolution.ok ? orgResolution.organizationId : null;
+    if (!orgResolution.ok) {
+      return noOrganizationResponse("재고를 등록할 수 없습니다");
+    }
+    const activeOrganizationId = orgResolution.organizationId;
 
     // §pricing-refresh P2 — Free 재고 품목 한도 enforce(grandfather/유료/env미설정은 통과). 초과 시 429+안내.
     try {
@@ -323,11 +332,10 @@ export async function POST(request: NextRequest) {
     const inventoryData = {
       /* §inventory-org-session-authority — 소유 2축(호영님 2026-09-10 판정):
        *   `userId` = 행위자 · `organizationId` = 스코프. 세션에서만 온다.
-       *   🔑 `userId: activeOrganizationId ? null : ...` 형태(XOR)는 **유지한다** —
-       *     바꾸면 `countUsageFor("items")` 가 `where { userId }` 로 세므로 조직 재고가
-       *     갑자기 개인 품목 한도에 잡힌다. 한도의 주체는 호영님 판단 대기 중이라
-       *     이 커밋에서 건드리지 않는다(§plan-limit-subject). */
-      userId: activeOrganizationId ? null : session.user.id,
+       *   🔑 옛 XOR(`userId: activeOrganizationId ? null : …`)은 한도 주체가 미정이던 때의 보류였다.
+       *     e6ba7456(§plan-limit-subject)로 사용량이 조직 기준이 됐고, §inventory-org-required 로
+       *     조직 없는 등록이 422 가 됐으므로 이제 행위자를 그대로 남긴다(smart-receiving 과 같은 2축). */
+      userId: session.user.id,
       organizationId: activeOrganizationId,
       currentQuantity: parseFloat(String(currentQuantity)) || 0,
       unit: unit || "ea",
