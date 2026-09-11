@@ -4197,7 +4197,11 @@ function InventoryPageContent() {
         {createOrUpdateMutation.isSuccess && (
           <motion.div key="inventory-toast" initial={{ opacity: 0, y: 60 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 60 }} transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }} className="fixed bottom-8 right-8 z-50 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-2xl">
             <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
-            <span className="text-sm font-medium text-emerald-900">재고가 등록되었습니다.</span>
+            {/* §inventory-toast-edit-label (2026-09-11 prod 실측 P3) — 문구가 "등록" 으로 하드코딩돼
+                수정 때도 "등록되었습니다" 가 떴다. 위 972 의 shadcn 토스트와 같은 판정(variables.id)을 쓴다. */}
+            <span className="text-sm font-medium text-emerald-900">
+              {createOrUpdateMutation.variables?.id ? "재고가 수정되었습니다." : "재고가 등록되었습니다."}
+            </span>
           </motion.div>
         )}
       </AnimatePresence>
