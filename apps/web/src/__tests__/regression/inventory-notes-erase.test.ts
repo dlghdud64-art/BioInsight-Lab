@@ -32,7 +32,7 @@ import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
 
 const WEB_ROOT = join(__dirname, "..", "..", "..");
 
-describe("§inventory-notes-erase — 비움과 안 넘김을 가른다", () => {
+describe("§inventory-notes-erase · 비움과 안 넘김을 가른다", () => {
   it("🛑 빈 문자열은 비움이다 → null (기존 값으로 되돌아가지 않는다)", () => {
     expect(resolveNotesUpdate("", "audit-smoke 20260911")).toBeNull();
   });
@@ -49,7 +49,7 @@ describe("§inventory-notes-erase — 비움과 안 넘김을 가른다", () => 
     expect(resolveNotesUpdate("새 비고", "기존 비고")).toBe("새 비고");
   });
 
-  it("입고일 병기 — 안 넘김 + date 면 기존 뒤에 붙인다 (회귀 0)", () => {
+  it("입고일 병기 · 안 넘김 + date 면 기존 뒤에 붙인다 (회귀 0)", () => {
     expect(resolveNotesUpdate(undefined, "기존", "2026-09-11")).toBe("기존\n[입고일: 2026-09-11]");
     // 같은 날짜는 두 번 붙이지 않는다
     expect(resolveNotesUpdate(undefined, "기존\n[입고일: 2026-09-11]", "2026-09-11")).toBe(
@@ -57,7 +57,7 @@ describe("§inventory-notes-erase — 비움과 안 넘김을 가른다", () => 
     );
   });
 
-  it("🔑 라우트가 이 함수를 쓴다 — 옛 `||` 폴백이 남아 있지 않다 (배선)", () => {
+  it("🔑 라우트가 이 함수를 쓴다 · 옛 `||` 폴백이 남아 있지 않다 (배선)", () => {
     const code = stripComments(
       readFileSync(join(WEB_ROOT, "src/app/api/inventory/[id]/route.ts"), "utf8"),
     );
