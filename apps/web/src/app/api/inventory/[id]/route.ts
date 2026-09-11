@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { createDataAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { assertTrackingModeAllowed, TrackingModePlanError } from "@/lib/billing/enforce-plan-limit";
 import { dispatchNotificationEvent } from "@/lib/notifications/event-dispatcher";
 import { sendPushNotification } from "@/lib/notifications/push-sender";
@@ -373,7 +373,7 @@ export async function PATCH(
       }
     }
 
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
     return NextResponse.json({ success: true, data: updatedInventory });
   } catch (error: any) {
     enforcement?.fail();
@@ -462,7 +462,7 @@ export async function DELETE(
       await tx.productInventory.delete({ where: { id: params.id } });
     });
 
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
     return NextResponse.json({ success: true, message: "Inventory deleted successfully" });
   } catch (error: any) {
     enforcement?.fail();

@@ -13,7 +13,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 interface BulkOrderItem {
   name: string;
@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { itemCount: items.length },
       afterState: { registeredCount: registeredItems.length },
     });

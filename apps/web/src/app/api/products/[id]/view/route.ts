@@ -1,4 +1,4 @@
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { recordProductView } from "@/lib/api/search-history";
@@ -35,7 +35,7 @@ export async function POST(
     await recordProductView(userId, id, query);
 
     // recordProductView 가 조회 이력을 기록한다(쓰기) → complete() 로 audit + lock 해제.
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { productId: id, viewerId: userId },
       afterState: { productId: id, viewerId: userId, query: query || null },
     });

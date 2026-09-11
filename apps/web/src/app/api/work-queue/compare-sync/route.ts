@@ -10,7 +10,7 @@
  * - Reopened sessions (UNDECIDED but COMPLETED queue item) → reactivate
  * - Stale items (active queue item for decided/deleted sessions) → complete
  */
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -73,7 +73,7 @@ export async function POST() {
     if (compareSessions.length === 0) {
       // Stale cleanup: complete any active compare queue items with no matching session
       await cleanupStaleItems(userId);
-      enforcement.complete({
+      enforcement.complete({ organizationId: UNRESOLVED_ORG,
         beforeState: { userId, undecidedSessions: 0 },
         afterState: { synced: 0, staleCleanup: true },
       });
@@ -249,7 +249,7 @@ export async function POST() {
     // 5. Stale cleanup: active items for sessions not in undecided set
     await cleanupStaleItems(userId, new Set(sessionIds));
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { userId, undecidedSessions: sessionIds.length },
       afterState: { synced },
     });

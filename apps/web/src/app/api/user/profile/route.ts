@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 /**
  * §11.69 #user-profile-settings-save-404
@@ -150,7 +150,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (Object.keys(updates).length === 0) {
-      enforcement.complete({
+      enforcement.complete({ organizationId: UNRESOLVED_ORG,
         beforeState: { action: "user_profile_update" },
         afterState: { noChange: true },
       });
@@ -170,7 +170,7 @@ export async function PATCH(request: NextRequest) {
       },
     });
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { action: "user_profile_update" },
       afterState: { fields: Object.keys(updates) },
     });

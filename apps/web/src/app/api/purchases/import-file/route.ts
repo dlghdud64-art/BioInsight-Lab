@@ -1,4 +1,4 @@
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -245,7 +245,7 @@ export async function POST(request: NextRequest) {
 
     // ImportJob create + update 는 행 성공/실패와 무관하게 항상 실행된다
     //   → 이 지점에 도달하면 쓰기가 확정이므로 무조건 complete().
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { scopeKey, filename, totalRows: result.totalRows },
       afterState: {
         scopeKey,

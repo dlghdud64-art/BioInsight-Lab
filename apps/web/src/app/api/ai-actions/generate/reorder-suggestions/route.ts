@@ -1,4 +1,4 @@
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 // §inventory-org-session-authority — 쓰기의 조직은 세션에서만 온다(§invite-flow P2-5).
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     }
 
     // detectInventoryIssues 가 db.aiActionItem.create 로 실제 생성한다 → complete().
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { organizationId: organizationId ?? null, actionsCreated: 0 },
       afterState: {
         organizationId: organizationId ?? null,

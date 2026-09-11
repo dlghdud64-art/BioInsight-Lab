@@ -4,7 +4,7 @@ import { db, dbTyped } from "@/lib/db";
 import { getOrCreateGuestKey } from "@/lib/api/guest-key";
 import { handleApiError } from "@/lib/api/utils";
 import { auth } from "@/auth";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 /**
  * GET /api/quote-lists/[id]
@@ -123,7 +123,7 @@ export async function PUT(
       },
     });
 
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
 
     return NextResponse.json(updated);
   } catch (error) {

@@ -6,7 +6,7 @@ import { createActivityLogServer } from "@/lib/api/activity-logs";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { extractRequestMeta } from "@/lib/audit";
 import { logStateTransition } from "@/lib/operations/state-transition-logger";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 // #post-approval-purchase-order-flow Phase 1.3-wiring-K — vendor-aware
 // service. POCandidate ≥ 1 → vendor 별 N Order, 0개 시 legacy quote.items
 // 기반 1 NULL-vendor Order fallback (backward compat).
@@ -423,7 +423,7 @@ export async function POST(request: NextRequest) {
       userAgent: ua2,
     });
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { quoteId, status: 'COMPLETED' },
       afterState: { orderId: result.order.id, orderNumber: result.order.orderNumber, status: 'ORDERED' },
     });

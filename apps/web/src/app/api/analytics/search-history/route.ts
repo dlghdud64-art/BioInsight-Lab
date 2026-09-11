@@ -1,4 +1,4 @@
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     });
 
     // 무조건 db.searchHistory.create 한다 → complete().
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { searchHistoryId: null },
       afterState: { searchHistoryId: searchHistory.id, query, clickedProductId: clickedProductId || null },
     });

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { OrganizationRole } from "@prisma/client";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { z } from "zod";
 // #approver-routing-per-user-limit-organization-member-admin-ui Phase 2 —
 // approvalLimit 변경 audit (best effort, mutation atomic 보호).
@@ -191,7 +191,7 @@ export async function PATCH(
       },
     });
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { memberId, previousRole: targetMember.role },
       afterState: { memberId, newRole: role ?? targetMember.role },
     });

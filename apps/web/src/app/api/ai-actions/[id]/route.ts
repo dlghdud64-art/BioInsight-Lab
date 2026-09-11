@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { AiActionStatus, TaskStatus, ApprovalStatus } from "@prisma/client";
 import { createDataAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 /**
  * GET /api/ai-actions/[id] — 단건 상세 (payload 포함)
@@ -155,7 +155,7 @@ export async function PATCH(
       userAgent,
     });
 
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
 
     return NextResponse.json({ item: updated });
   } catch (error) {

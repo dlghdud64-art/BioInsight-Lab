@@ -1,4 +1,4 @@
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -105,7 +105,7 @@ export async function POST(
     });
 
     // db.product.update 로 안전 필드를 실제로 갱신한다 → complete().
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: {
         productId: id, msdsUrl: product.msdsUrl, hazardCodes: product.hazardCodes,
         storageCondition: product.storageCondition, safetyNote: product.safetyNote,

@@ -1,4 +1,4 @@
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -73,7 +73,7 @@ export async function PATCH(
     // §enforcement-handle-close — 성공 시 audit envelope 기록 + lock 해제.
     //   소유권 스코프 부재(§supplier-product-ownership-scope) 동안 SUPPLIER 가 타사 제품의
     //   canonical 규격도 덮어쓸 수 있으므로, 이 추적이 사후 방어선이다.
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { productId: id, specification: product.specification },
       afterState: { productId: id, specification: updatedProduct.specification },
     });

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 견적 응답 업데이트 (협상용)
 export async function PATCH(
@@ -85,7 +85,7 @@ export async function PATCH(
       },
     });
 
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
 
     return NextResponse.json(updatedResponse);
   } catch (error: any) {

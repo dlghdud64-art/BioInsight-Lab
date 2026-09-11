@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { sendOrderDeliveredEmail } from "@/lib/email";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { extractRequestMeta } from "@/lib/audit";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { withSerializableBudgetTx } from "@/lib/budget/budget-concurrency";
 import {
   releasePOVoided,
@@ -436,7 +436,7 @@ export async function PATCH(
       }
     }
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { status: order.status, orderId },
       afterState: {
         status: newStatus,

@@ -15,7 +15,7 @@ import {
   clearDedupeForPoServer,
   purgeExpiredDedupeRecords,
 } from "@/lib/persistence/governance-event-dedupe-server";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 export async function POST(request: NextRequest) {
   let enforcement: InlineEnforcementHandle | undefined;
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     if (action === "purge") {
       const purged = await purgeExpiredDedupeRecords();
-      enforcement.complete({});
+      enforcement.complete({ organizationId: UNRESOLVED_ORG });
       return NextResponse.json({ purged });
     }
 
@@ -99,7 +99,7 @@ export async function DELETE(request: NextRequest) {
     if (!enforcement.allowed) return enforcement.deny();
 
     await clearDedupeForPoServer(poNumber);
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
     return NextResponse.json({ ok: true });
   } catch (error) {
     enforcement?.fail();

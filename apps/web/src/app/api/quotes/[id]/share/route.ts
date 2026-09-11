@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { getOrCreateGuestKey } from "@/lib/api/guest-key";
 import { generateShareToken } from "@/lib/api/share-token";
 import { z } from "zod";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // Schema for POST /api/quotes/:id/share
 const CreateShareSchema = z.object({
@@ -133,7 +133,7 @@ export async function POST(
         },
       });
 
-      enforcement.complete({
+      enforcement.complete({ organizationId: UNRESOLVED_ORG,
         beforeState: { enabled: existingShare.enabled, expiresAt: existingShare.expiresAt },
         afterState: { enabled: updatedShare.enabled, expiresAt: updatedShare.expiresAt },
       });
@@ -158,7 +158,7 @@ export async function POST(
       },
     });
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { shareToken: null },
       afterState: { shareToken: newShare.shareToken, enabled: newShare.enabled },
     });
@@ -229,7 +229,7 @@ export async function DELETE(
       },
     });
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { enabled: share.enabled },
       afterState: { enabled: false },
     });

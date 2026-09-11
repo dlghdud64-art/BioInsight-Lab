@@ -1,4 +1,4 @@
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (recorded) {
-      enforcement.complete({
+      enforcement.complete({ organizationId: UNRESOLVED_ORG,
         beforeState: { event, recorded: false },
         afterState: { event, recorded: true },
       });

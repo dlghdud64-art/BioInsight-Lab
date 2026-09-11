@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { ActivityType } from "@prisma/client";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 interface ItemUpdate {
   id: string;
@@ -128,7 +128,7 @@ export async function PATCH(
       console.error("Failed to create activity log:", error);
     });
 
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
 
     return NextResponse.json({
       success: true,

@@ -13,7 +13,7 @@ import {
   resolveActiveOrganizationId,
   resolveOrganizationIdForMutation,
 } from "@/lib/organizations/active-org";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // GET: 결제 수단 목록
 export async function GET(request: NextRequest) {
@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
 
     return NextResponse.json({
       success: true,
@@ -266,7 +266,7 @@ export async function DELETE(request: NextRequest) {
       where: { id: paymentMethodId },
     });
 
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
 
     return NextResponse.json({
       success: true,

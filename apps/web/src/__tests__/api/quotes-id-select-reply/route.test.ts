@@ -38,6 +38,9 @@ const enforcementSpies = {
   fail: vi.fn(),
 };
 vi.mock("@/lib/security/server-enforcement-middleware", () => ({
+  // §audit-org-required (2026-09-11) — 미들웨어가 UNRESOLVED_ORG 를 export 한다. 목도 같은 기호를 내놓는다
+  //   (Symbol.for 레지스트리라 실제 모듈의 기호와 같다). 없으면 라우트가 접근하는 순간 vitest 가 던진다.
+  UNRESOLVED_ORG: Symbol.for("audit.org.unresolved"),
   enforceAction: () => ({
     allowed: true,
     correlationId: "corr_test",

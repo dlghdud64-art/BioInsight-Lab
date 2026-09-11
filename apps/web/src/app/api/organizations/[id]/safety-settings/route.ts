@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 /**
  * §SM-S1 P1 (호영님 2026-07-05) — 조직 안전(MSDS) 관리 대상 카테고리 설정.
@@ -95,7 +95,7 @@ export async function PATCH(
       select: { id: true, safetyCategories: true },
     });
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { organizationId: id },
       afterState: { organizationId: id, safetyCategories: updated.safetyCategories },
     });

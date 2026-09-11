@@ -5,7 +5,7 @@ import {
   getOrganizationById,
   updateOrganization,
 } from "@/lib/api/organizations";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { assertSeatAvailable } from "@/lib/organizations/seats";
 
 // 조직 상세 조회
@@ -166,7 +166,7 @@ export async function PATCH(
       logoUrl: logoUrl !== undefined ? logoUrl : undefined,
     });
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { organizationId: id },
       afterState: { organizationId: updated.id, name: updated.name },
     });
@@ -220,7 +220,7 @@ export async function DELETE(
     await db.organizationMember.deleteMany({ where: { organizationId: id } });
     await db.organization.delete({ where: { id } });
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { organizationId: id },
       afterState: undefined,
     });

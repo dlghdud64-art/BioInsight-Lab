@@ -31,6 +31,9 @@ import {
 import { deriveConcurrencyKey } from './concurrency-key';
 // §audit-durability (2026-09-07) — 감사를 응답 경로 밖에서 DB 에 남긴다.
 import { recordDurableAudit, waitUntilCompat } from '@/lib/audit/durable-audit';
+// §audit-org-required — 감사의 조직은 complete() 에서 호출자가 넘긴다(기호·해석은 lib/audit/audit-org).
+import { resolveAuditOrg, type AuditOrganization } from '@/lib/audit/audit-org';
+export { UNRESOLVED_ORG } from '@/lib/audit/audit-org';
 /* §audit-durability (가) 2026-09-07 — appendAuditEnvelope 제거(메모리 체인 폐기).
    computeStateHash 는 이 파일에서 쓰이지 않아 함께 뺐다. */
 import {
@@ -457,7 +460,13 @@ export interface InlineEnforcementHandle {
   /** 차단 시 pre-built JSON response를 반환 */
   deny(): NextResponse;
   /** 성공 시 audit envelope 기록 + mutation lock 해제 */
-  complete(detail?: { beforeState?: Record<string, unknown>; afterState?: Record<string, unknown> }): void;
+  complete(detail: {
+    /** §audit-org-required — 이 감사가 어느 조직의 일인가. **필수.**
+     *   string = 그 조직 · null = 조직이 없는 일(명시) · UNRESOLVED_ORG = 아직 안 정함(채울수록 준다). */
+    organizationId: AuditOrganization;
+    beforeState?: Record<string, unknown>;
+    afterState?: Record<string, unknown>;
+  }): void;
   /** 실패 시 mutation lock 해제 (audit 미기록) */
   fail(): void;
 }
@@ -593,9 +602,15 @@ export function enforceAction(config: InlineEnforcementConfig): InlineEnforcemen
        *
        * 🛑 `recordDurableAudit` 은 절대 throw 하지 않는다(내부에서 잡고 로그).
        *   감사 실패가 업무 요청을 500 으로 만들면 안 된다. */
+      /* §audit-org-required (호영님 2026-09-11) — 조직은 **결과를 기록하는 이 자리에서** 호출자가 넘긴다.
+       *   config.organizationId 로 받던 판본은 넘기는 호출자가 0 이라 감사 전량이 orgId null 이었다.
+       *   config 로 채우려면 조직 조회를 권한 검사 앞으로 옮겨야 해서(53/68 자리) 금지됐다.
+       *   detail?. 은 인자 없이 부르는 옛 호출·테스트의 런타임 안전용이다(타입은 필수). */
+      const auditOrg = resolveAuditOrg(detail?.organizationId);
       waitUntilCompat(
         recordDurableAudit({
-          organizationId: config.organizationId ?? null,
+          organizationId: auditOrg.organizationId,
+          orgUnresolved: auditOrg.orgUnresolved,
           actorId: config.userId,
           route: config.routePath,
           action: config.action,

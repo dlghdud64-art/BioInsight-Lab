@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { holdStage } from "@/lib/ai-pipeline/runtime/doctype-rollout";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 export async function POST(request: NextRequest) {
   let enforcement: InlineEnforcementHandle | undefined;
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     const userId = session.user.id;
     await holdStage(body.documentType, userId, body.reason);
 
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
 
     return NextResponse.json({
       success: true,

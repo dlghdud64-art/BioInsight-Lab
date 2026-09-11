@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { rollbackStage } from "@/lib/ai-pipeline/runtime/doctype-rollout";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 export async function POST(request: NextRequest) {
   let enforcement: InlineEnforcementHandle | undefined;
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       body.toShadow ?? false
     );
 
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
 
     return NextResponse.json({
       success: true,

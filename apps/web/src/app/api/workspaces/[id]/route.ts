@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import { z } from "zod";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 // #approver-routing-audit-log — workspace 결재 임계치 변경 audit 추적성.
 // best effort (try/catch graceful — mutation atomic 보호).
 import { createAuditLog, auditRequestMeta } from "@/lib/audit/audit-logger";
@@ -305,7 +305,7 @@ export async function PATCH(
       }
     }
 
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
     return NextResponse.json({ workspace });
   } catch (error) {
     enforcement?.fail();
@@ -367,7 +367,7 @@ export async function DELETE(
       userId: session.user.id,
     });
 
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
     return NextResponse.json({ success: true });
   } catch (error) {
     enforcement?.fail();

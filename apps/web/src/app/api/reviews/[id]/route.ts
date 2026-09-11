@@ -1,4 +1,4 @@
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { deleteReview } from "@/lib/api/reviews";
@@ -31,7 +31,7 @@ export async function DELETE(
     if (!enforcement.allowed) return enforcement.deny();
 
     await deleteReview(id, session.user.id);
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { reviewId: id, deleted: false },
       afterState: { reviewId: id, deleted: true },
     });

@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { QuoteStatus, OrderStatus } from "@prisma/client";
 import { Prisma } from "@prisma/client";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 // #post-approval-purchase-order-flow Phase 1.3-wiring-K — vendor-aware
 // service. POCandidate ≥ 1 → vendor 별 N Order, 0개 시 legacy fallback.
 import { convertPOCandidatesToOrders } from "@/lib/orders/convert-pocandidate-to-orders";
@@ -312,7 +312,7 @@ export async function POST(request: NextRequest) {
       return { order, budget: updatedBudget, quote: updatedQuote };
     });
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { quoteId, status: 'PENDING' },
       afterState: { orderId: result.order.id, status: result.order.status },
     });

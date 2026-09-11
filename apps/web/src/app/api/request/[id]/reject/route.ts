@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { PurchaseRequestStatus, TeamRole } from "@prisma/client";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 // §11.209d-notification — requester 에게 결재 반려 email (best effort).
 import { sendEmail } from "@/lib/email/sender";
 import { generatePurchaseRejectedEmail } from "@/lib/email/templates";
@@ -122,7 +122,7 @@ export async function POST(
       },
     });
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { status: 'PENDING', requestId },
       afterState: { status: 'REJECTED', requestId, reason: reason || null },
     });

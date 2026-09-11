@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { createDataAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 /**
  * §safety-modal-upgrade P4b (호영님 2026-07-04) — 물질(Product) 대표 안전 점검 저장.
@@ -140,7 +140,7 @@ export async function POST(
       return created;
     });
 
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
     return NextResponse.json({ inspection }, { status: 201 });
   } catch (error) {
     enforcement?.fail();

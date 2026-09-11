@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { TeamRole } from "@prisma/client";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 /**
  * 팀 멤버 목록 조회
@@ -211,7 +211,7 @@ export async function PATCH(
       },
     });
 
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
     return NextResponse.json({
       member: {
         id: updatedMember.id,
@@ -343,7 +343,7 @@ export async function DELETE(
       where: { id: memberId },
     });
 
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
     return NextResponse.json({ success: true });
   } catch (error) {
     enforcement?.fail();

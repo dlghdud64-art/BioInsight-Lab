@@ -3,7 +3,7 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // ---------------------------------------------------------------------------
 // 입력 스키마
@@ -287,7 +287,7 @@ export async function POST(request: NextRequest) {
     });
 
     // 8. 성공 응답
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
     return NextResponse.json(
       {
         message: `재고 ${result.count}개가 성공적으로 등록되었습니다.`,

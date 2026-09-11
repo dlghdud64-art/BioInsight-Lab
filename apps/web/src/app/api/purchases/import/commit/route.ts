@@ -6,7 +6,7 @@ import { createLogger } from "@/lib/logger";
 import { fileCache } from "@/lib/cache/file-cache";
 import { getScope, getScopeKey } from "@/lib/auth/scope";
 import { auth } from "@/auth";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 const logger = createLogger("purchases/import/commit");
 
@@ -270,7 +270,7 @@ export async function POST(request: NextRequest) {
       `Import job ${importJob.id} completed: ${result.successRows} success, ${result.errorRows} errors`
     );
 
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
 
     return NextResponse.json({
       ...result,

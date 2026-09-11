@@ -118,7 +118,9 @@ describe("§pricing-enforce-p2 P2b — 회귀 0", () => {
   });
   it("scan-label enforceAction RBAC + OCR lock 보존", () => {
     expect(SCAN).toMatch(/enforceAction\(\{/);
-    expect(SCAN).toMatch(/enforcement\.complete\(\)/);
+    /* 승계 (§audit-org-required · 2026-09-11): complete() 는 조직 인자를 필수로 받는다.
+     *   명제는 "성공 경로에서 complete 로 lock 을 푼다" 이지 "인자 없이 부른다" 가 아니다. */
+    expect(SCAN).toMatch(/enforcement\.complete\(\{\s*organizationId:/);
     expect(SCAN).toMatch(/enforcement\?\.fail\(\)/);
   });
 });

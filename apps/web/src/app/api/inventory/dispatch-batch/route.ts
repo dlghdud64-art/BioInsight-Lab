@@ -5,7 +5,7 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { createDataAuditLog, AuditAction, AuditEntityType } from "@/lib/audit";
 import { validateUsageForTrackingMode } from "@/lib/inventory/tracking-mode";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 /**
  * POST /api/inventory/dispatch-batch
@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
       return out;
     });
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { itemCount: items.length },
       afterState: { dispatched: results.length },
     });

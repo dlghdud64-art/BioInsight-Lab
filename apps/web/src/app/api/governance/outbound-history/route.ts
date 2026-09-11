@@ -13,7 +13,7 @@ import {
   loadOutboundHistoryServer,
   clearOutboundHistoryServer,
 } from "@/lib/persistence/outbound-history-server";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 export async function GET(request: NextRequest) {
   const poId = request.nextUrl.searchParams.get("poId");
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     if (!enforcement.allowed) return enforcement.deny();
 
     await persistOutboundHistoryServer(poId, history);
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
     return NextResponse.json({ ok: true });
   } catch (error) {
     enforcement?.fail();
@@ -87,7 +87,7 @@ export async function DELETE(request: NextRequest) {
     if (!enforcement.allowed) return enforcement.deny();
 
     await clearOutboundHistoryServer(poId);
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
     return NextResponse.json({ ok: true });
   } catch (error) {
     enforcement?.fail();

@@ -12,7 +12,7 @@
  * - Active entities with wrong substatus → transition
  * - Terminal entities with active queue items → complete (stale cleanup)
  */
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -105,7 +105,7 @@ export async function POST() {
 
     if (allEntityIds.length === 0) {
       await cleanupStaleOpsItems(userId);
-      enforcement.complete({
+      enforcement.complete({ organizationId: UNRESOLVED_ORG,
         beforeState: { userId, activeEntities: 0 },
         afterState: { synced: 0, staleCleanup: true },
       });
@@ -237,7 +237,7 @@ export async function POST() {
     // 6. Stale cleanup
     await cleanupStaleOpsItems(userId, new Set(allEntityIds));
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { userId, activeEntities: allEntityIds.length },
       afterState: { synced },
     });

@@ -58,6 +58,8 @@ export function waitUntilCompat(promise: Promise<unknown>): void {
 export interface DurableAuditInput {
   /** 없을 수 있다. 활성 조직으로 **유도하지 않는다** — 틀린 조직을 적느니 null 이 정직하다. */
   organizationId?: string | null;
+  /** §audit-org-required — 호출자가 조직을 **아직 정하지 않았다**(UNRESOLVED_ORG). null(조직 없음)과 가른다. */
+  orgUnresolved?: boolean;
   actorId: string;
   /** `/api/organizations/id/subscription` 같은 정규화 경로. */
   route: string;
@@ -111,6 +113,8 @@ export async function recordDurableAudit(input: DurableAuditInput): Promise<void
           sourceSurface: input.sourceSurface ?? null,
           // 조직이 왜 비었는지를 값과 함께 남긴다 — null 이 사고인지 설계인지 구분된다.
           orgIdOmitted: input.organizationId == null,
+          // §audit-org-required — 위 null 이 "조직 없음(명시)" 인지 "아직 안 정함" 인지 가른다.
+          orgUnresolved: input.orgUnresolved ?? false,
         },
       },
     });

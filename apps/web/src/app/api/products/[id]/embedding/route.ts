@@ -1,4 +1,4 @@
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { isAdmin } from "@/lib/api/admin";
@@ -87,7 +87,7 @@ export async function POST(
       );
 
       // pgvector UPDATE 성공 = 실제 쓰기 → complete() 로 audit + lock 해제.
-      enforcement.complete({
+      enforcement.complete({ organizationId: UNRESOLVED_ORG,
         beforeState: { productId: id, embedding: "(previous)" },
         afterState: { productId: id, embedding: `(vector[${embedding.length}])` },
       });

@@ -117,7 +117,9 @@ describe("§11.371-3 — 회귀 0", () => {
     const src = read(SCANLABEL);
     expect(src).toMatch(/crypto\.randomUUID\(\)/);
     expect(src).not.toMatch(/targetEntityId:\s*'unknown'/);
-    expect(src).toMatch(/enforcement\.complete\(\)/);
+    /* 승계 (§audit-org-required · 2026-09-11): complete() 는 조직 인자를 필수로 받는다.
+     *   명제는 "성공 경로에서 complete 로 lock 을 푼다" 이지 "인자 없이 부른다" 가 아니다. */
+    expect(src).toMatch(/enforcement\.complete\(\{\s*organizationId:/);
     expect(src).toMatch(/enforcement\?\.fail\(\)/);
   });
 });

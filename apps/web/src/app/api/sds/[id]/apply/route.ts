@@ -1,4 +1,4 @@
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -135,7 +135,7 @@ export async function POST(
     });
 
     // db.product.update 로 canonical 안전필드를 실제 갱신한다 -> complete().
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { sdsDocumentId: id, productId: sdsDocument.productId },
       afterState: { sdsDocumentId: id, productId: updatedProduct.id, applied: true },
     });

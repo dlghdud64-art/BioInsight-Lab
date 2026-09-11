@@ -6,7 +6,7 @@ import { getOrCreateGuestKey } from "@/lib/api/guest-key";
 import { handleApiError, validateJsonBody } from "@/lib/api/utils";
 import { logger } from "@/lib/api/logger";
 import { auth } from "@/auth";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 입력 스키마
 const QuoteItemInputSchema = z.object({
@@ -124,7 +124,7 @@ export async function PUT(
       itemCount: items.length,
     });
 
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
 
     return NextResponse.json({
       success: true,

@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import { z } from "zod";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 // #approver-routing-per-user-limit-audit-log — approvalLimit 변경 audit 추적성.
 // best effort (try/catch graceful — mutation atomic 보호).
 import { createAuditLog, auditRequestMeta } from "@/lib/audit/audit-logger";
@@ -168,7 +168,7 @@ export async function PATCH(
       }
     }
 
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
     return NextResponse.json({ member: updatedMember });
   } catch (error) {
     enforcement?.fail();
@@ -267,7 +267,7 @@ export async function DELETE(
       isSelfRemoval: isSelf,
     });
 
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
     return NextResponse.json({ success: true });
   } catch (error) {
     enforcement?.fail();

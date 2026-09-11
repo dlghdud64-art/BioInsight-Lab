@@ -1,4 +1,4 @@
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getCallerOrganizationId } from "@/lib/security/caller-organization";
@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
     const unmatchedItems = bomItems.filter((item) => !item.productId);
 
     // db.quote.create 로 BOM 견적을 실제 생성한다 -> complete().
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { quoteId: null, reagentCount: reagents.length },
       afterState: { quoteId: quote.id, matchedItems: bomItems.filter((i) => i.productId).length },
     });

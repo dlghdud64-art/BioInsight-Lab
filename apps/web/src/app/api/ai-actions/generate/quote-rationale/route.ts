@@ -46,7 +46,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
 import { buildRationale } from "@/lib/ai/build-rationale";
-import {
+import { UNRESOLVED_ORG,
   enforceAction,
   type InlineEnforcementHandle,
 } from "@/lib/security/server-enforcement-middleware";
@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
       existing.result !== null &&
       Array.isArray((existing.result as any).rationale)
     ) {
-      enforcement.complete({
+      enforcement.complete({ organizationId: UNRESOLVED_ORG,
         beforeState: { quoteId: input.quoteId, optionId: input.optionId },
         afterState: { aiActionId: existing.id, fromCache: true },
       });
@@ -219,7 +219,7 @@ export async function POST(request: NextRequest) {
       select: { id: true },
     });
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { quoteId: input.quoteId, optionId: input.optionId },
       afterState: { aiActionId: aiAction.id, fromCache: false },
     });

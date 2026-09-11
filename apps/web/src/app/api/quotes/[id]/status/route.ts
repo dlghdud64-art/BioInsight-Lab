@@ -6,7 +6,7 @@ import { sendQuoteCompletedEmail, sendQuoteRejectedEmail } from "@/lib/email";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
 import { validateTransition, ALLOWED_QUOTE_TRANSITIONS } from "@/lib/operations/state-machine";
 import { logStateTransition } from "@/lib/operations/state-transition-logger";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // §O1 #transition-canonical — 전이 규칙은 canonical state-machine.ts(validateTransition)가
 //   유일 SoT. 기존 로컬 ALLOWED_STATUS_TRANSITIONS 재정의는 canonical 과 drift(예: 단계 skip
@@ -268,7 +268,7 @@ export async function PATCH(
       }
     }
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { status: previousStatus, id },
       afterState: { status, id },
     });

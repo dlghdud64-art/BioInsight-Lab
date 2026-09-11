@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import crypto from "crypto";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { buildRfqReplyAddress } from "@/lib/email/rfq-reply-address";
 
 const logger = createLogger("api/quotes/[id]/rfq-token");
@@ -129,7 +129,7 @@ export async function POST(
     // Build reply address (§inbound-rfq-autocapture P1 — 공용 빌더, fallback labaxis.co.kr)
     const replyAddress = buildRfqReplyAddress(rfqToken.token);
 
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
 
     return NextResponse.json(
       {
@@ -257,7 +257,7 @@ export async function PATCH(
     // Build reply address (§inbound-rfq-autocapture P1 — 공용 빌더, fallback labaxis.co.kr)
     const replyAddress = buildRfqReplyAddress(rfqToken.token);
 
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
 
     return NextResponse.json({
       token: rfqToken.token,

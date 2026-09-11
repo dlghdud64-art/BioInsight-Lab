@@ -6,7 +6,7 @@ import { resolveBudgetPurchaseScopeKeys } from "@/lib/budget/purchase-scope-keys
 import { resolveBudgetPeriod } from "@/lib/budget/budget-period";
 import { z } from "zod";
 import { OrganizationRole } from "@prisma/client";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // OWNER/ADMIN 여부 확인 헬퍼
 async function isOrgAdminOrOwner(userId: string, organizationId: string): Promise<boolean> {
@@ -322,7 +322,7 @@ export async function PATCH(
     revalidatePath("/dashboard");
 
     // ── 8. 응답 변환 ──────────────────────────────────────────────────────────
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { budgetId: budget.id, amount: budget.amount },
       afterState: { budgetId: updated.id, amount: updated.amount },
     });
@@ -400,7 +400,7 @@ export async function DELETE(
       where: { id },
     });
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { budgetId: budget.id },
       afterState: undefined,
     });

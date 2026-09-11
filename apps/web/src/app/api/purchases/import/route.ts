@@ -1,4 +1,4 @@
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
     // 행 단위로 create 하므로 성공 행이 0 이면 **쓰기가 하나도 없다**.
     //   그 경우 complete() 는 없던 변경을 기록하는 허위 audit 이 된다 → fail().
     if (result.successRows > 0) {
-      enforcement.complete({
+      enforcement.complete({ organizationId: UNRESOLVED_ORG,
         beforeState: { scopeKey, totalRows: result.totalRows },
         afterState: {
           scopeKey,

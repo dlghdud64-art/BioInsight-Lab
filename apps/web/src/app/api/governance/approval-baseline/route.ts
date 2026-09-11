@@ -13,7 +13,7 @@ import {
   getApprovalBaselineServer,
   invalidateApprovalBaselineServer,
 } from "@/lib/persistence/approval-baseline-server";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 export async function GET(request: NextRequest) {
   const poNumber = request.nextUrl.searchParams.get("poNumber");
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     const created = await ensureApprovalBaselineServer(snapshot);
-    enforcement.complete({ beforeState: {}, afterState: { poNumber: snapshot.poNumber } });
+    enforcement.complete({ organizationId: UNRESOLVED_ORG, beforeState: {}, afterState: { poNumber: snapshot.poNumber } });
     return NextResponse.json({ created });
   } catch (error) {
     enforcement?.fail();
@@ -87,7 +87,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     await invalidateApprovalBaselineServer(poNumber);
-    enforcement.complete({ beforeState: { poNumber }, afterState: undefined });
+    enforcement.complete({ organizationId: UNRESOLVED_ORG, beforeState: { poNumber }, afterState: undefined });
     return NextResponse.json({ ok: true });
   } catch (error) {
     enforcement?.fail();

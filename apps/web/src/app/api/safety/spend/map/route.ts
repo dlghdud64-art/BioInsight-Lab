@@ -1,4 +1,4 @@
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
       console.error("Failed to create audit log:", auditError);
     }
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { purchaseId, productId: purchaseRecord.productId, matchType: purchaseRecord.matchType },
       afterState: { purchaseId, productId, matchType: "MANUAL" },
     });

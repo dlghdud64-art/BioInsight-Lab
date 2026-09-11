@@ -43,7 +43,7 @@ import { convertPOCandidatesToOrders } from "@/lib/orders/convert-pocandidate-to
 // §pocandidate-creation-flow — 승인 통과 집합 단일 소스. approve route 와
 // 공유 (상수 이원화 시 한쪽만 갱신되는 drift 차단).
 import { APPROVAL_PASSED_STATUSES } from "@/lib/orders/approval-passed-statuses";
-import {
+import { UNRESOLVED_ORG,
   enforceAction,
   type InlineEnforcementHandle,
 } from "@/lib/security/server-enforcement-middleware";
@@ -292,7 +292,7 @@ export async function POST(request: NextRequest) {
       },
     );
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { quoteIds, orderCount: 0 },
       afterState: {
         quoteIds,

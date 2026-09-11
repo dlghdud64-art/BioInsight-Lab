@@ -10,7 +10,7 @@
  * 이 route 는 runtime auto-seed 를 하지 않는다.
  */
 
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
     };
 
     const created = await createPOCandidate(input);
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { candidateId: null },
       afterState: { candidateId: created.id, approvalPolicy: resolvedApprovalPolicy },
     });
@@ -161,7 +161,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { candidateId: id },
       afterState: { candidateId: id, stage, approvalStatus: approvalStatus ?? null },
     });
@@ -208,7 +208,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { candidateId: id, deleted: false },
       afterState: { candidateId: id, deleted: true },
     });

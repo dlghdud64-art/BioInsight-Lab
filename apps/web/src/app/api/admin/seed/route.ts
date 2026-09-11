@@ -1,4 +1,4 @@
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { requiresDestructiveConfirmation } from "@/lib/security/production-database";
@@ -334,7 +334,9 @@ export async function POST(request: NextRequest) {
       }),
     ]);
 
-    enforcement.complete({
+    // §audit-org-required — 코드모드가 27행 `//` 주석 안의 `/api/admin/*` 를 블록 주석 시작으로 오판해
+    //   이 호출을 건너뛰었다. tsc 와 래칫 sentinel 이 이 파일 이름으로 잡아 직접 넣었다.
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { seed: "demo-dataset" },
       afterState: { vendors: vendors.length, products: products.length },
     });

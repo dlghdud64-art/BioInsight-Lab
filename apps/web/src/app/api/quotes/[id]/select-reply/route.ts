@@ -27,7 +27,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
-import {
+import { UNRESOLVED_ORG,
   enforceAction,
   type InlineEnforcementHandle,
 } from "@/lib/security/server-enforcement-middleware";
@@ -164,7 +164,7 @@ export async function POST(
       select: { id: true, selectedReplyId: true },
     });
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { selectedReplyId: null },
       afterState: { selectedReplyId: updated.selectedReplyId },
     });

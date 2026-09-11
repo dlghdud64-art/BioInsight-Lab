@@ -5,7 +5,7 @@ import { Prisma, TeamRole, AiActionStatus, TaskStatus, ApprovalStatus } from "@p
 import { createDataAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { transitionWorkItem } from "@/lib/work-queue";
-import { enforceAction } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction } from "@/lib/security/server-enforcement-middleware";
 
 /**
  * POST /api/ai-actions/[id]/approve — 승인 → 도메인 액션 실행
@@ -320,7 +320,7 @@ export async function POST(
         userAgent,
       });
 
-      enforcement.complete({
+      enforcement.complete({ organizationId: UNRESOLVED_ORG,
         beforeState: { status: 'PENDING', itemId: params.id, type: item.type },
         afterState: { status: 'APPROVED', itemId: params.id, result },
       });

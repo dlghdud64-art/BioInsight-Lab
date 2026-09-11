@@ -24,7 +24,7 @@
 // fallback (audit/cache 미사용, 기존 동작 보존). Phase 5 SDK install 후
 // Cloud Vision + Claude Tier 2 자동 활성. parseReagentLabel (regex fallback)
 // 은 보존 — Gemini 호출 실패 시 text input 처리 path 유지.
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db, dbTyped } from "@/lib/db";
@@ -329,7 +329,7 @@ export async function POST(req: NextRequest) {
       data: { userId: session.user.id, organizationId: activeOrganizationId },
     });
     // §11.369-1 — 성공 응답 직전 lock 해제(이전 complete() 부재로 5분 잔존 → 후속 스캔 409).
-    enforcement.complete();
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
     return NextResponse.json({
       success: true,
       parsed: { ...parsed, ...merged }, // §11.382 — GS1 병합 필드 우선 + OCR 메타(confidence/rawText) 보존

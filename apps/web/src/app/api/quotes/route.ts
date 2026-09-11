@@ -7,7 +7,7 @@ import { db, isPrismaAvailable } from "@/lib/db";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
 import { ActivityType } from "@prisma/client";
 import { generateShareToken } from "@/lib/api/share-token";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { enforcePlanLimit, PlanLimitError } from "@/lib/billing/enforce-plan-limit";
 // #quote-payload-zod-schema — §11.203 silent assumption 후속 안전장치.
 // payload validation 의 single source. invalid payload → structured 400
@@ -370,7 +370,7 @@ export async function POST(request: NextRequest) {
     const shareToken = quoteResults[0]?.shareToken ?? null;
     const shareUrl = quoteResults[0]?.shareUrl ?? null;
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { action: 'quote_request_create' },
       afterState: { quoteId: quote.id, quoteCount: quoteResults.length },
     });

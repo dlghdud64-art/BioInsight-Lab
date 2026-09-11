@@ -8,7 +8,7 @@ import { auth } from "@/auth";
 import { promoteStage, ensureCanaryConfig } from "@/lib/ai-pipeline/runtime/doctype-rollout";
 import { canPromote, validateConstraints } from "@/lib/ai-pipeline/runtime/rollout-config";
 import { db } from "@/lib/db";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 export async function POST(request: NextRequest) {
   let enforcement: InlineEnforcementHandle | undefined;
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
 
     const updated = await promoteStage(documentType, userId, reason);
 
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
 
     return NextResponse.json({
       success: true,

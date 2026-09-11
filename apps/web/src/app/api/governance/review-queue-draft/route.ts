@@ -13,7 +13,7 @@ import {
   loadReviewQueueDraftServer,
   clearReviewQueueDraftServer,
 } from "@/lib/persistence/review-queue-server";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 export async function GET() {
   const session = await auth();
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     if (!enforcement.allowed) return enforcement.deny();
 
     await persistReviewQueueDraftServer(session.user.id, items);
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
     return NextResponse.json({ ok: true });
   } catch (error) {
     enforcement?.fail();
@@ -82,7 +82,7 @@ export async function DELETE() {
     if (!enforcement.allowed) return enforcement.deny();
 
     await clearReviewQueueDraftServer(session.user.id);
-    enforcement.complete({});
+    enforcement.complete({ organizationId: UNRESOLVED_ORG });
     return NextResponse.json({ ok: true });
   } catch (error) {
     enforcement?.fail();

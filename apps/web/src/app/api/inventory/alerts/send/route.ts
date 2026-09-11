@@ -1,4 +1,4 @@
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
       data: { lastNotifiedAt: new Date() },
     });
 
-    enforcement.complete({
+    enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { inventoryId, alertSettingId, lastNotifiedAt: alertSetting.lastNotifiedAt },
       afterState: { inventoryId, alertSettingId, sentTo: recipientEmail, alertType: alertSetting.alertType },
     });

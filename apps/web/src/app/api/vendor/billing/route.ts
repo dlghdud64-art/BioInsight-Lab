@@ -1,4 +1,4 @@
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     // 과금 설정이 없는 벤더는 continue 로 건너뛴다 → 쓰기가 0건일 수 있다.
     //   그 경우 complete() 는 없던 변경을 남기는 허위 audit 이 된다.
     if (billingRecords.length > 0) {
-      enforcement.complete({
+      enforcement.complete({ organizationId: UNRESOLVED_ORG,
         beforeState: { quoteId, requestedVendors: vendorIds.length },
         afterState: {
           quoteId,

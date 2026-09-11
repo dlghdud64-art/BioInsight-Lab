@@ -39,7 +39,10 @@ describe("§11.369-1 — scan-label lock 버그 수정", () => {
 
   it("성공 경로 enforcement.complete() 호출 (5분 lock 잔존 차단)", () => {
     const src = read(ROUTE);
-    expect(src).toContain("enforcement.complete()");
+    /* 승계 (§audit-org-required · 2026-09-11): complete() 는 이제 조직 인자를 필수로 받는다
+     *   (`enforcement.complete({ organizationId: UNRESOLVED_ORG })`). 명제는 "성공 경로에서 complete 로
+     *   lock 을 푼다" 이지 "인자 없이 부른다" 가 아니다. */
+    expect(src).toContain("enforcement.complete(");
   });
 
   it("catch 경로 enforcement?.fail() 호출 (실패 lock 해제)", () => {

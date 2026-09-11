@@ -9,7 +9,7 @@ import {
   activateKillSwitch,
   deactivateKillSwitch,
 } from "@/lib/ai-pipeline/runtime/doctype-rollout";
-import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 export async function POST(request: NextRequest) {
   let enforcement: InlineEnforcementHandle | undefined;
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
         userId,
         body.reason
       );
-      enforcement.complete({});
+      enforcement.complete({ organizationId: UNRESOLVED_ORG });
       return NextResponse.json({
         success: true,
         message: body.documentType
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
         );
       }
       await deactivateKillSwitch(body.documentType, userId, body.reason);
-      enforcement.complete({});
+      enforcement.complete({ organizationId: UNRESOLVED_ORG });
       return NextResponse.json({
         success: true,
         message: `Kill switch deactivated for ${body.documentType} — restored to SHADOW`,
