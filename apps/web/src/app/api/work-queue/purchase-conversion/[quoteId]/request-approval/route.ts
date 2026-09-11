@@ -25,7 +25,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { PurchaseRequestStatus } from "@prisma/client";
-import { UNRESOLVED_ORG,
+import {
   enforceAction,
   type InlineEnforcementHandle,
 } from "@/lib/security/server-enforcement-middleware";
@@ -245,7 +245,7 @@ export async function POST(
       },
     });
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG,
+    enforcement.complete({ organizationId: orgId,
       beforeState: { quoteId },
       afterState: {
         purchaseRequestId: purchaseRequest.id,

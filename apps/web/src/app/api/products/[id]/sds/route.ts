@@ -9,7 +9,7 @@ import { supersedePriorSds } from "@/lib/safety/supersede-sds";
 import { createActivityLog } from "@/lib/activity-log";
 import { ActivityType, OrganizationRole } from "@prisma/client";
 // §sds-upload-role-gate — 서버측 role 게이트 + enforceAction 핸들 마감(§enforcement-handle-close).
-import { UNRESOLVED_ORG,
+import {
   enforceAction,
   type InlineEnforcementHandle,
 } from "@/lib/security/server-enforcement-middleware";
@@ -287,7 +287,7 @@ export async function POST(
 
     // §enforcement-handle-close — 성공 시 audit envelope 기록 + lock 해제.
     //   업로드는 신규 문서 생성이라 beforeState 는 "해당 lot/제품에 문서 없음" 기준선만 남긴다.
-    enforcement.complete({ organizationId: UNRESOLVED_ORG,
+    enforcement.complete({ organizationId: organizationId,
       beforeState: { productId, docType, sdsDocumentId: null },
       afterState: {
         productId,

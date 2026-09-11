@@ -25,7 +25,7 @@ const MIDDLEWARE = "src/lib/security/server-enforcement-middleware.ts";
 /** 닫는 커밋 시점의 미정 잔량. **올릴 수 없다.** 채울 때마다 이 수를 내린다 · 0 이 완료.
  *  🛑 146 이 아니라 145 다. 앞선 형태 집계의 `.complete()` 2건 중 1건이 category-budget-release.ts 의
  *     JSDoc **주석**이었다(실제 호출 아님). 호출은 145 · 코드모드 144 + seed 수동 1. */
-const UNRESOLVED_CEILING = 135; // 채우기 1단(조직 경로 파라미터 10) · 145 → 135
+const UNRESOLVED_CEILING = 127; // 채우기 1단(조직 경로 파라미터 10) 145 → 135 · 2단(조직 변수 8) → 127
 
 function sourceFiles(): string[] {
   const out: string[] = [];

@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { PurchaseRequestStatus, OrderStatus } from "@prisma/client";
 // §purchase-request-org-axis (나)-1b — 승인 권한 역할 집합 정본. 사본 금지.
 import { isOrgApprover } from "@/lib/billing/approver-routing";
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { checkApprovalLimit } from "@/lib/security/approval-limit-guard";
 import {
   validateCategoryBudgetInTransaction,
@@ -482,7 +482,7 @@ export async function POST(
     });
 
     // ── Enforcement: 성공 시 audit 기록 (budget gate decision 포함) ──
-    enforcement.complete({ organizationId: UNRESOLVED_ORG,
+    enforcement.complete({ organizationId: orgId,
       beforeState: { status: 'PENDING', requestId },
       afterState: {
         status: 'APPROVED',

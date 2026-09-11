@@ -5,7 +5,7 @@
  * 멱등성: source_ref가 동일하면 기존 IngestionEntry 반환
  */
 
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
 
     // 6. 응답
     const statusCode = result.failedStage ? 207 : 201;
-    enforcement.complete({ organizationId: UNRESOLVED_ORG,
+    enforcement.complete({ organizationId: organizationId,
       beforeState: { organizationId, sourceType, sourceRef: sourceRef ?? null },
       afterState: {
         organizationId,
