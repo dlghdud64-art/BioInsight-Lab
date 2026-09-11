@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { resolveNotesUpdate } from "@/lib/inventory/notes-update";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
@@ -192,12 +193,10 @@ export async function PATCH(
     }
 
     if (notes !== undefined || date !== undefined) {
-      let updatedNotes = notes || existingInventory.notes || '';
-      if (date) {
-        const dateNote = `\n[입고일: ${date}]`;
-        if (!updatedNotes.includes(dateNote)) updatedNotes = updatedNotes + dateNote;
-      }
-      updateData.notes = updatedNotes || null;
+      /* §inventory-notes-erase (2026-09-11 prod 실측 P1) — 옛 판본은 `notes || existingInventory.notes`
+       *   라 빈 문자열이 기존 값으로 되돌아갔다(지우고 저장해도 그대로 · 성공 토스트·감사는 남음).
+       *   undefined=유지 · ""/null=비움 을 가르는 해석은 lib 한 곳에 둔다(테스트가 그 함수를 잠근다). */
+      updateData.notes = resolveNotesUpdate(notes, existingInventory.notes, date);
     }
 
     if (expiryDate !== undefined) {
