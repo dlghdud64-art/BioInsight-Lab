@@ -17,12 +17,13 @@
  *   5. 상태 코드를 변수로 넘기면(status: code) 성공으로 친다. 리터럴 4xx · 5xx 만 실패로 본다.
  *   6. 선언은 export async function 형태만 스캔한다. 다른 형태(export const · 동기 function ·
  *      export { x as POST })는 "커버리지" 단언이 0 을 강제해 사각을 RED 로 바꾼다.
- *   7. 괄호 짝은 문자열 · 템플릿을 건너뛰며 센다. 정규식 리터럴 안의 짝 없는 괄호는 못 본다.
+ *   7. 괄호 짝은 주석 제거본에서 문자열 · 템플릿을 건너뛰며 센다. 정규식 리터럴 안의 짝 없는 괄호는 못 본다.
  *
  * allowlist — CLAUDE.md 「예외 목록에는 만료일과 소유자」. 두 항목만 명시한다.
  *   검출이 늘면 allowlist 를 늘리는 게 아니라 RED 가 떠야 한다.
  *   allowlist 항목이 더 이상 검출되지 않아도 RED 다 — 목록은 줄어드는 방향으로만 움직인다.
- *   expires 가 날짜면 그날이 지나는 순간 RED 가 되어 재검토를 강제한다.
+ *   expires 가 날짜면 **그 날 0시(KST)부터 RED** 가 되어 재검토를 강제한다.
+ *   해제는 날짜 갱신 또는 항목 제거 — 둘 다 사람이 판단한다.
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
@@ -54,7 +55,8 @@ interface AllowEntry {
   route: string;
   method: MutatingMethod;
   reason: string;
-  expires: string; // "영구" 또는 YYYY-MM-DD
+  /** null = 영구. YYYY-MM-DD 면 그 날 0시(KST)부터 RED 가 된다. */
+  expires: string | null;
   owner: string;
 }
 
@@ -64,7 +66,7 @@ const ALLOWLIST: AllowEntry[] = [
     method: "POST",
     reason:
       "설계상 계산기 · DB·파일 무기록. 새 config JSON 을 계산해 돌려주고 운영자가 AI_CANARY_CONFIG env 를 직접 갱신한다. 347069ce 에서 이미 판정.",
-    expires: "영구",
+    expires: null,
     owner: "호영",
   },
   {
@@ -76,6 +78,9 @@ const ALLOWLIST: AllowEntry[] = [
     owner: "호영",
   },
 ];
+
+/** 만료일 판정 기준 — 그 날 0시(KST). Date.parse("YYYY-MM-DD") 는 UTC 0시라 9시간 늦게 RED 가 된다. */
+const expiresAtMs = (d: string) => Date.parse(`${d}T00:00:00+09:00`);
 
 const key = (x: { route?: string; file?: string; method: string }) => `${x.method} ${x.route ?? x.file}`;
 
@@ -154,6 +159,14 @@ describe("§placeholder-success-gate · src/app/api 전량", () => {
     expect(scanFiles(ROUTES, APP_WEB_ROOT).length).toBeGreaterThan(100);
   });
 
+  /*
+   * 🛑 이 단언을 "중복 같다" 며 지우지 말 것.
+   *   export const POST = async (...) => {} 가 하나라도 생기면 스캐너는 그 핸들러를 0개로 세고
+   *   아래 "allowlist 밖 0" 은 **조용히 GREEN** 이 된다 — 조항 8(부재를 성공으로 읽지 않는다)의
+   *   정확한 재현이다. 스캔 범위 밖 형태를 RED 로 바꾸는 것이 이 단언의 일이다.
+   *   실측 2026-09-11: 변경 핸들러를 가진 route.ts 195개 전부 export async function.
+   *   다른 선언 형태 0. 이 단언이 그 전제를 잠근다.
+   */
   it("커버리지 · 스캔하지 않는 형태의 변경 핸들러 0", () => {
     const offenders = ROUTES.filter(
       (f) => unscannedHandlerForms(readFileSync(join(APP_WEB_ROOT, f), "utf8")).length > 0,
@@ -180,13 +193,18 @@ describe("§placeholder-success-gate · allowlist 는 줄어드는 방향으로�
     expect(hits.has(key(e))).toBe(true);
   });
 
-  it.each(ALLOWLIST)("$method $route 에 사유 · 소유자 · 유효한 만료가 있다", (e) => {
+  it.each(ALLOWLIST)("$method $route 에 사유 · 소유자가 있고 만료 표기가 올바르다", (e) => {
     expect(e.reason.trim().length).toBeGreaterThan(10);
     expect(e.owner.trim()).not.toBe("");
-    if (e.expires !== "영구") {
+    if (e.expires !== null) {
       expect(e.expires).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-      expect(new Date(`${e.expires}T23:59:59+09:00`).getTime()).toBeGreaterThanOrEqual(Date.now());
+      expect(Number.isNaN(expiresAtMs(e.expires))).toBe(false);
     }
+  });
+
+  it("allowlist 예외가 만료되지 않았다 (만료일 0시 KST 부터 RED)", () => {
+    const expired = ALLOWLIST.filter((e) => e.expires !== null && Date.now() >= expiresAtMs(e.expires));
+    expect(expired.map((e) => `${e.route} (${e.expires})`)).toEqual([]);
   });
 });
 
