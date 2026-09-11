@@ -49,7 +49,7 @@ const EXEMPT_ROUTES: ReadonlyArray<{ pattern: string; reason: string }> = [
   { pattern: '/api/receiving/[token]/response',         reason: 'public_token_auth' },
   { pattern: '/api/mobile/auth/signin',                 reason: 'bearer_token_auth' },
   { pattern: '/api/mobile/auth/refresh',                reason: 'bearer_token_auth' },
-  { pattern: '/api/vendor/auth/send-link',              reason: 'vendor_token_auth' },
+  // '/api/vendor/auth/send-link' 제거 — §placeholder-success-gate P1 (2026-09-11): 라우트 삭제(TODO 만 있던 placeholder success)
   { pattern: '/api/vendor/quotes/[quoteId]/response',   reason: 'vendor_token_auth' },
   { pattern: '/api/pricing-assistant',                  reason: 'public_stateless_llm' },
 ];

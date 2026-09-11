@@ -1,125 +1,24 @@
-"use client";
-
-import { csrfFetch } from "@/lib/api-client";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { Mail, Loader2 } from "lucide-react";
+/**
+ * §placeholder-success-gate P1 (2026-09-11) — 벤더 로그인 링크 발송을 폐기한다.
+ *
+ * 이 화면은 "이메일로 로그인 링크를 발송했습니다. 메일함을 확인해주세요." 를 띄웠으나
+ * api/vendor/auth/send-link 는 TODO 만 있고 토큰 생성·저장·발송이 전부 없었다.
+ * 거래처가 오지 않을 메일을 기다리는 상태였다 — 앞선 §placeholder-success-audit 4건과
+ * 달리 **살아 있는 외부 표면**이다.
+ *
+ * §route-duplication(호영님 2026-08-10): 벤더 견적 회신의 canonical 은 토큰 경로다.
+ * 로그인 벤더용 포털은 §vendor-portal-identity 이후 새로 설계한다(app/vendor/page.tsx).
+ * 그 결정에 로그인 페이지 폐기는 없었으므로 **삭제하지 않고 안내 화면으로 보낸다.**
+ *
+ * 파일을 남기는 이유는 둘이다:
+ *   ① 벤더가 북마크했거나 예전 안내로 들어온 외부 URL 이 404 가 되지 않는다.
+ *   ② ui-rebrand-labaxis 가 이 경로를 직접 읽는다(파일 부재 = RED).
+ *
+ * 🛑 permanentRedirect(308) 를 쓰지 말 것. 브라우저가 캐시해 §vendor-portal-identity
+ *    에서 되살릴 때 벤더 단말에서 풀리지 않는다. 임시(307)로 둔다.
+ */
+import { redirect } from "next/navigation";
 
 export default function VendorLoginPage() {
-  const { toast } = useToast();
-  const [email, setEmail] = useState("");
-  const [isSending, setIsSending] = useState(false);
-
-  const handleSendLink = async () => {
-    if (!email || !email.includes("@")) {
-      toast({
-        title: "오류",
-        description: "올바른 이메일 주소를 입력해주세요.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsSending(true);
-      const response = await csrfFetch("/api/vendor/auth/send-link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) throw new Error("Failed to send login link");
-
-      toast({
-        title: "로그인 링크 발송",
-        description: "이메일로 로그인 링크를 발송했습니다. 메일함을 확인해주세요.",
-      });
-      setEmail("");
-    } catch (error) {
-      toast({
-        title: "오류",
-        description: "로그인 링크 발송에 실패했습니다.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSending(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-pg flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-slate-100 mb-2">
-            벤더 포털
-          </h1>
-          <p className="text-sm text-slate-600">
-            견적 요청을 확인하고 회신하세요
-          </p>
-        </div>
-
-        <div className="bg-pn border border-bd shadow-sm p-6">
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="email" className="text-sm font-medium">
-                이메일 주소
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="vendor@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !isSending) {
-                    handleSendLink();
-                  }
-                }}
-                className="mt-1"
-              />
-            </div>
-
-            <Button
-              onClick={handleSendLink}
-              disabled={isSending}
-              className="w-full"
-            >
-              {isSending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  발송 중...
-                </>
-              ) : (
-                <>
-                  <Mail className="h-4 w-4 mr-2" />
-                  로그인 링크 보내기
-                </>
-              )}
-            </Button>
-          </div>
-
-          <div className="mt-6 pt-6 border-t border-bd">
-            <p className="text-xs text-slate-500 text-center">
-              입력하신 이메일로 로그인 링크가 발송됩니다.
-              <br />
-              링크는 24시간 동안 유효합니다.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-4 text-center">
-          <p className="text-xs text-slate-500">
-            문의사항이 있으신가요?{" "}
-            <a href="mailto:support@labaxis.co.kr" className="text-blue-600 hover:underline">
-              support@labaxis.co.kr
-            </a>
-          </p>
-        </div>
-      </div>
-    </div>
-  );
+  redirect("/vendor");
 }
-

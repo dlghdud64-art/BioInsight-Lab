@@ -54,7 +54,6 @@ describe('csrf-route-registry', () => {
       '/api/receiving/tkn-xyz/response',
       '/api/mobile/auth/signin',
       '/api/mobile/auth/refresh',
-      '/api/vendor/auth/send-link',
       '/api/vendor/quotes/q-123/response',
     ];
 
