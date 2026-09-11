@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { ToastAction } from "@/components/ui/toast";
 import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, Download, X, Edit2, Check, XCircle } from "lucide-react";
 import { csrfFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
@@ -62,6 +61,14 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
+  // §inventory-org-required (호영님 2026-09-11) — 조직 없음(422)은 토스트가 아니라 **단계 화면 안 인라인 안내**.
+  //   토스트는 사라지고, 초대를 기다리는 사용자가 읽을 문장이 함께 사라진다. 마법사는 단계 화면이라 인라인이 자연스럽다.
+  const [orgBlock, setOrgBlock] = useState<{
+    title: string;
+    detail?: string;
+    hint?: string;
+    action: { label: string; href: string };
+  } | null>(null);
   const confettiRef = useRef<HTMLDivElement>(null);
 
   // Step 1: Upload
@@ -345,11 +352,12 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
       if (!response.ok) {
         const error = await response.json();
         // §inventory-org-required — 422 NO_ORGANIZATION 은 갈 길(action)을 함께 싣는다. 잃지 않고 넘긴다.
-        throw Object.assign(new Error(error.error || "등록 실패"), { action: error.action });
+        throw Object.assign(new Error(error.error || "등록 실패"), { action: error.action, detail: error.detail, hint: error.hint });
       }
 
       const result: ImportResult = await response.json();
       setImportResult(result);
+      setOrgBlock(null);
       setStep("commit");
 
       if (result.errorRows === 0) {
@@ -371,13 +379,15 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
     } catch (error: any) {
       // §inventory-org-required — 조직이 없어 막힌 경우 막다른 길로 끝내지 않는다: 조직 화면으로 가는 버튼.
       const next = error?.action as { label: string; href: string } | undefined;
+      if (next) {
+        // 조직 없음 · 갈 길이 있는 거절은 화면 안에 남긴다(아래 orgBlock 렌더).
+        setOrgBlock({ title: error.message, detail: error.detail, hint: error.hint, action: next });
+        return;
+      }
       toast({
         title: "등록 실패",
         description: error.message,
         variant: "destructive",
-        ...(next
-          ? { action: <ToastAction altText={next.label} onClick={() => router.push(next.href)}>{next.label}</ToastAction> }
-          : {}),
       });
     } finally {
       setLoading(false);
@@ -387,6 +397,7 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
 
   const handleReset = () => {
     setStep("upload");
+    setOrgBlock(null);
     setPreviewData(null);
     setColumnMapping({});
     setValidationErrors({});
@@ -520,6 +531,21 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* §inventory-org-required — 조직 없음 인라인 안내 · 버튼은 조직 만들기 하나 · 초대는 문장 */}
+            {orgBlock && (
+              <div role="alert" className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 space-y-2">
+                <p className="flex items-center gap-1.5 text-sm font-semibold text-yellow-800">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  {orgBlock.title}
+                </p>
+                {orgBlock.detail && <p className="text-sm text-slate-700">{orgBlock.detail}</p>}
+                {orgBlock.hint && <p className="text-sm text-slate-600">{orgBlock.hint}</p>}
+                <Button size="sm" className="min-h-[44px]" onClick={() => router.push(orgBlock.action.href)}>
+                  {orgBlock.action.label}
+                </Button>
+              </div>
+            )}
+
             {/* 요약 메시지 */}
             <div className="bg-muted rounded-lg p-4">
               <p className="text-sm font-medium">

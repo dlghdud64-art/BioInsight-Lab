@@ -51,7 +51,7 @@ export interface DeliveryInventorySyncResult {
 
 export class DeliverySyncError extends Error {
   constructor(
-    public code: "missing_product_id" | "order_not_found" | "no_items" | "no_owner",
+    public code: "missing_product_id" | "order_not_found" | "no_items" | "no_organization",
     message: string,
   ) {
     super(message);
@@ -89,14 +89,16 @@ export async function runDeliveryInventorySync(
     );
   }
 
-  // 3. owner 결정: organizationId 우선, fallback userId
-  const ownerKind: "organization" | "user" = order.organizationId
-    ? "organization"
-    : order.userId
-      ? "user"
-      : (() => {
-          throw new DeliverySyncError("no_owner", `Order ${orderId} has no userId or organizationId`);
-        })();
+  // 3. 소유 조직 · §inventory-org-required (호영님 2026-09-11): 재고는 조직의 것이다.
+  //   옛 판본은 organizationId 가 없으면 userId 로 **개인 재고**를 만들었다(개인 분기 · userId 유니크 키).
+  //   조직 없는 발주는 재고를 만들지 않고 던진다. 호출부 두 곳의 처리는 기존 DeliverySyncError 와 같다:
+  //     orders/[id] PATCH        잡아서 restock 만 건너뛴다(주문 DELIVERED 는 유지)
+  //     admin/orders/[id]/status 트랜잭션째 실패(missing_product_id 와 같은 경로)
+  //   prod 실측 2026-09-11(로컬 operator-shell → Supabase): organizationId null 발주 0건 · 잠복 경로.
+  const organizationId: string | null = order.organizationId;
+  if (!organizationId) {
+    throw new DeliverySyncError("no_organization", `Order ${orderId} has no organizationId`);
+  }
 
   // 4. 같은 productId 합산 (Map<productId, totalQuantity>)
   const aggregated = new Map<string, number>();
@@ -110,30 +112,11 @@ export async function runDeliveryInventorySync(
   const receivedAt = defaults?.receivedAt ?? new Date();
 
   for (const [productId, totalQuantity] of aggregated.entries()) {
-    const where =
-      ownerKind === "organization"
-        ? {
-            organizationId_productId: {
-              organizationId: order.organizationId as string,
-              productId,
-            },
-          }
-        : {
-            userId_productId: {
-              userId: order.userId,
-              productId,
-            },
-          };
-
-    const ownerFields =
-      ownerKind === "organization"
-        ? { organizationId: order.organizationId, productId }
-        : { userId: order.userId, productId };
-
     const inventory = await tx.productInventory.upsert({
-      where,
+      where: { organizationId_productId: { organizationId, productId } },
       create: {
-        ...ownerFields,
+        organizationId,
+        productId,
         currentQuantity: totalQuantity,
         location: defaults?.location ?? null,
         lotNumber: defaults?.lotNumber ?? null,

@@ -3,36 +3,50 @@
  *
  * 제품 판정: LabAxis 는 랩 운영 OS 이고 개인 재고는 제품 개념이 아니다. 스키마의
  * `ProductInventory.organizationId` nullable 은 허용이지 의도가 아니다.
- * 그런데 생성 경로 두 곳이 조직 없는 행을 만들고 있었다(POST /api/inventory 의 개인 재고 fallback ·
- * import/commit 의 조직 미해석). 그 결과가 prod BCP 1행 · orgOwnership.ownerlessCount 1 이다.
  *
- * 🛑 막다른 길로 끝내지 않는다(호영님 요건). 기능을 잃는 사용자가 실제로 있을 수 있으므로
- *   응답에 **갈 길**(조직 화면)을 함께 싣고, 화면은 그 버튼을 띄운다.
- *   `/dashboard/organizations` 는 조직 생성(POST /api/organizations)이 되는 실재 화면이다.
- *   초대로 참여하는 사용자는 초대 링크로 들어온다.
+ * 🛑 막다른 길로 끝내지 않는다(호영님 요건). 갈 길은 **두 갈래**다 (2026-09-11 화면 실측):
+ *   `/dashboard/organizations` 에는 「조직 생성」 이 있고 「조직 참여」·「초대 코드 입력」 은 **없다**.
+ *   참여는 초대 수락 경로뿐이다. 그래서
+ *     버튼  하나 · 「조직 만들기」 → 조직 화면 (실재 · sentinel 이 파일로 확인)
+ *     문장  초대 요청 안내 (버튼으로 만들 곳이 없다 · 없는 화면을 가리키면 또 막다른 길)
+ *   🛑 옛 판본 라벨 「조직 만들기·참여」 는 없는 기능(참여)을 약속했다.
+ *
+ * 코드는 `NO_ORGANIZATION` (대문자) · smart-receiving · scan-label · OCR 5라우트 · team 과 같은 코드.
+ * 카피와 코드는 이 파일 한 곳에서 같이 다닌다.
  */
 import { NextResponse } from "next/server";
 
 export const NO_ORGANIZATION_CODE = "NO_ORGANIZATION" as const;
 
-/** 조직을 만들거나 참여하는 화면. 존재는 sentinel 이 파일로 확인한다. */
+/** 조직을 만드는 화면. 존재는 sentinel 이 파일로 확인한다. */
 export const ORGANIZATION_ENTRY_HREF = "/dashboard/organizations";
+export const ORGANIZATION_CREATE_LABEL = "조직 만들기";
+export const NO_ORGANIZATION_DETAIL = "LabAxis 재고는 조직(랩) 단위로 관리됩니다.";
+export const NO_ORGANIZATION_INVITE_HINT = "이미 소속될 조직이 있다면 그 조직 관리자에게 초대를 요청하세요.";
 
 export interface NoOrganizationBody {
+  /** 제목 */
   error: string;
+  /** 본문 */
+  detail: string;
+  /** 초대 갈래 · 문장으로만 */
+  hint: string;
   code: typeof NO_ORGANIZATION_CODE;
+  /** 버튼은 하나 · 조직 만들기 */
   action: { label: string; href: string };
 }
 
-/** @param blocked 무엇이 막혔는지 — 예: "재고를 등록할 수 없습니다" */
-export function noOrganizationBody(blocked: string): NoOrganizationBody {
+/** @param task 막힌 일 · 예: "재고를 등록할" → 「조직에 속해야 재고를 등록할 수 있습니다」 */
+export function noOrganizationBody(task: string): NoOrganizationBody {
   return {
-    error: `소속 조직이 없어 ${blocked} · 조직을 만들거나 초대를 받아 참여한 뒤 다시 시도하세요.`,
+    error: `조직에 속해야 ${task} 수 있습니다`,
+    detail: NO_ORGANIZATION_DETAIL,
+    hint: NO_ORGANIZATION_INVITE_HINT,
     code: NO_ORGANIZATION_CODE,
-    action: { label: "조직 만들기·참여", href: ORGANIZATION_ENTRY_HREF },
+    action: { label: ORGANIZATION_CREATE_LABEL, href: ORGANIZATION_ENTRY_HREF },
   };
 }
 
-export function noOrganizationResponse(blocked: string) {
-  return NextResponse.json(noOrganizationBody(blocked), { status: 422 });
+export function noOrganizationResponse(task: string) {
+  return NextResponse.json(noOrganizationBody(task), { status: 422 });
 }

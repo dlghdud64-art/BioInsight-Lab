@@ -229,7 +229,7 @@ export async function POST(request: NextRequest) {
       userId: session.user.id,
     });
     if (!orgResolution.ok) {
-      return noOrganizationResponse("재고를 등록할 수 없습니다");
+      return noOrganizationResponse("재고를 등록할");
     }
     const activeOrganizationId = orgResolution.organizationId;
 

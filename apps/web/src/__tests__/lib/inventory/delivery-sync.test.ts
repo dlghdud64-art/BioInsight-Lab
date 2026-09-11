@@ -112,35 +112,22 @@ describe("runDeliveryInventorySync (#inventory-model-consolidation Phase 1)", ()
     });
   });
 
-  it("Case 2 — owner fallback: organizationId 없으면 userId 기준 upsert", async () => {
+  /* 승계 (§inventory-org-required · 2026-09-11): 옛 Case 2 는 "organizationId 없으면 userId 기준 upsert"
+   *   (개인 재고 fallback)를 **계약으로** 잠그고 있었다. 제품 판정이 바뀌었다 · 재고는 조직의 것이다.
+   *   명제를 뒤집어 잇는다: 조직 없는 발주는 재고를 만들지 않는다. */
+  it("Case 2 · 조직 없는 발주는 재고를 만들지 않고 no_organization 으로 던진다 (개인 재고 fallback 폐기)", async () => {
     tx.order.findUnique.mockResolvedValue({
       id: "order-2",
       userId: "user-1",
       organizationId: null,
       items: [{ id: "item-2", productId: "prod-1", name: "Reagent A", quantity: 5, unitPrice: 1000 }],
     });
-    tx.productInventory.upsert.mockResolvedValue({
-      id: "inv-2",
-      productId: "prod-1",
-      userId: "user-1",
-      currentQuantity: 5,
-    });
-    tx.inventoryRestock.create.mockResolvedValue({ id: "restock-2", inventoryId: "inv-2", orderId: "order-2", quantity: 5, receivingStatus: "COMPLETED" });
 
-    await runDeliveryInventorySync({
-      tx: tx as never,
-      orderId: "order-2",
-    });
-
-    const upsertArgs = tx.productInventory.upsert.mock.calls[0][0];
-    expect(upsertArgs.where).toEqual({
-      userId_productId: { userId: "user-1", productId: "prod-1" },
-    });
-    expect(upsertArgs.create).toMatchObject({
-      userId: "user-1",
-      productId: "prod-1",
-      currentQuantity: 5,
-    });
+    await expect(
+      runDeliveryInventorySync({ tx: tx as never, orderId: "order-2" }),
+    ).rejects.toMatchObject({ code: "no_organization" });
+    expect(tx.productInventory.upsert).not.toHaveBeenCalled();
+    expect(tx.inventoryRestock.create).not.toHaveBeenCalled();
   });
 
   it("Case 3 — F-3 Block: OrderItem.productId 누락 시 DeliverySyncError throw", async () => {

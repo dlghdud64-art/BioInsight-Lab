@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
      *   조직은 세션에서만 온다(§inventory-org-session-authority). 없으면 422 + 갈 길 · enforceAction 앞에서 거절. */
     const orgResolution = await resolveOrganizationIdForMutation({ userId: session.user.id });
     if (!orgResolution.ok) {
-      return noOrganizationResponse("재고를 가져올 수 없습니다");
+      return noOrganizationResponse("재고를 가져올");
     }
     const organizationId = orgResolution.organizationId;
 

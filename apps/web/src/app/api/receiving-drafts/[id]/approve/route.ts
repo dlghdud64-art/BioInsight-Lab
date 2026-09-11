@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createAuditLog, auditRequestMeta } from "@/lib/audit/audit-logger";
+import { noOrganizationResponse } from "@/lib/organizations/no-organization";
 
 /**
  * POST /api/receiving-drafts/:id/approve  (§11.348-A-4)
@@ -123,7 +124,14 @@ export async function POST(
       );
     }
 
-    const ownerKind: "organization" | "user" = draft.organizationId ? "organization" : "user";
+    /* 🛑 §inventory-org-required (호영님 2026-09-11) — 재고는 조직의 것이다.
+     *   옛 판본은 draft.organizationId 가 없으면 userId 로 **개인 재고**를 만들었다(ownerKind "user").
+     *   조직 없는 입고안은 재고에 반영하지 않고 422 + 갈 길로 돌려보낸다.
+     *   prod 실측 2026-09-11(로컬 operator-shell → Supabase): ReceivingDraft 0행 · 잠복 경로. */
+    const organizationId: string | null = draft.organizationId;
+    if (!organizationId) {
+      return noOrganizationResponse("입고를 재고에 반영할");
+    }
 
     const result = await db.$transaction(async (tx: any) => {
       // productId 별 실수량 합산 → ProductInventory upsert(증분)
@@ -132,17 +140,9 @@ export async function POST(
         aggregated.set(it.productId as string, (aggregated.get(it.productId as string) ?? 0) + (it.inspectedQuantity as number));
       }
       for (const [productId, qty] of aggregated.entries()) {
-        const where =
-          ownerKind === "organization"
-            ? { organizationId_productId: { organizationId: draft.organizationId as string, productId } }
-            : { userId_productId: { userId: draft.userId, productId } };
-        const ownerFields =
-          ownerKind === "organization"
-            ? { organizationId: draft.organizationId, productId }
-            : { userId: draft.userId, productId };
         await tx.productInventory.upsert({
-          where,
-          create: { ...ownerFields, currentQuantity: qty },
+          where: { organizationId_productId: { organizationId, productId } },
+          create: { organizationId, productId, currentQuantity: qty },
           update: { currentQuantity: { increment: qty } },
         });
       }
@@ -151,10 +151,7 @@ export async function POST(
       const restockedItems: Array<{ inventoryId: string; name: string; lotNumber: string | null; expiryDate: Date | null }> = [];
       for (const it of restockable) {
         const inv = await tx.productInventory.findUnique({
-          where:
-            ownerKind === "organization"
-              ? { organizationId_productId: { organizationId: draft.organizationId as string, productId: it.productId as string } }
-              : { userId_productId: { userId: draft.userId, productId: it.productId as string } },
+          where: { organizationId_productId: { organizationId, productId: it.productId as string } },
           select: { id: true },
         });
         if (!inv) continue;

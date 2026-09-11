@@ -945,9 +945,9 @@ function InventoryPageContent() {
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
-        const e = errData as { error?: string; code?: string; action?: { label: string; href: string } };
+        const e = errData as { error?: string; code?: string; detail?: string; hint?: string; action?: { label: string; href: string } };
         // §inventory-org-required — 422 NO_ORGANIZATION 은 갈 길(action)을 함께 싣는다. 잃지 않고 넘긴다.
-        throw Object.assign(new Error(e.error || "저장에 실패했습니다."), { code: e.code, action: e.action });
+        throw Object.assign(new Error(e.error || "저장에 실패했습니다."), { code: e.code, action: e.action, detail: e.detail, hint: e.hint });
       }
       return response.json();
     },
@@ -964,10 +964,14 @@ function InventoryPageContent() {
     },
     onError: (error: Error) => {
       // §inventory-org-required — 조직이 없어 막힌 경우 막다른 길로 끝내지 않는다: 조직 화면으로 가는 버튼.
-      const next = (error as Error & { action?: { label: string; href: string } }).action;
+      const org = error as Error & { action?: { label: string; href: string }; detail?: string; hint?: string };
+      const next = org.action;
       toast({
-        title: "저장 실패",
-        description: error.message || "알 수 없는 오류가 발생했습니다.",
+        // 조직 없음(422)은 서버가 준 제목 · 본문 + 초대 안내 문장 · 버튼은 「조직 만들기」 하나(호영님 2026-09-11).
+        title: next ? error.message : "저장 실패",
+        description: next
+          ? [org.detail, org.hint].filter(Boolean).join(" ")
+          : error.message || "알 수 없는 오류가 발생했습니다.",
         variant: "destructive",
         ...(next
           ? { action: <ToastAction altText={next.label} onClick={() => router.push(next.href)}>{next.label}</ToastAction> }
