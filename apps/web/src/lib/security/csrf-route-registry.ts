@@ -87,7 +87,7 @@ const HIGH_RISK_ROUTE_PATTERNS: readonly string[] = [
   '/api/quotes/generate-english',
   '/api/reviews/[id]',
   '/api/team/[id]/members',
-  '/api/templates/[id]',
+  // '/api/templates/[id]' 제거 — §placeholder-success-cleanup P3 (2026-09-11): 라우트 삭제
 ];
 
 // ═══════════════════════════════════════════════════════
