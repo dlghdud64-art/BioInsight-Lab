@@ -2,6 +2,7 @@
 
 // §11.283c #inventory-content-traffic-light — amber/orange 토큰 → yellow/red 신호등 sweep (호영님 P0 spec, §11.283 cluster C, 30+ spot byte-level swap).
 import { isSuspectReceivedQuantity, countSuspectInventories } from "@/lib/inventory/suspect-received-quantity";
+import { buildInventoryPatchBody } from "@/lib/inventory/inventory-form-payload";
 // §11.374 P3.4 — 헤더 단일 문법(AppPageHeader). 인라인 h1 교체, 모달 액션 클러스터는 보존.
 import { AppPageHeader } from "@/components/layout/page-header";
 import { useState, useEffect, Suspense, useMemo } from "react";
@@ -932,22 +933,8 @@ function InventoryPageContent() {
       const isEdit = Boolean(formPayload.id);
 
       const url = isEdit ? `/api/inventory/${formPayload.id}` : "/api/inventory";
-      const body = isEdit
-        ? {
-            quantity: formPayload.currentQuantity,
-            location: formPayload.location ?? undefined,
-            notes: formPayload.notes ?? undefined,
-            expiryDate: formPayload.expiryDate ?? undefined,
-            minOrderQty: formPayload.minOrderQty ?? undefined,
-            safetyStock: formPayload.safetyStock ?? undefined,
-            lotNumber: formPayload.lotNumber ?? undefined,
-            storageCondition: formPayload.storageCondition ?? undefined,
-            testPurpose: formPayload.testPurpose ?? undefined,
-            trackingMode: formPayload.trackingMode ?? undefined, // §inventory-phaseB P3-UI-b
-            // §11.336 — 편집모드 Cat.No 수동 입력 → PATCH 로 Product 마스터 반영.
-            catalogNumber: formPayload.catalogNumber,
-          }
-        : formPayload;
+      // §inventory-notes-erase P1-b — 편집 본문 조립도 lib 한 곳(buildInventoryPatchBody).
+      const body = isEdit ? buildInventoryPatchBody(formPayload) : formPayload;
 
       const response = await csrfFetch(url, {
         method: isEdit ? "PATCH" : "POST",

@@ -8,6 +8,7 @@
  * 환각 방지(§11.335): 자동 생성 X, 사용자 입력만. 빈 값 → null(채우기 취소).
  */
 import { describe, it, expect } from "vitest";
+import { buildInventoryFormPayload, buildInventoryPatchBody, type InventoryFormState } from "@/lib/inventory/inventory-form-payload";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -49,15 +50,25 @@ describe("§11.336 — AddInventoryModal 편집모드 Cat.No 입력 활성화", 
     expect(src).toMatch(/value=\{inventory \? editableCatNo : formCatNo\}/);
   });
   it("handleSubmit 편집모드 catalogNumber 포함(빈 값→null)", () => {
+    /* 승계 (§inventory-notes-erase P1-b · 2026-09-11): 조립이 lib/inventory/inventory-form-payload.ts 로
+     *   옮겨졌다(동작 동일 추출). 명제는 그 줄의 위치·바이트가 아니라 **조립 결과**다 — 결과와 배선으로 잰다. */
     const src = read(MODAL);
-    expect(src).toMatch(/inventory \? \{ catalogNumber: editableCatNo\.trim\(\) \|\| null \}/);
+    expect(src).toMatch(/isEdit:\s*Boolean\(inventory\),\s*editableCatNo/);
+    const base: InventoryFormState = { productId: "p", isManual: false, selectedProduct: null, currentQuantity: "1", unit: "ea", safetyStock: "", minOrderQty: "", location: "", expiryDate: undefined, notes: "", lotNumber: "", storageCondition: "", testPurpose: "", trackingMode: "QUANTITY", isEdit: true, editableCatNo: "" };
+    expect(buildInventoryFormPayload({ ...base, editableCatNo: "   " }).catalogNumber).toBeNull();
+    expect(buildInventoryFormPayload({ ...base, editableCatNo: " CAT-9 " }).catalogNumber).toBe("CAT-9");
+    expect("catalogNumber" in buildInventoryFormPayload({ ...base, isEdit: false })).toBe(false);
   });
 });
 
 describe("§11.336 — 부모 핸들러 PATCH body catalogNumber 전달(2화면)", () => {
   it("inventory-content edit body 에 catalogNumber", () => {
+    /* 승계 (§inventory-notes-erase P1-b · 2026-09-11): 조립이 lib/inventory/inventory-form-payload.ts 로
+     *   옮겨졌다(동작 동일 추출). 명제는 그 줄의 위치·바이트가 아니라 **조립 결과**다 — 결과와 배선으로 잰다. */
     const src = read(CONTENT);
-    expect(src).toMatch(/catalogNumber: formPayload\.catalogNumber/);
+    expect(src).toMatch(/buildInventoryPatchBody\s*\(\s*formPayload\s*\)/);
+    const body = JSON.parse(JSON.stringify(buildInventoryPatchBody({ currentQuantity: 1, catalogNumber: null })));
+    expect(body).toHaveProperty("catalogNumber", null);
   });
   // §inventory-dead-file-cleanup 2차(2026-08-06) — inventory-main 절반 폐기:
   //   dead file(importer 0). 라이브 절반(inventory-content, 위 단언)이 계약 보존.

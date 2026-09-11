@@ -7,6 +7,7 @@
  */
 
 import { describe, it, expect } from "vitest";
+import { buildInventoryPatchBody } from "@/lib/inventory/inventory-form-payload";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -39,7 +40,10 @@ describe("§inventory-phaseB P4 — end-to-end 체인 정합", () => {
   });
   it("P3-UI-b 설정 Select + API 화이트리스트", () => {
     expect(MODAL).toMatch(/<Select value=\{trackingMode\} onValueChange=\{setTrackingMode\}>/);
-    expect(CONTENT).toMatch(/trackingMode: formPayload\.trackingMode/);
+    /* 승계 (§inventory-notes-erase P1-b · 2026-09-11): 조립이 lib/inventory/inventory-form-payload.ts 로
+     *   옮겨졌다(동작 동일 추출). 명제는 그 줄의 위치·바이트가 아니라 **조립 결과**다 — 결과와 배선으로 잰다. */
+    expect(CONTENT).toMatch(/buildInventoryPatchBody\s*\(\s*formPayload\s*\)/);
+    expect(buildInventoryPatchBody({ currentQuantity: 1, trackingMode: "GMP_STRICT" }).trackingMode).toBe("GMP_STRICT");
   });
 });
 

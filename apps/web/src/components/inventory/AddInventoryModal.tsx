@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { buildInventoryFormPayload } from "@/lib/inventory/inventory-form-payload";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -151,30 +152,14 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
     // 수기 입력 감지: "manual-" 접두사인 임시 ID는 DB에 존재하지 않음
     const isManual = typeof productId === "string" && productId.startsWith("manual-");
 
-    const data = {
-      // 수기 입력이면 productId 대신 제품 메타 정보를 전달 (API에서 Find-or-Create 처리)
-      productId: isManual ? undefined : productId,
-      ...(isManual && {
-        productName: selectedProduct?.name ?? undefined,
-        brand: selectedProduct?.brand ?? undefined,
-        catalogNumber: selectedProduct?.catalogNumber ?? undefined,
-      }),
-      currentQuantity: parseFloat(currentQuantity) || 0,
-      unit,
-      safetyStock: safetyStock ? parseFloat(safetyStock) : undefined,
-      minOrderQty: minOrderQty ? parseFloat(minOrderQty) : undefined,
-      location: location || undefined,
-      expiryDate: expiryDate ? expiryDate.toISOString().split("T")[0] : undefined,
-      notes: notes || undefined,
-      lotNumber: lotNumber.trim() || undefined,
-      storageCondition: storageCondition || undefined,
-      testPurpose: testPurpose.trim() || undefined,
-      trackingMode, // §inventory-phaseB P3-UI-b — 추적 모드 저장(QUANTITY 기본).
-      // §11.336 — 편집모드: 사용자가 입력/수정한 Cat.No (빈 값이면 null 로 명시 전송).
-      ...(inventory ? { catalogNumber: editableCatNo.trim() || null } : {}),
-    };
+    // §inventory-notes-erase P1-b — 조립은 lib 한 곳에 둔다(요청 본문을 테스트가 직접 잰다).
+    const data = buildInventoryFormPayload({
+      productId, isManual, selectedProduct, currentQuantity, unit, safetyStock, minOrderQty,
+      location, expiryDate, notes, lotNumber, storageCondition, testPurpose, trackingMode,
+      isEdit: Boolean(inventory), editableCatNo,
+    });
     console.log("저장 시도:", data);
-    onSubmit(data);
+    onSubmit(data as Parameters<typeof onSubmit>[0]);
   };
 
   const handleClose = () => {
