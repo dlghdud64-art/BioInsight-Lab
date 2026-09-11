@@ -1,24 +1,36 @@
 #!/usr/bin/env sh
 #
-# LabAxis pre-commit hook (§11.49)
+# LabAxis pre-commit hook
 # ─────────────────────────────────
-# Runs scripts/check-no-inline-hex-bg.sh whenever the staged diff
-# touches files under apps/web/src/app/dashboard/**.  When no
-# dashboard surface file is staged the script is skipped so the
-# hook is effectively a no-op for non-UI commits.
+# §gate-to-pre-commit (호영님 2026-09-11) — **파일 단위 게이트를 커밋 시점으로 옮겼다.**
+#   pre-push 는 push 하는 세션의 훅만 돈다. 공유 워킹트리에서는 A 세션이 만든 커밋을
+#   B 세션이 push 하면 A 의 커밋은 아무 게이트도 거치지 않고 원격에 도착한다.
+#   2026-09-11 실측: 2c398691 이 em dash 가 든 신규 테스트 파일을 실은 채 원격에 도착했다
+#   (그 커밋을 만든 세션의 push 는 게이트에 막혔는데, 다른 push 에 먼저 실려 나갔다).
+#   이건 도구 문제가 아니라 구조 문제다 — 커밋 생성 시점에 걸면 누가 push 하든
+#   게이트를 통과한 커밋만 존재한다.
+#   무거운 게이트(build)는 pre-push 에 남긴다. 파일 단위로 판정 가능한 것만 여기 둔다.
+#
+# ⚠️ husky 9 는 훅을 sh -e 로 돌린다. 파이프 끝 grep 이 매치 0이면 exit 1 → 훅이 조용히 죽는다.
+#   그래서 목록 계산은 반드시 `|| true` 로 닫는다(2026-09-11 실측 · 60f80de7).
 #
 # History
-#   §11.45  script created (regression guard authored, manual run only)
-#   §11.48  inventory-content.tsx 6 sites cleaned → script exits 0
-#   §11.49  this hook wires the script into git pre-commit
-#
+#   §11.45  check-no-inline-hex-bg.sh 작성   §11.49  pre-commit 배선
+#   §lint-gate-restore · §em-dash-sweep  pre-push 에 신규 파일 게이트 → §gate-to-pre-commit 로 이관
 
-# Only run when at least one dashboard surface file is staged.
-DASHBOARD_STAGED=$(git diff --cached --name-only --diff-filter=ACMRTUXB \
-  | grep -E '^apps/web/src/app/dashboard/.*\.(ts|tsx)$' || true)
-
-if [ -z "$DASHBOARD_STAGED" ]; then
-  exit 0
+# ── 1. 신규 추가 파일: eslint + em dash 구분자 (스테이징 기준) ──
+#   ⚠️ 검사기는 워킹트리 파일을 읽는다. 스테이징 후 파일을 더 고치면 그 판본을 본다(한계).
+added=$(git diff --cached --name-only --diff-filter=A -- apps/web/src \
+          | grep -E '\.(ts|tsx)$' || true)
+if [ -n "$added" ]; then
+  echo "── 신규 파일 $(echo "$added" | grep -c .)개 검사 (pre-commit)"
+  ( cd apps/web && echo "$added" | sed 's|^apps/web/||' | xargs npx eslint ) || exit 1
+  echo "$added" | xargs npx tsx scripts/check-em-dash-new-files.ts || exit 1
 fi
 
-scripts/check-no-inline-hex-bg.sh
+# ── 2. dashboard 표면 inline hex 배경 (§11.49) ──
+DASHBOARD_STAGED=$(git diff --cached --name-only --diff-filter=ACMRTUXB \
+  | grep -E '^apps/web/src/app/dashboard/.*\.(ts|tsx)$' || true)
+if [ -n "$DASHBOARD_STAGED" ]; then
+  scripts/check-no-inline-hex-bg.sh || exit 1
+fi
