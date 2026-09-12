@@ -1252,17 +1252,16 @@ export default function AuditTrailPage() {
         </div>
       </div>
 
-      {/* §audit-log-enhancement P1 (호영님 2026-07-04) — 신뢰 배지 바(정직 문구).
-          ⚠ 근거 없는 "해시 검증됨" 미주장(AuditLog 에 hash chain 필드 없음). append-only·KST·Part11 정합만 사실 주장.
-          §11.64 Part11 톤 제거 반전(호영님 신 지시 재도입). 중립 톤(빨강/카테고리색 미사용). */}
+      {/* §audit-surface-divergence (호영님 2026-09-12) — **규제 정합 주장 제거.**
+          이 화면은 AuditLog·ActivityLog 만 읽는다. 그런데 제품의 쓰기 감사는 MutationAuditEvent 와
+          DataAuditLog 로 간다 — 2026-09-11 실측: 최근 2일 이 화면이 읽는 두 테이블 0행,
+          안 읽는 두 테이블 16행. 즉 오늘의 데이터 변경이 이 화면에 한 건도 들어오지 않는다.
+          그 상태로 「21 CFR Part 11 정합」·「변조 방지」·「수정·삭제 불가」 를 띄우는 것은 허위 표시다
+          (바이오·제약 고객 실사에서 그대로 걸린다).
+          🛑 되살리지 말 것 — 되살리려면 먼저 **이 화면이 실제 쓰기 감사를 읽어야** 한다.
+          남긴 것: 「KST 고정 표기」 는 이 화면이 실제로 하는 일이다(timeZone "Asia/Seoul" 고정). */}
       <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 print:hidden" data-testid="audit-trust-bar">
-        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-600">
-          <Lock className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
-          변조 방지 · 자동 기록
-        </span>
-        <span className="text-[11px] text-slate-500">수정·삭제 불가 (append-only)</span>
         <span className="text-[11px] text-slate-500">KST 고정 표기</span>
-        <span className="text-[11px] text-slate-500">21 CFR Part 11 정합</span>
       </div>
 
       {/* §11.337 — 내보내기 Sheet (인쇄/정형 PDF/CSV 묶음). 새로 고침은 분리 아이콘. */}
