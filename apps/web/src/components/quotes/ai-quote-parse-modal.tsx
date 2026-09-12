@@ -302,9 +302,14 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
               <p className="text-[10px] text-slate-500 text-center">
                 Gemini 2.5 Flash가 공급사명·품목별 단가·납기·조건을 자동 추출합니다.
               </p>
-              {/* §quote-scan-sian P5 §11 — 암호화 보관 안내(시안). */}
+              {/* 🛑 §quote-scan-public-storage (호영님 2026-09-12 P0) — 「암호화 보관됩니다」 제거.
+                  실제: lib/ocr/image-storage.ts 가 Vercel Blob 에 `access: "public"` 으로 올린다.
+                  방어는 URL 추측 난이도(SHA-256 경로)뿐이고, 업로드 실패는 graceful 이라
+                  저장이 안 되고도 성공 응답이 나간다 — 「보관됩니다」 자체가 항상 참이 아니다.
+                  견적서 = 공급사 단가 = 고객 영업 기밀. 주장 대신 사실만 적는다.
+                  🔑 되살리려면 먼저 access "private" + 서명 URL 로 전환해야 한다(별건 · 승인 대기). */}
               <p className="flex items-center justify-center gap-1 text-[10px] text-slate-400">
-                <Lock className="h-3 w-3" aria-hidden="true" />업로드한 견적서는 추출 후 암호화 보관됩니다
+                <Lock className="h-3 w-3" aria-hidden="true" />업로드한 견적서는 추출에만 사용됩니다
               </p>
             </div>
           )}

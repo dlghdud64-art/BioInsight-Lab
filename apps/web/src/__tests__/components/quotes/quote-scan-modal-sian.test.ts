@@ -12,6 +12,7 @@
  */
 
 import { describe, it, expect } from "vitest";
+import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -32,14 +33,24 @@ describe("§quote-scan-sian P5 — 헤더(아이콘 박스 + 배지 + 설명)", 
   });
 });
 
-describe("§quote-scan-sian P5 — 업로드 단계(드롭존 + 암호화 안내)", () => {
+describe("§quote-scan-sian P5 — 업로드 단계(드롭존 + 취급 안내)", () => {
   it("드롭존 드래그앤드롭 + 형식 안내 보존", () => {
     expect(src).toMatch(/onDrop=/);
     expect(src).toMatch(/PDF, JPG, PNG, WebP|PDF · JPG · PNG · WebP|최대 10MB/);
   });
-  it("암호화 보관 안내(Lock)", () => {
+
+  /* 🛑 승계 (§quote-scan-public-storage · 호영님 2026-09-12 P0): 옛 판본은 「암호화 보관」 **문구를
+   *   강제**하고 있었다(toMatch). 실제로는 Vercel Blob `access: "public"` 이고 업로드 실패도
+   *   graceful 이라 "보관됩니다" 가 항상 참이 아니다 — 검사가 거짓 주장을 붙잡아 두는 형태였다
+   *   (같은 날 감사 화면 「21 CFR Part 11 정합」 배지와 2건째 · §sentinel-inversion).
+   *   원 명제(업로드 단계에 취급 안내가 있다)는 유지하고, 근거 없는 보안 주장만 부재로 잠근다.
+   *   🔑 되살리는 조건: access "private" + 서명 URL 전환이 먼저다. */
+  it("취급 안내 존재(Lock 아이콘) · 🛑 근거 없는 보안 주장 0", () => {
     expect(src).toMatch(/import \{[\s\S]{0,220}Lock/);
-    expect(src).toMatch(/암호화 보관/);
+    expect(src).toMatch(/업로드한 견적서는/);
+    const stripped = stripComments(src);
+    expect(stripped).not.toMatch(/암호화/);
+    expect(stripped).not.toMatch(/안전하게 보관|안전 보관/);
   });
 });
 
