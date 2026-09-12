@@ -1104,9 +1104,16 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                   </CardHeader>
                   <CardContent>
                     {organizationLogs.length === 0 ? (
-                      /* §11.318 honesty 승계 — org-scoped 활동 엔드포인트가 아직 없다.
-                         가짜 피드를 만들지 않고 없다는 사실을 그대로 적는다. */
-                      <p className="text-sm text-slate-400 py-2">아직 기록된 활동이 없습니다</p>
+                      /* §11.318 honesty 승계 — org-scoped 활동 엔드포인트가 아직 없다(organizationLogs = []).
+                         가짜 피드를 만들지 않는다.
+                         🛑 "아직 기록된 활동이 없습니다" 는 §audit-durability 이후로 **거짓**이 됐다.
+                            기록은 남는다(MutationAuditEvent) — 이 화면에 읽기 배선이 없을 뿐이다.
+                            저장이 없는데 성공을 말하는 placeholder success 의 거울(읽기 쪽)이라
+                            "없다" 가 아니라 "아직 안 보여준다" 로 적는다.
+                         🛑 "전체 활동 로그에 다 있다" 로 읽히게 쓰지 말 것 — 그 화면은
+                            AuditLog · ActivityLog 를 읽고, MutationAuditEvent 에 쌓인 것은 거기서도 안 보인다
+                            (감사 테이블 3종 · 화면 도달 축이 다르다). 그래서 단언 없이 유도만 한다. */
+                      <p className="text-sm text-slate-400 py-2">조직별 활동 요약은 준비 중입니다 · 전체 활동 로그를 확인하십시오</p>
                     ) : (
                       <div className="space-y-2">
                         {organizationLogs.slice(0, 5).map((log) => (

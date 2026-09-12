@@ -152,10 +152,18 @@ describe("바로 처리할 항목 — 결과와 행동을 함께 말한다", () 
 });
 
 describe("최근 활동 — 빈 상태를 정직하게", () => {
-  it("가짜 피드를 만들지 않고 없다는 사실을 적는다", () => {
-    /* §11.318 honesty 승계 — org-scoped 활동 엔드포인트가 아직 없다. */
+  it("가짜 피드를 만들지 않는다 · 기록이 없다고 말하지도 않는다", () => {
+    /* §11.318 honesty 승계 → §audit-durability 이후 갱신 (2026-09-12).
+     *   원 명제: 가짜 활동 피드를 만들지 않는다 — 유지.
+     *   바뀐 것: "아직 기록된 활동이 없습니다" 가 **거짓**이 됐다. 기록은 MutationAuditEvent 에
+     *     남고, 이 화면에 읽기 배선이 없을 뿐이다(organizationLogs = [] 하드코딩).
+     *     저장이 없는데 성공을 말하는 placeholder success 의 읽기 쪽 거울이라 그대로 두면 안 된다.
+     *   🛑 "전체 활동 로그에 다 있다" 로도 쓰지 않는다 — 그 화면은 AuditLog · ActivityLog 를 읽고
+     *     MutationAuditEvent 에 쌓인 것은 거기서도 안 보인다(감사 테이블 3종 · 도달 축이 다르다). */
     const ov = overviewBlock(stripComments(read(ORG_DETAIL)));
-    expect(ov).toMatch(/아직 기록된 활동이 없습니다/);
+    expect(ov).toMatch(/조직별 활동 요약은 준비 중입니다/);
+    expect(ov).not.toMatch(/기록된 활동이 없습니다/);
+    expect(ov).not.toMatch(/전체 활동 로그에 (다|모두)/);
   });
 
   it("전체 활동 로그 딥링크가 전역 통합 로그(조직 필터)로 간다", () => {
