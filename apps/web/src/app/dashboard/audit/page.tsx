@@ -399,7 +399,12 @@ export default function AuditTrailPage() {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
-  const [periodFilter, setPeriodFilter] = useState<string>("30");
+  /* §audit-default-period (호영님 2026-09-12) — 기본값 30일 → **전체 기간**.
+   *   결함은 아니었다(컨트롤도 「전체 기간」 옵션도 데스크톱에 있다). 그런데 감사 추적은
+   *   과거를 되짚는 도구인데 기본이 30일이면 **도구의 용도와 기본값이 어긋난다** —
+   *   실제로 이 화면을 본 사람이 "데이터가 없다" 로 읽었다(2026-09-12 · AuditLog 5행 중 3행만 보였다).
+   *   실사 나온 심사관도 같게 읽는다. 활동 로그 탭은 운영 피드라 최근 기본이 맞아 그대로 둔다. */
+  const [periodFilter, setPeriodFilter] = useState<string>("all");
 
   // §11.311b — 모바일 액션 kebab + Sheet (호영님 P1 2026-05-26).
   const [isActionsSheetOpen, setIsActionsSheetOpen] = useState(false);

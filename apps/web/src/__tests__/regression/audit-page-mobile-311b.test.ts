@@ -130,6 +130,13 @@ describe("§11.311b — CLAUDE.md Mobile Patterns 섹션", () => {
 });
 
 describe("§11.311b — 회귀 0 (보존)", () => {
+  it("🛑 §audit-default-period — 감사 탭 기간 기본값은 전체 기간이다 (30일 천장 금지)", () => {
+    const src = read(PATH);
+    /* 감사 추적은 과거를 되짚는 도구다. 기본이 30일이면 그 밖의 이력이 없는 것처럼 보인다
+     * (2026-09-12 실측: AuditLog 5행 중 3행만 보였다). 활동 탭은 운영 피드라 별개다. */
+    expect(src).toMatch(/const \[periodFilter, setPeriodFilter\] = useState<string>\("all"\)/);
+  });
+
   it("PERIOD_OPTIONS + EVENT_TYPE_OPTIONS Select 보존", () => {
     const src = read(PATH);
     expect(src).toMatch(/PERIOD_OPTIONS\.map/);
