@@ -13,8 +13,8 @@
  * Lock:
  *   - cache TTL 48h (호영님 Phase 0 결정)
  *   - SHA-256 (crypto.createHash 사용)
- *   - Vercel Blob `put()` 호출 — addRandomSuffix=false (hash deterministic),
- *     allowOverwrite=true (동일 hash 재업로드 안전)
+ *   - Vercel Blob `put()` 호출 — P0-b2(2026-09-13) 이후 access private + 키는 randomUUID.
+ *     hash 는 반환값·DB imageHash 에만 쓴다(키 잠금은 regression/ocr-image-private-access).
  *   - prefix "ocr-images" (po-pdf-storage 와 분리)
  *
  * Test scope:

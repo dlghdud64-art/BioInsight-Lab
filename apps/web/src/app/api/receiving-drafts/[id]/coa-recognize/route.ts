@@ -99,13 +99,17 @@ export async function POST(
     );
 
     // P3 — 원본 병기용 이미지(조회만). bbox 는 Gemini 가 안 주므로 안 지어낸다(null 유지).
+    /* 🛑 §quote-scan-public-storage P0-b2 (호영님 2026-09-13) · blob URL 을 응답에 싣지 않는다.
+     *   옛 판본은 OcrJob.imageUrl(public blob URL)을 그대로 돌려줬고, 화면이 `<img src>` 에 넣었다 →
+     *   URL 이 DOM·네트워크 탭에 노출되고 인증 없이 열렸다. 이제는 **프록시 경로**만 준다.
+     *   프록시가 조직 대조·감사 후 private blob 을 스트림한다. */
     let imageUrl: string | null = null;
     if (pipeline.jobId) {
       const job = await db.ocrJob.findUnique({
         where: { id: pipeline.jobId },
-        select: { imageUrl: true },
+        select: { id: true, imageUrl: true },
       });
-      imageUrl = job?.imageUrl ?? null;
+      imageUrl = job?.imageUrl ? `/api/ocr/jobs/${job.id}/image` : null;
     }
 
     return NextResponse.json({

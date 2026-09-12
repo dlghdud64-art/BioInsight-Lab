@@ -25,11 +25,13 @@
  * Lock:
  *   - prefix "ocr-images" (image) / "ocr-pdfs" (PDF) 분리
  *   - SHA-256(raw bytes) — image: base64 strip, PDF: buffer 직접
- *   - put({ addRandomSuffix: false, allowOverwrite: true }) — hash deterministic
+ *   - put({ addRandomSuffix: false, allowOverwrite: true }) — 키 자체가 randomUUID 라 충돌 0
+ *   - 🛑 P0-b2 (2026-09-13): access "private" + **비결정적 키**. hash 는 DB imageHash 에만 남긴다.
+ *     public 으로 되돌리거나 키에 hash 를 다시 넣지 말 것 — 파일을 가진 누구나 URL 을 재현한다.
  *   - graceful degradation — STORAGE_PROVIDER 미설정 시 throw → caller fallback
  */
 
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import type { OcrJob, OcrJobType } from "@prisma/client";
 
 // db 는 함수 내부 lazy import (sandbox vitest path alias 해석 회피).
@@ -95,8 +97,12 @@ export async function uploadOcrImage(
   const mimeMatch = input.base64.match(/^data:(image\/\w+);base64,/);
   const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
   const ext = mimeType.split("/")[1] || "jpg";
-  // multi-tenant key prefix + type + hash + ext (deterministic)
-  const key = `ocr-images/${input.organizationId}/${input.type.toLowerCase()}/${hash}.${ext}`;
+  // multi-tenant key prefix + type + randomUUID + ext
+  /* 🛑 §quote-scan-public-storage P0-b2 (호영님 2026-09-13 승인) — 키를 **비결정적**으로.
+   *   옛 키는 `…/${hash}.ext`(SHA-256) 였다. 해시는 접근 통제가 아니라 중복 제거 수단이다 —
+   *   견적서는 공급사가 여러 고객에게 보내므로 **같은 파일을 가진 누구나 URL 을 재현**할 수 있었다.
+   *   캐시 재사용은 blob 키가 아니라 DB `imageHash` 컬럼으로 찾으므로(findCachedOcrJob) 영향 0. */
+  const key = `ocr-images/${input.organizationId}/${input.type.toLowerCase()}/${randomUUID()}.${ext}`;
 
   const rawBase64 = input.base64.replace(/^data:[^;]+;base64,/, "");
   const buffer = Buffer.from(rawBase64, "base64");
@@ -107,10 +113,10 @@ export async function uploadOcrImage(
       // env: BLOB_READ_WRITE_TOKEN (Vercel 환경 자동, 또는 .env)
       const { put } = await import("@vercel/blob");
       const result = await put(key, buffer, {
-        access: "public",
+        access: "private" /* P0-b2 — 견적서 원본은 조직 내부 문서. 열람은 /api/ocr/jobs/[jobId]/image 프록시 */,
         contentType: mimeType,
-        // addRandomSuffix=false — hash 기반 deterministic key
-        // allowOverwrite=true — 동일 hash 재업로드 safe (idempotent)
+        // addRandomSuffix=false — 키가 이미 randomUUID
+        // allowOverwrite=true — 옛 판본 호환(충돌 0이라 실효 없음)
         addRandomSuffix: false,
         allowOverwrite: true,
       });
@@ -157,7 +163,7 @@ export function getOcrPdfHash(buffer: Buffer): string {
  * caller (orchestrator) 가 try/catch 로 graceful fallback.
  *
  * OcrJob.type 은 caller 가 "QUOTE" 로 set (PDF 는 quote 전용).
- * Key: ocr-pdfs/{organizationId}/{hash}.pdf
+ * Key: ocr-pdfs/{organizationId}/{randomUUID}.pdf (P0-b2 · hash 는 DB imageHash)
  */
 export async function uploadOcrPdf(
   input: UploadOcrPdfInput,
@@ -168,14 +174,14 @@ export async function uploadOcrPdf(
   }
 
   const hash = getOcrPdfHash(input.buffer);
-  // multi-tenant key prefix + hash + .pdf ext (deterministic)
-  const key = `ocr-pdfs/${input.organizationId}/${hash}.pdf`;
+  // multi-tenant key prefix + randomUUID + .pdf ext
+  const key = `ocr-pdfs/${input.organizationId}/${randomUUID()}.pdf`; // P0-b2 — 비결정적(위와 같은 이유)
 
   switch (provider) {
     case "vercel-blob": {
       const { put } = await import("@vercel/blob");
       const result = await put(key, input.buffer, {
-        access: "public",
+        access: "private" /* P0-b2 — 견적서 원본은 조직 내부 문서. 열람은 /api/ocr/jobs/[jobId]/image 프록시 */,
         contentType: "application/pdf",
         // addRandomSuffix=false + allowOverwrite=true — image 패턴 정합
         addRandomSuffix: false,

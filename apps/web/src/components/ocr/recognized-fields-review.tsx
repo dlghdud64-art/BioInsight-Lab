@@ -175,7 +175,7 @@ export function RecognizedFieldsReview({
   /** 대상 라인 후보 + 대조 결과 — 자동 선택 0 (단일 라인만 기본 선택) */
   lines: RecognizedLineOption[];
   busy?: boolean;
-  /** 원본 병기 — OcrJob.imageUrl (없으면 미노출) */
+  /** 원본 병기 — 프록시 경로 /api/ocr/jobs/[jobId]/image (P0-b2 · blob URL 금지 · 없으면 미노출) */
   imageUrl?: string | null;
   /** 필드 영역 좌표 — 있을 때만 하이라이트(지어내기 0) */
   bbox?: RecognizedBbox | null;
