@@ -18,8 +18,26 @@
 #   §11.45  check-no-inline-hex-bg.sh 작성   §11.49  pre-commit 배선
 #   §lint-gate-restore · §em-dash-sweep  pre-push 에 신규 파일 게이트 → §gate-to-pre-commit 로 이관
 
+# ── 0. §gate-staged-vs-worktree (호영님 2026-09-12) — **검사 전제를 강제한다.**
+#   검사기(eslint · em dash · hex)는 워킹트리 파일을 읽는다. 스테이징 후 파일을 더 고치면
+#   검사한 판본과 커밋되는 판본이 다르다 — 게이트가 있는데 통과 근거가 다른 파일이 된다.
+#   `git stash -k` 는 쓰지 않는다: 공유 워킹트리에서 남의 미커밋 변경까지 밀어낸다
+#   (실측 사고 2회 · CLAUDE.md §병렬 세션 2). `git show :<path>` 추출은 eslint 의 @/ alias 해석이 깨진다.
+#   → 검사기를 건드리지 않고 전제를 강제한다: 검사 대상에 한해 스테이징 = 워킹트리.
+#   🛑 훅이 스테이징을 자동으로 고치지 않는다 — 일부만 의도적으로 스테이징했을 수 있다. 사람이 정한다.
+gate_targets=$(git diff --cached --name-only --diff-filter=ACMRTUXB -- apps/web/src | grep -E '[.](ts|tsx)$' || true)
+if [ -n "$gate_targets" ]; then
+  drift=$(echo "$gate_targets" | xargs git diff --name-only -- 2>/dev/null || true)
+  if [ -n "$drift" ]; then
+    echo "🛑 스테이징 후 수정된 검사 대상 파일이 있습니다 · 검사 판본과 커밋 판본이 다릅니다:"
+    echo "$drift" | sed 's/^/     /'
+    echo "   git add 후 다시 커밋하십시오."
+    exit 1
+  fi
+fi
+
 # ── 1. 신규 추가 파일: eslint + em dash 구분자 (스테이징 기준) ──
-#   ⚠️ 검사기는 워킹트리 파일을 읽는다. 스테이징 후 파일을 더 고치면 그 판본을 본다(한계).
+#   위 0번이 스테이징 = 워킹트리를 보장하므로, 검사기가 워킹트리를 읽어도 판본이 같다(옛 한계 닫힘).
 added=$(git diff --cached --name-only --diff-filter=A -- apps/web/src \
           | grep -E '\.(ts|tsx)$' || true)
 if [ -n "$added" ]; then
