@@ -16,7 +16,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const REPO_ROOT_WEB = join(__dirname, "..", "..", "..", "..");
-const REPO_ROOT = join(__dirname, "..", "..", "..", "..", "..");
+// 🔴 2026-09-13 교정 — 한 단계 모자라 apps/ 에서 멈췄다(apps/apps/mobile/... ENOENT · 원장 C 분류). 6단계 = 레포 루트.
+const REPO_ROOT = join(__dirname, "..", "..", "..", "..", "..", "..");
 const COMPONENT = "src/components/orders/order-tracking-section.tsx";
 const MOBILE_TYPES = "apps/mobile/types/index.ts";
 
