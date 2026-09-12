@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolveNotesUpdate } from "@/lib/inventory/notes-update";
+import { resolveNumericUpdate } from "@/lib/inventory/numeric-field-update";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
@@ -136,6 +137,7 @@ export async function PATCH(
       expiryDate,
       date,
       minOrderQty,
+      safetyStock, // §inventory-edit-blank-fields — 옛 판본은 이 키를 **꺼내지도 않았다**(편집 통째 무시).
       autoReorderEnabled,
       autoReorderThreshold,
       lotNumber,
@@ -203,14 +205,23 @@ export async function PATCH(
       updateData.expiryDate = expiryDate ? new Date(expiryDate) : null;
     }
 
-    if (minOrderQty !== undefined) {
-      const parsedMinOrderQty = typeof minOrderQty === 'string'
-        ? Number(minOrderQty.replace(/,/g, ''))
-        : Number(minOrderQty);
-      if (isNaN(parsedMinOrderQty)) {
+    /* §inventory-edit-blank-fields (호영님 2026-09-12) — "안 넘김" 과 "비움" 을 가른다.
+     *   옛 판본은 `Number("")` = 0 이라 **빈 값이 0 으로 저장**됐다. 안전재고 0 은 미설정이 아니라
+     *   "0개까지 괜찮다" 이고, 알림 조건이 safetyStock > 0 이라 경고가 영영 안 뜬다. */
+    const resolvedMinOrderQty = resolveNumericUpdate(minOrderQty);
+    if (resolvedMinOrderQty !== undefined) {
+      if (resolvedMinOrderQty !== null && Number.isNaN(resolvedMinOrderQty)) {
         return NextResponse.json({ error: "Invalid minOrderQty value" }, { status: 400 });
       }
-      updateData.minOrderQty = parsedMinOrderQty;
+      updateData.minOrderQty = resolvedMinOrderQty;
+    }
+
+    const resolvedSafetyStock = resolveNumericUpdate(safetyStock);
+    if (resolvedSafetyStock !== undefined) {
+      if (resolvedSafetyStock !== null && Number.isNaN(resolvedSafetyStock)) {
+        return NextResponse.json({ error: "Invalid safetyStock value" }, { status: 400 });
+      }
+      updateData.safetyStock = resolvedSafetyStock;
     }
 
     if (autoReorderEnabled !== undefined) {

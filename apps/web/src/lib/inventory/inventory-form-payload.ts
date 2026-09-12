@@ -43,10 +43,13 @@ export function buildInventoryFormPayload(s: InventoryFormState) {
     }),
     currentQuantity: parseFloat(s.currentQuantity) || 0,
     unit: s.unit,
-    safetyStock: s.safetyStock ? parseFloat(s.safetyStock) : undefined,
-    minOrderQty: s.minOrderQty ? parseFloat(s.minOrderQty) : undefined,
+    /* §inventory-edit-blank-fields — 비움을 **null 로 명시 전송**한다. 옛 `? : undefined` 는
+     *   키를 통째로 떨궈 "안 넘김" 이 됐고, 서버는 기존 값을 유지했다(비울 방법이 없었다). */
+    safetyStock: s.safetyStock.trim() === "" ? null : parseFloat(s.safetyStock),
+    minOrderQty: s.minOrderQty.trim() === "" ? null : parseFloat(s.minOrderQty),
     location: s.location, // 비움 = "" 를 그대로 싣는다(서버가 null 로 저장)
-    expiryDate: s.expiryDate ? s.expiryDate.toISOString().split("T")[0] : undefined,
+    // §inventory-edit-blank-fields — 유효기간도 같은 형태였다(비우면 키 소실 → 유지).
+    expiryDate: s.expiryDate ? s.expiryDate.toISOString().split("T")[0] : null,
     notes: s.notes, // 옛 `|| undefined` 가 비움을 키째 떨궜다(prod 94eb07ce 실측)
     lotNumber: s.lotNumber.trim(),
     storageCondition: s.storageCondition || undefined,
@@ -61,9 +64,9 @@ export interface InventoryPatchSource {
   currentQuantity: number;
   location?: string;
   notes?: string;
-  expiryDate?: string;
-  minOrderQty?: number;
-  safetyStock?: number;
+  expiryDate?: string | null;
+  minOrderQty?: number | null;
+  safetyStock?: number | null;
   lotNumber?: string;
   storageCondition?: string;
   testPurpose?: string;
@@ -77,9 +80,10 @@ export function buildInventoryPatchBody(p: InventoryPatchSource) {
     quantity: p.currentQuantity,
     location: p.location ?? undefined,
     notes: p.notes ?? undefined,
-    expiryDate: p.expiryDate ?? undefined,
-    minOrderQty: p.minOrderQty ?? undefined,
-    safetyStock: p.safetyStock ?? undefined,
+    // §inventory-edit-blank-fields — `?? undefined` 는 null(비움)을 undefined(유지)로 되돌린다. 그대로 싣는다.
+    expiryDate: p.expiryDate,
+    minOrderQty: p.minOrderQty,
+    safetyStock: p.safetyStock,
     lotNumber: p.lotNumber ?? undefined,
     storageCondition: p.storageCondition ?? undefined,
     testPurpose: p.testPurpose ?? undefined,
