@@ -1,34 +1,36 @@
 /**
- * §money-path-coverage-restore 축 2 — 예산 차감 정합 (동적 행동 검증).
+ * §money-path-coverage-restore 축 2 — 발주 예산 정합 (동적 행동 검증).
  *
- * POST /api/orders 의 예산 차감 경로는 이 파일 이전까지 런타임 커버리지 0 이었다.
- * (api/orders/ 아래 기존 9개는 PDF·이메일·PATCH·dispatch 이고 order-id-patch 는
- *  readFileSync 정적 sentinel. bulk-po route.test [8] 은 $transaction 을 하드코딩
- *  배열로 스텁해 콜백이 실행되지 않는다.) 이 파일은 $transaction 콜백을 실제
- *  실행시켜 mutation 호출을 관측한다.
+ * 🔴 2026-09-13 승계 — **명제는 그대로, 대상만 예약 축으로 옮긴다.**
+ *   명제: "발주 1건당 예산이 한 번만 잡히고, 장부 금액이 그 값과 일치한다."
+ *   2026-08-22 판정(⑪ · PLAN_order-budget-reservation P3)으로 canonical 이 바뀌었다:
+ *     UserBudget.usedAmount 차감  →  Budget + BudgetEvent(ORDER_RESERVED) **예약**
+ *   이 파일은 옛 축(userBudget mock)을 그대로 두고 있어 그날 이후 줄곧 RED 였고,
+ *   기준선 RED 더미(§baseline-red-ledger 187건)에 묻혀 아무도 보지 않았다.
  *
- * 계약 (근거 = route 소스 인용. 구현 역산 아님):
- *   M1 대칭   — L236-237 `usedAmount {increment: totalAmount}` /
- *               `remainingAmount {decrement: totalAmount}` 가 같은 값을 쓴다.
- *               → 증가분 == 감소분.
- *   M2 단일차감 — L164-165 주석 "`order` 변수는 첫 Order … 후속 budget 차감 정합".
- *               → 발주 1회당 userBudget.update 1회, userBudgetTransaction.create
- *                 1회. vendor-split 로 Order 가 N개 생겨도 차감 횟수는 1회.
- *   M3 장부정합 — L246-247 `balanceBefore = budget.remainingAmount`,
- *               `balanceAfter = updatedBudget.remainingAmount` + L255-259.
- *               → 장부 amount == 실제 차감액, balanceAfter == balanceBefore - amount.
+ * 🛑 그 사이 **라우트 수준 예산 정합을 실행으로 지는 테스트가 0 이었다.**
+ *   budget/order-reservation.test.ts       순수 코어(잔액 판정·이벤트 산출) · DB 무접촉
+ *   budget/order-reservation-wiring.test.ts 정적 대조("코어를 소비한다" · "FOR UPDATE 로 직렬화")
+ *   → 배선이 있다는 것은 잠갔지만 **몇 번 도는지·금액이 맞는지**는 아무도 재지 않았다.
+ *   2026-08-22 ~ 2026-09-13, 약 3주간 돈 축 실행 커버리지 0.
  *
- * ⚠️ 범위 밖 (이 파일이 커버하지 않음):
- *   차감액 `totalAmount` 의 **출처**. L131 은 quote 기준(`quote.totalAmount ||
- *   Σ quote.items.lineTotal`)이고 L166-184 는 candidate 기준으로 Order 를 만든다.
+ * 계약 (근거 = route 소스 인용. 구현 역산 아님)
+ *   M1  예약액   — L315-325 buildReservationEvent(...) → tx.budgetEvent.create.
+ *                 기록 amount == 요청 총액(quote 기준 totalAmount).
+ *   M1b 잔액식   — L198-230 amount − 확정지출(PurchaseRecord) − 활성예약(BudgetEvent).
+ *                 활성 예약이 잔액을 갉으면 새 예약을 만들지 않는다(이중 예약 차단).
+ *   M2a 단일예약 — legacy 경로(POCandidate 0 · Order 1) 에서 create 정확히 1회.
+ *   M2b 단일예약 — **vendor-split 로 Order 가 3개여도 예약은 1회.**
+ *                 이중 차감이 구조적으로 가능한 유일한 자리다(발주가 공급사별로 쪼개진다).
+ *   M3  장부문법 — budgetEventKey = org:source:type:seq · eventType ORDER_RESERVED ·
+ *                 budgetId 연결 · sourceEntityId = 주문 id.
+ *
+ * ⚠️ 범위 밖: 차감액 `totalAmount` 의 **출처**(quote 기준 vs candidate 기준).
  *   두 기준을 대조하는 코드가 없다 → §budget-quote-candidate-amount-divergence.
- *   그 divergence 가 미해결이므로 "차감액 == Σ Order.totalAmount"(M4)는 여기 쓰지
- *   않는다. 쓰면 갈라진 구현 중 한쪽을 계약으로 굳히는 것이 된다.
+ *   그 divergence 가 미해결이므로 "예약액 == Σ Order.totalAmount" 는 여기 쓰지 않는다.
+ *   쓰면 갈라진 구현 중 한쪽을 계약으로 굳히는 것이 된다.
  *
  * 스코핑 규칙: **관계식은 잠그고, 값의 출처는 잠그지 않는다.**
- *   M1·M3 는 totalAmount 가 무엇이어야 하는지 말하지 않고 그 값이 어떻게
- *   전파되는지만 말한다. M2 는 횟수만 말한다. 금액 비교는 관계식 형태로만 등장.
- *
  * 라우트·서비스 소스 무접촉.
  */
 
@@ -47,6 +49,9 @@ vi.mock("@/auth");
 vi.mock("@/lib/db", () => ({
   db: {
     teamMember: { findMany: vi.fn() },
+    // resolveBudgetPurchaseScopeKeys 가 전역 db 로 읽는다(조직 예산 → workspace 1:1).
+    // 계약 밖 조회라 null. 있으면 그 id 가 확정지출 scopeKey 후보에 더해질 뿐이다.
+    workspace: { findUnique: vi.fn(async () => null) },
     $transaction: vi.fn(),
   },
 }));
@@ -86,7 +91,7 @@ vi.mock("@/lib/notifications", () => ({
   resolveOrgRecipients: vi.fn().mockResolvedValue([]),
 }));
 // vendor-split 서비스는 축 1(convert-pocandidate-to-orders.behavior)에서 별도
-// 검증됨. 여기서는 "Order N개가 생겨도 차감은 1회"(M2)만 보므로 결과만 주입.
+// 검증됨. 여기서는 "Order N개가 생겨도 예약은 1회"(M2)만 보므로 결과만 주입.
 vi.mock("@/lib/orders/convert-pocandidate-to-orders", () => ({
   convertPOCandidatesToOrders: vi.fn(),
 }));
@@ -95,9 +100,11 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { convertPOCandidatesToOrders } from "@/lib/orders/convert-pocandidate-to-orders";
 import { POST } from "@/app/api/orders/route";
+import { ORDER_RESERVED } from "@/lib/budget/order-reservation";
 
 const mockDb = db as unknown as {
   teamMember: { findMany: ReturnType<typeof vi.fn> };
+  workspace: { findUnique: ReturnType<typeof vi.fn> };
   $transaction: ReturnType<typeof vi.fn>;
 };
 const mockAuth = auth as unknown as ReturnType<typeof vi.fn>;
@@ -106,23 +113,29 @@ const mockConvert = convertPOCandidatesToOrders as unknown as ReturnType<typeof 
 const OWNER_ID = "user-owner";
 const ORG_ID = "org-1";
 const BUDGET_ID = "budget-1";
-/** 차감 전 잔액. M3 의 balanceBefore 기준점. */
-const REMAINING_BEFORE = 1_000_000;
-const USED_BEFORE = 0;
+/** 예산 총액. 요청 총액(250,000)보다 크게 둬서 M1·M2 는 잔액 판정에 걸리지 않는다. */
+const BUDGET_AMOUNT = 1_000_000;
+const QUOTE_TOTAL = 250_000;
 
 /**
- * tx mock. userBudget.update 는 **받은 인자로부터** 결과를 계산한다 —
- * 상수를 반환하면 라우트의 산술이 아니라 mock 의 산술을 검증하게 된다.
+ * tx mock — 예약 축.
+ *   budget.findFirst/findUnique  잔액 기준 행
+ *   purchaseRecord.aggregate     확정 지출(창 안)
+ *   budgetEvent.findMany/create  활성 예약 조회 · 예약 기록(관측 지점)
+ * 🛑 create 결과를 상수로 만들지 않는다 — 받은 인자를 그대로 돌려줘야
+ *    라우트의 산술이 아니라 mock 의 산술을 검증하는 사고를 피한다.
  */
-function makeTx(opts: { candidates?: any[] } = {}) {
+function makeTx(opts: { candidates?: unknown[]; activeEvents?: unknown[]; spent?: number } = {}) {
   const budgetRow = {
     id: BUDGET_ID,
     name: "2026 연구비",
-    userId: OWNER_ID,
+    organizationId: ORG_ID,
+    workspaceId: null,
+    scopeKey: `org-${ORG_ID}`,
+    yearMonth: "2026-09",
+    description: null,
+    amount: BUDGET_AMOUNT,
     isActive: true,
-    totalAmount: REMAINING_BEFORE,
-    usedAmount: USED_BEFORE,
-    remainingAmount: REMAINING_BEFORE,
   };
   return {
     quote: {
@@ -132,7 +145,7 @@ function makeTx(opts: { candidates?: any[] } = {}) {
         organizationId: ORG_ID,
         title: "테스트 견적",
         status: "COMPLETED",
-        totalAmount: 250_000,
+        totalAmount: QUOTE_TOTAL,
         orders: [],
         items: [
           { productId: "p-1", name: "FBS", brand: "B", catalogNumber: "C-1",
@@ -163,20 +176,17 @@ function makeTx(opts: { candidates?: any[] } = {}) {
       })),
     },
     $executeRaw: vi.fn(async () => 1),
-    userBudget: {
+    budget: {
       findUnique: vi.fn(async () => ({ ...budgetRow })),
       findFirst: vi.fn(async () => ({ ...budgetRow })),
-      update: vi.fn(async ({ data }: any) => {
-        const inc = data.usedAmount?.increment ?? 0;
-        const dec = data.remainingAmount?.decrement ?? 0;
-        return {
-          ...budgetRow,
-          usedAmount: budgetRow.usedAmount + inc,
-          remainingAmount: budgetRow.remainingAmount - dec,
-        };
-      }),
     },
-    userBudgetTransaction: { create: vi.fn(async () => ({})) },
+    purchaseRecord: {
+      aggregate: vi.fn(async () => ({ _sum: { amount: opts.spent ?? 0 } })),
+    },
+    budgetEvent: {
+      findMany: vi.fn(async () => opts.activeEvents ?? []),
+      create: vi.fn(async ({ data }: any) => ({ id: "bev-1", ...data })),
+    },
   };
 }
 
@@ -189,91 +199,92 @@ function makeRequest(body: unknown) {
 }
 
 /** tx 를 만들고 $transaction 이 콜백을 **실제 실행**하도록 연결. */
-function wire(opts: { candidates?: any[] } = {}) {
+function wire(opts: { candidates?: unknown[]; activeEvents?: unknown[]; spent?: number } = {}) {
   const tx = makeTx(opts);
   mockDb.$transaction.mockImplementation(async (cb: any) => cb(tx));
   return tx;
 }
 
-const budgetUpdateData = (tx: ReturnType<typeof makeTx>) =>
-  tx.userBudget.update.mock.calls[0][0].data;
-const ledgerData = (tx: ReturnType<typeof makeTx>) =>
-  tx.userBudgetTransaction.create.mock.calls[0][0].data;
+const reservationData = (tx: ReturnType<typeof makeTx>) =>
+  tx.budgetEvent.create.mock.calls[0][0].data;
 
 beforeEach(() => {
   vi.clearAllMocks();
   mockAuth.mockResolvedValue({ user: { id: OWNER_ID, role: "ADMIN" } });
   mockDb.teamMember.findMany.mockResolvedValue([{ role: "ADMIN" }]);
+  mockDb.workspace.findUnique.mockResolvedValue(null);
 });
 
-describe("§money-path-coverage-restore 축2 — POST /api/orders 예산 차감 정합", () => {
-  it("M1 — usedAmount 증가분 == remainingAmount 감소분 (차감 대칭)", async () => {
-    const tx = wire();
-
-    const res = await POST(makeRequest({ quoteId: "q-1" }) as any);
-    expect(res.status ?? 200).toBe(200);
-
-    // 하네스가 실제로 트랜잭션 콜백을 실행했는지 먼저 확인 —
-    // 미실행이면 아래 관계식이 공허하게 통과한다.
-    expect(mockDb.$transaction).toHaveBeenCalledTimes(1);
-    expect(tx.userBudget.update).toHaveBeenCalled();
-
-    const data = budgetUpdateData(tx);
-    // 값의 출처는 보지 않는다. 두 방향이 같은 값인지만 본다.
-    expect(data.usedAmount.increment).toBe(data.remainingAmount.decrement);
-  });
-
-  it("M2a — legacy 경로(candidate 0, Order 1개): 차감 1회 · 장부 1회", async () => {
-    const tx = wire({ candidates: [] });
-
-    await POST(makeRequest({ quoteId: "q-1" }) as any);
-
-    expect(tx.order.create).toHaveBeenCalledTimes(1); // legacy fallback 진입 확인
-    expect(tx.userBudget.update).toHaveBeenCalledTimes(1);
-    expect(tx.userBudgetTransaction.create).toHaveBeenCalledTimes(1);
-  });
-
-  it("M2b — vendor-split(Order 3개)여도 차감은 1회 · 장부 1회", async () => {
+describe("§money-path-coverage-restore 축2 — POST /api/orders 예산 예약 정합", () => {
+  it("M2b — vendor-split(Order 3개)여도 예약은 1회 (이중 차감 차단)", async () => {
     const tx = wire({
       candidates: [
-        { id: "poc-a", vendor: "Vendor A", totalAmount: 100_000, items: [] },
-        { id: "poc-b", vendor: "Vendor B", totalAmount: 100_000, items: [] },
-        { id: "poc-c", vendor: "Vendor C", totalAmount: 100_000, items: [] },
+        { id: "cand-1", vendorId: "v-1", items: [] },
+        { id: "cand-2", vendorId: "v-2", items: [] },
+        { id: "cand-3", vendorId: "v-3", items: [] },
       ],
     });
     mockConvert.mockResolvedValue({
       created: [
-        { orderId: "order-a", orderNumber: "ORD-A", vendorId: "v-a", poCandidateId: "poc-a" },
-        { orderId: "order-b", orderNumber: "ORD-B", vendorId: "v-b", poCandidateId: "poc-b" },
-        { orderId: "order-c", orderNumber: "ORD-C", vendorId: "v-c", poCandidateId: "poc-c" },
+        { orderId: "order-v1", vendorId: "v-1" },
+        { orderId: "order-v2", vendorId: "v-2" },
+        { orderId: "order-v3", vendorId: "v-3" },
       ],
       skipped: [],
     });
 
-    await POST(makeRequest({ quoteId: "q-1" }) as any);
+    const res = await POST(makeRequest({ quoteId: "q-1" }) as any);
 
-    expect(mockConvert).toHaveBeenCalledTimes(1);
-    expect(tx.order.create).not.toHaveBeenCalled(); // legacy fallback 미진입
-    // Order 는 3개지만 차감은 1회 (L164-165 주석이 선언한 설계).
-    expect(tx.userBudget.update).toHaveBeenCalledTimes(1);
-    expect(tx.userBudgetTransaction.create).toHaveBeenCalledTimes(1);
+    expect(res.status ?? 200).toBe(200);
+    expect(tx.budgetEvent.create).toHaveBeenCalledTimes(1);
   });
 
-  it("M3 — 장부 amount == 실제 차감액, balanceAfter == balanceBefore - amount", async () => {
+  it("M2a — legacy 경로(candidate 0 · Order 1)에서도 예약 1회", async () => {
+    const tx = wire();
+
+    const res = await POST(makeRequest({ quoteId: "q-1" }) as any);
+
+    expect(res.status ?? 200).toBe(200);
+    expect(tx.budgetEvent.create).toHaveBeenCalledTimes(1);
+  });
+
+  it("M1 — 예약 amount == 요청 총액", async () => {
     const tx = wire();
 
     await POST(makeRequest({ quoteId: "q-1" }) as any);
 
-    const decrement = budgetUpdateData(tx).remainingAmount.decrement;
-    const led = ledgerData(tx);
+    expect(reservationData(tx).amount).toBe(QUOTE_TOTAL);
+  });
 
-    expect(led.type).toBe("DEBIT");
-    // 장부에 적힌 금액이 실제로 깎인 금액과 같은가 (출처는 묻지 않는다)
-    expect(led.amount).toBe(decrement);
-    // 차감 전 잔액을 읽었는가 (update 반환값이 아니라 사전 조회값)
-    expect(led.balanceBefore).toBe(REMAINING_BEFORE);
-    // 전후 정합
-    expect(led.balanceAfter).toBe(led.balanceBefore - led.amount);
-    expect(led.balanceAfter).toBe(REMAINING_BEFORE - decrement);
+  it("M1b — 활성 예약이 잔액을 갉는다 (초과면 새 예약 0회)", async () => {
+    const tx = wire({
+      activeEvents: [
+        // 🛑 상수는 소문자다(ORDER_RESERVED = "order_reserved"). 대문자로 쓰면 이 이벤트가
+        //   activeReservedAmount 에 안 잡혀 잔액이 가득 찬 것처럼 보이고, 단언이 조용히 무력해진다.
+        { eventType: ORDER_RESERVED, amount: BUDGET_AMOUNT, sourceEntityId: "ord-prev" },
+      ],
+    });
+
+    const res = await POST(makeRequest({ quoteId: "q-1" }) as any);
+
+    // 🛑 두 단언은 중복이 아니다 — 하나만 두면 조용히 무력해진다(2026-09-12 실측).
+    //   ① 만 두면: 다른 이유로 거부돼도 통과한다.
+    //   ② 만 두면: 상수 대소문자 오염(ORDER_RESERVED 를 대문자로 씀)처럼 활성 예약이
+    //      집계에 안 잡혀 예약이 **생겼는데도** create 가 0 이면 통과한다.
+    expect(res.status ?? 200).not.toBe(200); // ① 요청이 거부된다
+    expect(tx.budgetEvent.create).not.toHaveBeenCalled();
+  });
+
+  it("M3 — 장부 문법: ORDER_RESERVED · budgetId 연결 · key 는 org:source:type:seq", async () => {
+    const tx = wire();
+
+    await POST(makeRequest({ quoteId: "q-1" }) as any);
+
+    const data = reservationData(tx);
+    expect(data.eventType).toBe("order_reserved"); // 리터럴이 정본 — DB 에 저장되는 값이다
+    expect(data.eventType).toBe(ORDER_RESERVED); // 심볼 병기 — 상수가 바뀌면 여기서 갈린다
+    expect(data.budgetId).toBe(BUDGET_ID);
+    expect(String(data.budgetEventKey).split(":")).toHaveLength(4);
+    expect(String(data.budgetEventKey)).toContain("order_reserved");
   });
 });
