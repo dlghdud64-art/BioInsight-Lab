@@ -12,6 +12,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint src",
+    "red-ledger": "node scripts/red-ledger.mjs",
     "postinstall": "node scripts/dedupe-react.js && prisma generate",
     "db:generate": "prisma generate",
     "db:migrate": "tsx scripts/db-guard.ts \"prisma migrate dev\" && prisma migrate dev",
