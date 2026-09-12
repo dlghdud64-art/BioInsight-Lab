@@ -125,7 +125,7 @@ export async function PATCH(
         isOrgMember = !!membership;
       }
       if (!isOwner && !isOrgMember) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        return enforcement.reject(403, { error: "Forbidden" });
       }
     }
 
@@ -161,7 +161,7 @@ export async function PATCH(
         ? Number(quantity.replace(/,/g, ''))
         : Number(quantity);
       if (isNaN(parsedQuantity)) {
-        return NextResponse.json({ error: "Invalid quantity value" }, { status: 400 });
+        return enforcement.reject(400, { error: "Invalid quantity value" });
       }
       updateData.currentQuantity = parsedQuantity;
     }
@@ -174,10 +174,7 @@ export async function PATCH(
         await assertTrackingModeAllowed(session.user.id, trackingMode);
       } catch (e) {
         if (e instanceof TrackingModePlanError) {
-          return NextResponse.json(
-            { error: e.message, code: e.code, mode: e.mode },
-            { status: 403 },
-          );
+          return enforcement.reject(403, { error: e.message, code: e.code, mode: e.mode });
         }
         throw e;
       }
@@ -211,7 +208,7 @@ export async function PATCH(
     const resolvedMinOrderQty = resolveNumericUpdate(minOrderQty);
     if (resolvedMinOrderQty !== undefined) {
       if (resolvedMinOrderQty !== null && Number.isNaN(resolvedMinOrderQty)) {
-        return NextResponse.json({ error: "Invalid minOrderQty value" }, { status: 400 });
+        return enforcement.reject(400, { error: "Invalid minOrderQty value" });
       }
       updateData.minOrderQty = resolvedMinOrderQty;
     }
@@ -219,7 +216,7 @@ export async function PATCH(
     const resolvedSafetyStock = resolveNumericUpdate(safetyStock);
     if (resolvedSafetyStock !== undefined) {
       if (resolvedSafetyStock !== null && Number.isNaN(resolvedSafetyStock)) {
-        return NextResponse.json({ error: "Invalid safetyStock value" }, { status: 400 });
+        return enforcement.reject(400, { error: "Invalid safetyStock value" });
       }
       updateData.safetyStock = resolvedSafetyStock;
     }
@@ -233,7 +230,7 @@ export async function PATCH(
         ? Number(autoReorderThreshold.replace(/,/g, ''))
         : Number(autoReorderThreshold);
       if (isNaN(parsedThreshold)) {
-        return NextResponse.json({ error: "Invalid autoReorderThreshold value" }, { status: 400 });
+        return enforcement.reject(400, { error: "Invalid autoReorderThreshold value" });
       }
       updateData.autoReorderThreshold = parsedThreshold;
     }
@@ -440,7 +437,7 @@ export async function DELETE(
         isOrgMember = !!membership;
       }
       if (!isOwner && !isOrgMember) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        return enforcement.reject(403, { error: "Forbidden" });
       }
     }
 

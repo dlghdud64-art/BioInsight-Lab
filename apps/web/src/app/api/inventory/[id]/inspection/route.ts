@@ -107,7 +107,7 @@ export async function POST(
         isOrgMember = !!membership;
       }
       if (!isOwner && !isOrgMember) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        return enforcement.reject(403, { error: "Forbidden" });
       }
     }
 
@@ -115,11 +115,11 @@ export async function POST(
     const { result, checklist, notes } = body;
 
     if (!result || !["PASS", "CAUTION", "FAIL"].includes(result)) {
-      return NextResponse.json({ error: "Invalid result value" }, { status: 400 });
+      return enforcement.reject(400, { error: "Invalid result value" });
     }
 
     if (!checklist || typeof checklist !== "object") {
-      return NextResponse.json({ error: "Checklist is required" }, { status: 400 });
+      return enforcement.reject(400, { error: "Checklist is required" });
     }
 
     const { ipAddress, userAgent } = extractRequestMeta(request);

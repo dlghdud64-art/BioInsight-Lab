@@ -70,20 +70,17 @@ export async function POST(
           where: { userId: session.user.id, organizationId: inventory.organizationId },
         });
         if (!membership) {
-          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+          return enforcement.reject(403, { error: "Forbidden" });
         }
       } else {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        return enforcement.reject(403, { error: "Forbidden" });
       }
     }
 
     const body = await request.json();
     const validation = UseInventorySchema.safeParse(body);
     if (!validation.success) {
-      return NextResponse.json(
-        { error: "입력값 오류", details: validation.error.errors },
-        { status: 400 }
-      );
+      return enforcement.reject(400, { error: "입력값 오류", details: validation.error.errors });
     }
 
     const { quantity, unit, type, lotNumber, destination, operator, notes } = validation.data;
@@ -98,15 +95,12 @@ export async function POST(
         destination: "사용처",
       };
       const missingKo = usageGate.missing.map((k) => FIELD_LABEL_KO[k] ?? k);
-      return NextResponse.json(
-        {
+      return enforcement.reject(422, {
           error: "GMP 추적 필수 항목 누락",
           trackingMode: inventory.trackingMode,
           missing: usageGate.missing,
           message: `이 품목은 ${inventory.trackingMode} 추적 모드입니다. 필수 항목 누락: ${missingKo.join(", ")}`,
-        },
-        { status: 422 }
-      );
+        });
     }
 
     const quantityBefore = inventory.currentQuantity;

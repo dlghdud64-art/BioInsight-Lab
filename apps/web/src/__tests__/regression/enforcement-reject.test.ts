@@ -64,7 +64,7 @@ describe("§audit-reject-raw-4xx · reject() 계약", () => {
  *     미커버 파일에서 1을 더해 145 로 계획했는데, 게이트 파서는 153 을 센다.
  *     조항: **게이트 정본은 프로젝트 러너다** — 축이 다른 수치를 섞지 않는다.
  *     차이 9건의 정체는 Phase 2 부터 도메인 목록을 쓸 때 드러난다(그때 기록한다). */
-const RAW_4XX_CEILING = 153;
+const RAW_4XX_CEILING = 125; // Phase 2 inventory 28 지점 교체 · 153 → 125
 
 const SEP = String.fromCharCode(92);
 

@@ -148,7 +148,11 @@ describe("§scan-org-identity B-1 — 조직 0 은 조용히 통과하지 않는
     for (const rel of [PARSE_IMAGE, PARSE_PDF, SCAN_LABEL, OCR_CORRECT, OCR_RETRY]) {
       const src = read(rel);
       expect(src, rel).toMatch(/code: "NO_ORGANIZATION"/);
-      expect(src, rel).toMatch(/status: 422/);
+      /* 승계(§audit-reject-raw-4xx Phase 2): scan-label 의 거절이 reject(422, …) 로 바뀌었다(나머지 4곳은 raw).
+       *   🛑 단순 OR(status: 422|reject(422)로 넓히지 않는다 — 같은 파일의 **다른 422** 가 대신 매칭한다(4원칙 ④).
+       *   **분기 단위로 묶는다**: NO_ORGANIZATION 과 422 가 **같은 반환 안에** 붙어 있어야 성립한다.
+       *   raw 는 code 가 앞·status 가 뒤, reject 는 422 가 앞·code 가 뒤다. */
+      expect(src, rel).toMatch(/code: "NO_ORGANIZATION"[\s\S]{0,200}?status: 422|enforcement\.reject\(\s*422,[\s\S]{0,200}?code: "NO_ORGANIZATION"/);
     }
   });
 });

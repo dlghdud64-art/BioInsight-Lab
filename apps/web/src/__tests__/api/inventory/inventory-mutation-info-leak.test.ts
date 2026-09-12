@@ -48,7 +48,11 @@ describe("#api-inventory-mutation-info-leak — usage POST ownership", () => {
   });
 
   it("Forbidden 403 분기 추가", () => {
-    expect(usage).toMatch(/status:\s*403/);
+    /* 승계 (§audit-reject-raw-4xx Phase 2 · 2026-09-13): 옛 판본은 `status: 403` 문자열을 핀했다.
+     *   이 403 은 enforceAction 이후 핸들러 판정 거부라 `enforcement.reject(403, …)` 로 바꿨다
+     *   (거부도 감사에 남긴다 · lock 을 먼저 푼다). 원 명제("소유권 불일치 시 403")는 그대로 참이다.
+     *   🛑 OR 로 넓히지 않는다 — enforceAction 이전 구간의 `status: 403` 이 대신 매칭하면 거짓 GREEN(4원칙 ④). */
+    expect(usage).toMatch(/enforcement\.reject\(\s*403\b/);
   });
 
   it("cluster trace marker", () => {

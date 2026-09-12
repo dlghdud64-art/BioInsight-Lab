@@ -133,10 +133,7 @@ export async function POST(request: NextRequest) {
       select: { id: true, userId: true, organizationId: true, currentQuantity: true, trackingMode: true },
     });
     if (!inventory) {
-      return NextResponse.json(
-        { error: "Inventory not found" },
-        { status: 404 }
-      );
+      return enforcement.reject(404, { error: "Inventory not found" });
     }
     {
       const isOwner = inventory.userId === session.user.id;
@@ -149,21 +146,18 @@ export async function POST(request: NextRequest) {
         isOrgMember = !!membership;
       }
       if (!isOwner && !isOrgMember) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        return enforcement.reject(403, { error: "Forbidden" });
       }
     }
 
     // §inventory-phaseB P3 — legacy 경로는 lot/operator/destination 미수집 → LOT/GMP_STRICT 품목
     //   차감 차단(gating 우회·placeholder success 방지). 해당 품목은 /api/inventory/[id]/use 로 처리.
     if (inventory.trackingMode !== "QUANTITY") {
-      return NextResponse.json(
-        {
+      return enforcement.reject(422, {
           error: "추적 모드 품목은 이 경로로 차감할 수 없습니다",
           trackingMode: inventory.trackingMode,
           message: "로트·담당자·사용처 입력이 필요한 품목입니다. 사용/출고 화면에서 차감하세요.",
-        },
-        { status: 422 }
-      );
+        });
     }
 
     // 재고 사용 기록 생성

@@ -189,17 +189,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (!membership) {
-      return NextResponse.json(
-        { error: "해당 조직에 접근 권한이 없습니다." },
-        { status: 403 }
-      );
+      return enforcement.reject(403, { error: "해당 조직에 접근 권한이 없습니다." });
     }
 
     if (membership.role !== "ADMIN" && membership.role !== "OWNER") {
-      return NextResponse.json(
-        { error: "대량 재고 등록은 조직 관리자만 수행할 수 있습니다." },
-        { status: 403 }
-      );
+      return enforcement.reject(403, { error: "대량 재고 등록은 조직 관리자만 수행할 수 있습니다." });
     }
 
     // 5. 각 항목별 productId 사전 해결 (루프 - DB IO 최소화 불가 부분)
@@ -268,13 +262,10 @@ export async function POST(request: NextRequest) {
 
     // 6. 검증 오류가 하나라도 있으면 전체 중단 (트랜잭션 롤백과 동일 효과)
     if (itemErrors.length > 0) {
-      return NextResponse.json(
-        {
+      return enforcement.reject(422, {
           error: "일부 항목의 유효성 검사에 실패했습니다. 수정 후 다시 시도해 주세요.",
           details: itemErrors,
-        },
-        { status: 422 }
-      );
+        });
     }
 
     // 7. 트랜잭션으로 createMany 실행

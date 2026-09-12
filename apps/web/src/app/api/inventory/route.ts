@@ -314,10 +314,7 @@ export async function POST(request: NextRequest) {
 
     // 수기 입력 시 품목명은 필수
     if (isManual && !productName?.trim()) {
-      return NextResponse.json(
-        { error: "수기 입력 시 품목명(productName)은 필수입니다." },
-        { status: 400 }
-      );
+      return enforcement.reject(400, { error: "수기 입력 시 품목명(productName)은 필수입니다." });
     }
 
     // notes에 testPurpose 병합 (lotNumber는 전용 DB 컬럼으로 저장)
@@ -391,14 +388,11 @@ export async function POST(request: NextRequest) {
           select: { id: true },
         });
         if (!nameMatch) {
-          return NextResponse.json(
-            {
+          return enforcement.reject(422, {
               error:
                 "식별 정보(Cat.No.)가 없어 신규 품목을 등록할 수 없습니다 — Cat.No.를 입력하거나 확인 후 진행하세요.",
               code: "catalog_required",
-            },
-            { status: 422 },
-          );
+            });
         }
       }
 
@@ -466,10 +460,7 @@ export async function POST(request: NextRequest) {
 
     const product = await db.product.findUnique({ where: { id: resolvedProductId } });
     if (!product) {
-      return NextResponse.json(
-        { error: "존재하지 않는 제품입니다." },
-        { status: 404 }
-      );
+      return enforcement.reject(404, { error: "존재하지 않는 제품입니다." });
     }
 
     // 중복 재고 확인 (동일 user/org + product)
@@ -482,10 +473,7 @@ export async function POST(request: NextRequest) {
         });
 
     if (existing) {
-      return NextResponse.json(
-        { error: "이미 등록된 재고입니다. 수정 기능을 이용해 주세요." },
-        { status: 409 }
-      );
+      return enforcement.reject(409, { error: "이미 등록된 재고입니다. 수정 기능을 이용해 주세요." });
     }
 
     const inventory = await db.productInventory.create({

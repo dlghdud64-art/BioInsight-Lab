@@ -108,7 +108,7 @@ export async function POST(
     });
 
     if (!inventory) {
-      return NextResponse.json({ error: "Inventory not found" }, { status: 404 });
+      return enforcement.reject(404, { error: "Inventory not found" });
     }
 
     const isOwner = inventory.userId === session.user.id;
@@ -120,7 +120,7 @@ export async function POST(
       isOrgMember = !!membership;
     }
     if (!isOwner && !isOrgMember) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return enforcement.reject(403, { error: "Forbidden" });
     }
 
     const { ipAddress, userAgent } = extractRequestMeta(request);

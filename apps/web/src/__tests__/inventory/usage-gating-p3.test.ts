@@ -28,7 +28,8 @@ describe("§inventory-phaseB P3 — [id]/use canonical 게이팅", () => {
   it("GMP 누락 시 422 거부(placeholder success 0) + missing 노출", () => {
     expect(USE_ROUTE).toMatch(/if \(!usageGate\.ok\)/);
     expect(USE_ROUTE).toMatch(/missing: usageGate\.missing/);
-    expect(USE_ROUTE).toMatch(/status: 422/);
+    // 승계(§audit-reject-raw-4xx Phase 2): 422 게이팅은 enforceAction 이후 판정 → reject(422, …). 명제 참 · OR 금지(대체 매칭).
+    expect(USE_ROUTE).toMatch(/enforcement\.reject\(\s*422\b/);
   });
   it("게이팅이 트랜잭션 전(차감 발생 전) 위치", () => {
     const gateIdx = USE_ROUTE.indexOf("validateUsageForTrackingMode(inventory.trackingMode");
@@ -47,6 +48,7 @@ describe("§inventory-phaseB P3 — legacy /usage 우회 차단", () => {
   });
   it("비-QUANTITY 차감 차단(422 — lot/operator/destination 미수집 경로)", () => {
     expect(LEGACY_ROUTE).toMatch(/inventory\.trackingMode !== "QUANTITY"/);
-    expect(LEGACY_ROUTE).toMatch(/status: 422/);
+    // 승계(§audit-reject-raw-4xx Phase 2): 422 게이팅은 enforceAction 이후 판정 → reject(422, …). 명제 참 · OR 금지(대체 매칭).
+    expect(LEGACY_ROUTE).toMatch(/enforcement\.reject\(\s*422\b/);
   });
 });

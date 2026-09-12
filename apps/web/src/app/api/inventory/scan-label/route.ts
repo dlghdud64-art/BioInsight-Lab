@@ -96,10 +96,7 @@ export async function POST(req: NextRequest) {
     const { text, imageBase64, gs1Raw } = body as { text?: string; imageBase64?: string; gs1Raw?: string };
 
     if (!text && !imageBase64) {
-      return NextResponse.json(
-        { error: "텍스트 또는 이미지 데이터가 필요합니다" },
-        { status: 400 }
-      );
+      return enforcement.reject(400, { error: "텍스트 또는 이미지 데이터가 필요합니다" });
     }
 
     // ── 파싱 단계 ──
@@ -123,13 +120,10 @@ export async function POST(req: NextRequest) {
     //   🛑 여기서 다시 resolve 하지 않는다 — 위(:56)에서 이미 해석한 activeOrganizationId 를 쓴다.
     //      두 번 부르면 한도는 A 조직으로 재고 기록은 B 조직에 남는 분기가 생긴다.
     if (!activeOrganizationId) {
-      return NextResponse.json(
-        {
+      return enforcement.reject(422, {
           error: "소속 조직이 없어 스캔 기록을 남길 수 없습니다 · 조직에 참여한 뒤 다시 시도하세요.",
           code: "NO_ORGANIZATION",
-        },
-        { status: 422 },
-      );
+        });
     }
 
     if (imageBase64) {

@@ -31,7 +31,9 @@ describe("§inventory-phaseB P4 — end-to-end 체인 정합", () => {
   });
   it("P3-server 차감 422 게이팅", () => {
     expect(USE_ROUTE).toMatch(/validateUsageForTrackingMode\(inventory\.trackingMode/);
-    expect(USE_ROUTE).toMatch(/status: 422/);
+    /* 승계 (§audit-reject-raw-4xx Phase 2): 422 게이팅은 enforceAction 이후 판정이라 reject(422, …) 로 바꿨다.
+     *   명제("trackingMode 검증 실패 시 422")는 참. OR 로 넓히지 않는다(대체 매칭 방지). */
+    expect(USE_ROUTE).toMatch(/enforcement\.reject\(\s*422\b/);
   });
   it("P3-UI-a 차감 3 라이브 surface GMP 필드", () => {
     expect(SCAN).toMatch(/trackingMode !== "QUANTITY" && \(/);
