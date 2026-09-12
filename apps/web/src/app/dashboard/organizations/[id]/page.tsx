@@ -76,12 +76,16 @@ import { countOrgApprovers, isOrgApprover } from "@/lib/permissions/org-approver
 // 역할 라벨 매핑
 // §org-management-web P4b — 역할 색 점. 드롭다운 트리거와 읽기 전용 표기가 같은 색을 쓴다.
 // §mobile-residual-5 1e — 역할 색 점 = 전역 드롭다운 토큰(조회자 slate · 요청자 블루 · 승인자 퍼플 ·
-//   관리자 앰버). 멤버 목록 점과 초대 역할 패널이 같은 토큰을 쓴다(한 화면 두 팔레트 0).
+//   관리자 **먹색 slate-900**). 멤버 목록 점과 초대 역할 패널이 같은 토큰을 쓴다(한 화면 두 팔레트 0).
+// 🔴 2026-09-12 복원 — 관리자 점을 #b45309(amber-700)로 둔 것은 amber 금지 조항 위반이었다.
+//   8/21 호영님이 #b45309 를 거부하고 slate-900 으로 정한 것을 6cfe5ca5 가 시안 토큰으로 되돌렸고,
+//   9/08 smoke 에서 '시안값과 일치' 만 보고 통과시켰다(조항 대조 누락). amber-token-ratchet 이 4일간 RED 였다.
+//   🛑 시안이 조항 위에 있지 않다 — 시안과 조항이 충돌하면 조항이 이기거나 호영님께 올린다.
 const ROLE_DOT: Record<string, string> = {
   VIEWER: "bg-[#94a3b8]",
   REQUESTER: "bg-[#2563eb]",
   APPROVER: "bg-[#7c3aed]",
-  ADMIN: "bg-[#b45309]",
+  ADMIN: "bg-slate-900",
   OWNER: "bg-slate-900",
   MEMBER: "bg-[#94a3b8]",
 };

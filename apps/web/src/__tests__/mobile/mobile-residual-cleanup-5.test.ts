@@ -12,6 +12,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
+import { stripComments } from "../_helpers/em-dash-scan";
 import {
   formatPeriodRow,
   periodDayCount,
@@ -185,8 +186,13 @@ describe("1e — 멤버 초대 역할 = 인라인 listbox (포털 0)", () => {
     expect(block).toMatch(/INVITE_ROLE_OPTIONS/);
     expect(src).toMatch(/조직 설정·멤버 관리/); // ADMIN 설명
     expect(src).toMatch(/요청 승인·반려/);
-    // 역할 색 점 — 승인자 퍼플 · 관리자 앰버 (전역 드롭다운 토큰)
+    // 역할 색 점 — 승인자 퍼플 · 관리자 먹색 (전역 드롭다운 토큰)
+    // 🔴 2026-09-12 승계: 관리자 앰버(#b45309) 핀을 slate-900 으로 되돌렸다.
+    //   그 핀은 amber 금지 조항 위반을 sentinel 이 **요구**하던 형태다 (amber-token-ratchet 4일 RED).
+    //   8/21 호영님 결정(먹색)이 정본이고, 9/08 '시안값 일치' 판정은 조항 대조 누락이었다.
     expect(src).toMatch(/APPROVER: "bg-\[#7c3aed\]"/);
-    expect(src).toMatch(/ADMIN: "bg-\[#b45309\]"/);
+    expect(src).toMatch(/ADMIN: "bg-slate-900"/);
+    // 🛑 주석 제거본에 건다 - 위 이력 주석의 #b45309 가 매칭되면 구현자가 주석을 지워 통과한다
+    expect(stripComments(src)).not.toMatch(/#b45309/);
   });
 });
