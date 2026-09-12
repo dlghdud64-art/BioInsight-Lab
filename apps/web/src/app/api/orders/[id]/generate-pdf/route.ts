@@ -121,14 +121,17 @@ export async function POST(
           ? `po-pdfs/${order.organizationId}`
           : "po-pdfs",
       });
-      storedUrl = uploadResult.url;
+      /* 🛑 §quote-scan-public-storage P0-b1 — 저장하는 값은 **storage key** 다(원본 URL 아님).
+       *   업로드가 private 이라 URL 을 그대로 열 수 없다. 열람은 /api/orders/[id]/po-document 가
+       *   인증·조직 대조·enforceAction 을 거쳐 스트림으로 전달한다. */
+      storedUrl = uploadResult.pathname;
       storageProvider = uploadResult.provider;
       // db update — best effort. 실패 시 mutation 영향 0.
       await db.order
         .update({
           where: { id: order.id },
           data: {
-            poDocumentUrl: uploadResult.url,
+            poDocumentUrl: uploadResult.pathname, // storage key · 컬럼명은 레거시(URL 아님)
             poDocumentGeneratedAt: new Date(),
           },
         })

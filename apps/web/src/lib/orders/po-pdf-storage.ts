@@ -35,6 +35,8 @@ export class StorageNotConfiguredError extends Error {
   }
 }
 
+import { randomUUID } from "node:crypto";
+
 export interface UploadPoPdfInput {
   /** PDF binary content. */
   buffer: Buffer;
@@ -45,8 +47,10 @@ export interface UploadPoPdfInput {
 }
 
 export interface UploadPoPdfResult {
-  /** storage 가 반환한 public/signed URL — Order.poDocumentUrl 에 저장. */
+  /** storage 원본 URL. 🛑 private 이라 이 URL 을 그대로 열 수 없다 — 프록시 라우트를 쓴다. */
   url: string;
+  /** storage object key. **이 값이 Order.poDocumentUrl 에 저장된다**(프록시가 get() 에 쓴다). */
+  pathname: string;
   /** storage provider name (audit metadata 용). */
   provider: string;
 }
@@ -62,7 +66,11 @@ export async function uploadPoPdf(
 ): Promise<UploadPoPdfResult> {
   const provider = process.env.STORAGE_PROVIDER ?? "";
   const prefix = input.prefix ?? "po-pdfs";
-  const key = `${prefix}/${input.filename}`;
+  /* 🛑 §quote-scan-public-storage P0-b1 (호영님 2026-09-12) — 키를 **비결정적**으로.
+   *   옛 키는 `${prefix}/${orderNumber}.pdf` 였다. 발주번호는 비밀이 아니다 —
+   *   화면·이메일·PDF 본문에 찍히고 공급사에게도 보낸다. 그 값으로 URL 을 조립할 수 있었다.
+   *   private 전환과 **두 겹**이어야 한다: 나중에 누가 access 를 되돌려도 키로는 못 찾는다. */
+  const key = `${prefix}/${randomUUID()}-${input.filename}`;
 
   if (!provider) {
     throw new StorageNotConfiguredError();
@@ -78,14 +86,16 @@ export async function uploadPoPdf(
       // env: `BLOB_READ_WRITE_TOKEN` (Vercel 환경 자동, 또는 .env).
       const { put } = await import("@vercel/blob");
       const result = await put(key, input.buffer, {
-        access: "public",
+        // 🛑 private — 발주서는 조직 내부 문서다. 열람은 /api/orders/[id]/po-document 프록시가
+        //   인증·조직 대조·enforceAction 을 거친 뒤 스트림으로 전달한다(서명 URL 을 쓰지 않는다:
+        //   외부 공유 요구가 없고, 서명 URL 은 발급만 남고 **열람이 감사에 안 남는다**).
+        access: "private",
         contentType: "application/pdf",
-        // addRandomSuffix=false — orderNumber 기반 deterministic key,
-        // 동일 Order 재생성 시 덮어쓰기 (overwrite=true 명시).
+        // 키가 이미 UUID 라 접미사 불필요. 같은 키 재사용이 없으므로 덮어쓰기도 필요 없다.
         addRandomSuffix: false,
         allowOverwrite: true,
       });
-      return { url: result.url, provider };
+      return { url: result.url, pathname: key, provider };
     }
     case "supabase": {
       // host install: `@supabase/supabase-js`

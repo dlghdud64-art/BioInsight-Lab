@@ -1,6 +1,12 @@
 /**
  * §inbound-rfq-autocapture P2 — 공급사 회신 첨부 실저장(누락 0)
  *
+ * 🛑 access: "private" — 공급사 회신 첨부는 **거래 조건 문서**다(견적 PDF · 단가).
+ *   읽는 화면을 만들 때 `public` 으로 되돌리지 말 것. 안 열린다고 되돌리면 그 순간
+ *   URL 을 아는 누구나 열 수 있다(§quote-scan-public-storage P0 · 2026-09-12).
+ *   대신 인증·권한을 거치는 **프록시 라우트**를 쓴다 — `/api/orders/[id]/po-document` 와 같은 형태:
+ *     인증 → 조직 대조 → enforceAction(열람도 감사) → get(path, { access: "private" }) 스트림 전달.
+ *
  * inbound parse(/api/inbound/sendgrid/[secret])가 받은 첨부(견적 PDF 등)를 실제
  * object storage 에 업로드한다. 이전 inbound route 의 메타-only placeholder
  * (uploadAttachment "skip actual upload") 를 대체 — placeholder success 금지.
@@ -69,8 +75,12 @@ export async function uploadQuoteReplyAttachment(
     case "vercel-blob": {
       // host install: @vercel/blob (설치됨). env BLOB_READ_WRITE_TOKEN.
       const { put } = await import("@vercel/blob");
+      /* 🛑 §quote-scan-public-storage P0-b1 (호영님 2026-09-12 승인) — public → **private**.
+       *   공급사 회신 첨부는 견적 PDF 다(단가·거래 조건). public 이면 URL 을 아는 누구나 연다.
+       *   prod 실측 2026-09-12: QuoteReplyAttachment 0행 · 읽는 화면 0 → 깨질 소비처가 없다.
+       *   저장은 path 를 쓰고(QuoteReplyAttachment.path), 열람이 필요해지면 그때 인증 경로를 만든다. */
       const result = await put(key, input.buffer, {
-        access: "public",
+        access: "private",
         contentType: input.contentType,
         addRandomSuffix: false,
         allowOverwrite: true,

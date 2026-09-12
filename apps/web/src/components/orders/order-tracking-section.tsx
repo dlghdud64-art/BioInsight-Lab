@@ -284,11 +284,12 @@ export function OrderTrackingSection({ orderId }: Props) {
             variant="outline"
             onClick={() => {
               // #post-approval-purchase-order-flow Phase 2.3 step 4 —
-              // poDocumentUrl 있으면 storage URL 직접 다운로드 (재생성 0).
-              // 없으면 generate-pdf mutation fallback (PDF 생성 + storage
-              // upload + db update + stream).
+              // 문서가 있으면 열고, 없으면 generate-pdf mutation fallback (생성 + 저장 + stream).
+              /* 🛑 §quote-scan-public-storage P0-b1 (2026-09-12) — storage URL 을 직접 열지 않는다.
+               *   업로드가 private 이 됐고, poDocumentUrl 에는 storage key 가 들어 있다.
+               *   프록시 라우트가 인증·조직 대조·enforceAction(열람 감사)을 거쳐 스트림을 준다. */
               if (order.poDocumentUrl) {
-                window.open(order.poDocumentUrl, "_blank", "noopener");
+                window.open(`/api/orders/${order.id}/po-document`, "_blank", "noopener");
               } else {
                 pdfMutation.mutate();
               }
