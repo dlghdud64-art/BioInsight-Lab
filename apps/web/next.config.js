@@ -64,6 +64,12 @@ const nextConfig = {
   // 막을 경우 source 수정으로 해결 (release-prep batches 패턴 정합).
   typescript: {
     ignoreBuildErrors: false,
+    // §tsconfig-dist-glob P1 (2026-09-12) — 세션별 tsconfig.
+    //   env 미설정이면 Next 기본값('tsconfig.json')과 같은 값이라 기존 동작 그대로다.
+    //   설정하면 Next 가 그 파일만 읽고 고쳐 쓰므로 ① 추적 tsconfig 드리프트가 멈추고
+    //   ② include 가 자기 dist 만 가리켜 남의 세션 dist 옛 라우트 타입을 안 본다.
+    //   파일은 scripts/ensure-session-tsconfig.js 가 만든다(gitignore 산출물).
+    tsconfigPath: process.env.NEXT_TSCONFIG || 'tsconfig.json',
   },
 
   // 압축 설정

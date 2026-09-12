@@ -62,3 +62,6 @@ tailwindcss.exe.exe
 tailwindcss.exe.exe
 
 .vercel
+
+# §tsconfig-dist-glob P1 — 세션별 tsconfig(Next 가 고쳐 쓰는 산출물)
+/tsconfig.next-*.json
