@@ -14,7 +14,6 @@
 import {
   resolveCsrfConfig,
   getRegistryEntries,
-  getRegistryStats,
 } from '../csrf-route-registry';
 
 // ── Contract ──
@@ -63,21 +62,30 @@ describe('csrf-route-registry', () => {
       expect(config.exemptReason).toBeDefined();
     });
 
-    it('exempt 수는 정확히 9개여야 함', () => {
-      const stats = getRegistryStats();
-      expect(stats.exempt).toBe(9);
-    });
-
-    it('exempt reason 분류가 올바름', () => {
-      const stats = getRegistryStats();
-      // §11.90 — public_token_auth 2 → 1 (invite/[token] 제거)
-      expect(stats.exemptReasons).toEqual({
-        framework_csrf_builtin: 1,
-        webhook_signature: 2,
-        public_token_auth: 2,
-        bearer_token_auth: 2,
-        vendor_token_auth: 2,
-      });
+    /*
+     * §baseline-red-ledger 파일럿 (2026-09-12) — 개수·분류 맵 핀을 **집합 핀**으로 바꾼다.
+     *   개수는 명제가 아니다. 실측: exempt 는 9로 같은데 구성이 달랐다 —
+     *   send-link 제거(-1)와 pricing-assistant 추가(+1)가 상쇄돼 개수 단언이 **우연히 GREEN**이었다.
+     *   집합을 리터럴로 고정하면 무엇이 늘고 줄었는지가 diff 에서 바로 읽힌다.
+     * 🔑 목록을 고칠 때는 **그 변경을 만든 커밋**을 같은 줄에 남긴다. 근거 없는 갱신 금지.
+     */
+    it('exempt 집합(패턴 · 사유)이 정확히 이 목록이다', () => {
+      const exempt = getRegistryEntries()
+        .filter((e) => e.config.protection === 'exempt')
+        .map((e) => `${e.pattern} :: ${e.config.exemptReason}`)
+        .sort();
+      expect(exempt).toEqual([
+        '/api/auth/[...nextauth] :: framework_csrf_builtin',
+        '/api/billing/webhook :: webhook_signature',
+        '/api/inbound/sendgrid/[secret] :: webhook_signature',
+        '/api/mobile/auth/refresh :: bearer_token_auth',
+        '/api/mobile/auth/signin :: bearer_token_auth',
+        '/api/pricing-assistant :: public_stateless_llm',   // 9053f580 (2026-06-28) 추가
+        '/api/receiving/[token]/response :: public_token_auth',  // 0e71cd6c (2026-06-03) 추가
+        '/api/vendor-requests/[token]/response :: public_token_auth',
+        '/api/vendor/quotes/[quoteId]/response :: vendor_token_auth',
+        // 제거됨: '/api/invite/[token]' f87aa9a2(§11.90) · '/api/vendor/auth/send-link' 3a4b7700
+      ]);
     });
   });
 
@@ -102,9 +110,29 @@ describe('csrf-route-registry', () => {
       expect(config.highRisk).toBe(true);
     });
 
-    it('highRisk 수는 17개', () => {
-      const stats = getRegistryStats();
-      expect(stats.highRisk).toBe(17);
+    it('highRisk 집합이 정확히 이 목록이다', () => {
+      const high = getRegistryEntries()
+        .filter((e) => e.config.highRisk)
+        .map((e) => e.pattern)
+        .sort();
+      expect(high).toEqual([
+        '/api/admin/orders/[id]/status',
+        '/api/billing/payment-methods',
+        '/api/budgets/[id]',
+        '/api/inventory/[id]',
+        '/api/inventory/import/commit',
+        '/api/organizations/[id]',
+        '/api/organizations/[id]/members',
+        '/api/purchases/import/commit',
+        '/api/quote-items/[id]',
+        '/api/quotes/[id]',
+        '/api/quotes/[id]/status',
+        '/api/quotes/generate-english',
+        '/api/request/[id]/approve',
+        '/api/reviews/[id]',
+        '/api/team/[id]/members',
+        // 제거됨: '/api/compliance-links/[id]' ab1881bf(2026-08-12) · '/api/templates/[id]' 22fa9ddd(2026-09-11)
+      ]);
     });
   });
 
