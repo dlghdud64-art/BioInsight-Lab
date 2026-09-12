@@ -30,7 +30,8 @@
 enforceAction 보유 핸들러                     159
 (a) 쓰기 없음 · complete 없음                  27   정상(AI 추출·파싱·번역 등)
 (b) 쓰기인데 complete 누락                      0   결함 없음
-(c) enforceAction 이후 raw 4xx                144 지점 / 57 핸들러 / 20 도메인  ← 이 계획의 대상
+(c) enforceAction 이후 raw 4xx                145 지점 / 58 핸들러 / 20 도메인  ← 이 계획의 대상
+     (파서 144 + 미커버 파일에서 수동 발견 1 · vendor-requests 429)
      enforceAction 이전 4xx                  206 지점  ← 대상 **밖**(handle 없음)
 파서 커버리지                                 142/144 파일 (놓침 2)
 ```
@@ -62,13 +63,13 @@ enforceAction 보유 핸들러                     159
 ## 3. Overview
 
 **Feature Description:**
-`enforceAction` 이 handle 을 연 뒤 4xx 로 조기 반환하는 자리가 144 지점 있다. 그 경로는 `fail()` 도 `complete()` 도 부르지 않아 **거부 시도가 감사에 남지 않는다**(부수로 lock 이 최대 5분 잔존).
+`enforceAction` 이 handle 을 연 뒤 4xx 로 조기 반환하는 자리가 145 지점 있다. 그 경로는 `fail()` 도 `complete()` 도 부르지 않아 **거부 시도가 감사에 남지 않는다**(부수로 lock 이 최대 5분 잔존).
 `enforcement.reject(status, body)` 를 도입해 **잡은 쪽이 푼다**는 원칙으로 되돌린다.
 
 **Success Criteria:**
 - [ ] `enforcement.reject()` 가 **fail() 을 먼저 부르고** 그 다음 응답을 반환한다(프록시 라우트와 같은 원칙: 내보내기 전에 기록)
 - [ ] 응답 **바이트가 동일**하다 — status·body 를 그대로 통과시키고 부작용만 추가한다
-- [ ] enforceAction 이후 raw 4xx 지점 144 → **0**
+- [ ] enforceAction 이후 raw 4xx 지점 145 → **0**
 - [ ] prod 스모크: 거부 1회 → `MutationAuditEvent` 에 **`result` 가 성공이 아닌 값**으로 남는다
 
 **Out of Scope (⚠️ 절대 구현하지 말 것):**
@@ -119,8 +120,8 @@ enforceAction 보유 핸들러                     159
 ## 7. Implementation Phases
 
 ### Phase 0: 경계 고정 & 사전 판정
-**Goal:** 대상(144)과 대상 밖(206)을 **컴파일러가 가르게** 하고, 기존 핀을 훑는다.
-- Status: [ ] Pending | [x] **In Progress** (프로브 완료 · 잔여: 미커버 2파일 · 기존 핀 목록)
+**Goal:** 대상(145)과 대상 밖(206)을 **컴파일러가 가르게** 하고, 기존 핀을 훑는다.
+- Status: [x] **Complete** (2026-09-13 · 프로브 + 미커버 분류 + 핀 목록)
 
 **🔴 RED:** enforceAction **이전** 자리에서 handle 메서드를 부르면 tsc 가 막는지 — 프로브로 실측
 **🟢 GREEN:** 실측 결과(2026-09-13):
@@ -136,8 +137,8 @@ enforceAction 보유 핸들러                     159
 **✋ Quality Gate:**
 - [x] 전역 헬퍼 형태 아님(객체 메서드) — `import { reject }` 금지
 - [x] 프로브 A/B 실측 완료 · 보증 강도 기록
-- [ ] 파서 미커버 2파일 수동 분류
-- [ ] 기존 핀 78건 경고 목록 확보
+- [x] 파서 미커버 2파일 수동 분류 — `inventory/alerts/send` 3곳 모두 fail() 선행(정상) · `quotes/[id]/vendor-requests` 429 는 **대상**(+1)
+- [x] 기존 핀 78건 경고 목록 확보 (스크래치패드 `pins-raw4xx.txt` · 사전 경고용 · 못 찾아도 게이트가 잡는다)
 **Rollback:** 계획 단계 · 코드 변경 0(프로브는 바이트 복원 확인)
 
 ### Phase 1: `reject()` 계약 + 상한 핀
@@ -148,22 +149,22 @@ enforceAction 보유 핸들러                     159
 **🟢 GREEN:** `InlineEnforcementHandle.reject(status, body)` 구현
 **🔵 REFACTOR:** `deny()` 와 역할 분리 주석(deny=권한 거부 · reject=핸들러 판단 거부)
 
-**✋ Quality Gate:** sentinel 신설(enforceAction 이후 raw 4xx ≤ **144**) · 주입 프로브 RED · tsc 0 · 전량 게이트 신규 RED 0
+**✋ Quality Gate:** sentinel 신설(enforceAction 이후 raw 4xx ≤ **145**) · 주입 프로브 RED · tsc 0 · 전량 게이트 신규 RED 0
 **Rollback:** git revert(헬퍼 + sentinel)
 
 ### Phase 2: inventory 28 지점
 **Goal:** 최다 도메인부터. 오늘 여러 번 만진 축이라 회귀가 빨리 드러난다.
 - Status: [ ] Pending
-**✋ Quality Gate:** 상한 **116** · 도메인 테스트 GREEN · 게이트 신규 RED 0
+**✋ Quality Gate:** 상한 **117** · 도메인 테스트 GREEN · 게이트 신규 RED 0
 **Rollback:** git revert(도메인 단위)
 
 ### Phase 3: organizations 24 + quotes 14
 - Status: [ ] Pending
-**✋ Quality Gate:** 상한 **78**
+**✋ Quality Gate:** 상한 **79**
 
 ### Phase 4: team 13 + budgets 12 + admin 6 + billing 6
 - Status: [ ] Pending
-**✋ Quality Gate:** 상한 **41**
+**✋ Quality Gate:** 상한 **42**
 
 ### Phase 5: 잔여 41 + 프로브 + prod 스모크
 **Goal:** 상한 0 · 실제로 남는지 확인.
@@ -200,11 +201,11 @@ enforceAction 보유 핸들러                     159
 
 ## 11. Progress Tracking
 - Overall: 0%
-- Current phase: Phase 0
+- Current phase: Phase 1 (reject() 계약 + 상한 핀 145)
 - Blocker: 없음 (P0-b2 승인이 오면 그쪽 선행)
 - Next: Phase 0 경계 고정
 
-- [ ] Phase 0  - [ ] Phase 1  - [ ] Phase 2  - [ ] Phase 3  - [ ] Phase 4  - [ ] Phase 5
+- [x] Phase 0  - [ ] Phase 1  - [ ] Phase 2  - [ ] Phase 3  - [ ] Phase 4  - [ ] Phase 5
 
 ---
 
@@ -219,3 +220,6 @@ enforceAction 보유 핸들러                     159
 - [2026-09-13] **Phase 0 프로브**: 경계 보증이 초안보다 약하다. 변수는 스코프에 **있고**(164곳이 최상단 선언),
   막는 것은 `| undefined` 타입 판정(TS18048)이다. `enforcement?.` 로는 **뚫린다** — 그래서 두 겹으로 간다.
   초안의 "스코프에 없어 컴파일이 안 된다"는 틀렸다. 프로브 없이 넘어갔으면 약한 보증을 강한 것으로 적을 뻔했다.
+- [2026-09-13] **Phase 0 완료**: 파서 미커버 2파일을 손으로 갈랐더니 1건이 실제 대상이었다
+  (`quotes/[id]/vendor-requests` 429). 대상이 144 → **145 지점 / 58 핸들러**로 늘었다.
+  커버리지 한계를 "기록만" 하고 넘겼으면 그 1건은 영원히 안 잡혔다.
