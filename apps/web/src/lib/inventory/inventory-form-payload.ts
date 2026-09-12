@@ -24,7 +24,6 @@ export interface InventoryFormState {
   expiryDate: Date | undefined;
   notes: string;
   lotNumber: string;
-  storageCondition: string;
   trackingMode: string;
   isEdit: boolean;
   editableCatNo: string;
@@ -51,7 +50,6 @@ export function buildInventoryFormPayload(s: InventoryFormState) {
     expiryDate: s.expiryDate ? s.expiryDate.toISOString().split("T")[0] : null,
     notes: s.notes, // 옛 `|| undefined` 가 비움을 키째 떨궜다(prod 94eb07ce 실측)
     lotNumber: s.lotNumber.trim(),
-    storageCondition: s.storageCondition || undefined,
     trackingMode: s.trackingMode, // §inventory-phaseB P3-UI-b — 추적 모드 저장(QUANTITY 기본).
     // §11.336 — 편집모드: 사용자가 입력/수정한 Cat.No (빈 값이면 null 로 명시 전송).
     ...(s.isEdit ? { catalogNumber: s.editableCatNo.trim() || null } : {}),
@@ -66,7 +64,6 @@ export interface InventoryPatchSource {
   minOrderQty?: number | null;
   safetyStock?: number | null;
   lotNumber?: string;
-  storageCondition?: string;
   trackingMode?: string;
   catalogNumber?: string | null;
 }
@@ -82,7 +79,6 @@ export function buildInventoryPatchBody(p: InventoryPatchSource) {
     minOrderQty: p.minOrderQty,
     safetyStock: p.safetyStock,
     lotNumber: p.lotNumber ?? undefined,
-    storageCondition: p.storageCondition ?? undefined,
     trackingMode: p.trackingMode ?? undefined, // §inventory-phaseB P3-UI-b
     // §11.336 — 편집모드 Cat.No 수동 입력 → PATCH 로 Product 마스터 반영.
     catalogNumber: p.catalogNumber,

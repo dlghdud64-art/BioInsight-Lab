@@ -41,7 +41,6 @@ interface AddInventoryModalProps {
     expiryDate?: string;
     notes?: string;
     lotNumber?: string;
-    storageCondition?: string;
     trackingMode?: string; // §inventory-phaseB P3-UI-b — 추적 모드(QUANTITY/LOT/GMP_STRICT).
     catalogNumber?: string | null; // §11.336 — 편집모드 Cat.No 수동 입력(Product 마스터 반영).
   }) => void;
@@ -72,7 +71,6 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
   const [lotNumber, setLotNumber] = useState(inventory?.lotNumber ?? "");
   // §inventory-phaseB P3-UI-b — 추적 모드(차감 게이팅 정책). 기본 QUANTITY(마찰 0).
   const [trackingMode, setTrackingMode] = useState<string>(inventory?.trackingMode ?? "QUANTITY");
-  const [storageCondition, setStorageCondition] = useState(inventory?.storageCondition ?? "");
   // §11.336 — 편집모드 Cat.No 수동 입력 state(Product 마스터 catalogNumber).
   const [editableCatNo, setEditableCatNo] = useState<string>(inventory?.product?.catalogNumber ?? "");
   const [expiryDatePopoverOpen, setExpiryDatePopoverOpen] = useState(false);
@@ -96,7 +94,6 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
       setExpiryDate(inventory.expiryDate ? new Date(inventory.expiryDate) : undefined);
       setNotes(inventory.notes ?? "");
       setLotNumber(inventory.lotNumber ?? "");
-      setStorageCondition(inventory.storageCondition ?? "");
     }
   }, [open, inventory]);
 
@@ -152,7 +149,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
     // §inventory-notes-erase P1-b — 조립은 lib 한 곳에 둔다(요청 본문을 테스트가 직접 잰다).
     const data = buildInventoryFormPayload({
       productId, isManual, selectedProduct, currentQuantity, unit, safetyStock, minOrderQty,
-      location, expiryDate, notes, lotNumber, storageCondition, trackingMode,
+      location, expiryDate, notes, lotNumber, trackingMode,
       isEdit: Boolean(inventory), editableCatNo,
     });
     console.log("저장 시도:", data);
@@ -272,22 +269,14 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                     placeholder="배치 식별 번호 입력"
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="storageCondition">보관 조건</Label>
-                  <Select value={storageCondition} onValueChange={setStorageCondition}>
-                    <SelectTrigger id="storageCondition">
-                      <SelectValue placeholder="조건 선택" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="room_temp_broad">실온 (1~30°C)</SelectItem>
-                      <SelectItem value="room_temp_std">상온 (15~25°C)</SelectItem>
-                      <SelectItem value="fridge">냉장 (2~8°C)</SelectItem>
-                      <SelectItem value="freezer_20">냉동 (-20°C)</SelectItem>
-                      <SelectItem value="deep_freezer_80">초저온 냉동 (-80°C)</SelectItem>
-                      <SelectItem value="ln2">액체질소 (-196°C)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* 🛑 §inventory-edit-blank-fields (호영님 2026-09-12) — 「보관 조건」 **편집 제거**.
+                    호영님 판정: "읽기 전용. `2-8°C` 는 SDS 가 출처인 안전 정보다. 랩이 바꿀 건
+                    location(이미 있다). 재고 화면에서 편집 가능하면 사용자가 SDS 값을 덮어쓴다."
+                    실측(2026-09-12): ProductInventory 에 storageCondition 열이 **없고**, 저장 자리는
+                    Product.storageCondition 이다. 게다가 값 체계도 다르다 —
+                      이 Select   room_temp_broad · fridge · freezer_20 …  (코드값)
+                      Product 열  "2~8°C 냉장 보관"                        (SDS 자유 텍스트)
+                    이어진 적이 없는 입력이었다. 읽기 배선(제품 값 표시)은 별건. */}
               </div>
 
               {!inventory && selectedProduct && (

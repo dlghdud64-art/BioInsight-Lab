@@ -54,7 +54,7 @@ describe("§11.336 — AddInventoryModal 편집모드 Cat.No 입력 활성화", 
      *   옮겨졌다(동작 동일 추출). 명제는 그 줄의 위치·바이트가 아니라 **조립 결과**다 — 결과와 배선으로 잰다. */
     const src = read(MODAL);
     expect(src).toMatch(/isEdit:\s*Boolean\(inventory\),\s*editableCatNo/);
-    const base: InventoryFormState = { productId: "p", isManual: false, selectedProduct: null, currentQuantity: "1", unit: "ea", safetyStock: "", minOrderQty: "", location: "", expiryDate: undefined, notes: "", lotNumber: "", storageCondition: "", trackingMode: "QUANTITY", isEdit: true, editableCatNo: "" };
+    const base: InventoryFormState = { productId: "p", isManual: false, selectedProduct: null, currentQuantity: "1", unit: "ea", safetyStock: "", minOrderQty: "", location: "", expiryDate: undefined, notes: "", lotNumber: "", trackingMode: "QUANTITY", isEdit: true, editableCatNo: "" };
     expect(buildInventoryFormPayload({ ...base, editableCatNo: "   " }).catalogNumber).toBeNull();
     expect(buildInventoryFormPayload({ ...base, editableCatNo: " CAT-9 " }).catalogNumber).toBe("CAT-9");
     expect("catalogNumber" in buildInventoryFormPayload({ ...base, isEdit: false })).toBe(false);

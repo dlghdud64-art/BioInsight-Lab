@@ -12,10 +12,9 @@
  * → 그래서 이 파일은 함수가 아니라 **직렬화된 본문**을 단언한다.
  *
  * ── 이 파일이 안 보는 것 (조항 11) ──
- *   1. storageCondition — 저장 자리가 **ProductInventory 가 아니라 Product.storageCondition** 이다.
- *      재고 PATCH 가 받아도 쓸 열이 없어 catalogNumber 처럼 제품 마스터 갱신 경로가 필요하다 · 별건.
- *   2. testPurpose — schema.prisma 와 prod DB **어디에도 컬럼이 없다**(2026-09-12 실측).
- *      폼은 입력을 받아 보내는데 저장할 자리가 없다 → DDL 선행 · 별건.
+ *   1. 이 파일은 **재고 자기 열**만 본다. 제품 마스터(Product.storageCondition 등) 축은 별건이다.
+ *      storageCondition 편집·testPurpose 입력은 2026-09-12 에 제거됐다(저장 자리가 없었다) —
+ *      남은 것은 **읽기 배선**이다: 재고 화면이 제품 값을 평탄화해 보여주는 자리(미배선 · 별건).
  *   3. 실제 브라우저 폼 이벤트 — 상태 → 조립만 본다. 최종 확인은 prod 화면 실측이 한다.
  *
  * ── 닫은 한계 (옛 1·3) ──
@@ -47,7 +46,6 @@ const editing: InventoryFormState = {
   expiryDate: undefined,
   notes: "기존 비고",
   lotNumber: "LOT-1",
-  storageCondition: "",
   trackingMode: "QUANTITY",
   isEdit: true,
   editableCatNo: "CAT-1",

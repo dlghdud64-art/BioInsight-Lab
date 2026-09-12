@@ -1105,6 +1105,11 @@ function InventoryPageContent() {
       }
       if (statusFilter === "lot_issue") {
         // Lot 불일치: lot 번호 미등록 또는 보관 조건 미매칭
+        /* 🛑 §inventory-edit-blank-fields (2026-09-12 실측) — 뒤쪽 절은 **죽은 분기**다.
+         *   inv.storageCondition 은 ProductInventory 에 열이 없어 항상 undefined 이고,
+         *   GET /api/inventory 도 product.storageCondition 을 평탄화하지 않는다.
+         *   즉 실제 판정은 `!inv.lotNumber` 하나뿐이다. 의도(냉동 보관인데 위치 미지정)는
+         *   살아 있으므로 지우지 않고 표기한다 — 되살리려면 읽기 배선이 먼저다(별건). */
         const hasLotIssue = !inv.lotNumber || (inv.storageCondition && inv.storageCondition.includes("freezer") && !inv.location);
         if (!hasLotIssue) return false;
       }
@@ -3322,6 +3327,8 @@ function InventoryPageContent() {
                         항상 "-" 였다(입력·저장·표시 3단 전부 죽어 있었다). */}
                     <div className="flex items-center justify-between gap-1 min-w-0">
                       <span className="text-[11px] text-slate-500  text-slate-400 shrink-0">보관조건</span>
+                      {/* §inventory-edit-blank-fields — 편집은 제거했다(SDS 가 출처인 안전 정보).
+                          현재 값 출처가 없어 항상 "-" 다 · 제품 값 평탄화는 별건. */}
                       <span className="text-xs font-medium truncate text-right">{getStorageConditionLabel(selectedItem.storageCondition)}</span>
                     </div>
                   </div>

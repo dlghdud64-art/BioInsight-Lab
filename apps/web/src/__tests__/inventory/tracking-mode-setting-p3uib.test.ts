@@ -33,10 +33,12 @@ describe("§inventory-phaseB P3-UI-b — 설정 UI(AddInventoryModal)", () => {
     /* 승계 (§inventory-edit-blank-fields · 호영님 2026-09-12): testPurpose 는 저장 자리가 없어
      *   입력을 제거했다(schema·prod DB 어디에도 컬럼 없음). 원 명제는 "조립부가 trackingMode 를
      *   싣는다" 이므로 그것만 남기고, 제거한 필드는 **부재**로 잠근다. */
-    expect(MODAL).toMatch(/lotNumber,\s*storageCondition,\s*trackingMode,/);
+    expect(MODAL).toMatch(/lotNumber,\s*trackingMode,/);
     // 🛑 부정 단언은 **주석 제거본**에 건다 — 제거 사유를 적은 주석이 그 문구를 포함한다(조항).
     expect(stripComments(MODAL)).not.toMatch(/testPurpose/);
-    const state: InventoryFormState = { productId: "p", isManual: false, selectedProduct: null, currentQuantity: "1", unit: "ea", safetyStock: "", minOrderQty: "", location: "", expiryDate: undefined, notes: "", lotNumber: "", storageCondition: "", trackingMode: "QUANTITY", isEdit: true, editableCatNo: "" };
+    // §inventory-edit-blank-fields — 보관 조건도 편집 제거(SDS 출처 · 값 체계 불일치).
+    expect(stripComments(MODAL)).not.toMatch(/setStorageCondition/);
+    const state: InventoryFormState = { productId: "p", isManual: false, selectedProduct: null, currentQuantity: "1", unit: "ea", safetyStock: "", minOrderQty: "", location: "", expiryDate: undefined, notes: "", lotNumber: "", trackingMode: "QUANTITY", isEdit: true, editableCatNo: "" };
     expect(buildInventoryFormPayload({ ...state, trackingMode: "LOT" }).trackingMode).toBe("LOT");
   });
 });
