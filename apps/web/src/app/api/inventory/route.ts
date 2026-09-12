@@ -9,7 +9,7 @@ import {
   buildInventoryDisposalPriority,
   summarizeInventoryDisposalPriorities,
 } from "@/lib/inventory/disposal-readiness";
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { enforcePlanLimit, PlanLimitError, assertTrackingModeAllowed, TrackingModePlanError } from "@/lib/billing/enforce-plan-limit";
 import { resolveOrganizationIdForMutation } from "@/lib/organizations/active-org";
 
@@ -493,7 +493,7 @@ export async function POST(request: NextRequest) {
       include: inventoryInclude,
     });
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG });
+    enforcement.complete({ organizationId: activeOrganizationId });
     return NextResponse.json({ inventory }, { status: 201 });
   } catch (error: any) {
     enforcement?.fail();

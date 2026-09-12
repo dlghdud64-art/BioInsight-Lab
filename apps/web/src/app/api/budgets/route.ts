@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { resolveBudgetPurchaseScopeKeys } from "@/lib/budget/purchase-scope-keys";
 import { OrganizationRole } from "@prisma/client";
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { resolveOrganizationIdForMutation } from "@/lib/organizations/active-org";
 
 export async function GET(request: NextRequest) {
@@ -361,7 +361,7 @@ export async function POST(request: NextRequest) {
       projectName: sanitizedProjectName,
     };
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG,
+    enforcement.complete({ organizationId: orgResolution.ok ? orgResolution.organizationId : null,
       beforeState: { action: 'budget_create' },
       afterState: { budgetId: budget.id, amount: amountInt },
     });

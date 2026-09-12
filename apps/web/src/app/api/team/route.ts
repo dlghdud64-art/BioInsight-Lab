@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { TeamRole } from "@prisma/client";
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { resolveOrganizationIdForMutation } from "@/lib/organizations/active-org";
 
 /**
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG });
+    enforcement.complete({ organizationId: membership?.organizationId ?? null });
     return NextResponse.json({ team }, { status: 201 });
   } catch (error) {
     enforcement?.fail();

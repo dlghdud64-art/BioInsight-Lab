@@ -7,7 +7,7 @@ import { auth } from "@/auth";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import { fileCache } from "@/lib/cache/file-cache";
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 const logger = createLogger("inventory/import/commit");
 
@@ -367,7 +367,7 @@ export async function POST(request: NextRequest) {
       `Import job ${importJob.id} completed: ${result.successRows} success, ${result.errorRows} errors`
     );
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG,
+    enforcement.complete({ organizationId: organizationId,
       beforeState: { fileId },
       afterState: { totalRows: result.totalRows, successRows: result.successRows, errorRows: result.errorRows },
     });

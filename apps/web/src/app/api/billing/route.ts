@@ -7,7 +7,7 @@
  * 가격 기준: lib/plans.ts (Single Source of Truth)
  */
 
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 // §plan-change-claim (호영님 2026-09-06, (가)) — 상태·청구를 한 벌로 만드는 단일 정본.
 //   🛑 형제 슬롯 전수 훑기(CLAUDE.md): 같은 결함이 이 경로에도 있었다.
 import { buildPlanChangeClaim } from "@/lib/billing/plan-change-claim";
@@ -409,7 +409,7 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      enforcement.complete({ organizationId: UNRESOLVED_ORG,
+      enforcement.complete({ organizationId: activeOrgId,
         beforeState: {
           organizationId: membership.organization.id,
           plan: membership.organization.plan,

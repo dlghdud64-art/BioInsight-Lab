@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
     };
 
     const created = await createPOCandidate(input);
-    enforcement.complete({ organizationId: UNRESOLVED_ORG,
+    enforcement.complete({ organizationId: orgResolution.ok ? orgResolution.organizationId : null,
       beforeState: { candidateId: null },
       afterState: { candidateId: created.id, approvalPolicy: resolvedApprovalPolicy },
     });

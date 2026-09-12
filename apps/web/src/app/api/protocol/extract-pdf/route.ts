@@ -15,7 +15,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from '@/lib/security/server-enforcement-middleware';
+import { enforceAction, InlineEnforcementHandle } from '@/lib/security/server-enforcement-middleware';
 import { db } from '@/lib/db';
 import { robustParsePDF } from '@/lib/ai/robust-pdf-parser';
 import { parseQuoteWithAI } from '@/lib/ai/quote-ai-parser';
@@ -273,7 +273,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExtractPD
       quoteId: quote.id,
     });
 
-    enforcement?.complete({ organizationId: UNRESOLVED_ORG });
+    enforcement?.complete({ organizationId: organizationId });
 
     // 7. 성공 응답
     return NextResponse.json({
