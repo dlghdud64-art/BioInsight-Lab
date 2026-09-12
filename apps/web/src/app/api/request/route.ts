@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { PurchaseRequestStatus, TeamRole } from "@prisma/client";
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 /**
  * 구매 요청 생성 (MEMBER만 가능)
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG,
+    enforcement.complete({ organizationId: team.organizationId,
       beforeState: { teamId },
       afterState: { purchaseRequestId: purchaseRequest.id, status: purchaseRequest.status },
     });

@@ -91,6 +91,8 @@ export async function DELETE(request: NextRequest) {
       },
     });
 
+    /* 🛑 D — dispatch-batch 와 같은 형태. sharedList 는 루프 변수이고 일괄 삭제라 여러 조직이 섞일 수 있다.
+     *   §audit-batch-multi-org. */
     enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { requestedPublicIds: publicIds.length, authorized: authorizedListIds.length },
       afterState: { deleted: deleted.count },

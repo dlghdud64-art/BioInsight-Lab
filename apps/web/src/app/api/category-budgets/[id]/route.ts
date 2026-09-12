@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { updateCategoryBudgetSchema } from "@/lib/budget/spending-category-schema";
 
 // ── PATCH: 예산 수정 ──
@@ -95,7 +95,7 @@ export async function PATCH(
       },
     });
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG,
+    enforcement.complete({ organizationId: budget.organizationId,
       beforeState,
       afterState: {
         amount: updated.amount,
@@ -165,7 +165,7 @@ export async function DELETE(
       data: { isActive: false },
     });
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG,
+    enforcement.complete({ organizationId: budget.organizationId,
       beforeState: { isActive: true },
       afterState: { isActive: false },
     });

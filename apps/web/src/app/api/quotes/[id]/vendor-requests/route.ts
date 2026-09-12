@@ -33,7 +33,7 @@ const INVALID_TLDS = new Set(["test", "invalid", "example", "localhost"]);
 const BARE_IP_REGEX = /^[^@]+@\d+\.\d+\.\d+\.\d+$/;
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { extractRequestMeta } from "@/lib/audit";
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // Schema for POST /api/quotes/:id/vendor-requests
 const VendorSchema = z.object({
@@ -393,7 +393,7 @@ export async function POST(
       });
     }
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG,
+    enforcement.complete({ organizationId: quote.organizationId,
       beforeState: { vendorCount: quote.id },
       afterState: { emailsSent: successCount, emailsFailed: failCount, requestCount: createdRequests.length },
     });

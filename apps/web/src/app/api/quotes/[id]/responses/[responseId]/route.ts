@@ -85,6 +85,8 @@ export async function PATCH(
       },
     });
 
+    /* 🛑 D — response 는 quote 에 달려 있고 quote 에는 조직이 있다. 값이 없는 게 아니라 **조회가 없다.**
+     *   조직 축이 없는 자리(C)로 굳히면 영원히 안 채워진다. 조회 추가는 런타임 변경이라 별건. */
     enforcement.complete({ organizationId: UNRESOLVED_ORG });
 
     return NextResponse.json(updatedResponse);

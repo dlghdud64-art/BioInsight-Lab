@@ -1,4 +1,4 @@
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -242,7 +242,7 @@ export async function POST(request: NextRequest) {
     const payload = updatedAction.payload as Record<string, unknown>;
 
     // db.aiActionItem.update 로 초안을 실제 저장한다 → complete().
-    enforcement.complete({ organizationId: UNRESOLVED_ORG,
+    enforcement.complete({ organizationId: order.organizationId,
       beforeState: { orderId, actionId: existingOrNew.id, hasDraft: false },
       afterState: { orderId, actionId: updatedAction.id, hasDraft: true, skipped },
     });

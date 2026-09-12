@@ -6,7 +6,7 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { extractRequestMeta } from "@/lib/audit";
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 빈 문자열 → undefined 변환 헬퍼
 const emptyToUndefined = z.preprocess(
@@ -230,7 +230,7 @@ export async function POST(
       userAgent,
     });
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG,
+    enforcement.complete({ organizationId: quote.organizationId,
       beforeState: { vendorName: existingRequest?.vendorName ?? null },
       afterState: { vendorName, itemCount: items.length, vendorRequestId: resolvedVendorRequestId },
     });

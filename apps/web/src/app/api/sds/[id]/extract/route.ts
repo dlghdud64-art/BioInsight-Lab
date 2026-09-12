@@ -1,4 +1,4 @@
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -106,7 +106,7 @@ export async function POST(
     });
 
     // db.sDSDocument.update 로 추출 상태를 실제 전이시킨다(queued) -> complete().
-    enforcement.complete({ organizationId: UNRESOLVED_ORG,
+    enforcement.complete({ organizationId: sdsDocument.organizationId,
       beforeState: { sdsDocumentId: id, extractionStatus: sdsDocument.extractionStatus },
       afterState: { sdsDocumentId: id, extractionStatus: "queued", jobId },
     });

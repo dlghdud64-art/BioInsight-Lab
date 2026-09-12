@@ -12,7 +12,7 @@ import { generatePurchaseCompleteEmail } from "@/lib/email/templates";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import { markQuoteAsPurchased } from "./markPurchased";
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 // §11.209d-mobile Phase 1 — 결재 정보 노출 (mobile 견적 상세 timeline 위해).
 // canonical truth = PurchaseRequest. resolver 의 derive helpers 재사용으로
 // canonical 단일화 (web 의 §11.209d cluster 와 동일 source).
@@ -576,7 +576,7 @@ export async function PATCH(
     revalidatePath("/quotes");
     revalidatePath(`/quotes/${id}`);
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG,
+    enforcement.complete({ organizationId: quote.organizationId,
       beforeState: { status: previousStatus, id },
       afterState: { status: updatedQuote.status, id },
     });
@@ -680,7 +680,7 @@ export async function DELETE(
 
     logger.info(`Deleted quote ${id}`);
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG,
+    enforcement.complete({ organizationId: quote.organizationId,
       beforeState: { id, title: quote.title, status: quote.status },
       afterState: undefined,
     });

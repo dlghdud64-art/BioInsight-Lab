@@ -203,6 +203,11 @@ export async function POST(request: NextRequest) {
       return out;
     });
 
+    /* 🛑 D (§audit-org-required 분류 · 호영님 2026-09-12): 값이 없는 게 아니라 **하나로 못 적는다.**
+     *   이 배치는 멤버십 조직 **집합**으로 필터해 여러 재고를 한 번에 처리하는데 complete() 는 배치당 1회다.
+     *   명시 null 로 뭉개면 "조직 없음" 과 "여러 개라 못 적음" 이 한 값이 된다 — 선택 인자가 만든 결함과 같은 형태.
+     *   프로드 실측 2026-09-12: 멤버십 2개 이상 사용자 0명이라 **지금은** 단일이지만 스키마가 복수를 허용한다.
+     *   → §audit-batch-multi-org (조직별 complete() 분할 여부 · 런타임 변경이라 채우기와 분리). */
     enforcement.complete({ organizationId: UNRESOLVED_ORG,
       beforeState: { itemCount: items.length },
       afterState: { dispatched: results.length },

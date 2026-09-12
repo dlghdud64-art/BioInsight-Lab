@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { createCategoryBudgetSchema } from "@/lib/budget/spending-category-schema";
 
 // ── GET: 카테고리별 예산 한도 목록 ──
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG,
+    enforcement.complete({ organizationId: organizationId,
       afterState: {
         budgetId: budget.id,
         categoryId: budget.categoryId,

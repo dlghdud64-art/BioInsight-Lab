@@ -1,4 +1,4 @@
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -107,7 +107,7 @@ export async function PATCH(
     //   안전 정보 쓰기는 취급 사고와 직결되므로 "누가·어느 제품·무엇을" 이 남아야 한다.
     //   소유권 스코프(§supplier-product-ownership-scope)가 아직 없어 SUPPLIER 가 타사 제품도
     //   편집 가능한 상태이므로, 그때까지 이 추적이 유일한 사후 방어선이다.
-    enforcement.complete({ organizationId: UNRESOLVED_ORG,
+    enforcement.complete({ organizationId: null,
       beforeState: {
         productId: id,
         msdsUrl: product.msdsUrl,

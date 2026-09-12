@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import {
   createSpendingCategorySchema,
   DEFAULT_SPENDING_CATEGORIES,
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG,
+    enforcement.complete({ organizationId: organizationId,
       afterState: { categoryId: category.id, name: category.name },
     });
 

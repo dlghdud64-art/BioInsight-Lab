@@ -5,7 +5,7 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { createDataAuditLog, AuditAction, AuditEntityType } from "@/lib/audit";
 import { validateUsageForTrackingMode } from "@/lib/inventory/tracking-mode";
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 // 알림 고도화 #notif-inventory-low-dispatch — 출고/사용으로 currentQuantity 가
 // safetyStock 임계 아래로 "최초 진입"(prevQty > safetyStock && newQty <= safetyStock)
 // 시 INVENTORY_LOW 알림(best-effort). inventory/[id] PATCH 캘러(§11.250a)와 동일
@@ -173,7 +173,7 @@ export async function POST(
       }
     );
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG,
+    enforcement.complete({ organizationId: inventory.organizationId,
       beforeState: { currentQuantity: quantityBefore },
       afterState: { currentQuantity: updatedInventory.currentQuantity, usageRecordId: usageRecord.id },
     });

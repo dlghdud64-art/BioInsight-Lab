@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { updateSpendingCategorySchema } from "@/lib/budget/spending-category-schema";
 
 // ── PATCH: 카테고리 수정 ──
@@ -78,7 +78,7 @@ export async function PATCH(
       data: parsed.data,
     });
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG, beforeState, afterState: { displayName: updated.displayName, isActive: updated.isActive, color: updated.color } });
+    enforcement.complete({ organizationId: category.organizationId, beforeState, afterState: { displayName: updated.displayName, isActive: updated.isActive, color: updated.color } });
 
     return NextResponse.json({ category: updated });
   } catch (error) {
@@ -151,7 +151,7 @@ export async function DELETE(
         data: { isActive: false, archivedAt: new Date() },
       });
 
-      enforcement.complete({ organizationId: UNRESOLVED_ORG,
+      enforcement.complete({ organizationId: category.organizationId,
         beforeState: { isActive: true, linkedRecords: linkedRecordCount },
         afterState: { isActive: false, archivedAt: archived.archivedAt, action: "archived" },
       });
@@ -170,7 +170,7 @@ export async function DELETE(
         data: { isActive: false, archivedAt: new Date() },
       });
 
-      enforcement.complete({ organizationId: UNRESOLVED_ORG,
+      enforcement.complete({ organizationId: category.organizationId,
         beforeState: { isActive: true, isDefault: true },
         afterState: { isActive: false, archivedAt: archived.archivedAt, action: "archived" },
       });
@@ -188,7 +188,7 @@ export async function DELETE(
       data: { isActive: false, archivedAt: new Date() },
     });
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG,
+    enforcement.complete({ organizationId: category.organizationId,
       beforeState: { isActive: true },
       afterState: { isActive: false },
     });

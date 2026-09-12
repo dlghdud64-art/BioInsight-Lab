@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db, isPrismaAvailable } from "@/lib/db";
 import { isDemoMode } from "@/lib/env";
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 견적 요청 아이템 수정
 export async function PUT(
@@ -104,7 +104,7 @@ export async function PUT(
       },
     });
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG });
+    enforcement.complete({ organizationId: existingItem.quote.organizationId });
 
     return NextResponse.json(updatedItem);
   } catch (error) {
@@ -182,7 +182,7 @@ export async function DELETE(
       where: { id },
     });
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG });
+    enforcement.complete({ organizationId: existingItem.quote.organizationId });
 
     return NextResponse.json({ success: true });
   } catch (error) {

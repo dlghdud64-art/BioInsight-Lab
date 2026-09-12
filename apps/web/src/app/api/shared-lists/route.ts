@@ -1,4 +1,4 @@
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db, isPrismaAvailable } from "@/lib/db";
@@ -248,7 +248,7 @@ export async function POST(request: NextRequest) {
       throw error;
     });
 
-    enforcement.complete({ organizationId: UNRESOLVED_ORG,
+    enforcement.complete({ organizationId: quote.organizationId,
       beforeState: { quoteId: quote.id, existingSharedListId: null },
       afterState: {
         quoteId: quote.id,

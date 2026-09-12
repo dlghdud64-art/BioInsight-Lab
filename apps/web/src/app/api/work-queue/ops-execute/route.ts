@@ -7,7 +7,7 @@
  *
  * All state changes go through transitionWorkItem() — never direct DB update.
  */
-import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      enforcement.complete({ organizationId: UNRESOLVED_ORG,
+      enforcement.complete({ organizationId: item.organizationId,
         beforeState: { itemId: item.id, actionId, substatus: item.substatus, taskStatus: item.taskStatus },
         afterState: { itemId: item.id, actionId, substatus: completionDef.successTransition, nextItemId },
       });

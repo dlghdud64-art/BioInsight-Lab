@@ -129,6 +129,9 @@ export async function POST(
     // Build reply address (§inbound-rfq-autocapture P1 — 공용 빌더, fallback labaxis.co.kr)
     const replyAddress = buildRfqReplyAddress(rfqToken.token);
 
+    /* 🛑 D — 값은 **존재하지만 여기로 안 넘어온다.** 이 토큰이 달린 견적에는 조직이 있는데(quote.organizationId),
+     *   그 값은 권한 헬퍼의 지역 변수라 핸들러 스코프에는 rfqToken 만 있다. 조회를 추가하면 얻을 수 있고
+     *   그건 런타임 변경이라 채우기 단계와 분리한다. "조직 개념 없음"(C)이 아니다. */
     enforcement.complete({ organizationId: UNRESOLVED_ORG });
 
     return NextResponse.json(
@@ -257,6 +260,7 @@ export async function PATCH(
     // Build reply address (§inbound-rfq-autocapture P1 — 공용 빌더, fallback labaxis.co.kr)
     const replyAddress = buildRfqReplyAddress(rfqToken.token);
 
+    /* 🛑 D — 위 POST 와 같은 자리(조회 추가 필요). */
     enforcement.complete({ organizationId: UNRESOLVED_ORG });
 
     return NextResponse.json({
