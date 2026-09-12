@@ -10,8 +10,15 @@
   },
   "include": [
     "src",
+    // §tsconfig-dist-glob P2 (2026-09-12) — 이 한 줄만 둔다.
+    //   Vercel·로컬 기본 빌드가 쓰는 경로이고, npx tsc --noEmit 의 라우트 타입 축이다.
+    //   🛑 ".next-*/types/**" 글롭을 되살리지 말 것 — 다른 세션 dist(.next-invite 등)의
+    //      옛 라우트 타입까지 검사해, 라우트를 지우면 전 세션 build 가 깨진다(3회 실측).
+    //   🛑 ".next-<트랙>/types/**" 명시 줄도 손으로 넣지 말 것 — 그건 Next 가 build 때
+    //      자동으로 써 넣던 줄이고(writeConfigurationDefaults), 이제 세션별 child
+    //      tsconfig.next-<트랙>.json 이 받는다(scripts/ensure-session-tsconfig.js).
     ".next/types/**/*.ts",
-    ".next-*/types/**/*.ts"
+    ".next-scan/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
