@@ -42,7 +42,6 @@ interface AddInventoryModalProps {
     notes?: string;
     lotNumber?: string;
     storageCondition?: string;
-    testPurpose?: string;
     trackingMode?: string; // §inventory-phaseB P3-UI-b — 추적 모드(QUANTITY/LOT/GMP_STRICT).
     catalogNumber?: string | null; // §11.336 — 편집모드 Cat.No 수동 입력(Product 마스터 반영).
   }) => void;
@@ -74,7 +73,6 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
   // §inventory-phaseB P3-UI-b — 추적 모드(차감 게이팅 정책). 기본 QUANTITY(마찰 0).
   const [trackingMode, setTrackingMode] = useState<string>(inventory?.trackingMode ?? "QUANTITY");
   const [storageCondition, setStorageCondition] = useState(inventory?.storageCondition ?? "");
-  const [testPurpose, setTestPurpose] = useState(inventory?.testPurpose ?? "");
   // §11.336 — 편집모드 Cat.No 수동 입력 state(Product 마스터 catalogNumber).
   const [editableCatNo, setEditableCatNo] = useState<string>(inventory?.product?.catalogNumber ?? "");
   const [expiryDatePopoverOpen, setExpiryDatePopoverOpen] = useState(false);
@@ -99,7 +97,6 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
       setNotes(inventory.notes ?? "");
       setLotNumber(inventory.lotNumber ?? "");
       setStorageCondition(inventory.storageCondition ?? "");
-      setTestPurpose(inventory.testPurpose ?? "");
     }
   }, [open, inventory]);
 
@@ -155,7 +152,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
     // §inventory-notes-erase P1-b — 조립은 lib 한 곳에 둔다(요청 본문을 테스트가 직접 잰다).
     const data = buildInventoryFormPayload({
       productId, isManual, selectedProduct, currentQuantity, unit, safetyStock, minOrderQty,
-      location, expiryDate, notes, lotNumber, storageCondition, testPurpose, trackingMode,
+      location, expiryDate, notes, lotNumber, storageCondition, trackingMode,
       isEdit: Boolean(inventory), editableCatNo,
     });
     console.log("저장 시도:", data);
@@ -426,17 +423,11 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                 </div>
               </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="testPurpose" className="font-semibold text-slate-600">
-                  시험항목 (용도)
-                </Label>
-                <Input
-                  id="testPurpose"
-                  value={testPurpose}
-                  onChange={(e) => setTestPurpose(e.target.value)}
-                  placeholder="예: MTT assay, 외래성 바이러스 시험 등"
-                />
-              </div>
+              {/* 🛑 §inventory-edit-blank-fields (호영님 2026-09-12) — 「시험항목(용도)」 입력 제거.
+                  schema.prisma 와 prod DB **어디에도 testPurpose 컬럼이 없다**(2026-09-12 실측).
+                  폼은 입력을 받아 PATCH 로 보냈고 서버는 무시했다 — 저장 자리가 없는 dead input.
+                  호영님 판정: "설계 없이 UI 가 먼저 생긴 것. 컬럼을 추가하면 미검증 설계가 굳는다."
+                  🔑 되살리려면 스키마 설계가 먼저다(DDL 금지 · 이 자리에 다시 넣지 말 것). */}
 
               <div className="grid gap-2">
                 <Label htmlFor="notes">특이사항 (비고)</Label>

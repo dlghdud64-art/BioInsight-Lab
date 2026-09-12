@@ -102,7 +102,6 @@ type ContextPanelItem = {
   lotNumber?: string | null;
   storageCondition?: string | null;
   hazard?: boolean;
-  testPurpose?: string | null;
   vendor?: string | null;
   deliveryPeriod?: string | null;
   inUseOrUnopened?: string | null;
@@ -124,7 +123,6 @@ interface ProductInventory {
   trackingMode?: string | null; // §inventory-phaseB P3-UI-a3 — 차감 게이팅 정책.
   storageCondition?: string | null;
   hazard?: boolean;
-  testPurpose?: string | null;
   vendor?: string | null;
   deliveryPeriod?: string | null;
   inUseOrUnopened?: string | null;
@@ -394,7 +392,6 @@ function InventoryPageContent() {
       location: inv.location,
       storageCondition: inv.storageCondition,
       hazard: inv.hazard,
-      testPurpose: inv.testPurpose,
       vendor: inv.vendor,
       deliveryPeriod: inv.deliveryPeriod,
       inUseOrUnopened: inv.inUseOrUnopened,
@@ -581,7 +578,6 @@ function InventoryPageContent() {
       lotNumber: "PILOT-EXP-001",
       storageCondition: "-20C",
       hazard: false,
-      testPurpose: "browser-pilot",
       vendor: "LabAxis Pilot Vendor",
       deliveryPeriod: "3일",
       inUseOrUnopened: "unopened",
@@ -930,7 +926,7 @@ function InventoryPageContent() {
   });
 
   const createOrUpdateMutation = useMutation({
-    mutationFn: async (formPayload: { id?: string; productId: string; currentQuantity: number; unit: string; safetyStock?: number; minOrderQty?: number; location?: string; expiryDate?: string; autoReorderEnabled?: boolean; autoReorderThreshold?: number; notes?: string; lotNumber?: string; storageCondition?: string; testPurpose?: string; trackingMode?: string; catalogNumber?: string | null }) => {
+    mutationFn: async (formPayload: { id?: string; productId: string; currentQuantity: number; unit: string; safetyStock?: number; minOrderQty?: number; location?: string; expiryDate?: string; autoReorderEnabled?: boolean; autoReorderThreshold?: number; notes?: string; lotNumber?: string; storageCondition?: string; trackingMode?: string; catalogNumber?: string | null }) => {
       const isEdit = Boolean(formPayload.id);
 
       const url = isEdit ? `/api/inventory/${formPayload.id}` : "/api/inventory";
@@ -3322,10 +3318,8 @@ function InventoryPageContent() {
                       <span className="text-[11px] text-slate-500  text-slate-400 shrink-0">평균유효기한</span>
                       <span className="text-xs font-medium truncate text-right">{selectedItem.averageExpiry ?? "-"}</span>
                     </div>
-                    <div className="flex items-center justify-between gap-1 min-w-0">
-                      <span className="text-[11px] text-slate-500  text-slate-400 shrink-0">시험항목</span>
-                      <span className="text-xs font-medium truncate text-right">{selectedItem.testPurpose ?? "-"}</span>
-                    </div>
+                    {/* §inventory-edit-blank-fields — 「시험항목」 표시 제거. testPurpose 컬럼이 없어
+                        항상 "-" 였다(입력·저장·표시 3단 전부 죽어 있었다). */}
                     <div className="flex items-center justify-between gap-1 min-w-0">
                       <span className="text-[11px] text-slate-500  text-slate-400 shrink-0">보관조건</span>
                       <span className="text-xs font-medium truncate text-right">{getStorageConditionLabel(selectedItem.storageCondition)}</span>

@@ -48,7 +48,6 @@ const editing: InventoryFormState = {
   notes: "기존 비고",
   lotNumber: "LOT-1",
   storageCondition: "",
-  testPurpose: "",
   trackingMode: "QUANTITY",
   isEdit: true,
   editableCatNo: "CAT-1",

@@ -7,6 +7,7 @@
  */
 
 import { describe, it, expect } from "vitest";
+import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
 import { buildInventoryFormPayload, buildInventoryPatchBody, type InventoryFormState } from "@/lib/inventory/inventory-form-payload";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -29,15 +30,20 @@ describe("§inventory-phaseB P3-UI-b — 설정 UI(AddInventoryModal)", () => {
     /* 승계 (§inventory-notes-erase P1-b · 2026-09-11): 조립이 lib/inventory/inventory-form-payload.ts 로
      *   옮겨졌다(동작 동일 추출). 명제는 그 줄의 위치·바이트가 아니라 **조립 결과**다 — 결과와 배선으로 잰다. */
     expect(MODAL).toMatch(/buildInventoryFormPayload\s*\(/);
-    expect(MODAL).toMatch(/testPurpose,\s*trackingMode,/);
-    const state: InventoryFormState = { productId: "p", isManual: false, selectedProduct: null, currentQuantity: "1", unit: "ea", safetyStock: "", minOrderQty: "", location: "", expiryDate: undefined, notes: "", lotNumber: "", storageCondition: "", testPurpose: "", trackingMode: "QUANTITY", isEdit: true, editableCatNo: "" };
+    /* 승계 (§inventory-edit-blank-fields · 호영님 2026-09-12): testPurpose 는 저장 자리가 없어
+     *   입력을 제거했다(schema·prod DB 어디에도 컬럼 없음). 원 명제는 "조립부가 trackingMode 를
+     *   싣는다" 이므로 그것만 남기고, 제거한 필드는 **부재**로 잠근다. */
+    expect(MODAL).toMatch(/lotNumber,\s*storageCondition,\s*trackingMode,/);
+    // 🛑 부정 단언은 **주석 제거본**에 건다 — 제거 사유를 적은 주석이 그 문구를 포함한다(조항).
+    expect(stripComments(MODAL)).not.toMatch(/testPurpose/);
+    const state: InventoryFormState = { productId: "p", isManual: false, selectedProduct: null, currentQuantity: "1", unit: "ea", safetyStock: "", minOrderQty: "", location: "", expiryDate: undefined, notes: "", lotNumber: "", storageCondition: "", trackingMode: "QUANTITY", isEdit: true, editableCatNo: "" };
     expect(buildInventoryFormPayload({ ...state, trackingMode: "LOT" }).trackingMode).toBe("LOT");
   });
 });
 
 describe("§inventory-phaseB P3-UI-b — content saveMutation 전달", () => {
   it("payload 타입 + edit body 에 trackingMode", () => {
-    expect(CONTENT).toMatch(/testPurpose\?: string; trackingMode\?: string;/);
+    expect(CONTENT).toMatch(/trackingMode\?: string;/);
     /* 승계 (§inventory-notes-erase P1-b · 2026-09-11): 조립이 lib/inventory/inventory-form-payload.ts 로
      *   옮겨졌다(동작 동일 추출). 명제는 그 줄의 위치·바이트가 아니라 **조립 결과**다 — 결과와 배선으로 잰다. */
     expect(CONTENT).toMatch(/buildInventoryPatchBody\s*\(\s*formPayload\s*\)/);
