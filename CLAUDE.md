@@ -756,23 +756,44 @@ pre-push hook 이 `npm run build` 를 돌리는데, 두 세션이 같은 `.next`
 서로의 manifest 를 지워 ENOENT 로 죽는다(2026-09 실측 **5회+**).
 
 ```
-NEXT_DIST_DIR=.next-<트랙>  git push origin main      # 예: .next-invite · .next-scan
+NEXT_DIST_DIR=.next-<트랙> NEXT_TSCONFIG=tsconfig.next-<트랙>.json  git push origin main
+#  예: NEXT_DIST_DIR=.next-scan NEXT_TSCONFIG=tsconfig.next-scan.json
 ```
 
 `next.config.js` 의 `distDir` 이 이 env 를 읽는다. **미설정 시 `.next`** 라
 Vercel·로컬 dev 는 무변경이다. 산출물은 `.gitignore` 의 `/.next-*/` 가 받는다.
 
-⚠️ **tsc 는 빌드와 달리 자동으로 갈라지지 않는다.** `tsconfig.json` 의 `include` 가
-`.next/types/**` 만 보면, 세션별 디렉터리로 빌드한 라우트 타입을 **못 읽는다**(2026-09-04 실측).
-→ `include` 에 `.next-*/types/**/*.ts` 를 함께 넣어 뒀다.
+⚠️ **tsc·타입 검사는 빌드와 달리 자동으로 갈라지지 않는다.** 세션별 dist 로 빌드한 라우트 타입은
+`tsconfig.json` 의 `include` 가 가리키는 곳에서만 읽힌다. 그래서 세션은 **tsconfig 도 갈라 쓴다**
+(§tsconfig-dist-glob P1 `1d1a2a67` · P2 `b3526130`).
 
-🛑 **경로를 더 늘리지 말 것.** `.next-*` 글롭이 `.next-scan`·`.next-invite` 를 이미 전부 덮는다.
-   2026-09-05 실측: 누군가 `.next-scan/types/**`·`.next-invite/types/**`·`.next-invite2/types/**`
-   3줄을 명시로 추가했는데 **전부 중복**이고 증상은 그대로다.
-   라우트 타입이 안 읽히는 진짜 원인은 패턴이 아니라 **그 시점에 그 디렉터리가 없는 것**이다 —
-   글롭은 **존재하는 파일만** 매칭하므로, 그 세션이 **한 번이라도 그 dist 로 빌드하기 전**에는
-   명시 경로를 적어도 똑같이 아무것도 안 잡는다.
-   → 라우트 생성 타입의 정본 게이트는 **`next build`** 다. tsc 는 그걸 대신하지 못한다.
+```
+base  apps/web/tsconfig.json          include = "src" + ".next/types/**/*.ts"   ← 이 둘만
+세션  apps/web/tsconfig.next-<트랙>.json  { extends: base, include: ["src", "<dist>/types/**/*.ts"] }
+      npm run build 의 prebuild(scripts/ensure-session-tsconfig.js)가 자동 생성 · gitignore 산출물
+      next.config.js 의 typescript.tsconfigPath 가 NEXT_TSCONFIG 를 읽는다(미설정 = Next 기본값)
+```
+
+🛑 **base 에 `.next-*/types/**` 글롭도, `.next-<트랙>/types/**` 명시 줄도 넣지 말 것.**
+   남의 세션 dist 의 **옛 라우트 타입**까지 검사 대상이 되어, 라우트를 지우는 순간
+   그 타입이 지운 파일을 import 해 **전 세션 build 가 깨진다**(2026-09 실측 3회).
+   P2 프로브 실측: 라우트 1개를 지우자 옛 설정에서 5개 dist 출처로 10건 RED,
+   세션 tsconfig 로는 build exit 0.
+
+🔑 **그 명시 줄은 사람이 적은 게 아니다 — Next 가 쓴다.**
+   next 14.2.35 `dist/lib/typescript/writeConfigurationDefaults.js:222-236` 은 include 에
+   `${distDir}/types/**/*.ts` **문자열이 그대로** 없으면 그 줄을 추가하고 tsconfig 를 다시 쓴다
+   (글롭이 덮어도 문자열 비교라 인정하지 않는다). 그래서 `NEXT_DIST_DIR` 만 주고 빌드하면
+   그 세션의 줄이 **base 워킹카피에 다시 붙는다**(2026-09-12 실시간 관측).
+   → 되돌리거나 남의 작업으로 오해하지 말 것. `NEXT_TSCONFIG` 를 함께 주면 애초에 안 붙는다.
+
+⚠️ `NEXT_TSCONFIG` 를 주면서 그 파일이 없으면 **Next 가 tsconfig 를 새로 만든다**
+   (`strict:false` · `extends` 없음 · `@/*` 별칭 없음 → build 실패, 2026-09-12 실측).
+   prebuild 배선이 그걸 막는다 — 생성기를 prebuild 에서 떼지 말 것.
+
+⚠️ 라우트를 지우면 **내 dist** 의 옛 타입은 여전히 남는다. 그 세션이 한 번 빌드하면 갱신되지만,
+   그 전에 수동 `npx tsc --noEmit` 을 돌리면 지운 라우트 에러가 뜬다. 남의 dist 는 이제 안 걸린다.
+
 🛑 그래도 **tsc 수치는 다른 세션이 빌드 중일 때 불안정하다** — glob 이 잡은 파일을 상대 빌드가
 지우면 `TS6053 File not found` 가 뜨고 총계가 튄다(같은 시점 실측 424 → 29). **두 번 돌려
 같은 수가 나오는지 확인**하고, 다르면 상대 빌드가 끝난 뒤 다시 잰다.
