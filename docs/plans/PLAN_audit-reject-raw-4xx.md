@@ -97,7 +97,8 @@ enforceAction 보유 핸들러                     159
 | Decision | Rationale | Trade-offs |
 | :--- | :--- | :--- |
 | **② 거부 헬퍼**(래퍼 아님) | 호출부 한 줄 교체 + sentinel 하나. 중간 상태가 짧고 상한으로 잔량이 보인다 | 해제 책임이 여전히 호출자에 있다(래퍼가 근본) |
-| **`enforcement` 객체 메서드**로 둔다 | 🛑 **경계를 tsc 가 강제한다** — handle 이 없는 206 지점에는 `enforcement` 변수가 스코프에 없어 **컴파일이 안 된다**. A 채우기에서 변수 스코프를 tsc 가 판정한 것과 같은 원리 | 없음 |
+| **`enforcement` 객체 메서드**로 둔다 | 경계를 **tsc 가 1차로 막는다** — 실측(Phase 0 프로브): 164곳이 `let enforcement: InlineEnforcementHandle \| undefined;` 를 핸들러 최상단에 선언하므로 변수는 스코프에 **있고**, `enforcement.reject()` 는 **TS18048 possibly undefined** 로 막힌다 | 🛑 `enforcement?.reject()` 로 **우회 가능**(프로브 B 통과) → sentinel 2차가 필요하다 |
+| **두 겹**: tsc + sentinel | 우회형까지 잠근다 — "enforceAction 이전 구간에서 `enforcement?.` 사용 0". 오늘 P0-b1 의 private+비결정적 키와 같은 원칙 | 검사 1개 추가 |
 | 🛑 **전역 헬퍼 금지** | `import { reject }` 형태로 만들면 위 보증이 **사라진다**(handle 없는 자리에서도 호출 가능해진다). 금지한다 | 없음 |
 | fail() 먼저, 응답 나중 | 내보내고 기록하면 실패 시 흔적이 없다(P0-b1 프록시와 같은 원칙) | 없음 |
 
@@ -119,14 +120,25 @@ enforceAction 보유 핸들러                     159
 
 ### Phase 0: 경계 고정 & 사전 판정
 **Goal:** 대상(144)과 대상 밖(206)을 **컴파일러가 가르게** 하고, 기존 핀을 훑는다.
-- Status: [ ] Pending
+- Status: [ ] Pending | [x] **In Progress** (프로브 완료 · 잔여: 미커버 2파일 · 기존 핀 목록)
 
-**🔴 RED:** `enforcement` 가 없는 자리에서 `reject()` 를 부르면 tsc 가 막는지 확인(의도적 오류 1건)
-**🟢 GREEN:** 경계 강제 = 객체 메서드 + tsc(자동). 육안은 **보조** — 애매한 자리만 표본
-**🔵 REFACTOR:** 206 전수 검증하지 않는다(검증할 필요가 없다)
+**🔴 RED:** enforceAction **이전** 자리에서 handle 메서드를 부르면 tsc 가 막는지 — 프로브로 실측
+**🟢 GREEN:** 실측 결과(2026-09-13):
+```
+선언 패턴    let enforcement: InlineEnforcementHandle | undefined;   164곳 (핸들러 최상단)
+             const enforcement = enforceAction(...)                    1곳
+프로브 A     enforcement.fail()   → TS18048 possibly undefined   ✅ 막힌다
+프로브 B     enforcement?.fail()  → 에러 없음                    ❌ 우회 통과
+```
+→ 경계는 "스코프 부재"가 아니라 **타입 판정**이다. 계획서 초안의 "컴파일이 안 된다"는 **정정**했다.
+**🔵 REFACTOR:** 206 전수 검증은 여전히 불필요(무심코 쓰면 tsc 가 잡는다). 대신 **sentinel 2차**로 우회형을 잠근다.
 
-**✋ Quality Gate:** 전역 헬퍼 형태가 아님 · 파서 미커버 2파일 수동 분류 완료 · 기존 핀 78건 경고 목록 확보
-**Rollback:** 계획 단계 · 코드 변경 0
+**✋ Quality Gate:**
+- [x] 전역 헬퍼 형태 아님(객체 메서드) — `import { reject }` 금지
+- [x] 프로브 A/B 실측 완료 · 보증 강도 기록
+- [ ] 파서 미커버 2파일 수동 분류
+- [ ] 기존 핀 78건 경고 목록 확보
+**Rollback:** 계획 단계 · 코드 변경 0(프로브는 바이트 복원 확인)
 
 ### Phase 1: `reject()` 계약 + 상한 핀
 **Goal:** 헬퍼를 만들고 잔량을 숫자로 고정한다.
@@ -171,7 +183,7 @@ enforceAction 보유 핸들러                     159
 
 | Risk | P | I | Mitigation |
 | :--- | :--- | :--- | :--- |
-| 경계 오판(206 중 일부가 실제 handle 이후) | Low | High | **tsc 가 강제** — handle 없으면 컴파일 실패. 전역 헬퍼 금지로 보증 유지 |
+| 경계 오판(206 중 일부가 실제 handle 이후) | Low | High | tsc 1차(TS18048) + **sentinel 2차**(`enforcement?.` 우회 0). 전역 헬퍼 금지로 1차 보증 유지 |
 | 기존 핀 78건이 raw 4xx 요구 | Med | Med | 사전 sweep(경고) + 전량 게이트(검출). 오늘 3건 모두 게이트가 잡았다 |
 | 응답 계약 변경 | Low | High | status/body 통과 · **응답 동일성**을 sentinel 로 핀 |
 | 파서 미커버 2파일 | High | Low | 한계 기록 + 수동 분류(Phase 0) |
@@ -204,3 +216,6 @@ enforceAction 보유 핸들러                     159
 - [2026-09-13] "lock 이 감사보다 급하다" → TTL 5분 존재로 성립 안 함. 급한 쪽은 감사 소실.
 - [2026-09-13] 첫 파서가 `{ params }` 구조분해 인자의 중괄호를 본문 시작으로 오인해 144 중 54파일을 놓쳤다.
   "파일 144 > 핸들러 97 은 불가능"이라는 모순으로 잡았다. CLAUDE.md 에 이미 적힌 함정이었다.
+- [2026-09-13] **Phase 0 프로브**: 경계 보증이 초안보다 약하다. 변수는 스코프에 **있고**(164곳이 최상단 선언),
+  막는 것은 `| undefined` 타입 판정(TS18048)이다. `enforcement?.` 로는 **뚫린다** — 그래서 두 겹으로 간다.
+  초안의 "스코프에 없어 컴파일이 안 된다"는 틀렸다. 프로브 없이 넘어갔으면 약한 보증을 강한 것으로 적을 뻔했다.
