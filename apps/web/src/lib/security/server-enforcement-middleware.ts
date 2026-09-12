@@ -469,6 +469,17 @@ export interface InlineEnforcementHandle {
   }): void;
   /** 실패 시 mutation lock 해제 (audit 미기록) */
   fail(): void;
+  /**
+   * §audit-reject-raw-4xx (호영님 2026-09-13) — **핸들러 판단 거부(4xx).**
+   *   deny()  = 권한·CSRF 거부 (미들웨어가 판정 · allowed=false)
+   *   reject() = 핸들러가 판정한 거부 (검증 실패 · 소유권 불일치 · 상태 충돌 …)
+   *
+   * 🛑 lock 을 **먼저** 풀고 그 다음 응답을 만든다 — 내보내고 정리하면 실패 시 흔적이 없다
+   *   (P0-b1 프록시 라우트와 같은 원칙). status·body 는 **그대로 통과**한다.
+   * 🔑 객체 메서드로 두는 이유: handle 이 없는 자리(enforceAction 이전)에서 부르면 tsc 가 막는다.
+   *   전역 헬퍼로 만들면 그 보증이 사라진다 — 만들지 말 것.
+   */
+  reject(status: number, body: Record<string, unknown>): NextResponse;
 }
 
 export function enforceAction(config: InlineEnforcementConfig): InlineEnforcementHandle {
@@ -634,6 +645,14 @@ export function enforceAction(config: InlineEnforcementConfig): InlineEnforcemen
       if (lockAcquired) {
         failMutation(concurrencyKey);
       }
+    },
+
+    reject(status: number, body: Record<string, unknown>) {
+      // 🛑 순서가 곧 보증이다 — 응답을 만들기 **전에** lock 을 푼다.
+      if (lockAcquired) {
+        failMutation(concurrencyKey);
+      }
+      return NextResponse.json(body, { status });
     },
   };
 }

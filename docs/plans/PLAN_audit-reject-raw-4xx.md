@@ -30,8 +30,8 @@
 enforceAction 보유 핸들러                     159
 (a) 쓰기 없음 · complete 없음                  27   정상(AI 추출·파싱·번역 등)
 (b) 쓰기인데 complete 누락                      0   결함 없음
-(c) enforceAction 이후 raw 4xx                145 지점 / 58 핸들러 / 20 도메인  ← 이 계획의 대상
-     (파서 144 + 미커버 파일에서 수동 발견 1 · vendor-requests 429)
+(c) enforceAction 이후 raw 4xx                153 지점 / 20 도메인  ← 이 계획의 대상
+     (게이트 파서 실측 · 예비 python 파서 144 는 3파일을 놓쳤다 — 아래 Notes)
      enforceAction 이전 4xx                  206 지점  ← 대상 **밖**(handle 없음)
 파서 커버리지                                 142/144 파일 (놓침 2)
 ```
@@ -63,13 +63,13 @@ enforceAction 보유 핸들러                     159
 ## 3. Overview
 
 **Feature Description:**
-`enforceAction` 이 handle 을 연 뒤 4xx 로 조기 반환하는 자리가 145 지점 있다. 그 경로는 `fail()` 도 `complete()` 도 부르지 않아 **거부 시도가 감사에 남지 않는다**(부수로 lock 이 최대 5분 잔존).
+`enforceAction` 이 handle 을 연 뒤 4xx 로 조기 반환하는 자리가 153 지점 있다. 그 경로는 `fail()` 도 `complete()` 도 부르지 않아 **거부 시도가 감사에 남지 않는다**(부수로 lock 이 최대 5분 잔존).
 `enforcement.reject(status, body)` 를 도입해 **잡은 쪽이 푼다**는 원칙으로 되돌린다.
 
 **Success Criteria:**
 - [ ] `enforcement.reject()` 가 **fail() 을 먼저 부르고** 그 다음 응답을 반환한다(프록시 라우트와 같은 원칙: 내보내기 전에 기록)
 - [ ] 응답 **바이트가 동일**하다 — status·body 를 그대로 통과시키고 부작용만 추가한다
-- [ ] enforceAction 이후 raw 4xx 지점 145 → **0**
+- [ ] enforceAction 이후 raw 4xx 지점 153 → **0**
 - [ ] prod 스모크: 거부 1회 → `MutationAuditEvent` 에 **`result` 가 성공이 아닌 값**으로 남는다
 
 **Out of Scope (⚠️ 절대 구현하지 말 것):**
@@ -99,6 +99,7 @@ enforceAction 보유 핸들러                     159
 | :--- | :--- | :--- |
 | **② 거부 헬퍼**(래퍼 아님) | 호출부 한 줄 교체 + sentinel 하나. 중간 상태가 짧고 상한으로 잔량이 보인다 | 해제 책임이 여전히 호출자에 있다(래퍼가 근본) |
 | **`enforcement` 객체 메서드**로 둔다 | 경계를 **tsc 가 1차로 막는다** — 실측(Phase 0 프로브): 164곳이 `let enforcement: InlineEnforcementHandle \| undefined;` 를 핸들러 최상단에 선언하므로 변수는 스코프에 **있고**, `enforcement.reject()` 는 **TS18048 possibly undefined** 로 막힌다 | 🛑 `enforcement?.reject()` 로 **우회 가능**(프로브 B 통과) → sentinel 2차가 필요하다 |
+| **deny() / reject() 경계** | `deny()` = `enforcement.allowed === false`(미들웨어 판정 · pre-built 응답이라 status·body 를 고를 수 없다). **`reject()` = 핸들러가 스스로 조회·판정한 거부**(멤버십·소유권·상태 충돌·검증 실패 · 고유 메시지) | 기준이 한 줄이라 교체 시 오분류가 안 난다 |
 | **두 겹**: tsc + sentinel | 우회형까지 잠근다 — "enforceAction 이전 구간에서 `enforcement?.` 사용 0". 오늘 P0-b1 의 private+비결정적 키와 같은 원칙 | 검사 1개 추가 |
 | 🛑 **전역 헬퍼 금지** | `import { reject }` 형태로 만들면 위 보증이 **사라진다**(handle 없는 자리에서도 호출 가능해진다). 금지한다 | 없음 |
 | fail() 먼저, 응답 나중 | 내보내고 기록하면 실패 시 흔적이 없다(P0-b1 프록시와 같은 원칙) | 없음 |
@@ -120,7 +121,7 @@ enforceAction 보유 핸들러                     159
 ## 7. Implementation Phases
 
 ### Phase 0: 경계 고정 & 사전 판정
-**Goal:** 대상(145)과 대상 밖(206)을 **컴파일러가 가르게** 하고, 기존 핀을 훑는다.
+**Goal:** 대상(153)과 대상 밖(206)을 **컴파일러가 가르게** 하고, 기존 핀을 훑는다.
 - Status: [x] **Complete** (2026-09-13 · 프로브 + 미커버 분류 + 핀 목록)
 
 **🔴 RED:** enforceAction **이전** 자리에서 handle 메서드를 부르면 tsc 가 막는지 — 프로브로 실측
@@ -149,22 +150,22 @@ enforceAction 보유 핸들러                     159
 **🟢 GREEN:** `InlineEnforcementHandle.reject(status, body)` 구현
 **🔵 REFACTOR:** `deny()` 와 역할 분리 주석(deny=권한 거부 · reject=핸들러 판단 거부)
 
-**✋ Quality Gate:** sentinel 신설(enforceAction 이후 raw 4xx ≤ **145**) · 주입 프로브 RED · tsc 0 · 전량 게이트 신규 RED 0
+**✋ Quality Gate:** sentinel 신설(enforceAction 이후 raw 4xx ≤ **153**) · 주입 프로브 RED · tsc 0 · 전량 게이트 신규 RED 0
 **Rollback:** git revert(헬퍼 + sentinel)
 
 ### Phase 2: inventory 28 지점
 **Goal:** 최다 도메인부터. 오늘 여러 번 만진 축이라 회귀가 빨리 드러난다.
 - Status: [ ] Pending
-**✋ Quality Gate:** 상한 **117** · 도메인 테스트 GREEN · 게이트 신규 RED 0
+**✋ Quality Gate:** 상한 **125** · 도메인 테스트 GREEN · 게이트 신규 RED 0
 **Rollback:** git revert(도메인 단위)
 
 ### Phase 3: organizations 24 + quotes 14
 - Status: [ ] Pending
-**✋ Quality Gate:** 상한 **79**
+**✋ Quality Gate:** 상한 **87**
 
 ### Phase 4: team 13 + budgets 12 + admin 6 + billing 6
 - Status: [ ] Pending
-**✋ Quality Gate:** 상한 **42**
+**✋ Quality Gate:** 상한 **50**
 
 ### Phase 5: 잔여 41 + 프로브 + prod 스모크
 **Goal:** 상한 0 · 실제로 남는지 확인.
@@ -201,7 +202,7 @@ enforceAction 보유 핸들러                     159
 
 ## 11. Progress Tracking
 - Overall: 0%
-- Current phase: Phase 1 (reject() 계약 + 상한 핀 145)
+- Current phase: Phase 1 완료 대기(게이트) → Phase 2 (inventory · 상한 153 → 125)
 - Blocker: 없음 (P0-b2 승인이 오면 그쪽 선행)
 - Next: Phase 0 경계 고정
 
@@ -221,5 +222,15 @@ enforceAction 보유 핸들러                     159
   막는 것은 `| undefined` 타입 판정(TS18048)이다. `enforcement?.` 로는 **뚫린다** — 그래서 두 겹으로 간다.
   초안의 "스코프에 없어 컴파일이 안 된다"는 틀렸다. 프로브 없이 넘어갔으면 약한 보증을 강한 것으로 적을 뻔했다.
 - [2026-09-13] **Phase 0 완료**: 파서 미커버 2파일을 손으로 갈랐더니 1건이 실제 대상이었다
-  (`quotes/[id]/vendor-requests` 429). 대상이 144 → **145 지점 / 58 핸들러**로 늘었다.
+  (`quotes/[id]/vendor-requests` 429). 대상이 144 → **153 지점**로 늘었다.
   커버리지 한계를 "기록만" 하고 넘겼으면 그 1건은 영원히 안 잡혔다.
+- [2026-09-13] **파서 차이 9건 특정**(호영님 지시 — "Phase 2 에서 자연히 드러난다로 넘기지 마십시오").
+  두 파서 목록을 diff 한 결과 **게이트에만 있고 python 에만 있는 건 0** — python 이 3파일을 통째로 놓쳤다:
+  `organizations/[id]/invites`(400·403) · `quotes/[id]`(400×2·403×3·404) · `quotes/[id]/vendor-requests`(429).
+  마지막 1건은 Phase 0 에서 **손으로 찾은 것과 일치**한다 — 게이트 파서 신뢰의 근거.
+  육안 판정: invites 는 enforceAction(47) 이후 61/86/97 이 fail() 없이 반환 → **전부 진짜 대상**.
+  → 상한 **153 이 정확한 값**이다. 부풀려진 게 아니므로 Phase 5 에서 0 에 도달한다.
+  🔑 "게이트 러너가 정본"은 운영 규칙이지 정확성 보증이 아니다(호영님). 두 파서가 다르면 **diff 로 특정**한다.
+- [2026-09-13] **deny/reject 경계 확정**: `deny()` 는 미들웨어 판정(allowed=false) 전용이고 pre-built 응답이라
+  status·body 를 고를 수 없다. 핸들러가 스스로 판정한 거부는 고유 메시지를 내므로 전부 `reject()` 다.
+  → 153 중 deny 로 가야 할 자리는 **없다**(구조가 이미 갈라 놓았다).
