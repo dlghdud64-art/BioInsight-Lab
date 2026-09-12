@@ -1,8 +1,13 @@
 {
-  "generated": "2026-09-12T06:43:50.865Z",
+  "generated": "2026-09-12T08:05:40.941Z",
   "axis": "npx vitest run (전 축)",
-  "total": 187,
-  "howTo": "갱신: node scripts/red-ledger.mjs --update · 대조: node scripts/red-ledger.mjs",
+  "total": 185,
+  "kind": "sentinel 만 등재한다 · ratchet 은 등재 대상이 아니라 즉시 처리 대상",
+  "ratchetCensus": {
+    "total": 5,
+    "red": []
+  },
+  "howTo": "갱신: node scripts/red-ledger.mjs --update · 대조: npm run red-ledger",
   "rule": "entries 는 귀속이 적힌 것 · unattributed 는 아직 모르는 것. 섞지 않는다. P2 종료 조건은 unattributed 0.",
   "entries": [],
   "unattributed": [
@@ -156,8 +161,6 @@
     "src/__tests__/dashboard/system-insight-compact-252d3.test.ts > §11.252d-3 — invariant 보존 gradient accent 4 tone (emerald/amber/rose/indigo) 보존",
     "src/__tests__/dashboard/system-insight-compact-252d3.test.ts > §11.252d-3 — invariant 보존 §11.243b #3 dismiss button + sessionStorage 보존",
     "src/__tests__/dashboard/verification-summary-mobile-hidden-275.test.ts > §11.275 #2 — verification-summary section 구조 invariant 보존 quote-dispatch-summary-send-cta + '공급사에 전송' (§11.274b) 보존",
-    "src/__tests__/design/amber-token-ratchet.test.ts > §amber-token-ratchet — 총계 잠금 amber/orange 총계 = baseline 66",
-    "src/__tests__/design/amber-token-ratchet.test.ts > §amber-token-ratchet — 파일별 분포 잠금 총계가 같아도 파일이 옮겨간 경우를 잡는다",
     "src/__tests__/inventory/expired-lot-disposal-state-entry-contract.test.ts > inventory disposal state-entry contract keeps disposal evidence inline so the pilot can still click page actions",
     "src/__tests__/inventory/inventory-lot-issue-priority-strip-270.test.ts > inventory lot issue priority strip keeps lot issue priority counts visible before the operator chooses an action",
     "src/__tests__/inventory/inventory-lot-issue-priority-strip-270.test.ts > inventory lot issue priority strip keeps reorder review as secondary guidance after disposal",
