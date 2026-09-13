@@ -1,11 +1,11 @@
 /**
  * §inbound-rfq-autocapture P2 — 공급사 회신 첨부 실저장(누락 0)
  *
- * 🛑 access: "private" — 공급사 회신 첨부는 **거래 조건 문서**다(견적 PDF · 단가).
- *   읽는 화면을 만들 때 `public` 으로 되돌리지 말 것. 안 열린다고 되돌리면 그 순간
- *   URL 을 아는 누구나 열 수 있다(§quote-scan-public-storage P0 · 2026-09-12).
- *   대신 인증·권한을 거치는 **프록시 라우트**를 쓴다 — `/api/orders/[id]/po-document` 와 같은 형태:
- *     인증 → 조직 대조 → enforceAction(열람도 감사) → get(path, { access: "private" }) 스트림 전달.
+ * 🛑 공급사 회신 첨부는 **거래 조건 문서**다(견적 PDF · 단가).
+ *   access 는 스토어 모드를 따른다(lib/storage/blob-access · 현재 public 스토어).
+ *   그래서 보호는 **추측 불가 키 + 프록시 전용 노출** 두 겹이다. 읽는 화면을 만들 때 URL 을 응답에
+ *   싣지 말고 `/api/orders/[id]/po-document` 와 같은 프록시를 쓴다:
+ *     인증 → 조직 대조 → enforceAction(열람도 감사) → get(path, { access: blobReadAccess(path) }) 스트림 전달.
  *
  * inbound parse(/api/inbound/sendgrid/[secret])가 받은 첨부(견적 PDF 등)를 실제
  * object storage 에 업로드한다. 이전 inbound route 의 메타-only placeholder
@@ -20,6 +20,8 @@
  */
 
 import { getServiceClient } from "@/lib/supabase";
+import { randomUUID } from "node:crypto";
+import { BLOB_UPLOAD_ACCESS } from "@/lib/storage/blob-access";
 
 export class AttachmentStorageNotConfiguredError extends Error {
   constructor() {
@@ -69,18 +71,18 @@ export async function uploadQuoteReplyAttachment(
   }
 
   const safeName = input.filename.replace(/[^a-zA-Z0-9.-]/g, "_");
-  const key = `quote-replies/${input.quoteId}/${input.replyId}/${Date.now()}_${safeName}`;
+  // 🛑 randomUUID · quoteId·replyId·시각은 추측 가능한 값이라 키 보호가 안 된다(스토어가 public).
+  const key = `quote-replies/${input.quoteId}/${input.replyId}/${randomUUID()}_${safeName}`;
 
   switch (provider) {
     case "vercel-blob": {
       // host install: @vercel/blob (설치됨). env BLOB_READ_WRITE_TOKEN.
       const { put } = await import("@vercel/blob");
-      /* 🛑 §quote-scan-public-storage P0-b1 (호영님 2026-09-12 승인) — public → **private**.
-       *   공급사 회신 첨부는 견적 PDF 다(단가·거래 조건). public 이면 URL 을 아는 누구나 연다.
-       *   prod 실측 2026-09-12: QuoteReplyAttachment 0행 · 읽는 화면 0 → 깨질 소비처가 없다.
-       *   저장은 path 를 쓰고(QuoteReplyAttachment.path), 열람이 필요해지면 그때 인증 경로를 만든다. */
+      /* 🛑 §quote-scan-public-storage B (2026-09-13) · P0-b1 의 "private" 는 public 스토어에서 거부됐다.
+       *   access 는 스토어 모드 상수를 쓴다. prod 실측 2026-09-12: QuoteReplyAttachment 0행 · 읽는 화면 0.
+       *   저장은 path 를 쓰고(QuoteReplyAttachment.path), 열람이 필요해지면 그때 프록시를 만든다. */
       const result = await put(key, input.buffer, {
-        access: "private",
+        access: BLOB_UPLOAD_ACCESS,
         contentType: input.contentType,
         addRandomSuffix: false,
         allowOverwrite: true,

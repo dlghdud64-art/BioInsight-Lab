@@ -26,13 +26,15 @@
  *   - prefix "ocr-images" (image) / "ocr-pdfs" (PDF) 분리
  *   - SHA-256(raw bytes) — image: base64 strip, PDF: buffer 직접
  *   - put({ addRandomSuffix: false, allowOverwrite: true }) — 키 자체가 randomUUID 라 충돌 0
- *   - 🛑 P0-b2 (2026-09-13): access "private" + **비결정적 키**. hash 는 DB imageHash 에만 남긴다.
- *     public 으로 되돌리거나 키에 hash 를 다시 넣지 말 것 — 파일을 가진 누구나 URL 을 재현한다.
+ *   - 🛑 P0-b2 (2026-09-13): **비결정적 키** + 프록시 전용 노출. hash 는 DB imageHash 에만 남긴다.
+ *     키에 hash 를 다시 넣지 말 것 · 파일을 가진 누구나 URL 을 재현한다.
+ *     access 는 BLOB_UPLOAD_ACCESS(스토어 모드 · 현재 public) · private 은 private 스토어가 있어야 한다.
  *   - graceful degradation — STORAGE_PROVIDER 미설정 시 throw → caller fallback
  */
 
 import { createHash, randomUUID } from "node:crypto";
 import type { OcrJob, OcrJobType } from "@prisma/client";
+import { BLOB_UPLOAD_ACCESS } from "@/lib/storage/blob-access";
 
 // db 는 함수 내부 lazy import (sandbox vitest path alias 해석 회피).
 // Production runtime 에서는 정상 import. Phase 1 sentinel + Phase 2 unit
@@ -113,7 +115,7 @@ export async function uploadOcrImage(
       // env: BLOB_READ_WRITE_TOKEN (Vercel 환경 자동, 또는 .env)
       const { put } = await import("@vercel/blob");
       const result = await put(key, buffer, {
-        access: "private" /* P0-b2 — 견적서 원본은 조직 내부 문서. 열람은 /api/ocr/jobs/[jobId]/image 프록시 */,
+        access: BLOB_UPLOAD_ACCESS /* 스토어 모드를 따른다(lib/storage/blob-access) · 노출은 프록시 전용 */,
         contentType: mimeType,
         // addRandomSuffix=false — 키가 이미 randomUUID
         // allowOverwrite=true — 옛 판본 호환(충돌 0이라 실효 없음)
@@ -181,7 +183,7 @@ export async function uploadOcrPdf(
     case "vercel-blob": {
       const { put } = await import("@vercel/blob");
       const result = await put(key, input.buffer, {
-        access: "private" /* P0-b2 — 견적서 원본은 조직 내부 문서. 열람은 /api/ocr/jobs/[jobId]/image 프록시 */,
+        access: BLOB_UPLOAD_ACCESS /* 스토어 모드를 따른다(lib/storage/blob-access) · 노출은 프록시 전용 */,
         contentType: "application/pdf",
         // addRandomSuffix=false + allowOverwrite=true — image 패턴 정합
         addRandomSuffix: false,

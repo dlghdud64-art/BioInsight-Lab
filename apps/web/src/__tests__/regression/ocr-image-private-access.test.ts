@@ -1,6 +1,9 @@
 /**
- * §quote-scan-public-storage P0-b2 (호영님 2026-09-13 승인) ·
- * **OCR 원본(견적서·라벨)은 public 으로 올리지 않고, 브라우저는 blob URL 을 받지 않는다.**
+ * §quote-scan-public-storage P0-b2 (호영님 2026-09-13 승인) · B 로 재정의(같은 날)
+ * **OCR 원본(견적서·라벨)은 추측 불가 키로 올리고, 브라우저는 blob URL 을 받지 않는다.**
+ *   (파일명의 private 은 이력이다. access 는 스토어 단위이고 prod 스토어는 public 이라 fed86a6c 의
+ *    "private" 업로드는 거부 → graceful 스킵됐다. 명제는 **키 + 프록시 전용 노출** 두 겹이다.
+ *    private 스토어 전환은 런칭 체크리스트 A · lib/storage/blob-access 참조.)
  *
  * ── 왜 ──
  * 2026-09-12 실측: `uploadOcrImage` · `uploadOcrPdf` 가 `access: "public"` 에 키가 `…/${hash}.ext` 였다.
@@ -10,13 +13,14 @@
  *     DOM·네트워크 탭에 노출되고 인증 없이 열렸다(prod 6건 · 백업 시 http 200).
  *
  * ── 이 파일이 보는 것 ──
- *   1. 업로드 2곳 private + 비결정적 키
+ *   1. 업로드 2곳 access 는 스토어 모드 상수(리터럴 0) + 비결정적 키
  *   2. 프록시가 조직 대조 → 감사 → 스트림 순서로 연다
  *   3. coa-recognize 응답이 blob URL 이 아니라 프록시 경로다
  *
  * ── 이 파일이 안 보는 것 (조항 11 · 자기 한계) ──
- *   1. **이미 나간 옛 public blob 6건** · 코드가 닫지 못한다. 재업로드 + 옛 blob 삭제(데이터 단계)가
- *      닫고, 판정은 "옛 URL 이 404" 로 한다(정적 검사 불가).
+ *   1. **이미 나간 옛 blob 6건(해시 키)** · 코드가 닫지 못한다. 새 키로 재업로드 + 옛 blob 삭제(데이터 단계)가
+ *      닫고, 판정은 "옛 URL 이 404" 로 한다(정적 검사 불가 · CDN 전파 60초 · 이미 연 브라우저 캐시는 못 지운다).
+ *   4. 스토어가 public 이라 **키가 새면 인증 없이 열린다** · 원리적 한계. private 스토어(A)가 닫는다.
  *   2. 런타임 권한 · 실제 403 은 라우트 실행이 판정한다.
  *   3. 다른 API 가 OcrJob.imageUrl 을 새로 싣는 경로 · 아래 3번은 coa-recognize 만 본다.
  *      2026-09-13 전수: OcrJob.imageUrl 을 응답에 싣는 API 는 coa-recognize 1곳이었다.
@@ -53,14 +57,14 @@ function fnBlock(src: string, head: string): string {
   throw new Error(`${head} 본문 닫힘 없음`);
 }
 
-describe("§quote-scan-public-storage P0-b2 · 업로드는 private · 키는 재현 불가", () => {
+describe("§quote-scan-public-storage P0-b2 · 업로드 access 는 스토어 모드 상수 · 키는 재현 불가", () => {
   const src = read(STORE);
   // 경로 각각 단언한다 · 하나만 되돌아가도 유출 경로 부활이다(OR 로 묶지 않는다).
   for (const head of ["export async function uploadOcrImage(", "export async function uploadOcrPdf("]) {
-    it(`🛑 ${head.slice(22, -1)} · access private (public 0)`, () => {
+    it(`🛑 ${head.slice(22, -1)} · access 리터럴 0 (BLOB_UPLOAD_ACCESS)`, () => {
       const body = fnBlock(src, head);
-      expect(body).toMatch(/access:\s*"private"/);
-      expect(body).not.toMatch(/access:\s*"public"/);
+      expect(body).toMatch(/access:\s*BLOB_UPLOAD_ACCESS\b/);
+      expect(body).not.toMatch(/access:\s*"(public|private)"/);
     });
 
     it(`🛑 ${head.slice(22, -1)} · blob 키에 파일 해시가 없다 (randomUUID)`, () => {
@@ -99,8 +103,8 @@ describe("§quote-scan-public-storage P0-b2 · 열람은 프록시가 조직 대
     expect(done).toBeLessThan(streamAt);
   });
 
-  it("🛑 private 접근으로 읽고 공유 캐시에 남기지 않는다", () => {
-    expect(src).toMatch(/get\(\s*job\.imageUrl,\s*\{\s*access:\s*"private"\s*\}\s*\)/);
+  it("🛑 저장 URL 의 access 판정기로 읽고 공유 캐시에 남기지 않는다", () => {
+    expect(src).toMatch(/get\(\s*job\.imageUrl,\s*\{\s*access:\s*blobReadAccess\(job\.imageUrl\)\s*\}\s*\)/);
     expect(src).toMatch(/"Cache-Control":\s*"private, no-store"/);
     // blob URL 로 리다이렉트하면 프록시가 무의미해진다.
     expect(src).not.toMatch(/NextResponse\.redirect/);

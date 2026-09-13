@@ -1,6 +1,9 @@
 /**
- * §quote-scan-public-storage P0-b1 (호영님 2026-09-12 승인) —
- * **발주서·공급사 회신 첨부는 public 으로 올리지 않는다. 열람은 프록시가 감사와 함께 한다.**
+ * §quote-scan-public-storage P0-b1 (호영님 2026-09-12 승인) · B 로 재정의(2026-09-13)
+ * **발주서·공급사 회신 첨부는 추측 불가 키로 올리고, 열람은 프록시가 감사와 함께 한다.**
+ *   (파일명의 private 은 이력이다. 09-13 실측: access 는 스토어 단위이고 prod 스토어는 public 이라
+ *    "private" 업로드가 거부됐다. 명제는 access 값이 아니라 **키 + 프록시 전용 노출** 두 겹이다.
+ *    private 스토어 전환은 런칭 체크리스트 A · lib/storage/blob-access 참조.)
  *
  * ── 왜 ──
  * 2026-09-12 전수: Vercel Blob 업로드 4곳이 전부 `access: "public"` 이었다.
@@ -15,6 +18,7 @@
  *
  * ── 이 파일이 안 보는 것 (조항 11) ──
  *   1. OCR 견적 이미지·PDF 2곳 · **닫힘(P0-b2 · 2026-09-13)** → `ocr-image-private-access.test.ts` 가 본다.
+ *   4. access 값의 단일 출처·스토어 모드 판정 → `storage/blob-access.test.ts` 가 본다.
  *   2. 런타임 권한 — 정적 검사다. 실제 403 응답은 라우트 실행이 판정한다.
  *   3. Vercel Blob 외 provider(supabase · s3)는 아직 미구현 경로다.
  */
@@ -31,17 +35,26 @@ const REPLY_STORE = "src/lib/email/quote-reply-attachment-storage.ts";
 const PROXY = "src/app/api/orders/[id]/po-document/route.ts";
 const TRACKING = "src/components/orders/order-tracking-section.tsx";
 
-describe("§quote-scan-public-storage P0-b1 · 업로드는 private 다", () => {
-  it("🛑 발주서 PDF 를 public 으로 올리지 않는다", () => {
+describe("§quote-scan-public-storage P0-b1 · 업로드 access 는 스토어 모드 상수 · 키는 추측 불가", () => {
+  // 경로 각각 단언한다(OR 금지) · 한쪽만 리터럴로 되돌아가도 같은 사고(조용한 업로드 스킵)가 난다.
+  it("🛑 발주서 PDF · access 리터럴 0 (BLOB_UPLOAD_ACCESS)", () => {
     const src = read(PO_STORE);
-    expect(src).toMatch(/access:\s*"private"/);
-    expect(src).not.toMatch(/access:\s*"public"/);
+    expect(src).toMatch(/access:\s*BLOB_UPLOAD_ACCESS\b/);
+    expect(src).not.toMatch(/access:\s*"(public|private)"/);
   });
 
-  it("🛑 공급사 회신 첨부를 public 으로 올리지 않는다", () => {
+  it("🛑 공급사 회신 첨부 · access 리터럴 0 (BLOB_UPLOAD_ACCESS)", () => {
     const src = read(REPLY_STORE);
-    expect(src).toMatch(/access:\s*"private"/);
-    expect(src).not.toMatch(/access:\s*"public"/);
+    expect(src).toMatch(/access:\s*BLOB_UPLOAD_ACCESS\b/);
+    expect(src).not.toMatch(/access:\s*"(public|private)"/);
+  });
+
+  it("🛑 공급사 회신 첨부 키는 비결정적이다 (quoteId·replyId·시각은 추측 가능한 값)", () => {
+    const src = read(REPLY_STORE);
+    const key = src.match(/const key = `([^`]*)`/);
+    expect(key, "key 선언 없음").not.toBeNull();
+    expect(key![1]).toMatch(/\$\{randomUUID\(\)\}/);
+    expect(key![1]).not.toMatch(/Date\.now\(\)/);
   });
 
   it("🛑 발주서 키는 비결정적이다 (발주번호로 조립할 수 없다 · private 과 두 겹)", () => {
@@ -69,8 +82,8 @@ describe("§quote-scan-public-storage P0-b1 · 열람은 프록시가 감사와 
     expect(src.indexOf("enforcement.complete(")).toBeLessThan(src.indexOf("blob.stream"));
   });
 
-  it("🛑 private 접근으로 읽는다 (public URL 을 되쓰지 않는다)", () => {
-    expect(src).toMatch(/get\(\s*order\.poDocumentUrl,\s*\{\s*access:\s*"private"\s*\}\s*\)/);
+  it("🛑 저장 위치의 access 판정기로 읽는다 (리터럴 0 · 스토어 이관 중에도 무변경)", () => {
+    expect(src).toMatch(/get\(\s*order\.poDocumentUrl,\s*\{\s*access:\s*blobReadAccess\(order\.poDocumentUrl\)\s*\}\s*\)/);
     expect(src).toMatch(/Content-Disposition/);
   });
 

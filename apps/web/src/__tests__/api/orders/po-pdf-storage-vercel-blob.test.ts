@@ -30,14 +30,16 @@ describe("#post-approval-purchase-order-flow Phase 2.3 step 3 — Vercel Blob wi
     expect(src).toMatch(/put\s*\(/);
   });
 
-  it("access: 'public' + contentType: 'application/pdf' 명시", () => {
+  it("access 는 스토어 모드 상수 + contentType: 'application/pdf' 명시", () => {
     const src = read(HELPER);
-    /* 🛑 승계 (§quote-scan-public-storage P0-b1 · 호영님 2026-09-12): 옛 판본은 `access: 'public'` 을
-     *   **요구**하고 있었다 — 발주서(조직 내부 문서)를 공개 저장하도록 검사가 붙잡고 있던 형태다.
-     *   오늘 같은 형태를 2건 더 고쳤다(감사 배지 · 「암호화 보관」 · §sentinel-inversion).
-     *   명제를 뒤집어 잇는다: 업로드는 private 이고 열람은 프록시가 감사와 함께 한다. */
-    expect(src).toMatch(/access:\s*["']private["']/);
-    expect(src).not.toMatch(/access:\s*["']public["']/);
+    /* 🛑 승계 2회 (§quote-scan-public-storage):
+     *   09-12 P0-b1  `access: 'public'` 요구 → `'private'` 요구로 뒤집었다.
+     *   09-13 B      그 `'private'` 가 **public 스토어에서 거부**돼 업로드가 조용히 스킵되고 있었다
+     *                (Vercel: access 는 스토어 단위). 검사가 prod 에서 안 도는 값을 붙잡은 형태다.
+     *   명제: 업로드 access 는 **스토어 모드 상수 하나**를 따른다(lib/storage/blob-access) · 리터럴 0.
+     *   보호(추측 불가 키 · 프록시 전용 노출)는 regression/po-document-private-access 가 본다. */
+    expect(src).toMatch(/access:\s*BLOB_UPLOAD_ACCESS\b/);
+    expect(src).not.toMatch(/access:\s*["'](public|private)["']/);
     expect(src).toMatch(/contentType:\s*["']application\/pdf["']/);
   });
 

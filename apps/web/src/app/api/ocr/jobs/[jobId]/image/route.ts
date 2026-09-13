@@ -2,16 +2,18 @@
  * GET /api/ocr/jobs/[jobId]/image · 인식 원본 이미지 열람 (§quote-scan-public-storage P0-b2)
  *
  * 호영님 승인 2026-09-13. P0-b1 발주서 프록시와 같은 형태다.
- *   OCR 원본(견적서·라벨)은 private blob 에 있고, 브라우저는 blob URL 을 받지 않는다.
+ *   OCR 원본(견적서·라벨)의 blob URL 은 브라우저에 가지 않는다(키는 randomUUID).
  *   `<img src>` 는 이 경로를 가리킨다 → 열람마다 인증·조직 대조·감사가 붙는다.
  *
  * 순서: 인증 → OcrJob 조회 → **조직 대조(403)** → enforceAction → complete → private 스트림.
  *   OcrJob.organizationId 는 Organization FK 다(§scan-org-identity B-3) · 멤버십으로만 연다.
  *   OcrJob.imageUrl 에는 blob URL 이 들어 있다. `get()` 은 URL 을 그대로 받는다.
+ *   access 는 URL 호스트로 판정한다(lib/storage/blob-access · 스토어 이관 중에도 무변경).
  */
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { blobReadAccess } from "@/lib/storage/blob-access";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 export const runtime = "nodejs";
@@ -66,7 +68,7 @@ export async function GET(
     if (!enforcement.allowed) return enforcement.deny();
 
     const { get } = await import("@vercel/blob");
-    const blob = await get(job.imageUrl, { access: "private" });
+    const blob = await get(job.imageUrl, { access: blobReadAccess(job.imageUrl) });
     if (!blob || !blob.stream) {
       enforcement.fail();
       return NextResponse.json(

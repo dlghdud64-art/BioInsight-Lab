@@ -13,6 +13,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { blobReadAccess } from "@/lib/storage/blob-access";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 export async function GET(
@@ -69,7 +70,7 @@ export async function GET(
     if (!enforcement.allowed) return enforcement.deny();
 
     const { get } = await import("@vercel/blob");
-    const blob = await get(order.poDocumentUrl, { access: "private" });
+    const blob = await get(order.poDocumentUrl, { access: blobReadAccess(order.poDocumentUrl) });
     if (!blob) {
       enforcement.fail();
       return NextResponse.json(
