@@ -810,6 +810,55 @@ IngestionAuditLog       0행
 
 ---
 
+## 결제
+
+### 🛑 유료 결제 오픈 전 게이트 (2026-09-14 기록 · 미판정 2건 포함)
+
+측정된 결함. prod 유료 구독 0건이라 오늘 피해는 0이고, 결제를 여는 순간 실효가 된다.
+(prod 실측 2026-09-13 · operator-shell 로컬 Windows → Supabase xhid… Session Pooler · SELECT 만 ·
+ Workspace 1 · Organization 2 · Stripe 구독 0 · ORGANIZATION 조직 0)
+
+```
+1. 결제 결과가 좌석·한도에 도달하지 않는다.
+   webhook 은 Workspace.plan 에만 쓴다 (webhook/route.ts :85 :114 :158 :197 :233 · plan "TEAM" 고정).
+   좌석은 Organization.plan (seats.ts), 견적·재고 한도는 Subscription.plan (enforce-plan-limit.ts) 을 읽는다.
+   Workspace 를 읽는 권한 판정은 결재 축 4곳뿐이다 (아래 3).
+   강등 매핑(canceled·unpaid·incomplete_expired → FREE)은 webhook :42-65 에 이미 있다 —
+   없는 게 아니라 그 결과가 쓰이는 테이블을 좌석·한도가 안 읽는다.
+
+2. 미납 구독이 유료 한도를 발급한다.
+   enforce-plan-limit.ts resolvePlan(:54-69) 이 subscription.plan 만 select 한다(:63). status 는 보지 않는다.
+   prod 조직 2개 중 구독 행이 있는 1개가 TEAM · unpaid 다.
+   (단 PRICING_ENFORCE_CUTOFF 미설정 시 :171-172 에서 조기 return — 스위치를 켜는 순간 실효.
+    prod 설정 여부 미확인)
+
+3. 결제한 Pro 가 화면마다 다르게 보인다.
+   결재 축 4곳은 Workspace 의 plan + stripePriceId 를 넘겨 SKU 를 판별한다 → Pro(business)
+   (po-candidates:89 · quotes/[id]:211 · request-approval:149 · purchases:208).
+   pricing/page.tsx:93 은 1-arg 라 판별자를 받지 않는다 → Basic.
+   organizations/[id]/page.tsx:717 은 Organization.plan 하드코딩 삼항이다 → webhook 이 안 쓰는 값이라 결제와 무관.
+```
+
+미판정. 결제를 열기 전에 호영님 판정이 필요하다. 어느 쪽도 아직 정해지지 않았다.
+
+```
+Q2′  plan 정본 테이블 = Organization | Subscription
+     (좌석 축만 Organization 으로 고정됨 — seats.ts:18, 호영님 2026-09-04)
+Q3   ORGANIZATION 의 의미 = Pro | Enterprise
+     Pro  → §11.201/§11.209c 의 "business = TEAM + BUSINESS_MONTHLY SKU" 저장 설계를 은퇴시킨다
+            (핀: workspace-plan-mapper.test.ts:38 · -stripe-discriminator.test.ts:31)
+     Ent  → §11.304(2026-05-25)의 티어명 결정을 번복한다
+            (핀: plan-tier-naming-304.test.ts:283 :318 :323 · billing-plan-comparison-p4.test.ts:49)
+     어느 쪽이든 호영님 결정 하나를 되돌린다. 승인 없이 착수 금지.
+```
+
+세 결함이 닫히고 두 판정이 내려지기 전에는 유료 결제를 열지 않는다.
+
+⚠️ 이 기록의 결함·수치는 **유료 구독 0건** 을 전제로 한 등급이다. 구독이 1건이라도 생기면
+   오늘 피해 0 판정은 무효이고, 1·2 는 그날 바로 실효 결함이 된다.
+
+---
+
 ## Commit Convention
 
 - prefix: `feat() / fix() / chore() / refactor() / test() / docs()` + scope
