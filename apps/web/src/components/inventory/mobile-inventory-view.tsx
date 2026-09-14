@@ -64,6 +64,8 @@ interface MobileInventoryViewProps {
   onSearchChange: (q: string) => void;
   /** §inventory-mobile-reorder-gate P2 — 추천 쿼리 로딩 중 상세 시트 CTA 로딩 상태(침묵 no-op 방지). */
   reorderRecoLoading?: boolean;
+  /** §loading-empty-state · 목록 응답 도착 전 · 「등록된 재고가 없습니다」 를 그리지 않는다. */
+  loading?: boolean;
 }
 
 // ── Helpers ──
@@ -609,6 +611,7 @@ export function MobileInventoryView({
   searchQuery,
   onSearchChange,
   reorderRecoLoading = false,
+  loading = false,
 }: MobileInventoryViewProps) {
   const [detailItem, setDetailItem] = useState<ProductInventory | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -724,7 +727,9 @@ export function MobileInventoryView({
 
       {/* 4. Item Cards */}
       <div className="space-y-2.5">
-        {filtered.length === 0 ? (
+        {loading ? (
+          <p className="py-10 text-center text-sm text-slate-500" aria-busy="true">재고 목록을 불러오는 중</p>
+        ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center py-10 text-center">
             <Package className="h-10 w-10 text-slate-700 mb-3" />
             <p className="text-sm text-slate-500">

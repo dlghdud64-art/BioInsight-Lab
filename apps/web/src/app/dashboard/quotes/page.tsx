@@ -1848,6 +1848,8 @@ function QuotesPageContent() {
   //   이므로 빈 상태가 skeleton 대신 오노출됨. auth-ready 전까지 로딩으로 간주하여
   //   skeleton / empty / KPI / timeout 게이트를 단일점에서 정합. authenticated 후 동작 불변.
   const isLoading = quotesQueryLoading || status === "loading";
+  /* §loading-empty-state · 응답 도착 기준(React Query v5 는 enabled:false 쿼리의 isLoading 을 false 로 준다 · 세션 로딩 틈) */
+  const quotesPending = quotesData === undefined && !isError;
 
   // #user-supplier-registration Phase 5 — 조직 거래처 (org_book source) fetch.
   //   resolveSuppliers / preflight / batch sheet 모두 정합 forward.
@@ -2556,7 +2558,14 @@ function QuotesPageContent() {
       {/* §web-mobile-reskin-fidelity #quotes — 퍼널·추천은 데스크탑 전용(모바일=MobileQuotesView). */}
       {!isMobile && (
         <>
-      {/* §quote-management P2 — 파이프라인 퍼널(stage 집계·현재집중·0 흐리게). 빈 계정 전부 0(가짜 데이터 0). */}
+      {/* §quote-management P2 — 파이프라인 퍼널(stage 집계·현재집중·0 흐리게). 빈 계정 전부 0(가짜 데이터 0).
+          🛑 §loading-empty-state (호영님 착수 2026-09-14) · 응답 도착 전에는 퍼널을 그리지 않는다.
+          옛 판본은 목록 API(prod 4.5s · 릴레이 측정) 동안 빈 배열로 「진행 중 견적 없음」 을 확정처럼 그렸다. */}
+      {quotesPending ? (
+        <div className="flex items-center gap-2 rounded-2xl border border-bd bg-white px-4 py-3 shadow-sm text-[13px] text-slate-500" aria-busy="true">
+          <Loader2 className="h-4 w-4 animate-spin text-slate-400" /> 견적 불러오는 중
+        </div>
+      ) : (
       <QuoteFunnel
         quotes={quotesData?.quotes ?? []}
         activeStage={
@@ -2567,6 +2576,7 @@ function QuotesPageContent() {
           setStatusFilter((prev) => (prev === map[s] ? "all" : map[s]));
         }}
       />
+      )}
 
       {/* §quote-management P4-core-B — 우선 추천 카드(computePriority 룰베이스 1위). §11.217 Phase 1B "AI 추천" 배너 대체(가드② 정정: 룰베이스를 AI로 라벨 금지). */}
       <PriorityRecommendationCard
@@ -2971,7 +2981,7 @@ function QuotesPageContent() {
             </div>
           )}
           <div className="flex items-center justify-between">
-            <span className="text-[11px] text-slate-500">총 {quotes.length}건 중 {sortedQuotes.length}건</span>
+            <span className="text-[11px] text-slate-500">{quotesPending ? "불러오는 중" : <>총 {quotes.length}건 중 {sortedQuotes.length}건</>}</span>
             <div role="radiogroup" aria-label="정렬" className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 p-0.5">
               {(([[null, "우선순위순", "desc"], ["dday", "마감임박순", "asc"], ["amount", "금액 높은순", "desc"]] as [null | "dday" | "amount", string, "asc" | "desc"][]).map(([key, lbl, dir]) => {
                 const on = sortState.key === key;

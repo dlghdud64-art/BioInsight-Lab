@@ -495,7 +495,7 @@ function InventoryPageContent() {
   const selectedTeam = teamsData?.teams?.[0];
 
   // 내 인벤토리 조회
-  const { data: inventoryResponse, isLoading } = useQuery<{
+  const { data: inventoryResponse, isLoading, isError: inventoryIsError } = useQuery<{
     inventories: ProductInventory[];
   }>({
     queryKey: ["inventories"],
@@ -519,7 +519,7 @@ function InventoryPageContent() {
   }, [entityIdParam, inventoryResponse?.inventories]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 팀 인벤토리 조회
-  const { data: teamInventoryData, isLoading: isLoadingTeam } = useQuery<{
+  const { data: teamInventoryData, isLoading: isLoadingTeam, isError: teamInventoryIsError } = useQuery<{
     inventories: any[];
   }>({
     queryKey: ["team-inventory", selectedTeam?.id],
@@ -535,6 +535,17 @@ function InventoryPageContent() {
   const myInventories = inventoryResponse?.inventories || [];
   const teamInventories = teamInventoryData?.inventories || [];
   const inventories = inventoryView === "my" ? myInventories : teamInventories;
+
+  /* 🛑 §loading-empty-state (호영님 착수 2026-09-14 · 릴레이 prod 측정) · **데이터가 도착하기 전에는 안전 판정을 그리지 않는다.**
+   *   옛 판본은 목록 API 응답 전 몇 초 동안 KPI 가 「전체 품목 0종 · 안전재고 미달 0건 · ✓ 정상」 을 그렸다.
+   *   prod 에는 안전재고 10 대비 1개인 품목(BCP)이 있었다 · **부족을 정상으로 표시한 화면**이었다.
+   *   `isLoading` 으로는 못 막는다 · React Query v5 는 세션 로딩 중(enabled:false) 쿼리의 isLoading 을 false 로 준다.
+   *   그래서 기준은 "응답이 도착했는가"(data !== undefined) · 레퍼런스는 dashboard/receiving/page.tsx:234
+   *   (불러오는 중 → 오류 → 0건 순서). 팀 뷰에서 팀이 없으면 불러올 것이 없으므로 도착으로 본다. */
+  const inventoriesError = inventoryView === "my" ? inventoryIsError : teamInventoryIsError;
+  const inventoriesArrived =
+    inventoryView === "my" ? inventoryResponse !== undefined : !selectedTeam?.id || teamInventoryData !== undefined;
+  const kpiPending = !inventoriesArrived;
 
   // 리드 타임 기반 재주문 필요: current_stock <= average_daily_usage * lead_time_days
   // §stock-risk-consolidation P3 — 재주문 필요 판정 = canonical isReorderNeeded(공유 lib). 각자 계산 제거(drift 0).
@@ -1674,7 +1685,11 @@ function InventoryPageContent() {
                  inventory-main.tsx(dead, importer 0)에도 있었으나 그 파일은
                  §inventory-dead-file-cleanup(2026-08-06)에서 삭제됨. */
               <div key={k.label} className="flex-1 rounded-[13px] px-3 py-2.5 border bg-white border-slate-200 shadow-sm">
+                {kpiPending ? (
+                  <p className="text-sm font-semibold text-slate-400" aria-busy={!inventoriesError}>{inventoriesError ? "불러오지 못함" : "불러오는 중"}</p>
+                ) : (
                 <p className={`text-xl font-extrabold ${k.alert && k.value > 0 ? "text-[#b91c1c]" : "text-slate-900"}`}>{k.value}<span className="text-slate-400 text-xs font-semibold">{k.unit ? ` ${k.unit}` : ""}</span></p>
+                )}
                 <p className="text-[11px] mt-0.5 text-slate-500 flex items-center gap-1.5">
                   <span className={`h-1.5 w-1.5 rounded-full ${k.alert && k.value > 0 ? "bg-[#b91c1c]" : "bg-slate-300"}`} aria-hidden />
                   {k.label}
@@ -1685,6 +1700,7 @@ function InventoryPageContent() {
         </div>
         <MobileInventoryView
           inventories={displayInventories}
+          loading={!inventoriesArrived && !inventoriesError}
           searchQuery={searchQuery}
           reorderRecoLoading={reorderRecoLoading}
           onSearchChange={setSearchQuery}
@@ -1850,10 +1866,14 @@ function InventoryPageContent() {
                 className={`rounded-lg border px-3 py-2 ${headerKpiTotalItems > 0 ? "border-slate-300 bg-white" : "border-slate-200 bg-gray-50"}`}
               >
                 <span className="block text-[10px] font-semibold text-slate-500">전체 품목</span>
+                {kpiPending ? (
+                  <KpiPendingValue error={inventoriesError} />
+                ) : (
                 <span className={`mt-0.5 block text-lg font-extrabold leading-none md:text-xl ${headerKpiTotalItems > 0 ? "text-slate-900" : "text-gray-400"}`}>
                   {headerKpiTotalItems}
                   <span className="ml-0.5 text-[10px] font-bold text-slate-500">종</span>
                 </span>
+                )}
               </div>
               {/* 2. 만료 임박 (dispose · §11.302 우선) — 클릭 시 expiring 필터 토글(0건 비클릭) */}
               <button
@@ -1877,7 +1897,9 @@ function InventoryPageContent() {
                     <span className="flex items-center gap-0.5 text-[10px] font-bold text-blue-600">필터 중 ✕</span>
                   )}
                 </span>
-                {headerKpiExpiringSoon > 0 ? (
+                {kpiPending ? (
+                  <KpiPendingValue error={inventoriesError} />
+                ) : headerKpiExpiringSoon > 0 ? (
                   <span className="mt-0.5 block text-lg font-extrabold leading-none md:text-xl text-yellow-700">
                     {headerKpiExpiringSoon}
                     <span className="ml-0.5 text-[10px] font-bold">건</span>
@@ -1910,10 +1932,14 @@ function InventoryPageContent() {
                     <span className="hidden items-center text-[10px] font-bold text-rose-600 group-hover:flex">자세히 →</span>
                   ) : null}
                 </span>
+                {kpiPending ? (
+                  <KpiPendingValue error={inventoriesError} />
+                ) : (
                 <span className={`mt-0.5 block text-lg font-extrabold leading-none md:text-xl ${headerKpiLowStock > 0 ? "text-rose-700" : "text-gray-400"}`}>
                   {headerKpiLowStock}
                   <span className="ml-0.5 text-[10px] font-bold">건</span>
                 </span>
+                )}
               </button>
             </div>
             {/* §inventory-delta-label-kpi P4 (핸드오프 §3) — 운영 배너는 조치 2건+ 복합만(단건=KPI 카드가 역할, 중복 신호 금지). */}
@@ -2208,7 +2234,7 @@ function InventoryPageContent() {
                     </div>
                   )}
 
-                  {isLoading ? (
+                  {!inventoriesArrived && !inventoriesError ? (
                     <div className="space-y-3">
                       {[1, 2, 3, 4, 5].map((i) => (
                         <div key={i} className="flex items-center gap-4 px-4 py-3.5 rounded-lg border border-slate-100 bg-white animate-pulse">
@@ -3847,7 +3873,7 @@ function InventoryPageContent() {
               </div>
 
               <TabsContent value="my" className="mt-0">
-                {isLoading ? (
+                {!inventoriesArrived && !inventoriesError ? (
                   <Card>
                     <CardContent className="py-12 text-center">
                       <p className="text-muted-foreground">재고 목록을 불러오는 중...</p>
@@ -4109,7 +4135,7 @@ function InventoryPageContent() {
                 <CardDescription className="text-xs md:text-sm">안전 재고 이하로 떨어질 때 알림을 받을 제품을 선택하세요.</CardDescription>
               </CardHeader>
               <CardContent>
-                {isLoading ? (
+                {!inventoriesArrived && !inventoriesError ? (
                   <p className="text-xs md:text-sm text-muted-foreground text-center py-8">로딩 중...</p>
                 ) : inventories.length === 0 ? (
                   <div className="text-center py-8">
@@ -5070,5 +5096,14 @@ export function InventoryContent() {
     >
       <InventoryPageContent />
     </Suspense>
+  );
+}
+
+/** §loading-empty-state · KPI 값 자리 · 데이터 도착 전에는 숫자·「✓ 정상」 대신 이것만 그린다. */
+function KpiPendingValue({ error }: { error: boolean }) {
+  return (
+    <span className="mt-0.5 block text-sm font-semibold text-slate-400" aria-busy={!error}>
+      {error ? "불러오지 못함" : "불러오는 중"}
+    </span>
   );
 }
