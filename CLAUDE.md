@@ -835,7 +835,8 @@ IngestionAuditLog       0행
 3. 결제한 Pro 가 화면마다 다르게 보인다.
    결재 축 4곳은 Workspace 의 plan + stripePriceId 를 넘겨 SKU 를 판별한다 → Pro(business)
    (po-candidates:89 · quotes/[id]:211 · request-approval:149 · purchases:208).
-   pricing/page.tsx:93 은 1-arg 라 판별자를 받지 않는다 → Basic.
+   dashboard/pricing/page.tsx:93 은 1-arg 라 판별자를 받지 않는다 → Basic.
+   (`app/pricing/page.tsx` 가 따로 있다 · 2026-09-14 경로 정정)
    organizations/[id]/page.tsx:717 은 Organization.plan 하드코딩 삼항이다 → webhook 이 안 쓰는 값이라 결제와 무관.
 ```
 
