@@ -872,7 +872,7 @@ export function InventoryContextPanel({
                 {item.safetyStock !== null && item.safetyStock > 0 && (() => {
                   const safety = item.safetyStock ?? 0;
                   const pct = safety > 0 ? Math.min(100, Math.round((item.currentQuantity / safety) * 100)) : 0;
-                  const barColor = item.currentQuantity === 0 ? "bg-rose-500" : item.currentQuantity < safety ? "bg-yellow-500" : "bg-emerald-500";
+                  const barColor = item.currentQuantity === 0 ? "bg-rose-500" : item.currentQuantity <= safety ? "bg-yellow-500" : "bg-emerald-500";
                   // §inventory-brief-delta(2026-07-29) §2 — 게이지 수치 병기(바 단독 금지).
                   return (
                     <div className="flex items-center gap-2 px-3.5 py-2">
