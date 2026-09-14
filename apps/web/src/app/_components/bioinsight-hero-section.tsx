@@ -199,9 +199,10 @@ function MobileMenu() {
                       도입 문의하기
                     </button>
                   </Link>
-                  {/* §11.267a — 가입 전 검색 체험 모바일 보조 링크. */}
+                  {/* §11.267a — /search 보조 링크(모바일). §hero-link-copy(2026-09-14): /search 는 §11.324 A안 마케팅 랜딩이라
+                      검색을 약속하는 문구 대신 실제로 보여 주는 3단계 흐름을 말한다. */}
                   <Link href="/search" onClick={close} className="inline-flex items-center justify-center w-full h-10 text-[13px] font-medium text-slate-400 hover:text-slate-200 underline-offset-4 hover:underline transition-colors">
-                    먼저 검색해보기 →
+                    검색·비교·견적 흐름 보기 →
                   </Link>
                 </div>
               )}
@@ -566,7 +567,7 @@ export function BioInsightHeroSection() {
         {/* §11.267a — 호영님 spec 랜딩 CTA 동선 개선. 기존 "무료로 시작하기" 가
             /search (검색 체험) 으로 이동 → 사용자가 검색해야 비로소 /auth/signin
             진입 (이탈 지점). logged-out 일 때 /search 직진(로그인행 2-bounce 제거, 호영님 reroute). 검색 체험은
-            아래 "먼저 검색해보기" 보조 링크로 분리 (텍스트 링크). */}
+            아래 /search 보조 링크로 분리 (텍스트 링크 · 문구는 §hero-link-copy). */}
         <div className="flex flex-row gap-3 mb-3 animate-stagger-up" style={{ animationDelay: "160ms" }}>
           <Link href={isLoggedIn ? "/app/search" : "/search"}>
             <Button className="h-10 sm:h-11 px-6 sm:px-7 text-white font-bold text-[13px] sm:text-[14px] rounded-lg shadow-[0_2px_16px_rgba(60,130,255,0.25)]" style={{ backgroundColor: "#3B82F6", border: "1px solid rgba(60,140,255,0.3)" }}>
@@ -579,12 +580,15 @@ export function BioInsightHeroSection() {
             </Button>
           </Link>
         </div>
-        {/* §11.267a — 가입 전 검색 체험 보조 링크 (logged-out 한정).
+        {/* §11.267a — /search 보조 링크 (logged-out 한정).
+            §hero-link-copy(호영님 2026-09-14 권장안): 「먼저 검색해보기」 는 가입 전 검색을 약속했지만
+            /search 는 §11.324 A안(395f8fbc)으로 마케팅 랜딩이 되어 검색 제출 = 로그인 이동이었다.
+            canonical 은 A안 · 문구를 실제 동작(3단계 흐름도)에 맞춘다.
             텍스트 링크 톤 (chip/button 톤 회피) — 주 CTA 와 시각적 분리. */}
         {!isLoggedIn && (
           <div className="mb-10 md:mb-12 animate-stagger-up" style={{ animationDelay: "200ms" }}>
             <Link href="/search" className="inline-flex items-center text-[12px] font-medium text-slate-400 hover:text-slate-200 underline-offset-4 hover:underline transition-colors">
-              먼저 검색해보기 →
+              검색·비교·견적 흐름 보기 →
             </Link>
           </div>
         )}

@@ -71,7 +71,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                   </Link>
                   {/* §11.267a — 호영님 spec 헤더 CTA 동선 개선. "시작하기" 가
                       /auth/signin(로그인) 직진 폐기 → /search 통일. 검색 체험은
-                      Hero 의 "먼저 검색해보기" 보조 링크로만 진입. */}
+                      Hero 의 /search 보조 링크(「검색·비교·견적 흐름 보기」)로만 진입. */}
                   <Link href="/search" className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-5 py-2 transition-colors whitespace-nowrap shadow-sm">
                     무료로 시작하기
                   </Link>

@@ -9,7 +9,7 @@
  *
  * 본 sentinel 정리(§landing-cta-search reconcile, cowork 2026-06-28):
  *   - /auth/signin 직진 단언(#1 Hero, #3 Header) RETIRE — 반전되어 더 이상 유효 X.
- *   - 생존 invariant 만 유지: 무료 CTA /search 정합(아래) + "먼저 검색해보기" 보조 링크 +
+ *   - 생존 invariant 만 유지: 무료 CTA /search 정합(아래) + /search 보조 링크 +
  *     로그인 분기(/app/search·/dashboard·UserMenu) + 헤더 link(/intro·/pricing·로그인).
  *   - landing/ 은 dashboard+regression baseline 밖이라 이 latent RED 가 그동안 미포착됨
  *     (교훈: CTA/landing 변경 시 landing/ 도 sweep — pricing-handoff D12 marketing 갭과 동류).
@@ -18,6 +18,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
 
 const HERO_PATH = resolve(__dirname, "../../app/_components/bioinsight-hero-section.tsx");
 const HEADER_PATH = resolve(__dirname, "../../app/_components/main-header.tsx");
@@ -32,8 +33,18 @@ describe("§landing-cta-search 정합 (§11.267a 반전) — 무료 CTA = /searc
 });
 
 describe("§11.267a 생존 invariant — 보조 링크 + 로그인 분기 보존", () => {
-  it("'먼저 검색해보기' /search 보조 링크 보존", () => {
-    expect(hero).toMatch(/href="\/search"[\s\S]{0,300}먼저 검색해보기/);
+  /* 🛑 승계 (§hero-link-copy · 호영님 2026-09-14 권장안): 옛 판본은 「먼저 검색해보기」 를 **요구**했다.
+   *   /search 는 §11.324 A안(395f8fbc)으로 마케팅 랜딩이라 검색 제출 = 로그인 이동이다 ·
+   *   검사가 지켜지지 않는 약속을 붙잡고 있던 형태(§sentinel-inversion).
+   *   명제: /search 보조 링크는 남는다(데스크톱·모바일 각각) + 가입 전 검색을 약속하는 문구 0. */
+  it("/search 보조 링크 보존 · 문구는 실제 동작(3단계 흐름) · 데스크톱·모바일 각각", () => {
+    const code = stripComments(hero);
+    const re = /href="\/search"[^>]*>\s*검색·비교·견적 흐름 보기 →/g;
+    expect(code.match(re)?.length ?? 0).toBe(2);
+  });
+
+  it("🛑 가입 전 검색을 약속하는 문구 0 (/search 는 마케팅 랜딩)", () => {
+    expect(stripComments(hero)).not.toMatch(/검색해보기/);
   });
 
   it("Hero logged-in primary CTA (/app/search) 보존", () => {
