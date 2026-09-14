@@ -175,6 +175,10 @@ function getOpPriority(q: Quote): number {
 }
 
 // ── Canonical State Enum ──
+/** §quote-readiness-single-source 3b · 회신 1건 견적의 주 동작 · 상세의 「구매 진행 처리」 로 보낸다(행·레일 공통).
+ *  🛑 RAIL_STATE_MAP(모듈 상수)보다 **위**에 둔다 · 아래에 두면 모듈 로드 시 TDZ ReferenceError. */
+const PO_DETAIL_CTA = "구매 진행";
+
 type RailState = "request_not_sent" | "awaiting_responses" | "response_delayed" | "compare_not_ready" | "compare_review_required" | "condition_check_required" | "external_approval_required" | "ready_for_po_conversion";
 
 /* 🛑 §quote-readiness-single-source (2026-09-14) · 판정을 여기서 다시 계산하지 않는다.
@@ -255,12 +259,15 @@ const RAIL_STATE_MAP: Record<RailState, {
   compare_not_ready: {
     // §quote-readiness-single-source · 회신 1건 = **발주 가능 · 비교 불가**. 단일 공급사 품목은 이게 정상이다.
     //   전환 가능한 회신이 없는 경우(포털 회신만)는 getOpSignals 가 판정 결과로 덮어쓴다.
-    badge: "단일 회신", headerSummary: "회신 1건으로 구매를 진행할 수 있습니다 · 비교는 회신 2건부터입니다", urgency: "구매 진행 또는 추가 회신 확보를 고르세요",
-    status: "발주 가능 · 비교 불가", blocker: "차단 없음", nextAction: "구매 진행 또는 추가 회신 확보", compareReady: "불가 · 회신 2건부터", poReady: "가능",
+    // §quote-readiness-single-source 3b (릴레이 Phase 4 측정 2026-09-14) · 목록 행이 그리는 badge·CTA 도 같은 판정.
+    //   3a 는 status 만 바꿔 행은 「단일 회신 / 추가 회신」(더 받아라), 상세는 「구매 진행 처리」(발주해라)로 갈렸다.
+    badge: "발주 가능 · 비교 불가", headerSummary: "회신 1건으로 구매를 진행할 수 있습니다 · 비교는 회신 2건부터입니다", urgency: "대체 공급사가 없으면 바로 구매를 진행하세요",
+    status: "발주 가능 · 비교 불가", blocker: "차단 없음", nextAction: "구매 진행", compareReady: "불가 · 회신 2건부터", poReady: "가능",
     snapshotNote: "대체 공급사가 없는 품목은 회신 1건으로 구매를 진행하는 것이 일반적입니다",
     handoffTarget: "상세에서 구매 진행", handoffStatus: "단일 견적으로 진행 가능",
     aiRecommendation: "우선 추천: 대체 공급사가 없는 품목이면 추가 회신을 기다리기보다 구매 진행이 우선일 수 있습니다",
-    ctaLabel: "추가 회신 확보", railCtaLabel: "추가 확보 검토", ctaVariant: "outline", secondaryCta: "전체 상세 열기", tertiaryCta: "보류",
+    ctaLabel: PO_DETAIL_CTA, railCtaLabel: PO_DETAIL_CTA, ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "보류",
+    // actionKey 는 추가 발송 의도로 남는다(전환할 회신이 없을 때 getOpSignals 가 CTA 를 추가 회신으로 되돌린다).
     actionKey: "followup_send",
   },
   compare_review_required: {
@@ -422,7 +429,7 @@ function getOpSignals(q: Quote) {
   // 회신 1건인데 전환 가능한 회신이 없으면(포털 회신만) 표 문구 대신 판정 결과를 쓴다 · 거짓 「가능」 금지.
   const m =
     railState === "compare_not_ready" && !readiness.po.ready
-      ? { ...base, status: readiness.summary, blocker: "전환할 수 있는 회신 없음", poReady: "불가 · 전환할 회신 없음", handoffTarget: "추가 회신 확보", handoffStatus: "회신 확보 전" }
+      ? { ...base, badge: readiness.summary, status: readiness.summary, blocker: "전환할 수 있는 회신 없음", nextAction: "추가 회신 확보", poReady: "불가 · 전환할 회신 없음", handoffTarget: "추가 회신 확보", handoffStatus: "회신 확보 전", ctaLabel: "추가 회신 확보", railCtaLabel: "추가 확보 검토", ctaVariant: "outline" as const }
       : base;
   const responseCount = readiness.respondedCount;
 
@@ -1575,6 +1582,11 @@ function QuotesPageContent() {
     if (ctaLabel === "발주 실행 준비") {
       setSelectedQuoteId(quoteId);
       setActiveWorkWindow("po_conversion");
+      return;
+    }
+    if (ctaLabel === PO_DETAIL_CTA) {
+      // §quote-readiness-single-source 3b · 회신 1건 = 발주 가능 · 구매 진행 처리는 상세에 있다.
+      router.push(`/quotes/${quoteId}`);
       return;
     }
     if (ctaLabel === "견적 요청 발송") {
@@ -3855,6 +3867,7 @@ function QuotesPageContent() {
               <Button size="sm" className="w-full h-10 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white active:scale-[0.98]"
                 onClick={() => {
                   if (selectedDispatchBlocked) return;
+                  if (selectedSignals.ctaLabel === PO_DETAIL_CTA) { router.push(`/quotes/${selectedQuote.id}`); return; }
                   if (selectedSignals.actionKey) setActiveWorkWindow(selectedSignals.actionKey);
                 }}
                 disabled={!selectedSignals.actionKey || selectedDispatchBlocked}>
@@ -3879,7 +3892,7 @@ function QuotesPageContent() {
       {/* §order-entry-rewire P3-2 — po_conversion(주문 접수) 중에도 브리핑 미노출:
           발주 흐름에 브리핑이 끼어들지 않는다 (request_send 와 동형 처리). */}
       {activeWorkWindow !== "request_send" && activeWorkWindow !== "po_conversion" && selectedQuote && selectedSignals && selectedOpStatus && (() => {
-        const sqResponseCount = selectedQuote.responses?.length ?? 0;
+        const sqResponseCount = quoteReadiness(selectedQuote).respondedCount; // §quote-readiness-single-source 3b · 카운트 단일 출처
         // §11.212 — sqDaysSince 인라인 계산 제거 (SSR-CSR Date.now() drift 차단).
         // <RelativeTimeText iso={selectedQuote.createdAt} /> 가 useEffect mount 후 set.
         const sqDelayed = isDelayed(selectedQuote);
@@ -4139,7 +4152,7 @@ function QuotesPageContent() {
           {activeChipId === "compare" && (
             <div className="px-4 py-3 border-b border-bd/50">
               <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">비교 진행</div>
-              {sqResponseCount < 2 ? (
+              {sqResponseCount < COMPARE_MIN_RESPONSES ? (
                 <p className="text-xs text-slate-600 leading-relaxed">
                   비교하려면 회신이 2곳 이상 필요합니다. 현재 {sqResponseCount}곳 수신.
                 </p>
@@ -4398,6 +4411,7 @@ function QuotesPageContent() {
               className={`w-full h-8 text-xs font-medium ${selectedDispatchBlocked ? "bg-slate-200 text-slate-500 cursor-not-allowed" : selectedSignals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-500 text-white" : "bg-white text-slate-900 border border-slate-300 hover:bg-slate-50"}`}
               onClick={() => {
                 if (selectedDispatchBlocked) return;
+                if (selectedSignals.ctaLabel === PO_DETAIL_CTA) { router.push(`/quotes/${selectedQuote.id}`); return; }
                 if (selectedSignals.actionKey) {
                   setActiveWorkWindow(selectedSignals.actionKey);
                 }
@@ -4694,7 +4708,7 @@ function QuotesPageContent() {
           phase="ready"
           primaryAction={{
             label: activeWorkWindow === "compare_review"
-              ? ((selectedQuote.responses?.length ?? 0) >= 2 ? "선택안 확정" : "추가 회신 확보")
+              ? (quoteReadiness(selectedQuote).respondedCount >= COMPARE_MIN_RESPONSES ? "선택안 확정" : "추가 회신 확보")
               : activeWorkWindow === "approval_prep"
               ? "승인 패키지 준비 완료"
               : activeWorkWindow === "po_conversion"
@@ -4707,7 +4721,7 @@ function QuotesPageContent() {
               //   approval_prep / po_conversion 은 send intent 아님 → 닫기 유지.
               if (
                 activeWorkWindow === "followup_send" ||
-                (activeWorkWindow === "compare_review" && (selectedQuote.responses?.length ?? 0) < 2)
+                (activeWorkWindow === "compare_review" && quoteReadiness(selectedQuote).respondedCount < COMPARE_MIN_RESPONSES)
               ) {
                 setActiveWorkWindow("request_send");
                 return;

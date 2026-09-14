@@ -152,8 +152,17 @@
 
 **✋ Quality Gate:** 두 화면 같은 판정 · 죽은 버튼 0 · vitest 전량 신규 RED 0 · tsc 불변 · build · **Rollback:** 화면 연결 커밋만 revert(함수·테스트 유지)
 
+### Phase 3b: 대시보드 목록 행 badge·CTA 통일 (2026-09-14 · 릴레이 Phase 4 측정으로 추가)
+- Status: [x] Complete (2026-09-14)
+- [x] 측정: 목록 행은 `signals.badge`(:3375)·`shortenActionLabel(ctaLabel)`(:3487) 을 그린다 · 3a 는 `status` 만 바꿔 행은 「단일 회신 / 추가 회신」(더 받아라), 상세는 「구매 진행 처리」(발주해라) → **미배선**
+- [x] compare_not_ready badge 「발주 가능 · 비교 불가」 · 주 동작 `PO_DETAIL_CTA`「구매 진행」 → `/quotes/[id]` (행 CTA · 레일 CTA 2곳) · 전환할 회신이 없으면 badge·CTA 도 판정 결과로(추가 회신)
+- [x] 3a 전역 센티널이 놓친 복사본 2곳 이관: 비교 패널 `sqResponseCount`(:3882/:4142) · 작업창 라벨·추가발송 경로(:4697/:4710) · 전역 검사를 **형태**(responses.length·*ResponseCount 직접 문턱 비교)로 확장 + 자기 한계 명시
+- [x] §sentinel-inversion: `quote-followup-send-wiring-363` 2단언이 복사 형태(`responses?.length … < 2` · `>= 2 ? "선택안 확정"`)를 핀 → 판정 함수 형태로 승계
+- [x] ⚠️ `quote-centerworkwindow-demote-363b.test.ts` 는 **타 세션 미커밋(untracked) 파일** · 같은 복사 형태를 :45 에서 핀 → 이 파일은 수정하지 않았다(소유권) · 해당 단언 1건 RED 전환 · 같은 파일 「선택안 확정 삼항 제거」 단언 GREEN 전환 · 소유 세션 처방: :45 를 `quoteReadiness\(selectedQuote\)\.respondedCount < COMPARE_MIN_RESPONSES` 로
+- [x] 프로브 8/8 RED · 게이트 신규 RED 파일 0 · 실패 175 = 원장 · tsc 25 불변
+
 ### Phase 4: Rollout / Smoke
-- Status: [ ] Pending
+- Status: [~] 1차 합격(차단 해소 · 릴레이 prod 2026-09-14 · seed RFQ-2609-7895) · 3b 배포 후 대시보드 행 재확인
 - [ ] push → deployedCommit 두 번 측정
 - [ ] prod 테스트 견적 1건(승인 2026-09-14) · 🛑 **수신 주소는 호영님 본인 메일만** (`sender.ts:66` 은 `vendor-pilot-` 만 차단 · 그 외 실제 발송)
 - [ ] 토큰 회신 1건 → **성공 신호: 대시보드 브리핑·상세 둘 다 「발주 가능 · 비교 불가」**

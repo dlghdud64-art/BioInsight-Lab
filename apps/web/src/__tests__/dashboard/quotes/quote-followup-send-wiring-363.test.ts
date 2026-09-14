@@ -39,9 +39,12 @@ describe("§11.363 — CenterWorkWindow 추가발송 wiring", () => {
     );
   });
 
-  it("compare_review + 유효견적<2 intent 가 추가발송 라우팅 조건에 포함된다", () => {
+  /* 승계 (§quote-readiness-single-source 3b · 2026-09-14): 옛 판본은 `responses?.length … < 2` **복사 형태**를 핀했다.
+   *   회신 수를 화면에서 직접 세고 문턱을 직접 쓰는 형태가 대시보드 「차단」 vs 상세 「가능」 결함의 뿌리였다.
+   *   명제(비교 회신이 부족한 compare_review 는 추가 발송으로 간다)는 그대로 · 판정 함수 형태로 옮긴다. */
+  it("compare_review + 비교 회신 부족 intent 가 추가발송 라우팅 조건에 포함된다", () => {
     expect(page).toMatch(
-      /activeWorkWindow === "compare_review"[\s\S]{0,120}responses\?\.length[\s\S]{0,40}< 2[\s\S]{0,200}setActiveWorkWindow\("request_send"\)/
+      /activeWorkWindow === "compare_review" && quoteReadiness\(selectedQuote\)\.respondedCount < COMPARE_MIN_RESPONSES\)[\s\S]{0,200}setActiveWorkWindow\("request_send"\)/
     );
   });
 });
@@ -59,7 +62,8 @@ describe("§11.363 회귀 0 — canonical truth / 보존 항목", () => {
     );
   });
 
-  it('compare_review >= 2 → "선택안 확정" 라벨 보존 (send intent 아님)', () => {
-    expect(page).toMatch(/>= 2 \? "선택안 확정" : "추가 회신 확보"/);
+  it('compare_review 비교 가능 → "선택안 확정" 라벨 보존 (send intent 아님)', () => {
+    // 승계 (§quote-readiness-single-source 3b): 문턱 리터럴 2 → COMPARE_MIN_RESPONSES
+    expect(page).toMatch(/respondedCount >= COMPARE_MIN_RESPONSES \? "선택안 확정" : "추가 회신 확보"/);
   });
 });

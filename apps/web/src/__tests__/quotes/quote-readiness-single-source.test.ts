@@ -17,7 +17,13 @@
  * ── 이 파일이 안 보는 것 (자기 한계) ──
  *   1. 서버 전이 규칙(state-machine)은 회신 수 조건이 없다 · 화면 게이트만 본다(별건).
  *   2. 포털 회신(QuoteResponse)을 발주로 잇는 경로 · 지금은 세기만 하고 전환 대상에서 뺀다(별건).
- *   3. 화면 연결(대시보드·상세가 이 함수를 쓰는가)은 Phase 3 에서 이 파일에 추가한다.
+ *   3. 전역 복사본 검사는 **형태**로 찾는다(회신 수를 `responses.length`·`*ResponseCount`·`*RespondedCount` 로 세서
+ *      숫자 1·2 와 >=·<·<= 비교). 다음은 보지 않는다:
+ *        · `respondedVendors.length > 1` 류 · 공급사가 여럿일 때 선택 UI 를 띄우는 표시 분기(판정 아님)
+ *        · `=== 0` 회신 없음 분기(리마인더 대상 선정 등 · batch-reminder-sheet.tsx:195)
+ *        · 목록에 없는 변수 이름으로 센 뒤 비교하는 형태
+ *      2026-09-14 3a 판본은 변수 이름 목록(rc·responseCount…)으로만 찾아 `(selectedQuote.responses?.length ?? 0) >= 2`
+ *      를 놓쳤다(릴레이 prod 측정이 드러냄) · "복사본 0" 은 **이 형태들에 대해** 0 이다.
  */
 import { describe, it, expect } from "vitest";
 import {
@@ -174,7 +180,27 @@ describe("§quote-readiness-single-source · 두 화면이 같은 함수를 읽�
   });
 
   it("대시보드 · 전환할 회신이 없으면 판정 결과로 덮어쓴다 (거짓 「가능」 금지)", () => {
-    expect(code(DASH)).toMatch(/railState === "compare_not_ready" && !readiness\.po\.ready\s*\?\s*\{ \.\.\.base, status: readiness\.summary/);
+    expect(code(DASH)).toMatch(/railState === "compare_not_ready" && !readiness\.po\.ready\s*\?\s*\{ \.\.\.base, badge: readiness\.summary, status: readiness\.summary/);
+    // 전환할 회신이 없으면 주 동작도 추가 회신으로 되돌린다(구매 진행 버튼이 갈 곳이 없다)
+    expect(code(DASH)).toMatch(/badge: readiness\.summary, status: readiness\.summary[^}]*ctaLabel: "추가 회신 확보"/);
+  });
+
+  it("🛑 대시보드 목록 행 · badge 와 주 동작이 상세와 같다 (3b · 행은 badge·CTA 를 그린다)", () => {
+    const dash = code(DASH);
+    const start = dash.indexOf("compare_not_ready: {");
+    const entry = dash.slice(start, dash.indexOf("compare_review_required: {", start));
+    expect(entry).toMatch(/badge: "발주 가능 · 비교 불가"/);
+    expect(entry).toMatch(/ctaLabel: PO_DETAIL_CTA, railCtaLabel: PO_DETAIL_CTA/);
+    expect(dash).toMatch(/const PO_DETAIL_CTA = "구매 진행";/);
+    // 모듈 상수 RAIL_STATE_MAP 보다 먼저 선언(TDZ)
+    expect(dash.indexOf('const PO_DETAIL_CTA = "구매 진행";')).toBeLessThan(dash.indexOf("compare_not_ready: {"));
+  });
+
+  it("대시보드 · 구매 진행은 상세로 간다 (행 CTA · 레일 CTA 2곳 각각)", () => {
+    const dash = code(DASH);
+    expect(dash).toMatch(/if \(ctaLabel === PO_DETAIL_CTA\) \{\s*router\.push\(`\/quotes\/\$\{quoteId\}`\);\s*return;\s*\}/);
+    const rail = dash.match(/if \(selectedSignals\.ctaLabel === PO_DETAIL_CTA\) \{ router\.push\(`\/quotes\/\$\{selectedQuote\.id\}`\); return; \}/g) ?? [];
+    expect(rail.length).toBe(2);
   });
 
   it("상세 · canConvert 는 판정 함수의 발주 축 · 헤더 배지는 같은 요약", () => {
@@ -216,9 +242,8 @@ describe("§quote-readiness-single-source · 판정 복사본 0 (전역 · app·
     const files = ["app", "lib", "components"].flatMap((d) => walk(join(SRC, d)));
     expect(files.length).toBeGreaterThan(1000); // 축이 비지 않았다
     const PATTERNS: [string, RegExp][] = [
-      ["회신 수 >= 2 판정", /\b(rc|responseCount|respondedCount|validQuotes|sqrc)\s*>=\s*2\b/],
-      ["회신 수 < 2 판정", /\b(rc|responseCount|respondedCount|validQuotes|sqrc)\s*<\s*2\b/],
-      ["회신 1건 발주 인라인 판정", /\brespondedCount\s*>=\s*1\b/],
+      ["회신 수 변수 문턱 비교", /\b(rc|validQuotes|sqrc|\w*[Rr]esponseCount|\w*[Rr]espondedCount)\s*(>=|<=|<)\s*[12]\b/],
+      ["responses.length 직접 문턱 비교", /responses\??\.length(\s*\?\?\s*0\))?\s*(>=|<=|<)\s*[12]\b/],
       ["비교 상태 삼항 복사", /"compare_review_required"\s*:\s*"compare_not_ready"/],
     ];
     const hits: string[] = [];
