@@ -7,6 +7,8 @@
  * param 명칭: quoteCaseId (id / caseId / requestId 금지)
  */
 
+import { resolveQuoteReadiness } from "@/lib/quotes/readiness";
+
 // ── DB Status ──
 export type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 
@@ -113,15 +115,14 @@ export function isQuoteCaseDelayed(q: QuoteCaseRaw): boolean {
   return new Date(q.deliveryDate) < new Date();
 }
 
+/** §quote-readiness-single-source · 판정은 lib/quotes/readiness 한 곳이 한다(복사본 금지 · 위임만). */
 export function deriveUiState(q: QuoteCaseRaw): QuoteCaseUiState {
-  const rc = q.responses?.length ?? 0;
-  if (q.status === "COMPLETED") return "ready_for_po_conversion";
-  if (q.status === "RESPONDED") return rc >= 2 ? "compare_review_required" : "compare_not_ready";
-  if (q.status === "SENT") {
-    if (rc === 0) return isQuoteCaseDelayed(q) ? "response_delayed" : "awaiting_responses";
-    return rc >= 2 ? "compare_review_required" : "compare_not_ready";
-  }
-  return "request_not_sent";
+  return resolveQuoteReadiness({
+    status: q.status,
+    vendorRequests: [],
+    portalResponses: (q.responses ?? []).map((r) => ({ id: r.id, vendorName: r.vendor?.name })),
+    isDelayed: isQuoteCaseDelayed(q),
+  }).uiState;
 }
 
 export function derivePriorityScore(q: QuoteCaseRaw): number {

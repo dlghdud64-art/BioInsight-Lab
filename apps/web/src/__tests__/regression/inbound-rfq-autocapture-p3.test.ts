@@ -59,8 +59,10 @@ describe("§inbound-rfq-autocapture P3 — same-canvas 흡수(page-per-feature 0
     expect(PAGE).toMatch(/import \{ EmailRepliesSection \} from "@\/components\/quotes\/email-replies-section"/);
     expect(PAGE).toMatch(/<EmailRepliesSection quoteId=\{quoteId\} \/>/);
   });
-  it("회귀 0 — received 탭 + 벤더 견적 입력 보존", () => {
+  it("회귀 0 — received 탭 + 수동 회신 입력 폼 보존", () => {
     expect(PAGE).toMatch(/TabsContent value="received"/);
-    expect(PAGE).toMatch(/벤더 견적 입력/);
+    /* 승계 (§quote-readiness-single-source · 2026-09-14): 폼 제목 「벤더 견적 입력」 → 「새 회신 직접 입력」.
+     *   받은 회신이 와도 빈 폼이 첫 화면이라 "회신 없음" 으로 읽혔다(시뮬레이션). 명제(수동 입력 폼 보존)는 그대로다. */
+    expect(PAGE).toMatch(/새 회신 직접 입력/);
   });
 });

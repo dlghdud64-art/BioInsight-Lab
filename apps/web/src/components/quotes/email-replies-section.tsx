@@ -102,7 +102,7 @@ export function EmailRepliesSection({ quoteId }: { quoteId: string }) {
         <span className="text-slate-500 font-normal">· {replies.length}건</span>
       </h3>
       <p className="text-xs text-slate-500 mb-3">
-        공급사가 견적 요청 메일에 회신한 내용입니다. 가격은 아래 ‘벤더 견적 입력’에 기록하세요.
+        공급사가 견적 요청 메일에 회신한 내용입니다. 가격은 아래 ‘새 회신 직접 입력’에 기록하세요.
       </p>
       <div className="space-y-2 mb-6">
         {replies.map((r) => (

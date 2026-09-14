@@ -3,6 +3,8 @@
 export const dynamic = 'force-dynamic';
 
 import { csrfFetch } from "@/lib/api-client";
+// §quote-readiness-single-source · 발주·비교 판정은 대시보드와 같은 함수(화면별 문턱 금지).
+import { resolveQuoteReadiness } from "@/lib/quotes/readiness";
 import React, { useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -701,10 +703,22 @@ export default function QuoteDetailPage() {
   const urgency = getUrgency();
 
   // 회신 현황 집계
-  const respondedCount = respondedVendors.length;
-  const pendingCount = vendorRequests.length - respondedCount;
+  /* 🛑 §quote-readiness-single-source (2026-09-14) · 옛 `respondedCount >= 1 &&` 인라인 판정 제거.
+   *   대시보드는 2건 문턱으로 「차단」, 여기는 1건 문턱으로 「가능」 이었다 · 이제 둘 다 같은 함수를 읽는다. */
+  const readiness = resolveQuoteReadiness({
+    status: quoteStatus,
+    vendorRequests: vendorRequests.map((vr: any) => ({
+      id: vr.id,
+      status: vr.status,
+      vendorName: vr.vendorName,
+      responseItemCount: vr.responseItems?.length ?? 0,
+    })),
+    portalResponses: ((quoteData?.quote as any)?.responses ?? []).map((r: any) => ({ id: r.id, vendorName: r.vendor?.name })),
+  });
+  const respondedCount = readiness.respondedCount;
+  const pendingCount = Math.max(0, vendorRequests.length - readiness.convertibleCount);
   const needsApproval = quoteStatus === "RESPONDED";
-  const canConvert = respondedCount >= 1 && quoteStatus !== "CANCELLED" && quoteStatus !== "COMPLETED";
+  const canConvert = readiness.po.ready;
 
   /**
    * 최저가 벤더 (비교/추천 탭용)
@@ -716,8 +730,8 @@ export default function QuoteDetailPage() {
    * 훅을 위로 올리는 대신 훅을 없앤다 — 입력이 벤더 수 × 품목 수라 메모가 필요 없다.
    */
   const cheapestVendor = (() => {
-    if (respondedCount === 0) return null;
-    if (respondedCount === 1) return { name: (respondedVendors[0] as any)?.vendorName || "벤더", total: computeVendorReplyTotal((respondedVendors[0] as any)?.id) };
+    if (respondedVendors.length === 0) return null;
+    if (respondedVendors.length === 1) return { name: (respondedVendors[0] as any)?.vendorName || "벤더", total: computeVendorReplyTotal((respondedVendors[0] as any)?.id) };
     const totals = respondedVendors.map((vr: any) => ({
       name: vr.vendorName || vr.vendorEmail || "벤더",
       total: (quoteItems as any[]).reduce((sum: number, item: any) => {
@@ -792,7 +806,7 @@ export default function QuoteDetailPage() {
                     )}
                     {canConvert && (
                       <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-600/10 text-emerald-400 border border-emerald-600/20">
-                        <CheckCircle2 className="h-2.5 w-2.5" />전환 가능
+                        <CheckCircle2 className="h-2.5 w-2.5" />{readiness.summary}
                       </span>
                     )}
                   </div>
@@ -961,11 +975,31 @@ export default function QuoteDetailPage() {
                     ) : (
                     <>
                     {/* §inbound-rfq-autocapture P3 — 공급사 이메일 자동수신 회신(읽기 전용, same-canvas 흡수) */}
+                    {/* §quote-readiness-single-source · 받은 회신을 입력 폼보다 **먼저** 보인다.
+                        옛 판본은 이 탭 첫 화면이 빈 입력 폼(기본값 「대기」)이라 회신이 와도 "회신 없음" 으로 읽혔다. */}
+                    <div className="rounded-lg border border-bd bg-pn p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-bold text-slate-200">받은 회신 {respondedVendors.length}건</p>
+                        <span className="text-xs text-slate-500">{readiness.summary}</span>
+                      </div>
+                      {respondedVendors.length > 0 ? (
+                        <ul className="mt-2 space-y-1">
+                          {respondedVendors.map((vr: any) => (
+                            <li key={vr.id} className="flex items-center justify-between text-xs text-slate-300">
+                              <span className="truncate">{vr.vendorName || vr.vendorEmail || "공급사"}</span>
+                              <span className="tabular-nums">{computeVendorReplyTotal(vr.id) > 0 ? `₩${computeVendorReplyTotal(vr.id).toLocaleString("ko-KR")}` : "가격 미기재"}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="mt-1 text-xs text-slate-500">아직 받은 회신이 없습니다.</p>
+                      )}
+                    </div>
                     <EmailRepliesSection quoteId={quoteId} />
-                    {/* 벤더 가격 회신 입력 */}
+                    {/* 벤더 가격 회신 입력 · 전화·메일로 받은 회신을 직접 기록하는 폼 */}
                     <div>
-                      <h3 className="text-sm font-bold text-slate-200 mb-1">벤더 견적 입력</h3>
-                      <p className="text-xs text-slate-500 mb-4">벤더명을 입력하고 각 품목의 단가를 기록하세요. 저장 후 비교/추천 탭에 자동 반영됩니다.</p>
+                      <h3 className="text-sm font-bold text-slate-200 mb-1">새 회신 직접 입력</h3>
+                      <p className="text-xs text-slate-500 mb-4">전화나 메일로 받은 회신을 기록합니다. 벤더명을 입력하고 각 품목의 단가를 적으세요. 저장 후 비교/추천 탭에 자동 반영됩니다.</p>
 
                       {/* 벤더 기본 입력 */}
                       <div className="flex items-center gap-3 mb-3 p-3 bg-pg rounded-lg border border-bd">

@@ -90,6 +90,8 @@ import { MobileQuotesView } from "@/components/quotes/mobile-quotes-view";
 import { QuotePreparePanel } from "@/components/quotes/prepare/quote-prepare-panel";
 // §quotes-mobile-refine P3 — 개별 케이스 리마인더 바텀 시트(모바일 4a). 발송은 기존 vendor-requests 계약.
 import { MobileReminderSheet } from "@/components/quotes/mobile-reminder-sheet";
+// §quote-readiness-single-source · 회신 수와 비교·발주 판정은 한 함수가 한다(화면별 문턱 금지).
+import { BLOCKING_UI_STATES, COMPARE_MIN_RESPONSES, resolveQuoteReadiness, type QuoteReadiness } from "@/lib/quotes/readiness";
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 
@@ -151,7 +153,7 @@ function getOpStatus(q: Quote) {
   switch (q.status) {
     case "RESPONDED": return OP_STATUS.비교_검토;
     case "SENT":
-      return (q.responses?.length ?? 0) > 0 ? OP_STATUS.일부_회신 : OP_STATUS.회신_대기;
+      return quoteReadiness(q).respondedCount > 0 ? OP_STATUS.일부_회신 : OP_STATUS.회신_대기;
     case "PENDING":   return OP_STATUS.요청_접수;
     case "COMPLETED": return OP_STATUS.발주_완료;
     case "CANCELLED": return OP_STATUS.취소됨;
@@ -168,22 +170,33 @@ function getOpPriority(q: Quote): number {
     RESPONDED: 2, SENT: 3, PENDING: 4, COMPLETED: 6, CANCELLED: 7,
   };
   // 일부 회신 도착 = 비교 가능
-  if (q.status === "SENT" && (q.responses?.length ?? 0) > 0) return 2;
+  if (q.status === "SENT" && quoteReadiness(q).respondedCount > 0) return 2;
   return map[q.status] ?? 9;
 }
 
 // ── Canonical State Enum ──
 type RailState = "request_not_sent" | "awaiting_responses" | "response_delayed" | "compare_not_ready" | "compare_review_required" | "condition_check_required" | "external_approval_required" | "ready_for_po_conversion";
 
+/* 🛑 §quote-readiness-single-source (2026-09-14) · 판정을 여기서 다시 계산하지 않는다.
+ *   옛 판본은 `rc >= 2 ? … : compare_not_ready` 로 **회신 1건을 차단**으로 읽었고,
+ *   상세는 `respondedCount >= 1` 로 「구매 전환 가능」 이라 같은 견적을 반대로 말했다.
+ *   회신 수(축 ②)와 문턱(축 ①)을 둘 다 lib/quotes/readiness 가 가진다. */
+function quoteReadiness(q: Quote): QuoteReadiness {
+  return resolveQuoteReadiness({
+    status: q.status,
+    vendorRequests: (q.vendorRequests ?? []).map((vr) => ({
+      id: vr.id,
+      status: vr.status,
+      vendorName: vr.vendorName,
+      responseItemCount: vr.responseItems?.length ?? 0,
+    })),
+    portalResponses: (q.responses ?? []).map((r) => ({ id: r.id, vendorName: r.vendor?.name })),
+    isDelayed: isDelayed(q),
+  });
+}
+
 function deriveRailState(q: Quote): RailState {
-  const rc = q.responses?.length ?? 0;
-  if (q.status === "COMPLETED") return "ready_for_po_conversion";
-  if (q.status === "RESPONDED") return rc >= 2 ? "compare_review_required" : "compare_not_ready";
-  if (q.status === "SENT") {
-    if (rc === 0) return isDelayed(q) ? "response_delayed" : "awaiting_responses";
-    return rc >= 2 ? "compare_review_required" : "compare_not_ready";
-  }
-  return "request_not_sent";
+  return quoteReadiness(q).uiState;
 }
 
 // §purchased-falls-through-to-not-sent — **실행 축 분리** (호영님 판정 2026-08-24)
@@ -240,11 +253,13 @@ const RAIL_STATE_MAP: Record<RailState, {
     actionKey: "followup_send",
   },
   compare_not_ready: {
-    badge: "비교 준비 부족", headerSummary: "비교에 필요한 유효 견적 수가 부족합니다", urgency: "추가 회신 확보가 우선입니다",
-    status: "비교 준비 부족", blocker: "유효 견적 수 부족", nextAction: "추가 공급사 회신 확보", compareReady: "불가 또는 제한적", poReady: "불가 · 선택안 없음",
-    snapshotNote: "유효 견적 수가 부족해 비교 후보가 아직 안정적으로 만들어지지 않았습니다",
-    handoffTarget: "추가 회신 확보", handoffStatus: "비교 준비 중",
-    aiRecommendation: "우선 추천: 유효 견적 수를 먼저 확보해야 비교 결과의 신뢰도가 올라갑니다",
+    // §quote-readiness-single-source · 회신 1건 = **발주 가능 · 비교 불가**. 단일 공급사 품목은 이게 정상이다.
+    //   전환 가능한 회신이 없는 경우(포털 회신만)는 getOpSignals 가 판정 결과로 덮어쓴다.
+    badge: "단일 회신", headerSummary: "회신 1건으로 구매를 진행할 수 있습니다 · 비교는 회신 2건부터입니다", urgency: "구매 진행 또는 추가 회신 확보를 고르세요",
+    status: "발주 가능 · 비교 불가", blocker: "차단 없음", nextAction: "구매 진행 또는 추가 회신 확보", compareReady: "불가 · 회신 2건부터", poReady: "가능",
+    snapshotNote: "대체 공급사가 없는 품목은 회신 1건으로 구매를 진행하는 것이 일반적입니다",
+    handoffTarget: "상세에서 구매 진행", handoffStatus: "단일 견적으로 진행 가능",
+    aiRecommendation: "우선 추천: 대체 공급사가 없는 품목이면 추가 회신을 기다리기보다 구매 진행이 우선일 수 있습니다",
     ctaLabel: "추가 회신 확보", railCtaLabel: "추가 확보 검토", ctaVariant: "outline", secondaryCta: "전체 상세 열기", tertiaryCta: "보류",
     actionKey: "followup_send",
   },
@@ -401,9 +416,15 @@ const COLUMN_MAX_WIDTH = 500;
 
 // ── 운영 신호 파생 (canonical state 기반) ──
 function getOpSignals(q: Quote) {
-  const railState = deriveRailState(q);
-  const m = RAIL_STATE_MAP[railState];
-  const responseCount = q.responses?.length ?? 0;
+  const readiness = quoteReadiness(q);
+  const railState = readiness.uiState;
+  const base = RAIL_STATE_MAP[railState];
+  // 회신 1건인데 전환 가능한 회신이 없으면(포털 회신만) 표 문구 대신 판정 결과를 쓴다 · 거짓 「가능」 금지.
+  const m =
+    railState === "compare_not_ready" && !readiness.po.ready
+      ? { ...base, status: readiness.summary, blocker: "전환할 수 있는 회신 없음", poReady: "불가 · 전환할 회신 없음", handoffTarget: "추가 회신 확보", handoffStatus: "회신 확보 전" }
+      : base;
+  const responseCount = readiness.respondedCount;
 
   let readinessStage = 0;
   if (q.status === "SENT") readinessStage = 1;
@@ -920,7 +941,8 @@ function QuoteCard({
 // ── Operating mode chips ──
 // Mode chips — canonical state 기반 operator lens
 const RESPONSE_TRACK_STATES = new Set(["request_not_sent", "awaiting_responses", "response_delayed"]);
-const BLOCKED_STATES = new Set(["condition_check_required", "external_approval_required", "compare_not_ready"]);
+// 🛑 차단 상태는 lib/quotes/readiness 한 곳 · compare_not_ready(회신 1건)는 차단이 아니다.
+const BLOCKED_STATES: ReadonlySet<string> = BLOCKING_UI_STATES;
 const COMPARE_STATES = new Set(["compare_not_ready", "compare_review_required", "condition_check_required"]);
 
 // §quote-screen-sian P6.2 — 시안 §08 빠른 필터(교체, CEO 결정): 마감 임박·높음 우선(위험=빨강) · 회신 정체(주의=앰버).
@@ -1925,7 +1947,7 @@ function QuotesPageContent() {
     // §10 Phase 2 — per-RFQ 공급사 비교: 단가/납기/moq 회신(QuoteVendorResponseItem)이 2곳+ 인 견적 선택.
     //   우선순위: 선택된 견적 → 회신 2곳+ 첫 견적. canonical truth(저장 0·읽을 때 파생).
     const hasVendorData = (q: Quote) =>
-      (q.vendorRequests ?? []).filter((vr) => (vr.responseItems ?? []).length > 0).length >= 2;
+      (q.vendorRequests ?? []).filter((vr) => (vr.responseItems ?? []).length > 0).length >= COMPARE_MIN_RESPONSES;
     const targetQuote =
       (selectedQuoteId ? quotes.find((q) => q.id === selectedQuoteId && hasVendorData(q)) : undefined) ||
       quotes.find((q) => q.status !== "CANCELLED" && hasVendorData(q)) ||
@@ -4722,13 +4744,13 @@ function QuotesPageContent() {
               </div>
             )}
             {activeWorkWindow === "compare_review" && (() => {
-              const sqrc = selectedQuote.responses?.length ?? 0;
+              const sqrc = quoteReadiness(selectedQuote).respondedCount;
               const validQuotes = sqrc;
               const hasSelection = selectedQuote.status === "COMPLETED";
               const blockers: { label: string; reason: string; action: string }[] = [];
-              if (validQuotes < 2) blockers.push({ label: "유효 견적 부족", reason: "비교에 필요한 견적 수가 부족합니다", action: "추가 회신 확보" });
-              if (!hasSelection && validQuotes >= 2) blockers.push({ label: "선택안 미확정", reason: "비교는 가능하지만 선택안이 아직 확정되지 않았습니다", action: "선택안 확정" });
-              const canConfirm = validQuotes >= 2 && blockers.length === 0;
+              if (validQuotes < COMPARE_MIN_RESPONSES) blockers.push({ label: "비교 회신 부족", reason: "비교는 회신 2건부터입니다 · 회신 1건이면 상세에서 구매를 진행할 수 있습니다", action: "추가 회신 확보" });
+              if (!hasSelection && validQuotes >= COMPARE_MIN_RESPONSES) blockers.push({ label: "선택안 미확정", reason: "비교는 가능하지만 선택안이 아직 확정되지 않았습니다", action: "선택안 확정" });
+              const canConfirm = validQuotes >= COMPARE_MIN_RESPONSES && blockers.length === 0;
               const responses = selectedQuote.responses ?? [];
               const prices = responses.map(r => r.totalPrice).filter((p): p is number => typeof p === "number" && p > 0);
 
@@ -4744,7 +4766,7 @@ function QuotesPageContent() {
                       <div><p className={`text-lg font-bold ${hasSelection ? "text-emerald-400" : "text-yellow-600"}`}>{hasSelection ? "확정" : "미확정"}</p><p className="text-[11px] text-slate-500">선택안</p></div>
                     </div>
                     <p className="text-[11px] text-slate-500 leading-snug">
-                      {validQuotes >= 2 ? "비교 자체는 가능하지만 선택안 확정이 남아 있습니다" : "유효 견적이 부족해 비교 후보가 안정적으로 만들어지지 않았습니다"}
+                      {validQuotes >= COMPARE_MIN_RESPONSES ? "비교 자체는 가능하지만 선택안 확정이 남아 있습니다" : "비교는 회신 2건부터입니다 · 회신 1건이면 상세에서 구매를 진행할 수 있습니다"}
                     </p>
                   </div>
 
