@@ -10,9 +10,17 @@ import { ArrowLeft, ShieldCheck, Users, Zap } from "lucide-react";
 
 const PIPELINE = ["Search", "Compare", "Request", "Order", "Receive", "Inventory"];
 
+/* 🛑 §public-claim-evidence (2026-09-15 · 릴레이 판정) · 퍼블릭 화면에는 **측정으로 뒷받침되는 현재 상태**만 쓴다.
+ *   옛 문구 「256-bit 엔터프라이즈급 데이터 암호화」 는 근거가 없었다:
+ *     전송 구간  브라우저↔서비스 TLS 1.3 · 협상 암호 AES-128-GCM(2026-09-15 로컬 Node 측정) → 256 이 보장되지 않는다
+ *     앱 암호화  payload-encryption-adapter 는 호출자 0 · prod 키 env 없음 → 동작하지 않는다
+ *     「엔터프라이즈급」 은 근거 없는 등급 수식
+ *   옛 문구 「조직 단위 역할 기반 접근 제어」 는 전면 적용으로 읽힌다 · 실측 변경 핸들러 221 중 역할 강제 형태 175
+ *   (나머지는 인증만 또는 공개) → "주요 작업" 으로 한정.
+ *   주장을 추가하려면 regression/public-claim-evidence.test.ts 의 근거 문서 목록에 먼저 올린다. */
 const trustItems = [
-  { icon: ShieldCheck, text: "256-bit 엔터프라이즈급 데이터 암호화" },
-  { icon: Users, text: "조직 단위 역할 기반 접근 제어" },
+  { icon: ShieldCheck, text: "모든 통신 TLS 암호화 (HTTPS 강제)" },
+  { icon: Users, text: "주요 작업에 조직 역할별 권한 확인" },
   { icon: Zap, text: "구매-재고 운영 실시간 연결" },
 ];
 
@@ -319,7 +327,6 @@ function SignInContent() {
                 계정이 없으신가요?{" "}
                 <Link href="/search" className="font-semibold text-blue-600 hover:text-blue-500 underline underline-offset-2">무료로 시작하기</Link>
               </p>
-              <p className="text-[11px] text-slate-400">데이터 무결성과 ISMS 가이드를 준수합니다.</p>
             </div>
 
           </div>

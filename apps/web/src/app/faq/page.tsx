@@ -38,7 +38,8 @@ const FAQ_CATEGORIES = [
     label: "문의/오류",
     items: [
       { q: "문제가 생기면 어디로 문의하나요?", a: "support@labaxis.co.kr로 이메일을 보내시거나, 고객 지원 페이지에서 문의 양식을 제출해 주세요." },
-      { q: "데이터는 안전한가요?", a: "256-bit 암호화, 역할 기반 접근 제어, Audit Trail을 적용하여 엔터프라이즈급 데이터 보호를 제공합니다." },
+      // §public-claim-evidence (2026-09-15) · 측정으로 뒷받침되는 현재 상태만 · 등급·비트수·인증 주장 금지(regression/public-claim-evidence)
+      { q: "데이터는 안전한가요?", a: "모든 통신은 TLS로 암호화되며 HTTPS로만 접속됩니다. 주요 작업은 조직 멤버의 역할에 따라 권한을 확인합니다. 보안 요건 확인이 필요하시면 support@labaxis.co.kr로 문의해 주세요." },
     ],
   },
 ];
