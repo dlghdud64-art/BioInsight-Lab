@@ -13,12 +13,28 @@ const SRC = readFileSync(
   resolve(__dirname, "../../components/inventory/InventoryTable.tsx"),
   "utf8",
 );
+const CANON = readFileSync(
+  resolve(__dirname, "../../lib/inventory/reorder-need.ts"),
+  "utf8",
+);
 
 describe("§inventory-safety-gauge — 안전재고 게이지 막대(신호등)", () => {
   it("게이지 트레이스 + 신호등 3색 분기(0 red / 미달 yellow / 정상 emerald)", () => {
     expect(SRC).toMatch(/§inventory-safety-gauge/);
     expect(SRC).toMatch(/group\.totalQuantity === 0 \? "bg-red-500"/);
-    expect(SRC).toMatch(/group\.totalQuantity < safety \? "bg-yellow-500" : "bg-emerald-500"/);
+  });
+
+  it("🛑 게이지 경계 = 정본 경계 — 안전재고 '이하' yellow", () => {
+    /* 🛑 삼항 전체를 문자열로 박지 않는다.
+     *   옛 판본이 `group.totalQuantity < safety ? ...` 를 바이트로 핀해, 정본(reorder-need.ts `<=`)에
+     *   맞추는 수정을 막았다(§sentinel-inversion · 드로어 게이지 879cfb74 와 같은 형태, 2026-09-15).
+     *   지역변수 safety 비교는 이 파일에서 게이지 블록에만 있다. */
+    expect(SRC).toMatch(
+      /group\.totalQuantity\s*<=\s*safety\s*\?\s*"bg-yellow-500"\s*:\s*"bg-emerald-500"/,
+    );
+    expect(SRC).not.toMatch(/group\.totalQuantity\s*<\s*safety\s*\?/);
+    // 정본과 같은 경계인가 — 양쪽이 함께 < 로 바뀌는 경우까지 잡는다.
+    expect(CANON).toMatch(/inv\.currentQuantity\s*<=\s*inv\.safetyStock/);
   });
   it("현재÷안전 비율 게이지 + a11y 라벨", () => {
     expect(SRC).toMatch(/Math\.min\(100, Math\.round\(\(group\.totalQuantity \/ safety\) \* 100\)\)/);

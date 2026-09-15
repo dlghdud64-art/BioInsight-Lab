@@ -76,4 +76,14 @@ describe("§3-1 S5 — 신호등 정합 (§9)", () => {
     expect(block).toMatch(/#b91c1c/);
     expect(block).not.toMatch(/amber-|orange-/);
   });
+
+  it("🛑 미달 경계 = 정본 경계 — 안전재고 '이하' 면 red (§reorder-gauge-inequality 2)", () => {
+    /* 2026-09-15 이전에는 `<`(미만)라 수량 == 안전재고(재주문 트리거 지점)가 정상색으로 보였다.
+     *   정본 lib/inventory/reorder-need.ts isReorderNeeded 는 `<=`. 경계를 잠근 핀이 없었다.
+     *   바이트로 박지 않고 경계(관계)만 본다 — `below` 는 이 파일에서 이 블록에만 있다. */
+    const CANON = read("src/lib/inventory/reorder-need.ts");
+    expect(PAGE).toMatch(/const below\s*=\s*inv\.safetyStock != null && inv\.currentQuantity\s*<=\s*inv\.safetyStock/);
+    expect(PAGE).not.toMatch(/const below\s*=\s*inv\.safetyStock != null && inv\.currentQuantity\s*<\s*inv\.safetyStock/);
+    expect(CANON).toMatch(/inv\.currentQuantity\s*<=\s*inv\.safetyStock/);
+  });
 });

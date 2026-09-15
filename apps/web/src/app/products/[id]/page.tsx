@@ -1223,7 +1223,7 @@ export default function ProductDetailPage() {
                       <div className="space-y-1.5">
                         {orgInventories.slice(0, 3).map((inv) => {
                           const below =
-                            inv.safetyStock != null && inv.currentQuantity < inv.safetyStock;
+                            inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock;
                           return (
                             <div key={inv.id} className="flex items-center justify-between gap-2 min-w-0">
                               <span className="text-[11px] text-slate-500 truncate">

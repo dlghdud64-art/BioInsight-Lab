@@ -739,7 +739,7 @@ export function InventoryTable({
                             {(() => {
                               const safety = group.safetyStock ?? 0;
                               const pct = safety > 0 ? Math.min(100, Math.round((group.totalQuantity / safety) * 100)) : 0;
-                              const barColor = group.totalQuantity === 0 ? "bg-red-500" : group.totalQuantity < safety ? "bg-yellow-500" : "bg-emerald-500";
+                              const barColor = group.totalQuantity === 0 ? "bg-red-500" : group.totalQuantity <= safety ? "bg-yellow-500" : "bg-emerald-500";
                               return (
                                 <div className="mt-1 w-full h-2 rounded-full bg-slate-100 overflow-hidden" role="img" aria-label={`안전재고 대비 ${pct}%`}>
                                   <div className={`h-full rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
