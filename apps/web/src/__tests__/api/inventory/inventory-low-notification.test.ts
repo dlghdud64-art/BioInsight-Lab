@@ -64,8 +64,18 @@ describe("§11.250a #1 — inventory PATCH route INVENTORY_LOW dispatch", () => 
     expect(route).toMatch(/dispatchNotificationEvent[\s\S]{0,500}entityId[:\s]+(params\.id|updatedInventory\.id|existingInventory\.id)/);
   });
 
-  it("recipients inventory.userId (single recipient minimum scope)", () => {
-    expect(route).toMatch(/dispatchNotificationEvent[\s\S]{0,800}recipients[\s\S]{0,300}userId/);
+  it("recipients = 소유자 + 조직 OWNER/ADMIN 집합(중복 제거)이 그대로 dispatch 로 간다", () => {
+    /* 🛑 2026-09-16 §sentinel-inversion 승계 — 옛 단언은 `dispatchNotificationEvent` 뒤
+     *   800자 창에서 `recipients … userId` 를 찾았다. §11.250acd-2 에서 수신자가 Set 으로
+     *   먼저 만들어지고 `recipients` 변수를 **경유**해 전달되도록 바뀌며 창 밖으로 나갔다.
+     *   명제는 "소유자 + 조직 관리자 전원이 받는다" 이므로 그 관계를 핀한다. */
+    expect(route).toMatch(/const recipientUserIds = new Set<string>\(\)/);
+    expect(route).toMatch(/if \(userId\) recipientUserIds\.add\(userId\)/);
+    // 조직 OWNER/ADMIN 도 집합에 들어간다(조직 전용 재고도 수신자가 생긴다)
+    expect(route).toMatch(/role: \{ in: \["OWNER", "ADMIN"\] \}[\s\S]{0,400}?recipientUserIds\.add\(m\.userId\)/);
+    // 집합 → { userId } 목록 → dispatch 의 recipients (역참조로 같은 변수를 확인)
+    expect(route).toMatch(/const recipients = Array\.from\(recipientUserIds\)\.map\(\((\w+)\) => \(\{ userId: \1 \}\)\)/);
+    expect(route).toMatch(/dispatchNotificationEvent\(\{[\s\S]{0,800}?recipients\b/);
   });
 
   it("metadata productName + currentQuantity + safetyStock 포함", () => {
@@ -81,8 +91,20 @@ describe("§11.250a #2 — push notification (sendPushNotification)", () => {
     expect(route).toMatch(/from\s+["']@\/lib\/notifications\/push-sender["']/);
   });
 
-  it("sendPushNotification 호출 — inventory.userId forward", () => {
-    expect(route).toMatch(/sendPushNotification\s*\(\s*(\w+\.)?userId/);
+  it("sendPushNotification 호출 — 수신자 전원에게 전달(for-of)", () => {
+    /* 🛑 2026-09-16 §sentinel-inversion 승계 — 옛 단언은 단일 수신자 시절의
+     *   `x.userId` 형태를 박았다. §11.250acd-2 에서 multi-recipient for-of 로 바뀌며
+     *   인자가 recipientUserId 가 되어 RED 로 남았고, 그동안 이 축은 무방비였다.
+     *   명제는 "수신자 전원에게 간다" 이므로, 루프 변수가 그대로 전달되는 **관계**를 핀한다
+     *   (역참조 \1 — 변수명이 바뀌어도 관계가 유지되면 GREEN). */
+    expect(route).toMatch(
+      /for \(const (\w+) of recipientUserIds\)[\s\S]{0,400}?sendPushNotification\s*\(\s*\1\b/,
+    );
+    /* ⚠️ 범위: 위 단언은 **한 쌍**만 확인한다. 한 파일에 푸시 호출이 여러 곳이면
+     *   한 곳이 회귀해도 통과한다(orders/status 는 2곳). 그래서 옛 단일 수신자 형태로의
+     *   회귀를 아래에서 따로 막는다. 이 둘로도 "루프 변수가 아닌 다른 이름"으로의
+     *   회귀까지는 못 잡는다 — 그건 파서가 필요하고, 여기서는 범위를 밝히고 멈춘다. */
+    expect(route).not.toMatch(/sendPushNotification\s*\(\s*\w+\.userId/);
   });
 
   it("push payload type 'low_stock' (mobile ROUTE_MAP 매핑)", () => {

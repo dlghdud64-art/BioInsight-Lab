@@ -82,8 +82,25 @@ describe("§11.250cd #3 — ORDER_DELIVERED 분기 (DELIVERED transition)", () =
 });
 
 describe("§11.250cd #4 — push notification (purchase NotificationType reuse)", () => {
-  it("sendPushNotification 호출 — order.userId forward", () => {
-    expect(route).toMatch(/sendPushNotification\s*\(\s*(\w+\.)*userId/);
+  it("sendPushNotification 호출 — 수신자 전원에게 전달(for-of)", () => {
+    /* 🛑 2026-09-16 §sentinel-inversion 승계 — 옛 단언은 단일 수신자 시절의
+     *   `x.userId` 형태를 박았다. §11.250acd-2 에서 multi-recipient for-of 로 바뀌며
+     *   인자가 recipientUserId 가 되어 RED 로 남았고, 그동안 이 축은 무방비였다.
+     *   명제는 "수신자 전원에게 간다" 이므로, 루프 변수가 그대로 전달되는 **관계**를 핀한다
+     *   (역참조 \1 — 변수명이 바뀌어도 관계가 유지되면 GREEN). */
+    // 이 라우트는 푸시 지점이 **둘**이다(SHIPPING · DELIVERED). 각각을 따로 핀한다 —
+    //   한 쌍만 보면 한 곳이 회귀해도 다른 곳이 단언을 만족시켜 통과한다(실측).
+    for (const status of ["SHIPPING", "DELIVERED"]) {
+      const re = new RegExp(
+        `for \\(const (\\w+) of recipientUserIds\\)[\\s\\S]{0,400}?sendPushNotification\\s*\\(\\s*\\1\\b[\\s\\S]{0,400}?status:\\s*"${status}"`,
+      );
+      expect(route, `${status} 푸시가 수신자 전원 루프를 통과하지 않는다`).toMatch(re);
+    }
+    /* ⚠️ 범위: 두 지점을 status 로 갈라 각각 핀했다(실측 — 한 쌍만 보면 첫 루프를 지워도
+     *   둘째가 단언을 만족시켜 통과했다). 아래 부정 단언이 옛 단일 수신자 형태로의 회귀를 막는다.
+     *   다만 "루프 변수가 아닌 제3의 이름"으로 바꾸는 회귀는 이 둘로도 못 잡는다 —
+     *   파서가 필요하고, 여기서는 범위를 밝히고 멈춘다. */
+    expect(route).not.toMatch(/sendPushNotification\s*\(\s*\w+\.userId/);
   });
 
   it("push payload type 'purchase' (mobile ROUTE_MAP 매핑)", () => {
