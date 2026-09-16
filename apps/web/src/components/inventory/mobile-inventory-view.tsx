@@ -17,6 +17,10 @@ import {
   Info,
 } from "lucide-react";
 import { format } from "date-fns";
+import {
+  isReorderNeededByLeadTime,
+  isReorderNeededBySafetyStock,
+} from "@/lib/inventory/reorder-need";
 import { getStorageConditionLabel } from "@/lib/constants";
 // §11.374 P3.3 #mobile-surface-unify — 재고 모바일 상태요약 2x2 정합.
 
@@ -71,15 +75,6 @@ interface MobileInventoryViewProps {
 // ── Helpers ──
 const now = new Date();
 
-function isReorderNeededByLeadTime(inv: ProductInventory) {
-  const dailyUsage = inv.averageDailyUsage ?? 0;
-  const leadTime = inv.leadTimeDays ?? 0;
-  if (dailyUsage > 0 && leadTime > 0) {
-    return inv.currentQuantity <= dailyUsage * leadTime;
-  }
-  return false;
-}
-
 function getItemStatus(inv: ProductInventory): StatusType {
   if (inv.currentQuantity === 0) return "danger";
   if (inv.expiryDate) {
@@ -88,7 +83,7 @@ function getItemStatus(inv: ProductInventory): StatusType {
     if (days <= 0) return "danger";
     if (days <= 30) return "expiring";
   }
-  if (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock) return "low";
+  if (isReorderNeededBySafetyStock(inv)) return "low";
   if (isReorderNeededByLeadTime(inv)) return "low";
   return "normal";
 }
@@ -101,7 +96,7 @@ function classifyIssue(inv: ProductInventory): IssueType {
     if (days <= 0) return "expired";
     if (days <= 30) return "expiring";
   }
-  if (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock) return "low_stock";
+  if (isReorderNeededBySafetyStock(inv)) return "low_stock";
   if (isReorderNeededByLeadTime(inv)) return "reorder_lead";
   if (!inv.location) return "no_location";
   return "low_stock";
