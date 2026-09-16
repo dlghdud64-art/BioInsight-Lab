@@ -5,14 +5,26 @@ import { db } from "@/lib/db";
 // 구매내역 리포트 조회
 export async function GET(request: NextRequest) {
   try {
-    // x-guest-key 헤더 또는 세션 인증 지원
-    const guestKey = request.headers.get("x-guest-key");
+    // 🛑 §guest-scope-leak (2026-09-16 · 릴레이 지시 3) — 옛 구현은 세션 없이도 응답했고,
+    //   범위가 `x-guest-key` 헤더 값(없으면 "guest-demo")이었다. 즉 헤더만 바꾸면
+    //   아무나 남의 scopeKey 구매 내역·예산을 읽을 수 있었다. 세션 필수 + 범위는
+    //   세션·멤버십에서만 만든다. 계약: __tests__/regression/guest-scope-leak.test.ts
     const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+    const userId = session.user.id;
 
-    // 게스트 키가 있거나 세션이 있으면 인증 통과
-    // 개발 단계에서는 모든 사용자에게 guest-demo 데이터 표시
-    const scopeKey = guestKey || "guest-demo";
-    const userId = session?.user?.id;
+    const [memberships, orgMemberships] = await Promise.all([
+      db.workspaceMember.findMany({ where: { userId }, select: { workspaceId: true } }),
+      db.organizationMember.findMany({ where: { userId }, select: { organizationId: true } }),
+    ]);
+    const workspaceIds = memberships.map((m: { workspaceId: string }) => m.workspaceId);
+    const orgIds = orgMemberships.map((m: { organizationId: string }) => m.organizationId);
+    // 구매 원장 범위 = /api/purchases 와 같은 축(userId · workspace)
+    const purchaseScopeKeys: string[] = [userId, ...workspaceIds];
+    // 예산 범위 = 대시보드 예산 조회와 같은 축(`user-<id>` · userId · 소속 조직)
+    const budgetScopeKeys: string[] = [`user-${userId}`, userId, ...orgIds];
 
     const { searchParams } = new URL(request.url);
     const period = searchParams.get("period") || "month";
@@ -98,7 +110,7 @@ export async function GET(request: NextRequest) {
     // 실제 구매내역 조회 (PurchaseRecord)
     if (process.env.NODE_ENV === "development") {
       console.log("[Purchase API] Querying purchase records with:", {
-        scopeKey: scopeKey,
+        scopeKeys: purchaseScopeKeys.length,
         dateStart,
         dateEnd,
         vendorId,
@@ -108,7 +120,10 @@ export async function GET(request: NextRequest) {
 
     const purchaseRecords = await db.purchaseRecord.findMany({
       where: {
-        scopeKey: scopeKey,
+        OR: [
+          { scopeKey: { in: purchaseScopeKeys } },
+          ...(workspaceIds.length > 0 ? [{ workspaceId: { in: workspaceIds } }] : []),
+        ],
         ...(vendorId && { vendorName: vendorId }),
         purchasedAt: {
           gte: dateStart,
@@ -206,12 +221,12 @@ export async function GET(request: NextRequest) {
 
     // 예산 정보 조회 및 사용률 계산 (yearMonth 기반)
     if (process.env.NODE_ENV === "development") {
-      console.log("[Purchase API] Querying budgets with scopeKey:", scopeKey);
+      console.log("[Purchase API] Querying budgets · scopeKeys:", budgetScopeKeys.length);
     }
 
     const budgets = await db.budget.findMany({
       where: {
-        scopeKey: scopeKey,
+        scopeKey: { in: budgetScopeKeys },
       },
       include: {
         workspace: true,

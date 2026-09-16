@@ -30,11 +30,17 @@ vi.mock("@/auth", () => ({
   auth: vi.fn(),
 }));
 
+// §guest-scope-leak (2026-09-16) — 라우트가 조회 범위를 **세션·멤버십**에서 만들도록 바뀌면서
+//   workspaceMember·organizationMember 조회가 추가됐다(이전에는 `x-guest-key` 헤더가 범위였다).
+//   이 mock 이 없으면 핸들러가 undefined 를 부르고 500 이 나 계약 단언이 전부 깨진다 —
+//   계약(응답 모양)은 그대로이고, 모킹 대상만 늘었다.
 vi.mock("@/lib/db", () => ({
   db: {
     quote: { findMany: vi.fn() },
     purchaseRecord: { findMany: vi.fn() },
     budget: { findMany: vi.fn() },
+    workspaceMember: { findMany: vi.fn() },
+    organizationMember: { findMany: vi.fn() },
   },
 }));
 
@@ -57,6 +63,8 @@ describe("GET /api/reports/purchase — contract shape (§11.46)", () => {
     mockedAuth.mockResolvedValue({ user: { id: "user-1" } });
     mockedDb.budget.findMany.mockResolvedValue([] as never);
     mockedDb.quote.findMany.mockResolvedValue([] as never);
+    mockedDb.workspaceMember.findMany.mockResolvedValue([] as never);
+    mockedDb.organizationMember.findMany.mockResolvedValue([] as never);
   });
 
   it("categoryData entries carry { name: string, amount: number }", async () => {

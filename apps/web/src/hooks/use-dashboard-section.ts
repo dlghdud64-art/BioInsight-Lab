@@ -18,7 +18,6 @@
 
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getGuestKey } from "@/lib/guest-key";
 // §session-expiry-global — GET 을 csrfFetch 경유 → 401 시 전역 재로그인 유도(가짜 empty 폴백 차단).
 import { csrfFetch } from "@/lib/api-client";
 import {
@@ -62,10 +61,10 @@ export function useDashboardSection<T>({
   const { data, isLoading, error, refetch } = useQuery<T>({
     queryKey,
     queryFn: async () => {
-      const guestKey = getGuestKey();
-      const headers: Record<string, string> = {};
-      if (guestKey) headers["x-guest-key"] = guestKey;
-      const response = await csrfFetch(url, { headers });
+      // 🛑 §guest-scope-leak (2026-09-16) — getGuestKey() 는 환경 무관 고정값 "guest-demo" 라
+      //   이 헤더가 데모 시드 범위를 실사용자 집계에 붙였다. 로그인 화면은 헤더를 보내지 않는다.
+      //   서버도 더는 읽지 않는다(api/dashboard/{stats,summary}) — 양쪽 다 닫는다.
+      const response = await csrfFetch(url);
       if (!response.ok) {
         // §11.361-1b — !ok 는 throw(return null 금지) → react-query retry 동작.
         throw new Error(`${url} ${response.status}`);

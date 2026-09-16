@@ -20,7 +20,6 @@ import { Badge } from "@/components/ui/badge";
 // (모든 chart 는 SpendTrendCard/CategoryDistributionCard 등 분리 component).
 // 본 dead import 가 recharts (~150KB gzipped) 를 page chunk 에 포함시키고
 // 있어 initial bundle 부담. 제거 후 recharts 는 chart component lazy chunk 만.
-import { getGuestKey } from "@/lib/guest-key";
 // §session-expiry-global — 대시보드 GET 을 csrfFetch 경유 → 401 시 raw fetch 우회로 인한
 //   "가짜 empty-state" 폴백 대신 전역 재로그인 유도(api-client redirectToSignInOn401).
 import { csrfFetch } from "@/lib/api-client";
@@ -205,10 +204,8 @@ function DashboardPageInner() {
   const { data: dashboardStats, isLoading: statsLoading, isError: statsError, refetch: refetchStats } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const guestKey = getGuestKey();
-      const headers: Record<string, string> = {};
-      if (guestKey) headers["x-guest-key"] = guestKey;
-      const response = await csrfFetch("/api/dashboard/stats", { headers });
+      // 🛑 §guest-scope-leak (2026-09-16) — 고정 게스트 키 헤더 제거(근거는 use-dashboard-section.ts).
+      const response = await csrfFetch("/api/dashboard/stats");
       if (!response.ok) {
         // §11.361-1b — 이전엔 return null → react-query 가 "성공(null)"으로 처리해
         //   retry 미작동 → 간헐 500(콜드스타트 Prisma transient) 1회로 stats 영구 null

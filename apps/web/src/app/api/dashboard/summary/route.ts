@@ -33,7 +33,8 @@ export async function GET(request: NextRequest) {
     }
 
     const userId = session.user.id;
-    const guestKey = request.headers.get("x-guest-key") || null;
+    // 🛑 §guest-scope-leak (2026-09-16) — `x-guest-key` 를 범위에 넣지 않는다.
+    //   근거·계약은 api/dashboard/stats/route.ts 주석 · regression/guest-scope-leak.test.ts
 
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -160,7 +161,7 @@ export async function GET(request: NextRequest) {
     ).length;
 
     // ── 이번 달 실 구매액(예산 무관, scope 동일) — StatLine "이번달 지출" + 폴백예산 spent ──
-    const scopeKeyValues = [userId, ...workspaceIds, ...(guestKey ? [guestKey] : [])];
+    const scopeKeyValues = [userId, ...workspaceIds];
     const thisMonthSpend = await db.purchaseRecord
       .aggregate({
         where: {

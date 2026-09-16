@@ -32,8 +32,14 @@ export async function GET(request: NextRequest) {
     }
 
     const userId = session.user.id;
-    const guestKey = request.headers.get("x-guest-key") || null;
-    console.log("[DASHBOARD_STATS] userId:", userId, "guestKey:", guestKey ? "[present]" : "[none]");
+    // 🛑 §guest-scope-leak (2026-09-16 · 릴레이 지시 3) — 로그인 사용자의 집계 범위에서
+    //   `x-guest-key` 를 **읽지 않는다.** 클라이언트의 getGuestKey() 가 환경 무관 고정값
+    //   "guest-demo" 를 보냈고, 그 값이 아래 scopeKey OR 조건에 그대로 들어가
+    //   데모 시드 지출이 실사용자 대시보드에 합산됐다(prod 실측 2026-09-16:
+    //   6개월 창 44,634,000 중 11행 43,784,000 이 scopeKey='guest-demo').
+    //   범위는 세션(userId)과 멤버십(workspaceId)에서만 나온다 — 헤더가 범위를 넓히지 못한다.
+    //   계약: __tests__/regression/guest-scope-leak.test.ts
+    console.log("[DASHBOARD_STATS] userId:", userId);
 
     // 날짜 계산 (공통)
     const now = new Date();
@@ -87,7 +93,7 @@ export async function GET(request: NextRequest) {
     //   단축은 아래 직렬체인 병렬 호이스트.
     const earlyPurchaseWhere: any = {
       OR: [
-        { scopeKey: { in: [userId, ...workspaceIds, ...(guestKey ? [guestKey] : [])] } },
+        { scopeKey: { in: [userId, ...workspaceIds] } },
         ...(workspaceIds.length > 0 ? [{ workspaceId: { in: workspaceIds } }] : []),
       ],
     };
@@ -252,7 +258,7 @@ export async function GET(request: NextRequest) {
     // 이전: recentOrders, recentPurchases가 return문 안에서 순차 실행
     // 이후: 모두 병렬 (quoteId 의존성 해소 후 실행)
     const userQuoteIdList = quotes.map((q: { id: string }) => q.id);
-    const scopeKeyValues = [userId, ...workspaceIds, ...(guestKey ? [guestKey] : [])];
+    const scopeKeyValues = [userId, ...workspaceIds];
     const purchaseOwnerWhere: any = {
       OR: [
         { scopeKey: { in: scopeKeyValues } },
@@ -354,8 +360,15 @@ export async function GET(request: NextRequest) {
 
     // orders 통계 (ordersWithItems 통합 활용)
     const orders = ordersWithItems; // 별칭 유지 (하위 호환)
+    // 🛑 §cancelled-order-spend (2026-09-16 · 릴레이 P1) — **취소된 발주는 지출이 아니다.**
+    //   옛 산식은 status 필터 없이 전량 합산해, 취소 발주 2건(₩850,000×2)이 「총 구매액
+    //   ₩1,700,000」 으로 떴다(prod 실측 2026-09-16 · 취소 제외 시 0). 예산 소진율·지출
+    //   분석이 이 값을 딛고 서므로 취소분 포함은 근거 없는 지출이다.
+    //   같은 데이터를 보는 /api/dashboard/summary 의 confirmedAmount 는 이미 상태를 가린다.
+    //   계약: __tests__/regression/cancelled-order-spend.test.ts
     const totalPurchaseAmount = orders.reduce(
-      (sum: number, order: { totalAmount: number }) => sum + order.totalAmount,
+      (sum: number, order: { totalAmount: number; status: string }) =>
+        order.status === "CANCELLED" ? sum : sum + order.totalAmount,
       0
     );
     const ordersByStatus = orders.reduce(

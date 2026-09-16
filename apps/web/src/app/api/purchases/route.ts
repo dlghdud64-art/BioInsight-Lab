@@ -31,14 +31,13 @@ export async function GET(request: NextRequest) {
     });
     const workspaceIds = memberships.map((m: { workspaceId: string }) => m.workspaceId);
 
-    // x-guest-key 헤더 (하위 호환: 미로그인 상태에서 저장된 구매 내역)
-    const guestKey = request.headers.get("x-guest-key");
-
-    // scopeKey 조건: userId + workspaceIds + guestKey 모두 포함
+    // 🛑 §guest-scope-leak (2026-09-16) — `x-guest-key` 하위 호환 경로 제거.
+    //   헤더 값이 그대로 scopeKey 가 되므로, 아무 값이나 보내면 그 범위의 구매 내역이 열린다.
+    //   근거·계약은 api/dashboard/stats/route.ts 주석 · regression/guest-scope-leak.test.ts
+    // scopeKey 조건: userId + workspaceIds
     const scopeKeyValues: string[] = [
       session.user.id, // userId로 저장된 구매 내역
       ...workspaceIds,  // workspaceId로 저장된 구매 내역
-      ...(guestKey ? [guestKey] : []), // 미로그인 상태에서 저장된 구매 내역
     ];
 
     // workspaceId 컬럼으로 직접 연결된 구매 내역도 포함
@@ -52,7 +51,6 @@ export async function GET(request: NextRequest) {
     logger.debug("Fetching purchases", {
       userId: session.user.id,
       workspaceCount: workspaceIds.length,
-      hasGuestKey: !!guestKey,
       from,
       to,
       vendor,

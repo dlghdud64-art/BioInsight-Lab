@@ -9,13 +9,13 @@ const logger = createLogger("purchases/summary");
 
 export async function GET(request: NextRequest) {
   try {
-    // 인증된 유저: session 기반, guestKey는 하위 호환용
+    // 인증된 유저: session 기반
+    // 🛑 §guest-scope-leak (2026-09-16) — `x-guest-key` 하위 호환 경로 제거.
+    //   근거·계약은 api/dashboard/stats/route.ts 주석 · regression/guest-scope-leak.test.ts
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const guestKey = request.headers.get("x-guest-key");
 
     // 유저의 워크스페이스 목록 조회
     const memberships = await db.workspaceMember.findMany({
@@ -28,7 +28,6 @@ export async function GET(request: NextRequest) {
     const scopeKeyValues: string[] = [
       session.user.id,
       ...workspaceIds,
-      ...(guestKey ? [guestKey] : []),
     ];
 
     const ownerWhere: any = {
