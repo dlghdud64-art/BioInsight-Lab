@@ -53,7 +53,12 @@ const CLS = /\b(?:amber|orange)-(?:50|100|200|300|400|500|600|700|800|900|950)\b
 /** 🔴 2026-08-22 재계수: 78 → 66. 주석을 모집단에서 뺐다(census 의 stripComments).
  *      12건이 주석에만 있던 것이고, 그중 inventory-context-panel.tsx 는 전량이 주석이라 목록에서 빠진다.
  *      이것도 감축이 아니라 **모집단 정의 정정**이다 — 소스의 amber 는 한 개도 안 줄었다. */
-const BASELINE_TOTAL = 66;
+/** 🔴 2026-09-16 재계수: 66 → 62. **이것도 감축이 아니다 — 모집단 변화다.**
+ *      §inventory-fabricated-figures 가 inventory-flow-view.tsx 의 가짜 데이터를 걷어내면서
+ *      lib/inventory/flow-insight-engine.ts 의 유일한 importer 가 사라졌다 → importer 0 = dead →
+ *      census 에서 빠졌다(4건). 엔진 소스의 amber 4건은 그대로 남아 있다.
+ *      엔진을 다시 import 하면 「신규유입」 으로 RED 가 난다 — 되살릴 때 amber 도 함께 정리할 것. */
+const BASELINE_TOTAL = 62;
 const BASELINE_PER_FILE: Record<string, number> = {
   "app/api/analytics/dashboard/route.ts": 1,
   "app/dashboard/analytics/category/page.tsx": 2,
@@ -74,7 +79,6 @@ const BASELINE_PER_FILE: Record<string, number> = {
   "lib/budget/spending-category-schema.ts": 1,
   "lib/email/templates.ts": 3,
   "lib/email/vendor-request-templates.ts": 7,
-  "lib/inventory/flow-insight-engine.ts": 4,
   "lib/inventory/lot-tracking-engine.ts": 1,
 };
 
