@@ -16,6 +16,8 @@
  *   - tail 조건: isLowStock OR daysRemaining 정의됨 (둘 다 없으면 의미 약해 tail X).
  */
 
+import { isReorderNeededBySafetyStock } from "@/lib/inventory/reorder-need";
+
 export interface BriefRationaleInventoryUrgent {
   /** 매칭된 product 이름 (예: "FBS"). */
   productName: string;
@@ -225,10 +227,12 @@ export function findMostUrgentInventoryForQuote(
         ? inv.currentQuantity / usage
         : undefined;
 
-    const safetyTrigger =
-      inv.safetyStock !== undefined &&
-      inv.safetyStock !== null &&
-      inv.currentQuantity < inv.safetyStock;
+    /* 🛑 2026-09-16 §reorder-need-canonical-call — 안전재고 축은 정본을 부른다.
+     *   이전에는 조건을 복사해 `<`(미만)이었고, 정본·KPI·게이지는 `<=`(이하)라
+     *   수량 == 안전재고에서 브리핑만 긴급으로 안 잡혔다. safetyStock 미설정 분기도 없었다.
+     *   ⚠ 아래 leadTimeTrigger 의 1.5배 여유는 별개 결정이라 그대로 둔다
+     *     (정본 isReorderNeededByLeadTime 은 여유 없음). 근거 미확인 — 별도 후보. */
+    const safetyTrigger = isReorderNeededBySafetyStock(inv);
     const leadTimeTrigger =
       daysRemaining !== undefined &&
       leadTime !== undefined &&

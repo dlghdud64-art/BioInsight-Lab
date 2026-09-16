@@ -26,11 +26,24 @@ export function isReorderNeededByLeadTime(inv: ReorderNeedInput): boolean {
   return false;
 }
 
-/** 재주문 필요(재고 부족) canonical 판정 — 복합(리드타임 OR 안전재고 OR 소진). */
-export function isReorderNeeded(inv: ReorderNeedInput): boolean {
-  if (isReorderNeededByLeadTime(inv)) return true;
+/**
+ * 안전재고 축만(복합의 한 요인) — 리드타임 입력이 없는 화면용.
+ *
+ * 🛑 2026-09-16 §reorder-need-canonical-call — 추출 전에는 이 경계를 부를 수 있는
+ *   export 가 없어, leadTime 을 안 받는 화면들이 조건을 각자 복사했다.
+ *   그래서 갈렸다(제품 상세·브리핑 모두 `<`). 동작 변화 0 인 순수 추출이다.
+ */
+export function isReorderNeededBySafetyStock(
+  inv: Pick<ReorderNeedInput, "currentQuantity" | "safetyStock">,
+): boolean {
   if (inv.safetyStock !== null && inv.safetyStock !== undefined) {
     return inv.currentQuantity <= inv.safetyStock;
   }
   return inv.currentQuantity <= 0;
+}
+
+/** 재주문 필요(재고 부족) canonical 판정 — 복합(리드타임 OR 안전재고 OR 소진). */
+export function isReorderNeeded(inv: ReorderNeedInput): boolean {
+  if (isReorderNeededByLeadTime(inv)) return true;
+  return isReorderNeededBySafetyStock(inv);
 }

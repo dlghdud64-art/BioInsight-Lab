@@ -1,5 +1,6 @@
 "use client";
 
+import { isReorderNeededBySafetyStock } from "@/lib/inventory/reorder-need";
 import { csrfFetch } from "@/lib/api-client";
 // §11.348-B-1 B1-2 — SDS 문서 섹션(업로드/열람).
 import { SdsDocumentsSection } from "@/components/safety/sds-documents-section";
@@ -204,25 +205,18 @@ export default function ProductDetailPage() {
   });
   const openDraftQuote = ((draftQuoteData?.quotes ?? []) as Array<{ id: string }>)[0] ?? null;
 
-  /** 정본 `lib/inventory/reorder-need.ts` isReorderNeeded 의 safetyStock 축과 같은 경계.
-   *  🛑 이 화면 입력(orgInventories, :171)에는 leadTime 이 없어 정본을 직접 부르지 못한다.
-   *     그래서 경계만 복제하되 **한 곳에서만** 복제한다 — 배너 트리거와 표시가 갈리지 않게.
-   *     (§reorder-gauge-inequality 3. 2026-09-15 이전에는 표시는 <=, 배너는 < 였다.) */
-  const isBelowSafety = (inv: { currentQuantity: number; safetyStock?: number | null }) =>
-    inv.safetyStock != null ? inv.currentQuantity <= inv.safetyStock : inv.currentQuantity <= 0;
-
   /**
    * §4 배너 트리거 — **FK 정확 신호만 사용**.
    *   B1 의 orgInventories(productId FK 조회)에서 안전재고 미달 여부를 직접 판정한다.
    *   `useReorderRecommendation(productName)` 텍스트 매칭은 쓰지 않는다 —
    *   오매칭된 근거로 발주를 유도할 위험이 있고, 여기서는 필요도 없다(§text-coupling-debt).
    *   부족분 = Σ(미달 항목마다 max(1, safetyStock - currentQuantity)).
-   *   🛑 판정은 isBelowSafety 하나만 쓴다 — 트리거·표시·초안 수량이 한 식에서 나온다.
+   *   🛑 판정은 정본 isReorderNeededBySafetyStock 하나만 쓴다 — 트리거·표시·초안 수량이 한 식.
    *     (2026-09-15 §reorder-gauge-inequality 3. 이전에는 gap > 0(= 미만)이라
    *      수량 == 안전재고에서 배너가 안 뜨거나 '부족분 0' 을 말할 수 있었다.)
    */
   const reorderShortfall = orgInventories.reduce((sum, inv) => {
-    if (!isBelowSafety(inv)) return sum;
+    if (!isReorderNeededBySafetyStock(inv)) return sum;
     const gap = inv.safetyStock != null ? inv.safetyStock - inv.currentQuantity : -inv.currentQuantity;
     return sum + Math.max(1, gap);
   }, 0);
@@ -1232,7 +1226,7 @@ export default function ProductDetailPage() {
                       </div>
                       <div className="space-y-1.5">
                         {orgInventories.slice(0, 3).map((inv) => {
-                          const below = isBelowSafety(inv);
+                          const below = isReorderNeededBySafetyStock(inv);
                           return (
                             <div key={inv.id} className="flex items-center justify-between gap-2 min-w-0">
                               <span className="text-[11px] text-slate-500 truncate">

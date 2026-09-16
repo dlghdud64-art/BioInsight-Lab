@@ -100,6 +100,40 @@ describe("#quote-rationale-inventory-context Phase 2a — findMostUrgentInventor
     expect(result?.daysRemaining).toBeUndefined();
     expect(result?.leadTimeDays).toBe(7);
   });
+
+  /* 🛑 2026-09-16 §reorder-need-canonical-call — 아래 두 경계는 이 파일에 없던 자리다.
+   *   이전 판본은 safetyTrigger 를 `currentQuantity < safetyStock` 으로 직접 써서
+   *   (a) 수량 == 안전재고 를 긴급으로 안 잡았고 (b) safetyStock 미설정 + 수량 0 도 안 잡았다.
+   *   정본 isReorderNeededBySafetyStock 을 부르면서 둘 다 잡힌다. 그 동작을 여기서 고정한다. */
+  it("수량 == 안전재고 도 low-stock (정본 경계 <=)", () => {
+    const result = findMostUrgentInventoryForQuote(
+      [{ product: { id: "p1", name: "BSA" } }],
+      [{
+        productId: "p1",
+        currentQuantity: 5,
+        safetyStock: 5,
+        averageDailyUsage: 0,
+        leadTimeDays: 7,
+        product: { name: "BSA" },
+      }],
+    );
+    expect(result?.isLowStock).toBe(true);
+  });
+
+  it("safetyStock 미설정 + 수량 0 도 low-stock (정본 소진 분기)", () => {
+    const result = findMostUrgentInventoryForQuote(
+      [{ product: { id: "p1", name: "BSA" } }],
+      [{
+        productId: "p1",
+        currentQuantity: 0,
+        safetyStock: null,
+        averageDailyUsage: 0,
+        leadTimeDays: 7,
+        product: { name: "BSA" },
+      }],
+    );
+    expect(result?.isLowStock).toBe(true);
+  });
 });
 
 describe("#quote-rationale-inventory-context Phase 2b — caller wiring (quotes/page.tsx)", () => {
