@@ -1,120 +1,21 @@
-"use client";
+/**
+ * §guest-scope-leak (2026-09-16 · 호영님 승인) — 게스트 데모 대시보드 **경로 차단**.
+ *
+ * 이 화면은 로그인 없이 구매 내역을 시험하던 초기 MVP(PURCHASE_DASHBOARD_GUESTKEY_MVP.md)의
+ * 잔존물이고, `lib/guest-key.ts` 의 고정 키 `"guest-demo"` 로 읽고 **썼다**. 그 공용 스코프가
+ * 로그인 사용자의 지출 집계에 섞이던 것이 이번 발견이다(prod 실측 2026-09-16: 6개월 창
+ * ₩44,634,000 중 ₩43,784,000 이 데모 시드). 읽기 축은 API 에서 닫았고, 쓰기 축은
+ * **진입 화면을 없애는 것**이 처방이다 — 로그인만 요구하면(미들웨어 추가) 오염원은 남는다.
+ *
+ * 진입 경로 전수(2026-09-16): 앱 안에서 이 경로를 가리키는 링크·리다이렉트·sitemap 0건.
+ * 파일 삭제 대신 redirect-only swap — 레포 선례 `app/inventory/page.tsx`(§11.92).
+ * 되돌리려면 이 커밋을 revert 한다.
+ */
 
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, TrendingUp, Store } from "lucide-react";
-import { getGuestKey } from "@/lib/guest-key";
-import { format, startOfMonth, endOfMonth, subDays } from "date-fns";
+import { redirect } from "next/navigation";
 
-export default function DashboardGuestPage() {
-  const [guestKey, setGuestKey] = useState<string>("");
+export const dynamic = "force-dynamic";
 
-  useEffect(() => {
-    setGuestKey(getGuestKey());
-  }, []);
-
-  const now = new Date();
-  const thisMonthStart = startOfMonth(now);
-  const thisMonthEnd = endOfMonth(now);
-  const last30DaysStart = subDays(now, 30);
-
-  const { data: thisMonthSummary, isLoading: loadingThisMonth } = useQuery({
-    queryKey: ["purchase-summary", "thisMonth", guestKey],
-    queryFn: async () => {
-      const response = await fetch(
-        `/api/purchases/summary?from=${thisMonthStart.toISOString()}&to=${thisMonthEnd.toISOString()}`,
-        {
-          headers: {
-            "x-guest-key": guestKey,
-          },
-        }
-      );
-      if (!response.ok) throw new Error("Failed to fetch summary");
-      return response.json();
-    },
-    enabled: !!guestKey,
-  });
-
-  const { data: last30DaysSummary, isLoading: loadingLast30Days } = useQuery({
-    queryKey: ["purchase-summary", "last30Days", guestKey],
-    queryFn: async () => {
-      const response = await fetch(
-        `/api/purchases/summary?from=${last30DaysStart.toISOString()}&to=${now.toISOString()}`,
-        {
-          headers: {
-            "x-guest-key": guestKey,
-          },
-        }
-      );
-      if (!response.ok) throw new Error("Failed to fetch summary");
-      return response.json();
-    },
-    enabled: !!guestKey,
-  });
-
-  const formatCurrency = (amount: number) => {
-    return `₩${amount.toLocaleString()}`;
-  };
-
-  return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">구매 대시보드</h1>
-
-      <div className="grid gap-6 md:grid-cols-3 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">이번달 지출</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {loadingThisMonth ? "..." : formatCurrency(thisMonthSummary?.totalAmount || 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {format(thisMonthStart, "yyyy-MM")}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">최근 30일 지출</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {loadingLast30Days ? "..." : formatCurrency(last30DaysSummary?.totalAmount || 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {format(last30DaysStart, "MM/dd")} ~ {format(now, "MM/dd")}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Top 벤더</CardTitle>
-            <Store className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {loadingThisMonth
-                ? "..."
-                : thisMonthSummary?.topVendors?.[0]?.vendorName || "N/A"}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {thisMonthSummary?.topVendors?.[0]
-                ? formatCurrency(thisMonthSummary.topVendors[0].amount)
-                : ""}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="text-xs text-muted-foreground mt-8">
-        Guest Key: {guestKey}
-      </div>
-    </div>
-  );
+export default function DashboardGuestRedirect() {
+  redirect("/dashboard");
 }

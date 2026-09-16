@@ -89,10 +89,8 @@ describe("§guest-scope-leak · 조회 범위는 세션에서만 나온다", () 
   it("⑤ 고정 게스트 키를 쓰는 파일 집합이 고정돼 있다 (로그인 화면·공용 훅 0)", () => {
     // 개수가 아니라 **구성**을 핀한다 — 하나 빠지고 하나 늘어도 통과하지 않는다.
     const ALLOWED = [
-      // 게스트 데모 화면 2종 — 진입 경로 차단 판정 대기(2026-09-16 릴레이 지시 2).
-      //   차단·삭제하는 커밋에서 이 두 줄도 함께 지운다.
-      "app/dashboard-guest/page.tsx",
-      "app/dashboard-guest/purchases/page.tsx",
+      // 게스트 데모 화면 2종은 **여기서 빠졌다** — 2026-09-16 호영님 승인으로 두 page 를
+      //   redirect-only 로 교체(경로 차단). 다시 목록에 오르면 그 화면이 부활한 것이다.
       // 워크벤치 견적 요청 패널 — 대상은 /api/quote-lists 이고, 그 라우트는 서버 쿠키
       //   게스트 키(브라우저별 난수)로 판정한다. 지출·재고 축이 아니다.
       "app/_workbench/_components/quote-panel.tsx",
@@ -103,6 +101,17 @@ describe("§guest-scope-leak · 조회 범위는 세션에서만 나온다", () 
       .filter((rel) => rel !== "lib/guest-key.ts" && /getGuestKey\s*\(/.test(code(rel)))
       .sort();
     expect(callers).toEqual(ALLOWED);
+  });
+
+  it("⑦ 게스트 데모 경로는 리다이렉트만 한다 (쓰기 진입 화면 0)", () => {
+    for (const rel of ["app/dashboard-guest/page.tsx", "app/dashboard-guest/purchases/page.tsx"]) {
+      const src = code(rel);
+      expect(src, `${rel} · redirect 아님`).toMatch(/redirect\("\/dashboard"\)/);
+      // 화면이 되살아나면 아래 중 하나가 반드시 다시 나타난다
+      expect(/x-guest-key/i.test(src), `${rel} · 게스트 키 헤더 부활`).toBe(false);
+      expect(/purchases\/import/.test(src), `${rel} · 구매 import 호출 부활`).toBe(false);
+      expect(/useQuery|useState/.test(src), `${rel} · 데모 화면 본문 부활`).toBe(false);
+    }
   });
 
   it("⑥ 대시보드 클라이언트가 x-guest-key 헤더를 보내지 않는다", () => {
