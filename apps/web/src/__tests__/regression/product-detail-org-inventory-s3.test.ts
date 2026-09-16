@@ -77,13 +77,30 @@ describe("§3-1 S5 — 신호등 정합 (§9)", () => {
     expect(block).not.toMatch(/amber-|orange-/);
   });
 
-  it("🛑 미달 경계 = 정본 경계 — 안전재고 '이하' 면 red (§reorder-gauge-inequality 2)", () => {
-    /* 2026-09-15 이전에는 `<`(미만)라 수량 == 안전재고(재주문 트리거 지점)가 정상색으로 보였다.
-     *   정본 lib/inventory/reorder-need.ts isReorderNeeded 는 `<=`. 경계를 잠근 핀이 없었다.
-     *   바이트로 박지 않고 경계(관계)만 본다 — `below` 는 이 파일에서 이 블록에만 있다. */
+  it("🛑 미달 판정은 이 파일에 한 번만 있다 — 표시와 배너가 같은 경계를 쓴다", () => {
+    /* 2026-09-15 · §reorder-gauge-inequality 3.
+     *   이전 판본: 표시 below 는 `<=`(gauge 2 에서 고침), 배너 reorderShortfall 은 `gap > 0`(= `<`).
+     *   같은 파일에서 갈려, 수량 == 안전재고면 숫자는 red 인데 재발주 배너가 안 떴다.
+     *   또 safetyStock == null 일 때 정본은 currentQuantity <= 0 을 재주문 필요로 보는데
+     *   두 자리 모두 그 분기가 없어 "수량 0 인데 정상" 으로 보였다.
+     *   → 경계를 로컬 헬퍼 isBelowSafety 한 곳으로 모으고, 두 자리가 그것을 부른다.
+     *   🛑 바이트로 박지 않는다. 헬퍼의 두 분기와 호출 2곳, 그리고 정본과의 경계 일치만 본다.
+     *      (이 파일 입력에는 leadTime 이 없어 정본 isReorderNeeded 직접 호출은 불가하다.) */
     const CANON = read("src/lib/inventory/reorder-need.ts");
-    expect(PAGE).toMatch(/const below\s*=\s*inv\.safetyStock != null && inv\.currentQuantity\s*<=\s*inv\.safetyStock/);
-    expect(PAGE).not.toMatch(/const below\s*=\s*inv\.safetyStock != null && inv\.currentQuantity\s*<\s*inv\.safetyStock/);
+
+    // 헬퍼가 정본의 두 분기를 그대로 갖는다
+    expect(PAGE).toMatch(
+      /const isBelowSafety\s*=[\s\S]{0,200}?inv\.safetyStock != null \?\s*inv\.currentQuantity\s*<=\s*inv\.safetyStock\s*:\s*inv\.currentQuantity\s*<=\s*0/,
+    );
+    // 표시와 배너가 둘 다 헬퍼를 부른다 — 조건을 다시 쓰지 않는다
+    expect(PAGE).toMatch(/const below = isBelowSafety\(inv\)/);
+    // 배너 트리거도 같은 헬퍼를 통과한다 — 부족분 합산이 판정과 같은 식에서 나온다
+    expect(PAGE).toMatch(/if \(!isBelowSafety\(inv\)\) return sum/);
+    // 미만(<) 회귀 0 — 경계를 되돌리면 RED
+    expect(PAGE).not.toMatch(/inv\.currentQuantity\s*<\s*inv\.safetyStock/);
+    expect(PAGE).not.toMatch(/if \(inv\.safetyStock == null\) return sum/);
+    // 정본도 같은 경계인가 — 양쪽이 함께 < 로 바뀌는 경우까지 잡는다
     expect(CANON).toMatch(/inv\.currentQuantity\s*<=\s*inv\.safetyStock/);
+    expect(CANON).toMatch(/inv\.currentQuantity\s*<=\s*0/);
   });
 });
