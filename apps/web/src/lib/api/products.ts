@@ -1,6 +1,5 @@
 import { db, isPrismaAvailable } from "@/lib/db";
 import { cache, createCacheKey } from "@/lib/cache";
-import { convertToKRW } from "@/lib/api/exchange-rate";
 import { getEmbedding } from "@/lib/ai/embeddings";
 import type { ProductCategory } from "@/types";
 
@@ -301,27 +300,16 @@ export async function searchProducts(params: SearchProductsParams) {
     total = 0;
   }
 
-  // priceInKRW가 없는 경우 자동으로 환율 변환
-  for (const product of products) {
-    for (const vendor of product.vendors) {
-      if (vendor.price && vendor.currency && !vendor.priceInKRW) {
-        try {
-          vendor.priceInKRW = await convertToKRW(vendor.price, vendor.currency);
-          // DB에 저장 (비동기, 실패해도 계속 진행)
-          db.productVendor
-            .update({
-              where: { id: vendor.id },
-              data: { priceInKRW: vendor.priceInKRW },
-            })
-            .catch((error: any) => {
-              console.error(`Failed to update priceInKRW for ${vendor.id}:`, error);
-            });
-        } catch (error: any) {
-          console.error(`Failed to convert price for ${vendor.id}:`, error);
-        }
-      }
-    }
-  }
+  // 🛑 §fx-writeback-off (2026-09-17 · 릴레이 지시) — priceInKRW 자동 환산 + DB 역기입 경로를 **끈다.**
+  //   옛 코드: priceInKRW 가 비어 있으면 convertToKRW(price, currency) 로 채우고 productVendor.update 로 원본에 기록.
+  //   문제는 방향 오류만이 아니다 — prod 에 EXCHANGE_RATE_API_KEY 가 없어 lib/api/exchange-rate.ts 의
+  //   폴백 상수로 계산하고, 그 폴백은 곱셈 방향이 뒤집혀 있다(prod `/api/exchange-rates?from=USD&amount=52`
+  //   → converted 0.039 · 2026-09-17 비로그인 GET). 즉 공급사 가격이 들어오는 순간 0원에 가까운 값이
+  //   **원본 열에 영구 기록**된다. 표시가 아니라 쓰기라 화면 수정으로는 못 잡고, 들어간 뒤엔 복구 작업이 된다.
+  //   오늘 발화 조건(price 있음 · priceInKRW 없음) 행은 0 — 피해 0인 지금 끈다(§guest-scope-leak 과 같은 기준).
+  //   처방: 환율 원천(키·기준일·갱신 주기)이 확정될 때까지 **비어 있으면 비워 둔다.** 표시는 원통화
+  //   그대로(lib/pricing/display-price.ts). 방향 수정은 그 다음 단계다.
+  //   계약: __tests__/regression/fx-writeback-off.test.ts
 
   // Cat.No로 검색한 경우, 정확히 일치하는 제품을 우선순위로 정렬
   if (query) {
