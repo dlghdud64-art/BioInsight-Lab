@@ -1,4 +1,6 @@
 import { UNRESOLVED_ORG, enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+// §krw-calc-single-source (2026-09-17) — 원화 계산은 원통화 KRW 행만(krwAmount). KRW 아닌 가격의 priceInKRW 는 환산 근거가 없다.
+import { krwAmount } from "@/lib/pricing/display-price";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getCallerOrganizationId } from "@/lib/security/caller-organization";
@@ -148,7 +150,7 @@ export async function POST(request: NextRequest) {
               // 타입 에러 수정: productMap.get()의 반환 타입이 제대로 추론되지 않아 타입 캐스팅 추가
               const product = productMap.get(item.productId!) as any;
               const vendor = product?.vendors?.[0];
-              const unitPrice = vendor?.priceInKRW || 0;
+              const unitPrice = krwAmount(vendor) ?? 0;
               const lineTotal = unitPrice * item.quantity;
 
               return {

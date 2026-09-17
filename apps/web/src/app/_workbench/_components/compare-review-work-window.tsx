@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
+// §krw-calc-single-source (2026-09-17) — 원화 계산은 원통화 KRW 행만(krwAmount). KRW 아닌 가격의 priceInKRW 는 환산 근거가 없다.
+import { krwAmount } from "@/lib/pricing/display-price";
 import { Button } from "@/components/ui/button";
 import { X, Check, Minus, AlertTriangle, ArrowRight, GitCompare, TrendingDown, Clock, Package, FileText, Undo2, Sparkles, ChevronDown, ChevronUp, ShieldCheck, Zap, Scale } from "lucide-react";
 import {
@@ -123,7 +125,7 @@ export function CompareReviewWorkWindow({
         category: p.category || "",
         catalogNumber: p.catalogNumber || "",
         spec: p.specification || p.packSize || "",
-        priceKRW: v?.priceInKRW || 0,
+        priceKRW: krwAmount(v) ?? 0,
         leadTimeDays: v?.leadTimeDays || 0,
       };
     }).filter(Boolean) as CompareCandidateInfo[];

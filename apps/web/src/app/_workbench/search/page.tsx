@@ -1,6 +1,8 @@
 "use client";
 
 import { SearchPanel } from "../_components/search-panel";
+// §krw-calc-single-source (2026-09-17) — 원화 계산은 원통화 KRW 행만(krwAmount). KRW 아닌 가격의 priceInKRW 는 환산 근거가 없다.
+import { krwAmount } from "@/lib/pricing/display-price";
 import { useTestFlow } from "../_components/test-flow-provider";
 import { toast } from "@/lib/toast";
 import { resolveAddToQuoteToast } from "@/lib/quote/resolve-add-to-quote-toast";
@@ -532,7 +534,7 @@ export default function SearchPage() {
       const p = products.find((pp: any) => pp.id === id);
       if (!p) return null;
       const v = p.vendors?.[0];
-      return { id: p.id, name: p.name, brand: p.brand || "", category: p.category || "", priceKRW: v?.priceInKRW || 0, leadTimeDays: v?.leadTimeDays || 0 };
+      return { id: p.id, name: p.name, brand: p.brand || "", category: p.category || "", priceKRW: krwAmount(v) ?? 0, leadTimeDays: v?.leadTimeDays || 0 };
     }).filter(Boolean) as any[];
     const catResult = validateCompareCategoryIntegrity(candidates);
     return {
@@ -568,7 +570,7 @@ export default function SearchPage() {
           category: p.category || "",
           catalogNumber: p.catalogNumber || "",
           spec: p.specification || p.packSize || "",
-          priceKRW: v?.priceInKRW || 0,
+          priceKRW: krwAmount(v) ?? 0,
           // 납기 필드 불일치 파생 보정: leadTimeDays 부재 시 leadTime 문자열 파싱("3일"→3).
           leadTimeDays: v?.leadTimeDays || parseLeadDays(v?.leadTime) || 0,
         } as CompareCandidateInfo;
@@ -794,7 +796,7 @@ export default function SearchPage() {
         id: p.id,
         name: p.name,
         brand: p.brand,
-        priceKRW: p.vendors?.[0]?.priceInKRW ?? 0,
+        priceKRW: krwAmount(p.vendors?.[0]) ?? 0,
         leadTimeDays: p.vendors?.[0]?.leadTimeDays ?? 0,
         specMatchScore: 0,
       })),
@@ -833,7 +835,7 @@ export default function SearchPage() {
     const opt = sourcingOptions.find(o => o.frame === optionFrame);
     if (!opt) return;
     const candidateIds = products
-      .filter((p: any) => !compareIds.includes(p.id) && p.vendors?.[0]?.priceInKRW > 0)
+      .filter((p: any) => !compareIds.includes(p.id) && (krwAmount(p.vendors?.[0]) ?? 0) > 0)
       .slice(0, 3)
       .map((p: any) => p.id);
     if (candidateIds.length >= 2) {
@@ -858,7 +860,7 @@ export default function SearchPage() {
     const queryToken = searchQuery.trim().toLowerCase().split(/\s+/).find(Boolean) ?? "";
     const hasVendorEvidence = (product: any) => {
       const vendor = product.vendors?.[0];
-      return Boolean(vendor?.vendor?.name || vendor?.name || (vendor?.priceInKRW ?? 0) > 0);
+      return Boolean(vendor?.vendor?.name || vendor?.name || (krwAmount(vendor) ?? 0) > 0);
     };
     // §11.337 Part A — 식별자(품명·Cat.No) 우선 매칭. 짧은 쿼리(≤2자)는 임의 위치
     //   부분일치 시 "P"가 PCR의 P, Capricorn의 p 까지 걸려 noise → prefix(시작/단어경계)만.
@@ -1353,7 +1355,7 @@ export default function SearchPage() {
                     {aiSearchSummary.some(l => l.signal === "compare") && compareIds.length === 0 && (
                       <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-blue-600 hover:bg-blue-50 border border-blue-200"
                         onClick={() => handleProtectedAction(() => {
-                          products.filter((p: any) => p.vendors?.[0]?.priceInKRW > 0 && !compareIds.includes(p.id)).slice(0, 3)
+                          products.filter((p: any) => (krwAmount(p.vendors?.[0]) ?? 0) > 0 && !compareIds.includes(p.id)).slice(0, 3)
                             .forEach((p: any) => toggleCompare(p.id, { name: p.name, brand: p.brand }));
                         })}>비교 후보 담기</Button>
                     )}
@@ -2290,7 +2292,7 @@ export default function SearchPage() {
             itemName: p?.name || "—",
             packSpec: p?.specification || p?.packSize || "—",
             leadTimeDays: v?.leadTimeDays || null,
-            priceKRW: v?.priceInKRW || null,
+            priceKRW: krwAmount(v),
             availability: "unknown" as const,
             riskFlags: [],
             reviewStatus: "pending_review" as const,
@@ -3032,7 +3034,7 @@ export default function SearchPage() {
                     <div className="px-3 py-2.5 rounded-md border border-slate-200 bg-slate-50">
                       <span className="text-[9px] text-slate-500 block mb-0.5">추가 후보</span>
                       <span className="text-base font-bold tabular-nums text-slate-100">
-                        {products.filter((p: any) => !compareIds.includes(p.id) && p.vendors?.[0]?.priceInKRW > 0).slice(0, 3).length}개
+                        {products.filter((p: any) => !compareIds.includes(p.id) && (krwAmount(p.vendors?.[0]) ?? 0) > 0).slice(0, 3).length}개
                       </span>
                     </div>
                     <div className="px-3 py-2.5 rounded-md border border-slate-200 bg-slate-50">

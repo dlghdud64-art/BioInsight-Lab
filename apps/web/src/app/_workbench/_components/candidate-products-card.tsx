@@ -1,6 +1,8 @@
 "use client";
 
 import { TestCard } from "./test-card";
+// §krw-calc-single-source (2026-09-17) — 원화 계산은 원통화 KRW 행만(krwAmount). KRW 아닌 가격의 priceInKRW 는 환산 근거가 없다.
+import { krwAmount } from "@/lib/pricing/display-price";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Package } from "lucide-react";
@@ -40,7 +42,7 @@ export function CandidateProductsCard({
           {products.slice(0, 5).map((product) => {
             const isSelected = selectedProductIds.includes(product.id);
             const minPrice = product.vendors?.reduce(
-              (min, v) => (v.priceInKRW && (!min || v.priceInKRW < min) ? v.priceInKRW : min),
+              (min, v) => { const krw = krwAmount(v); return krw !== null && (!min || krw < min) ? krw : min; },
               null as number | null
             );
             return (

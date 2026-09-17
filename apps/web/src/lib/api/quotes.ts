@@ -1,4 +1,6 @@
 import { db } from "@/lib/db";
+// §krw-calc-single-source (2026-09-17) — 원화 계산은 원통화 KRW 행만(krwAmount). KRW 아닌 가격의 priceInKRW 는 환산 근거가 없다.
+import { krwAmount } from "@/lib/pricing/display-price";
 import { translateText } from "@/lib/ai/openai";
 import { cache } from "@/lib/cache";
 import { generateQuoteNumber } from "@/lib/api/quote-number";
@@ -204,9 +206,9 @@ export async function createQuote(params: CreateQuoteParams) {
     const selectedVendorId = vendorIds[productId];
     const vendor = selectedVendorId
       ? product?.vendors?.find((v: any) => v.vendor?.id === selectedVendorId)
-      : product?.vendors?.sort((a: any, b: any) => (a.priceInKRW || 0) - (b.priceInKRW || 0))[0];
+      : product?.vendors?.sort((a: any, b: any) => (krwAmount(a) ?? 0) - (krwAmount(b) ?? 0))[0];
     const quantity = quantities[productId] || 1;
-    const unitPrice = vendor?.priceInKRW || 0;
+    const unitPrice = krwAmount(vendor) ?? 0;
     const lineTotal = unitPrice * quantity;
 
     // productSnapshot 생성 (서버에서 계산, 클라 값 신뢰하지 않음)

@@ -11,6 +11,8 @@
  */
 
 import { useMemo, useState } from "react";
+// §krw-calc-single-source (2026-09-17) — 원화 계산은 원통화 KRW 행만(krwAmount). KRW 아닌 가격의 priceInKRW 는 환산 근거가 없다.
+import { krwAmount } from "@/lib/pricing/display-price";
 import { useQuery } from "@tanstack/react-query";
 import { csrfFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
@@ -42,7 +44,7 @@ interface SourcingSpecCompareSectionProps {
 }
 
 function minVendorPrice(p: CompareProduct): number | null {
-  const prices = (p.vendors || []).map(v => v.priceInKRW).filter((n): n is number => typeof n === "number" && n > 0);
+  const prices = (p.vendors || []).map(v => krwAmount(v)).filter((n): n is number => typeof n === "number" && n > 0);
   return prices.length > 0 ? Math.min(...prices) : null;
 }
 

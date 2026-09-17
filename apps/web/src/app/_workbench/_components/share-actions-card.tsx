@@ -1,6 +1,8 @@
 "use client";
 
 import { csrfFetch } from "@/lib/api-client";
+// §krw-calc-single-source (2026-09-17) — 원화 계산은 원통화 KRW 행만(krwAmount). KRW 아닌 가격의 priceInKRW 는 환산 근거가 없다.
+import { krwAmount } from "@/lib/pricing/display-price";
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { TestCard } from "./test-card";
@@ -70,7 +72,7 @@ export function ShareActionsCard({ productIds }: ShareActionsCardProps) {
 
     const rows = products.map((product: any, index: number) => {
       const vendor = product.vendors?.[0];
-      const unitPrice = vendor?.priceInKRW || 0;
+      const unitPrice = krwAmount(vendor) ?? 0;
       const quantity = 1;
       const lineTotal = unitPrice * quantity;
 
@@ -135,7 +137,7 @@ export function ShareActionsCard({ productIds }: ShareActionsCardProps) {
 
     const rows = products.map((product: any, index: number) => {
       const vendor = product.vendors?.[0];
-      const unitPrice = vendor?.priceInKRW || 0;
+      const unitPrice = krwAmount(vendor) ?? 0;
       const quantity = 1;
       const lineTotal = unitPrice * quantity;
 
