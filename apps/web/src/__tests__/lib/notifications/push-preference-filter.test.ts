@@ -54,10 +54,10 @@ const REJECT_PATH = resolve(
   __dirname,
   "../../../app/api/request/[id]/reject/route.ts",
 );
-const COMPARE_INSIGHT_PATH = resolve(
-  __dirname,
-  "../../../app/api/compare-sessions/[id]/insight/route.ts",
-);
+/* 🪦 COMPARE_INSIGHT_PATH 은퇴 (2026-09-17 §notify-sentinel-retire-2)
+ *   app/api/compare-sessions/ 는 4f9ab245(§11.381c-2 #compare-api-orphan · 2026-06-11)로 **결정 삭제**됐다.
+ *   COMPARE_COMPLETED 생산자 0(event-types·category-map 에 정의만) · 설정 UI 는 카테고리 7개 하드코딩이라
+ *   사용자에게 보이는 dead toggle 없음. 삭제 결정의 부활 잠금은 regression/compare-retire-381c 가 진다. */
 const INVENTORY_DETECTOR_PATH = resolve(
   __dirname,
   "../../../lib/ai/inventory-restock-detector.ts",
@@ -81,7 +81,6 @@ const inventoryPatch = safeRead(INVENTORY_PATCH_PATH);
 const orderStatus = safeRead(ORDER_STATUS_PATH);
 const approve = safeRead(APPROVE_PATH);
 const reject = safeRead(REJECT_PATH);
-const compareInsight = safeRead(COMPARE_INSIGHT_PATH);
 const inventoryDetector = safeRead(INVENTORY_DETECTOR_PATH);
 const quoteExpiry = safeRead(QUOTE_EXPIRY_PATH);
 const vendorResponse = safeRead(VENDOR_RESPONSE_PATH);
@@ -162,9 +161,7 @@ describe("§11.250-pref-push #3 — 10 caller eventType 인자 추가", () => {
     expect(reject).toMatch(/sendPushNotification\([\s\S]{0,800}["']PURCHASE_REJECTED["']/);
   });
 
-  it("compare-sessions insight COMPARE_COMPLETED", () => {
-    expect(compareInsight).toMatch(/sendPushNotification\([\s\S]{0,800}["']COMPARE_COMPLETED["']/);
-  });
+  // 🪦 "compare-sessions insight COMPARE_COMPLETED" 은퇴 — 대상 라우트가 4f9ab245 로 삭제됨(위 PATH 주석).
 
   it("inventory-restock-detector INVENTORY_EXPIRING", () => {
     expect(inventoryDetector).toMatch(/sendPushNotification\([\s\S]{0,800}["']INVENTORY_EXPIRING["']/);
