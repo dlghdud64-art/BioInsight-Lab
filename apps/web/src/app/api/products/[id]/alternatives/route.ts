@@ -225,6 +225,8 @@ export async function GET(
               name: v.vendor.name,
             },
             priceInKRW: v.priceInKRW || undefined,
+            // §price-currency-honesty — 원통화 금액. KRW 아닌 행은 이 값을 원통화로 그린다(priceInKRW 는 환산 근거 없음).
+            price: v.price ?? undefined,
             currency: v.currency,
           })),
         });

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PriceDisplay } from "@/components/products/price-display";
+import { displayPrice } from "@/lib/pricing/display-price";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import {
   FlaskConical,
@@ -31,6 +32,8 @@ export interface ProductDetailData {
   grade: string | null;
   category: string | null;
   unitPrice: number | null;
+  /** §price-currency-honesty — unitPrice 의 통화(원통화 그대로 · KRW 아닐 수 있다) */
+  unitPriceCurrency: string | null;
   imageUrl: string | null;
 }
 
@@ -47,7 +50,9 @@ export function toDetailData(product: any): ProductDetailData {
     storageCondition: product.storageCondition || null,
     grade: product.grade || null,
     category: product.category || null,
-    unitPrice: vendor?.priceInKRW > 0 ? vendor.priceInKRW : null,
+    // §price-currency-honesty — priceInKRW 를 무조건 원화로 쓰지 않는다. KRW 아닌 행은 원통화 그대로(lib/pricing/display-price.ts).
+    unitPrice: displayPrice(vendor)?.amount ?? null,
+    unitPriceCurrency: displayPrice(vendor)?.currency ?? null,
     imageUrl: product.imageUrl || null,
   };
 }
@@ -137,7 +142,7 @@ export function ProductDetailSummary({
         {data.unitPrice ? (
           <div className="flex items-baseline gap-1.5">
             <span className={`${variant === "compact" ? "text-base" : "text-lg"} font-bold tabular-nums text-slate-900`}>
-              <PriceDisplay price={data.unitPrice} currency="KRW" />
+              <PriceDisplay price={data.unitPrice} currency={data.unitPriceCurrency ?? "KRW"} />
             </span>
             <span className="text-[10px] text-slate-500">(VAT 별도)</span>
           </div>

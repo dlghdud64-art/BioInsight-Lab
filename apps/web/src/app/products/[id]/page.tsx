@@ -63,6 +63,8 @@ import { QuoteTrayBar } from "@/components/products/quote-tray-bar";
 // §product-detail-sourcing-v21 §5 — 이 표면의 safety Disclaimer(yellow Alert)는 회색 각주로 대체 → import 폐기.
 // #quote-cta-truth — 견적함 저장 계층 단일 출처 (fake success 제거, 호영님 2026-06-11)
 import { addToQuoteCart, readQuoteCart, removeFromQuoteCart } from "@/lib/quote/quote-cart-storage";
+// §price-currency-honesty — 공급사 가격 통화 표기 단일 출처(KRW 아닌 행을 원화로 단정하지 않는다)
+import { displayPrice, formatDisplayAmount } from "@/lib/pricing/display-price";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -1038,12 +1040,13 @@ export default function ProductDetailPage() {
                             {pv.vendor?.name && (
                               <div className="text-sm font-medium text-gray-700">{pv.vendor.name}</div>
                             )}
-                            {pv.priceInKRW && pv.priceInKRW > 0 ? (
+                            {/* §price-currency-honesty — 원통화 그대로. KRW 아닌 행의 priceInKRW 는 환산 근거가 없어 원화로 쓰지 않는다. */}
+                            {displayPrice(pv) ? (
                               <div className="flex items-baseline gap-1">
                                 <span className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
-                                  ₩{pv.priceInKRW.toLocaleString()}
+                                  {formatDisplayAmount(displayPrice(pv)!)}
                                 </span>
-                                <span className="text-lg font-medium text-gray-400">KRW</span>
+                                <span className="text-lg font-medium text-gray-400">{displayPrice(pv)!.currency}</span>
                               </div>
                             ) : (
                               <div className="inline-flex items-center rounded-md bg-blue-50 border border-blue-200 px-2 py-1 text-sm font-bold text-blue-700">견적가 안내 품목</div>
@@ -1281,12 +1284,12 @@ export default function ProductDetailPage() {
       <div className="fixed bottom-0 left-0 w-full bg-pn/95 backdrop-blur border-t border-bd p-4 z-50 lg:hidden shadow-lg">
         <div className="flex items-center justify-between mb-2">
           <div className="flex-1 min-w-0 mr-4">
-            {vendors.length > 0 && vendors[0].priceInKRW && vendors[0].priceInKRW > 0 ? (
+            {vendors.length > 0 && displayPrice(vendors[0]) ? (
               <div className="flex items-baseline gap-1">
                 <span className="text-xl font-bold text-slate-900">
-                  ₩{vendors[0].priceInKRW.toLocaleString()}
+                  {formatDisplayAmount(displayPrice(vendors[0])!)}
                 </span>
-                <span className="text-sm font-medium text-gray-400">KRW</span>
+                <span className="text-sm font-medium text-gray-400">{displayPrice(vendors[0])!.currency}</span>
               </div>
             ) : (
               <div className="inline-flex items-center rounded-md bg-blue-50 border border-blue-200 px-2 py-1 text-sm font-bold text-blue-700">견적가 안내 품목</div>
@@ -1497,7 +1500,8 @@ function AlternativeProductsSection({
         {/* §sourcing-quote-flow v1.1 §4 — 대체품 카드 간 12px(gap-3). 섹션 간은 20px(mt-5). */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {shown.map((alt: any) => {
-            const minPrice = alt.vendors?.[0]?.priceInKRW;
+            // §price-currency-honesty — 원통화 그대로(대체품 API 가 price·currency 를 함께 내려준다).
+            const altPrice = displayPrice(alt.vendors?.[0]);
 
             return (
               <Card key={alt.id} className="border-gray-200 hover:border-blue-300 hover:shadow-sm rounded-xl transition-all">
@@ -1546,9 +1550,9 @@ function AlternativeProductsSection({
                       {matchReasons(alt)[0]}
                     </span>
                   </div>
-                  {minPrice !== undefined && (
+                  {altPrice && (
                     <div className="text-sm font-semibold">
-                      ₩{minPrice.toLocaleString("ko-KR")}
+                      {formatDisplayAmount(altPrice)}{altPrice.currency !== "KRW" ? ` ${altPrice.currency}` : ""}
                     </div>
                   )}
                   {/* §product-detail-sourcing-v21 §6 — 비교 버튼 삭제(비교 화면 배선 전까지 dead button 금지). 상세 링크만. */}

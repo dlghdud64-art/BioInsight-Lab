@@ -6,6 +6,7 @@ import { toast } from "@/lib/toast";
 
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { PriceDisplay } from "@/components/products/price-display";
+import { displayPrice, krwAmount } from "@/lib/pricing/display-price";
 import {
   PenLine, FlaskConical, FileText, ChevronRight, Check,
   AlertTriangle,
@@ -220,7 +221,10 @@ export function SourcingResultRow({
   //   비-canonical search ref (e.g. "p1") 가 console pollution 유발.
   const [imgError, setImgError] = useState(!product.imageUrl);
   const vendor = product.vendors?.[0];
-  const unitPrice = vendor?.priceInKRW && vendor.priceInKRW > 0 ? vendor.priceInKRW : null;
+  // §price-currency-honesty — 원화 계산(고가·예산 임계값)은 원통화 KRW 행만. 표시는 원통화 그대로.
+  //   priceInKRW 를 무조건 원화로 그리면 근거 없는 환산값이 원화 정가로 읽힌다(lib/pricing/display-price.ts).
+  const unitPrice = krwAmount(vendor);
+  const shownPrice = displayPrice(vendor);
   const imageSrc = product.imageUrl ?? "";
   const staticMeta = buildStaticMeta(product, vendor);
   const matchReason = buildMatchReason(product, query);
@@ -296,9 +300,9 @@ export function SourcingResultRow({
 
         {/* Price column — desktop */}
         <div className="shrink-0 hidden md:flex flex-col items-end gap-0.5 mr-1">
-          {unitPrice ? (
+          {shownPrice ? (
             <span className="text-base font-bold tabular-nums text-slate-900 whitespace-nowrap tracking-tight">
-              <PriceDisplay price={unitPrice} currency="KRW" />
+              <PriceDisplay price={shownPrice.amount} currency={shownPrice.currency} />
             </span>
           ) : (
             <span className="text-sm font-semibold text-yellow-600 flex items-center gap-0.5">
@@ -306,7 +310,7 @@ export function SourcingResultRow({
             </span>
           )}
           <span className="text-xs text-slate-400">
-            {isInRequest ? "견적 후보" : isInCompare ? "비교 후보" : unitPrice ? "VAT 별도" : ""}
+            {isInRequest ? "견적 후보" : isInCompare ? "비교 후보" : shownPrice ? "VAT 별도" : ""}
           </span>
         </div>
 
@@ -390,8 +394,8 @@ export function SourcingResultRow({
       {/* Mobile bottom: price + CTA */}
       <div className={`flex items-center justify-between px-3 pb-2.5 pt-0 sm:hidden ${previewDim}`} onClick={(e) => e.stopPropagation()}>
         <div className="text-sm">
-          {unitPrice ? (
-            <span className="font-semibold tabular-nums text-slate-900"><PriceDisplay price={unitPrice} currency="KRW" /></span>
+          {shownPrice ? (
+            <span className="font-semibold tabular-nums text-slate-900"><PriceDisplay price={shownPrice.amount} currency={shownPrice.currency} /></span>
           ) : (
             <span className="text-yellow-600 text-xs">견적 필요</span>
           )}
