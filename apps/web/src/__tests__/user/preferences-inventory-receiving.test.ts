@@ -102,19 +102,27 @@ describe("§11.230c (a)-5 #3 — inventory-content.tsx server hydration", () => 
   });
 });
 
-describe("§11.230c (a)-5 #4 — receiving/page.tsx server hydration", () => {
-  it("useUserPreferences import", () => {
-    expect(receiving).toMatch(/useUserPreferences/);
-  });
-
-  it("server hydration (preferences.receivingFilter → setActiveTab)", () => {
-    expect(receiving).toMatch(/preferences[\s\S]{0,1000}receivingFilter[\s\S]{0,1000}setActiveTab/);
-  });
-
-  it("persistence — updateReceivingFilter 호출", () => {
-    expect(receiving).toMatch(/updateReceivingFilter/);
-  });
-});
+/* 🪦 §11.230c (a)-5 #4 — receiving/page.tsx server hydration · 은퇴 (2026-09-17 §receiving-filter-retire)
+ *
+ *   은퇴한 단언 3건: useUserPreferences import · preferences.receivingFilter → setActiveTab · updateReceivingFilter 호출
+ *   (+ 아래 #5 의 "receiving activeTab ModuleBucketKey 보존" 1건)
+ *
+ *   왜 은퇴인가 (승계 아님)
+ *     d8156765 §receiving-list-redesign(2026-08-31 · 호영님 2026-08-30 핸드오프)이 입고 화면을
+ *     리스트 canonical + 인라인 펼침으로 재설계하며 **탭 자체를 없앴다**. 복원할 activeTab 이 없다.
+ *     시간순: 이 파일(§11.230c)이 먼저 · 재설계가 나중 → 이 단언들은 폐기된 설계를 요구한다.
+ *     승계자가 필요 없다 — 명제("입고 탭 선택이 서버에서 복원된다")의 대상이 사라졌다.
+ *   🛑 이 RED 를 "회귀" 로 읽고 입고 화면에 탭을 되살리지 말 것.
+ *
+ *   명제 §11.230c("설정이 서버에서 하이드레이션된다")는 receiving 밖에서 유효하다 — #3(inventory)는 그대로 둔다.
+ *
+ *   ⚠️ 남은 것 — 죽은 설정 필드
+ *     api/user/preferences/route.ts(ReceivingFilterSchema · nested merge) 와
+ *     lib/preferences/user-preferences.ts(타입 · updateReceivingFilter)는 아직 receivingFilter 를 받고 저장한다.
+ *     읽는 화면도 쓰는 화면도 0 이다. 위 #1·#2 의 receivingFilter 단언이 그 필드의 **존재**를 핀하고 있고,
+ *     preferences-inventory-locationcategory · preferences-purchases-orders · preferences-safety 도 같은 필드를 핀한다.
+ *     필드 제거(§receiving-filter-retire ②)는 그 핀들을 함께 승계해야 해서 이 커밋 범위 밖으로 뺐다.
+ */
 
 describe("§11.230c (a)-5 #5 — invariant 보존", () => {
   it("§11.230c (a) preferences route GET/PATCH 보존", () => {
@@ -146,10 +154,7 @@ describe("§11.230c (a)-5 #5 — invariant 보존", () => {
     expect(inventory).toMatch(/categoryFilter/);
   });
 
-  it("receiving activeTab ModuleBucketKey 보존", () => {
-    expect(receiving).toMatch(/activeTab/);
-    expect(receiving).toMatch(/setActiveTab/);
-  });
+  // 🪦 "receiving activeTab ModuleBucketKey 보존" 은퇴 — 위 #4 주석 참조(d8156765 로 탭 제거).
 
   it("§11.230c (a)-5 trace marker", () => {
     const combined = route + "\n" + helper + "\n" + inventory + "\n" + receiving;
