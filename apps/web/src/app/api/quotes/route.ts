@@ -205,21 +205,30 @@ export async function POST(request: NextRequest) {
       const vendorProductCount = items.length;
       const vendorTotalAmount = items.reduce((sum: number, item: any) => sum + (item.lineTotal || 0), 0);
 
+      /* §rfq-zero-amount-line (2026-09-18 · 릴레이 지시) — **금액이 없으면 금액 줄을 쓰지 않는다.**
+       *   옛 구현은 총액이 0이어도 「예상 금액: ₩0」 을 공급사 발송 문구에 박았다. prod 실측(2026-09-17):
+       *   가격 보유 ProductVendor 0 → 지금 만드는 모든 RFQ 가 「예상 금액: ₩0」 을 달고 나간다.
+       *   0원은 "금액 미정" 과 다르다 — 공급사가 예산 0으로 읽는다. 없는 값을 0으로 쓰지 않는다는
+       *   이 세션의 기준 그대로다. 계약: __tests__/regression/rfq-zero-amount-line.test.ts */
+      const amountLine = vendorTotalAmount > 0
+        ? `\n예상 금액: ₩${vendorTotalAmount.toLocaleString("ko-KR")}`
+        : "";
+
       let vendorMessage = "";
       if (vendorMessages && vendorMessages[vendorId]) {
         // 벤더별 개별 메시지가 있으면 사용 (이미 공통 메시지와 합쳐져 있음)
         vendorMessage = vendorMessages[vendorId];
         // 품목 정보 추가
-        vendorMessage += `\n\n품목 수: ${vendorProductCount}개\n예상 금액: ₩${vendorTotalAmount.toLocaleString("ko-KR")}`;
+        vendorMessage += `\n\n품목 수: ${vendorProductCount}개${amountLine}`;
       } else if (message) {
-        // 공통 메시지만 있는 경우
+        // 공통 메시지만 있는 경우 — 총액 0 이면 금액 줄을 **삭제**한다(₩0 로 덮어쓰지 않는다).
         vendorMessage = message.replace(/\d+건/g, `${vendorProductCount}건`)
                  .replace(/품목 수: \d+개/g, `품목 수: ${vendorProductCount}개`)
-                 .replace(/예상 금액: ₩[\d,]+/g, `예상 금액: ₩${vendorTotalAmount.toLocaleString("ko-KR")}`)
-                 .replace(/예상 총액: ₩[\d,]+/g, `예상 금액: ₩${vendorTotalAmount.toLocaleString("ko-KR")}`);
+                 .replace(/\n?예상 금액: ₩[\d,]+/g, amountLine)
+                 .replace(/\n?예상 총액: ₩[\d,]+/g, amountLine);
       } else {
         // 기본 메시지
-        vendorMessage = `안녕하세요.\n\n아래 품목 ${vendorProductCount}건에 대한 견적을 요청드립니다.\n\n품목 수: ${vendorProductCount}개\n예상 금액: ₩${vendorTotalAmount.toLocaleString("ko-KR")}\n\n빠른 견적 부탁드립니다.\n감사합니다.`;
+        vendorMessage = `안녕하세요.\n\n아래 품목 ${vendorProductCount}건에 대한 견적을 요청드립니다.\n\n품목 수: ${vendorProductCount}개${amountLine}\n\n빠른 견적 부탁드립니다.\n감사합니다.`;
       }
 
       // §11.203 — snapshot fields 보존 forward (createQuote 의 itemsDetailed
