@@ -1,7 +1,7 @@
 {
-  "generated": "2026-09-16T10:19:18.189Z",
+  "generated": "2026-09-17T08:51:07.143Z",
   "axis": "npx vitest run (전 축)",
-  "total": 170,
+  "total": 164,
   "kind": "sentinel 만 등재한다 · ratchet 은 등재 대상이 아니라 즉시 처리 대상",
   "ratchetCensus": {
     "total": 5,
@@ -163,8 +163,6 @@
     "src/__tests__/inventory/inventory-lot-issue-priority-strip-270.test.ts > inventory lot issue priority strip wires the primary lot issue action to a visible dock or disabled reason",
     "src/__tests__/landing/search-signup-banner-267b.test.ts > §11.267b #1 — search 페이지 상단 가입 배너 신규 배너는 logged-out 한정 노출 (!session?.user 조건부 렌더)",
     "src/__tests__/legal/legal-hub-p1.test.ts > §P-leg P1 (A) — 법문 verbatim 무결성(직전 land 보존) CPO/사업자 placeholder 유지(휴업 대기 — 날조 금지)",
-    "src/__tests__/lib/notifications/push-preference-filter.test.ts > §11.250-pref-push #3 — 10 caller eventType 인자 추가 compare-sessions insight COMPARE_COMPLETED",
-    "src/__tests__/lib/notifications/push-preference-filter.test.ts > §11.250-pref-push #3 — 10 caller eventType 인자 추가 work-queue request-approval PURCHASE_APPROVAL_REQUESTED",
     "src/__tests__/mobile/compare-detail-mobile.test.ts > §11.250g-2 #2 — 신규 screen Compare Detail aiInsight.keyChanges render (핵심 변화)",
     "src/__tests__/mobile/compare-detail-mobile.test.ts > §11.250g-2 #2 — 신규 screen Compare Detail aiInsight.recommendedActions render (권장 조치)",
     "src/__tests__/mobile/compare-detail-mobile.test.ts > §11.250g-2 #2 — 신규 screen Compare Detail graceful loading + error state",
@@ -180,11 +178,83 @@
     "src/__tests__/mobile/mobile-surface-372.test.ts > §11.372 ③ 설정 모바일 drill-in 회귀 0: lg+ master-detail(flex-col lg:flex-row, lg:w-64) + 4 섹션 라벨 보존",
     "src/__tests__/mobile/search-placeholder-251b-redo.test.ts > §11.251b-redo — invariant 보존 (canonical truth) search-result-triage section (다른 spec, §11.251b-redo scope 외) 보존",
     "src/__tests__/security/tenant-scope-coverage.test.ts > §tenant-isolation A4 — 테넌트 접촉 핸들러는 반드시 검사를 갖는다 소유권/조직 검사가 없는 테넌트 접촉 핸들러가 0 이다",
-    "src/__tests__/user/preferences-inventory-receiving.test.ts > §11.230c (a)-5 #4 — receiving/page.tsx server hydration persistence — updateReceivingFilter 호출",
-    "src/__tests__/user/preferences-inventory-receiving.test.ts > §11.230c (a)-5 #4 — receiving/page.tsx server hydration server hydration (preferences.receivingFilter → setActiveTab)",
-    "src/__tests__/user/preferences-inventory-receiving.test.ts > §11.230c (a)-5 #4 — receiving/page.tsx server hydration useUserPreferences import",
-    "src/__tests__/user/preferences-inventory-receiving.test.ts > §11.230c (a)-5 #5 — invariant 보존 receiving activeTab ModuleBucketKey 보존",
     "src/app/dashboard/inventory/__tests__/mobile-inventory-header-align.test.ts > §11.328 — 회귀 보호 (액션 wiring 보존) 재고 등록·오버플로 핸들러가 유지된다",
     "src/app/dashboard/quotes/__tests__/dispatch-briefing-suppress.test.ts > §ops-briefing-scope 케이스3 — 발송 검토 모달 위/후 견적 케이스 rail 미노출 견적 rail 렌더(양 브레이크포인트)가 request_send 를 배제"
-  ]
+  ],
+  "uncollectedRule": "테스트가 애초에 안 도는 파일(수집 실패). 단위는 원인. verdict 는 사람이 적고 --update 가 보존한다. entries·unattributed 와 섞지 않는다.",
+  "uncollectedCensus": {
+    "total": 41,
+    "causes": 4,
+    "byCause": [
+      {
+        "cause": "ai-pipeline-core-resolve",
+        "verdict": "단일 원인 · ai-pipeline/runtime 테스트가 ../core/persistence*·../core/ontology/* 상대 경로를 못 푼다(모듈은 존재 · a70c8551). 프로덕션 라우트 빌드는 통과하나, 테스트가 못 찾는 모듈이 라우트 도달 경로에 포함되는지는 **미검증**. 별도 트랙(test-resolution). 출처: 2026-08-04 전체 스위트 지도.",
+        "count": 34,
+        "files": [
+          "src/lib/ai-pipeline/runtime/__tests__/memory-repositories.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p1-2-distributed-lock.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p1-3-recovery-path.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p1-closeout-validation.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p1-db-contention-validation.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p2-1-recovery-persistence.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p2-1b-coordinator-integration.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p2-1c-startup-continuity.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p2-2a-lock-hygiene.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p2-2b-lock-cleanup-integration.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p2-3-postgres-validation.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p2-4a-real-postgres-contention.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p2-4b-acceptance-blockers.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p2-4c-real-postgres-evidence.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p3-1-ontology-adapters.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p3-2-ontology-authority-incident.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p3-3-ontology-audit-snapshot.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p3-3b-snapshot-fidelity.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p3-4-consumer-cutover.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p3-5-consumer-cutover-final.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p3-6-closeout-validation.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p4-1-recovery-sync-shutdown.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p4-2-repo-fallback-reduction.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p4-3-compat-elimination.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p4-4-sync-compat-shutdown.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p4-5-closeout.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p5-1-startup-async-migration.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p5-2-rollback-async-migration.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p5-3-lock-baseline-async-migration.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p5-4-final-closeout.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/p6-guardrail-lock.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/persistence-bootstrap.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/prisma-repositories.test.ts",
+          "src/lib/ai-pipeline/runtime/__tests__/slice-1f-persistence-cutover.test.ts"
+        ]
+      },
+      {
+        "cause": "empty-suite",
+        "verdict": "D(버려진 파일) · 'No test suite found' — 빈 테스트 파일. 출처: 2026-08-04 지도.",
+        "count": 4,
+        "files": [
+          "src/lib/ai-pipeline/__tests__/pipeline-e2e-verification.test.ts",
+          "src/lib/ai-pipeline/__tests__/runtime-e2e-verification.test.ts",
+          "src/lib/budget/__tests__/budget-lifecycle-wiring.test.ts",
+          "src/lib/budget/__tests__/budget-postgresql-contention.test.ts"
+        ]
+      },
+      {
+        "cause": "lib-db-resolve",
+        "verdict": "미확정 · @/lib/db(db.ts 존재) 해석 실패. compare-sessions/routes 는 4f9ab245(2026-06-11)로 삭제된 라우트의 테스트 — git rm 호영님 승인 대기(2026-09-17). work-queue/compare-sync 는 미확정. 출처: 2026-08-04 지도 + 2026-09-17.",
+        "count": 2,
+        "files": [
+          "src/__tests__/api/compare-sessions/routes.test.ts",
+          "src/__tests__/api/work-queue/compare-sync.test.ts"
+        ]
+      },
+      {
+        "cause": "missing-test-helper",
+        "verdict": "D · ../helpers/page-imports-smoke 부재. 출처: 2026-08-04 지도.",
+        "count": 1,
+        "files": [
+          "src/__tests__/quotes/quotes-page-imports-smoke.test.ts"
+        ]
+      }
+    ]
+  }
 }
