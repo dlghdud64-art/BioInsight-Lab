@@ -372,7 +372,9 @@ export async function POST(
           quoteId,
           requestId: purchaseRequest.id,
         },
-      });
+        // §notify-sentinel-retire-2 ② (2026-09-17) — eventType 을 넘겨야 push-sender 가 사용자 설정
+        //   (approval_pending 토글)을 확인한다. 이 한 곳만 누락돼 알림을 꺼도 결재 요청 푸시가 갔다.
+      }, "PURCHASE_APPROVAL_REQUESTED");
     } catch (pushErr) {
       // graceful — mutation 정합 유지
       console.error("[request-approval] push notification 실패 (mutation 정합 유지):", pushErr);
