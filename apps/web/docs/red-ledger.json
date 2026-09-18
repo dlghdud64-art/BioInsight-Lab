@@ -188,7 +188,7 @@
     "byCause": [
       {
         "cause": "ai-pipeline-core-resolve",
-        "verdict": "원인 확정(2026-09-18 파일럿): 테스트의 require(\"../core/…\") 가 vitest(ESM)에서 TS 디렉터리 index 를 못 푼다. 모듈·상대 경로는 정상 — 실패는 테스트 쪽 로딩이지 프로덕션 모듈 결함이 아니다. 파일럿 memory-repositories.test.ts import 전환 → 수집 성공 38/38 GREEN · require 로 되돌리면 같은 오류로 재현. 잔여 33 은 아직 require(목록 갱신은 일괄 변환 때 전 축으로). 일괄 전 판단 2건: ① 테스트 본문 안 require(\"../core/…\") 6파일 — 최상위만 바꾸면 수집은 되고 그 테스트가 런타임에 죽는다. ② 실DB 표지 4파일(p2-3 · p2-4a · p2-4b · p2-4c) — 수집되는 순간 로컬 DATABASE_URL 에 접속·경합 쓰기를 시도할 수 있다(skip 가드는 p2-4c 만).",
+        "verdict": "원인 확정(2026-09-18 파일럿): 테스트의 require(\"../core/…\") 가 vitest(ESM)에서 TS 디렉터리 index 를 못 푼다. 모듈·상대 경로는 정상 — 실패는 테스트 쪽 로딩이지 프로덕션 모듈 결함이 아니다. 파일럿 memory-repositories.test.ts import 전환 → 수집 성공 38/38 GREEN · require 로 되돌리면 같은 오류로 재현. 잔여 33 은 아직 require(목록 갱신은 일괄 변환 때 전 축으로). 일괄 전 판단 2건: ① 테스트 본문 안 require(\"../core/…\") 6파일 — 최상위만 바꾸면 수집은 되고 그 테스트가 런타임에 죽는다. ② 실DB 표지는 3파일이다(p2-4a · p2-4b · p2-4c) — p2-3 은 실DB 경로가 없고 독블록만 그렇게 적혀 있었다. p2-4c 의 기존 describe.skip 은 접속 가드가 아니라 'PrismaClient 생성 가능' 판정이었고, 그 파일은 .env 를 직접 뒤져 localhost 아닌 DATABASE_URL(dev)을 골라 접속·DELETE 했다. 391173a0 에서 AI_PIPELINE_REAL_DB=1 옵트인 뒤로 닫고 센티널(§test-real-db-optin)을 db-target.test.ts 에 붙였다. 변환은 그 뒤에 진행.",
         "count": 34,
         "files": [
           "src/lib/ai-pipeline/runtime/__tests__/memory-repositories.test.ts",
@@ -229,7 +229,7 @@
       },
       {
         "cause": "empty-suite",
-        "verdict": "D(버려진 파일) · 'No test suite found' — 빈 테스트 파일. 출처: 2026-08-04 지도.",
+        "verdict": "'No test suite found' — 다만 넷이 같은 성질은 아니다. budget-postgresql-contention 은 빈 파일이 아니라 790줄 스크립트이고 import 시점에 main() 이 돌아 DB 에 쓰려 했다(최상위 process.exit(1) 포함). 391173a0 에서 옵트인 뒤로 닫음 — 은퇴 판단은 별건. 나머지 3개는 D(버려진 파일). 출처: 2026-08-04 지도 + 2026-09-18 재판정.",
         "count": 4,
         "files": [
           "src/lib/ai-pipeline/__tests__/pipeline-e2e-verification.test.ts",
