@@ -116,7 +116,7 @@ export async function runRecoveryDiagnostics(
       diagnostics.push({
         category: "INCOMPLETE_CANONICAL_CHAIN",
         reasonCode: "CANONICAL_CHAIN_UNDETERMINABLE",
-        detail: "UNDETERMINABLE: canonical chain could not be evaluated for correlationId=" + correlationId + ": " + (err instanceof Error ? err.message : String(err)),
+        detail: "UNDETERMINABLE: 정본 감사 체인을 평가하지 못했습니다(correlationId=" + correlationId + ", 원인: " + (err instanceof Error ? err.message : String(err)) + ") · 해소: 정본 감사 저장소 오류를 해소한 뒤 진단을 다시 실행하십시오",
         severity: "ERROR",
       });
     }

@@ -146,7 +146,7 @@ export async function checkAuditChainReconstructable(
       name: "AUDIT_CHAIN_RECONSTRUCTABLE",
       passed: false,
       undeterminable: true,
-      detail: "UNDETERMINABLE: audit chain could not be evaluated: " + (err instanceof Error ? err.message : String(err)),
+      detail: "UNDETERMINABLE: 감사 체인을 평가하지 못했습니다(원인: " + (err instanceof Error ? err.message : String(err)) + ") · 해소: 정본 감사 저장소·모듈 오류를 해소한 뒤 다시 실행하십시오",
     };
   }
 }

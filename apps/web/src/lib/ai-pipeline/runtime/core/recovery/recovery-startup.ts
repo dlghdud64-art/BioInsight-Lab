@@ -180,7 +180,7 @@ export async function evaluateResumeReadiness(
       name: "AUDIT_CHAIN_RECONSTRUCTABLE",
       passed: false,
       undeterminable: true,
-      detail: "UNDETERMINABLE: audit chain check could not run: " + (err instanceof Error ? err.message : String(err)),
+      detail: "UNDETERMINABLE: 감사 체인 검사를 실행하지 못했습니다(원인: " + (err instanceof Error ? err.message : String(err)) + ") · 해소: 정본 감사 저장소·모듈 오류를 해소한 뒤 다시 실행하십시오",
     });
   }
 
@@ -492,7 +492,7 @@ export async function runStartupRecoveryScan(): Promise<StartupScanResult> {
   } catch (err) {
     // 이전: UNKNOWN 으로 두고 가장 약한 상태(RESIDUE_DETECTED)로 떨어졌다.
     reconstructionStatus = "UNKNOWN";
-    chainUndeterminableDetail = "UNDETERMINABLE: audit chain check could not run: " + (err instanceof Error ? err.message : String(err));
+    chainUndeterminableDetail = "UNDETERMINABLE: 감사 체인 검사를 실행하지 못했습니다(원인: " + (err instanceof Error ? err.message : String(err)) + ") · 해소: 정본 감사 저장소·모듈 오류를 해소한 뒤 다시 실행하십시오";
   }
 
   // ── 4c. Classify startup status ──

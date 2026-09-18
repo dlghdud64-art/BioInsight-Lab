@@ -189,6 +189,20 @@ describe("§recovery-undeterminable · 검사 결과 변수의 초기값은 합�
   });
 });
 
+describe("§recovery-undeterminable · 판별 불가는 출구를 함께 준다", () => {
+  // 막혔을 때 할 일이 없으면 다음 사람은 가드를 빼는 것으로 해결한다 — fail-closed 가 무너지는 전형.
+  // 문구는 막힌 이유 + 해소 조건만 적는다. 수동 우회 경로는 호영님 판정 전이라 열지 않는다.
+  it("E1 · 판별 불가 detail 문구는 전부 '· 해소: <조건>' 을 담고, 수동 우회를 안내하지 않는다", () => {
+    const lines: string[] = [];
+    for (const f of recoveryFiles) {
+      for (const ln of code(join(RECOVERY, f)).split("\n")) if (ln.includes('"UNDETERMINABLE:')) lines.push(`${f}: ${ln.trim()}`);
+    }
+    expect(lines.length).toBeGreaterThan(0); // 검사 대상이 사라지면 이 단언이 무의미해진다
+    expect(lines.filter((l) => !/· 해소: [^"]{8,}"/.test(l))).toEqual([]);
+    expect(lines.filter((l) => /수동|manual/i.test(l))).toEqual([]);
+  });
+});
+
 describe("§recovery-undeterminable · 정본 감사 이벤트 소실 표지", () => {
   it("C1 · emitRecoveryCanonicalEvent 를 부르는 catch 는 비어 있지 않고 원인과 함께 표지를 남긴다", () => {
     const src = code(join(RECOVERY, "recovery-coordinator.ts"));

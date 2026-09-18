@@ -730,7 +730,7 @@ async function runRecoveryStage(
         // 판별 불가는 통과가 아니다(fail-closed). 감사 모듈을 못 불렀으면 "hops complete" 라고 보고하지 않는다.
         return {
           stage, passed: false, undeterminable: true,
-          detail: "UNDETERMINABLE: audit chain check could not run: " + (err instanceof Error ? err.message : String(err)),
+          detail: "UNDETERMINABLE: 감사 체인 검사를 실행하지 못했습니다(원인: " + (err instanceof Error ? err.message : String(err)) + ") · 해소: 정본 감사 저장소·모듈 오류를 해소한 뒤 다시 실행하십시오",
           timestamp: now,
         };
       }
@@ -822,7 +822,7 @@ export async function verifyRecovery(recoveryId: string): Promise<{
   }
   // 검사 결과의 초기값은 합격이 아니다 — 검사가 실제로 돌아야만 clean 이 된다.
   let residueScanClean = false;
-  let residueUndeterminableDetail: string | null = "UNDETERMINABLE: residue scan skipped: no canonical baseline";
+  let residueUndeterminableDetail: string | null = "UNDETERMINABLE: 정본 baseline 이 없어 잔여물 검사를 수행할 수 없습니다 · 해소: 정본 baseline 을 등록한 뒤 복구 검증을 다시 실행하십시오";
   if (baseline) {
     emitDiagnostic(
       "RECOVERY_SYNC_READ_REMOVED",
@@ -839,7 +839,7 @@ export async function verifyRecovery(recoveryId: string): Promise<{
         { entityId: baseline.rollbackSnapshotId, fallbackUsed: false }
       );
     }
-    residueUndeterminableDetail = rollbackSnap ? null : "UNDETERMINABLE: residue scan skipped: rollback snapshot not found (" + baseline.rollbackSnapshotId + ")";
+    residueUndeterminableDetail = rollbackSnap ? null : "UNDETERMINABLE: 정본 baseline 의 롤백 스냅샷(" + baseline.rollbackSnapshotId + ")이 저장소에 없어 잔여물 검사를 수행할 수 없습니다 · 해소: 이 롤백 스냅샷이 저장소에 존재하게 된 뒤 복구 검증을 다시 실행하십시오";
     if (rollbackSnap) {
       const currentState: Record<string, Record<string, unknown>> = {};
       for (const s of rollbackSnap.scopes) {
@@ -877,11 +877,11 @@ export async function verifyRecovery(recoveryId: string): Promise<{
     } catch (err) {
       // 판별 불가는 통과가 아니다(fail-closed). 이전: auditOk = true (감사를 못 불렀는데 "valid").
       auditOk = false;
-      auditUndeterminableDetail = "UNDETERMINABLE: audit chain check could not run: " + (err instanceof Error ? err.message : String(err));
+      auditUndeterminableDetail = "UNDETERMINABLE: 감사 체인 검사를 실행하지 못했습니다(원인: " + (err instanceof Error ? err.message : String(err)) + ") · 해소: 정본 감사 저장소·모듈 오류를 해소한 뒤 다시 실행하십시오";
     }
   } else {
     // 추적 정보가 없는 것은 정상 상황일 수 있다. 그래도 답은 "감사 확인됨" 이 아니라 "확인 불가" 다.
-    auditUndeterminableDetail = "UNDETERMINABLE: audit chain check skipped: correlationId not found for recoveryId=" + recoveryId;
+    auditUndeterminableDetail = "UNDETERMINABLE: 복구 레코드(recoveryId=" + recoveryId + ")에서 correlationId 를 찾지 못해 감사 체인을 조회할 수 없습니다 · 해소: 복구 레코드에 correlationId 가 기록된 뒤 복구 검증을 다시 실행하십시오";
   }
   checks.push(auditUndeterminableDetail !== null
     ? { name: "AUDIT_CHAIN_VALID", passed: false, undeterminable: true, detail: auditUndeterminableDetail }
@@ -910,7 +910,7 @@ export async function verifyRecovery(recoveryId: string): Promise<{
   }
   checks.push(_recoveryRecord
     ? { name: "RECOVERY_AUDIT_HOPS", passed: auditHopsComplete, detail: auditHopsComplete ? "all stages complete" : "incomplete" }
-    : { name: "RECOVERY_AUDIT_HOPS", passed: false, undeterminable: true, detail: "UNDETERMINABLE: recovery stages unavailable: no in-process recovery record for recoveryId=" + recoveryId });
+    : { name: "RECOVERY_AUDIT_HOPS", passed: false, undeterminable: true, detail: "UNDETERMINABLE: 이 프로세스에 복구 레코드(recoveryId=" + recoveryId + ")가 없어 복구 단계 기록을 확인할 수 없습니다(단계 기록은 복구를 실행한 프로세스 메모리에만 있음) · 해소: 복구를 실행한 프로세스에서 복구 검증을 다시 실행하십시오" });
 
   const allPassed = checks.every(function (c) { return c.passed; });
 
