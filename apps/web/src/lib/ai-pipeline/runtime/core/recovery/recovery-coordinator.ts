@@ -261,7 +261,12 @@ async function emitRecoveryAuditAsync(
   try {
     const { emitRecoveryCanonicalEvent } = require("./recovery-canonical-bridge");
     emitRecoveryCanonicalEvent(eventType, record, detail);
-  } catch (_bridgeErr) { /* non-fatal */ }
+  } catch (bridgeErr) {
+    // 명제: 정본 감사 이벤트를 조용히 버리지 않는다 · 버렸으면 표지를 남긴다.
+    //   bridge 내부 실패와 같은 표지(logBridgeFailure)를 쓴다 — 두 소실 경로가 한 곳에서 보인다.
+    //   복구 흐름은 막지 않는다(기록 경로이지 판정 경로가 아니다).
+    logBridgeFailure("recovery-coordinator", `canonical-event-dropped eventType=${eventType} recoveryId=${record.recoveryId}`, bridgeErr);
+  }
 }
 
 /**
@@ -718,10 +723,17 @@ async function runRecoveryStage(
           { excludeFlows: ["recovery"] }
         );
         if (!chainResult.passed) {
-          return { stage, passed: false, detail: chainResult.detail, timestamp: now };
+          return chainResult.undeterminable
+            ? { stage, passed: false, undeterminable: true, detail: chainResult.detail, timestamp: now }
+            : { stage, passed: false, detail: chainResult.detail, timestamp: now };
         }
-      } catch (_err) {
-        // canonical module load failure — non-fatal
+      } catch (err) {
+        // 판별 불가는 통과가 아니다(fail-closed). 감사 모듈을 못 불렀으면 "hops complete" 라고 보고하지 않는다.
+        return {
+          stage, passed: false, undeterminable: true,
+          detail: "UNDETERMINABLE: audit chain check could not run: " + (err instanceof Error ? err.message : String(err)),
+          timestamp: now,
+        };
       }
       return { stage, passed: true, detail: "audit hops complete", timestamp: now };
     }
@@ -766,9 +778,9 @@ async function runRecoveryStage(
 
 export async function verifyRecovery(recoveryId: string): Promise<{
   passed: boolean;
-  checks: Array<{ name: string; passed: boolean; detail: string }>;
+  checks: Array<{ name: string; passed: boolean; detail: string; undeterminable?: true }>;
 }> {
-  const checks: Array<{ name: string; passed: boolean; detail: string }> = [];
+  const checks: Array<{ name: string; passed: boolean; detail: string; undeterminable?: true }> = [];
 
   // 1. Canonical active combination valid
   const comboValid = isCanonicalActiveCombination("ACTIVE_100", "FULL_ACTIVE_STABILIZATION", "FROZEN");
@@ -840,6 +852,7 @@ export async function verifyRecovery(recoveryId: string): Promise<{
   // 5. Audit chain not BROKEN_CHAIN (post-recovery: include all flows including recovery)
   // Repository-first read for correlationId
   let auditOk = true;
+  let auditUndeterminableDetail: string | null = null;
   let correlationForAudit: string | null = null;
   try {
     const adapters = getPersistenceAdapters();
@@ -856,11 +869,16 @@ export async function verifyRecovery(recoveryId: string): Promise<{
       const { checkAuditChainReconstructable } = require("./recovery-preconditions");
       const chainResult = await checkAuditChainReconstructable(correlationForAudit);
       auditOk = chainResult.passed;
-    } catch (_err) {
-      auditOk = true;
+      if (chainResult.undeterminable) auditUndeterminableDetail = chainResult.detail;
+    } catch (err) {
+      // 판별 불가는 통과가 아니다(fail-closed). 이전: auditOk = true (감사를 못 불렀는데 "valid").
+      auditOk = false;
+      auditUndeterminableDetail = "UNDETERMINABLE: audit chain check could not run: " + (err instanceof Error ? err.message : String(err));
     }
   }
-  checks.push({ name: "AUDIT_CHAIN_VALID", passed: auditOk, detail: auditOk ? "valid" : "BROKEN_CHAIN" });
+  checks.push(auditUndeterminableDetail !== null
+    ? { name: "AUDIT_CHAIN_VALID", passed: false, undeterminable: true, detail: auditUndeterminableDetail }
+    : { name: "AUDIT_CHAIN_VALID", passed: auditOk, detail: auditOk ? "valid" : "BROKEN_CHAIN" });
 
   // 6. Authority integrity (P4-1: repo-first)
   emitDiagnostic(

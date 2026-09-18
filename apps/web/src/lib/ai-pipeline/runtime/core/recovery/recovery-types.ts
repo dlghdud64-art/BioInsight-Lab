@@ -72,6 +72,13 @@ export interface RecoveryPreconditionResult {
   name: string;
   passed: boolean;
   detail: string;
+  /**
+   * 판별 불가 표지 — 검사를 **수행하지 못했다**(모듈 로딩 실패·평가 중 예외).
+   * 이때 passed 는 항상 false 다(fail-closed). 판별 불가를 통과로 세지 않는다.
+   * 🛑 운영자에게 보여주기 위한 표지이지 분기용이 아니다.
+   *    호출부가 이 값을 보고 통과시키기 시작하면 fail-closed 가 무너진다.
+   */
+  undeterminable?: true;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -94,6 +101,13 @@ export interface RecoveryStageResult {
   passed: boolean;
   detail: string;
   timestamp: Date;
+  /**
+   * 판별 불가 표지 — 검사를 **수행하지 못했다**(모듈 로딩 실패·평가 중 예외).
+   * 이때 passed 는 항상 false 다(fail-closed). 판별 불가를 통과로 세지 않는다.
+   * 🛑 운영자에게 보여주기 위한 표지이지 분기용이 아니다.
+   *    호출부가 이 값을 보고 통과시키기 시작하면 fail-closed 가 무너진다.
+   */
+  undeterminable?: true;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

@@ -69,7 +69,7 @@ export interface OperatorHandoffPayload {
 export interface ResumeReadinessResult {
   canResume: boolean;
   mustAbort: boolean;
-  checks: Array<{ name: string; passed: boolean; detail: string }>;
+  checks: Array<{ name: string; passed: boolean; detail: string; undeterminable?: true }>;
   recommendedAction: RecommendedAction;
 }
 
@@ -130,7 +130,7 @@ async function emitStartupDiagnostic(
 export async function evaluateResumeReadiness(
   activeRecord: PersistedRecoveryRecord
 ): Promise<ResumeReadinessResult> {
-  const checks: Array<{ name: string; passed: boolean; detail: string }> = [];
+  const checks: Array<{ name: string; passed: boolean; detail: string; undeterminable?: true }> = [];
 
   // 1. No open critical incidents
   const hasIncidents = await hasUnacknowledgedIncidentsFromRepo();
@@ -171,17 +171,16 @@ export async function evaluateResumeReadiness(
       { excludeFlows: ["recovery"] }
     );
     chainOk = chainResult.passed;
-    checks.push({
-      name: "AUDIT_CHAIN_RECONSTRUCTABLE",
-      passed: chainResult.passed,
-      detail: chainResult.detail,
-    });
-  } catch (_err) {
+    checks.push(chainResult.undeterminable
+      ? { name: "AUDIT_CHAIN_RECONSTRUCTABLE", passed: false, undeterminable: true, detail: chainResult.detail }
+      : { name: "AUDIT_CHAIN_RECONSTRUCTABLE", passed: chainResult.passed, detail: chainResult.detail });
+  } catch (err) {
     chainOk = false;
     checks.push({
       name: "AUDIT_CHAIN_RECONSTRUCTABLE",
       passed: false,
-      detail: "canonical module error",
+      undeterminable: true,
+      detail: "UNDETERMINABLE: audit chain check could not run: " + (err instanceof Error ? err.message : String(err)),
     });
   }
 
@@ -473,6 +472,9 @@ export async function runStartupRecoveryScan(): Promise<StartupScanResult> {
   // ── 4b. Check audit chain ──
   let reconstructionStatus: "RECONSTRUCTABLE" | "BROKEN_CHAIN" | "UNKNOWN" = "UNKNOWN";
   let hasBrokenChain = false;
+  // 판별 불가(검사를 수행하지 못함)는 깨짐과 다른 사건이다 — 사유를 가르되, 등급은 깨짐과 같게 둔다(fail-closed).
+  // 🛑 이 값은 더 엄한 쪽으로만 쓴다. 판별 불가를 이유로 상태를 완화하지 않는다.
+  let chainUndeterminableDetail: string | null = null;
   try {
     const chainResult = await checkAuditChainReconstructable(
       record.correlationId,
@@ -480,12 +482,17 @@ export async function runStartupRecoveryScan(): Promise<StartupScanResult> {
     );
     if (chainResult.passed) {
       reconstructionStatus = "RECONSTRUCTABLE";
+    } else if (chainResult.undeterminable) {
+      reconstructionStatus = "UNKNOWN";
+      chainUndeterminableDetail = chainResult.detail;
     } else {
       reconstructionStatus = "BROKEN_CHAIN";
       hasBrokenChain = true;
     }
-  } catch (_err) {
+  } catch (err) {
+    // 이전: UNKNOWN 으로 두고 가장 약한 상태(RESIDUE_DETECTED)로 떨어졌다.
     reconstructionStatus = "UNKNOWN";
+    chainUndeterminableDetail = "UNDETERMINABLE: audit chain check could not run: " + (err instanceof Error ? err.message : String(err));
   }
 
   // ── 4c. Classify startup status ──
@@ -498,11 +505,12 @@ export async function runStartupRecoveryScan(): Promise<StartupScanResult> {
     reasonCode = "STALE_RECOVERY_LOCK_PRESENT";
     operatorNote = "Recovery " + record.recoveryId + " in state " + record.recoveryState +
       " with stale recovery lock. Clear lock before retry.";
-  } else if (hasBrokenChain) {
+  } else if (hasBrokenChain || chainUndeterminableDetail !== null) {
     status = "RECOVERY_RESIDUE_WITH_BROKEN_CHAIN";
-    reasonCode = "AUDIT_CHAIN_BROKEN";
+    reasonCode = hasBrokenChain ? "AUDIT_CHAIN_BROKEN" : "AUDIT_CHAIN_UNDETERMINABLE";
     operatorNote = "Recovery " + record.recoveryId + " in state " + record.recoveryState +
-      " with broken audit chain. Manual verification required.";
+      (hasBrokenChain ? " with broken audit chain." : " with audit chain that could not be evaluated (" + chainUndeterminableDetail + ").") +
+      " Manual verification required.";
   } else {
     status = "RECOVERY_RESIDUE_DETECTED";
     reasonCode = "NON_TERMINAL_RECOVERY_IN_PROGRESS";

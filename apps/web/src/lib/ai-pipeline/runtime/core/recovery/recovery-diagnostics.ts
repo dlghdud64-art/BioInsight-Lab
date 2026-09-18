@@ -111,8 +111,14 @@ export async function runRecoveryDiagnostics(
           severity: "ERROR",
         });
       }
-    } catch (_err) {
-      // canonical module unavailable
+    } catch (err) {
+      // 판별 불가는 CLEAN 이 아니다(fail-closed). 이전: 삼키고 진단 0건 → healthStatus CLEAN.
+      diagnostics.push({
+        category: "INCOMPLETE_CANONICAL_CHAIN",
+        reasonCode: "CANONICAL_CHAIN_UNDETERMINABLE",
+        detail: "UNDETERMINABLE: canonical chain could not be evaluated for correlationId=" + correlationId + ": " + (err instanceof Error ? err.message : String(err)),
+        severity: "ERROR",
+      });
     }
   }
 

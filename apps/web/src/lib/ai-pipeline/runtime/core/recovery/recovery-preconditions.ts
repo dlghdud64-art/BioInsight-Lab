@@ -139,8 +139,15 @@ export async function checkAuditChainReconstructable(
       passed: true,
       detail: "reconstruction status: " + timeline.reconstructionStatus,
     };
-  } catch (_err) {
-    return { name: "AUDIT_CHAIN_RECONSTRUCTABLE", passed: false, detail: "canonical module error" };
+  } catch (err) {
+    // 모듈 로딩 실패·평가 중 예외 = 판별 불가. "감사 체인 깨짐" 과 detail 로 구별한다.
+    // passed:false 유지가 fail-closed 의 구현이다(RecoveryPreconditionResult.undeterminable 참조).
+    return {
+      name: "AUDIT_CHAIN_RECONSTRUCTABLE",
+      passed: false,
+      undeterminable: true,
+      detail: "UNDETERMINABLE: audit chain could not be evaluated: " + (err instanceof Error ? err.message : String(err)),
+    };
   }
 }
 
