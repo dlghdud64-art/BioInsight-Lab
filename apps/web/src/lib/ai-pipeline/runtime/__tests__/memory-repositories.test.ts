@@ -12,14 +12,17 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 
-const {
+// §ai-pipeline-test-resolve 파일럿 (2026-09-18) — require() → import.
+//   vitest(ESM)에서 require("../core/persistence") 는 TS 디렉터리 index 를 풀지 못해 수집 단계에서 죽었다
+//   ("Cannot find module '../core/persistence'" · 원장 uncollected ai-pipeline-core-resolve).
+import {
   createMemoryAdapters,
   createPrismaAdapters,
   registerAdapterFactory,
   resolveAdapters,
   isAdapterRegistered,
   _resetAdapterRegistry,
-} = require("../core/persistence");
+} from "../core/persistence";
 
 // ── Test Data Builders (identical to Prisma tests for parity) ──
 

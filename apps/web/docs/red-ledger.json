@@ -188,7 +188,7 @@
     "byCause": [
       {
         "cause": "ai-pipeline-core-resolve",
-        "verdict": "단일 원인 · ai-pipeline/runtime 테스트가 ../core/persistence*·../core/ontology/* 상대 경로를 못 푼다(모듈은 존재 · a70c8551). 프로덕션 라우트 빌드는 통과하나, 테스트가 못 찾는 모듈이 라우트 도달 경로에 포함되는지는 **미검증**. 별도 트랙(test-resolution). 출처: 2026-08-04 전체 스위트 지도.",
+        "verdict": "원인 확정(2026-09-18 파일럿): 테스트의 require(\"../core/…\") 가 vitest(ESM)에서 TS 디렉터리 index 를 못 푼다. 모듈·상대 경로는 정상 — 실패는 테스트 쪽 로딩이지 프로덕션 모듈 결함이 아니다. 파일럿 memory-repositories.test.ts import 전환 → 수집 성공 38/38 GREEN · require 로 되돌리면 같은 오류로 재현. 잔여 33 은 아직 require(목록 갱신은 일괄 변환 때 전 축으로). 일괄 전 판단 2건: ① 테스트 본문 안 require(\"../core/…\") 6파일 — 최상위만 바꾸면 수집은 되고 그 테스트가 런타임에 죽는다. ② 실DB 표지 4파일(p2-3 · p2-4a · p2-4b · p2-4c) — 수집되는 순간 로컬 DATABASE_URL 에 접속·경합 쓰기를 시도할 수 있다(skip 가드는 p2-4c 만).",
         "count": 34,
         "files": [
           "src/lib/ai-pipeline/runtime/__tests__/memory-repositories.test.ts",
