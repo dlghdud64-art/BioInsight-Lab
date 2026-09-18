@@ -821,7 +821,9 @@ export async function verifyRecovery(recoveryId: string): Promise<{
       { fallbackUsed: false }
     );
   }
-  let residueScanClean = true;
+  // 검사 결과의 초기값은 합격이 아니다 — 검사가 실제로 돌아야만 clean 이 된다.
+  let residueScanClean = false;
+  let residueUndeterminableDetail: string | null = "UNDETERMINABLE: residue scan skipped: no canonical baseline";
   if (baseline) {
     emitDiagnostic(
       "RECOVERY_SYNC_READ_REMOVED",
@@ -838,6 +840,7 @@ export async function verifyRecovery(recoveryId: string): Promise<{
         { entityId: baseline.rollbackSnapshotId, fallbackUsed: false }
       );
     }
+    residueUndeterminableDetail = rollbackSnap ? null : "UNDETERMINABLE: residue scan skipped: rollback snapshot not found (" + baseline.rollbackSnapshotId + ")";
     if (rollbackSnap) {
       const currentState: Record<string, Record<string, unknown>> = {};
       for (const s of rollbackSnap.scopes) {
@@ -847,11 +850,14 @@ export async function verifyRecovery(recoveryId: string): Promise<{
       residueScanClean = scan.clean;
     }
   }
-  checks.push({ name: "RESIDUE_SCAN_CLEAN", passed: residueScanClean, detail: residueScanClean ? "clean" : "residues detected" });
+  checks.push(residueUndeterminableDetail !== null
+    ? { name: "RESIDUE_SCAN_CLEAN", passed: false, undeterminable: true, detail: residueUndeterminableDetail }
+    : { name: "RESIDUE_SCAN_CLEAN", passed: residueScanClean, detail: residueScanClean ? "clean" : "residues detected" });
 
   // 5. Audit chain not BROKEN_CHAIN (post-recovery: include all flows including recovery)
   // Repository-first read for correlationId
-  let auditOk = true;
+  // 검사 결과의 초기값은 합격이 아니다. 이전: true — correlationId 를 못 찾아 검사를 건너뛰면 그대로 "valid" 였다.
+  let auditOk = false;
   let auditUndeterminableDetail: string | null = null;
   let correlationForAudit: string | null = null;
   try {
@@ -875,6 +881,9 @@ export async function verifyRecovery(recoveryId: string): Promise<{
       auditOk = false;
       auditUndeterminableDetail = "UNDETERMINABLE: audit chain check could not run: " + (err instanceof Error ? err.message : String(err));
     }
+  } else {
+    // 추적 정보가 없는 것은 정상 상황일 수 있다. 그래도 답은 "감사 확인됨" 이 아니라 "확인 불가" 다.
+    auditUndeterminableDetail = "UNDETERMINABLE: audit chain check skipped: correlationId not found for recoveryId=" + recoveryId;
   }
   checks.push(auditUndeterminableDetail !== null
     ? { name: "AUDIT_CHAIN_VALID", passed: false, undeterminable: true, detail: auditUndeterminableDetail }
@@ -896,11 +905,14 @@ export async function verifyRecovery(recoveryId: string): Promise<{
   checks.push({ name: "SINGLE_CANONICAL", passed: singleCanonical.valid, detail: singleCanonical.reason });
 
   // 8. Recovery audit hops complete
-  let auditHopsComplete = true;
+  // 검사 결과의 초기값은 합격이 아니다. 이전: true — 레코드가 없으면 검사 없이 "all stages complete" 였다.
+  let auditHopsComplete = false;
   if (_recoveryRecord) {
     auditHopsComplete = _recoveryRecord.stages.length >= 7;
   }
-  checks.push({ name: "RECOVERY_AUDIT_HOPS", passed: auditHopsComplete, detail: auditHopsComplete ? "all stages complete" : "incomplete" });
+  checks.push(_recoveryRecord
+    ? { name: "RECOVERY_AUDIT_HOPS", passed: auditHopsComplete, detail: auditHopsComplete ? "all stages complete" : "incomplete" }
+    : { name: "RECOVERY_AUDIT_HOPS", passed: false, undeterminable: true, detail: "UNDETERMINABLE: recovery stages unavailable: no in-process recovery record for recoveryId=" + recoveryId });
 
   const allPassed = checks.every(function (c) { return c.passed; });
 

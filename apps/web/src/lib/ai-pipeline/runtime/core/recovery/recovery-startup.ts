@@ -164,7 +164,7 @@ export async function evaluateResumeReadiness(
   }
 
   // 3. Audit chain reconstructable
-  let chainOk = true;
+  let chainOk = false; // 검사 결과의 초기값은 합격이 아니다(try·catch 양쪽에서 재대입)
   try {
     const chainResult = await checkAuditChainReconstructable(
       activeRecord.correlationId,
@@ -185,7 +185,7 @@ export async function evaluateResumeReadiness(
   }
 
   // 4. Authority continuity valid
-  let authorityOk = true;
+  let authorityOk = false; // 검사 결과의 초기값은 합격이 아니다(try·catch 양쪽에서 재대입)
   try {
     const integrity = await checkAuthorityIntegrityFromRepo();
     authorityOk = !integrity.splitBrain && integrity.orphanCount === 0;

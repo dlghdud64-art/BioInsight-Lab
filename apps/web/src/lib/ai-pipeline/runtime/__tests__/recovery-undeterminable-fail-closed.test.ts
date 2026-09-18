@@ -140,6 +140,55 @@ describe("§recovery-undeterminable · undeterminable 은 분기용이 아니다
   });
 });
 
+describe("§recovery-undeterminable · 검사 결과 변수의 초기값은 합격이 아니다", () => {
+  // 초기값이 합격이면 검사를 건너뛴 경우와 통과한 경우가 구별되지 않는다.
+  // 실측 2026-09-18: verifyRecovery 가 correlationId 미발견 시 감사 검사를 건너뛰고 auditOk 초기값 true 를
+  //   "valid" 로 보고. A 축(catch)으로는 안 보였다 — 결함이 catch 가 아니라 초기값에 있었다.
+  // 검사 결과 변수 = `passed: X` 로 흘러가거나 `X = y.passed` 로 대입되는 식별자.
+  it("D1 · runtime 전역에서 검사 결과 변수를 true 로 초기화하는 선언 0", () => {
+    const hits: string[] = [];
+    let carriers = 0;
+    const walk = (dir: string) => {
+      for (const e of readdirSync(dir, { withFileTypes: true })) {
+        const p = join(dir, e.name);
+        if (e.isDirectory()) { if (e.name !== "__tests__") walk(p); continue; }
+        if (!e.name.endsWith(".ts")) continue;
+        const src = code(p);
+        const names = new Set<string>();
+        for (const m of src.matchAll(/\bpassed\s*:\s*([A-Za-z_$][\w$]*)\b/g)) if (m[1] !== "true" && m[1] !== "false") names.add(m[1]);
+        for (const m of src.matchAll(/\b([A-Za-z_$][\w$]*)\s*=\s*[\w$.]+\.passed\b/g)) names.add(m[1]);
+        if (names.size) carriers++;
+        for (const n of names) {
+          const re = new RegExp(`\\b(?:let|var)\\s+${n}(?:\\s*:\\s*boolean)?\\s*=\\s*true\\b`);
+          if (re.test(src)) hits.push(`${e.name}: ${n}`);
+        }
+      }
+    };
+    walk(RUNTIME);
+    expect(carriers).toBeGreaterThan(0); // 검사 대상이 사라지면 이 단언이 무의미해진다
+    expect(hits).toEqual([]);
+  });
+
+  it("D2 · verifyRecovery 의 생략 경로 3곳은 판별 불가를 남긴다 (correlationId · baseline/스냅샷 · 레코드)", () => {
+    const src = code(join(RECOVERY, "recovery-coordinator.ts"));
+    const start = src.indexOf("export async function verifyRecovery(");
+    // 반환 타입이 Promise<{ … }> 라 첫 `{` 는 타입 리터럴이다 — 타입 닫힘 `}> {` 뒤에서 본문을 연다
+    expect(start).toBeGreaterThan(-1);
+    const body = blockFrom(src, src.indexOf("}> {", start) + 3);
+    for (const name of ["AUDIT_CHAIN_VALID", "RESIDUE_SCAN_CLEAN", "RECOVERY_AUDIT_HOPS"]) {
+      // 같은 check 이름으로 undeterminable 분기가 있다 — 분기 단위로 묶는다(4원칙 ④)
+      expect(body).toMatch(new RegExp(`\\{\\s*name:\\s*"${name}",\\s*passed:\\s*false,\\s*undeterminable:\\s*true,`));
+    }
+    // correlationId 생략 경로: 검사 블록의 else 가 판별 불가 사유를 기록한다
+    //   (AUDIT_CHAIN_VALID 리터럴은 catch 경로와 공유되므로 위 단언만으로는 이 분기를 지워도 GREEN)
+    const ifAt = body.indexOf("if (correlationForAudit) {");
+    expect(ifAt).toBeGreaterThan(-1);
+    const thenBlock = blockFrom(body, body.indexOf("{", ifAt));
+    const rest = body.slice(body.indexOf("{", ifAt) + thenBlock.length);
+    expect(rest).toMatch(/^\s*else\s*\{\s*auditUndeterminableDetail\s*=/);
+  });
+});
+
 describe("§recovery-undeterminable · 정본 감사 이벤트 소실 표지", () => {
   it("C1 · emitRecoveryCanonicalEvent 를 부르는 catch 는 비어 있지 않고 원인과 함께 표지를 남긴다", () => {
     const src = code(join(RECOVERY, "recovery-coordinator.ts"));
