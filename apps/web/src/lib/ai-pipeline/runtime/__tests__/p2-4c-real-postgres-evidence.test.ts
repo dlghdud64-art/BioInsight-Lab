@@ -6,7 +6,8 @@
 /**
  * P2-4C — REAL_POSTGRES Execution Evidence + P2 Final Closeout
  *
- * REAL_POSTGRES 전용: PrismaClient 연결 실패 시 전체 스킵.
+ * REAL_POSTGRES 전용: AI_PIPELINE_REAL_DB=1 일 때만 실행한다.
+ * 켜지 않으면 전체 스킵하고, 켠 상태에서 접속에 실패하면 RED 다(조용한 통과 없음).
  * CONCURRENT_MOCK 결과를 대체하지 않음 — 별도 evidence 수집.
  *
  * Section A (PG1-PG5): Contention re-run against real PostgreSQL
@@ -29,49 +30,28 @@ var realClient = null;
 var connectionOk = false;
 var pgVersion = "unknown";
 
-// Resolve DATABASE_URL: env var > dotenv file search > jest.setup fallback
-var dbUrl = process.env.DATABASE_URL;
-if (!dbUrl || dbUrl.indexOf("localhost") !== -1) {
-  try {
-    var fs = require("fs");
-    var path = require("path");
-    // Search for .env: walk up from __dirname, also try known main repo path
-    var dir = __dirname;
-    var candidates = [];
-    for (var i = 0; i < 10; i++) {
-      candidates.push(path.join(dir, ".env"));
-      var parent = path.dirname(dir);
-      if (parent === dir) break;
-      dir = parent;
-    }
-    // Also try the main repo apps/web/.env (handles worktree case)
-    var homeDir = process.env.USERPROFILE || process.env.HOME || "";
-    if (homeDir) {
-      candidates.push(path.join(homeDir, "ai-biocompare", "apps", "web", ".env"));
-    }
-    for (var ci = 0; ci < candidates.length; ci++) {
-      if (fs.existsSync(candidates[ci])) {
-        var content = fs.readFileSync(candidates[ci], "utf8");
-        var match = content.match(/^DATABASE_URL="([^"]+)"/m);
-        if (match && match[1].indexOf("localhost") === -1) {
-          dbUrl = match[1];
-          break;
-        }
-      }
-    }
-  } catch (_fsErr) { /* ignore */ }
-}
+// 실DB 옵트인 — AI_PIPELINE_REAL_DB=1 일 때만 실제 PostgreSQL 에 접속한다.
+// 켜지 않으면 클라이언트를 만들지도 않는다: 게이트는 다른 세션의 대조 기준이므로
+// 공용 dev DB 에 접속·쓰기를 시도하지 않는다.
+var REAL_DB_OPT_IN = process.env.AI_PIPELINE_REAL_DB === "1";
 
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  var PrismaClientClass = require("@prisma/client").PrismaClient;
-  var clientOpts = { log: [] };
-  if (dbUrl && dbUrl.indexOf("localhost") === -1) {
-    clientOpts.datasources = { db: { url: dbUrl } };
+// 접속 URL 은 호출자가 명시적으로 준 값만 쓴다 — 테스트가 .env 를 스스로 뒤지지 않는다.
+var dbUrl = REAL_DB_OPT_IN
+  ? process.env.AI_PIPELINE_REAL_DB_URL || process.env.DATABASE_URL
+  : null;
+
+if (REAL_DB_OPT_IN) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    var PrismaClientClass = require("@prisma/client").PrismaClient;
+    var clientOpts = { log: [] };
+    if (dbUrl) {
+      clientOpts.datasources = { db: { url: dbUrl } };
+    }
+    realClient = new PrismaClientClass(clientOpts);
+  } catch (_e) {
+    // PrismaClient not available
   }
-  realClient = new PrismaClientClass(clientOpts);
-} catch (_e) {
-  // PrismaClient not available
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -177,7 +157,7 @@ function record(type, id, name, pass, conflictType, drift, residue) {
 // Main Suite — REAL_POSTGRES only
 // ══════════════════════════════════════════════════════════════════════════════
 
-var suiteRunner = realClient ? describe : describe.skip;
+var suiteRunner = REAL_DB_OPT_IN && realClient ? describe : describe.skip;
 
 suiteRunner("P2-4C REAL_POSTGRES Evidence", function () {
 

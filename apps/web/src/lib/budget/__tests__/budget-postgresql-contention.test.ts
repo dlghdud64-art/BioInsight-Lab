@@ -22,22 +22,25 @@
 
 import { PrismaClient } from "@prisma/client";
 
+// 실DB 옵트인 — 이 파일은 import 시점에 main() 을 실행하는 스크립트다.
+// vitest 의 include 글롭에 잡히므로, 옵트인이 없으면 접속도 실행도 하지 않는다.
+// 게이트는 다른 세션의 대조 기준이므로 공용 DB 에 쓰기를 시도하지 않는다.
+const REAL_DB_OPT_IN = process.env.AI_PIPELINE_REAL_DB === "1";
+
 // ── DIRECT_URL 사용 (SERIALIZABLE 필수) ──
 const DIRECT_URL = process.env.DIRECT_URL || process.env.DATABASE_URL;
-if (!DIRECT_URL) {
-  console.error("DIRECT_URL or DATABASE_URL required");
-  process.exit(1);
-}
 
 // pgbouncer URL(6543)이면 SERIALIZABLE 불가 경고
-if (DIRECT_URL.includes(":6543")) {
+if (REAL_DB_OPT_IN && DIRECT_URL && DIRECT_URL.includes(":6543")) {
   console.warn("⚠️ pgbouncer URL detected — SERIALIZABLE may not work. Use DIRECT_URL (port 5432).");
 }
 
-const db = new PrismaClient({
-  datasourceUrl: DIRECT_URL,
-  log: [], // 운영 로그 off
-});
+const db = REAL_DB_OPT_IN && DIRECT_URL
+  ? new PrismaClient({
+      datasourceUrl: DIRECT_URL,
+      log: [], // 운영 로그 off
+    })
+  : (null as unknown as PrismaClient);
 
 // ── 테스트 식별자 ──
 const TEST_PREFIX = `__test_contention_${Date.now()}`;
@@ -787,4 +790,10 @@ async function main() {
   if (failedCount > 0) process.exitCode = 1;
 }
 
-main();
+// 옵트인일 때만 실행한다 — 수집만으로 DB 에 쓰지 않는다.
+if (REAL_DB_OPT_IN) {
+  if (!DIRECT_URL) {
+    throw new Error("AI_PIPELINE_REAL_DB=1 이면 DIRECT_URL 또는 DATABASE_URL 이 필요합니다");
+  }
+  main();
+}

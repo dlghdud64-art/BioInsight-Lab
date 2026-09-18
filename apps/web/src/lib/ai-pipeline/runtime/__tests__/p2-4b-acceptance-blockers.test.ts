@@ -324,9 +324,31 @@ function recordContention(id, name, pass, conflictType) {
 // Main Test Suite
 // ══════════════════════════════════════════════════════════════════════════════
 
+// 실DB 옵트인 — AI_PIPELINE_REAL_DB=1 일 때만 실제 PostgreSQL 에 접속한다.
+// 게이트는 다른 세션의 대조 기준이므로, 켜지 않으면 공용 dev DB 에 경합 쓰기를 시도하지 않는다.
+var REAL_DB_OPT_IN = process.env.AI_PIPELINE_REAL_DB === "1";
+
+// mock 모드 진입은 한 곳에서만 정의한다 — 모드 표기와 실제 백엔드가 어긋나지 않도록.
+function useConcurrentMock(reason) {
+  harness.mode = "CONCURRENT_MOCK";
+  harness.dbBackend = "enhanced-mock";
+  harness.client = createConcurrentMockPrisma4b();
+  harness.adapters = createPrismaAdapters(harness.client);
+  harness.lockRepo = new PrismaLockRepository(harness.client);
+  evidence4b.mode = "CONCURRENT_MOCK";
+  evidence4b.dbBackend = "enhanced-mock";
+  // eslint-disable-next-line no-console
+  console.info("[P2-4B] " + reason);
+}
+
 describe("P2-4B RC1 Mapping Correction + Acceptance Blockers", function () {
 
   beforeAll(function () {
+    // 옵트인이 아니면 실제 PostgreSQL 에 접속하지 않는다 — 클라이언트도 만들지 않는다.
+    if (!REAL_DB_OPT_IN) {
+      useConcurrentMock("AI_PIPELINE_REAL_DB 미설정 — CONCURRENT_MOCK");
+      return Promise.resolve();
+    }
     try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       var PrismaClientClass = require("@prisma/client").PrismaClient;
@@ -352,26 +374,10 @@ describe("P2-4B RC1 Mapping Correction + Acceptance Blockers", function () {
           realClient.$executeRawUnsafe('DELETE FROM "StabilizationRecoveryRecord" WHERE "recoveryId" LIKE \'p2-4b:%\''),
         ]);
       }).catch(function () {
-        harness.mode = "CONCURRENT_MOCK";
-        harness.dbBackend = "enhanced-mock";
-        harness.client = createConcurrentMockPrisma4b();
-        harness.adapters = createPrismaAdapters(harness.client);
-        harness.lockRepo = new PrismaLockRepository(harness.client);
-        evidence4b.mode = "CONCURRENT_MOCK";
-        evidence4b.dbBackend = "enhanced-mock";
-        // eslint-disable-next-line no-console
-        console.info("[P2-4B] PostgreSQL unavailable — using CONCURRENT_MOCK");
+        useConcurrentMock("PostgreSQL unavailable — using CONCURRENT_MOCK");
       });
     } catch (_e) {
-      harness.mode = "CONCURRENT_MOCK";
-      harness.dbBackend = "enhanced-mock";
-      harness.client = createConcurrentMockPrisma4b();
-      harness.adapters = createPrismaAdapters(harness.client);
-      harness.lockRepo = new PrismaLockRepository(harness.client);
-      evidence4b.mode = "CONCURRENT_MOCK";
-      evidence4b.dbBackend = "enhanced-mock";
-      // eslint-disable-next-line no-console
-      console.info("[P2-4B] PrismaClient not available — using CONCURRENT_MOCK");
+      useConcurrentMock("PrismaClient not available — using CONCURRENT_MOCK");
       return Promise.resolve();
     }
   });

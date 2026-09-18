@@ -232,3 +232,75 @@ describe("🔑 B — 스크립트 축 전수가 guard 를 경유한다 (신규 �
     expect(Object.keys(EXEMPT)).toHaveLength(1);
   });
 });
+
+/**
+ * §test-real-db-optin — 같은 조항의 테스트 쪽 축 (2026-09-18).
+ *
+ * 위의 조항은 "스크립트가 .env 를 조용히 읽는다" 를 물었다. 같은 일이 테스트에서
+ * 벌어지고 있었다: p2-4c 는 .env 를 직접 뒤져 localhost 가 아닌 DATABASE_URL 을
+ * 골라 접속하고 DELETE 를 돌렸고, p2-4a/4b 는 접속에 성공하면 그대로 썼다.
+ * 게이트는 이 세션과 병렬 세션이 계속 돌린다 — 게이트가 공용 DB 에 쓰기 시작하면
+ * 다른 세션의 대조 기준이 흔들린다. 그래서 접속은 옵트인에서만 일어난다.
+ */
+describe("§test-real-db-optin — 테스트의 실DB 접촉", () => {
+  const OPT_IN = "AI_PIPELINE_REAL_DB";
+
+  function walkTests(dir: string, acc: string[] = []): string[] {
+    for (const e of readdirSync(join(REPO_ROOT, dir), { withFileTypes: true })) {
+      const rel = `${dir}/${e.name}`;
+      if (e.isDirectory()) walkTests(rel, acc);
+      else if (/\.(test|spec)\.tsx?$/.test(e.name)) acc.push(rel);
+    }
+    return acc;
+  }
+
+  /**
+   * 검출기 자신은 검출 대상의 문자열을 본문에 담을 수밖에 없다 — 유일한 면제.
+   * 이름이 바뀌면 면제가 조용히 사라지므로 아래에서 존재를 함께 문다.
+   */
+  const SELF = "src/__tests__/scripts/db-target.test.ts";
+  const TEST_FILES = walkTests("src").filter((rel) => rel !== SELF);
+
+  it("측정 대상이 실제로 존재한다 — 0건 통과를 통과로 세지 않는다", () => {
+    expect(TEST_FILES.length).toBeGreaterThan(500);
+  });
+
+  it("🛑 자기 면제는 실재하는 파일 하나뿐이다 — 이름이 바뀌면 RED", () => {
+    expect(walkTests("src")).toContain(SELF);
+  });
+
+  it("실 PrismaClient 를 만드는 테스트는 전부 옵트인을 경유한다", () => {
+    const unguarded: string[] = [];
+    for (const rel of TEST_FILES) {
+      const code = stripComments(read(rel));
+      if (!/(?:require\(|from\s+)["']@prisma\/client["']/.test(code)) continue;
+      if (!/new\s+Prisma\w*Client\w*\s*\(/.test(code)) continue;
+      if (code.includes(OPT_IN)) continue;
+      unguarded.push(rel);
+    }
+    expect(unguarded).toEqual([]);
+  });
+
+  it("🛑 테스트는 .env 를 스스로 뒤지지 않는다 — 조용히 고른 대상이 사고였다", () => {
+    const peekers: string[] = [];
+    for (const rel of TEST_FILES) {
+      const code = stripComments(read(rel));
+      if (!/["'][^"']*\.env["']/.test(code)) continue;
+      if (!/readFileSync|existsSync/.test(code)) continue;
+      peekers.push(rel);
+    }
+    expect(peekers).toEqual([]);
+  });
+
+  it("옵트인을 가진 파일은 기본값이 꺼짐이다 — 존재만으로 켜지지 않는다", () => {
+    const holders = TEST_FILES.filter((rel) => read(rel).includes(OPT_IN));
+    expect(holders.length).toBeGreaterThan(0);
+    for (const rel of holders) {
+      const code = stripComments(read(rel));
+      /* 플래그는 반드시 명시적 "1" 비교로만 켜진다 — truthy 판정 금지 */
+      expect(code).toMatch(
+        new RegExp(`process\\.env\\.${OPT_IN}\\s*===\\s*["']1["']`),
+      );
+    }
+  });
+});
