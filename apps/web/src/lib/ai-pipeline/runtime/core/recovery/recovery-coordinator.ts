@@ -21,7 +21,8 @@ import type {
   RecoveryOverrideMetadata,
 } from "./recovery-types";
 import { RECOVERY_STATE_ORDER, RECOVERY_FAILURE_STATES, RECOVERY_STAGE_ORDER } from "./recovery-types";
-import { runRecoveryPreconditions } from "./recovery-preconditions";
+import { runRecoveryPreconditions, checkAuditChainReconstructable } from "./recovery-preconditions";
+import { emitRecoveryCanonicalEvent } from "./recovery-canonical-bridge";
 import { emitStabilizationAuditEvent } from "../audit/audit-events";
 import { getCanonicalBaselineFromRepo, assertSingleCanonical, isCanonicalActiveCombination } from "../baseline/baseline-registry";
 import { getSnapshotFromRepo } from "../baseline/snapshot-manager";
@@ -259,7 +260,6 @@ async function emitRecoveryAuditAsync(
 
   // Bridge to canonical audit log for timeline reconstruction
   try {
-    const { emitRecoveryCanonicalEvent } = require("./recovery-canonical-bridge");
     emitRecoveryCanonicalEvent(eventType, record, detail);
   } catch (bridgeErr) {
     // 명제: 정본 감사 이벤트를 조용히 버리지 않는다 · 버렸으면 표지를 남긴다.
@@ -717,7 +717,6 @@ async function runRecoveryStage(
 
     case "AUDIT_HOP_COMPLETENESS": {
       try {
-        const { checkAuditChainReconstructable } = require("./recovery-preconditions");
         const chainResult = await checkAuditChainReconstructable(
           record.correlationId,
           { excludeFlows: ["recovery"] }
@@ -872,7 +871,6 @@ export async function verifyRecovery(recoveryId: string): Promise<{
   }
   if (correlationForAudit) {
     try {
-      const { checkAuditChainReconstructable } = require("./recovery-preconditions");
       const chainResult = await checkAuditChainReconstructable(correlationForAudit);
       auditOk = chainResult.passed;
       if (chainResult.undeterminable) auditUndeterminableDetail = chainResult.detail;

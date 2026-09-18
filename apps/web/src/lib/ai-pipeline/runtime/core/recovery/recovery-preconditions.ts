@@ -15,6 +15,7 @@ import { runRollbackPrecheck } from "../rollback/rollback-precheck";
 import { checkAuthorityIntegrity, checkAuthorityIntegrityFromRepo } from "../authority/authority-registry";
 import { detectStaleLocks, recoveryLockKey } from "../persistence/lock-manager";
 import { getPersistenceAdapters } from "../persistence/bootstrap";
+import { buildTimelineFromRepo } from "../observability/canonical-event-schema";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Individual Checks
@@ -115,7 +116,6 @@ export async function checkAuditChainReconstructable(
     { entityId: correlationId }
   );
   try {
-    const { buildTimelineFromRepo } = require("../observability/canonical-event-schema");
     const timeline = await buildTimelineFromRepo(correlationId);
     if (timeline.orderedEvents.length === 0) {
       return { name: "AUDIT_CHAIN_RECONSTRUCTABLE", passed: true, detail: "no events yet" };
