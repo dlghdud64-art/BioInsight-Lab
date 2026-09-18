@@ -16,51 +16,19 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 
-var { getDiagnosticLog, _resetDiagnostics } = require("../core/ontology/diagnostics");
-var { createMemoryAdapters } = require("../core/persistence/memory");
-var { registerAdapterFactory, _resetAdapterRegistry } = require("../core/persistence/factory");
-var { bootstrapPersistence, _resetPersistenceBootstrap, getPersistenceAdapters } = require("../core/persistence/bootstrap");
-var {
-  createSnapshotPair,
-  _resetSnapshotStore,
-} = require("../core/baseline/snapshot-manager");
-var {
-  createCanonicalBaseline,
-  _resetBaselineRegistry,
-} = require("../core/baseline/baseline-registry");
-var {
-  createAuthorityLine,
-  checkAuthorityIntegrity,
-  checkAuthorityIntegrityFromRepo,
-  _resetAuthorityRegistry,
-  _assertNoDirectStoreAccess: _assertNoDirectStoreAccessAuthority,
-} = require("../core/authority/authority-registry");
-var {
-  escalateIncident,
-  hasUnacknowledgedIncidentsFromRepo,
-  _resetIncidents,
-} = require("../core/incidents/incident-escalation");
-var {
-  emitStabilizationAuditEvent,
-  getAuditEventsFromRepo,
-  _resetAuditEvents,
-} = require("../core/audit/audit-events");
-var {
-  writeCanonicalAudit,
-  createCanonicalEvent,
-  buildTimeline,
-  buildTimelineFromRepo,
-  _resetCanonicalAudit,
-} = require("../core/observability/canonical-event-schema");
-var {
-  runRecoveryPreconditions,
-} = require("../core/recovery/recovery-preconditions");
-var {
-  _resetRecoveryCoordinator,
-} = require("../core/recovery/recovery-coordinator");
-var {
-  _resetMutationFreeze,
-} = require("../core/containment/mutation-freeze");
+import { getDiagnosticLog, _resetDiagnostics } from "../core/ontology/diagnostics";
+import { createMemoryAdapters } from "../core/persistence/memory";
+import { registerAdapterFactory, _resetAdapterRegistry } from "../core/persistence/factory";
+import { bootstrapPersistence, _resetPersistenceBootstrap, getPersistenceAdapters } from "../core/persistence/bootstrap";
+import { createSnapshotPair, _resetSnapshotStore } from "../core/baseline/snapshot-manager";
+import { createCanonicalBaseline, _resetBaselineRegistry } from "../core/baseline/baseline-registry";
+import { createAuthorityLine, checkAuthorityIntegrity, checkAuthorityIntegrityFromRepo, _resetAuthorityRegistry, _assertNoDirectStoreAccess as _assertNoDirectStoreAccessAuthority } from "../core/authority/authority-registry";
+import { escalateIncident, hasUnacknowledgedIncidentsFromRepo, _resetIncidents } from "../core/incidents/incident-escalation";
+import { emitStabilizationAuditEvent, getAuditEventsFromRepo, _resetAuditEvents } from "../core/audit/audit-events";
+import { writeCanonicalAudit, createCanonicalEvent, buildTimeline, buildTimelineFromRepo, _resetCanonicalAudit } from "../core/observability/canonical-event-schema";
+import { runRecoveryPreconditions } from "../core/recovery/recovery-preconditions";
+import { _resetRecoveryCoordinator } from "../core/recovery/recovery-coordinator";
+import { _resetMutationFreeze } from "../core/containment/mutation-freeze";
 
 // ── Test Fixtures ──
 

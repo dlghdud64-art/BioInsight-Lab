@@ -9,76 +9,31 @@ import { describe, it, expect, beforeEach } from "vitest";
 
 // ── Imports ──
 
-var {
-  _resetPersistenceBootstrap,
-  _resetAdapterRegistry,
-  bootstrapPersistence,
-  getPersistenceAdapters,
-} = require("../core/persistence/bootstrap");
+import { _resetPersistenceBootstrap, _resetAdapterRegistry, bootstrapPersistence, getPersistenceAdapters } from "../core/persistence/bootstrap";
 
-var {
-  _resetAdapterRegistry: _resetReg,
-} = require("../core/persistence/factory");
+import { _resetAdapterRegistry as _resetReg } from "../core/persistence/factory";
 
-var {
-  createCanonicalBaseline,
-  getCanonicalBaseline,
-  assertSingleCanonical,
-  _resetBaselineRegistry,
-} = require("../core/baseline/baseline-registry");
+import { createCanonicalBaseline, getCanonicalBaseline, assertSingleCanonical, _resetBaselineRegistry } from "../core/baseline/baseline-registry";
 
-var {
-  createSnapshotPair,
-  _resetSnapshotStore,
-} = require("../core/baseline/snapshot-manager");
+import { createSnapshotPair, _resetSnapshotStore } from "../core/baseline/snapshot-manager";
 
-var {
-  createAuthorityLine,
-  checkAuthorityIntegrity,
-  _resetAuthorityRegistry,
-} = require("../core/authority/authority-registry");
+import { createAuthorityLine, checkAuthorityIntegrity, _resetAuthorityRegistry } from "../core/authority/authority-registry";
 
-var {
-  escalateIncident,
-  acknowledgeIncident,
-  getIncidents,
-  _resetIncidents,
-} = require("../core/incidents/incident-escalation");
+import { escalateIncident, acknowledgeIncident, getIncidents, _resetIncidents } from "../core/incidents/incident-escalation";
 
-var {
-  _resetAuditEvents,
-  getAuditEvents,
-} = require("../core/audit/audit-events");
+import { _resetAuditEvents, getAuditEvents } from "../core/audit/audit-events";
 
-var {
-  requestRecovery,
-  validateRecovery,
-  executeRecoveryAsync,
-  verifyRecovery,
-  getRecoveryStatus,
-  _resetRecoveryCoordinator,
-} = require("../core/recovery/recovery-coordinator");
+import { requestRecovery, validateRecovery, executeRecoveryAsync, verifyRecovery, getRecoveryStatus, _resetRecoveryCoordinator } from "../core/recovery/recovery-coordinator";
 
-var {
-  withLock,
-  recoveryLockKey,
-  detectStaleLocks,
-} = require("../core/persistence/lock-manager");
+import { withLock, recoveryLockKey, detectStaleLocks } from "../core/persistence/lock-manager";
 
-var {
-  guardLifecycleTransition,
-} = require("../core/runtime/transition-guard");
+import { guardLifecycleTransition } from "../core/runtime/transition-guard";
 
-var {
-  checkActionPermission,
-} = require("../core/runtime/action-permission-map");
+import { checkActionPermission } from "../core/runtime/action-permission-map";
 
-var { LOCK_REASON_CODES } = require("../core/persistence/lock-types");
+import { LOCK_REASON_CODES } from "../core/persistence/lock-types";
 
-var {
-  activateMutationFreeze,
-  _resetMutationFreeze,
-} = require("../core/containment/mutation-freeze");
+import { activateMutationFreeze, _resetMutationFreeze } from "../core/containment/mutation-freeze";
 
 // ── Scope Data for Snapshots ──
 

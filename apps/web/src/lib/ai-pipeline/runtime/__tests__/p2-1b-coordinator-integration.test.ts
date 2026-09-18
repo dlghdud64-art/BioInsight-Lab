@@ -20,55 +20,27 @@
  */
 
 /* eslint-disable @typescript-eslint/no-var-requires */
-var {
-  _resetPersistenceBootstrap,
-  bootstrapPersistence,
-  getPersistenceAdapters,
-} = require("../core/persistence/bootstrap");
+import { _resetPersistenceBootstrap, bootstrapPersistence, getPersistenceAdapters } from "../core/persistence/bootstrap";
 
-var { _resetAdapterRegistry } = require("../core/persistence/factory");
+import { _resetAdapterRegistry } from "../core/persistence/factory";
 
-var {
-  createCanonicalBaseline,
-  _resetBaselineRegistry,
-} = require("../core/baseline/baseline-registry");
+import { createCanonicalBaseline, _resetBaselineRegistry } from "../core/baseline/baseline-registry";
 
-var {
-  createSnapshotPair,
-  _resetSnapshotStore,
-} = require("../core/baseline/snapshot-manager");
+import { createSnapshotPair, _resetSnapshotStore } from "../core/baseline/snapshot-manager";
 
-var {
-  createAuthorityLine,
-  _resetAuthorityRegistry,
-} = require("../core/authority/authority-registry");
+import { createAuthorityLine, _resetAuthorityRegistry } from "../core/authority/authority-registry";
 
-var {
-  escalateIncident,
-  acknowledgeIncident,
-  _resetIncidents,
-} = require("../core/incidents/incident-escalation");
+import { escalateIncident, acknowledgeIncident, _resetIncidents } from "../core/incidents/incident-escalation";
 
-var { _resetAuditEvents } = require("../core/audit/audit-events");
+import { _resetAuditEvents } from "../core/audit/audit-events";
 
-var {
-  requestRecovery,
-  validateRecovery,
-  executeRecoveryAsync,
-  getRecoveryStatus,
-  getRecoveryStatusAsync,
-  detectRecoveryResidue,
-  _resetRecoveryCoordinator,
-} = require("../core/recovery/recovery-coordinator");
+import { requestRecovery, validateRecovery, executeRecoveryAsync, getRecoveryStatus, getRecoveryStatusAsync, detectRecoveryResidue, _resetRecoveryCoordinator } from "../core/recovery/recovery-coordinator";
 
-var {
-  activateMutationFreeze,
-  _resetMutationFreeze,
-} = require("../core/containment/mutation-freeze");
+import { activateMutationFreeze, _resetMutationFreeze } from "../core/containment/mutation-freeze";
 
-var { logBridgeFailure } = require("../core/persistence/bridge-logger");
+import { logBridgeFailure } from "../core/persistence/bridge-logger";
 
-var { runRecoveryDiagnostics } = require("../core/recovery/recovery-diagnostics");
+import { runRecoveryDiagnostics } from "../core/recovery/recovery-diagnostics";
 
 // ── Scope Data for Snapshots ──
 
