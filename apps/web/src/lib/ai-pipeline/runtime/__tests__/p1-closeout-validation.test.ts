@@ -14,104 +14,52 @@ import { describe, it, expect, beforeEach } from "vitest";
 
 // ── Persistence ──
 
-var {
-  _resetPersistenceBootstrap,
-  bootstrapPersistence,
-  getPersistenceAdapters,
-} = require("../core/persistence/bootstrap");
+import { _resetPersistenceBootstrap, bootstrapPersistence, getPersistenceAdapters } from "../core/persistence/bootstrap";
 
-var {
-  _resetAdapterRegistry: _resetReg,
-} = require("../core/persistence/factory");
+import { _resetAdapterRegistry as _resetReg } from "../core/persistence/factory";
 
-var {
-  createPrismaAdapters,
-} = require("../core/persistence");
+import { createPrismaAdapters } from "../core/persistence";
 
 // ── Baseline & Snapshot ──
 
-var {
-  createCanonicalBaseline,
-  getCanonicalBaseline,
-  assertSingleCanonical,
-  _resetBaselineRegistry,
-} = require("../core/baseline/baseline-registry");
+import { createCanonicalBaseline, getCanonicalBaseline, assertSingleCanonical, _resetBaselineRegistry } from "../core/baseline/baseline-registry";
 
-var {
-  createSnapshotPair,
-  _resetSnapshotStore,
-} = require("../core/baseline/snapshot-manager");
+import { createSnapshotPair, _resetSnapshotStore } from "../core/baseline/snapshot-manager";
 
 // ── Authority ──
 
-var {
-  createAuthorityLine,
-  _resetAuthorityRegistry,
-} = require("../core/authority/authority-registry");
+import { createAuthorityLine, _resetAuthorityRegistry } from "../core/authority/authority-registry";
 
 // ── Incidents ──
 
-var {
-  escalateIncident,
-  acknowledgeIncident,
-  _resetIncidents,
-} = require("../core/incidents/incident-escalation");
+import { escalateIncident, acknowledgeIncident, _resetIncidents } from "../core/incidents/incident-escalation";
 
 // ── Audit ──
 
-var {
-  _resetAuditEvents,
-} = require("../core/audit/audit-events");
+import { _resetAuditEvents } from "../core/audit/audit-events";
 
 // ── Canonical Events ──
 
-var {
-  createCanonicalEvent,
-  writeCanonicalAudit,
-  getCanonicalAuditLog,
-  buildTimeline,
-  validateHops,
-  _resetCanonicalAudit,
-  RECOVERY_FLOW_HOPS,
-} = require("../core/observability/canonical-event-schema");
+import { createCanonicalEvent, writeCanonicalAudit, getCanonicalAuditLog, buildTimeline, validateHops, _resetCanonicalAudit, RECOVERY_FLOW_HOPS } from "../core/observability/canonical-event-schema";
 
 // ── Recovery ──
 
-var {
-  requestRecovery,
-  validateRecovery,
-  executeRecoveryAsync,
-  verifyRecovery,
-  getRecoveryStatus,
-  _resetRecoveryCoordinator,
-} = require("../core/recovery/recovery-coordinator");
+import { requestRecovery, validateRecovery, executeRecoveryAsync, verifyRecovery, getRecoveryStatus, _resetRecoveryCoordinator } from "../core/recovery/recovery-coordinator";
 
-var {
-  emitRecoveryCanonicalEvent,
-} = require("../core/recovery/recovery-canonical-bridge");
+import { emitRecoveryCanonicalEvent } from "../core/recovery/recovery-canonical-bridge";
 
-var {
-  checkAuditChainReconstructable,
-} = require("../core/recovery/recovery-preconditions");
+import { checkAuditChainReconstructable } from "../core/recovery/recovery-preconditions";
 
-var {
-  runRecoveryDiagnostics,
-} = require("../core/recovery/recovery-diagnostics");
+import { runRecoveryDiagnostics } from "../core/recovery/recovery-diagnostics";
 
 // ── Containment ──
 
-var {
-  activateMutationFreeze,
-  _resetMutationFreeze,
-} = require("../core/containment/mutation-freeze");
+import { activateMutationFreeze, _resetMutationFreeze } from "../core/containment/mutation-freeze";
 
 // ── Lock ──
 
-var {
-  withLock,
-  recoveryLockKey,
-  detectStaleLocks,
-} = require("../core/persistence/lock-manager");
+import { withLock, recoveryLockKey, detectStaleLocks } from "../core/persistence/lock-manager";
+import { PrismaLockRepository } from "../core/persistence/prisma/lock";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Helpers
@@ -314,7 +262,6 @@ describe("P1 Closeout: Group 1 — Prisma Contention Validation", function () {
   });
 
   it("T3: recovery lock contention via mock Prisma (2 processes, same key)", async function () {
-    var { PrismaLockRepository } = require("../core/persistence/prisma/lock");
 
     var mockPrisma = createMockPrismaClientWithLock();
     var lockRepo = new PrismaLockRepository(mockPrisma);

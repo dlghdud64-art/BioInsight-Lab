@@ -14,14 +14,14 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 
-var { RecoveryOntologyAdapter, toRepositoryPatch } = require("../core/ontology/recovery-adapter");
-var { BaselineOntologyAdapter } = require("../core/ontology/baseline-adapter");
-var { normalizeDateWithDiagnostic } = require("../core/ontology/date-normalizer");
-var { toNullable, normalizeId, normalizeEnum, normalizeArray, emptyToNull, nullToEmpty } = require("../core/ontology/common-normalizers");
-var { getDiagnosticLog, _resetDiagnostics, assertBridgeRoute } = require("../core/ontology/diagnostics");
-var { createMemoryAdapters } = require("../core/persistence/memory");
-var { registerAdapterFactory, _resetAdapterRegistry } = require("../core/persistence/factory");
-var { bootstrapPersistence, _resetPersistenceBootstrap, getPersistenceAdapters } = require("../core/persistence/bootstrap");
+import { RecoveryOntologyAdapter, toRepositoryPatch } from "../core/ontology/recovery-adapter";
+import { BaselineOntologyAdapter } from "../core/ontology/baseline-adapter";
+import { normalizeDateWithDiagnostic } from "../core/ontology/date-normalizer";
+import { toNullable, normalizeId, normalizeEnum, normalizeArray, emptyToNull, nullToEmpty } from "../core/ontology/common-normalizers";
+import { getDiagnosticLog, _resetDiagnostics, assertBridgeRoute , emitOntologyDiagnostic } from "../core/ontology/diagnostics";
+import { createMemoryAdapters } from "../core/persistence/memory";
+import { registerAdapterFactory, _resetAdapterRegistry } from "../core/persistence/factory";
+import { bootstrapPersistence, _resetPersistenceBootstrap, getPersistenceAdapters } from "../core/persistence/bootstrap";
 
 // ── Test Fixtures ──
 
@@ -350,7 +350,6 @@ describe("P3 Slice 1 — Ontology Adapters", function () {
   it("OA10: legacy fallback emits LEGACY_DIRECT_ACCESS_FALLBACK_USED diagnostic", function () {
     // Simulate: reading from recovery with empty repo → fallback to memory
     // We test the diagnostic helper directly since the integration is in recovery-coordinator
-    var { emitOntologyDiagnostic } = require("../core/ontology/diagnostics");
 
     emitOntologyDiagnostic({
       type: "LEGACY_DIRECT_ACCESS_FALLBACK_USED",

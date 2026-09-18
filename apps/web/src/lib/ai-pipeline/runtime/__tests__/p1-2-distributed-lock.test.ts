@@ -9,48 +9,19 @@ import { describe, it, expect, beforeEach } from "vitest";
 
 // ── Imports ──
 
-var {
-  _resetPersistenceBootstrap,
-  _resetAdapterRegistry,
-  bootstrapPersistence,
-  getPersistenceAdapters,
-} = require("../core/persistence");
+import { _resetPersistenceBootstrap, _resetAdapterRegistry, bootstrapPersistence, getPersistenceAdapters } from "../core/persistence";
 
-var {
-  createCanonicalBaseline,
-  getCanonicalBaseline,
-  _resetBaselineRegistry,
-} = require("../core/baseline/baseline-registry");
+import { createCanonicalBaseline, getCanonicalBaseline, _resetBaselineRegistry } from "../core/baseline/baseline-registry";
 
-var {
-  createAuthorityLine,
-  requestTransfer,
-  requestTransferAsync,
-  getAuthorityLine,
-  _resetAuthorityRegistry,
-} = require("../core/authority/authority-registry");
+import { createAuthorityLine, requestTransfer, requestTransferAsync, getAuthorityLine, _resetAuthorityRegistry } from "../core/authority/authority-registry";
 
-var {
-  escalateIncident,
-  escalateIncidentAsync,
-  _resetIncidents,
-} = require("../core/incidents/incident-escalation");
+import { escalateIncident, escalateIncidentAsync, _resetIncidents } from "../core/incidents/incident-escalation";
 
-var {
-  withLock,
-  acquireLock,
-  releaseLock,
-  renewLock,
-  detectStaleLocks,
-  canonicalBaselineLockKey,
-  authorityLineLockKey,
-  snapshotRestoreLockKey,
-  incidentStreamLockKey,
-} = require("../core/persistence/lock-manager");
+import { withLock, acquireLock, releaseLock, renewLock, detectStaleLocks, canonicalBaselineLockKey, authorityLineLockKey, snapshotRestoreLockKey, incidentStreamLockKey , registerLockAuditCallback } from "../core/persistence/lock-manager";
 
-var { MemoryLockRepository } = require("../core/persistence/memory/lock");
+import { MemoryLockRepository } from "../core/persistence/memory/lock";
 
-var { LOCK_REASON_CODES } = require("../core/persistence/lock-types");
+import { LOCK_REASON_CODES } from "../core/persistence/lock-types";
 
 // ── Setup ──
 
@@ -551,7 +522,6 @@ describe("P1-2: Lock Audit Events", function () {
   it("should emit audit events for lock lifecycle", async function () {
     // Register audit callback spy
     var auditEvents = [];
-    var { registerLockAuditCallback } = require("../core/persistence/lock-manager");
     registerLockAuditCallback(function (eventType, detail, correlationId) {
       auditEvents.push({ eventType, detail, correlationId });
     });
