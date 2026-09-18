@@ -16,49 +16,26 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 
-var {
-  _resetPersistenceBootstrap,
-  bootstrapPersistence,
-} = require("../core/persistence/bootstrap");
-var { _resetAdapterRegistry } = require("../core/persistence/factory");
-var {
-  createCanonicalBaseline,
-  _resetBaselineRegistry,
-} = require("../core/baseline/baseline-registry");
-var {
-  createSnapshotPair,
-  _resetSnapshotStore,
-  getSnapshot,
-} = require("../core/baseline/snapshot-manager");
-var {
-  createAuthorityLine,
-  _resetAuthorityRegistry,
-} = require("../core/authority/authority-registry");
-var { _resetIncidents } = require("../core/incidents/incident-escalation");
-var { _resetAuditEvents } = require("../core/audit/audit-events");
-var { _resetRecoveryCoordinator } = require("../core/recovery/recovery-coordinator");
-var {
-  activateMutationFreeze,
-  deactivateMutationFreeze,
-  _resetMutationFreeze,
-} = require("../core/containment/mutation-freeze");
-var { _resetCanonicalAudit } = require("../core/observability/canonical-event-schema");
-var { getDiagnosticLog, _resetDiagnostics } = require("../core/ontology/diagnostics");
-var {
-  initializeRuntimeState,
-  _resetRuntimeState,
-} = require("../core/rollback/scope-restore-adapter");
+import { _resetPersistenceBootstrap, bootstrapPersistence } from "../core/persistence/bootstrap";
+import { _resetAdapterRegistry } from "../core/persistence/factory";
+import { createCanonicalBaseline, _resetBaselineRegistry } from "../core/baseline/baseline-registry";
+import { createSnapshotPair, _resetSnapshotStore, getSnapshot } from "../core/baseline/snapshot-manager";
+import { createAuthorityLine, _resetAuthorityRegistry } from "../core/authority/authority-registry";
+import { _resetIncidents } from "../core/incidents/incident-escalation";
+import { _resetAuditEvents } from "../core/audit/audit-events";
+import { _resetRecoveryCoordinator } from "../core/recovery/recovery-coordinator";
+import { activateMutationFreeze, deactivateMutationFreeze, _resetMutationFreeze } from "../core/containment/mutation-freeze";
+import { _resetCanonicalAudit } from "../core/observability/canonical-event-schema";
+import { getDiagnosticLog, _resetDiagnostics } from "../core/ontology/diagnostics";
+import { initializeRuntimeState, _resetRuntimeState } from "../core/rollback/scope-restore-adapter";
 
-var { runRollbackPrecheck } = require("../core/rollback/rollback-precheck");
-var { buildRollbackPlan } = require("../core/rollback/rollback-plan-builder");
-var { executeRollbackPlan } = require("../core/rollback/rollback-executor");
-var { runResidueScan } = require("../core/rollback/residue-scan");
-var { reconcileState } = require("../core/rollback/state-reconciliation");
+import { runRollbackPrecheck } from "../core/rollback/rollback-precheck";
+import { buildRollbackPlan } from "../core/rollback/rollback-plan-builder";
+import { executeRollbackPlan } from "../core/rollback/rollback-executor";
+import { runResidueScan } from "../core/rollback/residue-scan";
+import { reconcileState } from "../core/rollback/state-reconciliation";
 
-var {
-  SYNC_COMPAT_SHUTDOWN_INVENTORY,
-  evaluateP4Acceptance,
-} = require("../core/ontology/p3-closeout");
+import { SYNC_COMPAT_SHUTDOWN_INVENTORY, evaluateP4Acceptance } from "../core/ontology/p3-closeout";
 
 // ── Scope Data ──
 

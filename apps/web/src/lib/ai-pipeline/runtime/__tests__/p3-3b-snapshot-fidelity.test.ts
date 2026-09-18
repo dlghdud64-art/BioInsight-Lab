@@ -16,20 +16,12 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 
-var { SnapshotOntologyAdapter } = require("../core/ontology/snapshot-adapter");
-var { getDiagnosticLog, _resetDiagnostics } = require("../core/ontology/diagnostics");
-var { createMemoryAdapters } = require("../core/persistence/memory");
-var { registerAdapterFactory, _resetAdapterRegistry } = require("../core/persistence/factory");
-var { bootstrapPersistence, _resetPersistenceBootstrap, getPersistenceAdapters } = require("../core/persistence/bootstrap");
-var {
-  createSnapshotPair,
-  getSnapshot,
-  getSnapshotFromRepo,
-  restoreDryRunFromRepo,
-  canEnterActiveRuntimeFromRepo,
-  computeScopeChecksum,
-  _resetSnapshotStore,
-} = require("../core/baseline/snapshot-manager");
+import { SnapshotOntologyAdapter } from "../core/ontology/snapshot-adapter";
+import { getDiagnosticLog, _resetDiagnostics } from "../core/ontology/diagnostics";
+import { createMemoryAdapters } from "../core/persistence/memory";
+import { registerAdapterFactory, _resetAdapterRegistry } from "../core/persistence/factory";
+import { bootstrapPersistence, _resetPersistenceBootstrap, getPersistenceAdapters } from "../core/persistence/bootstrap";
+import { createSnapshotPair, getSnapshot, getSnapshotFromRepo, restoreDryRunFromRepo, canEnterActiveRuntimeFromRepo, computeScopeChecksum, _resetSnapshotStore } from "../core/baseline/snapshot-manager";
 
 // ── Test Fixtures ──
 

@@ -15,16 +15,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 
 // ── Import persistence types (no Prisma dependency) ──
-const {
-  ok,
-  fail,
-  INCIDENT_STATUS_LIFECYCLE,
-  createPrismaAdapters,
-  registerAdapterFactory,
-  resolveAdapters,
-  isAdapterRegistered,
-  _resetAdapterRegistry,
-} = require("../core/persistence");
+import { ok, fail, INCIDENT_STATUS_LIFECYCLE, createPrismaAdapters, registerAdapterFactory, resolveAdapters, isAdapterRegistered, _resetAdapterRegistry } from "../core/persistence";
 
 // ── Mock Prisma Client Builder ──
 

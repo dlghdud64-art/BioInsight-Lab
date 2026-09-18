@@ -16,51 +16,19 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 
-var {
-  _resetPersistenceBootstrap,
-  bootstrapPersistence,
-  getPersistenceAdapters,
-} = require("../core/persistence/bootstrap");
-var { _resetAdapterRegistry } = require("../core/persistence/factory");
-var {
-  createCanonicalBaseline,
-  _resetBaselineRegistry,
-} = require("../core/baseline/baseline-registry");
-var {
-  createSnapshotPair,
-  _resetSnapshotStore,
-} = require("../core/baseline/snapshot-manager");
-var {
-  createAuthorityLine,
-  _resetAuthorityRegistry,
-} = require("../core/authority/authority-registry");
-var {
-  escalateIncident,
-  _resetIncidents,
-} = require("../core/incidents/incident-escalation");
-var { _resetAuditEvents } = require("../core/audit/audit-events");
-var {
-  requestRecovery,
-  _resetRecoveryCoordinator,
-} = require("../core/recovery/recovery-coordinator");
-var {
-  activateMutationFreeze,
-  _resetMutationFreeze,
-} = require("../core/containment/mutation-freeze");
-var { getDiagnosticLog, _resetDiagnostics } = require("../core/ontology/diagnostics");
-var {
-  writeCanonicalAudit,
-  createCanonicalEvent,
-  buildTimeline,
-  buildReconstructionView,
-  _resetCanonicalAudit,
-} = require("../core/observability/canonical-event-schema");
-var { runRecoveryDiagnostics } = require("../core/recovery/recovery-diagnostics");
-var {
-  SYNC_COMPAT_SHUTDOWN_INVENTORY,
-  evaluateP4Acceptance,
-  evaluateP5Acceptance,
-} = require("../core/ontology/p3-closeout");
+import { _resetPersistenceBootstrap, bootstrapPersistence, getPersistenceAdapters } from "../core/persistence/bootstrap";
+import { _resetAdapterRegistry } from "../core/persistence/factory";
+import { createCanonicalBaseline, _resetBaselineRegistry } from "../core/baseline/baseline-registry";
+import { createSnapshotPair, _resetSnapshotStore } from "../core/baseline/snapshot-manager";
+import { createAuthorityLine, _resetAuthorityRegistry } from "../core/authority/authority-registry";
+import { escalateIncident, _resetIncidents } from "../core/incidents/incident-escalation";
+import { _resetAuditEvents } from "../core/audit/audit-events";
+import { requestRecovery, _resetRecoveryCoordinator } from "../core/recovery/recovery-coordinator";
+import { activateMutationFreeze, _resetMutationFreeze } from "../core/containment/mutation-freeze";
+import { getDiagnosticLog, _resetDiagnostics } from "../core/ontology/diagnostics";
+import { writeCanonicalAudit, createCanonicalEvent, buildTimeline, buildReconstructionView, _resetCanonicalAudit } from "../core/observability/canonical-event-schema";
+import { runRecoveryDiagnostics } from "../core/recovery/recovery-diagnostics";
+import { SYNC_COMPAT_SHUTDOWN_INVENTORY, evaluateP4Acceptance, evaluateP5Acceptance } from "../core/ontology/p3-closeout";
 
 // ── Scope Data ──
 

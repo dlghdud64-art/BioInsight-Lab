@@ -7,48 +7,17 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 
 // ── Helpers & Imports ──
 
-var {
-  bootstrapPersistence,
-  getPersistenceAdapters,
-  isPersistenceBootstrapped,
-  _resetPersistenceBootstrap,
-  _resetAdapterRegistry,
-  normalizeDate,
-  normalizeDateOptional,
-  createMemoryAdapters,
-} = require("../core/persistence");
+import { bootstrapPersistence, getPersistenceAdapters, isPersistenceBootstrapped, _resetPersistenceBootstrap, _resetAdapterRegistry, normalizeDate, normalizeDateOptional, createMemoryAdapters } from "../core/persistence";
 
-var {
-  createCanonicalBaseline,
-  getCanonicalBaseline,
-  _resetBaselineRegistry,
-} = require("../core/baseline/baseline-registry");
+import { createCanonicalBaseline, getCanonicalBaseline, _resetBaselineRegistry } from "../core/baseline/baseline-registry";
 
-var {
-  createAuthorityLine,
-  getAuthorityLine,
-  _resetAuthorityRegistry,
-} = require("../core/authority/authority-registry");
+import { createAuthorityLine, getAuthorityLine, _resetAuthorityRegistry } from "../core/authority/authority-registry";
 
-var {
-  escalateIncident,
-  getIncidents,
-  acknowledgeIncident,
-  _resetIncidents,
-} = require("../core/incidents/incident-escalation");
+import { escalateIncident, getIncidents, acknowledgeIncident, _resetIncidents } from "../core/incidents/incident-escalation";
 
-var {
-  emitStabilizationAuditEvent,
-  getAuditEvents,
-  _resetAuditEvents,
-} = require("../core/audit/audit-events");
+import { emitStabilizationAuditEvent, getAuditEvents, _resetAuditEvents } from "../core/audit/audit-events";
 
-var {
-  writeCanonicalAudit,
-  getCanonicalAuditLog,
-  createCanonicalEvent,
-  _resetCanonicalAudit,
-} = require("../core/observability/canonical-event-schema");
+import { writeCanonicalAudit, getCanonicalAuditLog, createCanonicalEvent, _resetCanonicalAudit } from "../core/observability/canonical-event-schema";
 
 // ── Setup ──
 

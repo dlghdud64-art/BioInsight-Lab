@@ -13,22 +13,13 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 
-var { getDiagnosticLog, _resetDiagnostics } = require("../core/ontology/diagnostics");
-var { createMemoryAdapters } = require("../core/persistence/memory");
-var { registerAdapterFactory, _resetAdapterRegistry } = require("../core/persistence/factory");
-var { bootstrapPersistence, _resetPersistenceBootstrap, getPersistenceAdapters } = require("../core/persistence/bootstrap");
-var {
-  createSnapshotPair,
-  getSnapshotFromRepo,
-  computeScopeChecksum,
-  _resetSnapshotStore,
-} = require("../core/baseline/snapshot-manager");
-var {
-  createAuthorityLine,
-  checkAuthorityIntegrityFromRepo,
-  _resetAuthorityRegistry,
-} = require("../core/authority/authority-registry");
-var { REPO_FALLBACK_INVENTORY } = require("../core/ontology/p3-closeout");
+import { getDiagnosticLog, _resetDiagnostics } from "../core/ontology/diagnostics";
+import { createMemoryAdapters } from "../core/persistence/memory";
+import { registerAdapterFactory, _resetAdapterRegistry } from "../core/persistence/factory";
+import { bootstrapPersistence, _resetPersistenceBootstrap, getPersistenceAdapters } from "../core/persistence/bootstrap";
+import { createSnapshotPair, getSnapshotFromRepo, computeScopeChecksum, _resetSnapshotStore } from "../core/baseline/snapshot-manager";
+import { createAuthorityLine, checkAuthorityIntegrityFromRepo, _resetAuthorityRegistry } from "../core/authority/authority-registry";
+import { REPO_FALLBACK_INVENTORY } from "../core/ontology/p3-closeout";
 
 // ── Test Fixtures ──
 

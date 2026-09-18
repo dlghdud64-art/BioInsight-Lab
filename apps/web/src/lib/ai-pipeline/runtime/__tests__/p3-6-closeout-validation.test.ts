@@ -13,57 +13,20 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 
-var { getDiagnosticLog, _resetDiagnostics } = require("../core/ontology/diagnostics");
-var { createMemoryAdapters } = require("../core/persistence/memory");
-var { registerAdapterFactory, _resetAdapterRegistry } = require("../core/persistence/factory");
-var { bootstrapPersistence, _resetPersistenceBootstrap } = require("../core/persistence/bootstrap");
-var {
-  createSnapshotPair,
-  getSnapshot,
-  getSnapshotFromRepo,
-  _resetSnapshotStore,
-  _assertNoDirectStoreAccess: _assertSnapshotGuard,
-} = require("../core/baseline/snapshot-manager");
-var {
-  createCanonicalBaseline,
-  getCanonicalBaseline,
-  _resetBaselineRegistry,
-  _assertNoDirectStoreAccess: _assertBaselineGuard,
-} = require("../core/baseline/baseline-registry");
-var {
-  createAuthorityLine,
-  checkAuthorityIntegrity,
-  _resetAuthorityRegistry,
-  _assertNoDirectStoreAccess: _assertAuthorityGuard,
-} = require("../core/authority/authority-registry");
-var {
-  _resetIncidents,
-  _assertNoDirectStoreAccess: _assertIncidentGuard,
-} = require("../core/incidents/incident-escalation");
-var {
-  _resetAuditEvents,
-  _assertNoDirectStoreAccess: _assertAuditGuard,
-} = require("../core/audit/audit-events");
-var {
-  _resetCanonicalAudit,
-  _assertNoDirectStoreAccess: _assertCanonicalAuditGuard,
-} = require("../core/observability/canonical-event-schema");
-var {
-  _resetRecoveryCoordinator,
-} = require("../core/recovery/recovery-coordinator");
-var {
-  _resetMutationFreeze,
-} = require("../core/containment/mutation-freeze");
+import { getDiagnosticLog, _resetDiagnostics } from "../core/ontology/diagnostics";
+import { createMemoryAdapters } from "../core/persistence/memory";
+import { registerAdapterFactory, _resetAdapterRegistry } from "../core/persistence/factory";
+import { bootstrapPersistence, _resetPersistenceBootstrap } from "../core/persistence/bootstrap";
+import { createSnapshotPair, getSnapshot, getSnapshotFromRepo, _resetSnapshotStore, _assertNoDirectStoreAccess as _assertSnapshotGuard } from "../core/baseline/snapshot-manager";
+import { createCanonicalBaseline, getCanonicalBaseline, _resetBaselineRegistry, _assertNoDirectStoreAccess as _assertBaselineGuard } from "../core/baseline/baseline-registry";
+import { createAuthorityLine, checkAuthorityIntegrity, _resetAuthorityRegistry, _assertNoDirectStoreAccess as _assertAuthorityGuard } from "../core/authority/authority-registry";
+import { _resetIncidents, _assertNoDirectStoreAccess as _assertIncidentGuard } from "../core/incidents/incident-escalation";
+import { _resetAuditEvents, _assertNoDirectStoreAccess as _assertAuditGuard } from "../core/audit/audit-events";
+import { _resetCanonicalAudit, _assertNoDirectStoreAccess as _assertCanonicalAuditGuard } from "../core/observability/canonical-event-schema";
+import { _resetRecoveryCoordinator } from "../core/recovery/recovery-coordinator";
+import { _resetMutationFreeze } from "../core/containment/mutation-freeze";
 
-var {
-  ONTOLOGY_ADAPTER_REGISTRY,
-  REPO_FIRST_CONSUMER_REGISTRY,
-  DEPRECATED_SYNC_REGISTRY,
-  DIRECT_ACCESS_GUARDRAIL_REGISTRY,
-  LEGACY_SHUTDOWN_PLAN,
-  getCompatUsageSummary,
-  evaluateP3Acceptance,
-} = require("../core/ontology/p3-closeout");
+import { ONTOLOGY_ADAPTER_REGISTRY, REPO_FIRST_CONSUMER_REGISTRY, DEPRECATED_SYNC_REGISTRY, DIRECT_ACCESS_GUARDRAIL_REGISTRY, LEGACY_SHUTDOWN_PLAN, getCompatUsageSummary, evaluateP3Acceptance } from "../core/ontology/p3-closeout";
 
 // ── Test Fixtures ──
 

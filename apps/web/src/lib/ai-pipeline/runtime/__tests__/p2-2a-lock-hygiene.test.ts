@@ -18,61 +18,29 @@
  */
 
 /* eslint-disable @typescript-eslint/no-var-requires */
-var {
-  _resetPersistenceBootstrap,
-  bootstrapPersistence,
-  getPersistenceAdapters,
-} = require("../core/persistence/bootstrap");
+import { _resetPersistenceBootstrap, bootstrapPersistence, getPersistenceAdapters } from "../core/persistence/bootstrap";
 
-var { _resetAdapterRegistry } = require("../core/persistence/factory");
+import { _resetAdapterRegistry } from "../core/persistence/factory";
 
-var {
-  createCanonicalBaseline,
-  _resetBaselineRegistry,
-} = require("../core/baseline/baseline-registry");
+import { createCanonicalBaseline, _resetBaselineRegistry } from "../core/baseline/baseline-registry";
 
-var {
-  createSnapshotPair,
-  _resetSnapshotStore,
-} = require("../core/baseline/snapshot-manager");
+import { createSnapshotPair, _resetSnapshotStore } from "../core/baseline/snapshot-manager";
 
-var {
-  createAuthorityLine,
-  _resetAuthorityRegistry,
-} = require("../core/authority/authority-registry");
+import { createAuthorityLine, _resetAuthorityRegistry } from "../core/authority/authority-registry";
 
-var {
-  escalateIncident,
-  acknowledgeIncident,
-  _resetIncidents,
-} = require("../core/incidents/incident-escalation");
+import { escalateIncident, acknowledgeIncident, _resetIncidents } from "../core/incidents/incident-escalation";
 
-var {
-  _resetAuditEvents,
-  getAuditEvents,
-} = require("../core/audit/audit-events");
+import { _resetAuditEvents, getAuditEvents } from "../core/audit/audit-events";
 
-var {
-  requestRecovery,
-  _resetRecoveryCoordinator,
-} = require("../core/recovery/recovery-coordinator");
+import { requestRecovery, _resetRecoveryCoordinator } from "../core/recovery/recovery-coordinator";
 
-var {
-  activateMutationFreeze,
-  _resetMutationFreeze,
-} = require("../core/containment/mutation-freeze");
+import { activateMutationFreeze, _resetMutationFreeze } from "../core/containment/mutation-freeze";
 
-var { acquireLock } = require("../core/persistence/lock-manager");
+import { acquireLock } from "../core/persistence/lock-manager";
 
-var {
-  scanLockResidues,
-  evaluateLockResidue,
-  buildLockCleanupPlan,
-} = require("../core/persistence/lock-hygiene");
+import { scanLockResidues, evaluateLockResidue, buildLockCleanupPlan } from "../core/persistence/lock-hygiene";
 
-var {
-  runStartupRecoveryScan,
-} = require("../core/recovery/recovery-startup");
+import { runStartupRecoveryScan } from "../core/recovery/recovery-startup";
 
 // ── Scope Data ──
 

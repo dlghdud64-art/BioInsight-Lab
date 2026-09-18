@@ -16,9 +16,9 @@
  */
 
 /* eslint-disable @typescript-eslint/no-var-requires */
-var { MemoryRecoveryRecordRepository } = require("../core/persistence/memory/recovery-record");
-var { createMemoryAdapters } = require("../core/persistence/memory");
-var { _resetPersistenceBootstrap, bootstrapPersistence } = require("../core/persistence/bootstrap");
+import { MemoryRecoveryRecordRepository } from "../core/persistence/memory/recovery-record";
+import { createMemoryAdapters } from "../core/persistence/memory";
+import { _resetPersistenceBootstrap, bootstrapPersistence } from "../core/persistence/bootstrap";
 
 function buildRecoveryInput(overrides) {
   var base = {

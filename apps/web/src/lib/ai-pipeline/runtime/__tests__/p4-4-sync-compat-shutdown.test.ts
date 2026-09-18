@@ -14,51 +14,20 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 
-var { getDiagnosticLog, _resetDiagnostics } = require("../core/ontology/diagnostics");
-var { createMemoryAdapters } = require("../core/persistence/memory");
-var { registerAdapterFactory, _resetAdapterRegistry } = require("../core/persistence/factory");
-var { bootstrapPersistence, _resetPersistenceBootstrap } = require("../core/persistence/bootstrap");
-var {
-  createSnapshotPair,
-  getSnapshot,
-  getSnapshotFromRepo,
-  _resetSnapshotStore,
-} = require("../core/baseline/snapshot-manager");
-var {
-  createCanonicalBaseline,
-  getCanonicalBaseline,
-  getCanonicalBaselineFromRepo,
-  _resetBaselineRegistry,
-} = require("../core/baseline/baseline-registry");
-var {
-  canEnterActiveRuntime,
-} = require("../core/baseline/snapshot-manager");
-var {
-  createAuthorityLine,
-  checkAuthorityIntegrityFromRepo,
-  _resetAuthorityRegistry,
-} = require("../core/authority/authority-registry");
-var {
-  escalateIncident,
-  hasUnacknowledgedIncidents,
-  acknowledgeIncidentAsync,
-  _resetIncidents,
-} = require("../core/incidents/incident-escalation");
-var {
-  _resetAuditEvents,
-} = require("../core/audit/audit-events");
-var {
-  _resetCanonicalAudit,
-} = require("../core/observability/canonical-event-schema");
-var {
-  _resetRecoveryCoordinator,
-} = require("../core/recovery/recovery-coordinator");
-var {
-  _resetMutationFreeze,
-} = require("../core/containment/mutation-freeze");
-var {
-  SYNC_COMPAT_SHUTDOWN_INVENTORY,
-} = require("../core/ontology/p3-closeout");
+import { getDiagnosticLog, _resetDiagnostics } from "../core/ontology/diagnostics";
+import { createMemoryAdapters } from "../core/persistence/memory";
+import { registerAdapterFactory, _resetAdapterRegistry } from "../core/persistence/factory";
+import { bootstrapPersistence, _resetPersistenceBootstrap } from "../core/persistence/bootstrap";
+import { createSnapshotPair, getSnapshot, getSnapshotFromRepo, _resetSnapshotStore } from "../core/baseline/snapshot-manager";
+import { createCanonicalBaseline, getCanonicalBaseline, getCanonicalBaselineFromRepo, _resetBaselineRegistry } from "../core/baseline/baseline-registry";
+import { canEnterActiveRuntime } from "../core/baseline/snapshot-manager";
+import { createAuthorityLine, checkAuthorityIntegrityFromRepo, _resetAuthorityRegistry } from "../core/authority/authority-registry";
+import { escalateIncident, hasUnacknowledgedIncidents, acknowledgeIncidentAsync, _resetIncidents } from "../core/incidents/incident-escalation";
+import { _resetAuditEvents } from "../core/audit/audit-events";
+import { _resetCanonicalAudit } from "../core/observability/canonical-event-schema";
+import { _resetRecoveryCoordinator } from "../core/recovery/recovery-coordinator";
+import { _resetMutationFreeze } from "../core/containment/mutation-freeze";
+import { SYNC_COMPAT_SHUTDOWN_INVENTORY } from "../core/ontology/p3-closeout";
 
 // ── Test Fixtures ──
 

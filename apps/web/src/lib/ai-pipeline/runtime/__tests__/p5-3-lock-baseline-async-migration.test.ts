@@ -16,50 +16,21 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 
-var { getDiagnosticLog, _resetDiagnostics } = require("../core/ontology/diagnostics");
-var { createMemoryAdapters } = require("../core/persistence/memory");
-var { registerAdapterFactory, _resetAdapterRegistry } = require("../core/persistence/factory");
-var { bootstrapPersistence, _resetPersistenceBootstrap } = require("../core/persistence/bootstrap");
-var {
-  createSnapshotPair,
-  _resetSnapshotStore,
-} = require("../core/baseline/snapshot-manager");
-var {
-  createCanonicalBaseline,
-  getCanonicalBaseline,
-  _resetBaselineRegistry,
-} = require("../core/baseline/baseline-registry");
-var {
-  validateBaselineAtBoot,
-} = require("../core/baseline/baseline-validator");
-var {
-  createAuthorityLine,
-  _resetAuthorityRegistry,
-} = require("../core/authority/authority-registry");
-var {
-  hasUnacknowledgedIncidents,
-  escalateIncident,
-  _resetIncidents,
-} = require("../core/incidents/incident-escalation");
-var {
-  scanLockResidues,
-} = require("../core/persistence/lock-hygiene");
-var {
-  _resetAuditEvents,
-} = require("../core/audit/audit-events");
-var {
-  _resetCanonicalAudit,
-} = require("../core/observability/canonical-event-schema");
-var {
-  _resetRecoveryCoordinator,
-} = require("../core/recovery/recovery-coordinator");
-var {
-  _resetMutationFreeze,
-} = require("../core/containment/mutation-freeze");
-var {
-  SYNC_COMPAT_SHUTDOWN_INVENTORY,
-  evaluateP4Acceptance,
-} = require("../core/ontology/p3-closeout");
+import { getDiagnosticLog, _resetDiagnostics } from "../core/ontology/diagnostics";
+import { createMemoryAdapters } from "../core/persistence/memory";
+import { registerAdapterFactory, _resetAdapterRegistry } from "../core/persistence/factory";
+import { bootstrapPersistence, _resetPersistenceBootstrap } from "../core/persistence/bootstrap";
+import { createSnapshotPair, _resetSnapshotStore } from "../core/baseline/snapshot-manager";
+import { createCanonicalBaseline, getCanonicalBaseline, _resetBaselineRegistry } from "../core/baseline/baseline-registry";
+import { validateBaselineAtBoot } from "../core/baseline/baseline-validator";
+import { createAuthorityLine, _resetAuthorityRegistry } from "../core/authority/authority-registry";
+import { hasUnacknowledgedIncidents, escalateIncident, _resetIncidents } from "../core/incidents/incident-escalation";
+import { scanLockResidues } from "../core/persistence/lock-hygiene";
+import { _resetAuditEvents } from "../core/audit/audit-events";
+import { _resetCanonicalAudit } from "../core/observability/canonical-event-schema";
+import { _resetRecoveryCoordinator } from "../core/recovery/recovery-coordinator";
+import { _resetMutationFreeze } from "../core/containment/mutation-freeze";
+import { SYNC_COMPAT_SHUTDOWN_INVENTORY, evaluateP4Acceptance } from "../core/ontology/p3-closeout";
 
 // ── Test Fixtures ──
 

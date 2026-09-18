@@ -16,34 +16,21 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-var fs = require("fs");
-var path = require("path");
+import * as fs from "fs";
+import * as path from "path";
 
-var { getDiagnosticLog, _resetDiagnostics } = require("../core/ontology/diagnostics");
-var {
-  _resetPersistenceBootstrap,
-  bootstrapPersistence,
-} = require("../core/persistence/bootstrap");
-var { _resetAdapterRegistry } = require("../core/persistence/factory");
-var { _resetBaselineRegistry } = require("../core/baseline/baseline-registry");
-var { _resetSnapshotStore } = require("../core/baseline/snapshot-manager");
-var { _resetAuthorityRegistry } = require("../core/authority/authority-registry");
-var { _resetIncidents } = require("../core/incidents/incident-escalation");
-var { _resetAuditEvents } = require("../core/audit/audit-events");
-var { _resetRecoveryCoordinator } = require("../core/recovery/recovery-coordinator");
-var { _resetMutationFreeze } = require("../core/containment/mutation-freeze");
-var { _resetCanonicalAudit } = require("../core/observability/canonical-event-schema");
-var {
-  SYNC_COMPAT_SHUTDOWN_INVENTORY,
-  CLOSURE_BASELINES,
-  FINAL_MIGRATION_STATE,
-  FORBIDDEN_SYNC_COMPAT_SYMBOLS,
-  ASYNC_ONLY_CALLER_CLUSTERS,
-  ASYNC_PATH_OWNERSHIP,
-  evaluateP4Acceptance,
-  evaluateP5Acceptance,
-  evaluateP6Acceptance,
-} = require("../core/ontology/p3-closeout");
+import { getDiagnosticLog, _resetDiagnostics } from "../core/ontology/diagnostics";
+import { _resetPersistenceBootstrap, bootstrapPersistence } from "../core/persistence/bootstrap";
+import { _resetAdapterRegistry } from "../core/persistence/factory";
+import { _resetBaselineRegistry } from "../core/baseline/baseline-registry";
+import { _resetSnapshotStore } from "../core/baseline/snapshot-manager";
+import { _resetAuthorityRegistry } from "../core/authority/authority-registry";
+import { _resetIncidents } from "../core/incidents/incident-escalation";
+import { _resetAuditEvents } from "../core/audit/audit-events";
+import { _resetRecoveryCoordinator } from "../core/recovery/recovery-coordinator";
+import { _resetMutationFreeze } from "../core/containment/mutation-freeze";
+import { _resetCanonicalAudit } from "../core/observability/canonical-event-schema";
+import { SYNC_COMPAT_SHUTDOWN_INVENTORY, CLOSURE_BASELINES, FINAL_MIGRATION_STATE, FORBIDDEN_SYNC_COMPAT_SYMBOLS, ASYNC_ONLY_CALLER_CLUSTERS, ASYNC_PATH_OWNERSHIP, evaluateP4Acceptance, evaluateP5Acceptance, evaluateP6Acceptance } from "../core/ontology/p3-closeout";
 
 // ── Helpers ──
 

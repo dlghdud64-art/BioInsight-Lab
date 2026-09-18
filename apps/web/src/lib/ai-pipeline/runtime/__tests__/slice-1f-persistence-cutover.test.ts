@@ -7,63 +7,23 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 
 // ── Imports ──
 
-var {
-  logBridgeFailure,
-  TRUTH_SOURCE_CONTRACT,
-} = require("../core/persistence/bridge-logger");
+import { logBridgeFailure, TRUTH_SOURCE_CONTRACT } from "../core/persistence/bridge-logger";
 
-var {
-  baselineSnapshotToCreateInput,
-} = require("../core/persistence/snapshot-adapter");
+import { baselineSnapshotToCreateInput } from "../core/persistence/snapshot-adapter";
 
-var {
-  bootstrapPersistence,
-  getPersistenceAdapters,
-  _resetPersistenceBootstrap,
-  _resetAdapterRegistry,
-} = require("../core/persistence");
+import { bootstrapPersistence, getPersistenceAdapters, _resetPersistenceBootstrap, _resetAdapterRegistry } from "../core/persistence";
 
-var {
-  createSnapshotPair,
-  getSnapshot,
-  _resetSnapshotStore,
-} = require("../core/baseline/snapshot-manager");
+import { createSnapshotPair, getSnapshot, _resetSnapshotStore } from "../core/baseline/snapshot-manager";
 
-var {
-  createCanonicalBaseline,
-  getCanonicalBaseline,
-  getCanonicalBaselineFromRepo,
-  _resetBaselineRegistry,
-} = require("../core/baseline/baseline-registry");
+import { createCanonicalBaseline, getCanonicalBaseline, getCanonicalBaselineFromRepo, _resetBaselineRegistry } from "../core/baseline/baseline-registry";
 
-var {
-  createAuthorityLine,
-  getAuthorityLine,
-  getAuthorityLineFromRepo,
-  _resetAuthorityRegistry,
-} = require("../core/authority/authority-registry");
+import { createAuthorityLine, getAuthorityLine, getAuthorityLineFromRepo, _resetAuthorityRegistry } from "../core/authority/authority-registry";
 
-var {
-  escalateIncident,
-  getIncidents,
-  getIncidentsFromRepo,
-  _resetIncidents,
-} = require("../core/incidents/incident-escalation");
+import { escalateIncident, getIncidents, getIncidentsFromRepo, _resetIncidents } from "../core/incidents/incident-escalation";
 
-var {
-  emitStabilizationAuditEvent,
-  getAuditEvents,
-  getAuditEventsFromRepo,
-  _resetAuditEvents,
-} = require("../core/audit/audit-events");
+import { emitStabilizationAuditEvent, getAuditEvents, getAuditEventsFromRepo, _resetAuditEvents } from "../core/audit/audit-events";
 
-var {
-  writeCanonicalAudit,
-  createCanonicalEvent,
-  getCanonicalAuditLog,
-  getCanonicalAuditLogFromRepo,
-  _resetCanonicalAudit,
-} = require("../core/observability/canonical-event-schema");
+import { writeCanonicalAudit, createCanonicalEvent, getCanonicalAuditLog, getCanonicalAuditLogFromRepo, _resetCanonicalAudit } from "../core/observability/canonical-event-schema";
 
 // ── Setup ──
 
