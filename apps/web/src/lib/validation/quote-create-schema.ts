@@ -68,6 +68,12 @@ export const quoteCreatePayloadSchema = z
     deliveryDate: z.string().optional(),
     deliveryLocation: z.string().optional(),
     specialNotes: z.string().optional(),
+    // §quote-request-conditions (2026-09-18 · A안) — 위저드 요청 조건. 이 키들이 없어 zod 가 조용히 버렸다
+    //   (2026-09-17 워크스루). 서버는 lib/quotes/request-conditions 로 발송 문구에 합성한다(DB 열 없음).
+    purpose: z.string().nullish(),
+    urgency: z.string().nullish(),
+    supplierStrategy: z.string().nullish(),
+    suppliers: z.array(z.string()).nullish(),
     // 새 형식
     items: z.array(quoteItemPayloadSchema).optional(),
     // 기존 형식 (하위 호환성)

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+// §quote-request-conditions (A안) — 요청 조건을 발송 문구·품목 메모로 합성(DB 열 없음)
+import { requestConditionBlock, mergeItemNotes } from "@/lib/quotes/request-conditions";
 import { auth } from "@/auth";
 import { getAuthUser } from "@/lib/auth/mobile-jwt";
 import { createQuote } from "@/lib/api/quotes";
@@ -65,6 +67,11 @@ export async function POST(request: NextRequest) {
       deliveryDate,
       deliveryLocation,
       specialNotes,
+      // §quote-request-conditions (A안) — 위저드 요청 조건(스키마 추가 전엔 파싱에서 탈락했다)
+      purpose,
+      urgency,
+      supplierStrategy,
+      suppliers,
       items, // 새로운 형식: [{ productId, vendorId, quantity, notes }]
       productIds, // 기존 형식 (하위 호환성)
       quantities,
@@ -230,6 +237,9 @@ export async function POST(request: NextRequest) {
         // 기본 메시지
         vendorMessage = `안녕하세요.\n\n아래 품목 ${vendorProductCount}건에 대한 견적을 요청드립니다.\n\n품목 수: ${vendorProductCount}개${amountLine}\n\n빠른 견적 부탁드립니다.\n감사합니다.`;
       }
+      // §quote-request-conditions (A안) — 요청 목적·긴급도·공급 전략을 문구 끝 「요청 조건」 블록으로 남긴다.
+      //   세 경로(벤더별·공통·기본) 모두 통과. 조건이 없으면 블록도 없다.
+      vendorMessage += requestConditionBlock({ purpose, urgency, supplierStrategy, suppliers });
 
       // §11.203 — snapshot fields 보존 forward (createQuote 의 itemsDetailed
       //   path 통과). RequestWizardModal payload 가 catalog/search ref ID 와
@@ -248,7 +258,8 @@ export async function POST(request: NextRequest) {
         unitPrice: item.unitPrice ?? undefined,
         currency: item.currency ?? "KRW",
         lineTotal: item.lineTotal ?? undefined,
-        notes: item.notes ?? undefined,
+        // §quote-request-conditions (A안) — 품목별 대체품 허용을 품목 메모로(QuoteListItem 에 열 없음).
+        notes: mergeItemNotes(item.notes, item.allowSubstitute),
       }));
 
       const quote = await createQuote({
