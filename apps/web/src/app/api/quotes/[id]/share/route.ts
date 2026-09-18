@@ -7,10 +7,20 @@ import { z } from "zod";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // Schema for POST /api/quotes/:id/share
-const CreateShareSchema = z.object({
-  enabled: z.boolean().default(true),
-  expiresInDays: z.number().int().min(1).max(365).optional(),
-});
+// 🛑 §quote-share-no-auto (2026-09-18 · 릴레이 P1) — **활성 링크는 만료 기간이 있어야 만든다.**
+//   옛 스키마는 expiresInDays 를 생략하면 expiresAt = null(무기한)로 저장했다. 비로그인으로 열리는
+//   링크가 회수 수단 없이 영구히 남는 형태라, 켜는 요청에는 기간(1~365일)을 필수로 한다.
+//   끄는 요청(enabled:false)은 기간 없이 허용하고 기존 만료일을 보존한다.
+//   계약: __tests__/regression/quote-share-no-auto.test.ts
+const CreateShareSchema = z
+  .object({
+    enabled: z.boolean().default(true),
+    expiresInDays: z.number().int().min(1).max(365).optional(),
+  })
+  .refine((d) => !d.enabled || d.expiresInDays !== undefined, {
+    message: "공유 링크는 만료 기간(1~365일)을 정해야 만들 수 있습니다. 무기한 링크는 만들지 않습니다.",
+    path: ["expiresInDays"],
+  });
 
 /**
  * Helper function to check quote access.
@@ -128,7 +138,8 @@ export async function POST(
         where: { quoteId: id },
         data: {
           enabled,
-          expiresAt,
+          // 끄는 요청(기간 없음)은 기존 만료일을 보존한다 — null 로 덮으면 무기한이 된다
+          expiresAt: expiresAt ?? existingShare.expiresAt,
           updatedAt: new Date(),
         },
       });

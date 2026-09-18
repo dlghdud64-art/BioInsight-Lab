@@ -8,7 +8,6 @@ import { sendQuoteConfirmationToUser, sendQuoteNotificationToVendors, sendQuoteR
 import { db, isPrismaAvailable } from "@/lib/db";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
 import { ActivityType } from "@prisma/client";
-import { generateShareToken } from "@/lib/api/share-token";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { enforcePlanLimit, PlanLimitError } from "@/lib/billing/enforce-plan-limit";
 // #quote-payload-zod-schema — §11.203 silent assumption 후속 안전장치.
@@ -187,10 +186,7 @@ export async function POST(request: NextRequest) {
     });
 
     // 각 벤더별로 견적 생성 + 공유 링크 생성
-    // shareToken은 루프 내부에서 벤더별로 독립 생성 → P2002(Unique Constraint) 방지
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    type QuoteWithShare = { quote: any; shareToken: string | null; shareUrl: string | null };
-    const quoteResults: QuoteWithShare[] = [];
+    const quoteResults: { quote: any }[] = [];
 
     for (const [vendorId, items] of vendorGroups.entries()) {
       const productIds = items.map((item: any) => item.productId);
@@ -277,21 +273,14 @@ export async function POST(request: NextRequest) {
         itemsDetailed,
       });
 
-      // 벤더별 공유 링크 생성: token을 루프 내부에서 매번 새로 생성 (P2002 방지)
-      let quoteShareToken: string | null = null;
-      let quoteShareUrl: string | null = null;
-      try {
-        const token = generateShareToken();
-        const share = await db.quoteShare.create({
-          data: { quoteId: quote.id, shareToken: token, enabled: true },
-        });
-        quoteShareToken = share.shareToken;
-        quoteShareUrl = `${appUrl}/share/${share.shareToken}`;
-      } catch (shareErr) {
-        console.error("[quotes/POST] QuoteShare 생성 실패 (견적은 정상 생성됨):", shareErr);
-      }
-
-      quoteResults.push({ quote, shareToken: quoteShareToken, shareUrl: quoteShareUrl });
+      /* 🛑 §quote-share-no-auto (2026-09-18 · 릴레이 P1 판정) — 견적 생성 시 공유 링크를 **만들지 않는다.**
+       *   옛 구현은 견적마다 QuoteShare 를 자동 생성했다(enabled · expiresAt 없음 · 사용자 요청 없음).
+       *   prod 실측(2026-09-18): 견적 8 · 공유 8 전부 활성·무기한 · 비로그인 GET /api/share/<token> 200 으로
+       *   제목·요청 문구·품목·단가가 열렸다. 그런데 응답의 shareToken·shareUrl 을 **읽는 클라이언트는 0곳**이었다
+       *   (워크벤치 「공유」 카드는 별개 기능 SharedList 를 쓴다). 사용자는 존재를 모르고 끌 수도 없었다.
+       *   공유는 사용자가 명시적으로 만들 때만(POST /api/quotes/[id]/share · 기간 필수).
+       *   계약: __tests__/regression/quote-share-no-auto.test.ts */
+      quoteResults.push({ quote });
     }
 
     // 첫 번째 견적을 메인으로 사용 (하위 호환성)
@@ -386,16 +375,14 @@ export async function POST(request: NextRequest) {
       console.error("Failed to create activity log:", error);
     });
 
-    // 공유 링크는 벤더별 루프 내에서 이미 생성됨 → 첫 번째 결과 추출 (하위 호환성)
-    const shareToken = quoteResults[0]?.shareToken ?? null;
-    const shareUrl = quoteResults[0]?.shareUrl ?? null;
 
     enforcement.complete({ organizationId: serverOrgId,
       beforeState: { action: 'quote_request_create' },
       afterState: { quoteId: quote.id, quoteCount: quoteResults.length },
     });
 
-    return NextResponse.json({ quote, shareToken, shareUrl }, { status: 201 });
+    // §quote-share-no-auto — 응답에 공유 링크 필드를 싣지 않는다(항상 null 인 죽은 키를 남기지 않는다).
+    return NextResponse.json({ quote }, { status: 201 });
   } catch (error: any) {
     enforcement?.fail();
     // 상세 에러 로깅 (Prisma 에러 코드/메타 포함)

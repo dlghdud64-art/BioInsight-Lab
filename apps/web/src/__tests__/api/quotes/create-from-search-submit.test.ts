@@ -219,7 +219,7 @@ describe("§11.203 /api/quotes POST — snapshot-backed search submission", () =
     expect(enforcementSpies.fail).toHaveBeenCalledTimes(1);
   });
 
-  it("§11.203b — 응답 shape 은 { quote: {id, ...}, shareToken, shareUrl } (wizard 가 quote.id 추출)", async () => {
+  it("§11.203b · §quote-share-no-auto — 응답 shape 은 { quote: {id, ...} } 이고 공유 링크 필드가 없다", async () => {
     createQuoteMock.mockResolvedValue({
       id: "q-shape-test",
       title: "Test",
@@ -239,9 +239,13 @@ describe("§11.203 /api/quotes POST — snapshot-backed search submission", () =
     // wizard handleSubmit 이 json.quote?.id 로 narrowing. shape 변경 시 wizard 도 동기.
     expect(json.quote, "응답에 quote 객체가 있어야 wizard 가 step 3 handoff 진입 가능").toBeDefined();
     expect(json.quote?.id).toBe("q-shape-test");
-    // shareToken / shareUrl 은 nullable (QuoteShare 생성 실패 시 null)
-    expect(json).toHaveProperty("shareToken");
-    expect(json).toHaveProperty("shareUrl");
+    // §quote-share-no-auto (2026-09-18 · 릴레이 승인) — 명제 승계: 「키 존재」 → 「공유 링크 필드가 없다」.
+    //   견적 생성이 공유 링크를 자동으로 만들던 경로를 끊었다. 읽는 클라이언트가 0곳이라 항상 null 인
+    //   죽은 키를 남기지 않는다(남기면 누군가 "왜 항상 null 이지" 하며 되살린다).
+    expect(json).not.toHaveProperty("shareToken");
+    expect(json).not.toHaveProperty("shareUrl");
+    // 견적 생성 경로는 QuoteShare 를 만들지 않는다
+    expect(mockDb.quoteShare.create).not.toHaveBeenCalled();
   });
 
   it("snapshot-only items 시 raw productId 가 catalogRef 형태로 createQuote 에 전달됨", async () => {
