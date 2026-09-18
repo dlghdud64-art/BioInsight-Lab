@@ -6,13 +6,13 @@
  * Section B (RB1-RB5): Real PostgreSQL contention (dual-mode, 3 workers)
  * Section C (RB6-RB7): Evidence summary + acceptance re-evaluation
  *
- * Babel constraints: var + require(), no import type, no as any, .then() chains.
+ * 모듈은 최상위 import 로 싣는다(vitest/ESM). 본문은 var + .then() 체인 유지.
  */
 
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 
-var { createPrismaAdapters } = require("../core/persistence");
-var { PrismaLockRepository } = require("../core/persistence/prisma/lock");
+import { createPrismaAdapters } from "../core/persistence";
+import { PrismaLockRepository } from "../core/persistence/prisma/lock";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Enhanced Concurrent Mock (same as P2-4A — P2002/P2025/optimistic lock)

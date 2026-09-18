@@ -8,15 +8,15 @@
  *
  * 5 contention scenarios + 3 DB-specific edge cases + summary + closeout = 10 tests
  *
- * Babel constraints: var + require(), no import type, no as any.
+ * 모듈은 최상위 import 로 싣는다(vitest/ESM). 본문은 var 스타일 유지.
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
 
 // ── Prisma Adapter Imports (actual classes, not memory backend) ──
 
-var { createPrismaAdapters } = require("../core/persistence");
-var { PrismaLockRepository } = require("../core/persistence/prisma/lock");
+import { createPrismaAdapters } from "../core/persistence";
+import { PrismaLockRepository } from "../core/persistence/prisma/lock";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Enhanced Mock Prisma — PostgreSQL-grade constraint simulation

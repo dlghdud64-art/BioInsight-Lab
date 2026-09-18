@@ -14,13 +14,13 @@
  * Section B (PG6-PG8): Edge cases
  * Section C (PG9-PG10): Residue diagnostics + P2 final closeout
  *
- * Babel constraints: var + require(), no import type, .then() chains.
+ * 모듈은 최상위 import 로 싣는다(vitest/ESM). 본문은 var + .then() 체인 유지.
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 
-var { createPrismaAdapters } = require("../core/persistence");
-var { PrismaLockRepository } = require("../core/persistence/prisma/lock");
+import { createPrismaAdapters } from "../core/persistence";
+import { PrismaLockRepository } from "../core/persistence/prisma/lock";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Connection probe — determines if suite runs or skips
