@@ -23,6 +23,10 @@ import { FileText, ClipboardList, PackageCheck, Boxes, RotateCw, ChevronRight } 
 import type { SectionState } from "@/lib/dashboard/section-state";
 import type { DashboardSummary } from "@/lib/dashboard/summary-derive";
 import { getFlag } from "@/lib/feature-flags";
+// §main-dashboard-p0-honesty T4 — 게이지(.pbar) 폐지 → 상태 칩(핸드오프 §4).
+//   게이지 분모(단계 최대 건수)는 도메인 의미가 없었다(견적 8건=100% · 재고 4건=50%).
+//   ★ 그 식별자를 주석에도 남기지 않는다 — B4 단언이 파일 전체를 보므로 언급 자체가 위반이다.
+import { buildPipelineChips, type PipelineChip, type PipelineStageKey } from "@/lib/dashboard/p0-display";
 
 interface PipelineStage {
   key: string;
@@ -98,6 +102,14 @@ const STAGE_TINT: Record<string, { icon: string; box: string }> = {
   stock: { icon: "text-yellow-600", box: "bg-yellow-50" },
 };
 
+// §main-dashboard-p0-honesty T4 — 칩 톤 → 클래스. §11.302 신호등(amber/orange 금지).
+const CHIP_TONE: Record<string, string> = {
+  red: "bg-red-100 text-red-700",
+  yellow: "bg-yellow-100 text-yellow-700",
+  gray: "bg-slate-100 text-slate-600",
+  emerald: "bg-emerald-100 text-emerald-700",
+};
+
 export function Pipeline({ state, summary, onRetry }: PipelineProps) {
   if (state === "loading") {
     return (
@@ -125,25 +137,27 @@ export function Pipeline({ state, summary, onRetry }: PipelineProps) {
     );
   }
 
-  // §purchasing-hide — 발주 stage 미정의 도메인 → off 시 파이프라인에서 제외(견적→입고→재고).
+  // §purchasing-hide — 발주 stage 미정의 도메인 → off 시 파이프라인에서 제외(견적 → 입고 → 재고).
   //   buildStages 의 po 객체는 보존(소스 문자열 = sentinel GREEN), 렌더 목록만 필터.
   const stages = buildStages(summary).filter((s) => getFlag("ENABLE_PURCHASING") || s.key !== "po");
   const gridColsClass = stages.length === 3 ? "grid-cols-3" : "grid-cols-2 md:grid-cols-4";
-  // §dashboard-home-redesign P3 — 퍼널 하단 진행바 비율(시안 .pbar). canonical=stage.total(파생만, 가짜 0).
-  const maxTotal = Math.max(...stages.map((s) => s.total), 1);
+  // §main-dashboard-p0-honesty T4 — 상태 칩(canonical summary 파생, 0건 칩 미생성 = dead button 0).
+  const chipsByStage = buildPipelineChips(summary);
 
   return (
     <div className={`grid gap-2 ${gridColsClass}`}>
       {stages.map((stage, i) => {
         const active = stage.total > 0;
+        const chips: PipelineChip[] =
+          stage.key === "po" ? [] : (chipsByStage[stage.key as PipelineStageKey] ?? []);
         return (
-          <a
+          // §main-dashboard-p0-honesty T4 — 카드 래퍼가 <a> 에서 <div> 로 바뀐다.
+          //   칩이 각자 딥링크를 가지므로 카드 전체 링크 안에 링크를 넣으면 중첩 interactive 가 된다.
+          //   카드 진입 동선은 헤더의 `열기 ›` 가 단독 소유(핸드오프 §4).
+          <div
             key={stage.key}
-            href={stage.href}
-            className={`relative block rounded-xl border p-3 transition-colors ${
-              active
-                ? "bg-white border-slate-300 shadow-sm hover:border-slate-400"
-                : "bg-white border-dashed border-slate-200"
+            className={`relative block rounded-xl border p-3 ${
+              active ? "bg-white border-slate-300 shadow-sm" : "bg-white border-dashed border-slate-200"
             }`}
           >
             <div className={`flex items-center gap-1.5 mb-1 ${active ? "text-slate-500" : "text-gray-400"}`}>
@@ -152,33 +166,41 @@ export function Pipeline({ state, summary, onRetry }: PipelineProps) {
                 <span className={active ? STAGE_TINT[stage.key]!.icon : "text-gray-400"}>{stage.icon}</span>
               </span>
               <span className="text-[11px] font-semibold uppercase tracking-[0.06em] truncate min-w-0">{stage.label}</span>
-              {/* 단계 연결 화살표(마지막 제외) — 데스크탑만 */}
-              {i < stages.length - 1 && (
-                <ChevronRight className="hidden md:block h-3 w-3 text-slate-300 ml-auto" aria-hidden />
-              )}
+              <a
+                href={stage.href}
+                className="ml-auto inline-flex items-center gap-0.5 text-[11px] font-bold text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                열기
+                <ChevronRight className="h-3 w-3" aria-hidden />
+              </a>
             </div>
             {/* §dashboard-home-redesign P3 — 0건 value 가독성 slate-500(시안 README, de-emphasis는 bg-gray-50 유지). */}
             <p className={`text-lg md:text-xl font-black tracking-tighter tabular-nums leading-none ${active ? "text-slate-900" : "text-slate-500"}`}>
               {stage.total}
-              <span className="text-[11px] font-semibold ml-0.5">건</span>
+              <span className="text-[11px] font-semibold ml-0.5">{stage.key === "stock" ? "품목" : "건"}</span>
             </p>
-            {stage.attention > 0 ? (
-              <p className="mt-1 text-[11px] font-semibold text-yellow-700 line-clamp-1">
-                {stage.attentionLabel} {stage.attention}건
-              </p>
-            ) : (
-              <p className="mt-1 text-[11px] text-slate-500 line-clamp-1">{active ? "이상 없음" : "데이터 없음"}</p>
-            )}
-            {/* §dashboard-home-redesign P3 — 퍼널 진행바(시안 .pbar). active만, 폭=total/maxTotal. 0건은 미표시(흐림 유지). */}
-            {active && (
-              <div className="mt-2 h-1 rounded-full bg-slate-100 overflow-hidden" aria-hidden="true">
-                <i
-                  className="block h-full rounded-full bg-blue-500"
-                  style={{ width: `${Math.min((stage.total / maxTotal) * 100, 100)}%` }}
-                />
+            {/* 상태 칩 — 각 칩이 모듈 필터 딥링크를 소유. 0건 칩은 애초에 생성되지 않는다. */}
+            {chips.length > 0 ? (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {chips.map((chip) => (
+                  <a
+                    key={chip.key}
+                    href={chip.href}
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-bold transition-opacity hover:opacity-80 ${CHIP_TONE[chip.tone]}`}
+                  >
+                    {chip.label}
+                    {chip.count !== null && <span className="tabular-nums">{chip.count}</span>}
+                  </a>
+                ))}
               </div>
+            ) : (
+              <p className="mt-2 text-[11px] text-slate-500 line-clamp-1">{active ? "이상 없음" : "데이터 없음"}</p>
             )}
-          </a>
+            {/* 단계 연결 화살표(마지막 제외) — 데스크탑만 */}
+            {i < stages.length - 1 && (
+              <ChevronRight className="hidden md:block absolute -right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 text-slate-300" aria-hidden />
+            )}
+          </div>
         );
       })}
     </div>

@@ -127,18 +127,13 @@ describe("§11.175 inbox auto_open URL handler", () => {
   });
 });
 
-describe("§11.175 dashboard 진입점 wire (§11.181 popup default 로 marshall 됨)", () => {
-  const PATH = "src/app/dashboard/page.tsx";
-
-  it("OperationalBriefFloatingEntry import + 사용", () => {
-    const src = read(PATH);
-    expect(src).toMatch(/OperationalBriefFloatingEntry/);
-  });
-
-  it("§11.181 — onClick prop 없음 (popup context default 사용)", () => {
-    const src = read(PATH);
-    const m = src.match(/<OperationalBriefFloatingEntry[\s\S]*?\/>/);
-    expect(m).not.toBeNull();
-    expect(m![0]).not.toMatch(/\bonClick\s*=/);
+// 【은퇴 2026-09-18 · §main-dashboard-p0-honesty】 §11.175 dashboard 진입점.
+//   핸드오프 §0-4(호영님 2026-09-17): 대시보드의 운영 브리핑 FAB 제거.
+//   ★ 컴포넌트 자체 명제(위 describe 들: named export · slate-900 · sparkle · label)는 **존치**한다 —
+//     purchases / inventory / purchase-orders / work-queue-console 이 계속 mount 한다.
+//     은퇴한 것은 "대시보드가 그 컴포넌트를 쓴다" 는 명제 하나뿐이다.
+describe("§11.175 은퇴 승계 — dashboard 진입점 제거 확정", () => {
+  it("dashboard page 에 FAB mount 0", () => {
+    expect(read("src/app/dashboard/page.tsx")).not.toMatch(/OperationalBriefFloatingEntry/);
   });
 });

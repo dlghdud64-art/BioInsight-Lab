@@ -57,10 +57,13 @@ describe("§11.258-sweep — invariant 보존", () => {
     });
   }
 
-  it("§11.257 dashboard wrap 패턴 보존 (이미 처리)", () => {
-    const dashboardPath = resolve(__dirname, "../../app/dashboard/page.tsx");
-    const code = safeRead(dashboardPath);
-    expect(code).toMatch(/hidden\s+lg:block[\s\S]{0,300}OperationalBriefFloatingEntry/);
+  // 【은퇴 2026-09-18 · §main-dashboard-p0-honesty】 대시보드 FAB 제거(핸드오프 §0-4)로
+  //   "dashboard 가 FAB 를 hidden lg:block 으로 wrap 한다" 는 명제가 성립하지 않는다.
+  //   ※ 이 단언은 2026-09-17 기준선에서 **이미 RED** 였다(래퍼가 진작 사라져 있었다).
+  //   역방향 명제는 main-dashboard-p0-honesty.test.ts B6 가 소유한다.
+  it("§11.257 은퇴 승계 — dashboard 에 FAB wrap 0", () => {
+    const code = safeRead(resolve(__dirname, "../../app/dashboard/page.tsx"));
+    expect(code).not.toMatch(/OperationalBriefFloatingEntry/);
   });
 
   it("BarcodeScanFab mount (dashboard-shell.tsx) 변경 0", () => {

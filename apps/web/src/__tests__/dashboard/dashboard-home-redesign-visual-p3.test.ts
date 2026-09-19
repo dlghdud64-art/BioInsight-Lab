@@ -19,10 +19,14 @@ const STATLINE = "src/components/dashboard/stat-line.tsx";
 
 describe("§dashboard-home-redesign P3 — Pipeline 퍼널 진행바", () => {
   const src = read(PIPELINE);
-  it("active 단계 하단 진행바(폭=total/maxTotal, canonical 파생)", () => {
-    expect(src).toMatch(/const maxTotal = Math\.max\(\.\.\.stages\.map\(\(s\) => s\.total\), 1\)/);
-    expect(src).toMatch(/active && \(/);
-    expect(src).toMatch(/width: `\$\{Math\.min\(\(stage\.total \/ maxTotal\) \* 100, 100\)\}%`/);
+  // 【은퇴 2026-09-18 · §main-dashboard-p0-honesty】 퍼널 진행바(.pbar).
+  //   핸드오프 §0-5(호영님 2026-09-17): "파이프라인 게이지 기준 없음 — 견적 8건이 100%,
+  //   재고 4건이 50% 등 의미 불명". §4: "상태 칩 (게이지 삭제)".
+  //   분모(단계 최대 건수)가 도메인 의미를 갖지 않는다는 것이 은퇴 사유다.
+  //   대체 명제(상태 칩 + 딥링크)는 main-dashboard-p0-honesty.test.ts B4·B5 가 소유한다.
+  it("은퇴 승계 — 진행바 부활 차단", () => {
+    expect(src).not.toMatch(/\bmaxTotal\b/);
+    expect(src).not.toMatch(/stage\.total\s*\/\s*/);
   });
   it("진행바 §11.302 정합 — amber/orange 0", () => {
     expect(src).not.toMatch(/-amber-|-orange-/);

@@ -16,6 +16,8 @@ import dynamic_import from "next/dynamic";
 import { FileText, PackageX, TrendingDown, TrendingUp, ChevronDown, ChevronRight, Wallet } from "lucide-react";
 import type { SectionState } from "@/lib/dashboard/section-state";
 import { won, type DashboardSummary } from "@/lib/dashboard/summary-derive";
+// §main-dashboard-p0-honesty T6 — 모바일 잔여 ₩0 1곳(핸드오프 §0-1).
+import { budgetStatDisplay } from "@/lib/dashboard/p0-display";
 import { NextStepBanner } from "@/components/dashboard/next-step-banner";
 import { ActionInbox, type ActionInboxItem } from "@/components/dashboard/action-inbox";
 import { Pipeline } from "@/components/dashboard/pipeline";
@@ -89,7 +91,9 @@ export function MobileDashboardView({
           <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400">
             <Wallet className="h-3.5 w-3.5" />이번 달 지출
           </div>
-          <div className="text-[26px] font-extrabold tracking-tight text-slate-900 tabular-nums mt-1">{won(thisMonthSpend)}</div>
+          <div className="text-[26px] font-extrabold tracking-tight text-slate-900 tabular-nums mt-1">
+            {budgetStatDisplay("spend", thisMonthSpend, budget?.isSet ?? false, won).primary}
+          </div>
           {hasMom && (
             <div className={`flex items-center gap-1 text-[12px] font-bold mt-1 ${momDown ? "text-emerald-600" : "text-rose-600"}`}>
               {momDown ? <TrendingDown className="h-3.5 w-3.5" /> : <TrendingUp className="h-3.5 w-3.5" />}

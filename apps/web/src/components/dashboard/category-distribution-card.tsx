@@ -98,7 +98,12 @@ export function CategoryDistributionCard({ categorySpending, className, bare }: 
     <div className={`${bare ? "" : "rounded-xl border border-slate-200 bg-white shadow-sm p-4 md:p-5 "}flex flex-col ${className ?? ""}`}>
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h3 className="text-[13px] font-extrabold text-slate-900">카테고리별 비중</h3>
+          {/* §main-dashboard-p0-honesty T3 (호영님 판정 2026-09-18) — 기간 병기.
+                  소스는 PurchaseRecord 최근 6개월(api/dashboard/stats/route.ts:283)인데
+                  같은 카드 상단은 이번 달이다. 기간을 적지 않으면 두 수가 같은 축으로 읽힌다. */}
+              <h3 className="text-[13px] font-extrabold text-slate-900">
+                카테고리별 비중 <span className="font-bold text-slate-400">· 최근 6개월</span>
+              </h3>
           <p className="text-[11px] text-slate-500 mt-0.5">최근 누적 지출 분포</p>
         </div>
         {!isEmpty && (

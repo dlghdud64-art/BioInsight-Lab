@@ -72,7 +72,6 @@ import { ActionInbox, type ActionInboxItem } from "@/components/dashboard/action
 // §dashboard-shifan-adopt P2 — NextStepBanner("다음 단계 추천") 가 레거시 "시작하기 3단계" hero 대체.
 import { NextStepBanner } from "@/components/dashboard/next-step-banner";
 import { MobileDashboardView } from "@/components/dashboard/mobile-dashboard-view";
-import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
 // §main-dashboard-redesign P3-B1 — GlobalEmpty(allEmpty 종합 빈) + summary 단일 진실 훅.
 //   비차단 추가: 기존 stats useQuery 렌더 경로 무수정(§11.199b stuck 위험 격리).
 //   GlobalEmpty 는 OnboardingHero 미표시 시에만(상호배타, 중복 0).
@@ -568,9 +567,9 @@ function DashboardPageInner() {
 
   // 비교 상태
   if (stats.undecidedCompareCount > 0) {
-    recommendedActions.push({ id: "r-compare", icon: <GitCompare className="h-3.5 w-3.5 text-yellow-700" />, label: "비교 판정", desc: `${stats.undecidedCompareCount}건 판정 대기 — 검토 후 확정하세요`, href: "/app/search", state: "ready" });
+    recommendedActions.push({ id: "r-compare", icon: <GitCompare className="h-3.5 w-3.5 text-yellow-700" />, label: "비교 판정", desc: `${stats.undecidedCompareCount}건 판정 대기 · 검토 후 확정하세요`, href: "/app/search", state: "ready" });
   } else if (stats.totalInventory > 0) {
-    recommendedActions.push({ id: "r-compare", icon: <GitCompare className="h-3.5 w-3.5 text-slate-400" />, label: "제품 비교", desc: "비교 대기 항목 없음 — 검색에서 후보를 추가하세요", href: "/app/search", state: "idle" });
+    recommendedActions.push({ id: "r-compare", icon: <GitCompare className="h-3.5 w-3.5 text-slate-400" />, label: "제품 비교", desc: "비교 대기 항목 없음 · 검색에서 후보를 추가하세요", href: "/app/search", state: "idle" });
   }
 
   // 검색
@@ -707,11 +706,21 @@ function DashboardPageInner() {
         {/* §dashboard-home-redesign P1 (호영님 시안) — 빠른작업 카드 제거: 동선은
             Pipeline 카드 클릭 진입이 흡수(중복 제거). 우측 = 지출 트렌드 분석(시안 2-col: 예산&지출 ↔ 트렌드).
             빠른작업 컴포넌트 파일은 dormant 보존(rollback / 발주 on 복원 시 재배치 가능). */}
-        <SpendTrendCard monthlySpending={stats.monthlySpendingChart} />
+        {/* §main-dashboard-p0-honesty T5 — 우측 컬럼 = 지출 트렌드 + 최근 활동 세로 2장.
+            각 카드를 flex-1 로 두어 좌측 예산 카드 높이에 맞춘다(핸드오프 §1-5 · §5).
+            ⚠️ §dashboard-rightcol-rebalance 의 "최근활동 풀폭" 을 핸드오프(2026-09-17)가 덮는다.
+               기존 sentinel(SpendTrend ~700자 내 RecentActivity 인접)은 두 카드가 이웃이라 무손상. */}
+        <div className="flex flex-col gap-4">
+          <div className="flex-1 flex flex-col">
+            <SpendTrendCard monthlySpending={stats.monthlySpendingChart} />
+          </div>
+          <div className="flex-1 flex flex-col">
+            <RecentActivityCard />
+          </div>
+        </div>
       </div>
 
-      {/* §dashboard-rightcol-rebalance(호영님) — 최근활동 풀폭(좁은 side-col 탈출 → 활동 로그 가로 확대·가독성↑). */}
-      <RecentActivityCard />
+      {/* §main-dashboard-p0-honesty T5 — 하단 풀폭 최근활동 제거(위 2열 그리드 우측으로 이동). */}
       </div>
       {/* /§dashboard-mobile-v2 데스크탑 전용 wrapper */}
 
@@ -748,8 +757,10 @@ function DashboardPageInner() {
         </div>
       </div>
 
-      {/* §11.181 — 운영 브리핑 floating entry (default = popup open) */}
-      <OperationalBriefFloatingEntry controls="operational-brief-popup" />
+      {/* §main-dashboard-p0-honesty T5 — 운영 브리핑 FAB 렌더 제거(핸드오프 §0-4 · §1).
+          §11.181 이 대시보드에 얹은 floating entry 는 견적 관리에서 이미 제거 확정한 패턴의 잔존분이다.
+          컴포넌트 파일(components/operational-brief/floating-entry.tsx)은 dormant 보존 —
+          purchases / inventory 등 다른 surface 가 계속 mount 하며 그쪽 sentinel 은 무손상. */}
     </div>
   );
 }

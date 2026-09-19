@@ -1,0 +1,16 @@
+src/__tests__/api/admin/operational-brief-popup-self-contained.test.ts > §11.181 7 surface FAB onClick prop 제거 > quotes — FAB block 안에 onClick prop 없음 (default popup 사용)
+src/__tests__/dashboard/dashboard-fab-collision-fix-271.test.ts > §11.271 #2 — DashboardHeader inline scan trigger mount > DashboardHeader 의 모바일 검색 button 옆에 <BarcodeScanFab /> mount
+src/__tests__/dashboard/dashboard-fab-collision-fix-271.test.ts > §11.271 #4 — invariant 보존 (canonical truth) > 운영 브리핑 FAB 위치 (bottom-[72px] right-4) 변경 0
+src/__tests__/dashboard/mobile-brief-inline-257.test.ts > §11.257 #1 — 모바일 인라인 운영 브리핑 link 추가 > '운영 브리핑 보기' inline 라벨 + lg:hidden 분기
+src/__tests__/dashboard/mobile-brief-inline-257.test.ts > §11.257 #1 — 모바일 인라인 운영 브리핑 link 추가 > Sparkles icon import 보존 (인라인 link icon)
+src/__tests__/dashboard/mobile-brief-inline-257.test.ts > §11.257 #1 — 모바일 인라인 운영 브리핑 link 추가 > inline link onClick → useOperationalBriefPopup 사용 (canonical popup hook)
+src/__tests__/dashboard/mobile-brief-inline-257.test.ts > §11.257 #1 — 모바일 인라인 운영 브리핑 link 추가 > inline link 터치 타깃 min-h-[44px] 또는 h-11+ (Apple HIG)
+src/__tests__/dashboard/mobile-brief-inline-257.test.ts > §11.257 #1 — 모바일 인라인 운영 브리핑 link 추가 > §11.257 trace marker
+src/__tests__/dashboard/mobile-brief-inline-257.test.ts > §11.257 #2 — FloatingEntry 데스크탑 한정 (모바일 hide) > OperationalBriefFloatingEntry mount 가 lg:block / hidden lg:* / max-lg:hidden 분기 wrap
+src/__tests__/dashboard/operational-brief-fab-bottom-273e.test.ts > §11.273e #1 — FAB bottom 좌표 144px swap > FAB className 에 bottom-[144px] 적용
+src/__tests__/dashboard/operational-brief-fab-bottom-273e.test.ts > §11.273e #1 — FAB bottom 좌표 144px swap > §11.273e trace marker comment 존재
+src/__tests__/dashboard/operational-brief-fab-sweep-258sweep.test.ts > §11.258-sweep #1 — 5 surface 모바일 hide wrap > quotes — OperationalBriefFloatingEntry 가 'hidden lg:block' wrap
+src/__tests__/dashboard/operational-brief-fab-sweep-258sweep.test.ts > §11.258-sweep #1 — 5 surface 모바일 hide wrap > quotes — §11.258-sweep trace marker
+src/__tests__/dashboard/operational-brief-fab-sweep-258sweep.test.ts > §11.258-sweep — invariant 보존 > OperationalBriefFloatingEntry 컴포넌트 시그니처 보존 (변경 0)
+src/__tests__/dashboard/operational-brief-fab-sweep-258sweep.test.ts > §11.258-sweep — invariant 보존 > quotes — controls="operational-brief-popup" 보존 (§11.181 정합)
+src/__tests__/dashboard/operational-brief-fab-sweep-258sweep.test.ts > §11.258-sweep — invariant 보존 > §11.257 dashboard wrap 패턴 보존 (이미 처리)

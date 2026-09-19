@@ -58,9 +58,12 @@ describe("§11.176 shared brief parts 추출", () => {
 //   §11.176 4-surface 불변식에서 quotes 제외(3 surface). "공급사 발송 검토" 모달이 정식 워크플로.
 //   quotes 억제 앵커는 별도 sentinel(quotes-brief-suppress.test.ts) 소유.
 describe("§11.176 floating entry mount (§quotes-brief-suppress: quotes 제외 3 surface)", () => {
+  // 【surface 목록 변경 2026-09-18 · §main-dashboard-p0-honesty】
+  //   제거: { name: "dashboard", path: "src/app/dashboard/page.tsx" }
+  //   사유: 핸드오프 §0-4 로 대시보드 FAB 제거. 개수가 아니라 **목록**을 diff 로 읽히게 남긴다
+  //         (CLAUDE.md 「개수는 명제가 아니다」). 역방향 명제는 main-dashboard-p0-honesty B6 소유.
   const SURFACES: { name: string; path: string }[] = [
     { name: "inbox", path: "src/app/dashboard/inbox/page.tsx" },
-    { name: "dashboard", path: "src/app/dashboard/page.tsx" },
     { name: "purchases", path: "src/app/dashboard/purchases/page.tsx" },
   ];
 

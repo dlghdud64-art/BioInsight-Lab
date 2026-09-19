@@ -19,6 +19,9 @@
 import { TrendingDown, Wallet, ClipboardCheck, RotateCw } from "lucide-react";
 import type { SectionState } from "@/lib/dashboard/section-state";
 import { won, type DashboardSummary } from "@/lib/dashboard/summary-derive";
+// §main-dashboard-p0-honesty T1 — 예산 미설정 시 ₩0 대신 정직 문구(핸드오프 §0-1).
+//   금액을 "안 그리는" 것이 아니라 "안 만드는" 것 — won() 자체를 부르지 않는다.
+import { budgetStatDisplay } from "@/lib/dashboard/p0-display";
 import { getFlag } from "@/lib/feature-flags";
 
 interface StatItem {
@@ -140,13 +143,22 @@ export function StatLine({ state, summary, onRetry }: StatLineProps) {
       : { label: "발주 0건", tone: "idle" };
   };
 
+  // §main-dashboard-p0-honesty T1 — KPI 표시 파생.
+  //   예산 축(지출·잔여)은 미설정 시 pending(집계 전/설정 전). 확정 발주액은 예산과 무관하므로 항상 금액.
+  const displayFor = (key: string, value: number) =>
+    key === "confirmed"
+      ? { mode: "amount" as const, primary: won(value), helper: null }
+      : budgetStatDisplay(key === "spend" ? "spend" : "remaining", value, isSet, won);
+
   return (
     // §dashboard-mobile-kpi — ₩ 금액이 모바일 grid-cols-3 폭을 넘쳐 잘림(정확값 위반).
     //   모바일=가로 스크롤(카드가 금액 길이만큼 확장 → 잘림 0, §11.311 compact 1줄·first-fold 보존),
     //   md+=기존 grid-cols-3.
     <div className={kpiGridClass}>
       {items.filter((it) => purchasingOn || it.key !== "confirmed").map((it) => {
-        const active = it.value > 0;
+        const disp = displayFor(it.key, it.value);
+        // pending 은 "아직 집계 전" 이라 0건 비활성 톤과 같은 취급(가짜 활성 0).
+        const active = disp.mode === "amount" && it.value > 0;
         const chip = chipFor(it.key);
         return (
           <a
@@ -177,22 +189,30 @@ export function StatLine({ state, summary, onRetry }: StatLineProps) {
                   {it.label}
                 </span>
               </div>
-              {/* §kpi-status-chip(호영님, 스캔허브 지시문 00·5) — 우측 상태칩. canonical summary.budget 단일 진실. */}
-              <span className={`flex-shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold tabular-nums ${CHIP_TONE[chip.tone]}`}>
-                {chip.label}
-              </span>
+              {/* §kpi-status-chip(호영님, 스캔허브 지시문 00·5) — 우측 상태칩. canonical summary.budget 단일 진실.
+                  §main-dashboard-p0-honesty T1 — pending(집계 전/설정 전)일 때는 칩 미노출.
+                  값 자리가 이미 "예산 미설정" 을 말하므로 칩이 같은 사실을 두 번 말한다(핸드오프 §0-1 ₩0 4회 반복의 잔여분). */}
+              {disp.mode === "amount" && (
+                <span className={`flex-shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold tabular-nums ${CHIP_TONE[chip.tone]}`}>
+                  {chip.label}
+                </span>
+              )}
             </div>
             {/* §dashboard-home-redesign P3 — 0건 value 가독성 slate-500(시안 README L11). 아이콘/라벨은
                 §11.311 gray-400 비활성 톤 유지(de-emphasis 위계 보존 + 0건 카드 bg-gray-50). */}
             {/* §dashboard-kpi-won-glyph(호영님 2026-07-02) — ₩ 글리프가 tracking-tighter(−0.05em)로
                 첫 숫자와 겹쳐 취소선처럼 보이는 현상 수정. tracking-normal 로 ₩·숫자 분리(가독성). */}
             <p
-              className={`text-lg md:text-xl font-black tracking-normal tabular-nums leading-none whitespace-nowrap ${
-                active ? "text-slate-900" : "text-slate-500"
-              }`}
+              className={`font-black tracking-normal leading-none whitespace-nowrap ${
+                disp.mode === "amount" ? "text-lg md:text-xl tabular-nums" : "text-[15px] md:text-base"
+              } ${active ? "text-slate-900" : "text-slate-500"}`}
             >
-              {won(it.value)}
+              {disp.primary}
             </p>
+            {/* §main-dashboard-p0-honesty T1 — pending 보조 1줄(핸드오프 §5 초기 상태 미니 지표). */}
+            {disp.helper && (
+              <p className="mt-1 text-[10.5px] text-slate-400 break-keep leading-snug">{disp.helper}</p>
+            )}
           </a>
         );
       })}

@@ -1,20 +1,18 @@
 /**
- * §11.257 — 모바일 대시보드 운영 브리핑 + 스캔 FAB 겹침 해소 (방안 3 인라인 배치).
+ * §11.257 — 【은퇴】 모바일 대시보드 인라인 운영 브리핑 link
  *
- * 호영님 spec: 모바일 우하단에서 ✨ 운영 브리핑 button + ⇄ 스캔 FAB 이
- *   `fixed bottom-[72px] right-4 z-40` 동일 좌표 충돌 → 운영 브리핑 텍스트
- *   "운영 브" 까지만 보임 + 오탭 위험.
+ * 은퇴 사유: §main-dashboard-p0-honesty (호영님 핸드오프 2026-09-17 §0-4 · 판정 2026-09-18)
+ *   대시보드에서 운영 브리핑 진입점 자체를 제거했다. 이 파일이 검사하던 인라인 link ·
+ *   Sparkles 아이콘 · lg:hidden 분기 · FAB wrap 은 **전부 존재하지 않는 기능**이다.
+ *   (기준선 실측 2026-09-17: 11건 중 6건이 이미 RED였다 — 검사가 죽은 기능을 붙잡고 있었다.)
  *
- * 권장안 (방안 3 인라인 배치):
- *   - 운영 브리핑을 floating 에서 대시보드 헤더 영역의 inline link 로 전환 (모바일).
- *   - 데스크탑 (lg+) 은 기존 floating 보존 (BottomNav / scan FAB 없음 → 겹침 0).
- *   - FAB 은 스캔 전용 유지 (lg:hidden 보존, 변경 0).
+ * 명제 이관 (은퇴 전 복원 — CLAUDE.md 「지우기 전에 명제를 이력에서 복원한다」):
+ *   1. "모바일 하단 빠른 실행 바 보존"     → main-dashboard-p0-honesty.test.ts  B9
+ *   2. "AIInsightDialog 헤더 mount 보존"   → main-dashboard-p0-honesty.test.ts  B9
+ *   3. "BarcodeScanFab mount 변경 0"       → operational-brief-fab-sweep-258sweep.test.ts (원 소유 유지)
+ *   4. "popup self-contained · controls 속성" → operational-brief-popup-self-contained.test.ts (원 소유 유지)
  *
- * canonical truth lock:
- *   - useOperationalBriefPopup hook 보존 (popup.open() 동일 호출).
- *   - §11.181 trace + controls="operational-brief-popup" 보존.
- *   - BarcodeScanFab mount (dashboard-shell.tsx) 변경 0.
- *   - 모바일 하단 빠른 실행 바 (시약 검색/재고 등록/견적 요청) 보존.
+ * 아래 단언은 **역방향**이다 — 은퇴한 기능이 조용히 되살아나는 것을 막는다.
  */
 
 import { describe, it, expect } from "vitest";
@@ -25,60 +23,13 @@ function safeRead(p: string): string {
   return existsSync(p) ? readFileSync(p, "utf8") : "";
 }
 
-const PAGE_PATH = resolve(__dirname, "../../app/dashboard/page.tsx");
-const code = safeRead(PAGE_PATH);
+const code = safeRead(resolve(__dirname, "../../app/dashboard/page.tsx"));
 
-describe("§11.257 #1 — 모바일 인라인 운영 브리핑 link 추가", () => {
-  it("§11.257 trace marker", () => {
-    expect(code).toMatch(/§11\.257|11\.257/);
+describe("§11.257 은퇴 — 대시보드 운영 브리핑 진입점 재유입 차단", () => {
+  it("인라인 '운영 브리핑 보기' link 0", () => {
+    expect(code).not.toMatch(/운영\s*브리핑\s*보기/);
   });
-
-  it("Sparkles icon import 보존 (인라인 link icon)", () => {
-    expect(code).toMatch(/(Sparkles)(?=\s*,|\s*}|\s*from)/);
-  });
-
-  it("'운영 브리핑 보기' inline 라벨 + lg:hidden 분기", () => {
-    // §11.257 trace 인근에 "운영 브리핑 보기" + lg:hidden (모바일 only).
-    expect(code).toMatch(/§11\.257[\s\S]{0,2000}lg:hidden[\s\S]{0,500}운영\s*브리핑\s*보기|운영\s*브리핑\s*보기[\s\S]{0,500}lg:hidden|lg:hidden[\s\S]{0,500}§11\.257[\s\S]{0,500}운영/);
-  });
-
-  it("inline link 터치 타깃 min-h-[44px] 또는 h-11+ (Apple HIG)", () => {
-    expect(code).toMatch(/§11\.257[\s\S]{0,3000}(min-h-\[44px\]|h-11|h-12)/);
-  });
-
-  it("inline link onClick → useOperationalBriefPopup 사용 (canonical popup hook)", () => {
-    // useOperationalBriefPopup import + popup.open() 호출.
-    expect(code).toMatch(/useOperationalBriefPopup/);
-  });
-});
-
-describe("§11.257 #2 — FloatingEntry 데스크탑 한정 (모바일 hide)", () => {
-  it("OperationalBriefFloatingEntry mount 가 lg:block / hidden lg:* / max-lg:hidden 분기 wrap", () => {
-    // floating entry 가 lg+ 에서만 노출되도록 wrap.
-    expect(code).toMatch(/(hidden\s+lg:block|max-lg:hidden|lg:block[\s\S]{0,200}OperationalBriefFloatingEntry|OperationalBriefFloatingEntry[\s\S]{0,200}(hidden|lg:))/);
-  });
-
-  it("OperationalBriefFloatingEntry controls='operational-brief-popup' 보존", () => {
-    expect(code).toMatch(/OperationalBriefFloatingEntry[\s\S]{0,200}controls=["']operational-brief-popup["']/);
-  });
-});
-
-describe("§11.257 — invariant 보존", () => {
-  it("§11.181 trace 또는 운영 브리핑 floating entry comment 보존", () => {
-    expect(code).toMatch(/§11\.181|운영\s*브리핑\s*floating/);
-  });
-
-  it("모바일 하단 빠른 실행 바 보존 (시약 검색/재고 등록/견적 요청)", () => {
-    expect(code).toMatch(/시약\s*검색/);
-    expect(code).toMatch(/재고\s*등록/);
-    expect(code).toMatch(/견적\s*요청/);
-  });
-
-  it("AIInsightDialog 헤더 mount 보존", () => {
-    expect(code).toMatch(/AIInsightDialog/);
-  });
-
-  it("OperationalBriefFloatingEntry import 보존 (컴포넌트 자체 변경 0)", () => {
-    expect(code).toMatch(/OperationalBriefFloatingEntry/);
+  it("floating entry mount 0 (§main-dashboard-p0-honesty B6 와 동일 명제)", () => {
+    expect(code).not.toMatch(/<OperationalBriefFloatingEntry/);
   });
 });

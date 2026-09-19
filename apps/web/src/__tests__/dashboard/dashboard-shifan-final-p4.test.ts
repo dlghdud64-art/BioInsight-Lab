@@ -41,8 +41,16 @@ describe("§dashboard-shifan-adopt P4 (B) — 중단 2-col 반응형", () => {
   it("grid-cols-1 lg:grid-cols-2 (모바일 stack → 데스크탑 2-col): 예산&지출 + 지출트렌드 · 최근활동 풀폭", () => {
     // §dashboard-home-redesign P1 (호영님 시안) — 2-col = 예산&지출 ↔ 지출 트렌드(빠른작업 제거).
     //   최근활동은 2-col 아래 풀폭(가로 확대). 순서(예산→트렌드→최근활동) 보존.
-    expect(PAGE).toMatch(/grid grid-cols-1 lg:grid-cols-2[\s\S]{0,260}<BudgetSpendCard[\s\S]{0,800}<SpendTrendCard/);
-    expect(PAGE).toMatch(/<SpendTrendCard[\s\S]{0,700}<RecentActivityCard/);
+    // §main-dashboard-p0-honesty 2026-09-18 — 고정 폭 창 → 등장 순서(p3b 와 같은 재조준).
+    //   핸드오프 §1-5: 우측 = 트렌드 + 최근활동 세로 2장. 구 "최근활동 풀폭" 을 덮는다.
+    expect(PAGE).toMatch(/grid grid-cols-1 lg:grid-cols-2/);
+    const order = ["lg:grid-cols-2", "<BudgetSpendCard", "<SpendTrendCard", "<RecentActivityCard"];
+    let at = -1;
+    for (const t of order) {
+      const i = PAGE.indexOf(t, at + 1);
+      expect(i, `순서 위반: ${t}`).toBeGreaterThan(at);
+      at = i;
+    }
   });
   it("예산 카드 summarySection 단일 진실 주입(신규 fetch 0)", () => {
     expect(PAGE).toMatch(/<BudgetSpendCard[\s\S]{0,120}state=\{summarySection\.state\}/);
@@ -56,9 +64,28 @@ describe("§dashboard-shifan-adopt P4 (C) — 정직성 lock", () => {
     expect(BUD).toMatch(/summary\?\.derived\.budTone/);
   });
   it("예산 미설정 정직(가짜 집행률 0) — §B4: 설정 CTA는 NextStepBanner 단독(카드서 제거)", () => {
-    expect(BUD).toMatch(/예산 미설정/);
-    // §dashboard-shifan-polish B4 — 예산 설정 CTA 3곳→1곳: 배너 단독. 카드 내부 CTA 제거.
-    expect(BUD).not.toMatch(/href="\/dashboard\/budget"/);
+    // §main-dashboard-p0-honesty 2026-09-18 — 층위 재조준 (p3b:113 의 **쌍둥이 단언**).
+    //   ⚠️ 이 줄을 p3b 와 함께 고치지 않아 재게이트에서 1건 RED 로 남았다.
+    //      형태를 하나 고치면 같은 창의 형제 슬롯을 전수 훑는다(CLAUDE.md, 이 저장소 반복 형태).
+    //
+    //   (구) `toMatch(/예산 미설정/)` — 구현은 UI 문구를 `설정 전` 으로 바꿨는데 **주석의
+    //        "초기 상태(예산 미설정)" 이 대신 매칭**해 통과하고 있었다(4원칙 ④ 대체 매칭).
+    //        바이트가 우연히 맞은 것이지 명제가 지켜져서 통과한 게 아니다.
+    //   (신) 명제로 잰다: **미설정 분기가 정직 표기를 갖고, 집행률을 만들지 않는다.**
+    //   (구) CTA 금지가 파일 전체였다 — 핸드오프 §5 는 운영 분기에 `예산 관리 ›` 를 명시한다.
+    //        원 취지(빈 계정 예산 CTA 1곳)대로 **미설정 분기 한정**으로 좁힌다.
+    const i = BUD.indexOf("!isSet");
+    expect(i, "미설정 분기 없음").toBeGreaterThan(-1);
+    let d = 0, block = "";
+    const st = BUD.indexOf("{", i);
+    for (let k = st; k < BUD.length; k++) {
+      if (BUD[k] === "{") d++;
+      else if (BUD[k] === "}") { d--; if (d === 0) { block = BUD.slice(st, k + 1); break; } }
+    }
+    expect(block).toMatch(/설정 전/);
+    expect(block).not.toMatch(/집행/);
+    expect(block).not.toMatch(/usageRate/);
+    expect(block).not.toMatch(/href="\/dashboard\/budget"/);
     expect(BUD).not.toMatch(/MOCKUP|mockup/);
   });
   it("카테고리 도넛 가짜분포 0 — mockup const/예시 overlay/grayscale 제거", () => {

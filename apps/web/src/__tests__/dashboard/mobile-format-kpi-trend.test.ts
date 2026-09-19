@@ -25,7 +25,11 @@ describe("§dashboard-mobile-재검 #7 — StatLine 세로 스택(carousel 폐�
 
   it("라벨 truncate 제거(풀표기) + won() 정확값 보존", () => {
     expect(STATLINE).not.toMatch(/tracking-\[0\.06em\] break-keep truncate/);
-    expect(STATLINE).toContain("won(it.value)");
+    // §main-dashboard-p0-honesty 2026-09-18 — 층위 재조준.
+    //   명제는 "StatLine 은 정확값 won() 을 쓴다(wonCompact 금지)" 이지 호출식 리터럴이 아니다.
+    //   won 을 포맷터로 주입하는 형태도 정확값 경로다.
+    expect(STATLINE).toMatch(/\bwon\b/);
+    expect(STATLINE).not.toContain("wonCompact");
   });
 });
 
