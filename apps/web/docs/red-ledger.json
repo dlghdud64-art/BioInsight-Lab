@@ -229,7 +229,7 @@
       },
       {
         "cause": "empty-suite",
-        "verdict": "'No test suite found' — 다만 넷이 같은 성질은 아니다. budget-postgresql-contention 은 빈 파일이 아니라 790줄 스크립트이고 import 시점에 main() 이 돌아 DB 에 쓰려 했다(최상위 process.exit(1) 포함). 391173a0 에서 옵트인 뒤로 닫음 — 은퇴 판단은 별건. 나머지 3개는 D(버려진 파일). 출처: 2026-08-04 지도 + 2026-09-18 재판정.",
+        "verdict": "판정 정정(2026-09-19): 넷 다 빈 파일이 아니다. 전부 describe/it 이 없는 독립 실행 스크립트이고 import 시점에 본문이 돌며 실패 시 process.exit(1) 을 부른다 — vitest 워커 안에서는 워커를 죽인다. 'No test suite found' 는 증상이지 버려졌다는 뜻이 아니다. pipeline-e2e-verification(568줄·assert 58) · runtime-e2e-verification(312줄) · budget-lifecycle-wiring(300줄·assert 61)은 실제 명제를 담고 있고 어느 게이트도 이를 측정한 적이 없다. budget-postgresql-contention 은 391173a0 에서 옵트인 뒤로 닫았다. 네 파일의 은퇴/전환은 각각 별건으로 판단한다. 출처: 2026-08-04 지도 + 2026-09-19 재판정.",
         "count": 4,
         "files": [
           "src/lib/ai-pipeline/__tests__/pipeline-e2e-verification.test.ts",
