@@ -269,15 +269,52 @@ describe("§test-real-db-optin — 테스트의 실DB 접촉", () => {
     expect(walkTests("src")).toContain(SELF);
   });
 
-  it("실 PrismaClient 를 만드는 테스트는 전부 옵트인을 경유한다", () => {
+  /**
+   * 플래그 문자열이 파일 어딘가에 있다는 것은 가드가 아니다. 가장 흔한 회귀는
+   * "선언은 남기고 분기만 지움" 이다. 그래서 문는 것은 존재가 아니라 포함 관계다 —
+   * 실 PrismaClient 생성 지점이 `if (REAL_DB_OPT_IN …) { }` 블록 안에 있는가.
+   */
+  const FLAG = "REAL_DB_OPT_IN";
+  const MAKES_CLIENT = /new\s+Prisma\w*Client\w*\s*\(/g;
+
+  /** `if (REAL_DB_OPT_IN …) {` 블록의 [여는 중괄호, 닫는 중괄호] 구간들. */
+  function optInBlocks(code: string): Array<[number, number]> {
+    const out: Array<[number, number]> = [];
+    const opener = new RegExp(`if\\s*\\(\\s*${FLAG}\\b[^)]*\\)\\s*\\{`, "g");
+    let m: RegExpExecArray | null;
+    while ((m = opener.exec(code)) !== null) {
+      const open = m.index + m[0].length - 1;
+      let depth = 0;
+      let i = open;
+      for (; i < code.length; i++) {
+        if (code[i] === "{") depth += 1;
+        else if (code[i] === "}") {
+          depth -= 1;
+          if (depth === 0) break;
+        }
+      }
+      out.push([open, i]);
+    }
+    return out;
+  }
+
+  it("실 PrismaClient 생성은 전부 옵트인 블록 안에서만 일어난다", () => {
     const unguarded: string[] = [];
+    let sites = 0;
     for (const rel of TEST_FILES) {
       const code = stripComments(read(rel));
-      if (!/(?:require\(|from\s+)["']@prisma\/client["']/.test(code)) continue;
-      if (!/new\s+Prisma\w*Client\w*\s*\(/.test(code)) continue;
-      if (code.includes(OPT_IN)) continue;
-      unguarded.push(rel);
+      const blocks = optInBlocks(code);
+      MAKES_CLIENT.lastIndex = 0;
+      let m: RegExpExecArray | null;
+      while ((m = MAKES_CLIENT.exec(code)) !== null) {
+        sites += 1;
+        const at = m.index;
+        const inside = blocks.some(([a, b]) => at > a && at < b);
+        if (!inside) unguarded.push(`${rel}:${at}`);
+      }
     }
+    /* 0건 통과를 통과로 세지 않는다 — 실제 생성 지점이 있어야 이 축이 의미를 갖는다. */
+    expect(sites).toBeGreaterThanOrEqual(4);
     expect(unguarded).toEqual([]);
   });
 
@@ -297,9 +334,11 @@ describe("§test-real-db-optin — 테스트의 실DB 접촉", () => {
     expect(holders.length).toBeGreaterThan(0);
     for (const rel of holders) {
       const code = stripComments(read(rel));
-      /* 플래그는 반드시 명시적 "1" 비교로만 켜진다 — truthy 판정 금지 */
+      /* 플래그 이름이 반드시 그 env 에 묶인다 — 이름만 같고 값이 다른 상수 금지 */
       expect(code).toMatch(
-        new RegExp(`process\\.env\\.${OPT_IN}\\s*===\\s*["']1["']`),
+        new RegExp(
+          `(?:var|let|const)\\s+${FLAG}\\s*=\\s*process\\.env\\.${OPT_IN}\\s*===\\s*["']1["']`,
+        ),
       );
     }
   });

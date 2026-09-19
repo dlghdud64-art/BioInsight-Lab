@@ -330,43 +330,44 @@ function useConcurrentMock(reason) {
 describe("P2-4A Real PostgreSQL Multi-Process Contention", function () {
 
   beforeAll(function () {
-    // 옵트인이 아니면 실제 PostgreSQL 에 접속하지 않는다 — 클라이언트도 만들지 않는다.
-    if (!REAL_DB_OPT_IN) {
-      useConcurrentMock("AI_PIPELINE_REAL_DB 미설정 — CONCURRENT_MOCK");
-      return Promise.resolve();
-    }
-    // Attempt real PostgreSQL connection
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      var PrismaClientClass = require("@prisma/client").PrismaClient;
-      var realClient = new PrismaClientClass({ log: [] });
-      harness.client = realClient;
-      harness.mode = "REAL_POSTGRES";
-      harness.dbBackend = "postgresql";
+    // 실 PrismaClient 생성은 이 옵트인 블록 안에서만 일어난다.
+    // 검출기(§test-real-db-optin)가 무는 것은 플래그의 존재가 아니라 이 포함 관계다.
+    if (REAL_DB_OPT_IN) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        var PrismaClientClass = require("@prisma/client").PrismaClient;
+        var realClient = new PrismaClientClass({ log: [] });
+        harness.client = realClient;
+        harness.mode = "REAL_POSTGRES";
+        harness.dbBackend = "postgresql";
 
-      return realClient.$connect().then(function () {
-        harness.adapters = createPrismaAdapters(realClient);
-        harness.lockRepo = new PrismaLockRepository(realClient);
-        evidence.mode = "REAL_POSTGRES";
-        evidence.dbBackend = "postgresql";
-        // eslint-disable-next-line no-console
-        console.info("[P2-4A] Connected to REAL PostgreSQL");
+        return realClient.$connect().then(function () {
+          harness.adapters = createPrismaAdapters(realClient);
+          harness.lockRepo = new PrismaLockRepository(realClient);
+          evidence.mode = "REAL_POSTGRES";
+          evidence.dbBackend = "postgresql";
+          // eslint-disable-next-line no-console
+          console.info("[P2-4A] Connected to REAL PostgreSQL");
 
-        // Clean test-scoped data
-        return Promise.all([
-          realClient.$executeRawUnsafe('DELETE FROM "StabilizationLock" WHERE "lockKey" LIKE \'p2-4a:%\''),
-          realClient.$executeRawUnsafe('DELETE FROM "StabilizationBaseline" WHERE "canonicalSlot" = \'P2_4A_TEST\''),
-          realClient.$executeRawUnsafe('DELETE FROM "StabilizationAuthorityLine" WHERE "authorityLineId" LIKE \'p2-4a:%\''),
-          realClient.$executeRawUnsafe('DELETE FROM "StabilizationIncident" WHERE "incidentId" LIKE \'p2-4a:%\''),
-          realClient.$executeRawUnsafe('DELETE FROM "StabilizationSnapshot" WHERE "baselineId" LIKE \'p2-4a:%\''),
-        ]);
-      }).catch(function () {
-        useConcurrentMock("PostgreSQL unavailable — using CONCURRENT_MOCK");
-      });
-    } catch (_e) {
-      useConcurrentMock("PrismaClient not available — using CONCURRENT_MOCK");
-      return Promise.resolve();
+          // Clean test-scoped data
+          return Promise.all([
+            realClient.$executeRawUnsafe('DELETE FROM "StabilizationLock" WHERE "lockKey" LIKE \'p2-4a:%\''),
+            realClient.$executeRawUnsafe('DELETE FROM "StabilizationBaseline" WHERE "canonicalSlot" = \'P2_4A_TEST\''),
+            realClient.$executeRawUnsafe('DELETE FROM "StabilizationAuthorityLine" WHERE "authorityLineId" LIKE \'p2-4a:%\''),
+            realClient.$executeRawUnsafe('DELETE FROM "StabilizationIncident" WHERE "incidentId" LIKE \'p2-4a:%\''),
+            realClient.$executeRawUnsafe('DELETE FROM "StabilizationSnapshot" WHERE "baselineId" LIKE \'p2-4a:%\''),
+          ]);
+        }).catch(function () {
+          useConcurrentMock("PostgreSQL unavailable — using CONCURRENT_MOCK");
+        });
+      } catch (_e) {
+        useConcurrentMock("PrismaClient not available — using CONCURRENT_MOCK");
+        return Promise.resolve();
+      }
     }
+
+    useConcurrentMock("AI_PIPELINE_REAL_DB 미설정 — CONCURRENT_MOCK");
+    return Promise.resolve();
   });
 
   afterAll(function () {

@@ -35,12 +35,15 @@ if (REAL_DB_OPT_IN && DIRECT_URL && DIRECT_URL.includes(":6543")) {
   console.warn("⚠️ pgbouncer URL detected — SERIALIZABLE may not work. Use DIRECT_URL (port 5432).");
 }
 
-const db = REAL_DB_OPT_IN && DIRECT_URL
-  ? new PrismaClient({
-      datasourceUrl: DIRECT_URL,
-      log: [], // 운영 로그 off
-    })
-  : (null as unknown as PrismaClient);
+// 실 PrismaClient 생성은 이 옵트인 블록 안에서만 일어난다.
+// 검출기(§test-real-db-optin)가 무는 것은 플래그의 존재가 아니라 이 포함 관계다.
+let db = null as unknown as PrismaClient;
+if (REAL_DB_OPT_IN && DIRECT_URL) {
+  db = new PrismaClient({
+    datasourceUrl: DIRECT_URL,
+    log: [], // 운영 로그 off
+  });
+}
 
 // ── 테스트 식별자 ──
 const TEST_PREFIX = `__test_contention_${Date.now()}`;
