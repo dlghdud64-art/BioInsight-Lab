@@ -10,6 +10,7 @@
  */
 
 import { describe, it, expect } from "vitest";
+import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
@@ -95,7 +96,15 @@ describe("§11.314-b — generate-pdf route", () => {
 
   it("audit log graceful (DATA_EXPORTED + quote_pdf_generate, §11.345-B 재분류)", () => {
     const src = read(ROUTE_PATH);
-    expect(src).toMatch(/createAuditLog/);
+    // 🛑 §audit-logger-homonym (2026-09-20) — 같은 이름의 헬퍼가 둘이고 **쓰는 테이블이 다르다.**
+    //   createAuditLog@lib/audit/audit-logger → AuditLog · createAuditLog@lib/audit → DataAuditLog.
+    //   이름만 물면 어느 쪽인지 안 갈린다. 호출 형태 + import 경로를 함께 문다(주석 제거본 기준 —
+    //   경계 없는 /createAuditLog/ 는 **주석에도** 걸린다).  이 단언이 무는 테이블: AuditLog
+    const auditCode = stripComments(src);
+    expect(auditCode).toMatch(/\bcreateAuditLog\(/);
+    expect(auditCode).toMatch(
+      /import\s*\{[^}]*\bcreateAuditLog\b[^}]*\}\s*from\s*["']@\/lib\/audit\/audit-logger["']/,
+    );
     // §11.345-B: PDF 생성은 설정 변경 아니라 내보내기 → DATA_EXPORTED 로 재분류.
     expect(src).toMatch(/eventType:\s*"DATA_EXPORTED"/);
     expect(src).not.toMatch(/eventType:\s*"SETTINGS_CHANGED"/);

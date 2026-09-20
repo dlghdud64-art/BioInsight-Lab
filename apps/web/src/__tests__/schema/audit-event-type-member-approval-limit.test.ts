@@ -9,6 +9,7 @@
  */
 
 import { describe, it, expect } from "vitest";
+import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
@@ -74,7 +75,15 @@ describe("#approver-routing-per-user-limit-audit-log — route audit", () => {
 
   it("createAuditLog import (lib/audit)", () => {
     const src = read(ROUTE);
-    expect(src).toMatch(/createAuditLog/);
+    // 🛑 §audit-logger-homonym (2026-09-20) — 같은 이름의 헬퍼가 둘이고 **쓰는 테이블이 다르다.**
+    //   createAuditLog@lib/audit/audit-logger → AuditLog · createAuditLog@lib/audit → DataAuditLog.
+    //   이름만 물면 어느 쪽인지 안 갈린다. 호출 형태 + import 경로를 함께 문다(주석 제거본 기준 —
+    //   경계 없는 /createAuditLog/ 는 **주석에도** 걸린다).  이 단언이 무는 테이블: AuditLog
+    const auditCode = stripComments(src);
+    expect(auditCode).toMatch(/\bcreateAuditLog\(/);
+    expect(auditCode).toMatch(
+      /import\s*\{[^}]*\bcreateAuditLog\b[^}]*\}\s*from\s*["']@\/lib\/audit\/audit-logger["']/,
+    );
   });
 
   it("eventType: MEMBER_APPROVAL_LIMIT_CHANGED 명시", () => {
@@ -87,7 +96,15 @@ describe("#approver-routing-per-user-limit-audit-log — route audit", () => {
     // approvalLimit !== undefined 분기 + createAuditLog 호출 (다른 field 단독
     // 변경 시 skip lock). source 안에 둘 다 명시.
     expect(src).toMatch(/approvalLimit\s*!==\s*undefined/);
-    expect(src).toMatch(/createAuditLog/);
+    // 🛑 §audit-logger-homonym (2026-09-20) — 같은 이름의 헬퍼가 둘이고 **쓰는 테이블이 다르다.**
+    //   createAuditLog@lib/audit/audit-logger → AuditLog · createAuditLog@lib/audit → DataAuditLog.
+    //   이름만 물면 어느 쪽인지 안 갈린다. 호출 형태 + import 경로를 함께 문다(주석 제거본 기준 —
+    //   경계 없는 /createAuditLog/ 는 **주석에도** 걸린다).  이 단언이 무는 테이블: AuditLog
+    const auditCode = stripComments(src);
+    expect(auditCode).toMatch(/\bcreateAuditLog\(/);
+    expect(auditCode).toMatch(
+      /import\s*\{[^}]*\bcreateAuditLog\b[^}]*\}\s*from\s*["']@\/lib\/audit\/audit-logger["']/,
+    );
   });
 
   it("changes.before / changes.after 명시 (approvalLimit before/after)", () => {

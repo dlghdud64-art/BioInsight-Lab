@@ -114,9 +114,17 @@ describe("§11.309c — 분기 A (기존 inventoryId)", () => {
     expect(src).toMatch(/buildExtractedData\(\s*EXTRACTED_SHAPE\.SINGLE,\s*confirmedData/);
   });
 
-  it("createAuditLog INVENTORY_RESTOCK CREATE (기존 분기)", () => {
+  it("createDataAuditLog INVENTORY_RESTOCK CREATE (기존 분기 · DataAuditLog 축)", () => {
     const src = read(ROUTE_PATH);
-    expect(src).toMatch(/createAuditLog/);
+    // 🛑 §audit-logger-homonym (2026-09-20) — 같은 이름의 헬퍼가 둘이고 **쓰는 테이블이 다르다.**
+    //   createAuditLog@lib/audit/audit-logger → AuditLog · createAuditLog@lib/audit → DataAuditLog.
+    //   이름만 물면 어느 쪽인지 안 갈린다. 호출 형태 + import 경로를 함께 문다(주석 제거본 기준 —
+    //   경계 없는 /createAuditLog/ 는 **주석에도** 걸린다).  이 단언이 무는 테이블: DataAuditLog
+    const auditCode = stripComments(src);
+    expect(auditCode).toMatch(/\bcreateDataAuditLog\(/);
+    expect(auditCode).toMatch(
+      /import\s*\{[^}]*\bcreateDataAuditLog\b[^}]*\}\s*from\s*["']@\/lib\/audit["']/,
+    );
     expect(src).toMatch(/AuditAction\.CREATE/);
     expect(src).toMatch(/AuditEntityType\.INVENTORY_RESTOCK/);
     expect(src).toMatch(/source:\s*["']smart_receiving["']/);

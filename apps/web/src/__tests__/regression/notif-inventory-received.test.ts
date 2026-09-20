@@ -9,6 +9,7 @@
  *   dead 알림 0(buildNotificationHref INVENTORY 커버 기존). sentinel(readFileSync+regex).
  */
 import { describe, it, expect } from "vitest";
+import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -67,7 +68,15 @@ describe("알림 — 회귀 0", () => {
   it("smart-receiving 기존 transaction/audit/응답 보존", () => {
     const src = read(ROUTE);
     expect(src).toMatch(/db\.\$transaction/);
-    expect(src).toMatch(/createAuditLog/);
+    // 🛑 §audit-logger-homonym (2026-09-20) — 같은 이름의 헬퍼가 둘이고 **쓰는 테이블이 다르다.**
+    //   createAuditLog@lib/audit/audit-logger → AuditLog · createAuditLog@lib/audit → DataAuditLog.
+    //   이름만 물면 어느 쪽인지 안 갈린다. 호출 형태 + import 경로를 함께 문다(주석 제거본 기준 —
+    //   경계 없는 /createAuditLog/ 는 **주석에도** 걸린다).  이 단언이 무는 테이블: DataAuditLog
+    const auditCode = stripComments(src);
+    expect(auditCode).toMatch(/\bcreateDataAuditLog\(/);
+    expect(auditCode).toMatch(
+      /import\s*\{[^}]*\bcreateDataAuditLog\b[^}]*\}\s*from\s*["']@\/lib\/audit["']/,
+    );
     expect(src).toMatch(/isNew:\s*false/);
     expect(src).toMatch(/isNew:\s*true/);
   });
