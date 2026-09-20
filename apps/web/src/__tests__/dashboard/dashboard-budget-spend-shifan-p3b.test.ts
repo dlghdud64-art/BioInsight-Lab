@@ -19,6 +19,8 @@ const read = (rel: string) => readFileSync(join(REPO_ROOT, rel), "utf8");
 const PAGE = read("src/app/dashboard/page.tsx");
 const BUD = read("src/components/dashboard/budget-spend-card.tsx");
 const CAT = read("src/components/dashboard/category-distribution-card.tsx");
+// §main-dashboard-p0-honesty P1-6 — 블록 창 공용화.
+import { blockAfter } from "../_helpers/block-window";
 /**
  * §main-dashboard-p0-honesty 2026-09-18 — 고정 폭 창 폐기.
  *   (구) `lg:grid-cols-2[\s\S]{0,260}<BudgetSpendCard[\s\S]{0,800}<SpendTrendCard`
@@ -102,15 +104,8 @@ describe("§dashboard-shifan-adopt P3b (B) — 예산 카드 정직(canonical �
     //   원 결정의 취지는 "**빈 계정**에서 예산 CTA 3곳 → 배너 1곳" 이다. 파일 전체 금지는 그 취지보다 넓었다.
     //   핸드오프 §5 는 운영 상태 카드에 `예산 관리 ›` 를 명시한다(설정 뒤의 관리 동선 = 다른 것).
     //   → 미설정 분기 안에서만 금지한다. 취지는 그대로, 글자만 좁힌다.
-    const i = BUD.indexOf("!isSet");
-    expect(i, "미설정 분기 없음").toBeGreaterThan(-1);
-    let d = 0, block = "";
-    const st = BUD.indexOf("{", i);
-    for (let k = st; k < BUD.length; k++) {
-      if (BUD[k] === "{") d++;
-      else if (BUD[k] === "}") { d--; if (d === 0) { block = BUD.slice(st, k + 1); break; } }
-    }
-    expect(block).not.toMatch(/href="\/dashboard\/budget"/);
+    expect(BUD.indexOf("!isSet"), "미설정 분기 없음").toBeGreaterThan(-1);
+    expect(blockAfter(BUD, "!isSet")).not.toMatch(/href="\/dashboard\/budget"/);
   });
   it("mock/하드코딩 분포 0", () => {
     expect(BUD).not.toMatch(/MOCKUP|mockup/);

@@ -20,6 +20,8 @@ const read = (rel: string) => readFileSync(join(ROOT, rel), "utf8");
 const PAGE = read("src/app/dashboard/page.tsx");
 const BUD = read("src/components/dashboard/budget-spend-card.tsx");
 const CAT = read("src/components/dashboard/category-distribution-card.tsx");
+// §main-dashboard-p0-honesty P1-6 — 블록 창 공용화.
+import { blockAfter } from "../_helpers/block-window";
 const idx = (s: string): number => PAGE.indexOf(s);
 
 // ── (A) 시안 단일 흐름 순서 ──────────────────────────────────────────────
@@ -74,14 +76,8 @@ describe("§dashboard-shifan-adopt P4 (C) — 정직성 lock", () => {
     //   (신) 명제로 잰다: **미설정 분기가 정직 표기를 갖고, 집행률을 만들지 않는다.**
     //   (구) CTA 금지가 파일 전체였다 — 핸드오프 §5 는 운영 분기에 `예산 관리 ›` 를 명시한다.
     //        원 취지(빈 계정 예산 CTA 1곳)대로 **미설정 분기 한정**으로 좁힌다.
-    const i = BUD.indexOf("!isSet");
-    expect(i, "미설정 분기 없음").toBeGreaterThan(-1);
-    let d = 0, block = "";
-    const st = BUD.indexOf("{", i);
-    for (let k = st; k < BUD.length; k++) {
-      if (BUD[k] === "{") d++;
-      else if (BUD[k] === "}") { d--; if (d === 0) { block = BUD.slice(st, k + 1); break; } }
-    }
+    expect(BUD.indexOf("!isSet"), "미설정 분기 없음").toBeGreaterThan(-1);
+    const block = blockAfter(BUD, "!isSet");
     expect(block).toMatch(/설정 전/);
     expect(block).not.toMatch(/집행/);
     expect(block).not.toMatch(/usageRate/);

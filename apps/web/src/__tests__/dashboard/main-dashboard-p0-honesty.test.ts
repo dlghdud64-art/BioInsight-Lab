@@ -32,6 +32,8 @@ import {
 } from "@/lib/dashboard/p0-display";
 import { budTone, deriveDashboardSummary } from "@/lib/dashboard/summary-derive";
 import { violations } from "../_helpers/em-dash-scan";
+// §main-dashboard-p0-honesty P1-6 — 블록 창 공용화(같은 루프가 저장소에 20곳 넘게 복사돼 있었다).
+import { blockFrom, blockAfter } from "../_helpers/block-window";
 
 const REPO_ROOT = join(__dirname, "..", "..", "..");
 function read(rel: string): string {
@@ -61,19 +63,6 @@ const SURFACES = [
   BANNER, INBOX, GLOBAL_EMPTY, RECENT, TREND, CATEGORY,
 ];
 
-/** 여는 토큰부터 대응 닫는 중괄호까지 — 길이에 좌우되지 않는 창(4원칙 ⑤). */
-function blockFrom(src: string, openIdx: number, open = "{", close = "}"): string {
-  if (openIdx < 0) return "";
-  let depth = 0;
-  for (let i = openIdx; i < src.length; i++) {
-    if (src[i] === open) depth++;
-    else if (src[i] === close) {
-      depth--;
-      if (depth === 0) return src.slice(openIdx, i + 1);
-    }
-  }
-  return src.slice(openIdx);
-}
 
 // ═══════════════════════════════════════════════════════════════
 // 축 A — 행동 (순수 파생. 명제를 직접 잰다)
@@ -299,9 +288,8 @@ describe("B2 BudgetSpendCard · 도넛이 게이트 안에 있다", () => {
 describe("B3 BudgetSpendCard · 미설정 분기에 CTA 0 (§dashboard-shifan-polish B4 승계)", () => {
   it("예산 설정 동선은 배너 단독 소유", () => {
     const src = read(BUDGET_CARD);
-    const idx = src.indexOf("!isSet");
-    expect(idx, "미설정 분기 없음").toBeGreaterThan(-1);
-    const block = blockFrom(src, src.indexOf("{", idx));
+    expect(src.indexOf("!isSet"), "미설정 분기 없음").toBeGreaterThan(-1);
+    const block = blockAfter(src, "!isSet");
     expect(block).not.toMatch(/<a\s/);
     expect(block).not.toMatch(/<Link\s/);
     expect(block).not.toMatch(/<button\s/);

@@ -25,21 +25,12 @@ const SRC = readFileSync(
   "utf8",
 );
 
-/** 값 <p> 여는 태그부터 대응 닫는 중괄호까지 — 클래스 순서·길이에 좌우되지 않는 창. */
-function valueClassBlock(src: string): string {
-  const i = src.indexOf("font-black tracking-normal");
-  if (i < 0) return "";
-  const open = src.lastIndexOf("className={`", i);
-  let depth = 0;
-  for (let k = open + "className=".length; k < src.length; k++) {
-    if (src[k] === "{") depth++;
-    else if (src[k] === "}") {
-      depth--;
-      if (depth === 0) return src.slice(open, k + 1);
-    }
-  }
-  return src.slice(open);
-}
+// §main-dashboard-p0-honesty P1-6 — 로컬 복사본을 공용 블록 창으로 교체(동작 동일).
+import { blockEnclosing } from "../_helpers/block-window";
+
+/** 값 <p> 의 className 표현식 전체 — 클래스 순서·길이에 좌우되지 않는 창. */
+const valueClassBlock = (src: string) =>
+  blockEnclosing(src, "font-black tracking-normal", "className={`");
 
 describe("§dashboard-kpi-won-glyph — ₩ 글리프 겹침 수정", () => {
   it("값 <p> 는 tracking-normal (tracking-tighter 제거)", () => {
