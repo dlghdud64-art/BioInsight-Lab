@@ -407,22 +407,12 @@ const PRIORITY_OPTIONS = [
   { value: "high", label: "높음", description: "업무 진행 차단 이슈" },
 ];
 
-const MOCK_TICKETS = [
-  {
-    id: "TK-001", title: "견적 요청 메일이 벤더에게 전송되지 않습니다", category: "quote",
-    status: "answered", createdAt: "2026-03-08", answeredAt: "2026-03-09",
-    // §4 — 답변 본문(실제 원인·조치). "담당자가 답변을 등록했습니다" 요약 대체.
-    answerBody: "벤더 이메일 주소에 오타가 있어 메일이 반송되었습니다. 공급사 정보에서 이메일 주소를 수정한 뒤 재발송하시면 정상 전송됩니다. 재발 방지를 위해 발송 전 주소 유효성 검증 단계를 추가했습니다.",
-    slaHours: null as number | null,
-  },
-  {
-    id: "TK-002", title: "CSV 업로드 시 일부 행이 누락됩니다", category: "purchase",
-    status: "in_progress", createdAt: "2026-03-10", answeredAt: null,
-    answerBody: null as string | null,
-    // §4 — 진행 중 티켓 SLA(약 N시간 내 1차 답변 예정).
-    slaHours: 3,
-  },
-];
+/* 🛑 §support-center-fabricated-tickets (2026-09-20 · 릴레이 판정)
+   여기 있던 MOCK_TICKETS 2건(TK-001 답변 완료 · TK-002 확인 중)은 데이터가 아니라 문안이었다.
+   특히 TK-001 의 답변 본문은 "재발 방지를 위해 발송 전 주소 유효성 검증 단계를 추가했습니다" 로,
+   하지 않은 조치를 고객에게 한 답변처럼 보여주고 있었다. 지웠다.
+   실제 접수는 POST /api/support/inquiry → ContactInquiry 로 저장된다(접수번호 발급, prod 3행).
+   읽는 API 가 없어서 이 화면은 접수 내역을 그릴 수 없다 — 목록 대신 그 사실을 적는다. */
 
 /* ═══════════════════════════════════════════════════════════════════
    메인 컴포넌트
@@ -511,24 +501,21 @@ export default function SupportCenterPage() {
   // ⌘K 결과 — 매뉴얼 / 문제 해결 / 티켓 3그룹 실시간 필터
   const cmdkResults = useMemo(() => {
     const q = cmdkQuery.trim().toLowerCase();
-    if (!q) return { manual: [], troubleshoot: [], ticket: [], total: 0 };
+    if (!q) return { manual: [], troubleshoot: [], total: 0 };
     const manual = GUIDE_ENTRIES.filter(
       (e) => e.title.toLowerCase().includes(q) || e.what.toLowerCase().includes(q) || e.when.toLowerCase().includes(q),
     ).slice(0, 6);
     const troubleshoot = RUNBOOK_ITEMS.filter(
       (r) => r.symptom.toLowerCase().includes(q) || r.possibleCauses.some((c) => c.toLowerCase().includes(q)),
     ).slice(0, 6);
-    const ticket = MOCK_TICKETS.filter(
-      (t) => t.title.toLowerCase().includes(q) || t.id.toLowerCase().includes(q),
-    ).slice(0, 4);
-    return { manual, troubleshoot, ticket, total: manual.length + troubleshoot.length + ticket.length };
+    // 티켓 그룹 은퇴 — 접수 내역을 읽는 API 가 없어 검색할 대상이 없다(§support-center-fabricated-tickets).
+    return { manual, troubleshoot, total: manual.length + troubleshoot.length };
   }, [cmdkQuery]);
 
-  // 결과 클릭 = 해당 탭으로 이동(딥링크). 티켓은 상세 선택 param 주입.
-  const goToResult = (type: TabId, opts?: { ticketId?: string; category?: string }) => {
+  // 결과 클릭 = 해당 탭으로 이동(딥링크). ticketId 딥링크는 은퇴 — 가리킬 티켓이 없다.
+  const goToResult = (type: TabId) => {
     const params = new URLSearchParams(searchParams?.toString() ?? "");
     params.set("tab", type);
-    if (opts?.ticketId) params.set("ticketId", opts.ticketId);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     setActiveTab(type);
     setIsCmdkOpen(false);
@@ -678,20 +665,6 @@ export default function SupportCenterPage() {
                           <div className="min-w-0">
                             <p className="text-[13px] font-bold text-slate-800 truncate">{r.symptom}</p>
                             <p className="text-[11px] text-slate-400 truncate">{r.impact}</p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {cmdkResults.ticket.length > 0 && (
-                    <div className="mb-1">
-                      <p className="px-5 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">지원 티켓</p>
-                      {cmdkResults.ticket.map((t) => (
-                        <button key={t.id} onClick={() => goToResult("ticket", { ticketId: t.id })} className="w-full text-left px-5 py-2.5 hover:bg-slate-50 flex items-start gap-3 transition-colors motion-reduce:transition-none">
-                          <MessageSquare className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
-                          <div className="min-w-0">
-                            <p className="text-[13px] font-bold text-slate-800 truncate">{t.title}</p>
-                            <p className="text-[11px] font-mono text-slate-400 truncate">{t.id}</p>
                           </div>
                         </button>
                       ))}
@@ -1401,21 +1374,11 @@ function TicketTab() {
   const srcLabel = searchParams?.get("sourceLabel") ?? null;
   const ticketTitleParam = searchParams?.get("ticketTitle") ?? null;
   const ticketBodyParam = searchParams?.get("ticketBody") ?? null;
-  // §1 ⌘K 딥링크 — 티켓 상세 직접 선택(존재하는 티켓만).
-  const ticketIdParam = searchParams?.get("ticketId") ?? null;
-  const deepTicketId = ticketIdParam && MOCK_TICKETS.some((t) => t.id === ticketIdParam) ? ticketIdParam : null;
   // §3 프리필 — 런북에서 넘어온 티켓 카테고리(유효 TICKET_CATEGORIES 값만 채택).
   const ticketCategoryParam = searchParams?.get("ticketCategory") ?? null;
   const prefillCategory = ticketCategoryParam && TICKET_CATEGORIES.some((c) => c.value === ticketCategoryParam) ? ticketCategoryParam : "";
   const hasSourceContext = Boolean(srcFromRoute || srcEntityId || ticketTitleParam);
 
-  // 빈 상태 시 compose 기본 open, 티켓 있으면 첫 번째 자동 선택
-  const [view, setView] = useState<"list" | "compose">(
-    deepTicketId ? "list" : hasSourceContext || MOCK_TICKETS.length === 0 ? "compose" : "list",
-  );
-  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(
-    deepTicketId ?? (!hasSourceContext && MOCK_TICKETS.length > 0 ? MOCK_TICKETS[0].id : null),
-  );
   const [category, setCategory] = useState(prefillCategory);
   const [relatedResource, setRelatedResource] = useState(() => {
     if (srcEntityId) {
@@ -1498,7 +1461,6 @@ function TicketTab() {
         description: `접수번호: ${data.referenceId ?? "-"}. 영업일 기준 1일 이내 답변드립니다.`,
       });
       resetForm();
-      setView("list");
     } catch {
       toast({ title: "네트워크 오류", description: "잠시 후 다시 시도해 주세요.", variant: "destructive" });
     } finally {
@@ -1506,84 +1468,20 @@ function TicketTab() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "pending":
-        return (
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-slate-300 text-slate-500 bg-transparent gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 inline-block" />접수 대기
-          </Badge>
-        );
-      case "in_progress":
-        return (
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-blue-200 text-blue-600 bg-blue-50 gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block" />확인 중
-          </Badge>
-        );
-      case "answered":
-        return (
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-emerald-200 text-emerald-600 bg-emerald-50 gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />답변 완료
-          </Badge>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const getCategoryLabel = (val: string) => {
-    return TICKET_CATEGORIES.find((c) => c.value === val)?.label || val;
-  };
-
-  // ── Desktop: Queue (left) + Compose/Detail (right) split ──
-  // ── Mobile: list / compose / detail 단일 뷰 전환 ──
-
+  // ── 접수 내역 — §support-center-fabricated-tickets (2026-09-20) ──
+  //   여기에는 지어낸 티켓 2건이 목록·상세(상태 파이프라인·SLA·답변 본문)로 떠 있었다. 지웠다.
+  //   접수 자체는 저장된다(POST /api/support/inquiry → ContactInquiry · 접수번호 발급).
+  //   읽는 API 가 없어 이 화면은 그 내역을 그리지 못한다 — 그 사실을 그대로 적는다.
   const ticketQueueRail = (
     <div className="space-y-2">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">내 티켓</p>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 px-2.5 text-[11px] font-bold text-blue-600 hover:bg-blue-50"
-          onClick={() => { setView("compose"); setSelectedTicketId(null); }}
-        >
-          <Send className="h-3 w-3 mr-1" />새 문의
-        </Button>
+      <p className="text-[10px] uppercase tracking-wider text-slate-400 font-extrabold mb-3">접수 내역</p>
+      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3">
+        <p className="text-[11px] font-bold text-slate-500 mb-1">데이터 없음</p>
+        <p className="text-[10px] text-slate-400 leading-relaxed break-keep">
+          접수한 문의는 저장되고 접수번호를 드리지만, 지난 접수 내역을 이 화면으로 불러오는 기능은 아직 없습니다.
+          접수번호로 회신을 기다리시거나 고객 지원·문의로 확인해 주세요.
+        </p>
       </div>
-      {MOCK_TICKETS.length === 0 ? (
-        <div className="text-center py-8">
-          <MessageSquare className="h-6 w-6 text-slate-300 mx-auto mb-2" />
-          <p className="text-[11px] font-bold text-slate-500">접수한 문의가 없습니다</p>
-        </div>
-      ) : (
-        MOCK_TICKETS.map((ticket) => {
-          const isSelected = selectedTicketId === ticket.id;
-          return (
-            <button
-              key={ticket.id}
-              onClick={() => { setSelectedTicketId(ticket.id); setView("list"); }}
-              className={`w-full text-left rounded-xl border px-3.5 py-3 transition-all ${
-                isSelected
-                  ? "border-blue-300 bg-blue-50 ring-1 ring-blue-200 shadow-sm"
-                  : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className={`text-[11px] font-mono font-bold ${isSelected ? "text-blue-600" : "text-slate-500"}`}>{ticket.id}</span>
-                {getStatusBadge(ticket.status)}
-              </div>
-              <p className={`text-[13px] font-bold leading-snug truncate ${isSelected ? "text-slate-900" : "text-slate-700"}`}>{ticket.title}</p>
-              <div className="flex items-center gap-2 mt-1.5">
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-slate-200 text-slate-500 font-bold">
-                  {getCategoryLabel(ticket.category)}
-                </Badge>
-                <span className="text-[10px] text-slate-400">{ticket.createdAt}</span>
-              </div>
-            </button>
-          );
-        })
-      )}
       {/* 지원 안내 (compact) */}
       <div className="mt-4 rounded-xl bg-slate-50 border border-slate-200 p-3.5">
         <p className="text-[10px] font-extrabold text-slate-500 mb-1.5">지원 안내</p>
@@ -1592,81 +1490,6 @@ function TicketTab() {
       </div>
     </div>
   );
-
-  // §4 상태 파이프라인 (접수→배정→확인→답변→완료).
-  const TICKET_STAGES = ["접수", "배정", "확인", "답변", "완료"];
-  const stageIndexByStatus = (s: string) => (s === "answered" ? 4 : s === "in_progress" ? 2 : 0);
-
-  // 선택된 티켓 상세 — §4 파이프라인 + SLA + 답변 본문.
-  const selectedTicket = MOCK_TICKETS.find((t) => t.id === selectedTicketId);
-  const ticketDetailPanel = selectedTicket ? (
-    <div className="rounded-xl border border-slate-200 bg-white p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2.5">
-          <span className="text-[13px] font-mono font-bold text-slate-500">{selectedTicket.id}</span>
-          {getStatusBadge(selectedTicket.status)}
-        </div>
-        <span className="text-[11px] text-slate-400">{selectedTicket.createdAt}</span>
-      </div>
-      <h3 className="text-[17px] font-extrabold text-slate-900 mb-3 leading-snug">{selectedTicket.title}</h3>
-      <Badge variant="outline" className="text-[11px] px-2 py-0.5 border-slate-200 text-slate-500 font-bold mb-5">
-        {getCategoryLabel(selectedTicket.category)}
-      </Badge>
-
-      {/* §4 상태 파이프라인 + 계단식 fade-in */}
-      {(() => {
-        const cur = stageIndexByStatus(selectedTicket.status);
-        return (
-          <div className="flex items-start mb-5">
-            {TICKET_STAGES.map((label, i) => {
-              const done = i <= cur;
-              const isCurrent = i === cur && selectedTicket.status !== "answered";
-              return (
-                <div
-                  key={label}
-                  className="flex items-start flex-1 last:flex-none animate-in fade-in-0 slide-in-from-bottom-1 duration-300 motion-reduce:animate-none"
-                  style={{ animationDelay: `${i * 80}ms` }}
-                >
-                  <div className="flex flex-col items-center gap-1.5">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center border-2 ${done ? "bg-emerald-500 border-emerald-500" : isCurrent ? "bg-white border-blue-500" : "bg-white border-slate-200"}`}>
-                      {done ? <CheckCircle2 className="h-4 w-4 text-white" /> : <span className={`text-[10px] font-bold ${isCurrent ? "text-blue-600" : "text-slate-300"}`}>{i + 1}</span>}
-                    </div>
-                    <span className={`text-[10px] font-bold whitespace-nowrap ${done ? "text-emerald-600" : isCurrent ? "text-blue-600" : "text-slate-400"}`}>{label}</span>
-                  </div>
-                  {i < TICKET_STAGES.length - 1 && (
-                    <div className={`flex-1 h-0.5 mt-3.5 mx-1 ${i < cur ? "bg-emerald-400" : "bg-slate-200"}`} />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        );
-      })()}
-
-      {/* §4 SLA 배지 (진행 중 티켓) */}
-      {selectedTicket.status === "in_progress" && selectedTicket.slaHours != null && (
-        <div className="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3 mb-3 flex items-center gap-2">
-          <Clock className="h-4 w-4 text-blue-500 shrink-0" />
-          <span className="text-[13px] font-bold text-blue-700">약 {selectedTicket.slaHours}시간 내 1차 답변 예정</span>
-        </div>
-      )}
-
-      {/* §4 답변 본문 (실제 원인·조치 — "담당자가 답변을 등록했습니다" 요약 대체) */}
-      {selectedTicket.status === "answered" && selectedTicket.answeredAt && (
-        <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-4 mt-1">
-          <div className="flex items-center gap-2 mb-2">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-            <span className="text-[13px] font-extrabold text-emerald-700">답변 완료 ({selectedTicket.answeredAt})</span>
-          </div>
-          {selectedTicket.answerBody ? (
-            <p className="text-[13px] text-slate-700 leading-relaxed break-keep">{selectedTicket.answerBody}</p>
-          ) : (
-            <p className="text-[13px] text-emerald-600 leading-relaxed">담당자가 답변을 등록했습니다.</p>
-          )}
-        </div>
-      )}
-    </div>
-  ) : null;
 
   // ── Compose form (공통 — desktop/mobile 양쪽에서 사용) ──
   const composeForm = (
@@ -1741,7 +1564,6 @@ function TicketTab() {
             <Button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white font-extrabold h-11 px-8 gap-2 text-[14px] rounded-xl" disabled={isSubmitting}>
               {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" />접수 중...</> : <><Send className="h-4 w-4" />문의 접수하기</>}
             </Button>
-            <button type="button" onClick={() => setView("list")} className="text-xs text-slate-500 hover:text-slate-600">취소</button>
           </div>
         </form>
       </div>
@@ -1757,13 +1579,10 @@ function TicketTab() {
           <MessageCircle className="h-5 w-5 text-blue-300 shrink-0 mt-0.5" />
           <div className="min-w-0">
             <p className="text-[14px] font-extrabold">찾는 답이 없으신가요?</p>
-            <p className="text-[12px] text-slate-300 break-keep">매뉴얼·문제 해결로 해결되지 않으면 담당자에게 바로 문의하세요. 평일 09-18시 접수 · 영업일 기준 1일 이내 회신.</p>
+            <p className="text-[12px] text-slate-300 break-keep">매뉴얼·문제 해결로 해결되지 않으면 아래 양식으로 바로 문의하세요. 평일 09-18시 접수 · 영업일 기준 1일 이내 회신.</p>
           </div>
         </div>
         <div className="flex gap-2 shrink-0">
-          <Button size="sm" className="h-9 px-3 text-xs bg-white text-slate-900 hover:bg-slate-100 font-bold gap-1.5" onClick={() => { setView("compose"); setSelectedTicketId(null); }}>
-            <Send className="h-3.5 w-3.5" />새 문의 작성
-          </Button>
           <Link href="/support">
             <Button variant="outline" size="sm" className="h-9 px-3 text-xs bg-transparent border-slate-700 text-slate-200 hover:bg-slate-800 hover:text-white gap-1.5">
               <LifeBuoy className="h-3.5 w-3.5" />고객 지원·문의
@@ -1773,86 +1592,24 @@ function TicketTab() {
       </div>
 
       <div className="flex gap-6">
-      {/* 좌측 큐 (desktop only) — 확장 */}
-      <nav className="hidden md:block w-72 flex-shrink-0">
-        <div className="sticky top-4">{ticketQueueRail}</div>
-      </nav>
+        {/* 좌측 (desktop only) — 접수 내역 자리 */}
+        <nav className="hidden md:block w-72 flex-shrink-0">
+          <div className="sticky top-4">{ticketQueueRail}</div>
+        </nav>
 
-      {/* 모바일: list/compose/detail 단일 뷰 전환 */}
-      <div className="md:hidden w-full">
-        {view === "list" && !selectedTicketId && (
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-xs text-slate-500">접수한 문의를 확인하고 새 티켓을 작성할 수 있습니다.</p>
-              <Button onClick={() => setView("compose")} className="gap-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white h-9 px-4">
-                <Send className="h-3.5 w-3.5" />새 문의
-              </Button>
-            </div>
-            {ticketQueueRail}
-          </div>
-        )}
-        {view === "list" && selectedTicketId && ticketDetailPanel && (
-          <div>
-            <button onClick={() => setSelectedTicketId(null)} className="flex items-center gap-1 text-xs text-slate-500 mb-3">
-              <ChevronRight className="h-3 w-3 rotate-180" />목록으로
-            </button>
-            {ticketDetailPanel}
-          </div>
-        )}
-        {view === "compose" && (
-          <div>
-            <button onClick={() => { setView("list"); setSelectedTicketId(null); }} className="flex items-center gap-1 text-xs text-slate-500 mb-3">
-              <ChevronRight className="h-3 w-3 rotate-180" />목록으로
-            </button>
-            <h2 className="text-sm font-semibold text-slate-700 mb-4">새 문의 작성</h2>
-            {composeForm}
-          </div>
-        )}
-      </div>
+        {/* 모바일 — 목록/상세 뷰 전환 은퇴(그릴 목록이 없다). 작성 폼 + 안내. */}
+        <div className="md:hidden w-full">
+          <h2 className="text-sm font-semibold text-slate-700 mb-4">새 문의 작성</h2>
+          {composeForm}
+          <div className="mt-5">{ticketQueueRail}</div>
+        </div>
 
-      {/* 데스크탑 센터: compose 또는 detail */}
-      <div className="hidden md:block flex-1 min-w-0">
-        {view === "compose" ? (
-          <div>
-            <div className="flex items-center gap-3 mb-5">
-              {MOCK_TICKETS.length > 0 && (
-                <button
-                  onClick={() => { setView("list"); setSelectedTicketId(MOCK_TICKETS[0].id); }}
-                  className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-slate-600 transition-colors"
-                >
-                  <ChevronRight className="h-3 w-3 rotate-180" />
-                  목록으로
-                </button>
-              )}
-              <h2 className="text-[15px] font-extrabold text-slate-900">새 문의 작성</h2>
-            </div>
-            {composeForm}
-          </div>
-        ) : selectedTicketId && ticketDetailPanel ? (
-          <div>
-            {/* 상세 헤더에 새 문의 CTA */}
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[15px] font-extrabold text-slate-900">티켓 상세</h2>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-xs font-bold border-blue-200 text-blue-600 hover:bg-blue-50 h-8"
-                onClick={() => { setView("compose"); setSelectedTicketId(null); }}
-              >
-                <Send className="h-3 w-3" />새 문의 작성
-              </Button>
-            </div>
-            {ticketDetailPanel}
-          </div>
-        ) : (
-          /* 티켓 없을 때도 compose form 바로 노출 */
-          <div>
-            <h2 className="text-[15px] font-extrabold text-slate-900 mb-5">새 문의 작성</h2>
-            {composeForm}
-          </div>
-        )}
+        {/* 데스크탑 센터 — 작성 폼 */}
+        <div className="hidden md:block flex-1 min-w-0">
+          <h2 className="text-[15px] font-extrabold text-slate-900 mb-5">새 문의 작성</h2>
+          {composeForm}
+        </div>
       </div>
-    </div>
     </>
   );
 
