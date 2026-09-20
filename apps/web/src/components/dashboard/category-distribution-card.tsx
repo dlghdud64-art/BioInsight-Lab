@@ -99,17 +99,20 @@ export function CategoryDistributionCard({ categorySpending, className, bare }: 
       <div className="flex items-center justify-between mb-3">
         <div>
           {/* §main-dashboard-p0-honesty T3 (호영님 판정 2026-09-18) — 기간 병기.
-                  소스는 PurchaseRecord 최근 6개월(api/dashboard/stats/route.ts:283)인데
-                  같은 카드 상단은 이번 달이다. 기간을 적지 않으면 두 수가 같은 축으로 읽힌다. */}
-              <h3 className="text-[13px] font-extrabold text-slate-900">
-                카테고리별 비중 <span className="font-bold text-slate-400">· 최근 6개월</span>
-              </h3>
+              소스는 PurchaseRecord 최근 6개월(api/dashboard/stats/route.ts:283)인데
+              같은 카드 상단은 이번 달이다. 기간을 적지 않으면 두 수가 같은 축으로 읽힌다. */}
+          <h3 className="text-[13px] font-extrabold text-slate-900">
+            카테고리별 비중 <span className="font-bold text-slate-400">· 최근 6개월</span>
+          </h3>
           <p className="text-[11px] text-slate-500 mt-0.5">최근 누적 지출 분포</p>
         </div>
         {!isEmpty && (
           <div className="text-right">
+            {/* §main-dashboard-p0-honesty Smoke B (2026-09-20) — `총 지출` 은 전체 기간으로도 읽힌다.
+                실측: 예산 카드 상단 `₩0`(이번 달) 바로 아래 `총 지출 ₩850,000`(6개월)이 나란히 떴다.
+                제목에만 기간을 붙였더니 값 옆은 여전히 무기한이었다 — 값에 기간을 붙인다. */}
             <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
-              총 지출
+              6개월 지출
             </p>
             <p className="text-sm font-bold text-slate-900 tabular-nums">
               ₩{total.toLocaleString("ko-KR")}

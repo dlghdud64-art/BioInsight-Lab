@@ -117,7 +117,12 @@ export function buildPipelineChips(
   if ((q?.pending ?? 0) > 0) {
     quote.push({
       key: "quote-pending",
-      label: "회신 대기",
+      // §main-dashboard-p0-honesty Smoke D (2026-09-20) — 라벨 정정.
+      //   핸드오프 §4 예시가 `회신 대기` 였으나 `quote.pending` = status PENDING 이고,
+      //   착지 화면(/dashboard/quotes?status=PENDING)은 그 단계를 **발송 대기** 로 부른다.
+      //   아직 발송도 안 된 견적을 "회신 대기" 로 부르면 같은 것을 두 이름으로 말하는 것이다.
+      //   시안 문구보다 착지 화면 어휘가 이긴다 — 클릭해서 확인할 수 있는 쪽이 사실이다.
+      label: "발송 대기",
       count: q!.pending,
       tone: "yellow",
       href: "/dashboard/quotes?status=PENDING",

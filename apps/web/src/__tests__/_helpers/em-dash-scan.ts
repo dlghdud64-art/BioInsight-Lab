@@ -46,6 +46,11 @@ export function isPlaceholder(line: string, index: number): boolean {
   if (/["'`]—["'`]/.test(around)) return true;
   // ?? 또는 : 뒤 단독 값
   if (/(\?\?|:)\s*["'`]?—["'`]?\s*[,;)}\]]?\s*$/.test(line.slice(0, index + 2))) return true;
+  // §main-dashboard-p0-honesty 2026-09-20 — JSX 텍스트 노드 단독.
+  //   실측 오탐: spend-trend-card.tsx `<p className="…">—</p>` 를 구분자로 분류했다.
+  //   조항은 "문자열 전체가 — 이면 placeholder" 라고 적고 있고, JSX 텍스트 노드도 같은 형태다.
+  //   판별기가 조항보다 **넓으면** 멀쩡한 구현이 RED 가 된다 — 좁은 경우와 같은 무게의 결함이다.
+  if (/>\s*—\s*</.test(line.slice(Math.max(0, index - 40), index + 40))) return true;
   return false;
 }
 

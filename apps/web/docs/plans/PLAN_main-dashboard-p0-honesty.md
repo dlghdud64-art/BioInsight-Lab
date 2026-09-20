@@ -2,7 +2,7 @@
 
 - **Status:** 🔄 In Progress
 - **Started:** 2026-09-17
-- **Last Updated:** 2026-09-19 (Phase 2 게이트 종료)
+- **Last Updated:** 2026-09-20 (prod 배포 READY · Smoke 대기)
 - **Estimated Completion:** 2026-09-18
 - **Scope tag:** `§main-dashboard-p0-honesty`
 
@@ -457,6 +457,60 @@ em dash 조항은 주석을 제외하지만, **금지 식별자 단언은 파일
 
 ---
 
+### 🛑 배포 확인 기준값 정정 (2026-09-20)
+
+**내 Phase 3 지시문 0번이 틀렸다.** "`deployedCommit` 이 이번 커밋 SHA 와 일치" 로 적었는데, Vercel 은 **브랜치 끝 커밋 하나만** 배포한다. 이 트랙 커밋이 조상으로 들어간 채 다른 커밋이 끝에 있으면 `deployedCommit` 은 그 끝 커밋이 되고, 그대로 적용하면 **정상 배포를 실패로 오판**한다.
+
+```
+push 결과   77694f58..93e25ef5  main -> main   (exit 0)
+  e52846a3  §main-dashboard-p0-honesty (22파일)  ← 내가 게이트 전량을 돌려 쟀다
+  93e25ef5  fix(test): §test-real-db-optin      ← 다른 세션. 내가 잰 적 없다(동승, CLAUDE.md §3-②)
+Vercel 배포 대상 = 93e25ef5 (끝 커밋)
+```
+
+**올바른 기준**: `deployedCommit` 이 **`e52846a3` 을 조상으로 포함하는가**.
+```
+git merge-base --is-ancestor e52846a3 <deployedCommit> && echo REACHED
+```
+SHA 일치가 아니라 **도달 가능성(reachability)** 으로 판정한다. 병렬 세션 저장소에서는 내 커밋이 배포 끝 커밋인 경우가 오히려 드물다.
+
+### 🛑 병렬 세션 — 네 번째 실패 형태 (CLAUDE.md 조항에 없음, 2026-09-20 실측)
+
+push 3회 기록. **앞의 둘은 코드 결함이 아니었고, 진단이 각각 달랐다.**
+
+| 시도 | exit | 실제 원인 | 판별 |
+| :--- | :--- | :--- | :--- |
+| 1 | 4 | **push 실패가 아니다.** pre-push 훅의 빌드가 도는 중에 실행 명령이 10분 제한에 걸려 죽었다. 로그는 `Compiled successfully` 뒤 타입 검사 중 끊겼고 실패 마커 0 | exit code 를 git 의 판정으로 읽은 것이 오독. **로그 끝을 먼저 본다** |
+| 2 | 1 | 진짜 실패. pre-push prebuild 가 `migration-manifest.json` 을 열다 `errno -4094 UNKNOWN` | **빌드 산출물 파일의 동시 쓰기 잠금.** 다른 세션 빌드와 같은 파일을 동시에 건드렸다 |
+| 3 | 0 | 성공 | 재시도만으로 풀림 |
+
+**2번이 조항에 없던 형태다.** CLAUDE.md 병렬 세션 §3 의 "남의 **미커밋 파일**이 빌드를 깬다" 와 다르다 — 이쪽은 미커밋 소스가 아니라 **생성되는 산출물 파일의 락 경합**이다. `NEXT_DIST_DIR` 분리는 `.next` 만 가르고 `src/generated/migration-manifest.json` 은 공유한다.
+- 처방: **재시도.** 코드를 고치거나 `--no-verify` 로 넘기지 않는다.
+- 판별: 에러가 `migration-manifest.json` · `EBUSY` · `errno -4094` 면 경합. 내 트랙 파일 경로가 나오면 그때만 결함을 의심한다.
+
+**1번의 교훈은 측정 축이다.** `exit 4` 를 "push 거부" 로 읽었는데 실제로는 명령 중단값이었다. 긴 훅을 도는 명령은 백그라운드로 돌려 제한을 없애고, **exit code 를 읽기 전에 로그 끝을 본다**(CLAUDE.md 「판정은 재현 가능해야 한다」의 같은 뿌리 — grep 마커가 아니라 exit code 를 정본으로 하되, 그 exit code 가 **누구의 것인지** 먼저 가른다).
+
+### 기타 기록 (2026-09-20)
+
+- **prod 도메인은 `www.labaxis.co.kr`** 이다. `www.labaxis.app` 은 404. 배포 확인 URL 을 이 값으로 고정한다.
+- **pre-commit 게이트가 내 파일을 잡았다.** 신규 테스트 파일의 describe/it 제목에 em dash 13건. `·` 로 교체 후 통과. `--no-verify` 미사용. 게이트가 제 역할을 했다.
+- **stale `index.lock`** — 49분 된 0바이트 파일에 활성 git 프로세스 0. 근거 확인 후 제거했다. 병렬 3세션 환경의 잠재 위험.
+
+---
+
+### ✅ 배포 반영 확인 (2026-09-20)
+
+```
+Vercel  dpl_8ifHnhv…  state=READY  sha=93e25ef5
+/api/health  deployedCommit = 93e25ef51b1da228…
+git merge-base --is-ancestor e52846a3 93e25ef5  → REACHED
+```
+두 번 잰 값이 `77694f58` → `93e25ef5` 로 **움직였다** — 앞서 3분 30초 고정이던 것은 실패가 아니라 큐였다. 「배포 판정은 두 번 잰다」가 그대로 작동했다.
+
+**Phase 0~2 가 prod 에 반영됐다.** 남은 것은 Smoke 실측뿐이다.
+
+---
+
 ### Phase 3: Smoke / Rollback
 **Goal:** 두 계정 상태 · 두 뷰포트에서 회귀 0을 실증하고 복구 경로를 고정한다.
 - Status: [ ] Pending | [ ] In Progress | [ ] Complete
@@ -523,10 +577,10 @@ em dash 조항은 주석을 제외하지만, **금지 식별자 단언은 파일
 
 ## 11. Progress Tracking
 
-- Overall completion: 85% (Phase 0·1·2 완료 — 게이트 종료. 커밋·배포 후 Phase 3)
-- Current phase: Phase 3 (Smoke) 착수 대기 — 커밋·push·배포 반영 확인 선행
+- Overall completion: 95% (Phase 0·1·2 완료 · prod 배포 READY — Smoke 실측만 남음)
+- Current phase: Phase 3 (Smoke) — 배포 READY. 로그인 세션 확보 후 A~D 실측
 - Current blocker: 없음
-- Next validation step: 경로 지정 커밋 → push → `/api/health` deployedCommit 2회 읽기 → Smoke A~D
+- Next validation step: Smoke A~D + 다른 surface FAB 회귀 (로그인 필요)
 
 **Phase Checklist**
 - [x] Phase 0 complete

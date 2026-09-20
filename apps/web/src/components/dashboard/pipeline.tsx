@@ -140,7 +140,12 @@ export function Pipeline({ state, summary, onRetry }: PipelineProps) {
   // §purchasing-hide — 발주 stage 미정의 도메인 → off 시 파이프라인에서 제외(견적 → 입고 → 재고).
   //   buildStages 의 po 객체는 보존(소스 문자열 = sentinel GREEN), 렌더 목록만 필터.
   const stages = buildStages(summary).filter((s) => getFlag("ENABLE_PURCHASING") || s.key !== "po");
-  const gridColsClass = stages.length === 3 ? "grid-cols-3" : "grid-cols-2 md:grid-cols-4";
+  // §main-dashboard-p0-honesty Smoke C (2026-09-20) — 핸드오프 §6 미구현분 보완.
+  //   "모바일(<768px): 파이프라인 3카드 → 1열" 인데 grid-cols-3 이 모바일에도 걸려 있었다.
+  //   375px 에서 카드 폭 ~110px 인데 T4 가 붙인 상태 칩(`안전재고 미달 1`)이 그 폭을 넘는다.
+  //   Smoke C 를 못 돌려 화면으로는 안 드러났고, 핸드오프 원문 대조에서 잡혔다.
+  //   4단계(purchasing on)는 핸드오프 범위 밖이라 기존 2열 분기 보존.
+  const gridColsClass = stages.length === 3 ? "grid-cols-1 md:grid-cols-3" : "grid-cols-2 md:grid-cols-4";
   // §main-dashboard-p0-honesty T4 — 상태 칩(canonical summary 파생, 0건 칩 미생성 = dead button 0).
   const chipsByStage = buildPipelineChips(summary);
 

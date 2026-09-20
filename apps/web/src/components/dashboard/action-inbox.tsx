@@ -73,7 +73,7 @@ export function ActionInbox({ items, viewAllHref }: ActionInboxProps) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-4 flex items-center gap-2.5">
         <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-        <p className="text-[13px] text-slate-600 break-keep">처리할 항목 없음 — 즉시 조치가 필요한 작업이 없습니다.</p>
+        <p className="text-[13px] text-slate-600 break-keep">처리할 항목 없음 · 즉시 조치가 필요한 작업이 없습니다.</p>
       </div>
     );
   }

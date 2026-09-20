@@ -69,7 +69,7 @@ function deriveInsightCandidates(summary: DashboardSummary): Insight[] {
       icon: Wallet,
       eyebrow: "확인 필요",
       title: "예산 한도를 초과했습니다",
-      desc: `소진율 ${budget.usageRate.toFixed(0)}% — 추가 발주를 보류하고 예산을 점검하세요.`,
+      desc: `소진율 ${budget.usageRate.toFixed(0)}% · 추가 발주를 보류하고 예산을 점검하세요.`,
       cta: { label: "예산 관리", href: "/dashboard/budget" },
     });
   }
@@ -78,7 +78,7 @@ function deriveInsightCandidates(summary: DashboardSummary): Insight[] {
       id: "stock-short",
       icon: Boxes,
       eyebrow: "확인 필요",
-      title: `안전재고 미달 ${stockShort}건 — 재고 점검이 필요합니다`,
+      title: `안전재고 미달 ${stockShort}건 · 재고 점검이 필요합니다`,
       desc: "실험 일정에 영향을 줄 수 있는 품목이 있습니다. 재주문 후보를 확인하세요.",
       cta: { label: "재고 점검", href: "/dashboard/inventory?filter=low" },
     });
@@ -174,7 +174,9 @@ export function NextStepBanner({ summary }: NextStepBannerProps) {
           {ins.eyebrow}
         </span>
         <b className="font-bold text-white">{ins.title}</b>
-        <span style={{ color: "#c7d4ee" }}>{" — "}{ins.desc}</span>
+        {/* §main-dashboard-p0-honesty Smoke A (2026-09-20) — 화면 실측에서 잡힌 em dash 구분자.
+            §타이포 조항: UI 문구 구분자는 가운뎃점. 내 B7 SURFACES 가 5파일이라 이 배너를 안 봤다. */}
+        <span style={{ color: "#c7d4ee" }}>{" · "}{ins.desc}</span>
       </p>
       {ins.cta && (
         <a

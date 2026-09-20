@@ -43,7 +43,23 @@ const BUDGET_CARD = "src/components/dashboard/budget-spend-card.tsx";
 const PIPELINE = "src/components/dashboard/pipeline.tsx";
 const PAGE = "src/app/dashboard/page.tsx";
 const MOBILE = "src/components/dashboard/mobile-dashboard-view.tsx";
-const SURFACES = [STAT_LINE, BUDGET_CARD, PIPELINE, PAGE, MOBILE];
+const BANNER = "src/components/dashboard/next-step-banner.tsx";
+const INBOX = "src/components/dashboard/action-inbox.tsx";
+const GLOBAL_EMPTY = "src/components/dashboard/global-empty.tsx";
+const RECENT = "src/components/dashboard/recent-activity-card.tsx";
+const TREND = "src/components/dashboard/spend-trend-card.tsx";
+const CATEGORY = "src/components/dashboard/category-distribution-card.tsx";
+
+/**
+ * §main-dashboard-p0-honesty Smoke A (2026-09-20) — **표면 목록 확대**.
+ *   최초 5파일(값을 고친 것들)만 봤는데, prod 화면을 눈으로 보자 NextStepBanner 의
+ *   em dash 가 그대로 떠 있었다. 고친 파일이 아니라 **한 화면에 함께 렌더되는 파일 전부**가
+ *   조항의 축이다. 정적 단언이 화면보다 좁으면 Smoke 가 그 차이를 메운다 — 그게 이번에 일어났다.
+ */
+const SURFACES = [
+  STAT_LINE, BUDGET_CARD, PIPELINE, PAGE, MOBILE,
+  BANNER, INBOX, GLOBAL_EMPTY, RECENT, TREND, CATEGORY,
+];
 
 /** 여는 토큰부터 대응 닫는 중괄호까지 — 길이에 좌우되지 않는 창(4원칙 ⑤). */
 function blockFrom(src: string, openIdx: number, open = "{", close = "}"): string {
@@ -155,7 +171,8 @@ describe("A3 파이프라인 상태 칩 (핸드오프 §4)", () => {
   it("견적 · 회신 대기(yellow) · 비교 중(gray)", () => {
     const chips = buildPipelineChips(summaryWith({ quote: { total: 5, pending: 3, responded: 2 } }));
     expect(chips.quote.map((c) => [c.label, c.count, c.tone])).toEqual([
-      ["회신 대기", 3, "yellow"],
+      // Smoke D 실측(2026-09-20): 착지 화면이 이 단계를 `발송 대기` 로 부른다.
+      ["발송 대기", 3, "yellow"],
       ["비교 중", 2, "gray"],
     ]);
   });
@@ -346,6 +363,19 @@ describe("B7 회귀 · 신호등·타이포 (은퇴 sentinel 명제 승계)", ()
 
   it("Pipeline 0건 value 가독성 slate-500 보존 (visual-p3 승계)", () => {
     expect(read(PIPELINE)).toMatch(/text-slate-500/);
+  });
+});
+
+describe("B10 모바일 <768px — 핸드오프 §6", () => {
+  // Smoke C 를 이 환경에서 못 돌려(resize 가 뷰포트에 반영되지 않음) 화면으로는 확인하지 못했다.
+  // 실행 불가한 검사를 추정으로 통과시키지 않는다 — 대신 **핸드오프 원문 대조**로 정적 단언을 남긴다.
+  it("파이프라인 3카드는 모바일에서 1열", () => {
+    expect(read(PIPELINE)).toMatch(/grid-cols-1 md:grid-cols-3/);
+    // 모바일에도 3열이 걸리면 375px 에서 카드 폭 ~110px 이라 상태 칩이 넘친다.
+    expect(read(PIPELINE)).not.toMatch(/\?\s*"grid-cols-3"/);
+  });
+  it("2열 그리드는 모바일에서 1열(lg 이상에서만 2열)", () => {
+    expect(read(PAGE)).toMatch(/grid-cols-1 lg:grid-cols-2/);
   });
 });
 
