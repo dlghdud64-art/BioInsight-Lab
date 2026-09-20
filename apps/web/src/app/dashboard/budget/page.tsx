@@ -310,7 +310,7 @@ export default function BudgetPage() {
             <div className="grid grid-cols-1 gap-2">
               {[
                 { label: "즉시 확인", count: actionKpi.immediateReview, sub: "초과 항목 검토 필요" },
-                { label: "차단 위험", count: actionKpi.blockRisk, sub: "임계 구간 — 곧 차단 가능" },
+                { label: "차단 위험", count: actionKpi.blockRisk, sub: "임계 구간 · 곧 차단 가능" },
               ].filter((k) => k.count > 0).map((k) => (
                 <div key={k.label} className="bg-white rounded-xl border border-[#e6eaf0] px-3.5 py-3 flex items-center gap-3">
                   <div className="flex-1">
@@ -357,7 +357,7 @@ export default function BudgetPage() {
               valueColor: actionKpi.blockRisk > 0 ? "text-yellow-600" : "text-slate-900",
               label: "차단 위험",
               value: `${actionKpi.blockRisk}건`,
-              sub: actionKpi.blockRisk > 0 ? "임계 구간 — 곧 차단 가능" : "임계치 안전",
+              sub: actionKpi.blockRisk > 0 ? "임계 구간 · 곧 차단 가능" : "임계치 안전",
             },
           ].map((kpi) => (
             <div key={kpi.label} className={`min-w-[140px] snap-start shrink-0 sm:min-w-0 sm:shrink rounded-xl border p-3.5 sm:p-4 hover:shadow-sm transition-shadow ${kpi.cardBg}`}>
@@ -456,11 +456,6 @@ export default function BudgetPage() {
                 className="w-full pl-10 pr-4 py-2.5 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
               />
             </div>
-            <Link href="/dashboard/purchases">
-              <span className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 whitespace-nowrap">
-                미매핑 요청 보기 <ArrowUpRight className="h-3.5 w-3.5" />
-              </span>
-            </Link>
           </div>
         )}
 
@@ -634,7 +629,7 @@ function EmptyState({ onCreateClick }: { onCreateClick: () => void }) {
   const previews: { name: string; pct: number; colorClass: string; badge: string; badgeClass: string }[] = [
     { name: "2026 Q2 시약", pct: 55, colorClass: "text-emerald-500", badge: "정상", badgeClass: "text-emerald-600" },
     { name: "장비 구매", pct: 72, colorClass: "text-yellow-500", badge: "주의 구간", badgeClass: "text-yellow-600" },
-    { name: "공용 소모품", pct: 96, colorClass: "text-red-500", badge: "위험 — 차단 임계", badgeClass: "text-red-600" },
+    { name: "공용 소모품", pct: 96, colorClass: "text-red-500", badge: "위험 · 차단 임계", badgeClass: "text-red-600" },
   ];
   return (
     <div className="space-y-5">
@@ -690,7 +685,7 @@ function EmptyState({ onCreateClick }: { onCreateClick: () => void }) {
               <span className="w-6 h-6 rounded-full bg-slate-200 text-slate-600 text-xs font-bold flex items-center justify-center">2</span>
               <h4 className="text-sm font-semibold text-slate-900">자동 임계 경고</h4>
             </div>
-            <p className="text-[12px] text-slate-500 leading-relaxed mb-3">소진율에 따라 자동 분류됩니다 — 60% 주의 · 80% 위험 · 100% 초과.</p>
+            <p className="text-[12px] text-slate-500 leading-relaxed mb-3">소진율에 따라 자동 분류됩니다 · 60% 주의 · 80% 위험 · 100% 초과.</p>
             <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400">
               <Clock className="h-3.5 w-3.5" /> 예산 생성 시 자동 적용
             </span>

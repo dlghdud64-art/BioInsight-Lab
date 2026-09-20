@@ -1,5 +1,5 @@
 /**
- * POST /api/support/inquiry
+ * POST /api/support/inquiry  (퍼블릭 인입)  ·  GET /api/support/inquiry  (본인 접수 내역)
  *
  * 퍼블릭 문의 인입 API — 로그인 불필요.
  * ContactInquiry 레코드를 생성하고 referenceId를 반환한다.
@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/email/sender";
+import { auth } from "@/auth";
 
 const VALID_INQUIRY_TYPES = ["service", "pricing", "sourcing", "account"];
 
@@ -47,6 +48,52 @@ function generateReferenceId(): string {
   ].join("");
   const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
   return `INQ-${datePart}-${randomPart}`;
+}
+
+/**
+ * GET /api/support/inquiry — 로그인 사용자 **본인**의 접수 내역.
+ *
+ * 왜 필요한가: 접수는 저장되는데(ContactInquiry) 읽는 경로가 없어서, 사용자가 자기 문의를
+ * 다시 볼 수 없었다. 그 공백을 지어낸 티켓 2건이 메우고 있었다(§support-center-fabricated-tickets).
+ *
+ * 🛑 스코프 = 세션 이메일 한 건. ContactInquiry 에는 userId 열이 없고(퍼블릭 폼이 먼저 생겼다)
+ *    열 추가는 prod DDL 이라 이번 범위 밖이다. 따라서 이 API 는 **세션 이메일과 같은 이메일로
+ *    접수된 건**을 돌려준다. 한계: 제3자가 남의 이메일을 적어 퍼블릭 폼으로 넣은 건도 여기 보인다
+ *    (내용은 그 제3자가 쓴 것이므로 타인 정보 유출은 아니지만, "내가 넣지 않은 건" 이 보일 수 있다).
+ *    userId 열이 생기면 스코프를 그쪽으로 옮긴다.
+ * 🛑 ipAddress·userAgent 는 내려주지 않는다(수집 목적이 스팸 방지지 표시가 아니다).
+ */
+export async function GET() {
+  try {
+    const session = await auth();
+    const email = session?.user?.email?.trim().toLowerCase();
+    if (!session?.user?.id || !email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const inquiries = await db.contactInquiry.findMany({
+      where: { email },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      select: {
+        referenceId: true,
+        inquiryType: true,
+        status: true,
+        message: true,
+        createdAt: true,
+        reviewedAt: true,
+        repliedAt: true,
+      },
+    });
+
+    return NextResponse.json({ inquiries });
+  } catch (error) {
+    console.error("[support/inquiry][GET] Error:", error);
+    return NextResponse.json(
+      { error: "접수 내역을 불러오지 못했습니다." },
+      { status: 500 },
+    );
+  }
 }
 
 export async function POST(request: NextRequest) {

@@ -6,6 +6,7 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -415,6 +416,72 @@ const PRIORITY_OPTIONS = [
    읽는 API 가 없어서 이 화면은 접수 내역을 그릴 수 없다 — 목록 대신 그 사실을 적는다. */
 
 /* ═══════════════════════════════════════════════════════════════════
+   접수 내역 (ContactInquiry) — §support-center-inquiry-history (2026-09-20)
+   ───────────────────────────────────────────────────────────────────
+   지어낸 티켓을 지운 자리에 **실제 접수**를 연결한다.
+   출처는 GET /api/support/inquiry 하나뿐이고, 리터럴 목록은 두지 않는다.
+   ═══════════════════════════════════════════════════════════════════ */
+
+export type SupportInquiry = {
+  referenceId: string;
+  inquiryType: string;
+  status: string; // received · reviewed · replied · closed (ContactInquiry.status)
+  message: string;
+  createdAt: string;
+  reviewedAt: string | null;
+  repliedAt: string | null;
+};
+
+/** 접수 내역 단일 출처. ⌘K 팔레트와 티켓 탭이 같은 키를 써서 한 번만 가져온다. */
+function useSupportInquiries() {
+  return useQuery<SupportInquiry[]>({
+    queryKey: ["support-inquiries"],
+    queryFn: async () => {
+      const res = await fetch("/api/support/inquiry");
+      if (!res.ok) throw new Error("접수 내역을 불러오지 못했습니다.");
+      const data = await res.json();
+      return Array.isArray(data.inquiries) ? data.inquiries : [];
+    },
+    staleTime: 30_000,
+  });
+}
+
+/**
+ * 저장된 message 를 제목/본문으로 가른다.
+ * 대시보드 작성 폼은 `[category] title\n\n body` 로 만든다(handleSubmit).
+ * 퍼블릭 폼(/support)에는 그 구조가 없으므로 **추측하지 않고** 통째로 본문으로 둔다.
+ */
+function splitInquiryMessage(message: string): { category: string | null; title: string; body: string } {
+  const head = message.split("\n\n");
+  const first = (head[0] ?? "").trim();
+  const rest = head.slice(1).join("\n\n").trim();
+  const m = first.match(/^\[([^\]]+)\]\s*(.*)$/);
+  if (m && rest) return { category: m[1], title: m[2] || first, body: rest };
+  if (rest) return { category: null, title: first, body: rest };
+  return { category: null, title: first.slice(0, 60) || "(제목 없음)", body: message.trim() };
+}
+
+/** ContactInquiry.status → 화면 라벨. 저장값에 없는 단계는 만들지 않는다. */
+const INQUIRY_STAGES = ["접수", "확인", "답변", "완료"];
+function inquiryStageIndex(status: string): number {
+  return status === "closed" ? 3 : status === "replied" ? 2 : status === "reviewed" ? 1 : 0;
+}
+function inquiryStatusLabel(status: string): string {
+  return status === "closed" ? "종료" : status === "replied" ? "답변 완료" : status === "reviewed" ? "확인 중" : "접수됨";
+}
+const INQUIRY_TYPE_LABEL: Record<string, string> = {
+  service: "서비스·도입",
+  pricing: "가격·플랜",
+  sourcing: "제품·소싱",
+  account: "계정·기타",
+};
+function formatInquiryDate(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 10);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
    메인 컴포넌트
    ═══════════════════════════════════════════════════════════════════ */
 
@@ -480,6 +547,9 @@ export default function SupportCenterPage() {
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
+  // 접수 내역 — ⌘K 결과 3그룹 중 하나. 티켓 탭과 같은 queryKey 라 요청은 한 번이다.
+  const { data: inquiries } = useSupportInquiries();
+
   // ── §설정-고도화 §0/§1 통합 검색 + ⌘K 커맨드 팔레트 (검색 전용 오버레이) ──
   //   매뉴얼·문제해결·티켓을 한 입력창에서 탐색. same-canvas 유지(도메인 조작
   //   아님 — 탐색·이동 전용). ⌘K/Ctrl+K 토글, Esc·배경 클릭 닫힘.
@@ -501,21 +571,25 @@ export default function SupportCenterPage() {
   // ⌘K 결과 — 매뉴얼 / 문제 해결 / 티켓 3그룹 실시간 필터
   const cmdkResults = useMemo(() => {
     const q = cmdkQuery.trim().toLowerCase();
-    if (!q) return { manual: [], troubleshoot: [], total: 0 };
+    if (!q) return { manual: [], troubleshoot: [], inquiry: [], total: 0 };
     const manual = GUIDE_ENTRIES.filter(
       (e) => e.title.toLowerCase().includes(q) || e.what.toLowerCase().includes(q) || e.when.toLowerCase().includes(q),
     ).slice(0, 6);
     const troubleshoot = RUNBOOK_ITEMS.filter(
       (r) => r.symptom.toLowerCase().includes(q) || r.possibleCauses.some((c) => c.toLowerCase().includes(q)),
     ).slice(0, 6);
-    // 티켓 그룹 은퇴 — 접수 내역을 읽는 API 가 없어 검색할 대상이 없다(§support-center-fabricated-tickets).
-    return { manual, troubleshoot, total: manual.length + troubleshoot.length };
-  }, [cmdkQuery]);
+    // 접수 내역 그룹 — 출처는 서버 목록 하나. 리터럴 배열을 다시 두지 않는다.
+    const inquiry = (inquiries ?? []).filter(
+      (t) => t.referenceId.toLowerCase().includes(q) || t.message.toLowerCase().includes(q),
+    ).slice(0, 4);
+    return { manual, troubleshoot, inquiry, total: manual.length + troubleshoot.length + inquiry.length };
+  }, [cmdkQuery, inquiries]);
 
-  // 결과 클릭 = 해당 탭으로 이동(딥링크). ticketId 딥링크는 은퇴 — 가리킬 티켓이 없다.
-  const goToResult = (type: TabId) => {
+  // 결과 클릭 = 해당 탭으로 이동(딥링크). 접수 내역은 referenceId 로 상세를 연다(실 소비).
+  const goToResult = (type: TabId, opts?: { inquiryRef?: string }) => {
     const params = new URLSearchParams(searchParams?.toString() ?? "");
     params.set("tab", type);
+    if (opts?.inquiryRef) params.set("inquiryRef", opts.inquiryRef);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     setActiveTab(type);
     setIsCmdkOpen(false);
@@ -665,6 +739,20 @@ export default function SupportCenterPage() {
                           <div className="min-w-0">
                             <p className="text-[13px] font-bold text-slate-800 truncate">{r.symptom}</p>
                             <p className="text-[11px] text-slate-400 truncate">{r.impact}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {cmdkResults.inquiry.length > 0 && (
+                    <div className="mb-1">
+                      <p className="px-5 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">접수 내역</p>
+                      {cmdkResults.inquiry.map((t) => (
+                        <button key={t.referenceId} onClick={() => goToResult("ticket", { inquiryRef: t.referenceId })} className="w-full text-left px-5 py-2.5 hover:bg-slate-50 flex items-start gap-3 transition-colors motion-reduce:transition-none">
+                          <MessageSquare className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                          <div className="min-w-0">
+                            <p className="text-[13px] font-bold text-slate-800 truncate">{splitInquiryMessage(t.message).title}</p>
+                            <p className="text-[11px] font-mono text-slate-400 truncate">{t.referenceId} · {inquiryStatusLabel(t.status)}</p>
                           </div>
                         </button>
                       ))}
@@ -1376,6 +1464,8 @@ function TicketTab() {
   const ticketBodyParam = searchParams?.get("ticketBody") ?? null;
   // §3 프리필 — 런북에서 넘어온 티켓 카테고리(유효 TICKET_CATEGORIES 값만 채택).
   const ticketCategoryParam = searchParams?.get("ticketCategory") ?? null;
+  // §1 ⌘K 딥링크 — 접수번호로 상세 직접 선택(존재하는 건만).
+  const inquiryRefParam = searchParams?.get("inquiryRef") ?? null;
   const prefillCategory = ticketCategoryParam && TICKET_CATEGORIES.some((c) => c.value === ticketCategoryParam) ? ticketCategoryParam : "";
   const hasSourceContext = Boolean(srcFromRoute || srcEntityId || ticketTitleParam);
 
@@ -1409,6 +1499,18 @@ function TicketTab() {
   const [priority, setPriority] = useState("medium");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ── 접수 내역(실데이터) ──
+  const { data: inquiries, isLoading: inquiriesLoading, isError: inquiriesError, refetch: refetchInquiries } = useSupportInquiries();
+  const inquiryList = inquiries ?? [];
+  const deepInquiry = inquiryRefParam && inquiryList.some((t) => t.referenceId === inquiryRefParam) ? inquiryRefParam : null;
+  // 내역이 있으면 목록, 없으면(또는 문제 해결에서 넘어왔으면) 바로 작성.
+  const [view, setView] = useState<"list" | "compose">(hasSourceContext ? "compose" : "list");
+  const [selectedRef, setSelectedRef] = useState<string | null>(null);
+  useEffect(() => {
+    if (deepInquiry) { setSelectedRef(deepInquiry); setView("list"); }
+  }, [deepInquiry]);
+  const selectedInquiry = inquiryList.find((t) => t.referenceId === selectedRef) ?? null;
 
   const handleFileAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -1461,6 +1563,8 @@ function TicketTab() {
         description: `접수번호: ${data.referenceId ?? "-"}. 영업일 기준 1일 이내 답변드립니다.`,
       });
       resetForm();
+      void refetchInquiries();
+      setView("list");
     } catch {
       toast({ title: "네트워크 오류", description: "잠시 후 다시 시도해 주세요.", variant: "destructive" });
     } finally {
@@ -1468,28 +1572,155 @@ function TicketTab() {
     }
   };
 
-  // ── 접수 내역 — §support-center-fabricated-tickets (2026-09-20) ──
-  //   여기에는 지어낸 티켓 2건이 목록·상세(상태 파이프라인·SLA·답변 본문)로 떠 있었다. 지웠다.
-  //   접수 자체는 저장된다(POST /api/support/inquiry → ContactInquiry · 접수번호 발급).
-  //   읽는 API 가 없어 이 화면은 그 내역을 그리지 못한다 — 그 사실을 그대로 적는다.
+  // ── 접수 내역 — §support-center-inquiry-history (2026-09-20) ──
+  //   출처는 GET /api/support/inquiry 하나. 여기에 리터럴 목록을 두지 않는다
+  //   (지어낸 티켓 2건이 있던 자리다 · §support-center-fabricated-tickets).
+  //   0건은 "아직 접수한 문의가 없다" 는 뜻이고, 실패는 실패라고 적는다 — 둘을 뭉개지 않는다.
   const ticketQueueRail = (
     <div className="space-y-2">
-      <p className="text-[10px] uppercase tracking-wider text-slate-400 font-extrabold mb-3">접수 내역</p>
-      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3">
-        <p className="text-[11px] font-bold text-slate-500 mb-1">데이터 없음</p>
-        <p className="text-[10px] text-slate-400 leading-relaxed break-keep">
-          접수한 문의는 저장되고 접수번호를 드리지만, 지난 접수 내역을 이 화면으로 불러오는 기능은 아직 없습니다.
-          접수번호로 회신을 기다리시거나 고객 지원·문의로 확인해 주세요.
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">
+          접수 내역{inquiryList.length > 0 ? ` · ${inquiryList.length}건` : ""}
         </p>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 px-2.5 text-[11px] font-bold text-blue-600 hover:bg-blue-50"
+          onClick={() => { setView("compose"); setSelectedRef(null); }}
+        >
+          <Send className="h-3 w-3 mr-1" />새 문의
+        </Button>
       </div>
+
+      {inquiriesLoading ? (
+        <div className="space-y-2" aria-busy="true">
+          {[0, 1].map((i) => <div key={i} className="h-16 rounded-xl border border-slate-200 bg-slate-50 animate-pulse" />)}
+        </div>
+      ) : inquiriesError ? (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3">
+          <p className="text-[11px] font-bold text-slate-600 mb-1">접수 내역을 불러오지 못했습니다</p>
+          <p className="text-[10px] text-slate-400 leading-relaxed break-keep mb-2">
+            잠시 후 다시 시도해 주세요. 접수 자체는 영향을 받지 않습니다.
+          </p>
+          <button onClick={() => void refetchInquiries()} className="text-[10px] font-bold text-blue-600 hover:text-blue-700">다시 시도</button>
+        </div>
+      ) : inquiryList.length === 0 ? (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3">
+          <p className="text-[11px] font-bold text-slate-500 mb-1">데이터 없음</p>
+          <p className="text-[10px] text-slate-400 leading-relaxed break-keep">
+            아직 접수한 문의가 없습니다. 아래 양식으로 접수하시면 접수번호가 발급되고 이 목록에 남습니다.
+          </p>
+        </div>
+      ) : (
+        inquiryList.map((inq) => {
+          const isSelected = selectedRef === inq.referenceId;
+          const { title: rowTitle } = splitInquiryMessage(inq.message);
+          return (
+            <button
+              key={inq.referenceId}
+              onClick={() => { setSelectedRef(inq.referenceId); setView("list"); }}
+              className={`w-full text-left rounded-xl border px-3.5 py-3 transition-all ${
+                isSelected
+                  ? "border-blue-300 bg-blue-50 ring-1 ring-blue-200 shadow-sm"
+                  : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className={`text-[11px] font-mono font-bold ${isSelected ? "text-blue-600" : "text-slate-500"}`}>{inq.referenceId}</span>
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-slate-200 text-slate-500 font-bold">
+                  {inquiryStatusLabel(inq.status)}
+                </Badge>
+              </div>
+              <p className={`text-[13px] font-bold leading-snug truncate ${isSelected ? "text-slate-900" : "text-slate-700"}`}>{rowTitle}</p>
+              <div className="flex items-center gap-2 mt-1.5">
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-slate-200 text-slate-500 font-bold">
+                  {INQUIRY_TYPE_LABEL[inq.inquiryType] ?? inq.inquiryType}
+                </Badge>
+                <span className="text-[10px] text-slate-400">{formatInquiryDate(inq.createdAt)}</span>
+              </div>
+            </button>
+          );
+        })
+      )}
+
       {/* 지원 안내 (compact) */}
       <div className="mt-4 rounded-xl bg-slate-50 border border-slate-200 p-3.5">
         <p className="text-[10px] font-extrabold text-slate-500 mb-1.5">지원 안내</p>
         <p className="text-[10px] text-slate-400 leading-relaxed">평일 09-18시 접수 · 영업일 기준 1일 이내 회신</p>
-        <p className="text-[10px] text-slate-400 leading-relaxed">접수 → 배정 → 확인 → 답변 → 완료</p>
+        <p className="text-[10px] text-slate-400 leading-relaxed">접수 · 확인 · 답변 · 완료 순으로 진행됩니다</p>
       </div>
     </div>
   );
+
+  // 상세 — 저장된 값만 그린다. 진행 단계는 ContactInquiry.status 하나에서 파생한다.
+  //   🛑 SLA 배지·답변 본문은 되살리지 않는다 — 저장하는 열이 없다(지어내지 않는다).
+  //      회신은 접수확인 메일이 약속한 대로 **이메일**로 간다(api/support/inquiry POST).
+  const ticketDetailPanel = selectedInquiry ? (() => {
+    const { category: inqCategory, title: inqTitle, body: inqBody } = splitInquiryMessage(selectedInquiry.message);
+    const cur = inquiryStageIndex(selectedInquiry.status);
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2.5">
+            <span className="text-[13px] font-mono font-bold text-slate-500">{selectedInquiry.referenceId}</span>
+            <Badge variant="outline" className="text-[11px] px-2 py-0.5 border-slate-200 text-slate-500 font-bold">
+              {inquiryStatusLabel(selectedInquiry.status)}
+            </Badge>
+          </div>
+          <span className="text-[11px] text-slate-400">{formatInquiryDate(selectedInquiry.createdAt)}</span>
+        </div>
+        <h3 className="text-[17px] font-extrabold text-slate-900 mb-3 leading-snug break-keep">{inqTitle}</h3>
+        <div className="flex items-center gap-2 mb-5">
+          <Badge variant="outline" className="text-[11px] px-2 py-0.5 border-slate-200 text-slate-500 font-bold">
+            {INQUIRY_TYPE_LABEL[selectedInquiry.inquiryType] ?? selectedInquiry.inquiryType}
+          </Badge>
+          {inqCategory && (
+            <Badge variant="outline" className="text-[11px] px-2 py-0.5 border-slate-200 text-slate-500 font-bold">
+              {TICKET_CATEGORIES.find((c) => c.value === inqCategory)?.label ?? inqCategory}
+            </Badge>
+          )}
+        </div>
+
+        {/* 진행 단계 — status 에서 파생(계단식 fade-in · reduced-motion 존중) */}
+        <div className="flex items-start mb-5">
+          {INQUIRY_STAGES.map((label, i) => {
+            const done = i <= cur;
+            const isCurrent = i === cur && selectedInquiry.status !== "closed";
+            return (
+              <div
+                key={label}
+                className="flex items-start flex-1 last:flex-none animate-in fade-in-0 slide-in-from-bottom-1 duration-300 motion-reduce:animate-none"
+                style={{ animationDelay: `${i * 80}ms` }}
+              >
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center border-2 ${done ? "bg-emerald-500 border-emerald-500" : isCurrent ? "bg-white border-blue-500" : "bg-white border-slate-200"}`}>
+                    {done ? <CheckCircle2 className="h-4 w-4 text-white" /> : <span className={`text-[10px] font-bold ${isCurrent ? "text-blue-600" : "text-slate-300"}`}>{i + 1}</span>}
+                  </div>
+                  <span className={`text-[10px] font-bold whitespace-nowrap ${done ? "text-emerald-600" : isCurrent ? "text-blue-600" : "text-slate-400"}`}>{label}</span>
+                </div>
+                {i < INQUIRY_STAGES.length - 1 && (
+                  <div className={`flex-1 h-0.5 mt-3.5 mx-1 ${i < cur ? "bg-emerald-400" : "bg-slate-200"}`} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* 접수한 내용 원문 */}
+        <div className="rounded-xl bg-slate-50 border border-slate-200 px-4 py-4">
+          <p className="text-[10px] font-extrabold text-slate-400 mb-1.5">접수한 내용</p>
+          <p className="text-[13px] text-slate-700 leading-relaxed break-keep whitespace-pre-wrap">{inqBody}</p>
+        </div>
+
+        {/* 회신 경로 — 답변 본문은 저장하지 않으므로 어디서 오는지만 적는다 */}
+        <p className="text-[11px] text-slate-400 leading-relaxed break-keep mt-3">
+          {selectedInquiry.repliedAt
+            ? `${formatInquiryDate(selectedInquiry.repliedAt)} 답변 처리됨 · 회신 내용은 등록하신 이메일에 있습니다(이 화면에는 저장되지 않습니다).`
+            : "회신은 등록하신 이메일로 갑니다 · 영업일 기준 1일 이내."}
+        </p>
+      </div>
+    );
+  })() : null;
 
   // ── Compose form (공통 — desktop/mobile 양쪽에서 사용) ──
   const composeForm = (
@@ -1564,6 +1795,7 @@ function TicketTab() {
             <Button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white font-extrabold h-11 px-8 gap-2 text-[14px] rounded-xl" disabled={isSubmitting}>
               {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" />접수 중...</> : <><Send className="h-4 w-4" />문의 접수하기</>}
             </Button>
+            <button type="button" onClick={() => setView("list")} className="text-xs text-slate-500 hover:text-slate-600">취소</button>
           </div>
         </form>
       </div>
@@ -1579,10 +1811,13 @@ function TicketTab() {
           <MessageCircle className="h-5 w-5 text-blue-300 shrink-0 mt-0.5" />
           <div className="min-w-0">
             <p className="text-[14px] font-extrabold">찾는 답이 없으신가요?</p>
-            <p className="text-[12px] text-slate-300 break-keep">매뉴얼·문제 해결로 해결되지 않으면 아래 양식으로 바로 문의하세요. 평일 09-18시 접수 · 영업일 기준 1일 이내 회신.</p>
+            <p className="text-[12px] text-slate-300 break-keep">매뉴얼·문제 해결로 해결되지 않으면 담당자에게 바로 문의하세요. 평일 09-18시 접수 · 영업일 기준 1일 이내 회신.</p>
           </div>
         </div>
         <div className="flex gap-2 shrink-0">
+          <Button size="sm" className="h-9 px-3 text-xs bg-white text-slate-900 hover:bg-slate-100 font-bold gap-1.5" onClick={() => { setView("compose"); setSelectedRef(null); }}>
+            <Send className="h-3.5 w-3.5" />새 문의 작성
+          </Button>
           <Link href="/support">
             <Button variant="outline" size="sm" className="h-9 px-3 text-xs bg-transparent border-slate-700 text-slate-200 hover:bg-slate-800 hover:text-white gap-1.5">
               <LifeBuoy className="h-3.5 w-3.5" />고객 지원·문의
@@ -1592,22 +1827,80 @@ function TicketTab() {
       </div>
 
       <div className="flex gap-6">
-        {/* 좌측 (desktop only) — 접수 내역 자리 */}
+        {/* 좌측 큐 (desktop only) */}
         <nav className="hidden md:block w-72 flex-shrink-0">
           <div className="sticky top-4">{ticketQueueRail}</div>
         </nav>
 
-        {/* 모바일 — 목록/상세 뷰 전환 은퇴(그릴 목록이 없다). 작성 폼 + 안내. */}
+        {/* 모바일: 목록 / 상세 / 작성 단일 뷰 전환 */}
         <div className="md:hidden w-full">
-          <h2 className="text-sm font-semibold text-slate-700 mb-4">새 문의 작성</h2>
-          {composeForm}
-          <div className="mt-5">{ticketQueueRail}</div>
+          {view === "list" && !selectedRef && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-xs text-slate-500">접수한 문의를 확인하고 새 문의를 작성할 수 있습니다.</p>
+                <Button onClick={() => setView("compose")} className="gap-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white h-9 px-4">
+                  <Send className="h-3.5 w-3.5" />새 문의
+                </Button>
+              </div>
+              {ticketQueueRail}
+            </div>
+          )}
+          {view === "list" && selectedRef && ticketDetailPanel && (
+            <div>
+              <button onClick={() => setSelectedRef(null)} className="flex items-center gap-1 text-xs text-slate-500 mb-3">
+                <ChevronRight className="h-3 w-3 rotate-180" />목록으로
+              </button>
+              {ticketDetailPanel}
+            </div>
+          )}
+          {view === "compose" && (
+            <div>
+              <button onClick={() => { setView("list"); setSelectedRef(null); }} className="flex items-center gap-1 text-xs text-slate-500 mb-3">
+                <ChevronRight className="h-3 w-3 rotate-180" />목록으로
+              </button>
+              <h2 className="text-sm font-semibold text-slate-700 mb-4">새 문의 작성</h2>
+              {composeForm}
+            </div>
+          )}
         </div>
 
-        {/* 데스크탑 센터 — 작성 폼 */}
+        {/* 데스크탑 센터: 작성 또는 상세 */}
         <div className="hidden md:block flex-1 min-w-0">
-          <h2 className="text-[15px] font-extrabold text-slate-900 mb-5">새 문의 작성</h2>
-          {composeForm}
+          {view === "compose" ? (
+            <div>
+              <div className="flex items-center gap-3 mb-5">
+                <button
+                  onClick={() => setView("list")}
+                  className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-slate-600 transition-colors"
+                >
+                  <ChevronRight className="h-3 w-3 rotate-180" />
+                  목록으로
+                </button>
+                <h2 className="text-[15px] font-extrabold text-slate-900">새 문의 작성</h2>
+              </div>
+              {composeForm}
+            </div>
+          ) : selectedRef && ticketDetailPanel ? (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-[15px] font-extrabold text-slate-900">접수 상세</h2>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs font-bold border-blue-200 text-blue-600 hover:bg-blue-50 h-8"
+                  onClick={() => { setView("compose"); setSelectedRef(null); }}
+                >
+                  <Send className="h-3 w-3" />새 문의 작성
+                </Button>
+              </div>
+              {ticketDetailPanel}
+            </div>
+          ) : (
+            <div>
+              <h2 className="text-[15px] font-extrabold text-slate-900 mb-5">새 문의 작성</h2>
+              {composeForm}
+            </div>
+          )}
         </div>
       </div>
     </>
