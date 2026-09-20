@@ -27,6 +27,7 @@ const BUDGET_CARD = "src/components/dashboard/budget-spend-card.tsx";
 const PIPELINE = "src/components/dashboard/pipeline.tsx";
 const PAGE = "src/app/dashboard/page.tsx";
 const MOBILE = "src/components/dashboard/mobile-dashboard-view.tsx";
+const SUMMARY_ROUTE = "src/app/api/dashboard/summary/route.ts";
 const SURFACES = [STAT_LINE, BUDGET_CARD, PIPELINE, PAGE, MOBILE];
 
 /** 대상 파일의 EOL 을 읽어 앵커를 만든다. */
@@ -56,13 +57,13 @@ const PROBES = {
     desc: "0건 칩 필터 무력화 -> A3 dead button 케이스 RED",
     edits: [[LIB, "if ((q?.pending ?? 0) > 0) {", "if ((q?.pending ?? 0) >= 0) {"]],
   },
-  "A3-receive-revive": {
-    desc: "입고 칩 부활 -> A3 '입고 칩 0' RED (판정 소스/착지 불일치 재유입 차단)",
+  "A3-receive-approved-leak": {
+    desc: "APPROVED 를 attention 에 합산 -> A3 '입고 조치 필요' RED (§receive-canonical)",
     edits: [
       [
         LIB,
-        "  const receive: PipelineChip[] = [];",
-        '  const receive: PipelineChip[] = [{ key: "receive-open", label: "조치 필요", count: 1, tone: "yellow", href: "/dashboard/receiving" }];',
+        "const receiveOpen = (r?.awaitingReply ?? 0) + (r?.pendingReview ?? 0);",
+        "const receiveOpen = (r?.awaitingReply ?? 0) + (r?.pendingReview ?? 0) + (r?.approved ?? 0);",
       ],
     ],
   },
@@ -143,6 +144,36 @@ const PROBES = {
     desc: "items-stretch 제거 -> B8 RED",
     edits: [[PAGE, "items-stretch", "items-start"]],
     phase2: true,
+  },
+
+  // ── 그룹 F: §receive-canonical (summary-contract-p1.test.ts (F)) ─────
+  "F1-restock-revive": {
+    desc: "입고 소스를 옛 테이블로 되돌림 -> (F)① RED (동시에 ②③④ 도 창을 잃어 RED)",
+    edits: [[SUMMARY_ROUTE, "db.receivingDraft.groupBy(", "db.inventoryRestock.groupBy("]],
+  },
+  "F2-status-drift": {
+    desc: "groupBy 의 status 집합에서 APPROVED 탈락 -> (F)② RED (질의끼리 · 화면과 불일치)",
+    edits: [
+      [
+        SUMMARY_ROUTE,
+        'by: ["status"],\n          where: { ...receivingOwnerWhere, status: { in: ["AWAITING_REPLY", "PENDING_REVIEW", "APPROVED"] } },',
+        'by: ["status"],\n          where: { ...receivingOwnerWhere, status: { in: ["AWAITING_REPLY", "PENDING_REVIEW"] } },',
+      ],
+    ],
+  },
+  "F3-scope-narrow": {
+    desc: "입고 질의 범위를 본인 단독으로 좁힘 -> (F)③ RED (조직 건이 있어도 '이상 없음')",
+    edits: [[SUMMARY_ROUTE, "...receivingOwnerWhere, status:", "userId, status:"]],
+  },
+  "F4-pipeline-approved-leak": {
+    desc: "pipeline attention 에 APPROVED 합산 -> (F)④ RED",
+    edits: [
+      [
+        PIPELINE,
+        "attention: (r?.awaitingReply ?? 0) + (r?.pendingReview ?? 0),",
+        "attention: (r?.awaitingReply ?? 0) + (r?.pendingReview ?? 0) + (r?.approved ?? 0),",
+      ],
+    ],
   },
 };
 

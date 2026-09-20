@@ -138,19 +138,36 @@ export function buildPipelineChips(
     });
   }
 
-  // 🛑 §main-dashboard-p0-honesty — 입고 칩은 P0 에서 만들지 않는다 (호영님 판정 2026-09-18).
+  // §receive-canonical (호영님 판정 2026-09-20 · CLAUDE.md) — 입고 칩 복원.
   //
-  //   prod 실측: 판정 소스와 착지 화면이 **다른 테이블**이다.
-  //     판정  summary.modules.receive  <- db.inventoryRestock   (api/dashboard/summary/route.ts:98)
-  //     착지  /dashboard/receiving     <- ReceivingDraft        (api/receiving-drafts)
-  //   그래서 「이상 없음」(그린) 을 눌러도 빈 입고 화면이 나왔다.
-  //   CLAUDE.md 「화면이 보여주는 수와 게이트가 판정하는 수는 같은 함수에서 나와야 한다」 위반.
-  //
-  //   어느 테이블을 canonical 로 삼을지는 입고 큐 트랙의 결정이라 이 트랙이 앞질러 내리지 않는다.
-  //   칩을 만들지 않으면 Pipeline 이 기존 텍스트 표시로 되돌아간다(클릭 대상 0 = dead link 0).
-  //   ⚠️ 잔여 P1: 입고 카드의 `열기 ›` 도 같은 불일치를 안고 있다(본 트랙 이전부터. 신규 회귀 아님).
-  const receive: PipelineChip[] = [];
-  void r;
+  //   P0 에서 뺐던 이유: 판정 소스(InventoryRestock)와 착지 화면(ReceivingDraft)이 다른 테이블이라
+  //   「이상 없음」(그린)을 눌러도 빈 입고 화면이 나왔다. 근거를 확인할 수 없는 상태 주장은
+  //   클릭 대상으로 내보내지 않는다는 기준으로 보류했다.
+  //   이제 summary 가 화면과 **같은 테이블·같은 3상태**를 세므로 그 기준이 충족된다.
+  //   APPROVED 는 입고 확정이라 할 일이 아니다 — attention 에서 제외(호영님 판정).
+  const receiveOpen = (r?.awaitingReply ?? 0) + (r?.pendingReview ?? 0);
+  const receive: PipelineChip[] =
+    receiveOpen > 0
+      ? [
+          {
+            key: "receive-open",
+            label: "조치 필요",
+            count: receiveOpen,
+            tone: "yellow",
+            href: "/dashboard/receiving",
+          },
+        ]
+      : (r?.total ?? 0) > 0
+        ? [
+            {
+              key: "receive-clear",
+              label: "이상 없음",
+              count: null,
+              tone: "emerald",
+              href: "/dashboard/receiving",
+            },
+          ]
+        : [];
 
   const stock: PipelineChip[] = [];
   if ((st?.lowStock ?? 0) > 0) {

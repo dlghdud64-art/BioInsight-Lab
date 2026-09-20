@@ -56,6 +56,12 @@ export async function GET(request: NextRequest) {
     const inventoryOwnerWhere: any = {
       OR: [{ userId }, ...(orgIds.length > 0 ? [{ organizationId: { in: orgIds } }] : [])],
     };
+    // §receive-canonical — 입고 칩이 여는 /dashboard/receiving 과 **같은 범위**를 센다.
+    //   그 화면은 api/receiving-drafts 를 통해 본인 + 소속 조직을 본다. 여기서 userId 만 세면
+    //   조직 건이 남아 있는데도 칩이 '이상 없음'(emerald)을 띄운다 — 거짓 안심이다.
+    const receivingOwnerWhere: any = {
+      OR: [{ userId }, ...(orgIds.length > 0 ? [{ organizationId: { in: orgIds } }] : [])],
+    };
 
     // ── MODULES 카운트 (scope 필터 적용) ─────────────────────────────────
     const [
@@ -63,8 +69,8 @@ export async function GET(request: NextRequest) {
       orders,
       allInventories,
       expiringInventoryCount,
-      restockGroups,
-      restockTotal,
+      receivingDraftGroups,
+      receivingDraftTotal,
       fallbackBudget,
     ] = await withDbRetry(() =>
       Promise.all([
@@ -95,12 +101,19 @@ export async function GET(request: NextRequest) {
             NOT: { expiryDate: null },
           },
         }),
-        db.inventoryRestock.groupBy({
-          by: ["receivingStatus"],
-          where: { userId },
+        // 🛑 §receive-canonical (호영님 판정 2026-09-20 · CLAUDE.md) — 입고 정본은 ReceivingDraft.
+        //   (구) 입고 적재 테이블 전량을 셌다. 칩이 여는 /dashboard/receiving 은 ReceivingDraft 를 읽는데
+        //        두 테이블이 달라서, 적재분이 N건이어도 Draft 가 0이면 "이상 없음" 을 누르면 빈 화면이었다.
+        //   🛑 은퇴한 테이블 이름을 주석에도 남기지 않는다 — 살아 있으면 다음 사람이 그리로 돌아간다((F)① 이 막는다).
+        //   (신) 화면이 거는 것과 **같은 3상태 · 같은 범위**를 센다(api/receiving-drafts?status=... 와 동일 집합).
+        db.receivingDraft.groupBy({
+          by: ["status"],
+          where: { ...receivingOwnerWhere, status: { in: ["AWAITING_REPLY", "PENDING_REVIEW", "APPROVED"] } },
           _count: { _all: true },
         }),
-        db.inventoryRestock.count({ where: { userId } }),
+        db.receivingDraft.count({
+          where: { ...receivingOwnerWhere, status: { in: ["AWAITING_REPLY", "PENDING_REVIEW", "APPROVED"] } },
+        }),
         // 활성 UserBudget 부재 시에만 Budget 폴백
         activeBudget
           ? Promise.resolve(null)
@@ -135,9 +148,12 @@ export async function GET(request: NextRequest) {
     ).length;
 
     // ── receive 모듈 ────────────────────────────────────────────────────
+    // §receive-canonical — 필드명을 ReceivingDraft 상태 그대로 쓴다.
+    //   옛 이름(pending/partial/completed/issue)은 InventoryRestock 어휘였다.
+    //   이름이 실제와 다르면 다음 사람이 같은 자리에서 또 틀린다 — 이번 결함의 뿌리가 그것이었다.
     const rByStatus: Record<string, number> = {};
-    for (const g of restockGroups as { receivingStatus: string; _count: { _all: number } }[]) {
-      rByStatus[g.receivingStatus] = g._count._all;
+    for (const g of receivingDraftGroups as { status: string; _count: { _all: number } }[]) {
+      rByStatus[g.status] = g._count._all;
     }
 
     // ── stock 모듈 ──────────────────────────────────────────────────────
@@ -213,11 +229,10 @@ export async function GET(request: NextRequest) {
         thisMonth: thisMonthOrders,
       },
       receive: {
-        total: restockTotal as number,
-        pending: rByStatus["PENDING"] || 0,
-        partial: rByStatus["PARTIAL"] || 0,
-        completed: rByStatus["COMPLETED"] || 0,
-        issue: rByStatus["ISSUE"] || 0,
+        total: receivingDraftTotal as number,
+        awaitingReply: rByStatus["AWAITING_REPLY"] || 0,
+        pendingReview: rByStatus["PENDING_REVIEW"] || 0,
+        approved: rByStatus["APPROVED"] || 0,
         expiringCount: expiringInventoryCount as number,
       },
       stock: {

@@ -75,7 +75,8 @@ function buildStages(s: DashboardSummary | undefined): PipelineStage[] {
       label: "입고",
       icon: <PackageCheck className="h-4 w-4" />,
       total: r?.total ?? 0,
-      attention: (r?.pending ?? 0) + (r?.partial ?? 0) + (r?.issue ?? 0),
+      // §receive-canonical — APPROVED 는 입고 확정이라 할 일이 아니다(호영님 판정 2026-09-20).
+      attention: (r?.awaitingReply ?? 0) + (r?.pendingReview ?? 0),
       attentionLabel: "미완료",
       href: "/dashboard/receiving",
     },

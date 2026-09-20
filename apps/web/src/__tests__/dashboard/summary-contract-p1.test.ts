@@ -20,6 +20,7 @@ import {
   won,
   type DashboardSummaryInput,
 } from "@/lib/dashboard/summary-derive";
+import { blockAfter, blockEnclosing } from "../_helpers/block-window";
 
 const REPO_ROOT = join(__dirname, "..", "..", "..");
 function read(rel: string): string {
@@ -27,12 +28,14 @@ function read(rel: string): string {
 }
 const ROUTE = "src/app/api/dashboard/summary/route.ts";
 const HELPER = "src/lib/dashboard/summary-derive.ts";
+const RECEIVING_SCREEN = "src/app/dashboard/receiving/page.tsx";
 
 function emptyInput(): DashboardSummaryInput {
   return {
     quote: { total: 0, pending: 0, responded: 0, completed: 0, purchased: 0, pendingAmount: 0 },
     po: { total: 0, ordered: 0, confirmed: 0, shipping: 0, delivered: 0, cancelled: 0, confirmedAmount: 0, thisMonth: 0 },
-    receive: { total: 0, pending: 0, partial: 0, completed: 0, issue: 0, expiringCount: 0 },
+    // §receive-canonical 2026-09-20 — ReceivingDraft 상태로 교체(호영님 판정).
+    receive: { total: 0, awaitingReply: 0, pendingReview: 0, approved: 0, expiringCount: 0 },
     stock: { total: 0, reorderNeeded: 0, lowStock: 0, expiringCount: 0, assetValue: 0 },
     budget: null,
     spend: { thisMonth: 0 },
@@ -151,3 +154,80 @@ describe("§main-dashboard-redesign P1 (E) — helper 계약 회귀 0", () => {
     expect(Object.keys(s.derived).sort()).toEqual(["allEmpty", "budTone"]);
   });
 });
+
+// ── (F) §receive-canonical — 입고 정본은 ReceivingDraft (호영님 판정 2026-09-20) ──
+//   명제: "칩이 판정하는 집합 = 칩이 여는 화면이 보여주는 집합".
+//   두 곳에 같은 상수를 적어 두면 한쪽만 바뀌어도 통과한다 — 그래서 **화면 파일에서 읽어와** 비교한다.
+describe("§receive-canonical — 입고 칩 판정과 화면이 같은 것을 센다", () => {
+  /** route 의 receivingDraft 질의 2개(groupBy/count) 본문 창. */
+  function receivingQueryBlocks(src: string): string[] {
+    return ["db.receivingDraft.groupBy(", "db.receivingDraft.count("].map((tok) => {
+      expect(src, `summary route 에 ${tok} 가 없다`).toContain(tok);
+      return blockAfter(src, tok);
+    });
+  }
+  /** `in: ["A", "B"]` 의 원소 집합. */
+  function statusSet(block: string): string[] {
+    const m = block.match(/in:\s*\[([^\]]*)\]/);
+    expect(m, "status in:[...] 배열을 찾지 못했다").not.toBeNull();
+    return (m![1].match(/"([A-Z_]+)"/g) ?? []).map((q) => q.replace(/"/g, "")).sort();
+  }
+
+  it("① 입고 카운트 소스는 receivingDraft 다 — 이 라우트에 inventoryRestock 0", () => {
+    const src = read(ROUTE);
+    expect(src).toContain("db.receivingDraft.groupBy(");
+    expect(src).toContain("db.receivingDraft.count(");
+    // 주석에 남아도 안 된다 — 은퇴한 식별자가 살아 있으면 다음 사람이 그리로 돌아간다.
+    expect(src).not.toMatch(/inventoryRestock/);
+  });
+
+  it("② 질의 2개의 status 집합이 서로 같고 · 화면이 거는 집합과도 같다", () => {
+    const [g, c] = receivingQueryBlocks(read(ROUTE));
+    const fromRoute = statusSet(g);
+    expect(statusSet(c)).toEqual(fromRoute);
+
+    // 화면: /api/receiving-drafts?status=A,B,C
+    const screen = read(RECEIVING_SCREEN);
+    const q = screen.match(/receiving-drafts\?status=([A-Z_,]+)/);
+    expect(q, "입고 화면에서 status 질의 문자열을 찾지 못했다").not.toBeNull();
+    const fromScreen = q![1].split(",").filter(Boolean).sort();
+
+    expect(fromRoute).toEqual(fromScreen);
+    // 검출력: 집합이 비면 위 비교가 공허하게 통과한다.
+    expect(fromRoute.length).toBeGreaterThan(0);
+  });
+
+  it("③ 판정 범위도 화면과 같다 — 본인 단독이 아니라 조직 포함", () => {
+    const src = read(ROUTE);
+    const [g, c] = receivingQueryBlocks(src);
+    for (const [name, b] of [["groupBy", g], ["count", c]] as const) {
+      expect(b, `${name} 질의가 userId 단독 범위다`).toContain("receivingOwnerWhere");
+    }
+    // receivingOwnerWhere 자체가 조직을 포함하는지 — 다른 모듈(견적·재고)과 같은 형태.
+    const owner = blockAfter(src, "const receivingOwnerWhere");
+    expect(owner).toContain("userId");
+    expect(owner).toContain("organizationId");
+  });
+
+  it("④ APPROVED 는 정본 집합에 있고 · attention(조치 필요)에는 없다", () => {
+    // 집합에는 있다 — 화면이 보여주니까.
+    const [g] = receivingQueryBlocks(read(ROUTE));
+    expect(statusSet(g)).toContain("APPROVED");
+    // 파이프라인 attention 합산에는 없다 — 입고 확정은 할 일이 아니다(호영님 판정).
+    //   창은 타입 선언이 아니라 **입고 스테이지 객체**다(첫 "attention:" 은 interface 쪽이다).
+    const pipe = read("src/components/dashboard/pipeline.tsx");
+    const stage = blockEnclosing(pipe, 'key: "receive"', "{");
+    expect(stage, "pipeline 에 입고 스테이지 객체가 없다").toContain('href: "/dashboard/receiving"');
+    const att = lineWith(stage, "attention:");
+    expect(att).toContain("awaitingReply");
+    expect(att).toContain("pendingReview");
+    expect(att).not.toMatch(/\bapproved\b/);
+  });
+});
+
+/** 주어진 창 안에서 `token` 이 포함된 첫 줄. 줄 번호가 아니라 토큰으로 찾는다. */
+function lineWith(scope: string, token: string): string {
+  const line = scope.split(/\r?\n/).find((l) => l.includes(token));
+  expect(line, `${token} 를 포함한 줄이 없다`).toBeTruthy();
+  return line!;
+}

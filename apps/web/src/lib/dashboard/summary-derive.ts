@@ -13,7 +13,14 @@
  *   를 상속.
  */
 
-export type ReceivingStatusKey = "PENDING" | "PARTIAL" | "COMPLETED" | "ISSUE";
+// §receive-canonical (호영님 판정 2026-09-20) — 입고 정본은 ReceivingDraft.
+//   구 키(PENDING/PARTIAL/COMPLETED/ISSUE)는 InventoryRestock 어휘였다.
+export type ReceivingStatusKey =
+  | "AWAITING_REPLY"
+  | "PENDING_REVIEW"
+  | "APPROVED"
+  | "REJECTED"
+  | "EXPIRED";
 
 /** route 가 Prisma 로 모아 넘기는 정규화 입력(이미 scope 필터 적용된 카운트). */
 export interface DashboardSummaryInput {
@@ -36,11 +43,12 @@ export interface DashboardSummaryInput {
     thisMonth: number;
   };
   receive: {
+    /** 화면(/dashboard/receiving)이 거는 3상태 합. 그 화면과 같은 집합이다. */
     total: number;
-    pending: number;
-    partial: number;
-    completed: number;
-    issue: number;
+    awaitingReply: number;
+    pendingReview: number;
+    /** 입고 확정분 — 할 일이 아니므로 attention 에 넣지 않는다(호영님 판정). */
+    approved: number;
     expiringCount: number;
   };
   stock: {

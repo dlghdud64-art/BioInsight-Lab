@@ -588,11 +588,128 @@ git merge-base --is-ancestor e52846a3 93e25ef5  → REACHED
 | P1-1 | §2 다음 단계 추천 **4단계 트랙** | summary 에 멤버 수 파생 추가 |
 | P1-2 | §3 **기한 그룹 3개**(지연/오늘/이번 주) + 품목명·수치 병기 + 담당자 아바타 + 모달 직행 | 견적 회신 마감일 스키마 확인. ⚠️ 담당자 아바타는 핸드오프 상단 "담당자 단일 운영 기준" 과 충돌 — 재확인 필요 |
 | P1-3 | 견적 `마감 오늘` 칩 | P1-2 와 같은 의존(마감일) |
-| P1-4 | **입고 판정 소스 통일** — summary `receive` = `InventoryRestock` vs 착지 화면 `/dashboard/receiving` = `ReceivingDraft`. 입고 카드 `열기 ›` 도 같은 불일치(본 트랙 이전부터) | 입고 큐 트랙의 canonical 판정 |
+| P1-4 | **입고 판정 소스 통일** — summary `receive` 와 착지 화면 `/dashboard/receiving` 이 서로 다른 테이블을 셌다 | 호영님 판정(2026-09-20) · **구현 완료, 게이트 대기** → 7-E |
 | P1-5 | `남은 일수` 축 재검토 — 현재 **이번 달 말일** 기준인데 예산 기간이 분기·반기면 어긋난다(실측: 예산 12.31 까지인데 11일로 표시) | 호영님 판정 |
-| P1-6 | `blockFrom` 류 블록 창 헬퍼 **4벌 중복**(신규 파일 · p3b · p4 · won-glyph) → `_helpers/` 통합 | 없음 |
+| P1-6 | `blockFrom` 류 블록 창 헬퍼 **4벌 중복**(신규 파일 · p3b · p4 · won-glyph) → `_helpers/` 통합 | 없음 · **완료** → 7-D |
 | P1-7 | `recommendedActions` 배열이 JSX 소비 0 인데 `302d6a4g:64` 가 핀해 살아 있다 | 그 sentinel 트랙 |
 | P1-8 | 원장 stale 해소 7건(§11.257 6 + 258sweep 1) `--update` | 별도 커밋 |
+
+
+---
+
+## 7-D. P1-6 완료 — 블록 창 헬퍼 통합 (2026-09-20)
+
+`src/__tests__/_helpers/block-window.ts` 신설 — `blockFrom` / `blockAfter` / `blockEnclosing`.
+
+- 이 트랙이 쓰던 **4벌**을 이관했다(신규 파일 · p3b · p4 · won-glyph).
+- 🛑 저장소 전체에는 같은 루프가 **20곳 넘게** 복사돼 있다(2026-09-20 실측). 나머지는 이관하지 않았다 —
+  복사본마다 경계 조건이 미세하게 달라 검출력이 다르고, **남의 sentinel 을 임의로 바꾸지 않는다**.
+  각 트랙이 자기 몫을 옮긴다. 헬퍼 헤더에 이 사실을 적어 뒀다.
+- 프로브 교훈 1건: 최초 프로브가 `!isSet` → `!isSetZZ` 였는데 `indexOf("!isSet")` 가 **접두 포함**으로
+  여전히 잡혀 88건이 전부 통과했다. 4원칙 ①(접두 경계)이 **프로브 안에서** 재발한 형태다.
+  `!budgetReady` 로 바꾸자 4 RED. → 프로브도 sentinel 과 같은 경계 검사를 받아야 한다.
+
+---
+
+## 7-E. P1-4 완료(구현) — §receive-canonical (2026-09-20)
+
+**판정 근거**: CLAUDE.md:678 호영님 판정 — 입고 정본은 `ReceivingDraft`.
+매핑 권고: `total` = 화면이 거는 3개 상태 합, `attention` = `AWAITING_REPLY + PENDING_REVIEW`
+(`APPROVED` 는 입고 확정이므로 할 일이 아니다).
+
+### 고친 것
+
+| 파일 | 내용 |
+| :--- | :--- |
+| `api/dashboard/summary/route.ts` | 입고 질의 2개를 `receivingDraft` 로 교체 · 상태 3종만 집계 · 변수명 `restock*` → `receivingDraft*` · 은퇴한 테이블명은 주석에서도 제거 |
+| 〃 | **범위도 화면과 맞췄다** — `receivingOwnerWhere`(본인 + 소속 조직). 처음엔 `userId` 단독이었는데, 화면은 `OR: [{userId},{organizationId in orgIds}]` 를 본다. 그대로 뒀으면 조직 건이 남아 있어도 칩이 `이상 없음`(emerald) 을 띄우는 **거짓 안심**이 됐다 |
+| `lib/dashboard/summary-derive.ts` | `ReceivingStatusKey` 를 실제 5상태로 · `receive` 계약 필드명을 상태 그대로 |
+| `lib/dashboard/p0-display.ts` | 입고 칩 복원 — `조치 필요`(yellow) / 없으면 `이상 없음`(emerald) / 0건이면 칩 0 |
+| `components/dashboard/pipeline.tsx` | `attention` = `awaitingReply + pendingReview` |
+
+### Sentinel
+
+`summary-contract-p1.test.ts` 에 `(F) §receive-canonical` 4건 추가.
+핵심은 ②다 — **상태 집합을 양쪽에 적어 두지 않고 화면 파일에서 읽어와 비교**한다.
+같은 상수를 두 곳에 적으면 한쪽만 바뀌어도 통과한다.
+
+### 검출력 실증 (격리 러너)
+
+| 프로브 | 주입 | RED |
+| :--- | :--- | :--- |
+| `F1-restock-revive` | 소스를 옛 테이블로 되돌림 | ①②③④ (창 자체를 잃는다) |
+| `F2-status-drift` | groupBy 에서 `APPROVED` 탈락 | ②④ |
+| `F3-scope-narrow` | 범위를 본인 단독으로 | ③ |
+| `F4-pipeline-approved-leak` | attention 에 `APPROVED` 합산 | ④ |
+| `A3-receive-approved-leak` | p0-display 쪽 같은 누수 | A3 2건 |
+
+복원 후 2파일 **79/79 GREEN**(격리 러너 · 비권위).
+
+### 부수 영향 0 — 차등 측정
+
+격리 러너로 `HEAD` 아카이브 사본과 작업본을 **같은 조건으로** 돌려 실패 집합을 차집합했다
+(`git archive HEAD apps/web/src` → 별도 러너. 워킹트리를 건드리지 않는다).
+
+- `__tests__/dashboard/` : 기준 98 실패 → 작업본 101 실패.
+  늘어난 3건은 전부 `quote-centerworkwindow-demote-363b.test.ts` — **다른 세션의 untracked 파일**이라
+  기준 사본에 없었을 뿐이다. 내 변경으로 깨진 것 0.
+- 🛑 이 차등이 없으면 "원래 빨갰다" 와 "내가 깨뜨렸다" 를 구분할 수 없다.
+  격리 러너의 절대 숫자는 권위가 없지만, **같은 러너의 전후 차이**는 읽을 수 있다.
+- 영향권 직접 측정: 바뀐 4개 소스를 **읽는** 테스트를 전수로 뽑아(`grep -rln` · dashboard 밖 5파일)
+  양쪽에서 돌렸다 — `guest-scope-leak` / `cancelled-order-spend` / `dashboard-empty-state-unify` /
+  `purchasing-hide-feature-flag` / `reorder-need-inline-duplication`. **31/31 GREEN, 양쪽 동일**.
+  (2026-09-18 의 교훈 — `stat-line.tsx` 를 건드려 계획 범위 밖 sentinel 4건을 깨뜨린 그 형태를 되풀이하지 않으려는 절차다.)
+- 실행 환경 실측 2건: ① 이 세션의 `device_bash` 는 한 번에 **약 120초**에서 끊긴다(인자로 더 줘도 상한이 이긴다).
+  백그라운드(`nohup ... &`)도 호출이 끝나면 같이 죽는다 — 긴 스윕은 **디렉터리를 쪼개 여러 번** 돌려야 한다.
+  ② 마운트된 폴더는 로컬 사본보다 느리다: 트리 전체를 걷는 `guest-scope-leak` 가 사본 0.6초 / 마운트 **35초**였다.
+  타임아웃으로 죽은 것을 RED 로 읽지 말 것.
+
+### 남은 것
+
+게이트는 operator-shell 몫이다 — **빌드까지** 돌려야 한다(P1-6 과 달리 소스·API 출력이 바뀌었고 화면에 칩이 뜨고 사라진다).
+이 세션(sandbox)에서는 프로젝트 러너를 돌릴 수 없다 — 원인이 확정됐다.
+
+`node_modules` 가 **Windows 에서 설치된 것**이다: `@rollup/rollup-win32-x64-{gnu,msvc}` 만 있고
+`rollup-linux-x64-gnu` 가 없다. esbuild 도 같다(`.exe`). 이 리눅스 VM 에서는 `require` 단계에서 즉사한다.
+
+우회를 두 번 시도했고 둘 다 실패했다(같은 시도를 반복하지 말 것):
+1. `NODE_PATH=<격리러너>/node_modules` — rollup 은 넘어갔지만 esbuild 에서 `write EPIPE`.
+2. `+ ESBUILD_BINARY_PATH=<격리러너 리눅스 바이너리>` — 동일. 버전도 어긋난다(repo 0.27.1 / 격리 0.28.2).
+
+남은 길은 **공용 `node_modules` 에 리눅스 바이너리를 설치**하는 것뿐인데, 금지 조항이다
+(샌드박스는 공용 node_modules 에 설치하지 않는다). → 게이트는 operator-shell 전용이다. 구조적 사실이지 일시적 장애가 아니다.
+
+### 🛑 operator-shell 게이트 지시 (P1-4)
+
+레포 루트에서, 순서대로:
+
+```
+npm run -w apps/web test -- src/__tests__/dashboard/ src/__tests__/regression/ src/__tests__/inventory/ src/__tests__/meta/
+npm run -w apps/web build          # ← P1-6 과 다르다. 소스·API 출력이 바뀌었다
+npm run red-ledger
+```
+
+- **빌드 필수.** `summary/route.ts` 의 Prisma 질의(모델·필드·enum)가 바뀌었다. vitest 는 정적 문자열만 읽으므로 타입 오류를 못 잡는다.
+- 커밋은 **경로를 명시**한다. 작업 트리에 다른 세션의 변경이 섞여 있다(`sentinel-identifier-boundary.test.ts` 는 **staged** 상태, `budget-lifecycle-wiring.test.ts`, `migration-manifest.json`). `git commit -a` / 인자 없는 commit 금지.
+
+```
+git add apps/web/src/app/api/dashboard/summary/route.ts \
+        apps/web/src/lib/dashboard/summary-derive.ts \
+        apps/web/src/lib/dashboard/p0-display.ts \
+        apps/web/src/components/dashboard/pipeline.tsx \
+        apps/web/src/__tests__/dashboard/summary-contract-p1.test.ts \
+        apps/web/src/__tests__/dashboard/main-dashboard-p0-honesty.test.ts \
+        apps/web/scripts/probe-p0-honesty.mjs \
+        apps/web/docs/plans/PLAN_main-dashboard-p0-honesty.md
+```
+
+- 훅 건너뛰기 금지. pre-commit 이 테스트 제목의 `—` 를 `·` 로 바꾸면 그대로 받는다(자동 수정이지 실패가 아니다).
+- `.git/index.lock` 이 남아 있다(2026-09-20 관측). 다른 세션이 안 돌고 있으면 **stale** 이다 — §병렬 세션 절차대로 처리.
+- 배포 확인은 SHA 일치가 아니라 `git merge-base --is-ancestor <이 커밋> <deployedCommit>` 이다.
+
+**화면 영향**: 입고 카드의 칩이 실제로 뜨고 사라진다. 배포 후 `/dashboard` 에서
+입고 칩이 `조치 필요 N` 인지 `이상 없음` 인지 확인하고, 눌러서 착지 화면의 건수와 **같은지** 본다 —
+이번 결함이 정확히 그 불일치였다.
 
 ---
 

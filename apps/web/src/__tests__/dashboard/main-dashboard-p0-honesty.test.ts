@@ -137,13 +137,13 @@ describe("A2 카테고리 도넛 게이팅 (핸드오프 §0-2 · §5)", () => {
 describe("A3 파이프라인 상태 칩 (핸드오프 §4)", () => {
   function summaryWith(over: {
     quote?: Partial<{ total: number; pending: number; responded: number }>;
-    receive?: Partial<{ total: number; pending: number; partial: number; issue: number }>;
+    receive?: Partial<{ total: number; awaitingReply: number; pendingReview: number; approved: number }>;
     stock?: Partial<{ total: number; lowStock: number; expiringCount: number; reorderNeeded: number }>;
   }) {
     return deriveDashboardSummary({
       quote: { total: 0, pending: 0, responded: 0, completed: 0, purchased: 0, pendingAmount: 0, ...over.quote },
       po: { total: 0, ordered: 0, confirmed: 0, shipping: 0, delivered: 0, cancelled: 0, confirmedAmount: 0, thisMonth: 0 },
-      receive: { total: 0, pending: 0, partial: 0, completed: 0, issue: 0, expiringCount: 0, ...over.receive },
+      receive: { total: 0, awaitingReply: 0, pendingReview: 0, approved: 0, expiringCount: 0, ...over.receive },
       stock: { total: 0, reorderNeeded: 0, lowStock: 0, expiringCount: 0, assetValue: 0, ...over.stock },
       budget: null,
       spend: { thisMonth: 0 },
@@ -174,19 +174,28 @@ describe("A3 파이프라인 상태 칩 (핸드오프 §4)", () => {
     ]);
   });
 
-  it("🛑 입고 칩은 만들지 않는다 · 판정 소스와 착지 화면이 다른 테이블 (호영님 판정 2026-09-18)", () => {
-    // 명제: 근거를 확인할 수 없는 상태 주장을 클릭 대상으로 내보내지 않는다.
-    //   summary.receive = db.inventoryRestock · /dashboard/receiving = ReceivingDraft.
-    //   미완료가 있든 전량 완료든 칩 0 — 어느 쪽도 착지 화면이 뒷받침하지 못한다.
-    expect(buildPipelineChips(summaryWith({ receive: { total: 4, pending: 1, issue: 1 } })).receive).toEqual([]);
-    expect(buildPipelineChips(summaryWith({ receive: { total: 4, completed: 4 } as never })).receive).toEqual([]);
+  it("입고 · 조치 필요(yellow) · APPROVED 는 할 일이 아니다 (§receive-canonical)", () => {
+    // §receive-canonical (호영님 판정 2026-09-20) — P0 에서 뺐던 입고 칩을 복원한다.
+    //   보류 사유였던 "판정 소스(InventoryRestock) vs 착지 화면(ReceivingDraft) 불일치" 가
+    //   summary 를 ReceivingDraft 로 옮기면서 해소됐다.
+    //   명제: attention = AWAITING_REPLY + PENDING_REVIEW. 입고 확정(APPROVED)은 세지 않는다.
+    const chips = buildPipelineChips(
+      summaryWith({ receive: { total: 4, awaitingReply: 1, pendingReview: 1, approved: 2 } }),
+    );
+    expect(chips.receive.map((c) => [c.label, c.count, c.tone])).toEqual([["조치 필요", 2, "yellow"]]);
+  });
+
+  it("입고 · 전량 승인이면 이상 없음(emerald) · 0건이면 칩 0", () => {
+    const clear = buildPipelineChips(summaryWith({ receive: { total: 4, approved: 4 } }));
+    expect(clear.receive.map((c) => [c.label, c.tone])).toEqual([["이상 없음", "emerald"]]);
+    expect(buildPipelineChips(summaryWith({})).receive).toEqual([]);
   });
 
   it("칩 href 는 검증된 라우트 집합만 쓴다 (신규 dead route 0)", () => {
     const chips = buildPipelineChips(
       summaryWith({
         quote: { total: 5, pending: 3, responded: 2 },
-        receive: { total: 4, pending: 1 },
+        receive: { total: 4, awaitingReply: 1 },
         stock: { total: 9, lowStock: 1, expiringCount: 2 },
       }),
     );
@@ -196,7 +205,8 @@ describe("A3 파이프라인 상태 칩 (핸드오프 §4)", () => {
       "/dashboard/inventory?filter=low",
       "/dashboard/quotes?status=PENDING",
       "/dashboard/quotes?status=RESPONDED",
-      // "/dashboard/receiving" 제거됨 (2026-09-18) — 판정 소스/착지 화면 테이블 불일치. P1 재검토.
+      // §receive-canonical 2026-09-20 복원 — summary 가 이 화면과 같은 테이블·같은 3상태를 센다.
+      "/dashboard/receiving",
     ]);
   });
 
@@ -204,7 +214,7 @@ describe("A3 파이프라인 상태 칩 (핸드오프 §4)", () => {
     const chips = buildPipelineChips(
       summaryWith({
         quote: { total: 5, pending: 3, responded: 2 },
-        receive: { total: 4, pending: 1 },
+        receive: { total: 4, awaitingReply: 1 },
         stock: { total: 9, lowStock: 1, expiringCount: 2 },
       }),
     );
