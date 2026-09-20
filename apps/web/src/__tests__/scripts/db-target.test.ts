@@ -277,10 +277,18 @@ describe("§test-real-db-optin — 테스트의 실DB 접촉", () => {
   const FLAG = "REAL_DB_OPT_IN";
   const MAKES_CLIENT = /new\s+Prisma\w*Client\w*\s*\(/g;
 
-  /** `if (REAL_DB_OPT_IN …) {` 블록의 [여는 중괄호, 닫는 중괄호] 구간들. */
+  /**
+   * `if (REAL_DB_OPT_IN …) {` 블록의 [여는 중괄호, 닫는 중괄호] 구간들.
+   *
+   * 조건은 플래그 단독이거나 && 로만 좁혀진 형태여야 한다. `||` 는 가드를 넓히므로
+   * ( `if (REAL_DB_OPT_IN || DIRECT_URL)` 는 플래그가 꺼져도 들어간다 ) 블록으로 세지 않는다.
+   */
   function optInBlocks(code: string): Array<[number, number]> {
     const out: Array<[number, number]> = [];
-    const opener = new RegExp(`if\\s*\\(\\s*${FLAG}\\b[^)]*\\)\\s*\\{`, "g");
+    const opener = new RegExp(
+      `if\\s*\\(\\s*${FLAG}\\s*(?:&&\\s*[^)|&]+)*\\)\\s*\\{`,
+      "g",
+    );
     let m: RegExpExecArray | null;
     while ((m = opener.exec(code)) !== null) {
       const open = m.index + m[0].length - 1;
@@ -334,12 +342,18 @@ describe("§test-real-db-optin — 테스트의 실DB 접촉", () => {
     expect(holders.length).toBeGreaterThan(0);
     for (const rel of holders) {
       const code = stripComments(read(rel));
-      /* 플래그 이름이 반드시 그 env 에 묶인다 — 이름만 같고 값이 다른 상수 금지 */
+      /*
+       * 플래그 이름이 그 env 에 묶이되, 선언문 끝(;)까지 대조한다.
+       * 앞부분만 보면 `=== "1" || true` 같은 꼬리가 통과한다.
+       */
       expect(code).toMatch(
         new RegExp(
-          `(?:var|let|const)\\s+${FLAG}\\s*=\\s*process\\.env\\.${OPT_IN}\\s*===\\s*["']1["']`,
+          `(?:var|let|const)\\s+${FLAG}\\s*=\\s*process\\.env\\.${OPT_IN}\\s*===\\s*["']1["']\\s*;`,
         ),
       );
+      /* 뒤에서 다시 선언해 덮어쓰는 형태를 막는다 — 선언은 파일당 하나다. */
+      const decls = code.match(new RegExp(`(?:var|let|const)\\s+${FLAG}\\s*=`, "g")) ?? [];
+      expect(decls).toHaveLength(1);
     }
   });
 });
