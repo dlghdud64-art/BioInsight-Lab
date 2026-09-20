@@ -126,57 +126,12 @@ export function deriveBudgetControl(b: Budget): BudgetControl {
   return { total, reserved, committed, actual, available, burnRate, risk };
 }
 
-// ── Monthly chart data ──
-export interface MonthlySpending {
-  month: string;
-  actual: number;
-  budget: number;
-}
-
-export function generateMonthlyData(budgets: Budget[]): MonthlySpending[] {
-  const months = ["1월", "2월", "3월", "4월", "5월", "6월"];
-  const totalBudget = budgets.reduce((s: number, b: Budget) => s + b.amount, 0);
-  const monthlyBudget = Math.round(totalBudget / 12);
-
-  return months.map((m, i) => {
-    const factor = [0.7, 0.85, 0.9, 1.05, 1.1, 0.95][i] ?? 1;
-    const isCurrentOrFuture = i >= new Date().getMonth();
-    return {
-      month: m,
-      actual: isCurrentOrFuture
-        ? Math.round(monthlyBudget * factor * 0.6)
-        : Math.round(monthlyBudget * factor),
-      budget: monthlyBudget,
-    };
-  });
-}
-
-// ── Department aggregation ──
-export interface DepartmentSpending {
-  department: string;
-  spent: number;
-  budget: number;
-  rate: number;
-}
-
-export function aggregateDepartments(budgets: Budget[]): DepartmentSpending[] {
-  const deptMap: Record<string, { spent: number; budget: number }> = {};
-  for (const b of budgets) {
-    const dept = b.targetDepartment || "미지정";
-    if (!deptMap[dept]) deptMap[dept] = { spent: 0, budget: 0 };
-    deptMap[dept].spent += b.usage?.totalSpent ?? 0;
-    deptMap[dept].budget += b.amount;
-  }
-  return Object.entries(deptMap)
-    .map(([department, { spent, budget }]) => ({
-      department,
-      spent,
-      budget,
-      rate: budget > 0 ? Math.round((spent / budget) * 100) : 0,
-    }))
-    .sort((a, b) => b.rate - a.rate)
-    .slice(0, 3);
-}
+/* 🛑 §budget-fabricated-figures (2026-09-20 · 릴레이 판정) — 합성 함수 2개를 지웠다.
+ *   generateMonthlyData  1~6월 고정 라벨에 `총예산÷12 × 고정계수[0.7·0.85·0.9·1.05·1.1·0.95]` 를 얹어
+ *                        "월별 지출 추이(AI 예측 포함)" 로 그렸다. 실지출(PurchaseRecord)을 읽지 않았다.
+ *   aggregateDepartments targetDepartment 로 묶었는데 그 열이 DB 에 없다 → 언제나 「미지정」 1줄.
+ *   되살릴 때: 월별은 실적 집계로, 부서별은 부서 열이 생긴 뒤. 화면은 그때까지 「데이터 없음」을 쓴다.
+ *   계약: __tests__/regression/budget-fabricated-figures.test.ts */
 
 // ── Store ──
 interface BudgetStoreState {

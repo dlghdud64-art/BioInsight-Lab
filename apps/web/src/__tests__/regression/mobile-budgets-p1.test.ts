@@ -64,7 +64,10 @@ describe("§mobile-budgets P1 — 7a 예산 관리 모바일", () => {
 
   it("0건 = 초록 한 줄 요약 · 1건+ = 카드 승격(배경 채색 금지 — 숫자·라벨만 레드)", () => {
     const src = read(BUDGET);
-    expect(src).toMatch(/예산 상태 정상 · 0\/0\/0/);
+    // §budget-fabricated-figures (2026-09-20 · 릴레이 판정) 승계 — 요약의 KPI 는 3개(0/0/0)에서 2개(0/0)가 됐다.
+    //   「승인 대기」 는 reserved 상수 0 이라 항상 0건이던 지표라 지웠다(예약 흐름 실측 후 되살린다).
+    //   명제는 그대로다: 0건이면 초록 한 줄 요약 · 1건+ 면 해당 항목만 카드 승격.
+    expect(src).toMatch(/예산 상태 정상 · 0\/0/);
     expect(src).toMatch(/상세 ›/);
     expect(src).toMatch(/#b91c1c/); // KPI 경고 = 텍스트만 레드
   });

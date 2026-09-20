@@ -28,12 +28,9 @@ import CategorySpendingWidget from "@/components/dashboard/CategorySpendingWidge
 import {
   useBudgetStore,
   deriveBudgetControl,
-  generateMonthlyData,
-  aggregateDepartments,
   type Budget,
   type BudgetControl,
   type BudgetWithControl,
-  type DepartmentSpending,
 } from "@/lib/store/budget-store";
 
 // ── Risk config ──
@@ -144,67 +141,25 @@ export default function BudgetPage() {
     return controls.filter(
       (c: BudgetWithControl) =>
         c.budget.name.toLowerCase().includes(q) ||
-        c.budget.targetDepartment?.toLowerCase().includes(q) ||
         c.budget.projectName?.toLowerCase().includes(q),
     );
   }, [controls, searchQuery]);
 
+  /* 🛑 §budget-fabricated-figures (2026-09-20 · 릴레이 판정) — 근거 없는 파생 지표 3종을 지웠다.
+   *   승인 대기  deriveBudgetControl 의 reserved 가 **상수 0**이라 조건이 성립한 적이 없다(항상 0건).
+   *              실제 예약은 BudgetEvent(ORDER_RESERVED)에 있는데 이 화면은 읽지 않는다.
+   *              예약 흐름을 실측한 뒤에 되살린다.
+   *   절감 가능  위험 예산 지출 × 0.15 — 15% 는 근거 없는 고정 비율이었다.
+   *   주간 소진  총 지출 ÷ 4 — 기간도 주 수도 보지 않았다("최근 4주 평균 기준" 은 사실이 아니었다).
+   *              prod 실측(2026-09-20): 구매 1건(8/18)뿐이라 어떤 산식도 의미 있는 주 평균을 못 낸다.
+   *   남긴 둘(즉시 확인·차단 위험)은 소진율 임계값 계산이라 실데이터다.
+   *   계약: __tests__/regression/budget-fabricated-figures.test.ts */
   const actionKpi = useMemo(() => {
     const immediateReview = controls.filter((c: BudgetWithControl) => c.ctrl.risk === "over").length;
     const blockRisk = controls.filter(
       (c: BudgetWithControl) => c.ctrl.risk === "warning" || c.ctrl.risk === "critical",
     ).length;
-    const pendingApproval = controls.filter(
-      (c: BudgetWithControl) => c.ctrl.reserved > 0 && (c.ctrl.risk === "warning" || c.ctrl.risk === "critical"),
-    ).length;
-    const altSavings = controls.reduce((sum: number, c: BudgetWithControl) => {
-      if (c.ctrl.risk === "warning" || c.ctrl.risk === "critical" || c.ctrl.risk === "over") {
-        return sum + Math.round(c.ctrl.actual * 0.15);
-      }
-      return sum;
-    }, 0);
-    const weeklyBurn = controls.reduce((s: number, c: BudgetWithControl) => s + c.ctrl.actual, 0) > 0
-      ? Math.round(controls.reduce((s: number, c: BudgetWithControl) => s + c.ctrl.actual, 0) / 4)
-      : 0;
-    return { immediateReview, blockRisk, pendingApproval, altSavings, weeklyBurn };
-  }, [controls]);
-
-  // ── Chart data ──
-  const monthlyData = useMemo(() => generateMonthlyData(budgets), [budgets]);
-  const departmentTop3 = useMemo(() => aggregateDepartments(budgets), [budgets]);
-
-  // ── AI Insight mock ──
-  const aiInsights = useMemo(() => {
-    const insights: { icon: string; title: string; description: string; actionLabel: string; actionHref: string; color: string }[] = [];
-    const overBudgets = controls.filter((c: BudgetWithControl) => c.ctrl.risk === "over" || c.ctrl.risk === "critical");
-    if (overBudgets.length > 0) {
-      const b = overBudgets[0].budget;
-      insights.push({
-        icon: "⚠️",
-        title: "이상 지출 감지",
-        description: `"${b.name}"의 소모품 지출이 지난 3개월 평균 대비 42% 급증했습니다. 대량 발주 여부를 확인하세요.`,
-        actionLabel: "상세 분석 보기",
-        actionHref: `/dashboard/budget/${b.id}`,
-        color: "text-yellow-600",
-      });
-    }
-    insights.push({
-      icon: "📉",
-      title: "절감 기회 포착",
-      description: "현재 진행 중인 5개 프로젝트의 공통 시약(PBS, Ethanol)을 통합 발주할 경우, 연간 약 ₩1.2M의 절감이 가능합니다.",
-      actionLabel: "통합 발주 제안서 확인",
-      actionHref: "/dashboard/purchases",
-      color: "text-emerald-600",
-    });
-    insights.push({
-      icon: "📊",
-      title: "소진 시점 예측",
-      description: `현재 소진 속도 유지 시, 상반기 예산은 약 2주차에 조기 소진될 것으로 예측됩니다.`,
-      actionLabel: "예산 재배정 시뮬레이션",
-      actionHref: "/dashboard/budget",
-      color: "text-red-600",
-    });
-    return insights;
+    return { immediateReview, blockRisk };
   }, [controls]);
 
   // ── Budget CRUD ──
@@ -214,7 +169,6 @@ export default function BudgetPage() {
     currency: string;
     periodStart: string;
     periodEnd: string;
-    targetDepartment?: string | null;
     projectName?: string | null;
     description?: string | null;
   }) => {
@@ -230,7 +184,7 @@ export default function BudgetPage() {
       const method = isEdit ? "PATCH" : "POST";
       const body = isEdit
         ? { name: formData.name, amount: cleanAmount, currency: formData.currency, periodStart: formData.periodStart, periodEnd: formData.periodEnd, projectName: formData.projectName ?? null, description: formData.description ?? null }
-        : { name: formData.name, amount: cleanAmount, currency: formData.currency, periodStart: formData.periodStart, periodEnd: formData.periodEnd, projectName: formData.projectName, description: formData.description, targetDepartment: formData.targetDepartment, organizationId: activeOrgId };
+        : { name: formData.name, amount: cleanAmount, currency: formData.currency, periodStart: formData.periodStart, periodEnd: formData.periodEnd, projectName: formData.projectName, description: formData.description, organizationId: activeOrgId };
 
       const res = await csrfFetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const json = await res.json().catch(() => ({}));
@@ -346,10 +300,10 @@ export default function BudgetPage() {
 
         {/* §mobile-budgets §1 — 0건 = 초록 한 줄 요약 · 1건+ = 해당 항목만 카드 승격(배경 채색 금지, 숫자·라벨만 레드) */}
         <div className="md:hidden space-y-2">
-          {actionKpi.immediateReview === 0 && actionKpi.blockRisk === 0 && actionKpi.pendingApproval === 0 ? (
+          {actionKpi.immediateReview === 0 && actionKpi.blockRisk === 0 ? (
             <div className="flex items-center gap-2 rounded-xl border border-[#e6eaf0] bg-green-50 px-3.5">
               <CheckCircle2 className="h-4 w-4 flex-none" style={{ color: "#15803d" }} />
-              <p className="flex-1 text-[13px] font-semibold py-3" style={{ color: "#15803d" }}>예산 상태 정상 · 0/0/0</p>
+              <p className="flex-1 text-[13px] font-semibold py-3" style={{ color: "#15803d" }}>예산 상태 정상 · 0/0</p>
               <button type="button" onClick={() => setKpiDetailOpen((v) => !v)} className="min-h-[44px] text-[12px] font-semibold text-slate-500">상세 ›</button>
             </div>
           ) : (
@@ -357,7 +311,6 @@ export default function BudgetPage() {
               {[
                 { label: "즉시 확인", count: actionKpi.immediateReview, sub: "초과 항목 검토 필요" },
                 { label: "차단 위험", count: actionKpi.blockRisk, sub: "임계 구간 — 곧 차단 가능" },
-                { label: "승인 대기", count: actionKpi.pendingApproval, sub: "임계 구간 내 예약 건" },
               ].filter((k) => k.count > 0).map((k) => (
                 <div key={k.label} className="bg-white rounded-xl border border-[#e6eaf0] px-3.5 py-3 flex items-center gap-3">
                   <div className="flex-1">
@@ -375,9 +328,6 @@ export default function BudgetPage() {
               {[
                 { label: "즉시 확인", value: `${actionKpi.immediateReview}건` },
                 { label: "차단 위험", value: `${actionKpi.blockRisk}건` },
-                { label: "승인 대기", value: `${actionKpi.pendingApproval}건` },
-                { label: "절감 가능", value: formatWonShort(actionKpi.altSavings) },
-                { label: "주간 소진", value: formatWonShort(actionKpi.weeklyBurn) },
               ].map((k) => (
                 <div key={k.label} className="flex items-center justify-between px-3.5 py-2.5 text-[12px]">
                   <span className="text-slate-500">{k.label}</span>
@@ -389,7 +339,7 @@ export default function BudgetPage() {
         </div>
 
         {/* ═══ KPI Strip ═══ */}
-        <div className="hidden md:grid md:grid-cols-5 gap-3">{/* §mobile-budgets — 모바일은 위 요약/승격 카드로 대체(패리티: 상세 › 전체) */}
+        <div className="hidden md:grid md:grid-cols-2 gap-3">{/* §mobile-budgets — 모바일은 위 요약/승격 카드로 대체(패리티: 상세 › 전체) */}
           {[
             {
               icon: <AlertTriangle className="h-4 w-4" />,
@@ -408,33 +358,6 @@ export default function BudgetPage() {
               label: "차단 위험",
               value: `${actionKpi.blockRisk}건`,
               sub: actionKpi.blockRisk > 0 ? "임계 구간 — 곧 차단 가능" : "임계치 안전",
-            },
-            {
-              icon: <CheckCircle2 className="h-4 w-4" />,
-              iconColor: "text-blue-500",
-              cardBg: actionKpi.pendingApproval > 0 ? "bg-blue-50 border-blue-200" : "bg-white border-slate-200",
-              valueColor: actionKpi.pendingApproval > 0 ? "text-blue-600" : "text-slate-900",
-              label: "승인 대기",
-              value: `${actionKpi.pendingApproval}건`,
-              sub: "임계 구간 내 예약 건",
-            },
-            {
-              icon: <TrendingUp className="h-4 w-4" />,
-              iconColor: "text-emerald-500",
-              cardBg: actionKpi.altSavings > 0 ? "bg-emerald-50 border-emerald-200" : "bg-white border-slate-200",
-              valueColor: actionKpi.altSavings > 0 ? "text-emerald-600" : "text-slate-900",
-              label: "절감 가능",
-              value: formatWonShort(actionKpi.altSavings),
-              sub: actionKpi.altSavings > 0 ? "절감 대상 감지" : "절감 대상 없음",
-            },
-            {
-              icon: <RefreshCw className="h-4 w-4" />,
-              iconColor: "text-slate-500",
-              cardBg: "bg-white border-slate-200",
-              valueColor: "text-slate-900",
-              label: "주간 소진",
-              value: formatWonShort(actionKpi.weeklyBurn),
-              sub: "최근 4주 평균 기준",
             },
           ].map((kpi) => (
             <div key={kpi.label} className={`min-w-[140px] snap-start shrink-0 sm:min-w-0 sm:shrink rounded-xl border p-3.5 sm:p-4 hover:shadow-sm transition-shadow ${kpi.cardBg}`}>
@@ -464,21 +387,26 @@ export default function BudgetPage() {
               <span className="text-[11px] text-slate-300" aria-disabled="true">›</span>
             </div>
           )}
-          {departmentTop3.length > 0 ? (
+          {/* §budget-fabricated-figures — 라벨은 「예산 풀별」인데 부서 집계(aggregateDepartments)를 그렸다.
+              부서 열이 DB 에 없어 언제나 「미지정」 한 줄이었다. 실제 예산 풀의 소진율(실데이터)로 교체. */}
+          {controls.length > 0 ? (
             <div className="py-3.5">
               <p className="text-[13px] font-bold text-slate-800 mb-2">예산 풀별 소진율</p>
               <div className="space-y-2.5">
-                {departmentTop3.map((dept: DepartmentSpending) => (
-                  <div key={dept.department}>
-                    <div className="flex items-center justify-between mb-1 text-[12px]">
-                      <span className="font-semibold text-slate-700">{dept.department}</span>
-                      <span className="tabular-nums text-slate-500">{dept.rate}%</span>
+                {controls.slice(0, 3).map((c: BudgetWithControl) => {
+                  const rate = Math.round(c.ctrl.burnRate);
+                  return (
+                    <div key={c.budget.id}>
+                      <div className="flex items-center justify-between mb-1 text-[12px]">
+                        <span className="font-semibold text-slate-700 truncate">{c.budget.name}</span>
+                        <span className="tabular-nums text-slate-500">{rate}%</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                        <div className={`h-full rounded-full ${rate > 100 ? "bg-red-500" : rate >= 80 ? "bg-yellow-400" : "bg-emerald-500"}`} style={{ width: `${Math.min(rate, 100)}%` }} />
+                      </div>
                     </div>
-                    <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                      <div className={`h-full rounded-full ${dept.rate > 100 ? "bg-red-500" : dept.rate >= 80 ? "bg-yellow-400" : "bg-emerald-500"}`} style={{ width: `${Math.min(dept.rate, 100)}%` }} />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ) : (
@@ -499,77 +427,19 @@ export default function BudgetPage() {
           </div>
         )}
 
-        {/* ═══ Chart + Department TOP 3 ═══ */}
+        {/* 🛑 §budget-fabricated-figures (2026-09-20 · 릴레이 판정) — 지운 블록 3개.
+              월별 지출 추이  실지출을 한 번도 읽지 않았다. 총예산÷12 × 고정계수[0.7·0.85·0.9·1.05·1.1·0.95]
+                             를 1~6월 라벨에 얹은 합성값이었다(예산 기간이 8~12월인데도 1~6월을 그렸다).
+              부서별 TOP 3    묶는 키 targetDepartment 가 DB 에 없다 → 언제나 「미지정」 1줄.
+              AI 인사이트     고정 문장이었다(코드 주석이 `AI Insight mock`). 분석 엔진·입력 0.
+              되살릴 때의 조건: 월별은 PurchaseRecord 실적으로, 부서별은 부서 열이 생긴 뒤.
+              계약: __tests__/regression/budget-fabricated-figures.test.ts */}
         {budgets.length > 0 && (
-          <div className="hidden md:grid grid-cols-1 lg:grid-cols-5 gap-4">
-            {/* 월별 지출 추이 */}
-            <div className="lg:col-span-3 bg-white rounded-xl border border-slate-200 p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-sm font-semibold text-slate-900">월별 지출 추이 (AI 예측 포함)</h2>
-                  <p className="text-[11px] text-slate-400 mt-0.5">최근 6개월간의 실적 지출량과 예산 한도를 비교합니다.</p>
-                </div>
-                <div className="flex items-center gap-3 text-[10px] text-slate-500">
-                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block" /> 실제 지출</span>
-                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-slate-300 inline-block" /> 예산 한도</span>
-                </div>
-              </div>
-              <div className="h-52">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={monthlyData} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} />
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => v >= 1_000_000 ? `₩${(v / 1_000_000).toFixed(0)}M` : `₩${(v / 1_000).toFixed(0)}K`} />
-                    <Tooltip content={<ChartTooltip />} />
-                    <Area type="monotone" dataKey="budget" stroke="#cbd5e1" strokeWidth={1.5} strokeDasharray="4 4" fill="none" dot={false} />
-                    <Area type="monotone" dataKey="actual" stroke="#3b82f6" strokeWidth={2} fill="url(#colorActual)" dot={{ r: 3, fill: "#3b82f6", stroke: "#fff", strokeWidth: 2 }} activeDot={{ r: 5, fill: "#3b82f6", stroke: "#fff", strokeWidth: 2 }} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* 부서별 예산 소진 TOP 3 + AI Insight */}
-            <div className="lg:col-span-2 space-y-4">
-              <div className="bg-white rounded-xl border border-slate-200 p-5">
-                <h2 className="text-sm font-semibold text-slate-900 mb-3">부서별 예산 소진 TOP 3</h2>
-                {departmentTop3.length > 0 ? (
-                  <div className="space-y-3">
-                    {departmentTop3.map((dept: DepartmentSpending) => {
-                      const barColor = dept.rate > 100 ? "bg-red-500" : dept.rate >= 80 ? "bg-yellow-500" : "bg-emerald-500";
-                      return (
-                        <div key={dept.department}>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs text-slate-700 font-medium">{dept.department}</span>
-                            <span className={`text-xs font-bold tabular-nums ${dept.rate > 100 ? "text-red-600" : dept.rate >= 80 ? "text-yellow-600" : "text-emerald-600"}`}>{dept.rate}%</span>
-                          </div>
-                          <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                            <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${Math.min(dept.rate, 100)}%` }} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-xs text-slate-400">예산 데이터가 부족합니다.</p>
-                )}
-              </div>
-
-              <div className="bg-white rounded-xl border border-slate-200 p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="h-4 w-4 text-violet-500" />
-                  <h3 className="text-xs font-semibold text-slate-700">AI 인사이트</h3>
-                </div>
-                <p className="text-[11px] text-slate-500 leading-relaxed">
-                  총합 판단한 소진 속도가 이례적으로 빠릅니다. 견적 비교 시 대체 시약을 함께 확인하세요.
-                </p>
-              </div>
-            </div>
+          <div className="hidden md:block rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+            <p className="text-[13px] font-bold text-gray-500">지출 추이·부서별 소진 데이터 없음</p>
+            <p className="mt-0.5 text-xs text-gray-500">
+              월별 추이와 부서별 소진은 아직 실제 지출 기록과 연결되지 않았습니다. 예산별 소진은 아래 목록에서 확인하세요.
+            </p>
           </div>
         )}
 
@@ -580,7 +450,7 @@ export default function BudgetPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="예산명, 부서, 프로젝트로 검색..."
+                placeholder="예산명, 프로젝트로 검색..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
@@ -637,9 +507,7 @@ export default function BudgetPage() {
                         <span className="text-sm font-medium text-slate-800 truncate">{b.name}</span>
                       </div>
                       <div className="text-[11px] text-slate-500 truncate mt-0.5 ml-4">
-                        {b.targetDepartment || "부서 미지정"}
-                        {b.projectName && <> · <span className="text-slate-400">{b.projectName}</span></>}
-                        {" · "}
+                        {b.projectName && <><span className="text-slate-400">{b.projectName}</span>{" · "}</>}
                         {new Date(b.periodStart).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
                         {" ~ "}
                         {new Date(b.periodEnd).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
@@ -678,7 +546,7 @@ export default function BudgetPage() {
                       <span className={`text-[11px] font-semibold shrink-0 ${riskCfg.color}`}>{riskCfg.label}</span>
                     </div>
                     <div className="text-[11px] text-slate-500 mb-2 ml-4">
-                      {b.targetDepartment || "부서 미지정"}{b.projectName && ` · ${b.projectName}`}
+                      {b.projectName ?? ""}
                     </div>
                     <div className="flex items-center justify-between ml-4 text-[11px]">
                       <div className="flex items-center gap-3">
@@ -701,10 +569,10 @@ export default function BudgetPage() {
         {!isFetching && budgets.length > 0 && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { label: "미매핑 요청", count: 0, sub: "예산 미연결 요청 확인", href: "/dashboard/purchases" },
+              /* §budget-fabricated-figures — 지운 카드 3개.
+                 미매핑 요청   count: 0 리터럴(집계 없음) · 승인 대기 항상 0(reserved 상수 0) ·
+                 발주 전환 대기 라벨은 견적인데 실제로는 「정상 예산 행 수」를 세고 있었다. */
               { label: "초과 위험 감지", count: actionKpi.blockRisk + actionKpi.immediateReview, sub: "임계 구간 · 초과 건 검토", href: "/dashboard/budget" },
-              { label: "승인 대기", count: actionKpi.pendingApproval, sub: "예산 초과분 승인 요청", href: "/dashboard/purchases" },
-              { label: "발주 전환 대기", count: controls.filter((c: BudgetWithControl) => c.ctrl.risk === "safe").length, sub: "예산 확인 완료 건", href: "/dashboard/quotes" },
             ].map((item) => (
               <Link key={item.label} href={item.href} className="block">
                 <div className="bg-white rounded-xl border border-slate-200 px-4 py-4 hover:shadow-sm transition-shadow">
@@ -719,34 +587,11 @@ export default function BudgetPage() {
           </div>
         )}
 
-        {/* ═══ AI 예산 이상 탐지 & 예측 ═══ */}
-        {!isFetching && budgets.length > 0 && (
-          <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 rounded-2xl p-6 text-white">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
-                <Sparkles className="h-5 w-5 text-yellow-400" />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold">AI 예산 이상 탐지 &amp; 예측</h2>
-                <p className="text-[11px] text-white/60">과거 지출 패턴을 분석하여 미래 예산 부족 위험을 사전에 경고합니다.</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {aiInsights.map((insight, i) => (
-                <div key={i} className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-colors">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-base">{insight.icon}</span>
-                    <h3 className="text-xs font-semibold text-white">{insight.title}</h3>
-                  </div>
-                  <p className="text-[11px] text-white/70 leading-relaxed mb-3">{insight.description}</p>
-                  <Link href={insight.actionHref} className="inline-flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 font-medium">
-                    {insight.actionLabel} <ArrowUpRight className="h-3 w-3" />
-                  </Link>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* 🛑 §budget-fabricated-figures — 「AI 예산 이상 탐지 & 예측」 블록 제거.
+              블록 설명문은 「과거 지출 패턴을 분석하여…」 였으나 과거 지출을 읽는 코드가 없었다.
+              3장 중 2장은 조건 없이 항상 렌더되는 고정 문장이었고(5개 프로젝트·PBS·Ethanol·₩1.2M,
+              「상반기 예산 2주차 조기 소진」), 1장은 예산 이름만 실제이고 42%·3개월은 고정이었다.
+              되살리려면 입력 데이터를 받는 엔진이 먼저 있어야 한다. */}
 
       {/* §mobile-budgets 7b — 공용 등록 시트. onSuccess = 배너 dismiss + 목록 실계산 + analytics 활성화 2/3 invalidate */}
       <BudgetRegisterSheet
@@ -948,7 +793,6 @@ function BudgetForm({
   const [currency, setCurrency] = useState(budget?.currency || "KRW");
   const [periodStart, setPeriodStart] = useState<Date | null>(getDefaultStartDate());
   const [periodEnd, setPeriodEnd] = useState<Date | null>(getDefaultEndDate());
-  const [targetDepartment, setTargetDepartment] = useState(budget?.targetDepartment || "");
   const [projectName, setProjectName] = useState(budget?.projectName || "");
   const [description, setDescription] = useState(budget?.description || "");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -977,7 +821,6 @@ function BudgetForm({
     if (!periodStart) newErrors.periodStart = "시작일을 선택해주세요.";
     if (!periodEnd) newErrors.periodEnd = "종료일을 선택해주세요.";
     if (periodStart && periodEnd && periodStart.getTime() > periodEnd.getTime()) newErrors.periodEnd = "종료일은 시작일보다 이후여야 합니다.";
-    if (!targetDepartment.trim()) newErrors.targetDepartment = "대상 부서/팀을 선택해주세요.";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -1000,7 +843,6 @@ function BudgetForm({
       currency,
       periodStart: periodStart ? periodStart.toISOString().split("T")[0] : "",
       periodEnd: periodEnd ? periodEnd.toISOString().split("T")[0] : "",
-      targetDepartment: targetDepartment.trim() || undefined,
       projectName: projectName.trim() || undefined,
       description: description.trim() || undefined,
     });
@@ -1053,18 +895,9 @@ function BudgetForm({
           예산 기간: {periodStart.toLocaleDateString("ko-KR")} ~ {periodEnd.toLocaleDateString("ko-KR")} ({Math.ceil((periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24))}일)
         </div>
       )}
-      <div>
-        <Label htmlFor="targetDepartment" className="text-sm font-semibold text-slate-700">대상 부서/팀 <span className="text-red-500">*</span></Label>
-        <Select value={targetDepartment} onValueChange={(v: string) => { setTargetDepartment(v); if (errors.targetDepartment) setErrors((prev) => ({ ...prev, targetDepartment: "" })); }}>
-          <SelectTrigger className={`mt-1.5 rounded-xl h-11 ${errors.targetDepartment ? "border-red-400 ring-1 ring-red-200" : "border-slate-200"}`}><SelectValue placeholder="부서를 선택해주세요" /></SelectTrigger>
-          <SelectContent position="popper" className="z-[9999] rounded-xl">
-            {BUDGET_DEPARTMENT_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.targetDepartment && <p className="text-[12px] font-medium text-red-500 mt-1.5">{errors.targetDepartment}</p>}
-      </div>
+      {/* 🛑 §budget-fabricated-figures — 「대상 부서/팀」 입력 제거.
+          필수 입력이었는데 서버(POST /api/budgets)가 저장하지 않았고 DB 에 열도 없다.
+          저장되지 않는 입력은 두지 않는다. 부서 구분이 실제로 필요해지면 열부터 만든다. */}
       <div>
         <Label htmlFor="projectName" className="text-sm font-semibold text-slate-700">프로젝트/과제명 (선택)</Label>
         <Input id="projectName" value={projectName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProjectName(e.target.value)} placeholder="예: 신약 개발 프로젝트" className="mt-1.5 rounded-xl h-11 border-slate-200" />
