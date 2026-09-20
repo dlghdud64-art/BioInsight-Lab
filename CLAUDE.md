@@ -865,7 +865,10 @@ IngestionAuditLog       0행
    enforce-plan-limit.ts resolvePlan(:54-69) 이 subscription.plan 만 select 한다(:63). status 는 보지 않는다.
    prod 조직 2개 중 구독 행이 있는 1개가 TEAM · unpaid 다.
    (단 PRICING_ENFORCE_CUTOFF 미설정 시 :171-172 에서 조기 return — 스위치를 켜는 순간 실효.
-    prod 설정 여부 미확인)
+    ✅ prod 미설정 확정 2026-09-20 — Vercel 프로젝트 env 전량 24개 조회, 해당 키 없음.
+       hiddenProductionEnvCount 0 이라 숨은 항목도 없다. 값은 복호화하지 않았다(키 이름·메타만).
+       → 오늘 이 결함은 잠복이다. 스위치를 켜는 것이 곧 실효화이므로, 켜는 커밋은 위 1·2 를
+         닫은 뒤여야 한다.)
 
 3. 결제한 Pro 가 화면마다 다르게 보인다.
    결재 축 4곳은 Workspace 의 plan + stripePriceId 를 넘겨 SKU 를 판별한다 → Pro(business)
