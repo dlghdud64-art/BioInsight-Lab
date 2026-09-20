@@ -2,7 +2,7 @@
 
 - **Status:** 🔄 In Progress
 - **Started:** 2026-09-17
-- **Last Updated:** 2026-09-20 (prod 배포 READY · Smoke 대기)
+- **Last Updated:** 2026-09-20 (Smoke A·B·D·5 통과 · 사각지대 4건 기록 · P1 백로그 분리)
 - **Estimated Completion:** 2026-09-18
 - **Scope tag:** `§main-dashboard-p0-honesty`
 
@@ -511,7 +511,7 @@ git merge-base --is-ancestor e52846a3 93e25ef5  → REACHED
 
 ---
 
-### Phase 3: Smoke / Rollback
+### Phase 3: Smoke / Rollback 🔄
 **Goal:** 두 계정 상태 · 두 뷰포트에서 회귀 0을 실증하고 복구 경로를 고정한다.
 - Status: [ ] Pending | [ ] In Progress | [ ] Complete
 
@@ -534,6 +534,65 @@ git merge-base --is-ancestor e52846a3 93e25ef5  → REACHED
 - [ ] 남은 blocker를 P1(§2·§3)로 격리 기록
 
 **Rollback:** 컴포넌트 5개 revert 한 커밋. feature flag 불필요(표시 규율 한정).
+
+---
+
+## 7-B. Phase 3 Smoke 결과 (2026-09-20 · prod 실측)
+
+| | 판정 |
+| :--- | :--- |
+| A 미설정 / 데스크탑 | ✅ `₩0` **0회** · 도넛 0 · 총 지출 0 · FAB 0 · 예산 카드 `설정 전` + 미니 지표 2 + 캡션 + CTA 0 |
+| B 설정(₩10,000,000) | ✅ `예산 & 지출 · 9월` + `예산 관리` · `₩0 / ₩10,000,000 · 0% 소진` · 3지표(잔여 · 남은 일수 11일 · 일평균 ₩909,090 = 내림 정확) · 도넛 `카테고리별 비중 · 최근 6개월` |
+| C 모바일 375px | ⛔ **실행 불가** — `resize_window` 가 뷰포트에 반영되지 않았다(사이드바 유지). 추정 통과 처리하지 않는다. 호영님 폰 확인 대기 |
+| D 칩 딥링크 | ✅ 견적 4 → `?status=PENDING` **4건** / 재고 1 → `?filter=low` **1건**(BCP, 1개 / 안전재고 10). 입고 칩 부재 = 판정대로 |
+| 5 회귀 | ✅ inventory 에 운영 브리핑 FAB 생존 |
+
+### 🛑 정적 단언의 사각지대 — 화면·원문 대조로만 잡힌 결함 4건
+
+전량 GREEN 인 게이트를 통과한 뒤, **화면을 보고서야** 드러났다. Smoke 단계가 없었으면 그대로 나갔다.
+
+| # | 결함 | 정적 단언이 못 본 이유 |
+| :--- | :--- | :--- |
+| 1 | NextStepBanner em dash 2건이 화면에 노출 | B7 SURFACES 가 **값을 고친 5파일**만 봤다. 조항의 축은 **한 화면에 함께 렌더되는 파일 전부** → 11파일로 확대 |
+| 2 | 칩 라벨 `회신 대기` vs 착지 화면 `발송 대기` | 어휘 일치를 재는 단언이 없었다. href 집합만 봤지 **라벨이 착지 화면과 같은 말인지**는 안 봤다 |
+| 3 | 도넛 `총 지출 ₩850,000`(6개월)이 예산 `₩0`(이번 달) 아래 기간 표기 없이 | T3 를 **제목에만** 적용했다. 값 옆은 여전히 무기한이었다 → `6개월 지출` |
+| 4 | 파이프라인이 모바일에서도 3열 | 핸드오프 §6 "모바일 3카드 → 1열" 을 구현하지 않았고, 그 조항을 단언으로도 옮기지 않았다. **핸드오프 원문 대조**에서 잡혔다 |
+
+교훈 3가지.
+- **단언의 축은 "내가 고친 파일" 이 아니라 "사용자가 한 번에 보는 것" 이다.** 1번이 그 형태다.
+- **핸드오프 조항을 구현할 때 같은 조항을 단언으로도 옮긴다.** 4번은 구현 누락인데 단언 누락이 그것을 덮었다.
+- **화면 검증은 정적 단언의 보완재가 아니라 다른 축이다.** 2·3번은 코드만 봐서는 영원히 안 보인다 — 착지 화면의 어휘, 두 수가 나란히 놓였을 때의 인상은 렌더된 화면에만 있다.
+
+### 자체 정정 1건
+재고 딥링크를 처음 읽고 `0건` 을 보고 "칩 1 vs 화면 0 = 결함" 이라 결론 낼 뻔했다. 페이지에 `불러오는 중` 이 남아 있었고 6초 뒤 **1건** 이었다. 「없어서 0 인지 아직 안 온 건지 가른다」를 건너뛴 형태(CLAUDE.md 절차 B).
+
+### 격리 러너 확보 (B1 우회)
+레포 밖 `~/iso-vitest` 에 vitest 단독 설치 — 공유 `node_modules` 무오염. rollup 리눅스 바이너리 부재로 막혔던 B1 을 우회해, sentinel 수정마다 operator 를 부르지 않고 사전 확인이 가능해졌다.
+🛑 **정본이 아니다.** 프로젝트 러너는 `environment: "jsdom"` + `setupFiles` 이고 격리 러너는 `node` · setup 없음. DB/jsdom 의존 테스트는 멈춘다. **사전 확인 전용**이며 게이트 판정은 operator-shell 만.
+
+### 공용 판별기 수정의 검출력 실증
+`em-dash-scan.ts` 는 **65파일**이 쓴다(실측). isPlaceholder 를 *넓히는* 수정이라 검사 약화 위험이 있어 주입 프로브 7종을 돌렸다 — 단독일 때만 placeholder, 한쪽이라도 텍스트가 붙으면 구분자로 잡는다. 7/7 PASS. 판별기 자기 테스트 9/9 GREEN. 2차 게이트에서 실패 이름 집합 **무차분** 확인(늘어남 0 · 줄어듦 0).
+
+### 커밋 2건
+| 커밋 | 내용 | 동승 |
+| :--- | :--- | :--- |
+| `e52846a3` | P0 본체 22파일 | `93e25ef5`(다른 세션, 내가 잰 적 없음) |
+| `35332812` | Smoke 수정 8파일 (+122 −18) | **없음** — push 전 `@{u}..HEAD` 확인 절차 반영 |
+
+---
+
+## 7-C. P1 백로그 (본 트랙에서 분리)
+
+| # | 항목 | 선행 조건 |
+| :--- | :--- | :--- |
+| P1-1 | §2 다음 단계 추천 **4단계 트랙** | summary 에 멤버 수 파생 추가 |
+| P1-2 | §3 **기한 그룹 3개**(지연/오늘/이번 주) + 품목명·수치 병기 + 담당자 아바타 + 모달 직행 | 견적 회신 마감일 스키마 확인. ⚠️ 담당자 아바타는 핸드오프 상단 "담당자 단일 운영 기준" 과 충돌 — 재확인 필요 |
+| P1-3 | 견적 `마감 오늘` 칩 | P1-2 와 같은 의존(마감일) |
+| P1-4 | **입고 판정 소스 통일** — summary `receive` = `InventoryRestock` vs 착지 화면 `/dashboard/receiving` = `ReceivingDraft`. 입고 카드 `열기 ›` 도 같은 불일치(본 트랙 이전부터) | 입고 큐 트랙의 canonical 판정 |
+| P1-5 | `남은 일수` 축 재검토 — 현재 **이번 달 말일** 기준인데 예산 기간이 분기·반기면 어긋난다(실측: 예산 12.31 까지인데 11일로 표시) | 호영님 판정 |
+| P1-6 | `blockFrom` 류 블록 창 헬퍼 **4벌 중복**(신규 파일 · p3b · p4 · won-glyph) → `_helpers/` 통합 | 없음 |
+| P1-7 | `recommendedActions` 배열이 JSX 소비 0 인데 `302d6a4g:64` 가 핀해 살아 있다 | 그 sentinel 트랙 |
+| P1-8 | 원장 stale 해소 7건(§11.257 6 + 258sweep 1) `--update` | 별도 커밋 |
 
 ---
 
@@ -577,16 +636,16 @@ git merge-base --is-ancestor e52846a3 93e25ef5  → REACHED
 
 ## 11. Progress Tracking
 
-- Overall completion: 95% (Phase 0·1·2 완료 · prod 배포 READY — Smoke 실측만 남음)
-- Current phase: Phase 3 (Smoke) — 배포 READY. 로그인 세션 확보 후 A~D 실측
-- Current blocker: 없음
-- Next validation step: Smoke A~D + 다른 surface FAB 회귀 (로그인 필요)
+- Overall completion: 98% (Phase 0·1·2 완료 · Smoke A·B·D·5 통과 — C 만 실행 불가로 대기)
+- Current phase: Phase 3 — Smoke A·B·D·5 통과. C(모바일 375px) 호영님 폰 확인 대기
+- Current blocker: Smoke C 실행 불가(브라우저 resize 미반영) · 검증용 예산 `cmu95g02y…` 삭제 판정
+- Next validation step: 폰에서 파이프라인 1열·칩 잘림 확인 → Phase 3 마감 → P1 착수
 
 **Phase Checklist**
 - [x] Phase 0 complete
 - [x] Phase 1 complete
 - [x] Phase 2 complete
-- [ ] Phase 3 complete
+- [ ] Phase 3 complete (C 대기)
 
 ---
 
