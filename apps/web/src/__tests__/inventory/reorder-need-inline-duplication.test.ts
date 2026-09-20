@@ -16,11 +16,16 @@
  * 대신 집합을 리터럴로 고정한다(§개수는 명제가 아니다):
  *   새 복제가 생기면 RED · 자리를 정본 호출로 닫아도 RED(목록에서 지우고 커밋을 같은 줄에 적는다).
  *
- * 🛑 여기 적힌 `boundary`·`guard`·`zeroAxis` 는 정본과의 **차이 기록**이지 승인이 아니다.
- *    "<" 2 곳과 truthy 가드 3 곳은 값이 실제로 갈리는 자리이며 판정 대기다(경계 <=/< 는 호영님 미판정 항목).
+ * 🛑 **검출기가 무는 것은 명제의 형태이지 값이 아니다.** 비교식 하나를 정본과 대조해 "값이 갈린다" 고
+ *    선언하면 틀린다 — 그 비교식에 **도달하기 전에 무엇이 걸러지는지**가 값을 정한다. 실측 2026-09-20:
+ *      scan/page 2곳   truthy 가드지만 앞 분기 `qty <= 0`("재고 없음")이 그 경우를 먼저 잡는다 → 값 일치
+ *      ai-panel:158    갈리지만 구간은 `safetyStock === 0 && qty <= 0` 하나 · truthy 가드가 바로 다음 줄
+ *                      `ratio = qty / safetyStock` 의 0 나누기를 막고 있다(정본 준수로 바꾸면 "NaN%" 를 띄운다)
+ *    그래서 아래 분류는 **형태**만 자동으로 세고, 값 확정은 사람이 분기 전체를 읽은 자리만 표기한다.
  *
  * 한계: 변수명으로 수량·안전재고·리드타임을 식별한다. 다른 이름으로 담아 비교하면 이 축 밖이다.
  *   임계 배수(×1.5 리드타임 여유 · ×0.5 · ×0.3 위험구간)는 **다른 명제**라 대상이 아니다 — 아래 THRESHOLD 참조.
+ *   자리별 값 판정은 자동화되지 않는다(31곳 전수 대상 · 별도 트랙 · 호영님 순서 판정 대기).
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
@@ -120,15 +125,15 @@ describe("§reorder-need-inline-duplication · 정본과 같은 명제를 인라
       "app/api/inventory/route.ts B<= 가드:null비교": 1,
       // 화면 축
       "app/dashboard/inventory/inventory-content.tsx B<= 가드:null비교": 9,
-      "app/dashboard/inventory/scan/page.tsx B<= 가드:truthy": 2, // 🛑 safetyStock === 0 을 건너뛴다
+      "app/dashboard/inventory/scan/page.tsx B<= 가드:truthy": 2, // 앞 분기 qty <= 0 이 먼저 잡는다 · 값 일치 확정
       "components/inventory/InventoryTable.tsx A<= 가드:-": 1, // 복합 판정을 "부족" 라벨 안에 복제
       "components/inventory/InventoryTable.tsx B<= 가드:null비교": 1,
       "components/inventory/ReorderReviewSheet.tsx B<= 가드:null비교": 1,
       "components/inventory/inventory-context-panel.tsx A'<= 가드:-": 1,
       "components/inventory/inventory-context-panel.tsx B<= 가드:null비교": 4,
       "components/inventory/stock-lifespan-gauge.tsx B<= 가드:없음": 1,
-      "hooks/use-inventory-ai-panel.ts B<= 가드:truthy": 1, // 🛑 safetyStock === 0 을 건너뛴다
-      "hooks/use-inventory-ai-panel.ts B<= 가드:없음": 1,
+      "hooks/use-inventory-ai-panel.ts B<= 가드:truthy": 1, // 🛑 값 갈림(safetyStock === 0 && qty <= 0) · 0 나누기 가드 겸용
+      "hooks/use-inventory-ai-panel.ts B<= 가드:없음": 1, // 🛑 값 갈림(같은 구간) · 삼항 : false (:247)
       // 🛑 경계가 정본과 다르다(정본 <=, 여기 <) — 판정 대기
       "lib/inventory/flow-insight-engine.ts A'< 가드:-": 2,
       "lib/inventory/flow-insight-engine.ts B<= 가드:null비교": 1,
@@ -144,20 +149,28 @@ describe("§reorder-need-inline-duplication · 정본과 같은 명제를 인라
     ]);
   });
 
-  it("경계가 정본(<=)과 다른 자리 · 값이 갈린다", () => {
-    // 정본은 `qty <= dailyUsage×leadTime`. `<` 는 경계값에서 반대로 답한다.
+  it("경계가 정본(<=)과 다른 형태 · 등호 자리에서 답이 뒤집힌다", () => {
+    // 앞 분기는 `usage > 0 && lead > 0` 뿐이라 등호(qty === usage×lead)를 걸러 주지 않는다 → 값이 갈린다.
+    // 🛑 판정 대기: 게이지 `<`(07-12) vs canonical `<=`(07-03) 결정 충돌. 판정 없이 건드리지 않는다.
     expect(duplicates.filter((s) => s.boundary === "<").map(key)).toEqual([
       "lib/inventory/flow-insight-engine.ts A'< 가드:-",
       "lib/inventory/flow-insight-engine.ts A'< 가드:-",
     ]);
   });
 
-  it("널 처리가 정본과 다른 자리 · safetyStock === 0 을 건너뛴다", () => {
-    // 정본은 safetyStock 이 0 이어도 유효값으로 보고 `qty <= 0` 으로 판정한다.
-    expect(duplicates.filter((s) => s.guard === "truthy").map((s) => s.file).sort()).toEqual([
-      "app/dashboard/inventory/scan/page.tsx",
-      "app/dashboard/inventory/scan/page.tsx",
-      "hooks/use-inventory-ai-panel.ts",
+  it("널 가드가 정본과 다른 형태 · 값 확정은 자리마다 다르다", () => {
+    // 형태만 센다. 아래 표기는 사람이 분기 전체를 읽고 확정한 것만이다(나머지는 미확정).
+    const byGuard = duplicates.filter((s) => s.guard === "truthy" || s.guard === "없음");
+    expect(byGuard.map((s) => `${s.file} 가드:${s.guard}`).sort()).toEqual([
+      // 값 일치 확정 — 앞 분기 `qty <= 0`("재고 없음")이 safetyStock === 0 경우를 먼저 잡는다
+      "app/dashboard/inventory/scan/page.tsx 가드:truthy",
+      "app/dashboard/inventory/scan/page.tsx 가드:truthy",
+      // 값 미확정 — 게이지 톤 분기. 앞뒤 분기 미독해
+      "components/inventory/stock-lifespan-gauge.tsx 가드:없음",
+      // 값 갈림(좁은 구간 safetyStock === 0 && qty <= 0) · truthy 가드가 0 나누기 겸용 → 단순 치환 금지
+      "hooks/use-inventory-ai-panel.ts 가드:truthy",
+      // 값 갈림(같은 구간) · 삼항 `: false` 형태 (:247) — 0 나누기 겸용은 아니다
+      "hooks/use-inventory-ai-panel.ts 가드:없음",
     ]);
   });
 });
