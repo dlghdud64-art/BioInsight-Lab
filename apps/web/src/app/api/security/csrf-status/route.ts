@@ -14,7 +14,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { getCsrfRolloutMode } from '@/lib/security/csrf-contract';
+import { resolveCsrfRolloutMode } from '@/lib/security/csrf-contract';
 import { getRegistryStats } from '@/lib/security/csrf-route-registry';
 import { getSecurityEventSummary } from '@/lib/security/event-provenance-engine';
 
@@ -35,7 +35,8 @@ export async function GET(_req: NextRequest) {
     );
   }
 
-  const mode = getCsrfRolloutMode();
+  const resolution = resolveCsrfRolloutMode();
+  const mode = resolution.mode;
   const registryStats = getRegistryStats();
 
   // Telemetry summary (in-memory, 서버 재시작 시 초기화)
@@ -49,6 +50,13 @@ export async function GET(_req: NextRequest) {
   return NextResponse.json({
     csrf: {
       mode,
+      // 🛑 §csrf-mode-unrecognized — 모드만 보면 "설정이 먹었는지" 를 알 수 없다.
+      //   recognized=false 면 env 에 값은 있는데 인식되지 않아 report_only 로 떨어진 것이다.
+      //   (원문 값은 싣지 않는다 — Vercel 에 sensitive 로 보관된 값이다)
+      envConfig: {
+        present: resolution.envPresent,
+        recognized: resolution.recognized,
+      },
       registry: {
         exempt: registryStats.exempt,
         highRisk: registryStats.highRisk,

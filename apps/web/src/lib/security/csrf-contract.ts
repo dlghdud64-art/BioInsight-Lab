@@ -84,21 +84,73 @@ export interface RouteCsrfConfig {
 // Rollout Config
 // ═══════════════════════════════════════════════════════
 
+/** CSRF rollout mode 해석 결과 — 모드와 그 모드가 어디서 왔는지를 함께 돌려준다. */
+export interface CsrfModeResolution {
+  mode: CsrfRolloutMode;
+  /** env 가 비어 있지 않았는가 (미설정·공백이면 false) */
+  envPresent: boolean;
+  /** env 값이 세 모드 중 하나로 인식됐는가 — false 면 설정이 먹지 않고 있다 */
+  recognized: boolean;
+}
+
+const CSRF_MODES: readonly CsrfRolloutMode[] = ['report_only', 'soft_enforce', 'full_enforce'];
+
+/** 인식 못 한 값 경고는 프로세스당 한 번만 — 요청마다 찍지 않는다. */
+let unrecognizedModeWarned = false;
+
 /**
- * 현재 CSRF rollout mode
- * env/config 기반으로 전환 가능
+ * 현재 CSRF rollout mode — env/config 기반.
+ *
+ * 🛑 §csrf-mode-unrecognized (2026-09-21)
+ *   이전 구현은 인식 못 하는 값을 **조용히** report_only 로 떨어뜨렸다.
+ *   같은 프로젝트 env 에 글자 하나 빠진 `ABAXIS_CSRF_MODE` 가 실제로 앉아 있었으므로
+ *   오타는 가설이 아니라 실증이다. 오타난 값 = 보호 없음 + 아무도 모름.
+ *
+ *   그렇다고 throw 하지는 않는다. 이 함수는 미들웨어에서 요청마다 불린다 —
+ *   던지면 오타 하나가 프로덕션 전체를 500 으로 만든다. 가드가 제품을 죽이면
+ *   그게 더 큰 결함이다. 모드는 안전한 기본값(report_only)에 머물되,
+ *   **인식 실패 사실을 잃지 않는다**:
+ *     ① console.error — Vercel 런타임 로그(휘발이 아닌 유일한 싱크)
+ *     ② resolveCsrfRolloutMode().recognized=false — /api/security/csrf-status 가 노출
+ *   원문 값은 싣지 않는다(Vercel 에 sensitive 로 보관된 값이다).
  */
-export function getCsrfRolloutMode(): CsrfRolloutMode {
-  const envMode = typeof process !== 'undefined'
+export function resolveCsrfRolloutMode(): CsrfModeResolution {
+  const rawValue = typeof process !== 'undefined'
     ? process.env.LABAXIS_CSRF_MODE
     : undefined;
 
-  if (envMode === 'full_enforce') return 'full_enforce';
-  if (envMode === 'soft_enforce') return 'soft_enforce';
-  if (envMode === 'report_only') return 'report_only';
+  // envPresent 는 **키가 있는가**, recognized 는 **그 값이 먹는가** — 둘은 다른 질문이다.
+  //   키 자체가 없을 때만 미설정이다. 빈 값·공백만 있는 값은 "넣긴 넣었는데 먹지 않는" 상태이고,
+  //   그걸 미설정으로 접으면 Vercel env 목록에는 키가 있는데 상태 엔드포인트는 "설정 안 됨" 이라
+  //   말하게 된다 — 이 변경의 목적(설정이 먹었는지 보이게 한다)과 정면으로 어긋난다.
+  if (rawValue === undefined) {
+    return { mode: 'report_only', envPresent: false, recognized: true };
+  }
+  const raw = rawValue;
 
-  // 기본값: report_only (안전한 시작점, 프론트 호출 경로 검증 후 전환)
-  return 'report_only';
+  // 🛑 모드 선택은 **완전 일치**만 인정한다. trim 한 값으로 고르지 않는다.
+  //   `" soft_enforce\n"` 처럼 공백이 붙은 prod 값이 배포 하나로 report_only → soft_enforce 로
+  //   **조용히 켜진다**(prod 값은 sensitive 라 읽을 수 없어 켜진 줄도 모른다).
+  //   공백이 붙은 허용값은 report_only 로 두고 recognized=false 로 드러낸다.
+  if ((CSRF_MODES as readonly string[]).includes(raw)) {
+    return { mode: raw as CsrfRolloutMode, envPresent: true, recognized: true };
+  }
+
+  if (!unrecognizedModeWarned) {
+    unrecognizedModeWarned = true;
+    // eslint-disable-next-line no-console
+    console.error(
+      '[csrf] LABAXIS_CSRF_MODE 값이 비어 있거나 인식되지 않습니다. report_only 로 동작합니다. ' +
+      `허용값: ${CSRF_MODES.join(' | ')} · 해소: env 값을 허용값 하나로 고치고 재배포하십시오. ` +
+      '(값 자체는 로그에 싣지 않습니다)',
+    );
+  }
+  return { mode: 'report_only', envPresent: true, recognized: false };
+}
+
+/** 현재 CSRF rollout mode. 해석 근거가 필요하면 resolveCsrfRolloutMode() 를 쓴다. */
+export function getCsrfRolloutMode(): CsrfRolloutMode {
+  return resolveCsrfRolloutMode().mode;
 }
 
 // ═══════════════════════════════════════════════════════
