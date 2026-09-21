@@ -373,15 +373,17 @@ export default function AnalyticsPage() {
     return cards.slice(0, 3);
   }, [anomalies, repeatItems, reorderCandidates, budgetStatus, budget.usageRate]);
 
-  // 카테고리별 MOM 계산 (간이 — 전월 데이터 없으므로 변동률로 대체)
+  // 카테고리별 지출 표 — 이번 달 지출 · 비중만. (§analytics-fake-trend 2026-09-21 · 호영님)
+  //   은퇴한 두 열:
+  //   · MOM  = `cat.pct - (100/카테고리수)` — 월 비교가 아니라 **평균 비중과의 차이**였다(자기 주석이
+  //            "전월 데이터 없으므로 변동률로 대체" 라고 자백). 전월 데이터가 실제로 쌓이면 그때 추가한다.
+  //   · 상태 = `cat.pct > 30 ? "danger"` — 카테고리별 예산이 없어 비중으로 예산 위험을 판정할 수 없다.
+  //            카테고리가 1개면 비중 100% 라 무조건 "예산 초과 위험" 이었다.
   const categoryTableRows = useMemo(() => {
-    return categoryItems.slice(0, 6).map((cat, idx) => {
-      // 간이 MOM: 카테고리 비중이 평균보다 높으면 양수, 낮으면 음수
-      const avgPct = 100 / Math.max(categoryItems.length, 1);
-      const mom = Math.round((cat.pct - avgPct) * 10) / 10;
-      const status: "danger" | "normal" = cat.pct > 30 ? "danger" : "normal";
-      return { ...cat, mom, status, color: CATEGORY_COLORS[idx % CATEGORY_COLORS.length] };
-    });
+    return categoryItems.slice(0, 6).map((cat, idx) => ({
+      ...cat,
+      color: CATEGORY_COLORS[idx % CATEGORY_COLORS.length],
+    }));
   }, [categoryItems]);
 
   // ══════════════════════════════════════════════════════════════
@@ -1040,7 +1042,8 @@ export default function AnalyticsPage() {
             <div className="min-w-[160px] snap-start shrink-0 sm:min-w-0 sm:shrink rounded-xl border border-bd bg-pn p-4 sm:p-5 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Q{Math.ceil((new Date().getMonth() + 1) / 3)} 예산 소진율</p>
-                <TrendBadge value={budget.total > 0 ? Math.round(budget.usageRate - 50) : null} suffix="%" />
+                {/* §analytics-fake-trend (2026-09-21 · 호영님) — 추세 뱃지 제거. 값이 `usageRate - 50`(상수 50과의 차이)이라
+                    시간축이 아니었다. 기준선은 아래 보조문구 「정상 범위 (목표 75%)」 가 이미 말한다. */}
               </div>
               <p className="text-3xl font-extrabold text-slate-900 tracking-tight">
                 {budget.total > 0 ? `${budget.usageRate}%` : "미등록"}
@@ -1059,7 +1062,9 @@ export default function AnalyticsPage() {
               <p className="text-3xl font-extrabold text-slate-900 tracking-tight">
                 {currentMonth ? fmtKRW(currentMonth.amount) : "₩0"}
               </p>
-              <p className="text-xs text-slate-500 mt-2">전월 동기 대비</p>
+              {/* §analytics-fake-trend ④ — 비교값이 없으면 비교 문구도 없다. 뱃지만 숨고 문구가 남으면
+                  "전월 대비" 를 말하는데 숫자가 없는 화면이 된다. */}
+              <p className="text-xs text-slate-500 mt-2">{monthChange === null ? "전월 데이터 없음" : "전월 동기 대비"}</p>
             </div>
 
             {/* KPI 3: AI 식별 절감 기회 */}
@@ -1082,13 +1087,16 @@ export default function AnalyticsPage() {
             <div className="min-w-[160px] snap-start shrink-0 sm:min-w-0 sm:shrink rounded-xl border border-bd bg-pn p-4 sm:p-5 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">특정 공급사 의존도</p>
-                <TrendBadge value={vendorConcentration > 0 ? Math.round(vendorConcentration - 40) : null} suffix="%" />
+                {/* §analytics-fake-trend — 추세 뱃지 제거. 값이 `vendorConcentration - 40`(상수 40과의 차이)이라
+                    시간축이 아니었다. 기준선은 보조문구 텍스트로 옮긴다(40 = reports 의 집중도 주의 임계와 같은 값). */}
               </div>
               <p className="text-3xl font-extrabold text-slate-900 tracking-tight">
                 {vendorConcentration > 0 ? `${vendorConcentration}%` : "--"}
               </p>
               <p className="text-xs text-slate-500 mt-2 truncate">
-                {topVendor ? topVendor.vendor : "데이터 축적 필요"}
+                {topVendor
+                  ? `${topVendor.vendor} · 집중도 기준 40% ${vendorConcentration > 40 ? "초과" : "이하"}`
+                  : "데이터 축적 필요"}
               </p>
             </div>
           </div>
@@ -1336,8 +1344,7 @@ export default function AnalyticsPage() {
                   <tr className="border-b border-bd">
                     <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">카테고리</th>
                     <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">이번 달 지출</th>
-                    <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">MOM</th>
-                    <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">상태</th>
+                    <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">비중</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1350,19 +1357,7 @@ export default function AnalyticsPage() {
                         <span className="text-sm font-semibold text-slate-800">{fmtCompact(row.totalAmount)}</span>
                       </td>
                       <td className="px-5 py-3.5 text-right">
-                        <span className={`text-sm font-semibold ${row.mom >= 0 ? "text-emerald-600" : "text-red-500"}`}>
-                          {row.mom >= 0 ? "+" : ""}{row.mom.toFixed(1)}%
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5 text-right">
-                        {row.status === "danger" ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
-                            <AlertTriangle className="h-3 w-3" />
-                            예산 초과 위험
-                          </span>
-                        ) : (
-                          <span className="text-xs font-medium text-slate-400">정상</span>
-                        )}
+                        <span className="text-sm font-semibold text-slate-600 tabular-nums">{row.pct}%</span>
                       </td>
                     </tr>
                   ))}
