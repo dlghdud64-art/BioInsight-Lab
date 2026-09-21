@@ -100,11 +100,13 @@ function deriveInsights(
   const vendorRisk = topVendorPct >= 60 ? "danger" : topVendorPct >= 40 ? "warning" : "safe";
 
   // Monthly trend — last two months comparison
+  // §analytics-fake-trend (2026-09-21 · 호영님) — 비교할 수 없으면 **null**. 예전에는 0 으로 뭉개서
+  //   데이터 2개월 미만(또는 전월 0)에도 초록 「↓ 0%」 를 그렸다 = 없음을 추세로 렌더.
   const recentMonths = monthlyData.slice(-2);
-  const trendDelta =
+  const trendDelta: number | null =
     recentMonths.length === 2 && recentMonths[0].amount > 0
       ? Math.round(((recentMonths[1].amount - recentMonths[0].amount) / recentMonths[0].amount) * 100)
-      : 0;
+      : null;
 
   return {
     topCat,
@@ -805,17 +807,27 @@ export default function ReportsPage() {
               {/* §reports-fidelity — 시안 흰 카드 + 코너칩 + 하단 미니 시각(실 canonical 데이터). 컬러배경 폐지. */}
               {/* Insight 1: 지출 변화 추이 — 실 월별 스파크라인 */}
               <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="w-7 h-7 rounded-lg grid place-items-center bg-emerald-50 text-emerald-600">
-                    {insights.trendDelta > 0 ? <ArrowUpRight className="h-4 w-4 text-red-500" /> : <ArrowDownRight className="h-4 w-4" />}
-                  </span>
-                  <span className="text-[10px] font-semibold text-slate-400">전월 대비</span>
-                </div>
-                <p className={`text-2xl font-extrabold leading-none ${insights.trendDelta > 0 ? "text-red-600" : "text-emerald-600"}`}>
-                  {insights.trendDelta > 0 ? "+" : ""}{insights.trendDelta}%
-                </p>
+                {/* §analytics-fake-trend — 비교값이 없으면 방향 뱃지·「전월 대비」 칩·퍼센트를 그리지 않는다. */}
+                {insights.trendDelta !== null ? (
+                  <>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="w-7 h-7 rounded-lg grid place-items-center bg-emerald-50 text-emerald-600">
+                        {insights.trendDelta > 0 ? <ArrowUpRight className="h-4 w-4 text-red-500" /> : <ArrowDownRight className="h-4 w-4" />}
+                      </span>
+                      <span className="text-[10px] font-semibold text-slate-400">전월 대비</span>
+                    </div>
+                    <p className={`text-2xl font-extrabold leading-none ${insights.trendDelta > 0 ? "text-red-600" : "text-emerald-600"}`}>
+                      {insights.trendDelta > 0 ? "+" : ""}{insights.trendDelta}%
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm font-bold text-slate-400 leading-snug mb-1">비교할 전월 데이터 없음</p>
+                )}
                 <p className="text-[11px] text-slate-500 mt-1">지출 변화 추이</p>
-                <MiniSparkline values={monthlyAmounts} stroke={insights.trendDelta > 0 ? "#ef4444" : "#10b981"} />
+                <MiniSparkline
+                  values={monthlyAmounts}
+                  stroke={insights.trendDelta === null ? "#94a3b8" : insights.trendDelta > 0 ? "#ef4444" : "#10b981"}
+                />
                 {monthlyAmounts.length >= 2 && (
                   <p className="text-[10px] text-slate-400 mt-1">최근 {monthlyAmounts.length}개월 월별 지출</p>
                 )}
@@ -1029,7 +1041,8 @@ export default function ReportsPage() {
                 <div className="flex items-center justify-center h-[240px] text-slate-500 text-xs">데이터 없음</div>
               )}
               {/* Trend explanation */}
-              {monthlyData.length >= 2 && (
+              {/* §analytics-fake-trend — 2개월 이상이어도 전월이 0 이면 비교값이 없다(null). 그때는 이 줄을 그리지 않는다. */}
+              {insights.trendDelta !== null && (
                 <div className="mt-3 border-t border-bd pt-3 text-xs text-slate-400 flex items-center gap-1.5">
                   <Activity className="h-3.5 w-3.5 flex-shrink-0" />
                   <span>

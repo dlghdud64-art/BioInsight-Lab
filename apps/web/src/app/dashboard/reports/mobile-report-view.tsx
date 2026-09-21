@@ -45,7 +45,8 @@ interface MonthlyItem { month: string; amount: number }
 
 /** page.tsx deriveInsights() 산출 구조(소비 필드만 구조 타이핑 — 규칙 재정의 아님) */
 interface MobileInsights {
-  trendDelta: number;
+  /** 비교 불가(데이터 2개월 미만 · 전월 0)면 null — 0 으로 뭉개지 않는다(§analytics-fake-trend ⑥). */
+  trendDelta: number | null;
   outlierCount: number;
   topVendorPct: number;
   topCat?: NamedAmount;
@@ -297,15 +298,27 @@ export function MobileReportView(props: MobileReportViewProps) {
       {/* ── §2 KPI 2열 컴팩트 4장 ── */}
       {!isLoading && !emptyPeriod && hasData && (
         <div className="grid grid-cols-2 gap-2.5">
-          <KpiCard
-            icon={<TrendingUp className="h-3.5 w-3.5" />}
-            chipClass={insights.trendDelta > 0 ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"}
-            aside="전월 대비"
-            value={monthlyData.length >= 2 ? `${insights.trendDelta > 0 ? "+" : ""}${insights.trendDelta}` : "–"}
-            unit="%"
-            valueClass={monthlyData.length >= 2 ? (insights.trendDelta > 0 ? "text-[#dc2626]" : "text-[#059669]") : undefined}
-            label="지출 변화"
-          />
+          {/* §analytics-fake-trend ⑥ — 비교 불가면 방향 색·「전월 대비」·퍼센트를 그리지 않는다.
+              예전 가드(monthlyData.length >= 2)는 전월 0 인 경우를 못 걸렀다. */}
+          {insights.trendDelta !== null ? (
+            <KpiCard
+              icon={<TrendingUp className="h-3.5 w-3.5" />}
+              chipClass={insights.trendDelta > 0 ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"}
+              aside="전월 대비"
+              value={`${insights.trendDelta > 0 ? "+" : ""}${insights.trendDelta}`}
+              unit="%"
+              valueClass={insights.trendDelta > 0 ? "text-[#dc2626]" : "text-[#059669]"}
+              label="지출 변화"
+            />
+          ) : (
+            <KpiCard
+              icon={<TrendingUp className="h-3.5 w-3.5" />}
+              chipClass="bg-slate-100 text-slate-500"
+              aside="비교할 전월 데이터 없음"
+              value="–"
+              label="지출 변화"
+            />
+          )}
           <KpiCard
             icon={<AlertTriangle className="h-3.5 w-3.5" />}
             chipClass={insights.outlierCount > 0 ? "bg-yellow-50 text-yellow-600" : "bg-slate-100 text-slate-500"}
@@ -419,9 +432,14 @@ export function MobileReportView(props: MobileReportViewProps) {
               {currentMonth && (
                 <p className="text-[13px] text-slate-700 mb-2.5">
                   <span className="font-extrabold">{formatManwon(currentMonth.amount)}</span>{" "}
-                  <span className={cn("font-bold", insights.trendDelta > 0 ? "text-[#dc2626]" : "text-[#059669]")}>
-                    {insights.trendDelta > 0 ? "+" : ""}{insights.trendDelta}%
-                  </span>{" "}
+                  {/* §analytics-fake-trend ⑥ — 당월만 있어도 「0%」 를 초록으로 그리던 자리. 비교 불가면 생략. */}
+                  {insights.trendDelta !== null && (
+                    <>
+                      <span className={cn("font-bold", insights.trendDelta > 0 ? "text-[#dc2626]" : "text-[#059669]")}>
+                        {insights.trendDelta > 0 ? "+" : ""}{insights.trendDelta}%
+                      </span>{" "}
+                    </>
+                  )}
                   <span className="text-slate-400">· {monthLabel(currentMonth.month)}</span>
                 </p>
               )}

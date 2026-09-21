@@ -26,8 +26,8 @@
  * ── 이 파일이 안 보는 것 (자기 한계) ──
  *   1. monthChange 자체의 정합성. 지금 정의는 **0이 아닌 마지막 두 달**을 비교한다(analytics/page.tsx
  *      validMonths) — 연속한 달이 아닐 수 있고 「이번 달」 이 아닐 수 있다. 큐 등재(2026-09-21), 이 파일은 안 잡는다.
- *   2. 분석 화면 밖의 추세 뱃지. 전역 sweep 결과는 큐 참조 — reports/page.tsx 의 trendDelta 는 데이터가
- *      2개월 미만이면 0 으로 뭉개져 「↓ 0%」 를 그린다(시간축은 맞으나 부재를 추세로 말함). 미수정.
+ *   2. 분석·보고서 화면 밖의 추세 뱃지. 2026-09-21 전역 sweep 에서 비시간축 뱃지는 analytics 2건뿐이었다.
+ *      (reports/page.tsx trendDelta 의 0 뭉개기는 아래 ⑥ 으로 **닫았다** — 2026-09-21 별도 커밋.)
  *   3. 「팀별 보기」 탭(team-analytics-view.tsx) 은 TEAM_DATA **더미 데이터셋** 전체를 표기 없이 렌더한다 —
  *      이 파일의 범위 밖이고 더 큰 건이다. 큐·보고 참조.
  */
@@ -38,6 +38,15 @@ import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
 
 const SRC = join(__dirname, "..", "..");
 const PAGE = stripComments(readFileSync(join(SRC, "app/dashboard/analytics/page.tsx"), "utf8"));
+const REPORTS = stripComments(readFileSync(join(SRC, "app/dashboard/reports/page.tsx"), "utf8"));
+const REPORTS_MOBILE = stripComments(readFileSync(join(SRC, "app/dashboard/reports/mobile-report-view.tsx"), "utf8"));
+
+/** reports 의 trendDelta 정의 — 선언부터 첫 `;` 까지. */
+function trendDeltaDef(): string {
+  const at = REPORTS.indexOf("const trendDelta");
+  if (at < 0) return "";
+  return REPORTS.slice(at, REPORTS.indexOf(";", at) + 1);
+}
 
 /** 카테고리 표 블록 — 표 제목 뒤 첫 <table 부터 </table> 까지(주석 제거본). */
 function categoryTable(): string {
@@ -88,5 +97,40 @@ describe("§analytics-fake-trend · 추세 표시는 시간축에서만 나온�
     expect(headers).toEqual(["카테고리", "이번 달 지출", "비중"]);
     // 비중 셀은 실제 값(row.pct)을 그린다
     expect(table).toMatch(/\{row\.pct\}%/);
+  });
+});
+
+/* ⑥ reports trendDelta (2026-09-21 · 호영님 · 별도 커밋)
+ *   데이터 2개월 미만(또는 전월 0)에서 0 으로 뭉개 초록 「↓ 0%」 를 그리던 것 = 없음을 추세로 렌더.
+ *   → 비교 불가면 null · 방향 뱃지·「전월 대비」·퍼센트 미표시 · 「비교할 전월 데이터 없음」. */
+describe("§analytics-fake-trend ⑥ · reports trendDelta 는 비교 불가를 0 으로 뭉개지 않는다", () => {
+  it("정의 · 비교 불가면 null (0 폴백 없음)", () => {
+    const def = trendDeltaDef();
+    expect(def.length).toBeGreaterThan(0);
+    expect(def).toMatch(/:\s*null;$/);
+    expect(def).not.toMatch(/:\s*0;$/);
+  });
+
+  it("렌더 · 두 자리 모두 null 가드 뒤에서만 방향·퍼센트를 그린다", () => {
+    // 가드는 2곳(인사이트 카드 · 추세 설명 줄) — 개수가 아니라 각 자리를 직접 본다
+    const card = REPORTS.slice(REPORTS.indexOf("insights.trendDelta !== null ?"), REPORTS.indexOf("지출 변화 추이"));
+    // 사용 지점 형태로 문다(경계 래칫 §sentinel-identifier-boundary 가 맨 이름 /ArrowUpRight/ 를 잡았다)
+    expect(card).toMatch(/<ArrowUpRight\b/);
+    expect(card).toMatch(/비교할 전월 데이터 없음/);
+    const trendLine = REPORTS.slice(REPORTS.indexOf("insights.trendDelta !== null &&"), REPORTS.indexOf("변동", REPORTS.indexOf("insights.trendDelta !== null &&")));
+    expect(trendLine).toMatch(/최근 월 대비/);
+    // 옛 형태 — 길이 조건만으로 추세 줄을 그리던 가드가 돌아오면 RED
+    expect(REPORTS).not.toMatch(/\{monthlyData\.length >= 2 && \(\s*<div className="mt-3 border-t/);
+  });
+
+  // 🛑 형제 슬롯 — 같은 insights 가 모바일 보고서로도 넘어간다. 데스크톱만 고치면 모바일이 「0%」 를 계속 그린다
+  //    (2026-09-21 실측: 처음엔 놓쳤고 tsc 가 MobileInsights 타입 불일치로 잡았다).
+  it("모바일 · 타입이 null 을 허용하고 두 자리 모두 null 가드", () => {
+    expect(REPORTS_MOBILE).toMatch(/trendDelta:\s*number\s*\|\s*null;/);
+    expect(REPORTS_MOBILE).toMatch(/insights\.trendDelta !== null \?\s*\(\s*<KpiCard/);
+    expect(REPORTS_MOBILE).toMatch(/aside="비교할 전월 데이터 없음"/);
+    expect(REPORTS_MOBILE).toMatch(/\{insights\.trendDelta !== null && \(/);
+    // 옛 형태 — 길이 조건으로만 가르던 값 계산이 돌아오면 RED
+    expect(REPORTS_MOBILE).not.toMatch(/value=\{monthlyData\.length >= 2 \? `\$\{insights\.trendDelta/);
   });
 });
