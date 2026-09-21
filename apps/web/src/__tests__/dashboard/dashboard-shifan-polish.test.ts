@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
+import { zeroCardBlock, zeroIconBoxBlock, inactiveBranch } from "@/__tests__/_helpers/dashboard-zero-card";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -33,13 +33,16 @@ describe("§dashboard-shifan-polish A1 — StatLine 아이콘 구분 강화", ()
     expect(STAT).toMatch(/bg-indigo-50/);
   });
   it("회귀 — 0건 회색 비활성(§11.311) + KPI3 라벨 + grid-cols-3 보존", () => {
-    // 🛑 §comment-axis (2026-09-21 · 릴레이 판정) — 이 단언은 **주석에만** 걸려 통과하고 있었다.
-    //    stat-line.tsx:202 · pipeline.tsx:183 이 "de-emphasis 는 bg-gray-50 유지" 라고 **적어 두었을 뿐**,
-    //    살아 있는 0건 배경은 `bg-slate-50` 이다. 주석 제거본에 걸어 무효를 막고 실제 토큰을 문다.
-    //    ⚠️ 조항 충돌 상신 중 — CLAUDE.md §Mobile Patterns 4 는 0건 톤을 `bg-gray-50` 으로 적고 있다.
-    //    판정이 gray-50 이면 **구현**을 고치고 이 단언도 그쪽으로 되돌린다(토큰 갱신으로 덮지 말 것).
-    expect(stripComments(STAT)).toMatch(/bg-slate-50/);
-    expect(STAT).toMatch(/bg-gray-100/); // 비활성 아이콘 박스
+    // §zero-card-window (2026-09-21 · 릴레이 판정) — 0건 카드 = **흰 배경 + 점선 테두리**(CLAUDE.md §Mobile Patterns 1 개정).
+    //   창 = 카드 컨테이너 className 블록의 **0건 분기**만. 파일 전체 grep 은 두 번 틀렸다 —
+    //   구 단언 /bg-gray-50/ 은 **주석**에, 중간 교체 /bg-slate-50/ 은 **아이콘 박스**에 걸렸다(둘 다 카드가 아니었다).
+    const zeroCard_stat = inactiveBranch(zeroCardBlock(STAT, "stat"));
+    expect(zeroCard_stat).toMatch(/\bbg-white\b/);
+    expect(zeroCard_stat).toMatch(/\bborder-dashed\b/);
+    expect(zeroCard_stat).toMatch(/\bborder-slate-200\b/);
+    // 아이콘 박스는 카드와 **다른 요소**다 — 0건 분기 = slate-50. 구 단언 /bg-gray-100/ 은 stat-line 에서
+    //   상태칩 톤(CHIP_TONE.idle)에 걸렸고 pipeline 에서는 0건이라 상시 RED 였다(4원칙 ④ · 이웃 요소 대체 매칭).
+    expect(inactiveBranch(zeroIconBoxBlock(STAT))).toMatch(/\bbg-slate-50\b/);
     expect(STAT).toMatch(/이번달 지출/);
     expect(STAT).toMatch(/잔여 예산/);
     expect(STAT).toMatch(/확정 발주액/);
@@ -65,13 +68,16 @@ describe("§dashboard-shifan-polish A2 — Pipeline 단계별 틴트", () => {
     expect(PIPE).toMatch(/입고/);
     expect(PIPE).toMatch(/재고/);
     expect(PIPE).toMatch(/modules\.quote/);
-    // 🛑 §comment-axis (2026-09-21 · 릴레이 판정) — 이 단언은 **주석에만** 걸려 통과하고 있었다.
-    //    stat-line.tsx:202 · pipeline.tsx:183 이 "de-emphasis 는 bg-gray-50 유지" 라고 **적어 두었을 뿐**,
-    //    살아 있는 0건 배경은 `bg-slate-50` 이다. 주석 제거본에 걸어 무효를 막고 실제 토큰을 문다.
-    //    ⚠️ 조항 충돌 상신 중 — CLAUDE.md §Mobile Patterns 4 는 0건 톤을 `bg-gray-50` 으로 적고 있다.
-    //    판정이 gray-50 이면 **구현**을 고치고 이 단언도 그쪽으로 되돌린다(토큰 갱신으로 덮지 말 것).
-    expect(stripComments(PIPE)).toMatch(/bg-slate-50/);
-    expect(PIPE).toMatch(/bg-gray-100/); // 비활성 아이콘 박스
+    // §zero-card-window (2026-09-21 · 릴레이 판정) — 0건 카드 = **흰 배경 + 점선 테두리**(CLAUDE.md §Mobile Patterns 1 개정).
+    //   창 = 카드 컨테이너 className 블록의 **0건 분기**만. 파일 전체 grep 은 두 번 틀렸다 —
+    //   구 단언 /bg-gray-50/ 은 **주석**에, 중간 교체 /bg-slate-50/ 은 **아이콘 박스**에 걸렸다(둘 다 카드가 아니었다).
+    const zeroCard_pipeline = inactiveBranch(zeroCardBlock(PIPE, "pipeline"));
+    expect(zeroCard_pipeline).toMatch(/\bbg-white\b/);
+    expect(zeroCard_pipeline).toMatch(/\bborder-dashed\b/);
+    expect(zeroCard_pipeline).toMatch(/\bborder-slate-200\b/);
+    // 아이콘 박스는 카드와 **다른 요소**다 — 0건 분기 = slate-50. 구 단언 /bg-gray-100/ 은 stat-line 에서
+    //   상태칩 톤(CHIP_TONE.idle)에 걸렸고 pipeline 에서는 0건이라 상시 RED 였다(4원칙 ④ · 이웃 요소 대체 매칭).
+    expect(inactiveBranch(zeroIconBoxBlock(PIPE))).toMatch(/\bbg-slate-50\b/);
   });
   it("§11.302 — amber·orange 금지", () => {
     expect(PIPE).not.toMatch(/-amber-|-orange-/);

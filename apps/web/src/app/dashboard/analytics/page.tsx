@@ -185,6 +185,12 @@ export default function AnalyticsPage() {
   //   시안형 AI 지출 리포트(분기요약·절감Top3·공급사 의존도·AI 권고)를 생성하는
   //   실 endpoint 는 없음 (/api/reports/purchase=구매내역, /api/budget/report=XLSX).
   //   따라서 정직하게 "예시 미리보기"(format preview) 로만 노출. 모든 수치 = 샘플.
+  //   🛑 만료 조건(호영님 2026-09-21): **실 endpoint 가 생기면 이 모달은 교체 대상이다.**
+  //      예시와 실데이터를 한 모달에 병존시키지 않는다 — 예시 표기 옆에 실수치가 섞이면
+  //      화면이 자기 자신에 대해 거짓말을 한다. 교체 시 예시 모달은 통째로 은퇴한다.
+  //   유지 판정(2026-09-21): 기준은 「화면이 자기 자신에 대해 거짓말하는가」. 이 모달은 진입 라벨부터
+  //   예시라고 말한다(라벨·배너·섹션·항목·풋터 5겹) — 표기 없이 실데이터인 척한 재고·예산과 다르다.
+  //   계약: __tests__/regression/analytics-report-sample-honesty.test.ts
   const [reportModalOpen, setReportModalOpen] = useState(false);
 
   const runAiAnalysis = async () => {

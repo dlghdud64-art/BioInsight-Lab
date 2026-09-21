@@ -199,7 +199,10 @@ export function StatLine({ state, summary, onRetry }: StatLineProps) {
               )}
             </div>
             {/* §dashboard-home-redesign P3 — 0건 value 가독성 slate-500(시안 README L11). 아이콘/라벨은
-                §11.311 gray-400 비활성 톤 유지(de-emphasis 위계 보존 + 0건 카드 bg-gray-50). */}
+                §11.311 gray-400 비활성 톤 유지(de-emphasis 위계 보존).
+                0건 표현(2026-09-21 사실대로 정정): 카드 = bg-white border-dashed border-slate-200 ·
+                아이콘 박스 = bg-slate-50. 이전 주석은 "0건 카드 bg-gray-50" 이라 적혀 있었으나 코드가 그렇지 않았고,
+                센티널이 그 주석에 걸려 통과했다(CLAUDE.md §Mobile Patterns 1 개정 참조). */}
             {/* §dashboard-kpi-won-glyph(호영님 2026-07-02) — ₩ 글리프가 tracking-tighter(−0.05em)로
                 첫 숫자와 겹쳐 취소선처럼 보이는 현상 수정. tracking-normal 로 ₩·숫자 분리(가독성). */}
             <p

@@ -180,7 +180,9 @@ export function Pipeline({ state, summary, onRetry }: PipelineProps) {
                 <ChevronRight className="h-3 w-3" aria-hidden />
               </a>
             </div>
-            {/* §dashboard-home-redesign P3 — 0건 value 가독성 slate-500(시안 README, de-emphasis는 bg-gray-50 유지). */}
+            {/* §dashboard-home-redesign P3 — 0건 value 가독성 slate-500(시안 README).
+                0건 표현(2026-09-21 사실대로 정정): 카드 = bg-white border-dashed border-slate-200 ·
+                아이콘 박스 = bg-slate-50. 이전 주석은 "de-emphasis는 bg-gray-50 유지" 였으나 코드가 그렇지 않았다. */}
             <p className={`text-lg md:text-xl font-black tracking-tighter tabular-nums leading-none ${active ? "text-slate-900" : "text-slate-500"}`}>
               {stage.total}
               <span className="text-[11px] font-semibold ml-0.5">{stage.key === "stock" ? "품목" : "건"}</span>
