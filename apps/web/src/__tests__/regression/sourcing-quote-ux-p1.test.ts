@@ -30,6 +30,7 @@ const SEARCH_API = "src/app/api/products/search/route.ts";
 describe("§sourcing-quote-ux P1 계약 — P2 담기 인터랙션 (구현 후 GREEN)", () => {
   it("(P2-a) §sourcing-quote-ux trace + 담기 모프 색 토큰(#eff6ff/#1d4ed8/#93c5fd)", () => {
     const src = readSafe(PAGE) + readSafe(ROW);
+    // 의도적 주석 인용 — 이 단언은 소스 **주석의 출처 태그**를 문다(주석이 사라지면 RED 가 맞다). §comment-axis 2026-09-21 조사에서 무효 아님으로 분류됨.
     expect(src).toMatch(/§sourcing-quote-ux/);
     expect(src).toMatch(/#93c5fd/i); // 모프 하이라이트
   });
@@ -86,6 +87,7 @@ describe("§sourcing-quote-ux P1 계약 — P4 배선 (구현 후 GREEN)", () =>
   it("(P4-a) 프리필 = 기존 store 핸드오프(useTestFlow/compare-store) 재사용 — URL param 신설 0", () => {
     const src = readSafe(PAGE);
     // 리포트 CTA → 견적 요청서: 기존 store 경유(useTestFlow/compareIds). URL param(?prefill=) 신설 금지.
+    // 의도적 주석 인용 — 이 단언은 소스 **주석의 출처 태그**를 문다(주석이 사라지면 RED 가 맞다). §comment-axis 2026-09-21 조사에서 무효 아님으로 분류됨.
     expect(src).toMatch(/§sourcing-quote-ux/); // 리포트 배선 마커(구현 시 추가)
     expect(src).not.toMatch(/[?&]prefill=/);
   });

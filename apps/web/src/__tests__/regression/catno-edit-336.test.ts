@@ -23,6 +23,7 @@ const CONTENT = "src/app/dashboard/inventory/inventory-content.tsx";
 describe("§11.336 — PATCH route Cat.No 수용 + Product 마스터 update(옵션 A)", () => {
   it("body 에서 catalogNumber 구조분해 + 정규화(빈 값→null)", () => {
     const src = read(ROUTE);
+    // 의도적 주석 인용 — 이 단언은 소스 **주석의 출처 태그**를 문다(주석이 사라지면 RED 가 맞다). §comment-axis 2026-09-21 조사에서 무효 아님으로 분류됨.
     expect(src).toMatch(/catalogNumber,\s*\/\/ §11\.336/);
     expect(src).toMatch(/resolvedCatalogNumber/);
     expect(src).toMatch(/catalogNumber\.trim\(\)\s*!==\s*""/);

@@ -45,6 +45,7 @@ describe("§11.316 — Spline 3D 즉시 mount + 짧은 fade", () => {
 
   it("§11.316 즉시 mount 주석 + 짧은 fade 명시", () => {
     const src = read(PATH);
+    // 의도적 주석 인용 — 이 단언은 소스 **주석의 출처 태그**를 문다(주석이 사라지면 RED 가 맞다). §comment-axis 2026-09-21 조사에서 무효 아님으로 분류됨.
     expect(src).toMatch(/§11\.316/);
     expect(src).toMatch(/즉시 mount/);
     expect(src).toMatch(/fade 2\.4s.*0\.6s/);

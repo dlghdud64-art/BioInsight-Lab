@@ -82,6 +82,7 @@ describe("§11.366 D-8 Phase 1 — 재고 상세 마스터 필드 보강 (라이
 
     it("D-8 trace marker (라이브)", () => {
       const src = read(LIVE);
+      // 의도적 주석 인용 — 이 단언은 소스 **주석의 출처 태그**를 문다(주석이 사라지면 RED 가 맞다). §comment-axis 2026-09-21 조사에서 무효 아님으로 분류됨.
       expect(src).toMatch(/§11\.366 D-8/);
     });
   });

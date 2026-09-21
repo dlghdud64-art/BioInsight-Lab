@@ -186,11 +186,13 @@ describe("#notification-inapp-helper-drift-sync — drift sync 정책 코멘트 
   const mobileSrc = readRepo(MOBILE_HELPER);
 
   it("web helper 가 mobile 복제 정책 명시 또는 §11.209d-notification 코멘트 포함", () => {
+    // 의도적 주석 인용 — 이 단언은 소스 **주석의 출처 태그**를 문다(주석이 사라지면 RED 가 맞다). §comment-axis 2026-09-21 조사에서 무효 아님으로 분류됨.
     expect(webSrc).toMatch(/§11\.209d-notification|11\.209d-notification/);
   });
 
   it("mobile helper 가 web canonical 참조 코멘트 포함 (drift 차단 lock)", () => {
     // mobile 은 web 의 single source 참조 명시 — drift 시 두 file 동시 수정 강제
+    // 의도적 주석 인용 — 이 단언은 소스 **주석의 출처 태그**를 문다(주석이 사라지면 RED 가 맞다). §comment-axis 2026-09-21 조사에서 무효 아님으로 분류됨.
     expect(mobileSrc).toMatch(/§11\.209d-notification|11\.209d-notification/);
     // mobile 복제임을 명시 (web event-category-map.ts 또는 동일 source 표기)
     expect(mobileSrc).toMatch(/web|apps\/web|동일 source|복제/);

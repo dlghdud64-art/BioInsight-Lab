@@ -47,6 +47,7 @@ describe("§inventory-mobile-reorder-gate P1 — 모바일 배선(no-op 0)", () 
   });
 
   it("§11.155 모바일 브리핑 시트 재배치 — 데스크톱 컨테이너 탈출(top-level, dead code 복원)", () => {
+    // 의도적 주석 인용 — 이 단언은 소스 **주석의 출처 태그**를 문다(주석이 사라지면 RED 가 맞다). §comment-axis 2026-09-21 조사에서 무효 아님으로 분류됨.
     expect(CONTENT).toMatch(/§11\.155 모바일 브리핑 시트 재배치[\s\S]{0,700}<MobileOperationalBriefSheet/);
     // 구 위치(Context Panel 직전) 잔재 없음 — MobileOperationalBriefSheet 렌더는 1곳뿐
     expect(CONTENT.match(/<MobileOperationalBriefSheet/g)?.length).toBe(1);

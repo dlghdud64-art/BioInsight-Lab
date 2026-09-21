@@ -91,6 +91,7 @@ describe("§11.209d-notification-inapp-web-bell-ui — event-category-map import
 describe("§11.209d-notification-inapp-web-bell-ui — drift 차단", () => {
   it("§11.209d-notification-inapp-web-bell-ui 코멘트 명시", () => {
     const src = read(HEADER);
+    // 의도적 주석 인용 — 이 단언은 소스 **주석의 출처 태그**를 문다(주석이 사라지면 RED 가 맞다). §comment-axis 2026-09-21 조사에서 무효 아님으로 분류됨.
     expect(src).toMatch(/§11\.209d-notification-inapp-web-bell-ui|11\.209d-notification-inapp-web-bell-ui/);
   });
 });

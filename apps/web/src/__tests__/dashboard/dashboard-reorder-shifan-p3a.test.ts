@@ -45,6 +45,7 @@ describe("§dashboard-shifan-adopt P3a (A) — 시안 순서 재배열", () => {
     expect(iBudget).toBeLessThan(iChart);
   });
   it("재배열 마커 주석", () => {
+    // 의도적 주석 인용 — 이 단언은 소스 **주석의 출처 태그**를 문다(주석이 사라지면 RED 가 맞다). §comment-axis 2026-09-21 조사에서 무효 아님으로 분류됨.
     expect(PAGE).toMatch(/§dashboard-shifan-adopt P3a — 시안 단일 흐름 재배열/);
   });
 });

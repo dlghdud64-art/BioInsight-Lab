@@ -61,6 +61,7 @@ describe("§11.209d-mobile Phase 1 — quote detail 결재 정보 노출", () =>
 
   it("§11.209d-mobile 코멘트 명시 (drift 차단)", () => {
     const src = read(ROUTE);
+    // 의도적 주석 인용 — 이 단언은 소스 **주석의 출처 태그**를 문다(주석이 사라지면 RED 가 맞다). §comment-axis 2026-09-21 조사에서 무효 아님으로 분류됨.
     expect(src).toMatch(/§11\.209d-mobile|11\.209d-mobile/);
   });
 });

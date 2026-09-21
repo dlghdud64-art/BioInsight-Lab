@@ -37,6 +37,7 @@ describe("§sourcing-counter-timing P1 계약 — 신규 behavior (구현 후 GR
 
   it("(3) 담기 타이밍 신값 pin — 모프 380·fly 820·hold 120·범프 520 (§트레이스 게이트)", () => {
     const src = readSafe(PAGE) + readSafe(ROW);
+    // 의도적 주석 인용 — 이 단언은 소스 **주석의 출처 태그**를 문다(주석이 사라지면 RED 가 맞다). §comment-axis 2026-09-21 조사에서 무효 아님으로 분류됨.
     expect(src).toMatch(/§sourcing-counter-timing/); // 구현 시 추가되는 트레이스 마커(현재 부재 → RED)
     expect(src).toMatch(/\b380\b/); // 모프
     expect(src).toMatch(/\b820\b/); // 플라잉 arc

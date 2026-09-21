@@ -21,6 +21,7 @@ const HEADER = "src/components/dashboard/Header.tsx";
 describe("§11.371-1 — csrfFetch 401 재로그인(systemic)", () => {
   it("csrfFetch 가 401 → /auth/signin 리다이렉트", () => {
     const src = read(API);
+    // 의도적 주석 인용 — 이 단언은 소스 **주석의 출처 태그**를 문다(주석이 사라지면 RED 가 맞다). §comment-axis 2026-09-21 조사에서 무효 아님으로 분류됨.
     expect(src).toMatch(/§11\.371-1/);
     expect(src).toMatch(/let response = await fetch/); // 403 retry 재할당용 mutable
     expect(src).toMatch(/response\.status === 401/);

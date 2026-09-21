@@ -14,10 +14,13 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
+import { stripComments } from "@/__tests__/_helpers/em-dash-scan";
 
 const REPO_ROOT = join(__dirname, "..", "..", "..");
 const p = (rel: string) => join(REPO_ROOT, rel);
 const read = (rel: string) => readFileSync(p(rel), "utf8");
+/** 주석 제거본. "지웠다" 고 **설명하는 주석**이 단언을 대신 만족시키는 것을 막는다(2026-09-20 실측). */
+const code = (rel: string) => stripComments(read(rel));
 
 const SHEET = "src/components/budget/budget-register-sheet.tsx";
 const BUDGET = "src/app/dashboard/budget/page.tsx";
@@ -165,15 +168,45 @@ describe("§mobile-budgets P1 — 8a 지출 분석 모바일", () => {
 });
 
 describe("§mobile-budgets P1 — 회귀 0 (데스크톱·패리티)", () => {
-  it("예산 관리 — 보고서 내보내기·BudgetForm Dialog·KPI 5종 보존", () => {
-    const src = read(BUDGET);
+  /* 🔁 은퇴→승계 (§budget-fabricated-figures · 2026-09-20 릴레이 판정 · 봉합 2026-09-21)
+   *
+   *   구 계약: KPI 5종(즉시 확인 · 차단 위험 · 승인 대기 · 절감 가능 · 주간 소진) 보존.
+   *   판정  : 뒤 3종은 데이터를 읽지 않는 지어낸 수라 **지웠다**(승인 대기 = reserved 상수 0 ·
+   *           절감 가능 = 지출×0.15 · 주간 소진 = 합계÷4). 남은 2종만 실데이터다.
+   *
+   *   🛑 이 블록은 그 삭제 뒤에도 **통과하고 있었다.** 세 가지가 각각 **다른 이유**로 false-GREEN 이었다:
+   *       ① 주간 소진 → 삭제 사유를 적은 **주석**(page.tsx:153)이 대신 매칭
+   *       ② 절감 가능 → 같은 형태의 주석(page.tsx:152)이 대신 매칭
+   *       ③ 승인 대기 → **페이지 헤더 문장**("등록 · 집행 · 승인 대기 · 초과 위험", 245·246)이 대신 매칭
+   *          — 이건 주석이 아니라 살아 있는 코드라 주석 제거만으로는 안 잡힌다(4원칙 ④).
+   *   → 세 원인을 각각 막는다: **주석 제거본** + **KPI 배열 블록으로 창을 좁힘** + 지운 3종은 **역계약**으로 부재 단언.
+   *   원인 진단 정정(2026-09-21): 앞선 보고에서 ②를 "타 파일(analytics) 오염" 이라 했으나,
+   *   이 단언은 `read(BUDGET)` 하나만 읽는다 — ②도 같은 파일 주석이다. 파일 단위 조사의 귀속 오류였다.
+   */
+  it("예산 관리 — 보고서 내보내기·BudgetForm Dialog·KPI 2종(실데이터)", () => {
+    const src = code(BUDGET);
     expect(src).toMatch(/보고서 내보내기/);
-    expect(src).toMatch(/BudgetForm/);
-    expect(src).toMatch(/즉시 확인/);
-    expect(src).toMatch(/차단 위험/);
-    expect(src).toMatch(/승인 대기/);
-    expect(src).toMatch(/절감 가능/);
-    expect(src).toMatch(/주간 소진/);
+    expect(src).toMatch(/\bBudgetForm\b/);
+
+    // 창 = KPI 배열 리터럴 블록. 헤더 문장·설명문이 대신 매칭하지 못한다.
+    const from = src.indexOf('{ label: "즉시 확인"');
+    const to = src.indexOf("].filter(", from);
+    expect(from).toBeGreaterThan(-1);
+    expect(to).toBeGreaterThan(from);
+    const kpiBlock = src.slice(from, to);
+
+    // 살아 있는 2종 — 값이 파생값(actionKpi)에서 온다는 것까지 문다
+    expect(kpiBlock).toMatch(/label: "즉시 확인", count: actionKpi\.immediateReview/);
+    expect(kpiBlock).toMatch(/label: "차단 위험", count: actionKpi\.blockRisk/);
+
+    // 역계약 — 지운 3종이 KPI 로 되돌아오면 RED
+    expect(kpiBlock).not.toMatch(/승인 대기/);
+    expect(kpiBlock).not.toMatch(/절감 가능/);
+    expect(kpiBlock).not.toMatch(/주간 소진/);
+    // 산식 자체도 돌아오지 않는다(파일 전역 · 주석 제거본)
+    expect(src).not.toMatch(/\bweeklyBurn\b/);
+    expect(src).not.toMatch(/\baltSavings\b/);
+    expect(src).not.toMatch(/\bpendingApproval\b/);
   });
 
   it("지출 분석 — AI 리포트 버튼·탭 3종 보존", () => {
