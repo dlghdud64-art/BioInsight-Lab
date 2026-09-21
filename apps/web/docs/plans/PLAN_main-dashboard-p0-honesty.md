@@ -589,7 +589,7 @@ git merge-base --is-ancestor e52846a3 93e25ef5  → REACHED
 | P1-2 | §3 **기한 그룹 3개**(지연/오늘/이번 주) + 품목명·수치 병기 + 담당자 아바타 + 모달 직행 | 견적 회신 마감일 스키마 확인. ⚠️ 담당자 아바타는 핸드오프 상단 "담당자 단일 운영 기준" 과 충돌 — 재확인 필요 |
 | P1-3 | 견적 `마감 오늘` 칩 | P1-2 와 같은 의존(마감일) |
 | P1-4 | **입고 판정 소스 통일** — summary `receive` 와 착지 화면 `/dashboard/receiving` 이 서로 다른 테이블을 셌다 | 호영님 판정(2026-09-20) · **구현 완료, 게이트 대기** → 7-E |
-| P1-5 | `남은 일수` 축 재검토 — 현재 **이번 달 말일** 기준인데 예산 기간이 분기·반기면 어긋난다(실측: 예산 12.31 까지인데 11일로 표시) | 호영님 판정 |
+| P1-5 | `남은 일수` 축 재검토 — 이번 달 말일 고정이 분기·반기 예산과 어긋난다 | **구현 완료, 게이트 대기** → 7-F |
 | P1-6 | `blockFrom` 류 블록 창 헬퍼 **4벌 중복**(신규 파일 · p3b · p4 · won-glyph) → `_helpers/` 통합 | 없음 · **완료** → 7-D |
 | P1-7 | `recommendedActions` 배열이 JSX 소비 0 인데 `302d6a4g:64` 가 핀해 살아 있다 | 그 sentinel 트랙 |
 | P1-8 | 원장 stale 해소 7건(§11.257 6 + 258sweep 1) `--update` | 별도 커밋 |
@@ -707,9 +707,125 @@ git add apps/web/src/app/api/dashboard/summary/route.ts \
 - `.git/index.lock` 이 남아 있다(2026-09-20 관측). 다른 세션이 안 돌고 있으면 **stale** 이다 — §병렬 세션 절차대로 처리.
 - 배포 확인은 SHA 일치가 아니라 `git merge-base --is-ancestor <이 커밋> <deployedCommit>` 이다.
 
-**화면 영향**: 입고 카드의 칩이 실제로 뜨고 사라진다. 배포 후 `/dashboard` 에서
-입고 칩이 `조치 필요 N` 인지 `이상 없음` 인지 확인하고, 눌러서 착지 화면의 건수와 **같은지** 본다 —
-이번 결함이 정확히 그 불일치였다.
+---
+
+### ✅ P1-4 게이트 · 배포 완료 (2026-09-20 · operator-shell)
+
+| 단계 | 결과 |
+| :--- | :--- |
+| 테스트 4축 731파일 | 실패 111 · 통과 6,633 · **신규 RED 0 · 해소 7** |
+| 빌드 | exit 0 |
+| red-ledger | exit 0 · 신규 0 · 래칫 **6/6** GREEN |
+| 커밋 | `72d36178` (8파일 · +328 −49) |
+| 배포 | `/api/health` `deployedCommit = 72d36178` — 내 커밋이 브랜치 끝이라 SHA 직접 일치 |
+
+- 빌드가 잡아 준 축: `summary/route.ts` 의 Prisma 모델·필드·enum 이 전부 바뀌었는데 타입 오류 0으로 통과했다.
+  정적 sentinel 은 문자열만 읽으므로 이 축을 못 본다 — **소스가 바뀌면 빌드까지** 라는 규칙이 값을 했다.
+- 래칫이 5 → **6** 으로 늘었다(다른 세션이 `§sentinel-identifier-boundary` 추가, `e8bca51a`).
+- ⚠️ 동승 커밋 `3930c8c6`(결제 게이트 문서 정정)은 다른 세션 것이고 **아무도 재지 않았다**.
+  같은 로컬 main 이라 분리할 수 없었다. 문서 커밋이라 화면 영향은 없어 보이지만, 측정된 바 없다는 사실은 남긴다.
+
+### 🛑 배포 후 화면 확인 — 판정 기준 정정 (2026-09-20)
+
+게이트 보고에 `"prod ReceivingDraft 0건이므로 칩이 안 보여야 정상 · 이상 없음(emerald)이 뜨면 회귀"` 가
+적혔는데, **두 군데가 틀렸다.** 그대로 두면 정상을 회귀로 읽는다.
+
+1. `이상 없음` 은 **정상 상태다.** 칩 규칙은 `open(AWAITING_REPLY+PENDING_REVIEW) > 0 → 조치 필요 N` ·
+   `open 0 인데 total > 0 → 이상 없음` · `total 0 → 칩 없음` 이다.
+   전건이 `APPROVED`(입고 확정)면 `이상 없음` 이 뜨는 게 설계대로다.
+2. `0건` 이라는 근거가 이번 변경 **이전** 측정이다. 2026-09-16 실측은 `userId` 단독 범위였고,
+   이번에 범위를 화면과 맞춰 **소속 조직까지** 포함시켰다. 조직 건이 있으면 0이 아닌 게 정상이다.
+
+**올바른 판정 기준은 절대값이 아니라 불변식이다:**
+
+> 칩이 말하는 수 == 칩을 눌러 도착한 `/dashboard/receiving` 의 건수.
+
+- 칩 없음 → 착지 화면도 0건이어야 한다.
+- `조치 필요 N` → 착지 화면에 **회신 대기 + 검토 대기** 합이 N 이어야 한다.
+- `이상 없음` → 착지 화면에 목록은 있는데 회신·검토 대기가 0이어야 한다.
+
+셋 중 어느 것이 떠도 그 자체로는 회귀가 아니다. **수가 어긋나면** 회귀다 — 이 트랙이 닫은 결함이 정확히 그것이다.
+
+
+---
+
+## 7-F. P1-5 구현 — §budget-period-axis (2026-09-21)
+
+**결함**: `남은 일수` 를 무조건 **이번 달 말일**로 셌다. 실측 — 12.31 까지인 예산에 `남은 일수 11일`.
+`일평균 가능 = 잔여 / 남은 일수` 라서 **한 번 틀린 축이 두 지표를 오염**시켰다.
+카드 머리의 `· 9월` 도 같은 거짓말이다(12.31 예산에 9월을 붙인다).
+
+**판정**: 축은 **예산이 스스로 선언한 기간**이다. 선언이 없으면 종전대로 이번 달 말일.
+별도 판단을 부르지 않았다 — 12.31 예산에 11일을 띄우는 것은 선택지가 아니라 오답이고,
+`UserBudget.endDate` 가 이미 스키마에 있다. 월 단위 폴백 예산(`Budget.yearMonth`)은 애초에
+**이번 달로 질의**되므로 두 규칙의 답이 같다 → `periodEnd: null` 로 두고 폴백에 맡긴다.
+
+### 고친 것
+
+| 파일 | 내용 |
+| :--- | :--- |
+| `summary-derive.ts` | `budget` 계약(입력·출력)에 `periodEnd: string \| null` 추가 |
+| `api/dashboard/summary/route.ts` | `UserBudget.endDate` → **KST 달력 날짜**(`YYYY-MM-DD`)로 굳혀 내려보낸다. 폴백 예산은 `null` |
+| `p0-display.ts` | `budgetPace(remaining, now, periodEnd?)` — 기간 끝까지 센다. 지났거나 마지막 날이면 1. 신설 `budgetPeriodLabel()` |
+| `budget-spend-card.tsx` | `now` 를 **하나만** 만들어 세 지표에 같이 넘긴다(자정을 넘기며 어긋나지 않게). 라벨은 `9월` / `12.31까지` |
+
+**시간대**: 변환은 route 에서 **한 번만** 한다(`en-CA` + `Asia/Seoul` — `resolvePeriodYearMonth` ·
+`silence-window.ts` 와 같은 전제: 운영자 전원 한국 기반). 그 아래로는 달력 문자열이라 시각이 없다.
+`now` 와 `periodEnd` 는 같은 달력(보는 사람의 달력)에서만 비교한다.
+
+### Sentinel
+
+- `main-dashboard-p0-honesty.test.ts` → `A6` 6건(행동): 기간 반영 · 두 지표 동시 오염 · 폴백 · 지난 기간 바닥 · 마지막 날 · 라벨.
+- `summary-contract-p1.test.ts` → `(G)` 4건(구조): KST 변환 위치 · 폴백은 기간을 만들지 않는다 ·
+  카드가 `now` 하나를 본다 · **말일 계산이 route·카드로 복제되지 않는다**(축이 두 곳이면 또 어긋난다).
+- `(E) 회귀 0` 의 `budget` 키 목록에 `periodEnd` 를 더했다 — 계약이 실제로 넓어졌으므로 같이 움직이는 게 맞다.
+
+### 검출력 실증 (격리 러너)
+
+| 프로브 | 주입 | RED |
+| :--- | :--- | :--- |
+| `G1-period-ignored` | 기간 파싱 무력화(2곳) | A6 **5건 전부** |
+| `G2-past-floor-off` | 지난 기간 바닥(1) 제거 | A6 지난-기간 1건 |
+| `G3-label-revert` | 라벨을 달력 이번 달로 | (G)③ |
+| `G4-tz-drift` | KST 고정 해제 | (G)① |
+| `G5-fallback-period` | 폴백에 기간 임의 주입 | (G)② |
+
+- `G1` 이 2곳을 치는 이유: `budgetPeriodLabel` 도 같은 파서를 쓴다. 축이 하나라는 증거다.
+- `G3` 은 **(G)③만** 깬다 — A6 라벨 단언은 함수를 직접 부르므로 배선을 끊어도 안 깨진다.
+  행동 축과 배선 축을 따로 두는 이유가 이것이다(둘 다 필요하다). 프로브 설명에 실측대로 적어 뒀다.
+
+### 자체 측정
+
+- 두 핵심 파일 **89/89 GREEN**.
+- 영향권 전수(`grep -rln` 으로 바뀐 4개 소스를 읽는 테스트) 9파일 **87/87 GREEN**.
+- 타 소비자 0 — `DashboardSummaryInput["budget"]` 리터럴을 만드는 곳은 summary route 하나뿐이고,
+  `budgetPace` 호출부도 카드 하나뿐이다(전수 grep).
+- 전부 격리 러너이므로 **비권위**다. 권위는 operator-shell 의 프로젝트 러너 + 빌드다.
+
+### 🛑 operator-shell 게이트 지시 (P1-5)
+
+```
+npm run -w apps/web test -- src/__tests__/dashboard/ src/__tests__/regression/ src/__tests__/inventory/ src/__tests__/meta/
+npm run -w apps/web build          # 계약(타입)이 넓어졌다 — 빌드 필수
+npm run red-ledger
+```
+
+```
+git add apps/web/src/app/api/dashboard/summary/route.ts \
+        apps/web/src/lib/dashboard/summary-derive.ts \
+        apps/web/src/lib/dashboard/p0-display.ts \
+        apps/web/src/components/dashboard/budget-spend-card.tsx \
+        apps/web/src/__tests__/dashboard/summary-contract-p1.test.ts \
+        apps/web/src/__tests__/dashboard/main-dashboard-p0-honesty.test.ts \
+        apps/web/scripts/probe-p0-honesty.mjs \
+        apps/web/docs/plans/PLAN_main-dashboard-p0-honesty.md
+```
+
+경로 명시 필수 — 작업 트리에 다른 세션 변경이 섞여 있다(`budget-lifecycle-wiring.test.ts`, `migration-manifest.json`, `package-lock.json`).
+
+**배포 후 화면 확인**: 예산 카드 머리와 `남은 일수`.
+현재 prod 의 활성 예산에 `endDate` 가 없으면 **아무것도 안 바뀐 것이 정상**이다(폴백 경로).
+`endDate` 가 있으면 머리가 `· 12.31까지` 류로 바뀌고 `남은 일수` 가 그 날짜까지로 늘어난다.
 
 ---
 

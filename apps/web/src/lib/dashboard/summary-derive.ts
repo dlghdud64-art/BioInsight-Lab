@@ -63,6 +63,12 @@ export interface DashboardSummaryInput {
     limit: number;
     spent: number;
     remaining: number;
+    /**
+     * §budget-period-axis (P1-5) — 예산이 선언한 기간의 **마지막 달력 날짜** `YYYY-MM-DD`.
+     * 선언이 없으면 null → 소비측이 이번 달 말일로 폴백한다.
+     * 시간대 변환은 route 가 한 번만 한다(KST 달력 날짜). 여기서부터는 문자열이다.
+     */
+    periodEnd: string | null;
   } | null;
   /** 지출 파생(예산 무관 실구매 합). StatLine "이번달 지출" 소스. */
   spend: {
@@ -80,6 +86,11 @@ export interface DashboardSummaryBudget {
   remaining: number;
   /** 0–100+ (over budget 시 100 초과 가능). 예산 미설정 시 0. */
   usageRate: number;
+  /**
+   * §budget-period-axis (P1-5) — 예산 기간의 마지막 달력 날짜 `YYYY-MM-DD`. 선언이 없으면 null.
+   * `남은 일수` · `일평균 가능` · 카드 기간 라벨이 전부 이 축 위에 선다.
+   */
+  periodEnd: string | null;
 }
 
 export interface DashboardSummary {
@@ -165,6 +176,7 @@ export function deriveDashboardSummary(
       spent: budget?.spent ?? 0,
       remaining: budget?.remaining ?? 0,
       usageRate: Math.round(usageRate * 10) / 10,
+      periodEnd: budget?.periodEnd ?? null,
     },
     spend: { thisMonth: input.spend?.thisMonth ?? 0 },
     derived: {

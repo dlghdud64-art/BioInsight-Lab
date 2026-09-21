@@ -193,12 +193,27 @@ export async function GET(request: NextRequest) {
       .catch(() => 0);
 
     // ── BUDGET ──────────────────────────────────────────────────────────
+    // §budget-period-axis (P1-5) — 시간대 변환은 **여기서 한 번만** 한다.
+    //   DateTime 을 KST 달력 날짜(YYYY-MM-DD)로 굳혀 내려보내면, 소비측은 달력 비교만 하면 된다.
+    //   운영자 전원 한국 기반(silence-window.ts 와 같은 전제). resolvePeriodYearMonth 와 같은 en-CA 패턴.
+    const toKstCalendarDate = (d: Date | null | undefined): string | null =>
+      d
+        ? new Intl.DateTimeFormat("en-CA", {
+            timeZone: "Asia/Seoul",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          }).format(d)
+        : null;
+
     let budgetInput: DashboardSummaryInput["budget"] = null;
     if (activeBudget && activeBudget.totalAmount > 0) {
       budgetInput = {
         limit: activeBudget.totalAmount,
         spent: activeBudget.usedAmount,
         remaining: activeBudget.remainingAmount,
+        // 선언이 없으면 null — 소비측이 이번 달 말일로 폴백한다(종전 동작).
+        periodEnd: toKstCalendarDate(activeBudget.endDate as Date | null),
       };
     } else if (fallbackBudget && fallbackBudget.amount > 0) {
       // 폴백 예산: 이번 달 구매액 합으로 spent derive(위 thisMonthSpend 재사용)
@@ -206,6 +221,9 @@ export async function GET(request: NextRequest) {
         limit: fallbackBudget.amount,
         spent: thisMonthSpend,
         remaining: fallbackBudget.amount - thisMonthSpend,
+        // 이 예산은 `yearMonth: currentYearMonth` 로 질의된 **이번 달** 예산이다.
+        //   기간 끝 = 이번 달 말일 = 폴백 규칙의 답. 둘이 같으므로 null 로 둔다.
+        periodEnd: null,
       };
     }
 

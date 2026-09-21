@@ -28,6 +28,7 @@ import {
   shouldRenderCategoryDonut,
   buildPipelineChips,
   budgetPace,
+  budgetPeriodLabel,
   type CategorySlice,
 } from "@/lib/dashboard/p0-display";
 import { budTone, deriveDashboardSummary } from "@/lib/dashboard/summary-derive";
@@ -263,6 +264,54 @@ describe("A5 예산 소진 페이스 (핸드오프 §5 운영 상태 3지표)", 
 
   it("예산 초과(잔여 음수)면 쓸 수 있는 돈을 만들지 않는다", () => {
     expect(budgetPace(-3_000_000, new Date(2026, 8, 17)).dailyAllowance).toBe(0);
+  });
+});
+
+// ── A6 §budget-period-axis (P1-5) ──────────────────────────────
+//   명제: 남은 일수의 축은 달력의 이번 달이 아니라 **예산이 선언한 기간**이다.
+//   실측 결함: 12.31 까지인 예산에 `남은 일수 11일` 이 떴고, 일평균까지 같이 틀렸다.
+describe("A6 예산 기간 축 (§budget-period-axis · P1-5)", () => {
+  it("periodEnd 가 있으면 그날까지 센다 — 이번 달 말일이 아니다", () => {
+    // 2026-09-20 기준. 달 말일 규칙이면 11일이다(그게 실측된 결함이다).
+    const now = new Date(2026, 8, 20);
+    expect(budgetPace(1_000_000, now).daysLeft).toBe(11); // 구 규칙(폴백)
+    expect(budgetPace(1_000_000, now, "2026-12-31").daysLeft).toBe(103); // 신 규칙
+  });
+
+  it("축이 틀리면 일평균도 같이 틀린다 — 두 지표가 한 축 위에 선다", () => {
+    const now = new Date(2026, 8, 20);
+    const wrong = budgetPace(10_300_000, now); // 11일로 나눈다
+    const right = budgetPace(10_300_000, now, "2026-12-31"); // 103일로 나눈다
+    expect(wrong.dailyAllowance).toBe(936_363);
+    expect(right.dailyAllowance).toBe(100_000);
+  });
+
+  it("periodEnd 가 없거나 형식이 아니면 종전대로 이번 달 말일", () => {
+    const now = new Date(2026, 8, 17);
+    expect(budgetPace(1_400_000, now, null).daysLeft).toBe(14);
+    expect(budgetPace(1_400_000, now, undefined).daysLeft).toBe(14);
+    expect(budgetPace(1_400_000, now, "").daysLeft).toBe(14);
+    expect(budgetPace(1_400_000, now, "2026-13-01").daysLeft).toBe(14); // 월 범위 밖
+    expect(budgetPace(1_400_000, now, "올해 말").daysLeft).toBe(14);
+  });
+
+  it("기간이 이미 지났으면 1 — 음수 일수로 나누지 않는다", () => {
+    const p = budgetPace(500_000, new Date(2026, 8, 20), "2026-08-31");
+    expect(p.daysLeft).toBe(1);
+    expect(p.dailyAllowance).toBe(500_000);
+  });
+
+  it("마지막 날이면 1 (오늘 포함)", () => {
+    expect(budgetPace(500_000, new Date(2026, 8, 20), "2026-09-20").daysLeft).toBe(1);
+    expect(budgetPace(500_000, new Date(2026, 8, 20), "2026-09-21").daysLeft).toBe(2);
+  });
+
+  it("기간 라벨도 같은 축 — 이번 달을 넘어서면 `9월` 이라고 쓰지 않는다", () => {
+    const now = new Date(2026, 8, 20);
+    expect(budgetPeriodLabel(null, now)).toBe("9월"); // 월 예산
+    expect(budgetPeriodLabel("2026-09-30", now)).toBe("9월"); // 이번 달 안에서 끝난다
+    expect(budgetPeriodLabel("2026-12-31", now)).toBe("12.31까지"); // 넘어간다
+    expect(budgetPeriodLabel("2027-03-31", now)).toBe("3.31까지"); // 해를 넘겨도 종료일을 쓴다
   });
 });
 

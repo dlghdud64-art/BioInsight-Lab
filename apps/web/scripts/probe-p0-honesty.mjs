@@ -165,6 +165,40 @@ const PROBES = {
     desc: "입고 질의 범위를 본인 단독으로 좁힘 -> (F)③ RED (조직 건이 있어도 '이상 없음')",
     edits: [[SUMMARY_ROUTE, "...receivingOwnerWhere, status:", "userId, status:"]],
   },
+  // ── 그룹 G: §budget-period-axis (P1-5) ───────────────────────────────
+  "G1-period-ignored": {
+    desc: "기간 파싱을 죽인다(2곳: budgetPace + budgetPeriodLabel) -> A6 5건 전부 RED (실측 결함 재현)",
+    edits: [[LIB, "  const end = parseCalendarDate(periodEnd);", "  const end = null;"]],
+  },
+  "G2-past-floor-off": {
+    desc: "지난 기간의 바닥(1) 제거 -> A6 '이미 지났으면 1' RED (음수 일수로 나눈다)",
+    edits: [
+      [
+        LIB,
+        "    daysLeft = Math.max(1, Math.round((endMs - nowMs) / 86_400_000) + 1);",
+        "    daysLeft = Math.round((endMs - nowMs) / 86_400_000) + 1;",
+      ],
+    ],
+  },
+  "G3-label-revert": {
+    desc: "기간 라벨을 달력 이번 달로 되돌림 -> (G)③ 배선 RED (A6 는 함수 직접 호출이라 안 깨진다 — 실측)",
+    edits: [
+      [
+        BUDGET_CARD,
+        "  const monthLabel = budgetPeriodLabel(budget!.periodEnd, now);",
+        "  const monthLabel = `${new Date().getMonth() + 1}월`;",
+      ],
+    ],
+  },
+  "G4-tz-drift": {
+    desc: "route 의 시간대 변환을 서버 로컬로 -> (G)① RED (KST 고정이 풀린다)",
+    edits: [[SUMMARY_ROUTE, 'timeZone: "Asia/Seoul",', ""]],
+  },
+  "G5-fallback-period": {
+    desc: "월 폴백 예산에 기간을 임의로 채움 -> (G)② RED",
+    edits: [[SUMMARY_ROUTE, "periodEnd: null,", 'periodEnd: "2026-12-31",']],
+  },
+
   "F4-pipeline-approved-leak": {
     desc: "pipeline attention 에 APPROVED 합산 -> (F)④ RED",
     edits: [

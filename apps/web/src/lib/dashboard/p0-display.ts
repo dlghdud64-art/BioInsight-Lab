@@ -197,10 +197,22 @@ export function buildPipelineChips(
 // ───────────────────────────────────────────────────────────────
 
 export interface BudgetPace {
-  /** 이번 달 남은 일수(오늘 포함). 월말이면 1. */
+  /** 예산 기간의 남은 일수(오늘 포함). 마지막 날이거나 이미 지났으면 1. */
   daysLeft: number;
   /** 남은 예산 / 남은 일수. 잔여가 음수면 0(초과 상태에서 "쓸 수 있는 돈" 을 만들지 않는다). */
   dailyAllowance: number;
+}
+
+/** `YYYY-MM-DD` → {y,m,d}. 형식이 아니면 null — 달력 날짜로만 다룬다(시각·시간대 없음). */
+function parseCalendarDate(iso: string | null | undefined): { y: number; m: number; d: number } | null {
+  if (!iso) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+  return { y, m: mo, d };
 }
 
 /**
@@ -208,12 +220,49 @@ export interface BudgetPace {
  *
  * ★ `now` 를 주입받는다 — 시스템 시계에 의존하면 테스트가 날짜마다 흔들린다.
  *   예산 미설정 상태에서는 호출하지 않는다(호출측 게이트).
+ *
+ * 🛑 §budget-period-axis (P1-5) — 축은 **예산이 스스로 선언한 기간**이다.
+ *   (구) 무조건 이번 달 말일로 셌다. 실측: 12.31 까지인 예산에 `남은 일수 11일` 이 떴다.
+ *        남은 돈을 11로 나눠 `일평균 가능` 까지 틀렸다 — 한 번 틀린 축이 두 지표를 오염시킨다.
+ *   (신) `periodEnd`(달력 날짜 `YYYY-MM-DD`)가 있으면 그날까지. 없으면 종전대로 이번 달 말일.
+ *        월 단위 폴백 예산은 애초에 이번 달로 질의되므로 두 규칙의 답이 같다.
+ *   `now` 와 `periodEnd` 는 **같은 달력**(보는 사람의 달력)에서 비교한다.
+ *   시간대 변환은 서버가 한 번만 한다(route 가 KST 달력 날짜로 만들어 내려보낸다).
  */
-export function budgetPace(remainingWon: number, now: Date): BudgetPace {
+export function budgetPace(
+  remainingWon: number,
+  now: Date,
+  periodEnd?: string | null,
+): BudgetPace {
   const year = now.getFullYear();
   const month = now.getMonth();
-  const lastDay = new Date(year, month + 1, 0).getDate();
-  const daysLeft = Math.max(1, lastDay - now.getDate() + 1);
+
+  const end = parseCalendarDate(periodEnd);
+  let daysLeft: number;
+  if (end) {
+    const endMs = Date.UTC(end.y, end.m - 1, end.d);
+    const nowMs = Date.UTC(year, month, now.getDate());
+    daysLeft = Math.max(1, Math.round((endMs - nowMs) / 86_400_000) + 1);
+  } else {
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    daysLeft = Math.max(1, lastDay - now.getDate() + 1);
+  }
+
   const safeRemaining = Number.isFinite(remainingWon) && remainingWon > 0 ? remainingWon : 0;
   return { daysLeft, dailyAllowance: Math.floor(safeRemaining / daysLeft) };
+}
+
+/**
+ * 카드 머리의 기간 라벨.
+ *
+ * 🛑 §budget-period-axis — `· 9월` 은 **월 예산일 때만** 참이다.
+ *   12.31 까지인 예산에 `9월` 을 붙이면 `남은 일수 11일` 과 같은 종류의 거짓말이 된다.
+ *   기간이 이번 달 안에서 끝나지 않으면 종료일을 그대로 쓴다.
+ */
+export function budgetPeriodLabel(periodEnd: string | null | undefined, now: Date): string {
+  const end = parseCalendarDate(periodEnd);
+  const thisMonthLabel = `${now.getMonth() + 1}월`;
+  if (!end) return thisMonthLabel;
+  if (end.y === now.getFullYear() && end.m === now.getMonth() + 1) return thisMonthLabel;
+  return `${end.m}.${end.d}까지`;
 }

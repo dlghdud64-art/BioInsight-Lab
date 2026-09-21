@@ -23,7 +23,7 @@ import { RotateCw, Wallet, ChevronRight } from "lucide-react";
 import type { SectionState } from "@/lib/dashboard/section-state";
 import { won, type DashboardSummary } from "@/lib/dashboard/summary-derive";
 // §main-dashboard-p0-honesty T2 — 도넛 게이팅 + 소진 페이스(핸드오프 §0-2 · §5).
-import { shouldRenderCategoryDonut, budgetPace } from "@/lib/dashboard/p0-display";
+import { shouldRenderCategoryDonut, budgetPace, budgetPeriodLabel } from "@/lib/dashboard/p0-display";
 import dynamic_import from "next/dynamic";
 
 // §dashboard-shifan-polish A5/B1 — 카테고리 비중 카드 내부 통합(시안 "예산&지출 카드 내부").
@@ -140,8 +140,11 @@ export function BudgetSpendCard({ state, summary, onRetry, categorySpending = []
 
   // ── 운영 상태(예산 설정 후) — 핸드오프 §5 ───────────────────
   const barWidth = Math.min(100, Math.max(0, usageRate));
-  const pace = budgetPace(budget!.remaining, new Date());
-  const monthLabel = `${new Date().getMonth() + 1}월`;
+  // §budget-period-axis (P1-5) — 남은 일수·일평균·기간 라벨이 모두 **예산이 선언한 기간** 위에 선다.
+  //   `now` 를 한 번만 만들어 셋에 같이 넘긴다 — 자정을 넘기며 지표끼리 어긋나는 것을 막는다.
+  const now = new Date();
+  const pace = budgetPace(budget!.remaining, now, budget!.periodEnd);
+  const monthLabel = budgetPeriodLabel(budget!.periodEnd, now);
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4 md:p-5 flex flex-col">

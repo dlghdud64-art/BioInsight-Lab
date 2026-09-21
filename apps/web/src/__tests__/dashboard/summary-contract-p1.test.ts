@@ -20,7 +20,7 @@ import {
   won,
   type DashboardSummaryInput,
 } from "@/lib/dashboard/summary-derive";
-import { blockAfter, blockEnclosing } from "../_helpers/block-window";
+import { blockAfter, blockEnclosing, blockFrom } from "../_helpers/block-window";
 
 const REPO_ROOT = join(__dirname, "..", "..", "..");
 function read(rel: string): string {
@@ -67,10 +67,15 @@ describe("§main-dashboard-redesign P1 (A) — 파생 helper 로직", () => {
 
   it("budget 설정 시 usageRate 계산 + isSet=true", () => {
     const input = emptyInput();
-    input.budget = { limit: 1_000_000, spent: 500_000, remaining: 500_000 };
+    input.budget = { limit: 1_000_000, spent: 500_000, remaining: 500_000, periodEnd: null };
     const s = deriveDashboardSummary(input);
     expect(s.budget.isSet).toBe(true);
     expect(s.budget.usageRate).toBe(50);
+    // §budget-period-axis — 선언이 없으면 null 그대로 통과시킨다(소비측이 폴백을 정한다).
+    expect(s.budget.periodEnd).toBeNull();
+
+    input.budget = { ...input.budget, periodEnd: "2026-12-31" };
+    expect(deriveDashboardSummary(input).budget.periodEnd).toBe("2026-12-31");
   });
 
   it("budTone §11.302 신호등 임계 — <80 ok / 80–<100 warn / >=100 danger / 미설정 none", () => {
@@ -150,7 +155,15 @@ describe("§main-dashboard-redesign P1 (E) — helper 계약 회귀 0", () => {
     const s = deriveDashboardSummary(emptyInput());
     expect(Object.keys(s).sort()).toEqual(["budget", "derived", "modules", "spend"]);
     expect(Object.keys(s.modules).sort()).toEqual(["po", "quote", "receive", "stock"]);
-    expect(Object.keys(s.budget).sort()).toEqual(["isSet", "limit", "remaining", "spent", "usageRate"]);
+    // §budget-period-axis (P1-5) — periodEnd 추가. 계약 확장이므로 이 목록도 함께 움직인다.
+    expect(Object.keys(s.budget).sort()).toEqual([
+      "isSet",
+      "limit",
+      "periodEnd",
+      "remaining",
+      "spent",
+      "usageRate",
+    ]);
     expect(Object.keys(s.derived).sort()).toEqual(["allEmpty", "budTone"]);
   });
 });
@@ -222,6 +235,48 @@ describe("§receive-canonical — 입고 칩 판정과 화면이 같은 것을 �
     expect(att).toContain("awaitingReply");
     expect(att).toContain("pendingReview");
     expect(att).not.toMatch(/\bapproved\b/);
+  });
+});
+
+// ── (G) §budget-period-axis — 시간대 변환은 서버가 한 번만 한다 (P1-5) ──
+describe("§budget-period-axis — 예산 기간 축은 한 곳에서만 굳는다", () => {
+  it("① route 가 periodEnd 를 KST 달력 날짜로 굳혀 내려보낸다", () => {
+    const src = read(ROUTE);
+    expect(src).toContain("periodEnd");
+    // 변환은 en-CA + Asia/Seoul — 저장소의 기존 패턴(resolvePeriodYearMonth · silence-window)과 같다.
+    //   창은 헬퍼 안의 `DateTimeFormat(...)` **인자 괄호**다. `{` 로 열면 en-CA 가 창 앞에 남아 빠진다.
+    const helperIdx = src.indexOf("const toKstCalendarDate");
+    expect(helperIdx, "route 에 toKstCalendarDate 헬퍼가 없다").toBeGreaterThan(-1);
+    const fmtIdx = src.indexOf("new Intl.DateTimeFormat(", helperIdx);
+    expect(fmtIdx, "헬퍼 안에 DateTimeFormat 호출이 없다").toBeGreaterThan(-1);
+    const conv = blockFrom(src, src.indexOf("(", fmtIdx), "(", ")");
+    expect(conv).toContain("Asia/Seoul");
+    expect(conv).toContain("en-CA");
+  });
+
+  it("② 월 단위 폴백 예산은 periodEnd 를 만들지 않는다 — 폴백 규칙과 답이 같다", () => {
+    const src = read(ROUTE);
+    // 폴백 분기 창 안에서만 본다(활성 예산 분기와 섞이지 않게).
+    const fb = blockAfter(src, "} else if (fallbackBudget");
+    expect(fb, "폴백 분기를 찾지 못했다").toContain("limit: fallbackBudget.amount");
+    expect(lineWith(fb, "periodEnd:")).toContain("null");
+  });
+
+  it("③ 카드의 세 지표가 **같은 now 하나**를 본다 — 자정을 넘기며 어긋나지 않는다", () => {
+    const src = read("src/components/dashboard/budget-spend-card.tsx");
+    expect(src).toMatch(/const now = new Date\(\);/);
+    expect(lineWith(src, "budgetPace(")).toContain("now");
+    expect(lineWith(src, "budgetPeriodLabel(")).toContain("now");
+    // 라벨이 달력 이번 달을 직접 읽어 만들던 옛 형태가 되살아나면 RED.
+    expect(src).not.toMatch(/getMonth\(\)\s*\+\s*1\}월/);
+  });
+
+  it("④ 축 계산은 p0-display 한 곳뿐 — route·카드에 로컬 말일 계산 0", () => {
+    for (const rel of [ROUTE, "src/components/dashboard/budget-spend-card.tsx"]) {
+      const src = read(rel);
+      // `new Date(y, m + 1, 0)` = 말일 구하기 관용구. 축을 두 곳에서 세면 또 어긋난다.
+      expect(src, `${rel} · 말일 계산이 복제됐다`).not.toMatch(/new Date\([^)]*\+\s*1\s*,\s*0\s*\)/);
+    }
   });
 });
 
