@@ -70,6 +70,7 @@ function recordCsrfMiddlewareTelemetry(
   method: string,
   origin: string | null,
   actorUserId: string,
+  blocked: boolean,
 ): void {
   const provenance = createEventProvenance({
     sourceDomain: 'security',
@@ -86,6 +87,21 @@ function recordCsrfMiddlewareTelemetry(
     'security_event',
     provenance,
     `CSRF middleware ${event}: method=${method} path=${pathname} origin=${origin || 'none'}`,
+  );
+
+  /*
+   * 🛑 §csrf-violation-observable (2026-09-21)
+   *   recordSecurityEvent 는 모듈 내 배열(2000건 링 버퍼)에만 쌓는다. DB·외부 싱크가 없고,
+   *   서버리스라 인스턴스가 바뀌면 그 순간 사라진다. prod 는 full_enforce 라 차단이 실제로
+   *   일어나는데, 그 사실이 어디에도 남지 않으면 사후에 누가 무엇에 막혔는지 알 수 없다.
+   *   Vercel 런타임 로그는 이 축에서 휘발이 아닌 유일한 싱크다.
+   *   blocked 를 함께 싣는다 — "막혔다" 와 "기록만 했다" 는 다른 사실이다.
+   *   토큰·본문은 싣지 않는다. 이미 메모리 기록에 있는 식별자까지만 남긴다.
+   */
+  // eslint-disable-next-line no-console
+  console.warn(
+    `[csrf] ${blocked ? 'blocked' : 'observed'} ${event} method=${method} ` +
+    `path=${pathname} origin=${origin || 'none'} actor=${actorUserId} cid=${correlationId}`,
   );
 }
 
@@ -227,20 +243,22 @@ export default auth(async (req) => {
 
     if (!effectiveOrigin) {
       const violation: CsrfViolationType = 'missing_origin';
+      const blocked = shouldBlockOnViolation(mode, routeConfig.protection, routeConfig.highRisk);
       recordCsrfMiddlewareTelemetry(
         mapViolationToTelemetry(violation), correlationId,
-        pathname, req.method, null, actorUserId,
+        pathname, req.method, null, actorUserId, blocked,
       );
-      if (shouldBlockOnViolation(mode, routeConfig.protection, routeConfig.highRisk)) {
+      if (blocked) {
         return buildCsrfBlockResponse(violation, pathname, correlationId);
       }
     } else if (!isTrustedOrigin(effectiveOrigin)) {
       const violation: CsrfViolationType = 'origin_mismatch';
+      const blocked = shouldBlockOnViolation(mode, routeConfig.protection, routeConfig.highRisk);
       recordCsrfMiddlewareTelemetry(
         mapViolationToTelemetry(violation), correlationId,
-        pathname, req.method, effectiveOrigin, actorUserId,
+        pathname, req.method, effectiveOrigin, actorUserId, blocked,
       );
-      if (shouldBlockOnViolation(mode, routeConfig.protection, routeConfig.highRisk)) {
+      if (blocked) {
         return buildCsrfBlockResponse(violation, pathname, correlationId);
       }
     }
@@ -254,11 +272,12 @@ export default auth(async (req) => {
     const tokenResult = await validateCsrfDoubleSubmit(cookieToken, headerToken);
 
     if (!tokenResult.valid && tokenResult.violation) {
+      const blocked = shouldBlockOnViolation(mode, routeConfig.protection, routeConfig.highRisk);
       recordCsrfMiddlewareTelemetry(
         mapViolationToTelemetry(tokenResult.violation), correlationId,
-        pathname, req.method, effectiveOrigin, actorUserId,
+        pathname, req.method, effectiveOrigin, actorUserId, blocked,
       );
-      if (shouldBlockOnViolation(mode, routeConfig.protection, routeConfig.highRisk)) {
+      if (blocked) {
         return buildCsrfBlockResponse(tokenResult.violation, pathname, correlationId);
       }
     }
